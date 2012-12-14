@@ -148,6 +148,7 @@ int MAIN(int argc, char **argv)
 	long nsec = MAX_VALIDITY_PERIOD, maxage = -1;
 	char *CAfile = NULL, *CApath = NULL;
 	X509_STORE *store = NULL;
+	X509_VERIFY_PARAM *vpm = NULL;
 	STACK_OF(X509) *sign_other = NULL, *verify_other = NULL, *rother = NULL;
 	char *sign_certfile = NULL, *verify_certfile = NULL, *rcertfile = NULL;
 	unsigned long sign_flags = 0, verify_flags = 0, rflags = 0;
@@ -355,6 +356,12 @@ int MAIN(int argc, char **argv)
 				CApath = *args;
 				}
 			else badarg = 1;
+			}
+		else if (args_verify(&args, NULL, &badarg, bio_err, &vpm))
+			{
+			if (badarg)
+				goto end;
+			continue;
 			}
 		else if (!strcmp (*args, "-validity_period"))
 			{
@@ -637,7 +644,10 @@ int MAIN(int argc, char **argv)
 
 	if (!req && reqin)
 		{
-		derbio = BIO_new_file(reqin, "rb");
+		if (!strcmp(reqin, "-"))
+			derbio = BIO_new_fp(stdin, BIO_NOCLOSE);
+		else
+			derbio = BIO_new_file(reqin, "rb");
 		if (!derbio)
 			{
 			BIO_printf(bio_err, "Error Opening OCSP request file\n");
@@ -739,7 +749,10 @@ int MAIN(int argc, char **argv)
 
 	if (reqout)
 		{
-		derbio = BIO_new_file(reqout, "wb");
+		if (!strcmp(respout, "-"))
+			derbio = BIO_new_fp(stdout, BIO_NOCLOSE);
+		else
+			derbio = BIO_new_file(reqout, "wb");
 		if(!derbio)
 			{
 			BIO_printf(bio_err, "Error opening file %s\n", reqout);
@@ -782,7 +795,10 @@ int MAIN(int argc, char **argv)
 		}
 	else if (respin)
 		{
-		derbio = BIO_new_file(respin, "rb");
+		if (!strcmp(respin, "-"))
+			derbio = BIO_new_fp(stdin, BIO_NOCLOSE);
+		else
+			derbio = BIO_new_file(respin, "rb");
 		if (!derbio)
 			{
 			BIO_printf(bio_err, "Error Opening OCSP response file\n");
@@ -807,7 +823,10 @@ int MAIN(int argc, char **argv)
 
 	if (respout)
 		{
-		derbio = BIO_new_file(respout, "wb");
+		if (!strcmp(respout, "-"))
+			derbio = BIO_new_fp(stdout, BIO_NOCLOSE);
+		else
+			derbio = BIO_new_file(respout, "wb");
 		if(!derbio)
 			{
 			BIO_printf(bio_err, "Error opening file %s\n", respout);
@@ -854,6 +873,8 @@ int MAIN(int argc, char **argv)
 		store = setup_verify(bio_err, CAfile, CApath);
 	if (!store)
 		goto end;
+	if (vpm)
+		X509_STORE_set1_param(store, vpm);
 	if (verify_certfile)
 		{
 		verify_other = load_certs(bio_err, verify_certfile, FORMAT_PEM,
@@ -904,6 +925,8 @@ end:
 	ERR_print_errors(bio_err);
 	X509_free(signer);
 	X509_STORE_free(store);
+	if (vpm)
+		X509_VERIFY_PARAM_free(vpm);
 	EVP_PKEY_free(key);
 	EVP_PKEY_free(rkey);
 	X509_free(issuer);
