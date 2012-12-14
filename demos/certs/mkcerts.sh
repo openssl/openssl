@@ -15,7 +15,7 @@ $OPENSSL x509 -req -in intreq.pem -CA root.pem -days 3600 \
 	-extfile ca.cnf -extensions v3_ca -CAcreateserial -out intca.pem
 
 # Server certificate: create request first
-CN="crl.host.com" $OPENSSL req -config ca.cnf -nodes \
+CN="Test Server Cert" $OPENSSL req -config ca.cnf -nodes \
 	-keyout skey.pem -out req.pem -newkey rsa:1024
 # Sign request: end entity extensions
 $OPENSSL x509 -req -in req.pem -CA intca.pem -CAkey intkey.pem -days 3600 \
