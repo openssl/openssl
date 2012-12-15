@@ -109,7 +109,7 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
 		 * (If the signer is a root certificate, X509_verify_cert()
 		 * would fail anyway!)
 		 */
-		if (chain == certs) goto verified_chain;
+		if (chain && chain == certs) goto verified_chain;
 
 		/* If we trust some "other" certificates, allow partial
 		 * chains (because some of them might be

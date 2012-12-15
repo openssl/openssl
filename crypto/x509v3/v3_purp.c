@@ -87,7 +87,7 @@ static X509_PURPOSE xstandard[] = {
 	{X509_PURPOSE_SMIME_ENCRYPT, X509_TRUST_EMAIL, 0, check_purpose_smime_encrypt, "S/MIME encryption", "smimeencrypt", NULL},
 	{X509_PURPOSE_CRL_SIGN, X509_TRUST_COMPAT, 0, check_purpose_crl_sign, "CRL signing", "crlsign", NULL},
 	{X509_PURPOSE_ANY, X509_TRUST_DEFAULT, 0, no_check, "Any Purpose", "any", NULL},
-	{X509_PURPOSE_OCSP_HELPER, X509_TRUST_OCSP_SIGN, 0, ocsp_helper, "OCSP helper", "ocsphelper", NULL},
+	{X509_PURPOSE_OCSP_HELPER, X509_TRUST_COMPAT, 0, ocsp_helper, "OCSP helper", "ocsphelper", NULL},
 	{X509_PURPOSE_TIMESTAMP_SIGN, X509_TRUST_TSA, 0, check_purpose_timestamp_sign, "Time Stamp signing", "timestampsign", NULL},
 };
 
