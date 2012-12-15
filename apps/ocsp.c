@@ -749,7 +749,7 @@ int MAIN(int argc, char **argv)
 
 	if (reqout)
 		{
-		if (!strcmp(respout, "-"))
+		if (!strcmp(reqout, "-"))
 			derbio = BIO_new_fp(stdout, BIO_NOCLOSE);
 		else
 			derbio = BIO_new_file(reqout, "wb");
