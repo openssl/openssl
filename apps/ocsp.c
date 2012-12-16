@@ -105,7 +105,7 @@ static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
 			      long maxage);
 
 static int make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req, CA_DB *db,
-			X509 *ca, X509 *rcert, EVP_PKEY *rkey,
+			X509 *ca, X509 *rcert, EVP_PKEY *rkey, const EVP_MD *md,
 			STACK_OF(X509) *rother, unsigned long flags,
 			int nmin, int ndays, int badsig);
 
@@ -166,7 +166,7 @@ int MAIN(int argc, char **argv)
 	char *rca_filename = NULL;
 	CA_DB *rdb = NULL;
 	int nmin = 0, ndays = -1;
-	const EVP_MD *cert_id_md = NULL;
+	const EVP_MD *cert_id_md = NULL, *rsign_md = NULL;
 
 	if (bio_err == NULL) bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
 
@@ -568,6 +568,17 @@ int MAIN(int argc, char **argv)
 				}
 			else badarg = 1;
 			}
+		else if (!strcmp(*args, "-rmd"))
+			{
+			if (args[1])
+				{
+				args++;
+				rsign_md = EVP_get_digestbyname(*args);
+				if (!rsign_md)
+					badarg = 1;
+				}
+			else badarg = 1;
+			}
 		else if ((cert_id_md = EVP_get_digestbyname((*args)+1))==NULL)
 			{
 			badarg = 1;
@@ -777,7 +788,7 @@ int MAIN(int argc, char **argv)
 
 	if (rdb)
 		{
-		i = make_ocsp_response(&resp, req, rdb, rca_cert, rsigner, rkey, rother, rflags, nmin, ndays, badsig);
+		i = make_ocsp_response(&resp, req, rdb, rca_cert, rsigner, rkey,rsign_md, rother, rflags, nmin, ndays, badsig);
 		if (cbio)
 			send_ocsp_response(cbio, resp);
 		}
@@ -1083,7 +1094,8 @@ static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
 
 
 static int make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req, CA_DB *db,
-			X509 *ca, X509 *rcert, EVP_PKEY *rkey,
+			X509 *ca, X509 *rcert,
+			EVP_PKEY *rkey, const EVP_MD *rmd,
 			STACK_OF(X509) *rother, unsigned long flags,
 			int nmin, int ndays, int badsig)
 	{
@@ -1174,7 +1186,7 @@ static int make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req, CA_DB *db
 
 	OCSP_copy_nonce(bs, req);
 	
-	OCSP_basic_sign(bs, rcert, rkey, NULL, rother, flags);
+	OCSP_basic_sign(bs, rcert, rkey, rmd, rother, flags);
 
 	if (badsig)
 		bs->signature->data[bs->signature->length -1] ^= 0x1;
