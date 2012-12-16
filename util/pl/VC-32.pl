@@ -122,7 +122,7 @@ elsif ($FLAVOR =~ /CE/)
 	$base_cflags.=' /MC';
     }
     $opt_cflags=' /O1i';	# optimize for space, but with intrinsics...
-    $dbg_clfags=' /Od -DDEBUG -D_DEBUG';
+    $dbg_cflags=' /Od -DDEBUG -D_DEBUG';
     $lflags="/nologo /opt:ref $wcelflag";
     }
 else	# Win32
