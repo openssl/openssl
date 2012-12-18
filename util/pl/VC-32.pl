@@ -177,7 +177,7 @@ if ($FLAVOR =~ /CE/)
 		$ex_libs.= ' $(WCECOMPAT)/lib';
 		if (-f "$ENV{WCECOMPAT}/lib/$ENV{TARGETCPU}/wcecompatex.lib")
 			{
-			$ex_libs.='/$(TARGETCPU)/whecompatex.lib';
+			$ex_libs.='/$(TARGETCPU)/wcecompatex.lib';
 			}
 		else
 			{
