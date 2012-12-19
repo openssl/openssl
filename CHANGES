@@ -51,8 +51,8 @@
      [Steve Henson]
 
   *) New functions to check a hostname email or IP address against a
-     certificate. Add options to s_client, s_server and x509 utilities
-     to print results of checks against a certificate.
+     certificate. Add options x509 utility to print results of checks against
+     a certificate.
      [Steve Henson]
 
   *) Add -rev test option to s_server to just reverse order of characters
