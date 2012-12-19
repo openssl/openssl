@@ -1478,7 +1478,7 @@ static CAPI_KEY *capi_get_key(CAPI_CTX *ctx, const TCHAR *contname, TCHAR *provn
 		}
 	if(ctx->store_flags & CERT_SYSTEM_STORE_LOCAL_MACHINE)
 		dwFlags = CRYPT_MACHINE_KEYSET;
-	if (!CryptAcquireContext(&key->hprov, contname, provname, ptype, dwflags))
+	if (!CryptAcquireContext(&key->hprov, contname, provname, ptype, dwFlags))
 		{
 		CAPIerr(CAPI_F_CAPI_GET_KEY, CAPI_R_CRYPTACQUIRECONTEXT_ERROR);
 		capi_addlasterror();
