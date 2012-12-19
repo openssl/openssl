@@ -516,7 +516,7 @@ static void mac_block_mesh(struct ossl_gost_imit_ctx *c,const unsigned char *dat
 		cryptopro_key_meshing(&(c->cctx),buffer);
 		}
 	mac_block(&(c->cctx),c->buffer,data);
-	c->count = (c->count+1)%1024 + 1024;
+	c->count = (c->count+8)%1024 + 1024;
 	}
 
 int gost_imit_update(EVP_MD_CTX *ctx, const void *data, size_t count)
