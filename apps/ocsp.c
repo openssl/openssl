@@ -844,6 +844,12 @@ int MAIN(int argc, char **argv)
 			resp = NULL;
 			goto redo_accept;
 			}
+		ret = 0;
+		goto end;
+		}
+	else if (ridx_filename)
+		{
+		ret = 0;
 		goto end;
 		}
 
