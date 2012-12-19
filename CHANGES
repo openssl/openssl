@@ -4,6 +4,10 @@
 
  Changes between 1.0.1 and 1.0.2 [xx XXX xxxx]
 
+  *) Integrate hostname, email address and IP address checking with certificate
+     verification. New verify options supporting checking in opensl utility.
+     [Steve Henson]
+
   *) Fixes and wildcard matching support to hostname and email checking
      functions. Add manual page.
      [Florian Weimer (Red Hat Product Security Team)]

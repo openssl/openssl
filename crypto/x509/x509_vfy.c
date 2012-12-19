@@ -113,6 +113,7 @@ static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer);
 static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x);
 static int check_chain_extensions(X509_STORE_CTX *ctx);
 static int check_name_constraints(X509_STORE_CTX *ctx);
+static int check_id(X509_STORE_CTX *ctx);
 static int check_trust(X509_STORE_CTX *ctx);
 static int check_revocation(X509_STORE_CTX *ctx);
 static int check_cert(X509_STORE_CTX *ctx);
@@ -365,6 +366,10 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 
 	ok = check_name_constraints(ctx);
 	
+	if (!ok) goto end;
+
+	ok = check_id(ctx);
+
 	if (!ok) goto end;
 
 	/* We may as well copy down any DSA parameters that are required */
@@ -651,6 +656,36 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
 					}
 				}
 			}
+		}
+	return 1;
+	}
+
+static int check_id_error(X509_STORE_CTX *ctx, int errcode)
+	{
+	ctx->error = errcode;
+	ctx->current_cert = ctx->cert;
+	ctx->error_depth = 0;
+	return ctx->verify_cb(0, ctx);
+	}
+
+static int check_id(X509_STORE_CTX *ctx)
+	{
+	X509_VERIFY_PARAM *vpm = ctx->param;
+	X509 *x = ctx->cert;
+	if (vpm->host && !X509_check_host(x, vpm->host, vpm->hostlen, 0))
+		{
+		if (!check_id_error(ctx, X509_V_ERR_HOSTNAME_MISMATCH))
+			return 0;
+		}
+	if (vpm->email && !X509_check_email(x, vpm->email, vpm->emaillen, 0))
+		{
+		if (!check_id_error(ctx, X509_V_ERR_EMAIL_MISMATCH))
+			return 0;
+		}
+	if (vpm->ip && !X509_check_ip(x, vpm->ip, vpm->iplen, 0))
+		{
+		if (!check_id_error(ctx, X509_V_ERR_IP_ADDRESS_MISMATCH))
+			return 0;
 		}
 	return 1;
 	}

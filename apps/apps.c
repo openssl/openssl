@@ -2262,6 +2262,8 @@ int args_verify(char ***pargs, int *pargc,
 	char **oldargs = *pargs;
 	char *arg = **pargs, *argn = (*pargs)[1];
 	time_t at_time = 0;
+	const unsigned char *hostname = NULL, *email = NULL;
+	char *ipasc = NULL;
 	if (!strcmp(arg, "-policy"))
 		{
 		if (!argn)
@@ -2335,6 +2337,27 @@ int args_verify(char ***pargs, int *pargc,
 			}
 		(*pargs)++;
 		}
+	else if (strcmp(arg,"-verify_hostname") == 0)
+		{
+		if (!argn)
+			*badarg = 1;
+		hostname = (unsigned char *)argn;
+		(*pargs)++;
+		}
+	else if (strcmp(arg,"-verify_email") == 0)
+		{
+		if (!argn)
+			*badarg = 1;
+		email = (unsigned char *)argn;
+		(*pargs)++;
+		}
+	else if (strcmp(arg,"-verify_ip") == 0)
+		{
+		if (!argn)
+			*badarg = 1;
+		ipasc = argn;
+		(*pargs)++;
+		}
 	else if (!strcmp(arg, "-ignore_critical"))
 		flags |= X509_V_FLAG_IGNORE_CRITICAL;
 	else if (!strcmp(arg, "-issuer_checks"))
@@ -2395,6 +2418,15 @@ int args_verify(char ***pargs, int *pargc,
 
 	if (at_time) 
 		X509_VERIFY_PARAM_set_time(*pm, at_time);
+
+	if (hostname && !X509_VERIFY_PARAM_set1_host(*pm, hostname, 0))
+		*badarg = 1;
+
+	if (email && !X509_VERIFY_PARAM_set1_email(*pm, email, 0))
+		*badarg = 1;
+
+	if (ipasc && !X509_VERIFY_PARAM_set1_ip_asc(*pm, ipasc))
+		*badarg = 1;
 
 	end:
 
