@@ -4,6 +4,15 @@
 
  Changes between 1.0.1 and 1.0.2 [xx XXX xxxx]
 
+  *) Fixes and wildcard matching support to hostname and email checking
+     functions. Add manual page.
+     [Florian Weimer (Red Hat Product Security Team)]
+
+  *) New functions to check a hostname email or IP address against a
+     certificate. Add options x509 utility to print results of checks against
+     a certificate.
+     [Steve Henson]
+
   *) Fix OCSP checking.
      [Rob Stradling <rob.stradling@comodo.com> and Ben Laurie]
 

@@ -335,6 +335,11 @@ void jpake_server_auth(BIO *out, BIO *conn, const char *secret);
 unsigned char *next_protos_parse(unsigned short *outlen, const char *in);
 #endif  /* !OPENSSL_NO_TLSEXT && !OPENSSL_NO_NEXTPROTONEG */
 
+void print_cert_checks(BIO *bio, X509 *x,
+				const unsigned char *checkhost,
+				const unsigned char *checkemail,
+				const char *checkip);
+
 #define FORMAT_UNDEF    0
 #define FORMAT_ASN1     1
 #define FORMAT_TEXT     2

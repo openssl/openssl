@@ -2771,6 +2771,35 @@ unsigned char *next_protos_parse(unsigned short *outlen, const char *in)
 	}
 #endif  /* !OPENSSL_NO_TLSEXT && !OPENSSL_NO_NEXTPROTONEG */
 
+void print_cert_checks(BIO *bio, X509 *x,
+				const unsigned char *checkhost,
+				const unsigned char *checkemail,
+				const char *checkip)
+	{
+	if (x == NULL)
+		return;
+	if (checkhost)
+		{
+		BIO_printf(bio, "Hostname %s does%s match certificate\n",
+				checkhost, X509_check_host(x, checkhost, 0, 0)
+						? "" : " NOT");
+		}
+
+	if (checkemail)
+		{
+		BIO_printf(bio, "Email %s does%s match certificate\n",
+				checkemail, X509_check_email(x, checkemail, 0,
+						0) ? "" : " NOT");
+		}
+
+	if (checkip)
+		{
+		BIO_printf(bio, "IP %s does%s match certificate\n",
+				checkip, X509_check_ip_asc(x, checkip,
+						0) ? "" : " NOT");
+		}
+	}
+
 /*
  * Platform-specific sections
  */

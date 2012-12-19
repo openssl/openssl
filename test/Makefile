@@ -62,6 +62,7 @@ EVPTEST=	evp_test
 IGETEST=	igetest
 JPAKETEST=	jpaketest
 SRPTEST=	srptest
+V3NAMETEST=	v3nametest
 ASN1TEST=	asn1test
 
 TESTS=		alltests
@@ -74,7 +75,7 @@ EXE=	$(BNTEST)$(EXE_EXT) $(ECTEST)$(EXE_EXT)  $(ECDSATEST)$(EXE_EXT) $(ECDHTEST)
 	$(RANDTEST)$(EXE_EXT) $(DHTEST)$(EXE_EXT) $(ENGINETEST)$(EXE_EXT) \
 	$(BFTEST)$(EXE_EXT) $(CASTTEST)$(EXE_EXT) $(SSLTEST)$(EXE_EXT) $(EXPTEST)$(EXE_EXT) $(DSATEST)$(EXE_EXT) $(RSATEST)$(EXE_EXT) \
 	$(EVPTEST)$(EXE_EXT) $(IGETEST)$(EXE_EXT) $(JPAKETEST)$(EXE_EXT) $(SRPTEST)$(EXE_EXT) \
-	$(ASN1TEST)$(EXE_EXT)
+	$(ASN1TEST)$(EXE_EXT) $(V3NAMETEST)$(EXE_EXT)
 
 # $(METHTEST)$(EXE_EXT)
 
@@ -86,7 +87,7 @@ OBJ=	$(BNTEST).o $(ECTEST).o  $(ECDSATEST).o $(ECDHTEST).o $(IDEATEST).o \
 	$(MDC2TEST).o $(RMDTEST).o \
 	$(RANDTEST).o $(DHTEST).o $(ENGINETEST).o $(CASTTEST).o \
 	$(BFTEST).o  $(SSLTEST).o  $(DSATEST).o  $(EXPTEST).o $(RSATEST).o \
-	$(EVPTEST).o $(IGETEST).o $(JPAKETEST).o $(ASN1TEST).o
+	$(EVPTEST).o $(IGETEST).o $(JPAKETEST).o $(ASN1TEST).o $(V3NAMETEST).o
 SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(MD2TEST).c  $(MD4TEST).c $(MD5TEST).c \
 	$(HMACTEST).c $(WPTEST).c \
@@ -94,7 +95,8 @@ SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(DESTEST).c $(SHATEST).c $(SHA1TEST).c $(MDC2TEST).c $(RMDTEST).c \
 	$(RANDTEST).c $(DHTEST).c $(ENGINETEST).c $(CASTTEST).c \
 	$(BFTEST).c  $(SSLTEST).c $(DSATEST).c   $(EXPTEST).c $(RSATEST).c \
-	$(EVPTEST).c $(IGETEST).c $(JPAKETEST).c $(SRPTEST).c $(ASN1TEST).c
+	$(EVPTEST).c $(IGETEST).c $(JPAKETEST).c $(SRPTEST).c $(ASN1TEST).c \
+	$(V3NAMETEST).c
 
 EXHEADER= 
 HEADER=	$(EXHEADER)
@@ -137,7 +139,7 @@ alltests: \
 	test_enc test_x509 test_rsa test_crl test_sid \
 	test_gen test_req test_pkcs7 test_verify test_dh test_dsa \
 	test_ss test_ca test_engine test_evp test_ssl test_tsa test_ige \
-	test_jpake test_srp test_cms test_ocsp
+	test_jpake test_srp test_cms test_ocsp test_v3name
 
 test_evp:
 	../util/shlib_wrap.sh ./$(EVPTEST) evptests.txt
@@ -322,6 +324,10 @@ test_ocsp:
 	@echo "Test OCSP"
 	@sh ./tocsp
 
+test_v3name: $(V3NAMETEST)$(EXE_EXT)
+	@echo "Test X509v3_check_*"
+	../util/shlib_wrap.sh ./$(V3NAMETEST)
+
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
@@ -472,6 +478,9 @@ $(ASN1TEST)$(EXE_EXT): $(ASN1TEST).o $(DLIBCRYPTO)
 
 $(SRPTEST)$(EXE_EXT): $(SRPTEST).o $(DLIBCRYPTO)
 	@target=$(SRPTEST); $(BUILD_CMD)
+
+$(V3NAMETEST)$(EXE_EXT): $(V3NAMETEST).o $(DLIBCRYPTO)
+	@target=$(V3NAMETEST); $(BUILD_CMD)
 
 #$(AESTEST).o: $(AESTEST).c
 #	$(CC) -c $(CFLAGS) -DINTERMEDIATE_VALUE_KAT -DTRACE_KAT_MCT $(AESTEST).c
