@@ -211,7 +211,7 @@ static void gost_crypt_mesh (void *ctx,unsigned char *iv,unsigned char *buf)
 		cryptopro_key_meshing(&(c->cctx),iv);
 		}	
 	gostcrypt(&(c->cctx),iv,buf);
-	c->count = (c->count+8)%1024 + 1024;
+	c->count = c->count%1024 + 8;
 	}
 
 static void gost_cnt_next (void *ctx, unsigned char *iv, unsigned char *buf)
@@ -248,7 +248,7 @@ static void gost_cnt_next (void *ctx, unsigned char *iv, unsigned char *buf)
 	buf1[7]=(unsigned char)((g>>24)&0xff);
 	memcpy(iv,buf1,8);
 	gostcrypt(&(c->cctx),buf1,buf);
-	c->count = (c->count+8)%1024 + 1024;
+	c->count = c->count%1024 + 8;
 	}
 
 /* GOST encryption in CFB mode */
@@ -516,7 +516,7 @@ static void mac_block_mesh(struct ossl_gost_imit_ctx *c,const unsigned char *dat
 		cryptopro_key_meshing(&(c->cctx),buffer);
 		}
 	mac_block(&(c->cctx),c->buffer,data);
-	c->count = (c->count+8)%1024 + 1024;
+	c->count = c->count%1024 + 8;
 	}
 
 int gost_imit_update(EVP_MD_CTX *ctx, const void *data, size_t count)
