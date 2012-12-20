@@ -524,6 +524,12 @@ typedef struct cert_st
 	/* Size of above array */
 	size_t sigalgslen;
 
+	/* Optional X509_STORE for chain building or certificate validation
+	 * If NULL the parent SSL_CTX store is used instead.
+	 */
+	X509_STORE *chain_store;
+	X509_STORE *verify_store;
+
 	int references; /* >1 only if SSL_copy_session_id is used */
 	} CERT;
 
