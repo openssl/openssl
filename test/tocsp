@@ -137,7 +137,7 @@ test_ocsp ND2.ors ISIC_ND2_Issuer_Root.pem 0
 echo "NON-DELEGATED; Root CA -> EE"
 test_ocsp ND3.ors ISIC_ND3_Issuer_Root.pem 0
 echo "DELEGATED; Intermediate CA -> EE"
-test_ocsp D1.ors ISIC_D1_Issuer_ICA.pem
+test_ocsp D1.ors ISIC_D1_Issuer_ICA.pem 0
 echo "DELEGATED; Root CA -> Intermediate CA"
 test_ocsp D2.ors ISIC_D2_Issuer_Root.pem 0
 echo "DELEGATED; Root CA -> EE"
