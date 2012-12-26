@@ -656,6 +656,12 @@ struct ssl_session_st
  */
 #define SSL_CERT_FLAG_TLS_STRICT	0x00000001L
 
+/* Flags for building certificate chains */
+/* Treat any existing certificates as untrusted CAs */
+#define SSL_BUILD_CHAIN_FLAG_UNTRUSTED	0x1
+/* Con't include root CA in chain */
+#define SSL_BUILD_CHAIN_FLAG_NO_ROOT	0x2
+
 /* Note: SSL[_CTX]_set_{options,mode} use |= op on the previous value,
  * they cannot be used to clear bits. */
 
@@ -1657,6 +1663,9 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_SET_CLIENT_SIGALGS_LIST	102
 #define SSL_CTRL_GET_CLIENT_CERT_TYPES		103
 #define SSL_CTRL_SET_CLIENT_CERT_TYPES		104
+#define SSL_CTRL_BUILD_CERT_CHAIN		105
+#define SSL_CTRL_SET_VERIFY_CERT_STORE		106
+#define SSL_CTRL_SET_CHAIN_CERT_STORE		107
 
 #define DTLSv1_get_timeout(ssl, arg) \
 	SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)
@@ -1707,6 +1716,17 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 	SSL_CTX_ctrl(ctx,SSL_CTRL_CHAIN_CERT,0,(char *)x509)
 #define SSL_CTX_add1_chain_cert(ctx,x509) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_CHAIN_CERT,1,(char *)x509)
+#define SSL_CTX_build_cert_chain(ctx, flags) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_BUILD_CERT_CHAIN, flags, NULL)
+
+#define SSL_CTX_set0_verify_cert_store(ctx,st) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_VERIFY_CERT_STORE,0,(char *)st)
+#define SSL_CTX_set1_verify_cert_store(ctx,st) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_VERIFY_CERT_STORE,1,(char *)st)
+#define SSL_CTX_set0_chain_cert_store(ctx,st) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_CHAIN_CERT_STORE,0,(char *)st)
+#define SSL_CTX_set1_chain_cert_store(ctx,st) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_CHAIN_CERT_STORE,1,(char *)st)
 
 #define SSL_set0_chain(ctx,sk) \
 	SSL_ctrl(ctx,SSL_CTRL_CHAIN,0,(char *)sk)
@@ -1716,6 +1736,17 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 	SSL_ctrl(ctx,SSL_CTRL_CHAIN_CERT,0,(char *)x509)
 #define SSL_add1_chain_cert(ctx,x509) \
 	SSL_ctrl(ctx,SSL_CTRL_CHAIN_CERT,1,(char *)x509)
+#define SSL_build_cert_chain(s, flags) \
+	SSL_ctrl(s,SSL_CTRL_BUILD_CERT_CHAIN, flags, NULL)
+#define SSL_set0_verify_cert_store(s,st) \
+	SSL_ctrl(s,SSL_CTRL_SET_VERIFY_CERT_STORE,0,(char *)st)
+#define SSL_set1_verify_cert_store(s,st) \
+	SSL_ctrl(s,SSL_CTRL_SET_VERIFY_CERT_STORE,1,(char *)st)
+#define SSL_set0_chain_cert_store(s,st) \
+	SSL_ctrl(s,SSL_CTRL_SET_CHAIN_CERT_STORE,0,(char *)st)
+#define SSL_set1_chain_cert_store(s,st) \
+	SSL_ctrl(s,SSL_CTRL_SET_CHAIN_CERT_STORE,1,(char *)st)
+
 #define SSL_get1_curves(ctx, s) \
 	SSL_ctrl(ctx,SSL_CTRL_GET_CURVES,0,(char *)s)
 #define SSL_CTX_set1_curves(ctx, clist, clistlen) \
@@ -2308,6 +2339,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_ADD_SERVERHELLO_TLSEXT		 278
 #define SSL_F_SSL_ADD_SERVERHELLO_USE_SRTP_EXT		 308
 #define SSL_F_SSL_BAD_METHOD				 160
+#define SSL_F_SSL_BUILD_CERT_CHAIN			 332
 #define SSL_F_SSL_BYTES_TO_CIPHER_LIST			 161
 #define SSL_F_SSL_CERT_DUP				 221
 #define SSL_F_SSL_CERT_INST				 222

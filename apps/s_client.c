@@ -558,6 +558,7 @@ int MAIN(int argc, char **argv)
 	{
 	unsigned int off=0, clr=0;
 	unsigned int cert_flags=0;
+	int build_chain = 0;
 	SSL *con=NULL;
 #ifndef OPENSSL_NO_KRB5
 	KSSL_CTX *kctx;
@@ -867,6 +868,8 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			CApath= *(++argv);
 			}
+		else if	(strcmp(*argv,"-build_chain") == 0)
+			build_chain = 1;
 		else if	(strcmp(*argv,"-CAfile") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -1201,8 +1204,6 @@ bad:
 #endif
 
 	SSL_CTX_set_verify(ctx,verify,verify_callback);
-	if (!set_cert_key_stuff(ctx,cert,key, NULL))
-		goto end;
 
 	if ((!SSL_CTX_load_verify_locations(ctx,CAfile,CApath)) ||
 		(!SSL_CTX_set_default_verify_paths(ctx)))
@@ -1211,6 +1212,9 @@ bad:
 		ERR_print_errors(bio_err);
 		/* goto end; */
 		}
+
+	if (!set_cert_key_stuff(ctx,cert,key, NULL, build_chain))
+		goto end;
 
 #ifndef OPENSSL_NO_TLSEXT
 	if (curves != NULL)

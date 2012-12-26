@@ -212,6 +212,9 @@ static int init_ssl_connection(SSL *s);
 static void print_stats(BIO *bp,SSL_CTX *ctx);
 static int generate_session_id(const SSL *ssl, unsigned char *id,
 				unsigned int *id_len);
+static int ssl_load_stores(SSL_CTX *sctx,
+			const char *vfyCApath, const char *vfyCAfile,
+			const char *chCApath, const char *chCAfile);
 #ifndef OPENSSL_NO_DH
 static DH *load_dh_param(const char *dhfile);
 static DH *get_dh512(void);
@@ -942,6 +945,8 @@ int MAIN(int argc, char *argv[])
 	int badarg = 0;
 	short port=PORT;
 	char *CApath=NULL,*CAfile=NULL;
+	char *chCApath=NULL,*chCAfile=NULL;
+	char *vfyCApath=NULL,*vfyCAfile=NULL;
 	unsigned char *context = NULL;
 	char *dhfile = NULL;
 #ifndef OPENSSL_NO_ECDH
@@ -951,6 +956,7 @@ int MAIN(int argc, char *argv[])
 	int ret=1;
 	int off=0;
 	unsigned int cert_flags = 0;
+	int build_chain = 0;
 	int no_tmp_rsa=0,no_dhe=0,no_ecdhe=0,nocert=0;
 	int state=0;
 	const SSL_METHOD *meth=NULL;
@@ -1125,6 +1131,16 @@ int MAIN(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			CApath= *(++argv);
 			}
+		else if	(strcmp(*argv,"-chainCApath") == 0)
+			{
+			if (--argc < 1) goto bad;
+			chCApath= *(++argv);
+			}
+		else if	(strcmp(*argv,"-verifyCApath") == 0)
+			{
+			if (--argc < 1) goto bad;
+			vfyCApath= *(++argv);
+			}
 		else if (strcmp(*argv,"-no_cache") == 0)
 			no_cache = 1;
 		else if (args_verify(&argv, &argc, &badarg, bio_err, &vpm))
@@ -1150,10 +1166,22 @@ int MAIN(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			cipher= *(++argv);
 			}
+		else if	(strcmp(*argv,"-build_chain") == 0)
+			build_chain = 1;
 		else if	(strcmp(*argv,"-CAfile") == 0)
 			{
 			if (--argc < 1) goto bad;
 			CAfile= *(++argv);
+			}
+		else if	(strcmp(*argv,"-chainCAfile") == 0)
+			{
+			if (--argc < 1) goto bad;
+			chCAfile= *(++argv);
+			}
+		else if	(strcmp(*argv,"-verifyCAfile") == 0)
+			{
+			if (--argc < 1) goto bad;
+			vfyCAfile= *(++argv);
 			}
 #ifdef FIONBIO	
 		else if	(strcmp(*argv,"-nbio") == 0)
@@ -1647,6 +1675,13 @@ bad:
 	if (vpm)
 		SSL_CTX_set1_param(ctx, vpm);
 
+	if (!ssl_load_stores(ctx, vfyCApath, vfyCAfile, chCApath, chCAfile))
+		{
+		BIO_printf(bio_err, "Error loading store locations\n");
+		ERR_print_errors(bio_err);
+		goto end;
+		}
+
 #ifndef OPENSSL_NO_TLSEXT
 	if (s_cert2)
 		{
@@ -1807,19 +1842,19 @@ bad:
 		}
 #endif
 	
-	if (!set_cert_key_stuff(ctx, s_cert, s_key, s_chain))
+	if (!set_cert_key_stuff(ctx, s_cert, s_key, s_chain, build_chain))
 		goto end;
 #ifndef OPENSSL_NO_TLSEXT
 	if (s_authz_file != NULL && !SSL_CTX_use_authz_file(ctx, s_authz_file))
 		goto end;
 #endif
 #ifndef OPENSSL_NO_TLSEXT
-	if (ctx2 && !set_cert_key_stuff(ctx2,s_cert2,s_key2, NULL))
+	if (ctx2 && !set_cert_key_stuff(ctx2,s_cert2,s_key2, NULL, build_chain))
 		goto end; 
 #endif
 	if (s_dcert != NULL)
 		{
-		if (!set_cert_key_stuff(ctx, s_dcert, s_dkey, s_dchain))
+		if (!set_cert_key_stuff(ctx, s_dcert, s_dkey, s_dchain, build_chain))
 			goto end;
 		}
 
@@ -3138,4 +3173,34 @@ static int generate_session_id(const SSL *ssl, unsigned char *id,
 	if(count >= MAX_SESSION_ID_ATTEMPTS)
 		return 0;
 	return 1;
+	}
+
+static int ssl_load_stores(SSL_CTX *sctx,
+			const char *vfyCApath, const char *vfyCAfile,
+			const char *chCApath, const char *chCAfile)
+	{
+	X509_STORE *vfy = NULL, *ch = NULL;
+	int rv = 0;
+	if (vfyCApath || vfyCAfile)
+		{
+		vfy = X509_STORE_new();
+		if (!X509_STORE_load_locations(vfy, vfyCAfile, vfyCApath))
+			goto err;
+		SSL_CTX_set1_verify_cert_store(ctx, vfy);
+		}
+	if (chCApath || chCAfile)
+		{
+		ch = X509_STORE_new();
+		if (!X509_STORE_load_locations(ch, chCAfile, chCApath))
+			goto err;
+		/*X509_STORE_set_verify_cb(ch, verify_callback);*/
+		SSL_CTX_set1_chain_cert_store(ctx, ch);
+		}
+	rv = 1;
+	err:
+	if (vfy)
+		X509_STORE_free(vfy);
+	if (ch)
+		X509_STORE_free(ch);
+	return rv;
 	}

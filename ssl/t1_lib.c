@@ -583,7 +583,7 @@ int tls1_check_ec_tmp_key(SSL *s)
 			return 0;
 		}
 	if (!tls1_set_ec_id(curve_id, NULL, ec))
-		return 1;
+		return 0;
 	return tls1_check_ec_key(s, curve_id, NULL);
 	}
 

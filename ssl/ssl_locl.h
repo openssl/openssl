@@ -585,6 +585,12 @@ typedef struct cert_st
 	int (*cert_cb)(SSL *ssl, void *arg);
 	void *cert_cb_arg;
 
+	/* Optional X509_STORE for chain building or certificate validation
+	 * If NULL the parent SSL_CTX store is used instead.
+	 */
+	X509_STORE *chain_store;
+	X509_STORE *verify_store;
+
 	int references; /* >1 only if SSL_copy_session_id is used */
 	} CERT;
 
@@ -927,6 +933,8 @@ void ssl_cert_set_cert_cb(CERT *c, int (*cb)(SSL *ssl, void *arg), void *arg);
 
 int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk);
 int ssl_add_cert_chain(SSL *s, CERT_PKEY *cpk, unsigned long *l);
+int ssl_build_cert_chain(CERT *c, X509_STORE *chain_store, int flags);
+int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain, int ref);
 int ssl_undefined_function(SSL *s);
 int ssl_undefined_void_function(void);
 int ssl_undefined_const_function(const SSL *s);

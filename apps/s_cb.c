@@ -251,7 +251,7 @@ int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
 	}
 
 int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
-		       STACK_OF(X509) *chain)
+		       STACK_OF(X509) *chain, int build_chain)
 	{
 	if (cert == NULL)
 		return 1;
@@ -282,6 +282,13 @@ int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
 		ERR_print_errors(bio_err);
 		return 0;
 		}
+	if (!chain && build_chain && !SSL_CTX_build_cert_chain(ctx, 0))
+		{
+		BIO_printf(bio_err,"error building certificate chain\n");
+		ERR_print_errors(bio_err);
+		return 0;
+		}
+		
 	return 1;
 	}
 
@@ -1125,6 +1132,7 @@ struct  ssl_excert_st
 	X509 *cert;
 	EVP_PKEY *key;
 	STACK_OF(X509) *chain;
+	int build_chain;
 	struct ssl_excert_st *next, *prev;
 	};
 
@@ -1152,7 +1160,16 @@ static int set_cert_cb(SSL *ssl, void *arg)
 			{
 			SSL_use_certificate(ssl, exc->cert);
 			SSL_use_PrivateKey(ssl, exc->key);
-			if (exc->chain)
+			/* NB: we wouldn't normally do this as it is
+			 * not efficient building chains on each connection
+			 * better to cache the chain in advance.
+			 */
+			if (exc->build_chain)
+				{
+				if (!SSL_build_cert_chain(ssl, 0))
+					return 0;
+				}
+			else if (exc->chain)
 				SSL_set1_chain(ssl, exc->chain);
 			}
 		exc = exc->prev;
@@ -1178,6 +1195,7 @@ static int ssl_excert_prepend(SSL_EXCERT **pexc)
 	exc->key = NULL;
 	exc->chain = NULL;
 	exc->prev = NULL;
+	exc->build_chain = 0;
 
 	exc->next = *pexc;
 	*pexc = exc;
@@ -1262,6 +1280,7 @@ int args_excert(char ***pargs, int *pargc,
 	{
 	char *arg = **pargs, *argn = (*pargs)[1];
 	SSL_EXCERT *exc = *pexc;
+	int narg = 2;
 	if (!exc)
 		{
 		if (ssl_excert_prepend(&exc))
@@ -1318,6 +1337,11 @@ int args_excert(char ***pargs, int *pargc,
 			}
 		exc->chainfile = argn;
 		}
+	else if (strcmp(arg,"-xchain_build") == 0)
+		{
+		narg = 1;
+		exc->build_chain = 1;
+		}
 	else if (strcmp(arg,"-xcertform") == 0)
 		{
 		if (!argn)
@@ -1339,10 +1363,10 @@ int args_excert(char ***pargs, int *pargc,
 	else
 		return 0;
 
-	(*pargs) += 2;
+	(*pargs) += narg;
 
 	if (pargc)
-		*pargc -= 2;
+		*pargc -= narg;
 
 	*pexc = exc;
 

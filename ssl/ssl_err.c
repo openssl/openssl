@@ -195,6 +195,7 @@ static ERR_STRING_DATA SSL_str_functs[]=
 {ERR_FUNC(SSL_F_SSL_ADD_SERVERHELLO_TLSEXT),	"ssl_add_serverhello_tlsext"},
 {ERR_FUNC(SSL_F_SSL_ADD_SERVERHELLO_USE_SRTP_EXT),	"ssl_add_serverhello_use_srtp_ext"},
 {ERR_FUNC(SSL_F_SSL_BAD_METHOD),	"ssl_bad_method"},
+{ERR_FUNC(SSL_F_SSL_BUILD_CERT_CHAIN),	"ssl_build_cert_chain"},
 {ERR_FUNC(SSL_F_SSL_BYTES_TO_CIPHER_LIST),	"ssl_bytes_to_cipher_list"},
 {ERR_FUNC(SSL_F_SSL_CERT_DUP),	"ssl_cert_dup"},
 {ERR_FUNC(SSL_F_SSL_CERT_INST),	"ssl_cert_inst"},
