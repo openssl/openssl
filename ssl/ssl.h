@@ -662,6 +662,26 @@ struct ssl_session_st
 /* Don't include root CA in chain */
 #define SSL_BUILD_CHAIN_FLAG_NO_ROOT	0x2
 
+/* Flags returned by SSL_check_chain */
+/* Certificate can be used with this session */
+#define CERT_PKEY_VALID		0x1
+/* Certificate can also be used for signing */
+#define CERT_PKEY_SIGN		0x2
+/* EE certificate signing algorithm OK */
+#define CERT_PKEY_EE_SIGNATURE	0x10
+/* CA signature algorithms OK */
+#define CERT_PKEY_CA_SIGNATURE	0x20
+/* EE certificate parameters OK */
+#define CERT_PKEY_EE_PARAM	0x40
+/* CA certificate parameters OK */
+#define CERT_PKEY_CA_PARAM	0x80
+/* Signing explicitly allowed as opposed to SHA1 fallback */
+#define CERT_PKEY_EXPLICIT_SIGN	0x100
+/* Client CA issuer names match (always set for server cert) */
+#define CERT_PKEY_ISSUER_NAME	0x200
+/* Cert type matches client types (always set for server cert) */
+#define CERT_PKEY_CERT_TYPE	0x400
+
 /* Note: SSL[_CTX]_set_{options,mode} use |= op on the previous value,
  * they cannot be used to clear bits. */
 

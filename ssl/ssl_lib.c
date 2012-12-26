@@ -2085,21 +2085,21 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 	have_ecdh_tmp=(c->ecdh_tmp || c->ecdh_tmp_cb || c->ecdh_tmp_auto);
 #endif
 	cpk= &(c->pkeys[SSL_PKEY_RSA_ENC]);
-	rsa_enc= cpk->valid_flags;
+	rsa_enc= cpk->valid_flags & CERT_PKEY_VALID;
 	rsa_enc_export=(rsa_enc && EVP_PKEY_size(cpk->privatekey)*8 <= kl);
 	cpk= &(c->pkeys[SSL_PKEY_RSA_SIGN]);
-	rsa_sign= (cpk->valid_flags & CERT_PKEY_SIGN);
+	rsa_sign= cpk->valid_flags & CERT_PKEY_SIGN;
 	cpk= &(c->pkeys[SSL_PKEY_DSA_SIGN]);
-	dsa_sign= (cpk->valid_flags & CERT_PKEY_SIGN);
+	dsa_sign= cpk->valid_flags & CERT_PKEY_SIGN;
 	cpk= &(c->pkeys[SSL_PKEY_DH_RSA]);
-	dh_rsa=  cpk->valid_flags;
+	dh_rsa=  cpk->valid_flags & CERT_PKEY_VALID;
 	dh_rsa_export=(dh_rsa && EVP_PKEY_size(cpk->privatekey)*8 <= kl);
 	cpk= &(c->pkeys[SSL_PKEY_DH_DSA]);
 /* FIX THIS EAY EAY EAY */
-	dh_dsa=  cpk->valid_flags;
+	dh_dsa=  cpk->valid_flags & CERT_PKEY_VALID;
 	dh_dsa_export=(dh_dsa && EVP_PKEY_size(cpk->privatekey)*8 <= kl);
 	cpk= &(c->pkeys[SSL_PKEY_ECC]);
-	have_ecc_cert= cpk->valid_flags;
+	have_ecc_cert= cpk->valid_flags & CERT_PKEY_VALID;
 	mask_k=0;
 	mask_a=0;
 	emask_k=0;

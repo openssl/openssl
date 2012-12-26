@@ -467,7 +467,8 @@ void ssl_cert_clear_certs(CERT *c)
                 if (cpk->authz != NULL)
 			OPENSSL_free(cpk->authz);
 #endif
-		cpk->valid_flags = 0;
+		/* Clear all flags apart from explicit sign */
+		cpk->valid_flags &= CERT_PKEY_EXPLICIT_SIGN;
 		}
 	}
 

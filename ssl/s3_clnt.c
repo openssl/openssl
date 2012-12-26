@@ -1964,6 +1964,12 @@ int ssl3_get_certificate_request(SSL *s)
 			SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,SSL_R_DATA_LENGTH_TOO_LONG);
 			goto err;
 			}
+		/* Clear certificate digests and validity flags */
+		for (i = 0; i < SSL_PKEY_NUM; i++)
+			{
+			s->cert->pkeys[i].digest = NULL;
+			s->cert->pkeys[i].valid_flags = 0;
+			}
 		if ((llen & 1) || !tls1_process_sigalgs(s, p, llen))
 			{
 			ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_DECODE_ERROR);

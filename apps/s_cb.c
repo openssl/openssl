@@ -1136,12 +1136,45 @@ struct  ssl_excert_st
 	struct ssl_excert_st *next, *prev;
 	};
 
+struct chain_flags
+	{
+	int flag;
+	const char *name;
+	};
+
+struct chain_flags chain_flags_list[] =
+	{
+		{CERT_PKEY_VALID, "Overall Validity"},
+		{CERT_PKEY_SIGN,  "Sign with EE key"},
+		{CERT_PKEY_EE_SIGNATURE, "EE signature"},
+		{CERT_PKEY_CA_SIGNATURE, "CA signature"},
+		{CERT_PKEY_EE_PARAM, "EE key parameters"},
+		{CERT_PKEY_CA_PARAM, "CA key parameters"},
+		{CERT_PKEY_EXPLICIT_SIGN,  "Explicity sign with EE key"},
+		{CERT_PKEY_ISSUER_NAME,  "Issuer Name"},
+		{CERT_PKEY_CERT_TYPE,  "Certificate Type"},
+		{0, NULL}
+	};
+
+
+static void print_chain_flags(BIO *out, int flags)
+	{
+	struct chain_flags *ctmp = chain_flags_list;
+	while(ctmp->name)
+		{
+		BIO_printf(out, "\t%s: %s\n", ctmp->name,
+				flags & ctmp->flag ? "OK" : "NOT OK");
+		ctmp++;
+		}
+	}
+
 /* Very basic selection callback: just use any certificate chain
  * reported as valid. More sophisticated could prioritise according
  * to local policy.
  */
 static int set_cert_cb(SSL *ssl, void *arg)
 	{
+	int i, rv;
 	SSL_EXCERT *exc = arg;
 	SSL_certs_clear(ssl);
 
@@ -1153,10 +1186,20 @@ static int set_cert_cb(SSL *ssl, void *arg)
 	 */
 	while (exc->next)
 		exc = exc->next;
-	
+
+	i = 0;	
+
 	while(exc)
 		{
-		if (SSL_check_chain(ssl, exc->cert, exc->key, exc->chain))
+		i++;
+		rv = SSL_check_chain(ssl, exc->cert, exc->key, exc->chain);
+		BIO_printf(bio_err, "Checking cert chain %d:\nSubject: ", i);
+		X509_NAME_print_ex(bio_err, X509_get_subject_name(exc->cert), 0,
+							XN_FLAG_ONELINE);
+		BIO_puts(bio_err, "\n");
+		
+		print_chain_flags(bio_err, rv);
+		if (rv & CERT_PKEY_VALID)
 			{
 			SSL_use_certificate(ssl, exc->cert);
 			SSL_use_PrivateKey(ssl, exc->key);
