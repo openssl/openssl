@@ -1751,25 +1751,12 @@ int ssl3_get_key_exchange(SSL *s)
 		{
 		if (TLS1_get_version(s) >= TLS1_2_VERSION)
 			{
-			int sigalg = tls12_get_sigid(pkey);
-			/* Should never happen */
-			if (sigalg == -1)
-				{
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
+			int rv = tls12_check_peer_sigalg(&md, s, p, pkey);
+			if (rv == -1)
 				goto err;
-				}
-			/* Check key type is consistent with signature */
-			if (sigalg != (int)p[1])
+			else if (rv == 0)
 				{
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_WRONG_SIGNATURE_TYPE);
-				al=SSL_AD_DECODE_ERROR;
-				goto f_err;
-				}
-			md = tls12_get_hash(p[0]);
-			if (md == NULL)
-				{
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_UNKNOWN_DIGEST);
-				al=SSL_AD_DECODE_ERROR;
+				al = SSL_AD_DECODE_ERROR;
 				goto f_err;
 				}
 #ifdef SSL_DEBUG
@@ -3162,12 +3149,16 @@ err:
 	}
 
 /* Check a certificate can be used for client authentication. Currently
- * just check cert exists and if static DH client certificates can be used.
+ * check cert exists, if we have a suitable digest for TLS 1.2  and if
+ * static DH client certificates can be used.
  */
 static int ssl3_check_client_certificate(SSL *s)
 	{
 	unsigned long alg_k;
 	if (!s->cert || !s->cert->key->x509 || !s->cert->key->privatekey)
+		return 0;
+	/* If no suitable signature algorithm can't use certificate */
+	if (TLS1_get_version(s) >= TLS1_2_VERSION && !s->cert->key->digest)
 		return 0;
 	alg_k=s->s3->tmp.new_cipher->algorithm_mkey;
 	/* See if we can use client certificate for fixed DH */

@@ -3054,26 +3054,15 @@ int ssl3_get_cert_verify(SSL *s)
 		{	
 		if (TLS1_get_version(s) >= TLS1_2_VERSION)
 			{
-			int sigalg = tls12_get_sigid(pkey);
-			/* Should never happen */
-			if (sigalg == -1)
+			int rv = tls12_check_peer_sigalg(&md, s, p, pkey);
+			if (rv == -1)
 				{
-				SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,ERR_R_INTERNAL_ERROR);
-				al=SSL_AD_INTERNAL_ERROR;
+				al = SSL_AD_INTERNAL_ERROR;
 				goto f_err;
 				}
-			/* Check key type is consistent with signature */
-			if (sigalg != (int)p[1])
+			else if (rv == 0)
 				{
-				SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,SSL_R_WRONG_SIGNATURE_TYPE);
-				al=SSL_AD_DECODE_ERROR;
-				goto f_err;
-				}
-			md = tls12_get_hash(p[0]);
-			if (md == NULL)
-				{
-				SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,SSL_R_UNKNOWN_DIGEST);
-				al=SSL_AD_DECODE_ERROR;
+				al = SSL_AD_DECODE_ERROR;
 				goto f_err;
 				}
 #ifdef SSL_DEBUG
