@@ -965,6 +965,11 @@ int X509_REVOKED_set_revocationDate(X509_REVOKED *r, ASN1_TIME *tm);
 int		X509_REQ_check_private_key(X509_REQ *x509,EVP_PKEY *pkey);
 
 int		X509_check_private_key(X509 *x509,EVP_PKEY *pkey);
+int 		X509_chain_check_suiteb(int *perror_depth,
+						X509 *x, STACK_OF(X509) *chain,
+						unsigned long flags);
+int 		X509_CRL_check_suiteb(X509_CRL *crl, EVP_PKEY *pk,
+						unsigned long flags);
 
 int		X509_issuer_and_serial_cmp(const X509 *a, const X509 *b);
 unsigned long	X509_issuer_and_serial_hash(X509 *a);
