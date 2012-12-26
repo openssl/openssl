@@ -418,6 +418,45 @@ int ssl_print_sigalgs(BIO *out, SSL *s)
 		BIO_printf(out, "Peer signing digest: %s\n", OBJ_nid2sn(mdnid));
 	return 1;
 	}
+ 
+int ssl_print_point_formats(BIO *out, SSL *s)
+	{
+	int i, nformats;
+	const char *pformats;
+	nformats = SSL_get0_ec_point_formats(s, &pformats);
+	if (nformats <= 0)
+		return 1;
+	BIO_puts(out, "Supported Elliptic Curve Point Formats: ");
+	for (i = 0; i < nformats; i++, pformats++)
+		{
+		if (i)
+			BIO_puts(out, ":");
+		switch(*pformats)
+			{
+		case TLSEXT_ECPOINTFORMAT_uncompressed:
+			BIO_puts(out, "uncompressed");
+			break;
+
+		case TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime:
+			BIO_puts(out, "ansiX962_compressed_prime");
+			break;
+
+		case TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2:
+			BIO_puts(out, "ansiX962_compressed_char2");
+			break;
+
+		default:
+			BIO_printf(out, "unknown(%d)", (int)*pformats);
+			break;
+
+			}
+		}
+	if (nformats <= 0)
+		BIO_puts(out, "NONE");
+	BIO_puts(out, "\n");
+	return 1;
+	}
+
 
 int ssl_print_curves(BIO *out, SSL *s)
 	{

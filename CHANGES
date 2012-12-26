@@ -4,6 +4,10 @@
 
  Changes between 1.0.1 and 1.0.2 [xx XXX xxxx]
 
+  *) New ctrl and macro to retrieve supported points extensions.
+     Print out extension in s_server.
+     [Steve Henson]
+
   *) New functions to retrieve certificate signature and signature
      OID NID.
      [Steve Henson]
