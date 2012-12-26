@@ -557,6 +557,7 @@ int MAIN(int, char **);
 int MAIN(int argc, char **argv)
 	{
 	unsigned int off=0, clr=0;
+	int cert_flags=0;
 	SSL *con=NULL;
 #ifndef OPENSSL_NO_KRB5
 	KSSL_CTX *kctx;
@@ -627,6 +628,7 @@ int MAIN(int argc, char **argv)
 	int srp_lateuser = 0;
 	SRP_ARG srp_arg = {NULL,NULL,0,0,0,1024};
 #endif
+	SSL_EXCERT *exc = NULL;
 
 	meth=SSLv23_client_method();
 
@@ -714,6 +716,12 @@ int MAIN(int argc, char **argv)
 			}
 		else if (strcmp(*argv,"-verify_return_error") == 0)
 			verify_return_error = 1;
+		else if (args_excert(&argv, &argc, &badarg, bio_err, &exc))
+			{
+			if (badarg)
+				goto bad;
+			continue;
+			}
 		else if	(strcmp(*argv,"-prexit") == 0)
 			prexit=1;
 		else if	(strcmp(*argv,"-crlf") == 0)
@@ -984,6 +992,8 @@ int MAIN(int argc, char **argv)
 			keymatexportlen=atoi(*(++argv));
 			if (keymatexportlen == 0) goto bad;
 			}
+		else if (strcmp(*argv, "-cert_strict") == 0)
+			cert_flags |= SSL_CERT_FLAG_TLS_STRICT;
                 else
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);
@@ -1088,6 +1098,9 @@ bad:
 			}
 		}
 
+	if (!load_excert(&exc, bio_err))
+		goto end;
+
 	if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL
 		&& !RAND_status())
 		{
@@ -1163,6 +1176,8 @@ bad:
 
 	if (clr)
 		SSL_CTX_clear_options(ctx, clr);
+	if (cert_flags) SSL_CTX_set_cert_flags(ctx, cert_flags);
+	if (exc) ssl_ctx_set_excert(ctx, exc);
 	/* DTLS: partial reads end up discarding unread UDP bytes :-( 
 	 * Setting read ahead solves this problem.
 	 */
@@ -1945,6 +1960,7 @@ end:
 		EVP_PKEY_free(key);
 	if (pass)
 		OPENSSL_free(pass);
+	ssl_excert_free(exc);
 	if (vpm)
 		X509_VERIFY_PARAM_free(vpm);
 	if (cbuf != NULL) { OPENSSL_cleanse(cbuf,BUFSIZZ); OPENSSL_free(cbuf); }
