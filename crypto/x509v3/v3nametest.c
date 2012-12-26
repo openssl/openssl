@@ -1,5 +1,6 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+#include "../e_os.h"
 #include <string.h>
 
 static const char *const names[] =
@@ -251,7 +252,7 @@ static void check_message(const struct set_name_fn *fn, const char *op,
 	char msg[1024];
 	if (match < 0)
 		return;
-	snprintf(msg, sizeof(msg), "%s: %s: [%s] %s [%s]",
+	BIO_snprintf(msg, sizeof(msg), "%s: %s: [%s] %s [%s]",
 		 fn->name, op, nameincert,
 		 match ? "matches" : "does not match", name);
 	if (is_exception(msg))
