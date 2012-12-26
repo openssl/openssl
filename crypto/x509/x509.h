@@ -970,6 +970,7 @@ int 		X509_chain_check_suiteb(int *perror_depth,
 						unsigned long flags);
 int 		X509_CRL_check_suiteb(X509_CRL *crl, EVP_PKEY *pk,
 						unsigned long flags);
+STACK_OF(X509) *X509_chain_up_ref(STACK_OF(X509) *chain);
 
 int		X509_issuer_and_serial_cmp(const X509 *a, const X509 *b);
 unsigned long	X509_issuer_and_serial_hash(X509 *a);
