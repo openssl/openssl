@@ -163,6 +163,7 @@ int set_cert_key_and_authz(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
 int ssl_print_sigalgs(BIO *out, SSL *s);
 int ssl_print_curves(BIO *out, SSL *s);
 #endif
+int ssl_print_tmp_key(BIO *out, SSL *s);
 int init_client(int *sock, char *server, int port, int type);
 int should_retry(int i);
 int extract_port(char *str, short *port_ptr);
