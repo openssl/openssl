@@ -2049,7 +2049,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 			BIO_write(bio,"\n",1);
 			}
 
-		ssl_print_sigalgs(bio, s);
+		ssl_print_sigalgs(bio, s, 1);
 
 		BIO_printf(bio,"---\nSSL handshake has read %ld bytes and written %ld bytes\n",
 			BIO_number_read(SSL_get_rbio(s)),

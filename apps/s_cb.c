@@ -285,20 +285,33 @@ int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
 	return 1;
 	}
 
-int ssl_print_sigalgs(BIO *out, SSL *s)
+static int do_print_sigalgs(BIO *out, SSL *s, int client, int shared)
 	{
 	int i, nsig;
-	nsig = SSL_get_sigalgs(s, -1, NULL, NULL, NULL, NULL, NULL);
+	if (shared)
+		nsig = SSL_get_shared_sigalgs(s, -1, NULL, NULL, NULL,
+							NULL, NULL);
+	else
+		nsig = SSL_get_sigalgs(s, -1, NULL, NULL, NULL, NULL, NULL);
 	if (nsig == 0)
 		return 1;
 
+	if (shared)
+		BIO_puts(out, "Shared ");
+
+	if (client)
+		BIO_puts(out, "Requested ");
 	BIO_puts(out, "Signature Algorithms: ");
 	for (i = 0; i < nsig; i++)
 		{
 		int hash_nid, sign_nid;
 		unsigned char rhash, rsign;
 		const char *sstr = NULL;
-		SSL_get_sigalgs(s, i, &sign_nid, &hash_nid, NULL,
+		if (shared)
+			SSL_get_shared_sigalgs(s, i, &sign_nid, &hash_nid, NULL,
+							&rsign, &rhash);
+		else
+			SSL_get_sigalgs(s, i, &sign_nid, &hash_nid, NULL,
 							&rsign, &rhash);
 		if (i)
 			BIO_puts(out, ":");
@@ -318,6 +331,13 @@ int ssl_print_sigalgs(BIO *out, SSL *s)
 			BIO_printf(out,"0x%02X", (int)rhash);
 		}
 	BIO_puts(out, "\n");
+	return 1;
+	}
+
+int ssl_print_sigalgs(BIO *out, SSL *s, int client)
+	{
+	do_print_sigalgs(out, s, client, 0);
+	do_print_sigalgs(out, s, client, 1);
 	return 1;
 	}
 

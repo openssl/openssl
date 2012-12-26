@@ -160,7 +160,7 @@ int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
 int set_cert_key_and_authz(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
                            unsigned char *authz, size_t authz_length);
 # endif
-int ssl_print_sigalgs(BIO *out, SSL *s);
+int ssl_print_sigalgs(BIO *out, SSL *s, int client);
 int ssl_print_curves(BIO *out, SSL *s);
 #endif
 int init_client(int *sock, char *server, int port, int type);

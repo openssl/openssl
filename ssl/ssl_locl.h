@@ -523,15 +523,20 @@ typedef struct cert_st
 	 * algorithms extension for server or as part of a certificate
 	 * request for client.
 	 */
-	TLS_SIGALGS *peer_sigalgs;
+	unsigned char *peer_sigalgs;
 	/* Size of above array */
 	size_t peer_sigalgslen;
 	/* configured signature algorithms (can be NULL for default).
 	 * sent in signature algorithms extension or certificate request.
 	 */
-	TLS_SIGALGS *conf_sigalgs;
+	unsigned char *conf_sigalgs;
 	/* Size of above array */
 	size_t conf_sigalgslen;
+	/* Signature algorithms shared by client and server: cached
+	 * because these are used most often
+	 */
+	TLS_SIGALGS *shared_sigalgs;
+	size_t shared_sigalgslen;
 
 	int references; /* >1 only if SSL_copy_session_id is used */
 	} CERT;
@@ -841,6 +846,7 @@ void ssl_clear_cipher_ctx(SSL *s);
 int ssl_clear_bad_session(SSL *s);
 CERT *ssl_cert_new(void);
 CERT *ssl_cert_dup(CERT *cert);
+void ssl_cert_set_default_md(CERT *cert);
 int ssl_cert_inst(CERT **o);
 void ssl_cert_clear_certs(CERT *c);
 void ssl_cert_free(CERT *c);

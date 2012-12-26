@@ -160,7 +160,7 @@ int SSL_get_ex_data_X509_STORE_CTX_idx(void)
 	return ssl_x509_store_ctx_idx;
 	}
 
-static void ssl_cert_set_default_md(CERT *cert)
+void ssl_cert_set_default_md(CERT *cert)
 	{
 	/* Set digest values to defaults */
 #ifndef OPENSSL_NO_DSA
@@ -373,6 +373,8 @@ CERT *ssl_cert_dup(CERT *cert)
 		}
 	else
 		ret->conf_sigalgs = NULL;
+	/* Shared sigalgs also NULL */
+	ret->shared_sigalgs = NULL;
 
 	return(ret);
 	
@@ -464,6 +466,8 @@ void ssl_cert_free(CERT *c)
 		OPENSSL_free(c->peer_sigalgs);
 	if (c->conf_sigalgs)
 		OPENSSL_free(c->conf_sigalgs);
+	if (c->shared_sigalgs)
+		OPENSSL_free(c->shared_sigalgs);
 	OPENSSL_free(c);
 	}
 
