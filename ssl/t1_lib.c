@@ -957,7 +957,7 @@ void ssl_set_client_disabled(SSL *s)
 	c->mask_a = 0;
 	c->mask_k = 0;
 	/* If less than TLS 1.2 don't allow TLS 1.2 only ciphers */
-	if (TLS1_get_version(s) < TLS1_2_VERSION)
+	if (TLS1_get_client_version(s) < TLS1_2_VERSION)
 		c->mask_ssl = SSL_TLSV1_2;
 	else
 		c->mask_ssl = 0;
