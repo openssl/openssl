@@ -2261,6 +2261,7 @@ void ERR_load_SSL_strings(void);
 /* Function codes. */
 #define SSL_F_AUTHZ_FIND_DATA				 330
 #define SSL_F_AUTHZ_VALIDATE				 323
+#define SSL_F_CHECK_SUITEB_CIPHER_LIST			 331
 #define SSL_F_CLIENT_CERTIFICATE			 100
 #define SSL_F_CLIENT_FINISHED				 167
 #define SSL_F_CLIENT_HELLO				 101
