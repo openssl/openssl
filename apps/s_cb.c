@@ -285,9 +285,75 @@ int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
 	return 1;
 	}
 
-static int do_print_sigalgs(BIO *out, SSL *s, int client, int shared)
+static void ssl_print_client_cert_types(BIO *bio, SSL *s)
 	{
-	int i, nsig;
+	const unsigned char *p;
+	int i;
+	int cert_type_num = SSL_get0_certificate_types(s, &p);
+	if (!cert_type_num)
+		return;
+	BIO_puts(bio, "Client Certificate Types: ");
+	for (i = 0; i < cert_type_num; i++)
+		{
+		unsigned char cert_type = p[i];
+		char *cname;
+		switch(cert_type)
+			{
+		case TLS_CT_RSA_SIGN:
+			cname = "RSA sign";
+			break;
+
+		case TLS_CT_DSS_SIGN:
+			cname = "DSA sign";
+			break;
+
+		case TLS_CT_RSA_FIXED_DH:
+			cname = "RSA fixed DH";
+			break;
+
+		case TLS_CT_DSS_FIXED_DH:
+			cname = "DSS fixed DH";
+			break;
+
+		case TLS_CT_ECDSA_SIGN:
+			cname = "ECDSA sign";
+			break;
+
+		case TLS_CT_RSA_FIXED_ECDH:
+			cname = "RSA fixed ECDH";
+			break;
+
+		case TLS_CT_ECDSA_FIXED_ECDH:
+			cname = "ECDSA fixed ECDH";
+			break;
+
+		case TLS_CT_GOST94_SIGN:
+			cname = "GOST94 Sign";
+			break;
+
+		case TLS_CT_GOST01_SIGN:
+			cname = "GOST01 Sign";
+			break;
+
+		default:
+			 cname = NULL;
+			}
+
+		if (i)
+			BIO_puts(bio, ", ");
+
+		if (cname)
+			BIO_puts(bio, cname);
+		else
+			BIO_printf(bio, "UNKNOWN (%d),", cert_type);
+		}
+	BIO_puts(bio, "\n");
+	}
+
+static int do_print_sigalgs(BIO *out, SSL *s, int shared)
+	{
+	int i, nsig, client;
+	client = SSL_is_server(s) ? 0 : 1;
 	if (shared)
 		nsig = SSL_get_shared_sigalgs(s, -1, NULL, NULL, NULL,
 							NULL, NULL);
@@ -334,10 +400,12 @@ static int do_print_sigalgs(BIO *out, SSL *s, int client, int shared)
 	return 1;
 	}
 
-int ssl_print_sigalgs(BIO *out, SSL *s, int client)
+int ssl_print_sigalgs(BIO *out, SSL *s)
 	{
-	do_print_sigalgs(out, s, client, 0);
-	do_print_sigalgs(out, s, client, 1);
+	if (!SSL_is_server(s))
+		ssl_print_client_cert_types(out, s);
+	do_print_sigalgs(out, s, 0);
+	do_print_sigalgs(out, s, 1);
 	return 1;
 	}
 

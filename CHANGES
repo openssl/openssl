@@ -8,6 +8,12 @@
      OID NID.
      [Steve Henson]
 
+  *) New ctrls to retrieve and set certificate types in a certificate
+     request message. Print out received values in s_client. If certificate
+     types is not set with custom values set sensible values based on
+     supported signature algorithms.
+     [Steve Henson]
+
   *) Support for distinct client and server supported signature algorithms.
      [Steve Henson]
 

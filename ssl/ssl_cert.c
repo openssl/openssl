@@ -388,6 +388,15 @@ CERT *ssl_cert_dup(CERT *cert)
 		ret->client_sigalgs = NULL;
 	/* Shared sigalgs also NULL */
 	ret->shared_sigalgs = NULL;
+	/* Copy any custom client certificate types */
+	if (cert->ctypes)
+		{
+		ret->ctypes = OPENSSL_malloc(cert->ctype_num);
+		if (!ret->ctypes)
+			goto err;
+		memcpy(ret->ctypes, cert->ctypes, cert->ctype_num);
+		ret->ctype_num = cert->ctype_num;
+		}
 
 	ret->cert_flags = cert->cert_flags;
 
@@ -489,6 +498,8 @@ void ssl_cert_free(CERT *c)
 		OPENSSL_free(c->client_sigalgs);
 	if (c->shared_sigalgs)
 		OPENSSL_free(c->shared_sigalgs);
+	if (c->ctypes)
+		OPENSSL_free(c->ctypes);
 	OPENSSL_free(c);
 	}
 
