@@ -2035,7 +2035,7 @@ end:
 		SSL_CONF_CTX_free(cctx);
 	if (bio_s_out != NULL)
 		{
-        BIO_free(bio_s_out);
+        	BIO_free(bio_s_out);
 		bio_s_out=NULL;
 		}
 	if (bio_s_msg != NULL)
