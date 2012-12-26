@@ -116,7 +116,7 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 # Hide SSL internals
 			 "SSL_INTERN",
 			 # SSL TRACE
-		 	 "SSL_TRACE");
+		 	 "SSL_TRACE",
 			 # SCTP
 			 "SCTP");
 
