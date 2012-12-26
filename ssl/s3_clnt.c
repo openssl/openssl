@@ -1648,9 +1648,17 @@ int ssl3_get_key_exchange(SSL *s)
 		 * and the ECParameters in this case is just three bytes.
 		 */
 		param_len=3;
-		if ((param_len > n) ||
-		    (*p != NAMED_CURVE_TYPE) || 
-		    ((curve_nid = tls1_ec_curve_id2nid(*(p + 2))) == 0)) 
+		/* Check curve is one of our prefrences, if not server has
+		 * sent an invalid curve.
+		 */
+		if (!tls1_check_curve(s, p, param_len))
+			{
+			al=SSL_AD_DECODE_ERROR;
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_WRONG_CURVE);
+			goto f_err;
+			}
+
+		if ((curve_nid = tls1_ec_curve_id2nid(*(p + 2))) == 0) 
 			{
 			al=SSL_AD_INTERNAL_ERROR;
 			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);

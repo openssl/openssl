@@ -8,6 +8,9 @@
      OID NID.
      [Steve Henson]
 
+  *) If server EC tmp key is not in client preference list abort handshake.
+     [Steve Henson]
+
   *) Add support for certificate stores in CERT structure. This makes it
      possible to have different stores per SSL structure or one store in
      the parent SSL_CTX. Include distint stores for certificate chain
