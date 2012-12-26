@@ -2588,8 +2588,8 @@ static int init_ssl_connection(SSL *con)
 			BIO_printf(bio_err,"verify error:%s\n",
 				X509_verify_cert_error_string(verify_error));
 			}
-		else
-			ERR_print_errors(bio_err);
+		/* Always print any error messages */
+		ERR_print_errors(bio_err);
 		return(0);
 		}
 

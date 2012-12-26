@@ -1348,10 +1348,49 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 	return(retval);
 	}
 
+static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
+					const char **prule_str)
+	{
+	unsigned int suiteb_flags = 0;
+	if (!strcmp(*prule_str, "SUITEB128"))
+		suiteb_flags = SSL_CERT_FLAG_SUITEB_128_LOS;
+	else if (!strcmp(*prule_str, "SUITEB128ONLY"))
+		suiteb_flags = SSL_CERT_FLAG_SUITEB_128_LOS_ONLY;
+	else if (!strcmp(*prule_str, "SUITEB192"))
+		suiteb_flags = SSL_CERT_FLAG_SUITEB_192_LOS;
+
+	if (suiteb_flags)
+		{
+		c->cert_flags &= ~SSL_CERT_FLAG_SUITEB_128_LOS;
+		c->cert_flags |= suiteb_flags;
+		}
+	else
+		suiteb_flags = c->cert_flags & SSL_CERT_FLAG_SUITEB_128_LOS;
+
+	if (!suiteb_flags)
+		return 1;
+	/* Check version */
+
+	switch(suiteb_flags)
+		{
+	case SSL_CERT_FLAG_SUITEB_128_LOS:
+		*prule_str = "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384";
+		break;
+	case SSL_CERT_FLAG_SUITEB_128_LOS_ONLY:
+		*prule_str = "ECDHE-ECDSA-AES128-GCM-SHA256";
+		break;
+	case SSL_CERT_FLAG_SUITEB_192_LOS:
+		*prule_str = "ECDHE-ECDSA-AES256-GCM-SHA384";
+		break;
+		}
+	return 1;
+	}
+
+
 STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 		STACK_OF(SSL_CIPHER) **cipher_list,
 		STACK_OF(SSL_CIPHER) **cipher_list_by_id,
-		const char *rule_str)
+		const char *rule_str, CERT *c)
 	{
 	int ok, num_of_ciphers, num_of_alias_max, num_of_group_aliases;
 	unsigned long disabled_mkey, disabled_auth, disabled_enc, disabled_mac, disabled_ssl;
@@ -1365,6 +1404,10 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	 */
 	if (rule_str == NULL || cipher_list == NULL || cipher_list_by_id == NULL)
 		return NULL;
+
+	if (!check_suiteb_cipher_list(ssl_method, c, &rule_str))
+		return NULL;
+
 
 	/*
 	 * To reduce the work to do we only want to process the compiled
