@@ -409,6 +409,8 @@ CERT *ssl_cert_dup(CERT *cert)
 		ret->chain_store = cert->chain_store;
 		}
 
+	ret->ciphers_raw = NULL;
+
 	return(ret);
 	
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_ECDH)
@@ -511,6 +513,8 @@ void ssl_cert_free(CERT *c)
 		X509_STORE_free(c->verify_store);
 	if (c->chain_store)
 		X509_STORE_free(c->chain_store);
+	if (c->ciphers_raw)
+		OPENSSL_free(c->ciphers_raw);
 	OPENSSL_free(c);
 	}
 

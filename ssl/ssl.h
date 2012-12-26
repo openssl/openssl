@@ -1699,6 +1699,7 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_SET_CHAIN_CERT_STORE		107
 #define SSL_CTRL_GET_PEER_SIGNATURE_NID		108
 #define SSL_CTRL_GET_SERVER_TMP_KEY		109
+#define SSL_CTRL_GET_RAW_CIPHERLIST		110
 
 #define DTLSv1_get_timeout(ssl, arg) \
 	SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)
@@ -1828,6 +1829,9 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 
 #define SSL_get_server_tmp_key(s, pk) \
 	SSL_ctrl(s,SSL_CTRL_GET_SERVER_TMP_KEY,0,pk)
+
+#define SSL_get0_raw_cipherlist(s, plst) \
+	SSL_ctrl(s,SSL_CTRL_GET_RAW_CIPHERLIST,0,plst)
 
 #ifndef OPENSSL_NO_BIO
 BIO_METHOD *BIO_f_ssl(void);
@@ -2230,6 +2234,8 @@ const char *SSL_COMP_get_name(const void *comp);
 void *SSL_COMP_get_compression_methods(void);
 int SSL_COMP_add_compression_method(int id,void *cm);
 #endif
+
+const SSL_CIPHER *SSL_CIPHER_find(SSL *ssl, const unsigned char *ptr);
 
 /* TLS extensions functions */
 int SSL_set_session_ticket_ext(SSL *s, void *ext_data, int ext_len);

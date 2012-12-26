@@ -8,6 +8,10 @@
      OID NID.
      [Steve Henson]
 
+  *) Add functions to retrieve and manipulate the raw cipherlist sent by a
+     client to OpenSSL.
+     [Steve Henson]
+
   *) New Suite B modes for TLS code. These use and enforce the requirements
      of RFC6460: restrict ciphersuites, only permit Suite B algorithms and
      only use Suite B curves. The Suite B modes can be set by using the
