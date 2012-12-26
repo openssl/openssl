@@ -885,7 +885,10 @@ int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s,
 		if (!tls1_set_ec_id(curve_id, &comp_id, pkey->pkey.ec))
 			return 0;
 		if (!s->server && !tls1_check_ec_key(s, curve_id, &comp_id))
+			{
+			SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG,SSL_R_WRONG_CURVE);
 			return 0;
+			}
 		/* If Suite B only P-384+SHA384 or P-256+SHA-256 allowed */
 		if (tls1_suiteb(s))
 			{
@@ -1863,7 +1866,8 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 			unsigned char *sdata = data;
 			int ecpointformatlist_length = *(sdata++);
 
-			if (ecpointformatlist_length != size - 1)
+			if (ecpointformatlist_length != size - 1 || 
+				ecpointformatlist_length < 1)
 				{
 				*al = TLS1_AD_DECODE_ERROR;
 				return 0;
@@ -2344,8 +2348,7 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 			unsigned char *sdata = data;
 			int ecpointformatlist_length = *(sdata++);
 
-			if (ecpointformatlist_length != size - 1 || 
-				ecpointformatlist_length < 1)
+			if (ecpointformatlist_length != size - 1)
 				{
 				*al = TLS1_AD_DECODE_ERROR;
 				return 0;
