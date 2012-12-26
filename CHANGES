@@ -4,6 +4,11 @@
 
  Changes between 1.0.1 and 1.0.2 [xx XXX xxxx]
 
+  *) Add new functions to allow customised supported signature algorithms
+     for SSL and SSL_CTX structures. Add options to s_client and s_server
+     to support them.
+     [Steve Henson]
+
   *) New function SSL_certs_clear() to delete all references to certificates
      from an SSL structure. Before this once a certificate had been added
      it couldn't be removed.

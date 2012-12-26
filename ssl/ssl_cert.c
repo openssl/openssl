@@ -357,9 +357,22 @@ CERT *ssl_cert_dup(CERT *cert)
 	 * will be set during handshake.
 	 */
 	ssl_cert_set_default_md(ret);
-	/* Sigalgs set to NULL as we get these from handshake too */
-	ret->sigalgs = NULL;
-	ret->sigalgslen = 0;
+	/* Peer sigalgs set to NULL as we get these from handshake too */
+	ret->peer_sigalgs = NULL;
+	ret->peer_sigalgslen = 0;
+	/* Configure sigalgs however we copy across */
+	if (cert->conf_sigalgs)
+		{
+		ret->conf_sigalgs = OPENSSL_malloc(cert->conf_sigalgslen
+							* sizeof(TLS_SIGALGS));
+		if (!ret->conf_sigalgs)
+			goto err;
+		memcpy(ret->conf_sigalgs, cert->conf_sigalgs,
+				cert->conf_sigalgslen * sizeof(TLS_SIGALGS));
+		ret->conf_sigalgslen = cert->conf_sigalgslen;
+		}
+	else
+		ret->conf_sigalgs = NULL;
 
 	return(ret);
 	
@@ -447,8 +460,10 @@ void ssl_cert_free(CERT *c)
 #endif
 
 	ssl_cert_clear_certs(c);
-	if (c->sigalgs)
-		OPENSSL_free(c->sigalgs);
+	if (c->peer_sigalgs)
+		OPENSSL_free(c->peer_sigalgs);
+	if (c->conf_sigalgs)
+		OPENSSL_free(c->conf_sigalgs);
 	OPENSSL_free(c);
 	}
 

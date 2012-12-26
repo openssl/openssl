@@ -519,10 +519,19 @@ typedef struct cert_st
 
 	CERT_PKEY pkeys[SSL_PKEY_NUM];
 
-	/* Array of pairs of NIDs for signature algorithm extension */
-	TLS_SIGALGS *sigalgs;
+	/* signature algorithms peer reports: e.g. supported signature
+	 * algorithms extension for server or as part of a certificate
+	 * request for client.
+	 */
+	TLS_SIGALGS *peer_sigalgs;
 	/* Size of above array */
-	size_t sigalgslen;
+	size_t peer_sigalgslen;
+	/* configured signature algorithms (can be NULL for default).
+	 * sent in signature algorithms extension or certificate request.
+	 */
+	TLS_SIGALGS *conf_sigalgs;
+	/* Size of above array */
+	size_t conf_sigalgslen;
 
 	int references; /* >1 only if SSL_copy_session_id is used */
 	} CERT;
@@ -1164,6 +1173,9 @@ int tls12_get_sigandhash(unsigned char *p, const EVP_PKEY *pk,
 int tls12_get_sigid(const EVP_PKEY *pk);
 const EVP_MD *tls12_get_hash(unsigned char hash_alg);
 
+int tls1_set_sigalgs_list(CERT *c, const char *str);
+int tls1_set_sigalgs(CERT *c, const int *salg, size_t salglen);
+
 #endif
 EVP_MD_CTX* ssl_replace_hash(EVP_MD_CTX **hash,const EVP_MD *md) ;
 void ssl_clear_hash_ctx(EVP_MD_CTX **hash);
@@ -1177,7 +1189,7 @@ int ssl_parse_clienthello_renegotiate_ext(SSL *s, unsigned char *d, int len,
 					  int *al);
 long ssl_get_algorithm2(SSL *s);
 int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize);
-int tls12_get_req_sig_algs(SSL *s, unsigned char *p);
+size_t tls12_get_sig_algs(SSL *s, unsigned char *p);
 
 int ssl_add_clienthello_use_srtp_ext(SSL *s, unsigned char *p, int *len, int maxlen);
 int ssl_parse_clienthello_use_srtp_ext(SSL *s, unsigned char *d, int len,int *al);

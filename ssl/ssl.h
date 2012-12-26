@@ -1634,6 +1634,8 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_SET_CURVES_LIST		92
 #define SSL_CTRL_GET_SHARED_CURVE		93
 #define SSL_CTRL_SET_ECDH_AUTO			94
+#define SSL_CTRL_SET_SIGALGS			97
+#define SSL_CTRL_SET_SIGALGS_LIST		98
 
 #define DTLSv1_get_timeout(ssl, arg) \
 	SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)
@@ -1709,6 +1711,15 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_ECDH_AUTO,onoff,NULL)
 #define SSL_set_ecdh_auto(s, onoff) \
 	SSL_ctrl(s,SSL_CTRL_SET_ECDH_AUTO,onoff,NULL)
+
+#define SSL_CTX_set1_sigalgs(ctx, slist, slistlen) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_SIGALGS,slistlen,(int *)slist)
+#define SSL_CTX_set1_sigalgs_list(ctx, s) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_SIGALGS_LIST,0,(char *)s)
+#define SSL_set1_sigalgs(ctx, slist, slistlen) \
+	SSL_ctrl(ctx,SSL_CTRL_SET_SIGALGS,clistlen,(int *)slist)
+#define SSL_set1_sigalgs_list(ctx, s) \
+	SSL_ctrl(ctx,SSL_CTRL_SET_SIGALGS_LIST,0,(char *)s)
 
 #ifndef OPENSSL_NO_BIO
 BIO_METHOD *BIO_f_ssl(void);

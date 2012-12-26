@@ -605,6 +605,7 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_TLSEXT
 	char *servername = NULL; 
 	char *curves=NULL;
+	char *sigalgs=NULL;
         tlsextctx tlsextcbp = 
         {NULL,0};
 # ifndef OPENSSL_NO_NEXTPROTONEG
@@ -948,6 +949,11 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			curves= *(++argv);
 			}
+		else if	(strcmp(*argv,"-sigalgs") == 0)
+			{
+			if (--argc < 1) goto bad;
+			sigalgs= *(++argv);
+			}
 #endif
 #ifndef OPENSSL_NO_JPAKE
 		else if (strcmp(*argv,"-jpake") == 0)
@@ -1189,6 +1195,12 @@ bad:
 	if (curves != NULL)
 		if(!SSL_CTX_set1_curves_list(ctx,curves)) {
 		BIO_printf(bio_err,"error setting curve list\n");
+		ERR_print_errors(bio_err);
+		goto end;
+	}
+	if (sigalgs != NULL)
+		if(!SSL_CTX_set1_sigalgs_list(ctx,sigalgs)) {
+		BIO_printf(bio_err,"error setting signature algorithms list\n");
 		ERR_print_errors(bio_err);
 		goto end;
 	}
