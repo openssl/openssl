@@ -4,6 +4,10 @@
 
  Changes between 1.0.1 and 1.0.2 [xx XXX xxxx]
 
+  *) New functions to retrieve certificate signature and signature
+     OID NID.
+     [Steve Henson]
+
   *) Add new "valid_flags" field to CERT_PKEY structure which determines what
      the certificate can be used for (if anything). Set valid_flags field 
      in new tls1_check_chain function. Simplify ssl_set_cert_masks which used
