@@ -949,6 +949,7 @@ int MAIN(int argc, char *argv[])
 	int badop=0,bugs=0;
 	int ret=1;
 	int off=0;
+	int cert_flags = 0;
 	int no_tmp_rsa=0,no_dhe=0,no_ecdhe=0,nocert=0;
 	int state=0;
 	const SSL_METHOD *meth=NULL;
@@ -1373,6 +1374,8 @@ int MAIN(int argc, char *argv[])
 			keymatexportlen=atoi(*(++argv));
 			if (keymatexportlen == 0) goto bad;
 			}
+		else if (strcmp(*argv, "-cert_strict") == 0)
+			cert_flags |= SSL_CERT_FLAG_TLS_STRICT;
 		else
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);
@@ -1590,6 +1593,7 @@ bad:
 	if (bugs) SSL_CTX_set_options(ctx,SSL_OP_ALL);
 	if (hack) SSL_CTX_set_options(ctx,SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG);
 	SSL_CTX_set_options(ctx,off);
+	if (cert_flags) SSL_CTX_set_cert_flags(ctx, cert_flags);
 	/* DTLS: partial reads end up discarding unread UDP bytes :-( 
 	 * Setting read ahead solves this problem.
 	 */
@@ -1661,6 +1665,7 @@ bad:
 		if (bugs) SSL_CTX_set_options(ctx2,SSL_OP_ALL);
 		if (hack) SSL_CTX_set_options(ctx2,SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG);
 		SSL_CTX_set_options(ctx2,off);
+		if (cert_flags) SSL_CTX_set_cert_flags(ctx2, cert_flags);
 		/* DTLS: partial reads end up discarding unread UDP bytes :-( 
 		 * Setting read ahead solves this problem.
 		 */

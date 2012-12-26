@@ -334,6 +334,7 @@ CERT *ssl_cert_dup(CERT *cert)
 				CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
 				}
 			}
+		rpk->valid_flags = 0;
                 if (cert->pkeys[i].authz != NULL)
 			{
 			/* Just copy everything. */
@@ -375,6 +376,8 @@ CERT *ssl_cert_dup(CERT *cert)
 		ret->conf_sigalgs = NULL;
 	/* Shared sigalgs also NULL */
 	ret->shared_sigalgs = NULL;
+
+	ret->cert_flags = cert->cert_flags;
 
 	return(ret);
 	
@@ -428,6 +431,7 @@ void ssl_cert_clear_certs(CERT *c)
                 if (cpk->authz != NULL)
 			OPENSSL_free(cpk->authz);
 #endif
+		cpk->valid_flags = 0;
 		}
 	}
 
