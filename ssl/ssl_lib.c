@@ -524,6 +524,11 @@ int SSL_set1_param(SSL *ssl, X509_VERIFY_PARAM *vpm)
 	return X509_VERIFY_PARAM_set1(ssl->param, vpm);
 	}
 
+void SSL_certs_clear(SSL *s)
+	{
+	ssl_cert_clear_certs(s->cert);
+	}
+
 void SSL_free(SSL *s)
 	{
 	int i;

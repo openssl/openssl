@@ -379,21 +379,42 @@ err:
 		EC_KEY_free(ret->ecdh_tmp);
 #endif
 
-	for (i = 0; i < SSL_PKEY_NUM; i++)
-		{
-		CERT_PKEY *rpk = ret->pkeys + i;
-		if (rpk->x509 != NULL)
-			X509_free(rpk->x509);
-		if (rpk->privatekey != NULL)
-			EVP_PKEY_free(rpk->privatekey);
-		if (rpk->chain)
-			sk_X509_pop_free(rpk->chain, X509_free);
-		}
-
+	ssl_cert_clear_certs(ret);
 
 	return NULL;
 	}
 
+/* Free up and clear all certificates and chains */
+
+void ssl_cert_clear_certs(CERT *c)
+	{
+	int i;
+	if (c == NULL)
+		return;
+	for (i = 0; i<SSL_PKEY_NUM; i++)
+		{
+		CERT_PKEY *cpk = c->pkeys + i;
+		if (cpk->x509)
+			{
+			X509_free(cpk->x509);
+			cpk->x509 = NULL;
+			}
+		if (cpk->privatekey)
+			{
+			EVP_PKEY_free(cpk->privatekey);
+			cpk->privatekey = NULL;
+			}
+		if (cpk->chain)
+			{
+			sk_X509_pop_free(cpk->chain, X509_free);
+			cpk->chain = NULL;
+			}
+#ifndef OPENSSL_NO_TLSEXT
+                if (cpk->authz != NULL)
+			OPENSSL_free(cpk->authz);
+#endif
+		}
+	}
 
 void ssl_cert_free(CERT *c)
 	{
@@ -425,24 +446,7 @@ void ssl_cert_free(CERT *c)
 	if (c->ecdh_tmp) EC_KEY_free(c->ecdh_tmp);
 #endif
 
-	for (i=0; i<SSL_PKEY_NUM; i++)
-		{
-		CERT_PKEY *cpk = c->pkeys + i;
-		if (cpk->x509 != NULL)
-			X509_free(cpk->x509);
-		if (cpk->privatekey != NULL)
-			EVP_PKEY_free(cpk->privatekey);
-		if (cpk->chain)
-			sk_X509_pop_free(cpk->chain, X509_free);
-#if 0
-		if (c->pkeys[i].publickey != NULL)
-			EVP_PKEY_free(c->pkeys[i].publickey);
-#endif
-#ifndef OPENSSL_NO_TLSEXT
-                if (c->pkeys[i].authz != NULL)
-			OPENSSL_free(c->pkeys[i].authz);
-#endif
-		}
+	ssl_cert_clear_certs(c);
 	if (c->sigalgs)
 		OPENSSL_free(c->sigalgs);
 	OPENSSL_free(c);

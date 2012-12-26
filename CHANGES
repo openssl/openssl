@@ -4,6 +4,11 @@
 
  Changes between 1.0.1 and 1.0.2 [xx XXX xxxx]
 
+  *) New function SSL_certs_clear() to delete all references to certificates
+     from an SSL structure. Before this once a certificate had been added
+     it couldn't be removed.
+     [Steve Henson]
+
   *) Integrate hostname, email address and IP address checking with certificate
      verification. New verify options supporting checking in opensl utility.
      [Steve Henson]
