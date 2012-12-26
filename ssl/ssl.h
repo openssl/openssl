@@ -659,7 +659,7 @@ struct ssl_session_st
 /* Flags for building certificate chains */
 /* Treat any existing certificates as untrusted CAs */
 #define SSL_BUILD_CHAIN_FLAG_UNTRUSTED	0x1
-/* Con't include root CA in chain */
+/* Don't include root CA in chain */
 #define SSL_BUILD_CHAIN_FLAG_NO_ROOT	0x2
 
 /* Note: SSL[_CTX]_set_{options,mode} use |= op on the previous value,
