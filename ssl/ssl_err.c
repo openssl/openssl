@@ -432,6 +432,8 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {ERR_REASON(SSL_R_MISSING_DH_KEY)        ,"missing dh key"},
 {ERR_REASON(SSL_R_MISSING_DH_RSA_CERT)   ,"missing dh rsa cert"},
 {ERR_REASON(SSL_R_MISSING_DSA_SIGNING_CERT),"missing dsa signing cert"},
+{ERR_REASON(SSL_R_MISSING_ECDH_CERT)     ,"missing ecdh cert"},
+{ERR_REASON(SSL_R_MISSING_ECDSA_SIGNING_CERT),"missing ecdsa signing cert"},
 {ERR_REASON(SSL_R_MISSING_EXPORT_TMP_DH_KEY),"missing export tmp dh key"},
 {ERR_REASON(SSL_R_MISSING_EXPORT_TMP_RSA_KEY),"missing export tmp rsa key"},
 {ERR_REASON(SSL_R_MISSING_RSA_CERTIFICATE),"missing rsa certificate"},

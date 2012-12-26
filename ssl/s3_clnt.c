@@ -1834,10 +1834,13 @@ fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
 		}
 	else
 		{
+		/* aNULL or kPSK do not need public keys */
 		if (!(alg_a & SSL_aNULL) && !(alg_k & SSL_kPSK))
-			/* aNULL or kPSK do not need public keys */
 			{
-			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
+			/* Might be wrong key type, check it */
+			if (ssl3_check_cert_and_algorithm(s))
+				/* Otherwise this shouldn't happen */
+				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
 			goto err;
 			}
 		/* still data left over */
@@ -3334,6 +3337,16 @@ int ssl3_check_cert_and_algorithm(SSL *s)
 			{
 			return 1;
 			}
+		}
+	else if (alg_a & SSL_aECDSA)
+		{
+		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_MISSING_ECDSA_SIGNING_CERT);
+		goto f_err;
+		}
+	else if (alg_k & (SSL_kECDHr|SSL_kECDHe))
+		{
+		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_MISSING_ECDH_CERT);
+		goto f_err;
 		}
 #endif
 	pkey=X509_get_pubkey(sc->peer_pkeys[idx].x509);
