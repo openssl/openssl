@@ -1351,11 +1351,16 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
 					const char **prule_str)
 	{
-	unsigned int suiteb_flags = 0;
+	unsigned int suiteb_flags = 0, suiteb_comb2 = 0;
 	if (!strcmp(*prule_str, "SUITEB128"))
 		suiteb_flags = SSL_CERT_FLAG_SUITEB_128_LOS;
 	else if (!strcmp(*prule_str, "SUITEB128ONLY"))
 		suiteb_flags = SSL_CERT_FLAG_SUITEB_128_LOS_ONLY;
+	else if (!strcmp(*prule_str, "SUITEB128C2"))
+		{
+		suiteb_comb2 = 1;
+		suiteb_flags = SSL_CERT_FLAG_SUITEB_128_LOS;
+		}
 	else if (!strcmp(*prule_str, "SUITEB192"))
 		suiteb_flags = SSL_CERT_FLAG_SUITEB_192_LOS;
 
@@ -1374,7 +1379,10 @@ static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
 	switch(suiteb_flags)
 		{
 	case SSL_CERT_FLAG_SUITEB_128_LOS:
-		*prule_str = "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384";
+		if (suiteb_comb2)
+			*prule_str = "ECDHE-ECDSA-AES256-GCM-SHA384";
+		else
+			*prule_str = "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384";
 		break;
 	case SSL_CERT_FLAG_SUITEB_128_LOS_ONLY:
 		*prule_str = "ECDHE-ECDSA-AES128-GCM-SHA256";
