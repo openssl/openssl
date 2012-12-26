@@ -921,7 +921,8 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *meth,
 void ssl_update_cache(SSL *s, int mode);
 int ssl_cipher_get_evp(const SSL_SESSION *s,const EVP_CIPHER **enc,
 		       const EVP_MD **md,int *mac_pkey_type,int *mac_secret_size, SSL_COMP **comp);
-int ssl_get_handshake_digest(int i,long *mask,const EVP_MD **md);			   
+int ssl_get_handshake_digest(int i,long *mask,const EVP_MD **md);
+int ssl_cipher_get_cert_index(const SSL_CIPHER *c);
 int ssl_cert_set0_chain(CERT *c, STACK_OF(X509) *chain);
 int ssl_cert_set1_chain(CERT *c, STACK_OF(X509) *chain);
 int ssl_cert_add0_chain_cert(CERT *c, X509 *x);
