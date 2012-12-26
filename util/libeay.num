@@ -4319,3 +4319,16 @@ EC_curve_nid2nist                       4688	EXIST::FUNCTION:EC
 DH_get_2048_256                         4689	EXIST::FUNCTION:DH
 PEM_write_bio_DHxparams                 4690	EXIST::FUNCTION:DH
 DH_get_2048_224                         4691	EXIST::FUNCTION:DH
+X509_chain_check_suiteb                 4692	EXIST::FUNCTION:
+X509_chain_up_ref                       4693	EXIST::FUNCTION:
+X509_VERIFY_PARAM_set1_ip_asc           4694	EXIST::FUNCTION:
+X509_CRL_check_suiteb                   4695	EXIST::FUNCTION:
+X509_VERIFY_PARAM_set1_email            4696	EXIST::FUNCTION:
+X509_check_email                        4697	EXIST::FUNCTION:
+X509_check_host                         4698	EXIST::FUNCTION:
+X509_check_ip_asc                       4699	EXIST::FUNCTION:
+X509_get0_signature                     4700	EXIST::FUNCTION:
+X509_get_signature_nid                  4701	EXIST::FUNCTION:
+X509_VERIFY_PARAM_set1_host             4702	EXIST::FUNCTION:
+X509_VERIFY_PARAM_set1_ip               4703	EXIST::FUNCTION:
+X509_check_ip                           4704	EXIST::FUNCTION:
