@@ -837,6 +837,7 @@ int ssl3_get_server_hello(SSL *s)
 	{
 	STACK_OF(SSL_CIPHER) *sk;
 	const SSL_CIPHER *c;
+	CERT *ct = s->cert;
 	unsigned char *p,*d;
 	int i,al=SSL_AD_INTERNAL_ERROR,ok;
 	unsigned int j;
@@ -959,9 +960,12 @@ int ssl3_get_server_hello(SSL *s)
 		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_UNKNOWN_CIPHER_RETURNED);
 		goto f_err;
 		}
-	/* TLS v1.2 only ciphersuites require v1.2 or later */
-	if ((c->algorithm_ssl & SSL_TLSV1_2) && 
-		(TLS1_get_version(s) < TLS1_2_VERSION))
+	/* If it is a disabled cipher we didn't send it in client hello,
+	 * so return an error.
+	 */
+	if (c->algorithm_ssl & ct->mask_ssl ||
+		c->algorithm_mkey & ct->mask_k ||
+		c->algorithm_auth & ct->mask_a)
 		{
 		al=SSL_AD_ILLEGAL_PARAMETER;
 		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_WRONG_CIPHER_RETURNED);

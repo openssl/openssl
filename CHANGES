@@ -8,6 +8,11 @@
      OID NID.
      [Steve Henson]
 
+  *) New function ssl_set_client_disabled to set a ciphersuite disabled
+     mask based on the current session, check mask when sending client
+     hello and checking the requested ciphersuite.
+     [Steve Henson]
+
   *) New ctrls to retrieve and set certificate types in a certificate
      request message. Print out received values in s_client. If certificate
      types is not set with custom values set sensible values based on
