@@ -3971,10 +3971,6 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 
 #ifndef OPENSSL_NO_TLSEXT
 #ifndef OPENSSL_NO_EC
-		/* if we are considering an ECC cipher suite that uses our
-		 * certificate check it */
-		if (alg_a & (SSL_aECDSA|SSL_aECDH))
-			ok = ok && tls1_check_ec_server_key(s);
 		/* if we are considering an ECC cipher suite that uses
 		 * an ephemeral EC key check it */
 		if (alg_k & SSL_kEECDH)
