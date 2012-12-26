@@ -310,6 +310,7 @@ ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x)
 	return x->cert_info->key->public_key;
 	}
 
+
 int X509_check_private_key(X509 *x, EVP_PKEY *k)
 	{
 	EVP_PKEY *xk;
@@ -464,4 +465,19 @@ int X509_CRL_check_suiteb(X509_CRL *crl, EVP_PKEY *pk, unsigned long flags)
 	sign_nid = OBJ_obj2nid(crl->crl->sig_alg->algorithm);
 	return check_suite_b(pk, sign_nid, &flags);
 	}
-
+/* Not strictly speaking an "up_ref" as a STACK doesn't have a reference
+ * count but it has the same effect by duping the STACK and upping the ref
+ * of each X509 structure.
+ */
+STACK_OF(X509) *X509_chain_up_ref(STACK_OF(X509) *chain)
+	{
+	STACK_OF(X509) *ret;
+	int i;
+	ret = sk_X509_dup(chain);
+	for (i = 0; i < sk_X509_num(ret); i++)
+		{
+		X509 *x = sk_X509_value(ret, i);
+		CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
+		}
+	return ret;
+	}
