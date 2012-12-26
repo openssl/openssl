@@ -3415,10 +3415,16 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		break;
 
 	case SSL_CTRL_SET_SIGALGS:
-		return tls1_set_sigalgs(s->cert, parg, larg);
+		return tls1_set_sigalgs(s->cert, parg, larg, 0);
 
 	case SSL_CTRL_SET_SIGALGS_LIST:
-		return tls1_set_sigalgs_list(s->cert, parg);
+		return tls1_set_sigalgs_list(s->cert, parg, 0);
+
+	case SSL_CTRL_SET_CLIENT_SIGALGS:
+		return tls1_set_sigalgs(s->cert, parg, larg, 1);
+
+	case SSL_CTRL_SET_CLIENT_SIGALGS_LIST:
+		return tls1_set_sigalgs_list(s->cert, parg, 1);
 
 	default:
 		break;
@@ -3698,10 +3704,16 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 		break;
 
 	case SSL_CTRL_SET_SIGALGS:
-		return tls1_set_sigalgs(ctx->cert, parg, larg);
+		return tls1_set_sigalgs(ctx->cert, parg, larg, 0);
 
 	case SSL_CTRL_SET_SIGALGS_LIST:
-		return tls1_set_sigalgs_list(ctx->cert, parg);
+		return tls1_set_sigalgs_list(ctx->cert, parg, 0);
+
+	case SSL_CTRL_SET_CLIENT_SIGALGS:
+		return tls1_set_sigalgs(ctx->cert, parg, larg, 1);
+
+	case SSL_CTRL_SET_CLIENT_SIGALGS_LIST:
+		return tls1_set_sigalgs_list(ctx->cert, parg, 1);
 
 	case SSL_CTRL_SET_TLSEXT_AUTHZ_SERVER_AUDIT_PROOF_CB_ARG:
 		ctx->tlsext_authz_server_audit_proof_cb_arg = parg;

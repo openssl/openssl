@@ -8,6 +8,9 @@
      OID NID.
      [Steve Henson]
 
+  *) Support for distinct client and server supported signature algorithms.
+     [Steve Henson]
+
   *) Add certificate callback. If set this is called whenever a certificate
      is required by client or server. An application can decide which
      certificate chain to present based on arbitrary criteria: for example
