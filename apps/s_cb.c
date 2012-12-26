@@ -1039,3 +1039,246 @@ int MS_CALLBACK verify_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned
 
 	return 0;
 	}
+
+/* Example of extended certificate handling. Where the standard support
+ * of one certificate per algorithm is not sufficient an application
+ * can decide which certificate(s) to use at runtime based on whatever
+ * criteria it deems appropriate.
+ */
+
+/* Linked list of certificates, keys and chains */
+struct  ssl_excert_st
+	{
+	int certform;
+	const char *certfile;
+	int keyform;
+	const char *keyfile;
+	const char *chainfile;
+	X509 *cert;
+	EVP_PKEY *key;
+	STACK_OF(X509) *chain;
+	struct ssl_excert_st *next, *prev;
+	};
+
+/* Very basic selection callback: just use any certificate chain
+ * reported as valid. More sophisticated could prioritise according
+ * to local policy.
+ */
+static int set_cert_cb(SSL *ssl, void *arg)
+	{
+	SSL_EXCERT *exc = arg;
+	SSL_certs_clear(ssl);
+
+	if (!exc)
+		return 1;
+
+	/* Go to end of list and traverse backwards since we prepend
+	 * newer entries this retains the original order.
+	 */
+	while (exc->next)
+		exc = exc->next;
+	
+	while(exc)
+		{
+		if (SSL_check_chain(ssl, exc->cert, exc->key, exc->chain))
+			{
+			SSL_use_certificate(ssl, exc->cert);
+			SSL_use_PrivateKey(ssl, exc->key);
+			if (exc->chain)
+				SSL_set1_chain(ssl, exc->chain);
+			}
+		exc = exc->prev;
+		}
+	return 1;
+	}
+
+void ssl_ctx_set_excert(SSL_CTX *ctx, SSL_EXCERT *exc)
+	{
+	SSL_CTX_set_cert_cb(ctx, set_cert_cb, exc);
+	}
+
+static int ssl_excert_prepend(SSL_EXCERT **pexc)
+	{
+	SSL_EXCERT *exc;
+	exc = OPENSSL_malloc(sizeof(SSL_EXCERT));
+	if (!exc)
+		return 0;
+	exc->certfile = NULL;
+	exc->keyfile = NULL;
+	exc->chainfile = NULL;
+	exc->cert = NULL;
+	exc->key = NULL;
+	exc->chain = NULL;
+	exc->prev = NULL;
+
+	exc->next = *pexc;
+	*pexc = exc;
+			
+	if (exc->next)
+		{
+		exc->certform = exc->next->certform;
+		exc->keyform = exc->next->keyform;
+		exc->next->prev = exc;
+		}
+	else
+		{
+		exc->certform = FORMAT_PEM;
+		exc->keyform = FORMAT_PEM;
+		}
+	return 1;
+
+	}
+
+void ssl_excert_free(SSL_EXCERT *exc)
+	{
+	SSL_EXCERT *curr;
+	while (exc)
+		{
+		if (exc->cert)
+			X509_free(exc->cert);
+		if (exc->key)
+			EVP_PKEY_free(exc->key);
+		if (exc->chain)
+			sk_X509_pop_free(exc->chain, X509_free);
+		curr = exc;
+		exc = exc->next;
+		OPENSSL_free(curr);
+		}
+	}
+
+int load_excert(SSL_EXCERT **pexc, BIO *err)
+	{
+	SSL_EXCERT *exc = *pexc;
+	if (!exc)
+		return 1;
+	/* If nothing in list, free and set to NULL */
+	if (!exc->certfile && !exc->next)
+		{
+		ssl_excert_free(exc);
+		*pexc = NULL;
+		return 1;
+		}
+	for(; exc; exc=exc->next)
+		{
+		if (!exc->certfile)
+			{
+			BIO_printf(err, "Missing filename\n");
+			return 0;
+			}
+		exc->cert = load_cert(err, exc->certfile, exc->certform,
+					NULL, NULL, "Server Certificate");
+		if (!exc->cert)
+			return 0;
+		if (exc->keyfile)
+			exc->keyfile = exc->certfile;
+		exc->key = load_key(err, exc->certfile, exc->certform, 0,
+					NULL, NULL, "Server Certificate");
+		if (!exc->key)
+			return 0;
+		if (exc->chainfile)
+			{
+			exc->chain = load_certs(err,
+						exc->chainfile, FORMAT_PEM,
+						NULL, NULL,
+						"Server Chain");
+			if (!exc->chainfile)
+				return 0;
+			}
+		}
+	return 1;
+	}
+		
+
+int args_excert(char ***pargs, int *pargc,
+			int *badarg, BIO *err, SSL_EXCERT **pexc)
+	{
+	char *arg = **pargs, *argn = (*pargs)[1];
+	SSL_EXCERT *exc = *pexc;
+	if (!exc && !ssl_excert_prepend(&exc))
+		{
+		BIO_printf(err, "Error initialising xcert\n");
+		*badarg = 1;
+		goto err;
+		}
+	if (strcmp(arg, "-xcert") == 0)
+		{
+		if (!argn)
+			{
+			*badarg = 1;
+			return 1;
+			}
+		if (exc->certfile && !ssl_excert_prepend(&exc))
+			{
+			BIO_printf(err, "Error adding xcert\n");
+			*badarg = 1;
+			goto err;
+			}
+		exc->certfile = argn;
+		}
+	else if (strcmp(arg,"-xkey") == 0)
+		{
+		if (!argn)
+			{
+			*badarg = 1;
+			return 1;
+			}
+		if (exc->keyfile)
+			{
+			BIO_printf(err, "Key already specified\n");
+			*badarg = 1;
+			return 1;
+			}
+		exc->keyfile = argn;
+		}
+	else if (strcmp(arg,"-xchain") == 0)
+		{
+		if (!argn)
+			{
+			*badarg = 1;
+			return 1;
+			}
+		if (exc->chainfile)
+			{
+			BIO_printf(err, "Chain already specified\n");
+			*badarg = 1;
+			return 1;
+			}
+		exc->chainfile = argn;
+		}
+	else if (strcmp(arg,"-xcertform") == 0)
+		{
+		if (!argn)
+			{
+			*badarg = 1;
+			goto err;
+			}
+		exc->certform = str2fmt(argn);
+		}
+	else if (strcmp(arg,"-xkeyform") == 0)
+		{
+		if (!argn)
+			{
+			*badarg = 1;
+			goto err;
+			}
+		exc->keyform = str2fmt(argn);
+		}
+	else
+		return 0;
+
+	(*pargs) += 2;
+
+	if (pargc)
+		*pargc -= 2;
+
+	*pexc = exc;
+
+	return 1;
+
+	err:
+	ERR_print_errors(err);
+	ssl_excert_free(exc);
+	*pexc = NULL;
+	return 1;
+	}
+

@@ -1791,6 +1791,7 @@ int	(*SSL_get_verify_callback(const SSL *s))(int,X509_STORE_CTX *);
 void	SSL_set_verify(SSL *s, int mode,
 		       int (*callback)(int ok,X509_STORE_CTX *ctx));
 void	SSL_set_verify_depth(SSL *s, int depth);
+void SSL_set_cert_cb(SSL *s, int (*cb)(SSL *ssl, void *arg), void *arg);
 #ifndef OPENSSL_NO_RSA
 int	SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa);
 #endif
@@ -1886,6 +1887,7 @@ void SSL_CTX_set_verify(SSL_CTX *ctx,int mode,
 			int (*callback)(int, X509_STORE_CTX *));
 void SSL_CTX_set_verify_depth(SSL_CTX *ctx,int depth);
 void SSL_CTX_set_cert_verify_callback(SSL_CTX *ctx, int (*cb)(X509_STORE_CTX *,void *), void *arg);
+void SSL_CTX_set_cert_cb(SSL_CTX *c, int (*cb)(SSL *ssl, void *arg), void *arg);
 #ifndef OPENSSL_NO_RSA
 int SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx, RSA *rsa);
 #endif
@@ -2443,6 +2445,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_CA_DN_TOO_LONG				 132
 #define SSL_R_CCS_RECEIVED_EARLY			 133
 #define SSL_R_CERTIFICATE_VERIFY_FAILED			 134
+#define SSL_R_CERT_CB_ERROR				 377
 #define SSL_R_CERT_LENGTH_MISMATCH			 135
 #define SSL_R_CHALLENGE_IS_DIFFERENT			 136
 #define SSL_R_CIPHER_CODE_WRONG_LENGTH			 137

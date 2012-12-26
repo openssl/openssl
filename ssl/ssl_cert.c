@@ -379,6 +379,9 @@ CERT *ssl_cert_dup(CERT *cert)
 
 	ret->cert_flags = cert->cert_flags;
 
+	ret->cert_cb = cert->cert_cb;
+	ret->cert_cb_arg = cert->cert_cb_arg;
+
 	return(ret);
 	
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_ECDH)
@@ -555,6 +558,12 @@ int ssl_cert_add1_chain_cert(CERT *c, X509 *x)
 		return 0;
 	CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
 	return 1;
+	}
+
+void ssl_cert_set_cert_cb(CERT *c, int (*cb)(SSL *ssl, void *arg), void *arg)
+	{
+	c->cert_cb = cb;
+	c->cert_cb_arg = arg;
 	}
 
 SESS_CERT *ssl_sess_cert_new(void)

@@ -181,3 +181,11 @@ void MS_CALLBACK tlsext_cb(SSL *s, int client_server, int type,
 
 int MS_CALLBACK generate_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len);
 int MS_CALLBACK verify_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned int cookie_len);
+
+typedef struct ssl_excert_st SSL_EXCERT;
+
+void ssl_ctx_set_excert(SSL_CTX *ctx, SSL_EXCERT *exc);
+void ssl_excert_free(SSL_EXCERT *exc);
+int args_excert(char ***pargs, int *pargc,
+			int *badarg, BIO *err, SSL_EXCERT **pexc);
+int load_excert(SSL_EXCERT **pexc, BIO *err);
