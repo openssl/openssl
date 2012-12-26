@@ -606,9 +606,9 @@ int MAIN(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_TLSEXT
 	char *servername = NULL; 
-	char *curves=NULL;
-	char *sigalgs=NULL;
-	char *client_sigalgs=NULL;
+	const char *curves=NULL;
+	const char *sigalgs=NULL;
+	const char *client_sigalgs=NULL;
         tlsextctx tlsextcbp = 
         {NULL,0};
 # ifndef OPENSSL_NO_NEXTPROTONEG
@@ -1218,7 +1218,7 @@ bad:
 
 #ifndef OPENSSL_NO_TLSEXT
 	if (curves != NULL)
-		if(!SSL_CTX_set1_curves_list(ctx,curves)) {
+		if(!SSL_CTX_set1_curves_list(ctx, curves)) {
 		BIO_printf(bio_err,"error setting curve list\n");
 		ERR_print_errors(bio_err);
 		goto end;
