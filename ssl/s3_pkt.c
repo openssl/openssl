@@ -321,6 +321,8 @@ again:
 		s->rstate=SSL_ST_READ_BODY;
 
 		p=s->packet;
+		if (s->msg_callback)
+			s->msg_callback(0, 0, SSL3_RT_HEADER, p, 5, s, s->msg_callback_arg);
 
 		/* Pull apart the header into the SSL3_RECORD */
 		rr->type= *(p++);
@@ -821,6 +823,9 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 
 	/* record length after mac and block padding */
 	s2n(wr->length,plen);
+
+	if (s->msg_callback)
+		s->msg_callback(1, 0, SSL3_RT_HEADER, plen - 5, 5, s, s->msg_callback_arg);
 
 	/* we should now have
 	 * wr->data pointing to the encrypted data, which is

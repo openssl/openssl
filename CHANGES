@@ -4,6 +4,12 @@
 
  Changes between 1.0.1 and 1.0.2 [xx XXX xxxx]
 
+  *) SSL/TLS tracing code. This parses out SSL/TLS records using the
+     message callback and prints the results. Needs compile time option
+     "enable-ssl-trace". New options to s_client and s_server to enable
+     tracing.
+     [Steve Henson]
+
   *) New ctrl and macro to retrieve supported points extensions.
      Print out extension in s_server.
      [Steve Henson]

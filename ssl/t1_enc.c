@@ -556,6 +556,30 @@ printf("which = %04X\nmac key=",which);
 		EVP_CIPHER_CTX_ctrl(dd,EVP_CTRL_AEAD_SET_MAC_KEY,
 				*mac_secret_size,mac_secret);
 
+#ifdef OPENSSL_SSL_TRACE_CRYPTO
+	if (s->msg_callback)
+		{
+		int wh = which & SSL3_CC_WRITE ? TLS1_RT_CRYPTO_WRITE : 0;
+		if (*mac_secret_size)
+			s->msg_callback(2, s->version, wh | TLS1_RT_CRYPTO_MAC,
+						mac_secret, *mac_secret_size,
+						s, s->msg_callback_arg);
+		if (c->key_len)
+			s->msg_callback(2, s->version, wh | TLS1_RT_CRYPTO_KEY,
+						key, c->key_len,
+						s, s->msg_callback_arg);
+		if (k)
+			{
+			if (EVP_CIPHER_mode(c) == EVP_CIPH_GCM_MODE)
+				wh |= TLS1_RT_CRYPTO_FIXED_IV;
+			else
+				wh |= TLS1_RT_CRYPTO_IV;
+			s->msg_callback(2, s->version, wh, iv, k,
+						s, s->msg_callback_arg);
+			}
+		}
+#endif
+
 #ifdef TLS_DEBUG
 printf("which = %04X\nkey=",which);
 { int z; for (z=0; z<EVP_CIPHER_key_length(c); z++) printf("%02X%c",key[z],((z+1)%16)?' ':'\n'); }
@@ -1116,6 +1140,24 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
 	BIO_dump_fp(stderr, (char *)s->s3->server_random, SSL3_RANDOM_SIZE);
 	fprintf(stderr, "Master Secret:\n");
 	BIO_dump_fp(stderr, (char *)s->session->master_key, SSL3_MASTER_SECRET_SIZE);
+#endif
+
+#ifdef OPENSSL_SSL_TRACE_CRYPTO
+	if (s->msg_callback)
+		{
+		s->msg_callback(2, s->version, TLS1_RT_CRYPTO_PREMASTER,
+						p, len, s, s->msg_callback_arg);
+		s->msg_callback(2, s->version, TLS1_RT_CRYPTO_CLIENT_RANDOM,
+					s->s3->client_random, SSL3_RANDOM_SIZE,
+						s, s->msg_callback_arg);
+		s->msg_callback(2, s->version, TLS1_RT_CRYPTO_SERVER_RANDOM,
+					s->s3->server_random, SSL3_RANDOM_SIZE,
+					s, s->msg_callback_arg);
+		s->msg_callback(2, s->version, TLS1_RT_CRYPTO_MASTER,
+					s->session->master_key,
+					SSL3_MASTER_SECRET_SIZE,
+					s, s->msg_callback_arg);
+		}
 #endif
 
 #ifdef KSSL_DEBUG
