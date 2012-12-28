@@ -810,13 +810,15 @@ static const char *lookup_id(int id)
 static int fail_id = -1;
 static int fail_sub = -1;
 static int fail_key = -1;
+static int sub_num = -1, sub_count = -1;
+static int sub_fail_num = -1;
 
 static int st_err, post_quiet = 0;
 
 static int post_cb(int op, int id, int subid, void *ex)
 	{
 	const char *idstr, *exstr = "";
-	char asctmp[20];
+	char asctmp[20], teststr[80];
 	int keytype = -1;
 	int exp_fail = 0;
 #ifdef FIPS_POST_TIME
@@ -935,6 +937,16 @@ static int post_cb(int op, int id, int subid, void *ex)
 		&& (fail_sub == -1 || fail_sub == subid))
 			exp_fail = 1;
 
+	if (sub_num > 0)
+		{
+		if (sub_fail_num == sub_num)
+			exp_fail = 1;
+		sprintf(teststr, "\t\t%s %s (POST subtest #%d) test",
+						idstr, exstr, sub_num);
+		}
+	else
+		sprintf(teststr, "\t\t%s %s test", idstr, exstr);
+
 	switch(op)
 		{
 		case FIPS_POST_BEGIN:
@@ -945,9 +957,16 @@ static int post_cb(int op, int id, int subid, void *ex)
 		clock_gettime(CLOCK_REALTIME, &tstart);
 #endif
 		printf("\tPOST started\n");
+		sub_num = 1;
 		break;
 
 		case FIPS_POST_END:
+		if (sub_count == -1)
+			sub_count = sub_num;
+		else if (sub_num != sub_count)
+			printf("Inconsistent POST count %d != %d\n",
+							sub_num, sub_count);
+		sub_num = -1;
 		printf("\tPOST %s\n", id ? "Success" : "Failed");
 #ifdef FIPS_POST_TIME
 		clock_gettime(CLOCK_REALTIME, &tend);
@@ -959,21 +978,22 @@ static int post_cb(int op, int id, int subid, void *ex)
 
 		case FIPS_POST_STARTED:
 		if (!post_quiet && !exp_fail)
-			printf("\t\t%s %s test started\n", idstr, exstr);
+			printf("%s started\n", teststr);
 #ifdef FIPS_POST_TIME
 		clock_gettime(CLOCK_REALTIME, &start);
 #endif
 		break;
 
 		case FIPS_POST_SUCCESS:
+		if (sub_num > 0)
+			sub_num++;
 		if (exp_fail)
 			{
-			printf("\t\t%s %s test OK but should've failed\n",
-								idstr, exstr);
+			printf("%s OK but should've failed\n", teststr);
 			st_err++;
 			}
 		else if (!post_quiet)
-			printf("\t\t%s %s test OK\n", idstr, exstr);
+			printf("%s OK\n", teststr);
 #ifdef FIPS_POST_TIME
 		clock_gettime(CLOCK_REALTIME, &end);
 		printf("\t\t\tTook %f seconds\n",
@@ -983,15 +1003,13 @@ static int post_cb(int op, int id, int subid, void *ex)
 		break;
 
 		case FIPS_POST_FAIL:
+		if (sub_num > 0)
+			sub_num++;
 		if (exp_fail)
-			{
-			printf("\t\t%s %s test failed as expected\n",
-							idstr, exstr);
-			}
+			printf("%s failed as expected\n", teststr);
 		else
 			{
-			printf("\t\t%s %s test Failed Incorrectly!!\n",
-							idstr, exstr);
+			printf("%s Failed Incorrectly!!\n", teststr);
 			st_err++;
 			}
 		break;
@@ -999,7 +1017,7 @@ static int post_cb(int op, int id, int subid, void *ex)
 		case FIPS_POST_CORRUPT:
 		if (exp_fail)
 			{
-			printf("\t\t%s %s test failure induced\n", idstr, exstr);
+			printf("%s failure induced\n", teststr);
 			return 0;
 			}
 		break;
@@ -1008,39 +1026,11 @@ static int post_cb(int op, int id, int subid, void *ex)
 	return 1;
 	}
 
-/* Test POST induced failures */
-
-typedef struct 
-	{
-	const char *name;
-	int id, subid, keyid;
-	} fail_list;
-
-static fail_list flist[] =
-	{
-	{"Integrity", FIPS_TEST_INTEGRITY, -1, -1},
-	{"AES", FIPS_TEST_CIPHER, NID_aes_128_ecb, -1},
-	{"DES3", FIPS_TEST_CIPHER, NID_des_ede3_ecb, -1},
-	{"AES-GCM", FIPS_TEST_GCM, -1, -1},
-	{"AES-CCM", FIPS_TEST_CCM, -1, -1},
-	{"AES-XTS", FIPS_TEST_XTS, -1, -1},
-	{"Digest", FIPS_TEST_DIGEST, -1, -1},
-	{"HMAC", FIPS_TEST_HMAC, -1, -1},
-	{"CMAC", FIPS_TEST_CMAC, -1, -1},
-	{"DRBG", FIPS_TEST_DRBG, -1, -1},
-	{"X9.31 PRNG", FIPS_TEST_X931, -1, -1},
-	{"RSA", FIPS_TEST_SIGNATURE, -1, EVP_PKEY_RSA},
-	{"DSA", FIPS_TEST_SIGNATURE, -1, EVP_PKEY_DSA},
-	{"ECDSA", FIPS_TEST_SIGNATURE, -1, EVP_PKEY_EC},
-	{"ECDH", FIPS_TEST_ECDH, -1, -1},
-	{NULL, -1, -1, -1}
-	};
-
 static int do_fail_all(int fullpost, int fullerr)
 	{
-	fail_list *ftmp;
 	int rv;
 	size_t i;
+	int sub_fail;
 	RSA *rsa = NULL;
 	DSA *dsa = NULL;
 	DRBG_CTX *dctx = NULL, *defctx = NULL;
@@ -1052,12 +1042,11 @@ static int do_fail_all(int fullpost, int fullerr)
 	if (!fullerr)
 		no_err = 1;
 	FIPS_module_mode_set(0, NULL);
-	for (ftmp = flist; ftmp->name; ftmp++)
+	for (sub_fail = 1; sub_fail < sub_count; sub_fail++)
 		{
-		printf("    Testing induced failure of %s test\n", ftmp->name);
-		fail_id = ftmp->id;
-		fail_sub = ftmp->subid;
-		fail_key = ftmp->keyid;
+		sub_fail_num = sub_fail;
+		printf("    Testing induced failure of POST subtest %d\n",
+								sub_fail);
 		rv = FIPS_module_mode_set(1, FIPS_AUTH_USER_PASS);
 		if (rv)
 			{
@@ -1065,6 +1054,7 @@ static int do_fail_all(int fullpost, int fullerr)
 			st_err++;
 			}
 		}
+	sub_fail_num = -1;
 	printf("    Testing induced failure of RSA keygen test\n");
 	/* NB POST will succeed with a pairwise test failures as
 	 * it is not used during POST.

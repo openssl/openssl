@@ -143,7 +143,7 @@ int FIPS_selftest_ecdsa()
 	EC_KEY *ec = NULL;
 	BIGNUM *x = NULL, *y = NULL, *d = NULL;
 	EVP_PKEY pk;
-	int rv = 0;
+	int rv = 0, test_err = 0;
 	size_t i;
 
 	for (i = 0; i < sizeof(test_ec_data)/sizeof(EC_SELFTEST_DATA); i++)
@@ -173,12 +173,12 @@ int FIPS_selftest_ecdsa()
 		if (!fips_pkey_signature_test(FIPS_TEST_SIGNATURE, &pk, NULL, 0,
 						NULL, 0, EVP_sha512(), 0,
 						ecd->name))
-			goto err;
+			test_err = 1;
 		EC_KEY_free(ec);
 		ec = NULL;
 		}
-
-	rv = 1;
+	if (test_err == 0)
+		rv = 1;
 
 	err:
 

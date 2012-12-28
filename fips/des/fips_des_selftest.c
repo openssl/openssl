@@ -83,7 +83,7 @@ static const struct
 
 int FIPS_selftest_des()
     {
-    int n, ret = 0;
+    int n, ret = 1;
     EVP_CIPHER_CTX ctx;
     FIPS_cipher_ctx_init(&ctx);
 
@@ -93,10 +93,8 @@ int FIPS_selftest_des()
 	if (!fips_cipher_test(FIPS_TEST_CIPHER, &ctx, EVP_des_ede3_ecb(),
 				tests3[n].key, NULL,
 				tests3[n].plaintext, tests3[n].ciphertext, 8))
-		goto err;
+		ret = 0;
 	}
-    ret = 1;
-    err:
     FIPS_cipher_ctx_cleanup(&ctx);
     if (ret == 0)
 	    FIPSerr(FIPS_F_FIPS_SELFTEST_DES,FIPS_R_SELFTEST_FAILED);
