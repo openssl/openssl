@@ -4,6 +4,10 @@
 
  Changes between 1.0.1 and 1.0.2 [xx XXX xxxx]
 
+  *) SSL_CONF* functions. These provide a common framework for application
+     configuration using configuration files or command lines.
+     [Steve Henson]
+
   *) SSL/TLS tracing code. This parses out SSL/TLS records using the
      message callback and prints the results. Needs compile time option
      "enable-ssl-trace". New options to s_client and s_server to enable
