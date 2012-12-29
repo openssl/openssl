@@ -337,3 +337,12 @@ S_SES_get_tlsx_auz_srvr_aud_prf         375	EXIST:VMS:FUNCTION:TLSEXT
 SSL_check_chain                         376	EXIST::FUNCTION:TLSEXT
 SSL_certs_clear                         377	EXIST::FUNCTION:
 SSL_trace                               378	EXIST::FUNCTION:SSL_TRACE
+SSL_CONF_cmd_argv                       379	EXIST::FUNCTION:
+SSL_CONF_cmd                            380	EXIST::FUNCTION:
+SSL_CONF_CTX_set_ssl_ctx                381	EXIST::FUNCTION:
+SSL_CONF_CTX_clear_flags                382	EXIST::FUNCTION:
+SSL_CONF_CTX_set1_prefix                383	EXIST::FUNCTION:
+SSL_CONF_CTX_new                        384	EXIST::FUNCTION:
+SSL_CONF_CTX_set_flags                  385	EXIST::FUNCTION:
+SSL_CONF_CTX_set_ssl                    386	EXIST::FUNCTION:
+SSL_CONF_CTX_free                       387	EXIST::FUNCTION:
