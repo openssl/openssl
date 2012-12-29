@@ -273,9 +273,6 @@ static int s_server_session_id_context = 1; /* anything will do */
 static const char *s_cert_file=TEST_CERT,*s_key_file=NULL, *s_chain_file=NULL;
 #ifndef OPENSSL_NO_TLSEXT
 static const char *s_cert_file2=TEST_CERT2,*s_key_file2=NULL;
-static const char *curves=NULL;
-static const char *sigalgs=NULL;
-static const char *client_sigalgs=NULL;
 #endif
 static char *s_dcert_file=NULL,*s_dkey_file=NULL, *s_dchain_file=NULL;
 #ifdef FIONBIO
@@ -446,7 +443,6 @@ static void s_server_init(void)
 	s_key_file=NULL;
 	s_chain_file=NULL;
 #ifndef OPENSSL_NO_TLSEXT
-	curves=NULL;
 	s_cert_file2=TEST_CERT2;
 	s_key_file2=NULL;
 	ctx2=NULL;
@@ -953,10 +949,8 @@ int MAIN(int argc, char *argv[])
 #ifndef OPENSSL_NO_ECDH
 	char *named_curve = NULL;
 #endif
-	int badop=0,bugs=0;
+	int badop=0;
 	int ret=1;
-	int off=0;
-	unsigned int cert_flags = 0;
 	int build_chain = 0;
 	int no_tmp_rsa=0,no_dhe=0,no_ecdhe=0,nocert=0;
 	int state=0;
@@ -990,6 +984,8 @@ int MAIN(int argc, char *argv[])
 	char *srp_verifier_file = NULL;
 #endif
 	SSL_EXCERT *exc = NULL;
+	SSL_CONF_CTX *cctx = NULL;
+	STACK_OF(OPENSSL_STRING) *ssl_args = NULL;
 	meth=SSLv23_server_method();
 
 	local_argc=argc;
@@ -1005,6 +1001,12 @@ int MAIN(int argc, char *argv[])
 
 	if (!load_config(bio_err, NULL))
 		goto end;
+
+	cctx = SSL_CONF_CTX_new();
+	if (!cctx)
+		goto end;
+	SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_SERVER);
+	SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_CMDLINE);
 
 	verify_depth=0;
 #ifdef FIONBIO
@@ -1156,17 +1158,14 @@ int MAIN(int argc, char *argv[])
 				goto bad;
 			continue;
 			}
+		else if (args_ssl(&argv, &argc, cctx, &badarg, bio_err, &ssl_args))
+			{
+			if (badarg)
+				goto bad;
+			continue;
+			}
 		else if (strcmp(*argv,"-verify_return_error") == 0)
 			verify_return_error = 1;
-		else if	(strcmp(*argv,"-serverpref") == 0)
-			{ off|=SSL_OP_CIPHER_SERVER_PREFERENCE; }
-		else if (strcmp(*argv,"-legacy_renegotiation") == 0)
-			off|=SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION;
-		else if	(strcmp(*argv,"-cipher") == 0)
-			{
-			if (--argc < 1) goto bad;
-			cipher= *(++argv);
-			}
 		else if	(strcmp(*argv,"-build_chain") == 0)
 			build_chain = 1;
 		else if	(strcmp(*argv,"-CAfile") == 0)
@@ -1227,21 +1226,6 @@ int MAIN(int argc, char *argv[])
 				goto bad;
 				}
 			}
-		else if	(strcmp(*argv,"-curves") == 0)
-			{
-			if (--argc < 1) goto bad;
-			curves= *(++argv);
-			}
-		else if	(strcmp(*argv,"-sigalgs") == 0)
-			{
-			if (--argc < 1) goto bad;
-			sigalgs= *(++argv);
-			}
-		else if	(strcmp(*argv,"-client_sigalgs") == 0)
-			{
-			if (--argc < 1) goto bad;
-			client_sigalgs= *(++argv);
-			}
 #endif
 		else if	(strcmp(*argv,"-msg") == 0)
 			{ s_msg=1; }
@@ -1262,8 +1246,6 @@ int MAIN(int argc, char *argv[])
 			{ s_crlf=1; }
 		else if	(strcmp(*argv,"-quiet") == 0)
 			{ s_quiet=1; }
-		else if	(strcmp(*argv,"-bugs") == 0)
-			{ bugs=1; }
 		else if	(strcmp(*argv,"-no_tmp_rsa") == 0)
 			{ no_tmp_rsa=1; }
 		else if	(strcmp(*argv,"-no_dhe") == 0)
@@ -1311,22 +1293,6 @@ int MAIN(int argc, char *argv[])
 			{ www=2; }
 		else if	(strcmp(*argv,"-HTTP") == 0)
 			{ www=3; }
-		else if	(strcmp(*argv,"-no_ssl2") == 0)
-			{ off|=SSL_OP_NO_SSLv2; }
-		else if	(strcmp(*argv,"-no_ssl3") == 0)
-			{ off|=SSL_OP_NO_SSLv3; }
-		else if	(strcmp(*argv,"-no_tls1") == 0)
-			{ off|=SSL_OP_NO_TLSv1; }
-		else if	(strcmp(*argv,"-no_tls1_1") == 0)
-			{ off|=SSL_OP_NO_TLSv1_1; }
-		else if	(strcmp(*argv,"-no_tls1_2") == 0)
-			{ off|=SSL_OP_NO_TLSv1_2; }
-		else if	(strcmp(*argv,"-no_comp") == 0)
-			{ off|=SSL_OP_NO_COMPRESSION; }
-#ifndef OPENSSL_NO_TLSEXT
-		else if	(strcmp(*argv,"-no_ticket") == 0)
-			{ off|=SSL_OP_NO_TICKET; }
-#endif
 #ifndef OPENSSL_NO_SSL2
 		else if	(strcmp(*argv,"-ssl2") == 0)
 			{ meth=SSLv2_server_method(); }
@@ -1425,8 +1391,6 @@ int MAIN(int argc, char *argv[])
 			keymatexportlen=atoi(*(++argv));
 			if (keymatexportlen == 0) goto bad;
 			}
-		else if (strcmp(*argv, "-cert_strict") == 0)
-			cert_flags |= SSL_CERT_FLAG_TLS_STRICT;
 		else
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);
@@ -1646,10 +1610,7 @@ bad:
 		BIO_printf(bio_err,"id_prefix '%s' set.\n", session_id_prefix);
 		}
 	SSL_CTX_set_quiet_shutdown(ctx,1);
-	if (bugs) SSL_CTX_set_options(ctx,SSL_OP_ALL);
 	if (hack) SSL_CTX_set_options(ctx,SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG);
-	SSL_CTX_set_options(ctx,off);
-	if (cert_flags) SSL_CTX_set_cert_flags(ctx, cert_flags);
 	if (exc) ssl_ctx_set_excert(ctx, exc);
 	/* DTLS: partial reads end up discarding unread UDP bytes :-( 
 	 * Setting read ahead solves this problem.
@@ -1686,6 +1647,9 @@ bad:
 		}
 	if (vpm)
 		SSL_CTX_set1_param(ctx, vpm);
+
+	if (!args_ssl_call(ctx, bio_err, cctx, ssl_args, no_ecdhe))
+		goto end;
 
 	if (!ssl_load_stores(ctx, vfyCApath, vfyCAfile, chCApath, chCAfile))
 		{
@@ -1726,10 +1690,7 @@ bad:
 			BIO_printf(bio_err,"id_prefix '%s' set.\n", session_id_prefix);
 			}
 		SSL_CTX_set_quiet_shutdown(ctx2,1);
-		if (bugs) SSL_CTX_set_options(ctx2,SSL_OP_ALL);
 		if (hack) SSL_CTX_set_options(ctx2,SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG);
-		SSL_CTX_set_options(ctx2,off);
-		if (cert_flags) SSL_CTX_set_cert_flags(ctx2, cert_flags);
 		if (exc) ssl_ctx_set_excert(ctx2, exc);
 		/* DTLS: partial reads end up discarding unread UDP bytes :-( 
 		 * Setting read ahead solves this problem.
@@ -1750,6 +1711,9 @@ bad:
 			}
 		if (vpm)
 			SSL_CTX_set1_param(ctx2, vpm);
+
+		if (!args_ssl_call(ctx2, bio_err, cctx, ssl_args, no_ecdhe))
+			goto end;
 		}
 
 # ifndef OPENSSL_NO_NEXTPROTONEG
@@ -1948,53 +1912,6 @@ bad:
 			}
 #endif
 		}
-#ifndef OPENSSL_NO_TLSEXT
-	if (curves)
-		{
-		if(!SSL_CTX_set1_curves_list(ctx,curves))
-			{
-			BIO_printf(bio_err,"error setting curves list\n");
-			ERR_print_errors(bio_err);
-			goto end;
-			}
-		if(ctx2 && !SSL_CTX_set1_curves_list(ctx2,curves))
-			{
-			BIO_printf(bio_err,"error setting curves list\n");
-			ERR_print_errors(bio_err);
-			goto end;
-			}
-		}
-	if (sigalgs)
-		{
-		if(!SSL_CTX_set1_sigalgs_list(ctx,sigalgs))
-			{
-			BIO_printf(bio_err,"error setting signature algorithms\n");
-			ERR_print_errors(bio_err);
-			goto end;
-			}
-		if(ctx2 && !SSL_CTX_set1_sigalgs_list(ctx2,sigalgs))
-			{
-			BIO_printf(bio_err,"error setting signature algorithms\n");
-			ERR_print_errors(bio_err);
-			goto end;
-			}
-		}
-	if (client_sigalgs)
-		{
-		if(!SSL_CTX_set1_client_sigalgs_list(ctx,client_sigalgs))
-			{
-			BIO_printf(bio_err,"error setting client signature algorithms\n");
-			ERR_print_errors(bio_err);
-			goto end;
-			}
-		if(ctx2 && !SSL_CTX_set1_client_sigalgs_list(ctx2,client_sigalgs))
-			{
-			BIO_printf(bio_err,"error setting client signature algorithms\n");
-			ERR_print_errors(bio_err);
-			goto end;
-			}
-		}
-#endif
 	SSL_CTX_set_verify(ctx,s_server_verify,verify_callback);
 	SSL_CTX_set_session_id_context(ctx,(void*)&s_server_session_id_context,
 		sizeof s_server_session_id_context);
@@ -2090,6 +2007,10 @@ end:
 		BIO_free(authz_in);
 #endif
 	ssl_excert_free(exc);
+	if (ssl_args)
+		sk_OPENSSL_STRING_free(ssl_args);
+	if (cctx)
+		SSL_CONF_CTX_free(cctx);
 	if (bio_s_out != NULL)
 		{
 		BIO_free(bio_s_out);

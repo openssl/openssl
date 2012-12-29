@@ -191,3 +191,9 @@ void ssl_excert_free(SSL_EXCERT *exc);
 int args_excert(char ***pargs, int *pargc,
 			int *badarg, BIO *err, SSL_EXCERT **pexc);
 int load_excert(SSL_EXCERT **pexc, BIO *err);
+#ifdef HEADER_SSL_H
+int args_ssl(char ***pargs, int *pargc, SSL_CONF_CTX *cctx,
+			int *badarg, BIO *err, STACK_OF(OPENSSL_STRING) **pstr);
+int args_ssl_call(SSL_CTX *ctx, BIO *err, SSL_CONF_CTX *cctx,
+				STACK_OF(OPENSSL_STRING) *str, int no_ecdhe);
+#endif

@@ -4,6 +4,9 @@
 
  Changes between 1.0.1 and 1.0.2 [xx XXX xxxx]
 
+  *) Delegate command line handling in s_client/s_server to SSL_CONF APIs.
+     [Steve Henson]
+
   *) SSL_CONF* functions. These provide a common framework for application
      configuration using configuration files or command lines.
      [Steve Henson]
