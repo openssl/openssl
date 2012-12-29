@@ -940,9 +940,10 @@ int ssl3_get_client_hello(SSL *s)
 	unsigned int cookie_len;
 	long n;
 	unsigned long id;
-	unsigned char *p,*d,*q;
+	unsigned char *p,*d;
 	SSL_CIPHER *c;
 #ifndef OPENSSL_NO_COMP
+	unsigned char *q;
 	SSL_COMP *comp=NULL;
 #endif
 	STACK_OF(SSL_CIPHER) *ciphers=NULL;
@@ -1178,7 +1179,9 @@ int ssl3_get_client_hello(SSL *s)
 		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_LENGTH_MISMATCH);
 		goto f_err;
 		}
+#ifndef OPENSSL_NO_COMP
 	q=p;
+#endif
 	for (j=0; j<i; j++)
 		{
 		if (p[j] == 0) break;

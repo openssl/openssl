@@ -620,8 +620,8 @@ int main(int argc, char *argv[])
 	int no_psk = 0;
 	int print_time = 0;
 	clock_t s_time = 0, c_time = 0;
-	int comp = 0;
 #ifndef OPENSSL_NO_COMP
+	int comp = 0;
 	COMP_METHOD *cm = NULL;
 	STACK_OF(SSL_COMP) *ssl_comp_methods = NULL;
 #endif
@@ -815,6 +815,7 @@ int main(int argc, char *argv[])
 			{
 			print_time = 1;
 			}
+#ifndef OPENSSL_NO_COMP
 		else if	(strcmp(*argv,"-zlib") == 0)
 			{
 			comp = COMP_ZLIB;
@@ -823,6 +824,7 @@ int main(int argc, char *argv[])
 			{
 			comp = COMP_RLE;
 			}
+#endif
 		else if	(strcmp(*argv,"-named_curve") == 0)
 			{
 			if (--argc < 1) goto bad;
