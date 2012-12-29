@@ -195,5 +195,5 @@ int load_excert(SSL_EXCERT **pexc, BIO *err);
 int args_ssl(char ***pargs, int *pargc, SSL_CONF_CTX *cctx,
 			int *badarg, BIO *err, STACK_OF(OPENSSL_STRING) **pstr);
 int args_ssl_call(SSL_CTX *ctx, BIO *err, SSL_CONF_CTX *cctx,
-				STACK_OF(OPENSSL_STRING) *str, int no_ecdhe);
+		STACK_OF(OPENSSL_STRING) *str, int no_ecdhe, int no_jpake);
 #endif

@@ -930,6 +930,9 @@ int MAIN(int, char **);
 
 #ifndef OPENSSL_NO_JPAKE
 static char *jpake_secret = NULL;
+#define no_jpake !jpake_secret
+#else
+#define no_jpake 1
 #endif
 #ifndef OPENSSL_NO_SRP
 	static srpsrvparm srp_callback_parm;
@@ -1417,14 +1420,7 @@ bad:
 			goto end;
 			}
 		psk_identity = "JPAKE";
-		if (cipher)
-			{
-			BIO_printf(bio_err, "JPAKE sets cipher to PSK\n");
-			goto end;
-			}
-		cipher = "PSK";
 		}
-
 #endif
 
 	SSL_load_error_strings();
@@ -1648,7 +1644,7 @@ bad:
 	if (vpm)
 		SSL_CTX_set1_param(ctx, vpm);
 
-	if (!args_ssl_call(ctx, bio_err, cctx, ssl_args, no_ecdhe))
+	if (!args_ssl_call(ctx, bio_err, cctx, ssl_args, no_ecdhe, no_jpake))
 		goto end;
 
 	if (!ssl_load_stores(ctx, vfyCApath, vfyCAfile, chCApath, chCAfile))
@@ -1712,7 +1708,7 @@ bad:
 		if (vpm)
 			SSL_CTX_set1_param(ctx2, vpm);
 
-		if (!args_ssl_call(ctx2, bio_err, cctx, ssl_args, no_ecdhe))
+		if (!args_ssl_call(ctx2, bio_err, cctx, ssl_args, no_ecdhe, no_jpake))
 			goto end;
 		}
 
@@ -2011,6 +2007,10 @@ end:
 		sk_OPENSSL_STRING_free(ssl_args);
 	if (cctx)
 		SSL_CONF_CTX_free(cctx);
+#ifndef OPENSSL_NO_JPAKE
+	if (jpake_secret && psk_key)
+		OPENSSL_free(psk_key);
+#endif
 	if (bio_s_out != NULL)
 		{
 		BIO_free(bio_s_out);

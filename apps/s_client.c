@@ -618,7 +618,10 @@ int MAIN(int argc, char **argv)
 	int enable_timeouts = 0 ;
 	long socket_mtu = 0;
 #ifndef OPENSSL_NO_JPAKE
-	char *jpake_secret = NULL;
+static char *jpake_secret = NULL;
+#define no_jpake !jpake_secret
+#else
+#define no_jpake 1
 #endif
 #ifndef OPENSSL_NO_SRP
 	char * srppass = NULL;
@@ -997,12 +1000,6 @@ bad:
 			goto end;
 			}
 		psk_identity = "JPAKE";
-		if (cipher)
-			{
-			BIO_printf(bio_err, "JPAKE sets cipher to PSK\n");
-			goto end;
-			}
-		cipher = "PSK";
 		}
 #endif
 
@@ -1120,7 +1117,7 @@ bad:
 	if (vpm)
 		SSL_CTX_set1_param(ctx, vpm);
 
-	if (!args_ssl_call(ctx, bio_err, cctx, ssl_args, 1))
+	if (!args_ssl_call(ctx, bio_err, cctx, ssl_args, 1, no_jpake))
 		{
 		ERR_print_errors(bio_err);
 		goto end;
@@ -1932,6 +1929,10 @@ end:
 		sk_OPENSSL_STRING_free(ssl_args);
 	if (cctx)
 		SSL_CONF_CTX_free(cctx);
+#ifndef OPENSSL_NO_JPAKE
+	if (jpake_secret && psk_key)
+		OPENSSL_free(psk_key);
+#endif
 	if (cbuf != NULL) { OPENSSL_cleanse(cbuf,BUFSIZZ); OPENSSL_free(cbuf); }
 	if (sbuf != NULL) { OPENSSL_cleanse(sbuf,BUFSIZZ); OPENSSL_free(sbuf); }
 	if (mbuf != NULL) { OPENSSL_cleanse(mbuf,BUFSIZZ); OPENSSL_free(mbuf); }

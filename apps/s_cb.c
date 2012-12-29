@@ -1545,7 +1545,7 @@ int args_ssl(char ***pargs, int *pargc, SSL_CONF_CTX *cctx,
 	}
 
 int args_ssl_call(SSL_CTX *ctx, BIO *err, SSL_CONF_CTX *cctx,
-				STACK_OF(OPENSSL_STRING) *str, int no_ecdhe)
+		STACK_OF(OPENSSL_STRING) *str, int no_ecdhe, int no_jpake)
 	{
 	int i;
 	SSL_CONF_CTX_set_ssl_ctx(cctx, ctx);
@@ -1558,6 +1558,13 @@ int args_ssl_call(SSL_CTX *ctx, BIO *err, SSL_CONF_CTX *cctx,
 		 */
 		if (!no_ecdhe && !strcmp(param, "-named_curve"))
 			no_ecdhe = 1;
+#ifndef OPENSSL_NO_JPAKE
+		if (!no_jpake && !strcmp(param, "-cipher"))
+			{
+			BIO_puts(err, "JPAKE sets cipher to PSK\n");
+			return 0;
+			}
+#endif
 		if (SSL_CONF_cmd(cctx, param, value) <= 0)
 			{
 			BIO_printf(err, "Error with command: \"%s %s\"\n",
@@ -1579,5 +1586,16 @@ int args_ssl_call(SSL_CTX *ctx, BIO *err, SSL_CONF_CTX *cctx,
 			return 0;
 			}
 		}
+#ifndef OPENSSL_NO_JPAKE
+	if (!no_jpake)
+		{
+		if (SSL_CONF_cmd(cctx, "-cipher", "PSK") <= 0)
+			{
+			BIO_puts(err, "Error setting cipher to PSK\n");
+			ERR_print_errors(err);
+			return 0;
+			}
+		}
+#endif
 	return 1;
 	}
