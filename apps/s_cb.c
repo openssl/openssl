@@ -1599,3 +1599,33 @@ int args_ssl_call(SSL_CTX *ctx, BIO *err, SSL_CONF_CTX *cctx,
 #endif
 	return 1;
 	}
+
+int ssl_load_stores(SSL_CTX *ctx,
+			const char *vfyCApath, const char *vfyCAfile,
+			const char *chCApath, const char *chCAfile)
+	{
+	X509_STORE *vfy = NULL, *ch = NULL;
+	int rv = 0;
+	if (vfyCApath || vfyCAfile)
+		{
+		vfy = X509_STORE_new();
+		if (!X509_STORE_load_locations(vfy, vfyCAfile, vfyCApath))
+			goto err;
+		SSL_CTX_set1_verify_cert_store(ctx, vfy);
+		}
+	if (chCApath || chCAfile)
+		{
+		ch = X509_STORE_new();
+		if (!X509_STORE_load_locations(ch, chCAfile, chCApath))
+			goto err;
+		/*X509_STORE_set_verify_cb(ch, verify_callback);*/
+		SSL_CTX_set1_chain_cert_store(ctx, ch);
+		}
+	rv = 1;
+	err:
+	if (vfy)
+		X509_STORE_free(vfy);
+	if (ch)
+		X509_STORE_free(ch);
+	return rv;
+	}

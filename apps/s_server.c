@@ -212,9 +212,6 @@ static int init_ssl_connection(SSL *s);
 static void print_stats(BIO *bp,SSL_CTX *ctx);
 static int generate_session_id(const SSL *ssl, unsigned char *id,
 				unsigned int *id_len);
-static int ssl_load_stores(SSL_CTX *sctx,
-			const char *vfyCApath, const char *vfyCAfile,
-			const char *chCApath, const char *chCAfile);
 #ifndef OPENSSL_NO_DH
 static DH *load_dh_param(const char *dhfile);
 static DH *get_dh512(void);
@@ -3121,34 +3118,4 @@ static int generate_session_id(const SSL *ssl, unsigned char *id,
 	if(count >= MAX_SESSION_ID_ATTEMPTS)
 		return 0;
 	return 1;
-	}
-
-static int ssl_load_stores(SSL_CTX *sctx,
-			const char *vfyCApath, const char *vfyCAfile,
-			const char *chCApath, const char *chCAfile)
-	{
-	X509_STORE *vfy = NULL, *ch = NULL;
-	int rv = 0;
-	if (vfyCApath || vfyCAfile)
-		{
-		vfy = X509_STORE_new();
-		if (!X509_STORE_load_locations(vfy, vfyCAfile, vfyCApath))
-			goto err;
-		SSL_CTX_set1_verify_cert_store(ctx, vfy);
-		}
-	if (chCApath || chCAfile)
-		{
-		ch = X509_STORE_new();
-		if (!X509_STORE_load_locations(ch, chCAfile, chCApath))
-			goto err;
-		/*X509_STORE_set_verify_cb(ch, verify_callback);*/
-		SSL_CTX_set1_chain_cert_store(ctx, ch);
-		}
-	rv = 1;
-	err:
-	if (vfy)
-		X509_STORE_free(vfy);
-	if (ch)
-		X509_STORE_free(ch);
-	return rv;
 	}
