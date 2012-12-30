@@ -575,7 +575,7 @@ int MAIN(int argc, char **argv)
 	char *passarg = NULL, *pass = NULL;
 	X509 *cert = NULL;
 	EVP_PKEY *key = NULL;
-	char *CApath=NULL,*CAfile=NULL,*cipher=NULL;
+	char *CApath=NULL,*CAfile=NULL;
 	int reconnect=0,badop=0,verify=SSL_VERIFY_NONE;
 	int crlf=0;
 	int write_tty,read_tty,write_ssl,read_ssl,tty_on,ssl_pending;
@@ -1163,12 +1163,6 @@ bad:
 #endif
 
 	if (state) SSL_CTX_set_info_callback(ctx,apps_ssl_info_callback);
-	if (cipher != NULL)
-		if(!SSL_CTX_set_cipher_list(ctx,cipher)) {
-		BIO_printf(bio_err,"error setting cipher list\n");
-		ERR_print_errors(bio_err);
-		goto end;
-	}
 #if 0
 	else
 		SSL_CTX_set_cipher_list(ctx,getenv("SSL_CIPHER"));
