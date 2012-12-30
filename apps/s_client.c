@@ -570,11 +570,12 @@ int MAIN(int argc, char **argv)
 	short port=PORT;
 	int full_log=1;
 	char *host=SSL_HOST_NAME;
-	char *cert_file=NULL,*key_file=NULL;
+	char *cert_file=NULL,*key_file=NULL,*chain_file=NULL;
 	int cert_format = FORMAT_PEM, key_format = FORMAT_PEM;
 	char *passarg = NULL, *pass = NULL;
 	X509 *cert = NULL;
 	EVP_PKEY *key = NULL;
+	STACK_OF(X509) *chain = NULL;
 	char *CApath=NULL,*CAfile=NULL;
 	int reconnect=0,badop=0,verify=SSL_VERIFY_NONE;
 	int crlf=0;
@@ -875,6 +876,11 @@ static char *jpake_secret = NULL;
 			if (--argc < 1) goto bad;
 			passarg = *(++argv);
 			}
+		else if	(strcmp(*argv,"-cert_chain") == 0)
+			{
+			if (--argc < 1) goto bad;
+			chain_file= *(++argv);
+			}
 		else if	(strcmp(*argv,"-key") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -1072,6 +1078,14 @@ bad:
 			}
 		}
 
+	if (chain_file)
+		{
+		chain = load_certs(bio_err, chain_file,FORMAT_PEM,
+					NULL, e, "client certificate chain");
+		if (!chain)
+			goto end;
+		}
+
 	if (!load_excert(&exc, bio_err))
 		goto end;
 
@@ -1178,7 +1192,7 @@ bad:
 		/* goto end; */
 		}
 
-	if (!set_cert_key_stuff(ctx,cert,key, NULL, build_chain))
+	if (!set_cert_key_stuff(ctx,cert,key,chain,build_chain))
 		goto end;
 
 #ifndef OPENSSL_NO_TLSEXT
@@ -1914,6 +1928,8 @@ end:
 		X509_free(cert);
 	if (key)
 		EVP_PKEY_free(key);
+	if (chain)
+		sk_X509_pop_free(chain, X509_free);
 	if (pass)
 		OPENSSL_free(pass);
 	if (vpm)
