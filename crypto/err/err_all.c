@@ -129,7 +129,9 @@ void ERR_load_crypto_strings(void)
 	ERR_load_ASN1_strings();
 	ERR_load_CONF_strings();
 	ERR_load_CRYPTO_strings();
+#ifndef OPENSSL_NO_COMP
 	ERR_load_COMP_strings();
+#endif
 #ifndef OPENSSL_NO_EC
 	ERR_load_EC_strings();
 #endif
@@ -161,6 +163,5 @@ void ERR_load_crypto_strings(void)
 #ifndef OPENSSL_NO_JPAKE
 	ERR_load_JPAKE_strings();
 #endif
-	ERR_load_COMP_strings();
 #endif
 	}
