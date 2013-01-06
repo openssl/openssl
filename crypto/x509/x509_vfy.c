@@ -156,7 +156,7 @@ static int x509_subject_cmp(X509 **a, X509 **b)
 static X509 *lookup_cert_match(X509_STORE_CTX *ctx, X509 *x)
 	{
 	STACK_OF(X509) *certs;
-	X509 *xtmp;
+	X509 *xtmp = NULL;
 	int i;
 	/* Lookup all certs with matching subject name */
 	certs = ctx->lookup_certs(ctx, X509_get_subject_name(x));
