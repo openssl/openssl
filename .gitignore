@@ -1,0 +1,56 @@
+# Object files
+*.o
+
+# Top level excludes
+/Makefile.bak
+/Makefile
+/*.a
+/include
+/*.pc
+/rehash.time
+
+# Most *.c files under test/ are symlinks
+test/*.c
+# Apart from these
+!test/asn1test.c
+!test/methtest.c
+!test/dummytest.c
+!test/igetest.c
+!test/r160test.c
+!test/fips_algvs.c
+
+# Certificate symbolic links
+*.0
+
+# Links under apps
+apps/CA.pl
+apps/md4.c
+
+
+# Auto generated headers
+crypto/buildinf.h
+crypto/opensslconf.h
+
+# Auto generated assembly language source files
+*.s
+!crypto/bn/asm/pa-risc2.s
+!crypto/bn/asm/pa-risc2W.s
+
+# Executables
+apps/openssl
+test/sha256t
+test/sha512t
+test/*test
+*.so*
+*.dylib*
+*.dll*
+# Exceptions
+!test/bctest
+!crypto/des/times/486-50.sol
+
+# Misc auto generated files
+tools/c_rehash
+test/evptests.txt
+lib
+Makefile.save
+*.bak
