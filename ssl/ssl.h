@@ -667,7 +667,8 @@ struct ssl_session_st
 /* Suite B 128 bit mode allowing 192 bit algorithms */
 #define SSL_CERT_FLAG_SUITEB_128_LOS		0x30000
 
-
+/* Perform all sorts of protocol violations for testing purposes */
+#define SSL_CERT_FLAG_BROKEN_PROTOCOL		0x10000000
 
 /* Flags for building certificate chains */
 /* Treat any existing certificates as untrusted CAs */

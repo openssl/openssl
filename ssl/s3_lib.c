@@ -2011,6 +2011,22 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	256,
 	256,
 	},
+#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
+	{
+	1,
+	"SCSV",
+	SSL3_CK_SCSV,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0
+	},
+#endif
 
 #ifndef OPENSSL_NO_ECDH
 	/* Cipher C001 */

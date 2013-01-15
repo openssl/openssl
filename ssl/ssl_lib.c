@@ -1436,6 +1436,7 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p,
 	SSL_CIPHER *c;
 	CERT *ct = s->cert;
 	unsigned char *q;
+	int no_scsv = s->renegotiate;
 	/* Set disabled masks for this session */
 	ssl_set_client_disabled(s);
 
@@ -1450,13 +1451,22 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p,
 			c->algorithm_mkey & ct->mask_k ||
 			c->algorithm_auth & ct->mask_a)
 			continue;
+#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
+		if (c->id == SSL3_CK_SCSV)
+			{
+			if (no_scsv)
+				continue;
+			else
+				no_scsv = 1;
+			}
+#endif
 		j = put_cb ? put_cb(c,p) : ssl_put_cipher_by_char(s,c,p);
 		p+=j;
 		}
 	/* If p == q, no ciphers and caller indicates an error. Otherwise
 	 * add SCSV if not renegotiating.
 	 */
-	if (p != q && !s->renegotiate)
+	if (p != q && !no_scsv)
 		{
 		static SSL_CIPHER scsv =
 			{
@@ -2389,6 +2399,14 @@ CERT_PKEY *ssl_get_server_send_pkey(const SSL *s)
 	c = s->cert;
 	ssl_set_cert_masks(c, s->s3->tmp.new_cipher);
 
+#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
+	/* Broken protocol test: return last used certificate: which may
+	 * mismatch the one expected.
+	 */
+	if (c->cert_flags & SSL_CERT_FLAG_BROKEN_PROTOCOL)
+		return c->key;
+#endif
+
 	i = ssl_get_server_cert_index(s);
 
 	/* This may or may not be an error. */
@@ -2407,6 +2425,15 @@ EVP_PKEY *ssl_get_sign_pkey(SSL *s,const SSL_CIPHER *cipher, const EVP_MD **pmd)
 
 	alg_a = cipher->algorithm_auth;
 	c=s->cert;
+
+#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
+	/* Broken protocol test: use last key: which may
+	 * mismatch the one expected.
+	 */
+	if (c->cert_flags & SSL_CERT_FLAG_BROKEN_PROTOCOL)
+		idx = c->key - c->pkeys;
+	else
+#endif
 
 	if ((alg_a & SSL_aDSS) &&
 		(c->pkeys[SSL_PKEY_DSA_SIGN].privatekey != NULL))
