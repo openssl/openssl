@@ -2786,11 +2786,11 @@ int ssl_check_clienthello_tlsext_late(SSL *s)
 	switch (ret)
 		{
 		case SSL_TLSEXT_ERR_ALERT_FATAL:
-			ssl3_send_alert(s, SSL3_AL_FATAL,al);
+			ssl3_send_alert(s, SSL3_AL_FATAL, al);
 			return -1;
 
 		case SSL_TLSEXT_ERR_ALERT_WARNING:
-			ssl3_send_alert(s, SSL3_AL_WARNING,al);
+			ssl3_send_alert(s, SSL3_AL_WARNING, al);
 			return 1; 
 
 		default:

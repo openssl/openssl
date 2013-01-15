@@ -233,7 +233,7 @@ int ssl3_get_finished(SSL *s, int a, int b)
 
 #ifdef OPENSSL_NO_NEXTPROTONEG
 	/* the mac has already been generated when we received the
-	 * change cipher spec message and is in s->s3->tmp.peer_finish_md.
+	 * change cipher spec message and is in s->s3->tmp.peer_finish_md
 	 */ 
 #endif
 
