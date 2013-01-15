@@ -111,8 +111,6 @@ eng_cnf.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 eng_cnf.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 eng_cnf.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 eng_cnf.o: ../cryptlib.h eng_cnf.c eng_int.h
-eng_cryptodev.o: ../../crypto/dh/dh.h ../../crypto/dsa/dsa.h
-eng_cryptodev.o: ../../crypto/err/err.h ../../crypto/rsa/rsa.h
 eng_cryptodev.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 eng_cryptodev.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 eng_cryptodev.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
