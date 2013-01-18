@@ -944,9 +944,6 @@ int MAIN(int argc, char *argv[])
 	char *vfyCApath=NULL,*vfyCAfile=NULL;
 	unsigned char *context = NULL;
 	char *dhfile = NULL;
-#ifndef OPENSSL_NO_ECDH
-	char *named_curve = NULL;
-#endif
 	int badop=0;
 	int ret=1;
 	int build_chain = 0;
@@ -1099,13 +1096,6 @@ int MAIN(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			dhfile = *(++argv);
 			}
-#ifndef OPENSSL_NO_ECDH		
-		else if	(strcmp(*argv,"-named_curve") == 0)
-			{
-			if (--argc < 1) goto bad;
-			named_curve = *(++argv);
-			}
-#endif
 		else if	(strcmp(*argv,"-dcertform") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -1801,58 +1791,6 @@ bad:
 		}
 #endif
 
-#ifndef OPENSSL_NO_ECDH
-	if (!no_ecdhe)
-		{
-		EC_KEY *ecdh=NULL;
-
-		if (named_curve && strcmp(named_curve, "auto"))
-			{
-			int nid = EC_curve_nist2nid(named_curve);
-			if (nid == NID_undef)
-				nid = OBJ_sn2nid(named_curve);
-			if (nid == 0)
-				{
-				BIO_printf(bio_err, "unknown curve name (%s)\n", 
-					named_curve);
-				goto end;
-				}
-			ecdh = EC_KEY_new_by_curve_name(nid);
-			if (ecdh == NULL)
-				{
-				BIO_printf(bio_err, "unable to create curve (%s)\n", 
-					named_curve);
-				goto end;
-				}
-			}
-
-		if (ecdh != NULL)
-			{
-			BIO_printf(bio_s_out,"Setting temp ECDH parameters\n");
-			}
-		else if (named_curve)
-			SSL_CTX_set_ecdh_auto(ctx, 1);
-		else
-			{
-			BIO_printf(bio_s_out,"Using default temp ECDH parameters\n");
-			ecdh = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
-			if (ecdh == NULL) 
-				{
-				BIO_printf(bio_err, "unable to create curve (nistp256)\n");
-				goto end;
-				}
-			}
-		(void)BIO_flush(bio_s_out);
-
-		SSL_CTX_set_tmp_ecdh(ctx,ecdh);
-#ifndef OPENSSL_NO_TLSEXT
-		if (ctx2) 
-			SSL_CTX_set_tmp_ecdh(ctx2,ecdh);
-#endif
-		EC_KEY_free(ecdh);
-		}
-#endif
-	
 	if (!set_cert_key_stuff(ctx, s_cert, s_key, s_chain, build_chain))
 		goto end;
 #ifndef OPENSSL_NO_TLSEXT
