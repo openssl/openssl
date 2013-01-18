@@ -264,7 +264,6 @@ static int accept_socket= -1;
 
 extern int verify_depth, verify_return_error;
 
-static char *cipher=NULL;
 static int s_server_verify=SSL_VERIFY_NONE;
 static int s_server_session_id_context = 1; /* anything will do */
 static const char *s_cert_file=TEST_CERT,*s_key_file=NULL, *s_chain_file=NULL;
@@ -431,7 +430,6 @@ static int MS_CALLBACK ssl_srp_server_param_cb(SSL *s, int *ad, void *arg)
 static void s_server_init(void)
 	{
 	accept_socket=-1;
-	cipher=NULL;
 	s_server_verify=SSL_VERIFY_NONE;
 	s_dcert_file=NULL;
 	s_dkey_file=NULL;
@@ -1928,23 +1926,6 @@ bad:
 		}
 #endif
 
-	if (cipher != NULL)
-		{
-		if(!SSL_CTX_set_cipher_list(ctx,cipher))
-			{
-			BIO_printf(bio_err,"error setting cipher list\n");
-			ERR_print_errors(bio_err);
-			goto end;
-			}
-#ifndef OPENSSL_NO_TLSEXT
-		if (ctx2 && !SSL_CTX_set_cipher_list(ctx2,cipher))
-			{
-			BIO_printf(bio_err,"error setting cipher list\n");
-			ERR_print_errors(bio_err);
-			goto end;
-			}
-#endif
-		}
 	SSL_CTX_set_verify(ctx,s_server_verify,verify_callback);
 	SSL_CTX_set_session_id_context(ctx,(void*)&s_server_session_id_context,
 		sizeof s_server_session_id_context);
