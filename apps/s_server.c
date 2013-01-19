@@ -264,7 +264,6 @@ static int accept_socket= -1;
 
 extern int verify_depth, verify_return_error;
 
-static char *cipher=NULL;
 static int s_server_verify=SSL_VERIFY_NONE;
 static int s_server_session_id_context = 1; /* anything will do */
 static const char *s_cert_file=TEST_CERT,*s_key_file=NULL, *s_chain_file=NULL;
@@ -431,7 +430,6 @@ static int MS_CALLBACK ssl_srp_server_param_cb(SSL *s, int *ad, void *arg)
 static void s_server_init(void)
 	{
 	accept_socket=-1;
-	cipher=NULL;
 	s_server_verify=SSL_VERIFY_NONE;
 	s_dcert_file=NULL;
 	s_dkey_file=NULL;
@@ -946,9 +944,6 @@ int MAIN(int argc, char *argv[])
 	char *vfyCApath=NULL,*vfyCAfile=NULL;
 	unsigned char *context = NULL;
 	char *dhfile = NULL;
-#ifndef OPENSSL_NO_ECDH
-	char *named_curve = NULL;
-#endif
 	int badop=0;
 	int ret=1;
 	int build_chain = 0;
@@ -986,6 +981,12 @@ int MAIN(int argc, char *argv[])
 	SSL_EXCERT *exc = NULL;
 	SSL_CONF_CTX *cctx = NULL;
 	STACK_OF(OPENSSL_STRING) *ssl_args = NULL;
+
+	char *crl_file = NULL;
+	int crl_format = FORMAT_PEM;
+	int crl_download = 0;
+	STACK_OF(X509_CRL) *crls = NULL;
+
 	meth=SSLv23_server_method();
 
 	local_argc=argc;
@@ -1051,6 +1052,13 @@ int MAIN(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			s_cert_file= *(++argv);
 			}
+		else if	(strcmp(*argv,"-CRL") == 0)
+			{
+			if (--argc < 1) goto bad;
+			crl_file= *(++argv);
+			}
+		else if	(strcmp(*argv,"-crl_download") == 0)
+			crl_download = 1;
 #ifndef OPENSSL_NO_TLSEXT
 		else if	(strcmp(*argv,"-authz") == 0)
 			{
@@ -1088,13 +1096,6 @@ int MAIN(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			dhfile = *(++argv);
 			}
-#ifndef OPENSSL_NO_ECDH		
-		else if	(strcmp(*argv,"-named_curve") == 0)
-			{
-			if (--argc < 1) goto bad;
-			named_curve = *(++argv);
-			}
-#endif
 		else if	(strcmp(*argv,"-dcertform") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -1146,6 +1147,11 @@ int MAIN(int argc, char *argv[])
 			}
 		else if (strcmp(*argv,"-no_cache") == 0)
 			no_cache = 1;
+		else if	(strcmp(*argv,"-CRLform") == 0)
+			{
+			if (--argc < 1) goto bad;
+			crl_format = str2fmt(*(++argv));
+			}
 		else if (args_verify(&argv, &argc, &badarg, bio_err, &vpm))
 			{
 			if (badarg)
@@ -1508,6 +1514,26 @@ bad:
 		}
 #endif
 
+	if (crl_file)
+		{
+		X509_CRL *crl;
+		crl = load_crl(crl_file, crl_format);
+		if (!crl)
+			{
+			BIO_puts(bio_err, "Error loading CRL\n");
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+		crls = sk_X509_CRL_new_null();
+		if (!crls || !sk_X509_CRL_push(crls, crl))
+			{
+			BIO_puts(bio_err, "Error adding CRL\n");
+			ERR_print_errors(bio_err);
+			X509_CRL_free(crl);
+			goto end;
+			}
+		}
+
 
 	if (s_dcert_file)
 		{
@@ -1641,10 +1667,13 @@ bad:
 	if (vpm)
 		SSL_CTX_set1_param(ctx, vpm);
 
+	ssl_ctx_add_crls(ctx, crls, 0);
+
 	if (!args_ssl_call(ctx, bio_err, cctx, ssl_args, no_ecdhe, no_jpake))
 		goto end;
 
-	if (!ssl_load_stores(ctx, vfyCApath, vfyCAfile, chCApath, chCAfile))
+	if (!ssl_load_stores(ctx, vfyCApath, vfyCAfile, chCApath, chCAfile,
+						crls, crl_download))
 		{
 		BIO_printf(bio_err, "Error loading store locations\n");
 		ERR_print_errors(bio_err);
@@ -1705,8 +1734,11 @@ bad:
 		if (vpm)
 			SSL_CTX_set1_param(ctx2, vpm);
 
+		ssl_ctx_add_crls(ctx2, crls, 0);
+
 		if (!args_ssl_call(ctx2, bio_err, cctx, ssl_args, no_ecdhe, no_jpake))
 			goto end;
+
 		}
 
 # ifndef OPENSSL_NO_NEXTPROTONEG
@@ -1759,58 +1791,6 @@ bad:
 		}
 #endif
 
-#ifndef OPENSSL_NO_ECDH
-	if (!no_ecdhe)
-		{
-		EC_KEY *ecdh=NULL;
-
-		if (named_curve && strcmp(named_curve, "auto"))
-			{
-			int nid = EC_curve_nist2nid(named_curve);
-			if (nid == NID_undef)
-				nid = OBJ_sn2nid(named_curve);
-			if (nid == 0)
-				{
-				BIO_printf(bio_err, "unknown curve name (%s)\n", 
-					named_curve);
-				goto end;
-				}
-			ecdh = EC_KEY_new_by_curve_name(nid);
-			if (ecdh == NULL)
-				{
-				BIO_printf(bio_err, "unable to create curve (%s)\n", 
-					named_curve);
-				goto end;
-				}
-			}
-
-		if (ecdh != NULL)
-			{
-			BIO_printf(bio_s_out,"Setting temp ECDH parameters\n");
-			}
-		else if (named_curve)
-			SSL_CTX_set_ecdh_auto(ctx, 1);
-		else
-			{
-			BIO_printf(bio_s_out,"Using default temp ECDH parameters\n");
-			ecdh = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
-			if (ecdh == NULL) 
-				{
-				BIO_printf(bio_err, "unable to create curve (nistp256)\n");
-				goto end;
-				}
-			}
-		(void)BIO_flush(bio_s_out);
-
-		SSL_CTX_set_tmp_ecdh(ctx,ecdh);
-#ifndef OPENSSL_NO_TLSEXT
-		if (ctx2) 
-			SSL_CTX_set_tmp_ecdh(ctx2,ecdh);
-#endif
-		EC_KEY_free(ecdh);
-		}
-#endif
-	
 	if (!set_cert_key_stuff(ctx, s_cert, s_key, s_chain, build_chain))
 		goto end;
 #ifndef OPENSSL_NO_TLSEXT
@@ -1888,23 +1868,6 @@ bad:
 		}
 #endif
 
-	if (cipher != NULL)
-		{
-		if(!SSL_CTX_set_cipher_list(ctx,cipher))
-			{
-			BIO_printf(bio_err,"error setting cipher list\n");
-			ERR_print_errors(bio_err);
-			goto end;
-			}
-#ifndef OPENSSL_NO_TLSEXT
-		if (ctx2 && !SSL_CTX_set_cipher_list(ctx2,cipher))
-			{
-			BIO_printf(bio_err,"error setting cipher list\n");
-			ERR_print_errors(bio_err);
-			goto end;
-			}
-#endif
-		}
 	SSL_CTX_set_verify(ctx,s_server_verify,verify_callback);
 	SSL_CTX_set_session_id_context(ctx,(void*)&s_server_session_id_context,
 		sizeof s_server_session_id_context);
@@ -1968,6 +1931,8 @@ end:
 	if (ctx != NULL) SSL_CTX_free(ctx);
 	if (s_cert)
 		X509_free(s_cert);
+	if (crls)
+		sk_X509_CRL_pop_free(crls, X509_CRL_free);
 	if (s_dcert)
 		X509_free(s_dcert);
 	if (s_key)

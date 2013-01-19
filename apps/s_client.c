@@ -636,6 +636,11 @@ static char *jpake_secret = NULL;
 	SSL_CONF_CTX *cctx = NULL;
 	STACK_OF(OPENSSL_STRING) *ssl_args = NULL;
 
+	char *crl_file = NULL;
+	int crl_format = FORMAT_PEM;
+	int crl_download = 0;
+	STACK_OF(X509_CRL) *crls = NULL;
+
 	meth=SSLv23_client_method();
 
 	apps_startup();
@@ -705,6 +710,13 @@ static char *jpake_secret = NULL;
 			if (--argc < 1) goto bad;
 			cert_file= *(++argv);
 			}
+		else if	(strcmp(*argv,"-CRL") == 0)
+			{
+			if (--argc < 1) goto bad;
+			crl_file= *(++argv);
+			}
+		else if	(strcmp(*argv,"-crl_download") == 0)
+			crl_download = 1;
 		else if	(strcmp(*argv,"-sess_out") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -719,6 +731,11 @@ static char *jpake_secret = NULL;
 			{
 			if (--argc < 1) goto bad;
 			cert_format = str2fmt(*(++argv));
+			}
+		else if	(strcmp(*argv,"-CRLform") == 0)
+			{
+			if (--argc < 1) goto bad;
+			crl_format = str2fmt(*(++argv));
 			}
 		else if (args_verify(&argv, &argc, &badarg, bio_err, &vpm))
 			{
@@ -1108,6 +1125,26 @@ bad:
 			goto end;
 		}
 
+	if (crl_file)
+		{
+		X509_CRL *crl;
+		crl = load_crl(crl_file, crl_format);
+		if (!crl)
+			{
+			BIO_puts(bio_err, "Error loading CRL\n");
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+		crls = sk_X509_CRL_new_null();
+		if (!crls || !sk_X509_CRL_push(crls, crl))
+			{
+			BIO_puts(bio_err, "Error adding CRL\n");
+			ERR_print_errors(bio_err);
+			X509_CRL_free(crl);
+			goto end;
+			}
+		}
+
 	if (!load_excert(&exc, bio_err))
 		goto end;
 
@@ -1159,7 +1196,8 @@ bad:
 		goto end;
 		}
 
-	if (!ssl_load_stores(ctx, vfyCApath, vfyCAfile, chCApath, chCAfile))
+	if (!ssl_load_stores(ctx, vfyCApath, vfyCAfile, chCApath, chCAfile,
+						crls, crl_download))
 		{
 		BIO_printf(bio_err, "Error loading store locations\n");
 		ERR_print_errors(bio_err);
@@ -1221,6 +1259,7 @@ bad:
 		/* goto end; */
 		}
 
+	ssl_ctx_add_crls(ctx, crls, crl_download);
 	if (!set_cert_key_stuff(ctx,cert,key,chain,build_chain))
 		goto end;
 
@@ -1955,6 +1994,8 @@ end:
 	if (ctx != NULL) SSL_CTX_free(ctx);
 	if (cert)
 		X509_free(cert);
+	if (crls)
+		sk_X509_CRL_pop_free(crls, X509_CRL_free);
 	if (key)
 		EVP_PKEY_free(key);
 	if (chain)

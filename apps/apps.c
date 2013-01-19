@@ -929,6 +929,55 @@ end:
 	return(x);
 	}
 
+X509_CRL *load_crl(const char *infile, int format)
+	{
+	X509_CRL *x=NULL;
+	BIO *in=NULL;
+
+	if (format == FORMAT_HTTP)
+		{
+		load_cert_crl_http(infile, bio_err, NULL, &x);
+		return x;
+		}
+
+	in=BIO_new(BIO_s_file());
+	if (in == NULL)
+		{
+		ERR_print_errors(bio_err);
+		goto end;
+		}
+
+	if (infile == NULL)
+		BIO_set_fp(in,stdin,BIO_NOCLOSE);
+	else
+		{
+		if (BIO_read_filename(in,infile) <= 0)
+			{
+			perror(infile);
+			goto end;
+			}
+		}
+	if 	(format == FORMAT_ASN1)
+		x=d2i_X509_CRL_bio(in,NULL);
+	else if (format == FORMAT_PEM)
+		x=PEM_read_bio_X509_CRL(in,NULL,NULL,NULL);
+	else	{
+		BIO_printf(bio_err,"bad input format specified for input crl\n");
+		goto end;
+		}
+	if (x == NULL)
+		{
+		BIO_printf(bio_err,"unable to load CRL\n");
+		ERR_print_errors(bio_err);
+		goto end;
+		}
+	
+end:
+	BIO_free(in);
+	return(x);
+	}
+
+
 EVP_PKEY *load_key(BIO *err, const char *file, int format, int maybe_stdin,
 	const char *pass, ENGINE *e, const char *key_descrip)
 	{
@@ -2912,6 +2961,83 @@ void print_cert_checks(BIO *bio, X509 *x,
 				checkip, X509_check_ip_asc(x, checkip,
 						0) ? "" : " NOT");
 		}
+	}
+
+/* Get first http URL from a DIST_POINT structure */
+
+static const char *get_dp_url(DIST_POINT *dp)
+	{
+	GENERAL_NAMES *gens;
+	GENERAL_NAME *gen;
+	int i, gtype;
+	ASN1_STRING *uri;
+	if (!dp->distpoint || dp->distpoint->type != 0)
+		return NULL;
+	gens = dp->distpoint->name.fullname;
+	for (i = 0; i < sk_GENERAL_NAME_num(gens); i++)
+		{
+		gen = sk_GENERAL_NAME_value(gens, i);
+		uri = GENERAL_NAME_get0_value(gen, &gtype);
+		if (gtype == GEN_URI && ASN1_STRING_length(uri) > 6)
+			{
+			char *uptr = (char *)ASN1_STRING_data(uri);
+			if (!strncmp(uptr, "http://", 7))
+				return uptr;
+			}
+		}		
+	return NULL;
+	}
+		
+
+/* Look through a CRLDP structure and attempt to find an http URL to downloads
+ * a CRL from.
+ */
+
+static X509_CRL *load_crl_crldp(STACK_OF(DIST_POINT) *crldp)
+	{
+	int i;
+	const char *urlptr = NULL;
+	for (i = 0; i < sk_DIST_POINT_num(crldp); i++)
+		{
+		DIST_POINT *dp = sk_DIST_POINT_value(crldp, i);
+		urlptr = get_dp_url(dp);
+		if (urlptr)
+			return load_crl(urlptr, FORMAT_HTTP);
+		}
+	return NULL;
+	}
+
+/* Example of downloading CRLs from CRLDP: not usable for real world
+ * as it always downloads, doesn't support non-blocking I/O and doesn't
+ * cache anything.
+ */
+
+static STACK_OF(X509_CRL) *crls_http_cb(X509_STORE_CTX *ctx, X509_NAME *nm)
+	{
+	X509 *x;
+	STACK_OF(X509_CRL) *crls = NULL;
+	X509_CRL *crl;
+	STACK_OF(DIST_POINT) *crldp;
+	x = X509_STORE_CTX_get_current_cert(ctx);
+	crldp = X509_get_ext_d2i(x, NID_crl_distribution_points, NULL, NULL);
+	crl = load_crl_crldp(crldp);
+	sk_DIST_POINT_pop_free(crldp, DIST_POINT_free);
+	if (!crl)
+		return NULL;
+	crls = sk_X509_CRL_new_null();
+	sk_X509_CRL_push(crls, crl);
+	/* Try to download delta CRL */
+	crldp = X509_get_ext_d2i(x, NID_freshest_crl, NULL, NULL);
+	crl = load_crl_crldp(crldp);
+	sk_DIST_POINT_pop_free(crldp, DIST_POINT_free);
+	if (crl)
+		sk_X509_CRL_push(crls, crl);
+	return crls;
+	}
+
+void store_setup_crl_download(X509_STORE *st)
+	{
+	X509_STORE_set_lookup_crls_cb(st, crls_http_cb);
 	}
 
 /*
