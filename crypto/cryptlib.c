@@ -935,7 +935,9 @@ void OpenSSLDie(const char *file,int line,const char *assertion)
 	abort();
 #else
 	/* Win32 abort() customarily shows a dialog, but we just did that... */
+#if !defined(_WIN32_WCE)
 	raise(SIGABRT);
+#endif
 	_exit(3);
 #endif
 	}

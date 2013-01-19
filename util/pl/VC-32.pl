@@ -116,7 +116,7 @@ elsif ($FLAVOR =~ /CE/)
     $base_cflags.=" $wcecdefs";
     $base_cflags.=' -I$(WCECOMPAT)/include'		if (defined($ENV{'WCECOMPAT'}));
     $base_cflags.=' -I$(PORTSDK_LIBPATH)/../../include'	if (defined($ENV{'PORTSDK_LIBPATH'}));
-    if (`cl 2>&1` =~ /Version 1[4-9]\./) {
+    if (`$cc 2>&1` =~ /Version ([0-9]+)\./ && $1>=14) {
 	$base_cflags.=($shlib and !$fipscanisterbuild)?' /MD':' /MT';
     } else {
 	$base_cflags.=' /MC';
