@@ -62,7 +62,7 @@
 #include <openssl/objects.h>
 #include "ssl_locl.h"
 
-#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS)
+#if defined(OPENSSL_SYS_VMS)
 #include <sys/timeb.h>
 #endif
 
@@ -452,7 +452,7 @@ int dtls1_handle_timeout(SSL *s)
 
 static void get_current_time(struct timeval *t)
 {
-#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WINCE)
+#if defined(_WIN32)
 	SYSTEMTIME st;
 	union { unsigned __int64 ul; FILETIME ft; } now;
 

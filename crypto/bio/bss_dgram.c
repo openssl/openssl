@@ -66,7 +66,7 @@
 #include <openssl/bio.h>
 #ifndef OPENSSL_NO_DGRAM
 
-#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS)
+#if defined(OPENSSL_SYS_VMS)
 #include <sys/timeb.h>
 #endif
 
@@ -1895,7 +1895,7 @@ int BIO_dgram_non_fatal_error(int err)
 
 static void get_current_time(struct timeval *t)
 	{
-#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WINCE)
+#if defined(_WIN32)
 	SYSTEMTIME st;
 	union { unsigned __int64 ul; FILETIME ft; } now;
 
