@@ -52,6 +52,7 @@
 /apps/openssl
 /test/sha256t
 /test/sha512t
+/test/gost2814789t
 /test/*test
 /test/fips_aesavs
 /test/fips_desmovs
