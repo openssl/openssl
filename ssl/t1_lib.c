@@ -1529,7 +1529,7 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 			unsigned char selected_len;
 
 			/* We must have requested it. */
-			if ((s->ctx->next_proto_select_cb == NULL))
+			if (s->ctx->next_proto_select_cb == NULL)
 				{
 				*al = TLS1_AD_UNSUPPORTED_EXTENSION;
 				return 0;
