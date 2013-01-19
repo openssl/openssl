@@ -11,6 +11,14 @@
 #include <openssl/rand.h>
 #include "e_gost_err.h"
 #include "gost_lcl.h"
+
+#if !defined(CCGOST_DEBUG) && !defined(DEBUG)
+# ifndef NDEBUG
+#  define NDEBUG
+# endif
+#endif
+#include <assert.h>
+
 static int gost_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key, 
 	const unsigned char *iv, int enc);
 static int	gost_cipher_init_cpa(EVP_CIPHER_CTX *ctx, const unsigned char *key,
@@ -206,6 +214,7 @@ int gost_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 static void gost_crypt_mesh (void *ctx,unsigned char *iv,unsigned char *buf)
 	{
 	struct ossl_gost_cipher_ctx *c = ctx;
+	assert(c->count%8 == 0 && c->count <= 1024);
 	if (c->key_meshing && c->count==1024)
 		{
 		cryptopro_key_meshing(&(c->cctx),iv);
@@ -219,6 +228,7 @@ static void gost_cnt_next (void *ctx, unsigned char *iv, unsigned char *buf)
 	struct ossl_gost_cipher_ctx *c = ctx;
 	word32 g,go;
 	unsigned char buf1[8];
+	assert(c->count%8 == 0 && c->count <= 1024);
 	if (c->key_meshing && c->count==1024)
 		{
 		cryptopro_key_meshing(&(c->cctx),iv);
@@ -511,6 +521,7 @@ static void mac_block_mesh(struct ossl_gost_imit_ctx *c,const unsigned char *dat
 	 * interpret internal state of MAC algorithm as iv during keymeshing
 	 * (but does initialize internal state from iv in key transport
 	 */
+	assert(c->count%8 == 0 && c->count <= 1024);
 	if (c->key_meshing && c->count==1024)
 		{
 		cryptopro_key_meshing(&(c->cctx),buffer);

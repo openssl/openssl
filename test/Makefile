@@ -53,6 +53,7 @@ RC5TEST=	rc5test
 BFTEST=		bftest
 CASTTEST=	casttest
 DESTEST=	destest
+GOST2814789TEST=gost2814789t
 RANDTEST=	randtest
 DHTEST=		dhtest
 DSATEST=	dsatest
@@ -93,6 +94,7 @@ EXE=	$(BNTEST)$(EXE_EXT) $(ECTEST)$(EXE_EXT)  $(ECDSATEST)$(EXE_EXT) $(ECDHTEST)
 	$(DESTEST)$(EXE_EXT) $(SHATEST)$(EXE_EXT) $(SHA1TEST)$(EXE_EXT) $(SHA256TEST)$(EXE_EXT) $(SHA512TEST)$(EXE_EXT) \
 	$(MDC2TEST)$(EXE_EXT) $(RMDTEST)$(EXE_EXT) \
 	$(RANDTEST)$(EXE_EXT) $(DHTEST)$(EXE_EXT) $(ENGINETEST)$(EXE_EXT) \
+	$(GOST2814789TEST)$(EXE_EXT) \
 	$(BFTEST)$(EXE_EXT) $(CASTTEST)$(EXE_EXT) $(SSLTEST)$(EXE_EXT) \
 	$(EXPTEST)$(EXE_EXT) $(DSATEST)$(EXE_EXT) $(RSATEST)$(EXE_EXT) \
 	$(EVPTEST)$(EXE_EXT) $(IGETEST)$(EXE_EXT) $(JPAKETEST)$(EXE_EXT) $(SRPTEST)$(EXE_EXT) \
@@ -124,7 +126,8 @@ OBJ=	$(BNTEST).o $(ECTEST).o  $(ECDSATEST).o $(ECDHTEST).o $(IDEATEST).o \
 	$(FIPS_DSSVS).o $(FIPS_DSATEST).o $(FIPS_RNGVS).o $(FIPS_DRBGVS).o \
 	$(FIPS_TEST_SUITE).o $(FIPS_DHVS).o $(FIPS_ECDSAVS).o \
 	$(FIPS_ECDHVS).o $(FIPS_CMACTEST).o $(FIPS_ALGVS).o \
-	$(EVPTEST).o $(IGETEST).o $(JPAKETEST).o $(V3NAMETEST).o
+	$(EVPTEST).o $(IGETEST).o $(JPAKETEST).o $(V3NAMETEST).o \
+	$(GOST2814789TEST).o
 SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(MD2TEST).c  $(MD4TEST).c $(MD5TEST).c \
 	$(HMACTEST).c $(WPTEST).c \
@@ -138,7 +141,8 @@ SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(FIPS_DSSVS).c $(FIPS_DSATEST).c $(FIPS_RNGVS).c $(FIPS_DRBGVS).c \
 	$(FIPS_TEST_SUITE).c $(FIPS_DHVS).c $(FIPS_ECDSAVS).c \
 	$(FIPS_ECDHVS).c $(FIPS_CMACTEST).c $(FIPS_ALGVS).c \
-	$(EVPTEST).c $(IGETEST).c $(JPAKETEST).c $(V3NAMETEST).c
+	$(EVPTEST).c $(IGETEST).c $(JPAKETEST).c $(V3NAMETEST).c \
+	$(GOST2814789TEST).c
 
 EXHEADER= 
 HEADER=	$(EXHEADER)
@@ -185,7 +189,8 @@ alltests: \
 	test_enc test_x509 test_rsa test_crl test_sid \
 	test_gen test_req test_pkcs7 test_verify test_dh test_dsa \
 	test_ss test_ca test_engine test_evp test_ssl test_tsa test_ige \
-	test_jpake test_srp test_cms test_v3name test_ocsp
+	test_jpake test_srp test_cms test_v3name test_ocsp \
+	test_gost2814789
 
 test_evp:
 	../util/shlib_wrap.sh ./$(EVPTEST) evptests.txt
@@ -240,6 +245,9 @@ test_rc5:
 
 test_rand:
 	../util/shlib_wrap.sh ./$(RANDTEST)
+
+test_gost2814789:
+	../util/shlib_wrap.sh ./$(GOST2814789TEST)
 
 test_enc:
 	@sh ./testenc
@@ -556,6 +564,9 @@ $(RC5TEST)$(EXE_EXT): $(RC5TEST).o $(DLIBCRYPTO)
 
 $(DESTEST)$(EXE_EXT): $(DESTEST).o $(DLIBCRYPTO)
 	@target=$(DESTEST); $(BUILD_CMD)
+
+$(GOST2814789TEST)$(EXE_EXT): $(GOST2814789TEST).o $(DLIBCRYPTO)
+	@target=$(GOST2814789TEST); $(BUILD_CMD)
 
 $(RANDTEST)$(EXE_EXT): $(RANDTEST).o $(DLIBCRYPTO)
 	@target=$(RANDTEST); $(BUILD_CMD)
