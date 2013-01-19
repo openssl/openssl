@@ -949,7 +949,7 @@ ssltest.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 ssltest.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 ssltest.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 ssltest.o: ../include/openssl/x509v3.h ssltest.c
-v3nametest.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+v3nametest.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 v3nametest.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 v3nametest.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 v3nametest.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
