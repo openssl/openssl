@@ -1,6 +1,12 @@
 # Object files
 *.o
 
+# editor artefacts
+*.swp
+.#*
+#*#
+*~
+
 # Top level excludes
 /Makefile.bak
 /Makefile
@@ -18,6 +24,12 @@
 !/test/igetest.c
 !/test/r160test.c
 !/test/fips_algvs.c
+
+/test/*.ss
+/test/*.srl
+/test/.rnd
+/test/test*.pem
+/test/newkey.pem
 
 # Certificate symbolic links
 *.0
