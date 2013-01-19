@@ -1393,7 +1393,9 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
                 const unsigned short ext_len = 2;
                 const unsigned char list_len = 1;
 
-		if ((lenmax = limit - ret - 6) < 0) return NULL;
+		if (limit < ret + 6)
+			return NULL;
+		lenmax = limit - ret - 6;
 
 		s2n(TLSEXT_TYPE_server_authz, ret);
                 /* Extension length: 2 bytes */
