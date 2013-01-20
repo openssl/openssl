@@ -64,7 +64,9 @@
 #endif
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
+#ifndef OPENSSL_NO_COMP
 #include <openssl/comp.h>
+#endif
 #ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
 #endif
@@ -102,7 +104,6 @@
 #ifndef OPENSSL_NO_JPAKE
 #include <openssl/jpake.h>
 #endif
-#include <openssl/comp.h>
 
 void ERR_load_crypto_strings(void)
 	{
