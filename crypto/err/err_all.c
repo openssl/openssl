@@ -104,7 +104,9 @@
 #ifndef OPENSSL_NO_JPAKE
 #include <openssl/jpake.h>
 #endif
+#ifndef OPENSSL_NO_COMP
 #include <openssl/comp.h>
+#endif
 
 void ERR_load_crypto_strings(void)
 	{
