@@ -22,6 +22,7 @@ int main(int argc, char *argv[])
 #include <openssl/conf.h>
 #include <openssl/crypto.h>
 #include <openssl/engine.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/obj_mac.h>
@@ -1237,7 +1238,7 @@ const g89_tc tcs[] = {
 
 int main(int argc, char *argv[])
 {
-    int t;
+    unsigned t;
     unsigned long long ullMaxLen = 6*1000*1000;
     int ignore = 0;
     ENGINE *impl = NULL;
