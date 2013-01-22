@@ -35,6 +35,24 @@ int main(int argc, char *argv[])
 #define G89_MAX_TC_LEN	(2048)
 #define G89_BLOCK_LEN (8)
 
+#if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)
+typedef unsigned __int64	u64;
+#define U64(C)			C##UI64
+#define FMT64			"%I64u"
+#elif defined(__arch64__)
+typedef unsigned long		u64;
+#define U64(C)			C##UL
+#define	FMT64			"%lu"
+#else
+typedef unsigned long long	u64;
+#define U64(C)			C##ULL
+#define	FMT64			"%llu"
+#endif
+#if defined(__MINGW32__)
+#undef FMT64
+#define FMT64			"%I64u"
+#endif
+
 typedef enum g89_mode_ {
     G89_ECB,
     G89_CFB,
@@ -43,7 +61,7 @@ typedef enum g89_mode_ {
 }   g89_mode;
 
 typedef struct g89_tc_ {
-    unsigned long long ullLen;		// ullLen > G89_MAX_TC_LEN
+    u64 ullLen;				// ullLen > G89_MAX_TC_LEN
     					//     Clear text ullLen
 					//     of zero bytes
     const byte bIn[G89_MAX_TC_LEN];	// Clear text, when
@@ -566,7 +584,7 @@ const g89_tc tcs[] = {
 	}
     },
     { /* Calculated by libcapi10, CryptoPro CSP 3.6R2, Mac OSX */
-	4294967296ULL+16, 
+	U64(4294967296)+16, 
 	{ 0 },
 	"id-Gost28147-89-CryptoPro-A-ParamSet",
 	"test4Gcfb",
@@ -885,7 +903,7 @@ const g89_tc tcs[] = {
 	}
     },
     { /* Calculated by libcapi10, CryptoPro CSP 3.6R2, Mac OSX */
-	4294967296ULL+16, 
+	U64(4294967296)+16, 
 	{ 0 },
 	"id-Gost28147-89-CryptoPro-A-ParamSet",
 	"test4Gcnt",
@@ -1167,7 +1185,7 @@ const g89_tc tcs[] = {
 	}
     },
     { /* Calculated by libcapi10, CryptoPro CSP 3.6R2, Mac OSX */
-	3221225472ULL + 16, 
+	3221225472U + 16, 
 	{ 0 },
 	"id-Gost28147-89-CryptoPro-A-ParamSet",
 	"test3Gimit1",
@@ -1184,7 +1202,7 @@ const g89_tc tcs[] = {
 	}
     },
     { /* Calculated by libcapi10, CryptoPro CSP 3.6R2, Mac OSX */
-	4ULL*1024*1024*1024ULL, 
+	U64(4)*1024*1024*1024, 
 	{ 0 },
 	"id-Gost28147-89-CryptoPro-A-ParamSet",
 	"test4Gimit3",
@@ -1201,7 +1219,7 @@ const g89_tc tcs[] = {
 	}
     },
     { /* Calculated by libcapi10, CryptoPro CSP 3.6R2, Mac OSX */
-	4ULL*1024*1024*1024+4ULL, 
+	U64(4)*1024*1024*1024+4, 
 	{ 0 },
 	"id-Gost28147-89-CryptoPro-A-ParamSet",
 	"test4Gimit1",
@@ -1218,7 +1236,7 @@ const g89_tc tcs[] = {
 	}
     },
     { /* Calculated by libcapi10, CryptoPro CSP 3.6R2, Mac OSX */
-	4ULL*1024*1024*1024+10ULL, 
+	U64(4)*1024*1024*1024+10, 
 	{ 0 },
 	"id-Gost28147-89-CryptoPro-A-ParamSet",
 	"test4Gimit2",
@@ -1238,8 +1256,8 @@ const g89_tc tcs[] = {
 
 int main(int argc, char *argv[])
 {
-    unsigned t;
-    unsigned long long ullMaxLen = 6*1000*1000;
+    unsigned int t;
+    u64 ullMaxLen = 6*1000*1000;
     int ignore = 0;
     ENGINE *impl = NULL;
     EVP_MD_CTX mctx;
@@ -1248,14 +1266,14 @@ int main(int argc, char *argv[])
     byte bDerive[EVP_MAX_KEY_LENGTH];
     byte bTest[G89_MAX_TC_LEN];
     byte bTest1[G89_MAX_TC_LEN];
-    unsigned long long ullLeft;
+    u64 ullLeft;
     static const byte bZB[40*1024*1024] = { 0 };
     static byte bTS[40*1024*1024] = { 0 };
     unsigned int mdl = 0;
     int enlu = 0;
     int enlf = 0;
     size_t siglen;
-    size_t l;
+    size_t l = 0;
 
     const EVP_MD *md_gost94 = NULL;
     const EVP_CIPHER *cp_g89cfb = NULL;
@@ -1283,7 +1301,7 @@ int main(int argc, char *argv[])
     printf("Testing GOST 28147-89 ");
 
     if(1 < argc) {
-       if(1 != sscanf(argv[1], "%llu", &ullMaxLen) ||
+       if(1 != sscanf(argv[1], FMT64, &ullMaxLen) ||
           ( 2 < argc ? 
             1 != sscanf(argv[2], "%d", &ignore) : 0)) {
            fflush(NULL);
@@ -1354,8 +1372,8 @@ int main(int argc, char *argv[])
 				    bTest1);
 		if(0 != memcmp(bTest, bTest1, 4)) {
 		    fflush(NULL);
-		    fprintf(stderr, "\nInternal test t=%d len=%llu "
-				    "failed (gost_mac_iv).\n", t,
+		    fprintf(stderr, "\nInternal test t=%d len=" FMT64
+				    " failed (gost_mac_iv).\n", t,
 				    tcs[t].ullLen);
 		    if(!ignore) {
 			return 2;
@@ -1368,8 +1386,8 @@ int main(int argc, char *argv[])
 
 	    if(0 != memcmp(tcs[t].bOut, bTest, l)) {
 		fflush(NULL);
-		fprintf(stderr, "\nInternal test t=%d len=%llu "
-				"failed.\n", t,
+		fprintf(stderr, "\nInternal test t=%d len=" FMT64
+				" failed.\n", t,
 				tcs[t].ullLen);
 		if(!ignore) {
 		    return 3;
@@ -1512,7 +1530,7 @@ engine_cipher_check:
 		    EVP_EncryptUpdate(&ectx, bTS, &enlu, 
 					    bZB, sizeof(bZB));
 		}
-		printf("b%llu/%llu", ullLeft, tcs[t].ullLen); 
+		printf("b"FMT64"/"FMT64, ullLeft, tcs[t].ullLen); 
 		fflush(NULL);
 		EVP_EncryptUpdate(&ectx, bTS, &enlu, 
 					bZB, (int)ullLeft);
@@ -1549,7 +1567,7 @@ engine_cipher_check:
 		    fflush(NULL);
 		    EVP_DigestSignUpdate(&mctx, bZB, sizeof(bZB));
 		}
-		printf("b%llu/%llu", ullLeft, tcs[t].ullLen); 
+		printf("b"FMT64"/"FMT64, ullLeft, tcs[t].ullLen); 
 		fflush(NULL);
 		EVP_DigestSignUpdate(&mctx, bZB, 
 					(unsigned int)ullLeft);
@@ -1565,8 +1583,8 @@ engine_cipher_check:
 	if((int)tcs[t].ullLen != enlu || 0 != enlf ||
 	   0 != memcmp(tcs[t].bOut, bTest, l)) {
 	    fflush(NULL);
-	    fprintf(stderr, "\nEngine test t=%d len=%llu "
-			    "failed.\n", t, tcs[t].ullLen);
+	    fprintf(stderr, "\nEngine test t=%d len=" FMT64
+			    " failed.\n", t, tcs[t].ullLen);
 	    if(!ignore) {
 	    	return 13;
 	    }
