@@ -91,10 +91,6 @@ if ($output =~ /512/) {
 
 $FRAME=32*$SIZE_T+16*$SZ;
 $LOCALS=6*$SIZE_T;
-if ($SZ==8 && $SIZE_T==4) {
-	$FRAME+=16*$SZ;
-	$XOFF=$LOCALS+16*$SZ;
-}
 
 $sp ="r1";
 $toc="r2";
@@ -435,6 +431,8 @@ ___
 #
 # (*)	~1/3 of -m64 result [and ~20% better than -m32 code generated
 #	by xlc-12.1]
+
+my $XOFF=$LOCALS;
 
 my @V=map("r$_",(16..31));	# A..H
 
