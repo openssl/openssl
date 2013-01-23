@@ -40,11 +40,45 @@ int main(int argc, char *argv[])
 
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
+#include <openssl/ecdsa.h>
 #include <openssl/dh.h>
 
 #include <openssl/fips.h>
 #include <openssl/fips_rand.h>
 #include "fips_utl.h"
+
+static int verbose = 0;
+
+static int fips_module_mode_set_verbose(int mode, const char *pass)
+	{
+	int rv;
+	if (verbose)
+		printf("Attempting to %s FIPS mode\n", mode ? "Enter" : "Leave");
+	rv = FIPS_module_mode_set(mode, pass);
+	if (verbose)
+		printf("FIPS_module_mode() returned %d\n", FIPS_module_mode());
+	return rv;
+	}
+
+static void do_print_rsa_key(RSA *rsa)
+	{
+    	if (!verbose)
+		return;
+	do_bn_print_name(stdout, "RSA key modulus value", rsa->e);
+	do_bn_print_name(stdout, "RSA key publicExponent value", rsa->n);
+	do_bn_print_name(stdout, "RSA key pricateExponent value", rsa->d);
+	do_bn_print_name(stdout, "RSA key prime1 value", rsa->p);
+	do_bn_print_name(stdout, "RSA key prime2 value", rsa->q);
+	do_bn_print_name(stdout, "RSA key exponent1 value", rsa->dmp1);
+	do_bn_print_name(stdout, "RSA key exponent2 value", rsa->dmq1);
+	do_bn_print_name(stdout, "RSA key coefficient value", rsa->iqmp);
+	}
+
+static void do_print_buf(char *name, unsigned char *buf, int buflen)
+	{
+	if (verbose)
+		OutputValue(name, buf, buflen, stdout, 0);
+	}
 
 /* AES: encrypt and decrypt known plaintext, verify result matches original plaintext
 */
@@ -57,14 +91,30 @@ static int FIPS_aes_test(void)
 	unsigned char plaintext[16] = "etaonrishdlcu";
 	EVP_CIPHER_CTX ctx;
 	FIPS_cipher_ctx_init(&ctx);
+	if (verbose)
+		{
+		do_print_buf("Key", key, sizeof(key));
+		do_print_buf("Plaintext", plaintext, sizeof(plaintext));
+		}
 	if (FIPS_cipherinit(&ctx, EVP_aes_128_ecb(), key, NULL, 1) <= 0)
 		goto err;
 	FIPS_cipher(&ctx, citmp, plaintext, 16);
+	if (verbose)
+		{
+		do_print_buf("Ciphertext", citmp, sizeof(plaintext));
+		printf("AES 128 bit ECB mode decryption started\n");
+		}
 	if (FIPS_cipherinit(&ctx, EVP_aes_128_ecb(), key, NULL, 0) <= 0)
 		goto err;
 	FIPS_cipher(&ctx, pltmp, citmp, 16);
+	do_print_buf("Recovered Plaintext", pltmp, sizeof(plaintext));
 	if (memcmp(pltmp, plaintext, 16))
+		{
+		printf("Comparison failure!!\n");
 		goto err;
+		}
+	if (verbose)
+		printf("Comparison success.\n");
 	ret = 1;
 	err:
 	FIPS_cipher_ctx_cleanup(&ctx);
@@ -83,6 +133,13 @@ static int FIPS_aes_gcm_test(void)
 	unsigned char plaintext[16] = "etaonrishdlcu";
 	EVP_CIPHER_CTX ctx;
 	FIPS_cipher_ctx_init(&ctx);
+	if (verbose)
+		{
+		do_print_buf("Key", key, sizeof(key));
+		do_print_buf("IV", key, sizeof(iv));
+		do_print_buf("Plaintext", plaintext, sizeof(plaintext));
+		do_print_buf("AAD", aad, sizeof(aad));
+		}
 	if (FIPS_cipherinit(&ctx, EVP_aes_128_gcm(), key, iv, 1) <= 0)
 		goto err;
 	FIPS_cipher(&ctx, NULL, aad, sizeof(aad));
@@ -90,6 +147,12 @@ static int FIPS_aes_gcm_test(void)
 	FIPS_cipher(&ctx, NULL, NULL, 0);
 	if (!FIPS_cipher_ctx_ctrl(&ctx, EVP_CTRL_GCM_GET_TAG, 16, tagtmp))
 		goto err;
+
+	if (verbose)
+		{
+		do_print_buf("Ciphertext", citmp, sizeof(citmp));
+		do_print_buf("Tag", tagtmp, sizeof(tagtmp));
+		}
 
 	if (FIPS_cipherinit(&ctx, EVP_aes_128_gcm(), key, iv, 0) <= 0)
 		goto err;
@@ -103,8 +166,17 @@ static int FIPS_aes_gcm_test(void)
 	if (FIPS_cipher(&ctx, NULL, NULL, 0) < 0)
 		goto err;
 
+	if (verbose)
+		do_print_buf("Recovered Plaintext", pltmp, sizeof(plaintext));
+
 	if (memcmp(pltmp, plaintext, 16))
+		{
+		if (verbose)
+			printf("Comparison failure!!\n");
 		goto err;
+		}
+
+	printf("Comparison sucess.\n");
 
 	ret = 1;
 	err:
@@ -122,19 +194,109 @@ static int FIPS_des3_test(void)
     	unsigned char plaintext[] = { 'e', 't', 'a', 'o', 'n', 'r', 'i', 's' };
 	EVP_CIPHER_CTX ctx;
 	FIPS_cipher_ctx_init(&ctx);
+	if (verbose)
+		{
+		do_print_buf("Key", key, sizeof(key));
+		do_print_buf("Plaintext", plaintext, sizeof(plaintext));
+		}
 	if (FIPS_cipherinit(&ctx, EVP_des_ede3_ecb(), key, NULL, 1) <= 0)
 		goto err;
 	FIPS_cipher(&ctx, citmp, plaintext, 8);
+	if (verbose)
+		{
+		do_print_buf("Ciphertext", citmp, sizeof(plaintext));
+		printf("DES3 ECB mode decryption\n");
+		}
 	if (FIPS_cipherinit(&ctx, EVP_des_ede3_ecb(), key, NULL, 0) <= 0)
 		goto err;
 	FIPS_cipher(&ctx, pltmp, citmp, 8);
+	if (verbose)
+		do_print_buf("Recovered Plaintext", pltmp, sizeof(plaintext));
 	if (memcmp(pltmp, plaintext, 8))
+		{
+		if (verbose)
+			printf("Comparison failure!!\n");
+
 		goto err;
+		}
+	if (verbose)
+		printf("Comparison success\n");
 	ret = 1;
 	err:
 	FIPS_cipher_ctx_cleanup(&ctx);
 	return ret;
 	}
+
+/*
+ * ECDSA: generate keys and sign, verify input plaintext.
+ */
+static int FIPS_ecdsa_test(void)
+    {
+    EC_KEY *ec = NULL;
+    unsigned char dgst[] = "etaonrishdlc";
+    int r = 0;
+    ECDSA_SIG *sig = NULL;
+
+    ERR_clear_error();
+    ec = FIPS_ec_key_new_by_curve_name(NID_X9_62_prime256v1);
+    if (!ec)
+	goto end;
+    if (!FIPS_ec_key_generate_key(ec))
+	goto end;
+
+    if (verbose)
+	{
+	BIGNUM *Qx, *Qy;
+	BN_CTX *ctx;
+	const EC_GROUP *grp;
+	const EC_POINT *pt;
+	const BIGNUM *priv;
+	Qx = BN_new();
+	Qy = BN_new();
+	ctx = BN_CTX_new();
+	grp = EC_KEY_get0_group(ec);
+	pt = EC_KEY_get0_public_key(ec);
+	priv = EC_KEY_get0_private_key(ec);
+	printf("EC Key using P-256\n");
+	if (!EC_POINT_get_affine_coordinates_GFp(grp, pt, Qx, Qy, ctx))
+		goto end;
+	
+	do_bn_print_name(stdout, "ECDSA key x coordinate", Qx);
+	do_bn_print_name(stdout, "ECDSA key y coordinate", Qy);
+	do_bn_print_name(stdout, "ECDSA key private value", priv);
+	BN_free(Qx);
+	BN_free(Qy);
+	BN_CTX_free(ctx);
+	printf("Signing string \"%s\" using SHA256\n", dgst);
+	}
+
+    sig = FIPS_ecdsa_sign(ec, dgst, sizeof(dgst) -1, EVP_sha256());
+    if (!sig)
+	{
+	if (verbose)
+		printf("Signing Failed!!\n");
+	goto end;
+	}
+
+    if (verbose)
+	{
+	printf("Signing successful\n");
+	do_bn_print_name(stdout, "ECDSA signature r value", sig->r);
+	do_bn_print_name(stdout, "ECDSA signature s value", sig->s);
+	}
+
+    r = FIPS_ecdsa_verify(ec, dgst, sizeof(dgst) -1, EVP_sha256(), sig);
+    if (verbose)
+	printf("ECDSA verification %s\n", r ? "Successful." : "Failed!!");
+    end:
+    if (sig)
+	FIPS_ecdsa_sig_free(sig);
+    if (ec)
+  	  FIPS_ec_key_free(ec);
+    if (r != 1)
+	return 0;
+    return 1;
+    }
 
 /*
  * DSA: generate keys and sign, verify input plaintext.
@@ -157,11 +319,34 @@ static int FIPS_dsa_test(int bad)
     if (bad)
 	    BN_add_word(dsa->pub_key, 1);
 
+    if (verbose)
+	{
+	do_bn_print_name(stdout, "DSA key p value", dsa->p);
+	do_bn_print_name(stdout, "DSA key q value", dsa->q);
+	do_bn_print_name(stdout, "DSA key g value", dsa->g);
+	do_bn_print_name(stdout, "DSA key public_key value", dsa->pub_key);
+	do_bn_print_name(stdout, "DSA key private key value", dsa->priv_key);
+	printf("Signing string \"%s\" using SHA256\n", dgst);
+	}
+
     sig = FIPS_dsa_sign(dsa, dgst, sizeof(dgst) -1, EVP_sha256());
     if (!sig)
+	{
+	if (verbose)
+		printf("Signing Failed!!\n");
 	goto end;
+	}
+
+    if (verbose)
+	{
+	printf("Signing successful\n");
+	do_bn_print_name(stdout, "DSA signature r value", sig->r);
+	do_bn_print_name(stdout, "DSA signature s value", sig->s);
+	}
 
     r = FIPS_dsa_verify(dsa, dgst, sizeof(dgst) -1, EVP_sha256(), sig);
+    if (verbose)
+	printf("DSA verification %s\n", r ? "Successful." : "Failed!!");
     end:
     if (sig)
 	FIPS_dsa_sig_free(sig);
@@ -196,12 +381,30 @@ static int FIPS_rsa_test(int bad)
     if (bad)
 	    BN_add_word(key->n, 1);
 
+    if (verbose)
+	{
+    	do_print_rsa_key(key);
+	printf("Signing string \"%s\" using SHA256\n", input_ptext);
+	}
+
     if (!FIPS_rsa_sign(key, input_ptext, sizeof(input_ptext) - 1, EVP_sha256(),
 			RSA_PKCS1_PADDING, 0, NULL, buf, &slen))
+	{
+	if (verbose)
+		printf("RSA Signing failed!!\n");
 	goto end;
+	}
+
+    if (verbose)
+	{
+	printf("RSA signing successul\n");
+	do_print_buf("RSA signature", buf, slen);
+	}
 
     r = FIPS_rsa_verify(key, input_ptext, sizeof(input_ptext) - 1, EVP_sha256(),
 			RSA_PKCS1_PADDING, 0, NULL, buf, slen);
+    if (verbose)
+	printf("RSA Verification %s\n", r == 1 ? "Successful" : "Failed!!");
     end:
     if (key)
   	  FIPS_rsa_free(key);
@@ -223,6 +426,11 @@ static int FIPS_sha1_test()
 
     ERR_clear_error();
     if (!FIPS_digest(str,sizeof(str) - 1,md, NULL, EVP_sha1())) return 0;
+    if (verbose)
+	{
+	printf("Digesting string %s\n", str);
+	do_print_buf("Digest value", md, sizeof(md));
+	}
     if (memcmp(md,digest,sizeof(md)))
         return 0;
     return 1;
@@ -242,6 +450,11 @@ static int FIPS_sha256_test()
 
     ERR_clear_error();
     if (!FIPS_digest(str,sizeof(str) - 1,md, NULL, EVP_sha256())) return 0;
+    if (verbose)
+	{
+	printf("Digesting string %s\n", str);
+	do_print_buf("Digest value", md, sizeof(md));
+	}
     if (memcmp(md,digest,sizeof(md)))
         return 0;
     return 1;
@@ -263,6 +476,11 @@ static int FIPS_sha512_test()
 
     ERR_clear_error();
     if (!FIPS_digest(str,sizeof(str) - 1,md, NULL, EVP_sha512())) return 0;
+    if (verbose)
+	{
+	printf("Digesting string %s\n", str);
+	do_print_buf("Digest value", md, sizeof(md));
+	}
     if (memcmp(md,digest,sizeof(md)))
         return 0;
     return 1;
@@ -284,8 +502,19 @@ static int FIPS_hmac_sha1_test()
 
     ERR_clear_error();
     if (!HMAC(EVP_sha1(),key,sizeof(key)-1,iv,sizeof(iv)-1,out,&outlen)) return 0;
+    if (verbose)
+	{
+	do_print_buf("HMAC key", key, sizeof(key) -1);
+	do_print_buf("HMAC input", iv, sizeof(iv) -1);
+	do_print_buf("HMAC output", out, outlen);
+	}
     if (memcmp(out,kaval,outlen))
+	{
+	if (verbose)
+		printf("HMAC comparison failed!!\n");
         return 0;
+	}
+    printf("HMAC comparison successful.\n");
     return 1;
     }
 
@@ -305,6 +534,19 @@ static int FIPS_hmac_sha224_test()
 
     ERR_clear_error();
     if (!HMAC(EVP_sha224(),key,sizeof(key)-1,iv,sizeof(iv)-1,out,&outlen)) return 0;
+    if (verbose)
+	{
+	do_print_buf("HMAC key", key, sizeof(key) -1);
+	do_print_buf("HMAC input", iv, sizeof(iv) -1);
+	do_print_buf("HMAC output", out, outlen);
+	}
+    if (memcmp(out,kaval,outlen))
+	{
+	if (verbose)
+		printf("HMAC comparison failed!!\n");
+        return 0;
+	}
+    printf("HMAC comparison successful.\n");
     if (memcmp(out,kaval,outlen))
         return 0;
     return 1;
@@ -326,8 +568,19 @@ static int FIPS_hmac_sha256_test()
 
     ERR_clear_error();
     if (!HMAC(EVP_sha256(),key,sizeof(key)-1,iv,sizeof(iv)-1,out,&outlen)) return 0;
+    if (verbose)
+	{
+	do_print_buf("HMAC key", key, sizeof(key) -1);
+	do_print_buf("HMAC input", iv, sizeof(iv) -1);
+	do_print_buf("HMAC output", out, outlen);
+	}
     if (memcmp(out,kaval,outlen))
+	{
+	if (verbose)
+		printf("HMAC comparison failed!!\n");
         return 0;
+	}
+    printf("HMAC comparison successful.\n");
     return 1;
     }
 
@@ -348,8 +601,19 @@ static int FIPS_hmac_sha384_test()
 
     ERR_clear_error();
     if (!HMAC(EVP_sha384(),key,sizeof(key)-1,iv,sizeof(iv)-1,out,&outlen)) return 0;
+    if (verbose)
+	{
+	do_print_buf("HMAC key", key, sizeof(key) -1);
+	do_print_buf("HMAC input", iv, sizeof(iv) -1);
+	do_print_buf("HMAC output", out, outlen);
+	}
     if (memcmp(out,kaval,outlen))
+	{
+	if (verbose)
+		printf("HMAC comparison failed!!\n");
         return 0;
+	}
+    printf("HMAC comparison successful.\n");
     return 1;
     }
 
@@ -371,8 +635,19 @@ static int FIPS_hmac_sha512_test()
 
     ERR_clear_error();
     if (!HMAC(EVP_sha512(),key,sizeof(key)-1,iv,sizeof(iv)-1,out,&outlen)) return 0;
+    if (verbose)
+	{
+	do_print_buf("HMAC key", key, sizeof(key) -1);
+	do_print_buf("HMAC input", iv, sizeof(iv) -1);
+	do_print_buf("HMAC output", out, outlen);
+	}
     if (memcmp(out,kaval,outlen))
+	{
+	if (verbose)
+		printf("HMAC comparison failed!!\n");
         return 0;
+	}
+    printf("HMAC comparison successful.\n");
     return 1;
     }
 
@@ -407,18 +682,15 @@ static int FIPS_cmac_aes128_test()
     out = OPENSSL_malloc(outlen);
     if (!CMAC_Final(ctx, out, &outlen))
 	    goto end;
-#if 0
-    {
-    char *hexout = OPENSSL_malloc(outlen * 2 + 1);
-    bin2hex(out, outlen, hexout);
-    printf("CMAC-AES128: res = %s\n", hexout);
-    OPENSSL_free(hexout);
-    }
-    r = 1;
-#else
     if (!memcmp(out,kaval,outlen))
 	    r = 1;
-#endif
+    if (verbose)
+	{
+	do_print_buf("CMAC key", key, sizeof(key));
+	do_print_buf("CMAC input", data, sizeof(data) -1);
+	do_print_buf("CMAC output", out, outlen);
+	printf("CMAC comparison %s\n", r == 1 ? "successful." : "Failed!!");
+	}
     end:
     CMAC_CTX_free(ctx);
     if (out)
@@ -458,18 +730,15 @@ static int FIPS_cmac_aes192_test()
     out = OPENSSL_malloc(outlen);
     if (!CMAC_Final(ctx, out, &outlen))
 	    goto end;
-#if 0
-    {
-    char *hexout = OPENSSL_malloc(outlen * 2 + 1);
-    bin2hex(out, outlen, hexout);
-    printf("CMAC-AES192: res = %s\n", hexout);
-    OPENSSL_free(hexout);
-    }
-    r = 1;
-#else
     if (!memcmp(out,kaval,outlen))
 	    r = 1;
-#endif
+    if (verbose)
+	{
+	do_print_buf("CMAC key", key, sizeof(key));
+	do_print_buf("CMAC input", data, sizeof(data) -1);
+	do_print_buf("CMAC output", out, outlen);
+	printf("CMAC comparison %s\n", r == 1 ? "successful." : "Failed!!");
+	}
     end:
     CMAC_CTX_free(ctx);
     if (out)
@@ -510,18 +779,15 @@ static int FIPS_cmac_aes256_test()
     out = OPENSSL_malloc(outlen);
     if (!CMAC_Final(ctx, out, &outlen))
 	    goto end;
-#if 0
-    {
-    char *hexout = OPENSSL_malloc(outlen * 2 + 1);
-    bin2hex(out, outlen, hexout);
-    printf("CMAC-AES256: res = %s\n", hexout);
-    OPENSSL_free(hexout);
-    }
-    r = 1;
-#else
     if (!memcmp(out,kaval,outlen))
 	    r = 1;
-#endif
+    if (verbose)
+	{
+	do_print_buf("CMAC key", key, sizeof(key));
+	do_print_buf("CMAC input", data, sizeof(data) -1);
+	do_print_buf("CMAC output", out, outlen);
+	printf("CMAC comparison %s\n", r == 1 ? "successful." : "Failed!!");
+	}
     end:
     CMAC_CTX_free(ctx);
     if (out)
@@ -560,18 +826,15 @@ static int FIPS_cmac_tdea3_test()
     out = OPENSSL_malloc(outlen);
     if (!CMAC_Final(ctx, out, &outlen))
 	    goto end;
-#if 0
-    {
-    char *hexout = OPENSSL_malloc(outlen * 2 + 1);
-    bin2hex(out, outlen, hexout);
-    printf("CMAC-TDEA3: res = %s\n", hexout);
-    OPENSSL_free(hexout);
-    }
-    r = 1;
-#else
     if (!memcmp(out,kaval,outlen))
 	    r = 1;
-#endif
+    if (verbose)
+	{
+	do_print_buf("CMAC key", key, sizeof(key));
+	do_print_buf("CMAC input", data, sizeof(data) -1);
+	do_print_buf("CMAC output", out, outlen);
+	printf("CMAC comparison %s\n", r == 1 ? "successful." : "Failed!!");
+	}
     end:
     CMAC_CTX_free(ctx);
     if (out)
@@ -627,7 +890,11 @@ static int Zeroize()
     for(i = 0; i < sizeof(userkey); i++) printf("%02x", userkey[i]);
         printf("\n");
     RAND_bytes(userkey, sizeof userkey);
-    printf("\tchar buffer key after overwriting: \n\t\t");
+    printf("\tchar buffer key after overwriting with random key: \n\t\t");
+    for(i = 0; i < sizeof(userkey); i++) printf("%02x", userkey[i]);
+        printf("\n");
+    OPENSSL_cleanse(userkey, sizeof(userkey));
+    printf("\tchar buffer key after zeroization: \n\t\t");
     for(i = 0; i < sizeof(userkey); i++) printf("%02x", userkey[i]);
         printf("\n");
 
@@ -747,9 +1014,13 @@ static const char * Fail(const char *msg)
     return msg; 
     }
 
-static void test_msg(const char *msg, int result)
-	{
-	printf("%s...%s\n", msg, result ? "successful" : Fail("Failed!"));
+#define test_msg(msg, rtest) \
+	{ \
+	int rv; \
+	if (verbose) \
+		printf("%s...started\n", msg); \
+	rv = rtest; \
+	printf("%s...%s\n", msg, rv ? "successful" : Fail("Failed!")); \
 	}
 
 /* Table of IDs for POST translating between NIDs and names */
@@ -1036,23 +1307,36 @@ static int do_fail_all(int fullpost, int fullerr)
 	DRBG_CTX *dctx = NULL, *defctx = NULL;
 	EC_KEY *ec = NULL;
 	BIGNUM *bn = NULL;
+	unsigned char key[16] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+	EVP_CIPHER_CTX ctx;
 	unsigned char out[10];
 	if (!fullpost)
 		post_quiet = 1;
 	if (!fullerr)
 		no_err = 1;
-	FIPS_module_mode_set(0, NULL);
+	fips_module_mode_set_verbose(0, NULL);
 	for (sub_fail = 1; sub_fail < sub_count; sub_fail++)
 		{
 		sub_fail_num = sub_fail;
 		printf("    Testing induced failure of POST subtest %d\n",
 								sub_fail);
-		rv = FIPS_module_mode_set(1, FIPS_AUTH_USER_PASS);
+		rv = fips_module_mode_set_verbose(1, FIPS_AUTH_USER_PASS);
 		if (rv)
 			{
 			printf("\tFIPS mode incorrectly successful!!\n");
 			st_err++;
 			}
+		printf("\tAttempting crypto operation after failed POST... ");
+		FIPS_cipher_ctx_init(&ctx);
+		rv = FIPS_cipherinit(&ctx, EVP_aes_128_ecb(), key, NULL, 1);
+		if (rv > 0)
+			{
+			printf("succeeded incorrectly!!\n");
+			st_err++;
+			}
+		else
+			printf("failed as expected.\n");
+		FIPS_cipher_ctx_cleanup(&ctx);
 		}
 	sub_fail_num = -1;
 	printf("    Testing induced failure of RSA keygen test\n");
@@ -1062,7 +1346,7 @@ static int do_fail_all(int fullpost, int fullerr)
 	fail_id = FIPS_TEST_PAIRWISE;
 	fail_key = EVP_PKEY_RSA;
 	/* Now enter FIPS mode successfully */
-	if (!FIPS_module_mode_set(1, FIPS_AUTH_USER_PASS))
+	if (!fips_module_mode_set_verbose(1, FIPS_AUTH_USER_PASS))
 		{
 		printf("\tError entering FIPS mode\n");
 		st_err++;
@@ -1082,12 +1366,12 @@ static int do_fail_all(int fullpost, int fullerr)
 		printf("\tRSA key generation failed as expected.\n");
 
 	/* Leave FIPS mode to clear error */
-	FIPS_module_mode_set(0, NULL);
+	fips_module_mode_set_verbose(0, NULL);
 
 	printf("    Testing induced failure of DSA keygen test\n");
 	fail_key = EVP_PKEY_DSA;
 	/* Enter FIPS mode successfully */
-	if (!FIPS_module_mode_set(1, FIPS_AUTH_USER_PASS))
+	if (!fips_module_mode_set_verbose(1, FIPS_AUTH_USER_PASS))
 		{
 		printf("\tError entering FIPS mode\n");
 		st_err++;
@@ -1106,9 +1390,9 @@ static int do_fail_all(int fullpost, int fullerr)
 		printf("\tDSA key generation failed as expected.\n");
 
 	/* Leave FIPS mode to clear error */
-	FIPS_module_mode_set(0, NULL);
+	fips_module_mode_set_verbose(0, NULL);
 	/* Enter FIPS mode successfully */
-	if (!FIPS_module_mode_set(1, FIPS_AUTH_USER_PASS))
+	if (!fips_module_mode_set_verbose(1, FIPS_AUTH_USER_PASS))
 		{
 		printf("\tError entering FIPS mode\n");
 		st_err++;
@@ -1137,9 +1421,9 @@ static int do_fail_all(int fullpost, int fullerr)
 	fail_sub = -1;
 	fail_key = -1;
 	/* Leave FIPS mode to clear error */
-	FIPS_module_mode_set(0, NULL);
+	fips_module_mode_set_verbose(0, NULL);
 	/* Enter FIPS mode successfully */
-	if (!FIPS_module_mode_set(1, FIPS_AUTH_USER_PASS))
+	if (!fips_module_mode_set_verbose(1, FIPS_AUTH_USER_PASS))
 		{
 		printf("\tError entering FIPS mode\n");
 		st_err++;
@@ -1172,9 +1456,9 @@ static int do_fail_all(int fullpost, int fullerr)
 	FIPS_drbg_stick(0);
 
 	/* Leave FIPS mode to clear error */
-	FIPS_module_mode_set(0, NULL);
+	fips_module_mode_set_verbose(0, NULL);
 	/* Enter FIPS mode successfully */
-	if (!FIPS_module_mode_set(1, FIPS_AUTH_USER_PASS))
+	if (!fips_module_mode_set_verbose(1, FIPS_AUTH_USER_PASS))
 		{
 		printf("\tError entering FIPS mode\n");
 		st_err++;
@@ -1202,9 +1486,9 @@ static int do_fail_all(int fullpost, int fullerr)
 	else
 		printf("\tDRBG continuous PRNG entropy failed as expected\n");
 	/* Leave FIPS mode to clear error */
-	FIPS_module_mode_set(0, NULL);
+	fips_module_mode_set_verbose(0, NULL);
 	/* Enter FIPS mode successfully */
-	if (!FIPS_module_mode_set(1, FIPS_AUTH_USER_PASS))
+	if (!fips_module_mode_set_verbose(1, FIPS_AUTH_USER_PASS))
 		{
 		printf("\tError entering FIPS mode\n");
 		st_err++;
@@ -1212,9 +1496,9 @@ static int do_fail_all(int fullpost, int fullerr)
 	FIPS_drbg_free(dctx);
 
 	/* Leave FIPS mode to clear error */
-	FIPS_module_mode_set(0, NULL);
+	fips_module_mode_set_verbose(0, NULL);
 	/* Enter FIPS mode successfully */
-	if (!FIPS_module_mode_set(1, FIPS_AUTH_USER_PASS))
+	if (!fips_module_mode_set_verbose(1, FIPS_AUTH_USER_PASS))
 		{
 		printf("\tError entering FIPS mode\n");
 		st_err++;
@@ -1242,9 +1526,9 @@ static int do_fail_all(int fullpost, int fullerr)
 	FIPS_x931_stick(0);
 
 	/* Leave FIPS mode to clear error */
-	FIPS_module_mode_set(0, NULL);
+	fips_module_mode_set_verbose(0, NULL);
 	/* Enter FIPS mode successfully */
-	if (!FIPS_module_mode_set(1, FIPS_AUTH_USER_PASS))
+	if (!fips_module_mode_set_verbose(1, FIPS_AUTH_USER_PASS))
 		{
 		printf("\tError entering FIPS mode\n");
 		st_err++;
@@ -1416,6 +1700,9 @@ int main(int argc, char **argv)
 	} else if (!strcmp(*args, "fullerr")) {
 		fullerr = 1;
 	    	no_exit = 1;
+	} else if (!strcmp(*args, "verbose")) {
+		verbose = 1;
+		no_exit = 1;
         } else {
             printf("Bad argument \"%s\"\n", *args);
             return 1;
@@ -1425,7 +1712,7 @@ int main(int argc, char **argv)
 
     if ((argc != 1) && !no_exit) {
     		fips_algtest_init_nofips();
-        	if (!FIPS_module_mode_set(1, pass)) {
+        	if (!fips_module_mode_set_verbose(1, pass)) {
         	    printf("Power-up self test failed\n");
 		    return 1;
 		}
@@ -1446,13 +1733,15 @@ int main(int argc, char **argv)
     /* Power-up self test
     */
     ERR_clear_error();
-    test_msg("2. Automatic power-up self test", FIPS_module_mode_set(1, pass));
+    test_msg("2a. Automatic power-up self test", fips_module_mode_set_verbose(1, pass));
     if (!FIPS_module_mode())
 	return 1;
     if (do_drbg_stick)
             FIPS_drbg_stick(1);
     if (do_rng_stick)
             FIPS_x931_stick(1);
+
+    test_msg("2b. On demand self test", FIPS_selftest());
 
     /* AES encryption/decryption
     */
@@ -1554,7 +1843,10 @@ int main(int argc, char **argv)
     	printf("\t%s\n", do_drbg_all() ? "successful as expected"
 					: Fail("failed INCORRECTLY!") );
 
-    printf("13. Induced test failure check...\n");
+    test_msg("13. ECDSA key generation and signature validation",
+    						FIPS_ecdsa_test());
+
+    printf("14. Induced test failure check...\n");
     printf("\t%s\n", do_fail_all(fullpost, fullerr) ? "successful as expected"
 					: Fail("failed INCORRECTLY!") );
     printf("\nAll tests completed with %d errors\n", Error);
