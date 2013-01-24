@@ -138,6 +138,12 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a, ASN1_BIT_STRING *signat
 	unsigned char *buf_in=NULL;
 	int ret= -1,i,inl;
 
+	if (!pkey)
+		{
+		ASN1err(ASN1_F_ASN1_ITEM_VERIFY, ERR_R_PASSED_NULL_PARAMETER);
+		return -1;
+		}
+
 	EVP_MD_CTX_init(&ctx);
 	i=OBJ_obj2nid(a->algorithm);
 	type=EVP_get_digestbyname(OBJ_nid2sn(i));
