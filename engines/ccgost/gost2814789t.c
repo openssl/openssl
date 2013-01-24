@@ -61,22 +61,22 @@ typedef enum g89_mode_ {
 }   g89_mode;
 
 typedef struct g89_tc_ {
-    u64 ullLen;				// ullLen > G89_MAX_TC_LEN
-    					//     Clear text ullLen
-					//     of zero bytes
-    const byte bIn[G89_MAX_TC_LEN];	// Clear text, when
-					//     ullLen <= G89_MAX_TC_LEN
-    const char *szParamSet;		// S-Box ID
-    const char *szDerive;		// String for derive bRawKey
+    u64 ullLen;				/* ullLen > G89_MAX_TC_LEN */
+    					/*     Clear text ullLen */
+					/*     of zero bytes */
+    const byte bIn[G89_MAX_TC_LEN];	/* Clear text, when */
+					/*     ullLen <= G89_MAX_TC_LEN */
+    const char *szParamSet;		/* S-Box ID */
+    const char *szDerive;		/* String for derive bRawKey */
     const byte bRawKey[EVP_MAX_KEY_LENGTH];
-    g89_mode gMode;			// Mode of encryption or MAC
-    const byte bIV[EVP_MAX_IV_LENGTH];	// IV for CFB or CNT mode
-    const byte bOut[G89_MAX_TC_LEN];	// Cipher text for ECB/CFB/CNT
-    					// mode, when ullLen <= G89_MAX_TC_LEN;
-					// Last 16 byte of cipher text for
-					// ECB/CFB/CNT, when ullLen >
-					// G89_MAX_TC_LEN;
-					// 4 byte MAC for imitovstavka
+    g89_mode gMode;			/* Mode of encryption or MAC */
+    const byte bIV[EVP_MAX_IV_LENGTH];	/* IV for CFB or CNT mode */
+    const byte bOut[G89_MAX_TC_LEN];	/* Cipher text for ECB/CFB/CNT */
+    					/* mode, when ullLen <= G89_MAX_TC_LEN;
+					 * Last 16 byte of cipher text for
+					 * ECB/CFB/CNT, when ullLen >
+					 * G89_MAX_TC_LEN;
+					 * 4 byte MAC for imitovstavka */
 }   g89_tc;
 
 const g89_tc tcs[] = {
