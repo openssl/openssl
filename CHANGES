@@ -4,6 +4,10 @@
 
  Changes between 1.0.1c and 1.0.1d [xx XXX xxxx]
 
+  *) Return an error when checking OCSP signatures when key is NULL.
+     This fixes a DoS attack. (CVE-2013-0166)
+     [Steve Henson]
+
   *) Make openssl verify return errors.
      [Chris Palmer <palmer@google.com> and Ben Laurie]
 
