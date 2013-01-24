@@ -1387,13 +1387,11 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 	/* 1 byte for the list (we only support audit proofs) */
 	if (s->ctx->tlsext_authz_server_audit_proof_cb != NULL)
 		{
-		size_t lenmax;
                 const unsigned short ext_len = 2;
                 const unsigned char list_len = 1;
 
 		if (limit < ret + 6)
 			return NULL;
-		lenmax = limit - ret - 6;
 
 		s2n(TLSEXT_TYPE_server_authz, ret);
                 /* Extension length: 2 bytes */
