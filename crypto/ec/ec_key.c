@@ -85,6 +85,7 @@ EC_KEY *EC_KEY_new(void)
 	ret->pub_key = NULL;
 	ret->priv_key= NULL;
 	ret->enc_flag= 0; 
+	ret->nonce_from_hash_flag = 0;
 	ret->conv_form = POINT_CONVERSION_UNCOMPRESSED;
 	ret->references= 1;
 	ret->method_data = NULL;
@@ -198,6 +199,7 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
 
 	/* copy the rest */
 	dest->enc_flag  = src->enc_flag;
+	dest->nonce_from_hash_flag = src->nonce_from_hash_flag;
 	dest->conv_form = src->conv_form;
 	dest->version   = src->version;
 	dest->flags = src->flags;
@@ -587,6 +589,16 @@ unsigned int EC_KEY_get_enc_flags(const EC_KEY *key)
 void EC_KEY_set_enc_flags(EC_KEY *key, unsigned int flags)
 	{
 	key->enc_flag = flags;
+	}
+
+int EC_KEY_get_nonce_from_hash(const EC_KEY *key)
+	{
+	return key->nonce_from_hash_flag;
+	}
+
+void EC_KEY_set_nonce_from_hash(EC_KEY *key, int on)
+	{
+	key->nonce_from_hash_flag = on != 0;
 	}
 
 point_conversion_form_t EC_KEY_get_conv_form(const EC_KEY *key)

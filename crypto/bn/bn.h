@@ -676,6 +676,10 @@ const BIGNUM *BN_get0_nist_prime_521(void);
 
 int (*BN_nist_mod_func(const BIGNUM *p))(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx);
 
+int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range, const BIGNUM *priv,
+			  const unsigned char *message, size_t message_len,
+			  BN_CTX *ctx);
+
 /* library internal functions */
 
 #define bn_expand(a,bits) ((((((bits+BN_BITS2-1))/BN_BITS2)) <= (a)->dmax)?\
@@ -868,6 +872,7 @@ void ERR_load_BN_strings(void);
 #define BN_R_NOT_INITIALIZED				 107
 #define BN_R_NO_INVERSE					 108
 #define BN_R_NO_SOLUTION				 116
+#define BN_R_PRIVATE_KEY_TOO_LARGE			 117
 #define BN_R_P_IS_NOT_PRIME				 112
 #define BN_R_TOO_MANY_ITERATIONS			 113
 #define BN_R_TOO_MANY_TEMPORARY_VARIABLES		 109

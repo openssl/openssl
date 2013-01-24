@@ -1,6 +1,6 @@
 /* crypto/bn/bn_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2013 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -132,6 +132,7 @@ static ERR_STRING_DATA BN_str_reasons[]=
 {ERR_REASON(BN_R_NOT_INITIALIZED)        ,"not initialized"},
 {ERR_REASON(BN_R_NO_INVERSE)             ,"no inverse"},
 {ERR_REASON(BN_R_NO_SOLUTION)            ,"no solution"},
+{ERR_REASON(BN_R_PRIVATE_KEY_TOO_LARGE)  ,"private key too large"},
 {ERR_REASON(BN_R_P_IS_NOT_PRIME)         ,"p is not prime"},
 {ERR_REASON(BN_R_TOO_MANY_ITERATIONS)    ,"too many iterations"},
 {ERR_REASON(BN_R_TOO_MANY_TEMPORARY_VARIABLES),"too many temporary variables"},

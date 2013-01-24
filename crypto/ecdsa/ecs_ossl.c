@@ -62,11 +62,13 @@
 #include <openssl/err.h>
 #include <openssl/obj_mac.h>
 #include <openssl/bn.h>
+#include <openssl/rand.h>
 
 static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dlen, 
 		const BIGNUM *, const BIGNUM *, EC_KEY *eckey);
-static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, 
-		BIGNUM **rp);
+static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
+			    BIGNUM **kinvp, BIGNUM **rp,
+			    const unsigned char *dgst, int dlen);
 static int ecdsa_do_verify(const unsigned char *dgst, int dgst_len, 
 		const ECDSA_SIG *sig, EC_KEY *eckey);
 
@@ -88,8 +90,9 @@ const ECDSA_METHOD *ECDSA_OpenSSL(void)
 	return &openssl_ecdsa_meth;
 }
 
-static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
-		BIGNUM **rp)
+static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
+			    BIGNUM **kinvp, BIGNUM **rp,
+			    const unsigned char *dgst, int dlen)
 {
 	BN_CTX   *ctx = NULL;
 	BIGNUM	 *k = NULL, *r = NULL, *order = NULL, *X = NULL;
@@ -143,11 +146,26 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
 	{
 		/* get random k */	
 		do
-			if (!BN_rand_range(k, order))
+#ifndef OPENSSL_NO_SHA512
+			if (EC_KEY_get_nonce_from_hash(eckey))
 			{
-				ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP,
-				 ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED);	
-				goto err;
+				if (!BN_generate_dsa_nonce(k, order, EC_KEY_get0_private_key(eckey),
+							   dgst, dlen, ctx))
+					{
+					ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP,
+						 ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED);
+					goto err;
+					}
+			}
+			else
+#endif
+			{
+				if (!BN_rand_range(k, order))
+				{
+					ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP,
+						 ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED);
+					goto err;
+				}
 			}
 		while (BN_is_zero(k));
 
@@ -302,8 +320,7 @@ static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 	{
 		if (in_kinv == NULL || in_r == NULL)
 		{
-			if (!ecdsa->meth->ecdsa_sign_setup(eckey, ctx,
-								&kinv, &ret->r))
+			if (!ecdsa->meth->ecdsa_sign_setup(eckey, ctx, &kinv, &ret->r, dgst, dgst_len))
 			{
 				ECDSAerr(ECDSA_F_ECDSA_DO_SIGN,ERR_R_ECDSA_LIB);
 				goto err;

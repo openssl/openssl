@@ -91,13 +91,27 @@
 #define OPENSSL_DSA_FIPS_MIN_MODULUS_BITS 1024
 
 #define DSA_FLAG_CACHE_MONT_P	0x01
-#define DSA_FLAG_NO_EXP_CONSTTIME       0x02 /* new with 0.9.7h; the built-in DSA
-                                              * implementation now uses constant time
-                                              * modular exponentiation for secret exponents
-                                              * by default. This flag causes the
-                                              * faster variable sliding window method to
-                                              * be used for all exponents.
+#define DSA_FLAG_NO_EXP_CONSTTIME       0x02 /* new with 0.9.7h; the
+                                              * built-in DSA
+                                              * implementation now
+                                              * uses constant time
+                                              * modular exponentiation
+                                              * for secret exponents
+                                              * by default. This flag
+                                              * causes the faster
+                                              * variable sliding
+                                              * window method to be
+                                              * used for all
+                                              * exponents.
                                               */
+#define DSA_FLAG_NONCE_FROM_HASH	0x04 /* Causes the DSA nonce
+					      * to be calculated from
+					      * SHA512(private_key +
+					      * H(message) +
+					      * random). This
+					      * strengthens DSA
+					      * against a weak
+					      * PRNG. */
 
 /* If this flag is set the DSA method is FIPS compliant and can be used
  * in FIPS mode. This is set in the validated module method. If an
@@ -133,8 +147,9 @@ struct dsa_method
 	{
 	const char *name;
 	DSA_SIG * (*dsa_do_sign)(const unsigned char *dgst, int dlen, DSA *dsa);
-	int (*dsa_sign_setup)(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
-								BIGNUM **rp);
+	int (*dsa_sign_setup)(DSA *dsa, BN_CTX *ctx_in,
+			      BIGNUM **kinvp, BIGNUM **rp,
+			      const unsigned char *dgst, int dlen);
 	int (*dsa_do_verify)(const unsigned char *dgst, int dgst_len,
 			     DSA_SIG *sig, DSA *dsa);
 	int (*dsa_mod_exp)(DSA *dsa, BIGNUM *rr, BIGNUM *a1, BIGNUM *p1,
@@ -338,6 +353,7 @@ void ERR_load_DSA_strings(void);
 #define DSA_R_MISSING_PARAMETERS			 101
 #define DSA_R_MODULUS_TOO_LARGE				 103
 #define DSA_R_NEED_NEW_SETUP_VALUES			 110
+#define DSA_R_NONCE_CANNOT_BE_PRECOMPUTED		 114
 #define DSA_R_NO_PARAMETERS_SET				 107
 #define DSA_R_PARAMETER_ENCODING_ERROR			 105
 #define DSA_R_Q_NOT_PRIME				 113

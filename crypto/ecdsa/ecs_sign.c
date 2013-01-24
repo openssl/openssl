@@ -58,6 +58,7 @@
 #include <openssl/engine.h>
 #endif
 #include <openssl/rand.h>
+#include <openssl/err.h>
 
 ECDSA_SIG *ECDSA_do_sign(const unsigned char *dgst, int dlen, EC_KEY *eckey)
 {
@@ -102,5 +103,12 @@ int ECDSA_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
 	ECDSA_DATA *ecdsa = ecdsa_check(eckey);
 	if (ecdsa == NULL)
 		return 0;
-	return ecdsa->meth->ecdsa_sign_setup(eckey, ctx_in, kinvp, rp); 
+	if (EC_KEY_get_nonce_from_hash(eckey))
+		{
+		/* You cannot precompute the ECDSA nonce if it is required to
+		 * depend on the message. */
+		ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP, ECDSA_R_NONCE_CANNOT_BE_PRECOMPUTED);
+		return 0;
+		}
+	return ecdsa->meth->ecdsa_sign_setup(eckey, ctx_in, kinvp, rp, NULL, 0);
 }
