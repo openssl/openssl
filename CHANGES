@@ -2038,6 +2038,10 @@
      This fixes a DoS attack. (CVE-2013-0166)
      [Steve Henson]
 
+  *) Return an error when checking OCSP signatures when key is NULL.
+     This fixes a DoS attack. (CVE-2013-0166)
+     [Steve Henson]
+
   *) Call OCSP Stapling callback after ciphersuite has been chosen, so
      the right response is stapled. Also change SSL_get_certificate()
      so it returns the certificate actually sent.
