@@ -215,6 +215,15 @@
 			 *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
 			 *((c)++)=(unsigned char)(((l)    )&0xff))
 
+#define l2n8(l,c)	(*((c)++)=(unsigned char)(((l)>>56)&0xff), \
+			 *((c)++)=(unsigned char)(((l)>>48)&0xff), \
+			 *((c)++)=(unsigned char)(((l)>>40)&0xff), \
+			 *((c)++)=(unsigned char)(((l)>>32)&0xff), \
+			 *((c)++)=(unsigned char)(((l)>>24)&0xff), \
+			 *((c)++)=(unsigned char)(((l)>>16)&0xff), \
+			 *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
+			 *((c)++)=(unsigned char)(((l)    )&0xff))
+
 #define n2l6(c,l)	(l =((BN_ULLONG)(*((c)++)))<<40, \
 			 l|=((BN_ULLONG)(*((c)++)))<<32, \
 			 l|=((BN_ULLONG)(*((c)++)))<<24, \
@@ -1079,4 +1088,29 @@ int ssl_add_clienthello_renegotiate_ext(SSL *s, unsigned char *p, int *len,
 					int maxlen);
 int ssl_parse_clienthello_renegotiate_ext(SSL *s, unsigned char *d, int len,
 					  int *al);
+/* s3_cbc.c */
+void ssl3_cbc_copy_mac(unsigned char* out,
+		       const SSL3_RECORD *rec,
+		       unsigned md_size);
+int ssl3_cbc_remove_padding(const SSL* s,
+			    SSL3_RECORD *rec,
+			    unsigned block_size,
+			    unsigned mac_size);
+int tls1_cbc_remove_padding(const SSL* s,
+			    SSL3_RECORD *rec,
+			    unsigned block_size,
+			    unsigned mac_size);
+char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx);
+void ssl3_cbc_digest_record(
+	const EVP_MD_CTX *ctx,
+	unsigned char* md_out,
+	size_t* md_out_size,
+	const unsigned char header[13],
+	const unsigned char *data,
+	size_t data_plus_mac_size,
+	size_t data_plus_mac_plus_padding_size,
+	const unsigned char *mac_secret,
+	unsigned mac_secret_length,
+	char is_sslv3);
+
 #endif
