@@ -935,7 +935,7 @@ static int get_server_verify(SSL *s)
 		s->msg_callback(0, s->version, 0, p, len, s, s->msg_callback_arg); /* SERVER-VERIFY */
 	p += 1;
 
-	if (memcmp(p,s->s2->challenge,s->s2->challenge_length) != 0)
+	if (CRYPTO_memcmp(p,s->s2->challenge,s->s2->challenge_length) != 0)
 		{
 		ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);
 		SSLerr(SSL_F_GET_SERVER_VERIFY,SSL_R_CHALLENGE_IS_DIFFERENT);

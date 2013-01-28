@@ -242,7 +242,7 @@ int ssl3_get_finished(SSL *s, int a, int b)
 		goto f_err;
 		}
 
-	if (memcmp(p, s->s3->tmp.peer_finish_md, i) != 0)
+	if (CRYPTO_memcmp(p, s->s3->tmp.peer_finish_md, i) != 0)
 		{
 		al=SSL_AD_DECRYPT_ERROR;
 		SSLerr(SSL_F_SSL3_GET_FINISHED,SSL_R_DIGEST_CHECK_FAILED);
