@@ -498,11 +498,7 @@ int ssl3_enc(SSL *s, int send)
 		if (!send)
 			{
 			if (l == 0 || l%bs != 0)
-				{
-				SSLerr(SSL_F_SSL3_ENC,SSL_R_BLOCK_CIPHER_PAD_IS_WRONG);
-				ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_DECRYPTION_FAILED);
 				return 0;
-				}
 			/* otherwise, rec->length >= bs */
 			}
 		

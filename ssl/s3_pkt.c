@@ -247,7 +247,6 @@ static int ssl3_get_record(SSL *s)
 	unsigned char md[EVP_MAX_MD_SIZE];
 	short version;
 	unsigned mac_size;
-	int clear=0;
 	size_t extra;
 
 	rr= &(s->s3->rrec);
@@ -361,8 +360,9 @@ again:
 	 *    -1: if the padding is invalid */
 	if (enc_err == 0)
 		{
-		/* SSLerr() and ssl3_send_alert() have been called */
-		goto err;
+		al=SSL_AD_DECRYPTION_FAILED;
+		SSLerr(SSL_F_TLS1_ENC,SSL_R_BLOCK_CIPHER_PAD_IS_WRONG);
+		goto f_err;
 		}
 
 #ifdef TLS_DEBUG
@@ -372,14 +372,11 @@ printf("\n");
 #endif
 
 	/* r->length is now the compressed data plus mac */
-	if (	(sess == NULL) ||
-		(s->enc_read_ctx == NULL) ||
-		(s->read_hash == NULL))
-		clear=1;
-
-	if (!clear)
+	if ((sess != NULL) &&
+	    (s->enc_read_ctx != NULL) &&
+	    (s->read_hash != NULL))
 		{
-		/* !clear => s->read_hash != NULL => mac_size != -1 */
+		/* s->read_hash != NULL => mac_size != -1 */
 		unsigned char *mac = NULL;
 		unsigned char mac_tmp[EVP_MAX_MD_SIZE];
 		mac_size=EVP_MD_size(s->read_hash);

@@ -327,17 +327,12 @@ dtls1_get_buffered_record(SSL *s)
 static int
 dtls1_process_record(SSL *s)
 {
-    int al;
-	int clear=0;
-    int enc_err;
+	int i,al;
+	int enc_err;
 	SSL_SESSION *sess;
     SSL3_RECORD *rr;
 	unsigned int mac_size;
 	unsigned char md[EVP_MAX_MD_SIZE];
-	int decryption_failed_or_bad_record_mac = 0;
-	unsigned char *mac = NULL;
-	int i;
-
 
 	rr= &(s->s3->rrec);
     sess = s->session;
@@ -370,12 +365,16 @@ dtls1_process_record(SSL *s)
 	rr->orig_len=rr->length;
 
 	enc_err = s->method->ssl3_enc->enc(s,0);
-	if (enc_err <= 0)
+	/* enc_err is:
+	 *    0: (in non-constant time) if the record is publically invalid.
+	 *    1: if the padding is valid
+	 *    -1: if the padding is invalid */
+	if (enc_err == 0)
 		{
-		/* To minimize information leaked via timing, we will always
-		 * perform all computations before discarding the message.
-		 */
-		decryption_failed_or_bad_record_mac = 1;
+		/* For DTLS we simply ignore bad packets. */
+		rr->length = 0;
+		s->packet_length = 0;
+		goto err;
 		}
 
 #ifdef TLS_DEBUG
@@ -385,41 +384,59 @@ printf("\n");
 #endif
 
 	/* r->length is now the compressed data plus mac */
-if (	(sess == NULL) ||
-		(s->enc_read_ctx == NULL) ||
-		(s->read_hash == NULL))
-    clear=1;
-
-	if (!clear)
+	if ((sess != NULL) &&
+	    (s->enc_read_ctx != NULL) &&
+	    (s->read_hash != NULL))
 		{
+		/* s->read_hash != NULL => mac_size != -1 */
+		unsigned char *mac = NULL;
+		unsigned char mac_tmp[EVP_MAX_MD_SIZE];
 		mac_size=EVP_MD_size(s->read_hash);
+		OPENSSL_assert(mac_size <= EVP_MAX_MD_SIZE);
 
-		if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH+mac_size)
+		/* orig_len is the length of the record before any padding was
+		 * removed. This is public information, as is the MAC in use,
+		 * therefore we can safely process the record in a different
+		 * amount of time if it's too short to possibly contain a MAC.
+		 */
+		if (rr->orig_len < mac_size ||
+		    /* CBC records must have a padding length byte too. */
+		    (EVP_CIPHER_CTX_mode(s->enc_read_ctx) == EVP_CIPH_CBC_MODE &&
+		     rr->orig_len < mac_size+1))
 			{
-#if 0 /* OK only for stream ciphers (then rr->length is visible from ciphertext anyway) */
-			al=SSL_AD_RECORD_OVERFLOW;
-			SSLerr(SSL_F_DTLS1_PROCESS_RECORD,SSL_R_PRE_MAC_LENGTH_TOO_LONG);
+			al=SSL_AD_DECODE_ERROR;
+			SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_LENGTH_TOO_SHORT);
 			goto f_err;
-#else
-			decryption_failed_or_bad_record_mac = 1;
-#endif			
 			}
-		/* check the MAC for rr->input (it's in mac_size bytes at the tail) */
-		if (rr->length >= mac_size)
+
+		if (EVP_CIPHER_CTX_mode(s->enc_read_ctx) == EVP_CIPH_CBC_MODE)
 			{
+			/* We update the length so that the TLS header bytes
+			 * can be constructed correctly but we need to extract
+			 * the MAC in constant time from within the record,
+			 * without leaking the contents of the padding bytes.
+			 * */
+			mac = mac_tmp;
+			ssl3_cbc_copy_mac(mac_tmp, rr, mac_size);
+			rr->length -= mac_size;
+			}
+		else
+			{
+			/* In this case there's no padding, so |rec->orig_len|
+			 * equals |rec->length| and we checked that there's
+			 * enough bytes for |mac_size| above. */
 			rr->length -= mac_size;
 			mac = &rr->data[rr->length];
 			}
-		else
-			rr->length = 0;
-		i=s->method->ssl3_enc->mac(s,md,0);
-		if (i < 0 || mac == NULL || CRYPTO_memcmp(md,mac,mac_size) != 0)
-			{
-			decryption_failed_or_bad_record_mac = 1;
-			}
+
+		i=s->method->ssl3_enc->mac(s,md,0 /* not send */);
+		if (i < 0 || mac == NULL || CRYPTO_memcmp(md, mac, (size_t)mac_size) != 0)
+			enc_err = -1;
+		if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH+mac_size)
+			enc_err = -1;
 		}
 
-	if (decryption_failed_or_bad_record_mac)
+	if (enc_err < 0)
 		{
 		/* decryption failed, silently discard message */
 		rr->length = 0;
