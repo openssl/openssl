@@ -126,6 +126,14 @@
 #include <openssl/des.h>
 #endif
 
+/* dtls1_enc encrypts/decrypts the record in |s->wrec| / |s->rrec|, respectively.
+ *
+ * Returns:
+ *   0: (in non-constant time) if the record is publically invalid (i.e. too
+ *       short etc).
+ *   1: if the record's padding is valid / the encryption was successful.
+ *   -1: if the record's padding/AEAD-authenticator is invalid or, if sending,
+ *       an internal error occured. */
 int dtls1_enc(SSL *s, int send)
 	{
 	SSL3_RECORD *rec;
@@ -165,8 +173,7 @@ int dtls1_enc(SSL *s, int send)
 		if (EVP_MD_CTX_md(s->read_hash))
 			{
 			mac_size=EVP_MD_CTX_size(s->read_hash);
-			if (mac_size < 0)
-				return -1;
+			OPENSSL_assert(mac_size >= 0);
 			}
 		ds=s->enc_read_ctx;
 		rec= &(s->s3->rrec);
@@ -231,7 +238,7 @@ int dtls1_enc(SSL *s, int send)
 		if (!send)
 			{
 			if (l == 0 || l%bs != 0)
-				return -1;
+				return 0;
 			}
 		
 		EVP_Cipher(ds,rec->data,rec->input,l);
