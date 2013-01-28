@@ -635,6 +635,15 @@ err:
 	return(ret);
 	}
 
+/* tls1_enc encrypts/decrypts the record in |s->wrec| / |s->rrec|, respectively.
+ *
+ * Returns:
+ *   0: (in non-constant time) if the record is publically invalid (i.e. too
+ *       short etc).
+ *   1: if the record's padding is valid / the encryption was successful.
+ *   -1: if the record's padding/AEAD-authenticator is invalid or, if sending,
+ *       an internal error occured.
+ */
 int tls1_enc(SSL *s, int send)
 	{
 	SSL3_RECORD *rec;
@@ -745,8 +754,6 @@ int tls1_enc(SSL *s, int send)
 			printf(" %02x", rec->data[i]);  printf("\n");
 		}
 #endif	/* KSSL_DEBUG */
-
-		rec->orig_len = rec->length;
 
 		ret = 1;
 		if (EVP_MD_CTX_md(s->read_hash) != NULL)

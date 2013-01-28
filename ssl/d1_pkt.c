@@ -406,6 +406,7 @@ dtls1_process_record(SSL *s)
 
 	/* decrypt in place in 'rr->input' */
 	rr->data=rr->input;
+	rr->orig_len=rr->length;
 
 	enc_err = s->method->ssl3_enc->enc(s,0);
 	if (enc_err <= 0)
