@@ -194,6 +194,7 @@ void OpenSSL_add_all_ciphers(void)
 	EVP_add_cipher_alias(SN_aes_256_cbc,"AES256");
 	EVP_add_cipher_alias(SN_aes_256_cbc,"aes256");
 #endif
+#endif
 
 #ifndef OPENSSL_NO_CAMELLIA
 	EVP_add_cipher(EVP_camellia_128_ecb());
