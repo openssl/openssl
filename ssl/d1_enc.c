@@ -246,7 +246,6 @@ int dtls1_enc(SSL *s, int send)
                 }
 #endif	/* KSSL_DEBUG */
 
-		rec->orig_len = rec->length;
 		if ((bs != 1) && !send)
 			return tls1_cbc_remove_padding(s, rec, bs, mac_size);
 		}

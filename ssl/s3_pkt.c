@@ -352,8 +352,13 @@ again:
 
 	/* decrypt in place in 'rr->input' */
 	rr->data=rr->input;
+	rr->orig_len=rr->length;
 
 	enc_err = s->method->ssl3_enc->enc(s,0);
+	/* enc_err is:
+	 *    0: (in non-constant time) if the record is publically invalid.
+	 *    1: if the padding is valid
+	 *    -1: if the padding is invalid */
 	if (enc_err == 0)
 		{
 		/* SSLerr() and ssl3_send_alert() have been called */

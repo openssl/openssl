@@ -433,6 +433,15 @@ void ssl3_cleanup_key_block(SSL *s)
 	s->s3->tmp.key_block_length=0;
 	}
 
+/* ssl3_enc encrypts/decrypts the record in |s->wrec| / |s->rrec|, respectively.
+ *
+ * Returns:
+ *   0: (in non-constant time) if the record is publically invalid (i.e. too
+ *       short etc).
+ *   1: if the record's padding is valid / the encryption was successful.
+ *   -1: if the record's padding is invalid or, if sending, an internal error
+ *       occured.
+ */
 int ssl3_enc(SSL *s, int send)
 	{
 	SSL3_RECORD *rec;
@@ -503,6 +512,7 @@ int ssl3_enc(SSL *s, int send)
 
 		if (s->read_hash != NULL)
 			mac_size = EVP_MD_size(s->read_hash);
+
 		if ((bs != 1) && !send)
 			return ssl3_cbc_remove_padding(s, rec, bs, mac_size);
 		}
