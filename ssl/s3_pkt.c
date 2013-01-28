@@ -465,7 +465,7 @@ printf("\n");
 #endif
 			}
 		i=s->method->ssl3_enc->mac(s,md,0);
-		if (i < 0 || mac == NULL || memcmp(md, mac, (size_t)mac_size) != 0)
+		if (i < 0 || mac == NULL || CRYPTO_memcmp(md, mac, (size_t)mac_size) != 0)
 			{
 			decryption_failed_or_bad_record_mac = 1;
 			}
