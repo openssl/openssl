@@ -641,6 +641,7 @@ int tls1_enc(SSL *s, int send)
 	EVP_CIPHER_CTX *ds;
 	unsigned long l;
 	int bs,i,j,k,pad=0,ret,mac_size=0;
+	int n;
 	const EVP_CIPHER *enc;
 
 	if (send)
