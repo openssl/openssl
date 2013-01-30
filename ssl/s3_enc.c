@@ -501,8 +501,8 @@ int ssl3_enc(SSL *s, int send)
 
 		rec->orig_len = rec->length;
 
-		if (EVP_MD_CTX_md(s->read_hash) != NULL)
-			mac_size = EVP_MD_CTX_size(s->read_hash);
+		if (s->read_hash != NULL)
+			mac_size = EVP_MD_size(s->read_hash);
 		if ((bs != 1) && !send)
 			return ssl3_cbc_remove_padding(s, rec, bs, mac_size);
 		}
@@ -643,7 +643,7 @@ int ssl3_mac(SSL *ssl, unsigned char *md, int send)
 		/* Chop the digest off the end :-) */
 		EVP_MD_CTX_init(&md_ctx);
 
-		EVP_MD_CTX_copy_ex( &md_ctx,hash);
+		EVP_DigestInit_ex( &md_ctx,hash, NULL);
 		EVP_DigestUpdate(&md_ctx,mac_sec,md_size);
 		EVP_DigestUpdate(&md_ctx,ssl3_pad_1,npad);
 		EVP_DigestUpdate(&md_ctx,seq,8);
@@ -655,7 +655,7 @@ int ssl3_mac(SSL *ssl, unsigned char *md, int send)
 		EVP_DigestUpdate(&md_ctx,rec->input,rec->length);
 		EVP_DigestFinal_ex( &md_ctx,md,NULL);
 
-		EVP_MD_CTX_copy_ex( &md_ctx,hash);
+		EVP_DigestInit_ex( &md_ctx,hash, NULL);
 		EVP_DigestUpdate(&md_ctx,mac_sec,md_size);
 		EVP_DigestUpdate(&md_ctx,ssl3_pad_2,npad);
 		EVP_DigestUpdate(&md_ctx,md,md_size);

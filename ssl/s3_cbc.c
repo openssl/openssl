@@ -139,8 +139,7 @@ int tls1_cbc_remove_padding(const SSL* s,
 			    unsigned mac_size)
 	{
 	unsigned padding_length, good, to_check, i;
-	const char has_explicit_iv =
-		s->version >= TLS1_1_VERSION || s->version == DTLS1_VERSION;
+	const char has_explicit_iv = s->version == DTLS1_VERSION;
 	const unsigned overhead = 1 /* padding length byte */ +
 				  mac_size +
 				  (has_explicit_iv ? block_size : 0);
@@ -366,9 +365,9 @@ static void tls1_sha512_final_raw(void* ctx, unsigned char *md_out)
 
 /* ssl3_cbc_record_digest_supported returns 1 iff |ctx| uses a hash function
  * which ssl3_cbc_digest_record supports. */
-char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx)
+char ssl3_cbc_record_digest_supported(const EVP_MD *digest)
 	{
-	switch (ctx->digest->type)
+	switch (digest->type)
 		{
 		case NID_md5:
 		case NID_sha1:
@@ -402,7 +401,7 @@ char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx)
  * a padding byte and MAC. (If the padding was invalid, it might contain the
  * padding too. ) */
 void ssl3_cbc_digest_record(
-	const EVP_MD_CTX *ctx,
+	const EVP_MD *digest,
 	unsigned char* md_out,
 	size_t* md_out_size,
 	const unsigned char header[13],
@@ -436,7 +435,7 @@ void ssl3_cbc_digest_record(
 	 * many possible overflows later in this function. */
 	OPENSSL_assert(data_plus_mac_plus_padding_size < 1024*1024);
 
-	switch (ctx->digest->type)
+	switch (digest->type)
 		{
 		case NID_md5:
 			MD5_Init((MD5_CTX*)md_state);
@@ -670,7 +669,7 @@ void ssl3_cbc_digest_record(
 		}
 
 	EVP_MD_CTX_init(&md_ctx);
-	EVP_DigestInit_ex(&md_ctx, ctx->digest, NULL /* engine */);
+	EVP_DigestInit_ex(&md_ctx, digest, NULL /* engine */);
 	if (is_sslv3)
 		{
 		/* We repurpose |hmac_pad| to contain the SSLv3 pad2 block. */

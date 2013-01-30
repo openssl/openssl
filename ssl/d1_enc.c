@@ -136,9 +136,9 @@ int dtls1_enc(SSL *s, int send)
 
 	if (send)
 		{
-		if (EVP_MD_CTX_md(s->write_hash))
+		if (s->write_hash)
 			{
-			mac_size=EVP_MD_CTX_size(s->write_hash);
+			mac_size=EVP_MD_size(s->write_hash);
 			if (mac_size < 0)
 				return -1;
 			}
@@ -162,9 +162,9 @@ int dtls1_enc(SSL *s, int send)
 		}
 	else
 		{
-		if (EVP_MD_CTX_md(s->read_hash))
+		if (s->read_hash)
 			{
-			mac_size=EVP_MD_CTX_size(s->read_hash);
+			mac_size=EVP_MD_size(s->read_hash);
 			if (mac_size < 0)
 				return -1;
 			}

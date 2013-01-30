@@ -377,7 +377,7 @@ printf("\n");
 		/* !clear => s->read_hash != NULL => mac_size != -1 */
 		unsigned char *mac = NULL;
 		unsigned char mac_tmp[EVP_MAX_MD_SIZE];
-		mac_size=EVP_MD_CTX_size(s->read_hash);
+		mac_size=EVP_MD_size(s->read_hash);
 		OPENSSL_assert(mac_size <= EVP_MAX_MD_SIZE);
 
 		/* orig_len is the length of the record before any padding was

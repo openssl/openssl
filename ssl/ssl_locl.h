@@ -1023,9 +1023,9 @@ int tls1_cbc_remove_padding(const SSL* s,
 			    SSL3_RECORD *rec,
 			    unsigned block_size,
 			    unsigned mac_size);
-char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx);
+char ssl3_cbc_record_digest_supported(const EVP_MD *hash);
 void ssl3_cbc_digest_record(
-	const EVP_MD_CTX *ctx,
+	const EVP_MD *hash,
 	unsigned char* md_out,
 	size_t* md_out_size,
 	const unsigned char header[13],

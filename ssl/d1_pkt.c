@@ -336,6 +336,7 @@ dtls1_process_record(SSL *s)
 	unsigned char md[EVP_MAX_MD_SIZE];
 	int decryption_failed_or_bad_record_mac = 0;
 	unsigned char *mac = NULL;
+	int i;
 
 
 	rr= &(s->s3->rrec);

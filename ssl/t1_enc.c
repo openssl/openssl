@@ -631,8 +631,8 @@ int tls1_enc(SSL *s, int send)
 		rec->orig_len = rec->length;
 
 		ret = 1;
-		if (EVP_MD_CTX_md(s->read_hash) != NULL)
-			mac_size = EVP_MD_CTX_size(s->read_hash);
+		if (s->read_hash != NULL)
+			mac_size = EVP_MD_size(s->read_hash);
 		if ((bs != 1) && !send)
 			ret = tls1_cbc_remove_padding(s, rec, bs, mac_size);
 		if (pad && !send)
@@ -686,12 +686,10 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 	SSL3_RECORD *rec;
 	unsigned char *mac_sec,*seq;
 	const EVP_MD *hash;
-	unsigned int md_size;
+	size_t md_size;
 	int i;
-	EVP_MD_CTX hmac, *mac_ctx;
+	HMAC_CTX hmac;
 	unsigned char header[13];
-	int stream_mac = (send?(ssl->mac_flags & SSL_MAC_FLAG_WRITE_MAC_STREAM):(ssl->mac_flags&SSL_MAC_FLAG_READ_MAC_STREAM));
-	int t;
 
 	if (send)
 		{
@@ -734,31 +732,32 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 
 	if (!send &&
 	    EVP_CIPHER_CTX_mode(ssl->enc_read_ctx) == EVP_CIPH_CBC_MODE &&
-	    ssl3_cbc_record_digest_supported(mac_ctx))
+	    ssl3_cbc_record_digest_supported(hash))
 		{
 		/* This is a CBC-encrypted record. We must avoid leaking any
 		 * timing-side channel information about how many blocks of
 		 * data we are hashing because that gives an attacker a
 		 * timing-oracle. */
 		ssl3_cbc_digest_record(
-			mac_ctx,
+		        hash,
 			md, &md_size,
 			header, rec->input,
 			rec->length + md_size, rec->orig_len,
 			ssl->s3->read_mac_secret,
-			ssl->s3->read_mac_secret_size,
+			EVP_MD_size(ssl->read_hash),
 			0 /* not SSLv3 */);
 		}
 	else
 		{
-		EVP_DigestSignUpdate(mac_ctx,header,sizeof(header));
-		EVP_DigestSignUpdate(mac_ctx,rec->input,rec->length);
-		t=EVP_DigestSignFinal(mac_ctx,md,&md_size);
-		OPENSSL_assert(t > 0);
+		unsigned mds;
+
+		HMAC_Update(&hmac,header,sizeof(header));
+		HMAC_Update(&hmac,rec->input,rec->length);
+		HMAC_Final(&hmac,md,&mds);
+		md_size = mds;
 		}
 		
-	if (!stream_mac)
-		EVP_MD_CTX_cleanup(&hmac);
+	HMAC_CTX_cleanup(&hmac);
 #ifdef TLS_DEBUG
 printf("sec=");
 {unsigned int z; for (z=0; z<md_size; z++) printf("%02X ",mac_sec[z]); printf("\n"); }
