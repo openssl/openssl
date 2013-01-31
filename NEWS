@@ -9,6 +9,7 @@
 
       o Fix renegotiation in TLS 1.1, 1.2 by using the correct TLS version.
       o Include the fips configuration module.
+      o Fix OCSP bad key DoS attack CVE-2013-0166
 
   Major changes between OpenSSL 1.0.1b and OpenSSL 1.0.1c:
 
