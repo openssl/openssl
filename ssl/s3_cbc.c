@@ -699,7 +699,7 @@ void ssl3_cbc_digest_record(
 	EVP_MD_CTX_cleanup(&md_ctx);
 	}
 
-#ifndef OPENSSL_FIPS
+#ifdef OPENSSL_FIPS
 
 /* Due to the need to use EVP in FIPS mode we can't reimplement digests but
  * we can ensure the number of blocks processed is equal for all cases
