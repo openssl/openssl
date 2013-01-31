@@ -1011,6 +1011,7 @@ int ssl_add_clienthello_renegotiate_ext(SSL *s, unsigned char *p, int *len,
 					int maxlen);
 int ssl_parse_clienthello_renegotiate_ext(SSL *s, unsigned char *d, int len,
 					  int *al);
+#endif
 /* s3_cbc.c */
 void ssl3_cbc_copy_mac(unsigned char* out,
 		       const SSL3_RECORD *rec,
@@ -1036,6 +1037,5 @@ void ssl3_cbc_digest_record(
 	unsigned mac_secret_length,
 	char is_sslv3);
 
-#endif
 
 #endif
