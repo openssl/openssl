@@ -758,6 +758,14 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 		HMAC_Update(&hmac,rec->input,rec->length);
 		HMAC_Final(&hmac,md,&mds);
 		md_size = mds;
+#ifdef OPENSSL_FIPS
+		if (!send && FIPS_mode())
+			tls_fips_digest_extra(
+	    				ssl->enc_read_ctx,
+					hash,
+					&hmac, rec->input,
+					rec->length, rec->orig_len);
+#endif
 		}
 		
 	HMAC_CTX_cleanup(&hmac);
