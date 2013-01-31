@@ -543,6 +543,8 @@ void OpenSSLDie(const char *file,int line,const char *assertion)
 
 void *OPENSSL_stderr(void)	{ return stderr; }
 
+#ifndef OPENSSL_FIPS
+
 int CRYPTO_memcmp(const void *in_a, const void *in_b, size_t len)
 	{
 	size_t i;
@@ -555,3 +557,4 @@ int CRYPTO_memcmp(const void *in_a, const void *in_b, size_t len)
 
 	return x;
 	}
+#endif
