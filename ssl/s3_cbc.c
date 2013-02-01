@@ -371,7 +371,7 @@ char ssl3_cbc_record_digest_supported(const EVP_MD *digest)
 	if (FIPS_mode())
 		return 0;
 #endif
-	switch (digest->type)
+	switch (EVP_MD_type(digest))
 		{
 		case NID_md5:
 		case NID_sha1:
@@ -439,7 +439,7 @@ void ssl3_cbc_digest_record(
 	 * many possible overflows later in this function. */
 	OPENSSL_assert(data_plus_mac_plus_padding_size < 1024*1024);
 
-	switch (digest->type)
+	switch (EVP_MD_type(digest))
 		{
 		case NID_md5:
 			MD5_Init((MD5_CTX*)md_state);
