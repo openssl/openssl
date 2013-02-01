@@ -709,7 +709,7 @@ int n_ssl3_mac(SSL *ssl, unsigned char *md, int send)
 	EVP_MD_CTX md_ctx;
 	const EVP_MD_CTX *hash;
 	unsigned char *p,rec_char;
-	size_t md_size;
+	size_t md_size, orig_len;
 	int npad;
 	int t;
 
@@ -733,6 +733,10 @@ int n_ssl3_mac(SSL *ssl, unsigned char *md, int send)
 		return -1;
 	md_size=t;
 	npad=(48/md_size)*md_size;
+
+	/* kludge: ssl3_cbc_remove_padding passes padding length in rec->type */
+	orig_len = rec->length+md_size+((unsigned int)rec->type>>8);
+	rec->type &= 0xff;
 
 	if (!send &&
 	    EVP_CIPHER_CTX_mode(ssl->enc_read_ctx) == EVP_CIPH_CBC_MODE &&
@@ -765,7 +769,7 @@ int n_ssl3_mac(SSL *ssl, unsigned char *md, int send)
 			hash,
 			md, &md_size,
 			header, rec->input,
-			rec->length + md_size, rec->orig_len,
+			rec->length + md_size, orig_len,
 			mac_sec, md_size,
 			1 /* is SSLv3 */);
 		}
