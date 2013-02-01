@@ -53,8 +53,6 @@
  *
  */
 
-#include <stdint.h>
-
 #include "ssl_locl.h"
 
 #include <openssl/md5.h>
@@ -423,7 +421,7 @@ void ssl3_cbc_digest_record(
 	unsigned sslv3_pad_length = 40, header_length, variance_blocks,
 		 len, max_mac_bytes, num_blocks,
 		 num_starting_blocks, k, mac_end_offset, c, index_a, index_b;
-	uint64_t bits;
+	unsigned int bits;	/* at most 18 bits */
 	unsigned char length_bytes[MAX_HASH_BIT_COUNT_BYTES];
 	/* hmac_pad is the masked HMAC key. */
 	unsigned char hmac_pad[MAX_HASH_BLOCK_SIZE];
@@ -583,14 +581,11 @@ void ssl3_cbc_digest_record(
 		md_transform(md_state, hmac_pad);
 		}
 
-	j = 0;
-	if (md_length_size == 16)
-		{
-		memset(length_bytes, 0, 8);
-		j = 8;
-		}
-	for (i = 0; i < 8; i++)
-		length_bytes[i+j] = bits >> (8*(7-i));
+	memset(length_bytes,0,md_length_size-4);
+	length_bytes[md_length_size-4] = (unsigned char)(bits>>24);
+	length_bytes[md_length_size-3] = (unsigned char)(bits>>16);
+	length_bytes[md_length_size-2] = (unsigned char)(bits>>8);
+	length_bytes[md_length_size-1] = (unsigned char)bits;
 
 	if (k > 0)
 		{
