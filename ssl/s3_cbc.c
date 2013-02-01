@@ -414,7 +414,8 @@ void ssl3_cbc_digest_record(
 	unsigned mac_secret_length,
 	char is_sslv3)
 	{
-	unsigned char md_state[sizeof(SHA512_CTX)];
+	union {	double align;
+		unsigned char c[sizeof(SHA512_CTX)]; } md_state;
 	void (*md_final_raw)(void *ctx, unsigned char *md_out);
 	void (*md_transform)(void *ctx, const unsigned char *block);
 	unsigned md_size, md_block_size = 64;
@@ -440,32 +441,32 @@ void ssl3_cbc_digest_record(
 	switch (EVP_MD_type(digest))
 		{
 		case NID_md5:
-			MD5_Init((MD5_CTX*)md_state);
+			MD5_Init((MD5_CTX*)md_state.c);
 			md_final_raw = tls1_md5_final_raw;
 			md_transform = (void(*)(void *ctx, const unsigned char *block)) MD5_Transform;
 			md_size = 16;
 			sslv3_pad_length = 48;
 			break;
 		case NID_sha1:
-			SHA1_Init((SHA_CTX*)md_state);
+			SHA1_Init((SHA_CTX*)md_state.c);
 			md_final_raw = tls1_sha1_final_raw;
 			md_transform = (void(*)(void *ctx, const unsigned char *block)) SHA1_Transform;
 			md_size = 20;
 			break;
 		case NID_sha224:
-			SHA224_Init((SHA256_CTX*)md_state);
+			SHA224_Init((SHA256_CTX*)md_state.c);
 			md_final_raw = tls1_sha256_final_raw;
 			md_transform = (void(*)(void *ctx, const unsigned char *block)) SHA256_Transform;
 			md_size = 224/8;
 			break;
 		case NID_sha256:
-			SHA256_Init((SHA256_CTX*)md_state);
+			SHA256_Init((SHA256_CTX*)md_state.c);
 			md_final_raw = tls1_sha256_final_raw;
 			md_transform = (void(*)(void *ctx, const unsigned char *block)) SHA256_Transform;
 			md_size = 32;
 			break;
 		case NID_sha384:
-			SHA384_Init((SHA512_CTX*)md_state);
+			SHA384_Init((SHA512_CTX*)md_state.c);
 			md_final_raw = tls1_sha512_final_raw;
 			md_transform = (void(*)(void *ctx, const unsigned char *block)) SHA512_Transform;
 			md_size = 384/8;
@@ -473,7 +474,7 @@ void ssl3_cbc_digest_record(
 			md_length_size = 16;
 			break;
 		case NID_sha512:
-			SHA512_Init((SHA512_CTX*)md_state);
+			SHA512_Init((SHA512_CTX*)md_state.c);
 			md_final_raw = tls1_sha512_final_raw;
 			md_transform = (void(*)(void *ctx, const unsigned char *block)) SHA512_Transform;
 			md_size = 64;
@@ -578,7 +579,7 @@ void ssl3_cbc_digest_record(
 		for (i = 0; i < md_block_size; i++)
 			hmac_pad[i] ^= 0x36;
 
-		md_transform(md_state, hmac_pad);
+		md_transform(md_state.c, hmac_pad);
 		}
 
 	memset(length_bytes,0,md_length_size-4);
@@ -596,21 +597,21 @@ void ssl3_cbc_digest_record(
 			 * block that the header consumes: either 7 bytes
 			 * (SHA1) or 11 bytes (MD5). */
 			unsigned overhang = header_length-md_block_size;
-			md_transform(md_state, header);
+			md_transform(md_state.c, header);
 			memcpy(first_block, header + md_block_size, overhang);
 			memcpy(first_block + overhang, data, md_block_size-overhang);
-			md_transform(md_state, first_block);
+			md_transform(md_state.c, first_block);
 			for (i = 1; i < k/md_block_size - 1; i++)
-				md_transform(md_state, data + md_block_size*i - overhang);
+				md_transform(md_state.c, data + md_block_size*i - overhang);
 			}
 		else
 			{
 			/* k is a multiple of md_block_size. */
 			memcpy(first_block, header, 13);
 			memcpy(first_block+13, data, md_block_size-13);
-			md_transform(md_state, first_block);
+			md_transform(md_state.c, first_block);
 			for (i = 1; i < k/md_block_size; i++)
-				md_transform(md_state, data + md_block_size*i - 13);
+				md_transform(md_state.c, data + md_block_size*i - 13);
 			}
 		}
 
@@ -660,8 +661,8 @@ void ssl3_cbc_digest_record(
 			block[j] = b;
 			}
 
-		md_transform(md_state, block);
-		md_final_raw(md_state, block);
+		md_transform(md_state.c, block);
+		md_final_raw(md_state.c, block);
 		/* If this is index_b, copy the hash value to |mac_out|. */
 		for (j = 0; j < md_size; j++)
 			mac_out[j] |= block[j]&is_block_b;
