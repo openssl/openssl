@@ -304,10 +304,6 @@ typedef struct ssl3_record_st
 /*r */	unsigned char *comp;    /* only used with decompression - malloc()ed */
 /*r */  unsigned long epoch;    /* epoch number, needed by DTLS1 */
 /*r */  PQ_64BIT seq_num;       /* sequence number, needed by DTLS1 */
-/*rw*/	unsigned int orig_len;  /* How many bytes were available before padding
-				   was removed? This is used to implement the
-				   MAC check in constant time for CBC records.
-				 */
 	} SSL3_RECORD;
 
 typedef struct ssl3_buffer_st

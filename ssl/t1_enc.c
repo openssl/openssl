@@ -689,7 +689,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 	SSL3_RECORD *rec;
 	unsigned char *mac_sec,*seq;
 	const EVP_MD *hash;
-	size_t md_size;
+	size_t md_size, orig_len;
 	int i;
 	HMAC_CTX hmac;
 	unsigned char header[13];
@@ -727,6 +727,10 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 	else
 		memcpy(header, seq, 8);
 
+	/* kludge: tls1_cbc_remove_padding passes padding length in rec->type */
+	orig_len = rec->length+md_size+((unsigned int)rec->type>>8);
+	rec->type &= 0xff;
+
 	header[8]=rec->type;
 	header[9]=(unsigned char)(ssl->version>>8);
 	header[10]=(unsigned char)(ssl->version);
@@ -745,7 +749,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 		        hash,
 			md, &md_size,
 			header, rec->input,
-			rec->length + md_size, rec->orig_len,
+			rec->length + md_size, orig_len,
 			ssl->s3->read_mac_secret,
 			EVP_MD_size(ssl->read_hash),
 			0 /* not SSLv3 */);

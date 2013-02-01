@@ -1015,7 +1015,7 @@ int ssl_parse_clienthello_renegotiate_ext(SSL *s, unsigned char *d, int len,
 /* s3_cbc.c */
 void ssl3_cbc_copy_mac(unsigned char* out,
 		       const SSL3_RECORD *rec,
-		       unsigned md_size);
+		       unsigned md_size,unsigned orig_len);
 int ssl3_cbc_remove_padding(const SSL* s,
 			    SSL3_RECORD *rec,
 			    unsigned block_size,
