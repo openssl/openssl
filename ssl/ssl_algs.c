@@ -90,11 +90,9 @@ int SSL_library_init(void)
 	EVP_add_cipher(EVP_aes_256_cbc());
 	EVP_add_cipher(EVP_aes_128_gcm());
 	EVP_add_cipher(EVP_aes_256_gcm());
-#if 0 /* Disabled because of timing side-channel leaks. */
 #if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA1)
 	EVP_add_cipher(EVP_aes_128_cbc_hmac_sha1());
 	EVP_add_cipher(EVP_aes_256_cbc_hmac_sha1());
-#endif
 #endif
 
 #endif
