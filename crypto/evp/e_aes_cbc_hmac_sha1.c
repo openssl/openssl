@@ -474,6 +474,8 @@ static int aesni_cbc_hmac_sha1_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void
 		SHA1_Init(&key->tail);
 		SHA1_Update(&key->tail,hmac_key,sizeof(hmac_key));
 
+		OPENSSL_cleanse(hmac_key,sizeof(hmac_key));
+
 		return 1;
 		}
 	case EVP_CTRL_AEAD_TLS1_AAD:
