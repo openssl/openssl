@@ -515,6 +515,26 @@ s3_both.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 s3_both.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 s3_both.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h s3_both.c
 s3_both.o: ssl_locl.h
+s3_cbc.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
+s3_cbc.o: ../include/openssl/buffer.h ../include/openssl/comp.h
+s3_cbc.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
+s3_cbc.o: ../include/openssl/dtls1.h ../include/openssl/e_os2.h
+s3_cbc.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
+s3_cbc.o: ../include/openssl/ecdsa.h ../include/openssl/err.h
+s3_cbc.o: ../include/openssl/evp.h ../include/openssl/hmac.h
+s3_cbc.o: ../include/openssl/kssl.h ../include/openssl/lhash.h
+s3_cbc.o: ../include/openssl/md5.h ../include/openssl/obj_mac.h
+s3_cbc.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+s3_cbc.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+s3_cbc.o: ../include/openssl/pem.h ../include/openssl/pem2.h
+s3_cbc.o: ../include/openssl/pkcs7.h ../include/openssl/pqueue.h
+s3_cbc.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+s3_cbc.o: ../include/openssl/sha.h ../include/openssl/ssl.h
+s3_cbc.o: ../include/openssl/ssl2.h ../include/openssl/ssl23.h
+s3_cbc.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
+s3_cbc.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
+s3_cbc.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h s3_cbc.c
+s3_cbc.o: ssl_locl.h
 s3_clnt.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 s3_clnt.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 s3_clnt.o: ../include/openssl/comp.h ../include/openssl/crypto.h
