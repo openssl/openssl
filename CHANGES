@@ -19,7 +19,7 @@
 
   *) Fix flaw in AESNI handling of TLS 1.2 and 1.1 records for CBC mode
      ciphersuites which can be exploited in a denial of service attack.
-     Thankd go to and to Adam Langley <agl@chromium.org> for discovering
+     Thanks go to and to Adam Langley <agl@chromium.org> for discovering
      and detecting this bug and to Wolfgang Ettlinger
      <wolfgang.ettlinger@gmail.com> for independently discovering this issue.
      (CVE-2012-2686)
