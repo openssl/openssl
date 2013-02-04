@@ -843,10 +843,19 @@ static int ssl_print_client_keyex(BIO *bio, int indent, SSL *ssl,
 		{
 
 	case SSL_kRSA:
-		if (!ssl_print_hexbuf(bio, indent + 2,
+		if (TLS1_get_version(ssl) == SSL3_VERSION)
+			{
+			ssl_print_hex(bio, indent + 2,
+						"EncyptedPreMasterSecret",
+						msg, msglen);
+			}
+		else
+			{
+			if (!ssl_print_hexbuf(bio, indent + 2,
 						"EncyptedPreMasterSecret", 2,
 						&msg, &msglen))
 				return 0;
+			}
 		break;
 
 		/* Implicit parameters only allowed for static DH */
