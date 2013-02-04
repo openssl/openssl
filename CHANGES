@@ -2,9 +2,9 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.1c and 1.0.1d [xx XXX xxxx]
+ Changes between 1.0.1c and 1.0.1d [5 Feb 2013]
 
-  *) Makes the decoding of SSLv3, TLS and DTLS CBC records constant time.
+  *) Make the decoding of SSLv3, TLS and DTLS CBC records constant time.
 
      This addresses the flaw in CBC record processing discovered by 
      Nadhem Alfardan and Kenny Paterson. Details of this attack can be found
