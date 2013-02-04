@@ -7,6 +7,7 @@
 
   Major changes between OpenSSL 1.0.0j and OpenSSL 1.0.0k:
 
+      o Fix for SSL/TLS/DTLS CBC plaintext recovery attack CVE-2013-0169
       o Fix OCSP bad key DoS attack CVE-2013-0166
 
   Major changes between OpenSSL 1.0.0i and OpenSSL 1.0.0j:
