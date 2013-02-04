@@ -1993,7 +1993,7 @@ CERT_PKEY *ssl_get_server_send_pkey(const SSL *s)
 		}
 	else /* if (kalg & SSL_aNULL) */
 		{
-		SSLerr(SSL_F_SSL_GET_SERVER_SEND_CERT,ERR_R_INTERNAL_ERROR);
+		SSLerr(SSL_F_SSL_GET_SERVER_SEND_PKEY,ERR_R_INTERNAL_ERROR);
 		return(NULL);
 		}
 
