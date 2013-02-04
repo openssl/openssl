@@ -4,6 +4,19 @@
 
  Changes between 0.9.8x and 0.9.8y [xx XXX xxxx]
 
+  *) Make the decoding of SSLv3, TLS and DTLS CBC records constant time.
+
+     This addresses the flaw in CBC record processing discovered by 
+     Nadhem Alfardan and Kenny Paterson. Details of this attack can be found
+     at: http://www.isg.rhul.ac.uk/tls/     
+
+     Thanks go to Nadhem Alfardan and Kenny Paterson of the Information
+     Security Group at Royal Holloway, University of London
+     (www.isg.rhul.ac.uk) for discovering this flaw and Adam Langley and
+     Emilia Käsper for the initial patch.
+     (CVE-2013-0169)
+     [Emilia Käsper, Adam Langley, Ben Laurie, Andy Polyakov, Steve Henson]
+
   *) Return an error when checking OCSP signatures when key is NULL.
      This fixes a DoS attack. (CVE-2013-0166)
      [Steve Henson]
