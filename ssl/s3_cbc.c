@@ -328,16 +328,24 @@ void ssl3_cbc_copy_mac(unsigned char* out,
 #endif
 	}
 
+/* u32toLE serialises an unsigned, 32-bit number (n) as four bytes at (p) in
+ * little-endian order. The value of p is advanced by four. */
+#define u32toLE(n, p) \
+	(*((p)++)=(unsigned char)(n), \
+	 *((p)++)=(unsigned char)(n>>8), \
+	 *((p)++)=(unsigned char)(n>>16), \
+	 *((p)++)=(unsigned char)(n>>24))
+
 /* These functions serialize the state of a hash and thus perform the standard
  * "final" operation without adding the padding and length that such a function
  * typically does. */
 static void tls1_md5_final_raw(void* ctx, unsigned char *md_out)
 	{
 	MD5_CTX *md5 = ctx;
-	l2n(md5->A, md_out);
-	l2n(md5->B, md_out);
-	l2n(md5->C, md_out);
-	l2n(md5->D, md_out);
+	u32toLE(md5->A, md_out);
+	u32toLE(md5->B, md_out);
+	u32toLE(md5->C, md_out);
+	u32toLE(md5->D, md_out);
 	}
 
 static void tls1_sha1_final_raw(void* ctx, unsigned char *md_out)
@@ -457,6 +465,7 @@ void ssl3_cbc_digest_record(
 	/* mdLengthSize is the number of bytes in the length field that terminates
 	* the hash. */
 	unsigned md_length_size = 8;
+	char length_is_big_endian = 1;
 
 	/* This is a, hopefully redundant, check that allows us to forget about
 	 * many possible overflows later in this function. */
@@ -470,6 +479,7 @@ void ssl3_cbc_digest_record(
 			md_transform = (void(*)(void *ctx, const unsigned char *block)) MD5_Transform;
 			md_size = 16;
 			sslv3_pad_length = 48;
+			length_is_big_endian = 0;
 			break;
 		case NID_sha1:
 			SHA1_Init((SHA_CTX*)md_state.c);
@@ -610,11 +620,22 @@ void ssl3_cbc_digest_record(
 		md_transform(md_state.c, hmac_pad);
 		}
 
-	memset(length_bytes,0,md_length_size-4);
-	length_bytes[md_length_size-4] = (unsigned char)(bits>>24);
-	length_bytes[md_length_size-3] = (unsigned char)(bits>>16);
-	length_bytes[md_length_size-2] = (unsigned char)(bits>>8);
-	length_bytes[md_length_size-1] = (unsigned char)bits;
+	if (length_is_big_endian)
+		{
+		memset(length_bytes,0,md_length_size-4);
+		length_bytes[md_length_size-4] = (unsigned char)(bits>>24);
+		length_bytes[md_length_size-3] = (unsigned char)(bits>>16);
+		length_bytes[md_length_size-2] = (unsigned char)(bits>>8);
+		length_bytes[md_length_size-1] = (unsigned char)bits;
+		}
+	else
+		{
+		memset(length_bytes,0,md_length_size);
+		length_bytes[md_length_size-5] = (unsigned char)(bits>>24);
+		length_bytes[md_length_size-6] = (unsigned char)(bits>>16);
+		length_bytes[md_length_size-7] = (unsigned char)(bits>>8);
+		length_bytes[md_length_size-8] = (unsigned char)bits;
+		}
 
 	if (k > 0)
 		{
