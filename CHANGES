@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 1.0.1d and 1.0.1e [xx XXX xxxx]
+
+  *)
+
  Changes between 1.0.1c and 1.0.1d [5 Feb 2013]
 
   *) Make the decoding of SSLv3, TLS and DTLS CBC records constant time.
