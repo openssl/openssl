@@ -504,8 +504,6 @@ int ssl3_enc(SSL *s, int send)
 		
 		EVP_Cipher(ds,rec->data,rec->input,l);
 
-		rec->orig_len = rec->length;
-
 		if (s->read_hash != NULL)
 			mac_size = EVP_MD_size(s->read_hash);
 
