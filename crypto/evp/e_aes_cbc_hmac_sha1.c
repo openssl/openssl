@@ -244,7 +244,10 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		}
 	} else {
 		union { unsigned int  u[SHA_DIGEST_LENGTH/sizeof(unsigned int)];
-			unsigned char c[SHA_DIGEST_LENGTH]; } mac;
+			unsigned char c[32+SHA_DIGEST_LENGTH]; } mac, *pmac;
+
+		/* arrange cache line alignment */
+		pmac = (void *)(((size_t)mac.c+31)&((size_t)0-32));
 
 		/* decrypt HMAC|padding at once */
 		aesni_cbc_encrypt(in,out,len,
@@ -300,17 +303,21 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 			/* but pretend as if we hashed padded payload */
 			bitlen = key->md.Nl+(inp_len<<3);	/* at most 18 bits */
+#ifdef BSWAP
+			bitlen = BSWAP(bitlen);
+#else
 			mac.c[0] = 0;
 			mac.c[1] = (unsigned char)(bitlen>>16);
 			mac.c[2] = (unsigned char)(bitlen>>8);
 			mac.c[3] = (unsigned char)bitlen;
 			bitlen = mac.u[0];
+#endif
 
-			mac.u[0]=0;
-			mac.u[1]=0;
-			mac.u[2]=0;
-			mac.u[3]=0;
-			mac.u[4]=0;
+			pmac->u[0]=0;
+			pmac->u[1]=0;
+			pmac->u[2]=0;
+			pmac->u[3]=0;
+			pmac->u[4]=0;
 
 			for (res=key->md.num, j=0;j<len;j++) {
 				size_t c = out[j];
@@ -325,11 +332,11 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 				data->u[SHA_LBLOCK-1] |= bitlen&mask;
 				sha1_block_data_order(&key->md,data,1);
 				mask &= 0-((j-inp_len-73)>>(sizeof(j)*8-1));
-				mac.u[0] |= key->md.h0 & mask;
-				mac.u[1] |= key->md.h1 & mask;
-				mac.u[2] |= key->md.h2 & mask;
-				mac.u[3] |= key->md.h3 & mask;
-				mac.u[4] |= key->md.h4 & mask;
+				pmac->u[0] |= key->md.h0 & mask;
+				pmac->u[1] |= key->md.h1 & mask;
+				pmac->u[2] |= key->md.h2 & mask;
+				pmac->u[3] |= key->md.h3 & mask;
+				pmac->u[4] |= key->md.h4 & mask;
 				res=0;
 			}
 
@@ -340,11 +347,11 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 				data->u[SHA_LBLOCK-1] |= bitlen&mask;
 				sha1_block_data_order(&key->md,data,1);
 				mask &= 0-((j-inp_len-73)>>(sizeof(j)*8-1));
-				mac.u[0] |= key->md.h0 & mask;
-				mac.u[1] |= key->md.h1 & mask;
-				mac.u[2] |= key->md.h2 & mask;
-				mac.u[3] |= key->md.h3 & mask;
-				mac.u[4] |= key->md.h4 & mask;
+				pmac->u[0] |= key->md.h0 & mask;
+				pmac->u[1] |= key->md.h1 & mask;
+				pmac->u[2] |= key->md.h2 & mask;
+				pmac->u[3] |= key->md.h3 & mask;
+				pmac->u[4] |= key->md.h4 & mask;
 
 				memset(data,0,SHA_CBLOCK);
 				j+=64;
@@ -352,32 +359,32 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			data->u[SHA_LBLOCK-1] = bitlen;
 			sha1_block_data_order(&key->md,data,1);
 			mask = 0-((j-inp_len-73)>>(sizeof(j)*8-1));
-			mac.u[0] |= key->md.h0 & mask;
-			mac.u[1] |= key->md.h1 & mask;
-			mac.u[2] |= key->md.h2 & mask;
-			mac.u[3] |= key->md.h3 & mask;
-			mac.u[4] |= key->md.h4 & mask;
+			pmac->u[0] |= key->md.h0 & mask;
+			pmac->u[1] |= key->md.h1 & mask;
+			pmac->u[2] |= key->md.h2 & mask;
+			pmac->u[3] |= key->md.h3 & mask;
+			pmac->u[4] |= key->md.h4 & mask;
 
 #ifdef BSWAP
-			mac.u[0] = BSWAP(mac.u[0]);
-			mac.u[1] = BSWAP(mac.u[1]);
-			mac.u[2] = BSWAP(mac.u[2]);
-			mac.u[3] = BSWAP(mac.u[3]);
-			mac.u[4] = BSWAP(mac.u[4]);
+			pmac->u[0] = BSWAP(pmac->u[0]);
+			pmac->u[1] = BSWAP(pmac->u[1]);
+			pmac->u[2] = BSWAP(pmac->u[2]);
+			pmac->u[3] = BSWAP(pmac->u[3]);
+			pmac->u[4] = BSWAP(pmac->u[4]);
 #else
 			for (i=0;i<5;i++) {
-				res = mac.u[i];
-				mac.c[4*i+0]=(unsigned char)(res>>24);
-				mac.c[4*i+1]=(unsigned char)(res>>16);
-				mac.c[4*i+2]=(unsigned char)(res>>8);
-				mac.c[4*i+3]=(unsigned char)res;
+				res = pmac->u[i];
+				pmac->c[4*i+0]=(unsigned char)(res>>24);
+				pmac->c[4*i+1]=(unsigned char)(res>>16);
+				pmac->c[4*i+2]=(unsigned char)(res>>8);
+				pmac->c[4*i+3]=(unsigned char)res;
 			}
 #endif
 			len += SHA_DIGEST_LENGTH;
 #else
 			SHA1_Update(&key->md,out,inp_len);
 			res = key->md.num;
-			SHA1_Final(mac.c,&key->md);
+			SHA1_Final(pmac->c,&key->md);
 
 			{
 			unsigned int inp_blocks, pad_blocks;
@@ -393,8 +400,8 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			}
 #endif
 			key->md = key->tail;
-			SHA1_Update(&key->md,mac.c,SHA_DIGEST_LENGTH);
-			SHA1_Final(mac.c,&key->md);
+			SHA1_Update(&key->md,pmac->c,SHA_DIGEST_LENGTH);
+			SHA1_Final(pmac->c,&key->md);
 
 			/* verify HMAC */
 			out += inp_len;
@@ -411,7 +418,7 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 				cmask = ((int)(j-off-SHA_DIGEST_LENGTH))>>(sizeof(int)*8-1);
 				res |= (c^pad)&~cmask;	/* ... and padding */
 				cmask &= ((int)(off-1-j))>>(sizeof(int)*8-1);
-				res |= (c^mac.c[i])&cmask;
+				res |= (c^pmac->c[i])&cmask;
 				i += 1&cmask;
 			}
 			maxpad -= SHA_DIGEST_LENGTH;
@@ -421,7 +428,7 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			}
 #else
 			for (res=0,i=0;i<SHA_DIGEST_LENGTH;i++)
-				res |= out[i]^mac.c[i];
+				res |= out[i]^pmac->c[i];
 			res = 0-((0-res)>>(sizeof(res)*8-1));
 			ret &= (int)~res;
 
