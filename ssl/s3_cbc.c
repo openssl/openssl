@@ -76,6 +76,13 @@
 #define DUPLICATE_MSB_TO_ALL(x) ( (unsigned)( (int)(x) >> (sizeof(int)*8-1) ) )
 #define DUPLICATE_MSB_TO_ALL_8(x) ((unsigned char)(DUPLICATE_MSB_TO_ALL(x)))
 
+/* constant_time_lt returns 0xff if a<b and 0x00 otherwise. */
+static unsigned constant_time_lt(unsigned a, unsigned b)
+	{
+	a -= b;
+	return DUPLICATE_MSB_TO_ALL(a);
+	}
+
 /* constant_time_ge returns 0xff if a>=b and 0x00 otherwise. */
 static unsigned constant_time_ge(unsigned a, unsigned b)
 	{
@@ -285,16 +292,13 @@ void ssl3_cbc_copy_mac(unsigned char* out,
 	rotate_offset = (div_spoiler + mac_start - scan_start) % md_size;
 
 	memset(rotated_mac, 0, md_size);
-	for (i = scan_start; i < rec->orig_len;)
+	for (i = scan_start, j = 0; i < rec->orig_len; i++)
 		{
-		for (j = 0; j < md_size && i < rec->orig_len; i++, j++)
-			{
-			unsigned char mac_started = constant_time_ge(i, mac_start);
-			unsigned char mac_ended = constant_time_ge(i, mac_end);
-			unsigned char b = 0;
-			b = rec->data[i];
-			rotated_mac[j] |= b & mac_started & ~mac_ended;
-			}
+		unsigned char mac_started = constant_time_ge(i, mac_start);
+		unsigned char mac_ended = constant_time_ge(i, mac_end);
+		unsigned char b = rec->data[i];
+		rotated_mac[j++] |= b & mac_started & ~mac_ended;
+		j &= constant_time_lt(j,md_size);
 		}
 
 	/* Now rotate the MAC */
@@ -302,16 +306,19 @@ void ssl3_cbc_copy_mac(unsigned char* out,
 	j = 0;
 	for (i = 0; i < md_size; i++)
 		{
-		unsigned offset = (div_spoiler + rotate_offset + i) % md_size;
-		out[j++] = rotated_mac[offset];
+		out[j++] = rotated_mac[rotate_offset++];
+		rotate_offset &= constant_time_lt(rotate_offset,md_size);
 		}
 #else
 	memset(out, 0, md_size);
+	rotate_offset = md_size - rotate_offset;
+	rotate_offset &= constant_time_lt(rotate_offset,md_size);
 	for (i = 0; i < md_size; i++)
 		{
-		unsigned offset = (div_spoiler + md_size - rotate_offset + i) % md_size;
 		for (j = 0; j < md_size; j++)
-			out[j] |= rotated_mac[i] & constant_time_eq_8(j, offset);
+			out[j] |= rotated_mac[i] & constant_time_eq_8(j, rotate_offset);
+		rotate_offset++;
+		rotate_offset &= constant_time_lt(rotate_offset,md_size);
 		}
 #endif
 	}
