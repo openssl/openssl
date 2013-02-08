@@ -84,7 +84,7 @@ static unsigned constant_time_ge(unsigned a, unsigned b)
 	}
 
 /* constant_time_eq_8 returns 0xff if a==b and 0x00 otherwise. */
-static unsigned char constant_time_eq_8(unsigned char a, unsigned char b)
+static unsigned char constant_time_eq_8(unsigned a, unsigned b)
 	{
 	unsigned c = a ^ b;
 	c--;
@@ -302,14 +302,14 @@ void ssl3_cbc_copy_mac(unsigned char* out,
 	j = 0;
 	for (i = 0; i < md_size; i++)
 		{
-		unsigned char offset = (div_spoiler + rotate_offset + i) % md_size;
+		unsigned offset = (div_spoiler + rotate_offset + i) % md_size;
 		out[j++] = rotated_mac[offset];
 		}
 #else
 	memset(out, 0, md_size);
 	for (i = 0; i < md_size; i++)
 		{
-		unsigned char offset = (div_spoiler + md_size - rotate_offset + i) % md_size;
+		unsigned offset = (div_spoiler + md_size - rotate_offset + i) % md_size;
 		for (j = 0; j < md_size; j++)
 			out[j] |= rotated_mac[i] & constant_time_eq_8(j, offset);
 		}
