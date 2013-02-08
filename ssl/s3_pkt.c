@@ -290,7 +290,7 @@ static int ssl3_get_record(SSL *s)
 	unsigned char *p;
 	unsigned char md[EVP_MAX_MD_SIZE];
 	short version;
-	unsigned mac_size, orig_len;
+	unsigned mac_size;
 	size_t extra;
 
 	rr= &(s->s3->rrec);
@@ -400,7 +400,7 @@ fprintf(stderr, "Record type=%d, Length=%d\n", rr->type, rr->length);
 
 	/* decrypt in place in 'rr->input' */
 	rr->data=rr->input;
-	orig_len=rr->length;
+	rr->orig_len=rr->length;
 
 	enc_err = s->method->ssl3_enc->enc(s,0);
 	/* enc_err is:
@@ -436,10 +436,10 @@ printf("\n");
 		 * therefore we can safely process the record in a different
 		 * amount of time if it's too short to possibly contain a MAC.
 		 */
-		if (orig_len < mac_size ||
+		if (rr->orig_len < mac_size ||
 		    /* CBC records must have a padding length byte too. */
 		    (EVP_CIPHER_CTX_mode(s->enc_read_ctx) == EVP_CIPH_CBC_MODE &&
-		     orig_len < mac_size+1))
+		     rr->orig_len < mac_size+1))
 			{
 			al=SSL_AD_DECODE_ERROR;
 			SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_LENGTH_TOO_SHORT);
@@ -454,12 +454,12 @@ printf("\n");
 			 * without leaking the contents of the padding bytes.
 			 * */
 			mac = mac_tmp;
-			ssl3_cbc_copy_mac(mac_tmp, rr, mac_size, orig_len);
+			ssl3_cbc_copy_mac(mac_tmp, rr, mac_size);
 			rr->length -= mac_size;
 			}
 		else
 			{
-			/* In this case there's no padding, so |orig_len|
+			/* In this case there's no padding, so |rec->orig_len|
 			 * equals |rec->length| and we checked that there's
 			 * enough bytes for |mac_size| above. */
 			rr->length -= mac_size;

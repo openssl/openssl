@@ -366,6 +366,10 @@ typedef struct ssl3_record_st
 	{
 /*r */	int type;               /* type of record */
 /*rw*/	unsigned int length;    /* How many bytes available */
+/*rw*/	unsigned int orig_len;  /* How many bytes were available before padding
+				   was removed? This is used to implement the
+				   MAC check in constant time for CBC records.
+				 */
 /*r */	unsigned int off;       /* read/write offset into 'buf' */
 /*rw*/	unsigned char *data;    /* pointer to the record data */
 /*rw*/	unsigned char *input;   /* where the decode bytes are */

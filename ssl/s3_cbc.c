@@ -116,9 +116,7 @@ int ssl3_cbc_remove_padding(const SSL* s,
 	good = constant_time_ge(rec->length, padding_length+overhead);
 	/* SSLv3 requires that the padding is minimal. */
 	good &= constant_time_ge(block_size, padding_length+1);
-	padding_length = good & (padding_length+1);
-	rec->length -= padding_length;
-	rec->type |= padding_length<<8;	/* kludge: pass padding length */
+	rec->length -= good & (padding_length+1);
 	return (int)((good & 1) | (~good & -1));
 }
 
@@ -139,31 +137,23 @@ int tls1_cbc_remove_padding(const SSL* s,
 			    unsigned mac_size)
 	{
 	unsigned padding_length, good, to_check, i;
-	const char has_explicit_iv =
-		s->version >= TLS1_1_VERSION || s->version == DTLS1_VERSION;
-	const unsigned overhead = 1 /* padding length byte */ +
-				  mac_size +
-				  (has_explicit_iv ? block_size : 0);
-
-	/* These lengths are all public so we can test them in non-constant
-	 * time. */
-	if (overhead > rec->length)
-		return 0;
-
-	/* We can always safely skip the explicit IV. We check at the beginning
-	 * of this function that the record has at least enough space for the
-	 * IV, MAC and padding length byte. (These can be checked in
-	 * non-constant time because it's all public information.) So, if the
-	 * padding was invalid, then we didn't change |rec->length| and this is
-	 * safe. If the padding was valid then we know that we have at least
-	 * overhead+padding_length bytes of space and so this is still safe
-	 * because overhead accounts for the explicit IV. */
-	if (has_explicit_iv)
+	const unsigned overhead = 1 /* padding length byte */ + mac_size;
+	/* Check if version requires explicit IV */
+	if (s->version >= TLS1_1_VERSION || s->version == DTLS1_VERSION)
 		{
+		/* These lengths are all public so we can test them in
+		 * non-constant time.
+		 */
+		if (overhead + block_size > rec->length)
+			return 0;
+		/* We can now safely skip explicit IV */
 		rec->data += block_size;
 		rec->input += block_size;
 		rec->length -= block_size;
+		rec->orig_len -= block_size;
 		}
+	else if (overhead > rec->length)
+		return 0;
 
 	padding_length = rec->data[rec->length-1];
 
@@ -190,7 +180,7 @@ int tls1_cbc_remove_padding(const SSL* s,
 	if (EVP_CIPHER_flags(s->enc_read_ctx->cipher)&EVP_CIPH_FLAG_AEAD_CIPHER)
 		{
 		/* padding is already verified */
-		rec->length -= padding_length;
+		rec->length -= padding_length + 1;
 		return 1;
 		}
 
@@ -227,9 +217,7 @@ int tls1_cbc_remove_padding(const SSL* s,
 	good <<= sizeof(good)*8-1;
 	good = DUPLICATE_MSB_TO_ALL(good);
 
-	padding_length = good & (padding_length+1);
-	rec->length -= padding_length;
-	rec->type |= padding_length<<8;	/* kludge: pass padding length */
+	rec->length -= good & (padding_length+1);
 
 	return (int)((good & 1) | (~good & -1));
 	}
@@ -256,7 +244,7 @@ int tls1_cbc_remove_padding(const SSL* s,
  */
 void ssl3_cbc_copy_mac(unsigned char* out,
 		       const SSL3_RECORD *rec,
-		       unsigned md_size,unsigned orig_len)
+		       unsigned md_size)
 	{
 #if defined(CBC_MAC_ROTATE_IN_PLACE)
 	unsigned char rotated_mac_buf[EVP_MAX_MD_SIZE*2];
@@ -275,7 +263,7 @@ void ssl3_cbc_copy_mac(unsigned char* out,
 	unsigned div_spoiler;
 	unsigned rotate_offset;
 
-	OPENSSL_assert(orig_len >= md_size);
+	OPENSSL_assert(rec->orig_len >= md_size);
 	OPENSSL_assert(md_size <= EVP_MAX_MD_SIZE);
 
 #if defined(CBC_MAC_ROTATE_IN_PLACE)
@@ -283,8 +271,8 @@ void ssl3_cbc_copy_mac(unsigned char* out,
 #endif
 
 	/* This information is public so it's safe to branch based on it. */
-	if (orig_len > md_size + 255 + 1)
-		scan_start = orig_len - (md_size + 255 + 1);
+	if (rec->orig_len > md_size + 255 + 1)
+		scan_start = rec->orig_len - (md_size + 255 + 1);
 	/* div_spoiler contains a multiple of md_size that is used to cause the
 	 * modulo operation to be constant time. Without this, the time varies
 	 * based on the amount of padding when running on Intel chips at least.
@@ -297,9 +285,9 @@ void ssl3_cbc_copy_mac(unsigned char* out,
 	rotate_offset = (div_spoiler + mac_start - scan_start) % md_size;
 
 	memset(rotated_mac, 0, md_size);
-	for (i = scan_start; i < orig_len;)
+	for (i = scan_start; i < rec->orig_len;)
 		{
-		for (j = 0; j < md_size && i < orig_len; i++, j++)
+		for (j = 0; j < md_size && i < rec->orig_len; i++, j++)
 			{
 			unsigned char mac_started = constant_time_ge(i, mac_start);
 			unsigned char mac_ended = constant_time_ge(i, mac_end);
