@@ -232,10 +232,6 @@ int tls1_cbc_remove_padding(const SSL* s,
 	return (int)((good & 1) | (~good & -1));
 	}
 
-#if defined(_M_AMD64) || defined(__x86_64__)
-#define CBC_MAC_ROTATE_IN_PLACE
-#endif
-
 /* ssl3_cbc_copy_mac copies |md_size| bytes from the end of |rec| to |out| in
  * constant time (independent of the concrete value of rec->length, which may
  * vary within a 256-byte window).
@@ -249,15 +245,18 @@ int tls1_cbc_remove_padding(const SSL* s,
  *
  * If CBC_MAC_ROTATE_IN_PLACE is defined then the rotation is performed with
  * variable accesses in a 64-byte-aligned buffer. Assuming that this fits into
- * a single cache-line, then the variable memory accesses don't actually affect
- * the timing. This has been tested to be true on Intel amd64 chips.
+ * a single or pair of cache-lines, then the variable memory accesses don't
+ * actually affect the timing. CPUs with smaller cache-lines [if any] are
+ * not multi-core and are not considered vulnerable to cache-timing attacks.
  */
+#define CBC_MAC_ROTATE_IN_PLACE
+
 void ssl3_cbc_copy_mac(unsigned char* out,
 		       const SSL3_RECORD *rec,
 		       unsigned md_size,unsigned orig_len)
 	{
 #if defined(CBC_MAC_ROTATE_IN_PLACE)
-	unsigned char rotated_mac_buf[EVP_MAX_MD_SIZE*2];
+	unsigned char rotated_mac_buf[64+EVP_MAX_MD_SIZE];
 	unsigned char *rotated_mac;
 #else
 	unsigned char rotated_mac[EVP_MAX_MD_SIZE];
@@ -277,7 +276,7 @@ void ssl3_cbc_copy_mac(unsigned char* out,
 	OPENSSL_assert(md_size <= EVP_MAX_MD_SIZE);
 
 #if defined(CBC_MAC_ROTATE_IN_PLACE)
-	rotated_mac = (unsigned char*) (((intptr_t)(rotated_mac_buf + 64)) & ~63);
+	rotated_mac = rotated_mac_buf + ((0-(size_t)rotated_mac_buf)&63);
 #endif
 
 	/* This information is public so it's safe to branch based on it. */
@@ -309,6 +308,8 @@ void ssl3_cbc_copy_mac(unsigned char* out,
 	j = 0;
 	for (i = 0; i < md_size; i++)
 		{
+		/* in case cache-line is 32 bytes, touch second line */
+		((volatile unsigned char *)rotated_mac)[rotate_offset^32];
 		out[j++] = rotated_mac[rotate_offset++];
 		rotate_offset &= constant_time_lt(rotate_offset,md_size);
 		}
