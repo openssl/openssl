@@ -888,7 +888,10 @@ int ssl3_get_server_hello(SSL *s)
 		}
 	s->s3->tmp.new_cipher=c;
 	if (!ssl3_digest_cached_records(s))
+		{
+		al = SSL_AD_INTERNAL_ERROR;
 		goto f_err;
+		}
 
 	/* lets get the compression algorithm */
 	/* COMPRESSION */
@@ -968,7 +971,9 @@ int ssl3_get_server_hello(SSL *s)
 	return(1);
 f_err:
 	ssl3_send_alert(s,SSL3_AL_FATAL,al);
+#ifndef OPENSSL_NO_TLSEXT
 err:
+#endif
 	return(-1);
 	}
 

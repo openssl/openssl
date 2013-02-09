@@ -1269,7 +1269,10 @@ int ssl3_get_client_hello(SSL *s)
 		}
 
 	if (!ssl3_digest_cached_records(s))
+		{
+		al = SSL_AD_INTERNAL_ERROR;
 		goto f_err;
+		}
 	
 	/* we now have the following setup. 
 	 * client_random
@@ -1282,6 +1285,7 @@ int ssl3_get_client_hello(SSL *s)
 	 * s->tmp.new_cipher	- the new cipher to use.
 	 */
 
+#ifndef OPENSSL_NO_TLSEXT
 	/* Handles TLS extensions that we couldn't check earlier */
 	if (s->version >= SSL3_VERSION)
 		{
@@ -1291,6 +1295,7 @@ int ssl3_get_client_hello(SSL *s)
 			goto err;
 			}
 		}
+#endif
 
 	if (ret < 0) ret=1;
 	if (0)
