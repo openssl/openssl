@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.8y and 0.9.8za [xx XXX xxxx]
+
+  *)
+
  Changes between 0.9.8x and 0.9.8y [5 Feb 2013]
 
   *) Make the decoding of SSLv3, TLS and DTLS CBC records constant time.
