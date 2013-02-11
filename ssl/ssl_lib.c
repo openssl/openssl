@@ -2792,9 +2792,7 @@ void ssl_clear_cipher_ctx(SSL *s)
 /* Fix this function so that it takes an optional type parameter */
 X509 *SSL_get_certificate(const SSL *s)
 	{
-	if (s->server)
-		return(ssl_get_server_send_cert(s));
-	else if (s->cert != NULL)
+	if (s->cert != NULL)
 		return(s->cert->key->x509);
 	else
 		return(NULL);
