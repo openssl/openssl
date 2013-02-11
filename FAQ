@@ -87,7 +87,7 @@ OpenSSL 1.0.1c was released on Feb 5th, 2013.
 
 In addition to the current stable release, you can also access daily
 snapshots of the OpenSSL development version at <URL:
-ftp://ftp.openssl.org/snapshot/>, or get it by anonymous CVS access.
+ftp://ftp.openssl.org/snapshot/>, or get it by anonymous Git access.
 
 
 * Where is the documentation?
