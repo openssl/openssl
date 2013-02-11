@@ -8,7 +8,9 @@
 
  Changes between 1.0.1d and 1.0.1e [11 Feb 2013]
 
-  *)
+  *) Correct fix for CVE-2013-0169. The original didn't work on AES-NI
+     supporting platforms or when small records were transferred.
+     [Andy Polyakov, Steve Henson]
 
  Changes between 1.0.1c and 1.0.1d [5 Feb 2013]
 
