@@ -5,6 +5,10 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 1.0.1d and OpenSSL 1.0.1e:
+
+      o Corrected fix for CVE-2013-0169
+
   Major changes between OpenSSL 1.0.1c and OpenSSL 1.0.1d:
 
       o Fix renegotiation in TLS 1.1, 1.2 by using the correct TLS version.
