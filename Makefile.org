@@ -69,7 +69,7 @@ RANLIB= ranlib
 NM= nm
 PERL= perl
 TAR= tar
-TARFLAGS= --no-recursion
+TARFLAGS= --no-recursion --record-size=10240
 MAKEDEPPROG=makedepend
 LIBDIR=lib
 
