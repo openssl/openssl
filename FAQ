@@ -189,6 +189,12 @@ Therefore the answer to the common question "when will feature X be
 backported to OpenSSL 1.0.0/0.9.8?" is "never" but it could appear
 in the next minor release.
 
+* What happens when the letter release reaches z?
+
+It was decided after the release of OpenSSL 0.9.8y the next version should
+be 0.9.8za then 0.9.8zb and so on.
+
+
 [LEGAL] =======================================================================
 
 * Do I need patent licenses to use OpenSSL?
@@ -864,7 +870,7 @@ The opposite assumes we already have len bytes in buf:
  p = buf;
  p7 = d2i_PKCS7(NULL, &p, len);
 
-At this point p7 contains a valid PKCS7 structure of NULL if an error
+At this point p7 contains a valid PKCS7 structure or NULL if an error
 occurred. If an error occurred ERR_print_errors(bio) should give more
 information.
 
@@ -875,6 +881,21 @@ variable the buffer pointer is changed to point just after the data
 that has been read or written. This may well be uninitialized data
 and attempts to free the buffer will have unpredictable results
 because it no longer points to the same address.
+
+Memory allocation and encoding can also be combined in a single
+operation by the ASN1 routines:
+
+ unsigned char *buf = NULL;	/* mandatory */
+ int len;
+ len = i2d_PKCS7(p7, &buf);
+ if (len < 0)
+	/* Error */
+ /* Do some things with 'buf' */
+ /* Finished with buf: free it */
+ OPENSSL_free(buf);
+
+In this special case the "buf" parameter is *not* incremented, it points
+to the start of the encoding.
 
 
 * OpenSSL uses DER but I need BER format: does OpenSSL support BER?
