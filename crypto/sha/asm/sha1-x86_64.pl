@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
+# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
 # details see http://www.openssl.org/~appro/cryptogams/.
@@ -55,14 +55,14 @@
 #
 #		x86_64		SSSE3		AVX
 # P4		9.8		-
-# Opteron	6.6		-
-# Core2		6.7		6.2/+8%		-
-# Atom		11.0		9.5/+15%	-
-# Westmere	7.1		5.5/+29%	-
-# Sandy Bridge	7.9		6.2/+28%	5.1/+54%
-# Ivy Bridge	6.4		4.7/+35%	4.6/+37%
-# Bulldozer	10.9		6.0/+82%
-# VIA Nano	10.2		7.4/+38%
+# Opteron	6.65		-
+# Core2		6.70		6.05/+11%	-
+# Westmere	7.08		5.49/+29%	-
+# Sandy Bridge	7.93		6.16/+28%	4.99/+59%
+# Ivy Bridge	6.30		4.63/+36%	4.60/+37%
+# Bulldozer	10.9		5.95/+82%
+# VIA Nano	10.2		7.46/+37%
+# Atom		11.0		9.61/+14%
 
 $flavour = shift;
 $output  = shift;
@@ -298,9 +298,11 @@ ___
 my $Xi=4;
 my @X=map("%xmm$_",(4..7,0..3));
 my @Tx=map("%xmm$_",(8..10));
+my $Kx="%xmm11";
 my @V=($A,$B,$C,$D,$E)=("%eax","%ebx","%ecx","%edx","%ebp");	# size optimization
 my @T=("%esi","%edi");
 my $j=0;
+my $rx=0;
 my $K_XX_XX="%r11";
 
 my $_rol=sub { &rol(@_) };
@@ -314,7 +316,7 @@ _ssse3_shortcut:
 	push	%rbx
 	push	%rbp
 	push	%r12
-	lea	`-64-($win64?5*16:0)`(%rsp),%rsp
+	lea	`-64-($win64?6*16:0)`(%rsp),%rsp
 ___
 $code.=<<___ if ($win64);
 	movaps	%xmm6,64+0(%rsp)
@@ -322,6 +324,7 @@ $code.=<<___ if ($win64);
 	movaps	%xmm8,64+32(%rsp)
 	movaps	%xmm9,64+48(%rsp)
 	movaps	%xmm10,64+64(%rsp)
+	movaps	%xmm11,64+80(%rsp)
 .Lprologue_ssse3:
 ___
 $code.=<<___;
@@ -339,6 +342,9 @@ $code.=<<___;
 	mov	12($ctx),$D
 	mov	$B,@T[0]		# magic seed
 	mov	16($ctx),$E
+	mov	$C,@T[1]
+	xor	$D,@T[1]
+	and	@T[1],@T[0]
 
 	movdqa	64($K_XX_XX),@X[2]	# pbswap mask
 	movdqa	0($K_XX_XX),@Tx[1]	# K_00_19
@@ -586,50 +592,66 @@ sub Xtail_ssse3()
 	foreach (@insns) { eval; }
 }
 
-sub body_00_19 () {
+sub body_00_19 () {	# ((c^d)&b)^d
+	# on start @T[0]=(c^d)&b
+	return &body_20_39() if ($rx==19); $rx++;
 	(
 	'($a,$b,$c,$d,$e)=@V;'.
-	'&add	($e,eval(4*($j&15))."(%rsp)");',	# X[]+K xfer
-	'&xor	($c,$d);',
-	'&mov	(@T[1],$a);',	# $b in next round
-	'&$_rol	($a,5);',
-	'&and	(@T[0],$c);',	# ($b&($c^$d))
-	'&xor	($c,$d);',	# restore $c
-	'&xor	(@T[0],$d);',
-	'&add	($e,$a);',
-	'&$_ror	($b,$j?7:2);',	# $b>>>2
-	'&add	($e,@T[0]);'	.'$j++; unshift(@V,pop(@V)); unshift(@T,pop(@T));'
+	'&$_ror	($b,$j?7:2)',	# $b>>>2
+	'&xor	(@T[0],$d)',
+	'&mov	(@T[1],$a)',	# $b for next round
+
+	'&add	($e,eval(4*($j&15))."(%rsp)")',	# X[]+K xfer
+	'&xor	($b,$c)',	# $c^$d for next round
+
+	'&$_rol	($a,5)',
+	'&add	($e,@T[0])',
+	'&and	(@T[1],$b)',	# ($b&($c^$d)) for next round
+
+	'&xor	($b,$c)',	# restore $b
+	'&add	($e,$a);'	.'$j++; unshift(@V,pop(@V)); unshift(@T,pop(@T));'
 	);
 }
 
-sub body_20_39 () {
+sub body_20_39 () {	# b^d^c
+	# on entry @T[0]=b^d
+	return &body_40_59() if ($rx==39); $rx++;
 	(
 	'($a,$b,$c,$d,$e)=@V;'.
-	'&add	($e,eval(4*($j++&15))."(%rsp)");',	# X[]+K xfer
-	'&xor	(@T[0],$d);',	# ($b^$d)
-	'&mov	(@T[1],$a);',	# $b in next round
-	'&$_rol	($a,5);',
-	'&xor	(@T[0],$c);',	# ($b^$d^$c)
-	'&add	($e,$a);',
-	'&$_ror	($b,7);',	# $b>>>2
-	'&add	($e,@T[0]);'	.'unshift(@V,pop(@V)); unshift(@T,pop(@T));'
+	'&add	($e,eval(4*($j&15))."(%rsp)")',	# X[]+K xfer
+	'&xor	(@T[0],$d)	if($j==19);'.
+	'&xor	(@T[0],$c)	if($j> 19)',	# ($b^$d^$c)
+	'&mov	(@T[1],$a)',	# $b for next round
+
+	'&$_rol	($a,5)',
+	'&add	($e,@T[0])',
+	'&xor	(@T[1],$c)	if ($j< 79)',	# $b^$d for next round
+
+	'&$_ror	($b,7)',	# $b>>>2
+	'&add	($e,$a);'	.'$j++; unshift(@V,pop(@V)); unshift(@T,pop(@T));'
 	);
 }
 
-sub body_40_59 () {
+sub body_40_59 () {	# ((b^c)&(c^d))^c
+	# on entry @T[0]=(b^c), (c^=d)
+	$rx++;
 	(
 	'($a,$b,$c,$d,$e)=@V;'.
-	'&xor	(@T[0],$c);',
-	'&xor	(@T[1],$d);',
-	'&add	($e,eval(4*($j++&15))."(%rsp)");',	# X[]+K xfer
-	'&and	(@T[0],$T[1]);',
-	'&$_ror	($b,7);',	# $b>>>2
-	'&xor	(@T[0],$c);',
-	'&mov	(@T[1],$a);',	# $b in next round
-	'&$_rol	($a,5);',
-	'&add	($e,@T[0]);',
-	'&mov	(@T[0],$b);',	# copy of $c in next round
-	'&add	($e,$a);'	.'unshift(@V,pop(@V)); unshift(@T,pop(@T));'
+	'&add	($e,eval(4*($j&15))."(%rsp)")',	# X[]+K xfer
+	'&and	(@T[0],$c)	if ($j>=40)',	# (b^c)&(c^d)
+	'&xor	($c,$d)		if ($j>=40)',	# restore $c
+
+	'&$_ror	($b,7)',	# $b>>>2
+	'&mov	(@T[1],$a)',	# $b for next round
+	'&xor	(@T[0],$c)',
+
+	'&$_rol	($a,5)',
+	'&add	($e,@T[0])',
+	'&xor	(@T[1],$c)	if ($j==59);'.
+	'&xor	(@T[1],$b)	if ($j< 59)',	# b^c for next round
+
+	'&xor	($b,$c)		if ($j< 59)',	# c^d for next round
+	'&add	($e,$a);'	.'$j++; unshift(@V,pop(@V)); unshift(@T,pop(@T));'
 	);
 }
 $code.=<<___;
@@ -646,7 +668,6 @@ ___
 	&Xupdate_ssse3_32_79(\&body_20_39);
 	&Xupdate_ssse3_32_79(\&body_20_39);
 	&Xupdate_ssse3_32_79(\&body_20_39);
-	&mov	(@T[1],@V[2]);	# copy of $c in next round
 	&Xupdate_ssse3_32_79(\&body_40_59);
 	&Xupdate_ssse3_32_79(\&body_40_59);
 	&Xupdate_ssse3_32_79(\&body_40_59);
@@ -671,8 +692,11 @@ $code.=<<___;
 	mov	@T[0],4($ctx)
 	mov	@T[0],$B			# magic seed
 	mov	$C,8($ctx)
+	mov	$C,@T[1]
 	mov	$D,12($ctx)
+	xor	$D,@T[1]
 	mov	$E,16($ctx)
+	and	@T[1],@T[0]
 	jmp	.Loop_ssse3
 
 .align	16
@@ -702,9 +726,10 @@ $code.=<<___ if ($win64);
 	movaps	64+32(%rsp),%xmm8
 	movaps	64+48(%rsp),%xmm9
 	movaps	64+64(%rsp),%xmm10
+	movaps	64+80(%rsp),%xmm11
 ___
 $code.=<<___;
-	lea	`64+($win64?5*16:0)`(%rsp),%rsi
+	lea	`64+($win64?6*16:0)`(%rsp),%rsi
 	mov	0(%rsi),%r12
 	mov	8(%rsi),%rbp
 	mov	16(%rsi),%rbx
@@ -715,13 +740,13 @@ $code.=<<___;
 ___
 
 if ($avx) {
-my $Xi=4;
-my @X=map("%xmm$_",(4..7,0..3));
-my @Tx=map("%xmm$_",(8..10));
-my @V=($A,$B,$C,$D,$E)=("%eax","%ebx","%ecx","%edx","%ebp");	# size optimization
-my @T=("%esi","%edi");
-my $j=0;
-my $K_XX_XX="%r11";
+$Xi=4;				# reset variables
+@X=map("%xmm$_",(4..7,0..3));
+@Tx=map("%xmm$_",(8..10));
+$j=0;
+$rx=0;
+
+my $done_avx_label=".Ldone_avx";
 
 my $_rol=sub { &shld(@_[0],@_) };
 my $_ror=sub { &shrd(@_[0],@_) };
@@ -734,7 +759,7 @@ _avx_shortcut:
 	push	%rbx
 	push	%rbp
 	push	%r12
-	lea	`-64-($win64?5*16:0)`(%rsp),%rsp
+	lea	`-64-($win64?6*16:0)`(%rsp),%rsp
 ___
 $code.=<<___ if ($win64);
 	movaps	%xmm6,64+0(%rsp)
@@ -742,6 +767,7 @@ $code.=<<___ if ($win64);
 	movaps	%xmm8,64+32(%rsp)
 	movaps	%xmm9,64+48(%rsp)
 	movaps	%xmm10,64+64(%rsp)
+	movaps	%xmm11,64+80(%rsp)
 .Lprologue_avx:
 ___
 $code.=<<___;
@@ -760,9 +786,12 @@ $code.=<<___;
 	mov	12($ctx),$D
 	mov	$B,@T[0]		# magic seed
 	mov	16($ctx),$E
+	mov	$C,@T[1]
+	xor	$D,@T[1]
+	and	@T[1],@T[0]
 
 	vmovdqa	64($K_XX_XX),@X[2]	# pbswap mask
-	vmovdqa	0($K_XX_XX),@Tx[1]	# K_00_19
+	vmovdqa	0($K_XX_XX),$Kx		# K_00_19
 	vmovdqu	0($inp),@X[-4&7]	# load input to %xmm[0-3]
 	vmovdqu	16($inp),@X[-3&7]
 	vmovdqu	32($inp),@X[-2&7]
@@ -772,9 +801,9 @@ $code.=<<___;
 	vpshufb	@X[2],@X[-3&7],@X[-3&7]
 	vpshufb	@X[2],@X[-2&7],@X[-2&7]
 	vpshufb	@X[2],@X[-1&7],@X[-1&7]
-	vpaddd	@Tx[1],@X[-4&7],@X[0]	# add K_00_19
-	vpaddd	@Tx[1],@X[-3&7],@X[1]
-	vpaddd	@Tx[1],@X[-2&7],@X[2]
+	vpaddd	$Kx,@X[-4&7],@X[0]	# add K_00_19
+	vpaddd	$Kx,@X[-3&7],@X[1]
+	vpaddd	$Kx,@X[-2&7],@X[2]
 	vmovdqa	@X[0],0(%rsp)		# X[]+K xfer to IALU
 	vmovdqa	@X[1],16(%rsp)
 	vmovdqa	@X[2],32(%rsp)
@@ -793,10 +822,10 @@ sub Xupdate_avx_16_31()		# recall that $Xi starts wtih 4
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 
-	  &vpaddd	(@Tx[1],@Tx[1],@X[-1&7]);
+	  &vpaddd	(@Tx[1],$Kx,@X[-1&7]);
 	 eval(shift(@insns));
 	 eval(shift(@insns));
-	&vpsrldq(@Tx[0],@X[-1&7],4);	# "X[-3]", 3 dwords
+	&vpsrldq(@Tx[0],@X[-1&7],4);		# "X[-3]", 3 dwords
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 	&vpxor	(@X[0],@X[0],@X[-4&7]);		# "X[0]"^="X[-16]"
@@ -846,7 +875,7 @@ sub Xupdate_avx_16_31()		# recall that $Xi starts wtih 4
 	&vpxor	(@X[0],@X[0],@Tx[2]);		# "X[0]"^=("X[0]">>96)<<<2
 	 eval(shift(@insns));
 	 eval(shift(@insns));
-	  &vmovdqa	(@Tx[2],eval(16*(($Xi)/5))."($K_XX_XX)");	# K_XX_XX
+	  &vmovdqa	($Kx,eval(16*(($Xi)/5))."($K_XX_XX)")	if ($Xi%5==0);	# K_XX_XX
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 
@@ -854,7 +883,6 @@ sub Xupdate_avx_16_31()		# recall that $Xi starts wtih 4
 	 foreach (@insns) { eval; }	# remaining instructions [if any]
 
   $Xi++;	push(@X,shift(@X));	# "rotate" X[]
-		push(@Tx,shift(@Tx));
 }
 
 sub Xupdate_avx_32_79()
@@ -873,12 +901,8 @@ sub Xupdate_avx_32_79()
 	&vpxor	(@X[0],@X[0],@X[-7&7]);		# "X[0]"^="X[-28]"
 	 eval(shift(@insns));
 	 eval(shift(@insns))	if (@insns[0] !~ /&ro[rl]/);
-	if ($Xi%5) {
-	  &vmovdqa	(@Tx[2],@Tx[1]);# "perpetuate" K_XX_XX...
-	} else {			# ... or load next one
-	  &vmovdqa	(@Tx[2],eval(16*($Xi/5))."($K_XX_XX)");
-	}
-	  &vpaddd	(@Tx[1],@Tx[1],@X[-1&7]);
+	  &vpaddd	(@Tx[1],$Kx,@X[-1&7]);
+	  &vmovdqa	($Kx,eval(16*($Xi/5))."($K_XX_XX)")	if ($Xi%5==0);
 	 eval(shift(@insns));		# ror
 	 eval(shift(@insns));
 
@@ -908,7 +932,6 @@ sub Xupdate_avx_32_79()
 	&vpor	(@X[0],@X[0],@Tx[0]);		# "X[0]"<<<=2
 	 eval(shift(@insns));		# body_20_39
 	 eval(shift(@insns));
-	  &vmovdqa	(@Tx[1],@X[0])	if ($Xi<19);
 	 eval(shift(@insns));
 	 eval(shift(@insns));		# rol
 	 eval(shift(@insns));
@@ -919,7 +942,6 @@ sub Xupdate_avx_32_79()
 	 foreach (@insns) { eval; }	# remaining instructions
 
   $Xi++;	push(@X,shift(@X));	# "rotate" X[]
-		push(@Tx,shift(@Tx));
 }
 
 sub Xuplast_avx_80()
@@ -929,23 +951,21 @@ sub Xuplast_avx_80()
   my ($a,$b,$c,$d,$e);
 
 	 eval(shift(@insns));
-	  &vpaddd	(@Tx[1],@Tx[1],@X[-1&7]);
+	  &vpaddd	(@Tx[1],$Kx,@X[-1&7]);
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 
-	  &movdqa	(eval(16*(($Xi-1)&3))."(%rsp)",@Tx[1]);	# X[]+K xfer IALU
+	  &vmovdqa	(eval(16*(($Xi-1)&3))."(%rsp)",@Tx[1]);	# X[]+K xfer IALU
 
 	 foreach (@insns) { eval; }		# remaining instructions
 
 	&cmp	($inp,$num);
-	&je	(".Ldone_avx");
-
-	unshift(@Tx,pop(@Tx));
+	&je	($done_avx_label);
 
 	&vmovdqa(@X[2],"64($K_XX_XX)");		# pbswap mask
-	&vmovdqa(@Tx[1],"0($K_XX_XX)");		# K_00_19
+	&vmovdqa($Kx,"0($K_XX_XX)");		# K_00_19
 	&vmovdqu(@X[-4&7],"0($inp)");		# load input
 	&vmovdqu(@X[-3&7],"16($inp)");
 	&vmovdqu(@X[-2&7],"32($inp)");
@@ -967,7 +987,7 @@ sub Xloop_avx()
 	&vpshufb(@X[($Xi-3)&7],@X[($Xi-3)&7],@X[2]);
 	 eval(shift(@insns));
 	 eval(shift(@insns));
-	&vpaddd	(@X[$Xi&7],@X[($Xi-4)&7],@Tx[1]);
+	&vpaddd	(@X[$Xi&7],@X[($Xi-4)&7],$Kx);
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 	 eval(shift(@insns));
@@ -1003,7 +1023,6 @@ ___
 	&Xupdate_avx_32_79(\&body_20_39);
 	&Xupdate_avx_32_79(\&body_20_39);
 	&Xupdate_avx_32_79(\&body_20_39);
-	&mov	(@T[1],@V[2]);	# copy of $c in next round
 	&Xupdate_avx_32_79(\&body_40_59);
 	&Xupdate_avx_32_79(\&body_40_59);
 	&Xupdate_avx_32_79(\&body_40_59);
@@ -1028,12 +1047,15 @@ $code.=<<___;
 	mov	@T[0],4($ctx)
 	mov	@T[0],$B			# magic seed
 	mov	$C,8($ctx)
+	mov	$C,@T[1]
 	mov	$D,12($ctx)
+	xor	$D,@T[1]
 	mov	$E,16($ctx)
+	and	@T[1],@T[0]
 	jmp	.Loop_avx
 
 .align	16
-.Ldone_avx:
+$done_avx_label:
 ___
 				$j=$saved_j; @V=@saved_V;
 
@@ -1061,9 +1083,10 @@ $code.=<<___ if ($win64);
 	movaps	64+32(%rsp),%xmm8
 	movaps	64+48(%rsp),%xmm9
 	movaps	64+64(%rsp),%xmm10
+	movaps	64+80(%rsp),%xmm11
 ___
 $code.=<<___;
-	lea	`64+($win64?5*16:0)`(%rsp),%rsi
+	lea	`64+($win64?6*16:0)`(%rsp),%rsi
 	mov	0(%rsi),%r12
 	mov	8(%rsi),%rbp
 	mov	16(%rsi),%rbx
@@ -1174,9 +1197,9 @@ ssse3_handler:
 
 	lea	64(%rax),%rsi
 	lea	512($context),%rdi	# &context.Xmm6
-	mov	\$10,%ecx
+	mov	\$12,%ecx
 	.long	0xa548f3fc		# cld; rep movsq
-	lea	`24+64+5*16`(%rax),%rax	# adjust stack pointer
+	lea	`24+64+6*16`(%rax),%rax	# adjust stack pointer
 
 	mov	-8(%rax),%rbx
 	mov	-16(%rax),%rbp
