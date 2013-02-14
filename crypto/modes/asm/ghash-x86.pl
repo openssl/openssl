@@ -119,6 +119,12 @@
 # For reference, AMD Bulldozer processes one byte in 1.98 cycles in
 # 32-bit mode and 1.89 in 64-bit.
 
+# February 2013
+#
+# Overhaul: aggregate Karatsuba post-processing, improve ILP in
+# reduction_alg9. Resulting performance is 1.96 cycles per byte on
+# Westmere, 1.95 - on Sandy/Ivy Bridge, 1.76 - on Bulldozer.
+
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
@@ -828,17 +834,18 @@ $len="ebx";
 &static_label("bswap");
 
 sub clmul64x64_T2 {	# minimal "register" pressure
-my ($Xhi,$Xi,$Hkey)=@_;
+my ($Xhi,$Xi,$Hkey,$HK)=@_;
 
 	&movdqa		($Xhi,$Xi);		#
 	&pshufd		($T1,$Xi,0b01001110);
-	&pshufd		($T2,$Hkey,0b01001110);
+	&pshufd		($T2,$Hkey,0b01001110)	if (!defined($HK));
 	&pxor		($T1,$Xi);		#
-	&pxor		($T2,$Hkey);
+	&pxor		($T2,$Hkey)		if (!defined($HK));
+			$HK=$T2			if (!defined($HK));
 
 	&pclmulqdq	($Xi,$Hkey,0x00);	#######
 	&pclmulqdq	($Xhi,$Hkey,0x11);	#######
-	&pclmulqdq	($T1,$T2,0x00);		#######
+	&pclmulqdq	($T1,$HK,0x00);		#######
 	&xorps		($T1,$Xi);		#
 	&xorps		($T1,$Xhi);		#
 
@@ -885,31 +892,32 @@ if (1) {		# Algorithm 9 with <<1 twist.
 			# below. Algorithm 9 was therefore chosen for
 			# further optimization...
 
-sub reduction_alg9 {	# 17/13 times faster than Intel version
+sub reduction_alg9 {	# 17/11 times faster than Intel version
 my ($Xhi,$Xi) = @_;
 
 	# 1st phase
-	&movdqa		($T1,$Xi);		#
+	&movdqa		($T2,$Xi);		#
+	&movdqa		($T1,$Xi);
+	&psllq		($Xi,5);
+	&pxor		($T1,$Xi);		#
 	&psllq		($Xi,1);
 	&pxor		($Xi,$T1);		#
-	&psllq		($Xi,5);		#
-	&pxor		($Xi,$T1);		#
 	&psllq		($Xi,57);		#
-	&movdqa		($T2,$Xi);		#
+	&movdqa		($T1,$Xi);		#
 	&pslldq		($Xi,8);
-	&psrldq		($T2,8);		#
-	&pxor		($Xi,$T1);
-	&pxor		($Xhi,$T2);		#
+	&psrldq		($T1,8);		#	
+	&pxor		($Xi,$T2);
+	&pxor		($Xhi,$T1);		#
 
 	# 2nd phase
 	&movdqa		($T2,$Xi);
+	&psrlq		($Xi,1);
+	&pxor		($Xhi,$T2);		#
+	&pxor		($T2,$Xi);
 	&psrlq		($Xi,5);
 	&pxor		($Xi,$T2);		#
 	&psrlq		($Xi,1);		#
-	&pxor		($Xi,$T2);		#
-	&pxor		($T2,$Xhi);
-	&psrlq		($Xi,1);		#
-	&pxor		($Xi,$T2);		#
+	&pxor		($Xi,$Xhi)		#
 }
 
 &function_begin_B("gcm_init_clmul");
@@ -943,8 +951,14 @@ my ($Xhi,$Xi) = @_;
 	&clmul64x64_T2	($Xhi,$Xi,$Hkey);
 	&reduction_alg9	($Xhi,$Xi);
 
+	&pshufd		($T1,$Hkey,0b01001110);
+	&pshufd		($T2,$Xi,0b01001110);
+	&pxor		($T1,$Hkey);		# Karatsuba pre-processing
 	&movdqu		(&QWP(0,$Htbl),$Hkey);	# save H
+	&pxor		($T2,$Xi);		# Karatsuba pre-processing
 	&movdqu		(&QWP(16,$Htbl),$Xi);	# save H^2
+	&palignr	($T2,$T1,8);		# low part is H.lo^H.hi
+	&movdqu		(&QWP(32,$Htbl),$T2);	# save Karatsuba "salt"
 
 	&ret		();
 &function_end_B("gcm_init_clmul");
@@ -962,8 +976,9 @@ my ($Xhi,$Xi) = @_;
 	&movdqa		($T3,&QWP(0,$const));
 	&movups		($Hkey,&QWP(0,$Htbl));
 	&pshufb		($Xi,$T3);
+	&movups		($T2,&QWP(32,$Htbl));
 
-	&clmul64x64_T2	($Xhi,$Xi,$Hkey);
+	&clmul64x64_T2	($Xhi,$Xi,$Hkey,$T2);
 	&reduction_alg9	($Xhi,$Xi);
 
 	&pshufb		($Xi,$T3);
@@ -1000,79 +1015,107 @@ my ($Xhi,$Xi) = @_;
 	&movdqu		($Xn,&QWP(16,$inp));	# Ii+1
 	&pshufb		($T1,$T3);
 	&pshufb		($Xn,$T3);
+	&movdqu		($T3,&QWP(32,$Htbl));
 	&pxor		($Xi,$T1);		# Ii+Xi
 
-	&clmul64x64_T2	($Xhn,$Xn,$Hkey);	# H*Ii+1
+	&pshufd		($T1,$Xn,0b01001110);	# H*Ii+1
+	&movdqa		($Xhn,$Xn);
+	&pxor		($T1,$Xn);		#
+
+	&pclmulqdq	($Xn,$Hkey,0x00);	#######
+	&pclmulqdq	($Xhn,$Hkey,0x11);	#######
 	&movups		($Hkey,&QWP(16,$Htbl));	# load H^2
+	&pclmulqdq	($T1,$T3,0x00);		#######
 
 	&lea		($inp,&DWP(32,$inp));	# i+=2
 	&sub		($len,0x20);
 	&jbe		(&label("even_tail"));
+	&jmp		(&label("mod_loop"));
 
-&set_label("mod_loop");
-	&clmul64x64_T2	($Xhi,$Xi,$Hkey);	# H^2*(Ii+Xi)
-	&movdqu		($T1,&QWP(0,$inp));	# Ii
+&set_label("mod_loop",32);
+	&pshufd		($T2,$Xi,0b01001110);	# H^2*(Ii+Xi)
+	&movdqa		($Xhi,$Xi);
+	&pxor		($T2,$Xi);		#
+
+	&pclmulqdq	($Xi,$Hkey,0x00);	#######
+	&pclmulqdq	($Xhi,$Hkey,0x11);	#######
 	&movups		($Hkey,&QWP(0,$Htbl));	# load H
+	&pclmulqdq	($T2,$T3,0x10);		#######
+	&movdqa		($T3,&QWP(0,$const));
 
-	&pxor		($Xi,$Xn);		# (H*Ii+1) + H^2*(Ii+Xi)
-	&pxor		($Xhi,$Xhn);
+	&xorps		($Xi,$Xn);		# (H*Ii+1) + H^2*(Ii+Xi)
+	&xorps		($Xhi,$Xhn);
+	 &movdqu	($Xhn,&QWP(0,$inp));	# Ii
+	&pxor		($T1,$Xi);		# aggregated Karatsuba post-processing
+	 &movdqu	($Xn,&QWP(16,$inp));	# Ii+1
+	&pxor		($T1,$Xhi);		#
 
-	&movdqu		($Xn,&QWP(16,$inp));	# Ii+1
-	&pshufb		($T1,$T3);
-	&pshufb		($Xn,$T3);
+	&pxor		($T2,$T1);		#
+	 &pshufb	($Xhn,$T3);
 
-	&movdqa		($T3,$Xn);		#&clmul64x64_TX	($Xhn,$Xn,$Hkey); H*Ii+1
-	&movdqa		($Xhn,$Xn);
-	 &pxor		($Xhi,$T1);		# "Ii+Xi", consume early
+	&movdqa		($T1,$T2);		#
+	&psrldq		($T2,8);
+	&pslldq		($T1,8);		#
+	&pxor		($Xhi,$T2);
+	&pxor		($Xi,$T1);		#
+	 &pshufb	($Xn,$T3);
+	 &pxor		($Xhi,$Xhn);		# "Ii+Xi", consume early
 
-	  &movdqa	($T1,$Xi);		#&reduction_alg9($Xhi,$Xi); 1st phase
+	&movdqa		($Xhn,$Xn);		#&clmul64x64_TX	($Xhn,$Xn,$Hkey); H*Ii+1
+	  &movdqa	($T2,$Xi);		#&reduction_alg9($Xhi,$Xi); 1st phase
+	  &movdqa	($T1,$Xi);
+	  &psllq	($Xi,5);
+	  &pxor		($T1,$Xi);		#
 	  &psllq	($Xi,1);
 	  &pxor		($Xi,$T1);		#
-	  &psllq	($Xi,5);		#
-	  &pxor		($Xi,$T1);		#
+	&movups		($T3,&QWP(32,$Htbl));
 	&pclmulqdq	($Xn,$Hkey,0x00);	#######
 	  &psllq	($Xi,57);		#
-	  &movdqa	($T2,$Xi);		#
+	  &movdqa	($T1,$Xi);		#
 	  &pslldq	($Xi,8);
-	  &psrldq	($T2,8);		#	
-	  &pxor		($Xi,$T1);
-	&pshufd		($T1,$T3,0b01001110);
-	  &pxor		($Xhi,$T2);		#
-	&pxor		($T1,$T3);
-	&pshufd		($T3,$Hkey,0b01001110);
-	&pxor		($T3,$Hkey);		#
-
-	&pclmulqdq	($Xhn,$Hkey,0x11);	#######
+	  &psrldq	($T1,8);		#	
+	  &pxor		($Xi,$T2);
+	  &pxor		($Xhi,$T1);		#
+	&pshufd		($T1,$Xhn,0b01001110);
 	  &movdqa	($T2,$Xi);		# 2nd phase
+	  &psrlq	($Xi,1);
+	&pxor		($T1,$Xhn);
+	&pclmulqdq	($Xhn,$Hkey,0x11);	#######
+	&movups		($Hkey,&QWP(16,$Htbl));	# load H^2
+	  &pxor		($Xhi,$T2);		#
+	  &pxor		($T2,$Xi);
 	  &psrlq	($Xi,5);
 	  &pxor		($Xi,$T2);		#
 	  &psrlq	($Xi,1);		#
-	  &pxor		($Xi,$T2);		#
-	  &pxor		($T2,$Xhi);
-	  &psrlq	($Xi,1);		#
-	  &pxor		($Xi,$T2);		#
-
+	  &pxor		($Xi,$Xhi)		#
 	&pclmulqdq	($T1,$T3,0x00);		#######
-	&movups		($Hkey,&QWP(16,$Htbl));	# load H^2
-	&xorps		($T1,$Xn);		#
-	&xorps		($T1,$Xhn);		#
-
-	&movdqa		($T3,$T1);		#
-	&psrldq		($T1,8);
-	&pslldq		($T3,8);		#
-	&pxor		($Xhn,$T1);
-	&pxor		($Xn,$T3);		#
-	&movdqa		($T3,&QWP(0,$const));
 
 	&lea		($inp,&DWP(32,$inp));
 	&sub		($len,0x20);
 	&ja		(&label("mod_loop"));
 
 &set_label("even_tail");
-	&clmul64x64_T2	($Xhi,$Xi,$Hkey);	# H^2*(Ii+Xi)
+	&pshufd		($T2,$Xi,0b01001110);	# H^2*(Ii+Xi)
+	&movdqa		($Xhi,$Xi);
+	&pxor		($T2,$Xi);		#
 
-	&pxor		($Xi,$Xn);		# (H*Ii+1) + H^2*(Ii+Xi)
-	&pxor		($Xhi,$Xhn);
+	&pclmulqdq	($Xi,$Hkey,0x00);	#######
+	&pclmulqdq	($Xhi,$Hkey,0x11);	#######
+	&pclmulqdq	($T2,$T3,0x10);		#######
+	&movdqa		($T3,&QWP(0,$const));
+
+	&xorps		($Xi,$Xn);		# (H*Ii+1) + H^2*(Ii+Xi)
+	&xorps		($Xhi,$Xhn);
+	&pxor		($T1,$Xi);		# aggregated Karatsuba post-processing
+	&pxor		($T1,$Xhi);		#
+
+	&pxor		($T2,$T1);		#
+
+	&movdqa		($T1,$T2);		#
+	&psrldq		($T2,8);
+	&pslldq		($T1,8);		#
+	&pxor		($Xhi,$T2);
+	&pxor		($Xi,$T1);		#
 
 	&reduction_alg9	($Xhi,$Xi);
 

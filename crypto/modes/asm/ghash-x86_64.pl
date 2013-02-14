@@ -41,6 +41,29 @@
 # providing access to a Westmere-based system on behalf of Intel
 # Open Source Technology Centre.
 
+# December 2012
+#
+# Overhaul: aggregate Karatsuba post-processing, improve ILP in
+# reduction_alg9, increase reduction aggregate factor to 4x. As for
+# the latter. ghash-x86.pl discusses that it makes lesser sense to
+# increase aggregate factor. Then why increase here? Critical path
+# consists of 3 independent pclmulqdq instructions, Karatsuba post-
+# processing and reduction. "On top" of this we lay down aggregated
+# multiplication operations, triplets of independent pclmulqdq's. As
+# issue rate for pclmulqdq is limited, it makes lesser sense to
+# aggregate more multiplications than it takes to perform remaining
+# non-multiplication operations. 2x is near-optimal coefficient for
+# contemporary Intel CPUs (therefore modest improvement coefficient),
+# but not for Bulldozer. Latter is because logical SIMD operations
+# are twice as slow in comparison to Intel, so that critical path is
+# longer. A CPU with higher pclmulqdq issue rate would also benefit
+# from higher aggregate factor...
+#
+# Westmere	1.76(+14%)
+# Sandy Bridge	1.79(+9%)
+# Ivy Bridge	1.79(+8%)
+# Bulldozer	1.52(+25%)
+
 $flavour = shift;
 $output  = shift;
 if ($flavour =~ /\./) { $output = $flavour; undef $flavour; }
@@ -54,6 +77,8 @@ die "can't locate x86_64-xlate.pl";
 
 open OUT,"| \"$^X\" $xlate $flavour $output";
 *STDOUT=*OUT;
+
+$do4xaggr=1;
 
 # common register layout
 $nlo="%rax";
@@ -354,19 +379,27 @@ ___
 ($T1,$T2,$T3)=("%xmm3","%xmm4","%xmm5");
 
 sub clmul64x64_T2 {	# minimal register pressure
-my ($Xhi,$Xi,$Hkey,$modulo)=@_;
+my ($Xhi,$Xi,$Hkey,$HK)=@_;
 
-$code.=<<___ if (!defined($modulo));
+if (!defined($HK)) {	$HK = $T2;
+$code.=<<___;
 	movdqa		$Xi,$Xhi		#
 	pshufd		\$0b01001110,$Xi,$T1
 	pshufd		\$0b01001110,$Hkey,$T2
 	pxor		$Xi,$T1			#
 	pxor		$Hkey,$T2
 ___
+} else {
+$code.=<<___;
+	movdqa		$Xi,$Xhi		#
+	pshufd		\$0b01001110,$Xi,$T1
+	pxor		$Xi,$T1			#
+___
+}
 $code.=<<___;
 	pclmulqdq	\$0x00,$Hkey,$Xi	#######
 	pclmulqdq	\$0x11,$Hkey,$Xhi	#######
-	pclmulqdq	\$0x00,$T2,$T1		#######
+	pclmulqdq	\$0x00,$HK,$T1		#######
 	pxor		$Xi,$T1			#
 	pxor		$Xhi,$T1		#
 
@@ -378,32 +411,33 @@ $code.=<<___;
 ___
 }
 
-sub reduction_alg9 {	# 17/13 times faster than Intel version
+sub reduction_alg9 {	# 17/11 times faster than Intel version
 my ($Xhi,$Xi) = @_;
 
 $code.=<<___;
 	# 1st phase
-	movdqa		$Xi,$T1			#
+	movdqa		$Xi,$T2			#
+	movdqa		$Xi,$T1
+	psllq		\$5,$Xi
+	pxor		$Xi,$T1			#
 	psllq		\$1,$Xi
 	pxor		$T1,$Xi			#
-	psllq		\$5,$Xi			#
-	pxor		$T1,$Xi			#
 	psllq		\$57,$Xi		#
-	movdqa		$Xi,$T2			#
+	movdqa		$Xi,$T1			#
 	pslldq		\$8,$Xi
-	psrldq		\$8,$T2			#	
-	pxor		$T1,$Xi
-	pxor		$T2,$Xhi		#
+	psrldq		\$8,$T1			#	
+	pxor		$T2,$Xi
+	pxor		$T1,$Xhi		#
 
 	# 2nd phase
 	movdqa		$Xi,$T2
+	psrlq		\$1,$Xi
+	pxor		$T2,$Xhi		#
+	pxor		$Xi,$T2
 	psrlq		\$5,$Xi
 	pxor		$T2,$Xi			#
 	psrlq		\$1,$Xi			#
-	pxor		$T2,$Xi			#
-	pxor		$Xhi,$T2
-	psrlq		\$1,$Xi			#
-	pxor		$T2,$Xi			#
+	pxor		$Xhi,$Xi		#
 ___
 }
 
@@ -437,8 +471,35 @@ ___
 	&clmul64x64_T2	($Xhi,$Xi,$Hkey);
 	&reduction_alg9	($Xhi,$Xi);
 $code.=<<___;
-	movdqu		$Hkey,($Htbl)		# save H
-	movdqu		$Xi,16($Htbl)		# save H^2
+	pshufd		\$0b01001110,$Hkey,$T1
+	pshufd		\$0b01001110,$Xi,$T2
+	pxor		$Hkey,$T1		# Karatsuba pre-processing
+	movdqu		$Hkey,0x00($Htbl)	# save H
+	pxor		$Xi,$T2			# Karatsuba pre-processing
+	movdqu		$Xi,0x10($Htbl)		# save H^2
+	palignr		\$8,$T1,$T2		# low part is H.lo^H.hi...
+	movdqu		$T2,0x20($Htbl)		# save Karatsuba "salt"
+___
+if ($do4xaggr) {
+	&clmul64x64_T2	($Xhi,$Xi,$Hkey);	# H^3
+	&reduction_alg9	($Xhi,$Xi);
+$code.=<<___;
+	movdqa		$Xi,$T3
+___
+	&clmul64x64_T2	($Xhi,$Xi,$Hkey);	# H^4
+	&reduction_alg9	($Xhi,$Xi);
+$code.=<<___;
+	pshufd		\$0b01001110,$T3,$T1
+	pshufd		\$0b01001110,$Xi,$T2
+	pxor		$T3,$T1			# Karatsuba pre-processing
+	movdqu		$T3,0x30($Htbl)		# save H^3
+	pxor		$Xi,$T2			# Karatsuba pre-processing
+	movdqu		$Xi,0x40($Htbl)		# save H^4
+	palignr		\$8,$T1,$T2		# low part is H.lo^H.hi...
+	movdqu		$T2,0x50($Htbl)		# save Karatsuba "salt"
+___
+}
+$code.=<<___;
 	ret
 .size	gcm_init_clmul,.-gcm_init_clmul
 ___
@@ -454,10 +515,34 @@ gcm_gmult_clmul:
 	movdqu		($Xip),$Xi
 	movdqa		.Lbswap_mask(%rip),$T3
 	movdqu		($Htbl),$Hkey
+	movdqu		0x20($Htbl),$T2
 	pshufb		$T3,$Xi
 ___
-	&clmul64x64_T2	($Xhi,$Xi,$Hkey);
-	&reduction_alg9	($Xhi,$Xi);
+	&clmul64x64_T2	($Xhi,$Xi,$Hkey,$T2);
+$code.=<<___ if (0 || (&reduction_alg9($Xhi,$Xi)&&0));
+	# experimental alternative. special thing about is that there
+	# no dependency between the two multiplications... 
+	mov		\$`0xE1<<1`,%eax
+	mov		\$0xA040608020C0E000,%r10	# ((7..0)·0xE0)&0xff
+	mov		\$0x07,%r11d
+	movq		%rax,$T1
+	movq		%r10,$T2
+	movq		%r11,$T3		# borrow $T3
+	pand		$Xi,$T3
+	pshufb		$T3,$T2			# ($Xi&7)·0xE0
+	movq		%rax,$T3
+	pclmulqdq	\$0x00,$Xi,$T1		# ·(0xE1<<1)
+	pxor		$Xi,$T2
+	pslldq		\$15,$T2
+	paddd		$T2,$T2			# <<(64+56+1)
+	pxor		$T2,$Xi
+	pclmulqdq	\$0x01,$T3,$Xi
+	movdqa		.Lbswap_mask(%rip),$T3	# reload $T3
+	psrldq		\$1,$T1
+	pxor		$T1,$Xhi
+	pslldq		\$7,$Xi
+	pxor		$Xhi,$Xi
+___
 $code.=<<___;
 	pshufb		$T3,$Xi
 	movdqu		$Xi,($Xip)
@@ -467,129 +552,316 @@ ___
 }
 
 { my ($Xip,$Htbl,$inp,$len)=@_4args;
-  my $Xn="%xmm6";
-  my $Xhn="%xmm7";
-  my $Hkey2="%xmm8";
-  my $T1n="%xmm9";
-  my $T2n="%xmm10";
+  my ($Xln,$Xmn,$Xhn,$Hkey2,$HK) = map("%xmm$_",(6..10));
 
 $code.=<<___;
 .globl	gcm_ghash_clmul
 .type	gcm_ghash_clmul,\@abi-omnipotent
-.align	16
+.align	32
 gcm_ghash_clmul:
 ___
 $code.=<<___ if ($win64);
+	lea	-0x88(%rsp),%rax
 .LSEH_begin_gcm_ghash_clmul:
 	# I can't trust assembler to use specific encoding:-(
-	.byte	0x48,0x83,0xec,0x58		#sub	\$0x58,%rsp
-	.byte	0x0f,0x29,0x34,0x24		#movaps	%xmm6,(%rsp)
-	.byte	0x0f,0x29,0x7c,0x24,0x10	#movdqa	%xmm7,0x10(%rsp)
-	.byte	0x44,0x0f,0x29,0x44,0x24,0x20	#movaps	%xmm8,0x20(%rsp)
-	.byte	0x44,0x0f,0x29,0x4c,0x24,0x30	#movaps	%xmm9,0x30(%rsp)
-	.byte	0x44,0x0f,0x29,0x54,0x24,0x40	#movaps	%xmm10,0x40(%rsp)
+	.byte	0x48,0x8d,0x60,0xe0		#lea	-0x20(%rax),%rsp
+	.byte	0x0f,0x29,0x70,0xe0		#movaps	%xmm6,-0x20(%rax)
+	.byte	0x0f,0x29,0x78,0xf0		#movaps	%xmm7,-0x10(%rax)
+	.byte	0x44,0x0f,0x29,0x00		#movaps	%xmm8,0(%rax)
+	.byte	0x44,0x0f,0x29,0x48,0x10	#movaps	%xmm9,0x10(%rax)
+	.byte	0x44,0x0f,0x29,0x50,0x20	#movaps	%xmm10,0x20(%rax)
+	.byte	0x44,0x0f,0x29,0x58,0x30	#movaps	%xmm11,0x30(%rax)
+	.byte	0x44,0x0f,0x29,0x60,0x40	#movaps	%xmm12,0x40(%rax)
+	.byte	0x44,0x0f,0x29,0x68,0x50	#movaps	%xmm13,0x50(%rax)
+	.byte	0x44,0x0f,0x29,0x70,0x60	#movaps	%xmm14,0x60(%rax)
+	.byte	0x44,0x0f,0x29,0x78,0x70	#movaps	%xmm15,0x70(%rax)
 ___
 $code.=<<___;
 	movdqa		.Lbswap_mask(%rip),$T3
+	mov		\$0xA040608020C0E000,%rax	# ((7..0)·0xE0)&0xff
 
 	movdqu		($Xip),$Xi
 	movdqu		($Htbl),$Hkey
+	movdqu		0x20($Htbl),$HK
 	pshufb		$T3,$Xi
 
 	sub		\$0x10,$len
 	jz		.Lodd_tail
 
-	movdqu		16($Htbl),$Hkey2
+	movdqu		0x10($Htbl),$Hkey2
+___
+if ($do4xaggr) {
+my ($Xl,$Xm,$Xh,$Hkey3,$Hkey4)=map("%xmm$_",(11..15));
+
+$code.=<<___;
+	cmp		\$0x30,$len
+	jb		.Lskip4x
+
+	sub		\$0x30,$len
+	movdqu		0x30($Htbl),$Hkey3
+	movdqu		0x40($Htbl),$Hkey4
+
+	#######
+	# Xi+4 =[(H*Ii+3) + (H^2*Ii+2) + (H^3*Ii+1) + H^4*(Ii+Xi)] mod P
+	#
+	movdqu		0x30($inp),$Xln
+	 movdqu		0x20($inp),$Xl
+	pshufb		$T3,$Xln
+	 pshufb		$T3,$Xl
+	movdqa		$Xln,$Xhn
+	pshufd		\$0b01001110,$Xln,$Xmn
+	pxor		$Xln,$Xmn
+	pclmulqdq	\$0x00,$Hkey,$Xln
+	pclmulqdq	\$0x11,$Hkey,$Xhn
+	pclmulqdq	\$0x00,$HK,$Xmn
+
+	movdqa		$Xl,$Xh
+	pshufd		\$0b01001110,$Xl,$Xm
+	pxor		$Xl,$Xm
+	pclmulqdq	\$0x00,$Hkey2,$Xl
+	pclmulqdq	\$0x11,$Hkey2,$Xh
+	xorps		$Xl,$Xln
+	pclmulqdq	\$0x10,$HK,$Xm
+	xorps		$Xh,$Xhn
+	movups		0x50($Htbl),$HK
+	xorps		$Xm,$Xmn
+
+	movdqu		0x10($inp),$Xl
+	 movdqu		0($inp),$T1
+	pshufb		$T3,$Xl
+	 pshufb		$T3,$T1
+	movdqa		$Xl,$Xh
+	pshufd		\$0b01001110,$Xl,$Xm
+	 pxor		$T1,$Xi
+	pxor		$Xl,$Xm
+	pclmulqdq	\$0x00,$Hkey3,$Xl
+	 movdqa		$Xi,$Xhi
+	 pshufd		\$0b01001110,$Xi,$T1
+	 pxor		$Xi,$T1
+	pclmulqdq	\$0x11,$Hkey3,$Xh
+	xorps		$Xl,$Xln
+	pclmulqdq	\$0x00,$HK,$Xm
+	xorps		$Xh,$Xhn
+
+	lea	0x40($inp),$inp
+	sub	\$0x40,$len
+	jc	.Ltail4x
+
+	jmp	.Lmod4_loop
+.align	32
+.Lmod4_loop:
+	pclmulqdq	\$0x00,$Hkey4,$Xi
+	xorps		$Xm,$Xmn
+	 movdqu		0x30($inp),$Xl
+	 pshufb		$T3,$Xl
+	pclmulqdq	\$0x11,$Hkey4,$Xhi
+	xorps		$Xln,$Xi
+	 movdqu		0x20($inp),$Xln
+	 movdqa		$Xl,$Xh
+	 pshufd		\$0b01001110,$Xl,$Xm
+	pclmulqdq	\$0x10,$HK,$T1
+	xorps		$Xhn,$Xhi
+	 pxor		$Xl,$Xm
+	 pshufb		$T3,$Xln
+	movups		0x20($Htbl),$HK
+	 pclmulqdq	\$0x00,$Hkey,$Xl
+	xorps		$Xmn,$T1
+	 movdqa		$Xln,$Xhn
+	 pshufd		\$0b01001110,$Xln,$Xmn
+
+	pxor		$Xi,$T1			# aggregated Karatsuba post-processing
+	 pxor		$Xln,$Xmn
+	pxor		$Xhi,$T1		#
+	movdqa		$T1,$T2			#
+	pslldq		\$8,$T1
+	 pclmulqdq	\$0x11,$Hkey,$Xh
+	psrldq		\$8,$T2			#
+	pxor		$T1,$Xi
+	movdqa		.L7_mask(%rip),$T1
+	pxor		$T2,$Xhi		#
+	movq		%rax,$T2
+
+	pand		$Xi,$T1			# 1st phase
+	pshufb		$T1,$T2			#
+	 pclmulqdq	\$0x00,$HK,$Xm
+	pxor		$Xi,$T2			#
+	psllq		\$57,$T2		#
+	movdqa		$T2,$T1			#
+	pslldq		\$8,$T2
+	 pclmulqdq	\$0x00,$Hkey2,$Xln
+	psrldq		\$8,$T1			#	
+	pxor		$T2,$Xi
+	pxor		$T1,$Xhi		#
+	movdqu		0($inp),$T1
+
+	movdqa		$Xi,$T2			# 2nd phase
+	psrlq		\$1,$Xi
+	 pclmulqdq	\$0x11,$Hkey2,$Xhn
+	 xorps		$Xl,$Xln
+	 movdqu		0x10($inp),$Xl
+	 pshufb		$T3,$Xl
+	 pclmulqdq	\$0x10,$HK,$Xmn
+	 xorps		$Xh,$Xhn
+	 movups		0x50($Htbl),$HK
+	pshufb		$T3,$T1
+	pxor		$T2,$Xhi		#
+	pxor		$Xi,$T2
+	psrlq		\$5,$Xi
+
+	 movdqa		$Xl,$Xh
+	 pxor		$Xm,$Xmn
+	 pshufd		\$0b01001110,$Xl,$Xm
+	 pxor		$Xl,$Xm
+	 pclmulqdq	\$0x00,$Hkey3,$Xl
+	pxor		$T2,$Xi			#
+	pxor		$T1,$Xhi
+	psrlq		\$1,$Xi			#
+	 pclmulqdq	\$0x11,$Hkey3,$Xh
+	 xorps		$Xl,$Xln
+	pxor		$Xhi,$Xi		#
+
+	 pclmulqdq	\$0x00,$HK,$Xm
+	 xorps		$Xh,$Xhn
+
+	movdqa		$Xi,$Xhi
+	pshufd		\$0b01001110,$Xi,$T1
+	pxor		$Xi,$T1
+
+	lea	0x40($inp),$inp
+	sub	\$0x40,$len
+	jnc	.Lmod4_loop
+
+.Ltail4x:
+	pclmulqdq	\$0x00,$Hkey4,$Xi
+	xorps		$Xm,$Xmn
+	pclmulqdq	\$0x11,$Hkey4,$Xhi
+	xorps		$Xln,$Xi
+	pclmulqdq	\$0x10,$HK,$T1
+	xorps		$Xhn,$Xhi
+	pxor		$Xi,$Xhi		# aggregated Karatsuba post-processing
+	pxor		$Xmn,$T1
+
+	pxor		$Xhi,$T1		#
+	pxor		$Xi,$Xhi
+
+	movdqa		$T1,$T2			#
+	psrldq		\$8,$T1
+	pslldq		\$8,$T2			#
+	pxor		$T1,$Xhi
+	pxor		$T2,$Xi			#
+___
+	&reduction_alg9($Xhi,$Xi);
+$code.=<<___;
+	add	\$0x40,$len
+	jz	.Ldone
+	sub	\$0x10,$len
+	movdqu	0x20($Htbl),$HK
+.Lskip4x:
+___
+}
+$code.=<<___;
 	#######
 	# Xi+2 =[H*(Ii+1 + Xi+1)] mod P =
 	#	[(H*Ii+1) + (H*Xi+1)] mod P =
 	#	[(H*Ii+1) + H^2*(Ii+Xi)] mod P
 	#
 	movdqu		($inp),$T1		# Ii
-	movdqu		16($inp),$Xn		# Ii+1
+	movdqu		16($inp),$Xln		# Ii+1
 	pshufb		$T3,$T1
-	pshufb		$T3,$Xn
+	pshufb		$T3,$Xln
 	pxor		$T1,$Xi			# Ii+Xi
-___
-	&clmul64x64_T2	($Xhn,$Xn,$Hkey);	# H*Ii+1
-$code.=<<___;
-	movdqa		$Xi,$Xhi		#
-	pshufd		\$0b01001110,$Xi,$T1
-	pshufd		\$0b01001110,$Hkey2,$T2
+
+	movdqa		$Xln,$Xhn
+	pshufd		\$0b01001110,$Xln,$Xmn
+	pxor		$Xln,$Xmn
+	pclmulqdq	\$0x00,$Hkey,$Xln
+	pclmulqdq	\$0x11,$Hkey,$Xhn
+	pclmulqdq	\$0x00,$HK,$Xmn
+
+	movdqa		$Xi,$Xhi
+	pshufd		\$0b01001110,$Xi,$T1	#
 	pxor		$Xi,$T1			#
-	pxor		$Hkey2,$T2
 
 	lea		32($inp),$inp		# i+=2
 	sub		\$0x20,$len
 	jbe		.Leven_tail
+	jmp		.Lmod_loop
 
+.align	32
 .Lmod_loop:
-___
-	&clmul64x64_T2	($Xhi,$Xi,$Hkey2,1);	# H^2*(Ii+Xi)
-$code.=<<___;
-	movdqu		($inp),$T1		# Ii
-	pxor		$Xn,$Xi			# (H*Ii+1) + H^2*(Ii+Xi)
+	pclmulqdq	\$0x00,$Hkey2,$Xi
+	pclmulqdq	\$0x11,$Hkey2,$Xhi
+	  movdqu	($inp),$T2		# Ii
+	pclmulqdq	\$0x10,$HK,$T1
+	  pshufb	$T3,$T2
+
+	pxor		$Xln,$Xi		# (H*Ii+1) + H^2*(Ii+Xi)
+	 movdqu		16($inp),$Xln		# Ii+1
 	pxor		$Xhn,$Xhi
 
-	movdqu		16($inp),$Xn		# Ii+1
-	pshufb		$T3,$T1
-	pshufb		$T3,$Xn
+	pxor		$Xi,$Xmn		# aggregated Karatsuba post-processing
+	pxor		$Xhi,$Xmn
+	  pxor		$T2,$Xhi		# "Ii+Xi", consume early
+	pxor		$Xmn,$T1
+	 pshufb		$T3,$Xln
+	movdqa		$T1,$T2			#
+	psrldq		\$8,$T1
+	pslldq		\$8,$T2			#
+	pxor		$T1,$Xhi
+	pxor		$T2,$Xi			#
 
-	movdqa		$Xn,$Xhn		#
-	pshufd		\$0b01001110,$Xn,$T1n
-	pshufd		\$0b01001110,$Hkey,$T2n
-	pxor		$Xn,$T1n		#
-	pxor		$Hkey,$T2n
-	 pxor		$T1,$Xhi		# "Ii+Xi", consume early
+	movdqa		$Xln,$Xhn		#
+	pshufd		\$0b01001110,$Xln,$Xmn
+	pxor		$Xln,$Xmn		#
 
-	  movdqa	$Xi,$T1			# 1st phase
+	  movdqa	$Xi,$T2			# 1st phase
+	  movdqa	$Xi,$T1
+	  psllq		\$5,$Xi
+	pclmulqdq	\$0x00,$Hkey,$Xln	#######
+	  pxor		$Xi,$T1			#
 	  psllq		\$1,$Xi
 	  pxor		$T1,$Xi			#
-	  psllq		\$5,$Xi			#
-	  pxor		$T1,$Xi			#
-	pclmulqdq	\$0x00,$Hkey,$Xn	#######
 	  psllq		\$57,$Xi		#
-	  movdqa	$Xi,$T2			#
+	  movdqa	$Xi,$T1			#
 	  pslldq	\$8,$Xi
-	  psrldq	\$8,$T2			#	
-	  pxor		$T1,$Xi
-	  pxor		$T2,$Xhi		#
+	  psrldq	\$8,$T1			#	
+	  pxor		$T2,$Xi
+	  pxor		$T1,$Xhi		#
 
 	pclmulqdq	\$0x11,$Hkey,$Xhn	#######
 	  movdqa	$Xi,$T2			# 2nd phase
+	  psrlq		\$1,$Xi
+	  pxor		$T2,$Xhi		#
+	  pxor		$Xi,$T2
 	  psrlq		\$5,$Xi
 	  pxor		$T2,$Xi			#
 	  psrlq		\$1,$Xi			#
-	  pxor		$T2,$Xi			#
-	  pxor		$Xhi,$T2
-	  psrlq		\$1,$Xi			#
-	  pxor		$T2,$Xi			#
+	pclmulqdq	\$0x00,$HK,$Xmn		#######
+	  pxor		$Xhi,$Xi		#
 
-	pclmulqdq	\$0x00,$T2n,$T1n	#######
-	 movdqa		$Xi,$Xhi		#
-	 pshufd		\$0b01001110,$Xi,$T1
-	 pshufd		\$0b01001110,$Hkey2,$T2
+	 movdqa		$Xi,$Xhi
+	 pshufd		\$0b01001110,$Xi,$T1	#
 	 pxor		$Xi,$T1			#
-	 pxor		$Hkey2,$T2
-
-	pxor		$Xn,$T1n		#
-	pxor		$Xhn,$T1n		#
-	movdqa		$T1n,$T2n		#
-	psrldq		\$8,$T1n
-	pslldq		\$8,$T2n		#
-	pxor		$T1n,$Xhn
-	pxor		$T2n,$Xn		#
 
 	lea		32($inp),$inp
 	sub		\$0x20,$len
 	ja		.Lmod_loop
 
 .Leven_tail:
-___
-	&clmul64x64_T2	($Xhi,$Xi,$Hkey2,1);	# H^2*(Ii+Xi)
-$code.=<<___;
-	pxor		$Xn,$Xi			# (H*Ii+1) + H^2*(Ii+Xi)
+	pclmulqdq	\$0x00,$Hkey2,$Xi
+	pclmulqdq	\$0x11,$Hkey2,$Xhi
+	pclmulqdq	\$0x10,$HK,$T1
+
+	pxor		$Xln,$Xi		# (H*Ii+1) + H^2*(Ii+Xi)
 	pxor		$Xhn,$Xhi
+	pxor		$Xi,$Xmn
+	pxor		$Xhi,$Xmn
+	pxor		$Xmn,$T1
+	movdqa		$T1,$T2			#
+	psrldq		\$8,$T1
+	pslldq		\$8,$T2			#
+	pxor		$T1,$Xhi
+	pxor		$T2,$Xi			#
 ___
 	&reduction_alg9	($Xhi,$Xi);
 $code.=<<___;
@@ -601,7 +873,7 @@ $code.=<<___;
 	pshufb		$T3,$T1
 	pxor		$T1,$Xi			# Ii+Xi
 ___
-	&clmul64x64_T2	($Xhi,$Xi,$Hkey);	# H*(Ii+Xi)
+	&clmul64x64_T2	($Xhi,$Xi,$Hkey,$HK);	# H*(Ii+Xi)
 	&reduction_alg9	($Xhi,$Xi);
 $code.=<<___;
 .Ldone:
@@ -614,7 +886,12 @@ $code.=<<___ if ($win64);
 	movaps	0x20(%rsp),%xmm8
 	movaps	0x30(%rsp),%xmm9
 	movaps	0x40(%rsp),%xmm10
-	add	\$0x58,%rsp
+	movaps	0x50(%rsp),%xmm11
+	movaps	0x60(%rsp),%xmm12
+	movaps	0x70(%rsp),%xmm13
+	movaps	0x80(%rsp),%xmm14
+	movaps	0x90(%rsp),%xmm15
+	lea	0xa8(%rsp),%rsp
 ___
 $code.=<<___;
 	ret
@@ -629,6 +906,10 @@ $code.=<<___;
 	.byte	15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0
 .L0x1c2_polynomial:
 	.byte	1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0xc2
+.L7_mask:
+	.long	7,0,7,0
+.L7_mask_poly:
+	.long	7,0,`0xE1<<1`,0
 .align	64
 .type	.Lrem_4bit,\@object
 .Lrem_4bit:
@@ -791,13 +1072,18 @@ se_handler:
 	.rva	se_handler
 	.rva	.Lghash_prologue,.Lghash_epilogue	# HandlerData
 .LSEH_info_gcm_ghash_clmul:
-	.byte	0x01,0x1f,0x0b,0x00
-	.byte	0x1f,0xa8,0x04,0x00	#movaps 0x40(rsp),xmm10
-	.byte	0x19,0x98,0x03,0x00	#movaps 0x30(rsp),xmm9
-	.byte	0x13,0x88,0x02,0x00	#movaps 0x20(rsp),xmm8
-	.byte	0x0d,0x78,0x01,0x00	#movaps 0x10(rsp),xmm7
-	.byte	0x08,0x68,0x00,0x00	#movaps (rsp),xmm6
-	.byte	0x04,0xa2,0x00,0x00	#sub	rsp,0x58
+	.byte	0x01,0x33,0x16,0x00
+	.byte	0x33,0xf8,0x09,0x00	#movaps 0x90(rsp),xmm15
+	.byte	0x2e,0xe8,0x08,0x00	#movaps 0x80(rsp),xmm14
+	.byte	0x29,0xd8,0x07,0x00	#movaps 0x70(rsp),xmm13
+	.byte	0x24,0xc8,0x06,0x00	#movaps 0x60(rsp),xmm12
+	.byte	0x1f,0xb8,0x05,0x00	#movaps 0x50(rsp),xmm11
+	.byte	0x1a,0xa8,0x04,0x00	#movaps 0x40(rsp),xmm10
+	.byte	0x15,0x98,0x03,0x00	#movaps 0x30(rsp),xmm9
+	.byte	0x10,0x88,0x02,0x00	#movaps 0x20(rsp),xmm8
+	.byte	0x0c,0x78,0x01,0x00	#movaps 0x10(rsp),xmm7
+	.byte	0x08,0x68,0x00,0x00	#movaps 0x00(rsp),xmm6
+	.byte	0x04,0x01,0x15,0x00	#sub	0xa8,rsp
 ___
 }
 
