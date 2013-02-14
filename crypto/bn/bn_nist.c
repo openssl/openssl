@@ -286,29 +286,25 @@ const BIGNUM *BN_get0_nist_prime_521(void)
 	}
 
 
-static void nist_cp_bn_0(BN_ULONG *buf, const BN_ULONG *a, int top, int max)
+static void nist_cp_bn_0(BN_ULONG *dst, const BN_ULONG *src, int top, int max)
 	{
 	int i;
-	BN_ULONG *_tmp1 = (buf);
-	const BN_ULONG *_tmp2 = (a);
 
 #ifdef BN_DEBUG
 	OPENSSL_assert(top <= max);
 #endif
-	for (i = (top); i != 0; i--)
-		*_tmp1++ = *_tmp2++;
-	for (i = (max) - (top); i != 0; i--)
-		*_tmp1++ = (BN_ULONG) 0;
+	for (i = 0; i < top; i++)
+		dst[i] = src[i];
+	for (; i < max; i++)
+		dst[i] = 0;
 	}
 
-static void nist_cp_bn(BN_ULONG *buf, const BN_ULONG *a, int top)
+static void nist_cp_bn(BN_ULONG *dst, const BN_ULONG *src, int top)
 	{ 
 	int i;
-	BN_ULONG *_tmp1 = (buf);
-	const BN_ULONG *_tmp2 = (a);
 
-	for (i = (top); i != 0; i--)
-		*_tmp1++ = *_tmp2++;
+	for (i = 0; i < top; i++)
+		dst[i] = src[i];
 	}
 
 #if BN_BITS2 == 64
