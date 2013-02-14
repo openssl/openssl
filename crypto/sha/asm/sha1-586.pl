@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 
 # ====================================================================
-# [Re]written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
+# [Re]written by Andy Polyakov <appro@openssl.org> for the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
 # details see http://www.openssl.org/~appro/cryptogams/.
@@ -88,13 +88,13 @@
 # PIII		11.5		-
 # P4		10.6		-
 # AMD K8	7.1		-
-# Core2		7.3		6.1/+20%	-
+# Core2		7.3		6.0/+22%	-
 # Atom		12.5		9.3(*)/+35%	-
 # Westmere	7.3		5.5/+33%	-
-# Sandy Bridge	8.8		6.2/+40%	5.2(**)/+70%
+# Sandy Bridge	8.8		6.2/+40%	5.1(**)/+73%
 # Ivy Bridge	7.2		4.8/+51%	4.7(**)/+53%
 # Bulldozer	11.6		6.0/+92%
-# VIA Nano	10.6		7.6/+40%
+# VIA Nano	10.6		7.4/+43%
 #
 # (*)	Loop is 1056 instructions long and expected result is ~8.25.
 #	It remains mystery [to me] why ILP is limited to 1.7.
@@ -423,6 +423,7 @@ my $Xi=4;			# 4xSIMD Xupdate round, start pre-seeded
 my @X=map("xmm$_",(4..7,0..3));	# pre-seeded for $Xi=4
 my @V=($A,$B,$C,$D,$E);
 my $j=0;			# hash round
+my $rx=0;
 my @T=($T,$tmp1);
 my $inp;
 
@@ -508,8 +509,11 @@ my $_ror=sub { &ror(@_) };
 	&movdqa	(&QWP(0+16,"esp"),@X[-3&7]);
 	&psubd	(@X[-3&7],@X[3]);
 	&movdqa	(&QWP(0+32,"esp"),@X[-2&7]);
+	&mov	(@T[1],$C);
 	&psubd	(@X[-2&7],@X[3]);
+	&xor	(@T[1],$D);
 	&movdqa	(@X[0],@X[-3&7]);
+	&and	(@T[0],@T[1]);
 	&jmp	(&label("loop"));
 
 ######################################################################
@@ -750,50 +754,66 @@ sub Xtail_ssse3()
 	foreach (@insns) { eval; }
 }
 
-sub body_00_19 () {
+sub body_00_19 () {	# ((c^d)&b)^d
+	# on start @T[0]=(c^d)&b
+	return &body_20_39()	if ($rx==19);	$rx++;
+	(
+	'($a,$b,$c,$d,$e)=@V;'.
+	'&$_ror	($b,$j?7:2);',	# $b>>>2
+	'&xor	(@T[0],$d);',
+	'&mov	(@T[1],$a);',	# $b in next round
+
+	'&add	($e,&DWP(4*($j&15),"esp"));',	# X[]+K xfer
+	'&xor	($b,$c);',	# $c^$d for next round
+
+	'&$_rol	($a,5);',
+	'&add	($e,@T[0]);',
+	'&and	(@T[1],$b);',	# ($b&($c^$d)) for next round
+
+	'&xor	($b,$c);',	# restore $b
+	'&add	($e,$a);'	.'$j++; unshift(@V,pop(@V)); unshift(@T,pop(@T));'
+	);
+}
+
+sub body_20_39 () {	# b^d^c
+	# on entry @T[0]=b^d
+	return &body_40_59()	if ($rx==39);	$rx++;
 	(
 	'($a,$b,$c,$d,$e)=@V;'.
 	'&add	($e,&DWP(4*($j&15),"esp"));',	# X[]+K xfer
-	'&xor	($c,$d);',
+	'&xor	(@T[0],$d)	if($j==19);'.
+	'&xor	(@T[0],$c)	if($j> 19);',	# ($b^$d^$c)
 	'&mov	(@T[1],$a);',	# $b in next round
-	'&$_rol	($a,5);',
-	'&and	(@T[0],$c);',	# ($b&($c^$d))
-	'&xor	($c,$d);',	# restore $c
-	'&xor	(@T[0],$d);',
-	'&add	($e,$a);',
-	'&$_ror	($b,$j?7:2);',	# $b>>>2
-	'&add	($e,@T[0]);'	.'$j++; unshift(@V,pop(@V)); unshift(@T,pop(@T));'
-	);
-}
 
-sub body_20_39 () {
-	(
-	'($a,$b,$c,$d,$e)=@V;'.
-	'&add	($e,&DWP(4*($j++&15),"esp"));',	# X[]+K xfer
-	'&xor	(@T[0],$d);',	# ($b^$d)
-	'&mov	(@T[1],$a);',	# $b in next round
-	'&$_rol	($a,5);',
-	'&xor	(@T[0],$c);',	# ($b^$d^$c)
-	'&add	($e,$a);',
-	'&$_ror	($b,7);',	# $b>>>2
-	'&add	($e,@T[0]);'	.'unshift(@V,pop(@V)); unshift(@T,pop(@T));'
-	);
-}
-
-sub body_40_59 () {
-	(
-	'($a,$b,$c,$d,$e)=@V;'.
-	'&xor	(@T[0],$c);',
-	'&xor	(@T[1],$d);',
-	'&add	($e,&DWP(4*($j++&15),"esp"));',	# X[]+K xfer
-	'&and	(@T[0],@T[1]);',
-	'&$_ror	($b,7);',	# $b>>>2
-	'&xor	(@T[0],$c);',
-	'&mov	(@T[1],$a);',	# $b in next round
 	'&$_rol	($a,5);',
 	'&add	($e,@T[0]);',
-	'&mov	(@T[0],$b);',	# copy of $c in next round
-	'&add	($e,$a);'	.'unshift(@V,pop(@V)); unshift(@T,pop(@T));'
+	'&xor	(@T[1],$c)	if ($j< 79);',	# $b^$d for next round
+
+	'&$_ror	($b,7);',	# $b>>>2
+	'&add	($e,$a);'	.'$j++; unshift(@V,pop(@V)); unshift(@T,pop(@T));'
+	);
+}
+
+sub body_40_59 () {	# ((b^c)&(c^d))^c
+	# on entry @T[0]=(b^c), (c^=d)
+	$rx++;
+	(
+	'($a,$b,$c,$d,$e)=@V;'.
+	'&add	($e,&DWP(4*($j&15),"esp"));',	# X[]+K xfer
+	'&and	(@T[0],$c)	if ($j>=40);',	# (b^c)&(c^d)
+	'&xor	($c,$d)		if ($j>=40);',	# restore $c
+
+	'&$_ror	($b,7);',	# $b>>>2
+	'&mov	(@T[1],$a);',	# $b for next round
+	'&xor	(@T[0],$c);',
+
+	'&$_rol	($a,5);',
+	'&add	($e,@T[0]);',
+	'&xor	(@T[1],$c)	if ($j==59);'.
+	'&xor	(@T[1],$b)	if ($j< 59);',	# b^c for next round
+
+	'&xor	($b,$c)		if ($j< 59);',	# c^d for next round
+	'&add	($e,$a);'	.'$j++; unshift(@V,pop(@V)); unshift(@T,pop(@T));'
 	);
 }
 
@@ -808,7 +828,6 @@ sub body_40_59 () {
 	&Xupdate_ssse3_32_79(\&body_20_39);
 	&Xupdate_ssse3_32_79(\&body_20_39);
 	&Xupdate_ssse3_32_79(\&body_20_39);
-	&mov	(@T[1],@V[2]);	# copy of $c in next round
 	&Xupdate_ssse3_32_79(\&body_40_59);
 	&Xupdate_ssse3_32_79(\&body_40_59);
 	&Xupdate_ssse3_32_79(\&body_40_59);
@@ -832,10 +851,13 @@ sub body_40_59 () {
 	&mov	(&DWP(4,@T[1]),@T[0]);
 	&add	($E,&DWP(16,@T[1]));
 	&mov	(&DWP(8,@T[1]),$C);
-	&mov	($B,@T[0]);
+	&mov	($B,$C);
 	&mov	(&DWP(12,@T[1]),$D);
+	&xor	($B,$D);
 	&mov	(&DWP(16,@T[1]),$E);
+	&and	($B,@T[0]);
 	&movdqa	(@X[0],@X[-3&7]);
+	&xchg	($B,@T[0]);
 
 	&jmp	(&label("loop"));
 
@@ -859,6 +881,8 @@ sub body_40_59 () {
 	&mov	(&DWP(16,@T[1]),$E);
 
 &function_end("_sha1_block_data_order_ssse3");
+
+$rx=0;	# reset
 
 if ($ymm) {
 my $Xi=4;			# 4xSIMD Xupdate round, start pre-seeded
@@ -947,8 +971,11 @@ my $_ror=sub { &shrd(@_[0],@_) };
 	&vpaddd	(@X[1],@X[-3&7],@X[3]);
 	&vpaddd	(@X[2],@X[-2&7],@X[3]);
 	&vmovdqa(&QWP(0,"esp"),@X[0]);		# X[]+K xfer to IALU
+	&mov	(@T[1],$C);
 	&vmovdqa(&QWP(0+16,"esp"),@X[1]);
+	&xor	(@T[1],$D);
 	&vmovdqa(&QWP(0+32,"esp"),@X[2]);
+	&and	(@T[0],@T[1]);
 	&jmp	(&label("loop"));
 
 sub Xupdate_avx_16_31()		# recall that $Xi starts wtih 4
@@ -1173,7 +1200,6 @@ sub Xtail_avx()
 	&Xupdate_avx_32_79(\&body_20_39);
 	&Xupdate_avx_32_79(\&body_20_39);
 	&Xupdate_avx_32_79(\&body_20_39);
-	&mov	(@T[1],@V[2]);	# copy of $c in next round
 	&Xupdate_avx_32_79(\&body_40_59);
 	&Xupdate_avx_32_79(\&body_40_59);
 	&Xupdate_avx_32_79(\&body_40_59);
@@ -1196,10 +1222,13 @@ sub Xtail_avx()
 	&add	($D,&DWP(12,@T[1]));
 	&mov	(&DWP(4,@T[1]),@T[0]);
 	&add	($E,&DWP(16,@T[1]));
+	&mov	($B,$C);
 	&mov	(&DWP(8,@T[1]),$C);
-	&mov	($B,@T[0]);
+	&xor	($B,$D);
 	&mov	(&DWP(12,@T[1]),$D);
+	&and	($B,@T[0]);
 	&mov	(&DWP(16,@T[1]),$E);
+	&xchg	($B,@T[0]);
 
 	&jmp	(&label("loop"));
 
