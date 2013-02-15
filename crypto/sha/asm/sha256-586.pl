@@ -33,10 +33,11 @@
 #		PIII	P4	AMD K8	Core2	SB	Atom	Bldzr
 # gcc		36	41	27	26	25	50	36
 # icc		33	38	25	23	-	-	-
-# x86 asm(*)	27/24	28	19/15.5	18/15.6	12.5	30/25	16.6
+# x86 asm(*)	27/24	28	19/15.5	18/15.6	12.3	30/25	16.6
 # x86_64 asm(**)	17.5	15.1	13.9	11.6	22	13.7
 #
-# (*)	numbers after slash are for unrolled loop, where available;
+# (*)	numbers after slash are for unrolled loop, where available,
+#	otherwise best applicable such as AVX/XOP;
 # (**)	x86_64 assembly performance is presented for reference
 #	purposes.
 
@@ -775,32 +776,28 @@ sub Xupdate_AVX () {
 	'&vpsrld	($t3,$t0,3);',
 	'&vpslld	($t1,$t0,14);',
 	'&vpxor		($t0,$t3,$t2);',
+	 '&vpshufd	($t3,@X[3],0b11111010)',# X[14..15]
 	'&vpsrld	($t2,$t2,18-7);',
 	'&vpxor		($t0,$t0,$t1);',
 	'&vpslld	($t1,$t1,25-14);',
 	'&vpxor		($t0,$t0,$t2);',
-	 '&vpsrld	($t3,@X[3],10);',
+	 '&vpsrld	($t2,$t3,10);',
 	'&vpxor		($t0,$t0,$t1);',	# sigma0(X[1..4])
-	 '&vpslld	($t2,@X[3],13);',
+	 '&vpsrlq	($t1,$t3,17);',
 	'&vpaddd	(@X[0],@X[0],$t0);',	# X[0..3] += sigma0(X[1..4])
-	 '&vpsrld	($t1,@X[3],17);',
-	 '&vpxor	($t3,$t3,$t2);',
-	 '&vpslld	($t2,$t2,15-13);',
-	 '&vpxor	($t3,$t3,$t1);',
-	 '&vpsrld	($t1,$t1,19-17);',
-	 '&vpxor	($t3,$t3,$t2);',
-	 '&vpxor	($t3,$t3,$t1);',	# sigma1(X[14..15])
+	 '&vpxor	($t2,$t2,$t1);',
+	 '&vpsrlq	($t3,$t3,19);',
+	 '&vpxor	($t2,$t2,$t3);',	# sigma1(X[14..15]
+	 '&vpshufd	($t3,$t2,0b10000100);',
 	'&vpsrldq	($t3,$t3,8);',
 	'&vpaddd	(@X[0],@X[0],$t3);',	# X[0..1] += sigma1(X[14..15])
-	 '&vpsrld	($t3,@X[0],10);',
-	 '&vpslld	($t2,@X[0],13);',
-	 '&vpsrld	($t1,@X[0],17);',
-	 '&vpxor	($t3,$t3,$t2);',
-	 '&vpslld	($t2,$t2,15-13);',
-	 '&vpxor	($t3,$t3,$t1);',
-	 '&vpsrld	($t1,$t1,19-17);',
-	 '&vpxor	($t3,$t3,$t2);',
-	 '&vpxor	($t3,$t3,$t1);',	# sigma1(X[16..17])
+	 '&vpshufd	($t3,@X[0],0b01010000)',# X[16..17]
+	 '&vpsrld	($t2,$t3,10);',
+	 '&vpsrlq	($t1,$t3,17);',
+	 '&vpxor	($t2,$t2,$t1);',
+	 '&vpsrlq	($t3,$t3,19);',
+	 '&vpxor	($t2,$t2,$t3);',	# sigma1(X[16..17]
+	 '&vpshufd	($t3,$t2,0b11101000);',
 	'&vpslldq	($t3,$t3,8);',
 	'&vpaddd	(@X[0],@X[0],$t3);'	# X[2..3] += sigma1(X[16..17])
 	);
@@ -813,7 +810,7 @@ my $body = shift;
 my @X = @_;
 my @insns = (&$body,&$body,&$body,&$body);	# 120 instructions
 
-	foreach (Xupdate_AVX()) {		# 35 instructions
+	foreach (Xupdate_AVX()) {		# 31 instructions
 	    eval;
 	    eval(shift(@insns));
 	    eval(shift(@insns));
