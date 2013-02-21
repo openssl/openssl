@@ -847,6 +847,20 @@ fips_test_suite.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
 fips_test_suite.o: ../include/openssl/rand.h ../include/openssl/safestack.h
 fips_test_suite.o: ../include/openssl/sha.h ../include/openssl/stack.h
 fips_test_suite.o: ../include/openssl/symhacks.h fips_test_suite.c
+gost2814789t.o: ../engines/ccgost/gost89.h ../include/openssl/asn1.h
+gost2814789t.o: ../include/openssl/bio.h ../include/openssl/buffer.h
+gost2814789t.o: ../include/openssl/conf.h ../include/openssl/crypto.h
+gost2814789t.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+gost2814789t.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+gost2814789t.o: ../include/openssl/engine.h ../include/openssl/err.h
+gost2814789t.o: ../include/openssl/evp.h ../include/openssl/hmac.h
+gost2814789t.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
+gost2814789t.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+gost2814789t.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+gost2814789t.o: ../include/openssl/pkcs7.h ../include/openssl/safestack.h
+gost2814789t.o: ../include/openssl/sha.h ../include/openssl/stack.h
+gost2814789t.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
+gost2814789t.o: ../include/openssl/x509_vfy.h gost2814789t.c
 hmactest.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 hmactest.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 hmactest.o: ../include/openssl/evp.h ../include/openssl/hmac.h
