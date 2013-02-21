@@ -462,6 +462,7 @@ void ssl3_cbc_digest_record(
 	* the hash. */
 	unsigned md_length_size = 8;
 	char length_is_big_endian = 1;
+	int ret;
 
 	/* This is a, hopefully redundant, check that allows us to forget about
 	 * many possible overflows later in this function. */
@@ -733,8 +734,8 @@ void ssl3_cbc_digest_record(
 		EVP_DigestUpdate(&md_ctx, hmac_pad, md_block_size);
 		EVP_DigestUpdate(&md_ctx, mac_out, md_size);
 		}
-	EVP_DigestFinal(&md_ctx, md_out, &md_out_size_u);
-	if (md_out_size)
+	ret = EVP_DigestFinal(&md_ctx, md_out, &md_out_size_u);
+	if (ret && md_out_size)
 		*md_out_size = md_out_size_u;
 	EVP_MD_CTX_cleanup(&md_ctx);
 	}

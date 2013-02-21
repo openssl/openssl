@@ -1573,7 +1573,7 @@ engine_cipher_check:
 					(unsigned int)ullLeft);
 	    }
 	    siglen = 4;
-	    EVP_DigestSignFinal(&mctx, bTest, &siglen);
+	    OPENSSL_assert(EVP_DigestSignFinal(&mctx, bTest, &siglen));
 	    EVP_MD_CTX_cleanup(&mctx);
 	    enlu = (int)tcs[t].ullLen;
 	    enlf = 0;
