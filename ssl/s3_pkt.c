@@ -409,7 +409,7 @@ fprintf(stderr, "Record type=%d, Length=%d\n", rr->type, rr->length);
 	if (enc_err == 0)
 		{
 		al=SSL_AD_DECRYPTION_FAILED;
-		SSLerr(SSL_F_TLS1_ENC,SSL_R_BLOCK_CIPHER_PAD_IS_WRONG);
+		SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_BLOCK_CIPHER_PAD_IS_WRONG);
 		goto f_err;
 		}
 
