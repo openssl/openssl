@@ -312,7 +312,7 @@ Set automatic support for any elliptic curve for key exchange:
 
 =head1 RETURN VALUES
 
-SSL_CONF_cmd() return 1 if the value of B<cmd> is recognised and B<value> is
+SSL_CONF_cmd() returns 1 if the value of B<cmd> is recognised and B<value> is
 B<NOT> used and 2 if both B<cmd> and B<value> are used. In other words it
 returns the number of arguments processed. This is useful when processing
 command lines.
@@ -337,6 +337,6 @@ L<SSL_CONF_cmd_argv(3)|SSL_CONF_cmd_argv(3)>
 
 =head1 HISTORY
 
-SSL_CONF_cmd() was first added to OpenSSL 1.1.0
+SSL_CONF_cmd() was first added to OpenSSL 1.0.2
 
 =cut
