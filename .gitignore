@@ -10,6 +10,7 @@
 # Top level excludes
 /Makefile.bak
 /Makefile
+/MINFO
 /*.a
 /include
 /*.pc
