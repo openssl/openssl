@@ -20,7 +20,7 @@ argument can be set to B<NULL> is it is not used.
 =head1 RETURN VALUES
 
 SSL_CONF_cmd_argv() returns the number of command arguments processed: 0, 1, 2
-2 or a negative error code.
+or a negative error code.
 
 If -2 is returned then an argument for a command is missing.
 
@@ -37,6 +37,6 @@ L<SSL_CONF_cmd(3)|SSL_CONF_cmd(3)>
 
 =head1 HISTORY
 
-These functions were first added to OpenSSL 1.1.0
+These functions were first added to OpenSSL 1.0.2
 
 =cut
