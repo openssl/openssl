@@ -803,12 +803,34 @@ int CMS_RecipientInfo_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 		}
 	}
 
+int CMS_RecipientInfo_encrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
+	{
+	switch (ri->type)
+		{
+		case CMS_RECIPINFO_TRANS:
+		return cms_RecipientInfo_ktri_encrypt(cms, ri);
+
+		case CMS_RECIPINFO_KEK:
+		return cms_RecipientInfo_kekri_encrypt(cms, ri);
+		break;
+
+		case CMS_RECIPINFO_PASS:
+		return cms_RecipientInfo_pwri_crypt(cms, ri, 1);
+		break;
+
+		default:
+		CMSerr(CMS_F_CMS_RECIPIENTINFO_ENCRYPT,
+				CMS_R_UNSUPPORTED_RECIPIENT_TYPE);
+		return 0;
+		}
+	}
+
 BIO *cms_EnvelopedData_init_bio(CMS_ContentInfo *cms)
 	{
 	CMS_EncryptedContentInfo *ec;
 	STACK_OF(CMS_RecipientInfo) *rinfos;
 	CMS_RecipientInfo *ri;
-	int i, r, ok = 0;
+	int i, ok = 0;
 	BIO *ret;
 
 	/* Get BIO first to set up key */
@@ -828,28 +850,7 @@ BIO *cms_EnvelopedData_init_bio(CMS_ContentInfo *cms)
 	for (i = 0; i < sk_CMS_RecipientInfo_num(rinfos); i++)
 		{
 		ri = sk_CMS_RecipientInfo_value(rinfos, i);
-
-		switch (ri->type)
-			{
-			case CMS_RECIPINFO_TRANS:
-			r = cms_RecipientInfo_ktri_encrypt(cms, ri);
-			break;
-
-			case CMS_RECIPINFO_KEK:
-			r = cms_RecipientInfo_kekri_encrypt(cms, ri);
-			break;
-
-			case CMS_RECIPINFO_PASS:
-			r = cms_RecipientInfo_pwri_crypt(cms, ri, 1);
-			break;
-
-			default:
-			CMSerr(CMS_F_CMS_ENVELOPEDDATA_INIT_BIO,
-				CMS_R_UNSUPPORTED_RECIPIENT_TYPE);
-			goto err;
-			}
-
-		if (r <= 0)
+		if (CMS_RecipientInfo_encrypt(cms, ri) <= 0)
 			{
 			CMSerr(CMS_F_CMS_ENVELOPEDDATA_INIT_BIO,
 				CMS_R_ERROR_SETTING_RECIPIENTINFO);

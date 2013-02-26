@@ -233,6 +233,7 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
 					const EVP_CIPHER *kekciph);
 
 int CMS_RecipientInfo_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri);
+int CMS_RecipientInfo_encrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri);
 	
 int CMS_uncompress(CMS_ContentInfo *cms, BIO *dcont, BIO *out,
 							unsigned int flags);
@@ -384,6 +385,7 @@ void ERR_load_CMS_strings(void);
 #define CMS_F_CMS_RECEIPTREQUEST_CREATE0		 159
 #define CMS_F_CMS_RECEIPT_VERIFY			 160
 #define CMS_F_CMS_RECIPIENTINFO_DECRYPT			 134
+#define CMS_F_CMS_RECIPIENTINFO_ENCRYPT			 169
 #define CMS_F_CMS_RECIPIENTINFO_KEKRI_DECRYPT		 135
 #define CMS_F_CMS_RECIPIENTINFO_KEKRI_ENCRYPT		 136
 #define CMS_F_CMS_RECIPIENTINFO_KEKRI_GET0_ID		 137

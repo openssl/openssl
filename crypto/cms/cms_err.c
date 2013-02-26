@@ -1,6 +1,6 @@
 /* crypto/cms/cms_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2009 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2013 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -114,6 +114,7 @@ static ERR_STRING_DATA CMS_str_functs[]=
 {ERR_FUNC(CMS_F_CMS_RECEIPTREQUEST_CREATE0),	"CMS_ReceiptRequest_create0"},
 {ERR_FUNC(CMS_F_CMS_RECEIPT_VERIFY),	"cms_Receipt_verify"},
 {ERR_FUNC(CMS_F_CMS_RECIPIENTINFO_DECRYPT),	"CMS_RecipientInfo_decrypt"},
+{ERR_FUNC(CMS_F_CMS_RECIPIENTINFO_ENCRYPT),	"CMS_RecipientInfo_encrypt"},
 {ERR_FUNC(CMS_F_CMS_RECIPIENTINFO_KEKRI_DECRYPT),	"CMS_RECIPIENTINFO_KEKRI_DECRYPT"},
 {ERR_FUNC(CMS_F_CMS_RECIPIENTINFO_KEKRI_ENCRYPT),	"CMS_RECIPIENTINFO_KEKRI_ENCRYPT"},
 {ERR_FUNC(CMS_F_CMS_RECIPIENTINFO_KEKRI_GET0_ID),	"CMS_RecipientInfo_kekri_get0_id"},
