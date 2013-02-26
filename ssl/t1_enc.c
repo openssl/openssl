@@ -768,7 +768,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 	    				ssl->enc_read_ctx,
 					hash,
 					&hmac, rec->input,
-					rec->length, rec->orig_len);
+					rec->length, orig_len);
 #endif
 		}
 		
