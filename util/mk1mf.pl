@@ -44,6 +44,7 @@ my %mf_import = (
 	INSTALLTOP     => \$INSTALLTOP,
 	OPENSSLDIR     => \$OPENSSLDIR,
 	PLATFORM       => \$mf_platform,
+	CC             => \$mf_cc,
 	CFLAG	       => \$mf_cflag,
 	DEPFLAG	       => \$mf_depflag,
 	CPUID_OBJ      => \$mf_cpuid_asm,
@@ -324,6 +325,7 @@ else
 
 print STDERR "platform = $orig_platform\n";
 $cflags = $mf_cflag if $orig_platform eq 'auto';
+$cc = $mf_cc if $orig_platform eq 'auto';
 
 $ex_libs="$l_flags$ex_libs" if ($l_flags ne "");
 
