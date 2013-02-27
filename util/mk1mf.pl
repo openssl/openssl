@@ -323,7 +323,6 @@ else
 ##else
 	{ $cflags="$c_flags$cflags" if ($c_flags ne ""); }
 
-print STDERR "platform = $orig_platform\n";
 $cflags = $mf_cflag if $orig_platform eq 'auto';
 $cc = $mf_cc if $orig_platform eq 'auto';
 
