@@ -639,7 +639,7 @@ LFLAGS=$lflags
 RSC=$rsc
 FIPSLINK=\$(PERL) util${o}fipslink.pl
 
-# The output directory for everything intersting
+# The output directory for everything interesting
 OUT_D=$out_dir
 # The output directory for all the temporary muck
 TMP_D=$tmp_dir
