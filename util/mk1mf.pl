@@ -766,6 +766,13 @@ vclean:
 	\$(RM) \$(TMP_D)$o*.*
 	\$(RM) \$(OUT_D)$o*.*
 
+reallyclean:
+	\$(RM) -rf \$(TMP_D)
+	\$(RM) -rf \$(BIN_D)
+	\$(RM) -rf \$(TEST_D)
+	\$(RM) -rf \$(LIB_D)
+	\$(RM) -rf \$(INC_D)
+
 EOF
     
 my $platform_cpp_symbol = "MK1MF_PLATFORM_$platform";
