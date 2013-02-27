@@ -740,7 +740,6 @@ $banner
 	\$(MKDIR) \"\$(INC_D)\"
 
 headers: \$(HEADER) \$(EXHEADER)
-	@
 
 lib: \$(LIBS_DEP) \$(E_SHLIB)
 
