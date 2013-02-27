@@ -811,7 +811,7 @@ printf OUT "  #define DATE \"%s\"\n", scalar gmtime();
 printf OUT "#endif\n";
 close(OUT);
 
-# Strip of trailing ' '
+# Strip off trailing ' '
 foreach (keys %lib_obj) { $lib_obj{$_}=&clean_up_ws($lib_obj{$_}); }
 $test=&clean_up_ws($test);
 $e_exe=&clean_up_ws($e_exe);
