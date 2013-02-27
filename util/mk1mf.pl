@@ -196,6 +196,7 @@ $NT=0;
 push(@INC,"util/pl","pl");
 
 if ($platform eq "auto") {
+	$orig_platform = $platform;
 	$platform = $mf_platform;
 	print STDERR "Imported platform $mf_platform\n";
 }
@@ -320,6 +321,9 @@ else
 ##	{ $cflags="$c_flags" if ($c_flags ne ""); }
 ##else
 	{ $cflags="$c_flags$cflags" if ($c_flags ne ""); }
+
+print STDERR "platform = $orig_platform\n";
+$cflags = $mf_cflag if $orig_platform eq 'auto';
 
 $ex_libs="$l_flags$ex_libs" if ($l_flags ne "");
 
@@ -1245,7 +1249,8 @@ sub cc_compile_target
 	$ex_flags.=" -DMK1MF_BUILD -D$platform_cpp_symbol" if ($source =~ /cversion/);
 	$target =~ s/\//$o/g if $o ne "/";
 	$source =~ s/\//$o/g if $o ne "/";
-	$ret ="$target: \$(SRC_D)$o$source\n\t";
+# FIXME: do dependencies instead of all headers.
+	$ret ="$target: \$(SRC_D)$o$source \$(HEADER) \$(EXHEADER)\n\t";
 	$ret.="\$(CC) ${ofile}$target $ex_flags -c \$(SRC_D)$o$source\n\n";
 	return($ret);
 	}
