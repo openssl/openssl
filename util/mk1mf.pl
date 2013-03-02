@@ -107,7 +107,8 @@ $infile="MINFO";
 	"netware-libc", "CodeWarrior for NetWare - LibC - with WinSock Sockets",
 	"netware-libc-bsdsock", "CodeWarrior for NetWare - LibC - with BSD Sockets",
 	"default","cc under unix",
-	"auto", "auto detect from top level Makefile"
+	"auto", "auto detect from top level Makefile",
+        "copy", "copy from top level Makefile"
 	);
 
 $platform="";
@@ -196,7 +197,7 @@ $NT=0;
 
 push(@INC,"util/pl","pl");
 
-if ($platform eq "auto") {
+if ($platform eq "auto" || $platform eq 'copy') {
 	$orig_platform = $platform;
 	$platform = $mf_platform;
 	print STDERR "Imported platform $mf_platform\n";
@@ -323,8 +324,10 @@ else
 ##else
 	{ $cflags="$c_flags$cflags" if ($c_flags ne ""); }
 
-$cflags = $mf_cflag if $orig_platform eq 'auto';
-$cc = $mf_cc if $orig_platform eq 'auto';
+if ($orig_platform eq 'copy') {
+    $cflags = $mf_cflag;
+    $cc = $mf_cc;
+}
 
 $ex_libs="$l_flags$ex_libs" if ($l_flags ne "");
 
