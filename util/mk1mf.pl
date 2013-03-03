@@ -69,7 +69,7 @@ open(IN,"<Makefile") || die "unable to open Makefile!\n";
 while(<IN>) {
     my ($mf_opt, $mf_ref);
     while (($mf_opt, $mf_ref) = each %mf_import) {
-    	if (/^$mf_opt\s*=\s*(.*)$/) {
+    	if (/^$mf_opt\s*=\s*(.*)$/ && !defined($$mfref)) {
 	   $$mf_ref = $1;
 	}
     }
