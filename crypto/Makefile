@@ -92,7 +92,7 @@ subdirs:
 	@target=all; $(RECURSIVE_MAKE)
 
 files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+	$(PERL) $(TOP)/util/files.pl "CPUID_OBJ=$(CPUID_OBJ)" Makefile >> $(TOP)/MINFO
 	@target=files; $(RECURSIVE_MAKE)
 
 links:
