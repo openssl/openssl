@@ -4333,3 +4333,17 @@ X509_get_signature_nid                  4701	EXIST::FUNCTION:
 X509_VERIFY_PARAM_set1_host             4702	EXIST::FUNCTION:
 X509_VERIFY_PARAM_set1_ip               4703	EXIST::FUNCTION:
 X509_check_ip                           4704	EXIST::FUNCTION:
+X509_STORE_set_lookup_crls_cb           4705	EXIST::FUNCTION:
+X509_CRL_diff                           4706	EXIST::FUNCTION:
+X509_CRL_http_nbio                      4707	EXIST::FUNCTION:EVP
+OCSP_REQ_CTX_i2d                        4708	EXIST::FUNCTION:
+OCSP_REQ_CTX_get0_mem_bio               4709	EXIST::FUNCTION:
+X509_STORE_CTX_get0_store               4710	EXIST::FUNCTION:
+X509_REVOKED_dup                        4711	EXIST::FUNCTION:
+CMS_RecipientInfo_encrypt               4712	EXIST::FUNCTION:CMS
+OCSP_REQ_CTX_http                       4713	EXIST::FUNCTION:
+OCSP_REQ_CTX_nbio                       4714	EXIST::FUNCTION:
+X509_http_nbio                          4715	EXIST::FUNCTION:EVP
+OCSP_set_max_response_length            4716	EXIST::FUNCTION:
+OCSP_REQ_CTX_new                        4717	EXIST::FUNCTION:
+OCSP_REQ_CTX_nbio_d2i                   4718	EXIST::FUNCTION:
