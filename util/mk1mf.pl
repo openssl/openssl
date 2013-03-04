@@ -61,6 +61,7 @@ my %mf_import = (
 	WP_ASM_OBJ     => \$mf_wp_asm,
 	CMLL_ENC       => \$mf_cm_asm,
 	MODES_ASM_OBJ  => \$mf_modes_asm,
+        ENGINES_ASM_OBJ=> \$mf_engines_asm,
 	FIPSCANISTERONLY  => \$mf_fipscanisteronly,
 	FIPSCANISTERINTERNAL  => \$mf_fipscanisterinternal
 );
@@ -862,6 +863,28 @@ if ($fips)
 		"-DFINGERPRINT_PREMAIN_DSO_LOAD \$(APP_CFLAGS)");
 	}
 
+sub fix_asm
+	{
+	my($asm, $dir) = @_;
+
+	$asm = " $asm";
+	$asm =~ s/\s+/ $dir\//g;
+	$asm =~ s/\.o//g;
+	$asm =~ s/^ //;
+
+	return $asm . ' ';
+	}
+
+$lib_obj{CRYPTO} .= fix_asm($mf_md5_asm, 'crypto/md5');
+$lib_obj{CRYPTO} .= fix_asm($mf_bn_asm, 'crypto/bn');
+$lib_obj{CRYPTO} .= fix_asm($mf_cpuid_asm, 'crypto');
+# AES asm files end up included by the aes dir itself
+#$lib_obj{CRYPTO} .= fix_asm($mf_aes_asm, 'crypto/aes');
+$lib_obj{CRYPTO} .= fix_asm($mf_sha_asm, 'crypto/sha');
+$lib_obj{CRYPTO} .= fix_asm($mf_engines_asm, 'engines');
+$lib_obj{CRYPTO} .= fix_asm($mf_rc4_asm, 'crypto/rc4');
+$lib_obj{CRYPTO} .= fix_asm($mf_modes_asm, 'crypto/modes');
+
 foreach (values %lib_nam)
 	{
 	$lib_obj=$lib_obj{$_};
@@ -1206,6 +1229,11 @@ sub do_compile_rule
 			{
 			$ret.=&Sasm_compile_target("$to${o}$n$obj",$s,$n);
 			}
+		elsif (defined &special_compile_target and
+		       ($s=special_compile_target($_)))
+			{
+			$ret.=$s;
+			}
 		else	{ die "no rule for $_"; }
 		}
 	return($ret);
@@ -1216,6 +1244,10 @@ sub do_compile_rule
 sub perlasm_compile_target
 	{
 	my($target,$source,$bname)=@_;
+
+	return platform_perlasm_compile_target($target, $source, $bname)
+	    if defined &platform_perlasm_compile_target;
+
 	my($ret);
 	$bname =~ s/(.*)\.[^\.]$/$1/;
 	$ret ="\$(TMP_D)$o$bname.asm: $source\n";
