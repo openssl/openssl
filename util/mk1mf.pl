@@ -875,15 +875,17 @@ sub fix_asm
 	return $asm . ' ';
 	}
 
-$lib_obj{CRYPTO} .= fix_asm($mf_md5_asm, 'crypto/md5');
-$lib_obj{CRYPTO} .= fix_asm($mf_bn_asm, 'crypto/bn');
-$lib_obj{CRYPTO} .= fix_asm($mf_cpuid_asm, 'crypto');
-# AES asm files end up included by the aes dir itself
-#$lib_obj{CRYPTO} .= fix_asm($mf_aes_asm, 'crypto/aes');
-$lib_obj{CRYPTO} .= fix_asm($mf_sha_asm, 'crypto/sha');
-$lib_obj{CRYPTO} .= fix_asm($mf_engines_asm, 'engines');
-$lib_obj{CRYPTO} .= fix_asm($mf_rc4_asm, 'crypto/rc4');
-$lib_obj{CRYPTO} .= fix_asm($mf_modes_asm, 'crypto/modes');
+if ($orig_platform eq 'copy') {
+	$lib_obj{CRYPTO} .= fix_asm($mf_md5_asm, 'crypto/md5');
+	$lib_obj{CRYPTO} .= fix_asm($mf_bn_asm, 'crypto/bn');
+	$lib_obj{CRYPTO} .= fix_asm($mf_cpuid_asm, 'crypto');
+	# AES asm files end up included by the aes dir itself
+	#$lib_obj{CRYPTO} .= fix_asm($mf_aes_asm, 'crypto/aes');
+	$lib_obj{CRYPTO} .= fix_asm($mf_sha_asm, 'crypto/sha');
+	$lib_obj{CRYPTO} .= fix_asm($mf_engines_asm, 'engines');
+	$lib_obj{CRYPTO} .= fix_asm($mf_rc4_asm, 'crypto/rc4');
+	$lib_obj{CRYPTO} .= fix_asm($mf_modes_asm, 'crypto/modes');
+}
 
 foreach (values %lib_nam)
 	{
