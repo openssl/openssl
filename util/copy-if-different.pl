@@ -4,12 +4,9 @@ use strict;
 
 use Fcntl;
 
-
 # copy-if-different.pl
 
 # Copy to the destination if the source is not the same as it.
-
-my $stripcr = 0;
 
 my @filelist;
 
