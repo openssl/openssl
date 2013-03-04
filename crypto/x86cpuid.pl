@@ -69,6 +69,7 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&inc	("esi");		# number of cores
 
 	&mov	("eax",1);
+	&xor	("ecx","ecx");
 	&cpuid	();
 	&bt	("edx",28);
 	&jnc	(&label("generic"));
@@ -102,6 +103,7 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 
 &set_label("nocacheinfo");
 	&mov	("eax",1);
+	&xor	("ecx","ecx");
 	&cpuid	();
 	&and	("edx",0xbfefffff);	# force reserved bits #20, #30 to 0
 	&cmp	("ebp",0);
