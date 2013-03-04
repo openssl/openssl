@@ -879,7 +879,7 @@ if ($orig_platform eq 'copy') {
 	$lib_obj{CRYPTO} .= fix_asm($mf_md5_asm, 'crypto/md5');
 	$lib_obj{CRYPTO} .= fix_asm($mf_bn_asm, 'crypto/bn');
 	# cpuid is included by the crypto dir
-	$lib_obj{CRYPTO} .= fix_asm($mf_cpuid_asm, 'crypto');
+	#$lib_obj{CRYPTO} .= fix_asm($mf_cpuid_asm, 'crypto');
 	# AES asm files end up included by the aes dir itself
 	#$lib_obj{CRYPTO} .= fix_asm($mf_aes_asm, 'crypto/aes');
 	$lib_obj{CRYPTO} .= fix_asm($mf_sha_asm, 'crypto/sha');
