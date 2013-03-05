@@ -30,7 +30,7 @@ $ofile='-o ';
 
 # EXE linking stuff
 $link='${CC}';
-$lflags='${CFLAGS}';
+$lflags='${CFLAG}';
 $efile='-o ';
 $exep='';
 $ex_libs="";
