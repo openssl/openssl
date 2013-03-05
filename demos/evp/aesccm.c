@@ -92,7 +92,7 @@ void aes_ccm_decrypt(void)
 	/* Specify key and IV */
 	EVP_DecryptInit_ex(ctx, NULL, NULL, ccm_key, ccm_nonce);
 	/* Set ciphertext length: only needed if we have AAD */
-	EVP_EncryptUpdate(ctx, NULL, &outlen, NULL, sizeof(ccm_ct));
+	EVP_DecryptUpdate(ctx, NULL, &outlen, NULL, sizeof(ccm_ct));
 	/* Zero or one call to specify any AAD */
 	EVP_DecryptUpdate(ctx, NULL, &outlen, ccm_adata, sizeof(ccm_adata));
 	/* Decrypt plaintext, verify tag: can only be called once */
