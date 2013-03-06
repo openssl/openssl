@@ -754,8 +754,9 @@ ___
 $code.=<<___;
 	add	\$0x40,$len
 	jz	.Ldone
-	sub	\$0x10,$len
 	movdqu	0x20($Htbl),$HK
+	sub	\$0x10,$len
+	jz	.Lodd_tail
 .Lskip4x:
 ___
 }
