@@ -589,6 +589,9 @@ again:
 
 		p=s->packet;
 
+		if (s->msg_callback)
+			s->msg_callback(0, 0, SSL3_RT_HEADER, p, DTLS1_RT_HEADER_LENGTH, s, s->msg_callback_arg);
+
 		/* Pull apart the header into the DTLS1_RECORD */
 		rr->type= *(p++);
 		ssl_major= *(p++);
@@ -1650,6 +1653,9 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len,
 	memcpy(pseq, &(s->s3->write_sequence[2]), 6);
 	pseq+=6;
 	s2n(wr->length,pseq);
+
+	if (s->msg_callback)
+		s->msg_callback(1, 0, SSL3_RT_HEADER, pseq - DTLS1_RT_HEADER_LENGTH, DTLS1_RT_HEADER_LENGTH, s, s->msg_callback_arg);
 
 	/* we should now have
 	 * wr->data pointing to the encrypted data, which is
