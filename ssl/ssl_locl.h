@@ -438,7 +438,8 @@
 				(c)->algo_strength)
 #define SSL_C_EXPORT_PKEYLENGTH(c)	SSL_EXPORT_PKEYLENGTH((c)->algo_strength)
 
-
+/* Check if an SSL structure is using DTLS */
+#define SSL_IS_DTLS(s)	((s->method->version >> 8) == 0xfe)
 
 
 /* Mostly for SSLv3 */
