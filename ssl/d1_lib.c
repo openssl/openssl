@@ -67,6 +67,8 @@
 #endif
 
 static void get_current_time(struct timeval *t);
+static void dtls1_set_handshake_header(SSL *s, int type, unsigned long len);
+static int dtls1_handshake_write(SSL *s);
 const char dtls1_version_str[]="DTLSv1" OPENSSL_VERSION_PTEXT;
 int dtls1_listen(SSL *s, struct sockaddr *client);
 
@@ -83,6 +85,10 @@ SSL3_ENC_METHOD DTLSv1_enc_data={
 	TLS_MD_SERVER_FINISH_CONST,TLS_MD_SERVER_FINISH_CONST_SIZE,
 	tls1_alert_code,
 	tls1_export_keying_material,
+	SSL_ENC_FLAG_DTLS|SSL_ENC_FLAG_EXPLICIT_IV,
+	DTLS1_HM_HEADER_LENGTH,
+	dtls1_set_handshake_header,
+	dtls1_handshake_write	
 	};
 
 long dtls1_default_timeout(void)
@@ -484,3 +490,20 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
 	(void) BIO_dgram_get_peer(SSL_get_rbio(s), client);
 	return 1;
 	}
+
+static void dtls1_set_handshake_header(SSL *s, int htype, unsigned long len)
+	{
+	unsigned char *p = (unsigned char *)s->init_buf->data;
+	dtls1_set_message_header(s, p, htype, len, 0, len);
+	s->init_num = (int)len + DTLS1_HM_HEADER_LENGTH;
+	s->init_off = 0;
+	/* Buffer the message to handle re-xmits */
+	dtls1_buffer_message(s, 0);
+	}
+
+static int dtls1_handshake_write(SSL *s)
+	{
+	return dtls1_do_write(s, SSL3_RT_HANDSHAKE);
+	}
+	
+	

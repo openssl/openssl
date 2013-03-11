@@ -439,7 +439,7 @@
 #define SSL_C_EXPORT_PKEYLENGTH(c)	SSL_EXPORT_PKEYLENGTH((c)->algo_strength)
 
 /* Check if an SSL structure is using DTLS */
-#define SSL_IS_DTLS(s)	((s->method->version >> 8) == 0xfe)
+#define SSL_IS_DTLS(s)	(s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS)
 
 
 /* Mostly for SSLv3 */
@@ -679,7 +679,31 @@ typedef struct ssl3_enc_method
 				      const char *, size_t,
 				      const unsigned char *, size_t,
 				      int use_context);
+	/* Various flags indicating protocol version requirements */
+	unsigned int enc_flags;
+	/* Handshake header length */
+	unsigned int hhlen;
+	/* Set the handshake header */
+	void (*set_handshake_header)(SSL *s, int type, unsigned long len);
+	/* Write out handshake message */
+	int (*do_write)(SSL *s);
 	} SSL3_ENC_METHOD;
+
+#define SSL_HM_HEADER_LENGTH(s)	s->method->ssl3_enc->hhlen
+#define ssl_handshake_start(s) \
+	(((unsigned char *)s->init_buf->data) + s->method->ssl3_enc->hhlen)
+#define ssl_set_handshake_header(s, htype, len) \
+	s->method->ssl3_enc->set_handshake_header(s, htype, len)
+#define ssl_do_write(s)  s->method->ssl3_enc->do_write(s)
+
+/* Values for enc_flags */
+
+/* Uses explicit IV for CBC mode */
+#define SSL_ENC_FLAG_EXPLICIT_IV	0x1
+/* Uses signature algorithms extension */
+#define SSL_ENC_FLAG_SIGALGS		0x2
+/* Is DTLS */
+#define SSL_ENC_FLAG_DTLS		0x4
 
 #ifndef OPENSSL_NO_COMP
 /* Used for holding the relevant compression methods loaded into SSL_CTX */
@@ -713,6 +737,8 @@ OPENSSL_EXTERN SSL_CIPHER ssl3_ciphers[];
 SSL_METHOD *ssl_bad_method(int ver);
 
 extern SSL3_ENC_METHOD TLSv1_enc_data;
+extern SSL3_ENC_METHOD TLSv1_1_enc_data;
+extern SSL3_ENC_METHOD TLSv1_2_enc_data;
 extern SSL3_ENC_METHOD SSLv3_enc_data;
 extern SSL3_ENC_METHOD DTLSv1_enc_data;
 
@@ -1044,6 +1070,9 @@ void ssl3_record_sequence_update(unsigned char *seq);
 int ssl3_do_change_cipher_spec(SSL *ssl);
 long ssl3_default_timeout(void );
 
+void ssl3_set_handshake_header(SSL *s, int htype, unsigned long len);
+int ssl3_handshake_write(SSL *s);
+
 int ssl23_num_ciphers(void );
 const SSL_CIPHER *ssl23_get_cipher(unsigned int u);
 int ssl23_read(SSL *s, void *buf, int len);
@@ -1115,9 +1144,6 @@ int ssl3_send_next_proto(SSL *s);
 #endif
 
 int dtls1_client_hello(SSL *s);
-int dtls1_send_client_certificate(SSL *s);
-int dtls1_send_client_key_exchange(SSL *s);
-int dtls1_send_client_verify(SSL *s);
 
 /* some server-only functions */
 int ssl3_get_client_hello(SSL *s);
@@ -1133,15 +1159,6 @@ int ssl3_get_cert_verify(SSL *s);
 #ifndef OPENSSL_NO_NEXTPROTONEG
 int ssl3_get_next_proto(SSL *s);
 #endif
-
-int dtls1_send_hello_request(SSL *s);
-int dtls1_send_server_hello(SSL *s);
-int dtls1_send_server_certificate(SSL *s);
-int dtls1_send_server_key_exchange(SSL *s);
-int dtls1_send_certificate_request(SSL *s);
-int dtls1_send_server_done(SSL *s);
-
-
 
 int ssl23_accept(SSL *s);
 int ssl23_connect(SSL *s);

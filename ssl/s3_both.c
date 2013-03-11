@@ -150,20 +150,18 @@ int ssl3_do_write(SSL *s, int type)
 
 int ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 	{
-	unsigned char *p,*d;
+	unsigned char *p;
 	int i;
 	unsigned long l;
 
 	if (s->state == a)
 		{
-		d=(unsigned char *)s->init_buf->data;
-		p= &(d[4]);
+		p = ssl_handshake_start(s);
 
 		i=s->method->ssl3_enc->final_finish_mac(s,
 			sender,slen,s->s3->tmp.finish_md);
 		s->s3->tmp.finish_md_len = i;
 		memcpy(p, s->s3->tmp.finish_md, i);
-		p+=i;
 		l=i;
 
                 /* Copy the finished so we can use it for
@@ -189,17 +187,12 @@ int ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 		 */
 		l&=0xffff;
 #endif
-
-		*(d++)=SSL3_MT_FINISHED;
-		l2n3(l,d);
-		s->init_num=(int)l+4;
-		s->init_off=0;
-
+		ssl_set_handshake_header(s, SSL3_MT_FINISHED, l);
 		s->state=b;
 		}
 
 	/* SSL3_ST_SEND_xxxxxx_HELLO_B */
-	return(ssl3_do_write(s,SSL3_RT_HANDSHAKE));
+	return ssl_do_write(s);
 	}
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
@@ -324,21 +317,17 @@ int ssl3_send_change_cipher_spec(SSL *s, int a, int b)
 unsigned long ssl3_output_cert_chain(SSL *s, CERT_PKEY *cpk)
 	{
 	unsigned char *p;
-	unsigned long l=7;
-	BUF_MEM *buf = s->init_buf;
+	unsigned long l = 3 + SSL_HM_HEADER_LENGTH(s);
 
 	if (!ssl_add_cert_chain(s, cpk, &l))
 		return 0;
 
-	l-=7;
-	p=(unsigned char *)&(buf->data[4]);
+	l -= 3 + SSL_HM_HEADER_LENGTH(s);
+	p = ssl_handshake_start(s);
 	l2n3(l,p);
-	l+=3;
-	p=(unsigned char *)&(buf->data[0]);
-	*(p++)=SSL3_MT_CERTIFICATE;
-	l2n3(l,p);
-	l+=4;
-	return(l);
+	l += 3;
+	ssl_set_handshake_header(s, SSL3_MT_CERTIFICATE, l);
+	return l + SSL_HM_HEADER_LENGTH(s);
 	}
 
 /* Obtain handshake message of message type 'mt' (any if mt == -1),

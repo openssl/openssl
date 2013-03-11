@@ -140,6 +140,48 @@ SSL3_ENC_METHOD TLSv1_enc_data={
 	TLS_MD_SERVER_FINISH_CONST,TLS_MD_SERVER_FINISH_CONST_SIZE,
 	tls1_alert_code,
 	tls1_export_keying_material,
+	0,
+	SSL3_HM_HEADER_LENGTH,
+	ssl3_set_handshake_header,
+	ssl3_handshake_write
+	};
+
+SSL3_ENC_METHOD TLSv1_1_enc_data={
+	tls1_enc,
+	tls1_mac,
+	tls1_setup_key_block,
+	tls1_generate_master_secret,
+	tls1_change_cipher_state,
+	tls1_final_finish_mac,
+	TLS1_FINISH_MAC_LENGTH,
+	tls1_cert_verify_mac,
+	TLS_MD_CLIENT_FINISH_CONST,TLS_MD_CLIENT_FINISH_CONST_SIZE,
+	TLS_MD_SERVER_FINISH_CONST,TLS_MD_SERVER_FINISH_CONST_SIZE,
+	tls1_alert_code,
+	tls1_export_keying_material,
+	SSL_ENC_FLAG_EXPLICIT_IV,
+	SSL3_HM_HEADER_LENGTH,
+	ssl3_set_handshake_header,
+	ssl3_handshake_write
+	};
+
+SSL3_ENC_METHOD TLSv1_2_enc_data={
+	tls1_enc,
+	tls1_mac,
+	tls1_setup_key_block,
+	tls1_generate_master_secret,
+	tls1_change_cipher_state,
+	tls1_final_finish_mac,
+	TLS1_FINISH_MAC_LENGTH,
+	tls1_cert_verify_mac,
+	TLS_MD_CLIENT_FINISH_CONST,TLS_MD_CLIENT_FINISH_CONST_SIZE,
+	TLS_MD_SERVER_FINISH_CONST,TLS_MD_SERVER_FINISH_CONST_SIZE,
+	tls1_alert_code,
+	tls1_export_keying_material,
+	SSL_ENC_FLAG_EXPLICIT_IV|SSL_ENC_FLAG_SIGALGS,
+	SSL3_HM_HEADER_LENGTH,
+	ssl3_set_handshake_header,
+	ssl3_handshake_write
 	};
 
 long tls1_default_timeout(void)
