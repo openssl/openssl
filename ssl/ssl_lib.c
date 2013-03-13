@@ -1112,8 +1112,7 @@ long SSL_ctrl(SSL *s,int cmd,long larg,void *parg)
 			return 0;
 #endif
 
-		if (SSL_version(s) == DTLS1_VERSION ||
-		    SSL_version(s) == DTLS1_BAD_VER)
+		if (SSL_IS_DTLS(s))
 			{
 			s->d1->mtu = larg;
 			return larg;

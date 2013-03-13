@@ -531,7 +531,7 @@ static int ssl_print_signature(BIO *bio, int indent, SSL *s,
 	{
 	if (*pmsglen < 2)
 		return 0;
-	if (TLS1_get_version(s) >= TLS1_2_VERSION)
+	if (SSL_USE_SIGALGS(s))
 		{
 		const unsigned char *p = *pmsg;
 		BIO_indent(bio, indent, 80);
@@ -1046,7 +1046,7 @@ static int ssl_print_cert_request(BIO *bio, int indent, SSL *s,
 		return 0;
 	msg += xlen;
 	msglen -= xlen + 1;
-	if (TLS1_get_version(s) < TLS1_2_VERSION)
+	if (!SSL_USE_SIGALGS(s))
 		goto skip_sig;
 	if (msglen < 2)
 		return 0;

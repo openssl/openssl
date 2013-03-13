@@ -640,13 +640,13 @@ int ssl3_accept(SSL *s)
 #endif
 				s->init_num = 0;
 				}
-			else if (TLS1_get_version(s) >= TLS1_2_VERSION)
+			else if (SSL_USE_SIGALGS(s))
 				{
 				s->state=SSL3_ST_SR_CERT_VRFY_A;
 				s->init_num=0;
 				if (!s->session->peer)
 					break;
-				/* For TLS v1.2 freeze the handshake buffer
+				/* For sigalgs freeze the handshake buffer
 				 * at this point and digest cached records.
 				 */
 				if (!s->s3->handshake_buffer)
@@ -1037,7 +1037,7 @@ int ssl3_get_client_hello(SSL *s)
 
 	p+=j;
 
-	if (s->version == DTLS1_VERSION || s->version == DTLS1_BAD_VER)
+	if (SSL_IS_DTLS(s))
 		{
 		/* cookie stuff */
 		cookie_len = *(p++);
@@ -1409,7 +1409,7 @@ int ssl3_get_client_hello(SSL *s)
 		s->s3->tmp.new_cipher=s->session->cipher;
 		}
 
-	if (TLS1_get_version(s) < TLS1_2_VERSION || !(s->verify_mode & SSL_VERIFY_PEER))
+	if (!SSL_USE_SIGALGS(s) || !(s->verify_mode & SSL_VERIFY_PEER))
 		{
 		if (!ssl3_digest_cached_records(s))
 			goto f_err;
@@ -1941,8 +1941,7 @@ int ssl3_send_server_key_exchange(SSL *s)
 			/* n is the length of the params, they start at &(d[4])
 			 * and p points to the space at the end. */
 #ifndef OPENSSL_NO_RSA
-			if (pkey->type == EVP_PKEY_RSA
-					&& TLS1_get_version(s) < TLS1_2_VERSION)
+			if (pkey->type == EVP_PKEY_RSA && !SSL_USE_SIGALGS(s))
 				{
 				q=md_buf;
 				j=0;
@@ -1973,9 +1972,8 @@ int ssl3_send_server_key_exchange(SSL *s)
 #endif
 			if (md)
 				{
-				/* For TLS1.2 and later send signature
-				 * algorithm */
-				if (TLS1_get_version(s) >= TLS1_2_VERSION)
+				/* send signature algorithm */
+				if (SSL_USE_SIGALGS(s))
 					{
 					if (!tls12_get_sigandhash(p, pkey, md))
 						{
@@ -2002,7 +2000,7 @@ int ssl3_send_server_key_exchange(SSL *s)
 					}
 				s2n(i,p);
 				n+=i+2;
-				if (TLS1_get_version(s) >= TLS1_2_VERSION)
+				if (SSL_USE_SIGALGS(s))
 					n+= 2;
 				}
 			else
@@ -2052,7 +2050,7 @@ int ssl3_send_certificate_request(SSL *s)
 		p+=n;
 		n++;
 
-		if (TLS1_get_version(s) >= TLS1_2_VERSION)
+		if (SSL_USE_SIGALGS(s))
 			{
 			const unsigned char *psigs;
 			nl = tls12_get_psigalgs(s, &psigs);
@@ -3024,7 +3022,7 @@ int ssl3_get_cert_verify(SSL *s)
 		} 
 	else 
 		{	
-		if (TLS1_get_version(s) >= TLS1_2_VERSION)
+		if (SSL_USE_SIGALGS(s))
 			{
 			int rv = tls12_check_peer_sigalg(&md, s, p, pkey);
 			if (rv == -1)
@@ -3060,7 +3058,7 @@ fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
 		goto f_err;
 		}
 
-	if (TLS1_get_version(s) >= TLS1_2_VERSION)
+	if (SSL_USE_SIGALGS(s))
 		{
 		long hdatalen = 0;
 		void *hdata;

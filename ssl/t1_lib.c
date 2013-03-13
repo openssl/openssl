@@ -178,7 +178,7 @@ SSL3_ENC_METHOD TLSv1_2_enc_data={
 	TLS_MD_SERVER_FINISH_CONST,TLS_MD_SERVER_FINISH_CONST_SIZE,
 	tls1_alert_code,
 	tls1_export_keying_material,
-	SSL_ENC_FLAG_EXPLICIT_IV|SSL_ENC_FLAG_SIGALGS,
+	SSL_ENC_FLAG_EXPLICIT_IV|SSL_ENC_FLAG_SIGALGS|SSL_ENC_FLAG_SHA256_PRF,
 	SSL3_HM_HEADER_LENGTH,
 	ssl3_set_handshake_header,
 	ssl3_handshake_write
@@ -1297,7 +1297,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		}
 		skip_ext:
 
-	if (TLS1_get_client_version(s) >= TLS1_2_VERSION)
+	if (SSL_USE_SIGALGS(s))
 		{
 		size_t salglen;
 		const unsigned char *salg;
@@ -3031,7 +3031,7 @@ int tls1_process_ticket(SSL *s, unsigned char *session_id, int len,
 	if (p >= limit)
 		return -1;
 	/* Skip past DTLS cookie */
-	if (s->version == DTLS1_VERSION || s->version == DTLS1_BAD_VER)
+	if (SSL_IS_DTLS(s))
 		{
 		i = *(p++);
 		p+= i;
@@ -3458,8 +3458,8 @@ int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 	const EVP_MD *md;
 	CERT *c = s->cert;
 	TLS_SIGALGS *sigptr;
-	/* Extension ignored for TLS versions below 1.2 */
-	if (TLS1_get_version(s) < TLS1_2_VERSION)
+	/* Extension ignored for inappropriate versions */
+	if (!SSL_USE_SIGALGS(s))
 		return 1;
 	/* Should never happen */
 	if (!c)

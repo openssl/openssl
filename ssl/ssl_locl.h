@@ -440,7 +440,14 @@
 
 /* Check if an SSL structure is using DTLS */
 #define SSL_IS_DTLS(s)	(s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS)
-
+/* See if we need explicit IV */
+#define SSL_USE_EXPLICIT_IV(s)	\
+		(s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_EXPLICIT_IV)
+/* See if we use signature algorithms extension
+ * and signature algorithm before signatures.
+ */
+#define SSL_USE_SIGALGS(s)	\
+			(s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_SIGALGS)
 
 /* Mostly for SSLv3 */
 #define SSL_PKEY_RSA_ENC	0
@@ -702,8 +709,10 @@ typedef struct ssl3_enc_method
 #define SSL_ENC_FLAG_EXPLICIT_IV	0x1
 /* Uses signature algorithms extension */
 #define SSL_ENC_FLAG_SIGALGS		0x2
+/* Uses SHA256 default PRF */
+#define SSL_ENC_FLAG_SHA256_PRF		0x4
 /* Is DTLS */
-#define SSL_ENC_FLAG_DTLS		0x4
+#define SSL_ENC_FLAG_DTLS		0x8
 
 #ifndef OPENSSL_NO_COMP
 /* Used for holding the relevant compression methods loaded into SSL_CTX */
