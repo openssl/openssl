@@ -743,7 +743,7 @@ extern SSL3_ENC_METHOD SSLv3_enc_data;
 extern SSL3_ENC_METHOD DTLSv1_enc_data;
 
 #define IMPLEMENT_tls_meth_func(version, func_name, s_accept, s_connect, \
-				s_get_meth) \
+				s_get_meth, enc_data) \
 const SSL_METHOD *func_name(void)  \
 	{ \
 	static const SSL_METHOD func_name##_data= { \
@@ -772,7 +772,7 @@ const SSL_METHOD *func_name(void)  \
 		ssl3_get_cipher, \
 		s_get_meth, \
 		tls1_default_timeout, \
-		&TLSv1_enc_data, \
+		&enc_data, \
 		ssl_undefined_void_function, \
 		ssl3_callback_ctrl, \
 		ssl3_ctx_callback_ctrl, \
