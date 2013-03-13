@@ -1030,10 +1030,10 @@ int ssl3_get_server_hello(SSL *s)
 			}
 		}
 	s->s3->tmp.new_cipher=c;
-	/* Don't digest cached records if TLS v1.2: we may need them for
+	/* Don't digest cached records if no sigalgs: we may need them for
 	 * client authentication.
 	 */
-	if (TLS1_get_version(s) < TLS1_2_VERSION && !ssl3_digest_cached_records(s))
+	if (!SSL_USE_SIGALGS(s) && !ssl3_digest_cached_records(s))
 		goto f_err;
 	/* lets get the compression algorithm */
 	/* COMPRESSION */
@@ -1785,7 +1785,7 @@ int ssl3_get_key_exchange(SSL *s)
 	/* if it was signed, check the signature */
 	if (pkey != NULL)
 		{
-		if (TLS1_get_version(s) >= TLS1_2_VERSION)
+		if (SSL_USE_SIGALGS(s))
 			{
 			int rv = tls12_check_peer_sigalg(&md, s, p, pkey);
 			if (rv == -1)
@@ -1817,7 +1817,7 @@ fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
 			}
 
 #ifndef OPENSSL_NO_RSA
-		if (pkey->type == EVP_PKEY_RSA && TLS1_get_version(s) < TLS1_2_VERSION)
+		if (pkey->type == EVP_PKEY_RSA && !SSL_USE_SIGALGS(s))
 			{
 			int num;
 
@@ -1991,7 +1991,7 @@ int ssl3_get_certificate_request(SSL *s)
 	for (i=0; i<ctype_num; i++)
 		s->s3->tmp.ctype[i]= p[i];
 	p+=p[-1];
-	if (TLS1_get_version(s) >= TLS1_2_VERSION)
+	if (SSL_USE_SIGALGS(s))
 		{
 		n2s(p, llen);
 		/* Check we have enough room for signature algorithms and
@@ -3051,7 +3051,7 @@ int ssl3_send_client_verify(SSL *s)
 		EVP_PKEY_sign_init(pctx);
 		if (EVP_PKEY_CTX_set_signature_md(pctx, EVP_sha1())>0)
 			{
-			if (TLS1_get_version(s) < TLS1_2_VERSION)
+			if (!SSL_USE_SIGALGS(s))
 				s->method->ssl3_enc->cert_verify_mac(s,
 						NID_sha1,
 						&(data[MD5_DIGEST_LENGTH]));
@@ -3063,7 +3063,7 @@ int ssl3_send_client_verify(SSL *s)
 		/* For TLS v1.2 send signature algorithm and signature
 		 * using agreed digest and cached handshake records.
 		 */
-		if (TLS1_get_version(s) >= TLS1_2_VERSION)
+		if (SSL_USE_SIGALGS(s))
 			{
 			long hdatalen = 0;
 			void *hdata;
@@ -3193,7 +3193,7 @@ static int ssl3_check_client_certificate(SSL *s)
 	if (!s->cert || !s->cert->key->x509 || !s->cert->key->privatekey)
 		return 0;
 	/* If no suitable signature algorithm can't use certificate */
-	if (TLS1_get_version(s) >= TLS1_2_VERSION && !s->cert->key->digest)
+	if (SSL_USE_SIGALGS(s) && !s->cert->key->digest)
 		return 0;
 	/* If strict mode check suitability of chain before using it.
 	 * This also adjusts suite B digest if necessary.

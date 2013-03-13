@@ -180,7 +180,7 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 	/* For DTLS/UDP reads should not span multiple packets
 	 * because the read operation returns the whole packet
 	 * at once (as long as it fits into the buffer). */
-	if (SSL_version(s) == DTLS1_VERSION || SSL_version(s) == DTLS1_BAD_VER)
+	if (SSL_IS_DTLS(s))
 		{
 		if (left > 0 && n > left)
 			n = left;
@@ -248,7 +248,7 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 			{
 			rb->left = left;
 			if (s->mode & SSL_MODE_RELEASE_BUFFERS &&
-			    SSL_version(s) != DTLS1_VERSION && SSL_version(s) != DTLS1_BAD_VER)
+				!SSL_IS_DTLS(s))
 				if (len+left == 0)
 					ssl3_release_read_buffer(s);
 			return(i);
@@ -257,7 +257,7 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 		/* reads should *never* span multiple packets for DTLS because
 		 * the underlying transport protocol is message oriented as opposed
 		 * to byte oriented as in the TLS case. */
-		if (SSL_version(s) == DTLS1_VERSION || SSL_version(s) == DTLS1_BAD_VER)
+		if (SSL_IS_DTLS(s))
 			{
 			if (n > left)
 				n = left; /* makes the while condition false */
@@ -759,8 +759,8 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	/* field where we are to write out packet length */
 	plen=p; 
 	p+=2;
-	/* Explicit IV length, block ciphers and TLS version 1.1 or later */
-	if (s->enc_write_ctx && s->version >= TLS1_1_VERSION)
+	/* Explicit IV length, block ciphers appropriate version flag */
+	if (s->enc_write_ctx && SSL_USE_EXPLICIT_IV(s))
 		{
 		int mode = EVP_CIPHER_CTX_mode(s->enc_write_ctx);
 		if (mode == EVP_CIPH_CBC_MODE)
@@ -897,7 +897,7 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
 			wb->left=0;
 			wb->offset+=i;
 			if (s->mode & SSL_MODE_RELEASE_BUFFERS &&
-			    SSL_version(s) != DTLS1_VERSION && SSL_version(s) != DTLS1_BAD_VER)
+				!SSL_IS_DTLS(s))
 				ssl3_release_write_buffer(s);
 			s->rwstate=SSL_NOTHING;
 			return(s->s3->wpend_ret);
