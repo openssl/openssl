@@ -33,6 +33,7 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&data_byte(0x0f,0x95,0xc0);	#&setne	(&LB("eax"));
 	&or	("ebp","eax");
 	&mov	("eax",1);
+	&xor	("ecx","ecx");
 	&cpuid	();
 	&cmp	("ebp",0);
 	&jne	(&label("notP4"));
