@@ -313,9 +313,10 @@ int dtls1_do_write(SSL *s, int type)
 				s->init_off -= DTLS1_HM_HEADER_LENGTH;
 				s->init_num += DTLS1_HM_HEADER_LENGTH;
 
-				/* write atleast DTLS1_HM_HEADER_LENGTH bytes */
-				if ( len <= DTLS1_HM_HEADER_LENGTH)  
-					len += DTLS1_HM_HEADER_LENGTH;
+				if ( s->init_num > curr_mtu)
+					len = curr_mtu;
+				else
+					len = s->init_num;
 				}
 
 			dtls1_fix_message_header(s, frag_off, 
