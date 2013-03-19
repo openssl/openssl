@@ -773,15 +773,11 @@ $code.=<<___;
 	pxor		$T1,$Xi			# Ii+Xi
 
 	movdqa		$Xln,$Xhn
-	pshufd		\$0b01001110,$Xln,$Xmn
-	pxor		$Xln,$Xmn
+	pshufd		\$0b01001110,$Xln,$T1
+	pxor		$Xln,$T1
 	pclmulqdq	\$0x00,$Hkey,$Xln
 	pclmulqdq	\$0x11,$Hkey,$Xhn
-	pclmulqdq	\$0x00,$HK,$Xmn
-
-	movdqa		$Xi,$Xhi
-	pshufd		\$0b01001110,$Xi,$T1	#
-	pxor		$Xi,$T1			#
+	pclmulqdq	\$0x00,$HK,$T1
 
 	lea		32($inp),$inp		# i+=2
 	sub		\$0x20,$len
@@ -790,30 +786,32 @@ $code.=<<___;
 
 .align	32
 .Lmod_loop:
+	movdqa		$Xi,$Xhi
+	pshufd		\$0b01001110,$Xi,$T2	#
+	pxor		$Xi,$T2			#
+
 	pclmulqdq	\$0x00,$Hkey2,$Xi
 	pclmulqdq	\$0x11,$Hkey2,$Xhi
-	  movdqu	($inp),$T2		# Ii
-	pclmulqdq	\$0x10,$HK,$T1
-	  pshufb	$T3,$T2
+	pclmulqdq	\$0x10,$HK,$T2
 
 	pxor		$Xln,$Xi		# (H*Ii+1) + H^2*(Ii+Xi)
-	 movdqu		16($inp),$Xln		# Ii+1
 	pxor		$Xhn,$Xhi
+	  movdqu	($inp),$Xhn		# Ii
+	  pshufb	$T3,$Xhn
+	  movdqu	16($inp),$Xln		# Ii+1
 
-	pxor		$Xi,$Xmn		# aggregated Karatsuba post-processing
-	pxor		$Xhi,$Xmn
-	  pxor		$T2,$Xhi		# "Ii+Xi", consume early
-	pxor		$Xmn,$T1
+	pxor		$Xi,$T1			# aggregated Karatsuba post-processing
+	pxor		$Xhi,$T1
+	  pxor		$Xhn,$Xhi		# "Ii+Xi", consume early
+	pxor		$T1,$T2
 	 pshufb		$T3,$Xln
-	movdqa		$T1,$T2			#
+	movdqa		$T2,$T1			#
 	psrldq		\$8,$T1
 	pslldq		\$8,$T2			#
 	pxor		$T1,$Xhi
 	pxor		$T2,$Xi			#
 
 	movdqa		$Xln,$Xhn		#
-	pshufd		\$0b01001110,$Xln,$Xmn
-	pxor		$Xln,$Xmn		#
 
 	  movdqa	$Xi,$T2			# 1st phase
 	  movdqa	$Xi,$T1
@@ -828,6 +826,8 @@ $code.=<<___;
 	  psrldq	\$8,$T1			#	
 	  pxor		$T2,$Xi
 	  pxor		$T1,$Xhi		#
+	pshufd		\$0b01001110,$Xhn,$T1
+	pxor		$Xhn,$T1		#
 
 	pclmulqdq	\$0x11,$Hkey,$Xhn	#######
 	  movdqa	$Xi,$T2			# 2nd phase
@@ -837,28 +837,28 @@ $code.=<<___;
 	  psrlq		\$5,$Xi
 	  pxor		$T2,$Xi			#
 	  psrlq		\$1,$Xi			#
-	pclmulqdq	\$0x00,$HK,$Xmn		#######
+	pclmulqdq	\$0x00,$HK,$T1		#######
 	  pxor		$Xhi,$Xi		#
-
-	 movdqa		$Xi,$Xhi
-	 pshufd		\$0b01001110,$Xi,$T1	#
-	 pxor		$Xi,$T1			#
 
 	lea		32($inp),$inp
 	sub		\$0x20,$len
 	ja		.Lmod_loop
 
 .Leven_tail:
+	 movdqa		$Xi,$Xhi
+	 pshufd		\$0b01001110,$Xi,$T2	#
+	 pxor		$Xi,$T2			#
+
 	pclmulqdq	\$0x00,$Hkey2,$Xi
 	pclmulqdq	\$0x11,$Hkey2,$Xhi
-	pclmulqdq	\$0x10,$HK,$T1
+	pclmulqdq	\$0x10,$HK,$T2
 
 	pxor		$Xln,$Xi		# (H*Ii+1) + H^2*(Ii+Xi)
 	pxor		$Xhn,$Xhi
-	pxor		$Xi,$Xmn
-	pxor		$Xhi,$Xmn
-	pxor		$Xmn,$T1
-	movdqa		$T1,$T2			#
+	pxor		$Xi,$T1
+	pxor		$Xhi,$T1
+	pxor		$T1,$T2
+	movdqa		$T2,$T1			#
 	psrldq		\$8,$T1
 	pslldq		\$8,$T2			#
 	pxor		$T1,$Xhi
