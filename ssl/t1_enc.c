@@ -1071,7 +1071,7 @@ printf("rec=");
 {unsigned int z; for (z=0; z<rec->length; z++) printf("%02X ",buf[z]); printf("\n"); }
 #endif
 
-	if (SSL_IS_DTLS(ssl))
+	if (!SSL_IS_DTLS(ssl))
 		{
 		for (i=7; i>=0; i--)
 			{
