@@ -139,10 +139,12 @@ static const SSL_METHOD *dtls1_get_client_method(int ver)
 		return(NULL);
 	}
 
-IMPLEMENT_dtls1_meth_func(DTLSv1_client_method,
+IMPLEMENT_dtls1_meth_func(DTLS1_VERSION,
+			DTLSv1_client_method,
 			ssl_undefined_function,
 			dtls1_connect,
-			dtls1_get_client_method)
+			dtls1_get_client_method,
+			DTLSv1_enc_data)
 
 int dtls1_connect(SSL *s)
 	{

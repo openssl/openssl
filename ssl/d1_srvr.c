@@ -137,10 +137,12 @@ static const SSL_METHOD *dtls1_get_server_method(int ver)
 		return(NULL);
 	}
 
-IMPLEMENT_dtls1_meth_func(DTLSv1_server_method,
+IMPLEMENT_dtls1_meth_func(DTLS1_VERSION,
+			DTLSv1_server_method,
 			dtls1_accept,
 			ssl_undefined_function,
-			dtls1_get_server_method)
+			dtls1_get_server_method,
+			DTLSv1_enc_data)
 
 int dtls1_accept(SSL *s)
 	{
