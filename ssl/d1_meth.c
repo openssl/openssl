@@ -70,8 +70,10 @@ static const SSL_METHOD *dtls1_get_method(int ver)
 		return(NULL);
 	}
 
-IMPLEMENT_dtls1_meth_func(DTLSv1_method,
+IMPLEMENT_dtls1_meth_func(DTLS1_VERSION,
+			DTLSv1_method,
 			dtls1_accept,
 			dtls1_connect,
-			dtls1_get_method)
+			dtls1_get_method,
+			DTLSv1_enc_data)
 

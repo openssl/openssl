@@ -900,11 +900,12 @@ const SSL_METHOD *func_name(void)  \
 	return &func_name##_data; \
 	}
 
-#define IMPLEMENT_dtls1_meth_func(func_name, s_accept, s_connect, s_get_meth) \
+#define IMPLEMENT_dtls1_meth_func(version, func_name, s_accept, s_connect, \
+					s_get_meth, enc_data) \
 const SSL_METHOD *func_name(void)  \
 	{ \
 	static const SSL_METHOD func_name##_data= { \
-		DTLS1_VERSION, \
+		version, \
 		dtls1_new, \
 		dtls1_clear, \
 		dtls1_free, \
@@ -929,7 +930,7 @@ const SSL_METHOD *func_name(void)  \
 		dtls1_get_cipher, \
 		s_get_meth, \
 		dtls1_default_timeout, \
-		&DTLSv1_enc_data, \
+		&enc_data, \
 		ssl_undefined_void_function, \
 		ssl3_callback_ctrl, \
 		ssl3_ctx_callback_ctrl, \
