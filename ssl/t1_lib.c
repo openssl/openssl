@@ -1095,7 +1095,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 #ifndef OPENSSL_NO_EC
 	/* See if we support any ECC ciphersuites */
 	int using_ecc = 0;
-	if (s->version != DTLS1_VERSION && s->version >= TLS1_VERSION)
+	if (s->version >= TLS1_VERSION || SSL_IS_DTLS(s))
 		{
 		int i;
 		unsigned long alg_k, alg_a;
@@ -1312,8 +1312,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		}
 
 #ifdef TLSEXT_TYPE_opaque_prf_input
-	if (s->s3->client_opaque_prf_input != NULL &&
-	    s->version != DTLS1_VERSION)
+	if (s->s3->client_opaque_prf_input != NULL)
 		{
 		size_t col = s->s3->client_opaque_prf_input_len;
 		
@@ -1330,8 +1329,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		}
 #endif
 
-	if (s->tlsext_status_type == TLSEXT_STATUSTYPE_ocsp &&
-	    s->version != DTLS1_VERSION)
+	if (s->tlsext_status_type == TLSEXT_STATUSTYPE_ocsp)
 		{
 		int i;
 		long extlen, idlen, itmp;
@@ -1503,7 +1501,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
         }
 
 #ifndef OPENSSL_NO_EC
-	if (using_ecc && s->version != DTLS1_VERSION)
+	if (using_ecc)
 		{
 		const unsigned char *plist;
 		size_t plistlen;
@@ -1546,8 +1544,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		}
 
 #ifdef TLSEXT_TYPE_opaque_prf_input
-	if (s->s3->server_opaque_prf_input != NULL &&
-	    s->version != DTLS1_VERSION)
+	if (s->s3->server_opaque_prf_input != NULL)
 		{
 		size_t sol = s->s3->server_opaque_prf_input_len;
 		
@@ -1909,8 +1906,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 #endif
 
 #ifndef OPENSSL_NO_EC
-		else if (type == TLSEXT_TYPE_ec_point_formats &&
-	             s->version != DTLS1_VERSION)
+		else if (type == TLSEXT_TYPE_ec_point_formats)
 			{
 			unsigned char *sdata = data;
 			int ecpointformatlist_length = *(sdata++);
@@ -1945,8 +1941,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 			fprintf(stderr,"\n");
 #endif
 			}
-		else if (type == TLSEXT_TYPE_elliptic_curves &&
-	             s->version != DTLS1_VERSION)
+		else if (type == TLSEXT_TYPE_elliptic_curves)
 			{
 			unsigned char *sdata = data;
 			int ellipticcurvelist_length = (*(sdata++) << 8);
@@ -1984,8 +1979,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 			}
 #endif /* OPENSSL_NO_EC */
 #ifdef TLSEXT_TYPE_opaque_prf_input
-		else if (type == TLSEXT_TYPE_opaque_prf_input &&
-	             s->version != DTLS1_VERSION)
+		else if (type == TLSEXT_TYPE_opaque_prf_input)
 			{
 			unsigned char *sdata = data;
 
@@ -2060,8 +2054,8 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 				return 0;
 				}
 			}
-		else if (type == TLSEXT_TYPE_status_request &&
-		         s->version != DTLS1_VERSION && s->ctx->tlsext_status_cb)
+		else if (type == TLSEXT_TYPE_status_request
+		         && s->ctx->tlsext_status_cb)
 			{
 		
 			if (size < 5) 
@@ -2391,8 +2385,7 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 			}
 
 #ifndef OPENSSL_NO_EC
-		else if (type == TLSEXT_TYPE_ec_point_formats &&
-	             s->version != DTLS1_VERSION)
+		else if (type == TLSEXT_TYPE_ec_point_formats)
 			{
 			unsigned char *sdata = data;
 			int ecpointformatlist_length = *(sdata++);
@@ -2438,8 +2431,7 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 			s->tlsext_ticket_expected = 1;
 			}
 #ifdef TLSEXT_TYPE_opaque_prf_input
-		else if (type == TLSEXT_TYPE_opaque_prf_input &&
-	             s->version != DTLS1_VERSION)
+		else if (type == TLSEXT_TYPE_opaque_prf_input)
 			{
 			unsigned char *sdata = data;
 
@@ -2469,8 +2461,7 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 				}
 			}
 #endif
-		else if (type == TLSEXT_TYPE_status_request &&
-		         s->version != DTLS1_VERSION)
+		else if (type == TLSEXT_TYPE_status_request)
 			{
 			/* MUST be empty and only sent if we've requested
 			 * a status request message.
