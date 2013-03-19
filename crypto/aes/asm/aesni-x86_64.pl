@@ -130,7 +130,7 @@
 # Further data for other parallelizable modes:
 #
 # CBC decrypt				1.16	0.93	0.93
-# CTR					1.14	0.91	0.90
+# CTR					1.14	0.91	0.86
 #
 # Well, given 3x column it's probably inappropriate to call the limit
 # asymptotic, if it can be surpassed, isn't it? What happens there?
@@ -160,7 +160,7 @@
 ######################################################################
 # For reference, AMD Bulldozer spends 5.77 cycles per byte processed
 # with 128-bit key in CBC encrypt and 0.76 cycles in CBC decrypt, 0.70
-# in ECB, 0.76 in CTR, 0.95 in XTS... This means that aes[enc|dec]
+# in ECB, 0.73 in CTR, 0.95 in XTS... This means that aes[enc|dec]
 # instruction latency is 9 cycles and that they can be issued every
 # cycle.
 
@@ -1062,38 +1062,38 @@ $code.=<<___;
 	$movkey	($key_),$rndkey0
 	shr	\$1,$rounds
 	shr	\$1,$rnds_
+	movdqa	$rndkey0,$inout0
+	movdqa	$rndkey0,$inout1
+	movdqa	$rndkey0,$inout2
+	movdqa	$rndkey0,$inout3
+	movdqa	$rndkey0,$inout4
+	movdqa	$rndkey0,$inout5
+	movdqa	$rndkey0,$inout6
+	movdqa	$rndkey0,$inout7
+	$movkey	16($key_),$rndkey1
 	sub	\$8,$len
 	jmp	.Lctr32_loop8
 
 .align	16
 .Lctr32_loop8:
-	 $movkey	16($key_),$rndkey1
-	movdqa		$rndkey0,$inout0
-	movdqa		$rndkey0,$inout1
 	pxor		$ivec,$inout0
 	paddb		$one,$ivec
-	movdqa		$rndkey0,$inout2
 	 aesenc		$rndkey1,$inout0
 	pxor		$ivec,$inout1
 	paddb		$one,$ivec
 	 lea		32($key_),$key
-	movdqa		$rndkey0,$inout3
 	 aesenc		$rndkey1,$inout1
 	pxor		$ivec,$inout2
 	paddb		$one,$ivec
-	movdqa		$rndkey0,$inout4
 	 aesenc		$rndkey1,$inout2
 	pxor		$ivec,$inout3
 	paddb		$one,$ivec
-	movdqa		$rndkey0,$inout5
 	 aesenc		$rndkey1,$inout3
 	pxor		$ivec,$inout4
 	paddb		$one,$ivec
-	movdqa		$rndkey0,$inout6
 	 aesenc		$rndkey1,$inout4
 	pxor		$ivec,$inout5
 	paddb		$one,$ivec
-	movdqa		$rndkey0,$inout7
 	 aesenc		$rndkey1,$inout5
 	pxor		$ivec,$inout6
 	paddb		$one,$ivec
@@ -1104,37 +1104,97 @@ $code.=<<___;
 	 dec		$rounds
 	 aesenc		$rndkey1,$inout7
 	 $movkey	16($key),$rndkey1
+
+	aesenc		$rndkey0,$inout0
+	aesenc		$rndkey0,$inout1
+	lea		32($key),$key
+	aesenc		$rndkey0,$inout2
 	  movups	($inp),$in0		# load input
+	aesenc		$rndkey0,$inout3
 	  movups	0x10($inp),$in1
+	aesenc		$rndkey0,$inout4
 	  movups	0x20($inp),$in2
+	aesenc		$rndkey0,$inout5
 	  movups	0x30($inp),$in3
+	aesenc		$rndkey0,$inout6
+	  movups	0x40($inp),$one
+	aesenc		$rndkey0,$inout7
+	$movkey		($key),$rndkey0
 
-	call		.Lenc_loop8_enter
+.Lctr32_enc_loop8:
+	aesenc		$rndkey1,$inout0
+	aesenc		$rndkey1,$inout1
+	dec		$rounds
+	aesenc		$rndkey1,$inout2
+	aesenc		$rndkey1,$inout3
+	aesenc		$rndkey1,$inout4
+	aesenc		$rndkey1,$inout5
+	aesenc		$rndkey1,$inout6
+	aesenc		$rndkey1,$inout7
+	$movkey		16($key),$rndkey1
 
-	xorps		$in0,$inout0		# xor
-	movups		0x40($inp),$in0
-	xorps		$in1,$inout1
-	movups		0x50($inp),$in1
-	xorps		$in2,$inout2
-	movups		0x60($inp),$in2
-	xorps		$in3,$inout3
-	movups		0x70($inp),$in3
+	aesenc		$rndkey0,$inout0
+	aesenc		$rndkey0,$inout1
+	lea		32($key),$key
+	aesenc		$rndkey0,$inout2
+	aesenc		$rndkey0,$inout3
+	aesenc		$rndkey0,$inout4
+	aesenc		$rndkey0,$inout5
+	aesenc		$rndkey0,$inout6
+	aesenc		$rndkey0,$inout7
+	$movkey		($key),$rndkey0
+	jnz		.Lctr32_enc_loop8
+
+	aesenc		$rndkey1,$inout0
+	pxor		$rndkey0,$in0
+	aesenc		$rndkey1,$inout1
+	pxor		$rndkey0,$in1
+	aesenc		$rndkey1,$inout2
+	pxor		$rndkey0,$in2
+	aesenc		$rndkey1,$inout3
+	pxor		$rndkey0,$in3
+	aesenc		$rndkey1,$inout4
+	pxor		$rndkey0,$one
+	aesenc		$rndkey1,$inout5
+	aesenc		$rndkey1,$inout6
+	aesenc		$rndkey1,$inout7
+	movdqu		0x50($inp),$rndkey1
+	aesenclast	$in0,$inout0
+	movdqu		0x60($inp),$in0
+	pxor		$rndkey0,$rndkey1
+	aesenclast	$in1,$inout1
+	movdqu		0x70($inp),$in1
+	pxor		$rndkey0,$in0
+	aesenclast	$in2,$inout2
+	pxor		$rndkey0,$in1
+	$movkey		($key_),$rndkey0
+	aesenclast	$in3,$inout3
 	lea		0x80($inp),$inp
-	xorps		$in0,$inout4
+	aesenclast	$one,$inout4
+	movdqa		.Lincrement1(%rip),$one
+	aesenclast	$rndkey1,$inout5
+	$movkey		16($key_),$rndkey1
+	aesenclast	$in0,$inout6
+	aesenclast	$in1,$inout7
+
 	movups		$inout0,($out)		# store output
-	xorps		$in1,$inout5
+	movdqa		$rndkey0,$inout0
 	movups		$inout1,0x10($out)
-	xorps		$in2,$inout6
+	movdqa		$rndkey0,$inout1
 	movups		$inout2,0x20($out)
-	xorps		$in3,$inout7
+	movdqa		$rndkey0,$inout2
 	movups		$inout3,0x30($out)
+	movdqa		$rndkey0,$inout3
 	movups		$inout4,0x40($out)
+	movdqa		$rndkey0,$inout4
 	movups		$inout5,0x50($out)
+	movdqa		$rndkey0,$inout5
 	movups		$inout6,0x60($out)
+	movdqa		$rndkey0,$inout6
 	movups		$inout7,0x70($out)
+	movdqa		$rndkey0,$inout7
 	lea		0x80($out),$out
 	
-	$movkey	($key_),$rndkey0
 	mov	$rnds_,$rounds
 	sub	\$8,$len
 	jnc	.Lctr32_loop8
