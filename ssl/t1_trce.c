@@ -112,6 +112,7 @@ static ssl_trace_tbl ssl_version_tbl[] = {
 	{TLS1_1_VERSION,	"TLS 1.1"},
 	{TLS1_2_VERSION,	"TLS 1.2"},
 	{DTLS1_VERSION,		"DTLS 1.0"},
+	{DTLS1_2_VERSION,	"DTLS 1.2"},
 	{DTLS1_BAD_VER,		"DTLS 1.0 (bad)"}
 };
 

@@ -205,9 +205,9 @@ typedef unsigned int u_int;
 static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength);
 #endif
 static int not_resumable_sess_cb(SSL *s, int is_forward_secure);
-static int sv_body(char *hostname, int s, unsigned char *context);
-static int www_body(char *hostname, int s, unsigned char *context);
-static int rev_body(char *hostname, int s, unsigned char *context);
+static int sv_body(char *hostname, int s, int stype, unsigned char *context);
+static int www_body(char *hostname, int s, int stype, unsigned char *context);
+static int rev_body(char *hostname, int s, int stype, unsigned char *context);
 static void close_accept_socket(void );
 static void sv_usage(void);
 static int init_ssl_connection(SSL *s);
@@ -533,6 +533,7 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -tls1_1       - Just talk TLSv1.1\n");
 	BIO_printf(bio_err," -tls1         - Just talk TLSv1\n");
 	BIO_printf(bio_err," -dtls1        - Just talk DTLSv1\n");
+	BIO_printf(bio_err," -dtls1_2      - Just talk DTLSv1.2\n");
 	BIO_printf(bio_err," -timeout      - Enable timeouts\n");
 	BIO_printf(bio_err," -mtu          - Set link layer MTU\n");
 	BIO_printf(bio_err," -chain        - Read a certificate chain\n");
@@ -1366,6 +1367,11 @@ int MAIN(int argc, char *argv[])
 			meth=DTLSv1_server_method();
 			socket_type = SOCK_DGRAM;
 			}
+		else if	(strcmp(*argv,"-dtls1_2") == 0)
+			{ 
+			meth=DTLSv1_2_server_method();
+			socket_type = SOCK_DGRAM;
+			}
 		else if (strcmp(*argv,"-timeout") == 0)
 			enable_timeouts = 1;
 		else if (strcmp(*argv,"-mtu") == 0)
@@ -2070,7 +2076,7 @@ static void print_stats(BIO *bio, SSL_CTX *ssl_ctx)
 		SSL_CTX_sess_get_cache_size(ssl_ctx));
 	}
 
-static int sv_body(char *hostname, int s, unsigned char *context)
+static int sv_body(char *hostname, int s, int stype, unsigned char *context)
 	{
 	char *buf=NULL;
 	fd_set readfds;
@@ -2140,7 +2146,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 #endif
 #endif
 
-	if (SSL_version(con) == DTLS1_VERSION)
+	if (stype == SOCK_DGRAM)
 		{
 
 		sbio=BIO_new_dgram(s,BIO_NOCLOSE);
@@ -2681,7 +2687,7 @@ static int load_CA(SSL_CTX *ctx, char *file)
 	}
 #endif
 
-static int www_body(char *hostname, int s, unsigned char *context)
+static int www_body(char *hostname, int s, int stype, unsigned char *context)
 	{
 	char *buf=NULL;
 	int ret=1;
@@ -3115,7 +3121,7 @@ err:
 	return(ret);
 	}
 
-static int rev_body(char *hostname, int s, unsigned char *context)
+static int rev_body(char *hostname, int s, int stype, unsigned char *context)
 	{
 	char *buf=NULL;
 	int i;

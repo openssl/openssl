@@ -91,6 +91,25 @@ SSL3_ENC_METHOD DTLSv1_enc_data={
 	dtls1_handshake_write	
 	};
 
+SSL3_ENC_METHOD DTLSv1_2_enc_data={
+    dtls1_enc,
+	tls1_mac,
+	tls1_setup_key_block,
+	tls1_generate_master_secret,
+	tls1_change_cipher_state,
+	tls1_final_finish_mac,
+	TLS1_FINISH_MAC_LENGTH,
+	tls1_cert_verify_mac,
+	TLS_MD_CLIENT_FINISH_CONST,TLS_MD_CLIENT_FINISH_CONST_SIZE,
+	TLS_MD_SERVER_FINISH_CONST,TLS_MD_SERVER_FINISH_CONST_SIZE,
+	tls1_alert_code,
+	tls1_export_keying_material,
+	SSL_ENC_FLAG_DTLS|SSL_ENC_FLAG_EXPLICIT_IV|SSL_ENC_FLAG_SIGALGS|SSL_ENC_FLAG_SHA256_PRF,
+	DTLS1_HM_HEADER_LENGTH,
+	dtls1_set_handshake_header,
+	dtls1_handshake_write	
+	};
+
 long dtls1_default_timeout(void)
 	{
 	/* 2 hours, the 24 hours mentioned in the DTLSv1 spec
@@ -247,7 +266,7 @@ void dtls1_clear(SSL *s)
 	if (s->options & SSL_OP_CISCO_ANYCONNECT)
 		s->version=DTLS1_BAD_VER;
 	else
-		s->version=DTLS1_VERSION;
+		s->version=s->method->version;
 	}
 
 long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg)

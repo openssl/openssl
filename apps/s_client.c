@@ -886,6 +886,11 @@ static char *jpake_secret = NULL;
 			meth=DTLSv1_client_method();
 			socket_type=SOCK_DGRAM;
 			}
+		else if	(strcmp(*argv,"-dtls1_2") == 0)
+			{
+			meth=DTLSv1_2_client_method();
+			socket_type=SOCK_DGRAM;
+			}
 		else if (strcmp(*argv,"-timeout") == 0)
 			enable_timeouts=1;
 		else if (strcmp(*argv,"-mtu") == 0)
@@ -1376,7 +1381,7 @@ re_start:
 #endif                                              
 	if (c_Pause & 0x01) SSL_set_debug(con, 1);
 
-	if ( SSL_version(con) == DTLS1_VERSION)
+	if (socket_type == SOCK_DGRAM)
 		{
 
 		sbio=BIO_new_dgram(s,BIO_NOCLOSE);

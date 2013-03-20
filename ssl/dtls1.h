@@ -85,6 +85,7 @@ extern "C" {
 
 #define DTLS1_VERSION			0xFEFF
 #define DTLS1_BAD_VER			0x0100
+#define DTLS1_2_VERSION			0xFEFD
 
 #if 0
 /* this alert description is not specified anywhere... */

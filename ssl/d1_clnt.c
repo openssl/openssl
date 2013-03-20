@@ -135,6 +135,8 @@ static const SSL_METHOD *dtls1_get_client_method(int ver)
 	{
 	if (ver == DTLS1_VERSION || ver == DTLS1_BAD_VER)
 		return(DTLSv1_client_method());
+	else if (ver == DTLS1_2_VERSION)
+		return(DTLSv1_2_client_method());
 	else
 		return(NULL);
 	}
@@ -145,6 +147,13 @@ IMPLEMENT_dtls1_meth_func(DTLS1_VERSION,
 			dtls1_connect,
 			dtls1_get_client_method,
 			DTLSv1_enc_data)
+
+IMPLEMENT_dtls1_meth_func(DTLS1_2_VERSION,
+			DTLSv1_2_client_method,
+			ssl_undefined_function,
+			dtls1_connect,
+			dtls1_get_client_method,
+			DTLSv1_2_enc_data)
 
 int dtls1_connect(SSL *s)
 	{
