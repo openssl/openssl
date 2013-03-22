@@ -460,6 +460,12 @@
 		((SSL_IS_DTLS(s) && s->client_version <= DTLS1_2_VERSION) || \
 		(!SSL_IS_DTLS(s) && s->client_version >= TLS1_2_VERSION))
 
+#ifdef TLSEXT_TYPE_encrypt_then_mac
+#define SSL_USE_ETM(s) (s->s3->flags & TLS1_FLAGS_ENCRYPT_THEN_MAC)
+#else
+#define SSL_USE_ETM(s) (0)
+#endif
+
 /* Mostly for SSLv3 */
 #define SSL_PKEY_RSA_ENC	0
 #define SSL_PKEY_RSA_SIGN	1
@@ -982,7 +988,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *meth,
 					     const char *rule_str, CERT *c);
 void ssl_update_cache(SSL *s, int mode);
 int ssl_cipher_get_evp(const SSL_SESSION *s,const EVP_CIPHER **enc,
-		       const EVP_MD **md,int *mac_pkey_type,int *mac_secret_size, SSL_COMP **comp);
+		       const EVP_MD **md,int *mac_pkey_type,int *mac_secret_size, SSL_COMP **comp, int use_etm);
 int ssl_get_handshake_digest(int i,long *mask,const EVP_MD **md);
 int ssl_cipher_get_cert_index(const SSL_CIPHER *c);
 const SSL_CIPHER *ssl_get_cipher_by_char(SSL *ssl, const unsigned char *ptr);

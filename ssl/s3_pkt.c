@@ -408,6 +408,30 @@ fprintf(stderr, "Record type=%d, Length=%d\n", rr->type, rr->length);
 	/* decrypt in place in 'rr->input' */
 	rr->data=rr->input;
 	rr->orig_len=rr->length;
+	/* If in encrypt-then-mac mode calculate mac from encrypted record.
+	 * All the details below are public so no timing details can leak.
+	 */
+	if (SSL_USE_ETM(s) && s->read_hash)
+		{
+		unsigned char *mac;
+		mac_size=EVP_MD_CTX_size(s->read_hash);
+		OPENSSL_assert(mac_size <= EVP_MAX_MD_SIZE);
+		if (rr->length < mac_size)
+			{
+			al=SSL_AD_DECODE_ERROR;
+			SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_LENGTH_TOO_SHORT);
+			goto f_err;
+			}
+		rr->length -= mac_size;
+		mac = rr->data + rr->length;
+		i=s->method->ssl3_enc->mac(s,md,0 /* not send */);
+		if (i < 0 || CRYPTO_memcmp(md, mac, (size_t)mac_size) != 0)
+			{
+			al=SSL_AD_BAD_RECORD_MAC;
+			SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
+			goto f_err;
+			}
+		}
 
 	enc_err = s->method->ssl3_enc->enc(s,0);
 	/* enc_err is:
@@ -430,7 +454,7 @@ printf("\n");
 	/* r->length is now the compressed data plus mac */
 	if ((sess != NULL) &&
 	    (s->enc_read_ctx != NULL) &&
-	    (EVP_MD_CTX_md(s->read_hash) != NULL))
+	    (EVP_MD_CTX_md(s->read_hash) != NULL) && !SSL_USE_ETM(s))
 		{
 		/* s->read_hash != NULL => mac_size != -1 */
 		unsigned char *mac = NULL;
@@ -820,7 +844,7 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	 * from wr->input.  Length should be wr->length.
 	 * wr->data still points in the wb->buf */
 
-	if (mac_size != 0)
+	if (!SSL_USE_ETM(s) && mac_size != 0)
 		{
 		if (s->method->ssl3_enc->mac(s,&(p[wr->length + eivlen]),1) < 0)
 			goto err;
@@ -839,6 +863,13 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 
 	/* ssl3_enc can only have an error on read */
 	s->method->ssl3_enc->enc(s,1);
+
+	if (SSL_USE_ETM(s) && mac_size != 0)
+		{
+		if (s->method->ssl3_enc->mac(s,p + wr->length,1) < 0)
+			goto err;
+		wr->length+=mac_size;
+		}
 
 	/* record length after mac and block padding */
 	s2n(wr->length,plen);

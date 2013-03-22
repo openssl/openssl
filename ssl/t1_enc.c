@@ -616,7 +616,7 @@ int tls1_setup_key_block(SSL *s)
 	if (s->s3->tmp.key_block_length != 0)
 		return(1);
 
-	if (!ssl_cipher_get_evp(s->session,&c,&hash,&mac_type,&mac_secret_size,&comp))
+	if (!ssl_cipher_get_evp(s->session,&c,&hash,&mac_type,&mac_secret_size,&comp, SSL_USE_ETM(s)))
 		{
 		SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK,SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
 		return(0);
@@ -874,7 +874,7 @@ int tls1_enc(SSL *s, int send)
 #endif	/* KSSL_DEBUG */
 
 		ret = 1;
-		if (EVP_MD_CTX_md(s->read_hash) != NULL)
+		if (!SSL_USE_ETM(s) && EVP_MD_CTX_md(s->read_hash) != NULL)
 			mac_size = EVP_MD_CTX_size(s->read_hash);
 		if ((bs != 1) && !send)
 			ret = tls1_cbc_remove_padding(s, rec, bs, mac_size);
@@ -1026,7 +1026,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 	header[11]=(rec->length)>>8;
 	header[12]=(rec->length)&0xff;
 
-	if (!send &&
+	if (!send && !SSL_USE_ETM(ssl) &&
 	    EVP_CIPHER_CTX_mode(ssl->enc_read_ctx) == EVP_CIPH_CBC_MODE &&
 	    ssl3_cbc_record_digest_supported(mac_ctx))
 		{
@@ -1050,7 +1050,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 		t=EVP_DigestSignFinal(mac_ctx,md,&md_size);
 		OPENSSL_assert(t > 0);
 #ifdef OPENSSL_FIPS
-		if (!send && FIPS_mode())
+		if (!send && !SSL_USE_ETM(ssl) && FIPS_mode())
 			tls_fips_digest_extra(
 	    				ssl->enc_read_ctx,
 					mac_ctx, rec->input,

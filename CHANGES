@@ -4,6 +4,20 @@
 
  Changes between 1.0.x and 1.1.0  [xx XXX xxxx]
 
+  *) Experimental encrypt-then-mac support.
+    
+     Experimental support for encrypt then mac from
+     draft-gutmann-tls-encrypt-then-mac-02.txt
+    
+     To enable it set the appropriate extension number (0x10 for the test
+     server) using e.g. -DTLSEXT_TYPE_encrypt_then_mac=0x10
+    
+     For non-compliant peers (i.e. just about everything) this should have no
+     effect.
+
+     WARNING: EXPERIMENTAL, SUBJECT TO CHANGE.
+     [Steve Henson]
+
   *) Add callbacks supporting generation and retrieval of supplemental
      data entries.
      [Scott Deboy <sdeboy@apache.org>, Trevor Perrin and Ben Laurie]

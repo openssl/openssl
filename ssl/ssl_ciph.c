@@ -485,7 +485,7 @@ static void load_builtin_compressions(void)
 #endif
 
 int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
-	     const EVP_MD **md, int *mac_pkey_type, int *mac_secret_size,SSL_COMP **comp)
+	     const EVP_MD **md, int *mac_pkey_type, int *mac_secret_size,SSL_COMP **comp, int use_etm)
 	{
 	int i;
 	const SSL_CIPHER *c;
@@ -616,6 +616,9 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 	    (!mac_pkey_type||*mac_pkey_type != NID_undef))
 		{
 		const EVP_CIPHER *evp;
+
+		if (use_etm)
+			return 1;
 
 		if (s->ssl_version>>8 != TLS1_VERSION_MAJOR ||
 		    s->ssl_version < TLS1_VERSION)

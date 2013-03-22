@@ -1023,6 +1023,11 @@ void MS_CALLBACK tlsext_cb(SSL *s, int client_server, int type,
 		extname = "next protocol";
 		break;
 #endif
+#ifdef TLSEXT_TYPE_encrypt_then_mac
+		case TLSEXT_TYPE_encrypt_then_mac:
+		extname = "encrypt-then-mac";
+		break;
+#endif
 
 		default:
 		extname = "unknown";

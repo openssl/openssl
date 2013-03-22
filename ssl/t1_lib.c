@@ -1465,6 +1465,10 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 			ret += outlen;
 			}
 		}
+#ifdef TLSEXT_TYPE_encrypt_then_mac
+	s2n(TLSEXT_TYPE_encrypt_then_mac,ret);
+	s2n(0,ret);
+#endif
 
 	if ((extdatalen = ret-p-2) == 0)
 		return p;
@@ -1700,6 +1704,21 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 				}
 			}
 		}
+#ifdef TLSEXT_TYPE_encrypt_then_mac
+	if (s->s3->flags & TLS1_FLAGS_ENCRYPT_THEN_MAC)
+		{
+		/* Don't use encrypt_then_mac if AEAD: might want
+		 * to disable for other ciphersuites too.
+		 */
+		if (s->s3->tmp.new_cipher->algorithm_mac == SSL_AEAD)
+			s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC;
+		else
+			{
+			s2n(TLSEXT_TYPE_encrypt_then_mac,ret);
+			s2n(0,ret);
+			}
+		}
+#endif
 
 	if (s->s3->alpn_selected)
 		{
@@ -1933,6 +1952,10 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 		s->cert->pkeys[i].digest = NULL;
 		s->cert->pkeys[i].valid_flags = 0;
 		}
+
+#ifdef TLSEXT_TYPE_encrypt_then_mac
+	s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC;
+#endif
 
 	if (data >= (d+n-2))
 		goto ri_check;
@@ -2452,6 +2475,10 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 					}						
 				}
 			}
+#ifdef TLSEXT_TYPE_encrypt_then_mac
+		else if (type == TLSEXT_TYPE_encrypt_then_mac)
+			s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
+#endif
 
 		data+=size;
 		}
@@ -2536,6 +2563,10 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 #ifndef OPENSSL_NO_HEARTBEATS
 	s->tlsext_heartbeat &= ~(SSL_TLSEXT_HB_ENABLED |
 	                       SSL_TLSEXT_HB_DONT_SEND_REQUESTS);
+#endif
+
+#ifdef TLSEXT_TYPE_encrypt_then_mac
+	s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC;
 #endif
 
 	if (data >= (d+n-2))
@@ -2789,6 +2820,14 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 					}
 				}			
 			}
+#ifdef TLSEXT_TYPE_encrypt_then_mac
+		else if (type == TLSEXT_TYPE_encrypt_then_mac)
+			{
+			/* Ignore if inappropriate ciphersuite */
+			if (s->s3->tmp.new_cipher->algorithm_mac != SSL_AEAD)
+				s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
+			}
+#endif
  
 		data += size;
 		}
