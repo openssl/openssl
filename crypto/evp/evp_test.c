@@ -534,7 +534,9 @@ int main(int argc,char **argv)
 	char *cipher;
 	unsigned char *iv,*key,*plaintext,*ciphertext,*aad,*tag;
 	int encdec;
-	int kn,in,pn,cn,an,tn;
+	int kn,in,pn,cn;
+	int an = 0;
+	int tn = 0;
 
 	if(!fgets((char *)line,sizeof line,f))
 	    break;
