@@ -152,7 +152,7 @@ sub do_link_rule
 	{
 	local($target,$files,$dep_libs,$libs)=@_;
 	local($ret,$_);
-	
+
 	$file =~ s/\//$o/g if $o ne '/';
 	$n=&bname($target);
 	$ret.="$target: $files $dep_libs\n";
@@ -172,5 +172,157 @@ sub which
 			}
 		}
 	}
+
+sub fixtests
+  {
+  my ($str, $tests) = @_;
+
+  foreach my $t (keys %$tests)
+    {
+    $str =~ s/(\.\/)?\$\($t\)/\$(TEST_D)\/$tests->{$t}/g;
+    }
+
+  return $str;
+  }
+
+sub fixdeps
+  {
+  my ($str) = @_;
+
+  my @t = split(/\s+/, $str);
+  $str = '';
+  foreach my $t (@t)
+    {
+    $str .= ' ' if $str ne '';
+    if ($t =~ /^[^\/]+$/)
+      {
+      $str .= '$(TEST_D)/' . $t;
+      }
+    else
+      {
+      $str .= $t;
+      }
+    }
+
+  return $str;
+  }
+
+sub fixrules
+  {
+  my ($str) = @_;
+
+  return $str;
+
+  my @t = split("\n", $str);
+  $str = '';
+  foreach my $t (@t)
+    {
+    $t =~ s/^\s+//;
+    if ($t =~ /^@/)
+      {
+      $t =~ s/^@/\@cd \$(TEST_D) && /;
+      }
+    else
+      {
+      $t = 'cd $(TEST_D) && ' . $t;
+      }
+    $str .= "\t$t\n";
+    }
+  return $str;
+}
+
+sub get_tests
+  {
+  my ($makefile) = @_;
+
+  open(M, $makefile) || die "Can't open $makefile: $!";
+  my %targets;
+  my %deps;
+  my %tests;
+  while (my $line = <M>)
+    {
+    chomp $line;
+    while ($line =~ /^(.*)\\$/)
+      {
+      $line = $1 . <M>;
+      }
+
+    if ($line =~ /^alltests:(.*)$/)
+      {
+      my @t = split(/\s+/, $1);
+      foreach my $t (@t)
+	{
+	$targets{$t} = '';
+        }
+      }
+
+    if (($line =~ /^(\S+):(.*)$/ && exists $targets{$1})
+	|| $line =~ /^(test_ss .*):(.*)/)
+      {
+      my $t = $1;
+      $deps{$t} = $2;
+      $deps{$t} =~ s/#.*$//;
+      for (;;)
+	{
+	$line = <M>;
+	chomp $line;
+	last if $line eq '';
+	$targets{$t} .= "$line\n";
+        }
+      next;
+      }
+
+    if ($line =~ /^(\S+TEST)=\s*(\S+)$/)
+      {
+      $tests{$1} = $2;
+      next;
+      }
+    }
+
+  delete $targets{test_jpake} if $no_jpake;
+  delete $targets{test_ige} if $no_ige;
+  delete $targets{test_md2} if $no_md2;
+  delete $targets{test_rc5} if $no_rc5;
+
+  my $tests;
+  foreach my $t (keys %tests)
+    {
+    $tests .= "$t = $tests{$t}\n";
+    }
+
+  my $all = 'test:';
+  my $each;
+  foreach my $t (keys %targets)
+    {
+    next if $t eq '';
+
+    if ($t =~ /^test_ss/)
+      {
+      $t =~ s/\s+/ \$(TEST_D)\//g;
+      $all .= ' test_ss';
+      }
+    else
+      {
+      $all .= " $t";
+      }
+
+    my $d = $deps{$t};
+    $d =~ s/\.\.\/apps/\$(BIN_D)/g;
+    $d = fixtests($d, \%tests);
+    $d = fixdeps($d);
+
+    my $r = $targets{$t};
+    $r =~ s/\.\.\/apps/\$(BIN_D)/g;
+    $r =~ s/\.\.\/(\S+)/\$(SRC_D)\/$1/g;
+    $r = fixrules($r);
+
+    $each .= "$t: \$(TEST_D) $d\n\tcd \$(TEST_D)\n$r\n";
+    }
+
+  # FIXME: Might be a clever way to figure out what needs copying
+  my $copies = do_copy_rule('$(TEST_D)', 'test/bctest test/evptests.txt test/testgen test/cms-test.pl', '');
+
+  return "$copies\n$tests\n$all\n\n$each";
+  }
 
 1;
