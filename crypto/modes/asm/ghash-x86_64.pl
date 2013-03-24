@@ -64,6 +64,18 @@
 # Ivy Bridge	1.79(+8%)
 # Bulldozer	1.52(+25%)
 
+# March 2013
+#
+# ... 8x aggregate factor AVX code path is using reduction algorithm
+# suggested by Shay Gueron[1]. Even though contemporary AVX-capable
+# CPUs such as Sandy and Ivy Bridge can execute it, the code performs
+# sub-optimally in comparison to above mentioned version. But thanks
+# to Ilya Albrekht and Max Locktyukhin of Intel Corp. we know that
+# it will perform better on upcoming Haswell processor. [Exact
+# performance numbers to be added at launch.]
+#
+# [1] http://rt.openssl.org/Ticket/Display.html?id=2900&user=guest&pass=guest
+
 $flavour = shift;
 $output  = shift;
 if ($flavour =~ /\./) { $output = $flavour; undef $flavour; }
@@ -74,6 +86,21 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}x86_64-xlate.pl" and -f $xlate ) or
 ( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
 die "can't locate x86_64-xlate.pl";
+
+if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
+		=~ /GNU assembler version ([2-9]\.[0-9]+)/) {
+	$avx = ($1>=2.19) + ($1>=2.22);
+}
+
+if (!$avx && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
+	    `nasm -v 2>&1` =~ /NASM version ([2-9]\.[0-9]+)/) {
+	$avx = ($1>=2.09) + ($1>=2.10);
+}
+
+if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
+	    `ml64 2>&1` =~ /Version ([0-9]+)\./) {
+	$avx = ($1>=10) + ($1>=11);
+}
 
 open OUT,"| \"$^X\" $xlate $flavour $output";
 *STDOUT=*OUT;
@@ -442,12 +469,22 @@ ___
 }
 
 { my ($Htbl,$Xip)=@_4args;
+  my $HK="%xmm6";
 
 $code.=<<___;
 .globl	gcm_init_clmul
 .type	gcm_init_clmul,\@abi-omnipotent
 .align	16
 gcm_init_clmul:
+.L_init_clmul:
+___
+$code.=<<___ if ($win64);
+.LSEH_begin_gcm_init_clmul:
+	# I can't trust assembler to use specific encoding:-(
+	.byte	0x48,0x83,0xec,0x18		#sub	$0x18,%rsp
+	.byte	0x0f,0x29,0x34,0x24		#movaps	%xmm6,(%rsp)
+___
+$code.=<<___;
 	movdqu		($Xip),$Hkey
 	pshufd		\$0b01001110,$Hkey,$Hkey	# dword swap
 
@@ -466,9 +503,11 @@ gcm_init_clmul:
 	pxor		$T3,$Hkey		# if(carry) H^=0x1c2_polynomial
 
 	# calculate H^2
+	pshufd		\$0b01001110,$Hkey,$HK
 	movdqa		$Hkey,$Xi
+	pxor		$Hkey,$HK
 ___
-	&clmul64x64_T2	($Xhi,$Xi,$Hkey);
+	&clmul64x64_T2	($Xhi,$Xi,$Hkey,$HK);
 	&reduction_alg9	($Xhi,$Xi);
 $code.=<<___;
 	pshufd		\$0b01001110,$Hkey,$T1
@@ -481,12 +520,12 @@ $code.=<<___;
 	movdqu		$T2,0x20($Htbl)		# save Karatsuba "salt"
 ___
 if ($do4xaggr) {
-	&clmul64x64_T2	($Xhi,$Xi,$Hkey);	# H^3
+	&clmul64x64_T2	($Xhi,$Xi,$Hkey,$HK);	# H^3
 	&reduction_alg9	($Xhi,$Xi);
 $code.=<<___;
 	movdqa		$Xi,$T3
 ___
-	&clmul64x64_T2	($Xhi,$Xi,$Hkey);	# H^4
+	&clmul64x64_T2	($Xhi,$Xi,$Hkey,$HK);	# H^4
 	&reduction_alg9	($Xhi,$Xi);
 $code.=<<___;
 	pshufd		\$0b01001110,$T3,$T1
@@ -495,10 +534,15 @@ $code.=<<___;
 	movdqu		$T3,0x30($Htbl)		# save H^3
 	pxor		$Xi,$T2			# Karatsuba pre-processing
 	movdqu		$Xi,0x40($Htbl)		# save H^4
-	palignr		\$8,$T1,$T2		# low part is H.lo^H.hi...
+	palignr		\$8,$T1,$T2		# low part is H^3.lo^H^3.hi...
 	movdqu		$T2,0x50($Htbl)		# save Karatsuba "salt"
 ___
 }
+$code.=<<___ if ($win64);
+	movaps	(%rsp),%xmm6
+	lea	0x18(%rsp),%rsp
+.LSEH_end_gcm_init_clmul:
+___
 $code.=<<___;
 	ret
 .size	gcm_init_clmul,.-gcm_init_clmul
@@ -512,6 +556,7 @@ $code.=<<___;
 .type	gcm_gmult_clmul,\@abi-omnipotent
 .align	16
 gcm_gmult_clmul:
+.L_gmult_clmul:
 	movdqu		($Xip),$Xi
 	movdqa		.Lbswap_mask(%rip),$T3
 	movdqu		($Htbl),$Hkey
@@ -559,6 +604,7 @@ $code.=<<___;
 .type	gcm_ghash_clmul,\@abi-omnipotent
 .align	32
 gcm_ghash_clmul:
+.L_ghash_clmul:
 ___
 $code.=<<___ if ($win64);
 	lea	-0x88(%rsp),%rax
@@ -893,14 +939,591 @@ $code.=<<___ if ($win64);
 	movaps	0x80(%rsp),%xmm14
 	movaps	0x90(%rsp),%xmm15
 	lea	0xa8(%rsp),%rsp
+.LSEH_end_gcm_ghash_clmul:
 ___
 $code.=<<___;
 	ret
-.LSEH_end_gcm_ghash_clmul:
 .size	gcm_ghash_clmul,.-gcm_ghash_clmul
 ___
 }
+
+$code.=<<___;
+.globl	gcm_init_avx
+.type	gcm_init_avx,\@abi-omnipotent
+.align	32
+gcm_init_avx:
+___
+if ($avx) {
+my ($Htbl,$Xip)=@_4args;
+my $HK="%xmm6";
 
+$code.=<<___ if ($win64);
+.LSEH_begin_gcm_init_avx:
+	# I can't trust assembler to use specific encoding:-(
+	.byte	0x48,0x83,0xec,0x18		#sub	$0x18,%rsp
+	.byte	0x0f,0x29,0x34,0x24		#movaps	%xmm6,(%rsp)
+___
+$code.=<<___;
+	vzeroupper
+
+	vmovdqu		($Xip),$Hkey
+	vpshufd		\$0b01001110,$Hkey,$Hkey	# dword swap
+
+	# <<1 twist
+	vpshufd		\$0b11111111,$Hkey,$T2	# broadcast uppermost dword
+	vpsrlq		\$63,$Hkey,$T1
+	vpsllq		\$1,$Hkey,$Hkey
+	vpxor		$T3,$T3,$T3		#
+	vpcmpgtd	$T2,$T3,$T3		# broadcast carry bit
+	vpslldq		\$8,$T1,$T1
+	vpor		$T1,$Hkey,$Hkey		# H<<=1
+
+	# magic reduction
+	vpand		.L0x1c2_polynomial(%rip),$T3,$T3
+	vpxor		$T3,$Hkey,$Hkey		# if(carry) H^=0x1c2_polynomial
+
+	vpunpckhqdq	$Hkey,$Hkey,$HK
+	vmovdqa		$Hkey,$Xi
+	vpxor		$Hkey,$HK,$HK
+	mov		\$4,%r10		# up to H^8
+	jmp		.Linit_start_avx
+___
+
+sub clmul64x64_avx {
+my ($Xhi,$Xi,$Hkey,$HK)=@_;
+
+if (!defined($HK)) {	$HK = $T2;
+$code.=<<___;
+	vpunpckhqdq	$Xi,$Xi,$T1
+	vpunpckhqdq	$Hkey,$Hkey,$T2
+	vpxor		$Xi,$T1,$T1		#
+	vpxor		$Hkey,$T2,$T2
+___
+} else {
+$code.=<<___;
+	vpunpckhqdq	$Xi,$Xi,$T1
+	vpxor		$Xi,$T1,$T1		#
+___
+}
+$code.=<<___;
+	vpclmulqdq	\$0x11,$Hkey,$Xi,$Xhi	#######
+	vpclmulqdq	\$0x00,$Hkey,$Xi,$Xi	#######
+	vpclmulqdq	\$0x00,$HK,$T1,$T1	#######
+	vpxor		$Xi,$Xhi,$T2		#
+	vpxor		$T2,$T1,$T1		#
+
+	vpslldq		\$8,$T1,$T2		#
+	vpsrldq		\$8,$T1,$T1
+	vpxor		$T2,$Xi,$Xi		#
+	vpxor		$T1,$Xhi,$Xhi
+___
+}
+
+sub reduction_avx {
+my ($Xhi,$Xi) = @_;
+
+$code.=<<___;
+	vpsllq		\$57,$Xi,$T1		# 1st phase
+	vpsllq		\$62,$Xi,$T2
+	vpxor		$T1,$T2,$T2		#
+	vpsllq		\$63,$Xi,$T1
+	vpxor		$T1,$T2,$T2		#
+	vpslldq		\$8,$T2,$T1		#
+	vpsrldq		\$8,$T2,$T2
+	vpxor		$T1,$Xi,$Xi		#
+	vpxor		$T2,$Xhi,$Xhi
+
+	vpsrlq		\$1,$Xi,$T2		# 2nd phase
+	vpxor		$Xi,$Xhi,$Xhi
+	vpxor		$T2,$Xi,$Xi		#
+	vpsrlq		\$5,$T2,$T2
+	vpxor		$T2,$Xi,$Xi		#
+	vpsrlq		\$1,$Xi,$Xi		#
+	vpxor		$Xhi,$Xi,$Xi		#
+___
+}
+
+$code.=<<___;
+.align	32
+.Linit_loop_avx:
+	vpalignr	\$8,$T1,$T2,$T3		# low part is H.lo^H.hi...
+	vmovdqu		$T3,-0x10($Htbl)	# save Karatsuba "salt"
+___
+	&clmul64x64_avx	($Xhi,$Xi,$Hkey,$HK);	# calculate H^3,5,7
+	&reduction_avx	($Xhi,$Xi);
+$code.=<<___;
+.Linit_start_avx:
+	vmovdqa		$Xi,$T3
+___
+	&clmul64x64_avx	($Xhi,$Xi,$Hkey,$HK);	# calculate H^2,4,6,8
+	&reduction_avx	($Xhi,$Xi);
+$code.=<<___;
+	vpshufd		\$0b01001110,$T3,$T1
+	vpshufd		\$0b01001110,$Xi,$T2
+	vpxor		$T3,$T1,$T1		# Karatsuba pre-processing
+	vmovdqu		$T3,0x00($Htbl)		# save H^1,3,5,7
+	vpxor		$Xi,$T2,$T2		# Karatsuba pre-processing
+	vmovdqu		$Xi,0x10($Htbl)		# save H^2,4,6,8
+	lea		0x30($Htbl),$Htbl
+	sub		\$1,%r10
+	jnz		.Linit_loop_avx
+
+	vpalignr	\$8,$T2,$T1,$T3		# last "salt" is flipped
+	vmovdqu		$T3,-0x10($Htbl)
+
+	vzeroupper
+___
+$code.=<<___ if ($win64);
+	movaps	(%rsp),%xmm6
+	lea	0x18(%rsp),%rsp
+.LSEH_end_gcm_init_avx:
+___
+$code.=<<___;
+	ret
+.size	gcm_init_avx,.-gcm_init_avx
+___
+} else {
+$code.=<<___;
+	jmp	.L_init_clmul
+.size	gcm_init_avx,.-gcm_init_avx
+___
+}
+
+$code.=<<___;
+.globl	gcm_gmult_avx
+.type	gcm_gmult_avx,\@abi-omnipotent
+.align	32
+gcm_gmult_avx:
+	jmp	.L_gmult_clmul
+.size	gcm_gmult_avx,.-gcm_gmult_avx
+___
+
+$code.=<<___;
+.globl	gcm_ghash_avx
+.type	gcm_ghash_avx,\@abi-omnipotent
+.align	32
+gcm_ghash_avx:
+___
+if ($avx) {
+my ($Xip,$Htbl,$inp,$len)=@_4args;
+my ($Xlo,$Xhi,$Xmi,
+    $Zlo,$Zhi,$Zmi,
+    $Hkey,$HK,$T1,$T2,
+    $Xi,$Xo,$Tred,$bswap,$Ii,$Ij) = map("%xmm$_",(0..15));
+
+$code.=<<___ if ($win64);
+	lea	-0x88(%rsp),%rax
+.LSEH_begin_gcm_ghash_avx:
+	# I can't trust assembler to use specific encoding:-(
+	.byte	0x48,0x8d,0x60,0xe0		#lea	-0x20(%rax),%rsp
+	.byte	0x0f,0x29,0x70,0xe0		#movaps	%xmm6,-0x20(%rax)
+	.byte	0x0f,0x29,0x78,0xf0		#movaps	%xmm7,-0x10(%rax)
+	.byte	0x44,0x0f,0x29,0x00		#movaps	%xmm8,0(%rax)
+	.byte	0x44,0x0f,0x29,0x48,0x10	#movaps	%xmm9,0x10(%rax)
+	.byte	0x44,0x0f,0x29,0x50,0x20	#movaps	%xmm10,0x20(%rax)
+	.byte	0x44,0x0f,0x29,0x58,0x30	#movaps	%xmm11,0x30(%rax)
+	.byte	0x44,0x0f,0x29,0x60,0x40	#movaps	%xmm12,0x40(%rax)
+	.byte	0x44,0x0f,0x29,0x68,0x50	#movaps	%xmm13,0x50(%rax)
+	.byte	0x44,0x0f,0x29,0x70,0x60	#movaps	%xmm14,0x60(%rax)
+	.byte	0x44,0x0f,0x29,0x78,0x70	#movaps	%xmm15,0x70(%rax)
+___
+$code.=<<___;
+	vzeroupper
+
+	vmovdqu		($Xip),$Xi		# load $Xi
+	lea		.L0x1c2_polynomial(%rip),%r10
+	lea		0x40($Htbl),$Htbl	# size optimization
+	vmovdqu		.Lbswap_mask(%rip),$bswap
+	vpshufb		$bswap,$Xi,$Xi
+	cmp		\$0x80,$len
+	jb		.Lshort_avx
+	sub		\$0x80,$len
+
+	vmovdqu		0x70($inp),$Ii		# I[7]
+	vmovdqu		0x00-0x40($Htbl),$Hkey	# $Hkey^1
+	vpshufb		$bswap,$Ii,$Ii
+	vmovdqu		0x20-0x40($Htbl),$HK
+
+	vpunpckhqdq	$Ii,$Ii,$T2
+	 vmovdqu	0x60($inp),$Ij		# I[6]
+	vpclmulqdq	\$0x00,$Hkey,$Ii,$Xlo
+	vpxor		$Ii,$T2,$T2
+	 vpshufb	$bswap,$Ij,$Ij
+	vpclmulqdq	\$0x11,$Hkey,$Ii,$Xhi
+	 vmovdqu	0x10-0x40($Htbl),$Hkey	# $Hkey^2
+	 vpunpckhqdq	$Ij,$Ij,$T1
+	 vmovdqu	0x50($inp),$Ii		# I[5]
+	vpclmulqdq	\$0x00,$HK,$T2,$Xmi
+	 vpxor		$Ij,$T1,$T1
+
+	 vpshufb	$bswap,$Ii,$Ii
+	vpclmulqdq	\$0x00,$Hkey,$Ij,$Zlo
+	 vpunpckhqdq	$Ii,$Ii,$T2
+	vpclmulqdq	\$0x11,$Hkey,$Ij,$Zhi
+	 vmovdqu	0x30-0x40($Htbl),$Hkey	# $Hkey^3
+	 vpxor		$Ii,$T2,$T2
+	 vmovdqu	0x40($inp),$Ij		# I[4]
+	vpclmulqdq	\$0x10,$HK,$T1,$Zmi
+	 vmovdqu	0x50-0x40($Htbl),$HK
+
+	 vpshufb	$bswap,$Ij,$Ij
+	vpxor		$Xlo,$Zlo,$Zlo
+	vpclmulqdq	\$0x00,$Hkey,$Ii,$Xlo
+	vpxor		$Xhi,$Zhi,$Zhi
+	 vpunpckhqdq	$Ij,$Ij,$T1
+	vpclmulqdq	\$0x11,$Hkey,$Ii,$Xhi
+	 vmovdqu	0x40-0x40($Htbl),$Hkey	# $Hkey^4
+	vpxor		$Xmi,$Zmi,$Zmi
+	vpclmulqdq	\$0x00,$HK,$T2,$Xmi
+	 vpxor		$Ij,$T1,$T1
+
+	 vmovdqu	0x30($inp),$Ii		# I[3]
+	vpxor		$Zlo,$Xlo,$Xlo
+	vpclmulqdq	\$0x00,$Hkey,$Ij,$Zlo
+	vpxor		$Zhi,$Xhi,$Xhi
+	 vpshufb	$bswap,$Ii,$Ii
+	vpclmulqdq	\$0x11,$Hkey,$Ij,$Zhi
+	 vmovdqu	0x60-0x40($Htbl),$Hkey	# $Hkey^5
+	vpxor		$Zmi,$Xmi,$Xmi
+	 vpunpckhqdq	$Ii,$Ii,$T2
+	vpclmulqdq	\$0x10,$HK,$T1,$Zmi
+	 vmovdqu	0x80-0x40($Htbl),$HK
+	 vpxor		$Ii,$T2,$T2
+
+	 vmovdqu	0x20($inp),$Ij		# I[2]
+	vpxor		$Xlo,$Zlo,$Zlo
+	vpclmulqdq	\$0x00,$Hkey,$Ii,$Xlo
+	vpxor		$Xhi,$Zhi,$Zhi
+	 vpshufb	$bswap,$Ij,$Ij
+	vpclmulqdq	\$0x11,$Hkey,$Ii,$Xhi
+	 vmovdqu	0x70-0x40($Htbl),$Hkey	# $Hkey^6
+	vpxor		$Xmi,$Zmi,$Zmi
+	 vpunpckhqdq	$Ij,$Ij,$T1
+	vpclmulqdq	\$0x00,$HK,$T2,$Xmi
+	 vpxor		$Ij,$T1,$T1
+
+	 vmovdqu	0x10($inp),$Ii		# I[1]
+	vpxor		$Zlo,$Xlo,$Xlo
+	vpclmulqdq	\$0x00,$Hkey,$Ij,$Zlo
+	vpxor		$Zhi,$Xhi,$Xhi
+	 vpshufb	$bswap,$Ii,$Ii
+	vpclmulqdq	\$0x11,$Hkey,$Ij,$Zhi
+	 vmovdqu	0x90-0x40($Htbl),$Hkey	# $Hkey^7
+	vpxor		$Zmi,$Xmi,$Xmi
+	 vpunpckhqdq	$Ii,$Ii,$T2
+	vpclmulqdq	\$0x10,$HK,$T1,$Zmi
+	 vmovdqu	0xb0-0x40($Htbl),$HK
+	 vpxor		$Ii,$T2,$T2
+
+	 vmovdqu	($inp),$Ij		# I[0]
+	vpxor		$Xlo,$Zlo,$Zlo
+	vpclmulqdq	\$0x00,$Hkey,$Ii,$Xlo
+	vpxor		$Xhi,$Zhi,$Zhi
+	 vpshufb	$bswap,$Ij,$Ij
+	vpclmulqdq	\$0x11,$Hkey,$Ii,$Xhi
+	 vmovdqu	0xa0-0x40($Htbl),$Hkey	# $Hkey^8
+	vpxor		$Xmi,$Zmi,$Zmi
+	vpclmulqdq	\$0x10,$HK,$T2,$Xmi
+
+	lea		0x80($inp),$inp
+	cmp		\$0x80,$len
+	jb		.Ltail_avx
+
+	vpxor		$Xi,$Ij,$Ij		# accumulate $Xi
+	sub		\$0x80,$len
+	jmp		.Loop8x_avx
+
+.align	32
+.Loop8x_avx:
+	vpunpckhqdq	$Ij,$Ij,$T1
+	 vmovdqu	0x70($inp),$Ii		# I[7]
+	vpxor		$Xlo,$Zlo,$Zlo
+	vpxor		$Ij,$T1,$T1
+	vpclmulqdq	\$0x00,$Hkey,$Ij,$Xi
+	 vpshufb	$bswap,$Ii,$Ii
+	vpxor		$Xhi,$Zhi,$Zhi
+	vpclmulqdq	\$0x11,$Hkey,$Ij,$Xo
+	 vmovdqu	0x00-0x40($Htbl),$Hkey	# $Hkey^1
+	 vpunpckhqdq	$Ii,$Ii,$T2
+	vpxor		$Xmi,$Zmi,$Zmi
+	vpclmulqdq	\$0x00,$HK,$T1,$Tred
+	 vmovdqu	0x20-0x40($Htbl),$HK
+	 vpxor		$Ii,$T2,$T2
+
+	  vmovdqu	0x60($inp),$Ij		# I[6]
+	 vpclmulqdq	\$0x00,$Hkey,$Ii,$Xlo
+	vpxor		$Zlo,$Xi,$Xi		# collect result
+	  vpshufb	$bswap,$Ij,$Ij
+	 vpclmulqdq	\$0x11,$Hkey,$Ii,$Xhi
+	vxorps		$Zhi,$Xo,$Xo
+	  vmovdqu	0x10-0x40($Htbl),$Hkey	# $Hkey^2
+	 vpunpckhqdq	$Ij,$Ij,$T1
+	 vpclmulqdq	\$0x00,$HK,  $T2,$Xmi
+	vpxor		$Zmi,$Tred,$Tred
+	 vxorps		$Ij,$T1,$T1
+
+	  vmovdqu	0x50($inp),$Ii		# I[5]
+	vpxor		$Xi,$Tred,$Tred		# aggregated Karatsuba post-processing
+	 vpclmulqdq	\$0x00,$Hkey,$Ij,$Zlo
+	vpxor		$Xo,$Tred,$Tred
+	vpslldq		\$8,$Tred,$T2
+	 vpxor		$Xlo,$Zlo,$Zlo
+	 vpclmulqdq	\$0x11,$Hkey,$Ij,$Zhi
+	vpsrldq		\$8,$Tred,$Tred
+	vpxor		$T2, $Xi, $Xi
+	  vmovdqu	0x30-0x40($Htbl),$Hkey	# $Hkey^3
+	  vpshufb	$bswap,$Ii,$Ii
+	vxorps		$Tred,$Xo, $Xo
+	 vpxor		$Xhi,$Zhi,$Zhi
+	 vpunpckhqdq	$Ii,$Ii,$T2
+	 vpclmulqdq	\$0x10,$HK,  $T1,$Zmi
+	  vmovdqu	0x50-0x40($Htbl),$HK
+	 vpxor		$Ii,$T2,$T2
+	 vpxor		$Xmi,$Zmi,$Zmi
+
+	  vmovdqu	0x40($inp),$Ij		# I[4]
+	vpalignr	\$8,$Xi,$Xi,$Tred	# 1st phase
+	 vpclmulqdq	\$0x00,$Hkey,$Ii,$Xlo
+	  vpshufb	$bswap,$Ij,$Ij
+	 vpxor		$Zlo,$Xlo,$Xlo
+	 vpclmulqdq	\$0x11,$Hkey,$Ii,$Xhi
+	  vmovdqu	0x40-0x40($Htbl),$Hkey	# $Hkey^4
+	 vpunpckhqdq	$Ij,$Ij,$T1
+	 vpxor		$Zhi,$Xhi,$Xhi
+	 vpclmulqdq	\$0x00,$HK,  $T2,$Xmi
+	 vxorps		$Ij,$T1,$T1
+	 vpxor		$Zmi,$Xmi,$Xmi
+
+	  vmovdqu	0x30($inp),$Ii		# I[3]
+	vpclmulqdq	\$0x10,(%r10),$Xi,$Xi
+	 vpclmulqdq	\$0x00,$Hkey,$Ij,$Zlo
+	  vpshufb	$bswap,$Ii,$Ii
+	 vpxor		$Xlo,$Zlo,$Zlo
+	 vpclmulqdq	\$0x11,$Hkey,$Ij,$Zhi
+	  vmovdqu	0x60-0x40($Htbl),$Hkey	# $Hkey^5
+	 vpunpckhqdq	$Ii,$Ii,$T2
+	 vpxor		$Xhi,$Zhi,$Zhi
+	 vpclmulqdq	\$0x10,$HK,  $T1,$Zmi
+	  vmovdqu	0x80-0x40($Htbl),$HK
+	 vpxor		$Ii,$T2,$T2
+	 vpxor		$Xmi,$Zmi,$Zmi
+
+	  vmovdqu	0x20($inp),$Ij		# I[2]
+	 vpclmulqdq	\$0x00,$Hkey,$Ii,$Xlo
+	  vpshufb	$bswap,$Ij,$Ij
+	 vpxor		$Zlo,$Xlo,$Xlo
+	 vpclmulqdq	\$0x11,$Hkey,$Ii,$Xhi
+	  vmovdqu	0x70-0x40($Htbl),$Hkey	# $Hkey^6
+	 vpunpckhqdq	$Ij,$Ij,$T1
+	 vpxor		$Zhi,$Xhi,$Xhi
+	 vpclmulqdq	\$0x00,$HK,  $T2,$Xmi
+	 vpxor		$Ij,$T1,$T1
+	 vpxor		$Zmi,$Xmi,$Xmi
+	vxorps		$Tred,$Xi,$Xi
+
+	  vmovdqu	0x10($inp),$Ii		# I[1]
+	vpalignr	\$8,$Xi,$Xi,$Tred	# 2nd phase
+	 vpclmulqdq	\$0x00,$Hkey,$Ij,$Zlo
+	  vpshufb	$bswap,$Ii,$Ii
+	 vpxor		$Xlo,$Zlo,$Zlo
+	 vpclmulqdq	\$0x11,$Hkey,$Ij,$Zhi
+	  vmovdqu	0x90-0x40($Htbl),$Hkey	# $Hkey^7
+	vpclmulqdq	\$0x10,(%r10),$Xi,$Xi
+	vxorps		$Xo,$Tred,$Tred
+	 vpunpckhqdq	$Ii,$Ii,$T2
+	 vpxor		$Xhi,$Zhi,$Zhi
+	 vpclmulqdq	\$0x10,$HK,  $T1,$Zmi
+	  vmovdqu	0xb0-0x40($Htbl),$HK
+	 vpxor		$Ii,$T2,$T2
+	 vpxor		$Xmi,$Zmi,$Zmi
+
+	  vmovdqu	($inp),$Ij		# I[0]
+	 vpclmulqdq	\$0x00,$Hkey,$Ii,$Xlo
+	  vpshufb	$bswap,$Ij,$Ij
+	 vpclmulqdq	\$0x11,$Hkey,$Ii,$Xhi
+	  vmovdqu	0xa0-0x40($Htbl),$Hkey	# $Hkey^8
+	vpxor		$Tred,$Ij,$Ij
+	 vpclmulqdq	\$0x10,$HK,  $T2,$Xmi
+	vpxor		$Xi,$Ij,$Ij		# accumulate $Xi
+
+	lea		0x80($inp),$inp
+	sub		\$0x80,$len
+	jnc		.Loop8x_avx
+
+	add		\$0x80,$len
+	jmp		.Ltail_no_xor_avx
+
+.align	32
+.Lshort_avx:
+	vmovdqu		-0x10($inp,$len),$Ii	# very last word
+	lea		($inp,$len),$inp
+	vmovdqu		0x00-0x40($Htbl),$Hkey	# $Hkey^1
+	vmovdqu		0x20-0x40($Htbl),$HK
+	vpshufb		$bswap,$Ii,$Ij
+
+	vmovdqa		$Xlo,$Zlo		# subtle way to zero $Zlo,
+	vmovdqa		$Xhi,$Zhi		# $Zhi and
+	vmovdqa		$Xmi,$Zmi		# $Zmi
+	sub		\$0x10,$len
+	jz		.Ltail_avx
+
+	vpunpckhqdq	$Ij,$Ij,$T1
+	vpxor		$Xlo,$Zlo,$Zlo
+	vpclmulqdq	\$0x00,$Hkey,$Ij,$Xlo
+	vpxor		$Ij,$T1,$T1
+	 vmovdqu	-0x20($inp),$Ii
+	vpxor		$Xhi,$Zhi,$Zhi
+	vpclmulqdq	\$0x11,$Hkey,$Ij,$Xhi
+	vmovdqu		0x10-0x40($Htbl),$Hkey	# $Hkey^2
+	 vpshufb	$bswap,$Ii,$Ij
+	vpxor		$Xmi,$Zmi,$Zmi
+	vpclmulqdq	\$0x00,$HK,$T1,$Xmi
+	vpsrldq		\$8,$HK,$HK
+	sub		\$0x10,$len
+	jz		.Ltail_avx
+
+	vpunpckhqdq	$Ij,$Ij,$T1
+	vpxor		$Xlo,$Zlo,$Zlo
+	vpclmulqdq	\$0x00,$Hkey,$Ij,$Xlo
+	vpxor		$Ij,$T1,$T1
+	 vmovdqu	-0x30($inp),$Ii
+	vpxor		$Xhi,$Zhi,$Zhi
+	vpclmulqdq	\$0x11,$Hkey,$Ij,$Xhi
+	vmovdqu		0x30-0x40($Htbl),$Hkey	# $Hkey^3
+	 vpshufb	$bswap,$Ii,$Ij
+	vpxor		$Xmi,$Zmi,$Zmi
+	vpclmulqdq	\$0x00,$HK,$T1,$Xmi
+	vmovdqu		0x50-0x40($Htbl),$HK
+	sub		\$0x10,$len
+	jz		.Ltail_avx
+
+	vpunpckhqdq	$Ij,$Ij,$T1
+	vpxor		$Xlo,$Zlo,$Zlo
+	vpclmulqdq	\$0x00,$Hkey,$Ij,$Xlo
+	vpxor		$Ij,$T1,$T1
+	 vmovdqu	-0x40($inp),$Ii
+	vpxor		$Xhi,$Zhi,$Zhi
+	vpclmulqdq	\$0x11,$Hkey,$Ij,$Xhi
+	vmovdqu		0x40-0x40($Htbl),$Hkey	# $Hkey^4
+	 vpshufb	$bswap,$Ii,$Ij
+	vpxor		$Xmi,$Zmi,$Zmi
+	vpclmulqdq	\$0x00,$HK,$T1,$Xmi
+	vpsrldq		\$8,$HK,$HK
+	sub		\$0x10,$len
+	jz		.Ltail_avx
+
+	vpunpckhqdq	$Ij,$Ij,$T1
+	vpxor		$Xlo,$Zlo,$Zlo
+	vpclmulqdq	\$0x00,$Hkey,$Ij,$Xlo
+	vpxor		$Ij,$T1,$T1
+	 vmovdqu	-0x50($inp),$Ii
+	vpxor		$Xhi,$Zhi,$Zhi
+	vpclmulqdq	\$0x11,$Hkey,$Ij,$Xhi
+	vmovdqu		0x60-0x40($Htbl),$Hkey	# $Hkey^5
+	 vpshufb	$bswap,$Ii,$Ij
+	vpxor		$Xmi,$Zmi,$Zmi
+	vpclmulqdq	\$0x00,$HK,$T1,$Xmi
+	vmovdqu		0x80-0x40($Htbl),$HK
+	sub		\$0x10,$len
+	jz		.Ltail_avx
+
+	vpunpckhqdq	$Ij,$Ij,$T1
+	vpxor		$Xlo,$Zlo,$Zlo
+	vpclmulqdq	\$0x00,$Hkey,$Ij,$Xlo
+	vpxor		$Ij,$T1,$T1
+	 vmovdqu	-0x60($inp),$Ii
+	vpxor		$Xhi,$Zhi,$Zhi
+	vpclmulqdq	\$0x11,$Hkey,$Ij,$Xhi
+	vmovdqu		0x70-0x40($Htbl),$Hkey	# $Hkey^6
+	 vpshufb	$bswap,$Ii,$Ij
+	vpxor		$Xmi,$Zmi,$Zmi
+	vpclmulqdq	\$0x00,$HK,$T1,$Xmi
+	vpsrldq		\$8,$HK,$HK
+	sub		\$0x10,$len
+	jz		.Ltail_avx
+
+	vpunpckhqdq	$Ij,$Ij,$T1
+	vpxor		$Xlo,$Zlo,$Zlo
+	vpclmulqdq	\$0x00,$Hkey,$Ij,$Xlo
+	vpxor		$Ij,$T1,$T1
+	 vmovdqu	-0x70($inp),$Ii
+	vpxor		$Xhi,$Zhi,$Zhi
+	vpclmulqdq	\$0x11,$Hkey,$Ij,$Xhi
+	vmovdqu		0x90-0x40($Htbl),$Hkey	# $Hkey^7
+	 vpshufb	$bswap,$Ii,$Ij
+	vpxor		$Xmi,$Zmi,$Zmi
+	vpclmulqdq	\$0x00,$HK,$T1,$Xmi
+	vmovq		0xb8-0x40($Htbl),$HK
+	sub		\$0x10,$len
+	jmp		.Ltail_avx
+
+.align	32
+.Ltail_avx:
+	vpxor		$Xi,$Ij,$Ij		# accumulate $Xi
+.Ltail_no_xor_avx:
+	vpunpckhqdq	$Ij,$Ij,$T1
+	vpxor		$Xlo,$Zlo,$Zlo
+	vpclmulqdq	\$0x00,$Hkey,$Ij,$Xlo
+	vpxor		$Ij,$T1,$T1
+	vpxor		$Xhi,$Zhi,$Zhi
+	vpclmulqdq	\$0x11,$Hkey,$Ij,$Xhi
+	vpxor		$Xmi,$Zmi,$Zmi
+	vpclmulqdq	\$0x00,$HK,$T1,$Xmi
+
+	vmovdqu		(%r10),$Tred
+
+	vpxor		$Xlo,$Zlo,$Xi
+	vpxor		$Xhi,$Zhi,$Xo
+	vpxor		$Xmi,$Zmi,$Zmi
+
+	vpxor		$Xi, $Zmi,$Zmi		# aggregated Karatsuba post-processing
+	vpxor		$Xo, $Zmi,$Zmi
+	vpslldq		\$8, $Zmi,$T2
+	vpsrldq		\$8, $Zmi,$Zmi
+	vpxor		$T2, $Xi, $Xi
+	vpxor		$Zmi,$Xo, $Xo
+
+	vpclmulqdq	\$0x10,$Tred,$Xi,$T2	# 1st phase
+	vpalignr	\$8,$Xi,$Xi,$Xi
+	vpxor		$T2,$Xi,$Xi
+
+	vpclmulqdq	\$0x10,$Tred,$Xi,$T2	# 2nd phase
+	vpalignr	\$8,$Xi,$Xi,$Xi
+	vpxor		$Xo,$Xi,$Xi
+	vpxor		$T2,$Xi,$Xi
+
+	cmp		\$0,$len
+	jne		.Lshort_avx
+
+	vpshufb		$bswap,$Xi,$Xi
+	vmovdqu		$Xi,($Xip)
+	vzeroupper
+___
+$code.=<<___ if ($win64);
+	movaps	(%rsp),%xmm6
+	movaps	0x10(%rsp),%xmm7
+	movaps	0x20(%rsp),%xmm8
+	movaps	0x30(%rsp),%xmm9
+	movaps	0x40(%rsp),%xmm10
+	movaps	0x50(%rsp),%xmm11
+	movaps	0x60(%rsp),%xmm12
+	movaps	0x70(%rsp),%xmm13
+	movaps	0x80(%rsp),%xmm14
+	movaps	0x90(%rsp),%xmm15
+	lea	0xa8(%rsp),%rsp
+.LSEH_end_gcm_ghash_avx:
+___
+$code.=<<___;
+	ret
+.size	gcm_ghash_avx,.-gcm_ghash_avx
+___
+} else {
+$code.=<<___;
+	jmp	.L_ghash_clmul
+.size	gcm_ghash_avx,.-gcm_ghash_avx
+___
+}
+
 $code.=<<___;
 .align	64
 .Lbswap_mask:
@@ -1058,10 +1681,24 @@ se_handler:
 	.rva	.LSEH_end_gcm_ghash_4bit
 	.rva	.LSEH_info_gcm_ghash_4bit
 
+	.rva	.LSEH_begin_gcm_init_clmul
+	.rva	.LSEH_end_gcm_init_clmul
+	.rva	.LSEH_info_gcm_init_clmul
+
 	.rva	.LSEH_begin_gcm_ghash_clmul
 	.rva	.LSEH_end_gcm_ghash_clmul
 	.rva	.LSEH_info_gcm_ghash_clmul
+___
+$code.=<<___	if ($avx);
+	.rva	.LSEH_begin_gcm_init_avx
+	.rva	.LSEH_end_gcm_init_avx
+	.rva	.LSEH_info_gcm_init_clmul
 
+	.rva	.LSEH_begin_gcm_ghash_avx
+	.rva	.LSEH_end_gcm_ghash_avx
+	.rva	.LSEH_info_gcm_ghash_clmul
+___
+$code.=<<___;
 .section	.xdata
 .align	8
 .LSEH_info_gcm_gmult_4bit:
@@ -1072,6 +1709,10 @@ se_handler:
 	.byte	9,0,0,0
 	.rva	se_handler
 	.rva	.Lghash_prologue,.Lghash_epilogue	# HandlerData
+.LSEH_info_gcm_init_clmul:
+	.byte	0x01,0x08,0x03,0x00
+	.byte	0x08,0x68,0x00,0x00	#movaps	0x00(rsp),xmm6
+	.byte	0x04,0x22,0x00,0x00	#sub	rsp,0x18
 .LSEH_info_gcm_ghash_clmul:
 	.byte	0x01,0x33,0x16,0x00
 	.byte	0x33,0xf8,0x09,0x00	#movaps 0x90(rsp),xmm15
@@ -1084,7 +1725,7 @@ se_handler:
 	.byte	0x10,0x88,0x02,0x00	#movaps 0x20(rsp),xmm8
 	.byte	0x0c,0x78,0x01,0x00	#movaps 0x10(rsp),xmm7
 	.byte	0x08,0x68,0x00,0x00	#movaps 0x00(rsp),xmm6
-	.byte	0x04,0x01,0x15,0x00	#sub	0xa8,rsp
+	.byte	0x04,0x01,0x15,0x00	#sub	rsp,0xa8
 ___
 }
 
