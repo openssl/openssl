@@ -130,7 +130,7 @@
 # Further data for other parallelizable modes:
 #
 # CBC decrypt				1.16	0.93	0.93
-# CTR					1.14	0.91	0.86
+# CTR					1.14	0.91	0.77
 #
 # Well, given 3x column it's probably inappropriate to call the limit
 # asymptotic, if it can be surpassed, isn't it? What happens there?
@@ -160,7 +160,7 @@
 ######################################################################
 # For reference, AMD Bulldozer spends 5.77 cycles per byte processed
 # with 128-bit key in CBC encrypt and 0.76 cycles in CBC decrypt, 0.70
-# in ECB, 0.73 in CTR, 0.95 in XTS... This means that aes[enc|dec]
+# in ECB, 0.71 in CTR, 0.95 in XTS... This means that aes[enc|dec]
 # instruction latency is 9 cycles and that they can be issued every
 # cycle.
 
@@ -1011,385 +1011,389 @@ ___
 #                         const char *ivec);
 #
 # Handles only complete blocks, operates on 32-bit counter and
-# does not update *ivec! (see engine/eng_aesni.c for details)
+# does not update *ivec! (see crypto/modes/ctr128.c for details)
 #
+# Overhaul based on suggestions from Shay Gueron and Vlad Krasnov,
+# http://rt.openssl.org/Ticket/Display.html?id=3031&user=guest&pass=guest.
+# Keywords are full unroll and modulo-schedule counter calculations
+# with zero-round key xor.
 {
-my ($in0,$in1,$in2,$in3,$one,$ivec)=map("%xmm$_",(10..15));
-my $len_="%r9";
+my ($in0,$in1,$in2,$in3,$in4,$in5)=map("%xmm$_",(10..15));
+my ($key0,$ctr)=("${key_}d","${ivp}d");
+my $frame_size = 0x80 + ($win64?160:0);
 
 $code.=<<___;
 .globl	aesni_ctr32_encrypt_blocks
 .type	aesni_ctr32_encrypt_blocks,\@function,5
 .align	16
 aesni_ctr32_encrypt_blocks:
+	lea	(%rsp),%rax
+	push	%rbp
+	sub	\$$frame_size,%rsp
+	and	\$-16,%rsp	# Linux kernel stack can be incorrectly seeded
 ___
 $code.=<<___ if ($win64);
-	lea	-0xa8(%rsp),%rsp
-	movaps	%xmm6,0x00(%rsp)
-	movaps	%xmm7,0x10(%rsp)
-	movaps	%xmm8,0x20(%rsp)
-	movaps	%xmm9,0x30(%rsp)
-	movaps	%xmm10,0x40(%rsp)
-	movaps	%xmm11,0x50(%rsp)
-	movaps	%xmm12,0x60(%rsp)
-	movaps	%xmm13,0x70(%rsp)
-	movaps	%xmm14,0x80(%rsp)
-	movaps	%xmm15,0x90(%rsp)
+	movaps	%xmm6,-0xa8(%rax)
+	movaps	%xmm7,-0x98(%rax)
+	movaps	%xmm8,-0x88(%rax)
+	movaps	%xmm9,-0x78(%rax)
+	movaps	%xmm10,-0x68(%rax)
+	movaps	%xmm11,-0x58(%rax)
+	movaps	%xmm12,-0x48(%rax)
+	movaps	%xmm13,-0x38(%rax)
+	movaps	%xmm14,-0x28(%rax)
+	movaps	%xmm15,-0x18(%rax)
 .Lctr32_body:
 ___
 $code.=<<___;
+	lea	-8(%rax),%rbp
+
 	cmp	\$1,$len
 	je	.Lctr32_one_shortcut
 
-	movzb	15($ivp),%rax			# counter LSB
-	mov	$len,$len_			# backup $len
-	mov	240($key),$rnds_		# key->rounds
-	mov	$key,$key_			# backup $key
-	movdqu	($ivp),$ivec
-	neg	%rax
-	movdqa	.Lincrement1(%rip),$one
-	add	\$256,%rax			# steps to closest overflow
+	movdqu	($ivp),$inout0
+	movdqu	($key),$rndkey0
+	mov	12($ivp),$ctr			# counter LSB
+	pxor	$rndkey0,$inout0
+	mov	12($key),$key0			# 0-round key LSB
+	movdqa	$inout0,0x00(%rsp)		# populate counter block
+	bswap	$ctr
+	movdqa	$inout0,0x10(%rsp)
+	movdqa	$inout0,0x20(%rsp)
+	movdqa	$inout0,0x30(%rsp)
+	movdqa	$inout0,0x40(%rsp)
+	movdqa	$inout0,0x50(%rsp)
+	movdqa	$inout0,0x60(%rsp)
+	movdqa	$inout0,0x70(%rsp)
 
-.Lctr32_grandloop:
-	cmp	%rax,$len
-	cmova	%rax,$len
-	mov	$rnds_,$rounds			# restore $rounds
-	sub	$len,$len_
+	mov	240($key),$rounds		# key->rounds
+
+	lea	1($ctr),%r9
+	 lea	2($ctr),%r10
+	bswap	%r9d
+	 bswap	%r10d
+	xor	$key0,%r9d
+	 xor	$key0,%r10d
+	mov	%r9d,0x10+12(%rsp)
+	lea	3($ctr),%r9
+	 mov	%r10d,0x20+12(%rsp)
+	bswap	%r9d
+	 lea	4($ctr),%r10
+	xor	$key0,%r9d
+	 bswap	%r10d
+	mov	%r9d,0x30+12(%rsp)
+	 xor	$key0,%r10d
+	lea	5($ctr),%r9
+	 mov	%r10d,0x40+12(%rsp)
+	bswap	%r9d
+	 lea	6($ctr),%r10
+	xor	$key0,%r9d
+	 bswap	%r10d
+	mov	%r9d,0x50+12(%rsp)
+	 xor	$key0,%r10d
+	lea	7($ctr),%r9
+	 mov	%r10d,0x60+12(%rsp)
+	bswap	%r9d
+	xor	$key0,%r9d
+	mov	%r9d,0x70+12(%rsp)
+
+	$movkey	0x10($key),$rndkey1
+
+	movdqa	0x10(%rsp),$inout1
+	movdqa	0x20(%rsp),$inout2
+	movdqa	0x30(%rsp),$inout3
+	movdqa	0x40(%rsp),$inout4
+	movdqa	0x50(%rsp),$inout5
 
 	cmp	\$8,$len
 	jb	.Lctr32_tail
 
-	$movkey	($key_),$rndkey0
-	shr	\$1,$rounds
-	shr	\$1,$rnds_
-	movdqa	$rndkey0,$inout0
-	movdqa	$rndkey0,$inout1
-	movdqa	$rndkey0,$inout2
-	movdqa	$rndkey0,$inout3
-	movdqa	$rndkey0,$inout4
-	movdqa	$rndkey0,$inout5
-	movdqa	$rndkey0,$inout6
-	movdqa	$rndkey0,$inout7
-	$movkey	16($key_),$rndkey1
+	lea	0x80($key),$key		# size optimization
 	sub	\$8,$len
 	jmp	.Lctr32_loop8
 
-.align	16
+.align	32
 .Lctr32_loop8:
-	pxor		$ivec,$inout0
-	paddb		$one,$ivec
-	 aesenc		$rndkey1,$inout0
-	pxor		$ivec,$inout1
-	paddb		$one,$ivec
-	 lea		32($key_),$key
-	 aesenc		$rndkey1,$inout1
-	pxor		$ivec,$inout2
-	paddb		$one,$ivec
-	 aesenc		$rndkey1,$inout2
-	pxor		$ivec,$inout3
-	paddb		$one,$ivec
-	 aesenc		$rndkey1,$inout3
-	pxor		$ivec,$inout4
-	paddb		$one,$ivec
-	 aesenc		$rndkey1,$inout4
-	pxor		$ivec,$inout5
-	paddb		$one,$ivec
-	 aesenc		$rndkey1,$inout5
-	pxor		$ivec,$inout6
-	paddb		$one,$ivec
-	 $movkey	($key),$rndkey0
-	 aesenc		$rndkey1,$inout6
-	pxor		$ivec,$inout7
-	paddb		$one,$ivec
-	 dec		$rounds
-	 aesenc		$rndkey1,$inout7
-	 $movkey	16($key),$rndkey1
-
+	 add		\$8,$ctr
+	movdqa		0x60(%rsp),$inout6
+	aesenc		$rndkey1,$inout0
+	 mov		$ctr,%r9d
+	movdqa		0x70(%rsp),$inout7
+	aesenc		$rndkey1,$inout1
+	 bswap		%r9d
+	$movkey		0x20-0x80($key),$rndkey0
+	aesenc		$rndkey1,$inout2
+	 xor		$key0,%r9d
+	aesenc		$rndkey1,$inout3
+	 mov		%r9d,0x00+12(%rsp)
+	 lea		1($ctr),%r9
+	aesenc		$rndkey1,$inout4
+	aesenc		$rndkey1,$inout5
+	aesenc		$rndkey1,$inout6
+	aesenc		$rndkey1,$inout7
+	$movkey		0x30-0x80($key),$rndkey1
+___
+for($i=2;$i<8;$i++) {
+my $rndkeyx = ($i&1)?$rndkey1:$rndkey0;
+$code.=<<___;
+	aesenc		$rndkeyx,$inout0
+	aesenc		$rndkeyx,$inout1
+	 bswap		%r9d
+	aesenc		$rndkeyx,$inout2
+	 xor		$key0,%r9d
+	aesenc		$rndkeyx,$inout3
+	 mov		%r9d,`0x10*($i-1)`+12(%rsp)
+	 lea		$i($ctr),%r9
+	aesenc		$rndkeyx,$inout4
+	aesenc		$rndkeyx,$inout5
+	aesenc		$rndkeyx,$inout6
+	aesenc		$rndkeyx,$inout7
+	$movkey		`0x20+0x10*$i`-0x80($key),$rndkeyx
+___
+}
+$code.=<<___;
 	aesenc		$rndkey0,$inout0
 	aesenc		$rndkey0,$inout1
-	lea		32($key),$key
+	 bswap		%r9d
 	aesenc		$rndkey0,$inout2
-	  movups	($inp),$in0		# load input
+	 xor		$key0,%r9d
 	aesenc		$rndkey0,$inout3
-	  movups	0x10($inp),$in1
+	 mov		%r9d,0x70+12(%rsp)
 	aesenc		$rndkey0,$inout4
-	  movups	0x20($inp),$in2
 	aesenc		$rndkey0,$inout5
-	  movups	0x30($inp),$in3
 	aesenc		$rndkey0,$inout6
-	  movups	0x40($inp),$one
+	 movdqu		0x00($inp),$in0
 	aesenc		$rndkey0,$inout7
-	$movkey		($key),$rndkey0
+	$movkey		0xa0-0x80($key),$rndkey0
 
-.Lctr32_enc_loop8:
+	cmp		\$11,$rounds
+	jb		.Lctr32_enc_done
+
 	aesenc		$rndkey1,$inout0
 	aesenc		$rndkey1,$inout1
-	dec		$rounds
 	aesenc		$rndkey1,$inout2
 	aesenc		$rndkey1,$inout3
 	aesenc		$rndkey1,$inout4
 	aesenc		$rndkey1,$inout5
 	aesenc		$rndkey1,$inout6
 	aesenc		$rndkey1,$inout7
-	$movkey		16($key),$rndkey1
+	$movkey		0xb0-0x80($key),$rndkey1
 
 	aesenc		$rndkey0,$inout0
 	aesenc		$rndkey0,$inout1
-	lea		32($key),$key
 	aesenc		$rndkey0,$inout2
 	aesenc		$rndkey0,$inout3
 	aesenc		$rndkey0,$inout4
 	aesenc		$rndkey0,$inout5
 	aesenc		$rndkey0,$inout6
 	aesenc		$rndkey0,$inout7
-	$movkey		($key),$rndkey0
-	jnz		.Lctr32_enc_loop8
+	$movkey		0xc0-0x80($key),$rndkey0
+	je		.Lctr32_enc_done
 
 	aesenc		$rndkey1,$inout0
+	aesenc		$rndkey1,$inout1
+	aesenc		$rndkey1,$inout2
+	aesenc		$rndkey1,$inout3
+	aesenc		$rndkey1,$inout4
+	aesenc		$rndkey1,$inout5
+	aesenc		$rndkey1,$inout6
+	aesenc		$rndkey1,$inout7
+	$movkey		0xd0-0x80($key),$rndkey1
+
+	aesenc		$rndkey0,$inout0
+	aesenc		$rndkey0,$inout1
+	aesenc		$rndkey0,$inout2
+	aesenc		$rndkey0,$inout3
+	aesenc		$rndkey0,$inout4
+	aesenc		$rndkey0,$inout5
+	aesenc		$rndkey0,$inout6
+	aesenc		$rndkey0,$inout7
+	$movkey		0xe0-0x80($key),$rndkey0
+
+.Lctr32_enc_done:
+	aesenc		$rndkey1,$inout0
+	movdqu		0x10($inp),$in1
 	pxor		$rndkey0,$in0
 	aesenc		$rndkey1,$inout1
+	movdqu		0x20($inp),$in2
 	pxor		$rndkey0,$in1
 	aesenc		$rndkey1,$inout2
+	movdqu		0x30($inp),$in3
 	pxor		$rndkey0,$in2
 	aesenc		$rndkey1,$inout3
+	movdqu		0x40($inp),$in4
 	pxor		$rndkey0,$in3
 	aesenc		$rndkey1,$inout4
-	pxor		$rndkey0,$one
+	movdqu		0x50($inp),$in5
+	pxor		$rndkey0,$in4
 	aesenc		$rndkey1,$inout5
+	pxor		$rndkey0,$in5
 	aesenc		$rndkey1,$inout6
 	aesenc		$rndkey1,$inout7
-	movdqu		0x50($inp),$rndkey1
+	movdqu		0x60($inp),$rndkey1
+
 	aesenclast	$in0,$inout0
-	movdqu		0x60($inp),$in0
 	pxor		$rndkey0,$rndkey1
-	aesenclast	$in1,$inout1
-	movdqu		0x70($inp),$in1
-	pxor		$rndkey0,$in0
-	aesenclast	$in2,$inout2
-	pxor		$rndkey0,$in1
-	$movkey		($key_),$rndkey0
-	aesenclast	$in3,$inout3
+	movdqu		0x70($inp),$in0
 	lea		0x80($inp),$inp
-	aesenclast	$one,$inout4
-	movdqa		.Lincrement1(%rip),$one
-	aesenclast	$rndkey1,$inout5
-	$movkey		16($key_),$rndkey1
-	aesenclast	$in0,$inout6
-	aesenclast	$in1,$inout7
+	aesenclast	$in1,$inout1
+	pxor		$rndkey0,$in0
+	movdqa		0x00(%rsp),$in1		# load next counter block
+	aesenclast	$in2,$inout2
+	movdqa		0x10(%rsp),$in2
+	aesenclast	$in3,$inout3
+	movdqa		0x20(%rsp),$in3
+	aesenclast	$in4,$inout4
+	movdqa		0x30(%rsp),$in4
+	aesenclast	$in5,$inout5
+	movdqa		0x40(%rsp),$in5
+	aesenclast	$rndkey1,$inout6
+	movdqa		0x50(%rsp),$rndkey0
+	aesenclast	$in0,$inout7
+	$movkey		0x10-0x80($key),$rndkey1
 
 	movups		$inout0,($out)		# store output
-	movdqa		$rndkey0,$inout0
+	movdqa		$in1,$inout0
 	movups		$inout1,0x10($out)
-	movdqa		$rndkey0,$inout1
+	movdqa		$in2,$inout1
 	movups		$inout2,0x20($out)
-	movdqa		$rndkey0,$inout2
+	movdqa		$in3,$inout2
 	movups		$inout3,0x30($out)
-	movdqa		$rndkey0,$inout3
+	movdqa		$in4,$inout3
 	movups		$inout4,0x40($out)
-	movdqa		$rndkey0,$inout4
+	movdqa		$in5,$inout4
 	movups		$inout5,0x50($out)
 	movdqa		$rndkey0,$inout5
 	movups		$inout6,0x60($out)
-	movdqa		$rndkey0,$inout6
 	movups		$inout7,0x70($out)
-	movdqa		$rndkey0,$inout7
 	lea		0x80($out),$out
 	
-	mov	$rnds_,$rounds
 	sub	\$8,$len
 	jnc	.Lctr32_loop8
 
-	lea	1($rounds,$rounds),$rounds	# restore original value
-	lea	1($rnds_,$rnds_),$rnds_		# restore original value
 	add	\$8,$len
 	jz	.Lctr32_done
+	lea	-0x80($key),$key
 
 .Lctr32_tail:
-	mov	$key_,$key			# restore $key
-	movdqa	$ivec,$inout0
-	paddb	$one,$ivec
-	movups	($inp),$in0
-	cmp	\$2,$len
-	jb	.Lctr32_one
-
-	movdqa	$ivec,$inout1
-	paddb	$one,$ivec
-	movups	0x10($inp),$in1
-	je	.Lctr32_two
-
-	movdqa	$ivec,$inout2
-	paddb	$one,$ivec
-	movups	0x20($inp),$in2
+	lea	16($key),$key
 	cmp	\$4,$len
-	jb	.Lctr32_three
+	jbe	.Lctr32_loop4
 
-	movdqa	$ivec,$inout3
-	paddb	$one,$ivec
+	movdqa		0x60(%rsp),$inout6
+
+	$movkey		16($key),$rndkey0
+	aesenc		$rndkey1,$inout0
+	lea		16($key),$key
+	aesenc		$rndkey1,$inout1
+	shr		\$1,$rounds
+	aesenc		$rndkey1,$inout2
+	dec		$rounds
+	aesenc		$rndkey1,$inout3
+	aesenc		$rndkey1,$inout4
+	aesenc		$rndkey1,$inout5
+	aesenc		$rndkey1,$inout6
+	pxor		$inout7,$inout7
+	$movkey		16($key),$rndkey1
+
+	call            .Lenc_loop8_enter
+
+	movups	($inp),$in0
+	movups	0x10($inp),$in1
+	movups	0x20($inp),$in2
+	xorps	$in0,$inout0
 	movups	0x30($inp),$in3
-	je	.Lctr32_four
-
-	movdqa	$ivec,$inout4
-	paddb	$one,$ivec
+	xorps	$in1,$inout1
+	movups	0x40($inp),$in0
+	xorps	$in2,$inout2
+	movups	$inout0,($out)
+	xorps	$in3,$inout3
+	movups	$inout1,0x10($out)
+	xorps	$in0,$inout4
+	movups	$inout2,0x20($out)
+	movups	$inout3,0x30($out)
+	movups	$inout4,0x40($out)
 	cmp	\$6,$len
-	jb	.Lctr32_five
+	jb	.Lctr32_done
 
-	movdqa	$ivec,$inout5
-	paddb	$one,$ivec
-	je	.Lctr32_six
+	movups	0x50($inp),$in1
+	xorps	$in1,$inout5
+	movups	$inout5,0x50($out)
+	je	.Lctr32_done
 
-	movdqa	$ivec,$inout6
-	paddb	$one,$ivec
-	xorps	$inout7,$inout7
+	movups	0x60($inp),$in2
+	xorps	$in2,$inout6
+	movups	$inout6,0x60($out)
+	jmp	.Lctr32_done
 
-	call	_aesni_encrypt8
+.align	32
+.Lctr32_loop4:
+	aesenc		$rndkey1,$inout0
+	lea		16($key),$key
+	aesenc		$rndkey1,$inout1
+	aesenc		$rndkey1,$inout2
+	aesenc		$rndkey1,$inout3
+	$movkey		($key),$rndkey1
+	dec		$rounds
+	jnz		.Lctr32_loop4
+	aesenclast	$rndkey1,$inout0
+	aesenclast	$rndkey1,$inout1
+	aesenclast	$rndkey1,$inout2
+	aesenclast	$rndkey1,$inout3
 
-	xorps		$in0,$inout0		# xor
-	movups		0x40($inp),$in0
-	xorps		$in1,$inout1
-	movups		0x50($inp),$in1
-	xorps		$in2,$inout2
-	movups		0x60($inp),$in2
-	lea		0x70($inp),$inp
-	xorps		$in3,$inout3
-	movups		$inout0,($out)		# store output
-	xorps		$in0,$inout4
-	movups		$inout1,0x10($out)
-	xorps		$in1,$inout5
-	movups		$inout2,0x20($out)
-	xorps		$in2,$inout6
-	movups		$inout3,0x30($out)
-	movups		$inout4,0x40($out)
-	movups		$inout5,0x50($out)
-	movups		$inout6,0x60($out)
-	lea		0x70($out),$out
+	movups	($inp),$in0
+	xorps	$in0,$inout0
+	movups	$inout0,($out)
+	cmp	\$2,$len
+	jb	.Lctr32_done
+
+	movups	0x10($inp),$in1
+	xorps	$in1,$inout1
+	movups	$inout1,0x10($out)
+	je	.Lctr32_done
+
+	movups	0x20($inp),$in2
+	xorps	$in2,$inout2
+	movups	$inout2,0x20($out)
+	cmp	\$4,$len
+	jb	.Lctr32_done
+
+	movups	0x30($inp),$in3
+	xorps	$in3,$inout3
+	movups	$inout3,0x30($out)
 	jmp	.Lctr32_done
 
 .align	16
 .Lctr32_one_shortcut:
 	movups	($ivp),$inout0
-	xor	$len_,$len_
 	movups	($inp),$in0
 	mov	240($key),$rounds		# key->rounds
-.Lctr32_one:
 ___
 	&aesni_generate1("enc",$key,$rounds);
 $code.=<<___;
 	xorps	$in0,$inout0
-	lea	0x10($inp),$inp
 	movups	$inout0,($out)
-	lea	0x10($out),$out
 	jmp	.Lctr32_done
 
 .align	16
-.Lctr32_two:
-	xorps	$inout2,$inout2
-	call	_aesni_encrypt3
-	xorps	$in0,$inout0		# xor
-	lea	0x20($inp),$inp
-	xorps	$in1,$inout1
-	movups	$inout0,($out)		# store output
-	movups	$inout1,0x10($out)
-	lea	0x20($out),$out
-	jmp	.Lctr32_done
-
-.align	16
-.Lctr32_three:
-	call	_aesni_encrypt3
-	xorps	$in0,$inout0		# xor
-	lea	0x30($inp),$inp
-	xorps	$in1,$inout1
-	movups	$inout0,($out)		# store output
-	xorps	$in2,$inout2
-	movups	$inout1,0x10($out)
-	movups	$inout2,0x20($out)
-	lea	0x30($out),$out
-	jmp	.Lctr32_done
-
-.align	16
-.Lctr32_four:
-	call	_aesni_encrypt4
-	xorps	$in0,$inout0		# xor
-	lea	0x40($inp),$inp
-	xorps	$in1,$inout1
-	movups	$inout0,($out)		# store output
-	xorps	$in2,$inout2
-	movups	$inout1,0x10($out)
-	xorps	$in3,$inout3
-	movups	$inout2,0x20($out)
-	movups	$inout3,0x30($out)
-	lea	0x40($out),$out
-	jmp	.Lctr32_done
-
-.align	16
-.Lctr32_five:
-	xorps	$inout5,$inout5
-	call	_aesni_encrypt6
-	xorps	$in0,$inout0		# xor
-	movups	0x40($inp),$in0
-	lea	0x50($inp),$inp
-	xorps	$in1,$inout1
-	movups	$inout0,($out)		# store output
-	xorps	$in2,$inout2
-	movups	$inout1,0x10($out)
-	xorps	$in3,$inout3
-	movups	$inout2,0x20($out)
-	xorps	$in0,$inout4
-	movups	$inout3,0x30($out)
-	movups	$inout4,0x40($out)
-	lea	0x50($out),$out
-	jmp	.Lctr32_done
-
-.align	16
-.Lctr32_six:
-	call	_aesni_encrypt6
-	xorps	$in0,$inout0		# xor
-	movups	0x40($inp),$in0
-	xorps	$in1,$inout1
-	movups	0x50($inp),$in1
-	lea	0x60($inp),$inp
-	xorps	$in2,$inout2
-	movups	$inout0,($out)		# store output
-	xorps	$in3,$inout3
-	movups	$inout1,0x10($out)
-	xorps	$in0,$inout4
-	movups	$inout2,0x20($out)
-	xorps	$in1,$inout5
-	movups	$inout3,0x30($out)
-	movups	$inout4,0x40($out)
-	movups	$inout5,0x50($out)
-	lea	0x60($out),$out
-
 .Lctr32_done:
-	test	$len_,$len_
-	jz	.Lctr32_really_done
-
-	movdqa	.Lbswap_mask(%rip),$rndkey1
-	pshufb	$rndkey1,$ivec
-	psrldq	\$14,$one		# 256
-	paddd	$one,$ivec
-	pslldq	\$14,$one
-	pshufb	$rndkey1,$ivec
-	mov	$len_,$len
-	mov	\$256,%rax
-	jmp	.Lctr32_grandloop
-
-.Lctr32_really_done:
 ___
 $code.=<<___ if ($win64);
-	movaps	0x00(%rsp),%xmm6
-	movaps	0x10(%rsp),%xmm7
-	movaps	0x20(%rsp),%xmm8
-	movaps	0x30(%rsp),%xmm9
-	movaps	0x40(%rsp),%xmm10
-	movaps	0x50(%rsp),%xmm11
-	movaps	0x60(%rsp),%xmm12
-	movaps	0x70(%rsp),%xmm13
-	movaps	0x80(%rsp),%xmm14
-	movaps	0x90(%rsp),%xmm15
-	lea	0xa8(%rsp),%rsp
+	movaps	-0xa0(%rbp),%xmm6
+	movaps	-0x90(%rbp),%xmm7
+	movaps	-0x80(%rbp),%xmm8
+	movaps	-0x70(%rbp),%xmm9
+	movaps	-0x60(%rbp),%xmm10
+	movaps	-0x50(%rbp),%xmm11
+	movaps	-0x40(%rbp),%xmm12
+	movaps	-0x30(%rbp),%xmm13
+	movaps	-0x20(%rbp),%xmm14
+	movaps	-0x10(%rbp),%xmm15
 ___
 $code.=<<___;
-.Lctr32_ret:
+	lea	(%rbp),%rsp
+	pop	%rbp
+.Lctr32_epilogue:
 	ret
 .size	aesni_ctr32_encrypt_blocks,.-aesni_ctr32_encrypt_blocks
 ___
@@ -1417,16 +1421,16 @@ aesni_xts_encrypt:
 	and	\$-16,%rsp	# Linux kernel stack can be incorrectly seeded
 ___
 $code.=<<___ if ($win64);
-	movaps	%xmm6,0x60(%rsp)
-	movaps	%xmm7,0x70(%rsp)
-	movaps	%xmm8,0x80(%rsp)
-	movaps	%xmm9,0x90(%rsp)
-	movaps	%xmm10,0xa0(%rsp)
-	movaps	%xmm11,0xb0(%rsp)
-	movaps	%xmm12,0xc0(%rsp)
-	movaps	%xmm13,0xd0(%rsp)
-	movaps	%xmm14,0xe0(%rsp)
-	movaps	%xmm15,0xf0(%rsp)
+	movaps	%xmm6,-0xa8(%rax)
+	movaps	%xmm7,-0x98(%rax)
+	movaps	%xmm8,-0x88(%rax)
+	movaps	%xmm9,-0x78(%rax)
+	movaps	%xmm10,-0x68(%rax)
+	movaps	%xmm11,-0x58(%rax)
+	movaps	%xmm12,-0x48(%rax)
+	movaps	%xmm13,-0x38(%rax)
+	movaps	%xmm14,-0x28(%rax)
+	movaps	%xmm15,-0x18(%rax)
 .Lxts_enc_body:
 ___
 $code.=<<___;
@@ -1782,16 +1786,16 @@ $code.=<<___;
 .Lxts_enc_ret:
 ___
 $code.=<<___ if ($win64);
-	movaps	0x60(%rsp),%xmm6
-	movaps	0x70(%rsp),%xmm7
-	movaps	0x80(%rsp),%xmm8
-	movaps	0x90(%rsp),%xmm9
-	movaps	0xa0(%rsp),%xmm10
-	movaps	0xb0(%rsp),%xmm11
-	movaps	0xc0(%rsp),%xmm12
-	movaps	0xd0(%rsp),%xmm13
-	movaps	0xe0(%rsp),%xmm14
-	movaps	0xf0(%rsp),%xmm15
+	movaps	-0xa0(%rbp),%xmm6
+	movaps	-0x90(%rbp),%xmm7
+	movaps	-0x80(%rbp),%xmm8
+	movaps	-0x70(%rbp),%xmm9
+	movaps	-0x60(%rbp),%xmm10
+	movaps	-0x50(%rbp),%xmm11
+	movaps	-0x40(%rbp),%xmm12
+	movaps	-0x30(%rbp),%xmm13
+	movaps	-0x20(%rbp),%xmm14
+	movaps	-0x10(%rbp),%xmm15
 ___
 $code.=<<___;
 	lea	(%rbp),%rsp
@@ -1812,16 +1816,16 @@ aesni_xts_decrypt:
 	and	\$-16,%rsp	# Linux kernel stack can be incorrectly seeded
 ___
 $code.=<<___ if ($win64);
-	movaps	%xmm6,0x60(%rsp)
-	movaps	%xmm7,0x70(%rsp)
-	movaps	%xmm8,0x80(%rsp)
-	movaps	%xmm9,0x90(%rsp)
-	movaps	%xmm10,0xa0(%rsp)
-	movaps	%xmm11,0xb0(%rsp)
-	movaps	%xmm12,0xc0(%rsp)
-	movaps	%xmm13,0xd0(%rsp)
-	movaps	%xmm14,0xe0(%rsp)
-	movaps	%xmm15,0xf0(%rsp)
+	movaps	%xmm6,-0xa8(%rax)
+	movaps	%xmm7,-0x98(%rax)
+	movaps	%xmm8,-0x88(%rax)
+	movaps	%xmm9,-0x78(%rax)
+	movaps	%xmm10,-0x68(%rax)
+	movaps	%xmm11,-0x58(%rax)
+	movaps	%xmm12,-0x48(%rax)
+	movaps	%xmm13,-0x38(%rax)
+	movaps	%xmm14,-0x28(%rax)
+	movaps	%xmm15,-0x18(%rax)
 .Lxts_dec_body:
 ___
 $code.=<<___;
@@ -2213,16 +2217,16 @@ $code.=<<___;
 .Lxts_dec_ret:
 ___
 $code.=<<___ if ($win64);
-	movaps	0x60(%rsp),%xmm6
-	movaps	0x70(%rsp),%xmm7
-	movaps	0x80(%rsp),%xmm8
-	movaps	0x90(%rsp),%xmm9
-	movaps	0xa0(%rsp),%xmm10
-	movaps	0xb0(%rsp),%xmm11
-	movaps	0xc0(%rsp),%xmm12
-	movaps	0xd0(%rsp),%xmm13
-	movaps	0xe0(%rsp),%xmm14
-	movaps	0xf0(%rsp),%xmm15
+	movaps	-0xa0(%rbp),%xmm6
+	movaps	-0x90(%rbp),%xmm7
+	movaps	-0x80(%rbp),%xmm8
+	movaps	-0x70(%rbp),%xmm9
+	movaps	-0x60(%rbp),%xmm10
+	movaps	-0x50(%rbp),%xmm11
+	movaps	-0x40(%rbp),%xmm12
+	movaps	-0x30(%rbp),%xmm13
+	movaps	-0x20(%rbp),%xmm14
+	movaps	-0x10(%rbp),%xmm15
 ___
 $code.=<<___;
 	lea	(%rbp),%rsp
@@ -2914,45 +2918,9 @@ ccm64_se_handler:
 	jmp	.Lcommon_seh_tail
 .size	ccm64_se_handler,.-ccm64_se_handler
 
-.type	ctr32_se_handler,\@abi-omnipotent
+.type	ctr_xts_se_handler,\@abi-omnipotent
 .align	16
-ctr32_se_handler:
-	push	%rsi
-	push	%rdi
-	push	%rbx
-	push	%rbp
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
-	pushfq
-	sub	\$64,%rsp
-
-	mov	120($context),%rax	# pull context->Rax
-	mov	248($context),%rbx	# pull context->Rip
-
-	lea	.Lctr32_body(%rip),%r10
-	cmp	%r10,%rbx		# context->Rip<"prologue" label
-	jb	.Lcommon_seh_tail
-
-	mov	152($context),%rax	# pull context->Rsp
-
-	lea	.Lctr32_ret(%rip),%r10
-	cmp	%r10,%rbx
-	jae	.Lcommon_seh_tail
-
-	lea	(%rax),%rsi		# %xmm save area
-	lea	512($context),%rdi	# &context.Xmm6
-	mov	\$20,%ecx		# 10*sizeof(%xmm0)/sizeof(%rax)
-	.long	0xa548f3fc		# cld; rep movsq
-	lea	0xa8(%rax),%rax		# adjust stack pointer
-
-	jmp	.Lcommon_seh_tail
-.size	ctr32_se_handler,.-ctr32_se_handler
-
-.type	xts_se_handler,\@abi-omnipotent
-.align	16
-xts_se_handler:
+ctr_xts_se_handler:
 	push	%rsi
 	push	%rdi
 	push	%rbx
@@ -2982,13 +2950,14 @@ xts_se_handler:
 	cmp	%r10,%rbx		# context->Rip>=epilogue label
 	jae	.Lcommon_seh_tail
 
-	lea	0x60(%rax),%rsi		# %xmm save area
+	mov	160($context),%rax	# pull context->Rbp
+	lea	-0xa0(%rax),%rsi	# %xmm save area
 	lea	512($context),%rdi	# & context.Xmm6
 	mov	\$20,%ecx		# 10*sizeof(%xmm0)/sizeof(%rax)
 	.long	0xa548f3fc		# cld; rep movsq
 
 	jmp	.Lcommon_rbp_tail
-.size	xts_se_handler,.-xts_se_handler
+.size	ctr_xts_se_handler,.-ctr_xts_se_handler
 ___
 $code.=<<___;
 .type	cbc_se_handler,\@abi-omnipotent
@@ -3132,14 +3101,15 @@ $code.=<<___ if ($PREFIX eq "aesni");
 	.rva	.Lccm64_dec_body,.Lccm64_dec_ret	# HandlerData[]
 .LSEH_info_ctr32:
 	.byte	9,0,0,0
-	.rva	ctr32_se_handler
+	.rva	ctr_xts_se_handler
+	.rva	.Lctr32_body,.Lctr32_epilogue		# HandlerData[]
 .LSEH_info_xts_enc:
 	.byte	9,0,0,0
-	.rva	xts_se_handler
+	.rva	ctr_xts_se_handler
 	.rva	.Lxts_enc_body,.Lxts_enc_epilogue	# HandlerData[]
 .LSEH_info_xts_dec:
 	.byte	9,0,0,0
-	.rva	xts_se_handler
+	.rva	ctr_xts_se_handler
 	.rva	.Lxts_dec_body,.Lxts_dec_epilogue	# HandlerData[]
 ___
 $code.=<<___;
