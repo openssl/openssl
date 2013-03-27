@@ -450,6 +450,17 @@
  */
 #define SSL_USE_SIGALGS(s)	\
 			(s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_SIGALGS)
+/* Allow TLS 1.2 ciphersuites: applies to DTLS 1.2 as well as TLS 1.2:
+ * may apply to others in future.
+ */
+#define SSL_USE_TLS1_2_CIPHERS(s)	\
+		(s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_TLS1_2_CIPHERS)
+/* Determine if a client can use TLS 1.2 ciphersuites: can't rely on method
+ * flags because it may not be set to correct version yet.
+ */
+#define SSL_CLIENT_USE_TLS1_2_CIPHERS(s)	\
+		((SSL_IS_DTLS(s) && s->client_version <= DTLS1_2_VERSION) || \
+		(!SSL_IS_DTLS(s) && s->client_version >= TLS1_2_VERSION))
 
 /* Mostly for SSLv3 */
 #define SSL_PKEY_RSA_ENC	0
@@ -723,6 +734,10 @@ typedef struct ssl3_enc_method
 #define SSL_ENC_FLAG_SHA256_PRF		0x4
 /* Is DTLS */
 #define SSL_ENC_FLAG_DTLS		0x8
+/* Allow TLS 1.2 ciphersuites: applies to DTLS 1.2 as well as TLS 1.2:
+ * may apply to others in future.
+ */
+#define SSL_ENC_FLAG_TLS1_2_CIPHERS	0x10
 
 #ifndef OPENSSL_NO_COMP
 /* Used for holding the relevant compression methods loaded into SSL_CTX */

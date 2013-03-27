@@ -3383,7 +3383,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 
 #ifndef OPENSSL_NO_HEARTBEATS
 	case SSL_CTRL_TLS_EXT_SEND_HEARTBEAT:
-		if (SSL_version(s) == DTLS1_VERSION || SSL_version(s) == DTLS1_BAD_VER)
+		if (SSL_IS_DTLS(s))
 			ret = dtls1_heartbeat(s);
 		else
 			ret = tls1_heartbeat(s);
@@ -3505,7 +3505,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		return ssl_cert_set_cert_store(s->cert, parg, 1, larg);
 
 	case SSL_CTRL_GET_PEER_SIGNATURE_NID:
-		if (TLS1_get_version(s) >= TLS1_2_VERSION)
+		if (SSL_USE_SIGALGS(s))
 			{
 			if (s->session && s->session->sess_cert)
 				{
@@ -4085,9 +4085,9 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 		{
 		c=sk_SSL_CIPHER_value(prio,i);
 
-		/* Skip TLS v1.2 only ciphersuites if lower than v1.2 */
+		/* Skip TLS v1.2 only ciphersuites if not supported */
 		if ((c->algorithm_ssl & SSL_TLSV1_2) && 
-			(TLS1_get_version(s) < TLS1_2_VERSION))
+			!SSL_USE_TLS1_2_CIPHERS(s))
 			continue;
 
 		ssl_set_cert_masks(cert,c);
