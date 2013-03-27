@@ -3404,14 +3404,14 @@ int ssl3_check_cert_and_algorithm(SSL *s)
 		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_MISSING_DH_KEY);
 		goto f_err;
 		}
-	else if ((alg_k & SSL_kDHr) && (TLS1_get_version(s) < TLS1_2_VERSION) &&
+	else if ((alg_k & SSL_kDHr) && !SSL_USE_SIGALGS(s) &&
 		!has_bits(i,EVP_PK_DH|EVP_PKS_RSA))
 		{
 		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_MISSING_DH_RSA_CERT);
 		goto f_err;
 		}
 #ifndef OPENSSL_NO_DSA
-	else if ((alg_k & SSL_kDHd) && (TLS1_get_version(s) < TLS1_2_VERSION) &&
+	else if ((alg_k & SSL_kDHd) && !SSL_USE_SIGALGS(s) &&
 		!has_bits(i,EVP_PK_DH|EVP_PKS_DSA))
 		{
 		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_MISSING_DH_DSA_CERT);
