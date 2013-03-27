@@ -650,6 +650,24 @@ int dtls1_accept(SSL *s)
 				s->state=SSL3_ST_SR_FINISHED_A;
 				s->init_num = 0;
 				}
+			else if (SSL_USE_SIGALGS(s))
+				{
+				s->state=SSL3_ST_SR_CERT_VRFY_A;
+				s->init_num=0;
+				if (!s->session->peer)
+					break;
+				/* For sigalgs freeze the handshake buffer
+				 * at this point and digest cached records.
+				 */
+				if (!s->s3->handshake_buffer)
+					{
+					SSLerr(SSL_F_SSL3_ACCEPT,ERR_R_INTERNAL_ERROR);
+					return -1;
+					}
+				s->s3->flags |= TLS1_FLAGS_KEEP_HANDSHAKE;
+				if (!ssl3_digest_cached_records(s))
+					return -1;
+				}
 			else
 				{
 				s->state=SSL3_ST_SR_CERT_VRFY_A;
