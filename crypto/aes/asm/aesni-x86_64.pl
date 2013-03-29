@@ -1014,7 +1014,7 @@ ___
 # does not update *ivec! (see crypto/modes/ctr128.c for details)
 #
 # Overhaul based on suggestions from Shay Gueron and Vlad Krasnov,
-# http://rt.openssl.org/Ticket/Display.html?id=3031&user=guest&pass=guest.
+# http://rt.openssl.org/Ticket/Display.html?id=3021&user=guest&pass=guest.
 # Keywords are full unroll and modulo-schedule counter calculations
 # with zero-round key xor.
 {
@@ -1058,9 +1058,9 @@ $code.=<<___;
 	mov	12($key),$key0			# 0-round key LSB
 	movdqa	$inout0,0x00(%rsp)		# populate counter block
 	bswap	$ctr
-	movdqa	$inout0,0x10(%rsp)
-	movdqa	$inout0,0x20(%rsp)
-	movdqa	$inout0,0x30(%rsp)
+	movdqa	$inout0,$inout1
+	movdqa	$inout0,$inout2
+	movdqa	$inout0,$inout3
 	movdqa	$inout0,0x40(%rsp)
 	movdqa	$inout0,0x50(%rsp)
 	movdqa	$inout0,0x60(%rsp)
@@ -1074,15 +1074,18 @@ $code.=<<___;
 	 bswap	%r10d
 	xor	$key0,%r9d
 	 xor	$key0,%r10d
-	mov	%r9d,0x10+12(%rsp)
+	pinsrd	\$3,%r9d,$inout1
 	lea	3($ctr),%r9
-	 mov	%r10d,0x20+12(%rsp)
+	movdqa	$inout1,0x10(%rsp)
+	 pinsrd	\$3,%r10d,$inout2
 	bswap	%r9d
 	 lea	4($ctr),%r10
+	 movdqa	$inout2,0x20(%rsp)
 	xor	$key0,%r9d
 	 bswap	%r10d
-	mov	%r9d,0x30+12(%rsp)
+	pinsrd	\$3,%r9d,$inout3
 	 xor	$key0,%r10d
+	movdqa	$inout3,0x30(%rsp)
 	lea	5($ctr),%r9
 	 mov	%r10d,0x40+12(%rsp)
 	bswap	%r9d
@@ -1099,9 +1102,6 @@ $code.=<<___;
 
 	$movkey	0x10($key),$rndkey1
 
-	movdqa	0x10(%rsp),$inout1
-	movdqa	0x20(%rsp),$inout2
-	movdqa	0x30(%rsp),$inout3
 	movdqa	0x40(%rsp),$inout4
 	movdqa	0x50(%rsp),$inout5
 
@@ -1278,9 +1278,11 @@ $code.=<<___;
 .Lctr32_tail:
 	lea	16($key),$key
 	cmp	\$4,$len
-	jbe	.Lctr32_loop4
+	jb	.Lctr32_loop3
+	je	.Lctr32_loop4
 
 	movdqa		0x60(%rsp),$inout6
+	pxor		$inout7,$inout7
 
 	$movkey		16($key),$rndkey0
 	aesenc		$rndkey1,$inout0
@@ -1290,17 +1292,16 @@ $code.=<<___;
 	aesenc		$rndkey1,$inout2
 	dec		$rounds
 	aesenc		$rndkey1,$inout3
+	 movups		($inp),$in0
 	aesenc		$rndkey1,$inout4
+	 movups		0x10($inp),$in1
 	aesenc		$rndkey1,$inout5
+	 movups		0x20($inp),$in2
 	aesenc		$rndkey1,$inout6
-	pxor		$inout7,$inout7
 	$movkey		16($key),$rndkey1
 
 	call            .Lenc_loop8_enter
 
-	movups	($inp),$in0
-	movups	0x10($inp),$in1
-	movups	0x20($inp),$in2
 	xorps	$in0,$inout0
 	movups	0x30($inp),$in3
 	xorps	$in1,$inout1
@@ -1337,9 +1338,36 @@ $code.=<<___;
 	dec		$rounds
 	jnz		.Lctr32_loop4
 	aesenclast	$rndkey1,$inout0
+	 movups		($inp),$in0
+	aesenclast	$rndkey1,$inout1
+	 movups		0x10($inp),$in1
+	aesenclast	$rndkey1,$inout2
+	 movups		0x20($inp),$in2
+	aesenclast	$rndkey1,$inout3
+	 movups		0x30($inp),$in3
+
+	xorps	$in0,$inout0
+	movups	$inout0,($out)
+	xorps	$in1,$inout1
+	movups	$inout1,0x10($out)
+	xorps	$in2,$inout2
+	movups	$inout2,0x20($out)
+	xorps	$in3,$inout3
+	movups	$inout3,0x30($out)
+	jmp	.Lctr32_done
+
+.align	32
+.Lctr32_loop3:
+	aesenc		$rndkey1,$inout0
+	lea		16($key),$key
+	aesenc		$rndkey1,$inout1
+	aesenc		$rndkey1,$inout2
+	$movkey		($key),$rndkey1
+	dec		$rounds
+	jnz		.Lctr32_loop3
+	aesenclast	$rndkey1,$inout0
 	aesenclast	$rndkey1,$inout1
 	aesenclast	$rndkey1,$inout2
-	aesenclast	$rndkey1,$inout3
 
 	movups	($inp),$in0
 	xorps	$in0,$inout0
@@ -1355,12 +1383,6 @@ $code.=<<___;
 	movups	0x20($inp),$in2
 	xorps	$in2,$inout2
 	movups	$inout2,0x20($out)
-	cmp	\$4,$len
-	jb	.Lctr32_done
-
-	movups	0x30($inp),$in3
-	xorps	$in3,$inout3
-	movups	$inout3,0x30($out)
 	jmp	.Lctr32_done
 
 .align	16
