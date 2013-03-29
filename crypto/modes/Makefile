@@ -50,6 +50,8 @@ ghash-x86.s:	asm/ghash-x86.pl
 	$(PERL) asm/ghash-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
 ghash-x86_64.s:	asm/ghash-x86_64.pl
 	$(PERL) asm/ghash-x86_64.pl $(PERLASM_SCHEME) > $@
+aesni-gcm-x86_64.s:	asm/aesni-gcm-x86_64.pl
+	$(PERL) asm/aesni-gcm-x86_64.pl $(PERLASM_SCHEME) > $@
 ghash-sparcv9.s:	asm/ghash-sparcv9.pl
 	$(PERL) asm/ghash-sparcv9.pl $@ $(CFLAGS)
 ghash-alpha.s:	asm/ghash-alpha.pl
