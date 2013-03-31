@@ -46,6 +46,8 @@
 .ident "des_enc.m4 2.1"
 .file  "des_enc-sparc.S"
 
+#include <openssl/opensslconf.h>
+
 #ifdef OPENSSL_FIPSCANISTER
 #include <openssl/fipssyms.h>
 #endif
