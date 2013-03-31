@@ -1582,6 +1582,63 @@ my %movxopf = (	"movdtox"	=> 0x110,
     }
 }
 
+sub undes {
+my ($mnemonic)=shift;
+my @args=@_;
+my ($ref,$opf);
+my %desopf = (	"des_round"	=> 0b1001,
+		"des_ip"	=> 0b100110100,
+		"des_iip"	=> 0b100110101,
+		"des_kexpand"	=> 0b100110110	);
+
+    $ref = "$mnemonic\t".join(",",@_);
+
+    if (defined($opf=$desopf{$mnemonic})) {	# 4-arg
+	if ($mnemonic eq "des_round") {
+	    foreach (@args[0..3]) {
+		return $ref if (!/%f([0-9]{1,2})/);
+		$_=$1;
+		if ($1>=32) {
+		    return $ref if ($1&1);
+		    # re-encode for upper double register addressing
+		    $_=($1|$1>>5)&31;
+		}
+	    }
+	    return  sprintf ".word\t0x%08x !%s",
+			    2<<30|0b011001<<19|$opf<<5|$args[0]<<14|$args[1]|$args[2]<<9|$args[3]<<25,
+			    $ref;
+	} elsif ($mnemonic eq "des_kexpand") {	# 3-arg
+	    foreach (@args[0..2]) {
+		return $ref if (!/(%f)?([0-9]{1,2})/);
+		$_=$2;
+		if ($2>=32) {
+		    return $ref if ($2&1);
+		    # re-encode for upper double register addressing
+		    $_=($2|$2>>5)&31;
+		}
+	    }
+	    return  sprintf ".word\t0x%08x !%s",
+			    2<<30|0b110110<<19|$opf<<5|$args[0]<<14|$args[1]|$args[2]<<25,
+			    $ref;
+	} else {				# 2-arg
+	    foreach (@args[0..1]) {
+		return $ref if (!/%f([0-9]{1,2})/);
+		$_=$1;
+		if ($1>=32) {
+		    return $ref if ($2&1);
+		    # re-encode for upper double register addressing
+		    $_=($1|$1>>5)&31;
+		}
+	    }
+	    return  sprintf ".word\t0x%08x !%s",
+			    2<<30|0b110110<<19|$opf<<5|$args[0]<<14|$args[1]<<25,
+			    $ref;
+	}
+    } else {
+	return $ref;
+    }
+}
+
 sub emit_assembler {
     foreach (split("\n",$::code)) {
 	s/\`([^\`]*)\`/eval $1/ge;
@@ -1599,6 +1656,9 @@ sub emit_assembler {
 	 /geo or
 	s/\b(camellia_[^s]+)\s+(%f[0-9]{1,2}),\s*(%f[0-9]{1,2}),\s*(%f[0-9]{1,2})/
 		&uncamellia3($1,$2,$3,$4)
+	 /geo or
+	s/\b(des_\w+)\s+(?<rs1>%f[0-9]{1,2}),\s*(?<rs2>[%fx0-9]+)(,\s*(?<rs3>%f[0-9]{1,2})(,\s*(?<rs4>%f[0-9]{1,2}))?)?/
+		&undes($1,$+{rs1},$+{rs2},$+{rs3},$+{rs4})
 	 /geo or
 	s/\b(mov[ds]to\w+)\s+(%f[0-9]{1,2}),\s*(%[goli][0-7])/
 		&unmovxtox($1,$2,$3)
