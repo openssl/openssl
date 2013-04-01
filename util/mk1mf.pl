@@ -610,6 +610,7 @@ EOF
 	}
 
 $defs= <<"EOF";
+# N.B. You MUST use -j on FreeBSD.
 # This makefile has been automatically generated from the OpenSSL distribution.
 # This single makefile will build the complete OpenSSL distribution and
 # by default leave the 'intertesting' output files in .${o}out and the stuff
@@ -754,7 +755,7 @@ $banner
 
 # This needs to be invoked once, when the makefile is first constructed, or
 # after cleaning.
-init: \$(TMP_D) \$(LIB_D) headers
+init: \$(TMP_D) \$(LIB_D) \$(INC_D) \$(INCO_D) \$(BIN_D) \$(TEST_D) headers
 
 headers: \$(HEADER) \$(EXHEADER)
 
@@ -1371,7 +1372,8 @@ sub do_copy_rule
 		if ($n =~ /bss_file/)
 			{ $pp=".c"; }
 		else	{ $pp=$p; }
-		$ret.="$to${o}$n$pp: \$(SRC_D)$o$_$pp $to\n\t\$(PERL) \$(SRC_D)${o}util${o}copy-if-different.pl \"\$(SRC_D)$o$_$pp\" \"$to${o}$n$pp\"\n\n";
+#		$ret.="$to${o}$n$pp: \$(SRC_D)$o$_$pp\n\t\$(PERL) \$(SRC_D)${o}util${o}copy-if-different.pl \"\$(SRC_D)$o$_$pp\" \"$to${o}$n$pp\"\n\n";
+		$ret.="$to${o}$n$pp: \$(SRC_D)$o$_$pp\n\t\$(CP) \"\$(SRC_D)$o$_$pp\" \"$to${o}$n$pp\"\n\n";
 		}
 	return($ret);
 	}

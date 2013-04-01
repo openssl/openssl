@@ -249,10 +249,10 @@ test_rand: $(RANDTEST)
 test_gost2814789: $(GOST2814789TEST)
 	../util/shlib_wrap.sh ./$(GOST2814789TEST)
 
-test_enc: ../apps/openssl
+test_enc: ../apps/openssl testenc
 	@sh ./testenc
 
-test_x509: ../apps/openssl
+test_x509: ../apps/openssl tx509 testx509.pem v3-cert1.pem v3-cert2.pem
 	echo test normal x509v1 certificate
 	sh ./tx509 2>/dev/null
 	echo test first x509v3 certificate
@@ -264,17 +264,17 @@ test_rsa: $(RSATEST)$(EXE_EXT) ../apps/openssl
 	@sh ./trsa 2>/dev/null
 	../util/shlib_wrap.sh ./$(RSATEST)
 
-test_crl: ../apps/openssl
+test_crl: ../apps/openssl tcrl testcrl.pem
 	@sh ./tcrl 2>/dev/null
 
-test_sid: ../apps/openssl
+test_sid: ../apps/openssl tsid
 	@sh ./tsid 2>/dev/null
 
-test_req: ../apps/openssl
+test_req: ../apps/openssl treq testreq.pem testreq2.pem
 	@sh ./treq 2>/dev/null
 	@sh ./treq testreq2.pem 2>/dev/null
 
-test_pkcs7: ../apps/openssl
+test_pkcs7: ../apps/openssl tpkcs7 tpkcs7d
 	@sh ./tpkcs7 2>/dev/null
 	@sh ./tpkcs7d 2>/dev/null
 
@@ -313,12 +313,12 @@ test_dsa: $(DSATEST)
 	../util/shlib_wrap.sh ./$(DSATEST)
 	../util/shlib_wrap.sh ./$(DSATEST) -app2_1
 
-test_gen: ../apps/openssl testgen
+test_gen: ../apps/openssl testgen test.cnf
 	@echo "Generate and verify a certificate request"
 	@sh ./testgen
 
 test_ss keyU.ss certU.ss certCA.ss certP1.ss keyP1.ss certP2.ss keyP2.ss \
-		intP1.ss intP2.ss: testss
+		intP1.ss intP2.ss: testss CAss.cnf Uss.cnf P1ss.cnf P2ss.cnf
 	@echo "Generate and certify a test certificate"
 	@sh ./testss
 	@cat certCA.ss certU.ss > intP1.ss
@@ -336,7 +336,7 @@ test_ssl: keyU.ss certU.ss certCA.ss certP1.ss keyP1.ss certP2.ss keyP2.ss \
 	@sh ./testsslproxy keyP1.ss certP1.ss intP1.ss
 	@sh ./testsslproxy keyP2.ss certP2.ss intP2.ss
 
-test_ca: ../apps/openssl
+test_ca: ../apps/openssl testca CAss.cnf Uss.cnf
 	@if ../util/shlib_wrap.sh ../apps/openssl no-rsa; then \
 	  echo "skipping CA.sh test -- requires RSA"; \
 	else \
@@ -348,7 +348,7 @@ test_aes: #$(AESTEST)
 #	@echo "test Rijndael"
 #	../util/shlib_wrap.sh ./$(AESTEST)
 
-test_tsa: ../apps/openssl
+test_tsa: ../apps/openssl testtsa CAtsa.cnf ../util/shlib_wrap.sh
 	@if ../util/shlib_wrap.sh ../apps/openssl no-rsa; then \
 	  echo "skipping testtsa test -- requires RSA"; \
 	else \
@@ -375,7 +375,7 @@ test_v3name: $(V3NAMETEST)$(EXE_EXT)
 	@echo "Test X509v3_check_*"
 	../util/shlib_wrap.sh ./$(V3NAMETEST)
 
-test_ocsp: ../apps/openssl
+test_ocsp: ../apps/openssl tocsp
 	@echo "Test OCSP"
 	@sh ./tocsp
 

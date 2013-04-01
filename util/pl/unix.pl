@@ -211,25 +211,47 @@ sub fixrules
   {
   my ($str) = @_;
 
+  # Compatible with -j...
+  $str =~ s/^(\s+@?)/$1cd \$(TEST_D) && /;
   return $str;
 
+  # Compatible with not -j.
   my @t = split("\n", $str);
   $str = '';
+  my $prev;
   foreach my $t (@t)
     {
     $t =~ s/^\s+//;
-    if ($t =~ /^@/)
+    if (!$prev)
       {
-      $t =~ s/^@/\@cd \$(TEST_D) && /;
-      }
-    else
-      {
-      $t = 'cd $(TEST_D) && ' . $t;
+      if ($t =~ /^@/)
+	{
+        $t =~ s/^@/\@cd \$(TEST_D) && /;
+        }
+      elsif ($t !~ /^\s*#/)
+	{
+        $t = 'cd $(TEST_D) && ' . $t;
+        }
       }
     $str .= "\t$t\n";
+    $prev = $t =~/\\$/;
     }
   return $str;
 }
+
+sub copy_scripts
+  {
+  my ($src, @targets) = @_;
+
+  my $s = '';
+  foreach my $t (@targets)
+    {
+    # Copy first so we get file modes...
+    $s .= "\$(TEST_D)/$t: \$(SRC_D)/$src/$t\n\tcp \$(SRC_D)/$src/$t \$(TEST_D)/$t\n\tsed -e 's/\\.\\.\\/apps/..\\/\$(OUT_D)/' -e 's/\\.\\.\\/util/..\\/\$(TEST_D)/' < \$(SRC_D)/$src/$t > \$(TEST_D)/$t\n\n";
+    }
+  return $s;
+  }
+
 
 sub get_tests
   {
@@ -308,21 +330,61 @@ sub get_tests
 
     my $d = $deps{$t};
     $d =~ s/\.\.\/apps/\$(BIN_D)/g;
+    $d =~ s/\.\.\/util/\$(TEST_D)/g;
     $d = fixtests($d, \%tests);
     $d = fixdeps($d);
 
     my $r = $targets{$t};
-    $r =~ s/\.\.\/apps/\$(BIN_D)/g;
+    $r =~ s/\.\.\/apps/..\/\$(BIN_D)/g;
+    $r =~ s/\.\.\/util/..\/\$(TEST_D)/g;
     $r =~ s/\.\.\/(\S+)/\$(SRC_D)\/$1/g;
     $r = fixrules($r);
 
-    $each .= "$t: \$(TEST_D) $d\n\tcd \$(TEST_D)\n$r\n";
+    $each .= "$t: test_scripts $d\n$r\n";
     }
 
   # FIXME: Might be a clever way to figure out what needs copying
-  my $copies = do_copy_rule('$(TEST_D)', 'test/bctest test/evptests.txt test/testgen test/cms-test.pl', '');
+  my @copies = ( 'bctest',
+		 'evptests.txt',
+		 'testgen',
+		 'cms-test.pl',
+		 'tx509',
+		 'test.cnf',
+		 'testenc',
+		 'tocsp',
+		 'testca',
+		 'CAss.cnf',
+		 'testtsa',
+		 'CAtsa.cnf',
+		 'Uss.cnf',
+		 'P1ss.cnf',
+		 'P2ss.cnf',
+		 'tcrl',
+		 'tsid',
+		 'treq',
+		 'tpkcs7',
+		 'tpkcs7d',
+		 'testcrl.pem',
+		 'testx509.pem',
+		 'v3-cert1.pem',
+		 'v3-cert2.pem',
+		 'testreq2.pem',
+	       );
+  my $copies = copy_scripts('test', @copies);
 
-  return "$copies\n$tests\n$all\n\n$each";
+  my @utils = ( 'shlib_wrap.sh',
+		'opensslwrap.sh',
+	      );
+  $copies .= copy_scripts('util', @utils);
+
+  my @apps = ( 'CA.sh',
+	       'openssl.cnf',
+	     );
+  $copies .= copy_scripts('apps', @apps);
+
+  $scripts = "test_scripts: \$(TEST_D)/CA.sh \$(TEST_D)/opensslwrap.sh \$(TEST_D)/openssl.cnf\n";
+
+  return "$scripts\n$copies\n$tests\n$all\n\n$each";
   }
 
 1;
