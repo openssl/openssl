@@ -382,7 +382,8 @@ sub get_tests
 	     );
   $copies .= copy_scripts('apps', @apps);
 
-  $scripts = "test_scripts: \$(TEST_D)/CA.sh \$(TEST_D)/opensslwrap.sh \$(TEST_D)/openssl.cnf\n";
+  $scripts = "test_scripts: \$(TEST_D)/CA.sh \$(TEST_D)/opensslwrap.sh \$(TEST_D)/openssl.cnf ocsp\n";
+  $scripts .= "\nocsp:\n\tcp -R test/ocsp-tests \$(TEST_D)\n";
 
   return "$scripts\n$copies\n$tests\n$all\n\n$each";
   }
