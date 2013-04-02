@@ -274,7 +274,7 @@ test_req: ../apps/openssl treq testreq.pem testreq2.pem
 	@sh ./treq 2>/dev/null
 	@sh ./treq testreq2.pem 2>/dev/null
 
-test_pkcs7: ../apps/openssl tpkcs7 tpkcs7d
+test_pkcs7: ../apps/openssl tpkcs7 tpkcs7d testp7.pem pkcs7-1.pem
 	@sh ./tpkcs7 2>/dev/null
 	@sh ./tpkcs7d 2>/dev/null
 

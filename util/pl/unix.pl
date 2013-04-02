@@ -369,6 +369,8 @@ sub get_tests
 		 'v3-cert1.pem',
 		 'v3-cert2.pem',
 		 'testreq2.pem',
+		 'testp7.pem',
+		 'pkcs7-1.pem',
 	       );
   my $copies = copy_scripts('test', @copies);
 
