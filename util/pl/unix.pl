@@ -371,6 +371,8 @@ sub get_tests
 		 'testreq2.pem',
 		 'testp7.pem',
 		 'pkcs7-1.pem',
+		 'trsa',
+		 'testrsa.pem',
 	       );
   my $copies = copy_scripts('test', @copies);
 

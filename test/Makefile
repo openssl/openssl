@@ -260,7 +260,7 @@ test_x509: ../apps/openssl tx509 testx509.pem v3-cert1.pem v3-cert2.pem
 	echo test second x509v3 certificate
 	sh ./tx509 v3-cert2.pem 2>/dev/null
 
-test_rsa: $(RSATEST)$(EXE_EXT) ../apps/openssl
+test_rsa: $(RSATEST)$(EXE_EXT) ../apps/openssl trsa testrsa.pem
 	@sh ./trsa 2>/dev/null
 	../util/shlib_wrap.sh ./$(RSATEST)
 
