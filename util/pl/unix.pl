@@ -241,17 +241,18 @@ sub fixrules
 
 sub copy_scripts
   {
-  my ($src, @targets) = @_;
+  my ($sed, $src, @targets) = @_;
 
   my $s = '';
   foreach my $t (@targets)
     {
     # Copy first so we get file modes...
-    $s .= "\$(TEST_D)/$t: \$(SRC_D)/$src/$t\n\tcp \$(SRC_D)/$src/$t \$(TEST_D)/$t\n\tsed -e 's/\\.\\.\\/apps/..\\/\$(OUT_D)/' -e 's/\\.\\.\\/util/..\\/\$(TEST_D)/' < \$(SRC_D)/$src/$t > \$(TEST_D)/$t\n\n";
+    $s .= "\$(TEST_D)/$t: \$(SRC_D)/$src/$t\n\tcp \$(SRC_D)/$src/$t \$(TEST_D)/$t\n";
+    $s .= "\tsed -e 's/\\.\\.\\/apps/..\\/\$(OUT_D)/' -e 's/\\.\\.\\/util/..\\/\$(TEST_D)/' < \$(SRC_D)/$src/$t > \$(TEST_D)/$t\n" if $sed;
+    $s .= "\n";
     }
   return $s;
   }
-
 
 sub get_tests
   {
@@ -374,20 +375,22 @@ sub get_tests
 		 'trsa',
 		 'testrsa.pem',
 	       );
-  my $copies = copy_scripts('test', @copies);
+  my $copies = copy_scripts(1, 'test', @copies);
+  $copies .= copy_scripts(0, 'test', ('smcont.txt'));
 
   my @utils = ( 'shlib_wrap.sh',
 		'opensslwrap.sh',
 	      );
-  $copies .= copy_scripts('util', @utils);
+  $copies .= copy_scripts(1, 'util', @utils);
 
   my @apps = ( 'CA.sh',
 	       'openssl.cnf',
 	     );
-  $copies .= copy_scripts('apps', @apps);
+  $copies .= copy_scripts(1, 'apps', @apps);
 
-  $scripts = "test_scripts: \$(TEST_D)/CA.sh \$(TEST_D)/opensslwrap.sh \$(TEST_D)/openssl.cnf ocsp\n";
+  $scripts = "test_scripts: \$(TEST_D)/CA.sh \$(TEST_D)/opensslwrap.sh \$(TEST_D)/openssl.cnf ocsp smime\n";
   $scripts .= "\nocsp:\n\tcp -R test/ocsp-tests \$(TEST_D)\n";
+  $scripts .= "\smime:\n\tcp -R test/smime-certs \$(TEST_D)\n";
 
   return "$scripts\n$copies\n$tests\n$all\n\n$each";
   }

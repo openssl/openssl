@@ -363,7 +363,7 @@ test_jpake: $(JPAKETEST)$(EXE_EXT)
 	@echo "Test JPAKE"
 	../util/shlib_wrap.sh ./$(JPAKETEST)
 
-test_cms: ../apps/openssl cms-test.pl
+test_cms: ../apps/openssl cms-test.pl smcont.txt
 	@echo "CMS consistency test"
 	$(PERL) cms-test.pl
 
