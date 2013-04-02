@@ -267,7 +267,7 @@ test_rsa: $(RSATEST)$(EXE_EXT) ../apps/openssl trsa testrsa.pem
 test_crl: ../apps/openssl tcrl testcrl.pem
 	@sh ./tcrl 2>/dev/null
 
-test_sid: ../apps/openssl tsid
+test_sid: ../apps/openssl tsid testsid.pem
 	@sh ./tsid 2>/dev/null
 
 test_req: ../apps/openssl treq testreq.pem testreq2.pem

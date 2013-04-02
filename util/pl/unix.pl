@@ -374,6 +374,7 @@ sub get_tests
 		 'pkcs7-1.pem',
 		 'trsa',
 		 'testrsa.pem',
+		 'testsid.pem',
 	       );
   my $copies = copy_scripts(1, 'test', @copies);
   $copies .= copy_scripts(0, 'test', ('smcont.txt'));
