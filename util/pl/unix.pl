@@ -320,16 +320,6 @@ sub get_tests
     {
     next if $t eq '';
 
-    if ($t =~ /^test_ss/)
-      {
-      $t =~ s/\s+/ \$(TEST_D)\//g;
-      $all .= ' test_ss';
-      }
-    else
-      {
-      $all .= " $t";
-      }
-
     my $d = $deps{$t};
     $d =~ s/\.\.\/apps/\$(BIN_D)/g;
     $d =~ s/\.\.\/util/\$(TEST_D)/g;
@@ -341,6 +331,18 @@ sub get_tests
     $r =~ s/\.\.\/util/..\/\$(TEST_D)/g;
     $r =~ s/\.\.\/(\S+)/\$(SRC_D)\/$1/g;
     $r = fixrules($r);
+
+    next if $r eq '';
+
+    if ($t =~ /^test_ss/)
+      {
+      $t =~ s/\s+/ \$(TEST_D)\//g;
+      $all .= ' test_ss';
+      }
+    else
+      {
+      $all .= " $t";
+      }
 
     $each .= "$t: test_scripts $d\n\t\@echo '$t test started'\n$r\t\@echo '$t test done'\n\n";
     }
@@ -376,6 +378,7 @@ sub get_tests
 		 'trsa',
 		 'testrsa.pem',
 		 'testsid.pem',
+		 'testss',
 	       );
   my $copies = copy_scripts(1, 'test', @copies);
   $copies .= copy_scripts(0, 'test', ('smcont.txt'));

@@ -318,7 +318,8 @@ test_gen: ../apps/openssl testgen test.cnf
 	@sh ./testgen
 
 test_ss keyU.ss certU.ss certCA.ss certP1.ss keyP1.ss certP2.ss keyP2.ss \
-		intP1.ss intP2.ss: testss CAss.cnf Uss.cnf P1ss.cnf P2ss.cnf
+		intP1.ss intP2.ss: testss CAss.cnf Uss.cnf P1ss.cnf P2ss.cnf \
+                                   ../apps/openssl
 	@echo "Generate and certify a test certificate"
 	@sh ./testss
 	@cat certCA.ss certU.ss > intP1.ss
