@@ -341,7 +341,7 @@ sub get_tests
     $r =~ s/\.\.\/(\S+)/\$(SRC_D)\/$1/g;
     $r = fixrules($r);
 
-    $each .= "$t: test_scripts $d\n$r\n";
+    $each .= "$t: test_scripts $d\n\t\@echo '$t test started'\n$r\t\@echo '$t test done'\n\n";
     }
 
   # FIXME: Might be a clever way to figure out what needs copying
