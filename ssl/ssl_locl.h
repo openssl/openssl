@@ -453,6 +453,12 @@
  */
 #define SSL_USE_TLS1_2_CIPHERS(s)	\
 		(s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_TLS1_2_CIPHERS)
+/* Determine if a client can use TLS 1.2 ciphersuites: can't rely on method
+ * flags because it may not be set to correct version yet.
+ */
+#define SSL_CLIENT_USE_TLS1_2_CIPHERS(s)	\
+		((SSL_IS_DTLS(s) && s->client_version <= DTLS1_2_VERSION) || \
+		(!SSL_IS_DTLS(s) && s->client_version >= TLS1_2_VERSION))
 
 /* Mostly for SSLv3 */
 #define SSL_PKEY_RSA_ENC	0
