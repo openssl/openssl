@@ -658,7 +658,7 @@ void gcm_init_clmul(u128 Htable[16],const u64 Xi[2]);
 void gcm_gmult_clmul(u64 Xi[2],const u128 Htable[16]);
 void gcm_ghash_clmul(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
 
-#if defined(__i386) || defined(__i386__)
+#if defined(__i386) || defined(__i386__) || defined(_M_IX86)
 # define gcm_init_avx	gcm_init_clmul
 # define gcm_gmult_avx	gcm_gmult_clmul
 # define gcm_ghash_avx	gcm_ghash_clmul
