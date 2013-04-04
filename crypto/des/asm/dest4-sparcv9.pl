@@ -282,7 +282,15 @@ des_t4_cbc_decrypt:
 	st		%f3, [$ivec + 4]
 .type	des_t4_cbc_decrypt,#function
 .size	des_t4_cbc_decrypt,.-des_t4_cbc_decrypt
+___
 
+# One might wonder why does one have back-to-back des_iip/des_ip
+# pairs between EDE passes. Indeed, aren't they inverse of each other?
+# They almost are. Outcome of the pair is 32-bit words being swapped
+# in target register. Consider pair of des_iip/des_ip as a way to
+# perform the due swap, it's actually fastest way in this case.
+
+$code.=<<___;
 .globl	des_t4_ede3_cbc_encrypt
 .align	32
 des_t4_ede3_cbc_encrypt:
