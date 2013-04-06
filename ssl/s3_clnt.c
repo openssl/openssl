@@ -694,6 +694,36 @@ int ssl3_client_hello(SSL *s)
 			if (!ssl_get_new_session(s,0))
 				goto err;
 			}
+		if (s->method->version == DTLS_ANY_VERSION)
+			{
+			/* Determine which DTLS version to use */
+			int options = s->options;
+			/* If DTLS 1.2 disabled correct the version number */
+			if (options & SSL_OP_NO_DTLSv1_2)
+				{
+				/* Disabling all versions is silly: return an
+				 * error.
+				 */
+				if (options & SSL_OP_NO_DTLSv1)
+					{
+					SSLerr(SSL_F_SSL3_CLIENT_HELLO,SSL_R_WRONG_SSL_VERSION);
+					goto err;
+					}
+				/* Update method so we don't use any DTLS 1.2
+				 * features.
+				 */
+				s->method = DTLSv1_client_method();
+				s->version = DTLS1_VERSION;
+				}
+			else
+				{
+				/* We only support one version: update method */
+				if (options & SSL_OP_NO_DTLSv1)
+					s->method = DTLSv1_2_client_method();
+				s->version = DTLS1_2_VERSION;
+				}
+			s->client_version = s->version;
+			}
 		/* else use the pre-loaded session */
 
 		p=s->s3->client_random;
@@ -721,6 +751,7 @@ int ssl3_client_hello(SSL *s)
 			Time=(unsigned long)time(NULL);	/* Time */
 			l2n(Time,p);
 			RAND_pseudo_bytes(p,sizeof(s->s3->client_random)-4);
+					
 			}
 
 		/* Do the message type and length last */
@@ -873,6 +904,11 @@ int ssl3_get_server_hello(SSL *s)
 #ifndef OPENSSL_NO_COMP
 	SSL_COMP *comp;
 #endif
+	/* Hello verify request and/or server hello version may not
+	 * match so set first packet if we're negotiating version.
+	 */
+	if (s->method->version == DTLS_ANY_VERSION)
+		s->first_packet = 1;
 
 	n=s->method->ssl_get_message(s,
 		SSL3_ST_CR_SRVR_HELLO_A,
@@ -885,6 +921,7 @@ int ssl3_get_server_hello(SSL *s)
 
 	if (SSL_IS_DTLS(s))
 		{
+		s->first_packet = 0;
 		if ( s->s3->tmp.message_type == DTLS1_MT_HELLO_VERIFY_REQUEST)
 			{
 			if ( s->d1->send_cookie == 0)
@@ -909,6 +946,21 @@ int ssl3_get_server_hello(SSL *s)
 		}
 
 	d=p=(unsigned char *)s->init_msg;
+	if (s->method->version == DTLS_ANY_VERSION)
+		{
+		/* Work out correct protocol version to use */
+		int hversion = (p[0] << 8)|p[1];
+		int options = s->options;
+		if (hversion == DTLS1_2_VERSION
+			&& !(options & SSL_OP_NO_DTLSv1_2))
+			s->method = DTLSv1_2_client_method();
+		else if (hversion == DTLS1_VERSION
+			&& !(options & SSL_OP_NO_DTLSv1))
+			s->method = DTLSv1_client_method();
+		else
+			SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_WRONG_SSL_VERSION);
+		s->version = s->client_version = s->method->version;
+		}
 
 	if ((p[0] != (s->version>>8)) || (p[1] != (s->version&0xff)))
 		{

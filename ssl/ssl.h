@@ -617,6 +617,9 @@ struct ssl_session_st
 #define SSL_OP_NO_TLSv1_2				0x08000000L
 #define SSL_OP_NO_TLSv1_1				0x10000000L
 
+#define SSL_OP_NO_DTLSv1				0x04000000L
+#define SSL_OP_NO_DTLSv1_2				0x08000000L
+
 #define SSL_OP_NO_SSL_MASK (SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3|\
 	SSL_OP_NO_TLSv1|SSL_OP_NO_TLSv1_1|SSL_OP_NO_TLSv1_2)
 
@@ -2114,6 +2117,10 @@ const SSL_METHOD *DTLSv1_client_method(void);	/* DTLSv1.0 */
 const SSL_METHOD *DTLSv1_2_method(void);	/* DTLSv1.2 */
 const SSL_METHOD *DTLSv1_2_server_method(void);	/* DTLSv1.2 */
 const SSL_METHOD *DTLSv1_2_client_method(void);	/* DTLSv1.2 */
+
+const SSL_METHOD *DTLS_method(void);		/* DTLS 1.0 and 1.2 */
+const SSL_METHOD *DTLS_server_method(void);	/* DTLS 1.0 and 1.2 */
+const SSL_METHOD *DTLS_client_method(void);	/* DTLS 1.0 and 1.2 */
 
 STACK_OF(SSL_CIPHER) *SSL_get_ciphers(const SSL *s);
 

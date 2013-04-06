@@ -1546,9 +1546,22 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len,
 
 	*(p++)=type&0xff;
 	wr->type=type;
-
-	*(p++)=(s->version>>8);
-	*(p++)=s->version&0xff;
+	/* Special case: for hello verify request, client version 1.0 and
+	 * we haven't decided which version to use yet send back using 
+	 * version 1.0 header: otherwise some clients will ignore it.
+	 */
+	if (s->state == DTLS1_ST_SW_HELLO_VERIFY_REQUEST_B
+			&& s->method->version == DTLS_ANY_VERSION
+			&& s->client_version == DTLS1_VERSION)
+		{
+		*(p++)=DTLS1_VERSION>>8;
+		*(p++)=DTLS1_VERSION&0xff;
+		}
+	else
+		{
+		*(p++)=s->version>>8;
+		*(p++)=s->version&0xff;
+		}
 
 	/* field where we are to write out packet epoch, seq num and len */
 	pseq=p; 

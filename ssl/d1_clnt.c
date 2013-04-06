@@ -155,6 +155,13 @@ IMPLEMENT_dtls1_meth_func(DTLS1_2_VERSION,
 			dtls1_get_client_method,
 			DTLSv1_2_enc_data)
 
+IMPLEMENT_dtls1_meth_func(DTLS_ANY_VERSION,
+			DTLS_client_method,
+			ssl_undefined_function,
+			dtls1_connect,
+			dtls1_get_client_method,
+			DTLSv1_2_enc_data)
+
 int dtls1_connect(SSL *s)
 	{
 	BUF_MEM *buf=NULL;
@@ -785,12 +792,14 @@ static int dtls1_get_hello_verify(SSL *s)
 	unsigned char *data;
 	unsigned int cookie_len;
 
+	s->first_packet = 1;
 	n=s->method->ssl_get_message(s,
 		DTLS1_ST_CR_HELLO_VERIFY_REQUEST_A,
 		DTLS1_ST_CR_HELLO_VERIFY_REQUEST_B,
 		-1,
 		s->max_cert_list,
 		&ok);
+	s->first_packet = 0;
 
 	if (!ok) return((int)n);
 
@@ -802,14 +811,16 @@ static int dtls1_get_hello_verify(SSL *s)
 		}
 
 	data = (unsigned char *)s->init_msg;
-
-	if ((data[0] != (s->version>>8)) || (data[1] != (s->version&0xff)))
+#if 0
+	if (s->method->version != DTLS_ANY_VERSION &&
+		((data[0] != (s->version>>8)) || (data[1] != (s->version&0xff))))
 		{
 		SSLerr(SSL_F_DTLS1_GET_HELLO_VERIFY,SSL_R_WRONG_SSL_VERSION);
 		s->version=(s->version&0xff00)|data[1];
 		al = SSL_AD_PROTOCOL_VERSION;
 		goto f_err;
 		}
+#endif
 	data+=2;
 
 	cookie_len = *(data++);

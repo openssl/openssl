@@ -967,8 +967,9 @@ int ssl3_get_client_hello(SSL *s)
 	s->client_version=(((int)p[0])<<8)|(int)p[1];
 	p+=2;
 
-	if ((s->version == DTLS1_VERSION && s->client_version > s->version) ||
-	    (s->version != DTLS1_VERSION && s->client_version < s->version))
+	if ((SSL_IS_DTLS(s) && s->client_version > s->version
+			&& s->method->version != DTLS_ANY_VERSION) ||
+	    (!SSL_IS_DTLS(s) && s->client_version < s->version))
 		{
 		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_WRONG_VERSION_NUMBER);
 		if ((s->client_version>>8) == SSL3_VERSION_MAJOR)
@@ -1086,6 +1087,30 @@ int ssl3_get_client_hello(SSL *s)
 			}
 
 		p += cookie_len;
+		if (s->method->version == DTLS_ANY_VERSION)
+			{
+			/* Select version to use */
+			if (s->client_version <= DTLS1_2_VERSION &&
+				!(s->options & SSL_OP_NO_DTLSv1_2))
+				{
+				s->version = DTLS1_2_VERSION;
+				s->method = DTLSv1_2_server_method();
+				}
+			else if (s->client_version <= DTLS1_VERSION &&
+				!(s->options & SSL_OP_NO_DTLSv1))
+				{
+				s->version = DTLS1_VERSION;
+				s->method = DTLSv1_server_method();
+				}
+			else
+				{
+				SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_WRONG_VERSION_NUMBER);
+				s->version = s->client_version;
+				al = SSL_AD_PROTOCOL_VERSION;
+				goto f_err;
+				}
+			s->session->ssl_version = s->version;
+			}
 		}
 
 	n2s(p,i);
