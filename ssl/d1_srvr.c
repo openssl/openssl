@@ -153,6 +153,13 @@ IMPLEMENT_dtls1_meth_func(DTLS1_2_VERSION,
 			dtls1_get_server_method,
 			DTLSv1_2_enc_data)
 
+IMPLEMENT_dtls1_meth_func(DTLS_ANY_VERSION,
+			DTLS_server_method,
+			dtls1_accept,
+			ssl_undefined_function,
+			dtls1_get_server_method,
+			DTLSv1_2_enc_data)
+
 int dtls1_accept(SSL *s)
 	{
 	BUF_MEM *buf;
@@ -885,8 +892,9 @@ int dtls1_send_hello_verify_request(SSL *s)
 		buf = (unsigned char *)s->init_buf->data;
 
 		msg = p = &(buf[DTLS1_HM_HEADER_LENGTH]);
-		*(p++) = s->version >> 8;
-		*(p++) = s->version & 0xFF;
+		/* Always use DTLS 1.0 version: see RFC 6347 */
+		*(p++) = DTLS1_VERSION >> 8;
+		*(p++) = DTLS1_VERSION & 0xFF;
 
 		if (s->ctx->app_gen_cookie_cb == NULL ||
 		     s->ctx->app_gen_cookie_cb(s, s->d1->cookie,

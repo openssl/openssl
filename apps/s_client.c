@@ -912,6 +912,11 @@ static char *jpake_secret = NULL;
 			meth=TLSv1_client_method();
 #endif
 #ifndef OPENSSL_NO_DTLS1
+		else if	(strcmp(*argv,"-dtls") == 0)
+			{
+			meth=DTLS_client_method();
+			socket_type=SOCK_DGRAM;
+			}
 		else if	(strcmp(*argv,"-dtls1") == 0)
 			{
 			meth=DTLSv1_client_method();

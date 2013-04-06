@@ -1369,6 +1369,11 @@ int MAIN(int argc, char *argv[])
 			{ meth=TLSv1_2_server_method(); }
 #endif
 #ifndef OPENSSL_NO_DTLS1
+		else if	(strcmp(*argv,"-dtls") == 0)
+			{ 
+			meth=DTLS_server_method();
+			socket_type = SOCK_DGRAM;
+			}
 		else if	(strcmp(*argv,"-dtls1") == 0)
 			{ 
 			meth=DTLSv1_server_method();

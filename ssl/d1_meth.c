@@ -86,3 +86,10 @@ IMPLEMENT_dtls1_meth_func(DTLS1_2_VERSION,
 			dtls1_get_method,
 			DTLSv1_2_enc_data)
 
+IMPLEMENT_dtls1_meth_func(DTLS_ANY_VERSION,
+			DTLS_method,
+			dtls1_accept,
+			dtls1_connect,
+			dtls1_get_method,
+			DTLSv1_2_enc_data)
+
