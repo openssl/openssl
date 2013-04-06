@@ -379,6 +379,7 @@ sub get_tests
 		 'testrsa.pem',
 		 'testsid.pem',
 		 'testss',
+		 'testreq.pem',
 	       );
   my $copies = copy_scripts(1, 'test', @copies);
   $copies .= copy_scripts(0, 'test', ('smcont.txt'));
