@@ -1305,7 +1305,7 @@ sub cc_compile_target
 	$target =~ s/\//$o/g if $o ne "/";
 	$source =~ s/\//$o/g if $o ne "/";
 	$ret ="$target: \$(SRC_D)$o$source\n\t";
-	$ret.="\$(CC)"
+	$ret.="\$(CC)";
 	$ret.= " -MMD" if $orig_platform eq "copy";
 	$ret.= " ${ofile}$target $ex_flags -c \$(SRC_D)$o$source\n\n";
 	$target =~ s/\.o$/.d/;
