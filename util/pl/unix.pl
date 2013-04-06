@@ -263,6 +263,7 @@ sub get_tests
   my %targets;
   my %deps;
   my %tests;
+  my @alltests;
   while (my $line = <M>)
     {
     chomp $line;
@@ -278,6 +279,7 @@ sub get_tests
 	{
 	$targets{$t} = '';
         }
+      @alltests = @t;
       }
 
     if (($line =~ /^(\S+):(.*)$/ && exists $targets{$1})
@@ -314,7 +316,6 @@ sub get_tests
     $tests .= "$t = $tests{$t}\n";
     }
 
-  my $all = 'test:';
   my $each;
   foreach my $t (keys %targets)
     {
@@ -379,7 +380,6 @@ sub get_tests
 		 'testrsa.pem',
 		 'testsid.pem',
 		 'testss',
-		 'testreq.pem',
 	       );
   my $copies = copy_scripts(1, 'test', @copies);
   $copies .= copy_scripts(0, 'test', ('smcont.txt'));
@@ -397,6 +397,8 @@ sub get_tests
   $scripts = "test_scripts: \$(TEST_D)/CA.sh \$(TEST_D)/opensslwrap.sh \$(TEST_D)/openssl.cnf ocsp smime\n";
   $scripts .= "\nocsp:\n\tcp -R test/ocsp-tests \$(TEST_D)\n";
   $scripts .= "\smime:\n\tcp -R test/smime-certs \$(TEST_D)\n";
+
+  my $all = 'test: ' . join(' ', @alltests);
 
   return "$scripts\n$copies\n$tests\n$all\n\n$each";
   }
