@@ -263,7 +263,7 @@ sub get_tests
   my %targets;
   my %deps;
   my %tests;
-  my @alltests;
+  my %alltests;
   while (my $line = <M>)
     {
     chomp $line;
@@ -278,15 +278,15 @@ sub get_tests
       foreach my $t (@t)
 	{
 	$targets{$t} = '';
+	$alltests{$t} = undef;
         }
-      @alltests = @t;
       }
 
-    if (($line =~ /^(\S+):(.*)$/ && exists $targets{$1})
-	|| $line =~ /^(test_ss .*):(.*)/)
+    if (($line =~ /^(?<t>\S+):(?<d>.*)$/ && exists $targets{$1})
+	|| $line =~ /^(?<t>test_(ss|gen) .*):(?<d>.*)/)
       {
-      my $t = $1;
-      $deps{$t} = $2;
+      my $t = $+{t};
+      $deps{$t} = $+{d};
       $deps{$t} =~ s/#.*$//;
       for (;;)
 	{
@@ -305,10 +305,10 @@ sub get_tests
       }
     }
 
-  delete $targets{test_jpake} if $no_jpake;
+  delete $alltests{test_jpake} if $no_jpake;
   delete $targets{test_ige} if $no_ige;
-  delete $targets{test_md2} if $no_md2;
-  delete $targets{test_rc5} if $no_rc5;
+  delete $alltests{test_md2} if $no_md2;
+  delete $alltests{test_rc5} if $no_rc5;
 
   my $tests;
   foreach my $t (keys %tests)
@@ -335,22 +335,13 @@ sub get_tests
 
     next if $r eq '';
 
-    if ($t =~ /^test_ss/)
-      {
-      $t =~ s/\s+/ \$(TEST_D)\//g;
-      $all .= ' test_ss';
-      }
-    else
-      {
-      $all .= " $t";
-      }
+    $t =~ s/\s+/ \$(TEST_D)\//g;
 
     $each .= "$t: test_scripts $d\n\t\@echo '$t test started'\n$r\t\@echo '$t test done'\n\n";
     }
 
   # FIXME: Might be a clever way to figure out what needs copying
   my @copies = ( 'bctest',
-		 'evptests.txt',
 		 'testgen',
 		 'cms-test.pl',
 		 'tx509',
@@ -394,11 +385,13 @@ sub get_tests
 	     );
   $copies .= copy_scripts(1, 'apps', @apps);
 
-  $scripts = "test_scripts: \$(TEST_D)/CA.sh \$(TEST_D)/opensslwrap.sh \$(TEST_D)/openssl.cnf ocsp smime\n";
+  $copies .= copy_scripts(1, 'crypto/evp', ('evptests.txt'));
+
+  $scripts = "test_scripts: \$(TEST_D)/CA.sh \$(TEST_D)/opensslwrap.sh \$(TEST_D)/openssl.cnf \$(TEST_D)/shlib_wrap.sh ocsp smime\n";
   $scripts .= "\nocsp:\n\tcp -R test/ocsp-tests \$(TEST_D)\n";
   $scripts .= "\smime:\n\tcp -R test/smime-certs \$(TEST_D)\n";
 
-  my $all = 'test: ' . join(' ', @alltests);
+  my $all = 'test: ' . join(' ', keys %alltests);
 
   return "$scripts\n$copies\n$tests\n$all\n\n$each";
   }

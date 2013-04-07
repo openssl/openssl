@@ -313,7 +313,7 @@ test_dsa: $(DSATEST)
 	../util/shlib_wrap.sh ./$(DSATEST)
 	../util/shlib_wrap.sh ./$(DSATEST) -app2_1
 
-test_gen: ../apps/openssl testgen test.cnf
+test_gen testreq.pem: ../apps/openssl testgen test.cnf
 	@echo "Generate and verify a certificate request"
 	@sh ./testgen
 
