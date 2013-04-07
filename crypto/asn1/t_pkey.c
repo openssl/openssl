@@ -208,11 +208,6 @@ int DSA_print(BIO *bp, const DSA *x, int off)
 
 	if (x->p)
 		buf_len = (size_t)BN_num_bytes(x->p);
-	else
-		{
-		DSAerr(DSA_F_DSA_PRINT,DSA_R_MISSING_PARAMETERS);
-		goto err;
-		}
 	if (x->q)
 		if (buf_len < (i = (size_t)BN_num_bytes(x->q)))
 			buf_len = i;
