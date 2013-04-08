@@ -1269,15 +1269,15 @@ sub perlasm_compile_target
 
 	my($ret);
 	$bname =~ s/(.*)\.[^\.]$/$1/;
-	$ret ="\$(TMP_D)$o$bname.asm: $source\n";
+	$ret ="\$(TMP_D)$o$bname$asm_suffix: $source\n";
 	$ret.="\t\$(PERL) $source $asmtype \$(CFLAG) >\$\@\n";
 	if ($fipscanisteronly)
 		{
-		$ret .= "\t\$(PERL) util\\fipsas.pl . \$@ norunasm \$(CFLAG)\n";
+		$ret .= "\t\$(PERL) util$o.pl . \$@ norunasm \$(CFLAG)\n";
 		}
 	$ret .= "\n";
-	$ret.="$target: \$(TMP_D)$o$bname.asm\n";
-	$ret.="\t\$(ASM) $afile\$\@ \$(TMP_D)$o$bname.asm\n\n";
+	$ret.="$target: \$(TMP_D)$o$bname$asm_suffix\n";
+	$ret.="\t\$(ASM) $afile\$\@ \$(TMP_D)$o$bname$asm_suffix\n\n";
 	return($ret);
 	}
 

@@ -26,6 +26,7 @@ else
 		{ $cflags="-O"; }
 	}
 $obj='.o';
+$asm_suffix='.s';
 $ofile='-o ';
 
 # EXE linking stuff
