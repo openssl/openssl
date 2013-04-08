@@ -217,6 +217,7 @@ void dtls1_free(SSL *s)
 	pq_64bit_free(&(s->d1->next_bitmap.max_seq_num));
 
 	OPENSSL_free(s->d1);
+	s->d1 = NULL;
 	}
 
 void dtls1_clear(SSL *s)
