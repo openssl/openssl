@@ -1377,11 +1377,15 @@ static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
 
 	if (!suiteb_flags)
 		return 1;
-	/* Check version */
+	/* Check version: if TLS 1.2 ciphers allowed we can use Suite B */
 
-	if (meth->version != TLS1_2_VERSION)
+	if (!(meth->ssl3_enc->enc_flags & SSL_ENC_FLAG_TLS1_2_CIPHERS))
 		{
-		SSLerr(SSL_F_CHECK_SUITEB_CIPHER_LIST,
+		if (meth->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS)
+			SSLerr(SSL_F_CHECK_SUITEB_CIPHER_LIST,
+				SSL_R_ONLY_DTLS_1_2_ALLOWED_IN_SUITEB_MODE);
+		else
+			SSLerr(SSL_F_CHECK_SUITEB_CIPHER_LIST,
 				SSL_R_ONLY_TLS_1_2_ALLOWED_IN_SUITEB_MODE);
 		return 0;
 		}
