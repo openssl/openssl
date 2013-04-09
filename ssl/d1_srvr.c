@@ -667,7 +667,7 @@ int dtls1_accept(SSL *s)
 				 */
 				if (!s->s3->handshake_buffer)
 					{
-					SSLerr(SSL_F_SSL3_ACCEPT,ERR_R_INTERNAL_ERROR);
+					SSLerr(SSL_F_DTLS1_ACCEPT,ERR_R_INTERNAL_ERROR);
 					return -1;
 					}
 				s->s3->flags |= TLS1_FLAGS_KEEP_HANDSHAKE;

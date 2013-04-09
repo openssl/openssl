@@ -871,7 +871,7 @@ const SSL_METHOD *func_name(void)  \
 	ssl23_get_cipher, \
 	s_get_meth, \
 	ssl23_default_timeout, \
-	&ssl3_undef_enc_method, \
+	&TLSv1_2_enc_data, \
 	ssl_undefined_void_function, \
 	ssl3_callback_ctrl, \
 	ssl3_ctx_callback_ctrl, \

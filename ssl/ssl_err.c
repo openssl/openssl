@@ -1,6 +1,6 @@
 /* ssl/ssl_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2012 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2013 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -479,6 +479,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {ERR_REASON(SSL_R_NULL_SSL_METHOD_PASSED),"null ssl method passed"},
 {ERR_REASON(SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED),"old session cipher not returned"},
 {ERR_REASON(SSL_R_OLD_SESSION_COMPRESSION_ALGORITHM_NOT_RETURNED),"old session compression algorithm not returned"},
+{ERR_REASON(SSL_R_ONLY_DTLS_1_2_ALLOWED_IN_SUITEB_MODE),"only DTLS 1 2 allowed in suiteb mode"},
 {ERR_REASON(SSL_R_ONLY_TLS_1_2_ALLOWED_IN_SUITEB_MODE),"only TLS 1.2 allowed in Suite B mode"},
 {ERR_REASON(SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE),"only tls allowed in fips mode"},
 {ERR_REASON(SSL_R_OPAQUE_PRF_INPUT_TOO_LONG),"opaque PRF input too long"},
