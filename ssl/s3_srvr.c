@@ -1082,8 +1082,8 @@ int ssl3_get_client_hello(SSL *s)
 						SSL_R_COOKIE_MISMATCH);
 					goto f_err;
 				}
-
-			ret = 2;
+			/* Set to -2 so if successful we return 2 */
+			ret = -2;
 			}
 
 		p += cookie_len;
@@ -1461,7 +1461,7 @@ int ssl3_get_client_hello(SSL *s)
 			}
 		}
 
-	if (ret < 0) ret=1;
+	if (ret < 0) ret=-ret;
 	if (0)
 		{
 f_err:
@@ -1469,7 +1469,7 @@ f_err:
 		}
 err:
 	if (ciphers != NULL) sk_SSL_CIPHER_free(ciphers);
-	return(ret);
+	return ret < 0 ? -1 : ret;
 	}
 
 int ssl3_send_server_hello(SSL *s)
