@@ -127,8 +127,14 @@ elsif ($FLAVOR =~ /CE/)
     $base_cflags.=" $wcecdefs";
     $base_cflags.=' -I$(WCECOMPAT)/include'		if (defined($ENV{'WCECOMPAT'}));
     $base_cflags.=' -I$(PORTSDK_LIBPATH)/../../include'	if (defined($ENV{'PORTSDK_LIBPATH'}));
-    $opt_cflags=' /MC /O1i';	# optimize for space, but with intrinsics...
-    $dbg_clfags=' /MC /Od -DDEBUG -D_DEBUG';
+    if ($ENV{PLATFORM} =~ /wce7/i) {
+      $opt_cflags=' /MT /O1i';	# optimize for space, but with intrinsics...
+      $dbg_cflags=' /MT /Od -DDEBUG -D_DEBUG';
+    } else {
+      $opt_cflags=' /MC /O1i';	# optimize for space, but with intrinsics...
+      $dbg_cflags=' /MC /Od -DDEBUG -D_DEBUG';
+    }
+
     $lflags="/nologo /opt:ref $wcelflag";
     }
 else	# Win32
