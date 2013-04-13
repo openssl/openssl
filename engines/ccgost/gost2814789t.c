@@ -1314,7 +1314,7 @@ int main(int argc, char *argv[])
     /* 
      * Internal function test on GostR3411_94_TestParamSet
      */
-    #ifdef OPENSSL_NO_DYNAMIC_ENGINE
+    #if 0 && defined(OPENSSL_NO_DYNAMIC_ENGINE)
     {
 	gost_ctx ctx;
 
