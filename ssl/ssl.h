@@ -1100,6 +1100,31 @@ struct ssl_ctx_st
 				    void *arg);
 	void *next_proto_select_cb_arg;
 # endif
+
+	/* ALPN information
+	 * (we are in the process of transitioning from NPN to ALPN.) */
+
+	/* For a server, this contains a callback function that allows the
+	 * server to select the protocol for the connection.
+	 *   out: on successful return, this must point to the raw protocol
+	 *        name (without the length prefix).
+	 *   outlen: on successful return, this contains the length of |*out|.
+	 *   in: points to the client's list of supported protocols in
+	 *       wire-format.
+	 *   inlen: the length of |in|. */
+	int (*alpn_select_cb)(SSL *s,
+			      const unsigned char **out,
+			      unsigned char *outlen,
+			      const unsigned char* in,
+			      unsigned int inlen,
+			      void *arg);
+	void *alpn_select_cb_arg;
+
+	/* For a client, this contains the list of supported protocols in wire
+	 * format. */
+	unsigned char* alpn_client_proto_list;
+	unsigned alpn_client_proto_list_len;
+
         /* SRTP profiles we are willing to do from RFC 5764 */
 	STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;  
 #endif
@@ -1201,6 +1226,21 @@ void SSL_get0_next_proto_negotiated(const SSL *s, const unsigned char **data,
 #define OPENSSL_NPN_NO_OVERLAP	2
 
 #endif
+
+int SSL_CTX_set_alpn_protos(SSL_CTX *ctx, const unsigned char* protos,
+			    unsigned protos_len);
+int SSL_set_alpn_protos(SSL *ssl, const unsigned char* protos,
+			unsigned protos_len);
+void SSL_CTX_set_alpn_select_cb(SSL_CTX* ctx,
+				int (*cb) (SSL *ssl,
+					   const unsigned char **out,
+					   unsigned char *outlen,
+					   const unsigned char *in,
+					   unsigned int inlen,
+					   void *arg),
+				void *arg);
+void SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
+			    unsigned *len);
 
 #ifndef OPENSSL_NO_PSK
 /* the maximum length of the buffer given to callbacks containing the
@@ -1508,6 +1548,11 @@ struct ssl_st
 	                                 */
 	unsigned int tlsext_hb_pending; /* Indicates if a HeartbeatRequest is in flight */
 	unsigned int tlsext_hb_seq;     /* HeartbeatRequest sequence number */
+
+	/* For a client, this contains the list of supported protocols in wire
+	 * format. */
+	unsigned char* alpn_client_proto_list;
+	unsigned alpn_client_proto_list_len;
 #else
 #define session_ctx ctx
 #endif /* OPENSSL_NO_TLSEXT */

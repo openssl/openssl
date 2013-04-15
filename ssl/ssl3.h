@@ -586,7 +586,17 @@ typedef struct ssl3_state_st
 	 * as the types were received in the client hello. */
 	unsigned short *tlsext_custom_types;
 	size_t tlsext_custom_types_count; /* how many tlsext_custom_types */
-#endif
+
+	/* ALPN information
+	 * (we are in the process of transitioning from NPN to ALPN.) */
+
+	/* In a server these point to the selected ALPN protocol after the
+	 * ClientHello has been processed. In a client these contain the
+	 * protocol that the server selected once the ServerHello has been
+	 * processed. */
+	unsigned char *alpn_selected;
+	unsigned alpn_selected_len;
+#endif	/* OPENSSL_NO_TLSEXT */
 	} SSL3_STATE;
 
 #endif

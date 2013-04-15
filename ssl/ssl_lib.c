@@ -382,6 +382,17 @@ SSL *SSL_new(SSL_CTX *ctx)
 # ifndef OPENSSL_NO_NEXTPROTONEG
 	s->next_proto_negotiated = NULL;
 # endif
+
+	if (s->ctx->alpn_client_proto_list)
+		{
+		s->alpn_client_proto_list =
+			OPENSSL_malloc(s->ctx->alpn_client_proto_list_len);
+		if (s->alpn_client_proto_list == NULL)
+			goto err;
+		memcpy(s->alpn_client_proto_list, s->ctx->alpn_client_proto_list,
+		       s->ctx->alpn_client_proto_list_len);
+		s->alpn_client_proto_list_len = s->ctx->alpn_client_proto_list_len;
+		}
 #endif
 
 	s->verify_result=X509_V_OK;
@@ -606,6 +617,8 @@ void SSL_free(SSL *s)
 		sk_OCSP_RESPID_pop_free(s->tlsext_ocsp_ids, OCSP_RESPID_free);
 	if (s->tlsext_ocsp_resp)
 		OPENSSL_free(s->tlsext_ocsp_resp);
+	if (s->alpn_client_proto_list)
+		OPENSSL_free(s->alpn_client_proto_list);
 #endif
 
 	if (s->client_CA != NULL)
@@ -1754,7 +1767,78 @@ int SSL_CTX_set_custom_srv_ext(SSL_CTX *ctx, unsigned short ext_type,
 	return 1;
 	}
 
-#endif
+/* SSL_CTX_set_alpn_protos sets the ALPN protocol list on |ctx| to |protos|.
+ * |protos| must be in wire-format (i.e. a series of non-empty, 8-bit
+ * length-prefixed strings).
+ *
+ * Returns 0 on success. */
+int SSL_CTX_set_alpn_protos(SSL_CTX *ctx, const unsigned char* protos,
+			    unsigned protos_len)
+	{
+	if (ctx->alpn_client_proto_list)
+		OPENSSL_free(ctx->alpn_client_proto_list);
+
+	ctx->alpn_client_proto_list = OPENSSL_malloc(protos_len);
+	if (!ctx->alpn_client_proto_list)
+		return 1;
+	memcpy(ctx->alpn_client_proto_list, protos, protos_len);
+	ctx->alpn_client_proto_list_len = protos_len;
+
+	return 0;
+	}
+
+/* SSL_set_alpn_protos sets the ALPN protocol list on |ssl| to |protos|.
+ * |protos| must be in wire-format (i.e. a series of non-empty, 8-bit
+ * length-prefixed strings).
+ *
+ * Returns 0 on success. */
+int SSL_set_alpn_protos(SSL *ssl, const unsigned char* protos,
+			unsigned protos_len)
+	{
+	if (ssl->alpn_client_proto_list)
+		OPENSSL_free(ssl->alpn_client_proto_list);
+
+	ssl->alpn_client_proto_list = OPENSSL_malloc(protos_len);
+	if (!ssl->alpn_client_proto_list)
+		return 1;
+	memcpy(ssl->alpn_client_proto_list, protos, protos_len);
+	ssl->alpn_client_proto_list_len = protos_len;
+
+	return 0;
+	}
+
+/* SSL_CTX_set_alpn_select_cb sets a callback function on |ctx| that is called
+ * during ClientHello processing in order to select an ALPN protocol from the
+ * client's list of offered protocols. */
+void SSL_CTX_set_alpn_select_cb(SSL_CTX* ctx,
+				int (*cb) (SSL *ssl,
+					   const unsigned char **out,
+					   unsigned char *outlen,
+					   const unsigned char *in,
+					   unsigned int inlen,
+					   void *arg),
+				void *arg)
+	{
+	ctx->alpn_select_cb = cb;
+	ctx->alpn_select_cb_arg = arg;
+	}
+
+/* SSL_get0_alpn_selected gets the selected ALPN protocol (if any) from |ssl|.
+ * On return it sets |*data| to point to |*len| bytes of protocol name (not
+ * including the leading length-prefix byte). If the server didn't respond with
+ * a negotiated protocol then |*len| will be zero. */
+void SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
+			    unsigned *len)
+	{
+	*data = NULL;
+	if (ssl->s3)
+		*data = ssl->s3->alpn_selected;
+	if (*data == NULL)
+		*len = 0;
+	else
+		*len = ssl->s3->alpn_selected_len;
+	}
+#endif /* !OPENSSL_NO_TLSEXT */
 
 int SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
 	const char *label, size_t llen, const unsigned char *p, size_t plen,
@@ -2117,6 +2201,8 @@ void SSL_CTX_free(SSL_CTX *a)
 	if (a->tlsext_ellipticcurvelist)
 		OPENSSL_free(a->tlsext_ellipticcurvelist);
 # endif /* OPENSSL_NO_EC */
+	if (a->alpn_client_proto_list != NULL)
+		OPENSSL_free(a->alpn_client_proto_list);
 #endif
 
 	OPENSSL_free(a);
