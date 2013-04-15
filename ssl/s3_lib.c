@@ -3002,6 +3002,11 @@ void ssl3_free(SSL *s)
 		BIO_free(s->s3->handshake_buffer);
 	}
 	if (s->s3->handshake_dgst) ssl3_free_digest_list(s);
+#ifndef OPENSSL_NO_TLSEXT
+	if (s->s3->alpn_selected)
+		OPENSSL_free(s->s3->alpn_selected);
+#endif
+
 #ifndef OPENSSL_NO_SRP
 	SSL_SRP_CTX_free(s);
 #endif
@@ -3080,6 +3085,14 @@ void ssl3_clear(SSL *s)
 	if (s->s3->handshake_dgst) {
 		ssl3_free_digest_list(s);
 	}	
+
+#if !defined(OPENSSL_NO_TLSEXT)
+	if (s->s3->alpn_selected)
+		{
+		free(s->s3->alpn_selected);
+		s->s3->alpn_selected = NULL;
+		}
+#endif
 	memset(s->s3,0,sizeof *s->s3);
 	s->s3->rbuf.buf = rp;
 	s->s3->wbuf.buf = wp;

@@ -368,6 +368,7 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -proof_debug      - request an audit proof and print its hex dump\n");
 # ifndef OPENSSL_NO_NEXTPROTONEG
 	BIO_printf(bio_err," -nextprotoneg arg - enable NPN extension, considering named protocols supported (comma-separated list)\n");
+	BIO_printf(bio_err," -alpn arg         - enable ALPN extension, considering named protocols supported (comma-separated list)\n");
 # endif
 #ifndef OPENSSL_NO_TLSEXT
 	BIO_printf(bio_err," -serverinfo types - send empty ClientHello extensions (comma-separated numbers)\n");
@@ -640,6 +641,7 @@ int MAIN(int argc, char **argv)
         {NULL,0};
 # ifndef OPENSSL_NO_NEXTPROTONEG
 	const char *next_proto_neg_in = NULL;
+	const char *alpn_in = NULL;
 # endif
 # define MAX_SI_TYPES 100
 	unsigned short serverinfo_types[MAX_SI_TYPES];
@@ -988,6 +990,11 @@ static char *jpake_secret = NULL;
 			if (--argc < 1) goto bad;
 			next_proto_neg_in = *(++argv);
 			}
+		else if (strcmp(*argv,"-alpn") == 0)
+			{
+			if (--argc < 1) goto bad;
+			alpn_in = *(++argv);
+			}
 # endif
 		else if (strcmp(*argv,"-serverinfo") == 0)
 			{
@@ -1301,9 +1308,24 @@ bad:
 	 */
 	if (socket_type == SOCK_DGRAM) SSL_CTX_set_read_ahead(ctx, 1);
 
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
+#if !defined(OPENSSL_NO_TLSEXT)
+# if !defined(OPENSSL_NO_NEXTPROTONEG)
 	if (next_proto.data)
 		SSL_CTX_set_next_proto_select_cb(ctx, next_proto_cb, &next_proto);
+# endif
+	if (alpn_in)
+		{
+		unsigned short alpn_len;
+		unsigned char *alpn = next_protos_parse(&alpn_len, alpn_in);
+
+		if (alpn == NULL)
+			{
+			BIO_printf(bio_err, "Error parsing -alpn argument\n");
+			goto end;
+			}
+		SSL_CTX_set_alpn_protos(ctx, alpn, alpn_len);
+		OPENSSL_free(alpn);
+		}
 #endif
 #ifndef OPENSSL_NO_TLSEXT
 		if (serverinfo_types_count)
@@ -2262,7 +2284,8 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 	}
 #endif
 
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
+#if !defined(OPENSSL_NO_TLSEXT)
+# if !defined(OPENSSL_NO_NEXTPROTONEG)
 	if (next_proto.status != -1) {
 		const unsigned char *proto;
 		unsigned int proto_len;
@@ -2271,6 +2294,20 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 		BIO_write(bio, proto, proto_len);
 		BIO_write(bio, "\n", 1);
 	}
+	{
+		const unsigned char *proto;
+		unsigned int proto_len;
+		SSL_get0_alpn_selected(s, &proto, &proto_len);
+		if (proto_len > 0)
+			{
+			BIO_printf(bio, "ALPN protocol: ");
+			BIO_write(bio, proto, proto_len);
+			BIO_write(bio, "\n", 1);
+			}
+		else
+			BIO_printf(bio, "No ALPN negotiated\n");
+	}
+# endif
 #endif
 
  	{

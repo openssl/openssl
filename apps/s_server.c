@@ -578,6 +578,7 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -nextprotoneg arg - set the advertised protocols for the NPN extension (comma-separated list)\n");
 # endif
         BIO_printf(bio_err," -use_srtp profiles - Offer SRTP key management with a colon-separated profile list\n");
+	BIO_printf(bio_err," -alpn arg  - set the advertised protocols for the ALPN extension (comma-separated list)\n");
 #endif
 	BIO_printf(bio_err," -keymatexport label   - Export keying material using label\n");
 	BIO_printf(bio_err," -keymatexportlen len  - Export len bytes of keying material (default 20)\n");
@@ -933,8 +934,47 @@ static int next_proto_cb(SSL *s, const unsigned char **data, unsigned int *len, 
 	}
 # endif  /* ndef OPENSSL_NO_NEXTPROTONEG */
 
+/* This the context that we pass to alpn_cb */
+typedef struct tlsextalpnctx_st {
+	unsigned char *data;
+	unsigned short len;
+} tlsextalpnctx;
 
-#endif
+static int alpn_cb(SSL *s, const unsigned char **out, unsigned char *outlen, const unsigned char *in, unsigned int inlen, void *arg)
+	{
+	tlsextalpnctx *alpn_ctx = arg;
+
+	if (!s_quiet)
+		{
+		/* We can assume that |in| is syntactically valid. */
+		unsigned i;
+		BIO_printf(bio_s_out, "ALPN protocols advertised by the client: ");
+		for (i = 0; i < inlen; )
+			{
+			if (i)
+				BIO_write(bio_s_out, ", ", 2);
+			BIO_write(bio_s_out, &in[i + 1], in[i]);
+			i += in[i] + 1;
+			}
+		BIO_write(bio_s_out, "\n", 1);
+		}
+
+	if (SSL_select_next_proto((unsigned char**) out, outlen, alpn_ctx->data, alpn_ctx->len, in, inlen) !=
+	    OPENSSL_NPN_NEGOTIATED)
+		{
+		return SSL_TLSEXT_ERR_NOACK;
+		}
+
+	if (!s_quiet)
+		{
+		BIO_printf(bio_s_out, "ALPN protocols selected: ");
+		BIO_write(bio_s_out, *out, *outlen);
+		BIO_write(bio_s_out, "\n", 1);
+		}
+
+	return SSL_TLSEXT_ERR_OK;
+	}
+#endif  /* ndef OPENSSL_NO_TLSEXT */
 
 int MAIN(int, char **);
 
@@ -984,6 +1024,8 @@ int MAIN(int argc, char *argv[])
 # ifndef OPENSSL_NO_NEXTPROTONEG
 	const char *next_proto_neg_in = NULL;
 	tlsextnextprotoctx next_proto;
+	const char *alpn_in = NULL;
+	tlsextalpnctx alpn_ctx = { NULL, 0};
 # endif
 #endif
 #ifndef OPENSSL_NO_PSK
@@ -1424,6 +1466,11 @@ int MAIN(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			next_proto_neg_in = *(++argv);
 			}
+		else if	(strcmp(*argv,"-alpn") == 0)
+			{
+			if (--argc < 1) goto bad;
+			alpn_in = *(++argv);
+			}
 # endif
 #endif
 #if !defined(OPENSSL_NO_JPAKE) && !defined(OPENSSL_NO_PSK)
@@ -1551,7 +1598,8 @@ bad:
 #endif /* OPENSSL_NO_TLSEXT */
 		}
 
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG) 
+#if !defined(OPENSSL_NO_TLSEXT)
+# if !defined(OPENSSL_NO_NEXTPROTONEG) 
 	if (next_proto_neg_in)
 		{
 		unsigned short len;
@@ -1563,6 +1611,16 @@ bad:
 	else
 		{
 		next_proto.data = NULL;
+		}
+# endif
+	alpn_ctx.data = NULL;
+	if (alpn_in)
+		{
+		unsigned short len;
+		alpn_ctx.data = next_protos_parse(&len, alpn_in);
+		if (alpn_ctx.data == NULL)
+			goto end;
+		alpn_ctx.len = len;
 		}
 #endif
 
@@ -1801,6 +1859,8 @@ bad:
 	if (next_proto.data)
 		SSL_CTX_set_next_protos_advertised_cb(ctx, next_proto_cb, &next_proto);
 # endif
+	if (alpn_ctx.data)
+		SSL_CTX_set_alpn_select_cb(ctx, alpn_cb, &alpn_ctx);
 #endif 
 
 #ifndef OPENSSL_NO_DH
@@ -2027,6 +2087,10 @@ end:
 		BIO_free(authz_in);
 	if (serverinfo_in != NULL)
 		BIO_free(serverinfo_in);
+	if (next_proto.data)
+		OPENSSL_free(next_proto.data);
+	if (alpn_ctx.data)
+		OPENSSL_free(alpn_ctx.data);
 #endif
 	ssl_excert_free(exc);
 	if (ssl_args)
