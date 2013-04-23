@@ -26,6 +26,9 @@
 # which is [much] worse than anticipated (for further details see
 # http://www.openssl.org/~appro/Snapdragon-S4.html).
 #
+# Cortex-A15 manages in 14.2/19.6 cycles [when integer-only code
+# manages in 20.0 cycles].
+#
 # When comparing to x86_64 results keep in mind that NEON unit is
 # [mostly] single-issue and thus can't [fully] benefit from
 # instruction-level parallelism. And when comparing to aes-armv4
@@ -617,6 +620,9 @@ ___
 }
 
 $code.=<<___;
+#include "arm_arch.h"
+
+#if __ARM_ARCH__>=7
 .text
 .code	32
 .fpu	neon
@@ -975,6 +981,9 @@ bsaes_decrypt_128:
 .size	bsaes_decrypt_128,.-bsaes_decrypt_128
 ___
 }
+$code.=<<___;
+#endif
+___
 
 $code =~ s/\`([^\`]*)\`/eval($1)/gem;
 
