@@ -1230,7 +1230,8 @@ int	i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
 	size_t          buf_len=0, tmp_len;
 	EC_PRIVATEKEY   *priv_key=NULL;
 
-	if (a == NULL || a->group == NULL || a->priv_key == NULL)
+	if (a == NULL || a->group == NULL || a->priv_key == NULL ||
+	    (!(a->enc_flag & EC_PKEY_NO_PUBKEY) && a->pub_key == NULL))
 		{
 		ECerr(EC_F_I2D_ECPRIVATEKEY,
                       ERR_R_PASSED_NULL_PARAMETER);
