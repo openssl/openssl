@@ -120,6 +120,7 @@ int test_gf2m_mod_sqrt(BIO *bp,BN_CTX *ctx);
 int test_gf2m_mod_solve_quad(BIO *bp,BN_CTX *ctx);
 int test_kron(BIO *bp,BN_CTX *ctx);
 int test_sqrt(BIO *bp,BN_CTX *ctx);
+int test_small_prime(BIO *bp,BN_CTX *ctx);
 int rand_neg(void);
 static int results=0;
 
@@ -264,6 +265,11 @@ int main(int argc, char *argv[])
 	message(out,"BN_mod_sqrt");
 	if (!test_sqrt(out,ctx)) goto err;
 	(void)BIO_flush(out);
+
+	message(out,"Small prime generation");
+	if (!test_small_prime(out,ctx)) goto err;
+	(void)BIO_flush(out);
+
 #ifndef OPENSSL_NO_EC2M
 	message(out,"BN_GF2m_add");
 	if (!test_gf2m_add(out)) goto err;
@@ -1892,6 +1898,28 @@ int test_sqrt(BIO *bp, BN_CTX *ctx)
 	if (a != NULL) BN_free(a);
 	if (p != NULL) BN_free(p);
 	if (r != NULL) BN_free(r);
+	return ret;
+	}
+
+int test_small_prime(BIO *bp,BN_CTX *ctx)
+	{
+	static const int bits = 10;
+	int ret = 0;
+	BIGNUM r;
+
+	BN_init(&r);
+	if (!BN_generate_prime_ex(&r, bits, 0, NULL, NULL, NULL))
+		goto err;
+	if (BN_num_bits(&r) != bits)
+		{
+		BIO_printf(bp, "Expected %d bit prime, got %d bit number\n", bits, BN_num_bits(&r));
+		goto err;
+		}
+
+	ret = 1;
+
+err:
+	BN_clear(&r);
 	return ret;
 	}
 

@@ -165,6 +165,19 @@ int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe,
 	BN_CTX *ctx;
 	int checks = BN_prime_checks_for_size(bits);
 
+	if (bits < 2)
+		{
+		/* There are no prime numbers this small. */
+		BNerr(BN_F_BN_GENERATE_PRIME_EX, BN_R_BITS_TOO_SMALL);
+		return 0;
+		}
+	else if (bits == 2 && safe)
+		{
+		/* The smallest safe prime (7) is three bits. */
+		BNerr(BN_F_BN_GENERATE_PRIME_EX, BN_R_BITS_TOO_SMALL);
+		return 0;
+		}
+
 	ctx=BN_CTX_new();
 	if (ctx == NULL) goto err;
 	BN_CTX_start(ctx);
@@ -378,27 +391,65 @@ static int probable_prime(BIGNUM *rnd, int bits)
 	{
 	int i;
 	prime_t mods[NUMPRIMES];
-	BN_ULONG delta,maxdelta;
+	BN_ULONG delta;
+	BN_ULONG maxdelta = BN_MASK2 - primes[NUMPRIMES-1];
+	char is_single_word = bits <= BN_BITS2;
 
 again:
 	if (!BN_rand(rnd,bits,1,1)) return(0);
-	/* we now have a random number 'rand' to test. */
+	/* we now have a random number 'rnd' to test. */
 	for (i=1; i<NUMPRIMES; i++)
 		mods[i]=(prime_t)BN_mod_word(rnd,(BN_ULONG)primes[i]);
-	maxdelta=BN_MASK2 - primes[NUMPRIMES-1];
-	delta=0;
-	loop: for (i=1; i<NUMPRIMES; i++)
+	/* If bits is so small that it fits into a single word then we
+	 * additionally don't want to exceed that many bits. */
+	if (is_single_word)
 		{
-		/* check that rnd is not a prime and also
-		 * that gcd(rnd-1,primes) == 1 (except for 2) */
-		if (((mods[i]+delta)%primes[i]) <= 1)
+		BN_ULONG size_limit = (((BN_ULONG) 1) << bits) - BN_get_word(rnd) - 1;
+		if (size_limit < maxdelta)
+			maxdelta = size_limit;
+		}
+	delta=0;
+	loop:
+	if (is_single_word)
+		{
+		BN_ULONG rnd_word = BN_get_word(rnd);
+
+		/* In the case that the candidate prime is a single word then
+		 * we check that:
+		 *   1) It's greater than primes[i] because we shouldn't reject
+		 *      3 as being a prime number because it's a multiple of
+		 *      three.
+		 *   2) That it's not a multiple of a known prime. We don't
+		 *      check that rnd-1 is also coprime to all the known
+		 *      primes because there aren't many small primes where
+		 *      that's true. */
+		for (i=1; i<NUMPRIMES && primes[i]<rnd_word; i++)
 			{
-			delta+=2;
-			if (delta > maxdelta) goto again;
-			goto loop;
+			if ((mods[i]+delta)%primes[i] == 0)
+				{
+				delta+=2;
+				if (delta > maxdelta) goto again;
+				goto loop;
+				}
+			}
+		}
+	else
+		{
+		for (i=1; i<NUMPRIMES; i++)
+			{
+			/* check that rnd is not a prime and also
+			 * that gcd(rnd-1,primes) == 1 (except for 2) */
+			if (((mods[i]+delta)%primes[i]) <= 1)
+				{
+				delta+=2;
+				if (delta > maxdelta) goto again;
+				goto loop;
+				}
 			}
 		}
 	if (!BN_add_word(rnd,delta)) return(0);
+	if (BN_num_bits(rnd) != bits)
+		goto again;
 	bn_check_top(rnd);
 	return(1);
 	}
