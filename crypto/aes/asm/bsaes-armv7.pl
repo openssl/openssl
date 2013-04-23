@@ -715,6 +715,8 @@ _bsaes_const:
 	.quad	0x0304090e00050a0f, 0x01060b0c0207080d
 .LM0:
 	.quad	0x02060a0e03070b0f, 0x0004080c0105090d
+.LREVM0SR:
+	.quad	0x090d02060c030708, 0x00040b0f050a0e01
 .asciz	"Bit-sliced AES for NEON, CRYPTOGAMS by <appro\@openssl.org>"
 .align	6
 .size	_bsaes_const,.-_bsaes_const
@@ -727,6 +729,7 @@ _bsaes_encrypt8:
 	sub	$const,$const,#_bsaes_encrypt8-.LM0SR
 
 	vldmia	$const!, {@XMM[8]}		@ .LM0SR
+_bsaes_encrypt8_alt:
 	veor	@XMM[10], @XMM[0], @XMM[9]	@ xor with round0 key
 	veor	@XMM[11], @XMM[1], @XMM[9]
 	 vtbl.8	`&Dlo(@XMM[0])`, {@XMM[10]}, `&Dlo(@XMM[8])`
@@ -879,7 +882,7 @@ _bsaes_key_convert:
 ___
 }
 
-if (1) {		# following four functions are unsupported interface
+if (0) {		# following four functions are unsupported interface
 			# used for benchmarking...
 $code.=<<___;
 .globl	bsaes_enc_key_convert
@@ -979,6 +982,432 @@ bsaes_decrypt_128:
 	vldmia	sp!,{d8-d15}
 	ldmia	sp!,{r4-r6,pc}
 .size	bsaes_decrypt_128,.-bsaes_decrypt_128
+___
+}
+{
+my ($inp,$out,$len,$key, $ivp,$fp,$rounds)=map("r$_",(0..3,8..10));
+my ($keysched)=("sp");
+
+$code.=<<___;
+.extern AES_cbc_encrypt
+.extern AES_decrypt
+
+.global	bsaes_cbc_encrypt
+.type	bsaes_cbc_encrypt,%function
+.align	5
+bsaes_cbc_encrypt:
+	cmp	$len, #128
+	blo	AES_cbc_encrypt
+
+	@ it is up to the caller to make sure we are called with enc == 0
+
+	stmdb	sp!, {r4-r10, lr}
+	vstmdb	sp!, {d8-d15}			@ ABI specification says so
+	ldr	$ivp, [sp, #0x60]		@ IV is 1st arg on the stack
+	mov	$len, $len, lsr#4		@ len in 16 byte blocks
+	sub	sp, #0x10			@ scratch space to carry over the IV
+	mov	$fp, sp				@ save sp
+
+	@ allocate the key schedule on the stack
+	ldr	$rounds, [$key, #240]		@ get # of rounds
+	sub	sp, sp, $rounds, lsl#7		@ 128 bytes per inner round key
+	add	sp, sp, #`128-32`		@ size of bit-sliced key schedule
+
+	@ populate the key schedule
+	mov	r4, $key			@ pass key
+	mov	r5, $rounds			@ pass # of rounds
+	mov	r12, $keysched			@ pass key schedule
+	bl	_bsaes_key_convert
+	vldmia	$keysched, {@XMM[6]}
+	vstmia	r12,  {@XMM[15]}		@ save last round key
+	veor	@XMM[7], @XMM[7], @XMM[6]	@ fix up round 0 key
+	vstmia	$keysched, {@XMM[7]}
+
+	vld1.8	{@XMM[15]}, [$ivp]		@ load IV
+	b	.Lcbc_dec_loop
+
+.align	4
+.Lcbc_dec_loop:
+	subs	$len, $len, #0x8
+	bmi	.Lcbc_dec_loop_finish
+
+	vld1.8	{@XMM[0]-@XMM[1]}, [$inp]!	@ load input
+	vld1.8	{@XMM[2]-@XMM[3]}, [$inp]!
+	mov	r4, $keysched			@ pass the key
+	vld1.8	{@XMM[4]-@XMM[5]}, [$inp]!
+	mov	r5, $rounds
+	vld1.8	{@XMM[6]-@XMM[7]}, [$inp]
+	sub	$inp, $inp, #0x60
+	vstmia	$fp, {@XMM[15]}			@ put aside IV
+
+	bl	_bsaes_decrypt8
+
+	vldmia	$fp, {@XMM[14]}			@ reload IV
+	vld1.8	{@XMM[8]-@XMM[9]}, [$inp]!	@ reload input
+	veor	@XMM[0], @XMM[0], @XMM[14]	@ ^= IV
+	vld1.8	{@XMM[10]-@XMM[11]}, [$inp]!
+	veor	@XMM[1], @XMM[1], @XMM[8]
+	veor	@XMM[6], @XMM[6], @XMM[9]
+	vld1.8	{@XMM[12]-@XMM[13]}, [$inp]!
+	veor	@XMM[4], @XMM[4], @XMM[10]
+	veor	@XMM[2], @XMM[2], @XMM[11]
+	vld1.8	{@XMM[14]-@XMM[15]}, [$inp]!
+	veor	@XMM[7], @XMM[7], @XMM[12]
+	vst1.8	{@XMM[0]-@XMM[1]}, [$out]!	@ write output
+	veor	@XMM[3], @XMM[3], @XMM[13]
+	vst1.8	{@XMM[6]}, [$out]!
+	veor	@XMM[5], @XMM[5], @XMM[14]
+	vst1.8	{@XMM[4]}, [$out]!
+	vst1.8	{@XMM[2]}, [$out]!
+	vst1.8	{@XMM[7]}, [$out]!
+	vst1.8	{@XMM[3]}, [$out]!
+	vst1.8	{@XMM[5]}, [$out]!
+
+	b	.Lcbc_dec_loop
+
+.Lcbc_dec_loop_finish:
+	adds	$len, $len, #8
+	beq	.Lcbc_dec_done
+
+	vld1.8	{@XMM[0]}, [$inp]!		@ load input
+	cmp	$len, #2
+	blo	.Lcbc_dec_one
+	vld1.8	{@XMM[1]}, [$inp]!
+	mov	r4, $keysched			@ pass the key
+	mov	r5, $rounds
+	vstmia	$fp, {@XMM[15]}			@ put aside IV
+	beq	.Lcbc_dec_two
+	vld1.8	{@XMM[2]}, [$inp]!
+	cmp	$len, #4
+	blo	.Lcbc_dec_three
+	vld1.8	{@XMM[3]}, [$inp]!
+	beq	.Lcbc_dec_four
+	vld1.8	{@XMM[4]}, [$inp]!
+	cmp	$len, #6
+	blo	.Lcbc_dec_five
+	vld1.8	{@XMM[5]}, [$inp]!
+	beq	.Lcbc_dec_six
+	vld1.8	{@XMM[6]}, [$inp]!
+	sub	$inp, $inp, #0x70
+
+	bl	_bsaes_decrypt8
+
+	vldmia	$fp, {@XMM[14]}			@ reload IV
+	vld1.8	{@XMM[8]-@XMM[9]}, [$inp]!	@ reload input
+	veor	@XMM[0], @XMM[0], @XMM[14]	@ ^= IV
+	vld1.8	{@XMM[10]-@XMM[11]}, [$inp]!
+	veor	@XMM[1], @XMM[1], @XMM[8]
+	veor	@XMM[6], @XMM[6], @XMM[9]
+	vld1.8	{@XMM[12]-@XMM[13]}, [$inp]!
+	veor	@XMM[4], @XMM[4], @XMM[10]
+	veor	@XMM[2], @XMM[2], @XMM[11]
+	vld1.8	{@XMM[15]}, [$inp]!
+	veor	@XMM[7], @XMM[7], @XMM[12]
+	vst1.8	{@XMM[0]-@XMM[1]}, [$out]!	@ write output
+	veor	@XMM[3], @XMM[3], @XMM[13]
+	vst1.8	{@XMM[6]}, [$out]!
+	vst1.8	{@XMM[4]}, [$out]!
+	vst1.8	{@XMM[2]}, [$out]!
+	vst1.8	{@XMM[7]}, [$out]!
+	vst1.8	{@XMM[3]}, [$out]!
+	b	.Lcbc_dec_done
+.align	4
+.Lcbc_dec_six:
+	sub	$inp, $inp, #0x60
+	bl	_bsaes_decrypt8
+	vldmia	$fp,{@XMM[14]}			@ reload IV
+	vld1.8	{@XMM[8]-@XMM[9]}, [$inp]!	@ reload input
+	veor	@XMM[0], @XMM[0], @XMM[14]	@ ^= IV
+	vld1.8	{@XMM[10]-@XMM[11]}, [$inp]!
+	veor	@XMM[1], @XMM[1], @XMM[8]
+	veor	@XMM[6], @XMM[6], @XMM[9]
+	vld1.8	{@XMM[12]}, [$inp]!
+	veor	@XMM[4], @XMM[4], @XMM[10]
+	veor	@XMM[2], @XMM[2], @XMM[11]
+	vld1.8	{@XMM[15]}, [$inp]!
+	veor	@XMM[7], @XMM[7], @XMM[12]
+	vst1.8	{@XMM[0]-@XMM[1]}, [$out]!	@ write output
+	vst1.8	{@XMM[6]}, [$out]!
+	vst1.8	{@XMM[4]}, [$out]!
+	vst1.8	{@XMM[2]}, [$out]!
+	vst1.8	{@XMM[7]}, [$out]!
+	b	.Lcbc_dec_done
+.align	4
+.Lcbc_dec_five:
+	sub	$inp, $inp, #0x50
+	bl	_bsaes_decrypt8
+	vldmia	$fp, {@XMM[14]}			@ reload IV
+	vld1.8	{@XMM[8]-@XMM[9]}, [$inp]!	@ reload input
+	veor	@XMM[0], @XMM[0], @XMM[14]	@ ^= IV
+	vld1.8	{@XMM[10]-@XMM[11]}, [$inp]!
+	veor	@XMM[1], @XMM[1], @XMM[8]
+	veor	@XMM[6], @XMM[6], @XMM[9]
+	vld1.8	{@XMM[15]}, [$inp]!
+	veor	@XMM[4], @XMM[4], @XMM[10]
+	vst1.8	{@XMM[0]-@XMM[1]}, [$out]!	@ write output
+	veor	@XMM[2], @XMM[2], @XMM[11]
+	vst1.8	{@XMM[6]}, [$out]!
+	vst1.8	{@XMM[4]}, [$out]!
+	vst1.8	{@XMM[2]}, [$out]!
+	b	.Lcbc_dec_done
+.align	4
+.Lcbc_dec_four:
+	sub	$inp, $inp, #0x40
+	bl	_bsaes_decrypt8
+	vldmia	$fp, {@XMM[14]}			@ reload IV
+	vld1.8	{@XMM[8]-@XMM[9]}, [$inp]!	@ reload input
+	veor	@XMM[0], @XMM[0], @XMM[14]	@ ^= IV
+	vld1.8	{@XMM[10]}, [$inp]!
+	veor	@XMM[1], @XMM[1], @XMM[8]
+	veor	@XMM[6], @XMM[6], @XMM[9]
+	vld1.8	{@XMM[15]}, [$inp]!
+	veor	@XMM[4], @XMM[4], @XMM[10]
+	vst1.8	{@XMM[0]-@XMM[1]}, [$out]!	@ write output
+	vst1.8	{@XMM[6]}, [$out]!
+	vst1.8	{@XMM[4]}, [$out]!
+	b	.Lcbc_dec_done
+.align	4
+.Lcbc_dec_three:
+	sub	$inp, $inp, #0x30
+	bl	_bsaes_decrypt8
+	vldmia	$fp, {@XMM[14]}			@ reload IV
+	vld1.8	{@XMM[8]-@XMM[9]}, [$inp]!	@ reload input
+	veor	@XMM[0], @XMM[0], @XMM[14]	@ ^= IV
+	vld1.8	{@XMM[15]}, [$inp]!
+	veor	@XMM[1], @XMM[1], @XMM[8]
+	veor	@XMM[6], @XMM[6], @XMM[9]
+	vst1.8	{@XMM[0]-@XMM[1]}, [$out]!	@ write output
+	vst1.8	{@XMM[6]}, [$out]!
+	b	.Lcbc_dec_done
+.align	4
+.Lcbc_dec_two:
+	sub	$inp, $inp, #0x20
+	bl	_bsaes_decrypt8
+	vldmia	$fp, {@XMM[14]}			@ reload IV
+	vld1.8	{@XMM[8]}, [$inp]!		@ reload input
+	veor	@XMM[0], @XMM[0], @XMM[14]	@ ^= IV
+	vld1.8	{@XMM[15]}, [$inp]!		@ reload input
+	veor	@XMM[1], @XMM[1], @XMM[8]
+	vst1.8	{@XMM[0]-@XMM[1]}, [$out]!	@ write output
+	b	.Lcbc_dec_done
+.align	4
+.Lcbc_dec_one:
+	sub	$inp, $inp, #0x10
+	mov	$rounds, $out			@ save original out pointer
+	mov	$out, $fp			@ use the iv scratch space as out buffer
+	mov	r2, $key
+	vmov	@XMM[4],@XMM[15]		@ just in case ensure that IV
+	vmov	@XMM[5],@XMM[0]			@ and input are preserved
+	bl	AES_decrypt
+	vld1.8	{@XMM[0]}, [$fp,:64]		@ load result
+	veor	@XMM[0], @XMM[0], @XMM[4]	@ ^= IV
+	vmov	@XMM[15], @XMM[5]		@ @XMM[5] holds input
+	vst1.8	{@XMM[0]}, [$rounds]		@ write output
+
+.Lcbc_dec_done:
+	vmov.i32	q0, #0
+	vmov.i32	q1, #0
+.Lcbc_dec_bzero:				@ wipe key schedule [if any]
+	vstmia		$keysched!, {q0-q1}
+	teq		$keysched, $fp
+	bne		.Lcbc_dec_bzero
+
+	add	sp, $fp, #0x10
+	vst1.8	{@XMM[15]}, [$ivp]		@ return IV
+	vldmia	sp!, {d8-d15}
+	ldmia	sp!, {r4-r10, pc}
+.size	bsaes_cbc_encrypt,.-bsaes_cbc_encrypt
+___
+}
+{
+my ($inp,$out,$len,$key, $ctr,$fp,$rounds)=(map("r$_",(0..3,8..10)));
+my $const = "r6";	# shared with _bsaes_encrypt8_alt
+my $keysched = "sp";
+
+$code.=<<___;
+.extern	AES_encrypt
+.global	bsaes_ctr32_encrypt_blocks
+.type	bsaes_ctr32_encrypt_blocks,%function
+.align	5
+bsaes_ctr32_encrypt_blocks:
+	cmp	$len, #8			@ use plain AES for
+	blo	.Lctr_enc_short			@ small sizes
+
+	stmdb	sp!, {r4-r10, lr}
+	vstmdb	sp!, {d8-d15}			@ ABI specification says so
+	ldr	$ctr, [sp, #0x60]		@ ctr is 1st arg on the stack
+	sub	sp, sp, #0x10			@ scratch space to carry over the ctr
+	mov	$fp, sp				@ save sp
+
+	@ allocate the key schedule on the stack
+	ldr	$rounds, [$key, #240]		@ get # of rounds
+	sub	sp, sp, $rounds, lsl#7		@ 128 bytes per inner round key
+	add	sp, sp, #`128-32`		@ size of bit-sliced key schedule
+
+	@ populate the key schedule
+	mov	r4, $key			@ pass key
+	mov	r5, $rounds			@ pass # of rounds
+	mov	r12, $keysched			@ pass key schedule
+	bl	_bsaes_key_convert
+	veor	@XMM[7],@XMM[7],@XMM[15]	@ fix up last round key
+	vstmia	r12, {@XMM[7]}			@ save last round key
+
+	vld1.8	{@XMM[0]}, [$ctr]		@ load counter
+	add	$ctr, $const, #.LREVM0SR-.LM0	@ borrow $ctr
+	vldmia	$keysched, {@XMM[4]}		@ load round0 key
+
+	vmov.i32	`&Dhi("@XMM[8]")`,#1	@ compose 1<<96
+	vmov.i32	`&Dlo("@XMM[8]")`,#0
+	vrev32.8	`&Dhi("@XMM[0]")`,`&Dhi("@XMM[0]")`
+	vshl.u64	`&Dhi("@XMM[8]")`,#32
+	vrev32.8	`&Dhi("@XMM[4]")`,`&Dhi("@XMM[4]")`
+	vadd.u32	@XMM[9],@XMM[8],@XMM[8]	@ compose 2<<96
+	vstmia	$keysched, {@XMM[4]}		@ save adjusted round0 key
+	b	.Lctr_enc_loop
+
+.align	4
+.Lctr_enc_loop:
+	vadd.u32	@XMM[10], @XMM[8], @XMM[9]	@ compose 3<<96
+	vadd.u32	@XMM[1], @XMM[0], @XMM[8]	@ +1
+	vadd.u32	@XMM[2], @XMM[0], @XMM[9]	@ +2
+	vadd.u32	@XMM[3], @XMM[0], @XMM[10]	@ +3
+	vadd.u32	@XMM[4], @XMM[1], @XMM[10]
+	vadd.u32	@XMM[5], @XMM[2], @XMM[10]
+	vadd.u32	@XMM[6], @XMM[3], @XMM[10]
+	vadd.u32	@XMM[7], @XMM[4], @XMM[10]
+	vadd.u32	@XMM[10], @XMM[5], @XMM[10]	@ next counter
+
+	@ Borrow prologue from _bsaes_encrypt8 to use the opportunity
+	@ to flip byte order in 32-bit counter
+
+	vldmia		$keysched, {@XMM[9]}		@ load round0 key
+	add		r4, $keysched, #0x10		@ pass next round key
+	vldmia		$ctr, {@XMM[8]}			@ .LREVM0SR
+	mov		r5, $rounds			@ pass rounds
+	vstmia		$fp, {@XMM[10]}			@ save next counter
+	sub		$const, $ctr, #.LREVM0SR-.LSR	@ pass constants
+
+	bl		_bsaes_encrypt8_alt
+
+	subs		$len, $len, #8
+	blo		.Lctr_enc_loop_done
+
+	vld1.8		{@XMM[8]-@XMM[9]}, [$inp]!	@ load input
+	vld1.8		{@XMM[10]-@XMM[11]}, [$inp]!
+	veor		@XMM[0], @XMM[8]
+	veor		@XMM[1], @XMM[9]
+	vld1.8		{@XMM[12]-@XMM[13]}, [$inp]!
+	veor		@XMM[4], @XMM[10]
+	veor		@XMM[6], @XMM[11]
+	vld1.8		{@XMM[14]-@XMM[15]}, [$inp]!
+	veor		@XMM[3], @XMM[12]
+	vst1.8		{@XMM[0]-@XMM[1]}, [$out]!	@ write output
+	veor		@XMM[7], @XMM[13]
+	veor		@XMM[2], @XMM[14]
+	vst1.8		{@XMM[4]}, [$out]!
+	veor		@XMM[5], @XMM[15]
+	vst1.8		{@XMM[6]}, [$out]!
+	vmov.i32	`&Dhi("@XMM[8]")`,#1		@ compose 1<<96
+	vst1.8		{@XMM[3]}, [$out]!
+	vmov.i32	`&Dlo("@XMM[8]")`,#0
+	vst1.8		{@XMM[7]}, [$out]!
+	vshl.u64	`&Dhi("@XMM[8]")`,#32
+	vst1.8		{@XMM[2]}, [$out]!
+	vadd.u32	@XMM[9],@XMM[8],@XMM[8]		@ compose 2<<96
+	vst1.8		{@XMM[5]}, [$out]!
+	vldmia		$fp, {@XMM[0]}			@ load counter
+
+	bne		.Lctr_enc_loop
+	b		.Lctr_enc_done
+
+.align	4
+.Lctr_enc_loop_done:
+	add		$len, $len, #8
+	vld1.8		{@XMM[8]}, [$inp]!	@ load input
+	veor		@XMM[0], @XMM[8]
+	vst1.8		{@XMM[0]}, [$out]!	@ write output
+	cmp		$len, #2
+	blo		.Lctr_enc_done
+	vld1.8		{@XMM[9]}, [$inp]!
+	veor		@XMM[1], @XMM[9]
+	vst1.8		{@XMM[1]}, [$out]!
+	beq		.Lctr_enc_done
+	vld1.8		{@XMM[10]}, [$inp]!
+	veor		@XMM[4], @XMM[10]
+	vst1.8		{@XMM[4]}, [$out]!
+	cmp		$len, #4
+	blo		.Lctr_enc_done
+	vld1.8		{@XMM[11]}, [$inp]!
+	veor		@XMM[6], @XMM[11]
+	vst1.8		{@XMM[6]}, [$out]!
+	beq		.Lctr_enc_done
+	vld1.8		{@XMM[12]}, [$inp]!
+	veor		@XMM[3], @XMM[12]
+	vst1.8		{@XMM[3]}, [$out]!
+	cmp		$len, #6
+	blo		.Lctr_enc_done
+	vld1.8		{@XMM[13]}, [$inp]!
+	veor		@XMM[7], @XMM[13]
+	vst1.8		{@XMM[7]}, [$out]!
+	beq		.Lctr_enc_done
+	vld1.8		{@XMM[14]}, [$inp]
+	veor		@XMM[2], @XMM[14]
+	vst1.8		{@XMM[2]}, [$out]!
+
+.Lctr_enc_done:
+	vmov.i32	q0, #0
+	vmov.i32	q1, #0
+.Lctr_enc_bzero:			@ wipe key schedule [if any]
+	vstmia		$keysched!, {q0-q1}
+	teq		$keysched, $fp
+	bne		.Lctr_enc_bzero
+
+	add	sp, $fp, #0x10
+	vldmia	sp!, {d8-d15}
+	ldmia	sp!, {r4-r10, pc}	@ return
+
+.align	4
+.Lctr_enc_short:
+	ldr	ip, [sp]		@ ctr pointer is passed on stack
+	stmdb	sp!, {r4-r8, lr}
+
+	mov	r4, $inp		@ copy arguments
+	mov	r5, $out
+	mov	r6, $len
+	mov	r7, $key
+	ldr	r8, [ip, #12]		@ load counter LSW
+	vld1.8	{@XMM[1]}, [ip]		@ load whole counter value
+#ifdef __ARMEL__
+	rev	r8, r8
+#endif
+	sub	sp, sp, #0x10
+	vst1.8	{@XMM[1]}, [sp,:64]	@ copy counter value
+	sub	sp, sp, #0x10
+
+.Lctr_enc_short_loop:
+	add	r0, sp, #0x10		@ input counter value
+	mov	r1, sp			@ output on the stack
+	mov	r2, r7			@ key
+
+	bl	AES_encrypt
+
+	vld1.8	{@XMM[0]}, [r4]!	@ load input
+	vld1.8	{@XMM[1]}, [sp,:64]	@ load encrypted counter
+	add	r8, r8, #1
+#ifdef __ARMEL__
+	rev	r0, r8
+	str	r0, [sp, #0x1c]		@ next counter value
+#else
+	str	r8, [sp, #0x1c]		@ next counter value
+#endif
+	veor	@XMM[0],@XMM[0],@XMM[1]
+	vst1.8	{@XMM[0]}, [r5]!	@ store output
+	subs	r6, r6, #1
+	bne	.Lctr_enc_short_loop
+
+	add	sp, sp, #0x20
+	ldmia	sp!, {r4-r8, pc}
+.size	bsaes_ctr32_encrypt_blocks,.-bsaes_ctr32_encrypt_blocks
 ___
 }
 $code.=<<___;
