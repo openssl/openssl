@@ -393,6 +393,8 @@ sub get_tests
 		 'testrsa.pem',
 		 'testsid.pem',
 		 'testss',
+		 'testssl',
+		 'testsslproxy',
 	       );
   my $copies = copy_scripts(1, 'test', @copies);
   $copies .= copy_scripts(0, 'test', ('smcont.txt'));
@@ -404,6 +406,7 @@ sub get_tests
 
   my @apps = ( 'CA.sh',
 	       'openssl.cnf',
+	       'server2.pem',
 	     );
   $copies .= copy_scripts(1, 'apps', @apps);
 

@@ -330,7 +330,8 @@ test_engine: $(ENGINETEST)
 	../util/shlib_wrap.sh ./$(ENGINETEST)
 
 test_ssl: keyU.ss certU.ss certCA.ss certP1.ss keyP1.ss certP2.ss keyP2.ss \
-		intP1.ss intP2.ss
+		intP1.ss intP2.ss $(SSLTEST) testssl testsslproxy \
+		../apps/server2.pem
 	@echo "test SSL protocol"
 	../util/shlib_wrap.sh ./$(SSLTEST) -test_cipherlist
 	@sh ./testssl keyU.ss certU.ss certCA.ss
