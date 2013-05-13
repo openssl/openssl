@@ -471,6 +471,14 @@ static int ssl_set_cert(CERT *c, X509 *x)
 		c->pkeys[i].authz = NULL;
 		c->pkeys[i].authz_length = 0;
 		}
+
+	/* Free the old serverinfo data, if it exists. */
+	if (c->pkeys[i].serverinfo != NULL)
+		{
+		OPENSSL_free(c->pkeys[i].serverinfo);
+		c->pkeys[i].serverinfo = NULL;
+		c->pkeys[i].serverinfo_length = 0;
+		}
 #endif
 	c->key= &(c->pkeys[i]);
 
@@ -855,6 +863,116 @@ static char authz_validate(const unsigned char *authz, size_t length)
 		}
 	}
 
+static int serverinfo_find_extension(const unsigned char *serverinfo,
+				     size_t serverinfo_length,
+				     unsigned short extension_type,
+				     const unsigned char **extension_data,
+				     unsigned short *extension_length)
+	{
+	*extension_data = NULL;
+	*extension_length = 0;
+	if (serverinfo == NULL || serverinfo_length == 0)
+		return 0;
+	for (;;)
+		{
+		unsigned short type = 0; /* uint16 */
+		unsigned short len = 0;  /* uint16 */
+
+		/* end of serverinfo */
+		if (serverinfo_length == 0)
+			return 0;
+
+		/* read 2-byte type field */
+		if (serverinfo_length < 2)
+			return 0;	/* error */
+		type = (serverinfo[0] << 8) + serverinfo[1];
+		serverinfo += 2;
+		serverinfo_length -= 2;
+
+		/* read 2-byte len field */
+		if (serverinfo_length < 2)
+			return 0;	/* error */
+		len = (serverinfo[0] << 8) + serverinfo[1];
+		serverinfo += 2;
+		serverinfo_length -= 2;
+
+		if (len > serverinfo_length)
+			return 0;	/* error */
+
+		if (type == extension_type)
+			{
+			*extension_data = serverinfo;
+			*extension_length = len;
+			return 1;
+			}
+
+		serverinfo += len;
+		serverinfo_length -= len;
+		}
+	return 0;
+	}
+
+static int serverinfo_srv_cb(SSL *s, unsigned short ext_type,
+			     const unsigned char **out, unsigned short *outlen, 
+			     void *arg)
+	{
+	const unsigned char *serverinfo = NULL;
+	size_t serverinfo_length = 0;
+
+	/* Is there a serverinfo for the chosen server cert? */
+	if ((ssl_get_server_cert_serverinfo(s, &serverinfo,
+					    &serverinfo_length)) != 0)
+		{
+		/* Find the relevant extension from the serverinfo */
+		serverinfo_find_extension(serverinfo, serverinfo_length,
+					  ext_type, out, outlen);
+		}
+		return 1;
+	}
+
+static int serverinfo_validate(const unsigned char *serverinfo, 
+			       size_t serverinfo_length, SSL_CTX *ctx)
+	{
+	if (serverinfo == NULL || serverinfo_length == 0)
+		return 0;
+	for (;;)
+		{
+		unsigned short ext_type = 0; /* uint16 */
+		unsigned short len = 0;  /* uint16 */
+
+		/* end of serverinfo */
+		if (serverinfo_length == 0)
+			return 1;
+
+		/* read 2-byte type field */
+		if (serverinfo_length < 2)
+			return 0;
+		/* FIXME: check for types we understand explicitly? */
+
+		/* Register callbacks for extensions */
+		ext_type = (serverinfo[0] << 8) + serverinfo[1];
+		if (ctx && !SSL_CTX_set_custom_srv_ext(ctx, ext_type, NULL,
+						       serverinfo_srv_cb, NULL))
+			return 0;
+
+		serverinfo += 2;
+		serverinfo_length -= 2;
+
+		/* read 2-byte len field */
+		if (serverinfo_length < 2)
+			return 0;
+		len = (serverinfo[0] << 8) + serverinfo[1];
+		serverinfo += 2;
+		serverinfo_length -= 2;
+
+		if (len > serverinfo_length)
+			return 0;
+
+		serverinfo += len;
+		serverinfo_length -= len;
+		}
+	}
+
 static const unsigned char *authz_find_data(const unsigned char *authz,
 					    size_t authz_length,
 					    unsigned char data_type,
@@ -906,13 +1024,18 @@ static int ssl_set_authz(CERT *c, unsigned char *authz, size_t authz_length)
 		return(0);
 		}
 	current_key->authz = OPENSSL_realloc(current_key->authz, authz_length);
+	if (current_key->authz == NULL)
+		{
+		SSLerr(SSL_F_SSL_SET_AUTHZ,ERR_R_MALLOC_FAILURE);
+		return 0;
+		}
 	current_key->authz_length = authz_length;
 	memcpy(current_key->authz, authz, authz_length);
 	return 1;
 	}
 
 int SSL_CTX_use_authz(SSL_CTX *ctx, unsigned char *authz,
-	size_t authz_length)
+		      size_t authz_length)
 	{
 	if (authz == NULL)
 		{
@@ -925,6 +1048,49 @@ int SSL_CTX_use_authz(SSL_CTX *ctx, unsigned char *authz,
 		return 0;
 		}
 	return ssl_set_authz(ctx->cert, authz, authz_length);
+	}
+
+int SSL_CTX_use_serverinfo(SSL_CTX *ctx, const unsigned char *serverinfo,
+			   size_t serverinfo_length)
+	{
+	if (ctx == NULL || serverinfo == NULL || serverinfo_length == 0)
+		{
+		SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO,ERR_R_PASSED_NULL_PARAMETER);
+		return 0;
+		}
+	if (!serverinfo_validate(serverinfo, serverinfo_length, NULL))
+		{
+		SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO,SSL_R_INVALID_SERVERINFO_DATA);
+		return(0);
+		}
+	if (!ssl_cert_inst(&ctx->cert))
+		{
+		SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO,ERR_R_MALLOC_FAILURE);
+		return 0;
+		}
+	if (ctx->cert->key == NULL)
+		{
+		SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO,ERR_R_INTERNAL_ERROR);
+		return 0;
+		}
+	ctx->cert->key->serverinfo = OPENSSL_realloc(ctx->cert->key->serverinfo,
+												serverinfo_length);
+	if (ctx->cert->key->serverinfo == NULL)
+		{
+		SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO,ERR_R_MALLOC_FAILURE);
+		return 0;
+		}
+	memcpy(ctx->cert->key->serverinfo, serverinfo, serverinfo_length);
+	ctx->cert->key->serverinfo_length = serverinfo_length;
+
+	/* Now that the serverinfo is validated and stored, go ahead and 
+	 * register callbacks. */
+	if (!serverinfo_validate(serverinfo, serverinfo_length, ctx))
+		{
+		SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO,SSL_R_INVALID_SERVERINFO_DATA);
+		return(0);
+		}
+	return 1;
 	}
 
 int SSL_use_authz(SSL *ssl, unsigned char *authz, size_t authz_length)
@@ -1024,6 +1190,82 @@ int SSL_use_authz_file(SSL *ssl, const char *file)
 	ret = SSL_use_authz(ssl, authz, authz_length);
 	/* SSL_use_authz makes a local copy of the authz. */
 	OPENSSL_free(authz);
+	return ret;
+	}
+
+int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
+	{
+	unsigned char *serverinfo = NULL;
+	size_t serverinfo_length = 0;
+	unsigned char* extension = 0;
+	long extension_length = 0;
+	char* name = NULL;
+	char* header = NULL;
+	int ret = 0;
+	BIO *bin = NULL;
+	size_t num_extensions = 0;
+
+	if (ctx == NULL || file == NULL)
+		{
+		SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE,ERR_R_PASSED_NULL_PARAMETER);
+		goto end;
+		}
+
+	bin = BIO_new(BIO_s_file_internal());
+	if (bin == NULL)
+		{
+		SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, ERR_R_BUF_LIB);
+		goto end;
+		}
+	if (BIO_read_filename(bin, file) <= 0)
+		{
+		SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, ERR_R_SYS_LIB);
+		goto end;
+		}
+
+	for (num_extensions=0;; num_extensions++)
+		{
+		if (PEM_read_bio(bin, &name, &header, &extension, &extension_length) == 0)
+			{
+			/* There must be at least one extension in this file */
+			if (num_extensions == 0)
+				{
+				SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, ERR_R_PEM_LIB);
+				goto end;
+				}
+			else /* End of file, we're done */
+				break;
+			}
+		/* Check that the decoded PEM data is plausible (valid length field) */
+		if (extension_length < 4 || (extension[2] << 8) + extension[3] != extension_length - 4)
+			{
+				SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, ERR_R_PEM_LIB);
+				goto end;
+			}
+		/* Append the decoded extension to the serverinfo buffer */
+		serverinfo = OPENSSL_realloc(serverinfo, serverinfo_length + extension_length);
+		if (serverinfo == NULL)
+			{
+			SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, ERR_R_MALLOC_FAILURE);
+			goto end;
+			}
+		memcpy(serverinfo + serverinfo_length, extension, extension_length);
+		serverinfo_length += extension_length;
+
+		OPENSSL_free(name); name = NULL;
+		OPENSSL_free(header); header = NULL;
+		OPENSSL_free(extension); extension = NULL;
+		}
+
+	ret = SSL_CTX_use_serverinfo(ctx, serverinfo, serverinfo_length);
+end:
+	/* SSL_CTX_use_serverinfo makes a local copy of the serverinfo. */
+	OPENSSL_free(name);
+	OPENSSL_free(header);
+	OPENSSL_free(extension);
+	OPENSSL_free(serverinfo);
+	if (bin != NULL)
+		BIO_free(bin);
 	return ret;
 	}
 #endif /* OPENSSL_NO_STDIO */

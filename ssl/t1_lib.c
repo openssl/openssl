@@ -1400,6 +1400,31 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		*(ret++) = TLSEXT_AUTHZDATAFORMAT_audit_proof;
 		}
 
+	/* Add custom TLS Extensions to ClientHello */
+	if (s->ctx->custom_cli_ext_records_count)
+		{
+		size_t i;
+		custom_cli_ext_record* record;
+
+		for (i = 0; i < s->ctx->custom_cli_ext_records_count; i++)
+			{
+			const unsigned char* out = NULL;
+			unsigned short outlen = 0;
+
+			record = &s->ctx->custom_cli_ext_records[i];
+			if (record->fn1 && !record->fn1(s, record->ext_type,
+							&out, &outlen,
+							record->arg))
+				return NULL;
+			if (limit < ret + 4 + outlen)
+				return NULL;
+			s2n(record->ext_type, ret);
+			s2n(outlen, ret);
+			memcpy(ret, out, outlen);
+			ret += outlen;
+			}
+		}
+
 	if ((extdatalen = ret-p-2) == 0)
 		return p;
 
@@ -1664,6 +1689,40 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 			i += 2;
 			authz += length;
 			i += length;
+			}
+		}
+
+	/* If custom types were sent in ClientHello, add ServerHello responses */
+	if (s->s3->tlsext_custom_types_count)
+		{
+		size_t i;
+
+		for (i = 0; i < s->s3->tlsext_custom_types_count; i++)
+			{
+			size_t j;
+			custom_srv_ext_record *record;
+
+			for (j = 0; j < s->ctx->custom_srv_ext_records_count; j++)
+				{
+				record = &s->ctx->custom_srv_ext_records[j];
+				if (s->s3->tlsext_custom_types[i] == record->ext_type)
+					{
+					const unsigned char *out = NULL;
+					unsigned short outlen = 0;
+					if (record->fn2
+					    && !record->fn2(s, record->ext_type,
+							    &out, &outlen,
+							    record->arg))
+						return NULL;
+					if (limit < ret + 4 + outlen)
+						return NULL;
+					s2n(record->ext_type, ret);
+					s2n(outlen, ret);
+					memcpy(ret, out, outlen);
+					ret += outlen;
+					break;
+					}
+				}
 			}
 		}
 
@@ -2235,6 +2294,54 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 				}
 			}
 
+		/* If this ClientHello extension was unhandled and this is 
+		 * a nonresumed connection, check whether the extension is a 
+		 * custom TLS Extension (has a custom_srv_ext_record), and if
+		 * so call the callback and record the extension number so that
+		 * an appropriate ServerHello may be later returned.
+		 */
+		else if (!s->hit && s->ctx->custom_srv_ext_records_count)
+			{
+			custom_srv_ext_record *record;
+
+			for (i=0; i < s->ctx->custom_srv_ext_records_count; i++)
+				{
+				record = &s->ctx->custom_srv_ext_records[i];
+				if (type == record->ext_type)
+					{
+					/* Error on duplicate TLS Extensions */
+					size_t j;
+
+					for (j = 0; j < s->s3->tlsext_custom_types_count; j++)
+						{
+						if (s->s3->tlsext_custom_types[j] == type)
+							{
+							*al = TLS1_AD_DECODE_ERROR;
+							return 0;
+							}
+						}
+
+					/* Callback */
+					if (record->fn1 && !record->fn1(s, type, data, size, al, record->arg))
+						return 0;
+						
+					/* Add the (non-duplicated) entry */
+					s->s3->tlsext_custom_types_count++;
+					s->s3->tlsext_custom_types = OPENSSL_realloc(
+							s->s3->tlsext_custom_types,
+							s->s3->tlsext_custom_types_count*2);
+					if (s->s3->tlsext_custom_types == NULL)
+						{
+						s->s3->tlsext_custom_types = 0;
+						*al = TLS1_AD_INTERNAL_ERROR;
+						return 0;
+						}
+					s->s3->tlsext_custom_types[
+							s->s3->tlsext_custom_types_count-1] = type;
+					}						
+				}
+			}
+
 		data+=size;
 		}
 
@@ -2541,6 +2648,26 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 				}
 
 			s->s3->tlsext_authz_server_promised = 1;
+			}
+
+		/* If this extension type was not otherwise handled, but 
+		 * matches a custom_cli_ext_record, then send it to the c
+		 * callback */
+		else if (s->ctx->custom_cli_ext_records_count)
+			{
+			size_t i;
+			custom_cli_ext_record* record;
+
+			for (i = 0; i < s->ctx->custom_cli_ext_records_count; i++)
+				{
+				record = &s->ctx->custom_cli_ext_records[i];
+				if (record->ext_type == type)
+					{
+					if (record->fn2 && !record->fn2(s, type, data, size, al, record->arg))
+						return 0;
+					break;
+					}
+				}			
 			}
  
 		data += size;

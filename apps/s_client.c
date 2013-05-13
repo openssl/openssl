@@ -364,6 +364,9 @@ static void sc_usage(void)
 # ifndef OPENSSL_NO_NEXTPROTONEG
 	BIO_printf(bio_err," -nextprotoneg arg - enable NPN extension, considering named protocols supported (comma-separated list)\n");
 # endif
+#ifndef OPENSSL_NO_TLSEXT
+	BIO_printf(bio_err," -serverinfo types - send empty ClientHello extensions (comma-separated numbers)\n");
+#endif
 #endif
 	BIO_printf(bio_err," -legacy_renegotiation - enable use of legacy renegotiation (dangerous)\n");
 	BIO_printf(bio_err," -use_srtp profiles - Offer SRTP key management with a colon-separated profile list\n");
@@ -541,6 +544,26 @@ static int next_proto_cb(SSL *s, unsigned char **out, unsigned char *outlen, con
 	return SSL_TLSEXT_ERR_OK;
 	}
 # endif  /* ndef OPENSSL_NO_NEXTPROTONEG */
+
+static int serverinfo_cli_cb(SSL* s, unsigned short ext_type,
+			     const unsigned char* in, unsigned short inlen, 
+			     int* al, void* arg)
+	{
+	char pem_name[100];
+	unsigned char ext_buf[4 + 65536];
+
+	/* Reconstruct the type/len fields prior to extension data */
+	ext_buf[0] = ext_type >> 8;
+	ext_buf[1] = ext_type & 0xFF;
+	ext_buf[2] = inlen >> 8;
+	ext_buf[3] = inlen & 0xFF;
+	memcpy(ext_buf+4, in, inlen);
+
+	BIO_snprintf(pem_name, sizeof(pem_name), "SERVER_INFO %d", ext_type);
+	PEM_write_bio(bio_c_out, pem_name, "", ext_buf, 4 + inlen);
+	return 1;
+	}
+
 #endif
 
 enum
@@ -613,6 +636,9 @@ int MAIN(int argc, char **argv)
 # ifndef OPENSSL_NO_NEXTPROTONEG
 	const char *next_proto_neg_in = NULL;
 # endif
+# define MAX_SI_TYPES 100
+	unsigned short serverinfo_types[MAX_SI_TYPES];
+	int serverinfo_types_count = 0;
 #endif
 	char *sess_in = NULL;
 	char *sess_out = NULL;
@@ -949,6 +975,29 @@ static char *jpake_secret = NULL;
 			next_proto_neg_in = *(++argv);
 			}
 # endif
+		else if (strcmp(*argv,"-serverinfo") == 0)
+			{
+			char *c;
+			int start = 0;
+			int len;
+
+			if (--argc < 1) goto bad;
+			c = *(++argv);
+			serverinfo_types_count = 0;
+			len = strlen(c);
+			for (i = 0; i <= len; ++i)
+				{
+				if (i == len || c[i] == ',')
+					{
+					serverinfo_types[serverinfo_types_count]
+					    = atoi(c+start);
+					serverinfo_types_count++;
+					start = i+1;
+					}
+				if (serverinfo_types_count == MAX_SI_TYPES)
+					break;
+				}
+			}
 #endif
 #ifdef FIONBIO
 		else if (strcmp(*argv,"-nbio") == 0)
@@ -1241,6 +1290,19 @@ bad:
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
 	if (next_proto.data)
 		SSL_CTX_set_next_proto_select_cb(ctx, next_proto_cb, &next_proto);
+#endif
+#ifndef OPENSSL_NO_TLSEXT
+		if (serverinfo_types_count)
+			{
+			for (i = 0; i < serverinfo_types_count; i++)
+				{
+				SSL_CTX_set_custom_cli_ext(ctx,
+							   serverinfo_types[i],
+							   NULL, 
+							   serverinfo_cli_cb,
+							   NULL);
+				}
+			}
 #endif
 
 	if (state) SSL_CTX_set_info_callback(ctx,apps_ssl_info_callback);

@@ -30,6 +30,8 @@ else
   extra="$4"
 fi
 
+serverinfo="./serverinfo.pem"
+
 #############################################################################
 
 echo test sslv2
@@ -164,6 +166,14 @@ $ssltest -tls1 -cipher PSK -psk abc123 $extra || exit 1
 
 echo test tls1 with PSK via BIO pair
 $ssltest -bio_pair -tls1 -cipher PSK -psk abc123 $extra || exit 1
+
+#############################################################################
+# Serverinfo tests
+
+$ssltest -bio_pair -tls1 -serverinfo_file $serverinfo || exit 1
+$ssltest -bio_pair -tls1 -serverinfo_file $serverinfo -serverinfo_sct || exit 1
+$ssltest -bio_pair -tls1 -serverinfo_file $serverinfo -serverinfo_tack || exit 1
+$ssltest -bio_pair -tls1 -serverinfo_file $serverinfo -serverinfo_sct -serverinfo_tack || exit 1
 
 if ../util/shlib_wrap.sh ../apps/openssl no-srp; then
   echo skipping SRP tests

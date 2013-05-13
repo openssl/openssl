@@ -295,6 +295,41 @@ static int MS_CALLBACK ssl_srp_server_param_cb(SSL *s, int *ad, void *arg)
 static BIO *bio_err=NULL;
 static BIO *bio_stdout=NULL;
 
+#define SCT_EXT_TYPE 18
+#define TACK_EXT_TYPE 62208
+
+/* These set from cmdline */
+char* serverinfo_file = NULL;
+int serverinfo_sct = 0;
+int serverinfo_tack = 0;
+int serverinfo_sct_seen = 0;
+int serverinfo_tack_seen = 0;
+int serverinfo_other_seen = 0;
+
+static int serverinfo_cli_cb(SSL* s, unsigned short ext_type,
+												     const unsigned char* in, unsigned short inlen, 
+												     int* al, void* arg)
+	{
+		if (ext_type == SCT_EXT_TYPE)
+			serverinfo_sct_seen++;
+		else if (ext_type == TACK_EXT_TYPE)
+			serverinfo_tack_seen++;
+		else
+			serverinfo_other_seen++;
+		return 1;
+	}
+
+static int verify_serverinfo()
+	{
+	if (serverinfo_sct != serverinfo_sct_seen)
+		return -1;
+	if (serverinfo_tack != serverinfo_tack_seen)
+		return -1;
+	if (serverinfo_other_seen)
+		return -1;
+	return 0;
+	}
+
 static char *cipher=NULL;
 static int verbose=0;
 static int debug=0;
@@ -374,6 +409,9 @@ static void sv_usage(void)
 	fprintf(stderr," -c_support_proof  - indicate client support for server_authz audit proofs\n");
 	fprintf(stderr," -c_require_proof  - fail if no audit proof is sent\n");
 #endif
+	fprintf(stderr," -serverinfo_file - have server use this file\n");
+	fprintf(stderr," -serverinfo_sct  - have client offer and expect SCT\n");
+	fprintf(stderr," -serverinfo_tack - have client offer and expect TACK\n");
 	}
 
 static void print_details(SSL *c_ssl, const char *prefix)
@@ -845,6 +883,19 @@ int main(int argc, char *argv[])
 			tls1 = 1;
 			}
 #endif
+		else if (strcmp(*argv,"-serverinfo_sct") == 0)
+			{
+			serverinfo_sct = 1;
+			}
+		else if (strcmp(*argv,"-serverinfo_tack") == 0)
+			{
+			serverinfo_tack = 1;
+			}
+		else if (strcmp(*argv,"-serverinfo_file") == 0)
+			{
+			if (--argc < 1) goto bad;
+			serverinfo_file = *(++argv);
+			}
 		else
 			{
 			fprintf(stderr,"unknown option %s\n",*argv);
@@ -1186,6 +1237,18 @@ bad:
 			&c_expected);
 		}
 #endif
+
+	if (serverinfo_sct)
+		SSL_CTX_set_custom_cli_ext(c_ctx, SCT_EXT_TYPE, NULL, serverinfo_cli_cb, NULL);
+	if (serverinfo_tack)
+		SSL_CTX_set_custom_cli_ext(c_ctx, TACK_EXT_TYPE, NULL, serverinfo_cli_cb, NULL);
+
+	if (serverinfo_file)
+		if (!SSL_CTX_use_serverinfo_file(s_ctx, serverinfo_file))
+			{
+			BIO_printf(bio_err, "missing serverinfo file\n");
+			goto end;
+			}
 
 	c_ssl=SSL_new(c_ctx);
 	s_ssl=SSL_new(s_ctx);
@@ -1641,6 +1704,13 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
 
 	if (verbose)
 		print_details(c_ssl, "DONE via BIO pair: ");
+
+	if (verify_serverinfo() < 0)
+		{
+		ret = 1;
+		goto err;
+		}
+
 end:
 	ret = 0;
 
@@ -1936,6 +2006,12 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 
 	if (verbose)
 		print_details(c_ssl, "DONE: ");
+
+	if (verify_serverinfo() < 0)
+		{
+		ret = 1;
+		goto err;
+		}
 	ret=0;
 err:
 	/* We have to set the BIO's to NULL otherwise they will be
