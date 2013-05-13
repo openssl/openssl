@@ -4,6 +4,9 @@
 
  Changes between 1.0.x and 1.1.0  [xx XXX xxxx]
 
+  *) Add callbacks for arbitrary TLS extensions.
+     [Trevor Perrin <trevp@trevp.net> and Ben Laurie]
+
   *) Support for DTLS 1.2. This adds two sets of DTLS methods: DTLS_*_method()
      supports both DTLS 1.2 and 1.0 and should use whatever version the peer
      supports and DTLSv1_2_*_method() which supports DTLS 1.2 only.
