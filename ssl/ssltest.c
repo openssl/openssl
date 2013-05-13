@@ -369,6 +369,45 @@ static int verify_npn(SSL *client, SSL *server)
 	return 0;
 	}
 #endif
+#ifndef OPENSSL_NO_SERVERINFO
+
+#define SCT_EXT_NUM 18
+#define TACK_EXT_NUM 62208
+
+/* These set from cmdline */
+char* serverinfo_file = NULL;
+int serverinfo_sct = 0;
+int serverinfo_tack = 0;
+int serverinfo_sct_seen = 0;
+int serverinfo_tack_seen = 0;
+int serverinfo_other_seen = 0;
+
+static void serverinfo_cb(SSL *s, const unsigned char *in,
+				    unsigned int inlen, void *arg)
+	{
+		unsigned short ext_type = (in[0]<<8) + in[1];
+		if (ext_type == SCT_EXT_NUM)
+			serverinfo_sct_seen++;
+		else if (ext_type == TACK_EXT_NUM)
+			serverinfo_tack_seen++;
+		else
+			serverinfo_other_seen++;
+	}
+
+static int verify_serverinfo()
+	{
+	if (serverinfo_sct != serverinfo_sct_seen)
+		{
+		return -1;
+		}
+	if (serverinfo_tack != serverinfo_tack_seen)
+		return -1;
+	if (serverinfo_other_seen)
+		return -1;
+	return 0;
+	}
+
+#endif
 
 static char *cipher=NULL;
 static int verbose=0;
@@ -448,6 +487,11 @@ static void sv_usage(void)
 	fprintf(stderr," -npn_client - have client side offer NPN\n");
 	fprintf(stderr," -npn_server - have server side offer NPN\n");
 	fprintf(stderr," -npn_server_reject - have server reject NPN\n");
+#endif
+#ifndef OPENSSL_NO_SERVERINFO
+	fprintf(stderr," -serverinfo_file - have server use this file\n");
+	fprintf(stderr," -serverinfo_sct  - have client offer and expect SCT\n");
+	fprintf(stderr," -serverinfo_tack - have client offer and expect TACK\n");
 #endif
 	}
 
@@ -861,6 +905,21 @@ int main(int argc, char *argv[])
 			npn_server_reject = 1;
 			}
 #endif
+#ifndef OPENSSL_NO_SERVERINFO
+		else if (strcmp(*argv,"-serverinfo_sct") == 0)
+			{
+			serverinfo_sct = 1;
+			}
+		else if (strcmp(*argv,"-serverinfo_tack") == 0)
+			{
+			serverinfo_tack = 1;
+			}
+		else if (strcmp(*argv,"-serverinfo_file") == 0)
+			{
+			if (--argc < 1) goto bad;
+			serverinfo_file = *(++argv);
+			}
+#endif
 		else
 			{
 			fprintf(stderr,"unknown option %s\n",*argv);
@@ -1184,6 +1243,28 @@ bad:
 		{
 		SSL_CTX_set_next_protos_advertised_cb(s_ctx, cb_server_rejects_npn, NULL);
 		}
+#endif
+
+#ifndef OPENSSL_NO_SERVERINFO
+	unsigned short sct_and_tack_types[] = {SCT_EXT_NUM, TACK_EXT_NUM};
+	unsigned short sct_types[] = {18};
+	unsigned short tack_types[] = {62208};
+
+  SSL_CTX_set_serverinfo_cb(c_ctx, serverinfo_cb, NULL);
+
+	if (serverinfo_sct && serverinfo_tack)
+		SSL_CTX_set_serverinfo_types(c_ctx, sct_and_tack_types, 2);
+	else if (serverinfo_sct)
+		SSL_CTX_set_serverinfo_types(c_ctx, sct_types, 1);
+	else if (serverinfo_tack)
+		SSL_CTX_set_serverinfo_types(c_ctx, tack_types, 1);
+
+	if (serverinfo_file)
+		if (!SSL_CTX_use_serverinfo_file(s_ctx, serverinfo_file))
+			{
+			BIO_printf(bio_err, "missing serverinfo file\n");
+			goto end;
+			}
 #endif
 
 	c_ssl=SSL_new(c_ctx);
@@ -1623,7 +1704,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
 							&& strncmp("2SSV", SSL_state_string(s_ssl), 4) == 0)
 							{
 							fprintf(stderr, " ok.\n");
-							goto end;
+							goto err;
 							}
 						}
 					fprintf(stderr, " ERROR.\n");
@@ -1643,6 +1724,14 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
 		goto end;
 		}
 #endif
+#ifndef OPENSSL_NO_SERVERINFO
+	if (verify_serverinfo() < 0)
+		{
+		ret = 1;
+		goto err;
+		}
+#endif
+
 end:
 	ret = 0;
 
@@ -1940,6 +2029,13 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 		print_details(c_ssl, "DONE: ");
 #ifndef OPENSSL_NO_NPN
 	if (verify_npn(c_ssl, s_ssl) < 0)
+		{
+		ret = 1;
+		goto err;
+		}
+#endif
+#ifndef OPENSSL_NO_SERVERINFO
+	if (verify_serverinfo() < 0)
 		{
 		ret = 1;
 		goto err;
