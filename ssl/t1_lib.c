@@ -818,6 +818,57 @@ int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
 
 #ifndef OPENSSL_NO_TLSEXT
 
+#ifndef OPENSSL_NO_SERVERINFO
+static int serverinfo_find_extension(const unsigned char *serverinfo,
+				   size_t serverinfo_length,
+				   unsigned short extension_type,
+				   const unsigned char** extension,
+				   size_t *extension_length)
+	{
+	*extension = NULL;
+	*extension_length = 0;
+	if (serverinfo == NULL || serverinfo_length == 0)
+		return 0;
+	for (;;)
+		{
+		unsigned short type = 0; /* uint16 */
+		unsigned short len = 0;  /* uint16 */
+
+		/* end of serverinfo */
+		if (serverinfo_length == 0)
+			return 0;
+
+		/* read 2-byte type field */
+		if (serverinfo_length < 2)
+			return 0;	/* error */
+		type = (serverinfo[0] << 8) + serverinfo[1];
+		serverinfo += 2;
+		serverinfo_length -= 2;
+
+		/* read 2-byte len field */
+		if (serverinfo_length < 2)
+			return 0;	/* error */
+		len = (serverinfo[0] << 8) + serverinfo[1];
+		serverinfo += 2;
+		serverinfo_length -= 2;
+
+		if (len > serverinfo_length)
+			return 0;	/* error */
+
+		if (type == extension_type)
+			{
+			*extension = serverinfo - 4;
+			*extension_length = len + 4;
+			return 1;
+			}
+
+		serverinfo += len;
+		serverinfo_length -= len;
+		}
+	return 0;
+	}
+#endif
+
 /* List of supported signature algorithms and hashes. Should make this
  * customisable at some point, for now include everything we support.
  */
@@ -1443,6 +1494,19 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		*(ret++) = TLSEXT_AUTHZDATAFORMAT_audit_proof;
 		}
 
+#ifndef OPENSSL_NO_SERVERINFO
+  /* Add any user-specified empty extensions */
+	if (s->ctx->serverinfo_types_count)
+		{
+		int i;
+		for (i=0; i < s->ctx->serverinfo_types_count; i++)
+			{
+			s2n(s->ctx->serverinfo_types[i], ret);
+			s2n(0, ret); /* zero length */
+			}
+		}
+#endif
+
 	if ((extdatalen = ret-p-2) == 0)
 		return p;
 
@@ -1708,6 +1772,39 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 			i += length;
 			}
 		}
+
+#ifndef OPENSSL_NO_SERVERINFO
+	/* If there are potential serverinfo types, let's see about adding them */
+	if (s->s3->tlsext_serverinfo_types_count && s->s3->tlsext_serverinfo_types)
+		{
+		size_t i = 0;
+		const unsigned char *serverinfo = NULL;
+		size_t serverinfo_length = 0;
+		const unsigned char* extension = NULL;
+		size_t extension_length = 0;
+
+		/* Is there a serverinfo for the chosen server cert? */
+		if ((ssl_get_server_cert_serverinfo(s, &serverinfo, &serverinfo_length)) != 0)
+			{
+			/* Copy any relevant extensions from the serverinfo */
+			for (i=0; i < s->s3->tlsext_serverinfo_types_count; i++)
+				{
+				if (serverinfo_find_extension(serverinfo,
+						serverinfo_length,
+						s->s3->tlsext_serverinfo_types[i],
+						&extension, &extension_length))
+					{
+
+					if ((long)(limit - ret - extension_length) < 0)
+						return NULL;
+					memcpy(ret, extension,
+					       extension_length);
+					ret += extension_length;
+					}
+				}
+			}
+		}
+#endif
 
 	if ((extdatalen = ret-p-2)== 0) 
 		return p;
@@ -2274,6 +2371,65 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 				}
 			}
 
+#ifndef OPENSSL_NO_SERVERINFO
+		/* See if there is any serverinfo extension for this type.
+		 * If so, record the type so the extension can potentially be
+		 * returned in the serverhello (we don't know for sure if it
+		 * will be returned, as the serverinfos are associated with
+		 * each certificate, so a particular serverinfo is not chosen
+		 * until the ciphersuite is selected. */
+
+		/* Serverinfo extensions must have empty extension_data */
+		else if (size == 0)
+			{
+			/* Successful session resumption uses the same serverinfo
+			 * information as the original session so we ignore this
+			 * in the case of a session resumption. */
+			if (!s->hit)
+				{
+				/* Check if the type matches some entry in an serverinfo */
+				char type_has_serverinfo_extension = 0;
+				for (i=0; i < SSL_PKEY_NUM; i++)
+					{
+					unsigned char* serverinfo = s->cert->pkeys[i].serverinfo;
+					size_t serverinfo_length =s->cert->pkeys[i].serverinfo_length;
+					const unsigned char* extension_unused = NULL;
+					size_t extension_length_unused = 0;
+					if (serverinfo_find_extension(serverinfo, serverinfo_length, type,
+										&extension_unused, &extension_length_unused))
+						{
+						type_has_serverinfo_extension = 1;
+						break;
+						}
+					}
+				if (type_has_serverinfo_extension)
+					{
+					/* Error on duplicate TLS Extensions */
+					for (i = 0; i < s->s3->tlsext_serverinfo_types_count; i++)
+						{
+						if (s->s3->tlsext_serverinfo_types[i] == type)
+							{
+							*al = TLS1_AD_DECODE_ERROR;
+							return 0;
+							}
+						}
+					/* Add the (non-duplicated) entry */
+					s->s3->tlsext_serverinfo_types_count++;
+					s->s3->tlsext_serverinfo_types = OPENSSL_realloc(
+							s->s3->tlsext_serverinfo_types,
+							s->s3->tlsext_serverinfo_types_count*2);
+					if (s->s3->tlsext_serverinfo_types == NULL)
+						{
+						*al = TLS1_AD_INTERNAL_ERROR;
+						return 0;
+						}
+					s->s3->tlsext_serverinfo_types[
+							s->s3->tlsext_serverinfo_types_count-1] = type;
+					}
+				}
+			}
+#endif
+
 		data+=size;
 		}
 
@@ -2578,6 +2734,25 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 
 			s->s3->tlsext_authz_server_promised = 1;
 			}
+
+#ifndef OPENSSL_NO_SERVERINFO
+		/* If this extension type was not otherwise handled,
+		  * matches a user-specified serverinfo type, and
+		  * there is a serverinfo callback, then send it
+		  * to the callback. */
+		else if (s->ctx->serverinfo_cb)
+			{
+			int i;
+			for (i=0; i < s->ctx->serverinfo_types_count; i++)
+				{
+				if (type == s->ctx->serverinfo_types[i])
+					{
+					s->ctx->serverinfo_cb(s, data-4, size+4, s->ctx->serverinfo_cb_arg);
+					break;
+					}
+				}
+			}
+#endif
  
 		data += size;
 		}

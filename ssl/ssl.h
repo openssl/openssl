@@ -1049,6 +1049,20 @@ struct ssl_ctx_st
 				    void *arg);
 	void *next_proto_select_cb_arg;
 # endif
+
+#ifndef OPENSSL_NO_SERVERINFO
+	/* Array of 16-bit TLS Extension types to be sent as empty
+	 * ClientHello extensions. */
+	unsigned short *serverinfo_types;
+	size_t serverinfo_types_count;
+
+	/* Callback for handling any ServerHello extension being sent
+	 * in response to one of the serverinfo_types */
+	void (*serverinfo_cb)(SSL *s, const unsigned char *in,
+				    unsigned int inlen, void *arg);
+	void *serverinfo_cb_arg;
+#endif
+
         /* SRTP profiles we are willing to do from RFC 5764 */
 	STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;  
 #endif
@@ -1168,6 +1182,18 @@ int SSL_CTX_use_psk_identity_hint(SSL_CTX *ctx, const char *identity_hint);
 int SSL_use_psk_identity_hint(SSL *s, const char *identity_hint);
 const char *SSL_get_psk_identity_hint(const SSL *s);
 const char *SSL_get_psk_identity(const SSL *s);
+#endif
+
+#ifndef OPENSSL_NO_SERVERINFO
+int SSL_CTX_set_serverinfo_types(SSL_CTX *ctx,
+		unsigned short *serverinfo_types,
+		size_t serverinfo_types_count);
+
+void SSL_CTX_set_serverinfo_cb(SSL_CTX *ctx,
+				      void (*cb) (SSL *ssl,
+						 const unsigned char *in,
+						 unsigned int inlen, void *arg),
+				      void *arg);
 #endif
 
 #define SSL_NOTHING	1
@@ -1934,6 +1960,16 @@ const unsigned char *SSL_CTX_get_authz_data(SSL_CTX *ctx, unsigned char type,
 int	SSL_CTX_use_authz_file(SSL_CTX *ctx, const char *file);
 int	SSL_use_authz_file(SSL *ssl, const char *file);
 #endif
+
+#ifndef OPENSSL_NO_SERVERINFO
+/* Set serverinfo data for the current active cert. */
+int	SSL_CTX_use_serverinfo(SSL_CTX *ctx, const unsigned char *serverinfo,
+							size_t serverinfo_length);
+#ifndef OPENSSL_NO_STDIO
+int	SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file);
+#endif /* NO_STDIO */
+#endif /* NO_SERVERINFO */
+
 #endif
 
 #ifndef OPENSSL_NO_STDIO
@@ -2481,6 +2517,8 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_CTX_USE_RSAPRIVATEKEY			 177
 #define SSL_F_SSL_CTX_USE_RSAPRIVATEKEY_ASN1		 178
 #define SSL_F_SSL_CTX_USE_RSAPRIVATEKEY_FILE		 179
+#define SSL_F_SSL_CTX_USE_SERVERINFO			 336
+#define SSL_F_SSL_CTX_USE_SERVERINFO_FILE		 337
 #define SSL_F_SSL_DO_HANDSHAKE				 180
 #define SSL_F_SSL_GET_NEW_SESSION			 181
 #define SSL_F_SSL_GET_PREV_SESSION			 217
@@ -2655,6 +2693,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_INVALID_COMPRESSION_ALGORITHM		 341
 #define SSL_R_INVALID_NULL_CMD_NAME			 385
 #define SSL_R_INVALID_PURPOSE				 278
+#define SSL_R_INVALID_SERVERINFO_DATA			 388
 #define SSL_R_INVALID_SRP_USERNAME			 357
 #define SSL_R_INVALID_STATUS_RESPONSE			 328
 #define SSL_R_INVALID_TICKET_KEYS_LENGTH		 325
