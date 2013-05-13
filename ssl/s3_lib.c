@@ -3008,6 +3008,8 @@ void ssl3_free(SSL *s)
 #ifndef OPENSSL_NO_TLSEXT
 	if (s->s3->tlsext_authz_client_types != NULL)
 		OPENSSL_free(s->s3->tlsext_authz_client_types);
+	if (s->s3->tlsext_custom_types != NULL)
+		OPENSSL_free(s->s3->tlsext_custom_types);
 #endif
 	OPENSSL_cleanse(s->s3,sizeof *s->s3);
 	OPENSSL_free(s->s3);
@@ -3058,6 +3060,12 @@ void ssl3_clear(SSL *s)
 		OPENSSL_free(s->s3->tlsext_authz_client_types);
 		s->s3->tlsext_authz_client_types = NULL;
 		}
+	if (s->s3->tlsext_custom_types != NULL)
+		{
+		OPENSSL_free(s->s3->tlsext_custom_types);
+		s->s3->tlsext_custom_types = NULL;
+		}
+	s->s3->tlsext_custom_types_count = 0;	
 #endif
 
 	rp = s->s3->rbuf.buf;

@@ -278,7 +278,7 @@ test_engine:  $(ENGINETEST)
 
 test_ssl: keyU.ss certU.ss certCA.ss certP1.ss keyP1.ss certP2.ss keyP2.ss \
 		intP1.ss intP2.ss $(SSLTEST) testssl testsslproxy \
-		../apps/server2.pem
+		../apps/server2.pem serverinfo.pem
 	@echo "test SSL protocol"
 	@if [ -n "$(FIPSCANLIB)" ]; then \
 	  sh ./testfipsssl keyU.ss certU.ss certCA.ss; \
