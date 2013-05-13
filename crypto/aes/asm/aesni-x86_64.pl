@@ -130,7 +130,7 @@
 # Further data for other parallelizable modes:
 #
 # CBC decrypt				1.16	0.93	0.74
-# CTR					1.14	0.91	0.77
+# CTR					1.14	0.91	0.74
 #
 # Well, given 3x column it's probably inappropriate to call the limit
 # asymptotic, if it can be surpassed, isn't it? What happens there?
@@ -1211,23 +1211,23 @@ $code.=<<___;
 	$movkey		0xe0-0x80($key),$rndkey0
 
 .Lctr32_enc_done:
-	aesenc		$rndkey1,$inout0
 	movdqu		0x10($inp),$in1
 	pxor		$rndkey0,$in0
-	aesenc		$rndkey1,$inout1
 	movdqu		0x20($inp),$in2
 	pxor		$rndkey0,$in1
-	aesenc		$rndkey1,$inout2
 	movdqu		0x30($inp),$in3
 	pxor		$rndkey0,$in2
-	aesenc		$rndkey1,$inout3
 	movdqu		0x40($inp),$in4
 	pxor		$rndkey0,$in3
-	aesenc		$rndkey1,$inout4
 	movdqu		0x50($inp),$in5
 	pxor		$rndkey0,$in4
-	aesenc		$rndkey1,$inout5
+	aesenc		$rndkey1,$inout0
 	pxor		$rndkey0,$in5
+	aesenc		$rndkey1,$inout1
+	aesenc		$rndkey1,$inout2
+	aesenc		$rndkey1,$inout3
+	aesenc		$rndkey1,$inout4
+	aesenc		$rndkey1,$inout5
 	aesenc		$rndkey1,$inout6
 	aesenc		$rndkey1,$inout7
 	movdqu		0x60($inp),$rndkey1
