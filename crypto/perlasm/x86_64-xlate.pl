@@ -253,6 +253,11 @@ my %globals;
 	$self->{label} =~ s/([0-9]+\s*[\*\/\%]\s*[0-9]+)/eval($1)/eg;
 	$self->{label} =~ s/([0-9]+)/$1<<32>>32/eg;
 
+	if (!$self->{label} && $self->{index} && $self->{scale}==1 &&
+	    $self->{base} =~ /(rbp|r13)/) {
+		$self->{base} = $self->{index}; $self->{index} = $1;
+	}
+
 	if ($gas) {
 	    $self->{label} =~ s/^___imp_/__imp__/   if ($flavour eq "mingw64");
 
