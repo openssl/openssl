@@ -4030,6 +4030,18 @@
 #define LN_aes_256_cbc_hmac_sha1		"aes-256-cbc-hmac-sha1"
 #define NID_aes_256_cbc_hmac_sha1		918
 
+#define SN_aes_128_cbc_hmac_sha256		"AES-128-CBC-HMAC-SHA256"
+#define LN_aes_128_cbc_hmac_sha256		"aes-128-cbc-hmac-sha256"
+#define NID_aes_128_cbc_hmac_sha256		935
+
+#define SN_aes_192_cbc_hmac_sha256		"AES-192-CBC-HMAC-SHA256"
+#define LN_aes_192_cbc_hmac_sha256		"aes-192-cbc-hmac-sha256"
+#define NID_aes_192_cbc_hmac_sha256		936
+
+#define SN_aes_256_cbc_hmac_sha256		"AES-256-CBC-HMAC-SHA256"
+#define LN_aes_256_cbc_hmac_sha256		"aes-256-cbc-hmac-sha256"
+#define NID_aes_256_cbc_hmac_sha256		937
+
 #define SN_dhpublicnumber		"dhpublicnumber"
 #define LN_dhpublicnumber		"X9.42 DH"
 #define NID_dhpublicnumber		920

@@ -932,3 +932,6 @@ brainpoolP384r1		931
 brainpoolP384t1		932
 brainpoolP512r1		933
 brainpoolP512t1		934
+aes_128_cbc_hmac_sha256		935
+aes_192_cbc_hmac_sha256		936
+aes_256_cbc_hmac_sha256		937

@@ -638,6 +638,14 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 			 c->algorithm_mac == SSL_SHA1 &&
 			 (evp=EVP_get_cipherbyname("AES-256-CBC-HMAC-SHA1")))
 			*enc = evp, *md = NULL;
+		else if (c->algorithm_enc == SSL_AES128 &&
+			 c->algorithm_mac == SSL_SHA256 &&
+			 (evp=EVP_get_cipherbyname("AES-128-CBC-HMAC-SHA256")))
+			*enc = evp, *md = NULL;
+		else if (c->algorithm_enc == SSL_AES256 &&
+			 c->algorithm_mac == SSL_SHA256 &&
+			 (evp=EVP_get_cipherbyname("AES-256-CBC-HMAC-SHA256")))
+			*enc = evp, *md = NULL;
 		return(1);
 		}
 	else
