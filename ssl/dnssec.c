@@ -80,7 +80,24 @@ unsigned char *SSL_get_tlsa_record_byname (const char *name,int port,int type)
 	char *query=NULL;
 	size_t qlen;
 
+#ifndef OPENSSL_NO_LIBUNBOUND
 	if (ctx == NULL) return NULL;
+#elif defined(RRSET_VALIDATED)
+	static union {
+		void *p; int (*f)(const char*,unsigned int,unsigned int,unsigned int,struct rrsetinfo **); }
+		p_getrrsetbyname = {NULL};
+	static union {
+		void *p; void (*f)(struct rrsetinfo *); }
+		p_freerrset = {NULL};
+
+	if (p_getrrsetbyname.p==NULL) {
+		if ((p_getrrsetbyname.p = DSO_global_lookup("getrrsetbyname")) == NULL ||
+		    (p_freerrset.p = DSO_global_lookup("freerrset")) == NULL)
+			p_getrrsetbyname.p = (void*)-1;
+	}
+
+	if (p_getrrsetbyname.p == (void *)-1) return NULL;
+#endif
 
 	qlen = 7+5+strlen(name)+1;
 	if ((query = OPENSSL_malloc(qlen)) == NULL)
@@ -117,23 +134,8 @@ unsigned char *SSL_get_tlsa_record_byname (const char *name,int port,int type)
 	}
 	}
 #elif defined(RRSET_VALIDATED)
-	do {
-	static union {
-		void *p; int (*f)(const char*,unsigned int,unsigned int,unsigned int,struct rrsetinfo **); }
-		p_getrrsetbyname = {NULL};
-	static union {
-		void *p; void (*f)(struct rrsetinfo *); }
-		p_freerrset = {NULL};
-
+	{
 	struct rrsetinfo *rrset=NULL;
-
-	if (p_getrrsetbyname.p==NULL) {
-		if ((p_getrrsetbyname.p = DSO_global_lookup("getrrsetbyname")) == NULL ||
-		    (p_freerrset.p = DSO_global_lookup("freerrset")) == NULL)
-			p_getrrsetbyname.p = (void*)-1;
-	}
-
-	if (p_getrrsetbyname.p == (void *)-1) break;
 
 	if (p_getrrsetbyname.f(query,1,52,RRSET_VALIDATED,&rrset) == 0 && rrset->rri_nrdatas) {
 		ret=(void*)-1;	/* -1 means insecure */
@@ -157,7 +159,7 @@ unsigned char *SSL_get_tlsa_record_byname (const char *name,int port,int type)
 		} while (0);	
 		p_freerrset.f(rrset);
 	}
-	} while (0);
+	}
 #elif defined(_WIN32_NOT_YET)
 	{
 	PDNS_RECORD rrset;
