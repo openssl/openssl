@@ -675,6 +675,138 @@ int ssl_set_peer_cert_type(SESS_CERT *sc,int type)
 	return(1);
 	}
 
+#ifndef OPENSSL_NO_DANE
+/*
+ * return value:
+ * -1:	format or digest error
+ *  0:	match
+ *  1:	no match
+ */
+int tlsa_cmp(const X509 *cert, const unsigned char *tlsa_record, unsigned int reclen)
+{
+	const EVP_MD *md;
+	unsigned char digest[EVP_MAX_MD_SIZE];
+	unsigned int len, selector, matching_type;
+	int ret;
+
+	if (reclen<3) return -1;
+
+	selector      = tlsa_record[1];
+	matching_type = tlsa_record[2];
+	tlsa_record   += 3;
+	reclen        -= 3;
+
+	switch (matching_type) {
+	case 0:				/* exact match */
+		if (selector==0) {	/* full certificate */
+			ret = EVP_Digest(tlsa_record,reclen,digest,&len,EVP_sha1(),NULL);
+			return ret ? memcmp(cert->sha1_hash,digest,len)!=0 : -1;
+		}
+		else if (selector==1) {	/* SubjectPublicKeyInfo */
+			ASN1_BIT_STRING *key = X509_get0_pubkey_bitstr(cert);
+
+			if (key == NULL) return -1;
+			if (key->length != reclen) return 1;
+
+			return memcmp(key->data,tlsa_record,reclen)!=0;
+		}
+		return -1;
+
+	case 1:				/* SHA256 */
+	case 2:				/* SHA512 */
+		md = matching_type==1 ? EVP_sha256() : EVP_sha512();
+
+		if (reclen!=EVP_MD_size(md)) return -1;
+
+		if (selector==0) {	/* full certificate */
+			ret = X509_digest(cert,md,digest,&len);
+		}
+		else if (selector==1) {	/* SubjectPublicKeyInfo */
+			ret = X509_pubkey_digest(cert,md,digest,&len);
+		}
+		else
+			return -1;
+
+		return ret ? memcmp(tlsa_record,digest,len)!=0 : -1;
+	default:
+		return -1;
+	}
+}
+
+int dane_verify_callback(int ok, X509_STORE_CTX *ctx)
+{
+	SSL *s = X509_STORE_CTX_get_ex_data(ctx,SSL_get_ex_data_X509_STORE_CTX_idx());
+	int depth=X509_STORE_CTX_get_error_depth(ctx);
+	X509 *cert = sk_X509_value(ctx->chain,depth);
+	unsigned int reclen, certificate_usage, witness_usage=0x100;
+	const unsigned char *tlsa_record = s->tlsa_record;
+	int tlsa_ret = -1;
+
+	if (s->verify_callback)	ok = s->verify_callback(ok,ctx);
+
+	if (tlsa_record == NULL) return ok;
+
+	if (tlsa_record == (void*)-1) {
+		ctx->error = X509_V_ERR_INVALID_CA;	/* temporary code? */
+		return 0;
+	}
+
+	while ((reclen = *(unsigned int *)tlsa_record)) {
+		tlsa_record += sizeof(unsigned int);
+
+		/*
+		 * tlsa_record[0]	Certificate Usage field
+		 * tlsa_record[1]	Selector field
+		 * tlsa_record[2]	Matching Type Field
+		 * tlsa_record+3	Certificate Association data
+		 */
+		certificate_usage = tlsa_record[0];
+
+		if (depth==0 || certificate_usage==0 || certificate_usage==2) {
+			tlsa_ret = tlsa_cmp(cert,tlsa_record,reclen);
+			if (tlsa_ret==0) {
+				s->tlsa_witness = depth<<8|certificate_usage;
+				break;
+			}
+			else if (tlsa_ret==-1)
+				s->tlsa_witness = -1;	/* something phishy? */
+		}
+
+		tlsa_record += reclen;
+	}
+
+	if (depth==0) {
+		switch (s->tlsa_witness&0xff) {		/* witnessed usage */
+		case 0:	/* CA constraint */
+			if (s->tlsa_witness<0 && ctx->error==X509_V_OK)
+				ctx->error = X509_V_ERR_INVALID_CA;
+			return 0;
+		case 1:	/* service certificate constraint */
+			if (tlsa_ret!=0 && ctx->error==X509_V_OK)
+				ctx->error = X509_V_ERR_CERT_UNTRUSTED;
+			return 0;
+		case 2:	/* trust anchor assertion */
+			if ((s->tlsa_witness>>8)>0 && ctx->error==X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY)
+				ctx->error = X509_V_OK;
+			break;
+		case 3:	/* domain-issued certificate */
+			if (tlsa_ret==0)
+				ctx->error = X509_V_OK; /* override all errors? */
+			break;
+		default:/* there were TLSA records, but something phishy happened */
+			ctx->error = X509_V_ERR_CERT_UNTRUSTED;
+			return ok;
+		}
+	}
+
+	/*
+	 * returning 1 makes verify procedure traverse the whole chain,
+	 * not actually approve it...
+	 */
+	return 1;
+}
+#endif
+
 int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk)
 	{
 	X509 *x;
@@ -716,8 +848,13 @@ int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk)
 	 */
 	X509_VERIFY_PARAM_set1(X509_STORE_CTX_get0_param(&ctx), s->param);
 
+#ifndef OPENSSL_NO_DANE
+	X509_STORE_CTX_set_verify_cb(&ctx, dane_verify_callback);
+	s->tlsa_witness = -1;
+#else
 	if (s->verify_callback)
 		X509_STORE_CTX_set_verify_cb(&ctx, s->verify_callback);
+#endif
 
 	if (s->ctx->app_verify_callback != NULL)
 #if 1 /* new with OpenSSL 0.9.7 */

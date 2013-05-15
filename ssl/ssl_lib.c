@@ -627,6 +627,11 @@ void SSL_free(SSL *s)
         if (s->srtp_profiles)
             sk_SRTP_PROTECTION_PROFILE_free(s->srtp_profiles);
 
+#ifndef OPENSSL_NO_DANE
+	if (s->tlsa_record && s->tlsa_record!=(void *)-1)
+		OPENSSL_free(s->tlsa_record);
+#endif
+
 	OPENSSL_free(s);
 	}
 
@@ -1142,6 +1147,14 @@ long SSL_ctrl(SSL *s,int cmd,long larg,void *parg)
 			}
 		else
 			return ssl_put_cipher_by_char(s,NULL,NULL);
+#ifndef OPENSSL_NO_DANE
+	case SSL_CTRL_PULL_TLSA_RECORD:
+		parg = SSL_get_tlsa_record_byname (parg,larg,s->version<0xF000?1:0);
+		/* yes, fall through */
+	case SSL_CTRL_SET_TLSA_RECORD:
+		s->tlsa_record = parg;
+		return 1;
+#endif
 	default:
 		return(s->method->ssl_ctrl(s,cmd,larg,parg));
 		}
