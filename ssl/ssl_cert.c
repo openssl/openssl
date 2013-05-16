@@ -340,7 +340,7 @@ CERT *ssl_cert_dup(CERT *cert)
 			if (ret->pkeys[i].authz == NULL)
 				{
 				SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_MALLOC_FAILURE);
-				return(NULL);
+				return NULL;
 				}
 			memcpy(ret->pkeys[i].authz,
 			       cert->pkeys[i].authz,
@@ -358,7 +358,7 @@ CERT *ssl_cert_dup(CERT *cert)
 			if (ret->pkeys[i].serverinfo == NULL)
 				{
 				SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_MALLOC_FAILURE);
-				return(NULL);
+				return NULL;
 				}
 			memcpy(ret->pkeys[i].serverinfo,
 			       cert->pkeys[i].serverinfo,

@@ -1712,7 +1712,7 @@ int SSL_CTX_set_serverinfo_types(SSL_CTX *ctx, unsigned short *serverinfo_types,
 		ctx->serverinfo_types = OPENSSL_malloc(serverinfo_types_count * 2);
 		if (ctx->serverinfo_types == NULL)
 			return 0;
-		memcpy(ctx->serverinfo_types, serverinfo_types, serverinfo_types_count*2);
+		memcpy(ctx->serverinfo_types, serverinfo_types, serverinfo_types_count * 2);
 		ctx->serverinfo_types_count = serverinfo_types_count;
 		}
 	return 1;

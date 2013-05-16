@@ -546,7 +546,7 @@ static int next_proto_cb(SSL *s, unsigned char **out, unsigned char *outlen, con
 	ctx->status = SSL_select_next_proto(out, outlen, in, inlen, ctx->data, ctx->len);
 	return SSL_TLSEXT_ERR_OK;
 	}
-# endif  /* ifndef OPENSSL_NO_NEXTPROTONEG */
+# endif  /* ndef OPENSSL_NO_NEXTPROTONEG */
 
 # ifndef OPENSSL_NO_SERVERINFO
 
