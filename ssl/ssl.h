@@ -1066,7 +1066,6 @@ struct ssl_ctx_st
 	int (*tlsext_authz_server_audit_proof_cb)(SSL *s, void *arg);
 	void *tlsext_authz_server_audit_proof_cb_arg;
 
-#ifndef OPENSSL_NO_SERVERINFO
 	/* Array of 16-bit TLS Extension types to be sent as empty
 	 * ClientHello extensions. */
 	unsigned short *serverinfo_types;
@@ -1077,7 +1076,6 @@ struct ssl_ctx_st
 	void (*serverinfo_cb)(SSL *s, const unsigned char *in,
 				    unsigned int inlen, void *arg);
 	void *serverinfo_cb_arg;
-#endif	
 	};
 
 #endif
@@ -1184,7 +1182,6 @@ const char *SSL_get_psk_identity_hint(const SSL *s);
 const char *SSL_get_psk_identity(const SSL *s);
 #endif
 
-#ifndef OPENSSL_NO_SERVERINFO
 int SSL_CTX_set_serverinfo_types(SSL_CTX *ctx,
 		unsigned short *serverinfo_types,
 		size_t serverinfo_types_count);
@@ -1194,7 +1191,6 @@ void SSL_CTX_set_serverinfo_cb(SSL_CTX *ctx,
 						 const unsigned char *in,
 						 unsigned int inlen, void *arg),
 				      void *arg);
-#endif
 
 #define SSL_NOTHING	1
 #define SSL_WRITING	2
@@ -1961,14 +1957,12 @@ int	SSL_CTX_use_authz_file(SSL_CTX *ctx, const char *file);
 int	SSL_use_authz_file(SSL *ssl, const char *file);
 #endif
 
-#ifndef OPENSSL_NO_SERVERINFO
 /* Set serverinfo data for the current active cert. */
 int	SSL_CTX_use_serverinfo(SSL_CTX *ctx, const unsigned char *serverinfo,
 							size_t serverinfo_length);
 #ifndef OPENSSL_NO_STDIO
 int	SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file);
 #endif /* NO_STDIO */
-#endif /* NO_SERVERINFO */
 
 #endif
 

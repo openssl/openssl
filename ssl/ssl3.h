@@ -578,7 +578,6 @@ typedef struct ssl3_state_st
 	 * a supplemental data handshake message. */
 	char tlsext_authz_server_promised;
 
-#ifndef OPENSSL_NO_SERVERINFO
 	/* tlsext_serverinfo_types contains an array of possible serverinfo
 	 * types, as advertised by the client and received by the server. In
 	 * other words, these are TLS Extension types with empty extension_data
@@ -589,7 +588,6 @@ typedef struct ssl3_state_st
 	 * as the types were received in the client hello. */
 	unsigned short *tlsext_serverinfo_types;
 	size_t tlsext_serverinfo_types_count; /* how many tlsext_serverinfo_types */
-#endif
 #endif
 	} SSL3_STATE;
 

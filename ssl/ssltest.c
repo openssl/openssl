@@ -369,7 +369,6 @@ static int verify_npn(SSL *client, SSL *server)
 	return 0;
 	}
 #endif
-#ifndef OPENSSL_NO_SERVERINFO
 
 #define SCT_EXT_NUM 18
 #define TACK_EXT_NUM 62208
@@ -406,8 +405,6 @@ static int verify_serverinfo()
 		return -1;
 	return 0;
 	}
-
-#endif
 
 static char *cipher=NULL;
 static int verbose=0;
@@ -488,11 +485,9 @@ static void sv_usage(void)
 	fprintf(stderr," -npn_server - have server side offer NPN\n");
 	fprintf(stderr," -npn_server_reject - have server reject NPN\n");
 #endif
-#ifndef OPENSSL_NO_SERVERINFO
 	fprintf(stderr," -serverinfo_file - have server use this file\n");
 	fprintf(stderr," -serverinfo_sct  - have client offer and expect SCT\n");
 	fprintf(stderr," -serverinfo_tack - have client offer and expect TACK\n");
-#endif
 	}
 
 static void print_details(SSL *c_ssl, const char *prefix)
@@ -905,7 +900,6 @@ int main(int argc, char *argv[])
 			npn_server_reject = 1;
 			}
 #endif
-#ifndef OPENSSL_NO_SERVERINFO
 		else if (strcmp(*argv,"-serverinfo_sct") == 0)
 			{
 			serverinfo_sct = 1;
@@ -919,7 +913,6 @@ int main(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			serverinfo_file = *(++argv);
 			}
-#endif
 		else
 			{
 			fprintf(stderr,"unknown option %s\n",*argv);
@@ -1245,7 +1238,6 @@ bad:
 		}
 #endif
 
-#ifndef OPENSSL_NO_SERVERINFO
 	unsigned short sct_and_tack_types[] = {SCT_EXT_NUM, TACK_EXT_NUM};
 	unsigned short sct_types[] = {18};
 	unsigned short tack_types[] = {62208};
@@ -1265,7 +1257,6 @@ bad:
 			BIO_printf(bio_err, "missing serverinfo file\n");
 			goto end;
 			}
-#endif
 
 	c_ssl=SSL_new(c_ctx);
 	s_ssl=SSL_new(s_ctx);
@@ -1724,13 +1715,11 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
 		goto end;
 		}
 #endif
-#ifndef OPENSSL_NO_SERVERINFO
 	if (verify_serverinfo() < 0)
 		{
 		ret = 1;
 		goto err;
 		}
-#endif
 
 end:
 	ret = 0;
@@ -2034,13 +2023,11 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 		goto err;
 		}
 #endif
-#ifndef OPENSSL_NO_SERVERINFO
 	if (verify_serverinfo() < 0)
 		{
 		ret = 1;
 		goto err;
 		}
-#endif
 	ret=0;
 err:
 	/* We have to set the BIO's to NULL otherwise they will be

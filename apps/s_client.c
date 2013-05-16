@@ -366,9 +366,7 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -nextprotoneg arg - enable NPN extension, considering named protocols supported (comma-separated list)\n");
 # endif
 #ifndef OPENSSL_NO_TLSEXT
-# ifndef OPENSSL_NO_SERVERINFO
 	BIO_printf(bio_err," -serverinfo types - send empty ClientHello extensions (comma-separated numbers)\n");
-# endif
 #endif
 #endif
 	BIO_printf(bio_err," -legacy_renegotiation - enable use of legacy renegotiation (dangerous)\n");
@@ -548,8 +546,6 @@ static int next_proto_cb(SSL *s, unsigned char **out, unsigned char *outlen, con
 	}
 # endif  /* ndef OPENSSL_NO_NEXTPROTONEG */
 
-# ifndef OPENSSL_NO_SERVERINFO
-
 static void serverinfo_cb(SSL *s, const unsigned char *in,
 				    unsigned int inlen, void *arg)
 	{
@@ -558,7 +554,6 @@ static void serverinfo_cb(SSL *s, const unsigned char *in,
 	PEM_write_bio(bio_c_out, pem_name, "", (unsigned char*)in, inlen);
 	}
 
-# endif
 #endif
 
 enum
@@ -631,10 +626,8 @@ int MAIN(int argc, char **argv)
 # ifndef OPENSSL_NO_NEXTPROTONEG
 	const char *next_proto_neg_in = NULL;
 # endif
-# ifndef OPENSSL_NO_SERVERINFO
   unsigned short serverinfo_types[100];
   int serverinfo_types_count = 0;
-# endif	
 #endif
 	char *sess_in = NULL;
 	char *sess_out = NULL;
@@ -989,7 +982,6 @@ static char *jpake_secret = NULL;
 			next_proto_neg_in = *(++argv);
 			}
 # endif
-#ifndef OPENSSL_NO_SERVERINFO
 		else if (strcmp(*argv,"-serverinfo") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -1008,7 +1000,6 @@ static char *jpake_secret = NULL;
 					break;
 				}
 			}
-#endif
 #endif
 #ifdef FIONBIO
 		else if (strcmp(*argv,"-nbio") == 0)
@@ -1302,7 +1293,7 @@ bad:
 	if (next_proto.data)
 		SSL_CTX_set_next_proto_select_cb(ctx, next_proto_cb, &next_proto);
 #endif
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_SERVERINFO)
+#ifndef OPENSSL_NO_TLSEXT
 		if (serverinfo_types_count)
 			{
 			SSL_CTX_set_serverinfo_cb(ctx, serverinfo_cb, NULL);

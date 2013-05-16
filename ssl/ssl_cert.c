@@ -347,7 +347,6 @@ CERT *ssl_cert_dup(CERT *cert)
 			       cert->pkeys[i].authz_length);
 			}
 
-#ifndef OPENSSL_NO_SERVERINFO
 		if (cert->pkeys[i].serverinfo != NULL)
 			{
 			/* Just copy everything. */
@@ -364,7 +363,6 @@ CERT *ssl_cert_dup(CERT *cert)
 			       cert->pkeys[i].serverinfo,
 			       cert->pkeys[i].serverinfo_length);
 			}
-#endif
 #endif
 		}
 	
@@ -486,13 +484,11 @@ void ssl_cert_clear_certs(CERT *c)
 			OPENSSL_free(cpk->authz);
 			cpk->authz = NULL;
 			}
-#ifndef OPENSSL_NO_SERVERINFO
 		if (cpk->serverinfo)
 			{
 			OPENSSL_free(cpk->serverinfo);
 			cpk->serverinfo = NULL;
 			}
-#endif
 #endif
 		/* Clear all flags apart from explicit sign */
 		cpk->valid_flags &= CERT_PKEY_EXPLICIT_SIGN;

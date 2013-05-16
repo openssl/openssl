@@ -1698,7 +1698,6 @@ void SSL_CTX_set_next_proto_select_cb(SSL_CTX *ctx, int (*cb) (SSL *s, unsigned 
 	}
 # endif
 
-#ifndef OPENSSL_NO_SERVERINFO
 int SSL_CTX_set_serverinfo_types(SSL_CTX *ctx, unsigned short *serverinfo_types, size_t serverinfo_types_count)
 	{
 	if (ctx->serverinfo_types != NULL)
@@ -1723,7 +1722,6 @@ void SSL_CTX_set_serverinfo_cb(SSL_CTX *ctx, void (*cb) (SSL *s, const unsigned 
 	ctx->serverinfo_cb = cb;
 	ctx->serverinfo_cb_arg = arg;
 	}
-#endif
 
 #endif
 
@@ -1924,12 +1922,10 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 #ifndef OPENSSL_NO_SRP
 	SSL_CTX_SRP_CTX_init(ret);
 #endif
-#ifndef OPENSSL_NO_SERVERINFO
 	ret->serverinfo_types = NULL;
 	ret->serverinfo_types_count = 0;
 	ret->serverinfo_cb = 0;
 	ret->serverinfo_cb_arg = NULL;
-#endif
 #ifndef OPENSSL_NO_BUF_FREELISTS
 	ret->freelist_max_len = SSL_MAX_BUF_FREELIST_LEN_DEFAULT;
 	ret->rbuf_freelist = OPENSSL_malloc(sizeof(SSL3_BUF_FREELIST));
@@ -2069,9 +2065,7 @@ void SSL_CTX_free(SSL_CTX *a)
 	SSL_CTX_SRP_CTX_free(a);
 #endif
 #ifndef OPENSSL_NO_TLSEXT
-#ifndef OPENSSL_NO_SERVERINFO
 	OPENSSL_free(a->serverinfo_types);
-#endif
 #endif
 #ifndef OPENSSL_NO_ENGINE
 	if (a->client_cert_engine)
@@ -2519,7 +2513,6 @@ unsigned char *ssl_get_authz_data(SSL *s, size_t *authz_length)
 	return c->pkeys[i].authz;
 	}
 
-#ifndef OPENSSL_NO_SERVERINFO
 int ssl_get_server_cert_serverinfo(SSL *s, const unsigned char** serverinfo,
 									size_t *serverinfo_length)
 	{
@@ -2539,7 +2532,6 @@ int ssl_get_server_cert_serverinfo(SSL *s, const unsigned char** serverinfo,
 	*serverinfo_length = c->pkeys[i].serverinfo_length;
 	return 1;
 	}
-#endif
 #endif
 
 void ssl_update_cache(SSL *s,int mode)

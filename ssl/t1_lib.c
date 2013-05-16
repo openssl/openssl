@@ -818,7 +818,6 @@ int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
 
 #ifndef OPENSSL_NO_TLSEXT
 
-#ifndef OPENSSL_NO_SERVERINFO
 static int serverinfo_find_extension(const unsigned char *serverinfo,
 				   size_t serverinfo_length,
 				   unsigned short extension_type,
@@ -867,7 +866,6 @@ static int serverinfo_find_extension(const unsigned char *serverinfo,
 		}
 	return 0;
 	}
-#endif
 
 /* List of supported signature algorithms and hashes. Should make this
  * customisable at some point, for now include everything we support.
@@ -1494,7 +1492,6 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		*(ret++) = TLSEXT_AUTHZDATAFORMAT_audit_proof;
 		}
 
-#ifndef OPENSSL_NO_SERVERINFO
   /* Add any user-specified empty extensions */
 	if (s->ctx->serverinfo_types_count)
 		{
@@ -1505,7 +1502,6 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 			s2n(0, ret); /* zero length */
 			}
 		}
-#endif
 
 	if ((extdatalen = ret-p-2) == 0)
 		return p;
@@ -1773,7 +1769,6 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 			}
 		}
 
-#ifndef OPENSSL_NO_SERVERINFO
 	/* If there are potential serverinfo types, let's see about adding them */
 	if (s->s3->tlsext_serverinfo_types_count && s->s3->tlsext_serverinfo_types)
 		{
@@ -1804,7 +1799,6 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 				}
 			}
 		}
-#endif
 
 	if ((extdatalen = ret-p-2)== 0) 
 		return p;
@@ -2371,7 +2365,6 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 				}
 			}
 
-#ifndef OPENSSL_NO_SERVERINFO
 		/* See if there is any serverinfo extension for this type.
 		 * If so, record the type so the extension can potentially be
 		 * returned in the serverhello (we don't know for sure if it
@@ -2428,7 +2421,6 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 					}
 				}
 			}
-#endif
 
 		data+=size;
 		}
@@ -2735,7 +2727,6 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 			s->s3->tlsext_authz_server_promised = 1;
 			}
 
-#ifndef OPENSSL_NO_SERVERINFO
 		/* If this extension type was not otherwise handled,
 		  * matches a user-specified serverinfo type, and
 		  * there is a serverinfo callback, then send it
@@ -2752,7 +2743,6 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 					}
 				}
 			}
-#endif
  
 		data += size;
 		}

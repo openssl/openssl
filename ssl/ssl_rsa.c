@@ -472,7 +472,6 @@ static int ssl_set_cert(CERT *c, X509 *x)
 		c->pkeys[i].authz_length = 0;
 		}
 
-#ifndef OPENSSL_NO_SERVERINFO
 	/* Free the old serverinfo data, if it exists. */
 	if (c->pkeys[i].serverinfo != NULL)
 		{
@@ -480,7 +479,6 @@ static int ssl_set_cert(CERT *c, X509 *x)
 		c->pkeys[i].serverinfo = NULL;
 		c->pkeys[i].serverinfo_length = 0;
 		}
-#endif
 #endif
 	c->key= &(c->pkeys[i]);
 
@@ -865,7 +863,6 @@ static char authz_validate(const unsigned char *authz, size_t length)
 		}
 	}
 
-#ifndef OPENSSL_NO_SERVERINFO
 static int serverinfo_validate(const unsigned char *serverinfo, size_t serverinfo_length)
 	{
 	if (serverinfo == NULL || serverinfo_length == 0)
@@ -901,7 +898,6 @@ static int serverinfo_validate(const unsigned char *serverinfo, size_t serverinf
 		serverinfo_length -= len;
 		}
 	}
-#endif
 
 static const unsigned char *authz_find_data(const unsigned char *authz,
 					    size_t authz_length,
@@ -980,7 +976,6 @@ int SSL_CTX_use_authz(SSL_CTX *ctx, unsigned char *authz,
 	return ssl_set_authz(ctx->cert, authz, authz_length);
 	}
 
-#ifndef OPENSSL_NO_SERVERINFO
 int SSL_CTX_use_serverinfo(SSL_CTX *ctx, const unsigned char *serverinfo,
 			 size_t serverinfo_length)
 	{
@@ -1015,7 +1010,6 @@ int SSL_CTX_use_serverinfo(SSL_CTX *ctx, const unsigned char *serverinfo,
 	ctx->cert->key->serverinfo_length = serverinfo_length;
 	return 1;
 	}
-#endif
 
 int SSL_use_authz(SSL *ssl, unsigned char *authz, size_t authz_length)
 	{
@@ -1117,7 +1111,6 @@ int SSL_use_authz_file(SSL *ssl, const char *file)
 	return ret;
 	}
 
-#ifndef OPENSSL_NO_SERVERINFO
 int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
 	{
 	unsigned char *serverinfo = NULL;
@@ -1193,6 +1186,5 @@ end:
 		BIO_free(bin);
 	return ret;
 	}
-#endif /* OPENSSL_NO_SERVERINFO */
 #endif /* OPENSSL_NO_STDIO */
 #endif /* OPENSSL_NO_TLSEXT */
