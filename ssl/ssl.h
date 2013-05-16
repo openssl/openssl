@@ -1050,19 +1050,6 @@ struct ssl_ctx_st
 	void *next_proto_select_cb_arg;
 # endif
 
-#ifndef OPENSSL_NO_SERVERINFO
-	/* Array of 16-bit TLS Extension types to be sent as empty
-	 * ClientHello extensions. */
-	unsigned short *serverinfo_types;
-	size_t serverinfo_types_count;
-
-	/* Callback for handling any ServerHello extension being sent
-	 * in response to one of the serverinfo_types */
-	void (*serverinfo_cb)(SSL *s, const unsigned char *in,
-				    unsigned int inlen, void *arg);
-	void *serverinfo_cb_arg;
-#endif
-
         /* SRTP profiles we are willing to do from RFC 5764 */
 	STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;  
 #endif
@@ -1078,6 +1065,19 @@ struct ssl_ctx_st
 # endif /* OPENSSL_NO_EC */
 	int (*tlsext_authz_server_audit_proof_cb)(SSL *s, void *arg);
 	void *tlsext_authz_server_audit_proof_cb_arg;
+
+#ifndef OPENSSL_NO_SERVERINFO
+	/* Array of 16-bit TLS Extension types to be sent as empty
+	 * ClientHello extensions. */
+	unsigned short *serverinfo_types;
+	size_t serverinfo_types_count;
+
+	/* Callback for handling any ServerHello extension being sent
+	 * in response to one of the serverinfo_types */
+	void (*serverinfo_cb)(SSL *s, const unsigned char *in,
+				    unsigned int inlen, void *arg);
+	void *serverinfo_cb_arg;
+#endif	
 	};
 
 #endif
