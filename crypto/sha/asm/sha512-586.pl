@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
+# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
 # details see http://www.openssl.org/~appro/cryptogams/.
@@ -11,15 +11,16 @@
 #
 # Performance in clock cycles per processed byte (less is better):
 #
-#		Pentium	PIII	P4	AMD K8	Core2
-# gcc		100	75	116	54	66
-# icc		97	77	95	55	57
-# x86 asm	61	56	82	36	40
-# SSE2 asm	-	-	38	24	20
-# x86_64 asm(*)	-	-	30	10.0	10.5
+#		PIII	P4	AMD K8	Core2	SB	Atom	Bldzr
+# gcc		75	116	54	66	58	126	121
+# icc		77	95	55	57	-	-	-
+# x86 asm	56	82	36	40	35	68	50
+# SSE2 asm	-	36.2	20.8	19.2	14.9	60(**)	17.1
+# x86_64 asm(*)	-	33	9.6	10.3	11.3	14.7	13.5
 #
-# (*) x86_64 assembler performance is presented for reference
-#     purposes.
+# (*)	x86_64 assembler performance is presented for reference
+#	purposes.
+# (**)	paddq is increadibly slow on Atom.
 #
 # IALU code-path is optimized for elder Pentiums. On vanilla Pentium
 # performance improvement over compiler generated code reaches ~60%,
@@ -66,72 +67,77 @@ $Hsse2=&QWP(56,"esp");
 $A="mm0";	# B-D and
 $E="mm4";	# F-H are commonly loaded to respectively mm1-mm3 and
 		# mm5-mm7, but it's done on on-demand basis...
+$BxC="mm2";	# ... except for B^C
 
 sub BODY_00_15_sse2 {
-    my $prefetch=shift;
+    my $phase=shift;
 
-	&movq	("mm5",$Fsse2);			# load f
-	&movq	("mm6",$Gsse2);			# load g
-	&movq	("mm7",$Hsse2);			# load h
+	#&movq	("mm5",$Fsse2);			# load f
+	#&movq	("mm6",$Gsse2);			# load g
 
 	&movq	("mm1",$E);			# %mm1 is sliding right
-	&movq	("mm2",$E);			# %mm2 is sliding left
+	 &pxor	("mm5","mm6");			# f^=g
 	&psrlq	("mm1",14);
-	&movq	($Esse2,$E);			# modulo-scheduled save e
-	&psllq	("mm2",23);
+	 &movq	($Esse2,$E);			# modulo-scheduled save e
+	 &pand	("mm5",$E);			# f&=e
+	&psllq	($E,23);			# $E is sliding left
+	 &movq	($A,"mm3")			if ($phase<2);
+	 &movq	(&QWP(8*9,"esp"),"mm7")		if ($phase>1);	# save X[i]
 	&movq	("mm3","mm1");			# %mm3 is T1
-	&psrlq	("mm1",4);
-	&pxor	("mm3","mm2");
-	&psllq	("mm2",23);
+	 &psrlq	("mm1",4);
+	 &pxor	("mm5","mm6");			# Ch(e,f,g)
+	&pxor	("mm3",$E);
+	 &psllq	($E,23);
 	&pxor	("mm3","mm1");
-	&psrlq	("mm1",23);
-	&pxor	("mm3","mm2");
-	&psllq	("mm2",4);
+	 &movq	($Asse2,$A);			# modulo-scheduled save a
+	 &paddq	("mm7","mm5");			# X[i]+=Ch(e,f,g)
+	&pxor	("mm3",$E);
+	 &psrlq	("mm1",23);
+	 &paddq	("mm7",$Hsse2);			# X[i]+=h
 	&pxor	("mm3","mm1");
-	&paddq	("mm7",QWP(0,$K512));		# h+=K512[i]
-	&pxor	("mm3","mm2");			# T1=Sigma1_512(e)
+	 &psllq	($E,4);
+	 &paddq	("mm7",QWP(0,$K512));		# X[i]+=K512[i]
+	&pxor	("mm3",$E);			# T1=Sigma1_512(e)
 
-	&pxor	("mm5","mm6");			# f^=g
+	 &movq	($E,$Dsse2);			# e = load d, e in next round
+	 &movq	("mm5",$A);			# %mm5 is sliding right
+	&paddq	("mm3","mm7");			# T1+=X[i]
+	 &psrlq	("mm5",28);
+	 &movq	("mm6",$A);			# %mm6 is sliding left
+	&paddq	($E,"mm3");			# d += T1
+	 &movq	("mm7","mm5");
+	 &psllq	("mm6",25);
 	&movq	("mm1",$Bsse2);			# load b
-	&pand	("mm5",$E);			# f&=e
-	&movq	("mm2",$Csse2);			# load c
-	&pxor	("mm5","mm6");			# f^=g
-	&movq	($E,$Dsse2);			# e = load d
-	&paddq	("mm3","mm5");			# T1+=Ch(e,f,g)
-	&movq	(&QWP(0,"esp"),$A);		# modulo-scheduled save a
-	&paddq	("mm3","mm7");			# T1+=h
-
-	&movq	("mm5",$A);			# %mm5 is sliding right
-	&movq	("mm6",$A);			# %mm6 is sliding left
-	&paddq	("mm3",&QWP(8*9,"esp"));	# T1+=X[0]
-	&psrlq	("mm5",28);
-	&paddq	($E,"mm3");			# e += T1
-	&psllq	("mm6",25);
-	&movq	("mm7","mm5");			# %mm7 is T2
-	&psrlq	("mm5",6);
-	&pxor	("mm7","mm6");
-	&psllq	("mm6",5);
-	&pxor	("mm7","mm5");
-	&psrlq	("mm5",5);
-	&pxor	("mm7","mm6");
-	&psllq	("mm6",6);
-	&pxor	("mm7","mm5");
+	 &psrlq	("mm5",6);
+	 &pxor	("mm7","mm6");
 	&sub	("esp",8);
-	&pxor	("mm7","mm6");			# T2=Sigma0_512(a)
+	 &psllq	("mm6",5);
+	 &pxor	("mm7","mm5");
+	&pxor	($A,"mm1");			# a^b, b^c in next round
+	 &psrlq	("mm5",5);
+	 &pxor	("mm7","mm6");
+	&pand	($BxC,$A);			# (b^c)&(a^b)
+	 &psllq	("mm6",6);
+	 &pxor	("mm7","mm5");
+	&pxor	($BxC,"mm1");			# [h=]Maj(a,b,c)
+	 &pxor	("mm6","mm7");			# Sigma0_512(a)
+	 &movq	("mm7",&QWP(8*(9+16-1),"esp"))	if ($phase!=0);	# pre-fetch
+	 &movq	("mm5",$Fsse2)			if ($phase==0);	# load f
 
-	&movq	("mm5",$A);			# %mm5=a
-	&por	($A,"mm2");			# a=a|c
-	&movq	("mm6",&QWP(8*(9+16-14),"esp"))	if ($prefetch);
-	&pand	("mm5","mm2");			# %mm5=a&c
-	&pand	($A,"mm1");			# a=(a|c)&b
-	&movq	("mm2",&QWP(8*(9+16-1),"esp"))	if ($prefetch);
-	&por	("mm5",$A);			# %mm5=(a&c)|((a|c)&b)
-	&paddq	("mm7","mm5");			# T2+=Maj(a,b,c)
-	&movq	($A,"mm3");			# a=T1
+    if ($phase>1) {
+	&paddq	($BxC,"mm6");			# h+=Sigma0(a)
+	 &add	($K512,8);
+	#&paddq	($BxC,"mm3");			# h+=T1
 
-	&mov	(&LB("edx"),&BP(0,$K512));
-	&paddq	($A,"mm7");			# a+=T2
-	&add	($K512,8);
+	($A,$BxC) = ($BxC,$A);			# rotate registers
+    } else {
+	&paddq	("mm3",$BxC);			# T1+=Maj(a,b,c)
+	 &movq	($BxC,$A);
+	 &add	($K512,8);
+	&paddq	("mm3","mm6");			# T1+=Sigma0(a)
+	 &movq	("mm6",$Gsse2)			if ($phase==0);	# load g
+	#&movq	($A,"mm3");			# h=T1
+    }
 }
 
 sub BODY_00_15_x86 {
@@ -290,7 +296,7 @@ if ($sse2) {
 	# load ctx->h[0-7]
 	&movq	($A,&QWP(0,"esi"));
 	&movq	("mm1",&QWP(8,"esi"));
-	&movq	("mm2",&QWP(16,"esi"));
+	&movq	($BxC,&QWP(16,"esi"));
 	&movq	("mm3",&QWP(24,"esi"));
 	&movq	($E,&QWP(32,"esi"));
 	&movq	("mm5",&QWP(40,"esi"));
@@ -299,14 +305,16 @@ if ($sse2) {
 	&sub	("esp",8*10);
 
 &set_label("loop_sse2",16);
-	# &movq	($Asse2,$A);
+	#&movq	($Asse2,$A);
 	&movq	($Bsse2,"mm1");
-	&movq	($Csse2,"mm2");
+	&movq	($Csse2,$BxC);
 	&movq	($Dsse2,"mm3");
-	# &movq	($Esse2,$E);
+	#&movq	($Esse2,$E);
 	&movq	($Fsse2,"mm5");
 	&movq	($Gsse2,"mm6");
+	&pxor	($BxC,"mm1");			# magic
 	&movq	($Hsse2,"mm7");
+	&movq	("mm3",$A);			# magic
 
 	&mov	("ecx",&DWP(0,"edi"));
 	&mov	("edx",&DWP(4,"edi"));
@@ -315,102 +323,111 @@ if ($sse2) {
 	&bswap	("edx");
 	&mov	(&DWP(8*9+4,"esp"),"ecx");
 	&mov	(&DWP(8*9+0,"esp"),"edx");
+	&mov	("edx",15);			# counter
+	&jmp	(&label("00_14_sse2"));
 
 &set_label("00_14_sse2",16);
 	&mov	("eax",&DWP(0,"edi"));
 	&mov	("ebx",&DWP(4,"edi"));
 	&add	("edi",8);
 	&bswap	("eax");
+	&movq	("mm7",&QWP(8*9,"esp"));	# X[i]
 	&bswap	("ebx");
 	&mov	(&DWP(8*8+4,"esp"),"eax");
 	&mov	(&DWP(8*8+0,"esp"),"ebx");
 
 	&BODY_00_15_sse2();
 
-	&cmp	(&LB("edx"),0x35);
-	&jne	(&label("00_14_sse2"));
+	&dec	("edx");
+	&jnz	(&label("00_14_sse2"));
+
+	&movq	("mm7",&QWP(8*9,"esp"));	# X[i]
 
 	&BODY_00_15_sse2(1);
+
+	&pxor	($A,$A);			# A is in %mm3
+	&mov	("edx",32);			# counter
+	&jmp	(&label("16_79_sse2"));
 
 &set_label("16_79_sse2",16);
-	#&movq	("mm2",&QWP(8*(9+16-1),"esp"));	#prefetched in BODY_00_15 
-	#&movq	("mm6",&QWP(8*(9+16-14),"esp"));
-	&movq	("mm1","mm2");
-
-	&psrlq	("mm2",1);
-	&movq	("mm7","mm6");
-	&psrlq	("mm6",6);
-	&movq	("mm3","mm2");
-
-	&psrlq	("mm2",7-1);
-	&movq	("mm5","mm6");
-	&psrlq	("mm6",19-6);
-	&pxor	("mm3","mm2");
-
-	&psrlq	("mm2",8-7);
-	&pxor	("mm5","mm6");
-	&psrlq	("mm6",61-19);
-	&pxor	("mm3","mm2");
-
-	&movq	("mm2",&QWP(8*(9+16),"esp"));
-
+    for ($j=0;$j<2;$j++) {			# 2x unroll
+	#&movq	("mm7",&QWP(8*(9+16-1),"esp"));	# prefetched in BODY_00_15 
+	&movq	("mm5",&QWP(8*(9+16-14),"esp"));
+	&movq	("mm1","mm7");
+	&psrlq	("mm7",1);
+	 &movq	("mm6","mm5");
+	 &psrlq	("mm5",6);
 	&psllq	("mm1",56);
-	&pxor	("mm5","mm6");
-	&psllq	("mm7",3);
+	 &paddq	($A,"mm3");			# from BODY_00_15
+	 &movq	("mm3","mm7");
+	&psrlq	("mm7",7-1);
+	 &pxor	("mm3","mm1");
+	 &psllq	("mm1",63-56);
+	&pxor	("mm3","mm7");
+	 &psrlq	("mm7",8-7);
 	&pxor	("mm3","mm1");
+	 &movq	("mm1","mm5");
+	 &psrlq	("mm5",19-6);
+	&pxor	("mm7","mm3");			# sigma0
 
-	&paddq	("mm2",&QWP(8*(9+16-9),"esp"));
+	 &psllq	("mm6",3);
+	 &pxor	("mm1","mm5");
+	&paddq	("mm7",&QWP(8*(9+16),"esp"));
+	 &pxor	("mm1","mm6");
+	 &psrlq	("mm5",61-19);
+	&paddq	("mm7",&QWP(8*(9+16-9),"esp"));
+	 &pxor	("mm1","mm5");
+	 &psllq	("mm6",45-3);
+	&movq	("mm5",$Fsse2);			# load f
+	 &pxor	("mm1","mm6");			# sigma1
+	&movq	("mm6",$Gsse2);			# load g
 
-	&psllq	("mm1",63-56);
-	&pxor	("mm5","mm7");
-	&psllq	("mm7",45-3);
-	&pxor	("mm3","mm1");
-	&pxor	("mm5","mm7");
+	&paddq	("mm7","mm1");			# X[i]
+	#&movq	(&QWP(8*9,"esp"),"mm7");	# moved to BODY_00_15
 
-	&paddq	("mm3","mm5");
-	&paddq	("mm3","mm2");
-	&movq	(&QWP(8*9,"esp"),"mm3");
+	&BODY_00_15_sse2(2);
+    }
+	&dec	("edx");
+	&jnz	(&label("16_79_sse2"));
 
-	&BODY_00_15_sse2(1);
-
-	&cmp	(&LB("edx"),0x17);
-	&jne	(&label("16_79_sse2"));
-
-	# &movq	($A,$Asse2);
+	#&movq	($A,$Asse2);
+	&paddq	($A,"mm3");			# from BODY_00_15
 	&movq	("mm1",$Bsse2);
-	&movq	("mm2",$Csse2);
+	#&movq	($BxC,$Csse2);
 	&movq	("mm3",$Dsse2);
-	# &movq	($E,$Esse2);
+	#&movq	($E,$Esse2);
 	&movq	("mm5",$Fsse2);
 	&movq	("mm6",$Gsse2);
 	&movq	("mm7",$Hsse2);
 
+	&pxor	($BxC,"mm1");			# de-magic
 	&paddq	($A,&QWP(0,"esi"));
 	&paddq	("mm1",&QWP(8,"esi"));
-	&paddq	("mm2",&QWP(16,"esi"));
+	&paddq	($BxC,&QWP(16,"esi"));
 	&paddq	("mm3",&QWP(24,"esi"));
 	&paddq	($E,&QWP(32,"esi"));
 	&paddq	("mm5",&QWP(40,"esi"));
 	&paddq	("mm6",&QWP(48,"esi"));
 	&paddq	("mm7",&QWP(56,"esi"));
 
+	&mov	("eax",8*80);
 	&movq	(&QWP(0,"esi"),$A);
 	&movq	(&QWP(8,"esi"),"mm1");
-	&movq	(&QWP(16,"esi"),"mm2");
+	&movq	(&QWP(16,"esi"),$BxC);
 	&movq	(&QWP(24,"esi"),"mm3");
 	&movq	(&QWP(32,"esi"),$E);
 	&movq	(&QWP(40,"esi"),"mm5");
 	&movq	(&QWP(48,"esi"),"mm6");
 	&movq	(&QWP(56,"esi"),"mm7");
 
-	&add	("esp",8*80);			# destroy frame
-	&sub	($K512,8*80);			# rewind K
+	&lea	("esp",&DWP(0,"esp","eax"));	# destroy frame
+	&sub	($K512,"eax");			# rewind K
 
 	&cmp	("edi",&DWP(8*10+8,"esp"));	# are we done yet?
 	&jb	(&label("loop_sse2"));
 
-	&emms	();
 	&mov	("esp",&DWP(8*10+12,"esp"));	# restore sp
+	&emms	();
 &function_end_A();
 }
 &set_label("loop_x86",16);
