@@ -4,15 +4,15 @@
 #include <setjmp.h>
 #include <signal.h>
 #include <sys/time.h>
+#include <unistd.h>
 #include <openssl/bn.h>
 
-#define SPARCV9_TICK_PRIVILEGED	(1<<0)
-#define SPARCV9_PREFER_FPU	(1<<1)
-#define SPARCV9_VIS1		(1<<2)
-#define SPARCV9_VIS2		(1<<3)	/* reserved */
-#define SPARCV9_FMADD		(1<<4)	/* reserved for SPARC64 V */
+#include "sparc_arch.h"
 
-static int OPENSSL_sparcv9cap_P=SPARCV9_TICK_PRIVILEGED;
+#if defined(__GNUC__) && defined(__linux)
+__attribute__((visibility("hidden")))
+#endif
+unsigned int OPENSSL_sparcv9cap_P[2]={SPARCV9_TICK_PRIVILEGED,0};
 
 int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,const BN_ULONG *n0, int num)
 	{
@@ -20,7 +20,7 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_U
 	int bn_mul_mont_int(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,const BN_ULONG *n0, int num);
 
 	if (num>=8 && !(num&1) &&
-	    (OPENSSL_sparcv9cap_P&(SPARCV9_PREFER_FPU|SPARCV9_VIS1)) ==
+	    (OPENSSL_sparcv9cap_P[0]&(SPARCV9_PREFER_FPU|SPARCV9_VIS1)) ==
 		(SPARCV9_PREFER_FPU|SPARCV9_VIS1))
 		return bn_mul_mont_fpu(rp,ap,bp,np,n0,num);
 	else
@@ -32,10 +32,15 @@ void		_sparcv9_vis1_probe(void);
 unsigned long	_sparcv9_vis1_instrument(void);
 void		_sparcv9_vis2_probe(void);
 void		_sparcv9_fmadd_probe(void);
+unsigned long	_sparcv9_rdcfr(void);
+void		_sparcv9_vis3_probe(void);
+unsigned long	_sparcv9_random(void);
+size_t 		_sparcv9_vis1_instrument_bus(unsigned int *,size_t);
+size_t		_sparcv9_vis1_instrument_bus2(unsigned int *,size_t,size_t);
 
 unsigned long OPENSSL_rdtsc(void)
 	{
-	if (OPENSSL_sparcv9cap_P&SPARCV9_TICK_PRIVILEGED)
+	if (OPENSSL_sparcv9cap_P[0]&SPARCV9_TICK_PRIVILEGED)
 #if defined(__sun) && defined(__SVR4)
 		return gethrtime();
 #else
@@ -43,6 +48,24 @@ unsigned long OPENSSL_rdtsc(void)
 #endif
 	else
 		return _sparcv9_rdtick();
+	}
+
+size_t OPENSSL_instrument_bus(unsigned int *out,size_t cnt)
+	{
+	if ((OPENSSL_sparcv9cap_P[0]&(SPARCV9_TICK_PRIVILEGED|SPARCV9_BLK)) ==
+			SPARCV9_BLK)
+		return _sparcv9_vis1_instrument_bus(out,cnt);
+	else
+		return 0;
+	}
+
+size_t OPENSSL_instrument_bus2(unsigned int *out,size_t cnt,size_t max)
+	{
+	if ((OPENSSL_sparcv9cap_P[0]&(SPARCV9_TICK_PRIVILEGED|SPARCV9_BLK)) ==
+			SPARCV9_BLK)
+		return _sparcv9_vis1_instrument_bus2(out,cnt,max);
+	else
+		return 0;
 	}
 
 #if 0 && defined(__sun) && defined(__SVR4)
@@ -69,18 +92,18 @@ static int walk_nodename(di_node_t node, di_node_name_t di_node_name)
 	if (!strcmp (name,"SUNW,UltraSPARC") ||
 	    !strncmp(name,"SUNW,UltraSPARC-I",17))  /* covers II,III,IV */
 		{
-		OPENSSL_sparcv9cap_P |= SPARCV9_PREFER_FPU|SPARCV9_VIS1;
+		OPENSSL_sparcv9cap_P[0] |= SPARCV9_PREFER_FPU|SPARCV9_VIS1;
 
 		/* %tick is privileged only on UltraSPARC-I/II, but not IIe */
 		if (name[14]!='\0' && name[17]!='\0' && name[18]!='\0')
-			OPENSSL_sparcv9cap_P &= ~SPARCV9_TICK_PRIVILEGED;
+			OPENSSL_sparcv9cap_P[0] &= ~SPARCV9_TICK_PRIVILEGED;
 
 		return DI_WALK_TERMINATE;
 		}
 	/* This is expected to catch remaining UltraSPARCs, such as T1 */
 	else if (!strncmp(name,"SUNW,UltraSPARC",15))
 		{
-		OPENSSL_sparcv9cap_P &= ~SPARCV9_TICK_PRIVILEGED;
+		OPENSSL_sparcv9cap_P[0] &= ~SPARCV9_TICK_PRIVILEGED;
 
 		return DI_WALK_TERMINATE;
 		}
@@ -99,7 +122,7 @@ void OPENSSL_cpuid_setup(void)
 
 	if ((e=getenv("OPENSSL_sparcv9cap")))
 		{
-		OPENSSL_sparcv9cap_P=strtoul(e,NULL,0);
+		OPENSSL_sparcv9cap_P[0]=strtoul(e,NULL,0);
 		return;
 		}
 
@@ -107,17 +130,17 @@ void OPENSSL_cpuid_setup(void)
 		{
 		if (strcmp(si,"sun4v"))
 			/* FPU is preferred for all CPUs, but US-T1/2 */
-			OPENSSL_sparcv9cap_P |= SPARCV9_PREFER_FPU;
+			OPENSSL_sparcv9cap_P[0] |= SPARCV9_PREFER_FPU;
 		}
 
 	if (sysinfo(SI_ISALIST,si,sizeof(si))>0)
 		{
 		if (strstr(si,"+vis"))
-			OPENSSL_sparcv9cap_P |= SPARCV9_VIS1;
+			OPENSSL_sparcv9cap_P[0] |= SPARCV9_VIS1|SPARCV9_BLK;
 		if (strstr(si,"+vis2"))
 			{
-			OPENSSL_sparcv9cap_P |= SPARCV9_VIS2;
-			OPENSSL_sparcv9cap_P &= ~SPARCV9_TICK_PRIVILEGED;
+			OPENSSL_sparcv9cap_P[0] |= SPARCV9_VIS2;
+			OPENSSL_sparcv9cap_P[0] &= ~SPARCV9_TICK_PRIVILEGED;
 			return;
 			}
 		}
@@ -177,12 +200,14 @@ void OPENSSL_cpuid_setup(void)
  
 	if ((e=getenv("OPENSSL_sparcv9cap")))
 		{
-		OPENSSL_sparcv9cap_P=strtoul(e,NULL,0);
+		OPENSSL_sparcv9cap_P[0]=strtoul(e,NULL,0);
+		if ((e=strchr(e,':')))
+			OPENSSL_sparcv9cap_P[1]=strtoul(e+1,NULL,0);
 		return;
 		}
 
 	/* Initial value, fits UltraSPARC-I&II... */
-	OPENSSL_sparcv9cap_P = SPARCV9_PREFER_FPU|SPARCV9_TICK_PRIVILEGED;
+	OPENSSL_sparcv9cap_P[0] = SPARCV9_PREFER_FPU|SPARCV9_TICK_PRIVILEGED;
 
 	sigfillset(&all_masked);
 	sigdelset(&all_masked,SIGILL);
@@ -205,33 +230,73 @@ void OPENSSL_cpuid_setup(void)
 	if (sigsetjmp(common_jmp,1) == 0)
 		{
 		_sparcv9_rdtick();
-		OPENSSL_sparcv9cap_P &= ~SPARCV9_TICK_PRIVILEGED;
+		OPENSSL_sparcv9cap_P[0] &= ~SPARCV9_TICK_PRIVILEGED;
 		}
 
 	if (sigsetjmp(common_jmp,1) == 0)
 		{
 		_sparcv9_vis1_probe();
-		OPENSSL_sparcv9cap_P |= SPARCV9_VIS1;
+		OPENSSL_sparcv9cap_P[0] |= SPARCV9_VIS1|SPARCV9_BLK;
 		/* detect UltraSPARC-Tx, see sparccpud.S for details... */
 		if (_sparcv9_vis1_instrument() >= 12)
-			OPENSSL_sparcv9cap_P &= ~(SPARCV9_VIS1|SPARCV9_PREFER_FPU);
+			OPENSSL_sparcv9cap_P[0] &= ~(SPARCV9_VIS1|SPARCV9_PREFER_FPU);
 		else
 			{
 			_sparcv9_vis2_probe();
-			OPENSSL_sparcv9cap_P |= SPARCV9_VIS2;
+			OPENSSL_sparcv9cap_P[0] |= SPARCV9_VIS2;
 			}
 		}
 
 	if (sigsetjmp(common_jmp,1) == 0)
 		{
 		_sparcv9_fmadd_probe();
-		OPENSSL_sparcv9cap_P |= SPARCV9_FMADD;
+		OPENSSL_sparcv9cap_P[0] |= SPARCV9_FMADD;
+		}
+
+	/*
+	 * VIS3 flag is tested independently from VIS1, unlike VIS2 that is,
+	 * because VIS3 defines even integer instructions.
+	 */
+	if (sigsetjmp(common_jmp,1) == 0)
+		{
+		_sparcv9_vis3_probe();
+		OPENSSL_sparcv9cap_P[0] |= SPARCV9_VIS3;
+		}
+
+	if (sigsetjmp(common_jmp,1) == 0)
+		{
+		(void)_sparcv9_random();
+		OPENSSL_sparcv9cap_P[0] |= SPARCV9_RANDOM;
+		}
+
+	/*
+	 * In wait for better solution _sparcv9_rdcfr is masked by
+	 * VIS3 flag, because it goes to uninterruptable endless
+	 * loop on UltraSPARC II running Solaris. Things might be
+	 * different on Linux...
+	 */
+	if ((OPENSSL_sparcv9cap_P[0]&SPARCV9_VIS3) &&
+	    sigsetjmp(common_jmp,1) == 0)
+		{
+		OPENSSL_sparcv9cap_P[1] = (unsigned int)_sparcv9_rdcfr();
 		}
 
 	sigaction(SIGBUS,&bus_oact,NULL);
 	sigaction(SIGILL,&ill_oact,NULL);
 
 	sigprocmask(SIG_SETMASK,&oset,NULL);
+
+	if (sizeof(size_t)==8)
+		OPENSSL_sparcv9cap_P[0] |= SPARCV9_64BIT_STACK;
+#ifdef __linux
+	else
+		{
+		int ret = syscall(340);
+
+		if (ret>=0 && ret&1)
+			OPENSSL_sparcv9cap_P[0] |= SPARCV9_64BIT_STACK;
+		}
+#endif
 	}
 
 #endif
