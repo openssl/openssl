@@ -131,6 +131,32 @@ sub ::rdrand
     {	&::generic("rdrand",@_);	}
 }
 
+sub rxb {
+ local *opcode=shift;
+ my ($dst,$src1,$src2,$rxb)=@_;
+
+   $rxb|=0x7<<5;
+   $rxb&=~(0x04<<5) if($dst>=8);
+   $rxb&=~(0x01<<5) if($src1>=8);
+   $rxb&=~(0x02<<5) if($src2>=8);
+   push @opcode,$rxb;
+}
+
+sub ::vprotd
+{ my $args=join(',',@_);
+    if ($args =~ /xmm([0-7]),xmm([0-7]),([x0-9a-f]+)/)
+    { my @opcode=(0x8f);
+	rxb(\@opcode,$1,$2,-1,0x08);
+	push @opcode,0x78,0xc2;
+	push @opcode,0xc0|($2&7)|(($1&7)<<3);		# ModR/M
+	my $c=$3;
+	push @opcode,$c=~/^0/?oct($c):$c;
+	&::data_byte(@opcode);
+    }
+    else
+    {	&::generic("vprotd",@_);	}
+}
+
 # label management
 $lbdecor="L";		# local label decoration, set by package
 $label="000";

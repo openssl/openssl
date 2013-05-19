@@ -253,6 +253,11 @@ my %globals;
 	$self->{label} =~ s/([0-9]+\s*[\*\/\%]\s*[0-9]+)/eval($1)/eg;
 	$self->{label} =~ s/([0-9]+)/$1<<32>>32/eg;
 
+	if (!$self->{label} && $self->{index} && $self->{scale}==1 &&
+	    $self->{base} =~ /(rbp|r13)/) {
+		$self->{base} = $self->{index}; $self->{index} = $1;
+	}
+
 	if ($gas) {
 	    $self->{label} =~ s/^___imp_/__imp__/   if ($flavour eq "mingw64");
 
@@ -766,6 +771,45 @@ my $rdrand = sub {
 	if ($dst !~ /[0-9]+/) { $dst = $regrm{"%e$dst"}; }
 	rex(\@opcode,0,$1,8);
 	push @opcode,0x0f,0xc7,0xf0|($dst&7);
+	@opcode;
+    } else {
+	();
+    }
+};
+
+sub rxb {
+ local *opcode=shift;
+ my ($dst,$src1,$src2,$rxb)=@_;
+
+   $rxb|=0x7<<5;
+   $rxb&=~(0x04<<5) if($dst>=8);
+   $rxb&=~(0x01<<5) if($src1>=8);
+   $rxb&=~(0x02<<5) if($src2>=8);
+   push @opcode,$rxb;
+}
+
+my $vprotd = sub {
+    if (shift =~ /\$([x0-9a-f]+),\s*%xmm([0-9]+),\s*%xmm([0-9]+)/) {
+      my @opcode=(0x8f);
+	rxb(\@opcode,$3,$2,-1,0x08);
+	push @opcode,0x78,0xc2;
+	push @opcode,0xc0|($2&7)|(($3&7)<<3);		# ModR/M
+	my $c=$1;
+	push @opcode,$c=~/^0/?oct($c):$c;
+	@opcode;
+    } else {
+	();
+    }
+};
+
+my $vprotq = sub {
+    if (shift =~ /\$([x0-9a-f]+),\s*%xmm([0-9]+),\s*%xmm([0-9]+)/) {
+      my @opcode=(0x8f);
+	rxb(\@opcode,$3,$2,-1,0x08);
+	push @opcode,0x78,0xc3;
+	push @opcode,0xc0|($2&7)|(($3&7)<<3);		# ModR/M
+	my $c=$1;
+	push @opcode,$c=~/^0/?oct($c):$c;
 	@opcode;
     } else {
 	();
