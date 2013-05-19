@@ -98,8 +98,8 @@ typedef struct { u64 hi,lo; } u128;
 
 struct gcm128_context {
 	/* Following 6 names follow names in GCM specification */
-	union { u64 u[2]; u32 d[4]; u8 c[16]; }	Yi,EKi,EK0,len,
-						Xi,H;
+	union { u64 u[2]; u32 d[4]; u8 c[16]; size_t t[16/sizeof(size_t)]; }
+	  Yi,EKi,EK0,len,Xi,H;
 	/* Relative position of Xi, H and pre-computed Htable is used
 	 * in some assembler modules, i.e. don't change the order! */
 #if TABLE_BITS==8
