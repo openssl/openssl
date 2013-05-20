@@ -230,6 +230,29 @@ void aesni_ccm64_decrypt_blocks (const unsigned char *in,
 			const unsigned char ivec[16],
 			unsigned char cmac[16]);
 
+#if defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
+size_t aesni_gcm_encrypt(const unsigned char *in,
+			unsigned char *out,
+			size_t len,
+			const void *key,
+			unsigned char ivec[16],
+			u64 *Xi);
+#define AES_gcm_encrypt	aesni_gcm_encrypt
+size_t aesni_gcm_decrypt(const unsigned char *in,
+			unsigned char *out,
+			size_t len,
+			const void *key,
+			unsigned char ivec[16],
+			u64 *Xi);
+#define AES_gcm_decrypt	aesni_gcm_decrypt
+void gcm_ghash_avx(u64 Xi[2],const u128 Htable[16],const u8 *in,size_t len);
+#define AES_GCM_ASM(gctx)	(gctx->ctr==aesni_ctr32_encrypt_blocks && \
+				 gctx->gcm.ghash==gcm_ghash_avx)
+#define AES_GCM_ASM2(gctx)	(gctx->gcm.block==(block128_f)aesni_encrypt && \
+				 gctx->gcm.ghash==gcm_ghash_avx)
+#undef AES_GCM_ASM2		/* minor size optimization */
+#endif
+
 static int aesni_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		   const unsigned char *iv, int enc)
 	{
@@ -914,13 +937,46 @@ static int aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		/* Encrypt payload */
 		if (gctx->ctr)
 			{
+			size_t bulk=0;
+#if defined(AES_GCM_ASM)
+			if (len>=32 && AES_GCM_ASM(gctx))
+				{
+				if (CRYPTO_gcm128_encrypt(&gctx->gcm,NULL,NULL,0))
+					return -1;
+
+				bulk = AES_gcm_encrypt(in,out,len,
+							gctx->gcm.key,
+							gctx->gcm.Yi.c,
+							gctx->gcm.Xi.u);
+				gctx->gcm.len.u[1] += bulk;
+				}
+#endif
 			if (CRYPTO_gcm128_encrypt_ctr32(&gctx->gcm,
-							in, out, len,
+							in +bulk,
+							out+bulk,
+							len-bulk,
 							gctx->ctr))
 				goto err;
 			}
 		else	{
-			if (CRYPTO_gcm128_encrypt(&gctx->gcm, in, out, len))
+			size_t bulk=0;
+#if defined(AES_GCM_ASM2)
+			if (len>=32 && AES_GCM_ASM2(gctx))
+				{
+				if (CRYPTO_gcm128_encrypt(&gctx->gcm,NULL,NULL,0))
+					return -1;
+
+				bulk = AES_gcm_encrypt(in,out,len,
+							gctx->gcm.key,
+							gctx->gcm.Yi.c,
+							gctx->gcm.Xi.u);
+				gctx->gcm.len.u[1] += bulk;
+				}
+#endif
+			if (CRYPTO_gcm128_encrypt(&gctx->gcm,
+							in +bulk,
+							out+bulk,
+							len-bulk))
 				goto err;
 			}
 		out += len;
@@ -933,13 +989,46 @@ static int aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		/* Decrypt */
 		if (gctx->ctr)
 			{
+			size_t bulk=0;
+#if defined(AES_GCM_ASM)
+			if (len>=16 && AES_GCM_ASM(gctx))
+				{
+				if (CRYPTO_gcm128_decrypt(&gctx->gcm,NULL,NULL,0))
+					return -1;
+
+				bulk = AES_gcm_decrypt(in,out,len,
+							gctx->gcm.key,
+							gctx->gcm.Yi.c,
+							gctx->gcm.Xi.u);
+				gctx->gcm.len.u[1] += bulk;
+				}
+#endif
 			if (CRYPTO_gcm128_decrypt_ctr32(&gctx->gcm,
-							in, out, len,
+							in +bulk,
+							out+bulk,
+							len-bulk,
 							gctx->ctr))
 				goto err;
 			}
 		else	{
-			if (CRYPTO_gcm128_decrypt(&gctx->gcm, in, out, len))
+			size_t bulk=0;
+#if defined(AES_GCM_ASM2)
+			if (len>=16 && AES_GCM_ASM2(gctx))
+				{
+				if (CRYPTO_gcm128_decrypt(&gctx->gcm,NULL,NULL,0))
+					return -1;
+
+				bulk = AES_gcm_decrypt(in,out,len,
+							gctx->gcm.key,
+							gctx->gcm.Yi.c,
+							gctx->gcm.Xi.u);
+				gctx->gcm.len.u[1] += bulk;
+				}
+#endif
+			if (CRYPTO_gcm128_decrypt(&gctx->gcm,
+							in +bulk,
+							out+bulk,
+							len-bulk))
 				goto err;
 			}
 		/* Retrieve tag */
@@ -984,13 +1073,54 @@ static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			{
 			if (gctx->ctr)
 				{
+				size_t bulk=0;
+#if defined(AES_GCM_ASM)
+				if (len>=32 && AES_GCM_ASM(gctx))
+					{
+					size_t res = (16-gctx->gcm.mres)%16;
+
+					if (CRYPTO_gcm128_encrypt(&gctx->gcm,
+							in,out,res))
+						return -1;
+
+					bulk = AES_gcm_encrypt(in+res,
+							out+res,len-res,								gctx->gcm.key,
+							gctx->gcm.Yi.c,
+							gctx->gcm.Xi.u);
+					gctx->gcm.len.u[1] += bulk;
+					bulk += res;
+					}
+#endif
 				if (CRYPTO_gcm128_encrypt_ctr32(&gctx->gcm,
-							in, out, len,
+							in +bulk,
+							out+bulk,
+							len-bulk,
 							gctx->ctr))
 					return -1;
 				}
 			else	{
-				if (CRYPTO_gcm128_encrypt(&gctx->gcm, in, out, len))
+				size_t bulk=0;
+#if defined(AES_GCM_ASM2)
+				if (len>=32 && AES_GCM_ASM2(gctx))
+					{
+					size_t res = (16-gctx->gcm.mres)%16;
+
+					if (CRYPTO_gcm128_encrypt(&gctx->gcm,
+							in,out,res))
+						return -1;
+
+					bulk = AES_gcm_encrypt(in+res,
+							out+res,len-res,								gctx->gcm.key,
+							gctx->gcm.Yi.c,
+							gctx->gcm.Xi.u);
+					gctx->gcm.len.u[1] += bulk;
+					bulk += res;
+					}
+#endif
+				if (CRYPTO_gcm128_encrypt(&gctx->gcm,
+							in +bulk,
+							out+bulk,
+							len-bulk))
 					return -1;
 				}
 			}
@@ -998,13 +1128,56 @@ static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			{
 			if (gctx->ctr)
 				{
+				size_t bulk=0;
+#if defined(AES_GCM_ASM)
+				if (len>=16 && AES_GCM_ASM(gctx))
+					{
+					size_t res = (16-gctx->gcm.mres)%16;
+
+					if (CRYPTO_gcm128_decrypt(&gctx->gcm,
+							in,out,res))
+						return -1;
+
+					bulk = AES_gcm_decrypt(in+res,
+							out+res,len-res,
+							gctx->gcm.key,
+							gctx->gcm.Yi.c,
+							gctx->gcm.Xi.u);
+					gctx->gcm.len.u[1] += bulk;
+					bulk += res;
+					}
+#endif
 				if (CRYPTO_gcm128_decrypt_ctr32(&gctx->gcm,
-							in, out, len,
+							in +bulk,
+							out+bulk,
+							len-bulk,
 							gctx->ctr))
 					return -1;
 				}
 			else	{
-				if (CRYPTO_gcm128_decrypt(&gctx->gcm, in, out, len))
+				size_t bulk=0;
+#if defined(AES_GCM_ASM2)
+				if (len>=16 && AES_GCM_ASM2(gctx))
+					{
+					size_t res = (16-gctx->gcm.mres)%16;
+
+					if (CRYPTO_gcm128_decrypt(&gctx->gcm,
+							in,out,res))
+						return -1;
+
+					bulk = AES_gcm_decrypt(in+res,
+							out+res,len-res,
+							gctx->gcm.key,
+							gctx->gcm.Yi.c,
+							gctx->gcm.Xi.u);
+					gctx->gcm.len.u[1] += bulk;
+					bulk += res;
+					}
+#endif
+				if (CRYPTO_gcm128_decrypt(&gctx->gcm,
+							in +bulk,
+							out+bulk,
+							len-bulk))
 					return -1;
 				}
 			}
