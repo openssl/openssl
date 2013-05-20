@@ -65,6 +65,33 @@
 #include <openssl/des.h>
 #include <openssl/rand.h>
 
+typedef struct
+	{
+	union { double align; DES_key_schedule ks[3]; } ks;
+	union {
+		void (*cbc)(const void *,void *,size_t,const void *,void *);
+	} stream;
+	} DES_EDE_KEY;
+#define ks1 ks.ks[0]
+#define ks2 ks.ks[1]
+#define ks3 ks.ks[2]
+
+#if defined(AES_ASM) && (defined(__sparc) || defined(__sparc__))
+/* ---------^^^ this is not a typo, just a way to detect that
+ * assembler support was in general requested... */
+#include "sparc_arch.h"
+
+extern unsigned int OPENSSL_sparcv9cap_P[];
+
+#define SPARC_DES_CAPABLE	(OPENSSL_sparcv9cap_P[1] & CFR_DES)
+
+void	des_t4_key_expand(const void *key, DES_key_schedule *ks);
+void	des_t4_ede3_cbc_encrypt(const void *inp,void *out,size_t len,
+				DES_key_schedule *ks,unsigned char iv[8]);
+void	des_t4_ede3_cbc_decrypt(const void *inp,void *out,size_t len,
+				DES_key_schedule *ks,unsigned char iv[8]);
+#endif
+
 static int des_ede_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 			    const unsigned char *iv,int enc);
 
@@ -72,13 +99,6 @@ static int des_ede3_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 			     const unsigned char *iv,int enc);
 
 static int des3_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr);
-
-typedef struct
-    {
-    DES_key_schedule ks1;/* key schedule */
-    DES_key_schedule ks2;/* key schedule (for ede) */
-    DES_key_schedule ks3;/* key schedule (for ede3) */
-    } DES_EDE_KEY;
 
 #define data(ctx) ((DES_EDE_KEY *)(ctx)->cipher_data)
 
@@ -119,6 +139,8 @@ static int des_ede_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 static int des_ede_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			      const unsigned char *in, size_t inl)
 {
+	DES_EDE_KEY *dat = data(ctx);
+
 #ifdef KSSL_DEBUG
 	{
         int i;
@@ -130,10 +152,16 @@ static int des_ede_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	printf("\n");
 	}
 #endif    /* KSSL_DEBUG */
+	if (dat->stream.cbc)
+		{
+		(*dat->stream.cbc)(in,out,inl,&dat->ks,ctx->iv);
+		return 1;
+		}
+
 	if (inl>=EVP_MAXCHUNK)
 		{
 		DES_ede3_cbc_encrypt(in, out, (long)EVP_MAXCHUNK,
-			     &data(ctx)->ks1, &data(ctx)->ks2, &data(ctx)->ks3,
+			     &dat->ks1, &dat->ks2, &dat->ks3,
 			     (DES_cblock *)ctx->iv, ctx->encrypt);
 		inl-=EVP_MAXCHUNK;
 		in +=EVP_MAXCHUNK;
@@ -141,7 +169,7 @@ static int des_ede_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		}
 	if (inl)
 		DES_ede3_cbc_encrypt(in, out, (long)inl,
-			     &data(ctx)->ks1, &data(ctx)->ks2, &data(ctx)->ks3,
+			     &dat->ks1, &dat->ks2, &dat->ks3,
                              (DES_cblock *)ctx->iv, ctx->encrypt);
 	return 1;
 }
@@ -206,9 +234,8 @@ static int des_ede3_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     }
 
 BLOCK_CIPHER_defs(des_ede, DES_EDE_KEY, NID_des_ede, 8, 16, 8, 64,
-			EVP_CIPH_RAND_KEY, des_ede_init_key, NULL, 
-			EVP_CIPHER_set_asn1_iv,
-			EVP_CIPHER_get_asn1_iv,
+			EVP_CIPH_RAND_KEY|EVP_CIPH_FLAG_DEFAULT_ASN1,
+			des_ede_init_key, NULL, NULL, NULL,
 			des3_ctrl)
 
 #define des_ede3_cfb64_cipher des_ede_cfb64_cipher
@@ -217,37 +244,53 @@ BLOCK_CIPHER_defs(des_ede, DES_EDE_KEY, NID_des_ede, 8, 16, 8, 64,
 #define des_ede3_ecb_cipher des_ede_ecb_cipher
 
 BLOCK_CIPHER_defs(des_ede3, DES_EDE_KEY, NID_des_ede3, 8, 24, 8, 64,
-			EVP_CIPH_RAND_KEY, des_ede3_init_key, NULL, 
-			EVP_CIPHER_set_asn1_iv,
-			EVP_CIPHER_get_asn1_iv,
-			des3_ctrl)
+	  	EVP_CIPH_RAND_KEY|EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_DEFAULT_ASN1,
+		  des_ede3_init_key, NULL, NULL, NULL,
+		  des3_ctrl)
 
 BLOCK_CIPHER_def_cfb(des_ede3,DES_EDE_KEY,NID_des_ede3,24,8,1,
-		     EVP_CIPH_RAND_KEY, des_ede3_init_key,NULL,
-		     EVP_CIPHER_set_asn1_iv,
-		     EVP_CIPHER_get_asn1_iv,
-		     des3_ctrl)
+		EVP_CIPH_RAND_KEY|EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_DEFAULT_ASN1,
+			des_ede3_init_key, NULL, NULL, NULL,
+			des3_ctrl)
 
 BLOCK_CIPHER_def_cfb(des_ede3,DES_EDE_KEY,NID_des_ede3,24,8,8,
-		     EVP_CIPH_RAND_KEY, des_ede3_init_key,NULL,
-		     EVP_CIPHER_set_asn1_iv,
-		     EVP_CIPHER_get_asn1_iv,
-		     des3_ctrl)
+		EVP_CIPH_RAND_KEY|EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_DEFAULT_ASN1,
+			des_ede3_init_key, NULL, NULL, NULL,
+			des3_ctrl)
 
 static int des_ede_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 			    const unsigned char *iv, int enc)
 	{
 	DES_cblock *deskey = (DES_cblock *)key;
+	DES_EDE_KEY *dat = data(ctx);
+
+	dat->stream.cbc = NULL;
+#if defined(SPARC_DES_CAPABLE)
+	if (SPARC_DES_CAPABLE)
+		{
+		int mode = ctx->cipher->flags & EVP_CIPH_MODE;
+
+		if (mode == EVP_CIPH_CBC_MODE)
+			{
+			des_t4_key_expand(&deskey[0],&dat->ks1);
+			des_t4_key_expand(&deskey[1],&dat->ks2);
+			memcpy(&dat->ks3,&dat->ks1,sizeof(dat->ks1));
+			dat->stream.cbc = enc ? des_t4_ede3_cbc_encrypt :
+						des_t4_ede3_cbc_decrypt;
+			return 1;
+			}
+		}
+#endif
 #ifdef EVP_CHECK_DES_KEY
-	if (DES_set_key_checked(&deskey[0],&data(ctx)->ks1)
-		!! DES_set_key_checked(&deskey[1],&data(ctx)->ks2))
+	if (DES_set_key_checked(&deskey[0],&dat->ks1)
+		!! DES_set_key_checked(&deskey[1],&dat->ks2))
 		return 0;
 #else
-	DES_set_key_unchecked(&deskey[0],&data(ctx)->ks1);
-	DES_set_key_unchecked(&deskey[1],&data(ctx)->ks2);
+	DES_set_key_unchecked(&deskey[0],&dat->ks1);
+	DES_set_key_unchecked(&deskey[1],&dat->ks2);
 #endif
-	memcpy(&data(ctx)->ks3,&data(ctx)->ks1,
-	       sizeof(data(ctx)->ks1));
+	memcpy(&dat->ks3,&dat->ks1,
+	       sizeof(dat->ks1));
 	return 1;
 	}
 
@@ -255,6 +298,8 @@ static int des_ede3_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 			     const unsigned char *iv, int enc)
 	{
 	DES_cblock *deskey = (DES_cblock *)key;
+	DES_EDE_KEY *dat = data(ctx);
+
 #ifdef KSSL_DEBUG
 	{
         int i;
@@ -266,15 +311,32 @@ static int des_ede3_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	}
 #endif	/* KSSL_DEBUG */
 
+	dat->stream.cbc = NULL;
+#if defined(SPARC_DES_CAPABLE)
+	if (SPARC_DES_CAPABLE)
+		{
+		int mode = ctx->cipher->flags & EVP_CIPH_MODE;
+
+		if (mode == EVP_CIPH_CBC_MODE)
+			{
+			des_t4_key_expand(&deskey[0],&dat->ks1);
+			des_t4_key_expand(&deskey[1],&dat->ks2);
+			des_t4_key_expand(&deskey[2],&dat->ks3);
+			dat->stream.cbc = enc ? des_t4_ede3_cbc_encrypt :
+						des_t4_ede3_cbc_decrypt;
+			return 1;
+			}
+		}
+#endif
 #ifdef EVP_CHECK_DES_KEY
-	if (DES_set_key_checked(&deskey[0],&data(ctx)->ks1)
-		|| DES_set_key_checked(&deskey[1],&data(ctx)->ks2)
-		|| DES_set_key_checked(&deskey[2],&data(ctx)->ks3))
+	if (DES_set_key_checked(&deskey[0],&dat->ks1)
+		|| DES_set_key_checked(&deskey[1],&dat->ks2)
+		|| DES_set_key_checked(&deskey[2],&dat->ks3))
 		return 0;
 #else
-	DES_set_key_unchecked(&deskey[0],&data(ctx)->ks1);
-	DES_set_key_unchecked(&deskey[1],&data(ctx)->ks2);
-	DES_set_key_unchecked(&deskey[2],&data(ctx)->ks3);
+	DES_set_key_unchecked(&deskey[0],&dat->ks1);
+	DES_set_key_unchecked(&deskey[1],&dat->ks2);
+	DES_set_key_unchecked(&deskey[2],&dat->ks3);
 #endif
 	return 1;
 	}
