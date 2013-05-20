@@ -125,6 +125,11 @@
 # endif
 #endif
 
+#if defined(OPENSSL_BN_ASM_MONT) && defined(__sparc__)
+# include "sparc_arch.h"
+extern unsigned int OPENSSL_sparcv9cap_P[];
+#endif
+
 /* maximum precomputation table size for *variable* sliding windows */
 #define TABLE_SIZE	32
 
@@ -587,6 +592,9 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	int powerbufLen = 0;
 	unsigned char *powerbuf=NULL;
 	BIGNUM tmp, am;
+#if defined(OPENSSL_BN_ASM_MONT) && defined(__sparc__)
+	unsigned int t4=0;
+#endif
 
 	bn_check_top(a);
 	bn_check_top(p);
@@ -621,9 +629,18 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 
 	/* Get the window size to use with size of p. */
 	window = BN_window_bits_for_ctime_exponent_size(bits);
+#if defined(OPENSSL_BN_ASM_MONT) && defined(__sparc__)
+	if (window>=5 && (top&15)==0 && top<=64 &&
+	    (OPENSSL_sparcv9cap_P[1]&(CFR_MONTMUL|CFR_MONTSQR))==
+	    			     (CFR_MONTMUL|CFR_MONTSQR) &&
+	    (t4=OPENSSL_sparcv9cap_P[0]))
+		window=5;
+	else
+#endif
 #if defined(OPENSSL_BN_ASM_MONT5)
 	if (window==6 && bits<=1024) window=5;	/* ~5% improvement of 2048-bit RSA sign */
 #endif
+	(void)0;
 
 	/* Allocate a buffer large enough to hold all of the pre-computed
 	 * powers of am, am itself and tmp.
@@ -673,6 +690,94 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 		}
 	else	if (!BN_to_montgomery(&am,a,mont,ctx))		goto err;
 
+#if defined(OPENSSL_BN_ASM_MONT) && defined(__sparc__)
+    if (t4)
+	{
+	typedef int (*bn_pwr5_mont_f)(BN_ULONG *tp,const BN_ULONG *np,
+			const BN_ULONG *n0,const void *table,int power);
+	int bn_pwr5_mont_t4_8(BN_ULONG *tp,const BN_ULONG *np,
+			const BN_ULONG *n0,const void *table,int power);
+	int bn_pwr5_mont_t4_16(BN_ULONG *tp,const BN_ULONG *np,
+			const BN_ULONG *n0,const void *table,int power);
+	int bn_pwr5_mont_t4_24(BN_ULONG *tp,const BN_ULONG *np,
+			const BN_ULONG *n0,const void *table,int power);
+	int bn_pwr5_mont_t4_32(BN_ULONG *tp,const BN_ULONG *np,
+			const BN_ULONG *n0,const void *table,int power);
+	static const bn_pwr5_mont_f funcs[4] = {
+			bn_pwr5_mont_t4_8,	bn_pwr5_mont_t4_16,
+			bn_pwr5_mont_t4_24,	bn_pwr5_mont_t4_32 };
+	bn_pwr5_mont_f worker = funcs[top/16-1];
+
+	void bn_mul_mont_t4(BN_ULONG *rp,const BN_ULONG *ap,
+			const void *bp,const BN_ULONG *np,
+			const BN_ULONG *n0,int num);
+	void bn_mul_mont_gather5_t4(BN_ULONG *rp,const BN_ULONG *ap,
+			const void *table,const BN_ULONG *np,
+			const BN_ULONG *n0,int num,int power);
+	void bn_scatter5_t4(const BN_ULONG *inp,size_t num,
+			void *table,size_t power);
+	void bn_gather5_t4(BN_ULONG *out,size_t num,
+			void *table,size_t power);
+	void bn_flip_t4(BN_ULONG *dst,BN_ULONG *src,size_t num);
+
+	BN_ULONG *np=alloca(top*sizeof(BN_ULONG)), *n0=mont->n0;
+
+	/* BN_to_montgomery can contaminate words above .top
+	 * [in BN_DEBUG[_DEBUG] build]... */
+	for (i=am.top; i<top; i++)	am.d[i]=0;
+	for (i=tmp.top; i<top; i++)	tmp.d[i]=0;
+
+	/* switch to 64-bit domain */ 
+	top /= 2;
+	bn_flip_t4(np,mont->N.d,top);
+	bn_flip_t4(tmp.d,tmp.d,top);
+	bn_flip_t4(am.d,am.d,top);
+
+	bn_scatter5_t4(tmp.d,top,powerbuf,0);
+	bn_scatter5_t4(am.d,top,powerbuf,1);
+	bn_mul_mont_t4(tmp.d,am.d,am.d,np,n0,top);
+	bn_scatter5_t4(tmp.d,top,powerbuf,2);
+
+	for (i=3; i<32; i++)
+		{
+		/* Calculate a^i = a^(i-1) * a */
+		bn_mul_mont_gather5_t4(tmp.d,am.d,powerbuf,np,n0,top,i-1);
+		bn_scatter5_t4(tmp.d,top,powerbuf,i);
+		}
+
+	bits--;
+	for (wvalue=0, i=bits%5; i>=0; i--,bits--)
+		wvalue = (wvalue<<1)+BN_is_bit_set(p,bits);
+	bn_gather5_t4(tmp.d,top,powerbuf,wvalue);
+
+	/* Scan the exponent one window at a time starting from the most
+	 * significant bits.
+	 */
+	while (bits >= 0)
+		{
+		for (wvalue=0, i=0; i<5; i++,bits--)
+			wvalue = (wvalue<<1)+BN_is_bit_set(p,bits);
+
+		if ((*worker)(tmp.d,np,n0,powerbuf,wvalue)) continue;
+		/* retry once and fall back */
+		if ((*worker)(tmp.d,np,n0,powerbuf,wvalue)) continue;
+		bn_mul_mont_t4(tmp.d,tmp.d,tmp.d,np,n0,top);
+		bn_mul_mont_t4(tmp.d,tmp.d,tmp.d,np,n0,top);
+		bn_mul_mont_t4(tmp.d,tmp.d,tmp.d,np,n0,top);
+		bn_mul_mont_t4(tmp.d,tmp.d,tmp.d,np,n0,top);
+		bn_mul_mont_t4(tmp.d,tmp.d,tmp.d,np,n0,top);
+		bn_mul_mont_gather5_t4(tmp.d,tmp.d,powerbuf,np,n0,top,wvalue);
+		}
+
+	bn_flip_t4(tmp.d,tmp.d,top);
+	top *= 2;
+	/* back to 32-bit domain */
+	tmp.top=top;
+	bn_correct_top(&tmp);
+	OPENSSL_cleanse(np,top*sizeof(BN_ULONG));
+	}
+    else
+#endif
 #if defined(OPENSSL_BN_ASM_MONT5)
     /* This optimization uses ideas from http://eprint.iacr.org/2011/239,
      * specifically optimization of cache-timing attack countermeasures
