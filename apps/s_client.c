@@ -546,12 +546,13 @@ static int next_proto_cb(SSL *s, unsigned char **out, unsigned char *outlen, con
 	}
 # endif  /* ndef OPENSSL_NO_NEXTPROTONEG */
 
-static void serverinfo_cb(SSL *s, const unsigned char *in,
-				    unsigned int inlen, void *arg)
+static int serverinfo_cb(SSL *s, const unsigned char *in,
+				    unsigned int inlen, int* al, void *arg)
 	{
 	char pem_name[100];
 	BIO_snprintf(pem_name, sizeof(pem_name), "SERVER_INFO %d", (in[0]<<8) | in[1]);
 	PEM_write_bio(bio_c_out, pem_name, "", (unsigned char*)in, inlen);
+	return 1;
 	}
 
 #endif

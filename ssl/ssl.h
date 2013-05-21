@@ -1072,9 +1072,11 @@ struct ssl_ctx_st
 	size_t serverinfo_types_count;
 
 	/* Callback for handling any ServerHello extension being sent
-	 * in response to one of the serverinfo_types */
-	void (*serverinfo_cb)(SSL *s, const unsigned char *in,
-				    unsigned int inlen, void *arg);
+	 * in response to one of the serverinfo_types.  Return zero and 
+	 * set an alert value in 'al' to close the connection with an 
+	 * alert. */
+	int (*serverinfo_cb)(SSL *s, const unsigned char *in,
+				    unsigned int inlen, int* al, void *arg);
 	void *serverinfo_cb_arg;
 	};
 
@@ -1187,9 +1189,9 @@ int SSL_CTX_set_serverinfo_types(SSL_CTX *ctx,
 		size_t serverinfo_types_count);
 
 void SSL_CTX_set_serverinfo_cb(SSL_CTX *ctx,
-				      void (*cb) (SSL *ssl,
-						 const unsigned char *in,
-						 unsigned int inlen, void *arg),
+				      int (*cb) (SSL *ssl,
+						  const unsigned char *in,
+						  unsigned int inlen, int* al, void *arg),
 				      void *arg);
 
 #define SSL_NOTHING	1

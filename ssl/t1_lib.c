@@ -2738,7 +2738,8 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 				{
 				if (type == s->ctx->serverinfo_types[i])
 					{
-					s->ctx->serverinfo_cb(s, data-4, size+4, s->ctx->serverinfo_cb_arg);
+					if (!s->ctx->serverinfo_cb(s, data-4, size+4, al, s->ctx->serverinfo_cb_arg))
+						return 0;
 					break;
 					}
 				}

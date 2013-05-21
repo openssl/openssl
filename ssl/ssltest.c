@@ -381,8 +381,8 @@ int serverinfo_sct_seen = 0;
 int serverinfo_tack_seen = 0;
 int serverinfo_other_seen = 0;
 
-static void serverinfo_cb(SSL *s, const unsigned char *in,
-				    unsigned int inlen, void *arg)
+static int serverinfo_cb(SSL *s, const unsigned char *in,
+				    unsigned int inlen, int* al, void *arg)
 	{
 		unsigned short ext_type = (in[0]<<8) + in[1];
 		if (ext_type == SCT_EXT_NUM)
@@ -391,6 +391,7 @@ static void serverinfo_cb(SSL *s, const unsigned char *in,
 			serverinfo_tack_seen++;
 		else
 			serverinfo_other_seen++;
+		return 1;
 	}
 
 static int verify_serverinfo()

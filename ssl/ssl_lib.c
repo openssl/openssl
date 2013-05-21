@@ -1717,7 +1717,7 @@ int SSL_CTX_set_serverinfo_types(SSL_CTX *ctx, unsigned short *serverinfo_types,
 	return 1;
 	}
 
-void SSL_CTX_set_serverinfo_cb(SSL_CTX *ctx, void (*cb) (SSL *s, const unsigned char *in, unsigned int inlen, void *arg), void *arg)
+void SSL_CTX_set_serverinfo_cb(SSL_CTX *ctx, int (*cb) (SSL *s, const unsigned char *in, unsigned int inlen, int* al, void *arg), void *arg)
   {
 	ctx->serverinfo_cb = cb;
 	ctx->serverinfo_cb_arg = arg;
