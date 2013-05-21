@@ -249,12 +249,22 @@ struct rsa_st
 				EVP_PKEY_CTRL_RSA_KEYGEN_PUBEXP, 0, pubexp)
 
 #define	 EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, md)	\
-		EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_TYPE_SIG,  \
+		EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, \
+			EVP_PKEY_OP_TYPE_SIG | EVP_PKEY_OP_TYPE_CRYPT, \
 				EVP_PKEY_CTRL_RSA_MGF1_MD, 0, (void *)md)
 
+#define	 EVP_PKEY_CTX_set_rsa_oaep_md(ctx, md)	\
+		EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_TYPE_CRYPT,  \
+				EVP_PKEY_CTRL_RSA_OAEP_MD, 0, (void *)md)
+
 #define	 EVP_PKEY_CTX_get_rsa_mgf1_md(ctx, pmd)	\
-		EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_TYPE_SIG,  \
+		EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, \
+			EVP_PKEY_OP_TYPE_SIG | EVP_PKEY_OP_TYPE_CRYPT, \
 				EVP_PKEY_CTRL_GET_RSA_MGF1_MD, 0, (void *)pmd)
+
+#define	 EVP_PKEY_CTX_set0_rsa_oaep_label(ctx, l, llen)	\
+		EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_TYPE_CRYPT,  \
+				EVP_PKEY_CTRL_RSA_OAEP_LABEL, llen, (void *)l)
 
 #define EVP_PKEY_CTRL_RSA_PADDING	(EVP_PKEY_ALG_CTRL + 1)
 #define EVP_PKEY_CTRL_RSA_PSS_SALTLEN	(EVP_PKEY_ALG_CTRL + 2)
@@ -266,6 +276,9 @@ struct rsa_st
 #define EVP_PKEY_CTRL_GET_RSA_PADDING		(EVP_PKEY_ALG_CTRL + 6)
 #define EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN	(EVP_PKEY_ALG_CTRL + 7)
 #define EVP_PKEY_CTRL_GET_RSA_MGF1_MD		(EVP_PKEY_ALG_CTRL + 8)
+
+#define EVP_PKEY_CTRL_RSA_OAEP_MD	(EVP_PKEY_ALG_CTRL + 9)
+#define EVP_PKEY_CTRL_RSA_OAEP_LABEL	(EVP_PKEY_ALG_CTRL + 10)
 
 #define RSA_PKCS1_PADDING	1
 #define RSA_SSLV23_PADDING	2
@@ -401,6 +414,14 @@ int RSA_padding_add_PKCS1_OAEP(unsigned char *to,int tlen,
 int RSA_padding_check_PKCS1_OAEP(unsigned char *to,int tlen,
 	const unsigned char *f,int fl,int rsa_len,
 	const unsigned char *p,int pl);
+int RSA_padding_add_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
+	const unsigned char *from, int flen,
+	const unsigned char *param, int plen,
+	const EVP_MD *md, const EVP_MD *mgf1md);
+int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
+	const unsigned char *from, int flen, int num,
+	const unsigned char *param, int plen,
+	const EVP_MD *md, const EVP_MD *mgf1md);
 int RSA_padding_add_SSLv23(unsigned char *to,int tlen,
 	const unsigned char *f,int fl);
 int RSA_padding_check_SSLv23(unsigned char *to,int tlen,
@@ -495,6 +516,7 @@ void ERR_load_RSA_strings(void);
 #define RSA_F_RSA_NULL_PUBLIC_ENCRYPT			 135
 #define RSA_F_RSA_PADDING_ADD_NONE			 107
 #define RSA_F_RSA_PADDING_ADD_PKCS1_OAEP		 121
+#define RSA_F_RSA_PADDING_ADD_PKCS1_OAEP_MGF1		 154
 #define RSA_F_RSA_PADDING_ADD_PKCS1_PSS			 125
 #define RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1		 152
 #define RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_1		 108
@@ -503,6 +525,7 @@ void ERR_load_RSA_strings(void);
 #define RSA_F_RSA_PADDING_ADD_X931			 127
 #define RSA_F_RSA_PADDING_CHECK_NONE			 111
 #define RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP		 122
+#define RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP_MGF1		 153
 #define RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_1		 112
 #define RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_2		 113
 #define RSA_F_RSA_PADDING_CHECK_SSLV23			 114
@@ -539,6 +562,7 @@ void ERR_load_RSA_strings(void);
 #define RSA_R_D_E_NOT_CONGRUENT_TO_1			 123
 #define RSA_R_FIRST_OCTET_INVALID			 133
 #define RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE	 144
+#define RSA_R_INVALID_DIGEST				 157
 #define RSA_R_INVALID_DIGEST_LENGTH			 143
 #define RSA_R_INVALID_HEADER				 137
 #define RSA_R_INVALID_KEYBITS				 145
