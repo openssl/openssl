@@ -4,6 +4,10 @@
 
  Changes between 1.0.1e and 1.0.2 [xx XXX xxxx]
 
+  *) Extended RSA OAEP support via EVP_PKEY API. Options to specify digest,
+     MGF1 digest and OAEP label.
+     [Steve Henson]
+
   *) Add EVP support for key wrapping algorithms, to avoid problems with
      existing code the flag EVP_CIPHER_CTX_WRAP_ALLOW has to be set in
      the EVP_CIPHER_CTX or an error is returned. Add AES and DES3 wrap

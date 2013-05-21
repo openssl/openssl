@@ -28,41 +28,55 @@
 #include <openssl/rand.h>
 #include <openssl/sha.h>
 
-static int MGF1(unsigned char *mask, long len,
-	const unsigned char *seed, long seedlen);
-
 int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
 	const unsigned char *from, int flen,
 	const unsigned char *param, int plen)
 	{
+	return RSA_padding_add_PKCS1_OAEP_mgf1(to, tlen, from, flen,
+						param, plen, NULL, NULL);
+	}
+
+int RSA_padding_add_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
+	const unsigned char *from, int flen,
+	const unsigned char *param, int plen,
+	const EVP_MD *md, const EVP_MD *mgf1md)
+	{
 	int i, emlen = tlen - 1;
 	unsigned char *db, *seed;
-	unsigned char *dbmask, seedmask[SHA_DIGEST_LENGTH];
+	unsigned char *dbmask, seedmask[EVP_MAX_MD_SIZE];
+	int mdlen;
 
-	if (flen > emlen - 2 * SHA_DIGEST_LENGTH - 1)
+	if (md == NULL)
+		md = EVP_sha1();
+	if (mgf1md == NULL)
+		mgf1md = md;
+
+	mdlen = EVP_MD_size(md);
+
+	if (flen > emlen - 2 * mdlen - 1)
 		{
-		RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_OAEP,
+		RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_OAEP_MGF1,
 		   RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
 		return 0;
 		}
 
-	if (emlen < 2 * SHA_DIGEST_LENGTH + 1)
+	if (emlen < 2 * mdlen + 1)
 		{
-		RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_OAEP, RSA_R_KEY_SIZE_TOO_SMALL);
+		RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_OAEP_MGF1, RSA_R_KEY_SIZE_TOO_SMALL);
 		return 0;
 		}
 
 	to[0] = 0;
 	seed = to + 1;
-	db = to + SHA_DIGEST_LENGTH + 1;
+	db = to + mdlen + 1;
 
-	if (!EVP_Digest((void *)param, plen, db, NULL, EVP_sha1(), NULL))
+	if (!EVP_Digest((void *)param, plen, db, NULL, md, NULL))
 		return 0;
-	memset(db + SHA_DIGEST_LENGTH, 0,
-		emlen - flen - 2 * SHA_DIGEST_LENGTH - 1);
-	db[emlen - flen - SHA_DIGEST_LENGTH - 1] = 0x01;
-	memcpy(db + emlen - flen - SHA_DIGEST_LENGTH, from, (unsigned int) flen);
-	if (RAND_bytes(seed, SHA_DIGEST_LENGTH) <= 0)
+	memset(db + mdlen, 0,
+		emlen - flen - 2 * mdlen - 1);
+	db[emlen - flen - mdlen - 1] = 0x01;
+	memcpy(db + emlen - flen - mdlen, from, (unsigned int) flen);
+	if (RAND_bytes(seed, mdlen) <= 0)
 		return 0;
 #ifdef PKCS_TESTVECT
 	memcpy(seed,
@@ -70,21 +84,21 @@ int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
 	   20);
 #endif
 
-	dbmask = OPENSSL_malloc(emlen - SHA_DIGEST_LENGTH);
+	dbmask = OPENSSL_malloc(emlen - mdlen);
 	if (dbmask == NULL)
 		{
-		RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_OAEP, ERR_R_MALLOC_FAILURE);
+		RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_OAEP_MGF1, ERR_R_MALLOC_FAILURE);
 		return 0;
 		}
 
-	if (MGF1(dbmask, emlen - SHA_DIGEST_LENGTH, seed, SHA_DIGEST_LENGTH) < 0)
+	if (PKCS1_MGF1(dbmask, emlen - mdlen, seed, mdlen, mgf1md) < 0)
 		return 0;
-	for (i = 0; i < emlen - SHA_DIGEST_LENGTH; i++)
+	for (i = 0; i < emlen - mdlen; i++)
 		db[i] ^= dbmask[i];
 
-	if (MGF1(seedmask, SHA_DIGEST_LENGTH, db, emlen - SHA_DIGEST_LENGTH) < 0)
+	if (PKCS1_MGF1(seedmask, mdlen, db, emlen - mdlen, mgf1md) < 0)
 		return 0;
-	for (i = 0; i < SHA_DIGEST_LENGTH; i++)
+	for (i = 0; i < mdlen; i++)
 		seed[i] ^= seedmask[i];
 
 	OPENSSL_free(dbmask);
@@ -95,14 +109,32 @@ int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
 	const unsigned char *from, int flen, int num,
 	const unsigned char *param, int plen)
 	{
+	return RSA_padding_check_PKCS1_OAEP_mgf1(to, tlen, from , flen, num,
+							param, plen,
+							NULL, NULL);
+	}
+
+int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
+	const unsigned char *from, int flen, int num,
+	const unsigned char *param, int plen,
+	const EVP_MD *md, const EVP_MD *mgf1md)
+	{
 	int i, dblen, mlen = -1;
 	const unsigned char *maskeddb;
 	int lzero;
-	unsigned char *db = NULL, seed[SHA_DIGEST_LENGTH], phash[SHA_DIGEST_LENGTH];
+	unsigned char *db = NULL, seed[EVP_MAX_MD_SIZE], phash[EVP_MAX_MD_SIZE];
 	unsigned char *padded_from;
 	int bad = 0;
+	int mdlen;
 
-	if (--num < 2 * SHA_DIGEST_LENGTH + 1)
+	if (md == NULL)
+		md = EVP_sha1();
+	if (mgf1md == NULL)
+		mgf1md = md;
+
+	mdlen = EVP_MD_size(md);
+
+	if (--num < 2 * mdlen + 1)
 		/* 'num' is the length of the modulus, i.e. does not depend on the
 		 * particular ciphertext. */
 		goto decoding_err;
@@ -120,11 +152,11 @@ int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
 		flen = num; /* don't overflow the memcpy to padded_from */
 		}
 
-	dblen = num - SHA_DIGEST_LENGTH;
+	dblen = num - mdlen;
 	db = OPENSSL_malloc(dblen + num);
 	if (db == NULL)
 		{
-		RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP, ERR_R_MALLOC_FAILURE);
+		RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP_MGF1, ERR_R_MALLOC_FAILURE);
 		return -1;
 		}
 
@@ -134,26 +166,26 @@ int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
 	memset(padded_from, 0, lzero);
 	memcpy(padded_from + lzero, from, flen);
 
-	maskeddb = padded_from + SHA_DIGEST_LENGTH;
+	maskeddb = padded_from + mdlen;
 
-	if (MGF1(seed, SHA_DIGEST_LENGTH, maskeddb, dblen))
+	if (PKCS1_MGF1(seed, mdlen, maskeddb, dblen, mgf1md))
 		return -1;
-	for (i = 0; i < SHA_DIGEST_LENGTH; i++)
+	for (i = 0; i < mdlen; i++)
 		seed[i] ^= padded_from[i];
   
-	if (MGF1(db, dblen, seed, SHA_DIGEST_LENGTH))
+	if (PKCS1_MGF1(db, dblen, seed, mdlen, mgf1md))
 		return -1;
 	for (i = 0; i < dblen; i++)
 		db[i] ^= maskeddb[i];
 
-	if (!EVP_Digest((void *)param, plen, phash, NULL, EVP_sha1(), NULL))
+	if (!EVP_Digest((void *)param, plen, phash, NULL, md, NULL))
 		return -1;
 
-	if (CRYPTO_memcmp(db, phash, SHA_DIGEST_LENGTH) != 0 || bad)
+	if (CRYPTO_memcmp(db, phash, mdlen) != 0 || bad)
 		goto decoding_err;
 	else
 		{
-		for (i = SHA_DIGEST_LENGTH; i < dblen; i++)
+		for (i = mdlen; i < dblen; i++)
 			if (db[i] != 0x00)
 				break;
 		if (i == dblen || db[i] != 0x01)
@@ -165,7 +197,7 @@ int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
 			mlen = dblen - ++i;
 			if (tlen < mlen)
 				{
-				RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP, RSA_R_DATA_TOO_LARGE);
+				RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP_MGF1, RSA_R_DATA_TOO_LARGE);
 				mlen = -1;
 				}
 			else
@@ -178,7 +210,7 @@ int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
 decoding_err:
 	/* to avoid chosen ciphertext attacks, the error message should not reveal
 	 * which kind of decoding error happened */
-	RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP, RSA_R_OAEP_DECODING_ERROR);
+	RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP_MGF1, RSA_R_OAEP_DECODING_ERROR);
 	if (db != NULL) OPENSSL_free(db);
 	return -1;
 	}
@@ -227,9 +259,4 @@ int PKCS1_MGF1(unsigned char *mask, long len,
 	return rv;
 	}
 
-static int MGF1(unsigned char *mask, long len, const unsigned char *seed,
-		 long seedlen)
-	{
-	return PKCS1_MGF1(mask, len, seed, seedlen, EVP_sha1());
-	}
 #endif
