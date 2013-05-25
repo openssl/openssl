@@ -52,9 +52,9 @@
 #
 #		AES-128-CBC	AES-192-CBC	AES-256-CBC
 # Westmere	1.31		1.55		1.80
-# Sandy Bridge	0.93		1.06		1.22
-# Ivy Bridge	0.92		1.06		1.21
-# Bulldozer	0.76		0.90		1.04
+# Sandy Bridge	0.74		0.91		1.09
+# Ivy Bridge	0.74		0.90		1.11
+# Bulldozer	0.70		0.85		0.99
 
 $flavour = shift;
 $output  = shift;
@@ -124,6 +124,13 @@ my $j=0; my $jj=0; my $r=0; my $sn=0; my $rx=0;
 my $K_XX_XX="%r11";
 my ($iv,$in,$rndkey0)=map("%xmm$_",(11..13));
 my @rndkey=("%xmm14","%xmm15");
+
+if (1) {
+    @X=map("%xmm$_",(4..11));
+    @Tx=map("%xmm$_",(12..14));
+    ($iv,$in,$rndkey0)=map("%xmm$_",(2,3,15));
+    @rndkey=("%xmm0","%xmm1");
+}
 
 sub AUTOLOAD()		# thunk [simplified] 32-bit style perlasm
 { my $opcode = $AUTOLOAD; $opcode =~ s/.*:://;
@@ -671,9 +678,11 @@ my ($in0,$out,$len,$key,$ivp,$ctx,$inp)=("%rdi","%rsi","%rdx","%rcx","%r8","%r9"
 my $Xi=4;
 my @X=map("%xmm$_",(4..7,0..3));
 my @Tx=map("%xmm$_",(8..10));
-my $Kx=$rndkey0;
 my @V=($A,$B,$C,$D,$E)=("%eax","%ebx","%ecx","%edx","%ebp");	# size optimization
 my @T=("%esi","%edi");
+my ($iv,$in,$rndkey0)=map("%xmm$_",(11..13));
+my @rndkey=("%xmm14","%xmm15");
+my $Kx=$rndkey0;
 
 my $_rol=sub { &shld(@_[0],@_) };
 my $_ror=sub { &shrd(@_[0],@_) };
