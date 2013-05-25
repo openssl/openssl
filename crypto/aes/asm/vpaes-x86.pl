@@ -29,7 +29,7 @@
 #
 # Core 2(**)	28.1/41.4/18.3		21.9/25.2(***)
 # Nehalem	27.9/40.4/18.1		10.2/11.9
-# Atom		70.7/92.1/60.1		61.1/81.0(***)
+# Atom		70.7/92.1/60.1		61.1/75.4(***)
 #
 # (*)	"Hyper-threading" in the context refers rather to cache shared
 #	among multiple cores, than to specifically Intel HTT. As vast
@@ -295,43 +295,43 @@ $k_dsbo=0x2c0;		# decryption sbox final output
 	&movdqa	("xmm1",&QWP(-0x10,$base));	# 0 : sb9t
 	&pshufb	("xmm4","xmm2");		# 4 = sb9u
 	&pshufb	("xmm1","xmm3");		# 0 = sb9t
-	&pxor	("xmm4","xmm0");
-	&add	($key,16);			# next round key
-	&pxor	("xmm1","xmm4");		# 0 = ch
-
+	&pxor	("xmm0","xmm4");
 	&movdqa	("xmm4",&QWP(0,$base));		# 4 : sbdu
-	&pshufb	("xmm1","xmm5");		# MC ch
+	&pxor	("xmm0","xmm1");		# 0 = ch
+	&movdqa	("xmm1",&QWP(0x10,$base));	# 0 : sbdt
+
 	&pshufb	("xmm4","xmm2");		# 4 = sbdu
-	&movdqa	("xmm0",&QWP(0x10,$base));	# 0 : sbdt
-	&pxor	("xmm4","xmm1");		# 4 = ch
-	&pshufb	("xmm0","xmm3");		# 0 = sbdt
-	&sub	($round,1);			# nr--
-	&pxor	("xmm0","xmm4");		# 0 = ch
-
-	&movdqa	("xmm4",&QWP(0x20,$base));	# 4 : sbbu
 	&pshufb	("xmm0","xmm5");		# MC ch
+	&pshufb	("xmm1","xmm3");		# 0 = sbdt
+	&pxor	("xmm0","xmm4");		# 4 = ch
+	&movdqa	("xmm4",&QWP(0x20,$base));	# 4 : sbbu
+	&pxor	("xmm0","xmm1");		# 0 = ch
 	&movdqa	("xmm1",&QWP(0x30,$base));	# 0 : sbbt
-	&pshufb	("xmm4","xmm2");		# 4 = sbbu
-	&pshufb	("xmm1","xmm3");		# 0 = sbbt
-	&pxor	("xmm4","xmm0");		# 4 = ch
-	&pxor	("xmm1","xmm4");		# 0 = ch
 
+	&pshufb	("xmm4","xmm2");		# 4 = sbbu
+	&pshufb	("xmm0","xmm5");		# MC ch
+	&pshufb	("xmm1","xmm3");		# 0 = sbbt
+	&pxor	("xmm0","xmm4");		# 4 = ch
 	&movdqa	("xmm4",&QWP(0x40,$base));	# 4 : sbeu
-	&pshufb	("xmm1","xmm5");		# MC ch
-	&movdqa	("xmm0",&QWP(0x50,$base));	# 0 : sbet
+	&pxor	("xmm0","xmm1");		# 0 = ch
+	&movdqa	("xmm1",&QWP(0x50,$base));	# 0 : sbet
+
 	&pshufb	("xmm4","xmm2");		# 4 = sbeu
-	&pshufb	("xmm0","xmm3");		# 0 = sbet
+	&pshufb	("xmm0","xmm5");		# MC ch
+	&pshufb	("xmm1","xmm3");		# 0 = sbet
+	&pxor	("xmm0","xmm4");		# 4 = ch
+	&add	($key,16);			# next round key
 	&palignr("xmm5","xmm5",12);
-	&pxor	("xmm4","xmm1");		# 4 = ch
-	&pxor	("xmm0","xmm4");		# 0 = ch
+	&pxor	("xmm0","xmm1");		# 0 = ch
+	&sub	($round,1);			# nr--
 
 &set_label("dec_entry");
 	# top of round
 	&movdqa	("xmm1","xmm6");		# 1 : i
-	&pandn	("xmm1","xmm0");		# 1 = i<<4
 	&movdqa	("xmm2",&QWP($k_inv+16,$const));# 2 : a/k
-	&psrld	("xmm1",4);			# 1 = i
+	&pandn	("xmm1","xmm0");		# 1 = i<<4
 	&pand	("xmm0","xmm6");		# 0 = k
+	&psrld	("xmm1",4);			# 1 = i
 	&pshufb	("xmm2","xmm0");		# 2 = a/k
 	&movdqa	("xmm3","xmm7");		# 3 : 1/i
 	&pxor	("xmm0","xmm1");		# 0 = j

@@ -29,7 +29,7 @@
 #
 # Core 2(**)	29.6/41.1/14.3		21.9/25.2(***)
 # Nehalem	29.6/40.3/14.6		10.0/11.8
-# Atom		57.3/74.2/32.1		60.9/82.3(***)
+# Atom		57.3/74.2/32.1		60.9/77.2(***)
 #
 # (*)	"Hyper-threading" in the context refers rather to cache shared
 #	among multiple cores, than to specifically Intel HTT. As vast
@@ -204,35 +204,35 @@ _vpaes_decrypt_core:
 	movdqa  -0x10(%r10),%xmm1	# 0 : sb9t
 	pshufb	%xmm2,	%xmm4		# 4 = sb9u
 	pshufb	%xmm3,	%xmm1		# 0 = sb9t
-	pxor	%xmm0,	%xmm4
-	add	\$16, %r9		# next round key
-	pxor	%xmm4,	%xmm1		# 0 = ch
-
+	pxor	%xmm4,	%xmm0
 	movdqa  0x00(%r10),%xmm4	# 4 : sbdu
-	pshufb	%xmm5,	%xmm1		# MC ch
+	pxor	%xmm1,	%xmm0		# 0 = ch
+	movdqa  0x10(%r10),%xmm1	# 0 : sbdt
+
 	pshufb	%xmm2,	%xmm4		# 4 = sbdu
-	movdqa  0x10(%r10),%xmm0	# 0 : sbdt
-	pxor	%xmm1,	%xmm4		# 4 = ch
-	pshufb	%xmm3,	%xmm0		# 0 = sbdt
-	sub	\$1,%rax		# nr--
-	pxor	%xmm4,	%xmm0		# 0 = ch
-
-	movdqa  0x20(%r10),%xmm4	# 4 : sbbu
 	pshufb	%xmm5,	%xmm0		# MC ch
+	pshufb	%xmm3,	%xmm1		# 0 = sbdt
+	pxor	%xmm4,	%xmm0		# 4 = ch
+	movdqa  0x20(%r10),%xmm4	# 4 : sbbu
+	pxor	%xmm1,	%xmm0		# 0 = ch
 	movdqa  0x30(%r10),%xmm1	# 0 : sbbt
-	pshufb	%xmm2,	%xmm4		# 4 = sbbu
-	pshufb	%xmm3,	%xmm1		# 0 = sbbt
-	pxor	%xmm0,	%xmm4		# 4 = ch
-	pxor	%xmm4,	%xmm1		# 0 = ch
 
+	pshufb	%xmm2,	%xmm4		# 4 = sbbu
+	pshufb	%xmm5,	%xmm0		# MC ch
+	pshufb	%xmm3,	%xmm1		# 0 = sbbt
+	pxor	%xmm4,	%xmm0		# 4 = ch
 	movdqa  0x40(%r10),%xmm4	# 4 : sbeu
-	pshufb	%xmm5,	%xmm1		# MC ch
-	movdqa  0x50(%r10),%xmm0	# 0 : sbet
+	pxor	%xmm1,	%xmm0		# 0 = ch
+	movdqa  0x50(%r10),%xmm1	# 0 : sbet
+
 	pshufb	%xmm2,	%xmm4		# 4 = sbeu
-	pshufb	%xmm3,	%xmm0		# 0 = sbet
+	pshufb	%xmm5,	%xmm0		# MC ch
+	pshufb	%xmm3,	%xmm1		# 0 = sbet
+	pxor	%xmm4,	%xmm0		# 4 = ch
+	add	\$16, %r9		# next round key
 	palignr	\$12,	%xmm5,	%xmm5
-	pxor	%xmm1,	%xmm4		# 4 = ch
-	pxor	%xmm4,	%xmm0		# 0 = ch
+	pxor	%xmm1,	%xmm0		# 0 = ch
+	sub	\$1,%rax		# nr--
 
 .Ldec_entry:
 	# top of round
