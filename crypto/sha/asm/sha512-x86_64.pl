@@ -76,13 +76,13 @@
 #
 # AMD K8	15.1	-	    -		    9.70    -
 # P4		17.5	-	    -		    33.4    -
-# Core 2	15.5	13.9(+11%)  -		    10.3    -
-# Westmere	15.1	12.5(+21%)  -		    9.72    -
-# Sandy Bridge	17.4	14.0(+24%)  11.6(+50%(**))  11.2    8.10(+38%(**))
-# Ivy Bridge	12.6	10.3(+22%)  10.3(+22%)	    8.17    7.22(+13%)
+# Core 2	15.5	13.8(+12%)  -		    10.3    -
+# Westmere	15.1	12.7(+19%)  -		    9.72    -
+# Sandy Bridge	17.4	14.2(+23%)  11.6(+50%(**))  11.2    8.10(+38%(**))
+# Ivy Bridge	12.6	10.5(+20%)  10.3(+22%)	    8.17    7.22(+13%)
 # Bulldozer	21.5	13.7(+57%)  13.7(+57%(***)) 13.5    8.58(+57%)
-# VIA Nano	23.0	16.3(+41%)  -		    14.7    -
-# Atom		23.0	21.6(+6%)   -		    14.7    -
+# VIA Nano	23.0	16.5(+39%)  -		    14.7    -
+# Atom		23.0	18.7(+23%)  -		    14.7    -
 #
 # (*)	whichever best applicable;
 # (**)	switch from ror to shrd stands for fair share of improvement;
@@ -611,8 +611,8 @@ $code.=<<___;
 ___
 
 $code.=<<___;
-	movdqa	$TABLE+`$SZ*2*$rounds`+32(%rip),$t4
-	movdqa	$TABLE+`$SZ*2*$rounds`+64(%rip),$t5
+	#movdqa	$TABLE+`$SZ*2*$rounds`+32(%rip),$t4
+	#movdqa	$TABLE+`$SZ*2*$rounds`+64(%rip),$t5
 	jmp	.Lloop_ssse3
 .align	16
 .Lloop_ssse3:
@@ -790,10 +790,12 @@ my @insns = (&$body,&$body,&$body,&$body);	# 104 instructions
 	  eval(shift(@insns));
 	  eval(shift(@insns));
 	  eval(shift(@insns));
-	 &pshufb	($t3,$t4);		# sigma1(X[14..15])
+	 #&pshufb	($t3,$t4);		# sigma1(X[14..15])
+	 &pshufd	($t3,$t3,0b10000000);
 	  eval(shift(@insns));
 	  eval(shift(@insns));	#@
 	  eval(shift(@insns));
+	 &psrldq	($t3,8);
 	  eval(shift(@insns));
 	  eval(shift(@insns));	#@
 	&paddd		(@X[0],$t3);		# X[0..1] += sigma1(X[14..15])
@@ -829,10 +831,12 @@ my @insns = (&$body,&$body,&$body,&$body);	# 104 instructions
 	&movdqa		($t2,16*2*$j."($Tbl)");
 	  eval(shift(@insns));	#@
 	  eval(shift(@insns));
-	 &pshufb	($t3,$t5);
+	 #&pshufb	($t3,$t5);
+	 &pshufd	($t3,$t3,0b00001000);
 	  eval(shift(@insns));
 	  eval(shift(@insns));	#@
 	  eval(shift(@insns));
+	 &pslldq	($t3,8);
 	  eval(shift(@insns));
 	  eval(shift(@insns));
 	&paddd		(@X[0],$t3);		# X[2..3] += sigma1(X[16..17])
@@ -1673,11 +1677,11 @@ $code.=<<___;
 	vzeroall
 	sub	\$-16*$SZ,$inp		# inp++, size optimization
 	mov	$SZ*0($ctx),$A
-	xor	%r12,%r12		# borrow $T1
+	mov	$inp,%r12		# borrow $T1
 	mov	$SZ*1($ctx),$B
 	cmp	%rdx,$inp		# $_end
 	mov	$SZ*2($ctx),$C
-	sete	%r12b
+	cmove	%rsp,%r12		# next block or random data
 	mov	$SZ*3($ctx),$D
 	mov	$SZ*4($ctx),$E
 	mov	$SZ*5($ctx),$F
@@ -1694,24 +1698,20 @@ $code.=<<___;
 	jmp	.Loop_avx2
 .align	16
 .Loop_avx2:
-	shl	\$`log(16*$SZ)/log(2)`,%r12
 	vmovdqa	$TABLE+`$SZ*2*$rounds`(%rip),$t3
-	neg	%r12	
-	vmovdqu	-16*$SZ+0($inp),$t0
-	add	$inp,%r12
-	vmovdqu	-16*$SZ+32($inp),$t1
-	vmovdqu	(%r12),@X[2]		# next or same input block
-	vmovdqu	32(%r12),@X[3]
-
-	vperm2i128	\$0x20,@X[2],$t0,@X[0]
+	vmovdqu	-16*$SZ+0($inp),%xmm0
+	vmovdqu	-16*$SZ+16($inp),%xmm1
+	vmovdqu	-16*$SZ+32($inp),%xmm2
+	vmovdqu	-16*$SZ+48($inp),%xmm3
 	#mov		$inp,$_inp	# offload $inp
-	vperm2i128	\$0x31,@X[2],$t0,@X[1]
-	vperm2i128	\$0x20,@X[3],$t1,@X[2]
-	vperm2i128	\$0x31,@X[3],$t1,@X[3]
+	vinserti128	\$1,(%r12),@X[0],@X[0]
+	vinserti128	\$1,16(%r12),@X[1],@X[1]
+	vpshufb		$t3,@X[0],@X[0]
+	vinserti128	\$1,32(%r12),@X[2],@X[2]
+	vpshufb		$t3,@X[1],@X[1]
+	vinserti128	\$1,48(%r12),@X[3],@X[3]
 
 	lea	$TABLE(%rip),$Tbl
-	vpshufb	$t3,@X[0],@X[0]
-	vpshufb	$t3,@X[1],@X[1]
 	vpshufb	$t3,@X[2],@X[2]
 	vpaddd	0x00($Tbl),@X[0],$t0
 	vpshufb	$t3,@X[3],@X[3]
@@ -1773,36 +1773,32 @@ $code.=<<___;
 	jmp	.Loop_avx2
 .align	16
 .Loop_avx2:
-	shl	\$`log(16*$SZ)/log(2)`,%r12
-	vmovdqu	-16*$SZ($inp),$t0
-	neg	%r12
-	vmovdqu	-16*$SZ+32($inp),$t1
-	add	$inp,%r12
-	vmovdqu	-16*$SZ+64($inp),$t2
-	vmovdqu	-16*$SZ+96($inp),$t3
-	vmovdqu	(%r12),@X[4]		# next or same block
-	vmovdqu	32(%r12),@X[5]
-	vmovdqu	64(%r12),@X[6]
-	vmovdqu	96(%r12),@X[7]
-
-	vperm2i128	\$0x20,@X[4],$t0,@X[0]
-	#mov		$inp,$_inp	# offload $inp
-	vperm2i128	\$0x31,@X[4],$t0,@X[1]
-	vperm2i128	\$0x20,@X[5],$t1,@X[2]
-	vperm2i128	\$0x31,@X[5],$t1,@X[3]
-	vperm2i128	\$0x20,@X[6],$t2,@X[4]
-	vperm2i128	\$0x31,@X[6],$t2,@X[5]
-	vmovdqa		$TABLE+`$SZ*2*$rounds`(%rip),$t2
-	vperm2i128	\$0x20,@X[7],$t3,@X[6]
-	vperm2i128	\$0x31,@X[7],$t3,@X[7]
-
-	vpshufb	$t2,@X[0],@X[0]
+	vmovdqu	-16*$SZ($inp),%xmm0
+	vmovdqu	-16*$SZ+16($inp),%xmm1
+	vmovdqu	-16*$SZ+32($inp),%xmm2
 	lea	$TABLE+0x80(%rip),$Tbl	# size optimization
-	vpshufb	$t2,@X[1],@X[1]
-	vpshufb	$t2,@X[2],@X[2]
-	vpshufb	$t2,@X[3],@X[3]
-	vpshufb	$t2,@X[4],@X[4]
-	vpshufb	$t2,@X[5],@X[5]
+	vmovdqu	-16*$SZ+48($inp),%xmm3
+	vmovdqu	-16*$SZ+64($inp),%xmm4
+	vmovdqu	-16*$SZ+80($inp),%xmm5
+	vmovdqu	-16*$SZ+96($inp),%xmm6
+	vmovdqu	-16*$SZ+112($inp),%xmm7
+	#mov	$inp,$_inp	# offload $inp
+	vmovdqa	`$SZ*2*$rounds-0x80`($Tbl),$t2
+	vinserti128	\$1,(%r12),@X[0],@X[0]
+	vinserti128	\$1,16(%r12),@X[1],@X[1]
+	 vpshufb	$t2,@X[0],@X[0]
+	vinserti128	\$1,32(%r12),@X[2],@X[2]
+	 vpshufb	$t2,@X[1],@X[1]
+	vinserti128	\$1,48(%r12),@X[3],@X[3]
+	 vpshufb	$t2,@X[2],@X[2]
+	vinserti128	\$1,64(%r12),@X[4],@X[4]
+	 vpshufb	$t2,@X[3],@X[3]
+	vinserti128	\$1,80(%r12),@X[5],@X[5]
+	 vpshufb	$t2,@X[4],@X[4]
+	vinserti128	\$1,96(%r12),@X[6],@X[6]
+	 vpshufb	$t2,@X[5],@X[5]
+	vinserti128	\$1,112(%r12),@X[7],@X[7]
+
 	vpaddq	-0x80($Tbl),@X[0],$t0
 	vpshufb	$t2,@X[6],@X[6]
 	vpaddq	-0x60($Tbl),@X[1],$t1
@@ -1924,11 +1920,12 @@ $code.=<<___;
 	add	$SZ*5($ctx),$F
 	lea	`2*16*$SZ`($inp),$inp	# inp+=2
 	add	$SZ*6($ctx),$G
-	xor	%r12,%r12
+	mov	$inp,%r12
 	add	$SZ*7($ctx),$H
 	cmp	$_end,$inp
 
 	mov	$A,$SZ*0($ctx)
+	cmove	%rsp,%r12		# next block or stale data
 	mov	$B,$SZ*1($ctx)
 	mov	$C,$SZ*2($ctx)
 	mov	$D,$SZ*3($ctx)
@@ -1937,7 +1934,6 @@ $code.=<<___;
 	mov	$G,$SZ*6($ctx)
 	mov	$H,$SZ*7($ctx)
 
-	sete	%r12b
 	jbe	.Loop_avx2
 	lea	(%rsp),$Tbl
 
