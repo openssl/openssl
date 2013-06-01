@@ -126,7 +126,7 @@
 # endif
 #endif
 
-#if defined(OPENSSL_BN_ASM_MONT) && defined(__sparc__)
+#if defined(OPENSSL_BN_ASM_MONT) && (defined(__sparc__) || defined(__sparc))
 # include "sparc_arch.h"
 extern unsigned int OPENSSL_sparcv9cap_P[];
 #endif
@@ -593,7 +593,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	int powerbufLen = 0;
 	unsigned char *powerbuf=NULL;
 	BIGNUM tmp, am;
-#if defined(OPENSSL_BN_ASM_MONT) && defined(__sparc__)
+#if defined(OPENSSL_BN_ASM_MONT) && (defined(__sparc__) || defined(__sparc))
 	unsigned int t4=0;
 #endif
 
@@ -630,7 +630,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 
 	/* Get the window size to use with size of p. */
 	window = BN_window_bits_for_ctime_exponent_size(bits);
-#if defined(OPENSSL_BN_ASM_MONT) && defined(__sparc__)
+#if defined(OPENSSL_BN_ASM_MONT) && (defined(__sparc__) || defined(__sparc))
 	if (window>=5 && (top&15)==0 && top<=64 &&
 	    (OPENSSL_sparcv9cap_P[1]&(CFR_MONTMUL|CFR_MONTSQR))==
 	    			     (CFR_MONTMUL|CFR_MONTSQR) &&
@@ -691,7 +691,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 		}
 	else	if (!BN_to_montgomery(&am,a,mont,ctx))		goto err;
 
-#if defined(OPENSSL_BN_ASM_MONT) && defined(__sparc__)
+#if defined(OPENSSL_BN_ASM_MONT) && (defined(__sparc__) || defined(__sparc))
     if (t4)
 	{
 	typedef int (*bn_pwr5_mont_f)(BN_ULONG *tp,const BN_ULONG *np,
