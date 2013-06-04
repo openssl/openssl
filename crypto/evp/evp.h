@@ -841,10 +841,14 @@ const EVP_CIPHER *EVP_aes_256_ctr(void);
 const EVP_CIPHER *EVP_aes_256_ccm(void);
 const EVP_CIPHER *EVP_aes_256_gcm(void);
 const EVP_CIPHER *EVP_aes_256_xts(void);
-#if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA1)
+# if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA1)
 const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha1(void);
 const EVP_CIPHER *EVP_aes_256_cbc_hmac_sha1(void);
-#endif
+# endif
+# ifndef OPENSSL_NO_SHA256
+const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha256(void);
+const EVP_CIPHER *EVP_aes_256_cbc_hmac_sha256(void);
+# endif
 #endif
 #ifndef OPENSSL_NO_CAMELLIA
 const EVP_CIPHER *EVP_camellia_128_ecb(void);
