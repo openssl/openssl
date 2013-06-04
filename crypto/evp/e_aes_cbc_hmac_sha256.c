@@ -388,7 +388,7 @@ static int aesni_cbc_hmac_sha256_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			pmac->u[6] = BSWAP(pmac->u[6]);
 			pmac->u[7] = BSWAP(pmac->u[7]);
 #else
-			for (i=0;i<8;;i++) {
+			for (i=0;i<8;i++) {
 				res = pmac->u[i];
 				pmac->c[4*i+0]=(unsigned char)(res>>24);
 				pmac->c[4*i+1]=(unsigned char)(res>>16);
