@@ -5,6 +5,8 @@
 #include <openssl/bio.h>
 #include <openssl/dso.h>
 
+#include "ssl.h"
+
 #ifndef OPENSSL_NO_LIBUNBOUND
 #include <unbound.h>
 
