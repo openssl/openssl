@@ -2,6 +2,7 @@
 
 #include <string.h>
 #include <netdb.h>
+#include <sys/socket.h>
 #include <openssl/bio.h>
 #include <openssl/dso.h>
 
