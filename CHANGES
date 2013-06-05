@@ -31,7 +31,7 @@
      [Steve Henson]
 
   *) Integrate hostname, email address and IP address checking with certificate
-     verification. New verify options supporting checking in opensl utility.
+     verification. New verify options supporting checking in openssl utility.
      [Steve Henson]
 
   *) New function X509_CRL_diff to generate a delta CRL from the difference
@@ -111,9 +111,9 @@
 
   *) Add support for certificate stores in CERT structure. This makes it
      possible to have different stores per SSL structure or one store in
-     the parent SSL_CTX. Include distint stores for certificate chain
+     the parent SSL_CTX. Include distinct stores for certificate chain
      verification and chain building. New ctrl SSL_CTRL_BUILD_CERT_CHAIN
-     to build and store a certificate chain in CERT structure: returing
+     to build and store a certificate chain in CERT structure: returning
      an error if the chain cannot be built: this will allow applications
      to test if a chain is correctly configured.
 
@@ -235,16 +235,16 @@
      [Steve Henson]
 
   *) Add functions FIPS_module_version() and FIPS_module_version_text()
-     to return numberical and string versions of the FIPS module number.
+     to return numerical and string versions of the FIPS module number.
      [Steve Henson]
 
   *) Rename FIPS_mode_set and FIPS_mode to FIPS_module_mode_set and
-     FIPS_module_mode. FIPS_mode and FIPS_mode_set will be implmeneted
+     FIPS_module_mode. FIPS_mode and FIPS_mode_set will be implemented
      outside the validated module in the FIPS capable OpenSSL.
      [Steve Henson]
 
   *) Minor change to DRBG entropy callback semantics. In some cases
-     there is no mutiple of the block length between min_len and
+     there is no multiple of the block length between min_len and
      max_len. Allow the callback to return more than max_len bytes
      of entropy but discard any extra: it is the callback's responsibility
      to ensure that the extra data discarded does not impact the
@@ -446,7 +446,7 @@
      When in FIPS mode the approved implementations are used as normal,
      when not in FIPS mode the internal unapproved versions are used instead.
      This means that the FIPS capable OpenSSL isn't forced to use the
-     (often lower perfomance) FIPS implementations outside FIPS mode.
+     (often lower performance) FIPS implementations outside FIPS mode.
      [Steve Henson]
 
   *) Transparently support X9.42 DH parameters when calling
@@ -529,7 +529,7 @@
   *) OpenSSL 1.0.0 sets SSL_OP_ALL to 0x80000FFFL and OpenSSL 1.0.1 and
      1.0.1a set SSL_OP_NO_TLSv1_1 to 0x00000400L which would unfortunately
      mean any application compiled against OpenSSL 1.0.0 headers setting
-     SSL_OP_ALL would also set SSL_OP_NO_TLSv1_1, unintentionally disablng
+     SSL_OP_ALL would also set SSL_OP_NO_TLSv1_1, unintentionally disabling
      TLS 1.1 also. Fix this by changing the value of SSL_OP_NO_TLSv1_1 to
      0x10000000L Any application which was previously compiled against
      OpenSSL 1.0.1 or 1.0.1a headers and which cares about SSL_OP_NO_TLSv1_1
@@ -538,7 +538,7 @@
      in unlike event, limit maximum offered version to TLS 1.0 [see below].
      [Steve Henson]
 
-  *) In order to ensure interoperabilty SSL_OP_NO_protocolX does not
+  *) In order to ensure interoperability SSL_OP_NO_protocolX does not
      disable just protocol X, but all protocols above X *if* there are
      protocols *below* X still enabled. In more practical terms it means
      that if application wants to disable TLS1.0 in favor of TLS1.1 and
@@ -593,7 +593,7 @@
 
   *) Some servers which support TLS 1.0 can choke if we initially indicate
      support for TLS 1.2 and later renegotiate using TLS 1.0 in the RSA
-     encrypted premaster secret. As a workaround use the maximum pemitted
+     encrypted premaster secret. As a workaround use the maximum permitted
      client version in client hello, this should keep such servers happy
      and still work with previous versions of OpenSSL.
      [Steve Henson]
@@ -723,7 +723,7 @@
   *) Add GCM support to TLS library. Some custom code is needed to split
      the IV between the fixed (from PRF) and explicit (from TLS record)
      portions. This adds all GCM ciphersuites supported by RFC5288 and 
-     RFC5289. Generalise some AES* cipherstrings to inlclude GCM and
+     RFC5289. Generalise some AES* cipherstrings to include GCM and
      add a special AESGCM string for GCM only.
      [Steve Henson]
 
@@ -737,9 +737,9 @@
      [Steve Henson]
 
   *) For FIPS capable OpenSSL interpret a NULL default public key method
-     as unset and return the appopriate default but do *not* set the default.
-     This means we can return the appopriate method in applications that
-     swicth between FIPS and non-FIPS modes.
+     as unset and return the appropriate default but do *not* set the default.
+     This means we can return the appropriate method in applications that
+     switch between FIPS and non-FIPS modes.
      [Steve Henson]
 
   *) Redirect HMAC and CMAC operations to FIPS module in FIPS mode. If an
@@ -1416,7 +1416,7 @@
      most recently disabled ciphersuites when "HIGH" is parsed).
 
      Also, change ssl_create_cipher_list() (using this new
-     funcionality) such that between otherwise identical
+     functionality) such that between otherwise identical
      cihpersuites, ephemeral ECDH is preferred over ephemeral DH in
      the default order.
      [Bodo Moeller]
@@ -1596,7 +1596,7 @@
      functional reference processing.
      [Steve Henson]
 
-  *) New functions EVP_Digest{Sign,Verify)*. These are enchance versions of
+  *) New functions EVP_Digest{Sign,Verify)*. These are enhance versions of
      EVP_{Sign,Verify}* which allow an application to customise the signature
      process.
      [Steve Henson]
@@ -1636,7 +1636,7 @@
   *) Add a ctrl to asn1 method to allow a public key algorithm to express
      a default digest type to use. In most cases this will be SHA1 but some
      algorithms (such as GOST) need to specify an alternative digest. The
-     return value indicates how strong the prefernce is 1 means optional and
+     return value indicates how strong the preference is 1 means optional and
      2 is mandatory (that is it is the only supported type). Modify
      ASN1_item_sign() to accept a NULL digest argument to indicate it should
      use the default md. Update openssl utilities to use the default digest
@@ -1681,7 +1681,7 @@
      manual pages.
      [Oliver Tappe <zooey@hirschkaefer.de>]
 
-  *) New utility "genpkey" this is analagous to "genrsa" etc except it can
+  *) New utility "genpkey" this is analogous to "genrsa" etc except it can
      generate keys for any algorithm. Extend and update EVP_PKEY_METHOD to
      support key and parameter generation and add initial key generation
      functionality for RSA.
@@ -1958,7 +1958,7 @@
   *) Fix for double free bug in ssl/s3_clnt.c CVE-2010-2939
      [Steve Henson]
 
-  *) Don't reencode certificate when calculating signature: cache and use
+  *) Don't re-encode certificate when calculating signature: cache and use
      the original encoding instead. This makes signature verification of
      some broken encodings work correctly.
      [Steve Henson]
@@ -2318,16 +2318,16 @@
      This work was sponsored by Logica.
      [Steve Henson]
 
-  *) Fix bug in X509_ATTRIBUTE creation: dont set attribute using
+  *) Fix bug in X509_ATTRIBUTE creation: don't set attribute using
      ASN1_TYPE_set1 if MBSTRING flag set. This bug would crash certain
-     attribute creation routines such as certifcate requests and PKCS#12
+     attribute creation routines such as certificate requests and PKCS#12
      files.
      [Steve Henson]
 
  Changes between 0.9.8g and 0.9.8h  [28 May 2008]
 
   *) Fix flaw if 'Server Key exchange message' is omitted from a TLS
-     handshake which could lead to a cilent crash as found using the
+     handshake which could lead to a client crash as found using the
      Codenomicon TLS test suite (CVE-2008-1672) 
      [Steve Henson, Mark Cox]
 
@@ -2395,7 +2395,7 @@
      [Ian Lister (tweaked by Geoff Thorpe)]
 
   *) Backport of CMS code to OpenSSL 0.9.8. This differs from the 0.9.9
-     implemention in the following ways:
+     implementation in the following ways:
 
      Lack of EVP_PKEY_ASN1_METHOD means algorithm parameters have to be
      hard coded.
@@ -2702,7 +2702,7 @@
      The proper fix will be to use different bits for AES128 and
      AES256, which would have avoided the problems from the beginning;
      however, bits are scarce, so we can only do this in a new release
-     (not just a patchlevel) when we can change the SSL_CIPHER
+     (not just a patch level) when we can change the SSL_CIPHER
      definition to split the single 'unsigned long mask' bitmap into
      multiple values to extend the available space.
 
@@ -2745,7 +2745,7 @@
      unofficial, and the ID has long expired.
      [Bodo Moeller]
 
-  *) Fix RSA blinding Heisenbug (problems sometimes occured on
+  *) Fix RSA blinding Heisenbug (problems sometimes occurred on
      dual-core machines) and other potential thread-safety issues.
      [Bodo Moeller]
 
@@ -2754,14 +2754,14 @@
      (see http://info.isl.ntt.co.jp/crypt/eng/info/chiteki.html).
      Also, add Camellia TLS ciphersuites from RFC 4132.
 
-     To minimize changes between patchlevels in the OpenSSL 0.9.8
+     To minimize changes between patch levels in the OpenSSL 0.9.8
      series, Camellia remains excluded from compilation unless OpenSSL
      is configured with 'enable-camellia'.
      [NTT]
 
   *) Disable the padding bug check when compression is in use. The padding
      bug check assumes the first packet is of even length, this is not
-     necessarily true if compresssion is enabled and can result in false
+     necessarily true if compression is enabled and can result in false
      positives causing handshake failure. The actual bug test is ancient
      code so it is hoped that implementations will either have fixed it by
      now or any which still have the bug do not support compression.
@@ -2900,7 +2900,7 @@
      to SSL_CTX_use_PrivateKey_file() and SSL_use_PrivateKey_file()
      [Walter Goulet]
 
-  *) Remove buggy and incompletet DH cert support from
+  *) Remove buggy and incomplete DH certificate support from
      ssl/ssl_rsa.c and ssl/s3_both.c
      [Nils Larsch]
 
@@ -2914,7 +2914,7 @@
      [Ben Laurie]
 
   *) Change ./Configure so that certain algorithms can be disabled by default.
-     The new counterpiece to "no-xxx" is "enable-xxx".
+     The new counter piece to "no-xxx" is "enable-xxx".
 
      The patented RC5 and MDC2 algorithms will now be disabled unless
      "enable-rc5" and "enable-mdc2", respectively, are specified.
@@ -2990,7 +2990,7 @@
      we can fix the problem directly in the 'ca' utility.)
      [Steve Henson]
 
-  *) Reduced header interdepencies by declaring more opaque objects in
+  *) Reduced header interdependencies by declaring more opaque objects in
      ossl_typ.h. As a consequence, including some headers (eg. engine.h) will
      give fewer recursive includes, which could break lazy source code - so
      this change is covered by the OPENSSL_NO_DEPRECATED symbol. As always,
@@ -3114,7 +3114,7 @@
      [Geoff Thorpe]
 
   *) Reorganise PKCS#7 code to separate the digest location functionality
-     into PKCS7_find_digest(), digest addtion into PKCS7_bio_add_digest().
+     into PKCS7_find_digest(), digest addition into PKCS7_bio_add_digest().
      New function PKCS7_set_digest() to set the digest type for PKCS#7
      digestedData type. Add additional code to correctly generate the
      digestedData type and add support for this type in PKCS7 initialization
@@ -3297,7 +3297,7 @@
   *) Key-generation can now be implemented in RSA_METHOD, DSA_METHOD
      and DH_METHOD (eg. by ENGINE implementations) to override the normal
      software implementations. For DSA and DH, parameter generation can
-     also be overriden by providing the appropriate method callbacks.
+     also be overridden by providing the appropriate method callbacks.
      [Geoff Thorpe]
 
   *) Change the "progress" mechanism used in key-generation and
@@ -3380,13 +3380,13 @@
      the "shared" options was given to ./Configure or ./config.
      Otherwise, they are inserted in libcrypto.a.
      /usr/local/ssl/engines is the default directory for dynamic
-     engines, but that can be overriden at configure time through
+     engines, but that can be overridden at configure time through
      the usual use of --prefix and/or --openssldir, and at run
      time with the environment variable OPENSSL_ENGINES.
      [Geoff Thorpe and Richard Levitte]
 
   *) Add Makefile.shared, a helper makefile to build shared
-     libraries.  Addapt Makefile.org.
+     libraries.  Adapt Makefile.org.
      [Richard Levitte]
 
   *) Add version info to Win32 DLLs.
@@ -3760,7 +3760,7 @@
      unofficial, and the ID has long expired.
      [Bodo Moeller]
 
-  *) Fix RSA blinding Heisenbug (problems sometimes occured on
+  *) Fix RSA blinding Heisenbug (problems sometimes occurred on
      dual-core machines) and other potential thread-safety issues.
      [Bodo Moeller]
 
@@ -3774,7 +3774,7 @@
      [Steve Henson]
 
   *) Add new Windows build target VC-32-GMAKE for VC++. This uses GNU make 
-     from a Windows bash shell such as MSYS. It is autodetected from the
+     from a Windows bash shell such as MSYS. It is auto-detected from the
      "config" script when run from a VC++ environment. Modify standard VC++
      build to use fipscanister.o from the GNU make build. 
      [Steve Henson]
@@ -3915,7 +3915,7 @@
      [Steve Henson]
 
   *) Perform some character comparisons of different types in X509_NAME_cmp:
-     this is needed for some certificates that reencode DNs into UTF8Strings
+     this is needed for some certificates that re-encode DNs into UTF8Strings
      (in violation of RFC3280) and can't or wont issue name rollover
      certificates.
      [Steve Henson]
@@ -4090,7 +4090,7 @@
  Changes between 0.9.7 and 0.9.7a  [19 Feb 2003]
 
   *) In ssl3_get_record (ssl/s3_pkt.c), minimize information leaked
-     via timing by performing a MAC computation even if incorrrect
+     via timing by performing a MAC computation even if incorrect
      block cipher padding has been found.  This is a countermeasure
      against active attacks where the attacker has to distinguish
      between bad padding and a MAC verification error. (CVE-2003-0078)
@@ -4352,7 +4352,7 @@
 	done
 
      To be absolutely sure not to disturb the source tree, a "make clean"
-     is a good thing.  If it isn't successfull, don't worry about it,
+     is a good thing.  If it isn't successful, don't worry about it,
      it probably means the source directory is very clean.
      [Richard Levitte]
 
@@ -4448,7 +4448,7 @@
      [Steve Henson]
 
   *) Move default behaviour from OPENSSL_config(). If appname is NULL
-     use "openssl_conf" if filename is NULL use default openssl config file.
+     use "openssl_conf". If filename is NULL use default openssl config file.
      [Steve Henson]
 
   *) Add an argument to OPENSSL_config() to allow the use of an alternative
@@ -4657,7 +4657,7 @@
   *) Major restructuring to the underlying ENGINE code. This includes
      reduction of linker bloat, separation of pure "ENGINE" manipulation
      (initialisation, etc) from functionality dealing with implementations
-     of specific crypto iterfaces. This change also introduces integrated
+     of specific crypto interfaces. This change also introduces integrated
      support for symmetric ciphers and digest implementations - so ENGINEs
      can now accelerate these by providing EVP_CIPHER and EVP_MD
      implementations of their own. This is detailed in crypto/engine/README
@@ -4686,7 +4686,7 @@
 
   *) New function SSL_renegotiate_pending().  This returns true once
      renegotiation has been requested (either SSL_renegotiate() call
-     or HelloRequest/ClientHello receveived from the peer) and becomes
+     or HelloRequest/ClientHello received from the peer) and becomes
      false once a handshake has been completed.
      (For servers, SSL_renegotiate() followed by SSL_do_handshake()
      sends a HelloRequest, but does not ensure that a handshake takes
@@ -5099,7 +5099,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
        missing functions (including a catch-all ENGINE_cpy that duplicates
        all ENGINE values onto a new ENGINE except reference counts/state).
      - Removed NULL parameter checks in get/set functions. Setting a method
-       or function to NULL is a way of cancelling out a previously set
+       or function to NULL is a way of canceling out a previously set
        value.  Passing a NULL ENGINE parameter is just plain stupid anyway
        and doesn't justify the extra error symbols and code.
      - Deprecate the ENGINE_FLAGS_MALLOCED define and move the area for
@@ -5661,7 +5661,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Steve Henson]
 
   *) Enhance mkdef.pl to be more accepting about spacing in C preprocessor
-     lines, recognice more "algorithms" that can be deselected, and make
+     lines, recognise more "algorithms" that can be deselected, and make
      it complain about algorithm deselection that isn't recognised.
      [Richard Levitte]
 
@@ -5679,7 +5679,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) New function X509V3_add1_i2d(). This automatically encodes and
      adds an extension. Its behaviour can be customised with various
      flags to append, replace or delete. Various wrappers added for
-     certifcates and CRLs.
+     certificates and CRLs.
      [Steve Henson]
 
   *) Fix to avoid calling the underlying ASN1 print routine when
@@ -5687,7 +5687,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      OCSP_SERVICELOC extension. Tidy up print OCSP format.
      [Steve Henson]
 
-  *) Make mkdef.pl parse some of the ASN1 macros and add apropriate
+  *) Make mkdef.pl parse some of the ASN1 macros and add appropriate
      entries for variables.
      [Steve Henson]
 
@@ -6059,7 +6059,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
  Changes between 0.9.6h and 0.9.6i  [19 Feb 2003]
 
   *) In ssl3_get_record (ssl/s3_pkt.c), minimize information leaked
-     via timing by performing a MAC computation even if incorrrect
+     via timing by performing a MAC computation even if incorrect
      block cipher padding has been found.  This is a countermeasure
      against active attacks where the attacker has to distinguish
      between bad padding and a MAC verification error. (CVE-2003-0078)
@@ -6224,7 +6224,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Nils Larsch <nla@trustcenter.de>]
 
   *) Fix BASE64 decode (EVP_DecodeUpdate) for data with CR/LF ended lines:
-     an end-of-file condition would erronously be flagged, when the CRLF
+     an end-of-file condition would erroneously be flagged, when the CRLF
      was just at the end of a processed block. The bug was discovered when
      processing data through a buffering memory BIO handing the data to a
      BASE64-decoding BIO. Bug fund and patch submitted by Pavel Tsekov
@@ -6431,7 +6431,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Bodo Moeller; bug noticed by Andy Schneider <andy.schneider@bjss.co.uk>]
 
   *) Bugfix in ssl3_accept (ssl/s3_srvr.c): Case SSL3_ST_SW_HELLO_REQ_C
-     should end in 'break', not 'goto end' which circuments various
+     should end in 'break', not 'goto end' which circumvents various
      cleanups done in state SSL_ST_OK.   But session related stuff
      must be disabled for SSL_ST_OK in the case that we just sent a
      HelloRequest.
@@ -7408,7 +7408,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) When some versions of IIS use the 'NET' form of private key the
      key derivation algorithm is different. Normally MD5(password) is
      used as a 128 bit RC4 key. In the modified case
-     MD5(MD5(password) + "SGCKEYSALT")  is used insted. Added some
+     MD5(MD5(password) + "SGCKEYSALT") is used instead. Added some
      new functions i2d_RSA_NET(), d2i_RSA_NET() etc which are the same
      as the old Netscape_RSA functions except they have an additional
      'sgckey' parameter which uses the modified algorithm. Also added
@@ -7696,8 +7696,8 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      its own key.
      ssl_cert_dup, which is used by SSL_new, now copies DH keys in addition
      to parameters -- in previous versions (since OpenSSL 0.9.3) the
-     'default key' from SSL_CTX_set_tmp_dh would always be lost, meanining
-     you effectivly got SSL_OP_SINGLE_DH_USE when using this macro.
+     'default key' from SSL_CTX_set_tmp_dh would always be lost, meanings
+     you effectively got SSL_OP_SINGLE_DH_USE when using this macro.
      [Bodo Moeller]
 
   *) New s_client option -ign_eof: EOF at stdin is ignored, and
@@ -7724,7 +7724,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
   *) In util/mkerr.pl (which implements 'make errors'), preserve
      reason strings from the previous version of the .c file, as
-     the default to have only downcase letters (and digits) in
+     the default to have only lowercase letters (and digits) in
      automatically generated reasons codes is not always appropriate.
      [Bodo Moeller]
 
@@ -9285,7 +9285,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) Change type of various DES function arguments from des_cblock
      (which means, in function argument declarations, pointer to char)
      to des_cblock * (meaning pointer to array with 8 char elements),
-     which allows the compiler to do more typechecking; it was like
+     which allows the compiler to do more type checking; it was like
      that back in SSLeay, but with lots of ugly casts.
 
      Introduce new type const_des_cblock.
@@ -10115,7 +10115,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      error code, add initial support to X509_print() and x509 application.
      [Steve Henson]
 
-  *) Takes a deep breath and start addding X509 V3 extension support code. Add
+  *) Takes a deep breath and start adding X509 V3 extension support code. Add
      files in crypto/x509v3. Move original stuff to crypto/x509v3/old. All this
      stuff is currently isolated and isn't even compiled yet.
      [Steve Henson]
@@ -10289,7 +10289,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) Fixed sk_insert which never worked properly.
      [Steve Henson]
 
-  *) Fix ASN1 macros so they can handle indefinite length construted 
+  *) Fix ASN1 macros so they can handle indefinite length constructed 
      EXPLICIT tags. Some non standard certificates use these: they can now
      be read in.
      [Steve Henson]
