@@ -383,6 +383,30 @@ DECLARE_STACK_OF(SRTP_PROTECTION_PROFILE)
 typedef int (*tls_session_ticket_ext_cb_fn)(SSL *s, const unsigned char *data, int len, void *arg);
 typedef int (*tls_session_secret_cb_fn)(SSL *s, void *secret, int *secret_len, STACK_OF(SSL_CIPHER) *peer_ciphers, SSL_CIPHER **cipher, void *arg);
 
+/* Callbacks and structures for handling custom TLS Extensions */
+typedef int (*custom_cli_ext_first_cb_fn)(SSL* s, unsigned short ext_num,
+								unsigned char** out, unsigned short* outlen, void* arg);
+typedef int (*custom_cli_ext_second_cb_fn)(SSL* s, unsigned short ext_num,
+								unsigned char* in, unsigned short in, int* al, void* arg); 
+
+typedef int (*custom_srv_ext_first_cb_fn)(SSL* s, unsigned short ext_num,
+								unsigned char* in, unsigned short* inlen, int* al, void* arg);
+typedef int (*custom_srv_ext_second_cb_fn)(SSL* s, unsigned short ext_num,
+								unsigned char** out, unsigned short out, int* void* arg); 
+
+typedef {
+	unsigned short ext_num;
+	custom_cli_ext_first_cb_fn fn1; 
+	custom_cli_ext_second_cb_fn fn2; 
+	void* arg;
+} custom_cli_ext_record;
+
+typedef {
+	unsigned short ext_num;
+	custom_srv_ext_first_cb_fn fn1; 
+	custom_srv_ext_second_cb_fn fn2; 
+	void* arg;
+} custom_srv_ext_record;
 
 #ifndef OPENSSL_NO_SSL_INTERN
 
@@ -1066,18 +1090,10 @@ struct ssl_ctx_st
 	int (*tlsext_authz_server_audit_proof_cb)(SSL *s, void *arg);
 	void *tlsext_authz_server_audit_proof_cb_arg;
 
-	/* Array of 16-bit TLS Extension types to be sent as empty
-	 * ClientHello extensions. */
-	unsigned short *serverinfo_types;
-	size_t serverinfo_types_count;
-
-	/* Callback for handling any ServerHello extension being sent
-	 * in response to one of the serverinfo_types.  Return zero and 
-	 * set an alert value in 'al' to close the connection with an 
-	 * alert. */
-	int (*serverinfo_cb)(SSL *s, const unsigned char *in,
-				    unsigned int inlen, int* al, void *arg);
-	void *serverinfo_cb_arg;
+	custom_cli_ext_record* custom_cli_ext_records;
+	custom_srv_ext_record* custom_srv_ext_records;
+	size_t custom_cli_ext_records_count;
+	size_t custom_srv_ext_records_count;
 	};
 
 #endif
@@ -1184,15 +1200,15 @@ const char *SSL_get_psk_identity_hint(const SSL *s);
 const char *SSL_get_psk_identity(const SSL *s);
 #endif
 
-int SSL_CTX_set_serverinfo_types(SSL_CTX *ctx,
-		unsigned short *serverinfo_types,
-		size_t serverinfo_types_count);
+	/* Register callbacks to handle custom TLS Extensions as client or server.
+	 * The record will be copied into the context.
+	 * Return nonzero on success.  You cannot register two records for the 
+   * same extension number, and registering for an extension number already 
+   * handled by OpenSSL will succeed, but the callbacks will not be invoked.
+   */
+int SSL_CTX_set_custom_cli_ext_record(SSL_CTX *ctx, const custom_cli_ext_record* record);
+int SSL_CTX_set_custom_srv_ext_record(SSL_CTX *ctx, const custom_srv_ext_record* record);
 
-void SSL_CTX_set_serverinfo_cb(SSL_CTX *ctx,
-				      int (*cb) (SSL *ssl,
-						  const unsigned char *in,
-						  unsigned int inlen, int* al, void *arg),
-				      void *arg);
 
 #define SSL_NOTHING	1
 #define SSL_WRITING	2
