@@ -22,20 +22,23 @@
 #
 #		AES-128-CBC	+SHA1		stitch      gain
 # Westmere	3.77[+5.5]	9.26		6.58	    +41%
-# Sandy Bridge	5.05[+5.0(6.2)]	10.06(11.21)	6.09(7.05)  +65%(+59%)
+# Sandy Bridge	5.05[+5.0(6.2)]	10.06(11.21)	5.98(7.05)  +68%(+59%)
 # Ivy Bridge	5.05[+4.6]	9.65		5.54        +74%
+# Haswell	4.43[+3.6(4.4)]	8.00(8.80)	4.55(5.21)  +75%(+69%)
 # Bulldozer	5.77[+6.0]	11.72		6.37        +84%
 #
 #		AES-192-CBC
 # Westmere	4.51		10.00		6.87	    +46%
 # Sandy Bridge	6.05		11.06(12.21)	6.11(7.20)  +81%(+70%)
 # Ivy Bridge	6.05		10.65		6.07        +75%
+# Haswell	5.29		8.86(9.65)	5.32(5.32)  +67%(+81%)
 # Bulldozer	6.89		12.84		6.96        +84%
 #
 #		AES-256-CBC
 # Westmere	5.25		10.74		7.19	    +49%
 # Sandy Bridge	7.05		12.06(13.21)	7.12(7.68)  +69%(+72%)
 # Ivy Bridge	7.05		11.65		7.12        +64%
+# Haswell	6.19		9.76(10.6)	6.21(6.41)  +57%(+65%)
 # Bulldozer	8.00		13.95		8.25        +69%
 #
 # (*)	There are two code paths: SSSE3 and AVX. See sha1-568.pl for
@@ -51,9 +54,10 @@
 # standalone AESNI-CBC decrypt:
 #
 #		AES-128-CBC	AES-192-CBC	AES-256-CBC
-# Westmere	1.31		1.55		1.80
+# Westmere	1.25		1.50		1.75
 # Sandy Bridge	0.74		0.91		1.09
 # Ivy Bridge	0.74		0.90		1.11
+# Haswell	0.63		0.76		0.88
 # Bulldozer	0.70		0.85		0.99
 
 $flavour = shift;
@@ -94,7 +98,7 @@ $code.=<<___;
 
 .globl	aesni_cbc_sha1_enc
 .type	aesni_cbc_sha1_enc,\@abi-omnipotent
-.align	16
+.align	32
 aesni_cbc_sha1_enc:
 	# caller should check for SSSE3 and AES-NI bits
 	mov	OPENSSL_ia32cap_P+0(%rip),%r10d
@@ -144,7 +148,7 @@ my $_ror=sub { &ror(@_) };
 
 $code.=<<___;
 .type	aesni_cbc_sha1_enc_ssse3,\@function,6
-.align	16
+.align	32
 aesni_cbc_sha1_enc_ssse3:
 	mov	`($win64?56:8)`(%rsp),$inp	# load 7th argument
 	#shr	\$6,$len			# debugging artefact
@@ -570,7 +574,7 @@ sub body_40_59 () {	# ((b^c)&(c^d))^c
     return @r;
 }
 $code.=<<___;
-.align	16
+.align	32
 .Loop_ssse3:
 ___
 	&Xupdate_ssse3_16_31(\&body_00_19);
@@ -618,7 +622,6 @@ $code.=<<___;
 	and	@T[1],@T[0]
 	jmp	.Loop_ssse3
 
-.align	16
 .Ldone_ssse3:
 ___
 				$jj=$j=$saved_j; @V=@saved_V;
@@ -689,7 +692,7 @@ my $_ror=sub { &shrd(@_[0],@_) };
 
 $code.=<<___;
 .type	aesni_cbc_sha1_enc_avx,\@function,6
-.align	16
+.align	32
 aesni_cbc_sha1_enc_avx:
 	mov	`($win64?56:8)`(%rsp),$inp	# load 7th argument
 	#shr	\$6,$len			# debugging artefact
@@ -773,14 +776,14 @@ my $aesenc=sub {
   my ($n,$k)=($r/10,$r%10);
     if ($k==0) {
       $code.=<<___;
-	vmovups		`16*$n`($in0),$in		# load input
-	vxorps		$rndkey[1],$in,$in
+	vmovdqu		`16*$n`($in0),$in		# load input
+	vpxor		$rndkey[1],$in,$in
 ___
       $code.=<<___ if ($n);
 	vmovups		$iv,`16*($n-1)`($out,$in0)	# write output
 ___
       $code.=<<___;
-	vxorps		$in,$iv,$iv
+	vpxor		$in,$iv,$iv
 	vaesenc		$rndkey[0],$iv,$iv
 	vmovups		`32+16*$k-112`($key),$rndkey[1]
 ___
@@ -1014,7 +1017,7 @@ sub Xtail_avx()
 }
 
 $code.=<<___;
-.align	16
+.align	32
 .Loop_avx:
 ___
 	&Xupdate_avx_16_31(\&body_00_19);
@@ -1062,7 +1065,6 @@ $code.=<<___;
 	and	@T[1],@T[0]
 	jmp	.Loop_avx
 
-.align	16
 .Ldone_avx:
 ___
 				$jj=$j=$saved_j; @V=@saved_V;
