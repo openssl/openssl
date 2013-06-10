@@ -381,13 +381,13 @@ int serverinfo_sct_seen = 0;
 int serverinfo_tack_seen = 0;
 int serverinfo_other_seen = 0;
 
-static int serverinfo_cb(SSL *s, const unsigned char *in,
-				    unsigned int inlen, int* al, void *arg)
+static int serverinfo_cb(SSL* s, unsigned short ext_num,
+												 unsigned char* in, unsigned short inlen, 
+												 int* al, void* arg)
 	{
-		unsigned short ext_type = (in[0]<<8) + in[1];
-		if (ext_type == SCT_EXT_NUM)
+		if (ext_num == SCT_EXT_NUM)
 			serverinfo_sct_seen++;
-		else if (ext_type == TACK_EXT_NUM)
+		else if (ext_num == TACK_EXT_NUM)
 			serverinfo_tack_seen++;
 		else
 			serverinfo_other_seen++;
@@ -1239,18 +1239,10 @@ bad:
 		}
 #endif
 
-	unsigned short sct_and_tack_types[] = {SCT_EXT_NUM, TACK_EXT_NUM};
-	unsigned short sct_types[] = {18};
-	unsigned short tack_types[] = {62208};
-
-  SSL_CTX_set_serverinfo_cb(c_ctx, serverinfo_cb, NULL);
-
-	if (serverinfo_sct && serverinfo_tack)
-		SSL_CTX_set_serverinfo_types(c_ctx, sct_and_tack_types, 2);
-	else if (serverinfo_sct)
-		SSL_CTX_set_serverinfo_types(c_ctx, sct_types, 1);
-	else if (serverinfo_tack)
-		SSL_CTX_set_serverinfo_types(c_ctx, tack_types, 1);
+	if (serverinfo_sct)
+		SSL_CTX_set_custom_cli_ext(c_ctx, SCT_EXT_NUM, NULL, serverinfo_cb, NULL);
+	if (serverinfo_tack)
+		SSL_CTX_set_custom_cli_ext(c_ctx, TACK_EXT_NUM, NULL, serverinfo_cb, NULL);
 
 	if (serverinfo_file)
 		if (!SSL_CTX_use_serverinfo_file(s_ctx, serverinfo_file))
