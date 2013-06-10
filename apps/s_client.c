@@ -546,12 +546,22 @@ static int next_proto_cb(SSL *s, unsigned char **out, unsigned char *outlen, con
 	}
 # endif  /* ndef OPENSSL_NO_NEXTPROTONEG */
 
-static int serverinfo_cb(SSL *s, const unsigned char *in,
-				    unsigned int inlen, int* al, void *arg)
+static int serverinfo_cb(SSL* s, unsigned short ext_num,
+												 unsigned char* in, unsigned short inlen, 
+												 int* al, void* arg)
 	{
 	char pem_name[100];
-	BIO_snprintf(pem_name, sizeof(pem_name), "SERVER_INFO %d", (in[0]<<8) | in[1]);
-	PEM_write_bio(bio_c_out, pem_name, "", (unsigned char*)in, inlen);
+	char ext_buf[4 + 65536];
+
+	/* Reconstruct the type/len fields prior to extension data */
+	ext_buf[0] = ext_num >> 8;
+	ext_buf[1] = ext_num & 0xFF;
+	ext_buf[2] = inlen >> 8;
+	ext_buf[3] = inlen & 0xFF;
+	memcpy(ext_buf+4, in, inlen);
+
+	BIO_snprintf(pem_name, sizeof(pem_name), "SERVER_INFO %d", ext_num);
+	PEM_write_bio(bio_c_out, pem_name, "", (unsigned char*)ext_buf, 4 + inlen);
 	return 1;
 	}
 
@@ -1297,8 +1307,12 @@ bad:
 #ifndef OPENSSL_NO_TLSEXT
 		if (serverinfo_types_count)
 			{
-			SSL_CTX_set_serverinfo_cb(ctx, serverinfo_cb, NULL);
-			SSL_CTX_set_serverinfo_types(ctx, serverinfo_types, serverinfo_types_count);
+			int i;
+			for (i = 0; i < serverinfo_types_count; i++)
+				{
+				SSL_CTX_set_custom_cli_ext(ctx, serverinfo_types[i], NULL, 
+				 													 serverinfo_cb, NULL);
+				}
 			}
 #endif
 

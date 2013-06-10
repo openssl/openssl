@@ -1161,7 +1161,7 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
 				goto end;
 			}
 		/* Append the decoded extension to the serverinfo buffer */
-		serverinfo = OPENSSL_malloc(serverinfo, serverinfo_length + extension_length);
+		serverinfo = OPENSSL_malloc(serverinfo_length + extension_length);
 		if (serverinfo == NULL)
 			{
 			SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, ERR_R_MALLOC_FAILURE);

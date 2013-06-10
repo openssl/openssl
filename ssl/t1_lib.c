@@ -1492,14 +1492,24 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		*(ret++) = TLSEXT_AUTHZDATAFORMAT_audit_proof;
 		}
 
-  /* Add any user-specified empty extensions */
-	if (s->ctx->serverinfo_types_count)
+	/* Add custom TLS Extensions to ClientHello */
+	if (s->ctx->custom_cli_ext_records_count)
 		{
 		int i;
-		for (i=0; i < s->ctx->serverinfo_types_count; i++)
+		custom_cli_ext_record* record;
+		for (i = 0; i < s->ctx->custom_cli_ext_records_count; i++)
 			{
-			s2n(s->ctx->serverinfo_types[i], ret);
-			s2n(0, ret); /* zero length */
+			unsigned char* out = NULL;
+			unsigned short outlen = 0;
+			record = &s->ctx->custom_cli_ext_records[i];
+			if (record->fn1 && !record->fn1(s, record->ext_num, &out, &outlen, record->arg))
+				return NULL;
+			if (limit < ret + 4 + outlen)
+				return NULL;
+			s2n(record->ext_num, ret);
+			s2n(outlen, ret);
+			memcpy(ret, out, outlen);
+			ret += outlen;
 			}
 		}
 
@@ -1769,33 +1779,27 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 			}
 		}
 
-	/* If there are potential serverinfo types, let's see about adding them */
-	if (s->s3->tlsext_serverinfo_types_count && s->s3->tlsext_serverinfo_types)
+	/* If custom types were sent in ClientHello, add ServerHello responses */
+	if (s->s3->tlsext_custom_types_count)
 		{
-		size_t i = 0;
-		const unsigned char *serverinfo = NULL;
-		size_t serverinfo_length = 0;
-		const unsigned char* extension = NULL;
-		size_t extension_length = 0;
-
-		/* Is there a serverinfo for the chosen server cert? */
-		if ((ssl_get_server_cert_serverinfo(s, &serverinfo, &serverinfo_length)) != 0)
+		int i;
+		for (i = 0; i < s->s3->tlsext_custom_types_count; i++)
 			{
-			/* Copy any relevant extensions from the serverinfo */
-			for (i=0; i < s->s3->tlsext_serverinfo_types_count; i++)
+			int j;
+			custom_srv_ext_record* record;
+			for (j = 0; j < s->ctx->custom_srv_ext_records_count; j++)
 				{
-				if (serverinfo_find_extension(serverinfo,
-						serverinfo_length,
-						s->s3->tlsext_serverinfo_types[i],
-						&extension, &extension_length))
-					{
-
-					if ((long)(limit - ret - extension_length) < 0)
-						return NULL;
-					memcpy(ret, extension,
-					       extension_length);
-					ret += extension_length;
-					}
+				record = &s->ctx->custom_srv_ext_records[j];
+				unsigned char* out = NULL;
+				unsigned short outlen = 0;
+				if (record->fn2 && !record->fn2(s, record->ext_num, &out, &outlen, record->arg))
+					return NULL;
+				if (limit < ret + 4 + outlen)
+					return NULL;
+				s2n(record->ext_num, ret);
+				s2n(outlen, ret);
+				memcpy(ret, out, outlen);
+				ret += outlen;
 				}
 			}
 		}
@@ -2365,60 +2369,49 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 				}
 			}
 
-		/* See if there is any serverinfo extension for this type.
-		 * If so, record the type so the extension can potentially be
-		 * returned in the serverhello (we don't know for sure if it
-		 * will be returned, as the serverinfos are associated with
-		 * each certificate, so a particular serverinfo is not chosen
-		 * until the ciphersuite is selected. */
-
-		/* Serverinfo extensions must have empty extension_data */
-		else if (size == 0)
+		/* If this ClientHello extension was unhandled and this is 
+		 * a nonresumed connection, check whether the extension is a 
+		 * custom TLS Extension (has a custom_srv_ext_record), and if
+		 * so call the callback and record the extension number so that
+		 * an appropriate ServerHello may be later returned.
+		 */
+		else if (!s->hit && s->ctx->custom_srv_ext_records_count)
 			{
-			/* Successful session resumption uses the same serverinfo
-			 * information as the original session so we ignore this
-			 * in the case of a session resumption. */
-			if (!s->hit)
+			int i;
+			custom_srv_ext_record* record;
+			for (i=0; i < s->ctx->custom_srv_ext_records_count; i++)
 				{
-				/* Check if the type matches some entry in an serverinfo */
-				char type_has_serverinfo_extension = 0;
-				for (i=0; i < SSL_PKEY_NUM; i++)
-					{
-					unsigned char* serverinfo = s->cert->pkeys[i].serverinfo;
-					size_t serverinfo_length =s->cert->pkeys[i].serverinfo_length;
-					const unsigned char* extension_unused = NULL;
-					size_t extension_length_unused = 0;
-					if (serverinfo_find_extension(serverinfo, serverinfo_length, type,
-										&extension_unused, &extension_length_unused))
-						{
-						type_has_serverinfo_extension = 1;
-						break;
-						}
-					}
-				if (type_has_serverinfo_extension)
+				record = &s->ctx->custom_srv_ext_records[i];
+				if (type == record->ext_num)
 					{
 					/* Error on duplicate TLS Extensions */
-					for (i = 0; i < s->s3->tlsext_serverinfo_types_count; i++)
+					int j;
+					for (j = 0; j < s->s3->tlsext_custom_types_count; j++)
 						{
-						if (s->s3->tlsext_serverinfo_types[i] == type)
+						if (s->s3->tlsext_custom_types[j] == type)
 							{
 							*al = TLS1_AD_DECODE_ERROR;
 							return 0;
 							}
 						}
+
+					/* Callback */
+					if (!record->fn1 && !record->fn1(s, type, data, size, al, record->arg))
+						return 0;
+						
 					/* Add the (non-duplicated) entry */
-					s->s3->tlsext_serverinfo_types_count++;
-					s->s3->tlsext_serverinfo_types = OPENSSL_realloc(
-							s->s3->tlsext_serverinfo_types,
-							s->s3->tlsext_serverinfo_types_count*2);
-					if (s->s3->tlsext_serverinfo_types == NULL)
+					s->s3->tlsext_custom_types_count++;
+					s->s3->tlsext_custom_types = OPENSSL_realloc(
+							s->s3->tlsext_custom_types,
+							s->s3->tlsext_custom_types_count*2);
+					if (s->s3->tlsext_custom_types == NULL)
 						{
 						*al = TLS1_AD_INTERNAL_ERROR;
 						return 0;
 						}
-					s->s3->tlsext_serverinfo_types[
-							s->s3->tlsext_serverinfo_types_count-1] = type;
-					}
+					s->s3->tlsext_custom_types[
+							s->s3->tlsext_custom_types_count-1] = type;
+					}						
 				}
 			}
 
@@ -2727,22 +2720,21 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 			s->s3->tlsext_authz_server_promised = 1;
 			}
 
-		/* If this extension type was not otherwise handled,
-		  * matches a user-specified serverinfo type, and
-		  * there is a serverinfo callback, then send it
-		  * to the callback. */
-		else if (s->ctx->serverinfo_cb)
+		/* If this extension type was not otherwise handled, but 
+		 * matches a custom_cli_ext_record, then send it to the c
+		 * callback */
+		else if (s->ctx->custom_cli_ext_records_count)
 			{
 			int i;
-			for (i=0; i < s->ctx->serverinfo_types_count; i++)
+			custom_cli_ext_record* record;
+			for (i = 0; i < s->ctx->custom_cli_ext_records_count; i++)
 				{
-				if (type == s->ctx->serverinfo_types[i])
-					{
-					if (!s->ctx->serverinfo_cb(s, data-4, size+4, al, s->ctx->serverinfo_cb_arg))
+				record = &s->ctx->custom_cli_ext_records[i];
+				if (record->ext_num == type)
+					if (record->fn2 && !record->fn2(s, type, data, size, al, record->arg))
 						return 0;
 					break;
-					}
-				}
+				}			
 			}
  
 		data += size;

@@ -387,21 +387,21 @@ typedef int (*tls_session_secret_cb_fn)(SSL *s, void *secret, int *secret_len, S
 typedef int (*custom_cli_ext_first_cb_fn)(SSL* s, unsigned short ext_num,
 								unsigned char** out, unsigned short* outlen, void* arg);
 typedef int (*custom_cli_ext_second_cb_fn)(SSL* s, unsigned short ext_num,
-								unsigned char* in, unsigned short in, int* al, void* arg); 
+								unsigned char* in, unsigned short inlen, int* al, void* arg); 
 
 typedef int (*custom_srv_ext_first_cb_fn)(SSL* s, unsigned short ext_num,
-								unsigned char* in, unsigned short* inlen, int* al, void* arg);
+								unsigned char* in, unsigned short inlen, int* al, void* arg);
 typedef int (*custom_srv_ext_second_cb_fn)(SSL* s, unsigned short ext_num,
-								unsigned char** out, unsigned short out, int* void* arg); 
+								unsigned char** out, unsigned short* outlen, void* arg); 
 
-typedef {
+typedef struct {
 	unsigned short ext_num;
 	custom_cli_ext_first_cb_fn fn1; 
 	custom_cli_ext_second_cb_fn fn2; 
 	void* arg;
 } custom_cli_ext_record;
 
-typedef {
+typedef struct {
 	unsigned short ext_num;
 	custom_srv_ext_first_cb_fn fn1; 
 	custom_srv_ext_second_cb_fn fn2; 
@@ -1206,9 +1206,13 @@ const char *SSL_get_psk_identity(const SSL *s);
    * same extension number, and registering for an extension number already 
    * handled by OpenSSL will succeed, but the callbacks will not be invoked.
    */
-int SSL_CTX_set_custom_cli_ext_record(SSL_CTX *ctx, const custom_cli_ext_record* record);
-int SSL_CTX_set_custom_srv_ext_record(SSL_CTX *ctx, const custom_srv_ext_record* record);
+int SSL_CTX_set_custom_cli_ext(SSL_CTX *ctx, unsigned short ext_num,
+															 custom_cli_ext_first_cb_fn fn1, 
+															 custom_cli_ext_second_cb_fn fn2, void* arg);
 
+int SSL_CTX_set_custom_srv_ext(SSL_CTX *ctx, unsigned short ext_num,
+															 custom_srv_ext_first_cb_fn fn1, 
+															 custom_srv_ext_second_cb_fn fn2, void* arg);
 
 #define SSL_NOTHING	1
 #define SSL_WRITING	2
