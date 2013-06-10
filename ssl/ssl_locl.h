@@ -1010,7 +1010,7 @@ int ssl_undefined_const_function(const SSL *s);
 CERT_PKEY *ssl_get_server_send_pkey(const SSL *s);
 #ifndef OPENSSL_NO_TLSEXT
 unsigned char *ssl_get_authz_data(SSL *s, size_t *authz_length);
-int ssl_get_server_cert_serverinfo(SSL *s, const unsigned char** serverinfo, size_t *serverinfo_length);
+int ssl_get_server_cert_serverinfo(SSL *s, unsigned char** serverinfo, size_t *serverinfo_length);
 #endif
 EVP_PKEY *ssl_get_sign_pkey(SSL *s,const SSL_CIPHER *c, const EVP_MD **pmd);
 int ssl_cert_type(X509 *x,EVP_PKEY *pkey);

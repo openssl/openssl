@@ -392,7 +392,7 @@ typedef int (*custom_cli_ext_second_cb_fn)(SSL* s, unsigned short ext_num,
 typedef int (*custom_srv_ext_first_cb_fn)(SSL* s, unsigned short ext_num,
 								unsigned char* in, unsigned short inlen, int* al, void* arg);
 typedef int (*custom_srv_ext_second_cb_fn)(SSL* s, unsigned short ext_num,
-								unsigned char** out, unsigned short* outlen, void* arg); 
+							  unsigned char** out, unsigned short* outlen, void* arg); 
 
 typedef struct {
 	unsigned short ext_num;

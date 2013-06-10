@@ -863,13 +863,13 @@ static char authz_validate(const unsigned char *authz, size_t length)
 		}
 	}
 
-static int serverinfo_find_extension(const unsigned char *serverinfo,
+static int serverinfo_find_extension(unsigned char *serverinfo,
 				   size_t serverinfo_length,
 				   unsigned short extension_type,
-				   const unsigned char** extension,
+				   unsigned char** extension_data,
 				   unsigned short* extension_length)
 	{
-	*extension = NULL;
+	*extension_data = NULL;
 	*extension_length = 0;
 	if (serverinfo == NULL || serverinfo_length == 0)
 		return 0;
@@ -901,8 +901,8 @@ static int serverinfo_find_extension(const unsigned char *serverinfo,
 
 		if (type == extension_type)
 			{
-			*extension = serverinfo - 4;
-			*extension_length = len + 4;
+			*extension_data = serverinfo;
+			*extension_length = len;
 			return 1;
 			}
 
@@ -916,7 +916,7 @@ static int serverinfo_srv_cb(SSL* s, unsigned short ext_num,
 													   unsigned char** out, unsigned short* outlen, 
 													   void* arg)
 	{
-	const unsigned char *serverinfo = NULL;
+	unsigned char *serverinfo = NULL;
 	size_t serverinfo_length = 0;
 
 	/* Is there a serverinfo for the chosen server cert? */
@@ -1239,7 +1239,7 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
 				goto end;
 			}
 		/* Append the decoded extension to the serverinfo buffer */
-		serverinfo = OPENSSL_malloc(serverinfo_length + extension_length);
+		serverinfo = OPENSSL_realloc(serverinfo, serverinfo_length + extension_length);
 		if (serverinfo == NULL)
 			{
 			SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, ERR_R_MALLOC_FAILURE);

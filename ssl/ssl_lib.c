@@ -1740,7 +1740,7 @@ int SSL_CTX_set_custom_srv_ext(SSL_CTX *ctx, unsigned short ext_num,
 	if (!ctx->custom_srv_ext_records)
 		return 0;
 	ctx->custom_srv_ext_records_count++;
-	record = &ctx->custom_srv_ext_records[ctx->custom_cli_ext_records_count - 1];
+	record = &ctx->custom_srv_ext_records[ctx->custom_srv_ext_records_count - 1];
 	record->ext_num = ext_num;
 	record->fn1 = fn1;
 	record->fn2 = fn2;
@@ -2539,7 +2539,7 @@ unsigned char *ssl_get_authz_data(SSL *s, size_t *authz_length)
 	return c->pkeys[i].authz;
 	}
 
-int ssl_get_server_cert_serverinfo(SSL *s, const unsigned char** serverinfo,
+int ssl_get_server_cert_serverinfo(SSL *s, unsigned char** serverinfo,
 									size_t *serverinfo_length)
 	{
 	CERT *c = NULL;

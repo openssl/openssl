@@ -2347,7 +2347,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 						}
 
 					/* Callback */
-					if (!record->fn1 && !record->fn1(s, type, data, size, al, record->arg))
+					if (record->fn1 && !record->fn1(s, type, data, size, al, record->arg))
 						return 0;
 						
 					/* Add the (non-duplicated) entry */
