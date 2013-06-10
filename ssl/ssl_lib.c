@@ -1707,7 +1707,7 @@ int SSL_CTX_set_custom_cli_ext(SSL_CTX *ctx, unsigned short ext_num,
 	custom_cli_ext_record* record;
 
 	for (i=0; i < ctx->custom_cli_ext_records_count; i++)
-		if (record->ext_num == ctx->custom_cli_ext_records[i].ext_num)
+		if (ext_num == ctx->custom_cli_ext_records[i].ext_num)
 			return 0;
 
 	ctx->custom_cli_ext_records = OPENSSL_realloc(ctx->custom_cli_ext_records,
@@ -1732,7 +1732,7 @@ int SSL_CTX_set_custom_srv_ext(SSL_CTX *ctx, unsigned short ext_num,
 	custom_srv_ext_record* record;
 
 	for (i=0; i < ctx->custom_srv_ext_records_count; i++)
-		if (record->ext_num == ctx->custom_srv_ext_records[i].ext_num)
+		if (ext_num == ctx->custom_srv_ext_records[i].ext_num)
 			return 0;
 
 	ctx->custom_srv_ext_records = OPENSSL_realloc(ctx->custom_srv_ext_records,
