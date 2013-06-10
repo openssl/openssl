@@ -81,6 +81,16 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&jmp	(&label("generic"));
 	
 &set_label("intel");
+	&cmp	("edi",7);
+	&jb	(&label("cacheinfo"));
+
+	&mov	("esi",&wparam(0));
+	&mov	("eax",7);
+	&xor	("ecx","ecx");
+	&cpuid	();
+	&mov	(&DWP(8,"esi"),"ebx");
+
+&set_label("cacheinfo");
 	&cmp	("edi",4);
 	&mov	("edi",-1);
 	&jb	(&label("nocacheinfo"));
@@ -91,15 +101,6 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&mov	("edi","eax");
 	&shr	("edi",14);
 	&and	("edi",0xfff);		# number of cores -1 per L1D
-
-	&cmp	("edi",7);
-	&jb	(&label("nocacheinfo"));
-
-	&mov	("esi",&wparam(0));
-	&mov	("eax",7);
-	&xor	("ecx","ecx");
-	&cpuid	();
-	&mov	(&DWP(8,"esi"),"ebx");
 
 &set_label("nocacheinfo");
 	&mov	("eax",1);
