@@ -24,6 +24,7 @@
 #		 AES-128/-192/-256+SHA256	this(**)gain
 # Sandy Bridge	    5.05/6.05/7.05+11.6		13.0	+28%/36%/43%
 # Ivy Bridge	    5.05/6.05/7.05+10.3		11.6	+32%/41%/50%
+# Haswell	    4.43/5.29/6.19+7.80		8.79	+39%/49%/59%
 # Bulldozer	    5.77/6.89/8.00+13.7		13.7	+42%/50%/58%
 #
 # (*)	there are XOP, AVX1 and AVX2 code pathes, meaning that
@@ -970,11 +971,11 @@ $code.=<<___;
 
 	sub	\$-16*$SZ,%r13		# inp++, size optimization
 	mov	$SZ*0(%r15),$A
-	xor	%r12,%r12		# borrow $a0
+	lea	(%rsi,%r13),%r12	# borrow $a0
 	mov	$SZ*1(%r15),$B
 	cmp	$len,%r13		# $_end
 	mov	$SZ*2(%r15),$C
-	sete	%r12b
+	cmove	%rsp,%r12		# next block or random data
 	mov	$SZ*3(%r15),$D
 	mov	$SZ*4(%r15),$E
 	mov	$SZ*5(%r15),$F
@@ -990,21 +991,18 @@ $code.=<<___;
 	jmp	.Loop_avx2
 .align	16
 .Loop_avx2:
-	shl	\$`log(16*$SZ)/log(2)`,%r12
 	vmovdqa	$TABLE+`$SZ*2*$rounds`(%rip),$t3
-	neg	%r12
 	vmovdqu	-16*$SZ+0(%rsi,%r13),%xmm0
-	add	%rsi,%r12		# next or same input block
 	vmovdqu	-16*$SZ+16(%rsi,%r13),%xmm1
 	vmovdqu	-16*$SZ+32(%rsi,%r13),%xmm2
 	vmovdqu	-16*$SZ+48(%rsi,%r13),%xmm3
 
-	vinserti128	\$1,(%r12,%r13),@X[0],@X[0]
-	vinserti128	\$1,16(%r12,%r13),@X[1],@X[1]
+	vinserti128	\$1,(%r12),@X[0],@X[0]
+	vinserti128	\$1,16(%r12),@X[1],@X[1]
 	 vpshufb	$t3,@X[0],@X[0]
-	vinserti128	\$1,32(%r12,%r13),@X[2],@X[2]
+	vinserti128	\$1,32(%r12),@X[2],@X[2]
 	 vpshufb	$t3,@X[1],@X[1]
-	vinserti128	\$1,48(%r12,%r13),@X[3],@X[3]
+	vinserti128	\$1,48(%r12),@X[3],@X[3]
 
 	lea	$TABLE(%rip),$Tbl
 	vpshufb	$t3,@X[2],@X[2]
@@ -1148,12 +1146,13 @@ $code.=<<___;
 	add	$SZ*4(%r15),$E
 	add	$SZ*5(%r15),$F
 	add	$SZ*6(%r15),$G
-	xor	%r12,%r12
+	lea	(%rsi,%r13),%r12
 	add	$SZ*7(%r15),$H
 
 	cmp	$_end,%r13
 
 	mov	$A,$SZ*0(%r15)
+	cmove	%rsp,%r12		# next block or stale data
 	mov	$B,$SZ*1(%r15)
 	mov	$C,$SZ*2(%r15)
 	mov	$D,$SZ*3(%r15)
@@ -1162,7 +1161,6 @@ $code.=<<___;
 	mov	$G,$SZ*6(%r15)
 	mov	$H,$SZ*7(%r15)
 
-	sete	%r12b
 	jbe	.Loop_avx2
 	lea	(%rsp),$Tbl
 
