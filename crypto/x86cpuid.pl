@@ -79,6 +79,16 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&jmp	(&label("generic"));
 	
 &set_label("intel");
+	&cmp	("edi",7);
+	&jb	(&label("cacheinfo"));
+
+	&mov	("esi",&wparam(0));
+	&mov	("eax",7);
+	&xor	("ecx","ecx");
+	&cpuid	();
+	&mov	(&DWP(8,"esi"),"ebx");
+
+&set_label("cacheinfo");
 	&cmp	("edi",4);
 	&mov	("edi",-1);
 	&jb	(&label("nocacheinfo"));
