@@ -28,18 +28,31 @@
 # May version, >60% over original. Add AVX+shrd code path, >25%
 # improvement on Sandy Bridge over May version, 60% over original.
 #
+# May 2013.
+#
+# Replace AMD XOP code path with SSSE3 to cover more processors.
+# (Biggest improvement coefficient is on upcoming Atom Silvermont,
+# not shown.) Add AVX+BMI code path.
+#
 # Performance in clock cycles per processed byte (less is better):
 #
-#		PIII	P4	AMD K8	Core2	SB	Atom	Bldzr
-# gcc		36	41	27	26	25	50	36
-# icc		33	38	25	23	-	-	-
-# x86 asm(*)	27/24	28	19/15.5	18/15.6	12.3	30/25	16.6
-# x86_64 asm(**)	17.5	15.1	13.9	11.6	22	13.7
+#		gcc	icc	x86 asm(*)	SIMD	x86_64 asm(**)	
+# Pentium	46	57	40/38		-	-
+# PIII		36	33	27/24		-	-
+# P4		41	38	28		-	17.3
+# AMD K8	27	25	19/15.5		-	14.9
+# Core2		26	23	18/15.6		14.3	13.8
+# Westmere	27	-	19/15.7		13.4	12.3
+# Sandy Bridge	25	-	15.9		12.4	11.6
+# Ivy Bridge	24	-	15.0		11.4	10.3
+# Haswell	22	-	13.9		9.46	7.80
+# Bulldozer	36	-	27/22		17.0	13.6
+# VIA Nano	36	-	25/22		16.8	16.5
+# Atom		50	-	30/25		21.9	18.9
 #
-# (*)	numbers after slash are for unrolled loop, where available,
-#	otherwise best applicable such as AVX/XOP;
+# (*)	numbers after slash are for unrolled loop, where applicable;
 # (**)	x86_64 assembly performance is presented for reference
-#	purposes.
+#	purposes, results are best-available;
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
@@ -47,21 +60,23 @@ require "x86asm.pl";
 
 &asm_init($ARGV[0],"sha512-586.pl",$ARGV[$#ARGV] eq "386");
 
-$xmm=$ymm=0;
+$xmm=$avx=0;
 for (@ARGV) { $xmm=1 if (/-DOPENSSL_IA32_SSE2/); }
 
-$ymm=1 if ($xmm &&
-		`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
-			=~ /GNU assembler version ([2-9]\.[0-9]+)/ &&
-		$1>=2.19);	# first version supporting AVX
+if ($xmm &&	`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
+			=~ /GNU assembler version ([2-9]\.[0-9]+)/) {
+	$avx = ($1>=2.19) + ($1>=2.22);
+}
 
-$ymm=1 if ($xmm && !$ymm && $ARGV[0] eq "win32n" &&
-		`nasm -v 2>&1` =~ /NASM version ([2-9]\.[0-9]+)/ &&
-		$1>=2.03);	# first version supporting AVX
+if ($xmm && !$avx && $ARGV[0] eq "win32n" &&
+		`nasm -v 2>&1` =~ /NASM version ([2-9]\.[0-9]+)/) {
+	$avx = ($1>=2.03) + ($1>=2.10);
+}
 
-$ymm=1 if ($xmm && !$ymm && $ARGV[0] eq "win32" &&
-		`ml 2>&1` =~ /Version ([0-9]+)\./ &&
-		$1>=10);	# first version supporting AVX
+if ($xmm && !$avx && $ARGV[0] eq "win32" &&
+		`ml 2>&1` =~ /Version ([0-9]+)\./) {
+	$avx = ($1>=10) + ($1>=11);
+}
 
 $unroll_after = 64*4;	# If pre-evicted from L1P cache first spin of
 			# fully unrolled loop was measured to run about
@@ -178,17 +193,21 @@ sub BODY_00_15() {
 						if (!$i386) {
 	&picmeup("edx","OPENSSL_ia32cap_P",$K256,&label("K256"));
 	&mov	("ecx",&DWP(0,"edx"));
-	&mov	("edx",&DWP(4,"edx"));
+	&mov	("ebx",&DWP(4,"edx"));
 	&test	("ecx",1<<20);		# check for P4
 	&jnz	(&label("loop"));
-	&test	("edx",1<<11);		# check for XOP
-	&jnz	(&label("XOP"))		if ($ymm);
 	&and	("ecx",1<<30);		# mask "Intel CPU" bit
-	&and	("edx",1<<28);		# mask AVX bit
-	&or	("ecx","edx");
+	&and	("ebx",1<<28|1<<9);	# mask AVX and SSSE3 bits
+	&or	("ecx","ebx");
+	&and	("ecx",1<<28|1<<30);
 	&cmp	("ecx",1<<28|1<<30);
-	&je	(&label("AVX"))		if ($ymm);
-	&je	(&label("loop_shrd"))	if (!$ymm);
+					if ($xmm) {
+	&je	(&label("AVX"))		if ($avx);
+	&test	("ebx",1<<9);		# check for SSSE3
+	&jnz	(&label("SSSE3"));
+					} else {
+	&je	(&label("loop_shrd"));
+					}
 						if ($unroll_after) {
 	&sub	("eax","edi");
 	&cmp	("eax",$unroll_after);
@@ -199,7 +218,7 @@ sub BODY_00_15() {
 sub COMPACT_LOOP() {
 my $suffix=shift;
 
-&set_label("loop$suffix",16);
+&set_label("loop$suffix",$suffix?32:16);
     # copy input block to stack reversing byte and dword order
     for($i=0;$i<4;$i++) {
 	&mov	("eax",&DWP($i*16+0,"edi"));
@@ -292,7 +311,7 @@ my $suffix=shift;
 	&COMPACT_LOOP();
 	&mov	("esp",&DWP(12,"esp"));		# restore sp
 &function_end_A();
-						if (!$i386 && !$ymm) {
+						if (!$i386 && !$xmm) {
 	# ~20% improvement on Sandy Bridge
 	local *ror = sub { &shrd(@_[0],@_) };
 	&COMPACT_LOOP("_shrd");
@@ -318,7 +337,11 @@ my $suffix=shift;
 	0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,
 	0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2	);
 &data_word(@K256);
-&data_word(0x00010203,0x04050607,0x08090a0b,0x0c0d0e0f);
+&data_word(0x00010203,0x04050607,0x08090a0b,0x0c0d0e0f);	# byte swap mask
+&asciz("SHA256 block transform for x86, CRYPTOGAMS by <appro\@openssl.org>");
+
+($a,$b,$c,$d,$e,$f,$g,$h)=(0..7);	# offsets
+sub off { &DWP(4*(((shift)-$i)&7),"esp"); }
 
 if (!$i386 && $unroll_after) {
 my @AH=($A,$K256);
@@ -365,8 +388,6 @@ my @AH=($A,$K256);
 	&mov	(&DWP(32+12*$i,"esp"),"ebx");
 
     my ($t1,$t2) = ("ecx","esi");
-    my ($a,$b,$c,$d,$e,$f,$g,$h)=(0..7);	# offsets
-    sub off { &DWP(4*(((shift)-$i)&7),"esp"); }
 
     for ($i=0;$i<64;$i++) {
 
@@ -472,15 +493,14 @@ my @AH=($A,$K256);
 
 	&mov	("esp",&DWP(96+12,"esp"));	# restore sp
 &function_end_A();
-
-						if ($ymm) {{{
+}
+						if (!$i386 && $xmm) {{{
 my @X = map("xmm$_",(0..3));
 my ($t0,$t1,$t2,$t3) = map("xmm$_",(4..7));
 my @AH = ($A,$T);
 
-&set_label("XOP",16);
+&set_label("SSSE3",32);
 	&lea	("esp",&DWP(-96,"esp"));
-	&vzeroall	();
 	# copy ctx->h[0-7] to A,B,C,D,E,F,G,H on stack
 	&mov	($AH[0],&DWP(0,"esi"));
 	&mov	($AH[1],&DWP(4,"esi"));
@@ -500,135 +520,208 @@ my @AH = ($A,$T);
 	&mov	("edi",&DWP(96+4,"esp"));	# inp
 	&mov	(&DWP(24,"esp"),"ecx");
 	&mov	(&DWP(28,"esp"),"esi");
-	&vmovdqa	($t3,&QWP(256,$K256));
-	&jmp	(&label("grand_xop"));
+	&movdqa	($t3,&QWP(256,$K256));
+	&jmp	(&label("grand_ssse3"));
 
-&set_label("grand_xop",16);
+&set_label("grand_ssse3",16);
 	# load input, reverse byte order, add K256[0..15], save to stack
-	&vmovdqu	(@X[0],&QWP(0,"edi"));
-	&vmovdqu	(@X[1],&QWP(16,"edi"));
-	&vmovdqu	(@X[2],&QWP(32,"edi"));
-	&vmovdqu	(@X[3],&QWP(48,"edi"));
-	&add		("edi",64);
-	&vpshufb	(@X[0],@X[0],$t3);
-	&mov		(&DWP(96+4,"esp"),"edi");
-	&vpshufb	(@X[1],@X[1],$t3);
-	&vpshufb	(@X[2],@X[2],$t3);
-	&vpaddd		($t0,@X[0],&QWP(0,$K256));
-	&vpshufb	(@X[3],@X[3],$t3);
-	&vpaddd		($t1,@X[1],&QWP(16,$K256));
-	&vpaddd		($t2,@X[2],&QWP(32,$K256));
-	&vpaddd		($t3,@X[3],&QWP(48,$K256));
-	&vmovdqa	(&QWP(32+0,"esp"),$t0);
-	&vmovdqa	(&QWP(32+16,"esp"),$t1);
-	&vmovdqa	(&QWP(32+32,"esp"),$t2);
-	&vmovdqa	(&QWP(32+48,"esp"),$t3);
-	&jmp		(&label("xop_00_47"));
+	&movdqu	(@X[0],&QWP(0,"edi"));
+	&movdqu	(@X[1],&QWP(16,"edi"));
+	&movdqu	(@X[2],&QWP(32,"edi"));
+	&movdqu	(@X[3],&QWP(48,"edi"));
+	&add	("edi",64);
+	&pshufb	(@X[0],$t3);
+	&mov	(&DWP(96+4,"esp"),"edi");
+	&pshufb	(@X[1],$t3);
+	&movdqa	($t0,&QWP(0,$K256));
+	&pshufb	(@X[2],$t3);
+	&movdqa	($t1,&QWP(16,$K256));
+	&paddd	($t0,@X[0]);
+	&pshufb	(@X[3],$t3);
+	&movdqa	($t2,&QWP(32,$K256));
+	&paddd	($t1,@X[1]);
+	&movdqa	($t3,&QWP(48,$K256));
+	&movdqa	(&QWP(32+0,"esp"),$t0);
+	&paddd	($t2,@X[2]);
+	&movdqa	(&QWP(32+16,"esp"),$t1);
+	&paddd	($t3,@X[3]);
+	&movdqa	(&QWP(32+32,"esp"),$t2);
+	&movdqa	(&QWP(32+48,"esp"),$t3);
+	&jmp	(&label("ssse3_00_47"));
 
-&set_label("xop_00_47",16);
+&set_label("ssse3_00_47",16);
 	&add		($K256,64);
 
-sub XOP_00_47 () {
+sub SSSE3_00_47 () {
 my $j = shift;
 my $body = shift;
 my @X = @_;
 my @insns = (&$body,&$body,&$body,&$body);	# 120 instructions
 
-	&vpalignr	($t0,@X[1],@X[0],4);	# X[1..4]
+	  eval(shift(@insns));
+	&movdqa		($t0,@X[1]);
+	  eval(shift(@insns));			# @
+	  eval(shift(@insns));
+	&movdqa		($t3,@X[3]);
 	  eval(shift(@insns));
 	  eval(shift(@insns));
-	 &vpalignr	($t3,@X[3],@X[2],4);	# X[9..12]
+	&palignr	($t0,@X[0],4);		# X[1..4]
 	  eval(shift(@insns));
+	  eval(shift(@insns));			# @
 	  eval(shift(@insns));
-	&vprotd		($t1,$t0,14);
-	  eval(shift(@insns));
-	  eval(shift(@insns));
-	&vpsrld		($t0,$t0,3);
-	 &vpaddd	(@X[0],@X[0],$t3);	# X[0..3] += X[9..12]
-	  eval(shift(@insns));
-	  eval(shift(@insns));
-	  eval(shift(@insns));
-	  eval(shift(@insns));
-	&vprotd		($t2,$t1,25-14);
-	&vpxor		($t0,$t0,$t1);
+	 &palignr	($t3,@X[2],4);		# X[9..12]
 	  eval(shift(@insns));
 	  eval(shift(@insns));
 	  eval(shift(@insns));
+	&movdqa		($t1,$t0);
+	  eval(shift(@insns));			# @
 	  eval(shift(@insns));
-	 &vprotd	($t3,@X[3],13);
-	&vpxor		($t0,$t0,$t2);		# sigma0(X[1..4])
-	  eval(shift(@insns));
-	  eval(shift(@insns));
-	 &vpsrld	($t2,@X[3],10);
+	&movdqa		($t2,$t0);
 	  eval(shift(@insns));
 	  eval(shift(@insns));
-	&vpaddd		(@X[0],@X[0],$t0);	# X[0..3] += sigma0(X[1..4])
+	&psrld		($t0,3);
+	  eval(shift(@insns));
+	  eval(shift(@insns));			# @
+	 &paddd		(@X[0],$t3);		# X[0..3] += X[9..12]
 	  eval(shift(@insns));
 	  eval(shift(@insns));
-	 &vprotd	($t1,$t3,15-13);
-	 &vpxor		($t3,$t3,$t2);
+	&psrld		($t2,7);
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	  eval(shift(@insns));			# @
+	  eval(shift(@insns));
+	 &pshufd	($t3,@X[3],0b11111010);	# X[14..15]
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	&pslld		($t1,32-18);
+	  eval(shift(@insns));
+	  eval(shift(@insns));			# @
+	&pxor		($t0,$t2);
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	&psrld		($t2,18-7);
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	  eval(shift(@insns));			# @
+	&pxor		($t0,$t1);
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	&pslld		($t1,18-7);
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	  eval(shift(@insns));			# @
+	&pxor		($t0,$t2);
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	 &movdqa	($t2,$t3);
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	  eval(shift(@insns));			# @
+	&pxor		($t0,$t1);		# sigma0(X[1..4])
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	 &psrld		($t3,10);
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	  eval(shift(@insns));			# @
+	&paddd		(@X[0],$t0);		# X[0..3] += sigma0(X[1..4])
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	 &psrlq		($t2,17);
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	  eval(shift(@insns));			# @
+	 &pxor		($t3,$t2);
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	 &psrlq		($t2,19-17);
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	  eval(shift(@insns));			# @
+	 &pxor		($t3,$t2);
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	 &pshufd	($t3,$t3,0b10000000);
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	  eval(shift(@insns));			# @
 	  eval(shift(@insns));
 	  eval(shift(@insns));
 	  eval(shift(@insns));
 	  eval(shift(@insns));
-	 &vpxor		($t3,$t3,$t1);		# sigma1(X[14..15])
+	  eval(shift(@insns));			# @
+	  eval(shift(@insns));
+	 &psrldq	($t3,8);
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	&paddd		(@X[0],$t3);		# X[0..1] += sigma1(X[14..15])
+	  eval(shift(@insns));			# @
 	  eval(shift(@insns));
 	  eval(shift(@insns));
 	  eval(shift(@insns));
 	  eval(shift(@insns));
-	&vpsrldq	($t3,$t3,8);
+	  eval(shift(@insns));			# @
+	  eval(shift(@insns));
+	 &pshufd	($t3,@X[0],0b01010000);	# X[16..17]
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	 &movdqa	($t2,$t3);
+	  eval(shift(@insns));			# @
+	 &psrld		($t3,10);
+	  eval(shift(@insns));
+	 &psrlq		($t2,17);
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	  eval(shift(@insns));			# @
+	 &pxor		($t3,$t2);
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	 &psrlq		($t2,19-17);
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	  eval(shift(@insns));			# @
+	 &pxor		($t3,$t2);
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	 &pshufd	($t3,$t3,0b00001000);
+	  eval(shift(@insns));
+	  eval(shift(@insns));			# @
+	&movdqa		($t2,&QWP(16*$j,$K256));
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	 &pslldq	($t3,8);
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	  eval(shift(@insns));			# @
 	  eval(shift(@insns));
 	  eval(shift(@insns));
 	  eval(shift(@insns));
 	  eval(shift(@insns));
-	&vpaddd		(@X[0],@X[0],$t3);	# X[0..1] += sigma1(X[14..15])
+	  eval(shift(@insns));			# @
+	&paddd		(@X[0],$t3);		# X[2..3] += sigma1(X[16..17])
 	  eval(shift(@insns));
 	  eval(shift(@insns));
 	  eval(shift(@insns));
 	  eval(shift(@insns));
-	 &vprotd	($t3,@X[0],13);
-	  eval(shift(@insns));
-	  eval(shift(@insns));
-	 &vpsrld	($t2,@X[0],10);
-	  eval(shift(@insns));
-	  eval(shift(@insns));
-	 &vprotd	($t1,$t3,15-13);
-	  eval(shift(@insns));
-	  eval(shift(@insns));
-	 &vpxor		($t3,$t3,$t2);
-	  eval(shift(@insns));
-	  eval(shift(@insns));
-	  eval(shift(@insns));
-	  eval(shift(@insns));
-	 &vpxor		($t3,$t3,$t1);		# sigma1(X[16..17])
-	  eval(shift(@insns));
-	  eval(shift(@insns));
-	  eval(shift(@insns));
-	  eval(shift(@insns));
-	&vpslldq	($t3,$t3,8);		# 22 instructions
-	  eval(shift(@insns));
-	  eval(shift(@insns));
-	  eval(shift(@insns));
-	  eval(shift(@insns));
-	&vpaddd		(@X[0],@X[0],$t3);	# X[2..3] += sigma1(X[16..17])
-	  eval(shift(@insns));
-	  eval(shift(@insns));
-	  eval(shift(@insns));
-	  eval(shift(@insns));
-	&vpaddd		($t2,@X[0],&QWP(16*$j,$K256));
+	&paddd		($t2,@X[0]);
+	  eval(shift(@insns));			# @
 
 	foreach (@insns) { eval; }		# remaining instructions
 
-	&vmovdqa	(&QWP(32+16*$j,"esp"),$t2);
+	&movdqa		(&QWP(32+16*$j,"esp"),$t2);
 }
 
 sub body_00_15 () {
 	(
 	'&mov	("ecx",$E);',
-	 '&mov	("esi",&off($f));',
 	'&ror	($E,25-11);',
-	 '&mov	("edi",&off($g));',
+	 '&mov	("esi",&off($f));',
 	'&xor	($E,"ecx");',
+	 '&mov	("edi",&off($g));',
 	 '&xor	("esi","edi");',
 	'&ror	($E,11-6);',
 	 '&and	("esi","ecx");',
@@ -637,19 +730,19 @@ sub body_00_15 () {
 	 '&xor	("edi","esi");',	# Ch(e,f,g)
 	'&ror	($E,6);',		# T = Sigma1(e)
 	 '&mov	("ecx",$AH[0]);',
-	'&mov	("esi",$AH[0]);',
-	 '&add	($E,&off($h));',	# T += h
-
-	'&ror	("ecx",22-13);',
 	 '&add	($E,"edi");',		# T += Ch(e,f,g)
 	 '&mov	("edi",&off($b));',
-	'&xor	("ecx",$AH[0]);',
+	'&mov	("esi",$AH[0]);',
+
+	'&ror	("ecx",22-13);',
 	 '&mov	(&off($a),$AH[0]);',	# save $A, modulo-scheduled
+	'&xor	("ecx",$AH[0]);',
 	 '&xor	($AH[0],"edi");',	# a ^= b, (b^c) in next round
+	 '&add	($E,&off($h));',	# T += h
 	'&ror	("ecx",13-2);',
 	 '&and	($AH[1],$AH[0]);',	# (b^c) &= (a^b)
-	 '&add	($E,&DWP(32+4*($i&15),"esp"));',	# T += K[i]+X[i]
 	'&xor	("ecx","esi");',
+	 '&add	($E,&DWP(32+4*($i&15),"esp"));',	# T += K[i]+X[i]
 	 '&xor	($AH[1],"edi");',	# h = Maj(a,b,c) = Ch(a^b,c,b)
 	'&ror	("ecx",2);',		# Sigma0(a)
 
@@ -662,11 +755,11 @@ sub body_00_15 () {
 }
 
     for ($i=0,$j=0; $j<4; $j++) {
-	&XOP_00_47($j,\&body_00_15,@X);
+	&SSSE3_00_47($j,\&body_00_15,@X);
 	push(@X,shift(@X));		# rotate(@X)
     }
 	&cmp	(&DWP(16*$j,$K256),0x00010203);
-	&jne	(&label("xop_00_47"));
+	&jne	(&label("ssse3_00_47"));
 
     for ($i=0; $i<16; ) {
 	foreach(body_00_15()) { eval; }
@@ -708,16 +801,21 @@ sub body_00_15 () {
 	 &mov	(&DWP(28,"esp"),"edi");
 	&mov	("edi",&DWP(96+4,"esp"));	# inp
 
-	&vmovdqa	($t3,&QWP(64,$K256));
+	&movdqa	($t3,&QWP(64,$K256));
 	&sub	($K256,3*64);			# rewind K
 	&cmp	("edi",&DWP(96+8,"esp"));	# are we done yet?
-	&jb	(&label("grand_xop"));
+	&jb	(&label("grand_ssse3"));
 
 	&mov	("esp",&DWP(96+12,"esp"));	# restore sp
-	&vzeroall	();
 &function_end_A();
-
-&set_label("AVX",16);
+						if ($avx) {
+&set_label("AVX",32);
+						if ($avx>1) {
+	&mov	("edx",&DWP(8,"edx"));
+	&and	("edx",1<<8|1<<3);		# check for BMI2+BMI1
+	&cmp	("edx",1<<8|1<<3);
+	&je	(&label("AVX_BMI"));
+						}
 	&lea	("esp",&DWP(-96,"esp"));
 	&vzeroall	();
 	# copy ctx->h[0-7] to A,B,C,D,E,F,G,H on stack
@@ -742,7 +840,7 @@ sub body_00_15 () {
 	&vmovdqa	($t3,&QWP(256,$K256));
 	&jmp	(&label("grand_avx"));
 
-&set_label("grand_avx",16);
+&set_label("grand_avx",32);
 	# load input, reverse byte order, add K256[0..15], save to stack
 	&vmovdqu	(@X[0],&QWP(0,"edi"));
 	&vmovdqu	(@X[1],&QWP(16,"edi"));
@@ -809,12 +907,14 @@ my $j = shift;
 my $body = shift;
 my @X = @_;
 my @insns = (&$body,&$body,&$body,&$body);	# 120 instructions
+my $insn;
 
 	foreach (Xupdate_AVX()) {		# 31 instructions
 	    eval;
 	    eval(shift(@insns));
 	    eval(shift(@insns));
-	    eval(shift(@insns));
+	    eval($insn = shift(@insns));
+	    eval(shift(@insns)) if ($insn =~ /rorx/ && @insns[0] =~ /rorx/);
 	}
 	&vpaddd		($t2,@X[0],&QWP(16*$j,$K256));
 	foreach (@insns) { eval; }		# remaining instructions
@@ -876,9 +976,150 @@ my @insns = (&$body,&$body,&$body,&$body);	# 120 instructions
 	&mov	("esp",&DWP(96+12,"esp"));	# restore sp
 	&vzeroall	();
 &function_end_A();
-						}}}
+						if ($avx>1) {
+sub bodyx_00_15 () {			# +10%
+	(
+	'&rorx	("ecx",$E,6)',
+	'&rorx	("esi",$E,11)',
+	 '&mov	(&off($e),$E)',		# save $E, modulo-scheduled
+	'&rorx	("edi",$E,25)',
+	'&xor	("ecx","esi")',
+	 '&andn	("esi",$E,&off($g))',
+	'&xor	("ecx","edi")',		# Sigma1(e)
+	 '&and	($E,&off($f))',
+	 '&mov	(&off($a),$AH[0]);',	# save $A, modulo-scheduled
+	 '&or	($E,"esi")',		# T = Ch(e,f,g)
+
+	'&rorx	("edi",$AH[0],2)',
+	'&rorx	("esi",$AH[0],13)',
+	 '&lea	($E,&DWP(0,$E,"ecx"))',	# T += Sigma1(e)
+	'&rorx	("ecx",$AH[0],22)',
+	'&xor	("esi","edi")',
+	 '&mov	("edi",&off($b))',
+	'&xor	("ecx","esi")',		# Sigma0(a)
+
+	 '&xor	($AH[0],"edi")',	# a ^= b, (b^c) in next round
+	 '&add	($E,&off($h))',		# T += h
+	 '&and	($AH[1],$AH[0])',	# (b^c) &= (a^b)
+	 '&add	($E,&DWP(32+4*($i&15),"esp"))',	# T += K[i]+X[i]
+	 '&xor	($AH[1],"edi")',	# h = Maj(a,b,c) = Ch(a^b,c,b)
+
+	 '&add	("ecx",$E)',		# h += T
+	 '&add	($E,&off($d))',		# d += T
+	'&lea	($AH[1],&DWP(0,$AH[1],"ecx"));'.	# h += Sigma0(a)
+
+	'@AH = reverse(@AH); $i++;'	# rotate(a,h)
+	);
 }
+
+&set_label("AVX_BMI",32);
+	&lea	("esp",&DWP(-96,"esp"));
+	&vzeroall	();
+	# copy ctx->h[0-7] to A,B,C,D,E,F,G,H on stack
+	&mov	($AH[0],&DWP(0,"esi"));
+	&mov	($AH[1],&DWP(4,"esi"));
+	&mov	("ecx",&DWP(8,"esi"));
+	&mov	("edi",&DWP(12,"esi"));
+	#&mov	(&DWP(0,"esp"),$AH[0]);
+	&mov	(&DWP(4,"esp"),$AH[1]);
+	&xor	($AH[1],"ecx");			# magic
+	&mov	(&DWP(8,"esp"),"ecx");
+	&mov	(&DWP(12,"esp"),"edi");
+	&mov	($E,&DWP(16,"esi"));
+	&mov	("edi",&DWP(20,"esi"));
+	&mov	("ecx",&DWP(24,"esi"));
+	&mov	("esi",&DWP(28,"esi"));
+	#&mov	(&DWP(16,"esp"),$E);
+	&mov	(&DWP(20,"esp"),"edi");
+	&mov	("edi",&DWP(96+4,"esp"));	# inp
+	&mov	(&DWP(24,"esp"),"ecx");
+	&mov	(&DWP(28,"esp"),"esi");
+	&vmovdqa	($t3,&QWP(256,$K256));
+	&jmp	(&label("grand_avx_bmi"));
+
+&set_label("grand_avx_bmi",32);
+	# load input, reverse byte order, add K256[0..15], save to stack
+	&vmovdqu	(@X[0],&QWP(0,"edi"));
+	&vmovdqu	(@X[1],&QWP(16,"edi"));
+	&vmovdqu	(@X[2],&QWP(32,"edi"));
+	&vmovdqu	(@X[3],&QWP(48,"edi"));
+	&add		("edi",64);
+	&vpshufb	(@X[0],@X[0],$t3);
+	&mov		(&DWP(96+4,"esp"),"edi");
+	&vpshufb	(@X[1],@X[1],$t3);
+	&vpshufb	(@X[2],@X[2],$t3);
+	&vpaddd		($t0,@X[0],&QWP(0,$K256));
+	&vpshufb	(@X[3],@X[3],$t3);
+	&vpaddd		($t1,@X[1],&QWP(16,$K256));
+	&vpaddd		($t2,@X[2],&QWP(32,$K256));
+	&vpaddd		($t3,@X[3],&QWP(48,$K256));
+	&vmovdqa	(&QWP(32+0,"esp"),$t0);
+	&vmovdqa	(&QWP(32+16,"esp"),$t1);
+	&vmovdqa	(&QWP(32+32,"esp"),$t2);
+	&vmovdqa	(&QWP(32+48,"esp"),$t3);
+	&jmp		(&label("avx_bmi_00_47"));
+
+&set_label("avx_bmi_00_47",16);
+	&add		($K256,64);
+
+    for ($i=0,$j=0; $j<4; $j++) {
+	&AVX_00_47($j,\&bodyx_00_15,@X);
+	push(@X,shift(@X));		# rotate(@X)
+    }
+	&cmp	(&DWP(16*$j,$K256),0x00010203);
+	&jne	(&label("avx_bmi_00_47"));
+
+    for ($i=0; $i<16; ) {
+	foreach(bodyx_00_15()) { eval; }
+    }
+
+	&mov	("esi",&DWP(96,"esp"));	#ctx
+					#&mov	($AH[0],&DWP(0,"esp"));
+	&xor	($AH[1],"edi");		#&mov	($AH[1],&DWP(4,"esp"));
+					#&mov	("edi", &DWP(8,"esp"));
+	&mov	("ecx",&DWP(12,"esp"));
+	&add	($AH[0],&DWP(0,"esi"));
+	&add	($AH[1],&DWP(4,"esi"));
+	&add	("edi",&DWP(8,"esi"));
+	&add	("ecx",&DWP(12,"esi"));
+	&mov	(&DWP(0,"esi"),$AH[0]);
+	&mov	(&DWP(4,"esi"),$AH[1]);
+	&mov	(&DWP(8,"esi"),"edi");
+	&mov	(&DWP(12,"esi"),"ecx");
+	 #&mov	(&DWP(0,"esp"),$AH[0]);
+	 &mov	(&DWP(4,"esp"),$AH[1]);
+	 &xor	($AH[1],"edi");			# magic
+	 &mov	(&DWP(8,"esp"),"edi");
+	 &mov	(&DWP(12,"esp"),"ecx");
+	#&mov	($E,&DWP(16,"esp"));
+	&mov	("edi",&DWP(20,"esp"));
+	&mov	("ecx",&DWP(24,"esp"));
+	&add	($E,&DWP(16,"esi"));
+	&add	("edi",&DWP(20,"esi"));
+	&add	("ecx",&DWP(24,"esi"));
+	&mov	(&DWP(16,"esi"),$E);
+	&mov	(&DWP(20,"esi"),"edi");
+	 &mov	(&DWP(20,"esp"),"edi");
+	&mov	("edi",&DWP(28,"esp"));
+	&mov	(&DWP(24,"esi"),"ecx");
+	 #&mov	(&DWP(16,"esp"),$E);
+	&add	("edi",&DWP(28,"esi"));
+	 &mov	(&DWP(24,"esp"),"ecx");
+	&mov	(&DWP(28,"esi"),"edi");
+	 &mov	(&DWP(28,"esp"),"edi");
+	&mov	("edi",&DWP(96+4,"esp"));	# inp
+
+	&vmovdqa	($t3,&QWP(64,$K256));
+	&sub	($K256,3*64);			# rewind K
+	&cmp	("edi",&DWP(96+8,"esp"));	# are we done yet?
+	&jb	(&label("grand_avx_bmi"));
+
+	&mov	("esp",&DWP(96+12,"esp"));	# restore sp
+	&vzeroall	();
+&function_end_A();
+						}
+						}
+						}}}
 &function_end_B("sha256_block_data_order");
-&asciz("SHA256 block transform for x86, CRYPTOGAMS by <appro\@openssl.org>");
 
 &asm_finish();
