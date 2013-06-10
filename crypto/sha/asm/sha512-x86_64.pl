@@ -44,7 +44,7 @@
 #
 # Optimization including one of Pavel Semjanov's ideas, alternative
 # Maj, resulted in >=5% improvement on most CPUs, +20% SHA256 and
-# unfortunately -10% SHA512 on P4 [which nobody should care about
+# unfortunately -2% SHA512 on P4 [which nobody should care about
 # that much].
 #
 # June 2012.
@@ -74,15 +74,16 @@
 #
 #		SHA256	SSSE3       AVX/XOP(*)	    SHA512  AVX/XOP(*)
 #
-# AMD K8	15.1	-	    -		    9.70    -
-# P4		17.5	-	    -		    33.4    -
-# Core 2	15.5	13.8(+12%)  -		    10.3    -
-# Westmere	15.1	12.7(+19%)  -		    9.72    -
+# AMD K8	14.9	-	    -		    9.57    -
+# P4		17.3	-	    -		    30.8    -
+# Core 2	15.6	13.8(+13%)  -		    9.97    -
+# Westmere	14.8	12.3(+19%)  -		    9.58    -
 # Sandy Bridge	17.4	14.2(+23%)  11.6(+50%(**))  11.2    8.10(+38%(**))
 # Ivy Bridge	12.6	10.5(+20%)  10.3(+22%)	    8.17    7.22(+13%)
-# Bulldozer	21.5	13.7(+57%)  13.7(+57%(***)) 13.5    8.58(+57%)
+# Haswell	12.2	9.28(+31%)  7.80(+56%)	    7.66    5.40(+42%)
+# Bulldozer	21.1	13.6(+54%)  13.6(+54%(***)) 13.5    8.58(+57%)
 # VIA Nano	23.0	16.5(+39%)  -		    14.7    -
-# Atom		23.0	18.7(+23%)  -		    14.7    -
+# Atom		23.0	18.9(+22%)  -		    14.7    -
 #
 # (*)	whichever best applicable;
 # (**)	switch from ror to shrd stands for fair share of improvement;
@@ -166,8 +167,8 @@ $code.=<<___;
 	ror	\$`$Sigma1[2]-$Sigma1[1]`,$a0
 	mov	$f,$a2
 
-	ror	\$`$Sigma0[2]-$Sigma0[1]`,$a1
 	xor	$e,$a0
+	ror	\$`$Sigma0[2]-$Sigma0[1]`,$a1
 	xor	$g,$a2			# f^g
 
 	mov	$T1,`$SZ*($i&0xf)`(%rsp)
@@ -186,25 +187,22 @@ $code.=<<___;
 	add	($Tbl),$T1		# T1+=K[round]
 	xor	$a,$a1
 
-	ror	\$$Sigma1[0],$a0	# Sigma1(e)
 	xor	$b,$a2			# a^b, b^c in next round
+	ror	\$$Sigma1[0],$a0	# Sigma1(e)
 	mov	$b,$h
 
-	ror	\$$Sigma0[0],$a1	# Sigma0(a)
 	and	$a2,$a3
+	ror	\$$Sigma0[0],$a1	# Sigma0(a)
 	add	$a0,$T1			# T1+=Sigma1(e)
 
 	xor	$a3,$h			# h=Maj(a,b,c)=Ch(a^b,c,b)
 	add	$T1,$d			# d+=T1
 	add	$T1,$h			# h+=T1
-___
-$code.=<<___ if ($i>=15);
-	mov	`$SZ*(($i+2)&0xf)`(%rsp),$a0
-___
-$code.=<<___;
-	lea	$STRIDE($Tbl),$Tbl	# round++
-	add	$a1,$h			# h+=Sigma0(a)
 
+	lea	$STRIDE($Tbl),$Tbl	# round++
+___
+$code.=<<___ if ($i<15);
+	add	$a1,$h			# h+=Sigma0(a)
 ___
 	($a2,$a3) = ($a3,$a2);
 }
@@ -213,28 +211,29 @@ sub ROUND_16_XX()
 { my ($i,$a,$b,$c,$d,$e,$f,$g,$h) = @_;
 
 $code.=<<___;
-	#mov	`$SZ*(($i+1)&0xf)`(%rsp),$a0
-	mov	`$SZ*(($i+14)&0xf)`(%rsp),$a1
+	mov	`$SZ*(($i+1)&0xf)`(%rsp),$a0
+	mov	`$SZ*(($i+14)&0xf)`(%rsp),$a2
 
 	mov	$a0,$T1
 	ror	\$`$sigma0[1]-$sigma0[0]`,$a0
-	mov	$a1,$a2
-	ror	\$`$sigma1[1]-$sigma1[0]`,$a1
+	add	$a1,$a			# modulo-scheduled h+=Sigma0(a)
+	mov	$a2,$a1
+	ror	\$`$sigma1[1]-$sigma1[0]`,$a2
 
 	xor	$T1,$a0
 	shr	\$$sigma0[2],$T1
 	ror	\$$sigma0[0],$a0
-	xor	$a2,$a1
-	shr	\$$sigma1[2],$a2
+	xor	$a1,$a2
+	shr	\$$sigma1[2],$a1
 
+	ror	\$$sigma1[0],$a2
 	xor	$a0,$T1			# sigma0(X[(i+1)&0xf])
-	ror	\$$sigma1[0],$a1
+	xor	$a1,$a2			# sigma1(X[(i+14)&0xf])
 	add	`$SZ*(($i+9)&0xf)`(%rsp),$T1
-	xor	$a2,$a1			# sigma1(X[(i+14)&0xf])
 
 	add	`$SZ*($i&0xf)`(%rsp),$T1
 	mov	$e,$a0
-	add	$a1,$T1
+	add	$a2,$T1
 	mov	$a,$a1
 ___
 	&ROUND_00_15(@_);
@@ -332,6 +331,7 @@ $code.=<<___;
 	jnz	.Lrounds_16_xx
 
 	mov	$_ctx,$ctx
+	add	$a1,$A			# modulo-scheduled h+=Sigma0(a)
 	lea	16*$SZ($inp),$inp
 
 	add	$SZ*0($ctx),$A
@@ -529,8 +529,8 @@ sub body_00_15 () {
 	'&mov	($a,$a1)',
 	'&mov	($a4,$f)',
 
-	'&xor	($a0,$e)',
 	'&ror	($a1,$Sigma0[2]-$Sigma0[1])',
+	'&xor	($a0,$e)',
 	'&xor	($a4,$g)',			# f^g
 
 	'&ror	($a0,$Sigma1[1]-$Sigma1[0])',
@@ -541,20 +541,20 @@ sub body_00_15 () {
 	'&add	($h,$SZ*($i&15)."(%rsp)")',	# h+=X[i]+K[i]
 	'&mov	($a2,$a)',
 
-	'&ror	($a1,$Sigma0[1]-$Sigma0[0])',
 	'&xor	($a4,$g)',			# Ch(e,f,g)=((f^g)&e)^g
+	'&ror	($a1,$Sigma0[1]-$Sigma0[0])',
 	'&xor	($a2,$b)',			# a^b, b^c in next round
 
-	'&ror	($a0,$Sigma1[0])',		# Sigma1(e)
 	'&add	($h,$a4)',			# h+=Ch(e,f,g)
+	'&ror	($a0,$Sigma1[0])',		# Sigma1(e)
 	'&and	($a3,$a2)',			# (b^c)&(a^b)
 
 	'&xor	($a1,$a)',
 	'&add	($h,$a0)',			# h+=Sigma1(e)
 	'&xor	($a3,$b)',			# Maj(a,b,c)=Ch(a^b,c,b)
 
-	'&add	($d,$h)',			# d+=h
 	'&ror	($a1,$Sigma0[0])',		# Sigma0(a)
+	'&add	($d,$h)',			# d+=h
 	'&add	($h,$a3)',			# h+=Maj(a,b,c)
 
 	'&mov	($a0,$d)',
@@ -702,145 +702,147 @@ my @insns = (&$body,&$body,&$body,&$body);	# 104 instructions
 	    eval(shift(@insns));
 	    eval(shift(@insns));
 	}
-    } else {			# squeeze extra 3% on Westmere and Atom
+    } else {			# squeeze extra 4% on Westmere and 19% on Atom
 	  eval(shift(@insns));	#@
-	  eval(shift(@insns));
 	&movdqa		($t0,@X[1]);
 	  eval(shift(@insns));
+	  eval(shift(@insns));
 	&movdqa		($t3,@X[3]);
+	  eval(shift(@insns));	#@
+	  eval(shift(@insns));
 	  eval(shift(@insns));
 	  eval(shift(@insns));	#@
 	  eval(shift(@insns));
 	&palignr	($t0,@X[0],$SZ);	# X[1..4]
-	  eval(shift(@insns));	#@
+	  eval(shift(@insns));
 	  eval(shift(@insns));
 	 &palignr	($t3,@X[2],$SZ);	# X[9..12]
 	  eval(shift(@insns));
 	  eval(shift(@insns));
 	  eval(shift(@insns));
-	  eval(shift(@insns));
 	  eval(shift(@insns));	#@
-	  eval(shift(@insns));
 	&movdqa		($t1,$t0);
+	  eval(shift(@insns));
 	  eval(shift(@insns));
 	&movdqa		($t2,$t0);
 	  eval(shift(@insns));	#@
-	  eval(shift(@insns));
 	  eval(shift(@insns));
 	&psrld		($t0,$sigma0[2]);
 	  eval(shift(@insns));
 	  eval(shift(@insns));
 	  eval(shift(@insns));
 	 &paddd		(@X[0],$t3);		# X[0..3] += X[9..12]
-	  eval(shift(@insns));
 	  eval(shift(@insns));	#@
 	  eval(shift(@insns));
 	&psrld		($t2,$sigma0[0]);
 	  eval(shift(@insns));
 	  eval(shift(@insns));
-	  eval(shift(@insns));	#@
-	  eval(shift(@insns));
 	 &pshufd	($t3,@X[3],0b11111010);	# X[4..15]
 	  eval(shift(@insns));
+	  eval(shift(@insns));	#@
 	&pslld		($t1,8*$SZ-$sigma0[1]);
+	  eval(shift(@insns));
 	  eval(shift(@insns));
 	&pxor		($t0,$t2);
 	  eval(shift(@insns));	#@
 	  eval(shift(@insns));
-	&psrld		($t2,$sigma0[1]-$sigma0[0]);
+	  eval(shift(@insns));
 	  eval(shift(@insns));	#@
+	&psrld		($t2,$sigma0[1]-$sigma0[0]);
 	  eval(shift(@insns));
 	&pxor		($t0,$t1);
 	  eval(shift(@insns));
 	  eval(shift(@insns));
 	&pslld		($t1,$sigma0[1]-$sigma0[0]);
 	  eval(shift(@insns));
+	  eval(shift(@insns));
 	&pxor		($t0,$t2);
 	  eval(shift(@insns));
 	  eval(shift(@insns));	#@
-	  eval(shift(@insns));
 	 &movdqa	($t2,$t3);
 	  eval(shift(@insns));
-	  eval(shift(@insns));	#@
 	  eval(shift(@insns));
 	&pxor		($t0,$t1);		# sigma0(X[1..4])
+	  eval(shift(@insns));	#@
 	  eval(shift(@insns));
 	  eval(shift(@insns));
 	 &psrld		($t3,$sigma1[2]);
 	  eval(shift(@insns));
 	  eval(shift(@insns));
 	&paddd		(@X[0],$t0);		# X[0..3] += sigma0(X[1..4])
-	  eval(shift(@insns));
 	  eval(shift(@insns));	#@
-	  eval(shift(@insns));
 	  eval(shift(@insns));
 	 &psrlq		($t2,$sigma1[0]);
 	  eval(shift(@insns));
-	  eval(shift(@insns));	#@
 	  eval(shift(@insns));
 	  eval(shift(@insns));
 	 &pxor		($t3,$t2);
+	  eval(shift(@insns));	#@
+	  eval(shift(@insns));
 	  eval(shift(@insns));
 	  eval(shift(@insns));	#@
 	 &psrlq		($t2,$sigma1[1]-$sigma1[0]);
 	  eval(shift(@insns));
-	  eval(shift(@insns));	#@
 	  eval(shift(@insns));
 	 &pxor		($t3,$t2);
-	  eval(shift(@insns));
+	  eval(shift(@insns));	#@
 	  eval(shift(@insns));
 	  eval(shift(@insns));
 	 #&pshufb	($t3,$t4);		# sigma1(X[14..15])
 	 &pshufd	($t3,$t3,0b10000000);
 	  eval(shift(@insns));
-	  eval(shift(@insns));	#@
+	  eval(shift(@insns));
 	  eval(shift(@insns));
 	 &psrldq	($t3,8);
 	  eval(shift(@insns));
 	  eval(shift(@insns));	#@
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	  eval(shift(@insns));	#@
 	&paddd		(@X[0],$t3);		# X[0..1] += sigma1(X[14..15])
+	  eval(shift(@insns));
+	  eval(shift(@insns));
 	  eval(shift(@insns));
 	 &pshufd	($t3,@X[0],0b01010000);	# X[16..17]
 	  eval(shift(@insns));
-	  eval(shift(@insns));
-	  eval(shift(@insns));
+	  eval(shift(@insns));	#@
 	  eval(shift(@insns));
 	 &movdqa	($t2,$t3);
 	  eval(shift(@insns));
-	  eval(shift(@insns));	#@
 	  eval(shift(@insns));
 	 &psrld		($t3,$sigma1[2]);
 	  eval(shift(@insns));
-	 &psrlq		($t2,$sigma1[0]);
-	  eval(shift(@insns));
 	  eval(shift(@insns));	#@
+	 &psrlq		($t2,$sigma1[0]);
 	  eval(shift(@insns));
 	  eval(shift(@insns));
 	 &pxor		($t3,$t2);
+	  eval(shift(@insns));	#@
+	  eval(shift(@insns));
 	  eval(shift(@insns));
 	  eval(shift(@insns));	#@
 	  eval(shift(@insns));
 	 &psrlq		($t2,$sigma1[1]-$sigma1[0]);
-	  eval(shift(@insns));	#@
 	  eval(shift(@insns));
 	  eval(shift(@insns));
 	  eval(shift(@insns));
 	 &pxor		($t3,$t2);
+	  eval(shift(@insns));
+	  eval(shift(@insns));
+	  eval(shift(@insns));	#@
+	 #&pshufb	($t3,$t5);
+	 &pshufd	($t3,$t3,0b00001000);
 	  eval(shift(@insns));
 	  eval(shift(@insns));
 	&movdqa		($t2,16*2*$j."($Tbl)");
 	  eval(shift(@insns));	#@
 	  eval(shift(@insns));
-	 #&pshufb	($t3,$t5);
-	 &pshufd	($t3,$t3,0b00001000);
-	  eval(shift(@insns));
-	  eval(shift(@insns));	#@
-	  eval(shift(@insns));
 	 &pslldq	($t3,8);
 	  eval(shift(@insns));
 	  eval(shift(@insns));
-	&paddd		(@X[0],$t3);		# X[2..3] += sigma1(X[16..17])
 	  eval(shift(@insns));
+	&paddd		(@X[0],$t3);		# X[2..3] += sigma1(X[16..17])
+	  eval(shift(@insns));	#@
 	  eval(shift(@insns));
 	  eval(shift(@insns));
     }
