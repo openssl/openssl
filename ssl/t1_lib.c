@@ -1741,16 +1741,20 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 			for (j = 0; j < s->ctx->custom_srv_ext_records_count; j++)
 				{
 				record = &s->ctx->custom_srv_ext_records[j];
-				unsigned char* out = NULL;
-				unsigned short outlen = 0;
-				if (record->fn2 && !record->fn2(s, record->ext_num, &out, &outlen, record->arg))
-					return NULL;
-				if (limit < ret + 4 + outlen)
-					return NULL;
-				s2n(record->ext_num, ret);
-				s2n(outlen, ret);
-				memcpy(ret, out, outlen);
-				ret += outlen;
+				if (s->s3->tlsext_custom_types[i] == record->ext_num)
+					{
+					unsigned char* out = NULL;
+					unsigned short outlen = 0;
+					if (record->fn2 && !record->fn2(s, record->ext_num, &out, &outlen, record->arg))
+						return NULL;
+					if (limit < ret + 4 + outlen)
+						return NULL;
+					s2n(record->ext_num, ret);
+					s2n(outlen, ret);
+					memcpy(ret, out, outlen);
+					ret += outlen;
+					break;
+					}
 				}
 			}
 		}
@@ -2682,9 +2686,11 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 				{
 				record = &s->ctx->custom_cli_ext_records[i];
 				if (record->ext_num == type)
+					{
 					if (record->fn2 && !record->fn2(s, type, data, size, al, record->arg))
 						return 0;
 					break;
+					}
 				}			
 			}
  
