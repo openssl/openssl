@@ -381,9 +381,9 @@ int serverinfo_sct_seen = 0;
 int serverinfo_tack_seen = 0;
 int serverinfo_other_seen = 0;
 
-static int serverinfo_cb(SSL* s, unsigned short ext_num,
-												 unsigned char* in, unsigned short inlen, 
-												 int* al, void* arg)
+static int serverinfo_cli_cb(SSL* s, unsigned short ext_num,
+												     unsigned char* in, unsigned short inlen, 
+												     int* al, void* arg)
 	{
 		if (ext_num == SCT_EXT_NUM)
 			serverinfo_sct_seen++;
@@ -1240,9 +1240,9 @@ bad:
 #endif
 
 	if (serverinfo_sct)
-		SSL_CTX_set_custom_cli_ext(c_ctx, SCT_EXT_NUM, NULL, serverinfo_cb, NULL);
+		SSL_CTX_set_custom_cli_ext(c_ctx, SCT_EXT_NUM, NULL, serverinfo_cli_cb, NULL);
 	if (serverinfo_tack)
-		SSL_CTX_set_custom_cli_ext(c_ctx, TACK_EXT_NUM, NULL, serverinfo_cb, NULL);
+		SSL_CTX_set_custom_cli_ext(c_ctx, TACK_EXT_NUM, NULL, serverinfo_cli_cb, NULL);
 
 	if (serverinfo_file)
 		if (!SSL_CTX_use_serverinfo_file(s_ctx, serverinfo_file))

@@ -818,55 +818,6 @@ int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
 
 #ifndef OPENSSL_NO_TLSEXT
 
-static int serverinfo_find_extension(const unsigned char *serverinfo,
-				   size_t serverinfo_length,
-				   unsigned short extension_type,
-				   const unsigned char** extension,
-				   size_t *extension_length)
-	{
-	*extension = NULL;
-	*extension_length = 0;
-	if (serverinfo == NULL || serverinfo_length == 0)
-		return 0;
-	for (;;)
-		{
-		unsigned short type = 0; /* uint16 */
-		unsigned short len = 0;  /* uint16 */
-
-		/* end of serverinfo */
-		if (serverinfo_length == 0)
-			return 0;
-
-		/* read 2-byte type field */
-		if (serverinfo_length < 2)
-			return 0;	/* error */
-		type = (serverinfo[0] << 8) + serverinfo[1];
-		serverinfo += 2;
-		serverinfo_length -= 2;
-
-		/* read 2-byte len field */
-		if (serverinfo_length < 2)
-			return 0;	/* error */
-		len = (serverinfo[0] << 8) + serverinfo[1];
-		serverinfo += 2;
-		serverinfo_length -= 2;
-
-		if (len > serverinfo_length)
-			return 0;	/* error */
-
-		if (type == extension_type)
-			{
-			*extension = serverinfo - 4;
-			*extension_length = len + 4;
-			return 1;
-			}
-
-		serverinfo += len;
-		serverinfo_length -= len;
-		}
-	return 0;
-	}
-
 /* List of supported signature algorithms and hashes. Should make this
  * customisable at some point, for now include everything we support.
  */

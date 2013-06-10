@@ -863,13 +863,78 @@ static char authz_validate(const unsigned char *authz, size_t length)
 		}
 	}
 
-static int serverinfo_validate(const unsigned char *serverinfo, size_t serverinfo_length)
+static int serverinfo_find_extension(const unsigned char *serverinfo,
+				   size_t serverinfo_length,
+				   unsigned short extension_type,
+				   const unsigned char** extension,
+				   unsigned short* extension_length)
+	{
+	*extension = NULL;
+	*extension_length = 0;
+	if (serverinfo == NULL || serverinfo_length == 0)
+		return 0;
+	for (;;)
+		{
+		unsigned short type = 0; /* uint16 */
+		unsigned short len = 0;  /* uint16 */
+
+		/* end of serverinfo */
+		if (serverinfo_length == 0)
+			return 0;
+
+		/* read 2-byte type field */
+		if (serverinfo_length < 2)
+			return 0;	/* error */
+		type = (serverinfo[0] << 8) + serverinfo[1];
+		serverinfo += 2;
+		serverinfo_length -= 2;
+
+		/* read 2-byte len field */
+		if (serverinfo_length < 2)
+			return 0;	/* error */
+		len = (serverinfo[0] << 8) + serverinfo[1];
+		serverinfo += 2;
+		serverinfo_length -= 2;
+
+		if (len > serverinfo_length)
+			return 0;	/* error */
+
+		if (type == extension_type)
+			{
+			*extension = serverinfo - 4;
+			*extension_length = len + 4;
+			return 1;
+			}
+
+		serverinfo += len;
+		serverinfo_length -= len;
+		}
+	return 0;
+	}
+
+static int serverinfo_srv_cb(SSL* s, unsigned short ext_num,
+													   unsigned char** out, unsigned short* outlen, 
+													   void* arg)
+	{
+	const unsigned char *serverinfo = NULL;
+	size_t serverinfo_length = 0;
+
+	/* Is there a serverinfo for the chosen server cert? */
+	if ((ssl_get_server_cert_serverinfo(s, &serverinfo, &serverinfo_length)) != 0)
+		{
+		/* Find the relevant extension from the serverinfo */
+		serverinfo_find_extension(serverinfo, serverinfo_length, ext_num, out, outlen);
+		}
+		return 1;
+	}
+
+static int serverinfo_validate(const unsigned char *serverinfo, size_t serverinfo_length, SSL_CTX* ctx)
 	{
 	if (serverinfo == NULL || serverinfo_length == 0)
 		return 0;
 	for (;;)
 		{
-		/*unsigned short type = 0;  uint16 */
+		unsigned short ext_num = 0; /* uint16 */
 		unsigned short len = 0;  /* uint16 */
 
 		/* end of serverinfo */
@@ -880,7 +945,12 @@ static int serverinfo_validate(const unsigned char *serverinfo, size_t serverinf
 		if (serverinfo_length < 2)
 			return 0;
 		/* FIXME: check for types we understand explicitly? */
-		/* type = (serverinfo[0] << 8) + serverinfo[1]; */
+
+		/* Register callbacks for extensions */
+		ext_num = (serverinfo[0] << 8) + serverinfo[1];
+		if (ctx && !SSL_CTX_set_custom_srv_ext(ctx, ext_num, NULL, serverinfo_srv_cb, NULL))
+			return 0;
+
 		serverinfo += 2;
 		serverinfo_length -= 2;
 
@@ -984,7 +1054,7 @@ int SSL_CTX_use_serverinfo(SSL_CTX *ctx, const unsigned char *serverinfo,
 		SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO,ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 		}
-	if (!serverinfo_validate(serverinfo, serverinfo_length))
+	if (!serverinfo_validate(serverinfo, serverinfo_length, NULL))
 		{
 		SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO,SSL_R_INVALID_SERVERINFO_DATA);
 		return(0);
@@ -1008,6 +1078,14 @@ int SSL_CTX_use_serverinfo(SSL_CTX *ctx, const unsigned char *serverinfo,
 		}
 	memcpy(ctx->cert->key->serverinfo, serverinfo, serverinfo_length);
 	ctx->cert->key->serverinfo_length = serverinfo_length;
+
+	/* Now that the serverinfo is validated and stored, go ahead and 
+	 * register callbacks. */
+	if (!serverinfo_validate(serverinfo, serverinfo_length, ctx))
+		{
+		SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO,SSL_R_INVALID_SERVERINFO_DATA);
+		return(0);
+		}
 	return 1;
 	}
 
