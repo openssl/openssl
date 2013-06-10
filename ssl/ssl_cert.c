@@ -450,7 +450,7 @@ err:
 
 	ssl_cert_clear_certs(ret);
 
-	return NULL;
+	return(NULL);
 	}
 
 /* Free up and clear all certificates and chains */
