@@ -62,6 +62,7 @@
 # Westmere	1.76(+14%)
 # Sandy Bridge	1.79(+9%)
 # Ivy Bridge	1.79(+8%)
+# Haswell	0.55(+93%) (if system doesn't support AVX)
 # Bulldozer	1.52(+25%)
 
 # March 2013
@@ -70,9 +71,8 @@
 # suggested by Shay Gueron[1]. Even though contemporary AVX-capable
 # CPUs such as Sandy and Ivy Bridge can execute it, the code performs
 # sub-optimally in comparison to above mentioned version. But thanks
-# to Ilya Albrekht and Max Locktyukhin of Intel Corp. we know that
-# it will perform better on upcoming Haswell processor. [Exact
-# performance numbers to be added at launch.]
+# to Ilya Albrekht and Max Locktyukhin of Intel Corp. we knew that
+# it performs in 0.41 cycles per byte on Haswell processor.
 #
 # [1] http://rt.openssl.org/Ticket/Display.html?id=2900&user=guest&pass=guest
 
