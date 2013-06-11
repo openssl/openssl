@@ -928,7 +928,8 @@ static int serverinfo_srv_cb(SSL* s, unsigned short ext_type,
 		return 1;
 	}
 
-static int serverinfo_validate(const unsigned char *serverinfo, size_t serverinfo_length, SSL_CTX* ctx)
+static int serverinfo_validate(const unsigned char *serverinfo, 
+															 size_t serverinfo_length, SSL_CTX* ctx)
 	{
 	if (serverinfo == NULL || serverinfo_length == 0)
 		return 0;
