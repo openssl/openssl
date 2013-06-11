@@ -383,26 +383,44 @@ DECLARE_STACK_OF(SRTP_PROTECTION_PROFILE)
 typedef int (*tls_session_ticket_ext_cb_fn)(SSL *s, const unsigned char *data, int len, void *arg);
 typedef int (*tls_session_secret_cb_fn)(SSL *s, void *secret, int *secret_len, STACK_OF(SSL_CIPHER) *peer_ciphers, SSL_CIPHER **cipher, void *arg);
 
-/* Callbacks and structures for handling custom TLS Extensions */
-typedef int (*custom_cli_ext_first_cb_fn)(SSL* s, unsigned short ext_num,
+/* Callbacks and structures for handling custom TLS Extensions: 
+ *   cli_ext_first_cb  - sends data for ClientHello TLS Extension
+ *   cli_ext_second_cb - receives data from ServerHello TLS Extension
+ *   srv_ext_first_cb  - receives data from ClientHello TLS Extension
+ *   srv_ext_second_cb - sends data for ServerHello TLS Extension
+ *
+ *   All these functions return nonzero on success.  Zero will terminate
+ *   the handshake (and return a specific TLS Fatal alert, if the function
+ *   declaration has an "al" parameter).
+ * 
+ *   "ext_type" is a TLS "ExtensionType" from 0-65535
+ *   "in" is a pointer to TLS "extension_data" being provided to the cb
+ *   "out" is used by the callback to return a pointer to "extension data"
+ *     which OpenSSL will later copy into the TLS handshake.  The contents
+ *     of this buffer should not be changed until the handshake is complete.
+ *   "inlen" and "outlen" are TLS Extension lengths from 0-65535
+ *   "al" is a TLS "AlertDescription" from 0-255 which WILL be sent as a 
+ *     fatal TLS alert, if the callback returns zero.
+ */
+typedef int (*custom_cli_ext_first_cb_fn)(SSL* s, unsigned short ext_type,
 								unsigned char** out, unsigned short* outlen, void* arg);
-typedef int (*custom_cli_ext_second_cb_fn)(SSL* s, unsigned short ext_num,
-								unsigned char* in, unsigned short inlen, int* al, void* arg); 
+typedef int (*custom_cli_ext_second_cb_fn)(SSL* s, unsigned short ext_type,
+					   const unsigned char* in, unsigned short inlen, int* al, void* arg); 
 
-typedef int (*custom_srv_ext_first_cb_fn)(SSL* s, unsigned short ext_num,
-								unsigned char* in, unsigned short inlen, int* al, void* arg);
-typedef int (*custom_srv_ext_second_cb_fn)(SSL* s, unsigned short ext_num,
+typedef int (*custom_srv_ext_first_cb_fn)(SSL* s, unsigned short ext_type,
+						 const unsigned char* in, unsigned short inlen, int* al, void* arg);
+typedef int (*custom_srv_ext_second_cb_fn)(SSL* s, unsigned short ext_type,
 							  unsigned char** out, unsigned short* outlen, void* arg); 
 
 typedef struct {
-	unsigned short ext_num;
+	unsigned short ext_type;
 	custom_cli_ext_first_cb_fn fn1; 
 	custom_cli_ext_second_cb_fn fn2; 
 	void* arg;
 } custom_cli_ext_record;
 
 typedef struct {
-	unsigned short ext_num;
+	unsigned short ext_type;
 	custom_srv_ext_first_cb_fn fn1; 
 	custom_srv_ext_second_cb_fn fn2; 
 	void* arg;
@@ -1205,11 +1223,11 @@ const char *SSL_get_psk_identity(const SSL *s);
    * same extension number, and registering for an extension number already 
    * handled by OpenSSL will succeed, but the callbacks will not be invoked.
    */
-int SSL_CTX_set_custom_cli_ext(SSL_CTX *ctx, unsigned short ext_num,
+int SSL_CTX_set_custom_cli_ext(SSL_CTX *ctx, unsigned short ext_type,
 															 custom_cli_ext_first_cb_fn fn1, 
 															 custom_cli_ext_second_cb_fn fn2, void* arg);
 
-int SSL_CTX_set_custom_srv_ext(SSL_CTX *ctx, unsigned short ext_num,
+int SSL_CTX_set_custom_srv_ext(SSL_CTX *ctx, unsigned short ext_type,
 															 custom_srv_ext_first_cb_fn fn1, 
 															 custom_srv_ext_second_cb_fn fn2, void* arg);
 

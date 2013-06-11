@@ -1453,11 +1453,11 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 			unsigned char* out = NULL;
 			unsigned short outlen = 0;
 			record = &s->ctx->custom_cli_ext_records[i];
-			if (record->fn1 && !record->fn1(s, record->ext_num, &out, &outlen, record->arg))
+			if (record->fn1 && !record->fn1(s, record->ext_type, &out, &outlen, record->arg))
 				return NULL;
 			if (limit < ret + 4 + outlen)
 				return NULL;
-			s2n(record->ext_num, ret);
+			s2n(record->ext_type, ret);
 			s2n(outlen, ret);
 			memcpy(ret, out, outlen);
 			ret += outlen;
@@ -1741,15 +1741,15 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 			for (j = 0; j < s->ctx->custom_srv_ext_records_count; j++)
 				{
 				record = &s->ctx->custom_srv_ext_records[j];
-				if (s->s3->tlsext_custom_types[i] == record->ext_num)
+				if (s->s3->tlsext_custom_types[i] == record->ext_type)
 					{
 					unsigned char* out = NULL;
 					unsigned short outlen = 0;
-					if (record->fn2 && !record->fn2(s, record->ext_num, &out, &outlen, record->arg))
+					if (record->fn2 && !record->fn2(s, record->ext_type, &out, &outlen, record->arg))
 						return NULL;
 					if (limit < ret + 4 + outlen)
 						return NULL;
-					s2n(record->ext_num, ret);
+					s2n(record->ext_type, ret);
 					s2n(outlen, ret);
 					memcpy(ret, out, outlen);
 					ret += outlen;
@@ -2337,7 +2337,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 			for (i=0; i < s->ctx->custom_srv_ext_records_count; i++)
 				{
 				record = &s->ctx->custom_srv_ext_records[i];
-				if (type == record->ext_num)
+				if (type == record->ext_type)
 					{
 					/* Error on duplicate TLS Extensions */
 					int j;
@@ -2685,7 +2685,7 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 			for (i = 0; i < s->ctx->custom_cli_ext_records_count; i++)
 				{
 				record = &s->ctx->custom_cli_ext_records[i];
-				if (record->ext_num == type)
+				if (record->ext_type == type)
 					{
 					if (record->fn2 && !record->fn2(s, type, data, size, al, record->arg))
 						return 0;

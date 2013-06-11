@@ -912,7 +912,7 @@ static int serverinfo_find_extension(unsigned char *serverinfo,
 	return 0;
 	}
 
-static int serverinfo_srv_cb(SSL* s, unsigned short ext_num,
+static int serverinfo_srv_cb(SSL* s, unsigned short ext_type,
 													   unsigned char** out, unsigned short* outlen, 
 													   void* arg)
 	{
@@ -923,7 +923,7 @@ static int serverinfo_srv_cb(SSL* s, unsigned short ext_num,
 	if ((ssl_get_server_cert_serverinfo(s, &serverinfo, &serverinfo_length)) != 0)
 		{
 		/* Find the relevant extension from the serverinfo */
-		serverinfo_find_extension(serverinfo, serverinfo_length, ext_num, out, outlen);
+		serverinfo_find_extension(serverinfo, serverinfo_length, ext_type, out, outlen);
 		}
 		return 1;
 	}
@@ -934,7 +934,7 @@ static int serverinfo_validate(const unsigned char *serverinfo, size_t serverinf
 		return 0;
 	for (;;)
 		{
-		unsigned short ext_num = 0; /* uint16 */
+		unsigned short ext_type = 0; /* uint16 */
 		unsigned short len = 0;  /* uint16 */
 
 		/* end of serverinfo */
@@ -947,8 +947,8 @@ static int serverinfo_validate(const unsigned char *serverinfo, size_t serverinf
 		/* FIXME: check for types we understand explicitly? */
 
 		/* Register callbacks for extensions */
-		ext_num = (serverinfo[0] << 8) + serverinfo[1];
-		if (ctx && !SSL_CTX_set_custom_srv_ext(ctx, ext_num, NULL, serverinfo_srv_cb, NULL))
+		ext_type = (serverinfo[0] << 8) + serverinfo[1];
+		if (ctx && !SSL_CTX_set_custom_srv_ext(ctx, ext_type, NULL, serverinfo_srv_cb, NULL))
 			return 0;
 
 		serverinfo += 2;

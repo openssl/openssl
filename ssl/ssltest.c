@@ -370,8 +370,8 @@ static int verify_npn(SSL *client, SSL *server)
 	}
 #endif
 
-#define SCT_EXT_NUM 18
-#define TACK_EXT_NUM 62208
+#define SCT_EXT_TYPE 18
+#define TACK_EXT_TYPE 62208
 
 /* These set from cmdline */
 char* serverinfo_file = NULL;
@@ -381,13 +381,13 @@ int serverinfo_sct_seen = 0;
 int serverinfo_tack_seen = 0;
 int serverinfo_other_seen = 0;
 
-static int serverinfo_cli_cb(SSL* s, unsigned short ext_num,
-												     unsigned char* in, unsigned short inlen, 
+static int serverinfo_cli_cb(SSL* s, unsigned short ext_type,
+												     const unsigned char* in, unsigned short inlen, 
 												     int* al, void* arg)
 	{
-		if (ext_num == SCT_EXT_NUM)
+		if (ext_type == SCT_EXT_TYPE)
 			serverinfo_sct_seen++;
-		else if (ext_num == TACK_EXT_NUM)
+		else if (ext_type == TACK_EXT_TYPE)
 			serverinfo_tack_seen++;
 		else
 			serverinfo_other_seen++;
@@ -1240,9 +1240,9 @@ bad:
 #endif
 
 	if (serverinfo_sct)
-		SSL_CTX_set_custom_cli_ext(c_ctx, SCT_EXT_NUM, NULL, serverinfo_cli_cb, NULL);
+		SSL_CTX_set_custom_cli_ext(c_ctx, SCT_EXT_TYPE, NULL, serverinfo_cli_cb, NULL);
 	if (serverinfo_tack)
-		SSL_CTX_set_custom_cli_ext(c_ctx, TACK_EXT_NUM, NULL, serverinfo_cli_cb, NULL);
+		SSL_CTX_set_custom_cli_ext(c_ctx, TACK_EXT_TYPE, NULL, serverinfo_cli_cb, NULL);
 
 	if (serverinfo_file)
 		if (!SSL_CTX_use_serverinfo_file(s_ctx, serverinfo_file))
