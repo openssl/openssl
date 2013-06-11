@@ -547,7 +547,7 @@ static int next_proto_cb(SSL *s, unsigned char **out, unsigned char *outlen, con
 # endif  /* ndef OPENSSL_NO_NEXTPROTONEG */
 
 static int serverinfo_cli_cb(SSL* s, unsigned short ext_type,
-												     unsigned char* in, unsigned short inlen, 
+												     const unsigned char* in, unsigned short inlen, 
 												     int* al, void* arg)
 	{
 	char pem_name[100];
