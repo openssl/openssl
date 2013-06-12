@@ -1688,7 +1688,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
 							&& strncmp("2SSV", SSL_state_string(s_ssl), 4) == 0)
 							{
 							fprintf(stderr, " ok.\n");
-							goto err;
+							goto end;
 							}
 						}
 					fprintf(stderr, " ERROR.\n");

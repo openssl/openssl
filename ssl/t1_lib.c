@@ -2361,6 +2361,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 							s->s3->tlsext_custom_types_count*2);
 					if (s->s3->tlsext_custom_types == NULL)
 						{
+						s->s3->tlsext_custom_types = 0;
 						*al = TLS1_AD_INTERNAL_ERROR;
 						return 0;
 						}
