@@ -383,6 +383,7 @@ DECLARE_STACK_OF(SRTP_PROTECTION_PROFILE)
 typedef int (*tls_session_ticket_ext_cb_fn)(SSL *s, const unsigned char *data, int len, void *arg);
 typedef int (*tls_session_secret_cb_fn)(SSL *s, void *secret, int *secret_len, STACK_OF(SSL_CIPHER) *peer_ciphers, SSL_CIPHER **cipher, void *arg);
 
+#ifndef OPENSSL_NO_TLSEXT
 /* Callbacks and structures for handling custom TLS Extensions: 
  *   cli_ext_first_cb  - sends data for ClientHello TLS Extension
  *   cli_ext_second_cb - receives data from ServerHello TLS Extension
@@ -425,6 +426,7 @@ typedef struct {
 	custom_srv_ext_second_cb_fn fn2; 
 	void* arg;
 } custom_srv_ext_record;
+#endif
 
 #ifndef OPENSSL_NO_SSL_INTERN
 
@@ -1218,6 +1220,7 @@ const char *SSL_get_psk_identity_hint(const SSL *s);
 const char *SSL_get_psk_identity(const SSL *s);
 #endif
 
+#ifndef OPENSSL_NO_TLSEXT
 	/* Register callbacks to handle custom TLS Extensions as client or server.
 	 * 
 	 * Returns nonzero on success.  You cannot register twice for the same 
@@ -1242,6 +1245,7 @@ int SSL_CTX_set_custom_cli_ext(SSL_CTX *ctx, unsigned short ext_type,
 int SSL_CTX_set_custom_srv_ext(SSL_CTX *ctx, unsigned short ext_type,
 															 custom_srv_ext_first_cb_fn fn1, 
 															 custom_srv_ext_second_cb_fn fn2, void* arg);
+#endif
 
 #define SSL_NOTHING	1
 #define SSL_WRITING	2
