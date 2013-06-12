@@ -393,12 +393,12 @@ typedef int (*tls_session_secret_cb_fn)(SSL *s, void *secret, int *secret_len, S
  *   the handshake (and return a specific TLS Fatal alert, if the function
  *   declaration has an "al" parameter).
  * 
- *   "ext_type" is a TLS "ExtensionType" from 0-65535
- *   "in" is a pointer to TLS "extension_data" being provided to the cb
+ *   "ext_type" is a TLS "ExtensionType" from 0-65535.
+ *   "in" is a pointer to TLS "extension_data" being provided to the cb.
  *   "out" is used by the callback to return a pointer to "extension data"
  *     which OpenSSL will later copy into the TLS handshake.  The contents
  *     of this buffer should not be changed until the handshake is complete.
- *   "inlen" and "outlen" are TLS Extension lengths from 0-65535
+ *   "inlen" and "outlen" are TLS Extension lengths from 0-65535.
  *   "al" is a TLS "AlertDescription" from 0-255 which WILL be sent as a 
  *     fatal TLS alert, if the callback returns zero.
  */
@@ -1107,6 +1107,7 @@ struct ssl_ctx_st
 	int (*tlsext_authz_server_audit_proof_cb)(SSL *s, void *arg);
 	void *tlsext_authz_server_audit_proof_cb_arg;
 
+	/* Arrays containing the callbacks for custom TLS Extensions. */
 	custom_cli_ext_record* custom_cli_ext_records;
 	custom_srv_ext_record* custom_srv_ext_records;
 	size_t custom_cli_ext_records_count;
@@ -1218,10 +1219,21 @@ const char *SSL_get_psk_identity(const SSL *s);
 #endif
 
 	/* Register callbacks to handle custom TLS Extensions as client or server.
-	 * The record will be copied into the context.
-	 * Return nonzero on success.  You cannot register two records for the 
-   * same extension number, and registering for an extension number already 
+	 * 
+	 * Returns nonzero on success.  You cannot register twice for the same 
+   * extension number, and registering for an extension number already 
    * handled by OpenSSL will succeed, but the callbacks will not be invoked.
+   *
+   * NULL can be registered for any callback function.  For the client
+   * functions, a NULL custom_cli_ext_first_cb_fn sends an empty ClientHello
+   * Extension, and a NULL custom_cli_ext_second_cb_fn ignores the ServerHello
+   * response (if any).
+   *
+   * For the server functions, a NULL custom_srv_ext_first_cb_fn means the
+   * ClientHello extension's data will be ignored, but the extension will still
+   * be noted and custom_srv_ext_second_cb_fn will still be invoked.  If 
+   * custom_srv_ext_second_cb_fn is NULL, an empty ServerHello extension is 
+   * sent.
    */
 int SSL_CTX_set_custom_cli_ext(SSL_CTX *ctx, unsigned short ext_type,
 															 custom_cli_ext_first_cb_fn fn1, 
