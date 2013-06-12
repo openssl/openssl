@@ -419,7 +419,7 @@ char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx)
  *   md_out: the digest output. At most EVP_MAX_MD_SIZE bytes will be written.
  *   md_out_size: if non-NULL, the number of output bytes is written here.
  *   header: the 13-byte, TLS record header.
- *   data: the record data itself, less any preceeding explicit IV.
+ *   data: the record data itself, less any preceding explicit IV.
  *   data_plus_mac_size: the secret, reported length of the data and MAC
  *     once the padding has been removed.
  *   data_plus_mac_plus_padding_size: the public length of the whole

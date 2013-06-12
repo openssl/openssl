@@ -485,7 +485,7 @@ printf("\n");
 		/* A separate 'decryption_failed' alert was introduced with TLS 1.0,
 		 * SSL 3.0 only has 'bad_record_mac'.  But unless a decryption
 		 * failure is directly visible from the ciphertext anyway,
-		 * we should not reveal which kind of error occured -- this
+		 * we should not reveal which kind of error occurred -- this
 		 * might become visible to an attacker (e.g. via a logfile) */
 		al=SSL_AD_BAD_RECORD_MAC;
 		SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);

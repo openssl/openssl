@@ -200,7 +200,7 @@ static int dh_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 
 
 /* PKCS#8 DH is defined in PKCS#11 of all places. It is similar to DH in
- * that the AlgorithmIdentifier contains the paramaters, the private key
+ * that the AlgorithmIdentifier contains the parameters, the private key
  * is explcitly included and the pubkey must be recalculated.
  */
 	

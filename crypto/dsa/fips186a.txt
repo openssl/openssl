@@ -1,4 +1,4 @@
-The origional FIPE 180 used SHA-0 (FIPS 180) for its appendix 5
+The original FIPE 180 used SHA-0 (FIPS 180) for its appendix 5
 examples.  This is an updated version that uses SHA-1 (FIPS 180-1)
 supplied to me by Wei Dai
 --

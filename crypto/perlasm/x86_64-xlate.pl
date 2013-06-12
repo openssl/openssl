@@ -1092,7 +1092,7 @@ close STDOUT;
 #	.rva	.LSEH_end_function
 #	.rva	function_unwind_info
 #
-# Reference to functon_unwind_info from .xdata segment is the anchor.
+# Reference to function_unwind_info from .xdata segment is the anchor.
 # In case you wonder why references are 32-bit .rvas and not 64-bit
 # .quads. References put into these two segments are required to be
 # *relative* to the base address of the current binary module, a.k.a.

@@ -71,7 +71,7 @@
  *
  * Q. 64-bit registers under 32-bit kernels? Didn't you just say it
  *    doesn't work?
- * A. You can't adress *all* registers as 64-bit wide:-( The catch is
+ * A. You can't address *all* registers as 64-bit wide:-( The catch is
  *    that you actually may rely upon %o0-%o5 and %g1-%g4 being fully
  *    preserved if you're in a leaf function, i.e. such never calling
  *    any other functions. All functions in this module are leaf and

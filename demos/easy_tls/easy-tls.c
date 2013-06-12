@@ -971,7 +971,7 @@ tls_proxy(int clear_fd, int tls_fd, int info_fd, SSL_CTX *ctx, int client_p)
     
     /* loop finishes as soon as we detect that one side closed;
      * when all (program and OS) buffers have enough space,
-     * the data from the last succesful read in each direction is transferred
+     * the data from the last successful read in each direction is transferred
      * before close */
     do {
 	int clear_read_select = 0, clear_write_select = 0,

@@ -79,7 +79,7 @@
                 compiler flags for any other CPU specific configuration,
                 e.g. "-m32" to build x86 code on an x64 system.
 
-  no-sse2	Exclude SSE2 code pathes. Normally SSE2 extention is
+  no-sse2	Exclude SSE2 code pathes. Normally SSE2 extension is
 		detected at run-time, but the decision whether or not the
 		machine code will be executed is taken solely on CPU
 		capability vector. This means that if you happen to run OS

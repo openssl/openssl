@@ -133,7 +133,7 @@
  *       short etc).
  *   1: if the record's padding is valid / the encryption was successful.
  *   -1: if the record's padding/AEAD-authenticator is invalid or, if sending,
- *       an internal error occured. */
+ *       an internal error occurred. */
 int dtls1_enc(SSL *s, int send)
 	{
 	SSL3_RECORD *rec;

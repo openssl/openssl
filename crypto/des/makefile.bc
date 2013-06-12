@@ -1,5 +1,5 @@
 #
-# Origional BC Makefile from Teun <Teun.Nijssen@kub.nl>
+# Original BC Makefile from Teun <Teun.Nijssen@kub.nl>
 #
 #
 CC      = bcc

@@ -544,7 +544,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		if (pcert == NULL)
 			{
 			/* Always attempt to decrypt all rinfo even
-			 * after sucess as a defence against MMA timing
+			 * after success as a defence against MMA timing
 			 * attacks.
 			 */
 			for (i=0; i<sk_PKCS7_RECIP_INFO_num(rsk); i++)

@@ -539,13 +539,13 @@ int X509_verify_cert(
 The applications
 
 Ok, where to begin....
-In the begining, when SSLeay was small (April 1995), there
+In the beginning, when SSLeay was small (April 1995), there
 were but few applications, they did happily cohabit in
 the one bin directory.  Then over time, they did multiply and grow,
 and they started to look like microsoft software; 500k to print 'hello world'.
 A new approach was needed.  They were coalessed into one 'Monolithic'
 application, ssleay.  This one program is composed of many programs that
-can all be compiled independantly.
+can all be compiled independently.
 
 ssleay has 3 modes of operation.
 1) If the ssleay binary has the name of one of its component programs, it
@@ -1733,7 +1733,7 @@ int BN_mul(BIGNUM *r, BIGNUM *a, BIGNUM *b);
 
 int BN_sqr(BIGNUM *r, BIGNUM *a, BN_CTX *ctx);
 	Multiply a by a and return the result in 'r'. 'r' must not be
-	'a'.  This function is alot faster than BN_mul(r,a,a).  This is r=a*a.
+	'a'.  This function is a lot faster than BN_mul(r,a,a).  This is r=a*a.
 
 int BN_div(BIGNUM *dv, BIGNUM *rem, BIGNUM *m, BIGNUM *d, BN_CTX *ctx);
 	Divide 'm' by 'd' and return the result in 'dv' and the remainder
@@ -3797,7 +3797,7 @@ patent law and ITAR restrictions.
 
 Inside the USA there is also the unresolved issue of RC4/RC2 which were
 made public on sci.crypt in Sep 1994 (RC4) and Feb 1996 (RC2).  I have
-copies of the origional postings if people are interested.  RSA I believe 
+copies of the original postings if people are interested.  RSA I believe 
 claim that they were 'trade-secrets' and that some-one broke an NDA in 
 revealing them.  Other claim they reverse engineered the algorithms from 
 compiled binaries.  If the algorithms were reverse engineered, I believe 
@@ -4143,7 +4143,7 @@ CRYPTO_malloc(), CRYPTO_free() and CRYPTO_realloc().
 If it is not defined, they are #defined to malloc(), free() and realloc().
 
 the CRYPTO_malloc() routines by default just call the underlying library
-functons.
+functions.
 
 If CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON) is called, memory leak detection is
 turned on.  CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_OFF) turns it off.
@@ -4185,7 +4185,7 @@ The ca program uses the ssleay.conf file for most of its configuration
 
 ./ca -help
 
- -verbose        - Talk alot while doing things
+ -verbose        - Talk a lot while doing things
  -config file    - A config file. If you don't want to use the
 		   default config file
  -name arg       - The particular CA definition to use
@@ -4336,7 +4336,7 @@ login password.
 2.) The practical usage
 -----------------------
 
-Unfortunatly since CAPI is a system API you can't access its functions from 
+Unfortunately since CAPI is a system API you can't access its functions from 
 HTML code directly. For this purpose Microsoft provides a wrapper called 
 certenr3.dll. This DLL accesses the CAPI functions and provides an interface 
 usable from Visual Basic Script. One needs to install that library on the 
@@ -4390,7 +4390,7 @@ AcceptCredentials(sessionID, credentials, 0, FALSE)
 
 CRL's and CA certs are not required simply just the client cert. (It seems to 
 me that both are not even checked somehow.) The only format of the base64 
-encoded object I succesfully used was all characters in a very long string 
+encoded object I successfully used was all characters in a very long string 
 without line feeds or carriage returns. (Hey, it doesn't matter, only a 
 computer reads it!)
 
@@ -4537,7 +4537,7 @@ text. I use two templates to have a clearer script.
 site. Grab it from http://www.easterngraphics.com/certs/IX9704/postit2.c. You 
 need utils.c from there too.
 
-2nd note: I'm note quite sure wether the gawk script really handles all 
+2nd note: I'm note quite sure whether the gawk script really handles all 
 possible inputs for the request right! Today I don't use this construction 
 anymore myself.
 
@@ -5103,7 +5103,7 @@ It is of a similar speed to DES and IDEA, so unless it is required for
 meeting some standard (SSLv2, perhaps S/MIME), it would probably be advisable
 to stick to IDEA, or for the paranoid, Tripple DES.
 
-Mind you, having said all that, I should mention that I just read alot and
+Mind you, having said all that, I should mention that I just read a lot and
 implement ciphers, I'm a 'babe in the woods' when it comes to evaluating
 ciphers :-).
 
@@ -6389,7 +6389,7 @@ implementation.  I have tried to make all the routines as general purpose
 as possible.  So you should not think of this library as an SSL
 implemtation, but rather as a library of cryptographic functions
 that also contains SSL.  I refer to each of these function groupings as
-libraries since they are often capable of functioning as independant
+libraries since they are often capable of functioning as independent
 libraries
 
 First up, the general ciphers and message digests supported by the library.
@@ -6441,7 +6441,7 @@ DH	This is an implementation of the
 	to using numbers suplied by others.  I conform to the PKCS#3
 	standard where required.
 
-You may have noticed the preceeding section mentions the 'generation' of
+You may have noticed the preceding section mentions the 'generation' of
 prime numbers.  Now this requries the use of 'random numbers'. 
 
 RAND	This psuedo-random number library is based on MD5 at it's core
@@ -6812,7 +6812,7 @@ all include e_os.h which contains OS/environment specific information.
 If you need to add something todo with a particular environment,
 add it to this file.  It is worth remembering that quite a few libraries,
 like lhash, des, md, sha etc etc do not include crypto/cryptlib.h.  This
-is because these libraries should be 'independantly compilable' and so I
+is because these libraries should be 'independently compilable' and so I
 try to keep them this way.
 e_os.h is not so much a part of SSLeay, as the placing in one spot all the
 evil OS dependant muck.
@@ -6834,7 +6834,7 @@ everthing will work as expected.  Don't edit progs.h by hand.
 make links re-generates the symbolic links that are used.  The reason why
 I keep everything in its own directory, and don't put all the
 test programs and header files in 'test' and 'include' is because I want
-to keep the 'sub-libraries' independant.  I still 'pull' out
+to keep the 'sub-libraries' independent.  I still 'pull' out
 indervidual libraries for use in specific projects where the code is
 required.  I have used the 'lhash' library in just about every software
 project I have worked on :-).

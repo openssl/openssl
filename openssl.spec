@@ -165,7 +165,7 @@ ldconfig
 - Make sure symlinks are created by using -f flag to ln.
   Otherwise some .so libraries are copied rather than
   linked in the resulting binary RPM. This causes the package
-  to be larger than neccessary and makes ldconfig complain.
+  to be larger than necessary and makes ldconfig complain.
 * Fri Oct 13 2000 Horms <horms@vergenet.net>
 - Make defattr is set for files in all packages so packages built as
   non-root will still be installed with files owned by root.
