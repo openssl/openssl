@@ -318,6 +318,8 @@ static int cert_chain = 0;
 #ifndef OPENSSL_NO_TLSEXT
 static BIO *authz_in = NULL;
 static const char *s_authz_file = NULL;
+static BIO *serverinfo_in = NULL;
+static const char *s_serverinfo_file = NULL;
 #endif
 
 #ifndef OPENSSL_NO_PSK
@@ -479,6 +481,9 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -cert arg     - certificate file to use\n");
 	BIO_printf(bio_err,"                 (default is %s)\n",TEST_CERT);
 	BIO_printf(bio_err," -authz arg   -  binary authz file for certificate\n");
+#ifndef OPENSSL_NO_TLSEXT
+	BIO_printf(bio_err," -serverinfo arg - PEM serverinfo file for certificate\n");
+#endif
 	BIO_printf(bio_err," -crl_check    - check the peer certificate has not been revoked by its CA.\n" \
 	                   "                 The CRL(s) are appended to the certificate file\n");
 	BIO_printf(bio_err," -crl_check_all - check the peer certificate has not been revoked by its CA\n" \
@@ -1092,6 +1097,11 @@ int MAIN(int argc, char *argv[])
 			{
 			if (--argc < 1) goto bad;
 			s_authz_file = *(++argv);
+			}
+		else if	(strcmp(*argv,"-serverinfo") == 0)
+			{
+			if (--argc < 1) goto bad;
+			s_serverinfo_file = *(++argv);
 			}
 #endif
 		else if	(strcmp(*argv,"-certform") == 0)
@@ -1853,6 +1863,8 @@ bad:
 #ifndef OPENSSL_NO_TLSEXT
 	if (s_authz_file != NULL && !SSL_CTX_use_authz_file(ctx, s_authz_file))
 		goto end;
+	if (s_serverinfo_file != NULL && !SSL_CTX_use_serverinfo_file(ctx, s_serverinfo_file))
+		goto end;
 #endif
 #ifndef OPENSSL_NO_TLSEXT
 	if (ctx2 && !set_cert_key_stuff(ctx2,s_cert2,s_key2, NULL, build_chain))
@@ -2032,6 +2044,8 @@ end:
 		EVP_PKEY_free(s_key2);
 	if (authz_in != NULL)
 		BIO_free(authz_in);
+	if (serverinfo_in != NULL)
+		BIO_free(serverinfo_in);
 #endif
 	ssl_excert_free(exc);
 	if (ssl_args)

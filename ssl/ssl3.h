@@ -577,6 +577,15 @@ typedef struct ssl3_state_st
 	 * server echoed our server_authz extension and therefore must send us
 	 * a supplemental data handshake message. */
 	char tlsext_authz_server_promised;
+
+	/* tlsext_custom_types contains an array of TLS Extension types which 
+	 * were advertised by the client in its ClientHello, which were not 
+	 * otherwise handled by OpenSSL, and which the server has registered
+	 * a custom_srv_ext_record to handle.
+	 * The array does not contain any duplicates, and is in the same order
+	 * as the types were received in the client hello. */
+	unsigned short *tlsext_custom_types;
+	size_t tlsext_custom_types_count; /* how many tlsext_custom_types */
 #endif
 	} SSL3_STATE;
 

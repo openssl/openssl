@@ -383,6 +383,50 @@ DECLARE_STACK_OF(SRTP_PROTECTION_PROFILE)
 typedef int (*tls_session_ticket_ext_cb_fn)(SSL *s, const unsigned char *data, int len, void *arg);
 typedef int (*tls_session_secret_cb_fn)(SSL *s, void *secret, int *secret_len, STACK_OF(SSL_CIPHER) *peer_ciphers, SSL_CIPHER **cipher, void *arg);
 
+#ifndef OPENSSL_NO_TLSEXT
+/* Callbacks and structures for handling custom TLS Extensions: 
+ *   cli_ext_first_cb  - sends data for ClientHello TLS Extension
+ *   cli_ext_second_cb - receives data from ServerHello TLS Extension
+ *   srv_ext_first_cb  - receives data from ClientHello TLS Extension
+ *   srv_ext_second_cb - sends data for ServerHello TLS Extension
+ *
+ *   All these functions return nonzero on success.  Zero will terminate
+ *   the handshake (and return a specific TLS Fatal alert, if the function
+ *   declaration has an "al" parameter).
+ * 
+ *   "ext_type" is a TLS "ExtensionType" from 0-65535.
+ *   "in" is a pointer to TLS "extension_data" being provided to the cb.
+ *   "out" is used by the callback to return a pointer to "extension data"
+ *     which OpenSSL will later copy into the TLS handshake.  The contents
+ *     of this buffer should not be changed until the handshake is complete.
+ *   "inlen" and "outlen" are TLS Extension lengths from 0-65535.
+ *   "al" is a TLS "AlertDescription" from 0-255 which WILL be sent as a 
+ *     fatal TLS alert, if the callback returns zero.
+ */
+typedef int (*custom_cli_ext_first_cb_fn)(SSL* s, unsigned short ext_type,
+								unsigned char** out, unsigned short* outlen, void* arg);
+typedef int (*custom_cli_ext_second_cb_fn)(SSL* s, unsigned short ext_type,
+					   const unsigned char* in, unsigned short inlen, int* al, void* arg); 
+
+typedef int (*custom_srv_ext_first_cb_fn)(SSL* s, unsigned short ext_type,
+						 const unsigned char* in, unsigned short inlen, int* al, void* arg);
+typedef int (*custom_srv_ext_second_cb_fn)(SSL* s, unsigned short ext_type,
+							  unsigned char** out, unsigned short* outlen, void* arg); 
+
+typedef struct {
+	unsigned short ext_type;
+	custom_cli_ext_first_cb_fn fn1; 
+	custom_cli_ext_second_cb_fn fn2; 
+	void* arg;
+} custom_cli_ext_record;
+
+typedef struct {
+	unsigned short ext_type;
+	custom_srv_ext_first_cb_fn fn1; 
+	custom_srv_ext_second_cb_fn fn2; 
+	void* arg;
+} custom_srv_ext_record;
+#endif
 
 #ifndef OPENSSL_NO_SSL_INTERN
 
@@ -1064,6 +1108,12 @@ struct ssl_ctx_st
 # endif /* OPENSSL_NO_EC */
 	int (*tlsext_authz_server_audit_proof_cb)(SSL *s, void *arg);
 	void *tlsext_authz_server_audit_proof_cb_arg;
+
+	/* Arrays containing the callbacks for custom TLS Extensions. */
+	custom_cli_ext_record* custom_cli_ext_records;
+	custom_srv_ext_record* custom_srv_ext_records;
+	size_t custom_cli_ext_records_count;
+	size_t custom_srv_ext_records_count;
 	};
 
 #endif
@@ -1168,6 +1218,33 @@ int SSL_CTX_use_psk_identity_hint(SSL_CTX *ctx, const char *identity_hint);
 int SSL_use_psk_identity_hint(SSL *s, const char *identity_hint);
 const char *SSL_get_psk_identity_hint(const SSL *s);
 const char *SSL_get_psk_identity(const SSL *s);
+#endif
+
+#ifndef OPENSSL_NO_TLSEXT
+	/* Register callbacks to handle custom TLS Extensions as client or server.
+	 * 
+	 * Returns nonzero on success.  You cannot register twice for the same 
+   * extension number, and registering for an extension number already 
+   * handled by OpenSSL will succeed, but the callbacks will not be invoked.
+   *
+   * NULL can be registered for any callback function.  For the client
+   * functions, a NULL custom_cli_ext_first_cb_fn sends an empty ClientHello
+   * Extension, and a NULL custom_cli_ext_second_cb_fn ignores the ServerHello
+   * response (if any).
+   *
+   * For the server functions, a NULL custom_srv_ext_first_cb_fn means the
+   * ClientHello extension's data will be ignored, but the extension will still
+   * be noted and custom_srv_ext_second_cb_fn will still be invoked.  If 
+   * custom_srv_ext_second_cb_fn is NULL, an empty ServerHello extension is 
+   * sent.
+   */
+int SSL_CTX_set_custom_cli_ext(SSL_CTX *ctx, unsigned short ext_type,
+															 custom_cli_ext_first_cb_fn fn1, 
+															 custom_cli_ext_second_cb_fn fn2, void* arg);
+
+int SSL_CTX_set_custom_srv_ext(SSL_CTX *ctx, unsigned short ext_type,
+															 custom_srv_ext_first_cb_fn fn1, 
+															 custom_srv_ext_second_cb_fn fn2, void* arg);
 #endif
 
 #define SSL_NOTHING	1
@@ -1934,6 +2011,14 @@ const unsigned char *SSL_CTX_get_authz_data(SSL_CTX *ctx, unsigned char type,
 int	SSL_CTX_use_authz_file(SSL_CTX *ctx, const char *file);
 int	SSL_use_authz_file(SSL *ssl, const char *file);
 #endif
+
+/* Set serverinfo data for the current active cert. */
+int	SSL_CTX_use_serverinfo(SSL_CTX *ctx, const unsigned char *serverinfo,
+							size_t serverinfo_length);
+#ifndef OPENSSL_NO_STDIO
+int	SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file);
+#endif /* NO_STDIO */
+
 #endif
 
 #ifndef OPENSSL_NO_STDIO
@@ -2481,6 +2566,8 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_CTX_USE_RSAPRIVATEKEY			 177
 #define SSL_F_SSL_CTX_USE_RSAPRIVATEKEY_ASN1		 178
 #define SSL_F_SSL_CTX_USE_RSAPRIVATEKEY_FILE		 179
+#define SSL_F_SSL_CTX_USE_SERVERINFO			 336
+#define SSL_F_SSL_CTX_USE_SERVERINFO_FILE		 337
 #define SSL_F_SSL_DO_HANDSHAKE				 180
 #define SSL_F_SSL_GET_NEW_SESSION			 181
 #define SSL_F_SSL_GET_PREV_SESSION			 217
@@ -2655,6 +2742,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_INVALID_COMPRESSION_ALGORITHM		 341
 #define SSL_R_INVALID_NULL_CMD_NAME			 385
 #define SSL_R_INVALID_PURPOSE				 278
+#define SSL_R_INVALID_SERVERINFO_DATA			 388
 #define SSL_R_INVALID_SRP_USERNAME			 357
 #define SSL_R_INVALID_STATUS_RESPONSE			 328
 #define SSL_R_INVALID_TICKET_KEYS_LENGTH		 325
