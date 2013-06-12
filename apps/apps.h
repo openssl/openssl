@@ -183,7 +183,6 @@ extern BIO *bio_err;
 #    define apps_startup() \
 			do { do_pipe_sig(); CRYPTO_malloc_init(); \
 			ERR_load_crypto_strings(); OpenSSL_add_all_algorithms(); \
-			RAND_cleanup(); \
 			ENGINE_load_builtin_engines(); setup_ui_method(); } while(0)
 #    define apps_shutdown() \
 			do { CONF_modules_unload(1); destroy_ui_method(); \
@@ -200,6 +199,7 @@ extern BIO *bio_err;
 			do { CONF_modules_unload(1); destroy_ui_method(); \
 			OBJ_cleanup(); EVP_cleanup(); \
 			CRYPTO_cleanup_all_ex_data(); ERR_remove_thread_state(NULL); \
+			RAND_cleanup(); \
 			ERR_free_strings(); zlib_cleanup(); } while(0)
 #  endif
 #endif
