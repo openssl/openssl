@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_get_session - retrieve TLS/SSL session data
+SSL_get_session, SSL_get0_session, SSL_get1_session - retrieve TLS/SSL session data
 
 =head1 SYNOPSIS
 

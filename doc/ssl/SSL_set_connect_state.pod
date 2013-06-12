@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_set_connect_state, SSL_get_accept_state - prepare SSL object to work in client or server mode
+SSL_set_connect_state, SSL_set_accept_state - prepare SSL object to work in client or server mode
 
 =head1 SYNOPSIS
 

@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-OPENSSL_instrument_bus[2] - instrument references to memory bus
+OPENSSL_instrument_bus, OPENSSL_instrument_bus2 - instrument references to memory bus
 
 =head1 SYNOPSIS
 

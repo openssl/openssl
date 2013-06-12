@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_get_rbio - get BIO linked to an SSL object
+SSL_get_rbio, SSL_get_wbio - get BIO linked to an SSL object
 
 =head1 SYNOPSIS
 

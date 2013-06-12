@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-OPENSSL_ia32cap - the IA-32 processor capabilities vector
+OPENSSL_ia32cap, OPENSSL_ia32cap_loc - the IA-32 processor capabilities vector
 
 =head1 SYNOPSIS
 
@@ -20,6 +20,8 @@ set up automatically upon toolkit initialization, but can be
 manipulated afterwards to modify crypto library behaviour. For the
 moment of this writing following bits are significant:
 
+=over
+
 =item bit #4 denoting presence of Time-Stamp Counter.
 
 =item bit #19 denoting availability of CLFLUSH instruction;
@@ -34,8 +36,8 @@ moment of this writing following bits are significant:
 
 =item bit #26 denoting SSE2 support;
 
-=item bit #28 denoting Hyperthreading, which is used to distiguish
-      cores with shared cache;
+=item bit #28 denoting Hyperthreading, which is used to distinguish
+cores with shared cache;
 
 =item bit #30, reserved by Intel, denotes specifically Intel CPUs;
 
@@ -53,6 +55,8 @@ moment of this writing following bits are significant:
 
 =item bit #62 denoting availability of RDRAND instruction;
 
+=back
+
 For example, clearing bit #26 at run-time disables high-performance
 SSE2 code present in the crypto library, while clearing bit #24
 disables SSE2 code operating on 128-bit XMM register bank. You might
@@ -66,7 +70,7 @@ better yet 'env OPENSSL_ia32cap=~0x1000000 apps/openssl' to achieve same
 effect without modifying the application source code. Alternatively you
 can reconfigure the toolkit with no-sse2 option and recompile.
 
-Less intuituve is clearing bit #28. The truth is that it's not copied
+Less intuitive is clearing bit #28. The truth is that it's not copied
 from CPUID output verbatim, but is adjusted to reflect whether or not
 the data cache is actually shared between logical cores. This in turn
 affects the decision on whether or not expensive countermeasures
@@ -76,13 +80,17 @@ module.
 The vector is further extended with EBX value returned by CPUID with
 EAX=7 and ECX=0 as input. Following bits are significant:
 
+=over
+
 =item bit #64+3 denoting availability of BMI1 instructions, e.g. ANDN;
 
 =item bit #64+5 denoting availability of AVX2 instructions;
 
 =item bit #64+8 denoting availability of BMI2 instructions, e.g. MUXL
-      and RORX;
+and RORX;
 
 =item bit #64+18 denoting availability of RDSEED instruction;
 
-=itme bit #64+19 denoting availability of ADCX and ADOX instructions;
+=item bit #64+19 denoting availability of ADCX and ADOX instructions;
+
+=back

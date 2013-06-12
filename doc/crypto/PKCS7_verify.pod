@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-PKCS7_verify - verify a PKCS#7 signedData structure
+PKCS7_verify, PKCS7_get0_signers - verify a PKCS#7 signedData structure
 
 =head1 SYNOPSIS
 

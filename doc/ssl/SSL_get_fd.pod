@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_get_fd - get file descriptor linked to an SSL object
+SSL_get_fd, SSL_get_rfd, SSL_get_wfd - get file descriptor linked to an SSL object
 
 =head1 SYNOPSIS
 

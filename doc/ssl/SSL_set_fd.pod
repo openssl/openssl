@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_set_fd - connect the SSL object with a file descriptor
+SSL_set_fd, SSL_set_rfd, SSL_set_wfd - connect the SSL object with a file descriptor
 
 =head1 SYNOPSIS
 
