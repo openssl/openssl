@@ -132,7 +132,7 @@ int get_signed_seq2string(PKCS7_SIGNER_INFO *si, char **str1, char **str2)
 		c.p=ASN1_STRING_data(s);
 		c.max=c.p+ASN1_STRING_length(s);
 		if (!asn1_GetSequence(&c,&length)) goto err;
-		/* Length is the length of the seqence */
+		/* Length is the length of the sequence */
 
 		c.q=c.p;
 		if ((os1=d2i_ASN1_OCTET_STRING(NULL,&c.p,c.slen)) == NULL) 
@@ -299,7 +299,7 @@ int sk_get_seq2string(STACK_OF(X509_ATTRIBUTE) *sk, char **str1, char **str2)
 		c.p=ASN1_STRING_data(s);
 		c.max=c.p+ASN1_STRING_length(s);
 		if (!asn1_GetSequence(&c,&length)) goto err;
-		/* Length is the length of the seqence */
+		/* Length is the length of the sequence */
 
 		c.q=c.p;
 		if ((os1=d2i_ASN1_OCTET_STRING(NULL,&c.p,c.slen)) == NULL) 

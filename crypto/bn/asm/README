@@ -19,7 +19,7 @@ a 2 times speedup :-).
 
 There are 3 versions of assember for the HP PA-RISC.
 
-pa-risc.s is the origional one which works fine and generated using gcc :-)
+pa-risc.s is the original one which works fine and generated using gcc :-)
 
 pa-risc2W.s and pa-risc2.s are 64 and 32-bit PA-RISC 2.0 implementations
 by Chris Ruemmler from HP (with some help from the HP C compiler).

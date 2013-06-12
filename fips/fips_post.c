@@ -300,7 +300,7 @@ int fips_pkey_signature_test(int id, EVP_PKEY *pkey,
 	if (pkey == NULL)
 		{
 		ret = 1;
-		/* Well actually sucess as we've set ret to 1 */
+		/* Well actually success as we've set ret to 1 */
 		goto error;
 		}
 	if (!FIPS_digestinit(&mctx, digest))

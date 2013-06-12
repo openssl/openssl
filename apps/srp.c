@@ -84,7 +84,7 @@
 static char *srp_usage[]={
 "usage: srp [args] [user] \n",
 "\n",
-" -verbose        Talk alot while doing things\n",
+" -verbose        Talk a lot while doing things\n",
 " -config file    A config file\n",
 " -name arg       The particular srp definition to use\n",
 " -srpvfile arg   The srp verifier file name\n",

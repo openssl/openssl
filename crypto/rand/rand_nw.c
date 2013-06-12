@@ -142,7 +142,7 @@ int RAND_poll(void)
        * ThreadSwitchWithDelay() will introduce additional variability into
        * the data returned by rdtsc.
        *
-       * Applications can agument the seed material by adding additional
+       * Applications can argument the seed material by adding additional
        * stuff with RAND_add() and should probably do so.
       */
    l = GetProcessSwitchCount();

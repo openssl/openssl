@@ -494,7 +494,7 @@ void ssl3_cleanup_key_block(SSL *s)
  *       short etc).
  *   1: if the record's padding is valid / the encryption was successful.
  *   -1: if the record's padding is invalid or, if sending, an internal error
- *       occured.
+ *       occurred.
  */
 int ssl3_enc(SSL *s, int send)
 	{

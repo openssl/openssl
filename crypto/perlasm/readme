@@ -1,5 +1,5 @@
 The perl scripts in this directory are my 'hack' to generate
-multiple different assembler formats via the one origional script.
+multiple different assembler formats via the one original script.
 
 The way to use this library is to start with adding the path to this directory
 and then include it.

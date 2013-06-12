@@ -382,7 +382,7 @@ esac
 #
 
 # Do the Apollo stuff first. Here, we just simply assume
-# that the existance of the /usr/apollo directory is proof
+# that the existence of the /usr/apollo directory is proof
 # enough
 if [ -d /usr/apollo ]; then
     echo "whatever-apollo-whatever"
@@ -862,7 +862,7 @@ case "$GUESSOS" in
   *) OUT=`echo $GUESSOS | awk -F- '{print $3}'`;;
 esac
 
-# NB: This atalla support has been superceded by the ENGINE support
+# NB: This atalla support has been superseded by the ENGINE support
 # That contains its own header and definitions anyway. Support can
 # be enabled or disabled on any supported platform without external
 # headers, eg. by adding the "hw-atalla" switch to ./config or

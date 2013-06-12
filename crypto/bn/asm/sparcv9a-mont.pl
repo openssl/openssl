@@ -867,7 +867,7 @@ ___
 $code =~ s/\`([^\`]*)\`/eval($1)/gem;
 
 # Below substitution makes it possible to compile without demanding
-# VIS extentions on command line, e.g. -xarch=v9 vs. -xarch=v9a. I
+# VIS extensions on command line, e.g. -xarch=v9 vs. -xarch=v9a. I
 # dare to do this, because VIS capability is detected at run-time now
 # and this routine is not called on CPU not capable to execute it. Do
 # note that fzeros is not the only VIS dependency! Another dependency

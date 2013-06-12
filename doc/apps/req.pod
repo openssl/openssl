@@ -159,7 +159,7 @@ B<param:file> generates a key using the parameter file or certificate B<file>,
 the algorithm is determined by the parameters. B<algname:file> use algorithm
 B<algname> and parameter file B<file>: the two algorithms must match or an
 error occurs. B<algname> just uses algorithm B<algname>, and parameters,
-if neccessary should be specified via B<-pkeyopt> parameter.
+if necessary should be specified via B<-pkeyopt> parameter.
 
 B<dsa:filename> generates a DSA key using the parameters
 in the file B<filename>. B<ec:filename> generates EC key (usable both with

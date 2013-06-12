@@ -710,7 +710,7 @@ working across wider range of *BSD branches, not just OpenBSD.
 If the test program in question fails withs SIGILL, Illegal Instruction
 exception, then you more than likely to run SSE2-capable CPU, such as
 Intel P4, under control of kernel which does not support SSE2
-instruction extentions. See accompanying INSTALL file and
+instruction extensions. See accompanying INSTALL file and
 OPENSSL_ia32cap(3) documentation page for further information.
 
 * Why does compiler fail to compile sha512.c?

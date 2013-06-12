@@ -189,7 +189,7 @@ end:
 static void int_unregister_cb_doall_arg(ENGINE_PILE *pile, ENGINE *e)
 	{
 	int n;
-	/* Iterate the 'c->sk' stack removing any occurance of 'e' */
+	/* Iterate the 'c->sk' stack removing any occurrence of 'e' */
 	while((n = sk_ENGINE_find(pile->sk, e)) >= 0)
 		{
 		(void)sk_ENGINE_delete(pile->sk, n);

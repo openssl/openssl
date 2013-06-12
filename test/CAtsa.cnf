@@ -57,7 +57,7 @@ distinguished_name	= $ENV::TSDNSECT
 encrypt_rsa_key		= no
 prompt 			= no
 # attributes		= req_attributes
-x509_extensions	= v3_ca	# The extentions to add to the self signed cert
+x509_extensions	= v3_ca	# The extensions to add to the self signed cert
 
 string_mask = nombstr
 

@@ -95,7 +95,7 @@ int asn1_set_choice_selector(ASN1_VALUE **pval, int value, const ASN1_ITEM *it)
 /* Do reference counting. The value 'op' decides what to do. 
  * if it is +1 then the count is incremented. If op is 0 count is
  * set to 1. If op is -1 count is decremented and the return value
- * is the current refrence count or 0 if no reference count exists.
+ * is the current reference count or 0 if no reference count exists.
  */
 
 int asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it)

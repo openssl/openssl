@@ -267,7 +267,7 @@ and EVP_DigestFinal_ex() were added in OpenSSL 0.9.7.
 
 EVP_md_null(), EVP_md2(), EVP_md5(), EVP_sha(), EVP_sha1(),
 EVP_dss(), EVP_dss1(), EVP_mdc2() and EVP_ripemd160() were
-changed to return truely const EVP_MD * in OpenSSL 0.9.7.
+changed to return truly const EVP_MD * in OpenSSL 0.9.7.
 
 The link between digests and signing algorithms was fixed in OpenSSL 1.0 and
 later, so now EVP_sha1() can be used with RSA and DSA, there is no need to

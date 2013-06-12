@@ -207,7 +207,7 @@ static IMPLEMENT_LHASH_DOALL_FN(cleanup2, ADDED_OBJ)
 static IMPLEMENT_LHASH_DOALL_FN(cleanup3, ADDED_OBJ)
 
 /* The purpose of obj_cleanup_defer is to avoid EVP_cleanup() attempting
- * to use freed up OIDs. If neccessary the actual freeing up of OIDs is
+ * to use freed up OIDs. If necessary the actual freeing up of OIDs is
  * delayed.
  */
 

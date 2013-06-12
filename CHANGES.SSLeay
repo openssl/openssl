@@ -29,7 +29,7 @@ eric (about to go bushwalking for the 4 day easter break :-)
 7-Jan-98
     - Finally reworked the cipher string to ciphers again, so it
       works correctly
-    - All the app_data stuff is now ex_data with funcion calls to access.
+    - All the app_data stuff is now ex_data with function calls to access.
       The index is supplied by a function and 'methods' can be setup
       for the types that are called on XXX_new/XXX_free.  This lets
       applications get notified on creation and destruction.  Some of
@@ -937,7 +937,7 @@ Reasons to start playing with version 0.5.0
   certificate, it is my aim to use perl5/Tk but I don't have time to do
   this right now.  It will generate the certificates but the management
   scripts still need to be written.  This is not a hard task.
-- Things have been cleaned up alot.
+- Things have been cleaned up a lot.
 - Have a look at the enc and dgst programs in the apps directory.
 - It supports v3 of x509 certiticates.
 
