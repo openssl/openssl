@@ -70,7 +70,8 @@ $bf_enc_src="";
 	  'rc4-x86_64' => 'crypto/rc4',
 	  'rc4-md5-x86_64' => 'crypto/rc4',
 	  'ghash-x86_64' => 'crypto/modes',
-          'aesni-gcm-x86_64' => 'crypto/modes',
+	  'aesni-gcm-x86_64' => 'crypto/modes',
+	  'aesni-sha256-x86_64' => 'crypto/aes',
          );
 
 # If I were feeling more clever, these could probably be extracted
