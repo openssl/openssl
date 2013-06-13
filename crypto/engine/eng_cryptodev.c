@@ -55,10 +55,10 @@ ENGINE_load_cryptodev(void)
  
 #include <sys/types.h>
 #include <crypto/cryptodev.h>
-#include <crypto/dh/dh.h>
-#include <crypto/dsa/dsa.h>
-#include <crypto/err/err.h>
-#include <crypto/rsa/rsa.h>
+#include <openssl/dh.h>
+#include <openssl/dsa.h>
+#include <openssl/err.h>
+#include <openssl/rsa.h>
 #include <sys/ioctl.h>
 #include <errno.h>
 #include <stdio.h>
