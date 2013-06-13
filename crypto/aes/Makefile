@@ -87,7 +87,7 @@ aes-%.S:	asm/aes-%.pl;	$(PERL) $< $(PERLASM_SCHEME) > $@
 aes-armv4.o:	aes-armv4.S
 
 files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+	$(PERL) $(TOP)/util/files.pl "AES_ENC=$(AES_ENC)" Makefile >> $(TOP)/MINFO
 
 links:
 	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)

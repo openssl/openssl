@@ -10,10 +10,15 @@
 # Top level excludes
 /Makefile.bak
 /Makefile
+/MINFO
 /*.a
 /include
 /*.pc
 /rehash.time
+/inc.*
+/makefile.*
+/out.*
+/tmp.*
 
 # Most *.c files under test/ are symlinks
 /test/*.c

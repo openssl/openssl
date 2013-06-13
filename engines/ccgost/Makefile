@@ -74,8 +74,7 @@ depend:
 	fi
 
 files:
-
-
+	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
