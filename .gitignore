@@ -15,9 +15,10 @@
 /include
 /*.pc
 /rehash.time
-/out.dbg
-/outinc
-/tmp.dbg
+/inc.*
+/makefile.*
+/out.*
+/tmp.*
 
 # Most *.c files under test/ are symlinks
 /test/*.c
