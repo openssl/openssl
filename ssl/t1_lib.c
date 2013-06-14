@@ -1412,10 +1412,19 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 			unsigned short outlen = 0;
 
 			record = &s->ctx->custom_cli_ext_records[i];
-			if (record->fn1 && !record->fn1(s, record->ext_type,
+			/* NULL callback sends empty extension */ 
+			/* -1 from callback omits extension */
+			if (record->fn1)
+				{
+				int cb_retval = 0;
+				cb_retval = record->fn1(s, record->ext_type,
 							&out, &outlen,
-							record->arg))
-				return NULL;
+							record->arg);
+				if (cb_retval == 0)
+					return NULL; /* error */
+				if (cb_retval == -1)
+					continue; /* skip this extension */
+				}
 			if (limit < ret + 4 + outlen)
 				return NULL;
 			s2n(record->ext_type, ret);
@@ -1709,11 +1718,18 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 					{
 					const unsigned char *out = NULL;
 					unsigned short outlen = 0;
-					if (record->fn2
-					    && !record->fn2(s, record->ext_type,
-							    &out, &outlen,
-							    record->arg))
-						return NULL;
+					int cb_retval = 0;
+
+					/* NULL callback or -1 omits extension */
+					if (!record->fn2)
+						break;
+					cb_retval = record->fn2(s, record->ext_type,
+						    		&out, &outlen,
+						    		record->arg);
+					if (cb_retval == 0)
+						return NULL; /* error */
+					if (cb_retval == -1)
+						break; /* skip this extension */
 					if (limit < ret + 4 + outlen)
 						return NULL;
 					s2n(record->ext_type, ret);

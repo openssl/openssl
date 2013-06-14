@@ -392,7 +392,8 @@ typedef int (*tls_session_secret_cb_fn)(SSL *s, void *secret, int *secret_len, S
  *
  *   All these functions return nonzero on success.  Zero will terminate
  *   the handshake (and return a specific TLS Fatal alert, if the function
- *   declaration has an "al" parameter).
+ *   declaration has an "al" parameter).  -1 for the "sending" functions
+ *   will cause the TLS Extension to be omitted.
  * 
  *   "ext_type" is a TLS "ExtensionType" from 0-65535.
  *   "in" is a pointer to TLS "extension_data" being provided to the cb.
@@ -1233,9 +1234,8 @@ const char *SSL_get_psk_identity(const SSL *s);
  *
  * For the server functions, a NULL custom_srv_ext_first_cb_fn means the
  * ClientHello extension's data will be ignored, but the extension will still
- * be noted and custom_srv_ext_second_cb_fn will still be invoked.  If 
- * custom_srv_ext_second_cb_fn is NULL, an empty ServerHello extension is 
- * sent.
+ * be noted and custom_srv_ext_second_cb_fn will still be invoked.  A NULL
+ * custom_srv_ext_second_cb doesn't send a ServerHello extension.
  */
 int SSL_CTX_set_custom_cli_ext(SSL_CTX *ctx, unsigned short ext_type,
 			       custom_cli_ext_first_cb_fn fn1, 
