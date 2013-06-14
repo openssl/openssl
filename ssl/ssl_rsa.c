@@ -912,9 +912,22 @@ static int serverinfo_find_extension(const unsigned char *serverinfo,
 	return 0;
 	}
 
-static int serverinfo_srv_cb(SSL *s, unsigned short ext_type,
-			     const unsigned char **out, unsigned short *outlen, 
-			     void *arg)
+static int serverinfo_srv_cb_1(SSL *s, unsigned short ext_type,
+			       const unsigned char *in,
+			       unsigned short inlen, int *al,
+			       void *arg)
+	{
+	if (inlen != 0)
+		{
+		*al = SSL_AD_DECODE_ERROR;
+		return 0;
+		}
+	return 1;
+	}
+
+static int serverinfo_srv_cb_2(SSL *s, unsigned short ext_type,
+			       const unsigned char **out, unsigned short *outlen, 
+			       void *arg)
 	{
 	const unsigned char *serverinfo = NULL;
 	size_t serverinfo_length = 0;
@@ -951,8 +964,9 @@ static int serverinfo_validate(const unsigned char *serverinfo,
 
 		/* Register callbacks for extensions */
 		ext_type = (serverinfo[0] << 8) + serverinfo[1];
-		if (ctx && !SSL_CTX_set_custom_srv_ext(ctx, ext_type, NULL,
-						       serverinfo_srv_cb, NULL))
+		if (ctx && !SSL_CTX_set_custom_srv_ext(ctx, ext_type,
+						       serverinfo_srv_cb_1,
+						       serverinfo_srv_cb_2, NULL))
 			return 0;
 
 		serverinfo += 2;
