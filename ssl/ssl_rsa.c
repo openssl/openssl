@@ -880,36 +880,36 @@ static int serverinfo_find_extension(const unsigned char *serverinfo,
 
 		/* end of serverinfo */
 		if (serverinfo_length == 0)
-			return 0;
+			return -1; /* Extension not found */
 
 		/* read 2-byte type field */
 		if (serverinfo_length < 2)
-			return 0;	/* error */
+			return 0; /* Error */
 		type = (serverinfo[0] << 8) + serverinfo[1];
 		serverinfo += 2;
 		serverinfo_length -= 2;
 
 		/* read 2-byte len field */
 		if (serverinfo_length < 2)
-			return 0;	/* error */
+			return 0; /* Error */
 		len = (serverinfo[0] << 8) + serverinfo[1];
 		serverinfo += 2;
 		serverinfo_length -= 2;
 
 		if (len > serverinfo_length)
-			return 0;	/* error */
+			return 0; /* Error */
 
 		if (type == extension_type)
 			{
 			*extension_data = serverinfo;
 			*extension_length = len;
-			return 1;
+			return 1; /* Success */
 			}
 
 		serverinfo += len;
 		serverinfo_length -= len;
 		}
-	return 0;
+	return 0; /* Error */
 	}
 
 static int serverinfo_srv_cb_1(SSL *s, unsigned short ext_type,
@@ -937,11 +937,15 @@ static int serverinfo_srv_cb_2(SSL *s, unsigned short ext_type,
 					    &serverinfo_length)) != 0)
 		{
 		/* Find the relevant extension from the serverinfo */
-		if (serverinfo_find_extension(serverinfo, serverinfo_length,
-					      ext_type, out, outlen))
-			return 1; /* Send extension */
+		int retval = serverinfo_find_extension(serverinfo, serverinfo_length,
+					      	       ext_type, out, outlen);
+		if (retval == 0)
+			return 0; /* Error */
+		if (retval == -1)
+			return -1; /* No extension found, don't send extension */
+		return 1; /* Send extension */
 		}
-	return -1; /* Don't send extension */
+	return -1; /* No serverinfo data found, don't send extension */
 	}
 
 static int serverinfo_validate(const unsigned char *serverinfo, 
