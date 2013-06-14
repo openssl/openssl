@@ -937,10 +937,11 @@ static int serverinfo_srv_cb_2(SSL *s, unsigned short ext_type,
 					    &serverinfo_length)) != 0)
 		{
 		/* Find the relevant extension from the serverinfo */
-		serverinfo_find_extension(serverinfo, serverinfo_length,
-					  ext_type, out, outlen);
+		if (serverinfo_find_extension(serverinfo, serverinfo_length,
+					      ext_type, out, outlen))
+			return 1; /* Send extension */
 		}
-		return 1;
+	return -1; /* Don't send extension */
 	}
 
 static int serverinfo_validate(const unsigned char *serverinfo, 

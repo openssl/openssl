@@ -1751,11 +1751,17 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 					{
 					const unsigned char *out = NULL;
 					unsigned short outlen = 0;
-					if (record->fn2
-					    && !record->fn2(s, record->ext_type,
-							    &out, &outlen,
-							    record->arg))
-						return NULL;
+					if (record->fn2)
+						{
+						int cb_retval = 0;
+						cb_retval = record->fn2(s, record->ext_type,
+							    		&out, &outlen,
+							    		record->arg);
+						if (cb_retval == 0)
+							return NULL; /* error */
+						if (cb_retval == -1)
+							break; /* skip this extension */	
+						}
 					if (limit < ret + 4 + outlen)
 						return NULL;
 					s2n(record->ext_type, ret);

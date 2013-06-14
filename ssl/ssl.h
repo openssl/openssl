@@ -392,7 +392,8 @@ typedef int (*tls_session_secret_cb_fn)(SSL *s, void *secret, int *secret_len, S
  *
  *   All these functions return nonzero on success.  Zero will terminate
  *   the handshake (and return a specific TLS Fatal alert, if the function
- *   declaration has an "al" parameter).
+ *   declaration has an "al" parameter).  -1 for the "sending" functions
+ *   will cause the TLS Extension to be omitted.
  * 
  *   "ext_type" is a TLS "ExtensionType" from 0-65535.
  *   "in" is a pointer to TLS "extension_data" being provided to the cb.
