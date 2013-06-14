@@ -880,58 +880,79 @@ static int serverinfo_find_extension(const unsigned char *serverinfo,
 
 		/* end of serverinfo */
 		if (serverinfo_length == 0)
-			return 0;
+			return -1; /* Extension not found */
 
 		/* read 2-byte type field */
 		if (serverinfo_length < 2)
-			return 0;	/* error */
+			return 0; /* Error */
 		type = (serverinfo[0] << 8) + serverinfo[1];
 		serverinfo += 2;
 		serverinfo_length -= 2;
 
 		/* read 2-byte len field */
 		if (serverinfo_length < 2)
-			return 0;	/* error */
+			return 0; /* Error */
 		len = (serverinfo[0] << 8) + serverinfo[1];
 		serverinfo += 2;
 		serverinfo_length -= 2;
 
 		if (len > serverinfo_length)
-			return 0;	/* error */
+			return 0; /* Error */
 
 		if (type == extension_type)
 			{
 			*extension_data = serverinfo;
 			*extension_length = len;
-			return 1;
+			return 1; /* Success */
 			}
 
 		serverinfo += len;
 		serverinfo_length -= len;
 		}
-	return 0;
+	return 0; /* Error */
 	}
 
-static int serverinfo_srv_cb(SSL *s, unsigned short ext_type,
-			     const unsigned char **out, unsigned short *outlen, 
-			     void *arg)
+static int serverinfo_srv_first_cb(SSL *s, unsigned short ext_type,
+				   const unsigned char *in,
+				   unsigned short inlen, int *al,
+				   void *arg)
+	{
+	if (inlen != 0)
+		{
+		*al = SSL_AD_DECODE_ERROR;
+		return 0;
+		}
+	return 1;
+	}
+
+static int serverinfo_srv_second_cb(SSL *s, unsigned short ext_type,
+			            const unsigned char **out, unsigned short *outlen, 
+			            void *arg)
 	{
 	const unsigned char *serverinfo = NULL;
 	size_t serverinfo_length = 0;
 
-	/* Is there a serverinfo for the chosen server cert? */
+	/* Is there serverinfo data for the chosen server cert? */
 	if ((ssl_get_server_cert_serverinfo(s, &serverinfo,
 					    &serverinfo_length)) != 0)
 		{
 		/* Find the relevant extension from the serverinfo */
-		serverinfo_find_extension(serverinfo, serverinfo_length,
-					  ext_type, out, outlen);
+		int retval = serverinfo_find_extension(serverinfo, serverinfo_length,
+					      	       ext_type, out, outlen);
+		if (retval == 0)
+			return 0; /* Error */
+		if (retval == -1)
+			return -1; /* No extension found, don't send extension */
+		return 1; /* Send extension */
 		}
-		return 1;
+	return -1; /* No serverinfo data found, don't send extension */
 	}
 
-static int serverinfo_validate(const unsigned char *serverinfo, 
-			       size_t serverinfo_length, SSL_CTX *ctx)
+/* With a NULL context, this function just checks that the serverinfo data
+   parses correctly.  With a non-NULL context, it registers callbacks for 
+   the included extensions. */
+static int serverinfo_process_buffer(const unsigned char *serverinfo, 
+			    	     size_t serverinfo_length, SSL_CTX *ctx)
 	{
 	if (serverinfo == NULL || serverinfo_length == 0)
 		return 0;
@@ -951,8 +972,9 @@ static int serverinfo_validate(const unsigned char *serverinfo,
 
 		/* Register callbacks for extensions */
 		ext_type = (serverinfo[0] << 8) + serverinfo[1];
-		if (ctx && !SSL_CTX_set_custom_srv_ext(ctx, ext_type, NULL,
-						       serverinfo_srv_cb, NULL))
+		if (ctx && !SSL_CTX_set_custom_srv_ext(ctx, ext_type, 
+						       serverinfo_srv_first_cb,
+						       serverinfo_srv_second_cb, NULL))
 			return 0;
 
 		serverinfo += 2;
@@ -1058,7 +1080,7 @@ int SSL_CTX_use_serverinfo(SSL_CTX *ctx, const unsigned char *serverinfo,
 		SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO,ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 		}
-	if (!serverinfo_validate(serverinfo, serverinfo_length, NULL))
+	if (!serverinfo_process_buffer(serverinfo, serverinfo_length, NULL))
 		{
 		SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO,SSL_R_INVALID_SERVERINFO_DATA);
 		return(0);
@@ -1085,7 +1107,7 @@ int SSL_CTX_use_serverinfo(SSL_CTX *ctx, const unsigned char *serverinfo,
 
 	/* Now that the serverinfo is validated and stored, go ahead and 
 	 * register callbacks. */
-	if (!serverinfo_validate(serverinfo, serverinfo_length, ctx))
+	if (!serverinfo_process_buffer(serverinfo, serverinfo_length, ctx))
 		{
 		SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO,SSL_R_INVALID_SERVERINFO_DATA);
 		return(0);
