@@ -932,7 +932,7 @@ static int serverinfo_srv_cb_2(SSL *s, unsigned short ext_type,
 	const unsigned char *serverinfo = NULL;
 	size_t serverinfo_length = 0;
 
-	/* Is there a serverinfo for the chosen server cert? */
+	/* Is there serverinfo data for the chosen server cert? */
 	if ((ssl_get_server_cert_serverinfo(s, &serverinfo,
 					    &serverinfo_length)) != 0)
 		{

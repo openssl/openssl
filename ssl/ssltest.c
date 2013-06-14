@@ -382,16 +382,16 @@ int serverinfo_tack_seen = 0;
 int serverinfo_other_seen = 0;
 
 static int serverinfo_cli_cb(SSL* s, unsigned short ext_type,
-												     const unsigned char* in, unsigned short inlen, 
-												     int* al, void* arg)
+			     const unsigned char* in, unsigned short inlen, 
+			     int* al, void* arg)
 	{
-		if (ext_type == SCT_EXT_TYPE)
-			serverinfo_sct_seen++;
-		else if (ext_type == TACK_EXT_TYPE)
-			serverinfo_tack_seen++;
-		else
-			serverinfo_other_seen++;
-		return 1;
+	if (ext_type == SCT_EXT_TYPE)
+		serverinfo_sct_seen++;
+	else if (ext_type == TACK_EXT_TYPE)
+		serverinfo_tack_seen++;
+	else
+		serverinfo_other_seen++;
+	return 1;
 	}
 
 static int verify_serverinfo()
