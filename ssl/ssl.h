@@ -1241,9 +1241,8 @@ const char *SSL_get_psk_identity(const SSL *s);
  *
  * For the server functions, a NULL custom_srv_ext_first_cb_fn means the
  * ClientHello extension's data will be ignored, but the extension will still
- * be noted and custom_srv_ext_second_cb_fn will still be invoked.  If 
- * custom_srv_ext_second_cb_fn is NULL, an empty ServerHello extension is 
- * sent.
+ * be noted and custom_srv_ext_second_cb_fn will still be invoked.  A NULL
+ * custom_srv_ext_second_cb doesn't send a ServerHello extension.
  */
 int SSL_CTX_set_custom_cli_ext(SSL_CTX *ctx, unsigned short ext_type,
 			       custom_cli_ext_first_cb_fn fn1, 
