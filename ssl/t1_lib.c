@@ -1776,7 +1776,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 					s2n(outlen, ret);
 					memcpy(ret, out, outlen);
 					ret += outlen;
-					break;					
+					break;
 					}
 				}
 			}
