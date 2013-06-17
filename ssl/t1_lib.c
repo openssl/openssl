@@ -1458,9 +1458,10 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 			/* -1 from callback omits extension */
 			if (record->fn1)
 				{
-				int cb_retval = record->fn1(s, record->ext_type,
-							    &out, &outlen,
-							    record->arg);
+				int cb_retval = 0;
+				cb_retval = record->fn1(s, record->ext_type,
+							&out, &outlen,
+							record->arg);
 				if (cb_retval == 0)
 					return NULL; /* error */
 				if (cb_retval == -1)
