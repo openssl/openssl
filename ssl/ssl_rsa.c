@@ -912,22 +912,9 @@ static int serverinfo_find_extension(const unsigned char *serverinfo,
 	return 0; /* Error */
 	}
 
-static int serverinfo_srv_cb_1(SSL *s, unsigned short ext_type,
-			       const unsigned char *in,
-			       unsigned short inlen, int *al,
-			       void *arg)
-	{
-	if (inlen != 0)
-		{
-		*al = SSL_AD_DECODE_ERROR;
-		return 0;
-		}
-	return 1;
-	}
-
-static int serverinfo_srv_cb_2(SSL *s, unsigned short ext_type,
-			       const unsigned char **out, unsigned short *outlen, 
-			       void *arg)
+static int serverinfo_srv_cb(SSL *s, unsigned short ext_type,
+			     const unsigned char **out, unsigned short *outlen, 
+			     void *arg)
 	{
 	const unsigned char *serverinfo = NULL;
 	size_t serverinfo_length = 0;
@@ -948,8 +935,11 @@ static int serverinfo_srv_cb_2(SSL *s, unsigned short ext_type,
 	return -1; /* No serverinfo data found, don't send extension */
 	}
 
-static int serverinfo_validate(const unsigned char *serverinfo, 
-			       size_t serverinfo_length, SSL_CTX *ctx)
+/* With a NULL context, this function just checks that the serverinfo data
+   parses correctly.  With a non-NULL context, it registers callbacks for 
+   the included extensions. */
+static int serverinfo_process_buffer(const unsigned char *serverinfo, 
+			    	     size_t serverinfo_length, SSL_CTX *ctx)
 	{
 	if (serverinfo == NULL || serverinfo_length == 0)
 		return 0;
@@ -969,9 +959,8 @@ static int serverinfo_validate(const unsigned char *serverinfo,
 
 		/* Register callbacks for extensions */
 		ext_type = (serverinfo[0] << 8) + serverinfo[1];
-		if (ctx && !SSL_CTX_set_custom_srv_ext(ctx, ext_type,
-						       serverinfo_srv_cb_1,
-						       serverinfo_srv_cb_2, NULL))
+		if (ctx && !SSL_CTX_set_custom_srv_ext(ctx, ext_type, NULL,
+						       serverinfo_srv_cb, NULL))
 			return 0;
 
 		serverinfo += 2;
@@ -1077,7 +1066,7 @@ int SSL_CTX_use_serverinfo(SSL_CTX *ctx, const unsigned char *serverinfo,
 		SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO,ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 		}
-	if (!serverinfo_validate(serverinfo, serverinfo_length, NULL))
+	if (!serverinfo_process_buffer(serverinfo, serverinfo_length, NULL))
 		{
 		SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO,SSL_R_INVALID_SERVERINFO_DATA);
 		return(0);
@@ -1104,7 +1093,7 @@ int SSL_CTX_use_serverinfo(SSL_CTX *ctx, const unsigned char *serverinfo,
 
 	/* Now that the serverinfo is validated and stored, go ahead and 
 	 * register callbacks. */
-	if (!serverinfo_validate(serverinfo, serverinfo_length, ctx))
+	if (!serverinfo_process_buffer(serverinfo, serverinfo_length, ctx))
 		{
 		SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO,SSL_R_INVALID_SERVERINFO_DATA);
 		return(0);
