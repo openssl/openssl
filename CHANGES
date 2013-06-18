@@ -4,6 +4,10 @@
 
  Changes between 1.0.x and 1.1.0  [xx XXX xxxx]
 
+  *) Add callbacks supporting generation and retrieval of supplemental 
+     data entries.
+     [Scott Deboy <sdeboy@apache.org>, Trevor Perrin and Ben Laurie]
+
   *) Add EVP support for key wrapping algorithms, to avoid problems with
      existing code the flag EVP_CIPHER_CTX_WRAP_ALLOW has to be set in
      the EVP_CIPHER_CTX or an error is returned. Add AES and DES3 wrap
