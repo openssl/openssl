@@ -172,10 +172,10 @@ des_t4_cbc_encrypt:
 						! in inp==out case
 	faligndata	%f0, %f0, %f2		! handle unaligned output
 
-	stda		%f8, [$out + $omask]0xc0	! partial store
+	stda		%f2, [$out + $omask]0xc0	! partial store
 	add		$out, 8, $out
 	orn		%g0, $omask, $omask
-	stda		%f8, [$out + $omask]0xc0	! partial store
+	stda		%f2, [$out + $omask]0xc0	! partial store
 
 	brnz,pt		$len, .Ldes_cbc_enc_loop+4
 	orn		%g0, $omask, $omask
