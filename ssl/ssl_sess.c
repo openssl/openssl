@@ -746,8 +746,6 @@ void SSL_SESSION_free(SSL_SESSION *ss)
 	ss->tlsext_ellipticcurvelist_length = 0;
 	if (ss->tlsext_ellipticcurvelist != NULL) OPENSSL_free(ss->tlsext_ellipticcurvelist);
 #endif /* OPENSSL_NO_EC */
-	if (ss->audit_proof != NULL) OPENSSL_free(ss->audit_proof);
-	ss->audit_proof_length = 0;
 #endif
 #ifndef OPENSSL_NO_PSK
 	if (ss->psk_identity_hint != NULL)
@@ -868,15 +866,6 @@ int SSL_SESSION_set1_id_context(SSL_SESSION *s,const unsigned char *sid_ctx,
 
 	return 1;
 	}
-
-#ifndef OPENSSL_NO_TLSEXT
-unsigned char *SSL_SESSION_get_tlsext_authz_server_audit_proof(SSL_SESSION *s, size_t *proof_length)
-	{
-	if (s->audit_proof != NULL)
-		*proof_length = s->audit_proof_length;
-	return s->audit_proof;
-	}
-#endif
 
 long SSL_CTX_set_timeout(SSL_CTX *s, long t)
 	{
