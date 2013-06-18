@@ -473,7 +473,15 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	wstart=bits-1;	/* The top bit of the window */
 	wend=0;		/* The bottom bit of the window */
 
+#if 1	/* by Shay Gueron's suggestion */
+	j = mont->N.top;	/* borrow j */
+	if (bn_wexpand(r,j) == NULL) goto err;
+	r->d[0] = (0-m->d[0])&BN_MASK2;		/* 2^(top*BN_BITS2) - m */
+	for(i=1;i<j;i++) r->d[i] = (~m->d[i])&BN_MASK2;
+	r->top = j;
+#else
 	if (!BN_to_montgomery(r,BN_value_one(),mont,ctx)) goto err;
+#endif
 	for (;;)
 		{
 		if (BN_is_bit_set(p,wstart) == 0)
@@ -525,6 +533,17 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 		start=0;
 		if (wstart < 0) break;
 		}
+#if defined(OPENSSL_BN_ASM_MONT) && (defined(__sparc__) || defined(__sparc))
+	if (OPENSSL_sparcv9cap_P[0]&(SPARCV9_VIS3|SPARCV9_PREFER_FPU))
+		{
+		j = mont->N.top;	/* borrow j */
+		val[0]->d[0] = 1;	/* borrow val[0] */
+		for (i=1;i<j;i++) val[0]->d[i] = 0;
+		val[0]->top = j;
+		if (!BN_mod_mul_montgomery(rr,r,val[0],mont,ctx)) goto err;
+		}
+	else
+#endif
 	if (!BN_from_montgomery(rr,r,mont,ctx)) goto err;
 	ret=1;
 err:
@@ -534,6 +553,28 @@ err:
 	return(ret);
 	}
 
+#if defined(OPENSSL_BN_ASM_MONT) && (defined(__sparc__) || defined(__sparc))
+static BN_ULONG bn_get_bits(const BIGNUM *a, int bitpos)
+	{
+	BN_ULONG ret=0;
+	int wordpos;
+
+	wordpos = bitpos/BN_BITS2;
+	bitpos %= BN_BITS2;
+	if (wordpos>=0 && wordpos < a->top)
+		{
+		ret = a->d[wordpos]&BN_MASK2;
+		if (bitpos)
+			{
+			ret >>= bitpos;
+			if (++wordpos < a->top)
+				ret |= a->d[wordpos]<<(BN_BITS2-bitpos);
+			}
+		}
+
+	return ret&BN_MASK2;
+}
+#endif
 
 /* BN_mod_exp_mont_consttime() stores the precomputed powers in a specific layout
  * so that accessing any of these table values shows the same access pattern as far
@@ -674,13 +715,13 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	tmp.flags = am.flags = BN_FLG_STATIC_DATA;
 
 	/* prepare a^0 in Montgomery domain */
-#if 1
- 	if (!BN_to_montgomery(&tmp,BN_value_one(),mont,ctx))	goto err;
-#else
+#if 1	/* by Shay Gueron's suggestion */
 	tmp.d[0] = (0-m->d[0])&BN_MASK2;	/* 2^(top*BN_BITS2) - m */
 	for (i=1;i<top;i++)
 		tmp.d[i] = (~m->d[i])&BN_MASK2;
 	tmp.top = top;
+#else
+ 	if (!BN_to_montgomery(&tmp,BN_value_one(),mont,ctx))	goto err;
 #endif
 
 	/* prepare a^1 in Montgomery domain */
@@ -695,56 +736,78 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
     if (t4)
 	{
 	typedef int (*bn_pwr5_mont_f)(BN_ULONG *tp,const BN_ULONG *np,
-			const BN_ULONG *n0,const void *table,int power);
+			const BN_ULONG *n0,const void *table,int power,int bits);
 	int bn_pwr5_mont_t4_8(BN_ULONG *tp,const BN_ULONG *np,
-			const BN_ULONG *n0,const void *table,int power);
+			const BN_ULONG *n0,const void *table,int power,int bits);
 	int bn_pwr5_mont_t4_16(BN_ULONG *tp,const BN_ULONG *np,
-			const BN_ULONG *n0,const void *table,int power);
+			const BN_ULONG *n0,const void *table,int power,int bits);
 	int bn_pwr5_mont_t4_24(BN_ULONG *tp,const BN_ULONG *np,
-			const BN_ULONG *n0,const void *table,int power);
+			const BN_ULONG *n0,const void *table,int power,int bits);
 	int bn_pwr5_mont_t4_32(BN_ULONG *tp,const BN_ULONG *np,
-			const BN_ULONG *n0,const void *table,int power);
-	static const bn_pwr5_mont_f funcs[4] = {
+			const BN_ULONG *n0,const void *table,int power,int bits);
+	static const bn_pwr5_mont_f pwr5_funcs[4] = {
 			bn_pwr5_mont_t4_8,	bn_pwr5_mont_t4_16,
 			bn_pwr5_mont_t4_24,	bn_pwr5_mont_t4_32 };
-	bn_pwr5_mont_f worker = funcs[top/16-1];
+	bn_pwr5_mont_f pwr5_worker = pwr5_funcs[top/16-1];
 
+	typedef int (*bn_mul_mont_f)(BN_ULONG *rp,const BN_ULONG *ap,
+			const void *bp,const BN_ULONG *np,const BN_ULONG *n0);
+	int bn_mul_mont_t4_8(BN_ULONG *rp,const BN_ULONG *ap,
+			const void *bp,const BN_ULONG *np,const BN_ULONG *n0);
+	int bn_mul_mont_t4_16(BN_ULONG *rp,const BN_ULONG *ap,
+			const void *bp,const BN_ULONG *np,const BN_ULONG *n0);
+	int bn_mul_mont_t4_24(BN_ULONG *rp,const BN_ULONG *ap,
+			const void *bp,const BN_ULONG *np,const BN_ULONG *n0);
+	int bn_mul_mont_t4_32(BN_ULONG *rp,const BN_ULONG *ap,
+			const void *bp,const BN_ULONG *np,const BN_ULONG *n0);
+	static const bn_mul_mont_f mul_funcs[4] = {
+			bn_mul_mont_t4_8,	bn_mul_mont_t4_16,
+			bn_mul_mont_t4_24,	bn_mul_mont_t4_32 };
+	bn_mul_mont_f mul_worker = mul_funcs[top/16-1];
+
+	void bn_mul_mont_vis3(BN_ULONG *rp,const BN_ULONG *ap,
+			const void *bp,const BN_ULONG *np,
+			const BN_ULONG *n0,int num);
 	void bn_mul_mont_t4(BN_ULONG *rp,const BN_ULONG *ap,
 			const void *bp,const BN_ULONG *np,
 			const BN_ULONG *n0,int num);
 	void bn_mul_mont_gather5_t4(BN_ULONG *rp,const BN_ULONG *ap,
 			const void *table,const BN_ULONG *np,
 			const BN_ULONG *n0,int num,int power);
-	void bn_scatter5_t4(const BN_ULONG *inp,size_t num,
+	void bn_flip_n_scatter5_t4(const BN_ULONG *inp,size_t num,
 			void *table,size_t power);
 	void bn_gather5_t4(BN_ULONG *out,size_t num,
 			void *table,size_t power);
 	void bn_flip_t4(BN_ULONG *dst,BN_ULONG *src,size_t num);
 
-	BN_ULONG *np=alloca(top*sizeof(BN_ULONG)), *n0=mont->n0;
+	BN_ULONG *np=mont->N.d, *n0=mont->n0;
+	int stride = 5*(6-(top/16-1));	/* multiple of 5, but less than 32 */
 
 	/* BN_to_montgomery can contaminate words above .top
 	 * [in BN_DEBUG[_DEBUG] build]... */
 	for (i=am.top; i<top; i++)	am.d[i]=0;
 	for (i=tmp.top; i<top; i++)	tmp.d[i]=0;
 
-	/* switch to 64-bit domain */ 
-	top /= 2;
-	bn_flip_t4(np,mont->N.d,top);
-	bn_flip_t4(tmp.d,tmp.d,top);
-	bn_flip_t4(am.d,am.d,top);
-
-	bn_scatter5_t4(tmp.d,top,powerbuf,0);
-	bn_scatter5_t4(am.d,top,powerbuf,1);
-	bn_mul_mont_t4(tmp.d,am.d,am.d,np,n0,top);
-	bn_scatter5_t4(tmp.d,top,powerbuf,2);
+	bn_flip_n_scatter5_t4(tmp.d,top,powerbuf,0);
+	bn_flip_n_scatter5_t4(am.d,top,powerbuf,1);
+	if (!(*mul_worker)(tmp.d,am.d,am.d,np,n0) &&
+	    !(*mul_worker)(tmp.d,am.d,am.d,np,n0))
+		bn_mul_mont_vis3(tmp.d,am.d,am.d,np,n0,top);
+	bn_flip_n_scatter5_t4(tmp.d,top,powerbuf,2);
 
 	for (i=3; i<32; i++)
 		{
 		/* Calculate a^i = a^(i-1) * a */
-		bn_mul_mont_gather5_t4(tmp.d,am.d,powerbuf,np,n0,top,i-1);
-		bn_scatter5_t4(tmp.d,top,powerbuf,i);
+		if (!(*mul_worker)(tmp.d,tmp.d,am.d,np,n0) &&
+		    !(*mul_worker)(tmp.d,tmp.d,am.d,np,n0))
+			bn_mul_mont_vis3(tmp.d,tmp.d,am.d,np,n0,top);
+		bn_flip_n_scatter5_t4(tmp.d,top,powerbuf,i);
 		}
+
+	/* switch to 64-bit domain */ 
+	np = alloca(top*sizeof(BN_ULONG));
+	top /= 2;
+	bn_flip_t4(np,mont->N.d,top);
 
 	bits--;
 	for (wvalue=0, i=bits%5; i>=0; i--,bits--)
@@ -756,12 +819,17 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	 */
 	while (bits >= 0)
 		{
-		for (wvalue=0, i=0; i<5; i++,bits--)
-			wvalue = (wvalue<<1)+BN_is_bit_set(p,bits);
+		if (bits < stride) stride = bits+1;
+		bits -= stride;
+		wvalue = bn_get_bits(p,bits+1);
 
-		if ((*worker)(tmp.d,np,n0,powerbuf,wvalue)) continue;
+		if ((*pwr5_worker)(tmp.d,np,n0,powerbuf,wvalue,stride)) continue;
 		/* retry once and fall back */
-		if ((*worker)(tmp.d,np,n0,powerbuf,wvalue)) continue;
+		if ((*pwr5_worker)(tmp.d,np,n0,powerbuf,wvalue,stride)) continue;
+
+		bits += stride-5;
+		wvalue >>= stride-5;
+		wvalue &= 31;
 		bn_mul_mont_t4(tmp.d,tmp.d,tmp.d,np,n0,top);
 		bn_mul_mont_t4(tmp.d,tmp.d,tmp.d,np,n0,top);
 		bn_mul_mont_t4(tmp.d,tmp.d,tmp.d,np,n0,top);
@@ -922,6 +990,15 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	}
 
  	/* Convert the final result from montgomery to standard format */
+#if defined(OPENSSL_BN_ASM_MONT) && (defined(__sparc__) || defined(__sparc))
+	if (OPENSSL_sparcv9cap_P[0]&(SPARCV9_VIS3|SPARCV9_PREFER_FPU))
+		{
+		am.d[0] = 1;	/* borrow am */
+		for (i=1;i<top;i++) am.d[i] = 0;
+		if (!BN_mod_mul_montgomery(rr,&tmp,&am,mont,ctx)) goto err;
+		}
+	else
+#endif
 	if (!BN_from_montgomery(rr,&tmp,mont,ctx)) goto err;
 	ret=1;
 err:
