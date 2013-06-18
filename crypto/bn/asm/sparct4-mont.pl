@@ -29,36 +29,36 @@
 #
 # 64-bit process, VIS3:
 #                   sign    verify    sign/s verify/s
-# rsa 1024 bits 0.000633s 0.000033s   1578.9  30513.3
-# rsa 2048 bits 0.003297s 0.000116s    303.3   8585.8
-# rsa 4096 bits 0.026000s 0.000387s     38.5   2587.0
+# rsa 1024 bits 0.000628s 0.000028s   1592.4  35434.4
+# rsa 2048 bits 0.003282s 0.000106s    304.7   9438.3
+# rsa 4096 bits 0.025866s 0.000340s     38.7   2940.9
 # dsa 1024 bits 0.000301s 0.000332s   3323.7   3013.9
 # dsa 2048 bits 0.001056s 0.001233s    946.9    810.8
 #
 # 64-bit process, this module:
 #                   sign    verify    sign/s verify/s
-# rsa 1024 bits 0.000341s 0.000021s   2931.5  46873.8
-# rsa 2048 bits 0.001244s 0.000044s    803.9  22569.1
-# rsa 4096 bits 0.006203s 0.000387s    161.2   2586.3
-# dsa 1024 bits 0.000179s 0.000195s   5573.9   5115.6
-# dsa 2048 bits 0.000311s 0.000350s   3212.3   2856.6
+# rsa 1024 bits 0.000256s 0.000016s   3904.4  61411.9
+# rsa 2048 bits 0.000946s 0.000029s   1056.8  34292.7
+# rsa 4096 bits 0.005061s 0.000340s    197.6   2940.5
+# dsa 1024 bits 0.000176s 0.000195s   5674.7   5130.5
+# dsa 2048 bits 0.000296s 0.000354s   3383.2   2827.6
 #
 ######################################################################
 # 32-bit process, VIS3:
 #                   sign    verify    sign/s verify/s
-# rsa 1024 bits 0.000675s 0.000033s   1480.9  30159.0
-# rsa 2048 bits 0.003383s 0.000118s    295.6   8499.9
-# rsa 4096 bits 0.026178s 0.000394s     38.2   2541.3
-# dsa 1024 bits 0.000326s 0.000343s   3070.0   2918.8
-# dsa 2048 bits 0.001121s 0.001291s    891.9    774.4
+# rsa 1024 bits 0.000665s 0.000028s   1504.8  35233.3
+# rsa 2048 bits 0.003349s 0.000106s    298.6   9433.4
+# rsa 4096 bits 0.025959s 0.000341s     38.5   2934.8
+# dsa 1024 bits 0.000320s 0.000341s   3123.3   2929.6
+# dsa 2048 bits 0.001101s 0.001260s    908.2    793.4
 #
 # 32-bit process, this module:
 #                   sign    verify    sign/s verify/s
-# rsa 1024 bits 0.000386s 0.000022s   2589.6  45704.9
-# rsa 2048 bits 0.001335s 0.000046s    749.3  21766.8
-# rsa 4096 bits 0.006390s 0.000393s    156.5   2544.8
-# dsa 1024 bits 0.000208s 0.000204s   4817.6   4896.6
-# dsa 2048 bits 0.000345s 0.000364s   2898.8   2747.3
+# rsa 1024 bits 0.000301s 0.000017s   3317.1  60240.0
+# rsa 2048 bits 0.001034s 0.000030s    966.9  33812.7
+# rsa 4096 bits 0.005244s 0.000341s    190.7   2935.4
+# dsa 1024 bits 0.000201s 0.000205s   4976.1   4879.2
+# dsa 2048 bits 0.000328s 0.000360s   3051.1   2774.2
 #
 # 32-bit code is prone to performance degradation as interrupt rate
 # dispatched to CPU executing the code grows. This is because in
@@ -69,7 +69,7 @@
 # hardly measurable. But in order to mitigate this problem for higher
 # interrupt rates contemporary Linux kernel recognizes biased stack
 # even in 32-bit process context and preserves full register contents.
-# See http://git.kernel.org/?p=linux/kernel/git/torvalds/linux.git;h=517ffce4e1a03aea979fe3a18a3dd1761a24fafb
+# See http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=517ffce4e1a03aea979fe3a18a3dd1761a24fafb
 # for details.
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
@@ -98,8 +98,8 @@ ___
 #
 my @R=map("%f".2*$_,(0..11,30,31,12..29));
 my @N=(map("%l$_",(0..7)),map("%o$_",(0..5))); @N=(@N,@N,@N[0..3]);
-my @B=(map("%o$_",(0..5)),@N[0..13],@N[0..11]);
 my @A=(@N[0..13],@R[14..31]);
+my @B=(map("%i$_",(0..5)),map("%l$_",(0..7))); @B=(@B,@B,map("%o$_",(0..3)));
 
 ########################################################################
 # int bn_mul_mont_t4_$NUM(u64 *rp,const u64 *ap,const u64 *bp,
@@ -223,20 +223,11 @@ $code.=<<___;
 ___
 
 # load bp[$NUM] ########################################################
-for($i=0; $i<6 && $i<$NUM; $i++) {
-my $lo=$i<5?@B[$i+1]:"%o7";
-$code.=<<___;
-	ld	[$bp+$i*8+0],$lo
-	ld	[$bp+$i*8+4],@B[$i]
-	sllx	@B[$i],32,@B[$i]
-	or	$lo,@B[$i],@B[$i]
-___
-}
 $code.=<<___;
 	save	%sp,-128,%sp;		or	$sentinel,%fp,%fp
 ___
-for(; $i<20 && $i<$NUM; $i++) {
-my $lo=$i<19?@B[$i+1]:"%o7";
+for($i=0; $i<14 && $i<$NUM; $i++) {
+my $lo=$i<13?@B[$i+1]:"%o7";
 $code.=<<___;
 	ld	[$bp+$i*8+0],$lo
 	ld	[$bp+$i*8+4],@B[$i]
@@ -355,58 +346,84 @@ for ($i=8;$i<=32;$i+=8) {
 
 ########################################################################
 #
-sub load_fcc() {
-my ($ptbl,$pwr,$tmp)=@_;
+sub load_ccr {
+my ($ptbl,$pwr,$ccr,$skip_wr)=@_;
 $code.=<<___;
-	sethi	%hi(.Lmagic-1f),$tmp
-1:	call	.+8
-	add	%o7,	$tmp,	%o7
-	inc	%lo(.Lmagic-1b),%o7
-	and	$pwr,	7<<2,	$tmp	! offset within "magic table"
-	add	$tmp,	%o7,	%o7
-	and	$pwr,	3,	$tmp
-	sll	$tmp,	3,	$tmp	! offset within first cache line
-	add	$tmp,	$ptbl,	$ptbl	! of the pwrtbl
-
-	! "magic table" is organized in such way that below comparisons
-	! make %fcc3:%fcc2:%fcc1:%fcc0 form a byte of 1s with one 0,
-	! e.g. 0b11011111, with 0 denoting relevant cache line.
-	ld	[%o7+0],	%f0	! load column
-	ld	[%o7+32],	%f1
-	ld	[%o7+64],	%f2
-	fcmps	%fcc0,	%f0,	%f1
-	ld	[%o7+96],	%f3
-	fcmps	%fcc1,	%f1,	%f2
-	fcmps	%fcc2,	%f2,	%f3
-	fcmps	%fcc3,	%f3,	%f0
+	srl	$pwr,	2,	%o4
+	and	$pwr,	3,	%o5
+	and	%o4,	7,	%o4
+	sll	%o5,	3,	%o5	! offset within first cache line
+	add	%o5,	$ptbl,	$ptbl	! of the pwrtbl
+	or	%g0,	1,	%o5
+	sll	%o5,	%o4,	$ccr
+___
+$code.=<<___	if (!$skip_wr);
+	wr	$ccr,	%g0,	%ccr
 ___
 }
-sub load_f16() {
-my $ptbl=shift;
+sub load_b_pair {
+my ($pwrtbl,$B0,$B1)=@_;
+
 $code.=<<___;
-	ldd	[$ptbl+0*32],%f0	! load all cache lines
-	ldd	[$ptbl+1*32],%f2
-	ldd	[$ptbl+2*32],%f4
-	fmovdg	%fcc0,%f0,%f16		! pick one value
-	ldd	[$ptbl+3*32],%f6
-	fmovdl	%fcc0,%f2,%f16
-	ldd	[$ptbl+4*32],%f8
-	fmovdg	%fcc1,%f4,%f16
-	ldd	[$ptbl+5*32],%f10
-	fmovdl	%fcc1,%f6,%f16
-	ldd	[$ptbl+6*32],%f12
-	fmovdg	%fcc2,%f8,%f16
-	ldd	[$ptbl+7*32],%f14
-	fmovdl	%fcc2,%f10,%f16
-	fmovdg	%fcc3,%f12,%f16
-	fmovdl	%fcc3,%f14,%f16
-	add	$ptbl,8*32,$ptbl
+	ldx	[$pwrtbl+0*32],	$B0
+	ldx	[$pwrtbl+8*32],	$B1
+	ldx	[$pwrtbl+1*32],	%o4
+	ldx	[$pwrtbl+9*32],	%o5
+	movvs	%icc,	%o4,	$B0
+	ldx	[$pwrtbl+2*32],	%o4
+	movvs	%icc,	%o5,	$B1
+	ldx	[$pwrtbl+10*32],%o5
+	move	%icc,	%o4,	$B0
+	ldx	[$pwrtbl+3*32],	%o4
+	move	%icc,	%o5,	$B1
+	ldx	[$pwrtbl+11*32],%o5
+	movneg	%icc,	%o4,	$B0
+	ldx	[$pwrtbl+4*32],	%o4
+	movneg	%icc,	%o5,	$B1
+	ldx	[$pwrtbl+12*32],%o5
+	movcs	%xcc,	%o4,	$B0
+	ldx	[$pwrtbl+5*32],%o4
+	movcs	%xcc,	%o5,	$B1
+	ldx	[$pwrtbl+13*32],%o5
+	movvs	%xcc,	%o4,	$B0
+	ldx	[$pwrtbl+6*32],	%o4
+	movvs	%xcc,	%o5,	$B1
+	ldx	[$pwrtbl+14*32],%o5
+	move	%xcc,	%o4,	$B0
+	ldx	[$pwrtbl+7*32],	%o4
+	move	%xcc,	%o5,	$B1
+	ldx	[$pwrtbl+15*32],%o5
+	movneg	%xcc,	%o4,	$B0
+	add	$pwrtbl,16*32,	$pwrtbl
+	movneg	%xcc,	%o5,	$B1
+___
+}
+sub load_b {
+my ($pwrtbl,$Bi)=@_;
+
+$code.=<<___;
+	ldx	[$pwrtbl+0*32],	$Bi
+	ldx	[$pwrtbl+1*32],	%o4
+	ldx	[$pwrtbl+2*32],	%o5
+	movvs	%icc,	%o4,	$Bi
+	ldx	[$pwrtbl+3*32],	%o4
+	move	%icc,	%o5,	$Bi
+	ldx	[$pwrtbl+4*32],	%o5
+	movneg	%icc,	%o4,	$Bi
+	ldx	[$pwrtbl+5*32],	%o4
+	movcs	%xcc,	%o5,	$Bi
+	ldx	[$pwrtbl+6*32],	%o5
+	movvs	%xcc,	%o4,	$Bi
+	ldx	[$pwrtbl+7*32],	%o4
+	move	%xcc,	%o5,	$Bi
+	add	$pwrtbl,8*32,	$pwrtbl
+	movneg	%xcc,	%o4,	$Bi
 ___
 }
 
 ########################################################################
 # int bn_pwr5_mont_t4_$NUM(u64 *tp,const u64 *np,const BN_ULONG *n0,
-#			   const u64 *pwrtbl,int pwr);
+#			   const u64 *pwrtbl,int pwr,int stride);
 #
 sub generate_bn_pwr5_mont_t4() {
 my $NUM=shift;
@@ -457,7 +474,9 @@ bn_pwr5_mont_t4_$NUM:
 	ld	[%i2+0],%f1	! load *n0
 	ld	[%i2+4],%f0
 	mov	%i3,$pwrtbl
-	mov	%i4,$pwr
+	srl	%i4,%g0,%i4	! pack last arguments
+	sllx	%i5,32,$pwr
+	or	%i4,$pwr,$pwr
 	fsrc2	%f0,%f60
 ___
 
@@ -501,31 +520,43 @@ $code.=<<___;
 ___
 }
 # load pwrtbl[pwr] ########################################################
-	&load_fcc($pwrtbl,$pwr,@B[0]);
-for($i=0; $i<6 && $i<$NUM; $i++) {
-	&load_f16($pwrtbl);
 $code.=<<___;
-	movdtox	%f16,@B[$i]
+	save	%sp,-128,%sp;		or	$sentinel,%fp,%fp
+
+	srlx	$pwr,	32,	%o4		! unpack $pwr
+	srl	$pwr,	%g0,	%o5
+	sub	%o4,	5,	%o4
+	mov	$pwrtbl,	%o7
+	sllx	%o4,	32,	$pwr		! re-pack $pwr
+	or	%o5,	$pwr,	$pwr
+	srl	%o5,	%o4,	%o5
 ___
+	&load_ccr("%o7","%o5","%o4");
+$code.=<<___;
+	b	.Lstride_$NUM
+	nop
+.align	16
+.Lstride_$NUM:
+___
+for($i=0; $i<14 && $i<$NUM; $i+=2) {
+	&load_b_pair("%o7",@B[$i],@B[$i+1]);
 }
 $code.=<<___;
 	save	%sp,-128,%sp;		or	$sentinel,%fp,%fp
 ___
-for(; $i<20 && $i<$NUM; $i++) {
-	&load_f16($pwrtbl);
-$code.=<<___;
-	movdtox	%f16,@B[$i]
-___
+for(; $i<$NUM; $i+=2) {
+	&load_b_pair("%i7",@B[$i],@B[$i+1]);
 }
 $code.=<<___;
-	save	%sp,-128,%sp;		or	$sentinel,%fp,%fp
+	srax	$pwr,	32,	%o4		! unpack $pwr
+	srl	$pwr,	%g0,	%o5
+	sub	%o4,	5,	%o4
+	mov	$pwrtbl,	%i7
+	sllx	%o4,	32,	$pwr		! re-pack $pwr
+	or	%o5,	$pwr,	$pwr
+	srl	%o5,	%o4,	%o5
 ___
-for(; $i<$NUM; $i++) {
-	&load_f16($pwrtbl);
-$code.=<<___;
-	movdtox	%f16,@B[$i]
-___
-}
+	&load_ccr("%i7","%o5","%o4",1);
 
 # magic ################################################################
 for($i=0; $i<5; $i++) {
@@ -540,21 +571,24 @@ $code.=<<___;
 ___
 }
 $code.=<<___;
+	wr	%o4,	%g0,	%ccr
 	.word	0x81b02920+$NUM-1	! montmul	$NUM-1
 	fbu,pn	%fcc3,.Labort_$NUM
 #ifndef	__arch64__
 	and	%fp,$sentinel,$sentinel
 	brz,pn	$sentinel,.Labort_$NUM
 #endif
-	nop
 
+	srax	$pwr,	32,	%o4
 #ifdef	__arch64__
+	brgez	%o4,.Lstride_$NUM
 	restore
 	restore
 	restore
 	restore
 	restore
 #else
+	brgez	%o4,.Lstride_$NUM
 	restore;		and	%fp,$sentinel,$sentinel
 	restore;		and	%fp,$sentinel,$sentinel
 	restore;		and	%fp,$sentinel,$sentinel
@@ -903,13 +937,12 @@ ___
 #	+-------------------------------+<-----	aligned at 64 bytes
 #	.				.
 ($rp,$ap,$bp,$np,$n0p,$num)=map("%i$_",(0..5));
-($t0,$t1,$t2,$t3,$cnt,$tp,$bufsz)=map("%l$_",(0..7));
+($t0,$t1,$t2,$t3,$cnt,$tp,$bufsz,$ccr)=map("%l$_",(0..7));
 ($ovf,$i)=($t0,$t1);
-	&load_fcc($bp,"%g4","%g1");
-	&load_f16($bp);
-$code.=<<___;
-	movdtox	%f16,	$m0		! m0=bp[0]
+	&load_ccr($bp,"%g4",$ccr);
+	&load_b($bp,$m0,"%o7");		# m0=bp[0]
 
+$code.=<<___;
 	ld	[$n0p+0],	$t0	! pull n0[0..1] value
 	ld	[$n0p+4],	$t1
 	add	%sp, STACK_BIAS+STACK_FRAME, $tp
@@ -990,11 +1023,10 @@ $code.=<<___;
 
 .align	16
 .Louter_g5:
+	wr	$ccr,	%g0,	%ccr
 ___
-	&load_f16($bp);
+	&load_b($bp,$m0);		# m0=bp[i]
 $code.=<<___;
-	movdtox	%f16,	$m0		! m0=bp[i]
-
 	sub	$ap,	$num,	$ap	! rewind
 	sub	$np,	$num,	$np
 	sub	$tp,	$num,	$tp
@@ -1138,39 +1170,40 @@ bn_flip_t4:
 .type	bn_flip_t4, #function
 .size	bn_flip_t4, .-bn_flip_t4
 
-.globl	bn_scatter5_t4
+.globl	bn_flip_n_scatter5_t4
 .align	32
-bn_scatter5_t4:
+bn_flip_n_scatter5_t4:
 	sll	%o3,	3,	%o3
-	sub	%o1,	1,	%o1
+	srl	%o1,	1,	%o1
 	add	%o3,	%o2,	%o2	! &pwrtbl[pwr]
-	nop
-.Loop_scatter5:
-	ldx	[%o0],	%g1		! inp[i]
+	sub	%o1,	1,	%o1
+.Loop_flip_n_scatter5:
+	ld	[%o0+0],	%o4	! inp[i]
+	ld	[%o0+4],	%o5
 	add	%o0,	8,	%o0
-	stx	%g1,	[%o2]
+	sllx	%o5,	32,	%o5
+	or	%o4,	%o5,	%o5
+	stx	%o5,	[%o2]
 	add	%o2,	32*8,	%o2
-	brnz	%o1,	.Loop_scatter5
+	brnz	%o1,	.Loop_flip_n_scatter5
 	sub	%o1,	1,	%o1
 	retl
 	nop
-.type	bn_scatter5_t4, #function
-.size	bn_scatter5_t4, .-bn_scatter5_t4
+.type	bn_flip_n_scatter5_t4, #function
+.size	bn_flip_n_scatter5_t4, .-bn_flip_n_scatter5_t4
 
 .globl	bn_gather5_t4
 .align	32
 bn_gather5_t4:
-	mov	%o7,	%o5
 ___
-	&load_fcc("%o2","%o3","%o4");
+	&load_ccr("%o2","%o3","%g1");
 $code.=<<___;
-	mov	%o5,	%o7
 	sub	%o1,	1,	%o1
 .Loop_gather5:
 ___
-	&load_f16("%o2");
+	&load_b("%o2","%g1");
 $code.=<<___;
-	std	%f16,	[%o0]
+	stx	%g1,	[%o0]
 	add	%o0,	8,	%o0
 	brnz	%o1,	.Loop_gather5
 	sub	%o1,	1,	%o1
@@ -1179,19 +1212,7 @@ $code.=<<___;
 	nop
 .type	bn_gather5_t4, #function
 .size	bn_gather5_t4, .-bn_gather5_t4
-___
-
-$code.=<<___;
-#define	ONE	0x3f800000
-#define	NUL	0x00000000
-#define NaN	0xffffffff
 
-.align	64
-.Lmagic:
-	.long	ONE,NUL,NaN,NaN,NaN,NaN,NUL,ONE
-	.long	NUL,ONE,ONE,NUL,NaN,NaN,NaN,NaN
-	.long	NaN,NaN,NUL,ONE,ONE,NUL,NaN,NaN
-	.long	NaN,NaN,NaN,NaN,NUL,ONE,ONE,NUL
 .asciz	"Montgomery Multiplication for SPARC T4, David S. Miller, Andy Polyakov"
 .align	4
 ___
