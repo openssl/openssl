@@ -210,6 +210,14 @@ case SSL3_ST_SR_KEY_EXCH_A:	str="SSLv3 read client key exchange A"; break;
 case SSL3_ST_SR_KEY_EXCH_B:	str="SSLv3 read client key exchange B"; break;
 case SSL3_ST_SR_CERT_VRFY_A:	str="SSLv3 read certificate verify A"; break;
 case SSL3_ST_SR_CERT_VRFY_B:	str="SSLv3 read certificate verify B"; break;
+case SSL3_ST_CW_SUPPLEMENTAL_DATA_A: str="SSLv3 client write supplemental data A"; break;
+case SSL3_ST_CW_SUPPLEMENTAL_DATA_B: str="SSLv3 client write supplemental data B"; break;
+case SSL3_ST_SW_SUPPLEMENTAL_DATA_A: str="SSLv3 server write supplemental data A"; break;
+case SSL3_ST_SW_SUPPLEMENTAL_DATA_B: str="SSLv3 client write supplemental data B"; break;
+case SSL3_ST_CR_SUPPLEMENTAL_DATA_A: str="SSLv3 client read supplemental data A"; break;
+case SSL3_ST_CR_SUPPLEMENTAL_DATA_B: str="SSLv3 client read supplemental data B"; break;
+case SSL3_ST_SR_SUPPLEMENTAL_DATA_A: str="SSLv3 server read supplemental data A"; break;
+case SSL3_ST_SR_SUPPLEMENTAL_DATA_B: str="SSLv3 client read supplemental data B"; break;
 #endif
 
 #if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)

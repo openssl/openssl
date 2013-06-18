@@ -876,6 +876,9 @@ void MS_CALLBACK msg_cb(int write_p, int version, int content_type, const void *
 				case 16:
 					str_details1 = ", ClientKeyExchange";
 					break;
+				case 23:
+					str_details1 = ", SupplementalData";
+					break;
 				case 20:
 					str_details1 = ", Finished";
 					break;
