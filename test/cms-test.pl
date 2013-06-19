@@ -341,6 +341,52 @@ my @smime_cms_comp_tests = (
 
 );
 
+my @smime_cms_param_tests = (
+    [
+        "signed content test streaming PEM format, RSA keys, PSS signature",
+        "-sign -in smcont.txt -outform PEM -nodetach"
+          . " -signer $smdir/smrsa1.pem -keyopt rsa_padding_mode:pss"
+	  . " -out test.cms",
+        "-verify -in test.cms -inform PEM "
+          . " \"-CAfile\" $smdir/smroot.pem -out smtst.txt"
+    ],
+
+    [
+        "signed content test streaming PEM format, RSA keys, PSS signature, no attributes",
+        "-sign -in smcont.txt -outform PEM -nodetach -noattr"
+          . " -signer $smdir/smrsa1.pem -keyopt rsa_padding_mode:pss"
+	  . " -out test.cms",
+        "-verify -in test.cms -inform PEM "
+          . " \"-CAfile\" $smdir/smroot.pem -out smtst.txt"
+    ],
+
+    [
+        "signed content test streaming PEM format, RSA keys, PSS signature, SHA384 MGF1",
+        "-sign -in smcont.txt -outform PEM -nodetach"
+          . " -signer $smdir/smrsa1.pem -keyopt rsa_padding_mode:pss"
+	  . " -keyopt rsa_mgf1_md:sha384 -out test.cms",
+        "-verify -in test.cms -inform PEM "
+          . " \"-CAfile\" $smdir/smroot.pem -out smtst.txt"
+    ],
+
+    [
+"enveloped content test streaming S/MIME format, OAEP default parameters",
+        "-encrypt -in smcont.txt"
+          . " -stream -out test.cms"
+          . " -recip $smdir/smrsa1.pem -keyopt rsa_padding_mode:oaep",
+        "-decrypt -recip $smdir/smrsa1.pem -in test.cms -out smtst.txt"
+    ],
+
+    [
+"enveloped content test streaming S/MIME format, OAEP SHA256",
+        "-encrypt -in smcont.txt"
+          . " -stream -out test.cms"
+          . " -recip $smdir/smrsa1.pem -keyopt rsa_padding_mode:oaep"
+	  . " -keyopt rsa_oaep_md:sha256",
+        "-decrypt -recip $smdir/smrsa1.pem -in test.cms -out smtst.txt"
+    ]
+);
+
 print "CMS => PKCS#7 compatibility tests\n";
 
 run_smime_tests( \$badcmd, \@smime_pkcs7_tests, $cmscmd, $pk7cmd );
@@ -353,6 +399,9 @@ print "CMS <=> CMS consistency tests\n";
 
 run_smime_tests( \$badcmd, \@smime_pkcs7_tests, $cmscmd, $cmscmd );
 run_smime_tests( \$badcmd, \@smime_cms_tests,   $cmscmd, $cmscmd );
+
+print "CMS <=> CMS consistency tests, modified key parameters\n";
+run_smime_tests( \$badcmd, \@smime_cms_param_tests,   $cmscmd, $cmscmd );
 
 if ( `$ossl_path version -f` =~ /ZLIB/ ) {
     run_smime_tests( \$badcmd, \@smime_cms_comp_tests, $cmscmd, $cmscmd );
