@@ -242,6 +242,10 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		dctx->md = p2;
 		return 1;
 
+		case EVP_PKEY_CTRL_GET_MD:
+		*(const EVP_MD **)p2 = dctx->md;
+		return 1;
+
 		case EVP_PKEY_CTRL_PEER_KEY:
 		/* Default behaviour is OK */
 		case EVP_PKEY_CTRL_DIGESTINIT:

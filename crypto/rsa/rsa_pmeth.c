@@ -552,6 +552,10 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		rctx->md = p2;
 		return 1;
 
+		case EVP_PKEY_CTRL_GET_MD:
+		*(const EVP_MD **)p2 = rctx->md;
+		return 1;
+
 		case EVP_PKEY_CTRL_RSA_MGF1_MD:
 		case EVP_PKEY_CTRL_GET_RSA_MGF1_MD:
 		if (rctx->pad_mode != RSA_PKCS1_PSS_PADDING)
