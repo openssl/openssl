@@ -97,6 +97,8 @@ static int cms_si_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 			EVP_PKEY_free(si->pkey);
 		if (si->signer)
 			X509_free(si->signer);
+		if (si->pctx)
+			EVP_MD_CTX_cleanup(&si->mctx);
 		}
 	return 1;
 	}
@@ -227,6 +229,8 @@ static int cms_ri_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 				EVP_PKEY_free(ktri->pkey);
 			if (ktri->recip)
 				X509_free(ktri->recip);
+			if (ktri->pctx)
+				EVP_PKEY_CTX_free(ktri->pctx);
 			}
 		else if (ri->type == CMS_RECIPINFO_KEK)
 			{

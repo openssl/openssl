@@ -140,6 +140,9 @@ struct CMS_SignerInfo_st
 	/* Signing certificate and key */
 	X509 *signer;
 	EVP_PKEY *pkey;
+	/* Digest and public key context for alternative parameters */
+	EVP_MD_CTX mctx;
+	EVP_PKEY_CTX *pctx;
 	};
 
 struct CMS_SignerIdentifier_st
@@ -202,6 +205,8 @@ struct CMS_KeyTransRecipientInfo_st
 	/* Recipient Key and cert */
 	X509 *recip;
 	EVP_PKEY *pkey;
+	/* Public key context for this operation */
+	EVP_PKEY_CTX *pctx;
 	};
 
 struct CMS_KeyAgreeRecipientInfo_st

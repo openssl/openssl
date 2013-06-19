@@ -112,6 +112,7 @@ DECLARE_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
 #define CMS_REUSE_DIGEST		0x8000
 #define CMS_USE_KEYID			0x10000
 #define CMS_DEBUG_DECRYPT		0x20000
+#define CMS_KEY_PARAM			0x40000
 
 const ASN1_OBJECT *CMS_get0_type(CMS_ContentInfo *cms);
 
@@ -190,6 +191,7 @@ int CMS_decrypt_set1_password(CMS_ContentInfo *cms,
 
 STACK_OF(CMS_RecipientInfo) *CMS_get0_RecipientInfos(CMS_ContentInfo *cms);
 int CMS_RecipientInfo_type(CMS_RecipientInfo *ri);
+EVP_PKEY_CTX *CMS_RecipientInfo_get0_pkey_ctx(CMS_RecipientInfo *ri);
 CMS_ContentInfo *CMS_EnvelopedData_create(const EVP_CIPHER *cipher);
 CMS_RecipientInfo *CMS_add1_recipient_cert(CMS_ContentInfo *cms,
 					X509 *recip, unsigned int flags);
@@ -256,6 +258,8 @@ int CMS_SignedData_init(CMS_ContentInfo *cms);
 CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
 			X509 *signer, EVP_PKEY *pk, const EVP_MD *md,
 			unsigned int flags);
+EVP_PKEY_CTX *CMS_SignerInfo_get0_pkey_ctx(CMS_SignerInfo *si);
+EVP_MD_CTX *CMS_SignerInfo_get0_md_ctx(CMS_SignerInfo *si);
 STACK_OF(CMS_SignerInfo) *CMS_get0_SignerInfos(CMS_ContentInfo *cms);
 
 void CMS_SignerInfo_set1_signer_cert(CMS_SignerInfo *si, X509 *signer);
@@ -374,6 +378,7 @@ void ERR_load_CMS_strings(void);
 #define CMS_F_CMS_ENVELOPEDDATA_CREATE			 124
 #define CMS_F_CMS_ENVELOPEDDATA_INIT_BIO		 125
 #define CMS_F_CMS_ENVELOPED_DATA_INIT			 126
+#define CMS_F_CMS_ENV_ASN1_CTRL				 171
 #define CMS_F_CMS_FINAL					 127
 #define CMS_F_CMS_GET0_CERTIFICATE_CHOICES		 128
 #define CMS_F_CMS_GET0_CONTENT				 129
@@ -399,6 +404,7 @@ void ERR_load_CMS_strings(void);
 #define CMS_F_CMS_RECIPIENTINFO_SET0_KEY		 144
 #define CMS_F_CMS_RECIPIENTINFO_SET0_PASSWORD		 168
 #define CMS_F_CMS_RECIPIENTINFO_SET0_PKEY		 145
+#define CMS_F_CMS_SD_ASN1_CTRL				 170
 #define CMS_F_CMS_SET1_SIGNERIDENTIFIER			 146
 #define CMS_F_CMS_SET_DETACHED				 147
 #define CMS_F_CMS_SIGN					 148
