@@ -262,9 +262,17 @@ struct rsa_st
 			EVP_PKEY_OP_TYPE_SIG | EVP_PKEY_OP_TYPE_CRYPT, \
 				EVP_PKEY_CTRL_GET_RSA_MGF1_MD, 0, (void *)pmd)
 
+#define	 EVP_PKEY_CTX_get_rsa_oaep_md(ctx, pmd)	\
+		EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_TYPE_CRYPT,  \
+				EVP_PKEY_CTRL_GET_RSA_OAEP_MD, 0, (void *)pmd)
+
 #define	 EVP_PKEY_CTX_set0_rsa_oaep_label(ctx, l, llen)	\
 		EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_TYPE_CRYPT,  \
 				EVP_PKEY_CTRL_RSA_OAEP_LABEL, llen, (void *)l)
+
+#define	 EVP_PKEY_CTX_get0_rsa_oaep_label(ctx, l)	\
+		EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_TYPE_CRYPT,  \
+				EVP_PKEY_CTRL_GET_RSA_OAEP_LABEL, 0, (void *)l)
 
 #define EVP_PKEY_CTRL_RSA_PADDING	(EVP_PKEY_ALG_CTRL + 1)
 #define EVP_PKEY_CTRL_RSA_PSS_SALTLEN	(EVP_PKEY_ALG_CTRL + 2)
@@ -279,6 +287,9 @@ struct rsa_st
 
 #define EVP_PKEY_CTRL_RSA_OAEP_MD	(EVP_PKEY_ALG_CTRL + 9)
 #define EVP_PKEY_CTRL_RSA_OAEP_LABEL	(EVP_PKEY_ALG_CTRL + 10)
+
+#define EVP_PKEY_CTRL_GET_RSA_OAEP_MD	(EVP_PKEY_ALG_CTRL + 11)
+#define EVP_PKEY_CTRL_GET_RSA_OAEP_LABEL (EVP_PKEY_ALG_CTRL + 12)
 
 #define RSA_PKCS1_PADDING	1
 #define RSA_SSLV23_PADDING	2

@@ -520,12 +520,16 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		return 1;
 
 		case EVP_PKEY_CTRL_RSA_OAEP_MD:
+		case EVP_PKEY_CTRL_GET_RSA_OAEP_MD:
 		if (rctx->pad_mode != RSA_PKCS1_OAEP_PADDING)
 			{
 			RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_PADDING_MODE);
-			return 0;
+			return -2;
 			}
-		rctx->md = p2;
+		if (type == EVP_PKEY_CTRL_GET_RSA_OAEP_MD)
+			*(const EVP_MD **)p2 = rctx->md;
+		else
+			rctx->md = p2;
 		return 1;
 
 		case EVP_PKEY_CTRL_MD:
@@ -558,10 +562,33 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		return 1;
 
 		case EVP_PKEY_CTRL_RSA_OAEP_LABEL:
-		OPENSSL_free(rctx->oaep_label);
-		rctx->oaep_label = p2;
-		rctx->oaep_labellen = p1;
+		if (rctx->pad_mode != RSA_PKCS1_OAEP_PADDING)
+			{
+			RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_PADDING_MODE);
+			return -2;
+			}
+		if (rctx->oaep_label)
+			OPENSSL_free(rctx->oaep_label);
+		if (p2 && p1 > 0)
+			{
+			rctx->oaep_label = p2;
+			rctx->oaep_labellen = p1;
+			}
+		else
+			{
+			rctx->oaep_label = NULL;
+			rctx->oaep_labellen = 0;
+			}
 		return 1;
+
+		case EVP_PKEY_CTRL_GET_RSA_OAEP_LABEL:
+		if (rctx->pad_mode != RSA_PKCS1_OAEP_PADDING)
+			{
+			RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_PADDING_MODE);
+			return -2;
+			}
+		*(unsigned char **)p2 = rctx->oaep_label;
+		return rctx->oaep_labellen;
 
 		case EVP_PKEY_CTRL_DIGESTINIT:
 		case EVP_PKEY_CTRL_PKCS7_ENCRYPT:
