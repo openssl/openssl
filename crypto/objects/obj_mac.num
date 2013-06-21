@@ -935,3 +935,4 @@ brainpoolP512t1		934
 aes_128_cbc_hmac_sha256		935
 aes_192_cbc_hmac_sha256		936
 aes_256_cbc_hmac_sha256		937
+pSpecified		938

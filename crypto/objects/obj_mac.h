@@ -590,6 +590,11 @@
 #define NID_mgf1		911
 #define OBJ_mgf1		OBJ_pkcs1,8L
 
+#define SN_pSpecified		"PSPECIFIED"
+#define LN_pSpecified		"pSpecified"
+#define NID_pSpecified		938
+#define OBJ_pSpecified		OBJ_pkcs1,9L
+
 #define SN_rsassaPss		"RSASSA-PSS"
 #define LN_rsassaPss		"rsassaPss"
 #define NID_rsassaPss		912
