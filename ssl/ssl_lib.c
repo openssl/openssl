@@ -1705,13 +1705,13 @@ int SSL_CTX_set_custom_cli_ext(SSL_CTX *ctx, unsigned short ext_type,
 	/* Check for duplicates */
 	size_t i;
 	custom_cli_ext_record* record;
-
 	for (i=0; i < ctx->custom_cli_ext_records_count; i++)
 		if (ext_type == ctx->custom_cli_ext_records[i].ext_type)
 			return 0;
 
 	ctx->custom_cli_ext_records = OPENSSL_realloc(ctx->custom_cli_ext_records,
-														(ctx->custom_cli_ext_records_count+1) * sizeof(custom_cli_ext_record));
+						      (ctx->custom_cli_ext_records_count + 1) * 
+						      sizeof(custom_cli_ext_record));
 	if (!ctx->custom_cli_ext_records) {
 		ctx->custom_cli_ext_records_count = 0;
 		return 0;
@@ -1726,19 +1726,19 @@ int SSL_CTX_set_custom_cli_ext(SSL_CTX *ctx, unsigned short ext_type,
 	}
 
 int SSL_CTX_set_custom_srv_ext(SSL_CTX *ctx, unsigned short ext_type,
-															 custom_srv_ext_first_cb_fn fn1, 
-															 custom_srv_ext_second_cb_fn fn2, void* arg)
+			       custom_srv_ext_first_cb_fn fn1, 
+			       custom_srv_ext_second_cb_fn fn2, void* arg)
 	{
 	/* Check for duplicates */
 	size_t i;
 	custom_srv_ext_record* record;
-
 	for (i=0; i < ctx->custom_srv_ext_records_count; i++)
 		if (ext_type == ctx->custom_srv_ext_records[i].ext_type)
 			return 0;
 
 	ctx->custom_srv_ext_records = OPENSSL_realloc(ctx->custom_srv_ext_records,
-														(ctx->custom_srv_ext_records_count+1) * sizeof(custom_srv_ext_record));
+						      (ctx->custom_srv_ext_records_count + 1) * 
+						      sizeof(custom_srv_ext_record));
 	if (!ctx->custom_srv_ext_records) {
 		ctx->custom_srv_ext_records_count = 0;
 		return 0;
