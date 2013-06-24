@@ -2325,19 +2325,19 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 				record = &s->ctx->custom_srv_ext_records[i];
 				if (type == record->ext_type)
 					{
-					/* Error on duplicate TLS Extensions */
 					size_t j;
 
+					/* Error on duplicate TLS Extensions */
 					for (j = 0; j < s->s3->tlsext_custom_types_count; j++)
 						{
-						if (s->s3->tlsext_custom_types[j] == type)
+						if (type == s->s3->tlsext_custom_types[j])
 							{
 							*al = TLS1_AD_DECODE_ERROR;
 							return 0;
 							}
 						}
 
-					/* Callback */
+					/* NULL callback still notes the extension */ 
 					if (record->fn1 && !record->fn1(s, type, data, size, al, record->arg))
 						return 0;
 						
@@ -2345,7 +2345,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 					s->s3->tlsext_custom_types_count++;
 					s->s3->tlsext_custom_types = OPENSSL_realloc(
 							s->s3->tlsext_custom_types,
-							s->s3->tlsext_custom_types_count*2);
+							s->s3->tlsext_custom_types_count * 2);
 					if (s->s3->tlsext_custom_types == NULL)
 						{
 						s->s3->tlsext_custom_types = 0;
@@ -2353,7 +2353,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 						return 0;
 						}
 					s->s3->tlsext_custom_types[
-							s->s3->tlsext_custom_types_count-1] = type;
+							s->s3->tlsext_custom_types_count - 1] = type;
 					}						
 				}
 			}
