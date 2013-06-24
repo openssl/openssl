@@ -1096,7 +1096,7 @@ int SSL_CTX_use_serverinfo(SSL_CTX *ctx, const unsigned char *serverinfo,
 		return 0;
 		}
 	ctx->cert->key->serverinfo = OPENSSL_realloc(ctx->cert->key->serverinfo,
-												serverinfo_length);
+						     serverinfo_length);
 	if (ctx->cert->key->serverinfo == NULL)
 		{
 		SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO,ERR_R_MALLOC_FAILURE);
