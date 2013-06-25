@@ -1702,9 +1702,10 @@ int SSL_CTX_set_custom_cli_ext(SSL_CTX *ctx, unsigned short ext_type,
 			       custom_cli_ext_first_cb_fn fn1, 
 			       custom_cli_ext_second_cb_fn fn2, void* arg)
 	{
-	/* Check for duplicates */
 	size_t i;
 	custom_cli_ext_record* record;
+
+	/* Check for duplicates */
 	for (i=0; i < ctx->custom_cli_ext_records_count; i++)
 		if (ext_type == ctx->custom_cli_ext_records[i].ext_type)
 			return 0;
@@ -1729,9 +1730,10 @@ int SSL_CTX_set_custom_srv_ext(SSL_CTX *ctx, unsigned short ext_type,
 			       custom_srv_ext_first_cb_fn fn1, 
 			       custom_srv_ext_second_cb_fn fn2, void* arg)
 	{
-	/* Check for duplicates */
 	size_t i;
 	custom_srv_ext_record* record;
+
+	/* Check for duplicates */	
 	for (i=0; i < ctx->custom_srv_ext_records_count; i++)
 		if (ext_type == ctx->custom_srv_ext_records[i].ext_type)
 			return 0;
