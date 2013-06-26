@@ -4,6 +4,9 @@
 
  Changes between 1.0.1 and 1.0.2 [xx XXX xxxx]
 
+  *) Add callbacks for arbitrary TLS extensions.
+     [Trevor Perrin <trevp@trevp.net> and Ben Laurie]
+
   *) New option -crl_download in several openssl utilities to download CRLs
      from CRLDP extension in certificates.
      [Steve Henson]

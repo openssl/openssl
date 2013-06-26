@@ -396,6 +396,7 @@ sub get_tests
 		 'testss',
 		 'testssl',
 		 'testsslproxy',
+		 'serverinfo.pem',
 	       );
   my $copies = copy_scripts(1, 'test', @copies);
   $copies .= copy_scripts(0, 'test', ('smcont.txt'));
