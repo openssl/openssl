@@ -1107,6 +1107,7 @@ struct ssl_ctx_st
 # endif /* OPENSSL_NO_EC */
 	int (*tlsext_authz_server_audit_proof_cb)(SSL *s, void *arg);
 	void *tlsext_authz_server_audit_proof_cb_arg;
+#endif
 
 	/* Arrays containing the callbacks for custom TLS Extensions. */
 	custom_cli_ext_record *custom_cli_ext_records;
