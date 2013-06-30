@@ -271,13 +271,14 @@ my %globals;
 	    }
 	} else {
 	    %szmap = (	b=>"BYTE$PTR", w=>"WORD$PTR", l=>"DWORD$PTR",
-	    		q=>"QWORD$PTR",o=>"OWORD$PTR",x=>"XMMWORD$PTR" );
+	    		q=>"QWORD$PTR",o=>"OWORD$PTR",x=>"XMMWORD$PTR",
+			y=>"" );
 
 	    $self->{label} =~ s/\./\$/g;
 	    $self->{label} =~ s/(?<![\w\$\.])0x([0-9a-f]+)/0$1h/ig;
 	    $self->{label} = "($self->{label})" if ($self->{label} =~ /[\*\+\-\/]/);
-	    $sz="q" if ($self->{asterisk} || opcode->mnemonic() eq "movq");
-	    $sz="l" if (opcode->mnemonic() eq "movd");
+	    $sz="q" if ($self->{asterisk} || opcode->mnemonic() =~ /^v?movq$/);
+	    $sz="l" if (opcode->mnemonic() =~ /^v?movd$/);
 
 	    if (defined($self->{index})) {
 		sprintf "%s[%s%s*%d%s]",$szmap{$sz},
@@ -881,6 +882,7 @@ while($line=<>) {
 		    my $arg = $_->out();
 		    # $insn.=$sz compensates for movq, pinsrw, ...
 		    if ($arg =~ /^xmm[0-9]+$/) { $insn.=$sz; $sz="x" if(!$sz); last; }
+		    if ($arg =~ /^ymm[0-9]+$/) { $insn.=$sz; $sz="y" if(!$sz); last; }
 		    if ($arg =~ /^mm[0-9]+$/)  { $insn.=$sz; $sz="q" if(!$sz); last; }
 		}
 		@args = reverse(@args);
