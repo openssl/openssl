@@ -123,6 +123,8 @@
 # ifndef alloca
 #  define alloca(s) __builtin_alloca((s))
 # endif
+#elif defined(__sun)
+# include <alloca.h>
 #endif
 
 #if defined(OPENSSL_BN_ASM_MONT) && (defined(__sparc__) || defined(__sparc))
