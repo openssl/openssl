@@ -1267,10 +1267,6 @@ $code.=<<___;
 	mov	%r14,232($context)	# restore context->R14
 	mov	%r15,240($context)	# restore context->R15
 
-	lea	.Lepilogue(%rip),%r10
-	cmp	%r10,%rbx
-	jb	.Lin_prologue		# non-AVX code
-
 	lea	16*$SZ+8*8(%rsi),%rsi	# Xmm6- save area
 	lea	512($context),%rdi	# &context.Xmm6
 	mov	\$20,%ecx
