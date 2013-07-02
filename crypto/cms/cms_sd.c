@@ -700,7 +700,8 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
 		pctx = si->pctx;
 		if (!EVP_DigestFinal_ex(&mctx, md, &mdlen))
 			goto err;
-		sig = OPENSSL_malloc(EVP_PKEY_size(si->pkey));
+		siglen = EVP_PKEY_size(si->pkey);
+		sig = OPENSSL_malloc(siglen);
 		if (!sig)
 			{
 			CMSerr(CMS_F_CMS_SIGNERINFO_CONTENT_SIGN,
