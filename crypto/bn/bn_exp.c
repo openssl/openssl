@@ -127,9 +127,11 @@
 # include <alloca.h>
 #endif
 
+#undef SPARC_T4_MONT
 #if defined(OPENSSL_BN_ASM_MONT) && (defined(__sparc__) || defined(__sparc))
 # include "sparc_arch.h"
 extern unsigned int OPENSSL_sparcv9cap_P[];
+# define SPARC_T4_MONT
 #endif
 
 /* maximum precomputation table size for *variable* sliding windows */
@@ -475,14 +477,18 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	wend=0;		/* The bottom bit of the window */
 
 #if 1	/* by Shay Gueron's suggestion */
-	j = mont->N.top;	/* borrow j */
-	if (bn_wexpand(r,j) == NULL) goto err;
-	r->d[0] = (0-m->d[0])&BN_MASK2;		/* 2^(top*BN_BITS2) - m */
-	for(i=1;i<j;i++) r->d[i] = (~m->d[i])&BN_MASK2;
-	r->top = j;
-#else
-	if (!BN_to_montgomery(r,BN_value_one(),mont,ctx)) goto err;
+	j = m->top;	/* borrow j */
+	if (m->d[j-1] & (((BN_ULONG)1)<<(BN_BITS2-1)))
+		{
+		if (bn_wexpand(r,j) == NULL) goto err;
+		/* 2^(top*BN_BITS2) - m */
+		r->d[0] = (0-m->d[0])&BN_MASK2;
+		for(i=1;i<j;i++) r->d[i] = (~m->d[i])&BN_MASK2;
+		r->top = j;
+		}
+	else
 #endif
+	if (!BN_to_montgomery(r,BN_value_one(),mont,ctx)) goto err;
 	for (;;)
 		{
 		if (BN_is_bit_set(p,wstart) == 0)
@@ -534,7 +540,7 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 		start=0;
 		if (wstart < 0) break;
 		}
-#if defined(OPENSSL_BN_ASM_MONT) && (defined(__sparc__) || defined(__sparc))
+#if defined(SPARC_T4_MONT)
 	if (OPENSSL_sparcv9cap_P[0]&(SPARCV9_VIS3|SPARCV9_PREFER_FPU))
 		{
 		j = mont->N.top;	/* borrow j */
@@ -554,7 +560,7 @@ err:
 	return(ret);
 	}
 
-#if defined(OPENSSL_BN_ASM_MONT) && (defined(__sparc__) || defined(__sparc))
+#if defined(SPARC_T4_MONT)
 static BN_ULONG bn_get_bits(const BIGNUM *a, int bitpos)
 	{
 	BN_ULONG ret=0;
@@ -635,7 +641,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	int powerbufLen = 0;
 	unsigned char *powerbuf=NULL;
 	BIGNUM tmp, am;
-#if defined(OPENSSL_BN_ASM_MONT) && (defined(__sparc__) || defined(__sparc))
+#if defined(SPARC_T4_MONT)
 	unsigned int t4=0;
 #endif
 
@@ -672,7 +678,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 
 	/* Get the window size to use with size of p. */
 	window = BN_window_bits_for_ctime_exponent_size(bits);
-#if defined(OPENSSL_BN_ASM_MONT) && (defined(__sparc__) || defined(__sparc))
+#if defined(SPARC_T4_MONT)
 	if (window>=5 && (top&15)==0 && top<=64 &&
 	    (OPENSSL_sparcv9cap_P[1]&(CFR_MONTMUL|CFR_MONTSQR))==
 	    			     (CFR_MONTMUL|CFR_MONTSQR) &&
@@ -717,13 +723,16 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 
 	/* prepare a^0 in Montgomery domain */
 #if 1	/* by Shay Gueron's suggestion */
-	tmp.d[0] = (0-m->d[0])&BN_MASK2;	/* 2^(top*BN_BITS2) - m */
-	for (i=1;i<top;i++)
-		tmp.d[i] = (~m->d[i])&BN_MASK2;
-	tmp.top = top;
-#else
- 	if (!BN_to_montgomery(&tmp,BN_value_one(),mont,ctx))	goto err;
+	if (m->d[top-1] & (((BN_ULONG)1)<<(BN_BITS2-1)))
+		{
+		/* 2^(top*BN_BITS2) - m */
+		tmp.d[0] = (0-m->d[0])&BN_MASK2;
+		for (i=1;i<top;i++) tmp.d[i] = (~m->d[i])&BN_MASK2;
+		tmp.top = top;
+		}
+	else
 #endif
+ 	if (!BN_to_montgomery(&tmp,BN_value_one(),mont,ctx))	goto err;
 
 	/* prepare a^1 in Montgomery domain */
 	if (a->neg || BN_ucmp(a,m) >= 0)
@@ -733,7 +742,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 		}
 	else	if (!BN_to_montgomery(&am,a,mont,ctx))		goto err;
 
-#if defined(OPENSSL_BN_ASM_MONT) && (defined(__sparc__) || defined(__sparc))
+#if defined(SPARC_T4_MONT)
     if (t4)
 	{
 	typedef int (*bn_pwr5_mont_f)(BN_ULONG *tp,const BN_ULONG *np,
@@ -991,7 +1000,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	}
 
  	/* Convert the final result from montgomery to standard format */
-#if defined(OPENSSL_BN_ASM_MONT) && (defined(__sparc__) || defined(__sparc))
+#if defined(SPARC_T4_MONT)
 	if (OPENSSL_sparcv9cap_P[0]&(SPARCV9_VIS3|SPARCV9_PREFER_FPU))
 		{
 		am.d[0] = 1;	/* borrow am */
