@@ -127,6 +127,14 @@
 # include <alloca.h>
 #endif
 
+#undef RSAZ_ENABLED
+#if defined(OPENSSL_BN_ASM_MONT) && \
+	(defined(__x86_64) || defined(__x86_64__) || \
+	 defined(_M_AMD64) || defined(_M_X64))
+# include "rsaz_exp.h"
+# define RSAZ_ENABLED
+#endif
+
 #undef SPARC_T4_MONT
 #if defined(OPENSSL_BN_ASM_MONT) && (defined(__sparc__) || defined(__sparc))
 # include "sparc_arch.h"
@@ -675,6 +683,35 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 		if ((mont=BN_MONT_CTX_new()) == NULL) goto err;
 		if (!BN_MONT_CTX_set(mont,m,ctx)) goto err;
 		}
+
+#ifdef RSAZ_ENABLED
+	/*
+	 * If the size of the operands allow it, perform the optimized
+	 * RSAZ exponentiation. For further information see
+	 * crypto/bn/rsaz_exp.c and accompanying assembly modules.
+	 */
+	if ((16 == a->top) && (16 == p->top) && (BN_num_bits(m) == 1024)
+	    && rsaz_avx2_eligible())
+	    	{
+		if (NULL == bn_wexpand(rr, 16)) goto err;
+		RSAZ_1024_mod_exp_avx2(rr->d, a->d, p->d, m->d, mont->RR.d, mont->n0[0]);
+		rr->top = 16;
+		rr->neg = 0;
+		bn_correct_top(rr);
+		ret = 1;
+		goto err;
+		}
+	else if ((8 == a->top) && (8 == p->top) && (BN_num_bits(m) == 512))
+		{
+		if (NULL == bn_wexpand(rr,8)) goto err;
+		RSAZ_512_mod_exp(rr->d, a->d, p->d, m->d, mont->n0[0], mont->RR.d);
+		rr->top = 8;
+		rr->neg = 0;
+		bn_correct_top(rr);
+		ret = 1;
+		goto err;
+		}
+#endif
 
 	/* Get the window size to use with size of p. */
 	window = BN_window_bits_for_ctime_exponent_size(bits);
