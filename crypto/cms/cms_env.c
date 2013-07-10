@@ -865,6 +865,78 @@ int CMS_RecipientInfo_encrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 		}
 	}
 
+/* Check structures and fixup version numbers (if necessary) */
+
+static void cms_env_set_originfo_version(CMS_EnvelopedData *env)
+	{
+	CMS_OriginatorInfo *org = env->originatorInfo;
+	int i;
+	if (org == NULL)
+		return;
+	for (i = 0; i < sk_CMS_CertificateChoices_num(org->certificates); i++)
+		{
+		CMS_CertificateChoices *cch;
+		cch = sk_CMS_CertificateChoices_value(org->certificates, i);
+		if (cch->type == CMS_CERTCHOICE_OTHER)
+			{
+			env->version = 4;
+			return;
+			}
+		else if (cch->type == CMS_CERTCHOICE_V2ACERT)
+			{
+			if (env->version < 3)
+				env->version = 3;
+			}
+		}
+
+	for (i = 0; i < sk_CMS_RevocationInfoChoice_num(org->crls); i++)
+		{
+		CMS_RevocationInfoChoice *rch;
+		rch = sk_CMS_RevocationInfoChoice_value(org->crls, i);
+		if (rch->type == CMS_REVCHOICE_OTHER)
+			{
+			env->version = 4;
+			return;
+			}
+		}
+	}
+
+static void cms_env_set_version(CMS_EnvelopedData *env)
+	{
+	int i;
+	CMS_RecipientInfo *ri;
+
+	/* Can't set version higher than 4 so if 4 or more already nothing
+	 * to do.
+	 */
+	if (env->version >= 4)
+		return;
+
+	cms_env_set_originfo_version(env);
+
+	if (env->version >= 3)
+		return;
+
+	for (i = 0; i < sk_CMS_RecipientInfo_num(env->recipientInfos); i++)
+		{
+		ri = sk_CMS_RecipientInfo_value(env->recipientInfos, i);
+		if (ri->type == CMS_RECIPINFO_PASS || ri->type == CMS_RECIPINFO_OTHER)
+			{
+			env->version = 3;
+			return;
+			}
+		else if (ri->type != CMS_RECIPINFO_TRANS)
+			{
+			env->version = 2;
+			}
+		}
+	if (env->version == 2)
+		return;
+	if (env->originatorInfo || env->unprotectedAttrs)
+		env->version = 2;
+	env->version = 0;
+	}
+
 BIO *cms_EnvelopedData_init_bio(CMS_ContentInfo *cms)
 	{
 	CMS_EncryptedContentInfo *ec;
@@ -897,6 +969,7 @@ BIO *cms_EnvelopedData_init_bio(CMS_ContentInfo *cms)
 			goto err;
 			}
 		}
+	cms_env_set_version(cms->d.envelopedData);
 
 	ok = 1;
 
