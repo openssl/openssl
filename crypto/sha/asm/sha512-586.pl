@@ -533,7 +533,7 @@ sub BODY_00_15_ssse3 {		# "phase-less" copy of BODY_00_15_sse2
 	 '&psllq($E,4)',
 	'&pxor	("mm3",$E)',				# T1=Sigma1_512(e)
 
-	 '&movq	($E,&DWP(8*($i+3)%64,"esp"))',		# e = load d, e in next round
+	 '&movq	($E,&QWP(8*($i+3)%64,"esp"))',		# e = load d, e in next round
 	'&paddq	("mm3","mm7")',				# T1+=X[i]
 	 '&movq	("mm5",$A)',				# %mm5 is sliding right
 	 '&psrlq("mm5",28)',
