@@ -84,8 +84,9 @@ sub platform_perlasm_compile_target
 
 	for $p (keys %perl1)
 	        {
-# FIXME: export CC so rsaz-avx2 can test for it. But this also
-# requires fixing the .s.o rule to use CC!
+# FIXME: export CC so rsaz-avx2 can test for it, since BSD make does
+# not export variables, unlike GNU make. But this also requires fixing
+# the .s.o rule to use CC!
 		if ($target eq "\$(OBJ_D)/$p.o")
 		        {
 			return << "EOF";
