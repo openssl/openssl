@@ -1836,7 +1836,7 @@ print <<___;	# assembler is too old
 
 .globl	rsaz_avx2_eligible
 .type	rsaz_avx2_eligible,\@abi-omnipotent
-rsaz_eligible:
+rsaz_avx2_eligible:
 	xor	%eax,%eax
 	ret
 .size	rsaz_avx2_eligible,.-rsaz_avx2_eligible
