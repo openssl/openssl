@@ -70,7 +70,7 @@ if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
 
 if (!$avx && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
 	    `nasm -v 2>&1` =~ /NASM version ([2-9]\.[0-9]+)/) {
-	$avx = ($1>=2.09) + ($1>=2.11);
+	$avx = ($1>=2.09) + ($1>=2.10);
 }
 
 if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
@@ -129,6 +129,8 @@ my $tp1=$r3;
 $np="%r13";			# reassigned argument
 
 $code.=<<___;
+.text
+
 .globl	rsaz_1024_sqr_avx2
 .type	rsaz_1024_sqr_avx2,\@function,5
 .align	64
@@ -263,7 +265,7 @@ $code.=<<___;
 
 	xor	$tmp, $tmp
 	mov 	\$4, $i
-	jmp	.Lentry_1024
+	jmp	.Lsqr_entry_1024
 ___
 $TEMP0=$Y1;
 $TEMP2=$Y2;
@@ -299,7 +301,7 @@ $code.=<<___;
 	vpmuludq	32*7-128($aap), $B1, $ACC8
 	 vpbroadcastq	32*2-128($ap,$tmp), $B1
 	vpaddq		$TEMP2, $ACC8, $ACC8
-.Lentry_1024:
+.Lsqr_entry_1024:
 	vmovdqu		$ACC0, 32*0(%rsp,$tmp)	# 32*0-192($tp0,$tmp)
 	vmovdqu		$ACC1, 32*1(%rsp,$tmp)	# 32*1-192($tp0,$tmp)
 
