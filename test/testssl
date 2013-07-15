@@ -195,6 +195,18 @@ $ssltest -bio_pair -tls1 -serverinfo_file $serverinfo -serverinfo_sct -serverinf
 $ssltest -bio_pair -tls1 -custom_ext -serverinfo_file $serverinfo -serverinfo_sct -serverinfo_tack || exit 1
 
 
+#############################################################################
+# ALPN tests
+
+$ssltest -bio_pair -tls1 -alpn_client foo -alpn_server bar || exit 1
+$ssltest -bio_pair -tls1 -alpn_client foo -alpn_server foo -alpn_expected foo || exit 1
+$ssltest -bio_pair -tls1 -alpn_client foo,bar -alpn_server foo -alpn_expected foo || exit 1
+$ssltest -bio_pair -tls1 -alpn_client bar,foo -alpn_server foo -alpn_expected foo || exit 1
+$ssltest -bio_pair -tls1 -alpn_client bar,foo -alpn_server foo,bar -alpn_expected foo || exit 1
+$ssltest -bio_pair -tls1 -alpn_client bar,foo -alpn_server bar,foo -alpn_expected bar || exit 1
+$ssltest -bio_pair -tls1 -alpn_client foo,bar -alpn_server bar,foo -alpn_expected bar || exit 1
+$ssltest -bio_pair -tls1 -alpn_client baz -alpn_server bar,foo || exit 1
+
 if ../util/shlib_wrap.sh ../apps/openssl no-srp; then
   echo skipping SRP tests
 else

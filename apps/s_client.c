@@ -1329,6 +1329,7 @@ bad:
 			goto end;
 			}
 		SSL_CTX_set_alpn_protos(ctx, alpn, alpn_len);
+		OPENSSL_free(alpn);
 		}
 #endif
 #ifndef OPENSSL_NO_TLSEXT
