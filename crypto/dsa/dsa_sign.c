@@ -72,12 +72,5 @@ DSA_SIG * DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 
 int DSA_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 	{
-	if (dsa->flags & DSA_FLAG_NONCE_FROM_HASH)
-		{
-		/* One cannot precompute the DSA nonce if it is required to
-		 * depend on the message. */
-		DSAerr(DSA_F_DSA_SIGN_SETUP, DSA_R_NONCE_CANNOT_BE_PRECOMPUTED);
-		return 0;
-		}
-	return dsa->meth->dsa_sign_setup(dsa, ctx_in, kinvp, rp, NULL, 0);
+	return dsa->meth->dsa_sign_setup(dsa, ctx_in, kinvp, rp);
 	}

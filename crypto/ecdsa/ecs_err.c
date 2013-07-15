@@ -84,7 +84,6 @@ static ERR_STRING_DATA ECDSA_str_reasons[]=
 {ERR_REASON(ECDSA_R_ERR_EC_LIB)          ,"err ec lib"},
 {ERR_REASON(ECDSA_R_MISSING_PARAMETERS)  ,"missing parameters"},
 {ERR_REASON(ECDSA_R_NEED_NEW_SETUP_VALUES),"need new setup values"},
-{ERR_REASON(ECDSA_R_NONCE_CANNOT_BE_PRECOMPUTED),"nonce cannot be precomputed"},
 {ERR_REASON(ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED),"random number generation failed"},
 {ERR_REASON(ECDSA_R_SIGNATURE_MALLOC_FAILED),"signature malloc failed"},
 {0,NULL}

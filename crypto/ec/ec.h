@@ -823,17 +823,6 @@ void *EC_KEY_insert_key_method_data(EC_KEY *key, void *data,
 /* wrapper functions for the underlying EC_GROUP object */
 void EC_KEY_set_asn1_flag(EC_KEY *eckey, int asn1_flag);
 
-/** Sets whether ECDSA operations with the given key will calculate their k
- * value from SHA512(private_key + message + random) in order to protect
- * against a weak PRNG.
- * \param  on  Whether to calculate k from a hash or not
- */
-void EC_KEY_set_nonce_from_hash(EC_KEY *key, int on);
-
-/** Returns the value of nonce_from_hash
- */
-int EC_KEY_get_nonce_from_hash(const EC_KEY *key);
-
 /** Creates a table of pre-computed multiples of the generator to 
  *  accelerate further EC_KEY operations.
  *  \param  key  EC_KEY object

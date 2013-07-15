@@ -72,9 +72,10 @@
 #endif
 
 static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa);
-static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
-			  BIGNUM **kinvp, BIGNUM **rp,
-			  const unsigned char *dgst, int dlen);
+static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp);
+static int dsa_sign_setup_with_digest(DSA *dsa, BN_CTX *ctx_in,
+				      BIGNUM **kinvp, BIGNUM **rp,
+				      const unsigned char *dgst, int dlen);
 static int dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 			 DSA *dsa);
 static int dsa_init(DSA *dsa);
@@ -178,7 +179,7 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 redo:
 	if ((dsa->kinv == NULL) || (dsa->r == NULL))
 		{
-		if (!dsa->meth->dsa_sign_setup(dsa,ctx,&kinv,&r,dgst,dlen))
+		if (!dsa_sign_setup_with_digest(dsa,ctx,&kinv,&r,dgst,dlen))
 			goto err;
 		}
 	else
@@ -239,8 +240,13 @@ err:
 	}
 
 static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
-			  BIGNUM **kinvp, BIGNUM **rp,
-			  const unsigned char *dgst, int dlen)
+			  BIGNUM **kinvp, BIGNUM **rp) {
+	return dsa_sign_setup_with_digest(dsa, ctx_in, kinvp, rp, NULL, 0);
+}
+
+static int dsa_sign_setup_with_digest(DSA *dsa, BN_CTX *ctx_in,
+				      BIGNUM **kinvp, BIGNUM **rp,
+				      const unsigned char *dgst, int dlen)
 	{
 	BN_CTX *ctx;
 	BIGNUM k,kq,*K,*kinv=NULL,*r=NULL;
@@ -268,11 +274,11 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
 	do
 		{
 #ifndef OPENSSL_NO_SHA512
-		if (dsa->flags & DSA_FLAG_NONCE_FROM_HASH)
+		if (dgst != NULL)
 			{
-			/* If DSA_FLAG_NONCE_FROM_HASH is set then we calculate k from
-			 * SHA512(private_key + H(message) + random). This protects the
-			 * private key from a weak PRNG. */
+			/* We calculate k from SHA512(private_key + H(message)
+			 * + random). This protects the private key from a weak
+			 * PRNG. */
 			if (!BN_generate_dsa_nonce(&k, dsa->q, dsa->priv_key, dgst,
 						   dlen, ctx))
 				goto err;

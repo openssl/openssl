@@ -246,7 +246,6 @@ struct ec_key_st {
 	BIGNUM	 *priv_key;
 
 	unsigned int enc_flag;
-	char nonce_from_hash_flag;
 	point_conversion_form_t conv_form;
 
 	int 	references;

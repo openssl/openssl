@@ -112,7 +112,6 @@ static ERR_STRING_DATA DSA_str_reasons[]=
 {ERR_REASON(DSA_R_MISSING_PARAMETERS)    ,"missing parameters"},
 {ERR_REASON(DSA_R_MODULUS_TOO_LARGE)     ,"modulus too large"},
 {ERR_REASON(DSA_R_NEED_NEW_SETUP_VALUES) ,"need new setup values"},
-{ERR_REASON(DSA_R_NONCE_CANNOT_BE_PRECOMPUTED),"nonce cannot be precomputed"},
 {ERR_REASON(DSA_R_NO_PARAMETERS_SET)     ,"no parameters set"},
 {ERR_REASON(DSA_R_PARAMETER_ENCODING_ERROR),"parameter encoding error"},
 {ERR_REASON(DSA_R_Q_NOT_PRIME)           ,"q not prime"},
