@@ -384,6 +384,31 @@ my @smime_cms_param_tests = (
           . " -recip $smdir/smrsa1.pem -keyopt rsa_padding_mode:oaep"
 	  . " -keyopt rsa_oaep_md:sha256",
         "-decrypt -recip $smdir/smrsa1.pem -in test.cms -out smtst.txt"
+    ],
+
+    [
+"enveloped content test streaming S/MIME format, ECDH",
+        "-encrypt -in smcont.txt"
+          . " -stream -out test.cms"
+          . " -recip $smdir/smec1.pem",
+        "-decrypt -recip $smdir/smec1.pem -in test.cms -out smtst.txt"
+    ],
+
+    [
+"enveloped content test streaming S/MIME format, ECDH, AES128, SHA256 KDF",
+        "-encrypt -in smcont.txt"
+          . " -stream -out test.cms"
+          . " -recip $smdir/smec1.pem -aes128 -keyopt ecdh_kdf_md:sha256",
+        "-decrypt -recip $smdir/smec1.pem -in test.cms -out smtst.txt"
+    ],
+
+    [
+"enveloped content test streaming S/MIME format, ECDH, K-283, cofactor DH",
+        "-encrypt -in smcont.txt"
+          . " -stream -out test.cms"
+          . " -recip $smdir/smec2.pem -aes128"
+	  . " -keyopt ecdh_kdf_md:sha256 -keyopt ecdh_cofactor_mode:1",
+        "-decrypt -recip $smdir/smec2.pem -in test.cms -out smtst.txt"
     ]
 );
 
