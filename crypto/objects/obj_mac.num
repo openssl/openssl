@@ -933,3 +933,15 @@ brainpoolP384t1		932
 brainpoolP512r1		933
 brainpoolP512t1		934
 pSpecified		935
+dhSinglePass_stdDH_sha1kdf_scheme		936
+dhSinglePass_stdDH_sha224kdf_scheme		937
+dhSinglePass_stdDH_sha256kdf_scheme		938
+dhSinglePass_stdDH_sha384kdf_scheme		939
+dhSinglePass_stdDH_sha512kdf_scheme		940
+dhSinglePass_cofactorDH_sha1kdf_scheme		941
+dhSinglePass_cofactorDH_sha224kdf_scheme		942
+dhSinglePass_cofactorDH_sha256kdf_scheme		943
+dhSinglePass_cofactorDH_sha384kdf_scheme		944
+dhSinglePass_cofactorDH_sha512kdf_scheme		945
+dh_std_kdf		946
+dh_cofactor_kdf		947
