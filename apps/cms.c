@@ -122,7 +122,7 @@ int MAIN(int argc, char **argv)
 	STACK_OF(OPENSSL_STRING) *sksigners = NULL, *skkeys = NULL;
 	char *certfile = NULL, *keyfile = NULL, *contfile=NULL;
 	char *certsoutfile = NULL;
-	const EVP_CIPHER *cipher = NULL;
+	const EVP_CIPHER *cipher = NULL, *wrap_cipher = NULL;
 	CMS_ContentInfo *cms = NULL, *rcms = NULL;
 	X509_STORE *store = NULL;
 	X509 *cert = NULL, *recip = NULL, *signer = NULL;
@@ -217,6 +217,8 @@ int MAIN(int argc, char **argv)
 				cipher = EVP_des_ede3_cbc();
 		else if (!strcmp (*args, "-des")) 
 				cipher = EVP_des_cbc();
+		else if (!strcmp (*args, "-des3-wrap")) 
+				wrap_cipher = EVP_des_ede3_wrap();
 #endif
 #ifndef OPENSSL_NO_SEED
 		else if (!strcmp (*args, "-seed")) 
@@ -237,6 +239,12 @@ int MAIN(int argc, char **argv)
 				cipher = EVP_aes_192_cbc();
 		else if (!strcmp(*args,"-aes256"))
 				cipher = EVP_aes_256_cbc();
+		else if (!strcmp(*args,"-aes128-wrap"))
+				wrap_cipher = EVP_aes_128_wrap();
+		else if (!strcmp(*args,"-aes192-wrap"))
+				wrap_cipher = EVP_aes_192_wrap();
+		else if (!strcmp(*args,"-aes256-wrap"))
+				wrap_cipher = EVP_aes_256_wrap();
 #endif
 #ifndef OPENSSL_NO_CAMELLIA
 		else if (!strcmp(*args,"-camellia128"))
@@ -1004,6 +1012,14 @@ int MAIN(int argc, char **argv)
 				pctx = CMS_RecipientInfo_get0_pkey_ctx(ri);
 				if (!cms_set_pkey_param(pctx, kparam->param))
 					goto end;
+				}
+			if (CMS_RecipientInfo_type(ri) == CMS_RECIPINFO_AGREE
+				&& wrap_cipher)
+				{
+				EVP_CIPHER_CTX *wctx;
+				wctx = CMS_RecipientInfo_kari_get0_ctx(ri);
+				EVP_EncryptInit_ex(wctx, wrap_cipher,
+							NULL, NULL, NULL);
 				}
 			}
 
