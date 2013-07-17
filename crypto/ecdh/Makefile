@@ -17,9 +17,9 @@ TEST=ecdhtest.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=	ech_lib.c ech_ossl.c ech_key.c ech_err.c
+LIBSRC=	ech_lib.c ech_ossl.c ech_key.c ech_err.c ech_kdf.c
 
-LIBOBJ=	ech_lib.o ech_ossl.o ech_key.o ech_err.o
+LIBOBJ=	ech_lib.o ech_ossl.o ech_key.o ech_err.o ech_kdf.o
 
 SRC= $(LIBSRC)
 
