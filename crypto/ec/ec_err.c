@@ -1,6 +1,6 @@
 /* crypto/ec/ec_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2013 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -76,6 +76,8 @@ static ERR_STRING_DATA EC_str_functs[]=
 {ERR_FUNC(EC_F_D2I_ECPKPARAMETERS),	"d2i_ECPKParameters"},
 {ERR_FUNC(EC_F_D2I_ECPRIVATEKEY),	"d2i_ECPrivateKey"},
 {ERR_FUNC(EC_F_DO_EC_KEY_PRINT),	"DO_EC_KEY_PRINT"},
+{ERR_FUNC(EC_F_ECDH_CMS_DECRYPT),	"ECDH_CMS_DECRYPT"},
+{ERR_FUNC(EC_F_ECDH_CMS_SET_SHARED_INFO),	"ECDH_CMS_SET_SHARED_INFO"},
 {ERR_FUNC(EC_F_ECKEY_PARAM2TYPE),	"ECKEY_PARAM2TYPE"},
 {ERR_FUNC(EC_F_ECKEY_PARAM_DECODE),	"ECKEY_PARAM_DECODE"},
 {ERR_FUNC(EC_F_ECKEY_PRIV_DECODE),	"ECKEY_PRIV_DECODE"},
@@ -229,6 +231,7 @@ static ERR_STRING_DATA EC_str_reasons[]=
 {ERR_REASON(EC_R_INVALID_COMPRESSED_POINT),"invalid compressed point"},
 {ERR_REASON(EC_R_INVALID_COMPRESSION_BIT),"invalid compression bit"},
 {ERR_REASON(EC_R_INVALID_CURVE)          ,"invalid curve"},
+{ERR_REASON(EC_R_INVALID_DIGEST)         ,"invalid digest"},
 {ERR_REASON(EC_R_INVALID_DIGEST_TYPE)    ,"invalid digest type"},
 {ERR_REASON(EC_R_INVALID_ENCODING)       ,"invalid encoding"},
 {ERR_REASON(EC_R_INVALID_FIELD)          ,"invalid field"},
@@ -237,6 +240,7 @@ static ERR_STRING_DATA EC_str_reasons[]=
 {ERR_REASON(EC_R_INVALID_PENTANOMIAL_BASIS),"invalid pentanomial basis"},
 {ERR_REASON(EC_R_INVALID_PRIVATE_KEY)    ,"invalid private key"},
 {ERR_REASON(EC_R_INVALID_TRINOMIAL_BASIS),"invalid trinomial basis"},
+{ERR_REASON(EC_R_KDF_PARAMETER_ERROR)    ,"kdf parameter error"},
 {ERR_REASON(EC_R_KEYS_NOT_SET)           ,"keys not set"},
 {ERR_REASON(EC_R_MISSING_PARAMETERS)     ,"missing parameters"},
 {ERR_REASON(EC_R_MISSING_PRIVATE_KEY)    ,"missing private key"},
@@ -247,9 +251,11 @@ static ERR_STRING_DATA EC_str_reasons[]=
 {ERR_REASON(EC_R_NO_FIELD_MOD)           ,"no field mod"},
 {ERR_REASON(EC_R_NO_PARAMETERS_SET)      ,"no parameters set"},
 {ERR_REASON(EC_R_PASSED_NULL_PARAMETER)  ,"passed null parameter"},
+{ERR_REASON(EC_R_PEER_KEY_ERROR)         ,"peer key error"},
 {ERR_REASON(EC_R_PKPARAMETERS2GROUP_FAILURE),"pkparameters2group failure"},
 {ERR_REASON(EC_R_POINT_AT_INFINITY)      ,"point at infinity"},
 {ERR_REASON(EC_R_POINT_IS_NOT_ON_CURVE)  ,"point is not on curve"},
+{ERR_REASON(EC_R_SHARED_INFO_ERROR)      ,"shared info error"},
 {ERR_REASON(EC_R_SLOT_FULL)              ,"slot full"},
 {ERR_REASON(EC_R_UNDEFINED_GENERATOR)    ,"undefined generator"},
 {ERR_REASON(EC_R_UNDEFINED_ORDER)        ,"undefined order"},

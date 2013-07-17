@@ -319,7 +319,7 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		case EVP_PKEY_CTRL_EC_ECDH_COFACTOR:
 		if (p1 == -2)
 			{
-			if (dctx->co_key)
+			if (dctx->cofactor_mode != -1)
 				return dctx->cofactor_mode;
 			else
 				{
@@ -458,6 +458,22 @@ static int pkey_ec_ctrl_str(EVP_PKEY_CTX *ctx,
 		else
 			return -2;
 		return EVP_PKEY_CTX_set_ec_param_enc(ctx, param_enc);
+		}
+	else if (!strcmp(type, "ecdh_kdf_md"))
+		{
+		const EVP_MD *md;
+		if (!(md = EVP_get_digestbyname(value)))
+			{
+			ECerr(EC_F_PKEY_EC_CTRL_STR, EC_R_INVALID_DIGEST);
+			return 0;
+			}
+		return EVP_PKEY_CTX_set_ecdh_kdf_md(ctx, md);
+		}
+	else if (!strcmp(type, "ecdh_cofactor_mode"))
+		{
+		int co_mode;
+		co_mode = atoi(value);
+		return EVP_PKEY_CTX_set_ecdh_cofactor_mode(ctx, co_mode);
 		}
 			
 	return -2;
