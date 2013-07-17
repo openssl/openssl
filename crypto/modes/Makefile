@@ -22,9 +22,9 @@ APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC= cbc128.c ctr128.c cts128.c cfb128.c ofb128.c gcm128.c \
-	ccm128.c xts128.c
+	ccm128.c xts128.c wrap128.c
 LIBOBJ= cbc128.o ctr128.o cts128.o cfb128.o ofb128.o gcm128.o \
-	ccm128.o xts128.o $(MODES_ASM_OBJ)
+	ccm128.o xts128.o wrap128.o $(MODES_ASM_OBJ)
 
 SRC= $(LIBSRC)
 

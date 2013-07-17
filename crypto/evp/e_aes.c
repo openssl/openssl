@@ -1879,4 +1879,102 @@ BLOCK_CIPHER_custom(NID_aes,128,1,12,ccm,CCM,EVP_CIPH_FLAG_FIPS|CUSTOM_FLAGS)
 BLOCK_CIPHER_custom(NID_aes,192,1,12,ccm,CCM,EVP_CIPH_FLAG_FIPS|CUSTOM_FLAGS)
 BLOCK_CIPHER_custom(NID_aes,256,1,12,ccm,CCM,EVP_CIPH_FLAG_FIPS|CUSTOM_FLAGS)
 
+typedef struct
+	{
+	union { double align; AES_KEY ks; } ks;
+	/* Indicates if IV has been set */
+	unsigned char *iv;
+	} EVP_AES_WRAP_CTX;
+
+static int aes_wrap_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+                        const unsigned char *iv, int enc)
+	{
+	EVP_AES_WRAP_CTX *wctx = ctx->cipher_data;
+	if (!iv && !key)
+		return 1;
+	if (key)
+		{
+		if (ctx->encrypt)
+			AES_set_encrypt_key(key, ctx->key_len * 8, &wctx->ks.ks);
+		else
+			AES_set_decrypt_key(key, ctx->key_len * 8, &wctx->ks.ks);
+		if (!iv)
+			wctx->iv = NULL;
+		}
+	if (iv)
+		{
+		memcpy(ctx->iv, iv, 8);
+		wctx->iv = ctx->iv;
+		}
+	return 1;
+	}
+
+static int aes_wrap_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+		const unsigned char *in, size_t inlen)
+	{
+	EVP_AES_WRAP_CTX *wctx = ctx->cipher_data;
+	size_t rv;
+	if (inlen % 8)
+		return 0;
+	if (!out)
+		{
+		if (ctx->encrypt)
+			return inlen + 8;
+		else
+			return inlen - 8;
+		}
+	if (!in)
+		return 0;
+	if (ctx->encrypt)
+		rv = CRYPTO_128_wrap(&wctx->ks.ks, wctx->iv, out, in, inlen,
+						(block128_f)AES_encrypt);
+	else
+		rv = CRYPTO_128_unwrap(&wctx->ks.ks, wctx->iv, out, in, inlen,
+						(block128_f)AES_decrypt);
+	return rv ? (int)rv : -1;
+	}
+
+#define WRAP_FLAGS	(EVP_CIPH_WRAP_MODE \
+		| EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER \
+		| EVP_CIPH_ALWAYS_CALL_INIT)
+
+static const EVP_CIPHER aes_128_wrap = {
+	NID_id_aes128_wrap,
+	8, 16, 8, WRAP_FLAGS,
+	aes_wrap_init_key, aes_wrap_cipher,
+	NULL,	
+	sizeof(EVP_AES_WRAP_CTX),
+	NULL,NULL,NULL,NULL };
+
+const EVP_CIPHER *EVP_aes_128_wrap(void)
+	{
+	return &aes_128_wrap;
+	}
+
+static const EVP_CIPHER aes_192_wrap = {
+	NID_id_aes192_wrap,
+	8, 24, 8, WRAP_FLAGS,
+	aes_wrap_init_key, aes_wrap_cipher,
+	NULL,	
+	sizeof(EVP_AES_WRAP_CTX),
+	NULL,NULL,NULL,NULL };
+
+const EVP_CIPHER *EVP_aes_192_wrap(void)
+	{
+	return &aes_192_wrap;
+	}
+
+static const EVP_CIPHER aes_256_wrap = {
+	NID_id_aes256_wrap,
+	8, 32, 8, WRAP_FLAGS,
+	aes_wrap_init_key, aes_wrap_cipher,
+	NULL,	
+	sizeof(EVP_AES_WRAP_CTX),
+	NULL,NULL,NULL,NULL };
+
+const EVP_CIPHER *EVP_aes_256_wrap(void)
+	{
+	return &aes_256_wrap;
+	}
+
 #endif

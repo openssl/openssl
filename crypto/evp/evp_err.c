@@ -1,6 +1,6 @@
 /* crypto/evp/evp_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2012 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2013 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -222,6 +222,7 @@ static ERR_STRING_DATA EVP_str_reasons[]=
 {ERR_REASON(EVP_R_UNSUPPORTED_PRF)       ,"unsupported prf"},
 {ERR_REASON(EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM),"unsupported private key algorithm"},
 {ERR_REASON(EVP_R_UNSUPPORTED_SALT_TYPE) ,"unsupported salt type"},
+{ERR_REASON(EVP_R_WRAP_MODE_NOT_ALLOWED) ,"wrap mode not allowed"},
 {ERR_REASON(EVP_R_WRONG_FINAL_BLOCK_LENGTH),"wrong final block length"},
 {ERR_REASON(EVP_R_WRONG_PUBLIC_KEY_TYPE) ,"wrong public key type"},
 {0,NULL}

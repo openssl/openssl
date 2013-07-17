@@ -164,6 +164,7 @@ static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
 	test1_exit(5);
 	}
     EVP_CIPHER_CTX_init(&ctx);
+    EVP_CIPHER_CTX_set_flags(&ctx,EVP_CIPHER_CTX_FLAG_WRAP_ALLOW);
     if (encdec != 0)
         {
 	if (mode == EVP_CIPH_GCM_MODE)
@@ -230,6 +231,15 @@ static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
 		fprintf(stderr,"AAD set failed\n");
 		ERR_print_errors_fp(stderr);
 		test1_exit(13);
+		}
+	    }
+	else if (mode == EVP_CIPH_WRAP_MODE)
+	    {
+	    if(!EVP_EncryptInit_ex(&ctx,c,NULL,key,in ? iv : NULL))
+	        {
+		fprintf(stderr,"EncryptInit failed\n");
+		ERR_print_errors_fp(stderr);
+		test1_exit(10);
 		}
 	    }
 	else if(!EVP_EncryptInit_ex(&ctx,c,NULL,key,iv))
@@ -361,6 +371,15 @@ static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
 		fprintf(stderr,"AAD set failed\n");
 		ERR_print_errors_fp(stderr);
 		test1_exit(13);
+		}
+	    }
+	else if (mode == EVP_CIPH_WRAP_MODE)
+	    {
+	    if(!EVP_DecryptInit_ex(&ctx,c,NULL,key,in ? iv : NULL))
+	        {
+		fprintf(stderr,"EncryptInit failed\n");
+		ERR_print_errors_fp(stderr);
+		test1_exit(10);
 		}
 	    }
 	else if(!EVP_DecryptInit_ex(&ctx,c,NULL,key,iv))
@@ -505,7 +524,7 @@ int main(int argc,char **argv)
 	perror(szTestFile);
 	EXIT(2);
 	}
-
+    ERR_load_crypto_strings();
     /* Load up the software EVP_CIPHER and EVP_MD definitions */
     OpenSSL_add_all_ciphers();
     OpenSSL_add_all_digests();

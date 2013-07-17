@@ -4,6 +4,12 @@
 
  Changes between 1.0.1e and 1.0.2 [xx XXX xxxx]
 
+  *) Add EVP support for key wrapping algorithms, to avoid problems with
+     existing code the flag EVP_CIPHER_CTX_WRAP_ALLOW has to be set in
+     the EVP_CIPHER_CTX or an error is returned. Add AES and DES3 wrap
+     algorithms and include tests cases.
+     [Steve Henson]
+
   *) Add functions to allocate and set the fields of an ECDSA_METHOD
      structure.
      [Douglas E. Engert, Steve Henson]
