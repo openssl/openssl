@@ -66,9 +66,9 @@
 
 static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dlen, 
 		const BIGNUM *, const BIGNUM *, EC_KEY *eckey);
-static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
-		BIGNUM **rp);
-static int ecdsa_sign_setup_with_digest(EC_KEY *eckey, BN_CTX *ctx_in,
+static int ecdsa_sign_setup_no_digest(EC_KEY *eckey,
+		BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp);
+static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
 					BIGNUM **kinvp, BIGNUM **rp,
 					const unsigned char *dgst, int dlen);
 static int ecdsa_do_verify(const unsigned char *dgst, int dgst_len, 
@@ -77,7 +77,7 @@ static int ecdsa_do_verify(const unsigned char *dgst, int dgst_len,
 static ECDSA_METHOD openssl_ecdsa_meth = {
 	"OpenSSL ECDSA method",
 	ecdsa_do_sign,
-	ecdsa_sign_setup,
+	ecdsa_sign_setup_no_digest,
 	ecdsa_do_verify,
 #if 0
 	NULL, /* init     */
@@ -92,12 +92,12 @@ const ECDSA_METHOD *ECDSA_OpenSSL(void)
 	return &openssl_ecdsa_meth;
 }
 
-static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
-		BIGNUM **rp) {
-	return ecdsa_sign_setup_with_digest(eckey, ctx_in, kinvp, rp, NULL, 0);
+static int ecdsa_sign_setup_no_digest(EC_KEY *eckey,
+		BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp) {
+	return ecdsa_sign_setup(eckey, ctx_in, kinvp, rp, NULL, 0);
 }
 
-static int ecdsa_sign_setup_with_digest(EC_KEY *eckey, BN_CTX *ctx_in,
+static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
 					BIGNUM **kinvp, BIGNUM **rp,
 					const unsigned char *dgst, int dlen)
 {
@@ -327,7 +327,7 @@ static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 	{
 		if (in_kinv == NULL || in_r == NULL)
 		{
-			if (!ecdsa_sign_setup_with_digest(
+			if (!ecdsa_sign_setup(
 				eckey, ctx, &kinv, &ret->r, dgst, dgst_len))
 			{
 				ECDSAerr(ECDSA_F_ECDSA_DO_SIGN,ERR_R_ECDSA_LIB);

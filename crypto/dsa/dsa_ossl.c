@@ -72,8 +72,8 @@
 #endif
 
 static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa);
-static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp);
-static int dsa_sign_setup_with_digest(DSA *dsa, BN_CTX *ctx_in,
+static int dsa_sign_setup_no_digest(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp);
+static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
 				      BIGNUM **kinvp, BIGNUM **rp,
 				      const unsigned char *dgst, int dlen);
 static int dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
@@ -84,7 +84,7 @@ static int dsa_finish(DSA *dsa);
 static DSA_METHOD openssl_dsa_meth = {
 "OpenSSL DSA method",
 dsa_do_sign,
-dsa_sign_setup,
+dsa_sign_setup_no_digest,
 dsa_do_verify,
 NULL, /* dsa_mod_exp, */
 NULL, /* dsa_bn_mod_exp, */
@@ -179,7 +179,7 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 redo:
 	if ((dsa->kinv == NULL) || (dsa->r == NULL))
 		{
-		if (!dsa_sign_setup_with_digest(dsa,ctx,&kinv,&r,dgst,dlen))
+		if (!dsa_sign_setup(dsa,ctx,&kinv,&r,dgst,dlen))
 			goto err;
 		}
 	else
@@ -239,12 +239,12 @@ err:
 	return(ret);
 	}
 
-static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
+static int dsa_sign_setup_no_digest(DSA *dsa, BN_CTX *ctx_in,
 			  BIGNUM **kinvp, BIGNUM **rp) {
-	return dsa_sign_setup_with_digest(dsa, ctx_in, kinvp, rp, NULL, 0);
+	return dsa_sign_setup(dsa, ctx_in, kinvp, rp, NULL, 0);
 }
 
-static int dsa_sign_setup_with_digest(DSA *dsa, BN_CTX *ctx_in,
+static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
 				      BIGNUM **kinvp, BIGNUM **rp,
 				      const unsigned char *dgst, int dlen)
 	{
