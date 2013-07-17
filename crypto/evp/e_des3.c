@@ -374,4 +374,111 @@ const EVP_CIPHER *EVP_des_ede3(void)
 {
 	return &des_ede3_ecb;
 }
+
+#ifndef OPENSSL_NO_SHA
+
+#include <openssl/sha.h>
+
+static const unsigned char wrap_iv[8] = {0x4a,0xdd,0xa2,0x2c,0x79,0xe8,0x21,0x05};
+
+static int des_ede3_unwrap(EVP_CIPHER_CTX *ctx, unsigned char *out,
+				const unsigned char *in, size_t inl)
+	{
+	unsigned char icv[8], iv[8], sha1tmp[SHA_DIGEST_LENGTH];
+	int rv = -1;
+	if (inl < 24)
+		return -1;
+	if (!out)
+		return inl - 16;
+	memcpy(ctx->iv, wrap_iv, 8);
+	/* Decrypt first block which will end up as icv */
+	des_ede_cbc_cipher(ctx, icv, in, 8);
+	/* Decrypt central blocks */
+	/* If decrypting in place move whole output along a block
+	 * so the next des_ede_cbc_cipher is in place.
+	 */
+	if (out == in)
+		{
+		memmove(out, out + 8, inl - 8);
+		in -= 8;
+		}
+	des_ede_cbc_cipher(ctx, out, in + 8, inl - 16);
+	/* Decrypt final block which will be IV */
+	des_ede_cbc_cipher(ctx, iv, in + inl - 8, 8);
+	/* Reverse order of everything */
+	BUF_reverse(icv, NULL, 8);
+	BUF_reverse(out, NULL, inl - 16);
+	BUF_reverse(ctx->iv, iv, 8);
+	/* Decrypt again using new IV */
+	des_ede_cbc_cipher(ctx, out, out, inl - 16);
+	des_ede_cbc_cipher(ctx, icv, icv, 8);
+	/* Work out SHA1 hash of first portion */
+	SHA1(out, inl - 16, sha1tmp);
+
+	if (!CRYPTO_memcmp(sha1tmp, icv, 8))
+		rv = inl - 16;
+	OPENSSL_cleanse(icv, 8);
+	OPENSSL_cleanse(sha1tmp, SHA_DIGEST_LENGTH);
+	OPENSSL_cleanse(iv, 8);
+	OPENSSL_cleanse(ctx->iv, 8);
+	if (rv == -1)
+		OPENSSL_cleanse(out, inl - 16);
+	
+	return rv;
+	}
+
+static int des_ede3_wrap(EVP_CIPHER_CTX *ctx, unsigned char *out,
+				const unsigned char *in, size_t inl)
+	{
+	unsigned char sha1tmp[SHA_DIGEST_LENGTH];
+	if (!out)
+		return inl + 16;
+	/* Copy input to output buffer + 8 so we have space for IV */
+	memmove(out + 8, in, inl);
+	/* Work out ICV */
+	SHA1(in, inl, sha1tmp);
+	memcpy(out + inl + 8, sha1tmp, 8);
+	OPENSSL_cleanse(sha1tmp, SHA_DIGEST_LENGTH);
+	/* Generate random IV */
+	RAND_bytes(ctx->iv, 8);
+	memcpy(out, ctx->iv, 8);
+	/* Encrypt everything after IV in place */
+	des_ede_cbc_cipher(ctx, out + 8, out + 8, inl + 8);
+	BUF_reverse(out, NULL, inl + 16);
+	memcpy(ctx->iv, wrap_iv, 8);
+	des_ede_cbc_cipher(ctx, out, out, inl + 16);
+	return inl + 16;
+	}
+
+static int des_ede3_wrap_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+				const unsigned char *in, size_t inl)
+	{
+	/* Sanity check input length: we typically only wrap keys
+	 * so EVP_MAXCHUNK is more than will ever be needed. Also
+	 * input length must be a multiple of 8 bits.
+	 */
+	if (inl >= EVP_MAXCHUNK || inl % 8)
+		return -1;
+	if (ctx->encrypt)
+		return des_ede3_wrap(ctx, out, in, inl);
+	else
+		return des_ede3_unwrap(ctx, out, in, inl);
+	}
+
+static const EVP_CIPHER des3_wrap = {
+	NID_id_smime_alg_CMS3DESwrap,
+	8, 24, 0,
+	EVP_CIPH_WRAP_MODE|EVP_CIPH_CUSTOM_IV|EVP_CIPH_FLAG_CUSTOM_CIPHER,
+	des_ede3_init_key, des_ede3_wrap_cipher,
+	NULL,	
+	sizeof(DES_EDE_KEY),
+	NULL,NULL,NULL,NULL };
+
+
+const EVP_CIPHER *EVP_des_ede3_wrap(void)
+	{
+	return &des3_wrap;
+	}
+
+# endif
 #endif

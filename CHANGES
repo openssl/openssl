@@ -4,6 +4,12 @@
 
  Changes between 1.0.x and 1.1.0  [xx XXX xxxx]
 
+  *) Add EVP support for key wrapping algorithms, to avoid problems with
+     existing code the flag EVP_CIPHER_CTX_WRAP_ALLOW has to be set in
+     the EVP_CIPHER_CTX or an error is returned. Add AES and DES3 wrap
+     algorithms and include tests cases.
+     [Steve Henson]
+
   *) Extend CMS code to support RSA-PSS signatures and RSA-OAEP for
      enveloped data.
      [Steve Henson]
