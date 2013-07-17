@@ -936,3 +936,15 @@ aes_128_cbc_hmac_sha256		935
 aes_192_cbc_hmac_sha256		936
 aes_256_cbc_hmac_sha256		937
 pSpecified		938
+dhSinglePass_stdDH_sha1kdf_scheme		939
+dhSinglePass_stdDH_sha224kdf_scheme		940
+dhSinglePass_stdDH_sha256kdf_scheme		941
+dhSinglePass_stdDH_sha384kdf_scheme		942
+dhSinglePass_stdDH_sha512kdf_scheme		943
+dhSinglePass_cofactorDH_sha1kdf_scheme		944
+dhSinglePass_cofactorDH_sha224kdf_scheme		945
+dhSinglePass_cofactorDH_sha256kdf_scheme		946
+dhSinglePass_cofactorDH_sha384kdf_scheme		947
+dhSinglePass_cofactorDH_sha512kdf_scheme		948
+dh_std_kdf		949
+dh_cofactor_kdf		950
