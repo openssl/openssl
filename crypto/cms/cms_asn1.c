@@ -166,10 +166,22 @@ ASN1_CHOICE(CMS_KeyAgreeRecipientIdentifier) = {
   ASN1_IMP(CMS_KeyAgreeRecipientIdentifier, d.rKeyId, CMS_RecipientKeyIdentifier, 0)
 } ASN1_CHOICE_END(CMS_KeyAgreeRecipientIdentifier)
 
-ASN1_SEQUENCE(CMS_RecipientEncryptedKey) = {
+static int cms_rek_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
+							void *exarg)
+	{
+	CMS_RecipientEncryptedKey *rek = (CMS_RecipientEncryptedKey *)*pval;
+	if(operation == ASN1_OP_FREE_POST)
+		{
+		if (rek->pkey)
+			EVP_PKEY_free(rek->pkey);
+		}
+	return 1;
+	}
+
+ASN1_SEQUENCE_cb(CMS_RecipientEncryptedKey, cms_rek_cb) = {
 	ASN1_SIMPLE(CMS_RecipientEncryptedKey, rid, CMS_KeyAgreeRecipientIdentifier),
 	ASN1_SIMPLE(CMS_RecipientEncryptedKey, encryptedKey, ASN1_OCTET_STRING)
-} ASN1_SEQUENCE_END(CMS_RecipientEncryptedKey)
+} ASN1_SEQUENCE_END_cb(CMS_RecipientEncryptedKey, CMS_RecipientEncryptedKey)
 
 ASN1_SEQUENCE(CMS_OriginatorPublicKey) = {
   ASN1_SIMPLE(CMS_OriginatorPublicKey, algorithm, X509_ALGOR),
@@ -182,13 +194,33 @@ ASN1_CHOICE(CMS_OriginatorIdentifierOrKey) = {
   ASN1_IMP(CMS_OriginatorIdentifierOrKey, d.originatorKey, CMS_OriginatorPublicKey, 1)
 } ASN1_CHOICE_END(CMS_OriginatorIdentifierOrKey)
 
-ASN1_SEQUENCE(CMS_KeyAgreeRecipientInfo) = {
+static int cms_kari_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
+							void *exarg)
+	{
+	CMS_KeyAgreeRecipientInfo *kari = (CMS_KeyAgreeRecipientInfo *)*pval;
+	if(operation == ASN1_OP_NEW_POST)
+		{
+		EVP_CIPHER_CTX_init(&kari->ctx);
+		EVP_CIPHER_CTX_set_flags(&kari->ctx,
+					EVP_CIPHER_CTX_FLAG_WRAP_ALLOW);
+		kari->pctx = NULL;
+		}
+	else if(operation == ASN1_OP_FREE_POST)
+		{
+		if (kari->pctx)
+			EVP_PKEY_CTX_free(kari->pctx);
+		EVP_CIPHER_CTX_cleanup(&kari->ctx);
+		}
+	return 1;
+	}
+
+ASN1_SEQUENCE_cb(CMS_KeyAgreeRecipientInfo, cms_kari_cb) = {
 	ASN1_SIMPLE(CMS_KeyAgreeRecipientInfo, version, LONG),
 	ASN1_EXP(CMS_KeyAgreeRecipientInfo, originator, CMS_OriginatorIdentifierOrKey, 0),
 	ASN1_EXP_OPT(CMS_KeyAgreeRecipientInfo, ukm, ASN1_OCTET_STRING, 1),
 	ASN1_SIMPLE(CMS_KeyAgreeRecipientInfo, keyEncryptionAlgorithm, X509_ALGOR),
 	ASN1_SEQUENCE_OF(CMS_KeyAgreeRecipientInfo, recipientEncryptedKeys, CMS_RecipientEncryptedKey)
-} ASN1_SEQUENCE_END(CMS_KeyAgreeRecipientInfo)
+} ASN1_SEQUENCE_END_cb(CMS_KeyAgreeRecipientInfo, CMS_KeyAgreeRecipientInfo)
 
 ASN1_SEQUENCE(CMS_KEKIdentifier) = {
 	ASN1_SIMPLE(CMS_KEKIdentifier, keyIdentifier, ASN1_OCTET_STRING),
