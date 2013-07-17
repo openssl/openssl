@@ -448,6 +448,10 @@ static int rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 		else if (arg1 == 1)
 			return rsa_cms_decrypt(arg2);
 		break;
+
+		case ASN1_PKEY_CTRL_CMS_RI_TYPE:
+		*(int *)arg2 = CMS_RECIPINFO_TRANS;
+		return 1;
 #endif
 
 		case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
