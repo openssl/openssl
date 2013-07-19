@@ -293,7 +293,7 @@ test_ec: $(ECTEST)
 
 test_ecdsa: $(ECDSATEST)
 	@echo 'test ecdsa'
-	# ../util/shlib_wrap.sh ./$(ECDSATEST)
+	../util/shlib_wrap.sh ./$(ECDSATEST)
 
 test_ecdh: $(ECDHTEST)
 	@echo 'test ecdh'

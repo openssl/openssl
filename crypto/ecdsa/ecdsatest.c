@@ -193,6 +193,7 @@ int x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
 	EC_KEY    *key = NULL;
 	ECDSA_SIG *signature = NULL;
 	BIGNUM    *r = NULL, *s = NULL;
+	BIGNUM    *kinv = NULL, *rp = NULL;
 
 	EVP_MD_CTX_init(&md_ctx);
 	/* get the message digest */
@@ -212,7 +213,10 @@ int x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
 	(void)BIO_flush(out);
 	/* create the signature */
 	use_fake = 1;
-	signature = ECDSA_do_sign(digest, 20, key);
+	/* Use ECDSA_sign_setup to avoid use of ECDSA nonces */
+	if (!ECDSA_sign_setup(key, NULL, &kinv, &rp))
+		goto x962_int_err;
+	signature = ECDSA_do_sign_ex(digest, 20, kinv, rp, key);
 	if (signature == NULL)
 		goto x962_int_err;
 	BIO_printf(out, ".");
@@ -247,6 +251,10 @@ x962_int_err:
 	if (s)
 		BN_free(s);
 	EVP_MD_CTX_cleanup(&md_ctx);
+	if (kinv)
+		BN_clear_free(kinv);
+	if (rp)
+		BN_clear_free(rp);
 	return ret;
 	}
 
