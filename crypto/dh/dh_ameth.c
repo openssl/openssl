@@ -62,6 +62,9 @@
 #include <openssl/dh.h>
 #include <openssl/bn.h>
 #include "asn1_locl.h"
+#ifndef OPENSSL_NO_CMS
+#include <openssl/cms.h>
+#endif
 
 extern const EVP_PKEY_ASN1_METHOD dhx_asn1_meth;
 
@@ -569,6 +572,34 @@ int DHparams_print(BIO *bp, const DH *x)
 	return do_dh_print(bp, x, 4, NULL, 0);
 	}
 
+#ifndef OPENSSL_NO_CMS
+static int dh_cms_decrypt(CMS_RecipientInfo *ri);
+static int dh_cms_encrypt(CMS_RecipientInfo *ri);
+#endif
+
+static int dh_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
+	{
+	switch (op)
+		{
+#ifndef OPENSSL_NO_CMS
+
+		case ASN1_PKEY_CTRL_CMS_ENVELOPE:
+		if (arg1 == 1)
+			return dh_cms_decrypt(arg2);
+		else if (arg1 == 0)
+			return dh_cms_encrypt(arg2);
+		return -2;
+
+		case ASN1_PKEY_CTRL_CMS_RI_TYPE:
+		*(int *)arg2 = CMS_RECIPINFO_AGREE;
+		return 1;
+#endif
+		default:
+		return -2;
+		}
+
+	}
+
 const EVP_PKEY_ASN1_METHOD dh_asn1_meth = 
 	{
 	EVP_PKEY_DH,
@@ -632,6 +663,323 @@ const EVP_PKEY_ASN1_METHOD dhx_asn1_meth =
 	0,
 
 	int_dh_free,
-	0
+	dh_pkey_ctrl
 	};
+#ifndef OPENSSL_NO_CMS
+
+static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
+				X509_ALGOR *alg, ASN1_BIT_STRING *pubkey)
+	{
+	ASN1_OBJECT *aoid;
+	int atype;
+	void *aval;
+	ASN1_INTEGER *public_key;
+	int rv = 0;
+	EVP_PKEY *pkpeer = NULL, *pk = NULL;
+	DH *dhpeer = NULL;
+	const unsigned char *p;
+	int plen;
+	X509_ALGOR_get0(&aoid, &atype, &aval, alg);
+	if (OBJ_obj2nid(aoid) != NID_dhpublicnumber)
+		goto err;
+	/* Only absent parameters allowed in RFC XXXX */
+	if (atype != V_ASN1_UNDEF && atype == V_ASN1_NULL)
+		goto err;
+
+	pk = EVP_PKEY_CTX_get0_pkey(pctx);
+	if (!pk)
+		goto err;
+	if (pk->type != EVP_PKEY_DHX)
+		goto err;
+	/* Get parameters from parent key */
+	dhpeer = DHparams_dup(pk->pkey.dh);
+	/* We have parameters now set public key */
+	plen = ASN1_STRING_length(pubkey);
+	p = ASN1_STRING_data(pubkey);
+	if (!p || !plen)
+		goto err;
+
+	if (!(public_key=d2i_ASN1_INTEGER(NULL, &p, plen)))
+		{
+		DHerr(DH_F_DH_CMS_SET_PEERKEY, DH_R_DECODE_ERROR);
+		goto err;
+		}
+
+	/* We have parameters now set public key */
+	if (!(dhpeer->pub_key = ASN1_INTEGER_to_BN(public_key, NULL)))
+		{
+		DHerr(DH_F_DH_CMS_SET_PEERKEY, DH_R_BN_DECODE_ERROR);
+		goto err;
+		}
+
+	pkpeer = EVP_PKEY_new();
+	if (!pkpeer)
+		goto err;
+	EVP_PKEY_assign(pkpeer, pk->ameth->pkey_id, dhpeer);
+	dhpeer = NULL;
+	if (EVP_PKEY_derive_set_peer(pctx, pkpeer) > 0)
+		rv = 1;
+	err:
+	if (public_key)
+		ASN1_INTEGER_free(public_key);
+	if (pkpeer)
+		EVP_PKEY_free(pkpeer);
+	if (dhpeer)
+		DH_free(dhpeer);
+	return rv;
+	}
+
+static int dh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
+	{
+	int rv = 0;
+
+	X509_ALGOR *alg, *kekalg = NULL;
+	ASN1_OCTET_STRING *ukm;
+	const unsigned char *p;
+	unsigned char *dukm = NULL;
+	size_t dukmlen;
+	int keylen, plen;
+	const EVP_CIPHER *kekcipher;
+	EVP_CIPHER_CTX *kekctx;
+
+	if (!CMS_RecipientInfo_kari_get0_alg(ri, &alg, &ukm))
+		goto err;
+
+	/* For DH we only have one OID permissible. If ever any more get
+	 * defined we will need something cleverer.
+	 */
+	if (OBJ_obj2nid(alg->algorithm) != NID_id_smime_alg_ESDH)
+		{
+		DHerr(DH_F_DH_CMS_SET_SHARED_INFO, DH_R_KDF_PARAMETER_ERROR);
+		goto err;
+		}
+
+	if (EVP_PKEY_CTX_set_dh_kdf_type(pctx, EVP_PKEY_DH_KDF_X9_42) <= 0)
+		goto err;
+
+	if (EVP_PKEY_CTX_set_dh_kdf_md(pctx, EVP_sha1()) <= 0)
+		goto err;
+
+	if (alg->parameter->type != V_ASN1_SEQUENCE)
+		goto err;
+
+	p = alg->parameter->value.sequence->data;
+	plen = alg->parameter->value.sequence->length;
+	kekalg = d2i_X509_ALGOR(NULL, &p, plen);
+	if (!kekalg)
+		goto err;
+	kekctx = CMS_RecipientInfo_kari_get0_ctx(ri);
+	if (!kekctx)
+		goto err;
+	kekcipher = EVP_get_cipherbyobj(kekalg->algorithm);
+	if (!kekcipher || EVP_CIPHER_mode(kekcipher) != EVP_CIPH_WRAP_MODE)
+		goto err;
+	if (!EVP_EncryptInit_ex(kekctx, kekcipher, NULL, NULL, NULL))
+		goto err;
+	if (EVP_CIPHER_asn1_to_param(kekctx, kekalg->parameter) <= 0)
+		goto err;
+
+	keylen = EVP_CIPHER_CTX_key_length(kekctx);
+	if (EVP_PKEY_CTX_set_dh_kdf_outlen(pctx, keylen) <= 0)
+		goto err;
+	/* Use OBJ_nid2obj to ensure we use built in OID that isn't freed */
+	if (EVP_PKEY_CTX_set0_dh_kdf_oid(pctx,
+				OBJ_nid2obj(EVP_CIPHER_type(kekcipher))) <= 0)
+		goto err;
+
+	if (ukm)
+		{
+		dukmlen = ASN1_STRING_length(ukm);
+		dukm = BUF_memdup(ASN1_STRING_data(ukm), dukmlen);
+		if (!dukm)
+			goto err;
+		}
+
+	if (EVP_PKEY_CTX_set0_dh_kdf_ukm(pctx, dukm, dukmlen) <= 0)
+		goto err;
+	dukm = NULL;
+
+	rv = 1;
+	err:
+	if (kekalg)
+		X509_ALGOR_free(kekalg);
+	if (dukm)
+		OPENSSL_free(dukm);
+	return rv;
+	}
+
+static int dh_cms_decrypt(CMS_RecipientInfo *ri)
+	{
+	EVP_PKEY_CTX *pctx;
+	pctx = CMS_RecipientInfo_get0_pkey_ctx(ri);
+	if (!pctx)
+		return 0;
+	/* See if we need to set peer key */
+	if (!EVP_PKEY_CTX_get0_peerkey(pctx))
+		{
+		X509_ALGOR *alg;
+		ASN1_BIT_STRING *pubkey;
+		if (!CMS_RecipientInfo_kari_get0_orig_id(ri, &alg, &pubkey,
+							NULL, NULL, NULL))
+			return 0;
+		if (!alg || !pubkey)
+			return 0;
+		if (!dh_cms_set_peerkey(pctx, alg, pubkey))
+			{
+			DHerr(DH_F_DH_CMS_DECRYPT, DH_R_PEER_KEY_ERROR);
+			return 0;
+			}
+		}
+	/* Set DH derivation parameters and initialise unwrap context */
+	if (!dh_cms_set_shared_info(pctx, ri))
+		{
+		DHerr(DH_F_DH_CMS_DECRYPT, DH_R_SHARED_INFO_ERROR);
+		return 0;
+		}
+	return 1;
+	}
+
+static int dh_cms_encrypt(CMS_RecipientInfo *ri)
+	{
+	EVP_PKEY_CTX *pctx;
+	EVP_PKEY *pkey;
+	EVP_CIPHER_CTX *ctx;
+	int keylen;
+	X509_ALGOR *talg, *wrap_alg = NULL;
+	ASN1_OBJECT *aoid;
+	ASN1_BIT_STRING *pubkey;
+	ASN1_STRING *wrap_str;
+	ASN1_OCTET_STRING *ukm;
+	unsigned char *penc = NULL, *dukm = NULL;
+	int penclen;
+	size_t dukmlen;
+	int rv = 0;
+	int kdf_type, wrap_nid;
+	const EVP_MD *kdf_md;
+	pctx = CMS_RecipientInfo_get0_pkey_ctx(ri);
+	if (!pctx)
+		return 0;
+	/* Get ephemeral key */
+	pkey = EVP_PKEY_CTX_get0_pkey(pctx);
+	if (!CMS_RecipientInfo_kari_get0_orig_id(ri, &talg, &pubkey,
+							NULL, NULL, NULL))
+		goto err;
+	X509_ALGOR_get0(&aoid, NULL, NULL, talg);
+	/* Is everything uninitialised? */
+	if (aoid == OBJ_nid2obj(NID_undef))
+		{
+		ASN1_INTEGER *pubk;
+		pubk = BN_to_ASN1_INTEGER(pkey->pkey.dh->pub_key, NULL);
+		if (!pubk)
+			goto err;
+		/* Set the key */
+
+		penclen = i2d_ASN1_INTEGER(pubk, &penc);
+		ASN1_INTEGER_free(pubk);
+		if (penclen <= 0)
+			goto err;
+		ASN1_STRING_set0(pubkey, penc, penclen);
+		pubkey->flags&= ~(ASN1_STRING_FLAG_BITS_LEFT|0x07);
+		pubkey->flags|=ASN1_STRING_FLAG_BITS_LEFT;
+
+		penc = NULL;
+		X509_ALGOR_set0(talg, OBJ_nid2obj(NID_dhpublicnumber),
+							V_ASN1_UNDEF, NULL);
+		}
+
+	/* See if custom paraneters set */
+	kdf_type = EVP_PKEY_CTX_get_dh_kdf_type(pctx);
+	if (kdf_type <= 0)
+		goto err;
+	if (!EVP_PKEY_CTX_get_dh_kdf_md(pctx, &kdf_md))
+		goto err;
+
+	if (kdf_type == EVP_PKEY_DH_KDF_NONE)
+		{
+		kdf_type = EVP_PKEY_DH_KDF_X9_42;
+		if (EVP_PKEY_CTX_set_dh_kdf_type(pctx, kdf_type) <= 0)
+			goto err;
+		}
+	else if (kdf_type != EVP_PKEY_DH_KDF_X9_42)
+		/* Unknown KDF */
+		goto err;
+	if (kdf_md == NULL)
+		{
+		/* Only SHA1 supported */
+		kdf_md = EVP_sha1();
+		if (EVP_PKEY_CTX_set_dh_kdf_md(pctx, kdf_md) <= 0)
+			goto err;
+		}
+	else if (EVP_MD_type(kdf_md) != NID_sha1)
+		/* Unsupported digest */
+		goto err;
+
+	if (!CMS_RecipientInfo_kari_get0_alg(ri, &talg, &ukm))
+		goto err;
+
+	/* Get wrap NID */
+	ctx = CMS_RecipientInfo_kari_get0_ctx(ri);
+	wrap_nid = EVP_CIPHER_CTX_type(ctx);
+	if (EVP_PKEY_CTX_set0_dh_kdf_oid(pctx, OBJ_nid2obj(wrap_nid)) <= 0)
+		goto err;
+	keylen = EVP_CIPHER_CTX_key_length(ctx);
+
+	/* Package wrap algorithm in an AlgorithmIdentifier */
+
+	wrap_alg = X509_ALGOR_new();
+	if (!wrap_alg)
+		goto err;
+	wrap_alg->algorithm = OBJ_nid2obj(wrap_nid);
+	wrap_alg->parameter = ASN1_TYPE_new();
+	if (!wrap_alg->parameter)
+		goto err;
+	if (EVP_CIPHER_param_to_asn1(ctx, wrap_alg->parameter) <= 0)
+		goto err;
+	if (ASN1_TYPE_get(wrap_alg->parameter) == NID_undef)
+		{
+		ASN1_TYPE_free(wrap_alg->parameter);
+		wrap_alg->parameter = NULL;
+		}
+
+	if (EVP_PKEY_CTX_set_dh_kdf_outlen(pctx, keylen) <= 0)
+		goto err;
+
+	if (ukm)
+		{
+		dukmlen = ASN1_STRING_length(ukm);
+		dukm = BUF_memdup(ASN1_STRING_data(ukm), dukmlen);
+		if (!dukm)
+			goto err;
+		}
+
+	if (EVP_PKEY_CTX_set0_dh_kdf_ukm(pctx, dukm, dukmlen) <= 0)
+		goto err;
+	dukm = NULL;
+
+	/* Now need to wrap encoding of wrap AlgorithmIdentifier into
+	 * parameter of another AlgorithmIdentifier.
+	 */
+	penc = NULL;
+	penclen = i2d_X509_ALGOR(wrap_alg, &penc);
+	if (!penc || !penclen)
+		goto err;
+	wrap_str = ASN1_STRING_new();
+	if (!wrap_str)
+		goto err;
+	ASN1_STRING_set0(wrap_str, penc, penclen);
+	penc = NULL;
+	X509_ALGOR_set0(talg, OBJ_nid2obj(NID_id_smime_alg_ESDH),
+						V_ASN1_SEQUENCE, wrap_str);
+
+	rv = 1;
+
+	err:
+	if (penc)
+		OPENSSL_free(penc);
+	if (wrap_alg)
+		X509_ALGOR_free(wrap_alg);
+	return rv;
+	}
+
+#endif
 
