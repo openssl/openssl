@@ -87,11 +87,6 @@ ASN1_SEQUENCE_cb(DHparams, dh_cb) = {
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DH, DHparams, DHparams)
 
-DH *DHparams_dup(DH *dh)
-	{
-	return ASN1_item_dup(ASN1_ITEM_rptr(DHparams), dh);
-	}
-
 /* Internal only structures for handling X9.42 DH: this gets translated
  * to or from a DH structure straight away.
  */
