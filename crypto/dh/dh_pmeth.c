@@ -65,6 +65,7 @@
 #ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
+#include <openssl/objects.h>
 #include "evp_locl.h"
 
 /* DH pkey context structure */
@@ -76,11 +77,22 @@ typedef struct
 	int generator;
 	int use_dsa;
 	int subprime_len;
+	/* message digest used for parameter generation */
 	const EVP_MD *md;
 	int rfc5114_param;
 	/* Keygen callback info */
 	int gentmp[2];
-	/* message digest */
+	/* KDF (if any) to use for DH */
+	char kdf_type;
+	/* OID to use for KDF */
+	ASN1_OBJECT *kdf_oid;
+	/* Message digest to use for key derivation */
+	const EVP_MD *kdf_md;
+	/* User key material */
+	unsigned char *kdf_ukm;
+	size_t kdf_ukmlen;
+	/* KDF output length */
+	size_t kdf_outlen;
 	} DH_PKEY_CTX;
 
 static int pkey_dh_init(EVP_PKEY_CTX *ctx)
@@ -95,6 +107,13 @@ static int pkey_dh_init(EVP_PKEY_CTX *ctx)
 	dctx->use_dsa = 0;
 	dctx->md = NULL;
 	dctx->rfc5114_param = 0;
+
+	dctx->kdf_type = EVP_PKEY_DH_KDF_NONE;
+	dctx->kdf_oid = NULL;
+	dctx->kdf_md = NULL;
+	dctx->kdf_ukm = NULL;
+	dctx->kdf_ukmlen = 0;
+	dctx->kdf_outlen = 0;
 
 	ctx->data = dctx;
 	ctx->keygen_info = dctx->gentmp;
@@ -116,6 +135,18 @@ static int pkey_dh_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 	dctx->use_dsa = sctx->use_dsa;
 	dctx->md = sctx->md;
 	dctx->rfc5114_param = sctx->rfc5114_param;
+
+	dctx->kdf_type = sctx->kdf_type;
+	dctx->kdf_oid = OBJ_dup(sctx->kdf_oid);
+	if (!dctx->kdf_oid)
+		return 0;
+	dctx->kdf_md = sctx->kdf_md;
+	if (dctx->kdf_ukm)
+		{
+		dctx->kdf_ukm = BUF_memdup(sctx->kdf_ukm, sctx->kdf_ukmlen);
+		dctx->kdf_ukmlen = sctx->kdf_ukmlen;
+		}
+	dctx->kdf_outlen = sctx->kdf_outlen;
 	return 1;
 	}
 
@@ -123,7 +154,13 @@ static void pkey_dh_cleanup(EVP_PKEY_CTX *ctx)
 	{
 	DH_PKEY_CTX *dctx = ctx->data;
 	if (dctx)
+		{
+		if (dctx->kdf_ukm)
+			OPENSSL_free(dctx->kdf_ukm);
+		if (dctx->kdf_oid)
+			ASN1_OBJECT_free(dctx->kdf_oid);
 		OPENSSL_free(dctx);
+		}
 	}
 
 static int pkey_dh_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
@@ -168,6 +205,57 @@ static int pkey_dh_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
 		case EVP_PKEY_CTRL_PEER_KEY:
 		/* Default behaviour is OK */
+		return 1;
+
+		case EVP_PKEY_CTRL_DH_KDF_TYPE:
+		if (p1 == -2)
+			return dctx->kdf_type;
+		if (p1 != EVP_PKEY_DH_KDF_NONE &&
+		    p1 != EVP_PKEY_DH_KDF_X9_42)
+			return -2;
+		dctx->kdf_type = p1;
+		return 1;
+
+		case EVP_PKEY_CTRL_DH_KDF_MD:
+		dctx->kdf_md = p2;
+		return 1;
+
+		case EVP_PKEY_CTRL_GET_DH_KDF_MD:
+		*(const EVP_MD **)p2 = dctx->kdf_md;
+		return 1;
+
+		case EVP_PKEY_CTRL_DH_KDF_OUTLEN:
+		if (p1 <= 0)
+			return -2;
+		dctx->kdf_outlen = (size_t)p1;
+		return 1;
+
+		case EVP_PKEY_CTRL_GET_DH_KDF_OUTLEN:
+		*(int *)p2 = dctx->kdf_outlen;
+		return 1;
+
+		case EVP_PKEY_CTRL_DH_KDF_UKM:
+		if (dctx->kdf_ukm)
+			OPENSSL_free(dctx->kdf_ukm);
+		dctx->kdf_ukm = p2;
+		if (p2)
+			dctx->kdf_ukmlen = p1;
+		else
+			dctx->kdf_ukmlen = 0;
+		return 1;
+
+		case EVP_PKEY_CTRL_GET_DH_KDF_UKM:
+		*(unsigned char **)p2 = dctx->kdf_ukm;
+		return dctx->kdf_ukmlen;
+
+		case EVP_PKEY_CTRL_DH_KDF_OID:
+		if (dctx->kdf_oid)
+			ASN1_OBJECT_free(dctx->kdf_oid);
+		dctx->kdf_oid = p2;
+		return 1;
+
+		case EVP_PKEY_CTRL_GET_DH_KDF_OID:
+		*(ASN1_OBJECT **)p2 = dctx->kdf_oid;
 		return 1;
 
 		default:
@@ -356,23 +444,68 @@ static int pkey_dh_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 static int pkey_dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
 	{
 	int ret;
+	DH *dh;
+	DH_PKEY_CTX *dctx = ctx->data;
+	BIGNUM *dhpub;
 	if (!ctx->pkey || !ctx->peerkey)
 		{
 		DHerr(DH_F_PKEY_DH_DERIVE, DH_R_KEYS_NOT_SET);
 		return 0;
 		}
-	ret = DH_compute_key(key, ctx->peerkey->pkey.dh->pub_key,
-							ctx->pkey->pkey.dh);
-	if (ret < 0)
+	dh = ctx->pkey->pkey.dh;
+	dhpub = ctx->peerkey->pkey.dh->pub_key;
+	if (dctx->kdf_type == EVP_PKEY_DH_KDF_NONE)
+		{
+		if (key == NULL)
+			{
+			*keylen = DH_size(dh);
+			return 1;
+			}
+		ret = DH_compute_key(key, dhpub, dh);
+		if (ret < 0)
+			return ret;
+		*keylen = ret;
+		return 1;
+		}
+	else if (dctx->kdf_type == EVP_PKEY_DH_KDF_X9_42)
+		{
+		unsigned char *Z = NULL;
+		size_t Zlen = 0;
+		if (!dctx->kdf_outlen || !dctx->kdf_oid)
+			return 0;
+		if (key == NULL)
+			{
+			*keylen = dctx->kdf_outlen;
+			return 1;
+			}
+		if (*keylen != dctx->kdf_outlen)
+			return 0;
+		ret = 0;
+		Zlen = DH_size(dh);
+		Z = OPENSSL_malloc(Zlen);
+		if (DH_compute_key_padded(Z, dhpub, dh) <= 0)
+			goto err;
+		if (!DH_KDF_X9_42(key, *keylen, Z, Zlen, dctx->kdf_oid,
+					dctx->kdf_ukm, dctx->kdf_ukmlen,
+					dctx->kdf_md))
+			goto err;
+		*keylen = dctx->kdf_outlen;
+		ret = 1;
+		err:
+		if (Z)
+			{
+			OPENSSL_cleanse(Z, Zlen);
+			OPENSSL_free(Z);
+			}
 		return ret;
-	*keylen = ret;
+		}
 	return 1;
 	}
 
 const EVP_PKEY_METHOD dh_pkey_meth = 
 	{
 	EVP_PKEY_DH,
-	EVP_PKEY_FLAG_AUTOARGLEN,
+	0,
 	pkey_dh_init,
 	pkey_dh_copy,
 	pkey_dh_cleanup,
@@ -408,7 +541,7 @@ const EVP_PKEY_METHOD dh_pkey_meth =
 const EVP_PKEY_METHOD dhx_pkey_meth = 
 	{
 	EVP_PKEY_DHX,
-	EVP_PKEY_FLAG_AUTOARGLEN,
+	0,
 	pkey_dh_init,
 	pkey_dh_copy,
 	pkey_dh_cleanup,
