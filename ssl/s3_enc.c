@@ -418,7 +418,13 @@ int ssl3_setup_key_block(SSL *s)
 	if (s->s3->tmp.key_block_length != 0)
 		return(1);
 
-	if (!ssl_cipher_get_evp(s->session,&c,&hash,NULL,NULL,&comp))
+	if (!ssl_cipher_get_comp(s->session, &comp))
+		{
+		SSLerr(SSL_F_SSL3_SETUP_KEY_BLOCK,SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
+		return(0);
+		}
+
+	if (!ssl_cipher_get_evp(s->session,&c,&hash,NULL,NULL))
 		{
 		SSLerr(SSL_F_SSL3_SETUP_KEY_BLOCK,SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
 		return(0);

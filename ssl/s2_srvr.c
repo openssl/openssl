@@ -452,7 +452,7 @@ static int get_client_master_key(SSL *s)
 
 	is_export=SSL_C_IS_EXPORT(s->session->cipher);
 	
-	if (!ssl_cipher_get_evp(s->session,&c,&md,NULL,NULL,NULL))
+	if (!ssl_cipher_get_evp(s->session,&c,&md,NULL,NULL))
 		{
 		ssl2_return_error(s,SSL2_PE_NO_CIPHER);
 		SSLerr(SSL_F_GET_CLIENT_MASTER_KEY,SSL_R_PROBLEMS_MAPPING_CIPHER_FUNCTIONS);

@@ -536,6 +536,7 @@ typedef struct ssl3_state_st
 		unsigned char *key_block;
 
 		const EVP_CIPHER *new_sym_enc;
+		const EVP_AEAD *new_aead;
 		const EVP_MD *new_hash;
 		int new_mac_pkey_type;
 		int new_mac_secret_size;

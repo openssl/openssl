@@ -379,6 +379,14 @@
 #define TLS1_STREAM_MAC 0x04
 
 
+/* SSL_CIPHER_ALGORITHM2_AEAD is a flag in SSL_CIPHER.algorithm2 which
+ * indicates that the cipher is implemented via an EVP_AEAD. */
+#define SSL_CIPHER_ALGORITHM2_AEAD (1<<23)
+
+/* SSL_CIPHER_AEAD_FIXED_NONCE_LEN returns the number of bytes of fixed nonce
+ * for an SSL_CIPHER* with the SSL_CIPHER_ALGORITHM2_AEAD flag. */
+#define SSL_CIPHER_AEAD_FIXED_NONCE_LEN(ssl_cipher) \
+	(((ssl_cipher->algorithm2 >> 24) & 0xf)*2)
 
 /*
  * Export and cipher strength information. For each cipher we have to decide
@@ -739,6 +747,17 @@ typedef struct ssl3_enc_method
  */
 #define SSL_ENC_FLAG_TLS1_2_CIPHERS	0x10
 
+/* ssl_aead_ctx_st contains information about an AEAD that is being used to
+ * encrypt an SSL connection. */
+struct ssl_aead_ctx_st
+	{
+	EVP_AEAD_CTX ctx;
+	/* fixed_nonce contains any bytes of the nonce that are fixed for all
+	 * records. */
+	unsigned char fixed_nonce[8];
+	unsigned char fixed_nonce_len, variable_nonce_len, tag_len;
+	};
+
 #ifndef OPENSSL_NO_COMP
 /* Used for holding the relevant compression methods loaded into SSL_CTX */
 typedef struct ssl3_comp_st
@@ -991,8 +1010,10 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *meth,
 					     STACK_OF(SSL_CIPHER) **sorted,
 					     const char *rule_str, CERT *c);
 void ssl_update_cache(SSL *s, int mode);
+int ssl_cipher_get_comp(const SSL_SESSION *s, SSL_COMP **comp);
+int ssl_cipher_get_evp_aead(const SSL_SESSION *s, const EVP_AEAD **aead);
 int ssl_cipher_get_evp(const SSL_SESSION *s,const EVP_CIPHER **enc,
-		       const EVP_MD **md,int *mac_pkey_type,int *mac_secret_size, SSL_COMP **comp);
+		       const EVP_MD **md,int *mac_pkey_type,int *mac_secret_size);
 int ssl_get_handshake_digest(int i,long *mask,const EVP_MD **md);
 int ssl_cipher_get_cert_index(const SSL_CIPHER *c);
 const SSL_CIPHER *ssl_get_cipher_by_char(SSL *ssl, const unsigned char *ptr);

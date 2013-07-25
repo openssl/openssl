@@ -316,6 +316,66 @@ static int tls1_generate_key_block(SSL *s, unsigned char *km,
 	return ret;
 	}
 
+/* tls1_aead_ctx_init allocates |*aead_ctx|, if needed and returns 1. It
+ * returns 0 on malloc error. */
+static int tls1_aead_ctx_init(SSL_AEAD_CTX **aead_ctx)
+	{
+	if (*aead_ctx != NULL)
+		EVP_AEAD_CTX_cleanup(&(*aead_ctx)->ctx);
+	else
+		{
+		*aead_ctx = (SSL_AEAD_CTX*) OPENSSL_malloc(sizeof(SSL_AEAD_CTX));
+		if (*aead_ctx == NULL)
+			{
+			SSLerr(SSL_F_TLS1_AEAD_CTX_INIT, ERR_R_MALLOC_FAILURE);
+			return 0;
+			}
+		}
+
+	return 1;
+	}
+
+static int tls1_change_cipher_state_aead(SSL *s, char is_read,
+	const unsigned char *key, unsigned key_len,
+	const unsigned char *iv, unsigned iv_len)
+	{
+	const EVP_AEAD *aead = s->s3->tmp.new_aead;
+	SSL_AEAD_CTX *aead_ctx;
+
+	if (is_read)
+		{
+		if (!tls1_aead_ctx_init(&s->aead_read_ctx))
+			return 0;
+		aead_ctx = s->aead_read_ctx;
+		}
+	else
+		{
+		if (!tls1_aead_ctx_init(&s->aead_write_ctx))
+			return 0;
+		aead_ctx = s->aead_write_ctx;
+		}
+
+	if (!EVP_AEAD_CTX_init(&aead_ctx->ctx, aead, key, key_len,
+			       EVP_AEAD_DEFAULT_TAG_LENGTH, NULL /* engine */))
+		return 0;
+	if (iv_len > sizeof(aead_ctx->fixed_nonce))
+		{
+		SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE_AEAD, ERR_R_INTERNAL_ERROR);
+		return 0;
+		}
+	memcpy(aead_ctx->fixed_nonce, iv, iv_len);
+	aead_ctx->fixed_nonce_len = iv_len;
+	aead_ctx->variable_nonce_len = 8;  /* always the case, currently. */
+	if (aead_ctx->variable_nonce_len + aead_ctx->fixed_nonce_len != EVP_AEAD_nonce_length(aead))
+		{
+		SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE_AEAD, ERR_R_INTERNAL_ERROR);
+		return 0;
+		}
+	aead_ctx->tag_len = EVP_AEAD_max_overhead(aead);
+
+	return 1;
+	}
+
 /* tls1_change_cipher_state_cipher performs the work needed to switch cipher
  * states when using EVP_CIPHER. The argument |is_read| is true iff this
  * function is being called due to reading, as opposed to writing, a
@@ -494,6 +554,7 @@ int tls1_change_cipher_state(SSL *s, int which)
 	const unsigned char *client_write_key, *server_write_key, *key;
 	const unsigned char *client_write_iv, *server_write_iv, *iv;
 	const EVP_CIPHER *cipher = s->s3->tmp.new_sym_enc;
+	const EVP_AEAD *aead = s->s3->tmp.new_aead;
 	unsigned key_len, iv_len, mac_secret_len;
 	const unsigned char *key_data;
 	const char is_export = SSL_C_IS_EXPORT(s->s3->tmp.new_cipher) != 0;
@@ -551,14 +612,22 @@ int tls1_change_cipher_state(SSL *s, int which)
 
 	mac_secret_len = s->s3->tmp.new_mac_secret_size;
 
-	key_len = EVP_CIPHER_key_length(cipher);
-	if (is_export && key_len > SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher))
-		key_len = SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher);
-
-	if (EVP_CIPHER_mode(cipher) == EVP_CIPH_GCM_MODE)
-		iv_len = EVP_GCM_TLS_FIXED_IV_LEN;
+	if (aead != NULL)
+		{
+		key_len = EVP_AEAD_key_length(aead);
+		iv_len = SSL_CIPHER_AEAD_FIXED_NONCE_LEN(s->s3->tmp.new_cipher);
+		}
 	else
-		iv_len = EVP_CIPHER_iv_length(cipher);
+		{
+		key_len = EVP_CIPHER_key_length(cipher);
+		if (is_export && key_len > SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher))
+			key_len = SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher);
+
+		if (EVP_CIPHER_mode(cipher) == EVP_CIPH_GCM_MODE)
+			iv_len = EVP_GCM_TLS_FIXED_IV_LEN;
+		else
+			iv_len = EVP_CIPHER_iv_length(cipher);
+		}
 
 	key_data = s->s3->tmp.key_block;
 	client_write_mac_secret = key_data; key_data += mac_secret_len;
@@ -587,12 +656,20 @@ int tls1_change_cipher_state(SSL *s, int which)
 		return 0;
 		}
 
-	if (!tls1_change_cipher_state_cipher(s, is_read, use_client_keys,
-					     mac_secret, mac_secret_len,
-					     key, key_len,
-					     iv, iv_len)) {
-		return 0;
-	}
+	if (aead != NULL)
+		{
+		if (!tls1_change_cipher_state_aead(s, is_read,
+						   key, key_len, iv, iv_len))
+			return 0;
+		}
+	else
+		{
+		if (!tls1_change_cipher_state_cipher(s, is_read, use_client_keys,
+						     mac_secret, mac_secret_len,
+						     key, key_len,
+						     iv, iv_len))
+			return 0;
+		}
 
 #ifdef OPENSSL_SSL_TRACE_CRYPTO
 	if (s->msg_callback)
@@ -627,13 +704,14 @@ err:
 int tls1_setup_key_block(SSL *s)
 	{
 	unsigned char *p1,*p2=NULL;
-	const EVP_CIPHER *c;
-	const EVP_MD *hash;
+	const EVP_CIPHER *c = NULL;
+	const EVP_MD *hash = NULL;
+	const EVP_AEAD *aead = NULL;
 	int num;
 	SSL_COMP *comp;
 	int mac_type= NID_undef,mac_secret_size=0;
 	int ret=0;
-	int iv_len;
+	unsigned key_len, iv_len;
 
 #ifdef KSSL_DEBUG
 	printf ("tls1_setup_key_block()\n");
@@ -642,22 +720,36 @@ int tls1_setup_key_block(SSL *s)
 	if (s->s3->tmp.key_block_length != 0)
 		return(1);
 
-	if (!ssl_cipher_get_evp(s->session,&c,&hash,&mac_type,&mac_secret_size,&comp))
+	if (!ssl_cipher_get_comp(s->session, &comp))
+		goto cipher_unavailable_err;
+
+	if (s->session->cipher &&
+	    (s->session->cipher->algorithm2 & SSL_CIPHER_ALGORITHM2_AEAD))
 		{
-		SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK,SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
-		return(0);
+		if (!ssl_cipher_get_evp_aead(s->session, &aead))
+			goto cipher_unavailable_err;
+		key_len = EVP_AEAD_key_length(aead);
+		iv_len = SSL_CIPHER_AEAD_FIXED_NONCE_LEN(s->session->cipher);
+		}
+	else
+		{
+		if (!ssl_cipher_get_evp(s->session,&c,&hash,&mac_type,&mac_secret_size))
+			goto cipher_unavailable_err;
+		key_len = EVP_CIPHER_key_length(c);
+
+		if (EVP_CIPHER_mode(c) == EVP_CIPH_GCM_MODE)
+			iv_len = EVP_GCM_TLS_FIXED_IV_LEN;
+		else
+			iv_len = EVP_CIPHER_iv_length(c);
 		}
 
-	if (EVP_CIPHER_mode(c) == EVP_CIPH_GCM_MODE)
-		iv_len = EVP_GCM_TLS_FIXED_IV_LEN;
-	else
-		iv_len = EVP_CIPHER_iv_length(c);
-
+	s->s3->tmp.new_aead=aead;
 	s->s3->tmp.new_sym_enc=c;
 	s->s3->tmp.new_hash=hash;
 	s->s3->tmp.new_mac_pkey_type = mac_type;
 	s->s3->tmp.new_mac_secret_size = mac_secret_size;
-	num=EVP_CIPHER_key_length(c)+mac_secret_size+iv_len;
+
+	num=key_len+mac_secret_size+iv_len;
 	num*=2;
 
 	ssl3_cleanup_key_block(s);
@@ -720,6 +812,10 @@ err:
 		OPENSSL_free(p2);
 		}
 	return(ret);
+
+cipher_unavailable_err:
+	SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK,SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
+	return 0;
 	}
 
 /* tls1_enc encrypts/decrypts the record in |s->wrec| / |s->rrec|, respectively.
@@ -738,6 +834,124 @@ int tls1_enc(SSL *s, int send)
 	unsigned long l;
 	int bs,i,j,k,pad=0,ret,mac_size=0;
 	const EVP_CIPHER *enc;
+	const SSL_AEAD_CTX *aead;
+
+	if (send)
+		rec = &s->s3->wrec;
+	else
+		rec = &s->s3->rrec;
+
+	if (send)
+		aead = s->aead_write_ctx;
+	else
+		aead = s->aead_read_ctx;
+
+	if (aead)
+		{
+		unsigned char ad[13], *seq, *in, *out, nonce[16];
+		unsigned nonce_used;
+		ssize_t n;
+
+		seq = send ? s->s3->write_sequence : s->s3->read_sequence;
+
+		if (s->version == DTLS1_VERSION || s->version == DTLS1_BAD_VER)
+			{
+			unsigned char dtlsseq[9], *p = dtlsseq;
+
+			s2n(send ? s->d1->w_epoch : s->d1->r_epoch, p);
+			memcpy(p, &seq[2], 6);
+			memcpy(ad, dtlsseq, 8);
+			}
+		else
+			{
+			memcpy(ad, seq, 8);
+			for (i=7; i>=0; i--)	/* increment */
+				{
+				++seq[i];
+				if (seq[i] != 0)
+					break;
+				}
+			}
+
+		ad[8]  = rec->type;
+		ad[9]  = (unsigned char)(s->version>>8);
+		ad[10] = (unsigned char)(s->version);
+
+		if (aead->fixed_nonce_len + aead->variable_nonce_len > sizeof(nonce) ||
+		    aead->variable_nonce_len > 8)
+			return -1;  /* internal error - should never happen. */
+
+		memcpy(nonce, aead->fixed_nonce, aead->fixed_nonce_len);
+		nonce_used = aead->fixed_nonce_len;
+
+		if (send)
+			{
+			size_t len = rec->length;
+			in = rec->input;
+			out = rec->data;
+
+			/* When sending we use the sequence number as the
+			 * variable part of the nonce. */
+			if (aead->variable_nonce_len > 8)
+				return -1;
+			memcpy(nonce + nonce_used, ad, aead->variable_nonce_len);
+			nonce_used += aead->variable_nonce_len;
+
+			/* in do_ssl3_write, rec->input is moved forward by
+			 * variable_nonce_len in order to leave space for the
+			 * variable nonce. Thus we can copy the sequence number
+			 * bytes into place without overwriting any of the
+			 * plaintext. */
+			memcpy(out, ad, aead->variable_nonce_len);
+			len -= aead->variable_nonce_len;
+
+			ad[11] = len >> 8;
+			ad[12] = len & 0xff;
+
+			n = EVP_AEAD_CTX_seal(&aead->ctx,
+					      out + aead->variable_nonce_len, len + aead->tag_len,
+					      nonce, nonce_used,
+					      in + aead->variable_nonce_len, len,
+					      ad, sizeof(ad));
+			if (n >= 0)
+				n += aead->variable_nonce_len;
+			}
+		else
+			{
+			/* receive */
+			size_t len = rec->length;
+
+			if (rec->data != rec->input)
+				return -1;  /* internal error - should never happen. */
+			out = in = rec->input;
+
+			if (len < aead->variable_nonce_len)
+				return 0;
+			memcpy(nonce + nonce_used, in, aead->variable_nonce_len);
+			nonce_used += aead->variable_nonce_len;
+
+			in += aead->variable_nonce_len;
+			len -= aead->variable_nonce_len;
+			out += aead->variable_nonce_len;
+
+			if (len < aead->tag_len)
+				return 0;
+			len -= aead->tag_len;
+
+			ad[11] = len >> 8;
+			ad[12] = len & 0xff;
+
+			n = EVP_AEAD_CTX_open(&aead->ctx, out, len, nonce, nonce_used,
+					      in, len + aead->tag_len, ad, sizeof(ad));
+
+			rec->data = rec->input = out;
+			}
+
+		if (n == -1)
+			return -1;
+		rec->length = n;
+		return 1;
+		}
 
 	if (send)
 		{

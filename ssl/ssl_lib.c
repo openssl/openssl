@@ -3054,6 +3054,18 @@ void ssl_clear_cipher_ctx(SSL *s)
 		OPENSSL_free(s->enc_write_ctx);
 		s->enc_write_ctx=NULL;
 		}
+	if (s->aead_read_ctx != NULL)
+		{
+		EVP_AEAD_CTX_cleanup(&s->aead_read_ctx->ctx);
+		OPENSSL_free(s->aead_read_ctx);
+		s->aead_read_ctx = NULL;
+		}
+	if (s->aead_write_ctx != NULL)
+		{
+		EVP_AEAD_CTX_cleanup(&s->aead_write_ctx->ctx);
+		OPENSSL_free(s->aead_write_ctx);
+		s->aead_write_ctx = NULL;
+		}
 #ifndef OPENSSL_NO_COMP
 	if (s->expand != NULL)
 		{
