@@ -1266,6 +1266,111 @@ void EVP_PKEY_meth_set_ctrl(EVP_PKEY_METHOD *pmeth,
 	int (*ctrl_str)(EVP_PKEY_CTX *ctx,
 					const char *type, const char *value));
 
+/* Authenticated Encryption with Additional Data.
+ *
+ * AEAD couples confidentiality and integrity in a single primtive. AEAD
+ * algorithms take a key and then can seal and open individual messages. Each
+ * message has a unique, per-message nonce and, optionally, additional data
+ * which is authenticated but not included in the output. */
+
+struct evp_aead_st;
+typedef struct evp_aead_st EVP_AEAD;
+
+#ifndef OPENSSL_NO_AES
+/* EVP_aes_128_gcm is AES-128 in Galois Counter Mode. */
+const EVP_AEAD *EVP_aead_aes_128_gcm(void);
+/* EVP_aes_256_gcm is AES-256 in Galois Counter Mode. */
+const EVP_AEAD *EVP_aead_aes_256_gcm(void);
+#endif
+
+/* EVP_AEAD_key_length returns the length, in bytes, of the keys used by
+ * |aead|. */
+size_t EVP_AEAD_key_length(const EVP_AEAD *aead);
+
+/* EVP_AEAD_nonce_length returns the length, in bytes, of the per-message nonce
+ * for |aead|. */
+size_t EVP_AEAD_nonce_length(const EVP_AEAD *aead);
+
+/* EVP_AEAD_max_overhead returns the maximum number of additional bytes added
+ * by the act of sealing data with |aead|. */
+size_t EVP_AEAD_max_overhead(const EVP_AEAD *aead);
+
+/* EVP_AEAD_max_tag_len returns the maximum tag length when using |aead|. This
+ * is the largest value that can be passed as |tag_len| to
+ * |EVP_AEAD_CTX_init|. */
+size_t EVP_AEAD_max_tag_len(const EVP_AEAD *aead);
+
+/* An EVP_AEAD_CTX represents an AEAD algorithm configured with a specific key
+ * and message-independent IV. */
+typedef struct evp_aead_ctx_st {
+	const EVP_AEAD *aead;
+	/* aead_state is an opaque pointer to whatever state the AEAD needs to
+	 * maintain. */
+	void *aead_state;
+} EVP_AEAD_CTX;
+
+#define EVP_AEAD_DEFAULT_TAG_LENGTH 0
+
+/* EVP_AEAD_init initializes |ctx| for the given AEAD algorithm from |impl|.
+ * The |impl| argument may be NULL to choose the default implementation.
+ * Authentication tags may be truncated by passing a size as |tag_len|. A
+ * |tag_len| of zero indicates the default tag length and this is defined as
+ * EVP_AEAD_DEFAULT_TAG_LENGTH for readability.
+ * Returns 1 on success. Otherwise returns 0 and pushes to the error stack. */
+int EVP_AEAD_CTX_init(EVP_AEAD_CTX *ctx, const EVP_AEAD *aead,
+		      const unsigned char *key, size_t key_len,
+		      size_t tag_len, ENGINE *impl);
+
+/* EVP_AEAD_CTX_cleanup frees any data allocated by |ctx|. */
+void EVP_AEAD_CTX_cleanup(EVP_AEAD_CTX *ctx);
+
+/* EVP_AEAD_CTX_seal encrypts and authenticates |in_len| bytes from |in| and
+ * authenticates |ad_len| bytes from |ad| and writes the result to |out|,
+ * returning the number of bytes written, or -1 on error.
+ *
+ * This function may be called (with the same EVP_AEAD_CTX) concurrently with
+ * itself or EVP_AEAD_CTX_open.
+ *
+ * At most |max_out_len| bytes are written to |out| and, in order to ensure
+ * success, |max_out_len| should be |in_len| plus the result of
+ * EVP_AEAD_overhead.
+ *
+ * The length of |nonce|, |nonce_len|, must be equal to the result of
+ * EVP_AEAD_nonce_length for this AEAD.
+ *
+ * EVP_AEAD_CTX_seal never results in a partial output. If |max_out_len| is
+ * insufficient, -1 will be returned.
+ *
+ * If |in| and |out| alias then |out| must be <= |in|. */
+ssize_t EVP_AEAD_CTX_seal(const EVP_AEAD_CTX *ctx,
+			  unsigned char *out, size_t max_out_len,
+			  const unsigned char *nonce, size_t nonce_len,
+			  const unsigned char *in, size_t in_len,
+			  const unsigned char *ad, size_t ad_len);
+
+/* EVP_AEAD_CTX_open authenticates |in_len| bytes from |in| and |ad_len| bytes
+ * from |ad| and decrypts at most |in_len| bytes into |out|. It returns the
+ * number of bytes written, or -1 on error.
+ *
+ * This function may be called (with the same EVP_AEAD_CTX) concurrently with
+ * itself or EVP_AEAD_CTX_seal.
+ *
+ * At most |in_len| bytes are written to |out|. In order to ensure success,
+ * |max_out_len| should be at least |in_len|.
+ *
+ * The length of |nonce|, |nonce_len|, must be equal to the result of
+ * EVP_AEAD_nonce_length for this AEAD.
+ *
+ * EVP_AEAD_CTX_open never results in a partial output. If |max_out_len| is
+ * insufficient, -1 will be returned.
+ *
+ * If |in| and |out| alias then |out| must be <= |in|. */
+ssize_t EVP_AEAD_CTX_open(const EVP_AEAD_CTX *ctx,
+			  unsigned char *out, size_t max_out_len,
+			  const unsigned char *nonce, size_t nonce_len,
+			  const unsigned char *in, size_t in_len,
+			  const unsigned char *ad, size_t ad_len);
+
 void EVP_add_alg_module(void);
 
 /* BEGIN ERROR CODES */
@@ -1277,6 +1382,11 @@ void ERR_load_EVP_strings(void);
 /* Error codes for the EVP functions. */
 
 /* Function codes. */
+#define EVP_F_AEAD_AES_GCM_INIT				 187
+#define EVP_F_AEAD_AES_GCM_OPEN				 188
+#define EVP_F_AEAD_AES_GCM_SEAL				 189
+#define EVP_F_AEAD_CTX_OPEN				 185
+#define EVP_F_AEAD_CTX_SEAL				 186
 #define EVP_F_AESNI_INIT_KEY				 165
 #define EVP_F_AESNI_XTS_CIPHER				 176
 #define EVP_F_AES_INIT_KEY				 133
@@ -1293,6 +1403,9 @@ void ERR_load_EVP_strings(void);
 #define EVP_F_DSA_PKEY2PKCS8				 135
 #define EVP_F_ECDSA_PKEY2PKCS8				 129
 #define EVP_F_ECKEY_PKEY2PKCS8				 132
+#define EVP_F_EVP_AEAD_CTX_INIT				 180
+#define EVP_F_EVP_AEAD_CTX_OPEN				 190
+#define EVP_F_EVP_AEAD_CTX_SEAL				 191
 #define EVP_F_EVP_CIPHERINIT_EX				 123
 #define EVP_F_EVP_CIPHER_CTX_COPY			 163
 #define EVP_F_EVP_CIPHER_CTX_CTRL			 124
@@ -1408,10 +1521,12 @@ void ERR_load_EVP_strings(void);
 #define EVP_R_NO_VERIFY_FUNCTION_CONFIGURED		 105
 #define EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE	 150
 #define EVP_R_OPERATON_NOT_INITIALIZED			 151
+#define EVP_R_OUTPUT_ALIASES_INPUT			 172
 #define EVP_R_PKCS8_UNKNOWN_BROKEN_TYPE			 117
 #define EVP_R_PRIVATE_KEY_DECODE_ERROR			 145
 #define EVP_R_PRIVATE_KEY_ENCODE_ERROR			 146
 #define EVP_R_PUBLIC_KEY_NOT_RSA			 106
+#define EVP_R_TAG_TOO_LARGE				 171
 #define EVP_R_TOO_LARGE					 164
 #define EVP_R_UNKNOWN_CIPHER				 160
 #define EVP_R_UNKNOWN_DIGEST				 161

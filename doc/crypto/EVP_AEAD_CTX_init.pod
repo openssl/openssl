@@ -1,0 +1,96 @@
+=pod
+
+=head1 NAME
+
+EVP_AEAD_CTX_init, EVP_AEAD_CTX_cleanup, EVP_AEAD_CTX_seal, EVP_AEAD_CTX_open - authenticated encryption functions.
+
+=head1 SYNOPSIS
+
+ #include <openssl/evp.h>
+
+ int EVP_AEAD_CTX_init(EVP_AEAD_CTX *ctx, const EVP_AEAD *aead,
+                       const unsigned char *key, size_t key_len,
+                       size_t tag_len, ENGINE *impl);
+ void EVP_AEAD_CTX_cleanup(EVP_AEAD_CTX *ctx);
+ ssize_t EVP_AEAD_CTX_seal(const EVP_AEAD_CTX *ctx,
+                           unsigned char *out, size_t max_out_len,
+                           const unsigned char *nonce, size_t nonce_len,
+                           const unsigned char *in, size_t in_len,
+                           const unsigned char *ad, size_t ad_len);
+ ssize_t EVP_AEAD_CTX_open(const EVP_AEAD_CTX *ctx,
+                           unsigned char *out, size_t max_out_len,
+                           const unsigned char *nonce, size_t nonce_len,
+                           const unsigned char *in, size_t in_len,
+                           const unsigned char *ad, size_t ad_len);
+
+=head1 DESCRIPTION
+
+The EVP_AEAD_CTX_init() function initialises an B<EVP_AEAD_CTX> structure and
+performs any precomputation needed to use B<aead> with B<key>. The length of
+the key, B<key_len>, is given in bytes.
+
+The B<tag_len> argument contains the length of the tags, in bytes, and allows
+for the processing of truncated authenticators. A zero value indicates that the
+default tag length should be used and this is defined as
+C<EVP_AEAD_DEFAULT_TAG_LENGTH> in order to make the code clear. Using truncated
+tags increases an attacker's chance of creating a valid forgery. Be aware that
+the attacker's chance may increase more than exponentially as would naively be
+expected.
+
+When no longer needed, the initialised B<EVP_AEAD_CTX> structure must be passed
+to EVP_AEAD_CTX_cleanup(), which will deallocate any memory used.
+
+With an B<EVP_AEAD_CTX> in hand, one can seal and open messages. These
+operations are intended to meet the standard notions of privacy and
+authenticity for authenticated encryption. For formal definitions see I<Bellare
+and Namprempre>, "Authenticated encryption: relations among notions and
+analysis of the generic composition paradigm," Lecture Notes in Computer
+Science B<1976> (2000), 531–545,
+L<http://www-cse.ucsd.edu/~mihir/papers/oem.html>.
+
+When sealing messages, a nonce must be given. The length of the nonce is fixed
+by the AEAD in use and is returned by EVP_AEAD_nonce_length(). I<The nonce must
+be unique for all messages with the same key>. This is critically important -
+nonce reuse may completely undermine the security of the AEAD. Nonces may be
+predictable and public, so long as they are unique. Uniqueness may be achieved
+with a simple counter or, if long enough, may be generated randomly. The nonce
+must be passed into the "open" operation by the receiver so must either be
+implicit (e.g. a counter), or must be transmitted along with the sealed message.
+
+The "seal" and "open" operations are atomic - an entire message must be
+encrypted or decrypted in a single call. Large messages may have to be split up
+in order to accomodate this. When doing so, be mindful of the need not to
+repeat nonces and the possibility that an attacker could duplicate, reorder or
+drop message chunks. For example, using a single key for a given (large)
+message and sealing chunks with nonces counting from zero would be secure as
+long as the number of chunks was securely transmitted. (Otherwise an attacker
+could truncate the message by dropping chunks from the end.)
+
+The number of chunks could be transmitted by prefixing it to the plaintext, for
+example. This also assumes that no other message would ever use the same key
+otherwise the rule that nonces must be unique for a given key would be
+violated.
+
+The "seal" and "open" operations also permit additional data to be
+authenticated via the B<ad> parameter. This data is not included in the
+ciphertext and must be identical for both the "seal" and "open" call. This
+permits implicit context to be authenticated but may be C<NULL> if not needed.
+
+The "seal" and "open" operations may work inplace if the B<out> and B<in>
+arguments are equal. They may also be used to shift the data left inside the
+same buffer if B<out> is less than B<in>. However, B<out> may not point inside
+the input data otherwise the input may be overwritten before it has been read.
+This case will cause an error.
+
+=head1 RETURN VALUES
+
+The "seal" and "open" operations return an C<ssize_t> with value -1 on error,
+otherwise they return the number of output bytes written. An error will be
+returned if the input length is large enough that the output size exceeds the
+range of a C<ssize_t>.
+
+=head1 HISTORY
+
+These functions were first added to OpenSSL 1.0.2.
+
+=cut
