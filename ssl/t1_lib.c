@@ -1909,6 +1909,14 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 		s->s3->alpn_selected = NULL;
 		}
 
+	/* Clear observed custom extensions */
+        if (s->s3->tlsext_custom_types != NULL)
+		{
+		OPENSSL_free(s->s3->tlsext_custom_types);
+	    	s->s3->tlsext_custom_types = NULL;
+	    	s->s3->tlsext_custom_types_count = 0;
+		}		
+
 #ifndef OPENSSL_NO_HEARTBEATS
 	s->tlsext_heartbeat &= ~(SSL_TLSEXT_HB_ENABLED |
 	                       SSL_TLSEXT_HB_DONT_SEND_REQUESTS);
