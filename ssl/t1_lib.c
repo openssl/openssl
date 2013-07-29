@@ -1910,11 +1910,11 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 		}
 
 	/* Clear observed custom extensions */
+	s->s3->tlsext_custom_types_count = 0;
         if (s->s3->tlsext_custom_types != NULL)
 		{
 		OPENSSL_free(s->s3->tlsext_custom_types);
 	    	s->s3->tlsext_custom_types = NULL;
-	    	s->s3->tlsext_custom_types_count = 0;
 		}		
 
 #ifndef OPENSSL_NO_HEARTBEATS
