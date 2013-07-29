@@ -1066,7 +1066,7 @@ int SSL_CTX_use_serverinfo(SSL_CTX *ctx, const unsigned char *serverinfo,
 	if (!serverinfo_process_buffer(serverinfo, serverinfo_length, NULL))
 		{
 		SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO,SSL_R_INVALID_SERVERINFO_DATA);
-		return(0);
+		return 0;
 		}
 	if (!ssl_cert_inst(&ctx->cert))
 		{
@@ -1093,7 +1093,7 @@ int SSL_CTX_use_serverinfo(SSL_CTX *ctx, const unsigned char *serverinfo,
 	if (!serverinfo_process_buffer(serverinfo, serverinfo_length, ctx))
 		{
 		SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO,SSL_R_INVALID_SERVERINFO_DATA);
-		return(0);
+		return 0;
 		}
 	return 1;
 	}
