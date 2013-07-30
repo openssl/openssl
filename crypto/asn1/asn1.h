@@ -208,14 +208,14 @@ typedef struct asn1_const_ctx_st
 #define ASN1_OBJECT_FLAG_CRITICAL	 0x02	/* critical x509v3 object id */
 #define ASN1_OBJECT_FLAG_DYNAMIC_STRINGS 0x04	/* internal use */
 #define ASN1_OBJECT_FLAG_DYNAMIC_DATA 	 0x08	/* internal use */
-typedef struct asn1_object_st
+struct asn1_object_st
 	{
 	const char *sn,*ln;
 	int nid;
 	int length;
 	const unsigned char *data;	/* data remains const after init */
 	int flags;	/* Should we free this one */
-	} ASN1_OBJECT;
+	};
 
 #define ASN1_STRING_FLAG_BITS_LEFT 0x08 /* Set if 0x07 has bits left value */
 /* This indicates that the ASN1_STRING is not a real value but just a place
