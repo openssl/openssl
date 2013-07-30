@@ -764,63 +764,6 @@ static int ecdh_cms_set_kdf_param(EVP_PKEY_CTX *pctx, int eckdf_nid)
 	return 1;
 	}
 
-/* Utilities to encode the ECC_CMS_SharedInfo structure used during key
- * derivation.
- */
-
-typedef struct {
-	X509_ALGOR *keyInfo;
-	ASN1_OCTET_STRING *entityUInfo;
-	ASN1_OCTET_STRING *suppPubInfo;
-} ECC_CMS_SharedInfo;
-
-ASN1_SEQUENCE(ECC_CMS_SharedInfo) = {
-  ASN1_SIMPLE(ECC_CMS_SharedInfo, keyInfo, X509_ALGOR),
-  ASN1_EXP_OPT(ECC_CMS_SharedInfo, entityUInfo, ASN1_OCTET_STRING, 0),
-  ASN1_EXP_OPT(ECC_CMS_SharedInfo, suppPubInfo, ASN1_OCTET_STRING, 2),
-} ASN1_SEQUENCE_END(ECC_CMS_SharedInfo)
-
-static int ecdh_cms_set_ukm(EVP_PKEY_CTX *pctx, 
-					X509_ALGOR *kekalg, 
-					ASN1_OCTET_STRING *ukm,
-					int keylen)
-	{
-	union {
-		ECC_CMS_SharedInfo *pecsi;
-		ASN1_VALUE *a;
-	} intsi = {NULL};
-
-	unsigned char *der = NULL;
-	int plen;
-	ASN1_OCTET_STRING oklen;
-	unsigned char kl[4];
-	ECC_CMS_SharedInfo ecsi;
-
-	keylen <<= 3;
-	kl[0] = (keylen >> 24) & 0xff;
-	kl[1] = (keylen >> 16) & 0xff;
-	kl[2] = (keylen >> 8) & 0xff;
-	kl[3] = keylen & 0xff;
-	oklen.length = 4;
-	oklen.data = kl;
-	oklen.type = V_ASN1_OCTET_STRING;
-	oklen.flags = 0;
-	ecsi.keyInfo = kekalg;
-	ecsi.entityUInfo = ukm;
-	ecsi.suppPubInfo = &oklen;
-	intsi.pecsi = &ecsi;
-	plen = ASN1_item_i2d(intsi.a, &der, ASN1_ITEM_rptr(ECC_CMS_SharedInfo));
-	if (!der || !plen)
-		goto err;
-	if (EVP_PKEY_CTX_set0_ecdh_kdf_ukm(pctx, der, plen) <= 0)
-		goto err;
-	return 1;
-	err:
-	if (der)
-		OPENSSL_free(der);
-	return 0;
-	}
-
 static int ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
 	{
 	int rv = 0;
@@ -828,6 +771,7 @@ static int ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
 	X509_ALGOR *alg, *kekalg = NULL;
 	ASN1_OCTET_STRING *ukm;
 	const unsigned char *p;
+	unsigned char *der = NULL;
 	int plen, keylen;
 	const EVP_CIPHER *kekcipher;
 	EVP_CIPHER_CTX *kekctx;
@@ -864,13 +808,21 @@ static int ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
 	if (EVP_PKEY_CTX_set_ecdh_kdf_outlen(pctx, keylen) <= 0)
 		goto err;
 
-	if (!ecdh_cms_set_ukm(pctx, kekalg, ukm, keylen))
+	plen = CMS_SharedInfo_encode(&der, kekalg, ukm, keylen);
+
+	if (!plen)
 		goto err;
+
+	if (EVP_PKEY_CTX_set0_ecdh_kdf_ukm(pctx, der, plen) <= 0)
+		goto err;
+	der = NULL;
 
 	rv = 1;
 	err:
 	if (kekalg)
 		X509_ALGOR_free(kekalg);
+	if (der)
+		OPENSSL_free(der);
 	return rv;
 	}
 
@@ -1019,13 +971,19 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 
 	if (EVP_PKEY_CTX_set_ecdh_kdf_outlen(pctx, keylen) <= 0)
 		goto err;
-	if (!ecdh_cms_set_ukm(pctx, wrap_alg, ukm, keylen))
+
+	penclen = CMS_SharedInfo_encode(&penc, wrap_alg, ukm, keylen);
+
+	if (!penclen)
 		goto err;
+
+	if (EVP_PKEY_CTX_set0_ecdh_kdf_ukm(pctx, penc, penclen) <= 0)
+		goto err;
+	penc = NULL;
 
 	/* Now need to wrap encoding of wrap AlgorithmIdentifier into
 	 * parameter of another AlgorithmIdentifier.
 	 */
-	penc = NULL;
 	penclen = i2d_X509_ALGOR(wrap_alg, &penc);
 	if (!penc || !penclen)
 		goto err;
