@@ -156,10 +156,6 @@ int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx);
 int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file);
 int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
 					STACK_OF(X509) *chain, int build_chain);
-# ifndef OPENSSL_NO_TLSEXT
-int set_cert_key_and_authz(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
-                           unsigned char *authz, size_t authz_length);
-# endif
 int ssl_print_sigalgs(BIO *out, SSL *s);
 int ssl_print_point_formats(BIO *out, SSL *s);
 int ssl_print_curves(BIO *out, SSL *s, int noshared);
