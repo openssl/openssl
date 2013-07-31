@@ -62,6 +62,9 @@
 #include <openssl/evp.h>
 #include <openssl/dh.h>
 #include <openssl/bn.h>
+#ifndef OPENSSL_NO_DSA
+#include <openssl/dsa.h>
+#endif
 #include "evp_locl.h"
 
 /* DH pkey context structure */
@@ -72,6 +75,8 @@ typedef struct
 	int prime_len;
 	int generator;
 	int use_dsa;
+	int subprime_len;
+	const EVP_MD *md;
 	int rfc5114_param;
 	/* Keygen callback info */
 	int gentmp[2];
@@ -85,8 +90,10 @@ static int pkey_dh_init(EVP_PKEY_CTX *ctx)
 	if (!dctx)
 		return 0;
 	dctx->prime_len = 1024;
+	dctx->subprime_len = -1;
 	dctx->generator = 2;
 	dctx->use_dsa = 0;
+	dctx->md = NULL;
 	dctx->rfc5114_param = 0;
 
 	ctx->data = dctx;
@@ -104,8 +111,10 @@ static int pkey_dh_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
        	sctx = src->data;
 	dctx = dst->data;
 	dctx->prime_len = sctx->prime_len;
+	dctx->subprime_len = sctx->subprime_len;
 	dctx->generator = sctx->generator;
 	dctx->use_dsa = sctx->use_dsa;
+	dctx->md = sctx->md;
 	dctx->rfc5114_param = sctx->rfc5114_param;
 	return 1;
 	}
@@ -128,8 +137,27 @@ static int pkey_dh_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		dctx->prime_len = p1;
 		return 1;
 
+		case EVP_PKEY_CTRL_DH_PARAMGEN_SUBPRIME_LEN:
+		if (dctx->use_dsa == 0)
+			return -2;
+		dctx->subprime_len = p1;
+		return 1;
+
 		case EVP_PKEY_CTRL_DH_PARAMGEN_GENERATOR:
+		if (dctx->use_dsa)
+			return -2;
 		dctx->generator = p1;
+		return 1;
+
+		case EVP_PKEY_CTRL_DH_PARAMGEN_TYPE:
+#ifdef OPENSSL_NO_DSA
+		if (p1 != 0)
+			return -2;
+#else
+		if (p1 < 0 || p1 > 2)
+			return -2;
+#endif
+		dctx->use_dsa = p1;
 		return 1;
 
 		case EVP_PKEY_CTRL_DH_RFC5114:
@@ -148,7 +176,7 @@ static int pkey_dh_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		}
 	}
 
-			
+
 static int pkey_dh_ctrl_str(EVP_PKEY_CTX *ctx,
 			const char *type, const char *value)
 	{
@@ -174,8 +202,74 @@ static int pkey_dh_ctrl_str(EVP_PKEY_CTX *ctx,
 		len = atoi(value);
 		return EVP_PKEY_CTX_set_dh_paramgen_generator(ctx, len);
 		}
+	if (!strcmp(type, "dh_paramgen_subprime_len"))
+		{
+		int len;
+		len = atoi(value);
+		return EVP_PKEY_CTX_set_dh_paramgen_subprime_len(ctx, len);
+		}
+	if (!strcmp(type, "dh_paramgen_type"))
+		{
+		int typ;
+		typ = atoi(value);
+		return EVP_PKEY_CTX_set_dh_paramgen_type(ctx, typ);
+		}
 	return -2;
 	}
+
+#ifndef OPENSSL_NO_DSA
+
+extern int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
+        const EVP_MD *evpmd, const unsigned char *seed_in, size_t seed_len,
+        unsigned char *seed_out,
+        int *counter_ret, unsigned long *h_ret, BN_GENCB *cb);
+
+extern int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
+        const EVP_MD *evpmd, const unsigned char *seed_in, size_t seed_len,
+        int idx, unsigned char *seed_out,
+        int *counter_ret, unsigned long *h_ret, BN_GENCB *cb);
+
+static DSA *dsa_dh_generate(DH_PKEY_CTX *dctx, BN_GENCB *pcb)
+	{
+	DSA *ret;
+	int rv = 0;
+	int prime_len = dctx->prime_len;
+	int subprime_len = dctx->subprime_len;
+	const EVP_MD *md = dctx->md;
+	if (dctx->use_dsa > 2)
+		return NULL;
+	ret = DSA_new();
+	if (!ret)
+		return NULL;
+	if (subprime_len == -1)
+		{
+		if (prime_len >= 2048)
+			subprime_len = 256;
+		else
+			subprime_len = 160;
+		}
+	if (md == NULL)
+		{
+		if (prime_len >= 2048)
+			md = EVP_sha256();
+		else
+			md = EVP_sha1();
+		}
+	if (dctx->use_dsa == 1)
+		rv = dsa_builtin_paramgen(ret, prime_len, subprime_len, md,
+						NULL, 0, NULL, NULL, NULL, pcb);
+	else if(dctx->use_dsa == 2)
+		rv = dsa_builtin_paramgen2(ret, prime_len, subprime_len, md,
+					   NULL, 0, -1, NULL, NULL, NULL, pcb);
+	if (rv <= 0)
+		{
+		DSA_free(ret);
+		return NULL;
+		}
+	return ret;
+	}
+
+#endif
 
 static int pkey_dh_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	{
@@ -213,11 +307,27 @@ static int pkey_dh_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 		}
 	else
 		pcb = NULL;
+#ifndef OPENSSL_NO_DSA
+	if (dctx->use_dsa)
+		{
+		DSA *dsa_dh;
+		dsa_dh = dsa_dh_generate(dctx, pcb);
+		if (!dsa_dh)
+			return 0;
+		dh = DSA_dup_DH(dsa_dh);
+		DSA_free(dsa_dh);
+		if (!dh)
+			return 0;
+		EVP_PKEY_assign(pkey, EVP_PKEY_DHX, dh);
+		return 1;
+		}
+#endif
 	dh = DH_new();
 	if (!dh)
 		return 0;
 	ret = DH_generate_parameters_ex(dh,
 					dctx->prime_len, dctx->generator, pcb);
+		
 	if (ret)
 		EVP_PKEY_assign_DH(pkey, dh);
 	else
