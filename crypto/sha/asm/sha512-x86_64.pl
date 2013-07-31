@@ -948,7 +948,7 @@ ___
 $code.=<<___;
 .Lprologue_xop:
 
-	vzeroall
+	vzeroupper
 	mov	$SZ*0($ctx),$A
 	mov	$SZ*1($ctx),$B
 	mov	$SZ*2($ctx),$C
@@ -1260,7 +1260,7 @@ $code.=<<___;
 	jb	.Lloop_xop
 
 	mov	$_rsp,%rsi
-	vzeroall
+	vzeroupper
 ___
 $code.=<<___ if ($win64);
 	movaps	16*$SZ+32(%rsp),%xmm6
@@ -1324,7 +1324,7 @@ ___
 $code.=<<___;
 .Lprologue_avx:
 
-	vzeroall
+	vzeroupper
 	mov	$SZ*0($ctx),$A
 	mov	$SZ*1($ctx),$B
 	mov	$SZ*2($ctx),$C
@@ -1568,7 +1568,7 @@ $code.=<<___;
 	jb	.Lloop_avx
 
 	mov	$_rsp,%rsi
-	vzeroall
+	vzeroupper
 ___
 $code.=<<___ if ($win64);
 	movaps	16*$SZ+32(%rsp),%xmm6
@@ -1676,7 +1676,7 @@ ___
 $code.=<<___;
 .Lprologue_avx2:
 
-	vzeroall
+	vzeroupper
 	sub	\$-16*$SZ,$inp		# inp++, size optimization
 	mov	$SZ*0($ctx),$A
 	mov	$inp,%r12		# borrow $T1
@@ -1942,7 +1942,7 @@ $code.=<<___;
 .Ldone_avx2:
 	lea	($Tbl),%rsp
 	mov	$_rsp,%rsi
-	vzeroall
+	vzeroupper
 ___
 $code.=<<___ if ($win64);
 	movaps	16*$SZ+32(%rsp),%xmm6
