@@ -3653,7 +3653,6 @@ int tls1_send_client_supplemental_data(SSL *s, int *skip)
 					SSLerr(SSL_F_TLS1_SEND_CLIENT_SUPPLEMENTAL_DATA,ERR_R_BUF_LIB);
 					return 0;
 					}
-		
 				p = (unsigned char *)s->init_buf->data;
 				*(p++) = SSL3_MT_SUPPLEMENTAL_DATA;
 				//update message length when all callbacks complete
@@ -3682,7 +3681,6 @@ int tls1_send_client_supplemental_data(SSL *s, int *skip)
 			s->state = SSL3_ST_CW_SUPPLEMENTAL_DATA_B;
 			s->init_num = length;
 			s->init_off = 0;
-	
 			return ssl3_do_write(s, SSL3_RT_HANDSHAKE);
 			}
 		}

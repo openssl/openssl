@@ -3708,14 +3708,14 @@ int tls1_send_server_supplemental_data(SSL *s, int *skip)
 		srv_supp_data_record *record = NULL;
 		size_t length = 0;
 		size_t i = 0;
-		
+
 		for (i = 0; i < s->ctx->srv_supp_data_records_count; i++)
 			{
 			const unsigned char *out = NULL;
 			unsigned short outlen = 0;
 			int cb_retval = 0;
 			record = &s->ctx->srv_supp_data_records[i];
-			
+
 			/* NULL callback or -1 omits supp data entry */
 			if (!record->fn1)
 				continue;
@@ -3775,11 +3775,11 @@ int tls1_send_server_supplemental_data(SSL *s, int *skip)
 			s->state = SSL3_ST_SW_SUPPLEMENTAL_DATA_B;
 			s->init_num = length;
 			s->init_off = 0;
-			
+
 			return ssl3_do_write(s, SSL3_RT_HANDSHAKE);
 			}
 		}
-	
+
 	//no supp data message sent
 	*skip = 1;
 	s->init_num = 0;
@@ -3797,8 +3797,8 @@ int tls1_get_client_supplemental_data(SSL *s)
 	unsigned short supp_data_entry_type = 0;
 	unsigned long supp_data_entry_len = 0;
 	unsigned long supp_data_len = 0;
-	int i;
-	
+	size_t i = 0;
+
 	n=s->method->ssl_get_message(s,
 	SSL3_ST_SR_SUPPLEMENTAL_DATA_A,
 	SSL3_ST_SR_SUPPLEMENTAL_DATA_B,
@@ -3806,12 +3806,12 @@ int tls1_get_client_supplemental_data(SSL *s)
 	/* use default limit */
 	TLSEXT_MAXLEN_supplemental_data,
 	&ok);
-	
+
 	if (!ok) return((int)n);
-	
+
 	p = (unsigned char *)s->init_msg;
 	d = p;
-	
+
 	/* The message cannot be empty */
 	if (n < 3)
 		{

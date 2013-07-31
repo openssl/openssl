@@ -434,7 +434,7 @@ typedef struct {
 	void *arg;
 } custom_srv_ext_record;
 
-/* Callbacks and structures for handling Supplemental Data: 
+/* Callbacks and structures for handling Supplemental Data:
  *   srv_supp_data_first_cb_fn  - server sends Supplemental Data
  *   srv_supp_data_second_cb_fn - server receives Supplemental Data
  *   cli_supp_data_first_cb_fn  - client receives Supplemental Data
@@ -443,16 +443,16 @@ typedef struct {
  *   All these functions return nonzero on success.  Zero will terminate
  *   the handshake (and return a specific TLS Fatal alert, if the function
  *   declaration has an "al" parameter).  -1 for the "sending" functions
- *   will result in no supplemental data entry being added to the 
+ *   will result in no supplemental data entry being added to the
  *   supplemental data message for the provided supplemental data type.
- * 
+ *
  *   "supp_data_type" is a Supplemental Data Type from 0-65535.
  *   "in" is a pointer to TLS "supplemental_data_entry" being provided to the cb.
  *   "out" is used by the callback to return a pointer to "supplemental data"
  *     which OpenSSL will later copy into the TLS handshake.  The contents
  *     of this buffer should not be changed until the handshake is complete.
  *   "inlen" and "outlen" are Supplemental Data lengths from 0-65535.
- *   "al" is a TLS "AlertDescription" from 0-255 which WILL be sent as a 
+ *   "al" is a TLS "AlertDescription" from 0-255 which WILL be sent as a
  *     fatal TLS alert, if the callback returns zero.
  */
 typedef int (*srv_supp_data_first_cb_fn)(SSL *s, unsigned short supp_data_type,
@@ -1341,25 +1341,25 @@ int SSL_CTX_set_custom_srv_ext(SSL_CTX *ctx, unsigned short ext_type,
 			       custom_srv_ext_second_cb_fn fn2, void *arg);
 
 /* Register callbacks to handle Supplemental Data as client or server.
- * 
+ *
  * For SSL_CTX_set_srv_supp_data, a NULL srv_supp_data_first_cb_fn results in no supplemental data
- * being sent by the server for that TLS extension.  
+ * being sent by the server for that TLS extension.
  * A NULL srv_supp_data_second_cb_fn results in no supplemental data
  * being received by the server for that TLS extension.
- * 
+ *
  * For SSL_CTX_set_cli_supp_data, a NULL cli_supp_data_first_cb_fn results in no supplemental data
- * being received by the client for that TLS extension.  
+ * being received by the client for that TLS extension.
  * A NULL cli_supp_data_second_cb_fn results in no supplemental data
  * being sent by the client for that TLS extension.
  *
  * Returns nonzero on success.  You cannot register twice for the same supp_data_type.
  */
-int SSL_CTX_set_srv_supp_data(SSL_CTX *ctx, 
+int SSL_CTX_set_srv_supp_data(SSL_CTX *ctx,
 			      unsigned short supp_data_type,
 			      srv_supp_data_first_cb_fn fn1,
 			      srv_supp_data_second_cb_fn fn2, void *arg);
 
-int SSL_CTX_set_cli_supp_data(SSL_CTX *ctx, 
+int SSL_CTX_set_cli_supp_data(SSL_CTX *ctx,
 			      unsigned short supp_data_type,
 			      cli_supp_data_first_cb_fn fn1,
 			      cli_supp_data_second_cb_fn fn2, void *arg);

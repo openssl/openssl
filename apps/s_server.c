@@ -3570,14 +3570,14 @@ static int authz_tlsext_cb(SSL *s, unsigned short ext_type,
 		TLSEXT_AUTHZDATAFORMAT_dtcp,
 		inlen) != NULL);
 		}
-	
+
 	if (TLSEXT_TYPE_client_authz == ext_type)
 		{
 		client_provided_client_authz = (memchr(in,
 		TLSEXT_AUTHZDATAFORMAT_dtcp,
 		inlen) != NULL);
 		}
-	
+
 	return 1;
 	}
 
@@ -3590,7 +3590,6 @@ static int authz_tlsext_generate_cb(SSL *s, unsigned short ext_type,
 		if (!c_auth_require_reneg || (c_auth_require_reneg && SSL_num_renegotiations(s)))
 			{
 			*out = auth_ext_data;
-			
 			*outlen = 1;
 			return 1;
 			}
@@ -3623,7 +3622,7 @@ static int auth_suppdata_generate_cb(SSL *s, unsigned short supp_data_type,
 			{
 			result = OPENSSL_malloc(10);
 			memcpy(result, "1234512345", 10);
-			*out = result; 
+			*out = result;
 			*outlen = 10;
 			return 1;
 			}

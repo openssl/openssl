@@ -4,7 +4,7 @@
 
  Changes between 1.0.x and 1.1.0  [xx XXX xxxx]
 
-  *) Add callbacks supporting generation and retrieval of supplemental 
+  *) Add callbacks supporting generation and retrieval of supplemental
      data entries.
      [Scott Deboy <sdeboy@apache.org>, Trevor Perrin and Ben Laurie]
 

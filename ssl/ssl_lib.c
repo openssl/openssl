@@ -1846,12 +1846,12 @@ int SSL_CTX_set_cli_supp_data(SSL_CTX *ctx,
 	{
 	size_t i;
 	cli_supp_data_record* record;
-	
+
 	/* Check for duplicates */
 	for (i=0; i < ctx->cli_supp_data_records_count; i++)
 		if (supp_data_type == ctx->cli_supp_data_records[i].supp_data_type)
 			return 0;
-	
+
 	ctx->cli_supp_data_records = OPENSSL_realloc(ctx->cli_supp_data_records,
 	(ctx->cli_supp_data_records_count+1) * sizeof(cli_supp_data_record));
 	if (!ctx->cli_supp_data_records)
@@ -1875,12 +1875,12 @@ int SSL_CTX_set_srv_supp_data(SSL_CTX *ctx,
 	{
 	size_t i;
 	srv_supp_data_record* record;
-	
+
 	/* Check for duplicates */
 	for (i=0; i < ctx->srv_supp_data_records_count; i++)
 		if (supp_data_type == ctx->srv_supp_data_records[i].supp_data_type)
 			return 0;
-	
+
 	ctx->srv_supp_data_records = OPENSSL_realloc(ctx->srv_supp_data_records,
 	(ctx->srv_supp_data_records_count+1) * sizeof(srv_supp_data_record));
 	if (!ctx->srv_supp_data_records)
@@ -1894,7 +1894,7 @@ int SSL_CTX_set_srv_supp_data(SSL_CTX *ctx,
 	record->fn1 = fn1;
 	record->fn2 = fn2;
 	record->arg = arg;
-	
+
 	return 1;
 	}
 
