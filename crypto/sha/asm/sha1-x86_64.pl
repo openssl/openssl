@@ -806,7 +806,7 @@ $code.=<<___;
 	mov	%rdi,$ctx	# reassigned argument
 	mov	%rsi,$inp	# reassigned argument
 	mov	%rdx,$num	# reassigned argument
-	vzeroall
+	vzeroupper
 
 	shl	\$6,$num
 	add	$inp,$num
@@ -1096,7 +1096,7 @@ ___
 	&Xtail_avx(\&body_20_39);
 
 $code.=<<___;
-	vzeroall
+	vzeroupper
 
 	add	0($ctx),$A			# update context
 	add	4($ctx),@T[0]
