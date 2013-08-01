@@ -90,7 +90,7 @@ int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
 			goto err;
 		if (!EVP_DigestUpdate(&mctx, sinfo, sinfolen))
 			goto err;
-		if (outlen > mdlen)
+		if (outlen >= mdlen)
 			{
 			if (!EVP_DigestFinal(&mctx, out, NULL))
 				goto err;
