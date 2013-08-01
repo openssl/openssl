@@ -1877,7 +1877,7 @@ int SSL_CTX_set_cli_supp_data(SSL_CTX *ctx,
 			return 0;
 
 	ctx->cli_supp_data_records = OPENSSL_realloc(ctx->cli_supp_data_records,
-	(ctx->cli_supp_data_records_count+1) * sizeof(cli_supp_data_record));
+	  (ctx->cli_supp_data_records_count+1) * sizeof(cli_supp_data_record));
 	if (!ctx->cli_supp_data_records)
 		{
 		ctx->cli_supp_data_records_count = 0;
@@ -1906,7 +1906,7 @@ int SSL_CTX_set_srv_supp_data(SSL_CTX *ctx,
 			return 0;
 
 	ctx->srv_supp_data_records = OPENSSL_realloc(ctx->srv_supp_data_records,
-	(ctx->srv_supp_data_records_count+1) * sizeof(srv_supp_data_record));
+	  (ctx->srv_supp_data_records_count+1) * sizeof(srv_supp_data_record));
 	if (!ctx->srv_supp_data_records)
 		{
 		ctx->srv_supp_data_records_count = 0;

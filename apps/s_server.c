@@ -1053,7 +1053,7 @@ int MAIN(int argc, char *argv[])
 	EVP_PKEY *s_key = NULL, *s_dkey = NULL;
 	int no_cache = 0, ext_cache = 0;
 	int rev = 0, naccept = -1;
-    int c_no_resumption_on_reneg = 0;
+	int c_no_resumption_on_reneg = 0;
 #ifndef OPENSSL_NO_TLSEXT
 	EVP_PKEY *s_key2 = NULL;
 	X509 *s_cert2 = NULL;
@@ -1961,10 +1961,8 @@ bad:
 		}
 #endif
 
-    if (c_no_resumption_on_reneg)
-        {
-        SSL_CTX_set_options(ctx, SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION);
-        }
+	if (c_no_resumption_on_reneg)
+		SSL_CTX_set_options(ctx, SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION);
 	if (!set_cert_key_stuff(ctx, s_cert, s_key, s_chain, build_chain))
 		goto end;
 #ifndef OPENSSL_NO_TLSEXT
@@ -3558,18 +3556,12 @@ static int authz_tlsext_cb(SSL *s, unsigned short ext_type,
 			   void *arg)
 	{
 	if (TLSEXT_TYPE_server_authz == ext_type)
-		{
-		client_provided_server_authz = (memchr(in,
-		TLSEXT_AUTHZDATAFORMAT_dtcp,
-		inlen) != NULL);
-		}
+		client_provided_server_authz
+		  = memchr(in,	TLSEXT_AUTHZDATAFORMAT_dtcp, inlen) != NULL;
 
 	if (TLSEXT_TYPE_client_authz == ext_type)
-		{
-		client_provided_client_authz = (memchr(in,
-		TLSEXT_AUTHZDATAFORMAT_dtcp,
-		inlen) != NULL);
-		}
+		client_provided_client_authz
+		  = memchr(in, TLSEXT_AUTHZDATAFORMAT_dtcp, inlen) != NULL;
 
 	return 1;
 	}

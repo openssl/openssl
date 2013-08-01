@@ -1202,11 +1202,11 @@ struct ssl_ctx_st
 	custom_srv_ext_record *custom_srv_ext_records;
 	size_t custom_srv_ext_records_count;
 
-    /* Arrays containing the callbacks for Supplemental Data. */
-    cli_supp_data_record *cli_supp_data_records;
-    size_t cli_supp_data_records_count;
-    srv_supp_data_record *srv_supp_data_records;
-    size_t srv_supp_data_records_count;
+ 	/* Arrays containing the callbacks for Supplemental Data. */
+ 	cli_supp_data_record *cli_supp_data_records;
+	size_t cli_supp_data_records_count;
+	srv_supp_data_record *srv_supp_data_records;
+	size_t srv_supp_data_records_count;
 	};
 
 #endif

@@ -2440,18 +2440,12 @@ static int authz_tlsext_cb(SSL *s, unsigned short ext_type,
 			   void *arg)
 	{
 	if (TLSEXT_TYPE_server_authz == ext_type)
-		{
-		server_provided_server_authz = (memchr(in,
-		TLSEXT_AUTHZDATAFORMAT_dtcp,
-		inlen) != NULL);
-		}
+		server_provided_server_authz
+		  = (memchr(in, TLSEXT_AUTHZDATAFORMAT_dtcp, inlen) != NULL);
 
 	if (TLSEXT_TYPE_client_authz == ext_type)
-		{
-		server_provided_client_authz = (memchr(in,
-		TLSEXT_AUTHZDATAFORMAT_dtcp,
-		inlen) != NULL);
-		}
+		server_provided_client_authz
+		  = (memchr(in, TLSEXT_AUTHZDATAFORMAT_dtcp, inlen) != NULL);
 
 	return 1;
 	}

@@ -446,7 +446,7 @@ int custom_ext = 0;
 /* This set based on extension callbacks */
 int custom_ext_error = 0;
 
-/*Not IETF assigned supplemental data types*/
+/* Not IETF assigned supplemental data types */
 #define CUSTOM_SUPP_DATA_TYPE_0 100
 #define CUSTOM_SUPP_DATA_TYPE_1 101
 #define CUSTOM_SUPP_DATA_TYPE_2 102
