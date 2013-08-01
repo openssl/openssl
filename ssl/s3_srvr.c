@@ -3689,12 +3689,13 @@ int tls1_send_server_supplemental_data(SSL *s, int *skip)
 				SSLerr(SSL_F_TLS1_SEND_SERVER_SUPPLEMENTAL_DATA,ERR_R_BUF_LIB);
 				return 0;
 				}
-			//write supp data entry...
-			//if first entry, write handshake message type
-			//jump back to write length at end
+			/* write supp data entry...
+			 * if first entry, write handshake message type
+			 * jump back to write length at end */
 			if (length == 0)
 				{
-				//1 byte message type + 3 bytes for message length
+				/* 1 byte message type + 3 bytes for
+				 * message length */
 				if (!BUF_MEM_grow_clean(s->init_buf, 4))
 					{
 					SSLerr(SSL_F_TLS1_SEND_SERVER_SUPPLEMENTAL_DATA,ERR_R_BUF_LIB);
@@ -3702,13 +3703,15 @@ int tls1_send_server_supplemental_data(SSL *s, int *skip)
 					}
 				p = (unsigned char *)s->init_buf->data;
 				*(p++) = SSL3_MT_SUPPLEMENTAL_DATA;
-				//hold on to length field to update later
+				/* hold on to length field to update later */
 				size_loc = p;
-				//skip over handshake length field (3 bytes) and supp_data length field (3 bytes)
+				/* skip over handshake length field (3
+				 * bytes) and supp_data length field
+				 * (3 bytes) */
 				p += 3 + 3;
 				length += 1 +3 +3;
 				}
-			//2 byte supp data type + 2 byte length + outlen
+			/* 2 byte supp data type + 2 byte length + outlen */
 			if (!BUF_MEM_grow(s->init_buf, outlen + 4))
 				{
 				SSLerr(SSL_F_TLS1_SEND_SERVER_SUPPLEMENTAL_DATA,ERR_R_BUF_LIB);
@@ -3717,15 +3720,16 @@ int tls1_send_server_supplemental_data(SSL *s, int *skip)
 			s2n(record->supp_data_type, p);
 			s2n(outlen, p);
 			memcpy(p, out, outlen);
-			//update length to supp data type (2 bytes) + supp data length (2 bytes) + supp data
+			/* update length to supp data type (2 bytes) +
+			 * supp data length (2 bytes) + supp data */
 			length += (outlen + 4);
 			p += outlen;
 			}
 		if (length > 0)
 			{
-			//write handshake length
+			/* write handshake length */
 			l2n3(length - 4, size_loc);
-			//supp_data length
+			/* supp_data length */
 			l2n3(length - 7, size_loc);
 			s->state = SSL3_ST_SW_SUPPLEMENTAL_DATA_B;
 			s->init_num = length;
@@ -3735,7 +3739,7 @@ int tls1_send_server_supplemental_data(SSL *s, int *skip)
 			}
 		}
 
-	//no supp data message sent
+	/* no supp data message sent */
 	*skip = 1;
 	s->init_num = 0;
 	s->init_off = 0;
@@ -3782,7 +3786,7 @@ int tls1_get_client_supplemental_data(SSL *s)
 		{
 		n2s(p, supp_data_entry_type);
 		n2s(p, supp_data_entry_len);
-		//if there is a callback for this supp data type, send it
+		/* if there is a callback for this supp data type, send it */
 		for (i=0; i < s->ctx->srv_supp_data_records_count; i++)
 			{
 			if (s->ctx->srv_supp_data_records[i].supp_data_type == supp_data_entry_type && s->ctx->srv_supp_data_records[i].fn2)

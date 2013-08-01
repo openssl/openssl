@@ -1089,19 +1089,6 @@ void ssl_set_client_disabled(SSL *s)
 	c->valid = 1;
 	}
 
-/* byte_compare is a compare function for qsort(3) that compares bytes. */
-static int byte_compare(const void *in_a, const void *in_b)
-	{
-	unsigned char a = *((const unsigned char*) in_a);
-	unsigned char b = *((const unsigned char*) in_b);
-
-	if (a > b)
-		return 1;
-	else if (a < b)
-		return -1;
-	return 0;
-}
-
 unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit, int *al)
 	{
 	int extdatalen=0;

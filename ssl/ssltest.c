@@ -1649,20 +1649,37 @@ bad:
 
 	if (suppdata)
 		{
-		//TEST CASES
-		//client and server both send and receive, verify additional arg passed back
-		SSL_CTX_set_srv_supp_data(s_ctx, CUSTOM_SUPP_DATA_TYPE_0, supp_data_0_srv_first_cb, supp_data_0_srv_second_cb, s_ssl);
-		SSL_CTX_set_cli_supp_data(c_ctx, CUSTOM_SUPP_DATA_TYPE_0, supp_data_0_cli_first_cb, supp_data_0_cli_second_cb, c_ssl);
+		/* TEST CASES */
+		/* client and server both send and receive, verify
+		 * additional arg passed back */
+		SSL_CTX_set_srv_supp_data(s_ctx, CUSTOM_SUPP_DATA_TYPE_0,
+					  supp_data_0_srv_first_cb,
+					  supp_data_0_srv_second_cb, s_ssl);
+		SSL_CTX_set_cli_supp_data(c_ctx, CUSTOM_SUPP_DATA_TYPE_0,
+					  supp_data_0_cli_first_cb,
+					  supp_data_0_cli_second_cb, c_ssl);
 
-		//-1 response from sending server/client doesn't receive, -1 response from sending client/server doesn't receive
-		SSL_CTX_set_srv_supp_data(s_ctx, CUSTOM_SUPP_DATA_TYPE_1, supp_data_1_srv_first_cb, supp_data_1_srv_second_cb, NULL);
-		SSL_CTX_set_cli_supp_data(c_ctx, CUSTOM_SUPP_DATA_TYPE_1, supp_data_1_cli_first_cb, supp_data_1_cli_second_cb, NULL);
+		/* -1 response from sending server/client doesn't
+                 * receive, -1 response from sending client/server
+                 * doesn't receive */
+		SSL_CTX_set_srv_supp_data(s_ctx, CUSTOM_SUPP_DATA_TYPE_1,
+					  supp_data_1_srv_first_cb,
+					  supp_data_1_srv_second_cb, NULL);
+		SSL_CTX_set_cli_supp_data(c_ctx, CUSTOM_SUPP_DATA_TYPE_1,
+					  supp_data_1_cli_first_cb,
+					  supp_data_1_cli_second_cb, NULL);
 
-		//null sending server/client doesn't receive, null sending client/server doesn't receive
-		SSL_CTX_set_srv_supp_data(s_ctx, CUSTOM_SUPP_DATA_TYPE_2, /*supp_data_2_srv_first_cb*/NULL, supp_data_2_srv_second_cb, NULL);
-		SSL_CTX_set_cli_supp_data(c_ctx, CUSTOM_SUPP_DATA_TYPE_2, supp_data_2_cli_first_cb, /*supp_data_2_cli_second_cb*/NULL, NULL);
+		/* null sending server/client doesn't receive, null
+		   sending client/server doesn't receive */
+		SSL_CTX_set_srv_supp_data(s_ctx, CUSTOM_SUPP_DATA_TYPE_2,
+					  /*supp_data_2_srv_first_cb*/NULL,
+					  supp_data_2_srv_second_cb, NULL);
+		SSL_CTX_set_cli_supp_data(c_ctx, CUSTOM_SUPP_DATA_TYPE_2,
+					  supp_data_2_cli_first_cb,
+					  /*supp_data_2_cli_second_cb*/NULL,
+					  NULL);
 
-		//alerts set to non-zero and zero return values not tested
+		/* alerts set to non-zero and zero return values not tested */
 		}
 #ifndef OPENSSL_NO_KRB5
 	if (c_ssl  &&  c_ssl->kssl_ctx)

@@ -2471,7 +2471,7 @@ static int authz_tlsext_generate_cb(SSL *s, unsigned short ext_type,
 			return 1;
 			}
 		}
-	//no auth extension to send
+	/* no auth extension to send */
 	return -1;
 	}
 
@@ -2506,7 +2506,7 @@ static int auth_suppdata_generate_cb(SSL *s, unsigned short supp_data_type,
 			return 1;
 			}
 		}
-	//no supplemental data to send
+	/* no supplemental data to send */
 	return -1;
 	}
 
