@@ -225,8 +225,10 @@ static int c_brief=0;
 
 #ifndef OPENSSL_NO_TLSEXT
 
-static const unsigned char *most_recent_supplemental_data;
-static size_t most_recent_supplemental_data_length;
+static unsigned char *generated_supp_data = NULL;
+
+static unsigned char *most_recent_supplemental_data = NULL;
+static size_t most_recent_supplemental_data_length = 0;
 
 static int server_provided_server_authz = 0;
 static int server_provided_client_authz = 0;
@@ -1776,6 +1778,13 @@ SSL_set_tlsext_status_ids(con, ids);
 						"CONNECTION ESTABLISHED\n");
 					print_ssl_summary(bio_err, con);
 					}
+				/*handshake is complete - free the generated supp data allocated in the callback */
+				if (generated_supp_data)
+					{
+					OPENSSL_free(generated_supp_data);
+					generated_supp_data = NULL;
+					}
+
 				print_stuff(bio_c_out,con,full_log);
 				if (full_log > 0) full_log--;
 
@@ -2453,6 +2462,8 @@ static int authz_tlsext_generate_cb(SSL *s, unsigned short ext_type,
 	{
 	if (c_auth)
 		{
+		/*if auth_require_reneg flag is set, only send extensions if
+		  renegotiation has occurred */
 		if (!c_auth_require_reneg || (c_auth_require_reneg && SSL_num_renegotiations(s)))
 			{
 			*out = auth_ext_data;
@@ -2481,14 +2492,16 @@ static int auth_suppdata_generate_cb(SSL *s, unsigned short supp_data_type,
 				     const unsigned char **out,
 				     unsigned short *outlen, void *arg)
 	{
-	unsigned char *result;
 	if (c_auth && server_provided_client_authz && server_provided_server_authz)
 		{
-		if (!c_auth_require_reneg || (c_auth_require_reneg && SSL_num_renegotiations(s)))
+		/*if auth_require_reneg flag is set, only send supplemental data if
+		  renegotiation has occurred */
+		if (!c_auth_require_reneg
+		    || (c_auth_require_reneg && SSL_num_renegotiations(s)))
 			{
-			result = OPENSSL_malloc(10);
-			memcpy(result, "5432154321", 10);
-			*out = result;
+			generated_supp_data = OPENSSL_malloc(10);
+			memcpy(generated_supp_data, "5432154321", 10);
+			*out = generated_supp_data;
 			*outlen = 10;
 			return 1;
 			}

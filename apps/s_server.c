@@ -228,8 +228,10 @@ static void s_server_init(void);
 
 static const unsigned char auth_ext_data[]={TLSEXT_AUTHZDATAFORMAT_dtcp};
 
-static const unsigned char *most_recent_supplemental_data;
-static size_t most_recent_supplemental_data_length;
+static unsigned char *generated_supp_data = NULL;
+
+static unsigned char *most_recent_supplemental_data = NULL;
+static size_t most_recent_supplemental_data_length = 0;
 
 static int client_provided_server_authz = 0;
 static int client_provided_client_authz = 0;
@@ -2678,6 +2680,13 @@ static int init_ssl_connection(SSL *con)
 			i=SSL_accept(con);
 		}
 #endif
+	/*handshake is complete - free the generated supp data allocated in the callback */
+	if (generated_supp_data)
+		{
+        OPENSSL_free(generated_supp_data);
+		generated_supp_data = NULL;
+		}
+
 	if (i <= 0)
 		{
 		if (BIO_sock_should_retry(i))
@@ -3571,7 +3580,10 @@ static int authz_tlsext_generate_cb(SSL *s, unsigned short ext_type,
 	{
 	if (c_auth && client_provided_client_authz && client_provided_server_authz)
 		{
-		if (!c_auth_require_reneg || (c_auth_require_reneg && SSL_num_renegotiations(s)))
+		/*if auth_require_reneg flag is set, only send extensions if
+		  renegotiation has occurred */
+		if (!c_auth_require_reneg
+		    || (c_auth_require_reneg && SSL_num_renegotiations(s)))
 			{
 			*out = auth_ext_data;
 			*outlen = 1;
@@ -3599,14 +3611,16 @@ static int auth_suppdata_generate_cb(SSL *s, unsigned short supp_data_type,
 				     const unsigned char **out,
 				     unsigned short *outlen, void *arg)
 	{
-	unsigned char *result;
 	if (c_auth && client_provided_client_authz && client_provided_server_authz)
 		{
-		if (!c_auth_require_reneg || (c_auth_require_reneg && SSL_num_renegotiations(s)))
+		/*if auth_require_reneg flag is set, only send supplemental data if
+		  renegotiation has occurred */
+		if (!c_auth_require_reneg
+		    || (c_auth_require_reneg && SSL_num_renegotiations(s)))
 			{
-			result = OPENSSL_malloc(10);
-			memcpy(result, "1234512345", 10);
-			*out = result;
+			generated_supp_data = OPENSSL_malloc(10);
+			memcpy(generated_supp_data, "1234512345", 10);
+			*out = generated_supp_data;
 			*outlen = 10;
 			return 1;
 			}
