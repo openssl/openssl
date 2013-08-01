@@ -903,9 +903,7 @@ int ssl3_check_client_hello(SSL *s)
 	s->s3->tmp.reuse_message = 1;
 #ifndef OPENSSL_NO_TLSEXT
 	if (s->s3->tmp.message_type == SSL3_MT_SUPPLEMENTAL_DATA)
-		{
 		return 3;
-		}
 #endif
 	if (s->s3->tmp.message_type == SSL3_MT_CLIENT_HELLO)
 		{
