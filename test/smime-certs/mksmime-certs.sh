@@ -57,5 +57,18 @@ CN="Test S/MIME EE EC #2" $OPENSSL req -config ca.cnf -nodes \
 	-keyout smec2.pem -out req.pem -newkey ec:ecp2.pem
 $OPENSSL x509 -req -in req.pem -CA smroot.pem -days 3600 \
 	-extfile ca.cnf -extensions usr_cert -CAcreateserial >>smec2.pem
+# Create X9.42 DH parameters.
+$OPENSSL genpkey -genparam -algorithm DH -pkeyopt dh_paramgen_type:2 \
+	-out dhp.pem
+# Generate X9.42 DH key.
+$OPENSSL genpkey -paramfile dhp.pem -out smdh.pem
+$OPENSSL pkey -pubout -in smdh.pem -out dhpub.pem
+# Generate dummy request.
+CN="Test S/MIME EE DH #1" $OPENSSL req -config ca.cnf -nodes \
+	-keyout smtmp.pem -out req.pem -newkey rsa:2048
+# Sign request but force public key to DH
+$OPENSSL x509 -req -in req.pem -CA smroot.pem -days 3600 \
+	-force_pubkey dhpub.pem \
+	-extfile ca.cnf -extensions usr_cert -CAcreateserial >>smdh.pem
 # Remove temp files.
-rm -f req.pem ecp.pem ecp2.pem dsap.pem smroot.srl
+rm -f req.pem ecp.pem ecp2.pem dsap.pem dhp.pem dhpub.pem smtmp.pem smroot.srl
