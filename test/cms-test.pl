@@ -409,6 +409,14 @@ my @smime_cms_param_tests = (
           . " -recip $smdir/smec2.pem -aes128"
 	  . " -keyopt ecdh_kdf_md:sha256 -keyopt ecdh_cofactor_mode:1",
         "-decrypt -recip $smdir/smec2.pem -in test.cms -out smtst.txt"
+    ],
+
+    [
+"enveloped content test streaming S/MIME format, X9.42 DH",
+        "-encrypt -in smcont.txt"
+          . " -stream -out test.cms"
+          . " -recip $smdir/smdh.pem -aes128",
+        "-decrypt -recip $smdir/smdh.pem -in test.cms -out smtst.txt"
     ]
 );
 
