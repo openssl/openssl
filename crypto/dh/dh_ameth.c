@@ -364,6 +364,8 @@ static int do_dh_print(BIO *bp, const DH *x, int indent,
 
 	update_buflen(x->g, &buf_len);
 	update_buflen(x->q, &buf_len);
+	update_buflen(x->j, &buf_len);
+	update_buflen(x->counter, &buf_len);
 	update_buflen(pub_key, &buf_len);
 	update_buflen(priv_key, &buf_len);
 
@@ -392,6 +394,29 @@ static int do_dh_print(BIO *bp, const DH *x, int indent,
 	if (!ASN1_bn_print(bp,"prime:",x->p,m,indent)) goto err;
 	if (!ASN1_bn_print(bp,"generator:",x->g,m,indent)) goto err;
 	if (x->q && !ASN1_bn_print(bp,"subgroup order:",x->q,m,indent)) goto err;
+	if (x->j && !ASN1_bn_print(bp,"subgroup factor:",x->j,m,indent))
+		goto err;
+	if (x->seed)
+		{
+		int i;
+		BIO_indent(bp, indent, 128);
+		BIO_puts(bp, "seed:");
+		for (i=0; i < x->seedlen; i++)
+			{
+			if ((i%15) == 0)
+				{
+				if(BIO_puts(bp,"\n") <= 0
+				   || !BIO_indent(bp,indent+4,128))
+				    goto err;
+				}
+			if (BIO_printf(bp,"%02x%s", x->seed[i],
+					((i+1) == x->seedlen)?"":":") <= 0)
+				goto err;
+			}
+		if (BIO_write(bp,"\n",1) <= 0) return(0);
+		}
+	if (x->counter && !ASN1_bn_print(bp,"counter:",x->counter,m,indent))
+		goto err;
 	if (x->length != 0)
 		{
 		BIO_indent(bp, indent, 128);
