@@ -729,7 +729,7 @@ ___
 {
 my ($out,$ap,$bp,$mod,$n0) = ("%rdi","%rsi","%rdx","%rcx","%r8");
 $code.=<<___;
-.global	rsaz_512_mul
+.globl	rsaz_512_mul
 .type	rsaz_512_mul,\@function,5
 .align	32
 rsaz_512_mul:
@@ -747,7 +747,7 @@ rsaz_512_mul:
 	movq	$n0, 128(%rsp)
 
 	movq	$bp, %rbp		# pass argument
-	call	_rsaz_512_mul
+	call	__rsaz_512_mul
 
 	movq	%xmm0, $out
 	movq	%xmm1, %rbp
@@ -791,7 +791,7 @@ ___
 {
 my ($out,$ap,$bp,$mod,$n0,$pwr) = ("%rdi","%rsi","%rdx","%rcx","%r8","%r9d");
 $code.=<<___;
-.global	rsaz_512_mul_gather4
+.globl	rsaz_512_mul_gather4
 .type	rsaz_512_mul_gather4,\@function,6
 .align	32
 rsaz_512_mul_gather4:
@@ -999,7 +999,7 @@ ___
 {
 my ($out,$ap,$mod,$n0,$tbl,$pwr) = ("%rdi","%rsi","%rdx","%rcx","%r8","%r9d");
 $code.=<<___;
-.global	rsaz_512_mul_scatter4
+.globl	rsaz_512_mul_scatter4
 .type	rsaz_512_mul_scatter4,\@function,6
 .align	32
 rsaz_512_mul_scatter4:
@@ -1019,7 +1019,7 @@ rsaz_512_mul_scatter4:
 	movq	$n0, 128(%rsp)
 
 	movq	$out, %rbp
-	call	_rsaz_512_mul
+	call	__rsaz_512_mul
 
 	movq	%xmm0, $out
 	movq	%xmm1, %rbp
@@ -1359,16 +1359,16 @@ _rsaz_512_subtract:
 .size	_rsaz_512_subtract,.-_rsaz_512_subtract
 ___
 }
-{	# _rsaz_512_mul
+{	# __rsaz_512_mul
 	#
 	# input: %rsi - ap, %rbp - bp
 	# ouput:
 	# clobbers: everything
 my ($ap,$bp) = ("%rsi","%rbp");
 $code.=<<___;
-.type	_rsaz_512_mul,\@abi-omnipotent
+.type	__rsaz_512_mul,\@abi-omnipotent
 .align	32
-_rsaz_512_mul:
+__rsaz_512_mul:
 	leaq	8(%rsp), %rdi
 
 	movq	($bp), %rbx
@@ -1508,7 +1508,7 @@ _rsaz_512_mul:
 	movq	%r15, 56(%rdi)
 
 	ret
-.size	_rsaz_512_mul,.-_rsaz_512_mul
+.size	__rsaz_512_mul,.-__rsaz_512_mul
 ___
 }
 {
