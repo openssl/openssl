@@ -57,6 +57,7 @@ B<openssl> B<cms>
 [B<-secretkeyid id>]
 [B<-econtent_type type>]
 [B<-inkey file>]
+[B<-keyopt name:parameter>]
 [B<-passin arg>]
 [B<-rand file(s)>]
 [B<cert.pem...>]
@@ -385,7 +386,8 @@ multiple times to specify successive keys.
 
 for signing and encryption this option can be used multiple times to
 set customised parameters for the preceding key or certificate. It can
-currently be used to set RSA-PSS for signing or RSA-OAEP for encryption.
+currently be used to set RSA-PSS for signing, RSA-OAEP for encryption
+or to modify default parameters for ECDH.
 
 =item B<-passin arg>
 
@@ -504,6 +506,10 @@ The B<-compress> option.
 
 The B<-secretkey> option when used with B<-encrypt>.
 
+The use of PSS with B<-sign>.
+
+The use of OAEP or non-RSA keys with B<-encrypt>.
+
 Additionally the B<-EncryptedData_create> and B<-data_create> type cannot
 be processed by the older B<smime> command.
 
@@ -591,8 +597,13 @@ Sign mail using RSA-PSS:
 
 Create encrypted mail using RSA-OAEP:
 
- openssl cms -encrypt -in plain.txt -camellia128 -out mail.msg \
+ openssl cms -encrypt -in plain.txt -out mail.msg \
 	-recip cert.pem -keyopt rsa_padding_mode:oaep
+
+Use SHA256 KDF with an ECDH certificate:
+
+ openssl cms -encrypt -in plain.txt -out mail.msg \
+	-recip ecdhcert.pem -keyopt ecdh_kdf_md:sha256
 
 =head1 BUGS
 
@@ -625,5 +636,8 @@ The use of B<-recip> to specify the recipient when encrypting mail was first
 added to OpenSSL 1.1.0
 
 Support for RSA-OAEP and RSA-PSS was first added to OpenSSL 1.1.0. 
+
+The use of non-RSA keys with B<-encrypt> and B<-decrypt> was first added
+to OpenSSL 1.1.0.
 
 =cut
