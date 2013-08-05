@@ -1635,12 +1635,10 @@ static int aes_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		xctx->stream = NULL;
 #endif
 		/* key_len is two AES keys */
-#if !(defined(__arm__) || defined(__arm))	/* not yet? */
 #ifdef BSAES_CAPABLE
 		if (BSAES_CAPABLE)
 			xctx->stream = enc ? bsaes_xts_encrypt : bsaes_xts_decrypt;
 		else
-#endif
 #endif
 #ifdef VPAES_CAPABLE
 		if (VPAES_CAPABLE)
