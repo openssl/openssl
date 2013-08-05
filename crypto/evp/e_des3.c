@@ -468,7 +468,8 @@ static int des_ede3_wrap_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 static const EVP_CIPHER des3_wrap = {
 	NID_id_smime_alg_CMS3DESwrap,
 	8, 24, 0,
-	EVP_CIPH_WRAP_MODE|EVP_CIPH_CUSTOM_IV|EVP_CIPH_FLAG_CUSTOM_CIPHER,
+	EVP_CIPH_WRAP_MODE|EVP_CIPH_CUSTOM_IV|EVP_CIPH_FLAG_CUSTOM_CIPHER
+		|EVP_CIPH_FLAG_DEFAULT_ASN1,
 	des_ede3_init_key, des_ede3_wrap_cipher,
 	NULL,	
 	sizeof(DES_EDE_KEY),
