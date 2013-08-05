@@ -857,6 +857,8 @@ static int ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
 		goto err;
 	if (!EVP_EncryptInit_ex(kekctx, kekcipher, NULL, NULL, NULL))
 		goto err;
+	if (EVP_CIPHER_asn1_to_param(kekctx, kekalg->parameter) <= 0)
+		goto err;
 
 	keylen = EVP_CIPHER_CTX_key_length(kekctx);
 	if (EVP_PKEY_CTX_set_ecdh_kdf_outlen(pctx, keylen) <= 0)
@@ -1003,7 +1005,17 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 	wrap_alg = X509_ALGOR_new();
 	if (!wrap_alg)
 		goto err;
-	X509_ALGOR_set0(wrap_alg, OBJ_nid2obj(wrap_nid), V_ASN1_UNDEF, NULL);
+	wrap_alg->algorithm = OBJ_nid2obj(wrap_nid);
+	wrap_alg->parameter = ASN1_TYPE_new();
+	if (!wrap_alg->parameter)
+		goto err;
+	if (EVP_CIPHER_param_to_asn1(ctx, wrap_alg->parameter) <= 0)
+		goto err;
+	if (ASN1_TYPE_get(wrap_alg->parameter) == NID_undef)
+		{
+		ASN1_TYPE_free(wrap_alg->parameter);
+		wrap_alg->parameter = NULL;
+		}
 
 	if (EVP_PKEY_CTX_set_ecdh_kdf_outlen(pctx, keylen) <= 0)
 		goto err;
