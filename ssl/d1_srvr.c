@@ -276,10 +276,11 @@ int dtls1_accept(SSL *s)
 		case SSL3_ST_SW_HELLO_REQ_B:
 
 			s->shutdown=0;
+			dtls1_clear_record_buffer(s);
 			dtls1_start_timer(s);
 			ret=dtls1_send_hello_request(s);
 			if (ret <= 0) goto end;
-			s->s3->tmp.next_state=SSL3_ST_SW_HELLO_REQ_C;
+			s->s3->tmp.next_state=SSL3_ST_SR_CLNT_HELLO_A;
 			s->state=SSL3_ST_SW_FLUSH;
 			s->init_num=0;
 
