@@ -904,7 +904,7 @@ loop:
 
 	if (subj && x509)
 		{
-		BIO_printf(bio_err, "Cannot modifiy certificate subject\n");
+		BIO_printf(bio_err, "Cannot modify certificate subject\n");
 		goto end;
 		}
 
