@@ -946,6 +946,7 @@ start:
 			!(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS) &&
 			!s->s3->renegotiate)
 			{
+			s->d1->handshake_read_seq++;
 			ssl3_renegotiate(s);
 			if (ssl3_renegotiate_check(s))
 				{
