@@ -35,6 +35,7 @@ OpenSSL  -  Frequently Asked Questions
 * What is a "128 bit certificate"? Can I create one with OpenSSL?
 * Why does OpenSSL set the authority key identifier extension incorrectly?
 * How can I set up a bundle of commercial root CA certificates?
+* Some secure servers 'hang' with OpenSSL 1.0.1, is this a bug?
 
 [BUILD] Questions about building and testing OpenSSL
 
@@ -489,6 +490,16 @@ Other projects do have other policies so you can for example extract the CA
 bundle used by Mozilla and/or modssl as described in this article:
 
   <URL: http://www.mail-archive.com/modssl-users@modssl.org/msg16980.html>
+
+
+* Some secure servers 'hang' with OpenSSL 1.0.1, is this a bug?
+
+OpenSSL 1.0.1 is the first release to support TLS 1.2, among other things,
+this increases the size of the default ClientHello message to more than
+255 bytes in length. Some software cannot handle this and hangs. For more
+details and workarounds see:
+
+  <URL: http://rt.openssl.org/Ticket/Display.html?user=guest&pass=guest&id=2771>
 
 
 [BUILD] =======================================================================
