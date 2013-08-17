@@ -3438,7 +3438,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 
 	case SSL_CTRL_SET_ECDH_AUTO:
 		s->cert->ecdh_tmp_auto = larg;
-		break;
+		return 1;
 
 	case SSL_CTRL_SET_SIGALGS:
 		return tls1_set_sigalgs(s->cert, parg, larg, 0);
@@ -3823,7 +3823,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 								parg);
 	case SSL_CTRL_SET_ECDH_AUTO:
 		ctx->cert->ecdh_tmp_auto = larg;
-		break;
+		return 1;
 
 	case SSL_CTRL_SET_SIGALGS:
 		return tls1_set_sigalgs(ctx->cert, parg, larg, 0);
