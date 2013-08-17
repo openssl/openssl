@@ -349,6 +349,8 @@ int X509_check_private_key(X509 *x, EVP_PKEY *k)
  * flags.
  */
 
+#ifndef OPENSSL_NO_EC
+
 static int check_suite_b(EVP_PKEY *pkey, int sign_nid, unsigned long *pflags)
 	{
 	const EC_GROUP *grp = NULL;
@@ -465,6 +467,20 @@ int X509_CRL_check_suiteb(X509_CRL *crl, EVP_PKEY *pk, unsigned long flags)
 	sign_nid = OBJ_obj2nid(crl->crl->sig_alg->algorithm);
 	return check_suite_b(pk, sign_nid, &flags);
 	}
+
+#else
+int X509_chain_check_suiteb(int *perror_depth, X509 *x, STACK_OF(X509) *chain,
+							unsigned long flags)
+	{
+	return 0;
+	}
+
+int X509_CRL_check_suiteb(X509_CRL *crl, EVP_PKEY *pk, unsigned long flags)
+	{
+	return 0;
+	}
+
+#endif
 /* Not strictly speaking an "up_ref" as a STACK doesn't have a reference
  * count but it has the same effect by duping the STACK and upping the ref
  * of each X509 structure.

@@ -110,7 +110,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <openssl/rand.h>
-#include <openssl/fips_rand.h>
 #include <openssl/err.h>
 #include <openssl/bn.h>
 
@@ -129,6 +128,7 @@ int main(int argc, char *argv[])
 
 #include "fips_utl.h"
 #include <openssl/fips.h>
+#include <openssl/fips_rand.h>
 
 typedef struct
 	{
