@@ -769,6 +769,13 @@ int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
 #endif
 	}
 
+#else
+
+static int tls1_check_cert_param(SSL *s, X509 *x, int set_ee_md)
+	{
+	return 1;
+	}
+
 #endif /* OPENSSL_NO_EC */
 
 #ifndef OPENSSL_NO_TLSEXT
@@ -816,17 +823,18 @@ static unsigned char tls12_sigalgs[] = {
 	tlsext_sigalg_rsa(TLSEXT_hash_md5)
 #endif
 };
-
+#ifndef OPENSSL_NO_ECDSA
 static unsigned char suiteb_sigalgs[] = {
 	tlsext_sigalg_ecdsa(TLSEXT_hash_sha256)
 	tlsext_sigalg_ecdsa(TLSEXT_hash_sha384)
 };
-
+#endif
 size_t tls12_get_psigalgs(SSL *s, const unsigned char **psigs)
 	{
 	/* If Suite B mode use Suite B sigalgs only, ignore any other
 	 * preferences.
 	 */
+#ifndef OPENSSL_NO_EC
 	switch (tls1_suiteb(s))
 		{
 	case SSL_CERT_FLAG_SUITEB_128_LOS:
@@ -841,7 +849,7 @@ size_t tls12_get_psigalgs(SSL *s, const unsigned char **psigs)
 		*psigs = suiteb_sigalgs + 2;
 		return 2;
 		}
-
+#endif
 	/* If server use client authentication sigalgs if not NULL */
 	if (s->server && s->cert->client_sigalgs)
 		{
@@ -883,6 +891,7 @@ int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s,
 		SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG,SSL_R_WRONG_SIGNATURE_TYPE);
 		return 0;
 		}
+#ifndef OPENSSL_NO_EC
 	if (pkey->type == EVP_PKEY_EC)
 		{
 		unsigned char curve_id[2], comp_id;
@@ -923,6 +932,7 @@ int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s,
 		}
 	else if (tls1_suiteb(s))
 		return 0;
+#endif
 
 	/* Check signature matches a type we sent */
 	sent_sigslen = tls12_get_psigalgs(s, &sent_sigs);
@@ -1448,11 +1458,12 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 #ifndef OPENSSL_NO_NEXTPROTONEG
 	int next_proto_neg_seen;
 #endif
+#ifndef OPENSSL_NO_EC
 	unsigned long alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 	unsigned long alg_a = s->s3->tmp.new_cipher->algorithm_auth;
 	int using_ecc = (alg_k & (SSL_kEECDH|SSL_kECDHr|SSL_kECDHe)) || (alg_a & SSL_aECDSA);
 	using_ecc = using_ecc && (s->session->tlsext_ecpointformatlist != NULL);
-
+#endif
 	/* don't add extensions for SSLv3, unless doing secure renegotiation */
 	if (s->version == SSL3_VERSION && !s->s3->send_connection_binding)
 		return p;

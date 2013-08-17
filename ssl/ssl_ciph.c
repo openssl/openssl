@@ -1350,7 +1350,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 
 	return(retval);
 	}
-
+#ifndef OPENSSL_NO_EC
 static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
 					const char **prule_str)
 	{
@@ -1405,6 +1405,7 @@ static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
 	c->ecdh_tmp_auto = 1;
 	return 1;
 	}
+#endif
 
 
 STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
@@ -1424,10 +1425,10 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	 */
 	if (rule_str == NULL || cipher_list == NULL || cipher_list_by_id == NULL)
 		return NULL;
-
+#ifndef OPENSSL_NO_EC
 	if (!check_suiteb_cipher_list(ssl_method, c, &rule_str))
 		return NULL;
-
+#endif
 
 	/*
 	 * To reduce the work to do we only want to process the compiled

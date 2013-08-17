@@ -3397,6 +3397,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		else
 			return ssl_cert_add0_chain_cert(s->cert, (X509 *)parg);
 
+#ifndef OPENSSL_NO_EC
 	case SSL_CTRL_GET_CURVES:
 		{
 		unsigned char *clist;
@@ -3439,7 +3440,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 	case SSL_CTRL_SET_ECDH_AUTO:
 		s->cert->ecdh_tmp_auto = larg;
 		return 1;
-
+#endif
 	case SSL_CTRL_SET_SIGALGS:
 		return tls1_set_sigalgs(s->cert, parg, larg, 0);
 
@@ -3510,9 +3511,11 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 			EVP_PKEY *ptmp;
 			int rv = 0;
 			sc = s->session->sess_cert;
+#if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_EC)
 			if (!sc->peer_rsa_tmp && !sc->peer_dh_tmp
 							&& !sc->peer_ecdh_tmp)
 				return 0;
+#endif
 			ptmp = EVP_PKEY_new();
 			if (!ptmp)
 				return 0;
@@ -3537,7 +3540,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 			EVP_PKEY_free(ptmp);
 			return 0;
 			}
-
+#ifndef OPENSSL_NO_EC
 	case SSL_CTRL_GET_EC_POINT_FORMATS:
 		{
 		SSL_SESSION *sess = s->session;
@@ -3547,7 +3550,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		*pformat = sess->tlsext_ecpointformatlist;
 		return (int)sess->tlsext_ecpointformatlist_length;
 		}
-
+#endif
 	default:
 		break;
 		}
@@ -3812,6 +3815,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 		break;
 #endif
 
+#ifndef OPENSSL_NO_EC
 	case SSL_CTRL_SET_CURVES:
 		return tls1_set_curves(&ctx->tlsext_ellipticcurvelist,
 					&ctx->tlsext_ellipticcurvelist_length,
@@ -3824,7 +3828,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 	case SSL_CTRL_SET_ECDH_AUTO:
 		ctx->cert->ecdh_tmp_auto = larg;
 		return 1;
-
+#endif
 	case SSL_CTRL_SET_SIGALGS:
 		return tls1_set_sigalgs(ctx->cert, parg, larg, 0);
 
@@ -4137,7 +4141,10 @@ int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 	int ret=0;
 	const unsigned char *sig;
 	size_t i, siglen;
-	int have_rsa_sign = 0, have_dsa_sign = 0, have_ecdsa_sign = 0;
+	int have_rsa_sign = 0, have_dsa_sign = 0;
+#ifndef OPENSSL_NO_ECDSA
+	int have_ecdsa_sign = 0;
+#endif
 	int nostrict = 1;
 	unsigned long alg_k;
 
@@ -4162,10 +4169,11 @@ int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 		case TLSEXT_signature_dsa:
 			have_dsa_sign = 1;
 			break;
-
+#ifndef OPENSSL_NO_ECDSA
 		case TLSEXT_signature_ecdsa:
 			have_ecdsa_sign = 1;
 			break;
+#endif
 			}
 		}
 

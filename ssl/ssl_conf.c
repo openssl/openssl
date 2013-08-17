@@ -253,7 +253,7 @@ static int cmd_curves(SSL_CONF_CTX *cctx, const char *value)
 		rv = SSL_CTX_set1_curves_list(cctx->ctx, value);
 	return rv > 0;
 	}
-
+#ifndef OPENSSL_NO_ECDH
 /* ECDH temporary parameters */
 static int cmd_ecdhparam(SSL_CONF_CTX *cctx, const char *value)
 	{
@@ -314,7 +314,7 @@ static int cmd_ecdhparam(SSL_CONF_CTX *cctx, const char *value)
 
 	return rv > 0;
 	}
-
+#endif
 static int cmd_cipher_list(SSL_CONF_CTX *cctx, const char *value)
 	{
 	int rv = 1;
@@ -378,7 +378,9 @@ static ssl_conf_cmd_tbl ssl_conf_cmds[] = {
 	{cmd_sigalgs,		"SignatureAlgorithms", "sigalgs"},
 	{cmd_client_sigalgs,	"ClientSignatureAlgorithms", "client_sigalgs"},
 	{cmd_curves,		"Curves", "curves"},
+#ifndef OPENSSL_NO_ECDH
 	{cmd_ecdhparam,		"ECDHParameters", "named_curve"},
+#endif
 	{cmd_cipher_list,	"CipherString", "cipher"},
 	{cmd_protocol,		"Protocol", NULL},
 	{cmd_options,		"Options", NULL},

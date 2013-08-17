@@ -423,7 +423,7 @@ int ssl_print_sigalgs(BIO *out, SSL *s)
 		BIO_printf(out, "Peer signing digest: %s\n", OBJ_nid2sn(mdnid));
 	return 1;
 	}
- 
+#ifndef OPENSSL_NO_EC
 int ssl_print_point_formats(BIO *out, SSL *s)
 	{
 	int i, nformats;
@@ -515,7 +515,7 @@ int ssl_print_curves(BIO *out, SSL *s, int noshared)
 	BIO_puts(out, "\n");
 	return 1;
 	}
-
+#endif
 int ssl_print_tmp_key(BIO *out, SSL *s)
 	{
 	EVP_PKEY *key;
@@ -531,7 +531,7 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
 	case EVP_PKEY_DH:
 		BIO_printf(out, "DH, %d bits\n", EVP_PKEY_bits(key));
 		break;
-
+#ifndef OPENSSL_NO_ECDH
 	case EVP_PKEY_EC:
 			{
 			EC_KEY *ec = EVP_PKEY_get1_EC_KEY(key);
@@ -545,6 +545,7 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
 			BIO_printf(out, "ECDH, %s, %d bits\n",
 						cname, EVP_PKEY_bits(key));
 			}
+#endif
 		}
 	EVP_PKEY_free(key);
 	return 1;
