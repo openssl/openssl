@@ -82,7 +82,22 @@ my $smdir    = "smime-certs";
 my $halt_err = 1;
 
 my $badcmd = 0;
+my $no_ec;
 my $ossl8 = `$ossl_path version -v` =~ /0\.9\.8/;
+
+system ("$ossl_path no-ec >/dev/null");
+if ($? == 0)
+	{
+	$no_ec = 1;
+	}
+elsif ($? == 1)
+	{
+	$no_ec = 0;
+	}
+else
+	{
+	die "Error checking for EC support\n";
+	}
 
 my @smime_pkcs7_tests = (
 
@@ -471,6 +486,11 @@ sub run_smime_tests {
 		$tnam =~ s/streaming//;	
 		$rscmd =~ s/-stream//;	
 		$rvcmd =~ s/-stream//;
+		}
+	if ($no_ec && $tnam =~ /ECDH/)
+		{
+		print "$tnam: skipped, EC disabled\n";
+		next;
 		}
         system("$scmd$rscmd$redir");
         if ($?) {
