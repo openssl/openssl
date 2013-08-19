@@ -1724,7 +1724,6 @@ int ssl_load_stores(SSL_CTX *ctx,
 		ch = X509_STORE_new();
 		if (!X509_STORE_load_locations(ch, chCAfile, chCApath))
 			goto err;
-		/*X509_STORE_set_verify_cb(ch, verify_callback);*/
 		SSL_CTX_set1_chain_cert_store(ctx, ch);
 		}
 	rv = 1;
