@@ -125,6 +125,7 @@
 #define	COOKIE_SECRET_LENGTH	16
 
 int verify_depth=0;
+int verify_quiet=0;
 int verify_error=X509_V_OK;
 int verify_return_error=0;
 unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
@@ -139,15 +140,19 @@ int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
 	err=	X509_STORE_CTX_get_error(ctx);
 	depth=	X509_STORE_CTX_get_error_depth(ctx);
 
-	BIO_printf(bio_err,"depth=%d ",depth);
-	if (err_cert)
+	if (!verify_quiet || !ok)
 		{
-		X509_NAME_print_ex(bio_err, X509_get_subject_name(err_cert),
+		BIO_printf(bio_err,"depth=%d ",depth);
+		if (err_cert)
+			{
+			X509_NAME_print_ex(bio_err,
+					X509_get_subject_name(err_cert),
 					0, XN_FLAG_ONELINE);
-		BIO_puts(bio_err, "\n");
+			BIO_puts(bio_err, "\n");
+			}
+		else
+			BIO_puts(bio_err, "<no cert>\n");
 		}
-	else
-		BIO_puts(bio_err, "<no cert>\n");
 	if (!ok)
 		{
 		BIO_printf(bio_err,"verify error:num=%d:%s\n",err,
@@ -185,13 +190,14 @@ int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
 		BIO_printf(bio_err,"\n");
 		break;
 	case X509_V_ERR_NO_EXPLICIT_POLICY:
-		policies_print(bio_err, ctx);
+		if (!verify_quiet)
+			policies_print(bio_err, ctx);
 		break;
 		}
-	if (err == X509_V_OK && ok == 2)
+	if (err == X509_V_OK && ok == 2 && !verify_quiet)
 		policies_print(bio_err, ctx);
-
-	BIO_printf(bio_err,"verify return:%d\n",ok);
+	if (ok && !verify_quiet)
+		BIO_printf(bio_err,"verify return:%d\n",ok);
 	return(ok);
 	}
 
@@ -456,8 +462,7 @@ int ssl_print_point_formats(BIO *out, SSL *s)
 	return 1;
 	}
 
-
-int ssl_print_curves(BIO *out, SSL *s)
+int ssl_print_curves(BIO *out, SSL *s, int noshared)
 	{
 	int i, ncurves, *curves, nid;
 	const char *cname;
@@ -485,8 +490,15 @@ int ssl_print_curves(BIO *out, SSL *s)
 			BIO_printf(out, "%s", cname);
 			}
 		}
-	BIO_puts(out, "\nShared Elliptic curves: ");
+	if (ncurves == 0)
+		BIO_puts(out, "NONE");
 	OPENSSL_free(curves);
+	if (noshared)
+		{
+		BIO_puts(out, "\n");
+		return 1;
+		}
+	BIO_puts(out, "\nShared Elliptic curves: ");
 	ncurves = SSL_get_shared_curve(s, -1);
 	for (i = 0; i < ncurves; i++)
 		{
@@ -1495,6 +1507,74 @@ int args_excert(char ***pargs, int *pargc,
 	ssl_excert_free(exc);
 	*pexc = NULL;
 	return 1;
+	}
+
+static void print_raw_cipherlist(BIO *bio, SSL *s)
+	{
+	const unsigned char *rlist;
+	static const unsigned char scsv_id[] = {0, 0, 0xFF};
+	size_t i, rlistlen, num;
+	if (!SSL_is_server(s))
+		return;
+	num = SSL_get0_raw_cipherlist(s, NULL);
+	rlistlen = SSL_get0_raw_cipherlist(s, &rlist);
+	BIO_puts(bio, "Client cipher list: ");
+	for (i = 0; i < rlistlen; i += num, rlist += num)
+		{
+		const SSL_CIPHER *c = SSL_CIPHER_find(s, rlist);
+		if (i)
+			BIO_puts(bio, ":");
+		if (c)
+			BIO_puts(bio, SSL_CIPHER_get_name(c));
+		else if (!memcmp(rlist, scsv_id - num + 3, num))
+			BIO_puts(bio, "SCSV");
+		else
+			{
+			size_t j;
+			BIO_puts(bio, "0x");
+			for (j = 0; j < num; j++)
+				BIO_printf(bio, "%02X", rlist[j]);
+			}
+		}
+	BIO_puts(bio, "\n");
+	}
+	
+
+void print_ssl_summary(BIO *bio, SSL *s)
+	{
+	const SSL_CIPHER *c;
+	X509 *peer;
+	/*const char *pnam = SSL_is_server(s) ? "client" : "server";*/
+	BIO_printf(bio, "Protocol version: %s\n", SSL_get_version(s));
+	print_raw_cipherlist(bio, s);
+	c = SSL_get_current_cipher(s);
+	BIO_printf(bio,"Ciphersuite: %s\n", SSL_CIPHER_get_name(c));
+	do_print_sigalgs(bio, s, 0);
+	peer = SSL_get_peer_certificate(s);
+	if (peer)
+		{
+		int nid;
+		BIO_puts(bio, "Peer certificate: ");
+		X509_NAME_print_ex(bio, X509_get_subject_name(peer),
+					0, XN_FLAG_ONELINE);
+		BIO_puts(bio, "\n");
+		if (SSL_get_peer_signature_nid(s, &nid))
+			BIO_printf(bio, "Hash used: %s\n", OBJ_nid2sn(nid));
+		}
+	else
+		BIO_puts(bio, "No peer certificate\n");
+	if (peer)
+		X509_free(peer);
+#ifndef OPENSSL_NO_EC
+	ssl_print_point_formats(bio, s);
+	if (SSL_is_server(s))
+		ssl_print_curves(bio, s, 1);
+	else
+		ssl_print_tmp_key(bio, s);
+#else
+	if (!SSL_is_server(s))
+		ssl_print_tmp_key(bio, s);
+#endif
 	}
 
 int args_ssl(char ***pargs, int *pargc, SSL_CONF_CTX *cctx,

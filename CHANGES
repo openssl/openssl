@@ -4,6 +4,10 @@
 
  Changes between 1.0.1 and 1.0.2 [xx XXX xxxx]
 
+  *) New option -brief for s_client and s_server to print out a brief summary
+     of connection parameters.
+     [Steve Henson]
+
   *) Add callbacks for arbitrary TLS extensions.
      [Trevor Perrin <trevp@trevp.net> and Ben Laurie]
 

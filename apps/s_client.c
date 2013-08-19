@@ -193,6 +193,7 @@ typedef unsigned int u_int;
 extern int verify_depth;
 extern int verify_error;
 extern int verify_return_error;
+extern int verify_quiet;
 
 #ifdef FIONBIO
 static int c_nbio=0;
@@ -220,6 +221,7 @@ static BIO *bio_c_out=NULL;
 static BIO *bio_c_msg=NULL;
 static int c_quiet=0;
 static int c_ign_eof=0;
+static int c_brief=0;
 
 #ifndef OPENSSL_NO_PSK
 /* Default PSK identity and key */
@@ -729,7 +731,8 @@ static char *jpake_secret = NULL;
 			verify=SSL_VERIFY_PEER;
 			if (--argc < 1) goto bad;
 			verify_depth=atoi(*(++argv));
-			BIO_printf(bio_err,"verify depth is %d\n",verify_depth);
+			if (!c_quiet)
+				BIO_printf(bio_err,"verify depth is %d\n",verify_depth);
 			}
 		else if	(strcmp(*argv,"-cert") == 0)
 			{
@@ -771,6 +774,14 @@ static char *jpake_secret = NULL;
 			}
 		else if (strcmp(*argv,"-verify_return_error") == 0)
 			verify_return_error = 1;
+		else if (strcmp(*argv,"-verify_quiet") == 0)
+			verify_quiet = 1;
+		else if (strcmp(*argv,"-brief") == 0)
+			{
+			c_brief = 1;
+			verify_quiet = 1;
+			c_quiet = 1;
+			}
 		else if (args_excert(&argv, &argc, &badarg, bio_err, &exc))
 			{
 			if (badarg)
@@ -1690,6 +1701,12 @@ SSL_set_tlsext_status_ids(con, ids);
 					else 
 						BIO_printf(bio_err, "Error writing session file %s\n", sess_out);
 					}
+				if (c_brief)
+					{
+					BIO_puts(bio_err,
+						"CONNECTION ESTABLISHED\n");
+					print_ssl_summary(bio_err, con);
+					}
 				print_stuff(bio_c_out,con,full_log);
 				if (full_log > 0) full_log--;
 
@@ -1952,7 +1969,10 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 				break;
 			case SSL_ERROR_SYSCALL:
 				ret=get_last_socket_error();
-				BIO_printf(bio_err,"read:errno=%d\n",ret);
+				if (c_brief)
+					BIO_puts(bio_err, "CONNECTION CLOSED BY SERVER\n");
+				else
+					BIO_printf(bio_err,"read:errno=%d\n",ret);
 				goto shut;
 			case SSL_ERROR_ZERO_RETURN:
 				BIO_printf(bio_c_out,"closed\n");

@@ -262,7 +262,7 @@ static int accept_socket= -1;
 #undef PROG
 #define PROG		s_server_main
 
-extern int verify_depth, verify_return_error;
+extern int verify_depth, verify_return_error, verify_quiet;
 
 static int s_server_verify=SSL_VERIFY_NONE;
 static int s_server_session_id_context = 1; /* anything will do */
@@ -290,8 +290,10 @@ static int s_tlsextdebug=0;
 static int s_tlsextstatus=0;
 static int cert_status_cb(SSL *s, void *arg);
 #endif
+static int no_resume_ephemeral = 0;
 static int s_msg=0;
 static int s_quiet=0;
+static int s_brief=0;
 
 static char *keymatexportlabel=NULL;
 static int keymatexportlen=20;
@@ -455,6 +457,7 @@ static void s_server_init(void)
 	s_debug=0;
 	s_msg=0;
 	s_quiet=0;
+	s_brief=0;
 	hack=0;
 #ifndef OPENSSL_NO_ENGINE
 	engine_id=NULL;
@@ -1037,7 +1040,8 @@ int MAIN(int argc, char *argv[])
 			s_server_verify=SSL_VERIFY_PEER|SSL_VERIFY_CLIENT_ONCE;
 			if (--argc < 1) goto bad;
 			verify_depth=atoi(*(++argv));
-			BIO_printf(bio_err,"verify depth is %d\n",verify_depth);
+			if (!s_quiet)
+				BIO_printf(bio_err,"verify depth is %d\n",verify_depth);
 			}
 		else if	(strcmp(*argv,"-Verify") == 0)
 			{
@@ -1045,7 +1049,8 @@ int MAIN(int argc, char *argv[])
 				SSL_VERIFY_CLIENT_ONCE;
 			if (--argc < 1) goto bad;
 			verify_depth=atoi(*(++argv));
-			BIO_printf(bio_err,"verify depth is %d, must return a certificate\n",verify_depth);
+			if (!s_quiet)
+				BIO_printf(bio_err,"verify depth is %d, must return a certificate\n",verify_depth);
 			}
 		else if	(strcmp(*argv,"-context") == 0)
 			{
@@ -1182,6 +1187,8 @@ int MAIN(int argc, char *argv[])
 			}
 		else if (strcmp(*argv,"-verify_return_error") == 0)
 			verify_return_error = 1;
+		else if (strcmp(*argv,"-verify_quiet") == 0)
+			verify_quiet = 1;
 		else if	(strcmp(*argv,"-build_chain") == 0)
 			build_chain = 1;
 		else if	(strcmp(*argv,"-CAfile") == 0)
@@ -1262,12 +1269,20 @@ int MAIN(int argc, char *argv[])
 			{ s_crlf=1; }
 		else if	(strcmp(*argv,"-quiet") == 0)
 			{ s_quiet=1; }
+		else if	(strcmp(*argv,"-brief") == 0)
+			{
+			s_quiet=1;
+			s_brief=1;
+			verify_quiet=1;
+			}
 		else if	(strcmp(*argv,"-no_tmp_rsa") == 0)
 			{ no_tmp_rsa=1; }
 		else if	(strcmp(*argv,"-no_dhe") == 0)
 			{ no_dhe=1; }
 		else if	(strcmp(*argv,"-no_ecdhe") == 0)
 			{ no_ecdhe=1; }
+		else if (strcmp(*argv,"-no_resume_ephemeral") == 0)
+			{ no_resume_ephemeral = 1; }
 #ifndef OPENSSL_NO_PSK
                 else if (strcmp(*argv,"-psk_hint") == 0)
 			{
@@ -1589,7 +1604,7 @@ bad:
 
 	if (bio_s_out == NULL)
 		{
-		if (s_quiet && !s_debug && !s_msg)
+		if (s_quiet && !s_debug)
 			{
 			bio_s_out=BIO_new(BIO_s_null());
 			if (s_msg && !bio_s_msg)
@@ -2260,7 +2275,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 				}
 			else
 				i=raw_read_stdin(buf,bufsize);
-			if (!s_quiet)
+			if (!s_quiet && !s_brief)
 				{
 				if ((i <= 0) || (buf[0] == 'Q'))
 					{
@@ -2513,6 +2528,9 @@ static int init_ssl_connection(SSL *con)
 		return(0);
 		}
 
+	if (s_brief)
+		print_ssl_summary(bio_err, con);
+
 	PEM_write_bio_SSL_SESSION(bio_s_out,SSL_get_session(con));
 
 	peer=SSL_get_peer_certificate(con);
@@ -2531,7 +2549,7 @@ static int init_ssl_connection(SSL *con)
 		BIO_printf(bio_s_out,"Shared ciphers:%s\n",buf);
 	str=SSL_CIPHER_get_name(SSL_get_current_cipher(con));
 	ssl_print_sigalgs(bio_s_out, con);
-	ssl_print_curves(bio_s_out, con);
+	ssl_print_curves(bio_s_out, con, 0);
 	BIO_printf(bio_s_out,"CIPHER is %s\n",(str != NULL)?str:"(NONE)");
 
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
@@ -2851,7 +2869,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 				BIO_puts(io,"\n");
 				}
 			ssl_print_sigalgs(io, con);
-			ssl_print_curves(io, con);
+			ssl_print_curves(io, con, 0);
 			BIO_printf(io,(SSL_cache_hit(con)
 				?"---\nReused, "
 				:"---\nNew, "));
