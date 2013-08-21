@@ -673,12 +673,13 @@ static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
 	ASN1_OBJECT *aoid;
 	int atype;
 	void *aval;
-	ASN1_INTEGER *public_key;
+	ASN1_INTEGER *public_key = NULL;
 	int rv = 0;
 	EVP_PKEY *pkpeer = NULL, *pk = NULL;
 	DH *dhpeer = NULL;
 	const unsigned char *p;
 	int plen;
+
 	X509_ALGOR_get0(&aoid, &atype, &aval, alg);
 	if (OBJ_obj2nid(aoid) != NID_dhpublicnumber)
 		goto err;
@@ -737,7 +738,7 @@ static int dh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
 	ASN1_OCTET_STRING *ukm;
 	const unsigned char *p;
 	unsigned char *dukm = NULL;
-	size_t dukmlen;
+	size_t dukmlen = 0;
 	int keylen, plen;
 	const EVP_CIPHER *kekcipher;
 	EVP_CIPHER_CTX *kekctx;
@@ -852,7 +853,7 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
 	ASN1_OCTET_STRING *ukm;
 	unsigned char *penc = NULL, *dukm = NULL;
 	int penclen;
-	size_t dukmlen;
+	size_t dukmlen = 0;
 	int rv = 0;
 	int kdf_type, wrap_nid;
 	const EVP_MD *kdf_md;
