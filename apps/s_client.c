@@ -350,6 +350,7 @@ static void sc_usage(void)
 	BIO_printf(bio_err,"                 'prot' defines which one to assume.  Currently,\n");
 	BIO_printf(bio_err,"                 only \"smtp\", \"pop3\", \"imap\", \"ftp\" and \"xmpp\"\n");
 	BIO_printf(bio_err,"                 are supported.\n");
+	BIO_printf(bio_err," -xmpphost host - When used with \"-starttls xmpp\" specifies the virtual host.\n");
 #ifndef OPENSSL_NO_ENGINE
 	BIO_printf(bio_err," -engine id    - Initialise and use the specified engine\n");
 #endif
@@ -595,6 +596,7 @@ int MAIN(int argc, char **argv)
 	short port=PORT;
 	int full_log=1;
 	char *host=SSL_HOST_NAME;
+	char *xmpphost = NULL;
 	char *cert_file=NULL,*key_file=NULL,*chain_file=NULL;
 	int cert_format = FORMAT_PEM, key_format = FORMAT_PEM;
 	char *passarg = NULL, *pass = NULL;
@@ -725,6 +727,11 @@ static char *jpake_secret = NULL;
 			if (--argc < 1) goto bad;
 			if (!extract_host_port(*(++argv),&host,NULL,&port))
 				goto bad;
+			}
+		else if	(strcmp(*argv,"-xmpphost") == 0)
+			{
+			if (--argc < 1) goto bad;
+			xmpphost= *(++argv);
 			}
 		else if	(strcmp(*argv,"-verify") == 0)
 			{
@@ -1670,14 +1677,17 @@ SSL_set_tlsext_status_ids(con, ids);
 		int seen = 0;
 		BIO_printf(sbio,"<stream:stream "
 		    "xmlns:stream='http://etherx.jabber.org/streams' "
-		    "xmlns='jabber:client' to='%s' version='1.0'>", host);
+		    "xmlns='jabber:client' to='%s' version='1.0'>", xmpphost? xmpphost:host);
 		seen = BIO_read(sbio,mbuf,BUFSIZZ);
 		mbuf[seen] = 0;
-		while (!strstr(mbuf, "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'"))
+		while (!strstr(mbuf, "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'") &&
+				!strstr(mbuf, "<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\""))
 			{
-			if (strstr(mbuf, "/stream:features>"))
-				goto shut;
 			seen = BIO_read(sbio,mbuf,BUFSIZZ);
+
+			if (seen <= 0)
+				goto shut;
+
 			mbuf[seen] = 0;
 			}
 		BIO_printf(sbio, "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>");

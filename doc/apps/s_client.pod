@@ -37,6 +37,7 @@ B<openssl> B<s_client>
 [B<-bugs>]
 [B<-cipher cipherlist>]
 [B<-starttls protocol>]
+[B<-xmpphost hostname>]
 [B<-engine id>]
 [B<-tlsextdebug>]
 [B<-no_ticket>]
@@ -223,7 +224,14 @@ command for more information.
 
 send the protocol-specific message(s) to switch to TLS for communication.
 B<protocol> is a keyword for the intended protocol.  Currently, the only
-supported keywords are "smtp", "pop3", "imap", and "ftp".
+supported keywords are "smtp", "pop3", "imap", "ftp" and "xmpp".
+
+=item B<-xmpphost hostname>
+
+This option, when used with "-starttls xmpp", specifies the host for the
+"to" attribute of the stream element.
+If this option is not specified, then the host specified with "-connect"
+will be used.
 
 =item B<-tlsextdebug>
 
