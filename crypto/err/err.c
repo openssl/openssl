@@ -1038,7 +1038,7 @@ ERR_STATE *ERR_get_state(void)
 			ERR_STATE_free(ret); /* could not insert it */
 			return(&fallback);
 			}
-		/* If a race occured in this function and we came second, tmpp
+		/* If a race occurred in this function and we came second, tmpp
 		 * is the first one that we just replaced. */
 		if (tmpp)
 			ERR_STATE_free(tmpp);

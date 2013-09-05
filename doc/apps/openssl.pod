@@ -153,7 +153,7 @@ Generation of Private Key or Parameters.
 
 =item L<B<genrsa>|genrsa(1)>
 
-Generation of RSA Private Key. Superceded by L<B<genpkey>|genpkey(1)>.
+Generation of RSA Private Key. Superseded by L<B<genpkey>|genpkey(1)>.
 
 =item L<B<nseq>|nseq(1)>
 

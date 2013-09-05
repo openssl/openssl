@@ -378,7 +378,7 @@ The openssl program has numerous options and can be used for many different
 things.  Many of the options operate in an interactive mode requiring the
 user to enter data.  Because of this, a default screen is created for the
 program.  However, when running the test script it is not desirable to
-have a seperate screen.  Therefore, the build also creates openssl2.nlm.
+have a separate screen.  Therefore, the build also creates openssl2.nlm.
 Openssl2.nlm is functionally identical but uses the console screen.
 Openssl2 can be used when a non-interactive mode is desired.
 

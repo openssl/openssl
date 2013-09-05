@@ -2359,7 +2359,7 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
 
 			if ((SSL_version(con) == DTLS1_VERSION) && DTLSv1_handle_timeout(con) > 0)
 				{
-				BIO_printf(bio_err,"TIMEOUT occured\n");
+				BIO_printf(bio_err,"TIMEOUT occurred\n");
 				}
 
 			if (i <= 0) continue;

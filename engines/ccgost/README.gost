@@ -193,7 +193,7 @@ Russian clients and RSA/DSA ciphersuites for foreign clients.
 
  openssl dgst -mac gost-mac -macopt key:<32 bytes of key> datafile
 
- Note absense of an option that specifies digest algorithm. gost-mac
+ Note absence of an option that specifies digest algorithm. gost-mac
  algorithm supports only one digest (which is actually part of
  implementation of this mac) and OpenSSL is clever enough to find out
  this.

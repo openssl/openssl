@@ -1753,7 +1753,7 @@ int ssl3_get_key_exchange(SSL *s)
 		 * and the ECParameters in this case is just three bytes.
 		 */
 		param_len=3;
-		/* Check curve is one of our prefrences, if not server has
+		/* Check curve is one of our preferences, if not server has
 		 * sent an invalid curve.
 		 */
 		if (!tls1_check_curve(s, p, param_len))

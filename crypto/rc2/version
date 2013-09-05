@@ -1,7 +1,7 @@
 1.1 23/08/96 - eay
 	Changed RC2_set_key() so it now takes another argument.  Many
 	thanks to Peter Gutmann <pgut01@cs.auckland.ac.nz> for the
-	clarification and origional specification of RC2.  BSAFE uses
+	clarification and original specification of RC2.  BSAFE uses
 	this last parameter, 'bits'.  It the key is 128 bits, BSAFE
 	also sets this parameter to 128.  The old behaviour can be
 	duplicated by setting this parameter to 1024.

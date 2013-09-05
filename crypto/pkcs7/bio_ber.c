@@ -96,7 +96,7 @@ typedef struct bio_ber_struct
 	int depth;	/* used with indefinite encoding. */
 	int finished;	/* No more read data */
 
-	/* writting */ 
+	/* writing */ 
 	char *w_addr;
 	int w_offset;
 	int w_left;

@@ -66,7 +66,7 @@ static LHASH *error_hash=NULL;
 static LHASH *thread_hash=NULL;
 
 several files have routines with static "init" to track if error strings
-   have been loaded ( may not want seperate error strings for each process )
+   have been loaded ( may not want separate error strings for each process )
    The "init" variable can't be left "global" because the error has is a ptr
    that is malloc'ed.  The malloc'ed error has is dependant on the "init"
    vars.

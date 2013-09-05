@@ -72,7 +72,7 @@
  *   of entropy bytes are requested. The connection is left open until the
  *   query is competed.
  *   RAND_query_egd_bytes() returns with
- *     -1  if an error occured during connection or communication.
+ *     -1  if an error occurred during connection or communication.
  *     num the number of bytes read from the EGD socket. This number is either
  *         the number of bytes requested or smaller, if the EGD pool is
  *         drained and the daemon signals that the pool is empty.
@@ -84,7 +84,7 @@
  *   RAND_egd_bytes() is a wrapper for RAND_query_egd_bytes() with buf=NULL.
  *   Unlike RAND_query_egd_bytes(), RAND_status() is used to test the
  *   seed status so that the return value can reflect the seed state:
- *     -1  if an error occured during connection or communication _or_
+ *     -1  if an error occurred during connection or communication _or_
  *         if the PRNG has still not received the required seeding.
  *     num the number of bytes read from the EGD socket. This number is either
  *         the number of bytes requested or smaller, if the EGD pool is
