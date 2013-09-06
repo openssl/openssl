@@ -227,7 +227,7 @@ static int c_brief=0;
 
 static unsigned char *generated_supp_data = NULL;
 
-static unsigned char *most_recent_supplemental_data = NULL;
+static const unsigned char *most_recent_supplemental_data = NULL;
 static size_t most_recent_supplemental_data_length = 0;
 
 static int server_provided_server_authz = 0;
