@@ -199,10 +199,8 @@ be 0.9.8za then 0.9.8zb and so on.
 
 * Do I need patent licenses to use OpenSSL?
 
-The patents section of the README file lists patents that may apply to
-you if you want to use OpenSSL.  For information on intellectual
-property rights, please consult a lawyer.  The OpenSSL team does not
-offer legal advice.
+For information on intellectual property rights, please consult a lawyer.
+The OpenSSL team does not offer legal advice.
 
 You can configure OpenSSL so as not to use IDEA, MDC2 and RC5 by using
  ./config no-idea no-mdc2 no-rc5
