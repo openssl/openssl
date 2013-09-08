@@ -759,20 +759,17 @@ static int check_trust(X509_STORE_CTX *ctx)
 	 */
 	if (ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN)
 		{
+		X509 *mx;
 		if (ctx->last_untrusted < sk_X509_num(ctx->chain))
 			return X509_TRUST_TRUSTED;
-		if (sk_X509_num(ctx->chain) == 1)
+		x = sk_X509_value(ctx->chain, 0);
+		mx = lookup_cert_match(ctx, x);
+		if (mx)
 			{
-			X509 *mx;
-			x = sk_X509_value(ctx->chain, 0);
-			mx = lookup_cert_match(ctx, x);
-			if (mx)
-				{
-				(void)sk_X509_set(ctx->chain, 0, mx);
-				X509_free(x);
-				ctx->last_untrusted = 0;
-				return X509_TRUST_TRUSTED;
-				}
+			(void)sk_X509_set(ctx->chain, 0, mx);
+			X509_free(x);
+			ctx->last_untrusted = 0;
+			return X509_TRUST_TRUSTED;
 			}
 		}
 
