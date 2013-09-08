@@ -773,7 +773,7 @@ int dtls1_client_hello(SSL *s)
 	unsigned char *buf;
 	unsigned char *p,*d;
 	unsigned int i,j;
-	unsigned long Time,l;
+	unsigned long l;
 	SSL_COMP *comp;
 
 	buf=(unsigned char *)s->init_buf->data;
@@ -801,9 +801,7 @@ int dtls1_client_hello(SSL *s)
 		for (i=0;p[i]=='\0' && i<sizeof(s->s3->client_random);i++) ;
 		if (i==sizeof(s->s3->client_random))
 			{
-			Time=(unsigned long)time(NULL);	/* Time */
-			l2n(Time,p);
-			RAND_pseudo_bytes(p,sizeof(s->s3->client_random)-4);
+			RAND_pseudo_bytes(p,sizeof(s->s3->client_random));
 			}
 
 		/* Do the message type and length last */

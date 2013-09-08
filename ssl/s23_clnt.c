@@ -274,7 +274,7 @@ static int ssl23_client_hello(SSL *s)
 	unsigned char *buf;
 	unsigned char *p,*d;
 	int i,ch_len;
-	unsigned long Time,l;
+	unsigned long l;
 	int ssl2_compat;
 	int version = 0, version_major, version_minor;
 #ifndef OPENSSL_NO_COMP
@@ -355,9 +355,7 @@ static int ssl23_client_hello(SSL *s)
 #endif
 
 		p=s->s3->client_random;
-		Time=(unsigned long)time(NULL);		/* Time */
-		l2n(Time,p);
-		if (RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE-4) <= 0)
+		if (RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE) <= 0)
 			return -1;
 
 		if (version == TLS1_2_VERSION)
