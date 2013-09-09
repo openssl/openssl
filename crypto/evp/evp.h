@@ -1283,6 +1283,11 @@ const EVP_AEAD *EVP_aead_aes_128_gcm(void);
 const EVP_AEAD *EVP_aead_aes_256_gcm(void);
 #endif
 
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+/* EVP_aead_chacha20_poly1305 is ChaCha20 with a Poly1305 authenticator. */
+const EVP_AEAD *EVP_aead_chacha20_poly1305(void);
+#endif
+
 /* EVP_AEAD_key_length returns the length, in bytes, of the keys used by
  * |aead|. */
 size_t EVP_AEAD_key_length(const EVP_AEAD *aead);
@@ -1385,6 +1390,9 @@ void ERR_load_EVP_strings(void);
 #define EVP_F_AEAD_AES_GCM_INIT				 187
 #define EVP_F_AEAD_AES_GCM_OPEN				 188
 #define EVP_F_AEAD_AES_GCM_SEAL				 189
+#define EVP_F_AEAD_CHACHA20_POLY1305_INIT		 192
+#define EVP_F_AEAD_CHACHA20_POLY1305_OPEN		 193
+#define EVP_F_AEAD_CHACHA20_POLY1305_SEAL		 194
 #define EVP_F_AEAD_CTX_OPEN				 185
 #define EVP_F_AEAD_CTX_SEAL				 186
 #define EVP_F_AESNI_INIT_KEY				 165

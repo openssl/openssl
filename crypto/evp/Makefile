@@ -30,7 +30,7 @@ LIBSRC= encode.c digest.c evp_enc.c evp_key.c evp_acnf.c evp_cnf.c \
 	evp_pkey.c evp_pbe.c p5_crpt.c p5_crpt2.c \
 	e_old.c pmeth_lib.c pmeth_fn.c pmeth_gn.c m_sigver.c \
 	e_aes_cbc_hmac_sha1.c e_aes_cbc_hmac_sha256.c e_rc4_hmac_md5.c \
-	evp_aead.c
+	evp_aead.c e_chacha20poly1305.c
 
 LIBOBJ=	encode.o digest.o evp_enc.o evp_key.o evp_acnf.o evp_cnf.o \
 	e_des.o e_bf.o e_idea.o e_des3.o e_camellia.o\
@@ -44,7 +44,7 @@ LIBOBJ=	encode.o digest.o evp_enc.o evp_key.o evp_acnf.o evp_cnf.o \
 	evp_pkey.o evp_pbe.o p5_crpt.o p5_crpt2.o \
 	e_old.o pmeth_lib.o pmeth_fn.o pmeth_gn.o m_sigver.o \
 	e_aes_cbc_hmac_sha1.o e_aes_cbc_hmac_sha256.o e_rc4_hmac_md5.o \
-	evp_aead.o
+	evp_aead.o e_chacha20poly1305.o
 
 SRC= $(LIBSRC)
 
@@ -241,6 +241,21 @@ e_cast.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 e_cast.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 e_cast.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 e_cast.o: ../../include/openssl/symhacks.h ../cryptlib.h e_cast.c evp_locl.h
+e_chacha20poly1305.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+e_chacha20poly1305.o: ../../include/openssl/chacha.h
+e_chacha20poly1305.o: ../../include/openssl/crypto.h
+e_chacha20poly1305.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+e_chacha20poly1305.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+e_chacha20poly1305.o: ../../include/openssl/obj_mac.h
+e_chacha20poly1305.o: ../../include/openssl/objects.h
+e_chacha20poly1305.o: ../../include/openssl/opensslconf.h
+e_chacha20poly1305.o: ../../include/openssl/opensslv.h
+e_chacha20poly1305.o: ../../include/openssl/ossl_typ.h
+e_chacha20poly1305.o: ../../include/openssl/poly1305.h
+e_chacha20poly1305.o: ../../include/openssl/safestack.h
+e_chacha20poly1305.o: ../../include/openssl/stack.h
+e_chacha20poly1305.o: ../../include/openssl/symhacks.h e_chacha20poly1305.c
+e_chacha20poly1305.o: evp_locl.h
 e_des.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 e_des.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 e_des.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
@@ -260,9 +275,10 @@ e_des3.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 e_des3.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 e_des3.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 e_des3.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
-e_des3.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-e_des3.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-e_des3.o: ../../include/openssl/ui_compat.h ../cryptlib.h e_des3.c evp_locl.h
+e_des3.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+e_des3.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+e_des3.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
+e_des3.o: ../cryptlib.h e_des3.c evp_locl.h
 e_idea.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 e_idea.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 e_idea.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
@@ -358,6 +374,14 @@ evp_acnf.o: ../../include/openssl/opensslconf.h
 evp_acnf.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 evp_acnf.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 evp_acnf.o: ../../include/openssl/symhacks.h ../cryptlib.h evp_acnf.c
+evp_aead.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+evp_aead.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+evp_aead.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+evp_aead.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+evp_aead.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+evp_aead.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+evp_aead.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+evp_aead.o: ../../include/openssl/symhacks.h evp_aead.c
 evp_cnf.o: ../../e_os.h ../../include/openssl/asn1.h
 evp_cnf.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 evp_cnf.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h

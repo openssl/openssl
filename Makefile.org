@@ -94,6 +94,8 @@ BF_ENC= bf_enc.o
 CAST_ENC= c_enc.o
 RC4_ENC= rc4_enc.o
 RC5_ENC= rc5_enc.o
+CHACHA_ENC= chacha_enc.o
+POLY1305= poly1305.o
 MD5_ASM_OBJ= 
 SHA1_ASM_OBJ= 
 RMD160_ASM_OBJ= 
@@ -147,7 +149,7 @@ SDIRS=  \
 	bn ec rsa dsa ecdsa dh ecdh dso engine \
 	buffer bio stack lhash rand err \
 	evp asn1 pem x509 x509v3 conf txt_db pkcs7 pkcs12 comp ocsp ui krb5 \
-	cms pqueue ts jpake srp store cmac
+	cms pqueue ts jpake srp store cmac poly1305 chacha
 # keep in mind that the above list is adjusted by ./Configure
 # according to no-xxx arguments...
 
@@ -232,6 +234,8 @@ BUILDENV=	PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)' \
 		WP_ASM_OBJ='$(WP_ASM_OBJ)'			\
 		MODES_ASM_OBJ='$(MODES_ASM_OBJ)'		\
 		ENGINES_ASM_OBJ='$(ENGINES_ASM_OBJ)'		\
+		CHACHA_ENC='$(CHACHA_ENC)'			\
+		POLY1305='$(POLY1305)'				\
 		PERLASM_SCHEME='$(PERLASM_SCHEME)'		\
 		FIPSLIBDIR='${FIPSLIBDIR}'			\
 		FIPSDIR='${FIPSDIR}'				\

@@ -775,8 +775,11 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 		else
 			eivlen = 0;
 		}
-	else if (s->aead_write_ctx != NULL)
+	else if (s->aead_write_ctx != NULL &&
+		 s->aead_write_ctx->variable_nonce_included_in_record)
+		{
 		eivlen = s->aead_write_ctx->variable_nonce_len;
+		}
 	else
 		eivlen = 0;
 

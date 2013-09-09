@@ -366,6 +366,8 @@ static int tls1_change_cipher_state_aead(SSL *s, char is_read,
 	memcpy(aead_ctx->fixed_nonce, iv, iv_len);
 	aead_ctx->fixed_nonce_len = iv_len;
 	aead_ctx->variable_nonce_len = 8;  /* always the case, currently. */
+	aead_ctx->variable_nonce_included_in_record =
+		(s->s3->tmp.new_cipher->algorithm2 & SSL_CIPHER_ALGORITHM2_VARIABLE_NONCE_INCLUDED_IN_RECORD) != 0;
 	if (aead_ctx->variable_nonce_len + aead_ctx->fixed_nonce_len != EVP_AEAD_nonce_length(aead))
 		{
 		SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE_AEAD, ERR_R_INTERNAL_ERROR);
@@ -887,6 +889,7 @@ int tls1_enc(SSL *s, int send)
 		if (send)
 			{
 			size_t len = rec->length;
+			size_t eivlen = 0;
 			in = rec->input;
 			out = rec->data;
 
@@ -902,18 +905,22 @@ int tls1_enc(SSL *s, int send)
 			 * variable nonce. Thus we can copy the sequence number
 			 * bytes into place without overwriting any of the
 			 * plaintext. */
-			memcpy(out, ad, aead->variable_nonce_len);
-			len -= aead->variable_nonce_len;
+			if (aead->variable_nonce_included_in_record)
+				{
+				memcpy(out, ad, aead->variable_nonce_len);
+				len -= aead->variable_nonce_len;
+				eivlen = aead->variable_nonce_len;
+				}
 
 			ad[11] = len >> 8;
 			ad[12] = len & 0xff;
 
 			n = EVP_AEAD_CTX_seal(&aead->ctx,
-					      out + aead->variable_nonce_len, len + aead->tag_len,
+					      out + eivlen, len + aead->tag_len,
 					      nonce, nonce_used,
-					      in + aead->variable_nonce_len, len,
+					      in + eivlen, len,
 					      ad, sizeof(ad));
-			if (n >= 0)
+			if (n >= 0 && aead->variable_nonce_included_in_record)
 				n += aead->variable_nonce_len;
 			}
 		else
@@ -927,12 +934,17 @@ int tls1_enc(SSL *s, int send)
 
 			if (len < aead->variable_nonce_len)
 				return 0;
-			memcpy(nonce + nonce_used, in, aead->variable_nonce_len);
+			memcpy(nonce + nonce_used,
+			       aead->variable_nonce_included_in_record ? in : ad,
+			       aead->variable_nonce_len);
 			nonce_used += aead->variable_nonce_len;
 
-			in += aead->variable_nonce_len;
-			len -= aead->variable_nonce_len;
-			out += aead->variable_nonce_len;
+			if (aead->variable_nonce_included_in_record)
+				{
+				in += aead->variable_nonce_len;
+				len -= aead->variable_nonce_len;
+				out += aead->variable_nonce_len;
+				}
 
 			if (len < aead->tag_len)
 				return 0;
