@@ -1378,7 +1378,6 @@ $code.=<<___;
 	lea	8*8($nptr),$nptr
 	xor	%rax,%rax
 	mov	8(%rsp),%rdx		# pull end of t[]
-	xor	$carry,$carry
 	cmp	0(%rsp),$nptr		# end of n[]?
 	jae	.L8x_no_tail
 
@@ -1491,17 +1490,10 @@ $code.=<<___;
 .align	32
 .L8x_tail_done:
 	add	(%rdx),%r8		# can this overflow?
-	adc	\$0,%r9
-	adc	\$0,%r10
-	adc	\$0,%r11
-	adc	\$0,%r12
-	adc	\$0,%r13
-	adc	\$0,%r14
-	adc	\$0,%r15
-	sbb	%rax,%rax
+	xor	%rax,%rax
 
-.L8x_no_tail:
 	neg	$carry
+.L8x_no_tail:
 	adc	8*0($tptr),%r8
 	adc	8*1($tptr),%r9
 	adc	8*2($tptr),%r10
@@ -1510,9 +1502,7 @@ $code.=<<___;
 	adc	8*5($tptr),%r13
 	adc	8*6($tptr),%r14
 	adc	8*7($tptr),%r15
-	sbb	$carry,$carry
-	neg	%rax
-	sub	$carry,%rax		# top-most carry
+	adc	\$0,%rax		# top-most carry
 
 	mov	40(%rsp),$nptr		# restore $nptr
 
