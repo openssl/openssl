@@ -21,8 +21,8 @@
 # justify. This module is based on combination of Intel submissions,
 # [1] and [2], with MOVBE twist suggested by Ilya Albrekht and Max
 # Locktyukhin of Intel Corp. who verified that it reduces shuffles
-# pressure with notable relative improvement on upcoming Haswell
-# processor. [Exact performance numbers to be added at launch.]
+# pressure with notable relative improvement, achieving 1.0 cycle per
+# byte processed with 128-bit key on Haswell processor.
 #
 # [1] http://rt.openssl.org/Ticket/Display.html?id=2900&user=guest&pass=guest
 # [2] http://www.intel.com/content/dam/www/public/us/en/documents/software-support/enabling-high-performance-gcm.pdf
@@ -422,16 +422,27 @@ $code.=<<___;
 	vzeroupper
 
 	vmovdqu		($ivp),$T1		# input counter value
-	sub		\$128,%rsp
+	add		\$-128,%rsp
 	mov		12($ivp),$counter
 	lea		.Lbswap_mask(%rip),$const
+	lea		-0x80($key),$in0	# borrow $in0
+	mov		\$0xf80,$end0		# borrow $end0
 	vmovdqu		($Xip),$Xi		# load Xi
-	and		\$-64,%rsp		# ensure stack alignment
+	and		\$-128,%rsp		# ensure stack alignment
 	vmovdqu		($const),$Ii		# borrow $Ii for .Lbswap_mask
 	lea		0x80($key),$key		# size optimization
 	lea		0x20+0x20($Xip),$Xip	# size optimization
 	mov		0xf0-0x80($key),$rounds
 	vpshufb		$Ii,$Xi,$Xi
+
+	and		$end0,$in0
+	and		%rsp,$end0
+	sub		$in0,$end0
+	jc		.Ldec_no_key_aliasing
+	cmp		\$768,$end0
+	jnc		.Ldec_no_key_aliasing
+	sub		$end0,%rsp		# avoid aliasing with key
+.Ldec_no_key_aliasing:
 
 	vmovdqu		0x50($inp),$Z3		# I[5]
 	lea		($inp),$in0
@@ -621,13 +632,24 @@ $code.=<<___;
 	vzeroupper
 
 	vmovdqu		($ivp),$T1		# input counter value
-	sub		\$128,%rsp
+	add		\$-128,%rsp
 	mov		12($ivp),$counter
 	lea		.Lbswap_mask(%rip),$const
+	lea		-0x80($key),$in0	# borrow $in0
+	mov		\$0xf80,$end0		# borrow $end0
 	lea		0x80($key),$key		# size optimization
 	vmovdqu		($const),$Ii		# borrow $Ii for .Lbswap_mask
-	and		\$-64,%rsp		# ensure stack alignment
+	and		\$-128,%rsp		# ensure stack alignment
 	mov		0xf0-0x80($key),$rounds
+
+	and		$end0,$in0
+	and		%rsp,$end0
+	sub		$in0,$end0
+	jc		.Lenc_no_key_aliasing
+	cmp		\$768,$end0
+	jnc		.Lenc_no_key_aliasing
+	sub		$end0,%rsp		# avoid aliasing with key
+.Lenc_no_key_aliasing:
 
 	lea		($out),$in0
 	lea		-0xc0($out,$len),$end0
