@@ -401,7 +401,7 @@ static void ssl_check_for_safari(SSL *s, const unsigned char *data, const unsign
 		return;
 	data += size;
 
-	if (TLS1_get_version(s) >= TLS1_2_VERSION)
+	if (TLS1_get_client_version(s) >= TLS1_2_VERSION)
 		{
 		const size_t len1 = sizeof(kSafariExtensionsBlock);
 		const size_t len2 = sizeof(kSafariTLS12ExtensionsBlock);
