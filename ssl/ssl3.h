@@ -532,7 +532,6 @@ typedef struct ssl3_state_st
 	char is_probably_safari;
 #endif /* !OPENSSL_NO_EC */
 #endif /* !OPENSSL_NO_TLSEXT */
-
 	} SSL3_STATE;
 
 
