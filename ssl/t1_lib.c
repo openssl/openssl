@@ -425,7 +425,7 @@ static void ssl_check_for_safari(SSL *s, const unsigned char *data, const unsign
 
 	s->s3->is_probably_safari = 1;
 }
-#endif	/* OPENSSL_NO_EC */
+#endif /* !OPENSSL_NO_EC */
 
 int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, int n, int *al)
 	{
@@ -441,7 +441,7 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 #ifndef OPENSSL_NO_EC
 	if (s->options & SSL_OP_SAFARI_ECDHE_ECDSA_BUG)
 		ssl_check_for_safari(s, data, d, n);
-#endif	/* OPENSSL_NO_EC */
+#endif /* !OPENSSL_NO_EC */
 
 	if (data >= (d+n-2))
 		goto ri_check;
