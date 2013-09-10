@@ -3068,8 +3068,8 @@ void ssl3_clear(SSL *s)
 	s->s3->tlsext_custom_types_count = 0;	
 #ifndef OPENSSL_NO_EC
 	s->s3->is_probably_safari = 0;
-#endif /* OPENSSL_NO_EC */
-#endif /* OPENSSL_NO_TLSEXT */
+#endif /* !OPENSSL_NO_EC */
+#endif /* !OPENSSL_NO_TLSEXT */
 
 	rp = s->s3->rbuf.buf;
 	wp = s->s3->wbuf.buf;
