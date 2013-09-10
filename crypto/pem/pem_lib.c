@@ -576,8 +576,8 @@ static int load_iv(char **fromp, unsigned char *to, int num)
 	}
 
 #ifndef OPENSSL_NO_FP_API
-int PEM_write(FILE *fp, char *name, char *header, unsigned char *data,
-	     long len)
+int PEM_write(FILE *fp, const char *name, const char *header,
+	      const unsigned char *data, long len)
         {
         BIO *b;
         int ret;
@@ -594,8 +594,8 @@ int PEM_write(FILE *fp, char *name, char *header, unsigned char *data,
         }
 #endif
 
-int PEM_write_bio(BIO *bp, const char *name, char *header, unsigned char *data,
-	     long len)
+int PEM_write_bio(BIO *bp, const char *name, const char *header,
+		  const unsigned char *data, long len)
 	{
 	int nlen,n,i,j,outl;
 	unsigned char *buf = NULL;
