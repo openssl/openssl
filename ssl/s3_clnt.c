@@ -891,8 +891,9 @@ int ssl3_client_hello(SSL *s)
 			SSLerr(SSL_F_SSL3_CLIENT_HELLO,SSL_R_CLIENTHELLO_TLSEXT);
 			goto err;
 			}
-		if ((p = ssl_add_clienthello_tlsext(s, p, buf+SSL3_RT_MAX_PLAIN_LENGTH)) == NULL)
+                if ((p = ssl_add_clienthello_tlsext(s, p, buf+SSL3_RT_MAX_PLAIN_LENGTH, &al)) == NULL)
 			{
+                        ssl3_send_alert(s,SSL3_AL_FATAL,al);
 			SSLerr(SSL_F_SSL3_CLIENT_HELLO,ERR_R_INTERNAL_ERROR);
 			goto err;
 			}
@@ -3622,6 +3623,7 @@ int ssl_do_client_cert_cb(SSL *s, X509 **px509, EVP_PKEY **ppkey)
 #ifndef OPENSSL_NO_TLSEXT
 int tls1_send_client_supplemental_data(SSL *s, int *skip)
 	{
+        int al = 0;
 	if (s->ctx->cli_supp_data_records_count)
 		{
 		unsigned char *p = NULL;
@@ -3641,14 +3643,14 @@ int tls1_send_client_supplemental_data(SSL *s, int *skip)
 			if (!record->fn2)
 				continue;
 			cb_retval = record->fn2(s, record->supp_data_type,
-				&out, &outlen,
+                                &out, &outlen, &al,
 				record->arg);
 			if (cb_retval == -1)
 				continue; /* skip this supp data entry */
 			if (cb_retval == 0)
 				{
 				SSLerr(SSL_F_TLS1_SEND_CLIENT_SUPPLEMENTAL_DATA,ERR_R_BUF_LIB);
-				return 0;
+                                goto f_err;
 				}
 			if (outlen == 0 || TLSEXT_MAXLEN_supplemental_data < outlen + 4 + length)
 				{
@@ -3703,7 +3705,11 @@ int tls1_send_client_supplemental_data(SSL *s, int *skip)
 	s->init_num = 0;
 	s->init_off = 0;
 	return 1;
-	}
+
+f_err:
+        ssl3_send_alert(s,SSL3_AL_FATAL,al);
+        return 0;
+}
 
 int tls1_get_server_supplemental_data(SSL *s)
 	{
