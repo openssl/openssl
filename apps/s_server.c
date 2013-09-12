@@ -1065,7 +1065,7 @@ int MAIN(int argc, char *argv[])
         tlsextctx tlsextcbp = {NULL, NULL, SSL_TLSEXT_ERR_ALERT_WARNING};
 # ifndef OPENSSL_NO_NEXTPROTONEG
 	const char *next_proto_neg_in = NULL;
-	tlsextnextprotoctx next_proto;
+	tlsextnextprotoctx next_proto = { NULL, 0};
 	const char *alpn_in = NULL;
 	tlsextalpnctx alpn_ctx = { NULL, 0};
 # endif
