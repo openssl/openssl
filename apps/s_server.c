@@ -337,11 +337,11 @@ static int suppdata_cb(SSL *s, unsigned short supp_data_type,
 
 static int auth_suppdata_generate_cb(SSL *s, unsigned short supp_data_type,
 				     const unsigned char **out,
-				     unsigned short *outlen, void *arg);
+                                     unsigned short *outlen, int *al, void *arg);
 
 static int authz_tlsext_generate_cb(SSL *s, unsigned short ext_type,
 				    const unsigned char **out, unsigned short *outlen,
-				    void *arg);
+                                    int *al, void *arg);
 
 static int authz_tlsext_cb(SSL *s, unsigned short ext_type,
 			   const unsigned char *in,
@@ -3602,7 +3602,7 @@ static int authz_tlsext_cb(SSL *s, unsigned short ext_type,
 
 static int authz_tlsext_generate_cb(SSL *s, unsigned short ext_type,
 				    const unsigned char **out, unsigned short *outlen,
-				    void *arg)
+                                    int *al, void *arg)
 	{
 	if (c_auth && client_provided_client_authz && client_provided_server_authz)
 		{
@@ -3635,7 +3635,7 @@ static int suppdata_cb(SSL *s, unsigned short supp_data_type,
 
 static int auth_suppdata_generate_cb(SSL *s, unsigned short supp_data_type,
 				     const unsigned char **out,
-				     unsigned short *outlen, void *arg)
+                                     unsigned short *outlen, int *al, void *arg)
 	{
 	if (c_auth && client_provided_client_authz && client_provided_server_authz)
 		{
