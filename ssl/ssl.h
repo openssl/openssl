@@ -406,7 +406,7 @@ typedef int (*tls_session_secret_cb_fn)(SSL *s, void *secret, int *secret_len, S
  */
 typedef int (*custom_cli_ext_first_cb_fn)(SSL *s, unsigned short ext_type,
 					  const unsigned char **out,
-					  unsigned short *outlen, void *arg);
+                                          unsigned short *outlen, int *al, void *arg);
 typedef int (*custom_cli_ext_second_cb_fn)(SSL *s, unsigned short ext_type,
 					   const unsigned char *in,
 					   unsigned short inlen, int *al,
@@ -418,7 +418,7 @@ typedef int (*custom_srv_ext_first_cb_fn)(SSL *s, unsigned short ext_type,
 					  void *arg);
 typedef int (*custom_srv_ext_second_cb_fn)(SSL *s, unsigned short ext_type,
 					   const unsigned char **out,
-					   unsigned short *outlen, void *arg); 
+                                           unsigned short *outlen, int *al, void *arg);
 
 typedef struct {
 	unsigned short ext_type;
@@ -457,7 +457,7 @@ typedef struct {
  */
 typedef int (*srv_supp_data_first_cb_fn)(SSL *s, unsigned short supp_data_type,
 	     const unsigned char **out,
-	     unsigned short *outlen, void *arg);
+             unsigned short *outlen, int *al, void *arg);
 typedef int (*srv_supp_data_second_cb_fn)(SSL *s, unsigned short supp_data_type,
 	     const unsigned char *in,
 	     unsigned short inlen, int *al,
@@ -469,7 +469,7 @@ typedef int (*cli_supp_data_first_cb_fn)(SSL *s, unsigned short supp_data_type,
 	     void *arg);
 typedef int (*cli_supp_data_second_cb_fn)(SSL *s, unsigned short supp_data_type,
 	     const unsigned char **out,
-	     unsigned short *outlen, void *arg);
+             unsigned short *outlen, int *al, void *arg);
 
 typedef struct {
 	unsigned short supp_data_type;
