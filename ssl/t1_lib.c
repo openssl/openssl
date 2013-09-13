@@ -1869,7 +1869,7 @@ static void ssl_check_for_safari(SSL *s, const unsigned char *data, const unsign
 		return;
 	data += size;
 
-	if (TLS1_get_version(s) >= TLS1_2_VERSION)
+	if (TLS1_get_client_version(s) >= TLS1_2_VERSION)
 		{
 		const size_t len1 = sizeof(kSafariExtensionsBlock);
 		const size_t len2 = sizeof(kSafariTLS12ExtensionsBlock);
@@ -1893,7 +1893,7 @@ static void ssl_check_for_safari(SSL *s, const unsigned char *data, const unsign
 
 	s->s3->is_probably_safari = 1;
 }
-#endif	/* OPENSSL_NO_EC */
+#endif /* !OPENSSL_NO_EC */
 
 static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, int n, int *al) 
 	{	
@@ -1932,7 +1932,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 #ifndef OPENSSL_NO_EC
 	if (s->options & SSL_OP_SAFARI_ECDHE_ECDSA_BUG)
 		ssl_check_for_safari(s, data, d, n);
-#endif	/* OPENSSL_NO_EC */
+#endif /* !OPENSSL_NO_EC */
 
 	/* Clear any signature algorithms extension received */
 	if (s->cert->peer_sigalgs)

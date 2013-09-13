@@ -3084,8 +3084,8 @@ void ssl3_clear(SSL *s)
 	s->s3->tlsext_custom_types_count = 0;	
 #ifndef OPENSSL_NO_EC
 	s->s3->is_probably_safari = 0;
-#endif /* OPENSSL_NO_EC */
-#endif /* OPENSSL_NO_TLSEXT */
+#endif /* !OPENSSL_NO_EC */
+#endif /* !OPENSSL_NO_TLSEXT */
 
 	rp = s->s3->rbuf.buf;
 	wp = s->s3->wbuf.buf;
@@ -4156,15 +4156,15 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 		ii=sk_SSL_CIPHER_find(allow,c);
 		if (ii >= 0)
 			{
+#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_TLSEXT)
 			if ((alg_k & SSL_kEECDH) && (alg_a & SSL_aECDSA) && s->s3->is_probably_safari)
 				{
 				if (!ret) ret=sk_SSL_CIPHER_value(allow,ii);
+				continue;
 				}
-			else
-				{
-				ret=sk_SSL_CIPHER_value(allow,ii);
-				break;
-				}
+#endif
+			ret=sk_SSL_CIPHER_value(allow,ii);
+			break;
 			}
 		}
 	return(ret);
