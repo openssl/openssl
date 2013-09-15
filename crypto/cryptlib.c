@@ -665,7 +665,7 @@ const char *CRYPTO_get_lock_name(int type)
 	defined(__INTEL__) || \
 	defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
 
-unsigned int  OPENSSL_ia32cap_P[2];
+extern unsigned int  OPENSSL_ia32cap_P[4];
 unsigned long *OPENSSL_ia32cap_loc(void)
 {   if (sizeof(long)==4)
 	/*
@@ -674,6 +674,9 @@ unsigned long *OPENSSL_ia32cap_loc(void)
 	 * is 32-bit.
 	 */
 	OPENSSL_ia32cap_P[1]=0;
+
+    OPENSSL_ia32cap_P[2]=0;
+
     return (unsigned long *)OPENSSL_ia32cap_P;
 }
 
@@ -686,7 +689,7 @@ typedef unsigned long long IA32CAP;
 #endif
 void OPENSSL_cpuid_setup(void)
 { static int trigger=0;
-  IA32CAP OPENSSL_ia32_cpuid(void);
+  IA32CAP OPENSSL_ia32_cpuid(unsigned int *);
   IA32CAP vec;
   char *env;
 
@@ -700,10 +703,21 @@ void OPENSSL_cpuid_setup(void)
 #else
 	if (!sscanf(env+off,"%lli",(long long *)&vec)) vec = strtoul(env+off,NULL,0);
 #endif
-	if (off) vec = OPENSSL_ia32_cpuid()&~vec;
+	if (off) vec = OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P)&~vec;
+	else if (env[0]==':') vec = OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P);
+
+	OPENSSL_ia32cap_P[2] = 0;
+	if ((env=strchr(env,':'))) {
+	    unsigned int vecx;
+	    env++;
+	    off = (env[0]=='~')?1:0;
+	    vecx = strtoul(env+off,NULL,0);
+	    if (off)	OPENSSL_ia32cap_P[2] &= ~vecx;
+	    else	OPENSSL_ia32cap_P[2] = vecx;
+	}
     }
     else
-	vec = OPENSSL_ia32_cpuid();
+	vec = OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P);
 
     /*
      * |(1<<10) sets a reserved bit to signal that variable
@@ -713,6 +727,8 @@ void OPENSSL_cpuid_setup(void)
     OPENSSL_ia32cap_P[0] = (unsigned int)vec|(1<<10);
     OPENSSL_ia32cap_P[1] = (unsigned int)(vec>>32);
 }
+#else
+unsigned int OPENSSL_ia32cap_P[4];
 #endif
 
 #else
