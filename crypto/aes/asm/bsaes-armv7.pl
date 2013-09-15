@@ -716,7 +716,7 @@ _bsaes_const:
 .LM0:
 	.quad	0x02060a0e03070b0f, 0x0004080c0105090d
 .LREVM0SR:
-	.quad	0x090d02060c030708, 0x00040b0f050a0e01
+	.quad	0x090d01050c000408, 0x03070b0f060a0e02
 .Lxts_magic:
 	.quad	1, 0x87
 .asciz	"Bit-sliced AES for NEON, CRYPTOGAMS by <appro\@openssl.org>"
@@ -1258,11 +1258,11 @@ bsaes_ctr32_encrypt_blocks:
 	add	$ctr, $const, #.LREVM0SR-.LM0	@ borrow $ctr
 	vldmia	$keysched, {@XMM[4]}		@ load round0 key
 
-	vmov.i32	`&Dhi("@XMM[8]")`,#1	@ compose 1<<96
-	vmov.i32	`&Dlo("@XMM[8]")`,#0
-	vrev32.8	`&Dhi("@XMM[0]")`,`&Dhi("@XMM[0]")`
-	vshl.u64	`&Dhi("@XMM[8]")`,#32
-	vrev32.8	`&Dhi("@XMM[4]")`,`&Dhi("@XMM[4]")`
+	vmov.i32	@XMM[8],#1		@ compose 1<<96
+	veor		@XMM[9],@XMM[9],@XMM[9]
+	vrev32.8	@XMM[0],@XMM[0]
+	vext.8		@XMM[8],@XMM[9],@XMM[8],#4
+	vrev32.8	@XMM[4],@XMM[4]
 	vadd.u32	@XMM[9],@XMM[8],@XMM[8]	@ compose 2<<96
 	vstmia	$keysched, {@XMM[4]}		@ save adjusted round0 key
 	b	.Lctr_enc_loop
@@ -1309,11 +1309,11 @@ bsaes_ctr32_encrypt_blocks:
 	vst1.8		{@XMM[4]}, [$out]!
 	veor		@XMM[5], @XMM[15]
 	vst1.8		{@XMM[6]}, [$out]!
-	vmov.i32	`&Dhi("@XMM[8]")`,#1		@ compose 1<<96
+	vmov.i32	@XMM[8], #1			@ compose 1<<96
 	vst1.8		{@XMM[3]}, [$out]!
-	vmov.i32	`&Dlo("@XMM[8]")`,#0
+	veor		@XMM[9], @XMM[9], @XMM[9]
 	vst1.8		{@XMM[7]}, [$out]!
-	vshl.u64	`&Dhi("@XMM[8]")`,#32
+	vext.8		@XMM[8], @XMM[9], @XMM[8], #4
 	vst1.8		{@XMM[2]}, [$out]!
 	vadd.u32	@XMM[9],@XMM[8],@XMM[8]		@ compose 2<<96
 	vst1.8		{@XMM[5]}, [$out]!
