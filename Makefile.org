@@ -325,7 +325,7 @@ clean-shared:
 			done; \
 		fi; \
 		( set -x; rm -f lib$$i$(SHLIB_EXT) ); \
-		if [ "$(PLATFORM)" = "Cygwin" ]; then \
+		if expr "$(PLATFORM)" : "Cygwin" >/dev/null; then \
 			( set -x; rm -f cyg$$i$(SHLIB_EXT) lib$$i$(SHLIB_EXT).a ); \
 		fi; \
 	done
@@ -570,7 +570,7 @@ install_sw:
 		do \
 			if [ -f "$$i" -o -f "$$i.a" ]; then \
 			(       echo installing $$i; \
-				if [ "$(PLATFORM)" != "Cygwin" ]; then \
+				if ! expr "$(PLATFORM)" : "Cygwin" >/dev/null; then \
 					cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
 					chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
 					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i; \
@@ -642,9 +642,9 @@ install_docs:
 	@pod2man="`cd ./util; ./pod2mantest $(PERL)`"; \
 	here="`pwd`"; \
 	filecase=; \
-	if [ "$(PLATFORM)" = "DJGPP" -o "$(PLATFORM)" = "Cygwin" -o "$(PLATFORM)" = "mingw" ]; then \
+	case "$(PLATFORM)" in DJGPP|Cygwin*|mingw*) \
 		filecase=-i; \
-	fi; \
+	esac; \
 	set -e; for i in doc/apps/*.pod; do \
 		fn=`basename $$i .pod`; \
 		sec=`$(PERL) util/extract-section.pl 1 < $$i`; \
