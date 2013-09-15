@@ -718,7 +718,7 @@ _bsaes_const:
 .LREVM0SR:
 	.quad	0x090d02060c030708, 0x00040b0f050a0e01
 .Lxts_magic:
-	.long	1, 0, 0x87, 0
+	.quad	1, 0x87
 .asciz	"Bit-sliced AES for NEON, CRYPTOGAMS by <appro\@openssl.org>"
 .align	6
 .size	_bsaes_const,.-_bsaes_const
@@ -1418,7 +1418,8 @@ ___
 #	const AES_KEY *key1, const AES_KEY *key2,
 #	const unsigned char iv[16]);
 #
-my ($inp,$out,$len,$key,$rounds,$keysched,$magic,$fp)=(map("r$_",(7..11,1..3)));
+my ($inp,$out,$len,$key,$rounds,$magic,$fp)=(map("r$_",(7..10,1..3)));
+my $const="r6";		# returned by _bsaes_key_convert
 my $twmask=@XMM[5];
 my @T=@XMM[6..7];
 
@@ -1427,41 +1428,41 @@ $code.=<<___;
 .type	bsaes_xts_encrypt,%function
 .align	4
 bsaes_xts_encrypt:
-	stmdb	sp!, {r4-r11, lr}		@ 0x24
+	stmdb	sp!, {r4-r10, lr}		@ 0x20
 	vstmdb	sp!, {d8-d15}			@ 0x40
-	sub	sp, #0x14			@ 0x14
+	mov	r6, sp				@ future $fp
+	sub	sp, #0x10			@ 0x10
 
 	mov	$inp, r0
 	mov	$out, r1
 	mov	$len, r2
 	mov	$key, r3
+	bic	sp, #0xf			@ align at 16 bytes
 
 	@ generate initial tweak
-	ldr	r0, [sp, #0x7c]			@ iv[]
+	ldr	r0, [r6, #0x64]			@ iv[]
 	mov	r1, sp
-	ldr	r2, [sp, #0x78]			@ key2
+	ldr	r2, [r6, #0x60]			@ key2
 	bl	AES_encrypt
 
 	@ allocate the key schedule on the stack
 	ldr	$rounds, [$key, #240]		@ get # of rounds
-	mov	$fp, sp
+	mov	$fp, r6
+	mov	r0, sp				@ pointer to initial tweak
 	sub	sp, sp, $rounds, lsl#7		@ 128 bytes per inner round key
-	add	sp, sp, #`128-32`		@ size of bit-sliced key schedule
-	mov	$keysched, sp
+	@ add	sp, sp, #`128-32`		@ size of bit-sliced key schedule
+	sub	sp, sp, #`32+16`		@ place for tweak[9]
 
 	@ populate the key schedule
 	mov	r4, $key			@ pass key
 	mov	r5, $rounds			@ pass # of rounds
-	mov	r12, $keysched			@ pass key schedule
+	add	r12, sp, #0x90			@ pass key schedule
 	bl	_bsaes_key_convert
 	veor	@XMM[7], @XMM[7], @XMM[15]	@ fix up last round key
 	vstmia	r12, {@XMM[7]}			@ save last round key
 
-	sub	sp, #0x80			@ place for tweak[8]
-	bic	sp, #0x8			@ align at 16 bytes
-
-	vld1.8	{@XMM[8]}, [$fp]		@ initial tweak
-	adrl	$magic, .Lxts_magic
+	vld1.8	{@XMM[8]}, [r0]			@ initial tweak
+	add	$magic, $const, #.Lxts_magic-.LM0
 
 	subs	$len, #0x80
 	blo	.Lxts_enc_short
@@ -1469,7 +1470,7 @@ bsaes_xts_encrypt:
 
 .align	4
 .Lxts_enc_loop:
-	vld1.8		{$twmask}, [$magic]	@ load XTS magic
+	vldmia		$magic, {$twmask}	@ load XTS magic
 	vshr.s64	@T[0], @XMM[8], #63
 	mov		r0, sp
 	vand		@T[0], @T[0], $twmask
@@ -1477,7 +1478,7 @@ ___
 for($i=9;$i<16;$i++) {
 $code.=<<___;
 	vadd.u64	@XMM[$i], @XMM[$i-1], @XMM[$i-1]
-	vst1.8		{@XMM[$i-1]}, [r0,:128]!
+	vst1.64		{@XMM[$i-1]}, [r0,:128]!
 	vswp		`&Dhi("@T[0]")`,`&Dlo("@T[0]")`
 	vshr.s64	@T[1], @XMM[$i], #63
 	veor		@XMM[$i], @XMM[$i], @T[0]
@@ -1494,14 +1495,14 @@ ___
 }
 $code.=<<___;
 	vadd.u64	@XMM[8], @XMM[15], @XMM[15]
-	vst1.8		{@XMM[15]}, [r0,:128]
+	vst1.64		{@XMM[15]}, [r0,:128]!
 	vswp		`&Dhi("@T[0]")`,`&Dlo("@T[0]")`
 	veor		@XMM[8], @XMM[8], @T[0]
-	vst1.8		{@XMM[8]}, [$fp]		@ next round tweak
+	vst1.64		{@XMM[8]}, [r0,:128]		@ next round tweak
 
 	vld1.8		{@XMM[6]-@XMM[7]}, [$inp]!
 	veor		@XMM[5], @XMM[5], @XMM[13]
-	mov		r4, $keysched
+	add		r4, sp, #0x90			@ pass key schedule
 	veor		@XMM[6], @XMM[6], @XMM[14]
 	mov		r5, $rounds			@ pass rounds
 	veor		@XMM[7], @XMM[7], @XMM[15]
@@ -1509,15 +1510,15 @@ $code.=<<___;
 
 	bl		_bsaes_encrypt8
 
-	vld1.8		{@XMM[ 8]-@XMM[ 9]}, [r0,:128]!
-	vld1.8		{@XMM[10]-@XMM[11]}, [r0,:128]!
+	vld1.64		{@XMM[ 8]-@XMM[ 9]}, [r0,:128]!
+	vld1.64		{@XMM[10]-@XMM[11]}, [r0,:128]!
 	veor		@XMM[0], @XMM[0], @XMM[ 8]
-	vld1.8		{@XMM[12]-@XMM[13]}, [r0,:128]!
+	vld1.64		{@XMM[12]-@XMM[13]}, [r0,:128]!
 	veor		@XMM[1], @XMM[1], @XMM[ 9]
 	veor		@XMM[8], @XMM[4], @XMM[10]
 	vst1.8		{@XMM[0]-@XMM[1]}, [$out]!
 	veor		@XMM[9], @XMM[6], @XMM[11]
-	vld1.8		{@XMM[14]-@XMM[15]}, [r0,:128]!
+	vld1.64		{@XMM[14]-@XMM[15]}, [r0,:128]!
 	veor		@XMM[10], @XMM[3], @XMM[12]
 	vst1.8		{@XMM[8]-@XMM[9]}, [$out]!
 	veor		@XMM[11], @XMM[7], @XMM[13]
@@ -1526,7 +1527,7 @@ $code.=<<___;
 	veor		@XMM[13], @XMM[5], @XMM[15]
 	vst1.8		{@XMM[12]-@XMM[13]}, [$out]!
 
-	vld1.8		{@XMM[8]}, [$fp]		@ next round tweak
+	vld1.64		{@XMM[8]}, [r0,:128]		@ next round tweak
 
 	subs		$len, #0x80
 	bpl		.Lxts_enc_loop
@@ -1535,7 +1536,7 @@ $code.=<<___;
 	adds		$len, #0x70
 	bmi		.Lxts_enc_done
 
-	vld1.8		{$twmask}, [$magic]	@ load XTS magic
+	vldmia		$magic, {$twmask}	@ load XTS magic
 	vshr.s64	@T[0], @XMM[8], #63
 	mov		r0, sp
 	vand		@T[0], @T[0], $twmask
@@ -1543,7 +1544,7 @@ ___
 for($i=9;$i<16;$i++) {
 $code.=<<___;
 	vadd.u64	@XMM[$i], @XMM[$i-1], @XMM[$i-1]
-	vst1.8		{@XMM[$i-1]}, [r0,:128]!
+	vst1.64		{@XMM[$i-1]}, [r0,:128]!
 	vswp		`&Dhi("@T[0]")`,`&Dlo("@T[0]")`
 	vshr.s64	@T[1], @XMM[$i], #63
 	veor		@XMM[$i], @XMM[$i], @T[0]
@@ -1562,26 +1563,26 @@ ___
 }
 $code.=<<___;
 	sub		$len, #0x10
-	vst1.8		{@XMM[15]}, [$fp]		@ next round tweak
+	vst1.64		{@XMM[15]}, [r0,:128]		@ next round tweak
 
 	vld1.8		{@XMM[6]}, [$inp]!
 	veor		@XMM[5], @XMM[5], @XMM[13]
-	mov		r4, $keysched
+	add		r4, sp, #0x90			@ pass key schedule
 	veor		@XMM[6], @XMM[6], @XMM[14]
 	mov		r5, $rounds			@ pass rounds
 	mov		r0, sp
 
 	bl		_bsaes_encrypt8
 
-	vld1.8		{@XMM[ 8]-@XMM[ 9]}, [r0,:128]!
-	vld1.8		{@XMM[10]-@XMM[11]}, [r0,:128]!
+	vld1.64		{@XMM[ 8]-@XMM[ 9]}, [r0,:128]!
+	vld1.64		{@XMM[10]-@XMM[11]}, [r0,:128]!
 	veor		@XMM[0], @XMM[0], @XMM[ 8]
-	vld1.8		{@XMM[12]-@XMM[13]}, [r0,:128]!
+	vld1.64		{@XMM[12]-@XMM[13]}, [r0,:128]!
 	veor		@XMM[1], @XMM[1], @XMM[ 9]
 	veor		@XMM[8], @XMM[4], @XMM[10]
 	vst1.8		{@XMM[0]-@XMM[1]}, [$out]!
 	veor		@XMM[9], @XMM[6], @XMM[11]
-	vld1.8		{@XMM[14]}, [r0,:128]!
+	vld1.64		{@XMM[14]}, [r0,:128]!
 	veor		@XMM[10], @XMM[3], @XMM[12]
 	vst1.8		{@XMM[8]-@XMM[9]}, [$out]!
 	veor		@XMM[11], @XMM[7], @XMM[13]
@@ -1589,23 +1590,24 @@ $code.=<<___;
 	vst1.8		{@XMM[10]-@XMM[11]}, [$out]!
 	vst1.8		{@XMM[12]}, [$out]!
 
-	vld1.8		{@XMM[8]}, [$fp]		@ next round tweak
+	vld1.64		{@XMM[8]}, [r0,:128]		@ next round tweak
 	b		.Lxts_enc_done
+.align	4
 .Lxts_enc_6:
-	vst1.8		{@XMM[14]}, [$fp]		@ next round tweak
+	vst1.64		{@XMM[14]}, [r0,:128]		@ next round tweak
 
 	veor		@XMM[4], @XMM[4], @XMM[12]
-	mov		r4, $keysched
+	add		r4, sp, #0x90			@ pass key schedule
 	veor		@XMM[5], @XMM[5], @XMM[13]
 	mov		r5, $rounds			@ pass rounds
 	mov		r0, sp
 
 	bl		_bsaes_encrypt8
 
-	vld1.8		{@XMM[ 8]-@XMM[ 9]}, [r0,:128]!
-	vld1.8		{@XMM[10]-@XMM[11]}, [r0,:128]!
+	vld1.64		{@XMM[ 8]-@XMM[ 9]}, [r0,:128]!
+	vld1.64		{@XMM[10]-@XMM[11]}, [r0,:128]!
 	veor		@XMM[0], @XMM[0], @XMM[ 8]
-	vld1.8		{@XMM[12]-@XMM[13]}, [r0,:128]!
+	vld1.64		{@XMM[12]-@XMM[13]}, [r0,:128]!
 	veor		@XMM[1], @XMM[1], @XMM[ 9]
 	veor		@XMM[8], @XMM[4], @XMM[10]
 	vst1.8		{@XMM[0]-@XMM[1]}, [$out]!
@@ -1615,23 +1617,24 @@ $code.=<<___;
 	veor		@XMM[11], @XMM[7], @XMM[13]
 	vst1.8		{@XMM[10]-@XMM[11]}, [$out]!
 
-	vld1.8		{@XMM[8]}, [$fp]		@ next round tweak
+	vld1.64		{@XMM[8]}, [r0,:128]		@ next round tweak
 	b		.Lxts_enc_done
+.align	4
 .Lxts_enc_5:
-	vst1.8		{@XMM[13]}, [$fp]		@ next round tweak
+	vst1.64		{@XMM[13]}, [r0,:128]		@ next round tweak
 
 	veor		@XMM[3], @XMM[3], @XMM[11]
-	mov		r4, $keysched
+	add		r4, sp, #0x90			@ pass key schedule
 	veor		@XMM[4], @XMM[4], @XMM[12]
 	mov		r5, $rounds			@ pass rounds
 	mov		r0, sp
 
 	bl		_bsaes_encrypt8
 
-	vld1.8		{@XMM[ 8]-@XMM[ 9]}, [r0,:128]!
-	vld1.8		{@XMM[10]-@XMM[11]}, [r0,:128]!
+	vld1.64		{@XMM[ 8]-@XMM[ 9]}, [r0,:128]!
+	vld1.64		{@XMM[10]-@XMM[11]}, [r0,:128]!
 	veor		@XMM[0], @XMM[0], @XMM[ 8]
-	vld1.8		{@XMM[12]}, [r0,:128]!
+	vld1.64		{@XMM[12]}, [r0,:128]!
 	veor		@XMM[1], @XMM[1], @XMM[ 9]
 	veor		@XMM[8], @XMM[4], @XMM[10]
 	vst1.8		{@XMM[0]-@XMM[1]}, [$out]!
@@ -1640,21 +1643,22 @@ $code.=<<___;
 	vst1.8		{@XMM[8]-@XMM[9]}, [$out]!
 	vst1.8		{@XMM[10]}, [$out]!
 
-	vld1.8		{@XMM[8]}, [$fp]		@ next round tweak
+	vld1.64		{@XMM[8]}, [r0,:128]		@ next round tweak
 	b		.Lxts_enc_done
+.align	4
 .Lxts_enc_4:
-	vst1.8		{@XMM[12]}, [$fp]		@ next round tweak
+	vst1.64		{@XMM[12]}, [r0,:128]		@ next round tweak
 
 	veor		@XMM[2], @XMM[2], @XMM[10]
-	mov		r4, $keysched
+	add		r4, sp, #0x90			@ pass key schedule
 	veor		@XMM[3], @XMM[3], @XMM[11]
 	mov		r5, $rounds			@ pass rounds
 	mov		r0, sp
 
 	bl		_bsaes_encrypt8
 
-	vld1.8		{@XMM[ 8]-@XMM[ 9]}, [r0,:128]!
-	vld1.8		{@XMM[10]-@XMM[11]}, [r0,:128]!
+	vld1.64		{@XMM[ 8]-@XMM[ 9]}, [r0,:128]!
+	vld1.64		{@XMM[10]-@XMM[11]}, [r0,:128]!
 	veor		@XMM[0], @XMM[0], @XMM[ 8]
 	veor		@XMM[1], @XMM[1], @XMM[ 9]
 	veor		@XMM[8], @XMM[4], @XMM[10]
@@ -1662,47 +1666,50 @@ $code.=<<___;
 	veor		@XMM[9], @XMM[6], @XMM[11]
 	vst1.8		{@XMM[8]-@XMM[9]}, [$out]!
 
-	vld1.8		{@XMM[8]}, [$fp]		@ next round tweak
+	vld1.64		{@XMM[8]}, [r0,:128]		@ next round tweak
 	b		.Lxts_enc_done
+.align	4
 .Lxts_enc_3:
-	vst1.8		{@XMM[11]}, [$fp]		@ next round tweak
+	vst1.64		{@XMM[11]}, [r0,:128]		@ next round tweak
 
 	veor		@XMM[1], @XMM[1], @XMM[9]
-	mov		r4, $keysched
+	add		r4, sp, #0x90			@ pass key schedule
 	veor		@XMM[2], @XMM[2], @XMM[10]
 	mov		r5, $rounds			@ pass rounds
 	mov		r0, sp
 
 	bl		_bsaes_encrypt8
 
-	vld1.8		{@XMM[8]-@XMM[9]}, [r0,:128]!
-	vld1.8		{@XMM[10]}, [r0,:128]!
+	vld1.64		{@XMM[8]-@XMM[9]}, [r0,:128]!
+	vld1.64		{@XMM[10]}, [r0,:128]!
 	veor		@XMM[0], @XMM[0], @XMM[ 8]
 	veor		@XMM[1], @XMM[1], @XMM[ 9]
 	veor		@XMM[8], @XMM[4], @XMM[10]
 	vst1.8		{@XMM[0]-@XMM[1]}, [$out]!
 	vst1.8		{@XMM[8]}, [$out]!
 
-	vld1.8		{@XMM[8]}, [$fp]		@ next round tweak
+	vld1.64		{@XMM[8]}, [r0,:128]		@ next round tweak
 	b		.Lxts_enc_done
+.align	4
 .Lxts_enc_2:
-	vst1.8		{@XMM[10]}, [$fp]		@ next round tweak
+	vst1.64		{@XMM[10]}, [r0,:128]		@ next round tweak
 
 	veor		@XMM[0], @XMM[0], @XMM[8]
-	mov		r4, $keysched
+	add		r4, sp, #0x90			@ pass key schedule
 	veor		@XMM[1], @XMM[1], @XMM[9]
 	mov		r5, $rounds			@ pass rounds
 	mov		r0, sp
 
 	bl		_bsaes_encrypt8
 
-	vld1.8		{@XMM[8]-@XMM[9]}, [r0,:128]!
+	vld1.64		{@XMM[8]-@XMM[9]}, [r0,:128]!
 	veor		@XMM[0], @XMM[0], @XMM[ 8]
 	veor		@XMM[1], @XMM[1], @XMM[ 9]
 	vst1.8		{@XMM[0]-@XMM[1]}, [$out]!
 
-	vld1.8		{@XMM[8]}, [$fp]		@ next round tweak
+	vld1.64		{@XMM[8]}, [r0,:128]		@ next round tweak
 	b		.Lxts_enc_done
+.align	4
 .Lxts_enc_1:
 	mov		r0, sp
 	veor		@XMM[0], @XMM[8]
@@ -1750,15 +1757,17 @@ $code.=<<___;
 	mov		$fp, r4
 
 .Lxts_enc_ret:
-	vmov.i32	d0, #0
+	bic		r0, $fp, #0xf
+	vmov.i32	q0, #0
+	vmov.i32	q1, #0
 .Lxts_enc_bzero:				@ wipe key schedule [if any]
-	vstmia		sp!, {d0}
-	teq		sp, $fp
+	vstmia		sp!, {q0-q1}
+	teq		sp, r0
 	bne		.Lxts_enc_bzero
 
-	add		sp, $fp, #0x14
+	mov		sp, $fp
 	vldmia		sp!, {d8-d15}
-	ldmia		sp!, {r4-r11, pc}	@ return
+	ldmia		sp!, {r4-r10, pc}	@ return
 
 .size	bsaes_xts_encrypt,.-bsaes_xts_encrypt
 
@@ -1766,46 +1775,47 @@ $code.=<<___;
 .type	bsaes_xts_decrypt,%function
 .align	4
 bsaes_xts_decrypt:
-	stmdb	sp!, {r4-r11, lr}		@ 0x24
+	stmdb	sp!, {r4-r10, lr}		@ 0x20
 	vstmdb	sp!, {d8-d15}			@ 0x40
-	sub	sp, #0x14			@ 0x14
+	mov	r6, sp				@ future $fp
+	sub	sp, #0x10			@ 0x10
 
 	mov	$inp, r0
 	mov	$out, r1
 	mov	$len, r2
 	mov	$key, r3
+	bic	sp, #0xf			@ align at 16 bytes
 
 	@ generate initial tweak
-	ldr	r0, [sp, #0x7c]			@ iv[]
+	ldr	r0, [r6, #0x64]			@ iv[]
 	mov	r1, sp
-	ldr	r2, [sp, #0x78]			@ key2
+	ldr	r2, [r6, #0x60]			@ key2
 	bl	AES_encrypt
 
 	@ allocate the key schedule on the stack
 	ldr	$rounds, [$key, #240]		@ get # of rounds
-	mov	$fp, sp
+	mov	$fp, r6
+	mov	r0, sp				@ pointer to initial tweak
 	sub	sp, sp, $rounds, lsl#7		@ 128 bytes per inner round key
-	add	sp, sp, #`128-32`		@ size of bit-sliced key schedule
-	mov	$keysched, sp
+	@ add	sp, sp, #`128-32`		@ size of bit-sliced key schedule
+	sub	sp, sp, #`32+16`		@ place for tweak[9]
 
 	@ populate the key schedule
 	mov	r4, $key			@ pass key
 	mov	r5, $rounds			@ pass # of rounds
-	mov	r12, $keysched			@ pass key schedule
+	add	r12, sp, #0x90			@ pass key schedule
 	bl	_bsaes_key_convert
-	vldmia	$keysched, {@XMM[6]}
+	add	r4, sp, #0x90
+	vldmia	r4, {@XMM[6]}
 	vstmia	r12,  {@XMM[15]}		@ save last round key
 	veor	@XMM[7], @XMM[7], @XMM[6]	@ fix up round 0 key
-	vstmia	$keysched, {@XMM[7]}
+	vstmia	r4, {@XMM[7]}
 
-	sub	sp, #0x80			@ place for tweak[8]
-	bic	sp, #0x8			@ align at 16 bytes
-
-	vld1.8	{@XMM[8]}, [$fp]		@ initial tweak
-	adrl	$magic, .Lxts_magic
+	vld1.8	{@XMM[8]}, [r0]			@ initial tweak
+	add	$magic, $const, #.Lxts_magic-.LM0
 
 	tst	$len, #0xf			@ if not multiple of 16
-	subne	$len, #0x10			@     subtract another 16 bytes
+	subne	$len, #0x10			@ subtract another 16 bytes
 	subs	$len, #0x80
 
 	blo	.Lxts_dec_short
@@ -1813,7 +1823,7 @@ bsaes_xts_decrypt:
 
 .align	4
 .Lxts_dec_loop:
-	vld1.8		{$twmask}, [$magic]	@ load XTS magic
+	vldmia		$magic, {$twmask}	@ load XTS magic
 	vshr.s64	@T[0], @XMM[8], #63
 	mov		r0, sp
 	vand		@T[0], @T[0], $twmask
@@ -1821,7 +1831,7 @@ ___
 for($i=9;$i<16;$i++) {
 $code.=<<___;
 	vadd.u64	@XMM[$i], @XMM[$i-1], @XMM[$i-1]
-	vst1.8		{@XMM[$i-1]}, [r0,:128]!
+	vst1.64		{@XMM[$i-1]}, [r0,:128]!
 	vswp		`&Dhi("@T[0]")`,`&Dlo("@T[0]")`
 	vshr.s64	@T[1], @XMM[$i], #63
 	veor		@XMM[$i], @XMM[$i], @T[0]
@@ -1838,14 +1848,14 @@ ___
 }
 $code.=<<___;
 	vadd.u64	@XMM[8], @XMM[15], @XMM[15]
-	vst1.8		{@XMM[15]}, [r0,:128]
+	vst1.64		{@XMM[15]}, [r0,:128]!
 	vswp		`&Dhi("@T[0]")`,`&Dlo("@T[0]")`
 	veor		@XMM[8], @XMM[8], @T[0]
-	vst1.8		{@XMM[8]}, [$fp]		@ next round tweak
+	vst1.64		{@XMM[8]}, [r0,:128]		@ next round tweak
 
 	vld1.8		{@XMM[6]-@XMM[7]}, [$inp]!
 	veor		@XMM[5], @XMM[5], @XMM[13]
-	mov		r4, $keysched
+	add		r4, sp, #0x90			@ pass key schedule
 	veor		@XMM[6], @XMM[6], @XMM[14]
 	mov		r5, $rounds			@ pass rounds
 	veor		@XMM[7], @XMM[7], @XMM[15]
@@ -1853,15 +1863,15 @@ $code.=<<___;
 
 	bl		_bsaes_decrypt8
 
-	vld1.8		{@XMM[ 8]-@XMM[ 9]}, [r0,:128]!
-	vld1.8		{@XMM[10]-@XMM[11]}, [r0,:128]!
+	vld1.64		{@XMM[ 8]-@XMM[ 9]}, [r0,:128]!
+	vld1.64		{@XMM[10]-@XMM[11]}, [r0,:128]!
 	veor		@XMM[0], @XMM[0], @XMM[ 8]
-	vld1.8		{@XMM[12]-@XMM[13]}, [r0,:128]!
+	vld1.64		{@XMM[12]-@XMM[13]}, [r0,:128]!
 	veor		@XMM[1], @XMM[1], @XMM[ 9]
 	veor		@XMM[8], @XMM[6], @XMM[10]
 	vst1.8		{@XMM[0]-@XMM[1]}, [$out]!
 	veor		@XMM[9], @XMM[4], @XMM[11]
-	vld1.8		{@XMM[14]-@XMM[15]}, [r0,:128]!
+	vld1.64		{@XMM[14]-@XMM[15]}, [r0,:128]!
 	veor		@XMM[10], @XMM[2], @XMM[12]
 	vst1.8		{@XMM[8]-@XMM[9]}, [$out]!
 	veor		@XMM[11], @XMM[7], @XMM[13]
@@ -1870,7 +1880,7 @@ $code.=<<___;
 	veor		@XMM[13], @XMM[5], @XMM[15]
 	vst1.8		{@XMM[12]-@XMM[13]}, [$out]!
 
-	vld1.8		{@XMM[8]}, [$fp]		@ next round tweak
+	vld1.64		{@XMM[8]}, [r0,:128]		@ next round tweak
 
 	subs		$len, #0x80
 	bpl		.Lxts_dec_loop
@@ -1879,7 +1889,7 @@ $code.=<<___;
 	adds		$len, #0x70
 	bmi		.Lxts_dec_done
 
-	vld1.8		{$twmask}, [$magic]	@ load XTS magic
+	vldmia		$magic, {$twmask}	@ load XTS magic
 	vshr.s64	@T[0], @XMM[8], #63
 	mov		r0, sp
 	vand		@T[0], @T[0], $twmask
@@ -1887,7 +1897,7 @@ ___
 for($i=9;$i<16;$i++) {
 $code.=<<___;
 	vadd.u64	@XMM[$i], @XMM[$i-1], @XMM[$i-1]
-	vst1.8		{@XMM[$i-1]}, [r0,:128]!
+	vst1.64		{@XMM[$i-1]}, [r0,:128]!
 	vswp		`&Dhi("@T[0]")`,`&Dlo("@T[0]")`
 	vshr.s64	@T[1], @XMM[$i], #63
 	veor		@XMM[$i], @XMM[$i], @T[0]
@@ -1906,26 +1916,26 @@ ___
 }
 $code.=<<___;
 	sub		$len, #0x10
-	vst1.8		{@XMM[15]}, [$fp]		@ next round tweak
+	vst1.64		{@XMM[15]}, [r0,:128]		@ next round tweak
 
 	vld1.8		{@XMM[6]}, [$inp]!
 	veor		@XMM[5], @XMM[5], @XMM[13]
-	mov		r4, $keysched
+	add		r4, sp, #0x90			@ pass key schedule
 	veor		@XMM[6], @XMM[6], @XMM[14]
 	mov		r5, $rounds			@ pass rounds
 	mov		r0, sp
 
 	bl		_bsaes_decrypt8
 
-	vld1.8		{@XMM[ 8]-@XMM[ 9]}, [r0,:128]!
-	vld1.8		{@XMM[10]-@XMM[11]}, [r0,:128]!
+	vld1.64		{@XMM[ 8]-@XMM[ 9]}, [r0,:128]!
+	vld1.64		{@XMM[10]-@XMM[11]}, [r0,:128]!
 	veor		@XMM[0], @XMM[0], @XMM[ 8]
-	vld1.8		{@XMM[12]-@XMM[13]}, [r0,:128]!
+	vld1.64		{@XMM[12]-@XMM[13]}, [r0,:128]!
 	veor		@XMM[1], @XMM[1], @XMM[ 9]
 	veor		@XMM[8], @XMM[6], @XMM[10]
 	vst1.8		{@XMM[0]-@XMM[1]}, [$out]!
 	veor		@XMM[9], @XMM[4], @XMM[11]
-	vld1.8		{@XMM[14]}, [r0,:128]!
+	vld1.64		{@XMM[14]}, [r0,:128]!
 	veor		@XMM[10], @XMM[2], @XMM[12]
 	vst1.8		{@XMM[8]-@XMM[9]}, [$out]!
 	veor		@XMM[11], @XMM[7], @XMM[13]
@@ -1933,23 +1943,24 @@ $code.=<<___;
 	vst1.8		{@XMM[10]-@XMM[11]}, [$out]!
 	vst1.8		{@XMM[12]}, [$out]!
 
-	vld1.8		{@XMM[8]}, [$fp]		@ next round tweak
+	vld1.64		{@XMM[8]}, [r0,:128]		@ next round tweak
 	b		.Lxts_dec_done
+.align	4
 .Lxts_dec_6:
-	vst1.8		{@XMM[14]}, [$fp]		@ next round tweak
+	vst1.64		{@XMM[14]}, [r0,:128]		@ next round tweak
 
 	veor		@XMM[4], @XMM[4], @XMM[12]
-	mov		r4, $keysched
+	add		r4, sp, #0x90			@ pass key schedule
 	veor		@XMM[5], @XMM[5], @XMM[13]
 	mov		r5, $rounds			@ pass rounds
 	mov		r0, sp
 
 	bl		_bsaes_decrypt8
 
-	vld1.8		{@XMM[ 8]-@XMM[ 9]}, [r0,:128]!
-	vld1.8		{@XMM[10]-@XMM[11]}, [r0,:128]!
+	vld1.64		{@XMM[ 8]-@XMM[ 9]}, [r0,:128]!
+	vld1.64		{@XMM[10]-@XMM[11]}, [r0,:128]!
 	veor		@XMM[0], @XMM[0], @XMM[ 8]
-	vld1.8		{@XMM[12]-@XMM[13]}, [r0,:128]!
+	vld1.64		{@XMM[12]-@XMM[13]}, [r0,:128]!
 	veor		@XMM[1], @XMM[1], @XMM[ 9]
 	veor		@XMM[8], @XMM[6], @XMM[10]
 	vst1.8		{@XMM[0]-@XMM[1]}, [$out]!
@@ -1959,23 +1970,24 @@ $code.=<<___;
 	veor		@XMM[11], @XMM[7], @XMM[13]
 	vst1.8		{@XMM[10]-@XMM[11]}, [$out]!
 
-	vld1.8		{@XMM[8]}, [$fp]		@ next round tweak
+	vld1.64		{@XMM[8]}, [r0,:128]		@ next round tweak
 	b		.Lxts_dec_done
+.align	4
 .Lxts_dec_5:
-	vst1.8		{@XMM[13]}, [$fp]		@ next round tweak
+	vst1.64		{@XMM[13]}, [r0,:128]		@ next round tweak
 
 	veor		@XMM[3], @XMM[3], @XMM[11]
-	mov		r4, $keysched
+	add		r4, sp, #0x90			@ pass key schedule
 	veor		@XMM[4], @XMM[4], @XMM[12]
 	mov		r5, $rounds			@ pass rounds
 	mov		r0, sp
 
 	bl		_bsaes_decrypt8
 
-	vld1.8		{@XMM[ 8]-@XMM[ 9]}, [r0,:128]!
-	vld1.8		{@XMM[10]-@XMM[11]}, [r0,:128]!
+	vld1.64		{@XMM[ 8]-@XMM[ 9]}, [r0,:128]!
+	vld1.64		{@XMM[10]-@XMM[11]}, [r0,:128]!
 	veor		@XMM[0], @XMM[0], @XMM[ 8]
-	vld1.8		{@XMM[12]}, [r0,:128]!
+	vld1.64		{@XMM[12]}, [r0,:128]!
 	veor		@XMM[1], @XMM[1], @XMM[ 9]
 	veor		@XMM[8], @XMM[6], @XMM[10]
 	vst1.8		{@XMM[0]-@XMM[1]}, [$out]!
@@ -1984,21 +1996,22 @@ $code.=<<___;
 	vst1.8		{@XMM[8]-@XMM[9]}, [$out]!
 	vst1.8		{@XMM[10]}, [$out]!
 
-	vld1.8		{@XMM[8]}, [$fp]		@ next round tweak
+	vld1.64		{@XMM[8]}, [r0,:128]		@ next round tweak
 	b		.Lxts_dec_done
+.align	4
 .Lxts_dec_4:
-	vst1.8		{@XMM[12]}, [$fp]		@ next round tweak
+	vst1.64		{@XMM[12]}, [r0,:128]		@ next round tweak
 
 	veor		@XMM[2], @XMM[2], @XMM[10]
-	mov		r4, $keysched
+	add		r4, sp, #0x90			@ pass key schedule
 	veor		@XMM[3], @XMM[3], @XMM[11]
 	mov		r5, $rounds			@ pass rounds
 	mov		r0, sp
 
 	bl		_bsaes_decrypt8
 
-	vld1.8		{@XMM[ 8]-@XMM[ 9]}, [r0,:128]!
-	vld1.8		{@XMM[10]-@XMM[11]}, [r0,:128]!
+	vld1.64		{@XMM[ 8]-@XMM[ 9]}, [r0,:128]!
+	vld1.64		{@XMM[10]-@XMM[11]}, [r0,:128]!
 	veor		@XMM[0], @XMM[0], @XMM[ 8]
 	veor		@XMM[1], @XMM[1], @XMM[ 9]
 	veor		@XMM[8], @XMM[6], @XMM[10]
@@ -2006,47 +2019,50 @@ $code.=<<___;
 	veor		@XMM[9], @XMM[4], @XMM[11]
 	vst1.8		{@XMM[8]-@XMM[9]}, [$out]!
 
-	vld1.8		{@XMM[8]}, [$fp]		@ next round tweak
+	vld1.64		{@XMM[8]}, [r0,:128]		@ next round tweak
 	b		.Lxts_dec_done
+.align	4
 .Lxts_dec_3:
-	vst1.8		{@XMM[11]}, [$fp]		@ next round tweak
+	vst1.64		{@XMM[11]}, [r0,:128]		@ next round tweak
 
 	veor		@XMM[1], @XMM[1], @XMM[9]
-	mov		r4, $keysched
+	add		r4, sp, #0x90			@ pass key schedule
 	veor		@XMM[2], @XMM[2], @XMM[10]
 	mov		r5, $rounds			@ pass rounds
 	mov		r0, sp
 
 	bl		_bsaes_decrypt8
 
-	vld1.8		{@XMM[8]-@XMM[9]}, [r0,:128]!
-	vld1.8		{@XMM[10]}, [r0,:128]!
+	vld1.64		{@XMM[8]-@XMM[9]}, [r0,:128]!
+	vld1.64		{@XMM[10]}, [r0,:128]!
 	veor		@XMM[0], @XMM[0], @XMM[ 8]
 	veor		@XMM[1], @XMM[1], @XMM[ 9]
 	veor		@XMM[8], @XMM[6], @XMM[10]
 	vst1.8		{@XMM[0]-@XMM[1]}, [$out]!
 	vst1.8		{@XMM[8]}, [$out]!
 
-	vld1.8		{@XMM[8]}, [$fp]		@ next round tweak
+	vld1.64		{@XMM[8]}, [r0,:128]		@ next round tweak
 	b		.Lxts_dec_done
+.align	4
 .Lxts_dec_2:
-	vst1.8		{@XMM[10]}, [$fp]		@ next round tweak
+	vst1.64		{@XMM[10]}, [r0,:128]		@ next round tweak
 
 	veor		@XMM[0], @XMM[0], @XMM[8]
-	mov		r4, $keysched
+	add		r4, sp, #0x90			@ pass key schedule
 	veor		@XMM[1], @XMM[1], @XMM[9]
 	mov		r5, $rounds			@ pass rounds
 	mov		r0, sp
 
 	bl		_bsaes_decrypt8
 
-	vld1.8		{@XMM[8]-@XMM[9]}, [r0,:128]!
+	vld1.64		{@XMM[8]-@XMM[9]}, [r0,:128]!
 	veor		@XMM[0], @XMM[0], @XMM[ 8]
 	veor		@XMM[1], @XMM[1], @XMM[ 9]
 	vst1.8		{@XMM[0]-@XMM[1]}, [$out]!
 
-	vld1.8		{@XMM[8]}, [$fp]		@ next round tweak
+	vld1.64		{@XMM[8]}, [r0,:128]		@ next round tweak
 	b		.Lxts_dec_done
+.align	4
 .Lxts_dec_1:
 	mov		r0, sp
 	veor		@XMM[0], @XMM[8]
@@ -2054,6 +2070,7 @@ $code.=<<___;
 	vst1.8		{@XMM[0]}, [sp,:128]
 	mov		r2, $key
 	mov		r4, $fp				@ preserve fp
+	mov		r5, $magic			@ preserve magic
 
 	bl		AES_decrypt
 
@@ -2061,6 +2078,7 @@ $code.=<<___;
 	veor		@XMM[0], @XMM[0], @XMM[8]
 	vst1.8		{@XMM[0]}, [$out]!
 	mov		$fp, r4
+	mov		$magic, r5
 
 	vmov		@XMM[8], @XMM[9]		@ next round tweak
 
@@ -2069,8 +2087,7 @@ $code.=<<___;
 	beq		.Lxts_dec_ret
 
 	@ calculate one round of extra tweak for the stolen ciphertext
-	adrl		$magic, .Lxts_magic
-	vld1.8		{$twmask}, [$magic]
+	vldmia		$magic, {$twmask}
 	vshr.s64	@XMM[6], @XMM[8], #63
 	vand		@XMM[6], @XMM[6], $twmask
 	vadd.u64	@XMM[9], @XMM[8], @XMM[8]
@@ -2117,15 +2134,17 @@ $code.=<<___;
 	mov		$fp, r4
 
 .Lxts_dec_ret:
-	vmov.i32	d0, #0
+	bic		r0, $fp, #0xf
+	vmov.i32	q0, #0
+	vmov.i32	q1, #0
 .Lxts_dec_bzero:				@ wipe key schedule [if any]
-	vstmia		sp!, {d0}
-	teq		sp, $fp
+	vstmia		sp!, {q0-q1}
+	teq		sp, r0
 	bne		.Lxts_dec_bzero
 
-	add		sp, $fp, #0x14
+	mov		sp, $fp
 	vldmia		sp!, {d8-d15}
-	ldmia		sp!, {r4-r11, pc}	@ return
+	ldmia		sp!, {r4-r10, pc}	@ return
 
 .size	bsaes_xts_decrypt,.-bsaes_xts_decrypt
 ___
