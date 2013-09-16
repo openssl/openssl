@@ -459,15 +459,6 @@ static int ssl_set_cert(CERT *c, X509 *x)
 		X509_free(c->pkeys[i].x509);
 	CRYPTO_add(&x->references,1,CRYPTO_LOCK_X509);
 	c->pkeys[i].x509=x;
-#ifndef OPENSSL_NO_TLSEXT
-	/* Free the old serverinfo data, if it exists. */
-	if (c->pkeys[i].serverinfo != NULL)
-		{
-		OPENSSL_free(c->pkeys[i].serverinfo);
-		c->pkeys[i].serverinfo = NULL;
-		c->pkeys[i].serverinfo_length = 0;
-		}
-#endif
 	c->key= &(c->pkeys[i]);
 
 	c->valid=0;
