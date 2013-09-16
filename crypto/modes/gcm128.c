@@ -655,16 +655,6 @@ void gcm_init_clmul(u128 Htable[16],const u64 Xi[2]);
 void gcm_gmult_clmul(u64 Xi[2],const u128 Htable[16]);
 void gcm_ghash_clmul(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
 
-#if defined(__i386) || defined(__i386__) || defined(_M_IX86)
-# define gcm_init_avx	gcm_init_clmul
-# define gcm_gmult_avx	gcm_gmult_clmul
-# define gcm_ghash_avx	gcm_ghash_clmul
-#else
-void gcm_init_avx(u128 Htable[16],const u64 Xi[2]);
-void gcm_gmult_avx(u64 Xi[2],const u128 Htable[16]);
-void gcm_ghash_avx(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
-#endif
-
 #  if	defined(__i386) || defined(__i386__) || defined(_M_IX86)
 #   define GHASH_ASM_X86
 void gcm_gmult_4bit_mmx(u64 Xi[2],const u128 Htable[16]);
@@ -681,14 +671,6 @@ void gcm_ghash_4bit_x86(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len
 void gcm_gmult_neon(u64 Xi[2],const u128 Htable[16]);
 void gcm_ghash_neon(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
 #  endif
-# elif defined(__sparc__) || defined(__sparc)
-#  include "sparc_arch.h"
-#  define GHASH_ASM_SPARC
-#  define GCM_FUNCREF_4BIT
-extern unsigned int OPENSSL_sparcv9cap_P[];
-void gcm_init_vis3(u128 Htable[16],const u64 Xi[2]);
-void gcm_gmult_vis3(u64 Xi[2],const u128 Htable[16]);
-void gcm_ghash_vis3(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
 # endif
 #endif
 
@@ -733,15 +715,9 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx,void *key,block128_f block)
 #  if	!defined(GHASH_ASM_X86) || defined(OPENSSL_IA32_SSE2)
 	if (OPENSSL_ia32cap_P[0]&(1<<24) &&	/* check FXSR bit */
 	    OPENSSL_ia32cap_P[1]&(1<<1) ) {	/* check PCLMULQDQ bit */
-		if (((OPENSSL_ia32cap_P[1]>>22)&0x41)==0x41) {	/* AVX+MOVBE */
-			gcm_init_avx(ctx->Htable,ctx->H.u);
-			ctx->gmult = gcm_gmult_avx;
-			ctx->ghash = gcm_ghash_avx;
-		} else {
-			gcm_init_clmul(ctx->Htable,ctx->H.u);
-			ctx->gmult = gcm_gmult_clmul;
-			ctx->ghash = gcm_ghash_clmul;
-		}
+		gcm_init_clmul(ctx->Htable,ctx->H.u);
+		ctx->gmult = gcm_gmult_clmul;
+		ctx->ghash = gcm_ghash_clmul;
 		return;
 	}
 #  endif
@@ -766,16 +742,6 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx,void *key,block128_f block)
 	if (OPENSSL_armcap_P & ARMV7_NEON) {
 		ctx->gmult = gcm_gmult_neon;
 		ctx->ghash = gcm_ghash_neon;
-	} else {
-		gcm_init_4bit(ctx->Htable,ctx->H.u);
-		ctx->gmult = gcm_gmult_4bit;
-		ctx->ghash = gcm_ghash_4bit;
-	}
-# elif	defined(GHASH_ASM_SPARC)
-	if (OPENSSL_sparcv9cap_P[0] & SPARCV9_VIS3) {
-		gcm_init_vis3(ctx->Htable,ctx->H.u);
-		ctx->gmult = gcm_gmult_vis3;
-		ctx->ghash = gcm_ghash_vis3;
 	} else {
 		gcm_init_4bit(ctx->Htable,ctx->H.u);
 		ctx->gmult = gcm_gmult_4bit;
