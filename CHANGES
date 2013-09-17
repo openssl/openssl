@@ -174,12 +174,12 @@
   *) Fix OCSP checking.
      [Rob Stradling <rob.stradling@comodo.com> and Ben Laurie]
 
-  *) Backport support for partial chain verification: if an intermediate
-     certificate is explicitly trusted (using -addtrust option to x509
-     utility for example) the verification is sucessful even if the chain
-     is not complete.
-     The OCSP checking fix depends on this backport.
-     [Steve Henson and Rob Stradling <rob.stradling@comodo.com>]
+  *) Initial experimental support for explicitly trusted non-root CAs. 
+     OpenSSL still tries to build a complete chain to a root but if an
+     intermediate CA has a trust setting included that is used. The first
+     setting is used: whether to trust (e.g., -addtrust option to the x509
+     utility) or reject.
+     [Steve Henson]
 
   *) Add -trusted_first option which attempts to find certificates in the
      trusted store even if an untrusted chain is also supplied.
