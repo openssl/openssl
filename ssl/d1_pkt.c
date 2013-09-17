@@ -1557,9 +1557,7 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len,
 	 * we haven't decided which version to use yet send back using 
 	 * version 1.0 header: otherwise some clients will ignore it.
 	 */
-	if (s->state == DTLS1_ST_SW_HELLO_VERIFY_REQUEST_B
-			&& s->method->version == DTLS_ANY_VERSION
-			&& s->client_version == DTLS1_VERSION)
+	if (s->method->version == DTLS_ANY_VERSION)
 		{
 		*(p++)=DTLS1_VERSION>>8;
 		*(p++)=DTLS1_VERSION&0xff;
