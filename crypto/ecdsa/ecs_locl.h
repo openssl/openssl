@@ -82,6 +82,11 @@ struct ecdsa_method
 	char *app_data;
 	};
 
+/* The ECDSA_METHOD was allocated and can be freed */
+
+#define ECDSA_METHOD_FLAG_ALLOCATED 0x2
+
+
 /* If this flag is set the ECDSA method is FIPS compliant and can be used
  * in FIPS mode. This is set in the validated module method. If an
  * application sets this flag in its own methods it is its responsibility
