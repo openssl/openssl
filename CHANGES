@@ -277,6 +277,10 @@
 
  Changes between 1.0.1e and 1.0.2 [xx XXX xxxx]
 
+  *) Add functions to allocate and set the fields of an ECDSA_METHOD
+     structure.
+     [Douglas E. Engert, Steve Henson]
+
   *) Add option SSL_OP_SAFARI_ECDHE_ECDSA_BUG (part of SSL_OP_ALL) which
      avoids preferring ECDHE-ECDSA ciphers when the client appears to be
      Safari on OS X.  Safari on OS X 10.8..10.8.3 advertises support for
