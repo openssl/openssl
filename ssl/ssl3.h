@@ -580,7 +580,15 @@ typedef struct ssl3_state_st
 	 * as the types were received in the client hello. */
 	unsigned short *tlsext_custom_types;
 	size_t tlsext_custom_types_count; /* how many tlsext_custom_types */
-#endif
+
+#ifndef OPENSSL_NO_EC
+	/* This is set to true if we believe that this is a version of Safari
+	 * running on OS X 10.6 or newer. We wish to know this because Safari
+	 * on 10.8 .. 10.8.3 has broken ECDHE-ECDSA support. */
+	char is_probably_safari;
+#endif /* !OPENSSL_NO_EC */
+
+#endif /* !OPENSSL_NO_TLSEXT */
 	} SSL3_STATE;
 
 #endif
