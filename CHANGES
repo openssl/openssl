@@ -2,15 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.x and 1.1.0  [xx XXX xxxx]
-
-  *) Add option SSL_OP_SAFARI_ECDHE_ECDSA_BUG (part of SSL_OP_ALL) which
-     avoids preferring ECDHE-ECDSA ciphers when the client appears to be
-     Safari on OS X.  Safari on OS X 10.8..10.8.3 advertises support for
-     several ECDHE-ECDSA ciphers, but fails to negotiate them.  The bug
-     is fixed in OS X 10.8.4, but Apple have ruled out both hot fixing
-     10.8..10.8.3 and forcing users to upgrade to 10.8.4 or newer.
-     [Rob Stradling, Adam Langley]
+ Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
 
   *) Experimental encrypt-then-mac support.
     
@@ -284,6 +276,14 @@
      [Steve Henson]
 
  Changes between 1.0.1e and 1.0.2 [xx XXX xxxx]
+
+  *) Add option SSL_OP_SAFARI_ECDHE_ECDSA_BUG (part of SSL_OP_ALL) which
+     avoids preferring ECDHE-ECDSA ciphers when the client appears to be
+     Safari on OS X.  Safari on OS X 10.8..10.8.3 advertises support for
+     several ECDHE-ECDSA ciphers, but fails to negotiate them.  The bug
+     is fixed in OS X 10.8.4, but Apple have ruled out both hot fixing
+     10.8..10.8.3 and forcing users to upgrade to 10.8.4 or newer.
+     [Rob Stradling, Adam Langley]
 
   *) New functions OPENSSL_gmtime_diff and ASN1_TIME_diff to find the
      difference in days and seconds between two tm or ASN1_TIME structures.
