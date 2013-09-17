@@ -912,7 +912,7 @@ int ssl3_get_server_hello(SSL *s)
 	/* Hello verify request and/or server hello version may not
 	 * match so set first packet if we're negotiating version.
 	 */
-	if (s->method->version == DTLS_ANY_VERSION)
+	if (SSL_IS_DTLS(s))
 		s->first_packet = 1;
 
 	n=s->method->ssl_get_message(s,
