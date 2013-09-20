@@ -1314,6 +1314,13 @@ typedef struct evp_aead_ctx_st {
 	void *aead_state;
 } EVP_AEAD_CTX;
 
+/* EVP_AEAD_MAX_TAG_LENGTH contains the maximum tag length used by any AEAD
+ * defined in this header. */
+#define EVP_AEAD_MAX_TAG_LENGTH 16
+
+/* EVP_AEAD_DEFAULT_TAG_LENGTH is a magic value that can be passed to
+ * EVP_AEAD_CTX_init to indicate that the default tag length for an AEAD should
+ * be used. */
 #define EVP_AEAD_DEFAULT_TAG_LENGTH 0
 
 /* EVP_AEAD_init initializes |ctx| for the given AEAD algorithm from |impl|.
