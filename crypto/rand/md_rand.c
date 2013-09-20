@@ -120,6 +120,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/time.h>
 
 #include "e_os.h"
 
@@ -359,7 +360,11 @@ static int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo)
 #ifndef GETPID_IS_MEANINGLESS
 	pid_t curr_pid = getpid();
 #endif
+	time_t curr_time = time(NULL);
+	struct timeval tv;
 	int do_stir_pool = 0;
+
+	gettimeofday(&tv, NULL);
 
 #ifdef PREDICT
 	if (rand_predictable)
@@ -488,11 +493,26 @@ static int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo)
 #ifndef GETPID_IS_MEANINGLESS
 		if (curr_pid) /* just in the first iteration to save time */
 			{
-			if (!MD_Update(&m,(unsigned char*)&curr_pid,sizeof curr_pid))
+			if (!MD_Update(&m,(unsigned char*)&curr_pid,
+				       sizeof curr_pid))
 				goto err;
 			curr_pid = 0;
 			}
 #endif
+		if (curr_time) /* just in the first iteration to save time */
+			{
+			if (!MD_Update(&m,(unsigned char*)&curr_time,
+				       sizeof curr_time))
+				goto err;
+			curr_time = 0;
+			}
+		if (tv.tv_sec) /* just in the first iteration to save time */
+			{
+			if (!MD_Update(&m,(unsigned char*)&tv,
+				       sizeof tv))
+				goto err;
+			tv.tv_sec = 0;
+			}
 		if (!MD_Update(&m,local_md,MD_DIGEST_LENGTH))
 			goto err;
 		if (!MD_Update(&m,(unsigned char *)&(md_c[0]),sizeof(md_c)))
