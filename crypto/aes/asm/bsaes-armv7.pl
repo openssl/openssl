@@ -5,6 +5,10 @@
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
 # details see http://www.openssl.org/~appro/cryptogams/.
+#
+# Specific modes and adaptation for Linux kernel by Ard Biesheuvel
+# <ard.biesheuvel@linaro.org>. Permission to use under GPL terms is
+# granted.
 # ====================================================================
 
 # Bit-sliced AES for ARM NEON
@@ -36,6 +40,12 @@
 # bsaes-x86_64.pl for further details)...
 #
 #						<appro@openssl.org>
+
+# April-August 2013
+#
+# Add CBC, CTR and XTS subroutines, adapt for kernel use.
+#
+#					<ard.biesheuvel@linaro.org>
 
 while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
 open STDOUT,">$output";
@@ -620,17 +630,34 @@ ___
 }
 
 $code.=<<___;
-#include "arm_arch.h"
+#ifndef __KERNEL__
+# include "arm_arch.h"
+
+# define VFP_ABI_PUSH	vstmdb	sp!,{d8-d15}
+# define VFP_ABI_POP	vldmia	sp!,{d8-d15}
+# define VFP_ABI_FRAME	0x40
+#else
+# define VFP_ABI_PUSH
+# define VFP_ABI_POP
+# define VFP_ABI_FRAME	0
+# define BSAES_ASM_EXTENDED_KEY
+# define XTS_CHAIN_TWEAK
+# define __ARM_ARCH__ __LINUX_ARM_ARCH__
+#endif
+
+#ifdef __thumb__
+# define adrl adr
+#endif
 
 #if __ARM_ARCH__>=7
 .text
-.code	32
+.syntax	unified 	@ ARMv7-capable assembler is expected to handle this
 .fpu	neon
 
 .type	_bsaes_decrypt8,%function
 .align	4
 _bsaes_decrypt8:
-	sub	$const,pc,#8			@ _bsaes_decrypt8
+	adr	$const,_bsaes_decrypt8
 	vldmia	$key!, {@XMM[9]}		@ round 0 key
 	add	$const,$const,#.LM0ISR-_bsaes_decrypt8
 
@@ -677,6 +704,7 @@ ___
 	&InvMixColumns	(@XMM[0,1,6,4,2,7,3,5, 8..15]);
 $code.=<<___;
 	vldmia	$const, {@XMM[12]}		@ .LISR
+	ite	eq				@ Thumb2 thing, sanity check in ARM
 	addeq	$const,$const,#0x10
 	bne	.Ldec_loop
 	vldmia	$const, {@XMM[12]}		@ .LISRM0
@@ -717,8 +745,6 @@ _bsaes_const:
 	.quad	0x02060a0e03070b0f, 0x0004080c0105090d
 .LREVM0SR:
 	.quad	0x090d01050c000408, 0x03070b0f060a0e02
-.Lxts_magic:
-	.quad	1, 0x87
 .asciz	"Bit-sliced AES for NEON, CRYPTOGAMS by <appro\@openssl.org>"
 .align	6
 .size	_bsaes_const,.-_bsaes_const
@@ -726,7 +752,7 @@ _bsaes_const:
 .type	_bsaes_encrypt8,%function
 .align	4
 _bsaes_encrypt8:
-	sub	$const,pc,#8			@ _bsaes_encrypt8
+	adr	$const,_bsaes_encrypt8
 	vldmia	$key!, {@XMM[9]}		@ round 0 key
 	sub	$const,$const,#_bsaes_encrypt8-.LM0SR
 
@@ -775,6 +801,7 @@ ___
 	&MixColumns	(@XMM[0,1,4,6,3,7,2,5, 8..15]);
 $code.=<<___;
 	vldmia	$const, {@XMM[12]}		@ .LSR
+	ite	eq				@ Thumb2 thing, samity check in ARM
 	addeq	$const,$const,#0x10
 	bne	.Lenc_loop
 	vldmia	$const, {@XMM[12]}		@ .LSRM0
@@ -829,7 +856,7 @@ $code.=<<___;
 .type	_bsaes_key_convert,%function
 .align	4
 _bsaes_key_convert:
-	sub	$const,pc,#8			@ _bsaes_key_convert
+	adr	$const,_bsaes_key_convert
 	vld1.8	{@XMM[7]},  [$inp]!		@ load round 0 key
 	sub	$const,$const,#_bsaes_key_convert-.LM0
 	vld1.8	{@XMM[15]}, [$inp]!		@ load round 1 key
@@ -998,32 +1025,62 @@ $code.=<<___;
 .type	bsaes_cbc_encrypt,%function
 .align	5
 bsaes_cbc_encrypt:
+#ifndef	__KERNEL__
 	cmp	$len, #128
+#ifndef	__thumb__
 	blo	AES_cbc_encrypt
+#else
+	bhs	1f
+	b	AES_cbc_encrypt
+1:
+#endif
+#endif
 
 	@ it is up to the caller to make sure we are called with enc == 0
 
+	mov	ip, sp
 	stmdb	sp!, {r4-r10, lr}
-	vstmdb	sp!, {d8-d15}			@ ABI specification says so
-	ldr	$ivp, [sp, #0x60]		@ IV is 1st arg on the stack
+	VFP_ABI_PUSH
+	ldr	$ivp, [ip]			@ IV is 1st arg on the stack
 	mov	$len, $len, lsr#4		@ len in 16 byte blocks
 	sub	sp, #0x10			@ scratch space to carry over the IV
 	mov	$fp, sp				@ save sp
 
-	@ allocate the key schedule on the stack
 	ldr	$rounds, [$key, #240]		@ get # of rounds
-	sub	sp, sp, $rounds, lsl#7		@ 128 bytes per inner round key
-	add	sp, sp, #`128-32`		@ size of bit-sliced key schedule
+#ifndef	BSAES_ASM_EXTENDED_KEY
+	@ allocate the key schedule on the stack
+	sub	r12, sp, $rounds, lsl#7		@ 128 bytes per inner round key
+	add	r12, #`128-32`			@ sifze of bit-slices key schedule
 
 	@ populate the key schedule
 	mov	r4, $key			@ pass key
 	mov	r5, $rounds			@ pass # of rounds
-	mov	r12, $keysched			@ pass key schedule
+	mov	sp, r12				@ sp is $keysched
 	bl	_bsaes_key_convert
 	vldmia	$keysched, {@XMM[6]}
 	vstmia	r12,  {@XMM[15]}		@ save last round key
 	veor	@XMM[7], @XMM[7], @XMM[6]	@ fix up round 0 key
 	vstmia	$keysched, {@XMM[7]}
+#else
+	ldr	r12, [$key, #244]
+	eors	r12, #1
+	beq	0f
+
+	@ populate the key schedule
+	str	r12, [$key, #244]
+	mov	r4, $key			@ pass key
+	mov	r5, $rounds			@ pass # of rounds
+	add	r12, $key, #248			@ pass key schedule
+	bl	_bsaes_key_convert
+	add	r4, $key, #248
+	vldmia	r4, {@XMM[6]}
+	vstmia	r12, {@XMM[15]}			@ save last round key
+	veor	@XMM[7], @XMM[7], @XMM[6]	@ fix up round 0 key
+	vstmia	r4, {@XMM[7]}
+
+.align	2
+0:
+#endif
 
 	vld1.8	{@XMM[15]}, [$ivp]		@ load IV
 	b	.Lcbc_dec_loop
@@ -1035,7 +1092,11 @@ bsaes_cbc_encrypt:
 
 	vld1.8	{@XMM[0]-@XMM[1]}, [$inp]!	@ load input
 	vld1.8	{@XMM[2]-@XMM[3]}, [$inp]!
+#ifndef	BSAES_ASM_EXTENDED_KEY
 	mov	r4, $keysched			@ pass the key
+#else
+	add	r4, $key, #248
+#endif
 	vld1.8	{@XMM[4]-@XMM[5]}, [$inp]!
 	mov	r5, $rounds
 	vld1.8	{@XMM[6]-@XMM[7]}, [$inp]
@@ -1075,7 +1136,11 @@ bsaes_cbc_encrypt:
 	cmp	$len, #2
 	blo	.Lcbc_dec_one
 	vld1.8	{@XMM[1]}, [$inp]!
+#ifndef	BSAES_ASM_EXTENDED_KEY
 	mov	r4, $keysched			@ pass the key
+#else
+	add	r4, $key, #248
+#endif
 	mov	r5, $rounds
 	vstmia	$fp, {@XMM[15]}			@ put aside IV
 	beq	.Lcbc_dec_two
@@ -1207,16 +1272,19 @@ bsaes_cbc_encrypt:
 	vst1.8	{@XMM[0]}, [$rounds]		@ write output
 
 .Lcbc_dec_done:
+#ifndef	BSAES_ASM_EXTENDED_KEY
 	vmov.i32	q0, #0
 	vmov.i32	q1, #0
 .Lcbc_dec_bzero:				@ wipe key schedule [if any]
 	vstmia		$keysched!, {q0-q1}
-	teq		$keysched, $fp
+	cmp		$keysched, $fp
 	bne		.Lcbc_dec_bzero
+#endif
 
-	add	sp, $fp, #0x10
+	mov	sp, $fp
+	add	sp, #0x10			@ add sp,$fp,#0x10 is no good for thumb
 	vst1.8	{@XMM[15]}, [$ivp]		@ return IV
-	vldmia	sp!, {d8-d15}
+	VFP_ABI_POP
 	ldmia	sp!, {r4-r10, pc}
 .size	bsaes_cbc_encrypt,.-bsaes_cbc_encrypt
 ___
@@ -1235,21 +1303,23 @@ bsaes_ctr32_encrypt_blocks:
 	cmp	$len, #8			@ use plain AES for
 	blo	.Lctr_enc_short			@ small sizes
 
+	mov	ip, sp
 	stmdb	sp!, {r4-r10, lr}
-	vstmdb	sp!, {d8-d15}			@ ABI specification says so
-	ldr	$ctr, [sp, #0x60]		@ ctr is 1st arg on the stack
+	VFP_ABI_PUSH
+	ldr	$ctr, [ip]			@ ctr is 1st arg on the stack
 	sub	sp, sp, #0x10			@ scratch space to carry over the ctr
 	mov	$fp, sp				@ save sp
 
-	@ allocate the key schedule on the stack
 	ldr	$rounds, [$key, #240]		@ get # of rounds
-	sub	sp, sp, $rounds, lsl#7		@ 128 bytes per inner round key
-	add	sp, sp, #`128-32`		@ size of bit-sliced key schedule
+#ifndef	BSAES_ASM_EXTENDED_KEY
+	@ allocate the key schedule on the stack
+	sub	r12, sp, $rounds, lsl#7		@ 128 bytes per inner round key
+	add	r12, #`128-32`			@ size of bit-sliced key schedule
 
 	@ populate the key schedule
 	mov	r4, $key			@ pass key
 	mov	r5, $rounds			@ pass # of rounds
-	mov	r12, $keysched			@ pass key schedule
+	mov	sp, r12				@ sp is $keysched
 	bl	_bsaes_key_convert
 	veor	@XMM[7],@XMM[7],@XMM[15]	@ fix up last round key
 	vstmia	r12, {@XMM[7]}			@ save last round key
@@ -1257,6 +1327,27 @@ bsaes_ctr32_encrypt_blocks:
 	vld1.8	{@XMM[0]}, [$ctr]		@ load counter
 	add	$ctr, $const, #.LREVM0SR-.LM0	@ borrow $ctr
 	vldmia	$keysched, {@XMM[4]}		@ load round0 key
+#else
+	ldr	r12, [$key, #244]
+	eors	r12, #1
+	beq	0f
+
+	@ populate the key schedule
+	str	r12, [$key, #244]
+	mov	r4, $key			@ pass key
+	mov	r5, $rounds			@ pass # of rounds
+	add	r12, $key, #248			@ pass key schedule
+	bl	_bsaes_key_convert
+	veor	@XMM[7],@XMM[7],@XMM[15]	@ fix up last round key
+	vstmia	r12, {@XMM[7]}			@ save last round key
+
+.align	2
+0:	add	r12, $key, #248
+	vld1.8	{@XMM[0]}, [$ctr]		@ load counter
+	adrl	$ctr, .LREVM0SR			@ borrow $ctr
+	vldmia	r12, {@XMM[4]}			@ load round0 key
+	sub	sp, #0x10			@ place for adjusted round0 key
+#endif
 
 	vmov.i32	@XMM[8],#1		@ compose 1<<96
 	veor		@XMM[9],@XMM[9],@XMM[9]
@@ -1283,7 +1374,11 @@ bsaes_ctr32_encrypt_blocks:
 	@ to flip byte order in 32-bit counter
 
 	vldmia		$keysched, {@XMM[9]}		@ load round0 key
+#ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, $keysched, #0x10		@ pass next round key
+#else
+	add		r4, $key, #`248+16`
+#endif
 	vldmia		$ctr, {@XMM[8]}			@ .LREVM0SR
 	mov		r5, $rounds			@ pass rounds
 	vstmia		$fp, {@XMM[10]}			@ save next counter
@@ -1359,13 +1454,18 @@ bsaes_ctr32_encrypt_blocks:
 .Lctr_enc_done:
 	vmov.i32	q0, #0
 	vmov.i32	q1, #0
+#ifndef	BSAES_ASM_EXTENDED_KEY
 .Lctr_enc_bzero:			@ wipe key schedule [if any]
 	vstmia		$keysched!, {q0-q1}
-	teq		$keysched, $fp
+	cmp		$keysched, $fp
 	bne		.Lctr_enc_bzero
+#else
+	vstmia		$keysched, {q0-q1}
+#endif
 
-	add	sp, $fp, #0x10
-	vldmia	sp!, {d8-d15}
+	mov	sp, $fp
+	add	sp, #0x10		@ add sp,$fp,#0x10 is no good for thumb
+	VFP_ABI_POP
 	ldmia	sp!, {r4-r10, pc}	@ return
 
 .align	4
@@ -1407,7 +1507,10 @@ bsaes_ctr32_encrypt_blocks:
 	subs	r6, r6, #1
 	bne	.Lctr_enc_short_loop
 
-	add	sp, sp, #0x20
+	vmov.i32	q0, #0
+	vmov.i32	q1, #0
+	vstmia		sp!, {q0-q1}
+
 	ldmia	sp!, {r4-r8, pc}
 .size	bsaes_ctr32_encrypt_blocks,.-bsaes_ctr32_encrypt_blocks
 ___
@@ -1428,41 +1531,66 @@ $code.=<<___;
 .type	bsaes_xts_encrypt,%function
 .align	4
 bsaes_xts_encrypt:
+	mov	ip, sp
 	stmdb	sp!, {r4-r10, lr}		@ 0x20
-	vstmdb	sp!, {d8-d15}			@ 0x40
+	VFP_ABI_PUSH
 	mov	r6, sp				@ future $fp
-	sub	sp, #0x10			@ 0x10
 
 	mov	$inp, r0
 	mov	$out, r1
 	mov	$len, r2
 	mov	$key, r3
-	bic	sp, #0xf			@ align at 16 bytes
 
+	sub	r0, sp, #0x10			@ 0x10
+	bic	r0, #0xf			@ align at 16 bytes
+	mov	sp, r0
+
+#ifdef	XTS_CHAIN_TWEAK
+	ldr	r0, [ip]			@ pointer to input tweak
+#else
 	@ generate initial tweak
-	ldr	r0, [r6, #0x64]			@ iv[]
+	ldr	r0, [ip, #4]			@ iv[]
 	mov	r1, sp
-	ldr	r2, [r6, #0x60]			@ key2
+	ldr	r2, [ip, #0]			@ key2
 	bl	AES_encrypt
+	mov	r0,sp				@ pointer to initial tweak
+#endif
 
-	@ allocate the key schedule on the stack
 	ldr	$rounds, [$key, #240]		@ get # of rounds
 	mov	$fp, r6
-	mov	r0, sp				@ pointer to initial tweak
-	sub	sp, sp, $rounds, lsl#7		@ 128 bytes per inner round key
-	@ add	sp, sp, #`128-32`		@ size of bit-sliced key schedule
-	sub	sp, sp, #`32+16`		@ place for tweak[9]
+#ifndef	BSAES_ASM_EXTENDED_KEY
+	@ allocate the key schedule on the stack
+	sub	r12, sp, $rounds, lsl#7		@ 128 bytes per inner round key
+	@ add	r12, #`128-32`			@ size of bit-sliced key schedule
+	sub	r12, #`32+16`			@ place for tweak[9]
 
 	@ populate the key schedule
 	mov	r4, $key			@ pass key
 	mov	r5, $rounds			@ pass # of rounds
-	add	r12, sp, #0x90			@ pass key schedule
+	mov	sp, r12
+	add	r12, #0x90			@ pass key schedule
 	bl	_bsaes_key_convert
 	veor	@XMM[7], @XMM[7], @XMM[15]	@ fix up last round key
 	vstmia	r12, {@XMM[7]}			@ save last round key
+#else
+	ldr	r12, [$key, #244]
+	eors	r12, #1
+	beq	0f
+
+	str	r12, [$key, #244]
+	mov	r4, $key			@ pass key
+	mov	r5, $rounds			@ pass # of rounds
+	add	r12, $key, #248			@ pass key schedule
+	bl	_bsaes_key_convert
+	veor	@XMM[7], @XMM[7], @XMM[15]	@ fix up last round key
+	vstmia	r12, {@XMM[7]}
+
+.align	2
+0:	sub	sp, #0x90			@ place for tweak[9]
+#endif
 
 	vld1.8	{@XMM[8]}, [r0]			@ initial tweak
-	add	$magic, $const, #.Lxts_magic-.LM0
+	adr	$magic, .Lxts_magic
 
 	subs	$len, #0x80
 	blo	.Lxts_enc_short
@@ -1502,7 +1630,11 @@ $code.=<<___;
 
 	vld1.8		{@XMM[6]-@XMM[7]}, [$inp]!
 	veor		@XMM[5], @XMM[5], @XMM[13]
+#ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
+#else
+	add		r4, $key, #248			@ pass key schedule
+#endif
 	veor		@XMM[6], @XMM[6], @XMM[14]
 	mov		r5, $rounds			@ pass rounds
 	veor		@XMM[7], @XMM[7], @XMM[15]
@@ -1567,7 +1699,11 @@ $code.=<<___;
 
 	vld1.8		{@XMM[6]}, [$inp]!
 	veor		@XMM[5], @XMM[5], @XMM[13]
+#ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
+#else
+	add		r4, $key, #248			@ pass key schedule
+#endif
 	veor		@XMM[6], @XMM[6], @XMM[14]
 	mov		r5, $rounds			@ pass rounds
 	mov		r0, sp
@@ -1597,7 +1733,11 @@ $code.=<<___;
 	vst1.64		{@XMM[14]}, [r0,:128]		@ next round tweak
 
 	veor		@XMM[4], @XMM[4], @XMM[12]
+#ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
+#else
+	add		r4, $key, #248			@ pass key schedule
+#endif
 	veor		@XMM[5], @XMM[5], @XMM[13]
 	mov		r5, $rounds			@ pass rounds
 	mov		r0, sp
@@ -1619,12 +1759,22 @@ $code.=<<___;
 
 	vld1.64		{@XMM[8]}, [r0,:128]		@ next round tweak
 	b		.Lxts_enc_done
-.align	4
+
+@ put this in range for both ARM and Thumb mode adr instructions
+.align	5
+.Lxts_magic:
+	.quad	1, 0x87
+
+.align	5
 .Lxts_enc_5:
 	vst1.64		{@XMM[13]}, [r0,:128]		@ next round tweak
 
 	veor		@XMM[3], @XMM[3], @XMM[11]
+#ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
+#else
+	add		r4, $key, #248			@ pass key schedule
+#endif
 	veor		@XMM[4], @XMM[4], @XMM[12]
 	mov		r5, $rounds			@ pass rounds
 	mov		r0, sp
@@ -1650,7 +1800,11 @@ $code.=<<___;
 	vst1.64		{@XMM[12]}, [r0,:128]		@ next round tweak
 
 	veor		@XMM[2], @XMM[2], @XMM[10]
+#ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
+#else
+	add		r4, $key, #248			@ pass key schedule
+#endif
 	veor		@XMM[3], @XMM[3], @XMM[11]
 	mov		r5, $rounds			@ pass rounds
 	mov		r0, sp
@@ -1673,7 +1827,11 @@ $code.=<<___;
 	vst1.64		{@XMM[11]}, [r0,:128]		@ next round tweak
 
 	veor		@XMM[1], @XMM[1], @XMM[9]
+#ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
+#else
+	add		r4, $key, #248			@ pass key schedule
+#endif
 	veor		@XMM[2], @XMM[2], @XMM[10]
 	mov		r5, $rounds			@ pass rounds
 	mov		r0, sp
@@ -1695,7 +1853,11 @@ $code.=<<___;
 	vst1.64		{@XMM[10]}, [r0,:128]		@ next round tweak
 
 	veor		@XMM[0], @XMM[0], @XMM[8]
+#ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
+#else
+	add		r4, $key, #248			@ pass key schedule
+#endif
 	veor		@XMM[1], @XMM[1], @XMM[9]
 	mov		r5, $rounds			@ pass rounds
 	mov		r0, sp
@@ -1728,6 +1890,7 @@ $code.=<<___;
 	vmov		@XMM[8], @XMM[9]		@ next round tweak
 
 .Lxts_enc_done:
+#ifndef	XTS_CHAIN_TWEAK
 	adds		$len, #0x10
 	beq		.Lxts_enc_ret
 	sub		r6, $out, #0x10
@@ -1755,18 +1918,25 @@ $code.=<<___;
 	veor		@XMM[0], @XMM[0], @XMM[8]
 	vst1.8		{@XMM[0]}, [r6]
 	mov		$fp, r4
+#endif
 
 .Lxts_enc_ret:
 	bic		r0, $fp, #0xf
 	vmov.i32	q0, #0
 	vmov.i32	q1, #0
+#ifdef	XTS_CHAIN_TWEAK
+	ldr		r1, [$fp, #0x20+VFP_ABI_FRAME]	@ chain tweak
+#endif
 .Lxts_enc_bzero:				@ wipe key schedule [if any]
 	vstmia		sp!, {q0-q1}
-	teq		sp, r0
+	cmp		sp, r0
 	bne		.Lxts_enc_bzero
 
 	mov		sp, $fp
-	vldmia		sp!, {d8-d15}
+#ifdef	XTS_CHAIN_TWEAK
+	vst1.8		{@XMM[8]}, [r1]
+#endif
+	VFP_ABI_POP
 	ldmia		sp!, {r4-r10, pc}	@ return
 
 .size	bsaes_xts_encrypt,.-bsaes_xts_encrypt
@@ -1775,46 +1945,74 @@ $code.=<<___;
 .type	bsaes_xts_decrypt,%function
 .align	4
 bsaes_xts_decrypt:
+	mov	ip, sp
 	stmdb	sp!, {r4-r10, lr}		@ 0x20
-	vstmdb	sp!, {d8-d15}			@ 0x40
+	VFP_ABI_PUSH
 	mov	r6, sp				@ future $fp
-	sub	sp, #0x10			@ 0x10
 
 	mov	$inp, r0
 	mov	$out, r1
 	mov	$len, r2
 	mov	$key, r3
-	bic	sp, #0xf			@ align at 16 bytes
 
+	sub	r0, sp, #0x10			@ 0x10
+	bic	r0, #0xf			@ align at 16 bytes
+	mov	sp, r0
+
+#ifdef	XTS_CHAIN_TWEAK
+	ldr	r0, [ip]			@ pointer to input tweak
+#else
 	@ generate initial tweak
-	ldr	r0, [r6, #0x64]			@ iv[]
+	ldr	r0, [ip, #4]			@ iv[]
 	mov	r1, sp
-	ldr	r2, [r6, #0x60]			@ key2
+	ldr	r2, [ip, #0]			@ key2
 	bl	AES_encrypt
+	mov	r0, sp				@ pointer to initial tweak
+#endif
 
-	@ allocate the key schedule on the stack
 	ldr	$rounds, [$key, #240]		@ get # of rounds
 	mov	$fp, r6
-	mov	r0, sp				@ pointer to initial tweak
-	sub	sp, sp, $rounds, lsl#7		@ 128 bytes per inner round key
-	@ add	sp, sp, #`128-32`		@ size of bit-sliced key schedule
-	sub	sp, sp, #`32+16`		@ place for tweak[9]
+#ifndef	BSAES_ASM_EXTENDED_KEY
+	@ allocate the key schedule on the stack
+	sub	r12, sp, $rounds, lsl#7		@ 128 bytes per inner round key
+	@ add	r12, #`128-32`			@ size of bit-sliced key schedule
+	sub	r12, #`32+16`			@ place for tweak[9]
 
 	@ populate the key schedule
 	mov	r4, $key			@ pass key
 	mov	r5, $rounds			@ pass # of rounds
-	add	r12, sp, #0x90			@ pass key schedule
+	mov	sp, r12
+	add	r12, #0x90			@ pass key schedule
 	bl	_bsaes_key_convert
 	add	r4, sp, #0x90
 	vldmia	r4, {@XMM[6]}
 	vstmia	r12,  {@XMM[15]}		@ save last round key
 	veor	@XMM[7], @XMM[7], @XMM[6]	@ fix up round 0 key
 	vstmia	r4, {@XMM[7]}
+#else
+	ldr	r12, [$key, #244]
+	eors	r12, #1
+	beq	0f
 
+	str	r12, [$key, #244]
+	mov	r4, $key			@ pass key
+	mov	r5, $rounds			@ pass # of rounds
+	add	r12, $key, #248			@ pass key schedule
+	bl	_bsaes_key_convert
+	add	r4, $key, #248
+	vldmia	r4, {@XMM[6]}
+	vstmia	r12,  {@XMM[15]}		@ save last round key
+	veor	@XMM[7], @XMM[7], @XMM[6]	@ fix up round 0 key
+	vstmia	r4, {@XMM[7]}
+
+.align	2
+0:	sub	sp, #0x90			@ place for tweak[9]
+#endif
 	vld1.8	{@XMM[8]}, [r0]			@ initial tweak
-	add	$magic, $const, #.Lxts_magic-.LM0
+	adr	$magic, .Lxts_magic
 
 	tst	$len, #0xf			@ if not multiple of 16
+	it	ne				@ Thumb2 thing, sanity check in ARM
 	subne	$len, #0x10			@ subtract another 16 bytes
 	subs	$len, #0x80
 
@@ -1855,7 +2053,11 @@ $code.=<<___;
 
 	vld1.8		{@XMM[6]-@XMM[7]}, [$inp]!
 	veor		@XMM[5], @XMM[5], @XMM[13]
+#ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
+#else
+	add		r4, $key, #248			@ pass key schedule
+#endif
 	veor		@XMM[6], @XMM[6], @XMM[14]
 	mov		r5, $rounds			@ pass rounds
 	veor		@XMM[7], @XMM[7], @XMM[15]
@@ -1920,7 +2122,11 @@ $code.=<<___;
 
 	vld1.8		{@XMM[6]}, [$inp]!
 	veor		@XMM[5], @XMM[5], @XMM[13]
+#ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
+#else
+	add		r4, $key, #248			@ pass key schedule
+#endif
 	veor		@XMM[6], @XMM[6], @XMM[14]
 	mov		r5, $rounds			@ pass rounds
 	mov		r0, sp
@@ -1950,7 +2156,11 @@ $code.=<<___;
 	vst1.64		{@XMM[14]}, [r0,:128]		@ next round tweak
 
 	veor		@XMM[4], @XMM[4], @XMM[12]
+#ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
+#else
+	add		r4, $key, #248			@ pass key schedule
+#endif
 	veor		@XMM[5], @XMM[5], @XMM[13]
 	mov		r5, $rounds			@ pass rounds
 	mov		r0, sp
@@ -1977,7 +2187,11 @@ $code.=<<___;
 	vst1.64		{@XMM[13]}, [r0,:128]		@ next round tweak
 
 	veor		@XMM[3], @XMM[3], @XMM[11]
+#ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
+#else
+	add		r4, $key, #248			@ pass key schedule
+#endif
 	veor		@XMM[4], @XMM[4], @XMM[12]
 	mov		r5, $rounds			@ pass rounds
 	mov		r0, sp
@@ -2003,7 +2217,11 @@ $code.=<<___;
 	vst1.64		{@XMM[12]}, [r0,:128]		@ next round tweak
 
 	veor		@XMM[2], @XMM[2], @XMM[10]
+#ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
+#else
+	add		r4, $key, #248			@ pass key schedule
+#endif
 	veor		@XMM[3], @XMM[3], @XMM[11]
 	mov		r5, $rounds			@ pass rounds
 	mov		r0, sp
@@ -2026,7 +2244,11 @@ $code.=<<___;
 	vst1.64		{@XMM[11]}, [r0,:128]		@ next round tweak
 
 	veor		@XMM[1], @XMM[1], @XMM[9]
+#ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
+#else
+	add		r4, $key, #248			@ pass key schedule
+#endif
 	veor		@XMM[2], @XMM[2], @XMM[10]
 	mov		r5, $rounds			@ pass rounds
 	mov		r0, sp
@@ -2048,7 +2270,11 @@ $code.=<<___;
 	vst1.64		{@XMM[10]}, [r0,:128]		@ next round tweak
 
 	veor		@XMM[0], @XMM[0], @XMM[8]
+#ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
+#else
+	add		r4, $key, #248			@ pass key schedule
+#endif
 	veor		@XMM[1], @XMM[1], @XMM[9]
 	mov		r5, $rounds			@ pass rounds
 	mov		r0, sp
@@ -2083,6 +2309,7 @@ $code.=<<___;
 	vmov		@XMM[8], @XMM[9]		@ next round tweak
 
 .Lxts_dec_done:
+#ifndef	XTS_CHAIN_TWEAK
 	adds		$len, #0x10
 	beq		.Lxts_dec_ret
 
@@ -2132,18 +2359,25 @@ $code.=<<___;
 	veor		@XMM[0], @XMM[0], @XMM[8]
 	vst1.8		{@XMM[0]}, [r6]
 	mov		$fp, r4
+#endif
 
 .Lxts_dec_ret:
 	bic		r0, $fp, #0xf
 	vmov.i32	q0, #0
 	vmov.i32	q1, #0
+#ifdef	XTS_CHAIN_TWEAK
+	ldr		r1, [$fp, #0x20+VFP_ABI_FRAME]	@ chain tweak
+#endif
 .Lxts_dec_bzero:				@ wipe key schedule [if any]
 	vstmia		sp!, {q0-q1}
-	teq		sp, r0
+	cmp		sp, r0
 	bne		.Lxts_dec_bzero
 
 	mov		sp, $fp
-	vldmia		sp!, {d8-d15}
+#ifdef	XTS_CHAIN_TWEAK
+	vst1.8		{@XMM[8]}, [r1]
+#endif
+	VFP_ABI_POP
 	ldmia		sp!, {r4-r10, pc}	@ return
 
 .size	bsaes_xts_decrypt,.-bsaes_xts_decrypt
@@ -2154,6 +2388,14 @@ $code.=<<___;
 ___
 
 $code =~ s/\`([^\`]*)\`/eval($1)/gem;
+
+open SELF,$0;
+while(<SELF>) {
+	next if (/^#!/);
+        last if (!s/^#/@/ and !/^$/);
+        print;
+}
+close SELF;
 
 print $code;
 
