@@ -982,6 +982,7 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
 	long extension_length = 0;
 	char* name = NULL;
 	char* header = NULL;
+	char namePrefix[] = "SERVERINFO FOR ";
 	int ret = 0;
 	BIO *bin = NULL;
 	size_t num_extensions = 0;
@@ -1017,11 +1018,22 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
 			else /* End of file, we're done */
 				break;
 			}
+		/* Check that PEM name starts with "BEGIN SERVERINFO FOR " */
+		if (strlen(name) < strlen(namePrefix))
+			{
+			SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, ERR_R_PEM_LIB);
+			goto end;
+			}
+		if (strncmp(name, namePrefix, strlen(namePrefix)) != 0)
+			{
+			SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, ERR_R_PEM_LIB);
+			goto end;
+			}
 		/* Check that the decoded PEM data is plausible (valid length field) */
 		if (extension_length < 4 || (extension[2] << 8) + extension[3] != extension_length - 4)
 			{
-				SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, ERR_R_PEM_LIB);
-				goto end;
+			SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, ERR_R_PEM_LIB);
+			goto end;
 			}
 		/* Append the decoded extension to the serverinfo buffer */
 		serverinfo = OPENSSL_realloc(serverinfo, serverinfo_length + extension_length);
