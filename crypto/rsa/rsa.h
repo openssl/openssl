@@ -459,6 +459,9 @@ void ERR_load_RSA_strings(void);
 /* Function codes. */
 #define RSA_F_CHECK_PADDING_MD				 140
 #define RSA_F_DO_RSA_PRINT				 146
+#define RSA_F_FIPS_RSA_SIGN_DIGEST			 149
+#define RSA_F_FIPS_RSA_VERIFY				 150
+#define RSA_F_FIPS_RSA_VERIFY_DIGEST			 151
 #define RSA_F_INT_RSA_VERIFY				 145
 #define RSA_F_MEMORY_LOCK				 100
 #define RSA_F_OLD_RSA_PRIV_DECODE			 147

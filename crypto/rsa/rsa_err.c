@@ -1,6 +1,6 @@
 /* crypto/rsa/rsa_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2013 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -72,6 +72,9 @@ static ERR_STRING_DATA RSA_str_functs[]=
 	{
 {ERR_FUNC(RSA_F_CHECK_PADDING_MD),	"CHECK_PADDING_MD"},
 {ERR_FUNC(RSA_F_DO_RSA_PRINT),	"DO_RSA_PRINT"},
+{ERR_FUNC(RSA_F_FIPS_RSA_SIGN_DIGEST),	"FIPS_rsa_sign_digest"},
+{ERR_FUNC(RSA_F_FIPS_RSA_VERIFY),	"FIPS_rsa_verify"},
+{ERR_FUNC(RSA_F_FIPS_RSA_VERIFY_DIGEST),	"FIPS_rsa_verify_digest"},
 {ERR_FUNC(RSA_F_INT_RSA_VERIFY),	"INT_RSA_VERIFY"},
 {ERR_FUNC(RSA_F_MEMORY_LOCK),	"MEMORY_LOCK"},
 {ERR_FUNC(RSA_F_OLD_RSA_PRIV_DECODE),	"OLD_RSA_PRIV_DECODE"},
