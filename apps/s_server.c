@@ -1865,7 +1865,10 @@ bad:
 		goto end;
 	if (s_serverinfo_file != NULL
 	    && !SSL_CTX_use_serverinfo_file(ctx, s_serverinfo_file))
+		{
+		ERR_print_errors(bio_err);
 		goto end;
+		}
 #endif
 #ifndef OPENSSL_NO_TLSEXT
 	if (ctx2 && !set_cert_key_stuff(ctx2,s_cert2,s_key2, NULL, build_chain))
