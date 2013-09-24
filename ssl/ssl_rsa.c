@@ -1012,7 +1012,7 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
 			/* There must be at least one extension in this file */
 			if (num_extensions == 0)
 				{
-				SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, ERR_R_PEM_LIB);
+				SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, SSL_R_NO_PEM_EXTENSIONS);
 				goto end;
 				}
 			else /* End of file, we're done */
@@ -1021,18 +1021,18 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
 		/* Check that PEM name starts with "BEGIN SERVERINFO FOR " */
 		if (strlen(name) < strlen(namePrefix))
 			{
-			SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, ERR_R_PEM_LIB);
+			SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, SSL_R_PEM_NAME_TOO_SHORT);
 			goto end;
 			}
 		if (strncmp(name, namePrefix, strlen(namePrefix)) != 0)
 			{
-			SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, ERR_R_PEM_LIB);
+			SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, SSL_R_PEM_NAME_BAD_PREFIX);
 			goto end;
 			}
 		/* Check that the decoded PEM data is plausible (valid length field) */
 		if (extension_length < 4 || (extension[2] << 8) + extension[3] != extension_length - 4)
 			{
-			SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, ERR_R_PEM_LIB);
+			SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, SSL_R_BAD_DATA);
 			goto end;
 			}
 		/* Append the decoded extension to the serverinfo buffer */

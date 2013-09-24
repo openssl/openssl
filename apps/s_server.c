@@ -1970,7 +1970,10 @@ bad:
 #ifndef OPENSSL_NO_TLSEXT
 	if (s_serverinfo_file != NULL
 	    && !SSL_CTX_use_serverinfo_file(ctx, s_serverinfo_file))
+		{
+		ERR_print_errors(bio_err);
 		goto end;
+		}
 	if (c_auth)
 		{
 		SSL_CTX_set_custom_srv_ext(ctx, TLSEXT_TYPE_client_authz, authz_tlsext_cb, authz_tlsext_generate_cb, bio_err);
