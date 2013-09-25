@@ -592,7 +592,8 @@ static int serverinfo_cli_cb(SSL* s, unsigned short ext_type,
 	ext_buf[3] = inlen & 0xFF;
 	memcpy(ext_buf+4, in, inlen);
 
-	BIO_snprintf(pem_name, sizeof(pem_name), "SERVER_INFO %d", ext_type);
+	BIO_snprintf(pem_name, sizeof(pem_name), "SERVERINFO FOR EXTENSION %d",
+		     ext_type);
 	PEM_write_bio(bio_c_out, pem_name, "", ext_buf, 4 + inlen);
 	return 1;
 	}
