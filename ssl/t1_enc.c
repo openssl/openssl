@@ -316,56 +316,30 @@ static int tls1_generate_key_block(SSL *s, unsigned char *km,
 	return ret;
 	}
 
-int tls1_change_cipher_state(SSL *s, int which)
+/* tls1_change_cipher_state_cipher performs the work needed to switch cipher
+ * states when using EVP_CIPHER. The argument |is_read| is true iff this
+ * function is being called due to reading, as opposed to writing, a
+ * ChangeCipherSpec message. In order to support export ciphersuites,
+ * use_client_keys indicates whether the key material provided is in the
+ * "client write" direction. */
+static int tls1_change_cipher_state_cipher(SSL *s,
+	char is_read, char use_client_keys,
+	const unsigned char *mac_secret, unsigned mac_secret_len,
+	const unsigned char *key, unsigned key_len,
+	const unsigned char *iv, unsigned iv_len)
 	{
-	static const unsigned char empty[]="";
-	unsigned char *p,*mac_secret;
-	unsigned char *exp_label;
-	unsigned char tmp1[EVP_MAX_KEY_LENGTH];
-	unsigned char tmp2[EVP_MAX_KEY_LENGTH];
-	unsigned char iv1[EVP_MAX_IV_LENGTH*2];
-	unsigned char iv2[EVP_MAX_IV_LENGTH*2];
-	unsigned char *ms,*key,*iv;
-	int client_write;
-	EVP_CIPHER_CTX *dd;
-	const EVP_CIPHER *c;
-#ifndef OPENSSL_NO_COMP
-	const SSL_COMP *comp;
-#endif
-	const EVP_MD *m;
-	int mac_type;
-	int *mac_secret_size;
+	const EVP_CIPHER *cipher = s->s3->tmp.new_sym_enc;
+	const char is_export = SSL_C_IS_EXPORT(s->s3->tmp.new_cipher) != 0;
+	EVP_CIPHER_CTX *cipher_ctx;
 	EVP_MD_CTX *mac_ctx;
-	EVP_PKEY *mac_key;
-	int is_export,n,i,j,k,exp_label_len,cl;
-	int reuse_dd = 0;
+	char is_aead_cipher;
 
-	is_export=SSL_C_IS_EXPORT(s->s3->tmp.new_cipher);
-	c=s->s3->tmp.new_sym_enc;
-	m=s->s3->tmp.new_hash;
-	mac_type = s->s3->tmp.new_mac_pkey_type;
-#ifndef OPENSSL_NO_COMP
-	comp=s->s3->tmp.new_compression;
-#endif
+	unsigned char export_tmp1[EVP_MAX_KEY_LENGTH];
+	unsigned char export_tmp2[EVP_MAX_KEY_LENGTH];
+	unsigned char export_iv1[EVP_MAX_IV_LENGTH * 2];
+	unsigned char export_iv2[EVP_MAX_IV_LENGTH * 2];
 
-#ifdef KSSL_DEBUG
-	printf("tls1_change_cipher_state(which= %d) w/\n", which);
-	printf("\talg= %ld/%ld, comp= %p\n",
-	       s->s3->tmp.new_cipher->algorithm_mkey,
-	       s->s3->tmp.new_cipher->algorithm_auth,
-	       comp);
-	printf("\tevp_cipher == %p ==? &d_cbc_ede_cipher3\n", c);
-	printf("\tevp_cipher: nid, blksz= %d, %d, keylen=%d, ivlen=%d\n",
-                c->nid,c->block_size,c->key_len,c->iv_len);
-	printf("\tkey_block: len= %d, data= ", s->s3->tmp.key_block_length);
-	{
-        int i;
-        for (i=0; i<s->s3->tmp.key_block_length; i++)
-		printf("%02x", s->s3->tmp.key_block[i]);  printf("\n");
-        }
-#endif	/* KSSL_DEBUG */
-
-	if (which & SSL3_CC_READ)
+	if (is_read)
 		{
 		if (s->s3->tmp.new_cipher->algorithm2 & TLS1_STREAM_MAC)
 			s->mac_flags |= SSL_MAC_FLAG_READ_MAC_STREAM;
@@ -373,19 +347,167 @@ int tls1_change_cipher_state(SSL *s, int which)
 			s->mac_flags &= ~SSL_MAC_FLAG_READ_MAC_STREAM;
 
 		if (s->enc_read_ctx != NULL)
-			reuse_dd = 1;
+			EVP_CIPHER_CTX_cleanup(s->enc_read_ctx);
 		else if ((s->enc_read_ctx=OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
 			goto err;
 		else
 			/* make sure it's intialized in case we exit later with an error */
 			EVP_CIPHER_CTX_init(s->enc_read_ctx);
-		dd= s->enc_read_ctx;
-		mac_ctx=ssl_replace_hash(&s->read_hash,NULL);
+
+		cipher_ctx = s->enc_read_ctx;
+		mac_ctx = ssl_replace_hash(&s->read_hash, NULL);
+
+		memcpy(s->s3->read_mac_secret, mac_secret, mac_secret_len);
+		s->s3->read_mac_secret_size = mac_secret_len;
+		}
+	else
+		{
+		if (s->s3->tmp.new_cipher->algorithm2 & TLS1_STREAM_MAC)
+			s->mac_flags |= SSL_MAC_FLAG_WRITE_MAC_STREAM;
+		else
+			s->mac_flags &= ~SSL_MAC_FLAG_WRITE_MAC_STREAM;
+
+		if (s->enc_write_ctx != NULL)
+			EVP_CIPHER_CTX_cleanup(s->enc_write_ctx);
+		else if ((s->enc_write_ctx=OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
+			goto err;
+		else
+			/* make sure it's intialized in case we exit later with an error */
+			EVP_CIPHER_CTX_init(s->enc_write_ctx);
+
+		cipher_ctx = s->enc_write_ctx;
+		mac_ctx = ssl_replace_hash(&s->write_hash, NULL);
+
+		memcpy(s->s3->write_mac_secret, mac_secret, mac_secret_len);
+		s->s3->write_mac_secret_size = mac_secret_len;
+		}
+
+	if (is_export)
+		{
+		/* In here I set both the read and write key/iv to the
+		 * same value since only the correct one will be used :-).
+		 */
+		const unsigned char *label;
+		unsigned label_len;
+
+		if (use_client_keys)
+			{
+			label = (const unsigned char*) TLS_MD_CLIENT_WRITE_KEY_CONST;
+			label_len = TLS_MD_CLIENT_WRITE_KEY_CONST_SIZE;
+			}
+		else
+			{
+			label = (const unsigned char*) TLS_MD_SERVER_WRITE_KEY_CONST;
+			label_len = TLS_MD_SERVER_WRITE_KEY_CONST_SIZE;
+			}
+
+		if (!tls1_PRF(ssl_get_algorithm2(s),
+				label, label_len,
+				s->s3->client_random, SSL3_RANDOM_SIZE,
+				s->s3->server_random, SSL3_RANDOM_SIZE,
+				NULL, 0, NULL, 0,
+				key /* secret */, key_len /* secret length */,
+				export_tmp1 /* output */,
+				export_tmp2 /* scratch space */,
+				EVP_CIPHER_key_length(s->s3->tmp.new_sym_enc) /* output length */))
+			return 0;
+		key = export_tmp1;
+
+		if (iv_len > 0)
+			{
+			static const unsigned char empty[] = "";
+
+			if (!tls1_PRF(ssl_get_algorithm2(s),
+					TLS_MD_IV_BLOCK_CONST, TLS_MD_IV_BLOCK_CONST_SIZE,
+					s->s3->client_random, SSL3_RANDOM_SIZE,
+					s->s3->server_random, SSL3_RANDOM_SIZE,
+					NULL, 0, NULL, 0,
+					empty /* secret */ ,0 /* secret length */,
+					export_iv1 /* output */,
+					export_iv2 /* scratch space */,
+					iv_len * 2 /* output length */))
+				return 0;
+
+			if (use_client_keys)
+				iv = export_iv1;
+			else
+				iv = &export_iv1[iv_len];
+			}
+		}
+
+	/* is_aead_cipher indicates whether the EVP_CIPHER implements an AEAD
+	 * interface. This is different from the newer EVP_AEAD interface. */
+	is_aead_cipher = (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0;
+
+	if (!is_aead_cipher)
+		{
+		EVP_PKEY *mac_key =
+			EVP_PKEY_new_mac_key(s->s3->tmp.new_mac_pkey_type,
+					     NULL, mac_secret, mac_secret_len);
+		if (!mac_key)
+			return 0;
+		EVP_DigestSignInit(mac_ctx, NULL, s->s3->tmp.new_hash, NULL, mac_key);
+		EVP_PKEY_free(mac_key);
+		}
+
+	if (EVP_CIPHER_mode(cipher) == EVP_CIPH_GCM_MODE)
+		{
+		EVP_CipherInit_ex(cipher_ctx, cipher, NULL /* engine */, key,
+				  NULL /* iv */, !is_read);
+		EVP_CIPHER_CTX_ctrl(cipher_ctx, EVP_CTRL_GCM_SET_IV_FIXED, iv_len, (void*) iv);
+		}
+	else
+		EVP_CipherInit_ex(cipher_ctx, cipher, NULL /* engine */, key, iv, !is_read);
+
+	/* Needed for "composite" AEADs, such as RC4-HMAC-MD5 */
+	if (is_aead_cipher && mac_secret_len > 0)
+		EVP_CIPHER_CTX_ctrl(cipher_ctx, EVP_CTRL_AEAD_SET_MAC_KEY,
+				    mac_secret_len, (void*) mac_secret);
+
+	if (is_export)
+		{
+		OPENSSL_cleanse(export_tmp1, sizeof(export_tmp1));
+		OPENSSL_cleanse(export_tmp2, sizeof(export_tmp1));
+		OPENSSL_cleanse(export_iv1, sizeof(export_iv1));
+		OPENSSL_cleanse(export_iv2, sizeof(export_iv2));
+		}
+
+	return 1;
+
+err:
+	SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE_CIPHER, ERR_R_MALLOC_FAILURE);
+	return 0;
+	}
+
+int tls1_change_cipher_state(SSL *s, int which)
+	{
+	/* is_read is true if we have just read a ChangeCipherSpec message -
+	 * i.e. we need to update the read cipherspec. Otherwise we have just
+	 * written one. */
+	const char is_read = (which & SSL3_CC_READ) != 0;
+	/* use_client_keys is true if we wish to use the keys for the "client
+	 * write" direction. This is the case if we're a client sending a
+	 * ChangeCipherSpec, or a server reading a client's ChangeCipherSpec. */
+	const char use_client_keys = which == SSL3_CHANGE_CIPHER_CLIENT_WRITE ||
+				     which == SSL3_CHANGE_CIPHER_SERVER_READ;
+	const unsigned char *client_write_mac_secret, *server_write_mac_secret, *mac_secret;
+	const unsigned char *client_write_key, *server_write_key, *key;
+	const unsigned char *client_write_iv, *server_write_iv, *iv;
+	const EVP_CIPHER *cipher = s->s3->tmp.new_sym_enc;
+	unsigned key_len, iv_len, mac_secret_len;
+	const unsigned char *key_data;
+	const char is_export = SSL_C_IS_EXPORT(s->s3->tmp.new_cipher) != 0;
+
+	/* Update compression contexts. */
 #ifndef OPENSSL_NO_COMP
+	const SSL_COMP *comp = s->s3->tmp.new_compression;
+
+	if (is_read)
+		{
 		if (s->expand != NULL)
 			{
 			COMP_CTX_free(s->expand);
-			s->expand=NULL;
+			s->expand = NULL;
 			}
 		if (comp != NULL)
 			{
@@ -393,210 +515,113 @@ int tls1_change_cipher_state(SSL *s, int which)
 			if (s->expand == NULL)
 				{
 				SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE,SSL_R_COMPRESSION_LIBRARY_ERROR);
-				goto err2;
+				return 0;
 				}
 			if (s->s3->rrec.comp == NULL)
-				s->s3->rrec.comp=(unsigned char *)
-					OPENSSL_malloc(SSL3_RT_MAX_ENCRYPTED_LENGTH);
+				s->s3->rrec.comp =
+					(unsigned char *)OPENSSL_malloc(SSL3_RT_MAX_ENCRYPTED_LENGTH);
 			if (s->s3->rrec.comp == NULL)
 				goto err;
 			}
-#endif
-		/* this is done by dtls1_reset_seq_numbers for DTLS1_VERSION */
- 		if (s->version != DTLS1_VERSION)
-			memset(&(s->s3->read_sequence[0]),0,8);
-		mac_secret= &(s->s3->read_mac_secret[0]);
-		mac_secret_size=&(s->s3->read_mac_secret_size);
 		}
 	else
 		{
-		if (s->s3->tmp.new_cipher->algorithm2 & TLS1_STREAM_MAC)
-			s->mac_flags |= SSL_MAC_FLAG_WRITE_MAC_STREAM;
-			else
-			s->mac_flags &= ~SSL_MAC_FLAG_WRITE_MAC_STREAM;
-		if (s->enc_write_ctx != NULL)
-			reuse_dd = 1;
-		else if ((s->enc_write_ctx=OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
-			goto err;
-		else
-			/* make sure it's intialized in case we exit later with an error */
-			EVP_CIPHER_CTX_init(s->enc_write_ctx);
-		dd= s->enc_write_ctx;
-		mac_ctx = ssl_replace_hash(&s->write_hash,NULL);
-#ifndef OPENSSL_NO_COMP
 		if (s->compress != NULL)
 			{
 			COMP_CTX_free(s->compress);
-			s->compress=NULL;
+			s->compress = NULL;
 			}
 		if (comp != NULL)
 			{
-			s->compress=COMP_CTX_new(comp->method);
+			s->compress = COMP_CTX_new(comp->method);
 			if (s->compress == NULL)
 				{
 				SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE,SSL_R_COMPRESSION_LIBRARY_ERROR);
-				goto err2;
+				return 0;
 				}
 			}
-#endif
-		/* this is done by dtls1_reset_seq_numbers for DTLS1_VERSION */
- 		if (s->version != DTLS1_VERSION)
-			memset(&(s->s3->write_sequence[0]),0,8);
-		mac_secret= &(s->s3->write_mac_secret[0]);
-		mac_secret_size = &(s->s3->write_mac_secret_size);
 		}
+#endif  /* OPENSSL_NO_COMP */
 
-	if (reuse_dd)
-		EVP_CIPHER_CTX_cleanup(dd);
+	/* Reset sequence number to zero. */
+	memset(is_read ? s->s3->read_sequence : s->s3->write_sequence, 0, 8);
 
-	p=s->s3->tmp.key_block;
-	i=*mac_secret_size=s->s3->tmp.new_mac_secret_size;
+	/* key_arg is used for SSLv2. We don't need it for TLS. */
+	s->session->key_arg_length = 0;
 
-	cl=EVP_CIPHER_key_length(c);
-	j=is_export ? (cl < SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher) ?
-	               cl : SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher)) : cl;
-	/* Was j=(exp)?5:EVP_CIPHER_key_length(c); */
-	/* If GCM mode only part of IV comes from PRF */
-	if (EVP_CIPHER_mode(c) == EVP_CIPH_GCM_MODE)
-		k = EVP_GCM_TLS_FIXED_IV_LEN;
+	mac_secret_len = s->s3->tmp.new_mac_secret_size;
+
+	key_len = EVP_CIPHER_key_length(cipher);
+	if (is_export && key_len > SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher))
+		key_len = SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher);
+
+	if (EVP_CIPHER_mode(cipher) == EVP_CIPH_GCM_MODE)
+		iv_len = EVP_GCM_TLS_FIXED_IV_LEN;
 	else
-		k=EVP_CIPHER_iv_length(c);
-	if (	(which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) ||
-		(which == SSL3_CHANGE_CIPHER_SERVER_READ))
+		iv_len = EVP_CIPHER_iv_length(cipher);
+
+	key_data = s->s3->tmp.key_block;
+	client_write_mac_secret = key_data; key_data += mac_secret_len;
+	server_write_mac_secret = key_data; key_data += mac_secret_len;
+	client_write_key =        key_data; key_data += key_len;
+	server_write_key =        key_data; key_data += key_len;
+	client_write_iv  =        key_data; key_data += iv_len;
+	server_write_iv  =        key_data; key_data += iv_len;
+
+	if (use_client_keys)
 		{
-		ms=  &(p[ 0]); n=i+i;
-		key= &(p[ n]); n+=j+j;
-		iv=  &(p[ n]); n+=k+k;
-		exp_label=(unsigned char *)TLS_MD_CLIENT_WRITE_KEY_CONST;
-		exp_label_len=TLS_MD_CLIENT_WRITE_KEY_CONST_SIZE;
-		client_write=1;
+		mac_secret = client_write_mac_secret;
+		key = client_write_key;
+		iv = client_write_iv;
 		}
 	else
 		{
-		n=i;
-		ms=  &(p[ n]); n+=i+j;
-		key= &(p[ n]); n+=j+k;
-		iv=  &(p[ n]); n+=k;
-		exp_label=(unsigned char *)TLS_MD_SERVER_WRITE_KEY_CONST;
-		exp_label_len=TLS_MD_SERVER_WRITE_KEY_CONST_SIZE;
-		client_write=0;
+		mac_secret = server_write_mac_secret;
+		key = server_write_key;
+		iv = server_write_iv;
 		}
 
-	if (n > s->s3->tmp.key_block_length)
+	if (key_data - s->s3->tmp.key_block != s->s3->tmp.key_block_length)
 		{
 		SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE,ERR_R_INTERNAL_ERROR);
-		goto err2;
+		return 0;
 		}
 
-	memcpy(mac_secret,ms,i);
-
-	if (!(EVP_CIPHER_flags(c)&EVP_CIPH_FLAG_AEAD_CIPHER))
-		{
-		mac_key = EVP_PKEY_new_mac_key(mac_type, NULL,
-				mac_secret,*mac_secret_size);
-		EVP_DigestSignInit(mac_ctx,NULL,m,NULL,mac_key);
-		EVP_PKEY_free(mac_key);
-		}
-#ifdef TLS_DEBUG
-printf("which = %04X\nmac key=",which);
-{ int z; for (z=0; z<i; z++) printf("%02X%c",ms[z],((z+1)%16)?' ':'\n'); }
-#endif
-	if (is_export)
-		{
-		/* In here I set both the read and write key/iv to the
-		 * same value since only the correct one will be used :-).
-		 */
-		if (!tls1_PRF(ssl_get_algorithm2(s),
-				exp_label,exp_label_len,
-				s->s3->client_random,SSL3_RANDOM_SIZE,
-				s->s3->server_random,SSL3_RANDOM_SIZE,
-				NULL,0,NULL,0,
-				key,j,tmp1,tmp2,EVP_CIPHER_key_length(c)))
-			goto err2;
-		key=tmp1;
-
-		if (k > 0)
-			{
-			if (!tls1_PRF(ssl_get_algorithm2(s),
-					TLS_MD_IV_BLOCK_CONST,TLS_MD_IV_BLOCK_CONST_SIZE,
-					s->s3->client_random,SSL3_RANDOM_SIZE,
-					s->s3->server_random,SSL3_RANDOM_SIZE,
-					NULL,0,NULL,0,
-					empty,0,iv1,iv2,k*2))
-				goto err2;
-			if (client_write)
-				iv=iv1;
-			else
-				iv= &(iv1[k]);
-			}
-		}
-
-	s->session->key_arg_length=0;
-#ifdef KSSL_DEBUG
-	{
-        int i;
-	printf("EVP_CipherInit_ex(dd,c,key=,iv=,which)\n");
-	printf("\tkey= "); for (i=0; i<c->key_len; i++) printf("%02x", key[i]);
-	printf("\n");
-	printf("\t iv= "); for (i=0; i<c->iv_len; i++) printf("%02x", iv[i]);
-	printf("\n");
+	if (!tls1_change_cipher_state_cipher(s, is_read, use_client_keys,
+					     mac_secret, mac_secret_len,
+					     key, key_len,
+					     iv, iv_len)) {
+		return 0;
 	}
-#endif	/* KSSL_DEBUG */
-
-	if (EVP_CIPHER_mode(c) == EVP_CIPH_GCM_MODE)
-		{
-		EVP_CipherInit_ex(dd,c,NULL,key,NULL,(which & SSL3_CC_WRITE));
-		EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_GCM_SET_IV_FIXED, k, iv);
-		}
-	else	
-		EVP_CipherInit_ex(dd,c,NULL,key,iv,(which & SSL3_CC_WRITE));
-
-	/* Needed for "composite" AEADs, such as RC4-HMAC-MD5 */
-	if ((EVP_CIPHER_flags(c)&EVP_CIPH_FLAG_AEAD_CIPHER) && *mac_secret_size)
-		EVP_CIPHER_CTX_ctrl(dd,EVP_CTRL_AEAD_SET_MAC_KEY,
-				*mac_secret_size,mac_secret);
 
 #ifdef OPENSSL_SSL_TRACE_CRYPTO
 	if (s->msg_callback)
 		{
 		int wh = which & SSL3_CC_WRITE ? TLS1_RT_CRYPTO_WRITE : 0;
-		if (*mac_secret_size)
+		if (mac_secret_len)
 			s->msg_callback(2, s->version, wh | TLS1_RT_CRYPTO_MAC,
-						mac_secret, *mac_secret_size,
+						mac_secret, mac_secret_len,
 						s, s->msg_callback_arg);
-		if (c->key_len)
+		if (key_len)
 			s->msg_callback(2, s->version, wh | TLS1_RT_CRYPTO_KEY,
-						key, c->key_len,
+						key, key_len,
 						s, s->msg_callback_arg);
-		if (k)
+		if (iv_len)
 			{
-			if (EVP_CIPHER_mode(c) == EVP_CIPH_GCM_MODE)
+			if (EVP_CIPHER_mode(cipher) == EVP_CIPH_GCM_MODE)
 				wh |= TLS1_RT_CRYPTO_FIXED_IV;
 			else
 				wh |= TLS1_RT_CRYPTO_IV;
-			s->msg_callback(2, s->version, wh, iv, k,
+			s->msg_callback(2, s->version, wh, iv, iv_len,
 						s, s->msg_callback_arg);
 			}
 		}
 #endif
 
-#ifdef TLS_DEBUG
-printf("which = %04X\nkey=",which);
-{ int z; for (z=0; z<EVP_CIPHER_key_length(c); z++) printf("%02X%c",key[z],((z+1)%16)?' ':'\n'); }
-printf("\niv=");
-{ int z; for (z=0; z<k; z++) printf("%02X%c",iv[z],((z+1)%16)?' ':'\n'); }
-printf("\n");
-#endif
-
-	OPENSSL_cleanse(tmp1,sizeof(tmp1));
-	OPENSSL_cleanse(tmp2,sizeof(tmp1));
-	OPENSSL_cleanse(iv1,sizeof(iv1));
-	OPENSSL_cleanse(iv2,sizeof(iv2));
-	return(1);
+	return 1;
 err:
-	SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE,ERR_R_MALLOC_FAILURE);
-err2:
-	return(0);
+	SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE, ERR_R_MALLOC_FAILURE);
+	return 0;
 	}
 
 int tls1_setup_key_block(SSL *s)
@@ -608,6 +633,7 @@ int tls1_setup_key_block(SSL *s)
 	SSL_COMP *comp;
 	int mac_type= NID_undef,mac_secret_size=0;
 	int ret=0;
+	int iv_len;
 
 #ifdef KSSL_DEBUG
 	printf ("tls1_setup_key_block()\n");
@@ -622,11 +648,16 @@ int tls1_setup_key_block(SSL *s)
 		return(0);
 		}
 
+	if (EVP_CIPHER_mode(c) == EVP_CIPH_GCM_MODE)
+		iv_len = EVP_GCM_TLS_FIXED_IV_LEN;
+	else
+		iv_len = EVP_CIPHER_iv_length(c);
+
 	s->s3->tmp.new_sym_enc=c;
 	s->s3->tmp.new_hash=hash;
 	s->s3->tmp.new_mac_pkey_type = mac_type;
 	s->s3->tmp.new_mac_secret_size = mac_secret_size;
-	num=EVP_CIPHER_key_length(c)+mac_secret_size+EVP_CIPHER_iv_length(c);
+	num=EVP_CIPHER_key_length(c)+mac_secret_size+iv_len;
 	num*=2;
 
 	ssl3_cleanup_key_block(s);
