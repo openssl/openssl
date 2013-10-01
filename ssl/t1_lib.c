@@ -1910,6 +1910,7 @@ static void ssl_check_for_safari(SSL *s, const unsigned char *data, const unsign
 
 	s->s3->is_probably_safari = 1;
 }
+#endif /* !OPENSSL_NO_EC */
 
 /* tls1_alpn_handle_client_hello is called to process the ALPN extension in a
  * ClientHello.
