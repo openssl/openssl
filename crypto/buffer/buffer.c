@@ -237,7 +237,7 @@ size_t BUF_strlcat(char *dst, const char *src, size_t size)
 	return l + BUF_strlcpy(dst, src, size);
 	}
 
-void BUF_reverse(unsigned char *out, unsigned char *in, size_t size)
+void BUF_reverse(unsigned char *out, const unsigned char *in, size_t size)
 	{
 	size_t i;
 	if (in)
