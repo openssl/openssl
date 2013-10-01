@@ -652,6 +652,12 @@ $code.=<<___;
 #if __ARM_ARCH__>=7
 .text
 .syntax	unified 	@ ARMv7-capable assembler is expected to handle this
+#ifdef __thumb2__
+.thumb
+#else
+.code   32
+#endif
+
 .fpu	neon
 
 .type	_bsaes_decrypt8,%function

@@ -62,6 +62,11 @@ $code=<<___;
 .code	32
 #else
 .syntax	unified
+# ifdef __thumb2__
+.thumb
+# else
+.code	32
+# endif
 #endif
 
 .type	AES_Te,%object
