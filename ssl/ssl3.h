@@ -590,7 +590,16 @@ typedef struct ssl3_state_st
 	char is_probably_safari;
 #endif /* !OPENSSL_NO_EC */
 
-#endif /* !OPENSSL_NO_TLSEXT */
+	/* ALPN information
+	 * (we are in the process of transitioning from NPN to ALPN.) */
+
+	/* In a server these point to the selected ALPN protocol after the
+	 * ClientHello has been processed. In a client these contain the
+	 * protocol that the server selected once the ServerHello has been
+	 * processed. */
+	unsigned char *alpn_selected;
+	unsigned alpn_selected_len;
+#endif	/* OPENSSL_NO_TLSEXT */
 	} SSL3_STATE;
 
 #endif
