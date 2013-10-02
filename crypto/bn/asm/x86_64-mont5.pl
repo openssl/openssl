@@ -31,6 +31,21 @@ die "can't locate x86_64-xlate.pl";
 open OUT,"| \"$^X\" $xlate $flavour $output";
 *STDOUT=*OUT;
 
+if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
+		=~ /GNU assembler version ([2-9]\.[0-9]+)/) {
+	$addx = ($1>=2.22);
+}
+
+if (!$addx && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
+	    `nasm -v 2>&1` =~ /NASM version ([2-9]\.[0-9]+)/) {
+	$addx = ($1>=2.10);
+}
+
+if (!$addx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
+	    `ml64 2>&1` =~ /Version ([0-9]+)\./) {
+	$addx = ($1>=11);
+}
+
 # int bn_mul_mont_gather5(
 $rp="%rdi";	# BN_ULONG *rp,
 $ap="%rsi";	# const BN_ULONG *ap,
@@ -53,6 +68,8 @@ $m1="%rbp";
 $code=<<___;
 .text
 
+.extern	OPENSSL_ia32cap_P
+
 .globl	bn_mul_mont_gather5
 .type	bn_mul_mont_gather5,\@function,6
 .align	64
@@ -61,6 +78,11 @@ bn_mul_mont_gather5:
 	jnz	.Lmul_enter
 	cmp	\$8,${num}d
 	jb	.Lmul_enter
+___
+$code.=<<___ if ($addx);
+	mov	OPENSSL_ia32cap_P+8(%rip),%r11d
+___
+$code.=<<___;
 	jmp	.Lmul4x_enter
 
 .align	16
@@ -347,6 +369,13 @@ $code.=<<___;
 .align	16
 bn_mul4x_mont_gather5:
 .Lmul4x_enter:
+___
+$code.=<<___ if ($addx);
+	and	\$0x80100,%r11d
+	cmp	\$0x80100,%r11d
+	je	.Lmulx4x_enter
+___
+$code.=<<___;
 	mov	${num}d,${num}d
 	mov	`($win64?56:8)`(%rsp),%r10d	# load 7th argument
 	push	%rbx
@@ -828,7 +857,404 @@ $code.=<<___;
 .size	bn_mul4x_mont_gather5,.-bn_mul4x_mont_gather5
 ___
 }}}
+if ($addx) {{{
+my $bp="%rdx";	# original value
 
+$code.=<<___;
+.type	bn_mulx4x_mont_gather5,\@function,6
+.align	32
+bn_mulx4x_mont_gather5:
+.Lmulx4x_enter:
+	mov	%rsp,%rax
+	push	%rbx
+	push	%rbp
+	push	%r12
+	push	%r13
+	push	%r14
+	push	%r15
+___
+$code.=<<___ if ($win64);
+	lea	-0x28(%rsp),%rsp
+	movaps	%xmm6,(%rsp)
+	movaps	%xmm7,0x10(%rsp)
+___
+$code.=<<___;
+	shl	\$3,${num}d		# convert $num to bytes
+	xor	%r10,%r10
+	mov	%rsp,%r11		# put aside %rsp
+	sub	$num,%r10		# -$num
+	mov	($n0),$n0		# *n0
+	lea	-72(%rsp,%r10),%rsp	# alloca(frame+$num+8)
+	and	\$-128,%rsp
+	##############################################################
+	# Stack layout
+	# +0	num
+	# +8	off-loaded &b[i]
+	# +16	end of b[num]
+	# +24	saved n0
+	# +32	saved rp
+	# +40
+	# +48	inner counter
+	# +56	saved %rsp
+	# +64	tmp[num+1]
+	#
+	mov	$num,0(%rsp)		# save $num
+	shl	\$5,$num
+	lea	256($bp,$num),%r10
+	shr	\$5+5,$num
+	mov	%r10,16(%rsp)		# end of b[num]
+	sub	\$1,$num
+	mov	$n0, 24(%rsp)		# save *n0
+	mov	$rp, 32(%rsp)		# save $rp
+	mov	$num,48(%rsp)		# inner counter
+	mov	%r11,56(%rsp)		# save original %rsp
+	jmp	.Lmulx4x_body
+
+.align	32
+.Lmulx4x_body:
+___
+my ($aptr, $bptr, $nptr, $tptr, $mi,  $bi,  $zero, $num)=
+   ("%rsi","%rdi","%rcx","%rbx","%r8","%r9","%rbp","%rax");
+my $rptr=$bptr;
+my $STRIDE=2**5*8;		# 5 is "window size"
+my $N=$STRIDE/4;		# should match cache line size
+$code.=<<___;
+	mov	`($win64?56:8)`(%rax),%r10d	# load 7th argument
+	mov	%r10,%r11
+	shr	\$`log($N/8)/log(2)`,%r10
+	and	\$`$N/8-1`,%r11
+	not	%r10
+	lea	.Lmagic_masks(%rip),%rax
+	and	\$`2**5/($N/8)-1`,%r10	# 5 is "window size"
+	lea	96($bp,%r11,8),$bptr	# pointer within 1st cache line
+	movq	0(%rax,%r10,8),%xmm4	# set of masks denoting which
+	movq	8(%rax,%r10,8),%xmm5	# cache line contains element
+	movq	16(%rax,%r10,8),%xmm6	# denoted by 7th argument
+	movq	24(%rax,%r10,8),%xmm7
+
+	movq	`0*$STRIDE/4-96`($bptr),%xmm0
+	movq	`1*$STRIDE/4-96`($bptr),%xmm1
+	pand	%xmm4,%xmm0
+	movq	`2*$STRIDE/4-96`($bptr),%xmm2
+	pand	%xmm5,%xmm1
+	movq	`3*$STRIDE/4-96`($bptr),%xmm3
+	pand	%xmm6,%xmm2
+	por	%xmm1,%xmm0
+	pand	%xmm7,%xmm3
+	por	%xmm2,%xmm0
+	lea	$STRIDE($bptr),$bptr
+	por	%xmm3,%xmm0
+
+	movq	%xmm0,%rdx		# bp[0]
+	movq	`0*$STRIDE/4-96`($bptr),%xmm0
+	movq	`1*$STRIDE/4-96`($bptr),%xmm1
+	pand	%xmm4,%xmm0
+	movq	`2*$STRIDE/4-96`($bptr),%xmm2
+	pand	%xmm5,%xmm1
+
+	lea	64+32(%rsp),$tptr
+	mov	%rdx,$bi
+	xor	$zero,$zero		# of=0,cf=0
+
+	mulx	0*8($aptr),$mi,%rax	# a[0]*b[0]
+	mulx	1*8($aptr),%r11,%r14	# a[1]*b[0]
+	adcx	%rax,%r11
+	mulx	2*8($aptr),%r12,%r13	# ...
+	adcx	%r14,%r12
+	adcx	$zero,%r13
+
+	movq	`3*$STRIDE/4-96`($bptr),%xmm3
+	lea	$STRIDE($bptr),%r10	# next &b[i]
+	pand	%xmm6,%xmm2
+	por	%xmm1,%xmm0
+	pand	%xmm7,%xmm3
+
+	mov	$mi,$bptr		# borrow $bptr
+	imulq	24(%rsp),$mi		# "t[0]"*n0
+	xor	$zero,$zero		# cf=0, of=0
+
+	por	%xmm2,%xmm0
+	por	%xmm3,%xmm0
+	mov	%r10,8(%rsp)		# off-load &b[i]
+
+	mulx	3*8($aptr),%rax,%r14
+	 mov	$mi,%rdx
+	lea	4*8($aptr),$aptr
+	adcx	%rax,%r13
+	adcx	$zero,%r14		# cf=0
+
+	mulx	0*8($nptr),%rax,%r10
+	adcx	%rax,$bptr		# discarded
+	adox	%r11,%r10
+	mulx	1*8($nptr),%rax,%r11
+	adcx	%rax,%r10
+	adox	%r12,%r11
+	mulx	2*8($nptr),%rax,%r12
+	mov	48(%rsp),$bptr		# counter value
+	mov	%r10,-4*8($tptr)
+	adcx	%rax,%r11
+	adox	%r13,%r12
+	mulx	3*8($nptr),%rax,%r15
+	 mov	$bi,%rdx
+	mov	%r11,-3*8($tptr)
+	adcx	%rax,%r12
+	adox	$zero,%r15		# of=0
+	lea	4*8($nptr),$nptr
+	mov	%r12,-2*8($tptr)
+
+	jmp	.Lmulx4x_1st
+
+.align	32
+.Lmulx4x_1st:
+	adcx	$zero,%r15		# cf=0, modulo-scheduled
+	mulx	0*8($aptr),%r10,%rax	# a[4]*b[0]
+	adcx	%r14,%r10
+	mulx	1*8($aptr),%r11,%r14	# a[5]*b[0]
+	adcx	%rax,%r11
+	mulx	2*8($aptr),%r12,%rax	# ...
+	adcx	%r14,%r12
+	mulx	3*8($aptr),%r13,%r14
+	 .byte	0x66,0x66
+	 mov	$mi,%rdx
+	adcx	%rax,%r13
+	adcx	$zero,%r14		# cf=0
+	lea	4*8($aptr),$aptr
+	lea	4*8($tptr),$tptr
+
+	adox	%r15,%r10
+	mulx	0*8($nptr),%rax,%r15
+	adcx	%rax,%r10
+	adox	%r15,%r11
+	mulx	1*8($nptr),%rax,%r15
+	adcx	%rax,%r11
+	adox	%r15,%r12
+	.byte	0x3e
+	mulx	2*8($nptr),%rax,%r15
+	mov	%r10,-5*8($tptr)
+	mov	%r11,-4*8($tptr)
+	adcx	%rax,%r12
+	adox	%r15,%r13
+	mulx	3*8($nptr),%rax,%r15
+	 mov	$bi,%rdx
+	mov	%r12,-3*8($tptr)
+	adcx	%rax,%r13
+	adox	$zero,%r15
+	lea	4*8($nptr),$nptr
+	mov	%r13,-2*8($tptr)
+
+	dec	$bptr			# of=0, pass cf
+	jnz	.Lmulx4x_1st
+
+	mov	0(%rsp),$num		# load num
+	mov	8(%rsp),$bptr		# re-load &b[i]
+	movq	%xmm0,%rdx		# bp[1]
+	adc	$zero,%r15		# modulo-scheduled
+	add	%r15,%r14
+	sbb	%r15,%r15		# top-most carry
+	mov	%r14,-1*8($tptr)
+	jmp	.Lmulx4x_outer
+
+.align	32
+.Lmulx4x_outer:
+	sub	$num,$aptr		# rewind $aptr
+	mov	%r15,($tptr)		# save top-most carry
+	mov	64(%rsp),%r10
+	lea	64(%rsp),$tptr
+	sub	$num,$nptr		# rewind $nptr
+	xor	$zero,$zero		# cf=0, of=0
+	mov	%rdx,$bi
+
+	movq	`0*$STRIDE/4-96`($bptr),%xmm0
+	movq	`1*$STRIDE/4-96`($bptr),%xmm1
+	pand	%xmm4,%xmm0
+	movq	`2*$STRIDE/4-96`($bptr),%xmm2
+	pand	%xmm5,%xmm1
+
+	mulx	0*8($aptr),$mi,%rax	# a[0]*b[i]
+	adox	%r10,$mi
+	mov	1*8($tptr),%r10
+	mulx	1*8($aptr),%r11,%r14	# a[1]*b[i]
+	adcx	%rax,%r11
+	mulx	2*8($aptr),%r12,%r13	# ...
+	adox	%r10,%r11
+	adcx	%r14,%r12
+	adox	$zero,%r12
+	adcx	$zero,%r13
+
+	movq	`3*$STRIDE/4-96`($bptr),%xmm3
+	lea	$STRIDE($bptr),%r10	# next &b[i]
+	pand	%xmm6,%xmm2
+	por	%xmm1,%xmm0
+	pand	%xmm7,%xmm3
+
+	mov	$mi,$bptr		# borrow $bptr
+	imulq	24(%rsp),$mi		# "t[0]"*n0
+	xor	$zero,$zero		# cf=0, of=0
+
+	por	%xmm2,%xmm0
+	por	%xmm3,%xmm0
+	mov	%r10,8(%rsp)		# off-load &b[i]
+	mov	2*8($tptr),%r10
+
+	mulx	3*8($aptr),%rax,%r14
+	 mov	$mi,%rdx
+	adox	%r10,%r12
+	adcx	%rax,%r13
+	adox	3*8($tptr),%r13
+	adcx	$zero,%r14
+	lea	4*8($aptr),$aptr
+	lea	4*8($tptr),$tptr
+	adox	$zero,%r14
+
+	mulx	0*8($nptr),%rax,%r10
+	adcx	%rax,$bptr		# discarded
+	adox	%r11,%r10
+	mulx	1*8($nptr),%rax,%r11
+	adcx	%rax,%r10
+	adox	%r12,%r11
+	mulx	2*8($nptr),%rax,%r12
+	.byte	0x3e
+	mov	%r10,-4*8($tptr)
+	.byte	0x3e
+	mov	0*8($tptr),%r10
+	adcx	%rax,%r11
+	adox	%r13,%r12
+	mulx	3*8($nptr),%rax,%r15
+	 mov	$bi,%rdx
+	mov	%r11,-3*8($tptr)
+	adcx	%rax,%r12
+	adox	$zero,%r15		# of=0
+	mov	48(%rsp),$bptr		# counter value
+	mov	%r12,-2*8($tptr)
+	lea	4*8($nptr),$nptr
+
+	jmp	.Lmulx4x_inner
+
+.align	32
+.Lmulx4x_inner:
+	adcx	$zero,%r15		# cf=0, modulo-scheduled
+	adox	%r10,%r14
+	mulx	0*8($aptr),%r10,%rax	# a[4]*b[i]
+	mov	1*8($tptr),%r13
+	adcx	%r14,%r10
+	mulx	1*8($aptr),%r11,%r14	# a[5]*b[i]
+	adox	%rax,%r11
+	mulx	2*8($aptr),%r12,%rax	# ...
+	adcx	%r13,%r11
+	adox	%r14,%r12
+	mulx	3*8($aptr),%r13,%r14
+	 mov	$mi,%rdx
+	adcx	2*8($tptr),%r12
+	adox	%rax,%r13
+	adcx	3*8($tptr),%r13
+	adox	$zero,%r14		# of=0
+	lea	4*8($aptr),$aptr
+	.byte	0x48,0x8d,0x9b,0x20,0x00,0x00,0x00	# lea	4*8($tptr),$tptr
+	adcx	$zero,%r14		# cf=0
+
+	adox	%r15,%r10
+	.byte	0x3e,0xc4,0x62,0xfb,0xf6,0x79,0x00	# mulx	0*8($nptr),%rax,%r15
+	adcx	%rax,%r10
+	adox	%r15,%r11
+	mulx	1*8($nptr),%rax,%r15
+	adcx	%rax,%r11
+	adox	%r15,%r12
+	mulx	2*8($nptr),%rax,%r15
+	mov	%r10,-5*8($tptr)
+	mov	0*8($tptr),%r10
+	adcx	%rax,%r12
+	adox	%r15,%r13
+	mulx	3*8($nptr),%rax,%r15
+	 mov	$bi,%rdx
+	mov	%r11,-4*8($tptr)
+	mov	%r12,-3*8($tptr)
+	adcx	%rax,%r13
+	adox	$zero,%r15
+	lea	4*8($nptr),$nptr
+	mov	%r13,-2*8($tptr)
+
+	dec	$bptr			# of=0, pass cf
+	jnz	.Lmulx4x_inner
+
+	mov	0(%rsp),$num		# load num
+	mov	8(%rsp),$bptr		# re-load &b[i]
+	movq	%xmm0,%rdx		# bp[i+1]
+	adc	$zero,%r15		# modulo-scheduled
+	sub	%r10,$zero		# pull top-most carry
+	adc	%r15,%r14
+	sbb	%r15,%r15		# top-most carry
+	mov	%r14,-1*8($tptr)
+
+	cmp	16(%rsp),$bptr
+	jb	.Lmulx4x_outer
+
+	neg	$num
+	mov	32(%rsp),$rptr		# restore rp
+	lea	64(%rsp),$tptr
+
+	xor	%rdx,%rdx
+	pxor	%xmm0,%xmm0
+	mov	0*8($nptr,$num),%r8
+	mov	1*8($nptr,$num),%r9
+	neg	%r8
+	jmp	.Lmulx4x_sub_entry
+
+.align	32
+.Lmulx4x_sub:
+	mov	0*8($nptr,$num),%r8
+	mov	1*8($nptr,$num),%r9
+	not	%r8
+.Lmulx4x_sub_entry:
+	mov	2*8($nptr,$num),%r10
+	not	%r9
+	and	%r15,%r8
+	mov	3*8($nptr,$num),%r11
+	not	%r10
+	and	%r15,%r9
+	not	%r11
+	and	%r15,%r10
+	and	%r15,%r11
+
+	neg	%rdx			# mov %rdx,%cf
+	adc	0*8($tptr),%r8
+	adc	1*8($tptr),%r9
+	movdqa	%xmm0,($tptr)
+	adc	2*8($tptr),%r10
+	adc	3*8($tptr),%r11
+	movdqa	%xmm0,16($tptr)
+	lea	4*8($tptr),$tptr
+	sbb	%rdx,%rdx		# mov %cf,%rdx
+
+	mov	%r8,0*8($rptr)
+	mov	%r9,1*8($rptr)
+	mov	%r10,2*8($rptr)
+	mov	%r11,3*8($rptr)
+	lea	4*8($rptr),$rptr
+
+	add	\$32,$num
+	jnz	.Lmulx4x_sub
+
+	mov	56(%rsp),%rsi		# restore %rsp
+	mov	\$1,%rax
+___
+$code.=<<___ if ($win64);
+	movaps	(%rsi),%xmm6
+	movaps	0x10(%rsi),%xmm7
+	lea	0x28(%rsi),%rsi
+___
+$code.=<<___;
+	mov	(%rsi),%r15
+	mov	8(%rsi),%r14
+	mov	16(%rsi),%r13
+	mov	24(%rsi),%r12
+	mov	32(%rsi),%rbp
+	mov	40(%rsi),%rbx
+	lea	48(%rsi),%rsp
+.Lmulx4x_epilogue:
+	ret
+.size	bn_mulx4x_mont_gather5,.-bn_mulx4x_mont_gather5
+___
+}}}
 {
 my ($inp,$num,$tbl,$idx)=$win64?("%rcx","%rdx","%r8", "%r9") : # Win64 order
 				("%rdi","%rsi","%rdx","%rcx"); # Unix order
