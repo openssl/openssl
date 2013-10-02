@@ -94,7 +94,7 @@ typedef struct
 #endif
 
 extern unsigned int OPENSSL_ia32cap_P[3];
-#define AESNI_AVX_CAPABLE   (1<<(57-32)|1<<(60-32))
+#define AESNI_CAPABLE   (1<<(57-32))
 
 int aesni_set_encrypt_key(const unsigned char *userKey, int bits,
 			      AES_KEY *key);
@@ -204,7 +204,9 @@ static int aesni_cbc_hmac_sha256_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			iv = AES_BLOCK_SIZE;
 
 #if defined(STITCHED_CALL)
-		if (plen>(sha_off+iv) && (blocks=(plen-(sha_off+iv))/SHA256_CBLOCK)) {
+		if (OPENSSL_ia32cap_P[1]&(1<<(60-32)) &&
+		    plen>(sha_off+iv) &&
+		    (blocks=(plen-(sha_off+iv))/SHA256_CBLOCK)) {
 			SHA256_Update(&key->md,in+iv,sha_off);
 
 			(void)aesni_cbc_sha256_enc(in,out,blocks,&key->ks,
@@ -574,14 +576,14 @@ static EVP_CIPHER aesni_256_cbc_hmac_sha256_cipher =
 
 const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha256(void)
 	{
-	return((OPENSSL_ia32cap_P[1]&AESNI_AVX_CAPABLE)==AESNI_AVX_CAPABLE &&
+	return((OPENSSL_ia32cap_P[1]&AESNI_CAPABLE) &&
 		aesni_cbc_sha256_enc(NULL,NULL,0,NULL,NULL,NULL,NULL) ?
 		&aesni_128_cbc_hmac_sha256_cipher:NULL);
 	}
 
 const EVP_CIPHER *EVP_aes_256_cbc_hmac_sha256(void)
 	{
-	return((OPENSSL_ia32cap_P[1]&AESNI_AVX_CAPABLE)==AESNI_AVX_CAPABLE &&
+	return((OPENSSL_ia32cap_P[1]&AESNI_CAPABLE) &&
 		aesni_cbc_sha256_enc(NULL,NULL,0,NULL,NULL,NULL,NULL)?
 		&aesni_256_cbc_hmac_sha256_cipher:NULL);
 	}
