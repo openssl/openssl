@@ -250,8 +250,8 @@ my %globals;
 	# in $self->{label}, new gas requires sign extension...
 	use integer;
 	$self->{label} =~ s/(?<![\w\$\.])(0x?[0-9a-f]+)/oct($1)/egi;
-	$self->{label} =~ s/([0-9]+\s*[\*\/\%]\s*[0-9]+)/eval($1)/eg;
-	$self->{label} =~ s/([0-9]+)/$1<<32>>32/eg;
+	$self->{label} =~ s/\b([0-9]+\s*[\*\/\%]\s*[0-9]+)\b/eval($1)/eg;
+	$self->{label} =~ s/\b([0-9]+)\b/$1<<32>>32/eg;
 
 	if (!$self->{label} && $self->{index} && $self->{scale}==1 &&
 	    $self->{base} =~ /(rbp|r13)/) {
@@ -418,7 +418,7 @@ my %globals;
     }
     sub out {
 	my $self = shift;
-	if ($nasm && opcode->mnemonic()=~m/^j/) {
+	if ($nasm && opcode->mnemonic()=~m/^j(?![re]cxz)/) {
 	    "NEAR ".$self->{value};
 	} else {
 	    $self->{value};
