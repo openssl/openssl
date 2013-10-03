@@ -74,6 +74,9 @@ $bf_enc_src="";
 	  'aesni-sha256-x86_64' => 'crypto/aes',
           'rsaz-x86_64' => 'crypto/bn',
           'rsaz-avx2' => 'crypto/bn',
+	  'aesni-mb-x86_64' => 'crypto/aes',
+	  'sha1-mb-x86_64' => 'crypto/sha',
+	  'sha256-mb-x86_64' => 'crypto/sha',
          );
 
 # If I were feeling more clever, these could probably be extracted
