@@ -17,7 +17,7 @@ ASFLAGS= $(INCLUDES) $(ASFLAG)
 AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
-TEST=
+TEST=poly1305test
 APPS=
 
 LIB=$(TOP)/libcrypto.a

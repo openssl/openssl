@@ -47,6 +47,10 @@
  * ====================================================================
  */
 
+#ifdef PEDANTIC
+# include "poly1305.c"
+#else
+
 /* This implementation of poly1305 is by Andrew Moon
  * (https://github.com/floodyberry/poly1305-donna) and released as public
  * domain. It implements SIMD vectorization based on the algorithm described in
@@ -731,3 +735,5 @@ poly1305_donna_finish:
 	}
 
 #endif  /* !OPENSSL_NO_POLY1305 */
+
+#endif  /* !PEDANTIC */

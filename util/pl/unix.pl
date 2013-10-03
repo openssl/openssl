@@ -274,6 +274,7 @@ sub get_tests
   my %tests;
   my %alltests;
   my %fakes;
+  my $info = '';
   while (my $line = <M>)
     {
     chomp $line;
@@ -290,11 +291,18 @@ sub get_tests
 	$targets{$t} = '';
 	$alltests{$t} = undef;
         }
+      $info .= '# targets = ' . join(' ', sort keys %targets) . "\n";
+      }
+
+    if ($line =~ /^(?<t>\S+):(?<d>.*)$/ && !exists $targets{$1}) 
+      {
+      $info .= "# no match: $line\n";
       }
 
     if (($line =~ /^(?<t>\S+):(?<d>.*)$/ && exists $targets{$1})
 	|| $line =~ /^(?<t>test_(ss|gen) .*):(?<d>.*)/)
       {
+      $info .= "# match: $line\n";
       my $t = $+{t};
       my $d = $+{d};
       # If there are multiple targets stupid FreeBSD make runs the
@@ -399,6 +407,9 @@ sub get_tests
 		 'testssl',
 		 'testsslproxy',
 		 'serverinfo.pem',
+		 'chacha20_poly1305_tests.txt',
+		 'aes_128_gcm_tests.txt',
+		 'aes_256_gcm_tests.txt',
 	       );
   my $copies = copy_scripts(1, 'test', @copies);
   $copies .= copy_scripts(0, 'test', ('smcont.txt'));
@@ -433,7 +444,7 @@ sub get_tests
       }
     }
 
-  return "$scripts\n$copies\n$tests\n$all\n\n$each";
+  return "$info\n$scripts\n$copies\n$tests\n$all\n\n$each";
   }
 
 1;

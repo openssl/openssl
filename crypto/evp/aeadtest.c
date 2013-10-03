@@ -84,7 +84,7 @@ enum
 	CT,       /* hex encoded ciphertext (not including the authenticator,
 		     which is next. */
 	TAG,      /* hex encoded authenticator. */
-	NUM_TYPES,
+	NUM_TYPES
 	};
 
 static const char NAMES[6][NUM_TYPES] =
@@ -257,7 +257,7 @@ int main(int argc, char **argv)
 		unsigned int i, type_len = 0;
 
 		unsigned char *buf = NULL;
-		unsigned int *buf_len;
+		unsigned int *buf_len = NULL;
 
 		if (!fgets(line, sizeof(line), f))
 			break;
