@@ -23,14 +23,14 @@
 # to collect performance results, which for Cortex-A8 core are:
 #
 # encrypt	19.5 cycles per byte processed with 128-bit key
-# decrypt	24.0 cycles per byte processed with 128-bit key
+# decrypt	22.1 cycles per byte processed with 128-bit key
 # key conv.	440  cycles per 128-bit key/0.18 of 8x block
 #
-# Snapdragon S4 encrypts byte in 17.6 cycles and decrypts in 22.6,
+# Snapdragon S4 encrypts byte in 17.6 cycles and decrypts in 19.7,
 # which is [much] worse than anticipated (for further details see
 # http://www.openssl.org/~appro/Snapdragon-S4.html).
 #
-# Cortex-A15 manages in 14.2/19.6 cycles [when integer-only code
+# Cortex-A15 manages in 14.2/16.1 cycles [when integer-only code
 # manages in 20.0 cycles].
 #
 # When comparing to x86_64 results keep in mind that NEON unit is
@@ -377,6 +377,7 @@ sub MixColumns {
 # modified to emit output in order suitable for feeding back to aesenc[last]
 my @x=@_[0..7];
 my @t=@_[8..15];
+my $inv=@_[16];	# optional
 $code.=<<___;
 	vext.8	@t[0], @x[0], @x[0], #12	@ x0 <<< 32
 	vext.8	@t[1], @x[1], @x[1], #12
@@ -417,8 +418,9 @@ $code.=<<___;
 	veor	@t[3], @t[3], @x[7]
 	 vext.8	@x[6], @x[2], @x[2], #8
 	veor	@x[7], @t[1], @t[5]
+___
+$code.=<<___ if (!$inv);
 	veor	@x[2], @t[0], @t[4]
-
 	veor	@x[4], @x[4], @t[3]
 	veor	@x[5], @x[5], @t[7]
 	veor	@x[3], @x[3], @t[6]
@@ -426,9 +428,18 @@ $code.=<<___;
 	veor	@x[6], @x[6], @t[2]
 	 @ vmov	@x[7], @t[1]
 ___
+$code.=<<___ if ($inv);
+	veor	@t[3], @t[3], @x[4]
+	veor	@x[5], @x[5], @t[7]
+	veor	@x[2], @x[3], @t[6]
+	veor	@x[3], @t[0], @t[4]
+	veor	@x[4], @x[6], @t[2]
+	vmov	@x[6], @t[3]
+	 @ vmov	@x[7], @t[1]
+___
 }
 
-sub InvMixColumns {
+sub InvMixColumns_orig {
 my @x=@_[0..7];
 my @t=@_[8..15];
 
@@ -579,6 +590,54 @@ $code.=<<___;
 	@ vmov	@XMM[6], @t[6]
 	@ vmov	@XMM[7], @t[7]
 ___
+}
+
+sub InvMixColumns {
+my @x=@_[0..7];
+my @t=@_[8..15];
+
+# Thanks to Jussi Kivilinna for providing pointer to
+#
+# | 0e 0b 0d 09 |   | 02 03 01 01 |   | 05 00 04 00 |
+# | 09 0e 0b 0d | = | 01 02 03 01 | x | 00 05 00 04 |
+# | 0d 09 0e 0b |   | 01 01 02 03 |   | 04 00 05 00 |
+# | 0b 0d 09 0e |   | 03 01 01 02 |   | 00 04 00 05 |
+
+$code.=<<___;
+	@ multiplication by 0x05-0x00-0x04-0x00
+	vext.8	@t[0], @x[0], @x[0], #8
+	vext.8	@t[6], @x[6], @x[6], #8
+	vext.8	@t[7], @x[7], @x[7], #8
+	veor	@t[0], @t[0], @x[0]
+	vext.8	@t[1], @x[1], @x[1], #8
+	veor	@t[6], @t[6], @x[6]
+	vext.8	@t[2], @x[2], @x[2], #8
+	veor	@t[7], @t[7], @x[7]
+	vext.8	@t[3], @x[3], @x[3], #8
+	veor	@t[1], @t[1], @x[1]
+	vext.8	@t[4], @x[4], @x[4], #8
+	veor	@t[2], @t[2], @x[2]
+	vext.8	@t[5], @x[5], @x[5], #8
+	veor	@t[3], @t[3], @x[3]
+	veor	@t[4], @t[4], @x[4]
+	veor	@t[5], @t[5], @x[5]
+
+	 veor	@x[0], @x[0], @t[6]
+	 veor	@x[1], @x[1], @t[6]
+	 veor	@x[2], @x[2], @t[0]
+	 veor	@x[4], @x[4], @t[2]
+	 veor	@x[3], @x[3], @t[1]
+	 veor	@x[1], @x[1], @t[7]
+	 veor	@x[2], @x[2], @t[7]
+	 veor	@x[4], @x[4], @t[6]
+	 veor	@x[5], @x[5], @t[3]
+	 veor	@x[3], @x[3], @t[6]
+	 veor	@x[6], @x[6], @t[4]
+	 veor	@x[4], @x[4], @t[7]
+	 veor	@x[5], @x[5], @t[7]
+	 veor	@x[7], @x[7], @t[5]
+___
+	&MixColumns	(@x,@t,1);	# flipped 2<->3 and 4<->6
 }
 
 sub swapmove {
