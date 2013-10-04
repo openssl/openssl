@@ -1838,15 +1838,19 @@ int MAIN(int argc, char **argv)
 		size_t nonce_len;
 		EVP_AEAD_CTX ctx;
 
-		EVP_AEAD_CTX_init(&ctx, aead, key32, EVP_AEAD_key_length(aead), EVP_AEAD_DEFAULT_TAG_LENGTH, NULL);
+		EVP_AEAD_CTX_init(&ctx, aead, key32, EVP_AEAD_key_length(aead),
+				  EVP_AEAD_DEFAULT_TAG_LENGTH, NULL);
 		nonce_len = EVP_AEAD_nonce_length(aead);
 
 		for (j=0; j<SIZE_NUM; j++)
 			{
-			print_message(names[D_AES_128_GCM],c[D_AES_128_GCM][j],lengths[j]);
+			print_message(names[D_AES_128_GCM], c[D_AES_128_GCM][j],
+				      lengths[j]);
 			Time_F(START);
 			for (count=0,run=1; COND(c[D_AES_128_GCM][j]); count++)
-				EVP_AEAD_CTX_seal(&ctx,buf, BUFSIZE, nonce, nonce_len, buf, lengths[j], NULL, 0);
+				EVP_AEAD_CTX_seal(&ctx, buf, BUFSIZE, nonce,
+						  nonce_len, buf, lengths[j],
+						  NULL, 0);
 			d=Time_F(STOP);
 			print_result(D_AES_128_GCM,j,count,d);
 			}
@@ -1860,15 +1864,19 @@ int MAIN(int argc, char **argv)
 		size_t nonce_len;
 		EVP_AEAD_CTX ctx;
 
-		EVP_AEAD_CTX_init(&ctx, aead, key32, EVP_AEAD_key_length(aead), EVP_AEAD_DEFAULT_TAG_LENGTH, NULL);
+		EVP_AEAD_CTX_init(&ctx, aead, key32, EVP_AEAD_key_length(aead),
+				  EVP_AEAD_DEFAULT_TAG_LENGTH, NULL);
 		nonce_len = EVP_AEAD_nonce_length(aead);
 
 		for (j=0; j<SIZE_NUM; j++)
 			{
-			print_message(names[D_AES_256_GCM],c[D_AES_256_GCM][j],lengths[j]);
+			print_message(names[D_AES_256_GCM], c[D_AES_256_GCM][j],
+				      lengths[j]);
 			Time_F(START);
 			for (count=0,run=1; COND(c[D_AES_256_GCM][j]); count++)
-				EVP_AEAD_CTX_seal(&ctx,buf, BUFSIZE, nonce, nonce_len, buf, lengths[j], NULL, 0);
+				EVP_AEAD_CTX_seal(&ctx, buf, BUFSIZE, nonce,
+						  nonce_len, buf, lengths[j],
+						  NULL, 0);
 			d=Time_F(STOP);
 			print_result(D_AES_256_GCM,j,count,d);
 			}
@@ -1884,15 +1892,20 @@ int MAIN(int argc, char **argv)
 		size_t nonce_len;
 		EVP_AEAD_CTX ctx;
 
-		EVP_AEAD_CTX_init(&ctx, aead, key32, EVP_AEAD_key_length(aead), EVP_AEAD_DEFAULT_TAG_LENGTH, NULL);
+		EVP_AEAD_CTX_init(&ctx, aead, key32, EVP_AEAD_key_length(aead),
+				  EVP_AEAD_DEFAULT_TAG_LENGTH, NULL);
 		nonce_len = EVP_AEAD_nonce_length(aead);
 
 		for (j=0; j<SIZE_NUM; j++)
 			{
-			print_message(names[D_CHACHA20_POLY1305],c[D_CHACHA20_POLY1305][j],lengths[j]);
+			print_message(names[D_CHACHA20_POLY1305],
+				      c[D_CHACHA20_POLY1305][j], lengths[j]);
 			Time_F(START);
-			for (count=0,run=1; COND(c[D_CHACHA20_POLY1305][j]); count++)
-				EVP_AEAD_CTX_seal(&ctx,buf, BUFSIZE, nonce, nonce_len, buf, lengths[j], NULL, 0);
+			for (count=0,run=1; COND(c[D_CHACHA20_POLY1305][j]);
+			     count++)
+				EVP_AEAD_CTX_seal(&ctx, buf, BUFSIZE, nonce,
+						  nonce_len, buf, lengths[j],
+						  NULL, 0);
 			d=Time_F(STOP);
 			print_result(D_CHACHA20_POLY1305,j,count,d);
 			}
