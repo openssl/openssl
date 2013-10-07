@@ -110,12 +110,12 @@ static int make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req, CA_DB *db
 			int nmin, int ndays, int badsig);
 
 static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser);
-static BIO *init_responder(char *port);
-static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio, char *port);
+static BIO *init_responder(const char *port);
+static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio, const char *port);
 static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp);
-static OCSP_RESPONSE *query_responder(BIO *err, BIO *cbio, char *path,
-				STACK_OF(CONF_VALUE) *headers,
-				OCSP_REQUEST *req, int req_timeout);
+static OCSP_RESPONSE *query_responder(BIO *err, BIO *cbio, const char *path,
+				      const STACK_OF(CONF_VALUE) *headers,
+				      OCSP_REQUEST *req, int req_timeout);
 
 #undef PROG
 #define PROG ocsp_main
@@ -1223,7 +1223,7 @@ static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser)
 
 /* Quick and dirty OCSP server: read in and parse input request */
 
-static BIO *init_responder(char *port)
+static BIO *init_responder(const char *port)
 	{
 	BIO *acbio = NULL, *bufbio = NULL;
 	bufbio = BIO_new(BIO_f_buffer());
@@ -1254,7 +1254,8 @@ static BIO *init_responder(char *port)
 	return NULL;
 	}
 
-static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio, char *port)
+static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio,
+			const char *port)
 	{
 	int have_post = 0, len;
 	OCSP_REQUEST *req = NULL;
@@ -1320,9 +1321,9 @@ static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp)
 	return 1;
 	}
 
-static OCSP_RESPONSE *query_responder(BIO *err, BIO *cbio, char *path,
-				STACK_OF(CONF_VALUE) *headers,
-				OCSP_REQUEST *req, int req_timeout)
+static OCSP_RESPONSE *query_responder(BIO *err, BIO *cbio, const char *path,
+				      const STACK_OF(CONF_VALUE) *headers,
+				      OCSP_REQUEST *req, int req_timeout)
 	{
 	int fd;
 	int rv;
@@ -1418,9 +1419,10 @@ static OCSP_RESPONSE *query_responder(BIO *err, BIO *cbio, char *path,
 	}
 
 OCSP_RESPONSE *process_responder(BIO *err, OCSP_REQUEST *req,
-			char *host, char *path, char *port, int use_ssl,
-			STACK_OF(CONF_VALUE) *headers,
-			int req_timeout)
+				 const char *host, const char *path,
+				 const char *port, int use_ssl,
+				 const STACK_OF(CONF_VALUE) *headers,
+				 int req_timeout)
 	{
 	BIO *cbio = NULL;
 	SSL_CTX *ctx = NULL;
