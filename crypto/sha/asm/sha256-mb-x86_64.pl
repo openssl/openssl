@@ -12,21 +12,23 @@
 # naturally limited to 4 on pre-AVX2 processors and to 8 on
 # AVX2-capable processors such as Haswell.
 #
-#		this	+aesni(*)	sha256	aesni-sha256	gain
+#		this	+aesni(i)	sha256	aesni-sha256	gain(iv)
 # -------------------------------------------------------------------
-# Westmere(**)	23.3/n	+1.28=7.11(n=4)	12.3	+3.75=16.1	+126%
-# Atom(**)	39.1/n	+3.93=13.7(n=4)	20.8	+5.69=26.5	+93%
+# Westmere(ii)	23.3/n	+1.28=7.11(n=4)	12.3	+3.75=16.1	+126%
+# Atom(ii)	39.1/n	+3.93=13.7(n=4)	20.8	+5.69=26.5	+93%
 # Sandy Bridge	(20.5	+5.15=25.7)/n	11.6	13.0		+103%
 # Ivy Bridge	(20.4	+5.14=25.5)/n	10.3	11.6		+82%
-# Haswell(***)	(21.0	+5.00=26.0)/n	7.80	8.79		+170%
+# Haswell(iii)	(21.0	+5.00=26.0)/n	7.80	8.79		+170%
 # Bulldozer	(21.6	+5.76=27.4)/n	13.6	13.7		+100%
 #
-# (*)	multi-block CBC encrypt with 128-bit key;
-# (**)	(HASH+AES)/n does not apply to Westmere for n>3 and Atom,
+# (i)	multi-block CBC encrypt with 128-bit key;
+# (ii)	(HASH+AES)/n does not apply to Westmere for n>3 and Atom,
 #	because of lower AES-NI instruction throughput, nor is there
 #	AES-NI-SHA256 stitch for these processors;
-# (***)	"this" is for n=8, when we gather twice as much data, result
+# (iii)	"this" is for n=8, when we gather twice as much data, result
 #	for n=4 is 20.3+4.44=24.7;
+# (iv)	improvement coefficients in real-life application are somewhat
+#	lower and range from 75% to 130% (on Haswell);
 
 $flavour = shift;
 $output  = shift;

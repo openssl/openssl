@@ -12,20 +12,22 @@
 # naturally limited to 4 on pre-AVX2 processors and to 8 on
 # AVX2-capable processors such as Haswell.
 #
-#		this	+aesni(*)	sha1	aesni-sha1	gain
+#		this	+aesni(i)	sha1	aesni-sha1	gain(iv)
 # -------------------------------------------------------------------
-# Westmere(**)	10.4/n	+1.28=3.88(n=4)	5.44	6.58		+70%
-# Atom(**)	18.9/n	+3.93=8.66(n=4)	10.0	14.0		+62%
+# Westmere(ii)	10.4/n	+1.28=3.88(n=4)	5.44	6.58		+70%
+# Atom(ii)	18.9/n	+3.93=8.66(n=4)	10.0	14.0		+62%
 # Sandy Bridge	(8.16	+5.15=13.3)/n	4.99	5.98		+80%
 # Ivy Bridge	(8.03	+5.14=13.2)/n	4.60	5.54		+68%
-# Haswell(***)	(8.96	+5.00=14.0)/n	3.57	4.55		+160%
+# Haswell(iii)	(8.96	+5.00=14.0)/n	3.57	4.55		+160%
 # Bulldozer	(9.75	+5.76=15.5)/n	5.95	6.37		+64%
 #
-# (*)	multi-block CBC encrypt with 128-bit key;
-# (**)	(HASH+AES)/n does not apply to Westmere for n>3 and Atom,
+# (i)	multi-block CBC encrypt with 128-bit key;
+# (ii)	(HASH+AES)/n does not apply to Westmere for n>3 and Atom,
 #	because of lower AES-NI instruction throughput;
-# (***)	"this" is for n=8, when we gather twice as much data, result
+# (iii)	"this" is for n=8, when we gather twice as much data, result
 #	for n=4 is 7.98+4.44=12.4;
+# (iv)	improvement coefficients in real-life application are somewhat
+#	lower and range from 30% to 100% (on Haswell);
 
 $flavour = shift;
 $output  = shift;
