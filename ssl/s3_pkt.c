@@ -117,6 +117,10 @@
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
 
+#ifndef  EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
+# define EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK 0
+#endif
+
 static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 			 unsigned int len, int create_empty_fragment);
 static int ssl3_get_record(SSL *s);
@@ -723,6 +727,55 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 		if (mac_size < 0)
 			goto err;
 		}
+
+#if !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
+	if (type==SSL3_RT_APPLICATION_DATA && s->compress==NULL &&
+	    !SSL_USE_ETM(s) && SSL_USE_EXPLICIT_IV(s) && /*!SSL_IS_DTLS(s) &&*/
+	    EVP_CIPHER_flags(s->enc_write_ctx->cipher)&EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)
+		do {
+		unsigned char aad[13];
+		EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM mb_param = {NULL,aad,sizeof(aad),0};
+		int packlen;
+
+		memcpy(aad,s->s3->write_sequence,8);
+		aad[8]=type;
+		aad[9]=(unsigned char)(s->version>>8);
+		aad[10]=(unsigned char)(s->version);
+		aad[11]=(unsigned char)(len>>8);
+		aad[12]=(unsigned char)len;
+		packlen = EVP_CIPHER_CTX_ctrl(s->enc_write_ctx,
+				EVP_CTRL_TLS1_1_MULTIBLOCK_AAD,
+				sizeof(mb_param),&mb_param);
+
+		if (packlen==0 || packlen > wb->len) break;
+
+		mb_param.out = wb->buf;
+		mb_param.inp = buf;
+		mb_param.len = len;
+		EVP_CIPHER_CTX_ctrl(s->enc_write_ctx,
+				EVP_CTRL_TLS1_1_MULTIBLOCK_ENCRYPT,
+				sizeof(mb_param),&mb_param);
+
+		s->s3->write_sequence[7] += mb_param.interleave;
+		if (s->s3->write_sequence[7] < mb_param.interleave)
+			{
+			int j=6;
+			while (j>=0 && (++s->s3->write_sequence[j--])==0) ;
+			}
+
+		wb->offset=0;
+		wb->left = packlen;
+
+		/* memorize arguments so that ssl3_write_pending can detect bad write retries later */
+		s->s3->wpend_tot=len;
+		s->s3->wpend_buf=buf;
+		s->s3->wpend_type=type;
+		s->s3->wpend_ret=len;
+
+		/* we now just need to write the buffer */
+		return ssl3_write_pending(s,type,buf,len);
+		} while (0);
+#endif
 
 	/* 'create_empty_fragment' is true only when this function calls itself */
 	if (!clear && !create_empty_fragment && !s->s3->empty_fragment_done)
