@@ -71,8 +71,8 @@
 #define EVP_CIPH_FLAG_DEFAULT_ASN1 0
 #endif
 
-#if !defined(EVP_CIPH_FLAG_TLS11_MULTI_BLOCK)
-#define EVP_CIPH_FLAG_TLS11_MULTI_BLOCK 0
+#if !defined(EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)
+#define EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK 0
 #endif
 
 #define TLS1_1_VERSION 0x0302
@@ -178,7 +178,7 @@ static void sha256_update(SHA256_CTX *c,const void *data,size_t len)
 #endif
 #define SHA256_Update sha256_update
 
-#if EVP_CIPH_FLAG_TLS11_MULTI_BLOCK
+#if !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
 
 typedef struct { unsigned int A[8],B[8],C[8],D[8],E[8],F[8],G[8],H[8]; } SHA256_MB_CTX;
 typedef struct { const unsigned char *ptr; int blocks;  } HASH_DESC;
@@ -186,11 +186,11 @@ typedef struct { const unsigned char *ptr; int blocks;  } HASH_DESC;
 void sha256_multi_block(SHA256_MB_CTX *,const HASH_DESC *,int);
 
 typedef struct { const unsigned char *inp; unsigned char *out;
-		 int blocks; double iv[2]; } CIPH_DESC; 
+		 int blocks; u64 iv[2]; } CIPH_DESC; 
 
 void aesni_multi_cbc_encrypt(CIPH_DESC *,void *,int);
 
-static size_t tls11_multi_block_encrypt(EVP_AES_HMAC_SHA256 *key,
+static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA256 *key,
 	unsigned char *out, const unsigned char *inp, size_t inp_len,
 	int n4x)	/* n4x is 1 or 2 */
 {
@@ -203,6 +203,7 @@ static size_t tls11_multi_block_encrypt(EVP_AES_HMAC_SHA256 *key,
 	SHA256_MB_CTX	*ctx;
 	unsigned int	frag, last, packlen, i, x4=4*n4x;
 	size_t		ret = 0;
+	u8		*IVs;
 
 	ctx = (SHA256_MB_CTX *)(storage+32-((size_t)storage%32));	/* align */
 
@@ -232,21 +233,21 @@ static size_t tls11_multi_block_encrypt(EVP_AES_HMAC_SHA256 *key,
 #if defined(BSWAP8)
 		blocks[i].q[0] = BSWAP8(BSWAP8(*(u64*)key->md.data)+i);
 #else
-		blocks[i].c[7] += key->md.data[7]+i;
+		blocks[i].c[7] += ((u8*)key->md.data)[7]+i;
 		if (blocks[i].c[7] < i) {
 			int j;
 
 			for (j=6;j>=0;j--) {
-				if (blocks[i].c[j]=key->md.data[j]+1) break;
+				if (blocks[i].c[j]=((u8*)key->md.data)[j]+1) break;
 			}
 		}
 #endif
-		blocks[i].c[8] = key->md.data[8];
-		blocks[i].c[9] = key->md.data[9];
-		blocks[i].c[10] = key->md.data[10];
+		blocks[i].c[8] = ((u8*)key->md.data)[8];
+		blocks[i].c[9] = ((u8*)key->md.data)[9];
+		blocks[i].c[10] = ((u8*)key->md.data)[10];
 		/* fix length */
-		blocks[i].c[11] = (unsigned char)(len>>8);
-		blocks[i].c[12] = (unsigned char)(len);
+		blocks[i].c[11] = (u8)(len>>8);
+		blocks[i].c[12] = (u8)(len);
 
 		memcpy(blocks[i].c+13,hash_d[i].ptr,64-13);
 		hash_d[i].ptr += 64-13;
@@ -256,7 +257,9 @@ static size_t tls11_multi_block_encrypt(EVP_AES_HMAC_SHA256 *key,
 		edges[i].blocks = 1;
 	}
 
+	/* hash 13-byte headers and first 64-13 bytes of inputs */
 	sha256_multi_block(ctx,edges,n4x);
+	/* hash bulk inputs */
 	sha256_multi_block(ctx,hash_d,n4x);
 
 	memset(blocks,0,sizeof(blocks));
@@ -280,6 +283,7 @@ static size_t tls11_multi_block_encrypt(EVP_AES_HMAC_SHA256 *key,
 		edges[i].ptr = blocks[i].c;
 	}
 
+	/* hash input tails and finalize */
 	sha256_multi_block(ctx,edges,n4x);
 
 	memset(blocks,0,sizeof(blocks));
@@ -298,12 +302,15 @@ static size_t tls11_multi_block_encrypt(EVP_AES_HMAC_SHA256 *key,
 		edges[i].blocks = 1;
 	}
 
+	/* finalize MACs */
 	sha256_multi_block(ctx,edges,n4x);
 
 	packlen = 5+16+((frag+32+16)&-16);
 
 	out += (packlen<<(1+n4x))-packlen;
 	inp += (frag<<(1+n4x))-frag;
+
+	RAND_bytes((IVs=blocks[0].c),16*x4);	/* ask for IVs in bulk */
 
 	for (i=x4-1;;i--) {
 		unsigned int len = (i==(x4-1)?last:frag), pad, j;
@@ -315,8 +322,8 @@ static size_t tls11_multi_block_encrypt(EVP_AES_HMAC_SHA256 *key,
 
 		memmove(out,inp,len);
 		out += len;
-		inp -= frag;
 
+		/* write MAC */
 		((u32 *)out)[0] = BSWAP4(ctx->A[i]);
 		((u32 *)out)[1] = BSWAP4(ctx->B[i]);
 		((u32 *)out)[2] = BSWAP4(ctx->C[i]);
@@ -326,33 +333,40 @@ static size_t tls11_multi_block_encrypt(EVP_AES_HMAC_SHA256 *key,
 		((u32 *)out)[6] = BSWAP4(ctx->G[i]);
 		((u32 *)out)[7] = BSWAP4(ctx->H[i]);
 		out += 32;
-		len += 32+16;
+		len += 32;
 
+		/* pad */
 		pad = 15-len%16;
 		for (j=0;j<=pad;j++) *(out++) = pad;
 		len += pad+1;
 
 		ciph_d[i].blocks = len/16;
+		len += 16;	/* account for explicit iv */
 
 		/* arrange header */
-		out0[0] = key->md.data[8];
-		out0[1] = key->md.data[9];
-		out0[2] = key->md.data[10];
-		out0[3] = (unsigned char)(len>>8);
-		out0[4] = (unsigned char)(len);
+		out0[0] = ((u8*)key->md.data)[8];
+		out0[1] = ((u8*)key->md.data)[9];
+		out0[2] = ((u8*)key->md.data)[10];
+		out0[3] = (u8)(len>>8);
+		out0[4] = (u8)(len);
 
 		/* explicit iv */
-		RAND_bytes((u8 *)ciph_d[i].iv, 16);
-		memcpy(&out[5], ciph_d[i].iv, 16);
+		memcpy(ciph_d[i].iv, IVs, 16);
+		memcpy(&out0[5],     IVs, 16);
 
 		ret += len+5;
 
 		if (i==0) break;
 
 		out = out0-packlen;
+		inp -= frag;
+		IVs += 16;
 	}
 
 	aesni_multi_cbc_encrypt(ciph_d,&key->ks,n4x);
+
+	OPENSSL_cleanse(blocks,sizeof(blocks));
+	OPENSSL_cleanse(ctx,sizeof(*ctx));
 
 	return ret;
 }
@@ -713,15 +727,15 @@ static int aesni_cbc_hmac_sha256_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, vo
 			return SHA256_DIGEST_LENGTH;
 			}
 		}
-#if EVP_EVP_CIPH_FLAG_TLS11_MULTI_BLOCK
-	case EVP_CTRL_TLS11_MULTI_BLOCK_AAD:
+#if !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
+	case EVP_CTRL_TLS1_1_MULTIBLOCK_AAD:
 		{
-		EVP_CTRL_TLS11_MULTI_BLOCK_PARAM *param =
-			(EVP_CTRL_TLS11_MULTI_BLOCK_PARAM *)ptr;
+		EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM *param =
+			(EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM *)ptr;
 		unsigned int n4x=1, x4;
 		unsigned int frag, last, packlen, inp_len;
 
-		if (arg<sizeof(EVP_CTRL_TLS11_MULTI_BLOCK_PARAM)) return -1;
+		if (arg<sizeof(EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM)) return -1;
 
 		inp_len = param->inp[11]<<8|param->inp[12];
 
@@ -729,10 +743,10 @@ static int aesni_cbc_hmac_sha256_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, vo
 			{
 			if ((param->inp[9]<<8|param->inp[10]) < TLS1_1_VERSION)
 				return -1;
-	
-			if (inp_len<2048) return -1;	/* too short */
 
-			if (inp_len>=6144) n4x=2;
+			if (inp_len<2048) return 0;	/* too short */
+
+			if (OPENSSL_ia32cap_P[2]&(1<<5)) n4x=2;	/* AVX2 */
 
 			key->md = key->head;
 			SHA256_Update(&key->md,param->inp,13);
@@ -747,7 +761,7 @@ static int aesni_cbc_hmac_sha256_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, vo
 			}
 
 			packlen = 5+16+((frag+32+16)&-16);
-			packlen = (packlen<<(1+n4x))-packlen;
+			packlen = (packlen<<n4x)-packlen;
 			packlen += 5+16+((last+32+16)&-16);
 
 			param->interleave = x4;
@@ -757,15 +771,15 @@ static int aesni_cbc_hmac_sha256_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, vo
 		else
 			return -1;	/* not yet */
 		}
-	case EVP_CTRL_TLS11_MULTI_BLOCK_ENCRYPT:
+	case EVP_CTRL_TLS1_1_MULTIBLOCK_ENCRYPT:
 		{
-		EVP_CTRL_TLS11_MULTI_BLOCK_PARAM *param =
-			(EVP_CTRL_TLS11_MULTI_BLOCK_PARAM *)ptr;
+		EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM *param =
+			(EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM *)ptr;
 
-		return tls11_multi_block_encrypt(key,param->out,param->inp,
+		return (int)tls1_1_multi_block_encrypt(key,param->out,param->inp,
 						param->len,param->interleave/4);
 		}
-	case EVP_CTRL_TLS11_MULTI_BLOCK_DECRYPT:
+	case EVP_CTRL_TLS1_1_MULTIBLOCK_DECRYPT:
 #endif
 	default:
 		return -1;
@@ -781,7 +795,7 @@ static EVP_CIPHER aesni_128_cbc_hmac_sha256_cipher =
 #endif
 	16,16,16,
 	EVP_CIPH_CBC_MODE|EVP_CIPH_FLAG_DEFAULT_ASN1|
-	EVP_CIPH_FLAG_AEAD_CIPHER|EVP_CIPH_FLAG_TLS11_MULTI_BLOCK,
+	EVP_CIPH_FLAG_AEAD_CIPHER|EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK,
 	aesni_cbc_hmac_sha256_init_key,
 	aesni_cbc_hmac_sha256_cipher,
 	NULL,
@@ -801,7 +815,7 @@ static EVP_CIPHER aesni_256_cbc_hmac_sha256_cipher =
 #endif
 	16,32,16,
 	EVP_CIPH_CBC_MODE|EVP_CIPH_FLAG_DEFAULT_ASN1|
-	EVP_CIPH_FLAG_AEAD_CIPHER|EVP_CIPH_FLAG_TLS11_MULTI_BLOCK,
+	EVP_CIPH_FLAG_AEAD_CIPHER|EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK,
 	aesni_cbc_hmac_sha256_init_key,
 	aesni_cbc_hmac_sha256_cipher,
 	NULL,
