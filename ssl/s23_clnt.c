@@ -269,6 +269,13 @@ static int ssl23_no_ssl2_ciphers(SSL *s)
 	return 1;
 	}
 
+/* Fill a ClientRandom or ServerRandom field of length len. Returns <= 0
+ * on failure, 1 on success. */
+int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, int len)
+	{
+	return RAND_pseudo_bytes(result, len);
+	}
+
 static int ssl23_client_hello(SSL *s)
 	{
 	unsigned char *buf;
@@ -355,7 +362,7 @@ static int ssl23_client_hello(SSL *s)
 #endif
 
 		p=s->s3->client_random;
-		if (RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE) <= 0)
+		if (ssl_fill_hello_random(s, 0, p, SSL3_RANDOM_SIZE) <= 0)
 			return -1;
 
 		if (version == TLS1_2_VERSION)

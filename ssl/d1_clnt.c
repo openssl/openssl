@@ -801,7 +801,7 @@ int dtls1_client_hello(SSL *s)
 		for (i=0;p[i]=='\0' && i<sizeof(s->s3->client_random);i++) ;
 		if (i==sizeof(s->s3->client_random))
 			{
-			RAND_pseudo_bytes(p,sizeof(s->s3->client_random));
+			ssl_fill_hello_random(s,0,p,sizeof(s->s3->client_random));
 			}
 
 		/* Do the message type and length last */
