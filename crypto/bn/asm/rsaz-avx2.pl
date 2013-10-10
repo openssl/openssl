@@ -48,7 +48,7 @@
 # +10% improvement by <appro@openssl.org>
 #
 # rsa2048 sign/sec	OpenSSL 1.0.1	scalar(*)	this
-# 2GHz Haswell		544		632/+16%	947/+74%
+# 2.3GHz Haswell	621		732/+18%	1112/+79%
 #
 # (*)	if system doesn't support AVX2, for reference purposes;
 
@@ -125,6 +125,7 @@ my $FrameSize=32*18+32*8;	# place for A^2 and 2*A
 my $aap=$r0;
 my $tp0="%rbx";
 my $tp1=$r3;
+my $tpa=$tmp;
 
 $np="%r13";			# reassigned argument
 
@@ -263,7 +264,7 @@ $code.=<<___;
 	 vpbroadcastq	32*2-128($ap), $B1
 	 vmovdqu	$ACC9, 32*17-448($tp1)
 
-	xor	$tmp, $tmp
+	mov	$ap, $tpa
 	mov 	\$4, $i
 	jmp	.Lsqr_entry_1024
 ___
@@ -272,38 +273,29 @@ $TEMP2=$Y2;
 $code.=<<___;
 .align	32
 .LOOP_SQR_1024:
-	vmovdqu		32*0(%rsp,$tmp), $TEMP0	# 32*0-192($tp0,$tmp)
-	vmovdqu		32*1(%rsp,$tmp), $TEMP1	# 32*1-192($tp0,$tmp)
-	 vpbroadcastq	32*1-128($ap,$tmp), $B2
+	 vpbroadcastq	32*1-128($tpa), $B2
 	vpmuludq	32*0-128($ap), $B1, $ACC0
-	vmovdqu		32*2-192($tp0,$tmp), $TEMP2
-	vpaddq		$TEMP0, $ACC0, $ACC0
+	vpaddq		32*0-192($tp0), $ACC0, $ACC0
 	vpmuludq	32*0-128($aap), $B1, $ACC1
-	vmovdqu		32*3-192($tp0,$tmp), $TEMP0
-	vpaddq		$TEMP1, $ACC1, $ACC1
+	vpaddq		32*1-192($tp0), $ACC1, $ACC1
 	vpmuludq	32*1-128($aap), $B1, $ACC2
-	vmovdqu		32*4-192($tp0,$tmp), $TEMP1
-	vpaddq		$TEMP2, $ACC2, $ACC2
+	vpaddq		32*2-192($tp0), $ACC2, $ACC2
 	vpmuludq	32*2-128($aap), $B1, $ACC3
-	vmovdqu		32*5-192($tp0,$tmp), $TEMP2
-	vpaddq		$TEMP0, $ACC3, $ACC3
+	vpaddq		32*3-192($tp0), $ACC3, $ACC3
 	vpmuludq	32*3-128($aap), $B1, $ACC4
-	vmovdqu		32*6-192($tp0,$tmp), $TEMP0
-	vpaddq		$TEMP1, $ACC4, $ACC4
+	vpaddq		32*4-192($tp0), $ACC4, $ACC4
 	vpmuludq	32*4-128($aap), $B1, $ACC5
-	vmovdqu		32*7-192($tp0,$tmp), $TEMP1
-	vpaddq		$TEMP2, $ACC5, $ACC5
+	vpaddq		32*5-192($tp0), $ACC5, $ACC5
 	vpmuludq	32*5-128($aap), $B1, $ACC6
-	vmovdqu		32*8-192($tp0,$tmp), $TEMP2
-	vpaddq		$TEMP0, $ACC6, $ACC6
+	vpaddq		32*6-192($tp0), $ACC6, $ACC6
 	vpmuludq	32*6-128($aap), $B1, $ACC7
-	vpaddq		$TEMP1, $ACC7, $ACC7
+	vpaddq		32*7-192($tp0), $ACC7, $ACC7
 	vpmuludq	32*7-128($aap), $B1, $ACC8
-	 vpbroadcastq	32*2-128($ap,$tmp), $B1
-	vpaddq		$TEMP2, $ACC8, $ACC8
+	 vpbroadcastq	32*2-128($tpa), $B1
+	vpaddq		32*8-192($tp0), $ACC8, $ACC8
 .Lsqr_entry_1024:
-	vmovdqu		$ACC0, 32*0(%rsp,$tmp)	# 32*0-192($tp0,$tmp)
-	vmovdqu		$ACC1, 32*1(%rsp,$tmp)	# 32*1-192($tp0,$tmp)
+	vmovdqu		$ACC0, 32*0-192($tp0)
+	vmovdqu		$ACC1, 32*1-192($tp0)
 
 	vpmuludq	32*1-128($ap), $B2, $TEMP0
 	vpaddq		$TEMP0, $ACC2, $ACC2
@@ -316,16 +308,15 @@ $code.=<<___;
 	vpmuludq	32*4-128($aap), $B2, $TEMP1
 	vpaddq		$TEMP1, $ACC6, $ACC6
 	vpmuludq	32*5-128($aap), $B2, $TEMP2
-	vmovdqu		32*9-192($tp0,$tmp), $TEMP1
 	vpaddq		$TEMP2, $ACC7, $ACC7
 	vpmuludq	32*6-128($aap), $B2, $TEMP0
 	vpaddq		$TEMP0, $ACC8, $ACC8
 	vpmuludq	32*7-128($aap), $B2, $ACC0
-	 vpbroadcastq	32*3-128($ap,$tmp), $B2
-	vpaddq		$TEMP1, $ACC0, $ACC0
+	 vpbroadcastq	32*3-128($tpa), $B2
+	vpaddq		32*9-192($tp0), $ACC0, $ACC0
 
-	vmovdqu		$ACC2, 32*2-192($tp0,$tmp)
-	vmovdqu		$ACC3, 32*3-192($tp0,$tmp)
+	vmovdqu		$ACC2, 32*2-192($tp0)
+	vmovdqu		$ACC3, 32*3-192($tp0)
 
 	vpmuludq	32*2-128($ap), $B1, $TEMP2
 	vpaddq		$TEMP2, $ACC4, $ACC4
@@ -336,16 +327,15 @@ $code.=<<___;
 	vpmuludq	32*4-128($aap), $B1, $TEMP2
 	vpaddq		$TEMP2, $ACC7, $ACC7
 	vpmuludq	32*5-128($aap), $B1, $TEMP0
-	vmovdqu		32*10-448($tp1,$tmp), $TEMP2
 	vpaddq		$TEMP0, $ACC8, $ACC8
 	vpmuludq	32*6-128($aap), $B1, $TEMP1
 	vpaddq		$TEMP1, $ACC0, $ACC0
 	vpmuludq	32*7-128($aap), $B1, $ACC1
-	 vpbroadcastq	32*4-128($ap,$tmp), $B1
-	vpaddq		$TEMP2, $ACC1, $ACC1
+	 vpbroadcastq	32*4-128($tpa), $B1
+	vpaddq		32*10-448($tp1), $ACC1, $ACC1
 
-	vmovdqu		$ACC4, 32*4-192($tp0,$tmp)
-	vmovdqu		$ACC5, 32*5-192($tp0,$tmp)
+	vmovdqu		$ACC4, 32*4-192($tp0)
+	vmovdqu		$ACC5, 32*5-192($tp0)
 
 	vpmuludq	32*3-128($ap), $B2, $TEMP0
 	vpaddq		$TEMP0, $ACC6, $ACC6
@@ -354,74 +344,70 @@ $code.=<<___;
 	vpmuludq	32*4-128($aap), $B2, $TEMP2
 	vpaddq		$TEMP2, $ACC8, $ACC8
 	vpmuludq	32*5-128($aap), $B2, $TEMP0
-	vmovdqu		32*11-448($tp1,$tmp), $TEMP2
 	vpaddq		$TEMP0, $ACC0, $ACC0
 	vpmuludq	32*6-128($aap), $B2, $TEMP1
 	vpaddq		$TEMP1, $ACC1, $ACC1
 	vpmuludq	32*7-128($aap), $B2, $ACC2
-	 vpbroadcastq	32*5-128($ap,$tmp), $B2
-	vpaddq		$TEMP2, $ACC2, $ACC2	
+	 vpbroadcastq	32*5-128($tpa), $B2
+	vpaddq		32*11-448($tp1), $ACC2, $ACC2	
 
-	vmovdqu		$ACC6, 32*6-192($tp0,$tmp)
-	vmovdqu		$ACC7, 32*7-192($tp0,$tmp)
+	vmovdqu		$ACC6, 32*6-192($tp0)
+	vmovdqu		$ACC7, 32*7-192($tp0)
 
 	vpmuludq	32*4-128($ap), $B1, $TEMP0
 	vpaddq		$TEMP0, $ACC8, $ACC8
 	vpmuludq	32*4-128($aap), $B1, $TEMP1
 	vpaddq		$TEMP1, $ACC0, $ACC0
 	vpmuludq	32*5-128($aap), $B1, $TEMP2
-	vmovdqu		32*12-448($tp1,$tmp), $TEMP1
 	vpaddq		$TEMP2, $ACC1, $ACC1
 	vpmuludq	32*6-128($aap), $B1, $TEMP0
 	vpaddq		$TEMP0, $ACC2, $ACC2
 	vpmuludq	32*7-128($aap), $B1, $ACC3
-	 vpbroadcastq	32*6-128($ap,$tmp), $B1
-	vpaddq		$TEMP1, $ACC3, $ACC3
+	 vpbroadcastq	32*6-128($tpa), $B1
+	vpaddq		32*12-448($tp1), $ACC3, $ACC3
 
-	vmovdqu		$ACC8, 32*8-192($tp0,$tmp)
-	vmovdqu		$ACC0, 32*9-192($tp0,$tmp)
+	vmovdqu		$ACC8, 32*8-192($tp0)
+	vmovdqu		$ACC0, 32*9-192($tp0)
+	lea		8($tp0), $tp0
 
 	vpmuludq	32*5-128($ap), $B2, $TEMP2
 	vpaddq		$TEMP2, $ACC1, $ACC1
 	vpmuludq	32*5-128($aap), $B2, $TEMP0
-	vmovdqu		32*13-448($tp1,$tmp), $TEMP2
 	vpaddq		$TEMP0, $ACC2, $ACC2
 	vpmuludq	32*6-128($aap), $B2, $TEMP1
 	vpaddq		$TEMP1, $ACC3, $ACC3
 	vpmuludq	32*7-128($aap), $B2, $ACC4
-	 vpbroadcastq	32*7-128($ap,$tmp), $B2
-	vpaddq		$TEMP2, $ACC4, $ACC4
+	 vpbroadcastq	32*7-128($tpa), $B2
+	vpaddq		32*13-448($tp1), $ACC4, $ACC4
 
-	vmovdqu		$ACC1, 32*10-448($tp1,$tmp)
-	vmovdqu		$ACC2, 32*11-448($tp1,$tmp)
+	vmovdqu		$ACC1, 32*10-448($tp1)
+	vmovdqu		$ACC2, 32*11-448($tp1)
 
 	vpmuludq	32*6-128($ap), $B1, $TEMP0
-	vmovdqu		32*14-448($tp1,$tmp), $TEMP2
 	vpaddq		$TEMP0, $ACC3, $ACC3
 	vpmuludq	32*6-128($aap), $B1, $TEMP1
-	 vpbroadcastq	32*8-128($ap,$tmp), $ACC0	# borrow $ACC0 for $B1
+	 vpbroadcastq	32*8-128($tpa), $ACC0		# borrow $ACC0 for $B1
 	vpaddq		$TEMP1, $ACC4, $ACC4
 	vpmuludq	32*7-128($aap), $B1, $ACC5
-	 vpbroadcastq	32*0+8-128($ap,$tmp), $B1	# for next iteration
-	vpaddq		$TEMP2, $ACC5, $ACC5
-	vmovdqu		32*15-448($tp1,$tmp), $TEMP1
+	 vpbroadcastq	32*0+8-128($tpa), $B1		# for next iteration
+	vpaddq		32*14-448($tp1), $ACC5, $ACC5
 
-	vmovdqu		$ACC3, 32*12-448($tp1,$tmp)
-	vmovdqu		$ACC4, 32*13-448($tp1,$tmp)
+	vmovdqu		$ACC3, 32*12-448($tp1)
+	vmovdqu		$ACC4, 32*13-448($tp1)
+	lea		8($tpa), $tpa
 
 	vpmuludq	32*7-128($ap), $B2, $TEMP0
-	vmovdqu		32*16-448($tp1,$tmp), $TEMP2
 	vpaddq		$TEMP0, $ACC5, $ACC5
 	vpmuludq	32*7-128($aap), $B2, $ACC6
-	vpaddq		$TEMP1, $ACC6, $ACC6
+	vpaddq		32*15-448($tp1), $ACC6, $ACC6
 
 	vpmuludq	32*8-128($ap), $ACC0, $ACC7
-	vmovdqu		$ACC5, 32*14-448($tp1,$tmp)
-	vpaddq		$TEMP2, $ACC7, $ACC7
-	vmovdqu		$ACC6, 32*15-448($tp1,$tmp)
-	vmovdqu		$ACC7, 32*16-448($tp1,$tmp)
+	vmovdqu		$ACC5, 32*14-448($tp1)
+	vpaddq		32*16-448($tp1), $ACC7, $ACC7
+	vmovdqu		$ACC6, 32*15-448($tp1)
+	vmovdqu		$ACC7, 32*16-448($tp1)
+	lea		8($tp1), $tp1
 
-	lea	8($tmp), $tmp
 	dec	$i        
 	jnz	.LOOP_SQR_1024
 ___
@@ -432,9 +418,10 @@ $TEMP3 = $Y1;
 $TEMP4 = $Y2;
 $code.=<<___;
 	#we need to fix indexes 32-39 to avoid overflow
-	vmovdqu		32*8-192($tp0), $ACC8
-	vmovdqu		32*9-192($tp0), $ACC1
-	vmovdqu		32*10-448($tp1), $ACC2
+	vmovdqu		32*8(%rsp), $ACC8		# 32*8-192($tp0),
+	vmovdqu		32*9(%rsp), $ACC1		# 32*9-192($tp0)
+	vmovdqu		32*10(%rsp), $ACC2		# 32*10-192($tp0)
+	lea		192(%rsp), $tp0			# 64+128=192
 
 	vpsrlq		\$29, $ACC8, $TEMP1
 	vpand		$AND_MASK, $ACC8, $ACC8
@@ -452,7 +439,7 @@ $code.=<<___;
 	vpaddq		$TEMP1, $ACC1, $ACC1
 	vpaddq		$TEMP2, $ACC2, $ACC2
 	vmovdqu		$ACC1, 32*9-192($tp0)
-	vmovdqu		$ACC2, 32*10-448($tp1)
+	vmovdqu		$ACC2, 32*10-192($tp0)
 
 	mov	(%rsp), %rax
 	mov	8(%rsp), $r1
@@ -502,13 +489,15 @@ $code.=<<___;
 	 mov	%rax, %rdx
 	 imulq	-128($np), %rax
 	vpaddq		$TEMP0, $ACC1, $ACC1
-	vpmuludq	32*2-128($np), $Y1, $TEMP1
 	 add	%rax, $r1
+	vpmuludq	32*2-128($np), $Y1, $TEMP1
 	 mov	%rdx, %rax
 	 imulq	8-128($np), %rax
 	vpaddq		$TEMP1, $ACC2, $ACC2
 	vpmuludq	32*3-128($np), $Y1, $TEMP2
+	 .byte	0x67
 	 add	%rax, $r2
+	 .byte	0x67
 	 mov	%rdx, %rax
 	 imulq	16-128($np), %rax
 	 shr	\$29, $r1
@@ -528,17 +517,17 @@ $code.=<<___;
 	vpaddq		$TEMP0, $ACC7, $ACC7
 	vpmuludq	32*8-128($np), $Y1, $TEMP1
 	 vmovd	%eax, $Y1
-	 vmovdqu	32*1-8-128($np), $TEMP2
+	 #vmovdqu	32*1-8-128($np), $TEMP2		# moved below
 	vpaddq		$TEMP1, $ACC8, $ACC8
-	 vmovdqu	32*2-8-128($np), $TEMP0
+	 #vmovdqu	32*2-8-128($np), $TEMP0		# moved below
 	 vpbroadcastq	$Y1, $Y1
 
-	vpmuludq	$Y2, $TEMP2, $TEMP2
+	vpmuludq	32*1-8-128($np), $Y2, $TEMP2	# see above
 	vmovdqu		32*3-8-128($np), $TEMP1
 	 mov	%rax, %rdx
 	 imulq	-128($np), %rax
 	vpaddq		$TEMP2, $ACC1, $ACC1
-	vpmuludq	$Y2, $TEMP0, $TEMP0
+	vpmuludq	32*2-8-128($np), $Y2, $TEMP0	# see above
 	vmovdqu		32*4-8-128($np), $TEMP2
 	 add	%rax, $r2
 	 mov	%rdx, %rax
@@ -552,11 +541,12 @@ $code.=<<___;
 	vpaddq		$TEMP1, $ACC3, $ACC3
 	vpmuludq	$Y2, $TEMP2, $TEMP2
 	vmovdqu		32*6-8-128($np), $TEMP1
+	 .byte	0x67
 	 mov	%rax, $r3
 	 imull	$n0, %eax
 	vpaddq		$TEMP2, $ACC4, $ACC4
 	vpmuludq	$Y2, $TEMP0, $TEMP0
-	vmovdqu		32*7-8-128($np), $TEMP2
+	.byte	0xc4,0x41,0x7e,0x6f,0x9d,0x58,0x00,0x00,0x00	# vmovdqu		32*7-8-128($np), $TEMP2
 	 and	\$0x1fffffff, %eax
 	vpaddq		$TEMP0, $ACC5, $ACC5
 	vpmuludq	$Y2, $TEMP1, $TEMP1
@@ -584,11 +574,12 @@ $code.=<<___;
 	vpaddq		$TEMP1, $ACC1, $ACC1
 	 vpmuludq	$Y2, $ACC0, $ACC0
 	vpmuludq	$Y1, $TEMP2, $TEMP2
-	vmovdqu		32*4-16-128($np), $TEMP1
+	.byte	0xc4,0x41,0x7e,0x6f,0xb5,0xf0,0xff,0xff,0xff	# vmovdqu		32*4-16-128($np), $TEMP1
 	 vpaddq		$ACC1, $ACC0, $ACC0
 	vpaddq		$TEMP2, $ACC2, $ACC2
 	vpmuludq	$Y1, $TEMP0, $TEMP0
 	vmovdqu		32*5-16-128($np), $TEMP2
+	 .byte	0x67
 	 vmovq		$ACC0, %rax
 	 vmovdqu	$ACC0, (%rsp)		# transfer $r0-$r3
 	vpaddq		$TEMP0, $ACC3, $ACC3
@@ -602,12 +593,12 @@ $code.=<<___;
 	vmovdqu		32*8-16-128($np), $TEMP2
 	vpaddq		$TEMP0, $ACC6, $ACC6
 	vpmuludq	$Y1, $TEMP1, $TEMP1
-	vmovdqu		32*9-16-128($np), $TEMP0
 	 shr	\$29, $r3
+	vmovdqu		32*9-16-128($np), $TEMP0
+	 add	$r3, %rax
 	vpaddq		$TEMP1, $ACC7, $ACC7
 	vpmuludq	$Y1, $TEMP2, $TEMP2
-	 vmovdqu	32*2-24-128($np), $TEMP1
-	 add	$r3, %rax
+	 #vmovdqu	32*2-24-128($np), $TEMP1	# moved below
 	 mov	%rax, $r0
 	 imull	$n0, %eax
 	vpaddq		$TEMP2, $ACC8, $ACC8
@@ -615,10 +606,11 @@ $code.=<<___;
 	 and	\$0x1fffffff, %eax
 	 vmovd	%eax, $Y1
 	 vmovdqu	32*3-24-128($np), $TEMP2
+	.byte	0x67
 	vpaddq		$TEMP0, $ACC9, $ACC9
 	 vpbroadcastq	$Y1, $Y1
 
-	vpmuludq	$Y2, $TEMP1, $TEMP1
+	vpmuludq	32*2-24-128($np), $Y2, $TEMP1	# see above
 	vmovdqu		32*4-24-128($np), $TEMP0
 	 mov	%rax, %rdx
 	 imulq	-128($np), %rax
@@ -629,6 +621,7 @@ $code.=<<___;
 	 add	%rax, $r0
 	 mov	%rdx, %rax
 	 imulq	8-128($np), %rax
+	 .byte	0x67
 	 shr	\$29, $r0
 	 mov	16(%rsp), $r2
 	vpaddq		$TEMP2, $ACC3, $ACC2
@@ -648,8 +641,8 @@ $code.=<<___;
 	vmovdqu		32*8-24-128($np), $TEMP1
 	 mov	%rax, $r1
 	 imull	$n0, %eax
-	vpaddq		$TEMP2, $ACC6, $ACC5
 	vpmuludq	$Y2, $TEMP0, $TEMP0
+	vpaddq		$TEMP2, $ACC6, $ACC5
 	vmovdqu		32*9-24-128($np), $TEMP2
 	 and	\$0x1fffffff, %eax
 	vpaddq		$TEMP0, $ACC7, $ACC6
