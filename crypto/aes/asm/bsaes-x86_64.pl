@@ -85,7 +85,7 @@
 #
 # Core 2	9.83
 # Nehalem	7.74
-# Atom		18.9 (estimated, not measured yet)
+# Atom		19.0
 #
 # November 2011.
 #
@@ -2089,6 +2089,8 @@ ___
 #	const unsigned char iv[16]);
 #
 my ($twmask,$twres,$twtmp)=@XMM[13..15];
+$arg6=~s/d$//;
+
 $code.=<<___;
 .globl	bsaes_xts_encrypt
 .type	bsaes_xts_encrypt,\@abi-omnipotent
