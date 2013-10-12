@@ -719,7 +719,8 @@ static int aesni_cbc_hmac_sha1_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void
 
 			if (inp_len<4096) return 0;	/* too short */
 
-			if (OPENSSL_ia32cap_P[2]&(1<<5)) n4x=2;	/* AVX2 */
+			if (inp_len>=8192 && OPENSSL_ia32cap_P[2]&(1<<5))
+				n4x=2;	/* AVX2 */
 
 			key->md = key->head;
 			SHA1_Update(&key->md,param->inp,13);
