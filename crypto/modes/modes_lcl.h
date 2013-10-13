@@ -29,6 +29,7 @@ typedef unsigned char u8;
 #if defined(__i386)	|| defined(__i386__)	|| \
     defined(__x86_64)	|| defined(__x86_64__)	|| \
     defined(_M_IX86)	|| defined(_M_AMD64)	|| defined(_M_X64) || \
+    defined(__aarch64__)			|| \
     defined(__s390__)	|| defined(__s390x__)
 # undef STRICT_ALIGNMENT
 #endif
@@ -50,6 +51,13 @@ typedef unsigned char u8;
 #  define BSWAP4(x) ({	u32 ret=(x);			\
 			asm ("bswapl %0"		\
 			: "+r"(ret));	ret;		})
+# elif defined(__aarch64__)
+#  define BSWAP8(x) ({	u64 ret;			\
+			asm ("rev %0,%1"		\
+			: "=r"(ret) : "r"(x)); ret;	})
+#  define BSWAP4(x) ({	u32 ret;			\
+			asm ("rev %w0,%w1"		\
+			: "=r"(ret) : "r"(x)); ret;	})
 # elif (defined(__arm__) || defined(__arm)) && !defined(STRICT_ALIGNMENT)
 #  define BSWAP8(x) ({	u32 lo=(u64)(x)>>32,hi=(x);	\
 			asm ("rev %0,%0; rev %1,%1"	\
