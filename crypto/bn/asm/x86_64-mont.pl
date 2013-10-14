@@ -55,7 +55,7 @@ open OUT,"| \"$^X\" $xlate $flavour $output";
 
 if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
 		=~ /GNU assembler version ([2-9]\.[0-9]+)/) {
-	$addx = ($1>=2.22);
+	$addx = ($1>=2.23);
 }
 
 if (!$addx && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
