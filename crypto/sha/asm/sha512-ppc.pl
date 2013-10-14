@@ -344,6 +344,7 @@ Ldone:
 	.long	0
 	.byte	0,12,4,1,0x80,18,3,0
 	.long	0
+.size	$func,.-$func
 ___
 
 if ($SZ==4 || $SIZE_T==8) {

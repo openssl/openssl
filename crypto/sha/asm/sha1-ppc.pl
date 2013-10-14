@@ -265,6 +265,7 @@ Ldone:
 	.long	0
 	.byte	0,12,4,1,0x80,18,3,0
 	.long	0
+.size	.sha1_block_data_order,.-.sha1_block_data_order
 ___
 
 # This is private block function, which uses tailored calling

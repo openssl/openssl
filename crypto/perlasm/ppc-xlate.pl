@@ -37,7 +37,6 @@ my $globl = sub {
 				$ret .= ".align	3\n";
 				$ret .= "$name:\n";
 				$ret .= ".quad	.$name,.TOC.\@tocbase,0\n";
-				$ret .= ".size	$name,24\n";
 				$ret .= ".previous\n";
 
 				$name = ".$name";
@@ -62,9 +61,12 @@ my $machine = sub {
     ".machine	$arch";
 };
 my $size = sub {
-    if ($flavour =~ /linux.*32/)
+    if ($flavour =~ /linux/)
     {	shift;
-	".size	" . join(",",@_);
+	my $name = shift; $name =~ s|^[\.\_]||;
+	my $ret  = ".size	$name,.-".($flavour=~/64/?".":"").$name;
+	$ret .= "\n.size	.$name,.-.$name" if ($flavour=~/64/);
+	$ret;
     }
     else
     {	"";	}

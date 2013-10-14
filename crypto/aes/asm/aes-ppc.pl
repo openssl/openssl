@@ -471,6 +471,7 @@ Lenc_done:
 	.long	0
 	.byte	0,12,4,1,0x80,18,3,0
 	.long	0
+.size	.AES_encrypt,.-.AES_encrypt
 
 .align	5
 Lppc_AES_encrypt:
@@ -904,6 +905,7 @@ Ldec_done:
 	.long	0
 	.byte	0,12,4,1,0x80,18,3,0
 	.long	0
+.size	.AES_decrypt,.-.AES_decrypt
 
 .align	5
 Lppc_AES_decrypt:
