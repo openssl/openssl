@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 
 # ====================================================================
-# Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
+# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
 # details see http://www.openssl.org/~appro/cryptogams/.
@@ -110,7 +110,7 @@ $B  ="r9";
 $C  ="r10";
 $D  ="r11";
 $E  ="r12";
-$F  ="r13";	$F="r2" if ($SIZE_T==8);# reassigned to exempt TLS pointer
+$F  =$t1;	$t1 = "r0";	# stay away from "r13";
 $G  ="r14";
 $H  ="r15";
 
@@ -118,24 +118,23 @@ $H  ="r15";
 @X=("r16","r17","r18","r19","r20","r21","r22","r23",
     "r24","r25","r26","r27","r28","r29","r30","r31");
 
-$inp="r31";	# reassigned $inp! aliases with @X[15]
+$inp="r31" if($SZ==4 || $SIZE_T==8);	# reassigned $inp! aliases with @X[15]
 
 sub ROUND_00_15 {
 my ($i,$a,$b,$c,$d,$e,$f,$g,$h)=@_;
 $code.=<<___;
-	$LD	$T,`$i*$SZ`($Tbl)
 	$ROR	$a0,$e,$Sigma1[0]
 	$ROR	$a1,$e,$Sigma1[1]
 	and	$t0,$f,$e
-	andc	$t1,$g,$e
-	add	$T,$T,$h
 	xor	$a0,$a0,$a1
+	add	$h,$h,$t1
+	andc	$t1,$g,$e
 	$ROR	$a1,$a1,`$Sigma1[2]-$Sigma1[1]`
 	or	$t0,$t0,$t1		; Ch(e,f,g)
-	add	$T,$T,@X[$i]
+	add	$h,$h,@X[$i%16]
 	xor	$a0,$a0,$a1		; Sigma1(e)
-	add	$T,$T,$t0
-	add	$T,$T,$a0
+	add	$h,$h,$t0
+	add	$h,$h,$a0
 
 	$ROR	$a0,$a,$Sigma0[0]
 	$ROR	$a1,$a,$Sigma0[1]
@@ -146,9 +145,14 @@ $code.=<<___;
 	xor	$t0,$t0,$t1
 	and	$t1,$b,$c
 	xor	$a0,$a0,$a1		; Sigma0(a)
-	add	$d,$d,$T
+	add	$d,$d,$h
 	xor	$t0,$t0,$t1		; Maj(a,b,c)
-	add	$h,$T,$a0
+___
+$code.=<<___ if ($i<15);
+	$LD	$t1,`($i+1)*$SZ`($Tbl)
+___
+$code.=<<___;
+	add	$h,$h,$a0
 	add	$h,$h,$t0
 
 ___
@@ -169,10 +173,11 @@ $code.=<<___;
 	add	@X[$i],@X[$i],@X[($i+9)%16]
 	xor	$a0,$a0,$a1		; sigma0(X[(i+1)&0x0f])
 	xor	$t0,$t0,$t1		; sigma1(X[(i+14)&0x0f])
+	$LD	$t1,`$i*$SZ`($Tbl)
 	add	@X[$i],@X[$i],$a0
 	add	@X[$i],@X[$i],$t0
 ___
-&ROUND_00_15($i,$a,$b,$c,$d,$e,$f,$g,$h);
+&ROUND_00_15($i+16,$a,$b,$c,$d,$e,$f,$g,$h);
 }
 
 $code=<<___;
@@ -188,8 +193,6 @@ $func:
 
 	$PUSH	$ctx,`$FRAME-$SIZE_T*22`($sp)
 
-	$PUSH	$toc,`$FRAME-$SIZE_T*20`($sp)
-	$PUSH	r13,`$FRAME-$SIZE_T*19`($sp)
 	$PUSH	r14,`$FRAME-$SIZE_T*18`($sp)
 	$PUSH	r15,`$FRAME-$SIZE_T*17`($sp)
 	$PUSH	r16,`$FRAME-$SIZE_T*16`($sp)
@@ -209,7 +212,10 @@ $func:
 	$PUSH	r30,`$FRAME-$SIZE_T*2`($sp)
 	$PUSH	r31,`$FRAME-$SIZE_T*1`($sp)
 	$PUSH	r0,`$FRAME+$LRSAVE`($sp)
+___
 
+if ($SZ==4 || $SIZE_T==8) {
+$code.=<<___;
 	$LD	$A,`0*$SZ`($ctx)
 	mr	$inp,r4				; incarnate $inp
 	$LD	$B,`1*$SZ`($ctx)
@@ -219,7 +225,16 @@ $func:
 	$LD	$F,`5*$SZ`($ctx)
 	$LD	$G,`6*$SZ`($ctx)
 	$LD	$H,`7*$SZ`($ctx)
+___
+} else {
+  for ($i=16;$i<32;$i++) {
+    $code.=<<___;
+	lwz	r$i,`4*($i-16)`($ctx)
+___
+  }
+}
 
+$code.=<<___;
 	bl	LPICmeup
 LPICedup:
 	andi.	r0,$inp,3
@@ -255,6 +270,9 @@ Lunaligned:
 Lcross_page:
 	li	$t1,`16*$SZ/4`
 	mtctr	$t1
+___
+if ($SZ==4 || $SIZE_T==8) {
+$code.=<<___;
 	addi	r20,$sp,$LOCALS			; aligned spot below the frame
 Lmemcpy:
 	lbz	r16,0($inp)
@@ -268,7 +286,26 @@ Lmemcpy:
 	stb	r19,3(r20)
 	addi	r20,r20,4
 	bdnz	Lmemcpy
+___
+} else {
+$code.=<<___;
+	addi	r12,$sp,$LOCALS			; aligned spot below the frame
+Lmemcpy:
+	lbz	r8,0($inp)
+	lbz	r9,1($inp)
+	lbz	r10,2($inp)
+	lbz	r11,3($inp)
+	addi	$inp,$inp,4
+	stb	r8,0(r12)
+	stb	r9,1(r12)
+	stb	r10,2(r12)
+	stb	r11,3(r12)
+	addi	r12,r12,4
+	bdnz	Lmemcpy
+___
+}
 
+$code.=<<___;
 	$PUSH	$inp,`$FRAME-$SIZE_T*26`($sp)	; save real inp
 	addi	$t1,$sp,`$LOCALS+16*$SZ`	; fictitious end pointer
 	addi	$inp,$sp,$LOCALS		; fictitious inp pointer
@@ -283,8 +320,6 @@ Lmemcpy:
 
 Ldone:
 	$POP	r0,`$FRAME+$LRSAVE`($sp)
-	$POP	$toc,`$FRAME-$SIZE_T*20`($sp)
-	$POP	r13,`$FRAME-$SIZE_T*19`($sp)
 	$POP	r14,`$FRAME-$SIZE_T*18`($sp)
 	$POP	r15,`$FRAME-$SIZE_T*17`($sp)
 	$POP	r16,`$FRAME-$SIZE_T*16`($sp)
@@ -309,9 +344,14 @@ Ldone:
 	.long	0
 	.byte	0,12,4,1,0x80,18,3,0
 	.long	0
+.size	$func,.-$func
+___
 
+if ($SZ==4 || $SIZE_T==8) {
+$code.=<<___;
 .align	4
 Lsha2_block_private:
+	$LD	$t1,0($Tbl)
 ___
 for($i=0;$i<16;$i++) {
 $code.=<<___ if ($SZ==4);
@@ -328,8 +368,8 @@ ___
 	unshift(@V,pop(@V));
 }
 $code.=<<___;
-	li	$T,`$rounds/16-1`
-	mtctr	$T
+	li	$t0,`$rounds/16-1`
+	mtctr	$t0
 .align	4
 Lrounds:
 	addi	$Tbl,$Tbl,`16*$SZ`
@@ -378,6 +418,255 @@ $code.=<<___;
 	.long	0
 	.byte	0,12,0x14,0,0,0,0,0
 ___
+} else {
+########################################################################
+# SHA512 for PPC32, X vector is off-loaded to stack...
+#
+#			|	sha512
+#			|	-m32
+# ----------------------+-----------------------
+# PPC74x0,gcc-4.0.1	|	+48%
+# POWER6,gcc-4.4.6	|	+124%(*)
+# POWER7,gcc-4.4.6	|	+79%(*)
+# e300,gcc-4.1.0	|	+167%
+#
+# (*)	~1/3 of -m64 result [and ~20% better than -m32 code generated
+#	by xlc-12.1]
+
+my $XOFF=$LOCALS;
+
+my @V=map("r$_",(16..31));	# A..H
+
+my ($s0,$s1,$t0,$t1,$t2,$t3,$a0,$a1,$a2,$a3)=map("r$_",(0,5,6,8..12,14,15));
+my ($x0,$x1)=("r3","r4");	# zaps $ctx and $inp
+
+sub ROUND_00_15_ppc32 {
+my ($i,	$ahi,$alo,$bhi,$blo,$chi,$clo,$dhi,$dlo,
+	$ehi,$elo,$fhi,$flo,$ghi,$glo,$hhi,$hlo)=@_;
+
+$code.=<<___;
+	lwz	$t2,`$SZ*($i%16)+4`($Tbl)
+	 xor	$a0,$flo,$glo
+	lwz	$t3,`$SZ*($i%16)+0`($Tbl)
+	 xor	$a1,$fhi,$ghi
+	addc	$hlo,$hlo,$t0			; h+=x[i]
+	stw	$t0,`$XOFF+0+$SZ*($i%16)`($sp)	; save x[i]
+
+	srwi	$s0,$elo,$Sigma1[0]
+	srwi	$s1,$ehi,$Sigma1[0]
+	 and	$a0,$a0,$elo
+	adde	$hhi,$hhi,$t1
+	 and	$a1,$a1,$ehi
+	stw	$t1,`$XOFF+4+$SZ*($i%16)`($sp)
+	srwi	$t0,$elo,$Sigma1[1]
+	srwi	$t1,$ehi,$Sigma1[1]
+	 addc	$hlo,$hlo,$t2			; h+=K512[i]
+	insrwi	$s0,$ehi,$Sigma1[0],0
+	insrwi	$s1,$elo,$Sigma1[0],0
+	 xor	$a0,$a0,$glo			; Ch(e,f,g)
+	 adde	$hhi,$hhi,$t3
+	 xor	$a1,$a1,$ghi
+	insrwi	$t0,$ehi,$Sigma1[1],0
+	insrwi	$t1,$elo,$Sigma1[1],0
+	 addc	$hlo,$hlo,$a0			; h+=Ch(e,f,g)
+	srwi	$t2,$ehi,$Sigma1[2]-32
+	srwi	$t3,$elo,$Sigma1[2]-32
+	xor	$s0,$s0,$t0
+	xor	$s1,$s1,$t1
+	insrwi	$t2,$elo,$Sigma1[2]-32,0
+	insrwi	$t3,$ehi,$Sigma1[2]-32,0
+	 xor	$a0,$alo,$blo			; a^b, b^c in next round
+	 adde	$hhi,$hhi,$a1
+	 xor	$a1,$ahi,$bhi
+	xor	$s0,$s0,$t2			; Sigma1(e)
+	xor	$s1,$s1,$t3
+
+	srwi	$t0,$alo,$Sigma0[0]
+	 and	$a2,$a2,$a0
+	 addc	$hlo,$hlo,$s0			; h+=Sigma1(e)
+	 and	$a3,$a3,$a1
+	srwi	$t1,$ahi,$Sigma0[0]
+	srwi	$s0,$ahi,$Sigma0[1]-32
+	 adde	$hhi,$hhi,$s1
+	srwi	$s1,$alo,$Sigma0[1]-32
+	insrwi	$t0,$ahi,$Sigma0[0],0
+	insrwi	$t1,$alo,$Sigma0[0],0
+	 xor	$a2,$a2,$blo			; Maj(a,b,c)
+	 addc	$dlo,$dlo,$hlo			; d+=h
+	 xor	$a3,$a3,$bhi
+	insrwi	$s0,$alo,$Sigma0[1]-32,0
+	insrwi	$s1,$ahi,$Sigma0[1]-32,0
+	 adde	$dhi,$dhi,$hhi
+	srwi	$t2,$ahi,$Sigma0[2]-32
+	srwi	$t3,$alo,$Sigma0[2]-32
+	xor	$s0,$s0,$t0
+	 addc	$hlo,$hlo,$a2			; h+=Maj(a,b,c)
+	xor	$s1,$s1,$t1
+	insrwi	$t2,$alo,$Sigma0[2]-32,0
+	insrwi	$t3,$ahi,$Sigma0[2]-32,0
+	 adde	$hhi,$hhi,$a3
+___
+$code.=<<___ if ($i>=15);
+	lwz	$t0,`$XOFF+0+$SZ*(($i+2)%16)`($sp)
+	lwz	$t1,`$XOFF+4+$SZ*(($i+2)%16)`($sp)
+___
+$code.=<<___ if ($i<15);
+	lwz	$t1,`$SZ*($i+1)+0`($inp)
+	lwz	$t0,`$SZ*($i+1)+4`($inp)
+___
+$code.=<<___;
+	xor	$s0,$s0,$t2			; Sigma0(a)
+	xor	$s1,$s1,$t3
+	addc	$hlo,$hlo,$s0			; h+=Sigma0(a)
+	adde	$hhi,$hhi,$s1
+___
+$code.=<<___ if ($i==15);
+	lwz	$x0,`$XOFF+0+$SZ*(($i+1)%16)`($sp)
+	lwz	$x1,`$XOFF+4+$SZ*(($i+1)%16)`($sp)
+___
+}
+sub ROUND_16_xx_ppc32 {
+my ($i,	$ahi,$alo,$bhi,$blo,$chi,$clo,$dhi,$dlo,
+	$ehi,$elo,$fhi,$flo,$ghi,$glo,$hhi,$hlo)=@_;
+
+$code.=<<___;
+	srwi	$s0,$t0,$sigma0[0]
+	srwi	$s1,$t1,$sigma0[0]
+	srwi	$t2,$t0,$sigma0[1]
+	srwi	$t3,$t1,$sigma0[1]
+	insrwi	$s0,$t1,$sigma0[0],0
+	insrwi	$s1,$t0,$sigma0[0],0
+	srwi	$a0,$t0,$sigma0[2]
+	insrwi	$t2,$t1,$sigma0[1],0
+	insrwi	$t3,$t0,$sigma0[1],0
+	insrwi	$a0,$t1,$sigma0[2],0
+	xor	$s0,$s0,$t2
+	 lwz	$t2,`$XOFF+0+$SZ*(($i+14)%16)`($sp)
+	srwi	$a1,$t1,$sigma0[2]
+	xor	$s1,$s1,$t3
+	 lwz	$t3,`$XOFF+4+$SZ*(($i+14)%16)`($sp)
+	xor	$a0,$a0,$s0
+	 srwi	$s0,$t2,$sigma1[0]
+	xor	$a1,$a1,$s1
+	 srwi	$s1,$t3,$sigma1[0]
+	addc	$x0,$x0,$a0			; x[i]+=sigma0(x[i+1])
+	 srwi	$a0,$t3,$sigma1[1]-32
+	insrwi	$s0,$t3,$sigma1[0],0
+	insrwi	$s1,$t2,$sigma1[0],0
+	adde	$x1,$x1,$a1
+	 srwi	$a1,$t2,$sigma1[1]-32
+
+	insrwi	$a0,$t2,$sigma1[1]-32,0
+	srwi	$t2,$t2,$sigma1[2]
+	insrwi	$a1,$t3,$sigma1[1]-32,0
+	insrwi	$t2,$t3,$sigma1[2],0
+	xor	$s0,$s0,$a0
+	 lwz	$a0,`$XOFF+0+$SZ*(($i+9)%16)`($sp)
+	srwi	$t3,$t3,$sigma1[2]
+	xor	$s1,$s1,$a1
+	 lwz	$a1,`$XOFF+4+$SZ*(($i+9)%16)`($sp)
+	xor	$s0,$s0,$t2
+	 addc	$x0,$x0,$a0			; x[i]+=x[i+9]
+	xor	$s1,$s1,$t3
+	 adde	$x1,$x1,$a1
+	addc	$x0,$x0,$s0			; x[i]+=sigma1(x[i+14])
+	adde	$x1,$x1,$s1
+___
+	($t0,$t1,$x0,$x1) = ($x0,$x1,$t0,$t1);
+	&ROUND_00_15_ppc32(@_);
+}
+
+$code.=<<___;
+.align	4
+Lsha2_block_private:
+	lwz	$t1,0($inp)
+	xor	$a2,@V[3],@V[5]		; B^C, magic seed
+	lwz	$t0,4($inp)
+	xor	$a3,@V[2],@V[4]
+___
+for($i=0;$i<16;$i++) {
+	&ROUND_00_15_ppc32($i,@V);
+	unshift(@V,pop(@V));	unshift(@V,pop(@V));
+	($a0,$a1,$a2,$a3) = ($a2,$a3,$a0,$a1);
+}
+$code.=<<___;
+	li	$a0,`$rounds/16-1`
+	mtctr	$a0
+.align	4
+Lrounds:
+	addi	$Tbl,$Tbl,`16*$SZ`
+___
+for(;$i<32;$i++) {
+	&ROUND_16_xx_ppc32($i,@V);
+	unshift(@V,pop(@V));	unshift(@V,pop(@V));
+	($a0,$a1,$a2,$a3) = ($a2,$a3,$a0,$a1);
+}
+$code.=<<___;
+	bdnz-	Lrounds
+
+	$POP	$ctx,`$FRAME-$SIZE_T*22`($sp)
+	$POP	$inp,`$FRAME-$SIZE_T*23`($sp)	; inp pointer
+	$POP	$num,`$FRAME-$SIZE_T*24`($sp)	; end pointer
+	subi	$Tbl,$Tbl,`($rounds-16)*$SZ`	; rewind Tbl
+
+	lwz	$t0,0($ctx)
+	lwz	$t1,4($ctx)
+	lwz	$t2,8($ctx)
+	lwz	$t3,12($ctx)
+	lwz	$a0,16($ctx)
+	lwz	$a1,20($ctx)
+	lwz	$a2,24($ctx)
+	addc	@V[1],@V[1],$t1
+	lwz	$a3,28($ctx)
+	adde	@V[0],@V[0],$t0
+	lwz	$t0,32($ctx)
+	addc	@V[3],@V[3],$t3
+	lwz	$t1,36($ctx)
+	adde	@V[2],@V[2],$t2
+	lwz	$t2,40($ctx)
+	addc	@V[5],@V[5],$a1
+	lwz	$t3,44($ctx)
+	adde	@V[4],@V[4],$a0
+	lwz	$a0,48($ctx)
+	addc	@V[7],@V[7],$a3
+	lwz	$a1,52($ctx)
+	adde	@V[6],@V[6],$a2
+	lwz	$a2,56($ctx)
+	addc	@V[9],@V[9],$t1
+	lwz	$a3,60($ctx)
+	adde	@V[8],@V[8],$t0
+	stw	@V[0],0($ctx)
+	stw	@V[1],4($ctx)
+	addc	@V[11],@V[11],$t3
+	stw	@V[2],8($ctx)
+	stw	@V[3],12($ctx)
+	adde	@V[10],@V[10],$t2
+	stw	@V[4],16($ctx)
+	stw	@V[5],20($ctx)
+	addc	@V[13],@V[13],$a1
+	stw	@V[6],24($ctx)
+	stw	@V[7],28($ctx)
+	adde	@V[12],@V[12],$a0
+	stw	@V[8],32($ctx)
+	stw	@V[9],36($ctx)
+	addc	@V[15],@V[15],$a3
+	stw	@V[10],40($ctx)
+	stw	@V[11],44($ctx)
+	adde	@V[14],@V[14],$a2
+	stw	@V[12],48($ctx)
+	stw	@V[13],52($ctx)
+	stw	@V[14],56($ctx)
+	stw	@V[15],60($ctx)
+
+	addi	$inp,$inp,`16*$SZ`		; advance inp
+	$PUSH	$inp,`$FRAME-$SIZE_T*23`($sp)
+	$UCMP	$inp,$num
+	bne	Lsha2_block_private
+	blr
+	.long	0
+	.byte	0,12,0x14,0,0,0,0,0
+___
+}
 
 # Ugly hack here, because PPC assembler syntax seem to vary too
 # much from platforms to platform...

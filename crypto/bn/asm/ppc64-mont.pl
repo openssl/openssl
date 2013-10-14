@@ -1079,6 +1079,7 @@ $code.=<<___;
 	.long	0
 	.byte	0,12,4,0,0x8c,10,6,0
 	.long	0
+.size	.$fname,.-.$fname
 
 .asciz  "Montgomery Multiplication for PPC64, CRYPTOGAMS by <appro\@openssl.org>"
 ___
