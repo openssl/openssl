@@ -876,9 +876,6 @@ static unsigned char tls12_sigalgs[] = {
 #ifndef OPENSSL_NO_SHA
 	tlsext_sigalg(TLSEXT_hash_sha1)
 #endif
-#ifndef OPENSSL_NO_MD5
-	tlsext_sigalg_rsa(TLSEXT_hash_md5)
-#endif
 };
 #ifndef OPENSSL_NO_ECDSA
 static unsigned char suiteb_sigalgs[] = {
@@ -921,13 +918,7 @@ size_t tls12_get_psigalgs(SSL *s, const unsigned char **psigs)
 	else
 		{
 		*psigs = tls12_sigalgs;
-#ifdef OPENSSL_FIPS
-		/* If FIPS mode don't include MD5 which is last */
-		if (FIPS_mode())
-			return sizeof(tls12_sigalgs) - 2;
-		else
-#endif
-			return sizeof(tls12_sigalgs);
+		return sizeof(tls12_sigalgs);
 		}
 	}
 /* Check signature algorithm is consistent with sent supported signature
