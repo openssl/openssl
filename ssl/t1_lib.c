@@ -360,6 +360,12 @@ int tls1_ec_nid2curve_id(int nid)
 		return 24;
 	case NID_secp521r1:  /* secp521r1 (25) */	
 		return 25;
+	case NID_brainpoolP256r1:  /* brainpoolP256r1 (26) */
+		return 26;
+	case NID_brainpoolP384r1:  /* brainpoolP384r1 (27) */
+		return 27;
+	case NID_brainpoolP512r1:  /* brainpool512r1 (28) */
+		return 28;
 	default:
 		return 0;
 		}
