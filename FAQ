@@ -628,8 +628,8 @@ valid for the current DOS session.
 * What is special about OpenSSL on Redhat?
 
 Red Hat Linux (release 7.0 and later) include a preinstalled limited
-version of OpenSSL. For patent reasons, support for IDEA, RC5 and MDC2
-is disabled in this version. The same may apply to other Linux distributions.
+version of OpenSSL. Red Hat has chosen to disable support for IDEA, RC5 and
+MDC2 in this version. The same may apply to other Linux distributions.
 Users may therefore wish to install more or all of the features left out.
 
 To do this you MUST ensure that you do not overwrite the openssl that is in
@@ -651,11 +651,6 @@ relevant updates in packages up to and including 0.9.6b.
 
 A possible way around this is to persuade Red Hat to produce a non-US
 version of Red Hat Linux.
-
-FYI: Patent numbers and expiry dates of US patents:
-MDC-2: 4,908,861 13/03/2007
-IDEA:  5,214,703 25/05/2010
-RC5:   5,724,428 03/03/2015
 
 
 * Why does the OpenSSL compilation fail on MacOS X?
