@@ -120,9 +120,15 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/time.h>
 
 #include "e_os.h"
+
+#if !(defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYSNAME_DSPBIOS))
+# include <sys/time.h>
+#endif
+#if defined(OPENSSL_SYS_VXWORKS)
+# include <time.h>
+#endif
 
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
@@ -361,10 +367,27 @@ static int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo)
 	pid_t curr_pid = getpid();
 #endif
 	time_t curr_time = time(NULL);
-	struct timeval tv;
 	int do_stir_pool = 0;
-
+/* time value for various platforms */
+#ifdef OPENSSL_SYS_WIN32
+	FILETIME tv;
+# ifdef _WIN32_WCE
+	SYSTEMTIME t;
+	GetSystemTime(&t);
+	SystemTimeToFileTime(&t, &tv);
+# else
+	GetSystemTimeAsFileTime(&tv);
+# endif
+#elif defined(OPENSSL_SYS_VXWORKS)
+	struct timespec tv;
+	clock_gettime(CLOCK_REALTIME, &ts);
+#elif defined(OPENSSL_SYSNAME_DSPBIOS)
+	unsigned long long tv, OPENSSL_rdtsc();
+	tv = OPENSSL_rdtsc();
+#else
+	struct timeval tv;
 	gettimeofday(&tv, NULL);
+#endif
 
 #ifdef PREDICT
 	if (rand_predictable)
@@ -504,14 +527,10 @@ static int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo)
 			if (!MD_Update(&m,(unsigned char*)&curr_time,
 				       sizeof curr_time))
 				goto err;
-			curr_time = 0;
-			}
-		if (tv.tv_sec) /* just in the first iteration to save time */
-			{
 			if (!MD_Update(&m,(unsigned char*)&tv,
 				       sizeof tv))
 				goto err;
-			tv.tv_sec = 0;
+			curr_time = 0;
 			}
 		if (!MD_Update(&m,local_md,MD_DIGEST_LENGTH))
 			goto err;
