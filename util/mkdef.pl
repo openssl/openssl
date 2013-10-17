@@ -233,6 +233,7 @@ foreach (@ARGV, split(/ /, $options))
 	elsif (/^no-ec_nistp_64_gcc_128$/)	{ $no_nistp_gcc=1; }
 	elsif (/^no-nextprotoneg$/)	{ $no_nextprotoneg=1; }
 	elsif (/^no-ssl2$/)	{ $no_ssl2=1; }
+	elsif (/^no-ssl-trace$/) { $no_ssl_trace=1; }
 	elsif (/^no-capieng$/)	{ $no_capieng=1; }
 	elsif (/^no-jpake$/)	{ $no_jpake=1; }
 	elsif (/^no-srp$/)	{ $no_srp=1; }
