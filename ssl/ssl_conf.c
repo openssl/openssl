@@ -496,7 +496,7 @@ int SSL_CONF_cmd_argv(SSL_CONF_CTX *cctx, int *pargc, char ***pargv)
 			(*pargc) -= rv;
 		return rv;
 		}
-	/* Unknown swicth: indicate no arguments processed */
+	/* Unknown switch: indicate no arguments processed */
 	if (rv == -2)
 		return 0;
 	/* Some error occurred processing command, return fatal error */
