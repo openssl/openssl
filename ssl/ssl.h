@@ -802,6 +802,12 @@ struct ssl_session_st
 #define SSL_CONF_FLAG_CLIENT		0x4
 #define SSL_CONF_FLAG_SERVER		0x8
 #define SSL_CONF_FLAG_SHOW_ERRORS	0x10
+#define SSL_CONF_FLAG_CERTIFICATE	0x20
+/* Configuration value types */
+#define SSL_CONF_TYPE_UNKNOWN		0x0
+#define SSL_CONF_TYPE_STRING		0x1
+#define SSL_CONF_TYPE_FILE		0x2
+#define SSL_CONF_TYPE_DIR		0x3
 
 /* Note: SSL[_CTX]_set_{options,mode} use |= op on the previous value,
  * they cannot be used to clear bits. */
@@ -2483,6 +2489,7 @@ int SSL_cache_hit(SSL *s);
 int SSL_is_server(SSL *s);
 
 SSL_CONF_CTX *SSL_CONF_CTX_new(void);
+int SSL_CONF_CTX_finish(SSL_CONF_CTX *cctx);
 void SSL_CONF_CTX_free(SSL_CONF_CTX *cctx);
 unsigned int SSL_CONF_CTX_set_flags(SSL_CONF_CTX *cctx, unsigned int flags);
 unsigned int SSL_CONF_CTX_clear_flags(SSL_CONF_CTX *cctx, unsigned int flags);
@@ -2493,6 +2500,7 @@ void SSL_CONF_CTX_set_ssl_ctx(SSL_CONF_CTX *cctx, SSL_CTX *ctx);
 
 int SSL_CONF_cmd(SSL_CONF_CTX *cctx, const char *cmd, const char *value);
 int SSL_CONF_cmd_argv(SSL_CONF_CTX *cctx, int *pargc, char ***pargv);
+int SSL_CONF_cmd_value_type(SSL_CONF_CTX *cctx, const char *cmd);
 
 #ifndef OPENSSL_NO_SSL_TRACE
 void SSL_trace(int write_p, int version, int content_type,

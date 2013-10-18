@@ -1685,6 +1685,12 @@ int args_ssl_call(SSL_CTX *ctx, BIO *err, SSL_CONF_CTX *cctx,
 			}
 		}
 #endif
+	if (!SSL_CONF_CTX_finish(cctx))
+		{
+		BIO_puts(err, "Error finishing context\n");
+		ERR_print_errors(err);
+		return 0;
+		}
 	return 1;
 	}
 
