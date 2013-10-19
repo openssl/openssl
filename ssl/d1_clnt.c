@@ -798,11 +798,10 @@ int dtls1_client_hello(SSL *s)
 
 		/* if client_random is initialized, reuse it, we are
 		 * required to use same upon reply to HelloVerify */
-		for (i=0;p[i]=='\0' && i<sizeof(s->s3->client_random);i++) ;
+		for (i=0;p[i]=='\0' && i<sizeof(s->s3->client_random);i++)
+			;
 		if (i==sizeof(s->s3->client_random))
-			{
 			ssl_fill_hello_random(s,0,p,sizeof(s->s3->client_random));
-			}
 
 		/* Do the message type and length last */
 		d=p= &(buf[DTLS1_HM_HEADER_LENGTH]);

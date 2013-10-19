@@ -1195,7 +1195,7 @@ int ssl3_get_client_hello(SSL *s)
 	{
 		unsigned char *pos;
 		pos=s->s3->server_random;
-		if (ssl_fill_hello_random(s,1,pos,SSL3_RANDOM_SIZE) <= 0)
+		if (ssl_fill_hello_random(s, 1, pos, SSL3_RANDOM_SIZE) <= 0)
 			{
 			al=SSL_AD_INTERNAL_ERROR;
 			goto f_err;

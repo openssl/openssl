@@ -274,6 +274,7 @@ static int ssl23_no_ssl2_ciphers(SSL *s)
 int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, int len)
 	{
 	int send_time = 0;
+
 	if (len < 4)
 		return 0;
 	if (server)
