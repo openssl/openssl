@@ -913,15 +913,13 @@ int dtls1_send_server_hello(SSL *s)
 	unsigned char *p,*d;
 	int i;
 	unsigned int sl;
-	unsigned long l,Time;
+	unsigned long l;
 
 	if (s->state == SSL3_ST_SW_SRVR_HELLO_A)
 		{
 		buf=(unsigned char *)s->init_buf->data;
 		p=s->s3->server_random;
-		Time=(unsigned long)time(NULL);			/* Time */
-		l2n(Time,p);
-		RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE-4);
+		ssl_fill_hello_random(s, 1, p, SSL3_RANDOM_SIZE);
 		/* Do the message type and length last */
 		d=p= &(buf[DTLS1_HM_HEADER_LENGTH]);
 
