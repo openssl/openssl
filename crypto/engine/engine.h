@@ -148,6 +148,16 @@ extern "C" {
 
 #define ENGINE_FLAGS_NO_REGISTER_ALL	(int)0x0008
 
+
+
+/* This flag is for engines using static global asn1 pkey meth data
+ * Setting the flag prevents OpenSSL to free the data,the engine has to take
+ * free memory on its own
+ */
+#define ENGINE_FLAGS_NO_PKEY_METH_FREE	(int)0x0010
+#define ENGINE_FLAGS_NO_PKEY_ASN1_METH_FREE	(int)0x0020
+
+
 /* ENGINEs can support their own command types, and these flags are used in
  * ENGINE_CTRL_GET_CMD_FLAGS to indicate to the caller what kind of input each
  * command expects. Currently only numeric and string input is supported. If a

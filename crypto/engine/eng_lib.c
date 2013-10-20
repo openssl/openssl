@@ -126,8 +126,11 @@ int engine_free_util(ENGINE *e, int locked)
 		}
 #endif
 	/* Free up any dynamically allocated public key methods */
-	engine_pkey_meths_free(e);
-	engine_pkey_asn1_meths_free(e);
+	if (!(ENGINE_get_flags(e) & ENGINE_FLAGS_NO_PKEY_METH_FREE))
+		engine_pkey_meths_free(e);
+	if (!(ENGINE_get_flags(e) & ENGINE_FLAGS_NO_PKEY_ASN1_METH_FREE))
+		engine_pkey_asn1_meths_free(e);
+
 	/* Give the ENGINE a chance to do any structural cleanup corresponding
 	 * to allocation it did in its constructor (eg. unload error strings) */
 	if(e->destroy)
