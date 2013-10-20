@@ -1,10 +1,11 @@
 # Example configuration file
-# Connects to the default port of s_server
-Port = localhost:4433
+# Port to listen on
+Port = 4433
 # Disable TLS v1.2 for test.
 # Protocol = ALL, -TLSv1.2
 # Only support 3 curves
 Curves = P-521:P-384:P-256
+# Automatic curve selection
 ECDHParameters = Automatic
 # Restricted signature algorithms
 SignatureAlgorithms = RSA+SHA512:ECDSA+SHA512 
