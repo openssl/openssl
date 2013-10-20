@@ -138,7 +138,7 @@ sub special_compile_target
 		{
 		return << "EOF";
 \$(TMP_D)/x86_64-gcc.o:	crypto/bn/asm/x86_64-gcc.c
-	\$(CC) \$(CFLAGS) -c -o \$@ crypto/bn/asm/x86_64-gcc.c
+	\$(CC) \$(LIB_CFLAGS) -c -o \$@ crypto/bn/asm/x86_64-gcc.c
 EOF
 		}
 	return undef;

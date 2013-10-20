@@ -5,4 +5,6 @@ BRANCH=`git rev-parse --abbrev-ref HEAD`
 ./Configure $@ no-symlinks
 make files
 util/mk1mf.pl OUT=out.$BRANCH TMP=tmp.$BRANCH INC=inc.$BRANCH copy > makefile.$BRANCH
-make -f makefile.$BRANCH init
+MAKE=make
+which bsdmake > /dev/null && MAKE=bsdmake
+$MAKE -f makefile.$BRANCH init

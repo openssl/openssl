@@ -2,4 +2,6 @@
 
 BRANCH=`git rev-parse --abbrev-ref HEAD`
 
-make -f makefile.$BRANCH $@
+MAKE=make
+which bsdmake > /dev/null && MAKE=bsdmake
+$MAKE -f makefile.$BRANCH $@
