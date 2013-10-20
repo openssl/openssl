@@ -125,6 +125,19 @@ int engine_free_util(ENGINE *e, int locked)
 		abort();
 		}
 #endif
+
+	/* unregister the engine */
+	ENGINE_unregister_ciphers(e);
+	ENGINE_unregister_digests(e);
+	ENGINE_unregister_RSA(e);
+	ENGINE_unregister_DSA(e);
+	ENGINE_unregister_DH(e);
+	ENGINE_unregister_ECDH(e);
+	ENGINE_unregister_ECDSA(e);
+	ENGINE_unregister_RAND(e);
+	ENGINE_unregister_pkey_meths(e);
+	ENGINE_unregister_pkey_asn1_meths(e);
+
 	/* Free up any dynamically allocated public key methods */
 	if (!(ENGINE_get_flags(e) & ENGINE_FLAGS_NO_PKEY_METH_FREE))
 		engine_pkey_meths_free(e);
