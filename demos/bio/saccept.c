@@ -1,13 +1,13 @@
 /* NOCW */
 /* demos/bio/saccept.c */
 
-/* A minimal program to server an SSL connection.
+/* A minimal program to serve an SSL connection.
  * It uses blocking.
  * saccept host:port
  * host is the interface IP to use.  If any interface, use *:port
  * The default it *:4433
  *
- * cc -I../../include saccept.c -L../.. -lssl -lcrypto
+ * cc -I../../include saccept.c -L../.. -lssl -lcrypto -ldl
  */
 
 #include <stdio.h>
@@ -58,8 +58,8 @@ int main(int argc, char *argv[])
 
 	if ((in=BIO_new_accept(port)) == NULL) goto err;
 
-	/* This means that when a new connection is acceptede on 'in',
-	 * The ssl_bio will be 'dupilcated' and have the new socket
+	/* This means that when a new connection is accepted on 'in',
+	 * The ssl_bio will be 'duplicated' and have the new socket
 	 * BIO push into it.  Basically it means the SSL BIO will be
 	 * automatically setup */
 	BIO_set_accept_bios(in,ssl_bio);
