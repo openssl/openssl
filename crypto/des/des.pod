@@ -181,6 +181,8 @@ the uuencoded file to embed in the begin line of the uuencoded
 output.  If there is no name specified after the B<-u>, the name text.des
 will be embedded in the header.
 
+=back
+
 =head1 SEE ALSO
 
 ps(1),
