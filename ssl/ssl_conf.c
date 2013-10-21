@@ -406,7 +406,7 @@ typedef struct
 #define SSL_CONF_CMD_STRING(name, cmdopt) \
 	SSL_CONF_CMD(name, cmdopt, SSL_CONF_TYPE_STRING)
 
-static ssl_conf_cmd_tbl ssl_conf_cmds[] = {
+static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
 	SSL_CONF_CMD_STRING(SignatureAlgorithms, "sigalgs"),
 	SSL_CONF_CMD_STRING(ClientSignatureAlgorithms, "client_sigalgs"),
 	SSL_CONF_CMD_STRING(Curves, "curves"),
@@ -446,9 +446,9 @@ static int ssl_conf_cmd_skip_prefix(SSL_CONF_CTX *cctx, const char **pcmd)
 	return 1;
 	}
 
-static ssl_conf_cmd_tbl *ssl_conf_cmd_lookup(SSL_CONF_CTX *cctx, const char *cmd)
+static const ssl_conf_cmd_tbl *ssl_conf_cmd_lookup(SSL_CONF_CTX *cctx, const char *cmd)
 	{
-	ssl_conf_cmd_tbl *t;
+	const ssl_conf_cmd_tbl *t;
 	size_t i;
 	if (cmd == NULL)
 		return NULL;
@@ -473,7 +473,7 @@ static ssl_conf_cmd_tbl *ssl_conf_cmd_lookup(SSL_CONF_CTX *cctx, const char *cmd
 
 int SSL_CONF_cmd(SSL_CONF_CTX *cctx, const char *cmd, const char *value)
 	{
-	ssl_conf_cmd_tbl *runcmd;
+	const ssl_conf_cmd_tbl *runcmd;
 	if (cmd == NULL)
 		{
 		SSLerr(SSL_F_SSL_CONF_CMD, SSL_R_INVALID_NULL_CMD_NAME);
@@ -556,7 +556,7 @@ int SSL_CONF_cmd_value_type(SSL_CONF_CTX *cctx, const char *cmd)
 	{
 	if (ssl_conf_cmd_skip_prefix(cctx, &cmd))
 		{
-		ssl_conf_cmd_tbl *runcmd;
+		const ssl_conf_cmd_tbl *runcmd;
 		runcmd = ssl_conf_cmd_lookup(cctx, cmd);
 		if (runcmd)
 			return runcmd->value_type;
