@@ -296,7 +296,7 @@ static int ssl23_client_hello(SSL *s)
 	unsigned char *buf;
 	unsigned char *p,*d;
 	int i,ch_len;
-	unsigned long Time,l;
+	unsigned long l;
 	int ssl2_compat;
 	int version = 0, version_major, version_minor;
 #ifndef OPENSSL_NO_COMP
