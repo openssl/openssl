@@ -438,7 +438,7 @@ static int ssl_conf_cmd_skip_prefix(SSL_CONF_CTX *cctx, const char **pcmd)
 		}
 	else if (cctx->flags & SSL_CONF_FLAG_CMDLINE)
 		{
-		if (**pcmd != '-' || !*pcmd[1])
+		if (**pcmd != '-' || !(*pcmd)[1])
 			return 0;
 		*pcmd += 1;
 		}
