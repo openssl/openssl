@@ -9,17 +9,13 @@
      Experimental support for encrypt then mac from
      draft-gutmann-tls-encrypt-then-mac-02.txt
 
-     To enable it set the appropriate extension number (0x10 for the test
-     server) using e.g. -DTLSEXT_TYPE_encrypt_then_mac=0x10
+     To enable it set the appropriate extension number (0x42 for the test
+     server) using e.g. -DTLSEXT_TYPE_encrypt_then_mac=0x42
  
      For non-compliant peers (i.e. just about everything) this should have no
      effect.
 
      WARNING: EXPERIMENTAL, SUBJECT TO CHANGE.
-
-     NOTE: unfortunately the test server value (0x10) clashes with the draft
-     ALPN extension. Until this is resolved the only way to check against the
-     test server is to temporarily change the ALPN extension value (ugh!).
 
      [Steve Henson]
 
