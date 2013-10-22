@@ -389,7 +389,39 @@ static int cmd_PrivateKey(SSL_CONF_CTX *cctx, const char *value)
 		rv = SSL_use_PrivateKey_file(cctx->ssl, value, SSL_FILETYPE_PEM);
 	return rv > 0;
 	}
-
+#ifndef OPENSSL_NO_DH
+static int cmd_DHParameters(SSL_CONF_CTX *cctx, const char *value)
+	{
+	int rv = 0;
+	DH *dh = NULL;
+	BIO *in = NULL;
+	if (!(cctx->flags & SSL_CONF_FLAG_CERTIFICATE))
+		return -2;
+	if (cctx->ctx || cctx->ssl)
+		{
+		in = BIO_new(BIO_s_file_internal());
+		if (!in)
+			goto end;
+		if (BIO_read_filename(in, value) <= 0)
+			goto end;
+		dh = PEM_read_bio_DHparams(in, NULL, NULL, NULL);
+		if (!dh)
+			goto end;
+		}
+	else
+		return 1;
+	if (cctx->ctx)
+		rv = SSL_CTX_set_tmp_dh(cctx->ctx, dh);
+	if (cctx->ssl)
+		rv = SSL_set_tmp_dh(cctx->ssl, dh);
+	end:
+	if (dh)
+		DH_free(dh);
+	if (in)
+		BIO_free(in);
+	return rv > 0;
+	}
+#endif
 typedef struct
 	{
 	int (*cmd)(SSL_CONF_CTX *cctx, const char *value);
@@ -417,7 +449,10 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
 	SSL_CONF_CMD_STRING(Protocol, NULL),
 	SSL_CONF_CMD_STRING(Options, NULL),
 	SSL_CONF_CMD(Certificate, "cert", SSL_CONF_TYPE_FILE),
-	SSL_CONF_CMD(PrivateKey, "key", SSL_CONF_TYPE_FILE)
+	SSL_CONF_CMD(PrivateKey, "key", SSL_CONF_TYPE_FILE),
+#ifndef OPENSSL_NO_DH
+	SSL_CONF_CMD(DHParameters, "dhparam", SSL_CONF_TYPE_FILE)
+#endif
 };
 
 static int ssl_conf_cmd_skip_prefix(SSL_CONF_CTX *cctx, const char **pcmd)
