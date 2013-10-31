@@ -383,7 +383,7 @@ $code.=<<___ if ($SZ==8 && $LITTLE_ENDIAN);
 	rlwimi	$t0,$a0,24,0,7
 	 rlwimi	@X[$i],$a1,24,0,7
 	rlwimi	$t0,$a0,24,16,23
-	 rlwimi	@X[$i],$a1,25,16,23
+	 rlwimi	@X[$i],$a1,24,16,23
 	insrdi	@X[$i],$t0,32,0
 ___
 	&ROUND_00_15($i,@V);
