@@ -38,6 +38,14 @@ if ($flavour =~ /64/) {
 	$PUSH	="stw";
 } else { die "nonsense $flavour"; }
 
+# Define endianess based on flavour
+# i.e.: linux64le
+$LITTLE_ENDIAN=0;
+if ($flavour =~ /le$/) {
+	die "little-endian is 64-bit only: $flavour" if ($SIZE_T == 4);
+	$LITTLE_ENDIAN=1;
+}
+
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}ppc-xlate.pl" and -f $xlate ) or
 ( $xlate="${dir}../../perlasm/ppc-xlate.pl" and -f $xlate) or
@@ -68,14 +76,28 @@ $T  ="r12";
 @X=("r16","r17","r18","r19","r20","r21","r22","r23",
     "r24","r25","r26","r27","r28","r29","r30","r31");
 
+sub loadbe {
+my ($dst, $src, $temp_reg) = @_;
+$code.=<<___ if (!$LITTLE_ENDIAN);
+	lwz	$dst,$src
+___
+$code.=<<___ if ($LITTLE_ENDIAN);
+	lwz	$temp_reg,$src
+	rotlwi	$dst,$temp_reg,8
+	rlwimi	$dst,$temp_reg,24,0,7
+	rlwimi	$dst,$temp_reg,24,16,23
+___
+}
+
 sub BODY_00_19 {
 my ($i,$a,$b,$c,$d,$e,$f)=@_;
 my $j=$i+1;
-$code.=<<___ if ($i==0);
-	lwz	@X[$i],`$i*4`($inp)
-___
+
+	# Since the last value of $f is discarded, we can use
+	# it as a temp reg to swap byte-order when needed.
+	loadbe("@X[$i]","`$i*4`($inp)",$f) if ($i==0);
+	loadbe("@X[$j]","`$j*4`($inp)",$f) if ($i<15);
 $code.=<<___ if ($i<15);
-	lwz	@X[$j],`$j*4`($inp)
 	add	$f,$K,$e
 	rotlwi	$e,$a,5
 	add	$f,$f,@X[$i]
