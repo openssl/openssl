@@ -92,7 +92,7 @@ my $quad = sub {
 	{  $hi=undef; $lo=$_; }
 
 	if (defined($hi))
-	{  push(@ret,$flavour=~/lei$/o?".long\t$lo,$hi":".long\t$hi,$lo");  }
+	{  push(@ret,$flavour=~/le$/o?".long\t$lo,$hi":".long\t$hi,$lo");  }
 	else
 	{  push(@ret,".quad	$lo");  }
     }
