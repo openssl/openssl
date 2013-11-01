@@ -206,6 +206,7 @@ static int ctrl_str_option(SSL_CONF_CTX *cctx, const char *cmd)
 		SSL_FLAG_TBL("no_tls1_2", SSL_OP_NO_TLSv1_2),
 		SSL_FLAG_TBL("bugs", SSL_OP_ALL),
 		SSL_FLAG_TBL("no_comp", SSL_OP_NO_COMPRESSION),
+		SSL_FLAG_TBL_SRV("ecdh_single", SSL_OP_SINGLE_ECDH_USE),
 #ifndef OPENSSL_NO_TLSEXT
 		SSL_FLAG_TBL("no_ticket", SSL_OP_NO_TICKET),
 #endif
