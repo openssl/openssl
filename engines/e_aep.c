@@ -1065,7 +1065,7 @@ static AEP_RV MakeAEPBigNum(AEP_VOID_PTR ArbBigNum, AEP_U32 BigNumSize,
 	{
 	BIGNUM* bn;
 	const union { long one; char little; } is_endian = {1};
-	int i,j;
+	AEP_U32 i,j;
 
 	/*Cast the ArbBigNum pointer to our BIGNUM struct*/
 	bn = (BIGNUM*) ArbBigNum;
