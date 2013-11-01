@@ -590,14 +590,12 @@ static int tls1_set_ec_id(unsigned char *curve_id, unsigned char *comp_id,
 	{
 	int is_prime, id;
 	const EC_GROUP *grp;
-	const EC_POINT *pt;
 	const EC_METHOD *meth;
 	if (!ec)
 		return 0;
 	/* Determine if it is a prime field */
 	grp = EC_KEY_get0_group(ec);
-        pt = EC_KEY_get0_public_key(ec);
-	if (!grp || !pt)
+	if (!grp)
 		return 0;
         meth = EC_GROUP_method_of(grp);
 	if (!meth)
@@ -625,6 +623,8 @@ static int tls1_set_ec_id(unsigned char *curve_id, unsigned char *comp_id,
 		}
 	if (comp_id)
 		{
+        	if (EC_KEY_get0_public_key(ec) == NULL)
+			return 0;
 		if (EC_KEY_get_conv_form(ec) == POINT_CONVERSION_COMPRESSED)
 			{
 			if (is_prime)
