@@ -62,6 +62,9 @@
 #include "ssl_locl.h"
 #include <openssl/conf.h>
 #include <openssl/objects.h>
+#ifndef OPENSSL_NO_DH
+#include <openssl/dh.h>
+#endif
 
 /* structure holding name tables. This is used for pemitted elements in
  * lists such as TLSv1 and single command line switches such as no_tls1
