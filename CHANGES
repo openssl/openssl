@@ -4,6 +4,19 @@
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
 
+  *) Experimental workaround TLS filler (WTF) extension. Based on a suggested
+     workaround for the "TLS hang bug" (see FAQ and PR#2771): if the TLS client
+     Hello record length value would otherwise be > 255 and less that 512
+     pad with a dummy extension containing zeroes so it is at least 512 bytes
+     long.
+
+     To enable it use an unused extension number (for example 0x4242) using
+     e.g. -DTLSEXT_TYPE_wtf=0x4242
+
+     WARNING: EXPERIMENTAL, SUBJECT TO CHANGE.
+ 
+     [Steve Henson]
+
   *) Experimental encrypt-then-mac support.
     
      Experimental support for encrypt then mac from

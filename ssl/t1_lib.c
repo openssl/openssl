@@ -1472,6 +1472,22 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 	s2n(TLSEXT_TYPE_encrypt_then_mac,ret);
 	s2n(0,ret);
 #endif
+#ifdef TLSEXT_TYPE_wtf
+	{
+	/* Work out length which would be used in the TLS record:
+	 * NB this should ALWAYS appear after all other extensions.
+	 */
+	int hlen = ret - (unsigned char *)s->init_buf->data - 3;
+	if (hlen > 0xff && hlen < 0x200)
+		{
+		hlen = 0x200 - hlen;
+		s2n(TLSEXT_TYPE_wtf,ret);
+		s2n(hlen,ret);
+		memset(ret, 0, hlen);
+		ret += hlen;
+		}
+	}
+#endif
 
 	if ((extdatalen = ret-p-2) == 0)
 		return p;
