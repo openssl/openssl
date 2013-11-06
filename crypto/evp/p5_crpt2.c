@@ -90,7 +90,7 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
 	if (mdlen < 0)
 		return 0;
 
-	HMAC_CTX_init(&hctx);
+	HMAC_CTX_init(&hctx_tpl);
 	p = out;
 	tkeylen = keylen;
 	if(!pass)
