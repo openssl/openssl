@@ -300,11 +300,11 @@ extern "C" {
 /* From RFC 5878 */
 #define TLSEXT_SUPPLEMENTALDATATYPE_authz_data 16386
 
-/* This is not IANA assigned. See
+/* DTCP Authorization Type
  * https://www.iana.org/assignments/tls-parameters/tls-parameters.xml#authorization-data-rules
- * http://tools.ietf.org/id/draft-dthakore-tls-authz-01.txt
+ * http://tools.ietf.org/id/draft-dthakore-tls-authz-04.txt
  */
-#define TLSEXT_AUTHZDATAFORMAT_dtcp 225
+#define TLSEXT_AUTHZDATAFORMAT_dtcp 66
 
 #define TLSEXT_MAXLEN_supplemental_data 1024*16 /* Let's limit to 16k */
 
