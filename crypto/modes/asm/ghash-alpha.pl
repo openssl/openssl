@@ -254,6 +254,15 @@ $code=<<___;
 
 .text
 
+.align	4
+rem_4bit:
+	.quad	0x0000<<48, 0x1C20<<48, 0x3840<<48, 0x2460<<48
+	.quad	0x7080<<48, 0x6CA0<<48, 0x48C0<<48, 0x54E0<<48
+	.quad	0xE100<<48, 0xFD20<<48, 0xD940<<48, 0xC560<<48
+	.quad	0x9180<<48, 0x8DA0<<48, 0xA9C0<<48, 0xB5E0<<48
+.ascii	"GHASH for Alpha, CRYPTOGAMS by <appro\@openssl.org>"
+.align	4
+
 .set	noat
 .set	noreorder
 .globl	gcm_gmult_4bit
@@ -267,7 +276,7 @@ gcm_gmult_4bit:
 	ldq	$Xhi,0($Xi)
 
 	br	$rem_4bit,.Lpic1
-.Lpic1:	lda	$rem_4bit,rem_4bit-.Lpic1($rem_4bit)
+.Lpic1:	lda	$rem_4bit,.Lpic1-rem_4bit($rem_4bit)
 ___
 
 	&loop();
@@ -342,7 +351,7 @@ gcm_ghash_4bit:
 	ldq	$Xlo,8($Xi)
 
 	br	$rem_4bit,.Lpic2
-.Lpic2:	lda	$rem_4bit,rem_4bit-.Lpic2($rem_4bit)
+.Lpic2:	lda	$rem_4bit,.Lpic2-rem_4bit($rem_4bit)
 
 .Louter:
 	extql	$inhi,$inp,$inhi
@@ -434,16 +443,6 @@ $code.=<<___;
 	lda	sp,32(sp)
 	ret	(ra)
 .end	gcm_ghash_4bit
-
-.align	4
-rem_4bit:
-	.quad	0x0000<<48, 0x1C20<<48, 0x3840<<48, 0x2460<<48
-	.quad	0x7080<<48, 0x6CA0<<48, 0x48C0<<48, 0x54E0<<48
-	.quad	0xE100<<48, 0xFD20<<48, 0xD940<<48, 0xC560<<48
-	.quad	0x9180<<48, 0x8DA0<<48, 0xA9C0<<48, 0xB5E0<<48
-.ascii	"GHASH for Alpha, CRYPTOGAMS by <appro\@openssl.org>"
-.align	4
-
 ___
 $output=shift and open STDOUT,">$output";
 print $code;
