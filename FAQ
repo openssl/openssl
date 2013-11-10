@@ -746,7 +746,6 @@ documentation and the mailing lists for similar queries. If you are still
 unsure whether it is a bug or not submit a query to the openssl-users mailing
 list.
 
-
 * I'm SURE I've found a bug, how do I report it?
 
 Bug reports with no security implications should be sent to the request
@@ -776,7 +775,9 @@ See also <URL: http://www.openssl.org/support/rt.html>
 If you think your bug has security implications then please send it to
 openssl-security@openssl.org if you don't get a prompt reply at least 
 acknowledging receipt then resend or mail it directly to one of the
-more active team members (e.g. Steve).
+more active team members (e.g. Steve). If you wish to use PGP to send
+in a report please use one or more of the keys of the team members listed
+at <URL: http://www.openssl.org/about/>
 
 [PROG] ========================================================================
 
