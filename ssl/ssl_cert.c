@@ -621,6 +621,20 @@ int ssl_cert_add1_chain_cert(CERT *c, X509 *x)
 	return 1;
 	}
 
+int ssl_cert_select_current(CERT *c, X509 *x)
+	{
+	int i;
+	for (i = 0; i < SSL_PKEY_NUM; i++)
+		{
+		if (c->pkeys[i].x509 == x)
+			{
+			c->key = &c->pkeys[i];
+			return 1;
+			}
+		}
+	return 0;
+	}
+
 void ssl_cert_set_cert_cb(CERT *c, int (*cb)(SSL *ssl, void *arg), void *arg)
 	{
 	c->cert_cb = cb;
