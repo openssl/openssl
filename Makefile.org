@@ -303,7 +303,7 @@ libcrypto$(SHLIB_EXT): libcrypto.a fips_premain_dso$(EXE_EXT)
 			export CC FIPSLD_CC FIPSLD_LIBCRYPTO; \
 		fi; \
 		$(MAKE) -e SHLIBDIRS=crypto  CC=$${CC:-$(CC)} build-shared; \
-		touch -c fips_premain_dso($EXE_EXT); \
+		touch -c fips_premain_dso$(EXE_EXT); \
 	else \
 		echo "There's no support for shared libraries on this platform" >&2; \
 		exit 1; \
