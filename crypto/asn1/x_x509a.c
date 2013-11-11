@@ -135,15 +135,26 @@ unsigned char *X509_keyid_get0(X509 *x, int *len)
 }
 
 int X509_add1_trust_object(X509 *x, ASN1_OBJECT *obj)
-{
+	{
 	X509_CERT_AUX *aux;
-	ASN1_OBJECT *objtmp;
-	if(!(objtmp = OBJ_dup(obj))) return 0;
-	if(!(aux = aux_get(x))) return 0;
-	if(!aux->trust
-		&& !(aux->trust = sk_ASN1_OBJECT_new_null())) return 0;
-	return sk_ASN1_OBJECT_push(aux->trust, objtmp);
-}
+	ASN1_OBJECT *objtmp = NULL;
+	if (obj)
+		{
+		objtmp = OBJ_dup(obj);
+		if (!objtmp)
+			return 0;
+		}
+	if(!(aux = aux_get(x)))
+		goto err;
+	if(!aux->trust && !(aux->trust = sk_ASN1_OBJECT_new_null()))
+			goto err;
+	if (!objtmp || sk_ASN1_OBJECT_push(aux->trust, objtmp))
+		return 1;
+	err:
+	if (objtmp)
+		ASN1_OBJECT_free(objtmp);
+	return 0;
+	}
 
 int X509_add1_reject_object(X509 *x, ASN1_OBJECT *obj)
 {
