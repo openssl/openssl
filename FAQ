@@ -738,6 +738,7 @@ never make sense, and tend to emerge when you least expect them. In order
 to identify one, drop optimization level, e.g. by editing CFLAG line in
 top-level Makefile, recompile and re-run the test.
 
+
 * I think I've found a bug, what should I do?
 
 If you are a new user then it is quite likely you haven't found a bug and
@@ -745,6 +746,11 @@ something is happening you aren't familiar with. Check this FAQ, the associated
 documentation and the mailing lists for similar queries. If you are still
 unsure whether it is a bug or not submit a query to the openssl-users mailing
 list.
+
+If you think you have found a bug based on the output of static analysis tools
+then please manually check the issue is genuine. Such tools can produce a
+LOT of false positives.
+
 
 * I'm SURE I've found a bug, how do I report it?
 
