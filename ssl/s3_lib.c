@@ -3424,6 +3424,13 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		else
 			return ssl_cert_add0_chain_cert(s->cert, (X509 *)parg);
 
+	case SSL_CTRL_GET_CHAIN_CERTS:
+		*(STACK_OF(X509) **)parg = s->cert->key->chain;
+		break;
+
+	case SSL_CTRL_SELECT_CURRENT_CERT:
+		return ssl_cert_select_current(s->cert, (X509 *)parg);
+
 #ifndef OPENSSL_NO_EC
 	case SSL_CTRL_GET_CURVES:
 		{
@@ -3922,6 +3929,13 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 			return ssl_cert_add1_chain_cert(ctx->cert, (X509 *)parg);
 		else
 			return ssl_cert_add0_chain_cert(ctx->cert, (X509 *)parg);
+
+	case SSL_CTRL_GET_CHAIN_CERTS:
+		*(STACK_OF(X509) **)parg = ctx->cert->key->chain;
+		break;
+
+	case SSL_CTRL_SELECT_CURRENT_CERT:
+		return ssl_cert_select_current(ctx->cert, (X509 *)parg);
 
 	default:
 		return(0);

@@ -3,9 +3,11 @@
 =head1 NAME
 
 SSL_CTX_set0_chain, SSL_CTX_set1_chain, SSL_CTX_add0_chain_cert,
-SSL_CTX_add1_chain_cert, SSL_set0_chain, SSL_set1_chain,
-SSL_add0_chain_cert, SSL_add1_chain_cert, SSL_CTX_build_cert_chain,
-SSL_build_cert_chain - extra chain certificate processing
+SSL_CTX_add1_chain_cert, SSL_CTX_get0_chain_certs, SSL_CTX_clear_chain_certs,
+SSL_set0_chain, SSL_set1_chain, SSL_add0_chain_cert, SSL_add1_chain_cert,
+SSL_get0_chain_certs, SSL_clear_chain_certs, SSL_CTX_build_cert_chain,
+SSL_build_cert_chain, SSL_CTX_select_current_cert,
+SSL_select_current_cert - extra chain certificate processing
 
 =head1 SYNOPSIS
 
@@ -13,26 +15,39 @@ SSL_build_cert_chain - extra chain certificate processing
 
  int SSL_CTX_set0_chain(SSL_CTX *ctx, STACK_OF(X509) *sk);
  int SSL_CTX_set1_chain(SSL_CTX *ctx, STACK_OF(X509) *sk);
- int SSL_CTX_add0_chain_cert(SSL_CTX *ctx, STACK_OF(X509) *x509);
+ int SSL_CTX_add0_chain_cert(SSL_CTX *ctx, X509 *x509);
  int SSL_CTX_add1_chain_cert(SSL_CTX *ctx, X509 *x509);
+ int SSL_CTX_get0_chain_certs(SSL_CTX *ctx, STACK_OF(X509) **sk);
+ int SSL_CTX_clear_chain_certs(SSL_CTX *ctx);
 
  int SSL_set0_chain(SSL *ssl, STACK_OF(X509) *sk);
  int SSL_set1_chain(SSL *ssl, STACK_OF(X509) *sk);
- int SSL_add0_chain_cert(SSL *ssl, STACK_OF(X509) *x509);
+ int SSL_add0_chain_cert(SSL *ssl, X509 *x509);
  int SSL_add1_chain_cert(SSL *ssl, X509 *x509);
+ int SSL_get0_chain_certs(SSL *ssl, STACK_OF(X509) **sk);
+ int SSL_clear_chain_certs(SSL *ssl);
 
  int SSL_CTX_build_cert_chain(SSL_CTX *ctx, flags);
- int SSL_build_cert_chain(SSL_CTX *ctx, flags);
+ int SSL_build_cert_chain(SSL *ssl, flags);
+
+ int SSL_CTX_select_current_cert(SSL_CTX *ctx, X509 *x509);
+ int SSL_select_current_cert(SSL *ssl, X509 *x509);
 
 =head1 DESCRIPTION
 
 SSL_CTX_set0_chain() and SSL_CTX_set1_chain() set the certificate chain
-associated with the current certificate of B<ctx> to B<sk>. If B<sk> is set
-to B<NULL> any existing chain is cleared.
+associated with the current certificate of B<ctx> to B<sk>.
 
 SSL_CTX_add0_chain_cert() and SSL_CTX_add1_chain_cert() append the single
 certificate B<x509> to the chain associated with the current certificate of
 B<ctx>.
+
+SSL_CTX_get0_chain_certs() retrieves the chain associated with the current
+certificate of B<ctx>.
+
+SSL_CTX_clear_chain_certs() clears any existing chain associated with the
+current certificate of B<ctx>.  (This is implemented by calling
+SSL_CTX_set0_chain() with B<sk> set to B<NULL>).
 
 SSL_CTX_build_cert_chain() builds the certificate chain for B<ctx> using the
 chain store. Any existing chain certificates are used as untrusted CAs.
@@ -40,9 +55,18 @@ If the function is successful the built chain will replace any existing chain.
 The B<flags> parameter can be set to B<SSL_BUILD_CHAIN_FLAG_NO_ROOT> to omit
 the root CA from the built chain.
 
-SSL_set0_chain(), SSL_set1_chain(), SSL_add0_chain_cert(), SSL_add0_chain_cert()
-and SSL_build_cert_chain() are similar except they apply to SSL structure
-B<ssl>.
+Each of these functions operates on the I<current> end entity
+(i.e. server or client) certificate. This is the last certificate loaded or
+selected on the corresponding B<ctx> structure.
+
+SSL_CTX_select_current_cert() selects B<x509> as the current end entity
+certificate, but only if B<x509> has already been loaded into B<ctx> using a
+function such as SSL_CTX_use_certificate().
+
+SSL_set0_chain(), SSL_set1_chain(), SSL_add0_chain_cert(),
+SSL_add1_chain_cert(), SSL_get0_chain_certs(), SSL_clear_chain_certs(),
+SSL_build_cert_chain() and SSL_select_current_cert() are similar except they
+apply to SSL structure B<ssl>.
 
 All these functions are implemented as macros. Those containing a B<1>
 increment the reference count of the supplied certificate or chain so it must
@@ -55,10 +79,6 @@ B<MUST NOT> be freed after the operation.
 The chains associate with an SSL_CTX structure are copied to any SSL
 structures when SSL_new() is called. SSL structures will not be affected
 by any chains subsequently changed in the parent SSL_CTX.
-
-Each of these functions operates on the I<current> end entity
-(i.e. server or client) certificate. This is the last certificate set
-on the corresponding B<ctx> or B<ssl> structure.
 
 One chain can be set for each key type supported by a server. So, for example,
 an RSA and a DSA certificate can (and often will) have different chains.
