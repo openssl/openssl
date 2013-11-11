@@ -129,6 +129,7 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
 			HMAC_CTX_cleanup(&hctx);
 			return 0;
 			}
+		HMAC_CTX_cleanup(&hctx);
 		memcpy(p, digtmp, cplen);
 		for(j = 1; j < iter; j++)
 			{
