@@ -602,6 +602,7 @@ case "$GUESSOS" in
 	    (echo "__LP64__" | gcc -E -x c - 2>/dev/null | grep "^__LP64__" 2>&1 > /dev/null) || options="$options -m32"
 	fi
 	;;
+  ppc64le-*-linux2) OUT="linux-ppc64le" ;;
   ppc-*-linux2) OUT="linux-ppc" ;;
   mips64*-*-linux2)
 	echo "WARNING! If you wish to build 64-bit library, then you have to"
