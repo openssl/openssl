@@ -438,7 +438,7 @@ $code.=<<___;
 .align	4
 .ent	picmeup
 picmeup:
-	.FRame	sp,0,$t0
+	.frame	sp,0,$t0
 	.prologue 0
 	br	$rem_4bit,.Lpic
 .Lpic:	lda	$rem_4bit,12($rem_4bit)
