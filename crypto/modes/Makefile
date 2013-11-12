@@ -55,7 +55,10 @@ aesni-gcm-x86_64.s:	asm/aesni-gcm-x86_64.pl
 ghash-sparcv9.s:	asm/ghash-sparcv9.pl
 	$(PERL) asm/ghash-sparcv9.pl $@ $(CFLAGS)
 ghash-alpha.s:	asm/ghash-alpha.pl
-	$(PERL) $< | $(CC) -E - | tee $@ > /dev/null
+	(preproc=/tmp/$$$$.$@; trap "rm $$preproc" INT; \
+	$(PERL) asm/ghash-alpha.pl > $$preproc && \
+	$(CC) -E $$preproc > $@ && rm $$preproc)
+
 ghash-parisc.s:	asm/ghash-parisc.pl
 	$(PERL) asm/ghash-parisc.pl $(PERLASM_SCHEME) $@
 
