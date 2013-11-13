@@ -1025,9 +1025,9 @@ int MAIN(int argc, char *argv[])
 # ifndef OPENSSL_NO_NEXTPROTONEG
 	const char *next_proto_neg_in = NULL;
 	tlsextnextprotoctx next_proto = { NULL, 0};
+# endif
 	const char *alpn_in = NULL;
 	tlsextalpnctx alpn_ctx = { NULL, 0};
-# endif
 #endif
 #ifndef OPENSSL_NO_PSK
 	/* by default do not send a PSK identity hint */
@@ -1477,12 +1477,12 @@ int MAIN(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			next_proto_neg_in = *(++argv);
 			}
+# endif
 		else if	(strcmp(*argv,"-alpn") == 0)
 			{
 			if (--argc < 1) goto bad;
 			alpn_in = *(++argv);
 			}
-# endif
 #endif
 #if !defined(OPENSSL_NO_JPAKE) && !defined(OPENSSL_NO_PSK)
 		else if (strcmp(*argv,"-jpake") == 0)
@@ -2101,8 +2101,10 @@ end:
 		BIO_free(authz_in);
 	if (serverinfo_in != NULL)
 		BIO_free(serverinfo_in);
+# ifndef OPENSSL_NO_NEXTPROTONEG
 	if (next_proto.data)
 		OPENSSL_free(next_proto.data);
+# endif
 	if (alpn_ctx.data)
 		OPENSSL_free(alpn_ctx.data);
 #endif

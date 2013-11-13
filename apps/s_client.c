@@ -368,8 +368,8 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -proof_debug      - request an audit proof and print its hex dump\n");
 # ifndef OPENSSL_NO_NEXTPROTONEG
 	BIO_printf(bio_err," -nextprotoneg arg - enable NPN extension, considering named protocols supported (comma-separated list)\n");
-	BIO_printf(bio_err," -alpn arg         - enable ALPN extension, considering named protocols supported (comma-separated list)\n");
 # endif
+	BIO_printf(bio_err," -alpn arg         - enable ALPN extension, considering named protocols supported (comma-separated list)\n");
 #ifndef OPENSSL_NO_TLSEXT
 	BIO_printf(bio_err," -serverinfo types - send empty ClientHello extensions (comma-separated numbers)\n");
 #endif
@@ -642,8 +642,8 @@ int MAIN(int argc, char **argv)
         {NULL,0};
 # ifndef OPENSSL_NO_NEXTPROTONEG
 	const char *next_proto_neg_in = NULL;
-	const char *alpn_in = NULL;
 # endif
+	const char *alpn_in = NULL;
 # define MAX_SI_TYPES 100
 	unsigned short serverinfo_types[MAX_SI_TYPES];
 	int serverinfo_types_count = 0;
@@ -1001,12 +1001,12 @@ static char *jpake_secret = NULL;
 			if (--argc < 1) goto bad;
 			next_proto_neg_in = *(++argv);
 			}
+# endif
 		else if (strcmp(*argv,"-alpn") == 0)
 			{
 			if (--argc < 1) goto bad;
 			alpn_in = *(++argv);
 			}
-# endif
 		else if (strcmp(*argv,"-serverinfo") == 0)
 			{
 			char *c;
@@ -2305,6 +2305,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 		BIO_write(bio, proto, proto_len);
 		BIO_write(bio, "\n", 1);
 	}
+# endif
 	{
 		const unsigned char *proto;
 		unsigned int proto_len;
@@ -2318,7 +2319,6 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 		else
 			BIO_printf(bio, "No ALPN negotiated\n");
 	}
-# endif
 #endif
 
  	{

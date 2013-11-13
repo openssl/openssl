@@ -2503,8 +2503,10 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 			{
 			if (tls1_alpn_handle_client_hello(s, data, size, al) != 0)
 				return 0;
+#ifndef OPENSSL_NO_NEXTPROTONEG
 			/* ALPN takes precedence over NPN. */
 			s->s3->next_proto_neg_seen = 0;
+#endif
 			}
 
 		/* session ticket processed earlier */
