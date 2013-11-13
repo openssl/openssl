@@ -624,9 +624,20 @@ int ssl_cert_add1_chain_cert(CERT *c, X509 *x)
 int ssl_cert_select_current(CERT *c, X509 *x)
 	{
 	int i;
+	if (x == NULL)
+		return 0;
 	for (i = 0; i < SSL_PKEY_NUM; i++)
 		{
 		if (c->pkeys[i].x509 == x)
+			{
+			c->key = &c->pkeys[i];
+			return 1;
+			}
+		}
+
+	for (i = 0; i < SSL_PKEY_NUM; i++)
+		{
+		if (c->pkeys[i].x509 && !X509_cmp(c->pkeys[i].x509, x))
 			{
 			c->key = &c->pkeys[i];
 			return 1;
