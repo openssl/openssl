@@ -81,16 +81,26 @@ int EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, unsigned int *siglen,
 	unsigned char m[EVP_MAX_MD_SIZE];
 	unsigned int m_len;
 	int i = 0,ok = 0,v;
-	EVP_MD_CTX tmp_ctx;
 	EVP_PKEY_CTX *pkctx = NULL;
 
 	*siglen=0;
-	EVP_MD_CTX_init(&tmp_ctx);
-	if (!EVP_MD_CTX_copy_ex(&tmp_ctx,ctx))
-		goto err;  
-	if (!EVP_DigestFinal_ex(&tmp_ctx,&(m[0]),&m_len))
-		goto err;
-	EVP_MD_CTX_cleanup(&tmp_ctx);
+	if (ctx->flags & EVP_MD_CTX_FLAG_FINALISE)
+		{
+		if (!EVP_DigestFinal_ex(ctx, m, &m_len))
+			goto err;
+		}
+	else
+		{
+		int rv;
+		EVP_MD_CTX tmp_ctx;
+		EVP_MD_CTX_init(&tmp_ctx);
+		rv = EVP_MD_CTX_copy_ex(&tmp_ctx,ctx);
+		if (rv)
+			rv = EVP_DigestFinal_ex(&tmp_ctx, m, &m_len);
+		EVP_MD_CTX_cleanup(&tmp_ctx);
+		if (!rv)
+			return 0;
+		}
 
 	if (ctx->digest->flags & EVP_MD_FLAG_PKEY_METHOD_SIGNATURE)
 		{
@@ -133,7 +143,7 @@ int EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, unsigned int *siglen,
 		EVPerr(EVP_F_EVP_SIGNFINAL,EVP_R_NO_SIGN_FUNCTION_CONFIGURED);
 		return(0);
 		}
-	return(ctx->digest->sign(ctx->digest->type,m,m_len,sigret,siglen,
-		pkey->pkey.ptr));
+	return ctx->digest->sign(ctx->digest->type,m,m_len,sigret,siglen,
+		pkey->pkey.ptr);
 	}
 

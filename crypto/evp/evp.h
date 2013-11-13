@@ -300,6 +300,12 @@ struct env_md_ctx_st
 #define EVP_MD_CTX_FLAG_PAD_PSS		0x20	/* PSS mode */
 
 #define EVP_MD_CTX_FLAG_NO_INIT		0x0100 /* Don't initialize md_data */
+/* Some functions such as EVP_DigestSign only finalise copies of internal
+ * contexts so additional data can be included after the finalisation call.
+ * This is inefficient if this functionality is not required: it is disabled
+ * if the following flag is set.
+ */
+#define EVP_MD_CTX_FLAG_FINALISE	0x0200
 
 struct evp_cipher_st
 	{
