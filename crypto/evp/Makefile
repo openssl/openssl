@@ -13,7 +13,7 @@ AR=		ar r
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
-TEST=evp_test.c
+TEST=evp_test.c p5_crpt2_test.c
 TESTDATA=evptests.txt
 APPS=
 
