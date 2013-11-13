@@ -2909,7 +2909,7 @@ void jpake_server_auth(BIO *out, BIO *conn, const char *secret)
 
 #endif
 
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
+#ifndef OPENSSL_NO_TLSEXT
 /* next_protos_parse parses a comma separated list of strings into a string
  * in a format suitable for passing to SSL_CTX_set_next_protos_advertised.
  *   outlen: (output) set to the length of the resulting buffer on success.
@@ -2951,7 +2951,7 @@ unsigned char *next_protos_parse(unsigned short *outlen, const char *in)
 	*outlen = len + 1;
 	return out;
 	}
-#endif  /* !OPENSSL_NO_TLSEXT && !OPENSSL_NO_NEXTPROTONEG */
+#endif  /* ndef OPENSSL_NO_TLSEXT */
 
 void print_cert_checks(BIO *bio, X509 *x,
 				const unsigned char *checkhost,

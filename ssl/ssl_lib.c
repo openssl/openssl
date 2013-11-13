@@ -1596,7 +1596,6 @@ int SSL_get_servername_type(const SSL *s)
 	return -1;
 	}
 
-# ifndef OPENSSL_NO_NEXTPROTONEG
 /* SSL_select_next_proto implements the standard protocol selection. It is
  * expected that this function is called from the callback set by
  * SSL_CTX_set_next_proto_select_cb.
@@ -1663,6 +1662,7 @@ int SSL_select_next_proto(unsigned char **out, unsigned char *outlen, const unsi
 	return status;
 	}
 
+# ifndef OPENSSL_NO_NEXTPROTONEG
 /* SSL_get0_next_proto_negotiated sets *data and *len to point to the client's
  * requested protocol for this connection and returns 0. If the client didn't
  * request any protocol, then *data is set to NULL.
