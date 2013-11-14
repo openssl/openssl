@@ -675,7 +675,7 @@ __owur int	EVP_DigestSignFinal(EVP_MD_CTX *ctx,
 __owur int	EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 			const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey);
 __owur int	EVP_DigestVerifyFinal(EVP_MD_CTX *ctx,
-			unsigned char *sig, size_t siglen);
+			const unsigned char *sig, size_t siglen);
 
 __owur int	EVP_OpenInit(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *type,
 		const unsigned char *ek, int ekl, const unsigned char *iv,
