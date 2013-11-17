@@ -2106,12 +2106,12 @@ int ssl3_send_certificate_request(SSL *s)
 				{
 				name=sk_X509_NAME_value(sk,i);
 				j=i2d_X509_NAME(name,NULL);
-				if (!BUF_MEM_grow_clean(buf,4+n+j+2))
+				if (!BUF_MEM_grow_clean(buf,SSL_HM_HEADER_LENGTH(s)+n+j+2))
 					{
 					SSLerr(SSL_F_SSL3_SEND_CERTIFICATE_REQUEST,ERR_R_BUF_LIB);
 					goto err;
 					}
-				p=(unsigned char *)&(buf->data[4+n]);
+				p = ssl_handshake_start(s) + n;
 				if (!(s->options & SSL_OP_NETSCAPE_CA_DN_BUG))
 					{
 					s2n(j,p);
