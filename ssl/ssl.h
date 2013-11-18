@@ -1227,9 +1227,11 @@ void SSL_get0_next_proto_negotiated(const SSL *s,
 				    const unsigned char **data, unsigned *len);
 #endif
 
+#ifndef OPENSSL_NO_TLSEXT
 int SSL_select_next_proto(unsigned char **out, unsigned char *outlen,
 			  const unsigned char *in, unsigned int inlen,
 			  const unsigned char *client, unsigned int client_len);
+#endif
 
 #define OPENSSL_NPN_UNSUPPORTED	0
 #define OPENSSL_NPN_NEGOTIATED	1
