@@ -2326,7 +2326,10 @@ STACK_OF(X509_NAME) *SSL_dup_CA_list(STACK_OF(X509_NAME) *sk);
 SSL *SSL_dup(SSL *ssl);
 
 X509 *SSL_get_certificate(const SSL *ssl);
-/* EVP_PKEY */ struct evp_pkey_st *SSL_get_privatekey(SSL *ssl);
+/* EVP_PKEY */ struct evp_pkey_st *SSL_get_privatekey(const SSL *ssl);
+
+X509 *SSL_CTX_get0_certificate(const SSL_CTX *ctx);
+EVP_PKEY *SSL_CTX_get0_privatekey(const SSL_CTX *ctx);
 
 void SSL_CTX_set_quiet_shutdown(SSL_CTX *ctx,int mode);
 int SSL_CTX_get_quiet_shutdown(const SSL_CTX *ctx);
