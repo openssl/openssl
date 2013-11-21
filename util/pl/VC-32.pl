@@ -337,7 +337,7 @@ sub do_lib_rule
 	else
 		{
 		my $ex = "";		
-		if ($target =~ /O_SSL/)
+		if ($target !~ /O_CRYPTO/)
 			{
 			$ex .= " \$(L_CRYPTO)";
 			#$ex .= " \$(L_FIPS)" if $fipsdso;

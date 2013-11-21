@@ -102,13 +102,13 @@ void ENGINE_load_builtin_engines(void)
 #if !defined(OPENSSL_NO_GMP) && !defined(OPENSSL_NO_HW_GMP)
 	ENGINE_load_gmp();
 #endif
+#if defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_NO_CAPIENG)
+	ENGINE_load_capi();
+#endif
 #endif
 #ifndef OPENSSL_NO_HW
 #if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV)
 	ENGINE_load_cryptodev();
-#endif
-#if defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_NO_CAPIENG)
-	ENGINE_load_capi();
 #endif
 #endif
 	}
