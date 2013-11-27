@@ -1,18 +1,15 @@
 %define _unpackaged_files_terminate_build 0
-%define libmaj 1
-%define libmin 1
-%define librel 0
-#%define librev a
+
 Release: 1
 
 %define openssldir /var/ssl
 
 Summary: Secure Sockets Layer and cryptography libraries and tools
 Name: openssl
-Version: %{libmaj}.%{libmin}.%{librel}
+Version: 1.1.0
 #Version: %{libmaj}.%{libmin}.%{librel}%{librev}
 Source0: ftp://ftp.openssl.org/source/%{name}-%{version}.tar.gz
-Copyright: Freely distributable
+License: OpenSSL
 Group: System Environment/Libraries
 Provides: SSL
 URL: http://www.openssl.org/
