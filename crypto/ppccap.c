@@ -25,7 +25,7 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_U
 
 	if (sizeof(size_t)==4)
 		{
-#if (defined(__APPLE__) && defined(__MACH__))
+#if 1 || (defined(__APPLE__) && defined(__MACH__))
 		if (num>=8 && (num&3)==0 && (OPENSSL_ppccap_P&PPC_FPU64))
 			return bn_mul_mont_fpu64(rp,ap,bp,np,n0,num);
 #else
