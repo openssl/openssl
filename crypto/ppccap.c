@@ -13,7 +13,7 @@
 #define PPC_FPU64	(1<<0)
 #define PPC_ALTIVEC	(1<<1)
 
-static int OPENSSL_ppccap_P = 0;
+unsigned int OPENSSL_ppccap_P = 0;
 
 static sigset_t all_masked;
 
