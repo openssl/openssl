@@ -304,7 +304,6 @@ Lenc_entry:
 
 	bl	_vpaes_encrypt_preheat
 
-	lvx	v0, 0, $inp
 	neg	r8, $inp		# prepare for unaligned access
 	lvsl	$keyperm, 0, $key
 	 lvsr	$outperm, 0, $out
@@ -488,7 +487,6 @@ Ldec_entry:
 
 	bl	_vpaes_decrypt_preheat
 
-	lvx	v0, 0, $inp
 	neg	r8, $inp		# prepare for unaligned access
 	lvsl	$keyperm, 0, $key
 	 lvsr	$outperm, 0, $out
@@ -545,14 +543,12 @@ Ldec_entry:
 	mfspr	r7, 256
 	mtspr	256, r6			# preserve all AltiVec registers
 
-	neg	r8, r31			# load [potentially unaligned] iv
+	lvx	v24, 0, r31		# load [potentially unaligned] iv
 	li	r9, 15
-	lvx	v24, 0, r31
-	lvsr	$inpperm, 0, r8		# -ivp
+	lvsl	$inpperm, 0, r31
 	lvx	v25, r9, r31
 	vperm	v24, v24, v25, $inpperm
 
-	lvx	v0, 0, $inp
 	neg	r8, $inp		# prepare for unaligned access
 	 vxor	v7, v7, v7
 	lvsl	$keyperm, 0, $key
@@ -619,11 +615,12 @@ Lcbc_done:
 	vsel	v1, $outhead, v1, $outmask
 	stvx	v1, 0, $out
 
-	lvsr	$outperm, 0, r31	# write [potentially unaligned] iv
+	neg	r8, r31			# write [potentially unaligned] iv
+	lvsl	$outperm, 0, r8
 	li	r6, 15
 	vnor	$outmask, v7, v7	# 0xff..ff
 	vperm	$outmask, v7, $outmask, $outperm
-	lvx	$outhead, 0, $out
+	lvx	$outhead, 0, r31
 	vperm	v24, v24, v24, $outperm	# rotate
 	vsel	v0, $outhead, v24, $outmask
 	lvx	v1, r6, r31
@@ -647,7 +644,7 @@ ___
 }
 {
 my ($inp,$bits,$out)=map("r$_",(3..5));
-my $dir="cr3";
+my $dir="cr1";
 my ($invlo,$invhi,$iptlo,$ipthi,$rcon) = map("v$_",(10..13,24));
 
 $code.=<<___;
