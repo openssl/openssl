@@ -1225,6 +1225,8 @@ sub read_options
 		"no-zlib" => 0,
 		"no-zlib-dynamic" => 0,
 		"no-ssl-trace" => 0,
+		"no-dane" => 0,
+		"no-libunbound" => 0,
 		"fips" => \$fips
 		);
 
