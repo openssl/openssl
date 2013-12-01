@@ -1,8 +1,10 @@
 #include <openssl/opensslconf.h>
 
 #include <string.h>
+#ifndef OPENSSL_SYS_WIN32
 #include <netdb.h>
 #include <sys/socket.h>
+#endif
 #include <openssl/bio.h>
 #include <openssl/dso.h>
 
