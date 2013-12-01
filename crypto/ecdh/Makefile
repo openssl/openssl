@@ -83,6 +83,14 @@ ech_err.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 ech_err.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 ech_err.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 ech_err.o: ech_err.c
+ech_kdf.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+ech_kdf.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+ech_kdf.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+ech_kdf.o: ../../include/openssl/evp.h ../../include/openssl/obj_mac.h
+ech_kdf.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+ech_kdf.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+ech_kdf.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+ech_kdf.o: ../../include/openssl/symhacks.h ech_kdf.c
 ech_key.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 ech_key.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 ech_key.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h

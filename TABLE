@@ -418,7 +418,7 @@ $rc5_obj      =
 $wp_obj       = wp-x86_64.o
 $cmll_obj     = cmll-x86_64.o cmll_misc.o
 $modes_obj    = ghash-x86_64.o aesni-gcm-x86_64.o
-$engines_obj  = e_padlock-x86_64.o
+$engines_obj  = 
 $perlasm_scheme = mingw64
 $dso_scheme   = dlfcn
 $shared_target= cygwin-shared
@@ -1881,9 +1881,9 @@ $ranlib       =
 $arflags      = 
 $multilib     = 
 
-*** debug-ben-debug-64-noopt
-$cc           = gcc
-$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -Wno-error=overlength-strings -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DDEBUG_UNUSED -g3 -pipe
+*** debug-ben-debug-64-clang
+$cc           = clang
+$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -Wno-error=overlength-strings -Wno-error=extended-offsetof -Qunused-arguments -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DDEBUG_UNUSED -g3 -O3 -pipe
 $unistd       = 
 $thread_cflag = -pthread -D_THREAD_SAFE -D_REENTRANT
 $sys_id       = 
@@ -1903,7 +1903,7 @@ $rc5_obj      =
 $wp_obj       = wp-x86_64.o
 $cmll_obj     = cmll-x86_64.o cmll_misc.o
 $modes_obj    = ghash-x86_64.o aesni-gcm-x86_64.o
-$engines_obj  = e_padlock-x86_64.o
+$engines_obj  = 
 $perlasm_scheme = elf
 $dso_scheme   = dlfcn
 $shared_target= bsd-gcc-shared
@@ -2114,7 +2114,7 @@ $multilib     =
 
 *** debug-bodo
 $cc           = gcc
-$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -DBN_DEBUG -DBN_DEBUG_RAND -DCONF_DEBUG -DBIO_PAIR_DEBUG -m64 -DL_ENDIAN -DTERMIO -g -DMD32_REG_T=int
+$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -Wno-error=overlength-strings -DBN_DEBUG -DBN_DEBUG_RAND -DCONF_DEBUG -DBIO_PAIR_DEBUG -m64 -DL_ENDIAN -DTERMIO -g -DMD32_REG_T=int
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2206,39 +2206,6 @@ $dso_scheme   = dlfcn
 $shared_target= darwin-shared
 $shared_cflag = -fPIC
 $shared_ldflag = -dynamiclib
-$shared_extension = .$(SHLIB_MAJOR).$(SHLIB_MINOR).dylib
-$ranlib       = 
-$arflags      = 
-$multilib     = 
-
-*** debug-darwin64-x86_64-cc
-$cc           = cc
-$cflags       = -arch x86_64 -ggdb -g2 -O0 -DL_ENDIAN -Wall
-$unistd       = 
-$thread_cflag = -D_REENTRANT
-$sys_id       = MACOSX
-$lflags       = -Wl,-search_paths_first%
-$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL
-$cpuid_obj    = x86_64cpuid.o
-$bn_obj       = x86_64-gcc.o x86_64-mont.o x86_64-mont5.o x86_64-gf2m.o rsaz_exp.o rsaz-x86_64.o rsaz-avx2.o
-$des_obj      = 
-$aes_obj      = aes-x86_64.o vpaes-x86_64.o bsaes-x86_64.o aesni-x86_64.o aesni-sha1-x86_64.o aesni-sha256-x86_64.o
-$bf_obj       = 
-$md5_obj      = md5-x86_64.o
-$sha1_obj     = sha1-x86_64.o sha256-x86_64.o sha512-x86_64.o
-$cast_obj     = 
-$rc4_obj      = rc4-x86_64.o rc4-md5-x86_64.o
-$rmd160_obj   = 
-$rc5_obj      = 
-$wp_obj       = wp-x86_64.o
-$cmll_obj     = cmll-x86_64.o cmll_misc.o
-$modes_obj    = ghash-x86_64.o aesni-gcm-x86_64.o
-$engines_obj  = e_padlock-x86_64.o
-$perlasm_scheme = macosx
-$dso_scheme   = dlfcn
-$shared_target= darwin-shared
-$shared_cflag = -fPIC -fno-common
-$shared_ldflag = -arch x86_64 -dynamiclib
 $shared_extension = .$(SHLIB_MAJOR).$(SHLIB_MINOR).dylib
 $ranlib       = 
 $arflags      = 

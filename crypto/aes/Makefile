@@ -151,7 +151,7 @@ aes_wrap.o: ../../e_os.h ../../include/openssl/aes.h
 aes_wrap.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 aes_wrap.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 aes_wrap.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
-aes_wrap.o: ../../include/openssl/opensslconf.h
+aes_wrap.o: ../../include/openssl/modes.h ../../include/openssl/opensslconf.h
 aes_wrap.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 aes_wrap.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 aes_wrap.o: ../../include/openssl/symhacks.h ../cryptlib.h aes_wrap.c
