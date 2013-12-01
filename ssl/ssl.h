@@ -2011,10 +2011,10 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 	SSL_ctrl(s,SSL_CTRL_GET_SERVER_TMP_KEY,0,pk)
 
 #define SSL_get0_raw_cipherlist(s, plst) \
-	SSL_ctrl(s,SSL_CTRL_GET_RAW_CIPHERLIST,0,plst)
+	SSL_ctrl(s,SSL_CTRL_GET_RAW_CIPHERLIST,0,(char *)plst)
 
 #define SSL_get0_ec_point_formats(s, plst) \
-	SSL_ctrl(s,SSL_CTRL_GET_EC_POINT_FORMATS,0,plst)
+	SSL_ctrl(s,SSL_CTRL_GET_EC_POINT_FORMATS,0,(char *)plst)
 
 #define SSL_set_tlsa_record(s,tlsa) \
 	SSL_ctrl(s,SSL_CTRL_SET_TLSA_RECORD,0,(void *)tlsa)
