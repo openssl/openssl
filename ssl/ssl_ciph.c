@@ -1621,7 +1621,12 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 		if (curr->active)
 #endif
 			{
-			sk_SSL_CIPHER_push(cipherstack, curr->cipher);
+			if (!sk_SSL_CIPHER_push(cipherstack, curr->cipher))
+				{
+				OPENSSL_free(co_list);
+				sk_SSL_CIPHER_free(cipherstack);
+				return NULL;
+				}
 #ifdef CIPHER_DEBUG
 			printf("<%s>\n",curr->cipher->name);
 #endif
