@@ -322,6 +322,7 @@ CERT *ssl_cert_dup(CERT *cert)
 			default:
 				/* Can't happen. */
 				SSLerr(SSL_F_SSL_CERT_DUP, SSL_R_LIBRARY_BUG);
+                                goto err;
 				}
 			}
 
@@ -344,7 +345,7 @@ CERT *ssl_cert_dup(CERT *cert)
 			if (ret->pkeys[i].serverinfo == NULL)
 				{
 				SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_MALLOC_FAILURE);
-				return NULL;
+				goto err;
 				}
 			ret->pkeys[i].serverinfo_length =
 				cert->pkeys[i].serverinfo_length;
