@@ -425,9 +425,7 @@ CERT *ssl_cert_dup(CERT *cert)
 
 	return(ret);
 	
-#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_ECDH)
 err:
-#endif
 #ifndef OPENSSL_NO_RSA
 	if (ret->rsa_tmp != NULL)
 		RSA_free(ret->rsa_tmp);
