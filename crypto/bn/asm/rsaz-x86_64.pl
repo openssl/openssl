@@ -910,6 +910,7 @@ rsaz_512_mul_gather4:
 	push	%r14
 	push	%r15
 
+	mov	$pwr, $pwr
 	subq	\$128+24, %rsp
 .Lmul_gather4_body:
 ___
@@ -1249,6 +1250,7 @@ rsaz_512_mul_scatter4:
 	push	%r14
 	push	%r15
 
+	mov	$pwr, $pwr
 	subq	\$128+24, %rsp
 .Lmul_scatter4_body:
 	leaq	($tbl,$pwr,4), $tbl
