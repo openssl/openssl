@@ -861,12 +861,12 @@ static MIME_HEADER *mime_hdr_new(char *name, char *value)
 		
 static int mime_hdr_addparam(MIME_HEADER *mhdr, char *name, char *value)
 {
-	char *tmpname, *tmpval, *p;
+	char *tmpname=NULL, *tmpval=NULL, *p;
 	int c;
-	MIME_PARAM *mparam;
+	MIME_PARAM *mparam=NULL;
 	if(name) {
 		tmpname = BUF_strdup(name);
-		if(!tmpname) return 0;
+		if(!tmpname) goto err;
 		for(p = tmpname ; *p; p++) {
 			c = (unsigned char)*p;
 			if(isupper(c)) {
@@ -874,18 +874,27 @@ static int mime_hdr_addparam(MIME_HEADER *mhdr, char *name, char *value)
 				*p = c;
 			}
 		}
-	} else tmpname = NULL;
+	}
 	if(value) {
 		tmpval = BUF_strdup(value);
-		if(!tmpval) return 0;
-	} else tmpval = NULL;
+		if(!tmpval) goto err;
+	}
 	/* Parameter values are case sensitive so leave as is */
 	mparam = (MIME_PARAM *) OPENSSL_malloc(sizeof(MIME_PARAM));
-	if(!mparam) return 0;
+	if(!mparam) goto err;
 	mparam->param_name = tmpname;
 	mparam->param_value = tmpval;
-	sk_MIME_PARAM_push(mhdr->params, mparam);
+	if (!sk_MIME_PARAM_push(mhdr->params, mparam))
+		goto err;
 	return 1;
+err:
+	if (tmpname != NULL)
+		OPENSSL_free(tmpname);
+	if (tmpval != NULL)
+		OPENSSL_free(tmpval);
+	if (mparam != NULL)
+		OPENSSL_free(mparam);
+	return 0;
 }
 
 static int mime_hdr_cmp(const MIME_HEADER * const *a,
