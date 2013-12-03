@@ -111,7 +111,7 @@ $code.=<<___;
 .extern	OPENSSL_ia32cap_P
 
 .globl	rsaz_512_sqr
-.type	rsaz_512_sqr,\@function,4
+.type	rsaz_512_sqr,\@function,5
 .align	32
 rsaz_512_sqr:				# 25-29% faster than rsaz_512_mul
 	push	%rbx
