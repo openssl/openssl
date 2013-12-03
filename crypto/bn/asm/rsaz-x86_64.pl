@@ -1,48 +1,60 @@
 #!/usr/bin/env perl
 
-#******************************************************************************#
-#* Copyright(c) 2012, Intel Corp.                                             *#
-#* Developers and authors:                                                    *#
-#* Shay Gueron (1, 2), and Vlad Krasnov (1)                                   *#
-#* (1) Intel Architecture Group, Microprocessor and Chipset Development,      *#
-#*     Israel Development Center, Haifa, Israel                               *#
-#* (2) University of Haifa                                                    *#
-#******************************************************************************#
-#* This submission to OpenSSL is to be made available under the OpenSSL       *#
-#* license, and only to the OpenSSL project, in order to allow integration    *#
-#* into the publicly distributed code. ?                                      *#
-#* The use of this code, or portions of this code, or concepts embedded in    *#
-#* this code, or modification of this code and/or algorithm(s) in it, or the  *#
-#* use of this code for any other purpose than stated above, requires special *#
-#* licensing.                                                                 *#
-#******************************************************************************#
-#******************************************************************************#
-#* DISCLAIMER:                                                                *#
-#* THIS SOFTWARE IS PROVIDED BY THE CONTRIBUTORS AND THE COPYRIGHT OWNERS     *#
-#* ``AS IS''. ANY EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED *#
-#* TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR *#
-#* PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE CONTRIBUTORS OR THE COPYRIGHT*#
-#* OWNERS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, *#
-#* OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF    *#
-#* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS   *#
-#* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN    *#
-#* CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)    *#
-#* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE *#
-#* POSSIBILITY OF SUCH DAMAGE.                                                *#
-#******************************************************************************#
-#* Reference:                                                                 *#
-#* [1] S. Gueron, "Efficient Software Implementations of Modular              *#
-#*     Exponentiation", http://eprint.iacr.org/2011/239                       *#
-#* [2] S. Gueron, V. Krasnov. "Speeding up Big-Numbers Squaring".             *#
-#*     IEEE Proceedings of 9th International Conference on Information        *#
-#*     Technology: New Generations (ITNG 2012), 821-823 (2012).               *#
-#* [3] S. Gueron, Efficient Software Implementations of Modular Exponentiation*#
-#*     Journal of Cryptographic Engineering 2:31-43 (2012).                   *#
-#* [4] S. Gueron, V. Krasnov: "[PATCH] Efficient and side channel analysis    *#
-#*     resistant 512-bit and 1024-bit modular exponentiation for optimizing   *#
-#*     RSA1024 and RSA2048 on x86_64 platforms",                              *#
-#*     http://rt.openssl.org/Ticket/Display.html?id=2582&user=guest&pass=guest*#
-################################################################################
+##############################################################################
+#                                                                            #
+#  Copyright (c) 2012, Intel Corporation                                     #
+#                                                                            #
+#  All rights reserved.                                                      #
+#                                                                            #
+#  Redistribution and use in source and binary forms, with or without        #
+#  modification, are permitted provided that the following conditions are    #
+#  met:                                                                      #
+#                                                                            #
+#  *  Redistributions of source code must retain the above copyright         #
+#     notice, this list of conditions and the following disclaimer.          #
+#                                                                            #
+#  *  Redistributions in binary form must reproduce the above copyright      #
+#     notice, this list of conditions and the following disclaimer in the    #
+#     documentation and/or other materials provided with the                 #
+#     distribution.                                                          #
+#                                                                            #
+#  *  Neither the name of the Intel Corporation nor the names of its         #
+#     contributors may be used to endorse or promote products derived from   #
+#     this software without specific prior written permission.               #
+#                                                                            #
+#                                                                            #
+#  THIS SOFTWARE IS PROVIDED BY INTEL CORPORATION ""AS IS"" AND ANY          #
+#  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE         #
+#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR        #
+#  PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL INTEL CORPORATION OR            #
+#  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,     #
+#  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,       #
+#  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR        #
+#  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF    #
+#  LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING      #
+#  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS        #
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.              #
+#                                                                            #
+##############################################################################
+# Developers and authors:                                                    #
+# Shay Gueron (1, 2), and Vlad Krasnov (1)                                   #
+# (1) Intel Architecture Group, Microprocessor and Chipset Development,      #
+#     Israel Development Center, Haifa, Israel                               #
+# (2) University of Haifa                                                    #
+##############################################################################
+# Reference:                                                                 #
+# [1] S. Gueron, "Efficient Software Implementations of Modular              #
+#     Exponentiation", http://eprint.iacr.org/2011/239                       #
+# [2] S. Gueron, V. Krasnov. "Speeding up Big-Numbers Squaring".             #
+#     IEEE Proceedings of 9th International Conference on Information        #
+#     Technology: New Generations (ITNG 2012), 821-823 (2012).               #
+# [3] S. Gueron, Efficient Software Implementations of Modular Exponentiation#
+#     Journal of Cryptographic Engineering 2:31-43 (2012).                   #
+# [4] S. Gueron, V. Krasnov: "[PATCH] Efficient and side channel analysis    #
+#     resistant 512-bit and 1024-bit modular exponentiation for optimizing   #
+#     RSA1024 and RSA2048 on x86_64 platforms",                              #
+#     http://rt.openssl.org/Ticket/Display.html?id=2582&user=guest&pass=guest#
+##############################################################################
 
 # While original submission covers 512- and 1024-bit exponentiation,
 # this module is limited to 512-bit version only (and as such
@@ -1812,33 +1824,33 @@ $code.=<<___;
 .align	32
 __rsaz_512_mulx:
 	mulx	($ap), %rbx, %r8	# initial %rdx preloaded by caller
-	xor	$zero, $zero		# cf=0,of=0
+	mov	\$-6, %rcx
 
 	mulx	8($ap), %rax, %r9
 	movq	%rbx, 8(%rsp)
 
 	mulx	16($ap), %rbx, %r10
-	adcx	%rax, %r8
+	adc	%rax, %r8
 
 	mulx	24($ap), %rax, %r11
-	adcx	%rbx, %r9
+	adc	%rbx, %r9
 
-	.byte	0xc4,0x62,0xe3,0xf6,0xa6,0x20,0x00,0x00,0x00	# mulx	32($ap), %rbx, %r12
-	adcx	%rax, %r10
+	mulx	32($ap), %rbx, %r12
+	adc	%rax, %r10
 
 	mulx	40($ap), %rax, %r13
-	adcx	%rbx, %r11
+	adc	%rbx, %r11
 
 	mulx	48($ap), %rbx, %r14
-	adcx	%rax, %r12
+	adc	%rax, %r12
 
 	mulx	56($ap), %rax, %r15
 	 mov	8($bp), %rdx
-	adcx	%rbx, %r13
-	adcx	%rax, %r14
-	adcx	$zero, %r15		# cf=0
+	adc	%rbx, %r13
+	adc	%rax, %r14
+	adc	\$0, %r15
 
-	mov	\$-6, %rcx
+	xor	$zero, $zero		# cf=0,of=0
 	jmp	.Loop_mulx
 
 .align	32
