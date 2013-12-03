@@ -46,8 +46,8 @@
  * See crypto/bn/asm/rsaz-avx2.pl for further details.
  */
 void rsaz_1024_norm2red_avx2(void *red,const void *norm);
-void rsaz_1024_mul_avx2(void *ret,const void *a,const void *b,const void *n,unsigned long k);
-void rsaz_1024_sqr_avx2(void *ret,const void *a,const void *n,unsigned long k,int cnt);
+void rsaz_1024_mul_avx2(void *ret,const void *a,const void *b,const void *n,BN_ULONG k);
+void rsaz_1024_sqr_avx2(void *ret,const void *a,const void *n,BN_ULONG k,int cnt);
 void rsaz_1024_scatter5_avx2(void *tbl,const void *val,int i);
 void rsaz_1024_gather5_avx2(void *val,const void *tbl,int i);
 void rsaz_1024_red2norm_avx2(void *norm,const void *red);
@@ -63,9 +63,9 @@ void rsaz_1024_red2norm_avx2(void *norm,const void *red);
 # define ALIGN64	/* not fatal, might hurt performance a little */
 #endif
 
-ALIGN64 static const unsigned long one[40] =
+ALIGN64 static const BN_ULONG one[40] =
 	{1,0,0,    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-ALIGN64 static const unsigned long two80[40] =
+ALIGN64 static const BN_ULONG two80[40] =
 	{0,0,1<<22,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 void RSAZ_1024_mod_exp_avx2(BN_ULONG result_norm[16],
@@ -256,13 +256,13 @@ void RSAZ_1024_mod_exp_avx2(BN_ULONG result_norm[16],
 /*
  * See crypto/bn/rsaz-x86_64.pl for further details.
  */
-void rsaz_512_mul(void *ret,const void *a,const void *b,const void *n,unsigned long k);
-void rsaz_512_mul_scatter4(void *ret,const void *a,const void *n,unsigned long k,const void *tbl,unsigned int power);
-void rsaz_512_mul_gather4(void *ret,const void *a,const void *tbl,const void *n,unsigned long k,unsigned int power);
-void rsaz_512_mul_by_one(void *ret,const void *a,const void *n,unsigned long k);
-void rsaz_512_sqr(void *ret,const void *a,const void *n,unsigned long k,int cnt);
-void rsaz_512_scatter4(void *tbl, const unsigned long *val, int power);
-void rsaz_512_gather4(unsigned long *val, const void *tbl, int power);
+void rsaz_512_mul(void *ret,const void *a,const void *b,const void *n,BN_ULONG k);
+void rsaz_512_mul_scatter4(void *ret,const void *a,const void *n,BN_ULONG k,const void *tbl,unsigned int power);
+void rsaz_512_mul_gather4(void *ret,const void *a,const void *tbl,const void *n,BN_ULONG k,unsigned int power);
+void rsaz_512_mul_by_one(void *ret,const void *a,const void *n,BN_ULONG k);
+void rsaz_512_sqr(void *ret,const void *a,const void *n,BN_ULONG k,int cnt);
+void rsaz_512_scatter4(void *tbl, const BN_ULONG *val, int power);
+void rsaz_512_gather4(BN_ULONG *val, const void *tbl, int power);
 
 void RSAZ_512_mod_exp(BN_ULONG result[8],
 	const BN_ULONG base[8], const BN_ULONG exponent[8],
@@ -270,8 +270,8 @@ void RSAZ_512_mod_exp(BN_ULONG result[8],
 {
 	unsigned char	 storage[16*8*8+64*2+64];	/* 1.2KB */
 	unsigned char	*table = storage + (64-((size_t)storage%64));
-	unsigned long	*a_inv = (unsigned long *)(table+16*8*8),
-			*temp  = (unsigned long *)(table+16*8*8+8*8);
+	BN_ULONG	*a_inv = (BN_ULONG *)(table+16*8*8),
+			*temp  = (BN_ULONG *)(table+16*8*8+8*8);
 	unsigned char	*p_str = (unsigned char*)exponent;
 	int index;
 	unsigned int wvalue;
