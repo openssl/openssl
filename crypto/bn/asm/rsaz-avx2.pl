@@ -1,54 +1,66 @@
 #!/usr/bin/env perl
 
-#******************************************************************************
-#* Copyright(c) 2012, Intel Corp.                                             
-#* Developers and authors:                                                    
-#* Shay Gueron (1, 2), and Vlad Krasnov (1)                                   
-#* (1) Intel Corporation, Israel Development Center, Haifa, Israel
-#* (2) University of Haifa, Israel                                              
-#******************************************************************************
-#* LICENSE:                                                                
-#* This submission to OpenSSL is to be made available under the OpenSSL  
-#* license, and only to the OpenSSL project, in order to allow integration    
-#* into the publicly distributed code. 
-#* The use of this code, or portions of this code, or concepts embedded in
-#* this code, or modification of this code and/or algorithm(s) in it, or the
-#* use of this code for any other purpose than stated above, requires special
-#* licensing.                                                                  
-#******************************************************************************
-#* DISCLAIMER:                                                                
-#* THIS SOFTWARE IS PROVIDED BY THE CONTRIBUTORS AND THE COPYRIGHT OWNERS     
-#* ``AS IS''. ANY EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED 
-#* TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
-#* PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE CONTRIBUTORS OR THE COPYRIGHT
-#* OWNERS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-#* OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF    
-#* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS   
-#* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN    
-#* CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)    
-#* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
-#* POSSIBILITY OF SUCH DAMAGE.                                                
-#******************************************************************************
-#* Reference:                                                                 
-#* [1]	S. Gueron, V. Krasnov: "Software Implementation of Modular
-#*	Exponentiation,  Using Advanced Vector Instructions Architectures",
-#*	F. Ozbudak and F. Rodriguez-Henriquez (Eds.): WAIFI 2012, LNCS 7369,
-#*	pp. 119?135, 2012. Springer-Verlag Berlin Heidelberg 2012
-#* [2]	S. Gueron: "Efficient Software Implementations of Modular
-#*	Exponentiation", Journal of Cryptographic Engineering 2:31-43 (2012).
-#* [3]	S. Gueron, V. Krasnov: "Speeding up Big-numbers Squaring",IEEE
-#*	Proceedings of 9th International Conference on Information Technology:
-#*	New Generations (ITNG 2012), pp.821-823 (2012)
-#* [4]	S. Gueron, V. Krasnov: "[PATCH] Efficient and side channel analysis
-#*	resistant 1024-bit modular exponentiation, for optimizing RSA2048
-#*	on AVX2 capable x86_64 platforms",
-#*	http://rt.openssl.org/Ticket/Display.html?id=2850&user=guest&pass=guest
-#******************************************************************************
-
-# +10% improvement by <appro@openssl.org>
+##############################################################################
+#                                                                            #
+#  Copyright (c) 2012, Intel Corporation                                     #
+#                                                                            #
+#  All rights reserved.                                                      #
+#                                                                            #
+#  Redistribution and use in source and binary forms, with or without        #
+#  modification, are permitted provided that the following conditions are    #
+#  met:                                                                      #
+#                                                                            #
+#  *  Redistributions of source code must retain the above copyright         #
+#     notice, this list of conditions and the following disclaimer.          #
+#                                                                            #
+#  *  Redistributions in binary form must reproduce the above copyright      #
+#     notice, this list of conditions and the following disclaimer in the    #
+#     documentation and/or other materials provided with the                 #
+#     distribution.                                                          #
+#                                                                            #
+#  *  Neither the name of the Intel Corporation nor the names of its         #
+#     contributors may be used to endorse or promote products derived from   #
+#     this software without specific prior written permission.               #
+#                                                                            #
+#                                                                            #
+#  THIS SOFTWARE IS PROVIDED BY INTEL CORPORATION ""AS IS"" AND ANY          #
+#  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE         #
+#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR        #
+#  PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL INTEL CORPORATION OR            #
+#  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,     #
+#  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,       #
+#  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR        #
+#  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF    #
+#  LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING      #
+#  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS        #
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.              #
+#                                                                            #
+##############################################################################
+# Developers and authors:                                                    #
+# Shay Gueron (1, 2), and Vlad Krasnov (1)                                   #
+# (1) Intel Corporation, Israel Development Center, Haifa, Israel            #
+# (2) University of Haifa, Israel                                            #
+##############################################################################
+# Reference:                                                                 #
+# [1] S. Gueron, V. Krasnov: "Software Implementation of Modular             #
+#     Exponentiation,  Using Advanced Vector Instructions Architectures",    #
+#     F. Ozbudak and F. Rodriguez-Henriquez (Eds.): WAIFI 2012, LNCS 7369,   #
+#     pp. 119?135, 2012. Springer-Verlag Berlin Heidelberg 2012              #
+# [2] S. Gueron: "Efficient Software Implementations of Modular              #
+#     Exponentiation", Journal of Cryptographic Engineering 2:31-43 (2012).  #
+# [3] S. Gueron, V. Krasnov: "Speeding up Big-numbers Squaring",IEEE         #
+#     Proceedings of 9th International Conference on Information Technology: #
+#     New Generations (ITNG 2012), pp.821-823 (2012)                         #
+# [4] S. Gueron, V. Krasnov: "[PATCH] Efficient and side channel analysis    #
+#     resistant 1024-bit modular exponentiation, for optimizing RSA2048      #
+#     on AVX2 capable x86_64 platforms",                                     #
+#     http://rt.openssl.org/Ticket/Display.html?id=2850&user=guest&pass=guest#
+##############################################################################
+#
+# +13% improvement over original submission by <appro@openssl.org>
 #
 # rsa2048 sign/sec	OpenSSL 1.0.1	scalar(*)	this
-# 2.3GHz Haswell	621		732/+18%	1112/+79%
+# 2.3GHz Haswell	621		765/+23%	1113/+79%
 #
 # (*)	if system doesn't support AVX2, for reference purposes;
 
@@ -143,24 +155,24 @@ rsaz_1024_sqr_avx2:		# 702 cycles, 14% faster than rsaz_1024_mul_avx2
 	push	%r13
 	push	%r14
 	push	%r15
+	vzeroupper
 ___
 $code.=<<___ if ($win64);
 	lea	-0xa8(%rsp),%rsp
-	movaps  %xmm6,-0xd8(%rax)
-	movaps  %xmm7,-0xc8(%rax)
-	movaps  %xmm8,-0xb8(%rax)
-	movaps  %xmm9,-0xa8(%rax)
-	movaps  %xmm10,-0x98(%rax)
-	movaps  %xmm11,-0x88(%rax)
-	movaps  %xmm12,-0x78(%rax)
-	movaps  %xmm13,-0x68(%rax)
-	movaps  %xmm14,-0x58(%rax)
-	movaps  %xmm15,-0x48(%rax)
+	vmovaps	%xmm6,-0xd8(%rax)
+	vmovaps	%xmm7,-0xc8(%rax)
+	vmovaps	%xmm8,-0xb8(%rax)
+	vmovaps	%xmm9,-0xa8(%rax)
+	vmovaps	%xmm10,-0x98(%rax)
+	vmovaps	%xmm11,-0x88(%rax)
+	vmovaps	%xmm12,-0x78(%rax)
+	vmovaps	%xmm13,-0x68(%rax)
+	vmovaps	%xmm14,-0x58(%rax)
+	vmovaps	%xmm15,-0x48(%rax)
 .Lsqr_1024_body:
 ___
 $code.=<<___;
 	mov	%rax,%rbp
-	vzeroall
 	mov	%rdx, $np			# reassigned argument
 	sub	\$$FrameSize, %rsp
 	mov	$np, $tmp
@@ -171,6 +183,7 @@ $code.=<<___;
 	and	\$4095, $tmp			# see if $np crosses page
 	add	\$32*10, $tmp
 	shr	\$12, $tmp
+	vpxor	$ACC9,$ACC9,$ACC9
 	jz	.Lsqr_1024_no_n_copy
 
 	# unaligned 256-bit load that crosses page boundary can
@@ -198,7 +211,7 @@ $code.=<<___;
 	vmovdqu		$ACC6, 32*6-128($np)
 	vmovdqu		$ACC7, 32*7-128($np)
 	vmovdqu		$ACC8, 32*8-128($np)
-	vmovdqu		$ACC9, 32*9-128($np)	# $ACC9 is zero after vzeroall
+	vmovdqu		$ACC9, 32*9-128($np)	# $ACC9 is zero
 
 .Lsqr_1024_no_n_copy:
 	and		\$-1024, %rsp
@@ -876,17 +889,18 @@ rsaz_1024_mul_avx2:
 	push	%r15
 ___
 $code.=<<___ if ($win64);
+	vzeroupper
 	lea	-0xa8(%rsp),%rsp
-	movaps  %xmm6,-0xd8(%rax)
-	movaps  %xmm7,-0xc8(%rax)
-	movaps  %xmm8,-0xb8(%rax)
-	movaps  %xmm9,-0xa8(%rax)
-	movaps  %xmm10,-0x98(%rax)
-	movaps  %xmm11,-0x88(%rax)
-	movaps  %xmm12,-0x78(%rax)
-	movaps  %xmm13,-0x68(%rax)
-	movaps  %xmm14,-0x58(%rax)
-	movaps  %xmm15,-0x48(%rax)
+	vmovaps	%xmm6,-0xd8(%rax)
+	vmovaps	%xmm7,-0xc8(%rax)
+	vmovaps	%xmm8,-0xb8(%rax)
+	vmovaps	%xmm9,-0xa8(%rax)
+	vmovaps	%xmm10,-0x98(%rax)
+	vmovaps	%xmm11,-0x88(%rax)
+	vmovaps	%xmm12,-0x78(%rax)
+	vmovaps	%xmm13,-0x68(%rax)
+	vmovaps	%xmm14,-0x58(%rax)
+	vmovaps	%xmm15,-0x48(%rax)
 .Lmul_1024_body:
 ___
 $code.=<<___;
@@ -900,6 +914,7 @@ $code.=<<___;
 	# cross page boundary, swap it with $bp [meaning that caller
 	# is advised to lay down $ap and $bp next to each other, so
 	# that only one can cross page boundary].
+	.byte	0x67,0x67
 	mov	$ap, $tmp
 	and	\$4095, $tmp
 	add	\$32*10, $tmp
@@ -915,6 +930,7 @@ $code.=<<___;
 
 	and	\$4095, $tmp	# see if $np crosses page
 	add	\$32*10, $tmp
+	.byte	0x67,0x67
 	shr	\$12, $tmp
 	jz	.Lmul_1024_no_n_copy
 
@@ -960,6 +976,7 @@ $code.=<<___;
 	vpbroadcastq ($bp), $Bi
 	vmovdqu	$ACC0, (%rsp)			# clear top of stack
 	xor	$r0, $r0
+	.byte	0x67
 	xor	$r1, $r1
 	xor	$r2, $r2
 	xor	$r3, $r3
@@ -1564,22 +1581,22 @@ rsaz_1024_gather5_avx2:
 ___
 $code.=<<___ if ($win64);
 	lea	-0x88(%rsp),%rax
+	vzeroupper
 .LSEH_begin_rsaz_1024_gather5:
 	# I can't trust assembler to use specific encoding:-(
 	.byte	0x48,0x8d,0x60,0xe0		#lea	-0x20(%rax),%rsp
-	.byte	0x0f,0x29,0x70,0xe0		#movaps	%xmm6,-0x20(%rax)
-	.byte	0x0f,0x29,0x78,0xf0		#movaps	%xmm7,-0x10(%rax)
-	.byte	0x44,0x0f,0x29,0x00		#movaps	%xmm8,0(%rax)
-	.byte	0x44,0x0f,0x29,0x48,0x10	#movaps	%xmm9,0x10(%rax)
-	.byte	0x44,0x0f,0x29,0x50,0x20	#movaps	%xmm10,0x20(%rax)
-	.byte	0x44,0x0f,0x29,0x58,0x30	#movaps	%xmm11,0x30(%rax)
-	.byte	0x44,0x0f,0x29,0x60,0x40	#movaps	%xmm12,0x40(%rax)
-	.byte	0x44,0x0f,0x29,0x68,0x50	#movaps	%xmm13,0x50(%rax)
-	.byte	0x44,0x0f,0x29,0x70,0x60	#movaps	%xmm14,0x60(%rax)
-	.byte	0x44,0x0f,0x29,0x78,0x70	#movaps	%xmm15,0x70(%rax)
+	.byte	0xc5,0xf8,0x29,0x70,0xe0	#vmovaps %xmm6,-0x20(%rax)
+	.byte	0xc5,0xf8,0x29,0x78,0xf0	#vmovaps %xmm7,-0x10(%rax)
+	.byte	0xc5,0x78,0x29,0x40,0x00	#vmovaps %xmm8,0(%rax)
+	.byte	0xc5,0x78,0x29,0x48,0x10	#vmovaps %xmm9,0x10(%rax)
+	.byte	0xc5,0x78,0x29,0x50,0x20	#vmovaps %xmm10,0x20(%rax)
+	.byte	0xc5,0x78,0x29,0x58,0x30	#vmovaps %xmm11,0x30(%rax)
+	.byte	0xc5,0x78,0x29,0x60,0x40	#vmovaps %xmm12,0x40(%rax)
+	.byte	0xc5,0x78,0x29,0x68,0x50	#vmovaps %xmm13,0x50(%rax)
+	.byte	0xc5,0x78,0x29,0x70,0x60	#vmovaps %xmm14,0x60(%rax)
+	.byte	0xc5,0x78,0x29,0x78,0x70	#vmovaps %xmm15,0x70(%rax)
 ___
 $code.=<<___;
-	vzeroupper
 	lea	.Lgather_table(%rip),%r11
 	mov	$power,%eax
 	and	\$3,$power
@@ -1596,25 +1613,25 @@ $code.=<<___;
 	vpbroadcastb	2(%r11,%rax), %xmm14
 	vpbroadcastb	1(%r11,%rax), %xmm15
 
-	lea	($inp,$power),$inp
+	lea	64($inp,$power),$inp
 	mov	\$64,%r11			# size optimization
 	mov	\$9,%eax
 	jmp	.Loop_gather_1024
 
 .align	32
 .Loop_gather_1024:
-	vpand		($inp),			%xmm8,%xmm0
-	vpand		($inp,%r11),		%xmm9,%xmm1
-	vpand		($inp,%r11,2),		%xmm10,%xmm2
-	vpand		64($inp,%r11,2),	%xmm11,%xmm3
+	vpand		-64($inp),		%xmm8,%xmm0
+	vpand		($inp),			%xmm9,%xmm1
+	vpand		64($inp),		%xmm10,%xmm2
+	vpand		($inp,%r11,2),		%xmm11,%xmm3
 	 vpor					%xmm0,%xmm1,%xmm1
-	vpand		($inp,%r11,4),		%xmm12,%xmm4
+	vpand		64($inp,%r11,2),	%xmm12,%xmm4
 	 vpor					%xmm2,%xmm3,%xmm3
-	vpand		64($inp,%r11,4),	%xmm13,%xmm5
+	vpand		($inp,%r11,4),		%xmm13,%xmm5
 	 vpor					%xmm1,%xmm3,%xmm3
-	vpand		-128($inp,%r11,8),	%xmm14,%xmm6
+	vpand		64($inp,%r11,4),	%xmm14,%xmm6
 	 vpor					%xmm4,%xmm5,%xmm5
-	vpand		-64($inp,%r11,8),	%xmm15,%xmm2
+	vpand		-128($inp,%r11,8),	%xmm15,%xmm2
 	lea		($inp,%r11,8),$inp
 	 vpor					%xmm3,%xmm5,%xmm5
 	 vpor					%xmm2,%xmm6,%xmm6
@@ -1798,16 +1815,16 @@ rsaz_se_handler:
 	.rva	.Lmul_1024_body,.Lmul_1024_epilogue
 .LSEH_info_rsaz_1024_gather5:
 	.byte	0x01,0x33,0x16,0x00
-	.byte	0x33,0xf8,0x09,0x00	#movaps 0x90(rsp),xmm15
-	.byte	0x2e,0xe8,0x08,0x00	#movaps 0x80(rsp),xmm14
-	.byte	0x29,0xd8,0x07,0x00	#movaps 0x70(rsp),xmm13
-	.byte	0x24,0xc8,0x06,0x00	#movaps 0x60(rsp),xmm12
-	.byte	0x1f,0xb8,0x05,0x00	#movaps 0x50(rsp),xmm11
-	.byte	0x1a,0xa8,0x04,0x00	#movaps 0x40(rsp),xmm10
-	.byte	0x15,0x98,0x03,0x00	#movaps 0x30(rsp),xmm9
-	.byte	0x10,0x88,0x02,0x00	#movaps 0x20(rsp),xmm8
-	.byte	0x0c,0x78,0x01,0x00	#movaps 0x10(rsp),xmm7
-	.byte	0x08,0x68,0x00,0x00	#movaps 0x00(rsp),xmm6
+	.byte	0x36,0xf8,0x09,0x00	#vmovaps 0x90(rsp),xmm15
+	.byte	0x31,0xe8,0x08,0x00	#vmovaps 0x80(rsp),xmm14
+	.byte	0x2c,0xd8,0x07,0x00	#vmovaps 0x70(rsp),xmm13
+	.byte	0x27,0xc8,0x06,0x00	#vmovaps 0x60(rsp),xmm12
+	.byte	0x22,0xb8,0x05,0x00	#vmovaps 0x50(rsp),xmm11
+	.byte	0x1d,0xa8,0x04,0x00	#vmovaps 0x40(rsp),xmm10
+	.byte	0x18,0x98,0x03,0x00	#vmovaps 0x30(rsp),xmm9
+	.byte	0x13,0x88,0x02,0x00	#vmovaps 0x20(rsp),xmm8
+	.byte	0x0e,0x78,0x01,0x00	#vmovaps 0x10(rsp),xmm7
+	.byte	0x09,0x68,0x00,0x00	#vmovaps 0x00(rsp),xmm6
 	.byte	0x04,0x01,0x15,0x00	#sub	rsp,0xa8
 ___
 }
