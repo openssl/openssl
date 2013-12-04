@@ -44,7 +44,7 @@ if ($flavour =~ /64/) {
 } else { die "nonsense $flavour"; }
 
 $sp="r1";
-$FRAME=8*$SIZE_T;
+$FRAME=6*$SIZE_T+13*16;	# 13*16 is for v20-v31 offload
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}ppc-xlate.pl" and -f $xlate ) or
@@ -296,10 +296,36 @@ Lenc_entry:
 .globl	.vpaes_encrypt
 .align	5
 .vpaes_encrypt:
+	$STU	$sp,-$FRAME($sp)
+	li	r10,`15+6*$SIZE_T`
+	li	r11,`31+6*$SIZE_T`
 	mflr	r6
 	mfspr	r7, 256			# save vrsave
+	stvx	v20,r10,$sp
+	addi	r10,r10,16
+	stvx	v21,r11,$sp
+	addi	r11,r11,16
+	stvx	v22,r10,$sp
+	addi	r10,r10,16
+	stvx	v23,r11,$sp
+	addi	r11,r11,16
+	stvx	v24,r10,$sp
+	addi	r10,r10,16
+	stvx	v25,r11,$sp
+	addi	r11,r11,16
+	stvx	v26,r10,$sp
+	addi	r10,r10,16
+	stvx	v27,r11,$sp
+	addi	r11,r11,16
+	stvx	v28,r10,$sp
+	addi	r10,r10,16
+	stvx	v29,r11,$sp
+	addi	r11,r11,16
+	stvx	v30,r10,$sp
+	stvx	v31,r11,$sp
+	lwz	r7,`$FRAME-4`($sp)	# save vrsave
 	li	r0, -1
-	$PUSH	r6,$LRSAVE($sp)
+	$PUSH	r6,`$FRAME+$LRSAVE`($sp)
 	mtspr	256, r0			# preserve all AltiVec registers
 
 	bl	_vpaes_encrypt_preheat
@@ -333,11 +359,36 @@ Lenc_entry:
 	vsel	v1, $outhead, v1, $outmask
 	stvx	v1, 0, $out
 
+	li	r10,`15+6*$SIZE_T`
+	li	r11,`31+6*$SIZE_T`
 	mtlr	r6
 	mtspr	256, r7			# restore vrsave
+	lvx	v20,r10,$sp
+	addi	r10,r10,16
+	lvx	v21,r11,$sp
+	addi	r11,r11,16
+	lvx	v22,r10,$sp
+	addi	r10,r10,16
+	lvx	v23,r11,$sp
+	addi	r11,r11,16
+	lvx	v24,r10,$sp
+	addi	r10,r10,16
+	lvx	v25,r11,$sp
+	addi	r11,r11,16
+	lvx	v26,r10,$sp
+	addi	r10,r10,16
+	lvx	v27,r11,$sp
+	addi	r11,r11,16
+	lvx	v28,r10,$sp
+	addi	r10,r10,16
+	lvx	v29,r11,$sp
+	addi	r11,r11,16
+	lvx	v30,r10,$sp
+	lvx	v31,r11,$sp
+	addi	$sp,$sp,$FRAME
 	blr
 	.long	0
-	.byte	0,12,0x14,1,0,0,3,0
+	.byte	0,12,0x04,1,0x80,0,3,0
 	.long	0
 .size	.vpaes_encrypt,.-.vpaes_encrypt
 
@@ -479,10 +530,36 @@ Ldec_entry:
 .globl	.vpaes_decrypt
 .align	5
 .vpaes_decrypt:
+	$STU	$sp,-$FRAME($sp)
+	li	r10,`15+6*$SIZE_T`
+	li	r11,`31+6*$SIZE_T`
 	mflr	r6
 	mfspr	r7, 256			# save vrsave
+	stvx	v20,r10,$sp
+	addi	r10,r10,16
+	stvx	v21,r11,$sp
+	addi	r11,r11,16
+	stvx	v22,r10,$sp
+	addi	r10,r10,16
+	stvx	v23,r11,$sp
+	addi	r11,r11,16
+	stvx	v24,r10,$sp
+	addi	r10,r10,16
+	stvx	v25,r11,$sp
+	addi	r11,r11,16
+	stvx	v26,r10,$sp
+	addi	r10,r10,16
+	stvx	v27,r11,$sp
+	addi	r11,r11,16
+	stvx	v28,r10,$sp
+	addi	r10,r10,16
+	stvx	v29,r11,$sp
+	addi	r11,r11,16
+	stvx	v30,r10,$sp
+	stvx	v31,r11,$sp
+	lwz	r7,`$FRAME-4`($sp)	# save vrsave
 	li	r0, -1
-	$PUSH	r6,$LRSAVE($sp)
+	$PUSH	r6,`$FRAME+$LRSAVE`($sp)
 	mtspr	256, r0			# preserve all AltiVec registers
 
 	bl	_vpaes_decrypt_preheat
@@ -516,23 +593,74 @@ Ldec_entry:
 	vsel	v1, $outhead, v1, $outmask
 	stvx	v1, 0, $out
 
+	li	r10,`15+6*$SIZE_T`
+	li	r11,`31+6*$SIZE_T`
 	mtlr	r6
 	mtspr	256, r7			# restore vrsave
+	lvx	v20,r10,$sp
+	addi	r10,r10,16
+	lvx	v21,r11,$sp
+	addi	r11,r11,16
+	lvx	v22,r10,$sp
+	addi	r10,r10,16
+	lvx	v23,r11,$sp
+	addi	r11,r11,16
+	lvx	v24,r10,$sp
+	addi	r10,r10,16
+	lvx	v25,r11,$sp
+	addi	r11,r11,16
+	lvx	v26,r10,$sp
+	addi	r10,r10,16
+	lvx	v27,r11,$sp
+	addi	r11,r11,16
+	lvx	v28,r10,$sp
+	addi	r10,r10,16
+	lvx	v29,r11,$sp
+	addi	r11,r11,16
+	lvx	v30,r10,$sp
+	lvx	v31,r11,$sp
+	addi	$sp,$sp,$FRAME
 	blr
 	.long	0
-	.byte	0,12,0x14,1,0,0,3,0
+	.byte	0,12,0x04,1,0x80,0,3,0
 	.long	0
 .size	.vpaes_decrypt,.-.vpaes_decrypt
 
 .globl	.vpaes_cbc_encrypt
 .align	5
 .vpaes_cbc_encrypt:
-	$STU	$sp,-$FRAME($sp)
+	$STU	$sp,-`($FRAME+2*$SIZE_T)`($sp)
 	mflr	r0
-	$PUSH	r30,$FRAME-$SIZE_T*2($sp)
+	li	r10,`15+6*$SIZE_T`
+	li	r11,`31+6*$SIZE_T`
+	mfspr	r12, 256
+	stvx	v20,r10,$sp
+	addi	r10,r10,16
+	stvx	v21,r11,$sp
+	addi	r11,r11,16
+	stvx	v22,r10,$sp
+	addi	r10,r10,16
+	stvx	v23,r11,$sp
+	addi	r11,r11,16
+	stvx	v24,r10,$sp
+	addi	r10,r10,16
+	stvx	v25,r11,$sp
+	addi	r11,r11,16
+	stvx	v26,r10,$sp
+	addi	r10,r10,16
+	stvx	v27,r11,$sp
+	addi	r11,r11,16
+	stvx	v28,r10,$sp
+	addi	r10,r10,16
+	stvx	v29,r11,$sp
+	addi	r11,r11,16
+	stvx	v30,r10,$sp
+	stvx	v31,r11,$sp
+	lwz	r12,`$FRAME-4`($sp)	# save vrsave
+	$PUSH	r30,`$FRAME+$SIZE_T*0`($sp)
+	$PUSH	r31,`$FRAME+$SIZE_T*1`($sp)
 	li	r9, 16
-	$PUSH	r31,$FRAME-$SIZE_T*1($sp)
-	$PUSH	r0, $FRAME+$LRSAVE($sp)
+	$PUSH	r0, `$FRAME+$SIZE_T*2+$LRSAVE`($sp)
 
 	sub.	r30, r5, r9		# copy length-16
 	mr	r5, r6			# copy pointer to key
@@ -540,7 +668,7 @@ Ldec_entry:
 	blt	Lcbc_abort
 	cmpwi	r8, 0			# test direction
 	li	r6, -1
-	mfspr	r7, 256
+	mr	r7, r12			# copy vrsave
 	mtspr	256, r6			# preserve all AltiVec registers
 
 	lvx	v24, 0, r31		# load [potentially unaligned] iv
@@ -629,12 +757,36 @@ Lcbc_done:
 	stvx	v1, r6, r31
 
 	mtspr	256, r7			# restore vrsave
+	li	r10,`15+6*$SIZE_T`
+	li	r11,`31+6*$SIZE_T`
+	lvx	v20,r10,$sp
+	addi	r10,r10,16
+	lvx	v21,r11,$sp
+	addi	r11,r11,16
+	lvx	v22,r10,$sp
+	addi	r10,r10,16
+	lvx	v23,r11,$sp
+	addi	r11,r11,16
+	lvx	v24,r10,$sp
+	addi	r10,r10,16
+	lvx	v25,r11,$sp
+	addi	r11,r11,16
+	lvx	v26,r10,$sp
+	addi	r10,r10,16
+	lvx	v27,r11,$sp
+	addi	r11,r11,16
+	lvx	v28,r10,$sp
+	addi	r10,r10,16
+	lvx	v29,r11,$sp
+	addi	r11,r11,16
+	lvx	v30,r10,$sp
+	lvx	v31,r11,$sp
 Lcbc_abort:
-	$POP	r0, $FRAME+$LRSAVE($sp)
-	$POP	r30,$FRAME-$SIZE_T*2($sp)
-	$POP	r31,$FRAME-$SIZE_T*1($sp)
+	$POP	r0, `$FRAME+$SIZE_T*2+$LRSAVE`($sp)
+	$POP	r30,`$FRAME+$SIZE_T*0`($sp)
+	$POP	r31,`$FRAME+$SIZE_T*1`($sp)
 	mtlr	r0
-	addi	$sp,$sp,$FRAME
+	addi	$sp,$sp,`$FRAME+$SIZE_T*2`
 	blr
 	.long	0
 	.byte	0,12,0x04,1,0x80,2,6,0
@@ -1158,10 +1310,36 @@ Lschedule_mangle_dec:
 .globl	.vpaes_set_encrypt_key
 .align	5
 .vpaes_set_encrypt_key:
+	$STU	$sp,-$FRAME($sp)
+	li	r10,`15+6*$SIZE_T`
+	li	r11,`31+6*$SIZE_T`
 	mflr	r0
 	mfspr	r6, 256			# save vrsave
+	stvx	v20,r10,$sp
+	addi	r10,r10,16
+	stvx	v21,r11,$sp
+	addi	r11,r11,16
+	stvx	v22,r10,$sp
+	addi	r10,r10,16
+	stvx	v23,r11,$sp
+	addi	r11,r11,16
+	stvx	v24,r10,$sp
+	addi	r10,r10,16
+	stvx	v25,r11,$sp
+	addi	r11,r11,16
+	stvx	v26,r10,$sp
+	addi	r10,r10,16
+	stvx	v27,r11,$sp
+	addi	r11,r11,16
+	stvx	v28,r10,$sp
+	addi	r10,r10,16
+	stvx	v29,r11,$sp
+	addi	r11,r11,16
+	stvx	v30,r10,$sp
+	stvx	v31,r11,$sp
+	lwz	r6,`$FRAME-4`($sp)	# save vrsave
 	li	r7, -1
-	$PUSH	r0, $LRSAVE($sp)
+	$PUSH	r0, `$FRAME+$LRSAVE`($sp)
 	mtspr	256, r7			# preserve all AltiVec registers
 
 	srwi	r9, $bits, 5		# shr	\$5,%eax
@@ -1172,23 +1350,74 @@ Lschedule_mangle_dec:
 	li	r8, 0x30		# mov	\$0x30,%r8d
 	bl	_vpaes_schedule_core
 
-	$POP	r0, $LRSAVE($sp)
+	$POP	r0, `$FRAME+$LRSAVE`($sp)
+	li	r10,`15+6*$SIZE_T`
+	li	r11,`31+6*$SIZE_T`
 	mtspr	256, r6			# restore vrsave
 	mtlr	r0
 	xor	r3, r3, r3
+	lvx	v20,r10,$sp
+	addi	r10,r10,16
+	lvx	v21,r11,$sp
+	addi	r11,r11,16
+	lvx	v22,r10,$sp
+	addi	r10,r10,16
+	lvx	v23,r11,$sp
+	addi	r11,r11,16
+	lvx	v24,r10,$sp
+	addi	r10,r10,16
+	lvx	v25,r11,$sp
+	addi	r11,r11,16
+	lvx	v26,r10,$sp
+	addi	r10,r10,16
+	lvx	v27,r11,$sp
+	addi	r11,r11,16
+	lvx	v28,r10,$sp
+	addi	r10,r10,16
+	lvx	v29,r11,$sp
+	addi	r11,r11,16
+	lvx	v30,r10,$sp
+	lvx	v31,r11,$sp
+	addi	$sp,$sp,$FRAME
 	blr
 	.long	0
-	.byte	0,12,0x14,1,0,3,0
+	.byte	0,12,0x04,1,0x80,3,0
 	.long	0
 .size	.vpaes_set_encrypt_key,.-.vpaes_set_encrypt_key
 
 .globl	.vpaes_set_decrypt_key
 .align	4
 .vpaes_set_decrypt_key:
+	$STU	$sp,-$FRAME($sp)
+	li	r10,`15+6*$SIZE_T`
+	li	r11,`31+6*$SIZE_T`
 	mflr	r0
 	mfspr	r6, 256			# save vrsave
+	stvx	v20,r10,$sp
+	addi	r10,r10,16
+	stvx	v21,r11,$sp
+	addi	r11,r11,16
+	stvx	v22,r10,$sp
+	addi	r10,r10,16
+	stvx	v23,r11,$sp
+	addi	r11,r11,16
+	stvx	v24,r10,$sp
+	addi	r10,r10,16
+	stvx	v25,r11,$sp
+	addi	r11,r11,16
+	stvx	v26,r10,$sp
+	addi	r10,r10,16
+	stvx	v27,r11,$sp
+	addi	r11,r11,16
+	stvx	v28,r10,$sp
+	addi	r10,r10,16
+	stvx	v29,r11,$sp
+	addi	r11,r11,16
+	stvx	v30,r10,$sp
+	stvx	v31,r11,$sp
+	lwz	r6,`$FRAME-4`($sp)	# save vrsave
 	li	r7, -1
-	$PUSH	r0, $LRSAVE($sp)
+	$PUSH	r0, `$FRAME+$LRSAVE`($sp)
 	mtspr	256, r7			# preserve all AltiVec registers
 
 	srwi	r9, $bits, 5		# shr	\$5,%eax
@@ -1204,17 +1433,44 @@ Lschedule_mangle_dec:
 	xori	r8, r8, 32		# xor	\$32,%r8d	# nbits==192?0:32
 	bl	_vpaes_schedule_core
 
-	$POP	r0,  $LRSAVE($sp)
+	$POP	r0,  `$FRAME+$LRSAVE`($sp)
+	li	r10,`15+6*$SIZE_T`
+	li	r11,`31+6*$SIZE_T`
 	mtspr	256, r6			# restore vrsave
 	mtlr	r0
 	xor	r3, r3, r3
+	lvx	v20,r10,$sp
+	addi	r10,r10,16
+	lvx	v21,r11,$sp
+	addi	r11,r11,16
+	lvx	v22,r10,$sp
+	addi	r10,r10,16
+	lvx	v23,r11,$sp
+	addi	r11,r11,16
+	lvx	v24,r10,$sp
+	addi	r10,r10,16
+	lvx	v25,r11,$sp
+	addi	r11,r11,16
+	lvx	v26,r10,$sp
+	addi	r10,r10,16
+	lvx	v27,r11,$sp
+	addi	r11,r11,16
+	lvx	v28,r10,$sp
+	addi	r10,r10,16
+	lvx	v29,r11,$sp
+	addi	r11,r11,16
+	lvx	v30,r10,$sp
+	lvx	v31,r11,$sp
+	addi	$sp,$sp,$FRAME
 	blr
 	.long	0
-	.byte	0,12,0x14,1,0,3,0
+	.byte	0,12,0x04,1,0x80,3,0
 	.long	0
 .size	.vpaes_set_decrypt_key,.-.vpaes_set_decrypt_key
 ___
 }
+
+$code =~ s/\`([^\`]*)\`/eval($1)/gem;
 
 print $code;
 
