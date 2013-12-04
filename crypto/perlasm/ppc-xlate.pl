@@ -27,7 +27,8 @@ my $globl = sub {
 	/osx/		&& do { $name = "_$name";
 				last;
 			      };
-	/linux.*32/	&& do {	$ret .= ".globl	$name\n";
+	/linux.*(32|64le)/
+			&& do {	$ret .= ".globl	$name\n";
 				$ret .= ".type	$name,\@function";
 				last;
 			      };
@@ -49,7 +50,9 @@ my $globl = sub {
     $ret;
 };
 my $text = sub {
-    ($flavour =~ /aix/) ? ".csect" : ".text";
+    my $ret = ($flavour =~ /aix/) ? ".csect" : ".text";
+    $ret = ".abiversion	2\n".$ret	if ($flavour =~ /linux.*64le/);
+    $ret;
 };
 my $machine = sub {
     my $junk = shift;
@@ -64,8 +67,8 @@ my $size = sub {
     if ($flavour =~ /linux/)
     {	shift;
 	my $name = shift; $name =~ s|^[\.\_]||;
-	my $ret  = ".size	$name,.-".($flavour=~/64/?".":"").$name;
-	$ret .= "\n.size	.$name,.-.$name" if ($flavour=~/64/);
+	my $ret  = ".size	$name,.-".($flavour=~/64$/?".":"").$name;
+	$ret .= "\n.size	.$name,.-.$name" if ($flavour=~/64$/);
 	$ret;
     }
     else
@@ -159,7 +162,10 @@ while($line=<>) {
     {
 	$line =~ s|(^[\.\w]+)\:\s*||;
 	my $label = $1;
-	printf "%s:",($GLOBALS{$label} or $label) if ($label);
+	if ($label) {
+	    printf "%s:",($GLOBALS{$label} or $label);
+	    printf "\n.localentry\t$GLOBALS{$label},0"	if ($GLOBALS{$label} && $flavour =~ /linux.*64le/);
+	}
     }
 
     {
