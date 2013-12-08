@@ -117,6 +117,8 @@ JPAKE_CTX *JPAKE_CTX_new(const char *name, const char *peer_name,
 			 const BIGNUM *secret)
     {
     JPAKE_CTX *ctx = OPENSSL_malloc(sizeof *ctx);
+    if (ctx == NULL)
+        return NULL;
 
     JPAKE_CTX_init(ctx, name, peer_name, p, g, q, secret);
 
