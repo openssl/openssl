@@ -901,17 +901,22 @@ static int cryptodev_digest_copy(EVP_MD_CTX *to,const EVP_MD_CTX *from)
 	if (ioctl(dstate->d_fd, CIOCGSESSION, sess) < 0) {
 		put_dev_crypto(dstate->d_fd);
 		dstate->d_fd = -1;
-		printf("cryptodev_digest_init: Open session failed\n");
+		printf("cryptodev_digest_copy: Open session failed\n");
 		return (0);
 	}
 
 	if (fstate->mac_len != 0) {
 	        if (fstate->mac_data != NULL)
-	                {
-        		dstate->mac_data = OPENSSL_malloc(fstate->mac_len);
-	        	memcpy(dstate->mac_data, fstate->mac_data, fstate->mac_len);
-           		dstate->mac_len = fstate->mac_len;
-	        	}
+			{
+			dstate->mac_data = OPENSSL_malloc(fstate->mac_len);
+			if (dstate->mac_data == NULL)
+				{
+				printf("cryptodev_digest_copy: mac_data allocation failed\n");
+				return (0);
+				}
+			memcpy(dstate->mac_data, fstate->mac_data, fstate->mac_len);
+			dstate->mac_len = fstate->mac_len;
+			}
 	}
 
 	return 1;
