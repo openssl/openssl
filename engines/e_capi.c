@@ -1301,6 +1301,8 @@ char * capi_cert_get_fname(CAPI_CTX *ctx, PCCERT_CONTEXT cert)
 	if (!CertGetCertificateContextProperty(cert, CERT_FRIENDLY_NAME_PROP_ID, NULL, &dlen))
 		return NULL;
 	wfname = OPENSSL_malloc(dlen);
+	if (wfname == NULL)
+		return NULL;
 	if (CertGetCertificateContextProperty(cert, CERT_FRIENDLY_NAME_PROP_ID, wfname, &dlen))
 		{
 		char *fname = wide_to_asc(wfname);
