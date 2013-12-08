@@ -111,6 +111,7 @@ void ERR_GOST_error(int function, int reason, char *file, int line);
 #define GOST_F_PUB_DECODE_GOST01			 133
 #define GOST_F_PUB_DECODE_GOST94			 134
 #define GOST_F_PUB_ENCODE_GOST01			 135
+#define GOST_F_PUB_ENCODE_GOST94			 141
 #define GOST_F_UNPACK_CC_SIGNATURE			 136
 #define GOST_F_UNPACK_CP_SIGNATURE			 137
 
