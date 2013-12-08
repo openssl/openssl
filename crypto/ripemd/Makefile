@@ -82,14 +82,8 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-rmd_dgst.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-rmd_dgst.o: ../../include/openssl/opensslconf.h
-rmd_dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 rmd_dgst.o: ../../include/openssl/ripemd.h ../../include/openssl/safestack.h
-rmd_dgst.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-rmd_dgst.o: ../md32_common.h rmd_dgst.c rmd_locl.h rmdconst.h
-rmd_one.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-rmd_one.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-rmd_one.o: ../../include/openssl/ossl_typ.h ../../include/openssl/ripemd.h
-rmd_one.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-rmd_one.o: ../../include/openssl/symhacks.h rmd_one.c
+rmd_dgst.o: ../../include/openssl/stack.h ../md32_common.h rmd_dgst.c
+rmd_dgst.o: rmd_locl.h rmdconst.h
+rmd_one.o: ../../include/openssl/ripemd.h ../../include/openssl/safestack.h
+rmd_one.o: ../../include/openssl/stack.h rmd_one.c

@@ -78,34 +78,19 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-ui_compat.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
-ui_compat.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-ui_compat.o: ../../include/openssl/stack.h ../../include/openssl/ui.h
-ui_compat.o: ../../include/openssl/ui_compat.h ui_compat.c
-ui_err.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
-ui_err.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-ui_err.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-ui_err.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-ui_err.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-ui_err.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h ui_err.c
-ui_lib.o: ../../e_os.h ../../include/openssl/bio.h
-ui_lib.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-ui_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-ui_lib.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-ui_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-ui_lib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-ui_lib.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
+ui_compat.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+ui_compat.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
+ui_compat.o: ui_compat.c
+ui_err.o: ../../include/openssl/bio.h ../../include/openssl/err.h
+ui_err.o: ../../include/openssl/lhash.h ../../include/openssl/safestack.h
+ui_err.o: ../../include/openssl/stack.h ../../include/openssl/ui.h ui_err.c
+ui_lib.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/err.h
+ui_lib.o: ../../include/openssl/lhash.h ../../include/openssl/safestack.h
+ui_lib.o: ../../include/openssl/stack.h ../../include/openssl/ui.h
 ui_lib.o: ../cryptlib.h ui_lib.c ui_locl.h
 ui_openssl.o: ../../e_os.h ../../include/openssl/bio.h
-ui_openssl.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-ui_openssl.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-ui_openssl.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-ui_openssl.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+ui_openssl.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 ui_openssl.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-ui_openssl.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-ui_openssl.o: ../cryptlib.h ui_locl.h ui_openssl.c
-ui_util.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-ui_util.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-ui_util.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-ui_util.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+ui_openssl.o: ../../include/openssl/ui.h ../cryptlib.h ui_locl.h ui_openssl.c
+ui_util.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 ui_util.o: ../../include/openssl/ui.h ui_locl.h ui_util.c

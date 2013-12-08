@@ -74,25 +74,15 @@ clean:
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 srp_lib.o: ../../e_os.h ../../include/openssl/asn1.h
-srp_lib.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-srp_lib.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-srp_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-srp_lib.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
-srp_lib.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-srp_lib.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-srp_lib.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-srp_lib.o: ../../include/openssl/sha.h ../../include/openssl/srp.h
-srp_lib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+srp_lib.o: ../../include/openssl/bio.h ../../include/openssl/err.h
+srp_lib.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+srp_lib.o: ../../include/openssl/objects.h ../../include/openssl/safestack.h
+srp_lib.o: ../../include/openssl/srp.h ../../include/openssl/stack.h
 srp_lib.o: ../cryptlib.h srp_grps.h srp_lcl.h srp_lib.c
 srp_vfy.o: ../../e_os.h ../../include/openssl/asn1.h
-srp_vfy.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-srp_vfy.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-srp_vfy.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-srp_vfy.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
-srp_vfy.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-srp_vfy.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-srp_vfy.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
-srp_vfy.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-srp_vfy.o: ../../include/openssl/srp.h ../../include/openssl/stack.h
-srp_vfy.o: ../../include/openssl/symhacks.h ../../include/openssl/txt_db.h
+srp_vfy.o: ../../include/openssl/bio.h ../../include/openssl/err.h
+srp_vfy.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+srp_vfy.o: ../../include/openssl/objects.h ../../include/openssl/rand.h
+srp_vfy.o: ../../include/openssl/safestack.h ../../include/openssl/srp.h
+srp_vfy.o: ../../include/openssl/stack.h ../../include/openssl/txt_db.h
 srp_vfy.o: ../cryptlib.h srp_lcl.h srp_vfy.c

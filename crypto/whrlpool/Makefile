@@ -87,10 +87,6 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-wp_block.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 wp_block.o: ../../include/openssl/whrlpool.h wp_block.c wp_locl.h
-wp_dgst.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-wp_dgst.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-wp_dgst.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-wp_dgst.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+wp_dgst.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 wp_dgst.o: ../../include/openssl/whrlpool.h wp_dgst.c wp_locl.h

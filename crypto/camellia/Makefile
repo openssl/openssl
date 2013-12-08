@@ -86,25 +86,13 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-camellia.o: ../../include/openssl/opensslconf.h camellia.c camellia.h
-camellia.o: cmll_locl.h
-cmll_cbc.o: ../../include/openssl/camellia.h ../../include/openssl/modes.h
-cmll_cbc.o: ../../include/openssl/opensslconf.h cmll_cbc.c
-cmll_cfb.o: ../../include/openssl/camellia.h ../../include/openssl/modes.h
-cmll_cfb.o: ../../include/openssl/opensslconf.h cmll_cfb.c
-cmll_ctr.o: ../../include/openssl/camellia.h ../../include/openssl/modes.h
-cmll_ctr.o: ../../include/openssl/opensslconf.h cmll_ctr.c
-cmll_ecb.o: ../../include/openssl/camellia.h
-cmll_ecb.o: ../../include/openssl/opensslconf.h cmll_ecb.c cmll_locl.h
-cmll_misc.o: ../../include/openssl/camellia.h ../../include/openssl/crypto.h
-cmll_misc.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
-cmll_misc.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-cmll_misc.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-cmll_misc.o: ../../include/openssl/symhacks.h cmll_locl.h cmll_misc.c
-cmll_ofb.o: ../../include/openssl/camellia.h ../../include/openssl/modes.h
-cmll_ofb.o: ../../include/openssl/opensslconf.h cmll_ofb.c
-cmll_utl.o: ../../include/openssl/camellia.h ../../include/openssl/crypto.h
-cmll_utl.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
-cmll_utl.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-cmll_utl.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-cmll_utl.o: ../../include/openssl/symhacks.h cmll_locl.h cmll_utl.c
+camellia.o: camellia.c camellia.h cmll_locl.h
+cmll_cbc.o: ../../include/openssl/camellia.h cmll_cbc.c
+cmll_cfb.o: ../../include/openssl/camellia.h cmll_cfb.c
+cmll_ctr.o: ../../include/openssl/camellia.h cmll_ctr.c
+cmll_ecb.o: ../../include/openssl/camellia.h cmll_ecb.c cmll_locl.h
+cmll_misc.o: ../../include/openssl/camellia.h ../../include/openssl/safestack.h
+cmll_misc.o: ../../include/openssl/stack.h cmll_locl.h cmll_misc.c
+cmll_ofb.o: ../../include/openssl/camellia.h cmll_ofb.c
+cmll_utl.o: ../../include/openssl/camellia.h ../../include/openssl/safestack.h
+cmll_utl.o: ../../include/openssl/stack.h cmll_locl.h cmll_utl.c
