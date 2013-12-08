@@ -562,6 +562,8 @@ static int pkey_gost_mac_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 			return 0;
 		}
 		keydata = OPENSSL_malloc(32);
+		if (keydata == NULL)
+			return 0;
 		memcpy(keydata,data->key,32);
 		EVP_PKEY_assign(pkey, NID_id_Gost28147_89_MAC, keydata);
 		return 1;
