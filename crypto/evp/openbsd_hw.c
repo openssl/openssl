@@ -193,6 +193,8 @@ static int dev_crypto_cipher(EVP_CIPHER_CTX *ctx,unsigned char *out,
 	    if(((unsigned long)in&3) || cinl != inl)
 		{
 		cin=OPENSSL_malloc(cinl);
+		if (cin == NULL)
+		    return 0;
 		memcpy(cin,in,inl);
 		cryp.src=cin;
 		}
@@ -200,6 +202,12 @@ static int dev_crypto_cipher(EVP_CIPHER_CTX *ctx,unsigned char *out,
 	    if(((unsigned long)out&3) || cinl != inl)
 		{
 		cout=OPENSSL_malloc(cinl);
+		if (cout == NULL)
+		    {
+		    if (cin != NULL)
+			OPENSSL_free(cin);
+		    return 0;
+		    }
 		cryp.dst=cout;
 		}
 
