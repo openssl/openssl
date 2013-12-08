@@ -382,11 +382,15 @@ static int dev_crypto_md5_update(EVP_MD_CTX *ctx,const void *data,
 				 unsigned long len)
     {
     MD_DATA *md_data=ctx->md_data;
+    char *tmp_md_data;
 
     if(ctx->flags&EVP_MD_CTX_FLAG_ONESHOT)
 	return do_digest(md_data->sess.ses,md_data->md,data,len);
 
-    md_data->data=OPENSSL_realloc(md_data->data,md_data->len+len);
+    tmp_md_data=OPENSSL_realloc(md_data->data,md_data->len+len);
+    if (tmp_md_data == NULL)
+	return 0;
+    md_data->data=tmp_md_data;
     memcpy(md_data->data+md_data->len,data,len);
     md_data->len+=len;
 
