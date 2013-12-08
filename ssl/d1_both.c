@@ -1371,6 +1371,8 @@ dtls1_process_heartbeat(SSL *s)
 		 * payload, plus padding
 		 */
 		buffer = OPENSSL_malloc(write_length);
+		if (buffer == NULL)
+			return -1;
 		bp = buffer;
 
 		/* Enter response type, length and copy payload */
