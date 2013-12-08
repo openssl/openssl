@@ -149,6 +149,7 @@ static int process_pci_value(CONF_VALUE *val,
 				{
 				OPENSSL_free(tmp_data2);
 				/* realloc failure implies the original data space is b0rked too! */
+				OPENSSL_free((*policy)->data);
 				(*policy)->data = NULL;
 				(*policy)->length = 0;
 				X509V3err(X509V3_F_PROCESS_PCI_VALUE,ERR_R_MALLOC_FAILURE);
@@ -177,7 +178,15 @@ static int process_pci_value(CONF_VALUE *val,
 					(*policy)->length + n + 1);
 
 				if (!tmp_data)
-					break;
+				{
+					OPENSSL_free((*policy)->data);
+					(*policy)->data = NULL;
+					(*policy)->length = 0;
+					X509V3err(X509V3_F_PROCESS_PCI_VALUE,ERR_R_MALLOC_FAILURE);
+					X509V3_conf_err(val);
+					BIO_free_all(b);
+					goto err;
+				}
 
 				(*policy)->data = tmp_data;
 				memcpy(&(*policy)->data[(*policy)->length],
@@ -210,6 +219,7 @@ static int process_pci_value(CONF_VALUE *val,
 			else
 				{
 				/* realloc failure implies the original data space is b0rked too! */
+				OPENSSL_free((*policy)->data);
 				(*policy)->data = NULL;
 				(*policy)->length = 0;
 				X509V3err(X509V3_F_PROCESS_PCI_VALUE,ERR_R_MALLOC_FAILURE);
