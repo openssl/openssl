@@ -1062,12 +1062,18 @@ cryptodev_asym(struct crypt_kop *kop, int rlen, BIGNUM *r, int slen, BIGNUM *s)
 		return (ret);
 
 	if (r) {
-		kop->crk_param[kop->crk_iparams].crp_p = calloc(rlen, sizeof(char));
+		kop->crk_param[kop->crk_iparams].crp_p = OPENSSL_malloc(rlen);
+		if (kop->crk_param[kop->crk_iparams].crp_p == NULL)
+			return (ret);
+		memset(kop->crk_param[kop->crk_iparams].crp_p,0,rlen);
 		kop->crk_param[kop->crk_iparams].crp_nbits = rlen * 8;
 		kop->crk_oparams++;
 	}
 	if (s) {
-		kop->crk_param[kop->crk_iparams+1].crp_p = calloc(slen, sizeof(char));
+		kop->crk_param[kop->crk_iparams+1].crp_p = OPENSSL_malloc(slen);
+		if (kop->crk_param[kop->crk_iparams+1].crp_p == NULL)
+			return (ret);
+		memset(kop->crk_param[kop->crk_iparams+1].crp_p,0,slen);
 		kop->crk_param[kop->crk_iparams+1].crp_nbits = slen * 8;
 		kop->crk_oparams++;
 	}
