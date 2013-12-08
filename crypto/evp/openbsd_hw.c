@@ -134,6 +134,8 @@ static int dev_crypto_init_key(EVP_CIPHER_CTX *ctx,int cipher,
 	return 0;
 
     CDATA(ctx)->key=OPENSSL_malloc(MAX_HW_KEY);
+    if (CDATA(ctx)->key == NULL)
+        return 0;
 
     assert(ctx->cipher->iv_len <= MAX_HW_IV);
 
