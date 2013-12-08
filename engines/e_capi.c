@@ -1466,6 +1466,8 @@ static CAPI_KEY *capi_get_key(CAPI_CTX *ctx, const TCHAR *contname, TCHAR *provn
 	CAPI_KEY *key;
 	DWORD dwFlags = 0; 
 	key = OPENSSL_malloc(sizeof(CAPI_KEY));
+	if (key == NULL)
+		return NULL;
 	if (sizeof(TCHAR)==sizeof(char))
 		CAPI_trace(ctx, "capi_get_key, contname=%s, provname=%s, type=%d\n",
 						contname, provname, ptype);
