@@ -427,6 +427,8 @@ static int dev_crypto_md5_copy(EVP_MD_CTX *to,const EVP_MD_CTX *from)
     assert(from->digest->flags&EVP_MD_FLAG_ONESHOT);
 
     to_md->data=OPENSSL_malloc(from_md->len);
+    if (to_md->data == NULL)
+	return 0;
     memcpy(to_md->data,from_md->data,from_md->len);
 
     return 1;
