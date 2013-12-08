@@ -1155,6 +1155,8 @@ static int capi_get_provname(CAPI_CTX *ctx, LPSTR *pname, DWORD *ptype, DWORD id
 	if (!CryptEnumProviders(idx, NULL, 0, ptype, name, &len))
 		{
 		err = GetLastError();
+		if (sizeof(TCHAR) == sizeof(char))
+			OPENSSL_free(name);
 		if (err == ERROR_NO_MORE_ITEMS)
 			return 2;
 		CAPIerr(CAPI_F_CAPI_GET_PROVNAME, CAPI_R_CRYPTENUMPROVIDERS_ERROR);
