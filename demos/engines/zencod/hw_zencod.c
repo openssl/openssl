@@ -1507,6 +1507,8 @@ static int engine_md_copy ( EVP_MD_CTX *to, const EVP_MD_CTX *from )
 	ZEN_MD_DATA *to_md = (ZEN_MD_DATA *) to->md_data ;
 
 	to_md->HashBuffer = OPENSSL_malloc ( from_md->HashBufferSize ) ;
+	if (to_md->HashBuffer == NULL)
+		return 0;
 	memcpy ( to_md->HashBuffer, from_md->HashBuffer, from_md->HashBufferSize ) ;
 
 	return 1;
