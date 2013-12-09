@@ -1763,13 +1763,14 @@ int SSL_CTX_set_custom_cli_ext(SSL_CTX *ctx, unsigned short ext_type,
 		if (ext_type == ctx->custom_cli_ext_records[i].ext_type)
 			return 0;
 
-	ctx->custom_cli_ext_records = OPENSSL_realloc(ctx->custom_cli_ext_records,
+	record = OPENSSL_realloc(ctx->custom_cli_ext_records,
 						      (ctx->custom_cli_ext_records_count + 1) * 
 						      sizeof(custom_cli_ext_record));
-	if (!ctx->custom_cli_ext_records) {
-		ctx->custom_cli_ext_records_count = 0;
+	if (!record) {
+		/* previously added extension records remain valid */
 		return 0;
 	}
+	ctx->custom_cli_ext_records = record;
 	ctx->custom_cli_ext_records_count++;
 	record = &ctx->custom_cli_ext_records[ctx->custom_cli_ext_records_count - 1];
 	record->ext_type = ext_type;
@@ -1791,13 +1792,14 @@ int SSL_CTX_set_custom_srv_ext(SSL_CTX *ctx, unsigned short ext_type,
 		if (ext_type == ctx->custom_srv_ext_records[i].ext_type)
 			return 0;
 
-	ctx->custom_srv_ext_records = OPENSSL_realloc(ctx->custom_srv_ext_records,
+	record = OPENSSL_realloc(ctx->custom_srv_ext_records,
 						      (ctx->custom_srv_ext_records_count + 1) * 
 						      sizeof(custom_srv_ext_record));
-	if (!ctx->custom_srv_ext_records) {
-		ctx->custom_srv_ext_records_count = 0;
+	if (!record) {
+		/* previously added extension records remain valid */
 		return 0;
 	}
+	ctx->custom_srv_ext_records = record;
 	ctx->custom_srv_ext_records_count++;
 	record = &ctx->custom_srv_ext_records[ctx->custom_srv_ext_records_count - 1];
 	record->ext_type = ext_type;
@@ -1892,13 +1894,14 @@ int SSL_CTX_set_cli_supp_data(SSL_CTX *ctx,
 		if (supp_data_type == ctx->cli_supp_data_records[i].supp_data_type)
 			return 0;
 
-	ctx->cli_supp_data_records = OPENSSL_realloc(ctx->cli_supp_data_records,
+	record = OPENSSL_realloc(ctx->cli_supp_data_records,
 	  (ctx->cli_supp_data_records_count+1) * sizeof(cli_supp_data_record));
-	if (!ctx->cli_supp_data_records)
+	if (!record)
 		{
-		ctx->cli_supp_data_records_count = 0;
+		/* previously added extension records remain valid */
 		return 0;
 		}
+	ctx->cli_supp_data_records = record;
 	ctx->cli_supp_data_records_count++;
 	record = &ctx->cli_supp_data_records[ctx->cli_supp_data_records_count - 1];
 	record->supp_data_type = supp_data_type;
@@ -1921,13 +1924,14 @@ int SSL_CTX_set_srv_supp_data(SSL_CTX *ctx,
 		if (supp_data_type == ctx->srv_supp_data_records[i].supp_data_type)
 			return 0;
 
-	ctx->srv_supp_data_records = OPENSSL_realloc(ctx->srv_supp_data_records,
+	record = OPENSSL_realloc(ctx->srv_supp_data_records,
 	  (ctx->srv_supp_data_records_count+1) * sizeof(srv_supp_data_record));
-	if (!ctx->srv_supp_data_records)
+	if (!record)
 		{
-		ctx->srv_supp_data_records_count = 0;
+		/* previously added extension records remain valid */
 		return 0;
 		}
+	ctx->srv_supp_data_records = record;
 	ctx->srv_supp_data_records_count++;
 	record = &ctx->srv_supp_data_records[ctx->srv_supp_data_records_count - 1];
 	record->supp_data_type = supp_data_type;
