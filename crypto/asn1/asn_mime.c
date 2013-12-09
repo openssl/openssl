@@ -636,21 +636,34 @@ static int multi_split(BIO *bio, char *bound, STACK_OF(BIO) **ret)
 	first = 1;
 	parts = sk_BIO_new_null();
 	*ret = parts;
+	if (*ret == NULL)
+		return 0;
 	while ((len = BIO_gets(bio, linebuf, MAX_SMLEN)) > 0) {
 		state = mime_bound_check(linebuf, len, bound, blen);
 		if(state == 1) {
 			first = 1;
 			part++;
 		} else if(state == 2) {
-			sk_BIO_push(parts, bpart);
+			if (!sk_BIO_push(parts, bpart))
+				{
+				BIO_free(bpart);
+				return 0;
+				}
 			return 1;
 		} else if(part) {
 			/* Strip CR+LF from linebuf */
 			next_eol = strip_eol(linebuf, &len, 0);
 			if(first) {
 				first = 0;
-				if(bpart) sk_BIO_push(parts, bpart);
+				if(bpart)
+					if (!sk_BIO_push(parts, bpart))
+						{
+						BIO_free(bpart);
+						return 0;
+						}
 				bpart = BIO_new(BIO_s_mem());
+				if (bpart == NULL)
+					return 0;
 				BIO_set_mem_eof_return(bpart, 0);
 			} else if (eol)
 				BIO_write(bpart, "\r\n", 2);
@@ -659,6 +672,8 @@ static int multi_split(BIO *bio, char *bound, STACK_OF(BIO) **ret)
 				BIO_write(bpart, linebuf, len);
 		}
 	}
+	if (bpart != NULL)
+		BIO_free(bpart);
 	return 0;
 }
 
