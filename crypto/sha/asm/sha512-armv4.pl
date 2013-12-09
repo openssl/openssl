@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 
 # ====================================================================
-# Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
+# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
 # details see http://www.openssl.org/~appro/cryptogams/.
@@ -26,7 +26,24 @@
 # March 2011.
 #
 # Add NEON implementation. On Cortex A8 it was measured to process
-# one byte in 25.5 cycles or 47% faster than integer-only code.
+# one byte in 23.3 cycles or ~60% faster than integer-only code.
+
+# August 2012.
+#
+# Improve NEON performance by 12% on Snapdragon S4. In absolute
+# terms it's 22.6 cycles per byte, which is disappointing result.
+# Technical writers asserted that 3-way S4 pipeline can sustain
+# multiple NEON instructions per cycle, but dual NEON issue could
+# not be observed, and for NEON-only sequences IPC(*) was found to
+# be limited by 1:-( 0.33 and 0.66 were measured for sequences with
+# ILPs(*) of 1 and 2 respectively. This in turn means that you can
+# even find yourself striving, as I did here, for achieving IPC
+# adequate to one delivered by Cortex A8 [for reference, it's
+# 0.5 for ILP of 1, and 1 for higher ILPs].
+#
+# (*) ILP, instruction-level parallelism, how many instructions
+#     *can* execute at the same time. IPC, instructions per cycle,
+#     indicates how many instructions actually execute.
 
 # Byte order [in]dependence. =========================================
 #
@@ -457,40 +474,40 @@ $code.=<<___ if ($i<16 || $i&1);
 	vld1.64		{@X[$i%16]},[$inp]!	@ handles unaligned
 #endif
 	vshr.u64	$t1,$e,#@Sigma1[1]
+#if $i>0
+	 vadd.i64	$a,$Maj			@ h+=Maj from the past
+#endif
 	vshr.u64	$t2,$e,#@Sigma1[2]
 ___
 $code.=<<___;
 	vld1.64		{$K},[$Ktbl,:64]!	@ K[i++]
 	vsli.64		$t0,$e,#`64-@Sigma1[0]`
 	vsli.64		$t1,$e,#`64-@Sigma1[1]`
+	vmov		$Ch,$e
 	vsli.64		$t2,$e,#`64-@Sigma1[2]`
 #if $i<16 && defined(__ARMEL__)
 	vrev64.8	@X[$i],@X[$i]
 #endif
-	vadd.i64	$T1,$K,$h
-	veor		$Ch,$f,$g
-	veor		$t0,$t1
-	vand		$Ch,$e
-	veor		$t0,$t2			@ Sigma1(e)
-	veor		$Ch,$g			@ Ch(e,f,g)
-	vadd.i64	$T1,$t0
+	veor		$t1,$t0
+	vbsl		$Ch,$f,$g		@ Ch(e,f,g)
 	vshr.u64	$t0,$a,#@Sigma0[0]
-	vadd.i64	$T1,$Ch
+	veor		$t2,$t1			@ Sigma1(e)
+	vadd.i64	$T1,$Ch,$h
 	vshr.u64	$t1,$a,#@Sigma0[1]
-	vshr.u64	$t2,$a,#@Sigma0[2]
 	vsli.64		$t0,$a,#`64-@Sigma0[0]`
+	vadd.i64	$T1,$t2
+	vshr.u64	$t2,$a,#@Sigma0[2]
+	vadd.i64	$K,@X[$i%16]
 	vsli.64		$t1,$a,#`64-@Sigma0[1]`
+	veor		$Maj,$a,$b
 	vsli.64		$t2,$a,#`64-@Sigma0[2]`
-	vadd.i64	$T1,@X[$i%16]
-	vorr		$Maj,$a,$c
-	vand		$Ch,$a,$c
 	veor		$h,$t0,$t1
-	vand		$Maj,$b
+	vadd.i64	$T1,$K
+	vbsl		$Maj,$c,$b		@ Maj(a,b,c)
 	veor		$h,$t2			@ Sigma0(a)
-	vorr		$Maj,$Ch		@ Maj(a,b,c)
-	vadd.i64	$h,$T1
 	vadd.i64	$d,$T1
-	vadd.i64	$h,$Maj
+	vadd.i64	$Maj,$T1
+	@ vadd.i64	$h,$Maj
 ___
 }
 
@@ -508,6 +525,7 @@ $i /= 2;
 $code.=<<___;
 	vshr.u64	$t0,@X[($i+7)%8],#@sigma1[0]
 	vshr.u64	$t1,@X[($i+7)%8],#@sigma1[1]
+	 vadd.i64	@_[0],d30			@ h+=Maj from the past
 	vshr.u64	$s1,@X[($i+7)%8],#@sigma1[2]
 	vsli.64		$t0,@X[($i+7)%8],#`64-@sigma1[0]`
 	vext.8		$s0,@X[$i%8],@X[($i+1)%8],#8	@ X[i+1]
@@ -554,6 +572,7 @@ for(;$i<32;$i++)	{ &NEON_16_79($i,@V); unshift(@V,pop(@V)); }
 $code.=<<___;
 	bne		.L16_79_neon
 
+	 vadd.i64	$A,d30		@ h+=Maj from the past
 	vldmia		$ctx,{d24-d31}	@ load context to temp
 	vadd.i64	q8,q12		@ vectorized accumulate
 	vadd.i64	q9,q13

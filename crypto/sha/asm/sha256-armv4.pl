@@ -21,15 +21,15 @@
 # February 2011.
 #
 # Profiler-assisted and platform-specific optimization resulted in 16%
-# improvement on Cortex A8 core and ~17 cycles per processed byte.
+# improvement on Cortex A8 core and ~16.4 cycles per processed byte.
 
 while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
 open STDOUT,">$output";
 
 $ctx="r0";	$t0="r0";
-$inp="r1";	$t3="r1";
+$inp="r1";	$t4="r1";
 $len="r2";	$t1="r2";
-$T1="r3";
+$T1="r3";	$t3="r3";
 $A="r4";
 $B="r5";
 $C="r6";
@@ -52,71 +52,90 @@ my ($i,$a,$b,$c,$d,$e,$f,$g,$h) = @_;
 
 $code.=<<___ if ($i<16);
 #if __ARM_ARCH__>=7
-	ldr	$T1,[$inp],#4
+	@ ldr	$t1,[$inp],#4			@ $i
+# if $i==15
+	str	$inp,[sp,#17*4]			@ make room for $t4
+# endif
+	mov	$t0,$e,ror#$Sigma1[0]
+	add	$a,$a,$t2			@ h+=Maj(a,b,c) from the past
+	rev	$t1,$t1
+	eor	$t0,$t0,$e,ror#$Sigma1[1]
 #else
-	ldrb	$T1,[$inp,#3]			@ $i
+	@ ldrb	$t1,[$inp,#3]			@ $i
+	add	$a,$a,$t2			@ h+=Maj(a,b,c) from the past
 	ldrb	$t2,[$inp,#2]
-	ldrb	$t1,[$inp,#1]
-	ldrb	$t0,[$inp],#4
-	orr	$T1,$T1,$t2,lsl#8
-	orr	$T1,$T1,$t1,lsl#16
-	orr	$T1,$T1,$t0,lsl#24
+	ldrb	$t0,[$inp,#1]
+	orr	$t1,$t1,$t2,lsl#8
+	ldrb	$t2,[$inp],#4
+	orr	$t1,$t1,$t0,lsl#16
+# if $i==15
+	str	$inp,[sp,#17*4]			@ make room for $t4
+# endif
+	mov	$t0,$e,ror#$Sigma1[0]
+	orr	$t1,$t1,$t2,lsl#24
+	eor	$t0,$t0,$e,ror#$Sigma1[1]
 #endif
 ___
 $code.=<<___;
-	mov	$t0,$e,ror#$Sigma1[0]
 	ldr	$t2,[$Ktbl],#4			@ *K256++
-	eor	$t0,$t0,$e,ror#$Sigma1[1]
+	add	$h,$h,$t1			@ h+=X[i]
+	str	$t1,[sp,#`$i%16`*4]
 	eor	$t1,$f,$g
-#if $i>=16
-	add	$T1,$T1,$t3			@ from BODY_16_xx
-#elif __ARM_ARCH__>=7 && defined(__ARMEL__)
-	rev	$T1,$T1
-#endif
-#if $i==15
-	str	$inp,[sp,#17*4]			@ leave room for $t3
-#endif
 	eor	$t0,$t0,$e,ror#$Sigma1[2]	@ Sigma1(e)
 	and	$t1,$t1,$e
-	str	$T1,[sp,#`$i%16`*4]
-	add	$T1,$T1,$t0
+	add	$h,$h,$t0			@ h+=Sigma1(e)
 	eor	$t1,$t1,$g			@ Ch(e,f,g)
-	add	$T1,$T1,$h
-	mov	$h,$a,ror#$Sigma0[0]
-	add	$T1,$T1,$t1
-	eor	$h,$h,$a,ror#$Sigma0[1]
-	add	$T1,$T1,$t2
-	eor	$h,$h,$a,ror#$Sigma0[2]		@ Sigma0(a)
-#if $i>=15
-	ldr	$t3,[sp,#`($i+2)%16`*4]		@ from BODY_16_xx
+	add	$h,$h,$t2			@ h+=K256[i]
+	mov	$t0,$a,ror#$Sigma0[0]
+	add	$h,$h,$t1			@ h+=Ch(e,f,g)
+#if $i==31
+	and	$t2,$t2,#0xff
+	cmp	$t2,#0xf2			@ done?
 #endif
-	orr	$t0,$a,$b
-	and	$t1,$a,$b
-	and	$t0,$t0,$c
-	add	$h,$h,$T1
-	orr	$t0,$t0,$t1			@ Maj(a,b,c)
-	add	$d,$d,$T1
-	add	$h,$h,$t0
+#if $i<15
+# if __ARM_ARCH__>=7
+	ldr	$t1,[$inp],#4			@ prefetch
+# else
+	ldrb	$t1,[$inp,#3]
+# endif
+	eor	$t2,$a,$b			@ a^b, b^c in next round
+#else
+	ldr	$t1,[sp,#`($i+2)%16`*4]		@ from future BODY_16_xx
+	eor	$t2,$a,$b			@ a^b, b^c in next round
+	ldr	$t4,[sp,#`($i+15)%16`*4]	@ from future BODY_16_xx
+#endif
+	eor	$t0,$a,ror#$Sigma0[1]
+	and	$t3,$t3,$t2			@ (b^c)&=(a^b)
+	add	$d,$d,$h			@ d+=h
+	eor	$t0,$a,ror#$Sigma0[2]		@ Sigma0(a)
+	eor	$t3,$t3,$b			@ Maj(a,b,c)
+	add	$h,$h,$t0			@ h+=Sigma0(a)
+	@ add	$h,$h,$t3			@ h+=Maj(a,b,c)
 ___
+	($t2,$t3)=($t3,$t2);
 }
 
 sub BODY_16_XX {
 my ($i,$a,$b,$c,$d,$e,$f,$g,$h) = @_;
 
 $code.=<<___;
-	@ ldr	$t3,[sp,#`($i+1)%16`*4]		@ $i
-	ldr	$t2,[sp,#`($i+14)%16`*4]
-	mov	$t0,$t3,ror#$sigma0[0]
-	ldr	$T1,[sp,#`($i+0)%16`*4]
-	eor	$t0,$t0,$t3,ror#$sigma0[1]
-	ldr	$t1,[sp,#`($i+9)%16`*4]
-	eor	$t0,$t0,$t3,lsr#$sigma0[2]	@ sigma0(X[i+1])
-	mov	$t3,$t2,ror#$sigma1[0]
-	add	$T1,$T1,$t0
-	eor	$t3,$t3,$t2,ror#$sigma1[1]
-	add	$T1,$T1,$t1
-	eor	$t3,$t3,$t2,lsr#$sigma1[2]	@ sigma1(X[i+14])
-	@ add	$T1,$T1,$t3
+	@ ldr	$t1,[sp,#`($i+1)%16`*4]		@ $i
+	@ ldr	$t4,[sp,#`($i+14)%16`*4]
+	mov	$t0,$t1,ror#$sigma0[0]
+	add	$a,$a,$t2			@ h+=Maj(a,b,c) from the past
+	mov	$t2,$t4,ror#$sigma1[0]
+	eor	$t0,$t0,$t1,ror#$sigma0[1]
+	eor	$t2,$t2,$t4,ror#$sigma1[1]
+	eor	$t0,$t0,$t1,lsr#$sigma0[2]	@ sigma0(X[i+1])
+	ldr	$t1,[sp,#`($i+0)%16`*4]
+	eor	$t2,$t2,$t4,lsr#$sigma1[2]	@ sigma1(X[i+14])
+	ldr	$t4,[sp,#`($i+9)%16`*4]
+
+	add	$t2,$t2,$t0
+	mov	$t0,$e,ror#$Sigma1[0]		@ from BODY_00_15
+	add	$t1,$t1,$t2
+	eor	$t0,$t0,$e,ror#$Sigma1[1]	@ from BODY_00_15
+	add	$t1,$t1,$t4			@ X[i]
 ___
 	&BODY_00_15(@_);
 }
@@ -158,35 +177,41 @@ sha256_block_data_order:
 	sub	$Ktbl,r3,#256		@ K256
 	sub	sp,sp,#16*4		@ alloca(X[16])
 .Loop:
+# if __ARM_ARCH__>=7
+	ldr	$t1,[$inp],#4
+# else
+	ldrb	$t1,[$inp,#3]
+# endif
+	eor	$t3,$B,$C		@ magic
+	eor	$t2,$t2,$t2
 ___
 for($i=0;$i<16;$i++)	{ &BODY_00_15($i,@V); unshift(@V,pop(@V)); }
 $code.=".Lrounds_16_xx:\n";
 for (;$i<32;$i++)	{ &BODY_16_XX($i,@V); unshift(@V,pop(@V)); }
 $code.=<<___;
-	and	$t2,$t2,#0xff
-	cmp	$t2,#0xf2
+	ldreq	$t3,[sp,#16*4]		@ pull ctx
 	bne	.Lrounds_16_xx
 
-	ldr	$T1,[sp,#16*4]		@ pull ctx
-	ldr	$t0,[$T1,#0]
-	ldr	$t1,[$T1,#4]
-	ldr	$t2,[$T1,#8]
+	add	$A,$A,$t2		@ h+=Maj(a,b,c) from the past
+	ldr	$t0,[$t3,#0]
+	ldr	$t1,[$t3,#4]
+	ldr	$t2,[$t3,#8]
 	add	$A,$A,$t0
-	ldr	$t0,[$T1,#12]
+	ldr	$t0,[$t3,#12]
 	add	$B,$B,$t1
-	ldr	$t1,[$T1,#16]
+	ldr	$t1,[$t3,#16]
 	add	$C,$C,$t2
-	ldr	$t2,[$T1,#20]
+	ldr	$t2,[$t3,#20]
 	add	$D,$D,$t0
-	ldr	$t0,[$T1,#24]
+	ldr	$t0,[$t3,#24]
 	add	$E,$E,$t1
-	ldr	$t1,[$T1,#28]
+	ldr	$t1,[$t3,#28]
 	add	$F,$F,$t2
 	ldr	$inp,[sp,#17*4]		@ pull inp
 	ldr	$t2,[sp,#18*4]		@ pull inp+len
 	add	$G,$G,$t0
 	add	$H,$H,$t1
-	stmia	$T1,{$A,$B,$C,$D,$E,$F,$G,$H}
+	stmia	$t3,{$A,$B,$C,$D,$E,$F,$G,$H}
 	cmp	$inp,$t2
 	sub	$Ktbl,$Ktbl,#256	@ rewind Ktbl
 	bne	.Loop
