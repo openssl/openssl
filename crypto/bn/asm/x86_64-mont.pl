@@ -261,7 +261,7 @@ $code.=<<___;
 
 	lea	1($i),$i		# i++
 	cmp	$num,$i
-	jl	.Louter
+	jb	.Louter
 
 	xor	$i,$i			# i=0 and clear CF!
 	mov	(%rsp),%rax		# tp[0]
@@ -442,7 +442,7 @@ $code.=<<___;
 	mov	$N[1],-32(%rsp,$j,8)	# tp[j-1]
 	mov	%rdx,$N[0]
 	cmp	$num,$j
-	jl	.L1st4x
+	jb	.L1st4x
 
 	mulq	$m0			# ap[j]*bp[0]
 	add	%rax,$A[0]
@@ -590,7 +590,7 @@ $code.=<<___;
 	mov	$N[1],-32(%rsp,$j,8)	# tp[j-1]
 	mov	%rdx,$N[0]
 	cmp	$num,$j
-	jl	.Linner4x
+	jb	.Linner4x
 
 	mulq	$m0			# ap[j]*bp[i]
 	add	%rax,$A[0]
@@ -636,7 +636,7 @@ $code.=<<___;
 	mov	$N[1],(%rsp,$j,8)	# store upmost overflow bit
 
 	cmp	$num,$i
-	jl	.Louter4x
+	jb	.Louter4x
 ___
 {
 my @ri=("%rax","%rdx",$m0,$m1);
@@ -743,17 +743,14 @@ my @A1=("%r12","%r13");
 my ($a0,$a1,$ai)=("%r14","%r15","%rbx");
 
 $code.=<<___;
+.extern	bn_sqr8x_internal		# see x86_64-mont5 module
+.extern	bn_sqrx8x_internal		# see x86_64-mont5 module
+
 .type	bn_sqr8x_mont,\@function,6
 .align	32
 bn_sqr8x_mont:
 .Lsqr8x_enter:
-___
-$code.=<<___ if ($addx);
-	and	\$0x80100,%r11d
-	cmp	\$0x80100,%r11d
-	je	.Lsqrx8x_enter
-___
-$code.=<<___;
+	mov	%rsp,%rax
 	push	%rbx
 	push	%rbp
 	push	%r12
@@ -761,908 +758,119 @@ $code.=<<___;
 	push	%r14
 	push	%r15
 
+	mov	${num}d,%r10d
 	shl	\$3,${num}d		# convert $num to bytes
-	xor	%r10,%r10
-	mov	%rsp,%r11		# put aside %rsp
-	sub	$num,%r10		# -$num
-	mov	($n0),$n0		# *n0
-	lea	-72(%rsp,%r10,2),%rsp	# alloca(frame+2*$num)
-	and	\$-1024,%rsp		# minimize TLB usage
-	##############################################################
-	# Stack layout
-	#
-	# +0	saved $num, used in reduction section
-	# +8	&t[2*$num], used in reduction section
-	# +32	saved $rptr
-	# +40	saved $nptr
-	# +48	saved *n0
-	# +56	saved %rsp
-	# +64	t[2*$num]
-	#
-	mov	$rptr,32(%rsp)		# save $rptr
-	mov	$nptr,40(%rsp)
-	mov	$n0,  48(%rsp)
-	mov	%r11, 56(%rsp)		# save original %rsp
-.Lsqr8x_body:
-	##############################################################
-	# Squaring part:
-	#
-	# a) multiply-n-add everything but a[i]*a[i];
-	# b) shift result of a) by 1 to the left and accumulate
-	#    a[i]*a[i] products;
-	#
-	##############################################################
-	#                                                     a[1]a[0]
-	#                                                 a[2]a[0]
-	#                                             a[3]a[0]
-	#                                             a[2]a[1]
-	#                                         a[4]a[0]
-	#                                         a[3]a[1]
-	#                                     a[5]a[0]
-	#                                     a[4]a[1]
-	#                                     a[3]a[2]
-	#                                 a[6]a[0]
-	#                                 a[5]a[1]
-	#                                 a[4]a[2]
-	#                             a[7]a[0]
-	#                             a[6]a[1]
-	#                             a[5]a[2]
-	#                             a[4]a[3]
-	#                         a[7]a[1]
-	#                         a[6]a[2]
-	#                         a[5]a[3]
-	#                     a[7]a[2]
-	#                     a[6]a[3]
-	#                     a[5]a[4]
-	#                 a[7]a[3]
-	#                 a[6]a[4]
-	#             a[7]a[4]
-	#             a[6]a[5]
-	#         a[7]a[5]
-	#     a[7]a[6]
-	#                                                     a[1]a[0]
-	#                                                 a[2]a[0]
-	#                                             a[3]a[0]
-	#                                         a[4]a[0]
-	#                                     a[5]a[0]
-	#                                 a[6]a[0]
-	#                             a[7]a[0]
-	#                                             a[2]a[1]
-	#                                         a[3]a[1]
-	#                                     a[4]a[1]
-	#                                 a[5]a[1]
-	#                             a[6]a[1]
-	#                         a[7]a[1]
-	#                                     a[3]a[2]
-	#                                 a[4]a[2]
-	#                             a[5]a[2]
-	#                         a[6]a[2]
-	#                     a[7]a[2]
-	#                             a[4]a[3]
-	#                         a[5]a[3]
-	#                     a[6]a[3]
-	#                 a[7]a[3]
-	#                     a[5]a[4]
-	#                 a[6]a[4]
-	#             a[7]a[4]
-	#             a[6]a[5]
-	#         a[7]a[5]
-	#     a[7]a[6]
-	#                                                         a[0]a[0]
-	#                                                 a[1]a[1]
-	#                                         a[2]a[2]
-	#                                 a[3]a[3]
-	#                         a[4]a[4]
-	#                 a[5]a[5]
-	#         a[6]a[6]
-	# a[7]a[7]
-
-	lea	32(%r10),$i		# $i=-($num-32)
-	lea	($aptr,$num),$aptr	# end of a[] buffer, ($aptr,$i)=&ap[2]
-
-	mov	$num,$j			# $j=$num
-
-					# comments apply to $num==8 case
-	mov	-32($aptr,$i),$a0	# a[0]
-	lea	64(%rsp,$num,2),$tptr	# end of tp[] buffer, &tp[2*$num]
-	mov	-24($aptr,$i),%rax	# a[1]
-	lea	-32($tptr,$i),$tptr	# end of tp[] window, &tp[2*$num-"$i"]
-	mov	-16($aptr,$i),$ai	# a[2]
-	mov	%rax,$a1
-
-	mul	$a0			# a[1]*a[0]
-	mov	%rax,$A0[0]		# a[1]*a[0]
-	 mov	$ai,%rax		# a[2]
-	mov	%rdx,$A0[1]
-	mov	$A0[0],-24($tptr,$i)	# t[1]
-
-	mul	$a0			# a[2]*a[0]
-	add	%rax,$A0[1]
-	 mov	$ai,%rax
-	adc	\$0,%rdx
-	mov	$A0[1],-16($tptr,$i)	# t[2]
-	mov	%rdx,$A0[0]
-
-	lea	-16($i),$j		# j=-16
-
-
-	 mov	8($aptr,$j),$ai		# a[3]
-	mul	$a1			# a[2]*a[1]
-	mov	%rax,$A1[0]		# a[2]*a[1]+t[3]
-	 mov	$ai,%rax
-	mov	%rdx,$A1[1]
-
-	 lea	16($j),$j
-	mul	$a0			# a[3]*a[0]
-	add	%rax,$A0[0]		# a[3]*a[0]+a[2]*a[1]+t[3]
-	 mov	$ai,%rax
-	mov	%rdx,$A0[1]
-	adc	\$0,$A0[1]
-	add	$A1[0],$A0[0]
-	adc	\$0,$A0[1]
-	mov	$A0[0],-8($tptr,$j)	# t[3]
-	jmp	.Lsqr4x_1st
-
-.align	32
-.Lsqr4x_1st:
-	 mov	($aptr,$j),$ai		# a[4]
-	mul	$a1			# a[3]*a[1]
-	add	%rax,$A1[1]		# a[3]*a[1]+t[4]
-	 mov	$ai,%rax
-	mov	%rdx,$A1[0]
-	adc	\$0,$A1[0]
-
-	mul	$a0			# a[4]*a[0]
-	add	%rax,$A0[1]		# a[4]*a[0]+a[3]*a[1]+t[4]
-	 mov	$ai,%rax		# a[3]
-	 mov	8($aptr,$j),$ai		# a[5]
-	mov	%rdx,$A0[0]
-	adc	\$0,$A0[0]
-	add	$A1[1],$A0[1]
-	adc	\$0,$A0[0]
-
-
-	mul	$a1			# a[4]*a[3]
-	add	%rax,$A1[0]		# a[4]*a[3]+t[5]
-	 mov	$ai,%rax
-	 mov	$A0[1],($tptr,$j)	# t[4]
-	mov	%rdx,$A1[1]
-	adc	\$0,$A1[1]
-
-	mul	$a0			# a[5]*a[2]
-	add	%rax,$A0[0]		# a[5]*a[2]+a[4]*a[3]+t[5]
-	 mov	$ai,%rax
-	 mov	16($aptr,$j),$ai	# a[6]
-	mov	%rdx,$A0[1]
-	adc	\$0,$A0[1]
-	add	$A1[0],$A0[0]
-	adc	\$0,$A0[1]
-
-	mul	$a1			# a[5]*a[3]
-	add	%rax,$A1[1]		# a[5]*a[3]+t[6]
-	 mov	$ai,%rax
-	 mov	$A0[0],8($tptr,$j)	# t[5]
-	mov	%rdx,$A1[0]
-	adc	\$0,$A1[0]
-
-	mul	$a0			# a[6]*a[2]
-	add	%rax,$A0[1]		# a[6]*a[2]+a[5]*a[3]+t[6]
-	 mov	$ai,%rax		# a[3]
-	 mov	24($aptr,$j),$ai	# a[7]
-	mov	%rdx,$A0[0]
-	adc	\$0,$A0[0]
-	add	$A1[1],$A0[1]
-	adc	\$0,$A0[0]
-
-
-	mul	$a1			# a[6]*a[5]
-	add	%rax,$A1[0]		# a[6]*a[5]+t[7]
-	 mov	$ai,%rax
-	 mov	$A0[1],16($tptr,$j)	# t[6]
-	mov	%rdx,$A1[1]
-	adc	\$0,$A1[1]
-
-	mul	$a0			# a[7]*a[4]
-	add	%rax,$A0[0]		# a[7]*a[4]+a[6]*a[5]+t[6]
-	 mov	$ai,%rax
-	 lea	32($j),$j
-	mov	%rdx,$A0[1]
-	adc	\$0,$A0[1]
-	add	$A1[0],$A0[0]
-	adc	\$0,$A0[1]
-	mov	$A0[0],-8($tptr,$j)	# t[7]
-
-	cmp	\$0,$j
-	jne	.Lsqr4x_1st
-
-	mul	$a1			# a[7]*a[5]
-	add	%rax,$A1[1]
-	lea	16($i),$i
-	adc	\$0,%rdx
-	add	$A0[1],$A1[1]
-	adc	\$0,%rdx
-
-	mov	$A1[1],($tptr)		# t[8]
-	mov	%rdx,$A1[0]
-	mov	%rdx,8($tptr)		# t[9]
-	jmp	.Lsqr4x_outer
-
-.align	32
-.Lsqr4x_outer:				# comments apply to $num==6 case
-	mov	-32($aptr,$i),$a0	# a[0]
-	lea	64(%rsp,$num,2),$tptr	# end of tp[] buffer, &tp[2*$num]
-	mov	-24($aptr,$i),%rax	# a[1]
-	lea	-32($tptr,$i),$tptr	# end of tp[] window, &tp[2*$num-"$i"]
-	mov	-16($aptr,$i),$ai	# a[2]
-	mov	%rax,$a1
-
-	mov	-24($tptr,$i),$A0[0]	# t[1]
-	mul	$a0			# a[1]*a[0]
-	add	%rax,$A0[0]		# a[1]*a[0]+t[1]
-	 mov	$ai,%rax		# a[2]
-	adc	\$0,%rdx
-	mov	$A0[0],-24($tptr,$i)	# t[1]
-	mov	%rdx,$A0[1]
-
-	mul	$a0			# a[2]*a[0]
-	add	%rax,$A0[1]
-	 mov	$ai,%rax
-	adc	\$0,%rdx
-	add	-16($tptr,$i),$A0[1]	# a[2]*a[0]+t[2]
-	mov	%rdx,$A0[0]
-	adc	\$0,$A0[0]
-	mov	$A0[1],-16($tptr,$i)	# t[2]
-
-	lea	-16($i),$j		# j=-16
-	xor	$A1[0],$A1[0]
-
-
-	 mov	8($aptr,$j),$ai		# a[3]
-	mul	$a1			# a[2]*a[1]
-	add	%rax,$A1[0]		# a[2]*a[1]+t[3]
-	 mov	$ai,%rax
-	adc	\$0,%rdx
-	add	8($tptr,$j),$A1[0]
-	mov	%rdx,$A1[1]
-	adc	\$0,$A1[1]
-
-	mul	$a0			# a[3]*a[0]
-	add	%rax,$A0[0]		# a[3]*a[0]+a[2]*a[1]+t[3]
-	 mov	$ai,%rax
-	adc	\$0,%rdx
-	add	$A1[0],$A0[0]
-	mov	%rdx,$A0[1]
-	adc	\$0,$A0[1]
-	mov	$A0[0],8($tptr,$j)	# t[3]
-
-	lea	16($j),$j
-	jmp	.Lsqr4x_inner
-
-.align	32
-.Lsqr4x_inner:
-	 mov	($aptr,$j),$ai		# a[4]
-	mul	$a1			# a[3]*a[1]
-	add	%rax,$A1[1]		# a[3]*a[1]+t[4]
-	 mov	$ai,%rax
-	mov	%rdx,$A1[0]
-	adc	\$0,$A1[0]
-	add	($tptr,$j),$A1[1]
-	adc	\$0,$A1[0]
-
-	mul	$a0			# a[4]*a[0]
-	add	%rax,$A0[1]		# a[4]*a[0]+a[3]*a[1]+t[4]
-	 mov	$ai,%rax		# a[3]
-	 mov	8($aptr,$j),$ai		# a[5]
-	mov	%rdx,$A0[0]
-	adc	\$0,$A0[0]
-	add	$A1[1],$A0[1]
-	adc	\$0,$A0[0]
-
-	mul	$a1			# a[4]*a[3]
-	add	%rax,$A1[0]		# a[4]*a[3]+t[5]
-	mov	$A0[1],($tptr,$j)	# t[4]
-	 mov	$ai,%rax
-	mov	%rdx,$A1[1]
-	adc	\$0,$A1[1]
-	add	8($tptr,$j),$A1[0]
-	lea	16($j),$j		# j++
-	adc	\$0,$A1[1]
-
-	mul	$a0			# a[5]*a[2]
-	add	%rax,$A0[0]		# a[5]*a[2]+a[4]*a[3]+t[5]
-	 mov	$ai,%rax
-	adc	\$0,%rdx
-	add	$A1[0],$A0[0]
-	mov	%rdx,$A0[1]
-	adc	\$0,$A0[1]
-	mov	$A0[0],-8($tptr,$j)	# t[5], "preloaded t[1]" below
-
-	cmp	\$0,$j
-	jne	.Lsqr4x_inner
-
-	mul	$a1			# a[5]*a[3]
-	add	%rax,$A1[1]
-	adc	\$0,%rdx
-	add	$A0[1],$A1[1]
-	adc	\$0,%rdx
-
-	mov	$A1[1],($tptr)		# t[6], "preloaded t[2]" below
-	mov	%rdx,$A1[0]
-	mov	%rdx,8($tptr)		# t[7], "preloaded t[3]" below
-
-	add	\$16,$i
-	jnz	.Lsqr4x_outer
-
-					# comments apply to $num==4 case
-	mov	-32($aptr),$a0		# a[0]
-	lea	64(%rsp,$num,2),$tptr	# end of tp[] buffer, &tp[2*$num]
-	mov	-24($aptr),%rax		# a[1]
-	lea	-32($tptr,$i),$tptr	# end of tp[] window, &tp[2*$num-"$i"]
-	mov	-16($aptr),$ai		# a[2]
-	mov	%rax,$a1
-
-	mul	$a0			# a[1]*a[0]
-	add	%rax,$A0[0]		# a[1]*a[0]+t[1], preloaded t[1]
-	 mov	$ai,%rax		# a[2]
-	mov	%rdx,$A0[1]
-	adc	\$0,$A0[1]
-
-	mul	$a0			# a[2]*a[0]
-	add	%rax,$A0[1]
-	 mov	$ai,%rax
-	 mov	$A0[0],-24($tptr)	# t[1]
-	mov	%rdx,$A0[0]
-	adc	\$0,$A0[0]
-	add	$A1[1],$A0[1]		# a[2]*a[0]+t[2], preloaded t[2]
-	 mov	-8($aptr),$ai		# a[3]
-	adc	\$0,$A0[0]
-
-	mul	$a1			# a[2]*a[1]
-	add	%rax,$A1[0]		# a[2]*a[1]+t[3], preloaded t[3]
-	 mov	$ai,%rax
-	 mov	$A0[1],-16($tptr)	# t[2]
-	mov	%rdx,$A1[1]
-	adc	\$0,$A1[1]
-
-	mul	$a0			# a[3]*a[0]
-	add	%rax,$A0[0]		# a[3]*a[0]+a[2]*a[1]+t[3]
-	 mov	$ai,%rax
-	mov	%rdx,$A0[1]
-	adc	\$0,$A0[1]
-	add	$A1[0],$A0[0]
-	adc	\$0,$A0[1]
-	mov	$A0[0],-8($tptr)	# t[3]
-
-	mul	$a1			# a[3]*a[1]
-	add	%rax,$A1[1]
-	 mov	-16($aptr),%rax		# a[2]
-	adc	\$0,%rdx
-	add	$A0[1],$A1[1]
-	adc	\$0,%rdx
-
-	mov	$A1[1],($tptr)		# t[4]
-	mov	%rdx,$A1[0]
-	mov	%rdx,8($tptr)		# t[5]
-
-	mul	$ai			# a[2]*a[3]
-___
-{
-my ($shift,$carry)=($a0,$a1);
-my @S=(@A1,$ai,$n0);
-$code.=<<___;
-	 add	\$16,$i
-	 xor	$shift,$shift
-	 sub	$num,$i			# $i=16-$num
-	 xor	$carry,$carry
-
-	add	$A1[0],%rax		# t[5]
-	adc	\$0,%rdx
-	mov	%rax,8($tptr)		# t[5]
-	mov	%rdx,16($tptr)		# t[6]
-	mov	$carry,24($tptr)	# t[7]
-
-	 mov	-16($aptr,$i),%rax	# a[0]
-	lea	64(%rsp),$tptr
-	 xor	$A0[0],$A0[0]		# t[0]
-	 mov	8($tptr),$A0[1]		# t[1]
-
-	lea	($shift,$A0[0],2),$S[0]	# t[2*i]<<1 | shift
-	shr	\$63,$A0[0]
-	lea	($j,$A0[1],2),$S[1]	# t[2*i+1]<<1 |
-	shr	\$63,$A0[1]
-	or	$A0[0],$S[1]		# | t[2*i]>>63
-	 mov	16($tptr),$A0[0]	# t[2*i+2]	# prefetch
-	mov	$A0[1],$shift		# shift=t[2*i+1]>>63
-	mul	%rax			# a[i]*a[i]
-	neg	$carry			# mov $carry,cf
-	 mov	24($tptr),$A0[1]	# t[2*i+2+1]	# prefetch
-	adc	%rax,$S[0]
-	 mov	-8($aptr,$i),%rax	# a[i+1]	# prefetch
-	mov	$S[0],($tptr)
-	adc	%rdx,$S[1]
-
-	lea	($shift,$A0[0],2),$S[2]	# t[2*i]<<1 | shift
-	 mov	$S[1],8($tptr)
-	 sbb	$carry,$carry		# mov cf,$carry
-	shr	\$63,$A0[0]
-	lea	($j,$A0[1],2),$S[3]	# t[2*i+1]<<1 |
-	shr	\$63,$A0[1]
-	or	$A0[0],$S[3]		# | t[2*i]>>63
-	 mov	32($tptr),$A0[0]	# t[2*i+2]	# prefetch
-	mov	$A0[1],$shift		# shift=t[2*i+1]>>63
-	mul	%rax			# a[i]*a[i]
-	neg	$carry			# mov $carry,cf
-	 mov	40($tptr),$A0[1]	# t[2*i+2+1]	# prefetch
-	adc	%rax,$S[2]
-	 mov	0($aptr,$i),%rax	# a[i+1]	# prefetch
-	mov	$S[2],16($tptr)
-	adc	%rdx,$S[3]
-	lea	16($i),$i
-	mov	$S[3],24($tptr)
-	sbb	$carry,$carry		# mov cf,$carry
-	lea	64($tptr),$tptr
-	jmp	.Lsqr4x_shift_n_add
-
-.align	32
-.Lsqr4x_shift_n_add:
-	lea	($shift,$A0[0],2),$S[0]	# t[2*i]<<1 | shift
-	shr	\$63,$A0[0]
-	lea	($j,$A0[1],2),$S[1]	# t[2*i+1]<<1 |
-	shr	\$63,$A0[1]
-	or	$A0[0],$S[1]		# | t[2*i]>>63
-	 mov	-16($tptr),$A0[0]	# t[2*i+2]	# prefetch
-	mov	$A0[1],$shift		# shift=t[2*i+1]>>63
-	mul	%rax			# a[i]*a[i]
-	neg	$carry			# mov $carry,cf
-	 mov	-8($tptr),$A0[1]	# t[2*i+2+1]	# prefetch
-	adc	%rax,$S[0]
-	 mov	-8($aptr,$i),%rax	# a[i+1]	# prefetch
-	mov	$S[0],-32($tptr)
-	adc	%rdx,$S[1]
-
-	lea	($shift,$A0[0],2),$S[2]	# t[2*i]<<1 | shift
-	 mov	$S[1],-24($tptr)
-	 sbb	$carry,$carry		# mov cf,$carry
-	shr	\$63,$A0[0]
-	lea	($j,$A0[1],2),$S[3]	# t[2*i+1]<<1 |
-	shr	\$63,$A0[1]
-	or	$A0[0],$S[3]		# | t[2*i]>>63
-	 mov	0($tptr),$A0[0]		# t[2*i+2]	# prefetch
-	mov	$A0[1],$shift		# shift=t[2*i+1]>>63
-	mul	%rax			# a[i]*a[i]
-	neg	$carry			# mov $carry,cf
-	 mov	8($tptr),$A0[1]		# t[2*i+2+1]	# prefetch
-	adc	%rax,$S[2]
-	 mov	0($aptr,$i),%rax	# a[i+1]	# prefetch
-	mov	$S[2],-16($tptr)
-	adc	%rdx,$S[3]
-
-	lea	($shift,$A0[0],2),$S[0]	# t[2*i]<<1 | shift
-	 mov	$S[3],-8($tptr)
-	 sbb	$carry,$carry		# mov cf,$carry
-	shr	\$63,$A0[0]
-	lea	($j,$A0[1],2),$S[1]	# t[2*i+1]<<1 |
-	shr	\$63,$A0[1]
-	or	$A0[0],$S[1]		# | t[2*i]>>63
-	 mov	16($tptr),$A0[0]	# t[2*i+2]	# prefetch
-	mov	$A0[1],$shift		# shift=t[2*i+1]>>63
-	mul	%rax			# a[i]*a[i]
-	neg	$carry			# mov $carry,cf
-	 mov	24($tptr),$A0[1]	# t[2*i+2+1]	# prefetch
-	adc	%rax,$S[0]
-	 mov	8($aptr,$i),%rax	# a[i+1]	# prefetch
-	mov	$S[0],0($tptr)
-	adc	%rdx,$S[1]
-
-	lea	($shift,$A0[0],2),$S[2]	# t[2*i]<<1 | shift
-	 mov	$S[1],8($tptr)
-	 sbb	$carry,$carry		# mov cf,$carry
-	shr	\$63,$A0[0]
-	lea	($j,$A0[1],2),$S[3]	# t[2*i+1]<<1 |
-	shr	\$63,$A0[1]
-	or	$A0[0],$S[3]		# | t[2*i]>>63
-	 mov	32($tptr),$A0[0]	# t[2*i+2]	# prefetch
-	mov	$A0[1],$shift		# shift=t[2*i+1]>>63
-	mul	%rax			# a[i]*a[i]
-	neg	$carry			# mov $carry,cf
-	 mov	40($tptr),$A0[1]	# t[2*i+2+1]	# prefetch
-	adc	%rax,$S[2]
-	 mov	16($aptr,$i),%rax	# a[i+1]	# prefetch
-	mov	$S[2],16($tptr)
-	adc	%rdx,$S[3]
-	mov	$S[3],24($tptr)
-	sbb	$carry,$carry		# mov cf,$carry
-	lea	64($tptr),$tptr
-	add	\$32,$i
-	jnz	.Lsqr4x_shift_n_add
-
-	lea	($shift,$A0[0],2),$S[0]	# t[2*i]<<1 | shift
-	shr	\$63,$A0[0]
-	lea	($j,$A0[1],2),$S[1]	# t[2*i+1]<<1 |
-	shr	\$63,$A0[1]
-	or	$A0[0],$S[1]		# | t[2*i]>>63
-	 mov	-16($tptr),$A0[0]	# t[2*i+2]	# prefetch
-	mov	$A0[1],$shift		# shift=t[2*i+1]>>63
-	mul	%rax			# a[i]*a[i]
-	neg	$carry			# mov $carry,cf
-	 mov	-8($tptr),$A0[1]	# t[2*i+2+1]	# prefetch
-	adc	%rax,$S[0]
-	 mov	-8($aptr),%rax		# a[i+1]	# prefetch
-	mov	$S[0],-32($tptr)
-	adc	%rdx,$S[1]
-
-	lea	($shift,$A0[0],2),$S[2]	# t[2*i]<<1|shift
-	 mov	$S[1],-24($tptr)
-	 sbb	$carry,$carry		# mov cf,$carry
-	shr	\$63,$A0[0]
-	lea	($j,$A0[1],2),$S[3]	# t[2*i+1]<<1 |
-	shr	\$63,$A0[1]
-	or	$A0[0],$S[3]		# | t[2*i]>>63
-	mul	%rax			# a[i]*a[i]
-	neg	$carry			# mov $carry,cf
-	adc	%rax,$S[2]
-	adc	%rdx,$S[3]
-	mov	$S[2],-16($tptr)
-	mov	$S[3],-8($tptr)
-___
-}
-######################################################################
-# Montgomery reduction part, "word-by-word" algorithm.
-#
-# This new path is inspired by multiple submissions from Intel, by
-# Shay Gueron, Vlad Krasnov, Erdinc Ozturk, James Guilford,
-# Vinodh Gopal...
-{
-my ($nptr,$tptr,$carry,$m0)=("%rbp","%rdi","%rsi","%rbx");
-
-$code.=<<___;
-	mov	40(%rsp),$nptr		# pull $nptr
-	xor	%rax,%rax
-	lea	($nptr,$num),%rdx	# end of n[]
-	lea	64(%rsp,$num,2),$tptr	# end of t[] buffer
-	mov	%rdx,0(%rsp)
-	mov	$tptr,8(%rsp)
-	mov	%rax,($tptr)		# clear top-most carry bit
-	lea	64(%rsp,$num),$tptr	# end of initial t[] window
+	shl	\$3+2,%r10		# 4*$num
 	neg	$num
-	jmp	.L8x_reduction_loop
+
+	##############################################################
+	# ensure that stack frame doesn't alias with $aptr modulo
+	# 4096. this is done to allow memory disambiguation logic
+	# do its job.
+	#
+	lea	-64(%rsp,$num,4),%r11
+	mov	($n0),$n0		# *n0
+	sub	$aptr,%r11
+	and	\$4095,%r11
+	cmp	%r11,%r10
+	jb	.Lsqr8x_sp_alt
+	sub	%r11,%rsp		# align with $aptr
+	lea	-64(%rsp,$num,4),%rsp	# alloca(frame+4*$num)
+	jmp	.Lsqr8x_sp_done
 
 .align	32
-.L8x_reduction_loop:
-	lea	($tptr,$num),$tptr	# start of current t[] window
-	mov	8*0($tptr),$m0
-	mov	8*1($tptr),%r9
-	mov	8*2($tptr),%r10
-	mov	8*3($tptr),%r11
-	mov	8*4($tptr),%r12
-	mov	8*5($tptr),%r13
-	mov	8*6($tptr),%r14
-	mov	8*7($tptr),%r15
-	lea	8*8($tptr),$tptr
+.Lsqr8x_sp_alt:
+	lea	4096-64(,$num,4),%r10	# 4096-frame-4*$num
+	lea	-64(%rsp,$num,4),%rsp	# alloca(frame+4*$num)
+	sub	%r10,%r11
+	mov	\$0,%r10
+	cmovc	%r10,%r11
+	sub	%r11,%rsp
+.Lsqr8x_sp_done:
+	and	\$-64,%rsp
+	mov	$num,%r10	
+	neg	$num
 
-	mov	$m0,%r8
-	imulq	48(%rsp),$m0		# n0*a[0]
-	mov	8*0($nptr),%rax		# n[0]
-	mov	\$8,%ecx
-	jmp	.L8x_reduce
+	lea	64(%rsp,$num,2),%r11	# copy of modulus
+	mov	$n0,  32(%rsp)
+	mov	%rax, 40(%rsp)		# save original %rsp
+.Lsqr8x_body:
 
-.align	32
-.L8x_reduce:
-	mulq	$m0
-	 mov	8*1($nptr),%rax		# n[1]
-	neg	%r8
-	mov	%rdx,%r8
-	adc	\$0,%r8
-
-	mulq	$m0
-	add	%rax,%r9
-	 mov	8*2($nptr),%rax
-	adc	\$0,%rdx
-	add	%r9,%r8
-	 mov	$m0,64-8(%rsp,%rcx,8)	# put aside n0*a[i]
-	mov	%rdx,%r9
-	adc	\$0,%r9
-
-	mulq	$m0
-	add	%rax,%r10
-	 mov	8*3($nptr),%rax
-	adc	\$0,%rdx
-	add	%r10,%r9
-	 mov	48(%rsp),$carry		# pull n0, borrow $carry
-	mov	%rdx,%r10
-	adc	\$0,%r10
-
-	mulq	$m0
-	add	%rax,%r11
-	 mov	8*4($nptr),%rax
-	adc	\$0,%rdx
-	 imulq	%r8,$carry		# modulo-scheduled
-	add	%r11,%r10
-	mov	%rdx,%r11
-	adc	\$0,%r11
-
-	mulq	$m0
-	add	%rax,%r12
-	 mov	8*5($nptr),%rax
-	adc	\$0,%rdx
-	add	%r12,%r11
-	mov	%rdx,%r12
-	adc	\$0,%r12
-
-	mulq	$m0
-	add	%rax,%r13
-	 mov	8*6($nptr),%rax
-	adc	\$0,%rdx
-	add	%r13,%r12
-	mov	%rdx,%r13
-	adc	\$0,%r13
-
-	mulq	$m0
-	add	%rax,%r14
-	 mov	8*7($nptr),%rax
-	adc	\$0,%rdx
-	add	%r14,%r13
-	mov	%rdx,%r14
-	adc	\$0,%r14
-
-	mulq	$m0
-	 mov	$carry,$m0		# n0*a[i]
-	add	%rax,%r15
-	 mov	8*0($nptr),%rax		# n[0]
-	adc	\$0,%rdx
-	add	%r15,%r14
-	mov	%rdx,%r15
-	adc	\$0,%r15
-
-	dec	%ecx
-	jnz	.L8x_reduce
-
-	lea	8*8($nptr),$nptr
-	xor	%rax,%rax
-	mov	8(%rsp),%rdx		# pull end of t[]
-	cmp	0(%rsp),$nptr		# end of n[]?
-	jae	.L8x_no_tail
-
-	add	8*0($tptr),%r8
-	adc	8*1($tptr),%r9
-	adc	8*2($tptr),%r10
-	adc	8*3($tptr),%r11
-	adc	8*4($tptr),%r12
-	adc	8*5($tptr),%r13
-	adc	8*6($tptr),%r14
-	adc	8*7($tptr),%r15
-	sbb	$carry,$carry		# top carry
-
-	mov	64+56(%rsp),$m0		# pull n0*a[0]
-	mov	\$8,%ecx
-	mov	8*0($nptr),%rax
-	jmp	.L8x_tail
+	mov	$num,$i
+	movq	%r11, %xmm2		# save pointer to modulus copy
+	shr	\$3+2,$i
+	mov	OPENSSL_ia32cap_P+8(%rip),%eax
+	jmp	.Lsqr8x_copy_n
 
 .align	32
-.L8x_tail:
-	mulq	$m0
-	add	%rax,%r8
-	 mov	8*1($nptr),%rax
-	 mov	%r8,($tptr)		# save result
-	mov	%rdx,%r8
-	adc	\$0,%r8
-
-	mulq	$m0
-	add	%rax,%r9
-	 mov	8*2($nptr),%rax
-	adc	\$0,%rdx
-	add	%r9,%r8
-	 lea	8($tptr),$tptr		# $tptr++
-	mov	%rdx,%r9
-	adc	\$0,%r9
-
-	mulq	$m0
-	add	%rax,%r10
-	 mov	8*3($nptr),%rax
-	adc	\$0,%rdx
-	add	%r10,%r9
-	mov	%rdx,%r10
-	adc	\$0,%r10
-
-	mulq	$m0
-	add	%rax,%r11
-	 mov	8*4($nptr),%rax
-	adc	\$0,%rdx
-	add	%r11,%r10
-	mov	%rdx,%r11
-	adc	\$0,%r11
-
-	mulq	$m0
-	add	%rax,%r12
-	 mov	8*5($nptr),%rax
-	adc	\$0,%rdx
-	add	%r12,%r11
-	mov	%rdx,%r12
-	adc	\$0,%r12
-
-	mulq	$m0
-	add	%rax,%r13
-	 mov	8*6($nptr),%rax
-	adc	\$0,%rdx
-	add	%r13,%r12
-	mov	%rdx,%r13
-	adc	\$0,%r13
-
-	mulq	$m0
-	add	%rax,%r14
-	 mov	8*7($nptr),%rax
-	adc	\$0,%rdx
-	add	%r14,%r13
-	mov	%rdx,%r14
-	adc	\$0,%r14
-
-	mulq	$m0
-	 mov	64-16(%rsp,%rcx,8),$m0	# pull n0*a[i]
-	add	%rax,%r15
-	adc	\$0,%rdx
-	add	%r15,%r14
-	 mov	8*0($nptr),%rax		# pull n[0]
-	mov	%rdx,%r15
-	adc	\$0,%r15
-
-	dec	%ecx
-	jnz	.L8x_tail
-
-	lea	8*8($nptr),$nptr
-	mov	8(%rsp),%rdx		# pull end of t[]
-	cmp	0(%rsp),$nptr		# end of n[]?
-	jae	.L8x_tail_done		# break out of loop
-
-	 mov	64+56(%rsp),$m0		# pull n0*a[0]
-	neg	$carry
-	 mov	8*0($nptr),%rax		# pull n[0]
-	adc	8*0($tptr),%r8
-	adc	8*1($tptr),%r9
-	adc	8*2($tptr),%r10
-	adc	8*3($tptr),%r11
-	adc	8*4($tptr),%r12
-	adc	8*5($tptr),%r13
-	adc	8*6($tptr),%r14
-	adc	8*7($tptr),%r15
-	sbb	$carry,$carry		# top carry
-
-	mov	\$8,%ecx
-	jmp	.L8x_tail
-
-.align	32
-.L8x_tail_done:
-	add	(%rdx),%r8		# can this overflow?
-	xor	%rax,%rax
-
-	neg	$carry
-.L8x_no_tail:
-	adc	8*0($tptr),%r8
-	adc	8*1($tptr),%r9
-	adc	8*2($tptr),%r10
-	adc	8*3($tptr),%r11
-	adc	8*4($tptr),%r12
-	adc	8*5($tptr),%r13
-	adc	8*6($tptr),%r14
-	adc	8*7($tptr),%r15
-	adc	\$0,%rax		# top-most carry
-
-	mov	40(%rsp),$nptr		# restore $nptr
-
-	mov	%r8,8*0($tptr)		# store top 512 bits
-	mov	%r9,8*1($tptr)
-	 mov	$nptr,$num		# $num is %r9, can't be moved upwards
-	mov	%r10,8*2($tptr)
-	 sub	0(%rsp),$num		# -$num
-	mov	%r11,8*3($tptr)
-	mov	%r12,8*4($tptr)
-	mov	%r13,8*5($tptr)
-	mov	%r14,8*6($tptr)
-	mov	%r15,8*7($tptr)
-	lea	8*8($tptr),$tptr
-	mov	%rax,(%rdx)		# store top-most carry
-
-	cmp	%rdx,$tptr		# end of t[]?
-	jb	.L8x_reduction_loop
-
-	neg	$num			# restore $num
-___
-}
-##############################################################
-# Post-condition, 4x unrolled copy from bn_mul_mont
-#
-{
-my ($tptr,$nptr)=("%rbx",$aptr);
-my @ri=("%rax","%rdx","%r10","%r11");
-$code.=<<___;
-	mov	64(%rsp,$num),@ri[0]	# tp[0]
-	lea	64(%rsp,$num),$tptr	# upper half of t[2*$num] holds result
-	mov	40(%rsp),$nptr		# restore $nptr
-	shr	\$5,$num		# num/4
-	mov	8($tptr),@ri[1]		# t[1]
-	xor	$i,$i			# i=0 and clear CF!
-
-	mov	32(%rsp),$rptr		# restore $rptr
-	sub	0($nptr),@ri[0]
-	mov	16($tptr),@ri[2]	# t[2]
-	mov	24($tptr),@ri[3]	# t[3]
-	sbb	8($nptr),@ri[1]
-	lea	-1($num),$j		# j=num/4-1
-	jmp	.Lsqr4x_sub
-.align	32
-.Lsqr4x_sub:
-	mov	@ri[0],0($rptr)		# rp[i]=tp[i]-np[i]
-	mov	@ri[1],8($rptr)		# rp[i]=tp[i]-np[i]
-	sbb	16($nptr,$i,8),@ri[2]
-	mov	32($tptr,$i,8),@ri[0]	# tp[i+1]
-	mov	40($tptr,$i,8),@ri[1]
-	sbb	24($nptr,$i,8),@ri[3]
-	mov	@ri[2],16($rptr)	# rp[i]=tp[i]-np[i]
-	mov	@ri[3],24($rptr)	# rp[i]=tp[i]-np[i]
-	lea	32($rptr),$rptr
-	sbb	32($nptr,$i,8),@ri[0]
-	mov	48($tptr,$i,8),@ri[2]
-	mov	56($tptr,$i,8),@ri[3]
-	sbb	40($nptr,$i,8),@ri[1]
-	lea	4($i),$i		# i++
-	dec	$j			# doesn't affect CF!
-	jnz	.Lsqr4x_sub
-
-	mov	@ri[0],0($rptr)		# rp[i]=tp[i]-np[i]
-	mov	32($tptr,$i,8),@ri[0]	# load overflow bit
-	sbb	16($nptr,$i,8),@ri[2]
-	mov	@ri[1],8($rptr)		# rp[i]=tp[i]-np[i]
-	sbb	24($nptr,$i,8),@ri[3]
-	mov	@ri[2],16($rptr)	# rp[i]=tp[i]-np[i]
-
-	sbb	\$0,@ri[0]		# handle upmost overflow bit
-	mov	@ri[3],24($rptr)	# rp[i]=tp[i]-np[i]
-	mov	32(%rsp),$rptr		# restore $rptr
-	xor	$i,$i			# i=0
-	and	@ri[0],$tptr
-	not	@ri[0]
-	mov	$rptr,$nptr
-	and	@ri[0],$nptr
-	lea	-1($num),$j
-	or	$nptr,$tptr		# tp=borrow?tp:rp
+.Lsqr8x_copy_n:
+	movq	8*0($nptr),%xmm0
+	movq	8*1($nptr),%xmm1
+	movq	8*2($nptr),%xmm3
+	movq	8*3($nptr),%xmm4
+	lea	8*4($nptr),$nptr
+	movdqa	%xmm0,16*0(%r11)
+	movdqa	%xmm1,16*1(%r11)
+	movdqa	%xmm3,16*2(%r11)
+	movdqa	%xmm4,16*3(%r11)
+	lea	16*4(%r11),%r11
+	dec	$i
+	jnz	.Lsqr8x_copy_n
 
 	pxor	%xmm0,%xmm0
-	lea	64(%rsp,$num,8),$nptr
-	movdqu	($tptr),%xmm1
-	lea	($nptr,$num,8),$nptr
-	movdqa	%xmm0,64(%rsp)		# zap lower half of temporary vector
-	movdqa	%xmm0,($nptr)		# zap upper half of temporary vector
-	movdqu	%xmm1,($rptr)
-	jmp	.Lsqr4x_copy
-.align	32
-.Lsqr4x_copy:				# copy or in-place refresh
-	movdqu	16($tptr,$i),%xmm2
-	movdqu	32($tptr,$i),%xmm1
-	movdqa	%xmm0,80(%rsp,$i)	# zap lower half of temporary vector
-	movdqa	%xmm0,96(%rsp,$i)	# zap lower half of temporary vector
-	movdqa	%xmm0,16($nptr,$i)	# zap upper half of temporary vector
-	movdqa	%xmm0,32($nptr,$i)	# zap upper half of temporary vector
-	movdqu	%xmm2,16($rptr,$i)
-	movdqu	%xmm1,32($rptr,$i)
-	lea	32($i),$i
-	dec	$j
-	jnz	.Lsqr4x_copy
-
-	movdqu	16($tptr,$i),%xmm2
-	movdqa	%xmm0,80(%rsp,$i)	# zap lower half of temporary vector
-	movdqa	%xmm0,16($nptr,$i)	# zap upper half of temporary vector
-	movdqu	%xmm2,16($rptr,$i)
+	movq	$rptr,%xmm1		# save $rptr
+	movq	%r10, %xmm3		# -$num
 ___
-}
+$code.=<<___ if ($addx);
+	and	\$0x80100,%eax
+	cmp	\$0x80100,%eax
+	jne	.Lsqr8x_nox
+
+	call	bn_sqrx8x_internal	# see x86_64-mont5 module
+
+	pxor	%xmm0,%xmm0
+	lea	48(%rsp),%rax
+	lea	64(%rsp,$num,2),%rdx
+	shr	\$3+2,$num
+	mov	40(%rsp),%rsi		# restore %rsp
+	jmp	.Lsqr8x_zero
+
+.align	32
+.Lsqr8x_nox:
+___
 $code.=<<___;
-	mov	56(%rsp),%rsi		# restore %rsp
+	call	bn_sqr8x_internal	# see x86_64-mont5 module
+
+	pxor	%xmm0,%xmm0
+	lea	48(%rsp),%rax
+	lea	64(%rsp,$num,2),%rdx
+	shr	\$3+2,$num
+	mov	40(%rsp),%rsi		# restore %rsp
+	jmp	.Lsqr8x_zero
+
+.align	32
+.Lsqr8x_zero:
+	movdqa	%xmm0,16*0(%rax)	# wipe t
+	movdqa	%xmm0,16*1(%rax)
+	movdqa	%xmm0,16*2(%rax)
+	movdqa	%xmm0,16*3(%rax)
+	lea	16*4(%rax),%rax
+	movdqa	%xmm0,16*0(%rdx)	# wipe n
+	movdqa	%xmm0,16*1(%rdx)
+	movdqa	%xmm0,16*2(%rdx)
+	movdqa	%xmm0,16*3(%rdx)
+	lea	16*4(%rdx),%rdx
+	dec	$num
+	jnz	.Lsqr8x_zero
+
 	mov	\$1,%rax
-	mov	0(%rsi),%r15
-	mov	8(%rsi),%r14
-	mov	16(%rsi),%r13
-	mov	24(%rsi),%r12
-	mov	32(%rsi),%rbp
-	mov	40(%rsi),%rbx
-	lea	48(%rsi),%rsp
+	mov	-48(%rsi),%r15
+	mov	-40(%rsi),%r14
+	mov	-32(%rsi),%r13
+	mov	-24(%rsi),%r12
+	mov	-16(%rsi),%rbp
+	mov	-8(%rsi),%rbx
+	lea	(%rsi),%rsp
 .Lsqr8x_epilogue:
 	ret
 .size	bn_sqr8x_mont,.-bn_sqr8x_mont
@@ -1677,6 +885,7 @@ $code.=<<___;
 .align	32
 bn_mulx4x_mont:
 .Lmulx4x_enter:
+	mov	%rsp,%rax
 	push	%rbx
 	push	%rbp
 	push	%r12
@@ -1687,7 +896,6 @@ bn_mulx4x_mont:
 	shl	\$3,${num}d		# convert $num to bytes
 	.byte	0x67
 	xor	%r10,%r10
-	mov	%rsp,%r11		# put aside %rsp
 	sub	$num,%r10		# -$num
 	mov	($n0),$n0		# *n0
 	lea	-72(%rsp,%r10),%rsp	# alloca(frame+$num+8)
@@ -1700,9 +908,9 @@ bn_mulx4x_mont:
 	# +16	end of b[num]
 	# +24	saved n0
 	# +32	saved rp
-	# +40
+	# +40	saved %rsp
 	# +48	inner counter
-	# +56	saved %rsp
+	# +56
 	# +64	tmp[num+1]
 	#
 	mov	$num,0(%rsp)		# save $num
@@ -1711,8 +919,8 @@ bn_mulx4x_mont:
 	sub	\$1,$num
 	mov	$n0, 24(%rsp)		# save *n0
 	mov	$rp, 32(%rsp)		# save $rp
+	mov	%rax,40(%rsp)		# save original %rsp
 	mov	$num,48(%rsp)		# inner counter
-	mov	%r11,56(%rsp)		# save original %rsp
 	jmp	.Lmulx4x_body
 
 .align	32
@@ -1776,7 +984,7 @@ $code.=<<___;
 	mulx	2*8($aptr),%r12,%rax	# ...
 	adcx	%r14,%r12
 	mulx	3*8($aptr),%r13,%r14
-	 .byte	0x66,0x66
+	 .byte	0x67,0x67
 	 mov	$mi,%rdx
 	adcx	%rax,%r13
 	adcx	$zero,%r14		# cf=0
@@ -1817,45 +1025,41 @@ $code.=<<___;
 .align	32
 .Lmulx4x_outer:
 	mov	($bptr),%rdx		# b[i]
-	lea	8($bptr),$bptr
+	lea	8($bptr),$bptr		# b++
 	sub	$num,$aptr		# rewind $aptr
 	mov	%r15,($tptr)		# save top-most carry
-	mov	64(%rsp),%r10
-	lea	64(%rsp),$tptr
+	lea	64+4*8(%rsp),$tptr
 	sub	$num,$nptr		# rewind $nptr
-	xor	$zero,$zero		# cf=0, of=0
+
+	mulx	0*8($aptr),$mi,%r11	# a[0]*b[i]
+	xor	%ebp,%ebp		# xor	$zero,$zero	# cf=0, of=0
 	mov	%rdx,$bi
-
-	mulx	0*8($aptr),$mi,%rax	# a[0]*b[i]
-	adox	%r10,$mi
-	mov	1*8($tptr),%r10
-	mulx	1*8($aptr),%r11,%r14	# a[1]*b[i]
-	adcx	%rax,%r11
-	mov	$bptr,8(%rsp)		# off-load &b[i]
-	mulx	2*8($aptr),%r12,%r13	# ...
-	adox	%r10,%r11
-	adcx	%r14,%r12
+	mulx	1*8($aptr),%r14,%r12	# a[1]*b[i]
+	adox	-4*8($tptr),$mi
+	adcx	%r14,%r11
+	mulx	2*8($aptr),%r15,%r13	# ...
+	adox	-3*8($tptr),%r11
+	adcx	%r15,%r12
 	adox	$zero,%r12
-	.byte	0x66,0x66
 	adcx	$zero,%r13
-	mov	2*8($tptr),%r10
 
-	mov	$mi,$bptr		# borrow $bptr
+	mov	$bptr,8(%rsp)		# off-load &b[i]
+	.byte	0x67
+	mov	$mi,%r15
 	imulq	24(%rsp),$mi		# "t[0]"*n0
-	xor	$zero,$zero		# cf=0, of=0
+	xor	%ebp,%ebp		# xor	$zero,$zero	# cf=0, of=0
 
 	mulx	3*8($aptr),%rax,%r14
 	 mov	$mi,%rdx
-	adox	%r10,%r12
+	adox	-2*8($tptr),%r12
 	adcx	%rax,%r13
-	adox	3*8($tptr),%r13
+	adox	-1*8($tptr),%r13
 	adcx	$zero,%r14
 	lea	4*8($aptr),$aptr
-	lea	4*8($tptr),$tptr
 	adox	$zero,%r14
 
 	mulx	0*8($nptr),%rax,%r10
-	adcx	%rax,$bptr		# discarded
+	adcx	%rax,%r15		# discarded
 	adox	%r11,%r10
 	mulx	1*8($nptr),%rax,%r11
 	adcx	%rax,%r10
@@ -1867,22 +1071,21 @@ $code.=<<___;
 	mulx	3*8($nptr),%rax,%r15
 	 mov	$bi,%rdx
 	mov	%r11,-3*8($tptr)
+	lea	4*8($nptr),$nptr
 	adcx	%rax,%r12
 	adox	$zero,%r15		# of=0
 	mov	48(%rsp),$bptr		# counter value
 	mov	%r12,-2*8($tptr)
-	.byte	0x66
-	lea	4*8($nptr),$nptr
 
-	#jmp	.Lmulx4x_inner
+	jmp	.Lmulx4x_inner
 
 .align	32
 .Lmulx4x_inner:
-	adcx	$zero,%r15		# cf=0, modulo-scheduled
-	adox	0*8($tptr),%r14
 	mulx	0*8($aptr),%r10,%rax	# a[4]*b[i]
-	adcx	%r14,%r10
+	adcx	$zero,%r15		# cf=0, modulo-scheduled
+	adox	%r14,%r10
 	mulx	1*8($aptr),%r11,%r14	# a[5]*b[i]
+	adcx	0*8($tptr),%r10
 	adox	%rax,%r11
 	mulx	2*8($aptr),%r12,%rax	# ...
 	adcx	1*8($tptr),%r11
@@ -1925,11 +1128,16 @@ $code.=<<___;
 	adc	$zero,%r15		# modulo-scheduled
 	sub	0*8($tptr),$zero	# pull top-most carry
 	adc	%r15,%r14
+	mov	-8($nptr),$mi
 	sbb	%r15,%r15		# top-most carry
 	mov	%r14,-1*8($tptr)
 
 	cmp	16(%rsp),$bptr
 	jne	.Lmulx4x_outer
+
+	sub	%r14,$mi		# compare top-most words
+	sbb	$mi,$mi
+	or	$mi,%r15
 
 	neg	$num
 	xor	%rdx,%rdx
@@ -1977,796 +1185,18 @@ $code.=<<___;
 	add	\$32,$num
 	jnz	.Lmulx4x_sub
 
-	mov	56(%rsp),%rsi		# restore %rsp
+	mov	40(%rsp),%rsi		# restore %rsp
 	mov	\$1,%rax
-	mov	(%rsi),%r15
-	mov	8(%rsi),%r14
-	mov	16(%rsi),%r13
-	mov	24(%rsi),%r12
-	mov	32(%rsi),%rbp
-	mov	40(%rsi),%rbx
-	lea	48(%rsi),%rsp
+	mov	-48(%rsi),%r15
+	mov	-40(%rsi),%r14
+	mov	-32(%rsi),%r13
+	mov	-24(%rsi),%r12
+	mov	-16(%rsi),%rbp
+	mov	-8(%rsi),%rbx
+	lea	(%rsi),%rsp
 .Lmulx4x_epilogue:
 	ret
 .size	bn_mulx4x_mont,.-bn_mulx4x_mont
-___
-}{
-######################################################################
-# void bn_sqr8x_mont(
-my $rptr="%rdi";	# const BN_ULONG *rptr,
-my $aptr="%rsi";	# const BN_ULONG *aptr,
-my $bptr="%rdx";	# not used
-my $nptr="%rcx";	# const BN_ULONG *nptr,
-my $n0  ="%r8";		# const BN_ULONG *n0);
-my $num ="%r9";		# int num, has to be divisible by 8
-
-my ($i,$j,$tptr)=("%rbp","%rcx",$rptr);
-my @A0=("%r10","%r11");
-my @A1=("%r12","%r13");
-my ($a0,$a1,$ai)=("%r14","%r15","%rbx");
-
-$code.=<<___;
-.type	bn_sqrx8x_mont,\@function,6
-.align	32
-bn_sqrx8x_mont:
-.Lsqrx8x_enter:
-	push	%rbx
-	push	%rbp
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
-
-	shl	\$3,${num}d		# convert $num to bytes
-	.byte	0x67
-	xor	%r10,%r10
-	mov	%rsp,%r11		# put aside %rsp
-	sub	$num,%r10		# -$num
-	mov	($n0),$n0		# *n0
-	lea	-64(%rsp,%r10,2),%rsp	# alloca(frame+2*$num)
-	and	\$-1024,%rsp		# minimize TLB usage
-	##############################################################
-	# Stack layout
-	#
-	# +0	saved $num, used in reduction section
-	# +8	&t[2*$num], used in reduction section
-	# +16	intermediate carry bit
-	# +24	top-most carry bit, used in reduction section
-	# +32	saved *n0
-	# +48	t[2*$num]
-	#
-	movq	$rptr,%xmm1		# save $rptr
-	movq	$nptr,%xmm2		# save $nptr
-	movq	%r10, %xmm3		# -$num
-	movq	%r11, %xmm4		# save original %rsp
-	mov	$n0,  32(%rsp)
-___
-$code.=<<___ if ($win64);
-	jmp	.Lsqrx8x_body
-.align	32
-___
-$code.=<<___;
-.Lsqrx8x_body:
-	##################################################################
-	# Squaring part:
-	#
-	# a) multiply-n-add everything but a[i]*a[i];
-	# b) shift result of a) by 1 to the left and accumulate
-	#    a[i]*a[i] products;
-	#
-	##################################################################
-	# a[7]a[7]a[6]a[6]a[5]a[5]a[4]a[4]a[3]a[3]a[2]a[2]a[1]a[1]a[0]a[0]
-	#                                                     a[1]a[0]
-	#                                                 a[2]a[0]
-	#                                             a[3]a[0]
-	#                                             a[2]a[1]
-	#                                         a[3]a[1]
-	#                                     a[3]a[2]
-	#
-	#                                         a[4]a[0]
-	#                                     a[5]a[0]
-	#                                 a[6]a[0]
-	#                             a[7]a[0]
-	#                                     a[4]a[1]
-	#                                 a[5]a[1]
-	#                             a[6]a[1]
-	#                         a[7]a[1]
-	#                                 a[4]a[2]
-	#                             a[5]a[2]
-	#                         a[6]a[2]
-	#                     a[7]a[2]
-	#                             a[4]a[3]
-	#                         a[5]a[3]
-	#                     a[6]a[3]
-	#                 a[7]a[3]
-	#
-	#                     a[5]a[4]
-	#                 a[6]a[4]
-	#             a[7]a[4]
-	#             a[6]a[5]
-	#         a[7]a[5]
-	#     a[7]a[6]
-	# a[7]a[7]a[6]a[6]a[5]a[5]a[4]a[4]a[3]a[3]a[2]a[2]a[1]a[1]a[0]a[0]
-___
-{
-my ($zero,$carry)=("%rbp","%rcx");
-my $aaptr=$zero;
-$code.=<<___;
-	pxor	%xmm0,%xmm0
-	lea	48(%rsp),$tptr
-	lea	($aptr,$num),$aaptr
-	mov	$num,(%rsp)		# save $num
-	mov	$aaptr,8(%rsp)		# save end of $aptr
-	jmp	.Lsqr8x_zero_start
-
-.align	32
-.byte	0x66,0x66,0x66,0x2e,0x0f,0x1f,0x84,0x00,0x00,0x00,0x00,0x00
-.Lsqrx8x_zero:
-	.byte	0x3e
-	movdqa	%xmm0,0*8($tptr)
-	movdqa	%xmm0,2*8($tptr)
-	movdqa	%xmm0,4*8($tptr)
-	movdqa	%xmm0,6*8($tptr)
-.Lsqr8x_zero_start:			# aligned at 32
-	movdqa	%xmm0,8*8($tptr)
-	movdqa	%xmm0,10*8($tptr)
-	movdqa	%xmm0,12*8($tptr)
-	movdqa	%xmm0,14*8($tptr)
-	lea	16*8($tptr),$tptr
-	sub	\$64,$num
-	jnz	.Lsqrx8x_zero
-
-	mov	0*8($aptr),%rdx		# a[0], modulo-scheduled
-	#xor	%r9,%r9			# t[1], ex-$num, zero already
-	xor	%r10,%r10
-	xor	%r11,%r11
-	xor	%r12,%r12
-	xor	%r13,%r13
-	xor	%r14,%r14
-	xor	%r15,%r15
-	lea	48(%rsp),$tptr
-	xor	$zero,$zero		# cf=0, cf=0
-	jmp	.Lsqrx8x_outer_loop
-
-.align	32
-.Lsqrx8x_outer_loop:
-	mulx	1*8($aptr),%r8,%rax	# a[1]*a[0]
-	adcx	%r9,%r8			# a[1]*a[0]+=t[1]
-	adox	%rax,%r10
-	mulx	2*8($aptr),%r9,%rax	# a[2]*a[0]
-	adcx	%r10,%r9
-	adox	%rax,%r11
-	.byte	0xc4,0xe2,0xab,0xf6,0x86,0x18,0x00,0x00,0x00	# mulx	3*8($aptr),%r10,%rax	# ...
-	adcx	%r11,%r10
-	adox	%rax,%r12
-	.byte	0xc4,0xe2,0xa3,0xf6,0x86,0x20,0x00,0x00,0x00	# mulx	4*8($aptr),%r11,%rax
-	adcx	%r12,%r11
-	adox	%rax,%r13
-	mulx	5*8($aptr),%r12,%rax
-	adcx	%r13,%r12
-	adox	%rax,%r14
-	mulx	6*8($aptr),%r13,%rax
-	adcx	%r14,%r13
-	adox	%r15,%rax
-	mulx	7*8($aptr),%r14,%r15
-	 mov	1*8($aptr),%rdx		# a[1]
-	adcx	%rax,%r14
-	adox	$zero,%r15
-	adc	8*8($tptr),%r15
-	mov	%r8,1*8($tptr)		# t[1]
-	mov	%r9,2*8($tptr)		# t[2]
-	sbb	$carry,$carry		# mov %cf,$carry
-	xor	$zero,$zero		# cf=0, of=0
-
-
-	mulx	2*8($aptr),%r8,%rbx	# a[2]*a[1]
-	mulx	3*8($aptr),%r9,%rax	# a[3]*a[1]
-	adcx	%r10,%r8
-	adox	%rbx,%r9
-	mulx	4*8($aptr),%r10,%rbx	# ...
-	adcx	%r11,%r9
-	adox	%rax,%r10
-	.byte	0xc4,0xe2,0xa3,0xf6,0x86,0x28,0x00,0x00,0x00	# mulx	5*8($aptr),%r11,%rax
-	adcx	%r12,%r10
-	adox	%rbx,%r11
-	.byte	0xc4,0xe2,0x9b,0xf6,0x9e,0x30,0x00,0x00,0x00	# mulx	6*8($aptr),%r12,%rbx
-	adcx	%r13,%r11
-	adox	%r14,%r12
-	.byte	0xc4,0x62,0x93,0xf6,0xb6,0x38,0x00,0x00,0x00	# mulx	7*8($aptr),%r13,%r14
-	 mov	2*8($aptr),%rdx		# a[2]
-	adcx	%rax,%r12
-	adox	%rbx,%r13
-	adcx	%r15,%r13
-	adox	$zero,%r14		# of=0
-	adcx	$zero,%r14		# cf=0
-
-	mov	%r8,3*8($tptr)		# t[3]
-	mov	%r9,4*8($tptr)		# t[4]
-
-	mulx	3*8($aptr),%r8,%rbx	# a[3]*a[2]
-	mulx	4*8($aptr),%r9,%rax	# a[4]*a[2]
-	adcx	%r10,%r8
-	adox	%rbx,%r9
-	mulx	5*8($aptr),%r10,%rbx	# ...
-	adcx	%r11,%r9
-	adox	%rax,%r10
-	.byte	0xc4,0xe2,0xa3,0xf6,0x86,0x30,0x00,0x00,0x00	# mulx	6*8($aptr),%r11,%rax
-	adcx	%r12,%r10
-	adox	%r13,%r11
-	.byte	0xc4,0x62,0x9b,0xf6,0xae,0x38,0x00,0x00,0x00	# mulx	7*8($aptr),%r12,%r13
-	.byte	0x3e
-	 mov	3*8($aptr),%rdx		# a[3]
-	adcx	%rbx,%r11
-	adox	%rax,%r12
-	adcx	%r14,%r12
-	mov	%r8,5*8($tptr)		# t[5]
-	mov	%r9,6*8($tptr)		# t[6]
-	 mulx	4*8($aptr),%r8,%rax	# a[4]*a[3]
-	adox	$zero,%r13		# of=0
-	adcx	$zero,%r13		# cf=0
-
-	mulx	5*8($aptr),%r9,%rbx	# a[5]*a[3]
-	adcx	%r10,%r8
-	adox	%rax,%r9
-	mulx	6*8($aptr),%r10,%rax	# ...
-	adcx	%r11,%r9
-	adox	%r12,%r10
-	mulx	7*8($aptr),%r11,%r12
-	 mov	4*8($aptr),%rdx		# a[4]
-	 mov	5*8($aptr),%r14		# a[5]
-	adcx	%rbx,%r10
-	adox	%rax,%r11
-	 mov	6*8($aptr),%r15		# a[6]
-	adcx	%r13,%r11
-	adox	$zero,%r12		# of=0
-	adcx	$zero,%r12		# cf=0
-
-	mov	%r8,7*8($tptr)		# t[7]
-	mov	%r9,8*8($tptr)		# t[8]
-
-	mulx	%r14,%r9,%rax		# a[5]*a[4]
-	 mov	7*8($aptr),%r8		# a[7]
-	adcx	%r10,%r9
-	mulx	%r15,%r10,%rbx		# a[6]*a[4]
-	adox	%rax,%r10
-	adcx	%r11,%r10
-	mulx	%r8,%r11,%rax		# a[7]*a[4]
-	 mov	%r14,%rdx		# a[5]
-	adox	%rbx,%r11
-	adcx	%r12,%r11
-	#adox	$zero,%rax		# of=0
-	adcx	$zero,%rax		# cf=0
-
-	mulx	%r15,%r14,%rbx		# a[6]*a[5]
-	mulx	%r8,%r12,%r13		# a[7]*a[5]
-	 mov	%r15,%rdx		# a[6]
-	 lea	8*8($aptr),$aptr
-	adcx	%r14,%r11
-	adox	%rbx,%r12
-	adcx	%rax,%r12
-	adox	$zero,%r13
-
-	.byte	0x67,0x67
-	mulx	%r8,%r8,%r14		# a[7]*a[6]
-	adcx	%r8,%r13
-	adcx	$zero,%r14
-
-	cmp	8(%rsp),$aptr
-	je	.Lsqrx8x_outer_break
-
-	neg	$carry			# mov $carry,%cf
-	mov	\$-8,%rcx
-	mov	$zero,%r15
-	mov	8*8($tptr),%r8
-	adcx	9*8($tptr),%r9		# +=t[9]
-	adcx	10*8($tptr),%r10	# ...
-	adcx	11*8($tptr),%r11
-	adc	12*8($tptr),%r12
-	adc	13*8($tptr),%r13
-	adc	14*8($tptr),%r14
-	adc	15*8($tptr),%r15
-	lea	($aptr),$aaptr
-	lea	2*8*8($tptr),$tptr
-	sbb	%rax,%rax		# mov %cf,$carry
-
-	mov	-64($aptr),%rdx		# a[0]
-	mov	%rax,16(%rsp)		# offload $carry
-	mov	$tptr,24(%rsp)
-
-	#lea	8*8($tptr),$tptr	# see 2*8*8($tptr) above
-	xor	%eax,%eax		# cf=0, of=0
-	jmp	.Lsqrx8x_loop
-
-.align	32
-.Lsqrx8x_loop:
-	mov	%r8,%rbx
-	mulx	0*8($aaptr),%rax,%r8	# a[8]*a[i]
-	adcx	%rax,%rbx		# +=t[8]
-	adox	%r9,%r8
-
-	mulx	1*8($aaptr),%rax,%r9	# ...
-	adcx	%rax,%r8
-	adox	%r10,%r9
-
-	mulx	2*8($aaptr),%rax,%r10
-	adcx	%rax,%r9
-	adox	%r11,%r10
-
-	mulx	3*8($aaptr),%rax,%r11
-	adcx	%rax,%r10
-	adox	%r12,%r11
-
-	.byte	0xc4,0x62,0xfb,0xf6,0xa5,0x20,0x00,0x00,0x00	# mulx	4*8($aaptr),%rax,%r12
-	adcx	%rax,%r11
-	adox	%r13,%r12
-
-	mulx	5*8($aaptr),%rax,%r13
-	adcx	%rax,%r12
-	adox	%r14,%r13
-
-	mulx	6*8($aaptr),%rax,%r14
-	 mov	%rbx,($tptr,%rcx,8)	# store t[8+i]
-	 mov	\$0,%ebx
-	adcx	%rax,%r13
-	adox	%r15,%r14
-
-	.byte	0xc4,0x62,0xfb,0xf6,0xbd,0x38,0x00,0x00,0x00	# mulx	7*8($aaptr),%rax,%r15
-	 mov	8($aptr,%rcx,8),%rdx	# a[i]
-	adcx	%rax,%r14
-	adox	%rbx,%r15		# %rbx is 0, of=0
-	adcx	%rbx,%r15		# cf=0
-
-	.byte	0x67
-	inc	%rcx			# of=0
-	jnz	.Lsqrx8x_loop
-
-	lea	8*8($aaptr),$aaptr
-	mov	\$-8,%rcx
-	cmp	8(%rsp),$aaptr		# done?
-	je	.Lsqrx8x_break
-
-	sub	16(%rsp),%rbx		# mov 16(%rsp),%cf
-	.byte	0x66
-	mov	-64($aptr),%rdx
-	adcx	0*8($tptr),%r8
-	adcx	1*8($tptr),%r9
-	adc	2*8($tptr),%r10
-	adc	3*8($tptr),%r11
-	adc	4*8($tptr),%r12
-	adc	5*8($tptr),%r13
-	adc	6*8($tptr),%r14
-	adc	7*8($tptr),%r15
-	lea	8*8($tptr),$tptr
-	.byte	0x67
-	sbb	%rax,%rax		# mov %cf,%rax
-	xor	%ebx,%ebx		# cf=0, of=0
-	mov	%rax,16(%rsp)		# offload carry
-	jmp	.Lsqrx8x_loop
-
-.align	32
-.Lsqrx8x_break:
-	sub	16(%rsp),%r8		# consume last carry
-	mov	24(%rsp),$carry		# initial $tptr, borrow $carry
-	mov	0*8($aptr),%rdx		# a[8], modulo-scheduled
-	xor	%ebp,%ebp		# xor	$zero,$zero
-	mov	%r8,0*8($tptr)
-	cmp	$carry,$tptr		# cf=0, of=0
-	je	.Lsqrx8x_outer_loop
-
-	mov	%r9,1*8($tptr)
-	 mov	1*8($carry),%r9
-	mov	%r10,2*8($tptr)
-	 mov	2*8($carry),%r10
-	mov	%r11,3*8($tptr)
-	 mov	3*8($carry),%r11
-	mov	%r12,4*8($tptr)
-	 mov	4*8($carry),%r12
-	mov	%r13,5*8($tptr)
-	 mov	5*8($carry),%r13
-	mov	%r14,6*8($tptr)
-	 mov	6*8($carry),%r14
-	mov	%r15,7*8($tptr)
-	 mov	7*8($carry),%r15
-	mov	$carry,$tptr
-	jmp	.Lsqrx8x_outer_loop
-
-.align	32
-.Lsqrx8x_outer_break:
-	mov	%r9,9*8($tptr)		# t[9]
-	 movq	%xmm3,%rcx		# -$num
-	mov	%r10,10*8($tptr)	# ...
-	mov	%r11,11*8($tptr)
-	mov	%r12,12*8($tptr)
-	mov	%r13,13*8($tptr)
-	mov	%r14,14*8($tptr)
-___
-}{
-my $i="%rcx";
-$code.=<<___;
-	lea	48(%rsp),$tptr
-	mov	($aptr,$i),%rdx		# a[0]
-
-	mov	8($tptr),$A0[1]		# t[1]
-	xor	$A0[0],$A0[0]		# t[0], of=0, cf=0
-	mov	(%rsp),$num		# restore $num
-	adox	$A0[1],$A0[1]
-	 mov	16($tptr),$A1[0]	# t[2]	# prefetch
-	 mov	24($tptr),$A1[1]	# t[3]	# prefetch
-	nop
-	#jmp	.Lsqrx4x_shift_n_add	# happens to be aligned
-
-.align	32
-.Lsqrx4x_shift_n_add:
-	mulx	%rdx,%rax,%rbx
-	 adox	$A1[0],$A1[0]
-	adcx	$A0[0],%rax
-	 .byte	0x48,0x8b,0x94,0x0e,0x08,0x00,0x00,0x00	# mov	8($aptr,$i),%rdx	# a[i+1]	# prefetch
-	 .byte	0x4c,0x8b,0x97,0x20,0x00,0x00,0x00	# mov	32($tptr),$A0[0]	# t[2*i+4]	# prefetch
-	 adox	$A1[1],$A1[1]
-	adcx	$A0[1],%rbx
-	 mov	40($tptr),$A0[1]		# t[2*i+4+1]	# prefetch
-	mov	%rax,0($tptr)
-	mov	%rbx,8($tptr)
-
-	mulx	%rdx,%rax,%rbx
-	 adox	$A0[0],$A0[0]
-	adcx	$A1[0],%rax
-	 mov	16($aptr,$i),%rdx	# a[i+2]	# prefetch
-	 mov	48($tptr),$A1[0]	# t[2*i+6]	# prefetch
-	 adox	$A0[1],$A0[1]
-	adcx	$A1[1],%rbx
-	 mov	56($tptr),$A1[1]	# t[2*i+6+1]	# prefetch
-	mov	%rax,16($tptr)
-	mov	%rbx,24($tptr)
-
-	mulx	%rdx,%rax,%rbx
-	 adox	$A1[0],$A1[0]
-	adcx	$A0[0],%rax
-	 mov	24($aptr,$i),%rdx	# a[i+3]	# prefetch
-	 lea	32($i),$i
-	 mov	64($tptr),$A0[0]	# t[2*i+8]	# prefetch
-	 adox	$A1[1],$A1[1]
-	adcx	$A0[1],%rbx
-	 mov	72($tptr),$A0[1]	# t[2*i+8+1]	# prefetch
-	mov	%rax,32($tptr)
-	mov	%rbx,40($tptr)
-
-	mulx	%rdx,%rax,%rbx
-	 adox	$A0[0],$A0[0]
-	adcx	$A1[0],%rax
-	jrcxz	.Lsqrx4x_shift_n_add_break
-	 .byte	0x48,0x8b,0x94,0x0e,0x00,0x00,0x00,0x00	# mov	0($aptr,$i),%rdx	# a[i+4]	# prefetch
-	 adox	$A0[1],$A0[1]
-	adcx	$A1[1],%rbx
-	 mov	80($tptr),$A1[0]	# t[2*i+10]	# prefetch
-	 mov	88($tptr),$A1[1]	# t[2*i+10+1]	# prefetch
-	mov	%rax,48($tptr)
-	mov	%rbx,56($tptr)
-	lea	64($tptr),$tptr
-	nop
-	jmp	.Lsqrx4x_shift_n_add
-
-.align	32
-.Lsqrx4x_shift_n_add_break:
-	adcx	$A1[1],%rbx
-	mov	%rax,48($tptr)
-	mov	%rbx,56($tptr)
-	lea	64($tptr),$tptr		# end of t[] buffer
-___
-}
-######################################################################
-# Montgomery reduction part, "word-by-word" algorithm.
-#
-# This new path is inspired by multiple submissions from Intel, by
-# Shay Gueron, Vlad Krasnov, Erdinc Ozturk, James Guilford,
-# Vinodh Gopal...
-{
-my ($nptr,$carry,$m0)=("%rbp","%rsi","%rdx");
-
-$code.=<<___;
-	movq	%xmm2,$nptr
-	xor	%eax,%eax		# initial top-most carry bit
-	mov	32(%rsp),%rbx		# n0
-	mov	48(%rsp),%rdx		# "%r8", 8*0($tptr)
-	lea	-64($nptr,$num),%rcx	# end of n[]
-	#lea	48(%rsp,$num,2),$tptr	# end of t[] buffer
-	mov	%rcx, 0(%rsp)		# save end of n[]
-	mov	$tptr,8(%rsp)		# save end of t[]
-
-	lea	48(%rsp),$tptr		# initial t[] window
-	jmp	.Lsqrx8x_reduction_loop
-
-.align	32
-.Lsqrx8x_reduction_loop:
-	mov	8*1($tptr),%r9
-	mov	8*2($tptr),%r10
-	mov	8*3($tptr),%r11
-	mov	8*4($tptr),%r12
-	mov	%rdx,%r8
-	imulq	%rbx,%rdx		# n0*a[i]
-	mov	8*5($tptr),%r13
-	mov	8*6($tptr),%r14
-	mov	8*7($tptr),%r15
-	mov	%rax,24(%rsp)		# store top-most carry bit
-
-	lea	8*8($tptr),$tptr
-	xor	$carry,$carry		# cf=0,of=0
-	mov	\$-8,%rcx
-	jmp	.Lsqrx8x_reduce
-
-.align	32
-.Lsqrx8x_reduce:
-	mov	%r8, %rbx
-	mulx	8*0($nptr),%rax,%r8	# n[0]
-	adcx	%rbx,%rax		# discarded
-	adox	%r9,%r8
-
-	mulx	8*1($nptr),%rbx,%r9	# n[1]
-	adcx	%rbx,%r8
-	adox	%r10,%r9
-
-	mulx	8*2($nptr),%rbx,%r10
-	adcx	%rbx,%r9
-	adox	%r11,%r10
-
-	mulx	8*3($nptr),%rbx,%r11
-	adcx	%rbx,%r10
-	adox	%r12,%r11
-
-	.byte	0xc4,0x62,0xe3,0xf6,0xa5,0x20,0x00,0x00,0x00	# mulx	8*4($nptr),%rbx,%r12
-	 mov	%rdx,%rax
-	 mov	%r8,%rdx
-	adcx	%rbx,%r11
-	adox	%r13,%r12
-
-	 mulx	32(%rsp),%rbx,%rdx	# %rdx discarded
-	 mov	%rax,%rdx
-	 mov	%rax,48+64(%rsp,%rcx,8)	# put aside n0*a[i]
-
-	mulx	8*5($nptr),%rax,%r13
-	adcx	%rax,%r12
-	adox	%r14,%r13
-
-	mulx	8*6($nptr),%rax,%r14
-	adcx	%rax,%r13
-	adox	%r15,%r14
-
-	mulx	8*7($nptr),%rax,%r15
-	 mov	%rbx,%rdx
-	adcx	%rax,%r14
-	adox	$carry,%r15		# $carry is 0
-	adcx	$carry,%r15		# cf=0
-
-	.byte	0x67
-	inc	%rcx			# of=0
-	jnz	.Lsqrx8x_reduce
-
-	.byte	0x66,0x67
-	mov	$carry,%rax		# xor	%rax,%rax
-	cmp	0(%rsp),$nptr		# end of n[]?
-	jae	.Lsqrx8x_no_tail
-
-	mov	48(%rsp),%rdx		# pull n0*a[0]
-	add	8*0($tptr),%r8
-	lea	8*8($nptr),$nptr
-	mov	\$-8,%rcx
-	adc	8*1($tptr),%r9
-	adc	8*2($tptr),%r10
-	adc	8*3($tptr),%r11
-	adc	8*4($tptr),%r12
-	adc	8*5($tptr),%r13
-	adc	8*6($tptr),%r14
-	adc	8*7($tptr),%r15
-	lea	8*8($tptr),$tptr
-	sbb	%rax,%rax		# top carry
-
-	xor	$carry,$carry		# of=0, cf=0
-	mov	%rax,16(%rsp)
-	jmp	.Lsqrx8x_tail
-
-.align	32
-.Lsqrx8x_tail:
-	mov	%r8,%rbx
-	mulx	8*0($nptr),%rax,%r8
-	adcx	%rax,%rbx
-	adox	%r9,%r8
-
-	mulx	8*1($nptr),%rax,%r9
-	adcx	%rax,%r8
-	adox	%r10,%r9
-
-	mulx	8*2($nptr),%rax,%r10
-	adcx	%rax,%r9
-	adox	%r11,%r10
-
-	mulx	8*3($nptr),%rax,%r11
-	adcx	%rax,%r10
-	adox	%r12,%r11
-
-	.byte	0xc4,0x62,0xfb,0xf6,0xa5,0x20,0x00,0x00,0x00	# mulx	8*4($nptr),%rax,%r12
-	adcx	%rax,%r11
-	adox	%r13,%r12
-
-	mulx	8*5($nptr),%rax,%r13
-	adcx	%rax,%r12
-	adox	%r14,%r13
-
-	mulx	8*6($nptr),%rax,%r14
-	adcx	%rax,%r13
-	adox	%r15,%r14
-
-	mulx	8*7($nptr),%rax,%r15
-	 mov	48+72(%rsp,%rcx,8),%rdx	# pull n0*a[i]
-	adcx	%rax,%r14
-	.byte	0x67
-	adox	$carry,%r15
-	 mov	%rbx,($tptr,%rcx,8)	# save result
-	 mov	%r8,%rbx
-	adcx	$carry,%r15		# cf=0
-
-	inc	%rcx			# of=0
-	jnz	.Lsqrx8x_tail
-
-	cmp	0(%rsp),$nptr		# end of n[]?
-	jae	.Lsqrx8x_tail_done	# break out of loop
-
-	sub	16(%rsp),$carry		# mov 16(%rsp),%cf
-	 mov	48(%rsp),%rdx		# pull n0*a[0]
-	 lea	8*8($nptr),$nptr
-	adc	8*0($tptr),%r8
-	adc	8*1($tptr),%r9
-	adc	8*2($tptr),%r10
-	adc	8*3($tptr),%r11
-	adc	8*4($tptr),%r12
-	adc	8*5($tptr),%r13
-	adc	8*6($tptr),%r14
-	adc	8*7($tptr),%r15
-	lea	8*8($tptr),$tptr
-	mov	\$-8,%rcx
-	sbb	%rax,%rax
-
-	xor	$carry,$carry		# of=0, cf=0
-	mov	%rax,16(%rsp)
-	jmp	.Lsqrx8x_tail
-
-.align	32
-.Lsqrx8x_tail_done:
-	add	24(%rsp),%r8		# can this overflow?
-	mov	$carry,%rax		# xor	%rax,%rax
-
-	sub	16(%rsp),$carry		# mov 16(%rsp),%cf
-.Lsqrx8x_no_tail:			# %cf is 0 if jumped here
-	adc	8*0($tptr),%r8
-	 movq	%xmm3,%rcx
-	adc	8*1($tptr),%r9
-	 movq	%xmm2,$nptr		# restore $nptr
-	adc	8*2($tptr),%r10
-	 lea	8*8($tptr),$carry	# borrow $carry
-	adc	8*3($tptr),%r11
-	adc	8*4($tptr),%r12
-	adc	8*5($tptr),%r13
-	adc	8*6($tptr),%r14
-	adc	8*7($tptr),%r15
-	adc	%rax,%rax		# top-most carry
-
-	mov	32(%rsp),%rbx		# n0
-	mov	8*8($tptr,%rcx),%rdx	# modulo-scheduled "%r8"
-
-	mov	%r8,8*0($tptr)		# store top 512 bits
-	mov	%r9,8*1($tptr)
-	mov	%r10,8*2($tptr)
-	mov	%r11,8*3($tptr)
-	mov	%r12,8*4($tptr)
-	mov	%r13,8*5($tptr)
-	mov	%r14,8*6($tptr)
-	mov	%r15,8*7($tptr)
-
-	lea	8*8($tptr,%rcx),$tptr	# start of current t[] window
-	cmp	8(%rsp),$carry		# end of t[]?
-	jb	.Lsqrx8x_reduction_loop
-
-	mov	%rcx,%rdx		# -$num
-	jmp	.Lsqrx8x_post
-___
-}
-##############################################################
-# Post-condition, 8x unrolled
-#
-{
-my ($rptr,$nptr,$lptr,$i)=($aptr,"%rbp","%rbx","%rcx");
-my @ri=map("%r$_",(10..13));
-my @ni=map("%r$_",(14..15));
-$code.=<<___;
-.align	32
-.Lsqrx8x_post:
-	neg	%rdx			# restore $num
-	neg	%rax			# top-most carry as mask
-	mov	0*8($nptr),%r8
-	mov	1*8($nptr),%r9
-	lea	($nptr,%rdx),$nptr	# end of $nptr
-	lea	48(%rsp,%rdx),$lptr	# end of lower half of t[2*num]
-	lea	48(%rsp,%rdx),$tptr
-	.byte	0x67
-	xor	%rdx,%rdx
-	movq	%xmm1,$rptr		# restore $rptr
-
-	neg	%r8
-	jmp	.Lsqrx8x_sub_entry
-
-.byte	0x66,0x66,0x0f,0x1f,0x84,0x00,0x00,0x00,0x00,0x00
-.Lsqrx8x_sub:
-	mov	0*8($nptr,$i),%r8
-	mov	1*8($nptr,$i),%r9
-	not	%r8
-.Lsqrx8x_sub_entry:			# aligned at 32
-	mov	2*8($nptr,$i),%r10
-	not	%r9
-	and	%rax,%r8
-	mov	3*8($nptr,$i),%r11
-	not	%r10
-	and	%rax,%r9
-	mov	4*8($nptr,$i),%r12
-	not	%r11
-	and	%rax,%r10
-	mov	5*8($nptr,$i),%r13
-	not	%r12
-	and	%rax,%r11
-	mov	6*8($nptr,$i),%r14
-	not	%r13
-	and	%rax,%r12
-	mov	7*8($nptr,$i),%r15
-	not	%r14
-	and	%rax,%r13
-	movdqa	%xmm0,0*8($lptr,$i)	# zap lower half
-	not	%r15
-	and	%rax,%r14
-	movdqa	%xmm0,2*8($lptr,$i)
-	and	%rax,%r15
-
-	neg	%edx			# mov %edx,%cf
-	movdqa	%xmm0,4*8($lptr,$i)
-	adc	0*8($tptr),%r8
-	mov	%r8,0*8($rptr)		# result
-	adc	1*8($tptr),%r9
-	movdqa	%xmm0,6*8($lptr,$i)
-	adc	2*8($tptr),%r10
-	mov	%r9,1*8($rptr)
-	adc	3*8($tptr),%r11
-	movdqa	%xmm0,0*8($tptr)	# zap upper half
-	adc	4*8($tptr),%r12
-	mov	%r10,2*8($rptr)
-	adc	5*8($tptr),%r13
-	movdqa	%xmm0,2*8($tptr)
-	adc	6*8($tptr),%r14
-	mov	%r11,3*8($rptr)
-	adc	7*8($tptr),%r15
-	sbb	%edx,%edx		# mov %cf,%edx
-	movdqa	%xmm0,4*8($tptr)
-	movdqa	%xmm0,6*8($tptr)
-	lea	8*8($tptr),$tptr
-	mov	%r12,4*8($rptr)
-	mov	%r13,5*8($rptr)
-	mov	%r14,6*8($rptr)
-	mov	%r15,7*8($rptr)
-	lea	8*8($rptr),$rptr
-
-	add	\$64,$i
-	jnz	.Lsqrx8x_sub
-___
-}
-$code.=<<___;
-	movq	%xmm4,%rsi		# restore %rsp
-	mov	\$1,%rax
-	mov	0(%rsi),%r15
-	mov	8(%rsi),%r14
-	mov	16(%rsi),%r13
-	mov	24(%rsi),%r12
-	mov	32(%rsi),%rbp
-	mov	40(%rsi),%rbx
-	lea	48(%rsi),%rsp
-.Lsqrx8x_epilogue:
-	ret
-.size	bn_sqrx8x_mont,.-bn_sqrx8x_mont
 ___
 }}}
 $code.=<<___;
@@ -2868,8 +1298,7 @@ sqr_handler:
 	cmp	%r10,%rbx		# context->Rip>=.Lsqr_epilogue
 	jae	.Lcommon_seh_tail
 
-	mov	56(%rax),%rax		# pull saved stack pointer
-	lea	48(%rax),%rax
+	mov	40(%rax),%rax		# pull saved stack pointer
 
 	mov	-8(%rax),%rbx
 	mov	-16(%rax),%rbp
@@ -2942,10 +1371,6 @@ $code.=<<___ if ($addx);
 	.rva	.LSEH_begin_bn_mulx4x_mont
 	.rva	.LSEH_end_bn_mulx4x_mont
 	.rva	.LSEH_info_bn_mulx4x_mont
-
-	.rva	.LSEH_begin_bn_sqrx8x_mont
-	.rva	.LSEH_end_bn_sqrx8x_mont
-	.rva	.LSEH_info_bn_sqrx8x_mont
 ___
 $code.=<<___;
 .section	.xdata
@@ -2968,10 +1393,6 @@ $code.=<<___ if ($addx);
 	.byte	9,0,0,0
 	.rva	sqr_handler
 	.rva	.Lmulx4x_body,.Lmulx4x_epilogue	# HandlerData[]
-.LSEH_info_bn_sqrx8x_mont:
-	.byte	9,0,0,0
-	.rva	sqr_handler
-	.rva	.Lsqrx8x_body,.Lsqrx8x_epilogue	# HandlerData[]
 ___
 }
 
