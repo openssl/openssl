@@ -617,6 +617,11 @@ int ssl3_digest_cached_records(SSL *s)
 	/* Allocate handshake_dgst array */
 	ssl3_free_digest_list(s);
 	s->s3->handshake_dgst = OPENSSL_malloc(SSL_MAX_DIGEST * sizeof(EVP_MD_CTX *));
+	if (s->s3->handshake_dgst == NULL)
+		{
+		SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS, ERR_R_MALLOC_FAILURE);
+		return 0;
+		}
 	memset(s->s3->handshake_dgst,0,SSL_MAX_DIGEST *sizeof(EVP_MD_CTX *));
 	hdatalen = BIO_get_mem_data(s->s3->handshake_buffer,&hdata);
 	if (hdatalen <= 0)
