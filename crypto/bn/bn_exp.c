@@ -690,7 +690,8 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	 * RSAZ exponentiation. For further information see
 	 * crypto/bn/rsaz_exp.c and accompanying assembly modules.
 	 */
-	if ((16 == a->top) && (16 == p->top) && (BN_num_bits(m) == 1024)
+	if (((OPENSSL_ia32cap_P[2]&0x80100) != 0x80100) /* check for MULX/AD*X */
+	    && (16 == a->top) && (16 == p->top) && (BN_num_bits(m) == 1024)
 	    && rsaz_avx2_eligible())
 	    	{
 		if (NULL == bn_wexpand(rr, 16)) goto err;
@@ -724,7 +725,11 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	else
 #endif
 #if defined(OPENSSL_BN_ASM_MONT5)
-	if (window==6 && bits<=1024) window=5;	/* ~5% improvement of 2048-bit RSA sign */
+	if (window>=5)
+		{
+		window=5;	/* ~5% improvement for RSA2048 sign, and even for RSA4096 */
+		if ((top&7)==0)	powerbufLen += 2*top*sizeof(m->d[0]);
+		}
 #endif
 	(void)0;
 
@@ -732,7 +737,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	 * powers of am, am itself and tmp.
 	 */
 	numPowers = 1 << window;
-	powerbufLen = sizeof(m->d[0])*(top*numPowers +
+	powerbufLen += sizeof(m->d[0])*(top*numPowers +
 				((2*top)>numPowers?(2*top):numPowers));
 #ifdef alloca
 	if (powerbufLen < 3072)
@@ -910,13 +915,25 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 			void *table,size_t power);
 	void bn_gather5(BN_ULONG *out,size_t num,
 			void *table,size_t power);
+	void bn_power5(BN_ULONG *rp,const BN_ULONG *ap,
+			const void *table,const BN_ULONG *np,
+			const BN_ULONG *n0,int num,int power);
+	int bn_get_bits5(const BN_ULONG *ap,int off);
+	int bn_from_montgomery(BN_ULONG *rp,const BN_ULONG *ap,
+			const BN_ULONG *not_used,const BN_ULONG *np,
+			const BN_ULONG *n0,int num);
 
-	BN_ULONG *np=mont->N.d, *n0=mont->n0;
+	BN_ULONG *np=mont->N.d, *n0=mont->n0, *np2;
 
 	/* BN_to_montgomery can contaminate words above .top
 	 * [in BN_DEBUG[_DEBUG] build]... */
 	for (i=am.top; i<top; i++)	am.d[i]=0;
 	for (i=tmp.top; i<top; i++)	tmp.d[i]=0;
+
+	if (top&7)
+		np2 = np;
+	else
+		for (np2=am.d+top,i=0; i<top; i++) np2[2*i]=np[i];
 
 	bn_scatter5(tmp.d,top,powerbuf,0);
 	bn_scatter5(am.d,am.top,powerbuf,1);
@@ -927,7 +944,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	for (i=3; i<32; i++)
 		{
 		/* Calculate a^i = a^(i-1) * a */
-		bn_mul_mont_gather5(tmp.d,am.d,powerbuf,np,n0,top,i-1);
+		bn_mul_mont_gather5(tmp.d,am.d,powerbuf,np2,n0,top,i-1);
 		bn_scatter5(tmp.d,top,powerbuf,i);
 		}
 #else
@@ -940,7 +957,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	for (i=3; i<8; i+=2)
 		{
 		int j;
-		bn_mul_mont_gather5(tmp.d,am.d,powerbuf,np,n0,top,i-1);
+		bn_mul_mont_gather5(tmp.d,am.d,powerbuf,np2,n0,top,i-1);
 		bn_scatter5(tmp.d,top,powerbuf,i);
 		for (j=2*i; j<32; j*=2)
 			{
@@ -950,14 +967,14 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 		}
 	for (; i<16; i+=2)
 		{
-		bn_mul_mont_gather5(tmp.d,am.d,powerbuf,np,n0,top,i-1);
+		bn_mul_mont_gather5(tmp.d,am.d,powerbuf,np2,n0,top,i-1);
 		bn_scatter5(tmp.d,top,powerbuf,i);
 		bn_mul_mont(tmp.d,tmp.d,tmp.d,np,n0,top);
 		bn_scatter5(tmp.d,top,powerbuf,2*i);
 		}
 	for (; i<32; i+=2)
 		{
-		bn_mul_mont_gather5(tmp.d,am.d,powerbuf,np,n0,top,i-1);
+		bn_mul_mont_gather5(tmp.d,am.d,powerbuf,np2,n0,top,i-1);
 		bn_scatter5(tmp.d,top,powerbuf,i);
 		}
 #endif
@@ -969,7 +986,8 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	/* Scan the exponent one window at a time starting from the most
 	 * significant bits.
 	 */
-	while (bits >= 0)
+	if (top&7)
+	    while (bits >= 0)
 		{
 		for (wvalue=0, i=0; i<5; i++,bits--)
 			wvalue = (wvalue<<1)+BN_is_bit_set(p,bits);
@@ -981,9 +999,24 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 		bn_mul_mont(tmp.d,tmp.d,tmp.d,np,n0,top);
 		bn_mul_mont_gather5(tmp.d,tmp.d,powerbuf,np,n0,top,wvalue);
 		}
+	else
+	    {
+	    while (bits >= 0)
+		{
+		wvalue = bn_get_bits5(p->d,bits-4);
+		bits-=5;
+		bn_power5(tmp.d,tmp.d,powerbuf,np2,n0,top,wvalue);
+		}
+	    }
 
+	ret=bn_from_montgomery(tmp.d,tmp.d,NULL,np2,n0,top);
 	tmp.top=top;
 	bn_correct_top(&tmp);
+	if (ret)
+		{
+		if (!BN_copy(rr,&tmp)) ret=0;
+		goto err; /* non-zero ret means it's not error */
+		}
 	}
     else
 #endif
