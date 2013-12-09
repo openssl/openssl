@@ -1,6 +1,6 @@
 /* e_capi_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2008 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2014 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -86,6 +86,7 @@ static ERR_STRING_DATA CAPI_str_functs[]=
 {ERR_FUNC(CAPI_F_CAPI_RSA_PRIV_DEC),	"CAPI_RSA_PRIV_DEC"},
 {ERR_FUNC(CAPI_F_CAPI_RSA_PRIV_ENC),	"CAPI_RSA_PRIV_ENC"},
 {ERR_FUNC(CAPI_F_CAPI_RSA_SIGN),	"CAPI_RSA_SIGN"},
+{ERR_FUNC(CAPI_F_CAPI_VTRACE),	"CAPI_VTRACE"},
 {ERR_FUNC(CAPI_F_CERT_SELECT_DIALOG),	"CERT_SELECT_DIALOG"},
 {ERR_FUNC(CAPI_F_CLIENT_CERT_SELECT),	"CLIENT_CERT_SELECT"},
 {ERR_FUNC(CAPI_F_WIDE_TO_ASC),	"WIDE_TO_ASC"},
@@ -109,6 +110,7 @@ static ERR_STRING_DATA CAPI_str_reasons[]=
 {ERR_REASON(CAPI_R_ERROR_GETTING_KEY_PROVIDER_INFO),"error getting key provider info"},
 {ERR_REASON(CAPI_R_ERROR_OPENING_STORE)  ,"error opening store"},
 {ERR_REASON(CAPI_R_ERROR_SIGNING_HASH)   ,"error signing hash"},
+{ERR_REASON(CAPI_R_FILE_OPEN_ERROR)      ,"file open error"},
 {ERR_REASON(CAPI_R_FUNCTION_NOT_SUPPORTED),"function not supported"},
 {ERR_REASON(CAPI_R_GETUSERKEY_ERROR)     ,"getuserkey error"},
 {ERR_REASON(CAPI_R_INVALID_DIGEST_LENGTH),"invalid digest length"},
