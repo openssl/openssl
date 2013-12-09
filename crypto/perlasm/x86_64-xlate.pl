@@ -834,6 +834,7 @@ while($line=<>) {
     $line =~ s|[#!].*$||;	# get rid of asm-style comments...
     $line =~ s|/\*.*\*/||;	# ... and C-style comments...
     $line =~ s|^\s+||;		# ... and skip white spaces in beginning
+    $line =~ s|\s+$||;		# ... and at the end
 
     undef $label;
     undef $opcode;
