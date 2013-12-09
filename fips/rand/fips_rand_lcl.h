@@ -236,6 +236,5 @@ struct drbg_ctx_st
 int fips_drbg_ctr_init(DRBG_CTX *dctx);
 int fips_drbg_hash_init(DRBG_CTX *dctx);
 int fips_drbg_hmac_init(DRBG_CTX *dctx);
-int fips_drbg_ec_init(DRBG_CTX *dctx);
 int fips_drbg_kat(DRBG_CTX *dctx, int nid, unsigned int flags);
 int fips_drbg_cprng_test(DRBG_CTX *dctx, const unsigned char *out);
