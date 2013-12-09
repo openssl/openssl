@@ -340,6 +340,11 @@ static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 		}
 	ctx = ENGINE_get_ex_data(e, capi_idx);
 	out = BIO_new_fp(stdout, BIO_NOCLOSE);
+	if (out == NULL)
+		{
+		CAPIerr(CAPI_F_CAPI_CTRL, CAPI_R_FILE_OPEN_ERROR);
+		return 0;
+		}
 	switch (cmd)
 		{
 		case CAPI_CMD_LIST_CSPS:
@@ -406,6 +411,7 @@ static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 		if (i < 1 || i > 3)
 			{
 			CAPIerr(CAPI_F_CAPI_CTRL, CAPI_R_INVALID_LOOKUP_METHOD);
+			BIO_free(out);
 			return 0;
 			}
 		ctx->lookup_method = i;
@@ -1081,6 +1087,11 @@ static void capi_vtrace(CAPI_CTX *ctx, int level, char *format, va_list argptr)
 	if (!ctx || (ctx->debug_level < level) || (!ctx->debug_file))
 		return;
 	out = BIO_new_file(ctx->debug_file, "a+");
+	if (out == NULL)
+		{
+		CAPIerr(CAPI_F_CAPI_VTRACE, CAPI_R_FILE_OPEN_ERROR);
+		return;
+		}
 	BIO_vprintf(out, format, argptr);
 	BIO_free(out);
 	}

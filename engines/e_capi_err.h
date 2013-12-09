@@ -87,6 +87,7 @@ static void ERR_CAPI_error(int function, int reason, char *file, int line);
 #define CAPI_F_CAPI_RSA_PRIV_DEC			 110
 #define CAPI_F_CAPI_RSA_PRIV_ENC			 111
 #define CAPI_F_CAPI_RSA_SIGN				 112
+#define CAPI_F_CAPI_VTRACE				 118
 #define CAPI_F_CERT_SELECT_DIALOG			 117
 #define CAPI_F_CLIENT_CERT_SELECT			 116
 #define CAPI_F_WIDE_TO_ASC				 113
@@ -107,6 +108,7 @@ static void ERR_CAPI_error(int function, int reason, char *file, int line);
 #define CAPI_R_ERROR_GETTING_KEY_PROVIDER_INFO		 109
 #define CAPI_R_ERROR_OPENING_STORE			 110
 #define CAPI_R_ERROR_SIGNING_HASH			 111
+#define CAPI_R_FILE_OPEN_ERROR				 128
 #define CAPI_R_FUNCTION_NOT_SUPPORTED			 112
 #define CAPI_R_GETUSERKEY_ERROR				 113
 #define CAPI_R_INVALID_DIGEST_LENGTH			 124
