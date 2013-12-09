@@ -4092,6 +4092,11 @@ tls1_heartbeat(SSL *s)
 	 *  - Padding
 	 */
 	buf = OPENSSL_malloc(1 + 2 + payload + padding);
+	if (buf == NULL)
+		{
+		SSLerr(SSL_F_TLS1_HEARTBEAT,ERR_R_MALLOC_FAILURE);
+		return -1;
+		}
 	p = buf;
 	/* Message Type */
 	*p++ = TLS1_HB_REQUEST;
