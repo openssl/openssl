@@ -85,6 +85,8 @@ aes-mips.S:	asm/aes-mips.pl
 # GNU make "catch all"
 aes-%.S:	asm/aes-%.pl;	$(PERL) $< $(PERLASM_SCHEME) > $@
 aes-armv4.o:	aes-armv4.S
+bsaes-%.S:	asm/bsaes-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
+bsaes-armv7.o:	bsaes-armv7.S
 
 files:
 	$(PERL) $(TOP)/util/files.pl "AES_ENC=$(AES_ENC)" Makefile >> $(TOP)/MINFO

@@ -136,7 +136,7 @@ my $alpha_asm="alphacpuid.o:bn_asm.o alpha-mont.o:::::sha1-alpha.o:::::::ghash-a
 my $mips64_asm=":bn-mips.o mips-mont.o::aes_cbc.o aes-mips.o:::sha1-mips.o sha256-mips.o sha512-mips.o::::::::";
 my $mips32_asm=$mips64_asm; $mips32_asm =~ s/\s*sha512\-mips\.o//;
 my $s390x_asm="s390xcap.o s390xcpuid.o:bn-s390x.o s390x-mont.o s390x-gf2m.o::aes-s390x.o aes-ctr.o aes-xts.o:::sha1-s390x.o sha256-s390x.o sha512-s390x.o::rc4-s390x.o:::::ghash-s390x.o:";
-my $armv4_asm="armcap.o armv4cpuid.o:bn_asm.o armv4-mont.o armv4-gf2m.o::aes_cbc.o aes-armv4.o:::sha1-armv4-large.o sha256-armv4.o sha512-armv4.o:::::::ghash-armv4.o::void";
+my $armv4_asm="armcap.o armv4cpuid.o:bn_asm.o armv4-mont.o armv4-gf2m.o::aes_cbc.o aes-armv4.o bsaes-armv7.o:::sha1-armv4-large.o sha256-armv4.o sha512-armv4.o:::::::ghash-armv4.o::void";
 my $parisc11_asm="pariscid.o:bn_asm.o parisc-mont.o::aes_core.o aes_cbc.o aes-parisc.o:::sha1-parisc.o sha256-parisc.o sha512-parisc.o::rc4-parisc.o:::::ghash-parisc.o::32";
 my $parisc20_asm="pariscid.o:pa-risc2W.o parisc-mont.o::aes_core.o aes_cbc.o aes-parisc.o:::sha1-parisc.o sha256-parisc.o sha512-parisc.o::rc4-parisc.o:::::ghash-parisc.o::64";
 my $ppc32_asm="ppccpuid.o ppccap.o:bn-ppc.o ppc-mont.o ppc64-mont.o::aes_core.o aes_cbc.o aes-ppc.o:::sha1-ppc.o sha256-ppc.o::::::::";

@@ -897,6 +897,13 @@ const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
 { return &aes_##keylen##_##mode; }
 #endif
 
+#if defined(AES_ASM) && defined(BSAES_ASM) && (defined(__arm__) || defined(__arm))
+#include "arm_arch.h"
+#if __ARM_ARCH__>=7
+#define BSAES_CAPABLE  (OPENSSL_armcap_P & ARMV7_NEON)
+#endif
+#endif
+
 #define BLOCK_CIPHER_generic_pack(nid,keylen,flags)		\
 	BLOCK_CIPHER_generic(nid,keylen,16,16,cbc,cbc,CBC,flags|EVP_CIPH_FLAG_DEFAULT_ASN1)	\
 	BLOCK_CIPHER_generic(nid,keylen,16,0,ecb,ecb,ECB,flags|EVP_CIPH_FLAG_DEFAULT_ASN1)	\
