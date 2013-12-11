@@ -737,23 +737,28 @@ doapr_outch(
     assert(*sbuffer != NULL || buffer != NULL);
 
     if (buffer) {
-	while (*currlen >= *maxlen) {
+	if (*currlen >= *maxlen) {
+	    size_t newlen;
+	    char *newbuf;
+
+	    newlen = *currlen + 1024;
 	    if (*buffer == NULL) {
-		if (*maxlen == 0)
-		    *maxlen = 1024;
-		*buffer = OPENSSL_malloc(*maxlen);
-		if (*currlen > 0) {
-		    assert(*sbuffer != NULL);
-		    memcpy(*buffer, *sbuffer, *currlen);
+		newbuf = OPENSSL_malloc(newlen);
+		if (newbuf != NULL) {
+		    if (*currlen > 0) {
+			assert(*sbuffer != NULL);
+			memcpy(newbuf, *sbuffer, *currlen);
+		    }
+		    *sbuffer = NULL;
 		}
-		*sbuffer = NULL;
 	    } else {
-		*maxlen += 1024;
-		*buffer = OPENSSL_realloc(*buffer, *maxlen);
+		newbuf = OPENSSL_realloc(*buffer, newlen);
+	    }
+	    if (newbuf != NULL) {
+		*buffer = newbuf;
+		*maxlen = newlen;
 	    }
 	}
-	/* What to do if *buffer is NULL? */
-	assert(*sbuffer != NULL || *buffer != NULL);
     }
 
     if (*currlen < *maxlen) {
