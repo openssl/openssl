@@ -184,7 +184,7 @@ _dopr(
     int state;
     int flags;
     int cflags;
-    size_t currlen;
+    size_t currlen, finallen;
 
     state = DP_S_DEFAULT;
     flags = currlen = cflags = min = 0;
@@ -421,10 +421,13 @@ _dopr(
             break;
         }
     }
-    *truncated = (currlen > *maxlen - 1);
-    if (*truncated)
-        currlen = *maxlen - 1;
+    finallen = currlen;
     doapr_outch(sbuffer, buffer, &currlen, maxlen, '\0');
+    *truncated = (currlen == finallen);
+    if (*truncated) {
+        currlen = *maxlen - 1;
+        doapr_outch(sbuffer, buffer, &currlen, maxlen, '\0');
+    }
     *retlen = currlen - 1;
     return;
 }
