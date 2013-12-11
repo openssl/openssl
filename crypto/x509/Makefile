@@ -33,7 +33,7 @@ LIBOBJ= x509_def.o x509_d2.o x509_r2x.o x509_cmp.o \
 SRC= $(LIBSRC)
 
 EXHEADER= x509.h x509_vfy.h
-HEADER=	$(EXHEADER)
+HEADER=	$(EXHEADER) vpm_int.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 

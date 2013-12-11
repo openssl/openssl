@@ -158,6 +158,8 @@ typedef struct x509_lookup_method_st
 			    X509_OBJECT *ret);
 	} X509_LOOKUP_METHOD;
 
+typedef struct X509_VERIFY_PARAM_ID_st X509_VERIFY_PARAM_ID;
+
 /* This structure hold all parameters associated with a verify operation
  * by including an X509_VERIFY_PARAM structure in related structures the
  * parameters used can be customized
@@ -173,12 +175,7 @@ typedef struct X509_VERIFY_PARAM_st
 	int trust;		/* trust setting to check */
 	int depth;		/* Verify depth */
 	STACK_OF(ASN1_OBJECT) *policies;	/* Permissible policies */
-	unsigned char *host;	/* If not NULL hostname to match */
-	size_t hostlen;
-	unsigned char *email;	/* If not NULL email address to match */
-	size_t emaillen;
-	unsigned char *ip;	/* If not NULL IP address to match */
-	size_t iplen;		/* Length of IP address */
+	X509_VERIFY_PARAM_ID *id;	/* opaque ID data */
 	} X509_VERIFY_PARAM;
 
 DECLARE_STACK_OF(X509_VERIFY_PARAM)
