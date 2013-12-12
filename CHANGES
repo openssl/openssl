@@ -4,19 +4,6 @@
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
 
-  *) Experimental workaround TLS filler (WTF) extension. Based on a suggested
-     workaround for the "TLS hang bug" (see FAQ and PR#2771): if the TLS client
-     Hello record length value would otherwise be > 255 and less that 512
-     pad with a dummy extension containing zeroes so it is at least 512 bytes
-     long.
-
-     To enable it use an unused extension number (for example 0x4242) using
-     e.g. -DTLSEXT_TYPE_wtf=0x4242
-
-     WARNING: EXPERIMENTAL, SUBJECT TO CHANGE.
- 
-     [Steve Henson]
-
   *) Experimental encrypt-then-mac support.
     
      Experimental support for encrypt then mac from
@@ -285,6 +272,25 @@
      [Steve Henson]
 
  Changes between 1.0.1e and 1.0.2 [xx XXX xxxx]
+
+  *) TLS pad extension: draft-agl-tls-padding-02
+
+     Workaround for the "TLS hang bug" (see FAQ and PR#2771): if the
+     TLS client Hello record length value would otherwise be > 255 and
+     less that 512 pad with a dummy extension containing zeroes so it
+     is at least 512 bytes long.
+
+     To enable it use an unused extension number (for example chrome uses
+     35655) using:
+
+     e.g. -DTLSEXT_TYPE_padding=35655
+
+     Since the extension is ignored the actual number doesn't matter as long
+     as it doesn't clash with any existing extension.
+
+     This will be updated when the extension gets an official number.
+
+     [Adam Langley, Steve Henson]
 
   *) Add functions to allocate and set the fields of an ECDSA_METHOD
      structure.
