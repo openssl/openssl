@@ -2261,6 +2261,9 @@ int SSL_set_trust(SSL *s, int trust);
 int SSL_CTX_set1_param(SSL_CTX *ctx, X509_VERIFY_PARAM *vpm);
 int SSL_set1_param(SSL *ssl, X509_VERIFY_PARAM *vpm);
 
+X509_VERIFY_PARAM *SSL_CTX_get0_param(SSL_CTX *ctx);
+X509_VERIFY_PARAM *SSL_get0_param(SSL *ssl);
+
 #ifndef OPENSSL_NO_SRP
 int SSL_CTX_set_srp_username(SSL_CTX *ctx,char *name);
 int SSL_CTX_set_srp_password(SSL_CTX *ctx,char *password);
