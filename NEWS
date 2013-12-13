@@ -7,7 +7,7 @@
 
   Major changes between OpenSSL 1.0.1f and OpenSSL 1.0.1g [under development]
 
-      o
+      o Add TLS padding extension workaround for broken servers.
 
   Known issues in OpenSL 1.0.1f
 
