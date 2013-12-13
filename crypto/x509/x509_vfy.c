@@ -1725,7 +1725,10 @@ static int internal_verify(X509_STORE_CTX *ctx)
 	else
 		{
 		if (ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN && n == 0)
-			return check_cert_time(ctx, xi);
+			{
+			xs = xi;
+			goto check_cert;
+			}
 		if (n <= 0)
 			{
 			ctx->error=X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE;
@@ -1776,6 +1779,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
 
 		xs->valid = 1;
 
+		check_cert:
 		ok = check_cert_time(ctx, xs);
 		if (!ok)
 			goto end;
