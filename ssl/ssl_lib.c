@@ -535,6 +535,16 @@ int SSL_set1_param(SSL *ssl, X509_VERIFY_PARAM *vpm)
 	return X509_VERIFY_PARAM_set1(ssl->param, vpm);
 	}
 
+X509_VERIFY_PARAM *SSL_CTX_get0_param(SSL_CTX *ctx)
+	{
+	return ctx->param;
+	}
+
+X509_VERIFY_PARAM *SSL_get0_param(SSL *ssl)
+	{
+	return ssl->param;
+	}
+
 void SSL_certs_clear(SSL *s)
 	{
 	ssl_cert_clear_certs(s->cert);
