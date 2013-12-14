@@ -915,18 +915,19 @@ int tls1_final_finish_mac(SSL *s,
 		if (mask & ssl_get_algorithm2(s))
 			{
 			int hashsize = EVP_MD_size(md);
-			if (hashsize < 0 || hashsize > (int)(sizeof buf - (size_t)(q-buf)))
+			EVP_MD_CTX *hdgst = s->s3->handshake_dgst[idx];
+			if (!hdgst || hashsize < 0 || hashsize > (int)(sizeof buf - (size_t)(q-buf)))
 				{
 				/* internal error: 'buf' is too small for this cipersuite! */
 				err = 1;
 				}
 			else
 				{
-				EVP_MD_CTX_copy_ex(&ctx,s->s3->handshake_dgst[idx]);
-				EVP_DigestFinal_ex(&ctx,q,&i);
-				if (i != (unsigned int)hashsize) /* can't really happen */
+				if (!EVP_MD_CTX_copy_ex(&ctx, hdgst) ||
+					!EVP_DigestFinal_ex(&ctx,q,&i) ||
+					(i != (unsigned int)hashsize))
 					err = 1;
-				q+=i;
+				q+=hashsize;
 				}
 			}
 		}
