@@ -695,7 +695,7 @@ int ssl3_setup_read_buffer(SSL *s)
 			len += SSL3_RT_MAX_EXTRA;
 			}
 #ifndef OPENSSL_NO_COMP
-		if (!(s->options & SSL_OP_NO_COMPRESSION))
+		if (ssl_allow_compression(s))
 			len += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
 #endif
 		if ((p=freelist_extract(s->ctx, 1, len)) == NULL)
@@ -732,7 +732,7 @@ int ssl3_setup_write_buffer(SSL *s)
 			+ SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD
 			+ headerlen + align;
 #ifndef OPENSSL_NO_COMP
-		if (!(s->options & SSL_OP_NO_COMPRESSION))
+		if (ssl_allow_compression(s))
 			len += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
 #endif
 		if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS))
@@ -780,5 +780,12 @@ int ssl3_release_read_buffer(SSL *s)
 		s->s3->rbuf.buf = NULL;
 		}
 	return 1;
+	}
+
+int ssl_allow_compression(SSL *s)
+	{
+	if (s->options & SSL_OP_NO_COMPRESSION)
+		return 0;
+	return ssl_security(s, SSL_SECOP_COMPRESSION, 0, 0, NULL);
 	}
 

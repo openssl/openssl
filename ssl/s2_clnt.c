@@ -1056,6 +1056,12 @@ int ssl2_set_certificate(SSL *s, int type, int len, const unsigned char *data)
 	ERR_clear_error(); /* but we keep s->verify_result */
 	s->session->verify_result = s->verify_result;
 
+	if (i > 1)
+		{
+		SSLerr(SSL_F_SSL2_SET_CERTIFICATE, i);
+		goto err;
+		}
+
 	/* server's cert for this session */
 	sc=ssl_sess_cert_new();
 	if (sc == NULL)

@@ -157,6 +157,11 @@
 extern "C" {
 #endif
 
+/* Default security level if not overriden at config time */
+#ifndef OPENSSL_TLS_SECURITY_LEVEL
+#define OPENSSL_TLS_SECURITY_LEVEL 1
+#endif
+
 #define TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES	0
 
 #define TLS1_2_VERSION			0x0303

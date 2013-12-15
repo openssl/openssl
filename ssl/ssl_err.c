@@ -1,6 +1,6 @@
 /* ssl/ssl_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2013 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2014 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -198,10 +198,12 @@ static ERR_STRING_DATA SSL_str_functs[]=
 {ERR_FUNC(SSL_F_SSL_BAD_METHOD),	"ssl_bad_method"},
 {ERR_FUNC(SSL_F_SSL_BUILD_CERT_CHAIN),	"ssl_build_cert_chain"},
 {ERR_FUNC(SSL_F_SSL_BYTES_TO_CIPHER_LIST),	"ssl_bytes_to_cipher_list"},
+{ERR_FUNC(SSL_F_SSL_CERT_ADD0_CHAIN_CERT),	"ssl_cert_add0_chain_cert"},
 {ERR_FUNC(SSL_F_SSL_CERT_DUP),	"ssl_cert_dup"},
 {ERR_FUNC(SSL_F_SSL_CERT_INST),	"ssl_cert_inst"},
 {ERR_FUNC(SSL_F_SSL_CERT_INSTANTIATE),	"SSL_CERT_INSTANTIATE"},
 {ERR_FUNC(SSL_F_SSL_CERT_NEW),	"ssl_cert_new"},
+{ERR_FUNC(SSL_F_SSL_CERT_SET0_CHAIN),	"ssl_cert_set0_chain"},
 {ERR_FUNC(SSL_F_SSL_CHECK_PRIVATE_KEY),	"SSL_check_private_key"},
 {ERR_FUNC(SSL_F_SSL_CHECK_SERVERHELLO_TLSEXT),	"SSL_CHECK_SERVERHELLO_TLSEXT"},
 {ERR_FUNC(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG),	"ssl_check_srvr_ecc_cert_and_alg"},
@@ -365,6 +367,8 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {ERR_REASON(SSL_R_BN_LIB)                ,"bn lib"},
 {ERR_REASON(SSL_R_CA_DN_LENGTH_MISMATCH) ,"ca dn length mismatch"},
 {ERR_REASON(SSL_R_CA_DN_TOO_LONG)        ,"ca dn too long"},
+{ERR_REASON(SSL_R_CA_KEY_TOO_SMALL)      ,"ca key too small"},
+{ERR_REASON(SSL_R_CA_MD_TOO_WEAK)        ,"ca md too weak"},
 {ERR_REASON(SSL_R_CCS_RECEIVED_EARLY)    ,"ccs received early"},
 {ERR_REASON(SSL_R_CERTIFICATE_VERIFY_FAILED),"certificate verify failed"},
 {ERR_REASON(SSL_R_CERT_CB_ERROR)         ,"cert cb error"},
@@ -386,6 +390,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {ERR_REASON(SSL_R_DATA_LENGTH_TOO_LONG)  ,"data length too long"},
 {ERR_REASON(SSL_R_DECRYPTION_FAILED)     ,"decryption failed"},
 {ERR_REASON(SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC),"decryption failed or bad record mac"},
+{ERR_REASON(SSL_R_DH_KEY_TOO_SMALL)      ,"dh key too small"},
 {ERR_REASON(SSL_R_DH_PUBLIC_VALUE_LENGTH_IS_WRONG),"dh public value length is wrong"},
 {ERR_REASON(SSL_R_DIGEST_CHECK_FAILED)   ,"digest check failed"},
 {ERR_REASON(SSL_R_DTLS_MESSAGE_TOO_BIG)  ,"dtls message too big"},
@@ -395,6 +400,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {ERR_REASON(SSL_R_ECC_CERT_SHOULD_HAVE_RSA_SIGNATURE),"ecc cert should have rsa signature"},
 {ERR_REASON(SSL_R_ECC_CERT_SHOULD_HAVE_SHA1_SIGNATURE),"ecc cert should have sha1 signature"},
 {ERR_REASON(SSL_R_ECGROUP_TOO_LARGE_FOR_CIPHER),"ecgroup too large for cipher"},
+{ERR_REASON(SSL_R_EE_KEY_TOO_SMALL)      ,"ee key too small"},
 {ERR_REASON(SSL_R_EMPTY_SRTP_PROTECTION_PROFILE_LIST),"empty srtp protection profile list"},
 {ERR_REASON(SSL_R_ENCRYPTED_LENGTH_TOO_LONG),"encrypted length too long"},
 {ERR_REASON(SSL_R_ERROR_GENERATING_TMP_RSA_KEY),"error generating tmp rsa key"},
@@ -422,6 +428,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {ERR_REASON(SSL_R_INVALID_TICKET_KEYS_LENGTH),"invalid ticket keys length"},
 {ERR_REASON(SSL_R_INVALID_TRUST)         ,"invalid trust"},
 {ERR_REASON(SSL_R_KEY_ARG_TOO_LONG)      ,"key arg too long"},
+{ERR_REASON(SSL_R_KEY_TOO_SMALL)         ,"key too small"},
 {ERR_REASON(SSL_R_KRB5)                  ,"krb5"},
 {ERR_REASON(SSL_R_KRB5_C_CC_PRINC)       ,"krb5 client cc principal (no tkt?)"},
 {ERR_REASON(SSL_R_KRB5_C_GET_CRED)       ,"krb5 client get cred"},
@@ -623,6 +630,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {ERR_REASON(SSL_R_UNSUPPORTED_SSL_VERSION),"unsupported ssl version"},
 {ERR_REASON(SSL_R_UNSUPPORTED_STATUS_TYPE),"unsupported status type"},
 {ERR_REASON(SSL_R_USE_SRTP_NOT_NEGOTIATED),"use srtp not negotiated"},
+{ERR_REASON(SSL_R_VERSION_TOO_LOW)       ,"version too low"},
 {ERR_REASON(SSL_R_WRITE_BIO_NOT_SET)     ,"write bio not set"},
 {ERR_REASON(SSL_R_WRONG_CERTIFICATE_TYPE),"wrong certificate type"},
 {ERR_REASON(SSL_R_WRONG_CIPHER_RETURNED) ,"wrong cipher returned"},

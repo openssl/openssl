@@ -259,10 +259,13 @@ static int ssl23_no_ssl2_ciphers(SSL *s)
 	SSL_CIPHER *cipher;
 	STACK_OF(SSL_CIPHER) *ciphers;
 	int i;
+	ssl_set_client_disabled(s);
 	ciphers = SSL_get_ciphers(s);
 	for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++)
 		{
 		cipher = sk_SSL_CIPHER_value(ciphers, i);
+		if (ssl_cipher_disabled(s, cipher, SSL_SECOP_CIPHER_SUPPORTED))
+			continue;
 		if (cipher->algorithm_ssl == SSL_SSLV2)
 			return 0;
 		}
@@ -309,6 +312,8 @@ static int ssl23_client_hello(SSL *s)
 
 	ssl2_compat = (options & SSL_OP_NO_SSLv2) ? 0 : 1;
 
+	if (ssl2_compat && !ssl_security(s, SSL_SECOP_SSL2_COMPAT, 0, 0, NULL))
+		ssl2_compat = 0;
 	if (ssl2_compat && ssl23_no_ssl2_ciphers(s))
 		ssl2_compat = 0;
 
@@ -533,8 +538,7 @@ static int ssl23_client_hello(SSL *s)
 #ifdef OPENSSL_NO_COMP
 			*(p++)=1;
 #else
-			if ((s->options & SSL_OP_NO_COMPRESSION)
-						|| !s->ctx->comp_methods)
+			if (!ssl_allow_compression(s) || !s->ctx->comp_methods)
 				j=0;
 			else
 				j=sk_SSL_COMP_num(s->ctx->comp_methods);
@@ -747,6 +751,12 @@ static int ssl23_get_server_hello(SSL *s)
 		else
 			{
 			SSLerr(SSL_F_SSL23_GET_SERVER_HELLO,SSL_R_UNSUPPORTED_PROTOCOL);
+			goto err;
+			}
+
+		if (!ssl_security(s, SSL_SECOP_VERSION, 0, s->version, NULL))
+			{
+			SSLerr(SSL_F_SSL23_GET_SERVER_HELLO,SSL_R_VERSION_TOO_LOW);
 			goto err;
 			}
 

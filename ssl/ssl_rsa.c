@@ -68,11 +68,19 @@ static int ssl_set_cert(CERT *c, X509 *x509);
 static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey);
 int SSL_use_certificate(SSL *ssl, X509 *x)
 	{
+	int rv;
 	if (x == NULL)
 		{
 		SSLerr(SSL_F_SSL_USE_CERTIFICATE,ERR_R_PASSED_NULL_PARAMETER);
 		return(0);
 		}
+	rv = ssl_security_cert(ssl, NULL, x, 0, 1);
+	if (rv != 1)
+		{
+		SSLerr(SSL_F_SSL_USE_CERTIFICATE, rv);
+		return 0;
+		}
+
 	if (!ssl_cert_inst(&ssl->cert))
 		{
 		SSLerr(SSL_F_SSL_USE_CERTIFICATE,ERR_R_MALLOC_FAILURE);
@@ -393,10 +401,17 @@ int SSL_use_PrivateKey_ASN1(int type, SSL *ssl, const unsigned char *d, long len
 
 int SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x)
 	{
+	int rv;
 	if (x == NULL)
 		{
 		SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE,ERR_R_PASSED_NULL_PARAMETER);
 		return(0);
+		}
+	rv = ssl_security_cert(NULL, ctx, x, 0, 1);
+	if (rv != 1)
+		{
+		SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE, rv);
+		return 0;
 		}
 	if (!ssl_cert_inst(&ctx->cert))
 		{

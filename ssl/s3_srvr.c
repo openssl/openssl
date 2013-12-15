@@ -272,6 +272,14 @@ int ssl3_accept(SSL *s)
 				SSLerr(SSL_F_SSL3_ACCEPT, ERR_R_INTERNAL_ERROR);
 				return -1;
 				}
+
+			if (!ssl_security(s, SSL_SECOP_VERSION, 0,
+							s->version, NULL))
+				{
+				SSLerr(SSL_F_SSL3_ACCEPT, SSL_R_VERSION_TOO_LOW);
+				return -1;
+				}
+
 			s->type=SSL_ST_ACCEPT;
 
 			if (s->init_buf == NULL)
@@ -1305,7 +1313,7 @@ int ssl3_get_client_hello(SSL *s)
 		int m, comp_id = s->session->compress_meth;
 		/* Perform sanity checks on resumed compression algorithm */
 		/* Can't disable compression */
-		if (s->options & SSL_OP_NO_COMPRESSION)
+		if (!ssl_allow_compression(s))
 			{
 			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_INCONSISTENT_COMPRESSION);
 			goto f_err;
@@ -1340,7 +1348,7 @@ int ssl3_get_client_hello(SSL *s)
 		}
 	else if (s->hit)
 		comp = NULL;
-	else if (!(s->options & SSL_OP_NO_COMPRESSION) && s->ctx->comp_methods)
+	else if (ssl_allow_compression(s) && s->ctx->comp_methods)
 		{ /* See if we have a match */
 		int m,nn,o,v,done=0;
 
@@ -1701,7 +1709,13 @@ int ssl3_send_server_key_exchange(SSL *s)
 				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,SSL_R_MISSING_TMP_DH_KEY);
 				goto f_err;
 				}
-
+			if (!ssl_security(s, SSL_SECOP_TMP_DH,
+						DH_security_bits(dhp), 0, dhp))
+				{
+				al=SSL_AD_HANDSHAKE_FAILURE;
+				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,SSL_R_DH_KEY_TOO_SMALL);
+				goto f_err;
+				}
 			if (s->s3->tmp.dh != NULL)
 				{
 				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
@@ -2115,9 +2129,13 @@ int ssl3_send_certificate_request(SSL *s)
 		if (SSL_USE_SIGALGS(s))
 			{
 			const unsigned char *psigs;
+			unsigned char *etmp = p;
 			nl = tls12_get_psigalgs(s, &psigs);
-			s2n(nl, p);
-			memcpy(p, psigs, nl);
+			/* Skip over length for now */
+			p += 2;
+			nl = tls12_copy_sigalgs(s, p, psigs, nl);
+			/* Now fill in length */
+			s2n(nl, etmp);
 			p += nl;
 			n += nl + 2;
 			}
@@ -3413,6 +3431,7 @@ int ssl3_get_client_certificate(SSL *s)
 		}
 	else
 		{
+		EVP_PKEY *pkey;
 		i=ssl_verify_cert_chain(s,sk);
 		if (i <= 0)
 			{
@@ -3420,6 +3439,21 @@ int ssl3_get_client_certificate(SSL *s)
 			SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE,SSL_R_CERTIFICATE_VERIFY_FAILED);
 			goto f_err;
 			}
+		if (i > 1)
+			{
+			SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE, i);
+			al = SSL_AD_HANDSHAKE_FAILURE;
+			goto f_err;
+			}
+		pkey = X509_get_pubkey(sk_X509_value(sk, 0));
+		if (pkey == NULL)
+			{
+			al=SSL3_AD_HANDSHAKE_FAILURE;
+			SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE,
+						SSL_R_UNKNOWN_CERTIFICATE_TYPE);
+			goto f_err;
+			}
+		EVP_PKEY_free(pkey);
 		}
 
 	if (s->session->peer != NULL) /* This should not be needed */

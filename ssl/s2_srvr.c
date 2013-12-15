@@ -1053,6 +1053,12 @@ static int request_certificate(SSL *s)
 
 	i=ssl_verify_cert_chain(s,sk);
 
+	if (i > 1)
+		{
+		SSLerr(SSL_F_REQUEST_CERTIFICATE, i);
+		goto msg_end;
+		}
+
 	if (i > 0)	/* we like the packet, now check the chksum */
 		{
 		EVP_MD_CTX ctx;

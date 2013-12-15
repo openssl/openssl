@@ -441,6 +441,12 @@ int ssl23_get_client_hello(SSL *s)
 		}
 #endif
 
+	if (!ssl_security(s, SSL_SECOP_VERSION, 0, s->version, NULL))
+		{
+		SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,SSL_R_VERSION_TOO_LOW);
+		goto err;
+		}
+
 	if (s->state == SSL23_ST_SR_CLNT_HELLO_B)
 		{
 		/* we have SSLv3/TLSv1 in an SSLv2 header
