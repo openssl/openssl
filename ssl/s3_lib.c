@@ -3228,6 +3228,12 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 				SSLerr(SSL_F_SSL3_CTRL, ERR_R_PASSED_NULL_PARAMETER);
 				return(ret);
 				}
+			if (!ssl_security(s, SSL_SECOP_TMP_DH,
+						DH_security_bits(dh), 0, dh))
+				{
+				SSLerr(SSL_F_SSL3_CTRL, SSL_R_DH_KEY_TOO_SMALL);
+				return(ret);
+				}
 			if ((dh = DHparams_dup(dh)) == NULL)
 				{
 				SSLerr(SSL_F_SSL3_CTRL, ERR_R_DH_LIB);
@@ -3415,17 +3421,17 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 
 	case SSL_CTRL_CHAIN:
 		if (larg)
-			return ssl_cert_set1_chain(s->cert,
+			return ssl_cert_set1_chain(s, NULL,
 						(STACK_OF (X509) *)parg);
 		else
-			return ssl_cert_set0_chain(s->cert,
+			return ssl_cert_set0_chain(s, NULL,
 						(STACK_OF (X509) *)parg);
 
 	case SSL_CTRL_CHAIN_CERT:
 		if (larg)
-			return ssl_cert_add1_chain_cert(s->cert, (X509 *)parg);
+			return ssl_cert_add1_chain_cert(s, NULL, (X509 *)parg);
 		else
-			return ssl_cert_add0_chain_cert(s->cert, (X509 *)parg);
+			return ssl_cert_add0_chain_cert(s, NULL, (X509 *)parg);
 
 	case SSL_CTRL_GET_CHAIN_CERTS:
 		*(STACK_OF(X509) **)parg = s->cert->key->chain;
@@ -3533,7 +3539,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		return ssl3_set_req_cert_type(s->cert, parg, larg);
 
 	case SSL_CTRL_BUILD_CERT_CHAIN:
-		return ssl_build_cert_chain(s->cert, s->ctx->cert_store, larg);
+		return ssl_build_cert_chain(s, NULL, larg);
 
 	case SSL_CTRL_SET_VERIFY_CERT_STORE:
 		return ssl_cert_set_cert_store(s->cert, parg, 0, larg);
@@ -3736,6 +3742,12 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 		DH *new=NULL,*dh;
 
 		dh=(DH *)parg;
+		if (!ssl_ctx_security(ctx, SSL_SECOP_TMP_DH,
+						DH_security_bits(dh), 0, dh))
+			{
+			SSLerr(SSL_F_SSL3_CTX_CTRL, SSL_R_DH_KEY_TOO_SMALL);
+			return 0;
+			}
 		if ((new=DHparams_dup(dh)) == NULL)
 			{
 			SSLerr(SSL_F_SSL3_CTX_CTRL,ERR_R_DH_LIB);
@@ -3911,7 +3923,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 		return ssl3_set_req_cert_type(ctx->cert, parg, larg);
 
 	case SSL_CTRL_BUILD_CERT_CHAIN:
-		return ssl_build_cert_chain(ctx->cert, ctx->cert_store, larg);
+		return ssl_build_cert_chain(NULL, ctx, larg);
 
 	case SSL_CTRL_SET_VERIFY_CERT_STORE:
 		return ssl_cert_set_cert_store(ctx->cert, parg, 0, larg);
@@ -3948,17 +3960,17 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 
 	case SSL_CTRL_CHAIN:
 		if (larg)
-			return ssl_cert_set1_chain(ctx->cert,
+			return ssl_cert_set1_chain(NULL, ctx,
 						(STACK_OF (X509) *)parg);
 		else
-			return ssl_cert_set0_chain(ctx->cert,
+			return ssl_cert_set0_chain(NULL, ctx,
 						(STACK_OF (X509) *)parg);
 
 	case SSL_CTRL_CHAIN_CERT:
 		if (larg)
-			return ssl_cert_add1_chain_cert(ctx->cert, (X509 *)parg);
+			return ssl_cert_add1_chain_cert(NULL, ctx, (X509 *)parg);
 		else
-			return ssl_cert_add0_chain_cert(ctx->cert, (X509 *)parg);
+			return ssl_cert_add0_chain_cert(NULL, ctx, (X509 *)parg);
 
 	case SSL_CTRL_GET_CHAIN_CERTS:
 		*(STACK_OF(X509) **)parg = ctx->cert->key->chain;
@@ -4203,6 +4215,10 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 		ii=sk_SSL_CIPHER_find(allow,c);
 		if (ii >= 0)
 			{
+			/* Check security callback permits this cipher */
+			if (!ssl_security(s, SSL_SECOP_CIPHER_SHARED,
+						c->strength_bits, 0, c))
+				continue;
 #if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_TLSEXT)
 			if ((alg_k & SSL_kECDHE) && (alg_a & SSL_aECDSA) && s->s3->is_probably_safari)
 				{
@@ -4220,14 +4236,8 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 	{
 	int ret=0;
-	const unsigned char *sig;
-	size_t i, siglen;
-	int have_rsa_sign = 0, have_dsa_sign = 0;
-#ifndef OPENSSL_NO_ECDSA
-	int have_ecdsa_sign = 0;
-#endif
 	int nostrict = 1;
-	unsigned long alg_k;
+	unsigned long alg_k, alg_a = 0;
 
 	/* If we have custom certificate types set, use them */
 	if (s->cert->ctypes)
@@ -4235,28 +4245,10 @@ int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 		memcpy(p, s->cert->ctypes, s->cert->ctype_num);
 		return (int)s->cert->ctype_num;
 		}
-	/* get configured sigalgs */
-	siglen = tls12_get_psigalgs(s, &sig);
+	/* Get mask of algorithms disabled by signature list */
+	ssl_set_sig_mask(&alg_a, s, SSL_SECOP_SIGALG_MASK);
 	if (s->cert->cert_flags & SSL_CERT_FLAGS_CHECK_TLS_STRICT)
 		nostrict = 0;
-	for (i = 0; i < siglen; i+=2, sig+=2)
-		{
-		switch(sig[1])
-			{
-		case TLSEXT_signature_rsa:
-			have_rsa_sign = 1;
-			break;
-
-		case TLSEXT_signature_dsa:
-			have_dsa_sign = 1;
-			break;
-#ifndef OPENSSL_NO_ECDSA
-		case TLSEXT_signature_ecdsa:
-			have_ecdsa_sign = 1;
-			break;
-#endif
-			}
-		}
 
 	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 
@@ -4279,11 +4271,11 @@ int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 		/* Since this refers to a certificate signed with an RSA
 		 * algorithm, only check for rsa signing in strict mode.
 		 */
-		if (nostrict || have_rsa_sign)
+		if (nostrict || !(alg_a & SSL_aRSA))
 			p[ret++]=SSL3_CT_RSA_FIXED_DH;
 #  endif
 #  ifndef OPENSSL_NO_DSA
-		if (nostrict || have_dsa_sign)
+		if (nostrict || !(alg_a & SSL_aDSS))
 			p[ret++]=SSL3_CT_DSS_FIXED_DH;
 #  endif
 		}
@@ -4299,19 +4291,19 @@ int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 		}
 #endif /* !OPENSSL_NO_DH */
 #ifndef OPENSSL_NO_RSA
-	if (have_rsa_sign)
+	if (!(alg_a & SSL_aRSA))
 		p[ret++]=SSL3_CT_RSA_SIGN;
 #endif
 #ifndef OPENSSL_NO_DSA
-	if (have_dsa_sign)
+	if (!(alg_a & SSL_aDSS))
 		p[ret++]=SSL3_CT_DSS_SIGN;
 #endif
 #ifndef OPENSSL_NO_ECDH
 	if ((alg_k & (SSL_kECDHr|SSL_kECDHe)) && (s->version >= TLS1_VERSION))
 		{
-		if (nostrict || have_rsa_sign)
+		if (nostrict || !(alg_a & SSL_aRSA))
 			p[ret++]=TLS_CT_RSA_FIXED_ECDH;
-		if (nostrict || have_ecdsa_sign)
+		if (nostrict || !(alg_a & SSL_aECDSA))
 			p[ret++]=TLS_CT_ECDSA_FIXED_ECDH;
 		}
 #endif
@@ -4322,7 +4314,7 @@ int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 	 */
 	if (s->version >= TLS1_VERSION)
 		{
-		if (have_ecdsa_sign)
+		if (!(alg_a & SSL_aECDSA))
 			p[ret++]=TLS_CT_ECDSA_SIGN;
 		}
 #endif	

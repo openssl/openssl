@@ -1353,7 +1353,7 @@ STACK_OF(SSL_CIPHER) *SSL_get1_supported_ciphers(SSL *s)
 	for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++)
 		{
 		const SSL_CIPHER *c = sk_SSL_CIPHER_value(ciphers, i);
-		if (!ssl_cipher_disabled(s, c))
+		if (!ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED))
 			{
 			if (!sk)
 				sk = sk_SSL_CIPHER_new_null();
@@ -1498,7 +1498,7 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p,
 		{
 		c=sk_SSL_CIPHER_value(sk,i);
 		/* Skip disabled ciphers */
-		if (ssl_cipher_disabled(s, c))
+		if (ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED))
 			continue;
 #ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
 		if (c->id == SSL3_CK_SCSV)
@@ -3639,6 +3639,67 @@ int SSL_is_server(SSL *s)
 	{
 	return s->server;
 	}
+
+void SSL_set_security_level(SSL *s, int level)
+	{
+	s->cert->sec_level = level;
+	}
+
+int SSL_get_security_level(const SSL *s)
+	{
+	return s->cert->sec_level;
+	}
+
+void SSL_set_security_callback(SSL *s, int (*cb)(SSL *s, SSL_CTX *ctx, int op, int bits, int nid, void *other, void *ex))
+	{
+	s->cert->sec_cb = cb;
+	}
+
+int (*SSL_get_security_callback(const SSL *s))(SSL *s, SSL_CTX *ctx, int op, int bits, int nid, void *other, void *ex)
+	{
+	return s->cert->sec_cb;
+	}
+
+void SSL_set0_security_ex_data(SSL *s, void *ex)
+	{
+	s->cert->sec_ex = ex;
+	}
+
+void *SSL_get0_security_ex_data(const SSL *s)
+	{
+	return s->cert->sec_ex;
+	}
+
+void SSL_CTX_set_security_level(SSL_CTX *ctx, int level)
+	{
+	ctx->cert->sec_level = level;
+	}
+
+int SSL_CTX_get_security_level(const SSL_CTX *ctx)
+	{
+	return ctx->cert->sec_level;
+	}
+
+void SSL_CTX_set_security_callback(SSL_CTX *ctx, int (*cb)(SSL *s, SSL_CTX *ctx, int op, int bits, int nid, void *other, void *ex))
+	{
+	ctx->cert->sec_cb = cb;
+	}
+
+int (*SSL_CTX_get_security_callback(const SSL_CTX *ctx))(SSL *s, SSL_CTX *ctx, int op, int bits, int nid, void *other, void *ex)
+	{
+	return ctx->cert->sec_cb;
+	}
+
+void SSL_CTX_set0_security_ex_data(SSL_CTX *ctx, void *ex)
+	{
+	ctx->cert->sec_ex = ex;
+	}
+
+void *SSL_CTX_get0_security_ex_data(const SSL_CTX *ctx)
+	{
+	return ctx->cert->sec_ex;
+	}
+
 
 #if defined(_WINDLL) && defined(OPENSSL_SYS_WIN16)
 #include "../crypto/bio/bss_file.c"

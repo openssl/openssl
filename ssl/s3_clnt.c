@@ -240,6 +240,13 @@ int ssl3_connect(SSL *s)
 				ret = -1;
 				goto end;
 				}
+
+			if (!ssl_security(s, SSL_SECOP_VERSION, 0,
+							s->version, NULL))
+				{
+				SSLerr(SSL_F_SSL3_CONNECT, SSL_R_VERSION_TOO_LOW);
+				return -1;
+				}
 				
 			/* s->version=SSL3_VERSION; */
 			s->type=SSL_ST_CONNECT;
@@ -871,8 +878,7 @@ int ssl3_client_hello(SSL *s)
 		*(p++)=1;
 #else
 
-		if ((s->options & SSL_OP_NO_COMPRESSION)
-					|| !s->ctx->comp_methods)
+		if (!ssl_allow_compression(s) || !s->ctx->comp_methods)
 			j=0;
 		else
 			j=sk_SSL_COMP_num(s->ctx->comp_methods);
@@ -1079,7 +1085,7 @@ int ssl3_get_server_hello(SSL *s)
 	/* If it is a disabled cipher we didn't send it in client hello,
 	 * so return an error.
 	 */
-	if (ssl_cipher_disabled(s, c))
+	if (ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_CHECK))
 		{
 		al=SSL_AD_ILLEGAL_PARAMETER;
 		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_WRONG_CIPHER_RETURNED);
@@ -1148,7 +1154,7 @@ int ssl3_get_server_hello(SSL *s)
 		}
 	if (j == 0)
 		comp=NULL;
-	else if (s->options & SSL_OP_NO_COMPRESSION)
+	else if (!ssl_allow_compression(s))
 		{
 		al=SSL_AD_ILLEGAL_PARAMETER;
 		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_COMPRESSION_DISABLED);
@@ -1290,6 +1296,12 @@ int ssl3_get_server_certificate(SSL *s)
 		goto f_err; 
 		}
 	ERR_clear_error(); /* but we keep s->verify_result */
+	if (i > 1)
+		{
+		SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE, i);
+		al = SSL_AD_HANDSHAKE_FAILURE;
+		goto f_err;
+		}
 
 	sc=ssl_sess_cert_new();
 	if (sc == NULL) goto err;
@@ -1708,6 +1720,14 @@ int ssl3_get_key_exchange(SSL *s)
 			}
 		p+=i;
 		n-=param_len;
+
+		if (!ssl_security(s, SSL_SECOP_TMP_DH,
+						DH_security_bits(dh), 0, dh))
+			{
+			al=SSL_AD_HANDSHAKE_FAILURE;
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_DH_KEY_TOO_SMALL);
+			goto f_err;
+			}
 
 #ifndef OPENSSL_NO_RSA
 		if (alg_a & SSL_aRSA)

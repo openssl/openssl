@@ -627,6 +627,13 @@ typedef struct cert_st
 	unsigned char *ciphers_raw;
 	size_t ciphers_rawlen;
 
+	/* Security callback */
+	int (*sec_cb)(SSL *s, SSL_CTX *ctx, int op, int bits, int nid, void *other, void *ex);
+	/* Security level */
+	int sec_level;
+
+	void *sec_ex;
+
 	int references; /* >1 only if SSL_copy_session_id is used */
 	} CERT;
 
@@ -995,10 +1002,10 @@ int ssl_cipher_get_evp(const SSL_SESSION *s,const EVP_CIPHER **enc,
 int ssl_get_handshake_digest(int i,long *mask,const EVP_MD **md);
 int ssl_cipher_get_cert_index(const SSL_CIPHER *c);
 const SSL_CIPHER *ssl_get_cipher_by_char(SSL *ssl, const unsigned char *ptr);
-int ssl_cert_set0_chain(CERT *c, STACK_OF(X509) *chain);
-int ssl_cert_set1_chain(CERT *c, STACK_OF(X509) *chain);
-int ssl_cert_add0_chain_cert(CERT *c, X509 *x);
-int ssl_cert_add1_chain_cert(CERT *c, X509 *x);
+int ssl_cert_set0_chain(SSL *s, SSL_CTX *ctx, STACK_OF(X509) *chain);
+int ssl_cert_set1_chain(SSL *s, SSL_CTX *ctx, STACK_OF(X509) *chain);
+int ssl_cert_add0_chain_cert(SSL *s, SSL_CTX *ctx, X509 *x);
+int ssl_cert_add1_chain_cert(SSL *s, SSL_CTX *ctx, X509 *x);
 int ssl_cert_select_current(CERT *c, X509 *x);
 int ssl_cert_set_current(CERT *c, long arg);
 X509 *ssl_cert_get0_next_certificate(CERT *c, int first);
@@ -1006,8 +1013,12 @@ void ssl_cert_set_cert_cb(CERT *c, int (*cb)(SSL *ssl, void *arg), void *arg);
 
 int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk);
 int ssl_add_cert_chain(SSL *s, CERT_PKEY *cpk, unsigned long *l);
-int ssl_build_cert_chain(CERT *c, X509_STORE *chain_store, int flags);
+int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags);
 int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain, int ref);
+
+int ssl_security(SSL *s, int op, int bits, int nid, void *other);
+int ssl_ctx_security(SSL_CTX *ctx, int op, int bits, int nid, void *other);
+
 int ssl_undefined_function(SSL *s);
 int ssl_undefined_void_function(void);
 int ssl_undefined_const_function(const SSL *s);
@@ -1123,6 +1134,8 @@ int ssl23_write(SSL *s, const void *buf, int len);
 int ssl23_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p);
 const SSL_CIPHER *ssl23_get_cipher_by_char(const unsigned char *p);
 long ssl23_default_timeout(void );
+
+int ssl_allow_compression(SSL *s);
 
 long tls1_default_timeout(void);
 int dtls1_do_write(SSL *s,int type);
@@ -1304,6 +1317,7 @@ int tls12_get_sigandhash(unsigned char *p, const EVP_PKEY *pk,
 				const EVP_MD *md);
 int tls12_get_sigid(const EVP_PKEY *pk);
 const EVP_MD *tls12_get_hash(unsigned char hash_alg);
+void ssl_set_sig_mask(unsigned long *pmask_a, SSL *s, int op);
 
 int tls1_set_sigalgs_list(CERT *c, const char *str, int client);
 int tls1_set_sigalgs(CERT *c, const int *salg, size_t salglen, int client);
@@ -1315,6 +1329,10 @@ void tls1_set_cert_validity(SSL *s);
 #ifndef OPENSSL_NO_DH
 DH *ssl_get_auto_dh(SSL *s);
 #endif
+
+int ssl_security_cert(SSL *s, SSL_CTX *ctx, X509 *x, int vfy, int is_ee);
+int ssl_security_cert_chain(SSL *s, STACK_OF(X509) *sk, X509 *ex, int vfy);
+
 EVP_MD_CTX* ssl_replace_hash(EVP_MD_CTX **hash,const EVP_MD *md) ;
 void ssl_clear_hash_ctx(EVP_MD_CTX **hash);
 int ssl_add_serverhello_renegotiate_ext(SSL *s, unsigned char *p, int *len,
@@ -1326,12 +1344,14 @@ int ssl_add_clienthello_renegotiate_ext(SSL *s, unsigned char *p, int *len,
 int ssl_parse_clienthello_renegotiate_ext(SSL *s, unsigned char *d, int len,
 					  int *al);
 long ssl_get_algorithm2(SSL *s);
+size_t tls12_copy_sigalgs(SSL *s, unsigned char *out,
+				const unsigned char *psig, size_t psiglen);
 int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize);
 size_t tls12_get_psigalgs(SSL *s, const unsigned char **psigs);
 int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s,
 				const unsigned char *sig, EVP_PKEY *pkey);
 void ssl_set_client_disabled(SSL *s);
-int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c);
+int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c, int op);
 
 int ssl_add_clienthello_use_srtp_ext(SSL *s, unsigned char *p, int *len, int maxlen);
 int ssl_parse_clienthello_use_srtp_ext(SSL *s, unsigned char *d, int len,int *al);

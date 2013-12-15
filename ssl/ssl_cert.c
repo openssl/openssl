@@ -132,6 +132,8 @@
 #include <openssl/bn.h>
 #include "ssl_locl.h"
 
+static int ssl_security_default_callback(SSL *s, SSL_CTX *ctx, int op, int bits, int nid, void *other, void *ex);
+
 int SSL_get_ex_data_X509_STORE_CTX_idx(void)
 	{
 	static volatile int ssl_x509_store_ctx_idx= -1;
@@ -190,6 +192,9 @@ CERT *ssl_cert_new(void)
 	ret->key= &(ret->pkeys[SSL_PKEY_RSA_ENC]);
 	ret->references=1;
 	ssl_cert_set_default_md(ret);
+	ret->sec_cb = ssl_security_default_callback;
+	ret->sec_level = OPENSSL_TLS_SECURITY_LEVEL;
+	ret->sec_ex = NULL;
 	return(ret);
 	}
 
@@ -414,6 +419,10 @@ CERT *ssl_cert_dup(CERT *cert)
 
 	ret->ciphers_raw = NULL;
 
+	ret->sec_cb = cert->sec_cb;
+	ret->sec_level = cert->sec_level;
+	ret->sec_ex = cert->sec_ex;
+
 	return(ret);
 	
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_ECDH)
@@ -553,26 +562,36 @@ int ssl_cert_inst(CERT **o)
 	return(1);
 	}
 
-int ssl_cert_set0_chain(CERT *c, STACK_OF(X509) *chain)
+int ssl_cert_set0_chain(SSL *s, SSL_CTX *ctx, STACK_OF(X509) *chain)
 	{
-	CERT_PKEY *cpk = c->key;
+	int i, r;
+	CERT_PKEY *cpk = s ? s->cert->key : ctx->cert->key;
 	if (!cpk)
 		return 0;
 	if (cpk->chain)
 		sk_X509_pop_free(cpk->chain, X509_free);
+	for (i = 0; i < sk_X509_num(chain); i++)
+		{
+		r = ssl_security_cert(s, ctx, sk_X509_value(chain, i), 0, 0);
+		if (r != 1)
+			{
+			SSLerr(SSL_F_SSL_CERT_SET0_CHAIN, r);
+			return 0;
+			}
+		}
 	cpk->chain = chain;
 	return 1;
 	}
 
-int ssl_cert_set1_chain(CERT *c, STACK_OF(X509) *chain)
+int ssl_cert_set1_chain(SSL *s, SSL_CTX *ctx, STACK_OF(X509) *chain)
 	{
 	STACK_OF(X509) *dchain;
 	if (!chain)
-		return ssl_cert_set0_chain(c, NULL);
+		return ssl_cert_set0_chain(s, ctx, NULL);
 	dchain = X509_chain_up_ref(chain);
 	if (!dchain)
 		return 0;
-	if (!ssl_cert_set0_chain(c, dchain))
+	if (!ssl_cert_set0_chain(s, ctx, dchain))
 		{
 		sk_X509_pop_free(dchain, X509_free);
 		return 0;
@@ -580,11 +599,18 @@ int ssl_cert_set1_chain(CERT *c, STACK_OF(X509) *chain)
 	return 1;
 	}
 
-int ssl_cert_add0_chain_cert(CERT *c, X509 *x)
+int ssl_cert_add0_chain_cert(SSL *s, SSL_CTX *ctx, X509 *x)
 	{
-	CERT_PKEY *cpk = c->key;
+	int r;
+	CERT_PKEY *cpk = s ? s->cert->key : ctx->cert->key;
 	if (!cpk)
 		return 0;
+	r = ssl_security_cert(s, ctx, x, 0, 0);
+	if (r != 1)
+		{
+		SSLerr(SSL_F_SSL_CERT_ADD0_CHAIN_CERT, r);
+		return 0;
+		}
 	if (!cpk->chain)
 		cpk->chain = sk_X509_new_null();
 	if (!cpk->chain || !sk_X509_push(cpk->chain, x))
@@ -592,9 +618,9 @@ int ssl_cert_add0_chain_cert(CERT *c, X509 *x)
 	return 1;
 	}
 
-int ssl_cert_add1_chain_cert(CERT *c, X509 *x)
+int ssl_cert_add1_chain_cert(SSL *s, SSL_CTX *ctx, X509 *x)
 	{
-	if (!ssl_cert_add0_chain_cert(c, x))
+	if (!ssl_cert_add0_chain_cert(s, ctx, x))
 		return 0;
 	CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
 	return 1;
@@ -790,6 +816,14 @@ int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk)
 		{
 #ifndef OPENSSL_NO_X509_VERIFY
 		i=X509_verify_cert(&ctx);
+#if 0
+		/* Dummy error calls so mkerr generates them */
+		SSLerr(SSL_F_SSL_VERIFY_CERT_CHAIN,SSL_R_EE_KEY_TOO_SMALL);
+		SSLerr(SSL_F_SSL_VERIFY_CERT_CHAIN,SSL_R_CA_KEY_TOO_SMALL);
+		SSLerr(SSL_F_SSL_VERIFY_CERT_CHAIN,SSL_R_CA_MD_TOO_WEAK);
+#endif
+		if (i > 0)
+			i = ssl_security_cert_chain(s, ctx.chain, NULL, 1);
 #else
 		i=0;
 		ctx.error=X509_V_ERR_APPLICATION_VERIFICATION;
@@ -1159,6 +1193,13 @@ int ssl_add_cert_chain(SSL *s, CERT_PKEY *cpk, unsigned long *l)
 		X509_verify_cert(&xs_ctx);
 		/* Don't leave errors in the queue */
 		ERR_clear_error();
+		i = ssl_security_cert_chain(s, xs_ctx.chain, NULL, 0);
+		if (i != 1)
+			{
+			X509_STORE_CTX_cleanup(&xs_ctx);
+			SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, i);
+			return 0;
+			}
 		for (i=0; i < sk_X509_num(xs_ctx.chain); i++)
 			{
 			x = sk_X509_value(xs_ctx.chain, i);
@@ -1173,6 +1214,12 @@ int ssl_add_cert_chain(SSL *s, CERT_PKEY *cpk, unsigned long *l)
 		}
 	else
 		{
+		i = ssl_security_cert_chain(s, extra_certs, x, 0);
+		if (i != 1)
+			{
+			SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, i);
+			return 0;
+			}
 		if (!ssl_add_cert_to_buf(buf, l, x))
 			return 0;
 		for (i=0; i<sk_X509_num(extra_certs); i++)
@@ -1186,9 +1233,11 @@ int ssl_add_cert_chain(SSL *s, CERT_PKEY *cpk, unsigned long *l)
 	}
 
 /* Build a certificate chain for current certificate */
-int ssl_build_cert_chain(CERT *c, X509_STORE *chain_store, int flags)
+int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags)
 	{
+	CERT *c = s ? s->cert : ctx->cert;
 	CERT_PKEY *cpk = c->key;
+	X509_STORE *chain_store = NULL;
 	X509_STORE_CTX xs_ctx;
 	STACK_OF(X509) *chain = NULL, *untrusted = NULL;
 	X509 *x;
@@ -1232,6 +1281,10 @@ int ssl_build_cert_chain(CERT *c, X509_STORE *chain_store, int flags)
 		{
 		if (c->chain_store)
 			chain_store = c->chain_store;
+		else if (s)
+			chain_store = s->ctx->cert_store;
+		else
+			chain_store = ctx->cert_store;
 
 		if (flags & SSL_BUILD_CHAIN_FLAG_UNTRUSTED)
 			untrusted = cpk->chain;
@@ -1266,8 +1319,6 @@ int ssl_build_cert_chain(CERT *c, X509_STORE *chain_store, int flags)
 		goto err;
 		}
 	X509_STORE_CTX_cleanup(&xs_ctx);
-	if (cpk->chain)
-		sk_X509_pop_free(cpk->chain, X509_free);
 	/* Remove EE certificate from chain */
 	x = sk_X509_shift(chain);
 	X509_free(x);
@@ -1285,6 +1336,23 @@ int ssl_build_cert_chain(CERT *c, X509_STORE *chain_store, int flags)
 				}
 			}
 		}
+	/* Check security level of all CA certificates: EE will have been
+	 * checked already.
+	 */
+	for (i = 0; i < sk_X509_num(chain); i++)
+		{
+		x = sk_X509_value(chain, i);
+		rv = ssl_security_cert(s, ctx, x, 0, 0);
+		if (rv != 1)
+			{
+			SSLerr(SSL_F_SSL_BUILD_CERT_CHAIN, rv);
+			sk_X509_pop_free(chain, X509_free);
+			rv = 0;
+			goto err;
+			}
+		}
+	if (cpk->chain)
+		sk_X509_pop_free(cpk->chain, X509_free);
 	cpk->chain = chain;
 	if (rv == 0)
 		rv = 1;
@@ -1310,3 +1378,86 @@ int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain, int ref)
 	return 1;
 	}
 
+static int ssl_security_default_callback(SSL *s, SSL_CTX *ctx, int op, int bits, int nid, void *other, void *ex)
+	{
+	int level, minbits;
+	static const int minbits_table[5] = {80, 112, 128, 192, 256};
+	if (ctx)
+		level = SSL_CTX_get_security_level(ctx);
+	else
+		level = SSL_get_security_level(s);
+	/* Level 0: anything goes */
+	if (level <= 0)
+		return 1;
+	if (level > 5)
+		level = 5;
+	minbits = minbits_table[level - 1];
+	switch (op)
+		{
+	case SSL_SECOP_CIPHER_SUPPORTED:
+	case SSL_SECOP_CIPHER_SHARED:
+	case SSL_SECOP_CIPHER_CHECK:
+		{
+		const SSL_CIPHER *c = other;
+		/* No ciphers below security level */
+		if (bits < minbits)
+			return 0;
+		/* No SSLv2 ciphers */
+		if ((SSL_CIPHER_get_id(c) >> 24) == 0x2)
+			return 0;
+		/* No unauthenticated ciphersuites */
+		if (c->algorithm_auth & SSL_aNULL)
+			return 0;
+		/* No MD5 mac ciphersuites */
+		if (c->algorithm_mac & SSL_MD5)
+			return 0;
+		/* Level 2: no RC4 */
+		if (level >= 2 && c->algorithm_enc == SSL_RC4)
+			return 0;
+		/* Level 3: forward secure ciphersuites only */
+		if (level >= 3 && !(c->algorithm_mkey & (SSL_kEDH|SSL_kEECDH)))
+			return 0;
+		break;
+		}
+	case SSL_SECOP_VERSION:
+		/* SSLv2 allowed only on level zero */
+		if (nid == SSL2_VERSION)
+			return 0;
+		/* SSLv3 not allowed on level 2 */
+		if (nid <= SSL3_VERSION && level >= 2)
+			return 0;
+		/* TLS v1.1 and above only for level 3 */
+		if (nid <= TLS1_VERSION && level >= 3)
+			return 0;
+		/* TLS v1.2 only for level 4 and above */
+		if (nid <= TLS1_1_VERSION && level >= 4)
+			return 0;
+		break;
+
+	case SSL_SECOP_COMPRESSION:
+		if (level >= 2)
+			return 0;
+		break;
+	case SSL_SECOP_TICKET:
+		if (level >= 3)
+			return 0;
+		break;
+	case SSL_SECOP_SSL2_COMPAT:
+		/* SSLv2 compatible client hello only for level zero */
+		return 0;
+	default:
+		if (bits < minbits)
+			return 0;
+		}
+	return 1;
+	}
+
+int ssl_security(SSL *s, int op, int bits, int nid, void *other)
+	{
+	return s->cert->sec_cb(s, NULL, op, bits, nid, other, s->cert->sec_ex);
+	}
+
+int ssl_ctx_security(SSL_CTX *ctx, int op, int bits, int nid, void *other)
+	{
+	return ctx->cert->sec_cb(NULL, ctx, op, bits, nid, other, ctx->cert->sec_ex);
+	}
