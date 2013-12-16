@@ -34,7 +34,8 @@ const void         *FIPS_text_end(void);
 				  defined(__mips__)|| defined(__mips)))	|| \
         (defined(__NetBSD__)  && (defined(__powerpc__) || defined(__i386))) || \
 	(defined(__linux)     && ((defined(__PPC__) && !defined(__PPC64__)) || \
-				  defined(__arm__) || defined(__arm)))	|| \
+				  defined(__arm__) || defined(__arm)) || \
+				  defined(__mips__))	|| \
 	(defined(__APPLE__) /* verified on all MacOS X & iOS flavors */)|| \
 	(defined(_TMS320C6X))						|| \
 	(defined(_WIN32)      && defined(_MSC_VER))
