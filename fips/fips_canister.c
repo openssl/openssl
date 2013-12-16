@@ -39,7 +39,8 @@ const void         *FIPS_text_end(void);
 	(defined(__APPLE__) /* verified on all MacOS X & iOS flavors */)|| \
 	(defined(_TMS320C6X))						|| \
 	(defined(__ECOS__))						|| \
-	(defined(_WIN32)      && defined(_MSC_VER))
+	(defined(_WIN32)      && defined(_MSC_VER))			|| \
+	(defined(__QNX__)     && defined(__ARM__))
 #  define FIPS_REF_POINT_IS_CROSS_COMPILER_AWARE
 # endif
 #endif

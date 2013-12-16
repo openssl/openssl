@@ -853,6 +853,7 @@ case "$GUESSOS" in
   j90-cray-unicos) OUT="cray-j90" ;;
   nsr-tandem-nsk) OUT="tandem-c89" ;;
   beos-*) OUT="$GUESSOS" ;;
+  armv4-*-qnx6) OUT="QNX6-armv4" ;;
   x86pc-*-qnx6) OUT="QNX6-i386" ;;
   *-*-qnx6) OUT="QNX6" ;;
   x86-*-android|i?86-*-android) OUT="android-x86" ;;
