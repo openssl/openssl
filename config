@@ -134,6 +134,10 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "${MACHINE}-dg-dgux"; exit 0
 	;;
 
+    ecos:*)
+	echo "${MACHINE}-whatever-ecos"; exit 0
+	;;
+
     HI-UX:*)
 	echo "${MACHINE}-hi-hiux"; exit 0
 	;;
@@ -645,6 +649,7 @@ case "$GUESSOS" in
 
 	options="$options -DB_ENDIAN -mschedule=$CPUSCHEDULE -march=$CPUARCH"
 	OUT="linux-generic32" ;;
+  armv[45]*-*-ecos) OUT="ecos-armv4" ;;
   armv[1-3]*-*-linux2) OUT="linux-generic32" ;;
   armv[7-9]*-*-linux2) OUT="linux-armv4"; options="$options -march=armv7-a" ;;
   arm*-*-linux2) OUT="linux-armv4" ;;
