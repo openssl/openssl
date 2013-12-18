@@ -154,7 +154,7 @@ void AES_xts_decrypt(const char *inp,char *out,size_t len,
 			const unsigned char iv[16]);
 #endif
 
-#if	defined(VPAES_ASM) && (defined(__powerpc__) || defined(__ppc__))
+#if	defined(VPAES_ASM) && (defined(__powerpc__) || defined(__ppc__) || defined(_ARCH_PPC))
 extern unsigned int OPENSSL_ppccap_P;
 #define	VPAES_CAPABLE	(OPENSSL_ppccap_P&(1<<1))
 #endif
