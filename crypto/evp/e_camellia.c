@@ -305,7 +305,7 @@ static int camellia_cbc_cipher(EVP_CIPHER_CTX *ctx,unsigned char *out,
 	else if (ctx->encrypt)
 		CRYPTO_cbc128_encrypt(in,out,len,&dat->ks,ctx->iv,dat->block);
 	else
-		CRYPTO_cbc128_encrypt(in,out,len,&dat->ks,ctx->iv,dat->block);
+		CRYPTO_cbc128_decrypt(in,out,len,&dat->ks,ctx->iv,dat->block);
 
 	return 1;
 }
