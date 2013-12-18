@@ -50,7 +50,7 @@ my $globl = sub {
     $ret;
 };
 my $text = sub {
-    my $ret = ($flavour =~ /aix/) ? ".csect" : ".text";
+    my $ret = ($flavour =~ /aix/) ? ".csect\t.text[PR],7" : ".text";
     $ret = ".abiversion	2\n".$ret	if ($flavour =~ /linux.*64le/);
     $ret;
 };
