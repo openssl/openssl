@@ -344,21 +344,26 @@ $code.=<<___;
 .align	16
 sha1_block_data_order_ssse3:
 _ssse3_shortcut:
+	mov	%rsp,%rax
 	push	%rbx
 	push	%rbp
 	push	%r12
+	push	%r13		# redundant, done to share Win64 SE handler
+	push	%r14
 	lea	`-64-($win64?6*16:0)`(%rsp),%rsp
 ___
 $code.=<<___ if ($win64);
-	movaps	%xmm6,64+0(%rsp)
-	movaps	%xmm7,64+16(%rsp)
-	movaps	%xmm8,64+32(%rsp)
-	movaps	%xmm9,64+48(%rsp)
-	movaps	%xmm10,64+64(%rsp)
-	movaps	%xmm11,64+80(%rsp)
+	movaps	%xmm6,-40-6*16(%rax)
+	movaps	%xmm7,-40-5*16(%rax)
+	movaps	%xmm8,-40-4*16(%rax)
+	movaps	%xmm9,-40-3*16(%rax)
+	movaps	%xmm10,-40-2*16(%rax)
+	movaps	%xmm11,-40-1*16(%rax)
 .Lprologue_ssse3:
 ___
 $code.=<<___;
+	mov	%rax,%r14	# original %rsp
+	and	\$-64,%rsp
 	mov	%rdi,$ctx	# reassigned argument
 	mov	%rsi,$inp	# reassigned argument
 	mov	%rdx,$num	# reassigned argument
@@ -753,19 +758,21 @@ $code.=<<___;
 	mov	$E,16($ctx)
 ___
 $code.=<<___ if ($win64);
-	movaps	64+0(%rsp),%xmm6
-	movaps	64+16(%rsp),%xmm7
-	movaps	64+32(%rsp),%xmm8
-	movaps	64+48(%rsp),%xmm9
-	movaps	64+64(%rsp),%xmm10
-	movaps	64+80(%rsp),%xmm11
+	movaps	-40-6*16(%r14),%xmm6
+	movaps	-40-5*16(%r14),%xmm7
+	movaps	-40-4*16(%r14),%xmm8
+	movaps	-40-3*16(%r14),%xmm9
+	movaps	-40-2*16(%r14),%xmm10
+	movaps	-40-1*16(%r14),%xmm11
 ___
 $code.=<<___;
-	lea	`64+($win64?6*16:0)`(%rsp),%rsi
-	mov	0(%rsi),%r12
-	mov	8(%rsi),%rbp
-	mov	16(%rsi),%rbx
-	lea	24(%rsi),%rsp
+	lea	(%r14),%rsi
+	mov	-40(%rsi),%r14
+	mov	-32(%rsi),%r13
+	mov	-24(%rsi),%r12
+	mov	-16(%rsi),%rbp
+	mov	-8(%rsi),%rbx
+	lea	(%rsi),%rsp
 .Lepilogue_ssse3:
 	ret
 .size	sha1_block_data_order_ssse3,.-sha1_block_data_order_ssse3
@@ -788,25 +795,30 @@ $code.=<<___;
 .align	16
 sha1_block_data_order_avx:
 _avx_shortcut:
+	mov	%rsp,%rax
 	push	%rbx
 	push	%rbp
 	push	%r12
+	push	%r13		# redundant, done to share Win64 SE handler
+	push	%r14
 	lea	`-64-($win64?6*16:0)`(%rsp),%rsp
+	vzeroupper
 ___
 $code.=<<___ if ($win64);
-	movaps	%xmm6,64+0(%rsp)
-	movaps	%xmm7,64+16(%rsp)
-	movaps	%xmm8,64+32(%rsp)
-	movaps	%xmm9,64+48(%rsp)
-	movaps	%xmm10,64+64(%rsp)
-	movaps	%xmm11,64+80(%rsp)
+	vmovaps	%xmm6,-40-6*16(%rax)
+	vmovaps	%xmm7,-40-5*16(%rax)
+	vmovaps	%xmm8,-40-4*16(%rax)
+	vmovaps	%xmm9,-40-3*16(%rax)
+	vmovaps	%xmm10,-40-2*16(%rax)
+	vmovaps	%xmm11,-40-1*16(%rax)
 .Lprologue_avx:
 ___
 $code.=<<___;
+	mov	%rax,%r14	# original %rsp
+	and	\$-64,%rsp
 	mov	%rdi,$ctx	# reassigned argument
 	mov	%rsi,$inp	# reassigned argument
 	mov	%rdx,$num	# reassigned argument
-	vzeroupper
 
 	shl	\$6,$num
 	add	$inp,$num
@@ -1110,19 +1122,21 @@ $code.=<<___;
 	mov	$E,16($ctx)
 ___
 $code.=<<___ if ($win64);
-	movaps	64+0(%rsp),%xmm6
-	movaps	64+16(%rsp),%xmm7
-	movaps	64+32(%rsp),%xmm8
-	movaps	64+48(%rsp),%xmm9
-	movaps	64+64(%rsp),%xmm10
-	movaps	64+80(%rsp),%xmm11
+	movaps	-40-6*16(%r14),%xmm6
+	movaps	-40-5*16(%r14),%xmm7
+	movaps	-40-4*16(%r14),%xmm8
+	movaps	-40-3*16(%r14),%xmm9
+	movaps	-40-2*16(%r14),%xmm10
+	movaps	-40-1*16(%r14),%xmm11
 ___
 $code.=<<___;
-	lea	`64+($win64?6*16:0)`(%rsp),%rsi
-	mov	0(%rsi),%r12
-	mov	8(%rsi),%rbp
-	mov	16(%rsi),%rbx
-	lea	24(%rsi),%rsp
+	lea	(%r14),%rsi
+	mov	-40(%rsi),%r14
+	mov	-32(%rsi),%r13
+	mov	-24(%rsi),%r12
+	mov	-16(%rsi),%rbp
+	mov	-8(%rsi),%rbx
+	lea	(%rsi),%rsp
 .Lepilogue_avx:
 	ret
 .size	sha1_block_data_order_avx,.-sha1_block_data_order_avx
@@ -1148,28 +1162,29 @@ $code.=<<___;
 .align	16
 sha1_block_data_order_avx2:
 _avx2_shortcut:
+	mov	%rsp,%rax
 	push	%rbx
 	push	%rbp
 	push	%r12
 	push	%r13
 	push	%r14
-	lea	(%rsp),%r14
+	vzeroupper
 ___
 $code.=<<___ if ($win64);
 	lea	-6*16(%rsp),%rsp
-	movaps	%xmm6,-6*16(%r14)
-	movaps	%xmm7,-5*16(%r14)
-	movaps	%xmm8,-4*16(%r14)
-	movaps	%xmm9,-3*16(%r14)
-	movaps	%xmm10,-2*16(%r14)
-	movaps	%xmm11,-1*16(%r14)
+	vmovaps	%xmm6,-40-6*16(%rax)
+	vmovaps	%xmm7,-40-5*16(%rax)
+	vmovaps	%xmm8,-40-4*16(%rax)
+	vmovaps	%xmm9,-40-3*16(%rax)
+	vmovaps	%xmm10,-40-2*16(%rax)
+	vmovaps	%xmm11,-40-1*16(%rax)
 .Lprologue_avx2:
 ___
 $code.=<<___;
+	mov	%rax,%r14		# original %rsp
 	mov	%rdi,$ctx		# reassigned argument
 	mov	%rsi,$inp		# reassigned argument
 	mov	%rdx,$num		# reassigned argument
-	vzeroupper
 
 	lea	-640(%rsp),%rsp
 	shl	\$6,$num
@@ -1586,21 +1601,21 @@ $code.=<<___;
 	vzeroupper
 ___
 $code.=<<___ if ($win64);
-	movaps	-6*16(%r14),%xmm6
-	movaps	-5*16(%r14),%xmm7
-	movaps	-4*16(%r14),%xmm8
-	movaps	-3*16(%r14),%xmm9
-	movaps	-2*16(%r14),%xmm10
-	movaps	-1*16(%r14),%xmm11
+	movaps	-40-6*16(%r14),%xmm6
+	movaps	-40-5*16(%r14),%xmm7
+	movaps	-40-4*16(%r14),%xmm8
+	movaps	-40-3*16(%r14),%xmm9
+	movaps	-40-2*16(%r14),%xmm10
+	movaps	-40-1*16(%r14),%xmm11
 ___
 $code.=<<___;
 	lea	(%r14),%rsi
-	mov	0(%rsi),%r14
-	mov	8(%rsi),%r13
-	mov	16(%rsi),%r12
-	mov	24(%rsi),%rbp
-	mov	32(%rsi),%rbx
-	lea	40(%rsi),%rsp
+	mov	-40(%rsi),%r14
+	mov	-32(%rsi),%r13
+	mov	-24(%rsi),%r12
+	mov	-16(%rsi),%rbp
+	mov	-8(%rsi),%rbx
+	lea	(%rsi),%rsp
 .Lepilogue_avx2:
 	ret
 .size	sha1_block_data_order_avx2,.-sha1_block_data_order_avx2
@@ -1711,18 +1726,23 @@ ssse3_handler:
 	cmp	%r10,%rbx		# context->Rip>=epilogue label
 	jae	.Lcommon_seh_tail
 
-	lea	64(%rax),%rsi
+	mov	232($context),%rax	# pull context->R14
+
+	lea	-40-6*16(%rax),%rsi
 	lea	512($context),%rdi	# &context.Xmm6
 	mov	\$12,%ecx
 	.long	0xa548f3fc		# cld; rep movsq
-	lea	`24+64+6*16`(%rax),%rax	# adjust stack pointer
 
 	mov	-8(%rax),%rbx
 	mov	-16(%rax),%rbp
 	mov	-24(%rax),%r12
+	mov	-32(%rax),%r13
+	mov	-40(%rax),%r14
 	mov	%rbx,144($context)	# restore context->Rbx
 	mov	%rbp,160($context)	# restore context->Rbp
 	mov	%r12,216($context)	# restore cotnext->R12
+	mov	%r13,224($context)	# restore cotnext->R13
+	mov	%r14,232($context)	# restore cotnext->R14
 
 .Lcommon_seh_tail:
 	mov	8(%rax),%rdi
