@@ -123,7 +123,12 @@ again:
 			BIO_free_all(tmp);
 			goto again;
 			}
-		if (i < 0) goto err;
+		if (i < 0)
+			{
+			if (BIO_should_retry(in))
+				continue;
+			goto err;
+			}
 		fwrite(buf,1,i,stdout);
 		fflush(stdout);
 		}
