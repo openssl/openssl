@@ -244,7 +244,8 @@ extern "C" {
 #define SSL_TXT_kDHr		"kDHr" 
 #define SSL_TXT_kDHd		"kDHd"
 #define SSL_TXT_kDH 		"kDH"
-#define SSL_TXT_kEDH		"kEDH"
+#define SSL_TXT_kEDH		"kEDH" /* alias for kDHE */
+#define SSL_TXT_kDHE		"kDHE"
 #define SSL_TXT_kKRB5     	"kKRB5"
 #define SSL_TXT_kECDHr		"kECDHr"
 #define SSL_TXT_kECDHe		"kECDHe"
@@ -268,7 +269,8 @@ extern "C" {
 
 #define	SSL_TXT_DSS		"DSS"
 #define SSL_TXT_DH		"DH"
-#define SSL_TXT_EDH		"EDH" /* same as "kEDH:-ADH" */
+#define SSL_TXT_DHE		"DHE" /* same as "kDHE:-ADH" */
+#define SSL_TXT_EDH		"EDH" /* alias for DHE */
 #define SSL_TXT_ADH		"ADH"
 #define SSL_TXT_RSA		"RSA"
 #define SSL_TXT_ECDH		"ECDH"

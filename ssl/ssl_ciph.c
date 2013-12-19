@@ -242,6 +242,7 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_kDHd,0,    SSL_kDHd,  0,0,0,0,0,0,0,0},
 	{0,SSL_TXT_kDH,0,     SSL_kDHr|SSL_kDHd,0,0,0,0,0,0,0,0},
 	{0,SSL_TXT_kEDH,0,    SSL_kEDH,  0,0,0,0,0,0,0,0},
+	{0,SSL_TXT_kDHE,0,    SSL_kEDH,  0,0,0,0,0,0,0,0},
 	{0,SSL_TXT_DH,0,      SSL_kDHr|SSL_kDHd|SSL_kEDH,0,0,0,0,0,0,0,0},
 
 	{0,SSL_TXT_kKRB5,0,   SSL_kKRB5, 0,0,0,0,0,0,0,0},
@@ -274,6 +275,7 @@ static const SSL_CIPHER cipher_aliases[]={
 
 	/* aliases combining key exchange and server authentication */
 	{0,SSL_TXT_EDH,0,     SSL_kEDH,~SSL_aNULL,0,0,0,0,0,0,0},
+	{0,SSL_TXT_DHE,0,     SSL_kEDH,~SSL_aNULL,0,0,0,0,0,0,0},
 	{0,SSL_TXT_EECDH,0,   SSL_kECDHE,~SSL_aNULL,0,0,0,0,0,0,0},
 	{0,SSL_TXT_ECDHE,0,   SSL_kECDHE,~SSL_aNULL,0,0,0,0,0,0,0},
 	{0,SSL_TXT_NULL,0,    0,0,SSL_eNULL, 0,0,0,0,0,0},
