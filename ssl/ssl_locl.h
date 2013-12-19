@@ -291,7 +291,8 @@
 #define SSL_kRSA		0x00000001L /* RSA key exchange */
 #define SSL_kDHr		0x00000002L /* DH cert, RSA CA cert */
 #define SSL_kDHd		0x00000004L /* DH cert, DSA CA cert */
-#define SSL_kEDH		0x00000008L /* tmp DH key no DH cert */
+#define SSL_kDHE		0x00000008L /* tmp DH key no DH cert */
+#define SSL_kEDH		SSL_kDHE    /* synonym */
 #define SSL_kKRB5		0x00000010L /* Kerberos5 key exchange */
 #define SSL_kECDHr		0x00000020L /* ECDH cert, RSA CA cert */
 #define SSL_kECDHe		0x00000040L /* ECDH cert, ECDSA CA cert */
@@ -481,7 +482,7 @@
 /* SSL_kRSA <- RSA_ENC | (RSA_TMP & RSA_SIGN) |
  * 	    <- (EXPORT & (RSA_ENC | RSA_TMP) & RSA_SIGN)
  * SSL_kDH  <- DH_ENC & (RSA_ENC | RSA_SIGN | DSA_SIGN)
- * SSL_kEDH <- RSA_ENC | RSA_SIGN | DSA_SIGN
+ * SSL_kDHE <- RSA_ENC | RSA_SIGN | DSA_SIGN
  * SSL_aRSA <- RSA_ENC | RSA_SIGN
  * SSL_aDSS <- DSA_SIGN
  */

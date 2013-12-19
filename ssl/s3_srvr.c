@@ -493,7 +493,7 @@ int ssl3_accept(SSL *s)
 			    /* SRP: send ServerKeyExchange */
 			    || (alg_k & SSL_kSRP)
 #endif
-			    || (alg_k & SSL_kEDH)
+			    || (alg_k & SSL_kDHE)
 			    || (alg_k & SSL_kECDHE)
 			    || ((alg_k & SSL_kRSA)
 				&& (s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL
@@ -1414,7 +1414,7 @@ int ssl3_get_client_hello(SSL *s)
 		/* check whether we should disable session resumption */
 		if (s->not_resumable_session_cb != NULL)
 			s->session->not_resumable=s->not_resumable_session_cb(s,
-				((c->algorithm_mkey & (SSL_kEDH | SSL_kECDHE)) != 0));
+				((c->algorithm_mkey & (SSL_kDHE | SSL_kECDHE)) != 0));
 		if (s->session->not_resumable)
 			/* do not send a session ticket */
 			s->tlsext_ticket_expected = 0;
@@ -1663,7 +1663,7 @@ int ssl3_send_server_key_exchange(SSL *s)
 		else
 #endif
 #ifndef OPENSSL_NO_DH
-			if (type & SSL_kEDH)
+			if (type & SSL_kDHE)
 			{
 			dhp=cert->dh_tmp;
 			if ((dhp == NULL) && (s->cert->dh_tmp_cb != NULL))
@@ -2346,7 +2346,7 @@ int ssl3_get_client_key_exchange(SSL *s)
 	else
 #endif
 #ifndef OPENSSL_NO_DH
-		if (alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
+		if (alg_k & (SSL_kDHE|SSL_kDHr|SSL_kDHd))
 		{
 		int idx = -1;
 		EVP_PKEY *skey = NULL;

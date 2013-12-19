@@ -179,7 +179,7 @@ attack and so their use is normally discouraged.
 
 cipher suites using RSA key exchange, authentication or either respectively.
 
-=item B<kEDH>
+=item B<kDHE>
 
 cipher suites using ephemeral DH key agreement.
 

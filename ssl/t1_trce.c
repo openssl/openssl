@@ -810,10 +810,10 @@ static int ssl_get_keyex(const char **pname, SSL *ssl)
 		*pname = "krb5";
 		return SSL_kKRB5;
 		}
-	if (alg_k & SSL_kEDH)
+	if (alg_k & SSL_kDHE)
 		{
 		*pname = "DHE";
-		return SSL_kEDH;
+		return SSL_kDHE;
 		}
 	if (alg_k & SSL_kECDHE)
 		{
@@ -885,7 +885,7 @@ static int ssl_print_client_keyex(BIO *bio, int indent, SSL *ssl,
 			BIO_puts(bio, "implicit\n");
 			break;
 			}
-	case SSL_kEDH:
+	case SSL_kDHE:
 		if (!ssl_print_hexbuf(bio, indent + 2, "dh_Yc", 2,
 								&msg, &msglen))
 			return 0;
@@ -938,7 +938,7 @@ static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
 			return 0;
 		break;
 
-	case SSL_kEDH:
+	case SSL_kDHE:
 		if (!ssl_print_hexbuf(bio, indent + 2, "dh_p", 2,
 						&msg, &msglen))
 			return 0;
