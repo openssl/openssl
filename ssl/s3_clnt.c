@@ -1734,7 +1734,7 @@ int ssl3_get_key_exchange(SSL *s)
 #endif /* !OPENSSL_NO_DH */
 
 #ifndef OPENSSL_NO_ECDH
-	else if (alg_k & SSL_kEECDH)
+	else if (alg_k & SSL_kECDHE)
 		{
 		EC_GROUP *ngroup;
 		const EC_GROUP *group;
@@ -2685,7 +2685,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 #endif
 
 #ifndef OPENSSL_NO_ECDH 
-		else if (alg_k & (SSL_kEECDH|SSL_kECDHr|SSL_kECDHe))
+		else if (alg_k & (SSL_kECDHE|SSL_kECDHr|SSL_kECDHe))
 			{
 			const EC_GROUP *srvr_group = NULL;
 			EC_KEY *tkey;

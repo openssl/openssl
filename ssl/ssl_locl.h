@@ -295,7 +295,8 @@
 #define SSL_kKRB5		0x00000010L /* Kerberos5 key exchange */
 #define SSL_kECDHr		0x00000020L /* ECDH cert, RSA CA cert */
 #define SSL_kECDHe		0x00000040L /* ECDH cert, ECDSA CA cert */
-#define SSL_kEECDH		0x00000080L /* ephemeral ECDH */
+#define SSL_kECDHE		0x00000080L /* ephemeral ECDH */
+#define SSL_kEECDH		SSL_kECDHE  /* synonym */
 #define SSL_kPSK		0x00000100L /* PSK */
 #define SSL_kGOST       0x00000200L /* GOST key exchange */
 #define SSL_kSRP        0x00000400L /* SRP */

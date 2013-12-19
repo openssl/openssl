@@ -2522,8 +2522,8 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 #ifndef OPENSSL_NO_ECDH
 	if (have_ecdh_tmp)
 		{
-		mask_k|=SSL_kEECDH;
-		emask_k|=SSL_kEECDH;
+		mask_k|=SSL_kECDHE;
+		emask_k|=SSL_kECDHE;
 		}
 #endif
 

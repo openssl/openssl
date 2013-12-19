@@ -494,7 +494,7 @@ int ssl3_accept(SSL *s)
 			    || (alg_k & SSL_kSRP)
 #endif
 			    || (alg_k & SSL_kEDH)
-			    || (alg_k & SSL_kEECDH)
+			    || (alg_k & SSL_kECDHE)
 			    || ((alg_k & SSL_kRSA)
 				&& (s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL
 				    || (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher)
@@ -1413,7 +1413,7 @@ int ssl3_get_client_hello(SSL *s)
 		/* check whether we should disable session resumption */
 		if (s->not_resumable_session_cb != NULL)
 			s->session->not_resumable=s->not_resumable_session_cb(s,
-				((c->algorithm_mkey & (SSL_kEDH | SSL_kEECDH)) != 0));
+				((c->algorithm_mkey & (SSL_kEDH | SSL_kECDHE)) != 0));
 		if (s->session->not_resumable)
 			/* do not send a session ticket */
 			s->tlsext_ticket_expected = 0;
@@ -1718,7 +1718,7 @@ int ssl3_send_server_key_exchange(SSL *s)
 		else 
 #endif
 #ifndef OPENSSL_NO_ECDH
-			if (type & SSL_kEECDH)
+			if (type & SSL_kECDHE)
 			{
 			const EC_GROUP *group;
 
@@ -1934,7 +1934,7 @@ int ssl3_send_server_key_exchange(SSL *s)
 			}
 
 #ifndef OPENSSL_NO_ECDH
-		if (type & SSL_kEECDH) 
+		if (type & SSL_kECDHE) 
 			{
 			/* XXX: For now, we only support named (not generic) curves.
 			 * In this situation, the serverKeyExchange message has:
@@ -2637,7 +2637,7 @@ int ssl3_get_client_key_exchange(SSL *s)
 #endif	/* OPENSSL_NO_KRB5 */
 
 #ifndef OPENSSL_NO_ECDH
-		if (alg_k & (SSL_kEECDH|SSL_kECDHr|SSL_kECDHe))
+		if (alg_k & (SSL_kECDHE|SSL_kECDHr|SSL_kECDHe))
 		{
 		int ret = 1;
 		int field_size = 0;
@@ -2690,7 +2690,7 @@ int ssl3_get_client_key_exchange(SSL *s)
 			{
 			/* Client Publickey was in Client Certificate */
 
-			 if (alg_k & SSL_kEECDH)
+			 if (alg_k & SSL_kECDHE)
 				 {
 				 al=SSL_AD_HANDSHAKE_FAILURE;
 				 SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_MISSING_TMP_ECDH_KEY);
