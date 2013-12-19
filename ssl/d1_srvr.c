@@ -492,7 +492,7 @@ int dtls1_accept(SSL *s)
 			    || ((alg_k & SSL_kPSK) && s->ctx->psk_identity_hint)
 #endif
 			    || (alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
-			    || (alg_k & SSL_kEECDH)
+			    || (alg_k & SSL_kECDHE)
 			    || ((alg_k & SSL_kRSA)
 				&& (s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL
 				    || (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher)

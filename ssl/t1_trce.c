@@ -815,10 +815,10 @@ static int ssl_get_keyex(const char **pname, SSL *ssl)
 		*pname = "edh";
 		return SSL_kEDH;
 		}
-	if (alg_k & SSL_kEECDH)
+	if (alg_k & SSL_kECDHE)
 		{
 		*pname = "ECDHE";
-		return SSL_kEECDH;
+		return SSL_kECDHE;
 		}
 	if (alg_k & SSL_kECDHr)
 		{
@@ -899,7 +899,7 @@ static int ssl_print_client_keyex(BIO *bio, int indent, SSL *ssl,
 			BIO_puts(bio, "implicit\n");
 			break;
 			}
-	case SSL_kEECDH:
+	case SSL_kECDHE:
 		if (!ssl_print_hexbuf(bio, indent + 2, "ecdh_Yc", 1,
 							&msg, &msglen))
 			return 0;
@@ -950,7 +950,7 @@ static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
 			return 0;
 		break;
 
-	case SSL_kEECDH:
+	case SSL_kECDHE:
 		if (msglen < 1)
 			return 0;
 		BIO_indent(bio, indent + 2, 80);
