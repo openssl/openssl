@@ -230,20 +230,20 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_CMPALL,0,  0,0,SSL_eNULL,0,0,0,0,0,0},
 
 	/* "COMPLEMENTOFDEFAULT" (does *not* include ciphersuites not found in ALL!) */
-	{0,SSL_TXT_CMPDEF,0,  SSL_kEDH|SSL_kECDHE,SSL_aNULL,~SSL_eNULL,0,0,0,0,0,0},
+	{0,SSL_TXT_CMPDEF,0,  SSL_kDHE|SSL_kECDHE,SSL_aNULL,~SSL_eNULL,0,0,0,0,0,0},
 
 	/* key exchange aliases
 	 * (some of those using only a single bit here combine
 	 * multiple key exchange algs according to the RFCs,
-	 * e.g. kEDH combines DHE_DSS and DHE_RSA) */
+	 * e.g. kDHE combines DHE_DSS and DHE_RSA) */
 	{0,SSL_TXT_kRSA,0,    SSL_kRSA,  0,0,0,0,0,0,0,0},
 
 	{0,SSL_TXT_kDHr,0,    SSL_kDHr,  0,0,0,0,0,0,0,0},
 	{0,SSL_TXT_kDHd,0,    SSL_kDHd,  0,0,0,0,0,0,0,0},
 	{0,SSL_TXT_kDH,0,     SSL_kDHr|SSL_kDHd,0,0,0,0,0,0,0,0},
-	{0,SSL_TXT_kEDH,0,    SSL_kEDH,  0,0,0,0,0,0,0,0},
-	{0,SSL_TXT_kDHE,0,    SSL_kEDH,  0,0,0,0,0,0,0,0},
-	{0,SSL_TXT_DH,0,      SSL_kDHr|SSL_kDHd|SSL_kEDH,0,0,0,0,0,0,0,0},
+	{0,SSL_TXT_kEDH,0,    SSL_kDHE,  0,0,0,0,0,0,0,0},
+	{0,SSL_TXT_kDHE,0,    SSL_kDHE,  0,0,0,0,0,0,0,0},
+	{0,SSL_TXT_DH,0,      SSL_kDHr|SSL_kDHd|SSL_kDHE,0,0,0,0,0,0,0,0},
 
 	{0,SSL_TXT_kKRB5,0,   SSL_kKRB5, 0,0,0,0,0,0,0,0},
 
@@ -274,14 +274,14 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_aGOST,0,0,SSL_aGOST94|SSL_aGOST01,0,0,0,0,0,0,0},
 
 	/* aliases combining key exchange and server authentication */
-	{0,SSL_TXT_EDH,0,     SSL_kEDH,~SSL_aNULL,0,0,0,0,0,0,0},
-	{0,SSL_TXT_DHE,0,     SSL_kEDH,~SSL_aNULL,0,0,0,0,0,0,0},
+	{0,SSL_TXT_EDH,0,     SSL_kDHE,~SSL_aNULL,0,0,0,0,0,0,0},
+	{0,SSL_TXT_DHE,0,     SSL_kDHE,~SSL_aNULL,0,0,0,0,0,0,0},
 	{0,SSL_TXT_EECDH,0,   SSL_kECDHE,~SSL_aNULL,0,0,0,0,0,0,0},
 	{0,SSL_TXT_ECDHE,0,   SSL_kECDHE,~SSL_aNULL,0,0,0,0,0,0,0},
 	{0,SSL_TXT_NULL,0,    0,0,SSL_eNULL, 0,0,0,0,0,0},
 	{0,SSL_TXT_KRB5,0,    SSL_kKRB5,SSL_aKRB5,0,0,0,0,0,0,0},
 	{0,SSL_TXT_RSA,0,     SSL_kRSA,SSL_aRSA,0,0,0,0,0,0,0},
-	{0,SSL_TXT_ADH,0,     SSL_kEDH,SSL_aNULL,0,0,0,0,0,0,0},
+	{0,SSL_TXT_ADH,0,     SSL_kDHE,SSL_aNULL,0,0,0,0,0,0,0},
 	{0,SSL_TXT_AECDH,0,   SSL_kECDHE,SSL_aNULL,0,0,0,0,0,0,0},
         {0,SSL_TXT_PSK,0,     SSL_kPSK,SSL_aPSK,0,0,0,0,0,0,0},
 	{0,SSL_TXT_SRP,0,     SSL_kSRP,0,0,0,0,0,0,0,0},
@@ -724,7 +724,7 @@ static void ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth, un
 	*auth |= SSL_aDSS;
 #endif
 #ifdef OPENSSL_NO_DH
-	*mkey |= SSL_kDHr|SSL_kDHd|SSL_kEDH;
+	*mkey |= SSL_kDHr|SSL_kDHd|SSL_kDHE;
 	*auth |= SSL_aDH;
 #endif
 #ifdef OPENSSL_NO_KRB5
@@ -1661,7 +1661,7 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
         case SSL_kKRB5:
 		kx="KRB5";
 		break;
-	case SSL_kEDH:
+	case SSL_kDHE:
 		kx=is_export?(pkl == 512 ? "DH(512)" : "DH(1024)"):"DH";
 		break;
 	case SSL_kECDHr:

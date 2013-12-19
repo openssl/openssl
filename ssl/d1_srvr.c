@@ -491,7 +491,7 @@ int dtls1_accept(SSL *s)
 #ifndef OPENSSL_NO_PSK
 			    || ((alg_k & SSL_kPSK) && s->ctx->psk_identity_hint)
 #endif
-			    || (alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
+			    || (alg_k & (SSL_kDHE|SSL_kDHr|SSL_kDHd))
 			    || (alg_k & SSL_kECDHE)
 			    || ((alg_k & SSL_kRSA)
 				&& (s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL

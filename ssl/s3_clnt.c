@@ -1656,7 +1656,7 @@ int ssl3_get_key_exchange(SSL *s)
 		;
 #endif
 #ifndef OPENSSL_NO_DH
-	else if (alg_k & SSL_kEDH)
+	else if (alg_k & SSL_kDHE)
 		{
 		if ((dh=DH_new()) == NULL)
 			{
@@ -2581,7 +2581,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 			}
 #endif
 #ifndef OPENSSL_NO_DH
-		else if (alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
+		else if (alg_k & (SSL_kDHE|SSL_kDHr|SSL_kDHd))
 			{
 			DH *dh_srvr,*dh_clnt;
 			SESS_CERT *scert = s->session->sess_cert;
@@ -3469,7 +3469,7 @@ int ssl3_check_cert_and_algorithm(SSL *s)
 		}
 #endif
 #ifndef OPENSSL_NO_DH
-	if ((alg_k & SSL_kEDH) && 
+	if ((alg_k & SSL_kDHE) && 
 		!(has_bits(i,EVP_PK_DH|EVP_PKT_EXCH) || (dh != NULL)))
 		{
 		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_MISSING_DH_KEY);
@@ -3506,7 +3506,7 @@ int ssl3_check_cert_and_algorithm(SSL *s)
 		else
 #endif
 #ifndef OPENSSL_NO_DH
-			if (alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
+			if (alg_k & (SSL_kDHE|SSL_kDHr|SSL_kDHd))
 			    {
 			    if (dh == NULL
 				|| DH_size(dh)*8 > SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher))

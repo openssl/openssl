@@ -2411,20 +2411,20 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 		emask_k|=SSL_kRSA;
 
 #if 0
-	/* The match needs to be both kEDH and aRSA or aDSA, so don't worry */
+	/* The match needs to be both kDHE and aRSA or aDSA, so don't worry */
 	if (	(dh_tmp || dh_rsa || dh_dsa) &&
 		(rsa_enc || rsa_sign || dsa_sign))
-		mask_k|=SSL_kEDH;
+		mask_k|=SSL_kDHE;
 	if ((dh_tmp_export || dh_rsa_export || dh_dsa_export) &&
 		(rsa_enc || rsa_sign || dsa_sign))
-		emask_k|=SSL_kEDH;
+		emask_k|=SSL_kDHE;
 #endif
 
 	if (dh_tmp_export)
-		emask_k|=SSL_kEDH;
+		emask_k|=SSL_kDHE;
 
 	if (dh_tmp)
-		mask_k|=SSL_kEDH;
+		mask_k|=SSL_kDHE;
 
 	if (dh_rsa) mask_k|=SSL_kDHr;
 	if (dh_rsa_export) emask_k|=SSL_kDHr;
