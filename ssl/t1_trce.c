@@ -817,7 +817,7 @@ static int ssl_get_keyex(const char **pname, SSL *ssl)
 		}
 	if (alg_k & SSL_kEECDH)
 		{
-		*pname = "EECDH";
+		*pname = "ECDHE";
 		return SSL_kEECDH;
 		}
 	if (alg_k & SSL_kECDHr)
