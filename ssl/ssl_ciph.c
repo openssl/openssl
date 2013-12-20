@@ -330,6 +330,21 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_HIGH,0,    0,0,0,0,0,SSL_HIGH,  0,0,0},
 	/* FIPS 140-2 approved ciphersuite */
 	{0,SSL_TXT_FIPS,0,    0,0,~SSL_eNULL,0,0,SSL_FIPS,  0,0,0},
+
+        /* "EDH-" aliases to "DHE-" labels (for backward compatibility) */
+	{0,SSL3_TXT_EDH_DSS_DES_40_CBC_SHA,0,
+         SSL_kDHE,SSL_aDSS,SSL_DES,SSL_SHA1,SSL_SSLV3,SSL_EXPORT|SSL_EXP40,0,0,0,},
+	{0,SSL3_TXT_EDH_DSS_DES_64_CBC_SHA,0,
+         SSL_kDHE,SSL_aDSS,SSL_DES,SSL_SHA1,SSL_SSLV3,SSL_NOT_EXP|SSL_LOW,0,0,0,},
+	{0,SSL3_TXT_EDH_DSS_DES_192_CBC3_SHA,0,
+         SSL_kDHE,SSL_aDSS,SSL_3DES,SSL_SHA1,SSL_SSLV3,SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,0,0,0,},
+	{0,SSL3_TXT_EDH_RSA_DES_40_CBC_SHA,0,
+         SSL_kDHE,SSL_aRSA,SSL_DES,SSL_SHA1,SSL_SSLV3,SSL_EXPORT|SSL_EXP40,0,0,0,},
+	{0,SSL3_TXT_EDH_RSA_DES_64_CBC_SHA,0,
+         SSL_kDHE,SSL_aRSA,SSL_DES,SSL_SHA1,SSL_SSLV3,SSL_NOT_EXP|SSL_LOW,0,0,0,},
+	{0,SSL3_TXT_EDH_RSA_DES_192_CBC3_SHA,0,
+         SSL_kDHE,SSL_aRSA,SSL_3DES,SSL_SHA1,SSL_SSLV3,SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,0,0,0,},
+
 	};
 /* Search for public key algorithm with given name and 
  * return its pkey_id if it is available. Otherwise return 0
