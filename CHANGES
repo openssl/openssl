@@ -273,6 +273,11 @@
 
  Changes between 1.0.1e and 1.0.2 [xx XXX xxxx]
 
+  *) Keep original DTLS digest and encryption contexts in retransmission
+     structures so we can use the previous session parameters if they need
+     to be resent. (CVE-2013-6450)
+     [Steve Henson]
+
   *) TLS pad extension: draft-agl-tls-padding-02
 
      Workaround for the "TLS hang bug" (see FAQ and PR#2771): if the
