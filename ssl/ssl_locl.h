@@ -600,6 +600,8 @@ extern SSL3_ENC_METHOD TLSv1_enc_data;
 extern SSL3_ENC_METHOD SSLv3_enc_data;
 extern SSL3_ENC_METHOD DTLSv1_enc_data;
 
+#define SSL_IS_DTLS(s) (s->method->version == DTLS1_VERSION)
+
 #define IMPLEMENT_tls1_meth_func(func_name, s_accept, s_connect, s_get_meth) \
 const SSL_METHOD *func_name(void)  \
 	{ \
