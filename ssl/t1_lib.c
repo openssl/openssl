@@ -539,7 +539,7 @@ int tls1_set_curves(unsigned char **pext, size_t *pextlen,
 	return 1;
 	}
 
-#define MAX_CURVELIST	25
+#define MAX_CURVELIST	28
 
 typedef struct
 	{
