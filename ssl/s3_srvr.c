@@ -968,12 +968,13 @@ int ssl3_get_client_hello(SSL *s)
 	s->client_version=(((int)p[0])<<8)|(int)p[1];
 	p+=2;
 
-	if ((SSL_IS_DTLS(s) && s->client_version > s->version
-			&& s->method->version != DTLS_ANY_VERSION) ||
-	    (!SSL_IS_DTLS(s) && s->client_version < s->version))
+	if (SSL_IS_DTLS(s)  ?	(s->client_version > s->version &&
+				 s->method->version != DTLS_ANY_VERSION)
+			    :	(s->client_version < s->version))
 		{
 		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_WRONG_VERSION_NUMBER);
-		if ((s->client_version>>8) == SSL3_VERSION_MAJOR)
+		if ((s->client_version>>8) == SSL3_VERSION_MAJOR &&
+			!s->enc_write_ctx && !s->write_hash)
 			{
 			/* similar to ssl3_get_record, send alert using remote version number */
 			s->version = s->client_version;
