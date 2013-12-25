@@ -227,6 +227,7 @@ static size_t drbg_get_adin(DRBG_CTX *ctx, unsigned char **pout)
 	static unsigned char buf[16];
 	static unsigned long counter;
 	FIPS_get_timevec(buf, &counter);
+	rand_hw_xor(buf, sizeof(buf));
 	*pout = buf;
 	return sizeof(buf);
 	}

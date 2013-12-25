@@ -167,6 +167,8 @@ int rand_predictable=0;
 
 const char RAND_version[]="RAND" OPENSSL_VERSION_PTEXT;
 
+static void rand_hw_seed(EVP_MD_CTX *ctx);
+
 static void ssleay_rand_cleanup(void);
 static int ssleay_rand_seed(const void *buf, int num);
 static int ssleay_rand_add(const void *buf, int num, double add_entropy);
@@ -531,6 +533,7 @@ static int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo)
 				       sizeof tv))
 				goto err;
 			curr_time = 0;
+			rand_hw_seed(&m);
 			}
 		if (!MD_Update(&m,local_md,MD_DIGEST_LENGTH))
 			goto err;
@@ -663,3 +666,79 @@ static int ssleay_rand_status(void)
 	
 	return ret;
 	}
+
+/* rand_hw_seed: get seed data from any available hardware RNG.
+ * only currently supports rdrand.
+ */
+
+/* Adapted from eng_rdrand.c */
+
+#if (defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
+     defined(__x86_64) || defined(__x86_64__) || \
+     defined(_M_AMD64) || defined (_M_X64)) && defined(OPENSSL_CPUID_OBJ)
+
+#define RDRAND_CALLS	4
+
+size_t OPENSSL_ia32_rdrand(void);
+extern unsigned int OPENSSL_ia32cap_P[];
+
+static void rand_hw_seed(EVP_MD_CTX *ctx)
+	{
+	int i;
+	if (!(OPENSSL_ia32cap_P[1] & (1<<(62-32))))
+		return;
+	for (i = 0; i < RDRAND_CALLS; i++)
+		{
+		size_t rnd;
+		rnd = OPENSSL_ia32_rdrand();
+		if (rnd == 0)
+			return;
+		MD_Update(ctx, (unsigned char *)rnd, sizeof(size_t));
+		}
+	}
+
+/* XOR an existing buffer with random data */
+
+void rand_hw_xor(unsigned char *buf, size_t num)
+	{
+	size_t rnd;
+	if (!(OPENSSL_ia32cap_P[1] & (1<<(62-32))))
+		return;
+	while (num >= sizeof(size_t))
+		{
+		rnd = OPENSSL_ia32_rdrand();
+		if (rnd == 0)
+			return;
+		*((size_t *)buf) ^= rnd;
+		buf += sizeof(size_t);
+		num -= sizeof(size_t);
+		}
+	if (num)
+		{
+		rnd = OPENSSL_ia32_rdrand();
+		if (rnd == 0)
+			return;
+		while(num)
+			{
+			*buf ^= rnd & 0xff;
+			rnd >>= 8;
+			buf++;
+			num--;
+			}
+		}
+	}
+
+
+#else
+
+static void rand_hw_seed(EVP_MD_CTX *ctx)
+	{
+	return;
+	}
+
+void rand_hw_xor(unsigned char *buf, size_t num)
+	{
+	return;
+	}
+
+#endif
