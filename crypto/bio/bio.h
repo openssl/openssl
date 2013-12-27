@@ -527,7 +527,7 @@ int BIO_read_filename(BIO *b,const char *name);
 #endif
 #define BIO_write_filename(b,name) BIO_ctrl(b,BIO_C_SET_FILENAME, \
 		BIO_CLOSE|BIO_FP_WRITE,name)
-#define BIO_append_filename(b,name) BIO_ctrl(b,BIO_C_SET_FILENAME, \
+#define BIO_append_filename(b,name) (int)BIO_ctrl(b,BIO_C_SET_FILENAME, \
 		BIO_CLOSE|BIO_FP_APPEND,name)
 #define BIO_rw_filename(b,name) BIO_ctrl(b,BIO_C_SET_FILENAME, \
 		BIO_CLOSE|BIO_FP_READ|BIO_FP_WRITE,name)
