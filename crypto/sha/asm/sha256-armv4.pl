@@ -104,10 +104,10 @@ $code.=<<___;
 	eor	$t2,$a,$b			@ a^b, b^c in next round
 	ldr	$t4,[sp,#`($i+15)%16`*4]	@ from future BODY_16_xx
 #endif
-	eor	$t0,$a,ror#$Sigma0[1]
+	eor	$t0,$t0,$a,ror#$Sigma0[1]
 	and	$t3,$t3,$t2			@ (b^c)&=(a^b)
 	add	$d,$d,$h			@ d+=h
-	eor	$t0,$a,ror#$Sigma0[2]		@ Sigma0(a)
+	eor	$t0,$t0,$a,ror#$Sigma0[2]	@ Sigma0(a)
 	eor	$t3,$t3,$b			@ Maj(a,b,c)
 	add	$h,$h,$t0			@ h+=Sigma0(a)
 	@ add	$h,$h,$t3			@ h+=Maj(a,b,c)

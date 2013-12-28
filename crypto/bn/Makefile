@@ -141,9 +141,10 @@ alpha-mont.s:	asm/alpha-mont.pl
 	$(CC) -E $$preproc > $@ && rm $$preproc)
 
 # GNU make "catch all"
-%-mont.s:	asm/%-mont.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
+%-mont.S:	asm/%-mont.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
 %-gf2m.S:	asm/%-gf2m.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
 
+armv4-mont.o:	armv4-mont.S
 armv4-gf2m.o:	armv4-gf2m.S
 
 files:
