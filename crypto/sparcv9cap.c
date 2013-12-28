@@ -287,11 +287,13 @@ void OPENSSL_cpuid_setup(void)
 		OPENSSL_sparcv9cap_P[0] |= SPARCV9_VIS3;
 		}
 
+#if 0	/* was planned at some point but never implemented in hardware */
 	if (sigsetjmp(common_jmp,1) == 0)
 		{
 		(void)_sparcv9_random();
 		OPENSSL_sparcv9cap_P[0] |= SPARCV9_RANDOM;
 		}
+#endif
 
 	/*
 	 * In wait for better solution _sparcv9_rdcfr is masked by
