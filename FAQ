@@ -76,6 +76,7 @@ OpenSSL  -  Frequently Asked Questions
 * Why does Valgrind complain about the use of uninitialized data?
 * Why doesn't a memory BIO work when a file does?
 * Where are the declarations and implementations of d2i_X509() etc?
+* When debugging I observe SIGILL during OpenSSL initialization: why?
 
 ===============================================================================
 
@@ -1069,5 +1070,20 @@ These are defined and implemented by macros of the form:
 The implementation passes an ASN1 "template" defining the structure into an
 ASN1 interpreter using generalised functions such as ASN1_item_d2i().
 
+* When debugging I observe SIGILL during OpenSSL initialization: why?
+
+OpenSSL adapts to processor it executes on and for this reason has to
+query its capabilities. Unfortunately on some processors the only way
+to achieve this for non-privileged code is to attempt instructions
+that can cause Illegal Instruction exceptions. The initialization
+procedure is coded to handle these exceptions to manipulate corresponding
+bits in capabilities vector. This normally appears transparent, except
+when you execute it under debugger, which stops prior delivering signal
+to handler. Simply resuming execution does the trick, but when debugging
+a lot it might feel counterproductive. Two options. Either set explicit
+capability environment variable in order to bypass the capability query
+(see corresponding crypto/*cap.c for details). Or configure debugger not
+to stop upon SIGILL exception, e.g. in gdb case add 'handle SIGILL nostop'
+to your .gdbinit.
 
 ===============================================================================
