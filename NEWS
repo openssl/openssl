@@ -5,6 +5,11 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 1.0.1e and OpenSSL 1.0.1f [under development]
+
+      o Fix for TLS version checking bug CVE-2013-6449
+      o Fix for DTLS retransmission bug CVE-2013-6450
+
   Major changes between OpenSSL 1.0.1d and OpenSSL 1.0.1e [11 Feb 2013]:
 
       o Corrected fix for CVE-2013-0169
