@@ -5,7 +5,7 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Major changes between OpenSSL 1.0.1e and OpenSSL 1.0.2 [xx XXX xxxx]:
+  Major changes between OpenSSL 1.0.1e and OpenSSL 1.0.2 [under development]:
 
       o Support for DTLS 1.2
       o TLS automatic EC curve selection.
