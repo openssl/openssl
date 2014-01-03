@@ -758,19 +758,15 @@ int SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx, const char *file)
 		X509 *ca;
 		int r;
 		unsigned long err;
-		
-		if (ctx->extra_certs != NULL)
-			{
-			sk_X509_pop_free(ctx->extra_certs, X509_free);
-			ctx->extra_certs = NULL;
-			}
 
+		SSL_CTX_clear_chain_certs(ctx);
+		
 		while ((ca = PEM_read_bio_X509(in, NULL,
 					ctx->default_passwd_callback,
 					ctx->default_passwd_callback_userdata))
 			!= NULL)
 			{
-			r = SSL_CTX_add_extra_chain_cert(ctx, ca);
+			r = SSL_CTX_add0_chain_cert(ctx, ca);
 			if (!r) 
 				{
 				X509_free(ca);

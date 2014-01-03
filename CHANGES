@@ -4,6 +4,10 @@
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
 
+  *) Use algorithm specific chains in SSL_CTX_use_certificate_chain_file():
+     this fixes a limiation in previous versions of OpenSSL.
+     [Steve Henson]
+
   *) Experimental encrypt-then-mac support.
     
      Experimental support for encrypt then mac from
