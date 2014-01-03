@@ -400,7 +400,7 @@ static int aesni_cbc_hmac_sha256_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			iv = AES_BLOCK_SIZE;
 
 #if defined(STITCHED_CALL)
-		if (OPENSSL_ia32cap_P[1]&(1<<(60-32)) &&
+		if (OPENSSL_ia32cap_P[1]&(1<<(60-32)) && /* AVX? */
 		    plen>(sha_off+iv) &&
 		    (blocks=(plen-(sha_off+iv))/SHA256_CBLOCK)) {
 			SHA256_Update(&key->md,in+iv,sha_off);
@@ -451,7 +451,7 @@ static int aesni_cbc_hmac_sha256_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		aesni_cbc_encrypt(in,out,len,
 				&key->ks,ctx->iv,0);
 
-		if (plen) {	/* "TLS" mode of operation */
+		if (plen != NO_PAYLOAD_LENGTH) {	/* "TLS" mode of operation */
 			size_t inp_len, mask, j, i;
 			unsigned int res, maxpad, pad, bitlen;
 			int ret = 1;
