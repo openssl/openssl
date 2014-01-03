@@ -391,6 +391,19 @@ static int cmd_PrivateKey(SSL_CONF_CTX *cctx, const char *value)
 		rv = SSL_use_PrivateKey_file(cctx->ssl, value, SSL_FILETYPE_PEM);
 	return rv > 0;
 	}
+
+static int cmd_ServerInfoFile(SSL_CONF_CTX *cctx, const char *value)
+	{
+	int rv = 1;
+	if (!(cctx->flags & SSL_CONF_FLAG_CERTIFICATE))
+		return -2;
+	if (!(cctx->flags & SSL_CONF_FLAG_SERVER))
+		return -2;
+	if (cctx->ctx)
+		rv = SSL_CTX_use_serverinfo_file(cctx->ctx, value);
+	return rv > 0;
+	}
+
 #ifndef OPENSSL_NO_DH
 static int cmd_DHParameters(SSL_CONF_CTX *cctx, const char *value)
 	{
@@ -452,6 +465,7 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
 	SSL_CONF_CMD_STRING(Options, NULL),
 	SSL_CONF_CMD(Certificate, "cert", SSL_CONF_TYPE_FILE),
 	SSL_CONF_CMD(PrivateKey, "key", SSL_CONF_TYPE_FILE),
+	SSL_CONF_CMD(ServerInfoFile, NULL, SSL_CONF_TYPE_FILE),
 #ifndef OPENSSL_NO_DH
 	SSL_CONF_CMD(DHParameters, "dhparam", SSL_CONF_TYPE_FILE)
 #endif
