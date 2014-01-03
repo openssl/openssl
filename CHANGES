@@ -4,6 +4,10 @@
 
  Changes between 1.0.1e and 1.0.2 [xx XXX xxxx]
 
+  *) Use algorithm specific chains in SSL_CTX_use_certificate_chain_file():
+     this fixes a limiation in previous versions of OpenSSL.
+     [Steve Henson]
+
   *) TLS pad extension: draft-agl-tls-padding-02
 
      Workaround for the "TLS hang bug" (see FAQ and PR#2771): if the
