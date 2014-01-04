@@ -28,8 +28,8 @@
 # Bulldozer	5.77[+6.0]	11.72		6.37        +84%
 #
 #		AES-192-CBC
-# Westmere	4.51		10.00		6.87	    +46%
-# Sandy Bridge	6.05		11.06(12.21)	6.11(7.20)  +81%(+70%)
+# Westmere	4.51		10.00		6.91	    +45%
+# Sandy Bridge	6.05		11.06(12.21)	6.11(7.18)  +81%(+70%)
 # Ivy Bridge	6.05		10.65		6.07        +75%
 # Haswell	5.29		8.86(9.42)	5.32(5.32)  +67%(+77%)
 # Bulldozer	6.89		12.84		6.96        +84%
@@ -66,8 +66,13 @@
 # Westmere	1.75		7.20		6.68        +7.8%
 # Sandy Bridge	1.09		6.09(7.22)	5.82(6.95)  +4.6%(+3.9%)
 # Ivy Bridge	1.11		5.70		5.45        +4.6%
-# Haswell	0.88		4.45(5.00)	4.39(4.69)  +1.4%(+6.6%)
-# Bulldozer	0.99		6.95		5.95        +17%
+# Haswell	0.88		4.45(5.00)	4.39(4.69)  +1.4%(*)(+6.6%)
+# Bulldozer	0.99		6.95		5.95        +17%(**)
+#
+# (*)	Tiny improvement coefficient on Haswell is because we compare
+#	AVX1 stitch to sum with AVX2 SHA1.
+# (**)	Execution is fully dominated by integer code sequence and
+#	SIMD still hardly shows [in single-process benchmark;-]
 
 $flavour = shift;
 $output  = shift;
@@ -142,11 +147,13 @@ my @rndkey=("%xmm14","%xmm15");					# for enc
 my ($inout0,$inout1,$inout2,$inout3)=map("%xmm$_",(12..15));	# for dec
 
 if (1) {	# reassign for Atom Silvermont
-    @X=map("%xmm$_",(8..15));
-    @Tx=map("%xmm$_",(5..7));
-    ($iv,$in,$rndkey0)=map("%xmm$_",(2..4));			# for enc
-    @rndkey=("%xmm0","%xmm1");					# for enc
-    ($inout0,$inout1,$inout2,$inout3)=map("%xmm$_",(0..3));	# for dec
+    # The goal is to minimize amount of instructions with more than
+    # 3 prefix bytes. Or in more practical terms to keep AES-NI *and*
+    # SSSE3 instructions to upper half of the register bank.
+    @X=map("%xmm$_",(8..11,4..7));
+    @Tx=map("%xmm$_",(12,13,3));
+    ($iv,$in,$rndkey0)=map("%xmm$_",(2,14,15));
+    @rndkey=("%xmm0","%xmm1");
 }
 
 sub AUTOLOAD()		# thunk [simplified] 32-bit style perlasm
@@ -216,17 +223,17 @@ $code.=<<___;
 	xor	$D,@T[1]
 	and	@T[1],@T[0]
 
-	movdqa	64($K_XX_XX),@X[2]	# pbswap mask
+	movdqa	64($K_XX_XX),@Tx[2]	# pbswap mask
 	movdqa	0($K_XX_XX),@Tx[1]	# K_00_19
 	movdqu	0($inp),@X[-4&7]	# load input to %xmm[0-3]
 	movdqu	16($inp),@X[-3&7]
 	movdqu	32($inp),@X[-2&7]
 	movdqu	48($inp),@X[-1&7]
-	pshufb	@X[2],@X[-4&7]		# byte swap
+	pshufb	@Tx[2],@X[-4&7]		# byte swap
 	add	\$64,$inp
-	pshufb	@X[2],@X[-3&7]
-	pshufb	@X[2],@X[-2&7]
-	pshufb	@X[2],@X[-1&7]
+	pshufb	@Tx[2],@X[-3&7]
+	pshufb	@Tx[2],@X[-2&7]
+	pshufb	@Tx[2],@X[-1&7]
 	paddd	@Tx[1],@X[-4&7]		# add K_00_19
 	paddd	@Tx[1],@X[-3&7]
 	paddd	@Tx[1],@X[-2&7]
@@ -704,6 +711,11 @@ ___
 $j=$jj=$r=$sn=$rx=0;
 $Xi=4;
 
+# reassign for Atom Silvermont (see above)
+($inout0,$inout1,$inout2,$inout3,$rndkey0)=map("%xmm$_",(0..4));
+@X=map("%xmm$_",(8..13,6,7));
+@Tx=map("%xmm$_",(14,15,5));
+
 my @aes256_dec = (
 	'&movdqu($inout0,"0x00($in0)");',
 	'&movdqu($inout1,"0x10($in0)");	&pxor	($inout0,$rndkey0);',
@@ -844,17 +856,17 @@ $code.=<<___;
 	xor	$D,@T[1]
 	and	@T[1],@T[0]
 
-	movdqa	64($K_XX_XX),@X[2]	# pbswap mask
+	movdqa	64($K_XX_XX),@Tx[2]	# pbswap mask
 	movdqa	0($K_XX_XX),@Tx[1]	# K_00_19
 	movdqu	0($inp),@X[-4&7]	# load input to %xmm[0-3]
 	movdqu	16($inp),@X[-3&7]
 	movdqu	32($inp),@X[-2&7]
 	movdqu	48($inp),@X[-1&7]
-	pshufb	@X[2],@X[-4&7]		# byte swap
+	pshufb	@Tx[2],@X[-4&7]		# byte swap
 	add	\$64,$inp
-	pshufb	@X[2],@X[-3&7]
-	pshufb	@X[2],@X[-2&7]
-	pshufb	@X[2],@X[-1&7]
+	pshufb	@Tx[2],@X[-3&7]
+	pshufb	@Tx[2],@X[-2&7]
+	pshufb	@Tx[2],@X[-1&7]
 	paddd	@Tx[1],@X[-4&7]		# add K_00_19
 	paddd	@Tx[1],@X[-3&7]
 	paddd	@Tx[1],@X[-2&7]
@@ -1407,7 +1419,7 @@ $code.=<<___;
 .size	aesni_cbc_sha1_enc_avx,.-aesni_cbc_sha1_enc_avx
 ___
 
-						if ($stiched_decrypt) {{{
+						if ($stitched_decrypt) {{{
 # reset
 ($in0,$out,$len,$key,$ivp,$ctx,$inp)=("%rdi","%rsi","%rdx","%rcx","%r8","%r9","%r10");
 
