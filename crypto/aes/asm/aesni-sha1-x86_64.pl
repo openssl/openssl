@@ -21,24 +21,24 @@
 # subroutine:
 #
 #		AES-128-CBC	+SHA1		stitch      gain
-# Westmere	3.77[+5.5]	9.26		6.58	    +41%
-# Sandy Bridge	5.05[+5.0(6.2)]	10.06(11.21)	5.98(7.05)  +68%(+59%)
+# Westmere	3.77[+5.5]	9.26		6.66	    +39%
+# Sandy Bridge	5.05[+5.0(6.2)]	10.06(11.21)	5.98(7.01)  +68%(+60%)
 # Ivy Bridge	5.05[+4.6]	9.65		5.54        +74%
-# Haswell	4.43[+3.6(4.4)]	8.00(8.80)	4.55(5.21)  +75%(+69%)
+# Haswell	4.43[+3.6(4.1)]	8.00(8.55)	4.55(5.21)  +75%(+64%)
 # Bulldozer	5.77[+6.0]	11.72		6.37        +84%
 #
 #		AES-192-CBC
-# Westmere	4.51		10.00		6.87	    +46%
-# Sandy Bridge	6.05		11.06(12.21)	6.11(7.20)  +81%(+70%)
+# Westmere	4.51		10.00		6.91	    +45%
+# Sandy Bridge	6.05		11.06(12.21)	6.11(7.18)  +81%(+70%)
 # Ivy Bridge	6.05		10.65		6.07        +75%
-# Haswell	5.29		8.86(9.65)	5.32(5.32)  +67%(+81%)
+# Haswell	5.29		8.86(9.42)	5.32(5.32)  +67%(+77%)
 # Bulldozer	6.89		12.84		6.96        +84%
 #
 #		AES-256-CBC
-# Westmere	5.25		10.74		7.19	    +49%
-# Sandy Bridge	7.05		12.06(13.21)	7.12(7.68)  +69%(+72%)
+# Westmere	5.25		10.74		7.24	    +48%
+# Sandy Bridge	7.05		12.06(13.21)	7.12(7.63)  +69%(+73%)
 # Ivy Bridge	7.05		11.65		7.12        +64%
-# Haswell	6.19		9.76(10.6)	6.21(6.41)  +57%(+65%)
+# Haswell	6.19		9.76(10.3)	6.21(6.25)  +57%(+65%)
 # Bulldozer	8.00		13.95		8.25        +69%
 #
 # (*)	There are two code paths: SSSE3 and AVX. See sha1-568.pl for
@@ -129,10 +129,13 @@ my $K_XX_XX="%r11";
 my ($iv,$in,$rndkey0)=map("%xmm$_",(11..13));
 my @rndkey=("%xmm14","%xmm15");
 
-if (1) {
-    @X=map("%xmm$_",(4..11));
-    @Tx=map("%xmm$_",(12..14));
-    ($iv,$in,$rndkey0)=map("%xmm$_",(2,3,15));
+if (1) {	# reassign for Atom Silvermont
+    # The goal is to minimize amount of instructions with more than
+    # 3 prefix bytes. Or in more practical terms to keep AES-NI *and*
+    # SSSE3 instructions to upper half of the register bank.
+    @X=map("%xmm$_",(8..11,4..7));
+    @Tx=map("%xmm$_",(12,13,3));
+    ($iv,$in,$rndkey0)=map("%xmm$_",(2,14,15));
     @rndkey=("%xmm0","%xmm1");
 }
 
@@ -203,17 +206,17 @@ $code.=<<___;
 	xor	$D,@T[1]
 	and	@T[1],@T[0]
 
-	movdqa	64($K_XX_XX),@X[2]	# pbswap mask
+	movdqa	64($K_XX_XX),@Tx[2]	# pbswap mask
 	movdqa	0($K_XX_XX),@Tx[1]	# K_00_19
 	movdqu	0($inp),@X[-4&7]	# load input to %xmm[0-3]
 	movdqu	16($inp),@X[-3&7]
 	movdqu	32($inp),@X[-2&7]
 	movdqu	48($inp),@X[-1&7]
-	pshufb	@X[2],@X[-4&7]		# byte swap
+	pshufb	@Tx[2],@X[-4&7]		# byte swap
 	add	\$64,$inp
-	pshufb	@X[2],@X[-3&7]
-	pshufb	@X[2],@X[-2&7]
-	pshufb	@X[2],@X[-1&7]
+	pshufb	@Tx[2],@X[-3&7]
+	pshufb	@Tx[2],@X[-2&7]
+	pshufb	@Tx[2],@X[-1&7]
 	paddd	@Tx[1],@X[-4&7]		# add K_00_19
 	paddd	@Tx[1],@X[-3&7]
 	paddd	@Tx[1],@X[-2&7]
@@ -277,11 +280,11 @@ sub Xupdate_ssse3_16_31()		# recall that $Xi starts wtih 4
   my @insns = (&$body,&$body,&$body,&$body);	# 40 instructions
   my ($a,$b,$c,$d,$e);
 
-	&movdqa	(@X[0],@X[-3&7]);
+	&pshufd	(@X[0],@X[-4&7],0xee);	# was &movdqa(@X[0],@X[-3&7]);
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 	&movdqa	(@Tx[0],@X[-1&7]);
-	&palignr(@X[0],@X[-4&7],8);	# compose "X[-14]" in "X[0]"
+	&punpcklqdq(@X[0],@X[-3&7]);	# compose "X[-14]" in "X[0]", was &palignr(@X[0],@X[-4&7],8);
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 
@@ -358,10 +361,10 @@ sub Xupdate_ssse3_32_79()
   my @insns = (&$body,&$body,&$body,&$body);	# 32 to 48 instructions
   my ($a,$b,$c,$d,$e);
 
-	&movdqa	(@Tx[0],@X[-1&7])	if ($Xi==8);
+	&pshufd	(@Tx[0],@X[-2&7],0xee)	if ($Xi==8);	# was &movdqa	(@Tx[0],@X[-1&7])
 	 eval(shift(@insns));		# body_20_39
 	&pxor	(@X[0],@X[-4&7]);	# "X[0]"="X[-32]"^"X[-16]"
-	&palignr(@Tx[0],@X[-2&7],8);	# compose "X[-6]"
+	&punpcklqdq(@Tx[0],@X[-1&7]);	# compose "X[-6]", was &palignr(@Tx[0],@X[-2&7],8);
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 	 eval(shift(@insns));		# rol
@@ -405,7 +408,7 @@ sub Xupdate_ssse3_32_79()
 	&por	(@X[0],@Tx[0]);		# "X[0]"<<<=2
 	 eval(shift(@insns));		# body_20_39
 	 eval(shift(@insns));
-	  &movdqa	(@Tx[1],@X[0])	if ($Xi<19);
+	  &pshufd(@Tx[1],@X[-1&7],0xee)	if ($Xi<19);	# was &movdqa	(@Tx[1],@X[0])
 	 eval(shift(@insns));
 	 eval(shift(@insns));		# rol
 	 eval(shift(@insns));
@@ -441,13 +444,13 @@ sub Xuplast_ssse3_80()
 
 	unshift(@Tx,pop(@Tx));
 
-	&movdqa	(@X[2],"64($K_XX_XX)");		# pbswap mask
+	&movdqa	(@Tx[2],"64($K_XX_XX)");	# pbswap mask
 	&movdqa	(@Tx[1],"0($K_XX_XX)");		# K_00_19
 	&movdqu	(@X[-4&7],"0($inp)");		# load input
 	&movdqu	(@X[-3&7],"16($inp)");
 	&movdqu	(@X[-2&7],"32($inp)");
 	&movdqu	(@X[-1&7],"48($inp)");
-	&pshufb	(@X[-4&7],@X[2]);		# byte swap
+	&pshufb	(@X[-4&7],@Tx[2]);		# byte swap
 	&add	($inp,64);
 
   $Xi=0;
@@ -461,7 +464,7 @@ sub Xloop_ssse3()
 
 	 eval(shift(@insns));
 	 eval(shift(@insns));
-	&pshufb	(@X[($Xi-3)&7],@X[2]);
+	&pshufb	(@X[($Xi-3)&7],@Tx[2]);
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 	&paddd	(@X[($Xi-4)&7],@Tx[1]);
