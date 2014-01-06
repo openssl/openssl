@@ -5,6 +5,13 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 1.0.1e and OpenSSL 1.0.1f [6 Jan 2014]
+
+      o Don't include gmt_unix_time in TLS server and client random values
+      o Fix for TLS record tampering bug CVE-2013-4353
+      o Fix for TLS version checking bug CVE-2013-6449
+      o Fix for DTLS retransmission bug CVE-2013-6450
+
   Major changes between OpenSSL 1.0.1d and OpenSSL 1.0.1e [11 Feb 2013]:
 
       o Corrected fix for CVE-2013-0169
@@ -46,6 +53,10 @@
       o Support TLS v1.2 and TLS v1.1.
       o Preliminary FIPS capability for unvalidated 2.0 FIPS module.
       o SRP support.
+
+  Major changes between OpenSSL 1.0.0k and OpenSSL 1.0.0l [6 Jan 2014]
+
+      o Fix for DTLS retransmission bug CVE-2013-6450
 
   Major changes between OpenSSL 1.0.0j and OpenSSL 1.0.0k [5 Feb 2013]:
 
