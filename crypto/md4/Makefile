@@ -76,8 +76,14 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-md4_dgst.o: ../../include/openssl/md4.h ../../include/openssl/safestack.h
-md4_dgst.o: ../../include/openssl/stack.h ../md32_common.h md4_dgst.c
+md4_dgst.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+md4_dgst.o: ../../include/openssl/md4.h ../../include/openssl/opensslconf.h
+md4_dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+md4_dgst.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+md4_dgst.o: ../../include/openssl/symhacks.h ../md32_common.h md4_dgst.c
 md4_dgst.o: md4_locl.h
-md4_one.o: ../../include/openssl/md4.h ../../include/openssl/safestack.h
-md4_one.o: ../../include/openssl/stack.h md4_one.c
+md4_one.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+md4_one.o: ../../include/openssl/md4.h ../../include/openssl/opensslconf.h
+md4_one.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+md4_one.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+md4_one.o: ../../include/openssl/symhacks.h md4_one.c

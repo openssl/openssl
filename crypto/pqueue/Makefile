@@ -74,6 +74,10 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-pqueue.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/err.h
-pqueue.o: ../../include/openssl/lhash.h ../../include/openssl/safestack.h
-pqueue.o: ../../include/openssl/stack.h ../cryptlib.h pqueue.c pqueue.h
+pqueue.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
+pqueue.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+pqueue.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+pqueue.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+pqueue.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+pqueue.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+pqueue.o: ../../include/openssl/symhacks.h ../cryptlib.h pqueue.c pqueue.h
