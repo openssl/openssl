@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 1.0.0l and 1.0.0m [xx XXX xxxx]
+
+  *)
+
  Changes between 1.0.0k and 1.0.0l [6 Jan 2014]
 
   *) Keep original DTLS digest and encryption contexts in retransmission

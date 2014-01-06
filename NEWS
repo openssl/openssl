@@ -5,6 +5,10 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 1.0.0l and OpenSSL 1.0.0m [under development]
+
+      o
+
   Major changes between OpenSSL 1.0.0k and OpenSSL 1.0.0l [6 Jan 2014]
 
       o Fix for DTLS retransmission bug CVE-2013-6450
