@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 1.0.1f and 1.0.1g [xx XXX xxxx]
+
+  *)
+
  Changes between 1.0.1e and 1.0.1f [6 Jan 2014]
 
   *) Fix for TLS record tampering bug. A carefully crafted invalid 

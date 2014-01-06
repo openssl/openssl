@@ -5,6 +5,10 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 1.0.1f and OpenSSL 1.0.1g [under development]
+
+      o
+
   Major changes between OpenSSL 1.0.1e and OpenSSL 1.0.1f [6 Jan 2014]
 
       o Fix for TLS record tampering bug CVE-2013-4353
