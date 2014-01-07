@@ -5,7 +5,7 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Major changes between OpenSSL 1.0.1e and OpenSSL 1.0.2 [under development]:
+  Major changes between OpenSSL 1.0.1f and OpenSSL 1.0.2 [under development]:
 
       o Support for DTLS 1.2
       o TLS automatic EC curve selection.
@@ -14,6 +14,13 @@
       o TLS Brainpool support.
       o ALPN support.
       o CMS support for RSA-PSS, RSA-OAEP, ECDH and X9.42 DH.
+
+  Major changes between OpenSSL 1.0.1e and OpenSSL 1.0.1f [6 Jan 2014]
+
+      o Don't include gmt_unix_time in TLS server and client random values
+      o Fix for TLS record tampering bug CVE-2013-4353
+      o Fix for TLS version checking bug CVE-2013-6449
+      o Fix for DTLS retransmission bug CVE-2013-6450
 
   Major changes between OpenSSL 1.0.1d and OpenSSL 1.0.1e [11 Feb 2013]:
 
