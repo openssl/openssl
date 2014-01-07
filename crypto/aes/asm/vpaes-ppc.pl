@@ -61,89 +61,89 @@ $code.=<<___;
 .align	7	# totally strategic alignment
 _vpaes_consts:
 Lk_mc_forward:	# mc_forward
-	.long	0x01020300, 0x05060704, 0x090a0b08, 0x0d0e0f0c
-	.long	0x05060704, 0x090a0b08, 0x0d0e0f0c, 0x01020300
-	.long	0x090a0b08, 0x0d0e0f0c, 0x01020300, 0x05060704
-	.long	0x0d0e0f0c, 0x01020300, 0x05060704, 0x090a0b08
+	.long	0x01020300, 0x05060704, 0x090a0b08, 0x0d0e0f0c	?inv
+	.long	0x05060704, 0x090a0b08, 0x0d0e0f0c, 0x01020300	?inv
+	.long	0x090a0b08, 0x0d0e0f0c, 0x01020300, 0x05060704	?inv
+	.long	0x0d0e0f0c, 0x01020300, 0x05060704, 0x090a0b08	?inv
 Lk_mc_backward:	# mc_backward
-	.long	0x03000102, 0x07040506, 0x0b08090a, 0x0f0c0d0e
-	.long	0x0f0c0d0e, 0x03000102, 0x07040506, 0x0b08090a
-	.long	0x0b08090a, 0x0f0c0d0e, 0x03000102, 0x07040506
-	.long	0x07040506, 0x0b08090a, 0x0f0c0d0e, 0x03000102
+	.long	0x03000102, 0x07040506, 0x0b08090a, 0x0f0c0d0e	?inv
+	.long	0x0f0c0d0e, 0x03000102, 0x07040506, 0x0b08090a	?inv
+	.long	0x0b08090a, 0x0f0c0d0e, 0x03000102, 0x07040506	?inv
+	.long	0x07040506, 0x0b08090a, 0x0f0c0d0e, 0x03000102	?inv
 Lk_sr:		# sr
-	.long	0x00010203, 0x04050607, 0x08090a0b, 0x0c0d0e0f
-	.long	0x00050a0f, 0x04090e03, 0x080d0207, 0x0c01060b
-	.long	0x0009020b, 0x040d060f, 0x08010a03, 0x0c050e07
-	.long	0x000d0a07, 0x04010e0b, 0x0805020f, 0x0c090603
+	.long	0x00010203, 0x04050607, 0x08090a0b, 0x0c0d0e0f	?inv
+	.long	0x00050a0f, 0x04090e03, 0x080d0207, 0x0c01060b	?inv
+	.long	0x0009020b, 0x040d060f, 0x08010a03, 0x0c050e07	?inv
+	.long	0x000d0a07, 0x04010e0b, 0x0805020f, 0x0c090603	?inv
 
 ##
 ## "Hot" constants
 ##
 Lk_inv:		# inv, inva
-	.long	0xf001080d, 0x0f06050e, 0x020c0b0a, 0x09030704
-	.long	0xf0070b0f, 0x060a0401, 0x09080502, 0x0c0e0d03
+	.long	0xf001080d, 0x0f06050e, 0x020c0b0a, 0x09030704	?rev
+	.long	0xf0070b0f, 0x060a0401, 0x09080502, 0x0c0e0d03	?rev
 Lk_ipt:		# input transform (lo, hi)
-	.long	0x00702a5a, 0x98e8b2c2, 0x08782252, 0x90e0baca
-	.long	0x004d7c31, 0x7d30014c, 0x81ccfdb0, 0xfcb180cd
+	.long	0x00702a5a, 0x98e8b2c2, 0x08782252, 0x90e0baca	?rev
+	.long	0x004d7c31, 0x7d30014c, 0x81ccfdb0, 0xfcb180cd	?rev
 Lk_sbo:		# sbou, sbot
-	.long	0x00c7bd6f, 0x176dd2d0, 0x78a802c5, 0x7abfaa15
-	.long	0x006abb5f, 0xa574e4cf, 0xfa352b41, 0xd1901e8e
+	.long	0x00c7bd6f, 0x176dd2d0, 0x78a802c5, 0x7abfaa15	?rev
+	.long	0x006abb5f, 0xa574e4cf, 0xfa352b41, 0xd1901e8e	?rev
 Lk_sb1:		# sb1u, sb1t
-	.long	0x0023e2fa, 0x15d41836, 0xefd92e0d, 0xc1ccf73b
-	.long	0x003e50cb, 0x8fe19bb1, 0x44f52a14, 0x6e7adfa5
+	.long	0x0023e2fa, 0x15d41836, 0xefd92e0d, 0xc1ccf73b	?rev
+	.long	0x003e50cb, 0x8fe19bb1, 0x44f52a14, 0x6e7adfa5	?rev
 Lk_sb2:		# sb2u, sb2t
-	.long	0x0029e10a, 0x4088eb69, 0x4a2382ab, 0xc863a1c2
-	.long	0x0024710b, 0xc6937ae2, 0xcd2f98bc, 0x55e9b75e
+	.long	0x0029e10a, 0x4088eb69, 0x4a2382ab, 0xc863a1c2	?rev
+	.long	0x0024710b, 0xc6937ae2, 0xcd2f98bc, 0x55e9b75e	?rev
 
 ##
 ##  Decryption stuff
 ##
 Lk_dipt:	# decryption input transform
-	.long	0x005f540b, 0x045b500f, 0x1a454e11, 0x1e414a15
-	.long	0x00650560, 0xe683e386, 0x94f191f4, 0x72177712
+	.long	0x005f540b, 0x045b500f, 0x1a454e11, 0x1e414a15	?rev
+	.long	0x00650560, 0xe683e386, 0x94f191f4, 0x72177712	?rev
 Lk_dsbo:	# decryption sbox final output
-	.long	0x0040f97e, 0x53ea8713, 0x2d3e94d4, 0xb96daac7
-	.long	0x001d4493, 0x0f56d712, 0x9c8ec5d8, 0x59814bca
+	.long	0x0040f97e, 0x53ea8713, 0x2d3e94d4, 0xb96daac7	?rev
+	.long	0x001d4493, 0x0f56d712, 0x9c8ec5d8, 0x59814bca	?rev
 Lk_dsb9:	# decryption sbox output *9*u, *9*t
-	.long	0x00d6869a, 0x53031c85, 0xc94c994f, 0x501fd5ca
-	.long	0x0049d7ec, 0x89173bc0, 0x65a5fbb2, 0x9e2c5e72
+	.long	0x00d6869a, 0x53031c85, 0xc94c994f, 0x501fd5ca	?rev
+	.long	0x0049d7ec, 0x89173bc0, 0x65a5fbb2, 0x9e2c5e72	?rev
 Lk_dsbd:	# decryption sbox output *D*u, *D*t
-	.long	0x00a2b1e6, 0xdfcc577d, 0x39442a88, 0x139b6ef5
-	.long	0x00cbc624, 0xf7fae23c, 0xd3efde15, 0x0d183129
+	.long	0x00a2b1e6, 0xdfcc577d, 0x39442a88, 0x139b6ef5	?rev
+	.long	0x00cbc624, 0xf7fae23c, 0xd3efde15, 0x0d183129	?rev
 Lk_dsbb:	# decryption sbox output *B*u, *B*t
-	.long	0x0042b496, 0x926422d0, 0x04d4f2b0, 0xf6462660
-	.long	0x006759cd, 0xa69894c1, 0x6baa5532, 0x3e0cfff3
+	.long	0x0042b496, 0x926422d0, 0x04d4f2b0, 0xf6462660	?rev
+	.long	0x006759cd, 0xa69894c1, 0x6baa5532, 0x3e0cfff3	?rev
 Lk_dsbe:	# decryption sbox output *E*u, *E*t
-	.long	0x00d0d426, 0x9692f246, 0xb0f6b464, 0x04604222
-	.long	0x00c1aaff, 0xcda6550c, 0x323e5998, 0x6bf36794
+	.long	0x00d0d426, 0x9692f246, 0xb0f6b464, 0x04604222	?rev
+	.long	0x00c1aaff, 0xcda6550c, 0x323e5998, 0x6bf36794	?rev
 
 ##
 ##  Key schedule constants
 ##
 Lk_dksd:	# decryption key schedule: invskew x*D
-	.long	0x0047e4a3, 0x5d1ab9fe, 0xf9be1d5a, 0xa4e34007
-	.long	0x008336b5, 0xf477c241, 0x1e9d28ab, 0xea69dc5f
+	.long	0x0047e4a3, 0x5d1ab9fe, 0xf9be1d5a, 0xa4e34007	?rev
+	.long	0x008336b5, 0xf477c241, 0x1e9d28ab, 0xea69dc5f	?rev
 Lk_dksb:	# decryption key schedule: invskew x*B
-	.long	0x00d55085, 0x1fca4f9a, 0x994cc91c, 0x8653d603
-	.long	0x004afcb6, 0xa7ed5b11, 0xc882347e, 0x6f2593d9
+	.long	0x00d55085, 0x1fca4f9a, 0x994cc91c, 0x8653d603	?rev
+	.long	0x004afcb6, 0xa7ed5b11, 0xc882347e, 0x6f2593d9	?rev
 Lk_dkse:	# decryption key schedule: invskew x*E + 0x63
-	.long	0x00d6c91f, 0xca1c03d5, 0x86504f99, 0x4c9a8553
-	.long	0xe87bdc4f, 0x059631a2, 0x8714b320, 0x6af95ecd
+	.long	0x00d6c91f, 0xca1c03d5, 0x86504f99, 0x4c9a8553	?rev
+	.long	0xe87bdc4f, 0x059631a2, 0x8714b320, 0x6af95ecd	?rev
 Lk_dks9:	# decryption key schedule: invskew x*9
-	.long	0x00a7d97e, 0xc86f11b6, 0xfc5b2582, 0x3493ed4a
-	.long	0x00331427, 0x62517645, 0xcefddae9, 0xac9fb88b
+	.long	0x00a7d97e, 0xc86f11b6, 0xfc5b2582, 0x3493ed4a	?rev
+	.long	0x00331427, 0x62517645, 0xcefddae9, 0xac9fb88b	?rev
 
 Lk_rcon:	# rcon
-	.long	0xb6ee9daf, 0xb991831f, 0x817d7c4d, 0x08982a70
+	.long	0xb6ee9daf, 0xb991831f, 0x817d7c4d, 0x08982a70	?asis
 Lk_s63:
-	.long	0x5b5b5b5b, 0x5b5b5b5b, 0x5b5b5b5b, 0x5b5b5b5b
+	.long	0x5b5b5b5b, 0x5b5b5b5b, 0x5b5b5b5b, 0x5b5b5b5b	?asis
 
 Lk_opt:		# output transform
-	.long	0x0060b6d6, 0x29499fff, 0x0868bede, 0x214197f7
-	.long	0x00ecbc50, 0x51bded01, 0xe00c5cb0, 0xb15d0de1
+	.long	0x0060b6d6, 0x29499fff, 0x0868bede, 0x214197f7	?rev
+	.long	0x00ecbc50, 0x51bded01, 0xe00c5cb0, 0xb15d0de1	?rev
 Lk_deskew:	# deskew tables: inverts the sbox's "skew"
-	.long	0x00e3a447, 0x40a3e407, 0x1af9be5d, 0x5ab9fe1d
-	.long	0x0069ea83, 0xdcb5365f, 0x771e9df4, 0xabc24128
+	.long	0x00e3a447, 0x40a3e407, 0x1af9be5d, 0x5ab9fe1d	?rev
+	.long	0x0069ea83, 0xdcb5365f, 0x771e9df4, 0xabc24128	?rev
 .align	5
 Lconsts:
 	mflr	r0
@@ -227,7 +227,7 @@ _vpaes_encrypt_core:
 	li	r11, 0x10
 	lvx	v6, r9, $key
 	addi	r9, r9, 16
-	vperm	v5, v5, v6, $keyperm	# align round key
+	?vperm	v5, v5, v6, $keyperm	# align round key
 	addi	r10, r11, 0x40
 	vsrb	v1, v0, v8		# vpsrlb	\$4,	%xmm0,	%xmm0
 	vperm	v0, $iptlo, $iptlo, v0	# vpshufb	%xmm1,	%xmm2,	%xmm1
@@ -275,7 +275,7 @@ Lenc_entry:
 	vperm	v3, $invlo, v7, v4	# vpshufb	%xmm4,	%xmm10,	%xmm3	# 3 = 1/jak
 	addi	r9, r9, 16
 	vxor	v2, v2, v0		# vpxor		%xmm1,	%xmm2,	%xmm2  	# 2 = io
-	vperm	v5, v5, v6, $keyperm	# align round key
+	?vperm	v5, v5, v6, $keyperm	# align round key
 	vxor	v3, v3, v1		# vpxor		%xmm0,	%xmm3,	%xmm3	# 3 = jo
 	bdnz	Lenc_loop
 
@@ -330,25 +330,20 @@ Lenc_entry:
 
 	bl	_vpaes_encrypt_preheat
 
-	neg	r8, $inp		# prepare for unaligned access
-	lvsl	$keyperm, 0, $key
-	 lvsr	$outperm, 0, $out
-	lvsr	$inpperm, 0, r8		# -$inp
-	 vnor	$outmask, v7, v7	# 0xff..ff
-	lvx	$inptail, 0, $inp
-	 vperm	$outmask, v7, $outmask, $outperm
+	?lvsl	$inpperm, 0, $inp	# prepare for unaligned access
+	lvx	v0, 0, $inp
 	addi	$inp, $inp, 15		# 15 is not a typo
-	 lvx	$outhead, 0, $out
-
-	########
-	vmr	v0, $inptail
+	 ?lvsr	$outperm, 0, $out
+	?lvsl	$keyperm, 0, $key	# prepare for unaligned access
+	 vnor	$outmask, v7, v7	# 0xff..ff
 	lvx	$inptail, 0, $inp	# redundant in aligned case
-	addi	$inp, $inp, 16
-	vperm	v0, v0, $inptail, $inpperm
+	 ?vperm	$outmask, v7, $outmask, $outperm
+	 lvx	$outhead, 0, $out
+	?vperm	v0, v0, $inptail, $inpperm
 
 	bl	_vpaes_encrypt_core
 
-	vperm	v0, v0, v0, $outperm	# rotate left
+	vperm	v0, v0, v0, $outperm	# rotate right/left
 	vsel	v1, $outhead, v0, $outmask
 	vmr	$outhead, v0
 	stvx	v1, 0, $out
@@ -445,7 +440,7 @@ _vpaes_decrypt_core:
 	li	r11, 0x30
 	lvx	v6, r9, $key
 	addi	r9, r9, 16
-	vperm	v5, v5, v6, $keyperm	# align round key
+	?vperm	v5, v5, v6, $keyperm	# align round key
 	vsrb	v1, v0, v8		# vpsrlb	\$4,	%xmm0,	%xmm0
 	vperm	v0, $iptlo, $iptlo, v0	# vpshufb	%xmm1,	%xmm2,	%xmm2
 	vperm	v1, $ipthi, $ipthi, v1	# vpshufb	%xmm0,	%xmm1,	%xmm0
@@ -509,7 +504,7 @@ Ldec_entry:
 	vperm	v3, $invlo, v7, v4	# vpshufb	%xmm4,  %xmm10,	%xmm3	# 3 = 1/jak
 	addi	r9, r9, 16
 	vxor	v2, v2, v0		# vpxor		%xmm1,	%xmm2,	%xmm2	# 2 = io
-	vperm	v5, v5, v6, $keyperm	# align round key
+	?vperm	v5, v5, v6, $keyperm	# align round key
 	vxor	v3, v3, v1		# vpxor		%xmm0,  %xmm3,	%xmm3	# 3 = jo
 	bdnz	Ldec_loop
 
@@ -564,25 +559,20 @@ Ldec_entry:
 
 	bl	_vpaes_decrypt_preheat
 
-	neg	r8, $inp		# prepare for unaligned access
-	lvsl	$keyperm, 0, $key
-	 lvsr	$outperm, 0, $out
-	lvsr	$inpperm, 0, r8		# -$inp
-	 vnor	$outmask, v7, v7	# 0xff..ff
-	lvx	$inptail, 0, $inp
-	 vperm	$outmask, v7, $outmask, $outperm
+	?lvsl	$inpperm, 0, $inp	# prepare for unaligned access
+	lvx	v0, 0, $inp
 	addi	$inp, $inp, 15		# 15 is not a typo
-	 lvx	$outhead, 0, $out
-
-	########
-	vmr	v0, $inptail
+	 ?lvsr	$outperm, 0, $out
+	?lvsl	$keyperm, 0, $key
+	 vnor	$outmask, v7, v7	# 0xff..ff
 	lvx	$inptail, 0, $inp	# redundant in aligned case
-	addi	$inp, $inp, 16
-	vperm	v0, v0, $inptail, $inpperm
+	 ?vperm	$outmask, v7, $outmask, $outperm
+	 lvx	$outhead, 0, $out
+	?vperm	v0, v0, $inptail, $inpperm
 
 	bl	_vpaes_decrypt_core
 
-	vperm	v0, v0, v0, $outperm	# rotate left
+	vperm	v0, v0, v0, $outperm	# rotate right/left
 	vsel	v1, $outhead, v0, $outmask
 	vmr	$outhead, v0
 	stvx	v1, 0, $out
@@ -673,18 +663,18 @@ Ldec_entry:
 
 	lvx	v24, 0, r31		# load [potentially unaligned] iv
 	li	r9, 15
-	lvsl	$inpperm, 0, r31
+	?lvsl	$inpperm, 0, r31
 	lvx	v25, r9, r31
-	vperm	v24, v24, v25, $inpperm
+	?vperm	v24, v24, v25, $inpperm
 
 	neg	r8, $inp		# prepare for unaligned access
 	 vxor	v7, v7, v7
-	lvsl	$keyperm, 0, $key
-	 lvsr	$outperm, 0, $out
-	lvsr	$inpperm, 0, r8		# -$inp
+	?lvsl	$keyperm, 0, $key
+	 ?lvsr	$outperm, 0, $out
+	?lvsr	$inpperm, 0, r8		# -$inp
 	 vnor	$outmask, v7, v7	# 0xff..ff
 	lvx	$inptail, 0, $inp
-	 vperm	$outmask, v7, $outmask, $outperm
+	 ?vperm	$outmask, v7, $outmask, $outperm
 	addi	$inp, $inp, 15		# 15 is not a typo
 	 lvx	$outhead, 0, $out
 
@@ -697,14 +687,14 @@ Lcbc_enc_loop:
 	vmr	v0, $inptail
 	lvx	$inptail, 0, $inp
 	addi	$inp, $inp, 16
-	vperm	v0, v0, $inptail, $inpperm
+	?vperm	v0, v0, $inptail, $inpperm
 	vxor	v0, v0, v24		# ^= iv
 
 	bl	_vpaes_encrypt_core
 
 	vmr	v24, v0			# put aside iv
 	sub.	r30, r30, r0		# len -= 16
-	vperm	v0, v0, v0, $outperm	# rotate left
+	vperm	v0, v0, v0, $outperm	# rotate right/left
 	vsel	v1, $outhead, v0, $outmask
 	vmr	$outhead, v0
 	stvx	v1, 0, $out
@@ -722,7 +712,7 @@ Lcbc_dec_loop:
 	vmr	v0, $inptail
 	lvx	$inptail, 0, $inp
 	addi	$inp, $inp, 16
-	vperm	v0, v0, $inptail, $inpperm
+	?vperm	v0, v0, $inptail, $inpperm
 	vmr	v25, v0			# put aside input
 
 	bl	_vpaes_decrypt_core
@@ -730,7 +720,7 @@ Lcbc_dec_loop:
 	vxor	v0, v0, v24		# ^= iv
 	vmr	v24, v25
 	sub.	r30, r30, r0		# len -= 16
-	vperm	v0, v0, v0, $outperm	# rotate left
+	vperm	v0, v0, v0, $outperm	# rotate right/left
 	vsel	v1, $outhead, v0, $outmask
 	vmr	$outhead, v0
 	stvx	v1, 0, $out
@@ -744,12 +734,12 @@ Lcbc_done:
 	stvx	v1, 0, $out
 
 	neg	r8, r31			# write [potentially unaligned] iv
-	lvsl	$outperm, 0, r8
+	?lvsl	$outperm, 0, r8
 	li	r6, 15
 	vnor	$outmask, v7, v7	# 0xff..ff
-	vperm	$outmask, v7, $outmask, $outperm
+	?vperm	$outmask, v7, $outmask, $outperm
 	lvx	$outhead, 0, r31
-	vperm	v24, v24, v24, $outperm	# rotate
+	vperm	v24, v24, v24, $outperm	# rotate right/left
 	vsel	v0, $outhead, v24, $outmask
 	lvx	v1, r6, r31
 	stvx	v0, 0, r31
@@ -863,10 +853,10 @@ _vpaes_schedule_core:
 	neg	r8, $inp		# prepare for unaligned access
 	lvx	v0, 0, $inp
 	addi	$inp, $inp, 15		# 15 is not typo
-	lvsr	$inpperm, 0, r8		# -$inp
+	?lvsr	$inpperm, 0, r8		# -$inp
 	lvx	v6, 0, $inp		# v6 serves as inptail
 	addi	$inp, $inp, 8
-	vperm	v0, v0, v6, $inpperm
+	?vperm	v0, v0, v6, $inpperm
 
 	# input transform
 	vmr	v3, v0			# vmovdqa	%xmm0,	%xmm3
@@ -879,13 +869,13 @@ _vpaes_schedule_core:
 	li	r8, 0x30		# mov	\$0x30,%r8d
 	addi	r10, r12, 0x80		# lea	.Lk_sr(%rip),%r10
 
-	lvsr	$outperm, 0, $out	# prepare for unaligned access
-	vspltisb	$outmask, -1	# 0xff..ff
+	?lvsr	$outperm, 0, $out	# prepare for unaligned access
+	vnor	$outmask, v9, v9	# 0xff..ff
 	lvx	$outhead, 0, $out
-	vperm	$outmask, v9, $outmask, $outperm
+	?vperm	$outmask, v9, $outmask, $outperm
 
 	#stvx	v0, 0, $out		# vmovdqu	%xmm0,	(%rdx)
-	vperm	v1, v0, v0, $outperm	# rotate left
+	vperm	v1, v0, v0, $outperm	# rotate right/left
 	vsel	v2, $outhead, v1, $outmask
 	vmr	$outhead, v1
 	stvx	v2, 0, $out
@@ -901,14 +891,14 @@ Lschedule_am_decrypting:
 	vperm	v4, v3, v3, v1		# vpshufb	%xmm1,	%xmm3,	%xmm3
 
 	neg	r0, $out		# prepare for unaligned access
-	lvsl	$outperm, 0, r0
+	?lvsl	$outperm, 0, r0
 	addi	$out, $out, 15		# 15 is not typo
-	vspltisb	$outmask, -1	# 0xff..ff
+	vnor	$outmask, v9, v9	# 0xff..ff
 	lvx	$outhead, 0, $out
-	vperm	$outmask, $outmask, v9, $outperm
+	?vperm	$outmask, $outmask, v9, $outperm
 
 	#stvx	v4, 0, $out		# vmovdqu	%xmm3,	(%rdx)
-	vperm	v4, v4, v4, $outperm	# rotate left
+	vperm	v4, v4, v4, $outperm	# rotate right/left
 	vsel	v2, $outhead, v4, $outmask
 	vmr	$outhead, v4
 	stvx	v2, 0, $out
@@ -957,16 +947,16 @@ Loop_schedule_128:
 Lschedule_192:
 	li	r0, 4			# mov	\$4,	%esi
 	lvx	v0, 0, $inp
-	vperm	v0, v6, v0, $inpperm
-	vsldoi	v0, v3, v0, 8		# vmovdqu	8(%rdi),%xmm0		# load key part 2 (very unaligned)
+	?vperm	v0, v6, v0, $inpperm
+	?vsldoi	v0, v3, v0, 8		# vmovdqu	8(%rdi),%xmm0		# load key part 2 (very unaligned)
 	bl	_vpaes_schedule_transform	# input transform
-	vsldoi	v6, v0, v9, 8
-	vsldoi	v6, v9, v6, 8		# clobber "low" side with zeros
+	?vsldoi	v6, v0, v9, 8
+	?vsldoi	v6, v9, v6, 8		# clobber "low" side with zeros
 	mtctr	r0
 
 Loop_schedule_192:
 	bl	_vpaes_schedule_round
-	vsldoi	v0, v6, v0, 8		# vpalignr	\$8,%xmm6,%xmm0,%xmm0
+	?vsldoi	v0, v6, v0, 8		# vpalignr	\$8,%xmm6,%xmm0,%xmm0
 	bl	_vpaes_schedule_mangle	# save key n
 	bl	_vpaes_schedule_192_smear
 	bl	_vpaes_schedule_mangle	# save key n+1
@@ -991,7 +981,7 @@ Lschedule_256:
 	li	r0, 7			# mov	\$7, %esi
 	addi	$inp, $inp, 8
 	lvx	v0, 0, $inp		# vmovdqu	16(%rdi),%xmm0		# load key part 2 (unaligned)
-	vperm	v0, v6, v0, $inpperm
+	?vperm	v0, v6, v0, $inpperm
 	bl	_vpaes_schedule_transform	# input transform
 	mtctr	r0
 
@@ -1005,7 +995,7 @@ Loop_schedule_256:
 	bl	_vpaes_schedule_mangle	
 
 	# low round. swap xmm7 and xmm6
-	vspltw	v0, v0, 3		# vpshufd	\$0xFF,	%xmm0,	%xmm0
+	?vspltw	v0, v0, 3		# vpshufd	\$0xFF,	%xmm0,	%xmm0
 	vmr	v5, v7			# vmovdqa	%xmm7,	%xmm5
 	vmr	v7, v6			# vmovdqa	%xmm6,	%xmm7
 	bl	_vpaes_schedule_low_round
@@ -1042,7 +1032,7 @@ Lschedule_mangle_last:
 	bl	_vpaes_schedule_transform	# output transform
 
 	#stvx	v0, r0, $out		# vmovdqu	%xmm0,	(%rdx)		# save last key
-	vperm	v0, v0, v0, $outperm	# rotate left
+	vperm	v0, v0, v0, $outperm	# rotate right/left
 	vsel	v2, $outhead, v0, $outmask
 	vmr	$outhead, v0
 	stvx	v2, 0, $out
@@ -1062,7 +1052,7 @@ Lschedule_mangle_last_dec:
 	bl	_vpaes_schedule_transform	# output transform
 
 	#stvx	v0, r0, $out		# vmovdqu	%xmm0,	(%rdx)		# save last key
-	vperm	v0, v0, v0, $outperm	# rotate left
+	vperm	v0, v0, v0, $outperm	# rotate right/left
 	vsel	v2, $outhead, v0, $outmask
 	vmr	$outhead, v0
 	stvx	v2, 0, $out
@@ -1104,14 +1094,14 @@ Lschedule_mangle_done:
 ##
 .align	4
 _vpaes_schedule_192_smear:
-	vspltw	v0, v7, 3
-	vsldoi	v1, v9, v6, 12		# vpshufd	\$0x80,	%xmm6,	%xmm1	# d c 0 0 -> c 0 0 0
-	vsldoi	v0, v7, v0, 8		# vpshufd	\$0xFE,	%xmm7,	%xmm0	# b a _ _ -> b b b a
+	?vspltw	v0, v7, 3
+	?vsldoi	v1, v9, v6, 12		# vpshufd	\$0x80,	%xmm6,	%xmm1	# d c 0 0 -> c 0 0 0
+	?vsldoi	v0, v7, v0, 8		# vpshufd	\$0xFE,	%xmm7,	%xmm0	# b a _ _ -> b b b a
 	vxor	v6, v6, v1		# vpxor		%xmm1,	%xmm6,	%xmm6	# -> c+d c 0 0
 	vxor	v6, v6, v0		# vpxor		%xmm0,	%xmm6,	%xmm6	# -> b+c+d b+c b a
 	vmr	v0, v6
-	vsldoi	v6, v6, v9, 8
-	vsldoi	v6, v9, v6, 8		# clobber low side with zeros
+	?vsldoi	v6, v6, v9, 8
+	?vsldoi	v6, v9, v6, 8		# clobber low side with zeros
 	blr
 	.long	0
 	.byte	0,12,0x14,0,0,0,0,0
@@ -1138,23 +1128,23 @@ _vpaes_schedule_192_smear:
 _vpaes_schedule_round:
 	# extract rcon from xmm8
 	#vxor	v4, v4, v4		# vpxor		%xmm4,	%xmm4,	%xmm4
-	vsldoi	v1, $rcon, v9, 15	# vpalignr	\$15,	%xmm8,	%xmm4,	%xmm1
-	vsldoi	$rcon, $rcon, $rcon, 15	# vpalignr	\$15,	%xmm8,	%xmm8,	%xmm8
+	?vsldoi	v1, $rcon, v9, 15	# vpalignr	\$15,	%xmm8,	%xmm4,	%xmm1
+	?vsldoi	$rcon, $rcon, $rcon, 15	# vpalignr	\$15,	%xmm8,	%xmm8,	%xmm8
 	vxor	v7, v7, v1		# vpxor		%xmm1,	%xmm7,	%xmm7
 
 	# rotate
-	vspltw	v0, v0, 3		# vpshufd	\$0xFF,	%xmm0,	%xmm0
-	vsldoi	v0, v0, v0, 1		# vpalignr	\$1,	%xmm0,	%xmm0,	%xmm0
+	?vspltw	v0, v0, 3		# vpshufd	\$0xFF,	%xmm0,	%xmm0
+	?vsldoi	v0, v0, v0, 1		# vpalignr	\$1,	%xmm0,	%xmm0,	%xmm0
 
 	# fall through...
 
 	# low round: same as high round, but no rotation and no rcon.
 _vpaes_schedule_low_round:
 	# smear xmm7
-	vsldoi	v1, v9, v7, 12		# vpslldq	\$4,	%xmm7,	%xmm1
+	?vsldoi	v1, v9, v7, 12		# vpslldq	\$4,	%xmm7,	%xmm1
 	vxor	v7, v7, v1		# vpxor		%xmm1,	%xmm7,	%xmm7
 	vspltisb	v1, 0x0f	# 0x0f..0f
-	vsldoi	v4, v9, v7, 8		# vpslldq	\$8,	%xmm7,	%xmm4
+	?vsldoi	v4, v9, v7, 8		# vpslldq	\$8,	%xmm7,	%xmm4
 
 	# subbytes
 	vand	v1, v1, v0		# vpand		%xmm9,	%xmm0,	%xmm1		# 0 = k
@@ -1248,7 +1238,7 @@ _vpaes_schedule_mangle:
 	andi.	r8, r8, 0x30		# and	\$0x30,	%r8
 
 	#stvx	v3, 0, $out		# vmovdqu	%xmm3,	(%rdx)
-	vperm	v1, v3, v3, $outperm	# rotate left
+	vperm	v1, v3, v3, $outperm	# rotate right/left
 	vsel	v2, $outhead, v1, $outmask
 	vmr	$outhead, v1
 	stvx	v2, 0, $out
@@ -1299,7 +1289,7 @@ Lschedule_mangle_dec:
 	andi.	r8, r8, 0x30		# and	\$0x30,	%r8
 
 	#stvx	v3, 0, $out		# vmovdqu	%xmm3,	(%rdx)
-	vperm	v1, v3, v3, $outperm	# rotate left
+	vperm	v1, v3, v3, $outperm	# rotate right/left
 	vsel	v2, $outhead, v1, $outmask
 	vmr	$outhead, v1
 	stvx	v2, 0, $out
@@ -1346,7 +1336,7 @@ Lschedule_mangle_dec:
 	addi	r9, r9, 6		# add	\$5,%eax
 	stw	r9, 240($out)		# mov	%eax,240(%rdx)	# AES_KEY->rounds = nbits/32+5;
 
-	cmplw	$dir, $bits, $bits
+	cmplw	$dir, $bits, $bits	# set encrypt direction
 	li	r8, 0x30		# mov	\$0x30,%r8d
 	bl	_vpaes_schedule_core
 
@@ -1427,7 +1417,7 @@ Lschedule_mangle_dec:
 	slwi	r9, r9, 4		# shl	\$4,%eax
 	add	$out, $out, r9		# lea	(%rdx,%rax),%rdx
 
-	cmplwi	$dir, $bits, 0
+	cmplwi	$dir, $bits, 0		# set decrypt direction
 	srwi	r8, $bits, 1		# shr	\$1,%r8d
 	andi.	r8, r8, 32		# and	\$32,%r8d
 	xori	r8, r8, 32		# xor	\$32,%r8d	# nbits==192?0:32
@@ -1470,8 +1460,48 @@ Lschedule_mangle_dec:
 ___
 }
 
-$code =~ s/\`([^\`]*)\`/eval($1)/gem;
+my $consts=1;
+foreach  (split("\n",$code)) {
+	s/\`([^\`]*)\`/eval $1/geo;
 
-print $code;
+	# constants table endian-specific conversion
+	if ($consts && m/\.long\s+(.+)\s+(\?[a-z]*)$/o) {
+	    my $conv=$2;
+	    my @bytes=();
+
+	    # convert to endian-agnostic format
+	    foreach (split(/,\s+/,$1)) {
+		my $l = /^0/?oct:int;
+		push @bytes,($l>>24)&0xff,($l>>16)&0xff,($l>>8)&0xff,$l&0xff;
+	    }
+
+	    # little-endian conversion
+	    if ($flavour =~ /le$/o) {
+		SWITCH: for($conv)  {
+		    /\?inv/ && do   { @bytes=map($_^0xf,@bytes); last; };
+		    /\?rev/ && do   { @bytes=reverse(@bytes);    last; }; 
+		}
+	    }
+
+	    #emit
+	    print ".byte\t",join(',',map (sprintf("0x%02x",$_),@bytes)),"\n";
+	    next;
+	}
+	$consts=0 if (m/Lconsts:/o);	# end of table
+
+	# instructions prefixed with '?' are endian-specific and need
+	# to be adjusted accordingly...
+	if ($flavour =~ /le$/o) {	# little-endian
+	    s/\?lvsr/lvsl/o or
+	    s/\?lvsl/lvsr/o or
+	    s/\?(vperm\s+v[0-9]+,\s*)(v[0-9]+,\s*)(v[0-9]+,\s*)(v[0-9]+)/$1$3$2$4/o or
+	    s/\?(vsldoi\s+v[0-9]+,\s*)(v[0-9]+,)\s*(v[0-9]+,\s*)([0-9]+)/$1$3$2 16-$4/o or
+	    s/\?(vspltw\s+v[0-9]+,\s*)(v[0-9]+,)\s*([0-9])/$1$2 3-$3/o;
+	} else {			# big-endian
+	    s/\?([a-z]+)/$1/o;
+	}
+
+	print $_,"\n";
+}
 
 close STDOUT;
