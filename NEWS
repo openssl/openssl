@@ -7,9 +7,10 @@
 
   Major changes between OpenSSL 1.0.1f and OpenSSL 1.0.2 [under development]:
 
+      o Suite B support for TLS 1.2 and DTLS 1.2
       o Support for DTLS 1.2
       o TLS automatic EC curve selection.
-      o API to set TLS support signature algorithms and curves
+      o API to set TLS supported signature algorithms and curves
       o SSL_CONF configuration API.
       o TLS Brainpool support.
       o ALPN support.
