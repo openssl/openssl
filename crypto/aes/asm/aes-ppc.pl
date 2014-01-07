@@ -45,11 +45,7 @@ if ($flavour =~ /64/) {
 	$PUSH	="stw";
 } else { die "nonsense $flavour"; }
 
-$LITTLE_ENDIAN=0;
-if ($flavour =~ /le$/) {
-	die "little-endian is 64-bit only: $flavour" if ($SIZE_T == 4);
-	$LITTLE_ENDIAN=1;
-}
+$LITTLE_ENDIAN = ($flavour=~/le$/) ? $SIZE_T : 0;
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}ppc-xlate.pl" and -f $xlate ) or

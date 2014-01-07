@@ -9,8 +9,7 @@
 
 # I let hardware handle unaligned input(*), except on page boundaries
 # (see below for details). Otherwise straightforward implementation
-# with X vector in register bank. The module is big-endian [which is
-# not big deal as there're no little-endian targets left around].
+# with X vector in register bank.
 #
 # (*) this means that this module is inappropriate for PPC403? Does
 #     anybody know if pre-POWER3 can sustain unaligned load?
@@ -40,11 +39,7 @@ if ($flavour =~ /64/) {
 
 # Define endianess based on flavour
 # i.e.: linux64le
-$LITTLE_ENDIAN=0;
-if ($flavour =~ /le$/) {
-	die "little-endian is 64-bit only: $flavour" if ($SIZE_T == 4);
-	$LITTLE_ENDIAN=1;
-}
+$LITTLE_ENDIAN = ($flavour=~/le$/) ? $SIZE_T : 0;
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}ppc-xlate.pl" and -f $xlate ) or

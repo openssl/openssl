@@ -9,8 +9,7 @@
 
 # I let hardware handle unaligned input, except on page boundaries
 # (see below for details). Otherwise straightforward implementation
-# with X vector in register bank. The module is big-endian [which is
-# not big deal as there're no little-endian targets left around].
+# with X vector in register bank.
 
 #			sha256		|	sha512
 # 			-m64	-m32	|	-m64	-m32
@@ -56,11 +55,7 @@ if ($flavour =~ /64/) {
 	$PUSH="stw";
 } else { die "nonsense $flavour"; }
 
-$LITTLE_ENDIAN=0;
-if ($flavour =~ /le$/) {
-	die "little-endian is 64-bit only: $flavour" if ($SIZE_T==4);
-	$LITTLE_ENDIAN=1;
-}
+$LITTLE_ENDIAN = ($flavour=~/le$/) ? $SIZE_T : 0;
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}ppc-xlate.pl" and -f $xlate ) or
@@ -235,7 +230,7 @@ ___
 } else {
   for ($i=16;$i<32;$i++) {
     $code.=<<___;
-	lwz	r$i,`4*($i-16)`($ctx)
+	lwz	r$i,`$LITTLE_ENDIAN^(4*($i-16))`($ctx)
 ___
   }
 }
@@ -468,9 +463,9 @@ my ($i,	$ahi,$alo,$bhi,$blo,$chi,$clo,$dhi,$dlo,
 	$ehi,$elo,$fhi,$flo,$ghi,$glo,$hhi,$hlo)=@_;
 
 $code.=<<___;
-	lwz	$t2,`$SZ*($i%16)+4`($Tbl)
+	lwz	$t2,`$SZ*($i%16)+($LITTLE_ENDIAN^4)`($Tbl)
 	 xor	$a0,$flo,$glo
-	lwz	$t3,`$SZ*($i%16)+0`($Tbl)
+	lwz	$t3,`$SZ*($i%16)+($LITTLE_ENDIAN^0)`($Tbl)
 	 xor	$a1,$fhi,$ghi
 	addc	$hlo,$hlo,$t0			; h+=x[i]
 	stw	$t0,`$XOFF+0+$SZ*($i%16)`($sp)	; save x[i]
@@ -533,9 +528,19 @@ $code.=<<___ if ($i>=15);
 	lwz	$t0,`$XOFF+0+$SZ*(($i+2)%16)`($sp)
 	lwz	$t1,`$XOFF+4+$SZ*(($i+2)%16)`($sp)
 ___
-$code.=<<___ if ($i<15);
+$code.=<<___ if ($i<15 && !$LITTLE_ENDIAN);
 	lwz	$t1,`$SZ*($i+1)+0`($inp)
 	lwz	$t0,`$SZ*($i+1)+4`($inp)
+___
+$code.=<<___ if ($i<15 && $LITTLE_ENDIAN);
+	lwz	$a2,`$SZ*($i+1)+0`($inp)
+	 lwz	$a3,`$SZ*($i+1)+4`($inp)
+	rotlwi	$t1,$a2,8
+	 rotlwi	$t0,$a3,8
+	rlwimi	$t1,$a2,24,0,7
+	 rlwimi	$t0,$a3,24,0,7
+	rlwimi	$t1,$a2,24,16,23
+	 rlwimi	$t0,$a3,24,16,23
 ___
 $code.=<<___;
 	xor	$s0,$s0,$t2			; Sigma0(a)
@@ -602,10 +607,24 @@ ___
 $code.=<<___;
 .align	4
 Lsha2_block_private:
+___
+$code.=<<___ if (!$LITTLE_ENDIAN);
 	lwz	$t1,0($inp)
 	xor	$a2,@V[3],@V[5]		; B^C, magic seed
 	lwz	$t0,4($inp)
 	xor	$a3,@V[2],@V[4]
+___
+$code.=<<___ if ($LITTLE_ENDIAN);
+	lwz	$a1,0($inp)
+	xor	$a2,@V[3],@V[5]		; B^C, magic seed
+	lwz	$a0,4($inp)
+	xor	$a3,@V[2],@V[4]
+	rotlwi	$t1,$a1,8
+	 rotlwi	$t0,$a0,8
+	rlwimi	$t1,$a1,24,0,7
+	 rlwimi	$t0,$a0,24,0,7
+	rlwimi	$t1,$a1,24,16,23
+	 rlwimi	$t0,$a0,24,16,23
 ___
 for($i=0;$i<16;$i++) {
 	&ROUND_00_15_ppc32($i,@V);
@@ -632,54 +651,54 @@ $code.=<<___;
 	$POP	$num,`$FRAME-$SIZE_T*24`($sp)	; end pointer
 	subi	$Tbl,$Tbl,`($rounds-16)*$SZ`	; rewind Tbl
 
-	lwz	$t0,0($ctx)
-	lwz	$t1,4($ctx)
-	lwz	$t2,8($ctx)
-	lwz	$t3,12($ctx)
-	lwz	$a0,16($ctx)
-	lwz	$a1,20($ctx)
-	lwz	$a2,24($ctx)
+	lwz	$t0,`$LITTLE_ENDIAN^0`($ctx)
+	lwz	$t1,`$LITTLE_ENDIAN^4`($ctx)
+	lwz	$t2,`$LITTLE_ENDIAN^8`($ctx)
+	lwz	$t3,`$LITTLE_ENDIAN^12`($ctx)
+	lwz	$a0,`$LITTLE_ENDIAN^16`($ctx)
+	lwz	$a1,`$LITTLE_ENDIAN^20`($ctx)
+	lwz	$a2,`$LITTLE_ENDIAN^24`($ctx)
 	addc	@V[1],@V[1],$t1
-	lwz	$a3,28($ctx)
+	lwz	$a3,`$LITTLE_ENDIAN^28`($ctx)
 	adde	@V[0],@V[0],$t0
-	lwz	$t0,32($ctx)
+	lwz	$t0,`$LITTLE_ENDIAN^32`($ctx)
 	addc	@V[3],@V[3],$t3
-	lwz	$t1,36($ctx)
+	lwz	$t1,`$LITTLE_ENDIAN^36`($ctx)
 	adde	@V[2],@V[2],$t2
-	lwz	$t2,40($ctx)
+	lwz	$t2,`$LITTLE_ENDIAN^40`($ctx)
 	addc	@V[5],@V[5],$a1
-	lwz	$t3,44($ctx)
+	lwz	$t3,`$LITTLE_ENDIAN^44`($ctx)
 	adde	@V[4],@V[4],$a0
-	lwz	$a0,48($ctx)
+	lwz	$a0,`$LITTLE_ENDIAN^48`($ctx)
 	addc	@V[7],@V[7],$a3
-	lwz	$a1,52($ctx)
+	lwz	$a1,`$LITTLE_ENDIAN^52`($ctx)
 	adde	@V[6],@V[6],$a2
-	lwz	$a2,56($ctx)
+	lwz	$a2,`$LITTLE_ENDIAN^56`($ctx)
 	addc	@V[9],@V[9],$t1
-	lwz	$a3,60($ctx)
+	lwz	$a3,`$LITTLE_ENDIAN^60`($ctx)
 	adde	@V[8],@V[8],$t0
-	stw	@V[0],0($ctx)
-	stw	@V[1],4($ctx)
+	stw	@V[0],`$LITTLE_ENDIAN^0`($ctx)
+	stw	@V[1],`$LITTLE_ENDIAN^4`($ctx)
 	addc	@V[11],@V[11],$t3
-	stw	@V[2],8($ctx)
-	stw	@V[3],12($ctx)
+	stw	@V[2],`$LITTLE_ENDIAN^8`($ctx)
+	stw	@V[3],`$LITTLE_ENDIAN^12`($ctx)
 	adde	@V[10],@V[10],$t2
-	stw	@V[4],16($ctx)
-	stw	@V[5],20($ctx)
+	stw	@V[4],`$LITTLE_ENDIAN^16`($ctx)
+	stw	@V[5],`$LITTLE_ENDIAN^20`($ctx)
 	addc	@V[13],@V[13],$a1
-	stw	@V[6],24($ctx)
-	stw	@V[7],28($ctx)
+	stw	@V[6],`$LITTLE_ENDIAN^24`($ctx)
+	stw	@V[7],`$LITTLE_ENDIAN^28`($ctx)
 	adde	@V[12],@V[12],$a0
-	stw	@V[8],32($ctx)
-	stw	@V[9],36($ctx)
+	stw	@V[8],`$LITTLE_ENDIAN^32`($ctx)
+	stw	@V[9],`$LITTLE_ENDIAN^36`($ctx)
 	addc	@V[15],@V[15],$a3
-	stw	@V[10],40($ctx)
-	stw	@V[11],44($ctx)
+	stw	@V[10],`$LITTLE_ENDIAN^40`($ctx)
+	stw	@V[11],`$LITTLE_ENDIAN^44`($ctx)
 	adde	@V[14],@V[14],$a2
-	stw	@V[12],48($ctx)
-	stw	@V[13],52($ctx)
-	stw	@V[14],56($ctx)
-	stw	@V[15],60($ctx)
+	stw	@V[12],`$LITTLE_ENDIAN^48`($ctx)
+	stw	@V[13],`$LITTLE_ENDIAN^52`($ctx)
+	stw	@V[14],`$LITTLE_ENDIAN^56`($ctx)
+	stw	@V[15],`$LITTLE_ENDIAN^60`($ctx)
 
 	addi	$inp,$inp,`16*$SZ`		; advance inp
 	$PUSH	$inp,`$FRAME-$SIZE_T*23`($sp)
