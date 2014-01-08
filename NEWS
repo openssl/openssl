@@ -9,6 +9,11 @@
 
       o
 
+  Known issues in OpenSL 1.0.1f
+
+      o Warning when compiling s23_clnt.c on Windows. Fixed in 1.0.1g-dev.
+      o On Windows 8 Getversion is deprecated: no workaround.
+
   Major changes between OpenSSL 1.0.1e and OpenSSL 1.0.1f [6 Jan 2014]
 
       o Don't include gmt_unix_time in TLS server and client random values
