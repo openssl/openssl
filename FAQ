@@ -755,6 +755,9 @@ LOT of false positives.
 
 * I'm SURE I've found a bug, how do I report it?
 
+To avoid duplicated reports check the mailing lists and release notes for the
+relevant version of OpenSSL to see if the problem has been reported already.
+
 Bug reports with no security implications should be sent to the request
 tracker. This can be done by mailing the report to <rt@openssl.org> (or its
 alias <openssl-bugs@openssl.org>), please note that messages sent to the
