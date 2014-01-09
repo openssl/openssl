@@ -1001,7 +1001,7 @@ $code.=<<___;
 	call	__bn_sqr8x_internal
 	call	__bn_sqr8x_internal
 
-	mov	%xmm2,$nptr
+	movq	%xmm2,$nptr
 	movq	%xmm4,$bptr
 	mov	$aptr,$rptr
 	mov	40(%rsp),%rax
