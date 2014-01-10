@@ -29,7 +29,7 @@ or to process defaults.
 
 Currently supported B<cmd> names for command lines (i.e. when the
 flag B<SSL_CONF_CMDLINE> is set) are listed below. Note: all B<cmd> names
-and are case sensitive. Unless otherwise stated commands can be used by
+are case sensitive. Unless otherwise stated commands can be used by
 both clients and servers and the B<value> parameter is not used. The default
 prefix for command line commands is B<-> and that is reflected below.
 
