@@ -19,7 +19,7 @@ These functions load "serverinfo" TLS ServerHello Extensions into the SSL_CTX.
 A "serverinfo" extension is returned in response to an empty ClientHello
 Extension.
 
-SSL_CTX_use_serverinfo_file() loads one or more serverinfo extensions from
+SSL_CTX_use_serverinfo() loads one or more serverinfo extensions from
 a byte array into B<ctx>.  The extensions must be concatenated into a 
 sequence of bytes.  Each extension must consist of a 2-byte Extension Type, 
 a 2-byte length, and then length bytes of extension_data.
