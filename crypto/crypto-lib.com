@@ -234,7 +234,7 @@ $ LIB_CAMELLIA = "camellia,cmll_misc,cmll_ecb,cmll_cbc,cmll_ofb,"+ -
 	"cmll_cfb,cmll_ctr,cmll_utl"
 $ LIB_SEED = "seed,seed_ecb,seed_cbc,seed_cfb,seed_ofb"
 $ LIB_MODES = "cbc128,ctr128,cts128,cfb128,ofb128,gcm128,"+ -
-	"ccm128,xts128"
+       "ccm128,xts128,wrap128"
 $ LIB_BN_ASM = "[.asm]vms.mar,vms-helper"
 $ IF F$TRNLNM("OPENSSL_NO_ASM") .OR. ARCH .NES. "VAX" THEN -
      LIB_BN_ASM = "bn_asm"
@@ -256,8 +256,8 @@ $ LIB_DSA = "dsa_gen,dsa_key,dsa_lib,dsa_asn1,dsa_vrf,dsa_sign,"+ -
 	"dsa_err,dsa_ossl,dsa_depr,dsa_ameth,dsa_pmeth,dsa_prn"
 $ LIB_ECDSA = "ecs_lib,ecs_asn1,ecs_ossl,ecs_sign,ecs_vrf,ecs_err"
 $ LIB_DH = "dh_asn1,dh_gen,dh_key,dh_lib,dh_check,dh_err,dh_depr,"+ -
-	"dh_ameth,dh_pmeth,dh_prn,dh_rfc5114"
-$ LIB_ECDH = "ech_lib,ech_ossl,ech_key,ech_err"
+       "dh_ameth,dh_pmeth,dh_prn,dh_rfc5114,dh_kdf"
+$ LIB_ECDH = "ech_lib,ech_ossl,ech_key,ech_err,ech_kdf"
 $ LIB_DSO = "dso_dl,dso_dlfcn,dso_err,dso_lib,dso_null,"+ -
 	"dso_openssl,dso_win32,dso_vms,dso_beos"
 $ LIB_ENGINE = "eng_err,eng_lib,eng_list,eng_init,eng_ctrl,"+ -
@@ -337,7 +337,7 @@ $ LIB_UI = "ui_err,ui_lib,ui_openssl,ui_util"+LIB_UI_COMPAT
 $ LIB_KRB5 = "krb5_asn"
 $ LIB_CMS = "cms_lib,cms_asn1,cms_att,cms_io,cms_smime,cms_err,"+ -
 	"cms_sd,cms_dd,cms_cd,cms_env,cms_enc,cms_ess,"+ -
-	"cms_pwri"
+       "cms_pwri,cms_kari"
 $ LIB_PQUEUE = "pqueue"
 $ LIB_TS = "ts_err,ts_req_utils,ts_req_print,ts_rsp_utils,ts_rsp_print,"+ -
 	"ts_rsp_sign,ts_rsp_verify,ts_verify_ctx,ts_lib,ts_conf,"+ -
@@ -1132,7 +1132,7 @@ $ CCDEFS = "TCPIP_TYPE_''P4',DSO_VMS"
 $ IF F$TYPE(USER_CCDEFS) .NES. "" THEN CCDEFS = CCDEFS + "," + USER_CCDEFS
 $ CCEXTRAFLAGS = ""
 $ IF F$TYPE(USER_CCFLAGS) .NES. "" THEN CCEXTRAFLAGS = USER_CCFLAGS
-$ CCDISABLEWARNINGS = "" !!! "LONGLONGTYPE,LONGLONGSUFX,FOUNDCR"
+$ CCDISABLEWARNINGS = "MAYLOSEDATA3" !!! "LONGLONGTYPE,LONGLONGSUFX,FOUNDCR"
 $ IF F$TYPE(USER_CCDISABLEWARNINGS) .NES. "" THEN -
 	CCDISABLEWARNINGS = CCDISABLEWARNINGS + "," + USER_CCDISABLEWARNINGS
 $!

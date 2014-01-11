@@ -242,7 +242,7 @@ $ WRITE H_FILE ""
 $ WRITE H_FILE "#ifndef OPENSSL_SYS_VMS"
 $ WRITE H_FILE "# define OPENSSL_SYS_VMS"
 $ WRITE H_FILE "#endif"
-$
+$!
 $! One of the best way to figure out what the list should be is to do
 $! the following on a Unix system:
 $!   grep OPENSSL_NO_ crypto/*/*.h ssl/*.h engines/*.h engines/*/*.h|grep ':# *if'|sed -e 's/^.*def //'|sort|uniq
@@ -506,6 +506,7 @@ $ WRITE H_FILE "#define OPENSSL_NO_SETVBUF_IONBF"
 $ WRITE H_FILE "/* STCP support comes with TCPIP 5.7 ECO 2 "
 $ WRITE H_FILE " * enable on newer systems / 2012-02-24 arpadffy */"
 $ WRITE H_FILE "#define OPENSSL_NO_SCTP"
+$ WRITE H_FILE "#define OPENSSL_NO_LIBUNBOUND"
 $ WRITE H_FILE ""
 $!
 $! Add in the common "crypto/opensslconf.h.in".
