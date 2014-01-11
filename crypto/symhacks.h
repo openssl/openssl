@@ -186,6 +186,13 @@
 #undef ssl_parse_serverhello_renegotiate_ext
 #define ssl_parse_serverhello_renegotiate_ext	ssl_parse_serverhello_reneg_ext
 
+#undef ssl3_cbc_record_digest_supported
+#define ssl3_cbc_record_digest_supported        ssl3_cbc_record_digest_support
+#undef ssl_check_clienthello_tlsext_late
+#define ssl_check_clienthello_tlsext_late       ssl_check_clihello_tlsext_late
+#undef ssl_check_clienthello_tlsext_early
+#define ssl_check_clienthello_tlsext_early      ssl_check_clihello_tlsext_early
+
 /* Hack some long ENGINE names */
 #undef ENGINE_get_default_BN_mod_exp_crt
 #define ENGINE_get_default_BN_mod_exp_crt	ENGINE_get_def_BN_mod_exp_crt
