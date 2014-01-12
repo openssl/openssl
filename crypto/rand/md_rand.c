@@ -693,7 +693,7 @@ static void rand_hw_seed(EVP_MD_CTX *ctx)
 		rnd = OPENSSL_ia32_rdrand();
 		if (rnd == 0)
 			return;
-		MD_Update(ctx, (unsigned char *)rnd, sizeof(size_t));
+		MD_Update(ctx, (unsigned char *)&rnd, sizeof(size_t));
 		}
 	}
 
