@@ -1093,6 +1093,14 @@ void ssl_set_client_disabled(SSL *s)
 	c->valid = 1;
 	}
 
+int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c)
+	{
+	CERT *ct = s->cert;
+	if (c->algorithm_ssl & ct->mask_ssl || c->algorithm_mkey & ct->mask_k || c->algorithm_auth & ct->mask_a)
+		return 1;
+	return 0;
+	}
+
 unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit, int *al)
 	{
 	int extdatalen=0;
