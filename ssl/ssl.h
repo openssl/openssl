@@ -2378,6 +2378,7 @@ const SSL_METHOD *DTLS_server_method(void);	/* DTLS 1.0 and 1.2 */
 const SSL_METHOD *DTLS_client_method(void);	/* DTLS 1.0 and 1.2 */
 
 STACK_OF(SSL_CIPHER) *SSL_get_ciphers(const SSL *s);
+STACK_OF(SSL_CIPHER) *SSL_get1_supported_ciphers(SSL *s);
 
 int SSL_do_handshake(SSL *s);
 int SSL_renegotiate(SSL *s);

@@ -1342,6 +1342,33 @@ STACK_OF(SSL_CIPHER) *SSL_get_ciphers(const SSL *s)
 	return(NULL);
 	}
 
+STACK_OF(SSL_CIPHER) *SSL_get1_supported_ciphers(SSL *s)
+	{
+	STACK_OF(SSL_CIPHER) *sk = NULL, *ciphers;
+	int i;
+	ciphers = SSL_get_ciphers(s);
+	if (!ciphers)
+		return NULL;
+	ssl_set_client_disabled(s);
+	for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++)
+		{
+		const SSL_CIPHER *c = sk_SSL_CIPHER_value(ciphers, i);
+		if (!ssl_cipher_disabled(s, c))
+			{
+			if (!sk)
+				sk = sk_SSL_CIPHER_new_null();
+			if (!sk)
+				return NULL;
+			if (!sk_SSL_CIPHER_push(sk, c))
+				{
+				sk_SSL_CIPHER_free(sk);
+				return NULL;
+				}
+			}
+		}
+	return sk;
+	}
+
 /** return a STACK of the ciphers available for the SSL and in order of
  * algorithm id */
 STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s)
@@ -1459,7 +1486,6 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p,
 	{
 	int i,j=0;
 	SSL_CIPHER *c;
-	CERT *ct = s->cert;
 	unsigned char *q;
 	int no_scsv = s->renegotiate;
 	/* Set disabled masks for this session */
@@ -1472,9 +1498,7 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p,
 		{
 		c=sk_SSL_CIPHER_value(sk,i);
 		/* Skip disabled ciphers */
-		if (c->algorithm_ssl & ct->mask_ssl ||
-			c->algorithm_mkey & ct->mask_k ||
-			c->algorithm_auth & ct->mask_a)
+		if (ssl_cipher_disabled(s, c))
 			continue;
 #ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
 		if (c->id == SSL3_CK_SCSV)

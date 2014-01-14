@@ -1079,9 +1079,7 @@ int ssl3_get_server_hello(SSL *s)
 	/* If it is a disabled cipher we didn't send it in client hello,
 	 * so return an error.
 	 */
-	if (c->algorithm_ssl & ct->mask_ssl ||
-		c->algorithm_mkey & ct->mask_k ||
-		c->algorithm_auth & ct->mask_a)
+	if (ssl_cipher_disabled(s, c))
 		{
 		al=SSL_AD_ILLEGAL_PARAMETER;
 		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_WRONG_CIPHER_RETURNED);

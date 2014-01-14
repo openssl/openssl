@@ -85,6 +85,7 @@ int MAIN(int argc, char **argv)
 	{
 	int ret=1,i;
 	int verbose=0,Verbose=0;
+	int use_supported = 0;
 #ifndef OPENSSL_NO_SSL_TRACE
 	int stdname = 0;
 #endif
@@ -129,6 +130,8 @@ int MAIN(int argc, char **argv)
 			verbose=1;
 		else if (strcmp(*argv,"-V") == 0)
 			verbose=Verbose=1;
+		else if (strcmp(*argv,"-s") == 0)
+			use_supported = 1;
 #ifndef OPENSSL_NO_SSL_TRACE
 		else if (strcmp(*argv,"-stdname") == 0)
 			stdname=verbose=1;
@@ -179,12 +182,17 @@ int MAIN(int argc, char **argv)
 	ssl=SSL_new(ctx);
 	if (ssl == NULL) goto err;
 
+	if (use_supported)
+		sk=SSL_get1_supported_ciphers(ssl);
+	else
+		sk=SSL_get_ciphers(ssl);
 
 	if (!verbose)
 		{
-		for (i=0; ; i++)
+		for (i=0; i<sk_SSL_CIPHER_num(sk); i++)
 			{
-			p=SSL_get_cipher_list(ssl,i);
+			SSL_CIPHER *c = sk_SSL_CIPHER_value(sk,i);
+			p = SSL_CIPHER_get_name(c);
 			if (p == NULL) break;
 			if (i != 0) BIO_printf(STDout,":");
 			BIO_printf(STDout,"%s",p);
@@ -193,7 +201,6 @@ int MAIN(int argc, char **argv)
 		}
 	else /* verbose */
 		{
-		sk=SSL_get_ciphers(ssl);
 
 		for (i=0; i<sk_SSL_CIPHER_num(sk); i++)
 			{
@@ -237,6 +244,8 @@ err:
 		ERR_print_errors(bio_err);
 		}
 end:
+	if (use_supported && sk)
+		sk_SSL_CIPHER_free(sk);
 	if (ctx != NULL) SSL_CTX_free(ctx);
 	if (ssl != NULL) SSL_free(ssl);
 	if (STDout != NULL) BIO_free_all(STDout);
