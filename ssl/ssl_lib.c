@@ -2715,6 +2715,11 @@ void ssl_update_cache(SSL *s,int mode)
 		}
 	}
 
+const SSL_METHOD *SSL_CTX_get_ssl_method(SSL_CTX *ctx)
+	{
+	return ctx->method;
+	}
+
 const SSL_METHOD *SSL_get_ssl_method(SSL *s)
 	{
 	return(s->method);

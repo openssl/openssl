@@ -2305,6 +2305,7 @@ int SSL_renegotiate_abbreviated(SSL *s);
 int SSL_renegotiate_pending(SSL *s);
 int SSL_shutdown(SSL *s);
 
+const SSL_METHOD *SSL_CTX_get_ssl_method(SSL_CTX *ctx);
 const SSL_METHOD *SSL_get_ssl_method(SSL *s);
 int SSL_set_ssl_method(SSL *s, const SSL_METHOD *method);
 const char *SSL_alert_type_string_long(int value);
