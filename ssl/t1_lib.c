@@ -2290,8 +2290,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 				return 0;
 				}
 			}
-		else if (type == TLSEXT_TYPE_status_request
-		         && s->ctx->tlsext_status_cb)
+		else if (type == TLSEXT_TYPE_status_request)
 			{
 		
 			if (size < 5) 
