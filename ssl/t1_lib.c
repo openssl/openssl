@@ -972,7 +972,7 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 			renegotiate_seen = 1;
 			}
 		else if (type == TLSEXT_TYPE_status_request &&
-		         s->version != DTLS1_VERSION && s->ctx->tlsext_status_cb)
+		         s->version != DTLS1_VERSION)
 			{
 		
 			if (size < 5) 
