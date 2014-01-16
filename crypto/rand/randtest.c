@@ -59,8 +59,94 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <openssl/rand.h>
+#include <openssl/err.h>
 
 #include "../e_os.h"
+
+/* error behaviour testing */
+/* we have a couple of RAND_METHODs with varying function support. */
+static int flip_bytes(unsigned char *buf, int num)
+{
+	int i;
+
+	if (num < 0)
+		return 0;
+
+	for (i = 0; i < num; i++)
+		buf[i] ^= 0xff;
+
+	return 1;
+}
+
+const RAND_METHOD useless = { NULL };
+const RAND_METHOD trivial = { NULL, flip_bytes, NULL, NULL, flip_bytes };
+
+static int check_buf(unsigned char *buf, size_t num, int byte)
+{
+	size_t i;
+	for (i = 0; i < num; i++)
+		if (buf[i] != byte)
+			return 0;
+
+	return 1;
+}
+
+static int error_tests(void)
+{
+	unsigned char buf[32] = { 0 };
+	size_t nbuf = sizeof buf;
+	int err;
+	int rc = 0;
+	unsigned long report;
+
+#define CHECK(expr, msg) \
+	do { \
+		if (!(expr)) { printf(msg "\n"); goto done; } \
+	} while (0)
+
+	/* check unsupported error codes. */
+	err = RAND_set_rand_method(&useless);
+	CHECK(err == 1, "RAND_set_rand_method failed");
+
+	err = RAND_bytes(buf, nbuf);
+	CHECK(err == 0, "unexpected RAND_bytes return when not supported");
+	report = ERR_get_error();
+	CHECK(ERR_GET_REASON(report) == RAND_R_FUNC_NOT_IMPLEMENTED, "unexpected error reason when not supported");
+	CHECK(ERR_GET_FUNC(report) == RAND_F_RAND_BYTES, "unexpected error function when not supported");
+	CHECK(check_buf(buf, nbuf, 0), "something fiddled with buffer anyway!");
+
+	err = RAND_pseudo_bytes(buf, nbuf);
+	CHECK(err == -1, "unexpected RAND_pseudo_bytes return when not supported");
+	CHECK(check_buf(buf, nbuf, 0), "something fiddled with buffer anyway!");
+
+	/* check normal errors */
+	err = RAND_set_rand_method(&trivial);
+	CHECK(err == 1, "RAND_set_rand_method failed");
+
+	err = RAND_bytes(buf, -1);
+	CHECK(err == 0, "unexpected RAND_bytes return for -ve len");
+	err = RAND_bytes(buf, nbuf);
+	CHECK(err == 1, "unexpected RAND_bytes success return");
+	CHECK(check_buf(buf, nbuf, 0xff), "buffer in unexpected state");
+	RAND_bytes(buf, nbuf);
+
+	err = RAND_pseudo_bytes(buf, -1);
+	CHECK(err == 0, "unexpected RAND_pseudo_bytes return for -ve len");
+	CHECK(check_buf(buf, nbuf, 0), "something fiddled with buffer anyway!");
+	err = RAND_pseudo_bytes(buf, nbuf);
+	CHECK(err == 1, "unexpected RAND_pseudo_bytes success return");
+	CHECK(check_buf(buf, nbuf, 0xff), "buffer in unexpected state");
+	RAND_pseudo_bytes(buf, nbuf);
+
+#undef CHECK
+
+	/* we won */
+	rc = 1;
+
+done:
+	RAND_set_rand_method(NULL);
+	return rc;
+}
 
 /* some FIPS 140-1 random number test */
 /* some simple tests */
@@ -74,6 +160,11 @@ int main(int argc,char **argv)
 	unsigned long runs[2][34];
 	/*double d; */
 	long d;
+
+	if (!error_tests())
+		err++;
+	else
+		printf("error tests OK\n");
 
 	i = RAND_pseudo_bytes(buf,2500);
 	if (i < 0)
