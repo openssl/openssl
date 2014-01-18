@@ -880,3 +880,28 @@ void BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
 	}
 #undef BN_CONSTTIME_SWAP
 }
+
+/* Bits of security, see SP800-57 */
+
+int BN_security_bits(int L, int N)
+	{
+	int secbits, bits;
+	if (L >= 15360)
+		secbits = 256;
+	else if (L >= 7690)
+		secbits = 192;
+	else if (L >= 3072)
+		secbits = 128;
+	else if (L >= 2048)
+		secbits = 112;
+	else if (L >= 1024)
+		secbits = 80;
+	else
+		return 0;
+	if (N == -1)
+		return secbits;
+	bits = N / 2;
+	if (bits < 80)
+		return 0;
+	return bits >= secbits ? secbits : bits;
+	}

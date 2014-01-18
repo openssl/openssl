@@ -462,3 +462,10 @@ void EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
 	{
 	ameth->pkey_ctrl = pkey_ctrl;
 	}
+
+void EVP_PKEY_asn1_set_security_bits(EVP_PKEY_ASN1_METHOD *ameth,
+				int (*pkey_security_bits)(const EVP_PKEY *pk))
+	{
+	ameth->pkey_security_bits = pkey_security_bits;
+	}
+

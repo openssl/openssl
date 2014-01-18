@@ -368,6 +368,11 @@ static int dsa_bits(const EVP_PKEY *pkey)
 	return BN_num_bits(pkey->pkey.dsa->p);
 	}
 
+static int dsa_security_bits(const EVP_PKEY *pkey)
+	{
+	return DSA_security_bits(pkey->pkey.dsa);
+	}
+
 static int dsa_missing_parameters(const EVP_PKEY *pkey)
 	{
 	DSA *dsa;
@@ -696,6 +701,7 @@ const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[] =
 
 		int_dsa_size,
 		dsa_bits,
+		dsa_security_bits,
 
 		dsa_param_decode,
 		dsa_param_encode,

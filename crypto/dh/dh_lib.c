@@ -245,3 +245,15 @@ int DH_size(const DH *dh)
 	{
 	return(BN_num_bytes(dh->p));
 	}
+
+int DH_security_bits(const DH *dh)
+	{
+	int N;
+	if (dh->q)
+		N = BN_num_bits(dh->q);
+	else if (dh->length)
+		N = dh->length;
+	else
+		N = -1;
+	return BN_security_bits(BN_num_bits(dh->p), N);
+	}

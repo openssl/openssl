@@ -320,3 +320,8 @@ int RSA_memory_lock(RSA *r)
 	r->bignum_data=p;
 	return(1);
 	}
+
+int RSA_security_bits(const RSA *rsa)
+	{
+	return BN_security_bits(BN_num_bits(rsa->n), -1);
+	}
