@@ -957,6 +957,7 @@ int		EVP_PKEY_type(int type);
 int		EVP_PKEY_id(const EVP_PKEY *pkey);
 int		EVP_PKEY_base_id(const EVP_PKEY *pkey);
 int		EVP_PKEY_bits(EVP_PKEY *pkey);
+int		EVP_PKEY_security_bits(const EVP_PKEY *pkey);
 int		EVP_PKEY_size(EVP_PKEY *pkey);
 int 		EVP_PKEY_set_type(EVP_PKEY *pkey,int type);
 int		EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len);
@@ -1114,6 +1115,9 @@ void EVP_PKEY_asn1_set_free(EVP_PKEY_ASN1_METHOD *ameth,
 void EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
 		int (*pkey_ctrl)(EVP_PKEY *pkey, int op,
 							long arg1, void *arg2));
+
+void EVP_PKEY_asn1_set_security_bits(EVP_PKEY_ASN1_METHOD *ameth,
+				int (*pkey_security_bits)(const EVP_PKEY *pk));
 
 
 #define EVP_PKEY_OP_UNDEFINED		0

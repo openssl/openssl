@@ -87,7 +87,7 @@ const EVP_PKEY_ASN1_METHOD cmac_asn1_meth =
 	0,0,0,
 
 	cmac_size,
-	0,
+	0, 0,
 	0,0,0,0,0,0,0,
 
 	cmac_key_free,

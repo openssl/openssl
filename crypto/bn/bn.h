@@ -420,6 +420,7 @@ int	BN_rand_range(BIGNUM *rnd, const BIGNUM *range);
 int	BN_pseudo_rand_range(BIGNUM *rnd, const BIGNUM *range);
 int	BN_num_bits(const BIGNUM *a);
 int	BN_num_bits_word(BN_ULONG l);
+int	BN_security_bits(int L, int N);
 BIGNUM *BN_new(void);
 void	BN_init(BIGNUM *);
 void	BN_clear_free(BIGNUM *a);

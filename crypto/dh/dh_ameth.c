@@ -448,6 +448,11 @@ static int dh_bits(const EVP_PKEY *pkey)
 	return BN_num_bits(pkey->pkey.dh->p);
 	}
 
+static int dh_security_bits(const EVP_PKEY *pkey)
+	{
+	return DH_security_bits(pkey->pkey.dh);
+	}
+
 static int dh_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 	{
 	if (	BN_cmp(a->pkey.dh->p,b->pkey.dh->p) ||
@@ -620,6 +625,7 @@ const EVP_PKEY_ASN1_METHOD dh_asn1_meth =
 
 	int_dh_size,
 	dh_bits,
+	dh_security_bits,
 
 	dh_param_decode,
 	dh_param_encode,
@@ -653,6 +659,7 @@ const EVP_PKEY_ASN1_METHOD dhx_asn1_meth =
 
 	int_dh_size,
 	dh_bits,
+	dh_security_bits,
 
 	dh_param_decode,
 	dh_param_encode,

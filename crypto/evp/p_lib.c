@@ -89,6 +89,15 @@ int EVP_PKEY_bits(EVP_PKEY *pkey)
 	return 0;
 	}
 
+int EVP_PKEY_security_bits(const EVP_PKEY *pkey)
+	{
+	if (pkey == NULL)
+		return 0;
+	if (!pkey->ameth || !pkey->ameth->pkey_security_bits)
+		return -2;
+	return pkey->ameth->pkey_security_bits(pkey);
+	}
+
 int EVP_PKEY_size(EVP_PKEY *pkey)
 	{
 	if (pkey && pkey->ameth && pkey->ameth->pkey_size)

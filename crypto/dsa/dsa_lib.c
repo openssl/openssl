@@ -272,6 +272,11 @@ void *DSA_get_ex_data(DSA *d, int idx)
 	return(CRYPTO_get_ex_data(&d->ex_data,idx));
 	}
 
+int DSA_security_bits(const DSA *d)
+	{
+	return BN_security_bits(BN_num_bits(d->p), BN_num_bits(d->q));
+	}
+
 #ifndef OPENSSL_NO_DH
 DH *DSA_dup_DH(const DSA *r)
 	{
