@@ -218,7 +218,6 @@ static void init_session_cache_ctx(SSL_CTX *sctx);
 static void free_sessions(void);
 #ifndef OPENSSL_NO_DH
 static DH *load_dh_param(const char *dhfile);
-static DH *get_dh512(void);
 #endif
 
 #ifdef MONOLITH
@@ -238,33 +237,6 @@ static int client_provided_server_authz = 0;
 static int client_provided_client_authz = 0;
 
 #endif
-
-#ifndef OPENSSL_NO_DH
-static unsigned char dh512_p[]={
-	0xDA,0x58,0x3C,0x16,0xD9,0x85,0x22,0x89,0xD0,0xE4,0xAF,0x75,
-	0x6F,0x4C,0xCA,0x92,0xDD,0x4B,0xE5,0x33,0xB8,0x04,0xFB,0x0F,
-	0xED,0x94,0xEF,0x9C,0x8A,0x44,0x03,0xED,0x57,0x46,0x50,0xD3,
-	0x69,0x99,0xDB,0x29,0xD7,0x76,0x27,0x6B,0xA2,0xD3,0xD4,0x12,
-	0xE2,0x18,0xF4,0xDD,0x1E,0x08,0x4C,0xF6,0xD8,0x00,0x3E,0x7C,
-	0x47,0x74,0xE8,0x33,
-	};
-static unsigned char dh512_g[]={
-	0x02,
-	};
-
-static DH *get_dh512(void)
-	{
-	DH *dh=NULL;
-
-	if ((dh=DH_new()) == NULL) return(NULL);
-	dh->p=BN_bin2bn(dh512_p,sizeof(dh512_p),NULL);
-	dh->g=BN_bin2bn(dh512_g,sizeof(dh512_g),NULL);
-	if ((dh->p == NULL) || (dh->g == NULL))
-		return(NULL);
-	return(dh);
-	}
-#endif
-
 
 /* static int load_CA(SSL_CTX *ctx, char *file);*/
 
@@ -1931,11 +1903,18 @@ bad:
 		else
 			{
 			BIO_printf(bio_s_out,"Using default temp DH parameters\n");
-			dh=get_dh512();
 			}
 		(void)BIO_flush(bio_s_out);
 
-		SSL_CTX_set_tmp_dh(ctx,dh);
+		if (dh == NULL)
+			SSL_CTX_set_dh_auto(ctx, 1);
+		else if (!SSL_CTX_set_tmp_dh(ctx,dh))
+			{
+			BIO_puts(bio_err, "Error setting temp DH parameters\n");
+			ERR_print_errors(bio_err);
+			DH_free(dh);
+			goto end;
+			}
 #ifndef OPENSSL_NO_TLSEXT
 		if (ctx2)
 			{
@@ -1951,7 +1930,15 @@ bad:
 					dh = dh2;
 					}
 				}
-			SSL_CTX_set_tmp_dh(ctx2,dh);
+			if (dh == NULL)
+				SSL_CTX_set_dh_auto(ctx2, 1);
+			else if (!SSL_CTX_set_tmp_dh(ctx2,dh))
+				{
+				BIO_puts(bio_err, "Error setting temp DH parameters\n");
+				ERR_print_errors(bio_err);
+				DH_free(dh);
+				goto end;
+				}
 			}
 #endif
 		DH_free(dh);

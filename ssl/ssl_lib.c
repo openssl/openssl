@@ -2353,8 +2353,8 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 	rsa_tmp=rsa_tmp_export=0;
 #endif
 #ifndef OPENSSL_NO_DH
-	dh_tmp=(c->dh_tmp != NULL || c->dh_tmp_cb != NULL);
-	dh_tmp_export=(c->dh_tmp_cb != NULL ||
+	dh_tmp=(c->dh_tmp != NULL || c->dh_tmp_cb != NULL || c->dh_tmp_auto);
+	dh_tmp_export= !c->dh_tmp_auto && (c->dh_tmp_cb != NULL ||
 		(dh_tmp && DH_size(c->dh_tmp)*8 <= kl));
 #else
 	dh_tmp=dh_tmp_export=0;
