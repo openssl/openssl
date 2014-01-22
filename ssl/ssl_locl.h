@@ -557,6 +557,7 @@ typedef struct cert_st
 #ifndef OPENSSL_NO_DH
 	DH *dh_tmp;
 	DH *(*dh_tmp_cb)(SSL *ssl,int is_export,int keysize);
+	int dh_tmp_auto;
 #endif
 #ifndef OPENSSL_NO_ECDH
 	EC_KEY *ecdh_tmp;
@@ -1310,6 +1311,9 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
 								int idx);
 void tls1_set_cert_validity(SSL *s);
 
+#endif
+#ifndef OPENSSL_NO_DH
+DH *ssl_get_auto_dh(SSL *s);
 #endif
 EVP_MD_CTX* ssl_replace_hash(EVP_MD_CTX **hash,const EVP_MD *md) ;
 void ssl_clear_hash_ctx(EVP_MD_CTX **hash);

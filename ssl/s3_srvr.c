@@ -1679,7 +1679,18 @@ int ssl3_send_server_key_exchange(SSL *s)
 #ifndef OPENSSL_NO_DH
 			if (type & SSL_kDHE)
 			{
-			dhp=cert->dh_tmp;
+			if (s->cert->dh_tmp_auto)
+				{
+				dhp = ssl_get_auto_dh(s);
+				if (dhp == NULL)
+					{
+					al=SSL_AD_INTERNAL_ERROR;
+					SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
+					goto f_err;
+					}
+				}
+			else
+				dhp=cert->dh_tmp;
 			if ((dhp == NULL) && (s->cert->dh_tmp_cb != NULL))
 				dhp=s->cert->dh_tmp_cb(s,
 				      SSL_C_IS_EXPORT(s->s3->tmp.new_cipher),
@@ -1697,7 +1708,9 @@ int ssl3_send_server_key_exchange(SSL *s)
 				goto err;
 				}
 
-			if ((dh=DHparams_dup(dhp)) == NULL)
+			if (s->cert->dh_tmp_auto)
+				dh = dhp;
+			else if ((dh=DHparams_dup(dhp)) == NULL)
 				{
 				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_DH_LIB);
 				goto err;
