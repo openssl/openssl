@@ -1461,7 +1461,7 @@ static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 	if (!gctx->iv_set)
 		return -1;
-	if (in)
+	if (in && len)
 		{
 		if (out == NULL)
 			{
