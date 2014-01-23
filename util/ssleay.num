@@ -365,3 +365,6 @@ SSL_CONF_cmd_value_type                 403	EXIST::FUNCTION:
 DTLSv1_2_method                         404	EXIST::FUNCTION:
 DTLS_server_method                      405	EXIST::FUNCTION:
 SSL_CTX_use_serverinfo_file             406	EXIST::FUNCTION:STDIO,TLSEXT
+SSL_get0_param                          407	EXIST::FUNCTION:
+SSL_CTX_get0_param                      408	EXIST::FUNCTION:
+SSL_CTX_get_ssl_method                  409	EXIST::FUNCTION:
