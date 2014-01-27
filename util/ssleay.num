@@ -368,3 +368,4 @@ SSL_CTX_use_serverinfo_file             406	EXIST::FUNCTION:STDIO,TLSEXT
 SSL_get0_param                          407	EXIST::FUNCTION:
 SSL_CTX_get0_param                      408	EXIST::FUNCTION:
 SSL_CTX_get_ssl_method                  409	EXIST::FUNCTION:
+SSL_COMP_set0_compression_methods       410	EXIST::FUNCTION:COMP
