@@ -480,8 +480,9 @@ int PEM_do_header(EVP_CIPHER_INFO *cipher, unsigned char *data, long *plen,
 	EVP_CIPHER_CTX_cleanup(&ctx);
 	OPENSSL_cleanse((char *)buf,sizeof(buf));
 	OPENSSL_cleanse((char *)key,sizeof(key));
-	j+=i;
-	if (!o)
+	if (o)
+		j+=i;
+	else
 		{
 		PEMerr(PEM_F_PEM_DO_HEADER,PEM_R_BAD_DECRYPT);
 		return(0);
