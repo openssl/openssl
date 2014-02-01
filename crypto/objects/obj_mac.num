@@ -945,3 +945,6 @@ dhSinglePass_cofactorDH_sha384kdf_scheme		944
 dhSinglePass_cofactorDH_sha512kdf_scheme		945
 dh_std_kdf		946
 dh_cofactor_kdf		947
+aes_128_cbc_hmac_sha256		948
+aes_192_cbc_hmac_sha256		949
+aes_256_cbc_hmac_sha256		950
