@@ -858,8 +858,12 @@ void OPENSSL_showfatal (const char *fmta,...)
     if ((h=GetStdHandle(STD_ERROR_HANDLE)) != NULL &&
 	GetFileType(h)!=FILE_TYPE_UNKNOWN)
     {	/* must be console application */
+	int   len;
+	DWORD out;
+
 	va_start (ap,fmta);
-	vfprintf (stderr,fmta,ap);
+	len=_vsnprintf((char *)buf,sizeof(buf),fmta,ap);
+	WriteFile(h,buf,len<0?sizeof(buf):(DWORD)len,&out,NULL);
 	va_end (ap);
 	return;
     }
