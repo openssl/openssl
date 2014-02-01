@@ -21,24 +21,24 @@
 # subroutine:
 #
 #		AES-128-CBC	+SHA1		stitch      gain
-# Westmere	3.77[+5.5]	9.26		6.66	    +39%
-# Sandy Bridge	5.05[+5.0(6.2)]	10.06(11.21)	5.98(7.01)  +68%(+60%)
+# Westmere	3.77[+5.3]	9.07		6.55	    +38%
+# Sandy Bridge	5.05[+5.0(6.1)]	10.06(11.15)	5.98(7.05)  +68%(+58%)
 # Ivy Bridge	5.05[+4.6]	9.65		5.54        +74%
-# Haswell	4.43[+3.6(4.1)]	8.00(8.55)	4.55(5.21)  +75%(+64%)
+# Haswell	4.43[+3.6(4.2)]	8.00(8.58)	4.55(5.21)  +75%(+65%)
 # Bulldozer	5.77[+6.0]	11.72		6.37        +84%
 #
 #		AES-192-CBC
-# Westmere	4.51		10.00		6.91	    +45%
-# Sandy Bridge	6.05		11.06(12.21)	6.11(7.18)  +81%(+70%)
+# Westmere	4.51		9.81		6.80	    +44%
+# Sandy Bridge	6.05		11.06(12.15)	6.11(7.19)  +81%(+69%)
 # Ivy Bridge	6.05		10.65		6.07        +75%
-# Haswell	5.29		8.86(9.42)	5.32(5.32)  +67%(+77%)
+# Haswell	5.29		8.86(9.44)	5.32(5.32)  +67%(+77%)
 # Bulldozer	6.89		12.84		6.96        +84%
 #
 #		AES-256-CBC
-# Westmere	5.25		10.74		7.24	    +48%
-# Sandy Bridge	7.05		12.06(13.21)	7.12(7.63)  +69%(+73%)
+# Westmere	5.25		10.55		7.21	    +46%
+# Sandy Bridge	7.05		12.06(13.15)	7.12(7.72)  +69%(+70%)
 # Ivy Bridge	7.05		11.65		7.12        +64%
-# Haswell	6.19		9.76(10.3)	6.21(6.25)  +57%(+65%)
+# Haswell	6.19		9.76(10.34)	6.21(6.25)  +57%(+65%)
 # Bulldozer	8.00		13.95		8.25        +69%
 #
 # (*)	There are two code paths: SSSE3 and AVX. See sha1-568.pl for
@@ -230,11 +230,11 @@ $code.=<<___;
 	movdqu	32($inp),@X[-2&7]
 	movdqu	48($inp),@X[-1&7]
 	pshufb	@Tx[2],@X[-4&7]		# byte swap
-	add	\$64,$inp
 	pshufb	@Tx[2],@X[-3&7]
 	pshufb	@Tx[2],@X[-2&7]
-	pshufb	@Tx[2],@X[-1&7]
+	add	\$64,$inp
 	paddd	@Tx[1],@X[-4&7]		# add K_00_19
+	pshufb	@Tx[2],@X[-1&7]
 	paddd	@Tx[1],@X[-3&7]
 	paddd	@Tx[1],@X[-2&7]
 	movdqa	@X[-4&7],0(%rsp)	# X[]+K xfer to IALU
@@ -297,61 +297,61 @@ sub Xupdate_ssse3_16_31()		# recall that $Xi starts wtih 4
   my @insns = (&$body,&$body,&$body,&$body);	# 40 instructions
   my ($a,$b,$c,$d,$e);
 
-	&pshufd	(@X[0],@X[-4&7],0xee);	# was &movdqa(@X[0],@X[-3&7]);
-	 eval(shift(@insns));
+	 eval(shift(@insns));		# ror
+	&pshufd	(@X[0],@X[-4&7],0xee);	# was &movdqa	(@X[0],@X[-3&7]);
 	 eval(shift(@insns));
 	&movdqa	(@Tx[0],@X[-1&7]);
-	&punpcklqdq(@X[0],@X[-3&7]);	# compose "X[-14]" in "X[0]", was &palignr(@X[0],@X[-4&7],8);
+	  &paddd	(@Tx[1],@X[-1&7]);
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 
-	  &paddd	(@Tx[1],@X[-1&7]);
+	&punpcklqdq(@X[0],@X[-3&7]);	# compose "X[-14]" in "X[0]", was &palignr(@X[0],@X[-4&7],8);
 	 eval(shift(@insns));
+	 eval(shift(@insns));		# rol
 	 eval(shift(@insns));
 	&psrldq	(@Tx[0],4);		# "X[-3]", 3 dwords
 	 eval(shift(@insns));
 	 eval(shift(@insns));
+
 	&pxor	(@X[0],@X[-4&7]);	# "X[0]"^="X[-16]"
 	 eval(shift(@insns));
-	 eval(shift(@insns));
-
+	 eval(shift(@insns));		# ror
 	&pxor	(@Tx[0],@X[-2&7]);	# "X[-3]"^"X[-8]"
-	 eval(shift(@insns));
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 
 	&pxor	(@X[0],@Tx[0]);		# "X[0]"^="X[-3]"^"X[-8]"
 	 eval(shift(@insns));
-	 eval(shift(@insns));
+	 eval(shift(@insns));		# rol
 	  &movdqa	(eval(16*(($Xi-1)&3))."(%rsp)",@Tx[1]);	# X[]+K xfer to IALU
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 
 	&movdqa	(@Tx[2],@X[0]);
+	 eval(shift(@insns));
+	 eval(shift(@insns));
+	 eval(shift(@insns));		# ror
 	&movdqa	(@Tx[0],@X[0]);
-	 eval(shift(@insns));
-	 eval(shift(@insns));
-	 eval(shift(@insns));
 	 eval(shift(@insns));
 
 	&pslldq	(@Tx[2],12);		# "X[0]"<<96, extract one dword
 	&paddd	(@X[0],@X[0]);
 	 eval(shift(@insns));
 	 eval(shift(@insns));
-	 eval(shift(@insns));
-	 eval(shift(@insns));
 
 	&psrld	(@Tx[0],31);
 	 eval(shift(@insns));
+	 eval(shift(@insns));		# rol
 	 eval(shift(@insns));
 	&movdqa	(@Tx[1],@Tx[2]);
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 
 	&psrld	(@Tx[2],30);
-	&por	(@X[0],@Tx[0]);		# "X[0]"<<<=1
 	 eval(shift(@insns));
+	 eval(shift(@insns));		# ror
+	&por	(@X[0],@Tx[0]);		# "X[0]"<<<=1
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 	 eval(shift(@insns));
@@ -359,12 +359,13 @@ sub Xupdate_ssse3_16_31()		# recall that $Xi starts wtih 4
 	&pslld	(@Tx[1],2);
 	&pxor	(@X[0],@Tx[2]);
 	 eval(shift(@insns));
-	 eval(shift(@insns));
 	  &movdqa	(@Tx[2],eval(16*(($Xi)/5))."($K_XX_XX)");	# K_XX_XX
+	 eval(shift(@insns));		# rol
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 
 	&pxor	(@X[0],@Tx[1]);		# "X[0]"^=("X[0]">>96)<<<2
+	&pshufd (@Tx[1],@X[-1&7],0xee)	if ($Xi==7);	# was &movdqa	(@Tx[0],@X[-1&7]) in Xupdate_ssse3_32_79
 
 	 foreach (@insns) { eval; }	# remaining instructions [if any]
 
@@ -375,27 +376,30 @@ sub Xupdate_ssse3_16_31()		# recall that $Xi starts wtih 4
 sub Xupdate_ssse3_32_79()
 { use integer;
   my $body = shift;
-  my @insns = (&$body,&$body,&$body,&$body);	# 32 to 48 instructions
+  my @insns = (&$body,&$body,&$body,&$body);	# 32 to 44 instructions
   my ($a,$b,$c,$d,$e);
 
-	&pshufd	(@Tx[0],@X[-2&7],0xee)	if ($Xi==8);	# was &movdqa	(@Tx[0],@X[-1&7])
-	 eval(shift(@insns));		# body_20_39
+	 eval(shift(@insns))		if ($Xi==8);
 	&pxor	(@X[0],@X[-4&7]);	# "X[0]"="X[-32]"^"X[-16]"
-	&punpcklqdq(@Tx[0],@X[-1&7]);	# compose "X[-6]", was &palignr(@Tx[0],@X[-2&7],8);
+	 eval(shift(@insns))		if ($Xi==8);
+	 eval(shift(@insns));		# body_20_39
 	 eval(shift(@insns));
+	 eval(shift(@insns))		if (@insns[1] =~ /_ror/);
+	 eval(shift(@insns))		if (@insns[0] =~ /_ror/);
+	&punpcklqdq(@Tx[0],@X[-1&7]);	# compose "X[-6]", was &palignr(@Tx[0],@X[-2&7],8);
 	 eval(shift(@insns));
 	 eval(shift(@insns));		# rol
 
 	&pxor	(@X[0],@X[-7&7]);	# "X[0]"^="X[-28]"
 	 eval(shift(@insns));
-	 eval(shift(@insns))	if (@insns[0] !~ /&ro[rl]/);
+	 eval(shift(@insns));
 	if ($Xi%5) {
 	  &movdqa	(@Tx[2],@Tx[1]);# "perpetuate" K_XX_XX...
 	} else {			# ... or load next one
 	  &movdqa	(@Tx[2],eval(16*($Xi/5))."($K_XX_XX)");
 	}
-	  &paddd	(@Tx[1],@X[-1&7]);
 	 eval(shift(@insns));		# ror
+	  &paddd	(@Tx[1],@X[-1&7]);
 	 eval(shift(@insns));
 
 	&pxor	(@X[0],@Tx[0]);		# "X[0]"^="X[-6]"
@@ -403,28 +407,30 @@ sub Xupdate_ssse3_32_79()
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 	 eval(shift(@insns));		# rol
+	 eval(shift(@insns))		if (@insns[0] =~ /_ror/);
 
 	&movdqa	(@Tx[0],@X[0]);
+	 eval(shift(@insns));
+	 eval(shift(@insns));
 	  &movdqa	(eval(16*(($Xi-1)&3))."(%rsp)",@Tx[1]);	# X[]+K xfer to IALU
-	 eval(shift(@insns));
-	 eval(shift(@insns));
 	 eval(shift(@insns));		# ror
 	 eval(shift(@insns));
+	 eval(shift(@insns));		# body_20_39
 
 	&pslld	(@X[0],2);
-	 eval(shift(@insns));		# body_20_39
+	 eval(shift(@insns));
 	 eval(shift(@insns));
 	&psrld	(@Tx[0],30);
-	 eval(shift(@insns));
-	 eval(shift(@insns));		# rol
+	 eval(shift(@insns))		if (@insns[0] =~ /_rol/);# rol
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 	 eval(shift(@insns));		# ror
-	 eval(shift(@insns));
 
 	&por	(@X[0],@Tx[0]);		# "X[0]"<<<=2
-	 eval(shift(@insns));		# body_20_39
 	 eval(shift(@insns));
+	 eval(shift(@insns));		# body_20_39
+	 eval(shift(@insns))		if (@insns[1] =~ /_rol/);
+	 eval(shift(@insns))		if (@insns[0] =~ /_rol/);
 	  &pshufd(@Tx[1],@X[-1&7],0xee)	if ($Xi<19);	# was &movdqa	(@Tx[1],@X[0])
 	 eval(shift(@insns));
 	 eval(shift(@insns));		# rol
@@ -446,9 +452,10 @@ sub Xuplast_ssse3_80()
   my ($a,$b,$c,$d,$e);
 
 	 eval(shift(@insns));
+	 eval(shift(@insns));
+	 eval(shift(@insns));
+	 eval(shift(@insns));
 	  &paddd	(@Tx[1],@X[-1&7]);
-	 eval(shift(@insns));
-	 eval(shift(@insns));
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 
@@ -481,7 +488,10 @@ sub Xloop_ssse3()
 
 	 eval(shift(@insns));
 	 eval(shift(@insns));
+	 eval(shift(@insns));
 	&pshufb	(@X[($Xi-3)&7],@Tx[2]);
+	 eval(shift(@insns));
+	 eval(shift(@insns));
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 	&paddd	(@X[($Xi-4)&7],@Tx[1]);
@@ -490,6 +500,8 @@ sub Xloop_ssse3()
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 	&movdqa	(eval(16*$Xi)."(%rsp)",@X[($Xi-4)&7]);	# X[]+K xfer to IALU
+	 eval(shift(@insns));
+	 eval(shift(@insns));
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 	&psubd	(@X[($Xi-4)&7],@Tx[1]);
