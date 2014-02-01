@@ -631,8 +631,6 @@ extern "C" {
 #define		X509_CINF_get_extensions(c) ((c)->extensions)
 #define		X509_CINF_get_signature(c) ((c)->signature)
 
-#define		X509_ALGOR_get_algorithm(a) ((a)->algorithm)
-
 void X509_CRL_set_default_method(const X509_CRL_METHOD *meth);
 X509_CRL_METHOD *X509_CRL_METHOD_new(
 	int (*crl_init)(X509_CRL *crl),
