@@ -27,7 +27,8 @@ my $globl = sub {
 	/osx/		&& do { $name = "_$name";
 				last;
 			      };
-	/linux.*32/	&& do {	$ret .= ".globl	$name\n";
+	/linux.*(32|64le)/
+			&& do {	$ret .= ".globl	$name\n";
 				$ret .= ".type	$name,\@function";
 				last;
 			      };
@@ -49,7 +50,9 @@ my $globl = sub {
     $ret;
 };
 my $text = sub {
-    ($flavour =~ /aix/) ? ".csect" : ".text";
+    my $ret = ($flavour =~ /aix/) ? ".csect\t.text[PR],7" : ".text";
+    $ret = ".abiversion	2\n".$ret	if ($flavour =~ /linux.*64le/);
+    $ret;
 };
 my $machine = sub {
     my $junk = shift;
@@ -64,8 +67,8 @@ my $size = sub {
     if ($flavour =~ /linux/)
     {	shift;
 	my $name = shift; $name =~ s|^[\.\_]||;
-	my $ret  = ".size	$name,.-".($flavour=~/64/?".":"").$name;
-	$ret .= "\n.size	.$name,.-.$name" if ($flavour=~/64/);
+	my $ret  = ".size	$name,.-".($flavour=~/64$/?".":"").$name;
+	$ret .= "\n.size	.$name,.-.$name" if ($flavour=~/64$/);
 	$ret;
     }
     else
@@ -78,6 +81,25 @@ my $asciz = sub {
     {	".byte	" . join(",",unpack("C*",$1),0) . "\n.align	2";	}
     else
     {	"";	}
+};
+my $quad = sub {
+    shift;
+    my @ret;
+    my ($hi,$lo);
+    for (@_) {
+	if (/^0x([0-9a-f]*?)([0-9a-f]{1,8})$/io)
+	{  $hi=$1?"0x$1":"0"; $lo="0x$2";  }
+	elsif (/^([0-9]+)$/o)
+	{  $hi=$1>>32; $lo=$1&0xffffffff;  } # error-prone with 32-bit perl
+	else
+	{  $hi=undef; $lo=$_; }
+
+	if (defined($hi))
+	{  push(@ret,$flavour=~/le$/o?".long\t$lo,$hi":".long\t$hi,$lo");  }
+	else
+	{  push(@ret,".quad	$lo");  }
+    }
+    join("\n",@ret);
 };
 
 ################################################################
@@ -124,6 +146,10 @@ my $extrdi = sub {
     $b = ($b+$n)&63; $n = 64-$n;
     "	rldicl	$ra,$rs,$b,$n";
 };
+my $vmr = sub {
+    my ($f,$vx,$vy) = @_;
+    "	vor	$vx,$vy,$vy";
+};
 
 while($line=<>) {
 
@@ -140,7 +166,10 @@ while($line=<>) {
     {
 	$line =~ s|(^[\.\w]+)\:\s*||;
 	my $label = $1;
-	printf "%s:",($GLOBALS{$label} or $label) if ($label);
+	if ($label) {
+	    printf "%s:",($GLOBALS{$label} or $label);
+	    printf "\n.localentry\t$GLOBALS{$label},0"	if ($GLOBALS{$label} && $flavour =~ /linux.*64le/);
+	}
     }
 
     {
@@ -149,7 +178,7 @@ while($line=<>) {
 	my $mnemonic = $2;
 	my $f = $3;
 	my $opcode = eval("\$$mnemonic");
-	$line =~ s|\bc?[rf]([0-9]+)\b|$1|g if ($c ne "." and $flavour !~ /osx/);
+	$line =~ s/\b(c?[rf]|v|vs)([0-9]+)\b/$2/g if ($c ne "." and $flavour !~ /osx/);
 	if (ref($opcode) eq 'CODE') { $line = &$opcode($f,split(',',$line)); }
 	elsif ($mnemonic)           { $line = $c.$mnemonic.$f."\t".$line; }
     }

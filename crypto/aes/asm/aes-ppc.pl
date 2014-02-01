@@ -45,6 +45,8 @@ if ($flavour =~ /64/) {
 	$PUSH	="stw";
 } else { die "nonsense $flavour"; }
 
+$LITTLE_ENDIAN = ($flavour=~/le$/) ? $SIZE_T : 0;
+
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}ppc-xlate.pl" and -f $xlate ) or
 ( $xlate="${dir}../../perlasm/ppc-xlate.pl" and -f $xlate) or
@@ -361,17 +363,61 @@ $code.=<<___;
 	bne	Lenc_unaligned
 
 Lenc_unaligned_ok:
+___
+$code.=<<___ if (!$LITTLE_ENDIAN);
 	lwz	$s0,0($inp)
 	lwz	$s1,4($inp)
 	lwz	$s2,8($inp)
 	lwz	$s3,12($inp)
+___
+$code.=<<___ if ($LITTLE_ENDIAN);
+	lwz	$t0,0($inp)
+	lwz	$t1,4($inp)
+	lwz	$t2,8($inp)
+	lwz	$t3,12($inp)
+	rotlwi	$s0,$t0,8
+	rotlwi	$s1,$t1,8
+	rotlwi	$s2,$t2,8
+	rotlwi	$s3,$t3,8
+	rlwimi	$s0,$t0,24,0,7
+	rlwimi	$s1,$t1,24,0,7
+	rlwimi	$s2,$t2,24,0,7
+	rlwimi	$s3,$t3,24,0,7
+	rlwimi	$s0,$t0,24,16,23
+	rlwimi	$s1,$t1,24,16,23
+	rlwimi	$s2,$t2,24,16,23
+	rlwimi	$s3,$t3,24,16,23
+___
+$code.=<<___;
 	bl	LAES_Te
 	bl	Lppc_AES_encrypt_compact
 	$POP	$out,`$FRAME-$SIZE_T*19`($sp)
+___
+$code.=<<___ if ($LITTLE_ENDIAN);
+	rotlwi	$t0,$s0,8
+	rotlwi	$t1,$s1,8
+	rotlwi	$t2,$s2,8
+	rotlwi	$t3,$s3,8
+	rlwimi	$t0,$s0,24,0,7
+	rlwimi	$t1,$s1,24,0,7
+	rlwimi	$t2,$s2,24,0,7
+	rlwimi	$t3,$s3,24,0,7
+	rlwimi	$t0,$s0,24,16,23
+	rlwimi	$t1,$s1,24,16,23
+	rlwimi	$t2,$s2,24,16,23
+	rlwimi	$t3,$s3,24,16,23
+	stw	$t0,0($out)
+	stw	$t1,4($out)
+	stw	$t2,8($out)
+	stw	$t3,12($out)
+___
+$code.=<<___ if (!$LITTLE_ENDIAN);
 	stw	$s0,0($out)
 	stw	$s1,4($out)
 	stw	$s2,8($out)
 	stw	$s3,12($out)
+___
+$code.=<<___;
 	b	Lenc_done
 
 Lenc_unaligned:
@@ -795,17 +841,61 @@ Lenc_compact_done:
 	bne	Ldec_unaligned
 
 Ldec_unaligned_ok:
+___
+$code.=<<___ if (!$LITTLE_ENDIAN);
 	lwz	$s0,0($inp)
 	lwz	$s1,4($inp)
 	lwz	$s2,8($inp)
 	lwz	$s3,12($inp)
+___
+$code.=<<___ if ($LITTLE_ENDIAN);
+	lwz	$t0,0($inp)
+	lwz	$t1,4($inp)
+	lwz	$t2,8($inp)
+	lwz	$t3,12($inp)
+	rotlwi	$s0,$t0,8
+	rotlwi	$s1,$t1,8
+	rotlwi	$s2,$t2,8
+	rotlwi	$s3,$t3,8
+	rlwimi	$s0,$t0,24,0,7
+	rlwimi	$s1,$t1,24,0,7
+	rlwimi	$s2,$t2,24,0,7
+	rlwimi	$s3,$t3,24,0,7
+	rlwimi	$s0,$t0,24,16,23
+	rlwimi	$s1,$t1,24,16,23
+	rlwimi	$s2,$t2,24,16,23
+	rlwimi	$s3,$t3,24,16,23
+___
+$code.=<<___;
 	bl	LAES_Td
 	bl	Lppc_AES_decrypt_compact
 	$POP	$out,`$FRAME-$SIZE_T*19`($sp)
+___
+$code.=<<___ if ($LITTLE_ENDIAN);
+	rotlwi	$t0,$s0,8
+	rotlwi	$t1,$s1,8
+	rotlwi	$t2,$s2,8
+	rotlwi	$t3,$s3,8
+	rlwimi	$t0,$s0,24,0,7
+	rlwimi	$t1,$s1,24,0,7
+	rlwimi	$t2,$s2,24,0,7
+	rlwimi	$t3,$s3,24,0,7
+	rlwimi	$t0,$s0,24,16,23
+	rlwimi	$t1,$s1,24,16,23
+	rlwimi	$t2,$s2,24,16,23
+	rlwimi	$t3,$s3,24,16,23
+	stw	$t0,0($out)
+	stw	$t1,4($out)
+	stw	$t2,8($out)
+	stw	$t3,12($out)
+___
+$code.=<<___ if (!$LITTLE_ENDIAN);
 	stw	$s0,0($out)
 	stw	$s1,4($out)
 	stw	$s2,8($out)
 	stw	$s3,12($out)
+___
+$code.=<<___;
 	b	Ldec_done
 
 Ldec_unaligned:
