@@ -646,6 +646,32 @@ int ssl_cert_select_current(CERT *c, X509 *x)
 	return 0;
 	}
 
+int ssl_cert_set_current(CERT *c, long op)
+	{
+	int i, idx;
+	if (!c)
+		return 0;
+	if (op == SSL_CERT_SET_FIRST)
+		idx = 0;
+	else if (op == SSL_CERT_SET_NEXT)
+		{
+		idx = (int)(c->key - c->pkeys + 1);
+		if (idx >= SSL_PKEY_NUM)
+			return 0;
+		}
+	else
+		return 0;
+	for (i = idx; i < SSL_PKEY_NUM; i++)
+		{
+		if (c->pkeys[i].x509)
+			{
+			c->key = &c->pkeys[i];
+			return 1;
+			}
+		}
+	return 0;
+	}
+
 void ssl_cert_set_cert_cb(CERT *c, int (*cb)(SSL *ssl, void *arg), void *arg)
 	{
 	c->cert_cb = cb;

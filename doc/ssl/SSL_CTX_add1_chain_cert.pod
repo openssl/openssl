@@ -7,7 +7,8 @@ SSL_CTX_add1_chain_cert, SSL_CTX_get0_chain_certs, SSL_CTX_clear_chain_certs,
 SSL_set0_chain, SSL_set1_chain, SSL_add0_chain_cert, SSL_add1_chain_cert,
 SSL_get0_chain_certs, SSL_clear_chain_certs, SSL_CTX_build_cert_chain,
 SSL_build_cert_chain, SSL_CTX_select_current_cert,
-SSL_select_current_cert - extra chain certificate processing
+SSL_select_current_cert, SSL_CTX_set_current_cert, SSL_set_current_cert - extra
+chain certificate processing
 
 =head1 SYNOPSIS
 
@@ -32,6 +33,8 @@ SSL_select_current_cert - extra chain certificate processing
 
  int SSL_CTX_select_current_cert(SSL_CTX *ctx, X509 *x509);
  int SSL_select_current_cert(SSL *ssl, X509 *x509);
+ int SSL_CTX_set_current_cert(SSL_CTX *ctx, long op);
+ int SSL_set_current_cert(SSL *ssl, long op);
 
 =head1 DESCRIPTION
 
@@ -65,8 +68,14 @@ function such as SSL_CTX_use_certificate().
 
 SSL_set0_chain(), SSL_set1_chain(), SSL_add0_chain_cert(),
 SSL_add1_chain_cert(), SSL_get0_chain_certs(), SSL_clear_chain_certs(),
-SSL_build_cert_chain() and SSL_select_current_cert() are similar except they
-apply to SSL structure B<ssl>.
+SSL_build_cert_chain(), SSL_select_current_cert() and SSL_set_current_cert()
+are similar except they apply to SSL structure B<ssl>.
+
+SSL_CTX_set_current_cert() changes the current certificate to a value based
+on the B<op> argument. Currently B<op> can be B<SSL_CERT_SET_FIRST> to use
+the first valid certificate or B<SSL_CERT_SET_NEXT> to set the next valid
+certificate after the current certificate. These two operations can be
+used to iterate over all certificates in an B<SSL_CTX> structure.
 
 All these functions are implemented as macros. Those containing a B<1>
 increment the reference count of the supplied certificate or chain so it must

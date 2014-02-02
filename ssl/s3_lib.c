@@ -3438,6 +3438,9 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 	case SSL_CTRL_SELECT_CURRENT_CERT:
 		return ssl_cert_select_current(s->cert, (X509 *)parg);
 
+	case SSL_CTRL_SET_CURRENT_CERT:
+		return ssl_cert_set_current(s->cert, larg);
+
 #ifndef OPENSSL_NO_EC
 	case SSL_CTRL_GET_CURVES:
 		{
@@ -3942,6 +3945,9 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 
 	case SSL_CTRL_SELECT_CURRENT_CERT:
 		return ssl_cert_select_current(ctx->cert, (X509 *)parg);
+
+	case SSL_CTRL_SET_CURRENT_CERT:
+		return ssl_cert_set_current(ctx->cert, larg);
 
 	default:
 		return(0);

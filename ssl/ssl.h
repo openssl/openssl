@@ -1870,6 +1870,10 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 
 #define SSL_CTRL_GET_CHAIN_CERTS		115
 #define SSL_CTRL_SELECT_CURRENT_CERT		116
+#define SSL_CTRL_SET_CURRENT_CERT		117
+
+#define SSL_CERT_SET_FIRST			1
+#define SSL_CERT_SET_NEXT			2
 
 #define DTLSv1_get_timeout(ssl, arg) \
 	SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)
@@ -1929,6 +1933,9 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTX_select_current_cert(ctx,x509) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_SELECT_CURRENT_CERT,0,(char *)x509)
 
+#define SSL_CTX_set_current_cert(ctx, op) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_CURRENT_CERT, op, NULL)
+
 #define SSL_CTX_set0_verify_cert_store(ctx,st) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_VERIFY_CERT_STORE,0,(char *)st)
 #define SSL_CTX_set1_verify_cert_store(ctx,st) \
@@ -1954,6 +1961,8 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 	SSL_ctrl(s,SSL_CTRL_BUILD_CERT_CHAIN, flags, NULL)
 #define SSL_select_current_cert(ctx,x509) \
 	SSL_ctrl(ctx,SSL_CTRL_SELECT_CURRENT_CERT,0,(char *)x509)
+#define SSL_set_current_cert(ctx,op) \
+	SSL_ctrl(ctx,SSL_CTRL_SET_CURRENT_CERT, op, NULL)
 
 #define SSL_set0_verify_cert_store(s,st) \
 	SSL_ctrl(s,SSL_CTRL_SET_VERIFY_CERT_STORE,0,(char *)st)
