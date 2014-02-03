@@ -395,7 +395,7 @@ libcrypto$(SHLIB_EXT): libcrypto.a build_fips
 			FIPSLD_CC="$(CC)"; CC=fips/fipsld; \
 			export CC FIPSLD_CC; \
 		fi; \
-		$(MAKE) -e SHLIBDIRS=crypto CC=$${CC:-$(CC)} build-shared; \
+		$(MAKE) -e SHLIBDIRS=crypto CC="$${CC:-$(CC)}" build-shared; \
 	else \
 		echo "There's no support for shared libraries on this platform" >&2; \
 		exit 1; \
