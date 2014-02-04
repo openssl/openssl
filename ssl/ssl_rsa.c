@@ -844,17 +844,19 @@ static int serverinfo_find_extension(const unsigned char *serverinfo,
 	}
 
 static int serverinfo_srv_first_cb(SSL *s, unsigned short ext_type,
-				const unsigned char *in,
-				unsigned short inlen, int *al,
-				void *arg)
+				   const unsigned char *in,
+				   unsigned short inlen, int *al,
+				   void *arg)
 	{
 	size_t i = 0;
+
 	if (inlen != 0)
 		{
 		*al = SSL_AD_DECODE_ERROR;
 		return 0;
 		}
-	//if already in list, error out
+
+	/* if already in list, error out */
 	for (i = 0; i < s->s3->serverinfo_client_tlsext_custom_types_count; i++)
 		{
 		if (s->s3->serverinfo_client_tlsext_custom_types[i] == ext_type)
@@ -880,8 +882,8 @@ static int serverinfo_srv_first_cb(SSL *s, unsigned short ext_type,
 	}
 
 static int serverinfo_srv_second_cb(SSL *s, unsigned short ext_type,
-				const unsigned char **out, unsigned short *outlen,
-				int *al, void *arg)
+				    const unsigned char **out, unsigned short *outlen,
+				    int *al, void *arg)
 	{
 	const unsigned char *serverinfo = NULL;
 	size_t serverinfo_length = 0;
@@ -898,17 +900,17 @@ static int serverinfo_srv_second_cb(SSL *s, unsigned short ext_type,
 		}
 	if (!match)
 		{
-		//extension not sent by client...don't send extension
+		/* extension not sent by client...don't send extension */
 		return -1;
 		}
 
 	/* Is there serverinfo data for the chosen server cert? */
 	if ((ssl_get_server_cert_serverinfo(s, &serverinfo,
-		&serverinfo_length)) != 0)
+					    &serverinfo_length)) != 0)
 		{
 		/* Find the relevant extension from the serverinfo */
 		int retval = serverinfo_find_extension(serverinfo, serverinfo_length,
-							ext_type, out, outlen);
+						       ext_type, out, outlen);
 		if (retval == 0)
 			return 0; /* Error */
 		if (retval == -1)

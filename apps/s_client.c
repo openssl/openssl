@@ -236,22 +236,22 @@ static int server_provided_client_authz = 0;
 static const unsigned char auth_ext_data[]={TLSEXT_AUTHZDATAFORMAT_dtcp};
 
 static int suppdata_cb(SSL *s, unsigned short supp_data_type,
-				const unsigned char *in,
-				unsigned short inlen, int *al,
-				void *arg);
+		       const unsigned char *in,
+		       unsigned short inlen, int *al,
+		       void *arg);
 
 static int auth_suppdata_generate_cb(SSL *s, unsigned short supp_data_type,
-				const unsigned char **out,
-				unsigned short *outlen, int *al, void *arg);
+				     const unsigned char **out,
+				     unsigned short *outlen, int *al, void *arg);
 
 static int authz_tlsext_generate_cb(SSL *s, unsigned short ext_type,
-				const unsigned char **out, unsigned short *outlen,
-				int *al, void *arg);
+				    const unsigned char **out, unsigned short *outlen,
+				    int *al, void *arg);
 
 static int authz_tlsext_cb(SSL *s, unsigned short ext_type,
-				const unsigned char *in,
-				unsigned short inlen, int *al,
-				void *arg);
+			   const unsigned char *in,
+			   unsigned short inlen, int *al,
+			   void *arg);
 #endif
 
 #ifndef OPENSSL_NO_PSK
@@ -2439,9 +2439,9 @@ static int ocsp_resp_cb(SSL *s, void *arg)
 	}
 
 static int authz_tlsext_cb(SSL *s, unsigned short ext_type,
-				const unsigned char *in,
-				unsigned short inlen, int *al,
-				void *arg)
+			   const unsigned char *in,
+			   unsigned short inlen, int *al,
+			   void *arg)
 	{
 	if (TLSEXT_TYPE_server_authz == ext_type)
 		server_provided_server_authz
@@ -2455,8 +2455,8 @@ static int authz_tlsext_cb(SSL *s, unsigned short ext_type,
 	}
 
 static int authz_tlsext_generate_cb(SSL *s, unsigned short ext_type,
-				const unsigned char **out, unsigned short *outlen,
-				int *al, void *arg)
+				    const unsigned char **out, unsigned short *outlen,
+				    int *al, void *arg)
 	{
 	if (c_auth)
 		{
@@ -2474,9 +2474,9 @@ static int authz_tlsext_generate_cb(SSL *s, unsigned short ext_type,
 	}
 
 static int suppdata_cb(SSL *s, unsigned short supp_data_type,
-				const unsigned char *in,
-				unsigned short inlen, int *al,
-				void *arg)
+		       const unsigned char *in,
+		       unsigned short inlen, int *al,
+		       void *arg)
 	{
 	if (supp_data_type == TLSEXT_SUPPLEMENTALDATATYPE_authz_data)
 		{
@@ -2487,8 +2487,8 @@ static int suppdata_cb(SSL *s, unsigned short supp_data_type,
 	}
 
 static int auth_suppdata_generate_cb(SSL *s, unsigned short supp_data_type,
-				const unsigned char **out,
-				unsigned short *outlen, int *al, void *arg)
+				     const unsigned char **out,
+				     unsigned short *outlen, int *al, void *arg)
 	{
 	if (c_auth && server_provided_client_authz && server_provided_server_authz)
 		{

@@ -1453,8 +1453,8 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 				{
 				int cb_retval = 0;
 				cb_retval = record->fn1(s, record->ext_type,
-										&out, &outlen, al,
-										record->arg);
+							&out, &outlen, al,
+							record->arg);
 				if (cb_retval == 0)
 					return NULL; /* error */
 				if (cb_retval == -1)
@@ -1700,10 +1700,11 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 
 	for (i = 0; i < s->ctx->custom_srv_ext_records_count; i++)
 		{
-		record = &s->ctx->custom_srv_ext_records[i];
 		const unsigned char *out = NULL;
 		unsigned short outlen = 0;
 		int cb_retval = 0;
+
+		record = &s->ctx->custom_srv_ext_records[i];
 
 		/* NULL callback or -1 omits extension */
 		if (!record->fn2)

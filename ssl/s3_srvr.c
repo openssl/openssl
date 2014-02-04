@@ -3725,8 +3725,7 @@ int tls1_send_server_supplemental_data(SSL *s, int *skip)
 			if (!record->fn1)
 				continue;
 			cb_retval = record->fn1(s, record->supp_data_type,
-									&out, &outlen, &al,
-			record->arg);
+						&out, &outlen, &al, record->arg);
 			if (cb_retval == -1)
 				continue; /* skip this supp data entry */
 			if (cb_retval == 0)
@@ -3812,12 +3811,12 @@ int tls1_get_client_supplemental_data(SSL *s)
 	size_t i = 0;
 
 	n=s->method->ssl_get_message(s,
-								 SSL3_ST_SR_SUPPLEMENTAL_DATA_A,
-								 SSL3_ST_SR_SUPPLEMENTAL_DATA_B,
-								 SSL3_MT_SUPPLEMENTAL_DATA,
-								 /* use default limit */
-								 TLSEXT_MAXLEN_supplemental_data,
-								 &ok);
+				     SSL3_ST_SR_SUPPLEMENTAL_DATA_A,
+				     SSL3_ST_SR_SUPPLEMENTAL_DATA_B,
+				     SSL3_MT_SUPPLEMENTAL_DATA,
+				     /* use default limit */
+				     TLSEXT_MAXLEN_supplemental_data,
+				     &ok);
 
 	if (!ok) return((int)n);
 
