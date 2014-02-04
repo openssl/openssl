@@ -3029,8 +3029,8 @@ void ssl3_free(SSL *s)
 	SSL_SRP_CTX_free(s);
 #endif
 #ifndef OPENSSL_NO_TLSEXT
-        if (s->s3->serverinfo_client_tlsext_custom_types != NULL)
-                OPENSSL_free(s->s3->serverinfo_client_tlsext_custom_types);
+	if (s->s3->serverinfo_client_tlsext_custom_types != NULL)
+		OPENSSL_free(s->s3->serverinfo_client_tlsext_custom_types);
 #endif
 	OPENSSL_cleanse(s->s3,sizeof *s->s3);
 	OPENSSL_free(s->s3);
@@ -3076,12 +3076,12 @@ void ssl3_clear(SSL *s)
 		}
 #endif
 #ifndef OPENSSL_NO_TLSEXT
-        if (s->s3->serverinfo_client_tlsext_custom_types != NULL)
+	if (s->s3->serverinfo_client_tlsext_custom_types != NULL)
 		{
-                OPENSSL_free(s->s3->serverinfo_client_tlsext_custom_types);
-                s->s3->serverinfo_client_tlsext_custom_types = NULL;
+		OPENSSL_free(s->s3->serverinfo_client_tlsext_custom_types);
+		s->s3->serverinfo_client_tlsext_custom_types = NULL;
 		}
-        s->s3->serverinfo_client_tlsext_custom_types_count = 0;
+	s->s3->serverinfo_client_tlsext_custom_types_count = 0;
 #ifndef OPENSSL_NO_EC
 	s->s3->is_probably_safari = 0;
 #endif /* !OPENSSL_NO_EC */

@@ -1504,7 +1504,8 @@ int ssl3_send_server_hello(SSL *s)
 	{
 	unsigned char *buf;
 	unsigned char *p,*d;
-        int i,sl,al;
+	int i,sl;
+	int al = 0;
 	unsigned long l;
 
 	if (s->state == SSL3_ST_SW_SRVR_HELLO_A)
@@ -1574,9 +1575,9 @@ int ssl3_send_server_hello(SSL *s)
 			SSLerr(SSL_F_SSL3_SEND_SERVER_HELLO,SSL_R_SERVERHELLO_TLSEXT);
 			return -1;
 			}
-                if ((p = ssl_add_serverhello_tlsext(s, p, buf+SSL3_RT_MAX_PLAIN_LENGTH, &al)) == NULL)
+		if ((p = ssl_add_serverhello_tlsext(s, p, buf+SSL3_RT_MAX_PLAIN_LENGTH, &al)) == NULL)
 			{
-                        ssl3_send_alert(s, SSL3_AL_FATAL, al);
+			ssl3_send_alert(s, SSL3_AL_FATAL, al);
 			SSLerr(SSL_F_SSL3_SEND_SERVER_HELLO,ERR_R_INTERNAL_ERROR);
 			return -1;
 			}
@@ -3704,7 +3705,7 @@ int ssl3_get_next_proto(SSL *s)
 
 int tls1_send_server_supplemental_data(SSL *s, int *skip)
 	{
-        int al = 0;
+	int al = 0;
 	if (s->ctx->srv_supp_data_records_count)
 		{
 		unsigned char *p = NULL;
@@ -3724,14 +3725,14 @@ int tls1_send_server_supplemental_data(SSL *s, int *skip)
 			if (!record->fn1)
 				continue;
 			cb_retval = record->fn1(s, record->supp_data_type,
-                        &out, &outlen, &al,
+									&out, &outlen, &al,
 			record->arg);
 			if (cb_retval == -1)
 				continue; /* skip this supp data entry */
 			if (cb_retval == 0)
 				{
 				SSLerr(SSL_F_TLS1_SEND_SERVER_SUPPLEMENTAL_DATA,ERR_R_BUF_LIB);
-                                goto f_err;
+				goto f_err;
 				}
 			if (outlen == 0 || TLSEXT_MAXLEN_supplemental_data < outlen + 4 + length)
 				{
@@ -3794,8 +3795,8 @@ int tls1_send_server_supplemental_data(SSL *s, int *skip)
 	s->init_off = 0;
 	return 1;
 f_err:
-        ssl3_send_alert(s,SSL3_AL_FATAL,al);
-        return 0;
+	ssl3_send_alert(s,SSL3_AL_FATAL,al);
+	return 0;
 	}
 
 int tls1_get_client_supplemental_data(SSL *s)
@@ -3811,12 +3812,12 @@ int tls1_get_client_supplemental_data(SSL *s)
 	size_t i = 0;
 
 	n=s->method->ssl_get_message(s,
-	SSL3_ST_SR_SUPPLEMENTAL_DATA_A,
-	SSL3_ST_SR_SUPPLEMENTAL_DATA_B,
-	SSL3_MT_SUPPLEMENTAL_DATA,
-	/* use default limit */
-	TLSEXT_MAXLEN_supplemental_data,
-	&ok);
+								 SSL3_ST_SR_SUPPLEMENTAL_DATA_A,
+								 SSL3_ST_SR_SUPPLEMENTAL_DATA_B,
+								 SSL3_MT_SUPPLEMENTAL_DATA,
+								 /* use default limit */
+								 TLSEXT_MAXLEN_supplemental_data,
+								 &ok);
 
 	if (!ok) return((int)n);
 
