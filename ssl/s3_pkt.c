@@ -654,6 +654,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 		i=do_ssl3_write(s, type, &(buf[tot]), nw, 0);
 		if (i <= 0)
 			{
+			/* XXX should we ssl3_release_write_buffer if i<0? */
 			s->s3->wnum=tot;
 			return i;
 			}
@@ -665,7 +666,11 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 			/* next chunk of data should get another prepended empty fragment
 			 * in ciphersuites with known-IV weakness: */
 			s->s3->empty_fragment_done = 0;
-			
+
+			if ((i==(int)n) && s->mode & SSL_MODE_RELEASE_BUFFERS &&
+				!SSL_IS_DTLS(s))
+				ssl3_release_write_buffer(s);
+
 			return tot+i;
 			}
 
@@ -995,9 +1000,6 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
 			{
 			wb->left=0;
 			wb->offset+=i;
-			if (s->mode & SSL_MODE_RELEASE_BUFFERS &&
-				!SSL_IS_DTLS(s))
-				ssl3_release_write_buffer(s);
 			s->rwstate=SSL_NOTHING;
 			return(s->s3->wpend_ret);
 			}
