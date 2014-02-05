@@ -299,6 +299,7 @@ static int ssl23_client_hello(SSL *s)
 	unsigned long l;
 	int ssl2_compat;
 	int version = 0, version_major, version_minor;
+	int al = 0;
 #ifndef OPENSSL_NO_COMP
 	int j;
 	SSL_COMP *comp;
@@ -553,8 +554,9 @@ static int ssl23_client_hello(SSL *s)
 				SSLerr(SSL_F_SSL23_CLIENT_HELLO,SSL_R_CLIENTHELLO_TLSEXT);
 				return -1;
 				}
-			if ((p = ssl_add_clienthello_tlsext(s, p, buf+SSL3_RT_MAX_PLAIN_LENGTH)) == NULL)
+			if ((p = ssl_add_clienthello_tlsext(s, p, buf+SSL3_RT_MAX_PLAIN_LENGTH, &al)) == NULL)
 				{
+				ssl3_send_alert(s,SSL3_AL_FATAL,al);
 				SSLerr(SSL_F_SSL23_CLIENT_HELLO,ERR_R_INTERNAL_ERROR);
 				return -1;
 				}

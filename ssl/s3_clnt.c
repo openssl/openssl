@@ -689,6 +689,7 @@ int ssl3_client_hello(SSL *s)
 	unsigned char *p,*d;
 	int i;
 	unsigned long l;
+	int al = 0;
 #ifndef OPENSSL_NO_COMP
 	int j;
 	SSL_COMP *comp;
@@ -891,8 +892,9 @@ int ssl3_client_hello(SSL *s)
 			SSLerr(SSL_F_SSL3_CLIENT_HELLO,SSL_R_CLIENTHELLO_TLSEXT);
 			goto err;
 			}
-		if ((p = ssl_add_clienthello_tlsext(s, p, buf+SSL3_RT_MAX_PLAIN_LENGTH)) == NULL)
+		if ((p = ssl_add_clienthello_tlsext(s, p, buf+SSL3_RT_MAX_PLAIN_LENGTH, &al)) == NULL)
 			{
+			ssl3_send_alert(s,SSL3_AL_FATAL,al);
 			SSLerr(SSL_F_SSL3_CLIENT_HELLO,ERR_R_INTERNAL_ERROR);
 			goto err;
 			}
@@ -3622,6 +3624,7 @@ int ssl_do_client_cert_cb(SSL *s, X509 **px509, EVP_PKEY **ppkey)
 #ifndef OPENSSL_NO_TLSEXT
 int tls1_send_client_supplemental_data(SSL *s, int *skip)
 	{
+	int al = 0;
 	if (s->ctx->cli_supp_data_records_count)
 		{
 		unsigned char *p = NULL;
@@ -3641,20 +3644,20 @@ int tls1_send_client_supplemental_data(SSL *s, int *skip)
 			if (!record->fn2)
 				continue;
 			cb_retval = record->fn2(s, record->supp_data_type,
-				&out, &outlen,
-				record->arg);
+									&out, &outlen, &al,
+									record->arg);
 			if (cb_retval == -1)
 				continue; /* skip this supp data entry */
 			if (cb_retval == 0)
 				{
 				SSLerr(SSL_F_TLS1_SEND_CLIENT_SUPPLEMENTAL_DATA,ERR_R_BUF_LIB);
-				return 0;
+				goto f_err;
 				}
 			if (outlen == 0 || TLSEXT_MAXLEN_supplemental_data < outlen + 4 + length)
 				{
 				SSLerr(SSL_F_TLS1_SEND_CLIENT_SUPPLEMENTAL_DATA,ERR_R_BUF_LIB);
 				return 0;
-			    	}
+				}
 			/* if first entry, write handshake message type */
 			if (length == 0)
 				{
@@ -3666,11 +3669,11 @@ int tls1_send_client_supplemental_data(SSL *s, int *skip)
 				p = (unsigned char *)s->init_buf->data;
 				*(p++) = SSL3_MT_SUPPLEMENTAL_DATA;
 				/* update message length when all
-				 * callbacks complete */
+				* callbacks complete */
 				size_loc = p;
 				/* skip over handshake length field (3
-				 * bytes) and supp_data length field
-				 * (3 bytes) */
+				* bytes) and supp_data length field
+				* (3 bytes) */
 				p += 3 + 3;
 				length += 1 +3 +3;
 				}
@@ -3703,6 +3706,10 @@ int tls1_send_client_supplemental_data(SSL *s, int *skip)
 	s->init_num = 0;
 	s->init_off = 0;
 	return 1;
+
+	f_err:
+		ssl3_send_alert(s,SSL3_AL_FATAL,al);
+		return 0;
 	}
 
 int tls1_get_server_supplemental_data(SSL *s)
@@ -3718,12 +3725,12 @@ int tls1_get_server_supplemental_data(SSL *s)
 	int cb_retval = 0;
 
 	n=s->method->ssl_get_message(s,
-		SSL3_ST_CR_SUPPLEMENTAL_DATA_A,
-		SSL3_ST_CR_SUPPLEMENTAL_DATA_B,
-		SSL3_MT_SUPPLEMENTAL_DATA,
-		/* use default limit */
-		TLSEXT_MAXLEN_supplemental_data,
-		&ok);
+					SSL3_ST_CR_SUPPLEMENTAL_DATA_A,
+					SSL3_ST_CR_SUPPLEMENTAL_DATA_B,
+					SSL3_MT_SUPPLEMENTAL_DATA,
+					/* use default limit */
+					TLSEXT_MAXLEN_supplemental_data,
+					&ok);
 
 	if (!ok) return((int)n);
 
@@ -3744,9 +3751,11 @@ int tls1_get_server_supplemental_data(SSL *s)
 		/* if there is a callback for this supp data type, send it */
 		for (i=0; i < s->ctx->cli_supp_data_records_count; i++)
 			{
-			if (s->ctx->cli_supp_data_records[i].supp_data_type == supp_data_entry_type && s->ctx->cli_supp_data_records[i].fn1)
+			if (s->ctx->cli_supp_data_records[i].supp_data_type == supp_data_entry_type &&
+				s->ctx->cli_supp_data_records[i].fn1)
 				{
-				cb_retval = s->ctx->cli_supp_data_records[i].fn1(s, supp_data_entry_type, p, supp_data_entry_len, &al, s->ctx->cli_supp_data_records[i].arg);
+				cb_retval = s->ctx->cli_supp_data_records[i].fn1(s, supp_data_entry_type, p,
+				supp_data_entry_len, &al, s->ctx->cli_supp_data_records[i].arg);
 				if (cb_retval == 0)
 					{
 					SSLerr(SSL_F_TLS1_GET_SERVER_SUPPLEMENTAL_DATA, ERR_R_SSL_LIB);
@@ -3757,8 +3766,8 @@ int tls1_get_server_supplemental_data(SSL *s)
 		p += supp_data_entry_len;
 		}
 	return 1;
-f_err:
-	ssl3_send_alert(s,SSL3_AL_FATAL,al);
-	return -1;
+	f_err:
+		ssl3_send_alert(s,SSL3_AL_FATAL,al);
+		return -1;
 	}
 #endif

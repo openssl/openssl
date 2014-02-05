@@ -583,14 +583,12 @@ typedef struct ssl3_state_st
 #endif
 
 #ifndef OPENSSL_NO_TLSEXT
-	/* tlsext_custom_types contains an array of TLS Extension types which 
-	 * were advertised by the client in its ClientHello, which were not 
-	 * otherwise handled by OpenSSL, and which the server has registered
-	 * a custom_srv_ext_record to handle.
+        /* serverinfo_client_tlsext_custom_types contains an array of TLS Extension types which
+         * were advertised by the client in its ClientHello and leveraged by ServerInfo TLS extension callbacks.
 	 * The array does not contain any duplicates, and is in the same order
 	 * as the types were received in the client hello. */
-	unsigned short *tlsext_custom_types;
-	size_t tlsext_custom_types_count; /* how many tlsext_custom_types */
+        unsigned short *serverinfo_client_tlsext_custom_types;
+        size_t serverinfo_client_tlsext_custom_types_count; /* how many serverinfo_client_tlsext_custom_types */
 
 	/* ALPN information
 	 * (we are in the process of transitioning from NPN to ALPN.) */
