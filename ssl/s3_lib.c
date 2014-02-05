@@ -3914,9 +3914,10 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 		break;
 
 	case SSL_CTRL_GET_EXTRA_CHAIN_CERTS:
-		*(STACK_OF(X509) **)parg =  ctx->extra_certs;
-		if (parg == NULL && larg == 0)
+		if (ctx->extra_certs == NULL && larg == 0)
 			*(STACK_OF(X509) **)parg =  ctx->cert->key->chain;
+		else
+			*(STACK_OF(X509) **)parg =  ctx->extra_certs;
 		break;
 
 	case SSL_CTRL_CLEAR_EXTRA_CHAIN_CERTS:
