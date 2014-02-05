@@ -1708,14 +1708,14 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 
 		/* NULL callback or -1 omits extension */
 		if (!record->fn2)
-			break;
+			continue;
 		cb_retval = record->fn2(s, record->ext_type,
 								&out, &outlen, al,
 								record->arg);
 		if (cb_retval == 0)
 			return NULL; /* error */
 		if (cb_retval == -1)
-			break; /* skip this extension */
+			continue; /* skip this extension */
 		if (limit < ret + 4 + outlen)
 			return NULL;
 		s2n(record->ext_type, ret);
