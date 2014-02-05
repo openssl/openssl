@@ -364,6 +364,7 @@ struct evp_cipher_st
  */
 #define 	EVP_CIPH_FLAG_CUSTOM_CIPHER	0x100000
 #define		EVP_CIPH_FLAG_AEAD_CIPHER	0x200000
+#define		EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK	0x400000
 
 /* Cipher context flag to indicate we can handle
  * wrap mode: if allowed in older applications it could
@@ -402,6 +403,18 @@ struct evp_cipher_st
 #define		EVP_CTRL_AEAD_SET_MAC_KEY	0x17
 /* Set the GCM invocation field, decrypt only */
 #define		EVP_CTRL_GCM_SET_IV_INV		0x18
+
+#define		EVP_CTRL_TLS1_1_MULTIBLOCK_AAD	0x19
+#define		EVP_CTRL_TLS1_1_MULTIBLOCK_ENCRYPT	0x1a
+#define		EVP_CTRL_TLS1_1_MULTIBLOCK_DECRYPT	0x1b
+#define		EVP_CTRL_TLS1_1_MULTIBLOCK_MAX_BUFSIZE	0x1c
+
+typedef struct {
+	unsigned char *out;
+	const unsigned char *inp;
+	size_t len;
+	unsigned int interleave;
+} EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM;
 
 /* GCM TLS constants */
 /* Length of fixed part of IV derived from PRF */
