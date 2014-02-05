@@ -501,8 +501,7 @@ static int custom_ext_0_cli_second_cb(SSL *s, unsigned short ext_type,
 				      unsigned short inlen, int *al,
 				      void *arg)
 	{
-	custom_ext_error = 1; /* Shouldn't be called */
-	return 0;
+	return 1;
 	}
 
 static int custom_ext_1_cli_first_cb(SSL *s, unsigned short ext_type,
@@ -521,8 +520,7 @@ static int custom_ext_1_cli_second_cb(SSL *s, unsigned short ext_type,
 				      unsigned short inlen, int *al,
 				      void *arg)
 	{
-	custom_ext_error = 1; /* Shouldn't be called */
-	return 0;
+	return 1;
 	}
 
 static int custom_ext_2_cli_first_cb(SSL *s, unsigned short ext_type,
@@ -579,8 +577,7 @@ static int custom_ext_0_srv_first_cb(SSL *s, unsigned short ext_type,
 				     unsigned short inlen, int *al,
 				     void *arg)
 	{
-	custom_ext_error = 1;
-	return 0; /* Shouldn't be called */
+	return 1;
 	}
 
 /* 'generate' callbacks are always called, even if the 'receive' callback isn't called */
