@@ -413,6 +413,7 @@ struct evp_cipher_st
 #define		EVP_CTRL_TLS1_1_MULTIBLOCK_AAD	0x19
 #define		EVP_CTRL_TLS1_1_MULTIBLOCK_ENCRYPT	0x1a
 #define		EVP_CTRL_TLS1_1_MULTIBLOCK_DECRYPT	0x1b
+#define		EVP_CTRL_TLS1_1_MULTIBLOCK_MAX_BUFSIZE	0x1c
 
 typedef struct {
 	unsigned char *out;

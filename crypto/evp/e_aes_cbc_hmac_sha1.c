@@ -775,6 +775,8 @@ static int aesni_cbc_hmac_sha1_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void
 			}
 		}
 #if !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
+	case EVP_CTRL_TLS1_1_MULTIBLOCK_MAX_BUFSIZE:
+		return (int)(5+16+((arg+20+16)&-16));
 	case EVP_CTRL_TLS1_1_MULTIBLOCK_AAD:
 		{
 		EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM *param =
@@ -791,10 +793,17 @@ static int aesni_cbc_hmac_sha1_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void
 			if ((param->inp[9]<<8|param->inp[10]) < TLS1_1_VERSION)
 				return -1;
 
-			if (inp_len<4096) return 0;	/* too short */
+			if (inp_len)
+				{
+				if (inp_len<4096) return 0;	/* too short */
 
-			if (inp_len>=8192 && OPENSSL_ia32cap_P[2]&(1<<5))
-				n4x=2;	/* AVX2 */
+				if (inp_len>=8192 && OPENSSL_ia32cap_P[2]&(1<<5))
+					n4x=2;	/* AVX2 */
+				}
+			else if ((n4x=param->interleave/4) && n4x<=2)
+				inp_len = param->len;
+			else
+				return -1;
 
 			key->md = key->head;
 			SHA1_Update(&key->md,param->inp,13);
