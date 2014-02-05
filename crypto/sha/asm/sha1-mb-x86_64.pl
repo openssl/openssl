@@ -14,20 +14,21 @@
 #
 #		this	+aesni(i)	sha1	aesni-sha1	gain(iv)
 # -------------------------------------------------------------------
-# Westmere(ii)	10.4/n	+1.28=3.88(n=4)	5.44	6.58		+70%
-# Atom(ii)	18.9/n	+3.93=8.66(n=4)	10.0	14.0		+62%
+# Westmere(ii)	10.7/n	+1.28=3.96(n=4)	5.30	6.66		+68%
+# Atom(ii)	18.9?/n	+3.93=8.66(n=4)	10.0	14.0		+62%
 # Sandy Bridge	(8.16	+5.15=13.3)/n	4.99	5.98		+80%
-# Ivy Bridge	(8.03	+5.14=13.2)/n	4.60	5.54		+68%
+# Ivy Bridge	(8.08	+5.14=13.2)/n	4.60	5.54		+68%
 # Haswell(iii)	(8.96	+5.00=14.0)/n	3.57	4.55		+160%
-# Bulldozer	(9.75	+5.76=15.5)/n	5.95	6.37		+64%
+# Bulldozer	(9.76	+5.76=15.5)/n	5.95	6.37		+64%
 #
 # (i)	multi-block CBC encrypt with 128-bit key;
 # (ii)	(HASH+AES)/n does not apply to Westmere for n>3 and Atom,
 #	because of lower AES-NI instruction throughput;
 # (iii)	"this" is for n=8, when we gather twice as much data, result
-#	for n=4 is 7.98+4.44=12.4;
-# (iv)	improvement coefficients in real-life application are somewhat
-#	lower and range from 30% to 100% (on Haswell);
+#	for n=4 is 8.00+4.44=12.4;
+# (iv)	presented improvement coefficients are asymptotic limits and
+#	in real-life application are somewhat lower, e.g. for 2KB
+#	fragments they range from 30% to 100% (on Haswell);
 
 $flavour = shift;
 $output  = shift;
@@ -79,6 +80,14 @@ $Tbl="%rbp";
 ($t0,$t1,$t2,$t3,$tx)=map("%xmm$_",(5..9));
 @Xi=map("%xmm$_",(10..14));
 $K="%xmm15";
+
+if (1) {
+    # Atom-specific optimization aiming to eliminate pshufb with high
+    # registers [and thus get rid of 48 cycles accumulated penalty] 
+    @Xi=map("%xmm$_",(0..4));
+    ($tx,$t0,$t1,$t2,$t3)=map("%xmm$_",(5..9));
+    @V=($A,$B,$C,$D,$E)=map("%xmm$_",(10..14));
+}
 
 $REG_SZ=16;
 
@@ -139,8 +148,8 @@ $code.=<<___ if ($i<14);			# just load input
 
 	psrld	\$2,$b
 	paddd	$t2,$e				# e+=rol(a,5)
-	 movd		`4*$j-16*4`(@ptr[2]),$t2
 	 pshufb	$tx,@Xi[1]
+	 movd		`4*$j-16*4`(@ptr[2]),$t2
 	por	$t1,$b				# b=rol(b,30)
 ___
 $code.=<<___ if ($i==14);			# just load input
@@ -152,6 +161,7 @@ $code.=<<___ if ($i==14);			# just load input
 	movdqa	$b,$t1
 	movdqa	$b,$t0
 	pslld	\$5,$t2
+	 prefetcht0	63(@ptr[0])
 	pandn	$d,$t1
 	pand	$c,$t0
 	 punpckldq	$t3,@Xi[1]
@@ -162,14 +172,17 @@ $code.=<<___ if ($i==14);			# just load input
 	psrld	\$27,$t3
 	pxor	$t1,$t0				# Ch(b,c,d)
 	movdqa	$b,$t1
+	 prefetcht0	63(@ptr[1])
 
 	por	$t3,$t2				# rol(a,5)
 	pslld	\$30,$t1
 	paddd	$t0,$e				# e+=Ch(b,c,d)
+	 prefetcht0	63(@ptr[2])
 
 	psrld	\$2,$b
 	paddd	$t2,$e				# e+=rol(a,5)
 	 pshufb	$tx,@Xi[1]
+	 prefetcht0	63(@ptr[3])
 	por	$t1,$b				# b=rol(b,30)
 ___
 $code.=<<___ if ($i>=13 && $i<15);
@@ -382,12 +395,12 @@ $code.=<<___;
 	movdqu	0x60($ctx),$D
 	movdqu	0x80($ctx),$E
 	movdqa	0x60($Tbl),$tx			# pbswap_mask
+	movdqa	-0x20($Tbl),$K			# K_00_19
 	jmp	.Loop
 
 .align	32
 .Loop:
 ___
-$code.="	movdqa	-0x20($Tbl),$K\n";	# K_00_19
 for($i=0;$i<20;$i++)	{ &BODY_00_19($i,@V); unshift(@V,pop(@V)); }
 $code.="	movdqa	0x00($Tbl),$K\n";	# K_20_39
 for(;$i<40;$i++)	{ &BODY_20_39($i,@V); unshift(@V,pop(@V)); }
@@ -434,6 +447,7 @@ $code.=<<___;
 
 	movdqa	@Xi[0],(%rbx)			# save counters
 	movdqa	0x60($Tbl),$tx			# pbswap_mask
+	movdqa	-0x20($Tbl),$K			# K_00_19
 	dec	$num
 	jnz	.Loop
 
@@ -551,6 +565,7 @@ $code.=<<___ if ($i<14);
 ___
 $code.=<<___ if ($i==14);
 	vpaddd	$K,$e,$e			# e+=K_00_19
+	 prefetcht0	63(@ptr[0])
 	vpslld	\$5,$a,$t2
 	vpandn	$d,$b,$t1
 	vpand	$c,$b,$t0
@@ -559,14 +574,17 @@ $code.=<<___ if ($i==14);
 	vpaddd	@Xi[0],$e,$e			# e+=X[i]
 	 $vpack		$t3,@Xi[1],@Xi[1]
 	vpsrld	\$27,$a,$t3
+	 prefetcht0	63(@ptr[1])
 	vpxor	$t1,$t0,$t0			# Ch(b,c,d)
 
 	vpslld	\$30,$b,$t1
 	vpor	$t3,$t2,$t2			# rol(a,5)
+	 prefetcht0	63(@ptr[2])
 	vpaddd	$t0,$e,$e			# e+=Ch(b,c,d)
 
 	vpsrld	\$2,$b,$b
 	vpaddd	$t2,$e,$e			# e+=rol(a,5)
+	 prefetcht0	63(@ptr[3])
 	 vpshufb	$tx,@Xi[1],@Xi[1]
 	vpor	$t1,$b,$b			# b=rol(b,30)
 ___
@@ -580,6 +598,7 @@ $code.=<<___ if ($i>=15);			# apply Xupdate
 	vpaddd	$K,$e,$e			# e+=K_00_19
 	vpslld	\$5,$a,$t2
 	vpandn	$d,$b,$t1
+	 `"prefetcht0	63(@ptr[4])"		if ($i==15 && $REG_SZ==32)`
 	vpand	$c,$b,$t0
 
 	vmovdqa	@Xi[0],`&Xi_off($i)`
@@ -588,14 +607,17 @@ $code.=<<___ if ($i>=15);			# apply Xupdate
 	vpsrld	\$27,$a,$t3
 	vpxor	$t1,$t0,$t0			# Ch(b,c,d)
 	 vpxor	@Xi[3],@Xi[1],@Xi[1]
+	 `"prefetcht0	63(@ptr[5])"		if ($i==15 && $REG_SZ==32)`
 
 	vpslld	\$30,$b,$t1
 	vpor	$t3,$t2,$t2			# rol(a,5)
 	vpaddd	$t0,$e,$e			# e+=Ch(b,c,d)
+	 `"prefetcht0	63(@ptr[6])"		if ($i==15 && $REG_SZ==32)`
 	 vpsrld	\$31,@Xi[1],$tx
 	 vpaddd	@Xi[1],@Xi[1],@Xi[1]
 
 	vpsrld	\$2,$b,$b
+	 `"prefetcht0	63(@ptr[7])"		if ($i==15 && $REG_SZ==32)`
 	vpaddd	$t2,$e,$e			# e+=rol(a,5)
 	 vpor	$tx,@Xi[1],@Xi[1]		# rol	\$1,@Xi[1]
 	vpor	$t1,$b,$b			# b=rol(b,30)

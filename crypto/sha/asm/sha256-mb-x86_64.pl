@@ -15,7 +15,7 @@
 #		this	+aesni(i)	sha256	aesni-sha256	gain(iv)
 # -------------------------------------------------------------------
 # Westmere(ii)	23.3/n	+1.28=7.11(n=4)	12.3	+3.75=16.1	+126%
-# Atom(ii)	39.1/n	+3.93=13.7(n=4)	20.8	+5.69=26.5	+93%
+# Atom(ii)	?39.1/n	+3.93=13.7(n=4)	20.8	+5.69=26.5	+93%
 # Sandy Bridge	(20.5	+5.15=25.7)/n	11.6	13.0		+103%
 # Ivy Bridge	(20.4	+5.14=25.5)/n	10.3	11.6		+82%
 # Haswell(iii)	(21.0	+5.00=26.0)/n	7.80	8.79		+170%
@@ -27,8 +27,9 @@
 #	AES-NI-SHA256 stitch for these processors;
 # (iii)	"this" is for n=8, when we gather twice as much data, result
 #	for n=4 is 20.3+4.44=24.7;
-# (iv)	improvement coefficients in real-life application are somewhat
-#	lower and range from 75% to 130% (on Haswell);
+# (iv)	presented improvement coefficients are asymptotic limits and
+#	in real-life application are somewhat lower, e.g. for 2KB 
+#	fragments they range from 75% to 13% (on Haswell);
 
 $flavour = shift;
 $output  = shift;
@@ -135,6 +136,7 @@ $code.=<<___;
 
 	psrld	\$25-11,$t2
 	 movdqa	$e,$t1
+	 `"prefetch	63(@ptr[0])"		if ($i==15)`
 	pxor	$t3,$sigma
 	 movdqa	$e,$axb				# borrow $axb
 	pslld	\$26-21,$t3
@@ -142,6 +144,7 @@ $code.=<<___;
 	 pand	$f,$axb
 	pxor	$t2,$sigma
 
+	 `"prefetch	63(@ptr[1])"		if ($i==15)`
 	movdqa	$a,$t2
 	pxor	$t3,$sigma			# Sigma1(e)
 	movdqa	$a,$t3
@@ -153,6 +156,7 @@ $code.=<<___;
 	pslld	\$10,$t3
 	 pxor	$a,$axb				# a^b, b^c in next round
 
+	 `"prefetch	63(@ptr[2])"		if ($i==15)`
 	psrld	\$13,$sigma
 	pxor	$t3,$t2
 	 paddd	$t1,$Xi				# Xi+=Ch(e,f,g)
@@ -160,6 +164,7 @@ $code.=<<___;
 	 pand	$axb,$bxc
 	pxor	$sigma,$t2
 
+	 `"prefetch	63(@ptr[3])"		if ($i==15)`
 	psrld	\$22-13,$sigma
 	pxor	$t3,$t2
 	 movdqa	$b,$h
@@ -465,30 +470,38 @@ $code.=<<___;
 
 	vpsrld	\$25,$e,$t2
 	vpxor	$t3,$sigma,$sigma
+	 `"prefetch	63(@ptr[0])"		if ($i==15)`
 	vpslld	\$7,$e,$t3
 	 vpandn	$g,$e,$t1
 	 vpand	$f,$e,$axb			# borrow $axb
+	 `"prefetch	63(@ptr[1])"		if ($i==15)`
 	vpxor	$t2,$sigma,$sigma
 
 	vpsrld	\$2,$a,$h			# borrow $h
 	vpxor	$t3,$sigma,$sigma		# Sigma1(e)
+	 `"prefetch	63(@ptr[2])"		if ($i==15)`
 	vpslld	\$30,$a,$t2
 	 vpxor	$axb,$t1,$t1			# Ch(e,f,g)
 	 vpxor	$a,$b,$axb			# a^b, b^c in next round
+	 `"prefetch	63(@ptr[3])"		if ($i==15)`
 	vpxor	$t2,$h,$h
 	vpaddd	$sigma,$Xi,$Xi			# Xi+=Sigma1(e)
 
 	vpsrld	\$13,$a,$t2
+	 `"prefetch	63(@ptr[4])"		if ($i==15 && $REG_SZ==32)`
 	vpslld	\$19,$a,$t3
 	 vpaddd	$t1,$Xi,$Xi			# Xi+=Ch(e,f,g)
 	 vpand	$axb,$bxc,$bxc
+	 `"prefetch	63(@ptr[5])"		if ($i==15 && $REG_SZ==32)`
 	vpxor	$t2,$h,$sigma
 
 	vpsrld	\$22,$a,$t2
 	vpxor	$t3,$sigma,$sigma
+	 `"prefetch	63(@ptr[6])"		if ($i==15 && $REG_SZ==32)`
 	vpslld	\$10,$a,$t3
 	 vpxor	$bxc,$b,$h			# h=Maj(a,b,c)=Ch(a^b,c,b)
 	 vpaddd	$Xi,$d,$d			# d+=Xi
+	 `"prefetch	63(@ptr[7])"		if ($i==15 && $REG_SZ==32)`
 	vpxor	$t2,$sigma,$sigma
 	vpxor	$t3,$sigma,$sigma		# Sigma0(a)
 

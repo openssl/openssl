@@ -15,8 +15,8 @@
 #			asymptotic	measured
 #			---------------------------
 # Westmere		5.00/4=1.25	5.13/4=1.28
-# Atom			15.0/4=3.75	15.7/4=3.93
-# Sandy Bridge		5.06/4=1.27	5.15/4=1.29
+# Atom			15.0/4=3.75	?15.7/4=3.93
+# Sandy Bridge		5.06/4=1.27	5.18/4=1.29
 # Ivy Bridge		5.06/4=1.27	5.14/4=1.29
 # Haswell		4.44/4=1.11	4.44/4=1.11
 # Bulldozer		5.75/4=1.44	5.76/4=1.44
@@ -27,8 +27,8 @@
 #
 #			asymptotic	measured
 #			---------------------------
-# Sandy Bridge		5.06/8=0.64	7.05/8=0.88(*)
-# Ivy Bridge		5.06/8=0.64	7.02/8=0.88(*)
+# Sandy Bridge		5.06/8=0.64	7.10/8=0.89(*)
+# Ivy Bridge		5.06/8=0.64	7.14/8=0.89(*)
 # Haswell		5.00/8=0.63	5.00/8=0.63
 # Bulldozer		5.75/8=0.72	5.77/8=0.72
 #
@@ -188,7 +188,11 @@ $code.=<<___;
 	sub	$offset,$sink
 
 	aesenc		$rndkey1,@out[0]
+	prefetcht0	31(@inptr[0],$offset)	# prefetch input
+	prefetcht0	31(@inptr[1],$offset)
 	aesenc		$rndkey1,@out[1]
+	prefetcht0	31(@inptr[2],$offset)
+	prefetcht0	31(@inptr[2],$offset)
 	aesenc		$rndkey1,@out[2]
 	aesenc		$rndkey1,@out[3]
 	movups		0x30-0x78($key),$rndkey1
@@ -199,8 +203,8 @@ $code.=<<___;
 	 cmp		`32+4*$i`(%rsp),$one
 	aesenc		$rndkey,@out[0]
 	aesenc		$rndkey,@out[1]
-	 cmovge		$sink,@inptr[$i]	# cancel input
 	aesenc		$rndkey,@out[2]
+	 cmovge		$sink,@inptr[$i]	# cancel input
 	 cmovg		$sink,@outptr[$i]	# sink output
 	aesenc		$rndkey,@out[3]
 	movups		`0x40+16*$i-0x78`($key),$rndkey
@@ -209,7 +213,11 @@ ___
 $code.=<<___;
 	 movdqa		$counters,$mask
 	aesenc		$rndkey0,@out[0]
+	prefetcht0	15(@outptr[0],$offset)	# prefetch output
+	prefetcht0	15(@outptr[1],$offset)
 	aesenc		$rndkey0,@out[1]
+	prefetcht0	15(@outptr[2],$offset)
+	prefetcht0	15(@outptr[3],$offset)
 	aesenc		$rndkey0,@out[2]
 	aesenc		$rndkey0,@out[3]
 	movups		0x80-0x78($key),$rndkey0
@@ -260,13 +268,15 @@ $code.=<<___;
 	aesenc		$rndkey0,@out[2]
 	aesenc		$rndkey0,@out[3]
 	movups		0xe0-0x78($key),$rndkey0
+	jmp	.Lenc4x_tail
 
+.align	32
 .Lenc4x_tail:
 	aesenc		$rndkey1,@out[0]
 	aesenc		$rndkey1,@out[1]
 	aesenc		$rndkey1,@out[2]
-	 movdqu		(@inptr[0],$offset),@inp[0]
 	aesenc		$rndkey1,@out[3]
+	 movdqu		(@inptr[0],$offset),@inp[0]
 	movdqu		0x10-0x78($key),$rndkey1
 
 	aesenclast	$rndkey0,@out[0]
@@ -426,7 +436,11 @@ $code.=<<___;
 	sub	$offset,$sink
 
 	aesdec		$rndkey1,@out[0]
+	prefetcht0	31(@inptr[0],$offset)	# prefetch input
+	prefetcht0	31(@inptr[1],$offset)
 	aesdec		$rndkey1,@out[1]
+	prefetcht0	31(@inptr[2],$offset)
+	prefetcht0	31(@inptr[3],$offset)
 	aesdec		$rndkey1,@out[2]
 	aesdec		$rndkey1,@out[3]
 	movups		0x30-0x78($key),$rndkey1
@@ -447,7 +461,11 @@ ___
 $code.=<<___;
 	 movdqa		$counters,$mask
 	aesdec		$rndkey0,@out[0]
+	prefetcht0	15(@outptr[0],$offset)	# prefetch output
+	prefetcht0	15(@outptr[1],$offset)
 	aesdec		$rndkey0,@out[1]
+	prefetcht0	15(@outptr[2],$offset)
+	prefetcht0	15(@outptr[3],$offset)
 	aesdec		$rndkey0,@out[2]
 	aesdec		$rndkey0,@out[3]
 	movups		0x80-0x78($key),$rndkey0
@@ -498,7 +516,9 @@ $code.=<<___;
 	aesdec		$rndkey0,@out[2]
 	aesdec		$rndkey0,@out[3]
 	movups		0xe0-0x78($key),$rndkey0
+	jmp	.Ldec4x_tail
 
+.align	32
 .Ldec4x_tail:
 	aesdec		$rndkey1,@out[0]
 	aesdec		$rndkey1,@out[1]
@@ -512,12 +532,12 @@ $code.=<<___;
 	movdqu		0x20-0x78($key),$rndkey0
 
 	aesdeclast	@inp[0],@out[0]
-	 movdqu		-16(@inptr[0],$offset),@inp[0]	# load next IV
 	aesdeclast	@inp[1],@out[1]
+	 movdqu		-16(@inptr[0],$offset),@inp[0]	# load next IV
 	 movdqu		-16(@inptr[1],$offset),@inp[1]
 	aesdeclast	@inp[2],@out[2]
-	 movdqu		-16(@inptr[2],$offset),@inp[2]
 	aesdeclast	@inp[3],@out[3]
+	 movdqu		-16(@inptr[2],$offset),@inp[2]
 	 movdqu		-16(@inptr[3],$offset),@inp[3]
 
 	movups		@out[0],-16(@outptr[0],$offset)
@@ -682,7 +702,13 @@ $code.=<<___ if ($i);
 ___
 $code.=<<___;
 	vaesenc		$rndkey,@out[1],@out[1]
+	prefetcht0	31(@ptr[$i])			# prefetch input
 	vaesenc		$rndkey,@out[2],@out[2]
+___
+$code.=<<___ if ($i>1);
+	prefetcht0	15(@ptr[$i-2])			# prefetch output
+___
+$code.=<<___;
 	vaesenc		$rndkey,@out[3],@out[3]
 	 lea		(@ptr[$i],$offset),$offset
 	 cmovge		%rsp,@ptr[$i]			# cancel input
@@ -703,6 +729,8 @@ ___
 }
 $code.=<<___;
 	 vmovdqu	32(%rsp),$counters
+	prefetcht0	15(@ptr[$i-2])			# prefetch output
+	prefetcht0	15(@ptr[$i-1])
 	cmp	\$11,$rounds
 	jb	.Lenc8x_tail
 
@@ -958,7 +986,13 @@ $code.=<<___ if ($i);
 ___
 $code.=<<___;
 	vaesdec		$rndkey,@out[1],@out[1]
+	prefetcht0	31(@ptr[$i])			# prefetch input
 	vaesdec		$rndkey,@out[2],@out[2]
+___
+$code.=<<___ if ($i>1);
+	prefetcht0	15(@ptr[$i-2])			# prefetch output
+___
+$code.=<<___;
 	vaesdec		$rndkey,@out[3],@out[3]
 	 lea		(@ptr[$i],$offset),$offset
 	 cmovge		%rsp,@ptr[$i]			# cancel input
@@ -979,6 +1013,8 @@ ___
 }
 $code.=<<___;
 	 vmovdqu	32(%rsp),$counters
+	prefetcht0	15(@ptr[$i-2])			# prefetch output
+	prefetcht0	15(@ptr[$i-1])
 	cmp	\$11,$rounds
 	jb	.Ldec8x_tail
 
