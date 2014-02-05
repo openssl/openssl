@@ -204,6 +204,9 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA256 *key,
 	unsigned int	frag, last, packlen, i, x4=4*n4x;
 	size_t		ret = 0;
 	u8		*IVs;
+#if defined(BSWAP8)
+	u64		seqnum;
+#endif
 
 	ctx = (SHA256_MB_CTX *)(storage+32-((size_t)storage%32));	/* align */
 
@@ -217,6 +220,10 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA256 *key,
 	hash_d[0].ptr = inp;
 	for (i=1;i<x4;i++)	hash_d[i].ptr = hash_d[i-1].ptr+frag;
 
+#if defined(BSWAP8)
+	memcpy(blocks[0].c,key->md.data,8);
+	seqnum = BSWAP8(blocks[0].q[0]);
+#endif
 	for (i=0;i<x4;i++) {
 		unsigned int len = (i==(x4-1)?last:frag);
 
@@ -231,7 +238,7 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA256 *key,
 
 		/* fix seqnum */
 #if defined(BSWAP8)
-		blocks[i].q[0] = BSWAP8(BSWAP8(*(u64*)key->md.data)+i);
+		blocks[i].q[0] = BSWAP8(seqnum+i);
 #else
 		blocks[i].c[7] += ((u8*)key->md.data)[7]+i;
 		if (blocks[i].c[7] < i) {
