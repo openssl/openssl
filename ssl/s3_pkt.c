@@ -635,7 +635,11 @@ int ssl3_do_compress(SSL *ssl)
 int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 	{
 	const unsigned char *buf=buf_;
-	unsigned int tot,n,nw,max_send_fragment;
+	int tot;
+	unsigned int n,nw;
+#if !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
+	unsigned int max_send_fragment;
+#endif
 	SSL3_BUFFER *wb=&(s->s3->wbuf);
 	int i;
 
