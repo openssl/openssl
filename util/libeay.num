@@ -4399,3 +4399,4 @@ ECDSA_METHOD_free                       4759	EXIST::FUNCTION:ECDSA
 X509_VERIFY_PARAM_get_count             4760	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get0_name             4761	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get0                  4762	EXIST::FUNCTION:
+X509V3_EXT_free                         4763	EXIST::FUNCTION:
