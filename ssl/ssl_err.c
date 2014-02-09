@@ -1,6 +1,6 @@
 /* ssl/ssl_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2013 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2014 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -293,14 +293,14 @@ static ERR_STRING_DATA SSL_str_functs[]=
 {ERR_FUNC(SSL_F_TLS1_CHECK_SERVERHELLO_TLSEXT),	"TLS1_CHECK_SERVERHELLO_TLSEXT"},
 {ERR_FUNC(SSL_F_TLS1_ENC),	"tls1_enc"},
 {ERR_FUNC(SSL_F_TLS1_EXPORT_KEYING_MATERIAL),	"tls1_export_keying_material"},
-{ERR_FUNC(SSL_F_TLS1_GET_SERVER_SUPPLEMENTAL_DATA),	"tls1_get_server_supplemental_data"},
 {ERR_FUNC(SSL_F_TLS1_GET_CLIENT_SUPPLEMENTAL_DATA),	"tls1_get_client_supplemental_data"},
+{ERR_FUNC(SSL_F_TLS1_GET_SERVER_SUPPLEMENTAL_DATA),	"tls1_get_server_supplemental_data"},
 {ERR_FUNC(SSL_F_TLS1_HEARTBEAT),	"tls1_heartbeat"},
 {ERR_FUNC(SSL_F_TLS1_PREPARE_CLIENTHELLO_TLSEXT),	"TLS1_PREPARE_CLIENTHELLO_TLSEXT"},
 {ERR_FUNC(SSL_F_TLS1_PREPARE_SERVERHELLO_TLSEXT),	"TLS1_PREPARE_SERVERHELLO_TLSEXT"},
 {ERR_FUNC(SSL_F_TLS1_PRF),	"tls1_prf"},
-{ERR_FUNC(SSL_F_TLS1_SEND_SERVER_SUPPLEMENTAL_DATA),	"tls1_send_server_supplemental_data"},
 {ERR_FUNC(SSL_F_TLS1_SEND_CLIENT_SUPPLEMENTAL_DATA),	"tls1_send_client_supplemental_data"},
+{ERR_FUNC(SSL_F_TLS1_SEND_SERVER_SUPPLEMENTAL_DATA),	"tls1_send_server_supplemental_data"},
 {ERR_FUNC(SSL_F_TLS1_SETUP_KEY_BLOCK),	"tls1_setup_key_block"},
 {ERR_FUNC(SSL_F_WRITE_PENDING),	"WRITE_PENDING"},
 {0,NULL}
