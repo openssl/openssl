@@ -44,6 +44,8 @@ B<openssl> B<s_client>
 [B<-sess_in filename>]
 [B<-rand file(s)>]
 [B<-serverinfo types>]
+[B<-auth>]
+[B<-auth_require_reneg>]
 
 =head1 DESCRIPTION
 
@@ -244,6 +246,15 @@ a list of comma-separated TLS Extension Types (numbers between 0 and
 65535).  Each type will be sent as an empty ClientHello TLS Extension.
 The server's response (if any) will be encoded and displayed as a PEM
 file.
+
+=item B<-auth>
+
+send RFC 5878 client and server authorization extensions in the Client Hello as well as
+supplemental data if the server also sent the authorization extensions in the Server Hello.
+
+=item B<-auth_require_reneg>
+
+only send RFC 5878 client and server authorization extensions during renegotiation.
 
 =back
 

@@ -446,6 +446,16 @@ int custom_ext = 0;
 /* This set based on extension callbacks */
 int custom_ext_error = 0;
 
+/* Not IETF assigned supplemental data types */
+#define CUSTOM_SUPP_DATA_TYPE_0 100
+#define CUSTOM_SUPP_DATA_TYPE_1 101
+#define CUSTOM_SUPP_DATA_TYPE_2 102
+
+const char supp_data_0_string[] = "00000";
+
+int suppdata = 0;
+int suppdata_error = 0;
+
 static int serverinfo_cli_cb(SSL* s, unsigned short ext_type,
 			     const unsigned char* in, unsigned short inlen, 
 			     int* al, void* arg)
@@ -479,7 +489,7 @@ static int verify_serverinfo()
 
 static int custom_ext_0_cli_first_cb(SSL *s, unsigned short ext_type,
 				     const unsigned char **out,
-				     unsigned short *outlen, void *arg)
+				     unsigned short *outlen, int *al, void *arg)
 	{
 	if (ext_type != CUSTOM_EXT_TYPE_0)
 		custom_ext_error = 1;
@@ -491,13 +501,12 @@ static int custom_ext_0_cli_second_cb(SSL *s, unsigned short ext_type,
 				      unsigned short inlen, int *al,
 				      void *arg)
 	{
-	custom_ext_error = 1; /* Shouldn't be called */
-	return 0;
+	return 1;
 	}
 
 static int custom_ext_1_cli_first_cb(SSL *s, unsigned short ext_type,
 				     const unsigned char **out,
-				     unsigned short *outlen, void *arg)
+				     unsigned short *outlen, int *al, void *arg)
 	{
 	if (ext_type != CUSTOM_EXT_TYPE_1)
 		custom_ext_error = 1;
@@ -511,13 +520,12 @@ static int custom_ext_1_cli_second_cb(SSL *s, unsigned short ext_type,
 				      unsigned short inlen, int *al,
 				      void *arg)
 	{
-	custom_ext_error = 1; /* Shouldn't be called */
-	return 0;
+	return 1;
 	}
 
 static int custom_ext_2_cli_first_cb(SSL *s, unsigned short ext_type,
 				     const unsigned char **out,
-				     unsigned short *outlen, void *arg)
+				     unsigned short *outlen, int *al, void *arg)
 	{
 	if (ext_type != CUSTOM_EXT_TYPE_2)
 		custom_ext_error = 1;
@@ -540,7 +548,7 @@ static int custom_ext_2_cli_second_cb(SSL *s, unsigned short ext_type,
 
 static int custom_ext_3_cli_first_cb(SSL *s, unsigned short ext_type,
 				     const unsigned char **out,
-				     unsigned short *outlen, void *arg)
+				     unsigned short *outlen, int *al, void *arg)
 	{
 	if (ext_type != CUSTOM_EXT_TYPE_3)
 		custom_ext_error = 1;
@@ -563,28 +571,27 @@ static int custom_ext_3_cli_second_cb(SSL *s, unsigned short ext_type,
 	return 1;
 	}
 
-
+/* custom_ext_0_cli_first_cb returns -1 - the server won't receive a callback for this extension */
 static int custom_ext_0_srv_first_cb(SSL *s, unsigned short ext_type,
 				     const unsigned char *in,
 				     unsigned short inlen, int *al,
 				     void *arg)
 	{
-	custom_ext_error = 1;
-	return 0; /* Shouldn't be called */
+	return 1;
 	}
 
+/* 'generate' callbacks are always called, even if the 'receive' callback isn't called */
 static int custom_ext_0_srv_second_cb(SSL *s, unsigned short ext_type,
 				      const unsigned char **out,
-				      unsigned short *outlen, void *arg)
+				      unsigned short *outlen, int *al, void *arg)
 	{
-	custom_ext_error = 1;
-	return 0; /* Shouldn't be called */
+        return -1; /* Don't send an extension */
 	}
 
 static int custom_ext_1_srv_first_cb(SSL *s, unsigned short ext_type,
-				     const unsigned char *in,
-				     unsigned short inlen, int *al,
-				     void *arg)
+				const unsigned char *in,
+				unsigned short inlen, int *al,
+				void *arg)
 	{
 	if (ext_type != CUSTOM_EXT_TYPE_1)
 		custom_ext_error = 1;		
@@ -598,7 +605,7 @@ static int custom_ext_1_srv_first_cb(SSL *s, unsigned short ext_type,
 
 static int custom_ext_1_srv_second_cb(SSL *s, unsigned short ext_type,
 				      const unsigned char **out,
-				      unsigned short *outlen, void *arg)
+				      unsigned short *outlen, int *al, void *arg)
 	{
 	return -1; /* Don't send an extension */
 	}
@@ -620,7 +627,7 @@ static int custom_ext_2_srv_first_cb(SSL *s, unsigned short ext_type,
 
 static int custom_ext_2_srv_second_cb(SSL *s, unsigned short ext_type,
 				      const unsigned char **out,
-				      unsigned short *outlen, void *arg)
+				      unsigned short *outlen, int *al, void *arg)
 	{
 	*out = NULL;
 	*outlen = 0;
@@ -644,13 +651,116 @@ static int custom_ext_3_srv_first_cb(SSL *s, unsigned short ext_type,
 
 static int custom_ext_3_srv_second_cb(SSL *s, unsigned short ext_type,
 				      const unsigned char **out,
-				      unsigned short *outlen, void *arg)
+				      unsigned short *outlen, int *al, void *arg)
 	{
 	*out = (const unsigned char*)custom_ext_srv_string;
 	*outlen = strlen(custom_ext_srv_string);
 	return 1; /* Send "defg" */
 	}
 
+static int supp_data_0_srv_first_cb(SSL *s, unsigned short supp_data_type,
+				    const unsigned char **out,
+				    unsigned short *outlen, int *al, void *arg)
+	{
+	*out = (const unsigned char*)supp_data_0_string;
+	*outlen = strlen(supp_data_0_string);
+	if (arg != s)
+		suppdata_error = 1;
+	return 1;
+	}
+
+static int supp_data_0_srv_second_cb(SSL *s, unsigned short supp_data_type,
+				     const unsigned char *in,
+				     unsigned short inlen, int *al,
+				     void *arg)
+	{
+	if (supp_data_type != CUSTOM_SUPP_DATA_TYPE_0)
+		suppdata_error = 1;
+	if (inlen != strlen(supp_data_0_string))
+		suppdata_error = 1;
+	if (memcmp(in, supp_data_0_string, inlen) != 0)
+		suppdata_error = 1;
+	if (arg != s)
+		suppdata_error = 1;
+	return 1;
+	}
+
+static int supp_data_1_srv_first_cb(SSL *s, unsigned short supp_data_type,
+				    const unsigned char **out,
+				    unsigned short *outlen, int *al, void *arg)
+	{
+	return -1;
+	}
+
+static int supp_data_1_srv_second_cb(SSL *s, unsigned short supp_data_type,
+				     const unsigned char *in,
+				     unsigned short inlen, int *al,
+				     void *arg)
+	{
+	suppdata_error = 1;
+	return 1;
+	}
+
+static int supp_data_2_srv_second_cb(SSL *s, unsigned short supp_data_type,
+				const unsigned char *in,
+				unsigned short inlen, int *al,
+				void *arg)
+	{
+	suppdata_error = 1;
+	return 1;
+	}
+
+static int supp_data_0_cli_first_cb(SSL *s, unsigned short supp_data_type,
+				    const unsigned char *in,
+				    unsigned short inlen, int *al,
+				    void *arg)
+	{
+	if (supp_data_type != CUSTOM_SUPP_DATA_TYPE_0)
+		suppdata_error = 1;
+	if (inlen != strlen(supp_data_0_string))
+		suppdata_error = 1;
+	if (memcmp(in, supp_data_0_string, inlen) != 0)
+		suppdata_error = 1;
+	if (arg != s)
+		suppdata_error = 1;
+	return 1;
+	}
+
+static int supp_data_0_cli_second_cb(SSL *s, unsigned short supp_data_type,
+				     const unsigned char **out,
+				     unsigned short *outlen, int *al, void *arg)
+	{
+	*out = (const unsigned char*)supp_data_0_string;
+	*outlen = strlen(supp_data_0_string);
+	if (arg != s)
+		suppdata_error = 1;
+	return 1;
+	}
+
+static int supp_data_1_cli_first_cb(SSL *s, unsigned short supp_data_type,
+				    const unsigned char *in,
+				    unsigned short inlen, int *al,
+				    void *arg)
+	{
+	suppdata_error = 1;
+	return 1;
+	}
+
+static int supp_data_1_cli_second_cb(SSL *s, unsigned short supp_data_type,
+				     const unsigned char **out,
+				     unsigned short *outlen, int *al, void *arg)
+	{
+	return -1;
+	}
+
+static int supp_data_2_cli_first_cb(SSL *s, unsigned short supp_data_type,
+				    const unsigned char *in,
+				    unsigned short inlen, int *al,
+				    void *arg)
+	{
+	suppdata_error = 1;
+	return 1;
+	}
 
 static char *cipher=NULL;
 static int verbose=0;
@@ -726,11 +836,6 @@ static void sv_usage(void)
 	               "                 (default is sect163r2).\n");
 #endif
 	fprintf(stderr," -test_cipherlist - verifies the order of the ssl cipher lists\n");
-#ifndef OPENSSL_NO_TLSEXT
-	fprintf(stderr," -server_authz arg - binary authz file for certificate\n");
-	fprintf(stderr," -c_support_proof  - indicate client support for server_authz audit proofs\n");
-	fprintf(stderr," -c_require_proof  - fail if no audit proof is sent\n");
-#endif
 	fprintf(stderr," -serverinfo_file file - have server use this file\n");
 	fprintf(stderr," -serverinfo_sct  - have client offer and expect SCT\n");
 	fprintf(stderr," -serverinfo_tack - have client offer and expect TACK\n");
@@ -738,6 +843,7 @@ static void sv_usage(void)
 	fprintf(stderr," -alpn_client <string> - have client side offer ALPN\n");
 	fprintf(stderr," -alpn_server <string> - have server side offer ALPN\n");
 	fprintf(stderr," -alpn_expected <string> - the ALPN protocol that should be negotiated\n");
+	fprintf(stderr, "-suppdata - exercise supplemental data callbacks\n");
 	}
 
 static void print_details(SSL *c_ssl, const char *prefix)
@@ -867,56 +973,6 @@ int opaque_prf_input_cb(SSL *ssl, void *peerinput, size_t len, void *arg_)
 	}
 #endif
 
-#ifndef OPENSSL_NO_TLSEXT
-struct audit_proof_cb_arg_st
-	{
-	unsigned char *expected_proof;
-	size_t expected_proof_length;
-	int require;
-	};
-
-struct audit_proof_cb_arg_st c_expected = { NULL, 0, 0 };
-
-static int audit_proof_cb(SSL *s, void *arg)
-	{
-	const unsigned char *proof;
-	size_t proof_len;
-	SSL_SESSION *sess = SSL_get_session(s);
-	struct audit_proof_cb_arg_st *cb_arg = (struct audit_proof_cb_arg_st*)arg;
-
-	proof = SSL_SESSION_get_tlsext_authz_server_audit_proof(sess,
-		&proof_len);
-	if (proof != NULL)
-		{
-		if (proof_len == cb_arg->expected_proof_length &&
-			cb_arg->expected_proof != NULL &&
-			memcmp(proof, cb_arg->expected_proof, proof_len) == 0)
-			{
-			BIO_printf(bio_stdout, "Audit proof OK (%lu bytes).\n",
-				   (long)proof_len);
-			return 1;
-			}
-		else
-			{
-			BIO_printf(bio_stdout, "Audit proof mismatch.\n");
-			/* Cause handshake failure. */
-			return 0;
-			}
-		}
-
-	else /* proof == NULL */
-		{
-		BIO_printf(bio_stdout, "No audit proof found.\n");
-		if (cb_arg->require)
-			{
-			/* Cause handshake failure. */
-			return 0;
-			}
-		return 1;
-		}
-	}
-#endif
-
 int main(int argc, char *argv[])
 	{
 	char *CApath=NULL,*CAfile=NULL;
@@ -967,11 +1023,6 @@ int main(int argc, char *argv[])
 	int test_cipherlist = 0;
 #ifdef OPENSSL_FIPS
 	int fips_mode=0;
-#endif
-#ifndef OPENSSL_NO_TLSEXT
-	char *s_authz_file = NULL;
-	int c_support_proof = 0;
-	int c_require_proof = 0;
 #endif
 
 	verbose = 0;
@@ -1191,24 +1242,6 @@ int main(int argc, char *argv[])
 			{
 			test_cipherlist = 1;
 			}
-#ifndef OPENSSL_NO_TLSEXT
-		else if(strcmp(*argv,"-server_authz") == 0)
-			{
-			if (--argc < 1) goto bad;
-			s_authz_file = *(++argv);
-			tls1 = 1;
-			}
-		else if (strcmp(*argv,"-c_support_proof") == 0)
-			{
-			c_support_proof = 1;
-			tls1 = 1;
-			}
-		else if (strcmp(*argv,"-c_require_proof") == 0)
-			{
-			c_require_proof = 1;
-			tls1 = 1;
-			}
-#endif
 		else if (strcmp(*argv,"-serverinfo_sct") == 0)
 			{
 			serverinfo_sct = 1;
@@ -1241,6 +1274,10 @@ int main(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			alpn_expected = *(++argv);
 			}
+		else if (strcmp(*argv,"-suppdata") == 0)
+			{
+			suppdata = 1;
+			}
 		else
 			{
 			fprintf(stderr,"unknown option %s\n",*argv);
@@ -1272,15 +1309,6 @@ bad:
 			"the test anyway (and\n-d to see what happens), "
 			"or add one of -ssl2, -ssl3, -tls1, -reuse\n"
 			"to avoid protocol mismatch.\n");
-		EXIT(1);
-		}
-	if (c_require_proof && s_authz_file == NULL && !force)
-		{
-		fprintf(stderr, "This case cannot work. -c_require_proof "
-			"requires an audit proof, but none was supplied. "
-			"Use -f to perform the test anyway (and\n-d to see "
-			"what happens), or use -server_authz to supply an "
-			"audit proof.\n");
 		EXIT(1);
 		}
 
@@ -1554,34 +1582,6 @@ bad:
 		SSL_CTX_set_srp_username_callback(s_ctx, ssl_srp_server_param_cb);
 		}
 #endif
-#ifndef OPENSSL_NO_TLSEXT
-	if (s_authz_file != NULL)
-		{
-		if(!SSL_CTX_use_authz_file(s_ctx, s_authz_file))
-			{
-			BIO_printf(bio_err, "Unable to set authz data\n");
-			goto end;
-			}
-		}
-	if (c_support_proof || c_require_proof)
-		{
-		size_t proof_length;
-		const unsigned char *proof = SSL_CTX_get_authz_data(s_ctx,
-			TLSEXT_AUTHZDATAFORMAT_audit_proof, &proof_length);
-		if (proof != NULL)
-			{
-			/* Store a local copy. */
-			c_expected.expected_proof = OPENSSL_malloc(proof_length);
-			c_expected.expected_proof_length = proof_length;
-			memcpy(c_expected.expected_proof, proof, proof_length);
-			}
-		c_expected.require = c_require_proof;
-		SSL_CTX_set_tlsext_authz_server_audit_proof_cb(c_ctx,
-			audit_proof_cb);
-		SSL_CTX_set_tlsext_authz_server_audit_proof_cb_arg(c_ctx,
-			&c_expected);
-		}
-#endif
 
 	if (serverinfo_sct)
 		SSL_CTX_set_custom_cli_ext(c_ctx, SCT_EXT_TYPE, NULL, 
@@ -1647,6 +1647,40 @@ bad:
 	c_ssl=SSL_new(c_ctx);
 	s_ssl=SSL_new(s_ctx);
 
+	if (suppdata)
+		{
+		/* TEST CASES */
+		/* client and server both send and receive, verify
+		 * additional arg passed back */
+		SSL_CTX_set_srv_supp_data(s_ctx, CUSTOM_SUPP_DATA_TYPE_0,
+					  supp_data_0_srv_first_cb,
+					  supp_data_0_srv_second_cb, s_ssl);
+		SSL_CTX_set_cli_supp_data(c_ctx, CUSTOM_SUPP_DATA_TYPE_0,
+					  supp_data_0_cli_first_cb,
+					  supp_data_0_cli_second_cb, c_ssl);
+
+		/* -1 response from sending server/client doesn't
+                 * receive, -1 response from sending client/server
+                 * doesn't receive */
+		SSL_CTX_set_srv_supp_data(s_ctx, CUSTOM_SUPP_DATA_TYPE_1,
+					  supp_data_1_srv_first_cb,
+					  supp_data_1_srv_second_cb, NULL);
+		SSL_CTX_set_cli_supp_data(c_ctx, CUSTOM_SUPP_DATA_TYPE_1,
+					  supp_data_1_cli_first_cb,
+					  supp_data_1_cli_second_cb, NULL);
+
+		/* null sending server/client doesn't receive, null
+		   sending client/server doesn't receive */
+		SSL_CTX_set_srv_supp_data(s_ctx, CUSTOM_SUPP_DATA_TYPE_2,
+					  /*supp_data_2_srv_first_cb*/NULL,
+					  supp_data_2_srv_second_cb, NULL);
+		SSL_CTX_set_cli_supp_data(c_ctx, CUSTOM_SUPP_DATA_TYPE_2,
+					  supp_data_2_cli_first_cb,
+					  /*supp_data_2_cli_second_cb*/NULL,
+					  NULL);
+
+		/* alerts set to non-zero and zero return values not tested */
+		}
 #ifndef OPENSSL_NO_KRB5
 	if (c_ssl  &&  c_ssl->kssl_ctx)
                 {
@@ -1717,10 +1751,6 @@ end:
 #endif
 #ifndef OPENSSL_NO_ENGINE
 	ENGINE_cleanup();
-#endif
-#ifndef OPENSSL_NO_TLSEXT
-	if (c_expected.expected_proof != NULL)
-		OPENSSL_free(c_expected.expected_proof);
 #endif
 	CRYPTO_cleanup_all_ex_data();
 	ERR_free_strings();
@@ -2411,7 +2441,11 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 
 	if (verbose)
 		print_details(c_ssl, "DONE: ");
-
+	if (suppdata_error < 0)
+		{
+		ret = 1;
+		goto err;
+		}
 	if (verify_serverinfo() < 0)
 		{
 		ret = 1;
