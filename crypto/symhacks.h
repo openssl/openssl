@@ -207,12 +207,12 @@
 
 #undef tls1_send_server_supplemental_data
 #define tls1_send_server_supplemental_data	tls1_send_server_suppl_data
+#undef tls1_send_client_supplemental_data
+#define tls1_send_client_supplemental_data	tls1_send_client_suppl_data
 #undef tls1_get_server_supplemental_data
 #define tls1_get_server_supplemental_data	tls1_get_server_suppl_data
-
-#undef SSL_SESSION_get_tlsext_authz_server_audit_proof
-#define SSL_SESSION_get_tlsext_authz_server_audit_proof	\
-						S_SES_get_tlsx_auz_srvr_aud_prf
+#undef tls1_get_client_supplemental_data
+#define tls1_get_client_supplemental_data	tls1_get_client_suppl_data
 
 #undef ssl3_cbc_record_digest_supported
 #define ssl3_cbc_record_digest_supported        ssl3_cbc_record_digest_support

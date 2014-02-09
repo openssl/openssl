@@ -505,14 +505,6 @@ typedef struct cert_pkey_st
 	/* Chain for this certificate */
 	STACK_OF(X509) *chain;
 #ifndef OPENSSL_NO_TLSEXT
-	/* authz/authz_length contain authz data for this certificate. The data
-	 * is in wire format, specifically it's a series of records like:
-	 *   uint8_t authz_type;  // (RFC 5878, AuthzDataFormat)
-	 *   uint16_t length;
-	 *   uint8_t data[length]; */
-	unsigned char *authz;
-	size_t authz_length;
-
 	/* serverinfo data for this certificate.  The data is in TLS Extension
 	 * wire format, specifically it's a series of records like:
 	 *   uint16_t extension_type; // (RFC 5246, 7.4.1.4, Extension)
@@ -1014,7 +1006,6 @@ int ssl_undefined_void_function(void);
 int ssl_undefined_const_function(const SSL *s);
 CERT_PKEY *ssl_get_server_send_pkey(const SSL *s);
 #ifndef OPENSSL_NO_TLSEXT
-unsigned char *ssl_get_authz_data(SSL *s, size_t *authz_length);
 int ssl_get_server_cert_serverinfo(SSL *s, const unsigned char **serverinfo,
 				   size_t *serverinfo_length);
 #endif
@@ -1272,8 +1263,8 @@ int tls1_shared_list(SSL *s,
 			const unsigned char *l1, size_t l1len,
 			const unsigned char *l2, size_t l2len,
 			int nmatch);
-unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit); 
-unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit); 
+unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit, int *al);
+unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit, int *al);
 int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **data, unsigned char *d, int n);
 int ssl_check_clienthello_tlsext_late(SSL *s);
 int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **data, unsigned char *d, int n);
@@ -1281,8 +1272,10 @@ int ssl_prepare_clienthello_tlsext(SSL *s);
 int ssl_prepare_serverhello_tlsext(SSL *s);
 
 /* server only */
-int tls1_send_server_supplemental_data(SSL *s);
+int tls1_send_server_supplemental_data(SSL *s, int *skip);
+int tls1_get_client_supplemental_data(SSL *s);
 /* client only */
+int tls1_send_client_supplemental_data(SSL *s, int *skip);
 int tls1_get_server_supplemental_data(SSL *s);
 
 #ifndef OPENSSL_NO_HEARTBEATS
