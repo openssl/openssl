@@ -520,7 +520,7 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -auth               - send and receive RFC 5878 TLS auth extensions and supplemental data\n");
 	BIO_printf(bio_err," -auth_require_reneg - Do not send TLS auth extensions until renegotiation\n");
 #endif
-    BIO_printf(bio_err," -no_resumption_on_reneg - set SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION flag\n");
+	BIO_printf(bio_err," -no_resumption_on_reneg - set SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION flag\n");
 	BIO_printf(bio_err," -crl_check    - check the peer certificate has not been revoked by its CA.\n" \
 	                   "                 The CRL(s) are appended to the certificate file\n");
 	BIO_printf(bio_err," -crl_check_all - check the peer certificate has not been revoked by its CA\n" \
@@ -2681,7 +2681,7 @@ static int init_ssl_connection(SSL *con)
 	/*handshake is complete - free the generated supp data allocated in the callback */
 	if (generated_supp_data)
 		{
-        OPENSSL_free(generated_supp_data);
+		OPENSSL_free(generated_supp_data);
 		generated_supp_data = NULL;
 		}
 
