@@ -258,6 +258,8 @@ int MAIN(int argc, char **argv)
 				flags |= CMS_DEBUG_DECRYPT;
 		else if (!strcmp (*args, "-text")) 
 				flags |= CMS_TEXT;
+		else if (!strcmp (*args, "-asciicrlf")) 
+				flags |= CMS_ASCIICRLF;
 		else if (!strcmp (*args, "-nointern")) 
 				flags |= CMS_NOINTERN;
 		else if (!strcmp (*args, "-noverify") 

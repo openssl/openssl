@@ -43,6 +43,7 @@ B<openssl> B<cms>
 [B<-noattr>]
 [B<-nosmimecap>]
 [B<-binary>]
+[B<-asciicrlf>]
 [B<-nodetach>]
 [B<-certfile file>]
 [B<-certsout file>]
@@ -290,6 +291,15 @@ normally the input message is converted to "canonical" format which is
 effectively using CR and LF as end of line: as required by the S/MIME
 specification. When this option is present no translation occurs. This
 is useful when handling binary data which may not be in MIME format.
+
+=item B<-asciicrlf>
+
+when signing use ASCII CRLF format canonicalisation. This strips trailing
+whitespace from all lines, deletes trailing blank lines at EOF and sets
+the encapsulated content type. This option is normally used with detached
+content and an output signature format of DER. This option is not normally
+needed when verifying as it is enabled automatically if the encapsulated
+content format is detected.
 
 =item B<-nodetach>
 

@@ -117,6 +117,7 @@ DECLARE_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
 #define CMS_USE_KEYID			0x10000
 #define CMS_DEBUG_DECRYPT		0x20000
 #define CMS_KEY_PARAM			0x40000
+#define CMS_ASCIICRLF			0x80000
 
 const ASN1_OBJECT *CMS_get0_type(CMS_ContentInfo *cms);
 

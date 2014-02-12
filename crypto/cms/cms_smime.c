@@ -334,6 +334,12 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
 
 	if (!dcont && !check_content(cms))
 		return 0;
+	if (dcont && !(flags & CMS_BINARY))
+		{
+		const ASN1_OBJECT *coid = CMS_get0_eContentType(cms);
+		if (OBJ_obj2nid(coid) == NID_id_ct_asciiTextWithCRLF)
+			flags |= CMS_ASCIICRLF;
+		}
 
 	/* Attempt to find all signer certificates */
 
@@ -519,6 +525,8 @@ CMS_ContentInfo *CMS_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 	cms = CMS_ContentInfo_new();
 	if (!cms || !CMS_SignedData_init(cms))
 		goto merr;
+	if (flags & CMS_ASCIICRLF && !CMS_set1_eContentType(cms, OBJ_nid2obj(NID_id_ct_asciiTextWithCRLF)))
+		goto err;
 
 	if (pkey && !CMS_add1_signer(cms, signcert, pkey, NULL, flags))
 		{
