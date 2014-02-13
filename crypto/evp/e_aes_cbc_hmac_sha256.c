@@ -201,12 +201,14 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA256 *key,
 		u32	d[32];
 		u8	c[128];	} blocks[8];
 	SHA256_MB_CTX	*ctx;
-	unsigned int	frag, last, packlen, i, x4=4*n4x;
+	unsigned int	frag, last, packlen, i, x4=4*n4x, minblocks, processed=0;
 	size_t		ret = 0;
 	u8		*IVs;
 #if defined(BSWAP8)
 	u64		seqnum;
 #endif
+
+	RAND_bytes((IVs=blocks[0].c),16*x4);	/* ask for IVs in bulk */
 
 	ctx = (SHA256_MB_CTX *)(storage+32-((size_t)storage%32));	/* align */
 
@@ -217,8 +219,21 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA256 *key,
 		last -= x4-1;
 	}
 
+	packlen = 5+16+((frag+32+16)&-16);
+
+	/* populate descriptors with pointers and IVs */
 	hash_d[0].ptr = inp;
-	for (i=1;i<x4;i++)	hash_d[i].ptr = hash_d[i-1].ptr+frag;
+	ciph_d[0].inp = inp;
+	ciph_d[0].out = out+5+16;	/* 5+16 is place for header and explicit IV */
+	memcpy(ciph_d[0].out-16,IVs,16);
+	memcpy(ciph_d[0].iv,IVs,16);	IVs += 16;
+
+	for (i=1;i<x4;i++) {
+		ciph_d[i].inp = hash_d[i].ptr = hash_d[i-1].ptr+frag;
+		ciph_d[i].out = ciph_d[i-1].out+packlen;
+		memcpy(ciph_d[i].out-16,IVs,16);
+		memcpy(ciph_d[i].iv,IVs,16);	IVs+=16;
+	}
 
 #if defined(BSWAP8)
 	memcpy(blocks[0].c,key->md.data,8);
@@ -267,6 +282,39 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA256 *key,
 	/* hash 13-byte headers and first 64-13 bytes of inputs */
 	sha256_multi_block(ctx,edges,n4x);
 	/* hash bulk inputs */
+#define	MAXCHUNKSIZE	2048
+#if	MAXCHUNKSIZE%64
+#error	"MAXCHUNKSIZE is not divisible by 64"
+#elif	MAXCHUNKSIZE
+	/* goal is to minimize pressure on L1 cache by moving
+	 * in shorter steps, so that hashed data is still in
+	 * the cache by the time we encrypt it */
+	minblocks = ((frag<=last ? frag : last)-(64-13))/64;
+	if (minblocks>MAXCHUNKSIZE/64) {
+		for (i=0;i<x4;i++) {
+			edges[i].ptr     = hash_d[i].ptr;
+			edges[i].blocks  = MAXCHUNKSIZE/64;
+			ciph_d[i].blocks = MAXCHUNKSIZE/16;
+		}
+		do {
+			sha256_multi_block(ctx,edges,n4x);
+			aesni_multi_cbc_encrypt(ciph_d,&key->ks,n4x);
+
+			for (i=0;i<x4;i++) {
+				edges[i].ptr     = hash_d[i].ptr += MAXCHUNKSIZE;
+				hash_d[i].blocks -= MAXCHUNKSIZE/64;
+				edges[i].blocks  = MAXCHUNKSIZE/64;
+				ciph_d[i].inp    += MAXCHUNKSIZE;
+				ciph_d[i].out    += MAXCHUNKSIZE;
+				ciph_d[i].blocks = MAXCHUNKSIZE/16;
+				memcpy(ciph_d[i].iv,ciph_d[i].out-16,16);
+			}
+			processed += MAXCHUNKSIZE;
+			minblocks -= MAXCHUNKSIZE/64;
+		} while (minblocks>MAXCHUNKSIZE/64);
+	}
+#endif
+#undef	MAXCHUNKSIZE
 	sha256_multi_block(ctx,hash_d,n4x);
 
 	memset(blocks,0,sizeof(blocks));
@@ -275,7 +323,7 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA256 *key,
 					off = hash_d[i].blocks*64;
 		const unsigned char    *ptr = hash_d[i].ptr+off;
 
-		off = len-(64-13)-off;	/* remainder actually */
+		off = (len-processed)-(64-13)-off;	/* remainder actually */
 		memcpy(blocks[i].c,ptr,off);
 		blocks[i].c[off]=0x80;
 		len += 64+13;		/* 64 is HMAC header */
@@ -312,23 +360,14 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA256 *key,
 	/* finalize MACs */
 	sha256_multi_block(ctx,edges,n4x);
 
-	packlen = 5+16+((frag+32+16)&-16);
-
-	out += (packlen<<(1+n4x))-packlen;
-	inp += (frag<<(1+n4x))-frag;
-
-	RAND_bytes((IVs=blocks[0].c),16*x4);	/* ask for IVs in bulk */
-
-	for (i=x4-1;;i--) {
+	for (i=0;i<x4;i++) {
 		unsigned int len = (i==(x4-1)?last:frag), pad, j;
 		unsigned char *out0 = out;
 
-		out += 5+16;		/* place for header and explicit IV */
-		ciph_d[i].inp = out;
-		ciph_d[i].out = out;
+		memcpy(ciph_d[i].out,ciph_d[i].inp,len-processed);
+		ciph_d[i].inp = ciph_d[i].out;
 
-		memmove(out,inp,len);
-		out += len;
+		out += 5+16+len;
 
 		/* write MAC */
 		((u32 *)out)[0] = BSWAP4(ctx->A[i]);
@@ -347,7 +386,7 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA256 *key,
 		for (j=0;j<=pad;j++) *(out++) = pad;
 		len += pad+1;
 
-		ciph_d[i].blocks = len/16;
+		ciph_d[i].blocks = (len-processed)/16;
 		len += 16;	/* account for explicit iv */
 
 		/* arrange header */
@@ -357,17 +396,8 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA256 *key,
 		out0[3] = (u8)(len>>8);
 		out0[4] = (u8)(len);
 
-		/* explicit iv */
-		memcpy(ciph_d[i].iv, IVs, 16);
-		memcpy(&out0[5],     IVs, 16);
-
 		ret += len+5;
-
-		if (i==0) break;
-
-		out = out0-packlen;
-		inp -= frag;
-		IVs += 16;
+		inp += frag;
 	}
 
 	aesni_multi_cbc_encrypt(ciph_d,&key->ks,n4x);
