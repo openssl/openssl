@@ -1021,13 +1021,14 @@ my ($Xhi,$Xi) = @_;
 	&pshufd		($T1,$Xn,0b01001110);	# H*Ii+1
 	&movdqa		($Xhn,$Xn);
 	&pxor		($T1,$Xn);		#
+	&lea		($inp,&DWP(32,$inp));	# i+=2
 
 	&pclmulqdq	($Xn,$Hkey,0x00);	#######
 	&pclmulqdq	($Xhn,$Hkey,0x11);	#######
-	&movups		($Hkey,&QWP(16,$Htbl));	# load H^2
 	&pclmulqdq	($T1,$T3,0x00);		#######
+	&movups		($Hkey,&QWP(16,$Htbl));	# load H^2
+	&nop		();
 
-	&lea		($inp,&DWP(32,$inp));	# i+=2
 	&sub		($len,0x20);
 	&jbe		(&label("even_tail"));
 	&jmp		(&label("mod_loop"));
@@ -1036,22 +1037,23 @@ my ($Xhi,$Xi) = @_;
 	&pshufd		($T2,$Xi,0b01001110);	# H^2*(Ii+Xi)
 	&movdqa		($Xhi,$Xi);
 	&pxor		($T2,$Xi);		#
+	&nop		();
 
 	&pclmulqdq	($Xi,$Hkey,0x00);	#######
 	&pclmulqdq	($Xhi,$Hkey,0x11);	#######
-	&movups		($Hkey,&QWP(0,$Htbl));	# load H
 	&pclmulqdq	($T2,$T3,0x10);		#######
-	&movdqa		($T3,&QWP(0,$const));
+	&movups		($Hkey,&QWP(0,$Htbl));	# load H
 
 	&xorps		($Xi,$Xn);		# (H*Ii+1) + H^2*(Ii+Xi)
+	&movdqa		($T3,&QWP(0,$const));
 	&xorps		($Xhi,$Xhn);
 	 &movdqu	($Xhn,&QWP(0,$inp));	# Ii
 	&pxor		($T1,$Xi);		# aggregated Karatsuba post-processing
 	 &movdqu	($Xn,&QWP(16,$inp));	# Ii+1
 	&pxor		($T1,$Xhi);		#
 
-	&pxor		($T2,$T1);		#
 	 &pshufb	($Xhn,$T3);
+	&pxor		($T2,$T1);		#
 
 	&movdqa		($T1,$T2);		#
 	&psrldq		($T2,8);
@@ -1068,8 +1070,8 @@ my ($Xhi,$Xi) = @_;
 	  &pxor		($T1,$Xi);		#
 	  &psllq	($Xi,1);
 	  &pxor		($Xi,$T1);		#
-	&movups		($T3,&QWP(32,$Htbl));
 	&pclmulqdq	($Xn,$Hkey,0x00);	#######
+	&movups		($T3,&QWP(32,$Htbl));
 	  &psllq	($Xi,57);		#
 	  &movdqa	($T1,$Xi);		#
 	  &pslldq	($Xi,8);
@@ -1080,9 +1082,9 @@ my ($Xhi,$Xi) = @_;
 	  &movdqa	($T2,$Xi);		# 2nd phase
 	  &psrlq	($Xi,1);
 	&pxor		($T1,$Xhn);
+	  &pxor		($Xhi,$T2);		#
 	&pclmulqdq	($Xhn,$Hkey,0x11);	#######
 	&movups		($Hkey,&QWP(16,$Htbl));	# load H^2
-	  &pxor		($Xhi,$T2);		#
 	  &pxor		($T2,$Xi);
 	  &psrlq	($Xi,5);
 	  &pxor		($Xi,$T2);		#
