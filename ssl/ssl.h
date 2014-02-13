@@ -1160,6 +1160,8 @@ struct ssl_ctx_st
 				    void *arg);
 	void *next_proto_select_cb_arg;
 # endif
+	/* SRTP profiles we are willing to do from RFC 5764 */
+	STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;
 
 	/* ALPN information
 	 * (we are in the process of transitioning from NPN to ALPN.) */
@@ -1185,8 +1187,6 @@ struct ssl_ctx_st
 	unsigned char* alpn_client_proto_list;
 	unsigned alpn_client_proto_list_len;
 
-        /* SRTP profiles we are willing to do from RFC 5764 */
-	STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;
 # ifndef OPENSSL_NO_EC
 	/* EC extension values inherited by SSL structure */
 	size_t tlsext_ecpointformatlist_length;
@@ -1635,11 +1635,6 @@ struct ssl_st
 	                                 */
 	unsigned int tlsext_hb_pending; /* Indicates if a HeartbeatRequest is in flight */
 	unsigned int tlsext_hb_seq;     /* HeartbeatRequest sequence number */
-
-	/* For a client, this contains the list of supported protocols in wire
-	 * format. */
-	unsigned char* alpn_client_proto_list;
-	unsigned alpn_client_proto_list_len;
 #else
 #define session_ctx ctx
 #endif /* OPENSSL_NO_TLSEXT */
@@ -1651,6 +1646,12 @@ struct ssl_st
 #ifndef OPENSSL_NO_SRP
 	SRP_CTX srp_ctx; /* ctx for SRP authentication */
 #endif
+#ifndef OPENSSL_NO_TLSEXT
+	/* For a client, this contains the list of supported protocols in wire
+	 * format. */
+	unsigned char* alpn_client_proto_list;
+	unsigned alpn_client_proto_list_len;
+#endif /* OPENSSL_NO_TLSEXT */
 #ifndef OPENSSL_NO_DANE
 	unsigned char *tlsa_record;
 	int tlsa_witness;
