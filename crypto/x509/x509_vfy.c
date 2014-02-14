@@ -481,6 +481,8 @@ static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
 static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
 {
 	int ret;
+	if (x == issuer)
+		return cert_self_signed(x);
 	ret = X509_check_issued(issuer, x);
 	if (ret == X509_V_OK)
 		{
