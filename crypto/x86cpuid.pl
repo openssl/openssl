@@ -367,6 +367,18 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&ret	();
 &function_end_B("OPENSSL_ia32_rdrand");
 
+&function_begin_B("OPENSSL_ia32_rdseed");
+	&mov	("ecx",8);
+&set_label("loop");
+	&rdseed	("eax");
+	&jc	(&label("break"));
+	&loop	(&label("loop"));
+&set_label("break");
+	&cmp	("eax",0);
+	&cmove	("eax","ecx");
+	&ret	();
+&function_end_B("OPENSSL_ia32_rdseed");
+
 &initseg("OPENSSL_cpuid_setup");
 
 &hidden("OPENSSL_cpuid_setup");

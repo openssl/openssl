@@ -778,6 +778,19 @@ my $rdrand = sub {
     }
 };
 
+my $rdseed = sub {
+    if (shift =~ /%[er](\w+)/) {
+      my @opcode=();
+      my $dst=$1;
+	if ($dst !~ /[0-9]+/) { $dst = $regrm{"%e$dst"}; }
+	rex(\@opcode,0,$1,8);
+	push @opcode,0x0f,0xc7,0xf8|($dst&7);
+	@opcode;
+    } else {
+	();
+    }
+};
+
 sub rxb {
  local *opcode=shift;
  my ($dst,$src1,$src2,$rxb)=@_;
