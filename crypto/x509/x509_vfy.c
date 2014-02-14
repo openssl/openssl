@@ -1735,7 +1735,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
 		xs=xi;
 	else
 		{
-		if (ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN && n == 0)
+		if (ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN)
 			{
 			xs = xi;
 			goto check_cert;
