@@ -725,9 +725,10 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 			mb_param.inp = &buf[tot];
 			mb_param.len = nw;
 
-			EVP_CIPHER_CTX_ctrl(s->enc_write_ctx,
-				EVP_CTRL_TLS1_1_MULTIBLOCK_ENCRYPT,
-				sizeof(mb_param),&mb_param);
+			if (EVP_CIPHER_CTX_ctrl(s->enc_write_ctx,
+					EVP_CTRL_TLS1_1_MULTIBLOCK_ENCRYPT,
+					sizeof(mb_param),&mb_param)<=0)
+				return -1;
 
 			s->s3->write_sequence[7] += mb_param.interleave;
 			if (s->s3->write_sequence[7] < mb_param.interleave)

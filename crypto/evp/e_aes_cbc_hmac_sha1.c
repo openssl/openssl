@@ -212,7 +212,8 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA1 *key,
 	u64		seqnum;
 #endif
 
-	RAND_bytes((IVs=blocks[0].c),16*x4);	/* ask for IVs in bulk */
+	if (RAND_bytes((IVs=blocks[0].c),16*x4)<=0)	/* ask for IVs in bulk */
+		return 0;
 
 	ctx = (SHA1_MB_CTX *)(storage+32-((size_t)storage%32));	/* align */
 
