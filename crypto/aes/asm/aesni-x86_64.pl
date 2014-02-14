@@ -158,25 +158,19 @@
 # in CTR mode AES instruction interleave factor was chosen to be 6x.
 
 ######################################################################
-# For reference, AMD Bulldozer spends 5.77 cycles per byte processed
-# with 128-bit key in CBC encrypt and 0.70 cycles in CBC decrypt, 0.70
-# in ECB, 0.71 in CTR, 0.90 in XTS... This means that aes[enc|dec]
-# instruction latency is 9 cycles and that they can be issued every
-# cycle.
-
-######################################################################
-# Haswell spends 4.44 cycles per byte in CBC encrypt, 0.63 in CBC
-# decrypt, CTR and ECB, 0.73 in XTS.
-
-######################################################################
-# Atom Silvermont spends 5.77/4.0 cycles per byte in CBC en-/decrypt,
-# 3.87 in ECB, 4.15 in CTR, 4.12 in XTS. Results for parallelizeable
-# modes [other than XTS] are actually suboptimal, because of penalties
-# incurred by operations on %xmm8-15, which are inevitable with such
-# high instruction interleave factors. This means that performance can
-# be improved by decreasing the interleave factor, but then it would
-# negatively affect other platforms in relatively larger degree.
-# Run-time detection would solve the dilemma...
+# Current large-block performance in cycles per byte processed with
+# 128-bit key (less is better).
+#
+#		CBC en-/decrypt	CTR	XTS	ECB
+# Westmere	3.77/1.25	1.25	1.25	1.26
+# * Bridge	5.07/0.74	0.75	0.90	0.85
+# Haswell	4.44/0.63	0.63	0.73	0.63
+# Atom		5.75/3.54	3.56	4.12	3.87(*)
+# Bulldozer	5.77/0.70	0.72	0.90	0.70
+#
+# (*)	Atom ECB result is suboptimal because of penalties incurred
+#	by operations on %xmm8-15. As ECB is not considered
+#	critical, nothing was done to mitigate the problem.
 
 $PREFIX="aesni";	# if $PREFIX is set to "AES", the script
 			# generates drop-in replacement for
@@ -201,6 +195,7 @@ $movkey = $PREFIX eq "aesni" ? "movups" : "movups";
 		("%rdi","%rsi","%rdx","%rcx");	# Unix order
 
 $code=".text\n";
+$code.=".extern	OPENSSL_ia32cap_P\n";
 
 $rounds="%eax";	# input to and changed by aesni_[en|de]cryptN !!!
 # this is natural Unix argument order for public $PREFIX_[ecb|cbc]_encrypt ...
@@ -1119,7 +1114,9 @@ $code.=<<___;
 	lea	7($ctr),%r9
 	 mov	%r10d,0x60+12(%rsp)
 	bswap	%r9d
+	 mov	OPENSSL_ia32cap_P+4(%rip),%r10d 
 	xor	$key0,%r9d
+	 and	\$`1<<26|1<<22`,%r10d		# isolate XSAVE+MOVBE
 	mov	%r9d,0x70+12(%rsp)
 
 	$movkey	0x10($key),$rndkey1
@@ -1130,9 +1127,103 @@ $code.=<<___;
 	cmp	\$8,$len
 	jb	.Lctr32_tail
 
+	sub	\$6,$len
+	cmp	\$`1<<22`,%r10d		# check for MOVBE without XSAVE
+	je	.Lctr32_6x
+
 	lea	0x80($key),$key		# size optimization
-	sub	\$8,$len
+	sub	\$2,$len
 	jmp	.Lctr32_loop8
+
+.align	16
+.Lctr32_6x:
+	shl	\$4,$rounds
+	mov	\$48,$rnds_
+	bswap	$key0
+	lea	32($key,$rounds),$key	# end of key schedule
+	sub	%rax,%r10		# twisted $rounds
+	jmp	.Lctr32_loop6
+
+.align	16
+.Lctr32_loop6:
+	 add	\$6,$ctr
+	$movkey	-48($key,$rnds_),$rndkey0
+	aesenc	$rndkey1,$inout0
+	 mov	$ctr,%eax
+	 xor	$key0,%eax
+	aesenc	$rndkey1,$inout1
+	 movbe	%eax,`0x00+12`(%rsp)
+	 lea	1($ctr),%eax
+	aesenc	$rndkey1,$inout2
+	 xor	$key0,%eax
+	 movbe	%eax,`0x10+12`(%rsp)
+	aesenc	$rndkey1,$inout3
+	 lea	2($ctr),%eax
+	 xor	$key0,%eax
+	aesenc	$rndkey1,$inout4
+	 movbe	%eax,`0x20+12`(%rsp)
+	 lea	3($ctr),%eax
+	aesenc	$rndkey1,$inout5
+	$movkey	-32($key,$rnds_),$rndkey1
+	 xor	$key0,%eax
+
+	aesenc	$rndkey0,$inout0
+	 movbe	%eax,`0x30+12`(%rsp)
+	 lea	4($ctr),%eax
+	aesenc	$rndkey0,$inout1
+	 xor	$key0,%eax
+	 movbe	%eax,`0x40+12`(%rsp)
+	aesenc	$rndkey0,$inout2
+	 lea	5($ctr),%eax
+	 xor	$key0,%eax
+	aesenc	$rndkey0,$inout3
+	 movbe	%eax,`0x50+12`(%rsp)
+	 mov	%r10,%rax		# mov	$rnds_,$rounds
+	aesenc	$rndkey0,$inout4
+	aesenc	$rndkey0,$inout5
+	$movkey	-16($key,$rnds_),$rndkey0
+
+	call	.Lenc_loop6
+
+	movdqu	($inp),$inout6
+	movdqu	0x10($inp),$inout7
+	movdqu	0x20($inp),$in0
+	movdqu	0x30($inp),$in1
+	movdqu	0x40($inp),$in2
+	movdqu	0x50($inp),$in3
+	lea	0x60($inp),$inp
+	$movkey	-64($key,$rnds_),$rndkey1
+	pxor	$inout0,$inout6
+	movaps	0x00(%rsp),$inout0
+	pxor	$inout1,$inout7
+	movaps	0x10(%rsp),$inout1
+	pxor	$inout2,$in0
+	movaps	0x20(%rsp),$inout2
+	pxor	$inout3,$in1
+	movaps	0x30(%rsp),$inout3
+	pxor	$inout4,$in2
+	movaps	0x40(%rsp),$inout4
+	pxor	$inout5,$in3
+	movaps	0x50(%rsp),$inout5
+	movdqu	$inout6,($out)
+	movdqu	$inout7,0x10($out)
+	movdqu	$in0,0x20($out)
+	movdqu	$in1,0x30($out)
+	movdqu	$in2,0x40($out)
+	movdqu	$in3,0x50($out)
+	lea	0x60($out),$out
+	
+	sub	\$6,$len
+	jnc	.Lctr32_loop6
+
+	add	\$6,$len
+	jz	.Lctr32_done
+
+	lea	-48($rnds_),$rounds
+	lea	-80($key,$rnds_),$key	# restore $key
+	neg	$rounds
+	shr	\$4,$rounds		# restore $rounds
+	jmp	.Lctr32_tail
 
 .align	32
 .Lctr32_loop8:
@@ -2455,10 +2546,15 @@ $code.=<<___;
 	movdqa	$inout3,$in3
 	movdqu	0x50($inp),$inout5
 	movdqa	$inout4,$in4
+	mov	OPENSSL_ia32cap_P+4(%rip),%r9d
 	cmp	\$0x70,$len
 	jbe	.Lcbc_dec_six_or_seven
 
-	sub	\$0x70,$len
+	and	\$`1<<26|1<<22`,%r9d	# isolate XSAVE+MOVBE	
+	sub	\$0x50,$len
+	cmp	\$`1<<22`,%r9d		# check for MOVBE without XSAVE
+	je	.Lcbc_dec_loop6_enter
+	sub	\$0x20,$len
 	lea	0x70($key),$key		# size optimization
 	jmp	.Lcbc_dec_loop8_enter
 .align	16
@@ -2637,6 +2733,51 @@ $code.=<<___;
 	lea	0x60($out),$out
 	movdqa	$inout6,$inout0
 	jmp	.Lcbc_dec_tail_collected
+
+.align	16
+.Lcbc_dec_loop6:
+	movups	$inout5,($out)
+	lea	0x10($out),$out
+	movdqu	0x00($inp),$inout0	# load input
+	movdqu	0x10($inp),$inout1
+	movdqa	$inout0,$in0
+	movdqu	0x20($inp),$inout2
+	movdqa	$inout1,$in1
+	movdqu	0x30($inp),$inout3
+	movdqa	$inout2,$in2
+	movdqu	0x40($inp),$inout4
+	movdqa	$inout3,$in3
+	movdqu	0x50($inp),$inout5
+	movdqa	$inout4,$in4
+.Lcbc_dec_loop6_enter:
+	lea	0x60($inp),$inp
+	movdqa	$inout5,$inout6
+
+	call	_aesni_decrypt6
+
+	pxor	$iv,$inout0		# ^= IV
+	movdqa	$inout6,$iv
+	pxor	$in0,$inout1
+	movdqu	$inout0,($out)
+	pxor	$in1,$inout2
+	movdqu	$inout1,0x10($out)
+	pxor	$in2,$inout3
+	movdqu	$inout2,0x20($out)
+	pxor	$in3,$inout4
+	mov	$key_,$key
+	movdqu	$inout3,0x30($out)
+	pxor	$in4,$inout5
+	mov	$rnds_,$rounds
+	movdqu	$inout4,0x40($out)
+	lea	0x50($out),$out
+	sub	\$0x60,$len
+	ja	.Lcbc_dec_loop6
+
+	movdqa	$inout5,$inout0
+	add	\$0x50,$len
+	jle	.Lcbc_dec_tail_collected
+	movups	$inout5,($out)
+	lea	0x10($out),$out
 
 .Lcbc_dec_tail:
 	movups	($inp),$inout0
@@ -3360,8 +3501,14 @@ sub aesni {
     return $line;
 }
 
+sub movbe {
+	".byte	0x0f,0x38,0xf1,0x44,0x24,".shift;
+}
+
 $code =~ s/\`([^\`]*)\`/eval($1)/gem;
 $code =~ s/\b(aes.*%xmm[0-9]+).*$/aesni($1)/gem;
+#$code =~ s/\bmovbe\s+%eax/bswap %eax; mov %eax/gm;	# debugging artefact
+$code =~ s/\bmovbe\s+%eax,\s*([0-9]+)\(%rsp\)/movbe($1)/gem;
 
 print $code;
 

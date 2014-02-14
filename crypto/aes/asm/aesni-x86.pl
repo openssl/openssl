@@ -43,6 +43,17 @@
 # Add aesni_xts_[en|de]crypt. Westmere spends 1.50 cycles processing
 # one byte out of 8KB with 128-bit key, Sandy Bridge - 1.09.
 
+######################################################################
+# Current large-block performance in cycles per byte processed with
+# 128-bit key (less is better).
+#
+#		CBC en-/decrypt	CTR	XTS	ECB
+# Westmere	3.77/1.37	1.37	1.52	1.27
+# * Bridge	5.07/0.98	0.99	1.09	0.91
+# Haswell	4.44/0.80	0.97	1.03	0.72
+# Atom		5.77/3.56	3.67	4.03	3.46
+# Bulldozer	5.80/0.98	1.05	1.24	0.93
+
 $PREFIX="aesni";	# if $PREFIX is set to "AES", the script
 			# generates drop-in replacement for
 			# crypto/aes/asm/aes-586.pl:-)
