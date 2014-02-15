@@ -1073,11 +1073,11 @@ sub cc_compile_target
 	$ex_flags.=" -DMK1MF_BUILD -D$platform_cpp_symbol" if ($source =~ /cversion/);
 	$target =~ s/\//$o/g if $o ne "/";
 	$source =~ s/\//$o/g if $o ne "/";
-	$srcd = "\$(SRC_D)$o" unless defined $srcd;
+	$srcd = "\$(SRC_D)$o" unless defined $srcd && $platform ne 'copy';
 	$ret ="$target: $srcd$source\n\t";
 	$ret.="\$(CC)";
 	$ret.= " -MMD" if $orig_platform eq "copy";
-	$ret.= " ${ofile}$target $ex_flags -c \$(SRC_D)$o$source\n\n";
+	$ret.= " ${ofile}$target $ex_flags -c $srcd$source\n\n";
 	$target =~ s/\.o$/.d/;
 	$ret.=".sinclude \"$target\"\n\n" if $orig_platform eq "copy";
 	return($ret);
