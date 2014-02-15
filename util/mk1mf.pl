@@ -169,7 +169,7 @@ $mkdir="-mkdir" unless defined $mkdir;
 $ranlib="echo ranlib";
 
 $cc=(defined($VARS{'CC'}))?$VARS{'CC'}:'cc';
-$src_dir=(defined($VARS{'SRC'}))?$VARS{'SRC'}:getcwd();
+$src_dir=(defined($VARS{'SRC'}))?$VARS{'SRC'}: $platform eq 'copy' ? getcwd() : '.';
 $bin_dir=(defined($VARS{'BIN'}))?$VARS{'BIN'}:'';
 
 # $bin_dir.=$o causes a core dump on my sparc :-(
