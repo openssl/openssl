@@ -1227,6 +1227,7 @@ sub read_options
 		"no-ssl-trace" => 0,
 		"no-dane" => 0,
 		"no-libunbound" => 0,
+		"no-multiblock" => 0,
 		"fips" => \$fips
 		);
 
