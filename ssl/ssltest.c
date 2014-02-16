@@ -1507,6 +1507,11 @@ bad:
 		ERR_print_errors(bio_err);
 		goto end;
 		}
+	/* Since we will use low security ciphersuites and keys for
+	 * testing set security level to zero.
+	 */
+	SSL_CTX_set_security_level(c_ctx, 0);
+	SSL_CTX_set_security_level(s_ctx, 0);
 
 	if (cipher != NULL)
 		{
