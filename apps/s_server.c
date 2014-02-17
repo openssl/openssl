@@ -1030,6 +1030,7 @@ int MAIN(int argc, char *argv[])
 	EVP_PKEY *s_key = NULL, *s_dkey = NULL;
 	int no_cache = 0, ext_cache = 0;
 	int rev = 0, naccept = -1;
+	int sdebug = 0;
 #ifndef OPENSSL_NO_TLSEXT
 	EVP_PKEY *s_key2 = NULL;
 	X509 *s_cert2 = NULL;
@@ -1344,6 +1345,10 @@ int MAIN(int argc, char *argv[])
 		else if	(strcmp(*argv,"-trace") == 0)
 			{ s_msg=2; }
 #endif
+		else if	(strcmp(*argv,"-security_debug") == 0)
+			{ sdebug=1; }
+		else if	(strcmp(*argv,"-security_debug_verbose") == 0)
+			{ sdebug=2; }
 		else if	(strcmp(*argv,"-hack") == 0)
 			{ hack=1; }
 		else if	(strcmp(*argv,"-state") == 0)
@@ -1743,6 +1748,8 @@ bad:
 		}
 
 	ctx=SSL_CTX_new(meth);
+	if (sdebug)
+		ssl_ctx_security_debug(ctx, bio_err, sdebug);
 	if (ctx == NULL)
 		{
 		ERR_print_errors(bio_err);
@@ -1831,6 +1838,9 @@ bad:
 	if (ctx2)
 		{
 		BIO_printf(bio_s_out,"Setting secondary ctx parameters\n");
+
+		if (sdebug)
+			ssl_ctx_security_debug(ctx, bio_err, sdebug);
 
 		if (session_id_prefix)
 			{

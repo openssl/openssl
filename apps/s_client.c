@@ -702,6 +702,7 @@ static char *jpake_secret = NULL;
 	int crl_format = FORMAT_PEM;
 	int crl_download = 0;
 	STACK_OF(X509_CRL) *crls = NULL;
+	int sdebug = 0;
 
 	meth=SSLv23_client_method();
 
@@ -874,6 +875,10 @@ static char *jpake_secret = NULL;
 		else if	(strcmp(*argv,"-trace") == 0)
 			c_msg=2;
 #endif
+		else if	(strcmp(*argv,"-security_debug") == 0)
+			{ sdebug=1; }
+		else if	(strcmp(*argv,"-security_debug_verbose") == 0)
+			{ sdebug=2; }
 		else if	(strcmp(*argv,"-showcerts") == 0)
 			c_showcerts=1;
 		else if	(strcmp(*argv,"-nbio_test") == 0)
@@ -1301,6 +1306,9 @@ bad:
 		ERR_print_errors(bio_err);
 		goto end;
 		}
+
+	if (sdebug)
+		ssl_ctx_security_debug(ctx, bio_err, sdebug);
 
 	if (vpm)
 		SSL_CTX_set1_param(ctx, vpm);
