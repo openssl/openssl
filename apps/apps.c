@@ -785,6 +785,8 @@ static int load_pkcs12(BIO *err, BIO *in, const char *desc,
 	return ret;
 	}
 
+#ifndef OPENSSL_NO_SOCK
+
 int load_cert_crl_http(const char *url, BIO *err,
 					X509 **pcert, X509_CRL **pcrl)
 	{
@@ -847,17 +849,23 @@ int load_cert_crl_http(const char *url, BIO *err,
 	return rv;
 	}
 
+#endif
+
 X509 *load_cert(BIO *err, const char *file, int format,
 	const char *pass, ENGINE *e, const char *cert_descrip)
 	{
 	X509 *x=NULL;
 	BIO *cert;
 
+#ifndef OPENSSL_NO_SOCK
+
 	if (format == FORMAT_HTTP)
 		{
 		load_cert_crl_http(file, err, &x, NULL);
 		return x;
 		}
+
+#endif
 
 	if ((cert=BIO_new(BIO_s_file())) == NULL)
 		{
@@ -934,11 +942,15 @@ X509_CRL *load_crl(const char *infile, int format)
 	X509_CRL *x=NULL;
 	BIO *in=NULL;
 
+#ifndef OPENSSL_NO_SOCK
+
 	if (format == FORMAT_HTTP)
 		{
 		load_cert_crl_http(infile, bio_err, NULL, &x);
 		return x;
 		}
+
+#endif
 
 	in=BIO_new(BIO_s_file());
 	if (in == NULL)
