@@ -147,9 +147,11 @@ static struct {
 	{ CRYPTO_AES_CBC,		NID_aes_128_cbc,	16,	16, },
 	{ CRYPTO_AES_CBC,		NID_aes_192_cbc,	16,	24, },
 	{ CRYPTO_AES_CBC,		NID_aes_256_cbc,	16,	32, },
+#ifdef CRYPTO_AES_CTR
 	{ CRYPTO_AES_CTR,		NID_aes_128_ctr,	14,	16, },
 	{ CRYPTO_AES_CTR,		NID_aes_192_ctr,	14,	24, },
 	{ CRYPTO_AES_CTR,		NID_aes_256_ctr,	14,	32, },
+#endif
 	{ CRYPTO_BLF_CBC,		NID_bf_cbc,		8,	16, },
 	{ CRYPTO_CAST_CBC,		NID_cast5_cbc,		8,	16, },
 	{ CRYPTO_SKIPJACK_CBC,		NID_undef,		0,	 0, },
@@ -602,7 +604,7 @@ const EVP_CIPHER cryptodev_aes_256_cbc = {
 	EVP_CIPHER_get_asn1_iv,
 	NULL
 };
-
+#ifdef CRYPTO_AES_CTR
 const EVP_CIPHER cryptodev_aes_ctr = {
 	NID_aes_128_ctr,
 	16, 16, 14,
@@ -641,7 +643,7 @@ const EVP_CIPHER cryptodev_aes_ctr_256 = {
 	EVP_CIPHER_get_asn1_iv,
 	NULL
 };
-
+#endif
 /*
  * Registered by the ENGINE when used to find out how to deal with
  * a particular NID in the ENGINE. this says what we'll do at the
@@ -679,6 +681,7 @@ cryptodev_engine_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
 	case NID_aes_256_cbc:
 		*cipher = &cryptodev_aes_256_cbc;
 		break;
+#ifdef CRYPTO_AES_CTR
 	case NID_aes_128_ctr:
 		*cipher = &cryptodev_aes_ctr;
 		break;
@@ -688,6 +691,7 @@ cryptodev_engine_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
 	case NID_aes_256_ctr:
 		*cipher = &cryptodev_aes_ctr_256;
 		break;
+#endif
 	default:
 		*cipher = NULL;
 		break;
