@@ -44,8 +44,8 @@ LIBOBJ= cryptlib.o mem.o mem_dbg.o cversion.o ex_data.o cpt_err.o \
 SRC= $(LIBSRC)
 
 EXHEADER= crypto.h opensslv.h opensslconf.h ebcdic.h symhacks.h \
-	ossl_typ.h o_time.h
-HEADER=	cryptlib.h buildinf.h md32_common.h o_str.h o_dir.h $(EXHEADER)
+	ossl_typ.h
+HEADER=	cryptlib.h buildinf.h md32_common.h o_time.h o_str.h o_dir.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
