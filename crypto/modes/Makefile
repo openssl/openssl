@@ -139,6 +139,14 @@ ofb128.o: ../../include/openssl/modes.h ../../include/openssl/opensslconf.h
 ofb128.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ofb128.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 ofb128.o: ../../include/openssl/symhacks.h modes_lcl.h ofb128.c
+wrap128.o: ../../e_os.h ../../include/openssl/bio.h
+wrap128.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+wrap128.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+wrap128.o: ../../include/openssl/lhash.h ../../include/openssl/modes.h
+wrap128.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+wrap128.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
+wrap128.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+wrap128.o: ../cryptlib.h wrap128.c
 xts128.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 xts128.o: ../../include/openssl/modes.h ../../include/openssl/opensslconf.h
 xts128.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
