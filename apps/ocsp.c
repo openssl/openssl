@@ -174,6 +174,7 @@ int MAIN(int argc, char **argv)
 		goto end;
 	SSL_load_error_strings();
 	OpenSSL_add_ssl_algorithms();
+	X509V3_EXT_add_rfc6962();
 	args = argv + 1;
 	reqnames = sk_OPENSSL_STRING_new_null();
 	ids = sk_OCSP_CERTID_new_null();
@@ -970,6 +971,7 @@ end:
 		OPENSSL_free(path);
 		}
 
+	X509V3_EXT_cleanup();
 	OPENSSL_EXIT(ret);
 }
 
