@@ -112,11 +112,11 @@
 #include <stdio.h>
 #include <time.h>
 #include <openssl/bio.h>
+#include <openssl/bn.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/ocsp.h>
-#include <openssl/o_time.h>
 #include <openssl/rand.h>
 #include "ssl_locl.h"
 
@@ -4437,8 +4437,8 @@ int SSL_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain)
 #endif
 
 /* RFC6962 Signed Certificate Timestamp List X.509 extension parser */
-int i2r_sctlist(X509V3_EXT_METHOD *method, ASN1_OCTET_STRING *oct,
-		BIO *out, int indent)
+static int i2r_sctlist(X509V3_EXT_METHOD *method, ASN1_OCTET_STRING *oct,
+		       BIO *out, int indent)
 	{
 	BN_ULLONG timestamp;
 	struct tm tm1;
