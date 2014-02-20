@@ -713,8 +713,6 @@ static char *jpake_secret = NULL;
 	c_msg=0;
 	c_showcerts=0;
 
-	X509V3_EXT_add_rfc6962();
-
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
 
@@ -2195,7 +2193,6 @@ end:
 		BIO_free(bio_c_msg);
 		bio_c_msg=NULL;
 		}
-	X509V3_EXT_cleanup();
 	apps_shutdown();
 	OPENSSL_EXIT(ret);
 	}

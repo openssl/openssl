@@ -73,7 +73,6 @@
 #include <openssl/x509v3.h>
 #include <openssl/objects.h>
 #include <openssl/pem.h>
-#include <openssl/ssl.h>
 #ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
 #endif
@@ -224,8 +223,6 @@ int MAIN(int argc, char **argv)
 	reqfile=0;
 
 	apps_startup();
-
-	X509V3_EXT_add_rfc6962();
 
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
@@ -1158,7 +1155,6 @@ end:
 	sk_ASN1_OBJECT_pop_free(trust, ASN1_OBJECT_free);
 	sk_ASN1_OBJECT_pop_free(reject, ASN1_OBJECT_free);
 	if (passin) OPENSSL_free(passin);
-	X509V3_EXT_cleanup();
 	apps_shutdown();
 	OPENSSL_EXIT(ret);
 	}
