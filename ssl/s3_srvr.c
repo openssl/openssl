@@ -3806,7 +3806,7 @@ int tls1_get_client_supplemental_data(SSL *s)
 	long n;
 	const unsigned char *p, *d;
 	unsigned short supp_data_entry_type = 0;
-	unsigned long supp_data_entry_len = 0;
+	unsigned short supp_data_entry_len = 0;
 	unsigned long supp_data_len = 0;
 	size_t i = 0;
 
