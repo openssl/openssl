@@ -102,7 +102,7 @@ static void timestamp_print(BIO *out, BN_ULLONG timestamp)
 	char genstr[20];
 	gen = ASN1_GENERALIZEDTIME_new();
 	ASN1_GENERALIZEDTIME_adj(gen, (time_t)0,
-					timestamp / 86400000,
+					(int)(timestamp / 86400000),
 					(timestamp % 86400000) / 1000);
 	/* Note GeneralizedTime from ASN1_GENERALIZETIME_adj is always 15
 	 * characters long with a final Z. Update it with fractional seconds.
