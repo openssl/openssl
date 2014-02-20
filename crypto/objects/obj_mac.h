@@ -4158,3 +4158,23 @@
 #define SN_dh_cofactor_kdf		"dh-cofactor-kdf"
 #define NID_dh_cofactor_kdf		947
 
+#define SN_ct_precert_scts		"ct_precert_scts"
+#define LN_ct_precert_scts		"CT Precertificate SCTs"
+#define NID_ct_precert_scts		951
+#define OBJ_ct_precert_scts		1L,3L,6L,1L,4L,1L,11129L,2L,4L,2L
+
+#define SN_ct_precert_poison		"ct_precert_poison"
+#define LN_ct_precert_poison		"CT Precertificate Poison"
+#define NID_ct_precert_poison		952
+#define OBJ_ct_precert_poison		1L,3L,6L,1L,4L,1L,11129L,2L,4L,3L
+
+#define SN_ct_precert_signer		"ct_precert_signer"
+#define LN_ct_precert_signer		"CT Precertificate Signer"
+#define NID_ct_precert_signer		953
+#define OBJ_ct_precert_signer		1L,3L,6L,1L,4L,1L,11129L,2L,4L,4L
+
+#define SN_ct_cert_scts		"ct_cert_scts"
+#define LN_ct_cert_scts		"CT Certificate SCTs"
+#define NID_ct_cert_scts		954
+#define OBJ_ct_cert_scts		1L,3L,6L,1L,4L,1L,11129L,2L,4L,5L
+

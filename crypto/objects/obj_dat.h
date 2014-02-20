@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 951
-#define NUM_SN 944
-#define NUM_LN 944
-#define NUM_OBJ 883
+#define NUM_NID 955
+#define NUM_SN 948
+#define NUM_LN 948
+#define NUM_OBJ 887
 
-static const unsigned char lvalues[6188]={
+static const unsigned char lvalues[6228]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -951,6 +951,10 @@ static const unsigned char lvalues[6188]={
 0x2B,0x81,0x04,0x01,0x0E,0x01,               /* [6169] OBJ_dhSinglePass_cofactorDH_sha256kdf_scheme */
 0x2B,0x81,0x04,0x01,0x0E,0x02,               /* [6175] OBJ_dhSinglePass_cofactorDH_sha384kdf_scheme */
 0x2B,0x81,0x04,0x01,0x0E,0x03,               /* [6181] OBJ_dhSinglePass_cofactorDH_sha512kdf_scheme */
+0x2B,0x06,0x01,0x04,0x01,0xD6,0x79,0x02,0x04,0x02,/* [6187] OBJ_ct_precert_scts */
+0x2B,0x06,0x01,0x04,0x01,0xD6,0x79,0x02,0x04,0x03,/* [6197] OBJ_ct_precert_poison */
+0x2B,0x06,0x01,0x04,0x01,0xD6,0x79,0x02,0x04,0x04,/* [6207] OBJ_ct_precert_signer */
+0x2B,0x06,0x01,0x04,0x01,0xD6,0x79,0x02,0x04,0x05,/* [6217] OBJ_ct_cert_scts */
 };
 
 static const ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2500,6 +2504,14 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 	NID_aes_192_cbc_hmac_sha256,0,NULL,0},
 {"AES-256-CBC-HMAC-SHA256","aes-256-cbc-hmac-sha256",
 	NID_aes_256_cbc_hmac_sha256,0,NULL,0},
+{"ct_precert_scts","CT Precertificate SCTs",NID_ct_precert_scts,10,
+	&(lvalues[6187]),0},
+{"ct_precert_poison","CT Precertificate Poison",NID_ct_precert_poison,
+	10,&(lvalues[6197]),0},
+{"ct_precert_signer","CT Precertificate Signer",NID_ct_precert_signer,
+	10,&(lvalues[6207]),0},
+{"ct_cert_scts","CT Certificate SCTs",NID_ct_cert_scts,10,
+	&(lvalues[6217]),0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -2777,6 +2789,10 @@ static const unsigned int sn_objs[NUM_SN]={
 884,	/* "crossCertificatePair" */
 806,	/* "cryptocom" */
 805,	/* "cryptopro" */
+954,	/* "ct_cert_scts" */
+952,	/* "ct_precert_poison" */
+951,	/* "ct_precert_scts" */
+953,	/* "ct_precert_signer" */
 500,	/* "dITRedirect" */
 451,	/* "dNSDomain" */
 495,	/* "dSAQuality" */
@@ -3460,6 +3476,10 @@ static const unsigned int ln_objs[NUM_LN]={
 285,	/* "Biometric Info" */
 179,	/* "CA Issuers" */
 785,	/* "CA Repository" */
+954,	/* "CT Certificate SCTs" */
+952,	/* "CT Precertificate Poison" */
+951,	/* "CT Precertificate SCTs" */
+953,	/* "CT Precertificate Signer" */
 131,	/* "Code Signing" */
 783,	/* "Diffie-Hellman based MAC" */
 382,	/* "Directory" */
@@ -5202,6 +5222,10 @@ static const unsigned int obj_objs[NUM_OBJ]={
 138,	/* OBJ_ms_efs                       1 3 6 1 4 1 311 10 3 4 */
 648,	/* OBJ_ms_smartcard_login           1 3 6 1 4 1 311 20 2 2 */
 649,	/* OBJ_ms_upn                       1 3 6 1 4 1 311 20 2 3 */
+951,	/* OBJ_ct_precert_scts              1 3 6 1 4 1 11129 2 4 2 */
+952,	/* OBJ_ct_precert_poison            1 3 6 1 4 1 11129 2 4 3 */
+953,	/* OBJ_ct_precert_signer            1 3 6 1 4 1 11129 2 4 4 */
+954,	/* OBJ_ct_cert_scts                 1 3 6 1 4 1 11129 2 4 5 */
 751,	/* OBJ_camellia_128_cbc             1 2 392 200011 61 1 1 1 2 */
 752,	/* OBJ_camellia_192_cbc             1 2 392 200011 61 1 1 1 3 */
 753,	/* OBJ_camellia_256_cbc             1 2 392 200011 61 1 1 1 4 */
