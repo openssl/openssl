@@ -1942,6 +1942,7 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 
 #define SSL_CERT_SET_FIRST			1
 #define SSL_CERT_SET_NEXT			2
+#define SSL_CERT_SET_SERVER			3
 
 #define DTLSv1_get_timeout(ssl, arg) \
 	SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)
