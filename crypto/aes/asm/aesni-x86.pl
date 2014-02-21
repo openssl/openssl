@@ -207,12 +207,45 @@ sub aesni_generate1	# fully unrolled loop
 # every *2nd* cycle. Thus 3x interleave was the one providing optimal
 # utilization, i.e. when subroutine's throughput is virtually same as
 # of non-interleaved subroutine [for number of input blocks up to 3].
-# This is why it makes no sense to implement 2x subroutine.
-# aes[enc|dec] latency in next processor generation is 8, but the
-# instructions can be scheduled every cycle. Optimal interleave for
-# new processor is therefore 8x, but it's unfeasible to accommodate it
-# in XMM registers addreassable in 32-bit mode and therefore 6x is
-# used instead...
+# This is why it originally made no sense to implement 2x subroutine.
+# But times change and it became appropriate to spend extra 192 bytes
+# on 2x subroutine on Atom Silvermont account. For processors that
+# can schedule aes[enc|dec] every cycle optimal interleave factor
+# equals to corresponding instructions latency. 8x is optimal for
+# * Bridge, but it's unfeasible to accommodate such implementation
+# in XMM registers addreassable in 32-bit mode and therefore maximum
+# of 6x is used instead...
+
+sub aesni_generate2
+{ my $p=shift;
+
+    &function_begin_B("_aesni_${p}rypt2");
+	&$movekey	($rndkey0,&QWP(0,$key));
+	&shl		($rounds,4);
+	&$movekey	($rndkey1,&QWP(16,$key));
+	&xorps		($inout0,$rndkey0);
+	&pxor		($inout1,$rndkey0);
+	&$movekey	($rndkey0,&QWP(32,$key));
+	&lea		($key,&DWP(32,$key,$rounds));
+	&neg		($rounds);
+	&add		($rounds,16);
+
+    &set_label("${p}2_loop");
+	eval"&aes${p}	($inout0,$rndkey1)";
+	eval"&aes${p}	($inout1,$rndkey1)";
+	&$movekey	($rndkey1,&QWP(0,$key,$rounds));
+	&add		($rounds,32);
+	eval"&aes${p}	($inout0,$rndkey0)";
+	eval"&aes${p}	($inout1,$rndkey0)";
+	&$movekey	($rndkey0,&QWP(-16,$key,$rounds));
+	&jnz		(&label("${p}2_loop"));
+    eval"&aes${p}	($inout0,$rndkey1)";
+    eval"&aes${p}	($inout1,$rndkey1)";
+    eval"&aes${p}last	($inout0,$rndkey0)";
+    eval"&aes${p}last	($inout1,$rndkey0)";
+    &ret();
+    &function_end_B("_aesni_${p}rypt2");
+}
 
 sub aesni_generate3
 { my $p=shift;
@@ -357,6 +390,8 @@ sub aesni_generate6
     &ret();
     &function_end_B("_aesni_${p}rypt6");
 }
+&aesni_generate2("enc") if ($PREFIX eq "aesni");
+&aesni_generate2("dec");
 &aesni_generate3("enc") if ($PREFIX eq "aesni");
 &aesni_generate3("dec");
 &aesni_generate4("enc") if ($PREFIX eq "aesni");
@@ -460,8 +495,7 @@ if ($PREFIX eq "aesni") {
 	&jmp	(&label("ecb_ret"));
 
 &set_label("ecb_enc_two",16);
-	&xorps	($inout2,$inout2);
-	&call	("_aesni_encrypt3");
+	&call	("_aesni_encrypt2");
 	&movups	(&QWP(0,$out),$inout0);
 	&movups	(&QWP(0x10,$out),$inout1);
 	&jmp	(&label("ecb_ret"));
@@ -561,8 +595,7 @@ if ($PREFIX eq "aesni") {
 	&jmp	(&label("ecb_ret"));
 
 &set_label("ecb_dec_two",16);
-	&xorps	($inout2,$inout2);
-	&call	("_aesni_decrypt3");
+	&call	("_aesni_decrypt2");
 	&movups	(&QWP(0,$out),$inout0);
 	&movups	(&QWP(0x10,$out),$inout1);
 	&jmp	(&label("ecb_ret"));
@@ -982,7 +1015,7 @@ if ($PREFIX eq "aesni") {
 	&jmp	(&label("ctr32_ret"));
 
 &set_label("ctr32_two",16);
-	&call	("_aesni_encrypt3");
+	&call	("_aesni_encrypt2");
 	&movups	($inout3,&QWP(0,$inp));
 	&movups	($inout4,&QWP(0x10,$inp));
 	&xorps	($inout0,$inout3);
@@ -1253,9 +1286,8 @@ if ($PREFIX eq "aesni") {
 	&lea	($inp,&DWP(16*2,$inp));
 	&xorps	($inout0,$inout3);		# input^=tweak
 	&xorps	($inout1,$inout4);
-	&xorps	($inout2,$inout2);
 
-	&call	("_aesni_encrypt3");
+	&call	("_aesni_encrypt2");
 
 	&xorps	($inout0,$inout3);		# output^=tweak
 	&xorps	($inout1,$inout4);
@@ -1596,7 +1628,7 @@ if ($PREFIX eq "aesni") {
 	&xorps	($inout0,$inout3);		# input^=tweak
 	&xorps	($inout1,$inout4);
 
-	&call	("_aesni_decrypt3");
+	&call	("_aesni_decrypt2");
 
 	&xorps	($inout0,$inout3);		# output^=tweak
 	&xorps	($inout1,$inout4);
@@ -1896,8 +1928,7 @@ if ($PREFIX eq "aesni") {
 	&jmp	(&label("cbc_dec_tail_collected"));
 
 &set_label("cbc_dec_two",16);
-	&xorps	($inout2,$inout2);
-	&call	("_aesni_decrypt3");
+	&call	("_aesni_decrypt2");
 	&xorps	($inout0,$ivec);
 	&xorps	($inout1,$in0);
 	&movups	(&QWP(0,$out),$inout0);
