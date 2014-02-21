@@ -1652,10 +1652,6 @@ struct ssl_st
 	unsigned char* alpn_client_proto_list;
 	unsigned alpn_client_proto_list_len;
 #endif /* OPENSSL_NO_TLSEXT */
-#ifndef OPENSSL_NO_DANE
-	unsigned char *tlsa_record;
-	int tlsa_witness;
-#endif
 	};
 
 #endif

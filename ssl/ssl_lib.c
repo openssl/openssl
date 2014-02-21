@@ -650,11 +650,6 @@ void SSL_free(SSL *s)
         if (s->srtp_profiles)
             sk_SRTP_PROTECTION_PROFILE_free(s->srtp_profiles);
 
-#ifndef OPENSSL_NO_DANE
-	if (s->tlsa_record && s->tlsa_record!=(void *)-1)
-		OPENSSL_free(s->tlsa_record);
-#endif
-
 	OPENSSL_free(s);
 	}
 
@@ -1105,6 +1100,9 @@ int SSL_renegotiate_pending(SSL *s)
 long SSL_ctrl(SSL *s,int cmd,long larg,void *parg)
 	{
 	long l;
+#ifndef OPNESSL_NO_DANE
+	const char *hostname = NULL;
+#endif
 
 	switch (cmd)
 		{
@@ -1171,10 +1169,37 @@ long SSL_ctrl(SSL *s,int cmd,long larg,void *parg)
 			return ssl_put_cipher_by_char(s,NULL,NULL);
 #ifndef OPENSSL_NO_DANE
 	case SSL_CTRL_PULL_TLSA_RECORD:
+		hostname = parg;
 		parg = SSL_get_tlsa_record_byname (parg,larg,s->version<0xF000?1:0);
 		/* yes, fall through */
 	case SSL_CTRL_SET_TLSA_RECORD:
-		s->tlsa_record = parg;
+		if (parg!=NULL)
+			{
+			TLSA_EX_DATA *ex = SSL_get_TLSA_ex_data(s);
+			unsigned char *tlsa_rec = parg;
+			int tlsa_len = 0;
+
+			if (hostname==NULL)
+				{
+			    	while (1)
+					{
+					int dlen;
+
+					memcpy(&dlen,tlsa_rec,sizeof(dlen));
+					tlsa_rec += sizeof(dlen)+dlen;
+
+					if (dlen==0) break;
+					}
+				if ((tlsa_rec = OPENSSL_malloc(tlsa_len)))
+					memcpy(tlsa_rec,parg,tlsa_len);
+				else
+					{
+					SSLerr(SSL_F_SSL_CTRL,SSL_R_UNINITIALIZED);
+					return 0;
+					}
+				}
+			ex->tlsa_record = tlsa_rec;
+			}
 		return 1;
 #endif
 	default:

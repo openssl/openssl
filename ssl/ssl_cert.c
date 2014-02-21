@@ -133,10 +133,30 @@
 #include "ssl_locl.h"
 
 int SSL_get_ex_data_X509_STORE_CTX_idx(void)
-	{
-	static volatile int ssl_x509_store_ctx_idx= -1;
-	int got_write_lock = 0;
+    {
+    static volatile int ssl_x509_store_ctx_idx= -1;
+    int got_write_lock = 0;
 
+    if (((size_t)&ssl_x509_store_ctx_idx&(sizeof(ssl_x509_store_ctx_idx)-1))
+		==0)	/* check alignment, practically always true */
+	{
+	int ret;
+
+	if ((ret=ssl_x509_store_ctx_idx) < 0)
+		{
+		CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
+		if ((ret=ssl_x509_store_ctx_idx) < 0)
+			{
+			ret=ssl_x509_store_ctx_idx=X509_STORE_CTX_get_ex_new_index(
+				0,"SSL for verify callback",NULL,NULL,NULL);
+			}
+		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
+		}
+
+	return ret;
+	}
+    else		/* commonly eliminated */
+	{
 	CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
 
 	if (ssl_x509_store_ctx_idx < 0)
@@ -159,6 +179,7 @@ int SSL_get_ex_data_X509_STORE_CTX_idx(void)
 	
 	return ssl_x509_store_ctx_idx;
 	}
+    }
 
 void ssl_cert_set_default_md(CERT *cert)
 	{
@@ -733,20 +754,98 @@ int ssl_set_peer_cert_type(SESS_CERT *sc,int type)
 	}
 
 #ifndef OPENSSL_NO_DANE
+static void tlsa_free(void *parent,void *ptr,CRYPTO_EX_DATA *ad,int idx,long argl,void *argp)
+	{
+	TLSA_EX_DATA *ex = ptr;
+
+	if (ex!=NULL)
+		{
+		if (ex->tlsa_record!=NULL && ex->tlsa_record!=(void *)-1)
+			OPENSSL_free(ex->tlsa_record);
+
+		OPENSSL_free(ex);
+		}
+	}
+
+int SSL_get_TLSA_ex_data_idx(void)
+    {
+    static volatile int ssl_tlsa_idx= -1;
+    int got_write_lock = 0;
+
+    if (((size_t)&ssl_tlsa_idx&(sizeof(ssl_tlsa_idx)-1))
+		==0)	/* check alignment, practically always true */
+	{
+	int ret;
+
+	if ((ret=ssl_tlsa_idx) < 0)
+		{
+		CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
+		if ((ret=ssl_tlsa_idx) < 0)
+			{
+			ret=ssl_tlsa_idx=SSL_get_ex_new_index(
+				0,"per-SSL TLSA",NULL,NULL,tlsa_free);
+			}
+		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
+		}
+
+	return ret;
+	}
+    else		/* commonly eliminated */
+	{
+	CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
+
+	if (ssl_tlsa_idx < 0)
+		{
+		CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
+		CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
+		got_write_lock = 1;
+		
+		if (ssl_tlsa_idx < 0)
+			{
+			ssl_tlsa_idx=SSL_get_ex_new_index(
+				0,"pre-SSL TLSA",NULL,NULL,tlsa_free);
+			}
+		}
+
+	if (got_write_lock)
+		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
+	else
+		CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
+	
+	return ssl_tlsa_idx;
+	}
+    }
+
+TLSA_EX_DATA *SSL_get_TLSA_ex_data(SSL *ssl)
+	{
+	int idx = SSL_get_TLSA_ex_data_idx();
+	TLSA_EX_DATA *ex;
+
+	if ((ex=SSL_get_ex_data(ssl,idx)) == NULL)
+		{
+		ex = OPENSSL_malloc(sizeof(TLSA_EX_DATA));
+		ex->tlsa_record = NULL;
+		ex->tlsa_witness = -1;
+		SSL_set_ex_data(ssl,idx,ex);
+		}
+
+	return ex;
+	}
+
 /*
  * return value:
  * -1:	format or digest error
  *  0:	match
  *  1:	no match
  */
-int tlsa_cmp(const X509 *cert, const unsigned char *tlsa_record, unsigned int reclen)
-{
+static int tlsa_cmp(const X509 *cert, const unsigned char *tlsa_record, unsigned int reclen)
+	{
 	const EVP_MD *md;
 	unsigned char digest[EVP_MAX_MD_SIZE];
 	unsigned int len, selector, matching_type;
 	int ret;
 
-	if (reclen<3) return -1;
+	if (reclen<3 || tlsa_record[0]>3)	return -1;
 
 	selector      = tlsa_record[1];
 	matching_type = tlsa_record[2];
@@ -788,29 +887,46 @@ int tlsa_cmp(const X509 *cert, const unsigned char *tlsa_record, unsigned int re
 	default:
 		return -1;
 	}
-}
+	}
 
-int dane_verify_callback(int ok, X509_STORE_CTX *ctx)
-{
+static int dane_verify_callback(int ok, X509_STORE_CTX *ctx)
+	{
 	SSL *s = X509_STORE_CTX_get_ex_data(ctx,SSL_get_ex_data_X509_STORE_CTX_idx());
 	int depth=X509_STORE_CTX_get_error_depth(ctx);
 	X509 *cert = sk_X509_value(ctx->chain,depth);
-	unsigned int reclen, certificate_usage, witness_usage=0x100;
-	const unsigned char *tlsa_record = s->tlsa_record;
-	int tlsa_ret = -1;
+	TLSA_EX_DATA *ex;
+	const unsigned char *tlsa_record;
+	int tlsa_ret=-1, mask=1;
 
-	if (s->verify_callback)	ok = s->verify_callback(ok,ctx);
 
-	if (tlsa_record == NULL) return ok;
-
-	if (tlsa_record == (void*)-1) {
-		ctx->error = X509_V_ERR_INVALID_CA;	/* temporary code? */
-		return 0;
+	if ((ex=SSL_get_ex_data(s, SSL_get_TLSA_ex_data_idx())) == NULL ||
+	    (tlsa_record=ex->tlsa_record) == NULL ||
+	    (tlsa_record==(void *)-1 && (ok=0,ctx->error=X509_V_ERR_INVALID_CA)) ||	/* temporary code? */
+	    /*
+	     * X509_verify_cert initially starts throwing ok=0 upon
+	     * failure to build certificate chain. As all certificate
+	     * usages except for 3 require verifiable chain, ok=0 at
+	     * non-zero depth is fatal. More specifically ok=0 at zero
+	     * depth is allowed only for usage 3. Special note about
+	     * usage 2. The chain is supposed to be filled by
+	     * dane_get_issuer, or once again we should tolerate ok=0
+	     * only in usage 3 case.
+	     */
+	    (!ok && depth!=0)) {
+		if (s->verify_callback)	return s->verify_callback(ok,ctx);
+		else			return ok;
 	}
 
-	while ((reclen = *(unsigned int *)tlsa_record)) {
-		tlsa_record += sizeof(unsigned int);
+	while (1) {
+	    unsigned int reclen, certificate_usage;
 
+	    memcpy(&reclen,tlsa_record,sizeof(reclen));
+
+	    if (reclen==0) break;
+
+	    tlsa_record += sizeof(reclen);
+
+	    if (!(ex->tlsa_mask&mask))	{ /* not matched yet */
 		/*
 		 * tlsa_record[0]	Certificate Usage field
 		 * tlsa_record[1]	Selector field
@@ -822,46 +938,41 @@ int dane_verify_callback(int ok, X509_STORE_CTX *ctx)
 		if (depth==0 || certificate_usage==0 || certificate_usage==2) {
 			tlsa_ret = tlsa_cmp(cert,tlsa_record,reclen);
 			if (tlsa_ret==0) {
-				s->tlsa_witness = depth<<8|certificate_usage;
+				ex->tlsa_witness = depth<<8|certificate_usage;
+				ex->tlsa_mask |= mask;
 				break;
 			}
-			else if (tlsa_ret==-1)
-				s->tlsa_witness = -1;	/* something phishy? */
+			else if (tlsa_ret==-1) {
+				ex->tlsa_witness = -1;	/* something phishy? */
+				ex->tlsa_mask |= mask;
+			}
 		}
 
-		tlsa_record += reclen;
+	    }
+	    tlsa_record += reclen;
+	    mask <<= 1;
 	}
 
 	if (depth==0) {
-		switch (s->tlsa_witness&0xff) {		/* witnessed usage */
-		case 0:	/* CA constraint */
-			if (s->tlsa_witness<0 && ctx->error==X509_V_OK)
-				ctx->error = X509_V_ERR_INVALID_CA;
-			return 0;
-		case 1:	/* service certificate constraint */
-			if (tlsa_ret!=0 && ctx->error==X509_V_OK)
-				ctx->error = X509_V_ERR_CERT_UNTRUSTED;
-			return 0;
-		case 2:	/* trust anchor assertion */
-			if ((s->tlsa_witness>>8)>0 && ctx->error==X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY)
-				ctx->error = X509_V_OK;
-			break;
-		case 3:	/* domain-issued certificate */
-			if (tlsa_ret==0)
-				ctx->error = X509_V_OK; /* override all errors? */
-			break;
-		default:/* there were TLSA records, but something phishy happened */
-			ctx->error = X509_V_ERR_CERT_UNTRUSTED;
-			return ok;
-		}
+		if (ex->tlsa_witness==-1)	/* no match */
+			ctx->error = X509_V_ERR_CERT_UNTRUSTED, ok=0;
+		else
+			ctx->error = X509_V_OK, ok=1;
 	}
 
-	/*
-	 * returning 1 makes verify procedure traverse the whole chain,
-	 * not actually approve it...
-	 */
-	return 1;
-}
+	if (s->verify_callback)	return s->verify_callback(ok,ctx);
+	else			return ok;
+	}
+
+static int dane_get_issuer(X509 **issuer,X509_STORE_CTX *ctx,X509 *x)
+	{
+	SSL *s = X509_STORE_CTX_get_ex_data(ctx,SSL_get_ex_data_X509_STORE_CTX_idx());
+	TLSA_EX_DATA *ex=SSL_get_ex_data(s, SSL_get_TLSA_ex_data_idx());
+
+	/* XXX TODO */
+
+	return ex->get_issuer(issuer,ctx,x);
+	}
 #endif
 
 int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk)
@@ -870,6 +981,9 @@ int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk)
 	int i;
 	X509_STORE *verify_store;
 	X509_STORE_CTX ctx;
+#ifndef OPENSSL_NO_DANE
+	TLSA_EX_DATA *ex;
+#endif
 
 	if (s->cert->verify_store)
 		verify_store = s->cert->verify_store;
@@ -906,12 +1020,45 @@ int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk)
 	X509_VERIFY_PARAM_set1(X509_STORE_CTX_get0_param(&ctx), s->param);
 
 #ifndef OPENSSL_NO_DANE
-	X509_STORE_CTX_set_verify_cb(&ctx, dane_verify_callback);
-	s->tlsa_witness = -1;
-#else
+	if (!s->server &&
+	    (ex=SSL_get_ex_data(s, SSL_get_TLSA_ex_data_idx()))!=NULL)
+		{
+		const unsigned char *tlsa_record = ex->tlsa_record;
+
+		/*
+		 * See if there are usable certificates we can add
+		 * to chain.
+		 */
+		while (tlsa_record!=(void *)-1)
+			{
+			unsigned int reclen;
+
+			memcpy (&reclen,tlsa_record,sizeof(reclen));
+
+			if (reclen==0)	break;
+
+			tlsa_record += sizeof(reclen);
+
+			if (tlsa_record[0]==2 &&
+			    tlsa_record[1]==0 && /* full certificate */
+			    tlsa_record[2]==0)   /* itself */
+				{ 
+				ex->get_issuer = ctx.get_issuer;
+				ctx.get_issuer = dane_get_issuer;
+
+				break;
+				}
+			tlsa_record += reclen;
+			}
+
+		ex->tlsa_mask = 0;
+		ex->tlsa_witness = -1;
+		X509_STORE_CTX_set_verify_cb(&ctx, dane_verify_callback);
+		}
+	else
+#endif
 	if (s->verify_callback)
 		X509_STORE_CTX_set_verify_cb(&ctx, s->verify_callback);
-#endif
 
 	if (s->ctx->app_verify_callback != NULL)
 #if 1 /* new with OpenSSL 0.9.7 */

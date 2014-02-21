@@ -129,12 +129,14 @@ unsigned char *SSL_get_tlsa_record_byname (const char *name,int port,int type)
 			if ((ret = OPENSSL_malloc(dlen)) == NULL) break;
 			
 			for (data=ret, i=0; tlsa->data[i]; i++) {
-				*(unsigned int *)data = dlen = (unsigned int)tlsa->len[i];
-				data += sizeof(unsigned int);
+				dlen = (unsigned int)tlsa->len[i];
+				memcpy(data,&dlen,sizeof(dlen));
+				data += sizeof(dlen);
 				memcpy(data,tlsa->data[i],dlen);
 				data += dlen;
 			}
-			*(unsigned int *)data = 0;	/* trailing zero */
+			dlen = 0;
+			memcpy(data,&dlen,sizeof(dlen)); /* trailing zero */
 		} while (0);	
 		p_ub_resolve_free.f(tlsa);
 	}
