@@ -77,6 +77,14 @@ the first valid certificate or B<SSL_CERT_SET_NEXT> to set the next valid
 certificate after the current certificate. These two operations can be
 used to iterate over all certificates in an B<SSL_CTX> structure.
 
+SSL_set_current_cert() also supports the option B<SSL_CERT_SET_SERVER>.
+If B<ssl> is a server and has sent a certificate to a connected client
+this option sets that certificate to the current certificate and returns 1.
+If the negotiated ciphersuite is anonymous (and thus no certificate will
+be sent) 2 is returned and the current certificate is unchanged. If B<ssl>
+is not a server or a certificate has not been sent 0 is returned and
+the current certificate is unchanged.
+
 All these functions are implemented as macros. Those containing a B<1>
 increment the reference count of the supplied certificate or chain so it must
 be freed at some point after the operation. Those containing a B<0> do

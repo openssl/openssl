@@ -2635,6 +2635,8 @@ CERT_PKEY *ssl_get_server_send_pkey(const SSL *s)
 	int i;
 
 	c = s->cert;
+	if (!s->s3 || !s->s3->tmp.new_cipher)
+		return NULL;
 	ssl_set_cert_masks(c, s->s3->tmp.new_cipher);
 
 #ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL

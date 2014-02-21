@@ -3432,6 +3432,24 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		return ssl_cert_select_current(s->cert, (X509 *)parg);
 
 	case SSL_CTRL_SET_CURRENT_CERT:
+		if (larg == SSL_CERT_SET_SERVER)
+			{
+			CERT_PKEY *cpk;
+			const SSL_CIPHER *cipher;
+			if (!s->server)
+				return 0;
+			cipher = s->s3->tmp.new_cipher;
+			if (!cipher)
+				return 0;
+			/* No certificate for unauthenticated ciphersuites */
+			if (cipher->algorithm_auth & SSL_aNULL)
+				return 2;
+			cpk = ssl_get_server_send_pkey(s);
+			if (!cpk)
+				return 0;
+			s->cert->key = cpk;
+			return 1;
+			}
 		return ssl_cert_set_current(s->cert, larg);
 
 #ifndef OPENSSL_NO_EC
