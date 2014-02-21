@@ -288,10 +288,49 @@ ___
 # every *2nd* cycle. Thus 3x interleave was the one providing optimal
 # utilization, i.e. when subroutine's throughput is virtually same as
 # of non-interleaved subroutine [for number of input blocks up to 3].
-# This is why it makes no sense to implement 2x subroutine.
-# aes[enc|dec] latency in next processor generation is 8, but the
-# instructions can be scheduled every cycle. Optimal interleave for
-# new processor is therefore 8x...
+# This is why it originally made no sense to implement 2x subroutine.
+# But times change and it became appropriate to spend extra 192 bytes
+# on 2x subroutine on Atom Silvermont account. For processors that
+# can schedule aes[enc|dec] every cycle optimal interleave factor
+# equals to corresponding instructions latency. 8x is optimal for
+# * Bridge and "super-optimal" for other Intel CPUs... 
+
+sub aesni_generate2 {
+my $dir=shift;
+# As already mentioned it takes in $key and $rounds, which are *not*
+# preserved. $inout[0-1] is cipher/clear text...
+$code.=<<___;
+.type	_aesni_${dir}rypt2,\@abi-omnipotent
+.align	16
+_aesni_${dir}rypt2:
+	$movkey	($key),$rndkey0
+	shl	\$4,$rounds
+	$movkey	16($key),$rndkey1
+	xorps	$rndkey0,$inout0
+	xorps	$rndkey0,$inout1
+	$movkey	32($key),$rndkey0
+	lea	32($key,$rounds),$key
+	neg	%rax				# $rounds
+	add	\$16,%rax
+
+.L${dir}_loop2:
+	aes${dir}	$rndkey1,$inout0
+	aes${dir}	$rndkey1,$inout1
+	$movkey		($key,%rax),$rndkey1
+	add		\$32,%rax
+	aes${dir}	$rndkey0,$inout0
+	aes${dir}	$rndkey0,$inout1
+	$movkey		-16($key,%rax),$rndkey0
+	jnz		.L${dir}_loop2
+
+	aes${dir}	$rndkey1,$inout0
+	aes${dir}	$rndkey1,$inout1
+	aes${dir}last	$rndkey0,$inout0
+	aes${dir}last	$rndkey0,$inout1
+	ret
+.size	_aesni_${dir}rypt2,.-_aesni_${dir}rypt2
+___
+}
 sub aesni_generate3 {
 my $dir=shift;
 # As already mentioned it takes in $key and $rounds, which are *not*
@@ -524,6 +563,8 @@ _aesni_${dir}rypt8:
 .size	_aesni_${dir}rypt8,.-_aesni_${dir}rypt8
 ___
 }
+&aesni_generate2("enc") if ($PREFIX eq "aesni");
+&aesni_generate2("dec");
 &aesni_generate3("enc") if ($PREFIX eq "aesni");
 &aesni_generate3("dec");
 &aesni_generate4("enc") if ($PREFIX eq "aesni");
@@ -645,8 +686,7 @@ $code.=<<___;
 	jmp	.Lecb_ret
 .align	16
 .Lecb_enc_two:
-	xorps	$inout2,$inout2
-	call	_aesni_encrypt3
+	call	_aesni_encrypt2
 	movups	$inout0,($out)
 	movups	$inout1,0x10($out)
 	jmp	.Lecb_ret
@@ -782,8 +822,7 @@ $code.=<<___;
 	jmp	.Lecb_ret
 .align	16
 .Lecb_dec_two:
-	xorps	$inout2,$inout2
-	call	_aesni_decrypt3
+	call	_aesni_decrypt2
 	movups	$inout0,($out)
 	movups	$inout1,0x10($out)
 	jmp	.Lecb_ret
@@ -1875,7 +1914,7 @@ $code.=<<___;
 	xorps	@tweak[0],$inout0
 	xorps	@tweak[1],$inout1
 
-	call	_aesni_encrypt3
+	call	_aesni_encrypt2
 
 	xorps	@tweak[0],$inout0
 	movdqa	@tweak[2],@tweak[0]
@@ -2322,7 +2361,7 @@ $code.=<<___;
 	xorps	@tweak[0],$inout0
 	xorps	@tweak[1],$inout1
 
-	call	_aesni_decrypt3
+	call	_aesni_decrypt2
 
 	xorps	@tweak[0],$inout0
 	movdqa	@tweak[2],@tweak[0]
@@ -2831,8 +2870,7 @@ $code.=<<___;
 .align	16
 .Lcbc_dec_two:
 	movaps	$inout1,$in1
-	xorps	$inout2,$inout2
-	call	_aesni_decrypt3
+	call	_aesni_decrypt2
 	pxor	$iv,$inout0
 	movaps	$in1,$iv
 	pxor	$in0,$inout1
