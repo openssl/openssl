@@ -1100,7 +1100,7 @@ int SSL_renegotiate_pending(SSL *s)
 long SSL_ctrl(SSL *s,int cmd,long larg,void *parg)
 	{
 	long l;
-#ifndef OPNESSL_NO_DANE
+#ifndef OPENSSL_NO_DANE
 	const char *hostname = NULL;
 #endif
 
