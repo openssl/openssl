@@ -1195,37 +1195,65 @@ int ssl_build_cert_chain(CERT *c, X509_STORE *chain_store, int flags)
 	X509_STORE_CTX xs_ctx;
 	STACK_OF(X509) *chain = NULL, *untrusted = NULL;
 	X509 *x;
-	int i;
+	int i, rv = 0;
 
 	if (!cpk->x509)
 		{
 		SSLerr(SSL_F_SSL_BUILD_CERT_CHAIN, SSL_R_NO_CERTIFICATE_SET);
-		return 0;
+		goto err;
 		}
+	/* Rearranging and check the chain: add everything to a store */
+	if (flags & SSL_BUILD_CHAIN_FLAG_CHECK)
+		{
+		chain_store = X509_STORE_new();
+		if (!chain_store)
+			goto err;
+		for (i = 0; i < sk_X509_num(cpk->chain); i++)
+			{
+			x = sk_X509_value(cpk->chain, i);
+			if (!X509_STORE_add_cert(chain_store, x))
+				goto err;
+			}
+		/* Add EE cert too: it might be self signed */
+		if (!X509_STORE_add_cert(chain_store, cpk->x509))
+			goto err;
+		}
+	else
+		{
+		if (c->chain_store)
+			chain_store = c->chain_store;
 
-	if (c->chain_store)
-		chain_store = c->chain_store;
-
-	if (flags & SSL_BUILD_CHAIN_FLAG_UNTRUSTED)
-		untrusted = cpk->chain;
+		if (flags & SSL_BUILD_CHAIN_FLAG_UNTRUSTED)
+			untrusted = cpk->chain;
+		}
 
 	if (!X509_STORE_CTX_init(&xs_ctx, chain_store, cpk->x509, untrusted))
 		{
 		SSLerr(SSL_F_SSL_BUILD_CERT_CHAIN, ERR_R_X509_LIB);
-		return 0;
+		goto err;
 		}
 	/* Set suite B flags if needed */
 	X509_STORE_CTX_set_flags(&xs_ctx, c->cert_flags & SSL_CERT_FLAG_SUITEB_128_LOS);
 
 	i = X509_verify_cert(&xs_ctx);
+	if (i <= 0 && flags & SSL_BUILD_CHAIN_FLAG_IGNORE_ERROR)
+		{
+		ERR_clear_error();
+		i = 1;
+		}
 	if (i > 0)
 		chain = X509_STORE_CTX_get1_chain(&xs_ctx);
-	X509_STORE_CTX_cleanup(&xs_ctx);
 	if (i <= 0)
 		{
 		SSLerr(SSL_F_SSL_BUILD_CERT_CHAIN, SSL_R_CERTIFICATE_VERIFY_FAILED);
-		return 0;
+		i = X509_STORE_CTX_get_error(&xs_ctx);
+		ERR_add_error_data(2, "Verify error:",
+					X509_verify_cert_error_string(i));
+
+		X509_STORE_CTX_cleanup(&xs_ctx);
+		goto err;
 		}
+	X509_STORE_CTX_cleanup(&xs_ctx);
 	if (cpk->chain)
 		sk_X509_pop_free(cpk->chain, X509_free);
 	/* Remove EE certificate from chain */
@@ -1233,12 +1261,25 @@ int ssl_build_cert_chain(CERT *c, X509_STORE *chain_store, int flags)
 	X509_free(x);
 	if (flags & SSL_BUILD_CHAIN_FLAG_NO_ROOT)
 		{
-		x = sk_X509_pop(chain);
-		X509_free(x);
+		if (sk_X509_num(chain) > 0)
+			{
+			/* See if last cert is self signed */
+			x = sk_X509_value(chain, sk_X509_num(chain) - 1);
+			X509_check_purpose(x, -1, 0);
+			if (x->ex_flags & EXFLAG_SS)
+				{
+				x = sk_X509_pop(chain);
+				X509_free(x);
+				}
+			}
 		}
 	cpk->chain = chain;
+	rv = 1;
+	err:
+	if (flags & SSL_BUILD_CHAIN_FLAG_CHECK)
+		X509_STORE_free(chain_store);
 
-	return 1;
+	return rv;
 	}
 
 int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain, int ref)

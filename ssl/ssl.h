@@ -784,9 +784,13 @@ struct ssl_session_st
 
 /* Flags for building certificate chains */
 /* Treat any existing certificates as untrusted CAs */
-#define SSL_BUILD_CHAIN_FLAG_UNTRUSTED	0x1
+#define SSL_BUILD_CHAIN_FLAG_UNTRUSTED		0x1
 /* Don't include root CA in chain */
-#define SSL_BUILD_CHAIN_FLAG_NO_ROOT	0x2
+#define SSL_BUILD_CHAIN_FLAG_NO_ROOT		0x2
+/* Just check certificates already there */
+#define SSL_BUILD_CHAIN_FLAG_CHECK		0x4
+/* Ignore verification errors */
+#define SSL_BUILD_CHAIN_FLAG_IGNORE_ERROR	0x8
 
 /* Flags returned by SSL_check_chain */
 /* Certificate can be used with this session */
