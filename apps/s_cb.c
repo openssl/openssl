@@ -259,6 +259,7 @@ int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
 int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
 		       STACK_OF(X509) *chain, int build_chain)
 	{
+	int chflags = chain ? SSL_BUILD_CHAIN_FLAG_CHECK : 0;
 	if (cert == NULL)
 		return 1;
 	if (SSL_CTX_use_certificate(ctx,cert) <= 0)
@@ -288,7 +289,7 @@ int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
 		ERR_print_errors(bio_err);
 		return 0;
 		}
-	if (!chain && build_chain && !SSL_CTX_build_cert_chain(ctx, 0))
+	if (build_chain && !SSL_CTX_build_cert_chain(ctx, chflags))
 		{
 		BIO_printf(bio_err,"error building certificate chain\n");
 		ERR_print_errors(bio_err);
