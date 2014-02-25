@@ -63,6 +63,15 @@
 #include <openssl/bn.h>
 #include "../ssl/ssl_locl.h"
 
+#if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)
+#define SCTS_TIMESTAMP unsigned __int64
+#elif defined(__arch64__)
+#define SCTS_TIMESTAMP unsigned long
+#else
+#define SCTS_TIMESTAMP unsigned long long
+#endif
+
+
 static int i2r_scts(X509V3_EXT_METHOD *method, ASN1_OCTET_STRING *oct, BIO *out, int indent);
 
 const X509V3_EXT_METHOD v3_ct_scts[] = {
@@ -96,7 +105,7 @@ static void tls12_signature_print(BIO *out, const unsigned char *data)
 		BIO_printf(out, "%s", OBJ_nid2ln(nid));
 	}
 
-static void timestamp_print(BIO *out, BN_ULLONG timestamp)
+static void timestamp_print(BIO *out, SCTS_TIMESTAMP timestamp)
 	{
 	ASN1_GENERALIZEDTIME *gen;
 	char genstr[20];
@@ -118,7 +127,7 @@ static void timestamp_print(BIO *out, BN_ULLONG timestamp)
 static int i2r_scts(X509V3_EXT_METHOD *method, ASN1_OCTET_STRING *oct,
 		       BIO *out, int indent)
 	{
-	BN_ULLONG timestamp;
+	SCTS_TIMESTAMP timestamp;
 	unsigned char* data = oct->data;
 	unsigned short listlen, sctlen = 0, fieldlen;
 
