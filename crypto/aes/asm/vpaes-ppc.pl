@@ -1371,7 +1371,7 @@ Lschedule_mangle_dec:
 	addi	$sp,$sp,$FRAME
 	blr
 	.long	0
-	.byte	0,12,0x04,1,0x80,3,0
+	.byte	0,12,0x04,1,0x80,0,3,0
 	.long	0
 .size	.vpaes_set_encrypt_key,.-.vpaes_set_encrypt_key
 
@@ -1454,7 +1454,7 @@ Lschedule_mangle_dec:
 	addi	$sp,$sp,$FRAME
 	blr
 	.long	0
-	.byte	0,12,0x04,1,0x80,3,0
+	.byte	0,12,0x04,1,0x80,0,3,0
 	.long	0
 .size	.vpaes_set_decrypt_key,.-.vpaes_set_decrypt_key
 ___
