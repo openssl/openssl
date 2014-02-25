@@ -141,9 +141,12 @@ static int i2r_scts(X509V3_EXT_METHOD *method, ASN1_OCTET_STRING *oct,
 
 		BIO_printf(out, "%*sSigned Certificate Timestamp:", indent,
 			   "");
+		BIO_printf(out, "\n%*sVersion   : ", indent + 4, "");
 
 		if (*data == 0)		/* SCT v1 */
 			{
+			BIO_printf(out, "v1(0)");
+
 			/* Fixed-length header:
 			 *		struct {
 			 * (1 byte)	  Version sct_version;
@@ -154,9 +157,6 @@ static int i2r_scts(X509V3_EXT_METHOD *method, ASN1_OCTET_STRING *oct,
 			if (sctlen < 43)
 				return 0;
 			sctlen -= 43;
-
-			BIO_printf(out, "\n%*sVersion   : v1(0)", indent + 4,
-				   "");
 
 			BIO_printf(out, "\n%*sLog ID    : ", indent + 4, "");
 			BIO_hex_string(out, indent + 16, 16, data + 1, 32);
@@ -195,9 +195,16 @@ static int i2r_scts(X509V3_EXT_METHOD *method, ASN1_OCTET_STRING *oct,
 				return 0;
 			BIO_printf(out, "\n%*s            ", indent + 4, "");
 			BIO_hex_string(out, indent + 16, 16, data, fieldlen);
-			if (listlen > 0) BIO_printf(out, "\n");
 			data += fieldlen;
 			}
+		else			/* Unknown version */
+			{
+			BIO_printf(out, "unknown\n%*s", indent + 16, "");
+			BIO_hex_string(out, indent + 16, 16, data, sctlen);
+			data += sctlen;
+			}
+
+		if (listlen > 0) BIO_printf(out, "\n");
 		}
 
 	return 1;
