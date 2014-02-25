@@ -4178,3 +4178,18 @@
 #define NID_ct_cert_scts		954
 #define OBJ_ct_cert_scts		1L,3L,6L,1L,4L,1L,11129L,2L,4L,5L
 
+#define SN_jurisdictionLocalityName		"jurisdictionL"
+#define LN_jurisdictionLocalityName		"jurisdictionLocalityName"
+#define NID_jurisdictionLocalityName		955
+#define OBJ_jurisdictionLocalityName		1L,3L,6L,1L,4L,1L,311L,60L,2L,1L,1L
+
+#define SN_jurisdictionStateOrProvinceName		"jurisdictionST"
+#define LN_jurisdictionStateOrProvinceName		"jurisdictionStateOrProvinceName"
+#define NID_jurisdictionStateOrProvinceName		956
+#define OBJ_jurisdictionStateOrProvinceName		1L,3L,6L,1L,4L,1L,311L,60L,2L,1L,2L
+
+#define SN_jurisdictionCountryName		"jurisdictionC"
+#define LN_jurisdictionCountryName		"jurisdictionCountryName"
+#define NID_jurisdictionCountryName		957
+#define OBJ_jurisdictionCountryName		1L,3L,6L,1L,4L,1L,311L,60L,2L,1L,3L
+
