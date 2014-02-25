@@ -1010,9 +1010,9 @@ $!
 $!    Tell The User We Don't Know What They Want.
 $!
 $     WRITE SYS$OUTPUT ""
-$     WRITE SYS$OUTPUT "USAGE:   @MAKEVMS.COM [Target] [Pointer size] [Debug option] <Compiler>"
+$     WRITE SYS$OUTPUT "USAGE:   @MAKEVMS.COM [Target] [Pointer size] [Debug option] <Compiler> <TCP/IP library>"
 $     WRITE SYS$OUTPUT ""
-$     WRITE SYS$OUTPUT "Example: @MAKEVMS.COM ALL """" NODEBUG "
+$     WRITE SYS$OUTPUT "Example: @MAKEVMS.COM ALL """" NODEBUG DECC TCPIP"
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT "The Target ",P1," Is Invalid.  The Valid Target Options Are:"
 $     WRITE SYS$OUTPUT ""

@@ -176,6 +176,8 @@
 #define SSL_CTX_set_default_passwd_cb_userdata  SSL_CTX_set_def_passwd_cb_ud
 #undef SSL_COMP_get_compression_methods
 #define SSL_COMP_get_compression_methods	SSL_COMP_get_compress_methods
+#undef SSL_COMP_set0_compression_methods
+#define SSL_COMP_set0_compression_methods       SSL_COMP_set0_compress_methods
 #undef ssl_add_clienthello_renegotiate_ext
 #define ssl_add_clienthello_renegotiate_ext	ssl_add_clienthello_reneg_ext
 #undef ssl_add_serverhello_renegotiate_ext
