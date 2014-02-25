@@ -7,6 +7,7 @@
 
   Known issues in OpenSSL 1.0.2:
 
+      o v3_scts.c compilation error on some platforms: fixed in 1.0.2-beta2-dev
       o Issues compiling WIN32 fips static libraries: fixed in 1.0.2-beta2-dev
 
   Major changes between OpenSSL 1.0.1f and OpenSSL 1.0.2 [in beta]:
