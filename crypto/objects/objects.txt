@@ -1341,3 +1341,10 @@ secg-scheme 14 3 : dhSinglePass-cofactorDH-sha512kdf-scheme
 1 3 6 1 4 1 11129 2 4 3	: ct_precert_poison		: CT Precertificate Poison
 1 3 6 1 4 1 11129 2 4 4	: ct_precert_signer		: CT Precertificate Signer
 1 3 6 1 4 1 11129 2 4 5	: ct_cert_scts			: CT Certificate SCTs
+
+# CABForum EV SSL Certificate Guidelines
+# (see https://cabforum.org/extended-validation/)
+# OIDs for Subject Jurisdiction of Incorporation or Registration
+1 3 6 1 4 1 311 60 2 1 1	: jurisdictionL		: jurisdictionLocalityName
+1 3 6 1 4 1 311 60 2 1 2	: jurisdictionST	: jurisdictionStateOrProvinceName
+1 3 6 1 4 1 311 60 2 1 3	: jurisdictionC		: jurisdictionCountryName

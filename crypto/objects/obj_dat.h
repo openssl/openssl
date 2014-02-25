@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 955
-#define NUM_SN 948
-#define NUM_LN 948
-#define NUM_OBJ 887
+#define NUM_NID 958
+#define NUM_SN 951
+#define NUM_LN 951
+#define NUM_OBJ 890
 
-static const unsigned char lvalues[6228]={
+static const unsigned char lvalues[6261]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -955,6 +955,9 @@ static const unsigned char lvalues[6228]={
 0x2B,0x06,0x01,0x04,0x01,0xD6,0x79,0x02,0x04,0x03,/* [6197] OBJ_ct_precert_poison */
 0x2B,0x06,0x01,0x04,0x01,0xD6,0x79,0x02,0x04,0x04,/* [6207] OBJ_ct_precert_signer */
 0x2B,0x06,0x01,0x04,0x01,0xD6,0x79,0x02,0x04,0x05,/* [6217] OBJ_ct_cert_scts */
+0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x3C,0x02,0x01,0x01,/* [6227] OBJ_jurisdictionLocalityName */
+0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x3C,0x02,0x01,0x02,/* [6238] OBJ_jurisdictionStateOrProvinceName */
+0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x3C,0x02,0x01,0x03,/* [6249] OBJ_jurisdictionCountryName */
 };
 
 static const ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2512,6 +2515,12 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 	10,&(lvalues[6207]),0},
 {"ct_cert_scts","CT Certificate SCTs",NID_ct_cert_scts,10,
 	&(lvalues[6217]),0},
+{"jurisdictionL","jurisdictionLocalityName",
+	NID_jurisdictionLocalityName,11,&(lvalues[6227]),0},
+{"jurisdictionST","jurisdictionStateOrProvinceName",
+	NID_jurisdictionStateOrProvinceName,11,&(lvalues[6238]),0},
+{"jurisdictionC","jurisdictionCountryName",
+	NID_jurisdictionCountryName,11,&(lvalues[6249]),0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -3126,6 +3135,9 @@ static const unsigned int sn_objs[NUM_SN]={
 86,	/* "issuerAltName" */
 770,	/* "issuingDistributionPoint" */
 492,	/* "janetMailbox" */
+957,	/* "jurisdictionC" */
+955,	/* "jurisdictionL" */
+956,	/* "jurisdictionST" */
 150,	/* "keyBag" */
 83,	/* "keyUsage" */
 477,	/* "lastModifiedBy" */
@@ -4063,6 +4075,9 @@ static const unsigned int ln_objs[NUM_LN]={
 645,	/* "itu-t" */
 492,	/* "janetMailbox" */
 646,	/* "joint-iso-itu-t" */
+957,	/* "jurisdictionCountryName" */
+955,	/* "jurisdictionLocalityName" */
+956,	/* "jurisdictionStateOrProvinceName" */
 150,	/* "keyBag" */
 773,	/* "kisa" */
 477,	/* "lastModifiedBy" */
@@ -5304,5 +5319,8 @@ static const unsigned int obj_objs[NUM_OBJ]={
 154,	/* OBJ_secretBag                    1 2 840 113549 1 12 10 1 5 */
 155,	/* OBJ_safeContentsBag              1 2 840 113549 1 12 10 1 6 */
 34,	/* OBJ_idea_cbc                     1 3 6 1 4 1 188 7 1 1 2 */
+955,	/* OBJ_jurisdictionLocalityName     1 3 6 1 4 1 311 60 2 1 1 */
+956,	/* OBJ_jurisdictionStateOrProvinceName 1 3 6 1 4 1 311 60 2 1 2 */
+957,	/* OBJ_jurisdictionCountryName      1 3 6 1 4 1 311 60 2 1 3 */
 };
 
