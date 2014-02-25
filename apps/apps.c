@@ -3114,7 +3114,7 @@ double app_tminterval(int stop,int usertime)
 
 	if (proc==NULL)
 		{
-		if (GetVersion() < 0x80000000)
+		if (check_winnt())
 			proc = OpenProcess(PROCESS_QUERY_INFORMATION,FALSE,
 						GetCurrentProcessId());
 		if (proc==NULL) proc = (HANDLE)-1;
