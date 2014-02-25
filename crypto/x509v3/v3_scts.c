@@ -71,6 +71,15 @@
 #define SCTS_TIMESTAMP unsigned long long
 #endif
 
+#define n2l8(c,l)	(l =((SCTS_TIMESTAMP)(*((c)++)))<<56, \
+			 l|=((SCTS_TIMESTAMP)(*((c)++)))<<48, \
+			 l|=((SCTS_TIMESTAMP)(*((c)++)))<<40, \
+			 l|=((SCTS_TIMESTAMP)(*((c)++)))<<32, \
+			 l|=((SCTS_TIMESTAMP)(*((c)++)))<<24, \
+			 l|=((SCTS_TIMESTAMP)(*((c)++)))<<16, \
+			 l|=((SCTS_TIMESTAMP)(*((c)++)))<< 8, \
+			 l|=((SCTS_TIMESTAMP)(*((c)++))))
+
 
 static int i2r_scts(X509V3_EXT_METHOD *method, ASN1_OCTET_STRING *oct, BIO *out, int indent);
 
