@@ -119,7 +119,7 @@ elsif ($FLAVOR =~ /CE/)
     $base_cflags.=' -I$(WCECOMPAT)/include'		if (defined($ENV{'WCECOMPAT'}));
     $base_cflags.=' -I$(PORTSDK_LIBPATH)/../../include'	if (defined($ENV{'PORTSDK_LIBPATH'}));
     if (`$cc 2>&1` =~ /Version ([0-9]+)\./ && $1>=14) {
-	$base_cflags.=($shlib and !$fipscanisterbuild)?' /MD':' /MT';
+	$base_cflags.=$shlib?' /MD':' /MT';
     } else {
 	$base_cflags.=' /MC';
     }
@@ -130,13 +130,13 @@ elsif ($FLAVOR =~ /CE/)
 else	# Win32
     {
     $base_cflags= " $mf_cflag";
-    my $f = $shlib?' /MD':' /MT';
+    my $f = $shlib || $fips ?' /MD':' /MT';
     $ff = "/fixed";
     $opt_cflags=$f.' /Ox /O2 /Ob2';
     $dbg_cflags=$f.'d /Od -DDEBUG -D_DEBUG';
     $lflags="/nologo /subsystem:console /opt:ref";
     }
-$lib_cflags='/Zl' if (!$shlib);	# remove /DEFAULTLIBs from static lib
+$lib_cflag='/Zl' if (!$shlib);	# remove /DEFAULTLIBs from static lib
 $mlflags='';
 
 $out_def ="out32";	$out_def.="dll"			if ($shlib);
