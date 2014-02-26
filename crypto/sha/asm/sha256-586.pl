@@ -190,7 +190,7 @@ sub BODY_00_15() {
 	&mov	(&DWP(4,"esp"),"edi");	# inp
 	&mov	(&DWP(8,"esp"),"eax");	# inp+num*128
 	&mov	(&DWP(12,"esp"),"ebx");	# saved sp
-						if (!$i386) {
+						if (!$i386 && $xmm) {
 	&picmeup("edx","OPENSSL_ia32cap_P",$K256,&label("K256"));
 	&mov	("ecx",&DWP(0,"edx"));
 	&mov	("ebx",&DWP(4,"edx"));
