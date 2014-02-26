@@ -5711,7 +5711,7 @@ $multilib     =
 
 *** solaris-x86-cc
 $cc           = cc
-$cflags       = -fast -O -Xa
+$cflags       = -fast -xarch=generic -O -Xa
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
