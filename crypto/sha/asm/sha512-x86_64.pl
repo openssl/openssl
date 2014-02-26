@@ -646,7 +646,7 @@ $code.=<<___;
 
 .align	16
 .Lssse3_00_47:
-	sub	\$-16*2*$SZ,$Tbl	# size optimization
+	sub	\$`-16*2*$SZ`,$Tbl	# size optimization
 ___
 sub Xupdate_256_SSSE3 () {
 	(
@@ -992,7 +992,7 @@ $code.=<<___;
 
 .align	16
 .Lxop_00_47:
-	sub	\$-16*2*$SZ,$Tbl	# size optimization
+	sub	\$`-16*2*$SZ`,$Tbl	# size optimization
 ___
 sub XOP_256_00_47 () {
 my $j = shift;
@@ -1154,7 +1154,7 @@ $code.=<<___;
 
 .align	16
 .Lxop_00_47:
-	add	\$16*2*$SZ,$Tbl
+	add	\$`16*2*$SZ`,$Tbl
 ___
 sub XOP_512_00_47 () {
 my $j = shift;
@@ -1370,7 +1370,7 @@ $code.=<<___;
 
 .align	16
 .Lavx_00_47:
-	sub	\$-16*2*$SZ,$Tbl	# size optimization
+	sub	\$`-16*2*$SZ`,$Tbl	# size optimization
 ___
 sub Xupdate_256_AVX () {
 	(
@@ -1484,7 +1484,7 @@ $code.=<<___;
 
 .align	16
 .Lavx_00_47:
-	add	\$16*2*$SZ,$Tbl
+	add	\$`16*2*$SZ`,$Tbl
 ___
 sub Xupdate_512_AVX () {
 	(
