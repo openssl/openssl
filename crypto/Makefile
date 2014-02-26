@@ -105,7 +105,7 @@ lib:	$(LIB)
 	@touch lib
 $(LIB):	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
-	[ -z "$(FIPSLIBDIR)" ] || $(AR) $(LIB) $(FIPSLIBDIR)fipscanister.o
+	test -z "$(FIPSLIBDIR)" || $(AR) $(LIB) $(FIPSLIBDIR)fipscanister.o
 	$(RANLIB) $(LIB) || echo Never mind.
 
 shared: buildinf.h lib subdirs
