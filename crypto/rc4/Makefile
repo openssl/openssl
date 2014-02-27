@@ -42,7 +42,7 @@ lib:	$(LIBOBJ)
 	@touch lib
 
 rc4-586.s:	asm/rc4-586.pl ../perlasm/x86asm.pl
-	$(PERL) asm/rc4-586.pl $(PERLASM_SCHEME) $(CFLAGS) > $@
+	$(PERL) asm/rc4-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
 
 rc4-x86_64.s: asm/rc4-x86_64.pl
 	$(PERL) asm/rc4-x86_64.pl $(PERLASM_SCHEME) > $@
