@@ -60,6 +60,9 @@
 #include "cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
 
 int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 	{
@@ -212,12 +215,22 @@ const EVP_CIPHER *EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx)
 
 unsigned long EVP_CIPHER_flags(const EVP_CIPHER *cipher)
 	{
+#ifdef OPENSSL_FIPS
+	const EVP_CIPHER *fcipher;
+	fcipher = FIPS_get_cipherbynid(EVP_CIPHER_type(cipher));
+	if (fcipher && fcipher->flags & EVP_CIPH_FLAG_FIPS)
+		return cipher->flags | EVP_CIPH_FLAG_FIPS;
+#endif
 	return cipher->flags;
 	}
 
 unsigned long EVP_CIPHER_CTX_flags(const EVP_CIPHER_CTX *ctx)
 	{
+#ifdef OPENSSL_FIPS
+	return EVP_CIPHER_flags(ctx->cipher);
+#else
 	return ctx->cipher->flags;
+#endif
 	}
 
 void *EVP_CIPHER_CTX_get_app_data(const EVP_CIPHER_CTX *ctx)
@@ -287,6 +300,12 @@ int EVP_MD_size(const EVP_MD *md)
 
 unsigned long EVP_MD_flags(const EVP_MD *md)
 	{
+#ifdef OPENSSL_FIPS
+	const EVP_MD *fmd;
+	fmd = FIPS_get_digestbynid(EVP_MD_type(md));
+	if (fmd && fmd->flags & EVP_MD_FLAG_FIPS)
+		return md->flags | EVP_MD_FLAG_FIPS;
+#endif
 	return md->flags;
 	}
 

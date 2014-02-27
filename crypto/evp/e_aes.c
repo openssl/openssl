@@ -56,9 +56,11 @@
 #include <assert.h>
 #include <openssl/aes.h>
 #include "evp_locl.h"
-#ifndef OPENSSL_FIPS
 #include "modes_lcl.h"
 #include <openssl/rand.h>
+
+#undef EVP_CIPH_FLAG_FIPS
+#define EVP_CIPH_FLAG_FIPS 0
 
 typedef struct
 	{
@@ -1136,11 +1138,6 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 	case EVP_CTRL_GCM_SET_IVLEN:
 		if (arg <= 0)
 			return 0;
-#ifdef OPENSSL_FIPS
-		if (FIPS_module_mode() && !(c->flags & EVP_CIPH_FLAG_NON_FIPS_ALLOW)
-						 && arg < 12)
-			return 0;
-#endif
 		/* Allocate memory for IV if needed */
 		if ((arg > EVP_MAX_IV_LENGTH) && (arg > gctx->ivlen))
 			{
@@ -1703,15 +1700,6 @@ static int aes_xts_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		return 0;
 	if (!out || !in || len<AES_BLOCK_SIZE)
 		return 0;
-#ifdef OPENSSL_FIPS
-	/* Requirement of SP800-38E */
-	if (FIPS_module_mode() && !(ctx->flags & EVP_CIPH_FLAG_NON_FIPS_ALLOW) &&
-			(len > (1UL<<20)*16))
-		{
-		EVPerr(EVP_F_AES_XTS_CIPHER, EVP_R_TOO_LARGE);
-		return 0;
-		}
-#endif
 	if (xctx->stream)
 		(*xctx->stream)(in, out, len,
 				xctx->xts.key1, xctx->xts.key2, ctx->iv);
@@ -1985,5 +1973,3 @@ const EVP_CIPHER *EVP_aes_256_wrap(void)
 	{
 	return &aes_256_wrap;
 	}
-
-#endif
