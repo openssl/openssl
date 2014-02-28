@@ -1877,6 +1877,18 @@ STACK_OF(SSL_COMP) *SSL_COMP_set0_compression_methods(STACK_OF(SSL_COMP) *meths)
 	return old_meths;
 	}
 
+static void cmeth_free(SSL_COMP *cm)
+	{
+	OPENSSL_free(cm);
+	}
+
+void SSL_COMP_free_compression_methods(void)
+	{
+	STACK_OF(SSL_COMP) *old_meths = ssl_comp_methods;
+	ssl_comp_methods = NULL;
+	sk_SSL_COMP_pop_free(old_meths, cmeth_free);
+	}
+
 int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 	{
 	SSL_COMP *comp;
