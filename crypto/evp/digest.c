@@ -119,6 +119,7 @@
 
 #ifdef OPENSSL_FIPS
 #include <openssl/fips.h>
+#include "evp_locl.h"
 #endif
 
 void EVP_MD_CTX_init(EVP_MD_CTX *ctx)
@@ -152,7 +153,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 		const EVP_MD *fipsmd;
 		if (type)
 			{
-			fipsmd = FIPS_get_digestbynid(EVP_MD_type(type));
+			fipsmd = evp_get_fips_md(type);
 			if (fipsmd)
 				type = fipsmd;
 			}

@@ -62,6 +62,7 @@
 #include <openssl/objects.h>
 #ifdef OPENSSL_FIPS
 #include <openssl/fips.h>
+#include "evp_locl.h"
 #endif
 
 int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
@@ -298,11 +299,27 @@ int EVP_MD_size(const EVP_MD *md)
 	return md->md_size;
 	}
 
+#ifdef OPENSSL_FIPS
+
+const EVP_MD *evp_get_fips_md(const EVP_MD *md)
+	{
+	int nid = EVP_MD_type(md);
+	if (nid == NID_dsa)
+		return FIPS_evp_dss1();
+	else if (nid == NID_dsaWithSHA)
+		return FIPS_evp_dss();
+	else if (nid == NID_ecdsa_with_SHA1)
+		return FIPS_evp_ecdsa();
+	else
+		return FIPS_get_digestbynid(nid);
+	}
+#endif
+
 unsigned long EVP_MD_flags(const EVP_MD *md)
 	{
 #ifdef OPENSSL_FIPS
 	const EVP_MD *fmd;
-	fmd = FIPS_get_digestbynid(EVP_MD_type(md));
+	fmd = evp_get_fips_md(md);
 	if (fmd && fmd->flags & EVP_MD_FLAG_FIPS)
 		return md->flags | EVP_MD_FLAG_FIPS;
 #endif

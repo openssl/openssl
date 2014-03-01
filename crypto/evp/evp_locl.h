@@ -348,6 +348,8 @@ int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 			     ASN1_TYPE *param,
 			     const EVP_CIPHER *c, const EVP_MD *md, int en_de);
 
+const EVP_MD *evp_get_fips_md(const EVP_MD *md);
+
 #ifdef OPENSSL_FIPS
 
 #ifdef OPENSSL_DOING_MAKEDEPEND
