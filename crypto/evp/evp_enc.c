@@ -174,7 +174,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *imp
 			{
 			const EVP_CIPHER *fcipher;
 			if (cipher)
-				fcipher = FIPS_get_cipherbynid(EVP_CIPHER_type(cipher));
+				fcipher = evp_get_fips_cipher(cipher);
 			if (fcipher)
 				cipher = fcipher;
 			return FIPS_cipherinit(ctx, cipher, key, iv, enc);

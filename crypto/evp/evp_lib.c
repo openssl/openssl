@@ -218,7 +218,7 @@ unsigned long EVP_CIPHER_flags(const EVP_CIPHER *cipher)
 	{
 #ifdef OPENSSL_FIPS
 	const EVP_CIPHER *fcipher;
-	fcipher = FIPS_get_cipherbynid(EVP_CIPHER_type(cipher));
+	fcipher = evp_get_fips_cipher(cipher);
 	if (fcipher && fcipher->flags & EVP_CIPH_FLAG_FIPS)
 		return cipher->flags | EVP_CIPH_FLAG_FIPS;
 #endif
@@ -313,6 +313,15 @@ const EVP_MD *evp_get_fips_md(const EVP_MD *md)
 	else
 		return FIPS_get_digestbynid(nid);
 	}
+
+const EVP_CIPHER *evp_get_fips_cipher(const EVP_CIPHER *cipher)
+	{
+	if (cipher->nid == NID_undef)
+		return FIPS_evp_enc_null();
+	else
+		return FIPS_get_cipherbynid(EVP_CIPHER_type(cipher));
+	}
+
 #endif
 
 unsigned long EVP_MD_flags(const EVP_MD *md)
