@@ -331,7 +331,8 @@ SSL_set_alpn_protos                     370	EXIST::FUNCTION:
 SSL_CTX_set_srv_supp_data               371	EXIST::FUNCTION:TLSEXT
 SSL_CONF_cmd_argv                       372	EXIST::FUNCTION:
 DTLSv1_2_server_method                  373	EXIST::FUNCTION:
-SSL_COMP_set0_compression_methods       374	EXIST::FUNCTION:COMP
+SSL_COMP_set0_compression_methods       374	EXIST:!VMS:FUNCTION:COMP
+SSL_COMP_set0_compress_methods          374	EXIST:VMS:FUNCTION:COMP
 SSL_CTX_set_cert_cb                     375	EXIST::FUNCTION:
 SSL_CTX_set_custom_cli_ext              376	EXIST::FUNCTION:TLSEXT
 SSL_is_server                           377	EXIST::FUNCTION:
@@ -364,3 +365,5 @@ SSL_CTX_set_cli_supp_data               403	EXIST::FUNCTION:TLSEXT
 DTLSv1_2_method                         404	EXIST::FUNCTION:
 DTLS_server_method                      405	EXIST::FUNCTION:
 SSL_CTX_use_serverinfo_file             406	EXIST::FUNCTION:STDIO,TLSEXT
+SSL_COMP_free_compression_methods       407	EXIST:!VMS:FUNCTION:COMP
+SSL_COMP_free_compress_methods          407	EXIST:VMS:FUNCTION:COMP

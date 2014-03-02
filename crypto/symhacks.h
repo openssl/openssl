@@ -178,6 +178,8 @@
 #define SSL_COMP_get_compression_methods	SSL_COMP_get_compress_methods
 #undef SSL_COMP_set0_compression_methods
 #define SSL_COMP_set0_compression_methods       SSL_COMP_set0_compress_methods
+#undef SSL_COMP_free_compression_methods
+#define SSL_COMP_free_compression_methods       SSL_COMP_free_compress_methods
 #undef ssl_add_clienthello_renegotiate_ext
 #define ssl_add_clienthello_renegotiate_ext	ssl_add_clienthello_reneg_ext
 #undef ssl_add_serverhello_renegotiate_ext
