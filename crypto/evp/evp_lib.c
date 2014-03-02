@@ -316,10 +316,11 @@ const EVP_MD *evp_get_fips_md(const EVP_MD *md)
 
 const EVP_CIPHER *evp_get_fips_cipher(const EVP_CIPHER *cipher)
 	{
-	if (cipher->nid == NID_undef)
+	int nid = cipher->nid;
+	if (nid == NID_undef)
 		return FIPS_evp_enc_null();
 	else
-		return FIPS_get_cipherbynid(EVP_CIPHER_type(cipher));
+		return FIPS_get_cipherbynid(nid);
 	}
 
 #endif
