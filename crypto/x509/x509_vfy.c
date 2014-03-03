@@ -366,8 +366,11 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 	/* If explicitly rejected error */
 	if (i == X509_TRUST_REJECTED)
 		goto end;
-	/* If not explicitly trusted then indicate error */
-	if (i != X509_TRUST_TRUSTED)
+	/* If not explicitly trusted then indicate error unless it's
+	 * a single self signed certificate in which case we've indicated
+	 * an error already and set bad_chain == 1
+	 */
+	if (i != X509_TRUST_TRUSTED && !bad_chain)
 		{
 		if ((chain_ss == NULL) || !ctx->check_issued(ctx, x, chain_ss))
 			{
