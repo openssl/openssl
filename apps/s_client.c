@@ -362,7 +362,7 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -srppass arg      - password for 'user'\n");
 	BIO_printf(bio_err," -srp_lateuser     - SRP username into second ClientHello message\n");
 	BIO_printf(bio_err," -srp_moregroups   - Tolerate other than the known g N values.\n");
-	BIO_printf(bio_err," -srp_strength int - minimal mength in bits for N (default %d).\n",SRP_MINIMAL_N);
+	BIO_printf(bio_err," -srp_strength int - minimal length in bits for N (default %d).\n",SRP_MINIMAL_N);
 #endif
 	BIO_printf(bio_err," -ssl2         - just use SSLv2\n");
 	BIO_printf(bio_err," -ssl3         - just use SSLv3\n");
