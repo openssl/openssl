@@ -82,6 +82,7 @@ int DH_check(const DH *dh, int *ret)
 	if (ctx == NULL) goto err;
 	BN_CTX_start(ctx);
 	t1=BN_CTX_get(ctx);
+	if (t1 == NULL) goto err;
 	t2=BN_CTX_get(ctx);
 	if (t2 == NULL) goto err;
 
