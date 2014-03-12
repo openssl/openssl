@@ -4,7 +4,14 @@
 
  Changes between 1.0.0l and 1.0.0m [xx XXX xxxx]
 
-  *)
+  *) Fix for the attack described in the paper "Recovering OpenSSL
+     ECDSA Nonces Using the FLUSH+RELOAD Cache Side-channel Attack"
+     by Yuval Yarom and Naomi Benger. Details can be obtained from:
+     http://eprint.iacr.org/2014/140
+
+     Thanks to Yuval Yarom and Naomi Benger for discovering this
+     flaw and to Yuval Yarom for supplying a fix (CVE-2014-0076)
+     [Yuval Yarom and Naomi Benger]
 
  Changes between 1.0.0k and 1.0.0l [6 Jan 2014]
 
