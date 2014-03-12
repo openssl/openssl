@@ -7,7 +7,7 @@
 
   Major changes between OpenSSL 1.0.0l and OpenSSL 1.0.0m [under development]
 
-      o
+      o Fix for CVE-2014-0076
 
   Major changes between OpenSSL 1.0.0k and OpenSSL 1.0.0l [6 Jan 2014]
 
