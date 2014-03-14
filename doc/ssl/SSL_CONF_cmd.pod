@@ -9,6 +9,8 @@ SSL_CONF_cmd - send configuration command
  #include <openssl/ssl.h>
 
  int SSL_CONF_cmd(SSL_CONF_CTX *cctx, const char *cmd, const char *value);
+ int SSL_CONF_cmd_value_type(SSL_CONF_CTX *cctx, const char *cmd);
+ int SSL_CONF_finish(SSL_CONF_CTX *cctx);
 
 =head1 DESCRIPTION
 
@@ -17,11 +19,17 @@ optional parameter B<value> on B<ctx>. Its purpose is to simplify application
 configuration of B<SSL_CTX> or B<SSL> structures by providing a common
 framework for command line options or configuration files.
 
+SSL_CONF_cmd_value_type() returns the type of value that B<cmd> refers to.
+
+The function SSL_CONF_finish() must be called after all configuration
+operations have been completed. It is used to finalise any operations
+or to process defaults.
+
 =head1 SUPPORTED COMMAND LINE COMMANDS
 
 Currently supported B<cmd> names for command lines (i.e. when the
 flag B<SSL_CONF_CMDLINE> is set) are listed below. Note: all B<cmd> names
-and are case sensitive. Unless otherwise stated commands can be used by
+are case sensitive. Unless otherwise stated commands can be used by
 both clients and servers and the B<value> parameter is not used. The default
 prefix for command line commands is B<-> and that is reflected below.
 
@@ -79,6 +87,27 @@ can be either the B<NIST> name (e.g. B<P-256>) or an OpenSSL OID name
 Sets the cipher suite list to B<value>. Note: syntax checking of B<value> is
 currently not performed unless a B<SSL> or B<SSL_CTX> structure is 
 associated with B<cctx>.
+
+=item B<-cert>
+
+Attempts to use the file B<value> as the certificate for the appropriate
+context. It currently uses SSL_CTX_use_cerificate_chain_file if an B<SSL_CTX>
+structure is set or SSL_use_certifcate_file with filetype PEM if an B<SSL>
+structure is set. This option is only supported if certificate operations
+are permitted.
+
+=item B<-key>
+
+Attempts to use the file B<value> as the private key for the appropriate
+context. This option is only supported if certificate operations
+are permitted. Note: if no B<-key> option is set then a private key is
+not loaded: it does not currently use the B<-cert> file.
+
+=item B<-dhparam>
+
+Attempts to use the file B<value> as the set of temporary DH parameters for
+the appropriate context. This option is only supported if certificate
+operations are permitted.
 
 =item B<-no_ssl2>, B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>
 
@@ -146,6 +175,32 @@ Note: the command prefix (if set) alters the recognised B<cmd> values.
 Sets the cipher suite list to B<value>. Note: syntax checking of B<value> is
 currently not performed unless an B<SSL> or B<SSL_CTX> structure is 
 associated with B<cctx>.
+
+=item B<Certificate>
+
+Attempts to use the file B<value> as the certificate for the appropriate
+context. It currently uses SSL_CTX_use_cerificate_chain_file if an B<SSL_CTX>
+structure is set or SSL_use_certifcate_file with filetype PEM if an B<SSL>
+structure is set. This option is only supported if certificate operations
+are permitted.
+
+=item B<PrivateKey>
+
+Attempts to use the file B<value> as the private key for the appropriate
+context. This option is only supported if certificate operations
+are permitted. Note: if no B<-key> option is set then a private key is
+not loaded: it does not currently use the B<Certificate> file.
+
+=item B<ServerInfoFile>
+
+Attempts to use the file B<value> in the "serverinfo" extension using the
+function SSL_CTX_use_serverinfo_file.
+
+=item B<DHParameters>
+
+Attempts to use the file B<value> as the set of temporary DH parameters for
+the appropriate context. This option is only supported if certificate
+operations are permitted.
 
 =item B<SignatureAlgorithms>
 
@@ -246,6 +301,30 @@ Set by default.
 
 =back
 
+=head1 SUPPORTED COMMAND TYPES
+
+The function SSL_CONF_cmd_value_type() currently returns one of the following
+types:
+
+=over 4
+
+=item B<SSL_CONF_TYPE_UNKNOWN>
+
+The B<cmd> string is unrecognised, this return value can be use to flag
+syntax errors.
+
+=item B<SSL_CONF_TYPE_STRING>
+
+The value is a string without any specific structure.
+
+=item B<SSL_CONF_TYPE_FILE>
+
+The value is a file name.
+
+=item B<SSL_CONF_TYPE_DIR>
+
+The value is a directory name.
+
 =head1 NOTES
 
 The order of operations is significant. This can be used to set either defaults
@@ -283,6 +362,12 @@ returned then B<cmd> is not recognised and application specific arguments
 can be checked instead. If -3 is returned a required argument is missing
 and an error is indicated. If 0 is returned some other error occurred and
 this can be reported back to the user.
+
+The function SSL_CONF_cmd_value_type() can be used by applications to 
+check for the existence of a command or to perform additional syntax
+checking or translation of the command value. For example if the return
+value is B<SSL_CONF_TYPE_FILE> an application could translate a relative
+pathname to an absolute pathname.
 
 =head1 EXAMPLES
 
@@ -326,6 +411,8 @@ A return code of 0 indicates that both B<cmd> and B<value> are valid but an
 error occurred attempting to perform the operation: for example due to an
 error in the syntax of B<value> in this case the error queue may provide
 additional information.
+
+SSL_CONF_finish() returns 1 for success and 0 for failure.
 
 =head1 SEE ALSO
 

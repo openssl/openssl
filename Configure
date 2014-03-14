@@ -128,7 +128,7 @@ my $x86_asm="x86cpuid.o:bn-586.o co-586.o x86-mont.o x86-gf2m.o:des-586.o crypt5
 
 my $x86_elf_asm="$x86_asm:elf";
 
-my $x86_64_asm="x86_64cpuid.o:x86_64-gcc.o x86_64-mont.o x86_64-mont5.o x86_64-gf2m.o rsaz_exp.o rsaz-x86_64.o rsaz-avx2.o::aes-x86_64.o vpaes-x86_64.o bsaes-x86_64.o aesni-x86_64.o aesni-sha1-x86_64.o aesni-sha256-x86_64.o::md5-x86_64.o:sha1-x86_64.o sha256-x86_64.o sha512-x86_64.o::rc4-x86_64.o rc4-md5-x86_64.o:::wp-x86_64.o:cmll-x86_64.o cmll_misc.o:ghash-x86_64.o aesni-gcm-x86_64.o:e_padlock-x86_64.o";
+my $x86_64_asm="x86_64cpuid.o:x86_64-gcc.o x86_64-mont.o x86_64-mont5.o x86_64-gf2m.o rsaz_exp.o rsaz-x86_64.o rsaz-avx2.o::aes-x86_64.o vpaes-x86_64.o bsaes-x86_64.o aesni-x86_64.o aesni-sha1-x86_64.o aesni-sha256-x86_64.o aesni-mb-x86_64.o::md5-x86_64.o:sha1-x86_64.o sha256-x86_64.o sha512-x86_64.o sha1-mb-x86_64.o sha256-mb-x86_64.o::rc4-x86_64.o rc4-md5-x86_64.o:::wp-x86_64.o:cmll-x86_64.o cmll_misc.o:ghash-x86_64.o aesni-gcm-x86_64.o:e_padlock-x86_64.o";
 my $ia64_asm="ia64cpuid.o:bn-ia64.o ia64-mont.o::aes_core.o aes_cbc.o aes-ia64.o::md5-ia64.o:sha1-ia64.o sha256-ia64.o sha512-ia64.o::rc4-ia64.o rc4_skey.o:::::ghash-ia64.o::void";
 my $sparcv9_asm="sparcv9cap.o sparccpuid.o:bn-sparcv9.o sparcv9-mont.o sparcv9a-mont.o vis3-mont.o sparct4-mont.o sparcv9-gf2m.o:des_enc-sparc.o fcrypt_b.o dest4-sparcv9.o:aes_core.o aes_cbc.o aes-sparcv9.o aest4-sparcv9.o::md5-sparcv9.o:sha1-sparcv9.o sha256-sparcv9.o sha512-sparcv9.o::::::camellia.o cmll_misc.o cmll_cbc.o cmllt4-sparcv9.o:ghash-sparcv9.o::void";
 my $sparcv8_asm=":sparcv8.o:des_enc-sparc.o fcrypt_b.o:::::::::::::void";
@@ -139,7 +139,7 @@ my $s390x_asm="s390xcap.o s390xcpuid.o:bn-s390x.o s390x-mont.o s390x-gf2m.o::aes
 my $armv4_asm="armcap.o armv4cpuid.o:bn_asm.o armv4-mont.o armv4-gf2m.o::aes_cbc.o aes-armv4.o bsaes-armv7.o:::sha1-armv4-large.o sha256-armv4.o sha512-armv4.o:::::::ghash-armv4.o::void";
 my $parisc11_asm="pariscid.o:bn_asm.o parisc-mont.o::aes_core.o aes_cbc.o aes-parisc.o:::sha1-parisc.o sha256-parisc.o sha512-parisc.o::rc4-parisc.o:::::ghash-parisc.o::32";
 my $parisc20_asm="pariscid.o:pa-risc2W.o parisc-mont.o::aes_core.o aes_cbc.o aes-parisc.o:::sha1-parisc.o sha256-parisc.o sha512-parisc.o::rc4-parisc.o:::::ghash-parisc.o::64";
-my $ppc64_asm="ppccpuid.o ppccap.o:bn-ppc.o ppc-mont.o ppc64-mont.o::aes_core.o aes_cbc.o aes-ppc.o:::sha1-ppc.o sha256-ppc.o sha512-ppc.o::::::::";
+my $ppc64_asm="ppccpuid.o ppccap.o:bn-ppc.o ppc-mont.o ppc64-mont.o::aes_core.o aes_cbc.o aes-ppc.o vpaes-ppc.o:::sha1-ppc.o sha256-ppc.o sha512-ppc.o::::::::";
 my $ppc32_asm=$ppc64_asm;
 my $no_asm=":::::::::::::::void";
 
@@ -172,6 +172,7 @@ my %table=(
 "debug-ben-openbsd-debug","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -DOPENSSL_OPENBSD_DEV_CRYPTO -DOPENSSL_NO_ASM -g3 -O2 -pedantic -Wall -Wshadow -Werror -pipe::(unknown)::::",
 "debug-ben-debug",	"gcc:$gcc_devteam_warn -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DOPENSSL_NO_HW_PADLOCK -g3 -O2 -pipe::(unknown)::::::",
 "debug-ben-debug-64",	"gcc:$gcc_devteam_warn -Wno-error=overlength-strings -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DDEBUG_UNUSED -g3 -O3 -pipe::${BSDthreads}:::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"debug-ben-debug-64-clang",	"clang:$gcc_devteam_warn -Wno-error=overlength-strings -Wno-error=extended-offsetof -Qunused-arguments -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DDEBUG_UNUSED -g3 -O3 -pipe::${BSDthreads}:::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "debug-ben-debug-64-noopt",	"gcc:$gcc_devteam_warn -Wno-error=overlength-strings -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DDEBUG_UNUSED -g3 -pipe::${BSDthreads}:::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "debug-ben-macos",	"cc:$gcc_devteam_warn -DOPENSSL_NO_ASM -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DDEBUG_UNUSED -DOPENSSL_THREADS -D_REENTRANT -DDSO_DLFCN -DHAVE_DLFCN_H -arch i386 -O3 -DL_ENDIAN -g3 -pipe::(unknown)::::::",
 "debug-ben-no-opt",	"gcc: -Wall -Wmissing-prototypes -Wstrict-prototypes -Wmissing-declarations -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG -Werror -DL_ENDIAN -DTERMIOS -Wall -g3::(unknown)::::::",
@@ -225,7 +226,7 @@ my %table=(
 "solaris64-x86_64-gcc","gcc:-m64 -O3 -Wall -DL_ENDIAN::-D_REENTRANT::-lsocket -lnsl -ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:solaris-shared:-fPIC:-m64 -shared -static-libgcc:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::/64",
  
 #### Solaris x86 with Sun C setups
-"solaris-x86-cc","cc:-fast -O -Xa::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_UNROLL BF_PTR:${no_asm}:dlfcn:solaris-shared:-KPIC:-G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"solaris-x86-cc","cc:-fast -xarch=generic -O -Xa::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_UNROLL BF_PTR:${no_asm}:dlfcn:solaris-shared:-KPIC:-G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "solaris64-x86_64-cc","cc:-fast -xarch=amd64 -xstrconst -Xa -DL_ENDIAN::-D_REENTRANT::-lsocket -lnsl -ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:solaris-shared:-KPIC:-xarch=amd64 -G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::/64",
 
 #### SPARC Solaris with GNU C setups
@@ -364,6 +365,7 @@ my %table=(
 ####
 "linux-generic64","gcc:-DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-ppc64",	"gcc:-m64 -DB_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_RISC1 DES_UNROLL:${ppc64_asm}:linux64:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
+"linux-ppc64le","gcc:-m64 -DL_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_RISC1 DES_UNROLL:$ppc64_asm:linux64le:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::",
 "linux-ia64",	"gcc:-DL_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_UNROLL DES_INT:${ia64_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-ia64-icc","icc:-DL_ENDIAN -DTERMIO -O2 -Wall::-D_REENTRANT::-ldl -no_cpprt:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_RISC1 DES_INT:${ia64_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-x86_64",	"gcc:-m64 -DL_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
@@ -466,20 +468,20 @@ my %table=(
 # UnixWare 2.0x fails destest with -O.
 "unixware-2.0","cc:-DFILIO_H -DNO_STRINGS_H::-Kthread::-lsocket -lnsl -lresolv -lx:${x86_gcc_des} ${x86_gcc_opts}:::",
 "unixware-2.1","cc:-O -DFILIO_H::-Kthread::-lsocket -lnsl -lresolv -lx:${x86_gcc_des} ${x86_gcc_opts}:::",
-"unixware-7","cc:-O -DFILIO_H -Kalloca::-Kthread::-lsocket -lnsl:BN_LLONG MD2_CHAR RC4_INDEX ${x86_gcc_des}:${x86_elf_asm}:dlfcn:svr5-shared:-Kpic::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"unixware-7-gcc","gcc:-DL_ENDIAN -DFILIO_H -O3 -fomit-frame-pointer -march=pentium -Wall::-D_REENTRANT::-lsocket -lnsl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:gnu-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"unixware-7","cc:-O -DFILIO_H -Kalloca::-Kthread::-lsocket -lnsl:BN_LLONG MD2_CHAR RC4_INDEX ${x86_gcc_des}:${x86_elf_asm}-1:dlfcn:svr5-shared:-Kpic::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"unixware-7-gcc","gcc:-DL_ENDIAN -DFILIO_H -O3 -fomit-frame-pointer -march=pentium -Wall::-D_REENTRANT::-lsocket -lnsl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}-1:dlfcn:gnu-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 # SCO 5 - Ben Laurie <ben@algroup.co.uk> says the -O breaks the SCO cc.
-"sco5-cc",  "cc:-belf::(unknown)::-lsocket -lnsl:${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:svr3-shared:-Kpic::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"sco5-gcc",  "gcc:-O3 -fomit-frame-pointer::(unknown)::-lsocket -lnsl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:svr3-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"sco5-cc",  "cc:-belf::(unknown)::-lsocket -lnsl:${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}-1:dlfcn:svr3-shared:-Kpic::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"sco5-gcc",  "gcc:-O3 -fomit-frame-pointer::(unknown)::-lsocket -lnsl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}-1:dlfcn:svr3-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
 #### IBM's AIX.
 "aix3-cc",  "cc:-O -DB_ENDIAN -qmaxmem=16384::(unknown):AIX::BN_LLONG RC4_CHAR:::",
-"aix-gcc",  "gcc:-O -DB_ENDIAN::-pthread:AIX::BN_LLONG RC4_CHAR:${ppc32_asm}:aix32:dlfcn:aix-shared::-shared -Wl,-G:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X32",
-"aix64-gcc","gcc:-maix64 -O -DB_ENDIAN::-pthread:AIX::SIXTY_FOUR_BIT_LONG RC4_CHAR:${ppc64_asm}:aix64:dlfcn:aix-shared::-maix64 -shared -Wl,-G:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X64",
+"aix-gcc",  "gcc:-O -DB_ENDIAN::-pthread:AIX::BN_LLONG RC4_CHAR:$ppc32_asm:aix32:dlfcn:aix-shared::-shared -Wl,-G:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X32",
+"aix64-gcc","gcc:-maix64 -O -DB_ENDIAN::-pthread:AIX::SIXTY_FOUR_BIT_LONG RC4_CHAR:$ppc64_asm:aix64:dlfcn:aix-shared::-maix64 -shared -Wl,-G:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X64",
 # Below targets assume AIX 5. Idea is to effectively disregard $OBJECT_MODE
 # at build time. $OBJECT_MODE is respected at ./config stage!
-"aix-cc",   "cc:-q32 -O -DB_ENDIAN -qmaxmem=16384 -qro -qroconst::-qthreaded -D_THREAD_SAFE:AIX::BN_LLONG RC4_CHAR:${ppc32_asm}:aix32:dlfcn:aix-shared::-q32 -G:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 32",
-"aix64-cc", "cc:-q64 -O -DB_ENDIAN -qmaxmem=16384 -qro -qroconst::-qthreaded -D_THREAD_SAFE:AIX::SIXTY_FOUR_BIT_LONG RC4_CHAR:${ppc64_asm}:aix64:dlfcn:aix-shared::-q64 -G:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 64",
+"aix-cc",   "cc:-q32 -O -DB_ENDIAN -qmaxmem=16384 -qro -qroconst::-qthreaded -D_THREAD_SAFE:AIX::BN_LLONG RC4_CHAR:$ppc32_asm:aix32:dlfcn:aix-shared::-q32 -G:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 32",
+"aix64-cc", "cc:-q64 -O -DB_ENDIAN -qmaxmem=16384 -qro -qroconst::-qthreaded -D_THREAD_SAFE:AIX::SIXTY_FOUR_BIT_LONG RC4_CHAR:$ppc64_asm:aix64:dlfcn:aix-shared::-q64 -G:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 64",
 
 #
 # Cray T90 and similar (SDSC)
@@ -538,7 +540,7 @@ my %table=(
 # 'perl Configure VC-WIN32' with '-DUNICODE -D_UNICODE'
 "VC-WIN32","cl:-W3 -Gs0 -GF -Gy -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -D_CRT_SECURE_NO_DEPRECATE:::WIN32::BN_LLONG RC4_INDEX EXPORT_VAR_AS_FN ${x86_gcc_opts}:${x86_asm}:win32n:win32",
 # Unified CE target
-"debug-VC-WIN32","cl:-W3 -WX -Gs0 -GF -Gy -Zi -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -D_CRT_SECURE_NO_DEPRECATE:::WIN32::BN_LLONG RC4_INDEX EXPORT_VAR_AS_FN ${x86_gcc_opts}:${x86_asm}:win32n:win32",
+"debug-VC-WIN32","cl:-W3 -Gs0 -GF -Gy -Zi -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -D_CRT_SECURE_NO_DEPRECATE:::WIN32::BN_LLONG RC4_INDEX EXPORT_VAR_AS_FN ${x86_gcc_opts}:${x86_asm}:win32n:win32",
 "VC-CE","cl::::WINCE::BN_LLONG RC4_INDEX EXPORT_VAR_AS_FN ${x86_gcc_opts}:${no_asm}:win32",
 
 # Borland C++ 4.5
@@ -725,6 +727,7 @@ my %disabled = ( # "what"         => "comment" [or special keyword "experimental
 		 "gmp"		  => "default",
 		 "jpake"          => "experimental",
 		 "md2"            => "default",
+		 "multiblock"	  => "experimental",
 		 "rc5"            => "default",
 		 "rfc3779"	  => "default",
 		 "sctp"       => "default",

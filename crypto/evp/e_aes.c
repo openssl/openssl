@@ -154,6 +154,11 @@ void AES_xts_decrypt(const char *inp,char *out,size_t len,
 			const unsigned char iv[16]);
 #endif
 
+#if	defined(VPAES_ASM) && (defined(__powerpc__) || defined(__ppc__) || defined(_ARCH_PPC))
+extern unsigned int OPENSSL_ppccap_P;
+#define	VPAES_CAPABLE	(OPENSSL_ppccap_P&(1<<1))
+#endif
+
 #if	defined(AES_ASM) && !defined(I386_ONLY) &&	(  \
 	((defined(__i386)	|| defined(__i386__)	|| \
 	  defined(_M_IX86)) && defined(OPENSSL_IA32_SSE2))|| \
@@ -999,7 +1004,7 @@ static int aes_cbc_cipher(EVP_CIPHER_CTX *ctx,unsigned char *out,
 	else if (ctx->encrypt)
 		CRYPTO_cbc128_encrypt(in,out,len,&dat->ks,ctx->iv,dat->block);
 	else
-		CRYPTO_cbc128_encrypt(in,out,len,&dat->ks,ctx->iv,dat->block);
+		CRYPTO_cbc128_decrypt(in,out,len,&dat->ks,ctx->iv,dat->block);
 
 	return 1;
 }

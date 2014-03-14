@@ -295,7 +295,7 @@ static int MS_CALLBACK ssl_srp_server_param_cb(SSL *s, int *ad, void *arg)
 static BIO *bio_err=NULL;
 static BIO *bio_stdout=NULL;
 
-#ifndef OPENSSL_NO_NPN
+#ifndef OPENSSL_NO_NEXTPROTONEG
 /* Note that this code assumes that this is only a one element list: */
 static const char NEXT_PROTO_STRING[] = "\x09testproto";
 int npn_client = 0;
@@ -564,7 +564,7 @@ static int verify_serverinfo()
 
 static int custom_ext_0_cli_first_cb(SSL *s, unsigned short ext_type,
 				     const unsigned char **out,
-				     unsigned short *outlen, void *arg)
+				     unsigned short *outlen, int *al, void *arg)
 	{
 	if (ext_type != CUSTOM_EXT_TYPE_0)
 		custom_ext_error = 1;
@@ -576,13 +576,12 @@ static int custom_ext_0_cli_second_cb(SSL *s, unsigned short ext_type,
 				      unsigned short inlen, int *al,
 				      void *arg)
 	{
-	custom_ext_error = 1; /* Shouldn't be called */
-	return 0;
+	return 1;
 	}
 
 static int custom_ext_1_cli_first_cb(SSL *s, unsigned short ext_type,
 				     const unsigned char **out,
-				     unsigned short *outlen, void *arg)
+				     unsigned short *outlen, int *al, void *arg)
 	{
 	if (ext_type != CUSTOM_EXT_TYPE_1)
 		custom_ext_error = 1;
@@ -596,13 +595,12 @@ static int custom_ext_1_cli_second_cb(SSL *s, unsigned short ext_type,
 				      unsigned short inlen, int *al,
 				      void *arg)
 	{
-	custom_ext_error = 1; /* Shouldn't be called */
-	return 0;
+	return 1;
 	}
 
 static int custom_ext_2_cli_first_cb(SSL *s, unsigned short ext_type,
 				     const unsigned char **out,
-				     unsigned short *outlen, void *arg)
+				     unsigned short *outlen, int *al, void *arg)
 	{
 	if (ext_type != CUSTOM_EXT_TYPE_2)
 		custom_ext_error = 1;
@@ -625,7 +623,7 @@ static int custom_ext_2_cli_second_cb(SSL *s, unsigned short ext_type,
 
 static int custom_ext_3_cli_first_cb(SSL *s, unsigned short ext_type,
 				     const unsigned char **out,
-				     unsigned short *outlen, void *arg)
+				     unsigned short *outlen, int *al, void *arg)
 	{
 	if (ext_type != CUSTOM_EXT_TYPE_3)
 		custom_ext_error = 1;
@@ -648,28 +646,27 @@ static int custom_ext_3_cli_second_cb(SSL *s, unsigned short ext_type,
 	return 1;
 	}
 
-
+/* custom_ext_0_cli_first_cb returns -1 - the server won't receive a callback for this extension */
 static int custom_ext_0_srv_first_cb(SSL *s, unsigned short ext_type,
 				     const unsigned char *in,
 				     unsigned short inlen, int *al,
 				     void *arg)
 	{
-	custom_ext_error = 1;
-	return 0; /* Shouldn't be called */
+	return 1;
 	}
 
+/* 'generate' callbacks are always called, even if the 'receive' callback isn't called */
 static int custom_ext_0_srv_second_cb(SSL *s, unsigned short ext_type,
 				      const unsigned char **out,
-				      unsigned short *outlen, void *arg)
+				      unsigned short *outlen, int *al, void *arg)
 	{
-	custom_ext_error = 1;
-	return 0; /* Shouldn't be called */
+        return -1; /* Don't send an extension */
 	}
 
 static int custom_ext_1_srv_first_cb(SSL *s, unsigned short ext_type,
-				     const unsigned char *in,
-				     unsigned short inlen, int *al,
-				     void *arg)
+				const unsigned char *in,
+				unsigned short inlen, int *al,
+				void *arg)
 	{
 	if (ext_type != CUSTOM_EXT_TYPE_1)
 		custom_ext_error = 1;		
@@ -683,7 +680,7 @@ static int custom_ext_1_srv_first_cb(SSL *s, unsigned short ext_type,
 
 static int custom_ext_1_srv_second_cb(SSL *s, unsigned short ext_type,
 				      const unsigned char **out,
-				      unsigned short *outlen, void *arg)
+				      unsigned short *outlen, int *al, void *arg)
 	{
 	return -1; /* Don't send an extension */
 	}
@@ -705,7 +702,7 @@ static int custom_ext_2_srv_first_cb(SSL *s, unsigned short ext_type,
 
 static int custom_ext_2_srv_second_cb(SSL *s, unsigned short ext_type,
 				      const unsigned char **out,
-				      unsigned short *outlen, void *arg)
+				      unsigned short *outlen, int *al, void *arg)
 	{
 	*out = NULL;
 	*outlen = 0;
@@ -729,7 +726,7 @@ static int custom_ext_3_srv_first_cb(SSL *s, unsigned short ext_type,
 
 static int custom_ext_3_srv_second_cb(SSL *s, unsigned short ext_type,
 				      const unsigned char **out,
-				      unsigned short *outlen, void *arg)
+				      unsigned short *outlen, int *al, void *arg)
 	{
 	*out = (const unsigned char*)custom_ext_srv_string;
 	*outlen = strlen(custom_ext_srv_string);
@@ -738,7 +735,7 @@ static int custom_ext_3_srv_second_cb(SSL *s, unsigned short ext_type,
 
 static int supp_data_0_srv_first_cb(SSL *s, unsigned short supp_data_type,
 				    const unsigned char **out,
-				    unsigned short *outlen, void *arg)
+				    unsigned short *outlen, int *al, void *arg)
 	{
 	*out = (const unsigned char*)supp_data_0_string;
 	*outlen = strlen(supp_data_0_string);
@@ -765,7 +762,7 @@ static int supp_data_0_srv_second_cb(SSL *s, unsigned short supp_data_type,
 
 static int supp_data_1_srv_first_cb(SSL *s, unsigned short supp_data_type,
 				    const unsigned char **out,
-				    unsigned short *outlen, void *arg)
+				    unsigned short *outlen, int *al, void *arg)
 	{
 	return -1;
 	}
@@ -780,9 +777,9 @@ static int supp_data_1_srv_second_cb(SSL *s, unsigned short supp_data_type,
 	}
 
 static int supp_data_2_srv_second_cb(SSL *s, unsigned short supp_data_type,
-				     const unsigned char *in,
-				     unsigned short inlen, int *al,
-				     void *arg)
+				const unsigned char *in,
+				unsigned short inlen, int *al,
+				void *arg)
 	{
 	suppdata_error = 1;
 	return 1;
@@ -806,7 +803,7 @@ static int supp_data_0_cli_first_cb(SSL *s, unsigned short supp_data_type,
 
 static int supp_data_0_cli_second_cb(SSL *s, unsigned short supp_data_type,
 				     const unsigned char **out,
-				     unsigned short *outlen, void *arg)
+				     unsigned short *outlen, int *al, void *arg)
 	{
 	*out = (const unsigned char*)supp_data_0_string;
 	*outlen = strlen(supp_data_0_string);
@@ -826,7 +823,7 @@ static int supp_data_1_cli_first_cb(SSL *s, unsigned short supp_data_type,
 
 static int supp_data_1_cli_second_cb(SSL *s, unsigned short supp_data_type,
 				     const unsigned char **out,
-				     unsigned short *outlen, void *arg)
+				     unsigned short *outlen, int *al, void *arg)
 	{
 	return -1;
 	}
@@ -914,7 +911,7 @@ static void sv_usage(void)
 	               "                 (default is sect163r2).\n");
 #endif
 	fprintf(stderr," -test_cipherlist - verifies the order of the ssl cipher lists\n");
-#ifndef OPENSSL_NO_NPN
+#ifndef OPENSSL_NO_NEXTPROTONEG
 	fprintf(stderr," -npn_client - have client side offer NPN\n");
 	fprintf(stderr," -npn_server - have server side offer NPN\n");
 	fprintf(stderr," -npn_server_reject - have server reject NPN\n");
@@ -1325,7 +1322,7 @@ int main(int argc, char *argv[])
 			{
 			test_cipherlist = 1;
 			}
-#ifndef OPENSSL_NO_NPN
+#ifndef OPENSSL_NO_NEXTPROTONEG
 		else if (strcmp(*argv,"-npn_client") == 0)
 			{
 			npn_client = 1;
@@ -1680,7 +1677,7 @@ bad:
 		}
 #endif
 
-#ifndef OPENSSL_NO_NPN
+#ifndef OPENSSL_NO_NEXTPROTONEG
 	if (npn_client)
 		{
 		SSL_CTX_set_next_proto_select_cb(c_ctx, cb_client_npn, NULL);
@@ -2245,7 +2242,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
 
 	if (verbose)
 		print_details(c_ssl, "DONE via BIO pair: ");
-#ifndef OPENSSL_NO_NPN
+#ifndef OPENSSL_NO_NEXTPROTONEG
 	if (verify_npn(c_ssl, s_ssl) < 0)
 		{
 		ret = 1;
@@ -2564,7 +2561,7 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 
 	if (verbose)
 		print_details(c_ssl, "DONE: ");
-#ifndef OPENSSL_NO_NPN
+#ifndef OPENSSL_NO_NEXTPROTONEG
 	if (verify_npn(c_ssl, s_ssl) < 0)
 		{
 		ret = 1;

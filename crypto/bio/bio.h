@@ -707,6 +707,9 @@ int BIO_dump_indent(BIO *b,const char *bytes,int len,int indent);
 int BIO_dump_fp(FILE *fp, const char *s, int len);
 int BIO_dump_indent_fp(FILE *fp, const char *s, int len, int indent);
 #endif
+int BIO_hex_string(BIO *out, int indent, int width, unsigned char *data,
+		   int datalen);
+
 struct hostent *BIO_gethostbyname(const char *name);
 /* We might want a thread-safe interface too:
  * struct hostent *BIO_gethostbyname_r(const char *name,
@@ -739,8 +742,8 @@ int BIO_dgram_sctp_wait_for_dry(BIO *b);
 int BIO_dgram_sctp_msg_waiting(BIO *b);
 #endif
 BIO *BIO_new_fd(int fd, int close_flag);
-BIO *BIO_new_connect(char *host_port);
-BIO *BIO_new_accept(char *host_port);
+BIO *BIO_new_connect(const char *host_port);
+BIO *BIO_new_accept(const char *host_port);
 
 int BIO_new_bio_pair(BIO **bio1, size_t writebuf1,
 	BIO **bio2, size_t writebuf2);

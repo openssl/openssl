@@ -300,11 +300,11 @@ extern "C" {
 /* From RFC 5878 */
 #define TLSEXT_SUPPLEMENTALDATATYPE_authz_data 16386
 
-/* This is not IANA assigned. See
+/* DTCP Authorization Type
  * https://www.iana.org/assignments/tls-parameters/tls-parameters.xml#authorization-data-rules
- * http://tools.ietf.org/id/draft-dthakore-tls-authz-01.txt
+ * http://tools.ietf.org/id/draft-dthakore-tls-authz-04.txt
  */
-#define TLSEXT_AUTHZDATAFORMAT_dtcp 225
+#define TLSEXT_AUTHZDATAFORMAT_dtcp 66
 
 #define TLSEXT_MAXLEN_supplemental_data 1024*16 /* Let's limit to 16k */
 
@@ -559,12 +559,12 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
 #define TLS1_CK_ECDH_RSA_WITH_AES_256_GCM_SHA384        0x0300C032
 
 /* XXX
- * Inconsistency alert:
- * The OpenSSL names of ciphers with ephemeral DH here include the string
- * "DHE", while elsewhere it has always been "EDH".
- * (The alias for the list of all such ciphers also is "EDH".)
- * The specifications speak of "EDH"; maybe we should allow both forms
- * for everything. */
+ * Backward compatibility alert:
+ * Older versions of OpenSSL gave some DHE ciphers names with "EDH"
+ * instead of "DHE".  Going forward, we should be using DHE
+ * everywhere, though we may indefinitely maintain aliases for users
+ * or configurations that used "EDH"
+ */
 #define TLS1_TXT_RSA_EXPORT1024_WITH_RC4_56_MD5		"EXP1024-RC4-MD5"
 #define TLS1_TXT_RSA_EXPORT1024_WITH_RC2_CBC_56_MD5	"EXP1024-RC2-CBC-MD5"
 #define TLS1_TXT_RSA_EXPORT1024_WITH_DES_CBC_SHA	"EXP1024-DES-CBC-SHA"

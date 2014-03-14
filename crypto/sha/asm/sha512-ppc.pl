@@ -9,8 +9,7 @@
 
 # I let hardware handle unaligned input, except on page boundaries
 # (see below for details). Otherwise straightforward implementation
-# with X vector in register bank. The module is big-endian [which is
-# not big deal as there're no little-endian targets left around].
+# with X vector in register bank.
 
 #			sha256		|	sha512
 # 			-m64	-m32	|	-m64	-m32
@@ -55,6 +54,8 @@ if ($flavour =~ /64/) {
 	$POP="lwz";
 	$PUSH="stw";
 } else { die "nonsense $flavour"; }
+
+$LITTLE_ENDIAN = ($flavour=~/le$/) ? $SIZE_T : 0;
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}ppc-xlate.pl" and -f $xlate ) or
@@ -229,7 +230,7 @@ ___
 } else {
   for ($i=16;$i<32;$i++) {
     $code.=<<___;
-	lwz	r$i,`4*($i-16)`($ctx)
+	lwz	r$i,`$LITTLE_ENDIAN^(4*($i-16))`($ctx)
 ___
   }
 }
@@ -353,14 +354,31 @@ Lsha2_block_private:
 	$LD	$t1,0($Tbl)
 ___
 for($i=0;$i<16;$i++) {
-$code.=<<___ if ($SZ==4);
+$code.=<<___ if ($SZ==4 && !$LITTLE_ENDIAN);
 	lwz	@X[$i],`$i*$SZ`($inp)
+___
+$code.=<<___ if ($SZ==4 && $LITTLE_ENDIAN);
+	lwz	$a0,`$i*$SZ`($inp)
+	rotlwi	@X[$i],$a0,8
+	rlwimi	@X[$i],$a0,24,0,7
+	rlwimi	@X[$i],$a0,24,16,23
 ___
 # 64-bit loads are split to 2x32-bit ones, as CPU can't handle
 # unaligned 64-bit loads, only 32-bit ones...
-$code.=<<___ if ($SZ==8);
+$code.=<<___ if ($SZ==8 && !$LITTLE_ENDIAN);
 	lwz	$t0,`$i*$SZ`($inp)
 	lwz	@X[$i],`$i*$SZ+4`($inp)
+	insrdi	@X[$i],$t0,32,0
+___
+$code.=<<___ if ($SZ==8 && $LITTLE_ENDIAN);
+	lwz	$a0,`$i*$SZ`($inp)
+	 lwz	$a1,`$i*$SZ+4`($inp)
+	rotlwi	$t0,$a0,8
+	 rotlwi	@X[$i],$a1,8
+	rlwimi	$t0,$a0,24,0,7
+	 rlwimi	@X[$i],$a1,24,0,7
+	rlwimi	$t0,$a0,24,16,23
+	 rlwimi	@X[$i],$a1,24,16,23
 	insrdi	@X[$i],$t0,32,0
 ___
 	&ROUND_00_15($i,@V);
@@ -416,6 +434,7 @@ $code.=<<___;
 	blr
 	.long	0
 	.byte	0,12,0x14,0,0,0,0,0
+.size	$func,.-$func
 ___
 } else {
 ########################################################################
@@ -444,9 +463,9 @@ my ($i,	$ahi,$alo,$bhi,$blo,$chi,$clo,$dhi,$dlo,
 	$ehi,$elo,$fhi,$flo,$ghi,$glo,$hhi,$hlo)=@_;
 
 $code.=<<___;
-	lwz	$t2,`$SZ*($i%16)+4`($Tbl)
+	lwz	$t2,`$SZ*($i%16)+($LITTLE_ENDIAN^4)`($Tbl)
 	 xor	$a0,$flo,$glo
-	lwz	$t3,`$SZ*($i%16)+0`($Tbl)
+	lwz	$t3,`$SZ*($i%16)+($LITTLE_ENDIAN^0)`($Tbl)
 	 xor	$a1,$fhi,$ghi
 	addc	$hlo,$hlo,$t0			; h+=x[i]
 	stw	$t0,`$XOFF+0+$SZ*($i%16)`($sp)	; save x[i]
@@ -509,9 +528,19 @@ $code.=<<___ if ($i>=15);
 	lwz	$t0,`$XOFF+0+$SZ*(($i+2)%16)`($sp)
 	lwz	$t1,`$XOFF+4+$SZ*(($i+2)%16)`($sp)
 ___
-$code.=<<___ if ($i<15);
+$code.=<<___ if ($i<15 && !$LITTLE_ENDIAN);
 	lwz	$t1,`$SZ*($i+1)+0`($inp)
 	lwz	$t0,`$SZ*($i+1)+4`($inp)
+___
+$code.=<<___ if ($i<15 && $LITTLE_ENDIAN);
+	lwz	$a2,`$SZ*($i+1)+0`($inp)
+	 lwz	$a3,`$SZ*($i+1)+4`($inp)
+	rotlwi	$t1,$a2,8
+	 rotlwi	$t0,$a3,8
+	rlwimi	$t1,$a2,24,0,7
+	 rlwimi	$t0,$a3,24,0,7
+	rlwimi	$t1,$a2,24,16,23
+	 rlwimi	$t0,$a3,24,16,23
 ___
 $code.=<<___;
 	xor	$s0,$s0,$t2			; Sigma0(a)
@@ -578,10 +607,24 @@ ___
 $code.=<<___;
 .align	4
 Lsha2_block_private:
+___
+$code.=<<___ if (!$LITTLE_ENDIAN);
 	lwz	$t1,0($inp)
 	xor	$a2,@V[3],@V[5]		; B^C, magic seed
 	lwz	$t0,4($inp)
 	xor	$a3,@V[2],@V[4]
+___
+$code.=<<___ if ($LITTLE_ENDIAN);
+	lwz	$a1,0($inp)
+	xor	$a2,@V[3],@V[5]		; B^C, magic seed
+	lwz	$a0,4($inp)
+	xor	$a3,@V[2],@V[4]
+	rotlwi	$t1,$a1,8
+	 rotlwi	$t0,$a0,8
+	rlwimi	$t1,$a1,24,0,7
+	 rlwimi	$t0,$a0,24,0,7
+	rlwimi	$t1,$a1,24,16,23
+	 rlwimi	$t0,$a0,24,16,23
 ___
 for($i=0;$i<16;$i++) {
 	&ROUND_00_15_ppc32($i,@V);
@@ -608,54 +651,54 @@ $code.=<<___;
 	$POP	$num,`$FRAME-$SIZE_T*24`($sp)	; end pointer
 	subi	$Tbl,$Tbl,`($rounds-16)*$SZ`	; rewind Tbl
 
-	lwz	$t0,0($ctx)
-	lwz	$t1,4($ctx)
-	lwz	$t2,8($ctx)
-	lwz	$t3,12($ctx)
-	lwz	$a0,16($ctx)
-	lwz	$a1,20($ctx)
-	lwz	$a2,24($ctx)
+	lwz	$t0,`$LITTLE_ENDIAN^0`($ctx)
+	lwz	$t1,`$LITTLE_ENDIAN^4`($ctx)
+	lwz	$t2,`$LITTLE_ENDIAN^8`($ctx)
+	lwz	$t3,`$LITTLE_ENDIAN^12`($ctx)
+	lwz	$a0,`$LITTLE_ENDIAN^16`($ctx)
+	lwz	$a1,`$LITTLE_ENDIAN^20`($ctx)
+	lwz	$a2,`$LITTLE_ENDIAN^24`($ctx)
 	addc	@V[1],@V[1],$t1
-	lwz	$a3,28($ctx)
+	lwz	$a3,`$LITTLE_ENDIAN^28`($ctx)
 	adde	@V[0],@V[0],$t0
-	lwz	$t0,32($ctx)
+	lwz	$t0,`$LITTLE_ENDIAN^32`($ctx)
 	addc	@V[3],@V[3],$t3
-	lwz	$t1,36($ctx)
+	lwz	$t1,`$LITTLE_ENDIAN^36`($ctx)
 	adde	@V[2],@V[2],$t2
-	lwz	$t2,40($ctx)
+	lwz	$t2,`$LITTLE_ENDIAN^40`($ctx)
 	addc	@V[5],@V[5],$a1
-	lwz	$t3,44($ctx)
+	lwz	$t3,`$LITTLE_ENDIAN^44`($ctx)
 	adde	@V[4],@V[4],$a0
-	lwz	$a0,48($ctx)
+	lwz	$a0,`$LITTLE_ENDIAN^48`($ctx)
 	addc	@V[7],@V[7],$a3
-	lwz	$a1,52($ctx)
+	lwz	$a1,`$LITTLE_ENDIAN^52`($ctx)
 	adde	@V[6],@V[6],$a2
-	lwz	$a2,56($ctx)
+	lwz	$a2,`$LITTLE_ENDIAN^56`($ctx)
 	addc	@V[9],@V[9],$t1
-	lwz	$a3,60($ctx)
+	lwz	$a3,`$LITTLE_ENDIAN^60`($ctx)
 	adde	@V[8],@V[8],$t0
-	stw	@V[0],0($ctx)
-	stw	@V[1],4($ctx)
+	stw	@V[0],`$LITTLE_ENDIAN^0`($ctx)
+	stw	@V[1],`$LITTLE_ENDIAN^4`($ctx)
 	addc	@V[11],@V[11],$t3
-	stw	@V[2],8($ctx)
-	stw	@V[3],12($ctx)
+	stw	@V[2],`$LITTLE_ENDIAN^8`($ctx)
+	stw	@V[3],`$LITTLE_ENDIAN^12`($ctx)
 	adde	@V[10],@V[10],$t2
-	stw	@V[4],16($ctx)
-	stw	@V[5],20($ctx)
+	stw	@V[4],`$LITTLE_ENDIAN^16`($ctx)
+	stw	@V[5],`$LITTLE_ENDIAN^20`($ctx)
 	addc	@V[13],@V[13],$a1
-	stw	@V[6],24($ctx)
-	stw	@V[7],28($ctx)
+	stw	@V[6],`$LITTLE_ENDIAN^24`($ctx)
+	stw	@V[7],`$LITTLE_ENDIAN^28`($ctx)
 	adde	@V[12],@V[12],$a0
-	stw	@V[8],32($ctx)
-	stw	@V[9],36($ctx)
+	stw	@V[8],`$LITTLE_ENDIAN^32`($ctx)
+	stw	@V[9],`$LITTLE_ENDIAN^36`($ctx)
 	addc	@V[15],@V[15],$a3
-	stw	@V[10],40($ctx)
-	stw	@V[11],44($ctx)
+	stw	@V[10],`$LITTLE_ENDIAN^40`($ctx)
+	stw	@V[11],`$LITTLE_ENDIAN^44`($ctx)
 	adde	@V[14],@V[14],$a2
-	stw	@V[12],48($ctx)
-	stw	@V[13],52($ctx)
-	stw	@V[14],56($ctx)
-	stw	@V[15],60($ctx)
+	stw	@V[12],`$LITTLE_ENDIAN^48`($ctx)
+	stw	@V[13],`$LITTLE_ENDIAN^52`($ctx)
+	stw	@V[14],`$LITTLE_ENDIAN^56`($ctx)
+	stw	@V[15],`$LITTLE_ENDIAN^60`($ctx)
 
 	addi	$inp,$inp,`16*$SZ`		; advance inp
 	$PUSH	$inp,`$FRAME-$SIZE_T*23`($sp)
@@ -664,6 +707,7 @@ $code.=<<___;
 	blr
 	.long	0
 	.byte	0,12,0x14,0,0,0,0,0
+.size	$func,.-$func
 ___
 }
 
@@ -683,46 +727,46 @@ LPICmeup:
 	.space	`64-9*4`
 ___
 $code.=<<___ if ($SZ==8);
-	.long	0x428a2f98,0xd728ae22,0x71374491,0x23ef65cd
-	.long	0xb5c0fbcf,0xec4d3b2f,0xe9b5dba5,0x8189dbbc
-	.long	0x3956c25b,0xf348b538,0x59f111f1,0xb605d019
-	.long	0x923f82a4,0xaf194f9b,0xab1c5ed5,0xda6d8118
-	.long	0xd807aa98,0xa3030242,0x12835b01,0x45706fbe
-	.long	0x243185be,0x4ee4b28c,0x550c7dc3,0xd5ffb4e2
-	.long	0x72be5d74,0xf27b896f,0x80deb1fe,0x3b1696b1
-	.long	0x9bdc06a7,0x25c71235,0xc19bf174,0xcf692694
-	.long	0xe49b69c1,0x9ef14ad2,0xefbe4786,0x384f25e3
-	.long	0x0fc19dc6,0x8b8cd5b5,0x240ca1cc,0x77ac9c65
-	.long	0x2de92c6f,0x592b0275,0x4a7484aa,0x6ea6e483
-	.long	0x5cb0a9dc,0xbd41fbd4,0x76f988da,0x831153b5
-	.long	0x983e5152,0xee66dfab,0xa831c66d,0x2db43210
-	.long	0xb00327c8,0x98fb213f,0xbf597fc7,0xbeef0ee4
-	.long	0xc6e00bf3,0x3da88fc2,0xd5a79147,0x930aa725
-	.long	0x06ca6351,0xe003826f,0x14292967,0x0a0e6e70
-	.long	0x27b70a85,0x46d22ffc,0x2e1b2138,0x5c26c926
-	.long	0x4d2c6dfc,0x5ac42aed,0x53380d13,0x9d95b3df
-	.long	0x650a7354,0x8baf63de,0x766a0abb,0x3c77b2a8
-	.long	0x81c2c92e,0x47edaee6,0x92722c85,0x1482353b
-	.long	0xa2bfe8a1,0x4cf10364,0xa81a664b,0xbc423001
-	.long	0xc24b8b70,0xd0f89791,0xc76c51a3,0x0654be30
-	.long	0xd192e819,0xd6ef5218,0xd6990624,0x5565a910
-	.long	0xf40e3585,0x5771202a,0x106aa070,0x32bbd1b8
-	.long	0x19a4c116,0xb8d2d0c8,0x1e376c08,0x5141ab53
-	.long	0x2748774c,0xdf8eeb99,0x34b0bcb5,0xe19b48a8
-	.long	0x391c0cb3,0xc5c95a63,0x4ed8aa4a,0xe3418acb
-	.long	0x5b9cca4f,0x7763e373,0x682e6ff3,0xd6b2b8a3
-	.long	0x748f82ee,0x5defb2fc,0x78a5636f,0x43172f60
-	.long	0x84c87814,0xa1f0ab72,0x8cc70208,0x1a6439ec
-	.long	0x90befffa,0x23631e28,0xa4506ceb,0xde82bde9
-	.long	0xbef9a3f7,0xb2c67915,0xc67178f2,0xe372532b
-	.long	0xca273ece,0xea26619c,0xd186b8c7,0x21c0c207
-	.long	0xeada7dd6,0xcde0eb1e,0xf57d4f7f,0xee6ed178
-	.long	0x06f067aa,0x72176fba,0x0a637dc5,0xa2c898a6
-	.long	0x113f9804,0xbef90dae,0x1b710b35,0x131c471b
-	.long	0x28db77f5,0x23047d84,0x32caab7b,0x40c72493
-	.long	0x3c9ebe0a,0x15c9bebc,0x431d67c4,0x9c100d4c
-	.long	0x4cc5d4be,0xcb3e42b6,0x597f299c,0xfc657e2a
-	.long	0x5fcb6fab,0x3ad6faec,0x6c44198c,0x4a475817
+	.quad	0x428a2f98d728ae22,0x7137449123ef65cd
+	.quad	0xb5c0fbcfec4d3b2f,0xe9b5dba58189dbbc
+	.quad	0x3956c25bf348b538,0x59f111f1b605d019
+	.quad	0x923f82a4af194f9b,0xab1c5ed5da6d8118
+	.quad	0xd807aa98a3030242,0x12835b0145706fbe
+	.quad	0x243185be4ee4b28c,0x550c7dc3d5ffb4e2
+	.quad	0x72be5d74f27b896f,0x80deb1fe3b1696b1
+	.quad	0x9bdc06a725c71235,0xc19bf174cf692694
+	.quad	0xe49b69c19ef14ad2,0xefbe4786384f25e3
+	.quad	0x0fc19dc68b8cd5b5,0x240ca1cc77ac9c65
+	.quad	0x2de92c6f592b0275,0x4a7484aa6ea6e483
+	.quad	0x5cb0a9dcbd41fbd4,0x76f988da831153b5
+	.quad	0x983e5152ee66dfab,0xa831c66d2db43210
+	.quad	0xb00327c898fb213f,0xbf597fc7beef0ee4
+	.quad	0xc6e00bf33da88fc2,0xd5a79147930aa725
+	.quad	0x06ca6351e003826f,0x142929670a0e6e70
+	.quad	0x27b70a8546d22ffc,0x2e1b21385c26c926
+	.quad	0x4d2c6dfc5ac42aed,0x53380d139d95b3df
+	.quad	0x650a73548baf63de,0x766a0abb3c77b2a8
+	.quad	0x81c2c92e47edaee6,0x92722c851482353b
+	.quad	0xa2bfe8a14cf10364,0xa81a664bbc423001
+	.quad	0xc24b8b70d0f89791,0xc76c51a30654be30
+	.quad	0xd192e819d6ef5218,0xd69906245565a910
+	.quad	0xf40e35855771202a,0x106aa07032bbd1b8
+	.quad	0x19a4c116b8d2d0c8,0x1e376c085141ab53
+	.quad	0x2748774cdf8eeb99,0x34b0bcb5e19b48a8
+	.quad	0x391c0cb3c5c95a63,0x4ed8aa4ae3418acb
+	.quad	0x5b9cca4f7763e373,0x682e6ff3d6b2b8a3
+	.quad	0x748f82ee5defb2fc,0x78a5636f43172f60
+	.quad	0x84c87814a1f0ab72,0x8cc702081a6439ec
+	.quad	0x90befffa23631e28,0xa4506cebde82bde9
+	.quad	0xbef9a3f7b2c67915,0xc67178f2e372532b
+	.quad	0xca273eceea26619c,0xd186b8c721c0c207
+	.quad	0xeada7dd6cde0eb1e,0xf57d4f7fee6ed178
+	.quad	0x06f067aa72176fba,0x0a637dc5a2c898a6
+	.quad	0x113f9804bef90dae,0x1b710b35131c471b
+	.quad	0x28db77f523047d84,0x32caab7b40c72493
+	.quad	0x3c9ebe0a15c9bebc,0x431d67c49c100d4c
+	.quad	0x4cc5d4becb3e42b6,0x597f299cfc657e2a
+	.quad	0x5fcb6fab3ad6faec,0x6c44198c4a475817
 ___
 $code.=<<___ if ($SZ==4);
 	.long	0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5

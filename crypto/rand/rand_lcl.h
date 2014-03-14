@@ -154,5 +154,6 @@
 #define	MD(a,b,c)		EVP_Digest(a,b,c,NULL,EVP_md2(), NULL)
 #endif
 
+void rand_hw_xor(unsigned char *buf, size_t num);
 
 #endif

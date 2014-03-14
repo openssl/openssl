@@ -300,6 +300,12 @@ struct env_md_ctx_st
 #define EVP_MD_CTX_FLAG_PAD_PSS		0x20	/* PSS mode */
 
 #define EVP_MD_CTX_FLAG_NO_INIT		0x0100 /* Don't initialize md_data */
+/* Some functions such as EVP_DigestSign only finalise copies of internal
+ * contexts so additional data can be included after the finalisation call.
+ * This is inefficient if this functionality is not required: it is disabled
+ * if the following flag is set.
+ */
+#define EVP_MD_CTX_FLAG_FINALISE	0x0200
 
 struct evp_cipher_st
 	{
@@ -364,6 +370,7 @@ struct evp_cipher_st
  */
 #define 	EVP_CIPH_FLAG_CUSTOM_CIPHER	0x100000
 #define		EVP_CIPH_FLAG_AEAD_CIPHER	0x200000
+#define		EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK	0x400000
 
 /* Cipher context flag to indicate we can handle
  * wrap mode: if allowed in older applications it could
@@ -402,6 +409,18 @@ struct evp_cipher_st
 #define		EVP_CTRL_AEAD_SET_MAC_KEY	0x17
 /* Set the GCM invocation field, decrypt only */
 #define		EVP_CTRL_GCM_SET_IV_INV		0x18
+
+#define		EVP_CTRL_TLS1_1_MULTIBLOCK_AAD	0x19
+#define		EVP_CTRL_TLS1_1_MULTIBLOCK_ENCRYPT	0x1a
+#define		EVP_CTRL_TLS1_1_MULTIBLOCK_DECRYPT	0x1b
+#define		EVP_CTRL_TLS1_1_MULTIBLOCK_MAX_BUFSIZE	0x1c
+
+typedef struct {
+	unsigned char *out;
+	const unsigned char *inp;
+	size_t len;
+	unsigned int interleave;
+} EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM;
 
 /* GCM TLS constants */
 /* Length of fixed part of IV derived from PRF */
@@ -657,7 +676,7 @@ __owur int	EVP_DigestSignFinal(EVP_MD_CTX *ctx,
 __owur int	EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 			const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey);
 __owur int	EVP_DigestVerifyFinal(EVP_MD_CTX *ctx,
-			unsigned char *sig, size_t siglen);
+			const unsigned char *sig, size_t siglen);
 
 __owur int	EVP_OpenInit(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *type,
 		const unsigned char *ek, int ekl, const unsigned char *iv,

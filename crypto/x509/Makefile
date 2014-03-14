@@ -33,7 +33,7 @@ LIBOBJ= x509_def.o x509_d2.o x509_r2x.o x509_cmp.o \
 SRC= $(LIBSRC)
 
 EXHEADER= x509.h x509_vfy.h
-HEADER=	$(EXHEADER)
+HEADER=	$(EXHEADER) vpm_int.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -312,7 +312,7 @@ x509_vfy.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 x509_vfy.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 x509_vfy.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 x509_vfy.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-x509_vfy.o: ../cryptlib.h x509_vfy.c
+x509_vfy.o: ../cryptlib.h vpm_int.h x509_vfy.c
 x509_vpm.o: ../../e_os.h ../../include/openssl/asn1.h
 x509_vpm.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 x509_vpm.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
@@ -326,7 +326,7 @@ x509_vpm.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 x509_vpm.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 x509_vpm.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 x509_vpm.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-x509_vpm.o: ../cryptlib.h x509_vpm.c
+x509_vpm.o: ../cryptlib.h vpm_int.h x509_vpm.c
 x509cset.o: ../../e_os.h ../../include/openssl/asn1.h
 x509cset.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 x509cset.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h

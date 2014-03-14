@@ -230,27 +230,29 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_CMPALL,0,  0,0,SSL_eNULL,0,0,0,0,0,0},
 
 	/* "COMPLEMENTOFDEFAULT" (does *not* include ciphersuites not found in ALL!) */
-	{0,SSL_TXT_CMPDEF,0,  SSL_kEDH|SSL_kEECDH,SSL_aNULL,~SSL_eNULL,0,0,0,0,0,0},
+	{0,SSL_TXT_CMPDEF,0,  SSL_kDHE|SSL_kECDHE,SSL_aNULL,~SSL_eNULL,0,0,0,0,0,0},
 
 	/* key exchange aliases
 	 * (some of those using only a single bit here combine
 	 * multiple key exchange algs according to the RFCs,
-	 * e.g. kEDH combines DHE_DSS and DHE_RSA) */
+	 * e.g. kDHE combines DHE_DSS and DHE_RSA) */
 	{0,SSL_TXT_kRSA,0,    SSL_kRSA,  0,0,0,0,0,0,0,0},
 
 	{0,SSL_TXT_kDHr,0,    SSL_kDHr,  0,0,0,0,0,0,0,0},
 	{0,SSL_TXT_kDHd,0,    SSL_kDHd,  0,0,0,0,0,0,0,0},
 	{0,SSL_TXT_kDH,0,     SSL_kDHr|SSL_kDHd,0,0,0,0,0,0,0,0},
-	{0,SSL_TXT_kEDH,0,    SSL_kEDH,  0,0,0,0,0,0,0,0},
-	{0,SSL_TXT_DH,0,      SSL_kDHr|SSL_kDHd|SSL_kEDH,0,0,0,0,0,0,0,0},
+	{0,SSL_TXT_kEDH,0,    SSL_kDHE,  0,0,0,0,0,0,0,0},
+	{0,SSL_TXT_kDHE,0,    SSL_kDHE,  0,0,0,0,0,0,0,0},
+	{0,SSL_TXT_DH,0,      SSL_kDHr|SSL_kDHd|SSL_kDHE,0,0,0,0,0,0,0,0},
 
 	{0,SSL_TXT_kKRB5,0,   SSL_kKRB5, 0,0,0,0,0,0,0,0},
 
 	{0,SSL_TXT_kECDHr,0,  SSL_kECDHr,0,0,0,0,0,0,0,0},
 	{0,SSL_TXT_kECDHe,0,  SSL_kECDHe,0,0,0,0,0,0,0,0},
 	{0,SSL_TXT_kECDH,0,   SSL_kECDHr|SSL_kECDHe,0,0,0,0,0,0,0,0},
-	{0,SSL_TXT_kEECDH,0,  SSL_kEECDH,0,0,0,0,0,0,0,0},
-	{0,SSL_TXT_ECDH,0,    SSL_kECDHr|SSL_kECDHe|SSL_kEECDH,0,0,0,0,0,0,0,0},
+	{0,SSL_TXT_kEECDH,0,  SSL_kECDHE,0,0,0,0,0,0,0,0},
+	{0,SSL_TXT_kECDHE,0,  SSL_kECDHE,0,0,0,0,0,0,0,0},
+	{0,SSL_TXT_ECDH,0,    SSL_kECDHr|SSL_kECDHe|SSL_kECDHE,0,0,0,0,0,0,0,0},
 
         {0,SSL_TXT_kPSK,0,    SSL_kPSK,  0,0,0,0,0,0,0,0},
 	{0,SSL_TXT_kSRP,0,    SSL_kSRP,  0,0,0,0,0,0,0,0},
@@ -272,13 +274,15 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_aGOST,0,0,SSL_aGOST94|SSL_aGOST01,0,0,0,0,0,0,0},
 
 	/* aliases combining key exchange and server authentication */
-	{0,SSL_TXT_EDH,0,     SSL_kEDH,~SSL_aNULL,0,0,0,0,0,0,0},
-	{0,SSL_TXT_EECDH,0,   SSL_kEECDH,~SSL_aNULL,0,0,0,0,0,0,0},
+	{0,SSL_TXT_EDH,0,     SSL_kDHE,~SSL_aNULL,0,0,0,0,0,0,0},
+	{0,SSL_TXT_DHE,0,     SSL_kDHE,~SSL_aNULL,0,0,0,0,0,0,0},
+	{0,SSL_TXT_EECDH,0,   SSL_kECDHE,~SSL_aNULL,0,0,0,0,0,0,0},
+	{0,SSL_TXT_ECDHE,0,   SSL_kECDHE,~SSL_aNULL,0,0,0,0,0,0,0},
 	{0,SSL_TXT_NULL,0,    0,0,SSL_eNULL, 0,0,0,0,0,0},
 	{0,SSL_TXT_KRB5,0,    SSL_kKRB5,SSL_aKRB5,0,0,0,0,0,0,0},
 	{0,SSL_TXT_RSA,0,     SSL_kRSA,SSL_aRSA,0,0,0,0,0,0,0},
-	{0,SSL_TXT_ADH,0,     SSL_kEDH,SSL_aNULL,0,0,0,0,0,0,0},
-	{0,SSL_TXT_AECDH,0,   SSL_kEECDH,SSL_aNULL,0,0,0,0,0,0,0},
+	{0,SSL_TXT_ADH,0,     SSL_kDHE,SSL_aNULL,0,0,0,0,0,0,0},
+	{0,SSL_TXT_AECDH,0,   SSL_kECDHE,SSL_aNULL,0,0,0,0,0,0,0},
         {0,SSL_TXT_PSK,0,     SSL_kPSK,SSL_aPSK,0,0,0,0,0,0,0},
 	{0,SSL_TXT_SRP,0,     SSL_kSRP,0,0,0,0,0,0,0,0},
 
@@ -326,6 +330,21 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_HIGH,0,    0,0,0,0,0,SSL_HIGH,  0,0,0},
 	/* FIPS 140-2 approved ciphersuite */
 	{0,SSL_TXT_FIPS,0,    0,0,~SSL_eNULL,0,0,SSL_FIPS,  0,0,0},
+
+        /* "EDH-" aliases to "DHE-" labels (for backward compatibility) */
+	{0,SSL3_TXT_EDH_DSS_DES_40_CBC_SHA,0,
+         SSL_kDHE,SSL_aDSS,SSL_DES,SSL_SHA1,SSL_SSLV3,SSL_EXPORT|SSL_EXP40,0,0,0,},
+	{0,SSL3_TXT_EDH_DSS_DES_64_CBC_SHA,0,
+         SSL_kDHE,SSL_aDSS,SSL_DES,SSL_SHA1,SSL_SSLV3,SSL_NOT_EXP|SSL_LOW,0,0,0,},
+	{0,SSL3_TXT_EDH_DSS_DES_192_CBC3_SHA,0,
+         SSL_kDHE,SSL_aDSS,SSL_3DES,SSL_SHA1,SSL_SSLV3,SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,0,0,0,},
+	{0,SSL3_TXT_EDH_RSA_DES_40_CBC_SHA,0,
+         SSL_kDHE,SSL_aRSA,SSL_DES,SSL_SHA1,SSL_SSLV3,SSL_EXPORT|SSL_EXP40,0,0,0,},
+	{0,SSL3_TXT_EDH_RSA_DES_64_CBC_SHA,0,
+         SSL_kDHE,SSL_aRSA,SSL_DES,SSL_SHA1,SSL_SSLV3,SSL_NOT_EXP|SSL_LOW,0,0,0,},
+	{0,SSL3_TXT_EDH_RSA_DES_192_CBC3_SHA,0,
+         SSL_kDHE,SSL_aRSA,SSL_3DES,SSL_SHA1,SSL_SSLV3,SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,0,0,0,},
+
 	};
 /* Search for public key algorithm with given name and 
  * return its pkey_id if it is available. Otherwise return 0
@@ -720,7 +739,7 @@ static void ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth, un
 	*auth |= SSL_aDSS;
 #endif
 #ifdef OPENSSL_NO_DH
-	*mkey |= SSL_kDHr|SSL_kDHd|SSL_kEDH;
+	*mkey |= SSL_kDHr|SSL_kDHd|SSL_kDHE;
 	*auth |= SSL_aDH;
 #endif
 #ifdef OPENSSL_NO_KRB5
@@ -1475,8 +1494,8 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	/* Now arrange all ciphers by preference: */
 
 	/* Everything else being equal, prefer ephemeral ECDH over other key exchange mechanisms */
-	ssl_cipher_apply_rule(0, SSL_kEECDH, 0, 0, 0, 0, 0, CIPHER_ADD, -1, &head, &tail);
-	ssl_cipher_apply_rule(0, SSL_kEECDH, 0, 0, 0, 0, 0, CIPHER_DEL, -1, &head, &tail);
+	ssl_cipher_apply_rule(0, SSL_kECDHE, 0, 0, 0, 0, 0, CIPHER_ADD, -1, &head, &tail);
+	ssl_cipher_apply_rule(0, SSL_kECDHE, 0, 0, 0, 0, 0, CIPHER_DEL, -1, &head, &tail);
 
 	/* AES is our preferred symmetric cipher */
 	ssl_cipher_apply_rule(0, 0, 0, SSL_AES, 0, 0, 0, CIPHER_ADD, -1, &head, &tail);
@@ -1657,7 +1676,7 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
         case SSL_kKRB5:
 		kx="KRB5";
 		break;
-	case SSL_kEDH:
+	case SSL_kDHE:
 		kx=is_export?(pkl == 512 ? "DH(512)" : "DH(1024)"):"DH";
 		break;
 	case SSL_kECDHr:
@@ -1666,7 +1685,7 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 	case SSL_kECDHe:
 		kx="ECDH/ECDSA";
 		break;
-	case SSL_kEECDH:
+	case SSL_kECDHE:
 		kx="ECDH";
 		break;
 	case SSL_kPSK:
@@ -1873,6 +1892,25 @@ STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void)
 	return(ssl_comp_methods);
 	}
 
+STACK_OF(SSL_COMP) *SSL_COMP_set0_compression_methods(STACK_OF(SSL_COMP) *meths)
+	{
+	STACK_OF(SSL_COMP) *old_meths = ssl_comp_methods;
+	ssl_comp_methods = meths;
+	return old_meths;
+	}
+
+static void cmeth_free(SSL_COMP *cm)
+	{
+	OPENSSL_free(cm);
+	}
+
+void SSL_COMP_free_compression_methods(void)
+	{
+	STACK_OF(SSL_COMP) *old_meths = ssl_comp_methods;
+	ssl_comp_methods = NULL;
+	sk_SSL_COMP_pop_free(old_meths, cmeth_free);
+	}
+
 int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 	{
 	SSL_COMP *comp;
@@ -1937,13 +1975,13 @@ int ssl_cipher_get_cert_index(const SSL_CIPHER *c)
 
 	if (alg_k & (SSL_kECDHr|SSL_kECDHe))
 		{
-		/* we don't need to look at SSL_kEECDH
+		/* we don't need to look at SSL_kECDHE
 		 * since no certificate is needed for
 		 * anon ECDH and for authenticated
-		 * EECDH, the check for the auth
+		 * ECDHE, the check for the auth
 		 * algorithm will set i correctly
 		 * NOTE: For ECDH-RSA, we need an ECC
-		 * not an RSA cert but for EECDH-RSA
+		 * not an RSA cert but for ECDHE-RSA
 		 * we need an RSA cert. Placing the
 		 * checks for SSL_kECDH before RSA
 		 * checks ensures the correct cert is chosen.

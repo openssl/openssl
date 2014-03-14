@@ -291,11 +291,13 @@
 #define SSL_kRSA		0x00000001L /* RSA key exchange */
 #define SSL_kDHr		0x00000002L /* DH cert, RSA CA cert */
 #define SSL_kDHd		0x00000004L /* DH cert, DSA CA cert */
-#define SSL_kEDH		0x00000008L /* tmp DH key no DH cert */
+#define SSL_kDHE		0x00000008L /* tmp DH key no DH cert */
+#define SSL_kEDH		SSL_kDHE    /* synonym */
 #define SSL_kKRB5		0x00000010L /* Kerberos5 key exchange */
 #define SSL_kECDHr		0x00000020L /* ECDH cert, RSA CA cert */
 #define SSL_kECDHe		0x00000040L /* ECDH cert, ECDSA CA cert */
-#define SSL_kEECDH		0x00000080L /* ephemeral ECDH */
+#define SSL_kECDHE		0x00000080L /* ephemeral ECDH */
+#define SSL_kEECDH		SSL_kECDHE  /* synonym */
 #define SSL_kPSK		0x00000100L /* PSK */
 #define SSL_kGOST       0x00000200L /* GOST key exchange */
 #define SSL_kSRP        0x00000400L /* SRP */
@@ -480,7 +482,7 @@
 /* SSL_kRSA <- RSA_ENC | (RSA_TMP & RSA_SIGN) |
  * 	    <- (EXPORT & (RSA_ENC | RSA_TMP) & RSA_SIGN)
  * SSL_kDH  <- DH_ENC & (RSA_ENC | RSA_SIGN | DSA_SIGN)
- * SSL_kEDH <- RSA_ENC | RSA_SIGN | DSA_SIGN
+ * SSL_kDHE <- RSA_ENC | RSA_SIGN | DSA_SIGN
  * SSL_aRSA <- RSA_ENC | RSA_SIGN
  * SSL_aDSS <- DSA_SIGN
  */
@@ -996,6 +998,9 @@ int ssl_cert_set0_chain(CERT *c, STACK_OF(X509) *chain);
 int ssl_cert_set1_chain(CERT *c, STACK_OF(X509) *chain);
 int ssl_cert_add0_chain_cert(CERT *c, X509 *x);
 int ssl_cert_add1_chain_cert(CERT *c, X509 *x);
+int ssl_cert_select_current(CERT *c, X509 *x);
+int ssl_cert_set_current(CERT *c, long arg);
+X509 *ssl_cert_get0_next_certificate(CERT *c, int first);
 void ssl_cert_set_cert_cb(CERT *c, int (*cb)(SSL *ssl, void *arg), void *arg);
 
 int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk);
@@ -1016,6 +1021,7 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher);
 STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s);
 int ssl_verify_alarm_type(long type);
 void ssl_load_ciphers(void);
+int ssl_fill_hello_random(SSL *s, int server, unsigned char *field, int len);
 
 int ssl2_enc_init(SSL *s, int client);
 int ssl2_generate_key_material(SSL *s);
@@ -1263,8 +1269,8 @@ int tls1_shared_list(SSL *s,
 			const unsigned char *l1, size_t l1len,
 			const unsigned char *l2, size_t l2len,
 			int nmatch);
-unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit); 
-unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit); 
+unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit, int *al);
+unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit, int *al);
 int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **data, unsigned char *d, int n);
 int ssl_check_clienthello_tlsext_late(SSL *s);
 int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **data, unsigned char *d, int n);

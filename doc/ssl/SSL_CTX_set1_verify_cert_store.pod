@@ -70,8 +70,6 @@ versions of OpenSSL.
 
 All these functions return 1 for success and 0 for failure.
 
-=back
-
 =head1 SEE ALSO
 
 L<SSL_CTX_add_extra_chain_cert(3)|SSL_CTX_add_extra_chain_cert(3)>

@@ -758,19 +758,15 @@ int SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx, const char *file)
 		X509 *ca;
 		int r;
 		unsigned long err;
-		
-		if (ctx->extra_certs != NULL)
-			{
-			sk_X509_pop_free(ctx->extra_certs, X509_free);
-			ctx->extra_certs = NULL;
-			}
 
+		SSL_CTX_clear_chain_certs(ctx);
+		
 		while ((ca = PEM_read_bio_X509(in, NULL,
 					ctx->default_passwd_callback,
 					ctx->default_passwd_callback_userdata))
 			!= NULL)
 			{
-			r = SSL_CTX_add_extra_chain_cert(ctx, ca);
+			r = SSL_CTX_add0_chain_cert(ctx, ca);
 			if (!r) 
 				{
 				X509_free(ca);
@@ -852,20 +848,61 @@ static int serverinfo_srv_first_cb(SSL *s, unsigned short ext_type,
 				   unsigned short inlen, int *al,
 				   void *arg)
 	{
+	size_t i = 0;
+
 	if (inlen != 0)
 		{
 		*al = SSL_AD_DECODE_ERROR;
 		return 0;
 		}
+
+	/* if already in list, error out */
+	for (i = 0; i < s->s3->serverinfo_client_tlsext_custom_types_count; i++)
+		{
+		if (s->s3->serverinfo_client_tlsext_custom_types[i] == ext_type)
+			{
+			*al = SSL_AD_DECODE_ERROR;
+			return 0;
+			}
+		}
+	s->s3->serverinfo_client_tlsext_custom_types_count++;
+	s->s3->serverinfo_client_tlsext_custom_types = OPENSSL_realloc(
+	s->s3->serverinfo_client_tlsext_custom_types,
+	s->s3->serverinfo_client_tlsext_custom_types_count * 2);
+	if (s->s3->serverinfo_client_tlsext_custom_types == NULL)
+		{
+		s->s3->serverinfo_client_tlsext_custom_types_count = 0;
+		*al = TLS1_AD_INTERNAL_ERROR;
+		return 0;
+		}
+	s->s3->serverinfo_client_tlsext_custom_types[
+	s->s3->serverinfo_client_tlsext_custom_types_count - 1] = ext_type;
+
 	return 1;
 	}
 
 static int serverinfo_srv_second_cb(SSL *s, unsigned short ext_type,
-			            const unsigned char **out, unsigned short *outlen, 
-			            void *arg)
+				    const unsigned char **out, unsigned short *outlen,
+				    int *al, void *arg)
 	{
 	const unsigned char *serverinfo = NULL;
 	size_t serverinfo_length = 0;
+	size_t i = 0;
+	unsigned int match = 0;
+	/* Did the client send a TLS extension for this type? */
+	for (i = 0; i < s->s3->serverinfo_client_tlsext_custom_types_count; i++)
+		{
+		if (s->s3->serverinfo_client_tlsext_custom_types[i] == ext_type)
+			{
+			match = 1;
+			break;
+			}
+		}
+	if (!match)
+		{
+		/* extension not sent by client...don't send extension */
+		return -1;
+		}
 
 	/* Is there serverinfo data for the chosen server cert? */
 	if ((ssl_get_server_cert_serverinfo(s, &serverinfo,
@@ -873,7 +910,7 @@ static int serverinfo_srv_second_cb(SSL *s, unsigned short ext_type,
 		{
 		/* Find the relevant extension from the serverinfo */
 		int retval = serverinfo_find_extension(serverinfo, serverinfo_length,
-					      	       ext_type, out, outlen);
+						       ext_type, out, outlen);
 		if (retval == 0)
 			return 0; /* Error */
 		if (retval == -1)
@@ -982,6 +1019,7 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
 	long extension_length = 0;
 	char* name = NULL;
 	char* header = NULL;
+	char namePrefix[] = "SERVERINFO FOR ";
 	int ret = 0;
 	BIO *bin = NULL;
 	size_t num_extensions = 0;
@@ -1011,17 +1049,28 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
 			/* There must be at least one extension in this file */
 			if (num_extensions == 0)
 				{
-				SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, ERR_R_PEM_LIB);
+				SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, SSL_R_NO_PEM_EXTENSIONS);
 				goto end;
 				}
 			else /* End of file, we're done */
 				break;
 			}
+		/* Check that PEM name starts with "BEGIN SERVERINFO FOR " */
+		if (strlen(name) < strlen(namePrefix))
+			{
+			SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, SSL_R_PEM_NAME_TOO_SHORT);
+			goto end;
+			}
+		if (strncmp(name, namePrefix, strlen(namePrefix)) != 0)
+			{
+			SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, SSL_R_PEM_NAME_BAD_PREFIX);
+			goto end;
+			}
 		/* Check that the decoded PEM data is plausible (valid length field) */
 		if (extension_length < 4 || (extension[2] << 8) + extension[3] != extension_length - 4)
 			{
-				SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, ERR_R_PEM_LIB);
-				goto end;
+			SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, SSL_R_BAD_DATA);
+			goto end;
 			}
 		/* Append the decoded extension to the serverinfo buffer */
 		serverinfo = OPENSSL_realloc(serverinfo, serverinfo_length + extension_length);

@@ -56,6 +56,7 @@ const char SHA512_version[]="SHA-512" OPENSSL_VERSION_PTEXT;
 #if defined(__i386) || defined(__i386__) || defined(_M_IX86) || \
     defined(__x86_64) || defined(_M_AMD64) || defined(_M_X64) || \
     defined(__s390__) || defined(__s390x__) || \
+    defined(__aarch64__) || \
     defined(SHA512_ASM)
 #define SHA512_BLOCK_CAN_MANAGE_UNALIGNED_DATA
 #endif
@@ -233,7 +234,14 @@ int SHA384_Update (SHA512_CTX *c, const void *data, size_t len)
 {   return SHA512_Update (c,data,len);   }
 
 void SHA512_Transform (SHA512_CTX *c, const unsigned char *data)
-{   sha512_block_data_order (c,data,1);  }
+	{
+#ifndef SHA512_BLOCK_CAN_MANAGE_UNALIGNED_DATA
+	if ((size_t)data%sizeof(c->u.d[0]) != 0)
+		memcpy(c->u.p,data,sizeof(c->u.p)),
+		data = c->u.p;
+#endif
+	sha512_block_data_order (c,data,1);
+	}
 
 unsigned char *SHA384(const unsigned char *d, size_t n, unsigned char *md)
 	{
@@ -342,6 +350,18 @@ static const SHA_LONG64 K512[80] = {
 				asm ("rotrdi %0,%1,%2"	\
 				: "=r"(ret)		\
 				: "r"(a),"K"(n)); ret;	})
+#  elif defined(__aarch64__)
+#   define ROTR(a,n)	({ SHA_LONG64 ret;		\
+				asm ("ror %0,%1,%2"	\
+				: "=r"(ret)		\
+				: "r"(a),"I"(n)); ret;	})
+#   if  defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && \
+	__BYTE_ORDER__==__ORDER_LITTLE_ENDIAN__
+#    define PULL64(x)	({ SHA_LONG64 ret;			\
+				asm ("rev	%0,%1"		\
+				: "=r"(ret)			\
+				: "r"(*((const SHA_LONG64 *)(&(x))))); ret;		})
+#   endif
 #  endif
 # elif defined(_MSC_VER)
 #  if defined(_WIN64)	/* applies to both IA-64 and AMD64 */

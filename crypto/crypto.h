@@ -118,6 +118,7 @@
 #define HEADER_CRYPTO_H
 
 #include <stdlib.h>
+#include <time.h>
 
 #include <openssl/e_os2.h>
 
@@ -579,6 +580,11 @@ int CRYPTO_memcmp(const void *a, const void *b, size_t len);
  * made after this point may be overwritten when the script is next run.
  */
 void ERR_load_CRYPTO_strings(void);
+
+struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result);
+int OPENSSL_gmtime_adj(struct tm *tm, int offset_day, long offset_sec);
+int OPENSSL_gmtime_diff(int *pday, int *psec,
+			const struct tm *from, const struct tm *to);
 
 /* Error codes for the CRYPTO functions. */
 

@@ -401,8 +401,8 @@ typedef struct ocsp_service_locator_st
 
 OCSP_CERTID *OCSP_CERTID_dup(OCSP_CERTID *id);
 
-OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, char *path, OCSP_REQUEST *req);
-OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, char *path, OCSP_REQUEST *req,
+OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, const char *path, OCSP_REQUEST *req);
+OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, const char *path, OCSP_REQUEST *req,
 								int maxline);
 int OCSP_REQ_CTX_nbio(OCSP_REQ_CTX *rctx);
 int OCSP_sendreq_nbio(OCSP_RESPONSE **presp, OCSP_REQ_CTX *rctx);

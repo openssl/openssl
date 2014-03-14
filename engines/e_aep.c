@@ -1052,13 +1052,10 @@ static AEP_RV GetBigNumSize(AEP_VOID_PTR ArbBigNum, AEP_U32* BigNumSize)
 	/*Cast the ArbBigNum pointer to our BIGNUM struct*/
 	bn = (BIGNUM*) ArbBigNum;
 
-#ifdef SIXTY_FOUR_BIT_LONG
-	*BigNumSize = bn->top << 3;
-#else
-	/*Size of the bignum in bytes is equal to the bn->top (no of 32 bit
-	  words) multiplies by 4*/
-	*BigNumSize = bn->top << 2;
-#endif
+	*BigNumSize = bn->top*BN_BYTES;
+
+	if (BN_BYTES>sizeof(AEP_U32) && (bn->d[bn->top-1]>>BN_BITS4)==0)
+		*BigNumSize -= 4;
 
 	return AEP_R_OK;
 	}
@@ -1067,31 +1064,42 @@ static AEP_RV MakeAEPBigNum(AEP_VOID_PTR ArbBigNum, AEP_U32 BigNumSize,
 	unsigned char* AEP_BigNum)
 	{
 	BIGNUM* bn;
-
-#ifndef SIXTY_FOUR_BIT_LONG
-	unsigned char* buf;
-	int i;
-#endif
+	const union { long one; char little; } is_endian = {1};
+	AEP_U32 i,j;
 
 	/*Cast the ArbBigNum pointer to our BIGNUM struct*/
 	bn = (BIGNUM*) ArbBigNum;
 
-#ifdef SIXTY_FOUR_BIT_LONG
-  	memcpy(AEP_BigNum, bn->d, BigNumSize);
-#else
 	/*Must copy data into a (monotone) least significant byte first format
 	  performing endian conversion if necessary*/
-	for(i=0;i<bn->top;i++)
+	if (is_endian.little && sizeof(bn->d[0])==BN_BYTES)
+		memcpy(AEP_BigNum, bn->d, BigNumSize);
+	else
 		{
-		buf = (unsigned char*)&bn->d[i];
+		BN_ULONG di;
 
-		*((AEP_U32*)AEP_BigNum) = (AEP_U32)
-			((unsigned) buf[1] << 8 | buf[0]) |
-			((unsigned) buf[3] << 8 | buf[2])  << 16;
+		for (i=0; BigNumSize>=BN_BYTES; i++)
+			{
+			di = bn->d[i];
+			for (j=0; j<BN_BYTES; j++)
+				{
+				AEP_BigNum[j] = (unsigned char)di;
+				di>>=8;
+				}
+			AEP_BigNum += BN_BYTES;
+			BigNumSize -= BN_BYTES;
+			}
 
-		AEP_BigNum += 4;
+		if (BigNumSize)
+			{
+			di = bn->d[i];
+			for (j=0; j<BigNumSize; j++)
+				{
+				AEP_BigNum[j] = (unsigned char)di;
+				di>>=8;
+				}
+			}
 		}
-#endif
 
 	return AEP_R_OK;
 	}
@@ -1101,36 +1109,46 @@ static AEP_RV ConvertAEPBigNum(void* ArbBigNum, AEP_U32 BigNumSize,
 	unsigned char* AEP_BigNum)
 	{
 	BIGNUM* bn;
-#ifndef SIXTY_FOUR_BIT_LONG
-	int i;
-#endif
+	const union { long one; char little; } is_endian = {1};
+	int i,j,top;
 
 	bn = (BIGNUM*)ArbBigNum;
 
 	/*Expand the result bn so that it can hold our big num.
 	  Size is in bits*/
-	bn_expand(bn, (int)(BigNumSize << 3));
+	top = (BigNumSize+BN_BYTES-1)/BN_BYTES;
+	bn_expand(bn, top);
+	bn->top = top;
+	bn->d[top-1] = 0;
 
-#ifdef SIXTY_FOUR_BIT_LONG
-	bn->top = BigNumSize >> 3;
-	
-	if((BigNumSize & 7) != 0)
-		bn->top++;
-
-	memset(bn->d, 0, bn->top << 3);	
-
-	memcpy(bn->d, AEP_BigNum, BigNumSize);
-#else
-	bn->top = BigNumSize >> 2;
- 
-	for(i=0;i<bn->top;i++)
+	if (is_endian.little && sizeof(bn->d[0])==BN_BYTES)
+		memcpy(bn->d, AEP_BigNum, BigNumSize);
+	else
 		{
-		bn->d[i] = (AEP_U32)
-			((unsigned) AEP_BigNum[3] << 8 | AEP_BigNum[2]) << 16 |
-			((unsigned) AEP_BigNum[1] << 8 | AEP_BigNum[0]);
-		AEP_BigNum += 4;
+		BN_ULONG di;
+
+		for (i=0; BigNumSize>=BN_BYTES; i++)
+			{
+			for (di=0,j=BN_BYTES; j!=0; )
+				{
+				di <<= 8;
+				di |= AEP_BigNum[--j];
+				}
+			bn->d[i] = di;
+			AEP_BigNum += BN_BYTES;
+			BigNumSize -= BN_BYTES;
+			}
+
+		if (BigNumSize)
+			{
+			for (di=0,j=BigNumSize; j!=0; )
+				{
+				di <<= 8;
+				di |= AEP_BigNum[--j];
+				}
+			bn->d[i] = di;
+			}
 		}
-#endif
 
 	return AEP_R_OK;
 }	

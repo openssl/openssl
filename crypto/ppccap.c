@@ -13,7 +13,7 @@
 #define PPC_FPU64	(1<<0)
 #define PPC_ALTIVEC	(1<<1)
 
-static int OPENSSL_ppccap_P = 0;
+unsigned int OPENSSL_ppccap_P = 0;
 
 static sigset_t all_masked;
 
@@ -25,7 +25,7 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_U
 
 	if (sizeof(size_t)==4)
 		{
-#if (defined(__APPLE__) && defined(__MACH__))
+#if 1 || (defined(__APPLE__) && defined(__MACH__))
 		if (num>=8 && (num&3)==0 && (OPENSSL_ppccap_P&PPC_FPU64))
 			return bn_mul_mont_fpu64(rp,ap,bp,np,n0,num);
 #else

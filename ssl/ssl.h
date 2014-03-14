@@ -244,12 +244,14 @@ extern "C" {
 #define SSL_TXT_kDHr		"kDHr" 
 #define SSL_TXT_kDHd		"kDHd"
 #define SSL_TXT_kDH 		"kDH"
-#define SSL_TXT_kEDH		"kEDH"
+#define SSL_TXT_kEDH		"kEDH" /* alias for kDHE */
+#define SSL_TXT_kDHE		"kDHE"
 #define SSL_TXT_kKRB5     	"kKRB5"
 #define SSL_TXT_kECDHr		"kECDHr"
 #define SSL_TXT_kECDHe		"kECDHe"
 #define SSL_TXT_kECDH		"kECDH"
-#define SSL_TXT_kEECDH		"kEECDH"
+#define SSL_TXT_kEECDH		"kEECDH" /* alias for kECDHE */
+#define SSL_TXT_kECDHE		"kECDHE"
 #define SSL_TXT_kPSK            "kPSK"
 #define SSL_TXT_kGOST		"kGOST"
 #define SSL_TXT_kSRP		"kSRP"
@@ -267,11 +269,13 @@ extern "C" {
 
 #define	SSL_TXT_DSS		"DSS"
 #define SSL_TXT_DH		"DH"
-#define SSL_TXT_EDH		"EDH" /* same as "kEDH:-ADH" */
+#define SSL_TXT_DHE		"DHE" /* same as "kDHE:-ADH" */
+#define SSL_TXT_EDH		"EDH" /* alias for DHE */
 #define SSL_TXT_ADH		"ADH"
 #define SSL_TXT_RSA		"RSA"
 #define SSL_TXT_ECDH		"ECDH"
-#define SSL_TXT_EECDH		"EECDH" /* same as "kEECDH:-AECDH" */
+#define SSL_TXT_EECDH		"EECDH" /* alias for ECDHE" */
+#define SSL_TXT_ECDHE		"ECDHE" /* same as "kECDHE:-AECDH" */
 #define SSL_TXT_AECDH		"AECDH"
 #define SSL_TXT_ECDSA		"ECDSA"
 #define SSL_TXT_KRB5      	"KRB5"
@@ -406,11 +410,11 @@ typedef int (*tls_session_secret_cb_fn)(SSL *s, void *secret, int *secret_len, S
  */
 typedef int (*custom_cli_ext_first_cb_fn)(SSL *s, unsigned short ext_type,
 					  const unsigned char **out,
-					  unsigned short *outlen, void *arg);
+					  unsigned short *outlen, int *al, void *arg);
 typedef int (*custom_cli_ext_second_cb_fn)(SSL *s, unsigned short ext_type,
 					   const unsigned char *in,
 					   unsigned short inlen, int *al,
-					   void *arg); 
+					   void *arg);
 
 typedef int (*custom_srv_ext_first_cb_fn)(SSL *s, unsigned short ext_type,
 					  const unsigned char *in,
@@ -418,7 +422,7 @@ typedef int (*custom_srv_ext_first_cb_fn)(SSL *s, unsigned short ext_type,
 					  void *arg);
 typedef int (*custom_srv_ext_second_cb_fn)(SSL *s, unsigned short ext_type,
 					   const unsigned char **out,
-					   unsigned short *outlen, void *arg); 
+					   unsigned short *outlen, int *al, void *arg);
 
 typedef struct {
 	unsigned short ext_type;
@@ -456,20 +460,20 @@ typedef struct {
  *     fatal TLS alert, if the callback returns zero.
  */
 typedef int (*srv_supp_data_first_cb_fn)(SSL *s, unsigned short supp_data_type,
-	     const unsigned char **out,
-	     unsigned short *outlen, void *arg);
+					 const unsigned char **out,
+					 unsigned short *outlen, int *al, void *arg);
 typedef int (*srv_supp_data_second_cb_fn)(SSL *s, unsigned short supp_data_type,
-	     const unsigned char *in,
-	     unsigned short inlen, int *al,
-	     void *arg);
+					  const unsigned char *in,
+					  unsigned short inlen, int *al,
+					  void *arg);
 
 typedef int (*cli_supp_data_first_cb_fn)(SSL *s, unsigned short supp_data_type,
-	     const unsigned char *in,
-	     unsigned short inlen, int *al,
-	     void *arg);
+					 const unsigned char *in,
+					 unsigned short inlen, int *al,
+					 void *arg);
 typedef int (*cli_supp_data_second_cb_fn)(SSL *s, unsigned short supp_data_type,
-	     const unsigned char **out,
-	     unsigned short *outlen, void *arg);
+					  const unsigned char **out,
+					  unsigned short *outlen, int *al, void *arg);
 
 typedef struct {
 	unsigned short supp_data_type;
@@ -665,6 +669,9 @@ struct ssl_session_st
 #define SSL_OP_TLS_D5_BUG				0x00000100L
 #define SSL_OP_TLS_BLOCK_PADDING_BUG			0x00000200L
 
+/* Hasn't done anything since OpenSSL 0.9.7h, retained for compatibility */
+#define SSL_OP_MSIE_SSLV2_RSA_PADDING			0x0
+
 /* Disable SSL 3.0/TLS 1.0 CBC vulnerability workaround that was added
  * in OpenSSL 0.9.6d.  Usually (depending on the application protocol)
  * the workaround is not needed.  Unfortunately some broken SSL/TLS
@@ -752,6 +759,12 @@ struct ssl_session_st
  * TLS only.)  "Released" buffers are put onto a free-list in the context
  * or just freed (depending on the context's setting for freelist_max_len). */
 #define SSL_MODE_RELEASE_BUFFERS 0x00000010L
+/* Send the current time in the Random fields of the ClientHello and
+ * ServerHello records for compatibility with hypothetical implementations
+ * that require it.
+ */
+#define SSL_MODE_SEND_CLIENTHELLO_TIME 0x00000020L
+#define SSL_MODE_SEND_SERVERHELLO_TIME 0x00000040L
 
 /* Cert related flags */
 /* Many implementations ignore some aspects of the TLS standards such as
@@ -771,9 +784,13 @@ struct ssl_session_st
 
 /* Flags for building certificate chains */
 /* Treat any existing certificates as untrusted CAs */
-#define SSL_BUILD_CHAIN_FLAG_UNTRUSTED	0x1
+#define SSL_BUILD_CHAIN_FLAG_UNTRUSTED		0x1
 /* Don't include root CA in chain */
-#define SSL_BUILD_CHAIN_FLAG_NO_ROOT	0x2
+#define SSL_BUILD_CHAIN_FLAG_NO_ROOT		0x2
+/* Just check certificates already there */
+#define SSL_BUILD_CHAIN_FLAG_CHECK		0x4
+/* Ignore verification errors */
+#define SSL_BUILD_CHAIN_FLAG_IGNORE_ERROR	0x8
 
 /* Flags returned by SSL_check_chain */
 /* Certificate can be used with this session */
@@ -802,6 +819,12 @@ struct ssl_session_st
 #define SSL_CONF_FLAG_CLIENT		0x4
 #define SSL_CONF_FLAG_SERVER		0x8
 #define SSL_CONF_FLAG_SHOW_ERRORS	0x10
+#define SSL_CONF_FLAG_CERTIFICATE	0x20
+/* Configuration value types */
+#define SSL_CONF_TYPE_UNKNOWN		0x0
+#define SSL_CONF_TYPE_STRING		0x1
+#define SSL_CONF_TYPE_FILE		0x2
+#define SSL_CONF_TYPE_DIR		0x3
 
 /* Note: SSL[_CTX]_set_{options,mode} use |= op on the previous value,
  * they cannot be used to clear bits. */
@@ -1076,7 +1099,7 @@ struct ssl_ctx_st
 	 */
 	unsigned int max_send_fragment;
 
-#ifndef OPENSSL_ENGINE
+#ifndef OPENSSL_NO_ENGINE
 	/* Engine to pass requests for client certs to
 	 */
 	ENGINE *client_cert_engine;
@@ -1262,18 +1285,19 @@ void SSL_CTX_set_next_proto_select_cb(SSL_CTX *s,
 						 const unsigned char *in,
 						 unsigned int inlen, void *arg),
 				      void *arg);
+void SSL_get0_next_proto_negotiated(const SSL *s, const unsigned char **data,
+				    unsigned *len);
+#endif
 
+#ifndef OPENSSL_NO_TLSEXT
 int SSL_select_next_proto(unsigned char **out, unsigned char *outlen,
 			  const unsigned char *in, unsigned int inlen,
 			  const unsigned char *client, unsigned int client_len);
-void SSL_get0_next_proto_negotiated(const SSL *s, const unsigned char **data,
-				    unsigned *len);
+#endif
 
 #define OPENSSL_NPN_UNSUPPORTED	0
 #define OPENSSL_NPN_NEGOTIATED	1
 #define OPENSSL_NPN_NO_OVERLAP	2
-
-#endif
 
 int SSL_CTX_set_alpn_protos(SSL_CTX *ctx, const unsigned char* protos,
 			    unsigned protos_len);
@@ -1923,6 +1947,14 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_GET_RAW_CIPHERLIST		110
 #define SSL_CTRL_GET_EC_POINT_FORMATS		111
 
+#define SSL_CTRL_GET_CHAIN_CERTS		115
+#define SSL_CTRL_SELECT_CURRENT_CERT		116
+#define SSL_CTRL_SET_CURRENT_CERT		117
+
+#define SSL_CERT_SET_FIRST			1
+#define SSL_CERT_SET_NEXT			2
+#define SSL_CERT_SET_SERVER			3
+
 #define DTLSv1_get_timeout(ssl, arg) \
 	SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)
 #define DTLSv1_handle_timeout(ssl) \
@@ -1961,6 +1993,8 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 	SSL_CTX_ctrl(ctx,SSL_CTRL_EXTRA_CHAIN_CERT,0,(char *)x509)
 #define SSL_CTX_get_extra_chain_certs(ctx,px509) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_GET_EXTRA_CHAIN_CERTS,0,px509)
+#define SSL_CTX_get_extra_chain_certs_only(ctx,px509) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_GET_EXTRA_CHAIN_CERTS,1,px509)
 #define SSL_CTX_clear_extra_chain_certs(ctx) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_CLEAR_EXTRA_CHAIN_CERTS,0,NULL)
 
@@ -1972,8 +2006,17 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 	SSL_CTX_ctrl(ctx,SSL_CTRL_CHAIN_CERT,0,(char *)x509)
 #define SSL_CTX_add1_chain_cert(ctx,x509) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_CHAIN_CERT,1,(char *)x509)
+#define SSL_CTX_get0_chain_certs(ctx,px509) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_GET_CHAIN_CERTS,0,px509)
+#define SSL_CTX_clear_chain_certs(ctx) \
+	SSL_CTX_set0_chain(ctx,NULL)
 #define SSL_CTX_build_cert_chain(ctx, flags) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_BUILD_CERT_CHAIN, flags, NULL)
+#define SSL_CTX_select_current_cert(ctx,x509) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_SELECT_CURRENT_CERT,0,(char *)x509)
+
+#define SSL_CTX_set_current_cert(ctx, op) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_CURRENT_CERT, op, NULL)
 
 #define SSL_CTX_set0_verify_cert_store(ctx,st) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_VERIFY_CERT_STORE,0,(char *)st)
@@ -1992,8 +2035,17 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 	SSL_ctrl(ctx,SSL_CTRL_CHAIN_CERT,0,(char *)x509)
 #define SSL_add1_chain_cert(ctx,x509) \
 	SSL_ctrl(ctx,SSL_CTRL_CHAIN_CERT,1,(char *)x509)
+#define SSL_get0_chain_certs(ctx,px509) \
+	SSL_ctrl(ctx,SSL_CTRL_GET_CHAIN_CERTS,0,px509)
+#define SSL_clear_chain_certs(ctx) \
+	SSL_set0_chain(ctx,NULL)
 #define SSL_build_cert_chain(s, flags) \
 	SSL_ctrl(s,SSL_CTRL_BUILD_CERT_CHAIN, flags, NULL)
+#define SSL_select_current_cert(ctx,x509) \
+	SSL_ctrl(ctx,SSL_CTRL_SELECT_CURRENT_CERT,0,(char *)x509)
+#define SSL_set_current_cert(ctx,op) \
+	SSL_ctrl(ctx,SSL_CTRL_SET_CURRENT_CERT, op, NULL)
+
 #define SSL_set0_verify_cert_store(s,st) \
 	SSL_ctrl(s,SSL_CTRL_SET_VERIFY_CERT_STORE,0,(char *)st)
 #define SSL_set1_verify_cert_store(s,st) \
@@ -2232,6 +2284,9 @@ int SSL_set_trust(SSL *s, int trust);
 int SSL_CTX_set1_param(SSL_CTX *ctx, X509_VERIFY_PARAM *vpm);
 int SSL_set1_param(SSL *ssl, X509_VERIFY_PARAM *vpm);
 
+X509_VERIFY_PARAM *SSL_CTX_get0_param(SSL_CTX *ctx);
+X509_VERIFY_PARAM *SSL_get0_param(SSL *ssl);
+
 #ifndef OPENSSL_NO_SRP
 int SSL_CTX_set_srp_username(SSL_CTX *ctx,char *name);
 int SSL_CTX_set_srp_password(SSL_CTX *ctx,char *password);
@@ -2321,6 +2376,7 @@ int SSL_renegotiate_abbreviated(SSL *s);
 int SSL_renegotiate_pending(SSL *s);
 int SSL_shutdown(SSL *s);
 
+const SSL_METHOD *SSL_CTX_get_ssl_method(SSL_CTX *ctx);
 const SSL_METHOD *SSL_get_ssl_method(SSL *s);
 int SSL_set_ssl_method(SSL *s, const SSL_METHOD *method);
 const char *SSL_alert_type_string_long(int value);
@@ -2348,7 +2404,10 @@ STACK_OF(X509_NAME) *SSL_dup_CA_list(STACK_OF(X509_NAME) *sk);
 SSL *SSL_dup(SSL *ssl);
 
 X509 *SSL_get_certificate(const SSL *ssl);
-/* EVP_PKEY */ struct evp_pkey_st *SSL_get_privatekey(SSL *ssl);
+/* EVP_PKEY */ struct evp_pkey_st *SSL_get_privatekey(const SSL *ssl);
+
+X509 *SSL_CTX_get0_certificate(const SSL_CTX *ctx);
+EVP_PKEY *SSL_CTX_get0_privatekey(const SSL_CTX *ctx);
 
 void SSL_CTX_set_quiet_shutdown(SSL_CTX *ctx,int mode);
 int SSL_CTX_get_quiet_shutdown(const SSL_CTX *ctx);
@@ -2452,6 +2511,8 @@ const COMP_METHOD *SSL_get_current_compression(SSL *s);
 const COMP_METHOD *SSL_get_current_expansion(SSL *s);
 const char *SSL_COMP_get_name(const COMP_METHOD *comp);
 STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
+STACK_OF(SSL_COMP) *SSL_COMP_set0_compression_methods(STACK_OF(SSL_COMP) *meths);
+void SSL_COMP_free_compression_methods(void);
 int SSL_COMP_add_compression_method(int id,COMP_METHOD *cm);
 #else
 const void *SSL_get_current_compression(SSL *s);
@@ -2483,6 +2544,7 @@ int SSL_cache_hit(SSL *s);
 int SSL_is_server(SSL *s);
 
 SSL_CONF_CTX *SSL_CONF_CTX_new(void);
+int SSL_CONF_CTX_finish(SSL_CONF_CTX *cctx);
 void SSL_CONF_CTX_free(SSL_CONF_CTX *cctx);
 unsigned int SSL_CONF_CTX_set_flags(SSL_CONF_CTX *cctx, unsigned int flags);
 unsigned int SSL_CONF_CTX_clear_flags(SSL_CONF_CTX *cctx, unsigned int flags);
@@ -2493,6 +2555,7 @@ void SSL_CONF_CTX_set_ssl_ctx(SSL_CONF_CTX *cctx, SSL_CTX *ctx);
 
 int SSL_CONF_cmd(SSL_CONF_CTX *cctx, const char *cmd, const char *value);
 int SSL_CONF_cmd_argv(SSL_CONF_CTX *cctx, int *pargc, char ***pargv);
+int SSL_CONF_cmd_value_type(SSL_CONF_CTX *cctx, const char *cmd);
 
 #ifndef OPENSSL_NO_SSL_TRACE
 void SSL_trace(int write_p, int version, int content_type,
@@ -2509,7 +2572,9 @@ void ERR_load_SSL_strings(void);
 /* Error codes for the SSL functions. */
 
 /* Function codes. */
-#define SSL_F_CHECK_SUITEB_CIPHER_LIST			 335
+#define SSL_F_AUTHZ_FIND_DATA				 330
+#define SSL_F_AUTHZ_VALIDATE				 323
+#define SSL_F_CHECK_SUITEB_CIPHER_LIST			 331
 #define SSL_F_CLIENT_CERTIFICATE			 100
 #define SSL_F_CLIENT_FINISHED				 167
 #define SSL_F_CLIENT_HELLO				 101
@@ -2552,6 +2617,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_GET_SERVER_HELLO				 109
 #define SSL_F_GET_SERVER_VERIFY				 110
 #define SSL_F_I2D_SSL_SESSION				 111
+#define SSL_F_READ_AUTHZ				 329
 #define SSL_F_READ_N					 112
 #define SSL_F_REQUEST_CERTIFICATE			 113
 #define SSL_F_SERVER_FINISH				 239
@@ -2622,7 +2688,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL3_WRITE_BYTES				 158
 #define SSL_F_SSL3_WRITE_PENDING			 159
 #define SSL_F_SSL_ADD_CERT_CHAIN			 316
-#define SSL_F_SSL_ADD_CERT_TO_BUF			 317
+#define SSL_F_SSL_ADD_CERT_TO_BUF			 319
 #define SSL_F_SSL_ADD_CLIENTHELLO_RENEGOTIATE_EXT	 298
 #define SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT		 277
 #define SSL_F_SSL_ADD_CLIENTHELLO_USE_SRTP_EXT		 307
@@ -2657,6 +2723,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_CTX_SET_SESSION_ID_CONTEXT		 219
 #define SSL_F_SSL_CTX_SET_SSL_VERSION			 170
 #define SSL_F_SSL_CTX_SET_TRUST				 229
+#define SSL_F_SSL_CTX_USE_AUTHZ				 324
 #define SSL_F_SSL_CTX_USE_CERTIFICATE			 171
 #define SSL_F_SSL_CTX_USE_CERTIFICATE_ASN1		 172
 #define SSL_F_SSL_CTX_USE_CERTIFICATE_CHAIN_FILE	 220
@@ -2673,8 +2740,9 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_DO_HANDSHAKE				 180
 #define SSL_F_SSL_GET_NEW_SESSION			 181
 #define SSL_F_SSL_GET_PREV_SESSION			 217
-#define SSL_F_SSL_GET_SERVER_CERT_INDEX			 331
-#define SSL_F_SSL_GET_SERVER_SEND_PKEY			 182
+#define SSL_F_SSL_GET_SERVER_CERT_INDEX			 322
+#define SSL_F_SSL_GET_SERVER_SEND_CERT			 182
+#define SSL_F_SSL_GET_SERVER_SEND_PKEY			 317
 #define SSL_F_SSL_GET_SIGN_PKEY				 183
 #define SSL_F_SSL_INIT_WBIO_BUFFER			 184
 #define SSL_F_SSL_LOAD_CLIENT_CA_FILE			 185
@@ -2691,12 +2759,13 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_READ					 223
 #define SSL_F_SSL_RSA_PRIVATE_DECRYPT			 187
 #define SSL_F_SSL_RSA_PUBLIC_ENCRYPT			 188
-#define SSL_F_SSL_SCAN_CLIENTHELLO_TLSEXT		 319
-#define SSL_F_SSL_SCAN_SERVERHELLO_TLSEXT		 320
+#define SSL_F_SSL_SCAN_CLIENTHELLO_TLSEXT		 320
+#define SSL_F_SSL_SCAN_SERVERHELLO_TLSEXT		 321
 #define SSL_F_SSL_SESSION_NEW				 189
 #define SSL_F_SSL_SESSION_PRINT_FP			 190
 #define SSL_F_SSL_SESSION_SET1_ID_CONTEXT		 312
 #define SSL_F_SSL_SESS_CERT_NEW				 225
+#define SSL_F_SSL_SET_AUTHZ				 325
 #define SSL_F_SSL_SET_CERT				 191
 #define SSL_F_SSL_SET_CIPHER_LIST			 271
 #define SSL_F_SSL_SET_FD				 192
@@ -2713,6 +2782,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_UNDEFINED_CONST_FUNCTION		 243
 #define SSL_F_SSL_UNDEFINED_FUNCTION			 197
 #define SSL_F_SSL_UNDEFINED_VOID_FUNCTION		 244
+#define SSL_F_SSL_USE_AUTHZ				 328
 #define SSL_F_SSL_USE_CERTIFICATE			 198
 #define SSL_F_SSL_USE_CERTIFICATE_ASN1			 199
 #define SSL_F_SSL_USE_CERTIFICATE_FILE			 200
@@ -2731,13 +2801,13 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_TLS1_CHECK_SERVERHELLO_TLSEXT		 274
 #define SSL_F_TLS1_ENC					 210
 #define SSL_F_TLS1_EXPORT_KEYING_MATERIAL		 314
-#define SSL_F_TLS1_GET_CLIENT_SUPPLEMENTAL_DATA		 338
+#define SSL_F_TLS1_GET_CLIENT_SUPPLEMENTAL_DATA		 335
 #define SSL_F_TLS1_GET_SERVER_SUPPLEMENTAL_DATA		 326
 #define SSL_F_TLS1_HEARTBEAT				 315
 #define SSL_F_TLS1_PREPARE_CLIENTHELLO_TLSEXT		 275
 #define SSL_F_TLS1_PREPARE_SERVERHELLO_TLSEXT		 276
 #define SSL_F_TLS1_PRF					 284
-#define SSL_F_TLS1_SEND_CLIENT_SUPPLEMENTAL_DATA	 339
+#define SSL_F_TLS1_SEND_CLIENT_SUPPLEMENTAL_DATA	 338
 #define SSL_F_TLS1_SEND_SERVER_SUPPLEMENTAL_DATA	 327
 #define SSL_F_TLS1_SETUP_KEY_BLOCK			 211
 #define SSL_F_WRITE_PENDING				 212
@@ -2745,10 +2815,12 @@ void ERR_load_SSL_strings(void);
 /* Reason codes. */
 #define SSL_R_APP_DATA_IN_HANDSHAKE			 100
 #define SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT 272
+#define SSL_R_AUTHZ_DATA_TOO_LARGE			 375
 #define SSL_R_BAD_ALERT_RECORD				 101
 #define SSL_R_BAD_AUTHENTICATION_TYPE			 102
 #define SSL_R_BAD_CHANGE_CIPHER_SPEC			 103
 #define SSL_R_BAD_CHECKSUM				 104
+#define SSL_R_BAD_DATA					 390
 #define SSL_R_BAD_DATA_RETURNED_BY_CALLBACK		 106
 #define SSL_R_BAD_DECOMPRESSION				 107
 #define SSL_R_BAD_DH_G_LENGTH				 108
@@ -2836,12 +2908,14 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_ILLEGAL_PADDING				 283
 #define SSL_R_ILLEGAL_SUITEB_DIGEST			 380
 #define SSL_R_INCONSISTENT_COMPRESSION			 340
+#define SSL_R_INVALID_AUDIT_PROOF			 371
+#define SSL_R_INVALID_AUTHZ_DATA			 374
 #define SSL_R_INVALID_CHALLENGE_LENGTH			 158
 #define SSL_R_INVALID_COMMAND				 280
 #define SSL_R_INVALID_COMPRESSION_ALGORITHM		 341
 #define SSL_R_INVALID_NULL_CMD_NAME			 385
 #define SSL_R_INVALID_PURPOSE				 278
-#define SSL_R_INVALID_SERVERINFO_DATA			 389
+#define SSL_R_INVALID_SERVERINFO_DATA			 388
 #define SSL_R_INVALID_SRP_USERNAME			 357
 #define SSL_R_INVALID_STATUS_RESPONSE			 328
 #define SSL_R_INVALID_TICKET_KEYS_LENGTH		 325
@@ -2897,6 +2971,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_NO_COMPRESSION_SPECIFIED			 187
 #define SSL_R_NO_GOST_CERTIFICATE_SENT_BY_PEER		 330
 #define SSL_R_NO_METHOD_SPECIFIED			 188
+#define SSL_R_NO_PEM_EXTENSIONS				 389
 #define SSL_R_NO_PRIVATEKEY				 189
 #define SSL_R_NO_PRIVATE_KEY_ASSIGNED			 190
 #define SSL_R_NO_PROTOCOLS_AVAILABLE			 191
@@ -2924,6 +2999,8 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_PEER_ERROR_NO_CERTIFICATE			 202
 #define SSL_R_PEER_ERROR_NO_CIPHER			 203
 #define SSL_R_PEER_ERROR_UNSUPPORTED_CERTIFICATE_TYPE	 204
+#define SSL_R_PEM_NAME_BAD_PREFIX			 391
+#define SSL_R_PEM_NAME_TOO_SHORT			 392
 #define SSL_R_PRE_MAC_LENGTH_TOO_LONG			 205
 #define SSL_R_PROBLEMS_MAPPING_CIPHER_FUNCTIONS		 206
 #define SSL_R_PROTOCOL_IS_SHUTDOWN			 207
@@ -3007,7 +3084,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST		 157
 #define SSL_R_TLS_PEER_DID_NOT_RESPOND_WITH_CERTIFICATE_LIST 233
 #define SSL_R_TLS_RSA_ENCRYPTED_VALUE_LENGTH_IS_WRONG	 234
-#define SSL_R_TOO_MANY_EMPTY_FRAGMENTS			 388
+#define SSL_R_TOO_MANY_EMPTY_FRAGMENTS			 393
 #define SSL_R_TRIED_TO_USE_UNSUPPORTED_CIPHER		 235
 #define SSL_R_UNABLE_TO_DECODE_DH_CERTS			 236
 #define SSL_R_UNABLE_TO_DECODE_ECDH_CERTS		 313
@@ -3023,6 +3100,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_UNEXPECTED_RECORD				 245
 #define SSL_R_UNINITIALIZED				 276
 #define SSL_R_UNKNOWN_ALERT_TYPE			 246
+#define SSL_R_UNKNOWN_AUTHZ_DATA_TYPE			 372
 #define SSL_R_UNKNOWN_CERTIFICATE_TYPE			 247
 #define SSL_R_UNKNOWN_CIPHER_RETURNED			 248
 #define SSL_R_UNKNOWN_CIPHER_TYPE			 249

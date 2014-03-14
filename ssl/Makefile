@@ -777,23 +777,24 @@ ssl_ciph.o: ../include/openssl/x509_vfy.h ssl_ciph.c ssl_locl.h
 ssl_conf.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 ssl_conf.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 ssl_conf.o: ../include/openssl/conf.h ../include/openssl/crypto.h
-ssl_conf.o: ../include/openssl/dsa.h ../include/openssl/dtls1.h
-ssl_conf.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-ssl_conf.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
-ssl_conf.o: ../include/openssl/err.h ../include/openssl/evp.h
-ssl_conf.o: ../include/openssl/hmac.h ../include/openssl/kssl.h
-ssl_conf.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
-ssl_conf.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-ssl_conf.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-ssl_conf.o: ../include/openssl/pem.h ../include/openssl/pem2.h
-ssl_conf.o: ../include/openssl/pkcs7.h ../include/openssl/pqueue.h
-ssl_conf.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-ssl_conf.o: ../include/openssl/sha.h ../include/openssl/srtp.h
-ssl_conf.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
-ssl_conf.o: ../include/openssl/ssl23.h ../include/openssl/ssl3.h
-ssl_conf.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-ssl_conf.o: ../include/openssl/tls1.h ../include/openssl/x509.h
-ssl_conf.o: ../include/openssl/x509_vfy.h ssl_conf.c ssl_locl.h
+ssl_conf.o: ../include/openssl/dh.h ../include/openssl/dsa.h
+ssl_conf.o: ../include/openssl/dtls1.h ../include/openssl/e_os2.h
+ssl_conf.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
+ssl_conf.o: ../include/openssl/ecdsa.h ../include/openssl/err.h
+ssl_conf.o: ../include/openssl/evp.h ../include/openssl/hmac.h
+ssl_conf.o: ../include/openssl/kssl.h ../include/openssl/lhash.h
+ssl_conf.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+ssl_conf.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+ssl_conf.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
+ssl_conf.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
+ssl_conf.o: ../include/openssl/pqueue.h ../include/openssl/rsa.h
+ssl_conf.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+ssl_conf.o: ../include/openssl/srtp.h ../include/openssl/ssl.h
+ssl_conf.o: ../include/openssl/ssl2.h ../include/openssl/ssl23.h
+ssl_conf.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
+ssl_conf.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
+ssl_conf.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h ssl_conf.c
+ssl_conf.o: ssl_locl.h
 ssl_err.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 ssl_err.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 ssl_err.o: ../include/openssl/crypto.h ../include/openssl/dtls1.h

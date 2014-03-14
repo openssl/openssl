@@ -117,6 +117,7 @@ DECLARE_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
 #define CMS_USE_KEYID			0x10000
 #define CMS_DEBUG_DECRYPT		0x20000
 #define CMS_KEY_PARAM			0x40000
+#define CMS_ASCIICRLF			0x80000
 
 const ASN1_OBJECT *CMS_get0_type(CMS_ContentInfo *cms);
 
@@ -275,6 +276,7 @@ int CMS_set1_signers_certs(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
 					unsigned int flags);
 void CMS_SignerInfo_get0_algs(CMS_SignerInfo *si, EVP_PKEY **pk, X509 **signer,
 					X509_ALGOR **pdig, X509_ALGOR **psig);
+ASN1_OCTET_STRING *CMS_SignerInfo_get0_signature(CMS_SignerInfo *si);
 int CMS_SignerInfo_sign(CMS_SignerInfo *si);
 int CMS_SignerInfo_verify(CMS_SignerInfo *si);
 int CMS_SignerInfo_verify_content(CMS_SignerInfo *si, BIO *chain);

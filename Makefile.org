@@ -395,7 +395,7 @@ libcrypto$(SHLIB_EXT): libcrypto.a build_fips
 			FIPSLD_CC="$(CC)"; CC=fips/fipsld; \
 			export CC FIPSLD_CC; \
 		fi; \
-		$(MAKE) -e SHLIBDIRS=crypto build-shared; \
+		$(MAKE) -e SHLIBDIRS=crypto CC="$${CC:-$(CC)}" build-shared; \
 	else \
 		echo "There's no support for shared libraries on this platform" >&2; \
 		exit 1; \
@@ -666,17 +666,17 @@ install_sw:
 		do \
 			if [ -f "$$i" -o -f "$$i.a" ]; then \
 			(       echo installing $$i; \
-				if ! expr "$(PLATFORM)" : "Cygwin" >/dev/null; then \
-					cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
-					chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
-					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i; \
-				else \
+				if expr "$(PLATFORM)" : "Cygwin" >/dev/null; then \
 					c=`echo $$i | sed 's/^lib\(.*\)\.dll\.a/cyg\1-$(SHLIB_VERSION_NUMBER).dll/'`; \
 					cp $$c $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new; \
 					chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new; \
 					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c; \
 					cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
 					chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
+					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i; \
+				else \
+					cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
+					chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
 					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i; \
 				fi ); \
 				if expr $(PLATFORM) : 'mingw' > /dev/null; then \

@@ -954,8 +954,8 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
 	memset(authchunks, 0, sizeof(sockopt_len));
 	ret = getsockopt(fd, IPPROTO_SCTP, SCTP_LOCAL_AUTH_CHUNKS, authchunks, &sockopt_len);
 	OPENSSL_assert(ret >= 0);
-	
-	for (p = (unsigned char*) authchunks + sizeof(sctp_assoc_t);
+
+	for (p = (unsigned char*) authchunks->gauth_chunks;
 	     p < (unsigned char*) authchunks + sockopt_len;
 	     p += sizeof(uint8_t))
 		{
@@ -1245,7 +1245,7 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
 			ii = getsockopt(b->num, IPPROTO_SCTP, SCTP_PEER_AUTH_CHUNKS, authchunks, &optlen);
 			OPENSSL_assert(ii >= 0);
 
-			for (p = (unsigned char*) authchunks + sizeof(sctp_assoc_t);
+			for (p = (unsigned char*) authchunks->gauth_chunks;
 				 p < (unsigned char*) authchunks + optlen;
 				 p += sizeof(uint8_t))
 				{
@@ -1901,7 +1901,11 @@ static void get_current_time(struct timeval *t)
 
 	GetSystemTime(&st);
 	SystemTimeToFileTime(&st,&now.ft);
+#ifdef	__MINGW32__
+	now.ul -= 116444736000000000ULL;
+#else
 	now.ul -= 116444736000000000UI64;	/* re-bias to 1/1/1970 */
+#endif
 	t->tv_sec  = (long)(now.ul/10000000);
 	t->tv_usec = ((int)(now.ul%10000000))/10;
 #elif defined(OPENSSL_SYS_VMS)

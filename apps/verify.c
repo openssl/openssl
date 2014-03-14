@@ -72,7 +72,7 @@
 static int MS_CALLBACK cb(int ok, X509_STORE_CTX *ctx);
 static int check(X509_STORE *ctx, char *file,
 		STACK_OF(X509) *uchain, STACK_OF(X509) *tchain,
-		STACK_OF(X509_CRL) *crls, ENGINE *e);
+		STACK_OF(X509_CRL) *crls, ENGINE *e, int show_chain);
 static int v_verbose=0, vflags = 0;
 
 int MAIN(int, char **);
@@ -88,7 +88,7 @@ int MAIN(int argc, char **argv)
 	X509_STORE *cert_ctx=NULL;
 	X509_LOOKUP *lookup=NULL;
 	X509_VERIFY_PARAM *vpm = NULL;
-	int crl_download = 0;
+	int crl_download = 0, show_chain = 0;
 #ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
 #endif
@@ -148,6 +148,8 @@ int MAIN(int argc, char **argv)
 				}
 			else if (strcmp(*argv,"-crl_download") == 0)
 				crl_download = 1;
+			else if (strcmp(*argv,"-show_chain") == 0)
+				show_chain = 1;
 #ifndef OPENSSL_NO_ENGINE
 			else if (strcmp(*argv,"-engine") == 0)
 				{
@@ -231,13 +233,13 @@ int MAIN(int argc, char **argv)
 	ret=0;
 	if (argc < 1)
 		{ 
-		if (1 != check(cert_ctx, NULL, untrusted, trusted, crls, e))
+		if (1 != check(cert_ctx, NULL, untrusted, trusted, crls, e, show_chain))
 			ret=-1;
 		}
 	else
 		{
 		for (i=0; i<argc; i++)
-			if (1 != check(cert_ctx,argv[i], untrusted, trusted, crls, e))
+			if (1 != check(cert_ctx,argv[i], untrusted, trusted, crls, e, show_chain))
 				ret=-1;
 		}
 
@@ -280,11 +282,12 @@ end:
 
 static int check(X509_STORE *ctx, char *file,
 		STACK_OF(X509) *uchain, STACK_OF(X509) *tchain,
-		STACK_OF(X509_CRL) *crls, ENGINE *e)
+		STACK_OF(X509_CRL) *crls, ENGINE *e, int show_chain)
 	{
 	X509 *x=NULL;
 	int i=0,ret=0;
 	X509_STORE_CTX *csc;
+	STACK_OF(X509) *chain = NULL;
 
 	x = load_cert(bio_err, file, FORMAT_PEM, NULL, e, "certificate file");
 	if (x == NULL)
@@ -307,6 +310,8 @@ static int check(X509_STORE *ctx, char *file,
 	if (crls)
 		X509_STORE_CTX_set0_crls(csc, crls);
 	i=X509_verify_cert(csc);
+	if (i > 0 && show_chain)
+		chain = X509_STORE_CTX_get1_chain(csc);
 	X509_STORE_CTX_free(csc);
 
 	ret=0;
@@ -318,6 +323,20 @@ end:
 		}
 	else
 		ERR_print_errors(bio_err);
+	if (chain)
+		{
+		printf("Chain:\n");
+		for (i = 0; i < sk_X509_num(chain); i++)
+			{
+			X509 *cert = sk_X509_value(chain, i);
+			printf("depth=%d: ", i);
+			X509_NAME_print_ex_fp(stdout,
+				X509_get_subject_name(cert),
+				0, XN_FLAG_ONELINE);
+			printf("\n");
+			}
+		sk_X509_pop_free(chain, X509_free);
+		}
 	if (x != NULL) X509_free(x);
 
 	return(ret);

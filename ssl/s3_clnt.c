@@ -688,7 +688,8 @@ int ssl3_client_hello(SSL *s)
 	unsigned char *buf;
 	unsigned char *p,*d;
 	int i;
-	unsigned long Time,l;
+	unsigned long l;
+	int al = 0;
 #ifndef OPENSSL_NO_COMP
 	int j;
 	SSL_COMP *comp;
@@ -768,12 +769,8 @@ int ssl3_client_hello(SSL *s)
 			i = 1;
 
 		if (i)
-			{
-			Time=(unsigned long)time(NULL);	/* Time */
-			l2n(Time,p);
-			RAND_pseudo_bytes(p,sizeof(s->s3->client_random)-4);
-					
-			}
+			ssl_fill_hello_random(s, 0, p,
+					      sizeof(s->s3->client_random));
 
 		/* Do the message type and length last */
 		d=p= ssl_handshake_start(s);
@@ -895,8 +892,9 @@ int ssl3_client_hello(SSL *s)
 			SSLerr(SSL_F_SSL3_CLIENT_HELLO,SSL_R_CLIENTHELLO_TLSEXT);
 			goto err;
 			}
-		if ((p = ssl_add_clienthello_tlsext(s, p, buf+SSL3_RT_MAX_PLAIN_LENGTH)) == NULL)
+		if ((p = ssl_add_clienthello_tlsext(s, p, buf+SSL3_RT_MAX_PLAIN_LENGTH, &al)) == NULL)
 			{
+			ssl3_send_alert(s,SSL3_AL_FATAL,al);
 			SSLerr(SSL_F_SSL3_CLIENT_HELLO,ERR_R_INTERNAL_ERROR);
 			goto err;
 			}
@@ -1660,7 +1658,7 @@ int ssl3_get_key_exchange(SSL *s)
 		;
 #endif
 #ifndef OPENSSL_NO_DH
-	else if (alg_k & SSL_kEDH)
+	else if (alg_k & SSL_kDHE)
 		{
 		if ((dh=DH_new()) == NULL)
 			{
@@ -1738,7 +1736,7 @@ int ssl3_get_key_exchange(SSL *s)
 #endif /* !OPENSSL_NO_DH */
 
 #ifndef OPENSSL_NO_ECDH
-	else if (alg_k & SSL_kEECDH)
+	else if (alg_k & SSL_kECDHE)
 		{
 		EC_GROUP *ngroup;
 		const EC_GROUP *group;
@@ -2585,7 +2583,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 			}
 #endif
 #ifndef OPENSSL_NO_DH
-		else if (alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
+		else if (alg_k & (SSL_kDHE|SSL_kDHr|SSL_kDHd))
 			{
 			DH *dh_srvr,*dh_clnt;
 			SESS_CERT *scert = s->session->sess_cert;
@@ -2689,7 +2687,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 #endif
 
 #ifndef OPENSSL_NO_ECDH 
-		else if (alg_k & (SSL_kEECDH|SSL_kECDHr|SSL_kECDHe))
+		else if (alg_k & (SSL_kECDHE|SSL_kECDHr|SSL_kECDHe))
 			{
 			const EC_GROUP *srvr_group = NULL;
 			EC_KEY *tkey;
@@ -3311,11 +3309,20 @@ int ssl3_send_client_certificate(SSL *s)
 	if (s->state ==	SSL3_ST_CW_CERT_A)
 		{
 		/* Let cert callback update client certificates if required */
-		if (s->cert->cert_cb
-			&& s->cert->cert_cb(s, s->cert->cert_cb_arg) <= 0)
+		if (s->cert->cert_cb)
 			{
-			ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_INTERNAL_ERROR);
-			return 0;
+			i = s->cert->cert_cb(s, s->cert->cert_cb_arg);
+			if (i < 0)
+				{
+				s->rwstate=SSL_X509_LOOKUP;
+				return -1;
+				}
+			if (i == 0)
+				{
+				ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_INTERNAL_ERROR);
+				return 0;
+				}
+			s->rwstate=SSL_NOTHING;
 			}
 		if (ssl3_check_client_certificate(s))
 			s->state=SSL3_ST_CW_CERT_C;
@@ -3473,7 +3480,7 @@ int ssl3_check_cert_and_algorithm(SSL *s)
 		}
 #endif
 #ifndef OPENSSL_NO_DH
-	if ((alg_k & SSL_kEDH) && 
+	if ((alg_k & SSL_kDHE) && 
 		!(has_bits(i,EVP_PK_DH|EVP_PKT_EXCH) || (dh != NULL)))
 		{
 		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_MISSING_DH_KEY);
@@ -3510,7 +3517,7 @@ int ssl3_check_cert_and_algorithm(SSL *s)
 		else
 #endif
 #ifndef OPENSSL_NO_DH
-			if (alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
+			if (alg_k & (SSL_kDHE|SSL_kDHr|SSL_kDHd))
 			    {
 			    if (dh == NULL
 				|| DH_size(dh)*8 > SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher))
@@ -3617,6 +3624,7 @@ int ssl_do_client_cert_cb(SSL *s, X509 **px509, EVP_PKEY **ppkey)
 #ifndef OPENSSL_NO_TLSEXT
 int tls1_send_client_supplemental_data(SSL *s, int *skip)
 	{
+	int al = 0;
 	if (s->ctx->cli_supp_data_records_count)
 		{
 		unsigned char *p = NULL;
@@ -3636,20 +3644,20 @@ int tls1_send_client_supplemental_data(SSL *s, int *skip)
 			if (!record->fn2)
 				continue;
 			cb_retval = record->fn2(s, record->supp_data_type,
-				&out, &outlen,
-				record->arg);
+						&out, &outlen, &al,
+						record->arg);
 			if (cb_retval == -1)
 				continue; /* skip this supp data entry */
 			if (cb_retval == 0)
 				{
 				SSLerr(SSL_F_TLS1_SEND_CLIENT_SUPPLEMENTAL_DATA,ERR_R_BUF_LIB);
-				return 0;
+				goto f_err;
 				}
 			if (outlen == 0 || TLSEXT_MAXLEN_supplemental_data < outlen + 4 + length)
 				{
 				SSLerr(SSL_F_TLS1_SEND_CLIENT_SUPPLEMENTAL_DATA,ERR_R_BUF_LIB);
 				return 0;
-			    	}
+				}
 			/* if first entry, write handshake message type */
 			if (length == 0)
 				{
@@ -3698,6 +3706,10 @@ int tls1_send_client_supplemental_data(SSL *s, int *skip)
 	s->init_num = 0;
 	s->init_off = 0;
 	return 1;
+
+	f_err:
+	ssl3_send_alert(s,SSL3_AL_FATAL,al);
+	return 0;
 	}
 
 int tls1_get_server_supplemental_data(SSL *s)
@@ -3707,18 +3719,18 @@ int tls1_get_server_supplemental_data(SSL *s)
 	long n;
 	const unsigned char *p, *d;
 	unsigned short supp_data_entry_type = 0;
-	unsigned long supp_data_entry_len = 0;
+	unsigned short supp_data_entry_len = 0;
 	unsigned long supp_data_len = 0;
 	size_t i;
 	int cb_retval = 0;
 
 	n=s->method->ssl_get_message(s,
-		SSL3_ST_CR_SUPPLEMENTAL_DATA_A,
-		SSL3_ST_CR_SUPPLEMENTAL_DATA_B,
-		SSL3_MT_SUPPLEMENTAL_DATA,
-		/* use default limit */
-		TLSEXT_MAXLEN_supplemental_data,
-		&ok);
+				     SSL3_ST_CR_SUPPLEMENTAL_DATA_A,
+				     SSL3_ST_CR_SUPPLEMENTAL_DATA_B,
+				     SSL3_MT_SUPPLEMENTAL_DATA,
+				     /* use default limit */
+				     TLSEXT_MAXLEN_supplemental_data,
+				     &ok);
 
 	if (!ok) return((int)n);
 
@@ -3739,9 +3751,12 @@ int tls1_get_server_supplemental_data(SSL *s)
 		/* if there is a callback for this supp data type, send it */
 		for (i=0; i < s->ctx->cli_supp_data_records_count; i++)
 			{
-			if (s->ctx->cli_supp_data_records[i].supp_data_type == supp_data_entry_type && s->ctx->cli_supp_data_records[i].fn1)
+			if (s->ctx->cli_supp_data_records[i].supp_data_type == supp_data_entry_type &&
+			    s->ctx->cli_supp_data_records[i].fn1)
 				{
-				cb_retval = s->ctx->cli_supp_data_records[i].fn1(s, supp_data_entry_type, p, supp_data_entry_len, &al, s->ctx->cli_supp_data_records[i].arg);
+				cb_retval = s->ctx->cli_supp_data_records[i].fn1(s, supp_data_entry_type, p,
+										 supp_data_entry_len, &al,
+										 s->ctx->cli_supp_data_records[i].arg);
 				if (cb_retval == 0)
 					{
 					SSLerr(SSL_F_TLS1_GET_SERVER_SUPPLEMENTAL_DATA, ERR_R_SSL_LIB);

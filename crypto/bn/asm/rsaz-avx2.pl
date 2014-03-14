@@ -1,54 +1,66 @@
 #!/usr/bin/env perl
 
-#******************************************************************************
-#* Copyright(c) 2012, Intel Corp.                                             
-#* Developers and authors:                                                    
-#* Shay Gueron (1, 2), and Vlad Krasnov (1)                                   
-#* (1) Intel Corporation, Israel Development Center, Haifa, Israel
-#* (2) University of Haifa, Israel                                              
-#******************************************************************************
-#* LICENSE:                                                                
-#* This submission to OpenSSL is to be made available under the OpenSSL  
-#* license, and only to the OpenSSL project, in order to allow integration    
-#* into the publicly distributed code. 
-#* The use of this code, or portions of this code, or concepts embedded in
-#* this code, or modification of this code and/or algorithm(s) in it, or the
-#* use of this code for any other purpose than stated above, requires special
-#* licensing.                                                                  
-#******************************************************************************
-#* DISCLAIMER:                                                                
-#* THIS SOFTWARE IS PROVIDED BY THE CONTRIBUTORS AND THE COPYRIGHT OWNERS     
-#* ``AS IS''. ANY EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED 
-#* TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
-#* PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE CONTRIBUTORS OR THE COPYRIGHT
-#* OWNERS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-#* OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF    
-#* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS   
-#* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN    
-#* CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)    
-#* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
-#* POSSIBILITY OF SUCH DAMAGE.                                                
-#******************************************************************************
-#* Reference:                                                                 
-#* [1]	S. Gueron, V. Krasnov: "Software Implementation of Modular
-#*	Exponentiation,  Using Advanced Vector Instructions Architectures",
-#*	F. Ozbudak and F. Rodriguez-Henriquez (Eds.): WAIFI 2012, LNCS 7369,
-#*	pp. 119?135, 2012. Springer-Verlag Berlin Heidelberg 2012
-#* [2]	S. Gueron: "Efficient Software Implementations of Modular
-#*	Exponentiation", Journal of Cryptographic Engineering 2:31-43 (2012).
-#* [3]	S. Gueron, V. Krasnov: "Speeding up Big-numbers Squaring",IEEE
-#*	Proceedings of 9th International Conference on Information Technology:
-#*	New Generations (ITNG 2012), pp.821-823 (2012)
-#* [4]	S. Gueron, V. Krasnov: "[PATCH] Efficient and side channel analysis
-#*	resistant 1024-bit modular exponentiation, for optimizing RSA2048
-#*	on AVX2 capable x86_64 platforms",
-#*	http://rt.openssl.org/Ticket/Display.html?id=2850&user=guest&pass=guest
-#******************************************************************************
-
-# +10% improvement by <appro@openssl.org>
+##############################################################################
+#                                                                            #
+#  Copyright (c) 2012, Intel Corporation                                     #
+#                                                                            #
+#  All rights reserved.                                                      #
+#                                                                            #
+#  Redistribution and use in source and binary forms, with or without        #
+#  modification, are permitted provided that the following conditions are    #
+#  met:                                                                      #
+#                                                                            #
+#  *  Redistributions of source code must retain the above copyright         #
+#     notice, this list of conditions and the following disclaimer.          #
+#                                                                            #
+#  *  Redistributions in binary form must reproduce the above copyright      #
+#     notice, this list of conditions and the following disclaimer in the    #
+#     documentation and/or other materials provided with the                 #
+#     distribution.                                                          #
+#                                                                            #
+#  *  Neither the name of the Intel Corporation nor the names of its         #
+#     contributors may be used to endorse or promote products derived from   #
+#     this software without specific prior written permission.               #
+#                                                                            #
+#                                                                            #
+#  THIS SOFTWARE IS PROVIDED BY INTEL CORPORATION ""AS IS"" AND ANY          #
+#  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE         #
+#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR        #
+#  PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL INTEL CORPORATION OR            #
+#  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,     #
+#  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,       #
+#  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR        #
+#  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF    #
+#  LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING      #
+#  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS        #
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.              #
+#                                                                            #
+##############################################################################
+# Developers and authors:                                                    #
+# Shay Gueron (1, 2), and Vlad Krasnov (1)                                   #
+# (1) Intel Corporation, Israel Development Center, Haifa, Israel            #
+# (2) University of Haifa, Israel                                            #
+##############################################################################
+# Reference:                                                                 #
+# [1] S. Gueron, V. Krasnov: "Software Implementation of Modular             #
+#     Exponentiation,  Using Advanced Vector Instructions Architectures",    #
+#     F. Ozbudak and F. Rodriguez-Henriquez (Eds.): WAIFI 2012, LNCS 7369,   #
+#     pp. 119?135, 2012. Springer-Verlag Berlin Heidelberg 2012              #
+# [2] S. Gueron: "Efficient Software Implementations of Modular              #
+#     Exponentiation", Journal of Cryptographic Engineering 2:31-43 (2012).  #
+# [3] S. Gueron, V. Krasnov: "Speeding up Big-numbers Squaring",IEEE         #
+#     Proceedings of 9th International Conference on Information Technology: #
+#     New Generations (ITNG 2012), pp.821-823 (2012)                         #
+# [4] S. Gueron, V. Krasnov: "[PATCH] Efficient and side channel analysis    #
+#     resistant 1024-bit modular exponentiation, for optimizing RSA2048      #
+#     on AVX2 capable x86_64 platforms",                                     #
+#     http://rt.openssl.org/Ticket/Display.html?id=2850&user=guest&pass=guest#
+##############################################################################
+#
+# +13% improvement over original submission by <appro@openssl.org>
 #
 # rsa2048 sign/sec	OpenSSL 1.0.1	scalar(*)	this
-# 2GHz Haswell		544		632/+16%	947/+74%
+# 2.3GHz Haswell	621		765/+23%	1113/+79%
 #
 # (*)	if system doesn't support AVX2, for reference purposes;
 
@@ -125,6 +137,7 @@ my $FrameSize=32*18+32*8;	# place for A^2 and 2*A
 my $aap=$r0;
 my $tp0="%rbx";
 my $tp1=$r3;
+my $tpa=$tmp;
 
 $np="%r13";			# reassigned argument
 
@@ -142,24 +155,24 @@ rsaz_1024_sqr_avx2:		# 702 cycles, 14% faster than rsaz_1024_mul_avx2
 	push	%r13
 	push	%r14
 	push	%r15
+	vzeroupper
 ___
 $code.=<<___ if ($win64);
 	lea	-0xa8(%rsp),%rsp
-	movaps  %xmm6,-0xd8(%rax)
-	movaps  %xmm7,-0xc8(%rax)
-	movaps  %xmm8,-0xb8(%rax)
-	movaps  %xmm9,-0xa8(%rax)
-	movaps  %xmm10,-0x98(%rax)
-	movaps  %xmm11,-0x88(%rax)
-	movaps  %xmm12,-0x78(%rax)
-	movaps  %xmm13,-0x68(%rax)
-	movaps  %xmm14,-0x58(%rax)
-	movaps  %xmm15,-0x48(%rax)
+	vmovaps	%xmm6,-0xd8(%rax)
+	vmovaps	%xmm7,-0xc8(%rax)
+	vmovaps	%xmm8,-0xb8(%rax)
+	vmovaps	%xmm9,-0xa8(%rax)
+	vmovaps	%xmm10,-0x98(%rax)
+	vmovaps	%xmm11,-0x88(%rax)
+	vmovaps	%xmm12,-0x78(%rax)
+	vmovaps	%xmm13,-0x68(%rax)
+	vmovaps	%xmm14,-0x58(%rax)
+	vmovaps	%xmm15,-0x48(%rax)
 .Lsqr_1024_body:
 ___
 $code.=<<___;
 	mov	%rax,%rbp
-	vzeroall
 	mov	%rdx, $np			# reassigned argument
 	sub	\$$FrameSize, %rsp
 	mov	$np, $tmp
@@ -170,6 +183,7 @@ $code.=<<___;
 	and	\$4095, $tmp			# see if $np crosses page
 	add	\$32*10, $tmp
 	shr	\$12, $tmp
+	vpxor	$ACC9,$ACC9,$ACC9
 	jz	.Lsqr_1024_no_n_copy
 
 	# unaligned 256-bit load that crosses page boundary can
@@ -197,7 +211,7 @@ $code.=<<___;
 	vmovdqu		$ACC6, 32*6-128($np)
 	vmovdqu		$ACC7, 32*7-128($np)
 	vmovdqu		$ACC8, 32*8-128($np)
-	vmovdqu		$ACC9, 32*9-128($np)	# $ACC9 is zero after vzeroall
+	vmovdqu		$ACC9, 32*9-128($np)	# $ACC9 is zero
 
 .Lsqr_1024_no_n_copy:
 	and		\$-1024, %rsp
@@ -263,7 +277,7 @@ $code.=<<___;
 	 vpbroadcastq	32*2-128($ap), $B1
 	 vmovdqu	$ACC9, 32*17-448($tp1)
 
-	xor	$tmp, $tmp
+	mov	$ap, $tpa
 	mov 	\$4, $i
 	jmp	.Lsqr_entry_1024
 ___
@@ -272,38 +286,29 @@ $TEMP2=$Y2;
 $code.=<<___;
 .align	32
 .LOOP_SQR_1024:
-	vmovdqu		32*0(%rsp,$tmp), $TEMP0	# 32*0-192($tp0,$tmp)
-	vmovdqu		32*1(%rsp,$tmp), $TEMP1	# 32*1-192($tp0,$tmp)
-	 vpbroadcastq	32*1-128($ap,$tmp), $B2
+	 vpbroadcastq	32*1-128($tpa), $B2
 	vpmuludq	32*0-128($ap), $B1, $ACC0
-	vmovdqu		32*2-192($tp0,$tmp), $TEMP2
-	vpaddq		$TEMP0, $ACC0, $ACC0
+	vpaddq		32*0-192($tp0), $ACC0, $ACC0
 	vpmuludq	32*0-128($aap), $B1, $ACC1
-	vmovdqu		32*3-192($tp0,$tmp), $TEMP0
-	vpaddq		$TEMP1, $ACC1, $ACC1
+	vpaddq		32*1-192($tp0), $ACC1, $ACC1
 	vpmuludq	32*1-128($aap), $B1, $ACC2
-	vmovdqu		32*4-192($tp0,$tmp), $TEMP1
-	vpaddq		$TEMP2, $ACC2, $ACC2
+	vpaddq		32*2-192($tp0), $ACC2, $ACC2
 	vpmuludq	32*2-128($aap), $B1, $ACC3
-	vmovdqu		32*5-192($tp0,$tmp), $TEMP2
-	vpaddq		$TEMP0, $ACC3, $ACC3
+	vpaddq		32*3-192($tp0), $ACC3, $ACC3
 	vpmuludq	32*3-128($aap), $B1, $ACC4
-	vmovdqu		32*6-192($tp0,$tmp), $TEMP0
-	vpaddq		$TEMP1, $ACC4, $ACC4
+	vpaddq		32*4-192($tp0), $ACC4, $ACC4
 	vpmuludq	32*4-128($aap), $B1, $ACC5
-	vmovdqu		32*7-192($tp0,$tmp), $TEMP1
-	vpaddq		$TEMP2, $ACC5, $ACC5
+	vpaddq		32*5-192($tp0), $ACC5, $ACC5
 	vpmuludq	32*5-128($aap), $B1, $ACC6
-	vmovdqu		32*8-192($tp0,$tmp), $TEMP2
-	vpaddq		$TEMP0, $ACC6, $ACC6
+	vpaddq		32*6-192($tp0), $ACC6, $ACC6
 	vpmuludq	32*6-128($aap), $B1, $ACC7
-	vpaddq		$TEMP1, $ACC7, $ACC7
+	vpaddq		32*7-192($tp0), $ACC7, $ACC7
 	vpmuludq	32*7-128($aap), $B1, $ACC8
-	 vpbroadcastq	32*2-128($ap,$tmp), $B1
-	vpaddq		$TEMP2, $ACC8, $ACC8
+	 vpbroadcastq	32*2-128($tpa), $B1
+	vpaddq		32*8-192($tp0), $ACC8, $ACC8
 .Lsqr_entry_1024:
-	vmovdqu		$ACC0, 32*0(%rsp,$tmp)	# 32*0-192($tp0,$tmp)
-	vmovdqu		$ACC1, 32*1(%rsp,$tmp)	# 32*1-192($tp0,$tmp)
+	vmovdqu		$ACC0, 32*0-192($tp0)
+	vmovdqu		$ACC1, 32*1-192($tp0)
 
 	vpmuludq	32*1-128($ap), $B2, $TEMP0
 	vpaddq		$TEMP0, $ACC2, $ACC2
@@ -316,16 +321,15 @@ $code.=<<___;
 	vpmuludq	32*4-128($aap), $B2, $TEMP1
 	vpaddq		$TEMP1, $ACC6, $ACC6
 	vpmuludq	32*5-128($aap), $B2, $TEMP2
-	vmovdqu		32*9-192($tp0,$tmp), $TEMP1
 	vpaddq		$TEMP2, $ACC7, $ACC7
 	vpmuludq	32*6-128($aap), $B2, $TEMP0
 	vpaddq		$TEMP0, $ACC8, $ACC8
 	vpmuludq	32*7-128($aap), $B2, $ACC0
-	 vpbroadcastq	32*3-128($ap,$tmp), $B2
-	vpaddq		$TEMP1, $ACC0, $ACC0
+	 vpbroadcastq	32*3-128($tpa), $B2
+	vpaddq		32*9-192($tp0), $ACC0, $ACC0
 
-	vmovdqu		$ACC2, 32*2-192($tp0,$tmp)
-	vmovdqu		$ACC3, 32*3-192($tp0,$tmp)
+	vmovdqu		$ACC2, 32*2-192($tp0)
+	vmovdqu		$ACC3, 32*3-192($tp0)
 
 	vpmuludq	32*2-128($ap), $B1, $TEMP2
 	vpaddq		$TEMP2, $ACC4, $ACC4
@@ -336,16 +340,15 @@ $code.=<<___;
 	vpmuludq	32*4-128($aap), $B1, $TEMP2
 	vpaddq		$TEMP2, $ACC7, $ACC7
 	vpmuludq	32*5-128($aap), $B1, $TEMP0
-	vmovdqu		32*10-448($tp1,$tmp), $TEMP2
 	vpaddq		$TEMP0, $ACC8, $ACC8
 	vpmuludq	32*6-128($aap), $B1, $TEMP1
 	vpaddq		$TEMP1, $ACC0, $ACC0
 	vpmuludq	32*7-128($aap), $B1, $ACC1
-	 vpbroadcastq	32*4-128($ap,$tmp), $B1
-	vpaddq		$TEMP2, $ACC1, $ACC1
+	 vpbroadcastq	32*4-128($tpa), $B1
+	vpaddq		32*10-448($tp1), $ACC1, $ACC1
 
-	vmovdqu		$ACC4, 32*4-192($tp0,$tmp)
-	vmovdqu		$ACC5, 32*5-192($tp0,$tmp)
+	vmovdqu		$ACC4, 32*4-192($tp0)
+	vmovdqu		$ACC5, 32*5-192($tp0)
 
 	vpmuludq	32*3-128($ap), $B2, $TEMP0
 	vpaddq		$TEMP0, $ACC6, $ACC6
@@ -354,74 +357,70 @@ $code.=<<___;
 	vpmuludq	32*4-128($aap), $B2, $TEMP2
 	vpaddq		$TEMP2, $ACC8, $ACC8
 	vpmuludq	32*5-128($aap), $B2, $TEMP0
-	vmovdqu		32*11-448($tp1,$tmp), $TEMP2
 	vpaddq		$TEMP0, $ACC0, $ACC0
 	vpmuludq	32*6-128($aap), $B2, $TEMP1
 	vpaddq		$TEMP1, $ACC1, $ACC1
 	vpmuludq	32*7-128($aap), $B2, $ACC2
-	 vpbroadcastq	32*5-128($ap,$tmp), $B2
-	vpaddq		$TEMP2, $ACC2, $ACC2	
+	 vpbroadcastq	32*5-128($tpa), $B2
+	vpaddq		32*11-448($tp1), $ACC2, $ACC2	
 
-	vmovdqu		$ACC6, 32*6-192($tp0,$tmp)
-	vmovdqu		$ACC7, 32*7-192($tp0,$tmp)
+	vmovdqu		$ACC6, 32*6-192($tp0)
+	vmovdqu		$ACC7, 32*7-192($tp0)
 
 	vpmuludq	32*4-128($ap), $B1, $TEMP0
 	vpaddq		$TEMP0, $ACC8, $ACC8
 	vpmuludq	32*4-128($aap), $B1, $TEMP1
 	vpaddq		$TEMP1, $ACC0, $ACC0
 	vpmuludq	32*5-128($aap), $B1, $TEMP2
-	vmovdqu		32*12-448($tp1,$tmp), $TEMP1
 	vpaddq		$TEMP2, $ACC1, $ACC1
 	vpmuludq	32*6-128($aap), $B1, $TEMP0
 	vpaddq		$TEMP0, $ACC2, $ACC2
 	vpmuludq	32*7-128($aap), $B1, $ACC3
-	 vpbroadcastq	32*6-128($ap,$tmp), $B1
-	vpaddq		$TEMP1, $ACC3, $ACC3
+	 vpbroadcastq	32*6-128($tpa), $B1
+	vpaddq		32*12-448($tp1), $ACC3, $ACC3
 
-	vmovdqu		$ACC8, 32*8-192($tp0,$tmp)
-	vmovdqu		$ACC0, 32*9-192($tp0,$tmp)
+	vmovdqu		$ACC8, 32*8-192($tp0)
+	vmovdqu		$ACC0, 32*9-192($tp0)
+	lea		8($tp0), $tp0
 
 	vpmuludq	32*5-128($ap), $B2, $TEMP2
 	vpaddq		$TEMP2, $ACC1, $ACC1
 	vpmuludq	32*5-128($aap), $B2, $TEMP0
-	vmovdqu		32*13-448($tp1,$tmp), $TEMP2
 	vpaddq		$TEMP0, $ACC2, $ACC2
 	vpmuludq	32*6-128($aap), $B2, $TEMP1
 	vpaddq		$TEMP1, $ACC3, $ACC3
 	vpmuludq	32*7-128($aap), $B2, $ACC4
-	 vpbroadcastq	32*7-128($ap,$tmp), $B2
-	vpaddq		$TEMP2, $ACC4, $ACC4
+	 vpbroadcastq	32*7-128($tpa), $B2
+	vpaddq		32*13-448($tp1), $ACC4, $ACC4
 
-	vmovdqu		$ACC1, 32*10-448($tp1,$tmp)
-	vmovdqu		$ACC2, 32*11-448($tp1,$tmp)
+	vmovdqu		$ACC1, 32*10-448($tp1)
+	vmovdqu		$ACC2, 32*11-448($tp1)
 
 	vpmuludq	32*6-128($ap), $B1, $TEMP0
-	vmovdqu		32*14-448($tp1,$tmp), $TEMP2
 	vpaddq		$TEMP0, $ACC3, $ACC3
 	vpmuludq	32*6-128($aap), $B1, $TEMP1
-	 vpbroadcastq	32*8-128($ap,$tmp), $ACC0	# borrow $ACC0 for $B1
+	 vpbroadcastq	32*8-128($tpa), $ACC0		# borrow $ACC0 for $B1
 	vpaddq		$TEMP1, $ACC4, $ACC4
 	vpmuludq	32*7-128($aap), $B1, $ACC5
-	 vpbroadcastq	32*0+8-128($ap,$tmp), $B1	# for next iteration
-	vpaddq		$TEMP2, $ACC5, $ACC5
-	vmovdqu		32*15-448($tp1,$tmp), $TEMP1
+	 vpbroadcastq	32*0+8-128($tpa), $B1		# for next iteration
+	vpaddq		32*14-448($tp1), $ACC5, $ACC5
 
-	vmovdqu		$ACC3, 32*12-448($tp1,$tmp)
-	vmovdqu		$ACC4, 32*13-448($tp1,$tmp)
+	vmovdqu		$ACC3, 32*12-448($tp1)
+	vmovdqu		$ACC4, 32*13-448($tp1)
+	lea		8($tpa), $tpa
 
 	vpmuludq	32*7-128($ap), $B2, $TEMP0
-	vmovdqu		32*16-448($tp1,$tmp), $TEMP2
 	vpaddq		$TEMP0, $ACC5, $ACC5
 	vpmuludq	32*7-128($aap), $B2, $ACC6
-	vpaddq		$TEMP1, $ACC6, $ACC6
+	vpaddq		32*15-448($tp1), $ACC6, $ACC6
 
 	vpmuludq	32*8-128($ap), $ACC0, $ACC7
-	vmovdqu		$ACC5, 32*14-448($tp1,$tmp)
-	vpaddq		$TEMP2, $ACC7, $ACC7
-	vmovdqu		$ACC6, 32*15-448($tp1,$tmp)
-	vmovdqu		$ACC7, 32*16-448($tp1,$tmp)
+	vmovdqu		$ACC5, 32*14-448($tp1)
+	vpaddq		32*16-448($tp1), $ACC7, $ACC7
+	vmovdqu		$ACC6, 32*15-448($tp1)
+	vmovdqu		$ACC7, 32*16-448($tp1)
+	lea		8($tp1), $tp1
 
-	lea	8($tmp), $tmp
 	dec	$i        
 	jnz	.LOOP_SQR_1024
 ___
@@ -432,9 +431,10 @@ $TEMP3 = $Y1;
 $TEMP4 = $Y2;
 $code.=<<___;
 	#we need to fix indexes 32-39 to avoid overflow
-	vmovdqu		32*8-192($tp0), $ACC8
-	vmovdqu		32*9-192($tp0), $ACC1
-	vmovdqu		32*10-448($tp1), $ACC2
+	vmovdqu		32*8(%rsp), $ACC8		# 32*8-192($tp0),
+	vmovdqu		32*9(%rsp), $ACC1		# 32*9-192($tp0)
+	vmovdqu		32*10(%rsp), $ACC2		# 32*10-192($tp0)
+	lea		192(%rsp), $tp0			# 64+128=192
 
 	vpsrlq		\$29, $ACC8, $TEMP1
 	vpand		$AND_MASK, $ACC8, $ACC8
@@ -452,7 +452,7 @@ $code.=<<___;
 	vpaddq		$TEMP1, $ACC1, $ACC1
 	vpaddq		$TEMP2, $ACC2, $ACC2
 	vmovdqu		$ACC1, 32*9-192($tp0)
-	vmovdqu		$ACC2, 32*10-448($tp1)
+	vmovdqu		$ACC2, 32*10-192($tp0)
 
 	mov	(%rsp), %rax
 	mov	8(%rsp), $r1
@@ -502,13 +502,15 @@ $code.=<<___;
 	 mov	%rax, %rdx
 	 imulq	-128($np), %rax
 	vpaddq		$TEMP0, $ACC1, $ACC1
-	vpmuludq	32*2-128($np), $Y1, $TEMP1
 	 add	%rax, $r1
+	vpmuludq	32*2-128($np), $Y1, $TEMP1
 	 mov	%rdx, %rax
 	 imulq	8-128($np), %rax
 	vpaddq		$TEMP1, $ACC2, $ACC2
 	vpmuludq	32*3-128($np), $Y1, $TEMP2
+	 .byte	0x67
 	 add	%rax, $r2
+	 .byte	0x67
 	 mov	%rdx, %rax
 	 imulq	16-128($np), %rax
 	 shr	\$29, $r1
@@ -528,17 +530,17 @@ $code.=<<___;
 	vpaddq		$TEMP0, $ACC7, $ACC7
 	vpmuludq	32*8-128($np), $Y1, $TEMP1
 	 vmovd	%eax, $Y1
-	 vmovdqu	32*1-8-128($np), $TEMP2
+	 #vmovdqu	32*1-8-128($np), $TEMP2		# moved below
 	vpaddq		$TEMP1, $ACC8, $ACC8
-	 vmovdqu	32*2-8-128($np), $TEMP0
+	 #vmovdqu	32*2-8-128($np), $TEMP0		# moved below
 	 vpbroadcastq	$Y1, $Y1
 
-	vpmuludq	$Y2, $TEMP2, $TEMP2
+	vpmuludq	32*1-8-128($np), $Y2, $TEMP2	# see above
 	vmovdqu		32*3-8-128($np), $TEMP1
 	 mov	%rax, %rdx
 	 imulq	-128($np), %rax
 	vpaddq		$TEMP2, $ACC1, $ACC1
-	vpmuludq	$Y2, $TEMP0, $TEMP0
+	vpmuludq	32*2-8-128($np), $Y2, $TEMP0	# see above
 	vmovdqu		32*4-8-128($np), $TEMP2
 	 add	%rax, $r2
 	 mov	%rdx, %rax
@@ -552,11 +554,12 @@ $code.=<<___;
 	vpaddq		$TEMP1, $ACC3, $ACC3
 	vpmuludq	$Y2, $TEMP2, $TEMP2
 	vmovdqu		32*6-8-128($np), $TEMP1
+	 .byte	0x67
 	 mov	%rax, $r3
 	 imull	$n0, %eax
 	vpaddq		$TEMP2, $ACC4, $ACC4
 	vpmuludq	$Y2, $TEMP0, $TEMP0
-	vmovdqu		32*7-8-128($np), $TEMP2
+	.byte	0xc4,0x41,0x7e,0x6f,0x9d,0x58,0x00,0x00,0x00	# vmovdqu		32*7-8-128($np), $TEMP2
 	 and	\$0x1fffffff, %eax
 	vpaddq		$TEMP0, $ACC5, $ACC5
 	vpmuludq	$Y2, $TEMP1, $TEMP1
@@ -584,11 +587,12 @@ $code.=<<___;
 	vpaddq		$TEMP1, $ACC1, $ACC1
 	 vpmuludq	$Y2, $ACC0, $ACC0
 	vpmuludq	$Y1, $TEMP2, $TEMP2
-	vmovdqu		32*4-16-128($np), $TEMP1
+	.byte	0xc4,0x41,0x7e,0x6f,0xb5,0xf0,0xff,0xff,0xff	# vmovdqu		32*4-16-128($np), $TEMP1
 	 vpaddq		$ACC1, $ACC0, $ACC0
 	vpaddq		$TEMP2, $ACC2, $ACC2
 	vpmuludq	$Y1, $TEMP0, $TEMP0
 	vmovdqu		32*5-16-128($np), $TEMP2
+	 .byte	0x67
 	 vmovq		$ACC0, %rax
 	 vmovdqu	$ACC0, (%rsp)		# transfer $r0-$r3
 	vpaddq		$TEMP0, $ACC3, $ACC3
@@ -602,12 +606,12 @@ $code.=<<___;
 	vmovdqu		32*8-16-128($np), $TEMP2
 	vpaddq		$TEMP0, $ACC6, $ACC6
 	vpmuludq	$Y1, $TEMP1, $TEMP1
-	vmovdqu		32*9-16-128($np), $TEMP0
 	 shr	\$29, $r3
+	vmovdqu		32*9-16-128($np), $TEMP0
+	 add	$r3, %rax
 	vpaddq		$TEMP1, $ACC7, $ACC7
 	vpmuludq	$Y1, $TEMP2, $TEMP2
-	 vmovdqu	32*2-24-128($np), $TEMP1
-	 add	$r3, %rax
+	 #vmovdqu	32*2-24-128($np), $TEMP1	# moved below
 	 mov	%rax, $r0
 	 imull	$n0, %eax
 	vpaddq		$TEMP2, $ACC8, $ACC8
@@ -615,10 +619,11 @@ $code.=<<___;
 	 and	\$0x1fffffff, %eax
 	 vmovd	%eax, $Y1
 	 vmovdqu	32*3-24-128($np), $TEMP2
+	.byte	0x67
 	vpaddq		$TEMP0, $ACC9, $ACC9
 	 vpbroadcastq	$Y1, $Y1
 
-	vpmuludq	$Y2, $TEMP1, $TEMP1
+	vpmuludq	32*2-24-128($np), $Y2, $TEMP1	# see above
 	vmovdqu		32*4-24-128($np), $TEMP0
 	 mov	%rax, %rdx
 	 imulq	-128($np), %rax
@@ -629,6 +634,7 @@ $code.=<<___;
 	 add	%rax, $r0
 	 mov	%rdx, %rax
 	 imulq	8-128($np), %rax
+	 .byte	0x67
 	 shr	\$29, $r0
 	 mov	16(%rsp), $r2
 	vpaddq		$TEMP2, $ACC3, $ACC2
@@ -648,8 +654,8 @@ $code.=<<___;
 	vmovdqu		32*8-24-128($np), $TEMP1
 	 mov	%rax, $r1
 	 imull	$n0, %eax
-	vpaddq		$TEMP2, $ACC6, $ACC5
 	vpmuludq	$Y2, $TEMP0, $TEMP0
+	vpaddq		$TEMP2, $ACC6, $ACC5
 	vmovdqu		32*9-24-128($np), $TEMP2
 	 and	\$0x1fffffff, %eax
 	vpaddq		$TEMP0, $ACC7, $ACC6
@@ -883,17 +889,18 @@ rsaz_1024_mul_avx2:
 	push	%r15
 ___
 $code.=<<___ if ($win64);
+	vzeroupper
 	lea	-0xa8(%rsp),%rsp
-	movaps  %xmm6,-0xd8(%rax)
-	movaps  %xmm7,-0xc8(%rax)
-	movaps  %xmm8,-0xb8(%rax)
-	movaps  %xmm9,-0xa8(%rax)
-	movaps  %xmm10,-0x98(%rax)
-	movaps  %xmm11,-0x88(%rax)
-	movaps  %xmm12,-0x78(%rax)
-	movaps  %xmm13,-0x68(%rax)
-	movaps  %xmm14,-0x58(%rax)
-	movaps  %xmm15,-0x48(%rax)
+	vmovaps	%xmm6,-0xd8(%rax)
+	vmovaps	%xmm7,-0xc8(%rax)
+	vmovaps	%xmm8,-0xb8(%rax)
+	vmovaps	%xmm9,-0xa8(%rax)
+	vmovaps	%xmm10,-0x98(%rax)
+	vmovaps	%xmm11,-0x88(%rax)
+	vmovaps	%xmm12,-0x78(%rax)
+	vmovaps	%xmm13,-0x68(%rax)
+	vmovaps	%xmm14,-0x58(%rax)
+	vmovaps	%xmm15,-0x48(%rax)
 .Lmul_1024_body:
 ___
 $code.=<<___;
@@ -907,6 +914,7 @@ $code.=<<___;
 	# cross page boundary, swap it with $bp [meaning that caller
 	# is advised to lay down $ap and $bp next to each other, so
 	# that only one can cross page boundary].
+	.byte	0x67,0x67
 	mov	$ap, $tmp
 	and	\$4095, $tmp
 	add	\$32*10, $tmp
@@ -922,6 +930,7 @@ $code.=<<___;
 
 	and	\$4095, $tmp	# see if $np crosses page
 	add	\$32*10, $tmp
+	.byte	0x67,0x67
 	shr	\$12, $tmp
 	jz	.Lmul_1024_no_n_copy
 
@@ -967,6 +976,7 @@ $code.=<<___;
 	vpbroadcastq ($bp), $Bi
 	vmovdqu	$ACC0, (%rsp)			# clear top of stack
 	xor	$r0, $r0
+	.byte	0x67
 	xor	$r1, $r1
 	xor	$r2, $r2
 	xor	$r3, $r3
@@ -1571,22 +1581,22 @@ rsaz_1024_gather5_avx2:
 ___
 $code.=<<___ if ($win64);
 	lea	-0x88(%rsp),%rax
+	vzeroupper
 .LSEH_begin_rsaz_1024_gather5:
 	# I can't trust assembler to use specific encoding:-(
 	.byte	0x48,0x8d,0x60,0xe0		#lea	-0x20(%rax),%rsp
-	.byte	0x0f,0x29,0x70,0xe0		#movaps	%xmm6,-0x20(%rax)
-	.byte	0x0f,0x29,0x78,0xf0		#movaps	%xmm7,-0x10(%rax)
-	.byte	0x44,0x0f,0x29,0x00		#movaps	%xmm8,0(%rax)
-	.byte	0x44,0x0f,0x29,0x48,0x10	#movaps	%xmm9,0x10(%rax)
-	.byte	0x44,0x0f,0x29,0x50,0x20	#movaps	%xmm10,0x20(%rax)
-	.byte	0x44,0x0f,0x29,0x58,0x30	#movaps	%xmm11,0x30(%rax)
-	.byte	0x44,0x0f,0x29,0x60,0x40	#movaps	%xmm12,0x40(%rax)
-	.byte	0x44,0x0f,0x29,0x68,0x50	#movaps	%xmm13,0x50(%rax)
-	.byte	0x44,0x0f,0x29,0x70,0x60	#movaps	%xmm14,0x60(%rax)
-	.byte	0x44,0x0f,0x29,0x78,0x70	#movaps	%xmm15,0x70(%rax)
+	.byte	0xc5,0xf8,0x29,0x70,0xe0	#vmovaps %xmm6,-0x20(%rax)
+	.byte	0xc5,0xf8,0x29,0x78,0xf0	#vmovaps %xmm7,-0x10(%rax)
+	.byte	0xc5,0x78,0x29,0x40,0x00	#vmovaps %xmm8,0(%rax)
+	.byte	0xc5,0x78,0x29,0x48,0x10	#vmovaps %xmm9,0x10(%rax)
+	.byte	0xc5,0x78,0x29,0x50,0x20	#vmovaps %xmm10,0x20(%rax)
+	.byte	0xc5,0x78,0x29,0x58,0x30	#vmovaps %xmm11,0x30(%rax)
+	.byte	0xc5,0x78,0x29,0x60,0x40	#vmovaps %xmm12,0x40(%rax)
+	.byte	0xc5,0x78,0x29,0x68,0x50	#vmovaps %xmm13,0x50(%rax)
+	.byte	0xc5,0x78,0x29,0x70,0x60	#vmovaps %xmm14,0x60(%rax)
+	.byte	0xc5,0x78,0x29,0x78,0x70	#vmovaps %xmm15,0x70(%rax)
 ___
 $code.=<<___;
-	vzeroupper
 	lea	.Lgather_table(%rip),%r11
 	mov	$power,%eax
 	and	\$3,$power
@@ -1603,25 +1613,25 @@ $code.=<<___;
 	vpbroadcastb	2(%r11,%rax), %xmm14
 	vpbroadcastb	1(%r11,%rax), %xmm15
 
-	lea	($inp,$power),$inp
+	lea	64($inp,$power),$inp
 	mov	\$64,%r11			# size optimization
 	mov	\$9,%eax
 	jmp	.Loop_gather_1024
 
 .align	32
 .Loop_gather_1024:
-	vpand		($inp),			%xmm8,%xmm0
-	vpand		($inp,%r11),		%xmm9,%xmm1
-	vpand		($inp,%r11,2),		%xmm10,%xmm2
-	vpand		64($inp,%r11,2),	%xmm11,%xmm3
+	vpand		-64($inp),		%xmm8,%xmm0
+	vpand		($inp),			%xmm9,%xmm1
+	vpand		64($inp),		%xmm10,%xmm2
+	vpand		($inp,%r11,2),		%xmm11,%xmm3
 	 vpor					%xmm0,%xmm1,%xmm1
-	vpand		($inp,%r11,4),		%xmm12,%xmm4
+	vpand		64($inp,%r11,2),	%xmm12,%xmm4
 	 vpor					%xmm2,%xmm3,%xmm3
-	vpand		64($inp,%r11,4),	%xmm13,%xmm5
+	vpand		($inp,%r11,4),		%xmm13,%xmm5
 	 vpor					%xmm1,%xmm3,%xmm3
-	vpand		-128($inp,%r11,8),	%xmm14,%xmm6
+	vpand		64($inp,%r11,4),	%xmm14,%xmm6
 	 vpor					%xmm4,%xmm5,%xmm5
-	vpand		-64($inp,%r11,8),	%xmm15,%xmm2
+	vpand		-128($inp,%r11,8),	%xmm15,%xmm2
 	lea		($inp,%r11,8),$inp
 	 vpor					%xmm3,%xmm5,%xmm5
 	 vpor					%xmm2,%xmm6,%xmm6
@@ -1805,16 +1815,16 @@ rsaz_se_handler:
 	.rva	.Lmul_1024_body,.Lmul_1024_epilogue
 .LSEH_info_rsaz_1024_gather5:
 	.byte	0x01,0x33,0x16,0x00
-	.byte	0x33,0xf8,0x09,0x00	#movaps 0x90(rsp),xmm15
-	.byte	0x2e,0xe8,0x08,0x00	#movaps 0x80(rsp),xmm14
-	.byte	0x29,0xd8,0x07,0x00	#movaps 0x70(rsp),xmm13
-	.byte	0x24,0xc8,0x06,0x00	#movaps 0x60(rsp),xmm12
-	.byte	0x1f,0xb8,0x05,0x00	#movaps 0x50(rsp),xmm11
-	.byte	0x1a,0xa8,0x04,0x00	#movaps 0x40(rsp),xmm10
-	.byte	0x15,0x98,0x03,0x00	#movaps 0x30(rsp),xmm9
-	.byte	0x10,0x88,0x02,0x00	#movaps 0x20(rsp),xmm8
-	.byte	0x0c,0x78,0x01,0x00	#movaps 0x10(rsp),xmm7
-	.byte	0x08,0x68,0x00,0x00	#movaps 0x00(rsp),xmm6
+	.byte	0x36,0xf8,0x09,0x00	#vmovaps 0x90(rsp),xmm15
+	.byte	0x31,0xe8,0x08,0x00	#vmovaps 0x80(rsp),xmm14
+	.byte	0x2c,0xd8,0x07,0x00	#vmovaps 0x70(rsp),xmm13
+	.byte	0x27,0xc8,0x06,0x00	#vmovaps 0x60(rsp),xmm12
+	.byte	0x22,0xb8,0x05,0x00	#vmovaps 0x50(rsp),xmm11
+	.byte	0x1d,0xa8,0x04,0x00	#vmovaps 0x40(rsp),xmm10
+	.byte	0x18,0x98,0x03,0x00	#vmovaps 0x30(rsp),xmm9
+	.byte	0x13,0x88,0x02,0x00	#vmovaps 0x20(rsp),xmm8
+	.byte	0x0e,0x78,0x01,0x00	#vmovaps 0x10(rsp),xmm7
+	.byte	0x09,0x68,0x00,0x00	#vmovaps 0x00(rsp),xmm6
 	.byte	0x04,0x01,0x15,0x00	#sub	rsp,0xa8
 ___
 }

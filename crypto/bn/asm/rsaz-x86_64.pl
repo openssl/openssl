@@ -1,48 +1,60 @@
 #!/usr/bin/env perl
 
-#******************************************************************************#
-#* Copyright(c) 2012, Intel Corp.                                             *#
-#* Developers and authors:                                                    *#
-#* Shay Gueron (1, 2), and Vlad Krasnov (1)                                   *#
-#* (1) Intel Architecture Group, Microprocessor and Chipset Development,      *#
-#*     Israel Development Center, Haifa, Israel                               *#
-#* (2) University of Haifa                                                    *#
-#******************************************************************************#
-#* This submission to OpenSSL is to be made available under the OpenSSL       *#
-#* license, and only to the OpenSSL project, in order to allow integration    *#
-#* into the publicly distributed code. ?                                      *#
-#* The use of this code, or portions of this code, or concepts embedded in    *#
-#* this code, or modification of this code and/or algorithm(s) in it, or the  *#
-#* use of this code for any other purpose than stated above, requires special *#
-#* licensing.                                                                 *#
-#******************************************************************************#
-#******************************************************************************#
-#* DISCLAIMER:                                                                *#
-#* THIS SOFTWARE IS PROVIDED BY THE CONTRIBUTORS AND THE COPYRIGHT OWNERS     *#
-#* ``AS IS''. ANY EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED *#
-#* TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR *#
-#* PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE CONTRIBUTORS OR THE COPYRIGHT*#
-#* OWNERS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, *#
-#* OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF    *#
-#* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS   *#
-#* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN    *#
-#* CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)    *#
-#* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE *#
-#* POSSIBILITY OF SUCH DAMAGE.                                                *#
-#******************************************************************************#
-#* Reference:                                                                 *#
-#* [1] S. Gueron, "Efficient Software Implementations of Modular              *#
-#*     Exponentiation", http://eprint.iacr.org/2011/239                       *#
-#* [2] S. Gueron, V. Krasnov. "Speeding up Big-Numbers Squaring".             *#
-#*     IEEE Proceedings of 9th International Conference on Information        *#
-#*     Technology: New Generations (ITNG 2012), 821-823 (2012).               *#
-#* [3] S. Gueron, Efficient Software Implementations of Modular Exponentiation*#
-#*     Journal of Cryptographic Engineering 2:31-43 (2012).                   *#
-#* [4] S. Gueron, V. Krasnov: "[PATCH] Efficient and side channel analysis    *#
-#*     resistant 512-bit and 1024-bit modular exponentiation for optimizing   *#
-#*     RSA1024 and RSA2048 on x86_64 platforms",                              *#
-#*     http://rt.openssl.org/Ticket/Display.html?id=2582&user=guest&pass=guest*#
-################################################################################
+##############################################################################
+#                                                                            #
+#  Copyright (c) 2012, Intel Corporation                                     #
+#                                                                            #
+#  All rights reserved.                                                      #
+#                                                                            #
+#  Redistribution and use in source and binary forms, with or without        #
+#  modification, are permitted provided that the following conditions are    #
+#  met:                                                                      #
+#                                                                            #
+#  *  Redistributions of source code must retain the above copyright         #
+#     notice, this list of conditions and the following disclaimer.          #
+#                                                                            #
+#  *  Redistributions in binary form must reproduce the above copyright      #
+#     notice, this list of conditions and the following disclaimer in the    #
+#     documentation and/or other materials provided with the                 #
+#     distribution.                                                          #
+#                                                                            #
+#  *  Neither the name of the Intel Corporation nor the names of its         #
+#     contributors may be used to endorse or promote products derived from   #
+#     this software without specific prior written permission.               #
+#                                                                            #
+#                                                                            #
+#  THIS SOFTWARE IS PROVIDED BY INTEL CORPORATION ""AS IS"" AND ANY          #
+#  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE         #
+#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR        #
+#  PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL INTEL CORPORATION OR            #
+#  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,     #
+#  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,       #
+#  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR        #
+#  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF    #
+#  LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING      #
+#  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS        #
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.              #
+#                                                                            #
+##############################################################################
+# Developers and authors:                                                    #
+# Shay Gueron (1, 2), and Vlad Krasnov (1)                                   #
+# (1) Intel Architecture Group, Microprocessor and Chipset Development,      #
+#     Israel Development Center, Haifa, Israel                               #
+# (2) University of Haifa                                                    #
+##############################################################################
+# Reference:                                                                 #
+# [1] S. Gueron, "Efficient Software Implementations of Modular              #
+#     Exponentiation", http://eprint.iacr.org/2011/239                       #
+# [2] S. Gueron, V. Krasnov. "Speeding up Big-Numbers Squaring".             #
+#     IEEE Proceedings of 9th International Conference on Information        #
+#     Technology: New Generations (ITNG 2012), 821-823 (2012).               #
+# [3] S. Gueron, Efficient Software Implementations of Modular Exponentiation#
+#     Journal of Cryptographic Engineering 2:31-43 (2012).                   #
+# [4] S. Gueron, V. Krasnov: "[PATCH] Efficient and side channel analysis    #
+#     resistant 512-bit and 1024-bit modular exponentiation for optimizing   #
+#     RSA1024 and RSA2048 on x86_64 platforms",                              #
+#     http://rt.openssl.org/Ticket/Display.html?id=2582&user=guest&pass=guest#
+##############################################################################
 
 # While original submission covers 512- and 1024-bit exponentiation,
 # this module is limited to 512-bit version only (and as such
@@ -70,8 +82,7 @@
 #
 # (*)	rsax engine and fips numbers are presented for reference
 #	purposes;
-# (**)	you might notice MULX code below, strangely enough gain is
-#	marginal, which is why code remains disabled;
+# (**)	MULX was attempted, but found to give only marginal improvement;
 
 $flavour = shift;
 $output  = shift;
@@ -87,6 +98,21 @@ die "can't locate x86_64-xlate.pl";
 open OUT,"| $^X $xlate $flavour $output";
 *STDOUT=*OUT;
 
+if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
+		=~ /GNU assembler version ([2-9]\.[0-9]+)/) {
+	$addx = ($1>=2.23);
+}
+
+if (!$addx && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
+	    `nasm -v 2>&1` =~ /NASM version ([2-9]\.[0-9]+)/) {
+	$addx = ($1>=2.10);
+}
+
+if (!$addx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
+	    `ml64 2>&1` =~ /Version ([0-9]+)\./) {
+	$addx = ($1>=11);
+}
+
 ($out, $inp, $mod) = ("%rdi", "%rsi", "%rbp");	# common internal API
 {
 my ($out,$inp,$mod,$n0,$times) = ("%rdi","%rsi","%rdx","%rcx","%r8d");
@@ -94,8 +120,10 @@ my ($out,$inp,$mod,$n0,$times) = ("%rdi","%rsi","%rdx","%rcx","%r8d");
 $code.=<<___;
 .text
 
+.extern	OPENSSL_ia32cap_P
+
 .globl	rsaz_512_sqr
-.type	rsaz_512_sqr,\@function,4
+.type	rsaz_512_sqr,\@function,5
 .align	32
 rsaz_512_sqr:				# 25-29% faster than rsaz_512_mul
 	push	%rbx
@@ -111,14 +139,19 @@ rsaz_512_sqr:				# 25-29% faster than rsaz_512_mul
 	movq	($inp), %rdx
 	movq	8($inp), %rax
 	movq	$n0, 128(%rsp)
+___
+$code.=<<___ if ($addx);
+	movl	\$0x80100,%r11d
+	andl	OPENSSL_ia32cap_P+8(%rip),%r11d
+	cmpl	\$0x80100,%r11d		# check for MULX and ADO/CX
+	je	.Loop_sqrx
+___
+$code.=<<___;
 	jmp	.Loop_sqr
 
 .align	32
 .Loop_sqr:
 	movl	$times,128+8(%rsp)
-___
-if (1) {
-$code.=<<___;
 #first iteration
 	movq	%rdx, %rbx
 	mulq	%rdx
@@ -446,242 +479,7 @@ $code.=<<___;
 
 	movq	%r13, 112(%rsp)
 	movq	%r14, 120(%rsp)
-___
-} else {
-$code.=<<___;
-	movq	$out, %xmm0		# off-load
-#first iteration	
-	mulx	%rax, %r8, %r9
 
-	mulx	16($inp), %rcx, %r10
-
-	mulx	24($inp), %rax, %r11
-	add	%rcx, %r9
-
-	mulx	32($inp), %rcx, %r12
-	adc	%rax, %r10
-
-	mulx	40($inp), %rax, %r13
-	adc	%rcx, %r11
-
-	mulx	48($inp), %rcx, %r14
-	adc	%rax, %r12
-
-	mulx	56($inp), %rax, %r15
-	adc	%rcx, %r13
-	mov	%r9, %rcx
-	adc	%rax, %r14
-	adc	\$0, %r15
-
-	shld	\$1, %r8, %r9
-	shl	\$1, %r8
-
-	mulx	%rdx, %rax, %rdx
-	add	%rdx, %r8
-	adc	\$0, %r9
-
-	mov	%rax, (%rsp)
-	mov	%r8, 8(%rsp)
-
-#second iteration	
-	mov	8($inp), %rdx
-	mulx	16($inp), %rax, %rbx
-
-	mulx	24($inp), $out, %r8
-	add	%rax, %r10
-	adc	%rbx, %r11
-	adc	\$0, %r8
-
-	mulx	32($inp), %rax, %rbx
-	add	$out, %r11
-	adc	%r8, %r12
-	adc	\$0, %rbx
-
-	mulx	40($inp), $out, %r8
-	add	%rax, %r12
-	adc	%rbx, %r13
-	adc	\$0, %r8
-
-	mulx	48($inp), %rax, %rbx
-	add	$out, %r13
-	adc	%r8, %r14
-	adc	\$0, %rbx
-
-	mulx	56($inp), $out, %r8
-	add	%rax, %r14
-	adc	%rbx, %r15
-	mov	%r11, %rbx
-	adc	\$0, %r8
-	add	$out, %r15
-	adc	\$0, %r8
-
-	shld	\$1, %r10, %r11
-	shld	\$1, %rcx, %r10
-
-	mulx	%rdx, %rax, %rcx
-	add	%rax, %r9
-	adc	%rcx, %r10
-	adc	\$0, %r11
-
-	mov	%r9, 16(%rsp)
-	mov	%r10, 24(%rsp)
-	
-#third iteration	
-	mov	16($inp), %rdx
-	mulx	24($inp), $out, %r9
-
-	mulx	32($inp), %rax, %rcx
-	add	$out, %r12
-	adc	%r9, %r13
-	adc	\$0, %rcx
-
-	mulx	40($inp), $out, %r9
-	add	%rax, %r13
-	adc	%rcx, %r14
-	adc	\$0, %r9
-
-	mulx	48($inp), %rax, %rcx
-	add	$out, %r14
-	adc	%r9, %r15
-	adc	\$0, %rcx
-
-	mulx	56($inp), $out, %r9
-	add	%rax, %r15
-	adc	%rcx, %r8
-	mov	%r13, %rcx
-	adc	\$0, %r9
-	add	$out, %r8
-	adc	\$0, %r9
-
-	shld	\$1, %r12, %r13
-	shld	\$1, %rbx, %r12
-
-	mulx	%rdx, %rax, %rdx
-	add	%rax, %r11
-	adc	%rdx, %r12
-	adc	\$0, %r13
-
-	mov	%r11, 32(%rsp)
-	mov	%r12, 40(%rsp)
-	
-#fourth iteration	
-	mov	24($inp), %rdx
-	mulx	32($inp), %rax, %rbx
-
-	mulx	40($inp), $out, %r10
-	add	%rax, %r14
-	adc	%rbx, %r15
-	adc	\$0, %r10
-
-	mulx	48($inp), %rax, %rbx
-	add	$out, %r15
-	adc	%r10, %r8
-	adc	\$0, %rbx
-
-	mulx	56($inp), $out, %r10
-	add	%rax, %r8
-	adc	\$0, %rbx
-	add	$out, %r9
-	adc	\$0, %r10
-	add	%rbx, %r9
-	mov	%r15, %rbx
-	adc	\$0, %r10
-
-	shld	\$1, %r14, %r15
-	shld	\$1, %rcx, %r14
-
-	mulx	%rdx, %rax, %rdx
-	add	%rax, %r13
-	adc	%rdx, %r14
-	adc	\$0, %r15
-
-	mov	%r13, 48(%rsp)
-	mov	%r14, 56(%rsp)
-	
-#fifth iteration	
-	mov	32($inp), %rdx
-	mulx	40($inp), $out, %r11
-
-	mulx	48($inp), %rax, %rcx
-	add	$out, %r8
-	adc	%r11, %r9
-	adc	\$0, %rcx
-
-	mulx	56($inp), $out, %r11
-	add	%rax, %r9
-	adc	%rcx, %r10
-	adc	\$0, %r11
-	add	$out, %r10
-	adc	\$0, %r11
-
-	mov	%r9, %rcx
-	shld	\$1, %r8, %r9
-	shld	\$1, %rbx, %r8
-
-	mulx	%rdx, %rax, %rdx
-	add	%rax, %r15
-	adc	%rdx, %r8
-	adc	\$0, %r9
-
-	mov	%r15, 64(%rsp)
-	mov	%r8, 72(%rsp)
-	
-#sixth iteration	
-	mov	40($inp), %rdx
-	mulx	48($inp), %rax, %rbx
-
-	mulx	56($inp), $out, %r12
-	add	%rax, %r10
-	adc	%rbx, %r11
-	adc	\$0, %r12
-	add	$out, %r11
-	adc	\$0, %r12
-
-	mov	%r11, %rbx
-	shld	\$1, %r10, %r11
-	shld	\$1, %rcx, %r10
-
-	mulx	%rdx, %rax, %rdx
-	add	%rax, %r9
-	adc	%rdx, %r10
-	adc	\$0, %r11
-
-	mov	%r9, 80(%rsp)
-	mov	%r10, 88(%rsp)
-
-#seventh iteration
-	mov	48($inp), %rdx
-	mulx	56($inp), %rax, %r13
-	add	%rax, %r12
-	adc	\$0, %r13
-
-	xor	%r14, %r14
-	shld	\$1, %r13, %r14
-	shld	\$1, %r12, %r13
-	shld	\$1, %rbx, %r12
-
-	mulx	%rdx, %rax, %rdx
-	add	%rax, %r11
-	adc	%rdx, %r12
-	adc	\$0, %r13
-
-	mov	%r11, 96(%rsp)
-	mov	%r12, 104(%rsp)
-
-#eighth iteration
-	mov	56($inp), %rdx
-	mulx	%rdx, %rax, %rdx
-	add	%rax, %r13
-	adc	\$0, %rdx
-	
-	add	%rdx, %r14
-
-	movq	%r13, 112(%rsp)
-	movq	%r14, 120(%rsp)
-	movq	%xmm0, $out
-___
-}
-$code.=<<___;
 	movq	(%rsp), %r8
 	movq	8(%rsp), %r9
 	movq	16(%rsp), %r10
@@ -691,7 +489,7 @@ $code.=<<___;
 	movq	48(%rsp), %r14
 	movq	56(%rsp), %r15
 
-	call	_rsaz_512_reduce
+	call	__rsaz_512_reduce
 
 	addq	64(%rsp), %r8
 	adcq	72(%rsp), %r9
@@ -703,7 +501,7 @@ $code.=<<___;
 	adcq	120(%rsp), %r15
 	sbbq	%rcx, %rcx
 
-	call	_rsaz_512_subtract
+	call	__rsaz_512_subtract
 
 	movq	%r8, %rdx
 	movq	%r9, %rax
@@ -712,6 +510,282 @@ $code.=<<___;
 
 	decl	$times
 	jnz	.Loop_sqr
+___
+if ($addx) {
+$code.=<<___;
+	jmp	.Lsqr_tail
+
+.align	32
+.Loop_sqrx:
+	movl	$times,128+8(%rsp)
+	movq	$out, %xmm0		# off-load
+	movq	%rbp, %xmm1		# off-load
+#first iteration	
+	mulx	%rax, %r8, %r9
+
+	mulx	16($inp), %rcx, %r10
+	xor	%rbp, %rbp		# cf=0, of=0
+
+	mulx	24($inp), %rax, %r11
+	adcx	%rcx, %r9
+
+	mulx	32($inp), %rcx, %r12
+	adcx	%rax, %r10
+
+	mulx	40($inp), %rax, %r13
+	adcx	%rcx, %r11
+
+	.byte	0xc4,0x62,0xf3,0xf6,0xb6,0x30,0x00,0x00,0x00	# mulx	48($inp), %rcx, %r14
+	adcx	%rax, %r12
+	adcx	%rcx, %r13
+
+	.byte	0xc4,0x62,0xfb,0xf6,0xbe,0x38,0x00,0x00,0x00	# mulx	56($inp), %rax, %r15
+	adcx	%rax, %r14
+	adcx	%rbp, %r15		# %rbp is 0
+
+	mov	%r9, %rcx
+	shld	\$1, %r8, %r9
+	shl	\$1, %r8
+
+	xor	%ebp, %ebp
+	mulx	%rdx, %rax, %rdx
+	adcx	%rdx, %r8
+	 mov	8($inp), %rdx
+	adcx	%rbp, %r9
+
+	mov	%rax, (%rsp)
+	mov	%r8, 8(%rsp)
+
+#second iteration	
+	mulx	16($inp), %rax, %rbx
+	adox	%rax, %r10
+	adcx	%rbx, %r11
+
+	.byte	0xc4,0x62,0xc3,0xf6,0x86,0x18,0x00,0x00,0x00	# mulx	24($inp), $out, %r8
+	adox	$out, %r11
+	adcx	%r8, %r12
+
+	mulx	32($inp), %rax, %rbx
+	adox	%rax, %r12
+	adcx	%rbx, %r13
+
+	mulx	40($inp), $out, %r8
+	adox	$out, %r13
+	adcx	%r8, %r14
+
+	.byte	0xc4,0xe2,0xfb,0xf6,0x9e,0x30,0x00,0x00,0x00	# mulx	48($inp), %rax, %rbx
+	adox	%rax, %r14
+	adcx	%rbx, %r15
+
+	.byte	0xc4,0x62,0xc3,0xf6,0x86,0x38,0x00,0x00,0x00	# mulx	56($inp), $out, %r8
+	adox	$out, %r15
+	adcx	%rbp, %r8
+	adox	%rbp, %r8
+
+	mov	%r11, %rbx
+	shld	\$1, %r10, %r11
+	shld	\$1, %rcx, %r10
+
+	xor	%ebp,%ebp
+	mulx	%rdx, %rax, %rcx
+	 mov	16($inp), %rdx
+	adcx	%rax, %r9
+	adcx	%rcx, %r10
+	adcx	%rbp, %r11
+
+	mov	%r9, 16(%rsp)
+	.byte	0x4c,0x89,0x94,0x24,0x18,0x00,0x00,0x00		# mov	%r10, 24(%rsp)
+	
+#third iteration	
+	.byte	0xc4,0x62,0xc3,0xf6,0x8e,0x18,0x00,0x00,0x00	# mulx	24($inp), $out, %r9
+	adox	$out, %r12
+	adcx	%r9, %r13
+
+	mulx	32($inp), %rax, %rcx
+	adox	%rax, %r13
+	adcx	%rcx, %r14
+
+	mulx	40($inp), $out, %r9
+	adox	$out, %r14
+	adcx	%r9, %r15
+
+	.byte	0xc4,0xe2,0xfb,0xf6,0x8e,0x30,0x00,0x00,0x00	# mulx	48($inp), %rax, %rcx
+	adox	%rax, %r15
+	adcx	%rcx, %r8
+
+	.byte	0xc4,0x62,0xc3,0xf6,0x8e,0x38,0x00,0x00,0x00	# mulx	56($inp), $out, %r9
+	adox	$out, %r8
+	adcx	%rbp, %r9
+	adox	%rbp, %r9
+
+	mov	%r13, %rcx
+	shld	\$1, %r12, %r13
+	shld	\$1, %rbx, %r12
+
+	xor	%ebp, %ebp
+	mulx	%rdx, %rax, %rdx
+	adcx	%rax, %r11
+	adcx	%rdx, %r12
+	 mov	24($inp), %rdx
+	adcx	%rbp, %r13
+
+	mov	%r11, 32(%rsp)
+	.byte	0x4c,0x89,0xa4,0x24,0x28,0x00,0x00,0x00		# mov	%r12, 40(%rsp)
+	
+#fourth iteration	
+	.byte	0xc4,0xe2,0xfb,0xf6,0x9e,0x20,0x00,0x00,0x00	# mulx	32($inp), %rax, %rbx
+	adox	%rax, %r14
+	adcx	%rbx, %r15
+
+	mulx	40($inp), $out, %r10
+	adox	$out, %r15
+	adcx	%r10, %r8
+
+	mulx	48($inp), %rax, %rbx
+	adox	%rax, %r8
+	adcx	%rbx, %r9
+
+	mulx	56($inp), $out, %r10
+	adox	$out, %r9
+	adcx	%rbp, %r10
+	adox	%rbp, %r10
+
+	.byte	0x66
+	mov	%r15, %rbx
+	shld	\$1, %r14, %r15
+	shld	\$1, %rcx, %r14
+
+	xor	%ebp, %ebp
+	mulx	%rdx, %rax, %rdx
+	adcx	%rax, %r13
+	adcx	%rdx, %r14
+	 mov	32($inp), %rdx
+	adcx	%rbp, %r15
+
+	mov	%r13, 48(%rsp)
+	mov	%r14, 56(%rsp)
+	
+#fifth iteration	
+	.byte	0xc4,0x62,0xc3,0xf6,0x9e,0x28,0x00,0x00,0x00	# mulx	40($inp), $out, %r11
+	adox	$out, %r8
+	adcx	%r11, %r9
+
+	mulx	48($inp), %rax, %rcx
+	adox	%rax, %r9
+	adcx	%rcx, %r10
+
+	mulx	56($inp), $out, %r11
+	adox	$out, %r10
+	adcx	%rbp, %r11
+	adox	%rbp, %r11
+
+	mov	%r9, %rcx
+	shld	\$1, %r8, %r9
+	shld	\$1, %rbx, %r8
+
+	xor	%ebp, %ebp
+	mulx	%rdx, %rax, %rdx
+	adcx	%rax, %r15
+	adcx	%rdx, %r8
+	 mov	40($inp), %rdx
+	adcx	%rbp, %r9
+
+	mov	%r15, 64(%rsp)
+	mov	%r8, 72(%rsp)
+	
+#sixth iteration	
+	.byte	0xc4,0xe2,0xfb,0xf6,0x9e,0x30,0x00,0x00,0x00	# mulx	48($inp), %rax, %rbx
+	adox	%rax, %r10
+	adcx	%rbx, %r11
+
+	.byte	0xc4,0x62,0xc3,0xf6,0xa6,0x38,0x00,0x00,0x00	# mulx	56($inp), $out, %r12
+	adox	$out, %r11
+	adcx	%rbp, %r12
+	adox	%rbp, %r12
+
+	mov	%r11, %rbx
+	shld	\$1, %r10, %r11
+	shld	\$1, %rcx, %r10
+
+	xor	%ebp, %ebp
+	mulx	%rdx, %rax, %rdx
+	adcx	%rax, %r9
+	adcx	%rdx, %r10
+	 mov	48($inp), %rdx
+	adcx	%rbp, %r11
+
+	mov	%r9, 80(%rsp)
+	mov	%r10, 88(%rsp)
+
+#seventh iteration
+	.byte	0xc4,0x62,0xfb,0xf6,0xae,0x38,0x00,0x00,0x00	# mulx	56($inp), %rax, %r13
+	adox	%rax, %r12
+	adox	%rbp, %r13
+
+	xor	%r14, %r14
+	shld	\$1, %r13, %r14
+	shld	\$1, %r12, %r13
+	shld	\$1, %rbx, %r12
+
+	xor	%ebp, %ebp
+	mulx	%rdx, %rax, %rdx
+	adcx	%rax, %r11
+	adcx	%rdx, %r12
+	 mov	56($inp), %rdx
+	adcx	%rbp, %r13
+
+	.byte	0x4c,0x89,0x9c,0x24,0x60,0x00,0x00,0x00		# mov	%r11, 96(%rsp)
+	.byte	0x4c,0x89,0xa4,0x24,0x68,0x00,0x00,0x00		# mov	%r12, 104(%rsp)
+
+#eighth iteration
+	mulx	%rdx, %rax, %rdx
+	adox	%rax, %r13
+	adox	%rbp, %rdx
+
+	.byte	0x66
+	add	%rdx, %r14
+
+	movq	%r13, 112(%rsp)
+	movq	%r14, 120(%rsp)
+	movq	%xmm0, $out
+	movq	%xmm1, %rbp
+
+	movq	128(%rsp), %rdx		# pull $n0
+	movq	(%rsp), %r8
+	movq	8(%rsp), %r9
+	movq	16(%rsp), %r10
+	movq	24(%rsp), %r11
+	movq	32(%rsp), %r12
+	movq	40(%rsp), %r13
+	movq	48(%rsp), %r14
+	movq	56(%rsp), %r15
+
+	call	__rsaz_512_reducex
+
+	addq	64(%rsp), %r8
+	adcq	72(%rsp), %r9
+	adcq	80(%rsp), %r10
+	adcq	88(%rsp), %r11
+	adcq	96(%rsp), %r12
+	adcq	104(%rsp), %r13
+	adcq	112(%rsp), %r14
+	adcq	120(%rsp), %r15
+	sbbq	%rcx, %rcx
+
+	call	__rsaz_512_subtract
+
+	movq	%r8, %rdx
+	movq	%r9, %rax
+	movl	128+8(%rsp), $times
+	movq	$out, $inp
+
+	decl	$times
+	jnz	.Loop_sqrx
+
+.Lsqr_tail:
+___
+}
+$code.=<<___;
 
 	leaq	128+24+48(%rsp), %rax
 	movq	-48(%rax), %r15
@@ -745,7 +819,15 @@ rsaz_512_mul:
 	movq	$out, %xmm0		# off-load arguments
 	movq	$mod, %xmm1
 	movq	$n0, 128(%rsp)
-
+___
+$code.=<<___ if ($addx);
+	movl	\$0x80100,%r11d
+	andl	OPENSSL_ia32cap_P+8(%rip),%r11d
+	cmpl	\$0x80100,%r11d		# check for MULX and ADO/CX
+	je	.Lmulx
+___
+$code.=<<___;
+	movq	($bp), %rbx		# pass b[0]
 	movq	$bp, %rbp		# pass argument
 	call	__rsaz_512_mul
 
@@ -761,8 +843,34 @@ rsaz_512_mul:
 	movq	48(%rsp), %r14
 	movq	56(%rsp), %r15
 
-	call	_rsaz_512_reduce
+	call	__rsaz_512_reduce
+___
+$code.=<<___ if ($addx);
+	jmp	.Lmul_tail
 
+.align	32
+.Lmulx:
+	movq	$bp, %rbp		# pass argument
+	movq	($bp), %rdx		# pass b[0]
+	call	__rsaz_512_mulx
+
+	movq	%xmm0, $out
+	movq	%xmm1, %rbp
+
+	movq	128(%rsp), %rdx		# pull $n0
+	movq	(%rsp), %r8
+	movq	8(%rsp), %r9
+	movq	16(%rsp), %r10
+	movq	24(%rsp), %r11
+	movq	32(%rsp), %r12
+	movq	40(%rsp), %r13
+	movq	48(%rsp), %r14
+	movq	56(%rsp), %r15
+
+	call	__rsaz_512_reducex
+.Lmul_tail:
+___
+$code.=<<___;
 	addq	64(%rsp), %r8
 	adcq	72(%rsp), %r9
 	adcq	80(%rsp), %r10
@@ -773,7 +881,7 @@ rsaz_512_mul:
 	adcq	120(%rsp), %r15
 	sbbq	%rcx, %rcx
 
-	call	_rsaz_512_subtract
+	call	__rsaz_512_subtract
 
 	leaq	128+24+48(%rsp), %rax
 	movq	-48(%rax), %r15
@@ -802,8 +910,17 @@ rsaz_512_mul_gather4:
 	push	%r14
 	push	%r15
 
+	mov	$pwr, $pwr
 	subq	\$128+24, %rsp
 .Lmul_gather4_body:
+___
+$code.=<<___ if ($addx);
+	movl	\$0x80100,%r11d
+	andl	OPENSSL_ia32cap_P+8(%rip),%r11d
+	cmpl	\$0x80100,%r11d		# check for MULX and ADO/CX
+	je	.Lmulx_gather
+___
+$code.=<<___;
 	movl	64($bp,$pwr,4), %eax
 	movq	$out, %xmm0		# off-load arguments
 	movl	($bp,$pwr,4), %ebx
@@ -969,8 +1086,131 @@ rsaz_512_mul_gather4:
 	movq	48(%rsp), %r14
 	movq	56(%rsp), %r15
 
-	call	_rsaz_512_reduce
+	call	__rsaz_512_reduce
+___
+$code.=<<___ if ($addx);
+	jmp	.Lmul_gather_tail
 
+.align	32
+.Lmulx_gather:
+	mov	64($bp,$pwr,4), %eax
+	movq	$out, %xmm0		# off-load arguments
+	lea	128($bp,$pwr,4), %rbp
+	mov	($bp,$pwr,4), %edx
+	movq	$mod, %xmm1
+	mov	$n0, 128(%rsp)
+
+	shl	\$32, %rax
+	or	%rax, %rdx
+	mulx	($ap), %rbx, %r8	# 0 iteration
+	mov	%rbx, (%rsp)
+	xor	%edi, %edi		# cf=0, of=0
+
+	mulx	8($ap), %rax, %r9
+	 movd	(%rbp), %xmm4
+
+	mulx	16($ap), %rbx, %r10
+	 movd	64(%rbp), %xmm5
+	adcx	%rax, %r8
+
+	mulx	24($ap), %rax, %r11
+	 pslldq	\$4, %xmm5
+	adcx	%rbx, %r9
+
+	mulx	32($ap), %rbx, %r12
+	 por	%xmm5, %xmm4
+	adcx	%rax, %r10
+
+	mulx	40($ap), %rax, %r13
+	adcx	%rbx, %r11
+
+	mulx	48($ap), %rbx, %r14
+	 lea	128(%rbp), %rbp
+	adcx	%rax, %r12
+	
+	mulx	56($ap), %rax, %r15
+	 movq	%xmm4, %rdx
+	adcx	%rbx, %r13
+	adcx	%rax, %r14
+	mov	%r8, %rbx
+	adcx	%rdi, %r15		# %rdi is 0
+
+	mov	\$-7, %rcx
+	jmp	.Loop_mulx_gather
+
+.align	32
+.Loop_mulx_gather:
+	mulx	($ap), %rax, %r8
+	adcx	%rax, %rbx
+	adox	%r9, %r8
+
+	mulx	8($ap), %rax, %r9
+	.byte	0x66,0x0f,0x6e,0xa5,0x00,0x00,0x00,0x00		# movd	(%rbp), %xmm4
+	adcx	%rax, %r8
+	adox	%r10, %r9
+
+	mulx	16($ap), %rax, %r10
+	 movd	64(%rbp), %xmm5
+	 lea	128(%rbp), %rbp
+	adcx	%rax, %r9
+	adox	%r11, %r10
+
+	.byte	0xc4,0x62,0xfb,0xf6,0x9e,0x18,0x00,0x00,0x00	# mulx	24($ap), %rax, %r11
+	 pslldq	\$4, %xmm5
+	 por	%xmm5, %xmm4
+	adcx	%rax, %r10
+	adox	%r12, %r11
+
+	mulx	32($ap), %rax, %r12
+	adcx	%rax, %r11
+	adox	%r13, %r12
+
+	mulx	40($ap), %rax, %r13
+	adcx	%rax, %r12
+	adox	%r14, %r13
+
+	.byte	0xc4,0x62,0xfb,0xf6,0xb6,0x30,0x00,0x00,0x00	# mulx	48($ap), %rax, %r14
+	adcx	%rax, %r13
+	adox	%r15, %r14
+
+	mulx	56($ap), %rax, %r15
+	 movq	%xmm4, %rdx
+	 mov	%rbx, 64(%rsp,%rcx,8)
+	adcx	%rax, %r14
+	adox	%rdi, %r15
+	mov	%r8, %rbx
+	adcx	%rdi, %r15		# cf=0
+
+	inc	%rcx			# of=0
+	jnz	.Loop_mulx_gather
+
+	mov	%r8, 64(%rsp)
+	mov	%r9, 64+8(%rsp)
+	mov	%r10, 64+16(%rsp)
+	mov	%r11, 64+24(%rsp)
+	mov	%r12, 64+32(%rsp)
+	mov	%r13, 64+40(%rsp)
+	mov	%r14, 64+48(%rsp)
+	mov	%r15, 64+56(%rsp)
+
+	movq	%xmm0, $out
+	movq	%xmm1, %rbp
+
+	mov	128(%rsp), %rdx		# pull $n0
+	mov	(%rsp), %r8
+	mov	8(%rsp), %r9
+	mov	16(%rsp), %r10
+	mov	24(%rsp), %r11
+	mov	32(%rsp), %r12
+	mov	40(%rsp), %r13
+	mov	48(%rsp), %r14
+	mov	56(%rsp), %r15
+
+	call	__rsaz_512_reducex
+
+.Lmul_gather_tail:
+___
+$code.=<<___;
 	addq	64(%rsp), %r8
 	adcq	72(%rsp), %r9
 	adcq	80(%rsp), %r10
@@ -981,7 +1221,7 @@ rsaz_512_mul_gather4:
 	adcq	120(%rsp), %r15
 	sbbq	%rcx, %rcx
 
-	call	_rsaz_512_subtract
+	call	__rsaz_512_subtract
 
 	leaq	128+24+48(%rsp), %rax
 	movq	-48(%rax), %r15
@@ -1010,6 +1250,7 @@ rsaz_512_mul_scatter4:
 	push	%r14
 	push	%r15
 
+	mov	$pwr, $pwr
 	subq	\$128+24, %rsp
 .Lmul_scatter4_body:
 	leaq	($tbl,$pwr,4), $tbl
@@ -1019,6 +1260,15 @@ rsaz_512_mul_scatter4:
 	movq	$n0, 128(%rsp)
 
 	movq	$out, %rbp
+___
+$code.=<<___ if ($addx);
+	movl	\$0x80100,%r11d
+	andl	OPENSSL_ia32cap_P+8(%rip),%r11d
+	cmpl	\$0x80100,%r11d		# check for MULX and ADO/CX
+	je	.Lmulx_scatter
+___
+$code.=<<___;
+	movq	($out),%rbx		# pass b[0]
 	call	__rsaz_512_mul
 
 	movq	%xmm0, $out
@@ -1033,8 +1283,34 @@ rsaz_512_mul_scatter4:
 	movq	48(%rsp), %r14
 	movq	56(%rsp), %r15
 
-	call	_rsaz_512_reduce
+	call	__rsaz_512_reduce
+___
+$code.=<<___ if ($addx);
+	jmp	.Lmul_scatter_tail
+	
+.align	32
+.Lmulx_scatter:
+	movq	($out), %rdx		# pass b[0]
+	call	__rsaz_512_mulx
 
+	movq	%xmm0, $out
+	movq	%xmm1, %rbp
+
+	movq	128(%rsp), %rdx		# pull $n0
+	movq	(%rsp), %r8
+	movq	8(%rsp), %r9
+	movq	16(%rsp), %r10
+	movq	24(%rsp), %r11
+	movq	32(%rsp), %r12
+	movq	40(%rsp), %r13
+	movq	48(%rsp), %r14
+	movq	56(%rsp), %r15
+
+	call	__rsaz_512_reducex
+
+.Lmul_scatter_tail:
+___
+$code.=<<___;
 	addq	64(%rsp), %r8
 	adcq	72(%rsp), %r9
 	adcq	80(%rsp), %r10
@@ -1046,7 +1322,7 @@ rsaz_512_mul_scatter4:
 	movq	%xmm2, $inp
 	sbbq	%rcx, %rcx
 
-	call	_rsaz_512_subtract
+	call	__rsaz_512_subtract
 
 	movl	%r8d, 64*0($inp)	# scatter
 	shrq	\$32, %r8
@@ -1102,6 +1378,11 @@ rsaz_512_mul_by_one:
 
 	subq	\$128+24, %rsp
 .Lmul_by_one_body:
+___
+$code.=<<___ if ($addx);
+	movl	OPENSSL_ia32cap_P+8(%rip),%eax
+___
+$code.=<<___;
 	movq	$mod, %rbp	# reassign argument
 	movq	$n0, 128(%rsp)
 
@@ -1122,9 +1403,24 @@ rsaz_512_mul_by_one:
 	movdqa	%xmm0, 64(%rsp)
 	movdqa	%xmm0, 80(%rsp)
 	movdqa	%xmm0, 96(%rsp)
-
-	call	_rsaz_512_reduce
-
+___
+$code.=<<___ if ($addx);
+	andl	\$0x80100,%eax
+	cmpl	\$0x80100,%eax		# check for MULX and ADO/CX
+	je	.Lby_one_callx
+___
+$code.=<<___;
+	call	__rsaz_512_reduce
+___
+$code.=<<___ if ($addx);
+	jmp	.Lby_one_tail
+.align	32
+.Lby_one_callx:
+	movq	128(%rsp), %rdx		# pull $n0
+	call	__rsaz_512_reducex
+.Lby_one_tail:
+___
+$code.=<<___;
 	movq	%r8, ($out)
 	movq	%r9, 8($out)
 	movq	%r10, 16($out)
@@ -1147,18 +1443,15 @@ rsaz_512_mul_by_one:
 .size	rsaz_512_mul_by_one,.-rsaz_512_mul_by_one
 ___
 }
-{	# _rsaz_512_reduce
+{	# __rsaz_512_reduce
 	#
 	# input:	%r8-%r15, %rbp - mod, 128(%rsp) - n0
 	# output:	%r8-%r15
 	# clobbers:	everything except %rbp and %rdi
 $code.=<<___;
-.type	_rsaz_512_reduce,\@abi-omnipotent
+.type	__rsaz_512_reduce,\@abi-omnipotent
 .align	32
-_rsaz_512_reduce:
-___
-if (1) {
-$code.=<<___;
+__rsaz_512_reduce:
 	movq	%r8, %rbx
 	imulq	128+8(%rsp), %rbx
 	movq	0(%rbp), %rax
@@ -1195,8 +1488,10 @@ $code.=<<___;
 	adcq	\$0, %rdx
 	addq	%r11, %r10
 	 movq	128+8(%rsp), %rsi
+	#movq	%rdx, %r11
+	#adcq	\$0, %r11
+	adcq	\$0, %rdx
 	movq	%rdx, %r11
-	adcq	\$0, %r11
 
 	mulq	%rbx
 	addq	%rax, %r12
@@ -1234,75 +1529,84 @@ $code.=<<___;
 
 	decl	%ecx
 	jne	.Lreduction_loop
+
+	ret
+.size	__rsaz_512_reduce,.-__rsaz_512_reduce
 ___
-} else {
+}
+if ($addx) {
+	# __rsaz_512_reducex
+	#
+	# input:	%r8-%r15, %rbp - mod, 128(%rsp) - n0
+	# output:	%r8-%r15
+	# clobbers:	everything except %rbp and %rdi
 $code.=<<___;
-	movq	128+8(%rsp), %rdx		# pull $n0
+.type	__rsaz_512_reducex,\@abi-omnipotent
+.align	32
+__rsaz_512_reducex:
+	#movq	128+8(%rsp), %rdx		# pull $n0
 	imulq	%r8, %rdx
+	xorq	%rsi, %rsi			# cf=0,of=0
 	movl	\$8, %ecx
-	jmp	.Lreduction_loop
+	jmp	.Lreduction_loopx
 
 .align	32
-.Lreduction_loop:
-	neg	%r8
+.Lreduction_loopx:
+	mov	%r8, %rbx
 	mulx	0(%rbp), %rax, %r8
-	adc	%r9, %r8
+	adcx	%rbx, %rax
+	adox	%r9, %r8
 
 	mulx	8(%rbp), %rax, %r9
-	adc	\$0, %r9
-	add	%rax, %r8
-	adc	%r10, %r9
+	adcx	%rax, %r8
+	adox	%r10, %r9
 
-	mulx	16(%rbp), %rax, %r10
-	adc	\$0, %r10
-	 mov	128+8(%rsp), %rbx		# pull $n0
-	 imul	%r8, %rbx
-	add	%rax, %r9
-	adc	%r11, %r10
+	mulx	16(%rbp), %rbx, %r10
+	adcx	%rbx, %r9
+	adox	%r11, %r10
 
-	mulx	24(%rbp), %rax, %r11
-	adc	\$0, %r11
-	add	%rax, %r10
-	adc	%r12, %r11
+	mulx	24(%rbp), %rbx, %r11
+	adcx	%rbx, %r10
+	adox	%r12, %r11
 
-	mulx	32(%rbp), %rax, %r12
-	adc	\$0, %r12
-	add	%rax, %r11
-	adc	%r13, %r12
+	.byte	0xc4,0x62,0xe3,0xf6,0xa5,0x20,0x00,0x00,0x00	# mulx	32(%rbp), %rbx, %r12
+	 mov	%rdx, %rax
+	 mov	%r8, %rdx
+	adcx	%rbx, %r11
+	adox	%r13, %r12
+
+	 mulx	128+8(%rsp), %rbx, %rdx
+	 mov	%rax, %rdx
 
 	mulx	40(%rbp), %rax, %r13
-	adc	\$0, %r13
-	add	%rax, %r12
-	adc	%r14, %r13
+	adcx	%rax, %r12
+	adox	%r14, %r13
 
-	mulx	48(%rbp), %rax, %r14
-	adc	\$0, %r14
-	add	%rax, %r13
-	adc	%r15, %r14
+	.byte	0xc4,0x62,0xfb,0xf6,0xb5,0x30,0x00,0x00,0x00	# mulx	48(%rbp), %rax, %r14
+	adcx	%rax, %r13
+	adox	%r15, %r14
 
 	mulx	56(%rbp), %rax, %r15
 	 mov	%rbx, %rdx
-	adc	\$0, %r15
-	add	%rax, %r14
-	adc	\$0, %r15
+	adcx	%rax, %r14
+	adox	%rsi, %r15			# %rsi is 0
+	adcx	%rsi, %r15			# cf=0
 
-	dec	%ecx
-	jne	.Lreduction_loop
-___
-}
-$code.=<<___;
+	decl	%ecx				# of=0
+	jne	.Lreduction_loopx
+
 	ret
-.size	_rsaz_512_reduce,.-_rsaz_512_reduce
+.size	__rsaz_512_reducex,.-__rsaz_512_reducex
 ___
 }
-{	# _rsaz_512_subtract
+{	# __rsaz_512_subtract
 	# input: %r8-%r15, %rdi - $out, %rbp - $mod, %rcx - mask
 	# output:
 	# clobbers: everything but %rdi, %rsi and %rbp
 $code.=<<___;
-.type	_rsaz_512_subtract,\@abi-omnipotent
+.type	__rsaz_512_subtract,\@abi-omnipotent
 .align	32
-_rsaz_512_subtract:
+__rsaz_512_subtract:
 	movq	%r8, ($out)
 	movq	%r9, 8($out)
 	movq	%r10, 16($out)
@@ -1356,7 +1660,7 @@ _rsaz_512_subtract:
 	movq	%r15, 56($out)
 
 	ret
-.size	_rsaz_512_subtract,.-_rsaz_512_subtract
+.size	__rsaz_512_subtract,.-__rsaz_512_subtract
 ___
 }
 {	# __rsaz_512_mul
@@ -1371,7 +1675,6 @@ $code.=<<___;
 __rsaz_512_mul:
 	leaq	8(%rsp), %rdi
 
-	movq	($bp), %rbx
 	movq	($ap), %rax
 	mulq	%rbx
 	movq	%rax, (%rdi)
@@ -1509,6 +1812,136 @@ __rsaz_512_mul:
 
 	ret
 .size	__rsaz_512_mul,.-__rsaz_512_mul
+___
+}
+if ($addx) {
+	# __rsaz_512_mulx
+	#
+	# input: %rsi - ap, %rbp - bp
+	# ouput:
+	# clobbers: everything
+my ($ap,$bp,$zero) = ("%rsi","%rbp","%rdi");
+$code.=<<___;
+.type	__rsaz_512_mulx,\@abi-omnipotent
+.align	32
+__rsaz_512_mulx:
+	mulx	($ap), %rbx, %r8	# initial %rdx preloaded by caller
+	mov	\$-6, %rcx
+
+	mulx	8($ap), %rax, %r9
+	movq	%rbx, 8(%rsp)
+
+	mulx	16($ap), %rbx, %r10
+	adc	%rax, %r8
+
+	mulx	24($ap), %rax, %r11
+	adc	%rbx, %r9
+
+	mulx	32($ap), %rbx, %r12
+	adc	%rax, %r10
+
+	mulx	40($ap), %rax, %r13
+	adc	%rbx, %r11
+
+	mulx	48($ap), %rbx, %r14
+	adc	%rax, %r12
+
+	mulx	56($ap), %rax, %r15
+	 mov	8($bp), %rdx
+	adc	%rbx, %r13
+	adc	%rax, %r14
+	adc	\$0, %r15
+
+	xor	$zero, $zero		# cf=0,of=0
+	jmp	.Loop_mulx
+
+.align	32
+.Loop_mulx:
+	movq	%r8, %rbx
+	mulx	($ap), %rax, %r8
+	adcx	%rax, %rbx
+	adox	%r9, %r8
+
+	mulx	8($ap), %rax, %r9
+	adcx	%rax, %r8
+	adox	%r10, %r9
+
+	mulx	16($ap), %rax, %r10
+	adcx	%rax, %r9
+	adox	%r11, %r10
+
+	mulx	24($ap), %rax, %r11
+	adcx	%rax, %r10
+	adox	%r12, %r11
+
+	.byte	0x3e,0xc4,0x62,0xfb,0xf6,0xa6,0x20,0x00,0x00,0x00	# mulx	32($ap), %rax, %r12
+	adcx	%rax, %r11
+	adox	%r13, %r12
+
+	mulx	40($ap), %rax, %r13
+	adcx	%rax, %r12
+	adox	%r14, %r13
+
+	mulx	48($ap), %rax, %r14
+	adcx	%rax, %r13
+	adox	%r15, %r14
+
+	mulx	56($ap), %rax, %r15
+	 movq	64($bp,%rcx,8), %rdx
+	 movq	%rbx, 8+64-8(%rsp,%rcx,8)
+	adcx	%rax, %r14
+	adox	$zero, %r15
+	adcx	$zero, %r15		# cf=0
+
+	inc	%rcx			# of=0
+	jnz	.Loop_mulx
+
+	movq	%r8, %rbx
+	mulx	($ap), %rax, %r8
+	adcx	%rax, %rbx
+	adox	%r9, %r8
+
+	.byte	0xc4,0x62,0xfb,0xf6,0x8e,0x08,0x00,0x00,0x00	# mulx	8($ap), %rax, %r9
+	adcx	%rax, %r8
+	adox	%r10, %r9
+
+	.byte	0xc4,0x62,0xfb,0xf6,0x96,0x10,0x00,0x00,0x00	# mulx	16($ap), %rax, %r10
+	adcx	%rax, %r9
+	adox	%r11, %r10
+
+	mulx	24($ap), %rax, %r11
+	adcx	%rax, %r10
+	adox	%r12, %r11
+
+	mulx	32($ap), %rax, %r12
+	adcx	%rax, %r11
+	adox	%r13, %r12
+
+	mulx	40($ap), %rax, %r13
+	adcx	%rax, %r12
+	adox	%r14, %r13
+
+	.byte	0xc4,0x62,0xfb,0xf6,0xb6,0x30,0x00,0x00,0x00	# mulx	48($ap), %rax, %r14
+	adcx	%rax, %r13
+	adox	%r15, %r14
+
+	.byte	0xc4,0x62,0xfb,0xf6,0xbe,0x38,0x00,0x00,0x00	# mulx	56($ap), %rax, %r15
+	adcx	%rax, %r14
+	adox	$zero, %r15
+	adcx	$zero, %r15
+
+	mov	%rbx, 8+64-8(%rsp)
+	mov	%r8, 8+64(%rsp)
+	mov	%r9, 8+64+8(%rsp)
+	mov	%r10, 8+64+16(%rsp)
+	mov	%r11, 8+64+24(%rsp)
+	mov	%r12, 8+64+32(%rsp)
+	mov	%r13, 8+64+40(%rsp)
+	mov	%r14, 8+64+48(%rsp)
+	mov	%r15, 8+64+56(%rsp)
+
+	ret
+.size	__rsaz_512_mulx,.-__rsaz_512_mulx
 ___
 }
 {

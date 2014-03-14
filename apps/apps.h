@@ -265,9 +265,10 @@ ENGINE *setup_engine(BIO *err, const char *engine, int debug);
 
 #ifndef OPENSSL_NO_OCSP
 OCSP_RESPONSE *process_responder(BIO *err, OCSP_REQUEST *req,
-			char *host, char *path, char *port, int use_ssl,
-			STACK_OF(CONF_VALUE) *headers,
-			int req_timeout);
+				 const char *host, const char *path,
+				 const char *port, int use_ssl,
+				 const STACK_OF(CONF_VALUE) *headers,
+				 int req_timeout);
 #endif
 
 int load_config(BIO *err, CONF *cnf);
@@ -336,9 +337,9 @@ void jpake_client_auth(BIO *out, BIO *conn, const char *secret);
 void jpake_server_auth(BIO *out, BIO *conn, const char *secret);
 #endif
 
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
+#ifndef OPENSSL_NO_TLSEXT
 unsigned char *next_protos_parse(unsigned short *outlen, const char *in);
-#endif  /* !OPENSSL_NO_TLSEXT && !OPENSSL_NO_NEXTPROTONEG */
+#endif  /* ndef OPENSSL_NO_TLSEXT */
 
 void print_cert_checks(BIO *bio, X509 *x,
 				const unsigned char *checkhost,

@@ -35,6 +35,8 @@ $::code.=<<___;
 .align	32
 ${alg}${bits}_t4_cbc_encrypt:
 	save		%sp, -$::frame, %sp
+	cmp		$len, 0
+	be,pn		$::size_t_cc, .L${bits}_cbc_enc_abort
 	sub		$inp, $out, $blk_init	! $inp!=$out
 ___
 $::code.=<<___ if (!$::evp);
@@ -123,6 +125,7 @@ $::code.=<<___ if (!$::evp);
 	std		%f2, [$ivec + 8]
 ___
 $::code.=<<___;
+.L${bits}_cbc_enc_abort:
 	ret
 	restore
 
@@ -249,6 +252,8 @@ $::code.=<<___;
 .align	32
 ${alg}${bits}_t4_cbc_decrypt:
 	save		%sp, -$::frame, %sp
+	cmp		$len, 0
+	be,pn		$::size_t_cc, .L${bits}_cbc_dec_abort
 	sub		$inp, $out, $blk_init	! $inp!=$out
 ___
 $::code.=<<___ if (!$::evp);
@@ -341,6 +346,7 @@ $::code.=<<___ if (!$::evp);
 	std		%f14, [$ivec + 8]
 ___
 $::code.=<<___;
+.L${bits}_cbc_dec_abort:
 	ret
 	restore
 
@@ -1657,8 +1663,8 @@ sub emit_assembler {
 	s/\b(camellia_[^s]+)\s+(%f[0-9]{1,2}),\s*(%f[0-9]{1,2}),\s*(%f[0-9]{1,2})/
 		&uncamellia3($1,$2,$3,$4)
 	 /geo or
-	s/\b(des_\w+)\s+(?<rs1>%f[0-9]{1,2}),\s*(?<rs2>[%fx0-9]+)(,\s*(?<rs3>%f[0-9]{1,2})(,\s*(?<rs4>%f[0-9]{1,2}))?)?/
-		&undes($1,$+{rs1},$+{rs2},$+{rs3},$+{rs4})
+	s/\b(des_\w+)\s+(%f[0-9]{1,2}),\s*([%fx0-9]+)(?:,\s*(%f[0-9]{1,2})(?:,\s*(%f[0-9]{1,2}))?)?/
+		&undes($1,$2,$3,$4,$5)
 	 /geo or
 	s/\b(mov[ds]to\w+)\s+(%f[0-9]{1,2}),\s*(%[goli][0-7])/
 		&unmovxtox($1,$2,$3)

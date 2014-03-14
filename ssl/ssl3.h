@@ -149,12 +149,18 @@ extern "C" {
 #define SSL3_CK_DH_RSA_DES_64_CBC_SHA		0x0300000F
 #define SSL3_CK_DH_RSA_DES_192_CBC3_SHA 	0x03000010
 
-#define SSL3_CK_EDH_DSS_DES_40_CBC_SHA		0x03000011
-#define SSL3_CK_EDH_DSS_DES_64_CBC_SHA		0x03000012
-#define SSL3_CK_EDH_DSS_DES_192_CBC3_SHA	0x03000013
-#define SSL3_CK_EDH_RSA_DES_40_CBC_SHA		0x03000014
-#define SSL3_CK_EDH_RSA_DES_64_CBC_SHA		0x03000015
-#define SSL3_CK_EDH_RSA_DES_192_CBC3_SHA	0x03000016
+#define SSL3_CK_DHE_DSS_DES_40_CBC_SHA		0x03000011
+#define SSL3_CK_EDH_DSS_DES_40_CBC_SHA          SSL3_CK_DHE_DSS_DES_40_CBC_SHA
+#define SSL3_CK_DHE_DSS_DES_64_CBC_SHA		0x03000012
+#define SSL3_CK_EDH_DSS_DES_64_CBC_SHA		SSL3_CK_DHE_DSS_DES_64_CBC_SHA
+#define SSL3_CK_DHE_DSS_DES_192_CBC3_SHA	0x03000013
+#define SSL3_CK_EDH_DSS_DES_192_CBC3_SHA	SSL3_CK_DHE_DSS_DES_192_CBC3_SHA
+#define SSL3_CK_DHE_RSA_DES_40_CBC_SHA		0x03000014
+#define SSL3_CK_EDH_RSA_DES_40_CBC_SHA		SSL3_CK_DHE_RSA_DES_40_CBC_SHA
+#define SSL3_CK_DHE_RSA_DES_64_CBC_SHA		0x03000015
+#define SSL3_CK_EDH_RSA_DES_64_CBC_SHA		SSL3_CK_DHE_RSA_DES_64_CBC_SHA
+#define SSL3_CK_DHE_RSA_DES_192_CBC3_SHA	0x03000016
+#define SSL3_CK_EDH_RSA_DES_192_CBC3_SHA	SSL3_CK_DHE_RSA_DES_192_CBC3_SHA
 
 #define SSL3_CK_ADH_RC4_40_MD5			0x03000017
 #define SSL3_CK_ADH_RC4_128_MD5			0x03000018
@@ -208,6 +214,17 @@ extern "C" {
 #define SSL3_TXT_DH_RSA_DES_64_CBC_SHA		"DH-RSA-DES-CBC-SHA"
 #define SSL3_TXT_DH_RSA_DES_192_CBC3_SHA 	"DH-RSA-DES-CBC3-SHA"
 
+#define SSL3_TXT_DHE_DSS_DES_40_CBC_SHA		"EXP-DHE-DSS-DES-CBC-SHA"
+#define SSL3_TXT_DHE_DSS_DES_64_CBC_SHA		"DHE-DSS-DES-CBC-SHA"
+#define SSL3_TXT_DHE_DSS_DES_192_CBC3_SHA	"DHE-DSS-DES-CBC3-SHA"
+#define SSL3_TXT_DHE_RSA_DES_40_CBC_SHA		"EXP-DHE-RSA-DES-CBC-SHA"
+#define SSL3_TXT_DHE_RSA_DES_64_CBC_SHA		"DHE-RSA-DES-CBC-SHA"
+#define SSL3_TXT_DHE_RSA_DES_192_CBC3_SHA	"DHE-RSA-DES-CBC3-SHA"
+
+/* This next block of six "EDH" labels is for backward compatibility
+   with older versions of OpenSSL.  New code should use the six "DHE"
+   labels above instead:
+ */
 #define SSL3_TXT_EDH_DSS_DES_40_CBC_SHA		"EXP-EDH-DSS-DES-CBC-SHA"
 #define SSL3_TXT_EDH_DSS_DES_64_CBC_SHA		"EDH-DSS-DES-CBC-SHA"
 #define SSL3_TXT_EDH_DSS_DES_192_CBC3_SHA	"EDH-DSS-DES-CBC3-SHA"
@@ -566,14 +583,12 @@ typedef struct ssl3_state_st
 #endif
 
 #ifndef OPENSSL_NO_TLSEXT
-	/* tlsext_custom_types contains an array of TLS Extension types which 
-	 * were advertised by the client in its ClientHello, which were not 
-	 * otherwise handled by OpenSSL, and which the server has registered
-	 * a custom_srv_ext_record to handle.
+        /* serverinfo_client_tlsext_custom_types contains an array of TLS Extension types which
+         * were advertised by the client in its ClientHello and leveraged by ServerInfo TLS extension callbacks.
 	 * The array does not contain any duplicates, and is in the same order
 	 * as the types were received in the client hello. */
-	unsigned short *tlsext_custom_types;
-	size_t tlsext_custom_types_count; /* how many tlsext_custom_types */
+        unsigned short *serverinfo_client_tlsext_custom_types;
+        size_t serverinfo_client_tlsext_custom_types_count; /* how many serverinfo_client_tlsext_custom_types */
 
 	/* ALPN information
 	 * (we are in the process of transitioning from NPN to ALPN.) */
@@ -639,10 +654,10 @@ typedef struct ssl3_state_st
 #ifndef OPENSSL_NO_NEXTPROTONEG
 #define SSL3_ST_CW_NEXT_PROTO_A		(0x200|SSL_ST_CONNECT)
 #define SSL3_ST_CW_NEXT_PROTO_B		(0x201|SSL_ST_CONNECT)
+#endif
 #ifndef OPENSSL_NO_TLSEXT
 #define SSL3_ST_CW_SUPPLEMENTAL_DATA_A		(0x222|SSL_ST_CONNECT)
 #define SSL3_ST_CW_SUPPLEMENTAL_DATA_B		(0x223|SSL_ST_CONNECT)
-#endif
 #endif
 #define SSL3_ST_CW_FINISHED_A		(0x1B0|SSL_ST_CONNECT)
 #define SSL3_ST_CW_FINISHED_B		(0x1B1|SSL_ST_CONNECT)
@@ -668,6 +683,7 @@ typedef struct ssl3_state_st
 #define SSL3_ST_SR_CLNT_HELLO_A		(0x110|SSL_ST_ACCEPT)
 #define SSL3_ST_SR_CLNT_HELLO_B		(0x111|SSL_ST_ACCEPT)
 #define SSL3_ST_SR_CLNT_HELLO_C		(0x112|SSL_ST_ACCEPT)
+#define SSL3_ST_SR_CLNT_HELLO_D		(0x115|SSL_ST_ACCEPT)
 #ifndef OPENSSL_NO_TLSEXT
 #define SSL3_ST_SR_SUPPLEMENTAL_DATA_A		(0x212|SSL_ST_ACCEPT)
 #define SSL3_ST_SR_SUPPLEMENTAL_DATA_B		(0x213|SSL_ST_ACCEPT)

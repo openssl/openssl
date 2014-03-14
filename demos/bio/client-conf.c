@@ -68,6 +68,13 @@ int main(int argc, char **argv)
 			goto end;
 			}
 		}
+
+	if (!SSL_CONF_CTX_finish(cctx))
+		{
+		fprintf(stderr, "Finish error\n");
+		ERR_print_errors_fp(stderr);
+		goto err;
+		}
 			
 	/* We'd normally set some stuff like the verify paths and
 	* mode here because as things stand this will connect to

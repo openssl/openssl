@@ -233,8 +233,8 @@ int OCSP_REQ_CTX_add1_header(OCSP_REQ_CTX *rctx,
 	return 1;
 	}
 
-OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, char *path, OCSP_REQUEST *req,
-								int maxline)
+OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, const char *path, OCSP_REQUEST *req,
+			       int maxline)
 	{
 
 	OCSP_REQ_CTX *rctx = NULL;
@@ -563,7 +563,7 @@ int OCSP_sendreq_nbio(OCSP_RESPONSE **presp, OCSP_REQ_CTX *rctx)
 
 /* Blocking OCSP request handler: now a special case of non-blocking I/O */
 
-OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, char *path, OCSP_REQUEST *req)
+OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, const char *path, OCSP_REQUEST *req)
 	{
 	OCSP_RESPONSE *resp = NULL;
 	OCSP_REQ_CTX *ctx;

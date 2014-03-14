@@ -59,8 +59,8 @@
 
 
 /* Key derivation function from X9.62/SECG */
-
-#define ECDH_KDF_MAX	(1L << 31)
+/* Way more than we will ever need */
+#define ECDH_KDF_MAX	(1 << 30)
 
 int ECDH_KDF_X9_62(unsigned char *out, size_t outlen, 
 		const unsigned char *Z, size_t Zlen,

@@ -76,7 +76,7 @@ typedef struct
 	/* Duplicate key if custom cofactor needed */
 	EC_KEY *co_key;
 	/* Cofactor mode */
-	char cofactor_mode;
+	signed char cofactor_mode;
 	/* KDF (if any) to use for ECDH */
 	char kdf_type;
 	/* Message digest to use for key derivation */

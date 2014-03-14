@@ -394,6 +394,9 @@ static ssl_trace_tbl ssl_curve_tbl[] = {
 	{23, "secp256r1 (P-256)"},
 	{24, "secp384r1 (P-384)"},
 	{25, "secp521r1 (P-521)"},
+	{26, "brainpoolP256r1"},
+	{27, "brainpoolP384r1"},
+	{28, "brainpoolP512r1"},
 	{0xFF01, "arbitrary_explicit_prime_curves"},
 	{0xFF02, "arbitrary_explicit_char2_curves"}
 };
@@ -807,15 +810,15 @@ static int ssl_get_keyex(const char **pname, SSL *ssl)
 		*pname = "krb5";
 		return SSL_kKRB5;
 		}
-	if (alg_k & SSL_kEDH)
+	if (alg_k & SSL_kDHE)
 		{
-		*pname = "edh";
-		return SSL_kEDH;
+		*pname = "DHE";
+		return SSL_kDHE;
 		}
-	if (alg_k & SSL_kEECDH)
+	if (alg_k & SSL_kECDHE)
 		{
-		*pname = "EECDH";
-		return SSL_kEECDH;
+		*pname = "ECDHE";
+		return SSL_kECDHE;
 		}
 	if (alg_k & SSL_kECDHr)
 		{
@@ -882,7 +885,7 @@ static int ssl_print_client_keyex(BIO *bio, int indent, SSL *ssl,
 			BIO_puts(bio, "implicit\n");
 			break;
 			}
-	case SSL_kEDH:
+	case SSL_kDHE:
 		if (!ssl_print_hexbuf(bio, indent + 2, "dh_Yc", 2,
 								&msg, &msglen))
 			return 0;
@@ -896,7 +899,7 @@ static int ssl_print_client_keyex(BIO *bio, int indent, SSL *ssl,
 			BIO_puts(bio, "implicit\n");
 			break;
 			}
-	case SSL_kEECDH:
+	case SSL_kECDHE:
 		if (!ssl_print_hexbuf(bio, indent + 2, "ecdh_Yc", 1,
 							&msg, &msglen))
 			return 0;
@@ -935,7 +938,7 @@ static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
 			return 0;
 		break;
 
-	case SSL_kEDH:
+	case SSL_kDHE:
 		if (!ssl_print_hexbuf(bio, indent + 2, "dh_p", 2,
 						&msg, &msglen))
 			return 0;
@@ -947,7 +950,7 @@ static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
 			return 0;
 		break;
 
-	case SSL_kEECDH:
+	case SSL_kECDHE:
 		if (msglen < 1)
 			return 0;
 		BIO_indent(bio, indent + 2, 80);

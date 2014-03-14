@@ -102,7 +102,7 @@ static int mime_param_cmp(const MIME_PARAM * const *a,
 static void mime_param_free(MIME_PARAM *param);
 static int mime_bound_check(char *line, int linelen, char *bound, int blen);
 static int multi_split(BIO *bio, char *bound, STACK_OF(BIO) **ret);
-static int strip_eol(char *linebuf, int *plen);
+static int strip_eol(char *linebuf, int *plen, int flags);
 static MIME_HEADER *mime_hdr_find(STACK_OF(MIME_HEADER) *hdrs, char *name);
 static MIME_PARAM *mime_param_find(MIME_HEADER *hdr, char *name);
 static void mime_hdr_free(MIME_HEADER *hdr);
@@ -554,14 +554,30 @@ int SMIME_crlf_copy(BIO *in, BIO *out, int flags)
 		}
 	else
 		{
+		int eolcnt = 0;
 		if(flags & SMIME_TEXT)
 			BIO_printf(out, "Content-Type: text/plain\r\n\r\n");
 		while ((len = BIO_gets(in, linebuf, MAX_SMLEN)) > 0)
 			{
-			eol = strip_eol(linebuf, &len);
+			eol = strip_eol(linebuf, &len, flags);
 			if (len)
+				{
+				/* Not EOF: write out all CRLF */
+				if (flags & SMIME_ASCIICRLF)
+					{
+					int i;
+					for(i = 0; i < eolcnt; i++)
+						BIO_write(out, "\r\n", 2);
+					eolcnt = 0;
+					}
 				BIO_write(out, linebuf, len);
-			if(eol) BIO_write(out, "\r\n", 2);
+				if(eol)
+					BIO_write(out, "\r\n", 2);
+				}
+			else if (flags & SMIME_ASCIICRLF)
+				eolcnt++;	
+			else if(eol)
+				BIO_write(out, "\r\n", 2);
 			}
 		}
 	(void)BIO_flush(out);
@@ -630,7 +646,7 @@ static int multi_split(BIO *bio, char *bound, STACK_OF(BIO) **ret)
 			return 1;
 		} else if(part) {
 			/* Strip CR+LF from linebuf */
-			next_eol = strip_eol(linebuf, &len);
+			next_eol = strip_eol(linebuf, &len, 0);
 			if(first) {
 				first = 0;
 				if(bpart) sk_BIO_push(parts, bpart);
@@ -932,7 +948,7 @@ static int mime_bound_check(char *line, int linelen, char *bound, int blen)
 	return 0;
 }
 
-static int strip_eol(char *linebuf, int *plen)
+static int strip_eol(char *linebuf, int *plen, int flags)
 	{
 	int len = *plen;
 	char *p, c;
@@ -943,6 +959,8 @@ static int strip_eol(char *linebuf, int *plen)
 		c = *p;
 		if (c == '\n')
 			is_eol = 1;
+		else if (is_eol && flags & SMIME_ASCIICRLF && c < 33)
+			continue;
 		else if (c != '\r')
 			break;
 		}

@@ -215,6 +215,24 @@
 				   asm ("bswapl %0":"=r"(r):"0"(r));	\
 				   *((unsigned int *)(c))=r; (c)+=4; r;	})
 #   endif
+#  elif defined(__aarch64__)
+#   if defined(__BYTE_ORDER__)
+#    if defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__==__ORDER_LITTLE_ENDIAN__
+#     define HOST_c2l(c,l)	({ unsigned int r;		\
+				   asm ("rev	%w0,%w1"	\
+					:"=r"(r)		\
+					:"r"(*((const unsigned int *)(c))));\
+				   (c)+=4; (l)=r;		})
+#     define HOST_l2c(l,c)	({ unsigned int r;		\
+				   asm ("rev	%w0,%w1"	\
+					:"=r"(r)		\
+					:"r"((unsigned int)(l)));\
+				   *((unsigned int *)(c))=r; (c)+=4; r;	})
+#    elif defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__==__ORDER_BIG_ENDIAN__
+#     define HOST_c2l(c,l)	((l)=*((const unsigned int *)(c)), (c)+=4, (l))
+#     define HOST_l2c(l,c)	(*((unsigned int *)(c))=(l), (c)+=4, (l))
+#    endif
+#   endif
 #  endif
 # endif
 #endif

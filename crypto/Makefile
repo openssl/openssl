@@ -45,7 +45,7 @@ SRC= $(LIBSRC)
 
 EXHEADER= crypto.h opensslv.h opensslconf.h ebcdic.h symhacks.h \
 	ossl_typ.h
-HEADER=	cryptlib.h buildinf.h md32_common.h o_time.h o_str.h o_dir.h $(EXHEADER)
+HEADER=	cryptlib.h buildinf.h md32_common.h o_str.h o_dir.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -86,7 +86,9 @@ ia64cpuid.s:	ia64cpuid.S;	$(CC) $(CFLAGS) -E ia64cpuid.S > $@
 ppccpuid.s:	ppccpuid.pl;	$(PERL) ppccpuid.pl $(PERLASM_SCHEME) $@
 pariscid.s:	pariscid.pl;	$(PERL) pariscid.pl $(PERLASM_SCHEME) $@
 alphacpuid.s:	alphacpuid.pl
-	$(PERL) $< | $(CC) -E - | tee $@ > /dev/null
+	(preproc=/tmp/$$$$.$@; trap "rm $$preproc" INT; \
+	$(PERL) alphacpuid.pl > $$preproc && \
+	$(CC) -E $$preproc > $@ && rm $$preproc)
 
 subdirs:
 	@target=all; $(RECURSIVE_MAKE)
@@ -218,8 +220,10 @@ o_init.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 o_init.o: ../include/openssl/symhacks.h o_init.c
 o_str.o: ../e_os.h ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
 o_str.o: o_str.c o_str.h
-o_time.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h o_time.c
-o_time.o: o_time.h
+o_time.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
+o_time.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+o_time.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+o_time.o: ../include/openssl/symhacks.h crypto.h o_time.c
 thr_id.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h
 thr_id.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 thr_id.o: ../include/openssl/err.h ../include/openssl/lhash.h

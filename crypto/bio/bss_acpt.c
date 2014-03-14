@@ -460,7 +460,7 @@ static int acpt_puts(BIO *bp, const char *str)
 	return(ret);
 	}
 
-BIO *BIO_new_accept(char *str)
+BIO *BIO_new_accept(const char *str)
 	{
 	BIO *ret;
 

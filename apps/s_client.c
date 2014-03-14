@@ -242,11 +242,11 @@ static int suppdata_cb(SSL *s, unsigned short supp_data_type,
 
 static int auth_suppdata_generate_cb(SSL *s, unsigned short supp_data_type,
 				     const unsigned char **out,
-				     unsigned short *outlen, void *arg);
+				     unsigned short *outlen, int *al, void *arg);
 
 static int authz_tlsext_generate_cb(SSL *s, unsigned short ext_type,
 				    const unsigned char **out, unsigned short *outlen,
-				    void *arg);
+				    int *al, void *arg);
 
 static int authz_tlsext_cb(SSL *s, unsigned short ext_type,
 			   const unsigned char *in,
@@ -398,8 +398,8 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -auth_require_reneg - Do not send TLS auth extensions until renegotiation\n");
 # ifndef OPENSSL_NO_NEXTPROTONEG
 	BIO_printf(bio_err," -nextprotoneg arg - enable NPN extension, considering named protocols supported (comma-separated list)\n");
-	BIO_printf(bio_err," -alpn arg         - enable ALPN extension, considering named protocols supported (comma-separated list)\n");
 # endif
+	BIO_printf(bio_err," -alpn arg         - enable ALPN extension, considering named protocols supported (comma-separated list)\n");
 #endif
 	BIO_printf(bio_err," -legacy_renegotiation - enable use of legacy renegotiation (dangerous)\n");
 	BIO_printf(bio_err," -use_srtp profiles - Offer SRTP key management with a colon-separated profile list\n");
@@ -592,7 +592,8 @@ static int serverinfo_cli_cb(SSL* s, unsigned short ext_type,
 	ext_buf[3] = inlen & 0xFF;
 	memcpy(ext_buf+4, in, inlen);
 
-	BIO_snprintf(pem_name, sizeof(pem_name), "SERVER_INFO %d", ext_type);
+	BIO_snprintf(pem_name, sizeof(pem_name), "SERVERINFO FOR EXTENSION %d",
+		     ext_type);
 	PEM_write_bio(bio_c_out, pem_name, "", ext_buf, 4 + inlen);
 	return 1;
 	}
@@ -669,8 +670,8 @@ int MAIN(int argc, char **argv)
         {NULL,0};
 # ifndef OPENSSL_NO_NEXTPROTONEG
 	const char *next_proto_neg_in = NULL;
-	const char *alpn_in = NULL;
 # endif
+	const char *alpn_in = NULL;
 # define MAX_SI_TYPES 100
 	unsigned short serverinfo_types[MAX_SI_TYPES];
 	int serverinfo_types_count = 0;
@@ -1034,12 +1035,12 @@ static char *jpake_secret = NULL;
 			if (--argc < 1) goto bad;
 			next_proto_neg_in = *(++argv);
 			}
+# endif
 		else if (strcmp(*argv,"-alpn") == 0)
 			{
 			if (--argc < 1) goto bad;
 			alpn_in = *(++argv);
 			}
-# endif
 		else if (strcmp(*argv,"-serverinfo") == 0)
 			{
 			char *c;
@@ -2350,6 +2351,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 		BIO_write(bio, proto, proto_len);
 		BIO_write(bio, "\n", 1);
 	}
+# endif
 	{
 		const unsigned char *proto;
 		unsigned int proto_len;
@@ -2363,7 +2365,6 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 		else
 			BIO_printf(bio, "No ALPN negotiated\n");
 	}
-# endif
 #endif
 
  	{
@@ -2455,7 +2456,7 @@ static int authz_tlsext_cb(SSL *s, unsigned short ext_type,
 
 static int authz_tlsext_generate_cb(SSL *s, unsigned short ext_type,
 				    const unsigned char **out, unsigned short *outlen,
-				    void *arg)
+				    int *al, void *arg)
 	{
 	if (c_auth)
 		{
@@ -2487,7 +2488,7 @@ static int suppdata_cb(SSL *s, unsigned short supp_data_type,
 
 static int auth_suppdata_generate_cb(SSL *s, unsigned short supp_data_type,
 				     const unsigned char **out,
-				     unsigned short *outlen, void *arg)
+				     unsigned short *outlen, int *al, void *arg)
 	{
 	if (c_auth && server_provided_client_authz && server_provided_server_authz)
 		{

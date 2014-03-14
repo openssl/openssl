@@ -69,6 +69,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/objects.h>
+#include "vpm_int.h"
 
 /* CRL score values */
 
@@ -365,8 +366,11 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 	/* If explicitly rejected error */
 	if (i == X509_TRUST_REJECTED)
 		goto end;
-	/* If not explicitly trusted then indicate error */
-	if (i != X509_TRUST_TRUSTED)
+	/* If not explicitly trusted then indicate error unless it's
+	 * a single self signed certificate in which case we've indicated
+	 * an error already and set bad_chain == 1
+	 */
+	if (i != X509_TRUST_TRUSTED && !bad_chain)
 		{
 		if ((chain_ss == NULL) || !ctx->check_issued(ctx, x, chain_ss))
 			{
@@ -480,6 +484,8 @@ static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
 static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
 {
 	int ret;
+	if (x == issuer)
+		return cert_self_signed(x);
 	ret = X509_check_issued(issuer, x);
 	if (ret == X509_V_OK)
 		{
@@ -736,18 +742,19 @@ static int check_id_error(X509_STORE_CTX *ctx, int errcode)
 static int check_id(X509_STORE_CTX *ctx)
 	{
 	X509_VERIFY_PARAM *vpm = ctx->param;
+	X509_VERIFY_PARAM_ID *id = vpm->id;
 	X509 *x = ctx->cert;
-	if (vpm->host && !X509_check_host(x, vpm->host, vpm->hostlen, 0))
+	if (id->host && !X509_check_host(x, id->host, id->hostlen, 0))
 		{
 		if (!check_id_error(ctx, X509_V_ERR_HOSTNAME_MISMATCH))
 			return 0;
 		}
-	if (vpm->email && !X509_check_email(x, vpm->email, vpm->emaillen, 0))
+	if (id->email && !X509_check_email(x, id->email, id->emaillen, 0))
 		{
 		if (!check_id_error(ctx, X509_V_ERR_EMAIL_MISMATCH))
 			return 0;
 		}
-	if (vpm->ip && !X509_check_ip(x, vpm->ip, vpm->iplen, 0))
+	if (id->ip && !X509_check_ip(x, id->ip, id->iplen, 0))
 		{
 		if (!check_id_error(ctx, X509_V_ERR_IP_ADDRESS_MISMATCH))
 			return 0;
@@ -1612,10 +1619,9 @@ static int cert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x)
 	 * a certificate was revoked. This has since been changed since 
 	 * critical extension can change the meaning of CRL entries.
 	 */
-	if (crl->flags & EXFLAG_CRITICAL)
+	if (!(ctx->param->flags & X509_V_FLAG_IGNORE_CRITICAL)
+		&& (crl->flags & EXFLAG_CRITICAL))
 		{
-		if (ctx->param->flags & X509_V_FLAG_IGNORE_CRITICAL)
-			return 1;
 		ctx->error = X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION;
 		ok = ctx->verify_cb(0, ctx);
 		if(!ok)
@@ -1752,8 +1758,11 @@ static int internal_verify(X509_STORE_CTX *ctx)
 		xs=xi;
 	else
 		{
-		if (ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN && n == 0)
-			return check_cert_time(ctx, xi);
+		if (ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN)
+			{
+			xs = xi;
+			goto check_cert;
+			}
 		if (n <= 0)
 			{
 			ctx->error=X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE;
@@ -1804,6 +1813,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
 
 		xs->valid = 1;
 
+		check_cert:
 		ok = check_cert_time(ctx, xs);
 		if (!ok)
 			goto end;

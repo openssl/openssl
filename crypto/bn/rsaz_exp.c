@@ -1,32 +1,44 @@
-/******************************************************************************
-* Copyright(c) 2012, Intel Corp.                                             
-* Developers and authors:                                                    
-* Shay Gueron (1, 2), and Vlad Krasnov (1)                                   
-* (1) Intel Corporation, Israel Development Center, Haifa, Israel                               
-* (2) University of Haifa, Israel                                              
+/*****************************************************************************
+*                                                                            *
+*  Copyright (c) 2012, Intel Corporation                                     *
+*                                                                            *
+*  All rights reserved.                                                      *
+*                                                                            *
+*  Redistribution and use in source and binary forms, with or without        *
+*  modification, are permitted provided that the following conditions are    *
+*  met:                                                                      *
+*                                                                            *
+*  *  Redistributions of source code must retain the above copyright         *
+*     notice, this list of conditions and the following disclaimer.          *
+*                                                                            *
+*  *  Redistributions in binary form must reproduce the above copyright      *
+*     notice, this list of conditions and the following disclaimer in the    *
+*     documentation and/or other materials provided with the                 *
+*     distribution.                                                          *
+*                                                                            *
+*  *  Neither the name of the Intel Corporation nor the names of its         *
+*     contributors may be used to endorse or promote products derived from   *
+*     this software without specific prior written permission.               *
+*                                                                            *
+*                                                                            *
+*  THIS SOFTWARE IS PROVIDED BY INTEL CORPORATION ""AS IS"" AND ANY          *
+*  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE         *
+*  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR        *
+*  PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL INTEL CORPORATION OR            *
+*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,     *
+*  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,       *
+*  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR        *
+*  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF    *
+*  LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING      *
+*  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS        *
+*  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.              *
+*                                                                            *
 ******************************************************************************
-* LICENSE:                                                                
-* This submission to OpenSSL is to be made available under the OpenSSL  
-* license, and only to the OpenSSL project, in order to allow integration    
-* into the publicly distributed code. 
-* The use of this code, or portions of this code, or concepts embedded in
-* this code, or modification of this code and/or algorithm(s) in it, or the
-* use of this code for any other purpose than stated above, requires special
-* licensing.                                                                  
-******************************************************************************
-* DISCLAIMER:                                                                
-* THIS SOFTWARE IS PROVIDED BY THE CONTRIBUTORS AND THE COPYRIGHT OWNERS     
-* ``AS IS''. ANY EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED 
-* TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
-* PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE CONTRIBUTORS OR THE COPYRIGHT
-* OWNERS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-* OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF    
-* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS   
-* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN    
-* CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)    
-* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
-* POSSIBILITY OF SUCH DAMAGE.                                                
-******************************************************************************/
+* Developers and authors:                                                    *
+* Shay Gueron (1, 2), and Vlad Krasnov (1)                                   *
+* (1) Intel Corporation, Israel Development Center, Haifa, Israel            *
+* (2) University of Haifa, Israel                                            *
+*****************************************************************************/
 
 #include "rsaz_exp.h"
 
@@ -34,8 +46,8 @@
  * See crypto/bn/asm/rsaz-avx2.pl for further details.
  */
 void rsaz_1024_norm2red_avx2(void *red,const void *norm);
-void rsaz_1024_mul_avx2(void *ret,const void *a,const void *b,const void *n,unsigned long k);
-void rsaz_1024_sqr_avx2(void *ret,const void *a,const void *n,unsigned long k,int cnt);
+void rsaz_1024_mul_avx2(void *ret,const void *a,const void *b,const void *n,BN_ULONG k);
+void rsaz_1024_sqr_avx2(void *ret,const void *a,const void *n,BN_ULONG k,int cnt);
 void rsaz_1024_scatter5_avx2(void *tbl,const void *val,int i);
 void rsaz_1024_gather5_avx2(void *val,const void *tbl,int i);
 void rsaz_1024_red2norm_avx2(void *norm,const void *red);
@@ -51,9 +63,9 @@ void rsaz_1024_red2norm_avx2(void *norm,const void *red);
 # define ALIGN64	/* not fatal, might hurt performance a little */
 #endif
 
-ALIGN64 static const unsigned long one[40] =
+ALIGN64 static const BN_ULONG one[40] =
 	{1,0,0,    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-ALIGN64 static const unsigned long two80[40] =
+ALIGN64 static const BN_ULONG two80[40] =
 	{0,0,1<<22,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 void RSAZ_1024_mod_exp_avx2(BN_ULONG result_norm[16],
@@ -244,13 +256,13 @@ void RSAZ_1024_mod_exp_avx2(BN_ULONG result_norm[16],
 /*
  * See crypto/bn/rsaz-x86_64.pl for further details.
  */
-void rsaz_512_mul(void *ret,const void *a,const void *b,const void *n,unsigned long k);
-void rsaz_512_mul_scatter4(void *ret,const void *a,const void *n,unsigned long k,const void *tbl,unsigned int power);
-void rsaz_512_mul_gather4(void *ret,const void *a,const void *tbl,const void *n,unsigned long k,unsigned int power);
-void rsaz_512_mul_by_one(void *ret,const void *a,const void *n,unsigned long k);
-void rsaz_512_sqr(void *ret,const void *a,const void *n,unsigned long k,int cnt);
-void rsaz_512_scatter4(void *tbl, const unsigned long *val, int power);
-void rsaz_512_gather4(unsigned long *val, const void *tbl, int power);
+void rsaz_512_mul(void *ret,const void *a,const void *b,const void *n,BN_ULONG k);
+void rsaz_512_mul_scatter4(void *ret,const void *a,const void *n,BN_ULONG k,const void *tbl,unsigned int power);
+void rsaz_512_mul_gather4(void *ret,const void *a,const void *tbl,const void *n,BN_ULONG k,unsigned int power);
+void rsaz_512_mul_by_one(void *ret,const void *a,const void *n,BN_ULONG k);
+void rsaz_512_sqr(void *ret,const void *a,const void *n,BN_ULONG k,int cnt);
+void rsaz_512_scatter4(void *tbl, const BN_ULONG *val, int power);
+void rsaz_512_gather4(BN_ULONG *val, const void *tbl, int power);
 
 void RSAZ_512_mod_exp(BN_ULONG result[8],
 	const BN_ULONG base[8], const BN_ULONG exponent[8],
@@ -258,8 +270,8 @@ void RSAZ_512_mod_exp(BN_ULONG result[8],
 {
 	unsigned char	 storage[16*8*8+64*2+64];	/* 1.2KB */
 	unsigned char	*table = storage + (64-((size_t)storage%64));
-	unsigned long	*a_inv = (unsigned long *)(table+16*8*8),
-			*temp  = (unsigned long *)(table+16*8*8+8*8);
+	BN_ULONG	*a_inv = (BN_ULONG *)(table+16*8*8),
+			*temp  = (BN_ULONG *)(table+16*8*8+8*8);
 	unsigned char	*p_str = (unsigned char*)exponent;
 	int index;
 	unsigned int wvalue;

@@ -62,16 +62,20 @@
 # CPU clock cycles spent to process single byte (less is better).
 #
 #		x86_64		SSSE3		AVX[2]
-# P4		9.8		-
-# Opteron	6.65		-
-# Core2		6.70		6.05/+11%	-
-# Westmere	7.08		5.44/+30%	-
-# Sandy Bridge	7.93		6.16/+28%	4.99/+59%
-# Ivy Bridge	6.30		4.63/+36%	4.60/+37%
-# Haswell	5.98		4.36/+37%	3.57/+67%
-# Bulldozer	10.9		5.95/+82%
-# VIA Nano	10.2		7.46/+37%
-# Atom		11.0		9.61/+14%
+# P4		9.05		-
+# Opteron	6.26		-
+# Core2		6.55		6.05/+8%	-
+# Westmere	6.73		5.30/+27%	-
+# Sandy Bridge	7.70		6.10/+26%	4.99/+54%
+# Ivy Bridge	6.06		4.67/+30%	4.60/+32%
+# Haswell	5.45		4.15/+31%	3.57/+53%
+# Bulldozer	9.11		5.95/+53%
+# VIA Nano	9.32		7.15/+30%
+# Atom		[10.5?]		[9.23?]/+14%
+# Silvermont	13.1(*)		9.37/+40%
+#
+# (*)	obviously suboptimal result, nothing was done about it,
+#	because SSSE3 code is compiled unconditionally;
 
 $flavour = shift;
 $output  = shift;
@@ -114,7 +118,7 @@ $num="%r10";
 $t0="%eax";
 $t1="%ebx";
 $t2="%ecx";
-@xi=("%edx","%ebp");
+@xi=("%edx","%ebp","%r14d");
 $A="%esi";
 $B="%edi";
 $C="%r11d";
@@ -129,42 +133,40 @@ my $j=$i+1;
 $code.=<<___ if ($i==0);
 	mov	`4*$i`($inp),$xi[0]
 	bswap	$xi[0]
-	mov	$xi[0],`4*$i`(%rsp)
 ___
 $code.=<<___ if ($i<15);
-	mov	$c,$t0
 	mov	`4*$j`($inp),$xi[1]
+	mov	$d,$t0
+	mov	$xi[0],`4*$i`(%rsp)
 	mov	$a,$t2
-	xor	$d,$t0
 	bswap	$xi[1]
+	xor	$c,$t0
 	rol	\$5,$t2
-	lea	0x5a827999($xi[0],$e),$e
 	and	$b,$t0
-	mov	$xi[1],`4*$j`(%rsp)
+	lea	0x5a827999($xi[0],$e),$e
 	add	$t2,$e
 	xor	$d,$t0
 	rol	\$30,$b
 	add	$t0,$e
 ___
 $code.=<<___ if ($i>=15);
-	mov	`4*($j%16)`(%rsp),$xi[1]
-	mov	$c,$t0
+	xor	`4*($j%16)`(%rsp),$xi[1]
+	mov	$d,$t0
+	mov	$xi[0],`4*($i%16)`(%rsp)
 	mov	$a,$t2
 	xor	`4*(($j+2)%16)`(%rsp),$xi[1]
-	xor	$d,$t0
+	xor	$c,$t0
 	rol	\$5,$t2
 	xor	`4*(($j+8)%16)`(%rsp),$xi[1]
 	and	$b,$t0
 	lea	0x5a827999($xi[0],$e),$e
-	xor	`4*(($j+13)%16)`(%rsp),$xi[1]
-	xor	$d,$t0
-	rol	\$1,$xi[1]
-	add	$t2,$e
 	rol	\$30,$b
-	mov	$xi[1],`4*($j%16)`(%rsp)
+	xor	$d,$t0
+	add	$t2,$e
+	rol	\$1,$xi[1]
 	add	$t0,$e
 ___
-unshift(@xi,pop(@xi));
+push(@xi,shift(@xi));
 }
 
 sub BODY_20_39 {
@@ -172,62 +174,58 @@ my ($i,$a,$b,$c,$d,$e)=@_;
 my $j=$i+1;
 my $K=($i<40)?0x6ed9eba1:0xca62c1d6;
 $code.=<<___ if ($i<79);
-	mov	`4*($j%16)`(%rsp),$xi[1]
-	mov	$c,$t0
+	xor	`4*($j%16)`(%rsp),$xi[1]
+	mov	$b,$t0
+	`"mov	$xi[0],".4*($i%16)."(%rsp)"	if ($i<72)`
 	mov	$a,$t2
 	xor	`4*(($j+2)%16)`(%rsp),$xi[1]
-	xor	$b,$t0
-	rol	\$5,$t2
-	lea	$K($xi[0],$e),$e
-	xor	`4*(($j+8)%16)`(%rsp),$xi[1]
 	xor	$d,$t0
+	rol	\$5,$t2
+	xor	`4*(($j+8)%16)`(%rsp),$xi[1]
+	lea	$K($xi[0],$e),$e
+	xor	$c,$t0
 	add	$t2,$e
-	xor	`4*(($j+13)%16)`(%rsp),$xi[1]
 	rol	\$30,$b
 	add	$t0,$e
 	rol	\$1,$xi[1]
 ___
-$code.=<<___ if ($i<76);
-	mov	$xi[1],`4*($j%16)`(%rsp)
-___
 $code.=<<___ if ($i==79);
-	mov	$c,$t0
+	mov	$b,$t0
 	mov	$a,$t2
-	xor	$b,$t0
+	xor	$d,$t0
 	lea	$K($xi[0],$e),$e
 	rol	\$5,$t2
-	xor	$d,$t0
+	xor	$c,$t0
 	add	$t2,$e
 	rol	\$30,$b
 	add	$t0,$e
 ___
-unshift(@xi,pop(@xi));
+push(@xi,shift(@xi));
 }
 
 sub BODY_40_59 {
 my ($i,$a,$b,$c,$d,$e)=@_;
 my $j=$i+1;
 $code.=<<___;
-	mov	`4*($j%16)`(%rsp),$xi[1]
-	mov	$c,$t0
-	mov	$c,$t1
+	xor	`4*($j%16)`(%rsp),$xi[1]
+	mov	$d,$t0
+	mov	$xi[0],`4*($i%16)`(%rsp)
+	mov	$d,$t1
 	xor	`4*(($j+2)%16)`(%rsp),$xi[1]
-	and	$d,$t0
+	and	$c,$t0
 	mov	$a,$t2
 	xor	`4*(($j+8)%16)`(%rsp),$xi[1]
-	xor	$d,$t1
 	lea	0x8f1bbcdc($xi[0],$e),$e
+	xor	$c,$t1
 	rol	\$5,$t2
-	xor	`4*(($j+13)%16)`(%rsp),$xi[1]
 	add	$t0,$e
-	and	$b,$t1
 	rol	\$1,$xi[1]
-	add	$t1,$e
-	rol	\$30,$b
-	mov	$xi[1],`4*($j%16)`(%rsp)
+	and	$b,$t1
 	add	$t2,$e
+	rol	\$30,$b
+	add	$t1,$e
 ___
-unshift(@xi,pop(@xi));
+push(@xi,shift(@xi));
 }
 
 $code.=<<___;
@@ -261,17 +259,18 @@ $code.=<<___;
 
 .align	16
 .Lialu:
+	mov	%rsp,%rax
 	push	%rbx
 	push	%rbp
 	push	%r12
 	push	%r13
-	mov	%rsp,%r11
+	push	%r14
 	mov	%rdi,$ctx	# reassigned argument
 	sub	\$`8+16*4`,%rsp
 	mov	%rsi,$inp	# reassigned argument
 	and	\$-64,%rsp
 	mov	%rdx,$num	# reassigned argument
-	mov	%r11,`16*4`(%rsp)
+	mov	%rax,`16*4`(%rsp)
 .Lprologue:
 
 	mov	0($ctx),$A
@@ -305,11 +304,12 @@ $code.=<<___;
 	jnz	.Lloop
 
 	mov	`16*4`(%rsp),%rsi
-	mov	(%rsi),%r13
-	mov	8(%rsi),%r12
-	mov	16(%rsi),%rbp
-	mov	24(%rsi),%rbx
-	lea	32(%rsi),%rsp
+	mov	-40(%rsi),%r14
+	mov	-32(%rsi),%r13
+	mov	-24(%rsi),%r12
+	mov	-16(%rsi),%rbp
+	mov	-8(%rsi),%rbx
+	lea	(%rsi),%rsp
 .Lepilogue:
 	ret
 .size	sha1_block_data_order,.-sha1_block_data_order
@@ -344,21 +344,26 @@ $code.=<<___;
 .align	16
 sha1_block_data_order_ssse3:
 _ssse3_shortcut:
+	mov	%rsp,%rax
 	push	%rbx
 	push	%rbp
 	push	%r12
+	push	%r13		# redundant, done to share Win64 SE handler
+	push	%r14
 	lea	`-64-($win64?6*16:0)`(%rsp),%rsp
 ___
 $code.=<<___ if ($win64);
-	movaps	%xmm6,64+0(%rsp)
-	movaps	%xmm7,64+16(%rsp)
-	movaps	%xmm8,64+32(%rsp)
-	movaps	%xmm9,64+48(%rsp)
-	movaps	%xmm10,64+64(%rsp)
-	movaps	%xmm11,64+80(%rsp)
+	movaps	%xmm6,-40-6*16(%rax)
+	movaps	%xmm7,-40-5*16(%rax)
+	movaps	%xmm8,-40-4*16(%rax)
+	movaps	%xmm9,-40-3*16(%rax)
+	movaps	%xmm10,-40-2*16(%rax)
+	movaps	%xmm11,-40-1*16(%rax)
 .Lprologue_ssse3:
 ___
 $code.=<<___;
+	mov	%rax,%r14	# original %rsp
+	and	\$-64,%rsp
 	mov	%rdi,$ctx	# reassigned argument
 	mov	%rsi,$inp	# reassigned argument
 	mov	%rdx,$num	# reassigned argument
@@ -384,11 +389,11 @@ $code.=<<___;
 	movdqu	32($inp),@X[-2&7]
 	movdqu	48($inp),@X[-1&7]
 	pshufb	@X[2],@X[-4&7]		# byte swap
-	add	\$64,$inp
 	pshufb	@X[2],@X[-3&7]
 	pshufb	@X[2],@X[-2&7]
-	pshufb	@X[2],@X[-1&7]
+	add	\$64,$inp
 	paddd	@Tx[1],@X[-4&7]		# add K_00_19
+	pshufb	@X[2],@X[-1&7]
 	paddd	@Tx[1],@X[-3&7]
 	paddd	@Tx[1],@X[-2&7]
 	movdqa	@X[-4&7],0(%rsp)	# X[]+K xfer to IALU
@@ -413,61 +418,61 @@ sub Xupdate_ssse3_16_31()		# recall that $Xi starts wtih 4
   my @insns = (&$body,&$body,&$body,&$body);	# 40 instructions
   my ($a,$b,$c,$d,$e);
 
-	&movdqa	(@X[0],@X[-3&7]);
-	 eval(shift(@insns));
+	 eval(shift(@insns));		# ror
+	&pshufd	(@X[0],@X[-4&7],0xee);	# was &movdqa	(@X[0],@X[-3&7]);
 	 eval(shift(@insns));
 	&movdqa	(@Tx[0],@X[-1&7]);
-	&palignr(@X[0],@X[-4&7],8);	# compose "X[-14]" in "X[0]"
+	  &paddd	(@Tx[1],@X[-1&7]);
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 
-	  &paddd	(@Tx[1],@X[-1&7]);
+	&punpcklqdq(@X[0],@X[-3&7]);	# compose "X[-14]" in "X[0]", was &palignr(@X[0],@X[-4&7],8);
 	 eval(shift(@insns));
+	 eval(shift(@insns));		# rol
 	 eval(shift(@insns));
 	&psrldq	(@Tx[0],4);		# "X[-3]", 3 dwords
 	 eval(shift(@insns));
 	 eval(shift(@insns));
+
 	&pxor	(@X[0],@X[-4&7]);	# "X[0]"^="X[-16]"
 	 eval(shift(@insns));
-	 eval(shift(@insns));
-
+	 eval(shift(@insns));		# ror
 	&pxor	(@Tx[0],@X[-2&7]);	# "X[-3]"^"X[-8]"
-	 eval(shift(@insns));
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 
 	&pxor	(@X[0],@Tx[0]);		# "X[0]"^="X[-3]"^"X[-8]"
 	 eval(shift(@insns));
-	 eval(shift(@insns));
+	 eval(shift(@insns));		# rol
 	  &movdqa	(eval(16*(($Xi-1)&3))."(%rsp)",@Tx[1]);	# X[]+K xfer to IALU
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 
 	&movdqa	(@Tx[2],@X[0]);
+	 eval(shift(@insns));
+	 eval(shift(@insns));
+	 eval(shift(@insns));		# ror
 	&movdqa	(@Tx[0],@X[0]);
-	 eval(shift(@insns));
-	 eval(shift(@insns));
-	 eval(shift(@insns));
 	 eval(shift(@insns));
 
 	&pslldq	(@Tx[2],12);		# "X[0]"<<96, extract one dword
 	&paddd	(@X[0],@X[0]);
 	 eval(shift(@insns));
 	 eval(shift(@insns));
-	 eval(shift(@insns));
-	 eval(shift(@insns));
 
 	&psrld	(@Tx[0],31);
 	 eval(shift(@insns));
+	 eval(shift(@insns));		# rol
 	 eval(shift(@insns));
 	&movdqa	(@Tx[1],@Tx[2]);
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 
 	&psrld	(@Tx[2],30);
-	&por	(@X[0],@Tx[0]);		# "X[0]"<<<=1
 	 eval(shift(@insns));
+	 eval(shift(@insns));		# ror
+	&por	(@X[0],@Tx[0]);		# "X[0]"<<<=1
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 	 eval(shift(@insns));
@@ -475,12 +480,13 @@ sub Xupdate_ssse3_16_31()		# recall that $Xi starts wtih 4
 	&pslld	(@Tx[1],2);
 	&pxor	(@X[0],@Tx[2]);
 	 eval(shift(@insns));
-	 eval(shift(@insns));
 	  &movdqa	(@Tx[2],eval(2*16*(($Xi)/5)-64)."($K_XX_XX)");	# K_XX_XX
+	 eval(shift(@insns));		# rol
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 
 	&pxor	(@X[0],@Tx[1]);		# "X[0]"^=("X[0]">>96)<<<2
+	&pshufd (@Tx[1],@X[-1&7],0xee)	if ($Xi==7);	# was &movdqa	(@Tx[0],@X[-1&7]) in Xupdate_ssse3_32_79
 
 	 foreach (@insns) { eval; }	# remaining instructions [if any]
 
@@ -494,24 +500,27 @@ sub Xupdate_ssse3_32_79()
   my @insns = (&$body,&$body,&$body,&$body);	# 32 to 44 instructions
   my ($a,$b,$c,$d,$e);
 
-	&movdqa	(@Tx[0],@X[-1&7])	if ($Xi==8);
-	 eval(shift(@insns));		# body_20_39
+	 eval(shift(@insns))		if ($Xi==8);
 	&pxor	(@X[0],@X[-4&7]);	# "X[0]"="X[-32]"^"X[-16]"
-	&palignr(@Tx[0],@X[-2&7],8);	# compose "X[-6]"
+	 eval(shift(@insns))		if ($Xi==8);
+	 eval(shift(@insns));		# body_20_39
 	 eval(shift(@insns));
+	 eval(shift(@insns))		if (@insns[1] =~ /_ror/);
+	 eval(shift(@insns))		if (@insns[0] =~ /_ror/);
+	&punpcklqdq(@Tx[0],@X[-1&7]);	# compose "X[-6]", was &palignr(@Tx[0],@X[-2&7],8);
 	 eval(shift(@insns));
 	 eval(shift(@insns));		# rol
 
 	&pxor	(@X[0],@X[-7&7]);	# "X[0]"^="X[-28]"
 	 eval(shift(@insns));
-	 eval(shift(@insns))	if (@insns[0] !~ /&ro[rl]/);
+	 eval(shift(@insns));
 	if ($Xi%5) {
 	  &movdqa	(@Tx[2],@Tx[1]);# "perpetuate" K_XX_XX...
 	} else {			# ... or load next one
 	  &movdqa	(@Tx[2],eval(2*16*($Xi/5)-64)."($K_XX_XX)");
 	}
-	  &paddd	(@Tx[1],@X[-1&7]);
 	 eval(shift(@insns));		# ror
+	  &paddd	(@Tx[1],@X[-1&7]);
 	 eval(shift(@insns));
 
 	&pxor	(@X[0],@Tx[0]);		# "X[0]"^="X[-6]"
@@ -519,29 +528,31 @@ sub Xupdate_ssse3_32_79()
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 	 eval(shift(@insns));		# rol
+	 eval(shift(@insns))		if (@insns[0] =~ /_ror/);
 
 	&movdqa	(@Tx[0],@X[0]);
+	 eval(shift(@insns));
+	 eval(shift(@insns));
 	  &movdqa	(eval(16*(($Xi-1)&3))."(%rsp)",@Tx[1]);	# X[]+K xfer to IALU
-	 eval(shift(@insns));
-	 eval(shift(@insns));
 	 eval(shift(@insns));		# ror
 	 eval(shift(@insns));
+	 eval(shift(@insns));		# body_20_39
 
 	&pslld	(@X[0],2);
-	 eval(shift(@insns));		# body_20_39
+	 eval(shift(@insns));
 	 eval(shift(@insns));
 	&psrld	(@Tx[0],30);
-	 eval(shift(@insns));
-	 eval(shift(@insns));		# rol
+	 eval(shift(@insns))		if (@insns[0] =~ /_rol/);# rol
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 	 eval(shift(@insns));		# ror
-	 eval(shift(@insns));
 
 	&por	(@X[0],@Tx[0]);		# "X[0]"<<<=2
-	 eval(shift(@insns));		# body_20_39
 	 eval(shift(@insns));
-	  &movdqa	(@Tx[1],@X[0])	if ($Xi<19);
+	 eval(shift(@insns));		# body_20_39
+	 eval(shift(@insns))		if (@insns[1] =~ /_rol/);
+	 eval(shift(@insns))		if (@insns[0] =~ /_rol/);
+	  &pshufd(@Tx[1],@X[-1&7],0xee)	if ($Xi<19);	# was &movdqa	(@Tx[1],@X[0])
 	 eval(shift(@insns));
 	 eval(shift(@insns));		# rol
 	 eval(shift(@insns));
@@ -562,9 +573,10 @@ sub Xuplast_ssse3_80()
   my ($a,$b,$c,$d,$e);
 
 	 eval(shift(@insns));
+	 eval(shift(@insns));
+	 eval(shift(@insns));
+	 eval(shift(@insns));
 	  &paddd	(@Tx[1],@X[-1&7]);
-	 eval(shift(@insns));
-	 eval(shift(@insns));
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 
@@ -597,7 +609,9 @@ sub Xloop_ssse3()
 
 	 eval(shift(@insns));
 	 eval(shift(@insns));
+	 eval(shift(@insns));
 	&pshufb	(@X[($Xi-3)&7],@X[2]);
+	 eval(shift(@insns));
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 	 eval(shift(@insns));
@@ -607,6 +621,8 @@ sub Xloop_ssse3()
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 	&movdqa	(eval(16*$Xi)."(%rsp)",@X[($Xi-4)&7]);	# X[]+K xfer to IALU
+	 eval(shift(@insns));
+	 eval(shift(@insns));
 	 eval(shift(@insns));
 	 eval(shift(@insns));
 	&psubd	(@X[($Xi-4)&7],@Tx[1]);
@@ -753,19 +769,21 @@ $code.=<<___;
 	mov	$E,16($ctx)
 ___
 $code.=<<___ if ($win64);
-	movaps	64+0(%rsp),%xmm6
-	movaps	64+16(%rsp),%xmm7
-	movaps	64+32(%rsp),%xmm8
-	movaps	64+48(%rsp),%xmm9
-	movaps	64+64(%rsp),%xmm10
-	movaps	64+80(%rsp),%xmm11
+	movaps	-40-6*16(%r14),%xmm6
+	movaps	-40-5*16(%r14),%xmm7
+	movaps	-40-4*16(%r14),%xmm8
+	movaps	-40-3*16(%r14),%xmm9
+	movaps	-40-2*16(%r14),%xmm10
+	movaps	-40-1*16(%r14),%xmm11
 ___
 $code.=<<___;
-	lea	`64+($win64?6*16:0)`(%rsp),%rsi
-	mov	0(%rsi),%r12
-	mov	8(%rsi),%rbp
-	mov	16(%rsi),%rbx
-	lea	24(%rsi),%rsp
+	lea	(%r14),%rsi
+	mov	-40(%rsi),%r14
+	mov	-32(%rsi),%r13
+	mov	-24(%rsi),%r12
+	mov	-16(%rsi),%rbp
+	mov	-8(%rsi),%rbx
+	lea	(%rsi),%rsp
 .Lepilogue_ssse3:
 	ret
 .size	sha1_block_data_order_ssse3,.-sha1_block_data_order_ssse3
@@ -788,25 +806,30 @@ $code.=<<___;
 .align	16
 sha1_block_data_order_avx:
 _avx_shortcut:
+	mov	%rsp,%rax
 	push	%rbx
 	push	%rbp
 	push	%r12
+	push	%r13		# redundant, done to share Win64 SE handler
+	push	%r14
 	lea	`-64-($win64?6*16:0)`(%rsp),%rsp
+	vzeroupper
 ___
 $code.=<<___ if ($win64);
-	movaps	%xmm6,64+0(%rsp)
-	movaps	%xmm7,64+16(%rsp)
-	movaps	%xmm8,64+32(%rsp)
-	movaps	%xmm9,64+48(%rsp)
-	movaps	%xmm10,64+64(%rsp)
-	movaps	%xmm11,64+80(%rsp)
+	vmovaps	%xmm6,-40-6*16(%rax)
+	vmovaps	%xmm7,-40-5*16(%rax)
+	vmovaps	%xmm8,-40-4*16(%rax)
+	vmovaps	%xmm9,-40-3*16(%rax)
+	vmovaps	%xmm10,-40-2*16(%rax)
+	vmovaps	%xmm11,-40-1*16(%rax)
 .Lprologue_avx:
 ___
 $code.=<<___;
+	mov	%rax,%r14	# original %rsp
+	and	\$-64,%rsp
 	mov	%rdi,$ctx	# reassigned argument
 	mov	%rsi,$inp	# reassigned argument
 	mov	%rdx,$num	# reassigned argument
-	vzeroupper
 
 	shl	\$6,$num
 	add	$inp,$num
@@ -1110,19 +1133,21 @@ $code.=<<___;
 	mov	$E,16($ctx)
 ___
 $code.=<<___ if ($win64);
-	movaps	64+0(%rsp),%xmm6
-	movaps	64+16(%rsp),%xmm7
-	movaps	64+32(%rsp),%xmm8
-	movaps	64+48(%rsp),%xmm9
-	movaps	64+64(%rsp),%xmm10
-	movaps	64+80(%rsp),%xmm11
+	movaps	-40-6*16(%r14),%xmm6
+	movaps	-40-5*16(%r14),%xmm7
+	movaps	-40-4*16(%r14),%xmm8
+	movaps	-40-3*16(%r14),%xmm9
+	movaps	-40-2*16(%r14),%xmm10
+	movaps	-40-1*16(%r14),%xmm11
 ___
 $code.=<<___;
-	lea	`64+($win64?6*16:0)`(%rsp),%rsi
-	mov	0(%rsi),%r12
-	mov	8(%rsi),%rbp
-	mov	16(%rsi),%rbx
-	lea	24(%rsi),%rsp
+	lea	(%r14),%rsi
+	mov	-40(%rsi),%r14
+	mov	-32(%rsi),%r13
+	mov	-24(%rsi),%r12
+	mov	-16(%rsi),%rbp
+	mov	-8(%rsi),%rbx
+	lea	(%rsi),%rsp
 .Lepilogue_avx:
 	ret
 .size	sha1_block_data_order_avx,.-sha1_block_data_order_avx
@@ -1148,28 +1173,29 @@ $code.=<<___;
 .align	16
 sha1_block_data_order_avx2:
 _avx2_shortcut:
+	mov	%rsp,%rax
 	push	%rbx
 	push	%rbp
 	push	%r12
 	push	%r13
 	push	%r14
-	lea	(%rsp),%r14
+	vzeroupper
 ___
 $code.=<<___ if ($win64);
 	lea	-6*16(%rsp),%rsp
-	movaps	%xmm6,-6*16(%r14)
-	movaps	%xmm7,-5*16(%r14)
-	movaps	%xmm8,-4*16(%r14)
-	movaps	%xmm9,-3*16(%r14)
-	movaps	%xmm10,-2*16(%r14)
-	movaps	%xmm11,-1*16(%r14)
+	vmovaps	%xmm6,-40-6*16(%rax)
+	vmovaps	%xmm7,-40-5*16(%rax)
+	vmovaps	%xmm8,-40-4*16(%rax)
+	vmovaps	%xmm9,-40-3*16(%rax)
+	vmovaps	%xmm10,-40-2*16(%rax)
+	vmovaps	%xmm11,-40-1*16(%rax)
 .Lprologue_avx2:
 ___
 $code.=<<___;
+	mov	%rax,%r14		# original %rsp
 	mov	%rdi,$ctx		# reassigned argument
 	mov	%rsi,$inp		# reassigned argument
 	mov	%rdx,$num		# reassigned argument
-	vzeroupper
 
 	lea	-640(%rsp),%rsp
 	shl	\$6,$num
@@ -1586,21 +1612,21 @@ $code.=<<___;
 	vzeroupper
 ___
 $code.=<<___ if ($win64);
-	movaps	-6*16(%r14),%xmm6
-	movaps	-5*16(%r14),%xmm7
-	movaps	-4*16(%r14),%xmm8
-	movaps	-3*16(%r14),%xmm9
-	movaps	-2*16(%r14),%xmm10
-	movaps	-1*16(%r14),%xmm11
+	movaps	-40-6*16(%r14),%xmm6
+	movaps	-40-5*16(%r14),%xmm7
+	movaps	-40-4*16(%r14),%xmm8
+	movaps	-40-3*16(%r14),%xmm9
+	movaps	-40-2*16(%r14),%xmm10
+	movaps	-40-1*16(%r14),%xmm11
 ___
 $code.=<<___;
 	lea	(%r14),%rsi
-	mov	0(%rsi),%r14
-	mov	8(%rsi),%r13
-	mov	16(%rsi),%r12
-	mov	24(%rsi),%rbp
-	mov	32(%rsi),%rbx
-	lea	40(%rsi),%rsp
+	mov	-40(%rsi),%r14
+	mov	-32(%rsi),%r13
+	mov	-24(%rsi),%r12
+	mov	-16(%rsi),%rbp
+	mov	-8(%rsi),%rbx
+	lea	(%rsi),%rsp
 .Lepilogue_avx2:
 	ret
 .size	sha1_block_data_order_avx2,.-sha1_block_data_order_avx2
@@ -1665,16 +1691,17 @@ se_handler:
 	jae	.Lcommon_seh_tail
 
 	mov	`16*4`(%rax),%rax	# pull saved stack pointer
-	lea	32(%rax),%rax
 
 	mov	-8(%rax),%rbx
 	mov	-16(%rax),%rbp
 	mov	-24(%rax),%r12
 	mov	-32(%rax),%r13
+	mov	-40(%rax),%r14
 	mov	%rbx,144($context)	# restore context->Rbx
 	mov	%rbp,160($context)	# restore context->Rbp
 	mov	%r12,216($context)	# restore context->R12
 	mov	%r13,224($context)	# restore context->R13
+	mov	%r14,232($context)	# restore context->R14
 
 	jmp	.Lcommon_seh_tail
 .size	se_handler,.-se_handler
@@ -1711,18 +1738,23 @@ ssse3_handler:
 	cmp	%r10,%rbx		# context->Rip>=epilogue label
 	jae	.Lcommon_seh_tail
 
-	lea	64(%rax),%rsi
+	mov	232($context),%rax	# pull context->R14
+
+	lea	-40-6*16(%rax),%rsi
 	lea	512($context),%rdi	# &context.Xmm6
 	mov	\$12,%ecx
 	.long	0xa548f3fc		# cld; rep movsq
-	lea	`24+64+6*16`(%rax),%rax	# adjust stack pointer
 
 	mov	-8(%rax),%rbx
 	mov	-16(%rax),%rbp
 	mov	-24(%rax),%r12
+	mov	-32(%rax),%r13
+	mov	-40(%rax),%r14
 	mov	%rbx,144($context)	# restore context->Rbx
 	mov	%rbp,160($context)	# restore context->Rbp
 	mov	%r12,216($context)	# restore cotnext->R12
+	mov	%r13,224($context)	# restore cotnext->R13
+	mov	%r14,232($context)	# restore cotnext->R14
 
 .Lcommon_seh_tail:
 	mov	8(%rax),%rdi

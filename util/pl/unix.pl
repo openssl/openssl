@@ -74,6 +74,9 @@ $bf_enc_src="";
 	  'aesni-sha256-x86_64' => 'crypto/aes',
           'rsaz-x86_64' => 'crypto/bn',
           'rsaz-avx2' => 'crypto/bn',
+	  'aesni-mb-x86_64' => 'crypto/aes',
+	  'sha1-mb-x86_64' => 'crypto/sha',
+	  'sha256-mb-x86_64' => 'crypto/sha',
          );
 
 # If I were feeling more clever, these could probably be extracted
@@ -135,7 +138,7 @@ sub special_compile_target
 		{
 		return << "EOF";
 \$(TMP_D)/x86_64-gcc.o:	crypto/bn/asm/x86_64-gcc.c
-	\$(CC) \$(CFLAGS) -c -o \$@ crypto/bn/asm/x86_64-gcc.c
+	\$(CC) \$(LIB_CFLAGS) -c -o \$@ crypto/bn/asm/x86_64-gcc.c
 EOF
 		}
 	return undef;

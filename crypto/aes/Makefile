@@ -67,6 +67,8 @@ aesni-sha1-x86_64.s:	asm/aesni-sha1-x86_64.pl
 	$(PERL) asm/aesni-sha1-x86_64.pl $(PERLASM_SCHEME) > $@
 aesni-sha256-x86_64.s:	asm/aesni-sha256-x86_64.pl
 	$(PERL) asm/aesni-sha256-x86_64.pl $(PERLASM_SCHEME) > $@
+aesni-mb-x86_64.s:	asm/aesni-mb-x86_64.pl
+	$(PERL) asm/aesni-mb-x86_64.pl $(PERLASM_SCHEME) > $@
 
 aes-sparcv9.s: asm/aes-sparcv9.pl
 	$(PERL) asm/aes-sparcv9.pl $(CFLAGS) > $@
@@ -75,6 +77,8 @@ aest4-sparcv9.s: asm/aest4-sparcv9.pl
 
 aes-ppc.s:	asm/aes-ppc.pl
 	$(PERL) asm/aes-ppc.pl $(PERLASM_SCHEME) $@
+vpaes-ppc.s:	asm/vpaes-ppc.pl
+	$(PERL) asm/vpaes-ppc.pl $(PERLASM_SCHEME) $@
 
 aes-parisc.s:	asm/aes-parisc.pl
 	$(PERL) asm/aes-parisc.pl $(PERLASM_SCHEME) $@
@@ -152,7 +156,7 @@ aes_wrap.o: ../../e_os.h ../../include/openssl/aes.h
 aes_wrap.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 aes_wrap.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 aes_wrap.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
-aes_wrap.o: ../../include/openssl/opensslconf.h
+aes_wrap.o: ../../include/openssl/modes.h ../../include/openssl/opensslconf.h
 aes_wrap.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 aes_wrap.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 aes_wrap.o: ../../include/openssl/symhacks.h ../cryptlib.h aes_wrap.c

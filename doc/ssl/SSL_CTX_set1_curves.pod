@@ -87,8 +87,6 @@ SSL_get1_curves() returns the number of curves, which may be zero.
 SSL_get1_shared_curve() returns the NID of shared curve B<n> of zero if there
 is no shared curve B<n> or the number of shared curves if B<n> is -1.
 
-=back
-
 =head1 SEE ALSO
 
 L<SSL_CTX_add_extra_chain_cert(3)|SSL_CTX_add_extra_chain_cert(3)>

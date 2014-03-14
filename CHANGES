@@ -4,22 +4,22 @@
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
 
+  *) Use algorithm specific chains in SSL_CTX_use_certificate_chain_file():
+     this fixes a limiation in previous versions of OpenSSL.
+     [Steve Henson]
+
   *) Experimental encrypt-then-mac support.
     
      Experimental support for encrypt then mac from
      draft-gutmann-tls-encrypt-then-mac-02.txt
 
-     To enable it set the appropriate extension number (0x10 for the test
-     server) using e.g. -DTLSEXT_TYPE_encrypt_then_mac=0x10
+     To enable it set the appropriate extension number (0x42 for the test
+     server) using e.g. -DTLSEXT_TYPE_encrypt_then_mac=0x42
  
      For non-compliant peers (i.e. just about everything) this should have no
      effect.
 
      WARNING: EXPERIMENTAL, SUBJECT TO CHANGE.
-
-     NOTE: unfortunately the test server value (0x10) clashes with the draft
-     ALPN extension. Until this is resolved the only way to check against the
-     test server is to temporarily change the ALPN extension value (ugh!).
 
      [Steve Henson]
 
@@ -276,6 +276,30 @@
      [Steve Henson]
 
  Changes between 1.0.1e and 1.0.2 [xx XXX xxxx]
+
+  *) Keep original DTLS digest and encryption contexts in retransmission
+     structures so we can use the previous session parameters if they need
+     to be resent. (CVE-2013-6450)
+     [Steve Henson]
+
+  *) TLS pad extension: draft-agl-tls-padding-02
+
+     Workaround for the "TLS hang bug" (see FAQ and PR#2771): if the
+     TLS client Hello record length value would otherwise be > 255 and
+     less that 512 pad with a dummy extension containing zeroes so it
+     is at least 512 bytes long.
+
+     To enable it use an unused extension number (for example chrome uses
+     35655) using:
+
+     e.g. -DTLSEXT_TYPE_padding=35655
+
+     Since the extension is ignored the actual number doesn't matter as long
+     as it doesn't clash with any existing extension.
+
+     This will be updated when the extension gets an official number.
+
+     [Adam Langley, Steve Henson]
 
   *) Add functions to allocate and set the fields of an ECDSA_METHOD
      structure.

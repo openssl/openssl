@@ -536,6 +536,16 @@ int SSL_set1_param(SSL *ssl, X509_VERIFY_PARAM *vpm)
 	return X509_VERIFY_PARAM_set1(ssl->param, vpm);
 	}
 
+X509_VERIFY_PARAM *SSL_CTX_get0_param(SSL_CTX *ctx)
+	{
+	return ctx->param;
+	}
+
+X509_VERIFY_PARAM *SSL_get0_param(SSL *ssl)
+	{
+	return ssl->param;
+	}
+
 void SSL_certs_clear(SSL *s)
 	{
 	ssl_cert_clear_certs(s->cert);
@@ -1596,7 +1606,6 @@ int SSL_get_servername_type(const SSL *s)
 	return -1;
 	}
 
-# ifndef OPENSSL_NO_NEXTPROTONEG
 /* SSL_select_next_proto implements the standard protocol selection. It is
  * expected that this function is called from the callback set by
  * SSL_CTX_set_next_proto_select_cb.
@@ -1663,6 +1672,7 @@ int SSL_select_next_proto(unsigned char **out, unsigned char *outlen, const unsi
 	return status;
 	}
 
+# ifndef OPENSSL_NO_NEXTPROTONEG
 /* SSL_get0_next_proto_negotiated sets *data and *len to point to the client's
  * requested protocol for this connection and returns 0. If the client didn't
  * request any protocol, then *data is set to NULL.
@@ -2401,20 +2411,20 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 		emask_k|=SSL_kRSA;
 
 #if 0
-	/* The match needs to be both kEDH and aRSA or aDSA, so don't worry */
+	/* The match needs to be both kDHE and aRSA or aDSA, so don't worry */
 	if (	(dh_tmp || dh_rsa || dh_dsa) &&
 		(rsa_enc || rsa_sign || dsa_sign))
-		mask_k|=SSL_kEDH;
+		mask_k|=SSL_kDHE;
 	if ((dh_tmp_export || dh_rsa_export || dh_dsa_export) &&
 		(rsa_enc || rsa_sign || dsa_sign))
-		emask_k|=SSL_kEDH;
+		emask_k|=SSL_kDHE;
 #endif
 
 	if (dh_tmp_export)
-		emask_k|=SSL_kEDH;
+		emask_k|=SSL_kDHE;
 
 	if (dh_tmp)
-		mask_k|=SSL_kEDH;
+		mask_k|=SSL_kDHE;
 
 	if (dh_rsa) mask_k|=SSL_kDHr;
 	if (dh_rsa_export) emask_k|=SSL_kDHr;
@@ -2512,8 +2522,8 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 #ifndef OPENSSL_NO_ECDH
 	if (have_ecdh_tmp)
 		{
-		mask_k|=SSL_kEECDH;
-		emask_k|=SSL_kEECDH;
+		mask_k|=SSL_kECDHE;
+		emask_k|=SSL_kECDHE;
 		}
 #endif
 
@@ -2625,6 +2635,8 @@ CERT_PKEY *ssl_get_server_send_pkey(const SSL *s)
 	int i;
 
 	c = s->cert;
+	if (!s->s3 || !s->s3->tmp.new_cipher)
+		return NULL;
 	ssl_set_cert_masks(c, s->s3->tmp.new_cipher);
 
 #ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
@@ -2738,6 +2750,11 @@ void ssl_update_cache(SSL *s,int mode)
 			SSL_CTX_flush_sessions(s->session_ctx,(unsigned long)time(NULL));
 			}
 		}
+	}
+
+const SSL_METHOD *SSL_CTX_get_ssl_method(SSL_CTX *ctx)
+	{
+	return ctx->method;
 	}
 
 const SSL_METHOD *SSL_get_ssl_method(SSL *s)
@@ -3103,7 +3120,6 @@ void ssl_clear_cipher_ctx(SSL *s)
 #endif
 	}
 
-/* Fix this function so that it takes an optional type parameter */
 X509 *SSL_get_certificate(const SSL *s)
 	{
 	if (s->cert != NULL)
@@ -3112,13 +3128,28 @@ X509 *SSL_get_certificate(const SSL *s)
 		return(NULL);
 	}
 
-/* Fix this function so that it takes an optional type parameter */
-EVP_PKEY *SSL_get_privatekey(SSL *s)
+EVP_PKEY *SSL_get_privatekey(const SSL *s)
 	{
 	if (s->cert != NULL)
 		return(s->cert->key->privatekey);
 	else
 		return(NULL);
+	}
+
+X509 *SSL_CTX_get0_certificate(const SSL_CTX *ctx)
+	{
+	if (ctx->cert != NULL)
+		return ctx->cert->key->x509;
+	else
+		return NULL;
+	}
+
+EVP_PKEY *SSL_CTX_get0_privatekey(const SSL_CTX *ctx)
+	{
+	if (ctx->cert != NULL)
+		return ctx->cert->key->privatekey;
+	else
+		return NULL ;
 	}
 
 const SSL_CIPHER *SSL_get_current_cipher(const SSL *s)

@@ -76,6 +76,7 @@ OpenSSL  -  Frequently Asked Questions
 * Why does Valgrind complain about the use of uninitialized data?
 * Why doesn't a memory BIO work when a file does?
 * Where are the declarations and implementations of d2i_X509() etc?
+* When debugging I observe SIGILL during OpenSSL initialization: why?
 
 ===============================================================================
 
@@ -628,8 +629,8 @@ valid for the current DOS session.
 * What is special about OpenSSL on Redhat?
 
 Red Hat Linux (release 7.0 and later) include a preinstalled limited
-version of OpenSSL. For patent reasons, support for IDEA, RC5 and MDC2
-is disabled in this version. The same may apply to other Linux distributions.
+version of OpenSSL. Red Hat has chosen to disable support for IDEA, RC5 and
+MDC2 in this version. The same may apply to other Linux distributions.
 Users may therefore wish to install more or all of the features left out.
 
 To do this you MUST ensure that you do not overwrite the openssl that is in
@@ -651,11 +652,6 @@ relevant updates in packages up to and including 0.9.6b.
 
 A possible way around this is to persuade Red Hat to produce a non-US
 version of Red Hat Linux.
-
-FYI: Patent numbers and expiry dates of US patents:
-MDC-2: 4,908,861 13/03/2007
-IDEA:  5,214,703 25/05/2010
-RC5:   5,724,428 03/03/2015
 
 
 * Why does the OpenSSL compilation fail on MacOS X?
@@ -743,6 +739,7 @@ never make sense, and tend to emerge when you least expect them. In order
 to identify one, drop optimization level, e.g. by editing CFLAG line in
 top-level Makefile, recompile and re-run the test.
 
+
 * I think I've found a bug, what should I do?
 
 If you are a new user then it is quite likely you haven't found a bug and
@@ -751,8 +748,15 @@ documentation and the mailing lists for similar queries. If you are still
 unsure whether it is a bug or not submit a query to the openssl-users mailing
 list.
 
+If you think you have found a bug based on the output of static analysis tools
+then please manually check the issue is genuine. Such tools can produce a
+LOT of false positives.
+
 
 * I'm SURE I've found a bug, how do I report it?
+
+To avoid duplicated reports check the mailing lists and release notes for the
+relevant version of OpenSSL to see if the problem has been reported already.
 
 Bug reports with no security implications should be sent to the request
 tracker. This can be done by mailing the report to <rt@openssl.org> (or its
@@ -781,7 +785,9 @@ See also <URL: http://www.openssl.org/support/rt.html>
 If you think your bug has security implications then please send it to
 openssl-security@openssl.org if you don't get a prompt reply at least 
 acknowledging receipt then resend or mail it directly to one of the
-more active team members (e.g. Steve).
+more active team members (e.g. Steve). If you wish to use PGP to send
+in a report please use one or more of the keys of the team members listed
+at <URL: http://www.openssl.org/about/>
 
 [PROG] ========================================================================
 
@@ -1067,5 +1073,20 @@ These are defined and implemented by macros of the form:
 The implementation passes an ASN1 "template" defining the structure into an
 ASN1 interpreter using generalised functions such as ASN1_item_d2i().
 
+* When debugging I observe SIGILL during OpenSSL initialization: why?
+
+OpenSSL adapts to processor it executes on and for this reason has to
+query its capabilities. Unfortunately on some processors the only way
+to achieve this for non-privileged code is to attempt instructions
+that can cause Illegal Instruction exceptions. The initialization
+procedure is coded to handle these exceptions to manipulate corresponding
+bits in capabilities vector. This normally appears transparent, except
+when you execute it under debugger, which stops prior delivering signal
+to handler. Simply resuming execution does the trick, but when debugging
+a lot it might feel counterproductive. Two options. Either set explicit
+capability environment variable in order to bypass the capability query
+(see corresponding crypto/*cap.c for details). Or configure debugger not
+to stop upon SIGILL exception, e.g. in gdb case add 'handle SIGILL nostop'
+to your .gdbinit.
 
 ===============================================================================

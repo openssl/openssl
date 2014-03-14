@@ -337,11 +337,11 @@ static int suppdata_cb(SSL *s, unsigned short supp_data_type,
 
 static int auth_suppdata_generate_cb(SSL *s, unsigned short supp_data_type,
 				     const unsigned char **out,
-				     unsigned short *outlen, void *arg);
+				     unsigned short *outlen, int *al, void *arg);
 
 static int authz_tlsext_generate_cb(SSL *s, unsigned short ext_type,
 				    const unsigned char **out, unsigned short *outlen,
-				    void *arg);
+				    int *al, void *arg);
 
 static int authz_tlsext_cb(SSL *s, unsigned short ext_type,
 			   const unsigned char *in,
@@ -1066,9 +1066,9 @@ int MAIN(int argc, char *argv[])
 # ifndef OPENSSL_NO_NEXTPROTONEG
 	const char *next_proto_neg_in = NULL;
 	tlsextnextprotoctx next_proto = { NULL, 0};
+# endif
 	const char *alpn_in = NULL;
 	tlsextalpnctx alpn_ctx = { NULL, 0};
-# endif
 #endif
 #ifndef OPENSSL_NO_PSK
 	/* by default do not send a PSK identity hint */
@@ -1525,12 +1525,12 @@ int MAIN(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			next_proto_neg_in = *(++argv);
 			}
+# endif
 		else if	(strcmp(*argv,"-alpn") == 0)
 			{
 			if (--argc < 1) goto bad;
 			alpn_in = *(++argv);
 			}
-# endif
 #endif
 #if !defined(OPENSSL_NO_JPAKE) && !defined(OPENSSL_NO_PSK)
 		else if (strcmp(*argv,"-jpake") == 0)
@@ -1970,7 +1970,10 @@ bad:
 #ifndef OPENSSL_NO_TLSEXT
 	if (s_serverinfo_file != NULL
 	    && !SSL_CTX_use_serverinfo_file(ctx, s_serverinfo_file))
+		{
+		ERR_print_errors(bio_err);
 		goto end;
+		}
 	if (c_auth)
 		{
 		SSL_CTX_set_custom_srv_ext(ctx, TLSEXT_TYPE_client_authz, authz_tlsext_cb, authz_tlsext_generate_cb, bio_err);
@@ -2156,8 +2159,10 @@ end:
 		EVP_PKEY_free(s_key2);
 	if (serverinfo_in != NULL)
 		BIO_free(serverinfo_in);
+# ifndef OPENSSL_NO_NEXTPROTONEG
 	if (next_proto.data)
 		OPENSSL_free(next_proto.data);
+# endif
 	if (alpn_ctx.data)
 		OPENSSL_free(alpn_ctx.data);
 #endif
@@ -2663,6 +2668,15 @@ static int init_ssl_connection(SSL *con)
 
 
 	i=SSL_accept(con);
+#ifdef CERT_CB_TEST_RETRY
+	{
+	while (i <= 0 && SSL_get_error(con,i) == SSL_ERROR_WANT_X509_LOOKUP && SSL_state(con) == SSL3_ST_SR_CLNT_HELLO_C) 
+		{
+		fprintf(stderr, "LOOKUP from certificate callback during accept\n");
+		i=SSL_accept(con);
+		}
+	}
+#endif
 #ifndef OPENSSL_NO_SRP
 	while (i <= 0 &&  SSL_get_error(con,i) == SSL_ERROR_WANT_X509_LOOKUP) 
 		{
@@ -3588,7 +3602,7 @@ static int authz_tlsext_cb(SSL *s, unsigned short ext_type,
 
 static int authz_tlsext_generate_cb(SSL *s, unsigned short ext_type,
 				    const unsigned char **out, unsigned short *outlen,
-				    void *arg)
+				    int *al, void *arg)
 	{
 	if (c_auth && client_provided_client_authz && client_provided_server_authz)
 		{
@@ -3621,7 +3635,7 @@ static int suppdata_cb(SSL *s, unsigned short supp_data_type,
 
 static int auth_suppdata_generate_cb(SSL *s, unsigned short supp_data_type,
 				     const unsigned char **out,
-				     unsigned short *outlen, void *arg)
+				     unsigned short *outlen, int *al, void *arg)
 	{
 	if (c_auth && client_provided_client_authz && client_provided_server_authz)
 		{

@@ -250,8 +250,8 @@ my %globals;
 	# in $self->{label}, new gas requires sign extension...
 	use integer;
 	$self->{label} =~ s/(?<![\w\$\.])(0x?[0-9a-f]+)/oct($1)/egi;
-	$self->{label} =~ s/([0-9]+\s*[\*\/\%]\s*[0-9]+)/eval($1)/eg;
-	$self->{label} =~ s/([0-9]+)/$1<<32>>32/eg;
+	$self->{label} =~ s/\b([0-9]+\s*[\*\/\%]\s*[0-9]+)\b/eval($1)/eg;
+	$self->{label} =~ s/\b([0-9]+)\b/$1<<32>>32/eg;
 
 	if (!$self->{label} && $self->{index} && $self->{scale}==1 &&
 	    $self->{base} =~ /(rbp|r13)/) {
@@ -418,7 +418,7 @@ my %globals;
     }
     sub out {
 	my $self = shift;
-	if ($nasm && opcode->mnemonic()=~m/^j/) {
+	if ($nasm && opcode->mnemonic()=~m/^j(?![re]cxz)/) {
 	    "NEAR ".$self->{value};
 	} else {
 	    $self->{value};
@@ -778,6 +778,19 @@ my $rdrand = sub {
     }
 };
 
+my $rdseed = sub {
+    if (shift =~ /%[er](\w+)/) {
+      my @opcode=();
+      my $dst=$1;
+	if ($dst !~ /[0-9]+/) { $dst = $regrm{"%e$dst"}; }
+	rex(\@opcode,0,$1,8);
+	push @opcode,0x0f,0xc7,0xf8|($dst&7);
+	@opcode;
+    } else {
+	();
+    }
+};
+
 sub rxb {
  local *opcode=shift;
  my ($dst,$src1,$src2,$rxb)=@_;
@@ -834,6 +847,7 @@ while($line=<>) {
     $line =~ s|[#!].*$||;	# get rid of asm-style comments...
     $line =~ s|/\*.*\*/||;	# ... and C-style comments...
     $line =~ s|^\s+||;		# ... and skip white spaces in beginning
+    $line =~ s|\s+$||;		# ... and at the end
 
     undef $label;
     undef $opcode;

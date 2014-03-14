@@ -321,7 +321,7 @@ $ LIB_X509V3 = "v3_bcons,v3_bitst,v3_conf,v3_extku,v3_ia5,v3_lib,"+ -
 	"v3_int,v3_enum,v3_sxnet,v3_cpols,v3_crld,v3_purp,v3_info,"+ -
 	"v3_ocsp,v3_akeya,v3_pmaps,v3_pcons,v3_ncons,v3_pcia,v3_pci,"+ -
 	"pcy_cache,pcy_node,pcy_data,pcy_map,pcy_tree,pcy_lib,"+ -
-	"v3_asid,v3_addr"
+	"v3_asid,v3_addr,v3_scts"
 $ LIB_CONF = "conf_err,conf_lib,conf_api,conf_def,conf_mod,conf_mall,conf_sap"
 $ LIB_TXT_DB = "txt_db"
 $ LIB_PKCS7 = "pk7_asn1,pk7_lib,pkcs7err,pk7_doit,pk7_smime,pk7_attr,"+ -

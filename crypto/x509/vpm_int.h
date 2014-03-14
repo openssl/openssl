@@ -1,9 +1,9 @@
-/* crypto/o_time.h -*- mode:C; c-file-style: "eay" -*- */
-/* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
- * project 2001.
+/* vpm_int.h */
+/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
+ * project 2013.
  */
 /* ====================================================================
- * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2013 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,14 +56,14 @@
  *
  */
 
-#ifndef HEADER_O_TIME_H
-#define HEADER_O_TIME_H
+/* internal only structure to hold additional X509_VERIFY_PARAM data */
 
-#include <time.h>
-
-struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result);
-int OPENSSL_gmtime_adj(struct tm *tm, int offset_day, long offset_sec);
-int OPENSSL_gmtime_diff(int *pday, int *psec,
-			const struct tm *from, const struct tm *to);
-
-#endif
+struct X509_VERIFY_PARAM_ID_st
+	{
+	unsigned char *host;	/* If not NULL hostname to match */
+	size_t hostlen;
+	unsigned char *email;	/* If not NULL email address to match */
+	size_t emaillen;
+	unsigned char *ip;	/* If not NULL IP address to match */
+	size_t iplen;		/* Length of IP address */
+	};

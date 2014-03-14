@@ -259,6 +259,7 @@ int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
 int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
 		       STACK_OF(X509) *chain, int build_chain)
 	{
+	int chflags = chain ? SSL_BUILD_CHAIN_FLAG_CHECK : 0;
 	if (cert == NULL)
 		return 1;
 	if (SSL_CTX_use_certificate(ctx,cert) <= 0)
@@ -288,7 +289,7 @@ int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
 		ERR_print_errors(bio_err);
 		return 0;
 		}
-	if (!chain && build_chain && !SSL_CTX_build_cert_chain(ctx, 0))
+	if (build_chain && !SSL_CTX_build_cert_chain(ctx, chflags))
 		{
 		BIO_printf(bio_err,"error building certificate chain\n");
 		ERR_print_errors(bio_err);
@@ -1272,6 +1273,16 @@ static int set_cert_cb(SSL *ssl, void *arg)
 	{
 	int i, rv;
 	SSL_EXCERT *exc = arg;
+#ifdef CERT_CB_TEST_RETRY
+	static int retry_cnt;
+	if (retry_cnt < 5)
+		{
+		retry_cnt++;
+		fprintf(stderr, "Certificate callback retry test: count %d\n",
+								retry_cnt);
+		return -1;
+		}
+#endif
 	SSL_certs_clear(ssl);
 
 	if (!exc)
@@ -1685,6 +1696,12 @@ int args_ssl_call(SSL_CTX *ctx, BIO *err, SSL_CONF_CTX *cctx,
 			}
 		}
 #endif
+	if (!SSL_CONF_CTX_finish(cctx))
+		{
+		BIO_puts(err, "Error finishing context\n");
+		ERR_print_errors(err);
+		return 0;
+		}
 	return 1;
 	}
 

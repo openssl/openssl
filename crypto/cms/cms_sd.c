@@ -616,6 +616,11 @@ void CMS_SignerInfo_get0_algs(CMS_SignerInfo *si, EVP_PKEY **pk, X509 **signer,
 		*psig = si->signatureAlgorithm;
 	}
 
+ASN1_OCTET_STRING *CMS_SignerInfo_get0_signature(CMS_SignerInfo *si)
+	{
+	return si->signature;
+	}
+
 static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
 					CMS_SignerInfo *si, BIO *chain)
 	{
