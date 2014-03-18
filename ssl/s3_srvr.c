@@ -3084,6 +3084,11 @@ int ssl3_send_server_certificate(SSL *s)
 			}
 
 		l=ssl3_output_cert_chain(s,x);
+		if (!l)
+			{
+			SSLerr(SSL_F_SSL3_SEND_SERVER_CERTIFICATE,ERR_R_INTERNAL_ERROR);
+			return(0);
+			}
 		s->state=SSL3_ST_SW_CERT_B;
 		s->init_num=(int)l;
 		s->init_off=0;
