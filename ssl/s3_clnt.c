@@ -3380,8 +3380,13 @@ int ssl3_send_client_certificate(SSL *s)
 	if (s->state == SSL3_ST_CW_CERT_C)
 		{
 		s->state=SSL3_ST_CW_CERT_D;
-		ssl3_output_cert_chain(s,
-			(s->s3->tmp.cert_req == 2)?NULL:s->cert->key);
+		if (!ssl3_output_cert_chain(s,
+			(s->s3->tmp.cert_req == 2)?NULL:s->cert->key))
+			{
+			SSLerr(SSL_F_SSL3_SEND_CLIENT_CERTIFICATE, ERR_R_INTERNAL_ERROR);
+			ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_INTERNAL_ERROR);
+			return 0;
+			}
 		}
 	/* SSL3_ST_CW_CERT_D */
 	return ssl_do_write(s);
