@@ -1133,7 +1133,7 @@ static int ssl_cipher_strength_sort(CIPHER_ORDER **head_p,
 
 static int ssl_cipher_process_rulestr(const char *rule_str,
                 CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p,
-                const SSL_CIPHER **ca_list)
+                const SSL_CIPHER **ca_list, CERT *c)
 	{
 	unsigned long alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl, algo_strength;
 	const char *l, *buf;
@@ -1182,9 +1182,11 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 			while (	((ch >= 'A') && (ch <= 'Z')) ||
 				((ch >= '0') && (ch <= '9')) ||
 				((ch >= 'a') && (ch <= 'z')) ||
-				 (ch == '-') || (ch == '.'))
+				 (ch == '-') || (ch == '.')  ||
+				 (ch == '='))
 #else
-			while (	isalnum(ch) || (ch == '-') || (ch == '.'))
+			while (	isalnum(ch) || (ch == '-') || (ch == '.') ||
+				(ch == '='))
 #endif
 				 {
 				 ch = *(++l);
@@ -1350,6 +1352,20 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 			if ((buflen == 8) &&
 				!strncmp(buf, "STRENGTH", 8))
 				ok = ssl_cipher_strength_sort(head_p, tail_p);
+			else if (buflen == 10 && !strncmp(buf, "SECLEVEL=", 9))
+				{
+				int level = buf[9] - '0';
+				if (level < 0 || level > 5)
+					{
+					SSLerr(SSL_F_SSL_CIPHER_PROCESS_RULESTR,
+						SSL_R_INVALID_COMMAND);
+					}
+				else
+					{
+					c->sec_level = level;
+					ok = 1;
+					}
+				}
 			else
 				SSLerr(SSL_F_SSL_CIPHER_PROCESS_RULESTR,
 					SSL_R_INVALID_COMMAND);
@@ -1440,7 +1456,6 @@ static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
 	return 1;
 	}
 #endif
-
 
 STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 		STACK_OF(SSL_CIPHER) **cipher_list,
@@ -1563,14 +1578,14 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	if (strncmp(rule_str,"DEFAULT",7) == 0)
 		{
 		ok = ssl_cipher_process_rulestr(SSL_DEFAULT_CIPHER_LIST,
-			&head, &tail, ca_list);
+			&head, &tail, ca_list, c);
 		rule_p += 7;
 		if (*rule_p == ':')
 			rule_p++;
 		}
 
 	if (ok && (strlen(rule_p) > 0))
-		ok = ssl_cipher_process_rulestr(rule_p, &head, &tail, ca_list);
+		ok = ssl_cipher_process_rulestr(rule_p, &head, &tail, ca_list, c);
 
 	OPENSSL_free((void *)ca_list);	/* Not needed anymore */
 
