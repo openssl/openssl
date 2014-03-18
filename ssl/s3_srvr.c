@@ -949,7 +949,7 @@ int ssl3_get_client_hello(SSL *s)
 #endif
 	STACK_OF(SSL_CIPHER) *ciphers=NULL;
 
-	if (s->state == SSL3_ST_SR_CLNT_HELLO_C)
+	if (s->state == SSL3_ST_SR_CLNT_HELLO_C && !s->first_packet)
 		goto retry_cert;
 
 	/* We do this so that we will respond with our native type.
