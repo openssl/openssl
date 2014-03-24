@@ -1192,6 +1192,7 @@ int ssl_build_cert_chain(CERT *c, X509_STORE *chain_store, int flags)
 	STACK_OF(X509) *chain = NULL, *untrusted = NULL;
 	X509 *x;
 	int i, rv = 0;
+	unsigned long error;
 
 	if (!cpk->x509)
 		{
@@ -1208,11 +1209,23 @@ int ssl_build_cert_chain(CERT *c, X509_STORE *chain_store, int flags)
 			{
 			x = sk_X509_value(cpk->chain, i);
 			if (!X509_STORE_add_cert(chain_store, x))
-				goto err;
+				{
+				error = ERR_peek_last_error();
+				if (ERR_GET_LIB(error) != ERR_LIB_X509 ||
+				    ERR_GET_REASON(error) != X509_R_CERT_ALREADY_IN_HASH_TABLE)
+					goto err;
+				ERR_clear_error();
+				}
 			}
 		/* Add EE cert too: it might be self signed */
 		if (!X509_STORE_add_cert(chain_store, cpk->x509))
-			goto err;
+			{
+			error = ERR_peek_last_error();
+			if (ERR_GET_LIB(error) != ERR_LIB_X509 ||
+			    ERR_GET_REASON(error) != X509_R_CERT_ALREADY_IN_HASH_TABLE)
+				goto err;
+			ERR_clear_error();
+			}
 		}
 	else
 		{
