@@ -5,6 +5,11 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.8y and OpenSSL 0.9.8za [under development]:
+
+      o Fix for CVE-2014-0076
+      o Fix to TLS alert handling.
+
   Major changes between OpenSSL 0.9.8x and OpenSSL 0.9.8y [5 Feb 2013]:
 
       o Fix for SSL/TLS/DTLS CBC plaintext recovery attack CVE-2013-0169
