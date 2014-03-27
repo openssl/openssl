@@ -518,6 +518,24 @@ void MS_CALLBACK msg_cb(int write_p, int version, int content_type, const void *
 				case 100:
 					str_details2 = " no_renegotiation";
 					break;
+				case 110:
+					str_details2 = " unsupported_extension";
+					break;
+				case 111:
+					str_details2 = " certificate_unobtainable";
+					break;
+				case 112:
+					str_details2 = " unrecognized_name";
+					break;
+				case 113:
+					str_details2 = " bad_certificate_status_response";
+					break;
+				case 114:
+					str_details2 = " bad_certificate_hash_value";
+					break;
+				case 115:
+					str_details2 = " unknown_psk_identity";
+					break;
 					}
 				}
 			}

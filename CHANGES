@@ -4,6 +4,12 @@
 
  Changes between 0.9.8y and 0.9.8za [xx XXX xxxx]
 
+  *) Fix handling of warning-level alerts in SSL23 client mode so they
+     don't cause client-side termination (eg. on SNI unrecognized_name
+     warnings). Add client and server support for six additional alerts
+     per RFC 6066 and RFC 4279.
+     [mancha]
+
   *) Add option SSL_OP_SAFARI_ECDHE_ECDSA_BUG (part of SSL_OP_ALL) which
      avoids preferring ECDHE-ECDSA ciphers when the client appears to be
      Safari on OS X.  Safari on OS X 10.8..10.8.3 advertises support for

@@ -509,7 +509,7 @@ static int ssl23_get_server_hello(SSL *s)
 			/* use special padding (SSL 3.0 draft/RFC 2246, App. E.2) */
 			s->s2->ssl2_rollback=1;
 
-		/* setup the 5 bytes we have read so we get them from
+		/* setup the 7 bytes we have read so we get them from
 		 * the sslv2 buffer */
 		s->rstate=SSL_ST_READ_HEADER;
 		s->packet_length=n;
@@ -525,27 +525,13 @@ static int ssl23_get_server_hello(SSL *s)
 		s->handshake_func=s->method->ssl_connect;
 #endif
 		}
-	else if ((p[0] == SSL3_RT_HANDSHAKE) &&
-		 (p[1] == SSL3_VERSION_MAJOR) &&
-		 ((p[2] == SSL3_VERSION_MINOR) ||
-		  (p[2] == TLS1_VERSION_MINOR)) &&
-		 (p[5] == SSL3_MT_SERVER_HELLO))
+	else if (p[1] == SSL3_VERSION_MAJOR &&
+	         ((p[2] == SSL3_VERSION_MINOR) ||
+                  (p[2] == TLS1_VERSION_MINOR)) &&
+	         ((p[0] == SSL3_RT_HANDSHAKE && p[5] == SSL3_MT_SERVER_HELLO) ||
+	          (p[0] == SSL3_RT_ALERT && p[3] == 0 && p[4] == 2)))
 		{
-		/* we have sslv3 or tls1 */
-
-		if (!ssl_init_wbio_buffer(s,1)) goto err;
-
-		/* we are in this state */
-		s->state=SSL3_ST_CR_SRVR_HELLO_A;
-
-		/* put the 5 bytes we have read into the input buffer
-		 * for SSLv3 */
-		s->rstate=SSL_ST_READ_HEADER;
-		s->packet_length=n;
-		s->packet= &(s->s3->rbuf.buf[0]);
-		memcpy(s->packet,buf,n);
-		s->s3->rbuf.left=n;
-		s->s3->rbuf.offset=0;
+		/* we have sslv3 or tls1 (server hello or alert) */
 
 		if ((p[2] == SSL3_VERSION_MINOR) &&
 			!(s->options & SSL_OP_NO_SSLv3))
@@ -572,35 +558,52 @@ static int ssl23_get_server_hello(SSL *s)
 			SSLerr(SSL_F_SSL23_GET_SERVER_HELLO,SSL_R_UNSUPPORTED_PROTOCOL);
 			goto err;
 			}
-			
-		s->handshake_func=s->method->ssl_connect;
-		}
-	else if ((p[0] == SSL3_RT_ALERT) &&
-		 (p[1] == SSL3_VERSION_MAJOR) &&
-		 ((p[2] == SSL3_VERSION_MINOR) ||
-		  (p[2] == TLS1_VERSION_MINOR)) &&
-		 (p[3] == 0) &&
-		 (p[4] == 2))
-		{
-		void (*cb)(const SSL *ssl,int type,int val)=NULL;
-		int j;
 
-		/* An alert */
-		if (s->info_callback != NULL)
-			cb=s->info_callback;
-		else if (s->ctx->info_callback != NULL)
-			cb=s->ctx->info_callback;
- 
-		i=p[5];
-		if (cb != NULL)
+		if (p[0] == SSL3_RT_ALERT && p[5] != SSL3_AL_WARNING)
 			{
-			j=(i<<8)|p[6];
-			cb(s,SSL_CB_READ_ALERT,j);
+			/* fatal alert */
+
+			void (*cb)(const SSL *ssl,int type,int val)=NULL;
+			int j;
+
+			if (s->info_callback != NULL)
+				cb=s->info_callback;
+			else if (s->ctx->info_callback != NULL)
+				cb=s->ctx->info_callback;
+ 
+			i=p[5];
+			if (cb != NULL)
+				{
+				j=(i<<8)|p[6];
+				cb(s,SSL_CB_READ_ALERT,j);
+				}
+			
+			if (s->msg_callback)
+				s->msg_callback(0, s->version, SSL3_RT_ALERT, p+5, 2, s, s->msg_callback_arg);
+
+			s->rwstate=SSL_NOTHING;
+			SSLerr(SSL_F_SSL23_GET_SERVER_HELLO,SSL_AD_REASON_OFFSET+p[6]);
+			goto err;
 			}
 
-		s->rwstate=SSL_NOTHING;
-		SSLerr(SSL_F_SSL23_GET_SERVER_HELLO,SSL_AD_REASON_OFFSET+p[6]);
-		goto err;
+		if (!ssl_init_wbio_buffer(s,1)) goto err;
+
+		/* we are in this state */
+		s->state=SSL3_ST_CR_SRVR_HELLO_A;
+
+		/* put the 7 bytes we have read into the input buffer
+		 * for SSLv3 */
+		s->rstate=SSL_ST_READ_HEADER;
+		s->packet_length=n;
+		if (s->s3->rbuf.buf == NULL)
+			if (!ssl3_setup_buffers(s))
+				goto err;
+		s->packet= &(s->s3->rbuf.buf[0]);
+		memcpy(s->packet,buf,n);
+		s->s3->rbuf.left=n;
+		s->s3->rbuf.offset=0;
+
+		s->handshake_func=s->method->ssl_connect;
 		}
 	else
 		{
