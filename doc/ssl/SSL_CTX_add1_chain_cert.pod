@@ -60,7 +60,9 @@ existing chain certificates as untrusted CAs, B<SSL_BUILD_CHAIN_FLAG_NO_ROOT>
 to omit the root CA from the built chain, B<SSL_BUILD_CHAIN_FLAG_CHECK> to
 use all existing chain certificates only to build the chain (effectively
 sanity checking and rearranging them if necessary), the flag
-B<SSL_BUILD_CHAIN_FLAG_IGNORE_ERROR> ignores any errors during verification.
+B<SSL_BUILD_CHAIN_FLAG_IGNORE_ERROR> ignores any errors during verification:
+if flag B<SSL_BUILD_CHAIN_FLAG_CLEAR_ERROR> is also set verification errors
+are cleared from the error queue.
 
 Each of these functions operates on the I<current> end entity
 (i.e. server or client) certificate. This is the last certificate loaded or
@@ -113,6 +115,10 @@ For example an application can add any set of certificates using
 SSL_CTX_use_certificate_chain_file() then call SSL_CTX_build_cert_chain()
 with the option B<SSL_BUILD_CHAIN_FLAG_CHECK> to check and reorder them.
 
+Applications can issue non fatal warnings when checking chains by setting
+the flag B<SSL_BUILD_CHAIN_FLAG_IGNORE_ERRORS> and checking the return
+value.
+
 Calling SSL_CTX_build_cert_chain() or SSL_build_cert_chain() is more
 efficient than the automatic chain building as it is only performed once.
 Automatic chain building is performed on each new session.
@@ -125,6 +131,10 @@ using SSL_CTX_add_extra_chain_cert() will be used.
 SSL_set_current_cert() with B<SSL_CERT_SET_SERVER> return 1 for success, 2 if
 no server certificate is used because the ciphersuites is anonymous and 0
 for failure.
+
+SSL_CTX_build_cert_chain() and SSL_build_cert_chain() return 1 for success
+and 0 for failure. If the flag B<SSL_BUILD_CHAIN_FLAG_IGNORE_ERROR> and
+a verification error occurs then 2 is returned.
 
 All other functions return 1 for success and 0 for failure.
 
