@@ -133,6 +133,10 @@ Use server and not client preference order when determining which cipher suite,
 signature algorithm or elliptic curve to use for an incoming connection.
 Equivalent to B<SSL_OP_CIPHER_SERVER_PREFERENCE>. Only used by servers.
 
+=item B<-no_resumption_on_reneg>
+
+set SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION flag. Only used by servers.
+
 =item B<-legacyrenegotiation>
 
 permits the use of unsafe legacy renegotiation. Equivalent to setting
@@ -286,6 +290,9 @@ B<ServerPreference> use server and not client preference order when
 determining which cipher suite, signature algorithm or elliptic curve
 to use for an incoming connection.  Equivalent to
 B<SSL_OP_CIPHER_SERVER_PREFERENCE>. Only used by servers.
+
+B<NoResumptionOnRenegotiation> set
+B<SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION> flag. Only used by servers.
 
 B<UnsafeLegacyRenegotiation> permits the use of unsafe legacy renegotiation.
 Equivalent to B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION>.

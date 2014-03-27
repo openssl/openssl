@@ -1053,7 +1053,6 @@ int MAIN(int argc, char *argv[])
 	EVP_PKEY *s_key = NULL, *s_dkey = NULL;
 	int no_cache = 0, ext_cache = 0;
 	int rev = 0, naccept = -1;
-	int c_no_resumption_on_reneg = 0;
 #ifndef OPENSSL_NO_TLSEXT
 	EVP_PKEY *s_key2 = NULL;
 	X509 *s_cert2 = NULL;
@@ -1178,10 +1177,6 @@ int MAIN(int argc, char *argv[])
 			c_auth = 1;
 			}
 #endif
-		else if (strcmp(*argv, "-no_resumption_on_reneg") == 0)
-			{
-			c_no_resumption_on_reneg = 1;
-			}
 		else if	(strcmp(*argv,"-auth_require_reneg") == 0)
 			{
 			c_auth_require_reneg = 1;
@@ -1961,8 +1956,6 @@ bad:
 		}
 #endif
 
-	if (c_no_resumption_on_reneg)
-		SSL_CTX_set_options(ctx, SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION);
 	if (!set_cert_key_stuff(ctx, s_cert, s_key, s_chain, build_chain))
 		goto end;
 #ifndef OPENSSL_NO_TLSEXT
