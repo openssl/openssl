@@ -791,6 +791,8 @@ struct ssl_session_st
 #define SSL_BUILD_CHAIN_FLAG_CHECK		0x4
 /* Ignore verification errors */
 #define SSL_BUILD_CHAIN_FLAG_IGNORE_ERROR	0x8
+/* Clear verification errors from queue */
+#define SSL_BUILD_CHAIN_FLAG_CLEAR_ERROR	0x10
 
 /* Flags returned by SSL_check_chain */
 /* Certificate can be used with this session */
