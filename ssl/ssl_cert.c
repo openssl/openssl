@@ -1247,8 +1247,10 @@ int ssl_build_cert_chain(CERT *c, X509_STORE *chain_store, int flags)
 	i = X509_verify_cert(&xs_ctx);
 	if (i <= 0 && flags & SSL_BUILD_CHAIN_FLAG_IGNORE_ERROR)
 		{
-		ERR_clear_error();
+		if (flags & SSL_BUILD_CHAIN_FLAG_CLEAR_ERROR)
+			ERR_clear_error();
 		i = 1;
+		rv = 2;
 		}
 	if (i > 0)
 		chain = X509_STORE_CTX_get1_chain(&xs_ctx);
@@ -1283,7 +1285,8 @@ int ssl_build_cert_chain(CERT *c, X509_STORE *chain_store, int flags)
 			}
 		}
 	cpk->chain = chain;
-	rv = 1;
+	if (rv == 0)
+		rv = 1;
 	err:
 	if (flags & SSL_BUILD_CHAIN_FLAG_CHECK)
 		X509_STORE_free(chain_store);
