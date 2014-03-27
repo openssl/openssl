@@ -3606,6 +3606,11 @@ static int tls1_set_shared_sigalgs(SSL *s)
 	TLS_SIGALGS *salgs = NULL;
 	CERT *c = s->cert;
 	unsigned int is_suiteb = tls1_suiteb(s);
+	if (c->shared_sigalgs)
+		{
+		OPENSSL_free(c->shared_sigalgs);
+		c->shared_sigalgs = NULL;
+		}
 	/* If client use client signature algorithms if not NULL */
 	if (!s->server && c->client_sigalgs && !is_suiteb)
 		{
@@ -3662,6 +3667,8 @@ int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 	if (!c)
 		return 0;
 
+	if (c->peer_sigalgs)
+		OPENSSL_free(c->peer_sigalgs);
 	c->peer_sigalgs = OPENSSL_malloc(dsize);
 	if (!c->peer_sigalgs)
 		return 0;
