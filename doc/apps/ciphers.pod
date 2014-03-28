@@ -7,6 +7,7 @@ ciphers - SSL cipher display and cipher list tool.
 =head1 SYNOPSIS
 
 B<openssl> B<ciphers>
+[B<-s>]
 [B<-v>]
 [B<-V>]
 [B<-ssl2>]
@@ -24,6 +25,12 @@ the appropriate cipherlist.
 =head1 COMMAND OPTIONS
 
 =over 4
+
+=item B<-s>
+
+Only list supported ciphers: those consistent with the security level. This
+is the actual cipher list an application will support. If this option is
+not used then ciphers excluded by the security level will still be listed.
 
 =item B<-v>
 
@@ -104,8 +111,11 @@ as a list of ciphers to be appended to the current preference list. If the
 list includes any ciphers already present they will be ignored: that is they
 will not moved to the end of the list.
 
-Additionally the cipher string B<@STRENGTH> can be used at any point to sort
-the current cipher list in order of encryption algorithm key length.
+The cipher string B<@STRENGTH> can be used at any point to sort the current
+cipher list in order of encryption algorithm key length.
+
+The cipher string B<@SECLEVEL=n> can be used at any point to set the security
+level to B<n>.
 
 =head1 CIPHER STRINGS
 
@@ -584,6 +594,10 @@ Include all chiphers with RSA authentication but leave out ciphers without
 encryption.
 
  openssl ciphers -v 'RSA:!COMPLEMENTOFALL'
+
+Set security level to 2 and display all ciphers consistent with level 2:
+
+ openssl ciphers -v 'ALL:@SECLEVEL=2'
 
 =head1 SEE ALSO
 
