@@ -96,7 +96,7 @@ int MAIN(int argc, char **argv)
 	SSL *ssl=NULL;
 	char *ciphers=NULL;
 	const SSL_METHOD *meth=NULL;
-	STACK_OF(SSL_CIPHER) *sk;
+	STACK_OF(SSL_CIPHER) *sk=NULL;
 	char buf[512];
 	BIO *STDout=NULL;
 
