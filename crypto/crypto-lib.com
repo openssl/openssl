@@ -292,7 +292,7 @@ $ LIB_EVP_2 = "m_null,m_md2,m_md4,m_md5,m_sha,m_sha1,m_wp," + -
 	"bio_md,bio_b64,bio_enc,evp_err,e_null,"+ -
 	"c_all,c_allc,c_alld,evp_lib,bio_ok,"+-
 	"evp_pkey,evp_pbe,p5_crpt,p5_crpt2"
-$ LIB_EVP_3 = "e_old,pmeth_lib,pmeth_fn,pmeth_gn,m_sigver,evp_fips,"+ -
+$ LIB_EVP_3 = "e_old,pmeth_lib,pmeth_fn,pmeth_gn,m_sigver,"+ -
 	"e_aes_cbc_hmac_sha1,e_aes_cbc_hmac_sha256,e_rc4_hmac_md5"
 $ LIB_ASN1 = "a_object,a_bitstr,a_utctm,a_gentm,a_time,a_int,a_octet,"+ -
 	"a_print,a_type,a_set,a_dup,a_d2i_fp,a_i2d_fp,"+ -
