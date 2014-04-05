@@ -1411,6 +1411,9 @@ static int ssl_security_default_callback(SSL *s, SSL_CTX *ctx, int op, int bits,
 		/* No MD5 mac ciphersuites */
 		if (c->algorithm_mac & SSL_MD5)
 			return 0;
+		/* SHA1 HMAC is 160 bits of security */
+		if (minbits > 160 && c->algorithm_mac & SSL_SHA1)
+			return 0;
 		/* Level 2: no RC4 */
 		if (level >= 2 && c->algorithm_enc == SSL_RC4)
 			return 0;
