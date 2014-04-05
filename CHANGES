@@ -4,6 +4,15 @@
 
  Changes between 1.0.1f and 1.0.2 [xx XXX xxxx]
 
+  *) A missing bounds check in the handling of the TLS heartbeat extension
+     can be used to reveal up to 64k of memory to a connected client or
+     server.
+
+     Thanks for Neel Mehta of Google Security for discovering this bug and to
+     Adam Langley <agl@chromium.org> and Bodo Moeller <bmoeller@acm.org> for
+     preparing the fix (CVE-2014-0160)
+     [Adam Langley, Bodo Moeller]
+
   *) Fix for the attack described in the paper "Recovering OpenSSL
      ECDSA Nonces Using the FLUSH+RELOAD Cache Side-channel Attack"
      by Yuval Yarom and Naomi Benger. Details can be obtained from:
