@@ -67,31 +67,39 @@ OpenSSL.
 
 =item B<Level 1>
 
-The security level set to 80 bits of security. Any parameters offering
-below 80 bits of security are excluded. As a result all export ciphersuites
-are prohibited. SSL version 2 is prohibited. Any ciphersuite using MD5 for
-the MAC is also prohibited.
+The security level corresponds to a minimum of 80 bits of security. Any
+parameters offering below 80 bits of security are excluded. As a result RSA,
+DSA and DH keys shorter than 1024 bits and ECC keys shorter than 160 bits
+are prohibited. All export ciphersuites are prohibited since they all offer
+less than 80 bits of security. SSL version 2 is prohibited. Any ciphersuite
+using MD5 for the MAC is also prohibited.
 
 =item B<Level 2>
 
-Security level set to 112 bits of security. In addition to the level 1
-exclusions any ciphersuite using RC4 is also prohibited. SSL version
-3 is also not allowed. Compression is disabled.
+Security level set to 112 bits of security. As a result RSA, DSA and DH keys
+shorter than 2048 bits and ECC keys shorter than 224 bits are prohibited.
+In addition to the level 1 exclusions any ciphersuite using RC4 is also
+prohibited. SSL version 3 is also not allowed. Compression is disabled.
 
 =item B<Level 3>
 
-Ssecurity level set to 128 bits of security. In addition to the level 2
-exclusions any ciphersuite not offering forward secrecy are prohibited.
-TLS versions below 1.1 are not permitted. Session tickets are disabled.
+Security level set to 128 bits of security. As a result RSA, DSA and DH keys
+shorter than 3072 bits and ECC keys shorter than 256 bits are prohibited.
+In addition to the level 2 exclusions ciphersuites not offering forward
+secrecy are prohibited. TLS versions below 1.1 are not permitted. Session
+tickets are disabled.
 
 =item B<Level 4>
 
-Security level set to 192 bits of security. TLS versions below 1.2 are not
-permitted.
+Security level set to 192 bits of security. As a result RSA, DSA and DH keys
+shorter than 7680 bits and ECC keys shorter than 384 bits are prohibited.
+Ciphersuites using SHA1 for the MAC are prohibited. TLS versions below 1.2 are
+not permitted.
 
 =item B<Level 5>
 
-Security level set to 256 bits of security.
+Security level set to 256 bits of security. As a result RSA, DSA and DH keys
+shorter than 15360 bits and ECC keys shorter than 512 bits are prohibited.
 
 =back
 
@@ -100,6 +108,12 @@ Security level set to 256 bits of security.
 TBA
 
 =head1 NOTES
+
+B<WARNING> at this time setting the security level higher than 1 for
+general internet use is likely to cause B<considerable> interoperability
+issues and is not recommended. This is because the B<SHA1> algorithm
+is very widely used in certificates and will be rejected at levels
+higher than 1 because it only offers 80 bits of security.
 
 The default security level can be configured when OpenSSL is compiled by
 setting B<-DOPENSSL_TLS_SECURITY_LEVEL=level>. If not set then 1 is used.
@@ -123,13 +137,9 @@ then only ciphersuites consistent with the security level are permissible.
 See SP800-57 for how the security limits are related to individual
 algorithms.
 
-SHA1 is in widespread use in certificates but it only offers 80 bits
-of security. This is problematic as anything above level 1 will reject
-them.
-
 Some security levels require large key sizes for none-ECC public key
-algorithms. For example 256 bits of security requires the use of RSA
-keys of at least 15360 bits in size.
+algorithms which can severely degrade performance. For example 256 bits
+of security requires the use of RSA keys of at least 15360 bits in size.
 
 Some restrictions can be gracefully handled: for example ciphersuites
 offering insufficient security are not sent by the client and will not
@@ -140,7 +150,8 @@ alert.
 Attempts to set certificates or parameters with insufficient security are
 also blocked. For example trying to set a certificate using a 512 bit RSA
 key using SSL_CTX_use_certificate() at level 1. Applications which do not
-check the return values for errors will misbehave.
+check the return values for errors will misbehave: for example it might
+appear that a certificate is not set at all because it had been rejected.
 
 =head1 SEE ALSO
 
