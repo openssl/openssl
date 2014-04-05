@@ -17,22 +17,12 @@
      this fixes a limiation in previous versions of OpenSSL.
      [Steve Henson]
 
-  *) TLS pad extension: draft-agl-tls-padding-02
+  *) TLS pad extension: draft-agl-tls-padding-03
 
      Workaround for the "TLS hang bug" (see FAQ and PR#2771): if the
      TLS client Hello record length value would otherwise be > 255 and
      less that 512 pad with a dummy extension containing zeroes so it
      is at least 512 bytes long.
-
-     To enable it use an unused extension number (for example chrome uses
-     35655) using:
-
-     e.g. -DTLSEXT_TYPE_padding=35655
-
-     Since the extension is ignored the actual number doesn't matter as long
-     as it doesn't clash with any existing extension.
-
-     This will be updated when the extension gets an official number.
 
      [Adam Langley, Steve Henson]
 
