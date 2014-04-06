@@ -7,13 +7,9 @@
 
   Major changes between OpenSSL 1.0.1f and OpenSSL 1.0.1g [under development]
 
+      o Fix for CVE-2014-0160
       o Add TLS padding extension workaround for broken servers.
       o Fix for CVE-2014-0076
-
-  Known issues in OpenSL 1.0.1f
-
-      o Warning when compiling s23_clnt.c on Windows. Fixed in 1.0.1g-dev.
-      o On Windows 8 GetVersion is deprecated. Fixed in 1.0.1g-dev.
 
   Major changes between OpenSSL 1.0.1e and OpenSSL 1.0.1f [6 Jan 2014]
 
