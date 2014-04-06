@@ -212,6 +212,9 @@ static int ssleay_rand_add(const void *buf, int num, double add)
 	int do_not_lock;
 	int rv = 0;
 
+	if (!num)
+		return;
+
 	/*
 	 * (Based on the rand(3) manpage)
 	 *
