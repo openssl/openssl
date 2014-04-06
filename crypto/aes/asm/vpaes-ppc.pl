@@ -154,7 +154,7 @@ Lconsts:
 	blr
 	.long	0
 	.byte	0,12,0x14,0,0,0,0,0
-.asciz  "Vector Permutaion AES for AltiVec, Mike Hamburg (Stanford University)"
+.asciz  "Vector Permutation AES for AltiVec, Mike Hamburg (Stanford University)"
 .align	6
 ___
 
