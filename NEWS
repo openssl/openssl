@@ -10,7 +10,7 @@
       o v3_scts.c compilation error on some platforms: fixed in 1.0.2-beta2-dev
       o Issues compiling WIN32 fips static libraries: fixed in 1.0.2-beta2-dev
 
-  Major changes between OpenSSL 1.0.1f and OpenSSL 1.0.2 [in beta]:
+  Major changes between OpenSSL 1.0.1g and OpenSSL 1.0.2 [in beta]:
 
       o Suite B support for TLS 1.2 and DTLS 1.2
       o Support for DTLS 1.2
@@ -20,6 +20,12 @@
       o TLS Brainpool support.
       o ALPN support.
       o CMS support for RSA-PSS, RSA-OAEP, ECDH and X9.42 DH.
+
+  Major changes between OpenSSL 1.0.1f and OpenSSL 1.0.1g [7 Apr 2014]
+
+      o Fix for CVE-2014-0160
+      o Add TLS padding extension workaround for broken servers.
+      o Fix for CVE-2014-0076
 
   Major changes between OpenSSL 1.0.1e and OpenSSL 1.0.1f [6 Jan 2014]
 
