@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 1.0.1g and 1.0.1h [xx XXX xxxx]
+
+  *)
+
  Changes between 1.0.1f and 1.0.1g [7 Apr 2014]
 
   *) A missing bounds check in the handling of the TLS heartbeat extension
