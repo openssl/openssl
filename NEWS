@@ -5,11 +5,6 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Known issues in OpenSSL 1.0.2:
-
-      o v3_scts.c compilation error on some platforms: fixed in 1.0.2-beta2-dev
-      o Issues compiling WIN32 fips static libraries: fixed in 1.0.2-beta2-dev
-
   Major changes between OpenSSL 1.0.1g and OpenSSL 1.0.2 [in beta]:
 
       o Suite B support for TLS 1.2 and DTLS 1.2
