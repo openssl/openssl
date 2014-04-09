@@ -213,7 +213,7 @@ static int ssleay_rand_add(const void *buf, int num, double add)
 	int rv = 0;
 
 	if (!num)
-		return;
+		return 1;
 
 	/*
 	 * (Based on the rand(3) manpage)
