@@ -121,6 +121,10 @@
 #endif
 #include "ssl_locl.h"
 
+#ifndef OPENSSL_NO_HEARTBEATS
+#include "heartbeat.h"
+#endif
+
 const char tls1_version_str[]="TLSv1" OPENSSL_VERSION_PTEXT;
 
 #ifndef OPENSSL_NO_TLSEXT
@@ -3969,10 +3973,7 @@ tls1_process_heartbeat(SSL *s)
 	unsigned int payload;
 	unsigned int padding = 16; /* Use minimum padding */
 
-	if (s->msg_callback)
-		s->msg_callback(0, s->version, TLS1_RT_HEARTBEAT,
-			&s->s3->rrec.data[0], s->s3->rrec.length,
-			s, s->msg_callback_arg);
+	apply_msg_callback(s);
 
 	/* Read type and payload length first */
 	if (1 + 2 + 16 > s->s3->rrec.length)
