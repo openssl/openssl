@@ -1299,6 +1299,14 @@ int tls1_send_client_supplemental_data(SSL *s, int *skip);
 int tls1_get_server_supplemental_data(SSL *s);
 
 #ifndef OPENSSL_NO_HEARTBEATS
+
+#define HEARTBEAT_SIZE( payload, padding) ( \
+		1 /* heartbeat type */ + \
+		2 /* heartbeat length */ + \
+		(payload) + (padding))
+
+#define HEARTBEAT_SIZE_STD( payload) HEARTBEAT_SIZE( payload, 16)
+
 int tls1_heartbeat(SSL *s);
 int dtls1_heartbeat(SSL *s);
 int tls1_process_heartbeat(SSL *s);
