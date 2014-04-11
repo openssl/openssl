@@ -1335,12 +1335,12 @@ dtls1_process_heartbeat(SSL *s)
 			&s->s3->rrec.data[0], s->s3->rrec.length,
 			s, s->msg_callback_arg);
 
-	/* Read type and payload length first */
-	if (1 + 2 + 16 > s->s3->rrec.length)
+	/* Read type and payload length */
+	if (1 + 2 + padding > s->s3->rrec.length)
 		return 0; /* silently discard */
 	hbtype = *p++;
 	n2s(p, payload);
-	if (1 + 2 + payload + 16 > s->s3->rrec.length)
+	if (1 + 2 + payload + padding > s->s3->rrec.length)
 		return 0; /* silently discard per RFC 6520 sec. 4 */
 	pl = p;
 
