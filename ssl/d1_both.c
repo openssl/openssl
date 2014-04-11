@@ -1335,30 +1335,25 @@ dtls1_process_heartbeat(SSL *s)
 			&s->s3->rrec.data[0], s->s3->rrec.length,
 			s, s->msg_callback_arg);
 
-	/* Read type and payload length first */
-	if (1 + 2 + 16 > s->s3->rrec.length)
+	/* Read type and payload length */
+	if (HEARTBEAT_SIZE_STD( 0) > s->s3->rrec.length)
 		return 0; /* silently discard */
 	hbtype = *p++;
 	n2s(p, payload);
-	if (1 + 2 + payload + 16 > s->s3->rrec.length)
+	if (HEARTBEAT_SIZE_STD( payload) > s->s3->rrec.length)
 		return 0; /* silently discard per RFC 6520 sec. 4 */
 	pl = p;
 
 	if (hbtype == TLS1_HB_REQUEST)
 		{
 		unsigned char *buffer, *bp;
-		unsigned int write_length = 1 /* heartbeat type */ +
-					    2 /* heartbeat length */ +
-					    payload + padding;
+		unsigned int write_length = HEARTBEAT_SIZE( payload, padding);
 		int r;
 
 		if (write_length > SSL3_RT_MAX_PLAIN_LENGTH)
 			return 0;
 
-		/* Allocate memory for the response, size is 1 byte
-		 * message type, plus 2 bytes payload length, plus
-		 * payload, plus padding
-		 */
+		/* Allocate memory for the response. */
 		buffer = OPENSSL_malloc(write_length);
 		bp = buffer;
 
@@ -1409,6 +1404,7 @@ dtls1_heartbeat(SSL *s)
 	int ret;
 	unsigned int payload = 18; /* Sequence number + random bytes */
 	unsigned int padding = 16; /* Use minimum padding */
+	unsigned int size;
 
 	/* Only send if peer supports and accepts HB requests... */
 	if (!(s->tlsext_heartbeat & SSL_TLSEXT_HB_ENABLED) ||
@@ -1440,13 +1436,9 @@ dtls1_heartbeat(SSL *s)
 	/* Create HeartBeat message, we just use a sequence number
 	 * as payload to distuingish different messages and add
 	 * some random stuff.
-	 *  - Message Type, 1 byte
-	 *  - Payload Length, 2 bytes (unsigned int)
-	 *  - Payload, the sequence number (2 bytes uint)
-	 *  - Payload, random bytes (16 bytes uint)
-	 *  - Padding
 	 */
-	buf = OPENSSL_malloc(1 + 2 + payload + padding);
+	size = HEARTBEAT_SIZE( payload, padding);
+	buf = OPENSSL_malloc( size);
 	p = buf;
 	/* Message Type */
 	*p++ = TLS1_HB_REQUEST;
@@ -1460,12 +1452,12 @@ dtls1_heartbeat(SSL *s)
 	/* Random padding */
 	RAND_pseudo_bytes(p, padding);
 
-	ret = dtls1_write_bytes(s, TLS1_RT_HEARTBEAT, buf, 3 + payload + padding);
+	ret = dtls1_write_bytes(s, TLS1_RT_HEARTBEAT, buf, size);
 	if (ret >= 0)
 		{
 		if (s->msg_callback)
 			s->msg_callback(1, s->version, TLS1_RT_HEARTBEAT,
-				buf, 3 + payload + padding,
+				buf, size,
 				s, s->msg_callback_arg);
 
 		dtls1_start_timer(s);
