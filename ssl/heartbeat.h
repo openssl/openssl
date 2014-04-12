@@ -7,5 +7,5 @@ int heartbeat_size(int payload, int padding);
 int heartbeat_size_std(int payload);
 
 void apply_msg_callback(SSL *s);
-void heartbeat_read_payload(SSL *s);
+unsigned char * heartbeat_read_payload(SSL *s, unsigned short *hbtype, unsigned int *payload);
 #endif

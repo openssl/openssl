@@ -1,4 +1,5 @@
 #include "heartbeat.h"
+#include "ssl_locl.h"
 #include <openssl/ssl.h>
 
 int heartbeat_size(int payload, int padding)
@@ -23,14 +24,16 @@ void apply_msg_callback(SSL *s)
 
 }
 
-//-- int heartbeat_read_payload(SSL *s, unsigned char *pl, unsigned short hbtype, unsigned int payload) {
-//--     unsigned char *p = &s->s3->rrec.data[0];
-//-- 	/* Read type and payload length first */
-//-- 	if (1 + 2 + 16 > s->s3->rrec.length)
-//-- 		return 0; /* silently discard */
-//-- 	hbtype = *p++;
-//-- 	n2s(p, payload);
-//-- 	if (1 + 2 + payload + 16 > s->s3->rrec.length)
-//-- 		return 0; /* silently discard per RFC 6520 sec. 4 */
-//-- 	pl = p;
-//-- }
+unsigned char * heartbeat_read_payload(SSL *s, unsigned short *hbtype, unsigned int *payload) {
+	unsigned char *pl;
+	unsigned char *p = &s->s3->rrec.data[0];
+	/* Read type and payload length first */
+	if (1 + 2 + 16 > s->s3->rrec.length)
+		return NULL; /* silently discard */
+	*hbtype = *p++;
+	n2s(p, *payload);
+	if (1 + 2 + *payload + 16 > s->s3->rrec.length)
+		return NULL; /* silently discard per RFC 6520 sec. 4 */
+	*pl = p;
+	return pl;
+}

@@ -1325,21 +1325,18 @@ int dtls1_shutdown(SSL *s)
 int
 dtls1_process_heartbeat(SSL *s)
 	{
-	unsigned char *p = &s->s3->rrec.data[0], *pl;
+	unsigned char *pl;
 	unsigned short hbtype;
 	unsigned int payload;
 	unsigned int padding = 16; /* Use minimum padding */
 
     apply_msg_callback(s);
 
-	/* Read type and payload length */
-	if (heartbeat_size_std(0) > s->s3->rrec.length)
-		return 0; /* silently discard */
-	hbtype = *p++;
-	n2s(p, payload);
-	if (heartbeat_size_std(payload) > s->s3->rrec.length)
-		return 0; /* silently discard per RFC 6520 sec. 4 */
-	pl = p;
+    pl = heartbeat_read_payload(s, &hbtype, &payload);
+    if (pl == NULL)
+        {
+        return 0;
+        }
 
 	if (hbtype == TLS1_HB_REQUEST)
 		{
