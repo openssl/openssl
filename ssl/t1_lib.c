@@ -3977,11 +3977,11 @@ tls1_process_heartbeat(SSL *s)
 	apply_msg_callback(s);
 
 	/* Read type and payload length */
-	if (HEARTBEAT_SIZE_STD( 0) > s->s3->rrec.length)
+	if (HEARTBEAT_SIZE_STD(0) > s->s3->rrec.length)
 		return 0; /* silently discard */
 	hbtype = *p++;
 	n2s(p, payload);
-	if (HEARTBEAT_SIZE_STD( payload) > s->s3->rrec.length)
+	if (HEARTBEAT_SIZE_STD(payload) > s->s3->rrec.length)
 		return 0; /* silently discard per RFC 6520 sec. 4 */
 	pl = p;
 
@@ -3991,8 +3991,8 @@ tls1_process_heartbeat(SSL *s)
 		int r;
 
 		/* Allocate memory for the response. */
-		size = HEARTBEAT_SIZE( payload, padding);
-		buffer = OPENSSL_malloc( size);
+		size = HEARTBEAT_SIZE(payload, padding);
+		buffer = OPENSSL_malloc(size);
 		bp = buffer;
 		
 		/* Enter response type, length and copy payload */
@@ -4074,8 +4074,8 @@ tls1_heartbeat(SSL *s)
 	 * as payload to distuingish different messages and add
 	 * some random stuff.
 	 */
-	size = HEARTBEAT_SIZE( payload, padding);
-	buf = OPENSSL_malloc( size);
+	size = HEARTBEAT_SIZE(payload, padding);
+	buf = OPENSSL_malloc(size);
 	p = buf;
 	/* Message Type */
 	*p++ = TLS1_HB_REQUEST;
