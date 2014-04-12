@@ -1,5 +1,5 @@
 
- OpenSSL 1.1.0-dev
+ OpenSSL 1.1.0-dev [![Build Status](https://travis-ci.org/tanx/openssl.svg?branch=travis-ci)](https://travis-ci.org/tanx/openssl)
 
  Copyright (c) 1998-2011 The OpenSSL Project
  Copyright (c) 1995-1998 Eric A. Young, Tim J. Hudson
