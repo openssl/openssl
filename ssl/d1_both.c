@@ -1362,6 +1362,9 @@ dtls1_process_heartbeat(SSL *s)
 		buffer = OPENSSL_malloc(write_length);
 		bp = buffer;
 
+	        /* clear memory to avoid CVE-2014-0160 */
+                memset(bp, 0x00, write_length);
+
 		/* Enter response type, length and copy payload */
 		*bp++ = TLS1_HB_RESPONSE;
 		s2n(payload, bp);
