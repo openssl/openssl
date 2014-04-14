@@ -54,6 +54,7 @@ BFTEST=		bftest
 CASTTEST=	casttest
 DESTEST=	destest
 GOST2814789TEST=gost2814789t
+GOSTHASH_TEST=gosthash12t
 RANDTEST=	randtest
 DHTEST=		dhtest
 DSATEST=	dsatest
@@ -94,7 +95,7 @@ EXE=	$(BNTEST)$(EXE_EXT) $(ECTEST)$(EXE_EXT)  $(ECDSATEST)$(EXE_EXT) $(ECDHTEST)
 	$(DESTEST)$(EXE_EXT) $(SHATEST)$(EXE_EXT) $(SHA1TEST)$(EXE_EXT) $(SHA256TEST)$(EXE_EXT) $(SHA512TEST)$(EXE_EXT) \
 	$(MDC2TEST)$(EXE_EXT) $(RMDTEST)$(EXE_EXT) \
 	$(RANDTEST)$(EXE_EXT) $(DHTEST)$(EXE_EXT) $(ENGINETEST)$(EXE_EXT) \
-	$(GOST2814789TEST)$(EXE_EXT) \
+	$(GOST2814789TEST)$(EXE_EXT) $(GOSTHASH_TEST)$(EXE_EXT)\
 	$(BFTEST)$(EXE_EXT) $(CASTTEST)$(EXE_EXT) $(SSLTEST)$(EXE_EXT) \
 	$(EXPTEST)$(EXE_EXT) $(DSATEST)$(EXE_EXT) $(RSATEST)$(EXE_EXT) \
 	$(EVPTEST)$(EXE_EXT) $(IGETEST)$(EXE_EXT) $(JPAKETEST)$(EXE_EXT) $(SRPTEST)$(EXE_EXT) \
@@ -127,7 +128,7 @@ OBJ=	$(BNTEST).o $(ECTEST).o  $(ECDSATEST).o $(ECDHTEST).o $(IDEATEST).o \
 	$(FIPS_TEST_SUITE).o $(FIPS_DHVS).o $(FIPS_ECDSAVS).o \
 	$(FIPS_ECDHVS).o $(FIPS_CMACTEST).o $(FIPS_ALGVS).o \
 	$(EVPTEST).o $(IGETEST).o $(JPAKETEST).o $(V3NAMETEST).o \
-	$(GOST2814789TEST).o
+	$(GOST2814789TEST).o $(GOSTHASH_TEST).o
 SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(MD2TEST).c  $(MD4TEST).c $(MD5TEST).c \
 	$(HMACTEST).c $(WPTEST).c \
@@ -142,7 +143,7 @@ SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(FIPS_TEST_SUITE).c $(FIPS_DHVS).c $(FIPS_ECDSAVS).c \
 	$(FIPS_ECDHVS).c $(FIPS_CMACTEST).c $(FIPS_ALGVS).c \
 	$(EVPTEST).c $(IGETEST).c $(JPAKETEST).c $(V3NAMETEST).c \
-	$(GOST2814789TEST).c
+	$(GOST2814789TEST).c $(GOSTHASH_TEST).c
 
 EXHEADER= 
 HEADER=	$(EXHEADER)
@@ -190,7 +191,7 @@ alltests: \
 	test_gen test_req test_pkcs7 test_verify test_dh test_dsa \
 	test_ss test_ca test_engine test_evp test_ssl test_tsa test_ige \
 	test_jpake test_srp test_cms test_v3name test_ocsp \
-	test_gost2814789
+	test_gost2814789 test_gosthash
 
 test_evp: $(EVPTEST)$(EXE_EXT) evptests.txt
 	../util/shlib_wrap.sh ./$(EVPTEST) evptests.txt
@@ -248,6 +249,9 @@ test_rand: $(RANDTEST)$(EXE_EXT)
 
 test_gost2814789: $(GOST2814789TEST)$(EXE_EXT)
 	../util/shlib_wrap.sh ./$(GOST2814789TEST)
+
+test_gosthash: $(GOSTHASH_TEST)$(EXE_EXT)
+	../util/shlib_wrap.sh ./$(GOSTHASH_TEST)
 
 test_enc: ../apps/openssl$(EXE_EXT) testenc
 	@sh ./testenc
@@ -566,6 +570,9 @@ $(DESTEST)$(EXE_EXT): $(DESTEST).o $(DLIBCRYPTO)
 $(GOST2814789TEST)$(EXE_EXT): $(GOST2814789TEST).o $(DLIBCRYPTO)
 	@target=$(GOST2814789TEST); $(BUILD_CMD)
 
+$(GOSTHASH_TEST)$(EXE_EXT): $(GOSTHASH_TEST).o $(DLIBCRYPTO)
+	@target=$(GOSTHASH_TEST); $(BUILD_CMD)
+
 $(RANDTEST)$(EXE_EXT): $(RANDTEST).o $(DLIBCRYPTO)
 	@target=$(RANDTEST); $(BUILD_CMD)
 
@@ -855,6 +862,19 @@ gost2814789t.o: ../include/openssl/pkcs7.h ../include/openssl/safestack.h
 gost2814789t.o: ../include/openssl/sha.h ../include/openssl/stack.h
 gost2814789t.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
 gost2814789t.o: ../include/openssl/x509_vfy.h gost2814789t.c
+gosthash12t.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+gosthash12t.o: ../include/openssl/buffer.h ../include/openssl/conf.h
+gosthash12t.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
+gosthash12t.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
+gosthash12t.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+gosthash12t.o: ../include/openssl/evp.h ../include/openssl/lhash.h
+gosthash12t.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+gosthash12t.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+gosthash12t.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
+gosthash12t.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+gosthash12t.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+gosthash12t.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
+gosthash12t.o: gosthash12t.c
 hmactest.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 hmactest.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 hmactest.o: ../include/openssl/evp.h ../include/openssl/hmac.h
