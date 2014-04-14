@@ -955,3 +955,8 @@ ct_cert_scts		954
 jurisdictionLocalityName		955
 jurisdictionStateOrProvinceName		956
 jurisdictionCountryName		957
+tc_26		958
+md_gost12_256		959
+md_gost12_512		960
+id_tc26_gost3411_12_256		961
+id_tc26_gost3411_12_512		962
