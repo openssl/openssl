@@ -121,10 +121,6 @@
 #endif
 #include "ssl_locl.h"
 
-#ifndef OPENSSL_NO_HEARTBEATS
-#include "heartbeat.h"
-#endif
-
 const char tls1_version_str[]="TLSv1" OPENSSL_VERSION_PTEXT;
 
 #ifndef OPENSSL_NO_TLSEXT
@@ -3977,11 +3973,11 @@ tls1_process_heartbeat(SSL *s)
 	apply_msg_callback(s);
 
 	/* Read type and payload length */
-	if (HEARTBEAT_SIZE_STD(0) > s->s3->rrec.length)
+	if (heartbeat_size_std(0) > s->s3->rrec.length)
 		return 0; /* silently discard */
 	hbtype = *p++;
 	n2s(p, payload);
-	if (HEARTBEAT_SIZE_STD(payload) > s->s3->rrec.length)
+	if (heartbeat_size_std(payload) > s->s3->rrec.length)
 		return 0; /* silently discard per RFC 6520 sec. 4 */
 	pl = p;
 
@@ -3991,7 +3987,7 @@ tls1_process_heartbeat(SSL *s)
 		int r;
 
 		/* Allocate memory for the response. */
-		size = HEARTBEAT_SIZE(payload, padding);
+		size = heartbeat_size(payload, padding);
 		buffer = OPENSSL_malloc(size);
 		bp = buffer;
 		
@@ -4074,7 +4070,7 @@ tls1_heartbeat(SSL *s)
 	 * as payload to distuingish different messages and add
 	 * some random stuff.
 	 */
-	size = HEARTBEAT_SIZE(payload, padding);
+	size = heartbeat_size(payload, padding);
 	buf = OPENSSL_malloc(size);
 	p = buf;
 	/* Message Type */
