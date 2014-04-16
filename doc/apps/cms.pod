@@ -90,6 +90,11 @@ decrypt mail using the supplied certificate and private key. Expects an
 encrypted mail message in MIME format for the input file. The decrypted mail
 is written to the output file.
 
+=item B<-debug_decrypt>
+
+this option sets the B<CMS_DEBUG_DECRYPT> flag. This option should be used
+with caution: see the notes section below.
+
 =item B<-sign>
 
 sign mail using the supplied certificate and private key. Input file is
@@ -445,6 +450,16 @@ B<-sign> operation if the content is not detached.
 Streaming is always used for the B<-sign> operation with detached data but
 since the content is no longer part of the CMS structure the encoding
 remains DER.
+
+If the B<-decrypt> option is used without a recipient certificate then an
+attempt is made to locate the recipient by trying each potential recipient
+in turn using the supplied private key. To thwart the MMA attack
+(Bleichenbacher's attack on PKCS #1 v1.5 RSA padding) all recipients are
+tried whether they succeed or not and if no recipients match the message
+is "decrypted" using a random key which will typically output garbage. 
+The B<-debug_decrypt> option can be used to disable the MMA attack protection
+and return an error if no recipient can be found: this option should be used
+with caution. For a fuller description see L<CMS_decrypt(3)|CMS_decrypt(3)>).
 
 =head1 EXIT CODES
 
