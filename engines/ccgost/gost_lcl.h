@@ -185,6 +185,8 @@ int pkey_gost94_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen);
 /* Internal functions for signature algorithms */
 int fill_GOST94_params(DSA *dsa,int nid);
 int fill_GOST2001_params(EC_KEY *eckey, int nid);
+int fill_GOST2012_256_params(EC_KEY *eckey, int nid);
+int fill_GOST2012_512_params(EC_KEY *eckey, int nid);
 int gost_sign_keygen(DSA *dsa) ;
 int gost2001_keygen(EC_KEY *ec) ;
 
@@ -200,7 +202,7 @@ int gost94_compute_public(DSA *dsa) ;
 /*============== miscellaneous functions============================= */
 /* from gost_sign.c */
 /* Convert GOST R 34.11 hash sum to bignum according to standard */
-BIGNUM *hashsum2bn(const unsigned char *dgst) ;
+BIGNUM *hashsum2bn(const unsigned char *dgst,int dlen) ;
 /* Store bignum in byte array of given length, prepending by zeros
  * if nesseccary */
 int store_bignum(BIGNUM *bn, unsigned char *buf,int len);

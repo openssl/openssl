@@ -960,3 +960,15 @@ md_gost12_256		959
 md_gost12_512		960
 id_tc26_gost3411_12_256		961
 id_tc26_gost3411_12_512		962
+id_tc26_gost3410_12_256		963
+id_tc26_gost3410_12_512		964
+id_tc26_signwithdigest_gost3410_12_256		965
+id_tc26_signwithdigest_gost3410_12_512		966
+id_tc26_hmac_gost_3411_12_256		967
+id_tc26_hmac_gost_3411_12_512		968
+id_tc26_agreement_gost_3410_12_256		969
+id_tc26_agreement_gost_3410_12_512		970
+id_tc26_gost_3410_12_512_paramSetTest		971
+id_tc26_gost_3410_12_512_paramSetA		972
+id_tc26_gost_3410_12_512_paramSetB		973
+id_tc26_gost_28147_param_A		974

@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 963
-#define NUM_SN 954
-#define NUM_LN 954
-#define NUM_OBJ 893
+#define NUM_NID 975
+#define NUM_SN 966
+#define NUM_LN 966
+#define NUM_OBJ 905
 
-static const unsigned char lvalues[6282]={
+static const unsigned char lvalues[6382]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -961,6 +961,18 @@ static const unsigned char lvalues[6282]={
 0x2A,0x85,0x03,0x07,0x01,                    /* [6260] OBJ_tc_26 */
 0x2A,0x85,0x03,0x07,0x01,0x01,0x02,0x02,     /* [6265] OBJ_id_tc26_gost3411_12_256 */
 0x2A,0x85,0x03,0x07,0x01,0x01,0x02,0x03,     /* [6273] OBJ_id_tc26_gost3411_12_512 */
+0x2A,0x85,0x03,0x07,0x01,0x01,0x01,0x01,     /* [6281] OBJ_id_tc26_gost3410_12_256 */
+0x2A,0x85,0x03,0x07,0x01,0x01,0x01,0x02,     /* [6289] OBJ_id_tc26_gost3410_12_512 */
+0x2A,0x85,0x03,0x07,0x01,0x01,0x03,0x02,     /* [6297] OBJ_id_tc26_signwithdigest_gost3410_12_256 */
+0x2A,0x85,0x03,0x07,0x01,0x01,0x03,0x03,     /* [6305] OBJ_id_tc26_signwithdigest_gost3410_12_512 */
+0x2A,0x85,0x03,0x07,0x01,0x01,0x04,0x01,     /* [6313] OBJ_id_tc26_hmac_gost_3411_12_256 */
+0x2A,0x85,0x03,0x07,0x01,0x01,0x04,0x02,     /* [6321] OBJ_id_tc26_hmac_gost_3411_12_512 */
+0x2A,0x85,0x03,0x07,0x01,0x01,0x06,0x01,     /* [6329] OBJ_id_tc26_agreement_gost_3410_12_256 */
+0x2A,0x85,0x03,0x07,0x01,0x01,0x06,0x02,     /* [6337] OBJ_id_tc26_agreement_gost_3410_12_512 */
+0x2A,0x85,0x03,0x07,0x01,0x02,0x01,0x02,0x00,/* [6345] OBJ_id_tc26_gost_3410_12_512_paramSetTest */
+0x2A,0x85,0x03,0x07,0x01,0x02,0x01,0x02,0x01,/* [6354] OBJ_id_tc26_gost_3410_12_512_paramSetA */
+0x2A,0x85,0x03,0x07,0x01,0x02,0x01,0x02,0x02,/* [6363] OBJ_id_tc26_gost_3410_12_512_paramSetB */
+0x2A,0x85,0x03,0x07,0x01,0x02,0x05,0x01,0x01,/* [6372] OBJ_id_tc26_gost_28147_param_A */
 };
 
 static const ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2531,6 +2543,37 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 	NID_id_tc26_gost3411_12_256,8,&(lvalues[6265]),0},
 {"md_gost12_512","GOST R 34.11-2012 512-bit length",
 	NID_id_tc26_gost3411_12_512,8,&(lvalues[6273]),0},
+{"gost2012_256","GOST R 34.10-2012 with 256-bit key",
+	NID_id_tc26_gost3410_12_256,8,&(lvalues[6281]),0},
+{"gost2012_512","GOST R 34.10-2012 with 512-bit key",
+	NID_id_tc26_gost3410_12_512,8,&(lvalues[6289]),0},
+{"id-tc26-signwithdigest-gost3410-12-256",
+	"GOST R 34.10-2012 with 34.11-2012 256-bit",
+	NID_id_tc26_signwithdigest_gost3410_12_256,8,&(lvalues[6297]),0},
+{"id-tc26-signwithdigest-gost3410-12-512",
+	"GOST R 34.10-2012 with 34.11-2012 512-bit",
+	NID_id_tc26_signwithdigest_gost3410_12_512,8,&(lvalues[6305]),0},
+{"id-tc26-hmac-gost-3411-12-256","HMAC GOST R 34.11-2012 L=32 B=64",
+	NID_id_tc26_hmac_gost_3411_12_256,8,&(lvalues[6313]),0},
+{"id-tc26-hmac-gost-3411-12-512","HMAC GOST R 34.11-2012 L=64 B=64",
+	NID_id_tc26_hmac_gost_3411_12_512,8,&(lvalues[6321]),0},
+{"id-tc26-agreement-gost-3410-12-256",
+	"Key agreement schemes GOST R 34.10-2012 256-bit key",
+	NID_id_tc26_agreement_gost_3410_12_256,8,&(lvalues[6329]),0},
+{"id-tc26-agreement-gost-3410-12-512",
+	"Key agreement schemes GOST R 34.10-2012 512-bit key",
+	NID_id_tc26_agreement_gost_3410_12_512,8,&(lvalues[6337]),0},
+{"id-tc26-gost-3410-12-512-paramSetTest",
+	"id-tc26-gost-3410-12-512-paramSetTest",
+	NID_id_tc26_gost_3410_12_512_paramSetTest,9,&(lvalues[6345]),0},
+{"id-tc26-gost-3410-12-512-paramSetA",
+	"id-tc26-gost-3410-12-512-paramSetA",
+	NID_id_tc26_gost_3410_12_512_paramSetA,9,&(lvalues[6354]),0},
+{"id-tc26-gost-3410-12-512-paramSetB",
+	"id-tc26-gost-3410-12-512-paramSetB",
+	NID_id_tc26_gost_3410_12_512_paramSetB,9,&(lvalues[6363]),0},
+{"id-tc26-gost-28147-param-A","id-tc26-gost-28147-param-A",
+	NID_id_tc26_gost_28147_param_A,9,&(lvalues[6372]),0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -2877,6 +2920,8 @@ static const unsigned int sn_objs[NUM_SN]={
 815,	/* "gost-mac" */
 811,	/* "gost2001" */
 851,	/* "gost2001cc" */
+963,	/* "gost2012_256" */
+964,	/* "gost2012_512" */
 813,	/* "gost89" */
 814,	/* "gost89-cnt" */
 812,	/* "gost94" */
@@ -3132,6 +3177,16 @@ static const unsigned int sn_objs[NUM_SN]={
 194,	/* "id-smime-spq" */
 250,	/* "id-smime-spq-ets-sqt-unotice" */
 249,	/* "id-smime-spq-ets-sqt-uri" */
+969,	/* "id-tc26-agreement-gost-3410-12-256" */
+970,	/* "id-tc26-agreement-gost-3410-12-512" */
+974,	/* "id-tc26-gost-28147-param-A" */
+972,	/* "id-tc26-gost-3410-12-512-paramSetA" */
+973,	/* "id-tc26-gost-3410-12-512-paramSetB" */
+971,	/* "id-tc26-gost-3410-12-512-paramSetTest" */
+967,	/* "id-tc26-hmac-gost-3411-12-256" */
+968,	/* "id-tc26-hmac-gost-3411-12-512" */
+965,	/* "id-tc26-signwithdigest-gost3410-12-256" */
+966,	/* "id-tc26-signwithdigest-gost3410-12-512" */
 676,	/* "identified-organization" */
 461,	/* "info" */
 748,	/* "inhibitAnyPolicy" */
@@ -3521,6 +3576,10 @@ static const unsigned int ln_objs[NUM_LN]={
 850,	/* "GOST 34.10-94 Cryptocom" */
 811,	/* "GOST R 34.10-2001" */
 817,	/* "GOST R 34.10-2001 DH" */
+963,	/* "GOST R 34.10-2012 with 256-bit key" */
+965,	/* "GOST R 34.10-2012 with 34.11-2012 256-bit" */
+966,	/* "GOST R 34.10-2012 with 34.11-2012 512-bit" */
+964,	/* "GOST R 34.10-2012 with 512-bit key" */
 812,	/* "GOST R 34.10-94" */
 818,	/* "GOST R 34.10-94 DH" */
 961,	/* "GOST R 34.11-2012 256-bit length" */
@@ -3533,6 +3592,8 @@ static const unsigned int ln_objs[NUM_LN]={
 852,	/* "GOST R 34.11-94 with GOST R 34.10-94 Cryptocom" */
 854,	/* "GOST R 3410-2001 Parameter Set Cryptocom" */
 810,	/* "HMAC GOST 34.11-94" */
+967,	/* "HMAC GOST R 34.11-2012 L=32 B=64" */
+968,	/* "HMAC GOST R 34.11-2012 L=64 B=64" */
 432,	/* "Hold Instruction Call Issuer" */
 430,	/* "Hold Instruction Code" */
 431,	/* "Hold Instruction None" */
@@ -3547,6 +3608,8 @@ static const unsigned int ln_objs[NUM_LN]={
 665,	/* "Inherit all" */
 647,	/* "International Organizations" */
 142,	/* "Invalidity Date" */
+969,	/* "Key agreement schemes GOST R 34.10-2012 256-bit key" */
+970,	/* "Key agreement schemes GOST R 34.10-2012 512-bit key" */
 504,	/* "MIME MHS" */
 388,	/* "Mail" */
 383,	/* "Management" */
@@ -4075,6 +4138,10 @@ static const unsigned int ln_objs[NUM_LN]={
 194,	/* "id-smime-spq" */
 250,	/* "id-smime-spq-ets-sqt-unotice" */
 249,	/* "id-smime-spq-ets-sqt-uri" */
+974,	/* "id-tc26-gost-28147-param-A" */
+972,	/* "id-tc26-gost-3410-12-512-paramSetA" */
+973,	/* "id-tc26-gost-3410-12-512-paramSetB" */
+971,	/* "id-tc26-gost-3410-12-512-paramSetTest" */
 34,	/* "idea-cbc" */
 35,	/* "idea-cfb" */
 36,	/* "idea-ecb" */
@@ -4870,8 +4937,16 @@ static const unsigned int obj_objs[NUM_OBJ]={
 851,	/* OBJ_id_GostR3410_2001_cc         1 2 643 2 9 1 5 4 */
 849,	/* OBJ_id_Gost28147_89_cc           1 2 643 2 9 1 6 1 */
 854,	/* OBJ_id_GostR3410_2001_ParamSet_cc 1 2 643 2 9 1 8 1 */
+963,	/* OBJ_id_tc26_gost3410_12_256      1 2 643 7 1 1 1 1 */
+964,	/* OBJ_id_tc26_gost3410_12_512      1 2 643 7 1 1 1 2 */
 961,	/* OBJ_id_tc26_gost3411_12_256      1 2 643 7 1 1 2 2 */
 962,	/* OBJ_id_tc26_gost3411_12_512      1 2 643 7 1 1 2 3 */
+965,	/* OBJ_id_tc26_signwithdigest_gost3410_12_256 1 2 643 7 1 1 3 2 */
+966,	/* OBJ_id_tc26_signwithdigest_gost3410_12_512 1 2 643 7 1 1 3 3 */
+967,	/* OBJ_id_tc26_hmac_gost_3411_12_256 1 2 643 7 1 1 4 1 */
+968,	/* OBJ_id_tc26_hmac_gost_3411_12_512 1 2 643 7 1 1 4 2 */
+969,	/* OBJ_id_tc26_agreement_gost_3410_12_256 1 2 643 7 1 1 6 1 */
+970,	/* OBJ_id_tc26_agreement_gost_3410_12_512 1 2 643 7 1 1 6 2 */
 186,	/* OBJ_pkcs1                        1 2 840 113549 1 1 */
 27,	/* OBJ_pkcs3                        1 2 840 113549 1 3 */
 187,	/* OBJ_pkcs5                        1 2 840 113549 1 5 */
@@ -5039,6 +5114,10 @@ static const unsigned int obj_objs[NUM_OBJ]={
 439,	/* OBJ_pilotAttributeSyntax         0 9 2342 19200300 100 3 */
 440,	/* OBJ_pilotObjectClass             0 9 2342 19200300 100 4 */
 441,	/* OBJ_pilotGroups                  0 9 2342 19200300 100 10 */
+971,	/* OBJ_id_tc26_gost_3410_12_512_paramSetTest 1 2 643 7 1 2 1 2 0 */
+972,	/* OBJ_id_tc26_gost_3410_12_512_paramSetA 1 2 643 7 1 2 1 2 1 */
+973,	/* OBJ_id_tc26_gost_3410_12_512_paramSetB 1 2 643 7 1 2 1 2 2 */
+974,	/* OBJ_id_tc26_gost_28147_param_A   1 2 643 7 1 2 5 1 1 */
 108,	/* OBJ_cast5_cbc                    1 2 840 113533 7 66 10 */
 112,	/* OBJ_pbeWithMD5AndCast5_CBC       1 2 840 113533 7 66 12 */
 782,	/* OBJ_id_PasswordBasedMAC          1 2 840 113533 7 66 13 */

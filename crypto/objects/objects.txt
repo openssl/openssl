@@ -1181,10 +1181,20 @@ cryptopro 14 1		: id-Gost28147-89-CryptoPro-KeyMeshing
 cryptopro 14 0		: id-Gost28147-89-None-KeyMeshing
 
 # TC-26 GOST OIDs
+!Cname id-tc26-gost3410-12-256
+tc-26 1 1 1  : gost2012_256 : GOST R 34.10-2012 with 256-bit key
+!Cname id-tc26-gost3410-12-512
+tc-26 1 1 2  : gost2012_512 : GOST R 34.10-2012 with 512-bit key
 !Cname id-tc26-gost3411-12-256
 tc-26 1 2 2  : md_gost12_256 : GOST R 34.11-2012 256-bit length
 !Cname id-tc26-gost3411-12-512
 tc-26 1 2 3  : md_gost12_512 : GOST R 34.11-2012 512-bit length
+tc-26 1 3 2  : id-tc26-signwithdigest-gost3410-12-256 : GOST R 34.10-2012 with 34.11-2012 256-bit
+tc-26 1 3 3  : id-tc26-signwithdigest-gost3410-12-512 : GOST R 34.10-2012 with 34.11-2012 512-bit
+tc-26 1 4 1  : id-tc26-hmac-gost-3411-12-256 : HMAC GOST R 34.11-2012 L=32 B=64
+tc-26 1 4 2  : id-tc26-hmac-gost-3411-12-512 : HMAC GOST R 34.11-2012 L=64 B=64
+tc-26 1 6 1	 : id-tc26-agreement-gost-3410-12-256 : Key agreement schemes GOST R 34.10-2012 256-bit key
+tc-26 1 6 2  : id-tc26-agreement-gost-3410-12-512 :	Key agreement schemes GOST R 34.10-2012 512-bit key
 
 # GOST parameter set OIDs
 
@@ -1222,6 +1232,13 @@ id-GostR3410-94 1	: id-GostR3410-94-a
 id-GostR3410-94 2	: id-GostR3410-94-aBis
 id-GostR3410-94 3	: id-GostR3410-94-b
 id-GostR3410-94 4	: id-GostR3410-94-bBis
+
+# TC-26 GOST parameter set OIDs
+
+tc-26 2 1 2 0	    : id-tc26-gost-3410-12-512-paramSetTest
+tc-26 2 1 2 1	    : id-tc26-gost-3410-12-512-paramSetA
+tc-26 2 1 2 2	    : id-tc26-gost-3410-12-512-paramSetB
+tc-26 2 5 1 1       : id-tc26-gost-28147-param-A
 
 # Cryptocom LTD GOST OIDs
 

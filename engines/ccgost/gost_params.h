@@ -30,5 +30,6 @@ typedef struct R3410_2001 {
 } R3410_2001_params;
 
 extern R3410_2001_params R3410_2001_paramset[];
+extern R3410_2001_params R3410_2012_512_paramset[];
 
 #endif
