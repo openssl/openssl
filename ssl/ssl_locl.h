@@ -165,6 +165,10 @@
 #include <openssl/ssl.h>
 #include <openssl/symhacks.h>
 
+#ifndef OPENSSL_NO_HEARTBEATS
+#include "heartbeat.h"
+#endif
+
 #ifdef OPENSSL_BUILD_SHLIBSSL
 # undef OPENSSL_EXTERN
 # define OPENSSL_EXTERN OPENSSL_EXPORT
