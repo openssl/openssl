@@ -1353,7 +1353,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		{
 		size_t col = s->s3->client_opaque_prf_input_len;
 		
-		if ((long)(limit - ret - 6 - col < 0))
+		if ((long)(limit - ret - 6 - col) < 0)
 			return NULL;
 		if (col > 0xFFFD) /* can't happen */
 			return NULL;
