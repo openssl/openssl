@@ -670,7 +670,7 @@ int ssl_cert_set_current(CERT *c, long op)
 		return 0;
 	for (i = idx; i < SSL_PKEY_NUM; i++)
 		{
-		CERT_PKEY *cpk = c->key + i;
+		CERT_PKEY *cpk = c->pkeys + i;
 		if (cpk->x509 && cpk->privatekey)
 			{
 			c->key = cpk;
