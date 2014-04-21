@@ -740,8 +740,6 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
 #define TLS_MD_CLIENT_FINISH_CONST_SIZE		15
 #define TLS_MD_SERVER_FINISH_CONST		"server finished"
 #define TLS_MD_SERVER_FINISH_CONST_SIZE		15
-#define TLS_MD_SERVER_WRITE_KEY_CONST		"server write key"
-#define TLS_MD_SERVER_WRITE_KEY_CONST_SIZE	16
 #define TLS_MD_KEY_EXPANSION_CONST		"key expansion"
 #define TLS_MD_KEY_EXPANSION_CONST_SIZE		13
 #define TLS_MD_CLIENT_WRITE_KEY_CONST		"client write key"
