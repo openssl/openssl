@@ -4,6 +4,9 @@
 
  Changes between 1.0.1g and 1.0.2 [xx XXX xxxx]
 
+  *) Fix some double frees. These are not thought to be exploitable.
+     [mancha <mancha1@zoho.com>]
+
   *) Use algorithm specific chains in SSL_CTX_use_certificate_chain_file():
      this fixes a limiation in previous versions of OpenSSL.
      [Steve Henson]
