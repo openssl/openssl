@@ -4,7 +4,8 @@
 
  Changes between 1.0.1g and 1.0.1h [xx XXX xxxx]
 
-  *)
+  *) Fix some double frees. These are not thought to be exploitable.
+     [mancha <mancha1@zoho.com>]
 
  Changes between 1.0.1f and 1.0.1g [7 Apr 2014]
 
