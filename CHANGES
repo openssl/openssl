@@ -4,6 +4,9 @@
 
  Changes between 1.0.0l and 1.0.0m [xx XXX xxxx]
 
+  *) Fix some double frees. These are not thought to be exploitable.
+     [mancha <mancha1@zoho.com>]
+
   *) Fix for the attack described in the paper "Recovering OpenSSL
      ECDSA Nonces Using the FLUSH+RELOAD Cache Side-channel Attack"
      by Yuval Yarom and Naomi Benger. Details can be obtained from:
