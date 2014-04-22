@@ -928,6 +928,7 @@ int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
 	if (EVP_DigestSignUpdate(&mctx,abuf,alen) <= 0)
 		goto err;
 	OPENSSL_free(abuf);
+	abuf = NULL;
 	if (EVP_DigestSignFinal(&mctx, NULL, &siglen) <= 0)
 		goto err;
 	abuf = OPENSSL_malloc(siglen);
