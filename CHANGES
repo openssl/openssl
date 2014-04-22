@@ -4,6 +4,9 @@
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
 
+  *) Fix some double frees. These are not thought to be exploitable.
+     [mancha <mancha1@zoho.com>]
+
   *) A missing bounds check in the handling of the TLS heartbeat extension
      can be used to reveal up to 64k of memory to a connected client or
      server.
