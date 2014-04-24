@@ -678,6 +678,7 @@ void gcm_ghash_4bit_x86(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len
 #  if __ARM_ARCH__>=7
 #   define GHASH_ASM_ARM
 #   define GCM_FUNCREF_4BIT
+void gcm_init_neon(u128 Htable[16],const u64 Xi[2]);
 void gcm_gmult_neon(u64 Xi[2],const u128 Htable[16]);
 void gcm_ghash_neon(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
 #  endif
@@ -764,6 +765,7 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx,void *key,block128_f block)
 #  endif
 # elif	defined(GHASH_ASM_ARM)
 	if (OPENSSL_armcap_P & ARMV7_NEON) {
+		gcm_init_neon(ctx->Htable,ctx->H.u);
 		ctx->gmult = gcm_gmult_neon;
 		ctx->ghash = gcm_ghash_neon;
 	} else {
