@@ -4,6 +4,10 @@
 
  Changes between 1.0.1g and 1.0.2 [xx XXX xxxx]
 
+  *) Fix eckey_priv_encode so it immediately returns an error upon a failure
+     in i2d_ECPrivateKey.
+     [mancha <mancha1@zoho.com>]
+
   *) Fix some double frees. These are not thought to be exploitable.
      [mancha <mancha1@zoho.com>]
 
