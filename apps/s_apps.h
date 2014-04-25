@@ -161,9 +161,9 @@ int ssl_print_point_formats(BIO *out, SSL *s);
 int ssl_print_curves(BIO *out, SSL *s, int noshared);
 #endif
 int ssl_print_tmp_key(BIO *out, SSL *s);
-int init_client(int *sock, char *server, int port, int type);
+int init_client(int *sock, const char *server, int port, int type);
 int should_retry(int i);
-int extract_port(char *str, short *port_ptr);
+int extract_port(const char *str, short *port_ptr);
 int extract_host_port(char *str,char **host_ptr,unsigned char *ip,short *p);
 
 long MS_CALLBACK bio_dump_callback(BIO *bio, int cmd, const char *argp,
