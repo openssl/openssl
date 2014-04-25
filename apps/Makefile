@@ -778,8 +778,9 @@ rsautl.o: ../include/openssl/symhacks.h ../include/openssl/txt_db.h
 rsautl.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 rsautl.o: ../include/openssl/x509v3.h apps.h rsautl.c
 s_cb.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
-s_cb.o: ../include/openssl/buffer.h ../include/openssl/comp.h
-s_cb.o: ../include/openssl/conf.h ../include/openssl/crypto.h
+s_cb.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+s_cb.o: ../include/openssl/comp.h ../include/openssl/conf.h
+s_cb.o: ../include/openssl/crypto.h ../include/openssl/dh.h
 s_cb.o: ../include/openssl/dtls1.h ../include/openssl/e_os2.h
 s_cb.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
 s_cb.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
