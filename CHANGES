@@ -4,6 +4,10 @@
 
  Changes between 1.0.1g and 1.0.2 [xx XXX xxxx]
 
+  *) Harmonize version and its documentation. -f flag is used to display
+     compilation flags.
+     [mancha <mancha1@zoho.com>]
+
   *) Fix eckey_priv_encode so it immediately returns an error upon a failure
      in i2d_ECPrivateKey.
      [mancha <mancha1@zoho.com>]
