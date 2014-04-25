@@ -91,7 +91,7 @@ typedef unsigned int u_int;
 #include "netdb.h"
 #endif
 
-static struct hostent *GetHostByName(char *name);
+static struct hostent *GetHostByName(const char *name);
 #if defined(OPENSSL_SYS_WINDOWS) || (defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK))
 static void ssl_sock_cleanup(void);
 #endif
@@ -101,7 +101,7 @@ static int init_client_ip(int *sock, const unsigned char ip[4], int port,
 static int init_server(int *sock, int port, int type);
 static int init_server_long(int *sock, int port,char *ip, int type);
 static int do_accept(int acc_sock, int *sock, char **host);
-static int host_ip(char *str, unsigned char ip[4]);
+static int host_ip(const char *str, unsigned char ip[4]);
 
 #ifdef OPENSSL_SYS_WIN16
 #define SOCKET_PROTOCOL	0 /* more microsoft stupidity */
@@ -229,7 +229,7 @@ static int ssl_sock_init(void)
 	return(1);
 	}
 
-int init_client(int *sock, char *host, int port, int type)
+int init_client(int *sock, const char *host, int port, int type)
 	{
 	unsigned char ip[4];
 
@@ -498,7 +498,7 @@ err:
 	return(0);
 	}
 
-static int host_ip(char *str, unsigned char ip[4])
+static int host_ip(const char *str, unsigned char ip[4])
 	{
 	unsigned int in[4]; 
 	int i;
@@ -544,7 +544,7 @@ err:
 	return(0);
 	}
 
-int extract_port(char *str, short *port_ptr)
+int extract_port(const char *str, short *port_ptr)
 	{
 	int i;
 	struct servent *s;
@@ -576,7 +576,7 @@ static struct ghbn_cache_st
 static unsigned long ghbn_hits=0L;
 static unsigned long ghbn_miss=0L;
 
-static struct hostent *GetHostByName(char *name)
+static struct hostent *GetHostByName(const char *name)
 	{
 	struct hostent *ret;
 	int i,lowi=0;
