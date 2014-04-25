@@ -159,7 +159,15 @@ DSA_SIG *gost2001_do_sign(const unsigned char *dgst,int dlen, EC_KEY *eckey)
 				DSA_SIG_free(newsig);
 				newsig = NULL;
 				goto err;
-				}	
+				}
+			/* To avoid timing information leaking the length of k,
+			   compute C*k using an equivalent scalar of fixed bit-length
+			*/
+			if (!BN_add(k,k,order)) goto err;
+			if (BN_num_bits(k) <= BN_num_bits(order))
+				{
+				if (!BN_add(k,k,order)) goto err;
+				}
 			if (!EC_POINT_mul(group,C,k,NULL,NULL,ctx))
 				{
 				GOSTerr(GOST_F_GOST2001_DO_SIGN,ERR_R_EC_LIB);
@@ -191,7 +199,7 @@ DSA_SIG *gost2001_do_sign(const unsigned char *dgst,int dlen, EC_KEY *eckey)
 
 	newsig->s=BN_dup(s);
 	newsig->r=BN_dup(r);
-	err:			
+err:
 	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 	EC_POINT_free(C);
