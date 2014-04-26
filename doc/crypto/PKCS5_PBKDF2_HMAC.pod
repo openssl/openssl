@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-PKCS5_PBKDF2_HMAC - password based derivation routine with salt and iteration count
+PKCS5_PBKDF2_HMAC, PKCS5_PBKDF2_HMAC_SHA1 - password based derivation routines with salt and iteration count
 
 =head1 SYNOPSIS
 
@@ -12,6 +12,10 @@ PKCS5_PBKDF2_HMAC - password based derivation routine with salt and iteration co
                        const unsigned char *salt, int saltlen, int iter,
                        const EVP_MD *digest,
                        int keylen, unsigned char *out);
+
+int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
+			   const unsigned char *salt, int saltlen, int iter,
+			   int keylen, unsigned char *out);
 
 =head1 DESCRIPTION
 
@@ -24,14 +28,14 @@ function will calculate the length of B<pass> using strlen().
 
 B<salt> is the salt used in the derivation of length B<saltlen>. If the
 B<salt> is NULL, then B<saltlen> must be 0. The function will not
-attempt to calculate the length of the B<salt> because its not assumed to
+attempt to calculate the length of the B<salt> because it is not assumed to
 be NULL terminated.
 
 B<iter> is the iteration count and its value should be greater than or 
 equal to 1. RFC 2898 suggests an iteration count of at least 1000. Any
 B<iter> less than 1 is treated as a single iteration.
 
-B<digest> is message digest function used in the derivation. Values include
+B<digest> is the message digest function used in the derivation. Values include
 any of the EVP_* message digests. PKCS5_PBKDF2_HMAC_SHA1() calls
 PKCS5_PBKDF2_HMAC() with EVP_sha1().
 
@@ -50,7 +54,7 @@ of candidate passwords.
 
 =head1 RETURN VALUES
 
-PKCS5_PBKDF2_HMAC() returns 1 on success or 0 on error.
+PKCS5_PBKDF2_HMAC() and PBKCS5_PBKDF2_HMAC_SHA1() return 1 on success or 0 on error.
 
 =head1 SEE ALSO
 
