@@ -479,7 +479,9 @@ static void sv_usage(void)
 	{
 	BIO_printf(bio_err,"usage: s_server [args ...]\n");
 	BIO_printf(bio_err,"\n");
-	BIO_printf(bio_err," -accept arg   - port to accept on (default is %d)\n",PORT);
+	BIO_printf(bio_err," -accept port  - TCP/IP port to accept on (default is %d)\n",PORT);
+	BIO_printf(bio_err," -unix path    - unix domain socket to accept on\n");
+	BIO_printf(bio_err," -unlink       - for -unix, unlink existing socket first\n");
 	BIO_printf(bio_err," -context arg  - set session ID context\n");
 	BIO_printf(bio_err," -verify arg   - turn on peer certificate verification\n");
 	BIO_printf(bio_err," -Verify arg   - turn on peer certificate verification, must have a cert.\n");
@@ -1008,6 +1010,9 @@ int MAIN(int argc, char *argv[])
 	X509_VERIFY_PARAM *vpm = NULL;
 	int badarg = 0;
 	short port=PORT;
+	const char *unix_path=NULL;
+	int unlink_unix_path=0;
+	int (*server_cb)(char *hostname, int s, int stype, unsigned char *context);
 	char *CApath=NULL,*CAfile=NULL;
 	char *chCApath=NULL,*chCAfile=NULL;
 	char *vfyCApath=NULL,*vfyCAfile=NULL;
@@ -1099,6 +1104,25 @@ int MAIN(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			if (!extract_port(*(++argv),&port))
 				goto bad;
+			}
+		else if (strcmp(*argv,"-unix") == 0)
+			{
+#ifdef NO_SYS_UN_H
+			BIO_printf(bio_err, "unix domain sockets unsupported\n");
+			goto bad;
+#else
+			if (--argc < 1) goto bad;
+			unix_path = *(++argv);
+#endif
+			}
+		else if (strcmp(*argv,"-unlink") == 0)
+			{
+#ifdef NO_SYS_UN_H
+			BIO_printf(bio_err, "unix domain sockets unsupported\n");
+			goto bad;
+#else
+			unlink_unix_path = 1;
+#endif
 			}
 		else if	(strcmp(*argv,"-naccept") == 0)
 			{
@@ -1544,6 +1568,11 @@ bad:
 		goto end;
 		}
 
+	if (unix_path && (socket_type != SOCK_STREAM))
+		{
+		BIO_printf(bio_err, "Can't use unix sockets and datagrams together\n");
+			goto end;
+		}
 #if !defined(OPENSSL_NO_JPAKE) && !defined(OPENSSL_NO_PSK)
 	if (jpake_secret)
 		{
@@ -2106,11 +2135,19 @@ bad:
 	BIO_printf(bio_s_out,"ACCEPT\n");
 	(void)BIO_flush(bio_s_out);
 	if (rev)
-		do_server(port,socket_type,&accept_socket,rev_body, context, naccept);
+		server_cb = rev_body;
 	else if (www)
-		do_server(port,socket_type,&accept_socket,www_body, context, naccept);
+		server_cb = www_body;
 	else
-		do_server(port,socket_type,&accept_socket,sv_body, context, naccept);
+		server_cb = sv_body;
+	if (unix_path)
+		{
+		if (unlink_unix_path)
+			unlink(unix_path);
+		do_server_unix(unix_path,&accept_socket,server_cb, context, naccept);
+		}
+	else
+		do_server(port,socket_type,&accept_socket,server_cb, context, naccept);
 	print_stats(bio_s_out,ctx);
 	ret=0;
 end:

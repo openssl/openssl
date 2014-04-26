@@ -579,6 +579,16 @@ static unsigned int _strlen31(const char *str)
 #      include <inet.h>
 #    else
 #      include <sys/socket.h>
+#      ifndef NO_SYS_UN_H
+#        ifdef OPENSSL_SYS_VXWORKS
+#          include <streams/un.h>
+#        else
+#          include <sys/un.h>
+#        endif
+#        ifndef UNIX_PATH_MAX
+#          define UNIX_PATH_MAX sizeof(((struct sockaddr_un *)NULL)->sun_path)
+#        endif
+#      endif
 #      ifdef FILIO_H
 #        include <sys/filio.h> /* Added for FIONBIO under unixware */
 #      endif
