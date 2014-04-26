@@ -102,6 +102,10 @@ static int init_server(int *sock, int port, int type);
 static int init_server_long(int *sock, int port,char *ip, int type);
 static int do_accept(int acc_sock, int *sock, char **host);
 static int host_ip(const char *str, unsigned char ip[4]);
+#ifndef NO_SYS_UN_H
+static int init_server_unix(int *sock, const char *path);
+static int do_accept_unix(int acc_sock, int *sock);
+#endif
 
 #ifdef OPENSSL_SYS_WIN16
 #define SOCKET_PROTOCOL	0 /* more microsoft stupidity */
@@ -280,7 +284,32 @@ static int init_client_ip(int *sock, const unsigned char ip[4], int port,
 	return(1);
 	}
 
-int do_server(int port, int type, int *ret, int (*cb)(char *hostname, int s, int stype, unsigned char *context), unsigned char *context, int naccept)
+#ifndef NO_SYS_UN_H
+int init_client_unix(int *sock, const char *server)
+	{
+	struct sockaddr_un them;
+	int s;
+
+	if (strlen(server) > (UNIX_PATH_MAX + 1)) return(0);
+	if (!ssl_sock_init()) return(0);
+
+	s=socket(AF_UNIX, SOCK_STREAM, 0);
+	if (s == INVALID_SOCKET) { perror("socket"); return(0); }
+
+	memset((char *)&them,0,sizeof(them));
+	them.sun_family=AF_UNIX;
+	strcpy(them.sun_path, server);
+
+	if (connect(s, (struct sockaddr *)&them, sizeof(them)) == -1)
+		{ closesocket(s); perror("connect"); return(0); }
+	*sock=s;
+	return(1);
+	}
+#endif
+
+int do_server(int port, int type, int *ret,
+	      int (*cb)(char *hostname, int s, int stype, unsigned char *context),
+	      unsigned char *context, int naccept)
 	{
 	int sock;
 	char *name = NULL;
@@ -323,6 +352,43 @@ int do_server(int port, int type, int *ret, int (*cb)(char *hostname, int s, int
 			}
 		}
 	}
+
+#ifndef NO_SYS_UN_H
+int do_server_unix(const char *path, int *ret,
+		   int (*cb)(char *hostname, int s, int stype, unsigned char *context),
+		   unsigned char *context, int naccept)
+	{
+	int sock;
+	int accept_socket = 0;
+	int i;
+
+	if (!init_server_unix(&accept_socket, path)) return(0);
+
+	if (ret != NULL)
+		*ret=accept_socket;
+	for (;;)
+		{
+		if (do_accept_unix(accept_socket, &sock) == 0)
+			{
+			SHUTDOWN(accept_socket);
+			i = 0;
+			goto out;
+			}
+		i=(*cb)(NULL, sock, 0, context);
+		SHUTDOWN2(sock);
+		if (naccept != -1)
+			naccept--;
+		if (i < 0 || naccept == 0)
+			{
+			SHUTDOWN2(accept_socket);
+			goto out;
+			}
+		}
+out:
+	unlink(path);
+	return(i);
+	}
+#endif
 
 static int init_server_long(int *sock, int port, char *ip, int type)
 	{
@@ -381,6 +447,50 @@ static int init_server(int *sock, int port, int type)
 	{
 	return(init_server_long(sock, port, NULL, type));
 	}
+
+#ifndef NO_SYS_UN_H
+static int init_server_unix(int *sock, const char *path)
+	{
+	int ret = 0;
+	struct sockaddr_un server;
+	int s = -1;
+
+	if (strlen(path) > (UNIX_PATH_MAX + 1)) return(0);
+	if (!ssl_sock_init()) return(0);
+
+	s=socket(AF_UNIX, SOCK_STREAM, 0);
+	if (s == INVALID_SOCKET) goto err;
+
+	memset((char *)&server,0,sizeof(server));
+	server.sun_family=AF_UNIX;
+	strcpy(server.sun_path, path);
+
+	if (bind(s, (struct sockaddr *)&server, sizeof(server)) == -1)
+		{
+#ifndef OPENSSL_SYS_WINDOWS
+		perror("bind");
+#endif
+		goto err;
+		}
+	/* Make it 128 for linux */
+	if (listen(s,128) == -1)
+		{
+#ifndef OPENSSL_SYS_WINDOWS
+		perror("listen");
+#endif
+		unlink(path);
+		goto err;
+		}
+	*sock=s;
+	ret=1;
+err:
+	if ((ret == 0) && (s != -1))
+		{
+		SHUTDOWN(s);
+		}
+	return(ret);
+	}
+#endif
 
 static int do_accept(int acc_sock, int *sock, char **host)
 	{
@@ -475,6 +585,32 @@ end:
 	*sock=ret;
 	return(1);
 	}
+
+#ifndef NO_SYS_UN_H
+static int do_accept_unix(int acc_sock, int *sock)
+	{
+	int ret;
+
+	if (!ssl_sock_init()) return(0);
+
+redoit:
+	ret=accept(acc_sock, NULL, NULL);
+	if (ret == INVALID_SOCKET)
+		{
+		if (errno == EINTR)
+			{
+			/*check_timeout(); */
+			goto redoit;
+			}
+		fprintf(stderr,"errno=%d ",errno);
+		perror("accept");
+		return(0);
+		}
+
+	*sock=ret;
+	return(1);
+	}
+#endif
 
 int extract_host_port(char *str, char **host_ptr, unsigned char *ip,
 	     short *port_ptr)

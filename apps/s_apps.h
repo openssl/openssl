@@ -148,7 +148,14 @@ typedef fd_mask fd_set;
 #define PORT_STR        "4433"
 #define PROTOCOL        "tcp"
 
-int do_server(int port, int type, int *ret, int (*cb) (char *hostname, int s, int stype, unsigned char *context), unsigned char *context, int naccept);
+int do_server(int port, int type, int *ret,
+	      int (*cb)(char *hostname, int s, int stype, unsigned char *context),
+	      unsigned char *context, int naccept);
+#ifndef NO_SYS_UN_H
+int do_server_unix(const char *path, int *ret,
+		   int (*cb)(char *hostname, int s, int stype, unsigned char *context),
+		   unsigned char *context, int naccept);
+#endif
 #ifdef HEADER_X509_H
 int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx);
 #endif
@@ -162,6 +169,9 @@ int ssl_print_curves(BIO *out, SSL *s, int noshared);
 #endif
 int ssl_print_tmp_key(BIO *out, SSL *s);
 int init_client(int *sock, const char *server, int port, int type);
+#ifndef NO_SYS_UN_H
+int init_client_unix(int *sock, const char *server);
+#endif
 int should_retry(int i);
 int extract_port(const char *str, short *port_ptr);
 int extract_host_port(char *str,char **host_ptr,unsigned char *ip,short *p);

@@ -323,7 +323,8 @@ static void sc_usage(void)
 	BIO_printf(bio_err,"\n");
 	BIO_printf(bio_err," -host host     - use -connect instead\n");
 	BIO_printf(bio_err," -port port     - use -connect instead\n");
-	BIO_printf(bio_err," -connect host:port - who to connect to (default is %s:%s)\n",SSL_HOST_NAME,PORT_STR);
+	BIO_printf(bio_err," -connect host:port - connect over TCP/IP (default is %s:%s)\n",SSL_HOST_NAME,PORT_STR);
+	BIO_printf(bio_err," -unix path    - connect over unix domain sockets\n");
 	BIO_printf(bio_err," -verify arg   - turn on peer certificate verification\n");
 	BIO_printf(bio_err," -cert arg     - certificate file to use, PEM format assumed\n");
 	BIO_printf(bio_err," -certform arg - certificate format (PEM or DER) PEM default\n");
@@ -627,6 +628,7 @@ int MAIN(int argc, char **argv)
 	short port=PORT;
 	int full_log=1;
 	char *host=SSL_HOST_NAME;
+	const char *unix_path = NULL;
 	char *xmpphost = NULL;
 	char *cert_file=NULL,*key_file=NULL,*chain_file=NULL;
 	int cert_format = FORMAT_PEM, key_format = FORMAT_PEM;
@@ -759,6 +761,11 @@ static char *jpake_secret = NULL;
 			if (--argc < 1) goto bad;
 			if (!extract_host_port(*(++argv),&host,NULL,&port))
 				goto bad;
+			}
+		else if (strcmp(*argv,"-unix") == 0)
+			{
+			if (--argc < 1) goto bad;
+			unix_path = *(++argv);
 			}
 		else if	(strcmp(*argv,"-xmpphost") == 0)
 			{
@@ -1155,6 +1162,11 @@ bad:
 		goto end;
 		}
 
+	if (unix_path && (socket_type != SOCK_STREAM))
+		{
+		BIO_printf(bio_err, "Can't use unix sockets and datagrams together\n");
+			goto end;
+		}
 #if !defined(OPENSSL_NO_JPAKE) && !defined(OPENSSL_NO_PSK)
 	if (jpake_secret)
 		{
@@ -1499,7 +1511,8 @@ bad:
 
 re_start:
 
-	if (init_client(&s,host,port,socket_type) == 0)
+	if ((!unix_path && (init_client(&s,host,port,socket_type) == 0)) ||
+			(unix_path && (init_client_unix(&s,unix_path) == 0)))
 		{
 		BIO_printf(bio_err,"connect:errno=%d\n",get_last_socket_error());
 		SHUTDOWN(s);
