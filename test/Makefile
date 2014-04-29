@@ -85,7 +85,7 @@ FIPS_ECDSAVS=	fips_ecdsavs
 FIPS_TEST_SUITE=fips_test_suite
 FIPS_CMACTEST=	fips_cmactest
 FIPS_ALGVS=	fips_algvs
-HEARTBEATTEST = heartbeat_test
+HEARTBEATTEST=  heartbeat_test
 
 TESTS=		alltests
 
@@ -379,7 +379,7 @@ test_ocsp: ../apps/openssl$(EXE_EXT) tocsp
 	@sh ./tocsp
 
 test_heartbeat: $(HEARTBEATTEST)$(EXE_EXT)
-	./$<
+	../util/shlib_wrap.sh ./$(HEARTBEATTEST)
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
