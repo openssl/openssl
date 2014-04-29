@@ -45,10 +45,10 @@
 #include <string.h>
 
 /* As per https://tools.ietf.org/html/rfc6520#section-4 */
-static const int MIN_PADDING_SIZE = 16;
+#define MIN_PADDING_SIZE	16
 
 /* Maximum number of payload characters to print as test output */
-static const int MAX_PRINTABLE_CHARACTERS = 1024;
+#define MAX_PRINTABLE_CHARACTERS	1024
 
 typedef struct heartbeat_test_fixture
 	{
