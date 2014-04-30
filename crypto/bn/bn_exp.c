@@ -493,6 +493,9 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 		r->d[0] = (0-m->d[0])&BN_MASK2;
 		for(i=1;i<j;i++) r->d[i] = (~m->d[i])&BN_MASK2;
 		r->top = j;
+		/* Upper words will be zero if the corresponding words of 'm'
+		 * were 0xfff[...], so decrement r->top accordingly. */
+		bn_correct_top(r);
 		}
 	else
 #endif
