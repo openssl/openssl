@@ -327,6 +327,8 @@ The value is a file name.
 
 The value is a directory name.
 
+=back
+
 =head1 NOTES
 
 The order of operations is significant. This can be used to set either defaults

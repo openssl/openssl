@@ -138,7 +138,6 @@ a verification error occurs then 2 is returned.
 
 All other functions return 1 for success and 0 for failure.
 
-=back
 
 =head1 SEE ALSO
 
