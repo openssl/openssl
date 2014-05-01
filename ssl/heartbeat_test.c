@@ -105,6 +105,12 @@ static HEARTBEAT_TEST_FIXTURE set_up(const char* const test_case_name,
 		goto fail;
 		}
 
+	/* Clear the memory for the return buffer, since this isn't automatically
+	 * zeroed in opt mode and will cause spurious test failures that will change
+	 * with each execution.
+	 */
+	memset(fixture.s->s3->wbuf.buf, 0, fixture.s->s3->wbuf.len);
+
 	fail:
 	if (!setup_ok)
 		{
@@ -160,9 +166,7 @@ static HEARTBEAT_TEST_FIXTURE set_up_tls(const char* const test_case_name)
 static void tear_down(HEARTBEAT_TEST_FIXTURE fixture)
 	{
 	ERR_print_errors_fp(stderr);
-	memset(fixture.s, 0, sizeof(*fixture.s));
 	SSL_free(fixture.s);
-	memset(fixture.ctx, 0, sizeof(*fixture.ctx));
 	SSL_CTX_free(fixture.ctx);
 	}
 
