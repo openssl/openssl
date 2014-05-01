@@ -68,6 +68,7 @@ static HEARTBEAT_TEST_FIXTURE set_up(const char* const test_case_name,
 	const SSL_METHOD* meth)
 	{
 	HEARTBEAT_TEST_FIXTURE fixture;
+	int setup_ok = 1;
 	memset(&fixture, 0, sizeof(fixture));
 	fixture.test_case_name = test_case_name;
 
@@ -75,7 +76,8 @@ static HEARTBEAT_TEST_FIXTURE set_up(const char* const test_case_name,
 	if (!fixture.ctx)
 		{
 		fprintf(stderr, "Failed to allocate SSL_CTX for test: %s\n",
-						test_case_name);
+			test_case_name);
+		setup_ok = 0;
 		goto fail;
 		}
 
@@ -83,14 +85,28 @@ static HEARTBEAT_TEST_FIXTURE set_up(const char* const test_case_name,
 	if (!fixture.s)
 		{
 		fprintf(stderr, "Failed to allocate SSL for test: %s\n", test_case_name);
+		setup_ok = 0;
 		goto fail;
 		}
 
-	ssl_init_wbio_buffer(fixture.s, 1);
-	ssl3_setup_buffers(fixture.s);
+	if (!ssl_init_wbio_buffer(fixture.s, 1))
+		{
+		fprintf(stderr, "Failed to set up wbio buffer for test: %s\n",
+			test_case_name);
+		setup_ok = 0;
+		goto fail;
+		}
+
+	if (!ssl3_setup_buffers(fixture.s))
+		{
+		fprintf(stderr, "Failed to setup buffers for test: %s\n",
+			test_case_name);
+		setup_ok = 0;
+		goto fail;
+		}
 
 	fail:
-	if (!fixture.s)
+	if (!setup_ok)
 		{
 		ERR_print_errors_fp(stderr);
 		exit(EXIT_FAILURE);
