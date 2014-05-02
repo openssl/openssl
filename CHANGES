@@ -9,7 +9,7 @@
      [mancha <mancha1@zoho.com>]
 
   *) Fix eckey_priv_encode so it immediately returns an error upon a failure
-     in i2d_ECPrivateKey.
+     in i2d_ECPrivateKey. Thanks to Ted Unangst for feedback on this issue.
      [mancha <mancha1@zoho.com>]
 
   *) Fix some double frees. These are not thought to be exploitable.
