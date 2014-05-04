@@ -44,6 +44,10 @@ open STDOUT,">$output";
 
 $code=<<___;
 	.text
+
+	.if	.ASSEMBLER_VERSION<7000000
+	.asg	0,__TI_EABI__
+	.endif
 	.if	__TI_EABI__
 	.nocmp
 	.asg	AES_encrypt,_AES_encrypt
@@ -85,18 +89,18 @@ _AES_encrypt:
 __encrypt:
 	.if	__TI_EABI__
    [B2]	LDNDW	*INP++,A9:A8			; load input
-||	MVKL	\$PCR_OFFSET(AES_Te,_AES_encrypt),$TEA
-||	ADDKPC	_AES_encrypt,B0
+||	MVKL	\$PCR_OFFSET(AES_Te,__encrypt),$TEA
+||	ADDKPC	__encrypt,B0
    [B2]	LDNDW	*INP++,B9:B8
-||	MVKH	\$PCR_OFFSET(AES_Te,_AES_encrypt),$TEA
+||	MVKH	\$PCR_OFFSET(AES_Te,__encrypt),$TEA
 ||	ADD	0,KEY,$KPA
 ||	ADD	4,KEY,$KPB
 	.else
    [B2]	LDNDW	*INP++,A9:A8			; load input
-||	MVKL	(AES_Te-_AES_encrypt),$TEA
-||	ADDKPC	_AES_encrypt,B0
+||	MVKL	(AES_Te-__encrypt),$TEA
+||	ADDKPC	__encrypt,B0
    [B2]	LDNDW	*INP++,B9:B8
-||	MVKH	(AES_Te-_AES_encrypt),$TEA
+||	MVKH	(AES_Te-__encrypt),$TEA
 ||	ADD	0,KEY,$KPA
 ||	ADD	4,KEY,$KPB
 	.endif
@@ -297,18 +301,18 @@ _AES_decrypt:
 __decrypt:
 	.if	__TI_EABI__
    [B2]	LDNDW	*INP++,A9:A8			; load input
-||	MVKL	\$PCR_OFFSET(AES_Td,_AES_decrypt),$TEA
-||	ADDKPC	_AES_decrypt,B0
+||	MVKL	\$PCR_OFFSET(AES_Td,__decrypt),$TEA
+||	ADDKPC	__decrypt,B0
    [B2]	LDNDW	*INP++,B9:B8
-||	MVKH	\$PCR_OFFSET(AES_Td,_AES_decrypt),$TEA
+||	MVKH	\$PCR_OFFSET(AES_Td,__decrypt),$TEA
 ||	ADD	0,KEY,$KPA
 ||	ADD	4,KEY,$KPB
 	.else
    [B2]	LDNDW	*INP++,A9:A8			; load input
-||	MVKL	(AES_Td-_AES_decrypt),$TEA
-||	ADDKPC	_AES_decrypt,B0
+||	MVKL	(AES_Td-__decrypt),$TEA
+||	ADDKPC	__decrypt,B0
    [B2]	LDNDW	*INP++,B9:B8
-||	MVKH	(AES_Td-_AES_decrypt),$TEA
+||	MVKH	(AES_Td-__decrypt),$TEA
 ||	ADD	0,KEY,$KPA
 ||	ADD	4,KEY,$KPB
 	.endif
@@ -546,16 +550,16 @@ __set_encrypt_key:
 	.if	__TI_EABI__
    [A0]	ADD	0,KEY,$KPA
 || [A0]	ADD	4,KEY,$KPB
-|| [A0]	MVKL	\$PCR_OFFSET(AES_Te4,_AES_set_encrypt_key),$TEA
-|| [A0]	ADDKPC	_AES_set_encrypt_key,B6
-   [A0]	MVKH	\$PCR_OFFSET(AES_Te4,_AES_set_encrypt_key),$TEA
+|| [A0]	MVKL	\$PCR_OFFSET(AES_Te4,__set_encrypt_key),$TEA
+|| [A0]	ADDKPC	__set_encrypt_key,B6
+   [A0]	MVKH	\$PCR_OFFSET(AES_Te4,__set_encrypt_key),$TEA
    [A0]	ADD	B6,$TEA,$TEA			; AES_Te4
 	.else
    [A0]	ADD	0,KEY,$KPA
 || [A0]	ADD	4,KEY,$KPB
-|| [A0]	MVKL	(AES_Te4-_AES_set_encrypt_key),$TEA
-|| [A0]	ADDKPC	_AES_set_encrypt_key,B6
-   [A0]	MVKH	(AES_Te4-_AES_set_encrypt_key),$TEA
+|| [A0]	MVKL	(AES_Te4-__set_encrypt_key),$TEA
+|| [A0]	ADDKPC	__set_encrypt_key,B6
+   [A0]	MVKH	(AES_Te4-__set_encrypt_key),$TEA
    [A0]	ADD	B6,$TEA,$TEA			; AES_Te4
 	.endif
 	NOP

@@ -38,6 +38,10 @@ open STDOUT,">$output";
 
 $code=<<___;
 	.text
+
+	.if	.ASSEMBLER_VERSION<7000000
+	.asg	0,__TI_EABI__
+	.endif
 	.if	__TI_EABI__
 	.asg	sha1_block_data_order,_sha1_block_data_order
 	.endif
