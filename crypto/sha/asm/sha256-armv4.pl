@@ -31,6 +31,10 @@
 # code (meaning that latter performs sub-optimally, nothing was done
 # about it).
 
+# May 2014.
+#
+# Add ARMv8 code path performing at 2.0 cpb on Apple A7.
+
 while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
 open STDOUT,">$output";
 
@@ -185,6 +189,8 @@ sha256_block_data_order:
 #if __ARM_ARCH__>=7
 	ldr	r12,.LOPENSSL_armcap
 	ldr	r12,[r3,r12]		@ OPENSSL_armcap_P
+	tst	r12,#8
+	bne	.LARMv8
 	tst	r12,#1
 	bne	.LNEON
 #endif
@@ -241,6 +247,7 @@ $code.=<<___;
 	moveq	pc,lr			@ be binary compatible with V4, yet
 	bx	lr			@ interoperable with Thumb ISA:-)
 #endif
+.size	sha256_block_data_order,.-sha256_block_data_order
 ___
 ######################################################################
 # NEON stuff
@@ -418,7 +425,10 @@ sub body_00_15 () {
 $code.=<<___;
 #if __ARM_ARCH__>=7
 .fpu	neon
+
+.type	sha256_block_data_order_neon,%function
 .align	4
+sha256_block_data_order_neon:
 .LNEON:
 	stmdb	sp!,{r4-r12,lr}
 
@@ -521,17 +531,120 @@ $code.=<<___;
 	bne	.L_00_48
 
 	ldmia	sp!,{r4-r12,pc}
+.size	sha256_block_data_order_neon,.-sha256_block_data_order_neon
+#endif
+___
+}}}
+######################################################################
+# ARMv8 stuff
+#
+{{{
+my ($ABCD,$EFGH,$abcd)=map("q$_",(0..2));
+my @MSG=map("q$_",(8..11));
+my ($W0,$W1,$ABCD_SAVE,$EFGH_SAVE)=map("q$_",(12..15));
+my $Ktbl="r3";
+
+$code.=<<___;
+#if __ARM_ARCH__>=7
+.type	sha256_block_data_order_armv8,%function
+.align	5
+sha256_block_data_order_armv8:
+.LARMv8:
+	vld1.32	{$ABCD,$EFGH},[$ctx]
+	sub	$Ktbl,r3,#sha256_block_data_order-K256
+
+.Loop_v8:
+	vld1.8		{@MSG[0]-@MSG[1]},[$inp]!
+	vld1.8		{@MSG[2]-@MSG[3]},[$inp]!
+	vld1.32		{$W0},[$Ktbl]!
+	vrev32.8	@MSG[0],@MSG[0]
+	vrev32.8	@MSG[1],@MSG[1]
+	vrev32.8	@MSG[2],@MSG[2]
+	vrev32.8	@MSG[3],@MSG[3]
+	vmov		$ABCD_SAVE,$ABCD	@ offload
+	vmov		$EFGH_SAVE,$EFGH
+	teq		$inp,$len
+___
+for($i=0;$i<12;$i++) {
+$code.=<<___;
+	vld1.32		{$W1},[$Ktbl]!
+	vadd.i32	$W0,$W0,@MSG[0]
+	sha256su0	@MSG[0],@MSG[1]
+	vmov		$abcd,$ABCD
+	sha256h		$ABCD,$EFGH,$W0
+	sha256h2	$EFGH,$abcd,$W0
+	sha256su1	@MSG[0],@MSG[2],@MSG[3]
+___
+	($W0,$W1)=($W1,$W0);	push(@MSG,shift(@MSG));
+}
+$code.=<<___;
+	vld1.32		{$W1},[$Ktbl]!
+	vadd.i32	$W0,$W0,@MSG[0]
+	vmov		$abcd,$ABCD
+	sha256h		$ABCD,$EFGH,$W0
+	sha256h2	$EFGH,$abcd,$W0
+
+	vld1.32		{$W0},[$Ktbl]!
+	vadd.i32	$W1,$W1,@MSG[1]
+	vmov		$abcd,$ABCD
+	sha256h		$ABCD,$EFGH,$W1
+	sha256h2	$EFGH,$abcd,$W1
+
+	vld1.32		{$W1},[$Ktbl]
+	vadd.i32	$W0,$W0,@MSG[2]
+	sub		$Ktbl,$Ktbl,#256-16	@ rewind
+	vmov		$abcd,$ABCD
+	sha256h		$ABCD,$EFGH,$W0
+	sha256h2	$EFGH,$abcd,$W0
+
+	vadd.i32	$W1,$W1,@MSG[3]
+	vmov		$abcd,$ABCD
+	sha256h		$ABCD,$EFGH,$W1
+	sha256h2	$EFGH,$abcd,$W1
+
+	vadd.i32	$ABCD,$ABCD,$ABCD_SAVE
+	vadd.i32	$EFGH,$EFGH,$EFGH_SAVE
+	bne		.Loop_v8
+
+	vst1.32		{$ABCD,$EFGH},[$ctx]
+
+	bx	lr
+.size	sha256_block_data_order_armv8,.-sha256_block_data_order_armv8
 #endif
 ___
 }}}
 $code.=<<___;
-.size   sha256_block_data_order,.-sha256_block_data_order
-.asciz  "SHA256 block transform for ARMv4/NEON, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz  "SHA256 block transform for ARMv4/NEON/ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
 .align	2
 .comm   OPENSSL_armcap_P,4,4
 ___
 
-$code =~ s/\`([^\`]*)\`/eval $1/gem;
-$code =~ s/\bbx\s+lr\b/.word\t0xe12fff1e/gm;	# make it possible to compile with -march=armv4
-print $code;
+{   my  %opcode = (
+	"sha256h"	=> 0xf3000c40,	"sha256h2"	=> 0xf3100c40,
+	"sha256su0"	=> 0xf3ba03c0,	"sha256su1"	=> 0xf3200c40	);
+
+    sub unsha256 {
+	my ($mnemonic,$arg)=@_;
+
+	$arg =~ m/q([0-9]+)(?:,\s*q([0-9]+))?,\s*q([0-9]+)/o
+	&&
+	sprintf ".long\t0x%08x\t@ %s %s",
+			$opcode{$mnemonic}|(($1&7)<<13)|(($1&8)<<19)
+					  |(($2&7)<<17)|(($2&8)<<4)
+					  |(($3&7)<<1) |(($3&8)<<2),
+			$mnemonic,$arg;
+    }
+}
+
+foreach (split($/,$code)) {
+
+	s/\`([^\`]*)\`/eval $1/geo;
+
+	s/\b(sha256\w+)\s+(q.*)/unsha256($1,$2)/geo;
+
+	s/\bbx\s+lr\b/.word\t0xe12fff1e/go;	# make it possible to compile with -march=armv4
+
+	print $_,"\n";
+}
+
 close STDOUT; # enforce flush
