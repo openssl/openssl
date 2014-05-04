@@ -107,6 +107,10 @@ ___
 }
 $code.=<<___;
 	.text
+
+	.if	.ASSEMBLER_VERSION<7000000
+	.asg	0,__TI_EABI__
+	.endif
 	.if	__TI_EABI__
 	.asg	bn_GF2m_mul_2x2,_bn_GF2m_mul_2x2
 	.endif

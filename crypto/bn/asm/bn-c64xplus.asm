@@ -12,6 +12,10 @@
 ;; SPLOOPs spin at ... 2*n cycles [plus epilogue].
 ;;====================================================================
 	.text
+
+	.if	.ASSEMBLER_VERSION<7000000
+	.asg	0,__TI_EABI__
+	.endif
 	.if	__TI_EABI__
 	.asg	bn_mul_add_words,_bn_mul_add_words
 	.asg	bn_mul_words,_bn_mul_words
