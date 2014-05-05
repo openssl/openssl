@@ -485,6 +485,7 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -Verify arg   - turn on peer certificate verification, must have a cert.\n");
 	BIO_printf(bio_err," -cert arg     - certificate file to use\n");
 	BIO_printf(bio_err,"                 (default is %s)\n",TEST_CERT);
+	BIO_printf(bio_err," -naccept arg  - terminate after 'arg' connections\n");
 #ifndef OPENSSL_NO_TLSEXT
 	BIO_printf(bio_err," -serverinfo arg - PEM serverinfo file for certificate\n");
 	BIO_printf(bio_err," -auth               - send and receive RFC 5878 TLS auth extensions and supplemental data\n");
