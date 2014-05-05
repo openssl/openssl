@@ -270,7 +270,7 @@ static int init_client_ip(int *sock, const unsigned char ip[4], int port,
 		{
 		i=0;
 		i=setsockopt(s,SOL_SOCKET,SO_KEEPALIVE,(char *)&i,sizeof(i));
-		if (i < 0) { perror("keepalive"); return(0); }
+		if (i < 0) { closesocket(s); perror("keepalive"); return(0); }
 		}
 #endif
 
