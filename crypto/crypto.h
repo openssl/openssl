@@ -168,6 +168,7 @@ extern "C" {
 #define SSLEAY_BUILT_ON		3
 #define SSLEAY_PLATFORM		4
 #define SSLEAY_DIR		5
+#define SSLEAY_SECURE_HEAP      6
 
 /* Already declared in ossl_typ.h */
 #if 0
@@ -479,7 +480,7 @@ void (*CRYPTO_get_dynlock_destroy_callback(void))(struct CRYPTO_dynlock_value *l
 /* CRYPTO_set_mem_functions includes CRYPTO_set_locked_mem_functions --
  * call the latter last if you need different functions */
 int CRYPTO_set_mem_functions(void *(*m)(size_t),void *(*r)(void *,size_t), void (*f)(void *));
-int CRYPTO_set_locked_mem_functions(void *(*m)(size_t), void (*free_func)(void *));
+int CRYPTO_set_locked_mem_functions(void *(*m)(size_t), void (*f)(void *));
 int CRYPTO_set_mem_ex_functions(void *(*m)(size_t,const char *,int),
                                 void *(*r)(void *,size_t,const char *,int),
                                 void (*f)(void *));
@@ -512,6 +513,29 @@ void *CRYPTO_realloc(void *addr,int num, const char *file, int line);
 void *CRYPTO_realloc_clean(void *addr,int old_num,int num,const char *file,
 			   int line);
 void *CRYPTO_remalloc(void *addr,int num, const char *file, int line);
+
+#ifndef OPENSSL_NO_SECURE_HEAP
+#define OPENSSL_secure_malloc(num) \
+        CRYPTO_secure_malloc((int)num,__FILE__,__LINE__)
+#define OPENSSL_secure_free(addr) \
+        CRYPTO_secure_free(addr)
+
+int CRYPTO_secure_malloc_init(size_t sz, int minsize);
+void CRYPTO_secure_malloc_done();
+void *CRYPTO_secure_malloc(int num, const char *file, int line);
+void CRYPTO_secure_free(void *ptr);
+int CRYPTO_secure_allocated(const void *ptr);
+int CRYPTO_secure_malloc_initialized();
+
+int CRYPTO_set_secure_mem_functions(void *(*m)(size_t), void (*f)(void *));
+int CRYPTO_set_secure_mem_ex_functions(
+        void *(*m)(size_t,const char *,int),
+        void (*f)(void *));
+void CRYPTO_get_secure_mem_functions(void *(**m)(size_t), void (**f)(void *));
+void CRYPTO_get_secure_mem_ex_functions(
+        void *(**m)(size_t,const char *,int),
+        void (**f)(void *));
+#endif
 
 void OPENSSL_cleanse(void *ptr, size_t len);
 

@@ -89,6 +89,15 @@ static void *(*realloc_ex_func)(void *, size_t, const char *file, int line)
 
 static void (*free_func)(void *)            = free;
 
+#ifndef OPENSSL_NO_SECURE_HEAP
+static void *(*malloc_secure_func)(size_t)         = malloc;
+static void *default_malloc_secure_ex(size_t num, const char *file, int line)
+	{ return malloc_secure_func(num); }
+static void *(*malloc_secure_ex_func)(size_t, const char *file, int line)
+        = default_malloc_secure_ex;
+static void (*free_secure_func)(void *)            = free;
+#endif
+
 static void *(*malloc_locked_func)(size_t)  = malloc;
 static void *default_malloc_locked_ex(size_t num, const char *file, int line)
 	{ return malloc_locked_func(num); }
@@ -133,6 +142,12 @@ int CRYPTO_set_mem_functions(void *(*m)(size_t), void *(*r)(void *, size_t),
 	malloc_func=m; malloc_ex_func=default_malloc_ex;
 	realloc_func=r; realloc_ex_func=default_realloc_ex;
 	free_func=f;
+        /* If user wants to intercept the secure or locked functions, do it
+         * after the basic functions. */
+#ifndef OPENSSL_NO_SECURE_HEAP
+	malloc_secure_func=m; malloc_secure_ex_func=default_malloc_secure_ex;
+	free_secure_func=f;
+#endif
 	malloc_locked_func=m; malloc_locked_ex_func=default_malloc_locked_ex;
 	free_locked_func=f;
 	return 1;
@@ -150,10 +165,49 @@ int CRYPTO_set_mem_ex_functions(
 	malloc_func=0; malloc_ex_func=m;
 	realloc_func=0; realloc_ex_func=r;
 	free_func=f;
+#ifndef OPENSSL_NO_SECURE_HEAP
+	malloc_secure_func=0; malloc_secure_ex_func=m;
+	free_secure_func=f;
+#endif
 	malloc_locked_func=0; malloc_locked_ex_func=m;
 	free_locked_func=f;
 	return 1;
 	}
+
+#ifndef OPENSSL_NO_SECURE_HEAP
+int CRYPTO_set_secure_mem_functions(void *(*m)(size_t), void (*f)(void *))
+        {
+	/* Dummy call just to ensure OPENSSL_init() gets linked in */
+	OPENSSL_init();
+	if (!allow_customize)
+		return 0;
+	if ((m == 0) || (f == 0))
+		return 0;
+        malloc_secure_func=m; malloc_secure_ex_func=default_malloc_secure_ex;
+        free_secure_func=f;
+        /* If user wants to intercept the locked functions, do it after
+         * the secure functions. */
+        malloc_locked_func=m; malloc_locked_ex_func=default_malloc_secure_ex;
+        free_locked_func=f;
+        return 1;
+        }
+
+int CRYPTO_set_secure_mem_ex_functions(
+        void *(*m)(size_t,const char *,int),
+        void (*f)(void *))
+	{
+	if (!allow_customize)
+		return 0;
+	if ((m == NULL) || (f == NULL))
+		return 0;
+	malloc_secure_func=0; malloc_secure_ex_func=m;
+	free_secure_func=f;
+	malloc_locked_func=0; malloc_locked_ex_func=m;
+	free_locked_func=f;
+	return 1;
+	}
+#endif
+
 
 int CRYPTO_set_locked_mem_functions(void *(*m)(size_t), void (*f)(void *))
 	{
@@ -217,6 +271,24 @@ void CRYPTO_get_mem_ex_functions(
 	                    realloc_ex_func : 0;
 	if (f != NULL) *f=free_func;
 	}
+
+#ifndef OPENSSL_NO_SECURE_HEAP
+void CRYPTO_get_secure_mem_functions(void *(**m)(size_t), void (**f)(void *))
+	{
+	if (m != NULL) *m = (malloc_secure_ex_func == default_malloc_secure_ex) ? 
+	                     malloc_secure_func : 0;
+	if (f != NULL) *f=free_secure_func;
+	}
+
+void CRYPTO_get_secure_mem_ex_functions(
+        void *(**m)(size_t,const char *,int),
+        void (**f)(void *))
+	{
+	if (m != NULL) *m = (malloc_secure_ex_func != default_malloc_secure_ex) ?
+	                    malloc_secure_ex_func : 0;
+	if (f != NULL) *f=free_secure_func;
+	}
+#endif
 
 void CRYPTO_get_locked_mem_functions(void *(**m)(size_t), void (**f)(void *))
 	{
