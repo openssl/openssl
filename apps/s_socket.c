@@ -451,6 +451,7 @@ redoit:
 		if ((*host=(char *)OPENSSL_malloc(strlen(h1->h_name)+1)) == NULL)
 			{
 			perror("OPENSSL_malloc");
+			closesocket(ret);
 			return(0);
 			}
 		BUF_strlcpy(*host,h1->h_name,strlen(h1->h_name)+1);
@@ -459,11 +460,13 @@ redoit:
 		if (h2 == NULL)
 			{
 			BIO_printf(bio_err,"gethostbyname failure\n");
+			closesocket(ret);
 			return(0);
 			}
 		if (h2->h_addrtype != AF_INET)
 			{
 			BIO_printf(bio_err,"gethostbyname addr is not AF_INET\n");
+			closesocket(ret);
 			return(0);
 			}
 		}
