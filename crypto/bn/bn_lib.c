@@ -249,7 +249,13 @@ void BN_clear_free(BIGNUM *a)
 		{
 		OPENSSL_cleanse(a->d,a->dmax*sizeof(a->d[0]));
 		if (!(BN_get_flags(a,BN_FLG_STATIC_DATA)))
+			{
+#ifndef OPENSSL_NO_SECURE_HEAP
+			OPENSSL_secure_free(a->d);
+#else
 			OPENSSL_free(a->d);
+#endif
+			}
 		}
 	i=BN_get_flags(a,BN_FLG_MALLOCED);
 	OPENSSL_cleanse(a,sizeof(BIGNUM));
@@ -262,7 +268,13 @@ void BN_free(BIGNUM *a)
 	if (a == NULL) return;
 	bn_check_top(a);
 	if ((a->d != NULL) && !(BN_get_flags(a,BN_FLG_STATIC_DATA)))
+		{
+#ifndef OPENSSL_NO_SECURE_HEAP
+		OPENSSL_secure_free(a->d);
+#else
 		OPENSSL_free(a->d);
+#endif
+		}
 	if (a->flags & BN_FLG_MALLOCED)
 		OPENSSL_free(a);
 	else
@@ -318,7 +330,16 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
 		BNerr(BN_F_BN_EXPAND_INTERNAL,BN_R_EXPAND_ON_STATIC_BIGNUM_DATA);
 		return(NULL);
 		}
+#ifndef OPENSSL_NO_SECURE_HEAP
+	if (CRYPTO_secure_malloc_initialized() && (words > BN_MAX_WORDS))
+		{
+		BNerr(BN_F_BN_EXPAND_INTERNAL,BN_R_BIGNUM_TOO_LONG);
+		return NULL;
+		}
+	a=A=(BN_ULONG *)OPENSSL_secure_malloc(sizeof(BN_ULONG)*words);
+#else
 	a=A=(BN_ULONG *)OPENSSL_malloc(sizeof(BN_ULONG)*words);
+#endif
 	if (A == NULL)
 		{
 		BNerr(BN_F_BN_EXPAND_INTERNAL,ERR_R_MALLOC_FAILURE);
@@ -405,7 +426,11 @@ BIGNUM *bn_dup_expand(const BIGNUM *b, int words)
 			else
 				{
 				/* r == NULL, BN_new failure */
+#ifndef OPENSSL_NO_SECURE_HEAP
+				OPENSSL_secure_free(a);
+#else
 				OPENSSL_free(a);
+#endif
 				}
 			}
 		/* If a == NULL, there was an error in allocation in
@@ -435,7 +460,11 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
 		{
 		BN_ULONG *a = bn_expand_internal(b, words);
 		if(!a) return NULL;
+#ifndef OPENSSL_NO_SECURE_HEAP
+		if(b->d) OPENSSL_secure_free(b->d);
+#else
 		if(b->d) OPENSSL_free(b->d);
+#endif
 		b->d=a;
 		b->dmax=words;
 		}

@@ -1,0 +1,92 @@
+=pod
+
+=head1 NAME
+
+CRYPTO_secure_malloc_init, CRYPTO_secure_malloc_done, OPENSSL_secure_malloc, OPENSSL_secure_free, OPENSSL_secure_allocated - use secure heap storage
+
+=head1 SYNOPSIS
+
+ #include <openssl/crypto.h>
+
+ int CRYPTO_secure_malloc_init(size_t size, int minsize);
+
+ int CRYPTO_secure_malloc_initialized();
+
+ void CRYPTO_secure_malloc_done();
+
+ void *OPENSSL_secure_malloc(int num);
+
+ void OPENSSL_secure_free(void* ptr);
+
+ int OPENSSL_secure_allocated(const void* ptr);
+
+=head1 DESCRIPTION
+
+In order to help protect applications (particularly long-running servers)
+from pointer overruns or underruns that could return arbitrary data from
+the program's dynamic memory area, where keys and other sensitive
+information might be stored, OpenSSL supports the concept of a "secure heap."
+The level and type of security guarantees depend on the operating system.
+It is a good idea to review the code and see if it addresses your
+threat model and concerns.
+
+If a secure heap is used, then all B<BIGNUM> values are stored in that heap.
+This is more than strictly necessary -- the public part of an RSA key, for
+example, need not be kept private -- but it is a secure approach and least
+invasive to the OpenSSL source code.
+
+B<CRYPTO_secure_malloc_init> creates the secure heap, with the specified
+C<size> in bytes. The C<minsize> parameter is the minimum size to
+allocate from the heap. Both C<size> and C<minsize> must be a power
+of two.  It is an error to call this after any B<OPENSSL_secure_malloc>
+calls have been made.
+
+B<CRYPTO_secure_malloc_initialized> indicates whether or not the secure
+heap as been initialized and is available.
+
+B<CRYPTO_secure_malloc_done> releases the heap and makes the memory unavailable
+to the process. It can take noticeably long to complete.
+
+B<OPENSSL_secure_malloc> allocates C<num> bytes from the heap.
+If B<CRYPTO_secure_malloc_init> is not called, this is equivalent to
+calling B<OPENSSL_malloc>.
+
+B<OPENSSL_secure_free> releases the memory at C<ptr> back to the heap.
+It must be called with a value previously obtained from
+B<OPENSSL_secure_malloc>.
+If B<CRYPTO_secure_malloc_init> is not called, this is equivalent to
+calling B<OPENSSL_free>.
+
+B<OPENSSL_secure_allocated> tells whether or not a pointer is within
+the secure heap.
+
+=head1 RETURN VALUES
+
+B<CRYPTO_secure_malloc_init> returns 0 on failure, 1 if successful,
+and 2 if successful but the heap could not be protected by memory
+mapping.
+
+B<CRYPTO_secure_malloc_initialized> returns 1 if the secure heap is
+available (that is, if B<CRYPTO_secure_malloc_init> has been called,
+but B<CRYPTO_secure_malloc_done> has not) or 0 if not.
+
+B<OPENSSL_secure_malloc> returns a pointer into the secure heap of
+the requested size, or C<NULL> if memory could not be allocated.
+
+B<CRYPTO_secure_allocated> returns 1 if the pointer is in the
+the secure heap, or 0 if not.
+
+B<CRYPTO_secure_malloc_done> and B<OPENSSL_secure_free>
+return no values.
+
+=head1 SEE ALSO
+
+L<BN_new(3)|BN_new(3)>,
+L<bn_internal(3)|bn_internal(3)>
+
+=head1 HISTORY
+
+These functions were contributed to the OpenSSL project by
+Akamai Technologies in April, 2014.
+
+=cut
