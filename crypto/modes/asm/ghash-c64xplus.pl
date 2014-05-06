@@ -35,6 +35,10 @@ open STDOUT,">$output";
 
 $code.=<<___;
 	.text
+
+	.if	.ASSEMBLER_VERSION<7000000
+	.asg	0,__TI_EABI__
+	.endif
 	.if	__TI_EABI__
 	.asg	gcm_gmult_1bit,_gcm_gmult_1bit
 	.asg	gcm_gmult_4bit,_gcm_gmult_4bit
