@@ -1147,6 +1147,7 @@ int	ssl3_setup_write_buffer(SSL *s);
 int	ssl3_release_read_buffer(SSL *s);
 int	ssl3_release_write_buffer(SSL *s);
 int	ssl3_digest_cached_records(SSL *s);
+int	ssl3_digest_handshake_log(SSL *s, unsigned char *digest, unsigned int digest_maxlen);
 int	ssl3_new(SSL *s);
 void	ssl3_free(SSL *s);
 int	ssl3_accept(SSL *s);

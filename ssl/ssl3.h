@@ -578,6 +578,8 @@ typedef struct ssl3_state_st
         unsigned char previous_server_finished_len;
         int send_connection_binding; /* TODOEKR */
 
+        int extended_ms_seen;
+
 #ifndef OPENSSL_NO_NEXTPROTONEG
 	/* Set if we saw the Next Protocol Negotiation extension from our peer. */
 	int next_proto_neg_seen;

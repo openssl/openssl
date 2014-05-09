@@ -1150,6 +1150,10 @@ long SSL_ctrl(SSL *s,int cmd,long larg,void *parg)
 		if (s->s3)
 			return s->s3->send_connection_binding;
 		else return 0;
+	case SSL_CTRL_GET_EXT_MS_SUPPORT:
+		if (s->session)
+			return s->session->extended_master_key;
+		else return 0;
 	case SSL_CTRL_CERT_FLAGS:
 		return(s->cert->cert_flags|=larg);
 	case SSL_CTRL_CLEAR_CERT_FLAGS:

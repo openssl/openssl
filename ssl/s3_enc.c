@@ -656,6 +656,107 @@ int ssl3_digest_cached_records(SSL *s)
 	return 1;
 	}
 
+int ssl3_digest_handshake_log(SSL *s, unsigned char *digest, unsigned int digest_maxlen)
+	{
+	int i;
+	long mask;
+	const EVP_MD *md;
+	EVP_MD_CTX ctx;
+	long hdatalen;
+	void *hdata;
+
+	unsigned char *d = digest;
+	unsigned int dl = 0, hlen = 0;
+
+	EVP_MD_CTX *handshake_dgst[SSL_MAX_DIGEST * sizeof(EVP_MD_CTX *)];
+	memset(handshake_dgst,0,SSL_MAX_DIGEST *sizeof(EVP_MD_CTX *));
+
+	if (s->s3->handshake_buffer && !(s->s3->flags & TLS1_FLAGS_KEEP_HANDSHAKE))
+		{
+		/* We don't have a running hash. Compute it now */
+		hdatalen = BIO_get_mem_data(s->s3->handshake_buffer,&hdata);
+		if (hdatalen <= 0)
+			{
+			SSLerr(SSL_F_SSL3_DIGEST_HANDSHAKE_LOG, SSL_R_BAD_HANDSHAKE_LENGTH);
+			return 0;
+			}
+
+		/* Loop through bits of algorithm2 field and create MD_CTX-es */
+		for (i=0;ssl_get_handshake_digest(i,&mask,&md); i++)
+			{
+			if ((mask & ssl_get_algorithm2(s)) && md)
+				{
+				handshake_dgst[i]=EVP_MD_CTX_create();
+#ifdef OPENSSL_FIPS
+				if (EVP_MD_nid(md) == NID_md5)
+					{
+					EVP_MD_CTX_set_flags(handshake_dgst[i],
+							EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
+					}
+#endif
+				EVP_DigestInit_ex(handshake_dgst[i],md,NULL);
+				EVP_DigestUpdate(handshake_dgst[i],hdata,hdatalen);
+				}
+			else
+				{
+				handshake_dgst[i]=NULL;
+				}
+			}
+		}
+	else
+		{
+		/* Use the running hash */
+		for (i=0;i<SSL_MAX_DIGEST;i++)
+			{
+			handshake_dgst[i] = s->s3->handshake_dgst[i];
+			}
+		}
+
+	/* Here handshake_dgst contains the running hash. Let's finalize it */
+
+	EVP_MD_CTX_init(&ctx);
+
+	for (i=0;ssl_get_handshake_digest(i,&mask,&md);i++)
+		{
+		if (mask & ssl_get_algorithm2(s))
+			{
+			int hashsize = EVP_MD_size(md);
+			if (hashsize < 0 || hashsize + dl > digest_maxlen)
+				{
+				/* internal error: 'digest' is too small for this cipersuite! */
+				dl = 0;
+				break;
+				}
+			else
+				{
+				EVP_MD_CTX_copy_ex(&ctx,handshake_dgst[i]);
+				EVP_DigestFinal_ex(&ctx,d,&hlen);
+				if (hlen != (unsigned int)hashsize) /* can't really happen */
+					{
+					dl =0;
+					break;
+					}
+				d+=hlen;
+				dl+=hlen;
+				}
+			}
+		}
+
+	EVP_MD_CTX_cleanup(&ctx);
+
+	/* cleanup */
+	if (s->s3->handshake_buffer && !(s->s3->flags & TLS1_FLAGS_KEEP_HANDSHAKE))
+		{
+		for (i=0; i<SSL_MAX_DIGEST;i++)
+			{
+			if (handshake_dgst[i])
+				EVP_MD_CTX_destroy(handshake_dgst[i]);
+			}
+		}
+
+	return dl;
+	}
+
 int ssl3_cert_verify_mac(SSL *s, int md_nid, unsigned char *p)
 	{
 	return(ssl3_handshake_mac(s,md_nid,NULL,0,p));
@@ -862,6 +963,17 @@ int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
 #ifdef OPENSSL_SSL_TRACE_CRYPTO
 	unsigned char *tmpout = out;
 #endif
+	unsigned char session_hash[SSL_MAX_DIGEST*EVP_MAX_MD_SIZE];
+	unsigned int session_hash_len=0;
+
+	if (s->s3->extended_ms_seen)
+		{
+		session_hash_len =
+			ssl3_digest_handshake_log(s,
+				session_hash,
+				sizeof session_hash);
+		s->session->extended_master_key = 1;
+		}
 
 	EVP_MD_CTX_init(&ctx);
 	for (i=0; i<3; i++)
@@ -869,10 +981,18 @@ int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
 		EVP_DigestInit_ex(&ctx,s->ctx->sha1, NULL);
 		EVP_DigestUpdate(&ctx,salt[i],strlen((const char *)salt[i]));
 		EVP_DigestUpdate(&ctx,p,len);
+		if (s->s3->extended_ms_seen)
+			{
+			EVP_DigestUpdate(&ctx,
+				session_hash,session_hash_len);
+			}
+		else
+			{
 		EVP_DigestUpdate(&ctx,&(s->s3->client_random[0]),
 			SSL3_RANDOM_SIZE);
 		EVP_DigestUpdate(&ctx,&(s->s3->server_random[0]),
 			SSL3_RANDOM_SIZE);
+			}
 		EVP_DigestFinal_ex(&ctx,buf,&n);
 
 		EVP_DigestInit_ex(&ctx,s->ctx->md5, NULL);
