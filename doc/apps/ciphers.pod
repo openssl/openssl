@@ -597,7 +597,7 @@ encryption.
 
 Set security level to 2 and display all ciphers consistent with level 2:
 
- openssl ciphers -v 'ALL:@SECLEVEL=2'
+ openssl ciphers -s -v 'ALL:@SECLEVEL=2'
 
 =head1 SEE ALSO
 
