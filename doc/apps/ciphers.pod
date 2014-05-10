@@ -463,7 +463,7 @@ Note: these ciphers can also be used in SSL v3.
  TLS_DHE_DSS_WITH_RC4_128_SHA            DHE-DSS-RC4-SHA
 
 =head2 Elliptic curve cipher suites.
- 
+
  TLS_ECDH_RSA_WITH_NULL_SHA              ECDH-RSA-NULL-SHA
  TLS_ECDH_RSA_WITH_RC4_128_SHA           ECDH-RSA-RC4-SHA
  TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA      ECDH-RSA-DES-CBC3-SHA
