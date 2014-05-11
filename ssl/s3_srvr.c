@@ -2979,6 +2979,8 @@ int ssl3_get_client_key_exchange(SSL *s)
 			unsigned char premaster_secret[32], *start;
 			size_t outlen=32, inlen;
 			unsigned long alg_a;
+			int Ttag, Tclass;
+			long Tlen;
 
 			/* Get our certificate private key*/
 			alg_a = s->s3->tmp.new_cipher->algorithm_auth;
@@ -3000,26 +3002,15 @@ int ssl3_get_client_key_exchange(SSL *s)
 					ERR_clear_error();
 				}
 			/* Decrypt session key */
-			if ((*p!=( V_ASN1_SEQUENCE| V_ASN1_CONSTRUCTED))) 
+			if (ASN1_get_object((const unsigned char **)&p, &Tlen, &Ttag, &Tclass, n) != V_ASN1_CONSTRUCTED || 
+				Ttag != V_ASN1_SEQUENCE ||
+			 	Tclass != V_ASN1_UNIVERSAL) 
 				{
 				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_DECRYPTION_FAILED);
 				goto gerr;
 				}
-			if (p[1] == 0x81)
-				{
-				start = p+3;
-				inlen = p[2];
-				}
-			else if (p[1] < 0x80)
-				{
-				start = p+2;
-				inlen = p[1];
-				}
-			else
-				{
-				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_DECRYPTION_FAILED);
-				goto gerr;
-				}
+			start = p;
+			inlen = Tlen;
 			if (EVP_PKEY_decrypt(pkey_ctx,premaster_secret,&outlen,start,inlen) <=0) 
 
 				{
