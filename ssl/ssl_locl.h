@@ -292,10 +292,12 @@
 #define SSL_kDHr		0x00000002L /* DH cert, RSA CA cert */
 #define SSL_kDHd		0x00000004L /* DH cert, DSA CA cert */
 #define SSL_kEDH		0x00000008L /* tmp DH key no DH cert */
+#define SSL_kDHE		SSL_kEDH /* forward-compatible synonym */
 #define SSL_kKRB5		0x00000010L /* Kerberos5 key exchange */
 #define SSL_kECDHr		0x00000020L /* ECDH cert, RSA CA cert */
 #define SSL_kECDHe		0x00000040L /* ECDH cert, ECDSA CA cert */
 #define SSL_kEECDH		0x00000080L /* ephemeral ECDH */
+#define SSL_kECDHE		SSL_kEECDH /* forward-compatible synonym */
 #define SSL_kPSK		0x00000100L /* PSK */
 #define SSL_kGOST       0x00000200L /* GOST key exchange */
 #define SSL_kSRP        0x00000400L /* SRP */
