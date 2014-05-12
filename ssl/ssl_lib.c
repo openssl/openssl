@@ -1467,11 +1467,12 @@ char *SSL_get_shared_ciphers(const SSL *s,char *buf,int len)
 		(len < 2))
 		return(NULL);
 
+	p=buf;
+	sk=s->session->ciphers;
+
 	if (sk_SSL_CIPHER_num(sk) == 0)
 		return NULL;
 
-	p=buf;
-	sk=s->session->ciphers;
 	for (i=0; i<sk_SSL_CIPHER_num(sk); i++)
 		{
 		int n;
