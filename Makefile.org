@@ -375,11 +375,11 @@ libssl.pc: Makefile
 	    echo 'libdir=$${exec_prefix}/$(LIBDIR)'; \
 	    echo 'includedir=$${prefix}/include'; \
 	    echo ''; \
-	    echo 'Name: OpenSSL'; \
+	    echo 'Name: OpenSSL-libssl'; \
 	    echo 'Description: Secure Sockets Layer and cryptography libraries'; \
 	    echo 'Version: '$(VERSION); \
-	    echo 'Requires: '; \
-	    echo 'Libs: -L$${libdir} -lssl -lcrypto'; \
+	    echo 'Requires.private: libcrypto'; \
+	    echo 'Libs: -L$${libdir} -lssl'; \
 	    echo 'Libs.private: $(EX_LIBS)'; \
 	    echo 'Cflags: -I$${includedir} $(KRB5_INCLUDES)' ) > libssl.pc
 
@@ -392,10 +392,7 @@ openssl.pc: Makefile
 	    echo 'Name: OpenSSL'; \
 	    echo 'Description: Secure Sockets Layer and cryptography libraries and tools'; \
 	    echo 'Version: '$(VERSION); \
-	    echo 'Requires: '; \
-	    echo 'Libs: -L$${libdir} -lssl -lcrypto'; \
-	    echo 'Libs.private: $(EX_LIBS)'; \
-	    echo 'Cflags: -I$${includedir} $(KRB5_INCLUDES)' ) > openssl.pc
+	    echo 'Requires: libssl libcrypto' ) > openssl.pc
 
 Makefile: Makefile.org Configure config
 	@echo "Makefile is older than Makefile.org, Configure or config."
