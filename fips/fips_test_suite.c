@@ -714,6 +714,18 @@ static int do_drbg_all(void)
 		{NID_aes_128_ctr, DRBG_FLAG_CTR_USE_DF},
 		{NID_aes_192_ctr, DRBG_FLAG_CTR_USE_DF},
 		{NID_aes_256_ctr, DRBG_FLAG_CTR_USE_DF},
+		{(NID_X9_62_prime256v1 << 16)|NID_sha1, 0},
+		{(NID_X9_62_prime256v1 << 16)|NID_sha224, 0},
+		{(NID_X9_62_prime256v1 << 16)|NID_sha256, 0},
+		{(NID_X9_62_prime256v1 << 16)|NID_sha384, 0},
+		{(NID_X9_62_prime256v1 << 16)|NID_sha512, 0},
+		{(NID_secp384r1 << 16)|NID_sha224, 0},
+		{(NID_secp384r1 << 16)|NID_sha256, 0},
+		{(NID_secp384r1 << 16)|NID_sha384, 0},
+		{(NID_secp384r1 << 16)|NID_sha512, 0},
+		{(NID_secp521r1 << 16)|NID_sha256, 0},
+		{(NID_secp521r1 << 16)|NID_sha384, 0},
+		{(NID_secp521r1 << 16)|NID_sha512, 0},
 		{0, 0}
 	};
     DRBG_LIST *lst;

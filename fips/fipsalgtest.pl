@@ -434,6 +434,7 @@ my @fips_drbg_test_list = (
     # SP800-90 DRBG tests
     "SP800-90 DRBG",
     [ "CTR_DRBG",   "fips_drbgvs" ],
+    [ "Dual_EC_DRBG",   "fips_drbgvs" ],
     [ "Hash_DRBG",  "fips_drbgvs" ],
     [ "HMAC_DRBG",  "fips_drbgvs" ]
 
