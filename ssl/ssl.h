@@ -245,11 +245,13 @@ extern "C" {
 #define SSL_TXT_kDHd		"kDHd" /* no such ciphersuites supported! */
 #define SSL_TXT_kDH 		"kDH"  /* no such ciphersuites supported! */
 #define SSL_TXT_kEDH		"kEDH"
+#define SSL_TXT_kDHE		"kDHE" /* alias for kEDH */
 #define SSL_TXT_kKRB5     	"kKRB5"
 #define SSL_TXT_kECDHr		"kECDHr"
 #define SSL_TXT_kECDHe		"kECDHe"
 #define SSL_TXT_kECDH		"kECDH"
 #define SSL_TXT_kEECDH		"kEECDH"
+#define SSL_TXT_kECDHE		"kECDHE" /* alias for kEECDH */
 #define SSL_TXT_kPSK            "kPSK"
 #define SSL_TXT_kGOST		"kGOST"
 #define SSL_TXT_kSRP		"kSRP"
@@ -269,10 +271,12 @@ extern "C" {
 #define	SSL_TXT_DSS		"DSS"
 #define SSL_TXT_DH		"DH"
 #define SSL_TXT_EDH		"EDH" /* same as "kEDH:-ADH" */
+#define SSL_TXT_DHE		"DHE" /* alias for EDH */
 #define SSL_TXT_ADH		"ADH"
 #define SSL_TXT_RSA		"RSA"
 #define SSL_TXT_ECDH		"ECDH"
 #define SSL_TXT_EECDH		"EECDH" /* same as "kEECDH:-AECDH" */
+#define SSL_TXT_ECDHE		"ECDHE" /* alias for ECDHE" */
 #define SSL_TXT_AECDH		"AECDH"
 #define SSL_TXT_ECDSA		"ECDSA"
 #define SSL_TXT_KRB5      	"KRB5"
