@@ -166,6 +166,10 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "mips4-sgi-irix64"; exit 0
 	;;
 
+    Linux:[2-9].*:cross:x86_64)
+	echo "${MACHINE}-cross-linux"; exit 0
+	;;
+
     Linux:[2-9].*)
 	echo "${MACHINE}-whatever-linux2"; exit 0
 	;;
@@ -684,6 +688,7 @@ case "$GUESSOS" in
         fi ;;
   *-*-linux1) OUT="linux-aout" ;;
   *-*-linux2) OUT="linux-generic32" ;;
+  *-cross-linux) OUT="linux-x86_64-cross" ;;
   sun4[uv]*-*-solaris2)
 	OUT="solaris-sparcv9-$CC"
 	ISA64=`(isalist) 2>/dev/null | grep sparcv9`
