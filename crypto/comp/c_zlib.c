@@ -416,8 +416,13 @@ err:
 void COMP_zlib_cleanup(void)
 	{
 #ifdef ZLIB_SHARED
-	if (zlib_dso)
-		DSO_free(zlib_dso);
+    if (zlib_loaded){
+	    if (zlib_dso){
+		    DSO_free(zlib_dso);
+            zlib_dso = NULL;
+        }
+        zlib_loaded = 0;
+    }
 #endif
 	}
 
