@@ -274,4 +274,8 @@ The B<enc> program only supports a fixed number of algorithms with
 certain parameters. So if, for example, you want to use RC2 with a
 76 bit key or RC4 with an 84 bit key you can't use this program.
 
+The B<enc> program does not support authenticated encryption modes
+like CCM and GCM. The utility does not store or retrieve the
+authentication tag.
+
 =cut
