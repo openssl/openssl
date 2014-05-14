@@ -52,7 +52,7 @@ DSA_SIG *gost_do_sign(const unsigned char *dgst,int dlen, DSA *dsa)
 	{
 	BIGNUM *k=NULL,*tmp=NULL,*tmp2=NULL;
 	DSA_SIG *newsig = DSA_SIG_new();
-	BIGNUM *md = hashsum2bn(dgst);
+	BIGNUM *md = hashsum2bn(dgst,dlen);
 	/* check if H(M) mod q is zero */
 	BN_CTX *ctx=BN_CTX_new();
 	BN_CTX_start(ctx);
@@ -149,7 +149,7 @@ int gost_do_verify(const unsigned char *dgst, int dgst_len,
 		GOSTerr(GOST_F_GOST_DO_VERIFY,GOST_R_SIGNATURE_PARTS_GREATER_THAN_Q);
 		return 0;
 		}
-	md=hashsum2bn(dgst);
+	md=hashsum2bn(dgst,dgst_len);
 	
 	tmp=BN_CTX_get(ctx);
 	v=BN_CTX_get(ctx);
@@ -279,15 +279,16 @@ DSA_SIG *unpack_cp_signature(const unsigned char *sig,size_t siglen)
 	}
 
 /* Convert little-endian byte array into bignum */
-BIGNUM *hashsum2bn(const unsigned char *dgst)
+BIGNUM *hashsum2bn(const unsigned char *dgst,int dlen)
 	{
-	unsigned char buf[32];
+	unsigned char buf[64];    
 	int i;
-	for (i=0;i<32;i++)
+    OPENSSL_assert(dlen==32 || dlen == 64);
+	for (i=0;i<dlen;i++)
 		{
-		buf[31-i]=dgst[i];
+		buf[dlen-1-i]=dgst[i];
 		}
-	return getbnfrombuf(buf,32);
+	return getbnfrombuf(buf,dlen);
 	}
 
 /* Convert byte buffer to bignum, skipping leading zeros*/

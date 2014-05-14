@@ -31,14 +31,12 @@ void dump_dsa_sig(const char *message, DSA_SIG *sig);
  * Also fils DSA->q field with copy of EC_GROUP order field to make
  * DSA_size function work
  */ 
-int fill_GOST2001_params(EC_KEY *eckey, int nid)
+void fill_GOST_EC_params(EC_KEY *eckey, R3410_2001_params *params)
 	{
-	R3410_2001_params *params = R3410_2001_paramset;
 	EC_GROUP *grp=NULL;
 	BIGNUM *p=NULL,*q=NULL,*a=NULL,*b=NULL,*x=NULL,*y=NULL;
 	EC_POINT *P=NULL;
 	BN_CTX *ctx=BN_CTX_new();
-	int ok=0;
 	
 	BN_CTX_start(ctx);
 	p=BN_CTX_get(ctx);
@@ -47,12 +45,6 @@ int fill_GOST2001_params(EC_KEY *eckey, int nid)
 	x=BN_CTX_get(ctx);
 	y=BN_CTX_get(ctx);
 	q=BN_CTX_get(ctx);
-	while (params->nid!=NID_undef && params->nid != nid) params++;
-	if (params->nid == NID_undef)
-		{
-		GOSTerr(GOST_F_FILL_GOST2001_PARAMS,GOST_R_UNSUPPORTED_PARAMETER_SET);
-		goto err;
-		}	
 	BN_hex2bn(&p,params->p);
 	BN_hex2bn(&a,params->a);
 	BN_hex2bn(&b,params->b);
@@ -76,15 +68,44 @@ int fill_GOST2001_params(EC_KEY *eckey, int nid)
 	EC_GROUP_set_curve_name(grp,params->nid);
 
 	EC_KEY_set_group(eckey,grp);
-	ok=1;
-	err:
 	EC_POINT_free(P);
 	EC_GROUP_free(grp);
 	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
-	return ok;
-	}	
+	}
 
+int fill_GOST2001_params(EC_KEY *eckey, int nid)
+	{
+	R3410_2001_params *params = R3410_2001_paramset;
+
+	while (params->nid!=NID_undef && params->nid != nid) params++;
+	if (params->nid == NID_undef)
+		{
+		GOSTerr(GOST_F_FILL_GOST2001_PARAMS,GOST_R_UNSUPPORTED_PARAMETER_SET);
+		return 0;
+		}
+	fill_GOST_EC_params(eckey, params);
+	return 1;
+	}
+
+// paramset selection is exactly the same
+int fill_GOST2012_256_params(EC_KEY *eckey, int nid)
+	{
+	return fill_GOST2001_params(eckey, nid);
+	}
+
+int fill_GOST2012_512_params(EC_KEY *eckey, int nid)
+	{
+	R3410_2001_params *params = R3410_2012_512_paramset;
+	while (params->nid!=NID_undef && params->nid != nid) params++;
+	if (params->nid == NID_undef)
+		{
+		GOSTerr(GOST_F_FILL_GOST2001_PARAMS,GOST_R_UNSUPPORTED_PARAMETER_SET);
+		return 0;
+		}
+	fill_GOST_EC_params(eckey, params);
+	return 1;
+	}
 
 /*
  * Computes gost2001 signature as DSA_SIG structure 
@@ -94,7 +115,7 @@ int fill_GOST2001_params(EC_KEY *eckey, int nid)
 DSA_SIG *gost2001_do_sign(const unsigned char *dgst,int dlen, EC_KEY *eckey)
 	{
 	DSA_SIG *newsig = NULL;
-	BIGNUM *md = hashsum2bn(dgst);
+	BIGNUM *md = hashsum2bn(dgst,dlen);
 	BIGNUM *order = NULL;
 	const EC_GROUP *group;
 	const BIGNUM *priv_key;
@@ -102,7 +123,7 @@ DSA_SIG *gost2001_do_sign(const unsigned char *dgst,int dlen, EC_KEY *eckey)
 	EC_POINT *C=NULL;
 	BN_CTX *ctx = BN_CTX_new();	
 	BN_CTX_start(ctx);
-	OPENSSL_assert(dlen==32);
+	OPENSSL_assert(dlen==32 || dlen==64);
 	newsig=DSA_SIG_new();
 	if (!newsig) 
 		{
@@ -138,7 +159,15 @@ DSA_SIG *gost2001_do_sign(const unsigned char *dgst,int dlen, EC_KEY *eckey)
 				DSA_SIG_free(newsig);
 				newsig = NULL;
 				goto err;
-				}	
+				}
+			/* To avoid timing information leaking the length of k,
+			   compute C*k using an equivalent scalar of fixed bit-length
+			*/
+			if (!BN_add(k,k,order)) goto err;
+			if (BN_num_bits(k) <= BN_num_bits(order))
+				{
+				if (!BN_add(k,k,order)) goto err;
+				}
 			if (!EC_POINT_mul(group,C,k,NULL,NULL,ctx))
 				{
 				GOSTerr(GOST_F_GOST2001_DO_SIGN,ERR_R_EC_LIB);
@@ -170,7 +199,7 @@ DSA_SIG *gost2001_do_sign(const unsigned char *dgst,int dlen, EC_KEY *eckey)
 
 	newsig->s=BN_dup(s);
 	newsig->r=BN_dup(r);
-	err:			
+err:
 	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 	EC_POINT_free(C);
@@ -212,7 +241,7 @@ int gost2001_do_verify(const unsigned char *dgst,int dgst_len,
 		goto err;
 
 		}
-	md = hashsum2bn(dgst);
+	md = hashsum2bn(dgst,dgst_len);
 
 	BN_mod(e,md,order,ctx);
 #ifdef DEBUG_SIGN

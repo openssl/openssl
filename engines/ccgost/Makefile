@@ -9,10 +9,11 @@ CFLAGS= $(INCLUDES) $(CFLAG)
 LIB=$(TOP)/libcrypto.a
 
 TEST=gost2814789t.c
+TEST2=gosthash12t.c
 
-LIBSRC= gost2001.c gost2001_keyx.c gost89.c gost94_keyx.c gost_ameth.c gost_asn1.c gost_crypt.c gost_ctl.c gost_eng.c gosthash.c gost_keywrap.c gost_md.c gost_params.c gost_pmeth.c gost_sign.c
+LIBSRC= gost2001.c gost2001_keyx.c gost89.c gost94_keyx.c gost_ameth.c gost_asn1.c gost_crypt.c gost_ctl.c gost_eng.c gosthash.c gosthash12.c gost_keywrap.c gost_md.c gost_params.c gost_pmeth.c gost_sign.c
 
-LIBOBJ= e_gost_err.o gost2001_keyx.o gost2001.o gost89.o gost94_keyx.o gost_ameth.o gost_asn1.o gost_crypt.o gost_ctl.o gost_eng.o gosthash.o gost_keywrap.o gost_md.o gost_params.o gost_pmeth.o gost_sign.o
+LIBOBJ= e_gost_err.o gost2001_keyx.o gost2001.o gost89.o gost94_keyx.o gost_ameth.o gost_asn1.o gost_crypt.o gost_ctl.o gost_eng.o gosthash.o gosthash12.o gost_keywrap.o gost_md.o gost_params.o gost_pmeth.o gost_sign.o
 
 SRC=$(LIBSRC)
 
@@ -66,6 +67,7 @@ install:
 
 links:
 	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
+	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST2)
 
 tests:
 
@@ -232,7 +234,7 @@ gost_md.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
 gost_md.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 gost_md.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 gost_md.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-gost_md.o: e_gost_err.h gost89.h gost_lcl.h gost_md.c gosthash.h
+gost_md.o: e_gost_err.h gost89.h gost_lcl.h gost_md.c gosthash.h gosthash12.h
 gost_params.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 gost_params.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 gost_params.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
@@ -275,3 +277,10 @@ gost_sign.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 gost_sign.o: e_gost_err.h gost89.h gost_lcl.h gost_params.h gost_sign.c
 gost_sign.o: gosthash.h
 gosthash.o: gost89.h gosthash.c gosthash.h
+gosthash12.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+gosthash12.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+gosthash12.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+gosthash12.o: ../../include/openssl/opensslconf.h
+gosthash12.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+gosthash12.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+gosthash12.o: ../../include/openssl/symhacks.h gosthash12.c gosthash12.h

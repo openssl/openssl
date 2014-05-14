@@ -14,8 +14,16 @@ GOST R 34.10-94 and GOST R 34.10-2001 - digital signature algorithms.
    256 bit private keys. Public keys are 1024 bit for 94 and 512 bit for
    2001 (which is elliptic-curve based). Key exchange algorithms
    (VKO R 34.10) are supported on these keys too.
-   
+
+GOST R 34.10-2012 - digital signature algorithm.
+   Consists of 2 versions with 256 bit and 512 bit private keys.
+   Both are based on elliptic curve and have public keys of 512 bit
+   and 1024 bit respectively.
+
 GOST R 34.11-94  Message digest algorithm. 256-bit hash value
+
+GOST R 34.11-2012 Message digest algorithm. Has versions with 
+    256-bit and 512-bit hash values.
 
 GOST 28147-89 - Symmetric cipher  with 256-bit key. Various modes are
    defined in the standard, but only CFB and CNT modes are implemented
@@ -105,6 +113,8 @@ USAGE WITH COMMAND LINE openssl UTILITY
   are supported by 
   	gost94: 0,A,B,C,D,XA,XB,XC
 	gost2001: 0,A,B,C,XA,XB
+        gost2012-256: 0,A,B,C,XA,XB
+        gost2012-512: A,B
   You can also use numeric representation of OID as to destinate
   paramset.
 
@@ -183,6 +193,16 @@ Russian clients and RSA/DSA ciphersuites for foreign clients.
  So, to obtain correct digest value, such as produced by gostsum utility
  included in the engine distribution, bytes of output should be
  reversed.
+ 
+ Calculation of GOST R 34.11-2012 message digest
+ 
+ 256-bit version:
+ 
+ openssl dgst -md_gost12_256 datafile
+ 
+ 512-bit version:
+ 
+ openssl dgst -md_gost12_512 datafile
  
  Calculation of HMAC based on GOST R 34.11-94
 

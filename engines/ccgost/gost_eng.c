@@ -36,18 +36,24 @@ static int gost_cipher_nids[] =
     {NID_id_Gost28147_89, NID_gost89_cnt,0};
 
 static int gost_digest_nids[] =
-	{NID_id_GostR3411_94,NID_id_Gost28147_89_MAC, 0};
+	{NID_id_GostR3411_94,NID_id_Gost28147_89_MAC, 
+	 NID_id_tc26_gost3411_12_256,NID_id_tc26_gost3411_12_512,0};
 
 static int gost_pkey_meth_nids[] = 
-	{NID_id_GostR3410_94,
-	 NID_id_GostR3410_2001, NID_id_Gost28147_89_MAC, 0};
+	{NID_id_GostR3410_94, NID_id_GostR3410_2001, 
+	 NID_id_tc26_gost3410_12_256,NID_id_tc26_gost3410_12_512,
+	 NID_id_Gost28147_89_MAC, 0};
 
 static EVP_PKEY_METHOD *pmeth_GostR3410_94 = NULL,
-	 *pmeth_GostR3410_2001 = NULL,
+	*pmeth_GostR3410_2001 = NULL,
+	*pmeth_GostR3410_2012_256 = NULL,
+	*pmeth_GostR3410_2012_512 = NULL,
 	*pmeth_Gost28147_MAC = NULL;
 
 static EVP_PKEY_ASN1_METHOD *ameth_GostR3410_94 = NULL,
 	*ameth_GostR3410_2001 = NULL,
+	*ameth_GostR3410_2012_256 = NULL,
+	*ameth_GostR3410_2012_512 = NULL,
 	*ameth_Gost28147_MAC = NULL;
 
 
@@ -67,9 +73,13 @@ static int gost_engine_destroy(ENGINE *e)
 
 	pmeth_GostR3410_94 = NULL;
 	pmeth_GostR3410_2001 = NULL;
+	pmeth_GostR3410_2012_256 = NULL;
+	pmeth_GostR3410_2012_512 = NULL;
 	pmeth_Gost28147_MAC = NULL;
 	ameth_GostR3410_94 = NULL;
 	ameth_GostR3410_2001 = NULL;
+	ameth_GostR3410_2012_256 = NULL;
+	ameth_GostR3410_2012_512 = NULL;
 	ameth_Gost28147_MAC = NULL;
 	return 1;
 	}
@@ -129,11 +139,17 @@ static int bind_gost (ENGINE *e,const char *id)
 
 	if (!register_ameth_gost(NID_id_GostR3410_94, &ameth_GostR3410_94, "GOST94", "GOST R 34.10-94")) goto end;
 	if (!register_ameth_gost(NID_id_GostR3410_2001, &ameth_GostR3410_2001, "GOST2001", "GOST R 34.10-2001")) goto end;
+	if (!register_ameth_gost(NID_id_tc26_gost3410_12_256, &ameth_GostR3410_2012_256, 
+		"GOST2012-256", "GOST R 34.10-2012 256bit")) goto end;
+	if (!register_ameth_gost(NID_id_tc26_gost3410_12_512, &ameth_GostR3410_2012_512, 
+		"GOST2012-512", "GOST R 34.10-2012 512bit")) goto end;
 	if (!register_ameth_gost(NID_id_Gost28147_89_MAC, &ameth_Gost28147_MAC,
 		"GOST-MAC", "GOST 28147-89 MAC")) goto end;
 
 	if (!register_pmeth_gost(NID_id_GostR3410_94, &pmeth_GostR3410_94, 0)) goto end;
 	if (!register_pmeth_gost(NID_id_GostR3410_2001, &pmeth_GostR3410_2001, 0)) goto end;
+	if (!register_pmeth_gost(NID_id_tc26_gost3410_12_256, &pmeth_GostR3410_2012_256, 0)) goto end;
+	if (!register_pmeth_gost(NID_id_tc26_gost3410_12_512, &pmeth_GostR3410_2012_512, 0)) goto end;
 	if (!register_pmeth_gost(NID_id_Gost28147_89_MAC, &pmeth_Gost28147_MAC, 0))
 		goto end;
 	if ( ! ENGINE_register_ciphers(e)
@@ -143,6 +159,8 @@ static int bind_gost (ENGINE *e,const char *id)
 		|| ! EVP_add_cipher(&cipher_gost)
 		|| ! EVP_add_cipher(&cipher_gost_cpacnt)
 		|| ! EVP_add_digest(&digest_gost)
+		|| ! EVP_add_digest(&digest_gost12_256)
+		|| ! EVP_add_digest(&digest_gost12_512)
 		|| ! EVP_add_digest(&imit_gost_cpa)
 		)
 		{
@@ -167,7 +185,7 @@ static int gost_digests(ENGINE *e, const EVP_MD **digest,
 	if (!digest) 
 		{
 		*nids = gost_digest_nids;
-		return 2; 
+		return 4; 
 		}
 	/*printf("Digest no %d requested\n",nid);*/
 	if(nid == NID_id_GostR3411_94) 
@@ -178,13 +196,21 @@ static int gost_digests(ENGINE *e, const EVP_MD **digest,
 		{
 		*digest = &imit_gost_cpa;
 		}
+	else if (nid == NID_id_tc26_gost3411_12_256) 
+		{
+		*digest = &digest_gost12_256;
+		}
+	else if (nid == NID_id_tc26_gost3411_12_512) 
+		{
+		*digest = &digest_gost12_512;
+		}
 	else
 		{
 		ok =0;
 		*digest = NULL;
 		}
 	return ok;
-	}	
+	}
 	
 static int gost_ciphers (ENGINE *e,const EVP_CIPHER **cipher,
 	const int **nids, int nid) 
@@ -218,7 +244,7 @@ static int gost_pkey_meths (ENGINE *e, EVP_PKEY_METHOD **pmeth,
 	if (!pmeth) 
 		{
 		*nids = gost_pkey_meth_nids;
-		return 3;
+		return 5;
 		}
 
 	switch (nid) 
@@ -226,6 +252,8 @@ static int gost_pkey_meths (ENGINE *e, EVP_PKEY_METHOD **pmeth,
 		case NID_id_GostR3410_94: *pmeth = pmeth_GostR3410_94; return 1;
 		case NID_id_GostR3410_2001: *pmeth = pmeth_GostR3410_2001; return 1;
 		case NID_id_Gost28147_89_MAC: *pmeth = pmeth_Gost28147_MAC; return 1;
+		case NID_id_tc26_gost3410_12_256: *pmeth = pmeth_GostR3410_2012_256; return 1;
+		case NID_id_tc26_gost3410_12_512: *pmeth = pmeth_GostR3410_2012_512; return 1;
 		default:;
 		}
 	
@@ -236,17 +264,19 @@ static int gost_pkey_meths (ENGINE *e, EVP_PKEY_METHOD **pmeth,
 static int gost_pkey_asn1_meths (ENGINE *e, EVP_PKEY_ASN1_METHOD **ameth,
 	const int **nids, int nid)
 	{
+
 	if (!ameth) 
 		{
 		*nids = gost_pkey_meth_nids;
-		return 3;
+		return 5;
 		}
 	switch (nid) 
 		{
 		case NID_id_GostR3410_94: *ameth = ameth_GostR3410_94; return 1;
 		case NID_id_GostR3410_2001: *ameth = ameth_GostR3410_2001; return 1;
 		case NID_id_Gost28147_89_MAC: *ameth = ameth_Gost28147_MAC; return 1;
-	
+		case NID_id_tc26_gost3410_12_256: *ameth = ameth_GostR3410_2012_256; return 1;
+		case NID_id_tc26_gost3410_12_512: *ameth = ameth_GostR3410_2012_512; return 1;
 		default:;
 		}
 	
