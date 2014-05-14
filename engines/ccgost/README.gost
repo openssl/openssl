@@ -17,6 +17,9 @@ GOST R 34.10-94 and GOST R 34.10-2001 - digital signature algorithms.
    
 GOST R 34.11-94  Message digest algorithm. 256-bit hash value
 
+GOST R 34.11-2012 Message digest algorithm. Has versions with 
+    256-bit and 512-bit hash values.
+
 GOST 28147-89 - Symmetric cipher  with 256-bit key. Various modes are
    defined in the standard, but only CFB and CNT modes are implemented
    in the engine. To make statistical analysis more difficult, key
@@ -183,6 +186,16 @@ Russian clients and RSA/DSA ciphersuites for foreign clients.
  So, to obtain correct digest value, such as produced by gostsum utility
  included in the engine distribution, bytes of output should be
  reversed.
+ 
+ Calculation of GOST R 34.11-2012 message digest
+ 
+ 256-bit version:
+ 
+ openssl dgst -md_gost12_256 datafile
+ 
+ 512-bit version:
+ 
+ openssl dgst -md_gost12_512 datafile
  
  Calculation of HMAC based on GOST R 34.11-94
 

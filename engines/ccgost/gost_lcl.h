@@ -129,8 +129,11 @@ struct ossl_gost_digest_ctx {
 	gost_hash_ctx dctx;
 	gost_ctx cctx;
 };	
-/* EVP_MD structure for GOST R 34.11 */
+/* EVP_MD structure for GOST R 34.11-94 */
 extern EVP_MD digest_gost;
+/* EVP_MD structures for GOST R 34.11-2012 */
+extern EVP_MD digest_gost12_256;
+extern EVP_MD digest_gost12_512;
 /* EVP_MD structure for GOST 28147 in MAC mode */
 extern EVP_MD imit_gost_cpa;
 /* Cipher context used for EVP_CIPHER operation */

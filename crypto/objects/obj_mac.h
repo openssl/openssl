@@ -3678,6 +3678,10 @@
 #define NID_cryptocom		806
 #define OBJ_cryptocom		OBJ_member_body,643L,2L,9L
 
+#define SN_tc_26		"tc-26"
+#define NID_tc_26		958
+#define OBJ_tc_26		OBJ_member_body,643L,7L,1L
+
 #define SN_id_GostR3411_94_with_GostR3410_2001		"id-GostR3411-94-with-GostR3410-2001"
 #define LN_id_GostR3411_94_with_GostR3410_2001		"GOST R 34.11-94 with GOST R 34.10-2001"
 #define NID_id_GostR3411_94_with_GostR3410_2001		807
@@ -3743,6 +3747,16 @@
 #define SN_id_Gost28147_89_None_KeyMeshing		"id-Gost28147-89-None-KeyMeshing"
 #define NID_id_Gost28147_89_None_KeyMeshing		820
 #define OBJ_id_Gost28147_89_None_KeyMeshing		OBJ_cryptopro,14L,0L
+
+#define SN_id_tc26_gost3411_12_256		"md_gost12_256"
+#define LN_id_tc26_gost3411_12_256		"GOST R 34.11-2012 256-bit length"
+#define NID_id_tc26_gost3411_12_256		961
+#define OBJ_id_tc26_gost3411_12_256		OBJ_tc_26,1L,2L,2L
+
+#define SN_id_tc26_gost3411_12_512		"md_gost12_512"
+#define LN_id_tc26_gost3411_12_512		"GOST R 34.11-2012 512-bit length"
+#define NID_id_tc26_gost3411_12_512		962
+#define OBJ_id_tc26_gost3411_12_512		OBJ_tc_26,1L,2L,3L
 
 #define SN_id_GostR3411_94_TestParamSet		"id-GostR3411-94-TestParamSet"
 #define NID_id_GostR3411_94_TestParamSet		821

@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 958
-#define NUM_SN 951
-#define NUM_LN 951
-#define NUM_OBJ 890
+#define NUM_NID 963
+#define NUM_SN 954
+#define NUM_LN 954
+#define NUM_OBJ 893
 
-static const unsigned char lvalues[6261]={
+static const unsigned char lvalues[6282]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -958,6 +958,9 @@ static const unsigned char lvalues[6261]={
 0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x3C,0x02,0x01,0x01,/* [6227] OBJ_jurisdictionLocalityName */
 0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x3C,0x02,0x01,0x02,/* [6238] OBJ_jurisdictionStateOrProvinceName */
 0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x3C,0x02,0x01,0x03,/* [6249] OBJ_jurisdictionCountryName */
+0x2A,0x85,0x03,0x07,0x01,                    /* [6260] OBJ_tc_26 */
+0x2A,0x85,0x03,0x07,0x01,0x01,0x02,0x02,     /* [6265] OBJ_id_tc26_gost3411_12_256 */
+0x2A,0x85,0x03,0x07,0x01,0x01,0x02,0x03,     /* [6273] OBJ_id_tc26_gost3411_12_512 */
 };
 
 static const ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2521,6 +2524,13 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 	NID_jurisdictionStateOrProvinceName,11,&(lvalues[6238]),0},
 {"jurisdictionC","jurisdictionCountryName",
 	NID_jurisdictionCountryName,11,&(lvalues[6249]),0},
+{"tc-26","tc-26",NID_tc_26,5,&(lvalues[6260]),0},
+{NULL,NULL,NID_undef,0,NULL,0},
+{NULL,NULL,NID_undef,0,NULL,0},
+{"md_gost12_256","GOST R 34.11-2012 256-bit length",
+	NID_id_tc26_gost3411_12_256,8,&(lvalues[6265]),0},
+{"md_gost12_512","GOST R 34.11-2012 512-bit length",
+	NID_id_tc26_gost3411_12_512,8,&(lvalues[6273]),0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -3147,6 +3157,8 @@ static const unsigned int sn_objs[NUM_SN]={
 460,	/* "mail" */
 493,	/* "mailPreferenceOption" */
 467,	/* "manager" */
+961,	/* "md_gost12_256" */
+962,	/* "md_gost12_512" */
 809,	/* "md_gost94" */
 875,	/* "member" */
 182,	/* "member-body" */
@@ -3440,6 +3452,7 @@ static const unsigned int sn_objs[NUM_SN]={
 890,	/* "supportedAlgorithms" */
 874,	/* "supportedApplicationContext" */
 402,	/* "targetInformation" */
+958,	/* "tc-26" */
 864,	/* "telephoneNumber" */
 866,	/* "teletexTerminalIdentifier" */
 865,	/* "telexNumber" */
@@ -3510,6 +3523,8 @@ static const unsigned int ln_objs[NUM_LN]={
 817,	/* "GOST R 34.10-2001 DH" */
 812,	/* "GOST R 34.10-94" */
 818,	/* "GOST R 34.10-94 DH" */
+961,	/* "GOST R 34.11-2012 256-bit length" */
+962,	/* "GOST R 34.11-2012 512-bit length" */
 809,	/* "GOST R 34.11-94" */
 816,	/* "GOST R 34.11-94 PRF" */
 807,	/* "GOST R 34.11-94 with GOST R 34.10-2001" */
@@ -4393,6 +4408,7 @@ static const unsigned int ln_objs[NUM_LN]={
 890,	/* "supportedAlgorithms" */
 874,	/* "supportedApplicationContext" */
 100,	/* "surname" */
+958,	/* "tc-26" */
 864,	/* "telephoneNumber" */
 866,	/* "teletexTerminalIdentifier" */
 865,	/* "telexNumber" */
@@ -4668,6 +4684,7 @@ static const unsigned int obj_objs[NUM_OBJ]={
 639,	/* OBJ_set_brand_JCB                2 23 42 8 35 */
 805,	/* OBJ_cryptopro                    1 2 643 2 2 */
 806,	/* OBJ_cryptocom                    1 2 643 2 9 */
+958,	/* OBJ_tc_26                        1 2 643 7 1 */
 184,	/* OBJ_X9_57                        1 2 840 10040 */
 405,	/* OBJ_ansi_X9_62                   1 2 840 10045 */
 389,	/* OBJ_Enterprises                  1 3 6 1 4 1 */
@@ -4853,6 +4870,8 @@ static const unsigned int obj_objs[NUM_OBJ]={
 851,	/* OBJ_id_GostR3410_2001_cc         1 2 643 2 9 1 5 4 */
 849,	/* OBJ_id_Gost28147_89_cc           1 2 643 2 9 1 6 1 */
 854,	/* OBJ_id_GostR3410_2001_ParamSet_cc 1 2 643 2 9 1 8 1 */
+961,	/* OBJ_id_tc26_gost3411_12_256      1 2 643 7 1 1 2 2 */
+962,	/* OBJ_id_tc26_gost3411_12_512      1 2 643 7 1 1 2 3 */
 186,	/* OBJ_pkcs1                        1 2 840 113549 1 1 */
 27,	/* OBJ_pkcs3                        1 2 840 113549 1 3 */
 187,	/* OBJ_pkcs5                        1 2 840 113549 1 5 */

@@ -1156,6 +1156,7 @@ iso 0 10118 3 0 55	: whirlpool
 
 member-body 643 2 2	: cryptopro
 member-body 643 2 9	: cryptocom
+member-body 643 7 1 : tc-26
 
 cryptopro 3		: id-GostR3411-94-with-GostR3410-2001 : GOST R 34.11-94 with GOST R 34.10-2001
 cryptopro 4		: id-GostR3411-94-with-GostR3410-94 : GOST R 34.11-94 with GOST R 34.10-94
@@ -1178,6 +1179,12 @@ cryptopro 99		: id-GostR3410-94DH	: GOST R 34.10-94 DH
 
 cryptopro 14 1		: id-Gost28147-89-CryptoPro-KeyMeshing
 cryptopro 14 0		: id-Gost28147-89-None-KeyMeshing
+
+# TC-26 GOST OIDs
+!Cname id-tc26-gost3411-12-256
+tc-26 1 2 2  : md_gost12_256 : GOST R 34.11-2012 256-bit length
+!Cname id-tc26-gost3411-12-512
+tc-26 1 2 3  : md_gost12_512 : GOST R 34.11-2012 512-bit length
 
 # GOST parameter set OIDs
 
