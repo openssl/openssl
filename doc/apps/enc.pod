@@ -215,6 +215,10 @@ unsupported options (for example B<openssl enc -help>) includes a
 list of ciphers, supported by your versesion of OpenSSL, including
 ones provided by configured engines.
 
+The B<enc> program does not support authenticated encryption modes
+like CCM and GCM. The utility does not store or retrieve the
+authentication tag.
+
 
  base64             Base 64
 
@@ -325,9 +329,5 @@ There should be an option to allow an iteration count to be included.
 The B<enc> program only supports a fixed number of algorithms with
 certain parameters. So if, for example, you want to use RC2 with a
 76 bit key or RC4 with an 84 bit key you can't use this program.
-
-The B<enc> program does not support authenticated encryption modes
-like CCM and GCM. The utility does not store or retrieve the
-authentication tag.
 
 =cut
