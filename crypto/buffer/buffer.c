@@ -148,7 +148,7 @@ int BUF_MEM_grow(BUF_MEM *str, size_t len)
 		}
 	n=(len+3)/3*4;
 	if (str->flags & BUF_MEM_FLAG_SECURE)
-		ret=sec_alloc_realloc(str, len);
+		ret=sec_alloc_realloc(str, n);
 	else if (str->data == NULL)
 		ret=OPENSSL_malloc(n);
 	else
