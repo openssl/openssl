@@ -1518,7 +1518,7 @@ bad:
 
 re_start:
 
-	if ((!unix_path && (init_client(&s,host,port,socket_type,localip) == 0)) ||
+	if ((!unix_path && (init_client(&s,host,port,localip,socket_type) == 0)) ||
 			(unix_path && (init_client_unix(&s,unix_path) == 0)))
 		{
 		BIO_printf(bio_err,"connect:errno=%d\n",get_last_socket_error());
