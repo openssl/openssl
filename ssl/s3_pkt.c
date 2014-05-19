@@ -580,10 +580,11 @@ int ssl3_do_compress(SSL *ssl)
 int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 	{
 	const unsigned char *buf=buf_;
-	unsigned int tot,n,nw;
-	int i;
+	unsigned int n,nw;
+	int i,tot;
 
 	s->rwstate=SSL_NOTHING;
+	OPENSSL_assert(s->s3->wnum < INT_MAX);
 	tot=s->s3->wnum;
 	s->s3->wnum=0;
 
@@ -607,7 +608,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 	 * buffer ... so we trap and report the error in a way the user
 	 * will notice
 	 */
-	if ( len < tot)
+	if (len < tot)
 		{
 		SSLerr(SSL_F_SSL3_WRITE_BYTES,SSL_R_BAD_LENGTH);
 		return(-1);
