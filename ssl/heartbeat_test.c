@@ -173,12 +173,14 @@ static void tear_down(HEARTBEAT_TEST_FIXTURE fixture)
 static void print_payload(const char* const prefix,
 		const unsigned char *payload, const int n)
 	{
-	const int end = n < MAX_PRINTABLE_CHARACTERS ? n : MAX_PRINTABLE_CHARACTERS;
+	const int end = n < MAX_PRINTABLE_CHARACTERS ? n
+	    : MAX_PRINTABLE_CHARACTERS;
+	int i = 0;
+
 	printf("%s %d character%s", prefix, n, n == 1 ? "" : "s");
 	if (end != n) printf(" (first %d shown)", end);
 	printf("\n  \"");
 
-	int i = 0;
 	for (; i != end; ++i)
 		{
 		const unsigned char c = payload[i];
@@ -194,6 +196,9 @@ static int execute_heartbeat(HEARTBEAT_TEST_FIXTURE fixture)
 	SSL* s = fixture.s;
 	unsigned char *payload = fixture.payload;
 	unsigned char sent_buf[MAX_PRINTABLE_CHARACTERS + 1];
+	int return_value;
+	unsigned const char *p;
+	int actual_payload_len;
 
 	s->s3->rrec.data = payload;
 	s->s3->rrec.length = strlen((const char*)payload);
@@ -204,7 +209,7 @@ static int execute_heartbeat(HEARTBEAT_TEST_FIXTURE fixture)
 	 * point */
 	memcpy((char *)sent_buf, (const char*)payload, sizeof(sent_buf));
 
-	int return_value = fixture.process_heartbeat(s);
+	return_value = fixture.process_heartbeat(s);
 
 	if (return_value != fixture.expected_return_value)
 		{
@@ -215,9 +220,9 @@ static int execute_heartbeat(HEARTBEAT_TEST_FIXTURE fixture)
 		}
 
 	/* If there is any byte alignment, it will be stored in wbuf.offset. */
-	unsigned const char *p = &(s->s3->wbuf.buf[
+	p = &(s->s3->wbuf.buf[
 			fixture.return_payload_offset + s->s3->wbuf.offset]);
-	int actual_payload_len = 0;
+	actual_payload_len = 0;
 	n2s(p, actual_payload_len);
 
 	if (actual_payload_len != fixture.expected_payload_len)
@@ -282,13 +287,15 @@ static int test_dtls1_not_bleeding()
 
 static int test_dtls1_not_bleeding_empty_payload()
 	{
+	int payload_buf_len;
+
 	SETUP_HEARTBEAT_TEST_FIXTURE(dtls);
 	/* Three-byte pad at the beginning for type and payload length, plus a NUL
 	 * at the end */
 	unsigned char payload_buf[4 + MIN_PADDING_SIZE];
 	memset(payload_buf, ' ', sizeof(payload_buf));
 	payload_buf[sizeof(payload_buf) - 1] = '\0';
-	const int payload_buf_len = honest_payload_size(payload_buf);
+	payload_buf_len = honest_payload_size(payload_buf);
 
 	fixture.payload = &payload_buf[0];
 	fixture.sent_payload_len = payload_buf_len;
@@ -364,13 +371,15 @@ static int test_tls1_not_bleeding()
 
 static int test_tls1_not_bleeding_empty_payload()
 	{
+	int payload_buf_len;
+
 	SETUP_HEARTBEAT_TEST_FIXTURE(tls);
 	/* Three-byte pad at the beginning for type and payload length, plus a NUL
 	 * at the end */
 	unsigned char payload_buf[4 + MIN_PADDING_SIZE];
 	memset(payload_buf, ' ', sizeof(payload_buf));
 	payload_buf[sizeof(payload_buf) - 1] = '\0';
-	const int payload_buf_len = honest_payload_size(payload_buf);
+	payload_buf_len = honest_payload_size(payload_buf);
 
 	fixture.payload = &payload_buf[0];
 	fixture.sent_payload_len = payload_buf_len;
@@ -416,22 +425,24 @@ static int test_tls1_heartbleed_empty_payload()
 
 int main(int argc, char *argv[])
 	{
+	int num_failed;
+
 	SSL_library_init();
 	SSL_load_error_strings();
 
-	const int num_failed = test_dtls1_not_bleeding() +
-			test_dtls1_not_bleeding_empty_payload() +
-			test_dtls1_heartbleed() +
-			test_dtls1_heartbleed_empty_payload() +
-			/* The following test causes an assertion failure at
-			 * ssl/d1_pkt.c:dtls1_write_bytes() in versions prior to 1.0.1g: */
-			(OPENSSL_VERSION_NUMBER >= 0x1000107fL ?
-					 test_dtls1_heartbleed_excessive_plaintext_length() : 0) +
-			test_tls1_not_bleeding() +
-			test_tls1_not_bleeding_empty_payload() +
-			test_tls1_heartbleed() +
-			test_tls1_heartbleed_empty_payload() +
-			0;
+	num_failed = test_dtls1_not_bleeding() +
+	    test_dtls1_not_bleeding_empty_payload() +
+	    test_dtls1_heartbleed() +
+	    test_dtls1_heartbleed_empty_payload() +
+	    /* The following test causes an assertion failure at
+	     * ssl/d1_pkt.c:dtls1_write_bytes() in versions prior to 1.0.1g: */
+	    (OPENSSL_VERSION_NUMBER >= 0x1000107fL ?
+	     test_dtls1_heartbleed_excessive_plaintext_length() : 0) +
+	    test_tls1_not_bleeding() +
+	    test_tls1_not_bleeding_empty_payload() +
+	    test_tls1_heartbleed() +
+	    test_tls1_heartbleed_empty_payload() +
+	    0;
 
 	ERR_print_errors_fp(stderr);
 
