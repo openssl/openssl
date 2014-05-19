@@ -584,7 +584,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 	int i,tot;
 
 	s->rwstate=SSL_NOTHING;
-	OPENSSL_assert(s->s3->wnum < INT_MAX);
+	OPENSSL_assert(s->s3->wnum <= INT_MAX);
 	tot=s->s3->wnum;
 	s->s3->wnum=0;
 
