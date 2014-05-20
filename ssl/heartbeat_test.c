@@ -236,7 +236,7 @@ static int execute_heartbeat(HEARTBEAT_TEST_FIXTURE fixture)
 		}
 	else
 		{
-		char* actual_payload = strndup((const char*)p, actual_payload_len);
+		char* actual_payload = BUF_strndup((const char*)p, actual_payload_len);
 		if (strcmp(actual_payload, fixture.expected_return_payload) != 0)
 			{
 			printf("%s failed:\n  expected payload: \"%s\"\n  received: \"%s\"\n",
@@ -244,7 +244,7 @@ static int execute_heartbeat(HEARTBEAT_TEST_FIXTURE fixture)
 						 actual_payload);
 			result = 1;
 			}
-		free(actual_payload);
+		OPENSSL_free(actual_payload);
 		}
 
 	if (result != 0)
