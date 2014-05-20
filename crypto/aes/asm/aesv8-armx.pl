@@ -13,8 +13,8 @@
 # of operation. Latter is achieved by limiting amount of utilized
 # registers to 16, which implies additional instructions. This has
 # no effect on mighty Apple A7, as results are literally equal to
-# the theoretical estimates. It remains to be seen how does it
-# affect other platforms...
+# the theoretical estimates based on instruction latencies and issue
+# rate. It remains to be seen how does it affect other platforms...
 #
 # Performance in cycles per byte processed with 128-bit key:
 #
@@ -274,17 +274,17 @@ ${prefix}_${dir}crypt:
 
 .Loop_${dir}c:
 	aes$e	$inout,$rndkey0
-	aes$mc	$inout,$inout
 	vld1.32	{$rndkey0},[$key],#16
+	aes$mc	$inout,$inout
 	subs	$rounds,$rounds,#2
 	aes$e	$inout,$rndkey1
-	aes$mc	$inout,$inout
 	vld1.32	{$rndkey1},[$key],#16
+	aes$mc	$inout,$inout
 	b.gt	.Loop_${dir}c
 
 	aes$e	$inout,$rndkey0
-	aes$mc	$inout,$inout
 	vld1.32	{$rndkey0},[$key]
+	aes$mc	$inout,$inout
 	aes$e	$inout,$rndkey1
 	veor	$inout,$inout,$rndkey0
 
@@ -298,7 +298,7 @@ ___
 }}}
 {{{
 my ($inp,$out,$len,$key,$ivp)=map("x$_",(0..4)); my $enc="w5";
-my ($rounds,$cnt,$key_,$step)=($enc,"w6","x7","x8");
+my ($rounds,$cnt,$key_,$step,$step1)=($enc,"w6","x7","x8","x12");
 my ($dat0,$dat1,$in0,$in1,$tmp0,$tmp1,$ivec,$rndlast)=map("q$_",(0..7));
 
 my ($dat,$tmp,$rndzero_n_last)=($dat0,$tmp0,$tmp1);
@@ -346,16 +346,19 @@ $code.=<<___;
 	mov	$cnt,$rounds
 	b.eq	.Lcbc_dec
 
+	cmp	$rounds,#2
 	veor	$dat,$dat,$ivec
 	veor	$rndzero_n_last,q8,$rndlast
+	b.eq	.Lcbc_enc128
+
 .Loop_cbc_enc:
 	aese	$dat,q8
-	aesmc	$dat,$dat
 	vld1.32	{q8},[$key_],#16
+	aesmc	$dat,$dat
 	subs	$cnt,$cnt,#2
 	aese	$dat,q9
-	aesmc	$dat,$dat
 	vld1.32	{q9},[$key_],#16
+	aesmc	$dat,$dat
 	b.gt	.Loop_cbc_enc
 
 	aese	$dat,q8
@@ -388,40 +391,147 @@ $code.=<<___;
 	b	.Lcbc_done
 
 .align	5
+.Lcbc_enc128:
+	vld1.32	{$in0-$in1},[$key_]
+	aese	$dat,q8
+	aesmc	$dat,$dat
+	b	.Lenter_cbc_enc128
+.Loop_cbc_enc128:
+	aese	$dat,q8
+	aesmc	$dat,$dat
+	 vst1.8	{$ivec},[$out],#16
+.Lenter_cbc_enc128:
+	aese	$dat,q9
+	aesmc	$dat,$dat
+	 subs	$len,$len,#16
+	aese	$dat,$in0
+	aesmc	$dat,$dat
+	 cclr	$step,eq
+	aese	$dat,$in1
+	aesmc	$dat,$dat
+	aese	$dat,q10
+	aesmc	$dat,$dat
+	aese	$dat,q11
+	aesmc	$dat,$dat
+	 vld1.8	{q8},[$inp],$step
+	aese	$dat,q12
+	aesmc	$dat,$dat
+	aese	$dat,q13
+	aesmc	$dat,$dat
+	aese	$dat,q14
+	aesmc	$dat,$dat
+	 veor	q8,q8,$rndzero_n_last
+	aese	$dat,q15
+	veor	$ivec,$dat,$rndlast
+	b.hs	.Loop_cbc_enc128
+
+	vst1.8	{$ivec},[$out],#16
+	b	.Lcbc_done
+
+.align	5
+.Lcbc_dec128:
+	vld1.32	{$tmp0-$tmp1},[$key_]
+	veor	$ivec,$ivec,$rndlast
+	veor	$in0,$dat0,$rndlast
+	mov	$step1,$step
+
+.Loop2x_cbc_dec128:
+	aesd	$dat0,q8
+	aesd	$dat1,q8
+	aesimc	$dat0,$dat0
+	aesimc	$dat1,$dat1
+	 subs	$len,$len,#32
+	aesd	$dat0,q9
+	aesd	$dat1,q9
+	aesimc	$dat0,$dat0
+	aesimc	$dat1,$dat1
+	 cclr	$step,lo
+	aesd	$dat0,$tmp0
+	aesd	$dat1,$tmp0
+	aesimc	$dat0,$dat0
+	aesimc	$dat1,$dat1
+	 cclr	$step1,ls
+	aesd	$dat0,$tmp1
+	aesd	$dat1,$tmp1
+	aesimc	$dat0,$dat0
+	aesimc	$dat1,$dat1
+	aesd	$dat0,q10
+	aesd	$dat1,q10
+	aesimc	$dat0,$dat0
+	aesimc	$dat1,$dat1
+	aesd	$dat0,q11
+	aesd	$dat1,q11
+	aesimc	$dat0,$dat0
+	aesimc	$dat1,$dat1
+	aesd	$dat0,q12
+	aesd	$dat1,q12
+	aesimc	$dat0,$dat0
+	aesimc	$dat1,$dat1
+	aesd	$dat0,q13
+	aesd	$dat1,q13
+	aesimc	$dat0,$dat0
+	aesimc	$dat1,$dat1
+	aesd	$dat0,q14
+	aesd	$dat1,q14
+	aesimc	$dat0,$dat0
+	aesimc	$dat1,$dat1
+	aesd	$dat0,q15
+	aesd	$dat1,q15
+
+	veor	$ivec,$ivec,$dat0
+	veor	$in0,$in0,$dat1
+	vld1.8	{$dat0},[$inp],$step
+	vld1.8	{$dat1},[$inp],$step1
+	vst1.8	{$ivec},[$out],#16
+	veor	$ivec,$in1,$rndlast
+	vst1.8	{$in0},[$out],#16
+	veor	$in0,$dat0,$rndlast
+	vorr	$in1,$dat1,$dat1
+	b.hs	.Loop2x_cbc_dec128
+
+	adds	$len,$len,#32
+	veor	$ivec,$ivec,$rndlast
+	b.eq	.Lcbc_done
+	veor	$in0,$in0,$rndlast
+	b	.Lcbc_dec_tail
+
+.align	5
 .Lcbc_dec:
 	subs	$len,$len,#16
 	vorr	$in0,$dat,$dat
 	b.lo	.Lcbc_dec_tail
 
 	cclr	$step,eq
+	cmp	$rounds,#2
 	vld1.8	{$dat1},[$inp],$step
 	vorr	$in1,$dat1,$dat1
+	b.eq	.Lcbc_dec128
 
 .Loop2x_cbc_dec:
 	aesd	$dat0,q8
 	aesd	$dat1,q8
+	vld1.32	{q8},[$key_],#16
 	aesimc	$dat0,$dat0
 	aesimc	$dat1,$dat1
-	vld1.64	{q8},[$key_],#16
 	subs	$cnt,$cnt,#2
 	aesd	$dat0,q9
 	aesd	$dat1,q9
+	vld1.32	{q9},[$key_],#16
 	aesimc	$dat0,$dat0
 	aesimc	$dat1,$dat1
-	vld1.64	{q9},[$key_],#16
 	b.gt	.Loop2x_cbc_dec
 
 	aesd	$dat0,q8
 	aesd	$dat1,q8
 	aesimc	$dat0,$dat0
-	 veor	$tmp0,$ivec,$rndlast
 	aesimc	$dat1,$dat1
+	 veor	$tmp0,$ivec,$rndlast
 	 veor	$tmp1,$in0,$rndlast
 	aesd	$dat0,q9
 	aesd	$dat1,q9
 	aesimc	$dat0,$dat0
-	 vorr	$ivec,$in1,$in1
 	aesimc	$dat1,$dat1
+	 vorr	$ivec,$in1,$in1
 	 subs	$len,$len,#32
 	aesd	$dat0,q10
 	aesd	$dat1,q10
@@ -455,10 +565,11 @@ $code.=<<___;
 
 	 mov	$cnt,$rounds
 	veor	$tmp0,$tmp0,$dat0
-	 vorr	$dat0,$in0,$in0
 	veor	$tmp1,$tmp1,$dat1
+	 vorr	$dat0,$in0,$in0
+	vst1.8	{$tmp0},[$out],#32
 	 vorr	$dat1,$in1,$in1
-	vst1.8	{$tmp0-$tmp1},[$out],#32
+	vst1.8	{$tmp1},[$out],#32
 	b.hs	.Loop2x_cbc_dec
 
 	adds	$len,$len,#32
@@ -466,12 +577,12 @@ $code.=<<___;
 
 .Lcbc_dec_tail:
 	aesd	$dat,q8
+	vld1.32	{q8},[$key_],#16
 	aesimc	$dat,$dat
-	vld1.64	{q8},[$key_],#16
 	subs	$cnt,$cnt,#2
 	aesd	$dat,q9
+	vld1.32	{q9},[$key_],#16
 	aesimc	$dat,$dat
-	vld1.64	{q9},[$key_],#16
 	b.gt	.Lcbc_dec_tail
 
 	aesd	$dat,q8
