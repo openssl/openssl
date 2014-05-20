@@ -567,9 +567,9 @@ $code.=<<___;
 	veor	$tmp0,$tmp0,$dat0
 	veor	$tmp1,$tmp1,$dat1
 	 vorr	$dat0,$in0,$in0
-	vst1.8	{$tmp0},[$out],#32
+	vst1.8	{$tmp0},[$out],#16
 	 vorr	$dat1,$in1,$in1
-	vst1.8	{$tmp1},[$out],#32
+	vst1.8	{$tmp1},[$out],#16
 	b.hs	.Loop2x_cbc_dec
 
 	adds	$len,$len,#32
