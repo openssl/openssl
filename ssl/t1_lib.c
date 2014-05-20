@@ -1341,7 +1341,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		etmp = ret;
 		/* Skip over lengths for now */
 		ret += 4;
-		salglen = tls12_copy_sigalgs(s, etmp, salg, salglen);
+		salglen = tls12_copy_sigalgs(s, ret, salg, salglen);
 		/* Fill in lengths */
 		s2n(salglen + 2, etmp);
 		s2n(salglen, etmp);
