@@ -841,7 +841,8 @@ TLSA_EX_DATA *SSL_get_TLSA_ex_data(SSL *ssl)
  *  0:	match
  *  1:	no match
  */
-static int tlsa_cmp(const X509 *cert, const unsigned char *tlsa_record, unsigned int reclen)
+static int tlsa_cmp(const X509 *cert, const unsigned char *tlsa_record,
+		    int reclen)
 	{
 	const EVP_MD *md;
 	unsigned char digest[EVP_MAX_MD_SIZE];
