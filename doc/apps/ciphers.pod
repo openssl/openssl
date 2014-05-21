@@ -580,7 +580,7 @@ Verbose listing of all OpenSSL ciphers including NULL ciphers:
 Include all ciphers except NULL and anonymous DH then sort by
 strength:
 
- openssl ciphers -v 'ALL:!ADH:@STRENGTH'
+ openssl ciphers -v 'ALL:!aNULL:@STRENGTH'
 
 Include only 3DES ciphers and then place RSA ciphers last:
 
