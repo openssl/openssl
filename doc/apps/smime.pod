@@ -159,7 +159,7 @@ EVP_get_cipherbyname() function) can also be used preceded by a dash, for
 example B<-aes_128_cbc>. See L<B<enc>|enc(1)> for list of ciphers
 supported by your version of OpenSSL.
 
-If not specified 40 bit RC2 is used. Only used with B<-encrypt>.
+If not specified triple DES is used. Only used with B<-encrypt>.
 
 =item B<-nointern>
 
