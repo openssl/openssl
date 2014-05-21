@@ -84,7 +84,7 @@ check will be suppressed as appropriate when DANE support is added
 to OpenSSL.
 
 X509_VERIFY_PARAM_set1_email() sets the expected RFC822 email address to
-B<email>.  If B<email is NUL-terminated, B<emaillen> may be zero, otherwise
+B<email>.  If B<email> is NUL-terminated, B<emaillen> may be zero, otherwise
 B<emaillen> must be set to the length of B<email>.  When an email address
 is specified, certificate verification automatically invokes
 L<X509_check_email(3)>.
