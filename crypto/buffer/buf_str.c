@@ -79,13 +79,10 @@ char *BUF_strdup(const char *str)
 char *BUF_strndup(const char *str, size_t siz)
 	{
 	char *ret;
-	size_t len;
 
 	if (str == NULL) return(NULL);
 
-	len = BUF_strnlen(str, siz);
-	if (siz > len)
-	    siz = len;
+	siz = BUF_strnlen(str, siz);
 
 	ret=OPENSSL_malloc(siz+1);
 	if (ret == NULL) 
