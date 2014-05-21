@@ -135,8 +135,8 @@ to each certificate.
 =item B<-des -des3 -rc2-40 -rc2-64 -rc2-128 -aes128 -aes192 -aes256 -camellia128 -camellia192 -camellia256>
 
 the encryption algorithm to use. DES (56 bits), triple DES (168 bits),
-40, 64 or 128 bit RC2, 128, 192 or 256 bit AES, or 128, 192 or 256 bit Camellia respectively.  If not
-specified 40 bit RC2 is used. Only used with B<-encrypt>.
+40, 64 or 128 bit RC2, 128, 192 or 256 bit AES, or 128, 192 or 256 bit Camellia respectively.
+If not specified triple DES is used. Only used with B<-encrypt>.
 
 =item B<-nointern>
 
