@@ -239,6 +239,7 @@ int X509_VERIFY_PARAM_inherit(X509_VERIFY_PARAM *dest,
 		{
 		if (!X509_VERIFY_PARAM_set1_host(dest, id->host, id->hostlen))
 			return 0;
+		dest->id->hostflags = id->hostflags;
 		}
 
 	if (test_x509_verify_param_copy_id(email, NULL))
@@ -402,6 +403,12 @@ int X509_VERIFY_PARAM_set1_host(X509_VERIFY_PARAM *param,
 					name, namelen);
 	}
 
+void X509_VERIFY_PARAM_set_hostflags(X509_VERIFY_PARAM *param,
+					unsigned int flags)
+	{
+	param->id->hostflags = flags;
+	}
+
 int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,
 				const unsigned char *email, size_t emaillen)
 	{
@@ -437,7 +444,7 @@ const char *X509_VERIFY_PARAM_get0_name(const X509_VERIFY_PARAM *param)
 	return param->name;
 	}
 
-static X509_VERIFY_PARAM_ID _empty_id = {NULL, 0, NULL, 0, NULL, 0};
+static X509_VERIFY_PARAM_ID _empty_id = {NULL, 0, 0U, NULL, 0, NULL, 0};
 
 #define vpm_empty_id (X509_VERIFY_PARAM_ID *)&_empty_id
 

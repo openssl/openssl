@@ -569,11 +569,13 @@ void X509_email_free(STACK_OF(OPENSSL_STRING) *sk)
 }
 
 typedef int (*equal_fn)(const unsigned char *pattern, size_t pattern_len,
-			const unsigned char *subject, size_t subject_len);
+			const unsigned char *subject, size_t subject_len,
+			unsigned int flags);
 
 /* Compare while ASCII ignoring case. */
 static int equal_nocase(const unsigned char *pattern, size_t pattern_len,
-			const unsigned char *subject, size_t subject_len)
+			const unsigned char *subject, size_t subject_len,
+			unsigned int unused_flags)
 	{
 	if (pattern_len != subject_len)
 		return 0;
@@ -602,7 +604,8 @@ static int equal_nocase(const unsigned char *pattern, size_t pattern_len,
 
 /* Compare using memcmp. */
 static int equal_case(const unsigned char *pattern, size_t pattern_len,
-		      const unsigned char *subject, size_t subject_len)
+		      const unsigned char *subject, size_t subject_len,
+		      unsigned int unused_flags)
 {
 	/* The pattern must not contain NUL characters. */
 	if (memchr(pattern, '\0', pattern_len) != NULL)
@@ -615,7 +618,8 @@ static int equal_case(const unsigned char *pattern, size_t pattern_len,
 /* RFC 5280, section 7.5, requires that only the domain is compared in
    a case-insensitive manner. */
 static int equal_email(const unsigned char *a, size_t a_len,
-		       const unsigned char *b, size_t b_len)
+		       const unsigned char *b, size_t b_len,
+		       unsigned int unused_flags)
 	{
 	size_t i = a_len;
 	if (a_len != b_len)
@@ -629,103 +633,177 @@ static int equal_email(const unsigned char *a, size_t a_len,
 		if (a[i] == '@' || b[i] == '@')
 			{
 			if (!equal_nocase(a + i, a_len - i,
-					  b + i, a_len - i))
+					  b + i, a_len - i, 0))
 				return 0;
 			break;
 			}
 		}
 	if (i == 0)
 		i = a_len;
-	return equal_case(a, i, b, i);
+	return equal_case(a, i, b, i, 0);
 	}
 
 /* Compare the prefix and suffix with the subject, and check that the
    characters in-between are valid. */
 static int wildcard_match(const unsigned char *prefix, size_t prefix_len,
 			  const unsigned char *suffix, size_t suffix_len,
-			  const unsigned char *subject, size_t subject_len)
+			  const unsigned char *subject, size_t subject_len,
+			  unsigned int flags)
 	{
 	const unsigned char *wildcard_start;
 	const unsigned char *wildcard_end;
 	const unsigned char *p;
+	int allow_multi = 0;
+	int allow_idna = 0;
+
 	if (subject_len < prefix_len + suffix_len)
 		return 0;
-	if (!equal_nocase(prefix, prefix_len, subject, prefix_len))
+	if (!equal_nocase(prefix, prefix_len, subject, prefix_len, flags))
 		return 0;
 	wildcard_start = subject + prefix_len;
 	wildcard_end = subject + (subject_len - suffix_len);
-	if (!equal_nocase(wildcard_end, suffix_len, suffix, suffix_len))
+	if (!equal_nocase(wildcard_end, suffix_len, suffix, suffix_len, flags))
 		return 0;
-	/* The wildcard must match at least one character. */
-	if (wildcard_start == wildcard_end)
+	/*
+	 * If the wildcard makes up the entire first label, it must match at
+	 * least one character.
+	 */
+	if (prefix_len == 0 && *suffix == '.')
+		{
+		if (wildcard_start == wildcard_end)
+			return 0;
+		allow_idna = 1;
+		if (flags & X509_CHECK_FLAG_MULTI_LABEL_WILDCARDS)
+			allow_multi = 1;
+		}
+	/* IDNA labels cannot match partial wildcards */
+	if (!allow_idna &&
+	    subject_len >= 4 && strncasecmp((char *)subject, "xn--", 4) == 0)
 		return 0;
-	/* Check that the part matched by the wildcard contains only
-	   permitted characters and only matches a single label. */
+	/* The wildcard may match a literal '*' */
+	if (wildcard_end == wildcard_start + 1 && *wildcard_start == '*')
+		return 1;
+	/*
+	 * Check that the part matched by the wildcard contains only
+	 * permitted characters and only matches a single label unless
+	 * allow_multi is set.
+	 */
 	for (p = wildcard_start; p != wildcard_end; ++p)
 		if (!(('0' <= *p && *p <= '9') ||
 		      ('A' <= *p && *p <= 'Z') ||
 		      ('a' <= *p && *p <= 'z') ||
-		      *p == '-'))
+		      *p == '-' || (allow_multi && *p == '.')))
 			return 0;
 	return 1;
 	}
 
-/* Checks if the memory region consistens of [0-9A-Za-z.-]. */
-static int valid_domain_characters(const unsigned char *p, size_t len)
-	{
-	while (len)
-		{
-		if (!(('0' <= *p && *p <= '9') ||
-		      ('A' <= *p && *p <= 'Z') ||
-		      ('a' <= *p && *p <= 'z') ||
-		      *p == '-' || *p == '.'))
-			return 0;
-		++p;
-		--len;
-		}
-	return 1;
-	}
+#define LABEL_START	(1 << 0)
+#define LABEL_END	(1 << 1)
+#define LABEL_HYPHEN	(1 << 2)
+#define LABEL_IDNA	(1 << 3)
 
-/* Find the '*' in a wildcard pattern.  If no such character is found
-   or the pattern is otherwise invalid, returns NULL. */
-static const unsigned char *wildcard_find_star(const unsigned char *pattern,
-					       size_t pattern_len)
+static const unsigned char *valid_star(const unsigned char *p, size_t len,
+						unsigned int flags)
 	{
-	const unsigned char *star = memchr(pattern, '*', pattern_len);
-	size_t dot_count = 0;
-	const unsigned char *suffix_start;
-	size_t suffix_length;
-	if (star == NULL)
-		return NULL;
-	suffix_start = star + 1;
-	suffix_length = (pattern + pattern_len) - (star + 1);
-	if (!(valid_domain_characters(pattern, star - pattern) &&
-	      valid_domain_characters(suffix_start, suffix_length)))
-		return NULL;
-	/* Check that the suffix matches at least two labels. */
-	while (suffix_length)
+	const unsigned char *star = 0;
+	size_t i;
+	int state = LABEL_START;
+	int dots = 0;
+	for (i = 0; i < len; ++i)
 		{
-		if (*suffix_start == '.')
-			++dot_count;
-		++suffix_start;
-		--suffix_length;
+		/*
+		 * Locate first and only legal wildcard, either at the start
+		 * or end of a non-IDNA first and not final label.
+		 */
+		if (p[i] == '*')
+			{
+			int atstart = (state & LABEL_START);
+			int atend = (i == len - 1 || p[i+i] == '.');
+			/*
+			 * At most one wildcard per pattern.
+			 * No wildcards in IDNA labels.
+			 * No wildcards after the first label.
+			 */
+			if (star != NULL || (state & LABEL_IDNA) != 0 || dots)
+				return NULL;
+			/* Only full-label '*.example.com' wildcards? */
+			if ((flags & X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS)
+			    && (!atstart || !atend))
+				return NULL;
+			/* No 'foo*bar' wildcards */
+			if (!atstart && !atend)
+				return NULL;
+			star = &p[i];
+			state &= ~LABEL_START;
+			}
+		else if ((state & LABEL_START) != 0)
+			{
+			/*
+			 * At the start of a label, skip any "xn--" and
+			 * remain in the LABEL_START state, but set the
+			 * IDNA label state
+			 */
+			if ((state & LABEL_IDNA) == 0 && len - i >= 4
+			    && strncasecmp((char *)&p[i], "xn--", 4) == 0)
+				{
+				i += 3;
+				state |= LABEL_IDNA;
+				continue;
+				}
+			/* Labels must start with a letter or digit */
+			state &= ~LABEL_START;
+			if (('a' <= p[i] && p[i] <= 'z')
+			    || ('A' <= p[i] && p[i] <= 'Z')
+			    || ('0' <= p[i] && p[i] <= '9'))
+				continue;
+			return NULL;
+			}
+		else if (('a' <= p[i] && p[i] <= 'z')
+			 || ('A' <= p[i] && p[i] <= 'Z')
+			 || ('0' <= p[i] && p[i] <= '9'))
+			{
+			state &= LABEL_IDNA;
+			continue;
+			}
+		else if (p[i] == '.')
+			{
+			if (state & (LABEL_HYPHEN | LABEL_START))
+				return NULL;
+			state = LABEL_START;
+			++dots;
+			}
+		else if (p[i] == '-')
+			{
+			if (state & LABEL_HYPHEN)
+				return NULL;
+			state |= LABEL_HYPHEN;
+			}
+		else
+			return NULL;
 		}
-	if (dot_count < 2)
+
+	/*
+	 * The final label must not end in a hyphen or ".", and
+	 * there must be at least two dots after the star.
+	 */
+	if ((state & (LABEL_START | LABEL_HYPHEN)) != 0
+	    || dots < 2)
 		return NULL;
 	return star;
 	}
 
 /* Compare using wildcards. */
 static int equal_wildcard(const unsigned char *pattern, size_t pattern_len,
-			  const unsigned char *subject, size_t subject_len)
+			  const unsigned char *subject, size_t subject_len,
+			  unsigned int flags)
 	{
-	const unsigned char *star = wildcard_find_star(pattern, pattern_len);
+	const unsigned char *star = valid_star(pattern, pattern_len, flags);
 	if (star == NULL)
 		return equal_nocase(pattern, pattern_len,
-				    subject, subject_len);
+				    subject, subject_len, flags);
 	return wildcard_match(pattern, star - pattern,
 			      star + 1, (pattern + pattern_len) - star - 1,
-			      subject, subject_len);
+			      subject, subject_len, flags);
 	}
 
 /* Compare an ASN1_STRING to a supplied string. If they match
@@ -734,6 +812,7 @@ static int equal_wildcard(const unsigned char *pattern, size_t pattern_len,
  */
 
 static int do_check_string(ASN1_STRING *a, int cmp_type, equal_fn equal,
+				unsigned int flags,
 				const unsigned char *b, size_t blen)
 	{
 	if (!a->data || !a->length)
@@ -743,7 +822,7 @@ static int do_check_string(ASN1_STRING *a, int cmp_type, equal_fn equal,
 		if (cmp_type != a->type)
 			return 0;
 		if (cmp_type == V_ASN1_IA5STRING)
-			return equal(a->data, a->length, b, blen);
+			return equal(a->data, a->length, b, blen, flags);
 		if (a->length == (int)blen && !memcmp(a->data, b, blen))
 			return 1;
 		else
@@ -756,7 +835,7 @@ static int do_check_string(ASN1_STRING *a, int cmp_type, equal_fn equal,
 		astrlen = ASN1_STRING_to_UTF8(&astr, a);
 		if (astrlen < 0)
 			return -1;
-		rv = equal(astr, astrlen, b, blen);
+		rv = equal(astr, astrlen, b, blen, flags);
 		OPENSSL_free(astr);
 		return rv;
 		}
@@ -770,6 +849,7 @@ static int do_x509_check(X509 *x, const unsigned char *chk, size_t chklen,
 	int i;
 	int cnid;
 	int alt_type;
+	int san_present = 0;
 	equal_fn equal;
 	if (check_type == GEN_EMAIL)
 		{
@@ -805,15 +885,17 @@ static int do_x509_check(X509 *x, const unsigned char *chk, size_t chklen,
 			GENERAL_NAME *gen;
 			ASN1_STRING *cstr;
 			gen = sk_GENERAL_NAME_value(gens, i);
-			if(gen->type != check_type)
+			if (gen->type != check_type)
 				continue;
+			san_present = 1;
 			if (check_type == GEN_EMAIL)
 				cstr = gen->d.rfc822Name;
 			else if (check_type == GEN_DNS)
 				cstr = gen->d.dNSName;
 			else
 				cstr = gen->d.iPAddress;
-			if (do_check_string(cstr, alt_type, equal, chk, chklen))
+			if (do_check_string(cstr, alt_type, equal, flags,
+					    chk, chklen))
 				{
 				rv = 1;
 				break;
@@ -822,7 +904,9 @@ static int do_x509_check(X509 *x, const unsigned char *chk, size_t chklen,
 		GENERAL_NAMES_free(gens);
 		if (rv)
 			return 1;
-		if (!(flags & X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT) || !cnid)
+		if (!cnid
+		    || (san_present
+		        && !(flags & X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT)))
 			return 0;
 		}
 	i = -1;
@@ -833,7 +917,7 @@ static int do_x509_check(X509 *x, const unsigned char *chk, size_t chklen,
 		ASN1_STRING *str;
 		ne = X509_NAME_get_entry(name, i);
 		str = X509_NAME_ENTRY_get_data(ne);
-		if (do_check_string(str, -1, equal, chk, chklen))
+		if (do_check_string(str, -1, equal, flags, chk, chklen))
 			return 1;
 		}
 	return 0;

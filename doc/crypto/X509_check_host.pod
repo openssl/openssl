@@ -47,16 +47,37 @@ X509_check_ip_asc() is similar, except that the NUL-terminated
 string B<address> is first converted to the internal representation.
 
 The B<flags> argument is usually 0.  It can be the bitwise OR of the
-flags B<X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT>,
-B<X509_CHECK_FLAG_NO_WILDCARDS>.
+flags:
+
+=over 4
+
+=item B<X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT>,
+
+=item B<X509_CHECK_FLAG_NO_WILDCARDS>,
+
+=item B<X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS>,
+
+=item B<X509_CHECK_FLAG_MULTI_LABEL_WILDCARDS>.
+
+=back
 
 The B<X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT> flag causes the function
-to check the subject DN even if the certificate contains a subject
-alternative name extension is present; the default is to ignore the
-subject DN in preference of the extension.
+to consider the subject DN even if the certificate contains at least
+one subject alternative name of the right type (DNS name or email
+address as appropriate); the default is to ignore the subject DN
+when at least one corresponding subject alternative names is present.
 
-If present, B<X509_CHECK_FLAG_NO_WILDCARDS> disables wildcard
+If set, B<X509_CHECK_FLAG_NO_WILDCARDS> disables wildcard
 expansion; this only applies to B<X509_check_host>.
+
+If set, B<X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS> suppresses support
+for "*" as wildcard pattern in labels that have a prefix or suffix,
+such as: "www*" or "*www"; this only aplies to B<X509_check_host>.
+
+If set, B<X509_CHECK_FLAG_MULTI_LABEL_WILDCARDS>, allows a "*"
+that constitutes the complete label of a DNS name (e.g.
+"*.example.com") to match more than one label in B<name>;
+this only applies to B<X509_check_host>.
 
 =head1 RETURN VALUES
 

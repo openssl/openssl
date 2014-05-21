@@ -26,6 +26,17 @@ X509_VERIFY_PARAM_set_flags, X509_VERIFY_PARAM_clear_flags, X509_VERIFY_PARAM_ge
  void X509_VERIFY_PARAM_set_depth(X509_VERIFY_PARAM *param, int depth);
  int X509_VERIFY_PARAM_get_depth(const X509_VERIFY_PARAM *param);
 
+ int X509_VERIFY_PARAM_set1_host(X509_VERIFY_PARAM *param,
+				 const unsigned char *name, size_t namelen);
+ void X509_VERIFY_PARAM_set_hostflags(X509_VERIFY_PARAM *param,
+				      unsigned int flags);
+ int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,
+				 const unsigned char *email, size_t emaillen);
+ int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param,
+			       const unsigned char *ip, size_t iplen);
+ int X509_VERIFY_PARAM_set1_ip_asc(X509_VERIFY_PARAM *param,
+				   const char *ipasc);
+
 =head1 DESCRIPTION
 
 These functions manipulate the B<X509_VERIFY_PARAM> structure associated with
@@ -61,12 +72,43 @@ X509_VERIFY_PARAM_set_depth() sets the maximum verification depth to B<depth>.
 That is the maximum number of untrusted CA certificates that can appear in a
 chain.
 
+X509_VERIFY_PARAM_set1_host() sets the expected DNS hostname to B<name>.  If
+B<name> is NUL-terminated, B<namelen> may be zero, otherwise B<namelen> must
+be set to the length of B<name>.  When a hostname is specified, certificate
+verification automatically invokes L<X509_check_host(3)> with flags equal to
+the B<flags> argument given to B<X509_VERIFY_PARAM_set_hostflags()> (default
+zero).  Applications are strongly advised to use this interface in preference
+to explicitly calling L<X509_check_host(3)>, hostname checks are
+out of scope with the DANE-EE(3) certificate usage, and the internal
+check will be suppressed as appropriate when DANE support is added
+to OpenSSL.
+
+X509_VERIFY_PARAM_set1_email() sets the expected RFC822 email address to
+B<email>.  If B<email is NUL-terminated, B<emaillen> may be zero, otherwise
+B<emaillen> must be set to the length of B<email>.  When an email address
+is specified, certificate verification automatically invokes
+L<X509_check_email(3)>.
+
+X509_VERIFY_PARAM_set1_ip() sets the expected IP address to B<ip>.
+The B<ip> argument is in binary format, in network byte-order and
+B<iplen> must be set to 4 for IPv4 and 16 for IPv6.  When an IP
+address is specified, certificate verification automatically invokes
+L<X509_check_ip(3)>.
+
+X509_VERIFY_PARAM_set1_ip_asc() sets the expected IP address to
+B<ipasc>.  The B<ipasc> argument is a NUL-terminal ASCII string:
+dotted decimal quad for IPv4 and colon-separated hexadecimal for
+IPv6.  The condensed "::" notation is supported for IPv6 addresses.
+
 =head1 RETURN VALUES
 
-X509_VERIFY_PARAM_set_flags(), X509_VERIFY_PARAM_clear_flags(), 
+X509_VERIFY_PARAM_set_flags(), X509_VERIFY_PARAM_clear_flags(),
 X509_VERIFY_PARAM_set_purpose(), X509_VERIFY_PARAM_set_trust(),
-X509_VERIFY_PARAM_add0_policy() and X509_VERIFY_PARAM_set1_policies() return 1
-for success and 0 for failure. 
+X509_VERIFY_PARAM_add0_policy() X509_VERIFY_PARAM_set1_policies(),
+X509_VERIFY_PARAM_set1_host(), X509_VERIFY_PARAM_set_hostflags(),
+X509_VERIFY_PARAM_set1_email(), X509_VERIFY_PARAM_set1_ip() and
+X509_VERIFY_PARAM_set1_ip_asc() return 1 for success and 0 for
+failure.
 
 X509_VERIFY_PARAM_get_flags() returns the current verification flags.
 
