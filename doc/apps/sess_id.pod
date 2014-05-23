@@ -9,7 +9,7 @@ sess_id - SSL/TLS session handling utility
 
 B<openssl> B<sess_id>
 [B<-inform PEM|DER>]
-[B<-outform PEM|DER>]
+[B<-outform PEM|DER|NSS>]
 [B<-in filename>]
 [B<-out filename>]
 [B<-text>]
@@ -33,10 +33,11 @@ format containing session details. The precise format can vary from one version
 to the next.  The B<PEM> form is the default format: it consists of the B<DER>
 format base64 encoded with additional header and footer lines.
 
-=item B<-outform DER|PEM>
+=item B<-outform DER|PEM|NSS>
 
-This specifies the output format, the options have the same meaning as the 
-B<-inform> option.
+This specifies the output format. The B<PEM> and B<DER> options have the same meaning
+as the B<-inform> option. The B<NSS> option outputs the session id and the master key
+in NSS keylog format.
 
 =item B<-in filename>
 
