@@ -78,7 +78,7 @@ static const char *sess_id_usage[]={
 " -out arg        - output file - default stdout\n",
 " -text           - print ssl session id details\n",
 " -cert           - output certificate \n",
-" -noout          - no CRL output\n",
+" -noout          - no output of encoded session info\n",
 " -context arg    - set the session ID context\n",
 NULL
 };
