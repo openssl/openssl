@@ -67,6 +67,7 @@ static int mem_puts(BIO *h, const char *str);
 static int mem_gets(BIO *h, char *str, int size);
 static long mem_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int mem_new(BIO *h);
+static int secmem_new(BIO *h);
 static int mem_free(BIO *data);
 static BIO_METHOD mem_method=
 	{
@@ -81,6 +82,19 @@ static BIO_METHOD mem_method=
 	mem_free,
 	NULL,
 	};
+static BIO_METHOD secmem_method=
+	{
+	BIO_TYPE_MEM,
+	"secure memory buffer",
+	mem_write,
+	mem_read,
+	mem_puts,
+	mem_gets,
+	mem_ctrl,
+	secmem_new,
+	mem_free,
+	NULL,
+	};
 
 /* bio->num is used to hold the value to return on 'empty', if it is
  * 0, should_retry is not set */
@@ -88,6 +102,11 @@ static BIO_METHOD mem_method=
 BIO_METHOD *BIO_s_mem(void)
 	{
 	return(&mem_method);
+	}
+
+BIO_METHOD *BIO_s_secmem(void)
+	{
+	return(&secmem_method);
 	}
 
 BIO *BIO_new_mem_buf(void *buf, int len)
@@ -112,17 +131,27 @@ BIO *BIO_new_mem_buf(void *buf, int len)
 	return ret;
 }
 
+static int mem_init(BIO *bi, unsigned long flags)
+        {
+        BUF_MEM *b;
+
+        if ((b=BUF_MEM_new_ex(flags)) == NULL)
+                return(0);
+        bi->shutdown=1;
+        bi->init=1;
+        bi->num= -1;
+        bi->ptr=(char *)b;
+        return(1);
+        }
+
 static int mem_new(BIO *bi)
 	{
-	BUF_MEM *b;
+        return(mem_init(bi, 0L));
+	}
 
-	if ((b=BUF_MEM_new()) == NULL)
-		return(0);
-	bi->shutdown=1;
-	bi->init=1;
-	bi->num= -1;
-	bi->ptr=(char *)b;
-	return(1);
+static int secmem_new(BIO *bi)
+	{
+	return(mem_init(bi, BUF_MEM_FLAG_SECURE));
 	}
 
 static int mem_free(BIO *a)

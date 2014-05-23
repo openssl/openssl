@@ -107,6 +107,14 @@ const char *SSLeay_version(int t)
 		return "OPENSSLDIR: N/A";
 #endif
 		}
+	if (t == SSLEAY_SECURE_HEAP)
+		{
+#ifndef OPENSSL_NO_SECURE_HEAP
+		return "Secure heap: available";
+#else
+		return "Secure heap: not available";
+#endif
+		}
 	return("not available");
 	}
 

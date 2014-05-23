@@ -11,6 +11,10 @@ character arrays structure
 
  BUF_MEM *BUF_MEM_new(void);
 
+ #define BUF_MEM_FLAG_SECURE  (1L << 1)
+
+ BUF_MEM * BUF_MEM_new_ex(unsigned long flags);
+
  void	BUF_MEM_free(BUF_MEM *a);
 
  int	BUF_MEM_grow(BUF_MEM *str, int len);
@@ -36,6 +40,10 @@ memory allocated to the buffer. There are three functions which handle these
 and one "miscellaneous" function.
 
 BUF_MEM_new() allocates a new buffer of zero size.
+
+BUF_MEM_new_ex() allocates a buffer with the specified flags.
+The flag B<BUF_MEM_FLAG_SECURE> specifies that the B<data> pointer
+should be allocated on the secure heap; see L<CRYPTO_secure_malloc(3)>.
 
 BUF_MEM_free() frees up an already existing buffer. The data is zeroed
 before freeing up in case the buffer contains sensitive data.
@@ -63,11 +71,15 @@ BUF_MEM_grow() returns zero on error or the new size (i.e. B<len>).
 
 =head1 SEE ALSO
 
-L<bio(3)|bio(3)>
+L<bio(3)|bio(3)>,
+L<CRYPTO_secure_malloc(3)>.
 
 =head1 HISTORY
 
 BUF_MEM_new(), BUF_MEM_free() and BUF_MEM_grow() are available in all
 versions of SSLeay and OpenSSL. BUF_strdup() was added in SSLeay 0.8.
+
+BUF_MEM_new_ex() was contributed to OpenSSL by Akamai Technologies
+in May, 2014.
 
 =cut

@@ -254,6 +254,7 @@ extern "C" {
 #endif
 
 #define BN_DEFAULT_BITS	1280
+#define BN_MAX_WORDS	(16*1024) /* maximum heap size to use */
 
 #define BN_FLG_MALLOCED		0x01
 #define BN_FLG_STATIC_DATA	0x02

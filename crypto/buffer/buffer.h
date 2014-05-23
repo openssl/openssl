@@ -76,12 +76,16 @@ extern "C" {
 
 struct buf_mem_st
 	{
+        unsigned long flags;
 	size_t length;	/* current number of bytes */
 	char *data;
 	size_t max;	/* size of buffer */
 	};
 
+#define BUF_MEM_FLAG_SECURE  (1L << 1)
+
 BUF_MEM *BUF_MEM_new(void);
+BUF_MEM * BUF_MEM_new_ex(unsigned long flags);
 void	BUF_MEM_free(BUF_MEM *a);
 int	BUF_MEM_grow(BUF_MEM *str, size_t len);
 int	BUF_MEM_grow_clean(BUF_MEM *str, size_t len);
