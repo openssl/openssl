@@ -363,6 +363,7 @@ void store_setup_crl_download(X509_STORE *st);
 #define FORMAT_MSBLOB	11	/* MS Key blob format */
 #define FORMAT_PVK	12	/* MS PVK file format */
 #define FORMAT_HTTP	13	/* Download using HTTP */
+#define FORMAT_NSS	14	/* NSS keylog format */
 
 #define EXT_COPY_NONE	0
 #define EXT_COPY_ADD	1

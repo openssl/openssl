@@ -263,6 +263,8 @@ int str2fmt(char *s)
 		return(FORMAT_ASN1);
 	else if ((*s == 'T') || (*s == 't'))
 		return(FORMAT_TEXT);
+	else if ((strcmp(s,"NSS") == 0) || (strcmp(s,"nss") == 0))
+		return(FORMAT_NSS);
   	else if ((*s == 'N') || (*s == 'n'))
   		return(FORMAT_NETSCAPE);
   	else if ((*s == 'S') || (*s == 's'))

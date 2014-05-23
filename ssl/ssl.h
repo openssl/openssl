@@ -2235,6 +2235,7 @@ int	SSL_SESSION_print_fp(FILE *fp,const SSL_SESSION *ses);
 #endif
 #ifndef OPENSSL_NO_BIO
 int	SSL_SESSION_print(BIO *fp,const SSL_SESSION *ses);
+int	SSL_SESSION_print_keylog(BIO *bp, const SSL_SESSION *x);
 #endif
 void	SSL_SESSION_free(SSL_SESSION *ses);
 int	i2d_SSL_SESSION(SSL_SESSION *in,unsigned char **pp);
