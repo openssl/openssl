@@ -35,12 +35,14 @@ if ($flavour =~ /64/) {
 	$STU	="stdu";
 	$POP	="ld";
 	$PUSH	="std";
+	$UCMP	="cmpld";
 } elsif ($flavour =~ /32/) {
 	$SIZE_T	=4;
 	$LRSAVE	=$SIZE_T;
 	$STU	="stwu";
 	$POP	="lwz";
 	$PUSH	="stw";
+	$UCMP	="cmplw";
 } else { die "nonsense $flavour"; }
 
 $sp="r1";
@@ -302,28 +304,28 @@ Lenc_entry:
 	mflr	r6
 	mfspr	r7, 256			# save vrsave
 	stvx	v20,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	stvx	v21,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	stvx	v22,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	stvx	v23,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	stvx	v24,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	stvx	v25,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	stvx	v26,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	stvx	v27,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	stvx	v28,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	stvx	v29,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	stvx	v30,r10,$sp
 	stvx	v31,r11,$sp
-	lwz	r7,`$FRAME-4`($sp)	# save vrsave
+	stw	r7,`$FRAME-4`($sp)	# save vrsave
 	li	r0, -1
 	$PUSH	r6,`$FRAME+$LRSAVE`($sp)
 	mtspr	256, r0			# preserve all AltiVec registers
@@ -359,25 +361,25 @@ Lenc_entry:
 	mtlr	r6
 	mtspr	256, r7			# restore vrsave
 	lvx	v20,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	lvx	v21,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	lvx	v22,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	lvx	v23,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	lvx	v24,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	lvx	v25,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	lvx	v26,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	lvx	v27,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	lvx	v28,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	lvx	v29,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	lvx	v30,r10,$sp
 	lvx	v31,r11,$sp
 	addi	$sp,$sp,$FRAME
@@ -531,28 +533,28 @@ Ldec_entry:
 	mflr	r6
 	mfspr	r7, 256			# save vrsave
 	stvx	v20,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	stvx	v21,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	stvx	v22,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	stvx	v23,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	stvx	v24,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	stvx	v25,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	stvx	v26,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	stvx	v27,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	stvx	v28,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	stvx	v29,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	stvx	v30,r10,$sp
 	stvx	v31,r11,$sp
-	lwz	r7,`$FRAME-4`($sp)	# save vrsave
+	stw	r7,`$FRAME-4`($sp)	# save vrsave
 	li	r0, -1
 	$PUSH	r6,`$FRAME+$LRSAVE`($sp)
 	mtspr	256, r0			# preserve all AltiVec registers
@@ -588,25 +590,25 @@ Ldec_entry:
 	mtlr	r6
 	mtspr	256, r7			# restore vrsave
 	lvx	v20,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	lvx	v21,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	lvx	v22,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	lvx	v23,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	lvx	v24,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	lvx	v25,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	lvx	v26,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	lvx	v27,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	lvx	v28,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	lvx	v29,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	lvx	v30,r10,$sp
 	lvx	v31,r11,$sp
 	addi	$sp,$sp,$FRAME
@@ -619,40 +621,43 @@ Ldec_entry:
 .globl	.vpaes_cbc_encrypt
 .align	5
 .vpaes_cbc_encrypt:
+	${UCMP}i r5,16
+	bltlr-
+
 	$STU	$sp,-`($FRAME+2*$SIZE_T)`($sp)
 	mflr	r0
 	li	r10,`15+6*$SIZE_T`
 	li	r11,`31+6*$SIZE_T`
 	mfspr	r12, 256
 	stvx	v20,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	stvx	v21,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	stvx	v22,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	stvx	v23,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	stvx	v24,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	stvx	v25,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	stvx	v26,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	stvx	v27,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	stvx	v28,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	stvx	v29,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	stvx	v30,r10,$sp
 	stvx	v31,r11,$sp
-	lwz	r12,`$FRAME-4`($sp)	# save vrsave
+	stw	r12,`$FRAME-4`($sp)	# save vrsave
 	$PUSH	r30,`$FRAME+$SIZE_T*0`($sp)
 	$PUSH	r31,`$FRAME+$SIZE_T*1`($sp)
-	li	r9, 16
+	li	r9, -16
 	$PUSH	r0, `$FRAME+$SIZE_T*2+$LRSAVE`($sp)
 
-	sub.	r30, r5, r9		# copy length-16
+	and	r30, r5, r9		# copy length&-16
 	mr	r5, r6			# copy pointer to key
 	mr	r31, r7			# copy pointer to iv
 	blt	Lcbc_abort
@@ -699,7 +704,7 @@ Lcbc_enc_loop:
 	vmr	$outhead, v0
 	stvx	v1, 0, $out
 	addi	$out, $out, 16
-	bge	Lcbc_enc_loop
+	bne	Lcbc_enc_loop
 
 	b	Lcbc_done
 
@@ -725,7 +730,7 @@ Lcbc_dec_loop:
 	vmr	$outhead, v0
 	stvx	v1, 0, $out
 	addi	$out, $out, 16
-	bge	Lcbc_dec_loop
+	bne	Lcbc_dec_loop
 
 Lcbc_done:
 	addi	$out, $out, -1
@@ -750,25 +755,25 @@ Lcbc_done:
 	li	r10,`15+6*$SIZE_T`
 	li	r11,`31+6*$SIZE_T`
 	lvx	v20,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	lvx	v21,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	lvx	v22,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	lvx	v23,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	lvx	v24,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	lvx	v25,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	lvx	v26,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	lvx	v27,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	lvx	v28,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	lvx	v29,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	lvx	v30,r10,$sp
 	lvx	v31,r11,$sp
 Lcbc_abort:
@@ -1306,28 +1311,28 @@ Lschedule_mangle_dec:
 	mflr	r0
 	mfspr	r6, 256			# save vrsave
 	stvx	v20,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	stvx	v21,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	stvx	v22,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	stvx	v23,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	stvx	v24,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	stvx	v25,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	stvx	v26,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	stvx	v27,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	stvx	v28,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	stvx	v29,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	stvx	v30,r10,$sp
 	stvx	v31,r11,$sp
-	lwz	r6,`$FRAME-4`($sp)	# save vrsave
+	stw	r6,`$FRAME-4`($sp)	# save vrsave
 	li	r7, -1
 	$PUSH	r0, `$FRAME+$LRSAVE`($sp)
 	mtspr	256, r7			# preserve all AltiVec registers
@@ -1347,25 +1352,25 @@ Lschedule_mangle_dec:
 	mtlr	r0
 	xor	r3, r3, r3
 	lvx	v20,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	lvx	v21,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	lvx	v22,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	lvx	v23,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	lvx	v24,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	lvx	v25,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	lvx	v26,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	lvx	v27,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	lvx	v28,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	lvx	v29,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	lvx	v30,r10,$sp
 	lvx	v31,r11,$sp
 	addi	$sp,$sp,$FRAME
@@ -1384,28 +1389,28 @@ Lschedule_mangle_dec:
 	mflr	r0
 	mfspr	r6, 256			# save vrsave
 	stvx	v20,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	stvx	v21,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	stvx	v22,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	stvx	v23,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	stvx	v24,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	stvx	v25,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	stvx	v26,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	stvx	v27,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	stvx	v28,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	stvx	v29,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	stvx	v30,r10,$sp
 	stvx	v31,r11,$sp
-	lwz	r6,`$FRAME-4`($sp)	# save vrsave
+	stw	r6,`$FRAME-4`($sp)	# save vrsave
 	li	r7, -1
 	$PUSH	r0, `$FRAME+$LRSAVE`($sp)
 	mtspr	256, r7			# preserve all AltiVec registers
@@ -1430,25 +1435,25 @@ Lschedule_mangle_dec:
 	mtlr	r0
 	xor	r3, r3, r3
 	lvx	v20,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	lvx	v21,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	lvx	v22,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	lvx	v23,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	lvx	v24,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	lvx	v25,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	lvx	v26,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	lvx	v27,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	lvx	v28,r10,$sp
-	addi	r10,r10,16
+	addi	r10,r10,32
 	lvx	v29,r11,$sp
-	addi	r11,r11,16
+	addi	r11,r11,32
 	lvx	v30,r10,$sp
 	lvx	v31,r11,$sp
 	addi	$sp,$sp,$FRAME
