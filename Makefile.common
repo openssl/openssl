@@ -1,3 +1,99 @@
 ##
 ## Makefile.common: rules shared by multiple Makefiles
 ##
+
+lib_arx_common: $(LIBOBJ)
+	$(ARX) $(LIB) $(LIBOBJ)
+	$(RANLIB) $(LIB) || echo Never mind.
+	@touch lib
+
+.PHONY: lib_arx_common
+
+lib_ar_common: $(LIBOBJ)
+	$(AR) $(LIB) $(LIBOBJ)
+	$(RANLIB) $(LIB) || echo Never mind.
+	@touch lib
+
+.PHONY: lib_ar_common
+
+files_common:
+	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+
+.PHONY: files_common
+
+links_up2_common:
+	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
+	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
+	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+
+.PHONY: links_up2_common
+
+links_up1_common:
+	@$(PERL) $(TOP)/util/mklink.pl ../include/openssl $(EXHEADER)
+	@$(PERL) $(TOP)/util/mklink.pl ../test $(TEST)
+	@$(PERL) $(TOP)/util/mklink.pl ../apps $(APPS)
+
+.PHONY: links_up1_common
+
+links_top_common:
+	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/include/openssl $(EXHEADER)
+	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/test $(TEST)
+	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/apps $(APPS)
+
+.PHONY: links_top_common
+
+install_common:
+	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
+	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	do  \
+	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
+	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
+	done;
+
+.PHONY: install_common
+
+install_fips_common:
+	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
+	do  \
+	  (cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
+	  chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
+	done
+
+.PHONY: install_fips_common
+
+tags_common:
+	ctags $(SRC)
+
+.PHONY: tags_common
+
+lint_common:
+	lint -DLINT $(INCLUDES) $(SRC)>fluff
+
+.PHONY: lint_common
+
+depend_common:
+	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
+	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+
+.PHONY: depend_common
+
+dclean_common:
+	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
+	mv -f Makefile.new $(MAKEFILE)
+
+.PHONY: dclean_common
+
+clean_common:
+	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+
+.PHONY: clean_common
+
+clean_s_common:
+	rm -f *.s
+
+.PHONY: clean_s_common
+
+clean_sub_o_common:
+	rm -f */*.o
+
+.PHONY: clean_sub_o_common
