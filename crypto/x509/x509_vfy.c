@@ -469,14 +469,18 @@ end:
 static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
 {
 	int i;
-	X509 *issuer;
+	X509 *issuer, *rv = NULL;;
 	for (i = 0; i < sk_X509_num(sk); i++)
 		{
 		issuer = sk_X509_value(sk, i);
 		if (ctx->check_issued(ctx, x, issuer))
-			return issuer;
+			{
+			rv = issuer;
+			if (x509_check_cert_time(ctx, rv, 1))
+				break;
+			}
 		}
-	return NULL;
+	return rv;
 }
 
 /* Given a possible certificate and issuer check them */
@@ -1694,7 +1698,7 @@ static int check_policy(X509_STORE_CTX *ctx)
 	return 1;
 	}
 
-static int check_cert_time(X509_STORE_CTX *ctx, X509 *x)
+int x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int quiet)
 	{
 	time_t *ptime;
 	int i;
@@ -1707,6 +1711,8 @@ static int check_cert_time(X509_STORE_CTX *ctx, X509 *x)
 	i=X509_cmp_time(X509_get_notBefore(x), ptime);
 	if (i == 0)
 		{
+		if (quiet)
+			return 0;
 		ctx->error=X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD;
 		ctx->current_cert=x;
 		if (!ctx->verify_cb(0, ctx))
@@ -1715,6 +1721,8 @@ static int check_cert_time(X509_STORE_CTX *ctx, X509 *x)
 
 	if (i > 0)
 		{
+		if (quiet)
+			return 0;
 		ctx->error=X509_V_ERR_CERT_NOT_YET_VALID;
 		ctx->current_cert=x;
 		if (!ctx->verify_cb(0, ctx))
@@ -1724,6 +1732,8 @@ static int check_cert_time(X509_STORE_CTX *ctx, X509 *x)
 	i=X509_cmp_time(X509_get_notAfter(x), ptime);
 	if (i == 0)
 		{
+		if (quiet)
+			return 0;
 		ctx->error=X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD;
 		ctx->current_cert=x;
 		if (!ctx->verify_cb(0, ctx))
@@ -1732,6 +1742,8 @@ static int check_cert_time(X509_STORE_CTX *ctx, X509 *x)
 
 	if (i < 0)
 		{
+		if (quiet)
+			return 0;
 		ctx->error=X509_V_ERR_CERT_HAS_EXPIRED;
 		ctx->current_cert=x;
 		if (!ctx->verify_cb(0, ctx))
@@ -1815,7 +1827,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
 		xs->valid = 1;
 
 		check_cert:
-		ok = check_cert_time(ctx, xs);
+		ok = x509_check_cert_time(ctx, xs, 0);
 		if (!ok)
 			goto end;
 
