@@ -68,3 +68,5 @@ struct X509_VERIFY_PARAM_ID_st
 	unsigned char *ip;	/* If not NULL IP address to match */
 	size_t iplen;		/* Length of IP address */
 	};
+
+int x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int quiet);
