@@ -1067,14 +1067,10 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 	if (!stream_mac)
 		EVP_MD_CTX_cleanup(&hmac);
 #ifdef TLS_DEBUG
-printf("sec=");
-{unsigned int z; for (z=0; z<md_size; z++) printf("%02X ",mac_sec[z]); printf("\n"); }
 printf("seq=");
 {int z; for (z=0; z<8; z++) printf("%02X ",seq[z]); printf("\n"); }
-printf("buf=");
-{int z; for (z=0; z<5; z++) printf("%02X ",buf[z]); printf("\n"); }
 printf("rec=");
-{unsigned int z; for (z=0; z<rec->length; z++) printf("%02X ",buf[z]); printf("\n"); }
+{unsigned int z; for (z=0; z<rec->length; z++) printf("%02X ",rec->data[z]); printf("\n"); }
 #endif
 
 	if (!SSL_IS_DTLS(ssl))
