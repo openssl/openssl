@@ -77,10 +77,12 @@ links:
 	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
 	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
 
-# We need to use force because 'install' matches 'INSTALL' on case
+# We needed to use force because 'install' matches 'INSTALL' on case
 # insensitive systems
-FRC.install:
-install: FRC.install
+# But we renamed 'INSTALL' to 'INSTALL.txt' to make sure that
+# install rule looks the same in all directories
+
+install:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
 	do  \
