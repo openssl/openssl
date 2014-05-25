@@ -163,8 +163,7 @@ fipsexe:	$(FIPSEXE)
 
 fipsalgvs:	$(FIPS_ALGVS)
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_common
 
 links:
 
@@ -176,8 +175,7 @@ errors:
 
 install:
 
-tags:
-	ctags $(SRC)
+tags: tags_common
 
 tests:	exe apps $(TESTS)
 
@@ -386,8 +384,7 @@ test_ocsp: ../apps/openssl$(EXE_EXT) tocsp
 test_heartbeat: $(HEARTBEATTEST)$(EXE_EXT)
 	../util/shlib_wrap.sh ./$(HEARTBEATTEST)
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_common
 
 depend:
 	@if [ -z "$(THIS)" ]; then \
@@ -396,14 +393,11 @@ depend:
 	    $(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(SRC); \
 	fi
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+dclean: dclean_common
 	rm -f $(SRC) $(SHA256TEST).c $(SHA512TEST).c evptests.txt newkey.pem testkey.pem \
 			testreq.pem
 
-clean:
-	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+clean: clean_common
 	rm -f *.dll .rnd tmp.bntest tmp.bctest $(EXE) $(FIPSEXE) *.ss *.srl log dummytest
 
 $(DLIBSSL):
