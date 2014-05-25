@@ -628,8 +628,8 @@ int MAIN(int argc, char **argv)
 	fd_set readfds,writefds;
 	short port=PORT;
 	int full_log=1;
-	char *host=SSL_HOST_NAME;
-	char *localip=NULL;
+	char *remote_host=SSL_HOST_NAME;
+	char *local_ip=NULL;
 	const char *unix_path = NULL;
 	char *xmpphost = NULL;
 	char *cert_file=NULL,*key_file=NULL,*chain_file=NULL;
@@ -750,7 +750,7 @@ static char *jpake_secret = NULL;
 		if	(strcmp(*argv,"-host") == 0)
 			{
 			if (--argc < 1) goto bad;
-			host= *(++argv);
+			remote_host= *(++argv);
 			}
 		else if	(strcmp(*argv,"-port") == 0)
 			{
@@ -761,13 +761,13 @@ static char *jpake_secret = NULL;
 		else if (strcmp(*argv,"-connect") == 0)
 			{
 			if (--argc < 1) goto bad;
-			if (!extract_host_port(*(++argv),&host,NULL,&port))
+			if (!extract_host_port(*(++argv),&remote_host,NULL,&port))
 				goto bad;
 			}
 		else if (strcmp(*argv,"-localip") == 0)
 			{
 			if (--argc < 1) goto bad;
-				localip=*(++argv);
+				local_ip=*(++argv);
 			}
 		else if (strcmp(*argv,"-unix") == 0)
 			{
@@ -1506,7 +1506,7 @@ bad:
 	if (con  &&  (kctx = kssl_ctx_new()) != NULL)
                 {
 		SSL_set0_kssl_ctx(con, kctx);
-                kssl_ctx_setstring(kctx, KSSL_SERVER, host);
+                kssl_ctx_setstring(kctx, KSSL_SERVER, remote_host);
 		}
 #endif	/* OPENSSL_NO_KRB5  */
 /*	SSL_set_cipher_list(con,"RC4-MD5"); */
@@ -1518,7 +1518,7 @@ bad:
 
 re_start:
 
-	if ((!unix_path && (init_client(&s,host,port,socket_type,localip) == 0)) ||
+	if ((!unix_path && (init_client(&s,remote_host,port,local_ip,socket_type) == 0)) ||
 			(unix_path && (init_client_unix(&s,unix_path) == 0)))
 		{
 		BIO_printf(bio_err,"connect:errno=%d\n",get_last_socket_error());
@@ -1742,7 +1742,7 @@ SSL_set_tlsext_status_ids(con, ids);
 		BIO_printf(sbio,"<stream:stream "
 		    "xmlns:stream='http://etherx.jabber.org/streams' "
 		    "xmlns='jabber:client' to='%s' version='1.0'>", xmpphost ?
-			   xmpphost : host);
+			   xmpphost : remote_host);
 		seen = BIO_read(sbio,mbuf,BUFSIZZ);
 		mbuf[seen] = 0;
 		while (!strstr(mbuf, "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'") &&

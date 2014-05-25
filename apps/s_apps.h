@@ -168,7 +168,7 @@ int ssl_print_point_formats(BIO *out, SSL *s);
 int ssl_print_curves(BIO *out, SSL *s, int noshared);
 #endif
 int ssl_print_tmp_key(BIO *out, SSL *s);
-int init_client(int *sock, char *server, int port, int type, char* localip);
+int init_client(int *sock, const char *remote_host, int port, const char* local_host, int type);
 #ifndef NO_SYS_UN_H
 int init_client_unix(int *sock, const char *server);
 #endif
