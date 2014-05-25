@@ -91,7 +91,8 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff enc dec sign verify
+	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f enc dec sign verify
 
 include $(TOP)/Makefile.common
 

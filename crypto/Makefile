@@ -138,7 +138,8 @@ depend:
 	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
 
 clean:
-	rm -f buildinf.h *.s *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f buildinf.h */*.o *.s
 	@target=clean; $(RECURSIVE_MAKE)
 
 dclean:

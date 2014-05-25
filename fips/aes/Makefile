@@ -81,7 +81,8 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff testlist
+	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f asm/*.o testlist
 
 include $(TOP)/Makefile.common
 

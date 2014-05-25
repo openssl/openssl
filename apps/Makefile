@@ -140,7 +140,8 @@ dclean:
 	rm -f CA.pl
 
 clean:
-	rm -f *.o *.obj *.dll lib tags core .pure .nfs* *.old *.bak fluff $(EXE)
+	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f *.dll $(EXE)
 	rm -f req
 
 $(DLIBSSL):
