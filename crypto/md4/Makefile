@@ -33,7 +33,7 @@ top:
 
 all:    lib
 
-lib:    $(LIBOBJ)
+lib:	$(LIBOBJ)
 	$(ARX) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
