@@ -96,8 +96,8 @@ static struct hostent *GetHostByName(const char *name);
 static void ssl_sock_cleanup(void);
 #endif
 static int ssl_sock_init(void);
-static int init_client_ip(int *sock, const unsigned char ip[4], int port,
-			  int type);
+static int init_client_ip(int *sock, const unsigned char remote_ip[4], int port,
+			  const unsigned char local_ip[4], int type);
 static int init_server(int *sock, int port, int type);
 static int init_server_long(int *sock, int port,char *ip, int type);
 static int do_accept(int acc_sock, int *sock, char **host);
@@ -233,18 +233,24 @@ static int ssl_sock_init(void)
 	return(1);
 	}
 
-int init_client(int *sock, const char *host, int port, int type)
+int init_client(int *sock, const char *remote_host, int port, const char *local_host, int type)
 	{
-	unsigned char ip[4];
+	unsigned char remote_ip[4];
+	unsigned char local_ip[4];
 
-	ip[0] = ip[1] = ip[2] = ip[3] = 0;
-	if (!host_ip(host,&(ip[0])))
+	remote_ip[0] = remote_ip[1] = remote_ip[2] = remote_ip[3] = 0;
+	if (!host_ip(remote_host,&(remote_ip[0])))
 		return 0;
-	return init_client_ip(sock,ip,port,type);
+
+	local_ip[0] = local_ip[1] = local_ip[2] = local_ip[3] = 0;
+	if (local_host!=NULL && !host_ip(local_host,&(local_ip[0])))
+		return 0;
+
+	return init_client_ip(sock,remote_ip,port,local_ip,type);
 	}
 
-static int init_client_ip(int *sock, const unsigned char ip[4], int port,
-			  int type)
+static int init_client_ip(int *sock, const unsigned char remote_ip[4], int port,
+			  const unsigned char local_ip[4], int type)
 	{
 	unsigned long addr;
 	struct sockaddr_in them;
@@ -256,10 +262,10 @@ static int init_client_ip(int *sock, const unsigned char ip[4], int port,
 	them.sin_family=AF_INET;
 	them.sin_port=htons((unsigned short)port);
 	addr=(unsigned long)
-		((unsigned long)ip[0]<<24L)|
-		((unsigned long)ip[1]<<16L)|
-		((unsigned long)ip[2]<< 8L)|
-		((unsigned long)ip[3]);
+		((unsigned long)remote_ip[0]<<24L)|
+		((unsigned long)remote_ip[1]<<16L)|
+		((unsigned long)remote_ip[2]<< 8L)|
+		((unsigned long)remote_ip[3]);
 	them.sin_addr.s_addr=htonl(addr);
 
 	if (type == SOCK_STREAM)
@@ -277,7 +283,21 @@ static int init_client_ip(int *sock, const unsigned char ip[4], int port,
 		if (i < 0) { closesocket(s); perror("keepalive"); return(0); }
 		}
 #endif
+	if(0!=local_ip[0])
+		{
+		struct sockaddr_in me;
+		memset((char*)&me,0,sizeof(me));
+		me.sin_family = AF_INET;
+		addr=(unsigned long)
+			((unsigned long)local_ip[0]<<24L)|
+			((unsigned long)local_ip[1]<<16L)|
+			((unsigned long)local_ip[2]<< 8L)|
+			((unsigned long)local_ip[3]);
+		me.sin_addr.s_addr = htonl(addr);
 
+		if( bind(s,(struct sockaddr *)&me,sizeof(me)) == -1 )
+			{ closesocket(s); perror("bind"); return(0); }
+		}
 	if (connect(s,(struct sockaddr *)&them,sizeof(them)) == -1)
 		{ closesocket(s); perror("connect"); return(0); }
 	*sock=s;
@@ -656,7 +676,7 @@ static int host_ip(const char *str, unsigned char ip[4])
 		ip[3]=in[3];
 		}
 	else
-		{ /* do a gethostbyname */
+		{/* do a gethostbyname */
 		struct hostent *he;
 
 		if (!ssl_sock_init()) return(0);
