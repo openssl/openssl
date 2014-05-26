@@ -74,6 +74,8 @@ dclean:
 clean:
 	rm -f *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
+include $(TOP)/Makefile.common
+
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 dso_beos.o: ../../e_os.h ../../include/openssl/bio.h

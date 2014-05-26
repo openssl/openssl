@@ -190,6 +190,8 @@ dclean:
 clean:
 	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
+include $(TOP)/Makefile.common
+
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 bn_add.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h

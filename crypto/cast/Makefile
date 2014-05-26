@@ -80,6 +80,8 @@ dclean:
 clean:
 	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
+include $(TOP)/Makefile.common
+
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 c_cfb64.o: ../../e_os.h ../../include/openssl/cast.h

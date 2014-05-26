@@ -217,6 +217,8 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 	@target=dclean; $(RECURSIVE_MAKE)
 
+include $(TOP)/Makefile.common
+
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 fips.o: ../include/openssl/aes.h ../include/openssl/asn1.h

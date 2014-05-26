@@ -45,6 +45,9 @@ clean:
 
 jpaketest: top jpaketest.c $(LIB)
 	$(CC) $(CFLAGS) -Wall -Werror -g -o jpaketest jpaketest.c $(LIB)
+
+include $(TOP)/Makefile.common
+
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 jpake.o: ../../include/openssl/bio.h ../../include/openssl/bn.h

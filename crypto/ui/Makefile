@@ -76,6 +76,8 @@ dclean:
 clean:
 	rm -f *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
+include $(TOP)/Makefile.common
+
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 ui_compat.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h

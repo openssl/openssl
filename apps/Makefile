@@ -165,6 +165,8 @@ progs.h: progs.pl
 	$(PERL) progs.pl $(E_EXE) >progs.h
 	$(RM) $(PROGRAM).o
 
+include $(TOP)/Makefile.common
+
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 app_rand.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h

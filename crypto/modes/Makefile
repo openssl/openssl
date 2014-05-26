@@ -102,6 +102,8 @@ dclean:
 clean:
 	rm -f *.s *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
+include $(TOP)/Makefile.common
+
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 cbc128.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h

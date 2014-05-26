@@ -80,6 +80,8 @@ dclean:
 clean:
 	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
+include $(TOP)/Makefile.common
+
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 rmd_dgst.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h

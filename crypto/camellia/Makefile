@@ -86,6 +86,8 @@ dclean:
 clean:
 	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
+include $(TOP)/Makefile.common
+
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 camellia.o: ../../include/openssl/opensslconf.h camellia.c camellia.h

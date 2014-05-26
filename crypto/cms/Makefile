@@ -78,6 +78,8 @@ dclean:
 clean:
 	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
+include $(TOP)/Makefile.common
+
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 cms_asn1.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h

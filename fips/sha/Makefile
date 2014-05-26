@@ -115,6 +115,8 @@ dclean:
 clean:
 	rm -f *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff $(EXE)
 
+include $(TOP)/Makefile.common
+
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 fips_sha1_selftest.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h

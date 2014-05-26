@@ -73,6 +73,8 @@ dclean:
 clean:
 	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
+include $(TOP)/Makefile.common
+
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 seed.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h

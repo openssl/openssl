@@ -56,4 +56,6 @@ clean:
 
 errors:
 
+include $(TOP)/Makefile.common
+
 # DO NOT DELETE THIS LINE -- make depend depends on it.
