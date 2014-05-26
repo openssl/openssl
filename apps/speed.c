@@ -2041,6 +2041,29 @@ int MAIN(int argc, char **argv)
 		BN_free(rnd);
 		
 		}
+	
+	if (prime_doit[D_PRIME_COPRIME])
+		{
+		BIGNUM *rnd = BN_new();
+		BIGNUM *add = BN_new();
+		BN_CTX *ctx = BN_CTX_new();
+		
+		BN_set_word(add, 2);
+		prime_print_message(prime_names[D_PRIME_COPRIME],
+							prime_c[D_PRIME_COPRIME]);
+			
+		Time_F(START);
+		for (count=0, run=1; COND(prime_c[D_PRIME_COPRIME]); count++)
+			bn_probable_prime_dh_coprime(rnd, 1024, add, NULL, ctx);
+		
+		d=Time_F(STOP);
+		prime_print_result(D_PRIME_COPRIME, count, d);
+		
+		BN_CTX_free(ctx);
+		BN_free(add);
+		BN_free(rnd);
+		
+		}
 
 	RAND_pseudo_bytes(buf,36);
 #ifndef OPENSSL_NO_RSA
