@@ -82,9 +82,10 @@ file using the B<out> option.
 =item B<-strictpem>
 
 If this option is used then B<-inform> will be ignored. Without this option any
-data in a PEM format input file will be treated as base64 encoded and processed
-whether it has the normal PEM BEGIN and END markers or not. This option will
-ignore any data prior to the start of the BEGIN marker in a PEM file.
+data in a PEM format input file will be treated as being base64 encoded and
+processed whether it has the normal PEM BEGIN and END markers or not. This
+option will ignore any data prior to the start of the BEGIN marker, or after an
+END marker in a PEM file.
 
 =back
 
