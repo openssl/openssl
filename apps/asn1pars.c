@@ -80,6 +80,9 @@
 #undef PROG
 #define PROG	asn1parse_main
 
+/* Minimum buffer size to be used */
+#define MIN_BUFFER	256
+
 int MAIN(int, char **);
 
 static int do_generate(BIO *bio, char *genstr, char *genconf, BUF_MEM *buf);
@@ -90,7 +93,7 @@ int MAIN(int argc, char **argv)
 	unsigned int length=0;
 	long num,tmplen;
 	BIO *in=NULL,*out=NULL,*b64=NULL, *derout = NULL;
-	int informat,indent=0, noout = 0, dump = 0;
+	int informat,indent=0, noout = 0, dump = 0, strictpem = 0;
 	char *infile=NULL,*str=NULL,*prog,*oidfile=NULL, *derfile=NULL;
 	char *genstr=NULL, *genconf=NULL;
 	unsigned char *tmpbuf;
@@ -181,6 +184,11 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			genconf= *(++argv);
 			}
+		else if (strcmp(*argv,"-strictpem") == 0)
+			{
+			strictpem = 1;
+			informat = FORMAT_PEM;
+			}
 		else
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);
@@ -211,6 +219,8 @@ bad:
 		BIO_printf(bio_err,"               ASN1 blob wrappings\n");
 		BIO_printf(bio_err," -genstr str   string to generate ASN1 structure from\n");
 		BIO_printf(bio_err," -genconf file file to generate ASN1 structure from\n");
+		BIO_printf(bio_err," -strictpem    do not attempt base64 decode outside PEM markers (-inform \n");
+		BIO_printf(bio_err,"               will be ignored)\n");
 		goto end;
 		}
 
@@ -262,7 +272,7 @@ bad:
 	}
 
 	if ((buf=BUF_MEM_new()) == NULL) goto end;
-	if (!BUF_MEM_grow(buf,BUFSIZ*8)) goto end; /* Pre-allocate :-) */
+	if (!BUF_MEM_grow(buf,(BUFSIZ*8)<MIN_BUFFER?MIN_BUFFER:(BUFSIZ*8))) goto end; /* Pre-allocate :-) */
 
 	if (genstr || genconf)
 		{
@@ -280,6 +290,38 @@ bad:
 		if (informat == FORMAT_PEM)
 			{
 			BIO *tmp;
+
+			if(strictpem)
+				{
+				for (;;)
+					{
+					/* Read a line */
+					i=BIO_gets(in,buf->data,MIN_BUFFER-1);
+
+					if (i <= 0)
+						{
+						BIO_printf(bio_err, "Error: Cannot find start line\n");
+						goto end;
+						}
+
+					/* Strip trailing spaces etc */
+					do
+						i--;
+					while ((i >= 0) && (buf->data[i]  <= ' '));
+
+					buf->data[++i]='\0';
+
+					/* Check if we have a PEM BEGIN marker */
+					if (strncmp(buf->data,"-----BEGIN ",11) == 0)
+						{
+						if (strncmp(&(buf->data[i-5]),"-----",5) != 0)
+							continue;
+						break;
+						}
+					}
+				}
+
+
 
 			if ((b64=BIO_new(BIO_f_base64())) == NULL)
 				goto end;
