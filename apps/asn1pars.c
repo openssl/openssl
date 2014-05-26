@@ -80,8 +80,6 @@
 #undef PROG
 #define PROG	asn1parse_main
 
-/* Minimum buffer size to be used */
-#define MIN_BUFFER	256
 
 int MAIN(int, char **);
 
@@ -94,7 +92,7 @@ int MAIN(int argc, char **argv)
 	long num,tmplen;
 	BIO *in=NULL,*out=NULL,*b64=NULL, *derout = NULL;
 	int informat,indent=0, noout = 0, dump = 0, strictpem = 0;
-	char *infile=NULL,*str=NULL,*prog,*oidfile=NULL, *derfile=NULL;
+	char *infile=NULL,*str=NULL,*prog,*oidfile=NULL, *derfile=NULL, *name=NULL, *header=NULL;
 	char *genstr=NULL, *genconf=NULL;
 	unsigned char *tmpbuf;
 	const unsigned char *ctmpbuf;
@@ -271,76 +269,58 @@ bad:
 		}
 	}
 
-	if ((buf=BUF_MEM_new()) == NULL) goto end;
-	if (!BUF_MEM_grow(buf,(BUFSIZ*8)<MIN_BUFFER?MIN_BUFFER:(BUFSIZ*8))) goto end; /* Pre-allocate :-) */
-
-	if (genstr || genconf)
+	if(strictpem)
 		{
-		num = do_generate(bio_err, genstr, genconf, buf);
-		if (num < 0)
+		if(PEM_read_bio(in, &name, &header, (unsigned char **)&str, &num) != 1)
 			{
+			BIO_printf(bio_err,"Error reading PEM file\n");
 			ERR_print_errors(bio_err);
 			goto end;
 			}
 		}
-
 	else
 		{
 
-		if (informat == FORMAT_PEM)
+		if ((buf=BUF_MEM_new()) == NULL) goto end;
+		if (!BUF_MEM_grow(buf,BUFSIZ*8)) goto end; /* Pre-allocate :-) */
+
+		if (genstr || genconf)
 			{
-			BIO *tmp;
-
-			if(strictpem)
+			num = do_generate(bio_err, genstr, genconf, buf);
+			if (num < 0)
 				{
-				for (;;)
-					{
-					/* Read a line */
-					i=BIO_gets(in,buf->data,MIN_BUFFER-1);
+				ERR_print_errors(bio_err);
+				goto end;
+				}
+			}
 
-					if (i <= 0)
-						{
-						BIO_printf(bio_err, "Error: Cannot find start line\n");
-						goto end;
-						}
+		else
+			{
 
-					/* Strip trailing spaces etc */
-					do
-						i--;
-					while ((i >= 0) && (buf->data[i]  <= ' '));
+			if (informat == FORMAT_PEM)
+				{
+				BIO *tmp;
 
-					buf->data[++i]='\0';
-
-					/* Check if we have a PEM BEGIN marker */
-					if (strncmp(buf->data,"-----BEGIN ",11) == 0)
-						{
-						if (strncmp(&(buf->data[i-5]),"-----",5) != 0)
-							continue;
-						break;
-						}
-					}
+				if ((b64=BIO_new(BIO_f_base64())) == NULL)
+					goto end;
+				BIO_push(b64,in);
+				tmp=in;
+				in=b64;
+				b64=tmp;
 				}
 
-
-
-			if ((b64=BIO_new(BIO_f_base64())) == NULL)
-				goto end;
-			BIO_push(b64,in);
-			tmp=in;
-			in=b64;
-			b64=tmp;
+			num=0;
+			for (;;)
+				{
+				if (!BUF_MEM_grow(buf,(int)num+BUFSIZ)) goto end;
+				i=BIO_read(in,&(buf->data[num]),BUFSIZ);
+				if (i <= 0) break;
+				num+=i;
+				}
 			}
+		str=buf->data;
 
-		num=0;
-		for (;;)
-			{
-			if (!BUF_MEM_grow(buf,(int)num+BUFSIZ)) goto end;
-			i=BIO_read(in,&(buf->data[num]),BUFSIZ);
-			if (i <= 0) break;
-			num+=i;
-			}
 		}
-	str=buf->data;
 
 	/* If any structs to parse go through in sequence */
 
@@ -419,6 +399,9 @@ end:
 	if (ret != 0)
 		ERR_print_errors(bio_err);
 	if (buf != NULL) BUF_MEM_free(buf);
+	if (name != NULL) OPENSSL_free(name);
+	if (header != NULL) OPENSSL_free(header);
+	if (strictpem && str != NULL) OPENSSL_free(str);
 	if (at != NULL) ASN1_TYPE_free(at);
 	if (osk != NULL) sk_OPENSSL_STRING_free(osk);
 	OBJ_cleanup();
