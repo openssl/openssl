@@ -43,23 +43,13 @@ all:	lib
 lib:	$(LIBOBJ)
 	@echo $(LIBOBJ) > lib
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_common
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/apps $(APPS)
+links: links_top_common
 
-install:
-	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
-	do  \
-	  (cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	  chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done
+install: install_fips_common
 
-tags:
-	ctags $(SRC)
+tags: tags_common
 
 tests:
 
@@ -69,18 +59,18 @@ fips_test:
 	mkdir ../testvectors/tdes/rsp
 	if [ -s testlist ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_desmovs -d testlist; fi
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_common
 
 depend:
 	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) \
 		$(SRC) $(TEST)
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+dclean: dclean_common
 
-clean:
-	rm -f *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff testlist
+clean: clean_common
+	rm -f asm/*.o testlist
+
+include $(TOP)/Makefile.common
+
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 fips_des_selftest.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h

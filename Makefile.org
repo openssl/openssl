@@ -773,4 +773,6 @@ install_docs:
 			 done); \
 	done
 
+include $(HERE)/$(TOP)/Makefile.common
+
 # DO NOT DELETE THIS LINE -- make depend depends on it.
