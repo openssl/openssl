@@ -129,8 +129,12 @@
 static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
 	const BIGNUM *a1_odd, int k, BN_CTX *ctx, BN_MONT_CTX *mont);
 static int probable_prime(BIGNUM *rnd, int bits);
+static int probable_prime_dh(BIGNUM *rnd, const BIGNUM *add,
+	const BIGNUM *rem, BN_CTX *ctx, int first_prime_index);
 static int probable_prime_dh_safe(BIGNUM *rnd, int bits,
 	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx);
+
+static int prime_offsets[8] = { 7, 11, 13, 17, 19, 23, 29, 31 };
 
 int BN_GENCB_call(BN_GENCB *cb, int a, int b)
 	{
@@ -363,40 +367,25 @@ err:
 int bn_probable_prime_dh(BIGNUM *rnd, int bits,
 	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx)
 	{
-	int i,ret=0;
-	BIGNUM *t1;
+	if (!BN_rand(rnd, bits, 0, 1)) return(0);
 
-	BN_CTX_start(ctx);
-	if ((t1 = BN_CTX_get(ctx)) == NULL) goto err;
+	return(probable_prime_dh(rnd, add, rem, ctx, 1));
+	}
 
-	if (!BN_rand(rnd,bits,0,1)) goto err;
+int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits,
+	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx)
+	{
+	BIGNUM *offset_index = BN_new();
 
-	/* we need ((rnd-rem) % add) == 0 */
+	if (!BN_rand(rnd, bits, 0, 1)) return(0);
+	if (!BN_rand(offset_index, 3, -1, -1)) return(0);
 
-	if (!BN_mod(t1,rnd,add,ctx)) goto err;
-	if (!BN_sub(rnd,rnd,t1)) goto err;
-	if (rem == NULL)
-		{ if (!BN_add_word(rnd,1)) goto err; }
-	else
-		{ if (!BN_add(rnd,rnd,rem)) goto err; }
+	BN_mul_word(rnd, 30);
+	BN_add_word(rnd, prime_offsets[BN_get_word(offset_index)]);
+	
+	BN_free(offset_index);
 
-	/* we now have a random number 'rand' to test. */
-
-loop:
-	for (i=1; i<NUMPRIMES; i++)
-		{
-		/* check that rnd is a prime */
-		if (BN_mod_word(rnd,(BN_ULONG)primes[i]) <= 1)
-			{
-			if (!BN_add(rnd,rnd,add)) goto err;
-			goto loop;
-			}
-		}
-	ret=1;
-err:
-	BN_CTX_end(ctx);
-	bn_check_top(rnd);
-	return(ret);
+	return(probable_prime_dh(rnd, add, rem, ctx, 3));
 	}
 
 static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
@@ -489,6 +478,43 @@ loop:
 		goto again;
 	bn_check_top(rnd);
 	return(1);
+	}
+
+static int probable_prime_dh(BIGNUM *rnd, const BIGNUM *add,
+	const BIGNUM *rem, BN_CTX *ctx, int first_prime_index)
+	{
+	int i,ret=0;
+	BIGNUM *t1;
+
+	BN_CTX_start(ctx);
+	if ((t1 = BN_CTX_get(ctx)) == NULL) goto err;
+
+	/* we need ((rnd-rem) % add) == 0 */
+
+	if (!BN_mod(t1,rnd,add,ctx)) goto err;
+	if (!BN_sub(rnd,rnd,t1)) goto err;
+	if (rem == NULL)
+		{ if (!BN_add_word(rnd,1)) goto err; }
+	else
+		{ if (!BN_add(rnd,rnd,rem)) goto err; }
+
+	/* we now have a random number 'rand' to test. */
+
+loop:
+	for (i=first_prime_index; i<NUMPRIMES; i++)
+		{
+		/* check that rnd is a prime */
+		if (BN_mod_word(rnd,(BN_ULONG)primes[i]) <= 1)
+			{
+			if (!BN_add(rnd,rnd,add)) goto err;
+			goto loop;
+			}
+		}
+	ret=1;
+err:
+	BN_CTX_end(ctx);
+	bn_check_top(rnd);
+	return(ret);
 	}
 
 static int probable_prime_dh_safe(BIGNUM *p, int bits, const BIGNUM *padd,
