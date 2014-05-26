@@ -409,7 +409,7 @@ again:
 			maxdelta = size_limit;
 		}
 	delta=0;
-	loop:
+loop:
 	if (is_single_word)
 		{
 		BN_ULONG rnd_word = BN_get_word(rnd);
@@ -476,7 +476,8 @@ static int probable_prime_dh(BIGNUM *rnd, int bits,
 
 	/* we now have a random number 'rand' to test. */
 
-	loop: for (i=1; i<NUMPRIMES; i++)
+loop:
+	for (i=1; i<NUMPRIMES; i++)
 		{
 		/* check that rnd is a prime */
 		if (BN_mod_word(rnd,(BN_ULONG)primes[i]) <= 1)
@@ -524,7 +525,8 @@ static int probable_prime_dh_safe(BIGNUM *p, int bits, const BIGNUM *padd,
 	if (!BN_lshift1(p,q)) goto err;
 	if (!BN_add_word(p,1)) goto err;
 
-	loop: for (i=1; i<NUMPRIMES; i++)
+loop:
+	for (i=1; i<NUMPRIMES; i++)
 		{
 		/* check that p and q are prime */
 		/* check that for p and q
