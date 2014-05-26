@@ -986,7 +986,7 @@ int MAIN(int argc, char **argv)
 		else
 #endif
 #ifndef OPENSSL_NO_ECDH
-		     if (strcmp(*argv,"ecdhp160") == 0) ecdh_doit[R_EC_P160]=2;
+			 if (strcmp(*argv,"ecdhp160") == 0) ecdh_doit[R_EC_P160]=2;
 		else if (strcmp(*argv,"ecdhp192") == 0) ecdh_doit[R_EC_P192]=2;
 		else if (strcmp(*argv,"ecdhp224") == 0) ecdh_doit[R_EC_P224]=2;
 		else if (strcmp(*argv,"ecdhp256") == 0) ecdh_doit[R_EC_P256]=2;
@@ -1010,7 +1010,7 @@ int MAIN(int argc, char **argv)
 		else
 #endif
 			 if (strcmp(*argv,"prime-trial-division") == 0) prime_doit[D_PRIME_TRIAL_DIVISION]=1;
-		else if (strcmp(*argv,"prime-coprime") == 0) prime_doit[D_PRIME_COPRIME]=1;
+		else if (strcmp(*argv,"prime-coprime") == 0) 		prime_doit[D_PRIME_COPRIME]=1;
 		else
 			{
 			BIO_printf(bio_err,"Error: bad option or value\n");
@@ -1309,23 +1309,24 @@ int MAIN(int argc, char **argv)
 
 	for (i=1; i<SIZE_NUM; i++)
 		{
-		c[D_MD2][i]=c[D_MD2][0]*4*lengths[0]/lengths[i];
-		c[D_MDC2][i]=c[D_MDC2][0]*4*lengths[0]/lengths[i];
-		c[D_MD4][i]=c[D_MD4][0]*4*lengths[0]/lengths[i];
-		c[D_MD5][i]=c[D_MD5][0]*4*lengths[0]/lengths[i];
-		c[D_HMAC][i]=c[D_HMAC][0]*4*lengths[0]/lengths[i];
-		c[D_SHA1][i]=c[D_SHA1][0]*4*lengths[0]/lengths[i];
-		c[D_RMD160][i]=c[D_RMD160][0]*4*lengths[0]/lengths[i];
-		c[D_SHA256][i]=c[D_SHA256][0]*4*lengths[0]/lengths[i];
-		c[D_SHA512][i]=c[D_SHA512][0]*4*lengths[0]/lengths[i];
-		c[D_WHIRLPOOL][i]=c[D_WHIRLPOOL][0]*4*lengths[0]/lengths[i];
-		}
-	for (i=1; i<SIZE_NUM; i++)
-		{
 		long l0,l1;
 
-		l0=(long)lengths[i-1];
+		l0=(long)lengths[0];
 		l1=(long)lengths[i];
+		
+		c[D_MD2][i]=c[D_MD2][0]*4*l0/l1;
+		c[D_MDC2][i]=c[D_MDC2][0]*4*l0/l1;
+		c[D_MD4][i]=c[D_MD4][0]*4*l0/l1;
+		c[D_MD5][i]=c[D_MD5][0]*4*l0/l1;
+		c[D_HMAC][i]=c[D_HMAC][0]*4*l0/l1;
+		c[D_SHA1][i]=c[D_SHA1][0]*4*l0/l1;
+		c[D_RMD160][i]=c[D_RMD160][0]*4*l0/l1;
+		c[D_SHA256][i]=c[D_SHA256][0]*4*l0/l1;
+		c[D_SHA512][i]=c[D_SHA512][0]*4*l0/l1;
+		c[D_WHIRLPOOL][i]=c[D_WHIRLPOOL][0]*4*l0/l1;
+
+		l0=(long)lengths[i-1];
+		
 		c[D_RC4][i]=c[D_RC4][i-1]*l0/l1;
 		c[D_CBC_DES][i]=c[D_CBC_DES][i-1]*l0/l1;
 		c[D_EDE3_DES][i]=c[D_EDE3_DES][i-1]*l0/l1;
@@ -2030,7 +2031,7 @@ int MAIN(int argc, char **argv)
 			
 			Time_F(START);
 			for (count=0, run=1; COND(prime_c[j]); count++)
-				bn_probable_prime_dh(rnd,1024,add,NULL,ctx);
+				bn_probable_prime_dh(rnd, 1024, add, NULL, ctx);
 			
 			d=Time_F(STOP);
 			BIO_printf(bio_err,
