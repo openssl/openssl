@@ -60,7 +60,7 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [experimenta
 # 386           generate 80386 code
 # no-sse2	disables IA-32 SSE2 code, above option implies no-sse2
 # no-<cipher>   build without specified algorithm (rsa, idea, rc5, ...)
-# -<xxx> +<xxx> compiler options are passed through 
+# -<xxx> +<xxx> compiler options are passed through
 #
 # DEBUG_SAFESTACK use type-safe stacks to enforce type-safety on stack items
 #		provided to stack calls. Generates unique stack functions for
@@ -101,7 +101,7 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [experimenta
 # AES_ASM	ASE_[en|de]crypt is implemented in assembler
 
 # Minimum warning options... any contributions to OpenSSL should at least get
-# past these. 
+# past these.
 
 my $gcc_devteam_warn = "-Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED";
 
@@ -144,7 +144,7 @@ my $ppc32_asm=$ppc64_asm;
 my $no_asm=":::::::::::::::void";
 
 # As for $BSDthreads. Idea is to maintain "collective" set of flags,
-# which would cover all BSD flavors. -pthread applies to them all, 
+# which would cover all BSD flavors. -pthread applies to them all,
 # but is treated differently. OpenBSD expands is as -D_POSIX_THREAD
 # -lc_r, which is sufficient. FreeBSD 4.x expands it as -lc_r,
 # which has to be accompanied by explicit -D_THREAD_SAFE and
@@ -225,7 +225,7 @@ my %table=(
 # compiler:-)
 #						<appro@fy.chalmers.se>
 "solaris64-x86_64-gcc","gcc:-m64 -O3 -Wall -DL_ENDIAN::-D_REENTRANT::-lsocket -lnsl -ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:solaris-shared:-fPIC:-m64 -shared -static-libgcc:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::/64",
- 
+
 #### Solaris x86 with Sun C setups
 "solaris-x86-cc","cc:-fast -xarch=generic -O -Xa::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_UNROLL BF_PTR:${no_asm}:dlfcn:solaris-shared:-KPIC:-G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "solaris64-x86_64-cc","cc:-fast -xarch=amd64 -xstrconst -Xa -DL_ENDIAN::-D_REENTRANT::-lsocket -lnsl -ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:solaris-shared:-KPIC:-xarch=amd64 -G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::/64",
@@ -250,7 +250,7 @@ my %table=(
 "solaris64-sparcv9-cc","cc:-xtarget=ultra -xarch=v9 -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN::-D_REENTRANT:ULTRASPARC:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR:${sparcv9_asm}:dlfcn:solaris-shared:-KPIC:-xarch=v9 -G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::/64",
 ####
 "debug-solaris-sparcv8-cc","cc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -xarch=v8 -g -O -xstrconst -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR:${sparcv8_asm}:dlfcn:solaris-shared:-KPIC:-G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"debug-solaris-sparcv9-cc","cc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -xtarget=ultra -xarch=v8plus -g -O -xstrconst -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT:ULTRASPARC:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK_LL DES_PTR DES_RISC1 DES_UNROLL BF_PTR:${sparcv9_asm}:dlfcn:solaris-shared:-KPIC:-G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)", 
+"debug-solaris-sparcv9-cc","cc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -xtarget=ultra -xarch=v8plus -g -O -xstrconst -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT:ULTRASPARC:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK_LL DES_PTR DES_RISC1 DES_UNROLL BF_PTR:${sparcv9_asm}:dlfcn:solaris-shared:-KPIC:-G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
 #### SunOS configs, assuming sparc for the gcc one.
 #"sunos-cc", "cc:-O4 -DNOPROTO -DNOCONST::(unknown):SUNOS::DES_UNROLL:${no_asm}::",
@@ -320,7 +320,7 @@ my %table=(
 "hpux64-ia64-cc","cc:-Ae +DD64 +O3 +Olit=all -z -DB_ENDIAN -D_REENTRANT::::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX DES_UNROLL DES_RISC1 DES_INT:${ia64_asm}:dlfcn:hpux-shared:+Z:+DD64 -b:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::/hpux64",
 # GCC builds...
 "hpux-ia64-gcc","gcc:-O3 -DB_ENDIAN -D_REENTRANT::::-ldl:SIXTY_FOUR_BIT MD2_CHAR RC4_INDEX DES_UNROLL DES_RISC1 DES_INT:${ia64_asm}:dlfcn:hpux-shared:-fpic:-shared:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::/hpux32",
-"hpux64-ia64-gcc","gcc:-mlp64 -O3 -DB_ENDIAN -D_REENTRANT::::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX DES_UNROLL DES_RISC1 DES_INT:${ia64_asm}:dlfcn:hpux-shared:-fpic:-mlp64 -shared:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::/hpux64", 
+"hpux64-ia64-gcc","gcc:-mlp64 -O3 -DB_ENDIAN -D_REENTRANT::::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX DES_UNROLL DES_RISC1 DES_INT:${ia64_asm}:dlfcn:hpux-shared:-fpic:-mlp64 -shared:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::/hpux64",
 
 # Legacy HPUX 9.X configs...
 "hpux-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY -Ae +ESlit +O2 -z::(unknown)::-Wl,+s -ldld:DES_PTR DES_UNROLL DES_RISC1:${no_asm}:dl:hpux-shared:+Z:-b:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
@@ -558,7 +558,7 @@ my %table=(
 # with itself, Applink is never engaged and can as well be omitted.
 "mingw64", "gcc:-mno-cygwin -DL_ENDIAN -O3 -Wall -DWIN32_LEAN_AND_MEAN -DUNICODE -D_UNICODE::-D_MT:MINGW64:-lws2_32 -lgdi32 -lcrypt32:SIXTY_FOUR_BIT RC4_CHUNK_LL DES_INT EXPORT_VAR_AS_FN:${x86_64_asm}:mingw64:win32:cygwin-shared:-D_WINDLL:-mno-cygwin:.dll.a",
 
-# UWIN 
+# UWIN
 "UWIN", "cc:-DTERMIOS -DL_ENDIAN -O -Wall:::UWIN::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${no_asm}:win32",
 
 # Cygwin
@@ -637,7 +637,7 @@ my %table=(
 my @MK1MF_Builds=qw(VC-WIN64I VC-WIN64A
 		    debug-VC-WIN64I debug-VC-WIN64A
 		    VC-NT VC-CE VC-WIN32 debug-VC-WIN32
-		    BC-32 
+		    BC-32
 		    netware-clib netware-clib-bsdsock
 		    netware-libc netware-libc-bsdsock);
 
@@ -837,7 +837,7 @@ PROCESS_ARGS:
 					{
 					$disabled{$1} = "option";
 					}
-				}			
+				}
 			}
 		elsif (/^enable-(.+)$/ || /^experimental-(.+)$/)
 			{
@@ -1128,7 +1128,7 @@ foreach (sort (keys %disabled))
 			{
 			$openssl_other_defines .= "#define OPENSSL_NO_$ALGO\n";
 			print " OPENSSL_NO_$ALGO";
-		
+
 			if (/^err$/)	{ $flags .= "-DOPENSSL_NO_ERR "; }
 			elsif (/^asm$/)	{ $no_asm = 1; }
 			}
@@ -1396,7 +1396,7 @@ else
 #			$thread_defines .= "#define $def\n";
 #			}
 #		}
-	}	
+	}
 
 $lflags="$libs$lflags" if ($libs ne "");
 
@@ -2015,8 +2015,8 @@ print "RC4_CHUNK is unsigned long long\n" if $rc4_chunk==2;
 print "MD2 uses u$type[$md2_int]\n" if $md2_int != $def_int;
 print "IDEA uses u$type[$idea_int]\n" if $idea_int != $def_int;
 print "RC2 uses u$type[$rc2_int]\n" if $rc2_int != $def_int;
-print "BF_PTR used\n" if $bf_ptr == 1; 
-print "BF_PTR2 used\n" if $bf_ptr == 2; 
+print "BF_PTR used\n" if $bf_ptr == 1;
+print "BF_PTR2 used\n" if $bf_ptr == 2;
 
 if($IsMK1MF) {
 	open (OUT,">crypto/buildinf.h") || die "Can't open buildinf.h";
@@ -2094,7 +2094,7 @@ BEGIN
 #if defined(FIPS)
 	    VALUE "Comments", "WARNING: TEST VERSION ONLY ***NOT*** FIPS 140-2 VALIDATED.\\0"
 #endif
-	    // Required:	    
+	    // Required:
 	    VALUE "CompanyName", "The OpenSSL Project, http://www.openssl.org/\\0"
 #if defined(FIPS)
 	    VALUE "FileDescription", "TEST UNVALIDATED FIPS140-2 DLL\\0"
@@ -2130,7 +2130,7 @@ END
 EOF
 	close(OUT);
   }
-  
+
 print <<EOF;
 
 Configured for $target.
@@ -2160,7 +2160,7 @@ generate a fipscanister.o object module for TESTING PURPOSES ONLY; that
 compiled module is NOT FIPS 140-2 validated and CANNOT be used to replace the
 OpenSSL FIPS Object Module as identified by the CMVP
 (http://csrc.nist.gov/cryptval/) in any application requiring the use of FIPS
-140-2 validated software. 
+140-2 validated software.
 
 This is a test OpenSSL 2.0 FIPS module.
 
@@ -2247,7 +2247,7 @@ sub print_table_entry
 	my $perlasm_scheme,my $dso_scheme,my $shared_target,my $shared_cflag,
 	my $shared_ldflag,my $shared_extension,my $ranlib,my $arflags,my $multilib)=
 	split(/\s*:\s*/,$table{$target} . ":" x 30 , -1);
-			
+
 	print <<EOF
 
 *** $target
