@@ -74,9 +74,10 @@
 #ifndef OPENSSL_NO_SPEED
 
 #undef SECONDS
-#define SECONDS		3	
-#define RSA_SECONDS	10
-#define DSA_SECONDS	10
+#define SECONDS			3	
+#define PRIME_SECONDS	10	
+#define RSA_SECONDS		10
+#define DSA_SECONDS		10
 #define ECDSA_SECONDS   10
 #define ECDH_SECONDS    10
 
@@ -220,6 +221,7 @@ static void prime_print_message(const char *s, long num);
 static void pkey_print_message(const char *str, const char *str2,
 	long num, int bits, int sec);
 static void print_result(int alg,int run_no,int count,double time_used);
+static void prime_print_result(int alg, int count, double time_used);
 #ifndef NO_FORK
 static int do_multi(int multi);
 #endif
@@ -2016,32 +2018,28 @@ int MAIN(int argc, char **argv)
 			print_result(D_EVP,j,count,d);
 			}
 		}
-		
-	for (j=0; j<PRIME_NUM; j++)
+	
+	if (prime_doit[D_PRIME_TRIAL_DIVISION])
 		{
 		BIGNUM *rnd = BN_new();
 		BIGNUM *add = BN_new();
 		BN_CTX *ctx = BN_CTX_new();
 		
-		if(prime_doit[j])
-			{
-			BN_set_word(add, 2);
+		BN_set_word(add, 2);
+		prime_print_message(prime_names[D_PRIME_TRIAL_DIVISION],
+							prime_c[D_PRIME_TRIAL_DIVISION]);
 			
-			prime_print_message(prime_names[j], prime_c[j]);
-			
-			Time_F(START);
-			for (count=0, run=1; COND(prime_c[j]); count++)
-				bn_probable_prime_dh(rnd, 1024, add, NULL, ctx);
-			
-			d=Time_F(STOP);
-			BIO_printf(bio_err,
-					   mr ? "+R:%ld:%s:%f\n" : "%ld %s's in %.2fs\n",
-					   count, prime_names[j], d);
-			}
+		Time_F(START);
+		for (count=0, run=1; COND(prime_c[D_PRIME_TRIAL_DIVISION]); count++)
+			bn_probable_prime_dh(rnd, 1024, add, NULL, ctx);
+		
+		d=Time_F(STOP);
+		prime_print_result(D_PRIME_TRIAL_DIVISION, count, d);
 		
 		BN_CTX_free(ctx);
 		BN_free(add);
 		BN_free(rnd);
+		
 		}
 
 	RAND_pseudo_bytes(buf,36);
@@ -2638,9 +2636,9 @@ static void prime_print_message(const char *s, long num)
 	{
 #ifdef SIGALRM
 	BIO_printf(bio_err,mr ? "+DT:%s:%d\n"
-		   : "Doing %s for %ds: ", s, SECONDS);
+		   : "Doing %s for %ds: ", s, PRIME_SECONDS);
 	(void)BIO_flush(bio_err);
-	alarm(SECONDS);
+	alarm(PRIME_SECONDS);
 #else
 	BIO_printf(bio_err,mr ? "+DN:%s:%ld\n"
 		   : "Doing %s %ld times: ", s, num);
@@ -2674,6 +2672,14 @@ static void print_result(int alg,int run_no,int count,double time_used)
 	BIO_printf(bio_err,mr ? "+R:%d:%s:%f\n"
 		   : "%d %s's in %.2fs\n",count,names[alg],time_used);
 	results[alg][run_no]=((double)count)/time_used*lengths[run_no];
+	}
+
+static void prime_print_result(int alg, int count, double time_used)
+	{
+	BIO_printf(bio_err,
+			   mr ? "+R:%d:%s:%f:%f\n" : "%d %s's in %.2fs (%.2fms/run)\n",
+			   count, prime_names[alg], time_used,
+			   time_used / ((double)count) * 1000);
 	}
 
 #ifndef NO_FORK
