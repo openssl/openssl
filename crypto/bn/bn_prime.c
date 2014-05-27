@@ -405,11 +405,7 @@ err:
 int bn_probable_prime_dh_retry(BIGNUM *rnd, int bits, BN_CTX *ctx)
 	{
 	int i;
-	BIGNUM *t1;
 	int ret = 0;
-
-	BN_CTX_start(ctx);
-	if ((t1 = BN_CTX_get(ctx)) == NULL) goto err;
 
 loop:
 	if (!BN_rand(rnd, bits, 0, 1)) goto err;
@@ -427,7 +423,6 @@ loop:
 	ret=1;
 
 err:
-	BN_CTX_end(ctx);
 	bn_check_top(rnd);
 	return(ret);
 	}
@@ -435,13 +430,11 @@ err:
 int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits, BN_CTX *ctx)
 	{
 	int i;
-	BIGNUM *t1;
 	BIGNUM *offset_index;
 	BIGNUM *offset_count;
 	int ret = 0;
 	
 	BN_CTX_start(ctx);
-	if ((t1 = BN_CTX_get(ctx)) == NULL) goto err;
 	if ((offset_index = BN_CTX_get(ctx)) == NULL) goto err;
 	if ((offset_count = BN_CTX_get(ctx)) == NULL) goto err;
 	
