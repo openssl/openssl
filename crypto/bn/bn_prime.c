@@ -134,7 +134,10 @@ static int probable_prime_dh(BIGNUM *rnd, const BIGNUM *add,
 static int probable_prime_dh_safe(BIGNUM *rnd, int bits,
 	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx);
 
-static int prime_offsets[8] = { 7, 11, 13, 17, 19, 23, 29, 31 };
+static int prime_multiplier = 210;
+static int prime_offsets[8] = { 23, 47, 59, 83, 107, 143, 167, 179 };
+static int prime_offset_count = 8;
+static int prime_offset_count_exponent = 3;
 
 int BN_GENCB_call(BN_GENCB *cb, int a, int b)
 	{
@@ -372,20 +375,27 @@ int bn_probable_prime_dh(BIGNUM *rnd, int bits,
 	return(probable_prime_dh(rnd, add, rem, ctx, 1));
 	}
 
-int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits,
+int bn_probable_prime_dh_coprime_safe(BIGNUM *rnd, int bits,
 	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx)
 	{
+	int i = prime_offset_count;
 	BIGNUM *offset_index = BN_new();
 
 	if (!BN_rand(rnd, bits, 0, 1)) return(0);
-	if (!BN_rand(offset_index, 3, -1, -1)) return(0);
+	
+	while (i >= prime_offset_count)
+		{
+		if (!BN_rand(offset_index, prime_offset_count_exponent, -1, -1))
+			return(0);
+		i = BN_get_word(offset_index);
+		}
 
-	BN_mul_word(rnd, 30);
-	BN_add_word(rnd, prime_offsets[BN_get_word(offset_index)]);
+	BN_mul_word(rnd, prime_multiplier);
+	BN_add_word(rnd, prime_offsets[i]);
 	
 	BN_free(offset_index);
 
-	return(probable_prime_dh(rnd, add, rem, ctx, 3));
+	return(probable_prime_dh(rnd, add, rem, ctx, 4));
 	}
 
 static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
