@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ * Copyright 2002-2014 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
  * Portions of the attached software ("Contribution") are developed by 
  * SUN MICROSYSTEMS, INC., and are contributed to the OpenSSL project.
@@ -2054,7 +2054,7 @@ int MAIN(int argc, char **argv)
 			
 		Time_F(START);
 		for (count=0, run=1; COND(prime_c[D_PRIME_COPRIME]); count++)
-			bn_probable_prime_dh_coprime(rnd, 1024, add, NULL, ctx);
+			bn_probable_prime_dh_coprime_safe(rnd, 1024, add, NULL, ctx);
 		
 		d=Time_F(STOP);
 		prime_print_result(D_PRIME_COPRIME, count, d);
@@ -2700,9 +2700,9 @@ static void print_result(int alg,int run_no,int count,double time_used)
 static void prime_print_result(int alg, int count, double time_used)
 	{
 	BIO_printf(bio_err,
-			   mr ? "+R:%d:%s:%f:%f\n" : "%d %s's in %.2fs (%.2fms/run)\n",
+			   mr ? "+R:%d:%s:%f:%f\n" : "%d %s's in %.2fs (%.2f microseconds / run)\n",
 			   count, prime_names[alg], time_used,
-			   time_used / ((double)count) * 1000);
+			   time_used / ((double)count) * 1000000);
 	}
 
 #ifndef NO_FORK
