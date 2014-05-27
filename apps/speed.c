@@ -228,7 +228,7 @@ static int do_multi(int multi);
 
 #define ALGOR_NUM	30
 #define SIZE_NUM	5
-#define PRIME_NUM	2
+#define PRIME_NUM	3
 #define RSA_NUM		4
 #define DSA_NUM		3
 
@@ -246,7 +246,7 @@ static const char *names[ALGOR_NUM]={
 static double results[ALGOR_NUM][SIZE_NUM];
 static int lengths[SIZE_NUM]={16,64,256,1024,8*1024};
 static const char *prime_names[PRIME_NUM]={
-  "prime trial division", "prime coprime" };
+  "prime trial division", "prime trial division retry", "prime coprime" };
 #ifndef OPENSSL_NO_RSA
 static double rsa_results[RSA_NUM][2];
 #endif
@@ -501,8 +501,9 @@ int MAIN(int argc, char **argv)
 	double d=0.0;
 	long c[ALGOR_NUM][SIZE_NUM];
 
-#define D_PRIME_TRIAL_DIVISION	0
-#define D_PRIME_COPRIME			1
+#define D_PRIME_TRIAL_DIVISION			0
+#define D_PRIME_TRIAL_DIVISION_RETRY	1
+#define D_PRIME_COPRIME					2
 	long prime_c[PRIME_NUM];
 
 #define	R_DSA_512	0
@@ -1011,8 +1012,12 @@ int MAIN(int argc, char **argv)
 			}
 		else
 #endif
-			 if (strcmp(*argv,"prime-trial-division") == 0) prime_doit[D_PRIME_TRIAL_DIVISION]=1;
-		else if (strcmp(*argv,"prime-coprime") == 0) 		prime_doit[D_PRIME_COPRIME]=1;
+			 if (strcmp(*argv,"prime-trial-division") == 0)
+			prime_doit[D_PRIME_TRIAL_DIVISION] = 1;
+		else if (strcmp(*argv,"prime-trial-division-retry") == 0)
+			prime_doit[D_PRIME_TRIAL_DIVISION_RETRY] = 1;
+		else if (strcmp(*argv,"prime-coprime") == 0)
+			prime_doit[D_PRIME_COPRIME] = 1;
 		else
 			{
 			BIO_printf(bio_err,"Error: bad option or value\n");
@@ -1350,6 +1355,7 @@ int MAIN(int argc, char **argv)
 		}
 		
 	prime_c[D_PRIME_TRIAL_DIVISION]=count;
+	prime_c[D_PRIME_TRIAL_DIVISION_RETRY]=count;
 	prime_c[D_PRIME_COPRIME]=count;
 	
 #ifndef OPENSSL_NO_RSA
@@ -2039,30 +2045,44 @@ int MAIN(int argc, char **argv)
 		BN_CTX_free(ctx);
 		BN_free(add);
 		BN_free(rnd);
+		}
+	
+	if (prime_doit[D_PRIME_TRIAL_DIVISION_RETRY])
+		{
+		BIGNUM *rnd = BN_new();
+		BN_CTX *ctx = BN_CTX_new();
 		
+		prime_print_message(prime_names[D_PRIME_TRIAL_DIVISION_RETRY],
+							prime_c[D_PRIME_TRIAL_DIVISION_RETRY]);
+			
+		Time_F(START);
+		for (count=0, run=1; COND(prime_c[D_PRIME_TRIAL_DIVISION_RETRY]); count++)
+			bn_probable_prime_dh_retry(rnd, 1024, ctx);
+		
+		d=Time_F(STOP);
+		prime_print_result(D_PRIME_TRIAL_DIVISION_RETRY, count, d);
+		
+		BN_CTX_free(ctx);
+		BN_free(rnd);
 		}
 	
 	if (prime_doit[D_PRIME_COPRIME])
 		{
 		BIGNUM *rnd = BN_new();
-		BIGNUM *add = BN_new();
 		BN_CTX *ctx = BN_CTX_new();
 		
-		BN_set_word(add, 2);
 		prime_print_message(prime_names[D_PRIME_COPRIME],
 							prime_c[D_PRIME_COPRIME]);
 			
 		Time_F(START);
 		for (count=0, run=1; COND(prime_c[D_PRIME_COPRIME]); count++)
-			bn_probable_prime_dh_coprime_safe(rnd, 1024, add, NULL, ctx);
+			bn_probable_prime_dh_coprime(rnd, 1024, ctx);
 		
 		d=Time_F(STOP);
 		prime_print_result(D_PRIME_COPRIME, count, d);
 		
 		BN_CTX_free(ctx);
-		BN_free(add);
 		BN_free(rnd);
-		
 		}
 
 	RAND_pseudo_bytes(buf,36);
