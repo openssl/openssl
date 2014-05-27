@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright 2002-2014 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
  * Portions of the attached software ("Contribution") are developed by 
  * SUN MICROSYSTEMS, INC., and are contributed to the OpenSSL project.
