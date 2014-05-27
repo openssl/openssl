@@ -458,12 +458,12 @@ loop:
 			goto loop;
 			}
 		}
-	ret=1;
+	ret = 1;
 
 err:
 	BN_CTX_end(ctx);
 	bn_check_top(rnd);
-	return(ret);
+	return ret;
 	}
 
 static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
