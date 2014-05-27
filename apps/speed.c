@@ -2037,7 +2037,7 @@ int MAIN(int argc, char **argv)
 			
 		Time_F(START);
 		for (count=0, run=1; COND(prime_c[D_PRIME_TRIAL_DIVISION]); count++)
-			bn_probable_prime_dh(rnd, 1024, add, NULL, ctx);
+			if (!bn_probable_prime_dh(rnd, 1024, add, NULL, ctx)) count--;
 		
 		d=Time_F(STOP);
 		prime_print_result(D_PRIME_TRIAL_DIVISION, count, d);
@@ -2057,7 +2057,7 @@ int MAIN(int argc, char **argv)
 			
 		Time_F(START);
 		for (count=0, run=1; COND(prime_c[D_PRIME_TRIAL_DIVISION_RETRY]); count++)
-			bn_probable_prime_dh_retry(rnd, 1024, ctx);
+			if (!bn_probable_prime_dh_retry(rnd, 1024, ctx)) count--;
 		
 		d=Time_F(STOP);
 		prime_print_result(D_PRIME_TRIAL_DIVISION_RETRY, count, d);
@@ -2076,7 +2076,7 @@ int MAIN(int argc, char **argv)
 			
 		Time_F(START);
 		for (count=0, run=1; COND(prime_c[D_PRIME_COPRIME]); count++)
-			bn_probable_prime_dh_coprime(rnd, 1024, ctx);
+			if (!bn_probable_prime_dh_coprime(rnd, 1024, ctx)) count--;
 		
 		d=Time_F(STOP);
 		prime_print_result(D_PRIME_COPRIME, count, d);
