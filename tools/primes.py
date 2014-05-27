@@ -1,7 +1,7 @@
-primes = [2, 3, 5, 7]
-safe = True
+primes = [2, 3, 5, 7, 11]
+safe = False  # Not sure if the period's right on safe primes.
 
-muliplier = 1
+muliplier = 1 if not safe else 2
 for p in primes:
     muliplier *= p
 
