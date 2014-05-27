@@ -172,6 +172,7 @@ static int prime_offsets[480] = {
 	2297, 2309, 2311 };
 static int prime_offset_count = 480;
 static int prime_multiplier = 2310;
+static int first_prime_index = 5;
 
 int BN_GENCB_call(BN_GENCB *cb, int a, int b)
 	{
@@ -420,7 +421,6 @@ loop:
 		/* check that rnd is a prime */
 		if (BN_mod_word(rnd, (BN_ULONG)primes[i]) <= 1)
 			{
-			/*if (!BN_add(rnd, rnd, add)) goto err;*/
 			goto loop;
 			}
 		}
@@ -456,8 +456,8 @@ loop:
 
 	/* we now have a random number 'rand' to test. */
 
-	/* skip primes 2, 3, 5, 7, 11 */
-	for (i = 5; i < NUMPRIMES; i++)
+	/* skip coprimes */
+	for (i = first_prime_index; i < NUMPRIMES; i++)
 		{
 		/* check that rnd is a prime */
 		if (BN_mod_word(rnd, (BN_ULONG)primes[i]) <= 1)
