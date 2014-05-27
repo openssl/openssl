@@ -129,15 +129,49 @@
 static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
 	const BIGNUM *a1_odd, int k, BN_CTX *ctx, BN_MONT_CTX *mont);
 static int probable_prime(BIGNUM *rnd, int bits);
-static int probable_prime_dh(BIGNUM *rnd, const BIGNUM *add,
-	const BIGNUM *rem, BN_CTX *ctx, int first_prime_index);
 static int probable_prime_dh_safe(BIGNUM *rnd, int bits,
 	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx);
 
-static int prime_multiplier = 210;
-static int prime_offsets[8] = { 23, 47, 59, 83, 107, 143, 167, 179 };
-static int prime_offset_count = 8;
-static int prime_offset_count_exponent = 3;
+static int prime_offsets[480] = {
+	13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89,
+	97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167,
+	169, 173, 179, 181, 191, 193, 197, 199, 211, 221, 223, 227, 229, 233, 239,
+	241, 247, 251, 257, 263, 269, 271, 277, 281, 283, 289, 293, 299, 307, 311,
+	313, 317, 323, 331, 337, 347, 349, 353, 359, 361, 367, 373, 377, 379, 383,
+	389, 391, 397, 401, 403, 409, 419, 421, 431, 433, 437, 439, 443, 449, 457,
+	461, 463, 467, 479, 481, 487, 491, 493, 499, 503, 509, 521, 523, 527, 529,
+	533, 541, 547, 551, 557, 559, 563, 569, 571, 577, 587, 589, 593, 599, 601,
+	607, 611, 613, 617, 619, 629, 631, 641, 643, 647, 653, 659, 661, 667, 673,
+	677, 683, 689, 691, 697, 701, 703, 709, 713, 719, 727, 731, 733, 739, 743,
+	751, 757, 761, 767, 769, 773, 779, 787, 793, 797, 799, 809, 811, 817, 821,
+	823, 827, 829, 839, 841, 851, 853, 857, 859, 863, 871, 877, 881, 883, 887,
+	893, 899, 901, 907, 911, 919, 923, 929, 937, 941, 943, 947, 949, 953, 961,
+	967, 971, 977, 983, 989, 991, 997, 1003, 1007, 1009, 1013, 1019, 1021, 1027,
+	1031, 1033, 1037, 1039, 1049, 1051, 1061, 1063, 1069, 1073, 1079, 1081,
+	1087, 1091, 1093, 1097, 1103, 1109, 1117, 1121, 1123, 1129, 1139, 1147,
+	1151, 1153, 1157, 1159, 1163, 1171, 1181, 1187, 1189, 1193, 1201, 1207,
+	1213, 1217, 1219, 1223, 1229, 1231, 1237, 1241, 1247, 1249, 1259, 1261,
+	1271, 1273, 1277, 1279, 1283, 1289, 1291, 1297, 1301, 1303, 1307, 1313,
+	1319, 1321, 1327, 1333, 1339, 1343, 1349, 1357, 1361, 1363, 1367, 1369,
+	1373, 1381, 1387, 1391, 1399, 1403, 1409, 1411, 1417, 1423, 1427, 1429,
+	1433, 1439, 1447, 1451, 1453, 1457, 1459, 1469, 1471, 1481, 1483, 1487,
+	1489, 1493, 1499, 1501, 1511, 1513, 1517, 1523, 1531, 1537, 1541, 1543,
+	1549, 1553, 1559, 1567, 1571, 1577, 1579, 1583, 1591, 1597, 1601, 1607,
+	1609, 1613, 1619, 1621, 1627, 1633, 1637, 1643, 1649, 1651, 1657, 1663,
+	1667, 1669, 1679, 1681, 1691, 1693, 1697, 1699, 1703, 1709, 1711, 1717,
+	1721, 1723, 1733, 1739, 1741, 1747, 1751, 1753, 1759, 1763, 1769, 1777,
+	1781, 1783, 1787, 1789, 1801, 1807, 1811, 1817, 1819, 1823, 1829, 1831,
+	1843, 1847, 1849, 1853, 1861, 1867, 1871, 1873, 1877, 1879, 1889, 1891,
+	1901, 1907, 1909, 1913, 1919, 1921, 1927, 1931, 1933, 1937, 1943, 1949,
+	1951, 1957, 1961, 1963, 1973, 1979, 1987, 1993, 1997, 1999, 2003, 2011,
+	2017, 2021, 2027, 2029, 2033, 2039, 2041, 2047, 2053, 2059, 2063, 2069,
+	2071, 2077, 2081, 2083, 2087, 2089, 2099, 2111, 2113, 2117, 2119, 2129,
+	2131, 2137, 2141, 2143, 2147, 2153, 2159, 2161, 2171, 2173, 2179, 2183,
+	2197, 2201, 2203, 2207, 2209, 2213, 2221, 2227, 2231, 2237, 2239, 2243,
+	2249, 2251, 2257, 2263, 2267, 2269, 2273, 2279, 2281, 2287, 2291, 2293,
+	2297, 2309, 2311 };
+static int prime_offset_count = 480;
+static int prime_multiplier = 2310;
 
 int BN_GENCB_call(BN_GENCB *cb, int a, int b)
 	{
@@ -367,35 +401,76 @@ err:
 	return(ret);
 	}
 
-int bn_probable_prime_dh(BIGNUM *rnd, int bits,
-	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx)
+int bn_probable_prime_dh_retry(BIGNUM *rnd, int bits, BN_CTX *ctx)
 	{
-	if (!BN_rand(rnd, bits, 0, 1)) return(0);
+	int i;
+	BIGNUM *t1;
+	int ret = 0;
 
-	return(probable_prime_dh(rnd, add, rem, ctx, 1));
+	BN_CTX_start(ctx);
+	if ((t1 = BN_CTX_get(ctx)) == NULL) goto err;
+
+loop:
+	if (!BN_rand(rnd, bits, 0, 1)) goto err;
+
+	/* we now have a random number 'rand' to test. */
+
+	for (i = 1; i < NUMPRIMES; i++)
+		{
+		/* check that rnd is a prime */
+		if (BN_mod_word(rnd, (BN_ULONG)primes[i]) <= 1)
+			{
+			/*if (!BN_add(rnd, rnd, add)) goto err;*/
+			goto loop;
+			}
+		}
+	ret=1;
+
+err:
+	BN_CTX_end(ctx);
+	bn_check_top(rnd);
+	return(ret);
 	}
 
-int bn_probable_prime_dh_coprime_safe(BIGNUM *rnd, int bits,
-	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx)
+int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits, BN_CTX *ctx)
 	{
-	int i = prime_offset_count;
-	BIGNUM *offset_index = BN_new();
-
-	if (!BN_rand(rnd, bits, 0, 1)) return(0);
+	int i;
+	BIGNUM *t1;
+	BIGNUM *offset_index;
+	BIGNUM *offset_count;
+	int ret = 0;
 	
-	while (i >= prime_offset_count)
-		{
-		if (!BN_rand(offset_index, prime_offset_count_exponent, -1, -1))
-			return(0);
-		i = BN_get_word(offset_index);
-		}
+	BN_CTX_start(ctx);
+	if ((t1 = BN_CTX_get(ctx)) == NULL) goto err;
+	if ((offset_index = BN_CTX_get(ctx)) == NULL) goto err;
+	if ((offset_count = BN_CTX_get(ctx)) == NULL) goto err;
+	
+	BN_add_word(offset_count, prime_offset_count);
+
+loop:
+	if (!BN_rand(rnd, bits, 0, 1)) goto err;
+	if (!BN_rand_range(offset_index, offset_count)) goto err;
 
 	BN_mul_word(rnd, prime_multiplier);
-	BN_add_word(rnd, prime_offsets[i]);
-	
-	BN_free(offset_index);
+	BN_add_word(rnd, prime_offsets[BN_get_word(offset_index)]);
 
-	return(probable_prime_dh(rnd, add, rem, ctx, 4));
+	/* we now have a random number 'rand' to test. */
+
+	/* skip primes 2, 3, 5, 7, 11 */
+	for (i = 5; i < NUMPRIMES; i++)
+		{
+		/* check that rnd is a prime */
+		if (BN_mod_word(rnd, (BN_ULONG)primes[i]) <= 1)
+			{
+			goto loop;
+			}
+		}
+	ret=1;
+
+err:
+	BN_CTX_end(ctx);
+	bn_check_top(rnd);
+	return(ret);
 	}
 
 static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
@@ -490,14 +565,16 @@ loop:
 	return(1);
 	}
 
-static int probable_prime_dh(BIGNUM *rnd, const BIGNUM *add,
-	const BIGNUM *rem, BN_CTX *ctx, int first_prime_index)
+int bn_probable_prime_dh(BIGNUM *rnd, int bits,
+	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx)
 	{
 	int i,ret=0;
 	BIGNUM *t1;
 
 	BN_CTX_start(ctx);
 	if ((t1 = BN_CTX_get(ctx)) == NULL) goto err;
+
+	if (!BN_rand(rnd,bits,0,1)) goto err;
 
 	/* we need ((rnd-rem) % add) == 0 */
 
@@ -511,7 +588,7 @@ static int probable_prime_dh(BIGNUM *rnd, const BIGNUM *add,
 	/* we now have a random number 'rand' to test. */
 
 loop:
-	for (i=first_prime_index; i<NUMPRIMES; i++)
+	for (i=1; i<NUMPRIMES; i++)
 		{
 		/* check that rnd is a prime */
 		if (BN_mod_word(rnd,(BN_ULONG)primes[i]) <= 1)
@@ -521,6 +598,7 @@ loop:
 			}
 		}
 	ret=1;
+
 err:
 	BN_CTX_end(ctx);
 	bn_check_top(rnd);
@@ -565,7 +643,7 @@ loop:
 		/* check that p and q are prime */
 		/* check that for p and q
 		 * gcd(p-1,primes) == 1 (except for 2) */
-		if (	(BN_mod_word(p,(BN_ULONG)primes[i]) == 0) ||
+		if ((BN_mod_word(p,(BN_ULONG)primes[i]) == 0) ||
 			(BN_mod_word(q,(BN_ULONG)primes[i]) == 0))
 			{
 			if (!BN_add(p,p,padd)) goto err;
@@ -574,6 +652,7 @@ loop:
 			}
 		}
 	ret=1;
+
 err:
 	BN_CTX_end(ctx);
 	bn_check_top(p);
