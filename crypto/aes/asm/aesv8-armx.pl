@@ -20,6 +20,7 @@
 #
 #		CBC enc		CBC dec
 # Apple A7	2.39		1.20
+# Cortex-A5x	n/a		n/a
 
 $flavour = shift;
 $prefix="AES";
@@ -479,8 +480,8 @@ $code.=<<___;
 	aesd	$dat1,q15
 
 	veor	$ivec,$ivec,$dat0
-	veor	$in0,$in0,$dat1
 	vld1.8	{$dat0},[$inp],$step
+	veor	$in0,$in0,$dat1
 	vld1.8	{$dat1},[$inp],$step1
 	vst1.8	{$ivec},[$out],#16
 	veor	$ivec,$in1,$rndlast
@@ -622,6 +623,245 @@ $code.=<<___;
 .size	${prefix}_cbc_encrypt,.-${prefix}_cbc_encrypt
 ___
 }}}
+{{{
+my ($inp,$out,$len,$key,$ivp)=map("x$_",(0..4));
+my ($rounds,$cnt,$key_,$ctr,$tctr,$tctr1)=("w5","w6","x7","w8","w9","w10");
+my ($dat0,$dat1,$in0,$in1,$tmp0,$tmp1,$ivec,$rndlast)=map("q$_",(0..7));
+
+my ($dat,$tmp)=($dat0,$tmp0);
+
+### q8-q15	preloaded key schedule
+
+$code.=<<___;
+.globl	${prefix}_ctr32_encrypt_blocks
+.type	${prefix}_ctr32_encrypt_blocks,%function
+.align	5
+${prefix}_ctr32_encrypt_blocks:
+___
+$code.=<<___	if ($flavour =~ /64/);
+	stp		x29,x30,[sp,#-16]!
+	add		x29,sp,#0
+___
+$code.=<<___	if ($flavour !~ /64/);
+	mov		ip,sp
+	stmdb		sp!,{r4-r10,lr}
+	vstmdb		sp!,{d8-d15}            @ ABI specification says so
+	ldr		r4, [ip]		@ load remaining arg
+___
+$code.=<<___;
+	ldr		$rounds,[$key,#240]
+
+	ldr		$ctr, [$ivp, #12]
+	vld1.32		{$dat0},[$ivp]
+
+	vld1.32		{q8-q9},[$key]		// load key schedule...
+	sub		$rounds,$rounds,#6
+	add		$key_,$key,x5,lsl#4	// pointer to last 7 round keys
+	sub		$rounds,$rounds,#2
+	vld1.32		{q10-q11},[$key_],#32
+	vld1.32		{q12-q13},[$key_],#32
+	vld1.32		{q14-q15},[$key_],#32
+	vld1.32		{$rndlast},[$key_]
+
+	add		$key_,$key,#32
+	mov		$cnt,$rounds
+
+	subs		$len,$len,#2
+	b.lo		.Lctr32_tail
+
+#ifndef BIG_ENDIAN
+	rev		$ctr, $ctr
+#endif
+	vorr		$dat1,$dat0,$dat0
+	add		$ctr, $ctr, #1
+	vorr		$ivec,$dat0,$dat0
+	rev		$tctr1, $ctr
+	cmp		$rounds,#2
+	vmov.32		${dat1}[3],$tctr1
+	b.eq		.Lctr32_128
+
+.Loop2x_ctr32:
+	aese		$dat0,q8
+	aese		$dat1,q8
+	vld1.32		{q8},[$key_],#16
+	aesmc		$dat0,$dat0
+	aesmc		$dat1,$dat1
+	subs		$cnt,$cnt,#2
+	aese		$dat0,q9
+	aese		$dat1,q9
+	vld1.32		{q9},[$key_],#16
+	aesmc		$dat0,$dat0
+	aesmc		$dat1,$dat1
+	b.gt		.Loop2x_ctr32
+
+	aese		$dat0,q8
+	aese		$dat1,q8
+	aesmc		$tmp0,$dat0
+	 vorr		$dat0,$ivec,$ivec
+	aesmc		$tmp1,$dat1
+	 vorr		$dat1,$ivec,$ivec
+	aese		$tmp0,q9
+	aese		$tmp1,q9
+	 vld1.8		{$in0},[$inp],#16
+	aesmc		$tmp0,$tmp0
+	 vld1.8		{$in1},[$inp],#16
+	aesmc		$tmp1,$tmp1
+	 add		$ctr,$ctr,#1
+	aese		$tmp0,q10
+	aese		$tmp1,q10
+	 rev		$tctr,$ctr
+	aesmc		$tmp0,$tmp0
+	aesmc		$tmp1,$tmp1
+	 add		$ctr,$ctr,#1
+	aese		$tmp0,q11
+	aese		$tmp1,q11
+	 veor		$in0,$in0,$rndlast
+	 rev		$tctr1,$ctr
+	aesmc		$tmp0,$tmp0
+	aesmc		$tmp1,$tmp1
+	 veor		$in1,$in1,$rndlast
+	 mov		$key_,$key
+	aese		$tmp0,q12
+	aese		$tmp1,q12
+	 subs		$len,$len,#2
+	aesmc		$tmp0,$tmp0
+	aesmc		$tmp1,$tmp1
+	 vld1.32	 {q8},[$key_],#16	// re-pre-load rndkey[0]
+	aese		$tmp0,q13
+	aese		$tmp1,q13
+	aesmc		$tmp0,$tmp0
+	aesmc		$tmp1,$tmp1
+	 vld1.32	 {q9},[$key_],#16	// re-pre-load rndkey[1]
+	aese		$tmp0,q14
+	aese		$tmp1,q14
+	 vmov.32	${dat0}[3], $tctr
+	aesmc		$tmp0,$tmp0
+	 vmov.32	${dat1}[3], $tctr1
+	aesmc		$tmp1,$tmp1
+	aese		$tmp0,q15
+	aese		$tmp1,q15
+
+	 mov		$cnt,$rounds
+	veor		$in0,$in0,$tmp0
+	veor		$in1,$in1,$tmp1
+	vst1.8		{$in0},[$out],#16
+	vst1.8		{$in1},[$out],#16
+	b.hs		.Loop2x_ctr32
+
+	adds		$len,$len,#2
+	b.eq		.Lctr32_done
+	b		.Lctr32_tail
+
+.Lctr32_128:
+	vld1.32		{$tmp0-$tmp1},[$key_]
+
+.Loop2x_ctr32_128:
+	aese		$dat0,q8
+	aese		$dat1,q8
+	aesmc		$dat0,$dat0
+	 vld1.8		{$in0},[$inp],#16
+	aesmc		$dat1,$dat1
+	 vld1.8		{$in1},[$inp],#16
+	aese		$dat0,q9
+	aese		$dat1,q9
+	 add		$ctr,$ctr,#1
+	aesmc		$dat0,$dat0
+	aesmc		$dat1,$dat1
+	 rev		$tctr,$ctr
+	aese		$dat0,$tmp0
+	aese		$dat1,$tmp0
+	 add		$ctr,$ctr,#1
+	aesmc		$dat0,$dat0
+	aesmc		$dat1,$dat1
+	 rev		$tctr1,$ctr
+	aese		$dat0,$tmp1
+	aese		$dat1,$tmp1
+	 subs		$len,$len,#2
+	aesmc		$dat0,$dat0
+	aesmc		$dat1,$dat1
+	aese		$dat0,q10
+	aese		$dat1,q10
+	aesmc		$dat0,$dat0
+	aesmc		$dat1,$dat1
+	aese		$dat0,q11
+	aese		$dat1,q11
+	aesmc		$dat0,$dat0
+	aesmc		$dat1,$dat1
+	aese		$dat0,q12
+	aese		$dat1,q12
+	aesmc		$dat0,$dat0
+	aesmc		$dat1,$dat1
+	aese		$dat0,q13
+	aese		$dat1,q13
+	aesmc		$dat0,$dat0
+	aesmc		$dat1,$dat1
+	aese		$dat0,q14
+	aese		$dat1,q14
+	aesmc		$dat0,$dat0
+	aesmc		$dat1,$dat1
+	 veor		$in0,$in0,$rndlast
+	aese		$dat0,q15
+	 veor		$in1,$in1,$rndlast
+	aese		$dat1,q15
+
+	veor		$in0,$in0,$dat0
+	vorr		$dat0,$ivec,$ivec
+	veor		$in1,$in1,$dat1
+	vorr		$dat1,$ivec,$ivec
+	vst1.8		{$in0},[$out],#16
+	vmov.32		${dat0}[3], $tctr
+	vst1.8		{$in1},[$out],#16
+	vmov.32		${dat1}[3], $tctr1
+	b.hs		.Loop2x_ctr32_128
+
+	adds		$len,$len,#2
+	b.eq		.Lctr32_done
+
+.Lctr32_tail:
+	aese		$dat,q8
+	vld1.32		{q8},[$key_],#16
+	aesmc		$dat,$dat
+	subs		$cnt,$cnt,#2
+	aese		$dat,q9
+	vld1.32		{q9},[$key_],#16
+	aesmc		$dat,$dat
+	b.gt		.Lctr32_tail
+
+	aese		$dat,q8
+	aesmc		$dat,$dat
+	aese		$dat,q9
+	aesmc		$dat,$dat
+	 vld1.8		{$in0},[$inp]
+	aese		$dat,q10
+	aesmc		$dat,$dat
+	aese		$dat,q11
+	aesmc		$dat,$dat
+	aese		$dat,q12
+	aesmc		$dat,$dat
+	aese		$dat,q13
+	aesmc		$dat,$dat
+	aese		$dat,q14
+	aesmc		$dat,$dat
+	 veor		$in0,$in0,$rndlast
+	aese		$dat,q15
+
+	veor		$in0,$in0,$dat
+	vst1.8		{$in0},[$out]
+
+.Lctr32_done:
+___
+$code.=<<___	if ($flavour !~ /64/);
+	vldmia		sp!,{d8-d15}
+	ldmia		sp!,{r4-r10,pc}
+___
+$code.=<<___	if ($flavour =~ /64/);
+	ldr		x29,[sp],#16
+	ret
+___
+$code.=<<___;
+.size	${prefix}_ctr32_encrypt_blocks,.-${prefix}_ctr32_encrypt_blocks
+___
+}}}
 ########################################
 if ($flavour =~ /64/) {			######## 64-bit code
     my %opcode = (
@@ -691,6 +931,13 @@ if ($flavour =~ /64/) {			######## 64-bit code
 	sprintf	"vdup.32	q%d,d%d[%d]",$1,2*$2+$3>>1,$3&1;	
     }
 
+    sub unvmov32 {
+	my $arg=shift;
+
+	$arg =~ m/q([0-9]+)\[([0-3])\],(.*)/o &&
+	sprintf	"vmov.32	d%d[%d],%s",2*$1+$2>>1,$2&1,$3;	
+    }
+
     foreach(split("\n",$code)) {
         s/\`([^\`]*)\`/eval($1)/geo;
 
@@ -705,6 +952,7 @@ if ($flavour =~ /64/) {			######## 64-bit code
 	s/cclr\s+([^,]+),\s*([a-z]+)/mov$2	$1,#0/o	or
 	s/vtbl\.8\s+(.*)/unvtbl($1)/geo			or
 	s/vdup\.32\s+(.*)/unvdup32($1)/geo		or
+	s/vmov\.32\s+(.*)/unvmov32($1)/geo		or
 	s/^(\s+)b\./$1b/o				or
 	s/^(\s+)ret/$1bx\tlr/o;
 
