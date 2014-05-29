@@ -10,11 +10,16 @@
 # This module implements support for AES instructions as per PowerISA
 # specification version 2.07, first implemented by POWER8 processor.
 # The module is endian-agnostic in sense that it supports both big-
-# and little-endian cases. As well as alignment-agnostic, and it is
-# guaranteed not to cause alignment exceptions. [One of options was
-# to use VSX loads and stores, which tolerate unaligned references,
-# but even then specification doesn't prohibit exceptions on page
-# boundaries.]
+# and little-endian cases. Data alignment in parallelizable modes is
+# handled with VSX loads and stores, which implies MSR.VSX flag being
+# set. It should also be noted that ISA specification doesn't prohibit
+# alignment exceptions for these instructions on page boundaries.
+# Initially alignment was handled in pure AltiVec/VMX way [when data
+# is aligned programmatically, which in turn guarantees exception-
+# free execution], but it turned to hamper performance when vcipher
+# instructions are interleaved. It's reckoned that eventual
+# misalignment penalties at page boundaries are in average lower
+# than additional overhead in pure AltiVec approach.
 
 $flavour = shift;
 
@@ -49,7 +54,8 @@ $prefix="AES";
 $sp="r1";
 $vrsave="r12";
 
-{{{
+#########################################################################
+{{{	Key setup procedures						#
 my ($inp,$bits,$out,$ptr,$cnt,$rounds)=map("r$_",(3..8));
 my ($zero,$in0,$in1,$key,$rcon,$mask,$tmp)=map("v$_",(0..6));
 my ($stage,$outperm,$outmask,$outhead,$outtail)=map("v$_",(7..11));
@@ -96,13 +102,9 @@ Lset_encrypt_key:
 	li		r8,0x20
 	cmpwi		$bits,192
 	lvx		$in1,0,$inp
-___
-$code.=<<___		if ($LITTLE_ENDIAN);
-	vspltisb	$mask,0x0f		# borrow $mask
-	vxor		$key,$key,$mask		# adjust for byte swap
-___
-$code.=<<___;
+	le?vspltisb	$mask,0x0f		# borrow $mask
 	lvx		$rcon,0,$ptr
+	le?vxor		$key,$key,$mask		# adjust for byte swap
 	lvx		$mask,r8,$ptr
 	addi		$ptr,$ptr,0x10
 	vperm		$in0,$in0,$in1,$key	# align [and byte swap in LE]
@@ -324,6 +326,7 @@ Ldone:
 	blr
 	.long		0
 	.byte		0,12,0x14,1,0,0,3,0
+	.long		0
 .size	.${prefix}_set_encrypt_key,.-.${prefix}_set_encrypt_key
 
 .globl	.${prefix}_set_decrypt_key
@@ -367,10 +370,12 @@ Ldeckey:
 	blr
 	.long		0
 	.byte		0,12,4,1,0x80,0,3,0
+	.long		0
 .size	.${prefix}_set_decrypt_key,.-.${prefix}_set_decrypt_key
 ___
 }}}
-{{{
+#########################################################################
+{{{	Single block en- and decrypt procedures				#
 sub gen_block () {
 my $dir = shift;
 my $n   = $dir eq "de" ? "n" : "";
@@ -390,9 +395,9 @@ $code.=<<___;
 	neg		r11,$out
 	lvx		v1,$idx,$inp
 	lvsl		v2,0,$inp		# inpperm
-	`"vspltisb	v4,0x0f"		if ($LITTLE_ENDIAN)`
+	le?vspltisb	v4,0x0f
 	?lvsl		v3,0,r11		# outperm
-	`"vxor		v2,v2,v4"		if ($LITTLE_ENDIAN)`
+	le?vxor		v2,v2,v4
 	li		$idx,16
 	vperm		v0,v0,v1,v2		# align [and byte swap in LE]
 	lvx		v1,0,$key
@@ -429,7 +434,7 @@ Loop_${dir}c:
 	vxor		v1,v1,v1
 	li		$idx,15			# 15 is not typo
 	?vperm		v2,v1,v2,v3		# outmask
-	`"vxor		v3,v3,v4"		if ($LITTLE_ENDIAN)`
+	le?vxor		v3,v3,v4
 	lvx		v1,0,$out		# outhead
 	vperm		v0,v0,v0,v3		# rotate [and byte swap in LE]
 	vsel		v1,v1,v0,v2
@@ -442,17 +447,19 @@ Loop_${dir}c:
 	blr
 	.long		0
 	.byte		0,12,0x14,0,0,0,3,0
+	.long		0
 .size	.${prefix}_${dir}crypt,.-.${prefix}_${dir}crypt
 ___
 }
 &gen_block("en");
 &gen_block("de");
 }}}
-{{{
+#########################################################################
+{{{	CBC en- and decrypt procedures					#
 my ($inp,$out,$len,$key,$ivp,$enc,$rounds,$idx)=map("r$_",(3..10));
-my ($rndkey0,$rndkey1,$inout,$tmp)=map("v$_",(0..3));
-my ($ivec,$inptail,$inpperm,$outhead,$outperm,$outmask,$keyperm)=map("v$_",(4..10));
-
+my ($rndkey0,$rndkey1,$inout,$tmp)=		map("v$_",(0..3));
+my ($ivec,$inptail,$inpperm,$outhead,$outperm,$outmask,$keyperm)=
+						map("v$_",(4..10));
 $code.=<<___;
 .globl	.${prefix}_cbc_encrypt
 .align	5
@@ -467,12 +474,12 @@ $code.=<<___;
 
 	li		$idx,15
 	vxor		$rndkey0,$rndkey0,$rndkey0
-	`"vspltisb	$tmp,0x0f"		if ($LITTLE_ENDIAN)`
+	le?vspltisb	$tmp,0x0f
 
 	lvx		$ivec,0,$ivp		# load [unaligned] iv
 	lvsl		$inpperm,0,$ivp
 	lvx		$inptail,$idx,$ivp
-	`"vxor		$inpperm,$inpperm,$tmp"	if ($LITTLE_ENDIAN)`
+	le?vxor		$inpperm,$inpperm,$tmp
 	vperm		$ivec,$ivec,$inptail,$inpperm
 
 	neg		r11,$inp
@@ -482,13 +489,13 @@ $code.=<<___;
 	lvsr		$inpperm,0,r11		# prepare for unaligned load
 	lvx		$inptail,0,$inp
 	addi		$inp,$inp,15		# 15 is not typo
-	`"vxor		$inpperm,$inpperm,$tmp"	if ($LITTLE_ENDIAN)`
+	le?vxor		$inpperm,$inpperm,$tmp
 
 	?lvsr		$outperm,0,$out		# prepare for unaligned store
 	vspltisb	$outmask,-1
 	lvx		$outhead,0,$out
 	?vperm		$outmask,$rndkey0,$outmask,$outperm
-	`"vxor		$outperm,$outperm,$tmp"	if ($LITTLE_ENDIAN)`
+	le?vxor		$outperm,$outperm,$tmp
 
 	srwi		$rounds,$rounds,1
 	li		$idx,16
@@ -597,10 +604,10 @@ Lcbc_done:
 	li		$idx,15			# 15 is not typo
 	vxor		$rndkey0,$rndkey0,$rndkey0
 	vspltisb	$outmask,-1
-	`"vspltisb	$tmp,0x0f"		if ($LITTLE_ENDIAN)`
+	le?vspltisb	$tmp,0x0f
 	?lvsl		$outperm,0,$enc
 	?vperm		$outmask,$rndkey0,$outmask,$outperm
-	`"vxor		$outperm,$outperm,$tmp"	if ($LITTLE_ENDIAN)`
+	le?vxor		$outperm,$outperm,$tmp
 	lvx		$outhead,0,$ivp
 	vperm		$ivec,$ivec,$ivec,$outperm
 	vsel		$inout,$outhead,$ivec,$outmask
@@ -613,9 +620,12 @@ Lcbc_done:
 	blr
 	.long		0
 	.byte		0,12,0x14,0,0,0,6,0
+	.long		0
 ___
-{{
+#########################################################################
+{{	Optimized CBC decrypt procedure					#
 my $key_="r11";
+my ($x00,$x10,$x20,$x30,$x40,$x50,$x60,$x70)=map("r$_",(0,8,26..31));
 my ($in0, $in1, $in2, $in3, $in4, $in5, $in6, $in7 )=map("v$_",(0..3,10..13));
 my ($out0,$out1,$out2,$out3,$out4,$out5,$out6,$out7)=map("v$_",(14..21));
 my $rndkey0="v23";	# v24-v25 rotating buffer for first found keys
@@ -625,7 +635,7 @@ my ($tmp,$keyperm)=($in3,$in4);	# aliases with "caller", redundant assignment
 $code.=<<___;
 .align	5
 _aesp8_cbc_decrypt8x:
-	$STU		$sp,-`($FRAME+21*16)`($sp)
+	$STU		$sp,-`($FRAME+21*16+6*$SIZE_T)`($sp)
 	li		r10,`$FRAME+8*16+15`
 	li		r11,`$FRAME+8*16+31`
 	stvx		v20,r10,$sp		# ABI says so
@@ -650,104 +660,103 @@ _aesp8_cbc_decrypt8x:
 	addi		r11,r11,32
 	stvx		v30,r10,$sp
 	stvx		v31,r11,$sp
-	stw		$vrsave,`$FRAME+21*16-4`($sp)	# save vrsave
 	li		r0,-1
+	stw		$vrsave,`$FRAME+21*16-4`($sp)	# save vrsave
+	li		$x10,0x10
+	$PUSH		r26,`$FRAME+21*16+0*$SIZE_T`($sp)
+	li		$x20,0x20
+	$PUSH		r27,`$FRAME+21*16+1*$SIZE_T`($sp)
+	li		$x30,0x30
+	$PUSH		r28,`$FRAME+21*16+2*$SIZE_T`($sp)
+	li		$x40,0x40
+	$PUSH		r29,`$FRAME+21*16+3*$SIZE_T`($sp)
+	li		$x50,0x50
+	$PUSH		r30,`$FRAME+21*16+4*$SIZE_T`($sp)
+	li		$x60,0x60
+	$PUSH		r31,`$FRAME+21*16+5*$SIZE_T`($sp)
+	li		$x70,0x70
 	mtspr		256,r0
 
 	subi		$rounds,$rounds,3	# -4 in total
 	subi		$len,$len,128		# bias
 
-	addi		$idx,$key,16		# load key schedule
-	lvx		$rndkey0,0,$key
-	addi		$key,$key,32
-	lvx		v30,0,$idx
-	addi		$idx,$idx,32
-	lvx		v31,0,$key
-	addi		$key,$key,32
+	lvx		$rndkey0,$x00,$key	# load key schedule
+	lvx		v30,$x10,$key
+	addi		$key,$key,0x20
+	lvx		v31,$x00,$key
 	?vperm		$rndkey0,$rndkey0,v30,$keyperm
 	addi		$key_,$sp,$FRAME+15
 	mtctr		$rounds
 
 Load_cbc_dec_key:
 	?vperm		v24,v30,v31,$keyperm
-	lvx		v30,0,$idx
-	addi		$idx,$idx,32
-	stvx		v24,0,$key_		# off-load round[1]
-	addi		$key_,$key_,16
+	lvx		v30,$x10,$key
+	addi		$key,$key,0x20
+	stvx		v24,$x00,$key_		# off-load round[1]
 	?vperm		v25,v31,v30,$keyperm
-	lvx		v31,0,$key
-	addi		$key,$key,32
-	stvx		v25,0,$key_		# off-load round[2]
-	addi		$key_,$key_,16
+	lvx		v31,$x00,$key
+	stvx		v25,$x10,$key_		# off-load round[2]
+	addi		$key_,$key_,0x20
 	bdnz		Load_cbc_dec_key
 
-	lvx		v26,0,$idx
-	addi		$idx,$idx,32
+	lvx		v26,$x10,$key
 	?vperm		v24,v30,v31,$keyperm
-	lvx		v27,0,$key
-	addi		$key,$key,32
-	stvx		v24,0,$key_		# off-load round[3]
-	addi		$key_,$key_,16
+	lvx		v27,$x20,$key
+	stvx		v24,$x00,$key_		# off-load round[3]
 	?vperm		v25,v31,v26,$keyperm
-	lvx		v28,0,$idx
-	addi		$idx,$idx,32
-	stvx		v25,0,$key_		# off-load round[4]
+	lvx		v28,$x30,$key
+	stvx		v25,$x10,$key_		# off-load round[4]
 	addi		$key_,$sp,$FRAME+15	# rewind $key_
 	?vperm		v26,v26,v27,$keyperm
-	lvx		v29,0,$key
-	addi		$key,$key,32
+	lvx		v29,$x40,$key
 	?vperm		v27,v27,v28,$keyperm
-	lvx		v30,0,$idx
-	addi		$idx,$idx,32
+	lvx		v30,$x50,$key
 	?vperm		v28,v28,v29,$keyperm
-	lvx		v31,0,$key
+	lvx		v31,$x60,$key
 	?vperm		v29,v29,v30,$keyperm
-	lvx		$out0,0,$idx		# borrow $out0
+	lvx		$out0,$x70,$key		# borrow $out0
 	?vperm		v30,v30,v31,$keyperm
-	lvx		v24,0,$key_		# pre-load round[1]
-	addi		$key_,$key_,16
+	lvx		v24,$x00,$key_		# pre-load round[1]
 	?vperm		v31,v31,$out0,$keyperm
-	lvx		v25,0,$key_		# pre-load round[2]
-	addi		$key_,$key_,16
-
+	lvx		v25,$x10,$key_		# pre-load round[2]
 
 	#lvx		$inptail,0,$inp		# "caller" already did this
 	#addi		$inp,$inp,15		# 15 is not typo
+	subi		$inp,$inp,15		# undo "caller"
 
-	lvx		$in1,0,$inp		# load first 8 "words"
-	addi		$inp,$inp,16
-	lvx		$in2,0,$inp
-	addi		$inp,$inp,16
-	lvx		$in3,0,$inp
-	addi		$inp,$inp,16
-	vperm		$in0,$inptail,$in1,$inpperm
-	lvx		$in4,0,$inp
-	addi		$inp,$inp,16
-	vperm		$in1,$in1,$in2,$inpperm
-	lvx		$in5,0,$inp
-	addi		$inp,$inp,16
-	vperm		$in2,$in2,$in3,$inpperm
+	 le?li		$idx,8
+	lvx_u		$in0,$x00,$inp		# load first 8 "words"
+	 le?lvsl	$inpperm,0,$idx
+	 le?vspltisb	$tmp,0x0f
+	lvx_u		$in1,$x10,$inp
+	 le?vxor	$inpperm,$inpperm,$tmp	# transform for lvx_u/stvx_u
+	lvx_u		$in2,$x20,$inp
+	 le?vperm	$in0,$in0,$in0,$inpperm
+	lvx_u		$in3,$x30,$inp
+	 le?vperm	$in1,$in1,$in1,$inpperm
+	lvx_u		$in4,$x40,$inp
+	 le?vperm	$in2,$in2,$in2,$inpperm
 	vxor		$out0,$in0,$rndkey0
-	lvx		$in6,0,$inp
-	addi		$inp,$inp,16
-	vperm		$in3,$in3,$in4,$inpperm
+	lvx_u		$in5,$x50,$inp
+	 le?vperm	$in3,$in3,$in3,$inpperm
 	vxor		$out1,$in1,$rndkey0
-	lvx		$in7,0,$inp
-	addi		$inp,$inp,16
-	vperm		$in4,$in4,$in5,$inpperm
+	lvx_u		$in6,$x60,$inp
+	 le?vperm	$in4,$in4,$in4,$inpperm
 	vxor		$out2,$in2,$rndkey0
-	lvx		$inptail,0,$inp
-	addi		$inp,$inp,16
-	vperm		$in5,$in5,$in6,$inpperm
+	lvx_u		$in7,$x70,$inp
+	addi		$inp,$inp,0x80
+	 le?vperm	$in5,$in5,$in5,$inpperm
 	vxor		$out3,$in3,$rndkey0
-	vperm		$in6,$in6,$in7,$inpperm
+	 le?vperm	$in6,$in6,$in6,$inpperm
 	vxor		$out4,$in4,$rndkey0
-	vperm		$in7,$in7,$inptail,$inpperm
+	 le?vperm	$in7,$in7,$in7,$inpperm
 	vxor		$out5,$in5,$rndkey0
 	vxor		$out6,$in6,$rndkey0
 	vxor		$out7,$in7,$rndkey0
 
 	mtctr		$rounds
+	b		Loop_cbc_dec8x
+.align	5
 Loop_cbc_dec8x:
 	vncipher	$out0,$out0,v24
 	vncipher	$out1,$out1,v24
@@ -757,8 +766,8 @@ Loop_cbc_dec8x:
 	vncipher	$out5,$out5,v24
 	vncipher	$out6,$out6,v24
 	vncipher	$out7,$out7,v24
-	lvx		v24,0,$key_		# round[3]
-	addi		$key_,$key_,16
+	lvx		v24,$x20,$key_		# round[3]
+	addi		$key_,$key_,0x20
 
 	vncipher	$out0,$out0,v25
 	vncipher	$out1,$out1,v25
@@ -768,8 +777,7 @@ Loop_cbc_dec8x:
 	vncipher	$out5,$out5,v25
 	vncipher	$out6,$out6,v25
 	vncipher	$out7,$out7,v25
-	lvx		v25,0,$key_		# round[4]
-	addi		$key_,$key_,16
+	lvx		v25,$x10,$key_		# round[4]
 	bdnz		Loop_cbc_dec8x
 
 	subic		$len,$len,128		# $len-=128
@@ -824,8 +832,7 @@ Loop_cbc_dec8x:
 	vncipher	$out5,$out5,v28
 	vncipher	$out6,$out6,v28
 	vncipher	$out7,$out7,v28
-	lvx		v24,0,$key_		# re-pre-load round[1]
-	addi		$key_,$key_,16
+	lvx		v24,$x00,$key_		# re-pre-load round[1]
 
 	vncipher	$out0,$out0,v29
 	vncipher	$out1,$out1,v29
@@ -835,8 +842,7 @@ Loop_cbc_dec8x:
 	vncipher	$out5,$out5,v29
 	vncipher	$out6,$out6,v29
 	vncipher	$out7,$out7,v29
-	lvx		v25,0,$key_		# re-pre-load round[2]
-	addi		$key_,$key_,16
+	lvx		v25,$x10,$key_		# re-pre-load round[2]
 
 	vncipher	$out0,$out0,v30
 	 vxor		$ivec,$ivec,v31		# xor with last round key
@@ -857,86 +863,55 @@ Loop_cbc_dec8x:
 
 	vncipherlast	$out0,$out0,$ivec
 	vncipherlast	$out1,$out1,$in0
+	 lvx_u		$in0,$x00,$inp		# load next input block
 	vncipherlast	$out2,$out2,$in1
-	 lvx		$in1,0,$inp		# load next input block
-	 addi		$inp,$inp,16
+	 lvx_u		$in1,$x10,$inp
 	vncipherlast	$out3,$out3,$in2
-	 lvx		$in2,0,$inp
-	 addi		$inp,$inp,16
+	 le?vperm	$in0,$in0,$in0,$inpperm
+	 lvx_u		$in2,$x20,$inp
 	vncipherlast	$out4,$out4,$in3
-	 lvx		$in3,0,$inp
-	 addi		$inp,$inp,16
-	 vperm		$in0,$inptail,$in1,$inpperm
+	 le?vperm	$in1,$in1,$in1,$inpperm
+	 lvx_u		$in3,$x30,$inp
 	vncipherlast	$out5,$out5,$in4
-	 lvx		$in4,0,$inp
-	 addi		$inp,$inp,16
-	 vperm		$in1,$in1,$in2,$inpperm
+	 le?vperm	$in2,$in2,$in2,$inpperm
+	 lvx_u		$in4,$x40,$inp
 	vncipherlast	$out6,$out6,$in5
-	 lvx		$in5,0,$inp
-	 addi		$inp,$inp,16
-	 vperm		$in2,$in2,$in3,$inpperm
+	 le?vperm	$in3,$in3,$in3,$inpperm
+	 lvx_u		$in5,$x50,$inp
 	vncipherlast	$out7,$out7,$in6
-	 lvx		$in6,0,$inp
-	 addi		$inp,$inp,16
-	 vperm		$in3,$in3,$in4,$inpperm
+	 le?vperm	$in4,$in4,$in4,$inpperm
+	 lvx_u		$in6,$x60,$inp
 	vmr		$ivec,$in7
+	 le?vperm	$in5,$in5,$in5,$inpperm
+	 lvx_u		$in7,$x70,$inp
+	 addi		$inp,$inp,0x80
 
-
-	vperm		$out0,$out0,$out0,$outperm
-	 lvx		$in7,0,$inp
-	 addi		$inp,$inp,16
-	vperm		$out1,$out1,$out1,$outperm
-	vsel		$outhead,$outhead,$out0,$outmask
-	 vperm		$in4,$in4,$in5,$inpperm
-	 lvx		$inptail,0,$inp
-	 addi		$inp,$inp,16
-	vsel		$out0,$out0,$out1,$outmask
-	stvx		$outhead,0,$out
-	addi		$out,$out,16
-
-	vperm		$out2,$out2,$out2,$outperm
-	 vperm		$in5,$in5,$in6,$inpperm
-	vsel		$out1,$out1,$out2,$outmask
-	stvx		$out0,0,$out
-	addi		$out,$out,16
-
-	vperm		$out3,$out3,$out3,$outperm
+	le?vperm	$out0,$out0,$out0,$inpperm
+	le?vperm	$out1,$out1,$out1,$inpperm
+	stvx_u		$out0,$x00,$out
+	 le?vperm	$in6,$in6,$in6,$inpperm
 	 vxor		$out0,$in0,$rndkey0
-	 vperm		$in6,$in6,$in7,$inpperm
-	vsel		$out2,$out2,$out3,$outmask
-	stvx		$out1,0,$out
-	addi		$out,$out,16
-
-	vperm		$out4,$out4,$out4,$outperm
+	le?vperm	$out2,$out2,$out2,$inpperm
+	stvx_u		$out1,$x10,$out
+	 le?vperm	$in7,$in7,$in7,$inpperm
 	 vxor		$out1,$in1,$rndkey0
-	 vperm		$in7,$in7,$inptail,$inpperm
-	vsel		$out3,$out3,$out4,$outmask
-	stvx		$out2,0,$out
-	addi		$out,$out,16
-
-	vperm		$out5,$out5,$out5,$outperm
+	le?vperm	$out3,$out3,$out3,$inpperm
+	stvx_u		$out2,$x20,$out
 	 vxor		$out2,$in2,$rndkey0
-	vsel		$out4,$out4,$out5,$outmask
-	stvx		$out3,0,$out
-	addi		$out,$out,16
-
-	vperm		$out6,$out6,$out6,$outperm
+	le?vperm	$out4,$out4,$out4,$inpperm
+	stvx_u		$out3,$x30,$out
 	 vxor		$out3,$in3,$rndkey0
-	vsel		$out5,$out5,$out6,$outmask
-	stvx		$out4,0,$out
-	addi		$out,$out,16
-
-	vperm		$outhead,$out7,$out7,$outperm
+	le?vperm	$out5,$out5,$out5,$inpperm
+	stvx_u		$out4,$x40,$out
 	 vxor		$out4,$in4,$rndkey0
-	vsel		$out6,$out6,$outhead,$outmask
-	stvx		$out5,0,$out
-	addi		$out,$out,16
-
+	le?vperm	$out6,$out6,$out6,$inpperm
+	stvx_u		$out5,$x50,$out
 	 vxor		$out5,$in5,$rndkey0
-	stvx		$out6,0,$out
-	addi		$out,$out,16
-
+	le?vperm	$out7,$out7,$out7,$inpperm
+	stvx_u		$out6,$x60,$out
 	 vxor		$out6,$in6,$rndkey0
+	stvx_u		$out7,$x70,$out
+	addi		$out,$out,0x80
 	 vxor		$out7,$in7,$rndkey0
 
 	mtctr		$rounds
@@ -944,6 +919,7 @@ Loop_cbc_dec8x:
 
 	addic.		$len,$len,128
 	beq		Lcbc_dec8x_done
+	nop
 	nop
 
 Loop_cbc_dec8x_tail:				# up to 7 "words" tail...
@@ -954,8 +930,8 @@ Loop_cbc_dec8x_tail:				# up to 7 "words" tail...
 	vncipher	$out5,$out5,v24
 	vncipher	$out6,$out6,v24
 	vncipher	$out7,$out7,v24
-	lvx		v24,0,$key_		# round[3]
-	addi		$key_,$key_,16
+	lvx		v24,$x20,$key_		# round[3]
+	addi		$key_,$key_,0x20
 
 	vncipher	$out1,$out1,v25
 	vncipher	$out2,$out2,v25
@@ -964,8 +940,7 @@ Loop_cbc_dec8x_tail:				# up to 7 "words" tail...
 	vncipher	$out5,$out5,v25
 	vncipher	$out6,$out6,v25
 	vncipher	$out7,$out7,v25
-	lvx		v25,0,$key_		# round[4]
-	addi		$key_,$key_,16
+	lvx		v25,$x10,$key_		# round[4]
 	bdnz		Loop_cbc_dec8x_tail
 
 	vncipher	$out1,$out1,v24
@@ -1044,6 +1019,7 @@ Loop_cbc_dec8x_tail:				# up to 7 "words" tail...
 	nop
 	beq		Lcbc_dec8x_six
 
+Lcbc_dec8x_seven:
 	vncipherlast	$out1,$out1,$ivec
 	vncipherlast	$out2,$out2,$in1
 	vncipherlast	$out3,$out3,$in2
@@ -1053,40 +1029,21 @@ Loop_cbc_dec8x_tail:				# up to 7 "words" tail...
 	vncipherlast	$out7,$out7,$in6
 	vmr		$ivec,$in7
 
-	vperm		$out1,$out1,$out1,$outperm
-	vsel		$outhead,$outhead,$out1,$outmask
-	stvx		$outhead,0,$out
-	addi		$out,$out,16
-
-	vperm		$out2,$out2,$out2,$outperm
-	vsel		$out1,$out1,$out2,$outmask
-	stvx		$out1,0,$out
-	addi		$out,$out,16
-
-	vperm		$out3,$out3,$out3,$outperm
-	vsel		$out2,$out2,$out3,$outmask
-	stvx		$out2,0,$out
-	addi		$out,$out,16
-
-	vperm		$out4,$out4,$out4,$outperm
-	vsel		$out3,$out3,$out4,$outmask
-	stvx		$out3,0,$out
-	addi		$out,$out,16
-
-	vperm		$out5,$out5,$out5,$outperm
-	vsel		$out4,$out4,$out5,$outmask
-	stvx		$out4,0,$out
-	addi		$out,$out,16
-
-	vperm		$out6,$out6,$out6,$outperm
-	vsel		$out5,$out5,$out6,$outmask
-	stvx		$out5,0,$out
-	addi		$out,$out,16
-
-	vperm		$outhead,$out7,$out7,$outperm
-	vsel		$out6,$out6,$outhead,$outmask
-	stvx		$out6,0,$out
-	addi		$out,$out,16
+	le?vperm	$out1,$out1,$out1,$inpperm
+	le?vperm	$out2,$out2,$out2,$inpperm
+	stvx_u		$out1,$x00,$out
+	le?vperm	$out3,$out3,$out3,$inpperm
+	stvx_u		$out2,$x10,$out
+	le?vperm	$out4,$out4,$out4,$inpperm
+	stvx_u		$out3,$x20,$out
+	le?vperm	$out5,$out5,$out5,$inpperm
+	stvx_u		$out4,$x30,$out
+	le?vperm	$out6,$out6,$out6,$inpperm
+	stvx_u		$out5,$x40,$out
+	le?vperm	$out7,$out7,$out7,$inpperm
+	stvx_u		$out6,$x50,$out
+	stvx_u		$out7,$x60,$out
+	addi		$out,$out,0x70
 	b		Lcbc_dec8x_done
 
 .align	5
@@ -1099,35 +1056,19 @@ Lcbc_dec8x_six:
 	vncipherlast	$out7,$out7,$in6
 	vmr		$ivec,$in7
 
-	vperm		$out2,$out2,$out2,$outperm
-	vsel		$outhead,$outhead,$out2,$outmask
-	stvx		$outhead,0,$out
-	addi		$out,$out,16
-
-	vperm		$out3,$out3,$out3,$outperm
-	vsel		$out2,$out2,$out3,$outmask
-	stvx		$out2,0,$out
-	addi		$out,$out,16
-
-	vperm		$out4,$out4,$out4,$outperm
-	vsel		$out3,$out3,$out4,$outmask
-	stvx		$out3,0,$out
-	addi		$out,$out,16
-
-	vperm		$out5,$out5,$out5,$outperm
-	vsel		$out4,$out4,$out5,$outmask
-	stvx		$out4,0,$out
-	addi		$out,$out,16
-
-	vperm		$out6,$out6,$out6,$outperm
-	vsel		$out5,$out5,$out6,$outmask
-	stvx		$out5,0,$out
-	addi		$out,$out,16
-
-	vperm		$outhead,$out7,$out7,$outperm
-	vsel		$out6,$out6,$outhead,$outmask
-	stvx		$out6,0,$out
-	addi		$out,$out,16
+	le?vperm	$out2,$out2,$out2,$inpperm
+	le?vperm	$out3,$out3,$out3,$inpperm
+	stvx_u		$out2,$x00,$out
+	le?vperm	$out4,$out4,$out4,$inpperm
+	stvx_u		$out3,$x10,$out
+	le?vperm	$out5,$out5,$out5,$inpperm
+	stvx_u		$out4,$x20,$out
+	le?vperm	$out6,$out6,$out6,$inpperm
+	stvx_u		$out5,$x30,$out
+	le?vperm	$out7,$out7,$out7,$inpperm
+	stvx_u		$out6,$x40,$out
+	stvx_u		$out7,$x50,$out
+	addi		$out,$out,0x60
 	b		Lcbc_dec8x_done
 
 .align	5
@@ -1139,30 +1080,17 @@ Lcbc_dec8x_five:
 	vncipherlast	$out7,$out7,$in6
 	vmr		$ivec,$in7
 
-	vperm		$out3,$out3,$out3,$outperm
-	vsel		$outhead,$outhead,$out3,$outmask
-	stvx		$outhead,0,$out
-	addi		$out,$out,16
-
-	vperm		$out4,$out4,$out4,$outperm
-	vsel		$out3,$out3,$out4,$outmask
-	stvx		$out3,0,$out
-	addi		$out,$out,16
-
-	vperm		$out5,$out5,$out5,$outperm
-	vsel		$out4,$out4,$out5,$outmask
-	stvx		$out4,0,$out
-	addi		$out,$out,16
-
-	vperm		$out6,$out6,$out6,$outperm
-	vsel		$out5,$out5,$out6,$outmask
-	stvx		$out5,0,$out
-	addi		$out,$out,16
-
-	vperm		$outhead,$out7,$out7,$outperm
-	vsel		$out6,$out6,$outhead,$outmask
-	stvx		$out6,0,$out
-	addi		$out,$out,16
+	le?vperm	$out3,$out3,$out3,$inpperm
+	le?vperm	$out4,$out4,$out4,$inpperm
+	stvx_u		$out3,$x00,$out
+	le?vperm	$out5,$out5,$out5,$inpperm
+	stvx_u		$out4,$x10,$out
+	le?vperm	$out6,$out6,$out6,$inpperm
+	stvx_u		$out5,$x20,$out
+	le?vperm	$out7,$out7,$out7,$inpperm
+	stvx_u		$out6,$x30,$out
+	stvx_u		$out7,$x40,$out
+	addi		$out,$out,0x50
 	b		Lcbc_dec8x_done
 
 .align	5
@@ -1173,25 +1101,15 @@ Lcbc_dec8x_four:
 	vncipherlast	$out7,$out7,$in6
 	vmr		$ivec,$in7
 
-	vperm		$out4,$out4,$out4,$outperm
-	vsel		$outhead,$outhead,$out4,$outmask
-	stvx		$outhead,0,$out
-	addi		$out,$out,16
-
-	vperm		$out5,$out5,$out5,$outperm
-	vsel		$out4,$out4,$out5,$outmask
-	stvx		$out4,0,$out
-	addi		$out,$out,16
-
-	vperm		$out6,$out6,$out6,$outperm
-	vsel		$out5,$out5,$out6,$outmask
-	stvx		$out5,0,$out
-	addi		$out,$out,16
-
-	vperm		$outhead,$out7,$out7,$outperm
-	vsel		$out6,$out6,$outhead,$outmask
-	stvx		$out6,0,$out
-	addi		$out,$out,16
+	le?vperm	$out4,$out4,$out4,$inpperm
+	le?vperm	$out5,$out5,$out5,$inpperm
+	stvx_u		$out4,$x00,$out
+	le?vperm	$out6,$out6,$out6,$inpperm
+	stvx_u		$out5,$x10,$out
+	le?vperm	$out7,$out7,$out7,$inpperm
+	stvx_u		$out6,$x20,$out
+	stvx_u		$out7,$x30,$out
+	addi		$out,$out,0x40
 	b		Lcbc_dec8x_done
 
 .align	5
@@ -1201,20 +1119,13 @@ Lcbc_dec8x_three:
 	vncipherlast	$out7,$out7,$in6
 	vmr		$ivec,$in7
 
-	vperm		$out5,$out5,$out5,$outperm
-	vsel		$outhead,$outhead,$out5,$outmask
-	stvx		$outhead,0,$out
-	addi		$out,$out,16
-
-	vperm		$out6,$out6,$out6,$outperm
-	vsel		$out5,$out5,$out6,$outmask
-	stvx		$out5,0,$out
-	addi		$out,$out,16
-
-	vperm		$outhead,$out7,$out7,$outperm
-	vsel		$out6,$out6,$outhead,$outmask
-	stvx		$out6,0,$out
-	addi		$out,$out,16
+	le?vperm	$out5,$out5,$out5,$inpperm
+	le?vperm	$out6,$out6,$out6,$inpperm
+	stvx_u		$out5,$x00,$out
+	le?vperm	$out7,$out7,$out7,$inpperm
+	stvx_u		$out6,$x10,$out
+	stvx_u		$out7,$x20,$out
+	addi		$out,$out,0x30
 	b		Lcbc_dec8x_done
 
 .align	5
@@ -1223,15 +1134,11 @@ Lcbc_dec8x_two:
 	vncipherlast	$out7,$out7,$in6
 	vmr		$ivec,$in7
 
-	vperm		$out6,$out6,$out6,$outperm
-	vsel		$outhead,$outhead,$out6,$outmask
-	stvx		$outhead,0,$out
-	addi		$out,$out,16
-
-	vperm		$outhead,$out7,$out7,$outperm
-	vsel		$out6,$out6,$outhead,$outmask
-	stvx		$out6,0,$out
-	addi		$out,$out,16
+	le?vperm	$out6,$out6,$out6,$inpperm
+	le?vperm	$out7,$out7,$out7,$inpperm
+	stvx_u		$out6,$x00,$out
+	stvx_u		$out7,$x10,$out
+	addi		$out,$out,0x20
 	b		Lcbc_dec8x_done
 
 .align	5
@@ -1239,52 +1146,31 @@ Lcbc_dec8x_one:
 	vncipherlast	$out7,$out7,$ivec
 	vmr		$ivec,$in7
 
-	vperm		$out7,$out7,$out7,$outperm
-	vsel		$outhead,$outhead,$out7,$outmask
-	stvx		$outhead,0,$out
-	addi		$out,$out,16
-	vmr		$outhead,$out7
-	nop
+	le?vperm	$out7,$out7,$out7,$inpperm
+	stvx_u		$out7,0,$out
+	addi		$out,$out,0x10
 
 Lcbc_dec8x_done:
-	addi		$out,$out,-1
-	lvx		$out7,0,$out		# redundant in aligned case
-	vsel		$out7,$outhead,$out7,$outmask
-	stvx		$out7,0,$out
-
-	neg		$enc,$ivp		# write [unaligned] iv
-	li		$idx,15			# 15 is not typo
-	vxor		$rndkey0,$rndkey0,$rndkey0
-	vspltisb	$outmask,-1
-	`"vspltisb	$tmp,0x0f"		if ($LITTLE_ENDIAN)`
-	?lvsl		$outperm,0,$enc
-	?vperm		$outmask,$rndkey0,$outmask,$outperm
-	`"vxor		$outperm,$outperm,$tmp"	if ($LITTLE_ENDIAN)`
-	lvx		$outhead,0,$ivp
-	vperm		$ivec,$ivec,$ivec,$outperm
-	vsel		$in0,$outhead,$ivec,$outmask
-	lvx		$inptail,$idx,$ivp
-	stvx		$in0,0,$ivp
-	vsel		$in0,$ivec,$inptail,$outmask
-	stvx		$in0,$idx,$ivp
+	le?vperm	$ivec,$ivec,$ivec,$inpperm
+	stvx_u		$ivec,0,$ivp		# write [unaligned] iv
 
 	li		r10,`$FRAME+15`
 	li		r11,`$FRAME+31`
-	stvx		$outmask,r10,$sp	# wipe copies of rounds keys
+	stvx		$inpperm,r10,$sp	# wipe copies of round keys
 	addi		r10,r10,32
-	stvx		$outmask,r11,$sp
+	stvx		$inpperm,r11,$sp
 	addi		r11,r11,32
-	stvx		$outmask,r10,$sp
+	stvx		$inpperm,r10,$sp
 	addi		r10,r10,32
-	stvx		$outmask,r11,$sp
+	stvx		$inpperm,r11,$sp
 	addi		r11,r11,32
-	stvx		$outmask,r10,$sp
+	stvx		$inpperm,r10,$sp
 	addi		r10,r10,32
-	stvx		$outmask,r11,$sp
+	stvx		$inpperm,r11,$sp
 	addi		r11,r11,32
-	stvx		$outmask,r10,$sp
+	stvx		$inpperm,r10,$sp
 	addi		r10,r10,32
-	stvx		$outmask,r11,$sp
+	stvx		$inpperm,r11,$sp
 	addi		r11,r11,32
 
 	mtspr		256,$vrsave
@@ -1310,10 +1196,17 @@ Lcbc_dec8x_done:
 	addi		r11,r11,32
 	lvx		v30,r10,$sp
 	lvx		v31,r11,$sp
-	addi		$sp,$sp,`$FRAME+21*16`
+	$POP		r26,`$FRAME+21*16+0*$SIZE_T`($sp)
+	$POP		r27,`$FRAME+21*16+1*$SIZE_T`($sp)
+	$POP		r28,`$FRAME+21*16+2*$SIZE_T`($sp)
+	$POP		r29,`$FRAME+21*16+3*$SIZE_T`($sp)
+	$POP		r30,`$FRAME+21*16+4*$SIZE_T`($sp)
+	$POP		r31,`$FRAME+21*16+5*$SIZE_T`($sp)
+	addi		$sp,$sp,`$FRAME+21*16+6*$SIZE_T`
 	blr
 	.long		0
-	.byte		0,12,0x14,0,0x80,0,6,0
+	.byte		0,12,0x14,0,0x80,6,6,0
+	.long		0
 .size	.${prefix}_cbc_encrypt,.-.${prefix}_cbc_encrypt
 ___
 }}	}}}
@@ -1354,12 +1247,16 @@ foreach(split("\n",$code)) {
 	# instructions prefixed with '?' are endian-specific and need
 	# to be adjusted accordingly...
 	if ($flavour =~ /le$/o) {	# little-endian
-	    s/\?lvsr/lvsl/o or
-	    s/\?lvsl/lvsr/o or
+	    s/le\?//o		or
+	    s/be\?/#be#/o	or
+	    s/\?lvsr/lvsl/o	or
+	    s/\?lvsl/lvsr/o	or
 	    s/\?(vperm\s+v[0-9]+,\s*)(v[0-9]+,\s*)(v[0-9]+,\s*)(v[0-9]+)/$1$3$2$4/o or
 	    s/\?(vsldoi\s+v[0-9]+,\s*)(v[0-9]+,)\s*(v[0-9]+,\s*)([0-9]+)/$1$3$2 16-$4/o or
 	    s/\?(vspltw\s+v[0-9]+,\s*)(v[0-9]+,)\s*([0-9])/$1$2 3-$3/o;
 	} else {			# big-endian
+	    s/le\?/#le#/o	or
+	    s/be\?//o		or
 	    s/\?([a-z]+)/$1/o;
 	}
 
