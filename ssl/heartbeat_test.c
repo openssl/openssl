@@ -44,7 +44,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef OPENSSL_NO_HEARTBEATS
+#if !defined(OPENSSL_NO_HEARTBEATS) && !defined(OPENSSL_SYS_WINDOWS)
 
 /* As per https://tools.ietf.org/html/rfc6520#section-4 */
 #define MIN_PADDING_SIZE	16
