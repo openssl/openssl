@@ -96,8 +96,8 @@ static struct hostent *GetHostByName(const char *name);
 static void ssl_sock_cleanup(void);
 #endif
 static int ssl_sock_init(void);
-static int init_client_ip(int *sock, const unsigned char remote_ip[4], int port,
-			  const unsigned char local_ip[4], int type);
+static int init_client_ip(int *sock, const unsigned char remote_ip[4], int remote_port,
+			  const unsigned char local_ip[4], int local_port, int type);
 static int init_server(int *sock, int port, int type);
 static int init_server_long(int *sock, int port,char *ip, int type);
 static int do_accept(int acc_sock, int *sock, char **host);
@@ -233,7 +233,7 @@ static int ssl_sock_init(void)
 	return(1);
 	}
 
-int init_client(int *sock, const char *remote_host, int port, const char *local_host, int type)
+int init_client(int *sock, const char *remote_host, int remote_port, const char *local_host, unsigned short local_port, int type)
 	{
 	unsigned char remote_ip[4];
 	unsigned char local_ip[4];
@@ -246,11 +246,11 @@ int init_client(int *sock, const char *remote_host, int port, const char *local_
 	if (local_host!=NULL && !host_ip(local_host,&(local_ip[0])))
 		return 0;
 
-	return init_client_ip(sock,remote_ip,port,local_ip,type);
+	return init_client_ip(sock,remote_ip,remote_port,local_ip,local_port,type);
 	}
 
-static int init_client_ip(int *sock, const unsigned char remote_ip[4], int port,
-			  const unsigned char local_ip[4], int type)
+static int init_client_ip(int *sock, const unsigned char remote_ip[4], int remote_port,
+			  const unsigned char local_ip[4], int local_port, int type)
 	{
 	unsigned long addr;
 	struct sockaddr_in them;
@@ -260,7 +260,7 @@ static int init_client_ip(int *sock, const unsigned char remote_ip[4], int port,
 
 	memset((char *)&them,0,sizeof(them));
 	them.sin_family=AF_INET;
-	them.sin_port=htons((unsigned short)port);
+	them.sin_port=htons((unsigned short)remote_port);
 	addr=(unsigned long)
 		((unsigned long)remote_ip[0]<<24L)|
 		((unsigned long)remote_ip[1]<<16L)|
@@ -283,21 +283,29 @@ static int init_client_ip(int *sock, const unsigned char remote_ip[4], int port,
 		if (i < 0) { closesocket(s); perror("keepalive"); return(0); }
 		}
 #endif
-	if(0!=local_ip[0])
-		{
-		struct sockaddr_in me;
-		memset((char*)&me,0,sizeof(me));
-		me.sin_family = AF_INET;
-		addr=(unsigned long)
-			((unsigned long)local_ip[0]<<24L)|
-			((unsigned long)local_ip[1]<<16L)|
-			((unsigned long)local_ip[2]<< 8L)|
-			((unsigned long)local_ip[3]);
-		me.sin_addr.s_addr = htonl(addr);
+	// setup binding to local IP and port
+	struct sockaddr_in me;
+	memset((char*)&me,0,sizeof(me));
+	me.sin_family = AF_INET;
+	me.sin_port=htons((unsigned short)local_port);
+	addr=(unsigned long)
+		((unsigned long)local_ip[0]<<24L)|
+		((unsigned long)local_ip[1]<<16L)|
+		((unsigned long)local_ip[2]<< 8L)|
+		((unsigned long)local_ip[3]);
+	me.sin_addr.s_addr = htonl(addr);
 
-		if( bind(s,(struct sockaddr *)&me,sizeof(me)) == -1 )
-			{ closesocket(s); perror("bind"); return(0); }
+#if defined SOL_SOCKET && defined SO_REUSEADDR
+		{
+		int j = 1;
+		setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
+			   (void *) &j, sizeof j);
 		}
+#endif
+
+	if( bind(s,(struct sockaddr *)&me,sizeof(me)) == -1 )
+		{ closesocket(s); perror("bind"); return(0); }
+
 	if (connect(s,(struct sockaddr *)&them,sizeof(them)) == -1)
 		{ closesocket(s); perror("connect"); return(0); }
 	*sock=s;
@@ -633,7 +641,7 @@ redoit:
 #endif
 
 int extract_host_port(char *str, char **host_ptr, unsigned char *ip,
-	     short *port_ptr)
+	     unsigned short *port_ptr, short port_required)
 	{
 	char *h,*p;
 
@@ -641,9 +649,17 @@ int extract_host_port(char *str, char **host_ptr, unsigned char *ip,
 	p=strchr(str,':');
 	if (p == NULL)
 		{
-		BIO_printf(bio_err,"no port defined\n");
-		return(0);
+		if(port_required)
+			{
+			BIO_printf(bio_err,"no port defined\n");
+			return(0);
+			}
+		else
+			{
+			return(1);
+			}
 		}
+
 	*(p++)='\0';
 
 	if ((ip != NULL) && !host_ip(str,ip))
@@ -703,7 +719,7 @@ err:
 	return(0);
 	}
 
-int extract_port(const char *str, short *port_ptr)
+int extract_port(const char *str, unsigned short *port_ptr)
 	{
 	int i;
 	struct servent *s;

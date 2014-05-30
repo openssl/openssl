@@ -9,7 +9,7 @@ s_client - SSL/TLS client program
 
 B<openssl> B<s_client>
 [B<-connect host:port>]
-[B<-localip IP>]
+[B<-bind IP:port>]
 [B<-verify depth>]
 [B<-verify_return_error>]
 [B<-cert filename>]
@@ -70,10 +70,11 @@ manual page.
 This specifies the host and optional port to connect to. If not specified
 then an attempt is made to connect to the local host on port 4433.
 
-=item B<-localip IP>
+=item B<-bind IP:port>
 
-This optional argument specifies IP address assigned to another interface 
-then the one which connect(2) chooses by default. 
+This argument specifies IP address and optionally a port assigned to another
+interface then the one which connect(2) chooses by default. If port parameter
+is not provided, then port from ephemeral port range is used. 
 
 =item B<-cert certname>
 
