@@ -25,6 +25,7 @@ B<openssl> B<verify>
 [B<-untrusted file>]
 [B<-help>]
 [B<-issuer_checks>]
+[B<-attime timestamp>]
 [B<-verbose>]
 [B<->]
 [certificates]
@@ -79,6 +80,12 @@ current certificate. This shows why each candidate issuer certificate was
 rejected. The presence of rejection messages does not itself imply that
 anything is wrong; during the normal verification process, several
 rejections may take place.
+
+=item B<-attime timestamp>
+
+Perform validation checks using time specified by B<timestamp> and not
+current system time. B<timestamp> is the number of seconds since
+01.01.1970 (UNIX time).
 
 =item B<-policy arg>
 
