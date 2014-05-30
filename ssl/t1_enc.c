@@ -1218,7 +1218,7 @@ int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
 	if (memcmp(val, TLS_MD_KEY_EXPANSION_CONST,
 		 TLS_MD_KEY_EXPANSION_CONST_SIZE) == 0) goto err1;
 
-	rv = tls1_PRF(s->s3->tmp.new_cipher->algorithm2,
+	rv = tls1_PRF(ssl_get_algorithm2(s),
 		      val, vallen,
 		      NULL, 0,
 		      NULL, 0,
