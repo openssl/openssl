@@ -132,7 +132,7 @@ static int probable_prime(BIGNUM *rnd, int bits);
 static int probable_prime_dh_safe(BIGNUM *rnd, int bits,
 	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx);
 
-static int prime_offsets[480] = {
+static const int prime_offsets[480] = {
 	13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89,
 	97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167,
 	169, 173, 179, 181, 191, 193, 197, 199, 211, 221, 223, 227, 229, 233, 239,
@@ -170,9 +170,10 @@ static int prime_offsets[480] = {
 	2197, 2201, 2203, 2207, 2209, 2213, 2221, 2227, 2231, 2237, 2239, 2243,
 	2249, 2251, 2257, 2263, 2267, 2269, 2273, 2279, 2281, 2287, 2291, 2293,
 	2297, 2309, 2311 };
-static int prime_offset_count = 480;
-static int prime_multiplier = 2310;
-static int first_prime_index = 5;
+static const int prime_offset_count = 480;
+static const int prime_multiplier = 2310;
+static const int prime_multiplier_bits = 11;
+static const int first_prime_index = 5;
 
 int BN_GENCB_call(BN_GENCB *cb, int a, int b)
 	{
@@ -433,6 +434,8 @@ int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits, BN_CTX *ctx)
 	BIGNUM *offset_index;
 	BIGNUM *offset_count;
 	int ret = 0;
+
+	OPENSSL_assert(bits > prime_multiplier_bits);
 	
 	BN_CTX_start(ctx);
 	if ((offset_index = BN_CTX_get(ctx)) == NULL) goto err;
@@ -441,7 +444,7 @@ int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits, BN_CTX *ctx)
 	BN_add_word(offset_count, prime_offset_count);
 
 loop:
-	if (!BN_rand(rnd, bits, 0, 1)) goto err;
+	if (!BN_rand(rnd, bits - prime_multiplier_bits, 0, 1)) goto err;
 	if (!BN_rand_range(offset_index, offset_count)) goto err;
 
 	BN_mul_word(rnd, prime_multiplier);
