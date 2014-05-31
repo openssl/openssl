@@ -1018,6 +1018,11 @@ int MAIN(int argc, char **argv)
 			prime_doit[D_PRIME_TRIAL_DIVISION_RETRY] = 1;
 		else if (strcmp(*argv,"prime-coprime") == 0)
 			prime_doit[D_PRIME_COPRIME] = 1;
+		else if (strcmp(*argv,"prime") == 0)
+			{
+			for (i=0; i < PRIME_NUM; i++)
+				prime_doit[i]=1;
+			}
 		else
 			{
 			BIO_printf(bio_err,"Error: bad option or value\n");
