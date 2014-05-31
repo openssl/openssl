@@ -700,6 +700,8 @@ int MAIN(int argc, char **argv)
 	for (i=0; i<EC_NUM; i++)
 		ecdh_doit[i]=0;
 #endif
+	for (i=0; i<PRIME_NUM; i++)
+		prime_doit[i]=0;
 
 	
 	j=0;
