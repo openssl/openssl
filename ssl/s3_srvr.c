@@ -2097,6 +2097,11 @@ int ssl3_send_certificate_request(SSL *s)
 		s->init_num=n+4;
 		s->init_off=0;
 #ifdef NETSCAPE_HANG_BUG
+		if (!BUF_MEM_grow_clean(buf, s->init_num + 4))
+			{
+			SSLerr(SSL_F_SSL3_SEND_CERTIFICATE_REQUEST,ERR_R_BUF_LIB);
+			goto err;
+			}
 		p=(unsigned char *)s->init_buf->data + s->init_num;
 
 		/* do the header */
