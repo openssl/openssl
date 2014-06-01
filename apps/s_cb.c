@@ -1030,6 +1030,9 @@ void MS_CALLBACK tlsext_cb(SSL *s, int client_server, int type,
 		extname = "encrypt-then-mac";
 		break;
 #endif
+		case TLSEXT_TYPE_padding:
+		extname = "TLS padding";
+		break;
 
 		default:
 		extname = "unknown";
