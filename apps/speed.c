@@ -502,7 +502,7 @@ int MAIN(int argc, char **argv)
 	long c[ALGOR_NUM][SIZE_NUM];
 
 #define D_PRIME_TRIAL_DIVISION			0
-#define D_PRIME_TRIAL_DIVISION_RETRY	1
+#define D_PRIME_TRIAL_DIVISION_UNBIASED	1
 #define D_PRIME_COPRIME					2
 	long prime_c[PRIME_NUM];
 
@@ -1016,8 +1016,8 @@ int MAIN(int argc, char **argv)
 #endif
 			 if (strcmp(*argv,"prime-trial-division") == 0)
 			prime_doit[D_PRIME_TRIAL_DIVISION] = 1;
-		else if (strcmp(*argv,"prime-trial-division-retry") == 0)
-			prime_doit[D_PRIME_TRIAL_DIVISION_RETRY] = 1;
+		else if (strcmp(*argv,"prime-trial-division-unbiased") == 0)
+			prime_doit[D_PRIME_TRIAL_DIVISION_UNBIASED] = 1;
 		else if (strcmp(*argv,"prime-coprime") == 0)
 			prime_doit[D_PRIME_COPRIME] = 1;
 		else if (strcmp(*argv,"prime") == 0)
@@ -1362,7 +1362,7 @@ int MAIN(int argc, char **argv)
 		}
 		
 	prime_c[D_PRIME_TRIAL_DIVISION]=count;
-	prime_c[D_PRIME_TRIAL_DIVISION_RETRY]=count;
+	prime_c[D_PRIME_TRIAL_DIVISION_UNBIASED]=count;
 	prime_c[D_PRIME_COPRIME]=count;
 	
 #ifndef OPENSSL_NO_RSA
@@ -2054,20 +2054,20 @@ int MAIN(int argc, char **argv)
 		BN_free(rnd);
 		}
 	
-	if (prime_doit[D_PRIME_TRIAL_DIVISION_RETRY])
+	if (prime_doit[D_PRIME_TRIAL_DIVISION_UNBIASED])
 		{
 		BIGNUM *rnd = BN_new();
 		BN_CTX *ctx = BN_CTX_new();
 		
-		prime_print_message(prime_names[D_PRIME_TRIAL_DIVISION_RETRY],
-							prime_c[D_PRIME_TRIAL_DIVISION_RETRY]);
+		prime_print_message(prime_names[D_PRIME_TRIAL_DIVISION_UNBIASED],
+							prime_c[D_PRIME_TRIAL_DIVISION_UNBIASED]);
 			
 		Time_F(START);
-		for (count=0, run=1; COND(prime_c[D_PRIME_TRIAL_DIVISION_RETRY]); count++)
-			if (!bn_probable_prime_dh_retry(rnd, 1024, ctx)) count--;
+		for (count=0, run=1; COND(prime_c[D_PRIME_TRIAL_DIVISION_UNBIASED]); count++)
+			if (!bn_probable_prime_dh_unbiased(rnd, 1024, ctx)) count--;
 		
 		d=Time_F(STOP);
-		prime_print_result(D_PRIME_TRIAL_DIVISION_RETRY, count, d);
+		prime_print_result(D_PRIME_TRIAL_DIVISION_UNBIASED, count, d);
 		
 		BN_CTX_free(ctx);
 		BN_free(rnd);

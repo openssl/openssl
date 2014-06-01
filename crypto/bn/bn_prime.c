@@ -405,7 +405,7 @@ err:
 	return(ret);
 	}
 
-int bn_probable_prime_dh_retry(BIGNUM *rnd, int bits, BN_CTX *ctx)
+int bn_probable_prime_dh_unbiased(BIGNUM *rnd, int bits, BN_CTX *ctx)
 	{
 	int i;
 	int ret = 0;
