@@ -1025,6 +1025,10 @@ void MS_CALLBACK tlsext_cb(SSL *s, int client_server, int type,
 		break;
 #endif
 
+		case TLSEXT_TYPE_padding:
+		extname = "TLS padding";
+		break;
+
 		default:
 		extname = "unknown";
 		break;
