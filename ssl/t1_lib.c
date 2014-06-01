@@ -1468,36 +1468,35 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 			ret += outlen;
 			}
 		}
-
-#ifdef TLSEXT_TYPE_padding
 	/* Add padding to workaround bugs in F5 terminators.
 	 * See https://tools.ietf.org/html/draft-agl-tls-padding-03
 	 *
 	 * NB: because this code works out the length of all existing
 	 * extensions it MUST always appear last.
 	 */
-	{
-	int hlen = ret - (unsigned char *)s->init_buf->data;
-	/* The code in s23_clnt.c to build ClientHello messages includes the
-	 * 5-byte record header in the buffer, while the code in s3_clnt.c does
-	 * not. */
-	if (s->state == SSL23_ST_CW_CLNT_HELLO_A)
-		hlen -= 5;
-	if (hlen > 0xff && hlen < 0x200)
+	if (s->options & SSL_OP_TLSEXT_PADDING)
 		{
-		hlen = 0x200 - hlen;
-		if (hlen >= 4)
-			hlen -= 4;
-		else
-			hlen = 0;
+		int hlen = ret - (unsigned char *)s->init_buf->data;
+		/* The code in s23_clnt.c to build ClientHello messages
+		 * includes the 5-byte record header in the buffer, while
+		 * the code in s3_clnt.c does not.
+		 */
+		if (s->state == SSL23_ST_CW_CLNT_HELLO_A)
+			hlen -= 5;
+		if (hlen > 0xff && hlen < 0x200)
+			{
+			hlen = 0x200 - hlen;
+			if (hlen >= 4)
+				hlen -= 4;
+			else
+				hlen = 0;
 
-		s2n(TLSEXT_TYPE_padding, ret);
-		s2n(hlen, ret);
-		memset(ret, 0, hlen);
-		ret += hlen;
+			s2n(TLSEXT_TYPE_padding, ret);
+			s2n(hlen, ret);
+			memset(ret, 0, hlen);
+			ret += hlen;
+			}
 		}
-	}
-#endif
 
 	if ((extdatalen = ret-p-2) == 0)
 		return p;
