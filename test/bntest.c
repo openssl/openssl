@@ -35,6 +35,7 @@
 BIGNUM *bn_expand2(BIGNUM *b, int words);
 BIGNUM *bn_expand2(BIGNUM *b, int words) { return NULL; }
 #include "../crypto/bn/bn_lcl.h"
+// #include "../crypto/bn/bn_prime.h"
 
 #define MAXPAIRS        20
 
@@ -1996,6 +1997,285 @@ err:
     return st;
 }
 
+/*
+static int test_probable_prime_dh_trial_division()
+{
+    int i, j, ret = 0;
+    BIGNUM *r = BN_new();
+    BIGNUM *add = BN_new();
+
+    BN_set_word(add, 4);
+
+    for (i = 0; i < 1000; i++) {
+        if (!bn_probable_prime_dh(r, 1024, add, NULL, ctx, 0, 1))
+            goto err;
+
+        for (j = 0; j < NUMPRIMES; j++) {
+            if (BN_mod_word(r, primes[j]) == 0) {
+                fprintf(stderr,
+                        "Number generated is not coprime to %d\n",
+                        primes[j]);
+                goto err;
+            }
+        }
+    }
+
+    ret = 1;
+
+err:
+    BN_clear_free(r);
+    BN_clear_free(add);
+    return ret;
+}
+*/
+
+/*
+static int test_probable_prime_dh_trial_division_safe()
+{
+    int i, j, ret = 0;
+    BIGNUM *r = BN_new();
+    BIGNUM *add = BN_new();
+
+    BN_set_word(add, 4);
+
+    for (i = 0; i < 1000; i++) {
+        if (!bn_probable_prime_dh(r, 1024, add, NULL, ctx, 1, 1))
+            goto err;
+
+        for (j = 0; j < NUMPRIMES; j++) {
+            if (BN_mod_word(r, primes[j]) == 0) {
+                fprintf(stderr,
+                        "Number generated is not coprime to %d\n",
+                        primes[j]);
+                goto err;
+            }
+        }
+    }
+
+    ret = 1;
+
+err:
+    BN_clear_free(r);
+    BN_clear_free(add);
+    return ret;
+}
+*/
+
+/*
+static int test_probable_prime_dh_trial_division_unbiased()
+{
+    int i, j, ret = 0;
+    BIGNUM *r = BN_new();
+    BIGNUM *add = BN_new();
+
+    BN_set_word(add, 4);
+
+    for (i = 0; i < 1000; i++) {
+        if (!bn_probable_prime_dh(r, 1024, add, NULL, ctx, 0, 0))
+            goto err;
+
+        for (j = 0; j < NUMPRIMES; j++) {
+            if (BN_mod_word(r, primes[j]) == 0) {
+                fprintf(stderr,
+                        "Number generated is not coprime to %d\n",
+                        primes[j]);
+                goto err;
+            }
+        }
+    }
+
+    ret = 1;
+
+err:
+    BN_clear_free(r);
+    BN_clear_free(add);
+    return ret;
+}
+*/
+
+/*
+static int test_probable_prime_dh_trial_division_unbiased_safe()
+{
+    int i, j, ret = 0;
+    BIGNUM *r = BN_new();
+    BIGNUM *add = BN_new();
+
+    BN_set_word(add, 4);
+
+    for (i = 0; i < 1000; i++) {
+        if (!bn_probable_prime_dh(r, 1024, add, NULL, ctx, 1, 0))
+            goto err;
+
+        for (j = 0; j < NUMPRIMES; j++) {
+            if (BN_mod_word(r, primes[j]) == 0) {
+                fprintf(stderr,
+                        "Number generated is not coprime to %d\n",
+                        primes[j]);
+                goto err;
+            }
+        }
+    }
+
+    ret = 1;
+
+err:
+    BN_clear_free(r);
+    BN_clear_free(add);
+    return ret;
+}
+*/
+
+/*
+static int test_probable_prime_dh_coprime()
+{
+    int i, j, ret = 0;
+    BIGNUM *r = BN_new();
+    BIGNUM *add = BN_new();
+    BN_ULONG *mods = NULL;
+
+    mods = OPENSSL_zalloc(sizeof(*mods) * NUMPRIMES);
+    if (mods == NULL)
+        goto err;
+
+    BN_set_word(add, 4);
+
+    for (i = 0; i < 1000; i++) {
+        if (!bn_probable_prime_dh_coprime(r, 1024, add, NULL, mods, ctx, 0, 1))
+            goto err;
+
+        for (j = 0; j < NUMPRIMES; j++) {
+            if (BN_mod_word(r, primes[j]) == 0) {
+                fprintf(stderr,
+                        "Number generated is not coprime to %d\n",
+                        primes[j]);
+                goto err;
+            }
+        }
+    }
+
+    ret = 1;
+
+err:
+    BN_clear_free(r);
+    BN_clear_free(add);
+    OPENSSL_free(mods);
+    return ret;
+}
+*/
+
+/*
+static int test_probable_prime_dh_coprime_safe()
+{
+    int i, j, ret = 0;
+    BIGNUM *r = BN_new();
+    BIGNUM *add = BN_new();
+    BN_ULONG *mods = NULL;
+
+    mods = OPENSSL_zalloc(sizeof(*mods) * NUMPRIMES);
+    if (mods == NULL)
+        goto err;
+
+    BN_set_word(add, 4);
+
+    for (i = 0; i < 1000; i++) {
+        if (!bn_probable_prime_dh_coprime(r, 1024, add, NULL, mods, ctx, 1, 1))
+            goto err;
+
+        for (j = 0; j < NUMPRIMES; j++) {
+            if (BN_mod_word(r, primes[j]) == 0) {
+                fprintf(stderr,
+                        "Number generated is not coprime to %d\n",
+                        primes[j]);
+                goto err;
+            }
+        }
+    }
+
+    ret = 1;
+
+err:
+    BN_clear_free(r);
+    BN_clear_free(add);
+    OPENSSL_free(mods);
+    return ret;
+}
+*/
+
+/*
+static int test_probable_prime_dh_coprime_unbiased()
+{
+    int i, j, ret = 0;
+    BIGNUM *r = BN_new();
+    BIGNUM *add = BN_new();
+    BN_ULONG *mods = NULL;
+
+    mods = OPENSSL_zalloc(sizeof(*mods) * NUMPRIMES);
+    if (mods == NULL)
+        goto err;
+
+    BN_set_word(add, 4);
+
+    for (i = 0; i < 1000; i++) {
+        if (!bn_probable_prime_dh_coprime(r, 1024, add, NULL, mods, ctx, 0, 0))
+            goto err;
+
+        for (j = 0; j < NUMPRIMES; j++) {
+            if (BN_mod_word(r, primes[j]) == 0) {
+                fprintf(stderr,
+                        "Number generated is not coprime to %d\n",
+                        primes[j]);
+                goto err;
+            }
+        }
+    }
+
+    ret = 1;
+
+err:
+    BN_clear_free(r);
+    BN_clear_free(add);
+    OPENSSL_free(mods);
+    return ret;
+}
+*/
+
+/*
+static int test_probable_prime_dh_coprime_unbiased_safe()
+{
+    int i, j, ret = 0;
+    BIGNUM *r = BN_new();
+    BIGNUM *add = BN_new();
+    BN_ULONG *mods = NULL;
+
+    mods = OPENSSL_zalloc(sizeof(*mods) * NUMPRIMES);
+    if (mods == NULL)
+        goto err;
+
+    BN_set_word(add, 4);
+
+    for (i = 0; i < 1000; i++) {
+        if (!bn_probable_prime_dh_coprime(r, 1024, add, NULL, mods, ctx, 1, 0))
+            goto err;
+
+        for (j = 0; j < NUMPRIMES; j++) {
+            if (BN_mod_word(r, primes[j]) == 0) {
+                fprintf(stderr,
+                        "Number generated is not coprime to %d\n",
+                        primes[j]);
+                goto err;
+            }
+        }
+    }
+
+    ret = 1;
+
+err:
+    BN_clear_free(r);
+    BN_clear_free(add);
+    OPENSSL_free(mods);
+    return ret;
+}
+*/
 
 /* Delete leading and trailing spaces from a string */
 static char *strip_spaces(char *p)
@@ -2154,6 +2434,14 @@ int test_main(int argc, char *argv[])
     ADD_TEST(test_badmod);
     ADD_TEST(test_expmodzero);
     ADD_TEST(test_smallprime);
+    // ADD_TEST(test_probable_prime_dh_trial_division);
+    // ADD_TEST(test_probable_prime_dh_trial_division_safe);
+    // ADD_TEST(test_probable_prime_dh_trial_division_unbiased);
+    // ADD_TEST(test_probable_prime_dh_trial_division_unbiased_safe);
+    // ADD_TEST(test_probable_prime_dh_coprime);
+    // ADD_TEST(test_probable_prime_dh_coprime_safe);
+    // ADD_TEST(test_probable_prime_dh_coprime_unbiased);
+    // ADD_TEST(test_probable_prime_dh_coprime_unbiased_safe);
 #ifndef OPENSSL_NO_EC2M
     ADD_TEST(test_gf2m_add);
     ADD_TEST(test_gf2m_mod);

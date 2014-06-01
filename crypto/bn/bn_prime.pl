@@ -6,6 +6,8 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
+use POSIX;
+
 print <<"EOF";
 /*
  * WARNING: do not edit!
@@ -21,26 +23,99 @@ print <<"EOF";
 
 EOF
 
-
 my $num = shift || 2048;
 my @primes = ( 2 );
 my $p = 1;
-loop: while ($#primes < $num-1) {
+
+loop: while ($#primes < $num - 1) {
     $p += 2;
     my $s = int(sqrt($p));
 
     for (my $i = 0; defined($primes[$i]) && $primes[$i] <= $s; $i++) {
         next loop if ($p % $primes[$i]) == 0;
     }
+
     push(@primes, $p);
 }
 
-print "typedef unsigned short prime_t;\n";
+print "typedef unsigned short prime_t;\n\n";
 printf "# define NUMPRIMES %d\n\n", $num;
 
-printf "static const prime_t primes[%d] = {", $num;
-for (my $i = 0; $i <= $#primes; $i++) {
-    printf "\n   " if ($i % 8) == 0;
-    printf " %5d,", $primes[$i];
+print "static const prime_t primes[NUMPRIMES] = {";
+for ($i = 0; $i <= $#primes; $i++) {
+    printf "\n   " if ($i % 9) == 0;
+    printf "%6d, ", $primes[$i];
 }
-print "\n};\n";
+print "\n};\n\n";
+
+my @safe_states = (0, 1);
+my $prime_count = 6;
+
+for (my $i = 0; $i < scalar(@safe_states); $i++) {
+    my $safe = $safe_states[$i];
+
+    my $multiplier = 1;
+    if ($safe) {
+        $multiplier = 2;
+    }
+
+    for (my $j = 0; $j < $prime_count; $j++) {
+        $multiplier *= $primes[$j];
+    }
+
+    my @offsets = ();
+
+    for (my $x = 3; $x <= $multiplier + 3; $x += 2) {
+        my $prime = 1;
+
+        for (my $j = 0; $j < $prime_count; $j++) {
+            my $p = $primes[$j];
+
+            if (!($x % $p) || ($safe && !(($x - 1) / 2 % $p))) {
+                $prime = 0;
+                last;
+            }
+        }
+
+        if ($prime) {
+            push(@offsets, $x);
+        }
+    }
+
+    if ($safe) {
+        printf "#define SAFE_PRIME_OFFSET_COUNT %d\n\n", scalar(@offsets);
+
+        print "static const prime_t ",
+              "safe_prime_offsets[SAFE_PRIME_OFFSET_COUNT] = {";
+    } else {
+        printf "#define PRIME_OFFSET_COUNT %d\n\n", scalar(@offsets);
+
+        print "static const prime_t prime_offsets[PRIME_OFFSET_COUNT] = {";
+    }
+
+    my $print_buffer = "\n   ";
+    for ($j = 0; $j < scalar(@offsets); $j++) {
+        if (length($print_buffer) > 65) {
+            print $print_buffer;
+            $print_buffer = "\n   ";
+        }
+        $print_buffer .= sprintf("%6d,", $offsets[$j]);
+    }
+
+    print $print_buffer;
+    print "\n};\n\n";
+
+    my $bit_count = ceil(log($multiplier) / log(2));
+    if ($safe) {
+        printf "static const int safe_prime_multiplier = %d;\n", $multiplier;
+        printf "static const int safe_prime_multiplier_bits = %d;\n",
+               $bit_count;
+    } else {
+        printf "static const int prime_multiplier = %d;\n", $multiplier;
+        printf "static const int prime_multiplier_bits = %d;\n", $bit_count;
+    }
+
+    print "\n";
+}
+
+printf "static const int first_prime_index = %d;\n", $prime_count;

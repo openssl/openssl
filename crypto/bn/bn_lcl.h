@@ -668,10 +668,13 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
                            const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx,
                            int *noinv);
 
+int bn_probable_prime(BIGNUM *rnd, int bits, BN_ULONG *mods);
 int bn_probable_prime_dh(BIGNUM *rnd, int bits,
-                         const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx);
-int bn_probable_prime_dh_retry(BIGNUM *rnd, int bits, BN_CTX *ctx);
-int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits, BN_CTX *ctx);
+                         const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx,
+                         int safe, int baised);
+int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits, const BIGNUM *add,
+                                 const BIGNUM *rem, BN_ULONG *mods, BN_CTX *ctx,
+                                 int safe, int biased);
 
 static ossl_inline BIGNUM *bn_expand(BIGNUM *a, int bits)
 {
