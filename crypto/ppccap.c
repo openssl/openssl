@@ -12,6 +12,7 @@
 
 #define PPC_FPU64	(1<<0)
 #define PPC_ALTIVEC	(1<<1)
+#define PPC_CRYPTO207	(1<<2)
 
 unsigned int OPENSSL_ppccap_P = 0;
 
@@ -58,6 +59,7 @@ static void ill_handler (int sig) { siglongjmp(ill_jmp,sig); }
 
 void OPENSSL_ppc64_probe(void);
 void OPENSSL_altivec_probe(void);
+void OPENSSL_crypto207_probe(void);
 
 void OPENSSL_cpuid_setup(void)
 	{
@@ -128,6 +130,11 @@ void OPENSSL_cpuid_setup(void)
 		{
 		OPENSSL_altivec_probe();
 		OPENSSL_ppccap_P |= PPC_ALTIVEC;
+		if (sigsetjmp(ill_jmp,1) == 0)
+			{
+			OPENSSL_crypto207_probe();
+			OPENSSL_ppccap_P |= PPC_CRYPTO207;
+			}
 		}
 
 	sigaction (SIGILL,&ill_oact,NULL);

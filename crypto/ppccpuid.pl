@@ -42,6 +42,16 @@ $code=<<___;
 	.byte	0,12,0x14,0,0,0,0,0
 .size	.OPENSSL_altivec_probe,.-..OPENSSL_altivec_probe
 
+.globl	.OPENSSL_crypto207_probe
+.align	4
+.OPENSSL_crypto207_probe
+	lvx_u	v0,0,r1
+	vcipher	v0,v0,v0
+	blr
+	.long	0
+	.byte	0,12,0x14,0,0,0,0,0
+.size	.OPENSSL_crypto207_probe,.-.OPENSSL_crypto207_probe
+
 .globl	.OPENSSL_wipe_cpu
 .align	4
 .OPENSSL_wipe_cpu:
