@@ -3022,7 +3022,7 @@ static int www_body(char *hostname, int s, int stype, unsigned char *context)
 
 		/* else we have data */
 		if (	((www == 1) && (strncmp("GET ",buf,4) == 0)) ||
-			((www == 2) && (strncmp("GET /stats ",buf,10) == 0)))
+			((www == 2) && (strncmp("GET /stats ",buf,11) == 0)))
 			{
 			char *p;
 			X509 *peer;
