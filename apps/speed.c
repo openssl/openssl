@@ -74,9 +74,10 @@
 #ifndef OPENSSL_NO_SPEED
 
 #undef SECONDS
-#define SECONDS		3	
-#define RSA_SECONDS	10
-#define DSA_SECONDS	10
+#define SECONDS			3	
+#define PRIME_SECONDS	10	
+#define RSA_SECONDS		10
+#define DSA_SECONDS		10
 #define ECDSA_SECONDS   10
 #define ECDH_SECONDS    10
 
@@ -191,6 +192,8 @@
 #endif
 #include <openssl/modes.h>
 
+#include "../crypto/bn/bn_lcl.h"
+
 #ifndef HAVE_FORK
 # if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MACINTOSH_CLASSIC) || defined(OPENSSL_SYS_OS2) || defined(OPENSSL_SYS_NETWARE)
 #  define HAVE_FORK 0
@@ -214,15 +217,18 @@ static int usertime=1;
 
 static double Time_F(int s);
 static void print_message(const char *s,long num,int length);
+static void prime_print_message(const char *s, long num);
 static void pkey_print_message(const char *str, const char *str2,
 	long num, int bits, int sec);
 static void print_result(int alg,int run_no,int count,double time_used);
+static void prime_print_result(int alg, int count, double time_used);
 #ifndef NO_FORK
 static int do_multi(int multi);
 #endif
 
 #define ALGOR_NUM	30
 #define SIZE_NUM	5
+#define PRIME_NUM	3
 #define RSA_NUM		4
 #define DSA_NUM		3
 
@@ -239,6 +245,8 @@ static const char *names[ALGOR_NUM]={
   "aes-128 ige","aes-192 ige","aes-256 ige","ghash" };
 static double results[ALGOR_NUM][SIZE_NUM];
 static int lengths[SIZE_NUM]={16,64,256,1024,8*1024};
+static const char *prime_names[PRIME_NUM]={
+  "prime trial division", "prime trial division retry", "prime coprime" };
 #ifndef OPENSSL_NO_RSA
 static double rsa_results[RSA_NUM][2];
 #endif
@@ -492,6 +500,12 @@ int MAIN(int argc, char **argv)
 #define D_GHASH		29
 	double d=0.0;
 	long c[ALGOR_NUM][SIZE_NUM];
+
+#define D_PRIME_TRIAL_DIVISION			0
+#define D_PRIME_TRIAL_DIVISION_RETRY	1
+#define D_PRIME_COPRIME					2
+	long prime_c[PRIME_NUM];
+
 #define	R_DSA_512	0
 #define	R_DSA_1024	1
 #define	R_DSA_2048	2
@@ -605,6 +619,7 @@ int MAIN(int argc, char **argv)
 	long ecdh_c[EC_NUM][2];
 #endif
 
+	int prime_doit[PRIME_NUM];
 	int rsa_doit[RSA_NUM];
 	int dsa_doit[DSA_NUM];
 #ifndef OPENSSL_NO_ECDSA
@@ -974,7 +989,7 @@ int MAIN(int argc, char **argv)
 		else
 #endif
 #ifndef OPENSSL_NO_ECDH
-		     if (strcmp(*argv,"ecdhp160") == 0) ecdh_doit[R_EC_P160]=2;
+			 if (strcmp(*argv,"ecdhp160") == 0) ecdh_doit[R_EC_P160]=2;
 		else if (strcmp(*argv,"ecdhp192") == 0) ecdh_doit[R_EC_P192]=2;
 		else if (strcmp(*argv,"ecdhp224") == 0) ecdh_doit[R_EC_P224]=2;
 		else if (strcmp(*argv,"ecdhp256") == 0) ecdh_doit[R_EC_P256]=2;
@@ -997,6 +1012,13 @@ int MAIN(int argc, char **argv)
 			}
 		else
 #endif
+			 if (strcmp(*argv,"prime-trial-division") == 0)
+			prime_doit[D_PRIME_TRIAL_DIVISION] = 1;
+		else if (strcmp(*argv,"prime-trial-division-retry") == 0)
+			prime_doit[D_PRIME_TRIAL_DIVISION_RETRY] = 1;
+		else if (strcmp(*argv,"prime-coprime") == 0)
+			prime_doit[D_PRIME_COPRIME] = 1;
+		else
 			{
 			BIO_printf(bio_err,"Error: bad option or value\n");
 			BIO_printf(bio_err,"\n");
@@ -1123,6 +1145,7 @@ int MAIN(int argc, char **argv)
     !defined(OPENSSL_NO_AES) || !defined(OPENSSL_NO_CAMELLIA)
 			BIO_printf(bio_err,"\n");
 #endif
+			BIO_printf(bio_err,"prime-trial-division  prime-coprime\n");
 
 			BIO_printf(bio_err,"\n");
 			BIO_printf(bio_err,"Available options:\n");
@@ -1293,23 +1316,24 @@ int MAIN(int argc, char **argv)
 
 	for (i=1; i<SIZE_NUM; i++)
 		{
-		c[D_MD2][i]=c[D_MD2][0]*4*lengths[0]/lengths[i];
-		c[D_MDC2][i]=c[D_MDC2][0]*4*lengths[0]/lengths[i];
-		c[D_MD4][i]=c[D_MD4][0]*4*lengths[0]/lengths[i];
-		c[D_MD5][i]=c[D_MD5][0]*4*lengths[0]/lengths[i];
-		c[D_HMAC][i]=c[D_HMAC][0]*4*lengths[0]/lengths[i];
-		c[D_SHA1][i]=c[D_SHA1][0]*4*lengths[0]/lengths[i];
-		c[D_RMD160][i]=c[D_RMD160][0]*4*lengths[0]/lengths[i];
-		c[D_SHA256][i]=c[D_SHA256][0]*4*lengths[0]/lengths[i];
-		c[D_SHA512][i]=c[D_SHA512][0]*4*lengths[0]/lengths[i];
-		c[D_WHIRLPOOL][i]=c[D_WHIRLPOOL][0]*4*lengths[0]/lengths[i];
-		}
-	for (i=1; i<SIZE_NUM; i++)
-		{
 		long l0,l1;
 
-		l0=(long)lengths[i-1];
+		l0=(long)lengths[0];
 		l1=(long)lengths[i];
+		
+		c[D_MD2][i]=c[D_MD2][0]*4*l0/l1;
+		c[D_MDC2][i]=c[D_MDC2][0]*4*l0/l1;
+		c[D_MD4][i]=c[D_MD4][0]*4*l0/l1;
+		c[D_MD5][i]=c[D_MD5][0]*4*l0/l1;
+		c[D_HMAC][i]=c[D_HMAC][0]*4*l0/l1;
+		c[D_SHA1][i]=c[D_SHA1][0]*4*l0/l1;
+		c[D_RMD160][i]=c[D_RMD160][0]*4*l0/l1;
+		c[D_SHA256][i]=c[D_SHA256][0]*4*l0/l1;
+		c[D_SHA512][i]=c[D_SHA512][0]*4*l0/l1;
+		c[D_WHIRLPOOL][i]=c[D_WHIRLPOOL][0]*4*l0/l1;
+
+		l0=(long)lengths[i-1];
+		
 		c[D_RC4][i]=c[D_RC4][i-1]*l0/l1;
 		c[D_CBC_DES][i]=c[D_CBC_DES][i-1]*l0/l1;
 		c[D_EDE3_DES][i]=c[D_EDE3_DES][i-1]*l0/l1;
@@ -1329,6 +1353,11 @@ int MAIN(int argc, char **argv)
 		c[D_IGE_192_AES][i]=c[D_IGE_192_AES][i-1]*l0/l1;
 		c[D_IGE_256_AES][i]=c[D_IGE_256_AES][i-1]*l0/l1;
 		}
+		
+	prime_c[D_PRIME_TRIAL_DIVISION]=count;
+	prime_c[D_PRIME_TRIAL_DIVISION_RETRY]=count;
+	prime_c[D_PRIME_COPRIME]=count;
+	
 #ifndef OPENSSL_NO_RSA
 	rsa_c[R_RSA_512][0]=count/2000;
 	rsa_c[R_RSA_512][1]=count/400;
@@ -1995,6 +2024,66 @@ int MAIN(int argc, char **argv)
 			print_result(D_EVP,j,count,d);
 			}
 		}
+	
+	if (prime_doit[D_PRIME_TRIAL_DIVISION])
+		{
+		BIGNUM *rnd = BN_new();
+		BIGNUM *add = BN_new();
+		BN_CTX *ctx = BN_CTX_new();
+		
+		BN_set_word(add, 2);
+		prime_print_message(prime_names[D_PRIME_TRIAL_DIVISION],
+							prime_c[D_PRIME_TRIAL_DIVISION]);
+			
+		Time_F(START);
+		for (count=0, run=1; COND(prime_c[D_PRIME_TRIAL_DIVISION]); count++)
+			if (!bn_probable_prime_dh(rnd, 1024, add, NULL, ctx)) count--;
+		
+		d=Time_F(STOP);
+		prime_print_result(D_PRIME_TRIAL_DIVISION, count, d);
+		
+		BN_CTX_free(ctx);
+		BN_free(add);
+		BN_free(rnd);
+		}
+	
+	if (prime_doit[D_PRIME_TRIAL_DIVISION_RETRY])
+		{
+		BIGNUM *rnd = BN_new();
+		BN_CTX *ctx = BN_CTX_new();
+		
+		prime_print_message(prime_names[D_PRIME_TRIAL_DIVISION_RETRY],
+							prime_c[D_PRIME_TRIAL_DIVISION_RETRY]);
+			
+		Time_F(START);
+		for (count=0, run=1; COND(prime_c[D_PRIME_TRIAL_DIVISION_RETRY]); count++)
+			if (!bn_probable_prime_dh_retry(rnd, 1024, ctx)) count--;
+		
+		d=Time_F(STOP);
+		prime_print_result(D_PRIME_TRIAL_DIVISION_RETRY, count, d);
+		
+		BN_CTX_free(ctx);
+		BN_free(rnd);
+		}
+	
+	if (prime_doit[D_PRIME_COPRIME])
+		{
+		BIGNUM *rnd = BN_new();
+		BN_CTX *ctx = BN_CTX_new();
+		
+		prime_print_message(prime_names[D_PRIME_COPRIME],
+							prime_c[D_PRIME_COPRIME]);
+			
+		Time_F(START);
+		for (count=0, run=1; COND(prime_c[D_PRIME_COPRIME]); count++)
+			if (!bn_probable_prime_dh_coprime(rnd, 1024, ctx)) count--;
+		
+		d=Time_F(STOP);
+		prime_print_result(D_PRIME_COPRIME, count, d);
+		
+		BN_CTX_free(ctx);
+		BN_free(rnd);
+		}
 
 	RAND_pseudo_bytes(buf,36);
 #ifndef OPENSSL_NO_RSA
@@ -2586,6 +2675,23 @@ static void print_message(const char *s, long num, int length)
 #endif
 	}
 
+static void prime_print_message(const char *s, long num)
+	{
+#ifdef SIGALRM
+	BIO_printf(bio_err,mr ? "+DT:%s:%d\n"
+		   : "Doing %s for %ds: ", s, PRIME_SECONDS);
+	(void)BIO_flush(bio_err);
+	alarm(PRIME_SECONDS);
+#else
+	BIO_printf(bio_err,mr ? "+DN:%s:%ld\n"
+		   : "Doing %s %ld times: ", s, num);
+	(void)BIO_flush(bio_err);
+#endif
+#ifdef LINT
+	num=num;
+#endif
+	}
+
 static void pkey_print_message(const char *str, const char *str2, long num,
 	int bits, int tm)
 	{
@@ -2609,6 +2715,14 @@ static void print_result(int alg,int run_no,int count,double time_used)
 	BIO_printf(bio_err,mr ? "+R:%d:%s:%f\n"
 		   : "%d %s's in %.2fs\n",count,names[alg],time_used);
 	results[alg][run_no]=((double)count)/time_used*lengths[run_no];
+	}
+
+static void prime_print_result(int alg, int count, double time_used)
+	{
+	BIO_printf(bio_err,
+			   mr ? "+R:%d:%s:%f:%f\n" : "%d %s's in %.2fs (%.2f microseconds / run)\n",
+			   count, prime_names[alg], time_used,
+			   time_used / ((double)count) * 1000000);
 	}
 
 #ifndef NO_FORK
