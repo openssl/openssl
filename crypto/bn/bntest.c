@@ -124,6 +124,7 @@ int test_kron(BIO *bp,BN_CTX *ctx);
 int test_sqrt(BIO *bp,BN_CTX *ctx);
 int test_small_prime(BIO *bp,BN_CTX *ctx);
 int test_probable_prime_coprime(BIO *bp,BN_CTX *ctx);
+int test_probable_prime_coprime_safe(BIO *bp,BN_CTX *ctx);
 int rand_neg(void);
 static int results=0;
 
@@ -275,6 +276,10 @@ int main(int argc, char *argv[])
 
 	message(out,"Probable prime generation with coprimes");
 	if (!test_probable_prime_coprime(out,ctx)) goto err;
+	(void)BIO_flush(out);
+
+	message(out,"Probable prime generation with coprimes (safe)");
+	if (!test_probable_prime_coprime_safe(out,ctx)) goto err;
 	(void)BIO_flush(out);
 
 #ifndef OPENSSL_NO_EC2M
@@ -1947,6 +1952,38 @@ int test_probable_prime_coprime(BIO *bp, BN_CTX *ctx)
 			if (BN_mod_word(&r, primes[j]) == 0)
 				{
 				BIO_printf(bp, "Number generated is not coprime to %ld:\n", primes[j]);
+				BN_print_fp(stdout, &r);
+				BIO_printf(bp, "\n");
+				goto err;
+				}
+			}
+		}
+
+	ret = 1;
+
+err:
+	BN_clear(&r);
+	return ret;
+	}
+
+int test_probable_prime_coprime_safe(BIO *bp, BN_CTX *ctx)
+	{
+	int i, j, ret = 0;
+	BIGNUM r;
+	BN_ULONG primes[5] = { 2, 3, 5, 7, 11 };
+
+	BN_init(&r);
+	
+	for (i = 0; i < 1000; i++)
+		{
+		if (!bn_probable_prime_dh_coprime_safe(&r, 1024, ctx)) goto err;
+		
+		/* skip 2 */
+		for (j = 1; j < 5; j++)
+			{
+			if (BN_mod_word(&r, primes[j]) <= 1)
+				{
+				BIO_printf(bp, "Number generated is not a safe coprime of %ld:\n", primes[j]);
 				BN_print_fp(stdout, &r);
 				BIO_printf(bp, "\n");
 				goto err;

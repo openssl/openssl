@@ -175,7 +175,26 @@ static const int prime_offset_count = 480;
 static const int prime_multiplier = 2310;
 static const int prime_multiplier_bits = 11; /* 2^|prime_multiplier_bits|
 						<= |prime_multiplier| */
+
+static const int safe_prime_offsets[135] = {
+	47, 59, 83, 107, 167, 179, 227, 263, 299, 347, 359, 383, 443, 467, 479,
+	503, 527, 563, 587, 599, 647, 719, 767, 779, 839, 863, 887, 899, 923,
+	983, 1007, 1019, 1103, 1139, 1187, 1223, 1259, 1283, 1307, 1319, 1367,
+	1403, 1427, 1439, 1487, 1523, 1559, 1619, 1643, 1679, 1703, 1763, 1787,
+	1823, 1847, 1907, 1943, 1979, 2027, 2039, 2063, 2099, 2147, 2159, 2183,
+	2207, 2243, 2279, 2327, 2363, 2447, 2459, 2483, 2543, 2567, 2579, 2603,
+	2627, 2687, 2699, 2747, 2819, 2867, 2879, 2903, 2939, 2963, 2987, 2999,
+	3023, 3083, 3107, 3119, 3167, 3203, 3239, 3287, 3299, 3359, 3383, 3407,
+	3419, 3467, 3503, 3527, 3539, 3623, 3659, 3743, 3779, 3803, 3827, 3863,
+	3887, 3923, 3947, 3959, 4007, 4043, 4079, 4127, 4139, 4163, 4199, 4223,
+	4259, 4283, 4307, 4343, 4427, 4463, 4547, 4559, 4583, 4619 };
+static const int safe_prime_offset_count = 135;
+static const int safe_prime_multiplier = 4620;
+static const int safe_prime_multiplier_bits = 12; /* 2^|prime_multiplier_bits|
+						<= |prime_multiplier| */
+
 static const int first_prime_index = 5;
+
 
 int BN_GENCB_call(BN_GENCB *cb, int a, int b)
 	{
@@ -512,6 +531,109 @@ loop:
 	
 	BN_mul_word(rnd, prime_multiplier);
 	BN_add_word(rnd, prime_offsets[BN_get_word(offset_index)]);
+
+	/* we now have a random number 'rand' to test. */
+
+	/* skip coprimes */
+	for (i = first_prime_index; i < NUMPRIMES; i++)
+		{
+		/* check that rnd is a prime */
+		if (BN_mod_word(rnd, (BN_ULONG)primes[i]) <= 1)
+			{
+			goto loop;
+			}
+		}
+	ret = 1;
+
+err:
+	BN_CTX_end(ctx);
+	bn_check_top(rnd);
+	return ret;
+	}
+
+int bn_probable_prime_dh_coprime_safe(BIGNUM *rnd, int bits, BN_CTX *ctx)
+	{
+	int i;
+	int j;
+	int old_offset;
+	int offset;
+	BIGNUM *offset_index;
+	BIGNUM *offset_count;
+	int ret = 0;
+	int base_offset = 0;
+	
+	OPENSSL_assert(bits > safe_prime_multiplier_bits);
+	
+	BN_CTX_start(ctx);
+	if ((offset_index = BN_CTX_get(ctx)) == NULL) goto err;
+	if ((offset_count = BN_CTX_get(ctx)) == NULL) goto err;
+	
+	BN_add_word(offset_count, safe_prime_offset_count);
+
+again:
+	if (!BN_rand(rnd, bits - safe_prime_multiplier_bits, 0, 1)) goto err;
+	if (BN_is_bit_set(rnd, bits)) goto again;
+	if (!BN_rand_range(offset_index, offset_count)) goto err;
+
+	j = BN_get_word(offset_index);
+	offset = safe_prime_offsets[j];
+	
+	BN_mul_word(rnd, safe_prime_multiplier);
+	BN_add_word(rnd, offset);
+
+	/* we now have a random number 'rand' to test. */
+
+loop:
+	/* skip coprimes */
+	for (i = first_prime_index; i < NUMPRIMES; i++)
+		{
+		/* check that rnd is a prime */
+		if (BN_mod_word(rnd, (BN_ULONG)primes[i]) <= 1)
+			{
+			j++;
+			if (j >= safe_prime_offset_count)
+				{
+				j = 0;
+				base_offset = base_offset + safe_prime_multiplier;
+				}
+			old_offset = offset;
+			offset = base_offset + safe_prime_offsets[j];
+			if (!BN_add_word(rnd, offset - old_offset))
+				goto err;
+			goto loop;
+			}
+		}
+	ret = 1;
+
+err:
+	BN_CTX_end(ctx);
+	bn_check_top(rnd);
+	return ret;
+	}
+
+int bn_probable_prime_dh_coprime_unbiased_safe(BIGNUM *rnd, int bits,
+	BN_CTX *ctx)
+	{
+	int i;
+	BIGNUM *offset_index;
+	BIGNUM *offset_count;
+	int ret = 0;
+	
+	OPENSSL_assert(bits > safe_prime_multiplier_bits);
+	
+	BN_CTX_start(ctx);
+	if ((offset_index = BN_CTX_get(ctx)) == NULL) goto err;
+	if ((offset_count = BN_CTX_get(ctx)) == NULL) goto err;
+	
+	BN_add_word(offset_count, safe_prime_offset_count);
+
+loop:
+	if (!BN_rand(rnd, bits - safe_prime_multiplier_bits, 0, 1)) goto err;
+	if (BN_is_bit_set(rnd, bits)) goto loop;
+	if (!BN_rand_range(offset_index, offset_count)) goto err;
+	
+	BN_mul_word(rnd, safe_prime_multiplier);
+	BN_add_word(rnd, safe_prime_offsets[BN_get_word(offset_index)]);
 
 	/* we now have a random number 'rand' to test. */
 

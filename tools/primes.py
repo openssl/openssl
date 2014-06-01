@@ -1,21 +1,21 @@
 primes = [2, 3, 5, 7, 11]
-safe = False  # Not sure if the period's right on safe primes.
 
-muliplier = 1 if not safe else 2
-for p in primes:
-    muliplier *= p
-
-offsets = []
-for x in range(3, muliplier + 3, 2):
-    prime = True
+for safe in (False, True):
+    muliplier = 1 if not safe else 2
     for p in primes:
-        if not x % p or (safe and not ((x - 1) / 2) % p):
-            prime = False
-            break
+        muliplier *= p
 
-    if prime:
-        offsets.append(x)
+    offsets = []
+    for x in range(3, muliplier + 3, 2):
+        prime = True
+        for p in primes:
+            if not x % p or (safe and not ((x - 1) / 2) % p):
+                prime = False
+                break
 
-print(offsets)
-print(len(offsets))
-print(muliplier)
+        if prime:
+            offsets.append(x)
+
+    print(offsets)
+    print(len(offsets))
+    print(muliplier)
