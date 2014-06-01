@@ -94,6 +94,9 @@ sha512-%.S:	asm/sha512-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
 sha1-armv4-large.o:	sha1-armv4-large.S
 sha256-armv4.o:		sha256-armv4.S
 sha512-armv4.o:		sha512-armv4.S
+sha1-armv8.o:		sha1-armv8.S
+sha256-armv8.o:		sha256-armv8.S
+sha512-armv8.o:		sha512-armv8.S
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
