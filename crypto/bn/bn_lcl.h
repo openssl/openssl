@@ -538,6 +538,7 @@ int bn_probable_prime_dh(BIGNUM *rnd, int bits,
 	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx);
 int bn_probable_prime_dh_unbiased(BIGNUM *rnd, int bits, BN_CTX *ctx);
 int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits, BN_CTX *ctx);
+int bn_probable_prime_dh_coprime_unbiased(BIGNUM *rnd, int bits, BN_CTX *ctx);
 
 #ifdef  __cplusplus
 }

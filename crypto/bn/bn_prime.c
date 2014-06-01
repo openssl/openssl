@@ -433,10 +433,70 @@ err:
 int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits, BN_CTX *ctx)
 	{
 	int i;
+	int j;
+	int old_offset;
+	int offset;
 	BIGNUM *offset_index;
 	BIGNUM *offset_count;
 	int ret = 0;
+	int base_offset = 0;
+	
+	OPENSSL_assert(bits > prime_multiplier_bits);
+	
+	BN_CTX_start(ctx);
+	if ((offset_index = BN_CTX_get(ctx)) == NULL) goto err;
+	if ((offset_count = BN_CTX_get(ctx)) == NULL) goto err;
+	
+	BN_add_word(offset_count, prime_offset_count);
 
+again:
+	if (!BN_rand(rnd, bits - prime_multiplier_bits, 0, 1)) goto err;
+	if (BN_is_bit_set(rnd, bits)) goto again;
+	if (!BN_rand_range(offset_index, offset_count)) goto err;
+
+	j = BN_get_word(offset_index);
+	offset = prime_offsets[j];
+	
+	BN_mul_word(rnd, prime_multiplier);
+	BN_add_word(rnd, offset);
+
+	/* we now have a random number 'rand' to test. */
+
+loop:
+	/* skip coprimes */
+	for (i = first_prime_index; i < NUMPRIMES; i++)
+		{
+		/* check that rnd is a prime */
+		if (BN_mod_word(rnd, (BN_ULONG)primes[i]) <= 1)
+			{
+			j++;
+			if (j >= prime_offset_count)
+				{
+				j = 0;
+				base_offset = base_offset + prime_multiplier;
+				}
+			old_offset = offset;
+			offset = base_offset + prime_offsets[j];
+			if (!BN_add_word(rnd, offset - old_offset))
+				goto err;
+			goto loop;
+			}
+		}
+	ret = 1;
+
+err:
+	BN_CTX_end(ctx);
+	bn_check_top(rnd);
+	return ret;
+	}
+
+int bn_probable_prime_dh_coprime_unbiased(BIGNUM *rnd, int bits, BN_CTX *ctx)
+	{
+	int i;
+	BIGNUM *offset_index;
+	BIGNUM *offset_count;
+	int ret = 0;
+	
 	OPENSSL_assert(bits > prime_multiplier_bits);
 	
 	BN_CTX_start(ctx);
@@ -449,7 +509,7 @@ loop:
 	if (!BN_rand(rnd, bits - prime_multiplier_bits, 0, 1)) goto err;
 	if (BN_is_bit_set(rnd, bits)) goto loop;
 	if (!BN_rand_range(offset_index, offset_count)) goto err;
-
+	
 	BN_mul_word(rnd, prime_multiplier);
 	BN_add_word(rnd, prime_offsets[BN_get_word(offset_index)]);
 
