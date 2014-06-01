@@ -1883,7 +1883,7 @@ $multilib     =
 
 *** debug-ben-debug-64-clang
 $cc           = clang
-$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -Wno-error=overlength-strings -Wno-error=extended-offsetof -Qunused-arguments -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DDEBUG_UNUSED -g3 -O3 -pipe
+$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -fsanitize=undefined -Wno-error=overlength-strings -Wno-error=extended-offsetof -Wno-error=language-extension-token -Wstrict-overflow -Qunused-arguments -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DDEBUG_UNUSED -g3 -O3 -pipe
 $unistd       = 
 $thread_cflag = -pthread -D_THREAD_SAFE -D_REENTRANT
 $sys_id       = 
@@ -3959,6 +3959,39 @@ $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 $arflags      = 
 $multilib     = 64
+
+*** linux-aarch64
+$cc           = gcc
+$cflags       = -DTERMIO -O3 -Wall
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = 
+$lflags       = -ldl
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR
+$cpuid_obj    = armcap.o arm64cpuid.o mem_clr.o
+$bn_obj       = 
+$des_obj      = 
+$aes_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$wp_obj       = 
+$cmll_obj     = 
+$modes_obj    = 
+$engines_obj  = 
+$perlasm_scheme = linux64
+$dso_scheme   = dlfcn
+$shared_target= linux-shared
+$shared_cflag = -fPIC
+$shared_ldflag = 
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+$arflags      = 
+$multilib     = 
 
 *** linux-alpha+bwx-ccc
 $cc           = ccc
