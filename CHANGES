@@ -4,6 +4,10 @@
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
 
+  *) Experimental support for a new, fast, unbiased prime candidate generator,
+     bn_probable_prime_dh_coprime(). Not currently used by any prime generator.
+     [Felix Laurie von Massenbach <felix@erbridge.co.uk>]
+
   *) New output format NSS in the sess_id command line tool. This allows
      exporting the session id and the master key in NSS keylog format.
      [Martin Kaiser <martin@kaiser.cx>]
