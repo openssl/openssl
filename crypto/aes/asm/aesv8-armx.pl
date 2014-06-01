@@ -23,9 +23,16 @@
 # Cortex-A5x	n/a		n/a
 
 $flavour = shift;
-$prefix="AES";
+open STDOUT,">".shift;
 
-$code=".text\n";
+$prefix="aes_v8";
+
+$code=<<___;
+#include "arm_arch.h"
+
+#if __ARM_ARCH__>=7
+.text
+___
 $code.=".arch	armv8-a+crypto\n"	if ($flavour =~ /64/);
 $code.=".fpu	neon\n.code	32\n"	if ($flavour !~ /64/);
 
@@ -669,7 +676,7 @@ $code.=<<___;
 	subs		$len,$len,#2
 	b.lo		.Lctr32_tail
 
-#ifndef BIG_ENDIAN
+#ifndef __ARMEB__
 	rev		$ctr, $ctr
 #endif
 	vorr		$dat1,$dat0,$dat0
@@ -862,6 +869,9 @@ $code.=<<___;
 .size	${prefix}_ctr32_encrypt_blocks,.-${prefix}_ctr32_encrypt_blocks
 ___
 }}}
+$code.=<<___;
+#endif
+___
 ########################################
 if ($flavour =~ /64/) {			######## 64-bit code
     my %opcode = (
