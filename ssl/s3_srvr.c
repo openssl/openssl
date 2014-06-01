@@ -2146,6 +2146,11 @@ int ssl3_send_certificate_request(SSL *s)
 #ifdef NETSCAPE_HANG_BUG
 		if (!SSL_IS_DTLS(s))
 			{
+			if (!BUF_MEM_grow_clean(buf, s->init_num + 4))
+				{
+				SSLerr(SSL_F_SSL3_SEND_CERTIFICATE_REQUEST,ERR_R_BUF_LIB);
+				goto err;
+				}
 			p=(unsigned char *)s->init_buf->data + s->init_num;
 			/* do the header */
 			*(p++)=SSL3_MT_SERVER_DONE;
