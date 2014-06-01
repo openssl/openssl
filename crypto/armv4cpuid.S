@@ -14,7 +14,7 @@ _armv7_neon_probe:
 .global	_armv7_tick
 .type	_armv7_tick,%function
 _armv7_tick:
-	mrc	p15,0,r0,c9,c13,0
+	mrrc	p15,1,r0,r1,c14	@ CNTVCT
 	.word	0xe12fff1e	@ bx	lr
 .size	_armv7_tick,.-_armv7_tick
 
