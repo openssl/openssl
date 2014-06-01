@@ -486,7 +486,7 @@ loop:
 	for (i = first_prime_index; i < NUMPRIMES; i++)
 		{
 		/* check that rnd is a prime */
-		if (BN_mod_word(rnd, (BN_ULONG)primes[i]) <= 1)
+		if (BN_mod_word(rnd, (BN_ULONG)primes[i]) == 0)
 			{
 			j++;
 			if (j >= prime_offset_count)
@@ -538,7 +538,7 @@ loop:
 	for (i = first_prime_index; i < NUMPRIMES; i++)
 		{
 		/* check that rnd is a prime */
-		if (BN_mod_word(rnd, (BN_ULONG)primes[i]) <= 1)
+		if (BN_mod_word(rnd, (BN_ULONG)primes[i]) == 0)
 			{
 			goto loop;
 			}
