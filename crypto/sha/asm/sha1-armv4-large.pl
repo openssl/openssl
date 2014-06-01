@@ -178,9 +178,9 @@ sha1_block_data_order:
 	sub	r3,pc,#8		@ sha1_block_data_order
 	ldr	r12,.LOPENSSL_armcap
 	ldr	r12,[r3,r12]		@ OPENSSL_armcap_P
-	tst	r12,#8
+	tst	r12,#ARMV8_SHA1
 	bne	.LARMv8
-	tst	r12,#1
+	tst	r12,#ARMV7_NEON
 	bne	.LNEON
 #endif
 	stmdb	sp!,{r4-r12,lr}
