@@ -87,6 +87,8 @@
 #include <openssl/x509.h>
 #include <openssl/err.h>
 
+#include "../crypto/bn/bn_lcl.h"
+
 const int num0 = 100; /* number of tests */
 const int num1 = 50;  /* additional tests for some functions */
 const int num2 = 5;   /* number of tests for slow functions */
@@ -121,6 +123,7 @@ int test_gf2m_mod_solve_quad(BIO *bp,BN_CTX *ctx);
 int test_kron(BIO *bp,BN_CTX *ctx);
 int test_sqrt(BIO *bp,BN_CTX *ctx);
 int test_small_prime(BIO *bp,BN_CTX *ctx);
+int test_probable_prime_coprime(BIO *bp,BN_CTX *ctx);
 int rand_neg(void);
 static int results=0;
 
@@ -268,6 +271,10 @@ int main(int argc, char *argv[])
 
 	message(out,"Small prime generation");
 	if (!test_small_prime(out,ctx)) goto err;
+	(void)BIO_flush(out);
+
+	message(out,"Probable prime generation with coprimes");
+	if (!test_probable_prime_coprime(out,ctx)) goto err;
 	(void)BIO_flush(out);
 
 #ifndef OPENSSL_NO_EC2M
@@ -1914,6 +1921,37 @@ int test_small_prime(BIO *bp,BN_CTX *ctx)
 		{
 		BIO_printf(bp, "Expected %d bit prime, got %d bit number\n", bits, BN_num_bits(&r));
 		goto err;
+		}
+
+	ret = 1;
+
+err:
+	BN_clear(&r);
+	return ret;
+	}
+
+int test_probable_prime_coprime(BIO *bp, BN_CTX *ctx)
+	{
+	int i, j, ret = 0;
+	BIGNUM r;
+	BN_ULONG primes[5] = { 2, 3, 5, 7, 11 };
+
+	BN_init(&r);
+	
+	for (i = 0; i < 1000; i++)
+		{
+		if (!bn_probable_prime_dh_coprime(&r, 1024, ctx)) goto err;
+		
+		for (j = 0; j < 5; j++)
+			{
+			if (BN_mod_word(&r, primes[j]) == 0)
+				{
+				BIO_printf(bp, "Number generated is not coprime to %ld:\n", primes[j]);
+				BN_print_fp(stdout, &r);
+				BIO_printf(bp, "\n");
+				goto err;
+				}
+			}
 		}
 
 	ret = 1;
