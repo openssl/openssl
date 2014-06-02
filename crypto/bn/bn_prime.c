@@ -682,6 +682,12 @@ loop:
 int bn_probable_prime_dh(BIGNUM *rnd, int bits,
 	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx)
 	{
+	return bn_probable_prime_dh_safe(rnd, bits, add, rem, ctx);
+	}
+
+int bn_probable_prime_dh_safe(BIGNUM *rnd, int bits,
+	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx)
+	{
 	int i,ret=0;
 	BIGNUM *t1;
 
@@ -716,59 +722,5 @@ loop:
 err:
 	BN_CTX_end(ctx);
 	bn_check_top(rnd);
-	return(ret);
-	}
-
-int bn_probable_prime_dh_safe(BIGNUM *p, int bits, const BIGNUM *padd,
-	const BIGNUM *rem, BN_CTX *ctx)
-	{
-	int i,ret=0;
-	BIGNUM *t1,*qadd,*q;
-
-	bits--;
-	BN_CTX_start(ctx);
-	t1 = BN_CTX_get(ctx);
-	q = BN_CTX_get(ctx);
-	qadd = BN_CTX_get(ctx);
-	if (qadd == NULL) goto err;
-
-	if (!BN_rshift1(qadd,padd)) goto err;
-		
-	if (!BN_rand(q,bits,0,1)) goto err;
-
-	/* we need ((rnd-rem) % add) == 0 */
-	if (!BN_mod(t1,q,qadd,ctx)) goto err;
-	if (!BN_sub(q,q,t1)) goto err;
-	if (rem == NULL)
-		{ if (!BN_add_word(q,1)) goto err; }
-	else
-		{
-		if (!BN_rshift1(t1,rem)) goto err;
-		if (!BN_add(q,q,t1)) goto err;
-		}
-
-	/* we now have a random number 'rand' to test. */
-	if (!BN_lshift1(p,q)) goto err;
-	if (!BN_add_word(p,1)) goto err;
-
-loop:
-	for (i=1; i<NUMPRIMES; i++)
-		{
-		/* check that p and q are prime */
-		/* check that for p and q
-		 * gcd(p-1,primes) == 1 (except for 2) */
-		if ((BN_mod_word(p,(BN_ULONG)primes[i]) == 0) ||
-			(BN_mod_word(q,(BN_ULONG)primes[i]) == 0))
-			{
-			if (!BN_add(p,p,padd)) goto err;
-			if (!BN_add(q,q,qadd)) goto err;
-			goto loop;
-			}
-		}
-	ret=1;
-
-err:
-	BN_CTX_end(ctx);
-	bn_check_top(p);
 	return(ret);
 	}
