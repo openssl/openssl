@@ -128,7 +128,6 @@
 
 static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
 	const BIGNUM *a1_odd, int k, BN_CTX *ctx, BN_MONT_CTX *mont);
-static int probable_prime(BIGNUM *rnd, int bits);
 static int probable_prime_dh_safe(BIGNUM *rnd, int bits,
 	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx);
 
@@ -185,7 +184,7 @@ loop:
 	/* make a random number and set the top and bottom bits */
 	if (add == NULL)
 		{
-		if (!probable_prime(ret,bits)) goto err;
+		if (!bn_probable_prime(ret,bits)) goto err;
 		}
 	else
 		{
@@ -615,7 +614,7 @@ static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
 	return 1;
 	}
 
-static int probable_prime(BIGNUM *rnd, int bits)
+int bn_probable_prime(BIGNUM *rnd, int bits)
 	{
 	int i;
 	prime_t mods[NUMPRIMES];
