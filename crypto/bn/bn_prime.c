@@ -404,7 +404,7 @@ int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits, BN_CTX *ctx)
 	BN_add_word(offset_count, prime_offset_count);
 
 again:
-	if (!BN_rand(rnd, bits - prime_multiplier_bits, 0, 1)) goto err;
+	if (!BN_rand(rnd, bits - prime_multiplier_bits, 0, -1)) goto err;
 	if (BN_is_bit_set(rnd, bits)) goto again;
 	if (!BN_rand_range(offset_index, offset_count)) goto err;
 
@@ -460,7 +460,7 @@ int bn_probable_prime_dh_coprime_unbiased(BIGNUM *rnd, int bits, BN_CTX *ctx)
 	BN_add_word(offset_count, prime_offset_count);
 
 loop:
-	if (!BN_rand(rnd, bits - prime_multiplier_bits, 0, 1)) goto err;
+	if (!BN_rand(rnd, bits - prime_multiplier_bits, 0, -1)) goto err;
 	if (BN_is_bit_set(rnd, bits)) goto loop;
 	if (!BN_rand_range(offset_index, offset_count)) goto err;
 	
@@ -506,7 +506,7 @@ int bn_probable_prime_dh_coprime_safe(BIGNUM *rnd, int bits, BN_CTX *ctx)
 	BN_add_word(offset_count, safe_prime_offset_count);
 
 again:
-	if (!BN_rand(rnd, bits - safe_prime_multiplier_bits, 0, 1)) goto err;
+	if (!BN_rand(rnd, bits - safe_prime_multiplier_bits, 0, -1)) goto err;
 	if (BN_is_bit_set(rnd, bits)) goto again;
 	if (!BN_rand_range(offset_index, offset_count)) goto err;
 
@@ -563,7 +563,7 @@ int bn_probable_prime_dh_coprime_unbiased_safe(BIGNUM *rnd, int bits,
 	BN_add_word(offset_count, safe_prime_offset_count);
 
 loop:
-	if (!BN_rand(rnd, bits - safe_prime_multiplier_bits, 0, 1)) goto err;
+	if (!BN_rand(rnd, bits - safe_prime_multiplier_bits, 0, -1)) goto err;
 	if (BN_is_bit_set(rnd, bits)) goto loop;
 	if (!BN_rand_range(offset_index, offset_count)) goto err;
 	
