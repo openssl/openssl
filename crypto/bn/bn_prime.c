@@ -128,8 +128,6 @@
 
 static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
 	const BIGNUM *a1_odd, int k, BN_CTX *ctx, BN_MONT_CTX *mont);
-static int probable_prime_dh_safe(BIGNUM *rnd, int bits,
-	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx);
 
 int BN_GENCB_call(BN_GENCB *cb, int a, int b)
 	{
@@ -190,7 +188,7 @@ loop:
 		{
 		if (safe)
 			{
-			if (!probable_prime_dh_safe(ret,bits,add,rem,ctx))
+			if (!bn_probable_prime_dh_safe(ret,bits,add,rem,ctx))
 				 goto err;
 			}
 		else
@@ -721,7 +719,7 @@ err:
 	return(ret);
 	}
 
-static int probable_prime_dh_safe(BIGNUM *p, int bits, const BIGNUM *padd,
+int bn_probable_prime_dh_safe(BIGNUM *p, int bits, const BIGNUM *padd,
 	const BIGNUM *rem, BN_CTX *ctx)
 	{
 	int i,ret=0;
