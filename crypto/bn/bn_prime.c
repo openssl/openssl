@@ -186,16 +186,7 @@ loop:
 		}
 	else
 		{
-		if (safe)
-			{
-			if (!bn_probable_prime_dh_safe(ret,bits,add,rem,ctx))
-				 goto err;
-			}
-		else
-			{
-			if (!bn_probable_prime_dh(ret,bits,add,rem,ctx))
-				goto err;
-			}
+		if (!bn_probable_prime_dh(ret, bits, add, rem, ctx, safe)) goto err;
 		}
 	/* if (BN_mod_word(ret,(BN_ULONG)3) == 1) goto loop; */
 	if(!BN_GENCB_call(cb, 0, c1++))
@@ -680,16 +671,21 @@ loop:
 	}
 
 int bn_probable_prime_dh(BIGNUM *rnd, int bits,
-	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx)
+	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx, int safe)
 	{
-	return bn_probable_prime_dh_safe(rnd, bits, add, rem, ctx);
-	}
-
-int bn_probable_prime_dh_safe(BIGNUM *rnd, int bits,
-	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx)
-	{
-	int i,ret=0;
+	int i;
+	uint max_rem;
 	BIGNUM *t1;
+	int ret = 0;
+	
+	if (safe)
+		{
+		max_rem = 1;
+		}
+	else
+		{
+		max_rem = 0;
+		}
 
 	BN_CTX_start(ctx);
 	if ((t1 = BN_CTX_get(ctx)) == NULL) goto err;
@@ -711,7 +707,7 @@ loop:
 	for (i=1; i<NUMPRIMES; i++)
 		{
 		/* check that rnd is a prime */
-		if (BN_mod_word(rnd,(BN_ULONG)primes[i]) <= 1)
+		if (BN_mod_word(rnd,(BN_ULONG)primes[i]) <= max_rem)
 			{
 			if (!BN_add(rnd,rnd,add)) goto err;
 			goto loop;
