@@ -1380,6 +1380,8 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 
 #ifndef OPENSSL_NO_HEARTBEATS
 	/* Add Heartbeat extension */
+	if ((limit - ret - 4 - 1) < 0)
+		return NULL;
 	s2n(TLSEXT_TYPE_heartbeat,ret);
 	s2n(1,ret);
 	/* Set mode:
@@ -1658,6 +1660,8 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 	/* Add Heartbeat extension if we've received one */
 	if (s->tlsext_heartbeat & SSL_TLSEXT_HB_ENABLED)
 		{
+		if ((limit - ret - 4 - 1) < 0)
+			return NULL;
 		s2n(TLSEXT_TYPE_heartbeat,ret);
 		s2n(1,ret);
 		/* Set mode:
