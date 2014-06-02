@@ -186,7 +186,7 @@ loop:
 		}
 	else
 		{
-		if (!bn_probable_prime_dh(ret, bits, add, rem, ctx, safe)) goto err;
+		if (!bn_probable_prime_dh(ret, bits, add, rem, ctx, safe, 1)) goto err;
 		}
 	/* if (BN_mod_word(ret,(BN_ULONG)3) == 1) goto loop; */
 	if(!BN_GENCB_call(cb, 0, c1++))
@@ -348,27 +348,76 @@ err:
 	return(ret);
 	}
 
-int bn_probable_prime_dh_unbiased(BIGNUM *rnd, int bits, BN_CTX *ctx)
+int bn_probable_prime_dh(BIGNUM *rnd, int bits,
+	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx, int safe, int biased)
 	{
 	int i;
+	int sub;
+	uint max_rem;
+	BIGNUM *t1;
 	int ret = 0;
 
-loop:
+	if (safe)
+		{
+		max_rem = 1;
+		}
+	else
+		{
+		max_rem = 0;
+		}
+
+	BN_CTX_start(ctx);
+	if ((t1 = BN_CTX_get(ctx)) == NULL) goto err;
+
+again:
 	if (!BN_rand(rnd, bits, 0, 1)) goto err;
+
+	/* we need ((rnd-rem) % add) == 0 */
+
+	if (add == NULL)
+		{
+		sub = BN_mod_word(rnd, 2);
+		if (!BN_sub_word(rnd, sub)) goto err;
+		}
+	else
+		{
+		if (!BN_mod(t1, rnd, add, ctx)) goto err;
+		if (!BN_sub(rnd, rnd, t1)) goto err;
+		}
+
+	if (rem == NULL)
+		{
+		if (!BN_add_word(rnd, 1)) goto err;
+		}
+	else
+		{
+		if (!BN_add(rnd, rnd, rem)) goto err;
+		}
 
 	/* we now have a random number 'rand' to test. */
 
+loop:
 	for (i = 1; i < NUMPRIMES; i++)
 		{
 		/* check that rnd is a prime */
-		if (BN_mod_word(rnd, (BN_ULONG)primes[i]) <= 1)
+		if (BN_mod_word(rnd, (BN_ULONG)primes[i]) <= max_rem)
 			{
-			goto loop;
+			if (biased)
+				{
+				if (!BN_add(rnd, rnd, add)) goto err;
+				goto loop;
+				}
+			else
+				{
+				goto again;
+				}
 			}
 		}
+
 	ret=1;
 
 err:
+	BN_CTX_end(ctx);
 	bn_check_top(rnd);
 	return(ret);
 	}
@@ -668,55 +717,4 @@ loop:
 		goto again;
 	bn_check_top(rnd);
 	return(1);
-	}
-
-int bn_probable_prime_dh(BIGNUM *rnd, int bits,
-	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx, int safe)
-	{
-	int i;
-	uint max_rem;
-	BIGNUM *t1;
-	int ret = 0;
-	
-	if (safe)
-		{
-		max_rem = 1;
-		}
-	else
-		{
-		max_rem = 0;
-		}
-
-	BN_CTX_start(ctx);
-	if ((t1 = BN_CTX_get(ctx)) == NULL) goto err;
-
-	if (!BN_rand(rnd,bits,0,1)) goto err;
-
-	/* we need ((rnd-rem) % add) == 0 */
-
-	if (!BN_mod(t1,rnd,add,ctx)) goto err;
-	if (!BN_sub(rnd,rnd,t1)) goto err;
-	if (rem == NULL)
-		{ if (!BN_add_word(rnd,1)) goto err; }
-	else
-		{ if (!BN_add(rnd,rnd,rem)) goto err; }
-
-	/* we now have a random number 'rand' to test. */
-
-loop:
-	for (i=1; i<NUMPRIMES; i++)
-		{
-		/* check that rnd is a prime */
-		if (BN_mod_word(rnd,(BN_ULONG)primes[i]) <= max_rem)
-			{
-			if (!BN_add(rnd,rnd,add)) goto err;
-			goto loop;
-			}
-		}
-	ret=1;
-
-err:
-	BN_CTX_end(ctx);
-	bn_check_top(rnd);
-	return(ret);
 	}
