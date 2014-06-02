@@ -1311,6 +1311,20 @@ static int aes_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		return 1;
 	if (key)
 		{ do {
+#ifdef HWAES_CAPABLE
+		if (HWAES_CAPABLE)
+			{
+			HWAES_set_encrypt_key(key,ctx->key_len*8,&gctx->ks.ks);
+			CRYPTO_gcm128_init(&gctx->gcm,&gctx->ks,
+					(block128_f)HWAES_encrypt);
+#ifdef HWAES_ctr32_encrypt_blocks
+			gctx->ctr = (ctr128_f)HWAES_ctr32_encrypt_blocks;
+#else
+			gctx->ctr = NULL;
+#endif
+			}
+		else
+#endif
 #ifdef BSAES_CAPABLE
 		if (BSAES_CAPABLE)
 			{
@@ -1706,6 +1720,29 @@ static int aes_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		xctx->stream = NULL;
 #endif
 		/* key_len is two AES keys */
+#ifdef HWAES_CAPABLE
+		if (HWAES_CAPABLE)
+			{
+			if (enc)
+			    {
+			    HWAES_set_encrypt_key(key, ctx->key_len * 4, &xctx->ks1.ks);
+			    xctx->xts.block1 = (block128_f)HWAES_encrypt;
+			    }
+			else
+			    {
+			    HWAES_set_decrypt_key(key, ctx->key_len * 4, &xctx->ks1.ks);
+			    xctx->xts.block1 = (block128_f)HWAES_decrypt;
+			    }
+
+			HWAES_set_encrypt_key(key + ctx->key_len/2,
+						    ctx->key_len * 4, &xctx->ks2.ks);
+			xctx->xts.block2 = (block128_f)HWAES_encrypt;
+
+			xctx->xts.key1 = &xctx->ks1;
+			break;
+			}
+		else
+#endif
 #ifdef BSAES_CAPABLE
 		if (BSAES_CAPABLE)
 			xctx->stream = enc ? bsaes_xts_encrypt : bsaes_xts_decrypt;
@@ -1856,6 +1893,19 @@ static int aes_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		return 1;
 	if (key) do
 		{
+#ifdef HWAES_CAPABLE
+		if (HWAES_CAPABLE)
+			{
+			HWAES_set_encrypt_key(key,ctx->key_len*8,&cctx->ks.ks);
+
+			CRYPTO_ccm128_init(&cctx->ccm, cctx->M, cctx->L,
+					&cctx->ks, (block128_f)HWAES_encrypt);
+			cctx->str = NULL;
+			cctx->key_set = 1;
+			break;
+			}
+		else
+#endif
 #ifdef VPAES_CAPABLE
 		if (VPAES_CAPABLE)
 			{
