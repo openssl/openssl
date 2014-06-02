@@ -2175,7 +2175,7 @@ int MAIN(int argc, char **argv)
 			
 		Time_F(START);
 		for (count=0, run=1; COND(prime_c[D_PRIME_COPRIME]); count++)
-			if (!bn_probable_prime_dh_coprime(rnd, 1024, ctx)) count--;
+			if (!bn_probable_prime_dh_coprime(rnd, 1024, ctx, 0, 1)) count--;
 		
 		d=Time_F(STOP);
 		prime_print_result(D_PRIME_COPRIME, count, d);
@@ -2194,7 +2194,7 @@ int MAIN(int argc, char **argv)
 			
 		Time_F(START);
 		for (count=0, run=1; COND(prime_c[D_PRIME_COPRIME_UNBIASED]); count++)
-			if (!bn_probable_prime_dh_coprime_unbiased(rnd, 1024, ctx)) count--;
+			if (!bn_probable_prime_dh_coprime(rnd, 1024, ctx, 0, 0)) count--;
 		
 		d=Time_F(STOP);
 		prime_print_result(D_PRIME_COPRIME_UNBIASED, count, d);
@@ -2213,7 +2213,7 @@ int MAIN(int argc, char **argv)
 			
 		Time_F(START);
 		for (count=0, run=1; COND(prime_c[D_PRIME_COPRIME_SAFE]); count++)
-			if (!bn_probable_prime_dh_coprime_safe(rnd, 1024, ctx)) count--;
+			if (!bn_probable_prime_dh_coprime(rnd, 1024, ctx, 1, 1)) count--;
 		
 		d=Time_F(STOP);
 		prime_print_result(D_PRIME_COPRIME_SAFE, count, d);
@@ -2232,8 +2232,7 @@ int MAIN(int argc, char **argv)
 			
 		Time_F(START);
 		for (count=0, run=1; COND(prime_c[D_PRIME_COPRIME_UNBIASED_SAFE]); count++)
-			if (!bn_probable_prime_dh_coprime_unbiased_safe(rnd, 1024, ctx))
-				count--;
+			if (!bn_probable_prime_dh_coprime(rnd, 1024, ctx, 1, 0)) count--;
 		
 		d=Time_F(STOP);
 		prime_print_result(D_PRIME_COPRIME_UNBIASED_SAFE, count, d);

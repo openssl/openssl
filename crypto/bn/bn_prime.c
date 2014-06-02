@@ -422,34 +422,62 @@ err:
 	return(ret);
 	}
 
-int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits, BN_CTX *ctx)
+int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits, BN_CTX *ctx,
+	int safe, int biased)
 	{
 	int i;
 	int j;
 	int old_offset;
+	int new_offset;
 	int offset;
+	int prm_offset_count;
+	int prm_multiplier;
+	int prm_multiplier_bits;
+	uint max_rem;
 	BIGNUM *offset_index;
 	BIGNUM *offset_count;
 	int ret = 0;
 	int base_offset = 0;
 	
-	OPENSSL_assert(bits > prime_multiplier_bits);
-	
+	if (safe)
+		{
+		prm_offset_count = safe_prime_offset_count;
+		prm_multiplier = safe_prime_multiplier;
+		prm_multiplier_bits = safe_prime_multiplier_bits;
+		max_rem = 1;
+		}
+	else
+		{
+		prm_offset_count = prime_offset_count;
+		prm_multiplier = prime_multiplier;
+		prm_multiplier_bits = prime_multiplier_bits;
+		max_rem = 0;
+		}
+
+	OPENSSL_assert(bits > prm_multiplier_bits);
+
 	BN_CTX_start(ctx);
 	if ((offset_index = BN_CTX_get(ctx)) == NULL) goto err;
 	if ((offset_count = BN_CTX_get(ctx)) == NULL) goto err;
-	
-	BN_add_word(offset_count, prime_offset_count);
+
+	BN_add_word(offset_count, prm_offset_count);
 
 again:
-	if (!BN_rand(rnd, bits - prime_multiplier_bits, 0, -1)) goto err;
+	if (!BN_rand(rnd, bits - prm_multiplier_bits, 0, -1)) goto err;
 	if (BN_is_bit_set(rnd, bits)) goto again;
 	if (!BN_rand_range(offset_index, offset_count)) goto err;
 
 	j = BN_get_word(offset_index);
-	offset = prime_offsets[j];
-	
-	BN_mul_word(rnd, prime_multiplier);
+	if (safe)
+		{
+		offset = safe_prime_offsets[j];
+		}
+	else
+		{
+		offset = prime_offsets[j];
+		}
+
+	BN_mul_word(rnd, prm_multiplier);
 	BN_add_word(rnd, offset);
 
 	/* we now have a random number 'rand' to test. */
@@ -459,166 +487,40 @@ loop:
 	for (i = first_prime_index; i < NUMPRIMES; i++)
 		{
 		/* check that rnd is a prime */
-		if (BN_mod_word(rnd, (BN_ULONG)primes[i]) == 0)
+		if (BN_mod_word(rnd, (BN_ULONG)primes[i]) <= max_rem)
 			{
-			j++;
-			if (j >= prime_offset_count)
+			if (biased)
 				{
-				j = 0;
-				base_offset = base_offset + prime_multiplier;
+				j++;
+				if (j >= prm_offset_count)
+					{
+					j = 0;
+					base_offset = base_offset + prm_multiplier;
+					}
+
+				if (safe)
+					{
+					new_offset = safe_prime_offsets[j];
+					}
+				else
+					{
+					new_offset = prime_offsets[j];
+					}
+
+				old_offset = offset;
+				offset = base_offset + new_offset;
+
+				if (!BN_add_word(rnd, offset - old_offset))
+					goto err;
+				goto loop;
 				}
-			old_offset = offset;
-			offset = base_offset + prime_offsets[j];
-			if (!BN_add_word(rnd, offset - old_offset))
-				goto err;
-			goto loop;
-			}
-		}
-	ret = 1;
-
-err:
-	BN_CTX_end(ctx);
-	bn_check_top(rnd);
-	return ret;
-	}
-
-int bn_probable_prime_dh_coprime_unbiased(BIGNUM *rnd, int bits, BN_CTX *ctx)
-	{
-	int i;
-	BIGNUM *offset_index;
-	BIGNUM *offset_count;
-	int ret = 0;
-	
-	OPENSSL_assert(bits > prime_multiplier_bits);
-	
-	BN_CTX_start(ctx);
-	if ((offset_index = BN_CTX_get(ctx)) == NULL) goto err;
-	if ((offset_count = BN_CTX_get(ctx)) == NULL) goto err;
-	
-	BN_add_word(offset_count, prime_offset_count);
-
-loop:
-	if (!BN_rand(rnd, bits - prime_multiplier_bits, 0, -1)) goto err;
-	if (BN_is_bit_set(rnd, bits)) goto loop;
-	if (!BN_rand_range(offset_index, offset_count)) goto err;
-	
-	BN_mul_word(rnd, prime_multiplier);
-	BN_add_word(rnd, prime_offsets[BN_get_word(offset_index)]);
-
-	/* we now have a random number 'rand' to test. */
-
-	/* skip coprimes */
-	for (i = first_prime_index; i < NUMPRIMES; i++)
-		{
-		/* check that rnd is a prime */
-		if (BN_mod_word(rnd, (BN_ULONG)primes[i]) == 0)
-			{
-			goto loop;
-			}
-		}
-	ret = 1;
-
-err:
-	BN_CTX_end(ctx);
-	bn_check_top(rnd);
-	return ret;
-	}
-
-int bn_probable_prime_dh_coprime_safe(BIGNUM *rnd, int bits, BN_CTX *ctx)
-	{
-	int i;
-	int j;
-	int old_offset;
-	int offset;
-	BIGNUM *offset_index;
-	BIGNUM *offset_count;
-	int ret = 0;
-	int base_offset = 0;
-	
-	OPENSSL_assert(bits > safe_prime_multiplier_bits);
-	
-	BN_CTX_start(ctx);
-	if ((offset_index = BN_CTX_get(ctx)) == NULL) goto err;
-	if ((offset_count = BN_CTX_get(ctx)) == NULL) goto err;
-	
-	BN_add_word(offset_count, safe_prime_offset_count);
-
-again:
-	if (!BN_rand(rnd, bits - safe_prime_multiplier_bits, 0, -1)) goto err;
-	if (BN_is_bit_set(rnd, bits)) goto again;
-	if (!BN_rand_range(offset_index, offset_count)) goto err;
-
-	j = BN_get_word(offset_index);
-	offset = safe_prime_offsets[j];
-	
-	BN_mul_word(rnd, safe_prime_multiplier);
-	BN_add_word(rnd, offset);
-
-	/* we now have a random number 'rand' to test. */
-
-loop:
-	/* skip coprimes */
-	for (i = first_prime_index; i < NUMPRIMES; i++)
-		{
-		/* check that rnd is a prime */
-		if (BN_mod_word(rnd, (BN_ULONG)primes[i]) <= 1)
-			{
-			j++;
-			if (j >= safe_prime_offset_count)
+			else
 				{
-				j = 0;
-				base_offset = base_offset + safe_prime_multiplier;
+				goto again;
 				}
-			old_offset = offset;
-			offset = base_offset + safe_prime_offsets[j];
-			if (!BN_add_word(rnd, offset - old_offset))
-				goto err;
-			goto loop;
 			}
 		}
-	ret = 1;
 
-err:
-	BN_CTX_end(ctx);
-	bn_check_top(rnd);
-	return ret;
-	}
-
-int bn_probable_prime_dh_coprime_unbiased_safe(BIGNUM *rnd, int bits,
-	BN_CTX *ctx)
-	{
-	int i;
-	BIGNUM *offset_index;
-	BIGNUM *offset_count;
-	int ret = 0;
-	
-	OPENSSL_assert(bits > safe_prime_multiplier_bits);
-	
-	BN_CTX_start(ctx);
-	if ((offset_index = BN_CTX_get(ctx)) == NULL) goto err;
-	if ((offset_count = BN_CTX_get(ctx)) == NULL) goto err;
-	
-	BN_add_word(offset_count, safe_prime_offset_count);
-
-loop:
-	if (!BN_rand(rnd, bits - safe_prime_multiplier_bits, 0, -1)) goto err;
-	if (BN_is_bit_set(rnd, bits)) goto loop;
-	if (!BN_rand_range(offset_index, offset_count)) goto err;
-	
-	BN_mul_word(rnd, safe_prime_multiplier);
-	BN_add_word(rnd, safe_prime_offsets[BN_get_word(offset_index)]);
-
-	/* we now have a random number 'rand' to test. */
-
-	/* skip coprimes */
-	for (i = first_prime_index; i < NUMPRIMES; i++)
-		{
-		/* check that rnd is a prime */
-		if (BN_mod_word(rnd, (BN_ULONG)primes[i]) <= 1)
-			{
-			goto loop;
-			}
-		}
 	ret = 1;
 
 err:

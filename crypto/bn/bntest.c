@@ -1945,7 +1945,7 @@ int test_probable_prime_coprime(BIO *bp, BN_CTX *ctx)
 	
 	for (i = 0; i < 1000; i++)
 		{
-		if (!bn_probable_prime_dh_coprime(&r, 1024, ctx)) goto err;
+		if (!bn_probable_prime_dh_coprime(&r, 1024, ctx, 0, 1)) goto err;
 		
 		for (j = 0; j < 5; j++)
 			{
@@ -1976,7 +1976,7 @@ int test_probable_prime_coprime_safe(BIO *bp, BN_CTX *ctx)
 	
 	for (i = 0; i < 1000; i++)
 		{
-		if (!bn_probable_prime_dh_coprime_safe(&r, 1024, ctx)) goto err;
+		if (!bn_probable_prime_dh_coprime(&r, 1024, ctx, 1, 1)) goto err;
 		
 		/* skip 2 */
 		for (j = 1; j < 5; j++)
