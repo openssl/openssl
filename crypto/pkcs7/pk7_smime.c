@@ -89,13 +89,10 @@ PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 		goto err;
 		}
 
-	if(!(flags & PKCS7_NOCERTS))
+	for(i = 0; i < sk_X509_num(certs); i++)
 		{
-		for(i = 0; i < sk_X509_num(certs); i++)
-			{
-			if (!PKCS7_add_certificate(p7, sk_X509_value(certs, i)))
-				goto err;
-			}
+		if (!PKCS7_add_certificate(p7, sk_X509_value(certs, i)))
+			goto err;
 		}
 
 	if(flags & PKCS7_DETACHED)
