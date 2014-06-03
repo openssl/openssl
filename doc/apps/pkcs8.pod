@@ -14,6 +14,7 @@ B<openssl> B<pkcs8>
 [B<-passin arg>]
 [B<-out filename>]
 [B<-passout arg>]
+[B<-iter count>]
 [B<-noiter>]
 [B<-nocrypt>]
 [B<-nooct>]
@@ -75,6 +76,12 @@ filename.
 
 the output file password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+
+=item B<-iter count>
+
+When creating new PKCS#8 containers, use a given number of iterations on the password
+in deriving the encryption key for the PKCS#8 output. High values increase the time
+required to brute-force a PKCS#8 container.
 
 =item B<-nocrypt>
 
@@ -224,6 +231,11 @@ Read a DER unencrypted PKCS#8 format private key:
 Convert a private key from any PKCS#8 format to traditional format:
 
  openssl pkcs8 -in pk8.pem -out key.pem
+ 
+Convert a private key to PKCS#8 format, encrypting with AES-256 and with 
+one million iterations of the password:
+
+ openssl pkcs8 -in raw.pem -topk8 -v2 aes-256-cbc -iter 1000000 -out pk8.pem
 
 =head1 STANDARDS
 
