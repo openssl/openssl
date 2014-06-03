@@ -562,7 +562,7 @@ loop:
 				if (j >= prm_offset_count)
 					{
 					j = 0;
-					base_offset = base_offset + prm_multiplier;
+					base_offset += prm_multiplier;
 					}
 
 				if (safe)
