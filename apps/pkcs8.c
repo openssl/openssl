@@ -173,6 +173,12 @@ int MAIN(int argc, char **argv)
 			topk8 = 1;
 		else if (!strcmp (*args, "-noiter"))
 			iter = 1;
+        else if (!strcmp (*args, "-iter"))
+            {
+            if (!args[1]) goto bad;
+            iter = atoi(*(++args));
+            if (iter <= 0) goto bad;
+            }
 		else if (!strcmp (*args, "-nocrypt"))
 			nocrypt = 1;
 		else if (!strcmp (*args, "-nooct"))
@@ -235,7 +241,8 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err, "-nooct          use (nonstandard) no octet format\n");
 		BIO_printf(bio_err, "-embed          use (nonstandard) embedded DSA parameters format\n");
 		BIO_printf(bio_err, "-nsdb           use (nonstandard) DSA Netscape DB format\n");
-		BIO_printf(bio_err, "-noiter         use 1 as iteration count\n");
+		BIO_printf(bio_err, "-iter count     use count as iteration count\n");
+        BIO_printf(bio_err, "-noiter         use 1 as iteration count\n");
 		BIO_printf(bio_err, "-nocrypt        use or expect unencrypted private key\n");
 		BIO_printf(bio_err, "-v2 alg         use PKCS#5 v2.0 and cipher \"alg\"\n");
 		BIO_printf(bio_err, "-v1 obj         use PKCS#5 v1.5 and cipher \"alg\"\n");
