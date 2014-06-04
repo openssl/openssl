@@ -1322,6 +1322,7 @@ static int aes_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 #else
 			gctx->ctr = NULL;
 #endif
+			break;
 			}
 		else
 #endif
