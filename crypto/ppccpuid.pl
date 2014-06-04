@@ -44,7 +44,7 @@ $code=<<___;
 
 .globl	.OPENSSL_crypto207_probe
 .align	4
-.OPENSSL_crypto207_probe
+.OPENSSL_crypto207_probe:
 	lvx_u	v0,0,r1
 	vcipher	v0,v0,v0
 	blr
