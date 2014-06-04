@@ -55,7 +55,7 @@ $sp="r1";
 $vrsave="r12";
 
 #########################################################################
-{{{	Key setup procedures						#
+{{{	# Key setup procedures						#
 my ($inp,$bits,$out,$ptr,$cnt,$rounds)=map("r$_",(3..8));
 my ($zero,$in0,$in1,$key,$rcon,$mask,$tmp)=map("v$_",(0..6));
 my ($stage,$outperm,$outmask,$outhead,$outtail)=map("v$_",(7..11));
@@ -375,7 +375,7 @@ Ldeckey:
 ___
 }}}
 #########################################################################
-{{{	Single block en- and decrypt procedures				#
+{{{	# Single block en- and decrypt procedures			#
 sub gen_block () {
 my $dir = shift;
 my $n   = $dir eq "de" ? "n" : "";
@@ -455,7 +455,7 @@ ___
 &gen_block("de");
 }}}
 #########################################################################
-{{{	CBC en- and decrypt procedures					#
+{{{	# CBC en- and decrypt procedures				#
 my ($inp,$out,$len,$key,$ivp,$enc,$rounds,$idx)=map("r$_",(3..10));
 my ($rndkey0,$rndkey1,$inout,$tmp)=		map("v$_",(0..3));
 my ($ivec,$inptail,$inpperm,$outhead,$outperm,$outmask,$keyperm)=
@@ -623,7 +623,7 @@ Lcbc_done:
 	.long		0
 ___
 #########################################################################
-{{	Optimized CBC decrypt procedure					#
+{{	# Optimized CBC decrypt procedure				#
 my $key_="r11";
 my ($x00,$x10,$x20,$x30,$x40,$x50,$x60,$x70)=map("r$_",(0,8,26..31));
 my ($in0, $in1, $in2, $in3, $in4, $in5, $in6, $in7 )=map("v$_",(0..3,10..13));
