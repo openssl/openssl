@@ -7,7 +7,11 @@
 
   Major changes between OpenSSL 1.0.1g and OpenSSL 1.0.1h [under development]
 
-      o
+      o Fix for CVE-2014-0224
+      o Fix for CVE-2014-0221
+      o Fix for CVE-2014-0195
+      o Fix for CVE-2014-3470
+      o Fix for CVE-2010-5298
 
   Major changes between OpenSSL 1.0.1f and OpenSSL 1.0.1g [7 Apr 2014]
 
