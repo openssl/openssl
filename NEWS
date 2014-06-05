@@ -7,7 +7,12 @@
 
   Major changes between OpenSSL 0.9.8y and OpenSSL 0.9.8za [under development]:
 
+      o Fix for CVE-2014-0224
+      o Fix for CVE-2014-0221
+      o Fix for CVE-2014-0195
+      o Fix for CVE-2014-3470
       o Fix for CVE-2014-0076
+      o Fix for CVE-2010-5298
       o Fix to TLS alert handling.
 
   Major changes between OpenSSL 0.9.8x and OpenSSL 0.9.8y [5 Feb 2013]:
