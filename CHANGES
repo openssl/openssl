@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 1.0.1h and 1.0.1i [xx XXX xxxx]
+
+  *)
+
  Changes between 1.0.1g and 1.0.1h [5 Jun 2014]
 
   *) Fix for SSL/TLS MITM flaw. An attacker using a carefully crafted
