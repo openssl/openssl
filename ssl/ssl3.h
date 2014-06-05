@@ -441,7 +441,7 @@ typedef struct ssl3_buffer_st
  */
 #define SSL3_FLAGS_SGC_RESTART_DONE		0x0040
 /* Set if we encrypt then mac instead of usual mac then encrypt */
-#define TLS1_FLAGS_ENCRYPT_THEN_MAC		0x0080
+#define TLS1_FLAGS_ENCRYPT_THEN_MAC		0x0100
 
 #ifndef OPENSSL_NO_SSL_INTERN
 
