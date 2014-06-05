@@ -1586,7 +1586,7 @@ $multilib     =
 
 *** debug-VC-WIN32
 $cc           = cl
-$cflags       = -W3 -WX -Gs0 -GF -Gy -Zi -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -D_CRT_SECURE_NO_DEPRECATE
+$cflags       = -W3 -Gs0 -GF -Gy -Zi -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -D_CRT_SECURE_NO_DEPRECATE
 $unistd       = 
 $thread_cflag = 
 $sys_id       = WIN32
