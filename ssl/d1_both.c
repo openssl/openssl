@@ -605,6 +605,9 @@ dtls1_reassemble_fragment(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 	    msg_hdr->msg_len > dtls1_max_handshake_message_len(s))
 		goto err;
 
+	if (frag_len == 0)
+		return DTLS1_HM_FRAGMENT_RETRY;
+
 	/* Try to find item in queue */
 	pq_64bit_init(&seq64);
 	pq_64bit_assign_word(&seq64, msg_hdr->seq);
@@ -682,7 +685,12 @@ dtls1_reassemble_fragment(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 			goto err;
 			}
 
-		pqueue_insert(s->d1->buffered_messages, item);
+		item = pqueue_insert(s->d1->buffered_messages, item);
+		/* pqueue_insert fails iff a duplicate item is inserted.
+		 * However, |item| cannot be a duplicate. If it were,
+		 * |pqueue_find|, above, would have returned it and control
+		 * would never have reached this branch. */
+		OPENSSL_assert(item != NULL);
 		}
 
 	return DTLS1_HM_FRAGMENT_RETRY;
@@ -740,7 +748,7 @@ dtls1_process_out_of_seq_message(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 		}
 	else
 		{
-		if (frag_len && frag_len < msg_hdr->msg_len)
+		if (frag_len < msg_hdr->msg_len)
 			return dtls1_reassemble_fragment(s, msg_hdr, ok);
 
 		if (frag_len > dtls1_max_handshake_message_len(s))
@@ -769,7 +777,15 @@ dtls1_process_out_of_seq_message(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 		if ( item == NULL)
 			goto err;
 
-		pqueue_insert(s->d1->buffered_messages, item);
+		item = pqueue_insert(s->d1->buffered_messages, item);
+		/* pqueue_insert fails iff a duplicate item is inserted.
+		 * However, |item| cannot be a duplicate. If it were,
+		 * |pqueue_find|, above, would have returned it. Then, either
+		 * |frag_len| != |msg_hdr->msg_len| in which case |item| is set
+		 * to NULL and it will have been processed with
+		 * |dtls1_reassemble_fragment|, above, or the record will have
+		 * been discarded. */
+		OPENSSL_assert(item != NULL);
 		}
 
 	return DTLS1_HM_FRAGMENT_RETRY;
