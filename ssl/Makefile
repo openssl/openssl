@@ -30,7 +30,7 @@ LIBSRC=	\
 	ssl_lib.c ssl_err2.c ssl_cert.c ssl_sess.c \
 	ssl_ciph.c ssl_stat.c ssl_rsa.c \
 	ssl_asn1.c ssl_txt.c ssl_algs.c ssl_conf.c \
-	bio_ssl.c ssl_err.c kssl.c t1_reneg.c tls_srp.c t1_trce.c dnssec.c
+	bio_ssl.c ssl_err.c kssl.c t1_reneg.c tls_srp.c t1_trce.c
 LIBOBJ= \
 	s2_meth.o  s2_srvr.o  s2_clnt.o  s2_lib.o  s2_enc.o s2_pkt.o \
 	s3_meth.o  s3_srvr.o  s3_clnt.o  s3_lib.o  s3_enc.o s3_pkt.o s3_both.o s3_cbc.o \
@@ -41,7 +41,7 @@ LIBOBJ= \
 	ssl_lib.o ssl_err2.o ssl_cert.o ssl_sess.o \
 	ssl_ciph.o ssl_stat.o ssl_rsa.o \
 	ssl_asn1.o ssl_txt.o ssl_algs.o ssl_conf.o \
-	bio_ssl.o ssl_err.o kssl.o t1_reneg.o tls_srp.o t1_trce.o dnssec.o
+	bio_ssl.o ssl_err.o kssl.o t1_reneg.o tls_srp.o t1_trce.o
 
 SRC= $(LIBSRC)
 
@@ -288,25 +288,6 @@ d1_srvr.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 d1_srvr.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 d1_srvr.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h d1_srvr.c
 d1_srvr.o: ssl_locl.h
-dnssec.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-dnssec.o: ../include/openssl/buffer.h ../include/openssl/comp.h
-dnssec.o: ../include/openssl/crypto.h ../include/openssl/dso.h
-dnssec.o: ../include/openssl/dtls1.h ../include/openssl/e_os2.h
-dnssec.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-dnssec.o: ../include/openssl/ecdsa.h ../include/openssl/evp.h
-dnssec.o: ../include/openssl/hmac.h ../include/openssl/kssl.h
-dnssec.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
-dnssec.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-dnssec.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-dnssec.o: ../include/openssl/pem.h ../include/openssl/pem2.h
-dnssec.o: ../include/openssl/pkcs7.h ../include/openssl/pqueue.h
-dnssec.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-dnssec.o: ../include/openssl/srtp.h ../include/openssl/ssl.h
-dnssec.o: ../include/openssl/ssl2.h ../include/openssl/ssl23.h
-dnssec.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
-dnssec.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
-dnssec.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h dnssec.c
-dnssec.o: ssl.h
 kssl.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 kssl.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 kssl.o: ../include/openssl/crypto.h ../include/openssl/dtls1.h

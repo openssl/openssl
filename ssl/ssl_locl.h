@@ -1357,15 +1357,4 @@ void tls_fips_digest_extra(
 	const EVP_CIPHER_CTX *cipher_ctx, EVP_MD_CTX *mac_ctx,
 	const unsigned char *data, size_t data_len, size_t orig_len);
 
-#ifndef OPENSSL_NO_DANE
-
-typedef struct {
-	unsigned char *tlsa_record;
-	int tlsa_witness, tlsa_mask;
-	int (*get_issuer)(X509 **issuer,X509_STORE_CTX *ctx,X509 *x);
-	} TLSA_EX_DATA;
-
-TLSA_EX_DATA *SSL_get_TLSA_ex_data(SSL *);
-int SSL_get_TLSA_ex_data_idx(void);
-#endif
 #endif
