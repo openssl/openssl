@@ -49,6 +49,7 @@ B<openssl> B<s_client>
 [B<-rand file(s)>]
 [B<-serverinfo types>]
 [B<-status>]
+[B<-nextprotoneg protocols>]
 
 =head1 DESCRIPTION
 
@@ -272,6 +273,17 @@ file.
 
 sends a certificate status request to the server (OCSP stapling). The server
 response (if any) is printed out.
+
+=item B<-nextprotoneg protocols>
+
+enable Next Protocol Negotiation TLS extension and provide a list of
+comma-separated protocol names that the client should advertise
+support for. The list should contain most wanted protocols first.
+Protocol names are printable ASCII strings, for example "http/1.1" or
+"spdy/3".
+Empty list of protocols is treated specially and will cause the client to
+advertise support for the TLS extension but disconnect just after
+reciving ServerHello with a list of server supported protocols.
 
 =back
 
