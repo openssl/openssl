@@ -18,9 +18,9 @@
 #
 # Performance in cycles per byte processed with 128-bit key:
 #
-#		CBC enc		CBC dec
-# Apple A7	2.39		1.20
-# Cortex-A5x	n/a		n/a
+#		CBC enc		CBC dec		CTR
+# Apple A7	2.39		1.20		1.20
+# Cortex-A5x	n/a		n/a		n/a
 
 $flavour = shift;
 open STDOUT,">".shift;
@@ -733,12 +733,11 @@ $code.=<<___;
 	 subs		$len,$len,#2
 	aesmc		$tmp0,$tmp0
 	aesmc		$tmp1,$tmp1
-	 vld1.32	 {q8},[$key_],#16	// re-pre-load rndkey[0]
+	 vld1.32	 {q8-q9},[$key_],#32	// re-pre-load rndkey[0-1]
 	aese		$tmp0,q13
 	aese		$tmp1,q13
 	aesmc		$tmp0,$tmp0
 	aesmc		$tmp1,$tmp1
-	 vld1.32	 {q9},[$key_],#16	// re-pre-load rndkey[1]
 	aese		$tmp0,q14
 	aese		$tmp1,q14
 	 vmov.32	${dat0}[3], $tctr
@@ -878,14 +877,14 @@ if ($flavour =~ /64/) {			######## 64-bit code
 	"aesd"	=>	0x4e285800,	"aese"	=>	0x4e284800,
 	"aesimc"=>	0x4e287800,	"aesmc"	=>	0x4e286800	);
 
-    sub unaes {
+    local *unaes = sub {
 	my ($mnemonic,$arg)=@_;
 
 	$arg =~ m/[qv]([0-9]+)[^,]*,\s*[qv]([0-9]+)/o	&&
-	sprintf ".long\t0x%08x\t//%s %s",
+	sprintf ".inst\t0x%08x\t//%s %s",
 			$opcode{$mnemonic}|$1|($2<<5),
 			$mnemonic,$arg;
-    }
+    };
 
     foreach(split("\n",$code)) {
         s/\`([^\`]*)\`/eval($1)/geo;
@@ -917,35 +916,42 @@ if ($flavour =~ /64/) {			######## 64-bit code
 	"aesd"	=>	0xf3b00340,	"aese"	=>	0xf3b00300,
 	"aesimc"=>	0xf3b003c0,	"aesmc"	=>	0xf3b00380	);
 
-    sub unaes {
+    local *unaes = sub {
 	my ($mnemonic,$arg)=@_;
 
-	$arg =~ m/[qv]([0-9]+)[^,]*,\s*[qv]([0-9]+)/o	&&
-	sprintf ".long\t0x%08x\t@ %s %s",
-			$opcode{$mnemonic}|(($1&7)<<13)|(($1&8)<<19)
-					  |(($2&7)<<1) |(($2&8)<<2),
+	if ($arg =~ m/[qv]([0-9]+)[^,]*,\s*[qv]([0-9]+)/o) {
+	    my $word = $opcode{$mnemonic}|(($1&7)<<13)|(($1&8)<<19)
+					 |(($2&7)<<1) |(($2&8)<<2);
+	    # since ARMv7 instructions are always encoded little-endian.
+	    # correct solution is to use .inst directive, but older
+	    # assemblers don't implement it:-(
+	    sprintf ".byte\t0x%02x,0x%02x,0x%02x,0x%02x\t@ %s %s",
+			$word&0xff,($word>>8)&0xff,
+			($word>>16)&0xff,($word>>24)&0xff,
 			$mnemonic,$arg;
-    }
+	}
+    };
 
     sub unvtbl {
 	my $arg=shift;
 
 	$arg =~ m/q([0-9]+),\s*\{q([0-9]+)\},\s*q([0-9]+)/o &&
-	sprintf	"vtbl.8	d%d,{q%d},d%d\n\tvtbl.8	d%d,{q%d},d%d",2*$1,$2,2*$3,2*$1+1,$2,2*$3+1;	
+	sprintf	"vtbl.8	d%d,{q%d},d%d\n\t".
+		"vtbl.8	d%d,{q%d},d%d", 2*$1,$2,2*$3, 2*$1+1,$2,2*$3+1;	
     }
 
     sub unvdup32 {
 	my $arg=shift;
 
 	$arg =~ m/q([0-9]+),\s*q([0-9]+)\[([0-3])\]/o &&
-	sprintf	"vdup.32	q%d,d%d[%d]",$1,2*$2+$3>>1,$3&1;	
+	sprintf	"vdup.32	q%d,d%d[%d]",$1,2*$2+($3>>1),$3&1;	
     }
 
     sub unvmov32 {
 	my $arg=shift;
 
 	$arg =~ m/q([0-9]+)\[([0-3])\],(.*)/o &&
-	sprintf	"vmov.32	d%d[%d],%s",2*$1+$2>>1,$2&1,$3;	
+	sprintf	"vmov.32	d%d[%d],%s",2*$1+($2>>1),$2&1,$3;	
     }
 
     foreach(split("\n",$code)) {
@@ -956,6 +962,7 @@ if ($flavour =~ /64/) {			######## 64-bit code
         s/\/\/\s?/@ /o;				# new->old style commentary
 
 	# fix up remainig new-style suffixes
+	s/\{q([0-9]+)\},\s*\[(.+)\],#8/sprintf "{d%d},[$2]!",2*$1/eo	or
 	s/\],#[0-9]+/]!/o;
 
 	s/[v]?(aes\w+)\s+([qv].*)/unaes($1,$2)/geo	or
