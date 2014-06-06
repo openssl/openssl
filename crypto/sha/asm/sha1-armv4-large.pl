@@ -631,7 +631,7 @@ $code.=<<___;
 	vst1.32		{$E\[0]},[$ctx]
 
 	vldmia	sp!,{d8-d15}
-	bx	lr
+	ret					@ bx lr
 .size	sha1_block_data_order_armv8,.-sha1_block_data_order_armv8
 #endif
 ___
@@ -648,13 +648,18 @@ ___
     sub unsha1 {
 	my ($mnemonic,$arg)=@_;
 
-	$arg =~ m/q([0-9]+)(?:,\s*q([0-9]+))?,\s*q([0-9]+)/o
-	&&
-	sprintf ".long\t0x%08x\t@ %s %s",
-			$opcode{$mnemonic}|(($1&7)<<13)|(($1&8)<<19)
-					  |(($2&7)<<17)|(($2&8)<<4)
-					  |(($3&7)<<1) |(($3&8)<<2),
+	if ($arg =~ m/q([0-9]+)(?:,\s*q([0-9]+))?,\s*q([0-9]+)/o) {
+	    my $word = $opcode{$mnemonic}|(($1&7)<<13)|(($1&8)<<19)
+					 |(($2&7)<<17)|(($2&8)<<4)
+					 |(($3&7)<<1) |(($3&8)<<2);
+	    # since ARMv7 instructions are always encoded little-endian.
+	    # correct solution is to use .inst directive, but older
+	    # assemblers don't implement it:-(
+	    sprintf ".byte\t0x%02x,0x%02x,0x%02x,0x%02x\t@ %s %s",
+			$word&0xff,($word>>8)&0xff,
+			($word>>16)&0xff,($word>>24)&0xff,
 			$mnemonic,$arg;
+	}
     }
 }
 
@@ -664,6 +669,7 @@ foreach (split($/,$code)) {
 
 	s/\b(sha1\w+)\s+(q.*)/unsha1($1,$2)/geo;
 
+	s/\bret\b/bx	lr/o		or
 	s/\bbx\s+lr\b/.word\t0xe12fff1e/o;	# make it possible to compile with -march=armv4
 
 	print $_,$/;

@@ -202,7 +202,7 @@ bn_GF2m_mul_2x2:
 	veor		$r, $r, $t2
 
 	vst1.32		{$r}, [r0]
-	bx	lr
+	ret		@ bx lr
 .align	4
 .Lialu:
 #endif
@@ -273,6 +273,7 @@ foreach (split("\n",$code)) {
 	s/\`([^\`]*)\`/eval $1/geo;
 
 	s/\bq([0-9]+)#(lo|hi)/sprintf "d%d",2*$1+($2 eq "hi")/geo	or
+	s/\bret\b/bx	lr/go		or
 	s/\bbx\s+lr\b/.word\t0xe12fff1e/go;    # make it possible to compile with -march=armv4
 
 	print $_,"\n";

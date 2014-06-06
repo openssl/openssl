@@ -230,9 +230,14 @@ bn_mul_mont:
 	ldmia	sp!,{r4-r12,lr}		@ restore registers
 	add	sp,sp,#2*4		@ skip over {r0,r2}
 	mov	r0,#1
-.Labrt:	tst	lr,#1
+.Labrt:
+#if __ARM_ARCH__>=5
+	ret				@ bx lr
+#else
+	tst	lr,#1
 	moveq	pc,lr			@ be binary compatible with V4, yet
 	bx	lr			@ interoperable with Thumb ISA:-)
+#endif
 .size	bn_mul_mont,.-bn_mul_mont
 ___
 {
@@ -650,7 +655,7 @@ bn_mul8x_mont_neon:
 	sub	sp,ip,#96
         vldmia  sp!,{d8-d15}
         ldmia   sp!,{r4-r11}
-	bx	lr
+	ret						@ bx lr
 .size	bn_mul8x_mont_neon,.-bn_mul8x_mont_neon
 #endif
 ___
@@ -665,5 +670,6 @@ ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
 $code =~ s/\bbx\s+lr\b/.word\t0xe12fff1e/gm;	# make it possible to compile with -march=armv4
+$code =~ s/\bret\b/bx	lr/gm;
 print $code;
 close STDOUT;
