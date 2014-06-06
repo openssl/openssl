@@ -698,8 +698,7 @@ dtls1_reassemble_fragment(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 	return DTLS1_HM_FRAGMENT_RETRY;
 
 err:
-	if (frag != NULL) dtls1_hm_fragment_free(frag);
-	if (item != NULL) OPENSSL_free(item);
+	if (frag != NULL && item == NULL) dtls1_hm_fragment_free(frag);
 	*ok = 0;
 	return i;
 	}
@@ -783,8 +782,7 @@ dtls1_process_out_of_seq_message(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 	return DTLS1_HM_FRAGMENT_RETRY;
 
 err:
-	if ( frag != NULL) dtls1_hm_fragment_free(frag);
-	if ( item != NULL) OPENSSL_free(item);
+	if (frag != NULL && item == NULL) dtls1_hm_fragment_free(frag);
 	*ok = 0;
 	return i;
 	}
