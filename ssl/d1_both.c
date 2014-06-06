@@ -592,6 +592,16 @@ dtls1_retrieve_buffered_fragment(SSL *s, long max, int *ok)
 		return 0;
 	}
 
+/* dtls1_max_handshake_message_len returns the maximum number of bytes
+ * permitted in a DTLS handshake message for |s|. The minimum is 16KB, but may
+ * be greater if the maximum certificate list size requires it. */
+static unsigned long dtls1_max_handshake_message_len(const SSL *s)
+	{
+	unsigned long max_len = DTLS1_HM_HEADER_LENGTH + SSL3_RT_MAX_ENCRYPTED_LENGTH;
+	if (max_len < (unsigned long)s->max_cert_list)
+		return s->max_cert_list;
+	return max_len;
+	}
 
 static int
 dtls1_reassemble_fragment(SSL *s, struct hm_header_st* msg_hdr, int *ok)
@@ -600,20 +610,10 @@ dtls1_reassemble_fragment(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 	pitem *item = NULL;
 	int i = -1, is_complete;
 	unsigned char seq64be[8];
-	unsigned long frag_len = msg_hdr->frag_len, max_len;
+	unsigned long frag_len = msg_hdr->frag_len;
 
-	if ((msg_hdr->frag_off+frag_len) > msg_hdr->msg_len)
-		goto err;
-
-	/* Determine maximum allowed message size. Depends on (user set)
-	 * maximum certificate length, but 16k is minimum.
-	 */
-	if (DTLS1_HM_HEADER_LENGTH + SSL3_RT_MAX_ENCRYPTED_LENGTH < s->max_cert_list)
-		max_len = s->max_cert_list;
-	else
-		max_len = DTLS1_HM_HEADER_LENGTH + SSL3_RT_MAX_ENCRYPTED_LENGTH;
-
-	if ((msg_hdr->frag_off+frag_len) > max_len)
+	if ((msg_hdr->frag_off+frag_len) > msg_hdr->msg_len ||
+	    msg_hdr->msg_len > dtls1_max_handshake_message_len(s))
 		goto err;
 
 	/* Try to find item in queue */
@@ -753,6 +753,9 @@ dtls1_process_out_of_seq_message(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 		{
 		if (frag_len && frag_len < msg_hdr->msg_len)
 			return dtls1_reassemble_fragment(s, msg_hdr, ok);
+
+		if (frag_len > dtls1_max_handshake_message_len(s))
+			goto err;
 
 		frag = dtls1_hm_fragment_new(frag_len, 0);
 		if ( frag == NULL)
