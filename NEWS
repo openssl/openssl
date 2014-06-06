@@ -9,6 +9,14 @@
 
       o
 
+  Known issues with OpenSSL 0.9.8za:
+
+      o Compilation failure of s3_pkt.c on some platforms due to missing
+        <limits.h> include. Fixed in 0.9.8zb-dev.
+      o FIPS capable link failure with missing symbol BN_consttime_swap.
+        Fixed in 0.9.8zb-dev. Workaround is to compile with no-ec: the EC
+        algorithms are not approved in OpenSSL 0.9.8 anyway.
+
   Major changes between OpenSSL 0.9.8y and OpenSSL 0.9.8za [5 Jun 2014]:
 
       o Fix for CVE-2014-0224
