@@ -386,7 +386,7 @@ gcm_init_neon:
 	veor		$IN,$IN,$t0		@ twisted H
 	vstmia		r0,{$IN}
 
-	bx	lr
+	ret					@ bx lr
 .size	gcm_init_neon,.-gcm_init_neon
 
 .global	gcm_gmult_neon
@@ -470,7 +470,7 @@ $code.=<<___;
 	vst1.64		$Xl#hi,[$Xi,:64]!	@ write out Xi
 	vst1.64		$Xl#lo,[$Xi,:64]
 
-	bx	lr
+	ret					@ bx lr
 .size	gcm_ghash_neon,.-gcm_ghash_neon
 #endif
 ___
@@ -484,6 +484,7 @@ foreach (split("\n",$code)) {
 	s/\`([^\`]*)\`/eval $1/geo;
 
 	s/\bq([0-9]+)#(lo|hi)/sprintf "d%d",2*$1+($2 eq "hi")/geo	or
+	s/\bret\b/bx	lr/go		or
 	s/\bbx\s+lr\b/.word\t0xe12fff1e/go;    # make it possible to compile with -march=armv4
 
 	print $_,"\n";
