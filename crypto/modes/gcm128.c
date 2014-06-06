@@ -645,7 +645,7 @@ static void gcm_gmult_1bit(u64 Xi[2],const u64 H[2])
 
 #endif
 
-#if	TABLE_BITS==4 && defined(GHASH_ASM)
+#if	TABLE_BITS==4 && (defined(GHASH_ASM) || defined(OPENSSL_CPUID_OBJ))
 # if	!defined(I386_ONLY) && \
 	(defined(__i386)	|| defined(__i386__)	|| \
 	 defined(__x86_64)	|| defined(__x86_64__)	|| \
@@ -676,14 +676,21 @@ void gcm_ghash_4bit_mmx(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len
 void gcm_gmult_4bit_x86(u64 Xi[2],const u128 Htable[16]);
 void gcm_ghash_4bit_x86(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
 #  endif
-# elif defined(__arm__) || defined(__arm)
+# elif defined(__arm__) || defined(__arm) || defined(__aarch64__)
 #  include "arm_arch.h"
 #  if __ARM_ARCH__>=7
 #   define GHASH_ASM_ARM
 #   define GCM_FUNCREF_4BIT
+#   define PMULL_CAPABLE	(OPENSSL_armcap_P & ARMV8_PMULL)
+#   if defined(__arm__) || defined(__arm)
+#    define NEON_CAPABLE	(OPENSSL_armcap_P & ARMV7_NEON)
+#   endif
 void gcm_init_neon(u128 Htable[16],const u64 Xi[2]);
 void gcm_gmult_neon(u64 Xi[2],const u128 Htable[16]);
 void gcm_ghash_neon(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
+void gcm_init_v8(u128 Htable[16],const u64 Xi[2]);
+void gcm_gmult_v8(u64 Xi[2],const u128 Htable[16]);
+void gcm_ghash_v8(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
 #  endif
 # elif defined(__sparc__) || defined(__sparc)
 #  include "sparc_arch.h"
@@ -767,11 +774,21 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx,void *key,block128_f block)
 	ctx->ghash = gcm_ghash_4bit;
 #  endif
 # elif	defined(GHASH_ASM_ARM)
-	if (OPENSSL_armcap_P & ARMV7_NEON) {
+#  ifdef PMULL_CAPABLE
+	if (PMULL_CAPABLE) {
+		gcm_init_v8(ctx->Htable,ctx->H.u);
+		ctx->gmult = gcm_gmult_v8;
+		ctx->ghash = gcm_ghash_v8;
+	} else
+#  endif
+#  ifdef NEON_CAPABLE
+	if (NEON_CAPABLE) {
 		gcm_init_neon(ctx->Htable,ctx->H.u);
 		ctx->gmult = gcm_gmult_neon;
 		ctx->ghash = gcm_ghash_neon;
-	} else {
+	} else
+#  endif
+	{
 		gcm_init_4bit(ctx->Htable,ctx->H.u);
 		ctx->gmult = gcm_gmult_4bit;
 		ctx->ghash = gcm_ghash_4bit;
