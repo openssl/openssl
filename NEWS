@@ -9,7 +9,7 @@
 
       o
 
-  Known issues with OpenSSL 1.0.0m:
+  Known issues in OpenSSL 1.0.0m:
 
       o Compilation failure of s3_pkt.c on some platforms due to missing
         <limits.h> include. Fixed in 1.0.0n-dev
