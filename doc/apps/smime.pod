@@ -15,6 +15,9 @@ B<openssl> B<smime>
 [B<-pk7out>]
 [B<-[cipher]>]
 [B<-in file>]
+[B<-CAfile file>]
+[B<-CApath dir>]
+[B<-trusted_first>]
 [B<-certfile file>]
 [B<-signer file>]
 [B<-recip  file>]
@@ -145,6 +148,12 @@ a directory containing trusted CA certificates, only used with
 B<-verify>. This directory must be a standard certificate directory: that
 is a hash of each subject name (using B<x509 -hash>) should be linked
 to each certificate.
+
+=item B<-trusted_first>
+
+Use certificates in CA file or CA directory over certificates provided
+in the message when building the trust chain to verify server certificate.
+This is mainly useful in environments with Bridge CA or Cross-Certified CAs.
 
 =item B<-md digest>
 
