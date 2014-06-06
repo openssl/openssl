@@ -48,6 +48,7 @@ B<openssl> B<s_client>
 [B<-serverinfo types>]
 [B<-auth>]
 [B<-auth_require_reneg>]
+[B<-nextprotoneg protocols>]
 
 =head1 DESCRIPTION
 
@@ -288,6 +289,17 @@ supplemental data if the server also sent the authorization extensions in the Se
 =item B<-auth_require_reneg>
 
 only send RFC 5878 client and server authorization extensions during renegotiation.
+
+=item B<-nextprotoneg protocols>
+
+enable Next Protocol Negotiation TLS extension and provide a list of
+comma-separated protocol names that the client should advertise
+support for. The list should contain most wanted protocols first.
+Protocol names are printable ASCII strings, for example "http/1.1" or
+"spdy/3".
+Empty list of protocols is treated specially and will cause the client to
+advertise support for the TLS extension but disconnect just after
+reciving ServerHello with a list of server supported protocols.
 
 =back
 

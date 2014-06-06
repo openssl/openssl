@@ -61,6 +61,8 @@ B<openssl> B<s_server>
 [B<-auth>]
 [B<-auth_require_reneg>]
 [B<-no_resumption_on_reneg>]
+[B<-nextprotoneg protocols>]
+
 =head1 DESCRIPTION
 
 The B<s_server> command implements a generic SSL/TLS server which listens
@@ -336,6 +338,14 @@ only send RFC 5878 client and server authorization extensions during renegotiati
 
 set SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION flag.  Required in order to receive supplemental data
 during renegotiation if auth and auth_require_reneg are set.
+
+=item B<-nextprotoneg protocols>
+
+enable Next Protocol Negotiation TLS extension and provide a
+comma-separated list of supported protocol names.
+The list should contain most wanted protocols first.
+Protocol names are printable ASCII strings, for example "http/1.1" or
+"spdy/3".
 
 =back
 
