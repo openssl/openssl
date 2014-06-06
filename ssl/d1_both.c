@@ -765,7 +765,9 @@ dtls1_process_out_of_seq_message(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 			/* read the body of the fragment (header has already been read) */
 			i = s->method->ssl_read_bytes(s,SSL3_RT_HANDSHAKE,
 				frag->fragment,frag_len,0);
-			if (i<=0 || (unsigned long)i!=frag_len)
+			if ((unsigned long)i!=frag_len)
+				i = -1;
+			if (i<=0)
 				goto err;
 			}
 
