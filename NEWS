@@ -5,11 +5,11 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Major changes between OpenSSL 0.9.8za and OpenSSL 0.9.8zb [under development]
+  Major changes between OpenSSL 0.9.8za and OpenSSL 0.9.8zb [under development]:
 
       o
 
-  Known issues with OpenSSL 0.9.8za:
+  Known issues in OpenSSL 0.9.8za:
 
       o Compilation failure of s3_pkt.c on some platforms due to missing
         <limits.h> include. Fixed in 0.9.8zb-dev.
