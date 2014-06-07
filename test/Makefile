@@ -420,6 +420,13 @@ BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
 
+BUILD_CMD_STATIC=shlib_target=; \
+	LIBRARIES="$(DLIBSSL) $(DLIBCRYPTO) $(LIBKRB5)"; \
+	$(MAKE) -f $(TOP)/Makefile.shared -e \
+		APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		link_app.$${shlib_target}
+
 $(RSATEST)$(EXE_EXT): $(RSATEST).o $(DLIBCRYPTO)
 	@target=$(RSATEST); $(BUILD_CMD)
 
@@ -618,7 +625,7 @@ $(V3NAMETEST)$(EXE_EXT): $(V3NAMETEST).o $(DLIBCRYPTO)
 	@target=$(V3NAMETEST); $(BUILD_CMD)
 
 $(HEARTBEATTEST)$(EXE_EXT): $(HEARTBEATTEST).o $(DLIBCRYPTO)
-	@target=$(HEARTBEATTEST); $(BUILD_CMD)
+	@target=$(HEARTBEATTEST); $(BUILD_CMD_STATIC)
 
 #$(AESTEST).o: $(AESTEST).c
 #	$(CC) -c $(CFLAGS) -DINTERMEDIATE_VALUE_KAT -DTRACE_KAT_MCT $(AESTEST).c
