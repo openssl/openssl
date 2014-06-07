@@ -9,6 +9,11 @@
 
       o
 
+  Known issues in OpenSSL 1.0.1h:
+
+      o EAP-FAST and other applications using tls_session_secret_cb
+        wont resume sessions. Fixed in 1.0.1i-dev
+
   Major changes between OpenSSL 1.0.1g and OpenSSL 1.0.1h [5 Jun 2014]
 
       o Fix for CVE-2014-0224
