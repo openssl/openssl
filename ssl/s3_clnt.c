@@ -1031,6 +1031,7 @@ int ssl3_get_server_hello(SSL *s)
 			{
 			s->session->cipher = pref_cipher ?
 				pref_cipher : ssl_get_cipher_by_char(s, p+j);
+	    		s->s3->flags |= SSL3_FLAGS_CCS_OK;
 			}
 		}
 #endif /* OPENSSL_NO_TLSEXT */
