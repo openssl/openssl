@@ -243,6 +243,10 @@ extern "C" {
  * http://tools.ietf.org/html/draft-agl-tls-padding-03
  */
 #define TLSEXT_TYPE_padding	21
+/* Extension type for Encrypt-then-MAC
+ * http://www.ietf.org/id/draft-ietf-tls-encrypt-then-mac-02.txt
+ */
+#define TLSEXT_TYPE_encrypt_then_mac	22
 
 /* ExtensionType value from RFC4507 */
 #define TLSEXT_TYPE_session_ticket		35
