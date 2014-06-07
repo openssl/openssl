@@ -11,6 +11,8 @@
 
   Known issues in OpenSSL 1.0.0m:
 
+      o EAP-FAST and other applications using tls_session_secret_cb
+        wont resume sessions. Fixed in 1.0.0n-dev
       o Compilation failure of s3_pkt.c on some platforms due to missing
         <limits.h> include. Fixed in 1.0.0n-dev
 
