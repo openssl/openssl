@@ -203,6 +203,8 @@ my %table=(
 "debug-linux-generic64","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -DTERMIO -g -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "debug-linux-x86_64","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -m64 -DL_ENDIAN -DTERMIO -g -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
 "dist",		"cc:-O::(unknown)::::::",
+"debug-test-64-clang",	"clang:$gcc_devteam_warn -Wno-error=overlength-strings -Wno-error=extended-offsetof -Wno-error=language-extension-token -Wno-error=unused-const-variable -Wstrict-overflow -Qunused-arguments -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DDEBUG_UNUSED -g3 -O3 -pipe::${BSDthreads}:::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"darwin64-debug-test-64-clang",  "clang:-arch x86_64 -DL_ENDIAN $gcc_devteam_warn -Wno-error=overlength-strings -Wno-error=extended-offsetof -Wno-error=language-extension-token -Wno-error=unused-const-variable -Wstrict-overflow -Qunused-arguments -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DDEBUG_UNUSED -g3 -O3 -pipe::${BSDthreads}:MACOSX::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:macosx:dlfcn:darwin-shared:-fPIC -fno-common:-arch x86_64 -dynamiclib:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
 
 # Basic configs that should work on any (32 and less bit) box
 "gcc",		"gcc:-O3::(unknown):::BN_LLONG:::",
