@@ -184,6 +184,8 @@ included.
 the cipher suites offering no authentication. This is currently the anonymous
 DH algorithms and anonymous ECDH algorithms. These cipher suites are vulnerable
 to a "man in the middle" attack and so their use is normally discouraged.
+It also includes SRP cipher suites that do not use server certificates
+for additional authentication.
 
 =item B<kRSA>, B<aRSA>, B<RSA>
 
