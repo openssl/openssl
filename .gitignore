@@ -84,3 +84,5 @@ Makefile.save
 *.bak
 tags
 TAGS
+cscope.out
+*.d
