@@ -270,6 +270,7 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_aGOST94,0,0,SSL_aGOST94,0,0,0,0,0,0,0},
 	{0,SSL_TXT_aGOST01,0,0,SSL_aGOST01,0,0,0,0,0,0,0},
 	{0,SSL_TXT_aGOST,0,0,SSL_aGOST94|SSL_aGOST01,0,0,0,0,0,0,0},
+	{0,SSL_TXT_aSRP,0,    0,SSL_aSRP,  0,0,0,0,0,0,0},
 
 	/* aliases combining key exchange and server authentication */
 	{0,SSL_TXT_EDH,0,     SSL_kEDH,~SSL_aNULL,0,0,0,0,0,0,0},
@@ -1701,6 +1702,9 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 		break;
 	case SSL_aPSK:
 		au="PSK";
+		break;
+	case SSL_aSRP:
+		au="SRP";
 		break;
 	default:
 		au="unknown";
