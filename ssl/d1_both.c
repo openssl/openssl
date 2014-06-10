@@ -1176,6 +1176,8 @@ dtls1_buffer_message(SSL *s, int is_ccs)
 	OPENSSL_assert(s->init_off == 0);
 
 	frag = dtls1_hm_fragment_new(s->init_num, 0);
+	if (!frag)
+		return 0;
 
 	memcpy(frag->fragment, s->init_buf->data, s->init_num);
 
