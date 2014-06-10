@@ -1100,7 +1100,7 @@ $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR
 $cpuid_obj    = armcap.o armv4cpuid.o
 $bn_obj       = bn_asm.o armv4-mont.o armv4-gf2m.o
 $des_obj      = 
-$aes_obj      = aes_cbc.o aes-armv4.o bsaes-armv7.o
+$aes_obj      = aes_cbc.o aes-armv4.o bsaes-armv7.o aesv8-armx.o
 $bf_obj       = 
 $md5_obj      = 
 $sha1_obj     = sha1-armv4-large.o sha256-armv4.o sha512-armv4.o
@@ -1652,7 +1652,7 @@ $multilib     =
 
 *** debug-VC-WIN32
 $cc           = cl
-$cflags       = -W3 -WX -Gs0 -GF -Gy -Zi -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -D_CRT_SECURE_NO_DEPRECATE
+$cflags       = -W3 -Gs0 -GF -Gy -Zi -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -D_CRT_SECURE_NO_DEPRECATE
 $unistd       = 
 $thread_cflag = 
 $sys_id       = WIN32
@@ -1883,7 +1883,7 @@ $multilib     =
 
 *** debug-ben-debug-64-clang
 $cc           = clang
-$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -fsanitize=undefined -Wno-error=overlength-strings -Wno-error=extended-offsetof -Wno-error=language-extension-token -Wstrict-overflow -Qunused-arguments -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DDEBUG_UNUSED -g3 -O3 -pipe
+$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -Wno-error=overlength-strings -Wno-error=extended-offsetof -Qunused-arguments -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DDEBUG_UNUSED -g3 -O3 -pipe
 $unistd       = 
 $thread_cflag = -pthread -D_THREAD_SAFE -D_REENTRANT
 $sys_id       = 
@@ -2243,39 +2243,6 @@ $shared_extension = .$(SHLIB_MAJOR).$(SHLIB_MINOR).dylib
 $ranlib       = 
 $arflags      = 
 $multilib     = 
-
-*** debug-erbridge
-$cc           = gcc
-$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -DBN_DEBUG -DCONF_DEBUG -DCRYPTO_MDEBUG -m64 -DL_ENDIAN -DTERMIO -g
-$unistd       = 
-$thread_cflag = -D_REENTRANT
-$sys_id       = 
-$lflags       = -ldl
-$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL
-$cpuid_obj    = x86_64cpuid.o
-$bn_obj       = x86_64-gcc.o x86_64-mont.o x86_64-mont5.o x86_64-gf2m.o rsaz_exp.o rsaz-x86_64.o rsaz-avx2.o
-$des_obj      = 
-$aes_obj      = aes-x86_64.o vpaes-x86_64.o bsaes-x86_64.o aesni-x86_64.o aesni-sha1-x86_64.o aesni-sha256-x86_64.o aesni-mb-x86_64.o
-$bf_obj       = 
-$md5_obj      = md5-x86_64.o
-$sha1_obj     = sha1-x86_64.o sha256-x86_64.o sha512-x86_64.o sha1-mb-x86_64.o sha256-mb-x86_64.o
-$cast_obj     = 
-$rc4_obj      = rc4-x86_64.o rc4-md5-x86_64.o
-$rmd160_obj   = 
-$rc5_obj      = 
-$wp_obj       = wp-x86_64.o
-$cmll_obj     = cmll-x86_64.o cmll_misc.o
-$modes_obj    = ghash-x86_64.o aesni-gcm-x86_64.o
-$engines_obj  = e_padlock-x86_64.o
-$perlasm_scheme = elf
-$dso_scheme   = dlfcn
-$shared_target= linux-shared
-$shared_cflag = -fPIC
-$shared_ldflag = -m64
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
-$arflags      = 
-$multilib     = 64
 
 *** debug-geoff32
 $cc           = gcc
@@ -4004,7 +3971,7 @@ $bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR
 $cpuid_obj    = armcap.o arm64cpuid.o mem_clr.o
 $bn_obj       = 
 $des_obj      = 
-$aes_obj      = 
+$aes_obj      = aes_core.o aes_cbc.o aesv8-armx.o
 $bf_obj       = 
 $md5_obj      = 
 $sha1_obj     = sha1-armv8.o sha256-armv8.o sha512-armv8.o
@@ -4202,7 +4169,7 @@ $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR
 $cpuid_obj    = armcap.o armv4cpuid.o
 $bn_obj       = bn_asm.o armv4-mont.o armv4-gf2m.o
 $des_obj      = 
-$aes_obj      = aes_cbc.o aes-armv4.o bsaes-armv7.o
+$aes_obj      = aes_cbc.o aes-armv4.o bsaes-armv7.o aesv8-armx.o
 $bf_obj       = 
 $md5_obj      = 
 $sha1_obj     = sha1-armv4-large.o sha256-armv4.o sha512-armv4.o

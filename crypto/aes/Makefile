@@ -86,6 +86,10 @@ aes-parisc.s:	asm/aes-parisc.pl
 aes-mips.S:	asm/aes-mips.pl
 	$(PERL) asm/aes-mips.pl $(PERLASM_SCHEME) $@
 
+aesv8-armx.S:	asm/aesv8-armx.pl
+	$(PERL) asm/aesv8-armx.pl $(PERLASM_SCHEME) $@
+aesv8-armx.o:	aesv8-armx.S
+
 # GNU make "catch all"
 aes-%.S:	asm/aes-%.pl;	$(PERL) $< $(PERLASM_SCHEME) > $@
 aes-armv4.o:	aes-armv4.S
