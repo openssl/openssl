@@ -464,6 +464,9 @@ OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, char *path, OCSP_REQUEST *req)
 
 	ctx = OCSP_sendreq_new(b, path, req, -1);
 
+	if (!ctx)
+		return NULL;
+
 	do
 		{
 		rv = OCSP_sendreq_nbio(&resp, ctx);
