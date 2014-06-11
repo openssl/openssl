@@ -217,4 +217,12 @@ else
   $ssltest -bio_pair -tls1 -cipher SRP -srpuser test -srppass abc123
 fi
 
+#############################################################################
+# Multi-buffer tests
+
+if [ -z "$extra" -a `uname -m` = "x86_64" ]; then
+  $ssltest -cipher AES128-SHA    -bytes 8m	|| exit 1
+  $ssltest -cipher AES128-SHA256 -bytes 8m	|| exit 1
+fi
+
 exit 0
