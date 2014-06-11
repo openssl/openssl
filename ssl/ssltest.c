@@ -2301,7 +2301,8 @@ end:
 
 int doit(SSL *s_ssl, SSL *c_ssl, long count)
 	{
-	MS_STATIC char cbuf[1024*8],sbuf[1024*8];
+	char *cbuf=NULL,*sbuf=NULL;
+	long bufsiz;
 	long cw_num=count,cr_num=count;
 	long sw_num=count,sr_num=count;
 	int ret=1;
@@ -2314,9 +2315,15 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 	int done=0;
 	int c_write,s_write;
 	int do_server=0,do_client=0;
+	int max_frag = 5*1024;
 
-	memset(cbuf,0,sizeof(cbuf));
-	memset(sbuf,0,sizeof(sbuf));
+	bufsiz = count>40*1024 ? 40*1024 : count;
+
+	if ((cbuf = OPENSSL_malloc(bufsiz))==NULL) goto err;
+	if ((sbuf = OPENSSL_malloc(bufsiz))==NULL) goto err;
+
+	memset(cbuf,0,bufsiz);
+	memset(sbuf,0,bufsiz);
 
 	c_to_s=BIO_new(BIO_s_mem());
 	s_to_c=BIO_new(BIO_s_mem());
@@ -2336,10 +2343,12 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 
 	SSL_set_connect_state(c_ssl);
 	SSL_set_bio(c_ssl,s_to_c,c_to_s);
+	SSL_set_max_send_fragment(c_ssl,max_frag);
 	BIO_set_ssl(c_bio,c_ssl,BIO_NOCLOSE);
 
 	SSL_set_accept_state(s_ssl);
 	SSL_set_bio(s_ssl,c_to_s,s_to_c);
+	SSL_set_max_send_fragment(s_ssl,max_frag);
 	BIO_set_ssl(s_bio,s_ssl,BIO_NOCLOSE);
 
 	c_r=0; s_r=1;
@@ -2390,8 +2399,8 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 			{
 			if (c_write)
 				{
-				j = (cw_num > (long)sizeof(cbuf)) ?
-					(int)sizeof(cbuf) : (int)cw_num;
+				j = (cw_num > bufsiz) ?
+					(int)bufsiz : (int)cw_num;
 				i=BIO_write(c_bio,cbuf,j);
 				if (i < 0)
 					{
@@ -2424,11 +2433,13 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 					s_r=1;
 					c_write=0;
 					cw_num-=i;
+					if (max_frag>1029)
+						SSL_set_max_send_fragment(c_ssl,max_frag-=5);
 					}
 				}
 			else
 				{
-				i=BIO_read(c_bio,cbuf,sizeof(cbuf));
+				i=BIO_read(c_bio,cbuf,bufsiz);
 				if (i < 0)
 					{
 					c_r=0;
@@ -2476,7 +2487,7 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 			{
 			if (!s_write)
 				{
-				i=BIO_read(s_bio,sbuf,sizeof(cbuf));
+				i=BIO_read(s_bio,sbuf,bufsiz);
 				if (i < 0)
 					{
 					s_r=0;
@@ -2521,8 +2532,8 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 				}
 			else
 				{
-				j = (sw_num > (long)sizeof(sbuf)) ?
-					(int)sizeof(sbuf) : (int)sw_num;
+				j = (sw_num > bufsiz) ?
+					(int)bufsiz : (int)sw_num;
 				i=BIO_write(s_bio,sbuf,j);
 				if (i < 0)
 					{
@@ -2557,6 +2568,8 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 					c_r=1;
 					if (sw_num <= 0)
 						done|=S_DONE;
+					if (max_frag>1029)
+						SSL_set_max_send_fragment(s_ssl,max_frag-=5);
 					}
 				}
 			}
@@ -2612,6 +2625,10 @@ err:
 	if (s_to_c != NULL) BIO_free(s_to_c);
 	if (c_bio != NULL) BIO_free_all(c_bio);
 	if (s_bio != NULL) BIO_free_all(s_bio);
+
+	if (cbuf) OPENSSL_free(cbuf);
+	if (sbuf) OPENSSL_free(sbuf);
+
 	return(ret);
 	}
 
