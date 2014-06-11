@@ -118,7 +118,9 @@ $code.=<<___;
 aesni_cbc_sha1_enc:
 	# caller should check for SSSE3 and AES-NI bits
 	mov	OPENSSL_ia32cap_P+0(%rip),%r10d
-	mov	OPENSSL_ia32cap_P+4(%rip),%r11d
+	mov	OPENSSL_ia32cap_P+4(%rip),%r11
+	bt	\$61,%r11		# check SHA bit
+	jc	aesni_cbc_sha1_enc_shaext
 ___
 $code.=<<___ if ($avx);
 	and	\$`1<<28`,%r11d		# mask AVX bit
@@ -200,7 +202,7 @@ $code.=<<___;
 	mov	$in0,%r12			# reassign arguments
 	mov	$out,%r13
 	mov	$len,%r14
-	mov	$key,%r15
+	lea	112($key),%r15			# size optimization
 	movdqu	($ivp),$iv			# load IV
 	mov	$ivp,88(%rsp)			# save $ivp
 ___
@@ -209,7 +211,7 @@ my $rounds="${ivp}d";
 $code.=<<___;
 	shl	\$6,$len
 	sub	$in0,$out
-	mov	240($key),$rounds
+	mov	240-112($key),$rounds
 	add	$inp,$len		# end of input
 
 	lea	K_XX_XX(%rip),$K_XX_XX
@@ -243,8 +245,8 @@ $code.=<<___;
 	psubd	@Tx[1],@X[-3&7]
 	movdqa	@X[-2&7],32(%rsp)
 	psubd	@Tx[1],@X[-2&7]
-	movups	($key),$rndkey0		# $key[0]
-	movups	16($key),$rndkey[0]	# forward reference
+	movups	-112($key),$rndkey0	# $key[0]
+	movups	16-112($key),$rndkey[0]	# forward reference
 	jmp	.Loop_ssse3
 ___
 
@@ -261,31 +263,31 @@ ___
 ___
       $code.=<<___;
 	xorps		$in,$iv
+	movups		`32+16*$k-112`($key),$rndkey[1]
 	aesenc		$rndkey[0],$iv
-	movups		`32+16*$k`($key),$rndkey[1]
 ___
     } elsif ($k==9) {
       $sn++;
       $code.=<<___;
 	cmp		\$11,$rounds
 	jb		.Laesenclast$sn
-	movups		`32+16*($k+0)`($key),$rndkey[1]
+	movups		`32+16*($k+0)-112`($key),$rndkey[1]
 	aesenc		$rndkey[0],$iv
-	movups		`32+16*($k+1)`($key),$rndkey[0]
+	movups		`32+16*($k+1)-112`($key),$rndkey[0]
 	aesenc		$rndkey[1],$iv
 	je		.Laesenclast$sn
-	movups		`32+16*($k+2)`($key),$rndkey[1]
+	movups		`32+16*($k+2)-112`($key),$rndkey[1]
 	aesenc		$rndkey[0],$iv
-	movups		`32+16*($k+3)`($key),$rndkey[0]
+	movups		`32+16*($k+3)-112`($key),$rndkey[0]
 	aesenc		$rndkey[1],$iv
 .Laesenclast$sn:
 	aesenclast	$rndkey[0],$iv
-	movups		16($key),$rndkey[1]		# forward reference
+	movups		16-112($key),$rndkey[1]		# forward reference
 ___
     } else {
       $code.=<<___;
+	movups		`32+16*$k-112`($key),$rndkey[1]
 	aesenc		$rndkey[0],$iv
-	movups		`32+16*$k`($key),$rndkey[1]
 ___
     }
     $r++;	unshift(@rndkey,pop(@rndkey));
@@ -1041,7 +1043,7 @@ $code.=<<___;
 	mov	$in0,%r12			# reassign arguments
 	mov	$out,%r13
 	mov	$len,%r14
-	mov	$key,%r15
+	lea	112($key),%r15			# size optimization
 	vmovdqu	($ivp),$iv			# load IV
 	mov	$ivp,88(%rsp)			# save $ivp
 ___
@@ -1050,8 +1052,7 @@ my $rounds="${ivp}d";
 $code.=<<___;
 	shl	\$6,$len
 	sub	$in0,$out
-	mov	240($key),$rounds
-	add	\$112,$key		# size optimization
+	mov	240-112($key),$rounds
 	add	$inp,$len		# end of input
 
 	lea	K_XX_XX(%rip),$K_XX_XX
@@ -1651,11 +1652,180 @@ K_XX_XX:
 .long	0x8f1bbcdc,0x8f1bbcdc,0x8f1bbcdc,0x8f1bbcdc	# K_40_59
 .long	0xca62c1d6,0xca62c1d6,0xca62c1d6,0xca62c1d6	# K_60_79
 .long	0x00010203,0x04050607,0x08090a0b,0x0c0d0e0f	# pbswap mask
+.byte	0xf,0xe,0xd,0xc,0xb,0xa,0x9,0x8,0x7,0x6,0x5,0x4,0x3,0x2,0x1,0x0
 
 .asciz	"AESNI-CBC+SHA1 stitch for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
 .align	64
 ___
+						{{{
+($in0,$out,$len,$key,$ivp,$ctx,$inp)=("%rdi","%rsi","%rdx","%rcx","%r8","%r9","%r10");
 
+$rounds="%r11d";
+
+($iv,$in,$rndkey0)=map("%xmm$_",(2,14,15));
+@rndkey=("%xmm0","%xmm1");
+$r=0;
+
+my ($BSWAP,$ABCD,$E,$E_,$ABCD_SAVE,$E_SAVE)=map("%xmm$_",(7..12));
+my @MSG=map("%xmm$_",(3..6));
+
+$code.=<<___;
+.type	aesni_cbc_sha1_enc_shaext,\@function,6
+.align	32
+aesni_cbc_sha1_enc_shaext:
+	mov	`($win64?56:8)`(%rsp),$inp	# load 7th argument
+___
+$code.=<<___ if ($win64);
+	lea	`-8-4*16`(%rsp),%rsp
+	movaps	%xmm6,-8-10*16(%rax)
+	movaps	%xmm7,-8-9*16(%rax)
+	movaps	%xmm8,-8-8*16(%rax)
+	movaps	%xmm9,-8-7*16(%rax)
+	movaps	%xmm10,-8-6*16(%rax)
+	movaps	%xmm11,-8-5*16(%rax)
+	movaps	%xmm12,-8-4*16(%rax)
+	movaps	%xmm13,-8-3*16(%rax)
+	movaps	%xmm14,-8-2*16(%rax)
+	movaps	%xmm15,-8-1*16(%rax)
+.Lprologue_shaext:
+___
+$code.=<<___;
+	movdqu	($ctx),$ABCD
+	movd	16($ctx),$E
+	movdqa	K_XX_XX+0x50(%rip),$BSWAP	# byte-n-word swap
+
+	mov	240($key),$rounds
+	sub	$in0,$out
+	movups	($key),$rndkey0			# $key[0]
+	movups	16($key),$rndkey[0]		# forward reference
+	lea	112($key),$key			# size optimization
+
+	pshufd	\$0b00011011,$ABCD,$ABCD	# flip word order
+	pshufd	\$0b00011011,$E,$E		# flip word order
+	jmp	.Loop_shaext
+
+.align	16
+.Loop_shaext:
+___
+	&$aesenc();
+$code.=<<___;
+	movdqu		($inp),@MSG[0]
+	movdqa		$E,$E_SAVE		# offload $E
+	pshufb		$BSWAP,@MSG[0]
+	movdqu		0x10($inp),@MSG[1]
+	movdqa		$ABCD,$ABCD_SAVE	# offload $ABCD
+___
+	&$aesenc();
+$code.=<<___;
+	pshufb		$BSWAP,@MSG[1]
+
+	paddd		@MSG[0],$E
+	movdqu		0x20($inp),@MSG[2]
+	lea		0x40($inp),$inp
+	pxor		$E_SAVE,@MSG[0]		# black magic
+___
+	&$aesenc();
+$code.=<<___;
+	pxor		$E_SAVE,@MSG[0]		# black magic
+	movdqa		$ABCD,$E_
+	pshufb		$BSWAP,@MSG[2]
+	sha1rnds4	\$0,$E,$ABCD		# 0-3
+	sha1nexte	@MSG[1],$E_
+___
+	&$aesenc();
+$code.=<<___;
+	sha1msg1	@MSG[1],@MSG[0]
+	movdqu		-0x10($inp),@MSG[3]
+	movdqa		$ABCD,$E
+	pshufb		$BSWAP,@MSG[3]
+___
+	&$aesenc();
+$code.=<<___;
+	sha1rnds4	\$0,$E_,$ABCD		# 4-7
+	sha1nexte	@MSG[2],$E
+	pxor		@MSG[2],@MSG[0]
+	sha1msg1	@MSG[2],@MSG[1]
+___
+	&$aesenc();
+
+for($i=2;$i<20-4;$i++) {
+$code.=<<___;
+	movdqa		$ABCD,$E_
+	sha1rnds4	\$`int($i/5)`,$E,$ABCD	# 8-11
+	sha1nexte	@MSG[3],$E_
+___
+	&$aesenc();
+$code.=<<___;
+	sha1msg2	@MSG[3],@MSG[0]
+	pxor		@MSG[3],@MSG[1]
+	sha1msg1	@MSG[3],@MSG[2]
+___
+	($E,$E_)=($E_,$E);
+	push(@MSG,shift(@MSG));
+
+	&$aesenc();
+}
+$code.=<<___;
+	movdqa		$ABCD,$E_
+	sha1rnds4	\$3,$E,$ABCD		# 64-67
+	sha1nexte	@MSG[3],$E_
+	sha1msg2	@MSG[3],@MSG[0]
+	pxor		@MSG[3],@MSG[1]
+___
+	&$aesenc();
+$code.=<<___;
+	movdqa		$ABCD,$E
+	sha1rnds4	\$3,$E_,$ABCD		# 68-71
+	sha1nexte	@MSG[0],$E
+	sha1msg2	@MSG[0],@MSG[1]
+___
+	&$aesenc();
+$code.=<<___;
+	movdqa		$E_SAVE,@MSG[0]
+	movdqa		$ABCD,$E_
+	sha1rnds4	\$3,$E,$ABCD		# 72-75
+	sha1nexte	@MSG[1],$E_
+___
+	&$aesenc();
+$code.=<<___;
+	movdqa		$ABCD,$E
+	sha1rnds4	\$3,$E_,$ABCD		# 76-79
+	sha1nexte	$MSG[0],$E
+___
+	while($r<40)	{ &$aesenc(); }		# remaining aesenc's
+$code.=<<___;
+	dec		$len
+
+	paddd		$ABCD_SAVE,$ABCD
+	movups		$iv,48($out,$in0)	# write output
+	lea		64($in0),$in0
+	jnz		.Loop_shaext
+
+	pshufd	\$0b00011011,$ABCD,$ABCD
+	pshufd	\$0b00011011,$E,$E
+	movups	$iv,($ivp)			# write IV
+	movdqu	$ABCD,($ctx)
+	movd	$E,16($ctx)
+___
+$code.=<<___ if ($win64);
+	movaps	-8-10*16(%rax),%xmm6
+	movaps	-8-9*16(%rax),%xmm7
+	movaps	-8-8*16(%rax),%xmm8
+	movaps	-8-7*16(%rax),%xmm9
+	movaps	-8-6*16(%rax),%xmm10
+	movaps	-8-5*16(%rax),%xmm11
+	movaps	-8-4*16(%rax),%xmm12
+	movaps	-8-3*16(%rax),%xmm13
+	movaps	-8-2*16(%rax),%xmm14
+	movaps	-8-1*16(%rax),%xmm15
+	mov	%rax,%rsp
+.Lepilogue_shaext:
+___
+$code.=<<___;
+	ret
+.size	aesni_cbc_sha1_enc_shaext,.-aesni_cbc_sha1_enc_shaext
+___
+						}}}
 # EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
 #		CONTEXT *context,DISPATCHER_CONTEXT *disp)
 if ($win64) {
@@ -1793,12 +1963,43 @@ sub rex {
 
     $rex|=0x04			if($dst>=8);
     $rex|=0x01			if($src>=8);
-    push @opcode,$rex|0x40	if($rex);
+    unshift @opcode,$rex|0x40	if($rex);
+}
+
+sub sha1rnds4 {
+    if (@_[0] =~ /\$([x0-9a-f]+),\s*%xmm([0-9]+),\s*%xmm([0-9]+)/) {
+      my @opcode=(0x0f,0x3a,0xcc);
+	rex(\@opcode,$3,$2);
+	push @opcode,0xc0|($2&7)|(($3&7)<<3);		# ModR/M
+	my $c=$1;
+	push @opcode,$c=~/^0/?oct($c):$c;
+	return ".byte\t".join(',',@opcode);
+    } else {
+	return "sha1rnds4\t".@_[0];
+    }
+}
+
+sub sha1op38 {
+    my $instr = shift;
+    my %opcodelet = (
+		"sha1nexte" => 0xc8,
+  		"sha1msg1"  => 0xc9,
+		"sha1msg2"  => 0xca	);
+
+    if (defined($opcodelet{$instr}) && @_[0] =~ /%xmm([0-9]+),\s*%xmm([0-9]+)/) {
+      my @opcode=(0x0f,0x38);
+	rex(\@opcode,$2,$1);
+	push @opcode,$opcodelet{$instr};
+	push @opcode,0xc0|($1&7)|(($2&7)<<3);		# ModR/M
+	return ".byte\t".join(',',@opcode);
+    } else {
+	return $instr."\t".@_[0];
+    }
 }
 
 sub aesni {
   my $line=shift;
-  my @opcode=(0x66);
+  my @opcode=(0x0f,0x38);
 
     if ($line=~/(aes[a-z]+)\s+%xmm([0-9]+),\s*%xmm([0-9]+)/) {
 	my %opcodelet = (
@@ -1807,15 +2008,20 @@ sub aesni {
 	);
 	return undef if (!defined($opcodelet{$1}));
 	rex(\@opcode,$3,$2);
-	push @opcode,0x0f,0x38,$opcodelet{$1};
-	push @opcode,0xc0|($2&7)|(($3&7)<<3);	# ModR/M
+	push @opcode,$opcodelet{$1},0xc0|($2&7)|(($3&7)<<3);	# ModR/M
+	unshift @opcode,0x66;
 	return ".byte\t".join(',',@opcode);
     }
     return $line;
 }
 
-$code =~ s/\`([^\`]*)\`/eval($1)/gem;
-$code =~ s/\b(aes.*%xmm[0-9]+).*$/aesni($1)/gem;
+foreach (split("\n",$code)) {
+        s/\`([^\`]*)\`/eval $1/geo;
 
-print $code;
+	s/\b(sha1rnds4)\s+(.*)/sha1rnds4($2)/geo		or
+	s/\b(sha1[^\s]*)\s+(.*)/sha1op38($1,$2)/geo		or
+	s/\b(aes.*%xmm[0-9]+).*$/aesni($1)/geo;
+
+	print $_,"\n";
+}
 close STDOUT;

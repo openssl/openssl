@@ -57,6 +57,10 @@
 # hint regarding the number of Xupdate iterations to pre-compute in
 # advance was provided by Ilya Albrekht of Intel Corp.
 
+# March 2014.
+#
+# Add support for Intel SHA Extensions.
+
 ######################################################################
 # Current performance is summarized in following table. Numbers are
 # CPU clock cycles spent to process single byte (less is better).
@@ -71,7 +75,7 @@
 # Haswell	5.45		4.15/+31%	3.57/+53%
 # Bulldozer	9.11		5.95/+53%
 # VIA Nano	9.32		7.15/+30%
-# Atom		[10.5?]		[9.23?]/+14%
+# Atom		10.3		9.17/+12%
 # Silvermont	13.1(*)		9.37/+40%
 #
 # (*)	obviously suboptimal result, nothing was done about it,
@@ -241,6 +245,9 @@ sha1_block_data_order:
 	mov	OPENSSL_ia32cap_P+8(%rip),%r10d
 	test	\$`1<<9`,%r8d		# check SSSE3 bit
 	jz	.Lialu
+
+	test	\$`1<<29`,%r10d		# check SHA bit	
+	jnz	_shaext_shortcut
 ___
 $code.=<<___ if ($avx>1);
 	and	\$`1<<3|1<<5|1<<8`,%r10d	# check AVX2+BMI1+BMI2
@@ -314,6 +321,120 @@ $code.=<<___;
 	ret
 .size	sha1_block_data_order,.-sha1_block_data_order
 ___
+{{{
+######################################################################
+# Intel SHA Extensions implementation of SHA1 update function.
+#
+my ($ctx,$inp,$num)=("%rdi","%rsi","%rdx");
+my ($ABCD,$E,$E_,$BSWAP,$ABCD_SAVE,$E_SAVE)=map("%xmm$_",(0..3,8,9));
+my @MSG=map("%xmm$_",(4..7));
+
+$code.=<<___;
+.type	sha1_block_data_order_shaext,\@function,3
+.align	32
+sha1_block_data_order_shaext:
+_shaext_shortcut:
+___
+$code.=<<___ if ($win64);
+	lea	`-8-4*16`(%rsp),%rsp
+	movaps	%xmm6,-8-4*16(%rax)
+	movaps	%xmm7,-8-3*16(%rax)
+	movaps	%xmm8,-8-2*16(%rax)
+	movaps	%xmm9,-8-1*16(%rax)
+.Lprologue_shaext:
+___
+$code.=<<___;
+	movdqu	($ctx),$ABCD
+	movd	16($ctx),$E
+	movdqa	K_XX_XX+0xa0(%rip),$BSWAP	# byte-n-word swap
+
+	movdqu	($inp),@MSG[0]
+	pshufd	\$0b00011011,$ABCD,$ABCD	# flip word order
+	movdqu	0x10($inp),@MSG[1]
+	pshufd	\$0b00011011,$E,$E		# flip word order
+	movdqu	0x20($inp),@MSG[2]
+	pshufb	$BSWAP,@MSG[0]
+	movdqu	0x30($inp),@MSG[3]
+	pshufb	$BSWAP,@MSG[1]
+	pshufb	$BSWAP,@MSG[2]
+	movdqa	$E,$E_SAVE			# offload $E
+	pshufb	$BSWAP,@MSG[3]
+	jmp	.Loop_shaext
+
+.align	16
+.Loop_shaext:
+	dec		$num
+	lea		0x40($inp),%rax		# next input block
+	paddd		@MSG[0],$E
+	cmovne		%rax,$inp
+	movdqa		$ABCD,$ABCD_SAVE	# offload $ABCD
+___
+for($i=0;$i<20-4;$i+=2) {
+$code.=<<___;
+	sha1msg1	@MSG[1],@MSG[0]
+	movdqa		$ABCD,$E_
+	sha1rnds4	\$`int($i/5)`,$E,$ABCD	# 0-3...
+	sha1nexte	@MSG[1],$E_
+	pxor		@MSG[2],@MSG[0]
+	sha1msg1	@MSG[2],@MSG[1]
+	sha1msg2	@MSG[3],@MSG[0]
+
+	movdqa		$ABCD,$E
+	sha1rnds4	\$`int(($i+1)/5)`,$E_,$ABCD
+	sha1nexte	@MSG[2],$E
+	pxor		@MSG[3],@MSG[1]
+	sha1msg2	@MSG[0],@MSG[1]
+___
+	push(@MSG,shift(@MSG));	push(@MSG,shift(@MSG));
+}
+$code.=<<___;
+	movdqu		($inp),@MSG[0]
+	movdqa		$ABCD,$E_
+	sha1rnds4	\$3,$E,$ABCD		# 64-67
+	sha1nexte	@MSG[1],$E_
+	movdqu		0x10($inp),@MSG[1]
+	pshufb		$BSWAP,@MSG[0]
+
+	movdqa		$ABCD,$E
+	sha1rnds4	\$3,$E_,$ABCD		# 68-71
+	sha1nexte	@MSG[2],$E
+	movdqu		0x20($inp),@MSG[2]
+	pshufb		$BSWAP,@MSG[1]
+
+	movdqa		$ABCD,$E_
+	sha1rnds4	\$3,$E,$ABCD		# 72-75
+	sha1nexte	@MSG[3],$E_
+	movdqu		0x30($inp),@MSG[3]
+	pshufb		$BSWAP,@MSG[2]
+
+	movdqa		$ABCD,$E
+	sha1rnds4	\$3,$E_,$ABCD		# 76-79
+	sha1nexte	$E_SAVE,$E
+	pshufb		$BSWAP,@MSG[3]
+
+	paddd		$ABCD_SAVE,$ABCD
+	movdqa		$E,$E_SAVE		# offload $E
+
+	jnz		.Loop_shaext
+
+	pshufd	\$0b00011011,$ABCD,$ABCD
+	pshufd	\$0b00011011,$E,$E
+	movdqu	$ABCD,($ctx)
+	movd	$E,16($ctx)
+___
+$code.=<<___ if ($win64);
+	movaps	-8-4*16(%rax),%xmm6
+	movaps	-8-3*16(%rax),%xmm7
+	movaps	-8-2*16(%rax),%xmm8
+	movaps	-8-1*16(%rax),%xmm9
+	mov	%rax,%rsp
+.Lepilogue_shaext:
+___
+$code.=<<___;
+	ret
+.size	sha1_block_data_order_shaext,.-sha1_block_data_order_shaext
+___
+}}}
 {{{
 my $Xi=4;
 my @X=map("%xmm$_",(4..7,0..3));
@@ -1646,6 +1767,7 @@ K_XX_XX:
 .long	0xca62c1d6,0xca62c1d6,0xca62c1d6,0xca62c1d6	# K_60_79
 .long	0x00010203,0x04050607,0x08090a0b,0x0c0d0e0f	# pbswap mask
 .long	0x00010203,0x04050607,0x08090a0b,0x0c0d0e0f	# pbswap mask
+.byte	0xf,0xe,0xd,0xc,0xb,0xa,0x9,0x8,0x7,0x6,0x5,0x4,0x3,0x2,0x1,0x0
 ___
 }}}
 $code.=<<___;
@@ -1705,6 +1827,39 @@ se_handler:
 
 	jmp	.Lcommon_seh_tail
 .size	se_handler,.-se_handler
+
+.type	shaext_handler,\@abi-omnipotent
+.align	16
+shaext_handler:
+	push	%rsi
+	push	%rdi
+	push	%rbx
+	push	%rbp
+	push	%r12
+	push	%r13
+	push	%r14
+	push	%r15
+	pushfq
+	sub	\$64,%rsp
+
+	mov	120($context),%rax	# pull context->Rax
+	mov	248($context),%rbx	# pull context->Rip
+
+	lea	.Lprologue_shaext(%rip),%r10
+	cmp	%r10,%rbx		# context->Rip<.Lprologue
+	jb	.Lcommon_seh_tail
+
+	lea	.Lepilogue_shaext(%rip),%r10
+	cmp	%r10,%rbx		# context->Rip>=.Lepilogue
+	jae	.Lcommon_seh_tail
+
+	lea	-8-4*16(%rax),%rsi
+	lea	512($context),%rdi	# &context.Xmm6
+	mov	\$8,%ecx
+	.long	0xa548f3fc		# cld; rep movsq
+
+	jmp	.Lcommon_seh_tail
+.size	shaext_handler,.-shaext_handler
 
 .type	ssse3_handler,\@abi-omnipotent
 .align	16
@@ -1801,6 +1956,9 @@ ssse3_handler:
 	.rva	.LSEH_begin_sha1_block_data_order
 	.rva	.LSEH_end_sha1_block_data_order
 	.rva	.LSEH_info_sha1_block_data_order
+	.rva	.LSEH_begin_sha1_block_data_order_shaext
+	.rva	.LSEH_end_sha1_block_data_order_shaext
+	.rva	.LSEH_info_sha1_block_data_order_shaext
 	.rva	.LSEH_begin_sha1_block_data_order_ssse3
 	.rva	.LSEH_end_sha1_block_data_order_ssse3
 	.rva	.LSEH_info_sha1_block_data_order_ssse3
@@ -1821,6 +1979,9 @@ $code.=<<___;
 .LSEH_info_sha1_block_data_order:
 	.byte	9,0,0,0
 	.rva	se_handler
+.LSEH_info_sha1_block_data_order_shaext:
+	.byte	9,0,0,0
+	.rva	shaext_handler
 .LSEH_info_sha1_block_data_order_ssse3:
 	.byte	9,0,0,0
 	.rva	ssse3_handler
@@ -1842,6 +2003,41 @@ ___
 
 ####################################################################
 
-$code =~ s/\`([^\`]*)\`/eval $1/gem;
-print $code;
+sub sha1rnds4 {
+    if (@_[0] =~ /\$([x0-9a-f]+),\s*%xmm([0-7]),\s*%xmm([0-7])/) {
+      my @opcode=(0x0f,0x3a,0xcc);
+	push @opcode,0xc0|($2&7)|(($3&7)<<3);		# ModR/M
+	my $c=$1;
+	push @opcode,$c=~/^0/?oct($c):$c;
+	return ".byte\t".join(',',@opcode);
+    } else {
+	return "sha1rnds4\t".@_[0];
+    }
+}
+
+sub sha1op38 {
+    my $instr = shift;
+    my %opcodelet = (
+		"sha1nexte" => 0xc8,
+  		"sha1msg1"  => 0xc9,
+		"sha1msg2"  => 0xca	);
+
+    if (defined($opcodelet{$instr}) && @_[0] =~ /%xmm([0-7]),\s*%xmm([0-7])/) {
+      my @opcode=(0x0f,0x38);
+	push @opcode,$opcodelet{$instr};
+	push @opcode,0xc0|($1&7)|(($2&7)<<3);		# ModR/M
+	return ".byte\t".join(',',@opcode);
+    } else {
+	return $instr."\t".@_[0];
+    }
+}
+
+foreach (split("\n",$code)) {
+	s/\`([^\`]*)\`/eval $1/geo;
+
+	s/\b(sha1rnds4)\s+(.*)/sha1rnds4($2)/geo	or
+	s/\b(sha1[^\s]*)\s+(.*)/sha1op38($1,$2)/geo;
+
+	print $_,"\n";
+}
 close STDOUT;

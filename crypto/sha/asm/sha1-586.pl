@@ -79,6 +79,10 @@
 # strongly, it's probably more appropriate to discuss possibility of
 # using vector rotate XOP on AMD...
 
+# March 2014.
+#
+# Add support for Intel SHA Extensions.
+
 ######################################################################
 # Current performance is summarized in following table. Numbers are
 # CPU clock cycles spent to process single byte (less is better).
@@ -303,6 +307,7 @@ if ($alt) {
 
 &function_begin("sha1_block_data_order");
 if ($xmm) {
+  &static_label("shaext_shortcut");
   &static_label("ssse3_shortcut");
   &static_label("avx_shortcut")		if ($ymm);
   &static_label("K_XX_XX");
@@ -317,8 +322,11 @@ if ($xmm) {
 	&mov	($D,&DWP(4,$T));
 	&test	($D,1<<9);		# check SSSE3 bit
 	&jz	(&label("x86"));
+	&mov	($C,&DWP(8,$T));
 	&test	($A,1<<24);		# check FXSR bit
 	&jz	(&label("x86"));
+	&test	($C,1<<29);		# check SHA bit
+	&jnz	(&label("shaext_shortcut"));
 	if ($ymm) {
 		&and	($D,1<<28);		# mask AVX bit
 		&and	($A,1<<30);		# mask "Intel CPU" bit
@@ -397,6 +405,117 @@ if ($xmm) {
 &function_end("sha1_block_data_order");
 
 if ($xmm) {
+{
+######################################################################
+# Intel SHA Extensions implementation of SHA1 update function.
+#
+my ($ctx,$inp,$num)=("edi","esi","ecx");
+my ($ABCD,$E,$E_,$BSWAP)=map("xmm$_",(0..3));
+my @MSG=map("xmm$_",(4..7));
+
+sub sha1rnds4 {
+ my ($dst,$src,$imm)=@_;
+    if ("$dst:$src" =~ /xmm([0-7]):xmm([0-7])/)
+    {	&data_byte(0x0f,0x3a,0xcc,0xc0|($1<<3)|$2,$imm);	}
+}
+sub sha1op38 {
+ my ($opcodelet,$dst,$src)=@_;
+    if ("$dst:$src" =~ /xmm([0-7]):xmm([0-7])/)
+    {	&data_byte(0x0f,0x38,$opcodelet,0xc0|($1<<3)|$2);	}
+}
+sub sha1nexte	{ sha1op38(0xc8,@_); }
+sub sha1msg1	{ sha1op38(0xc9,@_); }
+sub sha1msg2	{ sha1op38(0xca,@_); }
+
+&function_begin("_sha1_block_data_order_shaext");
+	&call	(&label("pic_point"));	# make it PIC!
+	&set_label("pic_point");
+	&blindpop($tmp1);
+	&lea	($tmp1,&DWP(&label("K_XX_XX")."-".&label("pic_point"),$tmp1));
+&set_label("shaext_shortcut");
+	&mov	($ctx,&wparam(0));
+	&mov	("ebx","esp");
+	&mov	($inp,&wparam(1));
+	&mov	($num,&wparam(2));
+	&sub	("esp",32);
+
+	&movdqu	($ABCD,&QWP(0,$ctx));
+	&movd	($E,&QWP(16,$ctx));
+	&and	("esp",-32);
+	&movdqa	($BSWAP,&QWP(0x50,$tmp1));	# byte-n-word swap
+
+	&movdqu	(@MSG[0],&QWP(0,$inp));
+	&pshufd	($ABCD,$ABCD,0b00011011);	# flip word order
+	&movdqu	(@MSG[1],&QWP(0x10,$inp));
+	&pshufd	($E,$E,0b00011011);		# flip word order
+	&movdqu	(@MSG[2],&QWP(0x20,$inp));
+	&pshufb	(@MSG[0],$BSWAP);
+	&movdqu	(@MSG[3],&QWP(0x30,$inp));
+	&pshufb	(@MSG[1],$BSWAP);
+	&pshufb	(@MSG[2],$BSWAP);
+	&pshufb	(@MSG[3],$BSWAP);
+	&jmp	(&label("loop_shaext"));
+
+&set_label("loop_shaext",16);
+	&dec		($num);
+	&lea		("eax",&DWP(0x40,$inp));
+	&movdqa		(&QWP(0,"esp"),$E);	# offload $E
+	&paddd		($E,@MSG[0]);
+	&cmovne		($inp,"eax");
+	&movdqa		(&QWP(16,"esp"),$ABCD);	# offload $ABCD
+
+for($i=0;$i<20-4;$i+=2) {
+	&sha1msg1	(@MSG[0],@MSG[1]);
+	&movdqa		($E_,$ABCD);
+	&sha1rnds4	($ABCD,$E,int($i/5));	# 0-3...
+	&sha1nexte	($E_,@MSG[1]);
+	&pxor		(@MSG[0],@MSG[2]);
+	&sha1msg1	(@MSG[1],@MSG[2]);
+	&sha1msg2	(@MSG[0],@MSG[3]);
+
+	&movdqa		($E,$ABCD);
+	&sha1rnds4	($ABCD,$E_,int(($i+1)/5));
+	&sha1nexte	($E,@MSG[2]);
+	&pxor		(@MSG[1],@MSG[3]);
+	&sha1msg2	(@MSG[1],@MSG[0]);
+
+	push(@MSG,shift(@MSG));	push(@MSG,shift(@MSG));
+}
+	&movdqu		(@MSG[0],&QWP(0,$inp));
+	&movdqa		($E_,$ABCD);
+	&sha1rnds4	($ABCD,$E,3);		# 64-67
+	&sha1nexte	($E_,@MSG[1]);
+	&movdqu		(@MSG[1],&QWP(0x10,$inp));
+	&pshufb		(@MSG[0],$BSWAP);
+
+	&movdqa		($E,$ABCD);
+	&sha1rnds4	($ABCD,$E_,3);		# 68-71
+	&sha1nexte	($E,@MSG[2]);
+	&movdqu		(@MSG[2],&QWP(0x20,$inp));
+	&pshufb		(@MSG[1],$BSWAP);
+
+	&movdqa		($E_,$ABCD);
+	&sha1rnds4	($ABCD,$E,3);		# 72-75
+	&sha1nexte	($E_,@MSG[3]);
+	&movdqu		(@MSG[3],&QWP(0x30,$inp));
+	&pshufb		(@MSG[2],$BSWAP);
+
+	&movdqa		($E,$ABCD);
+	&sha1rnds4	($ABCD,$E_,3);		# 76-79
+	&movdqa		($E_,&QWP(0,"esp"));
+	&pshufb		(@MSG[3],$BSWAP);
+	&sha1nexte	($E,$E_);
+	&paddd		($ABCD,&QWP(16,"esp"));
+
+	&jnz		(&label("loop_shaext"));
+
+	&pshufd	($ABCD,$ABCD,0b00011011);
+	&pshufd	($E,$E,0b00011011);
+	&movdqu	(&QWP(0,$ctx),$ABCD)
+	&movd	(&DWP(16,$ctx),$E);
+	&mov	("esp","ebx");
+&function_end("_sha1_block_data_order_shaext");
+}
 ######################################################################
 # The SSSE3 implementation.
 #
@@ -1340,6 +1459,7 @@ sub Xtail_avx()
 &data_word(0x8f1bbcdc,0x8f1bbcdc,0x8f1bbcdc,0x8f1bbcdc);	# K_40_59
 &data_word(0xca62c1d6,0xca62c1d6,0xca62c1d6,0xca62c1d6);	# K_60_79
 &data_word(0x00010203,0x04050607,0x08090a0b,0x0c0d0e0f);	# pbswap mask
+&data_byte(0xf,0xe,0xd,0xc,0xb,0xa,0x9,0x8,0x7,0x6,0x5,0x4,0x3,0x2,0x1,0x0);
 }
 &asciz("SHA1 block transform for x86, CRYPTOGAMS by <appro\@openssl.org>");
 
