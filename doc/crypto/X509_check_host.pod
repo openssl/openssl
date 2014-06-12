@@ -27,7 +27,10 @@ X509_check_host() checks if the certificate matches the specified
 host name, which must be encoded in the preferred name syntax
 described in section 3.5 of RFC 1034. The B<namelen> argument must be
 the number of characters in the name string or zero in which case the
-length is calculated with strlen(name).
+length is calculated with strlen(name).  When B<name> starts with
+a dot (e.g ".example.com"), it will be matched by a certificate
+valid for any sub-domain of B<name>, (see also
+B<X509_CHECK_FLAG_SINGLE_LABEL_SUBDOMAINS> below).
 
 X509_check_email() checks if the certificate matches the specified
 email address.  Only the mailbox syntax of RFC 822 is supported,
@@ -59,6 +62,8 @@ flags:
 
 =item B<X509_CHECK_FLAG_MULTI_LABEL_WILDCARDS>.
 
+=item B<X509_CHECK_FLAG_SINGLE_LABEL_SUBDOMAINS>.
+
 =back
 
 The B<X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT> flag causes the function
@@ -74,10 +79,18 @@ If set, B<X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS> suppresses support
 for "*" as wildcard pattern in labels that have a prefix or suffix,
 such as: "www*" or "*www"; this only aplies to B<X509_check_host>.
 
-If set, B<X509_CHECK_FLAG_MULTI_LABEL_WILDCARDS>, allows a "*"
-that constitutes the complete label of a DNS name (e.g.
-"*.example.com") to match more than one label in B<name>;
-this only applies to B<X509_check_host>.
+If set, B<X509_CHECK_FLAG_MULTI_LABEL_WILDCARDS> allows a "*" that
+constitutes the complete label of a DNS name (e.g. "*.example.com")
+to match more than one label in B<name>; this flag only applies
+to B<X509_check_host>.
+
+If set, B<X509_CHECK_FLAG_SINGLE_LABEL_SUBDOMAINS> restricts B<name>
+values which start with ".", that would otherwise match any sub-domain
+in the peer certificate, to only match direct child sub-domains.
+Thus, for instance, with this flag set a B<name> of ".example.com"
+would match a peer certificate with a DNS name of "www.example.com",
+but would not match a peer certificate with a DNS name of
+"www.sub.example.com"; this flag only applies to B<X509_check_host>.
 
 =head1 RETURN VALUES
 
