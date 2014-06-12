@@ -572,11 +572,50 @@ typedef int (*equal_fn)(const unsigned char *pattern, size_t pattern_len,
 			const unsigned char *subject, size_t subject_len,
 			unsigned int flags);
 
+/* Skip pattern prefix to match "wildcard" subject */
+static void skip_prefix(const unsigned char **p, size_t *plen,
+			const unsigned char *subject, size_t subject_len,
+			unsigned int flags)
+	{
+	const unsigned char *pattern = *p;
+	size_t pattern_len = *plen;
+
+	/*
+	 * If subject starts with a leading '.' followed by more octets, and
+	 * pattern is longer, compare just an equal-length suffix with the
+	 * full subject (starting at the '.'), provided the prefix contains
+	 * no NULs.  (We check again that subject starts with '.' and
+	 * contains at least one subsequent character, just in case the
+	 * internal _X509_CHECK_FLAG_DOT_SUBDOMAINS flag was erroneously
+	 * set by the user).
+	 */
+	if ((flags & _X509_CHECK_FLAG_DOT_SUBDOMAINS) == 0 ||
+	    subject_len <= 1 || subject[0] != '.')
+		return;
+
+	while (pattern_len > subject_len && *pattern)
+		{
+		if ((flags & X509_CHECK_FLAG_SINGLE_LABEL_SUBDOMAINS) &&
+		    *pattern == '.')
+			break;
+		++pattern;
+		--pattern_len;
+		}
+
+	/* Skip if entire prefix acceptable */
+	if (pattern_len == subject_len)
+		{
+		*p = pattern;
+		*plen = pattern_len;
+		}
+	}
+
 /* Compare while ASCII ignoring case. */
 static int equal_nocase(const unsigned char *pattern, size_t pattern_len,
 			const unsigned char *subject, size_t subject_len,
-			unsigned int unused_flags)
+			unsigned int flags)
 	{
+	skip_prefix(&pattern, &pattern_len, subject, subject_len, flags);
 	if (pattern_len != subject_len)
 		return 0;
 	while (pattern_len)
@@ -605,11 +644,9 @@ static int equal_nocase(const unsigned char *pattern, size_t pattern_len,
 /* Compare using memcmp. */
 static int equal_case(const unsigned char *pattern, size_t pattern_len,
 		      const unsigned char *subject, size_t subject_len,
-		      unsigned int unused_flags)
+		      unsigned int flags)
 {
-	/* The pattern must not contain NUL characters. */
-	if (memchr(pattern, '\0', pattern_len) != NULL)
-		return 0;
+	skip_prefix(&pattern, &pattern_len, subject, subject_len, flags);
 	if (pattern_len != subject_len)
 		return 0;
 	return !memcmp(pattern, subject, pattern_len);
@@ -797,7 +834,14 @@ static int equal_wildcard(const unsigned char *pattern, size_t pattern_len,
 			  const unsigned char *subject, size_t subject_len,
 			  unsigned int flags)
 	{
-	const unsigned char *star = valid_star(pattern, pattern_len, flags);
+	const unsigned char *star = NULL;
+
+	/*
+	 * Subject names starting with '.' can only match a wildcard pattern
+	 * via a subject sub-domain pattern suffix match.
+	 */
+	if (!(subject_len > 1 && subject[0] == '.'))
+		star = valid_star(pattern, pattern_len, flags);
 	if (star == NULL)
 		return equal_nocase(pattern, pattern_len,
 				    subject, subject_len, flags);
@@ -860,6 +904,9 @@ static int do_x509_check(X509 *x, const unsigned char *chk, size_t chklen,
 	else if (check_type == GEN_DNS)
 		{
 		cnid = NID_commonName;
+		/* Implicit client-side DNS sub-domain pattern */
+		if (chklen > 1 && chk[0] == '.')
+			flags |= _X509_CHECK_FLAG_DOT_SUBDOMAINS;
 		alt_type = V_ASN1_IA5STRING;
 		if (flags & X509_CHECK_FLAG_NO_WILDCARDS)
 			equal = equal_nocase;
