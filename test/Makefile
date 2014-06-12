@@ -656,7 +656,7 @@ heartbeat_test.o: ../include/openssl/ssl23.h ../include/openssl/ssl3.h
 heartbeat_test.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 heartbeat_test.o: ../include/openssl/tls1.h ../include/openssl/x509.h
 heartbeat_test.o: ../include/openssl/x509_vfy.h ../ssl/ssl_locl.h
-heartbeat_test.o: heartbeat_test.c
+heartbeat_test.o: ../test/testutil.h heartbeat_test.c
 hmactest.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 hmactest.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 hmactest.o: ../include/openssl/evp.h ../include/openssl/hmac.h

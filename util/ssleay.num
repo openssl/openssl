@@ -346,7 +346,6 @@ DTLSv1_2_client_method                  384	EXIST::FUNCTION:
 SSL_get0_alpn_selected                  385	EXIST::FUNCTION:
 SSL_CONF_CTX_clear_flags                386	EXIST::FUNCTION:
 SSL_CTX_set_alpn_protos                 387	EXIST::FUNCTION:
-SSL_get_tlsa_record_byname              388	EXIST::FUNCTION:
 SSL_CTX_set_custom_srv_ext              389	EXIST::FUNCTION:TLSEXT
 SSL_CTX_get0_certificate                390	EXIST::FUNCTION:
 SSL_CTX_set_alpn_select_cb              391	EXIST::FUNCTION:
