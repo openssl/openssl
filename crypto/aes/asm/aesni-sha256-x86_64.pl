@@ -59,6 +59,9 @@ if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	$avx = ($1>=10) + ($1>=11);
 }
 
+$shaext=1;	### set to zero if compiling for 1.0.1
+$avx=1		if (!$shaext && $avx);
+
 open OUT,"| \"$^X\" $xlate $flavour $output";
 *STDOUT=*OUT;
 
@@ -113,10 +116,12 @@ $code.=<<___ if ($avx);
 	je	.Lprobe
 	mov	0(%r11),%eax
 	mov	4(%r11),%r10
-
+___
+$code.=<<___ if ($shaext);
 	bt	\$61,%r10			# check for SHA
 	jc	${func}_shaext
-
+___
+$code.=<<___;
 	mov	%r10,%r11
 	shr	\$32,%r11
 
@@ -1259,16 +1264,17 @@ ___
     $r++;	unshift(@rndkey,pop(@rndkey));
 };
 
+if ($shaext) {
+my $Tbl="%rax";
+
 $code.=<<___;
 .type	${func}_shaext,\@function,6
 .align	32
 ${func}_shaext:
-	mov	%rsp,%rax
 	mov	`($win64?56:8)`(%rsp),$inp	# load 7th argument
-	push	%rbx
 ___
 $code.=<<___ if ($win64);
-	lea	`-4*16`(%rsp),%rsp
+	lea	`-8-10*16`(%rsp),%rsp
 	movaps	%xmm6,-8-10*16(%rax)
 	movaps	%xmm7,-8-9*16(%rax)
 	movaps	%xmm8,-8-8*16(%rax)
@@ -1465,24 +1471,24 @@ $code.=<<___;
 	movdqu		$CDGH,16($ctx)
 ___
 $code.=<<___ if ($win64);
-	movaps	-8-10*16(%rax),%xmm6
-	movaps	-8-9*16(%rax),%xmm7
-	movaps	-8-8*16(%rax),%xmm8
-	movaps	-8-7*16(%rax),%xmm9
-	movaps	-8-6*16(%rax),%xmm10
-	movaps	-8-5*16(%rax),%xmm11
-	movaps	-8-4*16(%rax),%xmm12
-	movaps	-8-3*16(%rax),%xmm13
-	movaps	-8-2*16(%rax),%xmm14
-	movaps	-8-1*16(%rax),%xmm15
+	movaps	0*16(%rsp),%xmm6
+	movaps	1*16(%rsp),%xmm7
+	movaps	2*16(%rsp),%xmm8
+	movaps	3*16(%rsp),%xmm9
+	movaps	4*16(%rsp),%xmm10
+	movaps	5*16(%rsp),%xmm11
+	movaps	6*16(%rsp),%xmm12
+	movaps	7*16(%rsp),%xmm13
+	movaps	8*16(%rsp),%xmm14
+	movaps	9*16(%rsp),%xmm15
+	lea	8+10*16(%rsp),%rsp
 .Lepilogue_shaext:
 ___
 $code.=<<___;
-	mov	-8(%rax),%rbx
-	mov	%rax,%rsp
 	ret
 .size	${func}_shaext,.-${func}_shaext
 ___
+}
 }}}}}
 
 # EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
@@ -1526,6 +1532,19 @@ se_handler:
 	lea	(%rsi,%r10),%r10	# epilogue label
 	cmp	%r10,%rbx		# context->Rip>=epilogue label
 	jae	.Lin_prologue
+___
+$code.=<<___ if ($shaext);
+	lea	aesni_cbc_sha256_enc_shaext(%rip),%r10
+	cmp	%r10,%rbx
+	jb	.Lnot_in_shaext
+
+	lea	(%rax),%rsi
+	lea	512($context),%rdi	# &context.Xmm6
+	mov	\$20,%ecx
+	.long	0xa548f3fc		# cld; rep movsq
+	lea	168(%rax),%rax		# adjust stack pointer
+	jmp	.Lin_prologue
+.Lnot_in_shaext:
 ___
 $code.=<<___ if ($avx>1);
 	lea	.Lavx2_shortcut(%rip),%r10
@@ -1613,6 +1632,11 @@ $code.=<<___ if ($avx>1);
 	.rva	.LSEH_end_${func}_avx2
 	.rva	.LSEH_info_${func}_avx2
 ___
+$code.=<<___ if ($shaext);
+	.rva	.LSEH_begin_${func}_shaext
+	.rva	.LSEH_end_${func}_shaext
+	.rva	.LSEH_info_${func}_shaext
+___
 $code.=<<___ if ($avx);
 .section	.xdata
 .align	8
@@ -1631,6 +1655,12 @@ $code.=<<___ if ($avx>1);
 	.byte	9,0,0,0
 	.rva	se_handler
 	.rva	.Lprologue_avx2,.Lepilogue_avx2		# HandlerData[]
+___
+$code.=<<___ if ($shaext);
+.LSEH_info_${func}_shaext:
+	.byte	9,0,0,0
+	.rva	se_handler
+	.rva	.Lprologue_shaext,.Lepilogue_shaext	# HandlerData[]
 ___
 }
 
