@@ -123,6 +123,9 @@ if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	$avx = ($1>=10) + ($1>=11);
 }
 
+$shaext=1;	### set to zero if compiling for 1.0.1
+$avx=1		if (!$shaext && $avx);
+
 open OUT,"| \"$^X\" $xlate $flavour $output";
 *STDOUT=*OUT;
 
@@ -259,7 +262,7 @@ $code.=<<___ if ($SZ==4 || $avx);
 	mov	4(%r11),%r10d
 	mov	8(%r11),%r11d
 ___
-$code.=<<___ if ($SZ==4);
+$code.=<<___ if ($SZ==4 && $shaext);
 	test	\$`1<<29`,%r11d		# check for SHA
 	jnz	_shaext_shortcut
 ___
@@ -518,7 +521,7 @@ ___
 ######################################################################
 # SIMD code paths
 #
-if ($SZ==4) {{{
+if ($SZ==4 && $shaext) {{{
 ######################################################################
 # Intel SHA Extensions implementation of SHA256 update function.
 #
@@ -2295,10 +2298,12 @@ shaext_handler:
 	.rva	.LSEH_end_$func
 	.rva	.LSEH_info_$func
 ___
-$code.=<<___ if ($SZ==4);
+$code.=<<___ if ($SZ==4 && $shext);
 	.rva	.LSEH_begin_${func}_shaext
 	.rva	.LSEH_end_${func}_shaext
 	.rva	.LSEH_info_${func}_shaext
+___
+$code.=<<___ if ($SZ==4);
 	.rva	.LSEH_begin_${func}_ssse3
 	.rva	.LSEH_end_${func}_ssse3
 	.rva	.LSEH_info_${func}_ssse3
