@@ -58,19 +58,24 @@ my $redir = " 2> cms.err > cms.out";
 # Make VMS work
 if ( $^O eq "VMS" && -f "OSSLX:openssl.exe" ) {
     $ossl_path = "pipe mcr OSSLX:openssl";
+    $null_path = "NL:";
 }
 # Make MSYS work
 elsif ( $^O eq "MSWin32" && -f "../apps/openssl.exe" ) {
     $ossl_path = "cmd /c ..\\apps\\openssl";
+    $null_path = "/dev/null";
 }
 elsif ( -f "../apps/openssl$ENV{EXE_EXT}" ) {
     $ossl_path = "../util/shlib_wrap.sh ../apps/openssl";
+    $null_path = "/dev/null";
 }
 elsif ( -f "..\\out32dll\\openssl.exe" ) {
     $ossl_path = "..\\out32dll\\openssl.exe";
+    $null_path = "/dev/null";
 }
 elsif ( -f "..\\out32\\openssl.exe" ) {
     $ossl_path = "..\\out32\\openssl.exe";
+    $null_path = "/dev/null";
 }
 else {
     die "Can't find OpenSSL executable";
@@ -85,12 +90,12 @@ my $badcmd = 0;
 my $no_ec;
 my $ossl8 = `$ossl_path version -v` =~ /0\.9\.8/;
 
-system ("$ossl_path no-ec >/dev/null");
+system ("$ossl_path no-ec > $null_path");
 if ($? == 0)
 	{
 	$no_ec = 1;
 	}
-elsif ($? == 256)
+elsif ($^O eq "VMS" ? $? == 512 : $? == 256)
 	{
 	$no_ec = 0;
 	}
