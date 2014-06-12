@@ -1461,9 +1461,6 @@ bad:
 		SSL_set_session(con, sess);
 		SSL_SESSION_free(sess);
 		}
-#ifndef OPENSSL_NO_DANE
-	SSL_pull_tlsa_record(con,host,port);
-#endif
 #ifndef OPENSSL_NO_TLSEXT
 	if (servername != NULL)
 		{
