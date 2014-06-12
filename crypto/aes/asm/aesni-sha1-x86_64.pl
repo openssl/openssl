@@ -95,6 +95,8 @@ $avx=1 if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	   `ml64 2>&1` =~ /Version ([0-9]+)\./ &&
 	   $1>=10);
 
+$shaext=1;	### set to zero if compiling for 1.0.1
+
 $stitched_decrypt=0;
 
 open OUT,"| \"$^X\" $xlate $flavour $output";
@@ -119,6 +121,8 @@ aesni_cbc_sha1_enc:
 	# caller should check for SSSE3 and AES-NI bits
 	mov	OPENSSL_ia32cap_P+0(%rip),%r10d
 	mov	OPENSSL_ia32cap_P+4(%rip),%r11
+___
+$code.=<<___ if ($shaext);
 	bt	\$61,%r11		# check SHA bit
 	jc	aesni_cbc_sha1_enc_shaext
 ___
@@ -1657,7 +1661,7 @@ K_XX_XX:
 .asciz	"AESNI-CBC+SHA1 stitch for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
 .align	64
 ___
-						{{{
+						if ($shaext) {{{
 ($in0,$out,$len,$key,$ivp,$ctx,$inp)=("%rdi","%rsi","%rdx","%rcx","%r8","%r9","%r10");
 
 $rounds="%r11d";
@@ -1676,7 +1680,7 @@ aesni_cbc_sha1_enc_shaext:
 	mov	`($win64?56:8)`(%rsp),$inp	# load 7th argument
 ___
 $code.=<<___ if ($win64);
-	lea	`-8-4*16`(%rsp),%rsp
+	lea	`-8-10*16`(%rsp),%rsp
 	movaps	%xmm6,-8-10*16(%rax)
 	movaps	%xmm7,-8-9*16(%rax)
 	movaps	%xmm8,-8-8*16(%rax)
@@ -1867,7 +1871,21 @@ ssse3_handler:
 	lea	(%rsi,%r10),%r10	# epilogue label
 	cmp	%r10,%rbx		# context->Rip>=epilogue label
 	jae	.Lcommon_seh_tail
+___
+$code.=<<___ if ($shaext);
+	lea	aesni_cbc_sha1_enc_shaext(%rip),%r10
+	cmp	%r10,%rbx
+	jb	.Lseh_no_shaext
 
+	lea	(%rax),%rsi
+	lea	512($context),%rdi	# &context.Xmm6
+	mov	\$20,%ecx
+	.long	0xa548f3fc		# cld; rep movsq
+	lea	168(%rax),%rax		# adjust stack pointer
+	jmp	.Lcommon_seh_tail
+.Lseh_no_shaext:
+___
+$code.=<<___;
 	lea	96(%rax),%rsi
 	lea	512($context),%rdi	# &context.Xmm6
 	mov	\$20,%ecx
@@ -1939,6 +1957,11 @@ $code.=<<___ if ($avx);
 	.rva	.LSEH_end_aesni_cbc_sha1_enc_avx
 	.rva	.LSEH_info_aesni_cbc_sha1_enc_avx
 ___
+$code.=<<___ if ($shaext);
+	.rva	.LSEH_begin_aesni_cbc_sha1_enc_shaext
+	.rva	.LSEH_end_aesni_cbc_sha1_enc_shaext
+	.rva	.LSEH_info_aesni_cbc_sha1_enc_shaext
+___
 $code.=<<___;
 .section	.xdata
 .align	8
@@ -1952,6 +1975,12 @@ $code.=<<___ if ($avx);
 	.byte	9,0,0,0
 	.rva	ssse3_handler
 	.rva	.Lprologue_avx,.Lepilogue_avx		# HandlerData[]
+___
+$code.=<<___ if ($shaext);
+.LSEH_info_aesni_cbc_sha1_enc_shaext:
+	.byte	9,0,0,0
+	.rva	ssse3_handler
+	.rva	.Lprologue_shaext,.Lepilogue_shaext	# HandlerData[]
 ___
 }
 

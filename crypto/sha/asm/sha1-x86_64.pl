@@ -107,6 +107,9 @@ if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	$avx = ($1>=10) + ($1>=11);
 }
 
+$shaext=1;	### set to zero if compiling for 1.0.1
+$avx=1		if (!$shaext && $avx);
+
 open OUT,"| \"$^X\" $xlate $flavour $output";
 *STDOUT=*OUT;
 
@@ -245,7 +248,8 @@ sha1_block_data_order:
 	mov	OPENSSL_ia32cap_P+8(%rip),%r10d
 	test	\$`1<<9`,%r8d		# check SSSE3 bit
 	jz	.Lialu
-
+___
+$code.=<<___ if ($shaext);
 	test	\$`1<<29`,%r10d		# check SHA bit	
 	jnz	_shaext_shortcut
 ___
@@ -321,7 +325,7 @@ $code.=<<___;
 	ret
 .size	sha1_block_data_order,.-sha1_block_data_order
 ___
-{{{
+if ($shaext) {{{
 ######################################################################
 # Intel SHA Extensions implementation of SHA1 update function.
 #
@@ -1956,9 +1960,13 @@ ssse3_handler:
 	.rva	.LSEH_begin_sha1_block_data_order
 	.rva	.LSEH_end_sha1_block_data_order
 	.rva	.LSEH_info_sha1_block_data_order
+___
+$code.=<<___ if ($shaext);
 	.rva	.LSEH_begin_sha1_block_data_order_shaext
 	.rva	.LSEH_end_sha1_block_data_order_shaext
 	.rva	.LSEH_info_sha1_block_data_order_shaext
+___
+$code.=<<___;
 	.rva	.LSEH_begin_sha1_block_data_order_ssse3
 	.rva	.LSEH_end_sha1_block_data_order_ssse3
 	.rva	.LSEH_info_sha1_block_data_order_ssse3

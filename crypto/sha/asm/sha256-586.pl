@@ -82,6 +82,8 @@ if ($xmm && !$avx && $ARGV[0] eq "win32" &&
 	$avx = ($1>=10) + ($1>=11);
 }
 
+$shaext=$xmm;	### set to zero if compiling for 1.0.1
+
 $unroll_after = 64*4;	# If pre-evicted from L1P cache first spin of
 			# fully unrolled loop was measured to run about
 			# 3-4x slower. If slowdown coefficient is N and
@@ -205,8 +207,8 @@ sub BODY_00_15() {
 	&jz	($unroll_after?&label("no_xmm"):&label("loop"));
 	&and	("ecx",1<<30);		# mask "Intel CPU" bit
 	&and	("ebx",1<<28|1<<9);	# mask AVX and SSSE3 bits
-	&test	("edx",1<<29)		if ($xmm);	# check for SHA
-	&jnz	(&label("shaext"))	if ($xmm);
+	&test	("edx",1<<29)		if ($shaext);	# check for SHA
+	&jnz	(&label("shaext"))	if ($shaext);
 	&or	("ecx","ebx");
 	&and	("ecx",1<<28|1<<30);
 	&cmp	("ecx",1<<28|1<<30);
@@ -505,7 +507,7 @@ my @AH=($A,$K256);
 &function_end_A();
 }
 						if (!$i386 && $xmm) {{{
-{
+if ($shaext) {
 ######################################################################
 # Intel SHA Extensions implementation of SHA256 update function.
 #
