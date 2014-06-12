@@ -404,10 +404,13 @@ for (;;)
 	}
 close(IN);
 
-# Remove opensslconf.h so it doesn't get updated if we configure a
-# different branch.
-$exheader =~ s/[^ ]+\/opensslconf.h//;
-$header =~ s/[^ ]+\/opensslconf.h//;
+if ($orig_platform eq 'copy')
+	{
+	# Remove opensslconf.h so it doesn't get updated if we configure a
+	# different branch.
+	$exheader =~ s/[^ ]+\/opensslconf.h//;
+	$header =~ s/[^ ]+\/opensslconf.h//;
+	}
 
 if ($shlib)
 	{
