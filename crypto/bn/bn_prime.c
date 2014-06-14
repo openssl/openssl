@@ -126,6 +126,8 @@
  */
 #include "bn_prime.h"
 
+static int adjust_rnd_for_dh(BIGNUM *rnd, const BIGNUM *add, const BIGNUM *rem,
+	BIGNUM *temp_bn, BN_CTX *ctx);
 static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
 	const BIGNUM *a1_odd, int k, BN_CTX *ctx, BN_MONT_CTX *mont);
 
@@ -419,7 +421,6 @@ int bn_probable_prime_dh(BIGNUM *rnd, int bits,
 	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx, int safe, int biased)
 	{
 	int i;
-	int sub;
 	uint max_rem;
 	BIGNUM *t1;
 	int ret = 0;
@@ -438,30 +439,7 @@ int bn_probable_prime_dh(BIGNUM *rnd, int bits,
 
 again:
 	if (!BN_rand(rnd, bits, 0, 1)) goto err;
-
-	/* we need ((rnd-rem) % add) == 0 */
-
-	if (add == NULL)
-		{
-		sub = BN_mod_word(rnd, 2);
-		if (!BN_sub_word(rnd, sub)) goto err;
-		}
-	else
-		{
-		if (!BN_mod(t1, rnd, add, ctx)) goto err;
-		if (!BN_sub(rnd, rnd, t1)) goto err;
-		}
-
-	if (rem == NULL)
-		{
-		if (!BN_add_word(rnd, 1)) goto err;
-		}
-	else
-		{
-		if (!BN_add(rnd, rnd, rem)) goto err;
-		}
-
-	/* we now have a random number 'rand' to test. */
+	if (!adjust_rnd_for_dh(rnd, add, rem, t1, ctx)) goto err;
 
 loop:
 	for (i = 1; i < NUMPRIMES; i++)
@@ -502,7 +480,6 @@ int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits,
 	int i;
 	int j;
 	int add_word;
-	int sub;
 	int old_offset;
 	int offset;
 	int prm_offsets[5760];
@@ -564,29 +541,7 @@ int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits,
 again:
 	if (!BN_rand(rnd, bits - prm_multiplier_bits, 0, -1)) goto err;
 	if (BN_is_bit_set(rnd, bits)) goto again;
-
-	/* we need ((rnd-rem) % add) == 0 */
-
-	if (add == NULL)
-		{
-		sub = BN_mod_word(rnd, 2);
-		if (!BN_sub_word(rnd, sub)) goto err;
-		}
-	else
-		{
-		if (!BN_mod(t1, rnd, add, ctx)) goto err;
-		if (!BN_sub(rnd, rnd, t1)) goto err;
-		}
-
-	if (rem == NULL)
-		{
-		if (!BN_add_word(rnd, 1)) goto err;
-		}
-	else
-		{
-		if (!BN_add(rnd, rnd, rem)) goto err;
-		}
-
+	if (!adjust_rnd_for_dh(rnd, add, rem, t1, ctx)) goto err;
 	if (!BN_rand_range(offset_index, offset_count)) goto err;
 
 	j = BN_get_word(offset_index);
@@ -632,6 +587,40 @@ loop:
 err:
 	BN_CTX_end(ctx);
 	bn_check_top(rnd);
+	return ret;
+	}
+
+static int adjust_rnd_for_dh(BIGNUM *rnd, const BIGNUM *add, const BIGNUM *rem,
+	BIGNUM *temp_bn, BN_CTX *ctx)
+	{
+	int sub;
+	int ret = 0;
+
+	/* we need ((rnd-rem) % add) == 0 */
+
+	if (add == NULL)
+		{
+		sub = BN_mod_word(rnd, 2);
+		if (!BN_sub_word(rnd, sub)) goto err;
+		}
+	else
+		{
+		if (!BN_mod(temp_bn, rnd, add, ctx)) goto err;
+		if (!BN_sub(rnd, rnd, temp_bn)) goto err;
+		}
+
+	if (rem == NULL)
+		{
+		if (!BN_add_word(rnd, 1)) goto err;
+		}
+	else
+		{
+		if (!BN_add(rnd, rnd, rem)) goto err;
+		}
+
+	ret = 1;
+
+err:
 	return ret;
 	}
 
