@@ -1684,7 +1684,7 @@ sub rex {
   sub sha256op38 {
     my $instr = shift;
 
-    if (defined($opcodelet{$instr}) && @_[0] =~ /%xmm([0-7]),\s*%xmm([0-7])/) {
+    if (defined($opcodelet{$instr}) && @_[0] =~ /%xmm([0-9]+),\s*%xmm([0-9]+)/) {
       my @opcode=(0x0f,0x38);
 	rex(\@opcode,$2,$1);
 	push @opcode,$opcodelet{$instr};
