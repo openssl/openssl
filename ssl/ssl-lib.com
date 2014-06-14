@@ -213,16 +213,16 @@ $ ENDIF
 $!
 $! Define The Different SSL "library" Files.
 $!
-$ LIB_SSL = "s2_meth,s2_srvr,s2_clnt,s2_lib,s2_enc,s2_pkt,"+ -
-           "s3_meth,s3_srvr,s3_clnt,s3_lib,s3_enc,s3_pkt,s3_both,s3_cbc,"+ -
-	    "s23_meth,s23_srvr,s23_clnt,s23_lib,s23_pkt,"+ -
-           "t1_meth,t1_srvr,t1_clnt,t1_lib,t1_enc,t1_reneg,t1_trce,"+ -
-	    "d1_meth,d1_srvr,d1_clnt,d1_lib,d1_pkt,"+ -
+$ LIB_SSL = "s2_meth, s2_srvr, s2_clnt, s2_lib, s2_enc, s2_pkt,"+ -
+	    "s3_meth, s3_srvr, s3_clnt, s3_lib, s3_enc, s3_pkt, s3_both, s3_cbc,"+ -
+	    "s23_meth,s23_srvr,s23_clnt,s23_lib,        s23_pkt,"+ -
+	    "t1_meth, t1_srvr, t1_clnt, t1_lib, t1_enc,"+ -
+	    "d1_meth, d1_srvr, d1_clnt, d1_lib, d1_pkt,"+ -
 	    "d1_both,d1_enc,d1_srtp,"+ -
 	    "ssl_lib,ssl_err2,ssl_cert,ssl_sess,"+ -
-           "ssl_ciph,ssl_conf,ssl_stat,ssl_rsa,"+ -
-	    "ssl_asn1,ssl_txt,ssl_algs,"+ -
-           "bio_ssl,ssl_err,kssl,tls_srp,dnssec"
+	    "ssl_ciph,ssl_stat,ssl_rsa,"+ -
+	    "ssl_asn1,ssl_txt,ssl_algs,ssl_conf,"+ -
+	    "bio_ssl,ssl_err,kssl,t1_reneg,tls_srp,t1_trce"
 $!
 $ COMPILEWITH_CC5 = ""
 $!
