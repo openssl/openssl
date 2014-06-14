@@ -2030,8 +2030,12 @@ sub sha1op38 {
   		"sha1msg1"  => 0xc9,
 		"sha1msg2"  => 0xca	);
 
-    if (defined($opcodelet{$instr}) && @_[0] =~ /%xmm([0-7]),\s*%xmm([0-7])/) {
+    if (defined($opcodelet{$instr}) && @_[0] =~ /%xmm([0-9]+),\s*%xmm([0-9]+)/) {
       my @opcode=(0x0f,0x38);
+      my $rex=0;
+	$rex|=0x04			if ($2>=8);
+	$rex|=0x01			if ($1>=8);
+	unshift @opcode,0x40|$rex	if ($rex);
 	push @opcode,$opcodelet{$instr};
 	push @opcode,0xc0|($1&7)|(($2&7)<<3);		# ModR/M
 	return ".byte\t".join(',',@opcode);
