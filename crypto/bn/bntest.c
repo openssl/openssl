@@ -1968,12 +1968,14 @@ int test_probable_prime_dh_trial_division(BIO *bp, BN_CTX *ctx)
 	{
 	int i, j, ret = 0;
 	BIGNUM r;
+	BIGNUM *add = BN_new();
 
 	BN_init(&r);
+	BN_set_word(add, 2);
 
 	for (i = 0; i < 1000; i++)
 		{
-		if (!bn_probable_prime_dh(&r, 1024, NULL, NULL, ctx, 0, 1)) goto err;
+		if (!bn_probable_prime_dh(&r, 1024, add, NULL, ctx, 0, 1)) goto err;
 
 		for (j = 0; j < NUMPRIMES; j++)
 			{
@@ -1991,6 +1993,7 @@ int test_probable_prime_dh_trial_division(BIO *bp, BN_CTX *ctx)
 
 err:
 	BN_clear(&r);
+	BN_free(add);
 	return ret;
 	}
 
@@ -1998,18 +2001,20 @@ int test_probable_prime_dh_trial_division_safe(BIO *bp, BN_CTX *ctx)
 	{
 	int i, j, ret = 0;
 	BIGNUM r;
+	BIGNUM *add = BN_new();
 
 	BN_init(&r);
+	BN_set_word(add, 2);
 
 	for (i = 0; i < 1000; i++)
 		{
-		if (!bn_probable_prime_dh(&r, 1024, NULL, NULL, ctx, 1, 1)) goto err;
+		if (!bn_probable_prime_dh(&r, 1024, add, NULL, ctx, 1, 1)) goto err;
 
 		for (j = 0; j < NUMPRIMES; j++)
 			{
 			if (BN_mod_word(&r, primes[j]) == 0)
 				{
-				BIO_printf(bp, "Number generated is not coprime to %d:\n", primes[j]);
+				BIO_printf(bp, "Number generated is not a safe coprime of %d:\n", primes[j]);
 				BN_print_fp(stdout, &r);
 				BIO_printf(bp, "\n");
 				goto err;
@@ -2021,6 +2026,7 @@ int test_probable_prime_dh_trial_division_safe(BIO *bp, BN_CTX *ctx)
 
 err:
 	BN_clear(&r);
+	BN_free(add);
 	return ret;
 	}
 
@@ -2028,12 +2034,14 @@ int test_probable_prime_dh_trial_division_unbiased(BIO *bp, BN_CTX *ctx)
 	{
 	int i, j, ret = 0;
 	BIGNUM r;
+	BIGNUM *add = BN_new();
 
 	BN_init(&r);
+	BN_set_word(add, 2);
 
 	for (i = 0; i < 1000; i++)
 		{
-		if (!bn_probable_prime_dh(&r, 1024, NULL, NULL, ctx, 0, 0)) goto err;
+		if (!bn_probable_prime_dh(&r, 1024, add, NULL, ctx, 0, 0)) goto err;
 
 		for (j = 0; j < NUMPRIMES; j++)
 			{
@@ -2051,6 +2059,7 @@ int test_probable_prime_dh_trial_division_unbiased(BIO *bp, BN_CTX *ctx)
 
 err:
 	BN_clear(&r);
+	BN_free(add);
 	return ret;
 	}
 
@@ -2058,18 +2067,20 @@ int test_probable_prime_dh_trial_division_unbiased_safe(BIO *bp, BN_CTX *ctx)
 	{
 	int i, j, ret = 0;
 	BIGNUM r;
+	BIGNUM *add = BN_new();
 
 	BN_init(&r);
+	BN_set_word(add, 2);
 
 	for (i = 0; i < 1000; i++)
 		{
-		if (!bn_probable_prime_dh(&r, 1024, NULL, NULL, ctx, 1, 0)) goto err;
+		if (!bn_probable_prime_dh(&r, 1024, add, NULL, ctx, 1, 0)) goto err;
 
 		for (j = 0; j < NUMPRIMES; j++)
 			{
 			if (BN_mod_word(&r, primes[j]) == 0)
 				{
-				BIO_printf(bp, "Number generated is not coprime to %d:\n", primes[j]);
+				BIO_printf(bp, "Number generated is not a safe coprime of %d:\n", primes[j]);
 				BN_print_fp(stdout, &r);
 				BIO_printf(bp, "\n");
 				goto err;
@@ -2081,6 +2092,7 @@ int test_probable_prime_dh_trial_division_unbiased_safe(BIO *bp, BN_CTX *ctx)
 
 err:
 	BN_clear(&r);
+	BN_free(add);
 	return ret;
 	}
 
@@ -2088,12 +2100,14 @@ int test_probable_prime_dh_coprime(BIO *bp, BN_CTX *ctx)
 	{
 	int i, j, ret = 0;
 	BIGNUM r;
+	BIGNUM *add = BN_new();
 
 	BN_init(&r);
+	BN_set_word(add, 2);
 
 	for (i = 0; i < 1000; i++)
 		{
-		if (!bn_probable_prime_dh_coprime(&r, 1024, ctx, 0, 1)) goto err;
+		if (!bn_probable_prime_dh_coprime(&r, 1024, add, NULL, ctx, 0, 1)) goto err;
 
 		for (j = 0; j < NUMPRIMES; j++)
 			{
@@ -2111,6 +2125,7 @@ int test_probable_prime_dh_coprime(BIO *bp, BN_CTX *ctx)
 
 err:
 	BN_clear(&r);
+	BN_free(add);
 	return ret;
 	}
 
@@ -2118,17 +2133,18 @@ int test_probable_prime_dh_coprime_safe(BIO *bp, BN_CTX *ctx)
 	{
 	int i, j, ret = 0;
 	BIGNUM r;
+	BIGNUM *add = BN_new();
 
 	BN_init(&r);
+	BN_set_word(add, 2);
 
 	for (i = 0; i < 1000; i++)
 		{
-		if (!bn_probable_prime_dh_coprime(&r, 1024, ctx, 1, 1)) goto err;
+		if (!bn_probable_prime_dh_coprime(&r, 1024, add, NULL, ctx, 1, 1)) goto err;
 
-		/* skip 2 */
-		for (j = 1; j < NUMPRIMES; j++)
+		for (j = 0; j < NUMPRIMES; j++)
 			{
-			if (BN_mod_word(&r, primes[j]) <= 1)
+			if (BN_mod_word(&r, primes[j]) == 0)
 				{
 				BIO_printf(bp, "Number generated is not a safe coprime of %d:\n", primes[j]);
 				BN_print_fp(stdout, &r);
@@ -2142,6 +2158,7 @@ int test_probable_prime_dh_coprime_safe(BIO *bp, BN_CTX *ctx)
 
 err:
 	BN_clear(&r);
+	BN_free(add);
 	return ret;
 	}
 
@@ -2149,12 +2166,14 @@ int test_probable_prime_dh_coprime_unbiased(BIO *bp, BN_CTX *ctx)
 	{
 	int i, j, ret = 0;
 	BIGNUM r;
+	BIGNUM *add = BN_new();
 
 	BN_init(&r);
+	BN_set_word(add, 2);
 
 	for (i = 0; i < 1000; i++)
 		{
-		if (!bn_probable_prime_dh_coprime(&r, 1024, ctx, 0, 0)) goto err;
+		if (!bn_probable_prime_dh_coprime(&r, 1024, add, NULL, ctx, 0, 0)) goto err;
 
 		for (j = 0; j < NUMPRIMES; j++)
 			{
@@ -2172,6 +2191,7 @@ int test_probable_prime_dh_coprime_unbiased(BIO *bp, BN_CTX *ctx)
 
 err:
 	BN_clear(&r);
+	BN_free(add);
 	return ret;
 	}
 
@@ -2179,17 +2199,18 @@ int test_probable_prime_dh_coprime_unbiased_safe(BIO *bp, BN_CTX *ctx)
 	{
 	int i, j, ret = 0;
 	BIGNUM r;
+	BIGNUM *add = BN_new();
 
 	BN_init(&r);
+	BN_set_word(add, 2);
 
 	for (i = 0; i < 1000; i++)
 		{
-		if (!bn_probable_prime_dh_coprime(&r, 1024, ctx, 1, 0)) goto err;
+		if (!bn_probable_prime_dh_coprime(&r, 1024, add, NULL, ctx, 1, 0)) goto err;
 
-		/* skip 2 */
-		for (j = 1; j < NUMPRIMES; j++)
+		for (j = 0; j < NUMPRIMES; j++)
 			{
-			if (BN_mod_word(&r, primes[j]) <= 1)
+			if (BN_mod_word(&r, primes[j]) == 0)
 				{
 				BIO_printf(bp, "Number generated is not a safe coprime of %d:\n", primes[j]);
 				BN_print_fp(stdout, &r);
@@ -2203,6 +2224,7 @@ int test_probable_prime_dh_coprime_unbiased_safe(BIO *bp, BN_CTX *ctx)
 
 err:
 	BN_clear(&r);
+	BN_free(add);
 	return ret;
 	}
 

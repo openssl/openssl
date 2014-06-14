@@ -2168,76 +2168,88 @@ int MAIN(int argc, char **argv)
 	if (prime_doit[D_PRIME_COPRIME])
 		{
 		BIGNUM *rnd = BN_new();
+		BIGNUM *add = BN_new();
 		BN_CTX *ctx = BN_CTX_new();
 
+		BN_set_word(add, 2);
 		prime_print_message(prime_names[D_PRIME_COPRIME],
 							prime_c[D_PRIME_COPRIME]);
 
 		Time_F(START);
 		for (count=0, run=1; COND(prime_c[D_PRIME_COPRIME]); count++)
-			if (!bn_probable_prime_dh_coprime(rnd, 1024, ctx, 0, 1)) count--;
+			if (!bn_probable_prime_dh_coprime(rnd, 1024, add, NULL, ctx, 0, 1)) count--;
 
 		d=Time_F(STOP);
 		prime_print_result(D_PRIME_COPRIME, count, d);
 
 		BN_CTX_free(ctx);
+		BN_free(add);
 		BN_free(rnd);
 		}
 
 	if (prime_doit[D_PRIME_COPRIME_UNBIASED])
 		{
 		BIGNUM *rnd = BN_new();
+		BIGNUM *add = BN_new();
 		BN_CTX *ctx = BN_CTX_new();
 
+		BN_set_word(add, 2);
 		prime_print_message(prime_names[D_PRIME_COPRIME_UNBIASED],
 							prime_c[D_PRIME_COPRIME_UNBIASED]);
 
 		Time_F(START);
 		for (count=0, run=1; COND(prime_c[D_PRIME_COPRIME_UNBIASED]); count++)
-			if (!bn_probable_prime_dh_coprime(rnd, 1024, ctx, 0, 0)) count--;
+			if (!bn_probable_prime_dh_coprime(rnd, 1024, add, NULL, ctx, 0, 0)) count--;
 
 		d=Time_F(STOP);
 		prime_print_result(D_PRIME_COPRIME_UNBIASED, count, d);
 
 		BN_CTX_free(ctx);
+		BN_free(add);
 		BN_free(rnd);
 		}
 
 	if (prime_doit[D_PRIME_COPRIME_SAFE])
 		{
 		BIGNUM *rnd = BN_new();
+		BIGNUM *add = BN_new();
 		BN_CTX *ctx = BN_CTX_new();
 
+		BN_set_word(add, 2);
 		prime_print_message(prime_names[D_PRIME_COPRIME_SAFE],
 							prime_c[D_PRIME_COPRIME_SAFE]);
 
 		Time_F(START);
 		for (count=0, run=1; COND(prime_c[D_PRIME_COPRIME_SAFE]); count++)
-			if (!bn_probable_prime_dh_coprime(rnd, 1024, ctx, 1, 1)) count--;
+			if (!bn_probable_prime_dh_coprime(rnd, 1024, add, NULL, ctx, 1, 1)) count--;
 
 		d=Time_F(STOP);
 		prime_print_result(D_PRIME_COPRIME_SAFE, count, d);
 
 		BN_CTX_free(ctx);
+		BN_free(add);
 		BN_free(rnd);
 		}
 
 	if (prime_doit[D_PRIME_COPRIME_UNBIASED_SAFE])
 		{
 		BIGNUM *rnd = BN_new();
+		BIGNUM *add = BN_new();
 		BN_CTX *ctx = BN_CTX_new();
 
+		BN_set_word(add, 2);
 		prime_print_message(prime_names[D_PRIME_COPRIME_UNBIASED_SAFE],
 							prime_c[D_PRIME_COPRIME_UNBIASED_SAFE]);
 
 		Time_F(START);
 		for (count=0, run=1; COND(prime_c[D_PRIME_COPRIME_UNBIASED_SAFE]); count++)
-			if (!bn_probable_prime_dh_coprime(rnd, 1024, ctx, 1, 0)) count--;
+			if (!bn_probable_prime_dh_coprime(rnd, 1024, add, NULL, ctx, 1, 0)) count--;
 
 		d=Time_F(STOP);
 		prime_print_result(D_PRIME_COPRIME_UNBIASED_SAFE, count, d);
 
 		BN_CTX_free(ctx);
+		BN_free(add);
 		BN_free(rnd);
 		}
 

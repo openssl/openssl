@@ -496,25 +496,30 @@ err:
 	return(ret);
 	}
 
-int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits, BN_CTX *ctx,
-	int safe, int biased)
+int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits,
+	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx, int safe, int biased)
 	{
 	int i;
 	int j;
+	int add_word;
+	int sub;
 	int old_offset;
-	int new_offset;
 	int offset;
+	int prm_offsets[5760];
+	int tmp_prm_offsets[5760];
 	int prm_offset_count;
 	int prm_multiplier;
 	int prm_multiplier_bits;
 	uint max_rem;
 	BIGNUM *offset_index;
 	BIGNUM *offset_count;
+	BIGNUM *t1;
 	int ret = 0;
 	int base_offset = 0;
 
 	if (safe)
 		{
+		memcpy(prm_offsets, safe_prime_offsets, sizeof safe_prime_offsets);
 		prm_offset_count = safe_prime_offset_count;
 		prm_multiplier = safe_prime_multiplier;
 		prm_multiplier_bits = safe_prime_multiplier_bits;
@@ -522,6 +527,7 @@ int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits, BN_CTX *ctx,
 		}
 	else
 		{
+		memcpy(prm_offsets, prime_offsets, sizeof prime_offsets);
 		prm_offset_count = prime_offset_count;
 		prm_multiplier = prime_multiplier;
 		prm_multiplier_bits = prime_multiplier_bits;
@@ -530,7 +536,26 @@ int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits, BN_CTX *ctx,
 
 	OPENSSL_assert(bits > prm_multiplier_bits);
 
+	if (add != NULL)
+		{
+		add_word = BN_get_word(add);
+		j = 0;
+		for (i = 0; i < prm_offset_count; i++)
+			{
+			old_offset = offset;
+			offset = prm_offsets[j];
+			if ((offset - old_offset) % add_word == 0)
+				{
+				tmp_prm_offsets[j] = offset;
+				j++;
+				}
+			}
+		memcpy(prm_offsets, tmp_prm_offsets, sizeof tmp_prm_offsets);
+		prm_offset_count = j;
+		}
+
 	BN_CTX_start(ctx);
+	if ((t1 = BN_CTX_get(ctx)) == NULL) goto err;
 	if ((offset_index = BN_CTX_get(ctx)) == NULL) goto err;
 	if ((offset_count = BN_CTX_get(ctx)) == NULL) goto err;
 
@@ -539,17 +564,34 @@ int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits, BN_CTX *ctx,
 again:
 	if (!BN_rand(rnd, bits - prm_multiplier_bits, 0, -1)) goto err;
 	if (BN_is_bit_set(rnd, bits)) goto again;
-	if (!BN_rand_range(offset_index, offset_count)) goto err;
 
-	j = BN_get_word(offset_index);
-	if (safe)
+	/* we need ((rnd-rem) % add) == 0 */
+
+	if (add == NULL)
 		{
-		offset = safe_prime_offsets[j];
+		sub = BN_mod_word(rnd, 2);
+		if (!BN_sub_word(rnd, sub)) goto err;
 		}
 	else
 		{
-		offset = prime_offsets[j];
+		if (!BN_mod(t1, rnd, add, ctx)) goto err;
+		if (!BN_sub(rnd, rnd, t1)) goto err;
 		}
+
+	if (rem == NULL)
+		{
+		if (!BN_add_word(rnd, 1)) goto err;
+		}
+	else
+		{
+		if (!BN_add(rnd, rnd, rem)) goto err;
+		}
+
+	if (!BN_rand_range(offset_index, offset_count)) goto err;
+
+	j = BN_get_word(offset_index);
+	offset = prm_offsets[j];
+	base_offset = 0;
 
 	BN_mul_word(rnd, prm_multiplier);
 	BN_add_word(rnd, offset);
@@ -572,20 +614,10 @@ loop:
 					base_offset += prm_multiplier;
 					}
 
-				if (safe)
-					{
-					new_offset = safe_prime_offsets[j];
-					}
-				else
-					{
-					new_offset = prime_offsets[j];
-					}
-
 				old_offset = offset;
-				offset = base_offset + new_offset;
+				offset = base_offset + prm_offsets[j];
 
-				if (!BN_add_word(rnd, offset - old_offset))
-					goto err;
+				if (!BN_add_word(rnd, offset - old_offset)) goto err;
 				goto loop;
 				}
 			else

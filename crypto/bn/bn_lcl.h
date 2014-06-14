@@ -537,8 +537,8 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
 int bn_probable_prime(BIGNUM *rnd, int bits);
 int bn_probable_prime_dh(BIGNUM *rnd, int bits,
 	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx, int safe, int biased);
-int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits, BN_CTX *ctx,
-	int safe, int biased);
+int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits,
+	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx, int safe, int biased);
 
 #ifdef  __cplusplus
 }
