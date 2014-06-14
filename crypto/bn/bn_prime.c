@@ -466,7 +466,7 @@ loop:
 			}
 		}
 
-	ret=1;
+	ret = 1;
 
 err:
 	BN_CTX_end(ctx);
@@ -536,7 +536,7 @@ int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits,
 	if ((offset_index = BN_CTX_get(ctx)) == NULL) goto err;
 	if ((offset_count = BN_CTX_get(ctx)) == NULL) goto err;
 
-	BN_add_word(offset_count, prm_offset_count);
+	BN_set_word(offset_count, prm_offset_count);
 
 again:
 	if (!BN_rand(rnd, bits - prm_multiplier_bits, 0, -1)) goto err;
