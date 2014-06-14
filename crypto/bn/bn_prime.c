@@ -471,7 +471,14 @@ loop:
 			{
 			if (biased)
 				{
-				if (!BN_add(rnd, rnd, add)) goto err;
+				if (add == NULL)
+					{
+					if (!BN_add_word(rnd, 2)) goto err;
+					}
+				else
+					{
+					if (!BN_add(rnd, rnd, add)) goto err;
+					}
 				goto loop;
 				}
 			else
