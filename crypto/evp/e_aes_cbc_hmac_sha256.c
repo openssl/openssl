@@ -206,8 +206,6 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA256 *key,
 	u8		*IVs;
 #if defined(BSWAP8)
 	u64		seqnum;
-#else
-	unsigned int	carry,j;
 #endif
 
 	if (RAND_bytes((IVs=blocks[0].c),16*x4)<=0)	/* ask for IVs in bulk */
@@ -244,6 +242,9 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA256 *key,
 #endif
 	for (i=0;i<x4;i++) {
 		unsigned int len = (i==(x4-1)?last:frag);
+#if !defined(BSWAP8)
+		unsigned int carry, j;
+#endif
 
 		ctx->A[i] = key->md.h[0];
 		ctx->B[i] = key->md.h[1];
