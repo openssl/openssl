@@ -188,7 +188,15 @@ loop:
 		}
 	else
 		{
-		if (!bn_probable_prime_dh(ret, bits, add, rem, ctx, safe, 1)) goto err;
+		if (safe)
+			{
+			if (!bn_probable_prime_dh_coprime(ret, bits, add, rem, ctx, 1, 1)) goto err;
+			}
+		else
+			{
+			/* coprime method is faster in every case except the unsafe biased case */
+			if (!bn_probable_prime_dh(ret, bits, add, rem, ctx, 0, 1)) goto err;
+			}
 		}
 	/* if (BN_mod_word(ret,(BN_ULONG)3) == 1) goto loop; */
 	if(!BN_GENCB_call(cb, 0, c1++))
