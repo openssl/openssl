@@ -774,7 +774,7 @@ static int aesni_cbc_hmac_sha256_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, vo
 		unsigned int n4x=1, x4;
 		unsigned int frag, last, packlen, inp_len;
 
-		if (arg<sizeof(EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM)) return -1;
+		if (arg<(int)sizeof(EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM)) return -1;
 
 		inp_len = param->inp[11]<<8|param->inp[12];
 

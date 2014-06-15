@@ -696,7 +696,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 	 * compromise is considered worthy.
 	 */
 	if (type==SSL3_RT_APPLICATION_DATA &&
-	    len >= 4*(max_send_fragment=s->max_send_fragment) &&
+	    len >= 4*(int)(max_send_fragment=s->max_send_fragment) &&
 	    s->compress==NULL && s->msg_callback==NULL &&
 	    !SSL_USE_ETM(s) && SSL_USE_EXPLICIT_IV(s) &&
 	    EVP_CIPHER_flags(s->enc_write_ctx->cipher)&EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)
@@ -717,7 +717,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 					EVP_CTRL_TLS1_1_MULTIBLOCK_MAX_BUFSIZE,
 					max_send_fragment,NULL);
 
-			if (len>=8*max_send_fragment)	packlen *= 8;
+			if (len>=8*(int)max_send_fragment)	packlen *= 8;
 			else				packlen *= 4;
 
 			wb->buf=OPENSSL_malloc(packlen);
@@ -769,7 +769,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 					EVP_CTRL_TLS1_1_MULTIBLOCK_AAD,
 					sizeof(mb_param),&mb_param);
 
-			if (packlen<=0 || packlen>wb->len)	/* never happens */
+			if (packlen<=0 || packlen>(int)wb->len)	/* never happens */
 				{
 				OPENSSL_free(wb->buf);	/* free jumbo buffer */
 				wb->buf = NULL;
