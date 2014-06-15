@@ -848,7 +848,7 @@ int BIO_accept(int sock, char **addr)
 	 * length value would appear as unreasonably large. But this
 	 * won't prevent it from filling in the address structure. The
 	 * trouble of course would be if accept returns more data than
-	 * actual buffer can accomodate and overwrite stack... That's
+	 * actual buffer can accommodate and overwrite stack... That's
 	 * where early OPENSSL_assert comes into picture. Besides, the
 	 * only 64-bit big-endian platform found so far that expects
 	 * size_t* is HP-UX, where stack grows towards higher address.

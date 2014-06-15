@@ -153,7 +153,7 @@ the default key size, specified in the configuration file is used.
 
 All other algorithms support the B<-newkey alg:file> form, where file may be
 an algorithm parameter file, created by the B<genpkey -genparam> command
-or and X.509 certificate for a key with approriate algorithm.
+or and X.509 certificate for a key with appropriate algorithm.
 
 B<param:file> generates a key using the parameter file or certificate B<file>,
 the algorithm is determined by the parameters. B<algname:file> use algorithm

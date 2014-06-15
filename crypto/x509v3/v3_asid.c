@@ -164,7 +164,7 @@ static int i2r_ASIdentifiers(const X509V3_EXT_METHOD *method,
 }
 
 /*
- * Sort comparision function for a sequence of ASIdOrRange elements.
+ * Sort comparison function for a sequence of ASIdOrRange elements.
  */
 static int ASIdOrRange_cmp(const ASIdOrRange * const *a_,
 			   const ASIdOrRange * const *b_)

@@ -258,7 +258,7 @@ void ECDSA_METHOD_free(ECDSA_METHOD *ecdsa_method);
 
 /**  Set the ECDSA_do_sign function in the ECDSA_METHOD
  *   \param  ecdsa_method  pointer to existing ECDSA_METHOD
- *   \param  ecdsa_do_sign a funtion of type ECDSA_do_sign
+ *   \param  ecdsa_do_sign a function of type ECDSA_do_sign
  */
 
 void ECDSA_METHOD_set_sign(ECDSA_METHOD *ecdsa_method,
@@ -267,7 +267,7 @@ void ECDSA_METHOD_set_sign(ECDSA_METHOD *ecdsa_method,
 
 /**  Set the  ECDSA_sign_setup function in the ECDSA_METHOD
  *   \param  ecdsa_method  pointer to existing ECDSA_METHOD
- *   \param  ecdsa_sign_setup a funtion of type ECDSA_sign_setup
+ *   \param  ecdsa_sign_setup a function of type ECDSA_sign_setup
  */
 
 void ECDSA_METHOD_set_sign_setup(ECDSA_METHOD *ecdsa_method,
@@ -276,7 +276,7 @@ void ECDSA_METHOD_set_sign_setup(ECDSA_METHOD *ecdsa_method,
 
 /**  Set the ECDSA_do_verify function in the ECDSA_METHOD
  *   \param  ecdsa_method  pointer to existing ECDSA_METHOD
- *   \param  ecdsa_do_verify a funtion of type ECDSA_do_verify
+ *   \param  ecdsa_do_verify a function of type ECDSA_do_verify
  */
 
 void ECDSA_METHOD_set_verify(ECDSA_METHOD *ecdsa_method,

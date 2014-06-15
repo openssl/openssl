@@ -206,7 +206,7 @@ s_client -verify 10 -CApath . -reconnect
 	verify return:1
 	drop the connection and reconnect with the same session id
 	CIPHER is CBC3-DES-MD5
-This has done a full connection and then re-estabished it with the
+This has done a full connection and then re-established it with the
 same session id but a new socket.  No RSA stuff occures on the second
 connection.  Note that we said we would prefer to use CBC3-DES-MD5
 encryption and so, since the server supports it, we are.
@@ -214,7 +214,7 @@ encryption and so, since the server supports it, we are.
 =====
 s_server
 This program accepts SSL connections on a specified port
-Once connected, it will estabish an SSL connection and optionaly
+Once connected, it will establish an SSL connection and optionaly
 attempt to authenticate the client.  A 2 directional channel will be
 open.  Any text typed will be sent to the other end.  Type Q<cr> to exit.
 Flags are as follows.
@@ -1861,7 +1861,7 @@ int BN_bn2bin(BIGNUM *a, unsigned char *to);
 	information is lost.  Since this library was written to
 	manipulate large positive integers, the inability to save and
 	restore them is not considered to be a problem by me :-).
-	As for BN_bin2bn(), look at the ASN.1 integer encoding funtions
+	As for BN_bin2bn(), look at the ASN.1 integer encoding functions
 	for SSLeay.  They use BN_bin2bn() and BN_bn2bin() internally.
 	
 char *BN_bn2ascii(BIGNUM *a);
@@ -1968,7 +1968,7 @@ Each BIO structure can have a callback defined against it.  This callback is
 called 2 times for each BIO 'function'.  It is passed 6 parameters.
 BIO_debug_callback() is an example callback which is defined in
 crypto/buffer/bio_cb.c and is used in apps/dgst.c  This is intended mostly
-for debuging or to notify the application of IO.
+for debugging or to notify the application of IO.
 
 long BIO_debug_callback(BIO *bio,int cmd,char *argp,int argi,long argl,
 	long ret);
@@ -1981,7 +1981,7 @@ if the return code from the callback is not > 0, the call is aborted
 and the returned <= 0 value is returned.
 The second time the callback is called, the 'cmd' value also has
 BIO_CB_RETURN logically 'or'ed with it.  The 'ret' value is the value returned
-from the actuall function call and whatever the callback returns is returned
+from the actual function call and whatever the callback returns is returned
 from the BIO function.
 
 BIO_set_callback(b,cb) can be used to set the callback function
@@ -4381,7 +4381,7 @@ follows:
 	(n-1)th line contains a multiple of 4 chars less then 76 (possible 
 empty)
 	(n)th line has zero or 4 chars (then with 1 or 2 equal signs - the 
-		original text's lenght wasn'T a multiple of 3) 
+		original text's length wasn'T a multiple of 3) 
 	The line separator has two chars: 0x0d 0x0a
 
 AcceptCredentials(sessionID, credentials, 0, FALSE)
@@ -5689,14 +5689,14 @@ settings.  SSL_set_session()
 does not add it to the cache.  Just call SSL_CTX_add_session() if you do want the
 session added.  For a 'client' this would not normally be the case.
 SSL_CTX_add_session() is not normally ever used, except for doing 'evil' things
-which the next 2 funtions help you do.
+which the next 2 functions help you do.
 
 int     i2d_SSL_SESSION(SSL_SESSION *in,unsigned char **pp);
 SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a,unsigned char **pp,long length);
 These 2 functions are in the standard ASN1 library form and can be used to
 load and save to a byte format, the SSL_SESSION structure.
 With these functions, you can save and read these structures to a files or
-arbitary byte string.
+arbitrary byte string.
 The PEM_write_SSL_SESSION(fp,x) and PEM_read_SSL_SESSION(fp,x,cb) will
 write to a file pointer in base64 encoding.
 
@@ -5824,7 +5824,7 @@ SSL_CTX_remove_session(SSL_get_SSL_CTX(ssl),SSL_get_session(ssl));
  * connections using this session by doing SSL_get_session(ssl) to get the
  * existing session, but SSL_accept() will not be able to find it to
  * use for incoming connections.
- * Of corse, the session will timeout at the far end and it will no
+ * Of coarse, the session will timeout at the far end and it will no
  * longer be accepted after a while.  The time and timeout are ignored except
  * by SSL_accept(). */
 
@@ -6203,7 +6203,7 @@ SSL_load_error_strings
 SSL_state_string
 SSL_state_string_long
 /* These 2 report what kind of IO operation the library was trying to
- * perform last.  Probably not very usefull. */
+ * perform last.  Probably not very useful. */
 SSL_rstate_string
 SSL_rstate_string_long
 
@@ -6359,8 +6359,8 @@ big number library would be problomatic in itself, let alone making it fast.
 At this point the scope of 'implementing SSL' expands eponentialy.
 First of all, the RSA private keys  were being kept in ASN.1 format.
 Thankfully the RSA PKCS series of documents explains this format.  So I now
-needed to be able to encode and decode arbitary ASN.1 objects.  The Public
-keys were embeded in X509 certificates.  Hmm... these are not only
+needed to be able to encode and decode arbitrary ASN.1 objects.  The Public
+keys were embedded in X509 certificates.  Hmm... these are not only
 ASN.1 objects but they make up a heirachy of authentication.  To
 authenticate a X509 certificate one needs to retrieve it's issuers
 certificate etc etc.  Hmm..., so I also need to implement some kind
@@ -6417,7 +6417,7 @@ speed, minimal 'crap in the way' type interfaces.  For fastest and
 lowest level access, these routines should be used directly.
 
 Now there was also the matter of public key crypto systems.  These are
-based on large integer arithmatic.
+based on large integer arithmetic.
 
 BN	This is my large integer library.  It supports all the normal
 	arithmentic operations.  It uses malloc extensivly and as such has
@@ -6535,7 +6535,7 @@ TXT_DB	A simple memory based text file data base.  The application can specify
 
 CONF	Most of the programs written for this library require a configuration
 	file.  Instead of letting programs constantly re-implment this
-	subsystem, the CONF library provides a consistant and flexable
+	subsystem, the CONF library provides a consistent and flexable
 	interface to not only configuration files but also environment
 	variables.
 
@@ -6748,7 +6748,7 @@ int line;
 Now in this case I have used mutexes instead of read/write locks, since they
 are faster and there are not many read locks in SSLeay, you may as well
 always use write locks.  file and line are __FILE__ and __LINE__ from
-the compile and can be usefull when debugging.
+the compile and can be useful when debugging.
 
 Now as you can see, 'type' can be one of a range of values, these values are
 defined in crypto/crypto.h
@@ -6853,7 +6853,7 @@ to be used because the retarted C compilers explode when you do
 cl -o file *.o.
 
 Now some would argue that I should just use the single makefile.  I don't
-like it during develoment for 2 reasons.  First, the actuall make
+like it during develoment for 2 reasons.  First, the actual make
 command takes a long time.  For my current setup, if I'm in
 crypto/bn and I type make, only the crypto/bn directory gets rebuilt,
 which is nice when you are modifying prototypes in bn.h which

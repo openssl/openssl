@@ -32,7 +32,7 @@ static int zlib_stateful_expand_block(COMP_CTX *ctx, unsigned char *out,
 	unsigned int olen, unsigned char *in, unsigned int ilen);
 
 
-/* memory allocations functions for zlib intialization */
+/* memory allocations functions for zlib initialization */
 static void* zlib_zalloc(void* opaque, unsigned int no, unsigned int size)
 {
 	void *p;
@@ -391,7 +391,7 @@ COMP_METHOD *COMP_zlib(void)
 #if defined(ZLIB) || defined(ZLIB_SHARED)
 		{
 		/* init zlib_stateful_ex_idx here so that in a multi-process
-		 * application it's enough to intialize openssl before forking
+		 * application it's enough to initialize openssl before forking
 		 * (idx will be inherited in all the children) */
 		if (zlib_stateful_ex_idx == -1)
 			{

@@ -87,7 +87,7 @@ parameters along with the PEM or DER structure.
 
 =head1 KEY GENERATION OPTIONS
 
-The options supported by each algorith and indeed each implementation of an
+The options supported by each algorithm and indeed each implementation of an
 algorithm can vary. The options for the OpenSSL implementations are detailed
 below.
 

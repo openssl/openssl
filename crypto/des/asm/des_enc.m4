@@ -1668,7 +1668,7 @@ DES_ncbc_encrypt:
 	.size	 DES_ncbc_encrypt, .DES_ncbc_encrypt.end-DES_ncbc_encrypt
 
 
-! void DES_ede3_cbc_encrypt(input, output, lenght, ks1, ks2, ks3, ivec, enc)
+! void DES_ede3_cbc_encrypt(input, output, length, ks1, ks2, ks3, ivec, enc)
 ! **************************************************************************
 
 

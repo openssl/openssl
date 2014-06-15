@@ -248,7 +248,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
 		else if ((s->enc_read_ctx=OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
 			goto err;
 		else
-			/* make sure it's intialized in case we exit later with an error */
+			/* make sure it's initialized in case we exit later with an error */
 			EVP_CIPHER_CTX_init(s->enc_read_ctx);
 		dd= s->enc_read_ctx;
 
@@ -285,7 +285,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
 		else if ((s->enc_write_ctx=OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
 			goto err;
 		else
-			/* make sure it's intialized in case we exit later with an error */
+			/* make sure it's initialized in case we exit later with an error */
 			EVP_CIPHER_CTX_init(s->enc_write_ctx);
 		dd= s->enc_write_ctx;
 		ssl_replace_hash(&s->write_hash,m);

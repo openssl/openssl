@@ -46,7 +46,7 @@ Possible threats are, as far as has been imagined so far:
    authorisation rights.
 
 For this reason, OpenSSL requires that the use of proxy certificates
-be explicitely allowed.  Currently, this can be done using the
+be explicitly allowed.  Currently, this can be done using the
 following methods:
 
  - if the application calls X509_verify_cert() itself, it can do the

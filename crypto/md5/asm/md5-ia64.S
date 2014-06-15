@@ -416,7 +416,7 @@ md5_block_asm_data_order:
 .md5_unaligned:
 //
 //	Because variable shifts are expensive, we special case each of
-//	the four alignements. In practice, this won't hurt too much
+//	the four alignments. In practice, this won't hurt too much
 //	since only one working set of code will be loaded.
 //
 {	.mib

@@ -162,7 +162,7 @@ buffer is full or the read buffer is drained. Then the application has to
 flush the write buffer and/or fill the read buffer.
 
 Use the BIO_ctrl_pending(), to find out whether data is buffered in the BIO
-and must be transfered to the network. Use BIO_ctrl_get_read_request() to
+and must be transferred to the network. Use BIO_ctrl_get_read_request() to
 find out, how many bytes must be written into the buffer before the
 SSL_operation() can successfully be continued.
 

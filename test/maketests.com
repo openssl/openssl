@@ -414,7 +414,7 @@ $! Time To RETURN.
 $!
 $ RETURN
 $!
-$! Check To See If We Have The Appropiate Libraries.
+$! Check To See If We Have The Appropriate Libraries.
 $!
 $ LIB_CHECK:
 $!

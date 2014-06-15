@@ -310,8 +310,8 @@ DECLARE_STACK_OF(void)
 
 typedef struct crypto_ex_data_func_st
 	{
-	long argl;	/* Arbitary long */
-	void *argp;	/* Arbitary void * */
+	long argl;	/* Arbitrary long */
+	void *argp;	/* Arbitrary void * */
 	CRYPTO_EX_new *new_func;
 	CRYPTO_EX_free *free_func;
 	CRYPTO_EX_dup *dup_func;

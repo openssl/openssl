@@ -1558,7 +1558,7 @@ struct ssl_st
 
 	SSL_CTX *ctx;
 	/* set this flag to 1 and a sleep(1) is put into all SSL_read()
-	 * and SSL_write() calls, good for nbio debuging :-) */
+	 * and SSL_write() calls, good for nbio debugging :-) */
 	int debug;	
 
 	/* extra application data */

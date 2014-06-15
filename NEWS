@@ -380,7 +380,7 @@
       o Major overhaul of RC4 performance on Intel P4, IA-64 and
         AMD64.
       o Changed the Configure script to have some algorithms disabled
-        by default.  Those can be explicitely enabled with the new
+        by default.  Those can be explicitly enabled with the new
         argument form 'enable-xxx'.
       o Change the default digest in 'openssl' commands from MD5 to
         SHA-1.

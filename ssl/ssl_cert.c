@@ -539,7 +539,7 @@ int ssl_cert_inst(CERT **o)
 	/* Create a CERT if there isn't already one
 	 * (which cannot really happen, as it is initially created in
 	 * SSL_CTX_new; but the earlier code usually allows for that one
-	 * being non-existant, so we follow that behaviour, as it might
+	 * being non-existent, so we follow that behaviour, as it might
 	 * turn out that there actually is a reason for it -- but I'm
 	 * not sure that *all* of the existing code could cope with
 	 * s->cert being NULL, otherwise we could do without the

@@ -34,7 +34,7 @@ SSL_CTX_set_security_level, SSL_set_security_level, SSL_CTX_get_security_level, 
 =head1 DESCRIPTION
 
 The functions SSL_CTX_set_security_level() and SSL_set_security_level() set
-the security level to B<level>. If not set the libary default security level
+the security level to B<level>. If not set the library default security level
 is used.
 
 The functions SSL_CTX_get_security_level() and SSL_get_security_level()

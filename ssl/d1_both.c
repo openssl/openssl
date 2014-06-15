@@ -1130,7 +1130,7 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
 	item = pqueue_find(s->d1->sent_messages, seq64be);
 	if ( item == NULL)
 		{
-		fprintf(stderr, "retransmit:  message %d non-existant\n", seq);
+		fprintf(stderr, "retransmit:  message %d non-existent\n", seq);
 		*found = 0;
 		return 0;
 		}

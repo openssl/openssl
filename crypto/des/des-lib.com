@@ -856,7 +856,7 @@ $ CCDISABLEWARNINGS = ""
 $ IF F$TYPE(USER_CCDISABLEWARNINGS) .NES. "" THEN -
 	CCDISABLEWARNINGS = USER_CCDISABLEWARNINGS
 $!
-$!  Check To See If The User Entered A Valid Paramter.
+$!  Check To See If The User Entered A Valid Parameter.
 $!
 $ IF (P3.EQS."VAXC").OR.(P3.EQS."DECC").OR.(P3.EQS."GNUC")
 $ THEN

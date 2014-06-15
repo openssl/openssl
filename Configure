@@ -88,7 +88,7 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [experimenta
 #		word) boundary.
 # RC4_CHUNK_LL	enables code that handles data aligned at long long boundary
 #		(intended for 64-bit CPUs running 32-bit OS).
-# BF_PTR	use 'pointer arithmatic' for Blowfish (unsafe on Alpha).
+# BF_PTR	use 'pointer arithmetic' for Blowfish (unsafe on Alpha).
 # BF_PTR2	intel specific version (generic version is more efficient).
 #
 # Following are set automatically by this script

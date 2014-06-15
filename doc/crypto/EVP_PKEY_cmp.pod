@@ -26,7 +26,7 @@ B<from> to key B<to>.
 The function EVP_PKEY_cmp_parameters() compares the parameters of keys
 B<a> and B<b>.
 
-The function EVP_PKEY_cmp() compares the public key components and paramters
+The function EVP_PKEY_cmp() compares the public key components and parameters
 (if present) of keys B<a> and B<b>.
 
 =head1 NOTES

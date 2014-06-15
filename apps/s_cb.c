@@ -1251,7 +1251,7 @@ struct chain_flags chain_flags_list[] =
 		{CERT_PKEY_CA_SIGNATURE, "CA signature"},
 		{CERT_PKEY_EE_PARAM, "EE key parameters"},
 		{CERT_PKEY_CA_PARAM, "CA key parameters"},
-		{CERT_PKEY_EXPLICIT_SIGN,  "Explicity sign with EE key"},
+		{CERT_PKEY_EXPLICIT_SIGN,  "Explicitly sign with EE key"},
 		{CERT_PKEY_ISSUER_NAME,  "Issuer Name"},
 		{CERT_PKEY_CERT_TYPE,  "Certificate Type"},
 		{0, NULL}

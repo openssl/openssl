@@ -1167,7 +1167,7 @@ int test_gf2m_add(BIO *bp)
 		a.neg=rand_neg();
 		b.neg=rand_neg();
 		BN_GF2m_add(&c,&a,&b);
-#if 0 /* make test uses ouput in bc but bc can't handle GF(2^m) arithmetic */
+#if 0 /* make test uses output in bc but bc can't handle GF(2^m) arithmetic */
 		if (bp != NULL)
 			{
 			if (!results)
@@ -1226,7 +1226,7 @@ int test_gf2m_mod(BIO *bp)
 		for (j=0; j < 2; j++)
 			{
 			BN_GF2m_mod(c, a, b[j]);
-#if 0 /* make test uses ouput in bc but bc can't handle GF(2^m) arithmetic */
+#if 0 /* make test uses output in bc but bc can't handle GF(2^m) arithmetic */
 			if (bp != NULL)
 				{
 				if (!results)
@@ -1289,7 +1289,7 @@ int test_gf2m_mod_mul(BIO *bp,BN_CTX *ctx)
 		for (j=0; j < 2; j++)
 			{
 			BN_GF2m_mod_mul(e, a, c, b[j], ctx);
-#if 0 /* make test uses ouput in bc but bc can't handle GF(2^m) arithmetic */
+#if 0 /* make test uses output in bc but bc can't handle GF(2^m) arithmetic */
 			if (bp != NULL)
 				{
 				if (!results)
@@ -1356,7 +1356,7 @@ int test_gf2m_mod_sqr(BIO *bp,BN_CTX *ctx)
 			BN_GF2m_mod_sqr(c, a, b[j], ctx);
 			BN_copy(d, a);
 			BN_GF2m_mod_mul(d, a, d, b[j], ctx);
-#if 0 /* make test uses ouput in bc but bc can't handle GF(2^m) arithmetic */
+#if 0 /* make test uses output in bc but bc can't handle GF(2^m) arithmetic */
 			if (bp != NULL)
 				{
 				if (!results)
@@ -1414,7 +1414,7 @@ int test_gf2m_mod_inv(BIO *bp,BN_CTX *ctx)
 			{
 			BN_GF2m_mod_inv(c, a, b[j], ctx);
 			BN_GF2m_mod_mul(d, a, c, b[j], ctx);
-#if 0 /* make test uses ouput in bc but bc can't handle GF(2^m) arithmetic */
+#if 0 /* make test uses output in bc but bc can't handle GF(2^m) arithmetic */
 			if (bp != NULL)
 				{
 				if (!results)
@@ -1473,7 +1473,7 @@ int test_gf2m_mod_div(BIO *bp,BN_CTX *ctx)
 			BN_GF2m_mod_div(d, a, c, b[j], ctx);
 			BN_GF2m_mod_mul(e, d, c, b[j], ctx);
 			BN_GF2m_mod_div(f, a, e, b[j], ctx);
-#if 0 /* make test uses ouput in bc but bc can't handle GF(2^m) arithmetic */
+#if 0 /* make test uses output in bc but bc can't handle GF(2^m) arithmetic */
 			if (bp != NULL)
 				{
 				if (!results)
@@ -1539,7 +1539,7 @@ int test_gf2m_mod_exp(BIO *bp,BN_CTX *ctx)
 			BN_GF2m_mod_mul(e, e, f, b[j], ctx);
 			BN_add(f, c, d);
 			BN_GF2m_mod_exp(f, a, f, b[j], ctx);
-#if 0 /* make test uses ouput in bc but bc can't handle GF(2^m) arithmetic */
+#if 0 /* make test uses output in bc but bc can't handle GF(2^m) arithmetic */
 			if (bp != NULL)
 				{
 				if (!results)
@@ -1606,7 +1606,7 @@ int test_gf2m_mod_sqrt(BIO *bp,BN_CTX *ctx)
 			BN_GF2m_mod(c, a, b[j]);
 			BN_GF2m_mod_sqrt(d, a, b[j], ctx);
 			BN_GF2m_mod_sqr(e, d, b[j], ctx);
-#if 0 /* make test uses ouput in bc but bc can't handle GF(2^m) arithmetic */
+#if 0 /* make test uses output in bc but bc can't handle GF(2^m) arithmetic */
 			if (bp != NULL)
 				{
 				if (!results)
@@ -1668,7 +1668,7 @@ int test_gf2m_mod_solve_quad(BIO *bp,BN_CTX *ctx)
 				BN_GF2m_mod_sqr(d, c, b[j], ctx);
 				BN_GF2m_add(d, c, d);
 				BN_GF2m_mod(e, a, b[j]);
-#if 0 /* make test uses ouput in bc but bc can't handle GF(2^m) arithmetic */
+#if 0 /* make test uses output in bc but bc can't handle GF(2^m) arithmetic */
 				if (bp != NULL)
 					{
 					if (!results)
@@ -1693,7 +1693,7 @@ int test_gf2m_mod_solve_quad(BIO *bp,BN_CTX *ctx)
 				}
 			else 
 				{
-#if 0 /* make test uses ouput in bc but bc can't handle GF(2^m) arithmetic */
+#if 0 /* make test uses output in bc but bc can't handle GF(2^m) arithmetic */
 				if (bp != NULL)
 					{
 					if (!results)

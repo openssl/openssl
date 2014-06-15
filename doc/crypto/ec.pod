@@ -184,7 +184,7 @@ The creation and destruction of B<EC_GROUP> objects is described in L<EC_GROUP_n
 manipulating B<EC_GROUP> objects are described in L<EC_GROUP_copy(3)|EC_GROUP_copy(3)>.
 
 Functions for creating, destroying and manipulating B<EC_POINT> objects are explained in L<EC_POINT_new(3)|EC_POINT_new(3)>,
-whilst functions for performing mathematical operations and tests on B<EC_POINTs> are coverd in L<EC_POINT_add(3)|EC_POINT_add(3)>.
+whilst functions for performing mathematical operations and tests on B<EC_POINTs> are covered in L<EC_POINT_add(3)|EC_POINT_add(3)>.
 
 For working with private and public keys refer to L<EC_KEY_new(3)|EC_KEY_new(3)>. Implementations are covered in
 L<EC_GFp_simple_method(3)|EC_GFp_simple_method(3)>.

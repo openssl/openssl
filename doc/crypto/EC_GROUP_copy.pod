@@ -55,8 +55,8 @@ EC_GROUP object.
 
 EC_GROUP_method_of obtains the EC_METHOD of B<group>.
 
-EC_GROUP_set_generator sets curve paramaters that must be agreed by all participants using the curve. These
-paramaters include the B<generator>, the B<order> and the B<cofactor>. The B<generator> is a well defined point on the
+EC_GROUP_set_generator sets curve parameters that must be agreed by all participants using the curve. These
+parameters include the B<generator>, the B<order> and the B<cofactor>. The B<generator> is a well defined point on the
 curve chosen for cryptographic operations. Integers used for point multiplications will be between 0 and
 n-1 where n is the B<order>. The B<order> multipied by the B<cofactor> gives the number of points on the curve.
 

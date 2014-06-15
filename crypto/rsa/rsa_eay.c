@@ -815,7 +815,7 @@ static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 		BIGNUM local_p, local_q;
 		BIGNUM *p = NULL, *q = NULL;
 
-		/* Make sure BN_mod_inverse in Montgomery intialization uses the
+		/* Make sure BN_mod_inverse in Montgomery initialization uses the
 		 * BN_FLG_CONSTTIME flag (unless RSA_FLAG_NO_CONSTTIME is set)
 		 */
 		if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME))

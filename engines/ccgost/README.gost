@@ -145,7 +145,7 @@ OpenSSL supports all four ciphersuites defined in the IETF draft.
 Once you've loaded GOST key and certificate into your TLS server,
 ciphersuites which use GOST 28147-89 encryption are enabled.
 
-Ciphersuites with NULL encryption should be enabled explicitely if
+Ciphersuites with NULL encryption should be enabled explicitly if
 needed.
 
 GOST2001-GOST89-GOST89 Uses GOST R 34.10-2001 for auth and key exchange

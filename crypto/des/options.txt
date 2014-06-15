@@ -1,7 +1,7 @@
 Note that the UNROLL option makes the 'inner' des loop unroll all 16 rounds
 instead of the default 4.
 RISC1 and RISC2 are 2 alternatives for the inner loop and
-PTR means to use pointers arithmatic instead of arrays.
+PTR means to use pointers arithmetic instead of arrays.
 
 FreeBSD - Pentium Pro 200mhz - gcc 2.7.2.2 - assembler		577,000 4620k/s
 IRIX 6.2 - R10000 195mhz - cc (-O3 -n32) - UNROLL RISC2 PTR	496,000 3968k/s

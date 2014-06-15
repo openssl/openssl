@@ -322,7 +322,7 @@ static int ssleay_rand_add(const void *buf, int num, double add)
 			 * but always each byte of the new state is
 			 * the XOR of some previous value of its
 			 * and local_md (itermediate values may be lost).
-			 * Alway using locking could hurt performance more
+			 * Always using locking could hurt performance more
 			 * than necessary given that conflicts occur only
 			 * when the total seeding is longer than the random
 			 * state. */

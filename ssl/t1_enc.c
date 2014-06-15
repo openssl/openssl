@@ -376,7 +376,7 @@ int tls1_change_cipher_state(SSL *s, int which)
 		else if ((s->enc_read_ctx=OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
 			goto err;
 		else
-			/* make sure it's intialized in case we exit later with an error */
+			/* make sure it's initialized in case we exit later with an error */
 			EVP_CIPHER_CTX_init(s->enc_read_ctx);
 		dd= s->enc_read_ctx;
 		mac_ctx=ssl_replace_hash(&s->read_hash,NULL);

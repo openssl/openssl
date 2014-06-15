@@ -126,7 +126,7 @@ void UI_free(UI *ui);
    added, so the result is *not* a string.
 
    On success, the all return an index of the added information.  That index
-   is usefull when retrieving results with UI_get0_result(). */
+   is useful when retrieving results with UI_get0_result(). */
 int UI_add_input_string(UI *ui, const char *prompt, int flags,
 	char *result_buf, int minsize, int maxsize);
 int UI_dup_input_string(UI *ui, const char *prompt, int flags,
