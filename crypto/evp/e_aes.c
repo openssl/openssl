@@ -165,6 +165,7 @@ extern unsigned int OPENSSL_ppccap_P;
 # define HWAES_encrypt aes_p8_encrypt
 # define HWAES_decrypt aes_p8_decrypt
 # define HWAES_cbc_encrypt aes_p8_cbc_encrypt
+# define HWAES_ctr32_encrypt_blocks aes_p8_ctr32_encrypt_blocks
 #endif
 
 #if	defined(AES_ASM) && !defined(I386_ONLY) &&	(  \
