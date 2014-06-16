@@ -240,7 +240,7 @@ $ NEXT_FILE:
 $!
 $! O.K, Extract The File Name From The File List.
 $!
-$ FILE_NAME = F$ELEMENT(FILE_COUNTER,",",LIB_SSL)
+$ FILE_NAME = F$EDIT(F$ELEMENT(FILE_COUNTER,",",LIB_SSL),"COLLAPSE")
 $!
 $! Check To See If We Are At The End Of The File List.
 $!
