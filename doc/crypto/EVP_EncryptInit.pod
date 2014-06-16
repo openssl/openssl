@@ -398,7 +398,7 @@ See L<EXAMPLES> below for an example of the use of GCM mode.
 
 =head1 CCM Mode
 
-The behaviour of CCM mode ciphers is similar to CCM mode but with a few
+The behaviour of CCM mode ciphers is similar to GCM mode but with a few
 additional requirements and different ctrl values.
 
 Like GCM mode any additional authenticated data (AAD) is passed by calling
