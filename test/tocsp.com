@@ -32,7 +32,7 @@ $	write sys$output "DELEGATED; Root CA -> Intermediate CA"
 $	call test_ocsp D2.ors D2_Issuer_Root.pem 0
 $	write sys$output "DELEGATED; Root CA -> EE"
 $	call test_ocsp D3.ors D3_Issuer_Root.pem 0
-
+$
 $	write sys$output "=== INVALID SIGNATURE on the OCSP RESPONSE ==="
 $	write sys$output "NON-DELEGATED; Intermediate CA -> EE"
 $	call test_ocsp ISOP_ND1.ors ND1_Issuer_ICA.pem 1
@@ -46,7 +46,7 @@ $	write sys$output "DELEGATED; Root CA -> Intermediate CA"
 $	call test_ocsp ISOP_D2.ors D2_Issuer_Root.pem 1
 $	write sys$output "DELEGATED; Root CA -> EE"
 $	call test_ocsp ISOP_D3.ors D3_Issuer_Root.pem 1
-
+$
 $	write sys$output "=== WRONG RESPONDERID in the OCSP RESPONSE ==="
 $	write sys$output "NON-DELEGATED; Intermediate CA -> EE"
 $	call test_ocsp WRID_ND1.ors ND1_Issuer_ICA.pem 1
@@ -60,7 +60,7 @@ $	write sys$output "DELEGATED; Root CA -> Intermediate CA"
 $	call test_ocsp WRID_D2.ors D2_Issuer_Root.pem 1
 $	write sys$output "DELEGATED; Root CA -> EE"
 $	call test_ocsp WRID_D3.ors D3_Issuer_Root.pem 1
-
+$
 $	write sys$output "=== WRONG ISSUERNAMEHASH in the OCSP RESPONSE ==="
 $	write sys$output "NON-DELEGATED; Intermediate CA -> EE"
 $	call test_ocsp WINH_ND1.ors ND1_Issuer_ICA.pem 1
@@ -74,7 +74,7 @@ $	write sys$output "DELEGATED; Root CA -> Intermediate CA"
 $	call test_ocsp WINH_D2.ors D2_Issuer_Root.pem 1
 $	write sys$output "DELEGATED; Root CA -> EE"
 $	call test_ocsp WINH_D3.ors D3_Issuer_Root.pem 1
-
+$
 $	write sys$output "=== WRONG ISSUERKEYHASH in the OCSP RESPONSE ==="
 $	write sys$output "NON-DELEGATED; Intermediate CA -> EE"
 $	call test_ocsp WIKH_ND1.ors ND1_Issuer_ICA.pem 1
@@ -88,7 +88,7 @@ $	write sys$output "DELEGATED; Root CA -> Intermediate CA"
 $	call test_ocsp WIKH_D2.ors D2_Issuer_Root.pem 1
 $	write sys$output "DELEGATED; Root CA -> EE"
 $	call test_ocsp WIKH_D3.ors D3_Issuer_Root.pem 1
-
+$
 $	write sys$output "=== WRONG KEY in the DELEGATED OCSP SIGNING CERTIFICATE ==="
 $	write sys$output "DELEGATED; Intermediate CA -> EE"
 $	call test_ocsp WKDOSC_D1.ors D1_Issuer_ICA.pem 1
@@ -96,7 +96,7 @@ $	write sys$output "DELEGATED; Root CA -> Intermediate CA"
 $	call test_ocsp WKDOSC_D2.ors D2_Issuer_Root.pem 1
 $	write sys$output "DELEGATED; Root CA -> EE"
 $	call test_ocsp WKDOSC_D3.ors D3_Issuer_Root.pem 1
-
+$
 $	write sys$output "=== INVALID SIGNATURE on the DELEGATED OCSP SIGNING CERTIFICATE ==="
 $	write sys$output "DELEGATED; Intermediate CA -> EE"
 $	call test_ocsp ISDOSC_D1.ors D1_Issuer_ICA.pem 1
@@ -104,7 +104,7 @@ $	write sys$output "DELEGATED; Root CA -> Intermediate CA"
 $	call test_ocsp ISDOSC_D2.ors D2_Issuer_Root.pem 1
 $	write sys$output "DELEGATED; Root CA -> EE"
 $	call test_ocsp ISDOSC_D3.ors D3_Issuer_Root.pem 1
-
+$
 $	write sys$output "=== WRONG SUBJECT NAME in the ISSUER CERTIFICATE ==="
 $	write sys$output "NON-DELEGATED; Intermediate CA -> EE"
 $	call test_ocsp ND1.ors WSNIC_ND1_Issuer_ICA.pem 1
@@ -118,7 +118,7 @@ $	write sys$output "DELEGATED; Root CA -> Intermediate CA"
 $	call test_ocsp D2.ors WSNIC_D2_Issuer_Root.pem 1
 $	write sys$output "DELEGATED; Root CA -> EE"
 $	call test_ocsp D3.ors WSNIC_D3_Issuer_Root.pem 1
-
+$
 $	write sys$output "=== WRONG KEY in the ISSUER CERTIFICATE ==="
 $	write sys$output "NON-DELEGATED; Intermediate CA -> EE"
 $	call test_ocsp ND1.ors WKIC_ND1_Issuer_ICA.pem 1
@@ -132,9 +132,9 @@ $	write sys$output "DELEGATED; Root CA -> Intermediate CA"
 $	call test_ocsp D2.ors WKIC_D2_Issuer_Root.pem 1
 $	write sys$output "DELEGATED; Root CA -> EE"
 $	call test_ocsp D3.ors WKIC_D3_Issuer_Root.pem 1
-
+$
 $	write sys$output "=== INVALID SIGNATURE on the ISSUER CERTIFICATE ==="
-# Expect success, because we're explicitly trusting the issuer certificate.
+$	!# Expect success, because we're explicitly trusting the issuer certificate.
 $	write sys$output "NON-DELEGATED; Intermediate CA -> EE"
 $	call test_ocsp ND1.ors ISIC_ND1_Issuer_ICA.pem 0
 $	write sys$output "NON-DELEGATED; Root CA -> Intermediate CA"
@@ -147,6 +147,6 @@ $	write sys$output "DELEGATED; Root CA -> Intermediate CA"
 $	call test_ocsp D2.ors ISIC_D2_Issuer_Root.pem 0
 $	write sys$output "DELEGATED; Root CA -> EE"
 $	call test_ocsp D3.ors ISIC_D3_Issuer_Root.pem 0
-
+$
 $	write sys$output "ALL OCSP TESTS SUCCESSFUL"
 $	exit 1
