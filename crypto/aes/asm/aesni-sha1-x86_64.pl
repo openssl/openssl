@@ -726,7 +726,7 @@ ___
 						if ($stitched_decrypt) {{{
 # reset
 ($in0,$out,$len,$key,$ivp,$ctx,$inp)=("%rdi","%rsi","%rdx","%rcx","%r8","%r9","%r10");
-$j=$jj=$r=$sn=$rx=0;
+$j=$jj=$r=$rx=0;
 $Xi=4;
 
 # reassign for Atom Silvermont (see above)
@@ -994,7 +994,7 @@ $code.=<<___;
 .size	aesni256_cbc_sha1_dec_ssse3,.-aesni256_cbc_sha1_dec_ssse3
 ___
 						}}}
-$j=$jj=$r=$sn=$rx=0;
+$j=$jj=$r=$rx=0;
 
 if ($avx) {
 my ($in0,$out,$len,$key,$ivp,$ctx,$inp)=("%rdi","%rsi","%rdx","%rcx","%r8","%r9","%r10");
@@ -1440,7 +1440,7 @@ ___
 # reset
 ($in0,$out,$len,$key,$ivp,$ctx,$inp)=("%rdi","%rsi","%rdx","%rcx","%r8","%r9","%r10");
 
-$j=$jj=$r=$sn=$rx=0;
+$j=$jj=$r=$rx=0;
 $Xi=4;
 
 @aes256_dec = (
