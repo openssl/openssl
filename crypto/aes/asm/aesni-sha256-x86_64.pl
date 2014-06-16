@@ -59,7 +59,7 @@ if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	$avx = ($1>=10) + ($1>=11);
 }
 
-$shaext=1;	### set to zero if compiling for 1.0.1
+$shaext=$avx;	### set to zero if compiling for 1.0.1
 $avx=1		if (!$shaext && $avx);
 
 open OUT,"| \"$^X\" $xlate $flavour $output";
@@ -109,7 +109,8 @@ $code=<<___;
 .align	16
 $func:
 ___
-$code.=<<___ if ($avx);
+						if ($avx) {
+$code.=<<___;
 	lea	OPENSSL_ia32cap_P(%rip),%r11
 	mov	\$1,%eax
 	cmp	\$0,`$win64?"%rcx":"%rdi"`
@@ -133,7 +134,7 @@ $code.=<<___ if ($avx>1);
 	cmp	\$`1<<8|1<<5|1<<3`,%r11d
 	je	${func}_avx2
 ___
-$code.=<<___ if ($avx);
+$code.=<<___;
 	and	\$`1<<30`,%eax			# mask "Intel CPU" bit
 	and	\$`1<<28|1<<9`,%r10d		# mask AVX+SSSE3 bits
 	or	%eax,%r10d
@@ -141,6 +142,7 @@ $code.=<<___ if ($avx);
 	je	${func}_avx
 	ud2
 ___
+						}
 $code.=<<___;
 	xor	%eax,%eax
 	cmp	\$0,`$win64?"%rcx":"%rdi"`
