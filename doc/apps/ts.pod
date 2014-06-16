@@ -46,6 +46,7 @@ B<-verify>
 [B<-token_in>]
 [B<-CApath> trusted_cert_path]
 [B<-CAfile> trusted_certs.pem]
+[B<-trusted_first>]
 [B<-untrusted> cert_file.pem]
 
 =head1 DESCRIPTION
@@ -315,7 +316,6 @@ The name of the directory containing the trused CA certificates of the
 client. See the similar option of L<verify(1)|verify(1)> for additional
 details. Either this option or B<-CAfile> must be specified. (Optional)
 
-
 =item B<-CAfile> trusted_certs.pem
 
 The name of the file containing a set of trusted self-signed CA 
@@ -323,6 +323,12 @@ certificates in PEM format. See the similar option of
 L<verify(1)|verify(1)> for additional details. Either this option 
 or B<-CApath> must be specified.
 (Optional)
+
+=item B<-trusted_first>
+
+Use certificates in CA file or CA directory before certificates in untrusted
+file when building the trust chain to verify certificates.
+This is mainly useful in environments with Bridge CA or Cross-Certified CAs.
 
 =item B<-untrusted> cert_file.pem
 

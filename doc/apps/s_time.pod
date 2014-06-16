@@ -14,6 +14,7 @@ B<openssl> B<s_time>
 [B<-key filename>]
 [B<-CApath directory>]
 [B<-CAfile filename>]
+[B<-trusted_first>]
 [B<-reuse>]
 [B<-new>]
 [B<-verify depth>]
@@ -75,6 +76,12 @@ also used when building the client certificate chain.
 
 A file containing trusted certificates to use during server authentication
 and to use when attempting to build the client certificate chain.
+
+=item B<-trusted_first>
+
+Use certificates in CA file or CA directory over certificates provided
+by the server when building the trust chain to verify server certificate.
+This is mainly useful in environments with Bridge CA or Cross-Certified CAs.
 
 =item B<-new>
 

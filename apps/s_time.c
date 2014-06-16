@@ -179,6 +179,7 @@ static void s_time_usage(void)
                 file if not specified by this option\n\
 -CApath arg   - PEM format directory of CA's\n\
 -CAfile arg   - PEM format file of CA's\n\
+-trusted_first - Use locally trusted CA's first when building trust chain\n\
 -cipher       - preferred cipher to use, play with 'openssl ciphers'\n\n";
 
 	printf( "usage: s_time <args>\n\n" );
