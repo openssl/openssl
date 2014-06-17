@@ -29,6 +29,7 @@ B<openssl> B<ocsp>
 [B<-path>]
 [B<-CApath dir>]
 [B<-CAfile file>]
+[B<-trusted_first>]
 [B<-VAfile file>]
 [B<-validity_period n>]
 [B<-status_age n>]
@@ -137,6 +138,13 @@ or "/" by default.
 
 file or pathname containing trusted CA certificates. These are used to verify
 the signature on the OCSP response.
+
+=item B<-trusted_first>
+
+Use certificates in CA file or CA directory over certificates provided
+in the response or residing in other certificates file when building the trust
+chain to verify responder certificate.
+This is mainly useful in environments with Bridge CA or Cross-Certified CAs.
 
 =item B<-verify_other file>
 

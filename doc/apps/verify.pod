@@ -9,6 +9,7 @@ verify - Utility to verify certificates.
 B<openssl> B<verify>
 [B<-CApath directory>]
 [B<-CAfile file>]
+[B<-trusted_first>]
 [B<-purpose purpose>]
 [B<-policy arg>]
 [B<-ignore_critical>]
@@ -56,6 +57,12 @@ in PEM format concatenated together.
 
 A file of untrusted certificates. The file should contain multiple certificates
 in PEM format concatenated together.
+
+=item B<-trusted_first>
+
+Use certificates in CA file or CA directory before certificates in untrusted
+file when building the trust chain to verify certificates.
+This is mainly useful in environments with Bridge CA or Cross-Certified CAs.
 
 =item B<-purpose purpose>
 

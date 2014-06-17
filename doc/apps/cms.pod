@@ -35,6 +35,7 @@ B<openssl> B<cms>
 [B<-print>]
 [B<-CAfile file>]
 [B<-CApath dir>]
+[B<-trusted_first>]
 [B<-md digest>]
 [B<-[cipher]>]
 [B<-nointern>]
@@ -244,6 +245,12 @@ a directory containing trusted CA certificates, only used with
 B<-verify>. This directory must be a standard certificate directory: that
 is a hash of each subject name (using B<x509 -hash>) should be linked
 to each certificate.
+
+=item B<-trusted_first>
+
+Use certificates in CA file or CA directory before untrusted certificates
+from the message when building the trust chain to verify certificates.
+This is mainly useful in environments with Bridge CA or Cross-Certified CAs.
 
 =item B<-md digest>
 
