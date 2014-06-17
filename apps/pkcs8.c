@@ -56,6 +56,7 @@
  *
  */
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "apps.h"
 #include <openssl/pem.h>
@@ -173,12 +174,15 @@ int MAIN(int argc, char **argv)
 			topk8 = 1;
 		else if (!strcmp (*args, "-noiter"))
 			iter = 1;
-        	else if (!strcmp (*args, "-iter"))
-		{
-		if (!args[1]) goto bad;
-		iter = atoi(*(++args));
-		if (iter <= 0) goto bad;
-		}
+ 		else if (!strcmp (*args, "-iter"))
+			{
+			if (args[1])
+				{
+				iter = atoi(*(++args));
+				if (iter <= 0) badarg = 1;
+				}
+			else badarg = 1;
+			}
 		else if (!strcmp (*args, "-nocrypt"))
 			nocrypt = 1;
 		else if (!strcmp (*args, "-nooct"))
@@ -189,19 +193,22 @@ int MAIN(int argc, char **argv)
 			p8_broken = PKCS8_EMBEDDED_PARAM;
 		else if (!strcmp(*args,"-passin"))
 			{
-			if (!args[1]) goto bad;
-			passargin= *(++args);
+			if (args[1])
+				passargin= *(++args);
+			else badarg = 1;
 			}
 		else if (!strcmp(*args,"-passout"))
 			{
-			if (!args[1]) goto bad;
-			passargout= *(++args);
+			if (args[1])
+				passargout= *(++args);
+			else badarg = 1;
 			}
 #ifndef OPENSSL_NO_ENGINE
 		else if (strcmp(*args,"-engine") == 0)
 			{
-			if (!args[1]) goto bad;
-			engine= *(++args);
+			if (args[1])
+				engine= *(++args);
+			else badarg = 1;
 			}
 #endif
 		else if (!strcmp (*args, "-in"))
@@ -228,7 +235,6 @@ int MAIN(int argc, char **argv)
 
 	if (badarg)
 		{
-		bad:
 		BIO_printf(bio_err, "Usage pkcs8 [options]\n");
 		BIO_printf(bio_err, "where options are\n");
 		BIO_printf(bio_err, "-in file        input file\n");
