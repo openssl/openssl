@@ -716,6 +716,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-text          include or delete text MIME headers\n");
 		BIO_printf (bio_err, "-CApath dir    trusted certificates directory\n");
 		BIO_printf (bio_err, "-CAfile file   trusted certificates file\n");
+		BIO_printf (bio_err, "-trusted_first use locally trusted certificates first when building trust chain\n");
 		BIO_printf (bio_err, "-crl_check     check revocation status of signer's certificate using CRLs\n");
 		BIO_printf (bio_err, "-crl_check_all check revocation status of signer's certificate chain using CRLs\n");
 #ifndef OPENSSL_NO_ENGINE
