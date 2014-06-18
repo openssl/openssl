@@ -374,7 +374,9 @@ $       return
 $
 $
 $ exit:
+$	on error then goto exit2 ! In case openssl.exe didn't build.
 $	mcr 'exe_dir'openssl version -a
+$ exit2: 
 $	set default '__save_default'
 $	deassign sslroot
 $	exit
