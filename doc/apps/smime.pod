@@ -15,6 +15,8 @@ B<openssl> B<smime>
 [B<-pk7out>]
 [B<-[cipher]>]
 [B<-in file>]
+[B<-CAfile file>]
+[B<-CApath dir>]
 [B<-trusted_first>]
 [B<-certfile file>]
 [B<-signer file>]
