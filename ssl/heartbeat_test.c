@@ -38,8 +38,9 @@
  * http://mike-bland.com/tags/heartbleed.html
  */
 
-#include "../test/testutil.h"
 #include "../ssl/ssl_locl.h"
+
+#include "testutil.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
