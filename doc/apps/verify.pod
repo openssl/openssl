@@ -179,7 +179,7 @@ Limit the maximum depth of the certificate chain to B<num> certificates.
 =item B<-verify_email email>
 
 Verify if the B<email> matches the email address in Subject Alternative Name or
-the email the subject Distinguished Name.
+the email in the subject Distinguished Name.
 
 =item B<-verify_hostname hostname>
 
@@ -450,7 +450,7 @@ an application specific error. Unused.
 Although the issuer checks are a considerable improvement over the old technique they still
 suffer from limitations in the underlying X509_LOOKUP API. One consequence of this is that
 trusted certificates with matching subject name must either appear in a file (as specified by the
-B<-CAfile> option) or a directory (as specified by B<-CApath>. If they occur in both then only
+B<-CAfile> option) or a directory (as specified by B<-CApath>). If they occur in both then only
 the certificates in the file will be recognised.
 
 Previous versions of OpenSSL assume certificates with matching subject name are identical and
