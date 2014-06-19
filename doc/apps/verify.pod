@@ -9,6 +9,7 @@ verify - Utility to verify certificates.
 B<openssl> B<verify>
 [B<-CApath directory>]
 [B<-CAfile file>]
+[B<-check_ss_sig>]
 [B<-trusted_first>]
 [B<-purpose purpose>]
 [B<-policy arg>]
@@ -27,7 +28,16 @@ B<openssl> B<verify>
 [B<-help>]
 [B<-issuer_checks>]
 [B<-attime timestamp>]
+[B<-partial_chain>]
+[B<-suiteB_128>]
+[B<-suiteB_128_only>]
+[B<-suiteB_192>]
 [B<-verbose>]
+[B<-verify_depth num>]
+[B<-verify_email email>]
+[B<-verify_hostname hostname>]
+[B<-verify_ip ip>]
+[B<-verify_name name>]
 [B<->]
 [certificates]
 
@@ -154,6 +164,43 @@ Enable support for delta CRLs.
 
 Verify the signature on the self-signed root CA. This is disabled by default
 because it doesn't add any security.
+
+=item B<-partial_chain>
+
+Allow partial certificate chain if at least one certificate is in trusted store.
+
+=item B<-suiteB_128_only>, B<-suiteB_128>, B<-suiteB_192>
+
+enable the Suite B mode operation at 128 bit Level of Security, 128 bit or
+192 bit, or only 192 bit Level of Security respectively.
+See RFC6460 for details. In particular the supported signature algorithms are
+reduced to support only ECDSA and SHA256 or SHA384 and only the elliptic curves
+P-256 and P-384.
+
+=item B<-verify_depth num>
+
+Limit the maximum depth of the certificate chain to B<num> certificates.
+
+=item B<-verify_email email>
+
+Verify if the B<email> matches the email address in Subject Alternative Name or
+the email the subject Distinguished Name.
+
+=item B<-verify_hostname hostname>
+
+Verify if the B<hostname> matches DNS name in Subject Alternative Name or
+Common Name in the subject certificate.
+
+=item B<-verify_ip ip>
+
+Verify if the B<ip> matches the IP address in Subject Alternative Name of
+the subject certificate.
+
+=item B<-verify_name name>
+
+Use default verification options like trust model and required certificate
+policies identified by B<name>.
+Supported usages include: default, pkcs7, smime_sign, ssl_client, ssl_server.
 
 =item B<->
 
