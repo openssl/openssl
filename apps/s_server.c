@@ -526,6 +526,7 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -state        - Print the SSL states\n");
 	BIO_printf(bio_err," -CApath arg   - PEM format directory of CA's\n");
 	BIO_printf(bio_err," -CAfile arg   - PEM format file of CA's\n");
+	BIO_printf(bio_err," -trusted_first - Use locally trusted CA's first when building trust chain\n");
 	BIO_printf(bio_err," -nocert       - Don't use any certificates (Anon-DH)\n");
 	BIO_printf(bio_err," -cipher arg   - play with 'openssl ciphers' to see what goes here\n");
 	BIO_printf(bio_err," -serverpref   - Use server's cipher preferences\n");

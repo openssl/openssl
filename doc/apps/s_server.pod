@@ -34,6 +34,30 @@ B<openssl> B<s_server>
 [B<-state>]
 [B<-CApath directory>]
 [B<-CAfile filename>]
+[B<-attime timestamp>]
+[B<-check_ss_sig>]
+[B<-explicit_policy>]
+[B<-extended_crl>]
+[B<-ignore_critical>]
+[B<-inhibit_any>]
+[B<-inhibit_map>]
+[B<-issuer_checks>]
+[B<-partial_chain>]
+[B<-policy arg>]
+[B<-policy_check>]
+[B<-policy_print>]
+[B<-purpose purpose>]
+[B<-suiteB_128>]
+[B<-suiteB_128_only>]
+[B<-suiteB_192>]
+[B<-trusted_first>]
+[B<-use_deltas>]
+[B<-verify_depth num>]
+[B<-verify_email email>]
+[B<-verify_hostname hostname>]
+[B<-verify_ip ip>]
+[B<-verify_name name>]
+[B<-x509_strict>]
 [B<-nocert>]
 [B<-cipher cipherlist>]
 [B<-quiet>]
@@ -182,6 +206,16 @@ A file containing trusted certificates to use during client authentication
 and to use when attempting to build the server certificate chain. The list
 is also used in the list of acceptable client CAs passed to the client when
 a certificate is requested.
+
+=item B<-attime>, B<-check_ss_sig>, B<explicit_policy>, B<-extended_crl>,
+B<-ignore_critical>, B<-inhibit_any>, B<-inhibit_map>, B<-issuer_checks>,
+B<-partial_chain>, B<-policy>, B<-policy_check>, B<-policy_print>, B<-purpose>,
+B<-suiteB_128>, B<-suiteB_128_only>, B<-suiteB_192>, B<-trusted_first>,
+B<-use_deltas>, B<-verify_depth>, B<-verify_email>, B<-verify_hostname>,
+B<-verify_ip>, B<-verify_name>, B<-x509_strict>
+
+Set different peer certificate verification options.
+See the L<B<verify>|verify(1)> manual page for details.
 
 =item B<-state>
 
