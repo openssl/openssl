@@ -1,4 +1,4 @@
-/* test/testutil.h */
+/* test/testutil.c */
 /*
  * Utilities for writing OpenSSL unit tests.
  *
@@ -6,7 +6,7 @@
  * http://wiki.openssl.org/index.php/How_To_Write_Unit_Tests_For_OpenSSL
  *
  * Author: Mike Bland (mbland@acm.org)
- * Date:   2014-06-07
+ * Date:   2014-07-15
  * ====================================================================
  * Copyright (c) 2014 The OpenSSL Project.  All rights reserved.
  *
@@ -56,69 +56,52 @@
  * ====================================================================
  */
 
-#ifndef HEADER_TESTUTIL_H
-#define HEADER_TESTUTIL_H
+#include "testutil.h"
 
-/* SETUP_TEST_FIXTURE and EXECUTE_TEST macros for test case functions.
- *
- * SETUP_TEST_FIXTURE will call set_up() to create a new TEST_FIXTURE_TYPE
- * object called "fixture". It will also allocate the "result" variable used
- * by EXECUTE_TEST. set_up() should take a const char* specifying the test
- * case name and return a TEST_FIXTURE_TYPE by value.
- *
- * EXECUTE_TEST will pass fixture to execute_func() by value, call
- * tear_down(), and return the result of execute_func(). execute_func() should
- * take a TEST_FIXTURE_TYPE by value and return zero on success or one on
- * failure.
- *
- * Unit tests can define their own SETUP_TEST_FIXTURE and EXECUTE_TEST
- * variations like so:
- *
- * #define SETUP_FOOBAR_TEST_FIXTURE()\
- *   SETUP_TEST_FIXTURE(FOOBAR_TEST_FIXTURE, set_up_foobar)
- *
- * #define EXECUTE_FOOBAR_TEST()\
- *   EXECUTE_TEST(execute_foobar, tear_down_foobar)
- *
- * Then test case functions can take the form:
- *
- * static int test_foobar_feature()
- * 	{
- * 	SETUP_FOOBAR_TEST_FIXTURE();
- *	[...set individual members of fixture...]
- * 	EXECUTE_FOOBAR_TEST();
- * 	}
+#include <stdlib.h>
+#include <stdio.h>
+
+/* Declares the structures needed to register each test case function.
  */
-#define SETUP_TEST_FIXTURE(TEST_FIXTURE_TYPE, set_up)\
-	TEST_FIXTURE_TYPE fixture = set_up(TEST_CASE_NAME);\
-	int result = 0
+typedef struct test_info
+	{
+	const char* test_case_name;
+	int (*test_fn)();
+	} TEST_INFO;
 
-#define EXECUTE_TEST(execute_func, tear_down)\
-	if (execute_func(fixture) != 0) result = 1;\
-	tear_down(fixture);\
-	return result
+static TEST_INFO all_tests[1024];
+static int num_tests = 0;
 
-/* TEST_CASE_NAME is defined as the name of the test case function where
- * possible; otherwise we get by with the file name and line number.
- */
-#if __STDC_VERSION__ < 199901L
-#if defined(_MSC_VER)
-#define TEST_CASE_NAME __FUNCTION__
-#else
-#define testutil_stringify_helper(s) #s
-#define testutil_stringify(s) testutil_stringify_helper(s)
-#define TEST_CASE_NAME __FILE__ ":" testutil_stringify(__LINE__)
-#endif /* _MSC_VER */
-#else
-#define TEST_CASE_NAME __func__
-#endif /* __STDC_VERSION__ */
+void add_test(const char* test_case_name, int (*test_fn)())
+	{
+	all_tests[num_tests].test_case_name = test_case_name;
+	all_tests[num_tests].test_fn = test_fn;
+	++num_tests;
+	}
 
-/* In main(), call ADD_TEST to register each test case function, then call
- * run_tests() to execute all tests and report the results. The result
- * returned from run_tests() should be used as the return value for main().
- */
-#define ADD_TEST(test_function) add_test(#test_function, test_function)
-void add_test(const char* test_case_name, int (*test_fn)());
-int run_tests(const char* test_prog_name);
+int run_tests(const char* test_prog_name)
+	{
+	int num_failed = 0;
+	int i = 0;
 
-#endif /* HEADER_TESTUTIL_H */
+	printf("%s: %d test case%s\n", test_prog_name, num_tests,
+		num_tests == 1 ? "" : "s");
+	for (i = 0; i != num_tests; ++i)
+		{
+		if (all_tests[i].test_fn())
+			{
+			printf("** %s failed **\n--------\n",
+				all_tests[i].test_case_name);
+			++num_failed;
+			}
+		}
+
+	if (num_failed != 0)
+		{
+		printf("%s: %d test%s failed (out of %d)\n", test_prog_name,
+			num_failed, num_failed != 1 ? "s" : "", num_tests);
+		return EXIT_FAILURE;
+		}
+	printf("  All tests passed.\n");
+	return EXIT_SUCCESS;
+	}
