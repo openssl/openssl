@@ -29,6 +29,7 @@
 !/test/igetest.c
 !/test/r160test.c
 !/test/fips_algvs.c
+!/test/testutil.c
 
 /test/*.ss
 /test/*.srl
