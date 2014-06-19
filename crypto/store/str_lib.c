@@ -667,7 +667,7 @@ EVP_PKEY *STORE_get_public_key(STORE *s, OPENSSL_ITEM attributes[],
 
 	object = s->meth->get_object(s, STORE_OBJECT_TYPE_PUBLIC_KEY,
 		attributes, parameters);
-	if (!object || !object->data.key || !object->data.key)
+       if (!object || !object->data.key)
 		{
 		STOREerr(STORE_F_STORE_GET_PUBLIC_KEY,
 			STORE_R_FAILED_GETTING_KEY);

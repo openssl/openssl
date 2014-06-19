@@ -758,11 +758,9 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		if (!ssl3_setup_buffers(s))
 			return(-1);
 
-    /* XXX: check what the second '&& type' is about */
-	if ((type && (type != SSL3_RT_APPLICATION_DATA) && 
-		(type != SSL3_RT_HANDSHAKE) && type) ||
-	    (peek && (type != SSL3_RT_APPLICATION_DATA)))
-		{
+       if ((type && type != SSL3_RT_APPLICATION_DATA && type != SSL3_RT_HANDSHAKE) ||
+          (peek && (type != SSL3_RT_APPLICATION_DATA))) {
+                {
 		SSLerr(SSL_F_DTLS1_READ_BYTES, ERR_R_INTERNAL_ERROR);
 		return -1;
 		}
