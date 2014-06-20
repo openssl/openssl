@@ -3119,7 +3119,11 @@ int ssl3_send_client_key_exchange(SSL *s)
 #ifndef OPENSSL_NO_PSK
 		else if (alg_k & SSL_kPSK)
 			{
-			char identity[PSK_MAX_IDENTITY_LEN];
+			/* The callback needs PSK_MAX_IDENTITY_LEN + 1 bytes
+			 * to return a \0-terminated identity. The last byte
+			 * is for us for simulating strnlen. */
+			char identity[PSK_MAX_IDENTITY_LEN + 2];
+			size_t identity_len;
 			unsigned char *t = NULL;
 			unsigned char psk_or_pre_ms[PSK_MAX_PSK_LEN*2+4];
 			unsigned int pre_ms_len = 0, psk_len = 0;
@@ -3133,8 +3137,9 @@ int ssl3_send_client_key_exchange(SSL *s)
 				goto err;
 				}
 
+			memset(identity, 0, sizeof(identity));
 			psk_len = s->psk_client_callback(s, s->ctx->psk_identity_hint,
-				identity, PSK_MAX_IDENTITY_LEN,
+				identity, sizeof(identity) - 1,
 				psk_or_pre_ms, sizeof(psk_or_pre_ms));
 			if (psk_len > PSK_MAX_PSK_LEN)
 				{
@@ -3148,7 +3153,14 @@ int ssl3_send_client_key_exchange(SSL *s)
 					SSL_R_PSK_IDENTITY_NOT_FOUND);
 				goto psk_err;
 				}
-
+			identity[PSK_MAX_IDENTITY_LEN + 1] = '\0';
+			identity_len = strlen(identity);
+			if (identity_len > PSK_MAX_IDENTITY_LEN)
+				{
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+					ERR_R_INTERNAL_ERROR);
+				goto psk_err;
+				}
 			/* create PSK pre_master_secret */
 			pre_ms_len = 2+psk_len+2+psk_len;
 			t = psk_or_pre_ms;
@@ -3182,14 +3194,13 @@ int ssl3_send_client_key_exchange(SSL *s)
 			s->session->master_key_length =
 				s->method->ssl3_enc->generate_master_secret(s,
 					s->session->master_key,
-					psk_or_pre_ms, pre_ms_len); 
-			n = strlen(identity);
-			s2n(n, p);
-			memcpy(p, identity, n);
-			n+=2;
+					psk_or_pre_ms, pre_ms_len);
+			s2n(identity_len, p);
+			memcpy(p, identity, identity_len);
+			n = 2 + identity_len;
 			psk_err = 0;
 		psk_err:
-			OPENSSL_cleanse(identity, PSK_MAX_IDENTITY_LEN);
+			OPENSSL_cleanse(identity, sizeof(identity));
 			OPENSSL_cleanse(psk_or_pre_ms, sizeof(psk_or_pre_ms));
 			if (psk_err != 0)
 				{
