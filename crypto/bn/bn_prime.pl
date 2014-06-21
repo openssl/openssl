@@ -138,7 +138,7 @@ for safe in (False, True):
         if prime:
             offsets.append(x)
 
-    print('static const int %sprime_offsets[%d] = {' % (
+    print('static const uint %sprime_offsets[%d] = {' % (
         safe_prefix if safe else '', len(offsets)))
     print_buffer = '\t'
     for offset in offsets:
@@ -148,9 +148,9 @@ for safe in (False, True):
         print_buffer += '%6d,' % offset
     print(print_buffer)
     print('\t};')
-    print('static const int %sprime_offset_count = %d;' % (
+    print('static const uint %sprime_offset_count = %d;' % (
         safe_prefix if safe else '', len(offsets)))
-    print('static const int %sprime_multiplier = %d;' % (
+    print('static const uint %sprime_multiplier = %d;' % (
         safe_prefix if safe else '', muliplier))
     print('static const int %sprime_multiplier_bits = %d;' % (
         safe_prefix if safe else '', muliplier.bit_length()))

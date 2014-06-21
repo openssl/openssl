@@ -474,6 +474,8 @@ loop:
 			}
 		}
 
+	if (BN_num_bits(rnd) != bits) goto again;
+
 	ret = 1;
 
 err:
@@ -485,22 +487,24 @@ err:
 int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits,
 	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx, int safe, int biased)
 	{
-	int i;
-	int j;
 	int add_word;
-	int old_offset;
-	int offset;
-	int prm_offsets[5760];
-	int tmp_prm_offsets[5760];
-	int prm_offset_count;
-	int prm_multiplier;
 	int prm_multiplier_bits;
+	uint i;
+	uint j;
+	uint prm_offsets[5760];
+	uint tmp_prm_offsets[5760];
+	uint prm_offset_count;
+	uint prm_multiplier;
+	uint base_offset;
 	uint max_rem;
+	prime_t mods[NUMPRIMES];
+	BN_ULONG old_offset;
+	BN_ULONG offset;
 	BIGNUM *offset_index;
 	BIGNUM *offset_count;
 	BIGNUM *t1;
 	int ret = 0;
-	int base_offset = 0;
+	BN_ULONG max_offset = BN_MASK2 - primes[NUMPRIMES - 1] + 1;
 
 	if (safe)
 		{
@@ -548,27 +552,41 @@ int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits,
 
 again:
 	if (!BN_rand(rnd, bits - prm_multiplier_bits, 0, -1)) goto err;
-	if (BN_is_bit_set(rnd, bits)) goto again;
 	if (!adjust_rnd_for_dh(rnd, add, rem, t1, ctx)) goto err;
+	if (!BN_mul_word(rnd, prm_multiplier)) goto err;
+
 	if (!BN_rand_range(offset_index, offset_count)) goto err;
 
 	j = BN_get_word(offset_index);
 	offset = prm_offsets[j];
 	base_offset = 0;
 
-	BN_mul_word(rnd, prm_multiplier);
-	BN_add_word(rnd, offset);
+	if (biased)
+		{
+		for (i = 0; i < NUMPRIMES; i++)
+			{
+			mods[i] = 0;
+			}
+		}
+	else
+		{
+		if (!BN_add_word(rnd, offset)) goto err;
+		}
 
 	/* we now have a random number 'rand' to test. */
 
 loop:
-	/* skip coprimes */
-	for (i = first_prime_index; i < NUMPRIMES; i++)
+	/* check that rnd is a prime, skipping coprimes */
+	if (biased)
 		{
-		/* check that rnd is a prime */
-		if (BN_mod_word(rnd, (BN_ULONG)primes[i]) <= max_rem)
+		for (i = first_prime_index; i < NUMPRIMES; i++)
 			{
-			if (biased)
+			if (mods[i] == 0)
+				{
+				mods[i] = (prime_t)BN_mod_word(rnd, (BN_ULONG)primes[i]);
+				}
+
+			if ((mods[i] + offset) % primes[i] <= max_rem)
 				{
 				j++;
 				if (j >= prm_offset_count)
@@ -577,18 +595,25 @@ loop:
 					base_offset += prm_multiplier;
 					}
 
-				old_offset = offset;
 				offset = base_offset + prm_offsets[j];
 
-				if (!BN_add_word(rnd, offset - old_offset)) goto err;
+				if (offset > max_offset) goto again;
+
 				goto loop;
 				}
-			else
-				{
-				goto again;
-				}
+			}
+
+		if (!BN_add_word(rnd, offset)) goto err;
+		}
+	else
+		{
+		for (i = first_prime_index; i < NUMPRIMES; i++)
+			{
+			if (BN_mod_word(rnd, (BN_ULONG)primes[i]) <= max_rem) goto again;
 			}
 		}
+
+	if (BN_num_bits(rnd) != bits) goto again;
 
 	ret = 1;
 
