@@ -484,8 +484,8 @@ int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits,
 	int prm_multiplier_bits;
 	uint i;
 	uint j;
-	uint prm_offsets[5760];
-	uint tmp_prm_offsets[5760];
+	uint prm_offsets[PRIME_OFFSET_COUNT];
+	uint tmp_prm_offsets[PRIME_OFFSET_COUNT];
 	uint prm_offset_count;
 	uint prm_multiplier;
 	uint base_offset;
@@ -502,7 +502,7 @@ int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits,
 	if (safe)
 		{
 		memcpy(prm_offsets, safe_prime_offsets, sizeof safe_prime_offsets);
-		prm_offset_count = safe_prime_offset_count;
+		prm_offset_count = SAFE_PRIME_OFFSET_COUNT;
 		prm_multiplier = safe_prime_multiplier;
 		prm_multiplier_bits = safe_prime_multiplier_bits;
 		max_rem = 1;
@@ -510,7 +510,7 @@ int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits,
 	else
 		{
 		memcpy(prm_offsets, prime_offsets, sizeof prime_offsets);
-		prm_offset_count = prime_offset_count;
+		prm_offset_count = PRIME_OFFSET_COUNT;
 		prm_multiplier = prime_multiplier;
 		prm_multiplier_bits = prime_multiplier_bits;
 		max_rem = 0;

@@ -296,7 +296,8 @@ static const prime_t primes[NUMPRIMES] = {
 #endif
 	};
 
-static const uint prime_offsets[5760] = {
+#define PRIME_OFFSET_COUNT 5760
+static const uint prime_offsets[PRIME_OFFSET_COUNT] = {
 	    17,    19,    23,    29,    31,    37,    41,    43,    47,
 	    53,    59,    61,    67,    71,    73,    79,    83,    89,
 	    97,   101,   103,   107,   109,   113,   127,   131,   137,
@@ -938,11 +939,11 @@ static const uint prime_offsets[5760] = {
 	 29951, 29957, 29959, 29963, 29969, 29971, 29977, 29983, 29987,
 	 29989, 29993, 29999, 30001, 30007, 30011, 30013, 30029, 30031,
 	};
-static const uint prime_offset_count = 5760;
 static const uint prime_multiplier = 30030;
 static const int prime_multiplier_bits = 15;
 
-static const uint safe_prime_offsets[1485] = {
+#define SAFE_PRIME_OFFSET_COUNT 1485
+static const uint safe_prime_offsets[SAFE_PRIME_OFFSET_COUNT] = {
 	    47,    59,    83,   107,   167,   179,   227,   263,   347,
 	   359,   383,   467,   479,   503,   527,   563,   587,   647,
 	   719,   779,   839,   863,   887,   899,   983,  1007,  1019,
@@ -1109,7 +1110,6 @@ static const uint safe_prime_offsets[1485] = {
 	 59363, 59387, 59399, 59447, 59483, 59519, 59603, 59639, 59663,
 	 59699, 59747, 59783, 59867, 59903, 59987, 59999, 60023, 60059,
 	};
-static const uint safe_prime_offset_count = 1485;
 static const uint safe_prime_multiplier = 60060;
 static const int safe_prime_multiplier_bits = 16;
 
