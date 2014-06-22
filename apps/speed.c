@@ -2083,7 +2083,7 @@ int MAIN(int argc, char **argv)
 		BIGNUM *add = BN_new();
 		BN_CTX *ctx = BN_CTX_new();
 
-		BN_set_word(add, 2);
+		BN_set_word(add, 4);
 		prime_print_message(prime_names[D_PRIME_TRIAL_DIVISION],
 							prime_c[D_PRIME_TRIAL_DIVISION]);
 
@@ -2105,7 +2105,7 @@ int MAIN(int argc, char **argv)
 		BIGNUM *add = BN_new();
 		BN_CTX *ctx = BN_CTX_new();
 
-		BN_set_word(add, 2);
+		BN_set_word(add, 4);
 		prime_print_message(prime_names[D_PRIME_COPRIME],
 							prime_c[D_PRIME_COPRIME]);
 
@@ -2127,7 +2127,7 @@ int MAIN(int argc, char **argv)
 		BIGNUM *add = BN_new();
 		BN_CTX *ctx = BN_CTX_new();
 
-		BN_set_word(add, 2);
+		BN_set_word(add, 4);
 		prime_print_message(prime_names[D_PRIME_TRIAL_DIVISION_UNBIASED],
 							prime_c[D_PRIME_TRIAL_DIVISION_UNBIASED]);
 
@@ -2149,7 +2149,7 @@ int MAIN(int argc, char **argv)
 		BIGNUM *add = BN_new();
 		BN_CTX *ctx = BN_CTX_new();
 
-		BN_set_word(add, 2);
+		BN_set_word(add, 4);
 		prime_print_message(prime_names[D_PRIME_COPRIME_UNBIASED],
 							prime_c[D_PRIME_COPRIME_UNBIASED]);
 
@@ -2171,7 +2171,7 @@ int MAIN(int argc, char **argv)
 		BIGNUM *add = BN_new();
 		BN_CTX *ctx = BN_CTX_new();
 
-		BN_set_word(add, 2);
+		BN_set_word(add, 4);
 		prime_print_message(prime_names[D_PRIME_TRIAL_DIVISION_SAFE],
 							prime_c[D_PRIME_TRIAL_DIVISION_SAFE]);
 
@@ -2193,7 +2193,7 @@ int MAIN(int argc, char **argv)
 		BIGNUM *add = BN_new();
 		BN_CTX *ctx = BN_CTX_new();
 
-		BN_set_word(add, 2);
+		BN_set_word(add, 4);
 		prime_print_message(prime_names[D_PRIME_COPRIME_SAFE],
 							prime_c[D_PRIME_COPRIME_SAFE]);
 
@@ -2215,7 +2215,7 @@ int MAIN(int argc, char **argv)
 		BIGNUM *add = BN_new();
 		BN_CTX *ctx = BN_CTX_new();
 
-		BN_set_word(add, 2);
+		BN_set_word(add, 4);
 		prime_print_message(prime_names[D_PRIME_TRIAL_DIVISION_UNBIASED_SAFE],
 							prime_c[D_PRIME_TRIAL_DIVISION_UNBIASED_SAFE]);
 
@@ -2237,7 +2237,7 @@ int MAIN(int argc, char **argv)
 		BIGNUM *add = BN_new();
 		BN_CTX *ctx = BN_CTX_new();
 
-		BN_set_word(add, 2);
+		BN_set_word(add, 4);
 		prime_print_message(prime_names[D_PRIME_COPRIME_UNBIASED_SAFE],
 							prime_c[D_PRIME_COPRIME_UNBIASED_SAFE]);
 

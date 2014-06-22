@@ -525,15 +525,25 @@ int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits,
 
 	OPENSSL_assert(bits > prm_multiplier_bits);
 
+	BN_CTX_start(ctx);
+	if ((t1 = BN_CTX_get(ctx)) == NULL) goto err;
+	if ((offset_index = BN_CTX_get(ctx)) == NULL) goto err;
+	if ((offset_count = BN_CTX_get(ctx)) == NULL) goto err;
+
 	if (add != NULL)
 		{
 		add_word = BN_get_word(add);
+		OPENSSL_assert(add_word > 0);
 		j = 0;
 		for (i = 0; i < prm_offset_count; i++)
 			{
 			old_offset = offset;
 			offset = prm_offsets[j];
-			if ((offset - old_offset) % add_word == 0)
+
+			/* we've already checked that offset is coprime */
+			if (offset == (uint)add_word) goto start;
+
+			if ((offset - old_offset) % add_word <= max_rem)
 				{
 				tmp_prm_offsets[j] = offset;
 				j++;
@@ -543,12 +553,8 @@ int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits,
 		prm_offset_count = j;
 		}
 
-	BN_CTX_start(ctx);
-	if ((t1 = BN_CTX_get(ctx)) == NULL) goto err;
-	if ((offset_index = BN_CTX_get(ctx)) == NULL) goto err;
-	if ((offset_count = BN_CTX_get(ctx)) == NULL) goto err;
-
-	BN_set_word(offset_count, prm_offset_count);
+start:
+	if (!BN_set_word(offset_count, prm_offset_count)) goto err;
 
 again:
 	if (!BN_rand(rnd, bits - prm_multiplier_bits, 0, -1)) goto err;
