@@ -1971,7 +1971,7 @@ int test_probable_prime_dh_trial_division(BIO *bp, BN_CTX *ctx)
 	BIGNUM *add = BN_new();
 
 	BN_init(&r);
-	BN_set_word(add, 2);
+	BN_set_word(add, 4);
 
 	for (i = 0; i < 1000; i++)
 		{
@@ -2004,7 +2004,7 @@ int test_probable_prime_dh_trial_division_safe(BIO *bp, BN_CTX *ctx)
 	BIGNUM *add = BN_new();
 
 	BN_init(&r);
-	BN_set_word(add, 2);
+	BN_set_word(add, 4);
 
 	for (i = 0; i < 1000; i++)
 		{
@@ -2037,7 +2037,7 @@ int test_probable_prime_dh_trial_division_unbiased(BIO *bp, BN_CTX *ctx)
 	BIGNUM *add = BN_new();
 
 	BN_init(&r);
-	BN_set_word(add, 2);
+	BN_set_word(add, 4);
 
 	for (i = 0; i < 1000; i++)
 		{
@@ -2070,7 +2070,7 @@ int test_probable_prime_dh_trial_division_unbiased_safe(BIO *bp, BN_CTX *ctx)
 	BIGNUM *add = BN_new();
 
 	BN_init(&r);
-	BN_set_word(add, 2);
+	BN_set_word(add, 4);
 
 	for (i = 0; i < 1000; i++)
 		{
@@ -2103,7 +2103,7 @@ int test_probable_prime_dh_coprime(BIO *bp, BN_CTX *ctx)
 	BIGNUM *add = BN_new();
 
 	BN_init(&r);
-	BN_set_word(add, 2);
+	BN_set_word(add, 4);
 
 	for (i = 0; i < 1000; i++)
 		{
@@ -2136,7 +2136,7 @@ int test_probable_prime_dh_coprime_safe(BIO *bp, BN_CTX *ctx)
 	BIGNUM *add = BN_new();
 
 	BN_init(&r);
-	BN_set_word(add, 2);
+	BN_set_word(add, 4);
 
 	for (i = 0; i < 1000; i++)
 		{
@@ -2169,7 +2169,7 @@ int test_probable_prime_dh_coprime_unbiased(BIO *bp, BN_CTX *ctx)
 	BIGNUM *add = BN_new();
 
 	BN_init(&r);
-	BN_set_word(add, 2);
+	BN_set_word(add, 4);
 
 	for (i = 0; i < 1000; i++)
 		{
@@ -2202,7 +2202,7 @@ int test_probable_prime_dh_coprime_unbiased_safe(BIO *bp, BN_CTX *ctx)
 	BIGNUM *add = BN_new();
 
 	BN_init(&r);
-	BN_set_word(add, 2);
+	BN_set_word(add, 4);
 
 	for (i = 0; i < 1000; i++)
 		{

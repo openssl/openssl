@@ -533,22 +533,27 @@ int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits,
 	if (add != NULL)
 		{
 		add_word = BN_get_word(add);
-		OPENSSL_assert(add_word > 0);
-		j = 0;
-		for (i = 0; i < prm_offset_count; i++)
+
+		if (add_word == 2) goto start;
+
+		/* we want the difference between any two offsets
+		 * to be a multiple of add, but the starting point
+		 * is arbitrary, so include the first offset */
+		tmp_prm_offsets[0] = prm_offsets[0];
+
+		j = 1;
+		old_offset = tmp_prm_offsets[0];
+		for (i = 1; i < prm_offset_count; i++)
 			{
-			old_offset = offset;
-			offset = prm_offsets[j];
-
-			/* we've already checked that offset is coprime */
-			if (offset == (uint)add_word) goto start;
-
-			if ((offset - old_offset) % add_word <= max_rem)
+			offset = prm_offsets[i];
+			if ((offset - old_offset) % add_word == 0)
 				{
 				tmp_prm_offsets[j] = offset;
+				old_offset = offset;
 				j++;
 				}
 			}
+
 		memcpy(prm_offsets, tmp_prm_offsets, sizeof tmp_prm_offsets);
 		prm_offset_count = j;
 		}
