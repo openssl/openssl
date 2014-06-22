@@ -719,12 +719,27 @@ static int check_id_error(X509_STORE_CTX *ctx, int errcode)
 	return ctx->verify_cb(0, ctx);
 	}
 
+static int check_hosts(X509 *x, X509_VERIFY_PARAM_ID *id)
+	{
+	int i;
+	int n = sk_OPENSSL_STRING_num(id->hosts);
+	unsigned char *name;
+
+	for (i = 0; i < n; ++i)
+		{
+		name = (unsigned char *)sk_OPENSSL_STRING_value(id->hosts, i);
+		if (X509_check_host(x, name, 0, id->hostflags)) > 0)
+			return 1;
+		}
+	return n == 0;
+	}
+
 static int check_id(X509_STORE_CTX *ctx)
 	{
 	X509_VERIFY_PARAM *vpm = ctx->param;
 	X509_VERIFY_PARAM_ID *id = vpm->id;
 	X509 *x = ctx->cert;
-	if (id->host && X509_check_host(x, id->host, 0, id->hostflags) <= 0)
+	if (id->hosts && !check_hosts(x, id) <= 0)
 		{
 		if (!check_id_error(ctx, X509_V_ERR_HOSTNAME_MISMATCH))
 			return 0;
