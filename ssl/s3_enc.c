@@ -5,21 +5,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -63,7 +63,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -378,7 +378,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
 #ifdef OPENSSL_SSL_TRACE_CRYPTO
 	if (s->msg_callback)
 		{
- 
+
 		int wh = which & SSL3_CC_WRITE ?
 				TLS1_RT_CRYPTO_WRITE : TLS1_RT_CRYPTO_READ;
 		s->msg_callback(2, s->version, wh | TLS1_RT_CRYPTO_MAC,
@@ -574,11 +574,11 @@ void ssl3_init_finished_mac(SSL *s)
 	(void)BIO_set_close(s->s3->handshake_buffer,BIO_CLOSE);
 	}
 
-void ssl3_free_digest_list(SSL *s) 
+void ssl3_free_digest_list(SSL *s)
 	{
 	int i;
 	if (!s->s3->handshake_dgst) return;
-	for (i=0;i<SSL_MAX_DIGEST;i++) 
+	for (i=0;i<SSL_MAX_DIGEST;i++)
 		{
 		if (s->s3->handshake_dgst[i])
 			EVP_MD_CTX_destroy(s->s3->handshake_dgst[i]);
@@ -591,14 +591,14 @@ void ssl3_free_digest_list(SSL *s)
 
 void ssl3_finish_mac(SSL *s, const unsigned char *buf, int len)
 	{
-	if (s->s3->handshake_buffer && !(s->s3->flags & TLS1_FLAGS_KEEP_HANDSHAKE)) 
+	if (s->s3->handshake_buffer && !(s->s3->flags & TLS1_FLAGS_KEEP_HANDSHAKE))
 		{
 		BIO_write (s->s3->handshake_buffer,(void *)buf,len);
-		} 
-	else 
+		}
+	else
 		{
 		int i;
-		for (i=0;i< SSL_MAX_DIGEST;i++) 
+		for (i=0;i< SSL_MAX_DIGEST;i++)
 			{
 			if (s->s3->handshake_dgst[i]!= NULL)
 			EVP_DigestUpdate(s->s3->handshake_dgst[i],buf,len);
@@ -626,9 +626,9 @@ int ssl3_digest_cached_records(SSL *s)
 		}
 
 	/* Loop through bitso of algorithm2 field and create MD_CTX-es */
-	for (i=0;ssl_get_handshake_digest(i,&mask,&md); i++) 
+	for (i=0;ssl_get_handshake_digest(i,&mask,&md); i++)
 		{
-		if ((mask & ssl_get_algorithm2(s)) && md) 
+		if ((mask & ssl_get_algorithm2(s)) && md)
 			{
 			s->s3->handshake_dgst[i]=EVP_MD_CTX_create();
 #ifdef OPENSSL_FIPS
@@ -640,8 +640,8 @@ int ssl3_digest_cached_records(SSL *s)
 #endif
 			EVP_DigestInit_ex(s->s3->handshake_dgst[i],md,NULL);
 			EVP_DigestUpdate(s->s3->handshake_dgst[i],hdata,hdatalen);
-			} 
-		else 
+			}
+		else
 			{	
 			s->s3->handshake_dgst[i]=NULL;
 			}
@@ -660,7 +660,7 @@ int ssl3_cert_verify_mac(SSL *s, int md_nid, unsigned char *p)
 	{
 	return(ssl3_handshake_mac(s,md_nid,NULL,0,p));
 	}
-int ssl3_final_finish_mac(SSL *s, 
+int ssl3_final_finish_mac(SSL *s,
 	     const char *sender, int len, unsigned char *p)
 	{
 	int ret, sha1len;
@@ -686,15 +686,15 @@ static int ssl3_handshake_mac(SSL *s, int md_nid,
 	unsigned char md_buf[EVP_MAX_MD_SIZE];
 	EVP_MD_CTX ctx,*d=NULL;
 
-	if (s->s3->handshake_buffer) 
+	if (s->s3->handshake_buffer)
 		if (!ssl3_digest_cached_records(s))
 			return 0;
 
 	/* Search for digest of specified type in the handshake_dgst
 	 * array*/
-	for (i=0;i<SSL_MAX_DIGEST;i++) 
+	for (i=0;i<SSL_MAX_DIGEST;i++)
 		{
-		  if (s->s3->handshake_dgst[i]&&EVP_MD_CTX_type(s->s3->handshake_dgst[i])==md_nid) 
+		  if (s->s3->handshake_dgst[i]&&EVP_MD_CTX_type(s->s3->handshake_dgst[i])==md_nid)
 		  	{
 		  	d=s->s3->handshake_dgst[i];
 			break;
@@ -837,7 +837,7 @@ void ssl3_record_sequence_update(unsigned char *seq)
 	for (i=7; i>=0; i--)
 		{
 		++seq[i];
-		if (seq[i] != 0) break; 
+		if (seq[i] != 0) break;
 		}
 	}
 

@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -254,7 +254,7 @@ bad:
         setup_engine(bio_err, engine, 0);
 #endif
 
-	if(!app_passwd(bio_err, passargin, passargout, &passin, &passout)) 
+	if(!app_passwd(bio_err, passargin, passargout, &passin, &passout))
 		{
 		BIO_printf(bio_err, "Error getting passwords\n");
 		goto end;
@@ -280,22 +280,22 @@ bad:
 		}
 
 	BIO_printf(bio_err, "read EC key\n");
-	if (informat == FORMAT_ASN1) 
+	if (informat == FORMAT_ASN1)
 		{
-		if (pubin) 
+		if (pubin)
 			eckey = d2i_EC_PUBKEY_bio(in, NULL);
-		else 
+		else
 			eckey = d2i_ECPrivateKey_bio(in, NULL);
-		} 
-	else if (informat == FORMAT_PEM) 
+		}
+	else if (informat == FORMAT_PEM)
 		{
-		if (pubin) 
-			eckey = PEM_read_bio_EC_PUBKEY(in, NULL, NULL, 
+		if (pubin)
+			eckey = PEM_read_bio_EC_PUBKEY(in, NULL, NULL,
 				NULL);
-		else 
+		else
 			eckey = PEM_read_bio_ECPrivateKey(in, NULL, NULL,
 				passin);
-		} 
+		}
 	else
 		{
 		BIO_printf(bio_err, "bad input format specified for key\n");
@@ -335,7 +335,7 @@ bad:
 	if (new_asn1_flag)
 		EC_KEY_set_asn1_flag(eckey, asn1_flag);
 
-	if (text) 
+	if (text)
 		if (!EC_KEY_print(out, eckey, 0))
 			{
 			perror(outfile);
@@ -343,33 +343,33 @@ bad:
 			goto end;
 			}
 
-	if (noout) 
+	if (noout)
 		{
 		ret = 0;
 		goto end;
 		}
 
 	BIO_printf(bio_err, "writing EC key\n");
-	if (outformat == FORMAT_ASN1) 
+	if (outformat == FORMAT_ASN1)
 		{
 		if (param_out)
 			i = i2d_ECPKParameters_bio(out, group);
-		else if (pubin || pubout) 
+		else if (pubin || pubout)
 			i = i2d_EC_PUBKEY_bio(out, eckey);
-		else 
+		else
 			i = i2d_ECPrivateKey_bio(out, eckey);
-		} 
-	else if (outformat == FORMAT_PEM) 
+		}
+	else if (outformat == FORMAT_PEM)
 		{
 		if (param_out)
 			i = PEM_write_bio_ECPKParameters(out, group);
 		else if (pubin || pubout)
 			i = PEM_write_bio_EC_PUBKEY(out, eckey);
-		else 
+		else
 			i = PEM_write_bio_ECPrivateKey(out, eckey, enc,
 						NULL, 0, NULL, passout);
-		} 
-	else 
+		}
+	else
 		{
 		BIO_printf(bio_err, "bad output format specified for "
 			"outfile\n");

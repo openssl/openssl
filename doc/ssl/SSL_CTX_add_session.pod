@@ -59,7 +59,7 @@ The following values are returned by all functions:
  session was not found in the cache.
 
 =item Z<>1
- 
+
  The operation succeeded.
 
 =back

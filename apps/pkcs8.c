@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -316,7 +316,7 @@ int MAIN(int argc, char **argv)
 			}
 		if (nocrypt)
 			{
-			if (outformat == FORMAT_PEM) 
+			if (outformat == FORMAT_PEM)
 				PEM_write_bio_PKCS8_PRIV_KEY_INFO(out, p8inf);
 			else if (outformat == FORMAT_ASN1)
 				i2d_PKCS8_PRIV_KEY_INFO_bio(out, p8inf);
@@ -346,7 +346,7 @@ int MAIN(int argc, char **argv)
 				goto end;
 				}
 			app_RAND_write_file(NULL, bio_err);
-			if (outformat == FORMAT_PEM) 
+			if (outformat == FORMAT_PEM)
 				PEM_write_bio_PKCS8(out, p8);
 			else if (outformat == FORMAT_ASN1)
 				i2d_PKCS8_bio(out, p8);
@@ -363,7 +363,7 @@ int MAIN(int argc, char **argv)
 
 	if (nocrypt)
 		{
-		if (informat == FORMAT_PEM) 
+		if (informat == FORMAT_PEM)
 			p8inf = PEM_read_bio_PKCS8_PRIV_KEY_INFO(in,NULL,NULL, NULL);
 		else if (informat == FORMAT_ASN1)
 			p8inf = d2i_PKCS8_PRIV_KEY_INFO_bio(in, NULL);
@@ -375,7 +375,7 @@ int MAIN(int argc, char **argv)
 		}
 	else
 		{
-		if (informat == FORMAT_PEM) 
+		if (informat == FORMAT_PEM)
 			p8 = PEM_read_bio_PKCS8(in, NULL, NULL, NULL);
 		else if (informat == FORMAT_ASN1)
 			p8 = d2i_PKCS8_bio(in, NULL);
@@ -442,7 +442,7 @@ int MAIN(int argc, char **argv)
 		}
 	}
 	
-	if (outformat == FORMAT_PEM) 
+	if (outformat == FORMAT_PEM)
 		PEM_write_bio_PrivateKey(out, pkey, NULL, NULL, 0, NULL, passout);
 	else if (outformat == FORMAT_ASN1)
 		i2d_PrivateKey_bio(out, pkey);

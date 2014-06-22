@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -321,7 +321,7 @@ int SMIME_write_ASN1(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
 
 		/* Headers for signature */
 
-		BIO_printf(bio, "Content-Type: %ssignature;", mime_prefix); 
+		BIO_printf(bio, "Content-Type: %ssignature;", mime_prefix);
 		BIO_printf(bio, " name=\"smime.p7s\"%s", mime_eol);
 		BIO_printf(bio, "Content-Transfer-Encoding: base64%s",
 								mime_eol);

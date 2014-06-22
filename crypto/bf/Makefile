@@ -22,7 +22,7 @@ TEST=bftest.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=bf_skey.c bf_ecb.c bf_enc.c bf_cfb64.c bf_ofb64.c 
+LIBSRC=bf_skey.c bf_ecb.c bf_enc.c bf_cfb64.c bf_ofb64.c
 LIBOBJ=bf_skey.o bf_ecb.o $(BF_ENC) bf_cfb64.o bf_ofb64.o
 
 SRC= $(LIBSRC)

@@ -41,7 +41,7 @@ my ($rc4,$md5)=(1,1);	# what to generate?
 my $D="#" if (!$md5);	# if set to "#", MD5 is stitched into RC4(),
 			# but its result is discarded. Idea here is
 			# to be able to use 'openssl speed rc4' for
-			# benchmarking the stitched subroutine... 
+			# benchmarking the stitched subroutine...
 
 my $flavour = shift;
 my $output  = shift;

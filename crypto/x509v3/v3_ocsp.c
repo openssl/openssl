@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -276,7 +276,7 @@ static int i2r_ocsp_serviceloc(const X509V3_EXT_METHOD *method, void *in,
 	for (i = 0; i < sk_ACCESS_DESCRIPTION_num(a->locator); i++)
 	        {
 				ad = sk_ACCESS_DESCRIPTION_value(a->locator,i);
-				if (BIO_printf(bp, "\n%*s", (2*ind), "") <= 0) 
+				if (BIO_printf(bp, "\n%*s", (2*ind), "") <= 0)
 					goto err;
 				if(i2a_ASN1_OBJECT(bp, ad->method) <= 0) goto err;
 				if(BIO_puts(bp, " - ") <= 0) goto err;

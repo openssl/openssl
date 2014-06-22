@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -242,11 +242,11 @@ EVP_CIPHER_CTX *CMS_RecipientInfo_kari_get0_ctx(CMS_RecipientInfo *ri)
 	return NULL;
 	}
 
-/* Derive KEK and decrypt/encrypt with it to produce either the 
+/* Derive KEK and decrypt/encrypt with it to produce either the
  * original CEK or the encrypted CEK.
  */
 
-static int cms_kek_cipher(unsigned char **pout, size_t *poutlen, 
+static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
 			const unsigned char *in, size_t inlen,
 			CMS_KeyAgreeRecipientInfo *kari, int enc)
 	{

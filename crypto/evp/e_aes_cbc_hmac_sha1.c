@@ -190,7 +190,7 @@ typedef struct { const unsigned char *ptr; int blocks;  } HASH_DESC;
 void sha1_multi_block(SHA1_MB_CTX *,const HASH_DESC *,int);
 
 typedef struct { const unsigned char *inp; unsigned char *out;
-		 int blocks; u64 iv[2]; } CIPH_DESC; 
+		 int blocks; u64 iv[2]; } CIPH_DESC;
 
 void aesni_multi_cbc_encrypt(CIPH_DESC *,void *,int);
 

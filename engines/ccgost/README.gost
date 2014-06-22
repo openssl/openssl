@@ -14,7 +14,7 @@ GOST R 34.10-94 and GOST R 34.10-2001 - digital signature algorithms.
    256 bit private keys. Public keys are 1024 bit for 94 and 512 bit for
    2001 (which is elliptic-curve based). Key exchange algorithms
    (VKO R 34.10) are supported on these keys too.
-   
+
 GOST R 34.11-94  Message digest algorithm. 256-bit hash value
 
 GOST 28147-89 - Symmetric cipher  with 256-bit key. Various modes are
@@ -24,9 +24,9 @@ GOST 28147-89 - Symmetric cipher  with 256-bit key. Various modes are
 
 GOST 28147-89 MAC mode. Message authentication code. While most MAC
     algorithms  out there are based on hash functions using HMAC
-	algorithm, this algoritm is based on symmetric cipher. 
+	algorithm, this algoritm is based on symmetric cipher.
 	It has 256-bit symmetric key and only 32 bits of MAC value
-	(while HMAC has same key size and value size). 
+	(while HMAC has same key size and value size).
 
 	It is implemented as combination of EVP_PKEY type and EVP_MD type.
 
@@ -38,7 +38,7 @@ high-level openssl functions, such as PKI, S/MIME and TLS.
 See RFC 4490 for S/MIME with GOST algorithms and RFC 4491 for PKI.
 TLS support is implemented according IETF
 draft-chudov-cryptopro-cptls-03.txt and is compatible with
-CryptoPro CSP 3.0 and 3.6 as well as with MagPro CSP. 
+CryptoPro CSP 3.0 and 3.6 as well as with MagPro CSP.
 GOST ciphersuites implemented in CryptoPro CSP 2.0 are not supported
 because they use ciphersuite numbers used now by AES ciphersuites.
 
@@ -80,7 +80,7 @@ And section which describes configuration of the engine should contain
 Where engine_id parameter specifies name of engine (should be "gost").
 dynamic_path is a location of the loadable shared library implementing the
 engine. If the engine is compiled statically or is located in the OpenSSL
-engines directory, this line can be omitted. 
+engines directory, this line can be omitted.
 default_algorithms parameter specifies that all algorithms, provided by
 engine, should be used.
 
@@ -92,7 +92,7 @@ configuration parameter instead.
 
 Value of this parameter can be either short name, defined in OpenSSL
 obj_dat.h header file or numeric representation of OID, defined in RFC
-4357. 
+4357.
 
 USAGE WITH COMMAND LINE openssl UTILITY
 
@@ -102,7 +102,7 @@ USAGE WITH COMMAND LINE openssl UTILITY
 
   Use -algorithm option to specify algorithm.
   Use -pkeyopt option to pass paramset to algorithm. The following paramsets
-  are supported by 
+  are supported by
   	gost94: 0,A,B,C,D,XA,XB,XC
 	gost2001: 0,A,B,C,XA,XB
   You can also use numeric representation of OID as to destinate
@@ -124,7 +124,7 @@ request once you have a private key.
    Syntax of -pkeyopt parameter is identical with genpkey command.
 
    You can also use oldstyle syntax -newkey gost2001:paramfile, but in
-   this case you should create parameter file first. 
+   this case you should create parameter file first.
 
    It can be created with
 
@@ -183,11 +183,11 @@ Russian clients and RSA/DSA ciphersuites for foreign clients.
  So, to obtain correct digest value, such as produced by gostsum utility
  included in the engine distribution, bytes of output should be
  reversed.
- 
+
  Calculation of HMAC based on GOST R 34.11-94
 
  openssl dgst -md_gost94 -mac hmac -macopt key:<32 bytes of key> datafile
-  
+
   (or use hexkey if key contain NUL bytes)
  Calculation of GOST 28147 MAC
 
@@ -199,7 +199,7 @@ Russian clients and RSA/DSA ciphersuites for foreign clients.
  this.
 
  Encryption with GOST 28147 CFB mode
- openssl enc -gost89 -out encrypted-file -in plain-text-file -k <passphrase>  
+ openssl enc -gost89 -out encrypted-file -in plain-text-file -k <passphrase>
  Encryption with GOST 28147 CNT mode
  openssl enc -gost89-cnt -out encrypted-file -in plain-text-file -k <passphrase>
 
@@ -212,9 +212,9 @@ hash to derive key from password.
 
 openssl pksc12 -export -inkey gost.pem -in gost_cert.pem -keypbe gost89\
    -certpbe gost89 -macalg md_gost94
- 
+
 7. Testing speed of symmetric ciphers.
-   
+
 To test performance of GOST symmetric ciphers you should use -evp switch
 of the openssl speed command. Engine-provided ciphers couldn't be
 accessed by cipher-specific functions, only via generic evp interface
@@ -256,7 +256,7 @@ EVP_PKEY_encrypt encrypts provided session key with VKO shared key and
 packs it into GOST key transport structure, described in the RFC 4490.
 
 It typically uses ephemeral key pair to compute shared key and packs its
-public part along with encrypted key. So, for most cases use of 
+public part along with encrypted key. So, for most cases use of
 EVP_PKEY_encrypt/EVP_PKEY_decrypt with GOST keys is almost same as with
 RSA.
 
@@ -275,7 +275,7 @@ peer public key.
 Encrypt operation supports EVP_PKEY_CTRL_SET_IV operation as well.
 It can be used when some specific restriction on UKM are imposed by
 higher level protocol. For instance, description of GOST ciphersuites
-requires UKM to be derived from shared secret. 
+requires UKM to be derived from shared secret.
 
 If UKM is not set by this control command, encrypt operation would
 generate random UKM.

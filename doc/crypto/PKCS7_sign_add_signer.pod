@@ -44,7 +44,7 @@ digest value from the PKCS7 struture: to add a signer to an existing structure.
 An error occurs if a matching digest value cannot be found to copy. The
 returned PKCS7 structure will be valid and finalized when this flag is set.
 
-If B<PKCS7_PARTIAL> is set in addition to B<PKCS7_REUSE_DIGEST> then the 
+If B<PKCS7_PARTIAL> is set in addition to B<PKCS7_REUSE_DIGEST> then the
 B<PKCS7_SIGNER_INO> structure will not be finalized so additional attributes
 can be added. In this case an explicit call to PKCS7_SIGNER_INFO_sign() is
 needed to finalize it.
@@ -67,7 +67,7 @@ these algorithms is disabled then it will not be included.
 
 
 PKCS7_sign_add_signers() returns an internal pointer to the PKCS7_SIGNER_INFO
-structure just added, this can be used to set additional attributes 
+structure just added, this can be used to set additional attributes
 before it is finalized.
 
 =head1 RETURN VALUES

@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -81,7 +81,7 @@ struct X509_POLICY_DATA_st
 /* X509_POLICY_DATA flags values */
 
 /* This flag indicates the structure has been mapped using a policy mapping
- * extension. If policy mapping is not active its references get deleted. 
+ * extension. If policy mapping is not active its references get deleted.
  */
 
 #define POLICY_DATA_FLAG_MAPPED			0x1

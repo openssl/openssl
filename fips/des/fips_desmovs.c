@@ -6,7 +6,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -92,8 +92,8 @@ int main(int argc, char *argv[])
 #define VERBOSE 0
 
 static int DESTest(EVP_CIPHER_CTX *ctx,
-	    char *amode, int akeysz, unsigned char *aKey, 
-	    unsigned char *iVec, 
+	    char *amode, int akeysz, unsigned char *aKey,
+	    unsigned char *iVec,
 	    int dir,  /* 0 = decrypt, 1 = encrypt */
 	    unsigned char *out, unsigned char *in, int len)
     {
@@ -160,7 +160,7 @@ char *tdes_t_mode[6] = {"CBC","ECB","OFB","CFB1","CFB8","CFB64"};
 enum tdes_Mode {TCBC, TECB, TOFB, TCFB1, TCFB8, TCFB64};
 int Sizes[6]={64,64,64,1,8,64};
 
-static int do_tmct(char *amode, 
+static int do_tmct(char *amode,
 	    int akeysz, int numkeys, unsigned char *akey,unsigned char *ivec,
 	    int dir, unsigned char *text, int len,
 	    FILE *rfp)
@@ -173,7 +173,7 @@ static int do_tmct(char *amode,
 	if(!strcmp(amode,tdes_t_mode[imode]))
 	    break;
     if (imode == 6)
-	{ 
+	{
 	printf("Unrecognized mode: %s\n", amode);
 	return 0;
 	}
@@ -267,7 +267,7 @@ static int do_tmct(char *amode,
 	}
     return 1;
     }
-    
+
 static int tproc_file(char *rqfile, char *rspfile)
     {
     char afn[256], rfn[256];
@@ -295,7 +295,7 @@ static int tproc_file(char *rqfile, char *rspfile)
 
     if ((afp = fopen(afn, "r")) == NULL)
 	{
-	printf("Cannot open file: %s, %s\n", 
+	printf("Cannot open file: %s, %s\n",
 	       afn, strerror(errno));
 	return -1;
 	}
@@ -315,7 +315,7 @@ static int tproc_file(char *rqfile, char *rspfile)
 	}
     if ((rfp = fopen(rspfile, "w")) == NULL)
 	{
-	printf("Cannot open file: %s, %s\n", 
+	printf("Cannot open file: %s, %s\n",
 	       rfn, strerror(errno));
 	fclose(afp);
 	afp = NULL;
@@ -418,7 +418,7 @@ static int tproc_file(char *rqfile, char *rspfile)
 		printf("Missing ENCRYPT/DECRYPT keyword\n");
 		break;
 		}
-	    else 
+	    else
 		step = 2;
 
 	case 2: /* KEY = xxxx */
@@ -442,7 +442,7 @@ static int tproc_file(char *rqfile, char *rspfile)
 		numkeys=atoi(ibuf+10);
 		break;
 		}
-	    if (echo) 
+	    if (echo)
 	    	copy_line(ibuf, rfp);
 	    if(!fips_strncasecmp(ibuf,"KEY = ",6))
 		{
@@ -554,7 +554,7 @@ static int tproc_file(char *rqfile, char *rspfile)
 		else
 		    {
 		    assert(dir == 1);
-		    DESTest(&ctx, amode, akeysz, aKey, iVec, 
+		    DESTest(&ctx, amode, akeysz, aKey, iVec,
 				  dir,  /* 0 = decrypt, 1 = encrypt */
 				  ciphertext, plaintext, len);
 		    OutputValue("CIPHERTEXT",ciphertext,len,rfp,
@@ -588,13 +588,13 @@ static int tproc_file(char *rqfile, char *rspfile)
 		PrintValue("CIPHERTEXT", ciphertext, len);
 		if (strcmp(atest, "Monte") == 0)  /* Monte Carlo Test */
 		    {
-		    do_tmct(amode, akeysz, numkeys, aKey, iVec, 
+		    do_tmct(amode, akeysz, numkeys, aKey, iVec,
 			   dir, ciphertext, len, rfp);
 		    }
 		else
 		    {
 		    assert(dir == 0);
-		    DESTest(&ctx, amode, akeysz, aKey, iVec, 
+		    DESTest(&ctx, amode, akeysz, aKey, iVec,
 				  dir,  /* 0 = decrypt, 1 = encrypt */
 				  plaintext, ciphertext, len);
 		    OutputValue("PLAINTEXT",(unsigned char *)plaintext,len,rfp,
@@ -627,7 +627,7 @@ static int tproc_file(char *rqfile, char *rspfile)
     }
 
 /*--------------------------------------------------
-  Processes either a single file or 
+  Processes either a single file or
   a set of files whose names are passed in a file.
   A single file is specified as:
     aes_test -f xxx.req

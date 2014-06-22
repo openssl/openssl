@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -148,21 +148,21 @@ int MAIN(int argc, char **argv)
 		else if (!strcmp (*args, "-pk7out"))
 			operation = SMIME_PK7OUT;
 #ifndef OPENSSL_NO_DES
-		else if (!strcmp (*args, "-des3")) 
+		else if (!strcmp (*args, "-des3"))
 				cipher = EVP_des_ede3_cbc();
-		else if (!strcmp (*args, "-des")) 
+		else if (!strcmp (*args, "-des"))
 				cipher = EVP_des_cbc();
 #endif
 #ifndef OPENSSL_NO_SEED
-		else if (!strcmp (*args, "-seed")) 
+		else if (!strcmp (*args, "-seed"))
 				cipher = EVP_seed_cbc();
 #endif
 #ifndef OPENSSL_NO_RC2
-		else if (!strcmp (*args, "-rc2-40")) 
+		else if (!strcmp (*args, "-rc2-40"))
 				cipher = EVP_rc2_40_cbc();
-		else if (!strcmp (*args, "-rc2-128")) 
+		else if (!strcmp (*args, "-rc2-128"))
 				cipher = EVP_rc2_cbc();
-		else if (!strcmp (*args, "-rc2-64")) 
+		else if (!strcmp (*args, "-rc2-64"))
 				cipher = EVP_rc2_64_cbc();
 #endif
 #ifndef OPENSSL_NO_AES
@@ -181,19 +181,19 @@ int MAIN(int argc, char **argv)
 		else if (!strcmp(*args,"-camellia256"))
 				cipher = EVP_camellia_256_cbc();
 #endif
-		else if (!strcmp (*args, "-text")) 
+		else if (!strcmp (*args, "-text"))
 				flags |= PKCS7_TEXT;
-		else if (!strcmp (*args, "-nointern")) 
+		else if (!strcmp (*args, "-nointern"))
 				flags |= PKCS7_NOINTERN;
-		else if (!strcmp (*args, "-noverify")) 
+		else if (!strcmp (*args, "-noverify"))
 				flags |= PKCS7_NOVERIFY;
-		else if (!strcmp (*args, "-nochain")) 
+		else if (!strcmp (*args, "-nochain"))
 				flags |= PKCS7_NOCHAIN;
-		else if (!strcmp (*args, "-nocerts")) 
+		else if (!strcmp (*args, "-nocerts"))
 				flags |= PKCS7_NOCERTS;
-		else if (!strcmp (*args, "-noattr")) 
+		else if (!strcmp (*args, "-noattr"))
 				flags |= PKCS7_NOATTR;
-		else if (!strcmp (*args, "-nodetach")) 
+		else if (!strcmp (*args, "-nodetach"))
 				flags &= ~PKCS7_DETACHED;
 		else if (!strcmp (*args, "-nosmimecap"))
 				flags |= PKCS7_NOSMIMECAP;
@@ -620,11 +620,11 @@ int MAIN(int argc, char **argv)
 
 	if (operation & SMIME_IP)
 		{
-		if (informat == FORMAT_SMIME) 
+		if (informat == FORMAT_SMIME)
 			p7 = SMIME_read_PKCS7(in, &indata);
-		else if (informat == FORMAT_PEM) 
+		else if (informat == FORMAT_PEM)
 			p7 = PEM_read_bio_PKCS7(in, NULL, NULL, NULL);
-		else if (informat == FORMAT_ASN1) 
+		else if (informat == FORMAT_ASN1)
 			p7 = d2i_PKCS7_bio(in, NULL);
 		else
 			{
@@ -789,16 +789,16 @@ int MAIN(int argc, char **argv)
 			BIO_printf(out, "From: %s\n", from);
 		if (subject)
 			BIO_printf(out, "Subject: %s\n", subject);
-		if (outformat == FORMAT_SMIME) 
+		if (outformat == FORMAT_SMIME)
 			{
 			if (operation == SMIME_RESIGN)
 				SMIME_write_PKCS7(out, p7, indata, flags);
 			else
 				SMIME_write_PKCS7(out, p7, in, flags);
 			}
-		else if (outformat == FORMAT_PEM) 
+		else if (outformat == FORMAT_PEM)
 			PEM_write_bio_PKCS7_stream(out, p7, in, flags);
-		else if (outformat == FORMAT_ASN1) 
+		else if (outformat == FORMAT_ASN1)
 			i2d_PKCS7_bio_stream(out,p7, in, flags);
 		else
 			{

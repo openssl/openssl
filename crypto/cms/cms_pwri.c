@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -62,7 +62,7 @@
 #include "cms_lcl.h"
 #include "asn1_locl.h"
 
-int CMS_RecipientInfo_set0_password(CMS_RecipientInfo *ri, 
+int CMS_RecipientInfo_set0_password(CMS_RecipientInfo *ri,
 				unsigned char *pass, ossl_ssize_t passlen)
 	{
 	CMS_PasswordRecipientInfo *pwri;

@@ -20,7 +20,7 @@ BIO_get_mem_ptr, BIO_new_mem_buf - memory BIO
 
 =head1 DESCRIPTION
 
-BIO_s_mem() return the memory BIO method function. 
+BIO_s_mem() return the memory BIO method function.
 
 A memory BIO is a source/sink BIO which uses memory for its I/O. Data
 written to a memory BIO is stored in a BUF_MEM structure which is extended
@@ -94,7 +94,7 @@ to improve efficiency.
 Create a memory BIO and write some data to it:
 
  BIO *mem = BIO_new(BIO_s_mem());
- BIO_puts(mem, "Hello World\n"); 
+ BIO_puts(mem, "Hello World\n");
 
 Create a read only memory BIO:
 
@@ -108,7 +108,7 @@ Extract the BUF_MEM structure from a memory BIO and then free up the BIO:
  BIO_get_mem_ptr(mem, &bptr);
  BIO_set_close(mem, BIO_NOCLOSE); /* So BIO_free() leaves BUF_MEM alone */
  BIO_free(mem);
- 
+
 
 =head1 SEE ALSO
 

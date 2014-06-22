@@ -43,39 +43,39 @@ void main ()
   ctx = SSL_CTX_new (meth);                        CHK_NULL(ctx);
 
   CHK_SSL(err);
-  
+
   /* ----------------------------------------------- */
   /* Create a socket and connect to server using normal socket calls. */
-  
+
   sd = socket (AF_INET, SOCK_STREAM, 0);       CHK_ERR(sd, "socket");
- 
+
   memset (&sa, '\0', sizeof(sa));
   sa.sin_family      = AF_INET;
   sa.sin_addr.s_addr = inet_addr ("127.0.0.1");   /* Server IP */
   sa.sin_port        = htons     (1111);          /* Server Port number */
-  
+
   err = connect(sd, (struct sockaddr*) &sa,
 		sizeof(sa));                   CHK_ERR(err, "connect");
 
   /* ----------------------------------------------- */
   /* Now we have TCP conncetion. Start SSL negotiation. */
-  
-  ssl = SSL_new (ctx);                         CHK_NULL(ssl);    
+
+  ssl = SSL_new (ctx);                         CHK_NULL(ssl);
   SSL_set_fd (ssl, sd);
   err = SSL_connect (ssl);                     CHK_SSL(err);
-    
+
   /* Following two steps are optional and not required for
      data exchange to be successful. */
-  
+
   /* Get the cipher - opt */
 
   printf ("SSL connection using %s\n", SSL_get_cipher (ssl));
-  
+
   /* Get server's certificate (note: beware of dynamic allocation) - opt */
 
   server_cert = SSL_get_peer_certificate (ssl);       CHK_NULL(server_cert);
   printf ("Server certificate:\n");
-  
+
   str = X509_NAME_oneline (X509_get_subject_name (server_cert),0,0);
   CHK_NULL(str);
   printf ("\t subject: %s\n", str);
@@ -90,12 +90,12 @@ void main ()
      deallocating the certificate. */
 
   X509_free (server_cert);
-  
+
   /* --------------------------------------------------- */
   /* DATA EXCHANGE - Send a message and receive a reply. */
 
   err = SSL_write (ssl, "Hello World!", strlen("Hello World!"));  CHK_SSL(err);
-  
+
   err = SSL_read (ssl, buf, sizeof(buf) - 1);                     CHK_SSL(err);
   buf[err] = '\0';
   printf ("Got %d chars:'%s'\n", err, buf);

@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -71,7 +71,7 @@ static int newpass_bags(STACK_OF(PKCS12_SAFEBAG) *bags, char *oldpass,
 static int newpass_bag(PKCS12_SAFEBAG *bag, char *oldpass, char *newpass);
 static int alg_get(X509_ALGOR *alg, int *pnid, int *piter, int *psaltlen);
 
-/* 
+/*
  * Change the password on a PKCS#12 structure.
  */
 

@@ -21,7 +21,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -255,7 +255,7 @@ int ec_GF2m_simple_group_get_degree(const EC_GROUP *group)
 
 
 /* Checks the discriminant of the curve.
- * y^2 + x*y = x^3 + a*x^2 + b is an elliptic curve <=> b != 0 (mod p) 
+ * y^2 + x*y = x^3 + a*x^2 + b is an elliptic curve <=> b != 0 (mod p)
  */
 int ec_GF2m_simple_group_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
 	{
@@ -279,7 +279,7 @@ int ec_GF2m_simple_group_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
 	if (!BN_GF2m_mod_arr(b, &group->b, group->poly)) goto err;
 	
 	/* check the discriminant:
-	 * y^2 + x*y = x^3 + a*x^2 + b is an elliptic curve <=> b != 0 (mod p) 
+	 * y^2 + x*y = x^3 + a*x^2 + b is an elliptic curve <=> b != 0 (mod p)
 	 */
 	if (BN_is_zero(b)) goto err;
 
@@ -335,7 +335,7 @@ int ec_GF2m_simple_point_copy(EC_POINT *dest, const EC_POINT *src)
 	}
 
 
-/* Set an EC_POINT to the point at infinity.  
+/* Set an EC_POINT to the point at infinity.
  * A point at infinity is represented by having Z=0.
  */
 int ec_GF2m_simple_point_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
@@ -346,7 +346,7 @@ int ec_GF2m_simple_point_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
 	}
 
 
-/* Set the coordinates of an EC_POINT using affine coordinates. 
+/* Set the coordinates of an EC_POINT using affine coordinates.
  * Note that the simple implementation only uses affine coordinates.
  */
 int ec_GF2m_simple_point_set_affine_coordinates(const EC_GROUP *group, EC_POINT *point,
@@ -373,7 +373,7 @@ int ec_GF2m_simple_point_set_affine_coordinates(const EC_GROUP *group, EC_POINT 
 	}
 
 
-/* Gets the affine coordinates of an EC_POINT. 
+/* Gets the affine coordinates of an EC_POINT.
  * Note that the simple implementation only uses affine coordinates.
  */
 int ec_GF2m_simple_point_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *point,
@@ -387,7 +387,7 @@ int ec_GF2m_simple_point_get_affine_coordinates(const EC_GROUP *group, const EC_
 		return 0;
 		}
 
-	if (BN_cmp(&point->Z, BN_value_one())) 
+	if (BN_cmp(&point->Z, BN_value_one()))
 		{
 		ECerr(EC_F_EC_GF2M_SIMPLE_POINT_GET_AFFINE_COORDINATES, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
@@ -447,7 +447,7 @@ int ec_GF2m_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, co
 	t = BN_CTX_get(ctx);
 	if (t == NULL) goto err;
 
-	if (a->Z_is_one) 
+	if (a->Z_is_one)
 		{
 		if (!BN_copy(x0, &a->X)) goto err;
 		if (!BN_copy(y0, &a->Y)) goto err;
@@ -456,7 +456,7 @@ int ec_GF2m_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, co
 		{
 		if (!EC_POINT_get_affine_coordinates_GF2m(group, a, x0, y0, ctx)) goto err;
 		}
-	if (b->Z_is_one) 
+	if (b->Z_is_one)
 		{
 		if (!BN_copy(x1, &b->X)) goto err;
 		if (!BN_copy(y1, &b->Y)) goto err;

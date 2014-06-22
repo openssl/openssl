@@ -24,31 +24,31 @@
 
 EVP_PKEY * ReadPublicKey(const char *certfile)
 {
-  FILE *fp = fopen (certfile, "r");   
+  FILE *fp = fopen (certfile, "r");
   X509 *x509;
   EVP_PKEY *pkey;
 
-  if (!fp) 
-     return NULL; 
+  if (!fp)
+     return NULL;
 
   x509 = PEM_read_X509(fp, NULL, 0, NULL);
 
-  if (x509 == NULL) 
-  {  
+  if (x509 == NULL)
+  {
      ERR_print_errors_fp (stderr);
-     return NULL;   
+     return NULL;
   }
 
   fclose (fp);
-  
+
   pkey=X509_extract_key(x509);
 
   X509_free(x509);
 
-  if (pkey == NULL) 
+  if (pkey == NULL)
      ERR_print_errors_fp (stderr);
 
-  return pkey; 
+  return pkey;
 }
 
 EVP_PKEY *ReadPrivateKey(const char *keyfile)
@@ -63,8 +63,8 @@ EVP_PKEY *ReadPrivateKey(const char *keyfile)
 
 	fclose (fp);
 
-  	if (pkey == NULL) 
-		ERR_print_errors_fp (stderr);   
+  	if (pkey == NULL)
+		ERR_print_errors_fp (stderr);
 
 	return pkey;
 }

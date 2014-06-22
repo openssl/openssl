@@ -158,9 +158,9 @@
   .register	%g2,#scratch
   .register	%g3,#scratch
 # define	FRAME_SIZE	-192
-#else 
+#else
 # define	FRAME_SIZE	-96
-#endif 
+#endif
 /*
  * GNU assembler can't stand stuw:-(
  */

@@ -1,7 +1,7 @@
 ; This Emacs Lisp file defines a C indentation style that closely
 ; follows most aspects of the one that is used throughout SSLeay,
 ; and hence in OpenSSL.
-; 
+;
 ; This definition is for the "CC mode" package, which is the default
 ; mode for editing C source files in Emacs 20, not for the older
 ; c-mode.el (which was the default in less recent releaes of Emacs 19).
@@ -15,7 +15,7 @@
 ; such as "if" and that are not the body of a function cannot
 ; be handled too well by CC mode with this indentation style,
 ; so you have to indent them manually (you can use C-q tab).
-; 
+;
 ; For suggesting improvements, please send e-mail to bodo@openssl.org.
 
 (c-add-style "eay"

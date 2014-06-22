@@ -135,12 +135,12 @@ int get_signed_seq2string(PKCS7_SIGNER_INFO *si, char **str1, char **str2)
 		/* Length is the length of the sequence */
 
 		c.q=c.p;
-		if ((os1=d2i_ASN1_OCTET_STRING(NULL,&c.p,c.slen)) == NULL) 
+		if ((os1=d2i_ASN1_OCTET_STRING(NULL,&c.p,c.slen)) == NULL)
 			goto err;
 		c.slen-=(c.p-c.q);
 
 		c.q=c.p;
-		if ((os2=d2i_ASN1_OCTET_STRING(NULL,&c.p,c.slen)) == NULL) 
+		if ((os2=d2i_ASN1_OCTET_STRING(NULL,&c.p,c.slen)) == NULL)
 			goto err;
 		c.slen-=(c.p-c.q);
 
@@ -302,12 +302,12 @@ int sk_get_seq2string(STACK_OF(X509_ATTRIBUTE) *sk, char **str1, char **str2)
 		/* Length is the length of the sequence */
 
 		c.q=c.p;
-		if ((os1=d2i_ASN1_OCTET_STRING(NULL,&c.p,c.slen)) == NULL) 
+		if ((os1=d2i_ASN1_OCTET_STRING(NULL,&c.p,c.slen)) == NULL)
 			goto err;
 		c.slen-=(c.p-c.q);
 
 		c.q=c.p;
-		if ((os2=d2i_ASN1_OCTET_STRING(NULL,&c.p,c.slen)) == NULL) 
+		if ((os2=d2i_ASN1_OCTET_STRING(NULL,&c.p,c.slen)) == NULL)
 			goto err;
 		c.slen-=(c.p-c.q);
 

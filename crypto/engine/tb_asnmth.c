@@ -6,7 +6,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -188,14 +188,14 @@ const EVP_PKEY_ASN1_METHOD *ENGINE_get_pkey_asn1_meth_str(ENGINE *e,
 	for (i = 0; i < nidcount; i++)
 		{
 		e->pkey_asn1_meths(e, &ameth, NULL, nids[i]);
-		if (((int)strlen(ameth->pem_str) == len) && 
+		if (((int)strlen(ameth->pem_str) == len) &&
 					!strncasecmp(ameth->pem_str, str, len))
 			return ameth;
 		}
 	return NULL;
 	}
 
-typedef struct 
+typedef struct
 	{
 	ENGINE *e;
 	const EVP_PKEY_ASN1_METHOD *ameth;
@@ -214,7 +214,7 @@ static void look_str_cb(int nid, STACK_OF(ENGINE) *sk, ENGINE *def, void *arg)
 		ENGINE *e = sk_ENGINE_value(sk, i);
 		EVP_PKEY_ASN1_METHOD *ameth;
 		e->pkey_asn1_meths(e, &ameth, NULL, nid);
-		if (((int)strlen(ameth->pem_str) == lk->len) && 
+		if (((int)strlen(ameth->pem_str) == lk->len) &&
 				!strncasecmp(ameth->pem_str, lk->str, lk->len))
 			{
 			lk->e = e;

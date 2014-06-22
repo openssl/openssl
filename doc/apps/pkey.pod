@@ -37,7 +37,7 @@ This specifies the input format DER or PEM.
 
 =item B<-outform DER|PEM>
 
-This specifies the output format, the options have the same meaning as the 
+This specifies the output format, the options have the same meaning as the
 B<-inform> option.
 
 =item B<-in filename>
@@ -71,7 +71,7 @@ name accepted by EVP_get_cipherbyname() is acceptable such as B<des3>.
 =item B<-text>
 
 prints out the various public or private key components in
-plain text in addition to the encoded version. 
+plain text in addition to the encoded version.
 
 =item B<-text_pub>
 
@@ -111,7 +111,7 @@ To encrypt a private key using triple DES:
 
  openssl pkey -in key.pem -des3 -out keyout.pem
 
-To convert a private key from PEM to DER format: 
+To convert a private key from PEM to DER format:
 
  openssl pkey -in key.pem -outform DER -out keyout.der
 
@@ -130,6 +130,6 @@ To just output the public part of a private key:
 =head1 SEE ALSO
 
 L<genpkey(1)|genpkey(1)>, L<rsa(1)|rsa(1)>, L<pkcs8(1)|pkcs8(1)>,
-L<dsa(1)|dsa(1)>, L<genrsa(1)|genrsa(1)>, L<gendsa(1)|gendsa(1)> 
+L<dsa(1)|dsa(1)>, L<genrsa(1)|genrsa(1)>, L<gendsa(1)|gendsa(1)>
 
 =cut

@@ -5,21 +5,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -63,7 +63,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -192,7 +192,7 @@ static int ssl_ctx_make_profiles(const char *profiles_string,STACK_OF(SRTP_PROTE
 
 	char *col;
 	char *ptr=(char *)profiles_string;
-    
+
 	SRTP_PROTECTION_PROFILE *p;
 
 	if(!(profiles=sk_SRTP_PROTECTION_PROFILE_new_null()))
@@ -200,7 +200,7 @@ static int ssl_ctx_make_profiles(const char *profiles_string,STACK_OF(SRTP_PROTE
 		SSLerr(SSL_F_SSL_CTX_MAKE_PROFILES, SSL_R_SRTP_COULD_NOT_ALLOCATE_PROFILES);
 		return 1;
 		}
-    
+
 	do
 		{
 		col=strchr(ptr,':');
@@ -220,10 +220,10 @@ static int ssl_ctx_make_profiles(const char *profiles_string,STACK_OF(SRTP_PROTE
 		} while (col);
 
 	*out=profiles;
-    
+
 	return 0;
 	}
-    
+
 int SSL_CTX_set_tlsext_use_srtp(SSL_CTX *ctx,const char *profiles)
 	{
 	return ssl_ctx_make_profiles(profiles,&ctx->srtp_profiles);
@@ -258,7 +258,7 @@ SRTP_PROTECTION_PROFILE *SSL_get_selected_srtp_profile(SSL *s)
 	return s->srtp_profile;
 	}
 
-/* Note: this function returns 0 length if there are no 
+/* Note: this function returns 0 length if there are no
    profiles specified */
 int ssl_add_clienthello_use_srtp_ext(SSL *s, unsigned char *p, int *len, int maxlen)
 	{
@@ -266,8 +266,8 @@ int ssl_add_clienthello_use_srtp_ext(SSL *s, unsigned char *p, int *len, int max
 	int i;
 	STACK_OF(SRTP_PROTECTION_PROFILE) *clnt=0;
 	SRTP_PROTECTION_PROFILE *prof;
-    
-	clnt=SSL_get_srtp_profiles(s);    
+
+	clnt=SSL_get_srtp_profiles(s);
 	ct=sk_SRTP_PROTECTION_PROFILE_num(clnt); /* -1 if clnt == 0 */
 
 	if(p)
@@ -297,7 +297,7 @@ int ssl_add_clienthello_use_srtp_ext(SSL *s, unsigned char *p, int *len, int max
 		}
 
 	*len=2 + ct*2 + 1;
-    
+
 	return 0;
 	}
 
@@ -314,7 +314,7 @@ int ssl_parse_clienthello_use_srtp_ext(SSL *s, unsigned char *d, int len,int *al
 
          /* Length value + the MKI length */
         if(len < 3)
-		{            
+		{
 		SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_USE_SRTP_EXT,SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
 		*al=SSL_AD_DECODE_ERROR;
 		return 1;
@@ -323,7 +323,7 @@ int ssl_parse_clienthello_use_srtp_ext(SSL *s, unsigned char *d, int len,int *al
         /* Pull off the length of the cipher suite list */
         n2s(d, ct);
         len -= 2;
-        
+
         /* Check that it is even */
 	if(ct%2)
 		{
@@ -331,16 +331,16 @@ int ssl_parse_clienthello_use_srtp_ext(SSL *s, unsigned char *d, int len,int *al
 		*al=SSL_AD_DECODE_ERROR;
 		return 1;
 		}
-        
+
         /* Check that lengths are consistent */
-	if(len < (ct + 1)) 
+	if(len < (ct + 1))
 		{
 		SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_USE_SRTP_EXT,SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
 		*al=SSL_AD_DECODE_ERROR;
 		return 1;
 		}
 
-        
+
 	clnt=sk_SRTP_PROTECTION_PROFILE_new_null();
 
 	while(ct)
@@ -373,7 +373,7 @@ int ssl_parse_clienthello_use_srtp_ext(SSL *s, unsigned char *d, int len,int *al
 	srvr=SSL_get_srtp_profiles(s);
 
 	/* Pick our most preferred profile. If no profiles have been
-	 configured then the outer loop doesn't run 
+	 configured then the outer loop doesn't run
 	 (sk_SRTP_PROTECTION_PROFILE_num() = -1)
 	 and so we just return without doing anything */
 	for(i=0;i<sk_SRTP_PROTECTION_PROFILE_num(srvr);i++)
@@ -383,7 +383,7 @@ int ssl_parse_clienthello_use_srtp_ext(SSL *s, unsigned char *d, int len,int *al
 		for(j=0;j<sk_SRTP_PROTECTION_PROFILE_num(clnt);j++)
 			{
 			cprof=sk_SRTP_PROTECTION_PROFILE_value(clnt,j);
-            
+
 			if(cprof->id==sprof->id)
 				{
 				s->srtp_profile=sprof;
@@ -395,7 +395,7 @@ int ssl_parse_clienthello_use_srtp_ext(SSL *s, unsigned char *d, int len,int *al
 		}
 
 	ret=0;
-    
+
 done:
 	if(clnt) sk_SRTP_PROTECTION_PROFILE_free(clnt);
 
@@ -422,10 +422,10 @@ int ssl_add_serverhello_use_srtp_ext(SSL *s, unsigned char *p, int *len, int max
                 *p++ = 0;
 		}
 	*len=5;
-    
+
 	return 0;
 	}
-    
+
 
 int ssl_parse_serverhello_use_srtp_ext(SSL *s, unsigned char *d, int len,int *al)
 	{
@@ -468,14 +468,14 @@ int ssl_parse_serverhello_use_srtp_ext(SSL *s, unsigned char *d, int len,int *al
 		*al=SSL_AD_DECODE_ERROR;
 		return 1;
 		}
-    
+
 	/* Check to see if the server gave us something we support
 	   (and presumably offered)
 	*/
 	for(i=0;i<sk_SRTP_PROTECTION_PROFILE_num(clnt);i++)
 		{
 		prof=sk_SRTP_PROTECTION_PROFILE_value(clnt,i);
-	    
+	
 		if(prof->id == id)
 			{
 			s->srtp_profile=prof;

@@ -26,7 +26,7 @@ static int pkey_gost_init(EVP_PKEY_CTX *ctx)
 	data = OPENSSL_malloc(sizeof(struct gost_pmeth_data));
 	if (!data) return 0;
 	memset(data,0,sizeof(struct gost_pmeth_data));
-	if (pkey && EVP_PKEY_get0(pkey)) 
+	if (pkey && EVP_PKEY_get0(pkey))
 		{
 		switch (EVP_PKEY_base_id(pkey)) {
 		case NID_id_GostR3410_94:
@@ -37,7 +37,7 @@ static int pkey_gost_init(EVP_PKEY_CTX *ctx)
 		break;
 		default:
 			return 0;
-		}	  
+		}	
 		}
 	EVP_PKEY_CTX_set_data(ctx,data);
 	return 1;
@@ -273,7 +273,7 @@ static int pkey_gost_ctrl01_str(EVP_PKEY_CTX *ctx,
 static int pkey_gost_paramgen_init(EVP_PKEY_CTX *ctx) {
 	return 1;
 }	
-static int pkey_gost94_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey) 
+static int pkey_gost94_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	{
 	struct gost_pmeth_data *data = EVP_PKEY_CTX_get_data(ctx);
 	DSA *dsa=NULL;
@@ -477,7 +477,7 @@ static int pkey_gost_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		case EVP_PKEY_CTRL_PKCS7_SIGN:
 			return 1;
 		case EVP_PKEY_CTRL_SET_MAC_KEY:
-			if (p1 != 32) 
+			if (p1 != 32)
 				{
 				GOSTerr(GOST_F_PKEY_GOST_MAC_CTRL,
 					GOST_R_INVALID_MAC_KEY_LENGTH);
@@ -488,19 +488,19 @@ static int pkey_gost_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 			data->key_set = 1;
 			return 1;
 		case EVP_PKEY_CTRL_DIGESTINIT:
-			{ 
+			{
 			EVP_MD_CTX *mctx = p2;
 			void *key;
 			if (!data->key_set)
-				{ 
+				{
 				EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(ctx);
-				if (!pkey) 
+				if (!pkey)
 					{
 					GOSTerr(GOST_F_PKEY_GOST_MAC_CTRL,GOST_R_MAC_KEY_NOT_SET);
 					return 0;
 					}
 				key = EVP_PKEY_get0(pkey);
-				if (!key) 
+				if (!key)
 					{
 					GOSTerr(GOST_F_PKEY_GOST_MAC_CTRL,GOST_R_MAC_KEY_NOT_SET);
 					return 0;
@@ -509,16 +509,16 @@ static int pkey_gost_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 				key = &(data->key);
 				}
 			return mctx->digest->md_ctrl(mctx,EVP_MD_CTRL_SET_KEY,32,key);
-			}  
+			}
 		}	
 	return -2;
 	}
 static int pkey_gost_mac_ctrl_str(EVP_PKEY_CTX *ctx,
 	const char *type, const char *value)
 	{
-	if (!strcmp(type, key_ctrl_string)) 
+	if (!strcmp(type, key_ctrl_string))
 		{
-		if (strlen(value)!=32) 
+		if (strlen(value)!=32)
 			{
 			GOSTerr(GOST_F_PKEY_GOST_MAC_CTRL_STR,
 				GOST_R_INVALID_MAC_KEY_LENGTH);
@@ -527,11 +527,11 @@ static int pkey_gost_mac_ctrl_str(EVP_PKEY_CTX *ctx,
 		return pkey_gost_mac_ctrl(ctx, EVP_PKEY_CTRL_SET_MAC_KEY,
 			32,(char *)value);
 		}
-	if (!strcmp(type, hexkey_ctrl_string)) 
+	if (!strcmp(type, hexkey_ctrl_string))
 		{
 			long keylen; int ret;
 			unsigned char *keybuf=string_to_hex(value,&keylen);
-			if (keylen != 32) 
+			if (keylen != 32)
 				{
 				GOSTerr(GOST_F_PKEY_GOST_MAC_CTRL_STR,
 					GOST_R_INVALID_MAC_KEY_LENGTH);
@@ -551,7 +551,7 @@ static int pkey_gost_mac_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	{
 		struct gost_mac_pmeth_data *data = EVP_PKEY_CTX_get_data(ctx);
 		unsigned char *keydata;
-		if (!data->key_set) 
+		if (!data->key_set)
 		{
 			GOSTerr(GOST_F_PKEY_GOST_MAC_KEYGEN,GOST_R_MAC_KEY_NOT_SET);
 			return 0;
@@ -571,7 +571,7 @@ static int pkey_gost_mac_signctx(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *
 	{
 		unsigned int tmpsiglen=*siglen; /* for platforms where sizeof(int)!=sizeof(size_t)*/
 		int ret;
-		if (!sig) 
+		if (!sig)
 			{
 			*siglen = 4;
 			return 1;

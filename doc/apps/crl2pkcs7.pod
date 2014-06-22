@@ -69,7 +69,7 @@ Create a PKCS#7 structure from a certificate and CRL:
 Creates a PKCS#7 structure in DER format with no CRL from several
 different certificates:
 
- openssl crl2pkcs7 -nocrl -certfile newcert.pem 
+ openssl crl2pkcs7 -nocrl -certfile newcert.pem
 	-certfile demoCA/cacert.pem -outform DER -out p7.der
 
 =head1 NOTES

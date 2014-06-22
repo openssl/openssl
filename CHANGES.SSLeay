@@ -200,7 +200,7 @@ eric (about to go bushwalking for the 4 day easter break :-)
     - ASN.1 bug and rc2-40-cbc and rc4-40 added by
       Dr Stephen Henson <shenson@bigfoot.com>
 
-31-Aug-97 (stuff added while I was away)    
+31-Aug-97 (stuff added while I was away)
     - Linux pthreads by Tim Hudson (tjh@cryptsoft.com).
     - RSA_flags() added allowing bypass of pub/priv match check
       in ssl/ssl_rsa.c - Tim Hudson.
@@ -327,15 +327,15 @@ SSLeay 0.8.1 released.
     digests, authentication, export type and key-exchange algorithms.
 
     I found that when a SSLv23 session is established, a reused
-    session, of type SSLv3 was attempting to write the SSLv2 
-    ciphers, which were invalid. The SSL_METHOD->put_cipher_by_char 
+    session, of type SSLv3 was attempting to write the SSLv2
+    ciphers, which were invalid. The SSL_METHOD->put_cipher_by_char
     method has been modified so it will only write out cipher which
-    that method knows about.  
+    that method knows about.
 
 
  Changes between 0.8.0 and 0.8.1
 
-  *) Mostly bug fixes. 
+  *) Mostly bug fixes.
      There is an Ephemeral DH cipher problem which is fixed.
 
  SSLeay 0.8.0
@@ -386,8 +386,8 @@ buffer.h -> splits into buffer.h and bio.h so you need to include bio.h
 #include "bio.h"    - required along with "buffer.h" if you write
               your own BIO routines as the buffer and bio
               stuff that was intermixed has been separated
-              out 
-            
+              out
+
 envelope.h -> evp.h  (which should have been done ages ago)
 
 Initialisation ... don't forget these or you end up with code that
@@ -398,18 +398,18 @@ SSLeay_add_ssl_algorithms()
  already had that call in place)
 
 SSL_CTX_new()   - requires an extra method parameter
-              SSL_CTX_new(SSLv23_method()) 
-              SSL_CTX_new(SSLv2_method()) 
-              SSL_CTX_new(SSLv3_method()) 
+              SSL_CTX_new(SSLv23_method())
+              SSL_CTX_new(SSLv2_method())
+              SSL_CTX_new(SSLv3_method())
 
           OR to only have the server or the client code
-              SSL_CTX_new(SSLv23_server_method()) 
-              SSL_CTX_new(SSLv2_server_method()) 
-              SSL_CTX_new(SSLv3_server_method()) 
-          or  
-              SSL_CTX_new(SSLv23_client_method()) 
-              SSL_CTX_new(SSLv2_client_method()) 
-              SSL_CTX_new(SSLv3_client_method()) 
+              SSL_CTX_new(SSLv23_server_method())
+              SSL_CTX_new(SSLv2_server_method())
+              SSL_CTX_new(SSLv3_server_method())
+          or
+              SSL_CTX_new(SSLv23_client_method())
+              SSL_CTX_new(SSLv2_client_method())
+              SSL_CTX_new(SSLv3_client_method())
 
 SSL_set_default_verify_paths() ... renamed to the more appropriate
 SSL_CTX_set_default_verify_paths()
@@ -422,7 +422,7 @@ SSLeay otherwise certain browsers will not send client certs.
 SSL_CTX_set_client_CA_list(ctx,SSL_load_client_CA_file(s_cert_file));
 
 
-X509_NAME_oneline(X)    -> X509_NAME_oneline(X,NULL,0)  
+X509_NAME_oneline(X)    -> X509_NAME_oneline(X,NULL,0)
                or provide a buffer and size to copy the
                result into
 
@@ -450,7 +450,7 @@ Eric has fixed things so that extra flags can be introduced in
 the BIO layer in future without having to play with all the BIO
 modules by adding in some macros.
 
-The ugly stuff using 
+The ugly stuff using
     b->flags ~= (BIO_FLAGS_RW|BIO_FLAGS_SHOULD_RETRY)
 becomes
     BIO_clear_retry_flags(b)
@@ -473,7 +473,7 @@ for getting at the details in a much cleaner manner.
 SSL_CTX has been altered ... "cert" is no longer a direct member of this
 structure ... things are now down under "cert_store" (see x509_vfy.h) and
 things are no longer in a CERTIFICATE_CTX but instead in a X509_STORE.
-If your code "knows" about this level of detail then it will need some 
+If your code "knows" about this level of detail then it will need some
 surgery.
 
 If you depending on the incorrect spelling of a number of the error codes
@@ -489,11 +489,11 @@ SSL_R_NO_CIPHER_WE_TRUST -> SSL_R_NO_CIPHER_LIST
 
 
  Changes between 0.7.x and 0.8.0
-  
+
   *) There have been lots of changes, mostly the addition of SSLv3.
      There have been many additions from people and amongst
      others, C2Net has assisted greatly.
- 
+
  Changes between 0.7.x and 0.7.x
 
   *) Internal development version only
@@ -533,7 +533,7 @@ The main additions are
 - assember for x86 DES.  For all those gcc based systems, this is a big
   improvement.  From 117,000 DES operation a second on a pentium 100,
   I now get 191,000.  I have also reworked the C version so it
-  now gives 148,000 DESs per second.  
+  now gives 148,000 DESs per second.
 - As mentioned above, the inner DES macros now have some more variant that
   sometimes help, sometimes hinder performance.  There are now 3 options
   DES_PTR (ptr vs array lookup), DES_UNROLL (full vs partial loop unrolling)
@@ -625,7 +625,7 @@ Additions are
   to do this :-), or for that matter, what is involved in going the
   other way (list of certs and crl -> pkcs7).
 - Added RSA's DESX to the DES library.  It is also available via the
-  EVP_desx_cbc() method and via 'enc desx'. 
+  EVP_desx_cbc() method and via 'enc desx'.
 
 SSLeay 0.6.1
 
@@ -646,7 +646,7 @@ The main functional changes since 0.6.0 are as follows
   private key and certificate/verify mode in the server is now gone.
 - ssl/ssltest.c - one process talking SSL to its self for testing.
 - Storage of Session-id's can be controled via a session_cache_mode
-  flag.  There is also now an automatic default flushing of 
+  flag.  There is also now an automatic default flushing of
   old session-id's.
 - The X509_cert_verify() function now has another parameter, this
   should not effect most people but it now means that the reason for
@@ -957,7 +957,7 @@ Major things missing.
 - Testing of the higher level digital envelope routines.  I have not
   played with the *_seal() and *_open() type functions.  They are
   written but need testing.  The *_sign() and *_verify() functions are
-  rock solid. 
+  rock solid.
 - PEM.  Doing this and PKCS#7 have been dependant on the distributed
   x509 heirachy problem.  I started implementing my ideas, got
   distracted writing a CA program and then ran out of time.  I provide

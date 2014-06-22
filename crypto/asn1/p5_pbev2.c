@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -136,7 +136,7 @@ X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
 	/* If prf NID unspecified see if cipher has a preference.
 	 * An error is OK here: just means use default PRF.
 	 */
-	if ((prf_nid == -1) && 
+	if ((prf_nid == -1) &&
 	EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_PBE_PRF_NID, 0, &prf_nid) <= 0)
 		{
 		ERR_clear_error();
@@ -232,7 +232,7 @@ X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
 
 	/* If have a key len set it up */
 
-	if(keylen > 0) 
+	if(keylen > 0)
 		{
 		if(!(kdf->keylength = M_ASN1_INTEGER_new()))
 			goto merr;

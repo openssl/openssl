@@ -17,7 +17,7 @@ AR=		ar r
 
 PEX_LIBS=
 EX_LIBS=
- 
+
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL= Makefile

@@ -12,7 +12,7 @@ SSL_shutdown - shut down a TLS/SSL connection
 
 =head1 DESCRIPTION
 
-SSL_shutdown() shuts down an active TLS/SSL connection. It sends the 
+SSL_shutdown() shuts down an active TLS/SSL connection. It sends the
 "close notify" shutdown alert to the peer.
 
 =head1 NOTES
@@ -64,7 +64,7 @@ complete (return value of the first call is 0). As the shutdown is not
 specially handled in the SSLv2 protocol, SSL_shutdown() will succeed on
 the first call.
 
-The behaviour of SSL_shutdown() additionally depends on the underlying BIO. 
+The behaviour of SSL_shutdown() additionally depends on the underlying BIO.
 
 If the underlying BIO is B<blocking>, SSL_shutdown() will only return once the
 handshake step has been finished or an error occurred.

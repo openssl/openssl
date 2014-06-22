@@ -93,7 +93,7 @@ $!
 $ copy /protection = w:re 'exheader' wrk_sslinclude: /log
 $!
 $ i = 0
-$ loop_sdirs: 
+$ loop_sdirs:
 $   d = f$edit( f$element(i, ",", sdirs), "trim")
 $   i = i + 1
 $   if d .eqs. "," then goto loop_sdirs_end

@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -58,13 +58,13 @@
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
- * Portions of the attached software ("Contribution") are developed by 
+ * Portions of the attached software ("Contribution") are developed by
  * SUN MICROSYSTEMS, INC., and are contributed to the OpenSSL project.
  *
  * The Contribution is licensed pursuant to the OpenSSL open source
  * license provided above.
  *
- * The elliptic curve binary polynomial software is originally written by 
+ * The elliptic curve binary polynomial software is originally written by
  * Sheueling Chang Shantz and Douglas Stebila of Sun Microsystems Laboratories.
  *
  */
@@ -97,7 +97,7 @@
  * -C               - print a 'C' function creating the parameters
  * -name arg        - use the ec parameters with 'short name' name
  * -list_curves     - prints a list of all currently available curve 'short names'
- * -conv_form arg   - specifies the point conversion form 
+ * -conv_form arg   - specifies the point conversion form
  *                  - possible values: compressed
  *                                     uncompressed (default)
  *                                     hybrid
@@ -119,7 +119,7 @@ int MAIN(int, char **);
 int MAIN(int argc, char **argv)
 	{
 	EC_GROUP *group = NULL;
-	point_conversion_form_t form = POINT_CONVERSION_UNCOMPRESSED; 
+	point_conversion_form_t form = POINT_CONVERSION_UNCOMPRESSED;
 	int 	new_form = 0;
 	int 	asn1_flag = OPENSSL_EC_NAMED_CURVE;
 	int 	new_asn1_flag = 0;
@@ -373,7 +373,7 @@ bad:
 
 			BIO_printf(out, "  %-10s: ", sname);
 			BIO_printf(out, "%s\n", comment);
-			} 
+			}
 
 		OPENSSL_free(curves);
 		ret = 0;
@@ -408,7 +408,7 @@ bad:
 	
 		if (nid == 0)
 			{
-			BIO_printf(bio_err, "unknown curve name (%s)\n", 
+			BIO_printf(bio_err, "unknown curve name (%s)\n",
 				curve_name);
 			goto end;
 			}
@@ -416,7 +416,7 @@ bad:
 		group = EC_GROUP_new_by_curve_name(nid);
 		if (group == NULL)
 			{
-			BIO_printf(bio_err, "unable to create curve (%s)\n", 
+			BIO_printf(bio_err, "unable to create curve (%s)\n",
 				curve_name);
 			goto end;
 			}
@@ -439,7 +439,7 @@ bad:
 
 	if (group == NULL)
 		{
-		BIO_printf(bio_err, 
+		BIO_printf(bio_err,
 			"unable to load elliptic curve parameters\n");
 		ERR_print_errors(bio_err);
 		goto end;
@@ -486,14 +486,14 @@ bad:
 
 		if ((ec_p = BN_new()) == NULL || (ec_a = BN_new()) == NULL ||
 		    (ec_b = BN_new()) == NULL || (ec_gen = BN_new()) == NULL ||
-		    (ec_order = BN_new()) == NULL || 
+		    (ec_order = BN_new()) == NULL ||
 		    (ec_cofactor = BN_new()) == NULL )
 			{
 			perror("OPENSSL_malloc");
 			goto end;
 			}
 
-		is_prime = (EC_METHOD_get_field_type(meth) == 
+		is_prime = (EC_METHOD_get_field_type(meth) ==
 			NID_X9_62_prime_field);
 
 		if (is_prime)
@@ -510,8 +510,8 @@ bad:
 
 		if ((point = EC_GROUP_get0_generator(group)) == NULL)
 			goto end;
-		if (!EC_POINT_point2bn(group, point, 
-			EC_GROUP_get_point_conversion_form(group), ec_gen, 
+		if (!EC_POINT_point2bn(group, point,
+			EC_GROUP_get_point_conversion_form(group), ec_gen,
 			NULL))
 			goto end;
 		if (!EC_GROUP_get_order(group, ec_order, NULL))
@@ -519,7 +519,7 @@ bad:
 		if (!EC_GROUP_get_cofactor(group, ec_cofactor, NULL))
 			goto end;
 
-		if (!ec_p || !ec_a || !ec_b || !ec_gen || 
+		if (!ec_p || !ec_a || !ec_b || !ec_gen ||
 			!ec_order || !ec_cofactor)
 			goto end;
 
@@ -551,7 +551,7 @@ bad:
 		ecparam_print_var(out, ec_b, "ec_b", len, buffer);
 		ecparam_print_var(out, ec_gen, "ec_gen", len, buffer);
 		ecparam_print_var(out, ec_order, "ec_order", len, buffer);
-		ecparam_print_var(out, ec_cofactor, "ec_cofactor", len, 
+		ecparam_print_var(out, ec_cofactor, "ec_cofactor", len,
 			buffer);
 
 		BIO_printf(out, "\n\n");
@@ -707,18 +707,18 @@ static int ecparam_print_var(BIO *out, BIGNUM *in, const char *var,
 	BIO_printf(out, "static unsigned char %s_%d[] = {", var, len);
 	if (BN_is_zero(in))
 		BIO_printf(out, "\n\t0x00");
-	else 
+	else
 		{
 		int i, l;
 
 		l = BN_bn2bin(in, buffer);
 		for (i=0; i<l-1; i++)
 			{
-			if ((i%12) == 0) 
+			if ((i%12) == 0)
 				BIO_printf(out, "\n\t");
 			BIO_printf(out, "0x%02X,", buffer[i]);
 			}
-		if ((i%12) == 0) 
+		if ((i%12) == 0)
 			BIO_printf(out, "\n\t");
 		BIO_printf(out, "0x%02X", buffer[i]);
 		}

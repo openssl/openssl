@@ -1,7 +1,7 @@
 /* ssl/d1_lib.c */
-/* 
+/*
  * DTLS implementation written by Nagendra Modadugu
- * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
+ * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
  */
 /* ====================================================================
  * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
@@ -11,7 +11,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -139,7 +139,7 @@ int dtls1_new(SSL *s)
 		d1->cookie_len = sizeof(s->d1->cookie);
 		}
 
-	if( ! d1->unprocessed_rcds.q || ! d1->processed_rcds.q 
+	if( ! d1->unprocessed_rcds.q || ! d1->processed_rcds.q
         || ! d1->buffered_messages || ! d1->sent_messages || ! d1->buffered_app_data.q)
 		{
         if ( d1->unprocessed_rcds.q) pqueue_free(d1->unprocessed_rcds.q);

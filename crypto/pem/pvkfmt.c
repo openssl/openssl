@@ -9,7 +9,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -83,7 +83,7 @@ static unsigned int read_ledword(const unsigned char **in)
 	return ret;
 	}
 
-/* Read a BIGNUM in little endian format. The docs say that this should take up 
+/* Read a BIGNUM in little endian format. The docs say that this should take up
  * bitlen/8 bytes.
  */
 
@@ -704,7 +704,7 @@ static int do_PVK_header(const unsigned char **in, unsigned int length,
 	return 1;
 	}
 
-static int derive_pvk_key(unsigned char *key, 
+static int derive_pvk_key(unsigned char *key,
 			const unsigned char *salt, unsigned int saltlen,
 			const unsigned char *pass, int passlen)
 	{

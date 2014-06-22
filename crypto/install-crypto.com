@@ -146,7 +146,7 @@ $!
 $! Header files.
 $!
 $ i = 0
-$ loop_sdirs: 
+$ loop_sdirs:
 $   d = f$edit( f$element( i, ",", sdirs), "trim")
 $   i = i + 1
 $   if d .eqs. "," then goto loop_sdirs_end
@@ -159,7 +159,7 @@ $!
 $! Object libraries, shareable images.
 $!
 $ i = 0
-$ loop_lib: 
+$ loop_lib:
 $   e = f$edit( f$element( i, ",", libs), "trim")
 $   i = i + 1
 $   if e .eqs. "," then goto loop_lib_end

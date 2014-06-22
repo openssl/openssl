@@ -15,7 +15,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -96,9 +96,9 @@ OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, X509 *subject, X509 *issuer)
 }
 
 
-OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst, 
-			      X509_NAME *issuerName, 
-			      ASN1_BIT_STRING* issuerKey, 
+OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
+			      X509_NAME *issuerName,
+			      ASN1_BIT_STRING* issuerKey,
 			      ASN1_INTEGER *serialNumber)
         {
 	int nid;
@@ -211,7 +211,7 @@ int OCSP_parse_url(const char *url, char **phost, char **pport, char **ppath, in
 
 	p = strchr(p, '/');
 
-	if (!p) 
+	if (!p)
 		*ppath = BUF_strdup("/");
 	else
 		{

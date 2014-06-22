@@ -1,12 +1,12 @@
 /* Written by Corinne Dive-Reclus(cdive@baltimore.com)
-* 
+*
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions
 * are met:
 *
 * 1. Redistributions of source code must retain the above copyright
-*    notice, this list of conditions and the following disclaimer. 
+*    notice, this list of conditions and the following disclaimer.
 *
 * 2. Redistributions in binary form must reproduce the above copyright
 *    notice, this list of conditions and the following disclaimer in
@@ -38,7 +38,7 @@
 * All right Reserved.
 *																								*	
 *		THIS FILE IS PROVIDED BY BALTIMORE TECHNOLOGIES ``AS IS'' AND																			*
-*		ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE					* 
+*		ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE					*
 *		IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE				*
 *		ARE DISCLAIMED.  IN NO EVENT SHALL BALTIMORE TECHNOLOGIES BE LIABLE						*
 *		FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL				*
@@ -133,7 +133,7 @@ static RSA_METHOD surewarehk_rsa =
 	NULL, /* init*/
 	NULL, /* finish*/
 	0,	/* RSA flag*/
-	NULL, 
+	NULL,
 	NULL, /* OpenSSL sign*/
 	NULL, /* OpenSSL verify*/
 	NULL  /* keygen */
@@ -198,7 +198,7 @@ end:
 
 static DSA_METHOD surewarehk_dsa =
 	{
-	 "SureWare DSA method", 
+	 "SureWare DSA method",
 	surewarehk_dsa_do_sign,
 	NULL,/*sign setup*/
 	NULL,/*verify,*/
@@ -259,7 +259,7 @@ static int bind_sureware(ENGINE *e)
 	 * anything "more generic" because something like the RSAref
 	 * code may not hook properly, and if you own one of these
 	 * cards then you have the right to do RSA operations on it
-	 * anyway! */ 
+	 * anyway! */
 	meth1 = RSA_PKCS1_SSLeay();
 	if (meth1)
 	{
@@ -301,7 +301,7 @@ static int bind_helper(ENGINE *e, const char *id)
 	if(!bind_sureware(e))
 		return 0;
 	return 1;
-	}       
+	}
 IMPLEMENT_DYNAMIC_CHECK_FN()
 IMPLEMENT_DYNAMIC_BIND_FN(bind_helper)
 #else
@@ -378,7 +378,7 @@ static BIO *logstream = NULL;
 /* SureWareHook library functions and mechanics - these are used by the
  * higher-level functions further down. NB: As and where there's no
  * error checking, take a look lower down where these functions are
- * called, the checking and error handling is probably down there. 
+ * called, the checking and error handling is probably down there.
 */
 static int threadsafe=1;
 static int surewarehk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
@@ -684,7 +684,7 @@ static EVP_PKEY* sureware_load_public(ENGINE *e,const char *key_id,char *hptr,un
 		rsatmp->n = BN_new();
 		bn_expand2(rsatmp->e, el/sizeof(BN_ULONG));
 		bn_expand2(rsatmp->n, el/sizeof(BN_ULONG));
-		if (!rsatmp->e || rsatmp->e->dmax!=(int)(el/sizeof(BN_ULONG))|| 
+		if (!rsatmp->e || rsatmp->e->dmax!=(int)(el/sizeof(BN_ULONG))||
 			!rsatmp->n || rsatmp->n->dmax!=(int)(el/sizeof(BN_ULONG)))
 			goto err;
 		ret=p_surewarehk_Load_Rsa_Pubkey(msg,key_id,el,
@@ -723,14 +723,14 @@ static EVP_PKEY* sureware_load_public(ENGINE *e,const char *key_id,char *hptr,un
 		bn_expand2(dsatmp->p, el/sizeof(BN_ULONG));
 		bn_expand2(dsatmp->q, 20/sizeof(BN_ULONG));
 		bn_expand2(dsatmp->g, el/sizeof(BN_ULONG));
-		if (!dsatmp->pub_key || dsatmp->pub_key->dmax!=(int)(el/sizeof(BN_ULONG))|| 
+		if (!dsatmp->pub_key || dsatmp->pub_key->dmax!=(int)(el/sizeof(BN_ULONG))||
 			!dsatmp->p || dsatmp->p->dmax!=(int)(el/sizeof(BN_ULONG)) ||
 			!dsatmp->q || dsatmp->q->dmax!=20/sizeof(BN_ULONG) ||
 			!dsatmp->g || dsatmp->g->dmax!=(int)(el/sizeof(BN_ULONG)))
 			goto err;
 
 		ret=p_surewarehk_Load_Dsa_Pubkey(msg,key_id,el,
-						 (unsigned long *)dsatmp->pub_key->d, 
+						 (unsigned long *)dsatmp->pub_key->d,
 						 (unsigned long *)dsatmp->p->d,
 						 (unsigned long *)dsatmp->q->d,
 						 (unsigned long *)dsatmp->g->d);
@@ -846,7 +846,7 @@ static void surewarehk_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
 
 #if 0
 /* not currently used (bug?) */
-/* This cleans up an DH KM key (destroys the key into hardware), 
+/* This cleans up an DH KM key (destroys the key into hardware),
 called when ex_data is freed */
 static void surewarehk_dh_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
 	int idx,long argl, void *argp)

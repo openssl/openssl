@@ -80,11 +80,11 @@ for all available algorithms.
 
 =item B<-pubin>
 
-the input file is a public key. 
+the input file is a public key.
 
 =item B<-certin>
 
-the input is a certificate containing a public key. 
+the input is a certificate containing a public key.
 
 =item B<-rev>
 
@@ -141,7 +141,7 @@ EVP_get_digestbyname() function for example B<sha1>.
 =head1 RSA ALGORITHM
 
 The RSA algorithm supports encrypt, decrypt, sign, verify and verifyrecover
-operations in general. Some padding modes only support some of these 
+operations in general. Some padding modes only support some of these
 operations however.
 
 =over 4
@@ -152,7 +152,7 @@ This sets the RSA padding mode. Acceptable values for B<mode> are B<pkcs1> for
 PKCS#1 padding, B<sslv23> for SSLv23 padding, B<none> for no padding, B<oaep>
 for B<OAEP> mode, B<x931> for X9.31 mode and B<pss> for PSS.
 
-In PKCS#1 padding if the message digest is not set then the supplied data is 
+In PKCS#1 padding if the message digest is not set then the supplied data is
 signed or verified directly instead of using a B<DigestInfo> structure. If a
 digest is set then the a B<DigestInfo> structure is used and its the length
 must correspond to the digest type.

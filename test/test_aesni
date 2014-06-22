@@ -37,7 +37,7 @@ if [ 1 ]; then
 		nerr=`expr $nerr + 1`
 	    fi
 	done
-	for bufsize in $BUFSIZE; do 
+	for bufsize in $BUFSIZE; do
 	    TEST=`(	cat $PROG | \
 		env OPENSSL_ia32cap=~0x0200000000000000 $PROG enc -e -k "$HASH" -$alg | \
 		$PROG enc -d -k "$HASH" -$alg -bufsize $bufsize | \

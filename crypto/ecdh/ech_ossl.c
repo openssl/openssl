@@ -21,7 +21,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -81,7 +81,7 @@
 #include <openssl/bn.h>
 
 static int ecdh_compute_key(void *out, size_t len, const EC_POINT *pub_key,
-	EC_KEY *ecdh, 
+	EC_KEY *ecdh,
 	void *(*KDF)(const void *in, size_t inlen, void *out, size_t *outlen));
 
 static ECDH_METHOD openssl_ecdh_meth = {
@@ -164,15 +164,15 @@ static int ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 		goto err;
 		}
 
-	if (!EC_POINT_mul(group, tmp, NULL, pub_key, priv_key, ctx)) 
+	if (!EC_POINT_mul(group, tmp, NULL, pub_key, priv_key, ctx))
 		{
 		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,ECDH_R_POINT_ARITHMETIC_FAILURE);
 		goto err;
 		}
 		
-	if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) == NID_X9_62_prime_field) 
+	if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) == NID_X9_62_prime_field)
 		{
-		if (!EC_POINT_get_affine_coordinates_GFp(group, tmp, x, y, ctx)) 
+		if (!EC_POINT_get_affine_coordinates_GFp(group, tmp, x, y, ctx))
 			{
 			ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,ECDH_R_POINT_ARITHMETIC_FAILURE);
 			goto err;
@@ -181,7 +181,7 @@ static int ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 #ifndef OPENSSL_NO_EC2M
 	else
 		{
-		if (!EC_POINT_get_affine_coordinates_GF2m(group, tmp, x, y, ctx)) 
+		if (!EC_POINT_get_affine_coordinates_GF2m(group, tmp, x, y, ctx))
 			{
 			ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,ECDH_R_POINT_ARITHMETIC_FAILURE);
 			goto err;

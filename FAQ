@@ -15,7 +15,7 @@ OpenSSL  -  Frequently Asked Questions
 [LEGAL] Legal questions
 
 * Do I need patent licenses to use OpenSSL?
-* Can I use OpenSSL with GPL software? 
+* Can I use OpenSSL with GPL software?
 
 [USER] Questions on using the OpenSSL applications
 
@@ -179,9 +179,9 @@ just do:
 
 * How does the versioning scheme work?
 
-After the release of OpenSSL 1.0.0 the versioning scheme changed. Letter 
+After the release of OpenSSL 1.0.0 the versioning scheme changed. Letter
 releases (e.g. 1.0.1a) can only contain bug and security fixes and no
-new features. Minor releases change the last number (e.g. 1.0.2) and 
+new features. Minor releases change the last number (e.g. 1.0.2) and
 can contain new features that retain binary compatibility. Changes to
 the middle number are considered major releases and neither source nor
 binary compatibility is guaranteed.
@@ -589,7 +589,7 @@ This will only compile sha_dgst.c with -O0, the rest with the optimization
 level chosen by the configuration process.  When the above is done, do the
 test and installation and you're set.
 
-3. Reconfigure the toolkit with no-sha0 option to leave out SHA0. It 
+3. Reconfigure the toolkit with no-sha0 option to leave out SHA0. It
 should not be used and is not used in SSL/TLS nor any other recognized
 protocol in either case.
 
@@ -782,14 +782,14 @@ See also <URL: http://www.openssl.org/support/rt.html>
 * I've found a security issue, how do I report it?
 
 If you think your bug has security implications then please send it to
-openssl-security@openssl.org if you don't get a prompt reply at least 
+openssl-security@openssl.org if you don't get a prompt reply at least
 acknowledging receipt then resend or mail it directly to one of the
 more active team members (e.g. Steve). If you wish to use PGP to send
 in a report please use one or more of the keys of the team members listed
 at <URL: http://www.openssl.org/about/>
 
 Note that bugs only present in the openssl utility are not in general
-considered to be security issues. 
+considered to be security issues.
 
 [PROG] ========================================================================
 
@@ -936,7 +936,7 @@ macros with a C++ compiler. There is hardly ever any need to use the
 PKCS#12 macros in a program, it is much easier to parse and create
 PKCS#12 files using the PKCS12_parse() and PKCS12_create() functions
 documented in doc/openssl.txt and with examples in demos/pkcs12. The
-'pkcs12' application has to use the macros because it prints out 
+'pkcs12' application has to use the macros because it prints out
 debugging information.
 
 

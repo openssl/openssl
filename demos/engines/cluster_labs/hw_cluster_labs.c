@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -94,9 +94,9 @@ static int cluster_labs_rsa_pub_enc(int flen, const unsigned char *from,
 	     unsigned char *to, RSA *rsa, int padding);
 static int cluster_labs_rsa_pub_dec(int flen, const unsigned char *from,
 	     unsigned char *to, RSA *rsa, int padding);
-static int cluster_labs_rsa_priv_enc(int flen, const unsigned char *from, 
+static int cluster_labs_rsa_priv_enc(int flen, const unsigned char *from,
 		unsigned char *to, RSA *rsa, int padding);
-static int cluster_labs_rsa_priv_dec(int flen, const unsigned char *from, 
+static int cluster_labs_rsa_priv_dec(int flen, const unsigned char *from,
 		unsigned char *to, RSA *rsa, int padding);
 static int cluster_labs_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa);
 #endif
@@ -117,7 +117,7 @@ static int cluster_labs_mod_exp_dsa(DSA *dsa, BIGNUM *r, BIGNUM *a,
 /* DH stuff */
 #ifndef OPENSSL_NO_DH
 /* This function is alised to mod_exp (with the DH and mont dropped). */
-static int cluster_labs_mod_exp_dh(const DH *dh, BIGNUM *r, const BIGNUM *a, const BIGNUM *p, 
+static int cluster_labs_mod_exp_dh(const DH *dh, BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 #endif
 		
@@ -607,8 +607,8 @@ static int cluster_labs_rsa_pub_enc(int flen, const unsigned char *from,
 		
 	return 	p_cl_rsa_pub_enc(flen, from, to, rsa, padding);
 	
-	}  
-	     
+	}
+	
 static int cluster_labs_rsa_pub_dec(int flen, const unsigned char *from,
 	     unsigned char *to, RSA *rsa, int padding)
 	{
@@ -626,10 +626,10 @@ static int cluster_labs_rsa_pub_dec(int flen, const unsigned char *from,
 		
 	return 	p_cl_rsa_pub_dec(flen, from, to, rsa, padding);
 	
-	}  
+	}
 
 
-static int cluster_labs_rsa_priv_enc(int flen, const unsigned char *from, 
+static int cluster_labs_rsa_priv_enc(int flen, const unsigned char *from,
 		unsigned char *to, RSA *rsa, int padding)
 	{
 
@@ -647,9 +647,9 @@ static int cluster_labs_rsa_priv_enc(int flen, const unsigned char *from,
 		
 	return 	p_cl_rsa_priv_enc(flen, from, to, rsa, padding);
 	
-	}  
+	}
 
-static int cluster_labs_rsa_priv_dec(int flen, const unsigned char *from, 
+static int cluster_labs_rsa_priv_dec(int flen, const unsigned char *from,
 		unsigned char *to, RSA *rsa, int padding)
 	{
 	
@@ -666,7 +666,7 @@ static int cluster_labs_rsa_priv_dec(int flen, const unsigned char *from,
 
 	return 	p_cl_rsa_priv_dec(flen, from, to, rsa, padding);
 		
-	}  
+	}
 
 /************************************************************************************
 * Symmetric algorithms

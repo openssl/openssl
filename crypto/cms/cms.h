@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -188,10 +188,10 @@ int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pkey, X509 *cert,
 				unsigned int flags);
 	
 int CMS_decrypt_set1_pkey(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert);
-int CMS_decrypt_set1_key(CMS_ContentInfo *cms, 
+int CMS_decrypt_set1_key(CMS_ContentInfo *cms,
 				unsigned char *key, size_t keylen,
 				unsigned char *id, size_t idlen);
-int CMS_decrypt_set1_password(CMS_ContentInfo *cms, 
+int CMS_decrypt_set1_password(CMS_ContentInfo *cms,
 				unsigned char *pass, ossl_ssize_t passlen);
 
 STACK_OF(CMS_RecipientInfo) *CMS_get0_RecipientInfos(CMS_ContentInfo *cms);
@@ -223,13 +223,13 @@ int CMS_RecipientInfo_kekri_get0_id(CMS_RecipientInfo *ri,
 					ASN1_OBJECT **potherid,
 					ASN1_TYPE **pothertype);
 
-int CMS_RecipientInfo_set0_key(CMS_RecipientInfo *ri, 
+int CMS_RecipientInfo_set0_key(CMS_RecipientInfo *ri,
 				unsigned char *key, size_t keylen);
 
-int CMS_RecipientInfo_kekri_id_cmp(CMS_RecipientInfo *ri, 
+int CMS_RecipientInfo_kekri_id_cmp(CMS_RecipientInfo *ri,
 					const unsigned char *id, size_t idlen);
 
-int CMS_RecipientInfo_set0_password(CMS_RecipientInfo *ri, 
+int CMS_RecipientInfo_set0_password(CMS_RecipientInfo *ri,
 					unsigned char *pass,
 					ossl_ssize_t passlen);
 
@@ -366,7 +366,7 @@ EVP_CIPHER_CTX *CMS_RecipientInfo_kari_get0_ctx(CMS_RecipientInfo *ri);
 int CMS_RecipientInfo_kari_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
 					CMS_RecipientEncryptedKey *rek);
 
-int CMS_SharedInfo_encode(unsigned char **pder, X509_ALGOR *kekalg, 
+int CMS_SharedInfo_encode(unsigned char **pder, X509_ALGOR *kekalg,
 			ASN1_OCTET_STRING *ukm, int keylen);
 
 /* BEGIN ERROR CODES */

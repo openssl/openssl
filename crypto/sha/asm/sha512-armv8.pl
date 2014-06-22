@@ -15,7 +15,7 @@
 #		SHA256-hw	SHA256(*)	SHA512
 # Apple A7	1.97		10.5 (+33%)	6.73 (-1%(**))
 # Cortex-A5x	n/a		n/a		n/a
-# 
+#
 # (*)	Software SHA256 results are of lesser relevance, presented
 #	mostly for informational purposes.
 # (**)	The result is a trade-off: it's possible to improve it by

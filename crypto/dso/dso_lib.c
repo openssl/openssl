@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -131,13 +131,13 @@ DSO *DSO_new_method(DSO_METHOD *meth)
 int DSO_free(DSO *dso)
 	{
         int i;
- 
+
 	if(dso == NULL)
 		{
 		DSOerr(DSO_F_DSO_FREE,ERR_R_PASSED_NULL_PARAMETER);
 		return(0);
 		}
- 
+
 	i=CRYPTO_add(&dso->references,-1,CRYPTO_LOCK_DSO);
 #ifdef REF_PRINT
 	REF_PRINT("DSO",dso);
@@ -156,7 +156,7 @@ int DSO_free(DSO *dso)
 		DSOerr(DSO_F_DSO_FREE,DSO_R_UNLOAD_FAILED);
 		return(0);
 		}
- 
+
 	if((dso->meth->finish != NULL) && !dso->meth->finish(dso))
 		{
 		DSOerr(DSO_F_DSO_FREE,DSO_R_FINISH_FAILED);
@@ -168,7 +168,7 @@ int DSO_free(DSO *dso)
 		OPENSSL_free(dso->filename);
 	if(dso->loaded_filename != NULL)
 		OPENSSL_free(dso->loaded_filename);
- 
+
 	OPENSSL_free(dso);
 	return(1);
 	}

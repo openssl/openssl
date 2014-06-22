@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -144,7 +144,7 @@ union {
 #define M_PKCS12_x509crl2certbag PKCS12_x509crl2certbag
 
 #define M_PKCS12_certbag2x509 PKCS12_certbag2x509
-#define M_PKCS12_certbag2x509crl PKCS12_certbag2x509crl 
+#define M_PKCS12_certbag2x509crl PKCS12_certbag2x509crl
 
 #define M_PKCS12_unpack_p7data PKCS12_unpack_p7data
 #define M_PKCS12_pack_authsafes PKCS12_pack_authsafes
@@ -178,7 +178,7 @@ PKCS12_SAFEBAG *PKCS12_MAKE_KEYBAG(PKCS8_PRIV_KEY_INFO *p8);
 PKCS8_PRIV_KEY_INFO *PKCS8_decrypt(X509_SIG *p8, const char *pass, int passlen);
 PKCS8_PRIV_KEY_INFO *PKCS12_decrypt_skey(PKCS12_SAFEBAG *bag, const char *pass,
 								int passlen);
-X509_SIG *PKCS8_encrypt(int pbe_nid, const EVP_CIPHER *cipher, 
+X509_SIG *PKCS8_encrypt(int pbe_nid, const EVP_CIPHER *cipher,
 			const char *pass, int passlen,
 			unsigned char *salt, int saltlen, int iter,
 			PKCS8_PRIV_KEY_INFO *p8);

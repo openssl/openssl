@@ -4,7 +4,7 @@
 #
 opts=""
 lopts=""
-        
+
 for arg in $* ; do
   case $arg in
     -L*) lopts="$lopts $arg" ;;

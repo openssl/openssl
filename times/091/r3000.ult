@@ -2,7 +2,7 @@ MIPS R3000 64kI+64kD 25mhz, ultrix 4.3
 
 SSLeay 0.9.0b 19-Apr-1998
 built on Thu Apr 23 07:22:31 EST 1998
-options:bn(32,32) md2(int) rc4(ptr,int) des(ptr,risc2,16,long) idea(int) blowfish(idx) 
+options:bn(32,32) md2(int) rc4(ptr,int) des(ptr,risc2,16,long) idea(int) blowfish(idx)
 C flags:cc -O2 -DL_ENDIAN -DNOPROTO -DNOCONST
 The 'numbers' are in 1000s of bytes per second processed.
 type              8 bytes     64 bytes    256 bytes   1024 bytes   8192 bytes

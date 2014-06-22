@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -57,7 +57,7 @@
  */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
- * ECDH support in OpenSSL originally developed by 
+ * ECDH support in OpenSSL originally developed by
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
 
@@ -111,7 +111,7 @@
 #undef TEST_ENG_OPENSSL_SHA_OTHERS
 #undef TEST_ENG_OPENSSL_SHA_P_INIT
 #undef TEST_ENG_OPENSSL_SHA_P_UPDATE
-#undef TEST_ENG_OPENSSL_SHA_P_FINAL 
+#undef TEST_ENG_OPENSSL_SHA_P_FINAL
 #endif
 
 #ifdef TEST_ENG_OPENSSL_RC4
@@ -284,7 +284,7 @@ static const EVP_CIPHER test_r4_40_cipher=
 	test_rc4_cipher,
 	NULL,
 	sizeof(TEST_RC4_KEY),
-	NULL, 
+	NULL,
 	NULL,
 	NULL,
 	NULL
@@ -604,7 +604,7 @@ static int ossl_pkey_meths(ENGINE *e, EVP_PKEY_METHOD **pmeth,
         const int **nids, int nid)
 
 	{
-	static int ossl_pkey_nids[] = 
+	static int ossl_pkey_nids[] =
 		{
 		EVP_PKEY_HMAC,
 		0

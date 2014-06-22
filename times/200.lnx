@@ -2,7 +2,7 @@ This machine was slightly loaded :-(
 
 SSLeay 0.8.4c 03-Aug-1999
 built on Tue Nov  4 02:52:29 EST 1997
-options:bn(64,32) md2(int) rc4(ptr,int) des(ptr,risc1,16,long) idea(int) blowfish(ptr2) 
+options:bn(64,32) md2(int) rc4(ptr,int) des(ptr,risc1,16,long) idea(int) blowfish(ptr2)
 C flags:gcc -DL_ENDIAN -DTERMIO -DBN_ASM -O3 -fomit-frame-pointer -m486 -Wall -Wuninitialized -DMD5_ASM -DSHA1_ASM
 The 'numbers' are in 1000s of bytes per second processed.
 type              8 bytes     64 bytes    256 bytes   1024 bytes   8192 bytes

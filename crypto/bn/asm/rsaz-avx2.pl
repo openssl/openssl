@@ -421,7 +421,7 @@ $code.=<<___;
 	vmovdqu		$ACC7, 32*16-448($tp1)
 	lea		8($tp1), $tp1
 
-	dec	$i        
+	dec	$i
 	jnz	.LOOP_SQR_1024
 ___
 $ZERO = $ACC9;
@@ -766,7 +766,7 @@ $code.=<<___;
 	vpblendd	\$3, $TEMP4, $TEMP5, $TEMP4
 	vpaddq		$TEMP3, $ACC7, $ACC7
 	vpaddq		$TEMP4, $ACC8, $ACC8
-     
+
 	vpsrlq		\$29, $ACC4, $TEMP1
 	vpand		$AND_MASK, $ACC4, $ACC4
 	vpsrlq		\$29, $ACC5, $TEMP2
@@ -1430,7 +1430,7 @@ $code.=<<___;
 	vpaddq		$TEMP4, $ACC8, $ACC8
 
 	vmovdqu		$ACC4, 128-128($rp)
-	vmovdqu		$ACC5, 160-128($rp)    
+	vmovdqu		$ACC5, 160-128($rp)
 	vmovdqu		$ACC6, 192-128($rp)
 	vmovdqu		$ACC7, 224-128($rp)
 	vmovdqu		$ACC8, 256-128($rp)

@@ -2,7 +2,7 @@ Pentium Pro 200mhz, linux
 
 SSLeay 0.9.0d 26-Apr-1998
 built on Sun Apr 26 10:25:33 EST 1998
-options:bn(64,32) md2(int) rc4(idx,int) des(ptr,risc1,16,long) idea(int) blowfish(ptr2) 
+options:bn(64,32) md2(int) rc4(idx,int) des(ptr,risc1,16,long) idea(int) blowfish(ptr2)
 C flags:gcc -DL_ENDIAN -DTERMIO -DBN_ASM -O3 -fomit-frame-pointer -m486 -Wall -Wuninitialized -DSHA1_ASM -DMD5_ASM -DRMD160_ASM
 The 'numbers' are in 1000s of bytes per second processed.
 type              8 bytes     64 bytes    256 bytes   1024 bytes   8192 bytes

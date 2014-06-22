@@ -176,13 +176,13 @@ B<EncrytedData> type and output the content.
 
 =item B<-sign_receipt>
 
-Generate and output a signed receipt for the supplied message. The input 
+Generate and output a signed receipt for the supplied message. The input
 message B<must> contain a signed receipt request. Functionality is otherwise
 similar to the B<-sign> operation.
 
 =item B<-verify_receipt receipt>
 
-Verify a signed receipt in filename B<receipt>. The input message B<must> 
+Verify a signed receipt in filename B<receipt>. The input message B<must>
 contain the original receipt request. Functionality is otherwise similar
 to the B<-verify> operation.
 
@@ -246,7 +246,7 @@ is S/MIME and it uses the multipart/signed MIME content type.
 
 this option adds plain text (text/plain) MIME headers to the supplied
 message if encrypting or signing. If decrypting or verifying it strips
-off text headers: if the decrypted or verified message is not of MIME 
+off text headers: if the decrypted or verified message is not of MIME
 type text/plain then an error occurs.
 
 =item B<-noout>
@@ -280,11 +280,11 @@ default digest algorithm for the signing key will be used (usually SHA1).
 
 the encryption algorithm to use. For example triple DES (168 bits) - B<-des3>
 or 256 bit AES - B<-aes256>. Any standard algorithm name (as used by the
-EVP_get_cipherbyname() function) can also be used preceded by a dash, for 
+EVP_get_cipherbyname() function) can also be used preceded by a dash, for
 example B<-aes_128_cbc>. See L<B<enc>|enc(1)> for a list of ciphers
 supported by your version of OpenSSL.
 
-If not specified triple DES is used. Only used with B<-encrypt> and 
+If not specified triple DES is used. Only used with B<-encrypt> and
 B<-EncryptedData_create> commands.
 
 =item B<-nointern>
@@ -385,7 +385,7 @@ address where receipts should be supplied.
 
 =item B<-receipt_request_to emailaddress>
 
-Add an explicit email address where signed receipts should be sent to. This 
+Add an explicit email address where signed receipts should be sent to. This
 option B<must> but supplied if a signed receipt it requested.
 
 =item B<-receipt_request_print>
@@ -413,7 +413,7 @@ B<KEKRecipientInfo> structures.
 
 set the encapsulated content type to B<type> if not supplied the B<Data> type
 is used. The B<type> argument can be any valid OID name in either text or
-numerical format. 
+numerical format.
 
 =item B<-inkey file>
 
@@ -446,7 +446,7 @@ all others.
 =item B<cert.pem...>
 
 one or more certificates of message recipients: used when encrypting
-a message. 
+a message.
 
 =item B<-to, -from, -subject>
 
@@ -511,7 +511,7 @@ attempt is made to locate the recipient by trying each potential recipient
 in turn using the supplied private key. To thwart the MMA attack
 (Bleichenbacher's attack on PKCS #1 v1.5 RSA padding) all recipients are
 tried whether they succeed or not and if no recipients match the message
-is "decrypted" using a random key which will typically output garbage. 
+is "decrypted" using a random key which will typically output garbage.
 The B<-debug_decrypt> option can be used to disable the MMA attack protection
 and return an error if no recipient can be found: this option should be used
 with caution. For a fuller description see L<CMS_decrypt(3)|CMS_decrypt(3)>).
@@ -631,7 +631,7 @@ it with:
  -----BEGIN PKCS7-----
  -----END PKCS7-----
 
-and using the command, 
+and using the command,
 
  openssl cms -verify -inform PEM -in signature.pem -content content.txt
 
@@ -692,7 +692,7 @@ The B<keyopt> option was first added in OpenSSL 1.1.0
 The use of B<-recip> to specify the recipient when encrypting mail was first
 added to OpenSSL 1.1.0
 
-Support for RSA-OAEP and RSA-PSS was first added to OpenSSL 1.1.0. 
+Support for RSA-OAEP and RSA-PSS was first added to OpenSSL 1.1.0.
 
 The use of non-RSA keys with B<-encrypt> and B<-decrypt> was first added
 to OpenSSL 1.1.0.

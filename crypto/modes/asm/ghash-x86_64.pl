@@ -567,7 +567,7 @@ ___
 	&clmul64x64_T2	($Xhi,$Xi,$Hkey,$T2);
 $code.=<<___ if (0 || (&reduction_alg9($Xhi,$Xi)&&0));
 	# experimental alternative. special thing about is that there
-	# no dependency between the two multiplications... 
+	# no dependency between the two multiplications...
 	mov		\$`0xE1<<1`,%eax
 	mov		\$0xA040608020C0E000,%r10	# ((7..0)·0xE0)&0xff
 	mov		\$0x07,%r11d

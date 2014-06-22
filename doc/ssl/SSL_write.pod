@@ -22,7 +22,7 @@ not already explicitly performed by L<SSL_connect(3)|SSL_connect(3)> or
 L<SSL_accept(3)|SSL_accept(3)>. If the
 peer requests a re-negotiation, it will be performed transparently during
 the SSL_write() operation. The behaviour of SSL_write() depends on the
-underlying BIO. 
+underlying BIO.
 
 For the transparent negotiation to succeed, the B<ssl> must have been
 initialized to client or server mode. This is being done by calling
@@ -31,7 +31,7 @@ before the first call to an L<SSL_read(3)|SSL_read(3)> or SSL_write() function.
 
 If the underlying BIO is B<blocking>, SSL_write() will only return, once the
 write operation has been finished or an error occurred, except when a
-renegotiation take place, in which case a SSL_ERROR_WANT_READ may occur. 
+renegotiation take place, in which case a SSL_ERROR_WANT_READ may occur.
 This behaviour can be controlled with the SSL_MODE_AUTO_RETRY flag of the
 L<SSL_CTX_set_mode(3)|SSL_CTX_set_mode(3)> call.
 

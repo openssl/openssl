@@ -71,7 +71,7 @@ Derive shared secret (for example DH or EC keys):
 
  if (!skey)
 	/* malloc failure */
- 
+
  if (EVP_PKEY_derive(ctx, skey, &skeylen) <= 0)
 	/* Error */
 

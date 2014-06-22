@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -260,7 +260,7 @@ int TS_ACCURACY_set_millis(TS_ACCURACY *a, const ASN1_INTEGER *millis)
 		new_millis = ASN1_INTEGER_dup(millis);
 		if (new_millis == NULL)
 			{
-			TSerr(TS_F_TS_ACCURACY_SET_MILLIS, 
+			TSerr(TS_F_TS_ACCURACY_SET_MILLIS,
 			      ERR_R_MALLOC_FAILURE);
 			return 0;
 			}
@@ -286,7 +286,7 @@ int TS_ACCURACY_set_micros(TS_ACCURACY *a, const ASN1_INTEGER *micros)
 		new_micros = ASN1_INTEGER_dup(micros);
 		if (new_micros == NULL)
 			{
-			TSerr(TS_F_TS_ACCURACY_SET_MICROS, 
+			TSerr(TS_F_TS_ACCURACY_SET_MICROS,
 			      ERR_R_MALLOC_FAILURE);
 			return 0;
 			}

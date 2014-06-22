@@ -1,5 +1,5 @@
 /* apps/srp.c */
-/* Written by Peter Sylvester (peter.sylvester@edelweb.fr)  
+/* Written by Peter Sylvester (peter.sylvester@edelweb.fr)
  * for the EdelKey project and contributed to the OpenSSL project 2004.
  */
 /* ====================================================================
@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -111,8 +111,8 @@ extern int EF_ALIGNMENT;
 static CONF *conf=NULL;
 static char *section=NULL;
 
-#define VERBOSE if (verbose) 
-#define VVERBOSE if (verbose>1) 
+#define VERBOSE if (verbose)
+#define VVERBOSE if (verbose>1)
 
 
 int MAIN(int, char **);
@@ -122,22 +122,22 @@ static int get_index(CA_DB *db, char* id, char type)
 	char ** pp;
 	int i;
 	if (id == NULL) return -1;
-	if (type == DB_SRP_INDEX) 
+	if (type == DB_SRP_INDEX)
 	for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++)
 		{
 		pp = sk_OPENSSL_PSTRING_value(db->db->data,i);
-		if (pp[DB_srptype][0] == DB_SRP_INDEX  && !strcmp(id,pp[DB_srpid])) 
+		if (pp[DB_srptype][0] == DB_SRP_INDEX  && !strcmp(id,pp[DB_srpid]))
 			return i;
 		}
 	else for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++)
 		{
 		pp = sk_OPENSSL_PSTRING_value(db->db->data,i);
 
-		if (pp[DB_srptype][0] != DB_SRP_INDEX && !strcmp(id,pp[DB_srpid])) 
+		if (pp[DB_srptype][0] != DB_SRP_INDEX && !strcmp(id,pp[DB_srpid]))
 			return i;
 		}
 
-	return -1 ; 
+	return -1 ;
 	}
 
 static void print_entry(CA_DB *db, BIO *bio, int indx, int verbose, char *s)
@@ -259,7 +259,7 @@ static char *srp_create_user(char *user, char **srp_verifier,
 			{
 			BIO_printf(bio,"Internal error creating SRP verifier\n");
 			}
-		else 
+		else
 			*srp_usersalt = salt;
 		VVERBOSE BIO_printf(bio,"gNid=%s salt =\"%s\"\n verifier =\"%s\"\n", gNid,salt, *srp_verifier);
 
@@ -381,7 +381,7 @@ bad:
 			badops=1;
 			break;
 			}
-		else 
+		else
 			break;
 	
 		argc--;
@@ -492,7 +492,7 @@ bad:
 				goto err;
 				}
 			}
-         
+
 		if (randfile == NULL && conf)
 	        	randfile = NCONF_get_string(conf, BASE_SECTION, "RANDFILE");
 
@@ -508,7 +508,7 @@ bad:
         	}
 	if (randfile == NULL)
 		ERR_clear_error();
-       	else 
+       	else
 		app_RAND_load_file(randfile, bio_err, 0);
 
 	VERBOSE BIO_printf(bio_err,"Trying to read SRP verifier file \"%s\"\n",dbfile);
@@ -558,7 +558,7 @@ bad:
 	while (list_user || user)
 		{
 		int userindex = -1;
-		if (user) 
+		if (user)
 			VVERBOSE BIO_printf(bio_err, "Processing user \"%s\"\n", user);
 		if ((userindex = get_index(db, user, 'U')) >= 0)
 			{
@@ -612,7 +612,7 @@ bad:
 				row[DB_srpgN] = BUF_strdup(gNid);
 
 				if (!row[DB_srpid] || !row[DB_srpgN] || !row[DB_srptype] || !row[DB_srpverifier] || !row[DB_srpsalt] ||
-					(userinfo && (!(row[DB_srpinfo] = BUF_strdup(userinfo)))) || 
+					(userinfo && (!(row[DB_srpinfo] = BUF_strdup(userinfo)))) ||
 					!update_index(db, bio_err, row))
 					{
 					if (row[DB_srpid]) OPENSSL_free(row[DB_srpid]);
@@ -661,7 +661,7 @@ bad:
 							errors++;
 							goto err;
 							}
-						} 
+						}
 					VERBOSE BIO_printf(bio_err,"Password for user \"%s\" ok.\n",user);
 
 					if (!(gNid=srp_create_user(user,&(row[DB_srpverifier]), &(row[DB_srpsalt]),gNrow?gNrow[DB_srpsalt]:NULL, gNrow?gNrow[DB_srpverifier]:NULL, passout, bio_err,verbose)))
@@ -673,9 +673,9 @@ bad:
 
 					row[DB_srptype][0] = 'v';
 					row[DB_srpgN] = BUF_strdup(gNid);
- 
+
 					if (!row[DB_srpid] || !row[DB_srpgN] || !row[DB_srptype] || !row[DB_srpverifier] || !row[DB_srpsalt] ||
-						(userinfo && (!(row[DB_srpinfo] = BUF_strdup(userinfo)))))  
+						(userinfo && (!(row[DB_srpinfo] = BUF_strdup(userinfo)))))
 						goto err;
 
 					doupdatedb = 1;

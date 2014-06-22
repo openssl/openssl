@@ -1769,7 +1769,7 @@ if ($avx>1) {{
 ######################################################################
 # AVX2+BMI code path
 #
-my $a5=$SZ==4?"%esi":"%rsi";	# zap $inp 
+my $a5=$SZ==4?"%esi":"%rsi";	# zap $inp
 my $PUSH8=8*2*$SZ;
 use integer;
 

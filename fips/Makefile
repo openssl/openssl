@@ -28,7 +28,7 @@ RECURSIVE_MAKE=	[ -n "$(FDIRS)" ] && for i in $(FDIRS) ; do \
 
 PEX_LIBS=
 EX_LIBS=
- 
+
 CFLAGS= $(INCLUDE) $(CFLAG) -DHMAC_EXT=\"$${HMAC_EXT:-sha1}\"
 ASFLAGS= $(INCLUDE) $(ASFLAG)
 AFLAGS=$(ASFLAGS)

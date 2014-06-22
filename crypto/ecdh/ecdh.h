@@ -21,7 +21,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -96,12 +96,12 @@ int 	  ECDH_set_method(EC_KEY *, const ECDH_METHOD *);
 int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
                      void *(*KDF)(const void *in, size_t inlen, void *out, size_t *outlen));
 
-int 	  ECDH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new 
+int 	  ECDH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new
 		*new_func, CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
 int 	  ECDH_set_ex_data(EC_KEY *d, int idx, void *arg);
 void 	  *ECDH_get_ex_data(EC_KEY *d, int idx);
 
-int ECDH_KDF_X9_62(unsigned char *out, size_t outlen, 
+int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
 		const unsigned char *Z, size_t Zlen,
 		const unsigned char *sinfo, size_t sinfolen,
 		const EVP_MD *md);

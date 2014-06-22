@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -169,7 +169,7 @@ int BN_X931_derive_prime_ex(BIGNUM *p, BIGNUM *p1, BIGNUM *p2,
 			goto err;
 		if (BN_is_one(t)
 		/* X9.31 specifies 8 MR and 1 Lucas test or any prime test
-		 * offering similar or better guarantees 50 MR is considerably 
+		 * offering similar or better guarantees 50 MR is considerably
 		 * better.
 		 */
 			&& BN_is_prime_fasttest_ex(p, 50, ctx, 1, cb))

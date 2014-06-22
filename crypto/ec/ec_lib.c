@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -57,7 +57,7 @@
  */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
- * Binary polynomial ECC support in OpenSSL originally developed by 
+ * Binary polynomial ECC support in OpenSSL originally developed by
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
 
@@ -142,7 +142,7 @@ void EC_GROUP_free(EC_GROUP *group)
 
 	OPENSSL_free(group);
 	}
- 
+
 
 void EC_GROUP_clear_free(EC_GROUP *group)
 	{
@@ -361,7 +361,7 @@ int EC_GROUP_get_asn1_flag(const EC_GROUP *group)
 	}
 
 
-void EC_GROUP_set_point_conversion_form(EC_GROUP *group, 
+void EC_GROUP_set_point_conversion_form(EC_GROUP *group,
                                         point_conversion_form_t form)
 	{
 	group->asn1_form = form;
@@ -735,7 +735,7 @@ void EC_POINT_free(EC_POINT *point)
 		point->meth->point_finish(point);
 	OPENSSL_free(point);
 	}
- 
+
 
 void EC_POINT_clear_free(EC_POINT *point)
 	{

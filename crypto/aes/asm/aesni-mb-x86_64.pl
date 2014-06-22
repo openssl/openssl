@@ -123,7 +123,7 @@ $code.=<<___ if ($win64);
 	movaps	%xmm10,0x40(%rsp)
 	movaps	%xmm11,0x50(%rsp)
 	movaps	%xmm12,0x60(%rsp)
-	movaps	%xmm13,-0x68(%rax)	# not used, saved to share se_handler 
+	movaps	%xmm13,-0x68(%rax)	# not used, saved to share se_handler
 	movaps	%xmm14,-0x58(%rax)
 	movaps	%xmm15,-0x48(%rax)
 ___
@@ -382,7 +382,7 @@ $code.=<<___ if ($win64);
 	movaps	%xmm10,0x40(%rsp)
 	movaps	%xmm11,0x50(%rsp)
 	movaps	%xmm12,0x60(%rsp)
-	movaps	%xmm13,-0x68(%rax)	# not used, saved to share se_handler 
+	movaps	%xmm13,-0x68(%rax)	# not used, saved to share se_handler
 	movaps	%xmm14,-0x58(%rax)
 	movaps	%xmm15,-0x48(%rax)
 ___

@@ -6,7 +6,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -92,8 +92,8 @@ int main(int argc, char *argv[])
 /*-----------------------------------------------*/
 
 static int AESTest(EVP_CIPHER_CTX *ctx,
-	    char *amode, int akeysz, unsigned char *aKey, 
-	    unsigned char *iVec, 
+	    char *amode, int akeysz, unsigned char *aKey,
+	    unsigned char *iVec,
 	    int dir,  /* 0 = decrypt, 1 = encrypt */
 	    unsigned char *plaintext, unsigned char *ciphertext, int len)
     {
@@ -211,7 +211,7 @@ static int AESTest(EVP_CIPHER_CTX *ctx,
     if (!cipher)
 	{
 	printf("Invalid key size: %d\n", akeysz);
-	return 0; 
+	return 0;
 	}
     if (FIPS_cipherinit(ctx, cipher, aKey, iVec, dir) <= 0)
 	return 0;
@@ -240,7 +240,7 @@ enum XCrypt {XDECRYPT, XENCRYPT};
 #define gb(a,b) (((a)[(b)/8] >> (7-(b)%8))&1)
 #define sb(a,b,v) ((a)[(b)/8]=((a)[(b)/8]&~(1 << (7-(b)%8)))|(!!(v) << (7-(b)%8)))
 
-static int do_mct(char *amode, 
+static int do_mct(char *amode,
 	   int akeysz, unsigned char *aKey,unsigned char *iVec,
 	   int dir, unsigned char *text, int len,
 	   FILE *rfp)
@@ -258,7 +258,7 @@ static int do_mct(char *amode,
 
     if (len > 32)
 	{
-	printf("\n>>>> Length exceeds 32 for %s %d <<<<\n\n", 
+	printf("\n>>>> Length exceeds 32 for %s %d <<<<\n\n",
 	       amode, akeysz);
 	return -1;
 	}
@@ -266,7 +266,7 @@ static int do_mct(char *amode,
 	if (strcmp(amode, t_mode[imode]) == 0)
 	    break;
     if (imode == 6)
-	{ 
+	{
 	printf("Unrecognized mode: %s\n", amode);
 	return -1;
 	}
@@ -298,7 +298,7 @@ static int do_mct(char *amode,
 	    case ECB:
 		if (j == 0)
 		    { /* set up encryption */
-		    ret = AESTest(&ctx, amode, akeysz, key[i], NULL, 
+		    ret = AESTest(&ctx, amode, akeysz, key[i], NULL,
 				  dir,  /* 0 = decrypt, 1 = encrypt */
 				  ptext[j], ctext[j], len);
 		    if (dir == XENCRYPT)
@@ -322,11 +322,11 @@ static int do_mct(char *amode,
 		break;
 
 	    case CBC:
-	    case OFB:  
+	    case OFB:
 	    case CFB128:
 		if (j == 0)
 		    {
-		    ret = AESTest(&ctx, amode, akeysz, key[i], iv[i], 
+		    ret = AESTest(&ctx, amode, akeysz, key[i], iv[i],
 				  dir,  /* 0 = decrypt, 1 = encrypt */
 				  ptext[j], ctext[j], len);
 		    if (dir == XENCRYPT)
@@ -352,7 +352,7 @@ static int do_mct(char *amode,
 	    case CFB8:
 		if (j == 0)
 		    {
-		    ret = AESTest(&ctx, amode, akeysz, key[i], iv[i], 
+		    ret = AESTest(&ctx, amode, akeysz, key[i], iv[i],
 				  dir,  /* 0 = decrypt, 1 = encrypt */
 				  ptext[j], ctext[j], len);
 		    }
@@ -576,7 +576,7 @@ static int proc_file(char *rqfile, char *rspfile)
 
     if ((afp = fopen(afn, "r")) == NULL)
 	{
-	printf("Cannot open file: %s, %s\n", 
+	printf("Cannot open file: %s, %s\n",
 	       afn, strerror(errno));
 	return -1;
 	}
@@ -596,7 +596,7 @@ static int proc_file(char *rqfile, char *rspfile)
 	}
     if ((rfp = fopen(rspfile, "w")) == NULL)
 	{
-	printf("Cannot open file: %s, %s\n", 
+	printf("Cannot open file: %s, %s\n",
 	       rfn, strerror(errno));
 	fclose(afp);
 	afp = NULL;
@@ -693,7 +693,7 @@ static int proc_file(char *rqfile, char *rspfile)
 		printf("Missing ENCRYPT/DECRYPT keyword\n");
 		break;
 		}
-	    else 
+	    else
 		step = 2;
 
 	case 2: /* KEY = xxxx */
@@ -776,14 +776,14 @@ static int proc_file(char *rqfile, char *rspfile)
 		PrintValue("PLAINTEXT", (unsigned char*)plaintext, len);
 		if (strcmp(atest, "MCT") == 0)  /* Monte Carlo Test */
 		    {
-		    if(do_mct(amode, akeysz, aKey, iVec, 
-			      dir, (unsigned char*)plaintext, len, 
+		    if(do_mct(amode, akeysz, aKey, iVec,
+			      dir, (unsigned char*)plaintext, len,
 			      rfp) < 0)
 			err = 1;
 		    }
 		else
 		    {
-		    AESTest(&ctx, amode, akeysz, aKey, iVec, 
+		    AESTest(&ctx, amode, akeysz, aKey, iVec,
 				  dir,  /* 0 = decrypt, 1 = encrypt */
 				  plaintext, ciphertext, len);
 		    OutputValue("CIPHERTEXT",ciphertext,len,rfp,
@@ -816,12 +816,12 @@ static int proc_file(char *rqfile, char *rspfile)
 		PrintValue("CIPHERTEXT", ciphertext, len);
 		if (strcmp(atest, "MCT") == 0)  /* Monte Carlo Test */
 		    {
-		    do_mct(amode, akeysz, aKey, iVec, 
+		    do_mct(amode, akeysz, aKey, iVec,
 			   dir, ciphertext, len, rfp);
 		    }
 		else
 		    {
-		    AESTest(&ctx, amode, akeysz, aKey, iVec, 
+		    AESTest(&ctx, amode, akeysz, aKey, iVec,
 				  dir,  /* 0 = decrypt, 1 = encrypt */
 				  plaintext, ciphertext, len);
 		    OutputValue("PLAINTEXT",(unsigned char *)plaintext,len,rfp,
@@ -854,7 +854,7 @@ static int proc_file(char *rqfile, char *rspfile)
     }
 
 /*--------------------------------------------------
-  Processes either a single file or 
+  Processes either a single file or
   a set of files whose names are passed in a file.
   A single file is specified as:
     aes_test -f xxx.req

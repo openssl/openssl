@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -258,7 +258,7 @@ static GENERAL_NAMES *v2i_issuer_alt(X509V3_EXT_METHOD *method,
 		} else {
 			GENERAL_NAME *gen;
 			if(!(gen = v2i_GENERAL_NAME(method, ctx, cnf)))
-								 goto err; 
+								 goto err;
 			sk_GENERAL_NAME_push(gens, gen);
 		}
 	}
@@ -326,7 +326,7 @@ static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method,
 		} else {
 			GENERAL_NAME *gen;
 			if(!(gen = v2i_GENERAL_NAME(method, ctx, cnf)))
-								 goto err; 
+								 goto err;
 			sk_GENERAL_NAME_push(gens, gen);
 		}
 	}
@@ -336,7 +336,7 @@ static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method,
 	return NULL;
 }
 
-/* Copy any email addresses in a certificate or request to 
+/* Copy any email addresses in a certificate or request to
  * GENERAL_NAMES
  */
 
@@ -406,7 +406,7 @@ GENERAL_NAMES *v2i_GENERAL_NAMES(const X509V3_EXT_METHOD *method,
 	}
 	for(i = 0; i < sk_CONF_VALUE_num(nval); i++) {
 		cnf = sk_CONF_VALUE_value(nval, i);
-		if(!(gen = v2i_GENERAL_NAME(method, ctx, cnf))) goto err; 
+		if(!(gen = v2i_GENERAL_NAME(method, ctx, cnf))) goto err;
 		sk_GENERAL_NAME_push(gens, gen);
 	}
 	return gens;

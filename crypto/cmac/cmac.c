@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -138,7 +138,7 @@ int CMAC_CTX_copy(CMAC_CTX *out, const CMAC_CTX *in)
 	return 1;
 	}
 
-int CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen, 
+int CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
 			const EVP_CIPHER *cipher, ENGINE *impl)
 	{
 	__fips_constseg
@@ -266,7 +266,7 @@ int CMAC_resume(CMAC_CTX *ctx)
 	 * which is the last IV (or all zeroes if no last encrypted block).
 	 * The last block has not been modified since CMAC_final().
 	 * So reinitliasing using the last decrypted block will allow
-	 * CMAC to continue after calling CMAC_Final(). 
+	 * CMAC to continue after calling CMAC_Final().
 	 */
 	return M_EVP_EncryptInit_ex(&ctx->cctx, NULL, NULL, NULL, ctx->tbl);
 	}

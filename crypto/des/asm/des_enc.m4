@@ -337,7 +337,7 @@ $4:
 	sll	out1, 28, out1            ! rotate
 	xor	$1, local1, $1            ! 1 finished, local1 now sbox 7
 
-	ld	[global2+local2], local2  ! 2 
+	ld	[global2+local2], local2  ! 2
 	srl	out0, 24, local1          ! 7
 	or	out1, local0, out1        ! rotate
 
@@ -1465,7 +1465,7 @@ DES_ncbc_encrypt:
 	add	%o7,global1,global1
 	sub	global1,.PIC.DES_SPtrans-.des_and,out2
 
-	cmp	in5, 0                    ! enc   
+	cmp	in5, 0                    ! enc
 
 #ifdef OPENSSL_SYSNAME_ULTRASPARC
 	be,pn	%icc, .ncbc.dec

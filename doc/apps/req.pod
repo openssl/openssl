@@ -68,7 +68,7 @@ footer lines.
 
 =item B<-outform DER|PEM>
 
-This specifies the output format, the options have the same meaning as the 
+This specifies the output format, the options have the same meaning as the
 B<-inform> option.
 
 =item B<-in filename>
@@ -261,7 +261,7 @@ a variety of purposes.
 
 =item B<-utf8>
 
-this option causes field values to be interpreted as UTF8 strings, by 
+this option causes field values to be interpreted as UTF8 strings, by
 default they are interpreted as ASCII. This means that the field
 values, whether prompted from a terminal or obtained from a
 configuration file, must be valid UTF8 strings.
@@ -276,7 +276,7 @@ set multiple options. See the L<x509(1)|x509(1)> manual page for details.
 =item B<-reqopt>
 
 customise the output format used with B<-text>. The B<option> argument can be
-a single option or multiple options separated by commas. 
+a single option or multiple options separated by commas.
 
 See discission of the  B<-certopt> parameter in the L<B<x509>|x509(1)>
 command.
@@ -363,7 +363,7 @@ overridden by the B<-keyout> option.
 This specifies a file containing additional B<OBJECT IDENTIFIERS>.
 Each line of the file should consist of the numerical form of the
 object identifier followed by white space then the short name followed
-by white space and finally the long name. 
+by white space and finally the long name.
 
 =item B<oid_section>
 
@@ -396,7 +396,7 @@ This option masks out the use of certain string types in certain
 fields. Most users will not need to change this option.
 
 It can be set to several values B<default> which is also the default
-option uses PrintableStrings, T61Strings and BMPStrings if the 
+option uses PrintableStrings, T61Strings and BMPStrings if the
 B<pkix> value is used then only PrintableStrings and BMPStrings will
 be used. This follows the PKIX recommendation in RFC2459. If the
 B<utf8only> option is used then only UTF8Strings will be used: this
@@ -408,7 +408,7 @@ problems with BMPStrings and UTF8Strings: in particular Netscape.
 
 this specifies the configuration file section containing a list of
 extensions to add to the certificate request. It can be overridden
-by the B<-reqexts> command line switch. See the 
+by the B<-reqexts> command line switch. See the
 L<x509v3_config(5)|x509v3_config(5)> manual page for details of the
 extension section format.
 
@@ -673,6 +673,6 @@ address in subjectAltName should be input by the user.
 
 L<x509(1)|x509(1)>, L<ca(1)|ca(1)>, L<genrsa(1)|genrsa(1)>,
 L<gendsa(1)|gendsa(1)>, L<config(5)|config(5)>,
-L<x509v3_config(5)|x509v3_config(5)> 
+L<x509v3_config(5)|x509v3_config(5)>
 
 =cut

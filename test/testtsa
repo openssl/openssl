@@ -44,7 +44,7 @@ create_ca () {
 
     echo "Creating a new CA for the TSA tests..."
     TSDNSECT=ts_ca_dn
-    export TSDNSECT   
+    export TSDNSECT
     ../../util/shlib_wrap.sh ../../apps/openssl req -new -x509 -nodes \
 	-out tsaca.pem -keyout tsacakey.pem
     test $? != 0 && error
@@ -56,7 +56,7 @@ create_tsa_cert () {
     export INDEX
     EXT=$2
     TSDNSECT=ts_cert_dn
-    export TSDNSECT   
+    export TSDNSECT
 
     ../../util/shlib_wrap.sh ../../apps/openssl req -new \
 	-out tsa_req${INDEX}.pem -keyout tsa_key${INDEX}.pem

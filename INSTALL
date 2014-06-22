@@ -5,7 +5,7 @@
  [Installation on DOS (with djgpp), Windows, OpenVMS, MacOS (before MacOS X)
   and NetWare is described in INSTALL.DJGPP, INSTALL.W32, INSTALL.VMS,
   INSTALL.MacOS and INSTALL.NW.
-  
+
   This document describes installation on operating systems in the Unix
   family.]
 
@@ -200,8 +200,8 @@
      If you didn't choose a different installation prefix, the
      following additional subdirectories will be created:
 
-       bin             Contains the openssl binary and a few other 
-                       utility programs. 
+       bin             Contains the openssl binary and a few other
+                       utility programs.
        include/openssl Contains the header files needed if you want to
                        compile programs with libcrypto or libssl.
        lib             Contains the OpenSSL library files themselves.

@@ -141,7 +141,7 @@ my %globals;
 	if ($gas) {
 	    if ($self->{op} eq "movz") {	# movz is pain...
 		sprintf "%s%s%s",$self->{op},$self->{sz},shift;
-	    } elsif ($self->{op} =~ /^set/) { 
+	    } elsif ($self->{op} =~ /^set/) {
 		"$self->{op}";
 	    } elsif ($self->{op} eq "ret") {
 		my $epilogue = "";
@@ -168,7 +168,7 @@ my %globals;
 		$self->{op} .= $self->{sz};
 	    } elsif ($self->{op} eq "call" && $current_segment eq ".CRT\$XCU") {
 		$self->{op} = "\tDQ";
-	    } 
+	    }
 	    $self->{op};
 	}
     }
@@ -610,7 +610,7 @@ my %globals;
 							if ($sz eq "D" && ($current_segment=~/.[px]data/ || $dir eq ".rva"))
 							{ $var=~s/([_a-z\$\@][_a-z0-9\$\@]*)/$nasm?"$1 wrt ..imagebase":"imagerel $1"/egi; }
 							$var;
-						    };  
+						    };
 
 				    $sz =~ tr/bvlrq/BWDDQ/;
 				    $self->{value} = "\tD$sz\t";
@@ -936,7 +936,7 @@ close STDOUT;
 # %r13		-		-
 # %r14		-		-
 # %r15		-		-
-# 
+#
 # (*)	volatile register
 # (-)	preserved by callee
 # (#)	Nth argument, volatile

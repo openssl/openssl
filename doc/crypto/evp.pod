@@ -73,7 +73,7 @@ implementations. For more information, consult the engine(3) man page.
 Although low level algorithm specific functions exist for many algorithms
 their use is discouraged. They cannot be used with an ENGINE and ENGINE
 versions of new algorithms cannot be accessed using the low level functions.
-Also makes code harder to adapt to new algorithms and some options are not 
+Also makes code harder to adapt to new algorithms and some options are not
 cleanly supported at the low level and some operations are more efficient
 using the high level interface.
 

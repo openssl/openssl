@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -66,7 +66,7 @@ ASN1_SEQUENCE(X509_ALGOR) = {
 	ASN1_OPT(X509_ALGOR, parameter, ASN1_ANY)
 } ASN1_SEQUENCE_END(X509_ALGOR)
 
-ASN1_ITEM_TEMPLATE(X509_ALGORS) = 
+ASN1_ITEM_TEMPLATE(X509_ALGORS) =
 	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, algorithms, X509_ALGOR)
 ASN1_ITEM_TEMPLATE_END(X509_ALGORS)
 

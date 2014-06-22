@@ -51,7 +51,7 @@ size_t CRYPTO_cts128_encrypt_block(const unsigned char *in, unsigned char *out,
 		ivec[n] ^= in[n];
 	(*block)(ivec,ivec,key);
 	memcpy(out,out-16,residue);
-	memcpy(out-16,ivec,16); 
+	memcpy(out-16,ivec,16);
 
 	return len+residue;
 }

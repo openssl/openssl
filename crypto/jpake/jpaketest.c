@@ -94,7 +94,7 @@ static int run_jpake(JPAKE_CTX *alice, JPAKE_CTX *bob)
 	return 5;
 	}
     JPAKE_STEP3A_release(&alice_s3a);
-    
+
    /* Bob -> Alice: step 3b */
     puts("B->A s3b");
     JPAKE_STEP3B_init(&bob_s3b);

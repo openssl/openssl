@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -100,8 +100,8 @@ int X509_CERT_AUX_print(BIO *out, X509_CERT_AUX *aux, int indent)
 							aux->alias->data);
 	if(aux->keyid) {
 		BIO_printf(out, "%*sKey Id: ", indent, "");
-		for(i = 0; i < aux->keyid->length; i++) 
-			BIO_printf(out, "%s%02X", 
+		for(i = 0; i < aux->keyid->length; i++)
+			BIO_printf(out, "%s%02X",
 				i ? ":" : "",
 				aux->keyid->data[i]);
 		BIO_write(out,"\n",1);

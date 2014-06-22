@@ -26,7 +26,7 @@ Requirements:
 To build and install OpenSSL, you will need:
 
  * DEC C or some other ANSI C compiler.  VAX C is *not* supported.
-   [Note: OpenSSL has only been tested with DEC C.  Compiling with 
+   [Note: OpenSSL has only been tested with DEC C.  Compiling with
     a different ANSI C compiler may require some work]
 
 Checking the distribution:
@@ -177,14 +177,14 @@ following command procedures:
         defines all needed logical names.  Takes one argument that
         tells it in what logical name table to insert the logical
         names.  If you insert if it SYS$MANAGER:SYSTARTUP_VMS.COM, the
-        call should look like this: 
+        call should look like this:
 
           @openssldev:[openssldir.VMS]OPENSSL_STARTUP "/SYSTEM"
 
   OPENSSL_UTILS.COM
 
         sets up the symbols to the applications.  Should be called
-        from for example SYS$MANAGER:SYLOGIN.COM 
+        from for example SYS$MANAGER:SYLOGIN.COM
 
   OPENSSL_UNDO.COM
 

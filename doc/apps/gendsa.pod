@@ -26,7 +26,7 @@ The B<gendsa> command generates a DSA private key from a DSA parameter file
 
 =item B<-des|-des3|-idea>
 
-These options encrypt the private key with the DES, triple DES, or the 
+These options encrypt the private key with the DES, triple DES, or the
 IDEA ciphers respectively before outputting it. A pass phrase is prompted for.
 If none of these options is specified no encryption is used.
 

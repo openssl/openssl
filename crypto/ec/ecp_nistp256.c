@@ -692,7 +692,7 @@ static const felem zero100 = { two100m36m4, two100, two100m36p4, two100m36p4 };
 /* Internal function for the different flavours of felem_reduce.
  * felem_reduce_ reduces the higher coefficients in[4]-in[7].
  * On entry:
- *   out[0] >= in[6] + 2^32*in[6] + in[7] + 2^32*in[7] 
+ *   out[0] >= in[6] + 2^32*in[6] + in[7] + 2^32*in[7]
  *   out[1] >= in[7] + 2^32*in[4]
  *   out[2] >= in[5] + 2^32*in[5]
  *   out[3] >= in[4] + 2^32*in[5] + 2^32*in[6]

@@ -54,7 +54,7 @@ Any of the following flags (ored together) can be passed in the B<flags> paramet
 to change the default verify behaviour. Only the flag B<PKCS7_NOINTERN> is
 meaningful to PKCS7_get0_signers().
 
-If B<PKCS7_NOINTERN> is set the certificates in the message itself are not 
+If B<PKCS7_NOINTERN> is set the certificates in the message itself are not
 searched when locating the signer's certificate. This means that all the signers
 certificates must be in the B<certs> parameter.
 
@@ -79,7 +79,7 @@ certificates supplied in B<certs> then the verify will fail because the
 signer cannot be found.
 
 Care should be taken when modifying the default verify behaviour, for example
-setting B<PKCS7_NOVERIFY|PKCS7_NOSIGS> will totally disable all verification 
+setting B<PKCS7_NOVERIFY|PKCS7_NOSIGS> will totally disable all verification
 and any signed message will be considered valid. This combination is however
 useful if one merely wishes to write the content to B<out> and its validity
 is not considered important.

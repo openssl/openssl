@@ -100,23 +100,23 @@ int pkey_gost2001_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
 
 
 
-/*  
- * EVP_PKEY_METHOD callback encrypt  
- * Implementation of GOST2001 key transport, cryptocom variation 
+/*
+ * EVP_PKEY_METHOD callback encrypt
+ * Implementation of GOST2001 key transport, cryptocom variation
  */
 /* Generates ephemeral key based on pubk algorithm
  * computes shared key using VKO and returns filled up
  * GOST_KEY_TRANSPORT structure
  */
 
-/*  
- * EVP_PKEY_METHOD callback encrypt  
- * Implementation of GOST2001 key transport, cryptopo variation 
+/*
+ * EVP_PKEY_METHOD callback encrypt
+ * Implementation of GOST2001 key transport, cryptopo variation
  */
 
-int pkey_GOST01cp_encrypt(EVP_PKEY_CTX *pctx, unsigned char *out, size_t *out_len, const unsigned char *key,size_t key_len) 
+int pkey_GOST01cp_encrypt(EVP_PKEY_CTX *pctx, unsigned char *out, size_t *out_len, const unsigned char *key,size_t key_len)
 	{
-	GOST_KEY_TRANSPORT *gkt=NULL; 
+	GOST_KEY_TRANSPORT *gkt=NULL;
 	EVP_PKEY *pubk = EVP_PKEY_CTX_get0_pkey(pctx);
 	struct gost_pmeth_data *data = EVP_PKEY_CTX_get_data(pctx);
 	const struct gost_cipher_info *param=get_encryption_params(NULL);
@@ -125,11 +125,11 @@ int pkey_GOST01cp_encrypt(EVP_PKEY_CTX *pctx, unsigned char *out, size_t *out_le
 	int key_is_ephemeral=1;
 	gost_ctx cctx;
 	EVP_PKEY *sec_key=EVP_PKEY_CTX_get0_peerkey(pctx);
-	if (data->shared_ukm) 
+	if (data->shared_ukm)
 		{
 		memcpy(ukm, data->shared_ukm,8);
-		} 
-	else if (out) 
+		}
+	else if (out)
 		{
 		
 		if (RAND_bytes(ukm,8)<=0)
@@ -140,25 +140,25 @@ int pkey_GOST01cp_encrypt(EVP_PKEY_CTX *pctx, unsigned char *out, size_t *out_le
 			}	
 		}	
 	/* Check for private key in the peer_key of context */	
-	if (sec_key) 
+	if (sec_key)
 		{
 		key_is_ephemeral=0;
-		if (!gost_get0_priv_key(sec_key)) 
+		if (!gost_get0_priv_key(sec_key))
 			{
 			GOSTerr(GOST_F_PKEY_GOST01CP_ENCRYPT,
 			GOST_R_NO_PRIVATE_PART_OF_NON_EPHEMERAL_KEYPAIR);
 			goto err;
 			}	
-		} 
-	else 
+		}
+	else
 		{
 		key_is_ephemeral=1;
-		if (out) 
+		if (out)
 			{
 			sec_key = EVP_PKEY_new();
 			EVP_PKEY_assign(sec_key,EVP_PKEY_base_id(pubk),EC_KEY_new());
 			EVP_PKEY_copy_parameters(sec_key,pubk);
-			if (!gost2001_keygen(EVP_PKEY_get0(sec_key))) 
+			if (!gost2001_keygen(EVP_PKEY_get0(sec_key)))
 				{
 				goto err;
 				}	
@@ -168,7 +168,7 @@ int pkey_GOST01cp_encrypt(EVP_PKEY_CTX *pctx, unsigned char *out, size_t *out_le
 		{
 		param= gost_cipher_list+1;
 		}	
-    if (out) 
+    if (out)
 		{
 		VKO_compute_key(shared_key,32,EC_KEY_get0_public_key(EVP_PKEY_get0(pubk)),EVP_PKEY_get0(sec_key),ukm);
 		gost_init(&cctx,param->sblock);	
@@ -221,9 +221,9 @@ int pkey_GOST01cp_encrypt(EVP_PKEY_CTX *pctx, unsigned char *out, size_t *out_le
 	GOST_KEY_TRANSPORT_free(gkt);
 	return -1;
 	}
-/*  
- * EVP_PKEY_METHOD callback decrypt  
- * Implementation of GOST2001 key transport, cryptopo variation 
+/*
+ * EVP_PKEY_METHOD callback decrypt
+ * Implementation of GOST2001 key transport, cryptopo variation
  */
 int pkey_GOST01cp_decrypt(EVP_PKEY_CTX *pctx, unsigned char *key, size_t * key_len, const unsigned char *in, size_t in_len)
 	{

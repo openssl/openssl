@@ -34,7 +34,7 @@ CMS_RECIPINFO_KEK, CMS_RECIPINFO_PASS, or CMS_RECIPINFO_OTHER.
 CMS_RecipientInfo_ktri_get0_signer_id() retrieves the certificate recipient
 identifier associated with a specific CMS_RecipientInfo structure B<ri>, which
 must be of type CMS_RECIPINFO_TRANS. Either the keyidentifier will be set in
-B<keyid> or B<both> issuer name and serial number in B<issuer> and B<sno>. 
+B<keyid> or B<both> issuer name and serial number in B<issuer> and B<sno>.
 
 CMS_RecipientInfo_ktri_cert_cmp() compares the certificate B<cert> against the
 CMS_RecipientInfo structure B<ri>, which must be of type CMS_RECIPINFO_TRANS.

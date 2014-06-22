@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -94,7 +94,7 @@ ASN1_CHOICE(GENERAL_NAME) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(GENERAL_NAME)
 
-ASN1_ITEM_TEMPLATE(GENERAL_NAMES) = 
+ASN1_ITEM_TEMPLATE(GENERAL_NAMES) =
 	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, GeneralNames, GENERAL_NAME)
 ASN1_ITEM_TEMPLATE_END(GENERAL_NAMES)
 
@@ -238,7 +238,7 @@ int GENERAL_NAME_set0_othername(GENERAL_NAME *gen,
 	return 1;
 	}
 
-int GENERAL_NAME_get0_otherName(GENERAL_NAME *gen, 
+int GENERAL_NAME_get0_otherName(GENERAL_NAME *gen,
 				ASN1_OBJECT **poid, ASN1_TYPE **pvalue)
 	{
 	if (gen->type != GEN_OTHERNAME)

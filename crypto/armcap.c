@@ -77,7 +77,7 @@ void OPENSSL_cpuid_setup(void)
 
 	if (trigger) return;
 	trigger=1;
- 
+
 	if ((e=getenv("OPENSSL_armcap")))
 		{
 		OPENSSL_armcap_P=(unsigned int)strtoul(e,NULL,0);

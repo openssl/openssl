@@ -5,21 +5,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -63,7 +63,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -110,7 +110,7 @@
  */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
- * ECC cipher suite support in OpenSSL originally developed by 
+ * ECC cipher suite support in OpenSSL originally developed by
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
 /* ====================================================================
@@ -495,10 +495,10 @@
 */
 
 #ifndef OPENSSL_NO_EC
-/* From ECC-TLS draft, used in encoding the curve type in 
+/* From ECC-TLS draft, used in encoding the curve type in
  * ECParameters
  */
-#define EXPLICIT_PRIME_CURVE_TYPE  1   
+#define EXPLICIT_PRIME_CURVE_TYPE  1
 #define EXPLICIT_CHAR2_CURVE_TYPE  2
 #define NAMED_CURVE_TYPE           3
 #endif  /* OPENSSL_NO_EC */
@@ -538,7 +538,7 @@ typedef struct cert_st
 	CERT_PKEY *key; /* ALWAYS points to an element of the pkeys array
 			 * Probably it would make more sense to store
 			 * an index, not a pointer. */
- 
+
 	/* For servers the following masks are for the key and auth
 	 * algorithms that are supported by the certs below.
 	 * For clients they are masks of *disabled* algorithms based
@@ -586,7 +586,7 @@ typedef struct cert_st
 	/* Size of above array */
 	size_t peer_sigalgslen;
 	/* suppported signature algorithms.
-	 * When set on a client this is sent in the client hello as the 
+	 * When set on a client this is sent in the client hello as the
 	 * supported signature algorithms extension. For servers
 	 * it represents the signature algorithms we are willing to use.
 	 */
@@ -685,8 +685,8 @@ struct tls_sigalgs_st
 /*#define DES_DEBUG	*/
 /*#define DES_OFB_DEBUG	*/
 /*#define SSL_DEBUG	*/
-/*#define RSA_DEBUG	*/ 
-/*#define IDEA_DEBUG	*/ 
+/*#define RSA_DEBUG	*/
+/*#define IDEA_DEBUG	*/
 
 #define FP_ICC  (int (*)(const void *,const void *))
 #define ssl_put_cipher_by_char(ssl,ciph,ptr) \
@@ -1085,8 +1085,8 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok);
 int ssl3_send_finished(SSL *s, int a, int b, const char *sender,int slen);
 int ssl3_num_ciphers(void);
 const SSL_CIPHER *ssl3_get_cipher(unsigned int u);
-int ssl3_renegotiate(SSL *ssl); 
-int ssl3_renegotiate_check(SSL *ssl); 
+int ssl3_renegotiate(SSL *ssl);
+int ssl3_renegotiate_check(SSL *ssl);
 int ssl3_dispatch_alert(SSL *s);
 int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
 int ssl3_write_bytes(SSL *s, int type, const void *buf, int len);
@@ -1146,8 +1146,8 @@ int ssl3_do_compress(SSL *ssl);
 int ssl3_do_uncompress(SSL *ssl);
 int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
 	unsigned int len);
-unsigned char *dtls1_set_message_header(SSL *s, 
-	unsigned char *p, unsigned char mt,	unsigned long len, 
+unsigned char *dtls1_set_message_header(SSL *s,
+	unsigned char *p, unsigned char mt,	unsigned long len,
 	unsigned long frag_off, unsigned long frag_len);
 
 int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf, int len);
@@ -1158,7 +1158,7 @@ int dtls1_send_finished(SSL *s, int a, int b, const char *sender, int slen);
 unsigned long dtls1_output_cert_chain(SSL *s, CERT_PKEY *cpk);
 int dtls1_read_failed(SSL *s, int code);
 int dtls1_buffer_message(SSL *s, int ccs);
-int dtls1_retransmit_message(SSL *s, unsigned short seq, 
+int dtls1_retransmit_message(SSL *s, unsigned short seq,
 	unsigned long frag_off, int *found);
 int dtls1_get_queue_priority(unsigned short seq, int is_ccs);
 int dtls1_retransmit_buffered_messages(SSL *s);
@@ -1274,7 +1274,7 @@ int tls1_check_curve(SSL *s, const unsigned char *p, size_t len);
 int tls1_shared_curve(SSL *s, int nmatch);
 int tls1_set_curves(unsigned char **pext, size_t *pextlen,
 			int *curves, size_t ncurves);
-int tls1_set_curves_list(unsigned char **pext, size_t *pextlen, 
+int tls1_set_curves_list(unsigned char **pext, size_t *pextlen,
 				const char *str);
 int tls1_check_ec_tmp_key(SSL *s, unsigned long id);
 #endif /* OPENSSL_NO_EC */

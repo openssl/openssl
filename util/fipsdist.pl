@@ -1,5 +1,5 @@
 
-# FIPS distribution filter. 
+# FIPS distribution filter.
 # Takes tarball listing and removes unnecessary files and directories.
 #
 
@@ -36,7 +36,7 @@ if ($noec2m)
 	delete $tarobjs{"ec2_smpl.c"};
 	}
 
-my %keep = 
+my %keep =
 	(
 	"Makefile.fips" => 1,
 	"Makefile.shared" => 1,

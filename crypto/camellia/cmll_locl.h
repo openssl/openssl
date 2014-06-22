@@ -1,6 +1,6 @@
 /* crypto/camellia/camellia_locl.h -*- mode:C; c-file-style: "eay" -*- */
 /* ====================================================================
- * Copyright 2006 NTT (Nippon Telegraph and Telephone Corporation) . 
+ * Copyright 2006 NTT (Nippon Telegraph and Telephone Corporation) .
  * ALL RIGHTS RESERVED.
  *
  * Intellectual Property information for Camellia:
@@ -24,7 +24,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -73,12 +73,12 @@ typedef unsigned char u8;
 
 int Camellia_Ekeygen(int keyBitLength, const u8 *rawKey,
 		     KEY_TABLE_TYPE keyTable);
-void Camellia_EncryptBlock_Rounds(int grandRounds, const u8 plaintext[], 
+void Camellia_EncryptBlock_Rounds(int grandRounds, const u8 plaintext[],
 		const KEY_TABLE_TYPE keyTable, u8 ciphertext[]);
-void Camellia_DecryptBlock_Rounds(int grandRounds, const u8 ciphertext[], 
+void Camellia_DecryptBlock_Rounds(int grandRounds, const u8 ciphertext[],
 		const KEY_TABLE_TYPE keyTable, u8 plaintext[]);
-void Camellia_EncryptBlock(int keyBitLength, const u8 plaintext[], 
+void Camellia_EncryptBlock(int keyBitLength, const u8 plaintext[],
 		const KEY_TABLE_TYPE keyTable, u8 ciphertext[]);
-void Camellia_DecryptBlock(int keyBitLength, const u8 ciphertext[], 
+void Camellia_DecryptBlock(int keyBitLength, const u8 ciphertext[],
 		const KEY_TABLE_TYPE keyTable, u8 plaintext[]);
 #endif /* #ifndef HEADER_CAMELLIA_LOCL_H */

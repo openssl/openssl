@@ -361,7 +361,7 @@ L\$parisc1
 ___
 
 @V=(  $Ahi,  $Alo,  $Bhi,  $Blo,  $Chi,  $Clo,  $Dhi,  $Dlo,
-      $Ehi,  $Elo,  $Fhi,  $Flo,  $Ghi,  $Glo,  $Hhi,  $Hlo) = 
+      $Ehi,  $Elo,  $Fhi,  $Flo,  $Ghi,  $Glo,  $Hhi,  $Hlo) =
    ( "%r1", "%r2", "%r3", "%r4", "%r5", "%r6", "%r7", "%r8",
      "%r9","%r10","%r11","%r12","%r13","%r14","%r15","%r16");
 $a0 ="%r17";

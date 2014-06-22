@@ -45,7 +45,7 @@ will be untrusted but may be used to build the chain) in B<chain>. Any or
 all of the B<store>, B<x509> and B<chain> parameters can be B<NULL>.
 
 X509_STORE_CTX_trusted_stack() sets the set of trusted certificates of B<ctx>
-to B<sk>. This is an alternative way of specifying trusted certificates 
+to B<sk>. This is an alternative way of specifying trusted certificates
 instead of using an B<X509_STORE>.
 
 X509_STORE_CTX_set_cert() sets the certificate to be vertified in B<ctx> to

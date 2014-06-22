@@ -73,6 +73,6 @@ L<DH_set_method(3)|DH_set_method(3)>, L<DH_new(3)|DH_new(3)>,
 L<DH_get_ex_new_index(3)|DH_get_ex_new_index(3)>,
 L<DH_generate_parameters(3)|DH_generate_parameters(3)>,
 L<DH_compute_key(3)|DH_compute_key(3)>, L<d2i_DHparams(3)|d2i_DHparams(3)>,
-L<RSA_print(3)|RSA_print(3)> 
+L<RSA_print(3)|RSA_print(3)>
 
 =cut

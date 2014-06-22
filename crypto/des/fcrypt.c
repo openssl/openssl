@@ -26,7 +26,7 @@
 #include "des_locl.h"
 
 /* Added more values to handle illegal salt values the way normal
- * crypt() implementations do.  The patch was sent by 
+ * crypt() implementations do.  The patch was sent by
  * Bjorn Gronvall <bg@sics.se>
  */
 __fips_constseg

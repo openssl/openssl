@@ -82,7 +82,7 @@ void OPENSSL_Uplink (volatile void **table, int index)
     } while (0);
 
     table[index] = func;
-}    
+}
 
 #if defined(_MSC_VER) && defined(_M_IX86) && !defined(OPENSSL_NO_INLINE_ASM)
 #define LAZY(i)		\

@@ -5,21 +5,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -216,7 +216,7 @@ static int certify_spkac(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 			 STACK_OF(CONF_VALUE) *policy,
 			 CA_DB *db, BIGNUM *serial,char *subj,unsigned long chtype, int multirdn, int email_dn,
 			 char *startdate, char *enddate, long days, char *ext_sect,
-			 CONF *conf, int verbose, unsigned long certopt, 
+			 CONF *conf, int verbose, unsigned long certopt,
 			 unsigned long nameopt, int default_op, int ext_copy);
 static void write_new_certificate(BIO *bp, X509 *x, int output_der, int notext);
 static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
@@ -653,7 +653,7 @@ bad:
 			BIO *oid_bio;
 
 			oid_bio=BIO_new_file(p,"r");
-			if (oid_bio == NULL) 
+			if (oid_bio == NULL)
 				{
 				/*
 				BIO_printf(bio_err,"problems opening %s for extra oid's\n",p);
@@ -667,7 +667,7 @@ bad:
 				BIO_free(oid_bio);
 				}
 			}
-		if (!add_oid_section(bio_err,conf)) 
+		if (!add_oid_section(bio_err,conf))
 			{
 			ERR_print_errors(bio_err);
 			goto err;
@@ -764,7 +764,7 @@ bad:
 			goto err;
 			}
 		}
-	pkey = load_key(bio_err, keyfile, keyform, 0, key, e, 
+	pkey = load_key(bio_err, keyfile, keyform, 0, key, e,
 		"CA private key");
 	if (key) OPENSSL_cleanse(key,strlen(key));
 	if (pkey == NULL)
@@ -980,7 +980,7 @@ bad:
 		else if (i == 0)
 			{
 			if (verbose) BIO_printf(bio_err,
-					"No entries found to mark expired\n"); 
+					"No entries found to mark expired\n");
 			}
 	    	else
 			{
@@ -989,7 +989,7 @@ bad:
 			if (!rotate_index(dbfile,"new","old")) goto err;
 				
 			if (verbose) BIO_printf(bio_err,
-				"Done. %d entries marked as expired\n",i); 
+				"Done. %d entries marked as expired\n",i);
 	      		}
 	  	}
 
@@ -1286,13 +1286,13 @@ bad:
 				buf[0][0]='\0';
 				if (!fgets(buf[0],10,stdin))
 					{
-					BIO_printf(bio_err,"CERTIFICATION CANCELED: I/O error\n"); 
+					BIO_printf(bio_err,"CERTIFICATION CANCELED: I/O error\n");
 					ret=0;
 					goto err;
 					}
 				if ((buf[0][0] != 'y') && (buf[0][0] != 'Y'))
 					{
-					BIO_printf(bio_err,"CERTIFICATION CANCELED\n"); 
+					BIO_printf(bio_err,"CERTIFICATION CANCELED\n");
 					ret=0;
 					goto err;
 					}
@@ -1517,7 +1517,7 @@ bad:
 	/*****************************************************************/
 	if (dorevoke)
 		{
-		if (infile == NULL) 
+		if (infile == NULL)
 			{
 			BIO_printf(bio_err,"no input files\n");
 			goto err;
@@ -1539,7 +1539,7 @@ bad:
 
 			if (!rotate_index(dbfile, "new", "old")) goto err;
 
-			BIO_printf(bio_err,"Data Base Updated\n"); 
+			BIO_printf(bio_err,"Data Base Updated\n");
 			}
 		}
 	/*****************************************************************/
@@ -1935,7 +1935,7 @@ again2:
 
 	/* Build the correct Subject if no e-mail is wanted in the subject */
 	/* and add it later on because of the method extensions are added (altName) */
-	 
+	
 	if (email_dn)
 		dn_subject = subject;
 	else
@@ -2094,10 +2094,10 @@ again2:
 			{
 			if (verbose)
 				BIO_printf(bio_err, "Extra configuration file found\n");
- 
+
 			/* Use the extconf configuration db LHASH */
 			X509V3_set_nconf(&ctx, extconf);
- 
+
 			/* Test the structure (needed?) */
 			/* X509V3_set_ctx_test(&ctx); */
 
@@ -2125,7 +2125,7 @@ again2:
 				goto err;
 				}
 
-			if (verbose) 
+			if (verbose)
 				BIO_printf(bio_err, "Successfully added extensions from config\n");
 			}
 		}
@@ -2150,7 +2150,7 @@ again2:
 		BIO_printf(bio_err, "Certificate Details:\n");
 		/* Never print signature details because signature not present */
 		certopt |= X509_FLAG_NO_SIGDUMP | X509_FLAG_NO_SIGNAME;
-		X509_print_ex(bio_err, ret, nameopt, certopt); 
+		X509_print_ex(bio_err, ret, nameopt, certopt);
 		}
 
 	BIO_printf(bio_err,"Certificate is to be certified until ");
@@ -2543,7 +2543,7 @@ static int do_revoke(X509 *x509, CA_DB *db, int type, char *value)
 err:
 	for (i=0; i<DB_NUMBER; i++)
 		{
-		if (row[i] != NULL) 
+		if (row[i] != NULL)
 			OPENSSL_free(row[i]);
 		}
 	return(ok);
@@ -2641,7 +2641,7 @@ static int do_updatedb (CA_DB *db)
 	{
 	ASN1_UTCTIME	*a_tm = NULL;
 	int i, cnt = 0;
-	int db_y2k, a_y2k;  /* flags = 1 if y >= 2000 */ 
+	int db_y2k, a_y2k;  /* flags = 1 if y >= 2000 */
 	char **rrow, *a_tm_s;
 
 	a_tm = ASN1_UTCTIME_new();
@@ -2715,7 +2715,7 @@ static const char *crl_reasons[] = {
 	"keyCompromise",
 	"CACompromise",
 	"affiliationChanged",
-	"superseded", 
+	"superseded",
 	"cessationOfOperation",
 	"certificateHold",
 	"removeFromCRL",
@@ -2791,7 +2791,7 @@ char *make_revocation_str(int rev_type, char *rev_arg)
 		other = rev_arg;
 		if (rev_type == REV_KEY_COMPROMISE)
 			reason = "keyTime";
-		else 
+		else
 			reason = "CAkeyTime";
 
 		break;
@@ -2824,7 +2824,7 @@ char *make_revocation_str(int rev_type, char *rev_arg)
 	return str;
 	}
 
-/* Convert revocation field to X509_REVOKED entry 
+/* Convert revocation field to X509_REVOKED entry
  * return code:
  * 0 error
  * 1 OK

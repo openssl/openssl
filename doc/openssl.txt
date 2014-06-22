@@ -43,15 +43,15 @@ openssl crl -in crl.pem -text
 will give information in the extension printout, for example:
 
         X509v3 extensions:
-            X509v3 Basic Constraints: 
+            X509v3 Basic Constraints:
                 CA:TRUE
-            X509v3 Subject Key Identifier: 
+            X509v3 Subject Key Identifier:
                 73:FE:F7:59:A7:E1:26:84:44:D6:44:36:EE:79:1A:95:7C:B1:4B:15
-            X509v3 Authority Key Identifier: 
+            X509v3 Authority Key Identifier:
                 keyid:73:FE:F7:59:A7:E1:26:84:44:D6:44:36:EE:79:1A:95:7C:B1:4B:15, DirName:/C=AU/ST=Some-State/O=Internet Widgits Pty Ltd/Email=email@1.address/Email=email@2.address, serial:00
-            X509v3 Key Usage: 
+            X509v3 Key Usage:
                 Certificate Sign, CRL Sign
-            X509v3 Subject Alternative Name: 
+            X509v3 Subject Alternative Name:
                 email:email@1.address, email:email@2.address
 
 CONFIGURATION FILES.
@@ -187,7 +187,7 @@ CURRENTLY SUPPORTED EXTENSIONS.
 
 If you aren't sure about extensions then they can be largely ignored: its only
 when you want to do things like restrict certificate usage when you need to
-worry about them. 
+worry about them.
 
 The only extension that a beginner might want to look at is Basic Constraints.
 If in addition you want to try Netscape object signing the you should also
@@ -271,7 +271,7 @@ The rest of this section describes more advanced usage.
 Basic constraints is a multi-valued extension that supports a CA and an
 optional pathlen option. The CA option takes the values true and false and
 pathlen takes an integer. Note if the CA option is false the pathlen option
-should be omitted. 
+should be omitted.
 
 The pathlen parameter indicates the maximum number of CAs that can appear
 below this one in a chain. So if you have a CA with a pathlen of zero it can
@@ -313,7 +313,7 @@ nsSGC			Netscape Server Gated Crypto
 For example, under IE5 a CA can be used for any purpose: by including a list
 of the above usages the CA can be restricted to only authorised uses.
 
-Note: software packages may place additional interpretations on certificate 
+Note: software packages may place additional interpretations on certificate
 use, in particular some usages may only work for selected CAs. Don't for example
 expect just including msSGC or nsSGC will automatically mean that a certificate
 can be used for SGC ("step up" encryption) otherwise anyone could use it.
@@ -371,7 +371,7 @@ Issuer Alternative Name.
 The issuer alternative name option supports all the literal options of
 subject alternative name. It does *not* support the email:copy option because
 that would not make sense. It does support an additional issuer:copy option
-that will copy all the subject alternative name values from the issuer 
+that will copy all the subject alternative name values from the issuer
 certificate (if possible).
 
 Example:
@@ -471,7 +471,7 @@ organization="Organisation Name"
 noticeNumbers=1,2,3,4
 
 TECHNICAL NOTE: the ia5org option changes the type of the 'organization' field,
-according to PKIX it should be of type DisplayText but Verisign uses an 
+according to PKIX it should be of type DisplayText but Verisign uses an
 IA5STRING and IE5 needs this too.
 
 Display only extensions.
@@ -523,7 +523,7 @@ precise structure you get back depends on the extension being parsed. If the
 extension if basicConstraints you will get back a pointer to a
 BASIC_CONSTRAINTS structure. Check out the source in crypto/x509v3 for more
 details about the structures returned. The returned structure should be freed
-after use using the relevant free function, BASIC_CONSTRAINTS_free() for 
+after use using the relevant free function, BASIC_CONSTRAINTS_free() for
 example.
 
 void	*	X509_get_ext_d2i(X509 *x, int nid, int *crit, int *idx);
@@ -749,7 +749,7 @@ This function adds the value of the ASN1_INTEGER in decimal form.
 
 ADDING CUSTOM EXTENSIONS.
 
-Currently there are three types of supported extensions. 
+Currently there are three types of supported extensions.
 
 String extensions are simple strings where the value is placed directly in the
 extensions, and the string returned is printed out.
@@ -921,7 +921,7 @@ private key and certificate pair.
 
 1. Initialisation and cleanup.
 
-No special initialisation is needed for the internal PKCS#12 library: the 
+No special initialisation is needed for the internal PKCS#12 library: the
 standard SSLeay_add_all_algorithms() is sufficient. If you do not wish to
 add all algorithms (you should at least add SHA1 though) then you can manually
 initialise the PKCS#12 library with:
@@ -1016,7 +1016,7 @@ A PKCS#12 object contains several levels.
 
 At the lowest level is a PKCS12_SAFEBAG. This can contain a certificate, a
 CRL, a private key, encrypted or unencrypted, a set of safebags (so the
-structure can be nested) or other secrets (not documented at present). 
+structure can be nested) or other secrets (not documented at present).
 A safebag can optionally have attributes, currently these are: a unicode
 friendlyName (a Unicode string) or a localKeyID (a string of bytes).
 
@@ -1160,7 +1160,7 @@ EVP_PKEY * PKCS82PKEY(PKCS8_PRIV_KEY_INFO *p8)
 
 Extract a private key from a PKCS8 private key info structure.
 
-M_PKCS12_decrypt_skey(bag, pass, passlen) 
+M_PKCS12_decrypt_skey(bag, pass, passlen)
 
 Decrypt a shrouded key bag and return a PKCS8 private key info structure.
 Works with both RSA and DSA keys
@@ -1168,7 +1168,7 @@ Works with both RSA and DSA keys
 char *PKCS12_get_friendlyname(bag)
 
 Returns the friendlyName of a bag if present or NULL if none. The returned
-string is a null terminated ASCII string allocated with Malloc(). It should 
+string is a null terminated ASCII string allocated with Malloc(). It should
 thus be freed up with Free() after use.
 
 2.2 AuthSafe functions.
@@ -1243,12 +1243,12 @@ on everything.
 3. For decryption routines only the password and length are needed.
 
 4. Unlike the external version the nid's of objects are the values of the
-constants: that is NID_certBag is the real nid, therefore there is no 
+constants: that is NID_certBag is the real nid, therefore there is no
 PKCS12_obj_offset() function.  Note the object constants are not the same as
 those of the external version. If you use these constants then you will need
 to recompile your code.
 
-5. With the exception of PKCS12_MAKE_KEYBAG(), after calling any function or 
+5. With the exception of PKCS12_MAKE_KEYBAG(), after calling any function or
 macro of the form PKCS12_MAKE_SOMETHING(other) the "other" structure can be
 reused or freed up safely.
 

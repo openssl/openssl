@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -85,7 +85,7 @@
 #define	ENV_VALUE_SECS			"secs"
 #define	ENV_VALUE_MILLISECS		"millisecs"
 #define	ENV_VALUE_MICROSECS		"microsecs"
-#define	ENV_CLOCK_PRECISION_DIGITS	"clock_precision_digits" 
+#define	ENV_CLOCK_PRECISION_DIGITS	"clock_precision_digits"
 #define	ENV_VALUE_YES			"yes"
 #define	ENV_VALUE_NO			"no"
 
@@ -218,7 +218,7 @@ int TS_CONF_set_default_engine(const char *name)
 
 	if (!(e = ENGINE_by_id(name))) goto err;
 	/* Enable the use of the NCipher HSM for forked children. */
-	if (strcmp(name, "chil") == 0) 
+	if (strcmp(name, "chil") == 0)
 		ENGINE_ctrl(e, ENGINE_CTRL_CHIL_SET_FORKCHECK, 1, 0, 0);
 	/* All the operations are going to be carried out by the engine. */
 	if (!ENGINE_set_default(e, ENGINE_METHOD_ALL)) goto err;
@@ -226,7 +226,7 @@ int TS_CONF_set_default_engine(const char *name)
  err:
 	if (!ret)
 		{
-		TSerr(TS_F_TS_CONF_SET_DEFAULT_ENGINE, 
+		TSerr(TS_F_TS_CONF_SET_DEFAULT_ENGINE,
 		      TS_R_COULD_NOT_SET_ENGINE);
 		ERR_add_error_data(2, "engine:", name);
 		}
@@ -241,7 +241,7 @@ int TS_CONF_set_signer_cert(CONF *conf, const char *section,
 	{
 	int ret = 0;
 	X509 *cert_obj = NULL;
-	if (!cert) 
+	if (!cert)
 		cert = NCONF_get_string(conf, section, ENV_SIGNER_CERT);
 	if (!cert)
 		{
@@ -264,7 +264,7 @@ int TS_CONF_set_certs(CONF *conf, const char *section, const char *certs,
 	{
 	int ret = 0;
 	STACK_OF(X509) *certs_obj = NULL;
-	if (!certs) 
+	if (!certs)
 		certs = NCONF_get_string(conf, section, ENV_CERTS);
 	/* Certificate chain is optional. */
 	if (!certs) goto end;
@@ -283,7 +283,7 @@ int TS_CONF_set_signer_key(CONF *conf, const char *section,
 	{
 	int ret = 0;
 	EVP_PKEY *key_obj = NULL;
-	if (!key) 
+	if (!key)
 		key = NCONF_get_string(conf, section, ENV_SIGNER_KEY);
 	if (!key)
 		{
@@ -304,8 +304,8 @@ int TS_CONF_set_def_policy(CONF *conf, const char *section,
 	{
 	int ret = 0;
 	ASN1_OBJECT *policy_obj = NULL;
-	if (!policy) 
-		policy = NCONF_get_string(conf, section, 
+	if (!policy)
+		policy = NCONF_get_string(conf, section,
 					  ENV_DEFAULT_POLICY);
 	if (!policy)
 		{
@@ -332,7 +332,7 @@ int TS_CONF_set_policies(CONF *conf, const char *section,
 	int ret = 0;
 	int i;
 	STACK_OF(CONF_VALUE) *list = NULL;
-	char *policies = NCONF_get_string(conf, section, 
+	char *policies = NCONF_get_string(conf, section,
 					  ENV_OTHER_POLICIES);
 	/* If no other policy is specified, that's fine. */
 	if (policies && !(list = X509V3_parse_list(policies)))
@@ -419,7 +419,7 @@ int TS_CONF_set_accuracy(CONF *conf, const char *section, TS_RESP_CTX *ctx)
 	for (i = 0; i < sk_CONF_VALUE_num(list); ++i)
 		{
 		CONF_VALUE *val = sk_CONF_VALUE_value(list, i);
-		if (strcmp(val->name, ENV_VALUE_SECS) == 0) 
+		if (strcmp(val->name, ENV_VALUE_SECS) == 0)
 			{
 			if (val->value) secs = atoi(val->value);
 			}
@@ -502,6 +502,6 @@ int TS_CONF_set_tsa_name(CONF *conf, const char *section, TS_RESP_CTX *ctx)
 int TS_CONF_set_ess_cert_id_chain(CONF *conf, const char *section,
 				  TS_RESP_CTX *ctx)
 	{
-	return TS_CONF_add_flag(conf, section, ENV_ESS_CERT_ID_CHAIN, 
+	return TS_CONF_add_flag(conf, section, ENV_ESS_CERT_ID_CHAIN,
 				TS_ESS_CERT_ID_CHAIN, ctx);
 	}

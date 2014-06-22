@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -113,22 +113,22 @@ typedef struct
 	} ALGVS_FUNCTION;
 
 static ALGVS_FUNCTION algvs[] = {
-	{"fips_aesavs", fips_aesavs_main}, 
-	{"fips_cmactest", fips_cmactest_main}, 
-	{"fips_desmovs", fips_desmovs_main}, 
-	{"fips_dhvs", fips_dhvs_main}, 
-	{"fips_drbgvs", fips_drbgvs_main}, 
-	{"fips_dssvs", fips_dssvs_main}, 
-	{"fips_ecdhvs", fips_ecdhvs_main}, 
-	{"fips_ecdsavs", fips_ecdsavs_main}, 
-	{"fips_gcmtest", fips_gcmtest_main}, 
-	{"fips_hmactest", fips_hmactest_main}, 
-	{"fips_rngvs", fips_rngvs_main}, 
-	{"fips_rsagtest", fips_rsagtest_main}, 
-	{"fips_rsastest", fips_rsastest_main}, 
-	{"fips_rsavtest", fips_rsavtest_main}, 
-	{"fips_shatest", fips_shatest_main}, 
-	{"fips_test_suite", fips_test_suite_main}, 
+	{"fips_aesavs", fips_aesavs_main},
+	{"fips_cmactest", fips_cmactest_main},
+	{"fips_desmovs", fips_desmovs_main},
+	{"fips_dhvs", fips_dhvs_main},
+	{"fips_drbgvs", fips_drbgvs_main},
+	{"fips_dssvs", fips_dssvs_main},
+	{"fips_ecdhvs", fips_ecdhvs_main},
+	{"fips_ecdsavs", fips_ecdsavs_main},
+	{"fips_gcmtest", fips_gcmtest_main},
+	{"fips_hmactest", fips_hmactest_main},
+	{"fips_rngvs", fips_rngvs_main},
+	{"fips_rsagtest", fips_rsagtest_main},
+	{"fips_rsastest", fips_rsastest_main},
+	{"fips_rsavtest", fips_rsavtest_main},
+	{"fips_shatest", fips_shatest_main},
+	{"fips_test_suite", fips_test_suite_main},
 	{NULL, 0}
 	};
 

@@ -96,7 +96,7 @@ B<certs>, B<signcert> and B<pkey> parameters can all be B<NULL> and the
 B<CMS_PARTIAL> flag set. Then one or more signers can be added using the
 function CMS_sign_add1_signer(), non default digests can be used and custom
 attributes added. B<CMS_final()> must then be called to finalize the
-structure if streaming is not enabled. 
+structure if streaming is not enabled.
 
 =head1 BUGS
 

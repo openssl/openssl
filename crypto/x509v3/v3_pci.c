@@ -128,7 +128,7 @@ static int process_pci_value(CONF_VALUE *val,
 			unsigned char *tmp_data2 =
 				string_to_hex(val->value + 4, &val_len);
 
-			if (!tmp_data2) 
+			if (!tmp_data2)
 				{
 				X509V3err(X509V3_F_PROCESS_PCI_VALUE,X509V3_R_ILLEGAL_HEX_DIGIT);
 				X509V3_conf_err(val);

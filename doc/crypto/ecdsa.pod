@@ -11,12 +11,12 @@ ECDSA_SIG_new, ECDSA_SIG_free, i2d_ECDSA_SIG, d2i_ECDSA_SIG, ECDSA_size, ECDSA_s
  ECDSA_SIG*	ECDSA_SIG_new(void);
  void		ECDSA_SIG_free(ECDSA_SIG *sig);
  int		i2d_ECDSA_SIG(const ECDSA_SIG *sig, unsigned char **pp);
- ECDSA_SIG*	d2i_ECDSA_SIG(ECDSA_SIG **sig, const unsigned char **pp, 
+ ECDSA_SIG*	d2i_ECDSA_SIG(ECDSA_SIG **sig, const unsigned char **pp,
 		long len);
 
  ECDSA_SIG*	ECDSA_do_sign(const unsigned char *dgst, int dgst_len,
 			EC_KEY *eckey);
- ECDSA_SIG*	ECDSA_do_sign_ex(const unsigned char *dgst, int dgstlen, 
+ ECDSA_SIG*	ECDSA_do_sign_ex(const unsigned char *dgst, int dgstlen,
 			const BIGNUM *kinv, const BIGNUM *rp,
 			EC_KEY *eckey);
  int		ECDSA_do_verify(const unsigned char *dgst, int dgst_len,
@@ -28,7 +28,7 @@ ECDSA_SIG_new, ECDSA_SIG_free, i2d_ECDSA_SIG, d2i_ECDSA_SIG, ECDSA_size, ECDSA_s
 			unsigned int *siglen, EC_KEY *eckey);
  int		ECDSA_sign_ex(int type, const unsigned char *dgst,
 			int dgstlen, unsigned char *sig,
-			unsigned int *siglen, const BIGNUM *kinv, 
+			unsigned int *siglen, const BIGNUM *kinv,
 			const BIGNUM *rp, EC_KEY *eckey);
  int		ECDSA_verify(int type, const unsigned char *dgst,
 			int dgstlen, const unsigned char *sig,
@@ -65,7 +65,7 @@ ECDSA_SIG_free() frees the B<ECDSA_SIG> structure B<sig>.
 
 i2d_ECDSA_SIG() creates the DER encoding of the ECDSA signature
 B<sig> and writes the encoded signature to B<*pp> (note: if B<pp>
-is NULL B<i2d_ECDSA_SIG> returns the expected length in bytes of 
+is NULL B<i2d_ECDSA_SIG> returns the expected length in bytes of
 the DER encoded signature). B<i2d_ECDSA_SIG> returns the length
 of the DER encoded signature (or 0 on error).
 
@@ -142,8 +142,8 @@ specific)
 	/* error */
 	}
 
-Second step: compute the ECDSA signature of a SHA-1 hash value 
-using B<ECDSA_do_sign> 
+Second step: compute the ECDSA signature of a SHA-1 hash value
+using B<ECDSA_do_sign>
 
  sig = ECDSA_do_sign(digest, 20, eckey);
  if (sig == NULL)

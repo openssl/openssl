@@ -15,7 +15,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -107,7 +107,7 @@ const char *OCSP_response_status_str(long s)
 	        { OCSP_RESPONSE_STATUS_SIGREQUIRED, "sigrequired" },
 	        { OCSP_RESPONSE_STATUS_UNAUTHORIZED, "unauthorized" } };
 	return table2string(s, rstat_tbl, 6);
-	} 
+	}
 
 const char *OCSP_cert_status_str(long s)
         {
@@ -116,7 +116,7 @@ const char *OCSP_cert_status_str(long s)
 	        { V_OCSP_CERTSTATUS_REVOKED, "revoked" },
 	        { V_OCSP_CERTSTATUS_UNKNOWN, "unknown" } };
 	return table2string(s, cstat_tbl, 3);
-	} 
+	}
 
 const char *OCSP_crl_reason_str(long s)
         {
@@ -130,7 +130,7 @@ const char *OCSP_crl_reason_str(long s)
           { OCSP_REVOKED_STATUS_CERTIFICATEHOLD, "certificateHold" },
           { OCSP_REVOKED_STATUS_REMOVEFROMCRL, "removeFromCRL" } };
 	return table2string(s, reason_tbl, 8);
-	} 
+	}
 
 int OCSP_REQUEST_print(BIO *bp, OCSP_REQUEST* o, unsigned long flags)
         {
@@ -146,7 +146,7 @@ int OCSP_REQUEST_print(BIO *bp, OCSP_REQUEST* o, unsigned long flags)
 	if (BIO_printf(bp,"    Version: %lu (0x%lx)",l+1,l) <= 0) goto err;
 	if (inf->requestorName != NULL)
 	        {
-		if (BIO_write(bp,"\n    Requestor Name: ",21) <= 0) 
+		if (BIO_write(bp,"\n    Requestor Name: ",21) <= 0)
 		        goto err;
 		GENERAL_NAME_print(bp, inf->requestorName);
 		}
@@ -200,7 +200,7 @@ int OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE* o, unsigned long flags)
 	        goto err;
 	if(i2a_ASN1_OBJECT(bp, rb->responseType) <= 0)
 	        goto err;
-	if (OBJ_obj2nid(rb->responseType) != NID_id_pkix_OCSP_basic) 
+	if (OBJ_obj2nid(rb->responseType) != NID_id_pkix_OCSP_basic)
 	        {
 		BIO_puts(bp," (unknown response type)\n");
 		return 1;
@@ -241,22 +241,22 @@ int OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE* o, unsigned long flags)
 		if (cst->type == V_OCSP_CERTSTATUS_REVOKED)
 		        {
 		        rev = cst->value.revoked;
-			if (BIO_printf(bp, "\n    Revocation Time: ") <= 0) 
+			if (BIO_printf(bp, "\n    Revocation Time: ") <= 0)
 			        goto err;
-			if (!ASN1_GENERALIZEDTIME_print(bp, 
-							rev->revocationTime)) 
+			if (!ASN1_GENERALIZEDTIME_print(bp,
+							rev->revocationTime))
 				goto err;
-			if (rev->revocationReason) 
+			if (rev->revocationReason)
 			        {
 				l=ASN1_ENUMERATED_get(rev->revocationReason);
-				if (BIO_printf(bp, 
+				if (BIO_printf(bp,
 					 "\n    Revocation Reason: %s (0x%lx)",
 					       OCSP_crl_reason_str(l), l) <= 0)
 				        goto err;
 				}
 			}
 		if (BIO_printf(bp,"\n    This Update: ") <= 0) goto err;
-		if (!ASN1_GENERALIZEDTIME_print(bp, single->thisUpdate)) 
+		if (!ASN1_GENERALIZEDTIME_print(bp, single->thisUpdate))
 			goto err;
 		if (single->nextUpdate)
 		        {

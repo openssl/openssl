@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -347,7 +347,7 @@ static int tree_link_nodes(X509_POLICY_LEVEL *curr,
 		{
 		data = sk_X509_POLICY_DATA_value(cache->data, i);
 		/* If a node is mapped any it doesn't have a corresponding
-		 * CertificatePolicies entry. 
+		 * CertificatePolicies entry.
 		 * However such an identical node would be created
 		 * if anyPolicy matching is enabled because there would be
 		 * no match with the parent valid_policy_set. So we create
@@ -461,7 +461,7 @@ static int tree_link_any(X509_POLICY_LEVEL *curr,
 		 * nodes.
 		 *
 		 * Note: need something better for policy mapping
-		 * because each node may have multiple children 
+		 * because each node may have multiple children
 		 */
 		if (node->nchild)
 			continue;
@@ -469,7 +469,7 @@ static int tree_link_any(X509_POLICY_LEVEL *curr,
 		/* Create a new node with qualifiers from anyPolicy and
 		 * id from unmatched node.
 		 */
-		data = policy_data_new(NULL, node->data->valid_policy, 
+		data = policy_data_new(NULL, node->data->valid_policy,
 						node_critical(node));
 
 		if (data == NULL)

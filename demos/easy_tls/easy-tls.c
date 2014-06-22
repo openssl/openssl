@@ -21,10 +21,10 @@
  *
  * 1. Redistributions qualify as "freeware" or "Open Source Software" under
  *    one of the following terms:
- * 
+ *
  *    (a) Redistributions are made at no charge beyond the reasonable cost of
  *        materials and delivery.
- * 
+ *
  *    (b) Redistributions are accompanied by a copy of the Source Code
  *        or by an irrevocable offer to provide a copy of the Source Code
  *        for up to three years at the cost of materials and delivery.
@@ -33,7 +33,7 @@
  *        terms as this license.
  *
  * 2. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 3. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -126,7 +126,7 @@ static char const rcsid[] =
 
 /* Applications can define:
  *   TLS_APP_PROCESS_INIT -- void ...(int fd, int client_p, void *apparg)
- *   TLS_CUMULATE_ERRORS 
+ *   TLS_CUMULATE_ERRORS
  *   TLS_ERROR_BUFSIZ
  *   TLS_APP_ERRFLUSH -- void ...(int child_p, char *, size_t, void *apparg)
  */
@@ -181,7 +181,7 @@ tls_start_proxy_defaultargs(void)
     ret.ctx = NULL;
     ret.pid = NULL;
     ret.infofd = NULL;
-    
+
     return ret;
 }
 
@@ -271,7 +271,7 @@ tls_start_proxy(struct tls_start_proxy_args a, void *apparg)
     if (a.infofd != NULL)
 	*a.infofd = infofds[0];
     return 0;
-    
+
   err:
     if (fds[0] != -1)
 	close(fds[0]);
@@ -294,7 +294,7 @@ tls_errflush(void *apparg)
 {
     if (errbuf_i == 0)
 	return;
-    
+
     assert(errbuf_i < sizeof errbuf);
     assert(errbuf[errbuf_i] == 0);
     if (errbuf_i == sizeof errbuf - 1) {
@@ -314,7 +314,7 @@ tls_errprintf(int flush, void *apparg, const char *fmt, ...)
 {
     va_list args;
     int r;
-    
+
     if (errbuf_i < sizeof errbuf - 1) {
 	size_t n;
 
@@ -355,7 +355,7 @@ tls_openssl_errors(const char *app_prefix_1, const char *app_prefix_2, const cha
     int flags;
     char *errstring;
     int printed_something = 0;
-    
+
     reasons_i = 0;
 
     assert(app_prefix_1 != NULL);
@@ -363,7 +363,7 @@ tls_openssl_errors(const char *app_prefix_1, const char *app_prefix_2, const cha
 
     if (default_text == NULL)
 	default_text = "?""?""?";
-    
+
     while ((err = ERR_get_error_line_data(&file,&line,&data,&flags)) != 0) {
 	if (reasons_i < sizeof reasons) {
 	    size_t n;
@@ -393,7 +393,7 @@ tls_openssl_errors(const char *app_prefix_1, const char *app_prefix_2, const cha
 	tls_errprintf(0, apparg, "OpenSSL error%s%s: %s\n", app_prefix_1, app_prefix_2, default_text);
     }
 
-#ifdef TLS_CUMULATE_ERRORS    
+#ifdef TLS_CUMULATE_ERRORS
     tls_errflush(apparg);
 #endif
     assert(errbuf_i == 0);
@@ -410,7 +410,7 @@ tls_init(void *apparg)
 {
     if (tls_init_done)
 	return 0;
-    
+
     SSL_load_error_strings();
     if (!SSL_library_init() /* aka SSLeay_add_ssl_algorithms() */ ) {
 	tls_errprintf(1, apparg, "SSL_library_init failed.\n");
@@ -451,7 +451,7 @@ tls_rand_seed(void)
 	gid_t gid;
 	gid_t egid;
     } data;
-    
+
     data.uname_1 = uname(&data.uname);
     data.uname_2 = errno; /* Let's hope that uname fails randomly :-) */
 
@@ -459,7 +459,7 @@ tls_rand_seed(void)
     data.euid = geteuid();
     data.gid = getgid();
     data.egid = getegid();
-    
+
     RAND_seed((const void *)&data, sizeof data);
     tls_rand_seed_uniquely();
 }
@@ -502,7 +502,7 @@ void
 tls_rand_seed_from_memory(const void *buf, size_t n)
 {
     size_t i = 0;
-    
+
     while (i < n) {
 	size_t rest = n - i;
 	int chunk = rest < INT_MAX ? (int)rest : INT_MAX;
@@ -528,11 +528,11 @@ tls_get_x509_subject_name_oneline(X509 *cert, struct tls_x509_name_string *names
 	namestring->str[0] = '\0';
 	return;
     }
-    
+
     name = X509_get_subject_name(cert); /* does not increment any reference counter */
 
     assert(sizeof namestring->str >= 4); /* "?" or "...", plus 0 */
-    
+
     if (name == NULL) {
 	namestring->str[0] = '?';
 	namestring->str[1] = 0;
@@ -576,7 +576,7 @@ verify_dont_fail_cb(X509_STORE_CTX *c)
 #endif
 {
     int i;
-    
+
     i = X509_verify_cert(c); /* sets c->error */
 #if OPENSSL_VERSION_NUMBER >= 0x00905000L /* don't allow unverified
 					   * certificates -- they could
@@ -604,7 +604,7 @@ tls_set_dhe1024(int i, void *apparg)
 			   "hackers have even mo", /* from jargon file */
     };
     unsigned char seedbuf[20];
-    
+
     tls_init(apparg);
     if (i >= 0) {
 	i %= sizeof seed / sizeof seed[0];
@@ -615,7 +615,7 @@ tls_set_dhe1024(int i, void *apparg)
 	/* random parameters (may take a while) */
 	dsaparams = DSA_generate_parameters(1024, NULL, 0, NULL, NULL, 0, NULL);
     }
-    
+
     if (dsaparams == NULL) {
 	tls_openssl_errors("", "", NULL, apparg);
 	return;
@@ -654,7 +654,7 @@ tls_create_ctx(struct tls_create_ctx_args a, void *apparg)
     static long context_num = 0;
     SSL_CTX *ret;
     const char *err_pref_1 = "", *err_pref_2 = "";
-    
+
     if (tls_init(apparg) == -1)
 	return NULL;
 
@@ -665,7 +665,7 @@ tls_create_ctx(struct tls_create_ctx_args a, void *apparg)
 
     SSL_CTX_set_default_passwd_cb(ret, no_passphrase_callback);
     SSL_CTX_set_mode(ret, SSL_MODE_ENABLE_PARTIAL_WRITE);
-    
+
     if ((a.certificate_file != NULL) || (a.key_file != NULL)) {
 	if (a.key_file == NULL) {
 	    tls_errprintf(1, apparg, "Need a key file.\n");
@@ -691,7 +691,7 @@ tls_create_ctx(struct tls_create_ctx_args a, void *apparg)
 	    goto err_peek;
 	}
     }
-    
+
     if ((a.ca_file != NULL) || (a.verify_depth > 0)) {
 	context_num++;
 	r = SSL_CTX_set_session_id_context(ret, (const void *)&context_num, (unsigned int)sizeof context_num);
@@ -701,7 +701,7 @@ tls_create_ctx(struct tls_create_ctx_args a, void *apparg)
 	SSL_CTX_set_verify(ret, SSL_VERIFY_PEER | (a.fail_unless_verified ? SSL_VERIFY_FAIL_IF_NO_PEER_CERT : 0), 0);
 	if (!a.fail_unless_verified)
 	    SSL_CTX_set_cert_verify_callback(ret, verify_dont_fail_cb, NULL);
-	    
+	
 	if (a.verify_depth > 0)
 	    SSL_CTX_set_verify_depth(ret, a.verify_depth);
 	
@@ -712,7 +712,7 @@ tls_create_ctx(struct tls_create_ctx_args a, void *apparg)
 		err_pref_2 = a.ca_file;
 		goto err;
 	    }
-	    
+	
 	    if (!a.client_p) {
 		/* SSL_load_client_CA_file is a misnomer, it just creates a list of CNs. */
 		SSL_CTX_set_client_CA_list(ret, SSL_load_client_CA_file(a.ca_file));
@@ -726,7 +726,7 @@ tls_create_ctx(struct tls_create_ctx_args a, void *apparg)
 	    }
 	}
     }
-    
+
     if (!a.client_p) {
 	if (tls_dhe1024 == NULL) {
 	    int i;
@@ -766,7 +766,7 @@ tls_create_ctx(struct tls_create_ctx_args a, void *apparg)
 #endif
 	
     return ret;
-    
+
  err_peek:
     if (!ERR_peek_error())
 	goto err_return;
@@ -814,7 +814,7 @@ tls_sockets_select(int read_select_1, int read_select_2, int write_select_1, int
     fd_set reads, writes;
     struct timeval timeout;
     struct timeval *timeout_p;
-    
+
     assert(read_select_1 >= -1 && read_select_2 >= -1 && write_select_1 >= -1 && write_select_2 >= -1);
     assert(read_select_1 < FD_SETSIZE && read_select_2 < FD_SETSIZE -1 && write_select_1 < FD_SETSIZE -1 && write_select_2 < FD_SETSIZE -1);
 
@@ -823,7 +823,7 @@ tls_sockets_select(int read_select_1, int read_select_2, int write_select_1, int
 
     FD_ZERO(&reads);
     FD_ZERO(&writes);
-    
+
     for(n = 0; n < 4; ++n) {
 	int i = n % 2;
 	int w = n >= 2;
@@ -853,7 +853,7 @@ tls_sockets_select(int read_select_1, int read_select_2, int write_select_1, int
 	timeout.tv_sec = seconds;
 	timeout.tv_usec = 0;
 	timeout_p = &timeout;
-    } else 
+    } else
 	timeout_p = NULL;
 
     DEBUG_MSG2("select no.", ++tls_select_count);
@@ -959,7 +959,7 @@ tls_proxy(int clear_fd, int tls_fd, int info_fd, SSL_CTX *ctx, int client_p)
 	SSL_set_connect_state(ssl);
     else
 	SSL_set_accept_state(ssl);
-    
+
     closed = 0;
     in_handshake = 1;
     tls_to_clear.len = 0;
@@ -968,7 +968,7 @@ tls_proxy(int clear_fd, int tls_fd, int info_fd, SSL_CTX *ctx, int client_p)
     clear_to_tls.offset = 0;
 
     err_def = "I/O error";
-    
+
     /* loop finishes as soon as we detect that one side closed;
      * when all (program and OS) buffers have enough space,
      * the data from the last successful read in each direction is transferred
@@ -1003,7 +1003,7 @@ tls_proxy(int clear_fd, int tls_fd, int info_fd, SSL_CTX *ctx, int client_p)
 	
 	if (clear_to_tls.len != 0 && !in_handshake) {
 	    assert(!closed);
-	    
+	
 	    r = tls_write_attempt(ssl, &clear_to_tls, &tls_write_select, &tls_read_select, &closed, &progress, &err_pref_1);
 	    if (r != 0)
 		goto err;
@@ -1217,7 +1217,7 @@ static int write_attempt(int fd, struct tunnelbuf *buf, int *select, int *closed
 	tls_errprintf(1, tls_child_apparg, "write error: %s\n", strerror(errno));
     return r;
 }
-    
+
 static int
 read_attempt(int fd, struct tunnelbuf *buf, int *select, int *closed, int *progress)
 {

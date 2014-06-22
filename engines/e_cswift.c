@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -262,7 +262,7 @@ static int bind_helper(ENGINE *e)
 	 * anything "more generic" because something like the RSAref
 	 * code may not hook properly, and if you own one of these
 	 * cards then you have the right to do RSA operations on it
-	 * anyway! */ 
+	 * anyway! */
 	meth1 = RSA_PKCS1_SSLeay();
 	cswift_rsa.rsa_pub_enc = meth1->rsa_pub_enc;
 	cswift_rsa.rsa_pub_dec = meth1->rsa_pub_dec;
@@ -355,13 +355,13 @@ static const char *CSWIFT_F4 = "swReleaseAccContext";
 static int get_context(SW_CONTEXT_HANDLE *hac)
 	{
         SW_STATUS status;
- 
+
         status = p_CSwift_AcquireAccContext(hac);
         if(status != SW_OK)
                 return 0;
         return 1;
 	}
- 
+
 /* similarly to release one. */
 static void release_context(SW_CONTEXT_HANDLE hac)
 	{
@@ -500,11 +500,11 @@ static int cswift_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	SW_PARAM sw_param;
 	SW_CONTEXT_HANDLE hac;
 	int to_return, acquired;
- 
+
 	modulus = exponent = argument = result = NULL;
 	to_return = 0; /* expect failure */
 	acquired = 0;
- 
+
 	if(!get_context(&hac))
 		{
 		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP,CSWIFT_R_UNIT_FAILURE);
@@ -624,7 +624,7 @@ static int cswift_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	sw_param.up.crt.dmp1.value = NULL;
 	sw_param.up.crt.dmq1.value = NULL;
 	sw_param.up.crt.iqmp.value = NULL;
- 
+
 	if(!get_context(&hac))
 		{
 		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP_CRT,CSWIFT_R_UNIT_FAILURE);
@@ -737,7 +737,7 @@ err:
 	return to_return;
 	}
 #endif
- 
+
 #ifndef OPENSSL_NO_RSA
 static int cswift_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 	{
@@ -1120,7 +1120,7 @@ static int bind_fn(ENGINE *e, const char *id)
 	if(!bind_helper(e))
 		return 0;
 	return 1;
-	}       
+	}
 IMPLEMENT_DYNAMIC_CHECK_FN()
 IMPLEMENT_DYNAMIC_BIND_FN(bind_fn)
 #endif /* OPENSSL_NO_DYNAMIC_ENGINE */

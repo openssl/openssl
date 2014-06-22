@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -313,7 +313,7 @@ static char *dl_merger(DSO *dso, const char *filespec1, const char *filespec2)
 
 /* This function is identical to the one in dso_dlfcn.c, but as it is highly
  * unlikely that both the "dl" *and* "dlfcn" variants are being compiled at the
- * same time, there's no great duplicating the code. Figuring out an elegant 
+ * same time, there's no great duplicating the code. Figuring out an elegant
  * way to share one copy of the code would be more difficult and would not
  * leave the implementations independent. */
 #if defined(__hpux)
@@ -339,8 +339,8 @@ static char *dl_name_converter(DSO *dso, const char *filename)
 	if(translated == NULL)
 		{
 		DSOerr(DSO_F_DL_NAME_CONVERTER,
-				DSO_R_NAME_TRANSLATION_FAILED); 
-		return(NULL);   
+				DSO_R_NAME_TRANSLATION_FAILED);
+		return(NULL);
 		}
 	if(transform)
 		{

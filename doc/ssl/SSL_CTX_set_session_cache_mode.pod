@@ -26,7 +26,7 @@ SSL_CTX object is being maintained, the sessions are unique for each SSL_CTX
 object.
 
 In order to reuse a session, a client must send the session's id to the
-server. It can only send exactly one id.  The server then either 
+server. It can only send exactly one id.  The server then either
 agrees to reuse the session or it starts a full handshake (to create a new
 session).
 

@@ -60,7 +60,7 @@ certficate is required. In previous versions both had to be present or
 a fatal error is returned.
 
 B<nid_key> or B<nid_cert> can be set to -1 indicating that no encryption
-should be used. 
+should be used.
 
 B<mac_iter> can be set to -1 and the MAC will then be omitted entirely.
 

@@ -1,4 +1,4 @@
- 
+
  INSTALLATION ON THE WIN32 PLATFORM
  ----------------------------------
 
@@ -69,7 +69,7 @@
 
  If all is well it should compile and you will have some DLLs and
  executables in out32dll. If you want to try the tests then do:
- 
+
  > nmake -f ms\ntdll.mak test
 
 
@@ -115,7 +115,7 @@
  Borland C++ builder 3 and 4
  ---------------------------
 
- * Setup PATH. First must be GNU make then bcb4/bin 
+ * Setup PATH. First must be GNU make then bcb4/bin
 
  * Run ms\bcb4.bat
 
@@ -228,7 +228,7 @@
 
     - do as is written in INSTALL.Win32 that comes with modssl:
 
-	$ md c:\openssl 
+	$ md c:\openssl
 	$ md c:\openssl\bin
 	$ md c:\openssl\lib
 	$ md c:\openssl\include

@@ -36,7 +36,7 @@ BIO_ssl_shutdown - SSL BIO
 
 BIO_f_ssl() returns the SSL BIO method. This is a filter BIO which
 is a wrapper round the OpenSSL SSL routines adding a BIO "flavour" to
-SSL I/O. 
+SSL I/O.
 
 I/O performed on an SSL BIO communicates using the SSL protocol with
 the SSLs read and write BIOs. If an SSL connection is not established
@@ -63,7 +63,7 @@ BIO_set_ssl_mode() sets the SSL BIO mode to B<client>. If B<client>
 is 1 client mode is set. If B<client> is 0 server mode is set.
 
 BIO_set_ssl_renegotiate_bytes() sets the renegotiate byte count
-to B<num>. When set after every B<num> bytes of I/O (read and write) 
+to B<num>. When set after every B<num> bytes of I/O (read and write)
 the SSL session is automatically renegotiated. B<num> must be at
 least 512 bytes.
 
@@ -84,7 +84,7 @@ BIO_new_buffer_ssl_connect() creates a new BIO chain consisting
 of a buffering BIO, an SSL BIO (using B<ctx>) and a connect
 BIO.
 
-BIO_ssl_copy_session_id() copies an SSL session id between 
+BIO_ssl_copy_session_id() copies an SSL session id between
 BIO chains B<from> and B<to>. It does this by locating the
 SSL BIOs in each chain and calling SSL_copy_session_id() on
 the internal SSL pointer.
@@ -252,9 +252,9 @@ a client and also echoes the request to standard output.
  /* By doing this when a new connection is established
   * we automatically have sbio inserted into it. The
   * BIO chain is now 'swallowed' by the accept BIO and
-  * will be freed when the accept BIO is freed. 
+  * will be freed when the accept BIO is freed.
   */
- 
+
  BIO_set_accept_bios(acpt,sbio);
 
  out = BIO_new_fp(stdout, BIO_NOCLOSE);

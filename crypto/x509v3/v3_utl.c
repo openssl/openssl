@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -997,7 +997,7 @@ int X509_check_ip_asc(X509 *x, const char *ipasc, unsigned int flags)
 	return do_x509_check(x, ipout, (size_t)iplen, flags, GEN_IPADD);
 	}
 
-/* Convert IP addresses both IPv4 and IPv6 into an 
+/* Convert IP addresses both IPv4 and IPv6 into an
  * OCTET STRING compatible with RFC3280.
  */
 
@@ -1136,7 +1136,7 @@ static int ipv6_from_asc(unsigned char *v6, const char *in)
 		if (v6stat.total != 16)
 			return 0;
 		}
-	else 
+	else
 		{
 		/* If '::' must have less than 16 bytes */
 		if (v6stat.total == 16)
@@ -1157,7 +1157,7 @@ static int ipv6_from_asc(unsigned char *v6, const char *in)
 				&& (v6stat.zero_pos != v6stat.total))
 				return 0;
 			}
-		else 
+		else
 		/* Can only have one zero if *not* start or end */
 			{
 			if ((v6stat.zero_pos == 0)
@@ -1202,7 +1202,7 @@ static int ipv6_cb(const char *elem, int len, void *usr)
 			return 0;
 		s->zero_cnt++;
 		}
-	else 
+	else
 		{
 		/* If more than 4 characters could be final a.b.c.d form */
 		if (len > 4)
@@ -1270,9 +1270,9 @@ int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE)*dn_sk,
 		v=sk_CONF_VALUE_value(dn_sk,i);
 		type=v->name;
 		/* Skip past any leading X. X: X, etc to allow for
-		 * multiple instances 
+		 * multiple instances
 		 */
-		for(p = type; *p ; p++) 
+		for(p = type; *p ; p++)
 #ifndef CHARSET_EBCDIC
 			if ((*p == ':') || (*p == ',') || (*p == '.'))
 #else

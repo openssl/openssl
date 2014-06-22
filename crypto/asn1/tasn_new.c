@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -236,14 +236,14 @@ static void asn1_item_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)
 
 		case ASN1_ITYPE_EXTERN:
 		ef = it->funcs;
-		if (ef && ef->asn1_ex_clear) 
+		if (ef && ef->asn1_ex_clear)
 			ef->asn1_ex_clear(pval, it);
 		else *pval = NULL;
 		break;
 
 
 		case ASN1_ITYPE_PRIMITIVE:
-		if (it->templates) 
+		if (it->templates)
 			asn1_template_clear(pval, it->templates);
 		else
 			asn1_primitive_clear(pval, it);
@@ -311,7 +311,7 @@ int ASN1_template_new(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
 static void asn1_template_clear(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
 	{
 	/* If ADB or STACK just NULL the field */
-	if (tt->flags & (ASN1_TFLG_ADB_MASK|ASN1_TFLG_SK_MASK)) 
+	if (tt->flags & (ASN1_TFLG_ADB_MASK|ASN1_TFLG_SK_MASK))
 		*pval = NULL;
 	else
 		asn1_item_clear(pval, ASN1_ITEM_ptr(tt->item));
@@ -382,7 +382,7 @@ static void asn1_primitive_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)
 		const ASN1_PRIMITIVE_FUNCS *pf = it->funcs;
 		if (pf->prim_clear)
 			pf->prim_clear(pval, it);
-		else 
+		else
 			*pval = NULL;
 		return;
 		}

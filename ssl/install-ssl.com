@@ -97,7 +97,7 @@ $ goto loop_exe
 $ loop_exe_end:
 $!
 $ i = 0
-$ loop_lib: 
+$ loop_lib:
 $   e = f$edit(f$element(i, ",", libs),"trim")
 $   i = i + 1
 $   if e .eqs. "," then goto loop_lib_end

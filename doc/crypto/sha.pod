@@ -46,7 +46,7 @@ used only when backward compatibility is required.
 
 =head1 RETURN VALUES
 
-SHA1() returns a pointer to the hash value. 
+SHA1() returns a pointer to the hash value.
 
 SHA1_Init(), SHA1_Update() and SHA1_Final() return 1 for success, 0 otherwise.
 

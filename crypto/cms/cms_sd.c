@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -646,7 +646,7 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
 	if (CMS_signed_get_attr_count(si) >= 0)
 		{
 		ASN1_OBJECT *ctype =
-			cms->d.signedData->encapContentInfo->eContentType; 
+			cms->d.signedData->encapContentInfo->eContentType;
 		unsigned char md[EVP_MAX_MD_SIZE];
 		unsigned int mdlen;
 		if (!EVP_DigestFinal_ex(&mctx, md, &mdlen))

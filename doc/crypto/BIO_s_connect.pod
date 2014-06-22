@@ -86,7 +86,7 @@ BIO_get_conn_int_port() returns the port as an int.
 BIO_set_nbio() sets the non blocking I/O flag to B<n>. If B<n> is
 zero then blocking I/O is set. If B<n> is 1 then non blocking I/O
 is set. Blocking I/O is the default. The call to BIO_set_nbio()
-should be made before the connection is established because 
+should be made before the connection is established because
 non blocking I/O is set during the connect process.
 
 BIO_new_connect() combines BIO_new() and BIO_set_conn_hostname() into

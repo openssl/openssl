@@ -160,7 +160,7 @@ is S/MIME and it uses the multipart/signed MIME content type.
 
 this option adds plain text (text/plain) MIME headers to the supplied
 message if encrypting or signing. If decrypting or verifying it strips
-off text headers: if the decrypted or verified message is not of MIME 
+off text headers: if the decrypted or verified message is not of MIME
 type text/plain then an error occurs.
 
 =item B<-CAfile file>
@@ -183,7 +183,7 @@ default digest algorithm for the signing key will be used (usually SHA1).
 
 the encryption algorithm to use. For example DES  (56 bits) - B<-des>,
 triple DES (168 bits) - B<-des3>,
-EVP_get_cipherbyname() function) can also be used preceded by a dash, for 
+EVP_get_cipherbyname() function) can also be used preceded by a dash, for
 example B<-aes_128_cbc>. See L<B<enc>|enc(1)> for list of ciphers
 supported by your version of OpenSSL.
 
@@ -278,7 +278,7 @@ all others.
 =item B<cert.pem...>
 
 one or more certificates of message recipients: used when encrypting
-a message. 
+a message.
 
 =item B<-to, -from, -subject>
 
@@ -431,7 +431,7 @@ it with:
  -----BEGIN PKCS7-----
  -----END PKCS7-----
 
-and using the command: 
+and using the command:
 
  openssl smime -verify -inform PEM -in signature.pem -content content.txt
 

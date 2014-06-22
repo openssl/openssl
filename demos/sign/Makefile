@@ -3,7 +3,7 @@ CFLAGS= -g -I../../include -Wall
 LIBS=  -L../.. -lcrypto
 EXAMPLES=sign
 
-all: $(EXAMPLES) 
+all: $(EXAMPLES)
 
 sign: sign.o
 	$(CC) -o sign sign.o $(LIBS)

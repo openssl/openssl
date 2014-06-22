@@ -504,7 +504,7 @@ sub countentry {
 		{
 		print STDERR "WARNING: test file $key found $value times\n" unless $quiet;
 		}
-	else 
+	else
 		{
 		print STDERR "Found test file $key\n" if $debug;
 		}
@@ -609,7 +609,7 @@ sub test_line
 		else
 			{
 			$bufout .= <<END;
-${shwrap}\${TPREFIX}$tcmd "$req" "$rsp" || { echo "$req failure" ; exit 1 
+${shwrap}\${TPREFIX}$tcmd "$req" "$rsp" || { echo "$req failure" ; exit 1
 }
 END
 			$_programs{"${shwrap_prefix}shlib_wrap.sh"} = 1;

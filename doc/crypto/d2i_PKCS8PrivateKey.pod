@@ -41,7 +41,7 @@ corresponding B<PEM> function as described in the L<pem(3)|pem(3)> manual page.
 
 Before using these functions L<OpenSSL_add_all_algorithms(3)|OpenSSL_add_all_algorithms(3)>
 should be called to initialize the internal algorithm lookup tables otherwise errors about
-unknown algorithms will occur if an attempt is made to decrypt a private key. 
+unknown algorithms will occur if an attempt is made to decrypt a private key.
 
 These functions are currently the only way to store encrypted private keys using DER format.
 

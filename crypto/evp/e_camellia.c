@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -188,7 +188,7 @@ static int cmll_t4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 static int cmll_t4_cbc_cipher(EVP_CIPHER_CTX *ctx,unsigned char *out,
 	const unsigned char *in, size_t len);
 
-#define cmll_t4_ecb_cipher camellia_ecb_cipher 
+#define cmll_t4_ecb_cipher camellia_ecb_cipher
 static int cmll_t4_ecb_cipher(EVP_CIPHER_CTX *ctx,unsigned char *out,
 	const unsigned char *in, size_t len);
 
@@ -260,7 +260,7 @@ const EVP_CIPHER *EVP_camellia_##keylen##_##mode(void) \
 	BLOCK_CIPHER_generic(nid,keylen,1,16,ctr,ctr,CTR,flags)
 #endif
 
-/* The subkey for Camellia is generated. */ 
+/* The subkey for Camellia is generated. */
 static int camellia_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	const unsigned char *iv, int enc)
 	{

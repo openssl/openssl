@@ -11,7 +11,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -74,7 +74,7 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
       if (sizeof(TCHAR) != sizeof(char))
 	{
 	  TCHAR *wdir = NULL;
-	  /* len_0 denotes string length *with* trailing 0 */ 
+	  /* len_0 denotes string length *with* trailing 0 */
 	  size_t index = 0,len_0 = strlen(directory) + 1;
 
 	  wdir = (TCHAR *)malloc(len_0 * sizeof(TCHAR));

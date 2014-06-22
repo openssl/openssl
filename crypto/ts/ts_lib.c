@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -75,7 +75,7 @@ int TS_ASN1_INTEGER_print_bio(BIO *bio, const ASN1_INTEGER *num)
 
 	BN_init(&num_bn);
 	ASN1_INTEGER_to_BN(num, &num_bn);
-	if ((hex = BN_bn2hex(&num_bn))) 
+	if ((hex = BN_bn2hex(&num_bn)))
 		{
 		result = BIO_write(bio, "0x", 2) > 0;
 		result = result && BIO_write(bio, hex, strlen(hex)) > 0;
@@ -138,7 +138,7 @@ int TS_MSG_IMPRINT_print_bio(BIO *bio, TS_MSG_IMPRINT *a)
 
 	BIO_printf(bio, "Message data:\n");
 	msg = TS_MSG_IMPRINT_get_msg(a);
-	BIO_dump_indent(bio, (const char *)M_ASN1_STRING_data(msg), 
+	BIO_dump_indent(bio, (const char *)M_ASN1_STRING_data(msg),
 			M_ASN1_STRING_length(msg), 4);
 
 	return 1;

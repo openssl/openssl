@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -93,7 +93,7 @@ int TS_REQ_print_bio(BIO *bio, TS_REQ *a)
 		TS_ASN1_INTEGER_print_bio(bio, nonce);
 	BIO_write(bio, "\n", 1);
 
-	BIO_printf(bio, "Certificate required: %s\n", 
+	BIO_printf(bio, "Certificate required: %s\n",
 		   TS_REQ_get_cert_req(a) ? "yes" : "no");
 
 	TS_ext_print_bio(bio, TS_REQ_get_exts(a));

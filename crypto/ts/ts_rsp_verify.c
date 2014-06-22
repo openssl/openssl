@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -70,15 +70,15 @@ static int TS_check_signing_certs(PKCS7_SIGNER_INFO *si, STACK_OF(X509) *chain);
 static ESS_SIGNING_CERT *ESS_get_signing_cert(PKCS7_SIGNER_INFO *si);
 static int TS_find_cert(STACK_OF(ESS_CERT_ID) *cert_ids, X509 *cert);
 static int TS_issuer_serial_cmp(ESS_ISSUER_SERIAL *is, X509_CINF *cinfo);
-static int int_TS_RESP_verify_token(TS_VERIFY_CTX *ctx, 
+static int int_TS_RESP_verify_token(TS_VERIFY_CTX *ctx,
 				 PKCS7 *token, TS_TST_INFO *tst_info);
 static int TS_check_status_info(TS_RESP *response);
 static char *TS_get_status_text(STACK_OF(ASN1_UTF8STRING) *text);
 static int TS_check_policy(ASN1_OBJECT *req_oid, TS_TST_INFO *tst_info);
 static int TS_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
-			      X509_ALGOR **md_alg, 
+			      X509_ALGOR **md_alg,
 			      unsigned char **imprint, unsigned *imprint_len);
-static int TS_check_imprints(X509_ALGOR *algor_a, 
+static int TS_check_imprints(X509_ALGOR *algor_a,
 			     unsigned char *imprint_a, unsigned len_a,
 			     TS_TST_INFO *tst_info);
 static int TS_check_nonces(const ASN1_INTEGER *a, TS_TST_INFO *tst_info);
@@ -87,7 +87,7 @@ static int TS_find_name(STACK_OF(GENERAL_NAME) *gen_names, GENERAL_NAME *name);
 
 /*
  * Local mapping between response codes and descriptions.
- * Don't forget to change TS_STATUS_BUF_SIZE when modifying 
+ * Don't forget to change TS_STATUS_BUF_SIZE when modifying
  * the elements of this array.
  */
 static const char *TS_status_text[] =
@@ -287,7 +287,7 @@ static int TS_check_signing_certs(PKCS7_SIGNER_INFO *si, STACK_OF(X509) *chain)
 	ret = 1;
  err:
 	if (!ret)
-		TSerr(TS_F_TS_CHECK_SIGNING_CERTS, 
+		TSerr(TS_F_TS_CHECK_SIGNING_CERTS,
 		      TS_R_ESS_SIGNING_CERTIFICATE_ERROR);
 	ESS_SIGNING_CERT_free(ss);
 	return ret;
@@ -297,7 +297,7 @@ static ESS_SIGNING_CERT *ESS_get_signing_cert(PKCS7_SIGNER_INFO *si)
 	{
 	ASN1_TYPE *attr;
 	const unsigned char *p;
-	attr = PKCS7_get_signed_attribute(si, 
+	attr = PKCS7_get_signed_attribute(si,
 					  NID_id_smime_aa_signingCertificate);
 	if (!attr) return NULL;
 	p = attr->value.sequence->data;
@@ -342,7 +342,7 @@ static int TS_issuer_serial_cmp(ESS_ISSUER_SERIAL *is, X509_CINF *cinfo)
 
 	/* Check the issuer first. It must be a directory name. */
 	issuer = sk_GENERAL_NAME_value(is->issuer, 0);
-	if (issuer->type != GEN_DIRNAME 
+	if (issuer->type != GEN_DIRNAME
 	    || X509_NAME_cmp(issuer->d.dirn, cinfo->issuer))
 		return -1;
 
@@ -354,7 +354,7 @@ static int TS_issuer_serial_cmp(ESS_ISSUER_SERIAL *is, X509_CINF *cinfo)
 	}
 
 /*
- * Verifies whether 'response' contains a valid response with regards 
+ * Verifies whether 'response' contains a valid response with regards
  * to the settings of the context:
  *	- Gives an error message if the TS_TST_INFO is not present.
  *	- Calls _TS_RESP_verify_token to verify the token content.
@@ -394,7 +394,7 @@ int TS_RESP_verify_token(TS_VERIFY_CTX *ctx, PKCS7 *token)
 	}
 
 /*
- * Verifies whether the 'token' contains a valid time stamp token 
+ * Verifies whether the 'token' contains a valid time stamp token
  * with regards to the settings of the context. Only those checks are
  * carried out that are specified in the context:
  *	- Verifies the signature of the TS_TST_INFO.
@@ -405,7 +405,7 @@ int TS_RESP_verify_token(TS_VERIFY_CTX *ctx, PKCS7 *token)
  *	- Check if the TSA name matches the signer.
  *	- Check if the TSA name is the expected TSA.
  */
-static int int_TS_RESP_verify_token(TS_VERIFY_CTX *ctx, 
+static int int_TS_RESP_verify_token(TS_VERIFY_CTX *ctx,
 				 PKCS7 *token, TS_TST_INFO *tst_info)
 	{
 	X509 *signer = NULL;
@@ -437,7 +437,7 @@ static int int_TS_RESP_verify_token(TS_VERIFY_CTX *ctx,
 	/* Check message imprints. */
 	if ((ctx->flags & TS_VFY_IMPRINT)
 	    && !TS_check_imprints(ctx->md_alg, ctx->imprint, ctx->imprint_len,
-				  tst_info)) 
+				  tst_info))
 		goto err;
 
 	/* Compute and check message imprints. */
@@ -523,7 +523,7 @@ static int TS_check_status_info(TS_RESP *response)
 	TSerr(TS_F_TS_CHECK_STATUS_INFO, TS_R_NO_TIME_STAMP_TOKEN);
 	ERR_add_error_data(6,
 			   "status code: ", status_text,
-			   ", status text: ", embedded_status_text ? 
+			   ", status text: ", embedded_status_text ?
 			   embedded_status_text : "unspecified",
 			   ", failure codes: ", failure_text);
 	OPENSSL_free(embedded_status_text);
@@ -580,7 +580,7 @@ static int TS_check_policy(ASN1_OBJECT *req_oid, TS_TST_INFO *tst_info)
 	}
 
 static int TS_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
-			      X509_ALGOR **md_alg, 
+			      X509_ALGOR **md_alg,
 			      unsigned char **imprint, unsigned *imprint_len)
 	{
 	TS_MSG_IMPRINT *msg_imprint = TS_TST_INFO_get_msg_imprint(tst_info);
@@ -608,7 +608,7 @@ static int TS_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
 	if (length < 0)
 	    goto err;
 	*imprint_len = length;
-	if (!(*imprint = OPENSSL_malloc(*imprint_len))) 
+	if (!(*imprint = OPENSSL_malloc(*imprint_len)))
 		{
 		TSerr(TS_F_TS_COMPUTE_IMPRINT, ERR_R_MALLOC_FAILURE);
 		goto err;
@@ -633,7 +633,7 @@ static int TS_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
 	return 0;
 	}
 
-static int TS_check_imprints(X509_ALGOR *algor_a, 
+static int TS_check_imprints(X509_ALGOR *algor_a,
 			     unsigned char *imprint_a, unsigned len_a,
 			     TS_TST_INFO *tst_info)
 	{
@@ -648,7 +648,7 @@ static int TS_check_imprints(X509_ALGOR *algor_a,
 		if (OBJ_cmp(algor_a->algorithm, algor_b->algorithm)) goto err;
 
 		/* The parameter must be NULL in both. */
-		if ((algor_a->parameter 
+		if ((algor_a->parameter
 		     && ASN1_TYPE_get(algor_a->parameter) != V_ASN1_NULL)
 		    || (algor_b->parameter
 			&& ASN1_TYPE_get(algor_b->parameter) != V_ASN1_NULL))
@@ -694,7 +694,7 @@ static int TS_check_signer_name(GENERAL_NAME *tsa_name, X509 *signer)
 	int found = 0;
 
 	/* Check the subject name first. */
-	if (tsa_name->type == GEN_DIRNAME 
+	if (tsa_name->type == GEN_DIRNAME
 	    && X509_name_cmp(tsa_name->d.dirn, signer->cert_info->subject) == 0)
 		return 1;
 

@@ -1,5 +1,5 @@
 /* This header declares the necessary definitions for using the exponentiation
- * acceleration capabilities, and rnd number generation of the AEP card. 
+ * acceleration capabilities, and rnd number generation of the AEP card.
  *
  */
 
@@ -118,7 +118,7 @@ typedef AEP_U32					AEP_CONNECTION_HNDL;
 /*Pointer to an AEP connection handle*/
 typedef AEP_CONNECTION_HNDL 	*AEP_CONNECTION_HNDL_PTR;
 
-/*Used by an application (in conjunction with the apps process id) to 
+/*Used by an application (in conjunction with the apps process id) to
 identify an individual transaction*/
 typedef AEP_U32					AEP_TRANSACTION_ID;
 

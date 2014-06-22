@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -91,7 +91,7 @@ typedef struct ec_pre_comp_st {
 	size_t num;            /* numblocks * 2^(w-1) */
 	int references;
 } EC_PRE_COMP;
- 
+
 /* functions to manage EC_PRE_COMP within the EC_GROUP extra_data framework */
 static void *ec_pre_comp_dup(void *);
 static void ec_pre_comp_free(void *);
@@ -447,7 +447,7 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	wNAF_len = OPENSSL_malloc(totalnum * sizeof wNAF_len[0]);
 	wNAF     = OPENSSL_malloc((totalnum + 1) * sizeof wNAF[0]); /* includes space for pivot */
 	val_sub  = OPENSSL_malloc(totalnum * sizeof val_sub[0]);
-		 
+		
 	if (!wsize || !wNAF_len || !wNAF || !val_sub)
 		{
 		ECerr(EC_F_EC_WNAF_MUL, ERR_R_MALLOC_FAILURE);
@@ -668,7 +668,7 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 				int digit = wNAF[i][k];
 				int is_neg;
 
-				if (digit) 
+				if (digit)
 					{
 					is_neg = digit < 0;
 
@@ -748,7 +748,7 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 /* ec_wNAF_precompute_mult()
  * creates an EC_PRE_COMP object with preprecomputed multiples of the generator
  * for use with wNAF splitting as implemented in ec_wNAF_mul().
- * 
+ *
  * 'pre_comp->points' is an array of multiples of the generator
  * of the following form:
  * points[0] =     generator;

@@ -5,21 +5,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -63,7 +63,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -110,7 +110,7 @@
  */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
- * ECC cipher suite support in OpenSSL originally developed by 
+ * ECC cipher suite support in OpenSSL originally developed by
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
 /* ====================================================================
@@ -493,8 +493,8 @@ err:
 
 #define SCT_EXT_TYPE 18
 
-/* WARNING : below extension types are *NOT* IETF assigned, and 
-   could conflict if these types are reassigned and handled 
+/* WARNING : below extension types are *NOT* IETF assigned, and
+   could conflict if these types are reassigned and handled
    specially by OpenSSL in the future */
 #define TACK_EXT_TYPE 62208
 #define CUSTOM_EXT_TYPE_0 1000
@@ -532,7 +532,7 @@ int suppdata = 0;
 int suppdata_error = 0;
 
 static int serverinfo_cli_cb(SSL* s, unsigned short ext_type,
-			     const unsigned char* in, unsigned short inlen, 
+			     const unsigned char* in, unsigned short inlen,
 			     int* al, void* arg)
 	{
 	if (ext_type == SCT_EXT_TYPE)
@@ -943,7 +943,7 @@ static void print_details(SSL *c_ssl, const char *prefix)
 		EVP_PKEY *pkey = X509_get_pubkey(cert);
 		if (pkey != NULL)
 			{
-			if (0) 
+			if (0)
 				;
 #ifndef OPENSSL_NO_RSA
 			else if (pkey->type == EVP_PKEY_RSA && pkey->pkey.rsa != NULL
@@ -1478,7 +1478,7 @@ bad:
 #if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
 	if (ssl2)
 		meth=SSLv2_method();
-	else 
+	else
 	if (tls1)
 		meth=TLSv1_method();
 	else
@@ -1703,7 +1703,7 @@ bad:
 #endif
 
 	if (serverinfo_sct)
-		SSL_CTX_set_custom_cli_ext(c_ctx, SCT_EXT_TYPE, NULL, 
+		SSL_CTX_set_custom_cli_ext(c_ctx, SCT_EXT_TYPE, NULL,
 					   serverinfo_cli_cb, NULL);
 	if (serverinfo_tack)
 		SSL_CTX_set_custom_cli_ext(c_ctx, TACK_EXT_TYPE, NULL,
@@ -1718,31 +1718,31 @@ bad:
 
 	if (custom_ext)
 		{
-		SSL_CTX_set_custom_cli_ext(c_ctx, CUSTOM_EXT_TYPE_0, 
-					   custom_ext_0_cli_first_cb, 
+		SSL_CTX_set_custom_cli_ext(c_ctx, CUSTOM_EXT_TYPE_0,
+					   custom_ext_0_cli_first_cb,
 					   custom_ext_0_cli_second_cb, NULL);
-		SSL_CTX_set_custom_cli_ext(c_ctx, CUSTOM_EXT_TYPE_1, 
-					   custom_ext_1_cli_first_cb, 
+		SSL_CTX_set_custom_cli_ext(c_ctx, CUSTOM_EXT_TYPE_1,
+					   custom_ext_1_cli_first_cb,
 					   custom_ext_1_cli_second_cb, NULL);
-		SSL_CTX_set_custom_cli_ext(c_ctx, CUSTOM_EXT_TYPE_2, 
-					   custom_ext_2_cli_first_cb, 
+		SSL_CTX_set_custom_cli_ext(c_ctx, CUSTOM_EXT_TYPE_2,
+					   custom_ext_2_cli_first_cb,
 					   custom_ext_2_cli_second_cb, NULL);
-		SSL_CTX_set_custom_cli_ext(c_ctx, CUSTOM_EXT_TYPE_3, 
-					   custom_ext_3_cli_first_cb, 
+		SSL_CTX_set_custom_cli_ext(c_ctx, CUSTOM_EXT_TYPE_3,
+					   custom_ext_3_cli_first_cb,
 					   custom_ext_3_cli_second_cb, NULL);
 
 
-		SSL_CTX_set_custom_srv_ext(s_ctx, CUSTOM_EXT_TYPE_0, 
-					   custom_ext_0_srv_first_cb, 
+		SSL_CTX_set_custom_srv_ext(s_ctx, CUSTOM_EXT_TYPE_0,
+					   custom_ext_0_srv_first_cb,
 					   custom_ext_0_srv_second_cb, NULL);
-		SSL_CTX_set_custom_srv_ext(s_ctx, CUSTOM_EXT_TYPE_1, 
-					   custom_ext_1_srv_first_cb, 
+		SSL_CTX_set_custom_srv_ext(s_ctx, CUSTOM_EXT_TYPE_1,
+					   custom_ext_1_srv_first_cb,
 					   custom_ext_1_srv_second_cb, NULL);
-		SSL_CTX_set_custom_srv_ext(s_ctx, CUSTOM_EXT_TYPE_2, 
-					   custom_ext_2_srv_first_cb, 
+		SSL_CTX_set_custom_srv_ext(s_ctx, CUSTOM_EXT_TYPE_2,
+					   custom_ext_2_srv_first_cb,
 					   custom_ext_2_srv_second_cb, NULL);
-		SSL_CTX_set_custom_srv_ext(s_ctx, CUSTOM_EXT_TYPE_3, 
-					   custom_ext_3_srv_first_cb, 
+		SSL_CTX_set_custom_srv_ext(s_ctx, CUSTOM_EXT_TYPE_3,
+					   custom_ext_3_srv_first_cb,
 					   custom_ext_3_srv_second_cb, NULL);
 		}
 
@@ -3263,7 +3263,7 @@ static int psk_key2bn(const char *pskkey, unsigned char *psk,
 	ret = BN_hex2bn(&bn, pskkey);
 	if (!ret)
 		{
-		BIO_printf(bio_err,"Could not convert PSK key '%s' to BIGNUM\n", pskkey); 
+		BIO_printf(bio_err,"Could not convert PSK key '%s' to BIGNUM\n", pskkey);
 		if (bn)
 			BN_free(bn);
 		return 0;

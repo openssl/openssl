@@ -11,7 +11,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -96,7 +96,7 @@
 static int hwcrhk_destroy(ENGINE *e);
 static int hwcrhk_init(ENGINE *e);
 static int hwcrhk_finish(ENGINE *e);
-static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void)); 
+static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void));
 
 /* Functions to handle mutexes */
 static int hwcrhk_mutex_init(HWCryptoHook_Mutex*, HWCryptoHook_CallerContext*);
@@ -227,7 +227,7 @@ static RAND_METHOD hwcrhk_rand =
 /* Constants used when creating the ENGINE */
 static const char *engine_hwcrhk_id = "chil";
 static const char *engine_hwcrhk_name = "CHIL hardware engine support";
-#ifndef OPENSSL_NO_DYNAMIC_ENGINE 
+#ifndef OPENSSL_NO_DYNAMIC_ENGINE
 /* Compatibility hack, the dynamic library uses this form in the path */
 static const char *engine_hwcrhk_id_alt = "ncipher";
 #endif
@@ -365,7 +365,7 @@ static int bind_helper(ENGINE *e)
 	 * anything "more generic" because something like the RSAref
 	 * code may not hook properly, and if you own one of these
 	 * cards then you have the right to do RSA operations on it
-	 * anyway! */ 
+	 * anyway! */
 	meth1 = RSA_PKCS1_SSLeay();
 	hwcrhk_rsa.rsa_pub_enc = meth1->rsa_pub_enc;
 	hwcrhk_rsa.rsa_pub_dec = meth1->rsa_pub_dec;
@@ -491,7 +491,7 @@ static int get_context(HWCryptoHook_ContextHandle *hac,
                 return 0;
         return 1;
 	}
- 
+
 /* similarly to release one. */
 static void release_context(HWCryptoHook_ContextHandle hac)
 	{
@@ -902,7 +902,7 @@ static int hwcrhk_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	   thing we need to make sure of is that enough space is allocated. */
 	HWCryptoHook_MPI m_a, m_p, m_n, m_r;
 	int to_return, ret;
- 
+
 	to_return = 0; /* expect failure */
 	rmsg.buf = tempbuf;
 	rmsg.size = sizeof(tempbuf);
@@ -948,7 +948,7 @@ err:
 	return to_return;
 	}
 
-#ifndef OPENSSL_NO_RSA 
+#ifndef OPENSSL_NO_RSA
 static int hwcrhk_rsa_mod_exp(BIGNUM *r, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 	{
 	char tempbuf[1024];
@@ -1337,7 +1337,7 @@ static void hwcrhk_log_message(void *logstr, const char *message)
 	}
 
 /* This stuff is needed if this ENGINE is being compiled into a self-contained
- * shared-library. */	   
+ * shared-library. */	
 #ifndef OPENSSL_NO_DYNAMIC_ENGINE
 static int bind_fn(ENGINE *e, const char *id)
 	{
@@ -1347,7 +1347,7 @@ static int bind_fn(ENGINE *e, const char *id)
 	if(!bind_helper(e))
 		return 0;
 	return 1;
-	}       
+	}
 IMPLEMENT_DYNAMIC_CHECK_FN()
 IMPLEMENT_DYNAMIC_BIND_FN(bind_fn)
 #endif /* OPENSSL_NO_DYNAMIC_ENGINE */

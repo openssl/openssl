@@ -1,6 +1,6 @@
 /* crypto/ec/ecp_oct.c */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
- * for the OpenSSL project. 
+ * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
 */
 /* ====================================================================
@@ -11,7 +11,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in

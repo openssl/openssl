@@ -1,8 +1,8 @@
-An initial review of the OpenSSL code was done to determine how many 
-global variables where present.  The idea was to determine the amount of 
-work required to pull the globals into an instance data structure in 
-order to build a Library NLM for NetWare.  This file contains the results 
-of the review.  Each file is listed along with the globals in the file.  
+An initial review of the OpenSSL code was done to determine how many
+global variables where present.  The idea was to determine the amount of
+work required to pull the globals into an instance data structure in
+order to build a Library NLM for NetWare.  This file contains the results
+of the review.  Each file is listed along with the globals in the file.
 The initial review was done very quickly so this list is probably
 not a comprehensive list.
 

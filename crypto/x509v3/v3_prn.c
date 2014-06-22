@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -168,7 +168,7 @@ int X509V3_extensions_print(BIO *bp, char *title, STACK_OF(X509_EXTENSION) *exts
 
 	if(sk_X509_EXTENSION_num(exts) <= 0) return 1;
 
-	if(title) 
+	if(title)
 		{
 		BIO_printf(bp,"%*s%s:\n",indent, "", title);
 		indent += 4;

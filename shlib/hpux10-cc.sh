@@ -2,7 +2,7 @@
 #
 # Run this script from the OpenSSL root directory:
 # sh shlib/hpux10-cc.sh
-# 
+#
 # HP-UX (10.20) shared library installation:
 # Compile and install OpenSSL with best possible optimization:
 # - shared libraries are compiled and installed with +O4 optimization

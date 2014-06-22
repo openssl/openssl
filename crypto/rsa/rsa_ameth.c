@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -315,7 +315,7 @@ static RSA_PSS_PARAMS *rsa_pss_decode(const X509_ALGOR *alg,
 	return pss;
 	}
 
-static int rsa_pss_param_print(BIO *bp, RSA_PSS_PARAMS *pss, 
+static int rsa_pss_param_print(BIO *bp, RSA_PSS_PARAMS *pss,
 				X509_ALGOR *maskHash, int indent)
 	{
 	int rv = 0;
@@ -723,8 +723,8 @@ static int rsa_cms_verify(CMS_SignerInfo *si)
 	return 0;
 	}
 
-/* Customised RSA item verification routine. This is called 
- * when a signature is encountered requiring special handling. We 
+/* Customised RSA item verification routine. This is called
+ * when a signature is encountered requiring special handling. We
  * currently only handle PSS.
  */
 
@@ -774,7 +774,7 @@ static int rsa_cms_sign(CMS_SignerInfo *si)
 	}
 
 static int rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
-				X509_ALGOR *alg1, X509_ALGOR *alg2, 
+				X509_ALGOR *alg1, X509_ALGOR *alg2,
 				ASN1_BIT_STRING *sig)
 	{
 	int pad_mode;
@@ -977,7 +977,7 @@ static int rsa_cms_encrypt(CMS_RecipientInfo *ri)
 	return rv;
 	}
 
-const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[] = 
+const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[] =
 	{
 		{
 		EVP_PKEY_RSA,

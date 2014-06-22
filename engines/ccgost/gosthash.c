@@ -12,7 +12,7 @@
 #include "gosthash.h"
 
 
-/* Use OPENSSL_malloc for memory allocation if compiled with 
+/* Use OPENSSL_malloc for memory allocation if compiled with
  * -DOPENSSL_BUILD, and libc malloc otherwise
  */
 #ifndef MYALLOC
@@ -27,17 +27,17 @@
 #endif
 /* Following functions are various bit meshing routines used in
  * GOST R 34.11-94 algorithms */
-static void swap_bytes (byte *w, byte *k) 
+static void swap_bytes (byte *w, byte *k)
 	{
 	int i,j;
 	for (i=0;i<4;i++)	
-		for (j=0;j<8;j++) 
+		for (j=0;j<8;j++)
 			k[i+4*j]=w[8*i+j];
 
 	}
 
 /* was A_A */
-static void circle_xor8 (const byte *w, byte *k) 
+static void circle_xor8 (const byte *w, byte *k)
 	{
 	byte buf[8];
 	int i;
@@ -48,7 +48,7 @@ static void circle_xor8 (const byte *w, byte *k)
 	}
 
 /* was R_R */
-static void transform_3 (byte *data) 
+static void transform_3 (byte *data)
 	{
 	unsigned short int acc;
 	acc=(data[0]^data[2]^data[4]^data[6]^data[24]^data[30])|
@@ -59,19 +59,19 @@ static void transform_3 (byte *data)
 	}
 
 /* Adds blocks of N bytes modulo 2**(8*n). Returns carry*/
-static int add_blocks(int n,byte *left, const byte *right) 
+static int add_blocks(int n,byte *left, const byte *right)
 	{
 	int i;
 	int carry=0;
 	int sum;
-	for (i=0;i<n;i++) 
+	for (i=0;i<n;i++)
 		{
 	   	sum=(int)left[i]+(int)right[i]+carry;
 		left[i]=sum & 0xff;
 		carry=sum>>8;
 		}
 	return carry;
-	} 
+	}
 
 /* Xor two sequences of bytes */
 static void xor_blocks (byte *result,const byte *a,const byte *b,size_t len)
@@ -80,11 +80,11 @@ static void xor_blocks (byte *result,const byte *a,const byte *b,size_t len)
 	for (i=0;i<len;i++) result[i]=a[i]^b[i];
 	}	
 
-/* 
- * 	Calculate H(i+1) = Hash(Hi,Mi) 
+/*
+ * 	Calculate H(i+1) = Hash(Hi,Mi)
  * 	Where H and M are 32 bytes long
  */
-static int hash_step(gost_ctx *c,byte *H,const byte *M) 
+static int hash_step(gost_ctx *c,byte *H,const byte *M)
 	{
 	byte U[32],W[32],V[32],S[32],Key[32];
 	int i;
@@ -121,12 +121,12 @@ static int hash_step(gost_ctx *c,byte *H,const byte *M)
 	swap_bytes(W,Key);
 	/* Encrypt last 8 bytes with fourth key */
 	gost_enc_with_key(c,Key,H+24,S+24);
-	for (i=0;i<12;i++) 
+	for (i=0;i<12;i++)
 		transform_3(S);
 	xor_blocks(S,S,M,32);
 	transform_3(S);
 	xor_blocks(S,S,H,32);
-	for (i=0;i<61;i++) 
+	for (i=0;i<61;i++)
 		transform_3(S);
 	memcpy(H,S,32);
 	return 1;
@@ -152,8 +152,8 @@ int init_gost_hash_ctx(gost_hash_ctx *ctx, const gost_subst_block *subst_block)
  * if cipher ctx is statically allocated as in OpenSSL implementation of
  * GOST hash algroritm
  *
- */ 
-void done_gost_hash_ctx(gost_hash_ctx *ctx) 
+ */
+void done_gost_hash_ctx(gost_hash_ctx *ctx)
 	{
 	/* No need to use gost_destroy, because cipher keys are not really
 	 * secret when hashing */
@@ -221,7 +221,7 @@ int hash_block(gost_hash_ctx *ctx,const byte *block, size_t length)
  * Compute hash value from current state of ctx
  * state of hash ctx becomes invalid and cannot be used for further
  * hashing.
- */ 
+ */
 int finish_hash(gost_hash_ctx *ctx,byte *hashval)
 	{
 	byte buf[32];

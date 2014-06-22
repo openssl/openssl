@@ -59,10 +59,10 @@ OPENSSLDIR=/usr/local/ssl
 
 CC= cc
 CFLAG= -O
-DEPFLAG= 
-PEX_LIBS= 
-EX_LIBS= 
-EXE_EXT= 
+DEPFLAG=
+PEX_LIBS=
+EX_LIBS=
+EXE_EXT=
 ARFLAGS=
 AR=ar $(ARFLAGS) r
 RANLIB= ranlib
@@ -86,7 +86,7 @@ ASFLAG=$(CFLAG)
 PROCESSOR=
 
 # CPUID module collects small commonly used assembler snippets
-CPUID_OBJ= 
+CPUID_OBJ=
 BN_ASM= bn_asm.o
 DES_ENC= des_enc.o fcrypt_b.o
 AES_ENC= aes_core.o aes_cbc.o
@@ -94,9 +94,9 @@ BF_ENC= bf_enc.o
 CAST_ENC= c_enc.o
 RC4_ENC= rc4_enc.o
 RC5_ENC= rc5_enc.o
-MD5_ASM_OBJ= 
-SHA1_ASM_OBJ= 
-RMD160_ASM_OBJ= 
+MD5_ASM_OBJ=
+SHA1_ASM_OBJ=
+RMD160_ASM_OBJ=
 WP_ASM_OBJ=
 CMLL_ENC=
 MODES_ASM_OBJ=
@@ -140,9 +140,9 @@ FIPSCANLIB=
 
 BASEADDR=
 
-DIRS=   crypto fips test 
+DIRS=   crypto fips test
 ENGDIRS= ccgost
-SHLIBDIRS= crypto 
+SHLIBDIRS= crypto
 
 # dirs in crypto to build
 SDIRS=  \
@@ -176,7 +176,7 @@ TOP=    .
 ONEDIRS=out tmp
 EDIRS=  times doc bugs util include certs ms shlib mt demos perl sf dep VMS
 WDIRS=  windows
-LIBS=   
+LIBS=
 SHARED_CRYPTO=libcrypto$(SHLIB_EXT)
 SHARED_SSL=libssl$(SHLIB_EXT)
 SHARED_LIBS=
@@ -613,7 +613,7 @@ tar-snap:
 	      --prefix=openssl-$(VERSION) - > ../$(TARFILE);\
 	ls -l ../$(TARFILE)
 
-dist:   
+dist:
 	$(PERL) Configure dist fipscanisteronly
 	@$(MAKE) dist_pem_h
 	@$(MAKE) SDIRS='$(SDIRS)' clean

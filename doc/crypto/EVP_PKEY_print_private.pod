@@ -28,7 +28,7 @@ be used.
 
 =head1 NOTES
 
-Currently no public key algorithms include any options in the B<pctx> parameter 
+Currently no public key algorithms include any options in the B<pctx> parameter
 parameter.
 
 If the key does not include all the components indicated by the function then
@@ -44,7 +44,7 @@ the public key algorithm.
 =head1 SEE ALSO
 
 L<EVP_PKEY_CTX_new(3)|EVP_PKEY_CTX_new(3)>,
-L<EVP_PKEY_keygen(3)|EVP_PKEY_keygen(3)> 
+L<EVP_PKEY_keygen(3)|EVP_PKEY_keygen(3)>
 
 =head1 HISTORY
 

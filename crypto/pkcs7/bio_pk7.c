@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -63,7 +63,7 @@
 
 /* Streaming encode support for PKCS#7 */
 
-BIO *BIO_new_PKCS7(BIO *out, PKCS7 *p7) 
+BIO *BIO_new_PKCS7(BIO *out, PKCS7 *p7)
 	{
 	return BIO_new_NDEF(out, (ASN1_VALUE *)p7, ASN1_ITEM_rptr(PKCS7));
 	}

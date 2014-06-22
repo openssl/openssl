@@ -436,7 +436,7 @@ for (;;)
  		{ $engines.=$val }
 
 	if ($key eq "FIPS_EX_OBJ")
-		{ 
+		{
 		$fips_ex_obj=&var_add("crypto",$val,0);
 		}
 
@@ -704,7 +704,7 @@ CRYPTO=$crypto
 # ENG_D  - dynamic engine output directory
 # Note: if you change these point to different directories then uncomment out
 # the lines around the 'NB' comment below.
-# 
+#
 BIN_D=\$(OUT_D)
 TEST_D=\$(OUT_D)
 LIB_D=\$(OUT_D)
@@ -918,7 +918,7 @@ foreach (values %lib_nam)
 
 	if (($_ eq "SSL") && $no_ssl2 && $no_ssl3)
 		{
-		$rules.="\$(O_SSL):\n\n"; 
+		$rules.="\$(O_SSL):\n\n";
 		next;
 		}
 
@@ -949,7 +949,7 @@ foreach (split(/\s+/,$test))
 	# Check to see if test program is FIPS
 	if ($fips && /fips/)
 		{
-		# If fips perform static link to 
+		# If fips perform static link to
 		# $(O_FIPSCANISTER)
 		$t_libs = "\$(O_FIPSCANISTER)";
 		$ltype = 2;
@@ -1167,7 +1167,7 @@ sub do_defs
 	local(*OUT,$tmp,$t);
 
 	$files =~ s/\//$o/g if $o ne '/';
-	$ret="$var="; 
+	$ret="$var=";
 	$n=1;
 	$Vars{$var}.="";
 	foreach (split(/ /,$files))
@@ -1414,7 +1414,7 @@ sub read_options
 		"no-ripemd" => \$no_ripemd,
 		"no-mdc2" => \$no_mdc2,
 		"no-whirlpool" => \$no_whirlpool,
-		"no-patents" => 
+		"no-patents" =>
 			[\$no_rc2, \$no_rc4, \$no_rc5, \$no_idea, \$no_rsa],
 		"no-rsa" => \$no_rsa,
 		"no-dsa" => \$no_dsa,
@@ -1548,7 +1548,7 @@ sub fipslib_error
 	{
 	print STDERR "***FIPS module directory sanity check failed***\n";
 	print STDERR "FIPS module build failed, or was deleted\n";
-	print STDERR "Please rebuild FIPS module.\n"; 
+	print STDERR "Please rebuild FIPS module.\n";
 	exit 1;
 	}
 

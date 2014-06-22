@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -81,7 +81,7 @@ struct conf_module_st
 	/* Name of the module */
 	char *name;
 	/* Init function */
-	conf_init_func *init; 
+	conf_init_func *init;
 	/* Finish function */
 	conf_finish_func *finish;
 	/* Number of successfully initialized modules */
@@ -329,7 +329,7 @@ static CONF_MODULE *module_find(char *name)
 
 	if (p)
 		nchar = p - name;
-	else 
+	else
 		nchar = strlen(name);
 
 	for (i = 0; i < sk_CONF_MODULE_num(supported_modules); i++)
@@ -479,7 +479,7 @@ static void module_finish(CONF_IMODULE *imod)
 
 /* Add a static module to OpenSSL */
 
-int CONF_module_add(const char *name, conf_init_func *ifunc, 
+int CONF_module_add(const char *name, conf_init_func *ifunc,
 		    conf_finish_func *ffunc)
 	{
 	if (module_add(NULL, name, ifunc, ffunc))
@@ -549,7 +549,7 @@ char *CONF_get1_default_config_file(void)
 	int len;
 
 	file = getenv("OPENSSL_CONF");
-	if (file) 
+	if (file)
 		return BUF_strdup(file);
 
 	len = strlen(X509_get_default_cert_area());
@@ -604,7 +604,7 @@ int CONF_parse_list(const char *list_, int sep, int nospc,
 			{
 			if (p)
 				tmpend = p - 1;
-			else 
+			else
 				tmpend = lstart + strlen(lstart) - 1;
 			if (nospc)
 				{

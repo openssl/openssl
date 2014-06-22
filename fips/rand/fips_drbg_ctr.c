@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -299,7 +299,7 @@ static int drbg_ctr_instantiate(DRBG_CTX *dctx,
 	return 1;
 	}
 
-static int drbg_ctr_reseed(DRBG_CTX *dctx, 
+static int drbg_ctr_reseed(DRBG_CTX *dctx,
 			const unsigned char *ent, size_t entlen,
 			const unsigned char *adin, size_t adinlen)
 	{
@@ -406,7 +406,7 @@ int fips_drbg_ctr_init(DRBG_CTX *dctx)
 			0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,
 			0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,
 			0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,
-			0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f 
+			0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f
 			};
 		/* Set key schedule for df_key */
 		AES_set_encrypt_key(df_key, dctx->strength, &cctx->df_ks);

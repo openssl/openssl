@@ -2,7 +2,7 @@ HP-UX A.09.05 9000/712
 
 SSLeay 0.6.6 14-Jan-1997
 built on Tue Jan 14 16:36:31 WET 1997
-options:bn(32,32) md2(int) rc4(ptr,int) des(ptr,risc1,16,long) idea(int) 
+options:bn(32,32) md2(int) rc4(ptr,int) des(ptr,risc1,16,long) idea(int)
 blowfish(idx)
 C flags:cc -DB_ENDIAN -D_HPUX_SOURCE -Aa +ESlit +O2 -Wl,-a,archive
 The 'numbers' are in 1000s of bytes per second processed.
@@ -24,7 +24,7 @@ rsa 4096 bits  20.790s
 
 SSLeay 0.6.6 14-Jan-1997
 built on Tue Jan 14 15:37:30 WET 1997
-options:bn(64,32) md2(int) rc4(ptr,int) des(ptr,risc1,16,long) idea(int) 
+options:bn(64,32) md2(int) rc4(ptr,int) des(ptr,risc1,16,long) idea(int)
 blowfish(idx)
 C flags:gcc -DB_ENDIAN -O3
 The 'numbers' are in 1000s of bytes per second processed.

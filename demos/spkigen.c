@@ -1,6 +1,6 @@
 /* NOCW */
 /* demos/spkigen.c
- * 18-Mar-1997 - eay - A quick hack :-) 
+ * 18-Mar-1997 - eay - A quick hack :-)
  * 		version 1.1, it would probably help to save or load the
  *		private key :-)
  */
@@ -38,7 +38,7 @@ char *argv[];
 	FILE *fp;
 
 	pkey=EVP_PKEY_new();
-	 
+	
 	if (argc < 2)
 		{
 		/* Generate an RSA key, the random state should have been seeded
@@ -107,7 +107,7 @@ char *key;
 	return(1);
 	}
 
-/* While I have a 
+/* While I have a
  * X509_set_pubkey() and X509_REQ_set_pubkey(), SPKI_set_pubkey() does
  * not currently exist so here is a version of it.
  * The next SSLeay release will probably have

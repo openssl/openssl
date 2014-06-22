@@ -616,7 +616,7 @@ int AES_set_decrypt_key(const unsigned char *userKey, const int bits,
 			rk[j] = tpe ^ ROTATE(tpd,16) ^
 				ROTATE(tp9,8) ^ ROTATE(tpb,24);
 #else
-			rk[j] = tpe ^ (tpd >> 16) ^ (tpd << 16) ^ 
+			rk[j] = tpe ^ (tpd >> 16) ^ (tpd << 16) ^
 				(tp9 >> 24) ^ (tp9 << 8) ^
 				(tpb >> 8) ^ (tpb << 24);
 #endif
@@ -902,7 +902,7 @@ void AES_decrypt(const unsigned char *in, unsigned char *out,
 		Td4[(s1 >> 16) & 0xff] << 16 ^
 		Td4[(s0 >> 24)       ] << 24;
 
-	/* now do the linear transform using words */ 
+	/* now do the linear transform using words */
 	{	int i;
 		u32 tp1, tp2, tp4, tp8, tp9, tpb, tpd, tpe, m;
 
@@ -925,7 +925,7 @@ void AES_decrypt(const unsigned char *in, unsigned char *out,
 			t[i] = tpe ^ ROTATE(tpd,16) ^
 				ROTATE(tp9,8) ^ ROTATE(tpb,24);
 #else
-			t[i] = tpe ^ (tpd >> 16) ^ (tpd << 16) ^ 
+			t[i] = tpe ^ (tpd >> 16) ^ (tpd << 16) ^
 				(tp9 >> 24) ^ (tp9 << 8) ^
 				(tpb >> 8) ^ (tpb << 24);
 #endif
@@ -978,7 +978,7 @@ void AES_decrypt(const unsigned char *in, unsigned char *out,
 		Td4[(s1 >> 16) & 0xff] << 16 ^
 		Td4[(s0 >> 24)       ] << 24;
 
-	/* now do the linear transform using words */ 
+	/* now do the linear transform using words */
 	{	int i;
 		u32 tp1, tp2, tp4, tp8, tp9, tpb, tpd, tpe, m;
 
@@ -1001,7 +1001,7 @@ void AES_decrypt(const unsigned char *in, unsigned char *out,
 			t[i] = tpe ^ ROTATE(tpd,16) ^
 				ROTATE(tp9,8) ^ ROTATE(tpb,24);
 #else
-			t[i] = tpe ^ (tpd >> 16) ^ (tpd << 16) ^ 
+			t[i] = tpe ^ (tpd >> 16) ^ (tpd << 16) ^
 				(tp9 >> 24) ^ (tp9 << 8) ^
 				(tpb >> 8) ^ (tpb << 24);
 #endif

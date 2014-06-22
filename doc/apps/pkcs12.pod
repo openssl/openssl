@@ -322,7 +322,7 @@ Output only client certificates to a file:
  openssl pkcs12 -in file.p12 -clcerts -out file.pem
 
 Don't encrypt the private key:
- 
+
  openssl pkcs12 -in file.p12 -out file.pem -nodes
 
 Print some info about a PKCS#12 file:

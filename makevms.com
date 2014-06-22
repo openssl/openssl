@@ -84,7 +84,7 @@ $ DEF_ORIG = F$ENVIRONMENT( "DEFAULT")
 $ ON ERROR THEN GOTO TIDY
 $ ON CONTROL_C THEN GOTO TIDY
 $!
-$! Check if we're in a batch job, and make sure we get to 
+$! Check if we're in a batch job, and make sure we get to
 $! the directory this script is in
 $!
 $ IF F$MODE() .EQS. "BATCH"
@@ -640,7 +640,7 @@ $ then
 $   if (CFLAGS .nes. "") then CFLAGS = CFLAGS+ " "
 $   CFLAGS = CFLAGS+ "/DEFINE=ZLIB"
 $ endif
-$! 
+$!
 $ WRITE H_FILE "#define CFLAGS ""''CFLAGS'"""
 $ WRITE H_FILE "#define PLATFORM ""VMS ''ARCHD' ''VMS_VERSION'"""
 $ WRITE H_FILE "#define DATE ""''TIME'"" "
@@ -664,7 +664,7 @@ $ RETURN
 $!
 $! Copy a lot of files around.
 $!
-$ SOFTLINKS: 
+$ SOFTLINKS:
 $!
 $!!!! Tell The User We Are Partly Rebuilding The [.APPS] Directory.
 $!!!!
@@ -821,12 +821,12 @@ $!
 $ SET DEFAULT SYS$DISK:[.CRYPTO]
 $!
 $! Build The [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library.
-$!  
+$!
 $ @CRYPTO-LIB LIBRARY 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" -
    "''ISSEVEN'" "''BUILDPART'" "''POINTER_SIZE'" "''ZLIB'"
 $!
 $! Build The [.xxx.EXE.CRYPTO]*.EXE Test Applications.
-$!  
+$!
 $ @CRYPTO-LIB APPS 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" -
    "''ISSEVEN'" "''BUILDPART'" "''POINTER_SIZE'" "''ZLIB'"
 $!
@@ -1091,7 +1091,7 @@ $       WRITE SYS$OUTPUT -
 $       WRITE SYS$OUTPUT -
          "    64=ARGV  :  Compile with 64-bit (long) pointers (ARGV)."
 $       WRITE SYS$OUTPUT ""
-$! 
+$!
 $!      Time To EXIT.
 $!
 $       GOTO TIDY
@@ -1179,7 +1179,7 @@ $!
 $!  Check To See If We Have VAXC Or DECC.
 $!
 $   IF (F$GETSYI("CPU").GE.128).OR.(F$TRNLNM("DECC$CC_DEFAULT").EQS."/DECC")
-$   THEN 
+$   THEN
 $!
 $!    Looks Like DECC, Set To Use DECC.
 $!

@@ -51,7 +51,7 @@ private key is used.
 
 =item B<-outform DER|PEM>
 
-This specifies the output format, the options have the same meaning as the 
+This specifies the output format, the options have the same meaning as the
 B<-inform> option.
 
 =item B<-in filename>
@@ -117,7 +117,7 @@ the public and private keys respectively.
 This option enables the use of PKCS#5 v2.0 algorithms. Normally PKCS#8
 private keys are encrypted with the password based encryption algorithm
 called B<pbeWithMD5AndDES-CBC> this uses 56 bit DES encryption but it
-was the strongest encryption algorithm supported in PKCS#5 v1.5. Using 
+was the strongest encryption algorithm supported in PKCS#5 v1.5. Using
 the B<-v2> option PKCS#5 v2.0 algorithms are used which can use any
 encryption algorithm such as 168 bit triple DES or 128 bit RC2 however
 not many implementations support PKCS#5 v2.0 yet. If you are just using
@@ -231,8 +231,8 @@ Read a DER unencrypted PKCS#8 format private key:
 Convert a private key from any PKCS#8 format to traditional format:
 
  openssl pkcs8 -in pk8.pem -out key.pem
- 
-Convert a private key to PKCS#8 format, encrypting with AES-256 and with 
+
+Convert a private key to PKCS#8 format, encrypting with AES-256 and with
 one million iterations of the password:
 
  openssl pkcs8 -in raw.pem -topk8 -v2 aes-256-cbc -iter 1000000 -out pk8.pem
@@ -262,6 +262,6 @@ the old format at present.
 =head1 SEE ALSO
 
 L<dsa(1)|dsa(1)>, L<rsa(1)|rsa(1)>, L<genrsa(1)|genrsa(1)>,
-L<gendsa(1)|gendsa(1)> 
+L<gendsa(1)|gendsa(1)>
 
 =cut

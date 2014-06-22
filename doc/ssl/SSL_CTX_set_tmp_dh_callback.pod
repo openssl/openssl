@@ -141,7 +141,7 @@ partly left out.)
       dh_tmp = dh_512;
       break;
     case 1024:
-      if (!dh_1024) 
+      if (!dh_1024)
         dh_1024 = get_dh1024();
       dh_tmp = dh_1024;
       break;

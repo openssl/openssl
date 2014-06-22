@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -114,12 +114,12 @@ ASN1_SEQUENCE(PKCS12_SAFEBAG) = {
 IMPLEMENT_ASN1_FUNCTIONS(PKCS12_SAFEBAG)
 
 /* SEQUENCE OF SafeBag */
-ASN1_ITEM_TEMPLATE(PKCS12_SAFEBAGS) = 
+ASN1_ITEM_TEMPLATE(PKCS12_SAFEBAGS) =
 	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, PKCS12_SAFEBAGS, PKCS12_SAFEBAG)
 ASN1_ITEM_TEMPLATE_END(PKCS12_SAFEBAGS)
 
 /* Authsafes: SEQUENCE OF PKCS7 */
-ASN1_ITEM_TEMPLATE(PKCS12_AUTHSAFES) = 
+ASN1_ITEM_TEMPLATE(PKCS12_AUTHSAFES) =
 	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, PKCS12_AUTHSAFES, PKCS7)
 ASN1_ITEM_TEMPLATE_END(PKCS12_AUTHSAFES)
 

@@ -28,7 +28,7 @@ B<openssl> B<ec>
 =head1 DESCRIPTION
 
 The B<ec> command processes EC keys. They can be converted between various
-forms and their components printed out. B<Note> OpenSSL uses the 
+forms and their components printed out. B<Note> OpenSSL uses the
 private key format specified in 'SEC 1: Elliptic Curve Cryptography'
 (http://www.secg.org/). To convert a OpenSSL EC private key into the
 PKCS#8 private key format use the B<pkcs8> command.
@@ -48,7 +48,7 @@ PKCS#8 format is also accepted.
 
 =item B<-outform DER|PEM>
 
-This specifies the output format, the options have the same meaning as the 
+This specifies the output format, the options have the same meaning as the
 B<-inform> option.
 
 =item B<-in filename>
@@ -76,7 +76,7 @@ see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
 
 =item B<-des|-des3|-idea>
 
-These options encrypt the private key with the DES, triple DES, IDEA or 
+These options encrypt the private key with the DES, triple DES, IDEA or
 any other cipher supported by OpenSSL before outputting it. A pass phrase is
 prompted for.
 If none of these options is specified the key is written in plain text. This
@@ -123,7 +123,7 @@ the preprocessor macro B<OPENSSL_EC_BIN_PT_COMP> at compile time.
 This specifies how the elliptic curve parameters are encoded.
 Possible value are: B<named_curve>, i.e. the ec parameters are
 specified by a OID, or B<explicit> where the ec parameters are
-explicitly given (see RFC 3279 for the definition of the 
+explicitly given (see RFC 3279 for the definition of the
 EC parameters structures). The default value is B<named_curve>.
 B<Note> the B<implicitlyCA> alternative ,as specified in RFC 3279,
 is currently not implemented in OpenSSL.
@@ -155,7 +155,7 @@ To encrypt a private key using triple DES:
 
  openssl ec -in key.pem -des3 -out keyout.pem
 
-To convert a private key from PEM to DER format: 
+To convert a private key from PEM to DER format:
 
  openssl ec -in key.pem -outform DER -out keyout.der
 

@@ -5,21 +5,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -63,7 +63,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -110,7 +110,7 @@
  */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
- * ECC cipher suite support in OpenSSL originally developed by 
+ * ECC cipher suite support in OpenSSL originally developed by
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
 /* ====================================================================
@@ -183,16 +183,16 @@ static STACK_OF(SSL_COMP) *ssl_comp_methods=NULL;
 #define SSL_MD_GOST89MAC_IDX 3
 #define SSL_MD_SHA256_IDX 4
 #define SSL_MD_SHA384_IDX 5
-/*Constant SSL_MAX_DIGEST equal to size of digests array should be 
+/*Constant SSL_MAX_DIGEST equal to size of digests array should be
  * defined in the
  * ssl_locl.h */
-#define SSL_MD_NUM_IDX	SSL_MAX_DIGEST 
+#define SSL_MD_NUM_IDX	SSL_MAX_DIGEST
 static const EVP_MD *ssl_digest_methods[SSL_MD_NUM_IDX]={
 	NULL,NULL,NULL,NULL,NULL,NULL
 	};
 /* PKEY_TYPE for GOST89MAC is known in advance, but, because
  * implementation is engine-provided, we'll fill it only if
- * corresponding EVP_PKEY_METHOD is found 
+ * corresponding EVP_PKEY_METHOD is found
  */
 static int  ssl_mac_pkey_id[SSL_MD_NUM_IDX]={
 	EVP_PKEY_HMAC,EVP_PKEY_HMAC,EVP_PKEY_HMAC,NID_undef,
@@ -347,7 +347,7 @@ static const SSL_CIPHER cipher_aliases[]={
          SSL_kDHE,SSL_aRSA,SSL_3DES,SSL_SHA1,SSL_SSLV3,SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,0,0,0,},
 
 	};
-/* Search for public key algorithm with given name and 
+/* Search for public key algorithm with given name and
  * return its pkey_id if it is available. Otherwise return 0
  */
 #ifdef OPENSSL_NO_ENGINE
@@ -357,7 +357,7 @@ static int get_optional_pkey_id(const char *pkey_name)
 	const EVP_PKEY_ASN1_METHOD *ameth;
 	int pkey_id=0;
 	ameth = EVP_PKEY_asn1_find_str(NULL,pkey_name,-1);
-	if (ameth) 
+	if (ameth)
 		{
 		EVP_PKEY_asn1_get0_info(&pkey_id, NULL,NULL,NULL,NULL,ameth);
 		}		
@@ -384,16 +384,16 @@ static int get_optional_pkey_id(const char *pkey_name)
 
 void ssl_load_ciphers(void)
 	{
-	ssl_cipher_methods[SSL_ENC_DES_IDX]= 
+	ssl_cipher_methods[SSL_ENC_DES_IDX]=
 		EVP_get_cipherbyname(SN_des_cbc);
 	ssl_cipher_methods[SSL_ENC_3DES_IDX]=
 		EVP_get_cipherbyname(SN_des_ede3_cbc);
 	ssl_cipher_methods[SSL_ENC_RC4_IDX]=
 		EVP_get_cipherbyname(SN_rc4);
-	ssl_cipher_methods[SSL_ENC_RC2_IDX]= 
+	ssl_cipher_methods[SSL_ENC_RC2_IDX]=
 		EVP_get_cipherbyname(SN_rc2_cbc);
 #ifndef OPENSSL_NO_IDEA
-	ssl_cipher_methods[SSL_ENC_IDEA_IDX]= 
+	ssl_cipher_methods[SSL_ENC_IDEA_IDX]=
 		EVP_get_cipherbyname(SN_idea_cbc);
 #else
 	ssl_cipher_methods[SSL_ENC_IDEA_IDX]= NULL;
@@ -618,7 +618,7 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 		}
 	if ((i < 0) || (i >= SSL_MD_NUM_IDX))
 	{
-		*md=NULL; 
+		*md=NULL;
 		if (mac_pkey_type!=NULL) *mac_pkey_type = NID_undef;
 		if (mac_secret_size!=NULL) *mac_secret_size = 0;
 		if (c->algorithm_mac == SSL_AEAD)
@@ -675,9 +675,9 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 		return(0);
 	}
 
-int ssl_get_handshake_digest(int idx, long *mask, const EVP_MD **md) 
+int ssl_get_handshake_digest(int idx, long *mask, const EVP_MD **md)
 {
-	if (idx <0||idx>=SSL_MD_NUM_IDX) 
+	if (idx <0||idx>=SSL_MD_NUM_IDX)
 		{
 		return 0;
 		}
@@ -2020,7 +2020,7 @@ int ssl_cipher_get_cert_index(const SSL_CIPHER *c)
 	else if (alg_a & SSL_aKRB5)
 		/* VRS something else here? */
 		return -1;
-	else if (alg_a & SSL_aGOST94) 
+	else if (alg_a & SSL_aGOST94)
 		return SSL_PKEY_GOST94;
 	else if (alg_a & SSL_aGOST01)
 		return SSL_PKEY_GOST01;

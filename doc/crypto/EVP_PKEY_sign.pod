@@ -50,7 +50,7 @@ Sign data using RSA with PKCS#1 padding and SHA256 digest:
 
  EVP_PKEY_CTX *ctx;
  unsigned char *md, *sig;
- size_t mdlen, siglen; 
+ size_t mdlen, siglen;
  EVP_PKEY *signing_key;
  /* NB: assumes signing_key, md and mdlen are already set up
   * and that signing_key is an RSA private key
@@ -73,7 +73,7 @@ Sign data using RSA with PKCS#1 padding and SHA256 digest:
 
  if (!sig)
 	/* malloc failure */
- 
+
  if (EVP_PKEY_sign(ctx, sig, &siglen, md, mdlen) <= 0)
 	/* Error */
 
@@ -87,7 +87,7 @@ L<EVP_PKEY_encrypt(3)|EVP_PKEY_encrypt(3)>,
 L<EVP_PKEY_decrypt(3)|EVP_PKEY_decrypt(3)>,
 L<EVP_PKEY_verify(3)|EVP_PKEY_verify(3)>,
 L<EVP_PKEY_verify_recover(3)|EVP_PKEY_verify_recover(3)>,
-L<EVP_PKEY_derive(3)|EVP_PKEY_derive(3)> 
+L<EVP_PKEY_derive(3)|EVP_PKEY_derive(3)>
 
 =head1 HISTORY
 

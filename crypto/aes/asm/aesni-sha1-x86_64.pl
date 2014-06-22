@@ -783,7 +783,7 @@ sub body_00_19_dec () {	# ((c^d)&b)^d
 sub body_20_39_dec () {	# b^d^c
     # on entry @T[0]=b^d
     return &body_40_59_dec() if ($rx==39);
-  
+
     my @r=@body_20_39;
 
 	unshift (@r,@aes256_dec[$rx])	if (@aes256_dec[$rx]);

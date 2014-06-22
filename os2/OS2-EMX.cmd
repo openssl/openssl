@@ -16,8 +16,8 @@ echo Generating x86 for GNU assember
 echo Bignum
 cd crypto\bn\asm
 rem perl x86.pl a.out > bn-os2.asm
-perl bn-586.pl a.out > bn-os2.asm 
-perl co-586.pl a.out > co-os2.asm 
+perl bn-586.pl a.out > bn-os2.asm
+perl co-586.pl a.out > co-os2.asm
 cd ..\..\..
 
 echo DES

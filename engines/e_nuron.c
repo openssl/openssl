@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -221,7 +221,7 @@ static int nuron_dsa_mod_exp(DSA *dsa, BIGNUM *rr, BIGNUM *a1,
 	{
 	BIGNUM t;
 	int to_return = 0;
- 
+
 	BN_init(&t);
 	/* let rr = a1 ^ p1 mod m */
 	if (!nuron_mod_exp(rr,a1,p1,m,ctx))
@@ -361,7 +361,7 @@ static int bind_helper(ENGINE *e)
 	 * anything "more generic" because something like the RSAref
 	 * code may not hook properly, and if you own one of these
 	 * cards then you have the right to do RSA operations on it
-	 * anyway! */ 
+	 * anyway! */
 	meth1=RSA_PKCS1_SSLeay();
 	nuron_rsa.rsa_pub_enc=meth1->rsa_pub_enc;
 	nuron_rsa.rsa_pub_dec=meth1->rsa_pub_dec;
@@ -416,7 +416,7 @@ void ENGINE_load_nuron(void)
 #endif
 
 /* This stuff is needed if this ENGINE is being compiled into a self-contained
- * shared-library. */	   
+ * shared-library. */	
 #ifndef OPENSSL_NO_DYNAMIC_ENGINE
 static int bind_fn(ENGINE *e, const char *id)
 	{
@@ -425,7 +425,7 @@ static int bind_fn(ENGINE *e, const char *id)
 	if(!bind_helper(e))
 		return 0;
 	return 1;
-	}       
+	}
 IMPLEMENT_DYNAMIC_CHECK_FN()
 IMPLEMENT_DYNAMIC_BIND_FN(bind_fn)
 #endif /* OPENSSL_NO_DYNAMIC_ENGINE */

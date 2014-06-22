@@ -9,7 +9,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -138,7 +138,7 @@ static int old_hmac_encode(const EVP_PKEY *pkey, unsigned char **pder)
 
 #endif
 
-const EVP_PKEY_ASN1_METHOD hmac_asn1_meth = 
+const EVP_PKEY_ASN1_METHOD hmac_asn1_meth =
 	{
 	EVP_PKEY_HMAC,
 	EVP_PKEY_HMAC,

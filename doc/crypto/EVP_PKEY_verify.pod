@@ -53,7 +53,7 @@ Verify signature using PKCS#1 and SHA256 digest:
 
  EVP_PKEY_CTX *ctx;
  unsigned char *md, *sig;
- size_t mdlen, siglen; 
+ size_t mdlen, siglen;
  EVP_PKEY *verify_key;
  /* NB: assumes verify_key, sig, siglen md and mdlen are already set up
   * and that verify_key is an RSA public key
@@ -82,7 +82,7 @@ L<EVP_PKEY_encrypt(3)|EVP_PKEY_encrypt(3)>,
 L<EVP_PKEY_decrypt(3)|EVP_PKEY_decrypt(3)>,
 L<EVP_PKEY_sign(3)|EVP_PKEY_sign(3)>,
 L<EVP_PKEY_verify_recover(3)|EVP_PKEY_verify_recover(3)>,
-L<EVP_PKEY_derive(3)|EVP_PKEY_derive(3)> 
+L<EVP_PKEY_derive(3)|EVP_PKEY_derive(3)>
 
 =head1 HISTORY
 

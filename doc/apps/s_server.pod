@@ -105,7 +105,7 @@ the TCP port to listen on for connections. If not specified 4433 is used.
 
 =item B<-naccept count>
 
-The server will exit after receiving B<number> connections, default unlimited. 
+The server will exit after receiving B<number> connections, default unlimited.
 
 =item B<-context id>
 
@@ -299,7 +299,7 @@ print out a hex dump of any TLS extensions received from the server.
 
 =item B<-no_ticket>
 
-disable RFC4507bis session ticket support. 
+disable RFC4507bis session ticket support.
 
 =item B<-www>
 
@@ -377,7 +377,7 @@ during renegotiation if auth and auth_require_reneg are set.
 
 If a connection request is established with an SSL client and neither the
 B<-www> nor the B<-WWW> option has been used then normally any data received
-from the client is displayed and any key presses will be sent to the client. 
+from the client is displayed and any key presses will be sent to the client.
 
 Certain single letter commands are also recognized which perform special
 operations: these are listed below.

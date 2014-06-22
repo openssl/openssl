@@ -1,4 +1,4 @@
- 
+
  INSTALLATION FOR THE WINDOWS CE PLATFORM
  ----------------------------------------
 
@@ -78,13 +78,13 @@
  [note that static builds are not supported under CE]
 
  If all is well it should compile and you will have some DLLs and executables
- in out32dll*. 
+ in out32dll*.
 
  <<< everyting below needs revision in respect to wcecompat vs. PortSDK >>>
 
  If you want
  to try the tests then make sure the ceutils are in the path and do:
- 
+
  > cd out32
  > ..\ms\testce
 

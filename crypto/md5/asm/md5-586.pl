@@ -45,7 +45,7 @@ sub R0
 	local($pos,$a,$b,$c,$d,$K,$ki,$s,$t)=@_;
 
 	&mov($tmp1,$C)  if $pos < 0;
-	&mov($tmp2,&DWP($xo[$ki]*4,$K,"",0)) if $pos < 0; # very first one 
+	&mov($tmp2,&DWP($xo[$ki]*4,$K,"",0)) if $pos < 0; # very first one
 
 	# body proper
 

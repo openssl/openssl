@@ -247,7 +247,7 @@ check is not performed.
 =item B<-md5|-sha1|-sha256|-ripemod160|...>
 
 this option sets digest algorithm to use for certificate identification
-in the OCSP request. By default SHA-1 is used. 
+in the OCSP request. By default SHA-1 is used.
 
 =back
 
@@ -300,12 +300,12 @@ option.
 
 =item B<-nrequest number>
 
-The OCSP server will exit after receiving B<number> requests, default unlimited. 
+The OCSP server will exit after receiving B<number> requests, default unlimited.
 
 =item B<-nmin minutes>, B<-ndays days>
 
 Number of minutes or days when fresh revocation information is available: used in the
-B<nextUpdate> field. If neither option is present then the B<nextUpdate> field is 
+B<nextUpdate> field. If neither option is present then the B<nextUpdate> field is
 omitted meaning fresh revocation information is immediately available.
 
 =back
@@ -375,7 +375,7 @@ Create an OCSP request and write it to a file:
 
  openssl ocsp -issuer issuer.pem -cert c1.pem -cert c2.pem -reqout req.der
 
-Send a query to an OCSP responder with URL http://ocsp.myhost.com/ save the 
+Send a query to an OCSP responder with URL http://ocsp.myhost.com/ save the
 response to a file and print it out in text form
 
  openssl ocsp -issuer issuer.pem -cert c1.pem -cert c2.pem \

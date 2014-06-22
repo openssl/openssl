@@ -63,7 +63,7 @@ EVP_PKEY_set1_RSA(), EVP_PKEY_set1_DSA(), EVP_PKEY_set1_DH() and
 EVP_PKEY_set1_EC_KEY() return 1 for success or 0 for failure.
 
 EVP_PKEY_get1_RSA(), EVP_PKEY_get1_DSA(), EVP_PKEY_get1_DH() and
-EVP_PKEY_get1_EC_KEY() return the referenced key or B<NULL> if 
+EVP_PKEY_get1_EC_KEY() return the referenced key or B<NULL> if
 an error occurred.
 
 EVP_PKEY_assign_RSA() EVP_PKEY_assign_DSA(), EVP_PKEY_assign_DH()

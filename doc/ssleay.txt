@@ -93,7 +93,7 @@ eay1024.pem:the certificate used to sign client.pem and server.pem.
 	is returned by 'x509 -hash -noout <eay1024.pem' and is the
 	value used by X509 verification routines to 'find' this
 	certificte when search a directory for it.
-	[the above is not true any more, the CA cert is 
+	[the above is not true any more, the CA cert is
 	 ../certs/testca.pem which is signed by ../certs/mincomca.pem]
 
 When testing the s_server, you may get
@@ -245,7 +245,7 @@ s_client
 Everything up and running
 
 s_server -verify 0
-s_client  
+s_client
 	CONNECTED
 	CIPHER is CBC-DES-MD5
 Ok since no certificate was returned and we don't care.
@@ -347,12 +347,12 @@ Message-Id: <Pine.SOL.3.91.961004081346.8018K-100000@orb>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Status: RO
-X-Status: 
+X-Status:
 
 On Thu, 3 Oct 1996, wplatzer wrote:
 > I get Public Key from Netscape (Gold 3.0b4), but cannot do anything
 > with it... It looks like (asn1parse):
-> 
+>
 > 0:d=0 hl=3 l=180 cons: SEQUENCE
 > 3:d=1 hl=2 l= 96 cons: SEQUENCE
 > 5:d=2 hl=2 l= 92 cons: SEQUENCE
@@ -365,26 +365,26 @@ On Thu, 3 Oct 1996, wplatzer wrote:
 > 103:d=2 hl=2 l= 9 prim: OBJECT :md5withRSAEncryption
 > 114:d=2 hl=2 l= 0 prim: NULL
 > 116:d=1 hl=2 l= 65 prim: BIT STRING
-> 
-> The first BIT STRING is the public key and the second BIT STRING is 
+>
+> The first BIT STRING is the public key and the second BIT STRING is
 > the signature.
-> But a public key consists of the public exponent and the modulus. Are 
+> But a public key consists of the public exponent and the modulus. Are
 > both numbers in the first BIT STRING?
-> Is there a document simply describing this coding stuff (checking 
+> Is there a document simply describing this coding stuff (checking
 > signature, get the public key, etc.)?
 
 Minimal in SSLeay.  If you want to see what the modulus and exponent are,
 try asn1parse -offset 25 -length 75 <key.pem
-asn1parse will currently stuff up on the 'length 75' part (fixed in next 
-release) but it will print the stuff.  If you are after more 
-documentation on ASN.1, have a look at www.rsa.com and get their PKCS 
+asn1parse will currently stuff up on the 'length 75' part (fixed in next
+release) but it will print the stuff.  If you are after more
+documentation on ASN.1, have a look at www.rsa.com and get their PKCS
 documents, most of my initial work on SSLeay was done using them.
 
 As for SSLeay,
-util/crypto.num and util/ssl.num are lists of all exported functions in 
+util/crypto.num and util/ssl.num are lists of all exported functions in
 the library (but not macros :-(.
 
-The ones for extracting public keys from certificates and certificate 
+The ones for extracting public keys from certificates and certificate
 requests are EVP_PKEY *      X509_REQ_extract_key(X509_REQ *req);
 EVP_PKEY *      X509_extract_key(X509 *x509);
 
@@ -395,7 +395,7 @@ int X509_CRL_verify(X509_CRL *a,EVP_PKEY *key);
 int NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a,EVP_PKEY *key);
 
 I should mention that EVP_PKEY can be used to hold a public or a private key,
-since for  things like RSA and DSS, a public key is just a subset of what 
+since for  things like RSA and DSS, a public key is just a subset of what
 is stored for the private key.
 
 To sign any of the above structures
@@ -409,7 +409,7 @@ where md is the message digest to sign with.
 
 There are all defined in x509.h and all the _sign and _verify functions are
 actually macros to the ASN1_sign() and ASN1_verify() functions.
-These functions will put the correct algorithm identifiers in the correct 
+These functions will put the correct algorithm identifiers in the correct
 places in the structures.
 
 eric
@@ -489,7 +489,7 @@ X509_ATTRIBUTE *PKCS7_get_u_att_by_NID(PKCS7 *p7,int nid);
 
 The 'new' system.
 
-The X509_EXTENSION_METHOD includes extensions and attributes and/or names. 
+The X509_EXTENSION_METHOD includes extensions and attributes and/or names.
 Basically everthing that can be added to an X509 with an OID identifying it.
 
 It operates via 2 methods per object id.
@@ -786,7 +786,7 @@ and e fields in the RSA structure.
 DSAPrivateKey		DSS private key
 DSAPublicKey		DSS public key
 Both these 'function groups' operate on 'DSS' structures (see dsa.doc).
-The difference is that the RSAPublicKey operations only manipulate the 
+The difference is that the RSAPublicKey operations only manipulate the
 XXX fields in the DSA structure.
 
 DHparams		DHParameter
@@ -795,7 +795,7 @@ The function deal with the 'DH' strucure (see dh.doc).
 
 Now all of these function types can be used with several other functions to give
 quite useful set of general manipulation routines.  Normally one would
-not uses these functions directly but use them via macros. 
+not uses these functions directly but use them via macros.
 
 char *ASN1_dup(int (*i2d)(),char *(*d2i)(),char *x);
 'x' is the input structure case to a 'char *', 'i2d' is the 'i2d_TYPE'
@@ -924,7 +924,7 @@ char *	X509_get_default_cert_dir_env(void );
 char *	X509_get_default_cert_file_env(void );
 char *	X509_get_default_private_dir(void );
 X509_REQ *X509_X509_TO_req(X509 *x, RSA *rsa);
-int	X509_cert_verify(CERTIFICATE_CTX *ctx,X509 *xs, int (*cb)()); 
+int	X509_cert_verify(CERTIFICATE_CTX *ctx,X509 *xs, int (*cb)());
 
 CERTIFICATE_CTX *CERTIFICATE_CTX_new();
 void CERTIFICATE_CTX_free(CERTIFICATE_CTX *c);
@@ -998,71 +998,71 @@ unsigned long	X509_NAME_hash(X509_NAME *x);
 
 BIO Routines
 
-This documentation is rather sparse, you are probably best 
+This documentation is rather sparse, you are probably best
 off looking at the code for specific details.
 
-The BIO library is a IO abstraction that was originally 
-inspired by the need to have callbacks to perform IO to FILE 
-pointers when using Windows 3.1 DLLs.  There are two types 
+The BIO library is a IO abstraction that was originally
+inspired by the need to have callbacks to perform IO to FILE
+pointers when using Windows 3.1 DLLs.  There are two types
 of BIO; a source/sink type and a filter type.
 The source/sink methods are as follows:
 -	BIO_s_mem()  memory buffer - a read/write byte array that
 	grows until memory runs out :-).
--	BIO_s_file()  FILE pointer - A wrapper around the normal 
+-	BIO_s_file()  FILE pointer - A wrapper around the normal
 	'FILE *' commands, good for use with stdin/stdout.
--	BIO_s_fd()  File descriptor - A wrapper around file 
+-	BIO_s_fd()  File descriptor - A wrapper around file
 	descriptors, often used with pipes.
--	BIO_s_socket()  Socket - Used around sockets.  It is 
-	mostly in the Microsoft world that sockets are different 
-	from file descriptors and there are all those ugly winsock 
+-	BIO_s_socket()  Socket - Used around sockets.  It is
+	mostly in the Microsoft world that sockets are different
+	from file descriptors and there are all those ugly winsock
 	commands.
--	BIO_s_null()  Null - read nothing and write nothing.; a 
-	useful endpoint for filter type BIO's specifically things 
+-	BIO_s_null()  Null - read nothing and write nothing.; a
+	useful endpoint for filter type BIO's specifically things
 	like the message digest BIO.
 
 The filter types are
--	BIO_f_buffer()  IO buffering - does output buffering into 
-	larger chunks and performs input buffering to allow gets() 
+-	BIO_f_buffer()  IO buffering - does output buffering into
+	larger chunks and performs input buffering to allow gets()
 	type functions.
--	BIO_f_md()  Message digest - a transparent filter that can 
-	be asked to return a message digest for the data that has 
+-	BIO_f_md()  Message digest - a transparent filter that can
+	be asked to return a message digest for the data that has
 	passed through it.
--	BIO_f_cipher()  Encrypt or decrypt all data passing 
+-	BIO_f_cipher()  Encrypt or decrypt all data passing
 	through the filter.
 -	BIO_f_base64()  Base64 decode on read and encode on write.
--	BIO_f_ssl()  A filter that performs SSL encryption on the 
+-	BIO_f_ssl()  A filter that performs SSL encryption on the
 	data sent through it.
 
 Base BIO functions.
-The BIO library has a set of base functions that are 
-implemented for each particular type.  Filter BIOs will 
-normally call the equivalent function on the source/sink BIO 
-that they are layered on top of after they have performed 
-some modification to the data stream.  Multiple filter BIOs 
-can be 'push' into a stack of modifers, so to read from a 
-file, unbase64 it, then decrypt it, a BIO_f_cipher, 
-BIO_f_base64 and a BIO_s_file would probably be used.  If a 
-sha-1 and md5 message digest needed to be generated, a stack 
+The BIO library has a set of base functions that are
+implemented for each particular type.  Filter BIOs will
+normally call the equivalent function on the source/sink BIO
+that they are layered on top of after they have performed
+some modification to the data stream.  Multiple filter BIOs
+can be 'push' into a stack of modifers, so to read from a
+file, unbase64 it, then decrypt it, a BIO_f_cipher,
+BIO_f_base64 and a BIO_s_file would probably be used.  If a
+sha-1 and md5 message digest needed to be generated, a stack
 two BIO_f_md() BIOs and a BIO_s_null() BIO could be used.
 The base functions are
 -	BIO *BIO_new(BIO_METHOD *type); Create  a new BIO of  type 'type'.
--	int BIO_free(BIO *a); Free a BIO structure.  Depending on 
-	the configuration, this will free the underlying data 
+-	int BIO_free(BIO *a); Free a BIO structure.  Depending on
+	the configuration, this will free the underlying data
 	object for a source/sink BIO.
--	int BIO_read(BIO *b, char *data, int len); Read upto 'len' 
-	bytes into 'data'. 
--	int BIO_gets(BIO *bp,char *buf, int size); Depending on 
-	the BIO, this can either be a 'get special' or a get one 
+-	int BIO_read(BIO *b, char *data, int len); Read upto 'len'
+	bytes into 'data'.
+-	int BIO_gets(BIO *bp,char *buf, int size); Depending on
+	the BIO, this can either be a 'get special' or a get one
 	line of data, as per fgets();
--	int BIO_write(BIO *b, char *data, int len); Write 'len' 
+-	int BIO_write(BIO *b, char *data, int len); Write 'len'
 	bytes from 'data' to the 'b' BIO.
--	int BIO_puts(BIO *bp,char *buf); Either a 'put special' or 
+-	int BIO_puts(BIO *bp,char *buf); Either a 'put special' or
 	a write null terminated string as per fputs().
--	long BIO_ctrl(BIO *bp,int cmd,long larg,char *parg);  A 
-	control function which is used to manipulate the BIO 
-	structure and modify it's state and or report on it.  This 
-	function is just about never used directly, rather it 
-	should be used in conjunction with BIO_METHOD specific 
+-	long BIO_ctrl(BIO *bp,int cmd,long larg,char *parg);  A
+	control function which is used to manipulate the BIO
+	structure and modify it's state and or report on it.  This
+	function is just about never used directly, rather it
+	should be used in conjunction with BIO_METHOD specific
 	macros.
 -	BIO *BIO_push(BIO *new_top, BIO *old); new_top is apped to the
 	top of the 'old' BIO list.  new_top should be a filter BIO.
@@ -1071,30 +1071,30 @@ The base functions are
 -	BIO *BIO_pop(BIO *bio); the new topmost BIO is returned, NULL if
 	there are no more.
 
-If a particular low level BIO method is not supported 
-(normally BIO_gets()), -2 will be returned if that method is 
-called.  Otherwise the IO methods (read, write, gets, puts) 
-will return the number of bytes read or written, and 0 or -1 
-for error (or end of input).  For the -1 case, 
-BIO_should_retry(bio) can be called to determine if it was a 
-genuine error or a temporary problem.  -2 will also be 
-returned if the BIO has not been initalised yet, in all 
-cases, the correct error codes are set (accessible via the 
+If a particular low level BIO method is not supported
+(normally BIO_gets()), -2 will be returned if that method is
+called.  Otherwise the IO methods (read, write, gets, puts)
+will return the number of bytes read or written, and 0 or -1
+for error (or end of input).  For the -1 case,
+BIO_should_retry(bio) can be called to determine if it was a
+genuine error or a temporary problem.  -2 will also be
+returned if the BIO has not been initalised yet, in all
+cases, the correct error codes are set (accessible via the
 ERR library).
 
 
 The following functions are convenience functions:
--	int BIO_printf(BIO *bio, char * format, ..);  printf but 
+-	int BIO_printf(BIO *bio, char * format, ..);  printf but
 	to a BIO handle.
--	long BIO_ctrl_int(BIO *bp,int cmd,long larg,int iarg); a 
-	convenience function to allow a different argument types 
+-	long BIO_ctrl_int(BIO *bp,int cmd,long larg,int iarg); a
+	convenience function to allow a different argument types
 	to be passed to BIO_ctrl().
--	int BIO_dump(BIO *b,char *bytes,int len); output 'len' 
+-	int BIO_dump(BIO *b,char *bytes,int len); output 'len'
 	bytes from 'bytes' in a hex dump debug format.
--	long BIO_debug_callback(BIO *bio, int cmd, char *argp, int 
-	argi, long argl, long ret) - a default debug BIO callback, 
-	this is mentioned below.  To use this one normally has to 
-	use the BIO_set_callback_arg() function to assign an 
+-	long BIO_debug_callback(BIO *bio, int cmd, char *argp, int
+	argi, long argl, long ret) - a default debug BIO callback,
+	this is mentioned below.  To use this one normally has to
+	use the BIO_set_callback_arg() function to assign an
 	output BIO for the callback to use.
 -	BIO *BIO_find_type(BIO *bio,int type); when there is a 'stack'
 	of BIOs, this function scan the list and returns the first
@@ -1105,38 +1105,38 @@ The following functions are convenience functions:
 
 
 Extra commands are normally implemented as macros calling BIO_ctrl().
--	BIO_number_read(BIO *bio) - the number of bytes processed 
+-	BIO_number_read(BIO *bio) - the number of bytes processed
 	by BIO_read(bio,.).
--	BIO_number_written(BIO *bio) - the number of bytes written 
+-	BIO_number_written(BIO *bio) - the number of bytes written
 	by BIO_write(bio,.).
 -	BIO_reset(BIO *bio) - 'reset' the BIO.
--	BIO_eof(BIO *bio) - non zero if we are at the current end 
+-	BIO_eof(BIO *bio) - non zero if we are at the current end
 	of input.
 -	BIO_set_close(BIO *bio, int close_flag) - set the close flag.
 -	BIO_get_close(BIO *bio) - return the close flag.
-	BIO_pending(BIO *bio) - return the number of bytes waiting 
+	BIO_pending(BIO *bio) - return the number of bytes waiting
 	to be read (normally buffered internally).
 -	BIO_flush(BIO *bio) - output any data waiting to be output.
--	BIO_should_retry(BIO *io) - after a BIO_read/BIO_write 
-	operation returns 0 or -1, a call to this function will 
-	return non zero if you should retry the call later (this 
+-	BIO_should_retry(BIO *io) - after a BIO_read/BIO_write
+	operation returns 0 or -1, a call to this function will
+	return non zero if you should retry the call later (this
 	is for non-blocking IO).
--	BIO_should_read(BIO *io) - we should retry when data can 
+-	BIO_should_read(BIO *io) - we should retry when data can
 	be read.
--	BIO_should_write(BIO *io) - we should retry when data can 
+-	BIO_should_write(BIO *io) - we should retry when data can
 	be written.
 -	BIO_method_name(BIO *io) - return a string for the method name.
 -	BIO_method_type(BIO *io) - return the unique ID of the BIO method.
--	BIO_set_callback(BIO *io,  long (*callback)(BIO *io, int 
-	cmd, char *argp, int argi, long argl, long ret); - sets 
+-	BIO_set_callback(BIO *io,  long (*callback)(BIO *io, int
+	cmd, char *argp, int argi, long argl, long ret); - sets
 	the debug callback.
--	BIO_get_callback(BIO *io) - return the assigned function 
+-	BIO_get_callback(BIO *io) - return the assigned function
 	as mentioned above.
--	BIO_set_callback_arg(BIO *io, char *arg)  - assign some 
-	data against the BIO.  This is normally used by the debug 
-	callback but could in reality be used for anything.  To 
-	get an idea of how all this works, have a look at the code 
-	in the default debug callback mentioned above.  The 
+-	BIO_set_callback_arg(BIO *io, char *arg)  - assign some
+	data against the BIO.  This is normally used by the debug
+	callback but could in reality be used for anything.  To
+	get an idea of how all this works, have a look at the code
+	in the default debug callback mentioned above.  The
 	callback can modify the return values.
 
 Details of the BIO_METHOD structure.
@@ -1155,13 +1155,13 @@ typedef struct bio_method_st
 
 The 'type' is the numeric type of the BIO, these are listed in buffer.h;
 'Name' is a textual representation of the BIO 'type'.
-The 7 function pointers point to the respective function 
+The 7 function pointers point to the respective function
 methods, some of which can be NULL if not implemented.
 The BIO structure
 typedef struct bio_st
 	{
 	BIO_METHOD *method;
-	long (*callback)(BIO * bio, int mode, char *argp, int 
+	long (*callback)(BIO * bio, int mode, char *argp, int
 		argi, long argl, long ret);
 	char *cb_arg; /* first argument for the callback */
 	int init;
@@ -1176,79 +1176,79 @@ typedef struct bio_st
 	} BIO;
 
 -	'Method' is the BIO method.
--	'callback', when configured, is called before and after 
-	each BIO method is called for that particular BIO.  This 
+-	'callback', when configured, is called before and after
+	each BIO method is called for that particular BIO.  This
 	is intended primarily for debugging and of informational feedback.
--	'init' is 0 when the BIO can be used for operation.  
-	Often, after a BIO is created, a number of operations may 
-	need to be performed before it is available for use.  An 
-	example is for BIO_s_sock().  A socket needs to be 
+-	'init' is 0 when the BIO can be used for operation.
+	Often, after a BIO is created, a number of operations may
+	need to be performed before it is available for use.  An
+	example is for BIO_s_sock().  A socket needs to be
 	assigned to the BIO before it can be used.
--	'shutdown', this flag indicates if the underlying 
-	communication primitive being used should be closed/freed 
+-	'shutdown', this flag indicates if the underlying
+	communication primitive being used should be closed/freed
 	when the BIO is closed.
--	'flags' is used to hold extra state.  It is primarily used 
-	to hold information about why a non-blocking operation 
-	failed and to record startup protocol information for the 
+-	'flags' is used to hold extra state.  It is primarily used
+	to hold information about why a non-blocking operation
+	failed and to record startup protocol information for the
 	SSL BIO.
--	'num' and 'ptr' are used to hold instance specific state 
+-	'num' and 'ptr' are used to hold instance specific state
 	like file descriptors or local data structures.
 -	'next_bio' is used by filter BIOs to hold the pointer of the
 	next BIO in the chain. written data is sent to this BIO and
 	data read is taken from it.
--	'references' is used to indicate the number of pointers to 
-	this structure.  This needs to be '1' before a call to 
-	BIO_free() is made if the BIO_free() function is to 
-	actually free() the structure, otherwise the reference 
-	count is just decreased.  The actual BIO subsystem does 
-	not really use this functionality but it is useful when 
+-	'references' is used to indicate the number of pointers to
+	this structure.  This needs to be '1' before a call to
+	BIO_free() is made if the BIO_free() function is to
+	actually free() the structure, otherwise the reference
+	count is just decreased.  The actual BIO subsystem does
+	not really use this functionality but it is useful when
 	used in more advanced applicaion.
--	num_read and num_write are the total number of bytes 
+-	num_read and num_write are the total number of bytes
 	read/written via the 'read()' and 'write()' methods.
 
 BIO_ctrl operations.
-The following is the list of standard commands passed as the 
-second parameter to BIO_ctrl() and should be supported by 
-all BIO as best as possible.  Some are optional, some are 
-manditory, in any case, where is makes sense, a filter BIO 
+The following is the list of standard commands passed as the
+second parameter to BIO_ctrl() and should be supported by
+all BIO as best as possible.  Some are optional, some are
+manditory, in any case, where is makes sense, a filter BIO
 should pass such requests to underlying BIO's.
 -	BIO_CTRL_RESET	- Reset the BIO back to an initial state.
--	BIO_CTRL_EOF	- return 0 if we are not at the end of input, 
+-	BIO_CTRL_EOF	- return 0 if we are not at the end of input,
 	non 0 if we are.
 -	BIO_CTRL_INFO	- BIO specific special command, normal
 	information return.
 -	BIO_CTRL_SET	- set IO specific parameter.
 -	BIO_CTRL_GET	- get IO specific parameter.
--	BIO_CTRL_GET_CLOSE - Get the close on BIO_free() flag, one 
+-	BIO_CTRL_GET_CLOSE - Get the close on BIO_free() flag, one
 	of BIO_CLOSE or BIO_NOCLOSE.
 -	BIO_CTRL_SET_CLOSE - Set the close on BIO_free() flag.
--	BIO_CTRL_PENDING - Return the number of bytes available 
+-	BIO_CTRL_PENDING - Return the number of bytes available
 	for instant reading
 -	BIO_CTRL_FLUSH	- Output pending data, return number of bytes output.
--	BIO_CTRL_SHOULD_RETRY - After an IO error (-1 returned) 
+-	BIO_CTRL_SHOULD_RETRY - After an IO error (-1 returned)
 	should we 'retry' when IO is possible on the underlying IO object.
 -	BIO_CTRL_RETRY_TYPE - What kind of IO are we waiting on.
 
 The following command is a special BIO_s_file() specific option.
 -	BIO_CTRL_SET_FILENAME - specify a file to open for IO.
 
-The BIO_CTRL_RETRY_TYPE needs a little more explanation.  
-When performing non-blocking IO, or say reading on a memory 
-BIO, when no data is present (or cannot be written), 
-BIO_read() and/or BIO_write() will return -1.  
-BIO_should_retry(bio) will return true if this is due to an 
-IO condition rather than an actual error.  In the case of 
-BIO_s_mem(), a read when there is no data will return -1 and 
+The BIO_CTRL_RETRY_TYPE needs a little more explanation.
+When performing non-blocking IO, or say reading on a memory
+BIO, when no data is present (or cannot be written),
+BIO_read() and/or BIO_write() will return -1.
+BIO_should_retry(bio) will return true if this is due to an
+IO condition rather than an actual error.  In the case of
+BIO_s_mem(), a read when there is no data will return -1 and
 a should retry when there is more 'read' data.
 The retry type is deduced from 2 macros
 BIO_should_read(bio) and BIO_should_write(bio).
-Now while it may appear obvious that a BIO_read() failure 
-should indicate that a retry should be performed when more 
-read data is available, this is often not true when using 
-things like an SSL BIO.  During the SSL protocol startup 
-multiple reads and writes are performed, triggered by any 
+Now while it may appear obvious that a BIO_read() failure
+should indicate that a retry should be performed when more
+read data is available, this is often not true when using
+things like an SSL BIO.  During the SSL protocol startup
+multiple reads and writes are performed, triggered by any
 SSL_read or SSL_write.
-So to write code that will transparently handle either a 
+So to write code that will transparently handle either a
 socket or SSL BIO,
 	i=BIO_read(bio,..)
 	if (I == -1)
@@ -1266,38 +1266,38 @@ socket or SSL BIO,
 			}
 		}
 
-At this point in time only read and write conditions can be 
-used but in the future I can see the situation for other 
-conditions, specifically with SSL there could be a condition 
+At this point in time only read and write conditions can be
+used but in the future I can see the situation for other
+conditions, specifically with SSL there could be a condition
 of a X509 certificate lookup taking place and so the non-
-blocking BIO_read would require a retry when the certificate 
-lookup subsystem has finished it's lookup.  This is all 
-makes more sense and is easy to use in a event loop type 
+blocking BIO_read would require a retry when the certificate
+lookup subsystem has finished it's lookup.  This is all
+makes more sense and is easy to use in a event loop type
 setup.
-When using the SSL BIO, either SSL_read() or SSL_write()s 
-can be called during the protocol startup and things will 
+When using the SSL BIO, either SSL_read() or SSL_write()s
+can be called during the protocol startup and things will
 still work correctly.
-The nice aspect of the use of the BIO_should_retry() macro 
-is that all the errno codes that indicate a non-fatal error 
-are encapsulated in one place.  The Windows specific error 
-codes and WSAGetLastError() calls are also hidden from the 
+The nice aspect of the use of the BIO_should_retry() macro
+is that all the errno codes that indicate a non-fatal error
+are encapsulated in one place.  The Windows specific error
+codes and WSAGetLastError() calls are also hidden from the
 application.
 
 Notes on each BIO method.
-Normally buffer.h is just required but depending on the 
+Normally buffer.h is just required but depending on the
 BIO_METHOD, ssl.h or evp.h will also be required.
 
 BIO_METHOD *BIO_s_mem(void);
--	BIO_set_mem_buf(BIO *bio, BUF_MEM *bm, int close_flag) - 
+-	BIO_set_mem_buf(BIO *bio, BUF_MEM *bm, int close_flag) -
 	set the underlying BUF_MEM structure for the BIO to use.
--	BIO_get_mem_ptr(BIO *bio, char **pp) - if pp is not NULL, 
-	set it to point to the memory array and return the number 
+-	BIO_get_mem_ptr(BIO *bio, char **pp) - if pp is not NULL,
+	set it to point to the memory array and return the number
 	of bytes available.
-A read/write BIO.  Any data written is appended to the 
-memory array and any read is read from the front.  This BIO 
-can be used for read/write at the same time. BIO_gets() is 
+A read/write BIO.  Any data written is appended to the
+memory array and any read is read from the front.  This BIO
+can be used for read/write at the same time. BIO_gets() is
 supported in the fgets() sense.
-BIO_CTRL_INFO can be used to retrieve pointers to the memory 
+BIO_CTRL_INFO can be used to retrieve pointers to the memory
 buffer and it's length.
 
 BIO_METHOD *BIO_s_file(void);
@@ -1306,115 +1306,115 @@ BIO_METHOD *BIO_s_file(void);
 -	BIO_read_filename(BIO *bio, char *name) - read from file.
 -	BIO_write_filename(BIO *bio, char *name) - write to file.
 -	BIO_append_filename(BIO *bio, char *name) - append to file.
-This BIO sits over the normal system fread()/fgets() type 
-functions. Gets() is supported.  This BIO in theory could be 
-used for read and write but it is best to think of each BIO 
+This BIO sits over the normal system fread()/fgets() type
+functions. Gets() is supported.  This BIO in theory could be
+used for read and write but it is best to think of each BIO
 of this type as either a read or a write BIO, not both.
 
 BIO_METHOD *BIO_s_socket(void);
 BIO_METHOD *BIO_s_fd(void);
--	BIO_sock_should_retry(int i) - the underlying function 
-	used to determine if a call should be retried; the 
-	argument is the '0' or '-1' returned by the previous BIO 
+-	BIO_sock_should_retry(int i) - the underlying function
+	used to determine if a call should be retried; the
+	argument is the '0' or '-1' returned by the previous BIO
 	operation.
--	BIO_fd_should_retry(int i) - same as the 
+-	BIO_fd_should_retry(int i) - same as the
 -	BIO_sock_should_retry() except that it is different internally.
--	BIO_set_fd(BIO *bio, int fd, int close_flag) - set the 
+-	BIO_set_fd(BIO *bio, int fd, int close_flag) - set the
 	file descriptor to use
 -	BIO_get_fd(BIO *bio, int *fd) - get the file descriptor.
-These two methods are very similar.  Gets() is not 
-supported, if you want this functionality, put a 
-BIO_f_buffer() onto it.  This BIO is bi-directional if the 
-underlying file descriptor is.  This is normally the case 
+These two methods are very similar.  Gets() is not
+supported, if you want this functionality, put a
+BIO_f_buffer() onto it.  This BIO is bi-directional if the
+underlying file descriptor is.  This is normally the case
 for sockets but not the case for stdio descriptors.
 
 BIO_METHOD *BIO_s_null(void);
-Read and write as much data as you like, it all disappears 
+Read and write as much data as you like, it all disappears
 into this BIO.
 
 BIO_METHOD *BIO_f_buffer(void);
--	BIO_get_buffer_num_lines(BIO *bio) - return the number of 
+-	BIO_get_buffer_num_lines(BIO *bio) - return the number of
 	complete lines in the buffer.
--	BIO_set_buffer_size(BIO *bio, long size) - set the size of 
+-	BIO_set_buffer_size(BIO *bio, long size) - set the size of
 	the buffers.
-This type performs input and output buffering.  It performs 
-both at the same time.  The size of the buffer can be set 
-via the set buffer size option.  Data buffered for output is 
+This type performs input and output buffering.  It performs
+both at the same time.  The size of the buffer can be set
+via the set buffer size option.  Data buffered for output is
 only written when the buffer fills.
 
 BIO_METHOD *BIO_f_ssl(void);
--	BIO_set_ssl(BIO *bio, SSL *ssl, int close_flag) - the SSL 
+-	BIO_set_ssl(BIO *bio, SSL *ssl, int close_flag) - the SSL
 	structure to use.
--	BIO_get_ssl(BIO *bio, SSL **ssl) - get the SSL structure 
+-	BIO_get_ssl(BIO *bio, SSL **ssl) - get the SSL structure
 	in use.
-The SSL bio is a little different from normal BIOs because 
-the underlying SSL structure is a little different.  A SSL 
-structure performs IO via a read and write BIO.  These can 
+The SSL bio is a little different from normal BIOs because
+the underlying SSL structure is a little different.  A SSL
+structure performs IO via a read and write BIO.  These can
 be different and are normally set via the
-SSL_set_rbio()/SSL_set_wbio() calls.  The SSL_set_fd() calls 
-are just wrappers that create socket BIOs and then call 
-SSL_set_bio() where the read and write BIOs are the same.  
-The BIO_push() operation makes the SSLs IO BIOs the same, so 
-make sure the BIO pushed is capable of two directional 
-traffic.  If it is not, you will have to install the BIOs 
+SSL_set_rbio()/SSL_set_wbio() calls.  The SSL_set_fd() calls
+are just wrappers that create socket BIOs and then call
+SSL_set_bio() where the read and write BIOs are the same.
+The BIO_push() operation makes the SSLs IO BIOs the same, so
+make sure the BIO pushed is capable of two directional
+traffic.  If it is not, you will have to install the BIOs
 via the more conventional SSL_set_bio() call.  BIO_pop() will retrieve
 the 'SSL read' BIO.
 
 BIO_METHOD *BIO_f_md(void);
--	BIO_set_md(BIO *bio, EVP_MD *md) - set the message digest 
+-	BIO_set_md(BIO *bio, EVP_MD *md) - set the message digest
 	to use.
--	BIO_get_md(BIO *bio, EVP_MD **mdp) - return the digest 
+-	BIO_get_md(BIO *bio, EVP_MD **mdp) - return the digest
 	method in use in mdp, return 0 if not set yet.
--	BIO_reset() reinitializes the digest (EVP_DigestInit()) 
+-	BIO_reset() reinitializes the digest (EVP_DigestInit())
 	and passes the reset to the underlying BIOs.
-All data read or written via BIO_read() or BIO_write() to 
-this BIO will be added to the calculated digest.  This 
-implies that this BIO is only one directional.  If read and 
-write operations are performed, two separate BIO_f_md() BIOs 
-are reuqired to generate digests on both the input and the 
-output.  BIO_gets(BIO *bio, char *md, int size) will place the 
-generated digest into 'md' and return the number of bytes.  
-The EVP_MAX_MD_SIZE should probably be used to size the 'md' 
+All data read or written via BIO_read() or BIO_write() to
+this BIO will be added to the calculated digest.  This
+implies that this BIO is only one directional.  If read and
+write operations are performed, two separate BIO_f_md() BIOs
+are reuqired to generate digests on both the input and the
+output.  BIO_gets(BIO *bio, char *md, int size) will place the
+generated digest into 'md' and return the number of bytes.
+The EVP_MAX_MD_SIZE should probably be used to size the 'md'
 array.  Reading the digest will also reset it.
 
 BIO_METHOD *BIO_f_cipher(void);
 -	BIO_reset() reinitializes the cipher.
--	BIO_flush() should be called when the last bytes have been 
+-	BIO_flush() should be called when the last bytes have been
 	output to flush the final block of block ciphers.
--	BIO_get_cipher_status(BIO *b), when called after the last 
-	read from a cipher BIO, returns non-zero if the data 
+-	BIO_get_cipher_status(BIO *b), when called after the last
+	read from a cipher BIO, returns non-zero if the data
 	decrypted correctly, otherwise, 0.
--	BIO_set_cipher(BIO *b, EVP_CIPHER *c, unsigned char *key, 
-	unsigned char *iv, int encrypt)   This function is used to 
-	setup a cipher BIO.  The length of key and iv are 
-	specified by the choice of EVP_CIPHER.  Encrypt is 1 to 
+-	BIO_set_cipher(BIO *b, EVP_CIPHER *c, unsigned char *key,
+	unsigned char *iv, int encrypt)   This function is used to
+	setup a cipher BIO.  The length of key and iv are
+	specified by the choice of EVP_CIPHER.  Encrypt is 1 to
 	encrypt and 0 to decrypt.
 
 BIO_METHOD *BIO_f_base64(void);
 -	BIO_flush() should be called when the last bytes have been output.
-This BIO base64 encodes when writing and base64 decodes when 
-reading.  It will scan the input until a suitable begin line 
-is found.  After reading data, BIO_reset() will reset the 
-BIO to start scanning again.  Do not mix reading and writing 
+This BIO base64 encodes when writing and base64 decodes when
+reading.  It will scan the input until a suitable begin line
+is found.  After reading data, BIO_reset() will reset the
+BIO to start scanning again.  Do not mix reading and writing
 on the same base64 BIO.  It is meant as a single stream BIO.
 
 Directions	type
 both		BIO_s_mem()
 one/both	BIO_s_file()
 both		BIO_s_fd()
-both		BIO_s_socket() 
+both		BIO_s_socket()
 both		BIO_s_null()
 both		BIO_f_buffer()
-one		BIO_f_md()  
-one		BIO_f_cipher()  
-one		BIO_f_base64()  
+one		BIO_f_md()
+one		BIO_f_cipher()
+one		BIO_f_base64()
 both		BIO_f_ssl()
 
-It is easy to mix one and two directional BIOs, all one has 
-to do is to keep two separate BIO pointers for reading and 
-writing and be careful about usage of underlying BIOs.  The 
-SSL bio by it's very nature has to be two directional but 
-the BIO_push() command will push the one BIO into the SSL 
+It is easy to mix one and two directional BIOs, all one has
+to do is to keep two separate BIO pointers for reading and
+writing and be careful about usage of underlying BIOs.  The
+SSL bio by it's very nature has to be two directional but
+the BIO_push() command will push the one BIO into the SSL
 BIO for both reading and writing.
 
 The best example program to look at is apps/enc.c and/or perhaps apps/dgst.c.
@@ -1437,7 +1437,7 @@ same.
 
 This library requires the inclusion of 'blowfish.h'.
 
-All of the encryption functions take what is called an BF_KEY as an 
+All of the encryption functions take what is called an BF_KEY as an
 argument.  An BF_KEY is an expanded form of the Blowfish key.
 For all modes of the Blowfish algorithm, the BF_KEY used for
 decryption is the same one that was used for encryption.
@@ -1488,7 +1488,7 @@ void BF_decrypt(unsigned long *data, BF_KEY *key);
 	long, and this needs to be done to make sure 'non-aligned' memory
 	access do not occur.
 	Data is a pointer to 2 unsigned long's and key is the
-	BF_KEY to use. 
+	BF_KEY to use.
 
 void BF_ecb_encrypt(
 unsigned char *in,
@@ -1513,7 +1513,7 @@ int encrypt);
 	Input, which should be a multiple of 8 bytes is encrypted
 	(or decrypted) to output which will also be a multiple of 8 bytes.
 	The number of bytes is in length (and from what I've said above,
-	should be a multiple of 8).  If length is not a multiple of 8, bad 
+	should be a multiple of 8).  If length is not a multiple of 8, bad
 	things will probably happen.  ivec is the initialisation vector.
 	This function updates iv after each call so that it can be passed to
 	the next call to BF_cbc_encrypt().
@@ -1595,7 +1595,7 @@ typedef struct bignum_st
 	} BIGNUM;
 The big number is stored in a malloced array of BN_ULONG's.  A BN_ULONG can
 be either 16, 32 or 64 bits in size, depending on the 'number of  bits'
-specified in bn.h. 
+specified in bn.h.
 The 'd' field is this array.  'max' is the size of the 'd' array that has
 been allocated.  'top' is the 'last' entry being used, so for a value of 4,
 bn.d[0]=4 and bn.top=1.  'neg' is 1 if the number is negative.
@@ -1606,7 +1606,7 @@ variables during their execution.  Due to the use of dynamic memory
 allocation to create BIGNUMs being rather expensive when used in
 conjunction with repeated subroutine calls, the BN_CTX structure is
 used.  This structure contains BN_CTX BIGNUMs.  BN_CTX
-is the maximum number of temporary BIGNUMs any publicly exported 
+is the maximum number of temporary BIGNUMs any publicly exported
 function will use.
 
 #define BN_CTX	12
@@ -1765,7 +1765,7 @@ int BN_reciprocal(BIGNUM *r, BIGNUM *m, BN_CTX *ctx);
 	This number of bits shifted is required in BN_mod_mul_reciprocal().
 	This is r=(1/m)<<(BN_num_bits(m)+1).
 	
-int BN_mod_mul_reciprocal(BIGNUM *r, BIGNUM *x, BIGNUM *y, BIGNUM *m, 
+int BN_mod_mul_reciprocal(BIGNUM *r, BIGNUM *x, BIGNUM *y, BIGNUM *m,
 	BIGNUM *i, int nb, BN_CTX *ctx);
 	This function is used to perform an efficient BN_mod_mul()
 	operation.  If one is going to repeatedly perform BN_mod_mul() with
@@ -1819,7 +1819,7 @@ int BN_is_bit_set(BIGNUM *a, int n);
 	This function return 1 if bit 'n' is set in 'a' else 0.
 
 int BN_set_bit(BIGNUM *a, int n);
-	This function sets bit 'n' to 1 in 'a'. 
+	This function sets bit 'n' to 1 in 'a'.
 	This is a&= ~(1<<n);
 
 int BN_clear_bit(BIGNUM *a, int n);
@@ -1962,7 +1962,7 @@ DSA wants 64*32 to use word mont mul, but RSA wants to use full.
 Callback functions used in SSLeay.
 
 --------------------------
-The BIO library.  
+The BIO library.
 
 Each BIO structure can have a callback defined against it.  This callback is
 called 2 times for each BIO 'function'.  It is passed 6 parameters.
@@ -2069,7 +2069,7 @@ The SSL library.
 #define SSL_set_info_callback(ssl,cb)
 #define SSL_CTX_set_info_callback(ctx,cb)
 void callback(SSL *ssl,int location,int ret)
-This callback is called each time around the SSL_connect()/SSL_accept() 
+This callback is called each time around the SSL_connect()/SSL_accept()
 state machine.  So it will be called each time the SSL protocol progresses.
 It is mostly present for use when debugging.  When SSL_connect() or
 SSL_accept() return, the location flag is SSL_CB_ACCEPT_EXIT or
@@ -2160,7 +2160,7 @@ certitificate, the callback is called.  If everything checks out, the
 callback is called with 'VERIFY_OK' or 'VERIFY_ROOT_OK' (for a self
 signed cert that is not the passed certificate).
 
-The callback is passed the X509_cert_verify opinion of the certificate 
+The callback is passed the X509_cert_verify opinion of the certificate
 in 'ok', the certificate in 'xs', the issuer certificate in 'xi',
 the 'depth' of the certificate in the verification 'chain', the
 VERIFY_* code in 'error' and the argument passed to X509_cert_verify()
@@ -2345,7 +2345,7 @@ unsigned char *iv);
 	is an optional 8 byte object that is used to help seed the key
 	generator.
 	If the salt value is NULL, it is just not used.  Datal is the
-	number of bytes to use from 'data' in the key generation.  
+	number of bytes to use from 'data' in the key generation.
 	This function returns the key size for the specified cipher, if
 	data is NULL, this value is returns and no other
 	computation is performed.  Count is
@@ -2462,7 +2462,7 @@ int *outl);
 	changed some time in the future.  It should also be remembered
 	that the EVP_CIPHER_CTX contains the password and so when one has
 	finished encryption with a particular EVP_CIPHER_CTX, it is good
-	practice to zero the structure 
+	practice to zero the structure
 	(ie. memset(ctx,0,sizeof(EVP_CIPHER_CTX)).
 	
 void EVP_DecryptInit(
@@ -2515,7 +2515,7 @@ int *outl);
 	
 The following Cipher routines are convenience routines that call either
 EVP_EncryptXxx or EVP_DecryptXxx depending on weather the EVP_CIPHER_CTX
-was setup to encrypt or decrypt.  
+was setup to encrypt or decrypt.
 
 void EVP_CipherInit(
 EVP_CIPHER_CTX *ctx,
@@ -2563,20 +2563,20 @@ Content-Type: TEXT/PLAIN; charset=US-ASCII
 Sender: ssl-lists-owner@mincom.com
 Precedence: bulk
 Status: RO
-X-Status: 
+X-Status:
 
 On Fri, 11 Oct 1996, Roland Haring wrote:
 > THE_POINT:
-> 	Would somebody be so kind to give me the minimum basic 
+> 	Would somebody be so kind to give me the minimum basic
 > 	calls I need to do to libcrypto.a to get some text encrypted
 > 	and decrypted again? ...hopefully with code included to do
 > 	base64 encryption and decryption ... e.g. that sign-it.c code
 > 	posted some while ago was a big help :-) (please, do not point
 > 	me to apps/enc.c where I suspect my Heissenbug to be hidden :-)
 
-Ok, the base64 encoding stuff in 'enc.c' does the wrong thing sometimes 
-when the data is less than a line long (this is for decoding).  I'll dig 
-up the exact fix today and post it.  I am taking longer on 0.6.5 than I 
+Ok, the base64 encoding stuff in 'enc.c' does the wrong thing sometimes
+when the data is less than a line long (this is for decoding).  I'll dig
+up the exact fix today and post it.  I am taking longer on 0.6.5 than I
 intended so I'll just post this patch.
 
 The documentation to read is in
@@ -2623,7 +2623,7 @@ You can also use
 EVP_CipherInit()
 EVP_CipherUpdate()
 EVP_CipherFinal()
-which does either encryption or decryption depending on an extra 
+which does either encryption or decryption depending on an extra
 parameter to EVP_CipherInit().
 
 
@@ -2636,10 +2636,10 @@ EVP_DecodeInit()
 EVP_DecodeUpdate()
 EVP_DecodeFinal()
 
-where the encoding is quite simple, but the decoding can be a bit more 
+where the encoding is quite simple, but the decoding can be a bit more
 fun (due to dud input).
 
-EVP_DecodeUpdate() returns -1 for an error on an input line, 0 if the 
+EVP_DecodeUpdate() returns -1 for an error on an input line, 0 if the
 'last line' was just processed, and 1 if more lines should be submitted.
 
 EVP_DecodeFinal() returns -1 for an error or 1 if things are ok.
@@ -2658,8 +2658,8 @@ for (;;)
 EVP_DecodeFinal(....);
 /* process the data */
 
-The problem in 'enc.c' is that I was stuff the processing up after the 
-EVP_DecodeFinal(...) when the for(..) loop was not being run (one line of 
+The problem in 'enc.c' is that I was stuff the processing up after the
+EVP_DecodeFinal(...) when the for(..) loop was not being run (one line of
 base64 data) and this was because 'enc.c' tries to scan over a file until
 it hits the first valid base64 encoded line.
 
@@ -2774,7 +2774,7 @@ same.
 
 This library requires the inclusion of 'des.h'.
 
-All of the encryption functions take what is called a des_key_schedule as an 
+All of the encryption functions take what is called a des_key_schedule as an
 argument.  A des_key_schedule is an expanded form of the des key.
 A des_key is 8 bytes of odd parity, the type used to hold the key is a
 des_cblock.  A des_cblock is an array of 8 bytes, often in this library
@@ -2869,7 +2869,7 @@ des_key_schedule ks1,
 des_key_schedule ks2,
 des_key_schedule ks3,
 int enc);
-	This is the 3 key EDE mode of ECB DES.  What this means is that 
+	This is the 3 key EDE mode of ECB DES.  What this means is that
 	the 8 bytes of input is encrypted with ks1, decrypted with ks2 and
 	then encrypted again with ks3, before being put into output;
 	C=E(ks3,D(ks2,E(ks1,M))).  There is a macro, des_ecb2_encrypt()
@@ -2892,7 +2892,7 @@ int enc);
 	This function does not modify this variable.  To correctly implement
 	cbc mode, you need to do one of 2 things; copy the last 8 bytes of
 	cipher text for use as the next ivec in your application,
-	or use des_ncbc_encrypt(). 
+	or use des_ncbc_encrypt().
 	Only this routine has this problem with updating the ivec, all
 	other routines that are implementing cbc mode update ivec.
 	
@@ -2944,11 +2944,11 @@ int enc);
 	
 void des_ede3_cbc_encrypt(
 des_cblock *input,
-des_cblock *output, 
+des_cblock *output,
 long length,
 des_key_schedule ks1,
-des_key_schedule ks2, 
-des_key_schedule ks3, 
+des_key_schedule ks2,
+des_key_schedule ks3,
 des_cblock *ivec,
 int enc);
 	This function implements outer triple CBC DES encryption with 3
@@ -3409,7 +3409,7 @@ unsigned char *md,
 unsigned int *s,
 EVP_PKEY *pkey);
 	This finalisation function finishes the generation of the message
-digest and then encrypts the digest (with the correct message digest 
+digest and then encrypts the digest (with the correct message digest
 object identifier) with the EVP_PKEY private key.  'ctx' is the message digest
 context.  'md' will end up containing the encrypted message digest.  This
 array needs to be EVP_PKEY_size(pkey) bytes long.  's' will actually
@@ -3584,7 +3584,7 @@ same.
 
 This library requires the inclusion of 'idea.h'.
 
-All of the encryption functions take what is called an IDEA_KEY_SCHEDULE as an 
+All of the encryption functions take what is called an IDEA_KEY_SCHEDULE as an
 argument.  An IDEA_KEY_SCHEDULE is an expanded form of the idea key.
 For all modes of the IDEA algorithm, the IDEA_KEY_SCHEDULE used for
 decryption is different to the one used for encryption.
@@ -3681,7 +3681,7 @@ int enc);
 	Input, which should be a multiple of 8 bytes is encrypted
 	(or decrypted) to output which will also be a multiple of 8 bytes.
 	The number of bytes is in length (and from what I've said above,
-	should be a multiple of 8).  If length is not a multiple of 8, bad 
+	should be a multiple of 8).  If length is not a multiple of 8, bad
 	things will probably happen.  ivec is the initialisation vector.
 	This function updates iv after each call so that it can be passed to
 	the next call to idea_cbc_encrypt().
@@ -3767,22 +3767,22 @@ Message-Id: <Pine.SOL.3.91.960626131156.28573K-100000@orb>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Status: O
-X-Status: 
+X-Status:
 
 
 This is a little off topic but since SSLeay is a free implementation of
-the SSLv2 protocol, I feel it is worth responding on the topic of if it 
+the SSLv2 protocol, I feel it is worth responding on the topic of if it
 is actually legal for Americans to use free cryptographic software.
 
 On Wed, 26 Jun 1996, Ken Toll wrote:
-> Is the U.S the only country that SSLeay cannot be used commercially 
-> (because of RSAref) or is that going to be an issue with every country 
-> that a client/server application (non-web browser/server) is deployed 
+> Is the U.S the only country that SSLeay cannot be used commercially
+> (because of RSAref) or is that going to be an issue with every country
+> that a client/server application (non-web browser/server) is deployed
 > and sold?
 
->From what I understand, the software patents that apply to algorithms 
-like RSA and DH only apply in the USA.  The IDEA algorithm I believe is 
-patened in europe (USA?), but considing how little it is used by other SSL 
+>From what I understand, the software patents that apply to algorithms
+like RSA and DH only apply in the USA.  The IDEA algorithm I believe is
+patened in europe (USA?), but considing how little it is used by other SSL
 implementations, it quite easily be left out of the SSLeay build
 (this can be done with a compile flag).
 
@@ -3793,29 +3793,29 @@ to be used in, it would mean that non-one outside of the USA could produce
 public key software which would be a very strong statment for
 international patent law to make :-).  This logic is a little flawed but
 it still points out some of the more interesting permutations of USA
-patent law and ITAR restrictions. 
+patent law and ITAR restrictions.
 
 Inside the USA there is also the unresolved issue of RC4/RC2 which were
 made public on sci.crypt in Sep 1994 (RC4) and Feb 1996 (RC2).  I have
-copies of the original postings if people are interested.  RSA I believe 
-claim that they were 'trade-secrets' and that some-one broke an NDA in 
-revealing them.  Other claim they reverse engineered the algorithms from 
-compiled binaries.  If the algorithms were reverse engineered, I believe 
+copies of the original postings if people are interested.  RSA I believe
+claim that they were 'trade-secrets' and that some-one broke an NDA in
+revealing them.  Other claim they reverse engineered the algorithms from
+compiled binaries.  If the algorithms were reverse engineered, I believe
 RSA had no legal leg to stand on.  If an NDA was broken, I don't know.
-Regardless, RSA, I believe, is willing to go to court over the issue so 
+Regardless, RSA, I believe, is willing to go to court over the issue so
 licencing is probably the best idea, or at least talk to them.
-If there are people who actually know more about this, pease let me know, I 
+If there are people who actually know more about this, pease let me know, I
 don't want to vilify or spread miss-information if I can help it.
 
 If you are not producing a web browser, it is easy to build SSLeay with
-RC2/RC4 removed. Since RC4 is the defacto standard cipher in 
-all web software (and it is damn fast) it is more or less required for 
-www use. For non www use of SSL, especially for an application where 
+RC2/RC4 removed. Since RC4 is the defacto standard cipher in
+all web software (and it is damn fast) it is more or less required for
+www use. For non www use of SSL, especially for an application where
 interoperability with other vendors is not critical just leave it out.
 
-Removing IDEA, RC2 and RC4 would only leave DES and Triple DES but 
+Removing IDEA, RC2 and RC4 would only leave DES and Triple DES but
 they should be ok.  Considing that Triple DES can encrypt at rates of
-410k/sec on a pentium 100, and 940k/sec on a P6/200, this is quite 
+410k/sec on a pentium 100, and 940k/sec on a P6/200, this is quite
 reasonable performance.  Single DES clocks in at 1160k/s and 2467k/s
 respectivly is actually quite fast for those not so paranoid (56 bit key).[1]
 
@@ -3831,23 +3831,23 @@ Verisign will issue certificates for Sioux (sold from South Africa), so this
 (The above mentioned companies just the ones that I know for sure are issuing
  certificates outside the USA).
 
-There is always the point that if you are using SSL for an intra net, 
-SSLeay provides programs that can be used so you can issue your own 
+There is always the point that if you are using SSL for an intra net,
+SSLeay provides programs that can be used so you can issue your own
 certificates.  They need polishing but at least it is a good starting point.
 
 I am not doing anything outside Australian law by implementing these
-algorithms (to the best of my knowedge).  It is another example of how 
+algorithms (to the best of my knowedge).  It is another example of how
 the world legal system does not cope with the internet very well.
 
-I may start making shared libraries available (I have now got DLL's for 
-Windows).  This will mean that distributions into the usa could be 
-shipped with a version with a reduced cipher set and the versions outside 
+I may start making shared libraries available (I have now got DLL's for
+Windows).  This will mean that distributions into the usa could be
+shipped with a version with a reduced cipher set and the versions outside
 could use the DLL/shared library with all the ciphers (and without RSAref).
 
-This could be completly hidden from the application, so this would not 
+This could be completly hidden from the application, so this would not
 even require a re-linking.
 
-This is the reverse of what people were talking about doing to get around 
+This is the reverse of what people were talking about doing to get around
 USA export regulations :-)
 
 eric
@@ -3856,8 +3856,8 @@ eric
 	and one in South Africa.
 
 [2]:	Since I always get questions when I post benchmark numbers :-),
-	DES performace figures are in 1000's of bytes per second in cbc 
-	mode using an 8192 byte buffer.  The pentium 100 was running Windows NT 
+	DES performace figures are in 1000's of bytes per second in cbc
+	mode using an 8192 byte buffer.  The pentium 100 was running Windows NT
 	3.51 DLLs and the 686/200 was running NextStep.
 	I quote pentium 100 benchmarks because it is basically the
 	'entry level' computer that most people buy for personal use.
@@ -4175,7 +4175,7 @@ Message-Id: <Pine.SOL.3.91.951228133525.7269A-100000@orb>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Status: RO
-X-Status: 
+X-Status:
 
 On Fri, 22 Dec 1995, sameer wrote:
 > 	I could use documentation on 'ca'. Thanks.
@@ -4189,10 +4189,10 @@ The ca program uses the ssleay.conf file for most of its configuration
  -config file    - A config file. If you don't want to use the
 		   default config file
  -name arg       - The particular CA definition to use
-	In the config file, the section to use for parameters.  This lets 
-	multiple setups to be contained in the one file.  By default, the 
-	default_ca variable is looked up in the [ ca ] section.  So in the 
-	shipped ssleay.conf, the CA definition used is CA_default.  It could be 
+	In the config file, the section to use for parameters.  This lets
+	multiple setups to be contained in the one file.  By default, the
+	default_ca variable is looked up in the [ ca ] section.  So in the
+	shipped ssleay.conf, the CA definition used is CA_default.  It could be
 	any other name.
  -gencrl days    - Generate a new CRL, days is when the next CRL is due
 	This will generate a new certificate revocion list.
@@ -4200,7 +4200,7 @@ The ca program uses the ssleay.conf file for most of its configuration
 	When certifiying certificates, this is the number of days to use.
  -md arg         - md to use, one of md2, md5, sha or sha1
  -policy arg     - The CA 'policy' to support
-	I'll describe this later, but there are 2 policies definied in the 
+	I'll describe this later, but there are 2 policies definied in the
 	shipped ssleay.conf
  -keyfile arg    - PEM RSA private key file
  -key arg        - key to decode the RSA private key if it is encrypted
@@ -4217,12 +4217,12 @@ The ca program uses the ssleay.conf file for most of its configuration
 
 Just about all the above have default values defined in ssleay.conf.
 
-The key variables in ssleay.conf are (for the pariticular '-name' being 
+The key variables in ssleay.conf are (for the pariticular '-name' being
 used, in the default, it is CA_default).
 
 dir is where all the CA database stuff is kept.
 certs is where all the previously issued certificates are kept.
-The database is a simple text database containing the following tab separated 
+The database is a simple text database containing the following tab separated
 fields.
 status: a value of 'R' - revoked, 'E' -expired or 'V' valid.
 issued date:  When the certificate was certified.
@@ -4231,12 +4231,12 @@ serial number:  The certificate serial number.
 certificate:	Where the certificate is located.
 CN:	The name of the certificate.
 
-The demo file has quite a few made up values it it.  The last 2 were 
+The demo file has quite a few made up values it it.  The last 2 were
 added by the ca program and are acurate.
 The CA program does not update the 'certificate' file correctly right now.
 The serial field should be unique as should the CN/status combination.
-The ca program checks these at startup.  What still needs to be 
-wrtten is a program to 'regenerate' the data base file from the issued 
+The ca program checks these at startup.  What still needs to be
+wrtten is a program to 'regenerate' the data base file from the issued
 certificate list (and a CRL list).
 
 Back to the CA_default variables.
@@ -4245,7 +4245,7 @@ Most of the variables are commented.
 
 policy is the default policy.
 
-Ok for policies, they define the order and which fields must be present 
+Ok for policies, they define the order and which fields must be present
 in the certificate request and what gets filled in.
 
 So a value of
@@ -4256,7 +4256,7 @@ The org.Unit,Name does not have to be present and
 commonName              = supplied
 commonName must be supplied in the certificate request.
 
-For the 'policy_match' polocy, the order of the attributes in the 
+For the 'policy_match' polocy, the order of the attributes in the
 generated certiticate would be
 countryName
 stateOrProvinceName
@@ -4265,16 +4265,16 @@ organizationalUnitName
 commonName
 emailAddress
 
-Have a play, it sort of makes sense.  If you think about how the persona 
+Have a play, it sort of makes sense.  If you think about how the persona
 requests operate, it is similar to the 'policy_match' policy and the
 'policy_anything' is similar to what versign is doing.
 
-I hope this helps a bit.  Some backend scripts are definitly needed to 
-update the database and to make certificate revocion easy.  All 
+I hope this helps a bit.  Some backend scripts are definitly needed to
+update the database and to make certificate revocion easy.  All
 certificates issued should also be kept forever (or until they expire?)
 
 hope this helps
-eric (who has to run off an buy some cheap knee pads for the caving in 4 
+eric (who has to run off an buy some cheap knee pads for the caving in 4
 days time :-)
 
 --
@@ -4290,135 +4290,135 @@ Subject: ms3-ca.doc
 Organization: TU Ilmenau, Fak. IA, FG Telematik
 Content-Length: 14575
 Status: RO
-X-Status: 
+X-Status:
 
 Loading client certs into MSIE 3.01
 ===================================
 
-This document contains all the information necessary to successfully set up 
-some scripts to issue client certs to Microsoft Internet Explorer. It 
-includes the required knowledge about the model MSIE uses for client 
-certification and includes complete sample scripts ready to play with. The 
-scripts were tested against a modified ca program of SSLeay 0.6.6 and should 
-work with the regular ca program that comes with version 0.8.0. I haven't 
+This document contains all the information necessary to successfully set up
+some scripts to issue client certs to Microsoft Internet Explorer. It
+includes the required knowledge about the model MSIE uses for client
+certification and includes complete sample scripts ready to play with. The
+scripts were tested against a modified ca program of SSLeay 0.6.6 and should
+work with the regular ca program that comes with version 0.8.0. I haven't
 tested against MSIE 4.0
 
-You can use the information contained in this document in either way you 
-want. However if you feel it saved you a lot of time I ask you to be as fair 
+You can use the information contained in this document in either way you
+want. However if you feel it saved you a lot of time I ask you to be as fair
 as to mention my name: Holger Reif <reif@prakinf.tu-ilmenau.de>.
 
 1.) The model used by MSIE
 --------------------------
 
-The Internet Explorer doesn't come with a embedded engine for installing 
-client certs like Netscape's Navigator. It rather uses the CryptoAPI (CAPI) 
-defined by Microsoft. CAPI comes with WindowsNT 4.0 or is installed together 
-with Internet Explorer since 3.01. The advantage of this approach is a higher 
-flexibility because the certificates in the (per user) system open 
-certificate store may be used by other applications as well. The drawback 
+The Internet Explorer doesn't come with a embedded engine for installing
+client certs like Netscape's Navigator. It rather uses the CryptoAPI (CAPI)
+defined by Microsoft. CAPI comes with WindowsNT 4.0 or is installed together
+with Internet Explorer since 3.01. The advantage of this approach is a higher
+flexibility because the certificates in the (per user) system open
+certificate store may be used by other applications as well. The drawback
 however is that you need to do a bit more work to get a client cert issued.
 
-CAPI defines functions which will handle basic cryptographic work, eg. 
-generating keys, encrypting some data, signing text or building a certificate 
-request. The procedure is as follows: A CAPI function generates you a key 
-pair and saves it into the certificate store. After that one builds a 
-Distinguished Name. Together with that key pair another CAPI function forms a 
-PKCS#10 request which you somehow need to submit to a CA. Finally the issued 
-cert is given to a yet another CAPI function which saves it into the 
+CAPI defines functions which will handle basic cryptographic work, eg.
+generating keys, encrypting some data, signing text or building a certificate
+request. The procedure is as follows: A CAPI function generates you a key
+pair and saves it into the certificate store. After that one builds a
+Distinguished Name. Together with that key pair another CAPI function forms a
+PKCS#10 request which you somehow need to submit to a CA. Finally the issued
+cert is given to a yet another CAPI function which saves it into the
 certificate store.
 
-The certificate store with the user's keys and certs is in the registry. You 
-will find it under HKEY_CURRENT_USER/Software/Microsoft/Cryptography/ (I 
-leave it to you as a little exercise to figure out what all the entries mean 
-;-). Note that the keys are protected only with the user's usual Windows 
+The certificate store with the user's keys and certs is in the registry. You
+will find it under HKEY_CURRENT_USER/Software/Microsoft/Cryptography/ (I
+leave it to you as a little exercise to figure out what all the entries mean
+;-). Note that the keys are protected only with the user's usual Windows
 login password.
 
 2.) The practical usage
 -----------------------
 
-Unfortunately since CAPI is a system API you can't access its functions from 
-HTML code directly. For this purpose Microsoft provides a wrapper called 
-certenr3.dll. This DLL accesses the CAPI functions and provides an interface 
-usable from Visual Basic Script. One needs to install that library on the 
-computer which wants to have client cert. The easiest way is to load it as an 
-ActiveX control (certenr3.dll is properly authenticode signed by MS ;-). If 
+Unfortunately since CAPI is a system API you can't access its functions from
+HTML code directly. For this purpose Microsoft provides a wrapper called
+certenr3.dll. This DLL accesses the CAPI functions and provides an interface
+usable from Visual Basic Script. One needs to install that library on the
+computer which wants to have client cert. The easiest way is to load it as an
+ActiveX control (certenr3.dll is properly authenticode signed by MS ;-). If
 you have ever enrolled e cert request at a CA you will have installed it.
 
-At time of writing certenr3.dll is contained in 
-http://www.microsoft.com/workshop/prog/security/csa/certenr3.exe. It comes 
-with an README file which explains the available functions. It is labeled 
-beta but every CA seems to use it anyway. The license.txt allows you the 
-usage for your own purposes (as far as I understood) and a somehow limited 
-distribution. 
+At time of writing certenr3.dll is contained in
+http://www.microsoft.com/workshop/prog/security/csa/certenr3.exe. It comes
+with an README file which explains the available functions. It is labeled
+beta but every CA seems to use it anyway. The license.txt allows you the
+usage for your own purposes (as far as I understood) and a somehow limited
+distribution.
 
-The two functions of main interest are GenerateKeyPair and AcceptCredentials. 
-For complete explanation of all possible parameters see the README file. Here 
+The two functions of main interest are GenerateKeyPair and AcceptCredentials.
+For complete explanation of all possible parameters see the README file. Here
 are only minimal required parameters and their values.
 
 GenerateKeyPair(sessionID, FASLE, szName, 0, "ClientAuth", TRUE, FALSE, 1)
-- sessionID is a (locally to that computer) unique string to correlate the 
+- sessionID is a (locally to that computer) unique string to correlate the
 generated key pair with a cert installed later.
-- szName is the DN of the form "C=DE; S=Thueringen; L=Ilmenau; CN=Holger 
-Reif; 1.2.840.113549.1.9.1=reif@prakinf.tu-ilmenau.de". Note that S is the 
-abreviation for StateOrProvince. The recognized abreviation include CN, O, C, 
-OU, G, I, L, S, T. If the abreviation is unknown (eg. for PKCS#9 email addr) 
-you need to use the full object identifier. The starting point for searching 
-them could be crypto/objects.h since all OIDs know to SSLeay are listed 
+- szName is the DN of the form "C=DE; S=Thueringen; L=Ilmenau; CN=Holger
+Reif; 1.2.840.113549.1.9.1=reif@prakinf.tu-ilmenau.de". Note that S is the
+abreviation for StateOrProvince. The recognized abreviation include CN, O, C,
+OU, G, I, L, S, T. If the abreviation is unknown (eg. for PKCS#9 email addr)
+you need to use the full object identifier. The starting point for searching
+them could be crypto/objects.h since all OIDs know to SSLeay are listed
 there.
-- note: the possible ninth parameter which should give a default name to the 
-certificate storage location doesn't seem to work. Changes to the constant 
-values in the call above doesn't seem to make sense. You can't generate 
+- note: the possible ninth parameter which should give a default name to the
+certificate storage location doesn't seem to work. Changes to the constant
+values in the call above doesn't seem to make sense. You can't generate
 PKCS#10 extensions with that function.
 
-The result of GenerateKeyPair is the base64 encoded PKCS#10 request. However 
-it has a little strange format that SSLeay doesn't accept. (BTW I feel the 
-decision of rejecting that format as standard conforming.) It looks like 
+The result of GenerateKeyPair is the base64 encoded PKCS#10 request. However
+it has a little strange format that SSLeay doesn't accept. (BTW I feel the
+decision of rejecting that format as standard conforming.) It looks like
 follows:
 	1st line with 76 chars
 	2nd line with 76 chars
 	...
 	(n-2)th line with 76 chars
-	(n-1)th line contains a multiple of 4 chars less then 76 (possible 
+	(n-1)th line contains a multiple of 4 chars less then 76 (possible
 empty)
-	(n)th line has zero or 4 chars (then with 1 or 2 equal signs - the 
-		original text's lenght wasn'T a multiple of 3) 
+	(n)th line has zero or 4 chars (then with 1 or 2 equal signs - the
+		original text's lenght wasn'T a multiple of 3)
 	The line separator has two chars: 0x0d 0x0a
 
 AcceptCredentials(sessionID, credentials, 0, FALSE)
 - sessionID needs to be the same as while generating the key pair
-- credentials is the base64 encoded PKCS#7 object containing the cert. 
+- credentials is the base64 encoded PKCS#7 object containing the cert.
 
-CRL's and CA certs are not required simply just the client cert. (It seems to 
-me that both are not even checked somehow.) The only format of the base64 
-encoded object I successfully used was all characters in a very long string 
-without line feeds or carriage returns. (Hey, it doesn't matter, only a 
+CRL's and CA certs are not required simply just the client cert. (It seems to
+me that both are not even checked somehow.) The only format of the base64
+encoded object I successfully used was all characters in a very long string
+without line feeds or carriage returns. (Hey, it doesn't matter, only a
 computer reads it!)
 
-The result should be S_OK. For error handling see the example that comes with 
+The result should be S_OK. For error handling see the example that comes with
 certenr3.dll.
 
-A note about ASN.1 character encodings. certenr3.dll seems to know only about 
-2 of them: UniversalString and PrintableString. First it is definitely wrong 
-for an email address which is IA5STRING (checked by ssleay's ca). Second 
-unfortunately MSIE (at least until version 3.02) can't handle UniversalString 
-correctly - they just blow up you cert store! Therefore ssleay's ca (starting 
-from version 0.8.0) tries to convert the encodings automatically to IA5STRING 
-or TeletexString. The beef is it will work only for the latin-1 (western) 
+A note about ASN.1 character encodings. certenr3.dll seems to know only about
+2 of them: UniversalString and PrintableString. First it is definitely wrong
+for an email address which is IA5STRING (checked by ssleay's ca). Second
+unfortunately MSIE (at least until version 3.02) can't handle UniversalString
+correctly - they just blow up you cert store! Therefore ssleay's ca (starting
+from version 0.8.0) tries to convert the encodings automatically to IA5STRING
+or TeletexString. The beef is it will work only for the latin-1 (western)
 charset. Microsoft still has to do abit of homework...
 
 3.) An example
 --------------
 
-At least you need two steps: generating the key & request and then installing 
-the certificate. A real world CA would have some more steps involved, eg. 
-accepting some license. Note that both scripts shown below are just 
+At least you need two steps: generating the key & request and then installing
+the certificate. A real world CA would have some more steps involved, eg.
+accepting some license. Note that both scripts shown below are just
 experimental state without any warrenty!
 
-First how to generate a request. Note that we can't use a static page because 
-of the sessionID. I generate it from system time plus pid and hope it is 
-unique enough. Your are free to feed it through md5 to get more impressive 
-ID's ;-) Then the intended text is read in with sed which inserts the 
-sessionID. 
+First how to generate a request. Note that we can't use a static page because
+of the sessionID. I generate it from system time plus pid and hope it is
+unique enough. Your are free to feed it through md5 to get more impressive
+ID's ;-) Then the intended text is read in with sed which inserts the
+sessionID.
 
 -----BEGIN ms-enroll.cgi-----
 #!/bin/sh
@@ -4446,7 +4446,7 @@ encoded METHOD=POST>
     <TR><TD>Country</TD><TD><INPUT NAME="Country" VALUE=""></TD></TR>
     <TR><TD>State</TD><TD><INPUT NAME="StateOrProvince" VALUE=""></TD></TR>
     <TR><TD>Location</TD><TD><INPUT NAME="Location" VALUE=""></TD></TR>
-    <TR><TD>Organization</TD><TD><INPUT NAME="Organization" 
+    <TR><TD>Organization</TD><TD><INPUT NAME="Organization"
 VALUE=""></TD></TR>
     <TR><TD>Organizational Unit</TD>
         <TD><INPUT NAME="OrganizationalUnit" VALUE=""></TD></TR>
@@ -4504,7 +4504,7 @@ VALUE=""></TD></TR>
                 chr(10) & "Your credentials could not be generated."
             result = MsgBox(sz, 0, "Credentials Enrollment")
             Exit Sub
-	else 
+	else
 	    TheForm.Request.value = sz10
 	    TheForm.Submit
         end if
@@ -4524,24 +4524,24 @@ VALUE=""></TD></TR>
 EOF
 -----END ms-enroll.cgi-----
 
-Second, how to extract the request and feed the certificate back? We need to 
-"normalize" the base64 encoding of the PKCS#10 format which means 
-regenerating the lines and wrapping with BEGIN and END line. This is done by 
-gawk. The request is taken by ca the normal way. Then the cert needs to be 
-packed into a PKCS#7 structure (note: the use of a CRL is necessary for 
-crl2pkcs7 as of version 0.6.6. Starting with 0.8.0 it it might probably be 
-ommited). Finally we need to format the PKCS#7 object and generate the HTML 
+Second, how to extract the request and feed the certificate back? We need to
+"normalize" the base64 encoding of the PKCS#10 format which means
+regenerating the lines and wrapping with BEGIN and END line. This is done by
+gawk. The request is taken by ca the normal way. Then the cert needs to be
+packed into a PKCS#7 structure (note: the use of a CRL is necessary for
+crl2pkcs7 as of version 0.6.6. Starting with 0.8.0 it it might probably be
+ommited). Finally we need to format the PKCS#7 object and generate the HTML
 text. I use two templates to have a clearer script.
 
-1st note: postit2 is slightly modified from a program I found at ncsa's ftp 
-site. Grab it from http://www.easterngraphics.com/certs/IX9704/postit2.c. You 
+1st note: postit2 is slightly modified from a program I found at ncsa's ftp
+site. Grab it from http://www.easterngraphics.com/certs/IX9704/postit2.c. You
 need utils.c from there too.
 
-2nd note: I'm note quite sure whether the gawk script really handles all 
-possible inputs for the request right! Today I don't use this construction 
+2nd note: I'm note quite sure whether the gawk script really handles all
+possible inputs for the request right! Today I don't use this construction
 anymore myself.
 
-3d note: the cert must be of version 3! This could be done with the nsComment 
+3d note: the cert must be of version 3! This could be done with the nsComment
 line in ssleay.cnf...
 
 ------BEGIN ms-gencert.cgi-----
@@ -4580,7 +4580,7 @@ gawk \
 	} \
 	END { \
 		print "-----END CERTIFICATE REQUEST-----"; \
-	}' > "$FILE".pem < "$FILE".inp 
+	}' > "$FILE".pem < "$FILE".inp
 
 ssleay ca -batch -in "$FILE".pem -key passwd -out "$FILE".out
 ssleay crl2pkcs7 -certfile "$FILE".out -out "$FILE".pkcs7 -in demoCA/crl.pem
@@ -4632,10 +4632,10 @@ credentials = "" & _
 ----BEGIN ms-enroll2b.html----
 ""
         On Error Resume Next
-        result = certHelper.AcceptCredentials(sessionId, credentials, 0, 
+        result = certHelper.AcceptCredentials(sessionId, credentials, 0,
 FALSE)
         if (IsEmpty(result)) Then
-           sz = "The error '" & Err.Number & "' occurred." & chr(13) & 
+           sz = "The error '" & Err.Number & "' occurred." & chr(13) &
 chr(10) & "This Digital ID could not be registered."
            msgOut = MsgBox(sz, 0, "Credentials Registration Error")
            navigate "error.html"
@@ -4655,27 +4655,27 @@ chr(10) & "This Digital ID could not be registered."
 -----------------------------
 
 The cert is visible (without restarting MSIE) under the following menu:
-View->Options->Security->Personal certs. You can examine it's contents at 
+View->Options->Security->Personal certs. You can examine it's contents at
 least partially.
 
-To use it for client authentication you need to use SSL3.0 (fortunately 
-SSLeay supports it with 0.8.0). Furthermore MSIE is told to only supports a 
-kind of automatic selection of certs (I personally wasn't able to test it 
-myself). But there is a requirement that the issuer of the server cert and 
-the issuer of the client cert needs to be the same (according to a developer 
-from MS). Which means: you need may more then one cert to talk to all 
+To use it for client authentication you need to use SSL3.0 (fortunately
+SSLeay supports it with 0.8.0). Furthermore MSIE is told to only supports a
+kind of automatic selection of certs (I personally wasn't able to test it
+myself). But there is a requirement that the issuer of the server cert and
+the issuer of the client cert needs to be the same (according to a developer
+from MS). Which means: you need may more then one cert to talk to all
 servers...
 
-I'm sure we will get a bit more experience after ApacheSSL is available for 
+I'm sure we will get a bit more experience after ApacheSSL is available for
 SSLeay 0.8.8.
 
 
-I hope you enjoyed reading and that in future questions on this topic will 
+I hope you enjoyed reading and that in future questions on this topic will
 rarely appear on ssl-users@moncom.com ;-)
 
 Ilmenau, 9th of June 1997
 Holger Reif <reif@prakinf.tu-ilmenau.de>
--- 
+--
 read you later  -  Holger Reif
 ----------------------------------------  Signaturprojekt Deutsche Einheit
 TU Ilmenau - Informatik - Telematik                      (Verdamp lang her)
@@ -4698,7 +4698,7 @@ Internet and System Security Lab           Fax:   (404) 648-9516
                          oo
 ---------------------cut /\ here for ns-ca.doc ------------------------------
 
-This document briefly describes how to use SSLeay to implement a 
+This document briefly describes how to use SSLeay to implement a
 certificate authority capable of dynamically serving up client
 certificates for version 3.0 beta 5 (and presumably later) versions of
 the Netscape Navigator.  Before describing how this is done, it's
@@ -4717,7 +4717,7 @@ Here's a brief overview:
 	stored by the browser in a local key database.
 
 	This "Signed Public Key And Challenge" (SPKAC) arrives formatted
-	into 64 character lines (which are of course URL-encoded when 
+	into 64 character lines (which are of course URL-encoded when
 	sent via HTTP -- i.e. spaces, newlines and most punctuatation are
 	encoded as "%HH" where HH is the hex equivalent of the ASCII code).
 	Note that the SPKAC does not contain the other usual attributes
@@ -4745,7 +4745,7 @@ Here's a brief overview:
 	the scope of this document.
 
 
-Now, here's how the SSLeay package can be used to provide client 
+Now, here's how the SSLeay package can be used to provide client
 certficates:
 
 -	You prepare a file for input to the SSLeay ca application.
@@ -4781,7 +4781,7 @@ SPKAC = MIG0MGAwXDANBgkqhkiG9w0BAQEFAANLADBIAkEAwmk6FMJ4uAVIYbcvIOx5+bDGTfvL8X5g
 	you'd run:
 	$SSLDIR/bin/ca -spkac /tmp/cert.req -out /tmp/cert
 
-	The output is in DER format (binary) if a -out argument is 
+	The output is in DER format (binary) if a -out argument is
 	provided, as above; otherwise, it's in the PEM format (base-64
 	encoded DER).  Also, the "-batch" switch is implied by the
 	"-spkac" so you don't get asked whether to complete the signing
@@ -4818,7 +4818,7 @@ SPKAC = MIG0MGAwXDANBgkqhkiG9w0BAQEFAANLADBIAkEAwmk6FMJ4uAVIYbcvIOx5+bDGTfvL8X5g
 	  but for quite a few operating systems, this is not possible.
 	  - eric ]
 
-So, what do you have to do to make use of this stuff to create an online 
+So, what do you have to do to make use of this stuff to create an online
 demo CA capability with SSLeay?
 
 1	Create an HTML form for your users.  The form should contain
@@ -4978,7 +4978,7 @@ The following 3 routines are convenience routines that can be used to
 'save' and 'restore' data from/to the RNG and it's state.
 Since the more 'random' data that is feed as seed data the better, why not
 keep it around between executions of the program?  Of course the
-application should pass more 'random' data in via RAND_seed() and 
+application should pass more 'random' data in via RAND_seed() and
 make sure no-one can read the 'random' data file.
 	
 char *RAND_file_name(
@@ -5013,7 +5013,7 @@ What follows is a description of this RNG and a description of the rational
 behind it's design.
 
 It should be noted that this RNG is intended to be used to generate
-'random' keys for various ciphers including generation of DH and RSA keys.  
+'random' keys for various ciphers including generation of DH and RSA keys.
 
 It should also be noted that I have just created a system that I am happy with.
 It may be overkill but that does not worry me.  I have not spent that much
@@ -5112,7 +5112,7 @@ same.
 
 This library requires the inclusion of 'rc2.h'.
 
-All of the encryption functions take what is called an RC2_KEY as an 
+All of the encryption functions take what is called an RC2_KEY as an
 argument.  An RC2_KEY is an expanded form of the RC2 key.
 For all modes of the RC2 algorithm, the RC2_KEY used for
 decryption is the same one that was used for encryption.
@@ -5197,7 +5197,7 @@ int encrypt);
 	Input, which should be a multiple of 8 bytes is encrypted
 	(or decrypted) to output which will also be a multiple of 8 bytes.
 	The number of bytes is in length (and from what I've said above,
-	should be a multiple of 8).  If length is not a multiple of 8, bad 
+	should be a multiple of 8).  If length is not a multiple of 8, bad
 	things will probably happen.  ivec is the initialisation vector.
 	This function updates iv after each call so that it can be passed to
 	the next call to RC2_cbc_encrypt().
@@ -5400,7 +5400,7 @@ RSA *rsa);
 	bytes are expected.
 	
 For the following 4 RSA encryption routines, it should be noted that
-RSA_private_decrypt() should be used on the output from 
+RSA_private_decrypt() should be used on the output from
 RSA_public_encrypt() and RSA_public_decrypt() should be used on
 the output from RSA_private_encrypt().
 	
@@ -5472,7 +5472,7 @@ char *cb_arg;
 	This routine is used to generate RSA private keys.  It takes
 	quite a period of time to run and should only be used to
 	generate initial private keys that should then be stored
-	for later use.  The passed callback function 
+	for later use.  The passed callback function
 	will be called periodically so that feedback can be given
 	as to how this function is progressing.
 	'bits' is the length desired for the modulus, so it would be 1024
@@ -5560,7 +5560,7 @@ cached SSL_SESSIONS (which can be reused) and the certificate lookup
 information.  Each SSL structure needs to be associated with a SSL_CTX.
 Normally only one SSL_CTX structure is needed per program.
 
-SSL_CTX *SSL_CTX_new(void ); 
+SSL_CTX *SSL_CTX_new(void );
 void    SSL_CTX_free(SSL_CTX *);
 These 2 functions create and destroy SSL_CTX structures
 
@@ -5737,7 +5737,7 @@ If you 'set' the timeout back to 0, the system default will be used.
 SSL_SESSION *SSL_SESSION_new();
 void SSL_SESSION_free(SSL_SESSION *ses);
 These 2 functions are used to create and dispose of SSL_SESSION functions.
-You should not ever normally need to use them unless you are using 
+You should not ever normally need to use them unless you are using
 i2d_SSL_SESSION() and/or d2i_SSL_SESSION().  If you 'load' a SSL_SESSION
 via d2i_SSL_SESSION(), you will need to SSL_SESSION_free() it.
 Both SSL_set_session() and SSL_CTX_add_session() will 'take copies' of the
@@ -5768,7 +5768,7 @@ ctx=SSL_CTX_new();
  * this is not toally clear, but passing between programs does make sense
  * Perhaps you are using 4096 bit keys and are happy to keep them
  * valid for a week, to avoid the RSA overhead of 15 seconds, I'm not toally
- * sure, perhaps this is a process called from an SSL inetd and this is being 
+ * sure, perhaps this is a process called from an SSL inetd and this is being
  * passed to the application. */
 session=d2i_SSL_SESSION(....)
 SSL_CTX_add_session(ctx,session);
@@ -5936,7 +5936,7 @@ Times are how long it takes to do an RSA private key operation.
 	       512bits 1024bits
 -------------------------------
 SSLeay NT dll	0.042s   0.202s see above
-SSLeay linux	0.046s   0.218s	Assember inner loops (normal build) 
+SSLeay linux	0.046s   0.218s	Assember inner loops (normal build)
 SSLeay linux	0.067s   0.380s Pure C code with BN_LLONG defined
 SSLeay W3.1 dll	0.108s 	 0.478s see above
 SSLeay linux	0.109s   0.713s C without BN_LLONG.
@@ -5961,7 +5961,7 @@ servers.  The code is very simple, you just need to modify the 'header'.
 
 The message is, if you are stuck using RSAref, the RSA performance will be
 bad. Considering the code was compiled for a pentium, the 486DX66 number
-would indicate 'Use RSAref and turn you Pentium 100 into a 486DX66' :-). 
+would indicate 'Use RSAref and turn you Pentium 100 into a 486DX66' :-).
 [ As of verson 0.6.1, it would be correct to say 'turn you pentium 100
  into a 486DX33' :-) ]
 
@@ -5979,7 +5979,7 @@ PS while I know I could speed things up further, I will probably not do
    So the 'way to go', to support faster RSA libraries, if people are keen,
    is to write 'glue' code in a similar way that I do for RSAref and send it
    to me :-).
-   My base library still has the advantage of being able to operate on 
+   My base library still has the advantage of being able to operate on
    any size numbers, and is not that far from the performance from the
    leaders in the field. (-%30?)
    [ Well as of 0.6.1 I am now the leader in the filed on x86 (we at
@@ -6060,7 +6060,7 @@ The results are
 $ ssleay ciphers -v '!ADH:RC4+RSA:HIGH:MEDIUM:LOW:EXP:+SSLv2:+EXP'
 
 RC4-SHA                 SSLv3 Kx=RSA      Au=RSA  Enc=RC4(128)  Mac=SHA1
-RC4-MD5                 SSLv3 Kx=RSA      Au=RSA  Enc=RC4(128)  Mac=MD5 
+RC4-MD5                 SSLv3 Kx=RSA      Au=RSA  Enc=RC4(128)  Mac=MD5
 DHE-RSA-DES-CBC3-SHA    SSLv3 Kx=DH       Au=RSA  Enc=3DES(168) Mac=SHA1
 DHE-DSS-DES-CBC3-SHA    SSLv3 Kx=DH       Au=DSS  Enc=3DES(168) Mac=SHA1
 DES-CBC3-SHA            SSLv3 Kx=RSA      Au=RSA  Enc=3DES(168) Mac=SHA1
@@ -6068,11 +6068,11 @@ IDEA-CBC-MD5            SSLv3 Kx=RSA      Au=RSA  Enc=IDEA(128) Mac=SHA1
 DHE-RSA-DES-CBC-SHA     SSLv3 Kx=DH       Au=RSA  Enc=DES(56)   Mac=SHA1
 DHE-DSS-DES-CBC-SHA     SSLv3 Kx=DH       Au=DSS  Enc=DES(56)   Mac=SHA1
 DES-CBC-SHA             SSLv3 Kx=RSA      Au=RSA  Enc=DES(56)   Mac=SHA1
-DES-CBC3-MD5            SSLv2 Kx=RSA      Au=RSA  Enc=3DES(168) Mac=MD5 
-DES-CBC-MD5             SSLv2 Kx=RSA      Au=RSA  Enc=DES(56)   Mac=MD5 
-IDEA-CBC-MD5            SSLv2 Kx=RSA      Au=RSA  Enc=IDEA(128) Mac=MD5 
-RC2-CBC-MD5             SSLv2 Kx=RSA      Au=RSA  Enc=RC2(128)  Mac=MD5 
-RC4-MD5                 SSLv2 Kx=RSA      Au=RSA  Enc=RC4(128)  Mac=MD5 
+DES-CBC3-MD5            SSLv2 Kx=RSA      Au=RSA  Enc=3DES(168) Mac=MD5
+DES-CBC-MD5             SSLv2 Kx=RSA      Au=RSA  Enc=DES(56)   Mac=MD5
+IDEA-CBC-MD5            SSLv2 Kx=RSA      Au=RSA  Enc=IDEA(128) Mac=MD5
+RC2-CBC-MD5             SSLv2 Kx=RSA      Au=RSA  Enc=RC2(128)  Mac=MD5
+RC4-MD5                 SSLv2 Kx=RSA      Au=RSA  Enc=RC4(128)  Mac=MD5
 EXP-DHE-RSA-DES-CBC     SSLv3 Kx=DH(512)  Au=RSA  Enc=DES(40)   Mac=SHA1 export
 EXP-DHE-DSS-DES-CBC-SHA SSLv3 Kx=DH(512)  Au=DSS  Enc=DES(40)   Mac=SHA1 export
 EXP-DES-CBC-SHA         SSLv3 Kx=RSA(512) Au=RSA  Enc=DES(40)   Mac=SHA1 export
@@ -6282,7 +6282,7 @@ Message-Id: <Pine.SOL.3.91.951211112115.28608D-100000@orb>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Status: RO
-X-Status: 
+X-Status:
 
 On Sun, 10 Dec 1995, sameer wrote:
 > 	OK, that's solved. I've found out that it is saying "no
@@ -6294,9 +6294,9 @@ The full order of things for a server should be.
 
 ctx=SSL_CTX_new();
 
-/* The next line should not really be using ctx->cert but I'll leave it 
+/* The next line should not really be using ctx->cert but I'll leave it
  * this way right now... I don't want a X509_ routine to know about an SSL
- * structure, there should be an SSL_load_verify_locations... hmm, I may 
+ * structure, there should be an SSL_load_verify_locations... hmm, I may
  * add it tonight.
  */
 X509_load_verify_locations(ctx->cert,CAfile,CApath);
@@ -6442,7 +6442,7 @@ DH	This is an implementation of the
 	standard where required.
 
 You may have noticed the preceding section mentions the 'generation' of
-prime numbers.  Now this requries the use of 'random numbers'. 
+prime numbers.  Now this requries the use of 'random numbers'.
 
 RAND	This psuedo-random number library is based on MD5 at it's core
 	and a large internal state (2k bytes).  Once you have entered enough
@@ -6606,7 +6606,7 @@ and that is what I originally used it for.  Due to the way element
 pointers are kept in a malloc()ed array, the most efficient way to use this
 structure is to add and delete elements from the end via sk_pop() and
 sk_push().  If you wish to do 'lookups' sk_find() is quite efficient since
-it will sort the stack (if required) and then do a binary search to lookup 
+it will sort the stack (if required) and then do a binary search to lookup
 the requested item.  This sorting occurs automatically so just sk_push()
 elements on the stack and don't worry about the order.  Do remember that if
 you do a sk_find(), the order of the elements will change.
@@ -6669,7 +6669,7 @@ from the stack and returned.  NULL is returned if the element is not in the
 stack.
 
 int sk_find(STACK *st,char *data);
-	Returns the location that contains a value that is equal to 
+	Returns the location that contains a value that is equal to
 the 'data' item.  If the comparison function was not set, this function
 does a linear search.  This function actually qsort()s the stack if it is not
 in order and then uses bsearch() to do the initial search.  If the
@@ -6678,7 +6678,7 @@ value, the index of the first in the array is returned.
 
 int sk_push(STACK *st,char *data);
 	Append 'data' to the stack.  0 is returned if there is a failure
-(due to a malloc failure), else 1.  This is 
+(due to a malloc failure), else 1.  This is
 sk_insert(st,data,sk_num(st));
 
 int sk_unshift(STACK *st,char *data);
@@ -6779,7 +6779,7 @@ different library malloc, things get very confused.
 The default SSLeay DLL builds use /MD, so if you use this on your
 application, things will work as expected.  If you use /MDd,
 you will probably have to rebuild SSLeay using this flag.
-I should modify util/mk1mf.pl so it does all this correctly, but 
+I should modify util/mk1mf.pl so it does all this correctly, but
 this has not been done yet.
 
 One last warning.  Because locking overheads are actually quite large, the
@@ -6803,7 +6803,7 @@ This file is more of a note for other people who wish to understand why
 the build environment is the way it is :-).
 
 The include files 'depend' as follows.
-Each of 
+Each of
 crypto/*/*.c includes crypto/cryptlib.h
 ssl/*.c include ssl/ssl_locl.h
 apps/*.c include apps/apps.h
@@ -6976,7 +6976,7 @@ emailAddress_max		= 40
 
 # The next section is the attributes section.  This is exactly the
 # same as for the previous section except that the resulting objects are
-# put in the attributes field. 
+# put in the attributes field.
 [ req_attr ]
 challengePassword		= A challenge password
 challengePassword_min		= 4

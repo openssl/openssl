@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -328,7 +328,7 @@ static int pkcs12_add_bag(STACK_OF(PKCS12_SAFEBAG) **pbags, PKCS12_SAFEBAG *bag)
 			return 0;
 		free_bags = 1;
 		}
-	else 
+	else
 		free_bags = 0;
 
 	if (!sk_PKCS12_SAFEBAG_push(*pbags, bag))

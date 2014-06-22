@@ -28,7 +28,7 @@ client only type. B<method> can be of the following types:
 A TLS/SSL connection established with these methods will only understand
 the SSLv2 protocol. A client will send out SSLv2 client hello messages
 and will also indicate that it only understand SSLv2. A server will only
-understand SSLv2 client hello messages. The SSLv2 protocol is deprecated 
+understand SSLv2 client hello messages. The SSLv2 protocol is deprecated
 and very broken: its use is B<strongly> discouraged.
 
 =item SSLv3_method(void), SSLv3_server_method(void), SSLv3_client_method(void)

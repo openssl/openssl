@@ -51,7 +51,7 @@ transparent to the algorithm used and much more flexible.
 
 Due to the link between message digests and public key algorithms the correct
 digest algorithm must be used with the correct public key type. A list of
-algorithms and associated public key algorithms appears in 
+algorithms and associated public key algorithms appears in
 L<EVP_DigestInit(3)|EVP_DigestInit(3)>.
 
 The call to EVP_VerifyFinal() internally finalizes a copy of the digest context.
@@ -64,7 +64,7 @@ will occur.
 
 =head1 BUGS
 
-Older versions of this documentation wrongly stated that calls to 
+Older versions of this documentation wrongly stated that calls to
 EVP_VerifyUpdate() could not be made after calling EVP_VerifyFinal().
 
 Since the public key is passed in the call to EVP_SignFinal() any error

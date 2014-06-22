@@ -663,20 +663,20 @@ sub bn_sub_part_words
 	    &adc($c,0);
 	    &mov(&DWP($i*4,$r,"",0),$tmp1); 	# *r
 	}
-	    
+	
 	&comment("");
 	&add($b,32);
 	&add($r,32);
 	&sub($num,8);
 	&jnz(&label("pw_neg_loop"));
-	    
+	
 	&set_label("pw_neg_finish",0);
 	&mov($tmp2,&wparam(4));	# get dl
 	&mov($num,0);
 	&sub($num,$tmp2);
 	&and($num,7);
 	&jz(&label("pw_end"));
-	    
+	
 	for ($i=0; $i<7; $i++)
 	{
 	    &comment("dl<0 Tail Round $i");
@@ -710,18 +710,18 @@ sub bn_sub_part_words
 	    &mov(&DWP($i*4,$r,"",0),$tmp1);	# *r
 	    &jnc(&label("pw_nc".$i));
 	}
-	    
+	
 	&comment("");
 	&add($a,32);
 	&add($r,32);
 	&sub($num,8);
 	&jnz(&label("pw_pos_loop"));
-	    
+	
 	&set_label("pw_pos_finish",0);
 	&mov($num,&wparam(4));	# get dl
 	&and($num,7);
 	&jz(&label("pw_end"));
-	    
+	
 	for ($i=0; $i<7; $i++)
 	{
 	    &comment("dl>0 Tail Round $i");
@@ -742,17 +742,17 @@ sub bn_sub_part_words
 	    &mov(&DWP($i*4,$r,"",0),$tmp1);	# *r
 	    &set_label("pw_nc".$i,0);
 	}
-	    
+	
 	&comment("");
 	&add($a,32);
 	&add($r,32);
 	&sub($num,8);
 	&jnz(&label("pw_nc_loop"));
-	    
+	
 	&mov($num,&wparam(4));	# get dl
 	&and($num,7);
 	&jz(&label("pw_nc_end"));
-	    
+	
 	for ($i=0; $i<7; $i++)
 	{
 	    &mov($tmp1,&DWP($i*4,$a,"",0));	# *a

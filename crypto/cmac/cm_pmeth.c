@@ -9,7 +9,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -188,7 +188,7 @@ static int pkey_cmac_ctrl_str(EVP_PKEY_CTX *ctx,
 	return -2;
 	}
 
-const EVP_PKEY_METHOD cmac_pkey_meth = 
+const EVP_PKEY_METHOD cmac_pkey_meth =
 	{
 	EVP_PKEY_CMAC,
 	EVP_PKEY_FLAG_SIGCTX_CUSTOM,

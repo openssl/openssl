@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -58,7 +58,7 @@
 
 /* Packet trace support for OpenSSL */
 
-typedef struct 
+typedef struct
 	{
 	int num;
 	const char *name;
@@ -70,7 +70,7 @@ typedef struct
 #define ssl_trace_list(bio, indent, msg, msglen, value, table) \
 	do_ssl_trace_list(bio, indent, msg, msglen, value, \
 	 table, sizeof(table)/sizeof(ssl_trace_tbl))
- 
+
 static const char *do_ssl_trace_str(int val, ssl_trace_tbl *tbl, size_t ntbl)
 	{
 	size_t i;
@@ -979,7 +979,7 @@ static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
 	return ssl_print_signature(bio, indent, ssl, &msg, &msglen);
 	}
 
-static int ssl_print_certificate(BIO *bio, int indent, 
+static int ssl_print_certificate(BIO *bio, int indent,
 				const unsigned char **pmsg, size_t *pmsglen)
 	{
 	size_t msglen = *pmsglen;
@@ -1015,7 +1015,7 @@ static int ssl_print_certificate(BIO *bio, int indent,
 	return 1;
 	}
 
-static int ssl_print_certificates(BIO *bio, int indent, 
+static int ssl_print_certificates(BIO *bio, int indent,
 				const unsigned char *msg, size_t msglen)
 	{
 	size_t clen;

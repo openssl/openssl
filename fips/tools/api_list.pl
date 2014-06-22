@@ -5,7 +5,7 @@
 # symbols from fipscanister.o, pair those with the source file names
 # (from ./fips/fipssyms.h), and map to the object file name containing
 # them.
-# 
+#
 # Requires the "nm" and "find" utilities.
 # Execure from the root of the FIPS module source code workarea
 
@@ -260,7 +260,7 @@ print STDERR "Info: printing output\n";
 
 $d->on_all_declarations(
     sub {
-	my $decl = shift; 
+	my $decl = shift;
 	#$indent = 2;
 	#print printer($decl);
 	print "<p>",html_printer(0,$decl),"</p>\n";

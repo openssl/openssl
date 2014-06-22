@@ -1,7 +1,7 @@
 /*
  * Implement J-PAKE, as described in
  * http://grouper.ieee.org/groups/1363/Research/contributions/hao-ryan-2008.pdf
- * 
+ *
  * With hints from http://www.cl.cam.ac.uk/~fh240/software/JPAKE2.java.
  */
 

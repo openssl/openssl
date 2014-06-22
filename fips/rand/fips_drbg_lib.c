@@ -9,7 +9,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -257,7 +257,7 @@ int FIPS_drbg_instantiate(DRBG_CTX *dctx,
 
 		}
 
-	if (!dctx->instantiate(dctx, 
+	if (!dctx->instantiate(dctx,
 				entropy, entlen,
 				nonce, noncelen,
 				pers, perslen))

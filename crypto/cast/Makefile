@@ -22,7 +22,7 @@ TEST=casttest.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=c_skey.c c_ecb.c c_enc.c c_cfb64.c c_ofb64.c 
+LIBSRC=c_skey.c c_ecb.c c_enc.c c_cfb64.c c_ofb64.c
 LIBOBJ=c_skey.o c_ecb.o $(CAST_ENC) c_cfb64.o c_ofb64.o
 
 SRC= $(LIBSRC)

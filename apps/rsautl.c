@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -154,7 +154,7 @@ int MAIN(int argc, char **argv)
 			key_type = KEY_PUBKEY;
 		} else if(!strcmp(*argv, "-certin")) {
 			key_type = KEY_CERT;
-		} 
+		}
 		else if(!strcmp(*argv, "-asn1parse")) asn1parse = 1;
 		else if(!strcmp(*argv, "-hexdump")) hexdump = 1;
 		else if(!strcmp(*argv, "-raw")) pad = RSA_NO_PADDING;

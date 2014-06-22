@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -96,7 +96,7 @@ STACK_OF(CONF_VALUE) *i2v_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
 {
 	BIT_STRING_BITNAME *bnam;
 	for(bnam =method->usr_data; bnam->lname; bnam++) {
-		if(ASN1_BIT_STRING_get_bit(bits, bnam->bitnum)) 
+		if(ASN1_BIT_STRING_get_bit(bits, bnam->bitnum))
 			X509V3_add_value(bnam->lname, NULL, &ret);
 	}
 	return ret;

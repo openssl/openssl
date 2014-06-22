@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -57,7 +57,7 @@
  */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
- * ECDH support in OpenSSL originally developed by 
+ * ECDH support in OpenSSL originally developed by
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
 
@@ -141,7 +141,7 @@ extern "C" {
  * the existing ENGINE's structural reference count. */
 #define ENGINE_FLAGS_BY_ID_COPY		(int)0x0004
 
-/* This flag if for an ENGINE that does not want its methods registered as 
+/* This flag if for an ENGINE that does not want its methods registered as
  * part of ENGINE_register_all_complete() for example if the methods are
  * not usable as default methods.
  */

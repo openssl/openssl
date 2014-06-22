@@ -9,7 +9,7 @@
 #define ICA_ADAPTER_HANDLE int
 
 #if defined(linux) || defined (_AIX)
-#define ICA_CALL 
+#define ICA_CALL
 #endif
 
 #if defined(WIN32) || defined(_WIN32)

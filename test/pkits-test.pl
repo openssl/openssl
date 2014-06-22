@@ -50,7 +50,7 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 # ====================================================================
 
-# Perl utility to run PKITS tests for RFC3280 compliance. 
+# Perl utility to run PKITS tests for RFC3280 compliance.
 
 my $ossl_path;
 

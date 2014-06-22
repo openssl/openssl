@@ -74,7 +74,7 @@ BIO_set_nbio_accept() sets the accept socket to blocking mode
 
 BIO_set_accept_bios() can be used to set a chain of BIOs which
 will be duplicated and prepended to the chain when an incoming
-connection is received. This is useful if, for example, a 
+connection is received. This is useful if, for example, a
 buffering or SSL BIO is required for each connection. The
 chain of BIOs must not be freed after this call, they will
 be automatically freed when the accept BIO is freed.

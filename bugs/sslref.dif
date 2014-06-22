@@ -10,7 +10,7 @@ as specified in the documentation.
 From the section 2.6 Server Only Protocol Messages
 
 If the SESSION-ID-HIT flag is non-zero then the CERTIFICATE-TYPE,
-CERTIFICATE-LENGTH and CIPHER-SPECS-LENGTH fields will be zero. 
+CERTIFICATE-LENGTH and CIPHER-SPECS-LENGTH fields will be zero.
 
 This is not true for https://www.netscape.com.  The CERTIFICATE-TYPE
 is returned as 1.

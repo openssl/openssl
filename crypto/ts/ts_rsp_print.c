@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -229,7 +229,7 @@ int TS_TST_INFO_print_bio(BIO *bio, TS_TST_INFO *a)
 	BIO_write(bio, "\n", 1);
 
 	/* Print ordering. */
-	BIO_printf(bio, "Ordering: %s\n", 
+	BIO_printf(bio, "Ordering: %s\n",
 		   TS_TST_INFO_get_ordering(a) ? "yes" : "no");
 
 	/* Print nonce. */

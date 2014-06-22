@@ -28,7 +28,7 @@ be secure enough for most applications.  (The 192 bits used by
 
 a should be a generator for q, which means it needs to be
 relatively prime to q-1.   Usually a small prime like 2, 3 or 5 will
-work.  
+work.
 
 ....
 

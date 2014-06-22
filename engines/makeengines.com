@@ -295,7 +295,7 @@ $! Close the linker options file (for a real engine name).
 $!
 $ CLOSE OBJECTS
 $!
-$! Now, there are two ways to handle this.  We can either build 
+$! Now, there are two ways to handle this.  We can either build
 $! shareable images or stick the engine object file into libcrypto.
 $! For now, the latter is NOT supported.
 $!
@@ -346,7 +346,7 @@ $!
 $     CREATE 'OPT_FILE'
 $DECK
 !
-! Default System Options File To Link Against 
+! Default System Options File To Link Against
 ! The Sharable VAX C Runtime Library.
 !
 SYS$SHARE:VAXCRTL.EXE/SHARE
@@ -375,7 +375,7 @@ $!
 $     CREATE 'OPT_FILE'
 $DECK
 !
-! Default System Options File To Link Against 
+! Default System Options File To Link Against
 ! The Sharable C Runtime Library.
 !
 GNU_CC:[000000]GCCLIB/LIBRARY
@@ -410,7 +410,7 @@ $!
 $       CREATE 'OPT_FILE'
 $DECK
 !
-! Default System Options File To Link Against 
+! Default System Options File To Link Against
 ! The Sharable DEC C Runtime Library.
 !
 SYS$SHARE:DECC$SHR.EXE/SHARE
@@ -425,7 +425,7 @@ $!
 $       CREATE 'OPT_FILE'
 $DECK
 !
-! Default System Options File For non-VAX To Link Against 
+! Default System Options File For non-VAX To Link Against
 ! The Sharable C Runtime Library.
 !
 SYS$SHARE:CMA$OPEN_LIB_SHR/SHARE
@@ -523,7 +523,7 @@ $!  OPT_DEBUG Is NODEBUG, So Compile Without The Debugger Information.
 $!
 $   DEBUGGER = "NODEBUG"
 $   LINKMAP = "NOMAP"
-$   TRACEBACK = "NOTRACEBACK" 
+$   TRACEBACK = "NOTRACEBACK"
 $   GCC_OPTIMIZE = "OPTIMIZE"
 $   CC_OPTIMIZE = "OPTIMIZE"
 $   MACRO_OPTIMIZE = "OPTIMIZE"
@@ -546,7 +546,7 @@ $     CC_OPTIMIZE = "NOOPTIMIZE"
 $     MACRO_OPTIMIZE = "NOOPTIMIZE"
 $     WRITE SYS$OUTPUT "Debugger Information Will Be Produced During Compile."
 $     WRITE SYS$OUTPUT "Compiling Without Compiler Optimization."
-$   ELSE 
+$   ELSE
 $!
 $!    They Entered An Invalid Option.
 $!
@@ -639,7 +639,7 @@ $       WRITE SYS$OUTPUT -
 $       WRITE SYS$OUTPUT -
          "    64=ARGV  :  Compile with 64-bit (long) pointers (ARGV)."
 $       WRITE SYS$OUTPUT ""
-$! 
+$!
 $!      Time To EXIT.
 $!
 $       EXIT
@@ -680,7 +680,7 @@ $!
 $!    Check To See If We Have VAXC Or DECC.
 $!
 $     IF (ARCH.NES."VAX").OR.(F$TRNLNM("DECC$CC_DEFAULT").NES."")
-$     THEN 
+$     THEN
 $!
 $!      Looks Like DECC, Set To Use DECC.
 $!

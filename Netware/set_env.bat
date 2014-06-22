@@ -13,7 +13,7 @@ rem
 rem
 
 if "a%1" == "a" goto usage
-               
+
 set LIBC_BUILD=
 set CLIB_BUILD=
 set GNUC=
@@ -66,29 +66,29 @@ if "%LIBC_BUILD%" == "Y" set IMPORTS=%NDKBASE%\ndk\libc\imports
 if "%CLIB_BUILD%" == "Y" set IMPORTS=%NDKBASE%\ndk\nwsdk\imports
 
 rem   Set PRELUDE to the absolute path of the prelude object to link with in
-rem   the Metrowerks NetWare PDK - NOTE: for Clib builds "clibpre.o" is 
+rem   the Metrowerks NetWare PDK - NOTE: for Clib builds "clibpre.o" is
 rem   recommended, for LibC NKS builds libcpre.o must be used
 if "%GNUC%" == "Y" goto gnuc
 if "%LIBC_BUILD%" == "Y" set PRELUDE=%IMPORTS%\libcpre.o
 rem if "%CLIB_BUILD%" == "Y" set PRELUDE=%IMPORTS%\clibpre.o
 if "%CLIB_BUILD%" == "Y" set PRELUDE=%IMPORTS%\prelude.o
-echo using MetroWerks CodeWarrior 
+echo using MetroWerks CodeWarrior
 goto info
 
 :gnuc
 if "%LIBC_BUILD%" == "Y" set PRELUDE=%IMPORTS%\libcpre.gcc.o
 rem if "%CLIB_BUILD%" == "Y" set PRELUDE=%IMPORTS%\clibpre.gcc.o
 if "%CLIB_BUILD%" == "Y" set PRELUDE=%IMPORTS%\prelude.gcc.o
-echo using GNU GCC Compiler 
+echo using GNU GCC Compiler
 
 :info
 echo.
 
 if "%LIBC_BUILD%" == "Y" echo Enviroment configured for LibC build
-if "%LIBC_BUILD%" == "Y" echo use "netware\build.bat netware-libc ..." 
+if "%LIBC_BUILD%" == "Y" echo use "netware\build.bat netware-libc ..."
 
 if "%CLIB_BUILD%" == "Y" echo Enviroment configured for CLib build
-if "%CLIB_BUILD%" == "Y" echo use "netware\build.bat netware-clib ..." 
+if "%CLIB_BUILD%" == "Y" echo use "netware\build.bat netware-clib ..."
 
 goto end
 

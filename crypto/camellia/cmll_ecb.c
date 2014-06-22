@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -60,7 +60,7 @@
 #include "cmll_locl.h"
 
 void Camellia_ecb_encrypt(const unsigned char *in, unsigned char *out,
-	const CAMELLIA_KEY *key, const int enc) 
+	const CAMELLIA_KEY *key, const int enc)
 	{
 
 	assert(in && out && key);

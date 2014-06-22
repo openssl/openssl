@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -85,7 +85,7 @@ X509_EXTENSION *X509V3_EXT_nconf(CONF *conf, X509V3_CTX *ctx, char *name,
 	int ext_type;
 	X509_EXTENSION *ret;
 	crit = v3_check_critical(&value);
-	if ((ext_type = v3_check_generic(&value))) 
+	if ((ext_type = v3_check_generic(&value)))
 		return v3_generic_extension(name, value, crit, ext_type, ctx);
 	ret = do_ext_nconf(conf, ctx, OBJ_sn2nid(name), crit, value);
 	if (!ret)
@@ -104,7 +104,7 @@ X509_EXTENSION *X509V3_EXT_nconf_nid(CONF *conf, X509V3_CTX *ctx, int ext_nid,
 	int crit;
 	int ext_type;
 	crit = v3_check_critical(&value);
-	if ((ext_type = v3_check_generic(&value))) 
+	if ((ext_type = v3_check_generic(&value)))
 		return v3_generic_extension(OBJ_nid2sn(ext_nid),
 						 value, crit, ext_type, ctx);
 	return do_ext_nconf(conf, ctx, ext_nid, crit, value);

@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -138,7 +138,7 @@ static int dev_crypto_init_key(EVP_CIPHER_CTX *ctx,int cipher,
     assert(ctx->cipher->iv_len <= MAX_HW_IV);
 
     memcpy(CDATA(ctx)->key,key,klen);
-    
+
     CDATA(ctx)->cipher=cipher;
     CDATA(ctx)->keylen=klen;
 
@@ -219,8 +219,8 @@ static int dev_crypto_cipher(EVP_CIPHER_CTX *ctx,unsigned char *out,
 	    if(cin)
 		OPENSSL_free(cin);
 	    }
-	else 
-	    {	    
+	else
+	    {	
 	    err("CIOCCRYPT failed");
 	    abort();
 	    return 0;
@@ -244,7 +244,7 @@ static int dev_crypto_des_ede3_init_key(EVP_CIPHER_CTX *ctx,
 
 BLOCK_CIPHER_def_cbc(dev_crypto_des_ede3, session_op, NID_des_ede3, 8, 24, 8,
 		     0, dev_crypto_des_ede3_init_key,
-		     dev_crypto_cleanup, 
+		     dev_crypto_cleanup,
 		     EVP_CIPHER_set_asn1_iv,
 		     EVP_CIPHER_get_asn1_iv,
 		     NULL)

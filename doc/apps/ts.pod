@@ -121,7 +121,7 @@ parameter is specified. (Optional)
 It is possible to specify the message imprint explicitly without the data
 file. The imprint must be specified in a hexadecimal format, two characters
 per byte, the bytes optionally separated by colons (e.g. 1A:F6:01:... or
-1AF601...). The number of bytes must match the message digest algorithm 
+1AF601...). The number of bytes must match the message digest algorithm
 in use. (Optional)
 
 =item B<-md2>|B<-md4>|B<-md5>|B<-sha>|B<-sha1>|B<-mdc2>|B<-ripemd160>|B<...>
@@ -283,7 +283,7 @@ data file. The B<-verify> command does not use the configuration file.
 =item B<-data> file_to_hash
 
 The response or token must be verified against file_to_hash. The file
-is hashed with the message digest algorithm specified in the token. 
+is hashed with the message digest algorithm specified in the token.
 The B<-digest> and B<-queryfile> options must not be specified with this one.
 (Optional)
 
@@ -318,9 +318,9 @@ details. Either this option or B<-CAfile> must be specified. (Optional)
 
 =item B<-CAfile> trusted_certs.pem
 
-The name of the file containing a set of trusted self-signed CA 
-certificates in PEM format. See the similar option of 
-L<verify(1)|verify(1)> for additional details. Either this option 
+The name of the file containing a set of trusted self-signed CA
+certificates in PEM format. See the similar option of
+L<verify(1)|verify(1)> for additional details. Either this option
 or B<-CApath> must be specified.
 (Optional)
 
@@ -375,8 +375,8 @@ generation a new file is created with serial number 1. (Mandatory)
 
 =item B<crypto_device>
 
-Specifies the OpenSSL engine that will be set as the default for 
-all available algorithms. The default value is builtin, you can specify 
+Specifies the OpenSSL engine that will be set as the default for
+all available algorithms. The default value is builtin, you can specify
 any other engines supported by OpenSSL (e.g. use chil for the NCipher HSM).
 (Optional)
 
@@ -419,7 +419,7 @@ the components is missing zero is assumed for that field. (Optional)
 
 =item B<clock_precision_digits>
 
-Specifies the maximum number of digits, which represent the fraction of 
+Specifies the maximum number of digits, which represent the fraction of
 seconds, that  need to be included in the time field. The trailing zeroes
 must be removed from the time, so there might actually be fewer digits,
 or no fraction of seconds at all. Supported only on UNIX platforms.
@@ -458,12 +458,12 @@ overridden by the B<-config> command line option.
 =head1 EXAMPLES
 
 All the examples below presume that B<OPENSSL_CONF> is set to a proper
-configuration file, e.g. the example configuration file 
+configuration file, e.g. the example configuration file
 openssl/apps/openssl.cnf will do.
 
 =head2 Time Stamp Request
 
-To create a time stamp request for design1.txt with SHA-1 
+To create a time stamp request for design1.txt with SHA-1
 without nonce and policy and no certificate is required in the response:
 
   openssl ts -query -data design1.txt -no_nonce \
@@ -479,7 +479,7 @@ To print the content of the previous request in human readable format:
 
   openssl ts -query -in design1.tsq -text
 
-To create a time stamp request which includes the MD-5 digest 
+To create a time stamp request which includes the MD-5 digest
 of design2.txt, requests the signer certificate and nonce,
 specifies a policy id (assuming the tsa_policy1 name is defined in the
 OID section of the config file):
@@ -559,8 +559,8 @@ Zoltan Glozik <zglozik@opentsa.org>. Known issues:
 =over 4
 
 =item * No support for time stamps over SMTP, though it is quite easy
-to implement an automatic e-mail based TSA with L<procmail(1)|procmail(1)> 
-and L<perl(1)|perl(1)>. HTTP server support is provided in the form of 
+to implement an automatic e-mail based TSA with L<procmail(1)|procmail(1)>
+and L<perl(1)|perl(1)>. HTTP server support is provided in the form of
 a separate apache module. HTTP client support is provided by
 L<tsget(1)|tsget(1)>. Pure TCP/IP protocol is not supported.
 
@@ -587,8 +587,8 @@ Zoltan Glozik <zglozik@opentsa.org>, OpenTSA project (http://www.opentsa.org)
 
 =head1 SEE ALSO
 
-L<tsget(1)|tsget(1)>, L<openssl(1)|openssl(1)>, L<req(1)|req(1)>, 
-L<x509(1)|x509(1)>, L<ca(1)|ca(1)>, L<genrsa(1)|genrsa(1)>, 
+L<tsget(1)|tsget(1)>, L<openssl(1)|openssl(1)>, L<req(1)|req(1)>,
+L<x509(1)|x509(1)>, L<ca(1)|ca(1)>, L<genrsa(1)|genrsa(1)>,
 L<config(5)|config(5)>
 
 =cut

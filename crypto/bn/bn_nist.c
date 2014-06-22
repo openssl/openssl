@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -320,7 +320,7 @@ static void nist_cp_bn_0(BN_ULONG *dst, const BN_ULONG *src, int top, int max)
 	}
 
 static void nist_cp_bn(BN_ULONG *dst, const BN_ULONG *src, int top)
-	{ 
+	{
 	int i;
 
 	for (i = 0; i < top; i++)
@@ -1007,7 +1007,7 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 			}
 		*ap=c;
 		}
-	carry = (int)bn_add_words(r_d+(128/BN_BITS2), r_d+(128/BN_BITS2), 
+	carry = (int)bn_add_words(r_d+(128/BN_BITS2), r_d+(128/BN_BITS2),
 		t_d, BN_NIST_256_TOP);
 	/*S2 */
 	carry += (int)bn_add_words(r_d, r_d, buf.bn, BN_NIST_384_TOP);

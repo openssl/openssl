@@ -27,7 +27,7 @@ and RSA_get_ex_data() as described in L<RSA_get_ex_new_index(3)>.
 
 This mechanism is used internally by the B<ssl> library to store the B<SSL>
 structure associated with a verification operation in an B<X509_STORE_CTX>
-structure. 
+structure.
 
 =head1 SEE ALSO
 

@@ -2,7 +2,7 @@ Alpha EV5.6 (21164A) 533mhz, Linux 2.0.32
 
 SSLeay 0.9.0p 22-May-1998
 built on Sun May 27 14:23:38 GMT 2018
-options:bn(64,64) md2(int) rc4(ptr,int) des(idx,risc1,16,long) idea(int) blowfish(idx) 
+options:bn(64,64) md2(int) rc4(ptr,int) des(idx,risc1,16,long) idea(int) blowfish(idx)
 C flags:gcc -O3
 The 'numbers' are in 1000s of bytes per second processed.
 type              8 bytes     64 bytes    256 bytes   1024 bytes   8192 bytes

@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -72,7 +72,7 @@
 
 /* ASN1_PCTX routines */
 
-ASN1_PCTX default_pctx = 
+ASN1_PCTX default_pctx =
 	{
 	ASN1_PCTX_FLAGS_SHOW_ABSENT,	/* flags */
 	0,	/* nm_flags */
@@ -251,7 +251,7 @@ static int asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 				return 0;
 			return 1;
 			}
-		else if (sname && 
+		else if (sname &&
 			BIO_printf(out, ":EXTERNAL TYPE %s\n", sname) <= 0)
 			return 0;
 		break;
@@ -544,14 +544,14 @@ static int asn1_primitive_print(BIO *out, ASN1_VALUE **fld,
 		str = (ASN1_STRING *)*fld;
 		if (pctx->flags & ASN1_PCTX_FLAGS_NO_ANY_TYPE)
 			pname = NULL;
-		else 
+		else
 			pname = ASN1_tag2str(utype);
 		}
 	else
 		{
 		if (pctx->flags & ASN1_PCTX_FLAGS_SHOW_TYPE)
 			pname = ASN1_tag2str(utype);
-		else 
+		else
 			pname = NULL;
 		}
 

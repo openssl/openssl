@@ -801,7 +801,7 @@ sub mmx_loop() {
     &bswap	($dat);
     &pshufw	($Zhi,$Zhi,0b00011011);		# 76543210
     &bswap	("ebx");
-    
+
     &cmp	("ecx",&DWP(528+16+8,"esp"));	# are we done?
     &jne	(&label("outer"));
   }
