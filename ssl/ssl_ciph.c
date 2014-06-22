@@ -531,7 +531,7 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 		break;
 		}
 
-	if ((i < 0) || (i >= SSL_ENC_NUM_IDX))
+	if ((i < 0) || (i > SSL_ENC_NUM_IDX))
 		*enc=NULL;
 	else
 		{
@@ -559,7 +559,7 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 		i= -1;
 		break;
 		}
-	if ((i < 0) || (i >= SSL_MD_NUM_IDX))
+	if ((i < 0) || (i > SSL_MD_NUM_IDX))
 	{
 		*md=NULL; 
 		if (mac_pkey_type!=NULL) *mac_pkey_type = NID_undef;
