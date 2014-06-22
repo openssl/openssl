@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-X509_VERIFY_PARAM_set_flags, X509_VERIFY_PARAM_clear_flags, X509_VERIFY_PARAM_get_flags, X509_VERIFY_PARAM_set_purpose, X509_VERIFY_PARAM_set_trust, X509_VERIFY_PARAM_set_depth, X509_VERIFY_PARAM_get_depth, X509_VERIFY_PARAM_set_time, X509_VERIFY_PARAM_add0_policy, X509_VERIFY_PARAM_set1_policies - X509 verification parameters 
+X509_VERIFY_PARAM_set_flags, X509_VERIFY_PARAM_clear_flags, X509_VERIFY_PARAM_get_flags, X509_VERIFY_PARAM_set_purpose, X509_VERIFY_PARAM_set_trust, X509_VERIFY_PARAM_set_depth, X509_VERIFY_PARAM_get_depth, X509_VERIFY_PARAM_set_time, X509_VERIFY_PARAM_add0_policy, X509_VERIFY_PARAM_set1_policies, X509_VERIFY_PARAM_set1_host, X509_VERIFY_PARAM_set_hostflags, X509_VERIFY_PARAM_set1_email, X509_VERIFY_PARAM_set1_ip, X509_VERIFY_PARAM_set1_ip_asc - X509 verification parameters
 
 =head1 SYNOPSIS
 
@@ -204,7 +204,10 @@ connections associated with an B<SSL_CTX> structure B<ctx>:
 
 =head1 SEE ALSO
 
-L<X509_verify_cert(3)|X509_verify_cert(3)>
+L<X509_verify_cert(3)|X509_verify_cert(3)>,
+L<X509_check_host(3)|X509_check_host(3)>,
+L<X509_check_email(3)|X509_check_email(3)>,
+L<X509_check_ip(3)|X509_check_ip(3)>
 
 =head1 HISTORY
 
