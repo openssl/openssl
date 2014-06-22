@@ -439,7 +439,7 @@ int bn_probable_prime_dh(BIGNUM *rnd, int bits,
 	if ((t1 = BN_CTX_get(ctx)) == NULL) goto err;
 
 again:
-	if (!BN_rand(rnd, bits, 0, 1)) goto err;
+	if (!BN_rand(rnd, bits, 1, 1)) goto err;
 	if (!adjust_rnd_for_dh(rnd, add, rem, t1, ctx)) goto err;
 
 loop:
@@ -555,9 +555,9 @@ start:
 	if (!BN_set_word(offset_count, prm_offset_count)) goto err;
 
 again:
-	if (!BN_rand(rnd, bits - prm_multiplier_bits, 0, 1)) goto err;
-	if (!adjust_rnd_for_dh(rnd, add, rem, t1, ctx)) goto err;
+	if (!BN_rand(rnd, bits - prm_multiplier_bits, 1, 1)) goto err;
 	if (BN_num_bits(rnd) > bits - prm_multiplier_bits) goto again;
+	if (!adjust_rnd_for_dh(rnd, add, rem, t1, ctx)) goto err;
 	if (!BN_mul_word(rnd, prm_multiplier)) goto err;
 	if (BN_num_bits(rnd) > bits) goto again;
 
