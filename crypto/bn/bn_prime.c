@@ -562,7 +562,7 @@ start:
 	if (!BN_set_word(offset_count, prm_offset_count)) goto err;
 
 again:
-	if (!BN_rand(rnd, bits - prm_multiplier_bits, 0, -1)) goto err;
+	if (!BN_rand(rnd, bits - prm_multiplier_bits, 0, 1)) goto err;
 	if (!adjust_rnd_for_dh(rnd, add, rem, t1, ctx)) goto err;
 	if (!BN_mul_word(rnd, prm_multiplier)) goto err;
 
