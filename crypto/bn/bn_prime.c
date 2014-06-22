@@ -564,13 +564,24 @@ start:
 again:
 	if (!BN_rand(rnd, bits - prm_multiplier_bits, 0, 1)) goto err;
 	if (!adjust_rnd_for_dh(rnd, add, rem, t1, ctx)) goto err;
+	if (BN_num_bits(rnd) > bits - prm_multiplier_bits) goto again;
 	if (!BN_mul_word(rnd, prm_multiplier)) goto err;
+	if (BN_num_bits(rnd) > bits) goto again;
 
 	if (!BN_rand_range(offset_index, offset_count)) goto err;
 
 	j = BN_get_word(offset_index);
 	offset = prm_offsets[j];
 	base_offset = 0;
+
+	if (!biased)
+		{
+		if (!BN_add_word(rnd, offset)) goto err;
+		}
+
+	if (BN_num_bits(rnd) != bits) goto again;
+
+	/* we now have a random number 'rand' to test. */
 
 	if (biased)
 		{
@@ -579,12 +590,6 @@ again:
 			mods[i] = 0;
 			}
 		}
-	else
-		{
-		if (!BN_add_word(rnd, offset)) goto err;
-		}
-
-	/* we now have a random number 'rand' to test. */
 
 loop:
 	/* check that rnd is a prime, skipping coprimes */
@@ -615,6 +620,8 @@ loop:
 			}
 
 		if (!BN_add_word(rnd, offset)) goto err;
+
+		if (BN_num_bits(rnd) != bits) goto again;
 		}
 	else
 		{
@@ -623,8 +630,6 @@ loop:
 			if (BN_mod_word(rnd, (BN_ULONG)primes[i]) <= max_rem) goto again;
 			}
 		}
-
-	if (BN_num_bits(rnd) != bits) goto again;
 
 	ret = 1;
 
