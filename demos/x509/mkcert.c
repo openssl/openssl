@@ -69,7 +69,7 @@ int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days)
 		{
 		if ((pk=EVP_PKEY_new()) == NULL)
 			{
-			abort(); 
+			abort();
 			return(0);
 			}
 		}

@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -248,7 +248,7 @@ ASN1_TYPE *ASN1_generate_v3(char *str, X509V3_CTX *cnf)
 
 	if (asn1_tags.imp_tag != -1)
 		{
-		if (asn1_tags.imp_class == V_ASN1_UNIVERSAL 
+		if (asn1_tags.imp_class == V_ASN1_UNIVERSAL
 		    && (asn1_tags.imp_tag == V_ASN1_SEQUENCE
 		     || asn1_tags.imp_tag == V_ASN1_SET) )
 			hdr_constructed = V_ASN1_CONSTRUCTED;
@@ -403,7 +403,7 @@ static int parse_tagging(const char *vstart, int vlen, int *ptag, int *pclass)
 	/* If we have non numeric characters, parse them */
 	if (eptr)
 		vlen -= eptr - vstart;
-	else 
+	else
 		vlen = 0;
 	if (vlen)
 		{
@@ -793,7 +793,7 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
 			no_unused = 0;
 			
 			}
-		else 
+		else
 			{
 			ASN1err(ASN1_F_ASN1_STR2TYPE, ASN1_R_ILLEGAL_BITSTRING_FORMAT);
 			goto bad_form;

@@ -9,7 +9,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -236,7 +236,7 @@ static int pkey_dsa_ctrl_str(EVP_PKEY_CTX *ctx,
 	if (!strcmp(type, "dsa_paramgen_md"))
 		{
 		return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN,
-		                         EVP_PKEY_CTRL_DSA_PARAMGEN_MD, 0, 
+		                         EVP_PKEY_CTRL_DSA_PARAMGEN_MD, 0,
 		                         (void *)EVP_get_digestbyname(value));
 		}
 	return -2;
@@ -285,7 +285,7 @@ static int pkey_dsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	return DSA_generate_key(pkey->pkey.dsa);
 	}
 
-const EVP_PKEY_METHOD dsa_pkey_meth = 
+const EVP_PKEY_METHOD dsa_pkey_meth =
 	{
 	EVP_PKEY_DSA,
 	EVP_PKEY_FLAG_AUTOARGLEN,

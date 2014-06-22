@@ -9,10 +9,10 @@ Received: from toad.com by relay3.UU.NET with SMTP id QQzizb16156;
           Wed, 27 Sep 1995 04:48:46 -0400
 Received: by toad.com id AA07905; Tue, 26 Sep 95 06:31:45 PDT
 Received: from by toad.com id AB07851; Tue, 26 Sep 95 06:31:40 PDT
-Received: from servo.qualcomm.com (servo.qualcomm.com [129.46.128.14]) 
-          by cygnus.com (8.6.12/8.6.9) with ESMTP id RAA18442 
+Received: from servo.qualcomm.com (servo.qualcomm.com [129.46.128.14])
+          by cygnus.com (8.6.12/8.6.9) with ESMTP id RAA18442
           for <cypherpunks@toad.com>; Mon, 25 Sep 1995 17:52:47 -0700
-Received: (karn@localhost) by servo.qualcomm.com (8.6.12/QC-BSD-2.5.1) 
+Received: (karn@localhost) by servo.qualcomm.com (8.6.12/QC-BSD-2.5.1)
           id RAA14732; Mon, 25 Sep 1995 17:50:51 -0700
 Date: Mon, 25 Sep 1995 17:50:51 -0700
 From: Phil Karn <karn@qualcomm.com>
@@ -22,7 +22,7 @@ Subject: Primality verification needed
 Sender: owner-cypherpunks@toad.com
 Precedence: bulk
 Status: RO
-X-Status: 
+X-Status:
 
 Hi. I've generated a 2047-bit "strong" prime number that I would like to
 use with Diffie-Hellman key exchange. I assert that not only is this number

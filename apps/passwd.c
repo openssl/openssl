@@ -166,7 +166,7 @@ int MAIN(int argc, char **argv)
 	if (use1 || useapr1) badopt = 1;
 #endif
 
-	if (badopt) 
+	if (badopt)
 		{
 		BIO_printf(bio_err, "Usage: passwd [options] [passwords]\n");
 		BIO_printf(bio_err, "where options are\n");

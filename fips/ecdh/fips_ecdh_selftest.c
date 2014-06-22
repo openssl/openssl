@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -104,7 +104,7 @@ static const unsigned char p224_ziut[] = {
 	0x5c,0x1a,0xf2,0xdd
 };
 
-typedef struct 
+typedef struct
 	{
 	int curve;
 	const unsigned char *x1;
@@ -129,7 +129,7 @@ typedef struct
 				pr##_qcavsy, sizeof(pr##_qcavsy), \
 				pr##_ziut, sizeof(pr##_ziut) }
 
-static ECDH_SELFTEST_DATA test_ecdh_data[] = 
+static ECDH_SELFTEST_DATA test_ecdh_data[] =
 	{
 	make_ecdh_test(NID_secp224r1, p224),
 	};

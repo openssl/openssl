@@ -35,7 +35,7 @@ static int rsaref_destroy(ENGINE *e);
 static int rsaref_init(ENGINE *e);
 static int rsaref_finish(ENGINE *e);
 #if 0
-static int rsaref_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)()); 
+static int rsaref_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)());
 #endif
 
 /*****************************************************************************
@@ -243,7 +243,7 @@ static int bind_helper(ENGINE *e, const char *id)
 	if(!bind_rsaref(e))
 		return 0;
 	return 1;
-	}       
+	}
 IMPLEMENT_DYNAMIC_CHECK_FN()
 IMPLEMENT_DYNAMIC_BIND_FN(bind_helper)
 #else
@@ -463,7 +463,7 @@ static int rsaref_public_encrypt(int len, const unsigned char *from, unsigned ch
 	R_RANDOM_STRUCT rnd;
 	unsigned char buf[16];
 
-	if (padding != RSA_PKCS1_PADDING && padding != RSA_SSLV23_PADDING) 
+	if (padding != RSA_PKCS1_PADDING && padding != RSA_SSLV23_PADDING)
 		{
 		RSAREFerr(RSAREF_F_RSAREF_PUBLIC_ENCRYPT, RSA_R_UNKNOWN_PADDING_TYPE);
 		goto err;

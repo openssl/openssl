@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -512,9 +512,9 @@ DECLARE_ASN1_FUNCTIONS(BASIC_CONSTRAINTS)
 DECLARE_ASN1_FUNCTIONS(SXNET)
 DECLARE_ASN1_FUNCTIONS(SXNETID)
 
-int SXNET_add_id_asc(SXNET **psx, char *zone, char *user, int userlen); 
-int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, char *user, int userlen); 
-int SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *izone, char *user, int userlen); 
+int SXNET_add_id_asc(SXNET **psx, char *zone, char *user, int userlen);
+int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, char *user, int userlen);
+int SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *izone, char *user, int userlen);
 
 ASN1_OCTET_STRING *SXNET_get_id_asc(SXNET *sx, char *zone);
 ASN1_OCTET_STRING *SXNET_get_id_ulong(SXNET *sx, unsigned long lzone);
@@ -553,7 +553,7 @@ void GENERAL_NAME_set0_value(GENERAL_NAME *a, int type, void *value);
 void *GENERAL_NAME_get0_value(GENERAL_NAME *a, int *ptype);
 int GENERAL_NAME_set0_othername(GENERAL_NAME *gen,
 				ASN1_OBJECT *oid, ASN1_TYPE *value);
-int GENERAL_NAME_get0_otherName(GENERAL_NAME *gen, 
+int GENERAL_NAME_get0_otherName(GENERAL_NAME *gen,
 				ASN1_OBJECT **poid, ASN1_TYPE **pvalue);
 
 char *i2s_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method, ASN1_OCTET_STRING *ia5);

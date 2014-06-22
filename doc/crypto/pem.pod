@@ -250,7 +250,7 @@ structure. They will also process a trusted X509 certificate but
 any trust settings are discarded.
 
 The B<X509_AUX> functions process a trusted X509 certificate using
-an X509 structure. 
+an X509 structure.
 
 The B<X509_REQ> and B<X509_REQ_NEW> functions process a PKCS#10
 certificate request using an X509_REQ structure. The B<X509_REQ>
@@ -435,7 +435,7 @@ which is an uninitialised pointer.
 
 This old B<PrivateKey> routines use a non standard technique for encryption.
 
-The private key (or other data) takes the following form: 
+The private key (or other data) takes the following form:
 
  -----BEGIN RSA PRIVATE KEY-----
  Proc-Type: 4,ENCRYPTED
@@ -461,7 +461,7 @@ an existing structure. Therefore the following:
 
  PEM_read_bio_X509(bp, &x, 0, NULL);
 
-where B<x> already contains a valid certificate, may not work, whereas: 
+where B<x> already contains a valid certificate, may not work, whereas:
 
  X509_free(x);
  x = PEM_read_bio_X509(bp, NULL, 0, NULL);

@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -56,8 +56,8 @@
 #include <openssl/crypto.h>
 #include "ec_lcl.h"
 
-BIGNUM *EC_POINT_point2bn(const EC_GROUP *group, 
-                          const EC_POINT *point, 
+BIGNUM *EC_POINT_point2bn(const EC_GROUP *group,
+                          const EC_POINT *point,
                           point_conversion_form_t form,
                           BIGNUM *ret,
                           BN_CTX *ctx)
@@ -88,7 +88,7 @@ BIGNUM *EC_POINT_point2bn(const EC_GROUP *group,
 
 EC_POINT *EC_POINT_bn2point(const EC_GROUP *group,
                             const BIGNUM *bn,
-                            EC_POINT *point, 
+                            EC_POINT *point,
                             BN_CTX *ctx)
 	{
 	size_t        buf_len=0;
@@ -100,7 +100,7 @@ EC_POINT *EC_POINT_bn2point(const EC_GROUP *group,
 	if (buf == NULL)
 		return NULL;
 
-	if (!BN_bn2bin(bn, buf)) 
+	if (!BN_bn2bin(bn, buf))
 		{
 		OPENSSL_free(buf);
 		return NULL;

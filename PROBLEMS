@@ -127,7 +127,7 @@ explains why it is filled with zeroes):
 
 $ nm -Pg libcrypto.so | grep __ctype
 __ctype B 0011659c
-__ctype2 U         
+__ctype2 U
 
 Curiously, __ctype2 is undefined, in spite of being declared in
 /usr/include/ctype.h in exactly the same way as __ctype.

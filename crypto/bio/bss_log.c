@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -303,7 +303,7 @@ static int VMS_OPC_target = LOG_DAEMON;
 
 static void xopenlog(BIO* bp, char* name, int level)
 {
-	VMS_OPC_target = level; 
+	VMS_OPC_target = level;
 }
 
 static void xsyslog(BIO *bp, int priority, const char *string)

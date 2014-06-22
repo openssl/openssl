@@ -116,7 +116,7 @@ typedef struct {
  * negative number, usually HWCRYPTOHOOK_ERROR_FAILED, for
  * integer-valued ones).  It will, if an ErrMsgBuf is passed, also put
  * an error message there.
- * 
+ *
  * size is the size of the buffer, and will not be modified.  If you
  * pass 0 for size you must pass 0 for buf, and nothing will be
  * recorded (just as if you passed 0 for the struct pointer).
@@ -182,7 +182,7 @@ typedef struct {
    *
    * The callbacks may not call down again into the crypto plugin.
    */
-  
+
   /* For thread-safety.  Set everything to 0 if you promise only to be
    * singlethreaded.  maxsimultaneous is the number of calls to
    * ModExp[Crt]/RSAImmed{Priv,Pub}/RSA.  If you don't know what to
@@ -218,12 +218,12 @@ typedef struct {
   void (*condvar_signal)(HWCryptoHook_CondVar*);
   void (*condvar_broadcast)(HWCryptoHook_CondVar*);
   void (*condvar_destroy)(HWCryptoHook_CondVar*);
-  
+
   /* The semantics of acquiring and releasing mutexes and broadcasting
    * and waiting on condition variables are expected to be those from
    * POSIX threads (pthreads).  The mutexes may be (in pthread-speak)
    * fast mutexes, recursive mutexes, or nonrecursive ones.
-   * 
+   *
    * The _release/_signal/_broadcast and _destroy functions must
    * always succeed when given a valid argument; if they are given an
    * invalid argument then the program (crypto plugin + application)
@@ -246,7 +246,7 @@ typedef struct {
    * by the callback.  The returned passphrase should not be
    * null-terminated by the callback.
    */
-  
+
   int (*getphystoken)(const char *prompt_info,
                       const char *wrong_info,
                       HWCryptoHook_PassphraseContext *ppctx,
@@ -260,9 +260,9 @@ typedef struct {
    * currently inserted token(s) so that the user is told what
    * something is.  wrong_info, like prompt_info, may be null, but
    * should not be an empty string.  Its contents should be
-   * syntactically similar to that of prompt_info. 
+   * syntactically similar to that of prompt_info.
    */
-  
+
   /* Note that a single LoadKey operation might cause several calls to
    * getpassphrase and/or requestphystoken.  If requestphystoken is
    * not provided (ie, a null pointer is passed) then the plugin may

@@ -63,14 +63,14 @@ functionality: any sub command uses the master OpenSSL configuration file
 unless an option is used in the sub command to use an alternative configuration
 file.
 
-To enable library configuration the default section needs to contain an 
+To enable library configuration the default section needs to contain an
 appropriate line which points to the main configuration section. The default
 name is B<openssl_conf> which is used by the B<openssl> utility. Other
 applications may use an alternative name such as B<myapplicaton_conf>.
 
 The configuration section should consist of a set of name value pairs which
 contain specific module configuration information. The B<name> represents
-the name of the I<configuration module> the meaning of the B<value> is 
+the name of the I<configuration module> the meaning of the B<value> is
 module specific: it may, for example, represent a further configuration
 section containing configuration module specific information. E.g.
 
@@ -103,7 +103,7 @@ B<all> the B<openssl> utility sub commands can see the new objects as well
 as any compliant applications. For example:
 
  [new_oids]
- 
+
  some_new_oid = 1.2.3.4
  some_other_oid = 1.2.3.5
 
@@ -142,7 +142,7 @@ For example:
  [bar_section]
  ... "bar" ENGINE specific commands ...
 
-The command B<engine_id> is used to give the ENGINE name. If used this 
+The command B<engine_id> is used to give the ENGINE name. If used this
 command must be first. For example:
 
  [engine_section]
@@ -169,7 +169,7 @@ The command B<default_algorithms> sets the default algorithms an ENGINE will
 supply using the functions B<ENGINE_set_default_string()>
 
 If the name matches none of the above command names it is assumed to be a
-ctrl command which is sent to the ENGINE. The value of the command is the 
+ctrl command which is sent to the ENGINE. The value of the command is the
 argument to the ctrl command. If the value is the string B<EMPTY> then no
 value is sent to the command.
 
@@ -220,7 +220,7 @@ Here is a sample configuration file using some of the features
 mentioned above.
 
  # This is the default section.
- 
+
  HOME=/temp
  RANDFILE= ${ENV::HOME}/.rnd
  configdir=$ENV::HOME/config
@@ -250,7 +250,7 @@ the the B<TEMP> or B<TMP> environment variables but they may not be
 set to any value at all. If you just include the environment variable
 names and the variable doesn't exist then this will cause an error when
 an attempt is made to load the configuration file. By making use of the
-default section both values can be looked up with B<TEMP> taking 
+default section both values can be looked up with B<TEMP> taking
 priority and B</tmp> used if neither is defined:
 
  TMP=/tmp

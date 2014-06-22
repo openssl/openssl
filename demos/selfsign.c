@@ -83,7 +83,7 @@ int days;
 		{
 		if ((pk=EVP_PKEY_new()) == NULL)
 			{
-			abort(); 
+			abort();
 			return(0);
 			}
 		}

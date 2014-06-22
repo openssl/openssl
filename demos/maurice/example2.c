@@ -23,12 +23,12 @@
 #define PUBFILE   "cert.pem"
 #define PRIVFILE  "privkey.pem"
 #define STDIN     0
-#define STDOUT    1 
+#define STDOUT    1
 
 int main()
 {
         char *ct = "This the clear text";
-	char *buf;   
+	char *buf;
 	char *buf2;
   	EVP_PKEY *pubKey;
   	EVP_PKEY *privKey;
@@ -37,16 +37,16 @@ int main()
         ERR_load_crypto_strings();
 
         privKey = ReadPrivateKey(PRIVFILE);
-        if (!privKey) 
-	{  
-		ERR_print_errors_fp (stderr);    
-		exit (1);  
+        if (!privKey)
+	{
+		ERR_print_errors_fp (stderr);
+		exit (1);
 	}
 
-        pubKey = ReadPublicKey(PUBFILE);  
+        pubKey = ReadPublicKey(PUBFILE);
 	if(!pubKey)
 	{
-	   EVP_PKEY_free(privKey);   
+	   EVP_PKEY_free(privKey);
            fprintf(stderr,"Error: can't load public key");
 	   exit(1);
 	}

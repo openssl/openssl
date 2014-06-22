@@ -22,7 +22,7 @@ NULL the standard OpenSSL application name B<openssl_conf> is used.
 The behaviour can be cutomized using B<flags>.
 
 CONF_modules_load() is idential to CONF_modules_load_file() except it
-read configuration information from B<cnf>. 
+read configuration information from B<cnf>.
 
 =head1 NOTES
 

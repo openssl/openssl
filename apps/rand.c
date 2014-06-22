@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -160,7 +160,7 @@ int MAIN(int argc, char **argv)
 	if (num < 0)
 		badopt = 1;
 	
-	if (badopt) 
+	if (badopt)
 		{
 		BIO_printf(bio_err, "Usage: rand [options] num\n");
 		BIO_printf(bio_err, "where options are\n");
@@ -209,7 +209,7 @@ int MAIN(int argc, char **argv)
 		out = BIO_push(b64, out);
 		}
 	
-	while (num > 0) 
+	while (num > 0)
 		{
 		unsigned char buf[4096];
 		int chunk;
@@ -220,7 +220,7 @@ int MAIN(int argc, char **argv)
 		r = RAND_bytes(buf, chunk);
 		if (r <= 0)
 			goto err;
-		if (!hex) 
+		if (!hex)
 			BIO_write(out, buf, chunk);
 		else
 			{

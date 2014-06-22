@@ -9,7 +9,7 @@ client certificate
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
- 
+
  void SSL_CTX_set_client_CA_list(SSL_CTX *ctx, STACK_OF(X509_NAME) *list);
  void SSL_set_client_CA_list(SSL *s, STACK_OF(X509_NAME) *list);
  int SSL_CTX_add_client_CA(SSL_CTX *ctx, X509 *cacert);
@@ -42,7 +42,7 @@ This list must explicitly be set using SSL_CTX_set_client_CA_list() for
 B<ctx> and SSL_set_client_CA_list() for the specific B<ssl>. The list
 specified overrides the previous setting. The CAs listed do not become
 trusted (B<list> only contains the names, not the complete certificates); use
-L<SSL_CTX_load_verify_locations(3)|SSL_CTX_load_verify_locations(3)> 
+L<SSL_CTX_load_verify_locations(3)|SSL_CTX_load_verify_locations(3)>
 to additionally load them for verification.
 
 If the list of acceptable CAs is compiled in a file, the

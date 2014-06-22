@@ -1,6 +1,6 @@
 
 This directory contains a simple example of how to use the ERR functions of
-OpenSSL to add error codes to an external application. 
+OpenSSL to add error codes to an external application.
 
 To test it first do "make errors". This will build error codes and add them
 to the header files. It will also create some functions to load error codes.

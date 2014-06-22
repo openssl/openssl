@@ -30,7 +30,7 @@ changing the tag to the expected one, attempting to read it, then changing it
 back again. This means that decode buffers have to be writable even though they
 are ultimately unchanged. This gets in the way of constification.
 
-5. The handling of EXPLICIT isn't much better. It adds a chunk of code into 
+5. The handling of EXPLICIT isn't much better. It adds a chunk of code into
 the decoder and encoder for every EXPLICIT tag.
 
 6. APPLICATION and PRIVATE tags aren't even supported at all.
@@ -55,7 +55,7 @@ Template model
 
 One of the major problems with revision is the sheer volume of the ASN1 code.
 Attempts to change (for example) the IMPLICIT behaviour would result in a
-modification of *every* single decode function. 
+modification of *every* single decode function.
 
 I decided to adopt a template based approach. I'm using the term 'template'
 in a manner similar to SNACC templates: it has nothing to do with C++
@@ -69,7 +69,7 @@ operate on templates.
 
 Instead of having to write code to handle each operation only a single
 template needs to be written. If new operations are needed (such as a 'print'
-operation) only a single new template based function needs to be written 
+operation) only a single new template based function needs to be written
 which will then automatically handle all existing templates.
 
 Plans for revision
@@ -77,7 +77,7 @@ Plans for revision
 
 The revision will consist of the following steps. Other than the first two
 these can be handled in any order.
- 
+
 o Design and write template new, free, encode and decode operations, initially
 memory based. *DONE*
 

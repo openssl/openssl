@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -115,7 +115,7 @@ int policy_cache_set_mapping(X509 *x, POLICY_MAPPINGS *maps)
 			}
 		else
 			data->flags |= POLICY_DATA_FLAG_MAPPED;
-		if (!sk_ASN1_OBJECT_push(data->expected_policy_set, 
+		if (!sk_ASN1_OBJECT_push(data->expected_policy_set,
 						map->subjectDomainPolicy))
 			goto bad_mapping;
 		map->subjectDomainPolicy = NULL;

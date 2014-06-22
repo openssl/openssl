@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -321,7 +321,7 @@ int	i2d_TS_RESP_bio(BIO *fp, TS_RESP *a);
 TS_STATUS_INFO	*TS_STATUS_INFO_new(void);
 void		TS_STATUS_INFO_free(TS_STATUS_INFO *a);
 int		i2d_TS_STATUS_INFO(const TS_STATUS_INFO *a, unsigned char **pp);
-TS_STATUS_INFO	*d2i_TS_STATUS_INFO(TS_STATUS_INFO **a, 
+TS_STATUS_INFO	*d2i_TS_STATUS_INFO(TS_STATUS_INFO **a,
 				    const unsigned char **pp, long length);
 TS_STATUS_INFO	*TS_STATUS_INFO_dup(TS_STATUS_INFO *a);
 
@@ -361,7 +361,7 @@ ESS_CERT_ID	*ESS_CERT_ID_dup(ESS_CERT_ID *a);
 
 ESS_SIGNING_CERT *ESS_SIGNING_CERT_new(void);
 void		 ESS_SIGNING_CERT_free(ESS_SIGNING_CERT *a);
-int		 i2d_ESS_SIGNING_CERT(const ESS_SIGNING_CERT *a, 
+int		 i2d_ESS_SIGNING_CERT(const ESS_SIGNING_CERT *a,
 				      unsigned char **pp);
 ESS_SIGNING_CERT *d2i_ESS_SIGNING_CERT(ESS_SIGNING_CERT **a,
 				       const unsigned char **pp, long length);
@@ -486,13 +486,13 @@ struct TS_resp_ctx;
 typedef ASN1_INTEGER *(*TS_serial_cb)(struct TS_resp_ctx *, void *);
 
 /* This must return the seconds and microseconds since Jan 1, 1970 in
-   the sec and usec variables allocated by the caller. 
+   the sec and usec variables allocated by the caller.
    Return non-zero for success and zero for failure. */
 typedef	int (*TS_time_cb)(struct TS_resp_ctx *, void *, long *sec, long *usec);
 
 /* This must process the given extension.
  * It can modify the TS_TST_INFO object of the context.
- * Return values: !0 (processed), 0 (error, it must set the 
+ * Return values: !0 (processed), 0 (error, it must set the
  * status info/failure info of the response).
  */
 typedef	int (*TS_extension_cb)(struct TS_resp_ctx *, X509_EXTENSION *, void *);
@@ -547,11 +547,11 @@ int TS_RESP_CTX_set_def_policy(TS_RESP_CTX *ctx, ASN1_OBJECT *def_policy);
 /* No additional certs are included in the response by default. */
 int TS_RESP_CTX_set_certs(TS_RESP_CTX *ctx, STACK_OF(X509) *certs);
 
-/* Adds a new acceptable policy, only the default policy 
+/* Adds a new acceptable policy, only the default policy
    is accepted by default. */
 int TS_RESP_CTX_add_policy(TS_RESP_CTX *ctx, ASN1_OBJECT *policy);
 
-/* Adds a new acceptable message digest. Note that no message digests 
+/* Adds a new acceptable message digest. Note that no message digests
    are accepted by default. The md argument is shared with the caller. */
 int TS_RESP_CTX_add_md(TS_RESP_CTX *ctx, const EVP_MD *md);
 
@@ -559,8 +559,8 @@ int TS_RESP_CTX_add_md(TS_RESP_CTX *ctx, const EVP_MD *md);
 int TS_RESP_CTX_set_accuracy(TS_RESP_CTX *ctx,
 			     int secs, int millis, int micros);
 
-/* Clock precision digits, i.e. the number of decimal digits: 
-   '0' means sec, '3' msec, '6' usec, and so on. Default is 0. */ 
+/* Clock precision digits, i.e. the number of decimal digits:
+   '0' means sec, '3' msec, '6' usec, and so on. Default is 0. */
 int TS_RESP_CTX_set_clock_precision_digits(TS_RESP_CTX *ctx,
 					   unsigned clock_precision_digits);
 /* At most we accept usec precision. */	
@@ -575,18 +575,18 @@ void TS_RESP_CTX_set_serial_cb(TS_RESP_CTX *ctx, TS_serial_cb cb, void *data);
 /* Default callback uses the gettimeofday() and gmtime() system calls. */
 void TS_RESP_CTX_set_time_cb(TS_RESP_CTX *ctx, TS_time_cb cb, void *data);
 
-/* Default callback rejects all extensions. The extension callback is called 
+/* Default callback rejects all extensions. The extension callback is called
  * when the TS_TST_INFO object is already set up and not signed yet. */
 /* FIXME: extension handling is not tested yet. */
-void TS_RESP_CTX_set_extension_cb(TS_RESP_CTX *ctx, 
+void TS_RESP_CTX_set_extension_cb(TS_RESP_CTX *ctx,
 				  TS_extension_cb cb, void *data);
 
 /* The following methods can be used in the callbacks. */
-int TS_RESP_CTX_set_status_info(TS_RESP_CTX *ctx, 
+int TS_RESP_CTX_set_status_info(TS_RESP_CTX *ctx,
 				int status, const char *text);
 
 /* Sets the status info only if it is still TS_STATUS_GRANTED. */
-int TS_RESP_CTX_set_status_info_cond(TS_RESP_CTX *ctx, 
+int TS_RESP_CTX_set_status_info_cond(TS_RESP_CTX *ctx,
 				     int status, const char *text);
 
 int TS_RESP_CTX_add_failure_info(TS_RESP_CTX *ctx, int failure);
@@ -596,7 +596,7 @@ TS_REQ *TS_RESP_CTX_get_request(TS_RESP_CTX *ctx);
 
 TS_TST_INFO *TS_RESP_CTX_get_tst_info(TS_RESP_CTX *ctx);
 
-/* 
+/*
  * Creates the signed TS_TST_INFO and puts it in TS_RESP.
  * In case of errors it sets the status info properly.
  * Returns NULL only in case of memory allocation/fatal error.
@@ -661,7 +661,7 @@ typedef struct TS_verify_ctx
 	/* Must be set only with TS_VFY_POLICY. */
 	ASN1_OBJECT	*policy;
 
-	/* Must be set only with TS_VFY_IMPRINT. If md_alg is NULL, 
+	/* Must be set only with TS_VFY_IMPRINT. If md_alg is NULL,
 	   the algorithm from the response is used. */
 	X509_ALGOR	*md_alg;
 	unsigned char	*imprint;
@@ -691,7 +691,7 @@ void TS_VERIFY_CTX_init(TS_VERIFY_CTX *ctx);
 void TS_VERIFY_CTX_free(TS_VERIFY_CTX *ctx);
 void TS_VERIFY_CTX_cleanup(TS_VERIFY_CTX *ctx);
 
-/* 
+/*
  * If ctx is NULL, it allocates and returns a new object, otherwise
  * it returns ctx. It initialises all the members as follows:
  * flags = TS_VFY_ALL_IMPRINT & ~(TS_VFY_TSA_NAME | TS_VFY_SIGNATURE)

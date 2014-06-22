@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -76,7 +76,7 @@ const X509V3_EXT_METHOD v3_sxnet = {
 NID_sxnet, X509V3_EXT_MULTILINE, ASN1_ITEM_ref(SXNET),
 0,0,0,0,
 0,0,
-0, 
+0,
 #ifdef SXNET_TEST
 (X509V3_EXT_V2I)sxnet_v2i,
 #else

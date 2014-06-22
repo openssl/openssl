@@ -1,4 +1,4 @@
- 
+
  Installation on OS/2
  --------------------
 
@@ -13,7 +13,7 @@
 
  > os2\os2-emx
 
- This will configure OpenSSL and create OS2-EMX.mak which you then use to 
+ This will configure OpenSSL and create OS2-EMX.mak which you then use to
  build the OpenSSL libraries & programs by running
 
  > make -f os2-emx.mak

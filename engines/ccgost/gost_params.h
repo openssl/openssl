@@ -7,7 +7,7 @@
  * 	               parameter sets, defined in RFC 4357                *
  *         OpenSSL 0.9.9 libraries required to compile and use        *
  *                              this code                             *
- **********************************************************************/ 
+ **********************************************************************/
 #ifndef GOST_PARAMSET_H
 #define GOST_PARAMSET_H
 typedef struct R3410 {

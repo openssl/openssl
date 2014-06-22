@@ -3,7 +3,7 @@
 
 	Written by Mumit Khan <khan@nanotech.wisc.edu>
 
-	This file is part of a free library for the Win32 API. 
+	This file is part of a free library for the Win32 API.
 
 	This library is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -85,7 +85,7 @@ typedef struct tagMODULEENTRY32W {
 	DWORD ProccntUsage;
 	BYTE *modBaseAddr;
 	DWORD modBaseSize;
-	HMODULE hModule; 
+	HMODULE hModule;
 	WCHAR szModule[MAX_MODULE_NAME32 + 1];
 	WCHAR szExePath[MAX_PATH];
 } MODULEENTRY32W,*PMODULEENTRY32W,*LPMODULEENTRY32W;

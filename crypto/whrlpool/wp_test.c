@@ -199,7 +199,7 @@ int main (int argc,char *argv[])
     }
     else
 	fprintf(stdout,"."); fflush(stdout);
- 
+
     WHIRLPOOL_Init (&ctx);
     for (i=0;i<1000000;i+=288)
 	WHIRLPOOL_Update (&ctx,	"aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"

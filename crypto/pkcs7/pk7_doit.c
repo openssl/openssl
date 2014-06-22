@@ -5,21 +5,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -604,7 +604,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 				eklen = tkeylen;
 				tkey = NULL;
 				}
-		} 
+		}
 		/* Clear errors so we don't leak information useful in MMA */
 		ERR_clear_error();
 		if (EVP_CipherInit_ex(evp_ctx,NULL,NULL,ek,NULL,0) <= 0)
@@ -635,7 +635,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		{
 		bio=in_bio;
 		}
-	else 
+	else
 		{
 #if 0
 		bio=BIO_new(BIO_s_mem());
@@ -1004,7 +1004,7 @@ int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
 		}
 	X509_STORE_CTX_set_purpose(ctx, X509_PURPOSE_SMIME_SIGN);
 	i=X509_verify_cert(ctx);
-	if (i <= 0) 
+	if (i <= 0)
 		{
 		PKCS7err(PKCS7_F_PKCS7_DATAVERIFY,ERR_R_X509_LIB);
 		X509_STORE_CTX_cleanup(ctx);
@@ -1030,7 +1030,7 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
 
 	EVP_MD_CTX_init(&mdc_tmp);
 
-	if (!PKCS7_type_is_signed(p7) && 
+	if (!PKCS7_type_is_signed(p7) &&
 				!PKCS7_type_is_signedAndEnveloped(p7)) {
 		PKCS7err(PKCS7_F_PKCS7_SIGNATUREVERIFY,
 						PKCS7_R_WRONG_PKCS7_TYPE);
@@ -1110,7 +1110,7 @@ for (ii=0; ii<md_len; ii++) printf("%02X",md_dat[ii]); printf(" calc\n");
 
 		alen = ASN1_item_i2d((ASN1_VALUE *)sk, &abuf,
 						ASN1_ITEM_rptr(PKCS7_ATTR_VERIFY));
-		if (alen <= 0) 
+		if (alen <= 0)
 			{
 			PKCS7err(PKCS7_F_PKCS7_SIGNATUREVERIFY,ERR_R_ASN1_LIB);
 			ret = -1;

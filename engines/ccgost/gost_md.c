@@ -18,7 +18,7 @@ static int gost_digest_final(EVP_MD_CTX *ctx,unsigned char *md);
 static int gost_digest_copy(EVP_MD_CTX *to,const EVP_MD_CTX *from);
 static int gost_digest_cleanup(EVP_MD_CTX *ctx);
 
-EVP_MD digest_gost=  
+EVP_MD digest_gost=
 	{
 	NID_id_GostR3411_94,
 	NID_undef,
@@ -37,7 +37,7 @@ EVP_MD digest_gost=
 	NULL
 	};
 
-int gost_digest_init(EVP_MD_CTX *ctx) 
+int gost_digest_init(EVP_MD_CTX *ctx)
 	{
 	struct ossl_gost_digest_ctx *c = ctx->md_data;
 	memset(&(c->dctx),0,sizeof(gost_hash_ctx));
@@ -46,7 +46,7 @@ int gost_digest_init(EVP_MD_CTX *ctx)
 	return 1;
 	}
 
-int gost_digest_update(EVP_MD_CTX *ctx,const void *data,size_t count) 
+int gost_digest_update(EVP_MD_CTX *ctx,const void *data,size_t count)
 	{
 	return hash_block((gost_hash_ctx *)ctx->md_data,data,count);	
 	}
@@ -57,7 +57,7 @@ int gost_digest_final(EVP_MD_CTX *ctx,unsigned char *md)
 	
 	}
 
-int gost_digest_copy(EVP_MD_CTX *to,const EVP_MD_CTX *from) 
+int gost_digest_copy(EVP_MD_CTX *to,const EVP_MD_CTX *from)
 	{
 	struct ossl_gost_digest_ctx *md_ctx=to->md_data;
 	if (to->md_data && from->md_data) {
@@ -67,7 +67,7 @@ int gost_digest_copy(EVP_MD_CTX *to,const EVP_MD_CTX *from)
 	return 1;
 	}		
 
-int gost_digest_cleanup(EVP_MD_CTX *ctx) 
+int gost_digest_cleanup(EVP_MD_CTX *ctx)
 	{
 	if (ctx->md_data)
 	memset(ctx->md_data,0,sizeof(struct ossl_gost_digest_ctx));

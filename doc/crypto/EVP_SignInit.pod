@@ -32,7 +32,7 @@ same B<ctx> to include additional data.
 EVP_SignFinal() signs the data in B<ctx> using the private key B<pkey> and
 places the signature in B<sig>. The number of bytes of data written (i.e. the
 length of the signature) will be written to the integer at B<s>, at most
-EVP_PKEY_size(pkey) bytes will be written. 
+EVP_PKEY_size(pkey) bytes will be written.
 
 EVP_SignInit() initializes a signing context B<ctx> to use the default
 implementation of digest B<type>.
@@ -57,7 +57,7 @@ transparent to the algorithm used and much more flexible.
 
 Due to the link between message digests and public key algorithms the correct
 digest algorithm must be used with the correct public key type. A list of
-algorithms and associated public key algorithms appears in 
+algorithms and associated public key algorithms appears in
 L<EVP_DigestInit(3)|EVP_DigestInit(3)>.
 
 When signing with DSA private keys the random number generator must be seeded
@@ -74,7 +74,7 @@ will occur.
 
 =head1 BUGS
 
-Older versions of this documentation wrongly stated that calls to 
+Older versions of this documentation wrongly stated that calls to
 EVP_SignUpdate() could not be made after calling EVP_SignFinal().
 
 Since the private key is passed in the call to EVP_SignFinal() any error

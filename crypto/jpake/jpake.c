@@ -91,7 +91,7 @@ static void JPAKE_CTX_init(JPAKE_CTX *ctx, const char *name,
     ctx->key = BN_new();
     ctx->ctx = BN_CTX_new();
     }
-    
+
 static void JPAKE_CTX_release(JPAKE_CTX *ctx)
     {
     BN_CTX_free(ctx->ctx);
@@ -111,7 +111,7 @@ static void JPAKE_CTX_release(JPAKE_CTX *ctx)
 
     memset(ctx, '\0', sizeof *ctx);
     }
-    
+
 JPAKE_CTX *JPAKE_CTX_new(const char *name, const char *peer_name,
 			 const BIGNUM *p, const BIGNUM *g, const BIGNUM *q,
 			 const BIGNUM *secret)
@@ -242,7 +242,7 @@ static int verify_zkp(const JPAKE_STEP_PART *p, const BIGNUM *zkpg,
     BN_free(h);
 
     return ret;
-    }    
+    }
 
 static void generate_step_part(JPAKE_STEP_PART *p, const BIGNUM *x,
 			       const BIGNUM *g, JPAKE_CTX *ctx)
@@ -287,7 +287,7 @@ static int is_legal(const BIGNUM *gx, const JPAKE_CTX *ctx)
     {
     BIGNUM *t;
     int res;
-    
+
     if(BN_is_negative(gx) || BN_is_zero(gx) || BN_cmp(gx, ctx->p.p) >= 0)
 	return 0;
 

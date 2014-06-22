@@ -92,7 +92,7 @@ int mkreq(X509_REQ **req, EVP_PKEY **pkeyp, int bits, int serial, int days)
 
 #ifdef REQUEST_EXTENSIONS
 	/* Certificate requests can contain extensions, which can be used
-	 * to indicate the extensions the requestor would like added to 
+	 * to indicate the extensions the requestor would like added to
 	 * their certificate. CAs might ignore them however or even choke
 	 * if they are present.
 	 */

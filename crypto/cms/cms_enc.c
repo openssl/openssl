@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -236,7 +236,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 	return NULL;
 	}
 
-int cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec, 
+int cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
 				const EVP_CIPHER *cipher,
 				const unsigned char *key, size_t keylen)
 	{

@@ -21,7 +21,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -74,11 +74,11 @@
 #ifndef OPENSSL_NO_EC2M
 
 /* Calculates and sets the affine coordinates of an EC_POINT from the given
- * compressed coordinates.  Uses algorithm 2.3.4 of SEC 1. 
+ * compressed coordinates.  Uses algorithm 2.3.4 of SEC 1.
  * Note that the simple implementation only uses affine coordinates.
  *
  * The method is from the following publication:
- * 
+ *
  *     Harper, Menezes, Vanstone:
  *     "Public-Key Cryptosystems with Very Small Key Lengths",
  *     EUROCRYPT '92, Springer-Verlag LNCS 658,
@@ -158,7 +158,7 @@ int ec_GF2m_simple_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *p
 	}
 
 
-/* Converts an EC_POINT to an octet string.  
+/* Converts an EC_POINT to an octet string.
  * If buf is NULL, the encoded length will be returned.
  * If the length len of buf is smaller than required an error will be returned.
  */
@@ -291,7 +291,7 @@ size_t ec_GF2m_simple_point2oct(const EC_GROUP *group, const EC_POINT *point, po
 	}
 
 
-/* Converts an octet string representation to an EC_POINT. 
+/* Converts an octet string representation to an EC_POINT.
  * Note that the simple implementation only uses affine coordinates.
  */
 int ec_GF2m_simple_oct2point(const EC_GROUP *group, EC_POINT *point,

@@ -168,7 +168,7 @@ that is provided by the caller):
  /* Print out the entire hashtable to a particular BIO */
  lh_STUFF_doall_arg(hashtable, LHASH_DOALL_ARG_FN(STUFF_print), BIO,
                     logging_bio);
- 
+
 lh_<type>_error() can be used to determine if an error occurred in the last
 operation. lh_<type>_error() is a macro.
 
@@ -293,7 +293,7 @@ This manpage is derived from the SSLeay documentation.
 
 In OpenSSL 0.9.7, all lhash functions that were passed function pointers
 were changed for better type safety, and the function types LHASH_COMP_FN_TYPE,
-LHASH_HASH_FN_TYPE, LHASH_DOALL_FN_TYPE and LHASH_DOALL_ARG_FN_TYPE 
+LHASH_HASH_FN_TYPE, LHASH_DOALL_FN_TYPE and LHASH_DOALL_ARG_FN_TYPE
 became available.
 
 In OpenSSL 1.0.0, the lhash interface was revamped for even better

@@ -22,7 +22,7 @@ RECURSIVE_MAKE=	[ -n "$(SDIRS)" ] && for i in $(SDIRS) ; do \
 
 PEX_LIBS=
 EX_LIBS=
- 
+
 CFLAGS= $(INCLUDE) $(CFLAG)
 ASFLAGS= $(INCLUDE) $(ASFLAG)
 AFLAGS=$(ASFLAGS)

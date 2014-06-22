@@ -6,7 +6,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -460,7 +460,7 @@ static void gcm_ghash_4bit(u64 Xi[2],const u128 Htable[16],
      * [should] give ~50% improvement... One could have PACK()-ed
      * the rem_8bit even here, but the priority is to minimize
      * cache footprint...
-     */ 
+     */
     u128 Hshr4[16];	/* Htable shifted right by 4 bits */
     u8   Hshl4[16];	/* Htable shifted left  by 4 bits */
     __fips_constseg

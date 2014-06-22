@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -350,7 +350,7 @@ static int ASIdentifierChoice_is_canonical(ASIdentifierChoice *choice)
 		ERR_R_MALLOC_FAILURE);
       goto done;
     }
-    
+
     /*
      * Punt if adjacent or overlapping.
      */
@@ -463,7 +463,7 @@ static int ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
       X509V3err(X509V3_F_ASIDENTIFIERCHOICE_CANONIZE, ERR_R_MALLOC_FAILURE);
       goto done;
     }
-    
+
     /*
      * If a and b are adjacent, merge them.
      */

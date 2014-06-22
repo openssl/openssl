@@ -17,7 +17,7 @@ BIO_f_base64() returns the base64 BIO method. This is a filter
 BIO that base64 encodes any data written through it and decodes
 any data read through it.
 
-Base64 BIOs do not support BIO_gets() or BIO_puts(). 
+Base64 BIOs do not support BIO_gets() or BIO_puts().
 
 BIO_flush() on a base64 BIO that is being written through is
 used to signal that no more data is to be encoded: this is used
@@ -63,7 +63,7 @@ data to standard output:
  bio = BIO_new_fp(stdin, BIO_NOCLOSE);
  bio_out = BIO_new_fp(stdout, BIO_NOCLOSE);
  bio = BIO_push(b64, bio);
- while((inlen = BIO_read(bio, inbuf, 512)) > 0) 
+ while((inlen = BIO_read(bio, inbuf, 512)) > 0)
 	BIO_write(bio_out, inbuf, inlen);
 
  BIO_free_all(bio);

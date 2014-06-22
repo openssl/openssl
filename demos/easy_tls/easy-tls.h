@@ -26,7 +26,7 @@ void tls_rand_seed(void);
 int tls_rand_seed_from_file(const char *filename, size_t n, void *apparg);
 void tls_rand_seed_from_memory(const void *buf, size_t n);
 
-struct tls_create_ctx_args 
+struct tls_create_ctx_args
 {
     int client_p;
     const char *certificate_file;

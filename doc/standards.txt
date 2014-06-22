@@ -89,8 +89,8 @@ PKCS#12: Personal Information Exchange Syntax Standard, version 1.0.
 
 3447 Public-Key Cryptography Standards (PKCS) #1: RSA Cryptography
      Specifications Version 2.1. J. Jonsson, B. Kaliski. February 2003.
-     (Format: TXT=143173 bytes) (Obsoletes RFC2437) (Status:           
-     INFORMATIONAL)                                         
+     (Format: TXT=143173 bytes) (Obsoletes RFC2437) (Status:
+     INFORMATIONAL)
 
 3713 A Description of the Camellia Encryption Algorithm. M. Matsui,
      J. Nakajima, S. Moriai. April 2004. (Format: TXT=25031 bytes)
@@ -270,12 +270,12 @@ STARTTLS documents.
      Protocol. A. Jungmaier, E. Rescorla, M. Tuexen. December 2002.
      (Format: TXT=16333 bytes) (Status: PROPOSED STANDARD)
 
-3657 Use of the Camellia Encryption Algorithm in Cryptographic 
+3657 Use of the Camellia Encryption Algorithm in Cryptographic
      Message Syntax (CMS). S. Moriai, A. Kato. January 2004.
      (Format: TXT=26282 bytes) (Status: PROPOSED STANDARD)
 
-"Securing FTP with TLS", 01/27/2000, <draft-murray-auth-ftp-ssl-05.txt>  
- 
+"Securing FTP with TLS", 01/27/2000, <draft-murray-auth-ftp-ssl-05.txt>
+
 
 To be implemented:
 ------------------

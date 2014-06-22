@@ -2,7 +2,7 @@
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  *
- * Cloned shamelessly by Joe Tardo. 
+ * Cloned shamelessly by Joe Tardo.
  */
 /* ====================================================================
  * Copyright (c) 1999-2001 The OpenSSL Project.  All rights reserved.
@@ -12,7 +12,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -235,7 +235,7 @@ static int bind_helper(ENGINE *e)
 	 * anything "more generic" because something like the RSAref
 	 * code may not hook properly, and if you own one of these
 	 * cards then you have the right to do RSA operations on it
-	 * anyway! */ 
+	 * anyway! */
 	meth1 = RSA_PKCS1_SSLeay();
 	ubsec_rsa.rsa_pub_enc = meth1->rsa_pub_enc;
 	ubsec_rsa.rsa_pub_dec = meth1->rsa_pub_dec;
@@ -298,7 +298,7 @@ static t_UBSEC_ubsec_bits_to_bytes *p_UBSEC_ubsec_bits_to_bytes = NULL;
 static t_UBSEC_ubsec_open *p_UBSEC_ubsec_open = NULL;
 static t_UBSEC_ubsec_close *p_UBSEC_ubsec_close = NULL;
 #ifndef OPENSSL_NO_DH
-static t_UBSEC_diffie_hellman_generate_ioctl 
+static t_UBSEC_diffie_hellman_generate_ioctl
 	*p_UBSEC_diffie_hellman_generate_ioctl = NULL;
 static t_UBSEC_diffie_hellman_agree_ioctl *p_UBSEC_diffie_hellman_agree_ioctl = NULL;
 #endif
@@ -316,9 +316,9 @@ static t_UBSEC_max_key_len_ioctl *p_UBSEC_max_key_len_ioctl = NULL;
 
 static int max_key_len = 1024;  /* ??? */
 
-/* 
+/*
  * These are the static string constants for the DSO file name and the function
- * symbol names to bind to. 
+ * symbol names to bind to.
  */
 
 static const char *UBSEC_LIBNAME = NULL;
@@ -396,8 +396,8 @@ static int ubsec_init(ENGINE *e)
 		UBSECerr(UBSEC_F_UBSEC_INIT, UBSEC_R_ALREADY_LOADED);
 		goto err;
 		}
-	/* 
-	 * Attempt to load libubsec.so/ubsec.dll/whatever. 
+	/*
+	 * Attempt to load libubsec.so/ubsec.dll/whatever.
 	 */
 	ubsec_dso = DSO_load(NULL, get_UBSEC_LIBNAME(), NULL, 0);
 	if(ubsec_dso == NULL)
@@ -412,9 +412,9 @@ static int ubsec_init(ENGINE *e)
 	!(p3 = (t_UBSEC_ubsec_open *) DSO_bind_func(ubsec_dso, UBSEC_F3)) ||
 	!(p4 = (t_UBSEC_ubsec_close *) DSO_bind_func(ubsec_dso, UBSEC_F4)) ||
 #ifndef OPENSSL_NO_DH
-	!(p5 = (t_UBSEC_diffie_hellman_generate_ioctl *) 
+	!(p5 = (t_UBSEC_diffie_hellman_generate_ioctl *)
 				DSO_bind_func(ubsec_dso, UBSEC_F5)) ||
-	!(p6 = (t_UBSEC_diffie_hellman_agree_ioctl *) 
+	!(p6 = (t_UBSEC_diffie_hellman_agree_ioctl *)
 				DSO_bind_func(ubsec_dso, UBSEC_F6)) ||
 #endif
 /* #ifndef OPENSSL_NO_RSA */
@@ -425,7 +425,7 @@ static int ubsec_init(ENGINE *e)
 	!(p9 = (t_UBSEC_dsa_sign_ioctl *) DSO_bind_func(ubsec_dso, UBSEC_F9)) ||
 	!(p10 = (t_UBSEC_dsa_verify_ioctl *) DSO_bind_func(ubsec_dso, UBSEC_F10)) ||
 #endif
-	!(p11 = (t_UBSEC_math_accelerate_ioctl *) 
+	!(p11 = (t_UBSEC_math_accelerate_ioctl *)
 				DSO_bind_func(ubsec_dso, UBSEC_F11)) ||
 	!(p12 = (t_UBSEC_rng_ioctl *) DSO_bind_func(ubsec_dso, UBSEC_F12)) ||
         !(p13 = (t_UBSEC_max_key_len_ioctl *) DSO_bind_func(ubsec_dso, UBSEC_F13)))
@@ -570,7 +570,7 @@ static int ubsec_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	if (y_len > max_key_len) {
 		UBSECerr(UBSEC_F_UBSEC_MOD_EXP, UBSEC_R_SIZE_TOO_LARGE_OR_TOO_SMALL);
                 return BN_mod_exp(r, a, p, m, ctx);
-	} 
+	}
 
 	if(!bn_wexpand(r, m->top))
 	{
@@ -585,7 +585,7 @@ static int ubsec_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	}
 
 	if (p_UBSEC_rsa_mod_exp_ioctl(fd, (unsigned char *)a->d, BN_num_bits(a),
-		(unsigned char *)m->d, BN_num_bits(m), (unsigned char *)p->d, 
+		(unsigned char *)m->d, BN_num_bits(m), (unsigned char *)p->d,
 		BN_num_bits(p), (unsigned char *)r->d, &y_len) != 0)
 	{
 		UBSECerr(UBSEC_F_UBSEC_MOD_EXP, UBSEC_R_REQUEST_FAILED);
@@ -638,7 +638,7 @@ static int ubsec_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	if (y_len > max_key_len) {
 		UBSECerr(UBSEC_F_UBSEC_MOD_EXP_CRT, UBSEC_R_SIZE_TOO_LARGE_OR_TOO_SMALL);
 		return FAIL_TO_SOFTWARE;
-	} 
+	}
 
 	if (!bn_wexpand(r, p->top + q->top + 1)) {
 		UBSECerr(UBSEC_F_UBSEC_MOD_EXP_CRT, UBSEC_R_BN_EXPAND_FAIL);
@@ -652,7 +652,7 @@ static int ubsec_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	}
 
 	if (p_UBSEC_rsa_mod_exp_crt_ioctl(fd,
-		(unsigned char *)a->d, BN_num_bits(a), 
+		(unsigned char *)a->d, BN_num_bits(a),
 		(unsigned char *)qinv->d, BN_num_bits(qinv),
 		(unsigned char *)dp->d, BN_num_bits(dp),
 		(unsigned char *)p->d, BN_num_bits(p),
@@ -679,7 +679,7 @@ static int ubsec_dsa_mod_exp(DSA *dsa, BIGNUM *rr, BIGNUM *a1,
 	{
 	BIGNUM t;
 	int to_return = 0;
- 
+
 	BN_init(&t);
 	/* let rr = a1 ^ p1 mod m */
 	if (!ubsec_mod_exp(rr,a1,p1,m,ctx)) goto end;
@@ -762,7 +762,7 @@ static DSA_SIG *ubsec_dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	if (BN_bin2bn(dgst,dlen,&m) == NULL) {
 		UBSECerr(UBSEC_F_UBSEC_DSA_DO_SIGN, UBSEC_R_BN_EXPAND_FAIL);
 		goto err;
-	} 
+	}
 
 	if ((fd = p_UBSEC_ubsec_open(UBSEC_KEY_DEVICE_NAME)) <= 0) {
                 const DSA_METHOD *meth;
@@ -776,7 +776,7 @@ static DSA_SIG *ubsec_dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	if (p_UBSEC_dsa_sign_ioctl(fd, 0, /* compute hash before signing */
 		(unsigned char *)dgst, d_len,
 		NULL, 0,  /* compute random value */
-		(unsigned char *)dsa->p->d, BN_num_bits(dsa->p), 
+		(unsigned char *)dsa->p->d, BN_num_bits(dsa->p),
 		(unsigned char *)dsa->q->d, BN_num_bits(dsa->q),
 		(unsigned char *)dsa->g->d, BN_num_bits(dsa->g),
 		(unsigned char *)dsa->priv_key->d, BN_num_bits(dsa->priv_key),
@@ -810,7 +810,7 @@ err:
 	if (!to_return) {
 		if (r) BN_free(r);
 		if (s) BN_free(s);
-	}                                 
+	}
 	BN_clear_free(&m);
 	return to_return;
 }
@@ -845,7 +845,7 @@ static int ubsec_dsa_verify(const unsigned char *dgst, int dgst_len,
 
 	if (p_UBSEC_dsa_verify_ioctl(fd, 0, /* compute hash before signing */
 		(unsigned char *)dgst, d_len,
-		(unsigned char *)dsa->p->d, BN_num_bits(dsa->p), 
+		(unsigned char *)dsa->p->d, BN_num_bits(dsa->p),
 		(unsigned char *)dsa->q->d, BN_num_bits(dsa->q),
 		(unsigned char *)dsa->g->d, BN_num_bits(dsa->g),
 		(unsigned char *)dsa->pub_key->d, BN_num_bits(dsa->pub_key),
@@ -923,7 +923,7 @@ static int ubsec_dh_generate_key(DH *dh)
         BIGNUM   *pub_key          = NULL;
         BIGNUM   *priv_key         = NULL;
 
-        /* 
+        /*
          *  How many bits should Random x be? dh_key.c
          *  sets the range from 0 to num_bits(modulus) ???
          */

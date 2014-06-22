@@ -104,7 +104,7 @@ goto usage
 :usage
 echo.
 echo usage: cpy_tests.bat [test subdirectory] [NetWare drive]
-echo     [test subdirectory] - out_nw_clib.dbg, out_nw_libc.dbg, etc. 
+echo     [test subdirectory] - out_nw_clib.dbg, out_nw_libc.dbg, etc.
 echo     [NetWare drive]     - any mapped drive letter
 echo.
 echo example: cpy_test out_nw_clib.dbg M:

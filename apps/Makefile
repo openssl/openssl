@@ -15,8 +15,8 @@ KRB5_INCLUDES=
 LIBKRB5=
 
 PEX_LIBS=
-EX_LIBS= 
-EXE_EXT= 
+EX_LIBS=
+EXE_EXT=
 
 SHLIB_TARGET=
 
@@ -91,7 +91,7 @@ req: sreq.o $(A_OBJ) $(DLIBCRYPTO)
 		LIBDEPS="$(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS)" \
 		link_app.$${shlib_target}
 
-sreq.o: req.c 
+sreq.o: req.c
 	$(CC) -c $(INCLUDES) $(CFLAG) -o sreq.o req.c
 
 files:

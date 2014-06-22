@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -89,7 +89,7 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
 		X509V3_add_value("keyid", tmp, &extlist);
 		OPENSSL_free(tmp);
 	}
-	if(akeyid->issuer) 
+	if(akeyid->issuer)
 		extlist = i2v_GENERAL_NAMES(NULL, akeyid->issuer, extlist);
 	if(akeyid->serial) {
 		tmp = hex_to_string(akeyid->serial->data,

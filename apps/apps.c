@@ -5,21 +5,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -63,7 +63,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -764,7 +764,7 @@ static int load_pkcs12(BIO *err, BIO *in, const char *desc,
 		if (!pem_cb)
 			pem_cb = (pem_password_cb *)password_callback;
 		len = pem_cb(tpass, PEM_BUFSIZE, 0, cb_data);
-		if (len < 0) 
+		if (len < 0)
 			{
 			BIO_printf(err, "Passpharse callback error for %s\n",
 					desc);
@@ -1004,7 +1004,7 @@ EVP_PKEY *load_key(BIO *err, const char *file, int format, int maybe_stdin,
 			{
 			pkey = ENGINE_load_private_key(e, file,
 				ui_method, &cb_data);
-			if (!pkey) 
+			if (!pkey)
 				{
 				BIO_printf(err,"cannot load %s from engine\n",key_descrip);
 				ERR_print_errors(err);
@@ -1070,7 +1070,7 @@ EVP_PKEY *load_key(BIO *err, const char *file, int format, int maybe_stdin,
 		}
  end:
 	if (key != NULL) BIO_free(key);
-	if (pkey == NULL) 
+	if (pkey == NULL)
 		{
 		BIO_printf(err,"unable to load %s\n", key_descrip);
 		ERR_print_errors(err);
@@ -1149,7 +1149,7 @@ EVP_PKEY *load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
 	else if (format == FORMAT_PEMRSA)
 		{
 		RSA *rsa;
-		rsa = PEM_read_bio_RSAPublicKey(key, NULL, 
+		rsa = PEM_read_bio_RSAPublicKey(key, NULL,
 			(pem_password_cb *)password_callback, &cb_data);
 		if (rsa)
 			{
@@ -2562,7 +2562,7 @@ int args_verify(char ***pargs, int *pargc,
 	if (depth >= 0)
 		X509_VERIFY_PARAM_set_depth(*pm, depth);
 
-	if (at_time) 
+	if (at_time)
 		X509_VERIFY_PARAM_set_time(*pm, at_time);
 
 	if (hostname && !X509_VERIFY_PARAM_set1_host(*pm, hostname, 0))
@@ -3342,10 +3342,10 @@ int app_isdir(const char *name)
 #ifndef S_ISDIR
 # if defined(_S_IFMT) && defined(_S_IFDIR)
 #  define S_ISDIR(a)   (((a) & _S_IFMT) == _S_IFDIR)
-# else 
+# else
 #  define S_ISDIR(a)   (((a) & S_IFMT) == S_IFDIR)
-# endif 
-#endif 
+# endif
+#endif
 
 int app_isdir(const char *name)
 	{

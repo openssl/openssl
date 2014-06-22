@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -228,7 +228,7 @@ static int bind_helper(ENGINE *e)
 	 * anything "more generic" because something like the RSAref
 	 * code may not hook properly, and if you own one of these
 	 * cards then you have the right to do RSA operations on it
-	 * anyway! */ 
+	 * anyway! */
 	meth1 = RSA_PKCS1_SSLeay();
 	atalla_rsa.rsa_pub_enc = meth1->rsa_pub_enc;
 	atalla_rsa.rsa_pub_dec = meth1->rsa_pub_dec;
@@ -547,7 +547,7 @@ static int atalla_dsa_mod_exp(DSA *dsa, BIGNUM *rr, BIGNUM *a1,
 	{
 	BIGNUM t;
 	int to_return = 0;
- 
+
 	BN_init(&t);
 	/* let rr = a1 ^ p1 mod m */
 	if (!atalla_mod_exp(rr,a1,p1,m,ctx)) goto end;

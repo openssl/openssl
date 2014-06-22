@@ -56,7 +56,7 @@ needed to be used to sign using SHA1 and DSA. This is no longer necessary and
 the use of clone digest is now discouraged.
 
 For some key types and parameters the random number generator must be seeded
-or the operation will fail. 
+or the operation will fail.
 
 The call to EVP_DigestSignFinal() internally finalizes a copy of the digest
 context. This means that calls to EVP_DigestSignUpdate() and
@@ -81,7 +81,7 @@ L<sha(3)|sha(3)>, L<dgst(1)|dgst(1)>
 
 =head1 HISTORY
 
-EVP_DigestSignInit(), EVP_DigestSignUpdate() and EVP_DigestSignFinal() 
+EVP_DigestSignInit(), EVP_DigestSignUpdate() and EVP_DigestSignFinal()
 were first added to OpenSSL 1.0.0.
 
 =cut

@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -278,7 +278,7 @@ int FIPS_rsa_sign_digest(RSA *rsa, const unsigned char *md, int md_len,
 			RSAerr(RSA_F_FIPS_RSA_SIGN_DIGEST,ERR_R_MALLOC_FAILURE);
 			goto psserr;
 			}
-		if (!RSA_padding_add_PKCS1_PSS_mgf1(rsa, sbuf, md, mhash, 
+		if (!RSA_padding_add_PKCS1_PSS_mgf1(rsa, sbuf, md, mhash,
 							mgf1Hash, saltlen))
 			goto psserr;
 		j=rsa->meth->rsa_priv_enc(i,sbuf,sigret,rsa,RSA_NO_PADDING);

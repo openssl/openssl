@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -62,7 +62,7 @@
 /* Way more than we will ever need */
 #define ECDH_KDF_MAX	(1 << 30)
 
-int ECDH_KDF_X9_62(unsigned char *out, size_t outlen, 
+int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
 		const unsigned char *Z, size_t Zlen,
 		const unsigned char *sinfo, size_t sinfolen,
 		const EVP_MD *md)

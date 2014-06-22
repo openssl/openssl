@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -290,7 +290,7 @@ DSO_METHOD *DSO_METHOD_null(void);
  * this method. If not, this method will return NULL. */
 DSO_METHOD *DSO_METHOD_dlfcn(void);
 
-/* If DSO_DL is defined, the standard dl.h-style functions (shl_load, 
+/* If DSO_DL is defined, the standard dl.h-style functions (shl_load,
  * shl_unload, shl_findsym, etc) will be used and incorporated into
  * this method. If not, this method will return NULL. */
 DSO_METHOD *DSO_METHOD_dl(void);

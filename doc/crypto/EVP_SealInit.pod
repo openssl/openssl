@@ -42,9 +42,9 @@ If the cipher does not require an IV then the B<iv> parameter is ignored
 and can be B<NULL>.
 
 EVP_SealUpdate() and EVP_SealFinal() have exactly the same properties
-as the EVP_EncryptUpdate() and EVP_EncryptFinal() routines, as 
+as the EVP_EncryptUpdate() and EVP_EncryptFinal() routines, as
 documented on the L<EVP_EncryptInit(3)|EVP_EncryptInit(3)> manual
-page. 
+page.
 
 =head1 RETURN VALUES
 

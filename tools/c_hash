@@ -1,5 +1,5 @@
 #!/bin/sh
-# print out the hash values 
+# print out the hash values
 #
 
 for i in $*

@@ -1,6 +1,6 @@
 /* crypto/ec/ecp_smpl.c */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
- * for the OpenSSL project. 
+ * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
 */
 /* ====================================================================
@@ -11,7 +11,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -314,7 +314,7 @@ int ec_GFp_simple_group_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
 		}
 	
 	/* check the discriminant:
-	 * y^2 = x^3 + a*x + b is an elliptic curve <=> 4*a^3 + 27*b^2 != 0 (mod p) 
+	 * y^2 = x^3 + a*x + b is an elliptic curve <=> 4*a^3 + 27*b^2 != 0 (mod p)
          * 0 =< a, b < p */
 	if (BN_is_zero(a))
 		{

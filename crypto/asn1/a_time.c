@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -116,7 +116,7 @@ ASN1_TIME *ASN1_TIME_adj(ASN1_TIME *s, time_t t,
 		return NULL;
 		}
 	if (offset_day || offset_sec)
-		{ 
+		{
 		if (!OPENSSL_gmtime_adj(ts, offset_day, offset_sec))
 			return NULL;
 		}

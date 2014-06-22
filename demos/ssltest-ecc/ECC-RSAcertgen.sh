@@ -36,7 +36,7 @@ TEST_CLIENT_DN="/C=US/ST=CA/L=Mountain View/O=Sun Microsystems, Inc./OU=Sun Micr
 # Generating an EC certificate involves the following main steps
 # 1. Generating curve parameters (if needed)
 # 2. Generating a certificate request
-# 3. Signing the certificate request 
+# 3. Signing the certificate request
 # 4. [Optional] One can combine the cert and private key into a single
 #    file and also delete the certificate request
 
@@ -59,7 +59,7 @@ $OPENSSL_CMD x509 -req -days $DAYS \
     -CAkey $KEYS_DIR/$TEST_CA_FILE.key.pem \
     -out $CERTS_DIR/$TEST_SERVER_FILE.cert.pem -CAcreateserial
 
-# Display the certificate 
+# Display the certificate
 $OPENSSL_CMD x509 -in $CERTS_DIR/$TEST_SERVER_FILE.cert.pem -text
 
 # Place the certificate and key in a common file
@@ -85,7 +85,7 @@ $OPENSSL_CMD x509 -req -days $DAYS \
     -CAkey $KEYS_DIR/$TEST_CA_FILE.key.pem \
     -out $CERTS_DIR/$TEST_CLIENT_FILE.cert.pem -CAcreateserial
 
-# Display the certificate 
+# Display the certificate
 $OPENSSL_CMD x509 -in $CERTS_DIR/$TEST_CLIENT_FILE.cert.pem -text
 
 # Place the certificate and key in a common file

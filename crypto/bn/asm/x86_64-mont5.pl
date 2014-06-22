@@ -527,7 +527,7 @@ $code.=<<___;
 	# "above" modulo cache-line size, which effectively precludes
 	# possibility of memory disambiguation logic failure when
 	# accessing the table.
-	# 
+	#
 	lea	64+8(%rsp,%r11,8),$tp
 	mov	%rdx,$A[1]
 
@@ -910,7 +910,7 @@ my $bptr="%rdx";	# const void *table,
 my $nptr="%rcx";	# const BN_ULONG *nptr,
 my $n0  ="%r8";		# const BN_ULONG *n0);
 my $num ="%r9";		# int num, has to be divisible by 8
-			# int pwr 
+			# int pwr
 
 my ($i,$j,$tptr)=("%rbp","%rcx",$rptr);
 my @A0=("%r10","%r11");
@@ -2174,7 +2174,7 @@ $code.=<<___;
 	# "above" modulo cache-line size, which effectively precludes
 	# possibility of memory disambiguation logic failure when
 	# accessing the table.
-	# 
+	#
 	lea	64+8*4+8(%rsp,%r11,8),$tptr
 
 	mov	%rdx,$bi

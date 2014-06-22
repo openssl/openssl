@@ -36,12 +36,12 @@ This command is used to manipulate or generate EC parameter files.
 
 This specifies the input format. The B<DER> option uses an ASN.1 DER encoded
 form compatible with RFC 3279 EcpkParameters. The PEM form is the default
-format: it consists of the B<DER> format base64 encoded with additional 
+format: it consists of the B<DER> format base64 encoded with additional
 header and footer lines.
 
 =item B<-outform DER|PEM>
 
-This specifies the output format, the options have the same meaning as the 
+This specifies the output format, the options have the same meaning as the
 B<-inform> option.
 
 =item B<-in filename>
@@ -97,7 +97,7 @@ the preprocessor macro B<OPENSSL_EC_BIN_PT_COMP> at compile time.
 This specifies how the elliptic curve parameters are encoded.
 Possible value are: B<named_curve>, i.e. the ec parameters are
 specified by a OID, or B<explicit> where the ec parameters are
-explicitly given (see RFC 3279 for the definition of the 
+explicitly given (see RFC 3279 for the definition of the
 EC parameters structures). The default value is B<named_curve>.
 B<Note> the B<implicitlyCA> alternative ,as specified in RFC 3279,
 is currently not implemented in OpenSSL.
@@ -136,7 +136,7 @@ PEM format EC parameters use the header and footer lines:
  -----END EC PARAMETERS-----
 
 OpenSSL is currently not able to generate new groups and therefore
-B<ecparam> can only create EC parameters from known (named) curves. 
+B<ecparam> can only create EC parameters from known (named) curves.
 
 =head1 EXAMPLES
 

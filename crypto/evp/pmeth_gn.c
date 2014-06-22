@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -192,7 +192,7 @@ void evp_pkey_set_cb_translate(BN_GENCB *cb, EVP_PKEY_CTX *ctx)
 int EVP_PKEY_CTX_get_keygen_info(EVP_PKEY_CTX *ctx, int idx)
 	{
 	if (idx == -1)
-		return ctx->keygen_info_count; 
+		return ctx->keygen_info_count;
 	if (idx < 0 || idx > ctx->keygen_info_count)
 		return 0;
 	return ctx->keygen_info[idx];

@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -92,7 +92,7 @@ int ASN1_item_i2d(ASN1_VALUE *val, unsigned char **out, const ASN1_ITEM *it)
 	}
 
 /* Encode an ASN1 item, this is use by the
- * standard 'i2d' function. 'out' points to 
+ * standard 'i2d' function. 'out' points to
  * a buffer to output the data to.
  *
  * The new i2d has one additional feature. If the output
@@ -299,7 +299,7 @@ static int asn1_template_ex_i2d(ASN1_VALUE **pval, unsigned char **out,
 		ttag = -1;
 		tclass = 0;
 		}
-	/* 
+	/*
 	 * Remove any class mask from iflag.
 	 */
 	iclass &= ~ASN1_TFLG_TAG_CLASS;

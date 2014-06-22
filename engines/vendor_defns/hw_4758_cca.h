@@ -26,7 +26,7 @@
 
   #define SECURITYAPI __stdcall
 #else
-    /* Fixme!!         
+    /* Fixme!!
       Find out the values of these constants for other platforms.
     */
   #define CCA_LIB_NAME "CSUNSAPI"

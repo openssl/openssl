@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -80,7 +80,7 @@ static int fips_drbg_bytes(unsigned char *out, int count)
 	unsigned char *adin = NULL;
 	size_t adinlen = 0;
 	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
-	do 
+	do
 		{
 		size_t rcnt;
 		if (count > (int)dctx->max_request)

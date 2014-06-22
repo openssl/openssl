@@ -58,7 +58,7 @@ foreach $file (@files) {
 	unlink "$from/$file";
 	symlink("$to/$file", "$from/$file") or $err = " [$!]";
     } else {
-	unlink "$from/$file"; 
+	unlink "$from/$file";
 	open (OLD, "<$file") or die "Can't open $file: $!";
 	open (NEW, ">$from/$file") or die "Can't open $from/$file: $!";
 	binmode(OLD);

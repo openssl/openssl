@@ -68,7 +68,7 @@ The macro EVP_PKEY_CTX_set_rsa_padding() sets the RSA padding mode for B<ctx>.
 The B<pad> parameter can take the value RSA_PKCS1_PADDING for PKCS#1 padding,
 RSA_SSLV23_PADDING for SSLv23 padding, RSA_NO_PADDING for no padding,
 RSA_PKCS1_OAEP_PADDING for OAEP padding (encrypt and decrypt only),
-RSA_X931_PADDING for X9.31 padding (signature operations only) and 
+RSA_X931_PADDING for X9.31 padding (signature operations only) and
 RSA_PKCS1_PSS_PADDING (sign and verify only).
 
 Two RSA padding modes behave differently if EVP_PKEY_CTX_set_signature_md()
@@ -93,7 +93,7 @@ RSA key genration to B<bits>. If not specified 1024 bits is used.
 
 The EVP_PKEY_CTX_set_rsa_keygen_pubexp() macro sets the public exponent value
 for RSA key generation to B<pubexp> currently it should be an odd integer. The
-B<pubexp> pointer is used internally by this function so it should not be 
+B<pubexp> pointer is used internally by this function so it should not be
 modified or free after the call. If this macro is not called then 65537 is used.
 
 The macro EVP_PKEY_CTX_set_dsa_paramgen_bits() sets the number of bits used
@@ -124,8 +124,8 @@ L<EVP_PKEY_decrypt(3)|EVP_PKEY_decrypt(3)>,
 L<EVP_PKEY_sign(3)|EVP_PKEY_sign(3)>,
 L<EVP_PKEY_verify(3)|EVP_PKEY_verify(3)>,
 L<EVP_PKEY_verify_recover(3)|EVP_PKEY_verify_recover(3)>,
-L<EVP_PKEY_derive(3)|EVP_PKEY_derive(3)> 
-L<EVP_PKEY_keygen(3)|EVP_PKEY_keygen(3)> 
+L<EVP_PKEY_derive(3)|EVP_PKEY_derive(3)>
+L<EVP_PKEY_keygen(3)|EVP_PKEY_keygen(3)>
 
 =head1 HISTORY
 

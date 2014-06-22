@@ -41,7 +41,7 @@ Version 4.01
 Version 4.00
 	After a bit of a pause, I'll up the major version number since this
 	is mostly a performace release.  I've added x86 assembler and
-	added more options for performance.  A %28 speedup for gcc 
+	added more options for performance.  A %28 speedup for gcc
 	on a pentium and the assembler is a %50 speedup.
 	MIPS CPU's, sparc and Alpha are the main CPU's with speedups.
 	Run des_opts to work out which options should be used.
@@ -98,7 +98,7 @@ Version 3.22 29/11/95
 	for the patch.
 
 Version 3.21 22/11/95
-	After some emailing back and forth with 
+	After some emailing back and forth with
 	Colin Plumb <colin@nyx10.cs.du.edu>, I've tweaked a few things
 	and in a future version I will probably put in some of the
 	optimisation he suggested for use with the DES_USE_PTR option.
@@ -121,7 +121,7 @@ Version 3.20
 	passed seed into the init structure.  It is now fixed to copy 8.
 	My own suggestion is to used something like MD5 :-)
 
-Version 3.19 
+Version 3.19
 	While looking at my code one day, I though, why do I keep on
 	calling des_encrypt(in,out,ks,enc) when every function that
 	calls it has in and out the same.  So I dropped the 'out'
@@ -314,7 +314,7 @@ Patch2 posted to comp.sources.misc
 Version 1.95 13/05/92 eay
 	Added an alternative version of the D_ENCRYPT macro in
 	ecb_encrypt and fcrypt.  Depending on the compiler, one version or the
-	other will be faster.  This was inspired by 
+	other will be faster.  This was inspired by
 	Dana How <how@isl.stanford.edu>, and her pointers about doing the
 	*(ulong *)((uchar *)ptr+(value&0xfc))
 	vs

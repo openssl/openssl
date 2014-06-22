@@ -28,7 +28,7 @@ EXE=""
 # pick up any command line args to config
 for i
 do
-case "$i" in 
+case "$i" in
 -d*) PREFIX="debug-";;
 -t*) TEST="true";;
 -h*) TEST="true"; cat <<EOF
@@ -56,7 +56,7 @@ done
 
 # Now test for ISC and SCO, since it is has a braindamaged uname.
 #
-# We need to work around FreeBSD 1.1.5.1 
+# We need to work around FreeBSD 1.1.5.1
 (
 XREL=`uname -X 2>/dev/null | grep "^Release" | awk '{print $3}'`
 if [ "x$XREL" != "x" ]; then
@@ -403,7 +403,7 @@ esac
 # At this point we gone through all the one's
 # we know of: Punt
 
-echo "${MACHINE}-whatever-${SYSTEM}" 
+echo "${MACHINE}-whatever-${SYSTEM}"
 exit 0
 ) 2>/dev/null | (
 
@@ -486,7 +486,7 @@ fi
 
 CCVER=${CCVER:-0}
 
-# read the output of the embedded GuessOS 
+# read the output of the embedded GuessOS
 read GUESSOS
 
 echo Operating system: $GUESSOS
@@ -771,7 +771,7 @@ case "$GUESSOS" in
   *-*-[Uu]nix[Ww]are7)
 	if [ "$CC" = "gcc" ]; then
 	  OUT="unixware-7-gcc" ; options="$options no-sse2"
-	else    
+	else
 	  OUT="unixware-7" ; options="$options no-sse2 -D__i386__"
 	fi
 	;;
@@ -829,7 +829,7 @@ case "$GUESSOS" in
             OUT="aix64-gcc"
           fi
 	elif [ $OBJECT_MODE -eq 64 ]; then
-	    echo 'Your $OBJECT_MODE was found to be set to 64' 
+	    echo 'Your $OBJECT_MODE was found to be set to 64'
 	    OUT="aix64-cc"
 	else
 	    OUT="aix-cc"
@@ -964,7 +964,7 @@ if [ ".$PERL" = . ] ; then
 	exit 1
 fi
 
-# run Configure to check to see if we need to specify the 
+# run Configure to check to see if we need to specify the
 # compiler for the platform ... in which case we add it on
 # the end ... otherwise we leave it off
 

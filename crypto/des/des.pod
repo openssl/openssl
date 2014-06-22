@@ -158,7 +158,7 @@ Does nothing - allowed for compatibility with sunOS des(1) command.
 
 =item B<-k> I<key>
 
-Use the encryption 
+Use the encryption
 I<key>
 specified.
 

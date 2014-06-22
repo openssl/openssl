@@ -1052,7 +1052,7 @@ Lschedule_mangle_last:
 Lschedule_mangle_last_dec:
 	lvx	$iptlo, r11, r12	# reload $ipt
 	lvx	$ipthi, r9,  r12
-	addi	$out, $out, -16		# add	\$-16,	%rdx 
+	addi	$out, $out, -16		# add	\$-16,	%rdx
 	vxor	v0, v0, v26		# vpxor	.Lk_s63(%rip),	%xmm0,	%xmm0
 	bl	_vpaes_schedule_transform	# output transform
 
@@ -1484,7 +1484,7 @@ foreach  (split("\n",$code)) {
 	    if ($flavour =~ /le$/o) {
 		SWITCH: for($conv)  {
 		    /\?inv/ && do   { @bytes=map($_^0xf,@bytes); last; };
-		    /\?rev/ && do   { @bytes=reverse(@bytes);    last; }; 
+		    /\?rev/ && do   { @bytes=reverse(@bytes);    last; };
 		}
 	    }
 

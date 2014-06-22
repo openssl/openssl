@@ -9,7 +9,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -73,7 +73,7 @@ static int eckey_param2type(int *pptype, void **ppval, EC_KEY *ec_key)
 	{
 	const EC_GROUP  *group;
 	int nid;
-	if (ec_key == NULL || (group = EC_KEY_get0_group(ec_key)) == NULL) 
+	if (ec_key == NULL || (group = EC_KEY_get0_group(ec_key)) == NULL)
 	{
 		ECerr(EC_F_ECKEY_PARAM2TYPE, EC_R_MISSING_PARAMETERS);
 		return 0;
@@ -456,7 +456,7 @@ static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, int ktype)
 	const EC_GROUP *group;
 	const EC_POINT *public_key;
 	const BIGNUM *priv_key;
- 
+
 	if (x == NULL || (group = EC_KEY_get0_group(x)) == NULL)
 		{
 		reason = ERR_R_PASSED_NULL_PARAMETER;
@@ -516,8 +516,8 @@ static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, int ktype)
 		goto err;
 	if (BIO_printf(bp, "%s: (%d bit)\n", ecstr,
 		BN_num_bits(order)) <= 0) goto err;
-  
-	if ((priv_key != NULL) && !ASN1_bn_print(bp, "priv:", priv_key, 
+
+	if ((priv_key != NULL) && !ASN1_bn_print(bp, "priv:", priv_key,
 		buffer, off))
 		goto err;
 	if ((pub_key != NULL) && !ASN1_bn_print(bp, "pub: ", pub_key,
@@ -529,7 +529,7 @@ static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, int ktype)
 err:
 	if (!ret)
  		ECerr(EC_F_DO_EC_KEY_PRINT, reason);
-	if (pub_key) 
+	if (pub_key)
 		BN_free(pub_key);
 	if (order)
 		BN_free(order);
@@ -611,7 +611,7 @@ static int ec_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 			if (hnid == NID_undef)
 				return -1;
 			if (!OBJ_find_sigid_by_algs(&snid, hnid, EVP_PKEY_id(pkey)))
-				return -1; 
+				return -1;
 			X509_ALGOR_set0(alg2, OBJ_nid2obj(snid), V_ASN1_UNDEF, 0);
 			}
 		return 1;
@@ -629,7 +629,7 @@ static int ec_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 			if (hnid == NID_undef)
 				return -1;
 			if (!OBJ_find_sigid_by_algs(&snid, hnid, EVP_PKEY_id(pkey)))
-				return -1; 
+				return -1;
 			X509_ALGOR_set0(alg2, OBJ_nid2obj(snid), V_ASN1_UNDEF, 0);
 			}
 		return 1;
@@ -657,7 +657,7 @@ static int ec_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 
 	}
 
-const EVP_PKEY_ASN1_METHOD eckey_asn1_meth = 
+const EVP_PKEY_ASN1_METHOD eckey_asn1_meth =
 	{
 	EVP_PKEY_EC,
 	EVP_PKEY_EC,

@@ -51,7 +51,7 @@ B<BIO_FLAGS_IO_SPECIAL> though current BIO types will only set one of
 these.
 
 BIO_get_retry_BIO() determines the precise reason for the special
-condition, it returns the BIO that caused this condition and if 
+condition, it returns the BIO that caused this condition and if
 B<reason> is not NULL it contains the reason code. The meaning of
 the reason code and the action that should be taken depends on
 the type of BIO that resulted in this condition.
@@ -94,7 +94,7 @@ available and then retry the BIO operation. By combining the retry
 conditions of several non blocking BIOs in a single select() call
 it is possible to service several BIOs in a single thread, though
 the performance may be poor if SSL BIOs are present because long delays
-can occur during the initial handshake process. 
+can occur during the initial handshake process.
 
 It is possible for a BIO to block indefinitely if the underlying I/O
 structure cannot process or return any data. This depends on the behaviour of

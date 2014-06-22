@@ -64,7 +64,7 @@ where "name" is the name in the configuration file this function corresponds
 to.
 
 A set of builtin modules (currently only an ASN1 non functional test module)
-can be added by calling OPENSSL_load_builtin_modules(). 
+can be added by calling OPENSSL_load_builtin_modules().
 
 The function OPENSSL_config() is intended as a simple configuration function
 that any application can call to perform various default configuration tasks.

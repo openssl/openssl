@@ -19,7 +19,7 @@
 #endif
 #include <assert.h>
 
-static int gost_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key, 
+static int gost_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	const unsigned char *iv, int enc);
 static int	gost_cipher_init_cpa(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	const unsigned char *iv, int enc);
@@ -37,7 +37,7 @@ static int gost89_get_asn1_parameters(EVP_CIPHER_CTX *ctx,ASN1_TYPE *params);
 /* Control function */
 static int gost_cipher_ctl(EVP_CIPHER_CTX *ctx,int type,int arg,void *ptr);
 
-EVP_CIPHER cipher_gost = 
+EVP_CIPHER cipher_gost =
 	{
 	NID_id_Gost28147_89,
 	1,/*block_size*/
@@ -55,7 +55,7 @@ EVP_CIPHER cipher_gost =
 	NULL,
 	};
 
-EVP_CIPHER cipher_gost_cpacnt = 
+EVP_CIPHER cipher_gost_cpacnt =
 	{
 	NID_gost89_cnt,
 	1,/*block_size*/
@@ -101,11 +101,11 @@ EVP_MD imit_gost_cpa =
 	NULL,
 	{0,0,0,0,0},
 	8,
-	sizeof(struct ossl_gost_imit_ctx), 
+	sizeof(struct ossl_gost_imit_ctx),
 	gost_imit_ctrl
 	};
 
-/* 
+/*
  * Correspondence between gost parameter OIDs and substitution blocks
  * NID field is filed by register_gost_NID function in engine.c
  * upon engine initialization
@@ -125,7 +125,7 @@ struct gost_cipher_info gost_cipher_list[]=
 	};	
 
 /*  get encryption parameters from crypto network settings
-	FIXME For now we use environment var CRYPT_PARAMS as place to 
+	FIXME For now we use environment var CRYPT_PARAMS as place to
 	store these settings. Actually, it is better to use engine control   command, read from configuration file to set them */
 const struct gost_cipher_info *get_encryption_params(ASN1_OBJECT *obj)
 	{
@@ -134,7 +134,7 @@ const struct gost_cipher_info *get_encryption_params(ASN1_OBJECT *obj)
 	if (!obj)
 		{
 		const char * params = get_gost_engine_param(GOST_PARAM_CRYPT_PARAMS);
-		if (!params || !strlen(params)) 
+		if (!params || !strlen(params))
 			return &gost_cipher_list[1];
 
 		nid = OBJ_txt2nid(params);
@@ -149,7 +149,7 @@ const struct gost_cipher_info *get_encryption_params(ASN1_OBJECT *obj)
 		{
 		nid= OBJ_obj2nid(obj);
 		}
-	for (param=gost_cipher_list;param->sblock!=NULL && param->nid!=nid; 
+	for (param=gost_cipher_list;param->sblock!=NULL && param->nid!=nid;
 		 param++);
 	if (!param->sblock)
 		{
@@ -209,7 +209,7 @@ int gost_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	return gost_cipher_init_param(ctx,key,iv,enc,NID_undef,EVP_CIPH_CFB_MODE);
 	}	
 /* Wrapper around gostcrypt function from gost89.c which perform
- * key meshing when nesseccary 
+ * key meshing when nesseccary
  */
 static void gost_crypt_mesh (void *ctx,unsigned char *iv,unsigned char *buf)
 	{
@@ -270,9 +270,9 @@ int	gost_cipher_do_cfb(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	size_t i=0;
 	size_t j=0;
 /* process partial block if any */
-	if (ctx->num) 
+	if (ctx->num)
 		{
-		for (j=ctx->num,i=0;j<8 && i<inl;j++,i++,in_ptr++,out_ptr++) 
+		for (j=ctx->num,i=0;j<8 && i<inl;j++,i++,in_ptr++,out_ptr++)
 			{
 			if (!ctx->encrypt) ctx->buf[j+8]=*in_ptr;
 			*out_ptr=ctx->buf[j]^(*in_ptr);
@@ -332,9 +332,9 @@ static int gost_cipher_do_cnt(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	size_t i=0;
 	size_t j;
 /* process partial block if any */
-	if (ctx->num) 
+	if (ctx->num)
 		{
-		for (j=ctx->num,i=0;j<8 && i<inl;j++,i++,in_ptr++,out_ptr++) 
+		for (j=ctx->num,i=0;j<8 && i<inl;j++,i++,in_ptr++,out_ptr++)
 			{
 			*out_ptr=ctx->buf[j]^(*in_ptr);
 			}	
@@ -379,7 +379,7 @@ static int gost_cipher_do_cnt(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	}
 
 /* Cleaning up of EVP_CIPHER_CTX */
-int gost_cipher_cleanup(EVP_CIPHER_CTX *ctx) 
+int gost_cipher_cleanup(EVP_CIPHER_CTX *ctx)
 	{
 	gost_destroy(&((struct ossl_gost_cipher_ctx *)ctx->cipher_data)->cctx);
 	ctx->app_data = NULL;
@@ -467,7 +467,7 @@ int gost89_set_asn1_parameters(EVP_CIPHER_CTX *ctx,ASN1_TYPE *params)
 int  gost89_get_asn1_parameters(EVP_CIPHER_CTX *ctx,ASN1_TYPE *params)
 	{
 	int ret = -1;
-	int len; 
+	int len;
 	GOST_CIPHER_PARAMS *gcp = NULL;
 	unsigned char *p;
 	struct ossl_gost_cipher_ctx *c=ctx->cipher_data;
@@ -517,7 +517,7 @@ int gost_imit_init_cpa(EVP_MD_CTX *ctx)
 static void mac_block_mesh(struct ossl_gost_imit_ctx *c,const unsigned char *data)
 	{
 	unsigned char buffer[8];
-	/* We are using local buffer for iv because CryptoPro doesn't 
+	/* We are using local buffer for iv because CryptoPro doesn't
 	 * interpret internal state of MAC algorithm as iv during keymeshing
 	 * (but does initialize internal state from iv in key transport
 	 */

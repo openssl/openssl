@@ -15,7 +15,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -350,7 +350,7 @@ typedef struct ocsp_service_locator_st
 	X509_NAME* issuer;
 	STACK_OF(ACCESS_DESCRIPTION) *locator;
         } OCSP_SERVICELOC;
- 
+
 #define PEM_STRING_OCSP_REQUEST	"OCSP REQUEST"
 #define PEM_STRING_OCSP_RESPONSE "OCSP RESPONSE"
 
@@ -421,9 +421,9 @@ int OCSP_REQ_CTX_add1_header(OCSP_REQ_CTX *rctx,
 
 OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, X509 *subject, X509 *issuer);
 
-OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst, 
-			      X509_NAME *issuerName, 
-			      ASN1_BIT_STRING* issuerKey, 
+OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
+			      X509_NAME *issuerName,
+			      ASN1_BIT_STRING* issuerKey,
 			      ASN1_INTEGER *serialNumber);
 
 OCSP_ONEREQ *OCSP_request_add0_id(OCSP_REQUEST *req, OCSP_CERTID *cid);
@@ -483,7 +483,7 @@ OCSP_SINGLERESP *OCSP_basic_add1_status(OCSP_BASICRESP *rsp,
 						ASN1_TIME *revtime,
 					ASN1_TIME *thisupd, ASN1_TIME *nextupd);
 int OCSP_basic_add1_cert(OCSP_BASICRESP *resp, X509 *cert);
-int OCSP_basic_sign(OCSP_BASICRESP *brsp, 
+int OCSP_basic_sign(OCSP_BASICRESP *brsp,
 			X509 *signer, EVP_PKEY *key, const EVP_MD *dgst,
 			STACK_OF(X509) *certs, unsigned long flags);
 

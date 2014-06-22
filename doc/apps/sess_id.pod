@@ -52,7 +52,7 @@ output if this option is not specified.
 =item B<-text>
 
 prints out the various public or private key components in
-plain text in addition to the encoded version. 
+plain text in addition to the encoded version.
 
 =item B<-cert>
 

@@ -23,12 +23,12 @@ v2/v3) and Transport Layer Security (TLS v1) network protocols and related
 cryptography standards required by them.
 
 The B<openssl> program is a command line tool for using the various
-cryptography functions of OpenSSL's B<crypto> library from the shell. 
-It can be used for 
+cryptography functions of OpenSSL's B<crypto> library from the shell.
+It can be used for
 
  o  Creation and management of private keys, public keys and parameters
  o  Public key cryptographic operations
- o  Creation of X.509 certificates, CSRs and CRLs 
+ o  Creation of X.509 certificates, CSRs and CRLs
  o  Calculation of Message Digests
  o  Encryption and Decryption with Ciphers
  o  SSL/TLS Client and Server Tests
@@ -75,7 +75,7 @@ Parse an ASN.1 sequence.
 
 =item L<B<ca>|ca(1)>
 
-Certificate Authority (CA) Management.  
+Certificate Authority (CA) Management.
 
 =item L<B<ciphers>|ciphers(1)>
 
@@ -104,7 +104,7 @@ Obsoleted by L<B<dhparam>|dhparam(1)>.
 
 =item L<B<dhparam>|dhparam(1)>
 
-Generation and Management of Diffie-Hellman Parameters. Superseded by 
+Generation and Management of Diffie-Hellman Parameters. Superseded by
 L<B<genpkey>|genpkey(1)> and L<B<pkeyparam>|pkeyparam(1)>
 
 
@@ -114,7 +114,7 @@ DSA Data Management.
 
 =item L<B<dsaparam>|dsaparam(1)>
 
-DSA Parameter Generation and Management. Superseded by 
+DSA Parameter Generation and Management. Superseded by
 L<B<genpkey>|genpkey(1)> and L<B<pkeyparam>|pkeyparam(1)>
 
 =item L<B<ec>|ec(1)>
@@ -144,7 +144,7 @@ Obsoleted by L<B<dhparam>|dhparam(1)>.
 
 =item L<B<gendsa>|gendsa(1)>
 
-Generation of DSA Private Key from Parameters. Superseded by 
+Generation of DSA Private Key from Parameters. Superseded by
 L<B<genpkey>|genpkey(1)> and L<B<pkey>|pkey(1)>
 
 =item L<B<genpkey>|genpkey(1)>
@@ -279,11 +279,11 @@ MDC2 Digest
 
 RMD-160 Digest
 
-=item B<sha>            
+=item B<sha>
 
 SHA Digest
 
-=item B<sha1>           
+=item B<sha1>
 
 SHA-1 Digest
 
@@ -408,7 +408,7 @@ L<rsautl(1)|rsautl(1)>, L<s_client(1)|s_client(1)>,
 L<s_server(1)|s_server(1)>, L<s_time(1)|s_time(1)>,
 L<smime(1)|smime(1)>, L<spkac(1)|spkac(1)>,
 L<verify(1)|verify(1)>, L<version(1)|version(1)>, L<x509(1)|x509(1)>,
-L<crypto(3)|crypto(3)>, L<ssl(3)|ssl(3)>, L<x509v3_config(5)|x509v3_config(5)> 
+L<crypto(3)|crypto(3)>, L<ssl(3)|ssl(3)>, L<x509v3_config(5)|x509v3_config(5)>
 
 =head1 HISTORY
 

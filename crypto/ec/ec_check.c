@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -96,7 +96,7 @@ int EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx)
 
 	/* check the order of the generator */
 	if ((point = EC_POINT_new(group)) == NULL) goto err;
-	if (!EC_GROUP_get_order(group, order, ctx)) goto err; 
+	if (!EC_GROUP_get_order(group, order, ctx)) goto err;
 	if (BN_is_zero(order))
 		{
 		ECerr(EC_F_EC_GROUP_CHECK, EC_R_UNDEFINED_ORDER);

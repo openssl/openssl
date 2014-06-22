@@ -43,7 +43,7 @@ RSA key.  It is supposed to only accept 512.
 If Netscape connects to a server which requests a client certificate
 it will frequently hang after the user has selected one and never
 complete the connection. Hitting "Stop" and reload fixes this and
-all subsequent connections work fine. This appears to be because 
+all subsequent connections work fine. This appears to be because
 Netscape wont read any new records in when it is awaiting a server
 done message at this point. The fix is to send the certificate request
 and server done messages in one record.

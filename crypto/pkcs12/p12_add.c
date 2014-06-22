@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -121,7 +121,7 @@ PKCS12_SAFEBAG *PKCS12_MAKE_SHKEYBAG(int pbe_nid, const char *pass,
 	if (pbe_ciph)
 		pbe_nid = -1;
 
-	if (!(bag->value.shkeybag = 
+	if (!(bag->value.shkeybag =
 	  PKCS8_encrypt(pbe_nid, pbe_ciph, pass, passlen, salt, saltlen, iter,
 									 p8))) {
 		PKCS12err(PKCS12_F_PKCS12_MAKE_SHKEYBAG, ERR_R_MALLOC_FAILURE);
@@ -221,10 +221,10 @@ PKCS8_PRIV_KEY_INFO *PKCS12_decrypt_skey(PKCS12_SAFEBAG *bag, const char *pass,
 	return PKCS8_decrypt(bag->value.shkeybag, pass, passlen);
 }
 
-int PKCS12_pack_authsafes(PKCS12 *p12, STACK_OF(PKCS7) *safes) 
+int PKCS12_pack_authsafes(PKCS12 *p12, STACK_OF(PKCS7) *safes)
 {
 	if(ASN1_item_pack(safes, ASN1_ITEM_rptr(PKCS12_AUTHSAFES),
-		&p12->authsafes->d.data)) 
+		&p12->authsafes->d.data))
 			return 1;
 	return 0;
 }

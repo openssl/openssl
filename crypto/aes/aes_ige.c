@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -233,7 +233,7 @@ void AES_bi_ige_encrypt(const unsigned char *in, unsigned char *out,
 		/* XXX: Do a separate case for when in != out (strictly should
 		   check for overlap, too) */
 
-		/* First the forward pass */ 
+		/* First the forward pass */
 		iv = ivec;
 		iv2 = ivec + AES_BLOCK_SIZE;
 		while (len >= AES_BLOCK_SIZE)

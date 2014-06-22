@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -62,7 +62,7 @@
 #include <openssl/x509v3.h>
 
 static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *str);
-const X509V3_EXT_METHOD v3_skey_id = { 
+const X509V3_EXT_METHOD v3_skey_id = {
 NID_subject_key_identifier, 0, ASN1_ITEM_ref(ASN1_OCTET_STRING),
 0,0,0,0,
 (X509V3_EXT_I2S)i2s_ASN1_OCTET_STRING,
@@ -120,7 +120,7 @@ static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method,
 		goto err;
 	}
 
-	if(ctx->subject_req) 
+	if(ctx->subject_req)
 		pk = ctx->subject_req->req_info->pubkey->public_key;
 	else pk = ctx->subject_cert->cert_info->key->public_key;
 

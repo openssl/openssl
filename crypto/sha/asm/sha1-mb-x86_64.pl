@@ -83,7 +83,7 @@ $K="%xmm15";
 
 if (1) {
     # Atom-specific optimization aiming to eliminate pshufb with high
-    # registers [and thus get rid of 48 cycles accumulated penalty] 
+    # registers [and thus get rid of 48 cycles accumulated penalty]
     @Xi=map("%xmm$_",(0..4));
     ($tx,$t0,$t1,$t2,$t3)=map("%xmm$_",(5..9));
     @V=($A,$B,$C,$D,$E)=map("%xmm$_",(10..14));

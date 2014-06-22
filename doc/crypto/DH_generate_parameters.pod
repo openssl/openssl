@@ -27,7 +27,7 @@ structure. The pseudo-random number generator must be
 seeded prior to calling DH_generate_parameters().
 
 B<prime_len> is the length in bits of the safe prime to be generated.
-B<generator> is a small number E<gt> 1, typically 2 or 5. 
+B<generator> is a small number E<gt> 1, typically 2 or 5.
 
 A callback function may be used to provide feedback about the progress
 of the key generation. If B<cb> is not B<NULL>, it will be

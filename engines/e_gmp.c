@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -101,7 +101,7 @@
 static int e_gmp_destroy(ENGINE *e);
 static int e_gmp_init(ENGINE *e);
 static int e_gmp_finish(ENGINE *e);
-static int e_gmp_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void)); 
+static int e_gmp_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void));
 
 #ifndef OPENSSL_NO_RSA
 /* RSA stuff */
@@ -262,7 +262,7 @@ static int bn2gmp(const BIGNUM *bn, mpz_t g)
 	{
 	bn_check_top(bn);
 	if(((sizeof(bn->d[0]) * 8) == GMP_NUMB_BITS) &&
-			(BN_BITS2 == GMP_NUMB_BITS)) 
+			(BN_BITS2 == GMP_NUMB_BITS))
 		{
 		/* The common case */
 		if(!_mpz_realloc (g, bn->top))
@@ -312,7 +312,7 @@ static int gmp2bn(mpz_t g, BIGNUM *bn)
 		}
 	}
 
-#ifndef OPENSSL_NO_RSA 
+#ifndef OPENSSL_NO_RSA
 typedef struct st_e_gmp_rsa_ctx
 	{
 	int public_only;
@@ -456,7 +456,7 @@ static int e_gmp_rsa_mod_exp(BIGNUM *r, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 #endif /* !OPENSSL_NO_GMP */
 
 /* This stuff is needed if this ENGINE is being compiled into a self-contained
- * shared-library. */	   
+ * shared-library. */	
 #ifndef OPENSSL_NO_DYNAMIC_ENGINE
 IMPLEMENT_DYNAMIC_CHECK_FN()
 #ifndef OPENSSL_NO_GMP
@@ -467,7 +467,7 @@ static int bind_fn(ENGINE *e, const char *id)
 	if(!bind_helper(e))
 		return 0;
 	return 1;
-	}       
+	}
 IMPLEMENT_DYNAMIC_BIND_FN(bind_fn)
 #else
 OPENSSL_EXPORT

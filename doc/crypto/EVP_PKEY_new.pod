@@ -14,7 +14,7 @@ EVP_PKEY_new, EVP_PKEY_free - private key allocation functions.
 
 =head1 DESCRIPTION
 
-The EVP_PKEY_new() function allocates an empty B<EVP_PKEY> 
+The EVP_PKEY_new() function allocates an empty B<EVP_PKEY>
 structure which is used by OpenSSL to store private keys.
 
 EVP_PKEY_free() frees up the private key B<key>.

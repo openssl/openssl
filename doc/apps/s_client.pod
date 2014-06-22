@@ -280,7 +280,7 @@ print out a hex dump of any TLS extensions received from the server.
 
 =item B<-no_ticket>
 
-disable RFC4507bis session ticket support. 
+disable RFC4507bis session ticket support.
 
 =item B<-sess_out filename>
 
@@ -308,7 +308,7 @@ all others.
 
 =item B<-serverinfo types>
 
-a list of comma-separated TLS Extension Types (numbers between 0 and 
+a list of comma-separated TLS Extension Types (numbers between 0 and
 65535).  Each type will be sent as an empty ClientHello TLS Extension.
 The server's response (if any) will be encoded and displayed as a PEM
 file.

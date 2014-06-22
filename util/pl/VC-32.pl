@@ -47,7 +47,7 @@ if ($FLAVOR =~ /WIN64/)
     # own desing and limiting its return value to 2GB-1 (see e_os.h). As
     # per 0.9.8 release remaining warnings were explicitly examined and
     # considered safe to ignore.
-    # 
+    #
     $base_cflags= " $mf_cflag";
     my $f = ($shlib and !$fipscanisterbuild)?' /MD':' /MT';
     $opt_cflags=$f.' /Ox';

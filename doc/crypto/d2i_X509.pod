@@ -23,7 +23,7 @@ i2d_X509_fp - X509 encode and decode functions
 The X509 encode and decode routines encode and parse an
 B<X509> structure, which represents an X509 certificate.
 
-d2i_X509() attempts to decode B<len> bytes at B<*in>. If 
+d2i_X509() attempts to decode B<len> bytes at B<*in>. If
 successful a pointer to the B<X509> structure is returned. If an error
 occurred then B<NULL> is returned. If B<px> is not B<NULL> then the
 returned structure is written to B<*px>. If B<*px> is not B<NULL>
@@ -36,7 +36,7 @@ i2d_X509() encodes the structure pointed to by B<x> into DER format.
 If B<out> is not B<NULL> is writes the DER encoded data to the buffer
 at B<*out>, and increments it to point after the data just written.
 If the return value is negative an error occurred, otherwise it
-returns the length of the encoded data. 
+returns the length of the encoded data.
 
 For OpenSSL 0.9.7 and later if B<*out> is B<NULL> memory will be
 allocated for a buffer and the encoded data written to it. In this
@@ -194,7 +194,7 @@ happen.
 
 =head1 BUGS
 
-In some versions of OpenSSL the "reuse" behaviour of d2i_X509() when 
+In some versions of OpenSSL the "reuse" behaviour of d2i_X509() when
 B<*px> is valid is broken and some parts of the reused structure may
 persist if they are not present in the new one. As a result the use
 of this "reuse" behaviour is strongly discouraged.
@@ -210,14 +210,14 @@ always succeed.
 
 d2i_X509(), d2i_X509_bio() and d2i_X509_fp() return a valid B<X509> structure
 or B<NULL> if an error occurs. The error code that can be obtained by
-L<ERR_get_error(3)|ERR_get_error(3)>. 
+L<ERR_get_error(3)|ERR_get_error(3)>.
 
 i2d_X509() returns the number of bytes successfully encoded or a negative
 value if an error occurs. The error code can be obtained by
-L<ERR_get_error(3)|ERR_get_error(3)>. 
+L<ERR_get_error(3)|ERR_get_error(3)>.
 
-i2d_X509_bio() and i2d_X509_fp() return 1 for success and 0 if an error 
-occurs The error code can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>. 
+i2d_X509_bio() and i2d_X509_fp() return 1 for success and 0 if an error
+occurs The error code can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
 
 =head1 SEE ALSO
 

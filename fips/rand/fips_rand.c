@@ -6,7 +6,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -93,7 +93,7 @@ void *OPENSSL_stderr(void);
 
 /* AES FIPS PRNG implementation */
 
-typedef struct 
+typedef struct
 	{
 	int seeded;
 	int keyed;
@@ -183,7 +183,7 @@ static int fips_set_prng_seed(FIPS_PRNG_CTX *ctx,
 			ctx->vpos = 0;
 			/* Special case if first seed and key length equals
  			 * block size check key and seed do not match.
- 			 */ 
+ 			 */
 			if (ctx->keyed == 2)
 				{
 				if (!memcmp(ctx->tmp_key, ctx->V, 16))

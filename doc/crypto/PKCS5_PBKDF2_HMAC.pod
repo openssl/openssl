@@ -31,7 +31,7 @@ B<salt> is NULL, then B<saltlen> must be 0. The function will not
 attempt to calculate the length of the B<salt> because it is not assumed to
 be NULL terminated.
 
-B<iter> is the iteration count and its value should be greater than or 
+B<iter> is the iteration count and its value should be greater than or
 equal to 1. RFC 2898 suggests an iteration count of at least 1000. Any
 B<iter> less than 1 is treated as a single iteration.
 

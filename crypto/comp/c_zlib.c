@@ -81,7 +81,7 @@ static COMP_METHOD zlib_stateful_method={
 	NULL,
 	};
 
-/* 
+/*
  * When OpenSSL is built on Windows, we do not want to require that
  * the ZLIB.DLL be available in order for the OpenSSL DLLs to
  * work.  Therefore, all ZLIB routines are loaded at run time
@@ -448,7 +448,7 @@ static int bio_zlib_write(BIO *b, const char *in, int inl);
 static long bio_zlib_ctrl(BIO *b, int cmd, long num, void *ptr);
 static long bio_zlib_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp);
 
-static BIO_METHOD bio_meth_zlib = 
+static BIO_METHOD bio_meth_zlib =
 	{
 	BIO_TYPE_COMP,
 	"zlib",
@@ -741,7 +741,7 @@ static long bio_zlib_ctrl(BIO *b, int cmd, long num, void *ptr)
 			ip = ptr;
 			if (*ip == 0)
 				ibs = (int) num;
-			else 
+			else
 				obs = (int) num;
 			}
 		else

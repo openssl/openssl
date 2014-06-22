@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -94,7 +94,7 @@ ASN1_SEQUENCE(ACCESS_DESCRIPTION) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(ACCESS_DESCRIPTION)
 
-ASN1_ITEM_TEMPLATE(AUTHORITY_INFO_ACCESS) = 
+ASN1_ITEM_TEMPLATE(AUTHORITY_INFO_ACCESS) =
 	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, GeneralNames, ACCESS_DESCRIPTION)
 ASN1_ITEM_TEMPLATE_END(AUTHORITY_INFO_ACCESS)
 
@@ -160,7 +160,7 @@ static AUTHORITY_INFO_ACCESS *v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD *metho
 		ctmp.name = ptmp + 1;
 		ctmp.value = cnf->value;
 		if(!v2i_GENERAL_NAME_ex(acc->location, method, ctx, &ctmp, 0))
-								 goto err; 
+								 goto err;
 		if(!(objtmp = OPENSSL_malloc(objlen + 1))) {
 			X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS,ERR_R_MALLOC_FAILURE);
 			goto err;

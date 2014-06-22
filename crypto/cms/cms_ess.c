@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -105,7 +105,7 @@ CMS_ReceiptRequest *CMS_ReceiptRequest_create0(unsigned char *id, int idlen,
 		{
 		if (!ASN1_STRING_set(rr->signedContentIdentifier, NULL, 32))
 			goto merr;
-		if (RAND_pseudo_bytes(rr->signedContentIdentifier->data, 32) 
+		if (RAND_pseudo_bytes(rr->signedContentIdentifier->data, 32)
 					<= 0)
 			goto err;
 		}

@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -79,7 +79,7 @@ typedef struct
 	EVP_PBE_KEYGEN *keygen;
 	} EVP_PBE_CTL;
 
-static const EVP_PBE_CTL builtin_pbe[] = 
+static const EVP_PBE_CTL builtin_pbe[] =
 	{
 	{EVP_PBE_TYPE_OUTER, NID_pbeWithMD2AndDES_CBC,
 			NID_des_cbc, NID_md2, PKCS5_PBE_keyivgen},
@@ -98,7 +98,7 @@ static const EVP_PBE_CTL builtin_pbe[] =
 			NID_rc4_40, NID_sha1, PKCS12_PBE_keyivgen},
 	{EVP_PBE_TYPE_OUTER, NID_pbe_WithSHA1And3_Key_TripleDES_CBC,
 		 	NID_des_ede3_cbc, NID_sha1, PKCS12_PBE_keyivgen},
-	{EVP_PBE_TYPE_OUTER, NID_pbe_WithSHA1And2_Key_TripleDES_CBC, 
+	{EVP_PBE_TYPE_OUTER, NID_pbe_WithSHA1And2_Key_TripleDES_CBC,
 			NID_des_ede_cbc, NID_sha1, PKCS12_PBE_keyivgen},
 	{EVP_PBE_TYPE_OUTER, NID_pbe_WithSHA1And128BitRC2_CBC,
 			NID_rc2_cbc, NID_sha1, PKCS12_PBE_keyivgen},

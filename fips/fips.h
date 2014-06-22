@@ -6,7 +6,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -325,7 +325,7 @@ const struct dh_method *FIPS_dh_openssl(void);
 int FIPS_dh_generate_parameters_ex(DH *dh, int prime_len,
 						int generator, BN_GENCB *cb);
 
-int FIPS_cmac_init(struct CMAC_CTX_st *ctx, const void *key, size_t keylen, 
+int FIPS_cmac_init(struct CMAC_CTX_st *ctx, const void *key, size_t keylen,
 			const EVP_CIPHER *cipher, ENGINE *impl);
 int FIPS_cmac_update(struct CMAC_CTX_st *ctx, const void *in, size_t dlen);
 int FIPS_cmac_final(struct CMAC_CTX_st *ctx, unsigned char *out,

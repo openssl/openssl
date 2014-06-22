@@ -93,7 +93,7 @@ case $1 in
     RET=$?
     echo "Request is in newreq.pem, private key is in newkey.pem"
     ;;
--newreq-nodes) 
+-newreq-nodes)
     # create a certificate request
     $REQ -new -nodes -keyout newreq.pem -out newreq.pem $DAYS
     RET=$?

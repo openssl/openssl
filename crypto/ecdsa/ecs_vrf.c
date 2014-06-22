@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -66,7 +66,7 @@
  *      0: incorrect signature
  *     -1: error
  */
-int ECDSA_do_verify(const unsigned char *dgst, int dgst_len, 
+int ECDSA_do_verify(const unsigned char *dgst, int dgst_len,
 		const ECDSA_SIG *sig, EC_KEY *eckey)
 	{
 	ECDSA_DATA *ecdsa = ecdsa_check(eckey);

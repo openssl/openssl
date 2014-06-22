@@ -80,15 +80,15 @@ typedef struct g89_tc_ {
 }   g89_tc;
 
 const g89_tc tcs[] = {
-  /* 
-   * GOST R 34.11-94 Test cases 
+  /*
+   * GOST R 34.11-94 Test cases
    */
     { /* see p. A.3.1 [GOSTR341194], p. 7.3.1 [ENG-GOSTR341194] */
       /* <http://tools.ietf.org/html/rfc5831#section-7.3.1> */
       /* Iteration 1, K[1], see Errata for RFC 5831 */
-	8, 
-	{ 
-	    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 
+	8,
+	{
+	    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	},
 	"id-GostR3410-94-TestParamSet",
 	NULL,
@@ -107,9 +107,9 @@ const g89_tc tcs[] = {
     { /* see p. A.3.1 [GOSTR341194], p. 7.3.1 [ENG-GOSTR341194] */
       /* <http://tools.ietf.org/html/rfc5831#section-7.3.1> */
       /* Iteration 1, K[4] */
-	8, 
-	{ 
-	    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 
+	8,
+	{
+	    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	},
 	"id-GostR3410-94-TestParamSet",
 	NULL,
@@ -128,8 +128,8 @@ const g89_tc tcs[] = {
     { /* see p. A.3.1 [GOSTR341194], p. 7.3.1 [ENG-GOSTR341194] */
       /* <http://tools.ietf.org/html/rfc5831#section-7.3.1> */
       /* Iteration 2, K[1] */
-	8, 
-	{ 
+	8,
+	{
 	    0x34, 0xc0, 0x15, 0x33, 0xe3, 0x7d, 0x1c, 0x56
 	},
 	"id-GostR3410-94-TestParamSet",
@@ -146,7 +146,7 @@ const g89_tc tcs[] = {
 	    0x86, 0x3e, 0x78, 0xdd, 0x2d, 0x60, 0xd1, 0x3c
 	}
     },
-  /* 
+  /*
    * id-Gost28147-89-CryptoPro-A-ParamSet (1.2.643.2.2.31.1)
    * Test cases
    */
@@ -237,7 +237,7 @@ const g89_tc tcs[] = {
 	    0xf8, 0x1f, 0x08, 0xa3
 	}
     },
-  /* 
+  /*
    * Other paramsets and key meshing test cases.
    */
     { /* Calculated by libcapi10, CryptoPro CSP 3.6R2, Mac OSX */
@@ -564,7 +564,7 @@ const g89_tc tcs[] = {
 	}
     },
     { /* Calculated by libcapi10, CryptoPro CSP 3.6R2, Mac OSX */
-	5242880+8, 
+	5242880+8,
 	{ 0 },
 	"id-Gost28147-89-CryptoPro-A-ParamSet",
 	"test5Mcfb",
@@ -575,7 +575,7 @@ const g89_tc tcs[] = {
 	    0x85, 0xb4, 0xf0, 0xf9, 0x43, 0xa2, 0x7d, 0x9a
 	},
 	G89_CFB,
-	{ 
+	{
 	    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	},
 	{
@@ -584,7 +584,7 @@ const g89_tc tcs[] = {
 	}
     },
     { /* Calculated by libcapi10, CryptoPro CSP 3.6R2, Mac OSX */
-	U64(4294967296)+16, 
+	U64(4294967296)+16,
 	{ 0 },
 	"id-Gost28147-89-CryptoPro-A-ParamSet",
 	"test4Gcfb",
@@ -595,11 +595,11 @@ const g89_tc tcs[] = {
 	    0xc1, 0x12, 0x6a, 0xb0, 0x9a, 0x26, 0xe8, 0x06
 	},
 	G89_CFB,
-	{ 
+	{
 	    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	},
 	{
-	    0x2e, 0x62, 0xb0, 0x2e, 0xc7, 0x87, 0x4b, 0x29, 
+	    0x2e, 0x62, 0xb0, 0x2e, 0xc7, 0x87, 0x4b, 0x29,
 	    0x33, 0x16, 0x6b, 0xb4, 0xd6, 0x61, 0x66, 0xd9
 	}
     },
@@ -883,7 +883,7 @@ const g89_tc tcs[] = {
 	}
     },
     { /* Calculated by libcapi10, CryptoPro CSP 3.6R2, Mac OSX */
-	5242880+8, 
+	5242880+8,
 	{ 0 },
 	"id-Gost28147-89-CryptoPro-A-ParamSet",
 	"test5Mcnt",
@@ -894,7 +894,7 @@ const g89_tc tcs[] = {
 	    0x7e, 0x09, 0x9d, 0x4e, 0xb5, 0xc9, 0x84, 0x2e
 	},
 	G89_CNT,
-	{ 
+	{
 	    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	},
 	{
@@ -903,7 +903,7 @@ const g89_tc tcs[] = {
 	}
     },
     { /* Calculated by libcapi10, CryptoPro CSP 3.6R2, Mac OSX */
-	U64(4294967296)+16, 
+	U64(4294967296)+16,
 	{ 0 },
 	"id-Gost28147-89-CryptoPro-A-ParamSet",
 	"test4Gcnt",
@@ -914,11 +914,11 @@ const g89_tc tcs[] = {
 	    0xf2, 0x6c, 0xed, 0xda, 0x8f, 0xe4, 0x88, 0xe9
 	},
 	G89_CNT,
-	{ 
+	{
 	    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	},
 	{
-	    0xfa, 0x6c, 0x96, 0x78, 0xe2, 0xf8, 0xdd, 0xaa, 
+	    0xfa, 0x6c, 0x96, 0x78, 0xe2, 0xf8, 0xdd, 0xaa,
 	    0x67, 0x5a, 0xc9, 0x5d, 0x57, 0xf1, 0xbd, 0x99
 	}
     },
@@ -1110,7 +1110,7 @@ const g89_tc tcs[] = {
 	}
     },
     { /* Calculated by libcapi10, CryptoPro CSP 3.6R2, Mac OSX */
-	16, 
+	16,
 	{
 	    0x02, 0xf8, 0xec, 0x2b, 0x4d, 0x1f, 0xbc, 0x7c,
 	    0x6e, 0x47, 0xe3, 0x87, 0x22, 0x75, 0x41, 0xa7
@@ -1130,7 +1130,7 @@ const g89_tc tcs[] = {
 	}
     },
     { /* Calculated by libcapi10, CryptoPro CSP 3.6R2, Mac OSX */
-	8, 
+	8,
 	{
 	    0xf3, 0xb2, 0x29, 0xd2, 0x7a, 0x37, 0x03, 0x12
 	},
@@ -1149,7 +1149,7 @@ const g89_tc tcs[] = {
 	}
     },
     { /* Calculated by libcapi10, CryptoPro CSP 3.6R2, Mac OSX */
-	0, 
+	0,
 	{
 	    0
 	},
@@ -1168,7 +1168,7 @@ const g89_tc tcs[] = {
 	}
     },
     { /* Calculated by libcapi10, CryptoPro CSP 3.6R2, Mac OSX */
-	5242880, 
+	5242880,
 	{ 0 },
 	"id-Gost28147-89-CryptoPro-A-ParamSet",
 	"test5Mimit",
@@ -1185,7 +1185,7 @@ const g89_tc tcs[] = {
 	}
     },
     { /* Calculated by libcapi10, CryptoPro CSP 3.6R2, Mac OSX */
-	3221225472U + 16, 
+	3221225472U + 16,
 	{ 0 },
 	"id-Gost28147-89-CryptoPro-A-ParamSet",
 	"test3Gimit1",
@@ -1202,7 +1202,7 @@ const g89_tc tcs[] = {
 	}
     },
     { /* Calculated by libcapi10, CryptoPro CSP 3.6R2, Mac OSX */
-	U64(4)*1024*1024*1024, 
+	U64(4)*1024*1024*1024,
 	{ 0 },
 	"id-Gost28147-89-CryptoPro-A-ParamSet",
 	"test4Gimit3",
@@ -1219,7 +1219,7 @@ const g89_tc tcs[] = {
 	}
     },
     { /* Calculated by libcapi10, CryptoPro CSP 3.6R2, Mac OSX */
-	U64(4)*1024*1024*1024+4, 
+	U64(4)*1024*1024*1024+4,
 	{ 0 },
 	"id-Gost28147-89-CryptoPro-A-ParamSet",
 	"test4Gimit1",
@@ -1236,7 +1236,7 @@ const g89_tc tcs[] = {
 	}
     },
     { /* Calculated by libcapi10, CryptoPro CSP 3.6R2, Mac OSX */
-	U64(4)*1024*1024*1024+10, 
+	U64(4)*1024*1024*1024+10,
 	{ 0 },
 	"id-Gost28147-89-CryptoPro-A-ParamSet",
 	"test4Gimit2",
@@ -1284,7 +1284,7 @@ int main(int argc, char *argv[])
     long lErrLine;
     CONF *pConfig = NCONF_new(NULL);
     BIO *bpConf;
-    char sConf[] = 
+    char sConf[] =
 	    "openssl_conf = openssl_def\n"
 	    "\n"
 	    "[openssl_def]\n"
@@ -1302,16 +1302,16 @@ int main(int argc, char *argv[])
 
     if(1 < argc) {
        if(1 != sscanf(argv[1], FMT64, &ullMaxLen) ||
-          ( 2 < argc ? 
+          ( 2 < argc ?
             1 != sscanf(argv[2], "%d", &ignore) : 0)) {
            fflush(NULL);
-           fprintf(stderr, "Usage: %s [maxlen [ignore-error]]\n", 
+           fprintf(stderr, "Usage: %s [maxlen [ignore-error]]\n",
                                argv[0]);
            return 1;
        }
     }
 
-    /* 
+    /*
      * Internal function test on GostR3411_94_TestParamSet
      */
     #if 0 && defined(OPENSSL_NO_DYNAMIC_ENGINE)
@@ -1364,11 +1364,11 @@ int main(int argc, char *argv[])
 		 */
 		continue;
 	    case G89_IMIT:
-	        gost_mac(&ctx, 32, tcs[t].bIn, 
-				    (unsigned int)tcs[t].ullLen, 
+	        gost_mac(&ctx, 32, tcs[t].bIn,
+				    (unsigned int)tcs[t].ullLen,
 				    bTest);
-	        gost_mac_iv(&ctx, 32, tcs[t].bIV, tcs[t].bIn, 
-				    (unsigned int)tcs[t].ullLen, 
+	        gost_mac_iv(&ctx, 32, tcs[t].bIV, tcs[t].bIn,
+				    (unsigned int)tcs[t].ullLen,
 				    bTest1);
 		if(0 != memcmp(bTest, bTest1, 4)) {
 		    fflush(NULL);
@@ -1400,7 +1400,7 @@ int main(int argc, char *argv[])
     }
     #endif
 
-    /* 
+    /*
      * ccgost engine test on GostR3411_94_CryptoProParamSet
      */
     #ifndef OPENSSL_NO_DYNAMIC_ENGINE
@@ -1414,7 +1414,7 @@ int main(int argc, char *argv[])
     if(!NCONF_load_bio(pConfig, bpConf, &lErrLine)) {
 	fflush(NULL);
 	fprintf(stderr, "NCONF_load_bio: ErrLine=%ld: %s\n",
-		lErrLine, 
+		lErrLine,
 		ERR_error_string(ERR_get_error(), NULL));
 	return 4;
     }
@@ -1471,7 +1471,7 @@ int main(int argc, char *argv[])
 	}
 	memset(bDerive, 0x3c, sizeof(bDerive));
 	mdl = sizeof(bDerive);
-	EVP_Digest(tcs[t].szDerive, strlen(tcs[t].szDerive), 
+	EVP_Digest(tcs[t].szDerive, strlen(tcs[t].szDerive),
 			bDerive, &mdl,
 			md_gost94, impl);
 	if(0 != memcmp(tcs[t].bRawKey, bDerive, mdl)) {
@@ -1487,7 +1487,7 @@ int main(int argc, char *argv[])
 	}
 	memset(bTest, 0xa5, sizeof(bTest));
 	memset(bTest1, 0x5a, sizeof(bTest1));
-	if(!ENGINE_ctrl_cmd_string(impl, 
+	if(!ENGINE_ctrl_cmd_string(impl,
 		    "CRYPT_PARAMS",
 		    tcs[t].szParamSet, 0)) {
 	    fflush(NULL);
@@ -1517,22 +1517,22 @@ engine_cipher_check:
 				    bDerive, tcs[t].bIV);
 	    if(G89_MAX_TC_LEN >= tcs[t].ullLen) {
 		enlu = sizeof(bTest);
-		EVP_EncryptUpdate(&ectx, bTest, &enlu, 
+		EVP_EncryptUpdate(&ectx, bTest, &enlu,
 				    tcs[t].bIn, (int)tcs[t].ullLen);
 		l = (size_t)tcs[t].ullLen;
 	    } else {
-		for(ullLeft = tcs[t].ullLen; 
-			    ullLeft >= sizeof(bZB); 
+		for(ullLeft = tcs[t].ullLen;
+			    ullLeft >= sizeof(bZB);
 				    ullLeft -= sizeof(bZB)) {
-		    printf("B"); 
+		    printf("B");
 		    fflush(NULL);
 		    enlu = sizeof(bTS);
-		    EVP_EncryptUpdate(&ectx, bTS, &enlu, 
+		    EVP_EncryptUpdate(&ectx, bTS, &enlu,
 					    bZB, sizeof(bZB));
 		}
-		printf("b"FMT64"/"FMT64, ullLeft, tcs[t].ullLen); 
+		printf("b"FMT64"/"FMT64, ullLeft, tcs[t].ullLen);
 		fflush(NULL);
-		EVP_EncryptUpdate(&ectx, bTS, &enlu, 
+		EVP_EncryptUpdate(&ectx, bTS, &enlu,
 					bZB, (int)ullLeft);
 		memcpy(bTest, &bTS[enlu-16], 16);
 		enlu = (int)tcs[t].ullLen;
@@ -1554,22 +1554,22 @@ engine_cipher_check:
 	    mac_key = EVP_PKEY_new_mac_key(
 				NID_id_Gost28147_89_MAC, NULL,
 				bDerive, mdl);
-            EVP_DigestSignInit(&mctx, NULL, 
+            EVP_DigestSignInit(&mctx, NULL,
 				    md_g89imit, impl, mac_key);
 	    if(G89_MAX_TC_LEN >= tcs[t].ullLen) {
-		EVP_DigestSignUpdate(&mctx, tcs[t].bIn, 
+		EVP_DigestSignUpdate(&mctx, tcs[t].bIn,
 				    (unsigned int)tcs[t].ullLen);
 	    } else {
-		for(ullLeft = tcs[t].ullLen; 
-			    ullLeft >= sizeof(bZB); 
+		for(ullLeft = tcs[t].ullLen;
+			    ullLeft >= sizeof(bZB);
 				    ullLeft -= sizeof(bZB)) {
-		    printf("B"); 
+		    printf("B");
 		    fflush(NULL);
 		    EVP_DigestSignUpdate(&mctx, bZB, sizeof(bZB));
 		}
-		printf("b"FMT64"/"FMT64, ullLeft, tcs[t].ullLen); 
+		printf("b"FMT64"/"FMT64, ullLeft, tcs[t].ullLen);
 		fflush(NULL);
-		EVP_DigestSignUpdate(&mctx, bZB, 
+		EVP_DigestSignUpdate(&mctx, bZB,
 					(unsigned int)ullLeft);
 	    }
 	    siglen = 4;

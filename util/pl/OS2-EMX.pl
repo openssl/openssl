@@ -16,8 +16,8 @@ $cflags="-DL_ENDIAN -O3 -fomit-frame-pointer -m486 -Zmtd -Wall ";
 $cflags.="-Zomf " if $shlib;
 $shl_cflag="-Zdll";
 
-if ($debug) { 
-	$cflags.="-g "; 
+if ($debug) {
+	$cflags.="-g ";
 }
 
 $obj=$shlib ? '.obj' : '.o';
@@ -89,7 +89,7 @@ sub do_lib_rule
 	($Name=$name) =~ tr/a-z/A-Z/;
 
 	$ret.="$target: \$(${Name}OBJ)\n";
-	if (!$shlib) 
+	if (!$shlib)
 		{
 		$ret.="\t\$(RM) $target\n";
 		$ret.="\t\$(MKLIB) $target \$(${Name}OBJ)\n";

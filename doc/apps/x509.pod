@@ -84,7 +84,7 @@ obsolete.
 
 =item B<-outform DER|PEM|NET>
 
-This specifies the output format, the options have the same meaning as the 
+This specifies the output format, the options have the same meaning as the
 B<-inform> option.
 
 =item B<-in filename>
@@ -301,7 +301,7 @@ can thus behave like a "mini CA".
 =item B<-signkey filename>
 
 this option causes the input file to be self signed using the supplied
-private key. 
+private key.
 
 If the input file is a certificate it sets the issuer name to the
 subject name (i.e.  makes it self signed) changes the public key to the
@@ -377,7 +377,7 @@ an even number of hex digits with the serial number to use. After each
 use the serial number is incremented and written out to the file again.
 
 The default filename consists of the CA certificate file base name with
-".srl" appended. For example if the CA certificate file is called 
+".srl" appended. For example if the CA certificate file is called
 "mycacert.pem" it expects to find a serial number file called "mycacert.srl".
 
 =item B<-CAcreateserial>
@@ -821,7 +821,7 @@ if the keyUsage extension is present.
 The extended key usage extension must be absent or include the "email
 protection" OID. Netscape certificate type must be absent or must have the
 S/MIME CA bit set: this is used as a work around if the basicConstraints
-extension is absent. 
+extension is absent.
 
 =item B<CRL Signing>
 
@@ -856,7 +856,7 @@ OpenSSL 0.9.5 and later.
 
 L<req(1)|req(1)>, L<ca(1)|ca(1)>, L<genrsa(1)|genrsa(1)>,
 L<gendsa(1)|gendsa(1)>, L<verify(1)|verify(1)>,
-L<x509v3_config(5)|x509v3_config(5)> 
+L<x509v3_config(5)|x509v3_config(5)>
 
 =head1 HISTORY
 
@@ -866,6 +866,6 @@ The hash algorithm used in the B<-subject_hash> and B<-issuer_hash> options
 before OpenSSL 1.0.0 was based on the deprecated MD5 algorithm and the encoding
 of the distinguished name. In OpenSSL 1.0.0 and later it is based on a
 canonical version of the DN using SHA1. This means that any directories using
-the old form must have their links rebuilt using B<c_rehash> or similar. 
+the old form must have their links rebuilt using B<c_rehash> or similar.
 
 =cut

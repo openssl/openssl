@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -335,7 +335,7 @@ static ossl_ssize_t bio_nread(BIO *bio, char **buf, size_t num_)
 	peer_b = b->peer->ptr;
 
 	peer_b->len -= num;
-	if (peer_b->len) 
+	if (peer_b->len)
 		{
 		peer_b->offset += num;
 		assert(peer_b->offset <= peer_b->size);
@@ -528,7 +528,7 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
 
 			if (b->size != new_size)
 				{
-				if (b->buf) 
+				if (b->buf)
 					{
 					OPENSSL_free(b->buf);
 					b->buf = NULL;
@@ -783,7 +783,7 @@ static void bio_destroy_pair(BIO *bio)
 			}
 		}
 	}
- 
+
 
 /* Exported convenience functions */
 int BIO_new_bio_pair(BIO **bio1_p, size_t writebuf1,

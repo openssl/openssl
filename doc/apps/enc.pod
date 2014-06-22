@@ -100,7 +100,7 @@ the B<-pass> argument.
 
 =item B<-nosalt>
 
-do not use a salt 
+do not use a salt
 
 =item B<-salt>
 
@@ -255,7 +255,7 @@ authentication tag.
  desx               DESX algorithm.
 
  gost89             GOST 28147-89 in CFB mode (provided by ccgost engine)
- gost89-cnt        `GOST 28147-89 in CNT mode (provided by ccgost engine) 
+ gost89-cnt        `GOST 28147-89 in CNT mode (provided by ccgost engine)
 
  idea-cbc           IDEA algorithm in CBC mode
  idea               same as idea-cbc
@@ -297,11 +297,11 @@ Just base64 encode a binary file:
 
 Decode the same file
 
- openssl base64 -d -in file.b64 -out file.bin 
+ openssl base64 -d -in file.b64 -out file.bin
 
 Encrypt a file using triple DES in CBC mode using a prompted password:
 
- openssl des3 -salt -in file.txt -out file.des3 
+ openssl des3 -salt -in file.txt -out file.des3
 
 Decrypt a file using a supplied password:
 

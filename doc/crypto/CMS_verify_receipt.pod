@@ -16,7 +16,7 @@ CMS_verify_receipt() verifies a CMS signed receipt. B<rcms> is the signed
 receipt to verify. B<ocms> is the original SignedData structure containing the
 receipt request. B<certs> is a set of certificates in which to search for the
 signing certificate. B<store> is a trusted certificate store (used for chain
-verification). 
+verification).
 
 B<flags> is an optional set of flags, which can be used to modify the verify
 operation.

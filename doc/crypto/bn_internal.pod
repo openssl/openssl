@@ -95,8 +95,8 @@ is the number of words being used, so for a value of 4, bn.d[0]=4 and
 bn.top=1.  B<neg> is 1 if the number is negative.  When a B<BIGNUM> is
 B<0>, the B<d> field can be B<NULL> and B<top> == B<0>.
 
-B<flags> is a bit field of flags which are defined in C<openssl/bn.h>. The 
-flags begin with B<BN_FLG_>. The macros BN_set_flags(b,n) and 
+B<flags> is a bit field of flags which are defined in C<openssl/bn.h>. The
+flags begin with B<BN_FLG_>. The macros BN_set_flags(b,n) and
 BN_get_flags(b,n) exist to enable or fetch flag(s) B<n> from B<BIGNUM>
 structure B<b>.
 

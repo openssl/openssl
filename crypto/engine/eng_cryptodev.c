@@ -51,8 +51,8 @@ ENGINE_load_cryptodev(void)
 	return;
 }
 
-#else 
- 
+#else
+
 #include <sys/types.h>
 #include <crypto/cryptodev.h>
 #include <openssl/dh.h>
@@ -918,8 +918,8 @@ static int cryptodev_digest_copy(EVP_MD_CTX *to,const EVP_MD_CTX *from)
 
 const EVP_MD cryptodev_sha1 = {
 	NID_sha1,
-	NID_undef, 
-	SHA_DIGEST_LENGTH, 
+	NID_undef,
+	SHA_DIGEST_LENGTH,
 	EVP_MD_FLAG_ONESHOT,
 	cryptodev_digest_init,
 	cryptodev_digest_update,
@@ -933,8 +933,8 @@ const EVP_MD cryptodev_sha1 = {
 
 const EVP_MD cryptodev_md5 = {
 	NID_md5,
-	NID_undef, 
-	16 /* MD5_DIGEST_LENGTH */, 
+	NID_undef,
+	16 /* MD5_DIGEST_LENGTH */,
 	EVP_MD_FLAG_ONESHOT,
 	cryptodev_digest_init,
 	cryptodev_digest_update,
@@ -959,7 +959,7 @@ cryptodev_engine_digests(ENGINE *e, const EVP_MD **digest,
 	switch (nid) {
 #ifdef USE_CRYPTODEV_DIGESTS
 	case NID_md5:
-		*digest = &cryptodev_md5; 
+		*digest = &cryptodev_md5;
 		break;
 	case NID_sha1:
 		*digest = &cryptodev_sha1;

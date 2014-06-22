@@ -249,7 +249,7 @@
       o Compression memory leak fixed.
       o Compression session resumption fixed.
       o Ticket and SNI coexistence fixes.
-      o Many fixes to DTLS handling. 
+      o Many fixes to DTLS handling.
 
   Major changes between OpenSSL 0.9.8k and OpenSSL 0.9.8l [5 Nov 2009]:
 
@@ -282,7 +282,7 @@
       o Add gcc 4.2 support.
       o Add support for AES and SSE2 assembly lanugauge optimization
         for VC++ build.
-      o Support for RFC4507bis and server name extensions if explicitly 
+      o Support for RFC4507bis and server name extensions if explicitly
         selected at compile time.
       o DTLS improvements.
       o RFC4507bis support.
@@ -462,7 +462,7 @@
   Major changes between OpenSSL 0.9.7a and OpenSSL 0.9.7b [10 Apr 2003]:
 
       o Security: counter the Klima-Pokorny-Rosa extension of
-        Bleichbacher's attack 
+        Bleichbacher's attack
       o Security: make RSA blinding default.
       o Configuration: Irix fixes, AIX fixes, better mingw support.
       o Support for new platforms: linux-ia64-ecc.
@@ -535,7 +535,7 @@
   Major changes between OpenSSL 0.9.6i and OpenSSL 0.9.6j [10 Apr 2003]:
 
       o Security: counter the Klima-Pokorny-Rosa extension of
-        Bleichbacher's attack 
+        Bleichbacher's attack
       o Security: make RSA blinding default.
       o Build: shared library support fixes.
 
@@ -647,7 +647,7 @@
 
   Major changes between OpenSSL 0.9.5 and OpenSSL 0.9.5a [1 Apr 2000]:
 
-      o Bug fixes for Win32, SuSE Linux, NeXTSTEP and FreeBSD 2.2.8 
+      o Bug fixes for Win32, SuSE Linux, NeXTSTEP and FreeBSD 2.2.8
       o Shared library support for HPUX and Solaris-gcc
       o Support of Linux/IA64
       o Assembler support for Mingw32

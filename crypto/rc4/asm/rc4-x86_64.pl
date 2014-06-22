@@ -41,7 +41,7 @@
 
 # April 2005
 #
-# P4 EM64T core appears to be "allergic" to 64-bit inc/dec. Replacing 
+# P4 EM64T core appears to be "allergic" to 64-bit inc/dec. Replacing
 # those with add/sub results in 50% performance improvement of folded
 # loop...
 

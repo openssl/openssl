@@ -5,21 +5,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -201,13 +201,13 @@ struct rsa_st
 #define RSA_FLAG_NO_CONSTTIME		0x0100 /* new with 0.9.8f; the built-in RSA
 						* implementation now uses constant time
 						* operations by default in private key operations,
-						* e.g., constant time modular exponentiation, 
-                                                * modular inverse without leaking branches, 
-                                                * division without leaking branches. This 
-                                                * flag disables these constant time 
-                                                * operations and results in faster RSA 
+						* e.g., constant time modular exponentiation,
+                                                * modular inverse without leaking branches,
+                                                * division without leaking branches. This
+                                                * flag disables these constant time
+                                                * operations and results in faster RSA
                                                 * private key operations.
-                                                */ 
+                                                */
 #ifndef OPENSSL_NO_DEPRECATED
 #define RSA_FLAG_NO_EXP_CONSTTIME RSA_FLAG_NO_CONSTTIME /* deprecated name for the flag*/
                                                 /* new with 0.9.7h; the built-in RSA
@@ -330,9 +330,9 @@ int	RSA_public_encrypt(int flen, const unsigned char *from,
 		unsigned char *to, RSA *rsa,int padding);
 int	RSA_private_encrypt(int flen, const unsigned char *from,
 		unsigned char *to, RSA *rsa,int padding);
-int	RSA_public_decrypt(int flen, const unsigned char *from, 
+int	RSA_public_decrypt(int flen, const unsigned char *from,
 		unsigned char *to, RSA *rsa,int padding);
-int	RSA_private_decrypt(int flen, const unsigned char *from, 
+int	RSA_private_decrypt(int flen, const unsigned char *from,
 		unsigned char *to, RSA *rsa,int padding);
 void	RSA_free (RSA *r);
 /* "up" the RSA object's reference count */
@@ -464,7 +464,7 @@ int RSA_padding_add_PKCS1_PSS(RSA *rsa, unsigned char *EM,
 			const EVP_MD *Hash, int sLen);
 
 int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
-			const EVP_MD *Hash, const EVP_MD *mgf1Hash, 
+			const EVP_MD *Hash, const EVP_MD *mgf1Hash,
 			const unsigned char *EM, int sLen);
 
 int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,

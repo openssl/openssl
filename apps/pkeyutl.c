@@ -9,7 +9,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -419,7 +419,7 @@ static EVP_PKEY_CTX *init_ctx(int *pkeysize,
 	char *passin = NULL;
 	int rv = -1;
 	X509 *x;
-	if(((pkey_op == EVP_PKEY_OP_SIGN) || (pkey_op == EVP_PKEY_OP_DECRYPT) 
+	if(((pkey_op == EVP_PKEY_OP_SIGN) || (pkey_op == EVP_PKEY_OP_DECRYPT)
 		|| (pkey_op == EVP_PKEY_OP_DERIVE))
 		&& (key_type != KEY_PRIVKEY))
 		{
@@ -559,7 +559,7 @@ static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
 
 		case EVP_PKEY_OP_DECRYPT:
 		rv  = EVP_PKEY_decrypt(ctx, out, poutlen, in, inlen);
-		break; 
+		break;
 
 		case EVP_PKEY_OP_DERIVE:
 		rv  = EVP_PKEY_derive(ctx, out, poutlen);

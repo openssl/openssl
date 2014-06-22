@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -150,7 +150,7 @@ int RSA_check_key(const RSA *key)
 				RSA_R_DMP1_NOT_CONGRUENT_TO_D);
 			}
 	
-		/* dmq1 = d mod (q-1)? */    
+		/* dmq1 = d mod (q-1)? */
 		r = BN_sub(i, key->q, BN_value_one());
 		if (!r) { ret = -1; goto err; }
 	

@@ -10,7 +10,7 @@ rem      target        - "netware-clib" - CLib NetWare build (WinSock Sockets)
 rem                    - "netware-clib-bsdsock" - CLib NetWare build (BSD Sockets)
 rem                    - "netware-libc" - LibC NetWare build (WinSock Sockets)
 rem                    - "netware-libc-bsdsock" - LibC NetWare build (BSD Sockets)
-rem 
+rem
 rem      debug opts    - "debug"  - build debug
 rem
 rem      assembly opts - "nw-mwasm" - use Metrowerks assembler
@@ -50,7 +50,7 @@ rem set BLD_TARGET=netware-libc
 
 rem   Default to build non-debug
 set DEBUG=
-                                    
+
 rem   Uncomment to default to debug build
 rem set DEBUG=debug
 
@@ -231,5 +231,5 @@ echo .  If no debug or assembly opts are specified the default is to build
 echo .  non-debug without assembly
 echo .
 
-        
-:end        
+
+:end

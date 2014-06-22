@@ -83,9 +83,9 @@ void main ()
   FILE*          fp;
 
   SSL_load_error_strings();
-  
+
   /* Read private key */
-  
+
   fp = fopen (keyfile, "r");   if (fp == NULL) exit (1);
   pkey = (EVP_PKEY*)PEM_ASN1_read ((char *(*)())d2i_PrivateKey,
 				   PEM_STRING_EVP_PKEY,
@@ -93,21 +93,21 @@ void main ()
 				   NULL, NULL);
   if (pkey == NULL) {  ERR_print_errors_fp (stderr);    exit (1);  }
   fclose (fp);
-  
+
   /* Do the signature */
-  
+
   EVP_SignInit   (&md_ctx, EVP_md5());
   EVP_SignUpdate (&md_ctx, data, strlen(data));
   sig_len = sizeof(sig_buf);
   err = EVP_SignFinal (&md_ctx,
-		       sig_buf, 
+		       sig_buf,
 		       &sig_len,
 		       pkey);
   if (err != 1) {  ERR_print_errors_fp (stderr);    exit (1);  }
   EVP_PKEY_free (pkey);
-  
+
   /* Read public key */
-  
+
   fp = fopen (certfile, "r");   if (fp == NULL) exit (1);
   pkey = (EVP_PKEY*)PEM_ASN1_read ((char *(*)())d2i_PublicKey,
 				   PEM_STRING_X509,
@@ -115,9 +115,9 @@ void main ()
 				   NULL, NULL);
   if (pkey == NULL) {  ERR_print_errors_fp (stderr);    exit (1);  }
   fclose (fp);
-  
+
   /* Verify the signature */
-  
+
   EVP_VerifyInit   (&md_ctx, EVP_md5());
   EVP_VerifyUpdate (&md_ctx, data, strlen((char*)data));
   err = EVP_VerifyFinal (&md_ctx,

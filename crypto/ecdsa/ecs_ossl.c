@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -64,14 +64,14 @@
 #include <openssl/bn.h>
 #include <openssl/rand.h>
 
-static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dlen, 
+static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dlen,
 		const BIGNUM *, const BIGNUM *, EC_KEY *eckey);
 static int ecdsa_sign_setup_no_digest(EC_KEY *eckey,
 		BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp);
 static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
 					BIGNUM **kinvp, BIGNUM **rp,
 					const unsigned char *dgst, int dlen);
-static int ecdsa_do_verify(const unsigned char *dgst, int dgst_len, 
+static int ecdsa_do_verify(const unsigned char *dgst, int dgst_len,
 		const ECDSA_SIG *sig, EC_KEY *eckey);
 
 static ECDSA_METHOD openssl_ecdsa_meth = {
@@ -113,7 +113,7 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
 		return 0;
 	}
 
-	if (ctx_in == NULL) 
+	if (ctx_in == NULL)
 	{
 		if ((ctx = BN_CTX_new()) == NULL)
 		{
@@ -227,7 +227,7 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
 	/* clear old values if necessary */
 	if (*rp != NULL)
 		BN_clear_free(*rp);
-	if (*kinvp != NULL) 
+	if (*kinvp != NULL)
 		BN_clear_free(*kinvp);
 	/* save the pre-computed values  */
 	*rp    = r;
@@ -239,11 +239,11 @@ err:
 		if (k != NULL) BN_clear_free(k);
 		if (r != NULL) BN_clear_free(r);
 	}
-	if (ctx_in == NULL) 
+	if (ctx_in == NULL)
 		BN_CTX_free(ctx);
 	if (order != NULL)
 		BN_free(order);
-	if (tmp_point != NULL) 
+	if (tmp_point != NULL)
 		EC_POINT_free(tmp_point);
 	if (X)
 		BN_clear_free(X);
@@ -251,7 +251,7 @@ err:
 }
 
 
-static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dgst_len, 
+static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 		const BIGNUM *in_kinv, const BIGNUM *in_r, EC_KEY *eckey)
 {
 	int     ok = 0, i;
@@ -446,7 +446,7 @@ static int ecdsa_do_verify(const unsigned char *dgst, int dgst_len,
 		goto err;
 	}
 
-	if (BN_is_zero(sig->r)          || BN_is_negative(sig->r) || 
+	if (BN_is_zero(sig->r)          || BN_is_negative(sig->r) ||
 	    BN_ucmp(sig->r, order) >= 0 || BN_is_zero(sig->s)  ||
 	    BN_is_negative(sig->s)      || BN_ucmp(sig->s, order) >= 0)
 	{

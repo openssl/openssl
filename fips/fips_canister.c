@@ -231,7 +231,7 @@ const void *FIPS_ref_point()
  * In case you wonder why there is no #ifdef __linux. All Linux targets
  * are GCC-based and therefore are covered by instruction_pointer above
  * [well, some are covered by by the one below]...
- */ 
+ */
 #elif	defined(POINTER_TO_FUNCTION_IS_POINTER_TO_1ST_INSTRUCTION)
     return (void *)instruction_pointer;
 #else

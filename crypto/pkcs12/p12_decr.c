@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -113,7 +113,7 @@ unsigned char * PKCS12_pbe_crypt(X509_ALGOR *algor, const char *pass,
 
 }
 
-/* Decrypt an OCTET STRING and decode ASN1 structure 
+/* Decrypt an OCTET STRING and decode ASN1 structure
  * if zbuf set zero buffer after use.
  */
 
@@ -150,7 +150,7 @@ void * PKCS12_item_decrypt_d2i(X509_ALGOR *algor, const ASN1_ITEM *it,
 	return ret;
 }
 
-/* Encode ASN1 structure and encrypt, return OCTET STRING 
+/* Encode ASN1 structure and encrypt, return OCTET STRING
  * if zbuf set zero encoding.
  */
 

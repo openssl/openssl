@@ -196,11 +196,11 @@ static unsigned char dsa2048_g[]={
 	0xD1,0x96,0x70,0x59,0x06,0x78,0x35,0xBD,0x65,0x55,0x52,0x9E,
 	0xF8,0xB2,0xE5,0x38,
 	};
- 
+
 DSA *get_dsa2048()
 	{
 	DSA *dsa;
- 
+
 	if ((dsa=DSA_new()) == NULL) return(NULL);
 	dsa->priv_key=BN_bin2bn(dsa2048_priv,sizeof(dsa2048_priv),NULL);
 	dsa->pub_key=BN_bin2bn(dsa2048_pub,sizeof(dsa2048_pub),NULL);

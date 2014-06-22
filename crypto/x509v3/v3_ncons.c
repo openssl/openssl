@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -65,7 +65,7 @@
 
 static void *v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,
 				  X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
-static int i2r_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method, 
+static int i2r_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,
 				void *a, BIO *bp, int ind);
 static int do_i2r_name_constraints(const X509V3_EXT_METHOD *method,
 				   STACK_OF(GENERAL_SUBTREE) *trees,

@@ -22,7 +22,7 @@ TEST=rc5test.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=rc5_skey.c rc5_ecb.c rc5_enc.c rc5cfb64.c rc5ofb64.c 
+LIBSRC=rc5_skey.c rc5_ecb.c rc5_enc.c rc5cfb64.c rc5ofb64.c
 LIBOBJ=rc5_skey.o rc5_ecb.o $(RC5_ENC) rc5cfb64.o rc5ofb64.o
 
 SRC= $(LIBSRC)

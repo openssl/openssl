@@ -23,7 +23,7 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_U
 	if (!(num&1) && num>=6)
 		{
 		if ((num&15)==0 && num<=64 &&
-		    (OPENSSL_sparcv9cap_P[1]&(CFR_MONTMUL|CFR_MONTSQR))== 
+		    (OPENSSL_sparcv9cap_P[1]&(CFR_MONTMUL|CFR_MONTSQR))==
 		    			     (CFR_MONTMUL|CFR_MONTSQR))
 			{
 			typedef int (*bn_mul_mont_f)(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,const BN_ULONG *n0);
@@ -221,7 +221,7 @@ void OPENSSL_cpuid_setup(void)
 
 	if (trigger) return;
 	trigger=1;
- 
+
 	if ((e=getenv("OPENSSL_sparcv9cap")))
 		{
 		OPENSSL_sparcv9cap_P[0]=strtoul(e,NULL,0);

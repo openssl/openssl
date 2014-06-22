@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -131,7 +131,7 @@ int MAIN(int argc, char **argv)
 	if (toseq) {
 		seq = NETSCAPE_CERT_SEQUENCE_new();
 		seq->certs = sk_X509_new_null();
-		while((x509 = PEM_read_bio_X509(in, NULL, NULL, NULL))) 
+		while((x509 = PEM_read_bio_X509(in, NULL, NULL, NULL)))
 		    sk_X509_push(seq->certs,x509);
 
 		if(!sk_X509_num(seq->certs))

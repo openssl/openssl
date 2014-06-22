@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -137,7 +137,7 @@ static int dh_sharedinfo_encode(unsigned char **pder, unsigned char **pctr,
 	return derlen;
 	}
 
-int DH_KDF_X9_42(unsigned char *out, size_t outlen, 
+int DH_KDF_X9_42(unsigned char *out, size_t outlen,
 		const unsigned char *Z, size_t Zlen,
 		ASN1_OBJECT *key_oid,
 		const unsigned char *ukm, size_t ukmlen,

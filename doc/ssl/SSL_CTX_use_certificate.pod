@@ -66,7 +66,7 @@ SSL_use_certificate_file() loads the certificate from B<file> into B<ssl>.
 See the NOTES section on why SSL_CTX_use_certificate_chain_file()
 should be preferred.
 
-SSL_CTX_use_certificate_chain_file() loads a certificate chain from 
+SSL_CTX_use_certificate_chain_file() loads a certificate chain from
 B<file> into B<ctx>. The certificates must be in PEM format and must
 be sorted starting with the subject's certificate (actual client or server
 certificate), followed by intermediate CA certificates if applicable, and
@@ -81,7 +81,7 @@ If a certificate has already been set and the private does not belong
 to the certificate an error is returned. To change a certificate, private
 key pair the new certificate needs to be set with SSL_use_certificate()
 or SSL_CTX_use_certificate() before setting the private key with
-SSL_CTX_use_PrivateKey() or SSL_use_PrivateKey(). 
+SSL_CTX_use_PrivateKey() or SSL_use_PrivateKey().
 
 
 SSL_CTX_use_PrivateKey_ASN1() adds the private key of type B<pk>
@@ -108,14 +108,14 @@ the same check for B<ssl>. If no key/certificate was explicitly added for
 this B<ssl>, the last item added into B<ctx> will be checked.
 
 =head1 NOTES
-  
+
 The internal certificate store of OpenSSL can hold several private
 key/certificate pairs at a time. The certificate used depends on the
 cipher selected, see also L<SSL_CTX_set_cipher_list(3)|SSL_CTX_set_cipher_list(3)>.
 
 When reading certificates and private keys from file, files of type
 SSL_FILETYPE_ASN1 (also known as B<DER>, binary encoding) can only contain
-one certificate or private key, consequently 
+one certificate or private key, consequently
 SSL_CTX_use_certificate_chain_file() is only applicable to PEM formatting.
 Files of type SSL_FILETYPE_PEM can contain more than one item.
 
@@ -123,7 +123,7 @@ SSL_CTX_use_certificate_chain_file() adds the first certificate found
 in the file to the certificate store. The other certificates are added
 to the store of chain certificates using L<SSL_CTX_add1_chain_cert(3)|SSL_CTX_add1_chain_cert(3)>. Note: versions of OpenSSL before 1.0.2 only had a single
 certificate chain store for all certificate types, OpenSSL 1.0.2 and later
-have a separate chain store for each type. SSL_CTX_use_certificate_chain_file() 
+have a separate chain store for each type. SSL_CTX_use_certificate_chain_file()
 should be used instead of the SSL_CTX_use_certificate_file() function in order
 to allow the use of complete certificate chains even when no trusted CA
 storage is used or when the CA issuing the certificate shall not be added to

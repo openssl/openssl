@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-BIO_s_bio, BIO_make_bio_pair, BIO_destroy_bio_pair, BIO_shutdown_wr, 
+BIO_s_bio, BIO_make_bio_pair, BIO_destroy_bio_pair, BIO_shutdown_wr,
 BIO_set_write_buf_size, BIO_get_write_buf_size, BIO_new_bio_pair,
 BIO_get_write_guarantee, BIO_ctrl_get_write_guarantee, BIO_get_read_request,
 BIO_ctrl_get_read_request, BIO_ctrl_reset_read_request - BIO pair BIO
@@ -65,7 +65,7 @@ up any half of the pair will automatically destroy the association.
 BIO_shutdown_wr() is used to close down a BIO B<b>. After this call no further
 writes on BIO B<b> are allowed (they will return an error). Reads on the other
 half of the pair will return any pending data or EOF when all pending data has
-been read. 
+been read.
 
 BIO_set_write_buf_size() sets the write buffer size of BIO B<b> to B<size>.
 If the size is not initialized a default value is used. This is currently

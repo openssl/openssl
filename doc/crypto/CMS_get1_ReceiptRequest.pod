@@ -45,7 +45,7 @@ CMS_verify().
 
 =head1 RETURN VALUES
 
-CMS_ReceiptRequest_create0() returns a signed receipt request structure or 
+CMS_ReceiptRequest_create0() returns a signed receipt request structure or
 NULL if an error occurred.
 
 CMS_add1_ReceiptRequest() returns 1 for success or 0 is an error occurred.

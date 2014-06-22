@@ -60,7 +60,7 @@ described in L<RAND_add(3)|RAND_add(3)>. Its state can be saved in a seed file
 seeding process whenever the application is started.
 
 L<RAND_bytes(3)|RAND_bytes(3)> describes how to obtain random data from the
-PRNG. 
+PRNG.
 
 =head1 INTERNALS
 
@@ -170,6 +170,6 @@ L<BN_rand(3)|BN_rand(3)>, L<RAND_add(3)|RAND_add(3)>,
 L<RAND_load_file(3)|RAND_load_file(3)>, L<RAND_egd(3)|RAND_egd(3)>,
 L<RAND_bytes(3)|RAND_bytes(3)>,
 L<RAND_set_rand_method(3)|RAND_set_rand_method(3)>,
-L<RAND_cleanup(3)|RAND_cleanup(3)> 
+L<RAND_cleanup(3)|RAND_cleanup(3)>
 
 =cut

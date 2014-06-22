@@ -21,7 +21,7 @@ open(OUT,">$ARGV[1]") || die "unable to open header file '$ARGV[1]':$1\n";
 print OUT @out;
 print OUT @err;
 print OUT <<"EOF";
- 
+
 #ifdef  __cplusplus
 }
 #endif

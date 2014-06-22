@@ -10,7 +10,7 @@
 # SSLEAY=`pwd`/apps/ssleay; export SSLEAY
 # sh tools/c_rehash certs
 #
- 
+
 CAbits=1024
 SSLEAY="../apps/openssl"
 CONF="-config ../apps/openssl.cnf"

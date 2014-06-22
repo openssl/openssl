@@ -20,17 +20,17 @@ or the BSD socket interface.  Previous versions of NetWare, 4.x and 3.x,
 are only supported if OpenSSL is build for CLIB and BSD sockets;
 WinSock builds only support NetWare 5 and up.
 
-On NetWare there are two c-runtime libraries.  There is the legacy CLIB 
-interfaces and the newer LIBC interfaces.  Being ANSI-C libraries, the 
-functionality in CLIB and LIBC is similar but the LIBC interfaces are built 
-using Novell Kernal Services (NKS) which is designed to leverage 
+On NetWare there are two c-runtime libraries.  There is the legacy CLIB
+interfaces and the newer LIBC interfaces.  Being ANSI-C libraries, the
+functionality in CLIB and LIBC is similar but the LIBC interfaces are built
+using Novell Kernal Services (NKS) which is designed to leverage
 multi-processor environments.
 
 The NetWare port of OpenSSL can be configured to build using CLIB or LIBC.
-The CLIB build was developed and tested using NetWare 5.0 sp6.0a.  The LIBC 
-build was developed and tested using the NetWare 6.0 FCS.  
+The CLIB build was developed and tested using NetWare 5.0 sp6.0a.  The LIBC
+build was developed and tested using the NetWare 6.0 FCS.
 
-The necessary LIBC functionality ships with NetWare 6.  However, earlier 
+The necessary LIBC functionality ships with NetWare 6.  However, earlier
 NetWare 5.x versions will require updates in order to run the OpenSSL LIBC
 build (NetWare 5.1 SP8 is known to work).
 
@@ -50,8 +50,8 @@ following tools may be required:
 * Perl for Win32 - required (http://www.activestate.com/ActivePerl)
    Used to run the various perl scripts on the build platform.
 
-* Perl 5.8.0 for NetWare v3.20 (or later) - required 
-   (http://developer.novell.com) Used to run the test script on NetWare 
+* Perl 5.8.0 for NetWare v3.20 (or later) - required
+   (http://developer.novell.com) Used to run the test script on NetWare
    after building.
 
 * Compiler / Linker - required:
@@ -113,7 +113,7 @@ following tools may be required:
 
       NLM and NetWare libraries for C (including CLIB and XPlat):
          If you are going to build a CLIB version of OpenSSL, you will
-         need the CLIB headers and imports.  The March, 2001 NDK release or 
+         need the CLIB headers and imports.  The March, 2001 NDK release or
          later is recommended.
 
          Earlier versions should work but haven't been tested.  In recent
@@ -126,12 +126,12 @@ following tools may be required:
 
 
    LIBC - BUILDS:
-   
+
       Libraries for C (LIBC) - LIBC headers and import files
          If you are going to build a LIBC version of OpenSSL, you will
          need the LIBC headers and imports.  The March 14, 2002 NDK release or
-         later is required.  
-         
+         later is required.
+
          NOTE: The LIBC SDK includes the necessary WinSock2 support.
          It is not necessary to download the WinSock2 NDK when building for
          LIBC. The LIBC SDK also includes the appropriate BSD socket support
@@ -161,13 +161,13 @@ environment variables:
    PATH - Set PATH to point to the tools you will use.
 
    INCLUDE - The location of the NDK include files.
-         
+
             CLIB ex: set INCLUDE=c:\ndk\nwsdk\include\nlm
             LIBC ex: set INCLUDE=c:\ndk\libc\include
 
    PRELUDE - The absolute path of the prelude object to link with.  For
             a CLIB build it is recommended you use the "clibpre.o" files shipped
-            with the Metrowerks PDK for NetWare.  For a LIBC build you should 
+            with the Metrowerks PDK for NetWare.  For a LIBC build you should
             use the "libcpre.o" file delivered with the LIBC NDK components.
 
             CLIB ex: set PRELUDE=c:\ndk\nwsdk\imports\clibpre.o
@@ -184,7 +184,7 @@ process and generate a make file.  There is a batch file,
 "netware\build.bat", to automate the process.
 
 Build.bat runs the build configuration scripts and generates a make file.
-If an assembly option is specified, it also runs the scripts to generate 
+If an assembly option is specified, it also runs the scripts to generate
 the assembly code.  Always run build.bat from the "openssl" directory.
 
    netware\build [target] [debug opts] [assembly opts] [configure opts]
@@ -193,7 +193,7 @@ the assembly code.  Always run build.bat from the "openssl" directory.
                     - "netware-clib-bsdsock" - CLIB NetWare build (BSD Sockets)
                     - "netware-libc" - LIBC NetWare build (WinSock Sockets)
                     - "netware-libc-bsdsock" - LIBC NetWare build (BSD Sockets)
- 
+
       debug opts    - "debug"  - build debug
 
       assembly opts - "nw-mwasm" - use Metrowerks assembler
@@ -216,12 +216,12 @@ the assembly code.  Always run build.bat from the "openssl" directory.
       LIBC build, BSD sockets, non-debug, without assembly:
          netware\build.bat netware-libc-bsdsock no-asm
 
-Running build.bat generates a make file to be processed by your make 
+Running build.bat generates a make file to be processed by your make
 tool (gmake or nmake):
 
-   CLIB ex: gmake -f netware\nlm_clib_dbg.mak 
-   LIBC ex: gmake -f netware\nlm_libc.mak 
-   LIBC ex: gmake -f netware\nlm_libc_bsdsock.mak 
+   CLIB ex: gmake -f netware\nlm_clib_dbg.mak
+   LIBC ex: gmake -f netware\nlm_libc.mak
+   LIBC ex: gmake -f netware\nlm_libc_bsdsock.mak
 
 
 You can also run the build scripts manually if you do not want to use the
@@ -320,13 +320,13 @@ libraries in your development.
 
 There is no real installation procedure, just copy the static libs and
 headers to your build location.  The libs (crypto.lib & ssl.lib) are
-located in the appropriate "out_nw_XXXX" directory 
-(out_nw_clib, out_nw_libc, etc).  
+located in the appropriate "out_nw_XXXX" directory
+(out_nw_clib, out_nw_libc, etc).
 
-The headers are located in the appropriate "outinc_nw_XXX" directory 
-(outinc_nw_clib, outinc_nw_libc).  
+The headers are located in the appropriate "outinc_nw_XXX" directory
+(outinc_nw_clib, outinc_nw_libc).
 
-One suggestion is to create the following directory 
+One suggestion is to create the following directory
 structure for the OpenSSL SDK:
 
    \openssl
@@ -444,11 +444,11 @@ experience problems, use "vclean" (gmake -f netware\nlm_xxxx.mak vclean) and ret
 "Undefined Symbol" Linker errors
 --------------------------------
 There have been linker errors reported when doing a CLIB build.  The problems
-occur because some versions of the CLIB SDK import files inadvertently 
+occur because some versions of the CLIB SDK import files inadvertently
 left out some symbols.  One symbol in particular is "_lrotl".  The missing
 functions are actually delivered in the binaries, but they were left out of
-the import files.  The issues should be fixed in the September 2001 release 
+the import files.  The issues should be fixed in the September 2001 release
 of the NDK.  If you experience the problems you can temporarily
-work around it by manually adding the missing symbols to your version of 
+work around it by manually adding the missing symbols to your version of
 "clib.imp".
 

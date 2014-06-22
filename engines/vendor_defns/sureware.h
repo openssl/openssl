@@ -4,7 +4,7 @@
 * Copyright@2001 Baltimore Technologies Ltd.
 *																								*	
 *		THIS FILE IS PROVIDED BY BALTIMORE TECHNOLOGIES ``AS IS'' AND																			*
-*		ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE					* 
+*		ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE					*
 *		IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE				*
 *		ARE DISCLAIMED.  IN NO EVENT SHALL BALTIMORE TECHNOLOGIES BE LIABLE						*
 *		FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL				*
@@ -15,7 +15,7 @@
 *		OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF					*
 *		SUCH DAMAGE.																			*
 *
-* 
+*
 */
 #ifdef WIN32
 #define SW_EXPORT	__declspec ( dllexport )
@@ -35,7 +35,7 @@
 * -----------------WARNING-----------------------------------
 * In all the following functions:
 * msg is a string with at least 24 bytes free.
-* A 24 bytes string will be concatenated to the existing content of msg. 
+* A 24 bytes string will be concatenated to the existing content of msg.
 */
 /*
 *	SureWare Initialisation function

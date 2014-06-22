@@ -5,21 +5,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -58,13 +58,13 @@
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
- * Portions of the attached software ("Contribution") are developed by 
+ * Portions of the attached software ("Contribution") are developed by
  * SUN MICROSYSTEMS, INC., and are contributed to the OpenSSL project.
  *
  * The Contribution is licensed pursuant to the OpenSSL open source
  * license provided above.
  *
- * The ECDH and ECDSA speed test software is originally written by 
+ * The ECDH and ECDSA speed test software is originally written by
  * Sumit Gupta of Sun Microsystems Laboratories.
  *
  */
@@ -270,7 +270,7 @@ static int rnd_fake = 0;
 #define SIGRETTYPE void
 #else
 #define SIGRETTYPE int
-#endif 
+#endif
 
 static SIGRETTYPE sig_done(int sig);
 static SIGRETTYPE sig_done(int sig)
@@ -487,9 +487,9 @@ int MAIN(int argc, char **argv)
 #define D_CBC_128_AES	16
 #define D_CBC_192_AES	17
 #define D_CBC_256_AES	18
-#define D_CBC_128_CML   19 
+#define D_CBC_128_CML   19
 #define D_CBC_192_CML   20
-#define D_CBC_256_CML   21 
+#define D_CBC_256_CML   21
 #define D_EVP		22
 #define D_SHA256	23	
 #define D_SHA512	24
@@ -547,12 +547,12 @@ int MAIN(int argc, char **argv)
 	static unsigned int dsa_bits[DSA_NUM]={512,1024,2048};
 #endif
 #ifndef OPENSSL_NO_EC
-	/* We only test over the following curves as they are representative, 
+	/* We only test over the following curves as they are representative,
 	 * To add tests over more curves, simply add the curve NID
-	 * and curve name to the following arrays and increase the 
-	 * EC_NUM value accordingly. 
+	 * and curve name to the following arrays and increase the
+	 * EC_NUM value accordingly.
 	 */
-	static unsigned int test_curves[EC_NUM] = 
+	static unsigned int test_curves[EC_NUM] =
 	{	
 	/* Prime Curves */
 	NID_secp160r1,
@@ -572,8 +572,8 @@ int MAIN(int argc, char **argv)
 	NID_sect283r1,
 	NID_sect409r1,
 	NID_sect571r1
-	}; 
-	static const char * test_curves_names[EC_NUM] = 
+	};
+	static const char * test_curves_names[EC_NUM] =
 	{
 	/* Prime Curves */
 	"secp160r1",
@@ -837,7 +837,7 @@ int MAIN(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_RC4
 			if (strcmp(*argv,"rc4") == 0) doit[D_RC4]=1;
-		else 
+		else
 #endif
 #ifndef OPENSSL_NO_DES
 			if (strcmp(*argv,"des-cbc") == 0) doit[D_CBC_DES]=1;
@@ -861,7 +861,7 @@ int MAIN(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_RSA
 #if 0 /* was: #ifdef RSAref */
-			if (strcmp(*argv,"rsaref") == 0) 
+			if (strcmp(*argv,"rsaref") == 0)
 			{
 			RSA_set_default_openssl_method(RSA_PKCS1_RSAref());
 			j--;
@@ -869,7 +869,7 @@ int MAIN(int argc, char **argv)
 		else
 #endif
 #ifndef RSA_NULL
-			if (strcmp(*argv,"openssl") == 0) 
+			if (strcmp(*argv,"openssl") == 0)
 			{
 			RSA_set_default_method(RSA_PKCS1_SSLeay());
 			j--;
@@ -2272,53 +2272,53 @@ int MAIN(int argc, char **argv)
 #endif
 
 #ifndef OPENSSL_NO_ECDSA
-	if (RAND_status() != 1) 
+	if (RAND_status() != 1)
 		{
 		RAND_seed(rnd_seed, sizeof rnd_seed);
 		rnd_fake = 1;
 		}
-	for (j=0; j<EC_NUM; j++) 
+	for (j=0; j<EC_NUM; j++)
 		{
 		int ret;
 
-		if (!ecdsa_doit[j]) continue; /* Ignore Curve */ 
+		if (!ecdsa_doit[j]) continue; /* Ignore Curve */
 		ecdsa[j] = EC_KEY_new_by_curve_name(test_curves[j]);
-		if (ecdsa[j] == NULL) 
+		if (ecdsa[j] == NULL)
 			{
 			BIO_printf(bio_err,"ECDSA failure.\n");
 			ERR_print_errors(bio_err);
 			rsa_count=1;
-			} 
-		else 
+			}
+		else
 			{
 #if 1
 			EC_KEY_precompute_mult(ecdsa[j], NULL);
 #endif
 			/* Perform ECDSA signature test */
 			EC_KEY_generate_key(ecdsa[j]);
-			ret = ECDSA_sign(0, buf, 20, ecdsasig, 
+			ret = ECDSA_sign(0, buf, 20, ecdsasig,
 				&ecdsasiglen, ecdsa[j]);
-			if (ret == 0) 
+			if (ret == 0)
 				{
 				BIO_printf(bio_err,"ECDSA sign failure.  No ECDSA sign will be done.\n");
 				ERR_print_errors(bio_err);
 				rsa_count=1;
-				} 
-			else 
+				}
+			else
 				{
 				pkey_print_message("sign","ecdsa",
-					ecdsa_c[j][0], 
+					ecdsa_c[j][0],
 					test_curves_bits[j],
 					ECDSA_SECONDS);
 
 				Time_F(START);
 				for (count=0,run=1; COND(ecdsa_c[j][0]);
-					count++) 
+					count++)
 					{
-					ret=ECDSA_sign(0, buf, 20, 
+					ret=ECDSA_sign(0, buf, 20,
 						ecdsasig, &ecdsasiglen,
 						ecdsa[j]);
-					if (ret == 0) 
+					if (ret == 0)
 						{
 						BIO_printf(bio_err, "ECDSA sign failure\n");
 						ERR_print_errors(bio_err);
@@ -2329,32 +2329,32 @@ int MAIN(int argc, char **argv)
 				d=Time_F(STOP);
 
 				BIO_printf(bio_err, mr ? "+R5:%ld:%d:%.2f\n" :
-					"%ld %d bit ECDSA signs in %.2fs \n", 
+					"%ld %d bit ECDSA signs in %.2fs \n",
 					count, test_curves_bits[j], d);
 				ecdsa_results[j][0]=d/(double)count;
 				rsa_count=count;
 				}
 
 			/* Perform ECDSA verification test */
-			ret=ECDSA_verify(0, buf, 20, ecdsasig, 
+			ret=ECDSA_verify(0, buf, 20, ecdsasig,
 				ecdsasiglen, ecdsa[j]);
-			if (ret != 1) 
+			if (ret != 1)
 				{
 				BIO_printf(bio_err,"ECDSA verify failure.  No ECDSA verify will be done.\n");
 				ERR_print_errors(bio_err);
 				ecdsa_doit[j] = 0;
-				} 
-			else 
+				}
+			else
 				{
 				pkey_print_message("verify","ecdsa",
 				ecdsa_c[j][1],
 				test_curves_bits[j],
 				ECDSA_SECONDS);
 				Time_F(START);
-				for (count=0,run=1; COND(ecdsa_c[j][1]); count++) 
+				for (count=0,run=1; COND(ecdsa_c[j][1]); count++)
 					{
 					ret=ECDSA_verify(0, buf, 20, ecdsasig, ecdsasiglen, ecdsa[j]);
-					if (ret != 1) 
+					if (ret != 1)
 						{
 						BIO_printf(bio_err, "ECDSA verify failure\n");
 						ERR_print_errors(bio_err);
@@ -2369,7 +2369,7 @@ int MAIN(int argc, char **argv)
 				ecdsa_results[j][1]=d/(double)count;
 				}
 
-			if (rsa_count <= 1) 
+			if (rsa_count <= 1)
 				{
 				/* if longer than 10s, don't do any more */
 				for (j++; j<EC_NUM; j++)
@@ -2431,12 +2431,12 @@ int MAIN(int argc, char **argv)
 				secret_size_b = ECDH_compute_key(secret_b, outlen,
 					EC_KEY_get0_public_key(ecdh_a[j]),
 					ecdh_b[j], kdf);
-				if (secret_size_a != secret_size_b) 
+				if (secret_size_a != secret_size_b)
 					ecdh_checks = 0;
 				else
 					ecdh_checks = 1;
 
-				for (secret_idx = 0; 
+				for (secret_idx = 0;
 				    (secret_idx < secret_size_a)
 					&& (ecdh_checks == 1);
 				    secret_idx++)
@@ -2453,7 +2453,7 @@ int MAIN(int argc, char **argv)
 					}
 
 				pkey_print_message("","ecdh",
-				ecdh_c[j][0], 
+				ecdh_c[j][0],
 				test_curves_bits[j],
 				ECDH_SECONDS);
 				Time_F(START);
@@ -2517,7 +2517,7 @@ show_res:
 			fprintf(stdout,"+H");
 		else
 			{
-			fprintf(stdout,"The 'numbers' are in 1000s of bytes per second processed.\n"); 
+			fprintf(stdout,"The 'numbers' are in 1000s of bytes per second processed.\n");
 			fprintf(stdout,"type        ");
 			}
 		for (j=0;  j<SIZE_NUM; j++)
@@ -2592,15 +2592,15 @@ show_res:
 			}
 
 		if (mr)
-			fprintf(stdout,"+F4:%u:%u:%f:%f\n", 
+			fprintf(stdout,"+F4:%u:%u:%f:%f\n",
 				k, test_curves_bits[k],
 				ecdsa_results[k][0],ecdsa_results[k][1]);
 		else
 			fprintf(stdout,
-				"%4u bit ecdsa (%s) %8.4fs %8.4fs %8.1f %8.1f\n", 
+				"%4u bit ecdsa (%s) %8.4fs %8.4fs %8.1f %8.1f\n",
 				test_curves_bits[k],
 				test_curves_names[k],
-				ecdsa_results[k][0],ecdsa_results[k][1], 
+				ecdsa_results[k][0],ecdsa_results[k][1],
 				1.0/ecdsa_results[k][0],1.0/ecdsa_results[k][1]);
 		}
 #endif
@@ -2922,7 +2922,7 @@ static int do_multi(int multi)
 				else
 					ecdsa_results[k][1]=d;
 				}
-#endif 
+#endif
 
 #ifndef OPENSSL_NO_ECDH
 			else if(!strncmp(buf,"+F5:",4))

@@ -9,7 +9,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -84,7 +84,7 @@
 #define ENOMEM KRB5KRB_ERR_GENERIC
 #endif
 
-/* 
+/*
  * When OpenSSL is built on Windows, we do not want to require that
  * the Kerberos DLLs be available in order for the OpenSSL DLLs to
  * work.  Therefore, all Kerberos routines are loaded at run time
@@ -92,7 +92,7 @@
  */
 
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
-/* 
+/*
  * The purpose of the following pre-processor statements is to provide
  * compatibility with different releases of MIT Kerberos for Windows.
  * All versions up to 1.2 used macros.  But macros do not allow for
@@ -107,19 +107,19 @@
 #endif
 #define krb5_cc_get_principal    kssl_krb5_cc_get_principal
 
-#define krb5_free_data_contents  kssl_krb5_free_data_contents   
-#define krb5_free_context        kssl_krb5_free_context         
-#define krb5_auth_con_free       kssl_krb5_auth_con_free        
-#define krb5_free_principal      kssl_krb5_free_principal       
-#define krb5_mk_req_extended     kssl_krb5_mk_req_extended      
-#define krb5_get_credentials     kssl_krb5_get_credentials      
-#define krb5_cc_default          kssl_krb5_cc_default           
-#define krb5_sname_to_principal  kssl_krb5_sname_to_principal   
-#define krb5_init_context        kssl_krb5_init_context         
-#define krb5_free_ticket         kssl_krb5_free_ticket          
-#define krb5_rd_req              kssl_krb5_rd_req               
-#define krb5_kt_default          kssl_krb5_kt_default           
-#define krb5_kt_resolve          kssl_krb5_kt_resolve           
+#define krb5_free_data_contents  kssl_krb5_free_data_contents
+#define krb5_free_context        kssl_krb5_free_context
+#define krb5_auth_con_free       kssl_krb5_auth_con_free
+#define krb5_free_principal      kssl_krb5_free_principal
+#define krb5_mk_req_extended     kssl_krb5_mk_req_extended
+#define krb5_get_credentials     kssl_krb5_get_credentials
+#define krb5_cc_default          kssl_krb5_cc_default
+#define krb5_sname_to_principal  kssl_krb5_sname_to_principal
+#define krb5_init_context        kssl_krb5_init_context
+#define krb5_free_ticket         kssl_krb5_free_ticket
+#define krb5_rd_req              kssl_krb5_rd_req
+#define krb5_kt_default          kssl_krb5_kt_default
+#define krb5_kt_resolve          kssl_krb5_kt_resolve
 /* macros in mit 1.2.2 and earlier; functions in mit 1.2.3 and greater */
 #ifndef krb5_kt_close
 #define krb5_kt_close            kssl_krb5_kt_close
@@ -127,7 +127,7 @@
 #ifndef krb5_kt_get_entry
 #define krb5_kt_get_entry        kssl_krb5_kt_get_entry
 #endif /* krb5_kt_get_entry */
-#define krb5_auth_con_init       kssl_krb5_auth_con_init        
+#define krb5_auth_con_init       kssl_krb5_auth_con_init
 
 #define krb5_principal_compare   kssl_krb5_principal_compare
 #define krb5_decrypt_tkt_part    kssl_krb5_decrypt_tkt_part
@@ -165,9 +165,9 @@ krb5_error_code kssl_krb5_kt_resolve(krb5_context,
 krb5_error_code kssl_krb5_kt_default(krb5_context,
                                      krb5_keytab *);
 krb5_error_code kssl_krb5_free_ticket(krb5_context, krb5_ticket *);
-krb5_error_code kssl_krb5_rd_req(krb5_context, krb5_auth_context *, 
+krb5_error_code kssl_krb5_rd_req(krb5_context, krb5_auth_context *,
                                  krb5_const krb5_data *,
-                                 krb5_const_principal, krb5_keytab, 
+                                 krb5_const_principal, krb5_keytab,
                                  krb5_flags *,krb5_ticket **);
 
 krb5_boolean kssl_krb5_principal_compare(krb5_context, krb5_const_principal,
@@ -193,20 +193,20 @@ krb5_error_code kssl_krb5_get_credentials(krb5_context,
                                           krb5_creds  *  *);
 krb5_error_code kssl_krb5_auth_con_init(krb5_context,
                                         krb5_auth_context  *);
-krb5_error_code kssl_krb5_cc_get_principal(krb5_context context, 
+krb5_error_code kssl_krb5_cc_get_principal(krb5_context context,
                                            krb5_ccache cache,
                                            krb5_principal *principal);
 krb5_error_code kssl_krb5_auth_con_free(krb5_context,krb5_auth_context);
 size_t kssl_krb5_checksum_size(krb5_context context,krb5_cksumtype ctype);
 krb5_boolean kssl_valid_cksumtype(krb5_cksumtype ctype);
 krb5_error_code krb5_kt_free_entry(krb5_context,krb5_keytab_entry FAR * );
-krb5_error_code kssl_krb5_auth_con_setrcache(krb5_context, 
-                                             krb5_auth_context, 
+krb5_error_code kssl_krb5_auth_con_setrcache(krb5_context,
+                                             krb5_auth_context,
                                              krb5_rcache);
-krb5_error_code kssl_krb5_get_server_rcache(krb5_context, 
+krb5_error_code kssl_krb5_get_server_rcache(krb5_context,
                                             krb5_const krb5_data *,
                                             krb5_rcache *);
-krb5_error_code kssl_krb5_auth_con_getrcache(krb5_context, 
+krb5_error_code kssl_krb5_auth_con_getrcache(krb5_context,
                                              krb5_auth_context,
                                              krb5_rcache *);
 
@@ -219,12 +219,12 @@ static krb5_error_code(_stdcall *p_krb5_kt_resolve)
 			(krb5_context, krb5_const char *, krb5_keytab *)=NULL;
 static krb5_error_code (_stdcall *p_krb5_kt_default)(krb5_context,
                                                      krb5_keytab *)=NULL;
-static krb5_error_code (_stdcall *p_krb5_free_ticket)(krb5_context, 
+static krb5_error_code (_stdcall *p_krb5_free_ticket)(krb5_context,
                                                       krb5_ticket *)=NULL;
-static krb5_error_code (_stdcall *p_krb5_rd_req)(krb5_context, 
-                                                 krb5_auth_context *, 
+static krb5_error_code (_stdcall *p_krb5_rd_req)(krb5_context,
+                                                 krb5_auth_context *,
                                                  krb5_const krb5_data *,
-                                                 krb5_const_principal, 
+                                                 krb5_const_principal,
                                                  krb5_keytab, krb5_flags *,
                                                  krb5_ticket **)=NULL;
 static krb5_error_code (_stdcall *p_krb5_mk_req_extended)
@@ -269,18 +269,18 @@ static size_t (_stdcall *p_krb5_checksum_size)(krb5_context context,krb5_cksumty
 static krb5_boolean (_stdcall *p_valid_cksumtype)(krb5_cksumtype ctype)=NULL;
 static krb5_error_code (_stdcall *p_krb5_kt_free_entry)
                         (krb5_context,krb5_keytab_entry * )=NULL;
-static krb5_error_code (_stdcall * p_krb5_auth_con_setrcache)(krb5_context, 
-                                                               krb5_auth_context, 
+static krb5_error_code (_stdcall * p_krb5_auth_con_setrcache)(krb5_context,
+                                                               krb5_auth_context,
                                                                krb5_rcache)=NULL;
-static krb5_error_code (_stdcall * p_krb5_get_server_rcache)(krb5_context, 
-                                                              krb5_const krb5_data *, 
+static krb5_error_code (_stdcall * p_krb5_get_server_rcache)(krb5_context,
+                                                              krb5_const krb5_data *,
                                                               krb5_rcache *)=NULL;
-static krb5_error_code (* p_krb5_auth_con_getrcache)(krb5_context, 
+static krb5_error_code (* p_krb5_auth_con_getrcache)(krb5_context,
                                                       krb5_auth_context,
                                                       krb5_rcache *)=NULL;
-static krb5_error_code (_stdcall * p_krb5_kt_close)(krb5_context context, 
+static krb5_error_code (_stdcall * p_krb5_kt_close)(krb5_context context,
                                                     krb5_keytab keytab)=NULL;
-static krb5_error_code (_stdcall * p_krb5_kt_get_entry)(krb5_context context, 
+static krb5_error_code (_stdcall * p_krb5_kt_get_entry)(krb5_context context,
                                                         krb5_keytab keytab,
                        krb5_const_principal principal, krb5_kvno vno,
                        krb5_enctype enctype, krb5_keytab_entry *entry)=NULL;
@@ -291,7 +291,7 @@ void
 load_krb5_dll(void)
 	{
 	HANDLE hKRB5_32;
-    
+
 	krb5_loaded++;
 	hKRB5_32 = LoadLibrary(TEXT("KRB5_32"));
 	if (!hKRB5_32)
@@ -627,7 +627,7 @@ krb5_rc_destroy(krb5_context con, krb5_rcache rc)
 		return KRB5KRB_ERR_GENERIC;
 	}
 
-size_t 
+size_t
 krb5_checksum_size(krb5_context context,krb5_cksumtype ctype)
         {
         if (!krb5_loaded)
@@ -639,7 +639,7 @@ krb5_checksum_size(krb5_context context,krb5_cksumtype ctype)
                 return KRB5KRB_ERR_GENERIC;
         }
 
-krb5_boolean 
+krb5_boolean
 valid_cksumtype(krb5_cksumtype ctype)
         {
         if (!krb5_loaded)
@@ -651,7 +651,7 @@ valid_cksumtype(krb5_cksumtype ctype)
                 return KRB5KRB_ERR_GENERIC;
         }
 
-krb5_error_code 
+krb5_error_code
 krb5_kt_free_entry(krb5_context con,krb5_keytab_entry * entry)
         {
         if (!krb5_loaded)
@@ -662,13 +662,13 @@ krb5_kt_free_entry(krb5_context con,krb5_keytab_entry * entry)
         else
                 return KRB5KRB_ERR_GENERIC;
         }
-                 
+
 /* Structure definitions  */
 #ifndef NO_DEF_KRB5_CCACHE
 #ifndef krb5_x
 #define krb5_x(ptr,args) ((ptr)?((*(ptr)) args):(abort(),1))
 #define krb5_xc(ptr,args) ((ptr)?((*(ptr)) args):(abort(),(char*)0))
-#endif 
+#endif
 
 typedef	krb5_pointer	krb5_cc_cursor;	/* cursor for sequential lookup */
 
@@ -717,7 +717,7 @@ typedef struct _krb5_cc_ops
 	} krb5_cc_ops;
 #endif /* NO_DEF_KRB5_CCACHE */
 
-krb5_error_code 
+krb5_error_code
 kssl_krb5_cc_get_principal
     (krb5_context context, krb5_ccache cache,
       krb5_principal *principal)
@@ -741,7 +741,7 @@ kssl_krb5_auth_con_setrcache(krb5_context con, krb5_auth_context acon,
 
 krb5_error_code
 kssl_krb5_get_server_rcache(krb5_context con, krb5_const krb5_data * data,
-                            krb5_rcache * rcache) 
+                            krb5_rcache * rcache)
         {
 	if ( p_krb5_get_server_rcache )
 		return(p_krb5_get_server_rcache(con,data,rcache));
@@ -758,13 +758,13 @@ kssl_krb5_auth_con_getrcache(krb5_context con, krb5_auth_context acon,
 	else
 		return KRB5KRB_ERR_GENERIC;
 	}
- 
+
 krb5_error_code
 kssl_krb5_kt_close(krb5_context context, krb5_keytab keytab)
 	{
 	if ( p_krb5_kt_close )
 		return(p_krb5_kt_close(context,keytab));
-	else 
+	else
 		return KRB5KRB_ERR_GENERIC;
 	}
 
@@ -871,7 +871,7 @@ static int 	kssl_test_confound(unsigned char *p)
 **
 **      The krb5_cksumarray[] was an internal variable that has since been
 **      replaced by a more general method for storing the data.  It should
-**      not be used.  Instead we use real API calls and make a guess for 
+**      not be used.  Instead we use real API calls and make a guess for
 **      what the highest assigned CKSUMTYPE_ constant is.  As of 1.2.2
 **      it is 0x000c (CKSUMTYPE_HMAC_SHA1_DES3).  So we will use 0x0010.
 */
@@ -885,7 +885,7 @@ static size_t  *populate_cksumlens(void)
 #else
 	n = 0x0010;
 #endif	/* KRB5_MIT_OLD11 */
- 
+
 #ifdef KRB5CHECKAUTH
 	if (!cklens && !(cklens = (size_t *) calloc(sizeof(int),n+1)))  return NULL;
 
@@ -1170,7 +1170,7 @@ kssl_cget_tkt(	/* UPDATE */	KSSL_CTX *kssl_ctx,
 			{
 			authenp->length = i2d_KRB5_ENCDATA(
 					ap_req->authenticator, NULL);
-			if (authenp->length  && 
+			if (authenp->length  &&
 				(authenp->data = malloc(authenp->length)))
 				{
 				unsigned char	*adp = (unsigned char *)authenp->data;
@@ -1180,7 +1180,7 @@ kssl_cget_tkt(	/* UPDATE */	KSSL_CTX *kssl_ctx,
 			}
 
 		if (ap_req)  KRB5_APREQ_free((KRB5_APREQ *) ap_req);
-		if (krb5_app_req.length)  
+		if (krb5_app_req.length)
                         kssl_krb5_free_data_contents(krb5context,&krb5_app_req);
 		}
 #ifdef KRB5_HEIMDAL
@@ -1238,7 +1238,7 @@ kssl_TKT2tkt(	/* IN     */	krb5_context	krb5context,
 	*krb5ticket = NULL;
 
 	if (asn1ticket == NULL  ||  asn1ticket->realm == NULL  ||
-		asn1ticket->sname == NULL  || 
+		asn1ticket->sname == NULL  ||
 		sk_ASN1_GENERALSTRING_num(asn1ticket->sname->namestring) < 2)
 		{
 		BIO_snprintf(kssl_err->text, KSSL_ERR_MAX,
@@ -1357,7 +1357,7 @@ kssl_sget_tkt(	/* UPDATE */	KSSL_CTX		*kssl_ctx,
 		goto err;
 		}
 
- 
+
 	if ((krb5rc = krb5_auth_con_getrcache(krb5context, krb5auth_context,
 		&rcache)))
 		{
@@ -1365,7 +1365,7 @@ kssl_sget_tkt(	/* UPDATE */	KSSL_CTX		*kssl_ctx,
 			"krb5_auth_con_getrcache() fails.\n");
  		goto err;
 		}
- 
+
 	if ((krb5rc = krb5_sname_to_principal(krb5context, NULL,
                 (kssl_ctx->service_name)? kssl_ctx->service_name: KRB5SVC,
                 KRB5_NT_SRV_HST, &krb5server)) != 0)
@@ -1375,7 +1375,7 @@ kssl_sget_tkt(	/* UPDATE */	KSSL_CTX		*kssl_ctx,
 		goto err;
 		}
 
-	if (rcache == NULL) 
+	if (rcache == NULL)
                 {
                 if ((krb5rc = krb5_get_server_rcache(krb5context,
 			krb5_princ_component(krb5context, krb5server, 0),
@@ -1413,7 +1413,7 @@ kssl_sget_tkt(	/* UPDATE */	KSSL_CTX		*kssl_ctx,
                 krb5rc = krb5_kt_default(krb5context,&krb5keytab);
                 if (krb5rc)
 			{
-			kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT, 
+			kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
 				"krb5_kt_default() fails.\n");
 			goto err;
 			}
@@ -1769,7 +1769,7 @@ kssl_ctx_show(KSSL_CTX *kssl_ctx)
 	return;
         }
 
-    int 
+    int
     kssl_keytab_is_available(KSSL_CTX *kssl_ctx)
 {
     krb5_context		krb5context = NULL;
@@ -1799,14 +1799,14 @@ kssl_ctx_show(KSSL_CTX *kssl_ctx)
     }
 
     /* the host key we are looking for */
-    krb5rc = krb5_sname_to_principal(krb5context, NULL, 
+    krb5rc = krb5_sname_to_principal(krb5context, NULL,
                                      kssl_ctx->service_name ? kssl_ctx->service_name: KRB5SVC,
                                      KRB5_NT_SRV_HST, &princ);
 
     if (krb5rc)
 	goto exit;
 
-    krb5rc = krb5_kt_get_entry(krb5context, krb5keytab, 
+    krb5rc = krb5_kt_get_entry(krb5context, krb5keytab,
                                 princ,
                                 0 /* IGNORE_VNO */,
                                 0 /* IGNORE_ENCTYPE */,
@@ -1816,7 +1816,7 @@ kssl_ctx_show(KSSL_CTX *kssl_ctx)
         goto exit;
     } else if ( krb5rc )
         goto exit;
-    
+
     krb5_kt_free_entry(krb5context, &entry);
     rc = 1;
 
@@ -1827,7 +1827,7 @@ kssl_ctx_show(KSSL_CTX *kssl_ctx)
     return(rc);
 }
 
-int 
+int
 kssl_tgt_is_available(KSSL_CTX *kssl_ctx)
         {
         krb5_error_code		krb5rc = KRB5KRB_ERR_GENERIC;
@@ -1963,7 +1963,7 @@ krb5_error_code  kssl_validate_times(	krb5_timestamp atime,
 	krb5_context	context;
 
 	if ((rc = krb5_init_context(&context)))	 return SSL_R_KRB5_S_BAD_TICKET;
-	skew = get_rc_clockskew(context); 
+	skew = get_rc_clockskew(context);
 	if ((rc = krb5_timeofday(context,&now))) return SSL_R_KRB5_S_BAD_TICKET;
 	krb5_free_context(context);
 
@@ -1986,7 +1986,7 @@ krb5_error_code  kssl_validate_times(	krb5_timestamp atime,
 
 /*  Decode and decrypt given DER-encoded authenticator, then pass
 **  authenticator ctime back in *atimep (or 0 if time unavailable).
-**  Returns krb5_error_code and kssl_err on error.  A NULL 
+**  Returns krb5_error_code and kssl_err on error.  A NULL
 **  authenticator (authentp->length == 0) is not considered an error.
 **  Note that kssl_check_authent() makes use of the KRB5 session key;
 **  you must call kssl_sget_tkt() to get the key before calling this routine.
@@ -2028,7 +2028,7 @@ krb5_error_code  kssl_check_authent(
         {
         unsigned int ui;
 	printf("kssl_check_authent: authenticator[%d]:\n",authentp->length);
-	p = authentp->data; 
+	p = authentp->data;
 	for (ui=0; ui < authentp->length; ui++)  printf("%02x ",p[ui]);
 	printf("\n");
         }
@@ -2045,7 +2045,7 @@ krb5_error_code  kssl_check_authent(
 
 	p = (unsigned char *)authentp->data;
 	if ((dec_authent = d2i_KRB5_ENCDATA(NULL, &p,
-					(long) authentp->length)) == NULL) 
+					(long) authentp->length)) == NULL)
 		{
 		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
                         "Error decoding authenticator.\n");
@@ -2197,7 +2197,7 @@ krb5_error_code  kssl_build_principal_2(
 void SSL_set0_kssl_ctx(SSL *s, KSSL_CTX *kctx)
 	{
 	s->kssl_ctx = kctx;
-	} 
+	}
 
 KSSL_CTX * SSL_get0_kssl_ctx(SSL *s)
 	{

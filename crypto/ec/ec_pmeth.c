@@ -9,7 +9,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -274,7 +274,7 @@ static int pkey_ec_kdf_derive(EVP_PKEY_CTX *ctx,
 	if (!pkey_ec_derive(ctx, ktmp, &ktmplen))
 		goto err;
 	/* Do KDF stuff */
-	if (!ECDH_KDF_X9_62(key, *keylen, ktmp, ktmplen, 
+	if (!ECDH_KDF_X9_62(key, *keylen, ktmp, ktmplen,
 				dctx->kdf_ukm, dctx->kdf_ukmlen,
 				dctx->kdf_md))
 		goto err;
@@ -527,7 +527,7 @@ static int pkey_ec_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	return EC_KEY_generate_key(pkey->pkey.ec);
 	}
 
-const EVP_PKEY_METHOD ec_pkey_meth = 
+const EVP_PKEY_METHOD ec_pkey_meth =
 	{
 	EVP_PKEY_EC,
 	0,

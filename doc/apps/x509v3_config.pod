@@ -202,7 +202,7 @@ Examples:
 The issuer alternative name option supports all the literal options of
 subject alternative name. It does B<not> support the email:copy option because
 that would not make sense. It does support an additional issuer:copy option
-that will copy all the subject alternative name values from the issuer 
+that will copy all the subject alternative name values from the issuer
 certificate (if possible).
 
 Example:
@@ -380,7 +380,7 @@ Example:
 The name constraints extension is a multi-valued extension. The name should
 begin with the word B<permitted> or B<excluded> followed by a B<;>. The rest of
 the name and the value follows the syntax of subjectAltName except email:copy
-is not supported and the B<IP> form should consist of an IP addresses and 
+is not supported and the B<IP> form should consist of an IP addresses and
 subnet mask separated by a B</>.
 
 Examples:
@@ -491,7 +491,7 @@ will produce an error but the equivalent form:
  [subject_alt_section]
  subjectAltName=URI:ldap://somehost.com/CN=foo,OU=bar
 
-is valid. 
+is valid.
 
 Due to the behaviour of the OpenSSL B<conf> library the same field name
 can only occur once in a section. This means that:

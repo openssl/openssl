@@ -42,7 +42,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -355,8 +355,8 @@ void _ossl_old_des_encrypt3(DES_LONG *data, _ossl_old_des_key_schedule ks1,
 	_ossl_old_des_key_schedule ks2, _ossl_old_des_key_schedule ks3);
 void _ossl_old_des_decrypt3(DES_LONG *data, _ossl_old_des_key_schedule ks1,
 	_ossl_old_des_key_schedule ks2, _ossl_old_des_key_schedule ks3);
-void _ossl_old_des_ede3_cbc_encrypt(_ossl_old_des_cblock *input, _ossl_old_des_cblock *output, 
-	long length, _ossl_old_des_key_schedule ks1, _ossl_old_des_key_schedule ks2, 
+void _ossl_old_des_ede3_cbc_encrypt(_ossl_old_des_cblock *input, _ossl_old_des_cblock *output,
+	long length, _ossl_old_des_key_schedule ks1, _ossl_old_des_key_schedule ks2,
 	_ossl_old_des_key_schedule ks3, _ossl_old_des_cblock *ivec, int enc);
 void _ossl_old_des_ede3_cfb64_encrypt(unsigned char *in, unsigned char *out,
 	long length, _ossl_old_des_key_schedule ks1, _ossl_old_des_key_schedule ks2,

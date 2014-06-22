@@ -5,21 +5,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -63,7 +63,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -198,7 +198,7 @@ int RAND_poll(void)
 	DWORD w;
 	int good = 0;
 
-	/* Determine the OS version we are on so we can turn off things 
+	/* Determine the OS version we are on so we can turn off things
 	 * that do not work properly.
 	 */
         OSVERSIONINFO osverinfo ;
@@ -218,7 +218,7 @@ int RAND_poll(void)
 		{
 		if (CryptGenRandom(hProvider, sizeof(buf), buf))
 			RAND_add(buf, sizeof(buf), sizeof(buf));
-		CryptReleaseContext(hProvider, 0); 
+		CryptReleaseContext(hProvider, 0);
 		}
 	}
 # endif
@@ -280,7 +280,7 @@ int RAND_poll(void)
 		FreeLibrary(netapi);
 
         /* It appears like this can cause an exception deep within ADVAPI32.DLL
-         * at random times on Windows 2000.  Reported by Jeffrey Altman.  
+         * at random times on Windows 2000.  Reported by Jeffrey Altman.
          * Only use it on NT.
 	 */
 	/* Wolfgang Marczy <WMarczy@topcall.co.at> reports that
@@ -364,7 +364,7 @@ int RAND_poll(void)
 				printf("randomness from PROV_RSA_FULL\n");
 #endif
 				}
-			release(hProvider, 0); 
+			release(hProvider, 0);
 			}
 		
 		/* poll the Pentium PRG with CryptoAPI */
@@ -492,7 +492,7 @@ int RAND_poll(void)
                         /* HEAPLIST32 contains 3 fields that will change with
                          * each entry.  Consider each field a source of 1 byte
                          * of entropy.
-                         * HEAPENTRY32 contains 5 fields that will change with 
+                         * HEAPENTRY32 contains 5 fields that will change with
                          * each entry.  Consider each field a source of 1 byte
                          * of entropy.
                          */
@@ -512,7 +512,7 @@ int RAND_poll(void)
 				   based on patch in original message by Tanguy Fautré (2009/03/02)
 			           Subject: RAND_poll() and CreateToolhelp32Snapshot() stability
 			     */
-				int ex_cnt_limit = 42; 
+				int ex_cnt_limit = 42;
 				do
 					{
 					RAND_add(&hlist, hlist.dwSize, 3);
@@ -538,7 +538,7 @@ int RAND_poll(void)
 							/* ignore access violations when walking the heap list */
 							ex_cnt_limit--;
 						}
-					} while (heaplist_next(handle, &hlist) 
+					} while (heaplist_next(handle, &hlist)
 						&& (!good || (GetTickCount()-starttime)<MAXDELAY)
 						&& ex_cnt_limit > 0);
 				}
@@ -561,7 +561,7 @@ int RAND_poll(void)
 						while (heap_next(&hentry)
 							&& --entrycnt > 0);
 						}
-					} while (heaplist_next(handle, &hlist) 
+					} while (heaplist_next(handle, &hlist)
 						&& (!good || (GetTickCount()-starttime)<MAXDELAY));
 				}
 #endif
@@ -668,7 +668,7 @@ int RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam)
         RAND_add(&iMsg, sizeof(iMsg), add_entropy);
 	RAND_add(&wParam, sizeof(wParam), 0);
 	RAND_add(&lParam, sizeof(lParam), 0);
- 
+
 	return (RAND_status());
 	}
 

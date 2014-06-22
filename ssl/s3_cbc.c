@@ -780,7 +780,7 @@ void tls_fips_digest_extra(
 	 * and actual lengths plus one extra block to ensure this is never a
 	 * no op. The "data" pointer should always have enough space to
 	 * perform this operation as it is large enough for a maximum
-	 * length TLS buffer. 
+	 * length TLS buffer.
 	 */
 	EVP_DigestSignUpdate(mac_ctx, data,
 				(blocks_orig - blocks_data + 1) * block_size);

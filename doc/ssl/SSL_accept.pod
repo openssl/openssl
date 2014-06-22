@@ -18,7 +18,7 @@ B<ssl> by setting an underlying B<BIO>.
 
 =head1 NOTES
 
-The behaviour of SSL_accept() depends on the underlying BIO. 
+The behaviour of SSL_accept() depends on the underlying BIO.
 
 If the underlying BIO is B<blocking>, SSL_accept() will only return once the
 handshake has been finished or an error occurred, except for SGC (Server

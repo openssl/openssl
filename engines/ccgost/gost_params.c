@@ -6,7 +6,7 @@
  * Definitions of GOST R 34.10 parameter sets, defined in RFC 4357    *
  *         OpenSSL 0.9.9 libraries required to compile and use        *
  *                              this code                             *
- **********************************************************************/ 
+ **********************************************************************/
 #include "gost_params.h"
 #include <openssl/objects.h>
 /* Parameters of GOST 34.10 */

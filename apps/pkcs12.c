@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -532,7 +532,7 @@ int MAIN(int argc, char **argv)
 
 		if (!vret) {
 		    /* Exclude verified certificate */
-		    for (i = 1; i < sk_X509_num (chain2) ; i++) 
+		    for (i = 1; i < sk_X509_num (chain2) ; i++)
 			sk_X509_push(certs, sk_X509_value (chain2, i));
 		    /* Free first certificate */
 		    X509_free(sk_X509_value(chain2, 0));
@@ -594,7 +594,7 @@ int MAIN(int argc, char **argv)
 		macmd = EVP_get_digestbyname(macalg);
 		if (!macmd)
 			{
-			BIO_printf(bio_err, "Unknown digest algorithm %s\n", 
+			BIO_printf(bio_err, "Unknown digest algorithm %s\n",
 						macalg);
 			}
 		}
@@ -713,13 +713,13 @@ int dump_certs_keys_p12 (BIO *out, PKCS12 *p12, char *pass,
 		} else if (bagnid == NID_pkcs7_encrypted) {
 			if (options & INFO) {
 				BIO_printf(bio_err, "PKCS7 Encrypted data: ");
-				alg_print(bio_err, 
+				alg_print(bio_err,
 					p7->d.encrypted->enc_data->algorithm);
 			}
 			bags = PKCS12_unpack_p7encdata(p7, pass, passlen);
 		} else continue;
 		if (!bags) goto err;
-	    	if (!dump_certs_pkeys_bags (out, bags, pass, passlen, 
+	    	if (!dump_certs_pkeys_bags (out, bags, pass, passlen,
 						 options, pempass)) {
 			sk_PKCS12_SAFEBAG_pop_free (bags, PKCS12_SAFEBAG_free);
 			goto err;
@@ -859,7 +859,7 @@ int alg_print (BIO *x, X509_ALGOR *alg)
 	pbe = d2i_PBEPARAM(NULL, &p, alg->parameter->value.sequence->length);
 	if (!pbe)
 		return 1;
-	BIO_printf (bio_err, "%s, Iteration %ld\n", 
+	BIO_printf (bio_err, "%s, Iteration %ld\n",
 		OBJ_nid2ln(OBJ_obj2nid(alg->algorithm)),
 		ASN1_INTEGER_get(pbe->iter));
 	PBEPARAM_free (pbe);

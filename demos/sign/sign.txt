@@ -18,7 +18,7 @@ Content-Type: TEXT/PLAIN; charset=US-ASCII
 Sender: ssl-lists-owner@mincom.com
 Precedence: bulk
 Status: O
-X-Status: 
+X-Status:
 
 
 On Mon, 30 Sep 1996, Sampo Kellomaki wrote:
@@ -34,12 +34,12 @@ hmm... a rather poorly documented are of the library at this point in time.
 > 	EVP_PKEY* pkey = PEM_ASN1_read(d2i_PrivateKey, PEM_STRING_EVP_PKEY,
 > 	                               fp, NULL, NULL);
 > to read in private key and this seems to work Ok.
-> 
+>
 > However when I try analogous
 > 	EVP_PKEY* pkey = PEM_ASN1_read(d2i_PublicKey, PEM_STRING_X509,
 > 	                               fp, NULL, NULL);
 
-What you should do is 
+What you should do is
 	X509 *x509=PEM_read_X509(fp,NULL,NULL);
 	/* which is the same as PEM_ASN1_read(d2i_X509,PEM_STRING_X509,fp,
 	 * NULL,NULL); */
@@ -59,27 +59,27 @@ RSA as the private key.
 > not find a similar constant to use with getting the certificate, however.
 
 :-), PEM_STRING_EVP_PKEY is 'magical' :-).  In theory I should be using a
-standard such as PKCS#8 to store the private key so that the type is 
+standard such as PKCS#8 to store the private key so that the type is
 encoded in the asn.1 encoding of the object.
 
 > Is my approach of using PEM_ASN1_read correct? What should I pass in
 > as name?  Can I use normal (or even self signed) X509 certificate for
 > verifying the signature?
 
-The actual public key is kept in the certificate, so basically you have 
-to load the certificate and then 'unpack' the public key from the 
+The actual public key is kept in the certificate, so basically you have
+to load the certificate and then 'unpack' the public key from the
 certificate.
 
 > When will SSLeay documentation be written ;-)? If I would contribute
 > comments to the code, would Eric take time to review them and include
 > them in distribution?
 
-:-) After SSLv3 and PKCS#7 :-).  I actually started doing a function list 
-but what I really need to do is do quite a few 'this is how you do xyz' 
-type documents.  I suppose the current method is to post to ssl-users and 
+:-) After SSLv3 and PKCS#7 :-).  I actually started doing a function list
+but what I really need to do is do quite a few 'this is how you do xyz'
+type documents.  I suppose the current method is to post to ssl-users and
 I'll respond :-).
 
-I'll add a 'demo' directory for the next release, I've appended a 
+I'll add a 'demo' directory for the next release, I've appended a
 modified version of your program that works, you were very close :-).
 
 eric
@@ -115,9 +115,9 @@ void main ()
    * SSL_load_error_strings() loads the crypto AND the SSL ones */
   /* SSL_load_error_strings();*/
   ERR_load_crypto_strings();
-  
+
   /* Read private key */
-  
+
   fp = fopen (keyfile, "r");   if (fp == NULL) exit (1);
   pkey = (EVP_PKEY*)PEM_ASN1_read ((char *(*)())d2i_PrivateKey,
 				   PEM_STRING_EVP_PKEY,
@@ -125,34 +125,34 @@ void main ()
 				   NULL, NULL);
   if (pkey == NULL) {  ERR_print_errors_fp (stderr);    exit (1);  }
   fclose (fp);
-  
+
   /* Do the signature */
-  
+
   EVP_SignInit   (&md_ctx, EVP_md5());
   EVP_SignUpdate (&md_ctx, data, strlen(data));
   sig_len = sizeof(sig_buf);
   err = EVP_SignFinal (&md_ctx,
-		       sig_buf, 
+		       sig_buf,
 		       &sig_len,
 		       pkey);
   if (err != 1) {  ERR_print_errors_fp (stderr);    exit (1);  }
   EVP_PKEY_free (pkey);
-  
+
   /* Read public key */
-  
+
   fp = fopen (certfile, "r");   if (fp == NULL) exit (1);
   x509 = (X509 *)PEM_ASN1_read ((char *(*)())d2i_X509,
 				   PEM_STRING_X509,
 				   fp, NULL, NULL);
   if (x509 == NULL) {  ERR_print_errors_fp (stderr);    exit (1);  }
   fclose (fp);
-  
+
   /* Get public key - eay */
   pkey=X509_extract_key(x509);
   if (pkey == NULL) {  ERR_print_errors_fp (stderr);    exit (1);  }
 
   /* Verify the signature */
-  
+
   EVP_VerifyInit   (&md_ctx, EVP_md5());
   EVP_VerifyUpdate (&md_ctx, data, strlen((char*)data));
   err = EVP_VerifyFinal (&md_ctx,

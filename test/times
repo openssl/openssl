@@ -91,7 +91,7 @@ The general cipher performance number for this platform are
 SSLeay 0.8.2a 04-Sep-1997
 built on Fri Sep  5 17:37:05 EST 1997
 options:bn(64,32) md2(int) rc4(idx,int) des(ptr,risc1,16,long) idea(int) blowfish(ptr2)
-C flags:gcc -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall -Wuninitialized 
+C flags:gcc -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall -Wuninitialized
 The 'numbers' are in 1000s of bytes per second processed.
 type              8 bytes     64 bytes    256 bytes   1024 bytes   8192 bytes
 md2               131.02k      368.41k      500.57k      549.21k      566.09k

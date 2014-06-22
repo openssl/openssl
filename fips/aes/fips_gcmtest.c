@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -103,7 +103,7 @@ static void gcmtest(FILE *in, FILE *out, int encrypt)
 				gcm = EVP_aes_192_gcm();
 			else if (keylen == 256)
 				gcm = EVP_aes_256_gcm();
-			else 
+			else
 				{
 				fprintf(stderr, "Unsupported keylen %d\n",
 							keylen);

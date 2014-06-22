@@ -1888,7 +1888,7 @@ foreach(split("\n",$code)) {
 	    if ($flavour =~ /le$/o) {
 		SWITCH: for($conv)  {
 		    /\?inv/ && do   { @bytes=map($_^0xf,@bytes); last; };
-		    /\?rev/ && do   { @bytes=reverse(@bytes);    last; }; 
+		    /\?rev/ && do   { @bytes=reverse(@bytes);    last; };
 		}
 	    }
 

@@ -142,7 +142,7 @@ time stamp requests, tsa.opentsa.org listens at port 8080 for HTTP requests
 and at port 8443 for HTTPS requests, the TSA service is available at the /tsa
 absolute path.
 
-Get a time stamp response for file1.tsq over HTTP, output is written to 
+Get a time stamp response for file1.tsq over HTTP, output is written to
 file1.tsr:
 
   tsget -h http://tsa.opentsa.org:8080/tsa file1.tsq
@@ -188,7 +188,7 @@ Zoltan Glozik <zglozik@opentsa.org>, OpenTSA project (http://www.opentsa.org)
 
 =head1 SEE ALSO
 
-L<openssl(1)|openssl(1)>, L<ts(1)|ts(1)>, L<curl(1)|curl(1)>, 
+L<openssl(1)|openssl(1)>, L<ts(1)|ts(1)>, L<curl(1)|curl(1)>,
 B<RFC 3161>
 
 =cut

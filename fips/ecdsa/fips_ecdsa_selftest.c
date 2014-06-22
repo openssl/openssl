@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -113,7 +113,7 @@ static const unsigned char K_233_qy[] = {
 
 #endif
 
-typedef struct 
+typedef struct
 	{
 	int curve;
 	const char *name;
@@ -130,7 +130,7 @@ typedef struct
 				pr##_qy, sizeof(pr##_qy), \
 				pr##_d, sizeof(pr##_d)}
 
-static EC_SELFTEST_DATA test_ec_data[] = 
+static EC_SELFTEST_DATA test_ec_data[] =
 	{
 	make_ecdsa_test(NID_secp224r1, P_224),
 #ifndef OPENSSL_NO_EC2M

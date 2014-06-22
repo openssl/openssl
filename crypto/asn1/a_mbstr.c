@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -87,7 +87,7 @@ int ASN1_mbstring_copy(ASN1_STRING **out, const unsigned char *in, int len,
 }
 
 int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
-					int inform, unsigned long mask, 
+					int inform, unsigned long mask,
 					long minsize, long maxsize)
 {
 	int str_type;
@@ -206,7 +206,7 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 			return -1;
 		}
 		return str_type;
-	} 
+	}
 
 	/* Work out how much space the destination will need */
 	switch(outform) {
@@ -382,7 +382,7 @@ static int is_printable(unsigned long value)
 	int ch;
 	if(value > 0x7f) return 0;
 	ch = (int) value;
-	/* Note: we can't use 'isalnum' because certain accented 
+	/* Note: we can't use 'isalnum' because certain accented
 	 * characters may count as alphanumeric in some environments.
 	 */
 #ifndef CHARSET_EBCDIC

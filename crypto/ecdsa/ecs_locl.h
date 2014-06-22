@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -65,14 +65,14 @@
 extern "C" {
 #endif
 
-struct ecdsa_method 
+struct ecdsa_method
 	{
 	const char *name;
-	ECDSA_SIG *(*ecdsa_do_sign)(const unsigned char *dgst, int dgst_len, 
+	ECDSA_SIG *(*ecdsa_do_sign)(const unsigned char *dgst, int dgst_len,
 			const BIGNUM *inv, const BIGNUM *rp, EC_KEY *eckey);
 	int (*ecdsa_sign_setup)(EC_KEY *eckey, BN_CTX *ctx, BIGNUM **kinv,
 			BIGNUM **r);
-	int (*ecdsa_do_verify)(const unsigned char *dgst, int dgst_len, 
+	int (*ecdsa_do_verify)(const unsigned char *dgst, int dgst_len,
 			const ECDSA_SIG *sig, EC_KEY *eckey);
 #if 0
 	int (*init)(EC_KEY *eckey);

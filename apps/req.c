@@ -5,21 +5,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -509,7 +509,7 @@ bad:
 			BIO *oid_bio;
 
 			oid_bio=BIO_new_file(p,"r");
-			if (oid_bio == NULL) 
+			if (oid_bio == NULL)
 				{
 				/*
 				BIO_printf(bio_err,"problems opening %s for extra oid's\n",p);
@@ -858,7 +858,7 @@ loop:
 			X509V3_set_nconf(&ext_ctx, req_conf);
 
 			/* Add extensions */
-			if(extensions && !X509V3_EXT_add_nconf(req_conf, 
+			if(extensions && !X509V3_EXT_add_nconf(req_conf,
 				 	&ext_ctx, extensions, x509ss))
 				{
 				BIO_printf(bio_err,
@@ -884,7 +884,7 @@ loop:
 			X509V3_set_nconf(&ext_ctx, req_conf);
 
 			/* Add extensions */
-			if(req_exts && !X509V3_EXT_REQ_add_nconf(req_conf, 
+			if(req_exts && !X509V3_EXT_REQ_add_nconf(req_conf,
 				 	&ext_ctx, req_exts, req))
 				{
 				BIO_printf(bio_err,
@@ -991,7 +991,7 @@ loop:
 
 	if (pubkey)
 		{
-		EVP_PKEY *tpubkey; 
+		EVP_PKEY *tpubkey;
 		tpubkey=X509_REQ_get_pubkey(req);
 		if (tpubkey == NULL)
 			{
@@ -1011,7 +1011,7 @@ loop:
 			X509_REQ_print_ex(out, req, nmflag, reqflag);
 		}
 
-	if(subject) 
+	if(subject)
 		{
 		if(x509)
 			print_name(out, "subject=", X509_get_subject_name(x509ss), nmflag);
@@ -1030,7 +1030,7 @@ loop:
 		if (tpubkey == NULL)
 			{
 			fprintf(stdout,"Modulus=unavailable\n");
-			goto end; 
+			goto end;
 			}
 		fprintf(stdout,"Modulus=");
 #ifndef OPENSSL_NO_RSA
@@ -1160,7 +1160,7 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int multirdn,
 
 	if (subj)
 		i = build_subject(req, subj, chtype, multirdn);
-	else if (no_prompt) 
+	else if (no_prompt)
 		i = auto_info(req, dn_sk, attr_sk, attribs, chtype);
 	else
 		i = prompt_info(req, dn_sk, dn_sect, attr_sk, attr_sect, attribs, chtype);
@@ -1237,9 +1237,9 @@ start:		for (;;)
 				!check_end(type,"_default") ||
 					 !check_end(type,"_value")) continue;
 			/* Skip past any leading X. X: X, etc to allow for
-			 * multiple instances 
+			 * multiple instances
 			 */
-			for(p = v->name; *p ; p++) 
+			for(p = v->name; *p ; p++)
 				if ((*p == ':') || (*p == ',') ||
 							 (*p == '.')) {
 					p++;
@@ -1391,9 +1391,9 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
 		p=q=NULL;
 		type=v->name;
 		/* Skip past any leading X. X: X, etc to allow for
-		 * multiple instances 
+		 * multiple instances
 		 */
-		for(p = v->name; *p ; p++) 
+		for(p = v->name; *p ; p++)
 #ifndef CHARSET_EBCDIC
 			if ((*p == ':') || (*p == ',') || (*p == '.')) {
 #else

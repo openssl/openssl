@@ -49,7 +49,7 @@ $shlibp=($shlib)?".dll":".lib";
 $lfile='';
 
 $shlib_ex_obj="";
-$app_ex_obj="c0x32.obj"; 
+$app_ex_obj="c0x32.obj";
 
 $asm=(`nasm -v 2>NUL` ge `nasmw -v 2>NUL`?"nasm":"nasmw")." -f obj -d__omf__";
 $asm.=" -g" if $debug;

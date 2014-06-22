@@ -27,7 +27,7 @@
 #define PRIVFILE  "privkey.pem"
 
 #define STDIN     0
-#define STDOUT    1 
+#define STDOUT    1
 
 void main_encrypt(void);
 void main_decrypt(void);
@@ -61,9 +61,9 @@ void main_encrypt(void)
 	unsigned int ebuflen;
         EVP_CIPHER_CTX ectx;
         unsigned char iv[EVP_MAX_IV_LENGTH];
-	unsigned char *ekey[1]; 
+	unsigned char *ekey[1];
 	int readlen;
-	int ekeylen, net_ekeylen; 
+	int ekeylen, net_ekeylen;
 	EVP_PKEY *pubKey[1];
 	char buf[512];
 	char ebuf[512];
@@ -76,12 +76,12 @@ void main_encrypt(void)
 	{
            fprintf(stderr,"Error: can't load public key");
            exit(1);
-        }      
+        }
 
-        ekey[0] = malloc(EVP_PKEY_size(pubKey[0]));  
+        ekey[0] = malloc(EVP_PKEY_size(pubKey[0]));
         if (!ekey[0])
 	{
-	   EVP_PKEY_free(pubKey[0]); 
+	   EVP_PKEY_free(pubKey[0]);
 	   perror("malloc");
 	   exit(1);
 	}
@@ -92,7 +92,7 @@ void main_encrypt(void)
 		   &ekeylen,
 		   iv,
 		   pubKey,
-		   1); 
+		   1);
 
 	net_ekeylen = htonl(ekeylen);	
 	write(STDOUT, (char*)&net_ekeylen, sizeof(net_ekeylen));
@@ -117,7 +117,7 @@ void main_encrypt(void)
 	}
 
         EVP_SealFinal(&ectx, ebuf, &ebuflen);
-        
+
 	write(STDOUT, ebuf, ebuflen);
 
         EVP_PKEY_free(pubKey[0]);
@@ -131,8 +131,8 @@ void main_decrypt(void)
 	unsigned int buflen;
         EVP_CIPHER_CTX ectx;
         unsigned char iv[EVP_MAX_IV_LENGTH];
-	unsigned char *encryptKey; 
-	unsigned int ekeylen; 
+	unsigned char *encryptKey;
+	unsigned int ekeylen;
 	EVP_PKEY *privateKey;
 
 	memset(iv, '\0', sizeof(iv));
@@ -165,7 +165,7 @@ void main_decrypt(void)
 	read(STDIN, encryptKey, ekeylen);
 	read(STDIN, iv, sizeof(iv));
 	EVP_OpenInit(&ectx,
-		   EVP_des_ede3_cbc(), 
+		   EVP_des_ede3_cbc(),
 		   encryptKey,
 		   ekeylen,
 		   iv,

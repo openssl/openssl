@@ -15,7 +15,7 @@
 
 #define STDIN     	0
 #define STDOUT    	1
-#define BUFLEN	  	512 
+#define BUFLEN	  	512
 #define INIT_VECTOR 	"12345678"
 #define ENCRYPT		1
 #define DECRYPT         0
@@ -52,7 +52,7 @@ void do_cipher(char *pw, int operation)
         unsigned char iv[EVP_MAX_IV_LENGTH], key[EVP_MAX_KEY_LENGTH];
 	/* unsigned int ekeylen, net_ekeylen;  */
 	EVP_CIPHER_CTX ectx;
-        
+
 	memcpy(iv, INIT_VECTOR, sizeof(iv));
 
 	EVP_BytesToKey(ALG, EVP_md5(), "salu", pw, strlen(pw), 1, key, iv);
@@ -80,8 +80,8 @@ void do_cipher(char *pw, int operation)
 		write(STDOUT, ebuf, ebuflen);
 	}
 
-        EVP_CipherFinal_ex(&ectx, ebuf, &ebuflen); 
+        EVP_CipherFinal_ex(&ectx, ebuf, &ebuflen);
 	EVP_CIPHER_CTX_cleanup(&ectx);
 
-	write(STDOUT, ebuf, ebuflen); 
+	write(STDOUT, ebuf, ebuflen);
 }

@@ -18,7 +18,7 @@ rsa - RSA public key cryptosystem
     unsigned char *to, RSA *rsa, int padding);
  int RSA_private_encrypt(int flen, unsigned char *from,
     unsigned char *to, RSA *rsa,int padding);
- int RSA_public_decrypt(int flen, unsigned char *from, 
+ int RSA_public_decrypt(int flen, unsigned char *from,
     unsigned char *to, RSA *rsa,int padding);
 
  int RSA_sign(int type, unsigned char *m, unsigned int m_len,
@@ -118,6 +118,6 @@ L<RSA_set_method(3)|RSA_set_method(3)>, L<RSA_print(3)|RSA_print(3)>,
 L<RSA_get_ex_new_index(3)|RSA_get_ex_new_index(3)>,
 L<RSA_private_encrypt(3)|RSA_private_encrypt(3)>,
 L<RSA_sign_ASN1_OCTET_STRING(3)|RSA_sign_ASN1_OCTET_STRING(3)>,
-L<RSA_padding_add_PKCS1_type_1(3)|RSA_padding_add_PKCS1_type_1(3)> 
+L<RSA_padding_add_PKCS1_type_1(3)|RSA_padding_add_PKCS1_type_1(3)>
 
 =cut

@@ -51,7 +51,7 @@ section.
 
 =item B<-outform DER|NET|PEM>
 
-This specifies the output format, the options have the same meaning as the 
+This specifies the output format, the options have the same meaning as the
 B<-inform> option.
 
 =item B<-in filename>
@@ -84,7 +84,7 @@ keys.
 
 =item B<-des|-des3|-idea>
 
-These options encrypt the private key with the DES, triple DES, or the 
+These options encrypt the private key with the DES, triple DES, or the
 IDEA ciphers respectively before outputting it. A pass phrase is prompted for.
 If none of these options is specified the key is written in plain text. This
 means that using the B<rsa> utility to read in an encrypted key with no
@@ -95,7 +95,7 @@ These options can only be used with PEM format output files.
 =item B<-text>
 
 prints out the various public or private key components in
-plain text in addition to the encoded version. 
+plain text in addition to the encoded version.
 
 =item B<-noout>
 
@@ -172,7 +172,7 @@ To encrypt a private key using triple DES:
 
  openssl rsa -in key.pem -des3 -out keyout.pem
 
-To convert a private key from PEM to DER format: 
+To convert a private key from PEM to DER format:
 
  openssl rsa -in key.pem -outform DER -out keyout.der
 
@@ -199,6 +199,6 @@ without having to manually edit them.
 =head1 SEE ALSO
 
 L<pkcs8(1)|pkcs8(1)>, L<dsa(1)|dsa(1)>, L<genrsa(1)|genrsa(1)>,
-L<gendsa(1)|gendsa(1)> 
+L<gendsa(1)|gendsa(1)>
 
 =cut

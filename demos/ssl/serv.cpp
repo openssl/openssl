@@ -50,7 +50,7 @@ void main ()
   char*    str;
   char     buf [4096];
   SSL_METHOD *meth;
-  
+
   /* SSL preliminaries. We keep the certificate and key with the context. */
 
   SSL_load_error_strings();
@@ -61,7 +61,7 @@ void main ()
     ERR_print_errors_fp(stderr);
     exit(2);
   }
-  
+
   if (SSL_CTX_use_certificate_file(ctx, CERTF, SSL_FILETYPE_PEM) <= 0) {
     ERR_print_errors_fp(stderr);
     exit(3);
@@ -80,19 +80,19 @@ void main ()
   /* Prepare TCP socket for receiving connections */
 
   listen_sd = socket (AF_INET, SOCK_STREAM, 0);   CHK_ERR(listen_sd, "socket");
-  
+
   memset (&sa_serv, '\0', sizeof(sa_serv));
   sa_serv.sin_family      = AF_INET;
   sa_serv.sin_addr.s_addr = INADDR_ANY;
   sa_serv.sin_port        = htons (1111);          /* Server Port number */
-  
+
   err = bind(listen_sd, (struct sockaddr*) &sa_serv,
 	     sizeof (sa_serv));                   CHK_ERR(err, "bind");
-	     
+	
   /* Receive a TCP connection. */
-	     
+	
   err = listen (listen_sd, 5);                    CHK_ERR(err, "listen");
-  
+
   client_len = sizeof(sa_cli);
   sd = accept (listen_sd, (struct sockaddr*) &sa_cli, &client_len);
   CHK_ERR(sd, "accept");
@@ -100,37 +100,37 @@ void main ()
 
   printf ("Connection from %lx, port %x\n",
 	  sa_cli.sin_addr.s_addr, sa_cli.sin_port);
-  
+
   /* ----------------------------------------------- */
   /* TCP connection is ready. Do server side SSL. */
 
   ssl = SSL_new (ctx);                           CHK_NULL(ssl);
   SSL_set_fd (ssl, sd);
   err = SSL_accept (ssl);                        CHK_SSL(err);
-  
+
   /* Get the cipher - opt */
-  
+
   printf ("SSL connection using %s\n", SSL_get_cipher (ssl));
-  
+
   /* Get client's certificate (note: beware of dynamic allocation) - opt */
 
   client_cert = SSL_get_peer_certificate (ssl);
   if (client_cert != NULL) {
     printf ("Client certificate:\n");
-    
+
     str = X509_NAME_oneline (X509_get_subject_name (client_cert), 0, 0);
     CHK_NULL(str);
     printf ("\t subject: %s\n", str);
     OPENSSL_free (str);
-    
+
     str = X509_NAME_oneline (X509_get_issuer_name  (client_cert), 0, 0);
     CHK_NULL(str);
     printf ("\t issuer: %s\n", str);
     OPENSSL_free (str);
-    
+
     /* We could do all sorts of certificate verification stuff here before
        deallocating the certificate. */
-    
+
     X509_free (client_cert);
   } else
     printf ("Client does not have certificate.\n");
@@ -140,7 +140,7 @@ void main ()
   err = SSL_read (ssl, buf, sizeof(buf) - 1);                   CHK_SSL(err);
   buf[err] = '\0';
   printf ("Got %d chars:'%s'\n", err, buf);
-  
+
   err = SSL_write (ssl, "I hear you.", strlen("I hear you."));  CHK_SSL(err);
 
   /* Clean up. */

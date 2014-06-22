@@ -3,7 +3,7 @@
 All assember in this directory are just version of the file
 crypto/bn/bn_asm.c.
 
-Quite a few of these files are just the assember output from gcc since on 
+Quite a few of these files are just the assember output from gcc since on
 quite a few machines they are 2 times faster than the system compiler.
 
 For the x86, I have hand written assember because of the bad job all

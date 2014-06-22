@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -92,7 +92,7 @@ const X509V3_EXT_METHOD v3_ocsp_accresp = {
 	NULL
 };
 
-ASN1_ITEM_TEMPLATE(EXTENDED_KEY_USAGE) = 
+ASN1_ITEM_TEMPLATE(EXTENDED_KEY_USAGE) =
 	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, EXTENDED_KEY_USAGE, ASN1_OBJECT)
 ASN1_ITEM_TEMPLATE_END(EXTENDED_KEY_USAGE)
 

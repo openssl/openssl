@@ -56,7 +56,7 @@ i2d_X509() described in the L<d2i_X509(3)|d2i_X509(3)> manual page.
 The B<DSA> structure passed to the private key encoding functions should have
 all the private key components present.
 
-The data encoded by the private key functions is unencrypted and therefore 
+The data encoded by the private key functions is unencrypted and therefore
 offers no private key security.
 
 The B<DSA_PUBKEY> functions should be used in preference to the B<DSAPublicKey>

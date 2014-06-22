@@ -22,7 +22,7 @@ $!	Loop through all the certificate files.
 $!
 $	args = ""
 $	old_f = ""
-$ loop_file: 
+$ loop_file:
 $	    f = f$search( pems)
 $	    if ((f .nes. "") .and. (f .nes. old_f))
 $	    then

@@ -9,7 +9,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -475,7 +475,7 @@ static int int_dh_bn_cpy(BIGNUM **dst, const BIGNUM *src)
 		if (!a)
 			return 0;
 		}
-	else 
+	else
 		a = NULL;
 	if (*dst)
 		BN_free(*dst);
@@ -605,7 +605,7 @@ static int dh_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 
 	}
 
-const EVP_PKEY_ASN1_METHOD dh_asn1_meth = 
+const EVP_PKEY_ASN1_METHOD dh_asn1_meth =
 	{
 	EVP_PKEY_DH,
 	EVP_PKEY_DH,
@@ -639,7 +639,7 @@ const EVP_PKEY_ASN1_METHOD dh_asn1_meth =
 	0
 	};
 
-const EVP_PKEY_ASN1_METHOD dhx_asn1_meth = 
+const EVP_PKEY_ASN1_METHOD dhx_asn1_meth =
 	{
 	EVP_PKEY_DHX,
 	EVP_PKEY_DHX,

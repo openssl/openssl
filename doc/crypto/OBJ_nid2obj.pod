@@ -34,7 +34,7 @@ functions
 The ASN1 object utility functions process ASN1_OBJECT structures which are
 a representation of the ASN1 OBJECT IDENTIFIER (OID) type.
 
-OBJ_nid2obj(), OBJ_nid2ln() and OBJ_nid2sn() convert the NID B<n> to 
+OBJ_nid2obj(), OBJ_nid2ln() and OBJ_nid2sn() convert the NID B<n> to
 an ASN1_OBJECT structure, its long name and its short name respectively,
 or B<NULL> is an error occurred.
 
@@ -62,7 +62,7 @@ OBJ_cmp() compares B<a> to B<b>. If the two are identical 0 is returned.
 
 OBJ_dup() returns a copy of B<o>.
 
-OBJ_create() adds a new object to the internal table. B<oid> is the 
+OBJ_create() adds a new object to the internal table. B<oid> is the
 numerical form of the object, B<sn> the short name and B<ln> the
 long name. A new NID is returned for the created object.
 
@@ -115,14 +115,14 @@ Create a new NID and initialize an object from it:
  new_nid = OBJ_create("1.2.3.4", "NewOID", "New Object Identifier");
 
  obj = OBJ_nid2obj(new_nid);
- 
+
 Create a new object directly:
 
  obj = OBJ_txt2obj("1.2.3.4", 1);
 
 =head1 BUGS
 
-OBJ_obj2txt() is awkward and messy to use: it doesn't follow the 
+OBJ_obj2txt() is awkward and messy to use: it doesn't follow the
 convention of other OpenSSL functions where the buffer can be set
 to B<NULL> to determine the amount of data that should be written.
 Instead B<buf> must point to a valid buffer and B<buf_len> should

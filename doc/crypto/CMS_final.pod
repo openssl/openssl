@@ -14,7 +14,7 @@
 
 CMS_final() finalises the structure B<cms>. It's purpose is to perform any
 operations necessary on B<cms> (digest computation for example) and set the
-appropriate fields. The parameter B<data> contains the content to be 
+appropriate fields. The parameter B<data> contains the content to be
 processed. The B<dcont> parameter contains a BIO to write content to after
 processing: this is only used with detached data and will usually be set to
 NULL.

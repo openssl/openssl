@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -138,7 +138,7 @@ static void ctx_add_buf(DRBG_CTX *dctx, unsigned char *buf,
 	/* Special case: zero length, just increment buffer */
 	if (i)
 		c = 0;
-	else 
+	else
 		c = 1;
 
 	while (i)
@@ -226,11 +226,11 @@ static int drbg_hash_instantiate(DRBG_CTX *dctx,
 				const unsigned char *pstr, size_t pstr_len)
 	{
 	DRBG_HASH_CTX *hctx = &dctx->d.hash;
-	if (!hash_df(dctx, hctx->V, 
+	if (!hash_df(dctx, hctx->V,
 			ent, ent_len, nonce, nonce_len, pstr, pstr_len,
 			NULL, 0))
 		return 0;
-	if (!hash_df(dctx, hctx->C, 
+	if (!hash_df(dctx, hctx->C,
 			NULL, 0, hctx->V, dctx->seedlen,
 			NULL, 0, NULL, 0))
 		return 0;

@@ -5,21 +5,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -63,7 +63,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -371,7 +371,7 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -tls1_2       - just use TLSv1.2\n");
 	BIO_printf(bio_err," -tls1_1       - just use TLSv1.1\n");
 	BIO_printf(bio_err," -tls1         - just use TLSv1\n");
-	BIO_printf(bio_err," -dtls1        - just use DTLSv1\n");    
+	BIO_printf(bio_err," -dtls1        - just use DTLSv1\n");
 	BIO_printf(bio_err," -mtu          - set the link layer MTU\n");
 	BIO_printf(bio_err," -no_tls1_2/-no_tls1_1/-no_tls1/-no_ssl3/-no_ssl2 - turn off that protocol\n");
 	BIO_printf(bio_err," -bugs         - Switch on all SSL implementation bug workarounds\n");
@@ -422,9 +422,9 @@ static int MS_CALLBACK ssl_servername_cb(SSL *s, int *ad, void *arg)
 	{
 	tlsextctx * p = (tlsextctx *) arg;
 	const char * hn= SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
-	if (SSL_get_servername_type(s) != -1) 
+	if (SSL_get_servername_type(s) != -1)
  	        p->ack = !SSL_session_reused(s) && hn != NULL;
-	else 
+	else
 		BIO_printf(bio_err,"Can't use SSL_get_servername\n");
 	
 	return SSL_TLSEXT_ERR_OK;
@@ -479,12 +479,12 @@ static int srp_Verify_N_and_g(const BIGNUM *N, const BIGNUM *g)
    The callback is only called for a non default group.
 
    An application does not need the call back at all if
-   only the stanard groups are used.  In real life situations, 
-   client and server already share well known groups, 
-   thus there is no need to verify them. 
+   only the stanard groups are used.  In real life situations,
+   client and server already share well known groups,
+   thus there is no need to verify them.
    Furthermore, in case that a server actually proposes a group that
-   is not one of those defined in RFC 5054, it is more appropriate 
-   to add the group to a static list and then compare since 
+   is not one of those defined in RFC 5054, it is more appropriate
+   to add the group to a static list and then compare since
    primality tests are rather cpu consuming.
 */
 
@@ -496,7 +496,7 @@ static int MS_CALLBACK ssl_srp_verify_param_cb(SSL *s, void *arg)
 		return 0;
 	if (srp_arg->debug || srp_arg->msg || srp_arg->amp == 1)
 		{
-    		BIO_printf(bio_err, "SRP parameters:\n"); 
+    		BIO_printf(bio_err, "SRP parameters:\n");
 		BIO_printf(bio_err,"\tN="); BN_print(bio_err,N);
 		BIO_printf(bio_err,"\n\tg="); BN_print(bio_err,g);
 		BIO_printf(bio_err,"\n");
@@ -581,7 +581,7 @@ static int next_proto_cb(SSL *s, unsigned char **out, unsigned char *outlen, con
 # endif  /* ndef OPENSSL_NO_NEXTPROTONEG */
 
 static int serverinfo_cli_cb(SSL* s, unsigned short ext_type,
-			     const unsigned char* in, unsigned short inlen, 
+			     const unsigned char* in, unsigned short inlen,
 			     int* al, void* arg)
 	{
 	char pem_name[100];
@@ -668,8 +668,8 @@ int MAIN(int argc, char **argv)
 #endif
 #endif
 #ifndef OPENSSL_NO_TLSEXT
-	char *servername = NULL; 
-        tlsextctx tlsextcbp = 
+	char *servername = NULL;
+        tlsextctx tlsextcbp =
         {NULL,0};
 # ifndef OPENSSL_NO_NEXTPROTONEG
 	const char *next_proto_neg_in = NULL;
@@ -1369,7 +1369,7 @@ bad:
 		SSL_CTX_set_tlsext_use_srtp(ctx, srtp_profiles);
 #endif
 	if (exc) ssl_ctx_set_excert(ctx, exc);
-	/* DTLS: partial reads end up discarding unread UDP bytes :-( 
+	/* DTLS: partial reads end up discarding unread UDP bytes :-(
 	 * Setting read ahead solves this problem.
 	 */
 	if (socket_type == SOCK_DGRAM) SSL_CTX_set_read_ahead(ctx, 1);
@@ -1400,7 +1400,7 @@ bad:
 				{
 				SSL_CTX_set_custom_cli_ext(ctx,
 							   serverinfo_types[i],
-							   NULL, 
+							   NULL,
 							   serverinfo_cli_cb,
 							   NULL);
 				}
@@ -1532,7 +1532,7 @@ re_start:
 			goto end;
 			}
 		}
-#endif                                              
+#endif
 	if (c_Pause & 0x01) SSL_set_debug(con, 1);
 
 	if (socket_type == SOCK_DGRAM)
@@ -1795,7 +1795,7 @@ SSL_set_tlsext_status_ids(con, ids);
 						PEM_write_bio_SSL_SESSION(stmp, SSL_get_session(con));
 						BIO_free(stmp);
 						}
-					else 
+					else
 						BIO_printf(bio_err, "Error writing session file %s\n", sess_out);
 					}
 				if (c_brief)
@@ -2040,7 +2040,7 @@ SSL_set_tlsext_status_ids(con, ids);
 #else
 /* Demo for pending and peek :-) */
 			k=SSL_read(con,sbuf,16);
-{ char zbuf[10240]; 
+{ char zbuf[10240];
 printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240));
 }
 #endif
@@ -2350,7 +2350,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 	BIO_printf(bio,"Expansion: %s\n",
 		expansion ? SSL_COMP_get_name(expansion) : "NONE");
 #endif
- 
+
 #ifdef SSL_DEBUG
 	{
 	/* Print out local port of connection: useful for debugging */
@@ -2391,12 +2391,12 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 
  	{
  	SRTP_PROTECTION_PROFILE *srtp_profile=SSL_get_selected_srtp_profile(s);
- 
+
 	if(srtp_profile)
 		BIO_printf(bio,"SRTP Extension negotiated, profile=%s\n",
 			   srtp_profile->name);
 	}
- 
+
 	SSL_SESSION_print(bio,SSL_get_session(s));
 	if (keymatexportlabel != NULL)
 		{

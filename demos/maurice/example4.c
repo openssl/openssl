@@ -15,7 +15,7 @@
 
 #define STDIN     	0
 #define STDOUT    	1
-#define BUFLEN	  	512 
+#define BUFLEN	  	512
 
 static const char *usage = "Usage: example4 [-d]\n";
 
@@ -47,7 +47,7 @@ void do_encode()
 	char ebuf[BUFLEN+24];
 	unsigned int ebuflen;
 	EVP_ENCODE_CTX ectx;
-        
+
 	EVP_EncodeInit(&ectx);
 
 	while(1)
@@ -70,7 +70,7 @@ void do_encode()
 		write(STDOUT, ebuf, ebuflen);
 	}
 
-        EVP_EncodeFinal(&ectx, ebuf, &ebuflen); 
+        EVP_EncodeFinal(&ectx, ebuf, &ebuflen);
 
 	write(STDOUT, ebuf, ebuflen);
 }
@@ -81,7 +81,7 @@ void do_decode()
  	char ebuf[BUFLEN+24];
 	unsigned int ebuflen;
 	EVP_ENCODE_CTX ectx;
-        
+
 	EVP_DecodeInit(&ectx);
 
 	while(1)
@@ -116,8 +116,8 @@ void do_decode()
 		write(STDOUT, ebuf, ebuflen);
 	}
 
-        EVP_DecodeFinal(&ectx, ebuf, &ebuflen); 
+        EVP_DecodeFinal(&ectx, ebuf, &ebuflen);
 
-	write(STDOUT, ebuf, ebuflen); 
+	write(STDOUT, ebuf, ebuflen);
 }
 

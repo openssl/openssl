@@ -10,7 +10,7 @@
  * (bug is still present in IRIX 6.3 according to
  * Gage <agage@forgetmenot.Mines.EDU>
  */
- 
+
 /* Compare the output from
  * cc sgiccbug.c; ./a.out
  * and

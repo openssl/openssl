@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -339,7 +339,7 @@ static void *v2i_crld(const X509V3_EXT_METHOD *method,
 		else
 			{
 			if(!(gen = v2i_GENERAL_NAME(method, ctx, cnf)))
-				goto err; 
+				goto err;
 			if(!(gens = GENERAL_NAMES_new()))
 				goto merr;
 			if(!sk_GENERAL_NAME_push(gens, gen))
@@ -409,7 +409,7 @@ ASN1_SEQUENCE(DIST_POINT) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(DIST_POINT)
 
-ASN1_ITEM_TEMPLATE(CRL_DIST_POINTS) = 
+ASN1_ITEM_TEMPLATE(CRL_DIST_POINTS) =
 	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, CRLDistributionPoints, DIST_POINT)
 ASN1_ITEM_TEMPLATE_END(CRL_DIST_POINTS)
 
@@ -548,7 +548,7 @@ static int i2r_idp(const X509V3_EXT_METHOD *method, void *pidp, BIO *out,
 	if (idp->indirectCRL > 0)
 		BIO_printf(out, "%*sIndirect CRL\n", indent, "");
 	if (idp->onlysomereasons)
-		print_reasons(out, "Only Some Reasons", 
+		print_reasons(out, "Only Some Reasons",
 				idp->onlysomereasons, indent);
 	if (idp->onlyattr > 0)
 		BIO_printf(out, "%*sOnly Attribute Certificates\n", indent, "");
@@ -572,7 +572,7 @@ static int i2r_crldp(const X509V3_EXT_METHOD *method, void *pcrldp, BIO *out,
 		point = sk_DIST_POINT_value(crld, i);
 		if(point->distpoint)
 			print_distpoint(out, point->distpoint, indent);
-		if(point->reasons) 
+		if(point->reasons)
 			print_reasons(out, "Reasons", point->reasons,
 								indent);
 		if(point->CRLissuer)

@@ -5,21 +5,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -168,7 +168,7 @@ start:
 			if (strcmp(name,PEM_STRING_RSA) == 0)
 			{
 			d2i=(D2I_OF(void))d2i_RSAPrivateKey;
-			if (xi->x_pkey != NULL) 
+			if (xi->x_pkey != NULL)
 				{
 				if (!sk_X509_INFO_push(ret,xi)) goto err;
 				if ((xi=X509_INFO_new()) == NULL) goto err;
@@ -190,7 +190,7 @@ start:
 			if (strcmp(name,PEM_STRING_DSA) == 0)
 			{
 			d2i=(D2I_OF(void))d2i_DSAPrivateKey;
-			if (xi->x_pkey != NULL) 
+			if (xi->x_pkey != NULL)
 				{
 				if (!sk_X509_INFO_push(ret,xi)) goto err;
 				if ((xi=X509_INFO_new()) == NULL) goto err;
@@ -212,16 +212,16 @@ start:
  			if (strcmp(name,PEM_STRING_ECPRIVATEKEY) == 0)
  			{
  				d2i=(D2I_OF(void))d2i_ECPrivateKey;
- 				if (xi->x_pkey != NULL) 
+ 				if (xi->x_pkey != NULL)
  				{
  					if (!sk_X509_INFO_push(ret,xi)) goto err;
  					if ((xi=X509_INFO_new()) == NULL) goto err;
  						goto start;
  				}
- 
+
  			xi->enc_data=NULL;
  			xi->enc_len=0;
- 
+
  			xi->x_pkey=X509_PKEY_new();
 			ptype = EVP_PKEY_EC;
  			pp=&xi->x_pkey->dec_pkey;
@@ -281,7 +281,7 @@ start:
 		}
 
 	/* if the last one hasn't been pushed yet and there is anything
-	 * in it then add it to the stack ... 
+	 * in it then add it to the stack ...
 	 */
 	if ((xi->x509 != NULL) || (xi->crl != NULL) ||
 		(xi->x_pkey != NULL) || (xi->enc_data != NULL))
@@ -331,7 +331,7 @@ int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
 			}
 		}
 
-	/* now for the fun part ... if we have a private key then 
+	/* now for the fun part ... if we have a private key then
 	 * we have to be able to handle a not-yet-decrypted key
 	 * being written out correctly ... if it is decrypted or
 	 * it is non-encrypted then we use the base code
@@ -353,7 +353,7 @@ int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
 
 			/* we take the encryption data from the
 			 * internal stuff rather than what the
-			 * user has passed us ... as we have to 
+			 * user has passed us ... as we have to
 			 * match exactly for some strange reason
 			 */
 			objstr=OBJ_nid2sn(

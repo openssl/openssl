@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -156,7 +156,7 @@ static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
     	hexdump(stdout,"AAD",aad,an);
     if (tn)
     	hexdump(stdout,"Tag",tag,tn);
-    mode = EVP_CIPHER_mode(c); 
+    mode = EVP_CIPHER_mode(c);
     if(kn != EVP_CIPHER_key_length(c))
 	{
 	fprintf(stderr,"Key length doesn't match, got %d expected %lu\n",kn,
@@ -280,7 +280,7 @@ static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
 	if (mode == EVP_CIPH_GCM_MODE || mode == EVP_CIPH_CCM_MODE)
 	    {
 	    unsigned char rtag[16];
-	    /* Note: EVP_CTRL_CCM_GET_TAG has same value as 
+	    /* Note: EVP_CTRL_CCM_GET_TAG has same value as
 	     * EVP_CTRL_GCM_GET_TAG
 	     */
 	    if (!EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_GCM_GET_TAG, tn, rtag))
@@ -602,35 +602,35 @@ int main(int argc,char **argv)
 #ifdef OPENSSL_NO_AES
 	    if (strstr(cipher, "AES") == cipher)
 		{
-		fprintf(stdout, "Cipher disabled, skipping %s\n", cipher); 
+		fprintf(stdout, "Cipher disabled, skipping %s\n", cipher);
 		continue;
 		}
 #endif
 #ifdef OPENSSL_NO_DES
 	    if (strstr(cipher, "DES") == cipher)
 		{
-		fprintf(stdout, "Cipher disabled, skipping %s\n", cipher); 
+		fprintf(stdout, "Cipher disabled, skipping %s\n", cipher);
 		continue;
 		}
 #endif
 #ifdef OPENSSL_NO_RC4
 	    if (strstr(cipher, "RC4") == cipher)
 		{
-		fprintf(stdout, "Cipher disabled, skipping %s\n", cipher); 
+		fprintf(stdout, "Cipher disabled, skipping %s\n", cipher);
 		continue;
 		}
 #endif
 #ifdef OPENSSL_NO_CAMELLIA
 	    if (strstr(cipher, "CAMELLIA") == cipher)
 		{
-		fprintf(stdout, "Cipher disabled, skipping %s\n", cipher); 
+		fprintf(stdout, "Cipher disabled, skipping %s\n", cipher);
 		continue;
 		}
 #endif
 #ifdef OPENSSL_NO_SEED
 	    if (strstr(cipher, "SEED") == cipher)
 		{
-		fprintf(stdout, "Cipher disabled, skipping %s\n", cipher); 
+		fprintf(stdout, "Cipher disabled, skipping %s\n", cipher);
 		continue;
 		}
 #endif

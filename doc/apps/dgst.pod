@@ -6,7 +6,7 @@ dgst, md5, md4, md2, sha1, sha, mdc2, ripemd160 - message digests
 
 =head1 SYNOPSIS
 
-B<openssl> B<dgst> 
+B<openssl> B<dgst>
 [B<-md5|-md4|-md2|-sha1|-sha|-mdc2|-ripemd160|-dss1>]
 [B<-c>]
 [B<-d>]
@@ -136,7 +136,7 @@ a file or files containing random data used to seed the random number
 generator, or an EGD socket (see L<RAND_egd(3)|RAND_egd(3)>).
 Multiple files can be specified separated by a OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
-all others. 
+all others.
 
 =item B<file...>
 

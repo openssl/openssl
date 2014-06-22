@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -265,7 +265,7 @@ int MAIN(int argc, char **argv)
 
 	if (do_param)
 		rv = PEM_write_bio_Parameters(out, pkey);
-	else if (outformat == FORMAT_PEM) 
+	else if (outformat == FORMAT_PEM)
 		rv = PEM_write_bio_PrivateKey(out, pkey, cipher, NULL, 0,
 								NULL, pass);
 	else if (outformat == FORMAT_ASN1)

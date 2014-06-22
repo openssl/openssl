@@ -15,7 +15,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -311,7 +311,7 @@ err:
 
 /* Add a nonce to an extension stack. A nonce can be specificed or if NULL
  * a random nonce will be generated.
- * Note: OpenSSL 0.9.7d and later create an OCTET STRING containing the 
+ * Note: OpenSSL 0.9.7d and later create an OCTET STRING containing the
  * nonce, previous versions used the raw nonce.
  */
 
@@ -405,7 +405,7 @@ int OCSP_check_nonce(OCSP_REQUEST *req, OCSP_BASICRESP *bs)
 	return 1;
 	}
 
-/* Copy the nonce value (if any) from an OCSP request to 
+/* Copy the nonce value (if any) from an OCSP request to
  * a response.
  */
 
@@ -440,7 +440,7 @@ X509_EXTENSION *OCSP_crlID_new(char *url, long *n, char *tim)
 	if (tim)
 	        {
 		if (!(cid->crlTime = ASN1_GENERALIZEDTIME_new())) goto err;
-		if (!(ASN1_GENERALIZEDTIME_set_string(cid->crlTime, tim))) 
+		if (!(ASN1_GENERALIZEDTIME_set_string(cid->crlTime, tim)))
 		        goto err;
 		}
 	x = X509V3_EXT_i2d(NID_id_pkix_OCSP_CrlID, 0, cid);
@@ -460,7 +460,7 @@ X509_EXTENSION *OCSP_accept_responses_new(char **oids)
 	if (!(sk = sk_ASN1_OBJECT_new_null())) goto err;
 	while (oids && *oids)
 	        {
-		if ((nid=OBJ_txt2nid(*oids))!=NID_undef&&(o=OBJ_nid2obj(nid))) 
+		if ((nid=OBJ_txt2nid(*oids))!=NID_undef&&(o=OBJ_nid2obj(nid)))
 		        sk_ASN1_OBJECT_push(sk, o);
 		oids++;
 		}

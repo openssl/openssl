@@ -70,7 +70,7 @@ void OPENSSL_cpuid_setup(void)
 
 	if (trigger) return;
 	trigger=1;
- 
+
 	sigfillset(&all_masked);
 	sigdelset(&all_masked,SIGILL);
 	sigdelset(&all_masked,SIGTRAP);

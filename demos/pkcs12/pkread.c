@@ -53,7 +53,7 @@ int main(int argc, char **argv)
 	}
 	if (ca && sk_X509_num(ca)) {
 		fprintf(fp, "***Other Certificates***\n");
-		for (i = 0; i < sk_X509_num(ca); i++) 
+		for (i = 0; i < sk_X509_num(ca); i++)
 		    PEM_write_X509_AUX(fp, sk_X509_value(ca, i));
 	}
 	fclose(fp);

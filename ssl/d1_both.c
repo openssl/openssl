@@ -1,7 +1,7 @@
 /* ssl/d1_both.c */
-/* 
+/*
  * DTLS implementation written by Nagendra Modadugu
- * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
+ * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
  */
 /* ====================================================================
  * Copyright (c) 1998-2005 The OpenSSL Project.  All rights reserved.
@@ -11,7 +11,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -62,21 +62,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -91,10 +91,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -106,7 +106,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -159,14 +159,14 @@ static unsigned char bitmask_end_values[]   = {0xff, 0x01, 0x03, 0x07, 0x0f, 0x1
 static unsigned int g_probable_mtu[] = {1500 - 28, 512 - 28, 256 - 28};
 
 static unsigned int dtls1_guess_mtu(unsigned int curr_mtu);
-static void dtls1_fix_message_header(SSL *s, unsigned long frag_off, 
+static void dtls1_fix_message_header(SSL *s, unsigned long frag_off,
 	unsigned long frag_len);
 static unsigned char *dtls1_write_message_header(SSL *s,
 	unsigned char *p);
 static void dtls1_set_message_header_int(SSL *s, unsigned char mt,
-	unsigned long len, unsigned short seq_num, unsigned long frag_off, 
+	unsigned long len, unsigned short seq_num, unsigned long frag_off,
 	unsigned long frag_len);
-static long dtls1_get_message_fragment(SSL *s, int st1, int stn, 
+static long dtls1_get_message_fragment(SSL *s, int st1, int stn,
 	long max, int *ok);
 
 static hm_fragment *
@@ -235,7 +235,7 @@ int dtls1_do_write(SSL *s, int type)
 	/* AHA!  Figure out the MTU, and stick to the right size */
 	if (s->d1->mtu < dtls1_min_mtu() && !(SSL_get_options(s) & SSL_OP_NO_QUERY_MTU))
 		{
-		s->d1->mtu = 
+		s->d1->mtu =
 			BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_QUERY_MTU, 0, NULL);
 
 		/* I've seen the kernel return bogus numbers when it doesn't know
@@ -244,11 +244,11 @@ int dtls1_do_write(SSL *s, int type)
 			{
 			s->d1->mtu = 0;
 			s->d1->mtu = dtls1_guess_mtu(s->d1->mtu);
-			BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SET_MTU, 
+			BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SET_MTU,
 				s->d1->mtu, NULL);
 			}
 		}
-#if 0 
+#if 0
 	mtu = s->d1->mtu;
 
 	fprintf(stderr, "using MTU = %d\n", mtu);
@@ -274,7 +274,7 @@ int dtls1_do_write(SSL *s, int type)
 	OPENSSL_assert(s->d1->mtu >= dtls1_min_mtu());  /* should have something reasonable now */
 
 	if ( s->init_off == 0  && type == SSL3_RT_HANDSHAKE)
-		OPENSSL_assert(s->init_num == 
+		OPENSSL_assert(s->init_num ==
 			(int)s->d1->w_msg_hdr.msg_len + DTLS1_HM_HEADER_LENGTH);
 
 	if (s->write_hash)
@@ -287,7 +287,7 @@ int dtls1_do_write(SSL *s, int type)
 	else
 		mac_size = 0;
 
-	if (s->enc_write_ctx && 
+	if (s->enc_write_ctx &&
 		(EVP_CIPHER_CTX_mode(s->enc_write_ctx) == EVP_CIPH_CBC_MODE))
 		blocksize = 2 * EVP_CIPHER_block_size(s->enc_write_ctx->cipher);
 	else
@@ -296,7 +296,7 @@ int dtls1_do_write(SSL *s, int type)
 	frag_off = 0;
 	while( s->init_num)
 		{
-		curr_mtu = s->d1->mtu - BIO_wpending(SSL_get_wbio(s)) - 
+		curr_mtu = s->d1->mtu - BIO_wpending(SSL_get_wbio(s)) -
 			DTLS1_RT_HEADER_LENGTH - mac_size - blocksize;
 
 		if ( curr_mtu <= DTLS1_HM_HEADER_LENGTH)
@@ -330,7 +330,7 @@ int dtls1_do_write(SSL *s, int type)
 					len = s->init_num;
 				}
 
-			dtls1_fix_message_header(s, frag_off, 
+			dtls1_fix_message_header(s, frag_off,
 				len - DTLS1_HM_HEADER_LENGTH);
 
 			dtls1_write_message_header(s, (unsigned char *)&s->init_buf->data[s->init_off]);
@@ -346,7 +346,7 @@ int dtls1_do_write(SSL *s, int type)
 			 * which previous packet caused the failure -- so can't
 			 * really retransmit anything.  continue as if everything
 			 * is fine and wait for an alert to handle the
-			 * retransmit 
+			 * retransmit
 			 */
 			if ( BIO_ctrl(SSL_get_wbio(s),
 				BIO_CTRL_DGRAM_MTU_EXCEEDED, 0, NULL) > 0 )
@@ -394,8 +394,8 @@ int dtls1_do_write(SSL *s, int type)
 			if (ret == s->init_num)
 				{
 				if (s->msg_callback)
-					s->msg_callback(1, s->version, type, s->init_buf->data, 
-						(size_t)(s->init_off + s->init_num), s, 
+					s->msg_callback(1, s->version, type, s->init_buf->data,
+						(size_t)(s->init_off + s->init_num), s,
 						s->msg_callback_arg);
 
 				s->init_off = 0;  /* done writing this message */
@@ -826,7 +826,7 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
 	/* parse the message fragment header */
 	dtls1_get_message_header(wire, &msg_hdr);
 
-	/* 
+	/*
 	 * if this is a future (or stale) message it gets buffered
 	 * (or dropped)--no further processing at this time
 	 * While listening, we accept seq 1 (ClientHello with cookie)
@@ -852,8 +852,8 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
 		if (wire[1] == 0 && wire[2] == 0 && wire[3] == 0)
 			{
 			if (s->msg_callback)
-				s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE, 
-					wire, DTLS1_HM_HEADER_LENGTH, s, 
+				s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE,
+					wire, DTLS1_HM_HEADER_LENGTH, s,
 					s->msg_callback_arg);
 			
 			s->init_num = 0;
@@ -890,7 +890,7 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
 	else
 		i = 0;
 
-	/* XDTLS:  an incorrectly formatted fragment should cause the 
+	/* XDTLS:  an incorrectly formatted fragment should cause the
 	 * handshake to fail */
 	if (i != (int)frag_len)
 		{
@@ -925,7 +925,7 @@ f_err:
  * ssl->session->read_hash		assign
  */
 int dtls1_send_change_cipher_spec(SSL *s, int a, int b)
-	{ 
+	{
 	unsigned char *p;
 
 	if (s->state == a)
@@ -943,7 +943,7 @@ int dtls1_send_change_cipher_spec(SSL *s, int a, int b)
 
 		s->init_off=0;
 
-		dtls1_set_message_header_int(s, SSL3_MT_CCS, 0, 
+		dtls1_set_message_header_int(s, SSL3_MT_CCS, 0,
 			s->d1->handshake_write_seq, 0, 0);
 
 		/* buffer the message to handle re-xmits */
@@ -966,7 +966,7 @@ int dtls1_read_failed(SSL *s, int code)
 
 	if (!dtls1_is_timer_expired(s))
 		{
-		/* not a timeout, none of our business, 
+		/* not a timeout, none of our business,
 		   let higher layers handle this.  in fact it's probably an error */
 		return code;
 		}
@@ -1046,7 +1046,7 @@ dtls1_buffer_message(SSL *s, int is_ccs)
 	hm_fragment *frag;
 	unsigned char seq64be[8];
 
-	/* this function is called immediately after a message has 
+	/* this function is called immediately after a message has
 	 * been serialized */
 	OPENSSL_assert(s->init_off == 0);
 
@@ -1058,12 +1058,12 @@ dtls1_buffer_message(SSL *s, int is_ccs)
 
 	if ( is_ccs)
 		{
-		OPENSSL_assert(s->d1->w_msg_hdr.msg_len + 
+		OPENSSL_assert(s->d1->w_msg_hdr.msg_len +
 			       DTLS1_CCS_HEADER_LENGTH == (unsigned int)s->init_num);
 		}
 	else
 		{
-		OPENSSL_assert(s->d1->w_msg_hdr.msg_len + 
+		OPENSSL_assert(s->d1->w_msg_hdr.msg_len +
 			DTLS1_HM_HEADER_LENGTH == (unsigned int)s->init_num);
 		}
 
@@ -1143,12 +1143,12 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
 	else
 		header_length = DTLS1_HM_HEADER_LENGTH;
 
-	memcpy(s->init_buf->data, frag->fragment, 
+	memcpy(s->init_buf->data, frag->fragment,
 		frag->msg_header.msg_len + header_length);
 		s->init_num = frag->msg_header.msg_len + header_length;
 
-	dtls1_set_message_header_int(s, frag->msg_header.type, 
-		frag->msg_header.msg_len, frag->msg_header.seq, 0, 
+	dtls1_set_message_header_int(s, frag->msg_header.type,
+		frag->msg_header.msg_len, frag->msg_header.seq, 0,
 		frag->msg_header.frag_len);
 
 	/* save current state */
@@ -1174,7 +1174,7 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
 		memcpy(s->s3->write_sequence, s->d1->last_write_sequence, sizeof(s->s3->write_sequence));
 	}
 	
-	ret = dtls1_do_write(s, frag->msg_header.is_ccs ? 
+	ret = dtls1_do_write(s, frag->msg_header.is_ccs ?
 						 SSL3_RT_CHANGE_CIPHER_SPEC : SSL3_RT_HANDSHAKE);
 	
 	/* restore current state */
@@ -1269,14 +1269,14 @@ dtls1_write_message_header(SSL *s, unsigned char *p)
 	return p;
 	}
 
-unsigned int 
+unsigned int
 dtls1_min_mtu(void)
 	{
-	return (g_probable_mtu[(sizeof(g_probable_mtu) / 
+	return (g_probable_mtu[(sizeof(g_probable_mtu) /
 		sizeof(g_probable_mtu[0])) - 1]);
 	}
 
-static unsigned int 
+static unsigned int
 dtls1_guess_mtu(unsigned int curr_mtu)
 	{
 	unsigned int i;

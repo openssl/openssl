@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -58,13 +58,13 @@
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
- * Portions of the attached software ("Contribution") are developed by 
+ * Portions of the attached software ("Contribution") are developed by
  * SUN MICROSYSTEMS, INC., and are contributed to the OpenSSL project.
  *
  * The Contribution is licensed pursuant to the OpenSSL open source
  * license provided above.
  *
- * The elliptic curve binary polynomial software is originally written by 
+ * The elliptic curve binary polynomial software is originally written by
  * Sheueling Chang Shantz and Douglas Stebila of Sun Microsystems Laboratories.
  *
  */
@@ -149,7 +149,7 @@ static void timings(EC_GROUP *group, int type, BN_CTX *ctx)
 		{
 		for (j = 0; j < 10; j++)
 			{
-			if (!EC_POINT_mul(group, P, (type != TIMING_RAND_PT) ? r[i] : NULL, 
+			if (!EC_POINT_mul(group, P, (type != TIMING_RAND_PT) ? r[i] : NULL,
 				(type != TIMING_BASE_PT) ? P : NULL, (type != TIMING_BASE_PT) ? r0[i] : NULL, ctx)) ABORT;
 			}
 		}
@@ -748,7 +748,7 @@ static void prime_field_tests(void)
 	/* G_y value taken from the standard: */ \
 	if (!BN_hex2bn(&z, _y)) ABORT; \
 	if (0 != BN_cmp(y, z)) ABORT;
-#else 
+#else
 #define CHAR2_CURVE_TEST_INTERNAL(_name, _p, _a, _b, _x, _y, _y_bit, _order, _cof, _degree, _variable) \
 	if (!BN_hex2bn(&x, _x)) ABORT; \
 	if (!BN_hex2bn(&y, _y)) ABORT; \

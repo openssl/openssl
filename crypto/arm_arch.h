@@ -55,7 +55,7 @@
 #if !__ASSEMBLER__
 extern unsigned int OPENSSL_armcap_P;
 #endif
-                                     
+
 #define ARMV7_NEON      (1<<0)
 #define ARMV7_TICK      (1<<1)
 #define ARMV8_AES       (1<<2)

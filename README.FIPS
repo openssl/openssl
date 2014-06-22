@@ -24,7 +24,7 @@ test/fips_test_suite
 
 again should complete without errors.
 
-Run test vectors: 
+Run test vectors:
 
 1. Download an appropriate set of testvectors from www.openssl.org/docs/fips
    only the fips-2.0 testvector files are usable for complete tests.
@@ -124,7 +124,7 @@ reports.
 
 Known issues:
 
-Code needs extensively reviewing to ensure it builds correctly on 
+Code needs extensively reviewing to ensure it builds correctly on
 supported platforms and is compliant with FIPS 140-2.
 The "FIPS capable OpenSSL" is still largely untested, it builds and runs
 some simple tests OK on some systems but needs far more "real world" testing.

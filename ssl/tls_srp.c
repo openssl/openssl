@@ -1,6 +1,6 @@
 /* ssl/tls_srp.c */
-/* Written by Christophe Renou (christophe.renou@edelweb.fr) with 
- * the precious help of Peter Sylvester (peter.sylvester@edelweb.fr) 
+/* Written by Christophe Renou (christophe.renou@edelweb.fr) with
+ * the precious help of Peter Sylvester (peter.sylvester@edelweb.fr)
  * for the EdelKey project and contributed to the OpenSSL project 2004.
  */
 /* ====================================================================
@@ -11,7 +11,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -175,7 +175,7 @@ int SSL_SRP_CTX_init(struct ssl_st *s)
 		SSLerr(SSL_F_SSL_SRP_CTX_INIT,ERR_R_BN_LIB);
 		goto err;
 		}
-	if ((ctx->srp_ctx.login != NULL) && 
+	if ((ctx->srp_ctx.login != NULL) &&
 		((s->srp_ctx.login = BUF_strdup(ctx->srp_ctx.login)) == NULL))
 		{
 		SSLerr(SSL_F_SSL_SRP_CTX_INIT,ERR_R_INTERNAL_ERROR);
@@ -417,7 +417,7 @@ int SRP_Calc_A_param(SSL *s)
 	if (BN_num_bits(s->srp_ctx.N) < s->srp_ctx.strength)
 		return 0;
 
-	if (s->srp_ctx.SRP_verify_param_callback ==NULL && 
+	if (s->srp_ctx.SRP_verify_param_callback ==NULL &&
 		!SRP_check_known_gN_param(s->srp_ctx.g,s->srp_ctx.N))
 		return 0;
 
@@ -430,7 +430,7 @@ int SRP_Calc_A_param(SSL *s)
 		return 0;
 
 	/* We can have a callback to verify SRP param!! */
-	if (s->srp_ctx.SRP_verify_param_callback !=NULL) 
+	if (s->srp_ctx.SRP_verify_param_callback !=NULL)
 		return s->srp_ctx.SRP_verify_param_callback(s,s->srp_ctx.SRP_cb_arg);
 
 	return 1;

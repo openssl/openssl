@@ -9,7 +9,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -59,7 +59,7 @@
 #include "bn_lcl.h"
 
 
-BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx) 
+BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 /* Returns 'ret' such that
  *      ret^2 == a (mod p),
  * using the Tonelli/Shanks algorithm (cf. Henri Cohen, "A Course
@@ -173,7 +173,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		 *         = a*(-i)*i
 		 *         = a.
 		 *
-		 * (This is due to A.O.L. Atkin, 
+		 * (This is due to A.O.L. Atkin,
 		 * <URL: http://listserv.nodak.edu/scripts/wa.exe?A2=ind9211&L=nmbrthry&O=T&P=562>,
 		 * November 1992.)
 		 */

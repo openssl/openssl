@@ -32,7 +32,7 @@ the DER form with header and footer lines.
 
 =item B<-outform DER|PEM>
 
-This specifies the output format, the options have the same meaning as the 
+This specifies the output format, the options have the same meaning as the
 B<-inform> option.
 
 =item B<-in filename>
@@ -95,7 +95,7 @@ For compatibility with some CAs it will also accept:
 
 There is no option to print out all the fields of a PKCS#7 file.
 
-This PKCS#7 routines only understand PKCS#7 v 1.5 as specified in RFC2315 they 
+This PKCS#7 routines only understand PKCS#7 v 1.5 as specified in RFC2315 they
 cannot currently parse, for example, the new CMS as described in RFC2630.
 
 =head1 SEE ALSO

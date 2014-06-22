@@ -9,7 +9,7 @@ SSL_get_client_CA_list, SSL_CTX_get_client_CA_list - get list of client CAs
  #include <openssl/ssl.h>
 
  STACK_OF(X509_NAME) *SSL_get_client_CA_list(const SSL *s);
- STACK_OF(X509_NAME) *SSL_CTX_get_client_CA_list(const SSL_CTX *ctx); 
+ STACK_OF(X509_NAME) *SSL_CTX_get_client_CA_list(const SSL_CTX *ctx);
 
 =head1 DESCRIPTION
 

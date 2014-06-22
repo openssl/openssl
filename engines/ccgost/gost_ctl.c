@@ -5,7 +5,7 @@
  *                                                                    *
  *        Implementation of control commands for GOST engine          *
  *            OpenSSL 0.9.9 libraries required                        *
- **********************************************************************/            
+ **********************************************************************/
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/crypto.h>
@@ -36,11 +36,11 @@ const ENGINE_CMD_DEFN gost_cmds[]=
 {0,NULL,NULL,0}
 	};
 
-void gost_param_free() 
+void gost_param_free()
 {
 	int i;
-	for (i=0;i<=GOST_PARAM_MAX;i++) 
-		if (gost_params[i]!=NULL) 
+	for (i=0;i<=GOST_PARAM_MAX;i++)
+		if (gost_params[i]!=NULL)
 			{
 			OPENSSL_free(gost_params[i]);
 			gost_params[i]=NULL;
@@ -57,16 +57,16 @@ int gost_control_func(ENGINE *e,int cmd,long i, void *p, void (*f)(void))
 	return ret;
 	}
 
-const char *get_gost_engine_param(int param) 
+const char *get_gost_engine_param(int param)
 	{
 	char *tmp;
 	if (param <0 || param >GOST_PARAM_MAX) return NULL;
-	if (gost_params[param]!=NULL) 
+	if (gost_params[param]!=NULL)
 		{
 		return gost_params[param];
 		}
 	tmp = getenv(gost_envnames[param]);
-	if (tmp) 
+	if (tmp)
 		{
 		if (gost_params[param]) OPENSSL_free(gost_params[param]);
 		gost_params[param] = BUF_strdup(tmp);
@@ -75,7 +75,7 @@ const char *get_gost_engine_param(int param)
 	return NULL;
 	}	
 
-int gost_set_default_param(int param, const char *value) 
+int gost_set_default_param(int param, const char *value)
 	{
 	const char *tmp;
 	if (param <0 || param >GOST_PARAM_MAX) return 0;

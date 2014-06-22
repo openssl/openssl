@@ -2,8 +2,8 @@
 
 =head1 NAME
 
-BN_BLINDING_new, BN_BLINDING_free, BN_BLINDING_update, BN_BLINDING_convert, 
-BN_BLINDING_invert, BN_BLINDING_convert_ex, BN_BLINDING_invert_ex, 
+BN_BLINDING_new, BN_BLINDING_free, BN_BLINDING_update, BN_BLINDING_convert,
+BN_BLINDING_invert, BN_BLINDING_convert_ex, BN_BLINDING_invert_ex,
 BN_BLINDING_get_thread_id, BN_BLINDING_set_thread_id, BN_BLINDING_thread_id, BN_BLINDING_get_flags,
 BN_BLINDING_set_flags, BN_BLINDING_create_param - blinding related BIGNUM
 functions.
@@ -92,7 +92,7 @@ within a B<BN_BLINDING> object.
 BN_BLINDING_get_flags() returns the currently set B<BN_BLINDING> flags
 (a B<unsigned long> value).
 
-BN_BLINDING_create_param() returns the newly created B<BN_BLINDING> 
+BN_BLINDING_create_param() returns the newly created B<BN_BLINDING>
 parameters or NULL on error.
 
 =head1 SEE ALSO

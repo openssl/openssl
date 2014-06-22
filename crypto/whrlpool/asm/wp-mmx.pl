@@ -492,4 +492,4 @@ for($i=0;$i<8;$i++) {
 	&L(0xca,0x2d,0xbf,0x07,0xad,0x5a,0x83,0x33);
 
 &function_end_B("whirlpool_block_mmx");
-&asm_finish(); 
+&asm_finish();

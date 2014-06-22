@@ -9,7 +9,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -502,7 +502,7 @@ static int pkey_dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
 	return 1;
 	}
 
-const EVP_PKEY_METHOD dh_pkey_meth = 
+const EVP_PKEY_METHOD dh_pkey_meth =
 	{
 	EVP_PKEY_DH,
 	0,
@@ -538,7 +538,7 @@ const EVP_PKEY_METHOD dh_pkey_meth =
 
 	};
 
-const EVP_PKEY_METHOD dhx_pkey_meth = 
+const EVP_PKEY_METHOD dhx_pkey_meth =
 	{
 	EVP_PKEY_DHX,
 	0,

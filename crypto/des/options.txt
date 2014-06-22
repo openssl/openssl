@@ -26,7 +26,7 @@ solaris 2.4 486 50mhz - gcc 2.6.3 - UNROLL RISC2		 43,500  344k/s
 AIX - old slow one :-) - cc -					 39,000  312k/s
 
 Notes.
-[1] For the ultra sparc, SunC 4.0 
+[1] For the ultra sparc, SunC 4.0
     cc -xtarget=ultra -xarch=v8plus -Xa -xO5, running 'des_opts'
     gives a speed of 344,000 des/s while 'speed' gives 459,000 des/s.
     I'll record the higher since it is coming from the library but it

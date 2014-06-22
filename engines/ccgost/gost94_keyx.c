@@ -27,7 +27,7 @@
  * little-endian byte order as expected by both versions of GOST 94
  * algorithm
  */
-static int compute_pair_key_le(unsigned char *pair_key,BIGNUM *pub_key,DH *dh) 
+static int compute_pair_key_le(unsigned char *pair_key,BIGNUM *pub_key,DH *dh)
 	{
 	unsigned char be_key[128];
 	int i,key_size;
@@ -42,7 +42,7 @@ static int compute_pair_key_le(unsigned char *pair_key,BIGNUM *pub_key,DH *dh)
 	}	
 
 /*
- * Computes 256 bit Key exchange key as specified in RFC 4357 
+ * Computes 256 bit Key exchange key as specified in RFC 4357
  */
 static int make_cp_exchange_key(BIGNUM *priv_key,EVP_PKEY *pubk, unsigned char *shared_key)
 	{
@@ -85,7 +85,7 @@ int pkey_gost94_derive(EVP_PKEY_CTX *ctx,unsigned char *key,size_t *keylen)
  */
 
 
-int pkey_GOST94cp_encrypt(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen, const unsigned char* key, size_t key_len ) 
+int pkey_GOST94cp_encrypt(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen, const unsigned char* key, size_t key_len )
 	{
 	GOST_KEY_TRANSPORT *gkt=NULL;
 	unsigned char shared_key[32], ukm[8],crypted_key[44];
@@ -102,27 +102,27 @@ int pkey_GOST94cp_encrypt(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,
 		param= gost_cipher_list+1;
 		}	
 
-	if (mykey) 
+	if (mykey)
 		{
 		/* If key already set, it is not ephemeral */
 		key_is_ephemeral=0;
-		if (!gost_get0_priv_key(mykey)) 
+		if (!gost_get0_priv_key(mykey))
 			{
 			GOSTerr(GOST_F_PKEY_GOST94CP_ENCRYPT,
 			GOST_R_NO_PRIVATE_PART_OF_NON_EPHEMERAL_KEYPAIR);
 			goto err;
 			}	
-		} 
-	else 
+		}
+	else
 		{
 		/* Otherwise generate ephemeral key */
 		key_is_ephemeral = 1;
-		if (out) 
+		if (out)
 			{
 			mykey = EVP_PKEY_new();
 			EVP_PKEY_assign(mykey, EVP_PKEY_base_id(pubk),DSA_new());
 			EVP_PKEY_copy_parameters(mykey,pubk);
-			if (!gost_sign_keygen(EVP_PKEY_get0(mykey))) 
+			if (!gost_sign_keygen(EVP_PKEY_get0(mykey)))
 				{
 				goto err;
 				}	
@@ -130,11 +130,11 @@ int pkey_GOST94cp_encrypt(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,
 		}	
 	if (out)
 		make_cp_exchange_key(gost_get0_priv_key(mykey),pubk,shared_key);
-	if (data->shared_ukm) 
+	if (data->shared_ukm)
 		{
 		memcpy(ukm,data->shared_ukm,8);
 		}
-	else if (out) 
+	else if (out)
 		{	
 		if (RAND_bytes(ukm,8)<=0)
 			{
@@ -217,7 +217,7 @@ int pkey_GOST94cp_decrypt(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *key_len
 	gost_ctx cctx;
 	const struct gost_cipher_info *param=NULL;
 	EVP_PKEY *eph_key=NULL, *peerkey=NULL;
-	EVP_PKEY *priv= EVP_PKEY_CTX_get0_pkey(ctx); 
+	EVP_PKEY *priv= EVP_PKEY_CTX_get0_pkey(ctx);
 	
 	if (!key)
 		{

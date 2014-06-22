@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -119,7 +119,7 @@ const X509V3_EXT_METHOD *X509V3_EXT_get(X509_EXTENSION *ext)
 
 int X509V3_EXT_add_list(X509V3_EXT_METHOD *extlist)
 {
-	for(;extlist->ext_nid!=-1;extlist++) 
+	for(;extlist->ext_nid!=-1;extlist++)
 			if(!X509V3_EXT_add(extlist)) return 0;
 	return 1;
 }
@@ -266,7 +266,7 @@ int X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value,
 			return 1;
 		}
 	} else {
-		/* If replace existing or delete, error since 
+		/* If replace existing or delete, error since
 		 * extension must exist
 		 */
 		if((ext_op == X509V3_ADD_REPLACE_EXISTING) ||

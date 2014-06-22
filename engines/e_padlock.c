@@ -1,10 +1,10 @@
-/* 
+/*
  * Support for VIA PadLock Advanced Cryptography Engine (ACE)
  * Written by Michal Ludvig <michal@logix.cz>
  *            http://www.logix.cz/michal
  *
- * Big thanks to Andy Polyakov for a help with optimization, 
- * assembler fixes, port to MS Windows and a lot of other 
+ * Big thanks to Andy Polyakov for a help with optimization,
+ * assembler fixes, port to MS Windows and a lot of other
  * valuable work on this engine!
  */
 
@@ -97,7 +97,7 @@
 /* VIA PadLock AES is available *ONLY* on some x86 CPUs.
    Not only that it doesn't exist elsewhere, but it
    even can't be compiled on other platforms! */
- 
+
 #undef COMPILE_HW_PADLOCK
 #if !defined(I386_ONLY) && !defined(OPENSSL_NO_ASM)
 # if	defined(__i386__) || defined(__i386) ||    \
@@ -164,11 +164,11 @@ padlock_bind_helper(ENGINE *e)
 
 	/* Generate a nice engine name with available features */
 	BIO_snprintf(padlock_name, sizeof(padlock_name),
-		"VIA PadLock (%s, %s)", 
+		"VIA PadLock (%s, %s)",
 		 padlock_use_rng ? "RNG" : "no-RNG",
 		 padlock_use_ace ? "ACE" : "no-ACE");
 
-	/* Register everything or return with an error */ 
+	/* Register everything or return with an error */
 	if (!ENGINE_set_id(e, padlock_id) ||
 	    !ENGINE_set_name(e, padlock_name) ||
 
@@ -242,7 +242,7 @@ IMPLEMENT_DYNAMIC_BIND_FN (padlock_bind_fn)
 #define AES_KEY_SIZE_192	24
 #define AES_KEY_SIZE_256	32
 
-/* Here we store the status information relevant to the 
+/* Here we store the status information relevant to the
    current context. */
 /* BIG FAT WARNING:
  * 	Inline assembler in PADLOCK_XCRYPT_ASM()
@@ -719,7 +719,7 @@ padlock_aes_init_key (EVP_CIPHER_CTX *ctx, const unsigned char *key,
  * (posted at http://www.via.com.tw/en/viac3/c3.jsp) nor does it
  * provide meaningful error control...
  */
-/* Wrapper that provides an interface between the API and 
+/* Wrapper that provides an interface between the API and
    the raw PadLock RNG */
 static int
 padlock_rand_bytes(unsigned char *output, int count)

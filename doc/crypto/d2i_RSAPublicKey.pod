@@ -49,8 +49,8 @@ i2d_X509() described in the L<d2i_X509(3)|d2i_X509(3)> manual page.
 The B<RSA> structure passed to the private key encoding functions should have
 all the PKCS#1 private key components present.
 
-The data encoded by the private key functions is unencrypted and therefore 
-offers no private key security. 
+The data encoded by the private key functions is unencrypted and therefore
+offers no private key security.
 
 The NET format functions are present to provide compatibility with certain very
 old software. This format has some severe security weaknesses and should be

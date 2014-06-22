@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -116,7 +116,7 @@ static int long_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype, const A
 	if(ltmp == it->size) return -1;
 	/* Convert the long to positive: we subtract one if negative so
 	 * we can cleanly handle the padding if only the MSB of the leading
-	 * octet is set. 
+	 * octet is set.
 	 */
 	if(ltmp < 0) utmp = -ltmp - 1;
 	else utmp = ltmp;

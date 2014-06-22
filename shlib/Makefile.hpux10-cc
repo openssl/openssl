@@ -20,7 +20,7 @@ $(slib)_pic.a : $(slib).a
 	cp -p $? $@
 
 $(sh_clib) : $(clib)_pic.a
-	ld -b -s -z +h $@ -o $@ -Fl $(clib)_pic.a -ldld -lc 
+	ld -b -s -z +h $@ -o $@ -Fl $(clib)_pic.a -ldld -lc
 
 $(clib).sl : $(sh_clib)
 	rm -f $@
@@ -28,7 +28,7 @@ $(clib).sl : $(sh_clib)
 
 $(sh_slib) : $(slib)_pic.a $(clib).sl
 	ld -b -s -z +h $@ -o $@ -Fl $(slib)_pic.a -ldld -lc
-        
+
 $(slib).sl : $(sh_slib)
 	rm -f $@
 	ln -s $? $@

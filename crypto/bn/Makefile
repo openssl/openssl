@@ -112,7 +112,7 @@ modexp512-x86_64.s:	asm/modexp512-x86_64.pl
 	$(PERL) asm/modexp512-x86_64.pl $(PERLASM_SCHEME) > $@
 rsaz-x86_64.s:	asm/rsaz-x86_64.pl
 	$(PERL) asm/rsaz-x86_64.pl $(PERLASM_SCHEME) > $@
-rsaz-avx2.s:	asm/rsaz-avx2.pl 
+rsaz-avx2.s:	asm/rsaz-avx2.pl
 	$(PERL) asm/rsaz-avx2.pl $(PERLASM_SCHEME) > $@
 
 bn-ia64.s:	asm/ia64.S

@@ -29,7 +29,7 @@ $ goto loop
 $ loop_end:
 $!
 $ tidy:
-$ 
+$
 $ if (f$type( def_orig) .nes. "") then -
    set default 'def_orig'
 $!

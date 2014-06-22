@@ -103,7 +103,7 @@ static void primes(FILE *in, FILE *out)
 	    do_hex2bn(&pp,value);
 	    fprintf(out, "result= %c" RESP_EOL,
 		   BN_is_prime_ex(pp,20,NULL,NULL) ? 'P' : 'F');
-	    }	    
+	    }	
 	}
     }
 
@@ -157,7 +157,7 @@ static void pqg(FILE *in, FILE *out)
 		exit (1);
 		}
 	    }
-	else if(!strcmp(keyword,"N") 
+	else if(!strcmp(keyword,"N")
 		|| (!strcmp(keyword, "Num") && pqg_type == PQG_PQ))
 	    {
 	    int n=atoi(value);
@@ -183,7 +183,7 @@ static void pqg(FILE *in, FILE *out)
 			fprintf(stderr, "Parameter Generation error\n");
 			exit(1);
 			}
- 
+
 		do_bn_print_name(out, "P",dsa->p);
 		do_bn_print_name(out, "Q",dsa->q);
 		if (!dsa2)
@@ -375,7 +375,7 @@ static void pqgver(FILE *in, FILE *out)
 		else
 			fprintf(out, "Result = P" RESP_EOL);
 		}
-            else if (BN_cmp(dsa->p, p) || BN_cmp(dsa->q, q) || 
+            else if (BN_cmp(dsa->p, p) || BN_cmp(dsa->q, q) ||
 		(!part_test &&
 		((BN_cmp(dsa->g, g) || (counter != counter2) || (h != h2)))))
 	    	fprintf(out, "Result = F" RESP_EOL);

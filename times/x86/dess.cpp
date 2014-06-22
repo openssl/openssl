@@ -28,7 +28,7 @@ void GetTSC(unsigned long& tsc)
   __asm mov a, eax;
   tsc=a;
 }
-#endif      
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -28,7 +28,7 @@ hash functions and a cryptographic pseudo-random number generator.
 =item SYMMETRIC CIPHERS
 
 L<blowfish(3)|blowfish(3)>, L<cast(3)|cast(3)>, L<des(3)|des(3)>,
-L<idea(3)|idea(3)>, L<rc2(3)|rc2(3)>, L<rc4(3)|rc4(3)>, L<rc5(3)|rc5(3)> 
+L<idea(3)|idea(3)>, L<rc2(3)|rc2(3)>, L<rc4(3)|rc4(3)>, L<rc5(3)|rc5(3)>
 
 =item PUBLIC KEY CRYPTOGRAPHY AND KEY AGREEMENT
 
@@ -52,13 +52,13 @@ L<OPENSSL_VERSION_NUMBER(3)|OPENSSL_VERSION_NUMBER(3)>
 =item INPUT/OUTPUT, DATA ENCODING
 
 L<asn1(3)|asn1(3)>, L<bio(3)|bio(3)>, L<evp(3)|evp(3)>, L<pem(3)|pem(3)>,
-L<pkcs7(3)|pkcs7(3)>, L<pkcs12(3)|pkcs12(3)> 
+L<pkcs7(3)|pkcs7(3)>, L<pkcs12(3)|pkcs12(3)>
 
 =item INTERNAL FUNCTIONS
 
 L<bn(3)|bn(3)>, L<buffer(3)|buffer(3)>, L<ec(3)|ec(3)>, L<lhash(3)|lhash(3)>,
 L<objects(3)|objects(3)>, L<stack(3)|stack(3)>,
-L<txt_db(3)|txt_db(3)> 
+L<txt_db(3)|txt_db(3)>
 
 =back
 

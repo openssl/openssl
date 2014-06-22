@@ -601,7 +601,7 @@ static int Zeroize()
     {
     RSA *key;
     BIGNUM *bn;
-    unsigned char userkey[16] = 
+    unsigned char userkey[16] =
 	{ 0x48, 0x50, 0xf0, 0xa3, 0x3a, 0xed, 0xd3, 0xaf, 0x6e, 0x47, 0x7f, 0x83, 0x02, 0xb1, 0x09, 0x68 };
     size_t i;
     int n;
@@ -614,7 +614,7 @@ static int Zeroize()
     if (!RSA_generate_key_ex(key, 1024,bn,NULL))
 	return 0;
     BN_free(bn);
-    
+
     n = BN_num_bytes(key->d);
     printf(" Generated %d byte RSA private key\n", n);
     printf("\tBN key before overwriting:\n");
@@ -689,7 +689,7 @@ static int do_drbg_test(int type, int flags)
     return rv;
     }
 
-typedef struct 
+typedef struct
     {
     int type, flags;
     } DRBG_LIST;
@@ -744,7 +744,7 @@ static int Error;
 static const char * Fail(const char *msg)
     {
     Error++;
-    return msg; 
+    return msg;
     }
 
 static void test_msg(const char *msg, int result)
@@ -754,7 +754,7 @@ static void test_msg(const char *msg, int result)
 
 /* Table of IDs for POST translating between NIDs and names */
 
-typedef struct 
+typedef struct
 	{
 	int id;
 	const char *name;
@@ -1010,7 +1010,7 @@ static int post_cb(int op, int id, int subid, void *ex)
 
 /* Test POST induced failures */
 
-typedef struct 
+typedef struct
 	{
 	const char *name;
 	int id, subid, keyid;
@@ -1309,7 +1309,7 @@ static int do_fail_all(int fullpost, int fullerr)
 		printf("\tECDSA key generation failed as expected.\n");
 
 	printf("  Induced failure test completed with %d errors\n", st_err);
-	post_quiet = 0; 
+	post_quiet = 0;
 	no_err = 0;
 	BN_free(bn);
 	FIPS_rsa_free(rsa);

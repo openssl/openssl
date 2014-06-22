@@ -146,7 +146,7 @@ if ($flavour =~ /32/) {
 	$SHRI=	"srdi";		# unsigned shift right by immediate	
 	$SHLI=	"sldi";		# shift left by immediate
 	$CLRU=	"clrldi";	# clear upper bits
-	$INSR=	"insrdi";	# insert right 
+	$INSR=	"insrdi";	# insert right
 	$ROTL=	"rotldi";	# rotate left by immediate
 	$TR=	"td";		# conditional trap
 } else { die "nonsense $flavour"; }
@@ -222,7 +222,7 @@ $data=<<EOF;
 #	
 #.set r0,0	# we use it as storage for value of 0
 #.set SP,1	# preserved
-#.set RTOC,2	# preserved 
+#.set RTOC,2	# preserved
 #.set r3,3	# 1st argument/return value
 #.set r4,4	# 2nd argument/volatile register
 #.set r5,5	# 3rd argument/volatile register
@@ -273,7 +273,7 @@ $data=<<EOF;
 # r4 contains a
 #
 # Freely use registers r5,r6,r7,r8,r9,r10,r11 as follows:	
-# 
+#
 # r5,r6 are the two BN_ULONGs being multiplied.
 # r7,r8 are the results of the 32x32 giving 64 bit multiply.
 # r9,r10, r11 are the equivalents of c1,c2, c3.
@@ -300,13 +300,13 @@ $data=<<EOF;
 	addc		r7,r7,r7		# compute (r7,r8)=2*(r7,r8)
 	adde		r8,r8,r8
 	addze		r9,r0			# catch carry if any.
-						# r9= r0(=0) and carry 
+						# r9= r0(=0) and carry
 	
 	addc		r10,r7,r10		# now add to temp result.
-	addze		r11,r8                  # r8 added to r11 which is 0 
+	addze		r11,r8                  # r8 added to r11 which is 0
 	addze		r9,r9
 	
-	$ST		r10,`1*$BNSZ`(r3)	#r[1]=c2; 
+	$ST		r10,`1*$BNSZ`(r3)	#r[1]=c2;
 						#sqr_add_c(a,1,c3,c1,c2)
 	$UMULL		r7,r6,r6
 	$UMULH		r8,r6,r6
@@ -325,7 +325,7 @@ $data=<<EOF;
 	addc		r11,r7,r11
 	adde		r9,r8,r9
 	addze		r10,r10
-	$ST		r11,`2*$BNSZ`(r3)	#r[2]=c3 
+	$ST		r11,`2*$BNSZ`(r3)	#r[2]=c3
 						#sqr_add_c2(a,3,0,c1,c2,c3);
 	$LD		r6,`3*$BNSZ`(r4)		
 	$UMULL		r7,r5,r6
@@ -413,14 +413,14 @@ $data=<<EOF;
 # r4 contains a
 #
 # Freely use registers r5,r6,r7,r8,r9,r10,r11 as follows:	
-# 
+#
 # r5,r6 are the two BN_ULONGs being multiplied.
 # r7,r8 are the results of the 32x32 giving 64 bit multiply.
 # r9,r10, r11 are the equivalents of c1,c2, c3.
 #
 # Possible optimization of loading all 8 longs of a into registers
 # doesnt provide any speedup
-# 
+#
 
 	xor		r0,r0,r0		#set r0 = 0.Used in addze
 						#instructions below.
@@ -1647,7 +1647,7 @@ Lppcasm_div1:
 Lppcasm_div2:
 	$UCMP	0,r3,r5			#h>=d?
 	blt	Lppcasm_div3		#goto Lppcasm_div3 if not
-	subf	r3,r5,r3		#h-=d ; 
+	subf	r3,r5,r3		#h-=d ;
 Lppcasm_div3:				#r7 = BN_BITS2-i. so r7=i
 	cmpi	0,0,r7,0		# is (i == 0)?
 	beq	Lppcasm_div4
@@ -1662,7 +1662,7 @@ Lppcasm_div4:
 					# as it saves registers.
 	li	r6,2			#r6=2
 	mtctr	r6			#counter will be in count.
-Lppcasm_divouterloop: 
+Lppcasm_divouterloop:
 	$SHRI	r8,r3,`$BITS/2`		#r8 = (h>>BN_BITS4)
 	$SHRI	r11,r4,`$BITS/2`	#r11= (l&BN_MASK2h)>>BN_BITS4
 					# compute here for innerloop.
@@ -1670,7 +1670,7 @@ Lppcasm_divouterloop:
 	bne	Lppcasm_div5		# goto Lppcasm_div5 if not
 
 	li	r8,-1
-	$CLRU	r8,r8,`$BITS/2`		#q = BN_MASK2l 
+	$CLRU	r8,r8,`$BITS/2`		#q = BN_MASK2l
 	b	Lppcasm_div6
 Lppcasm_div5:
 	$UDIV	r8,r3,r9		#q = h/dh

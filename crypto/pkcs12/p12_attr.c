@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -68,7 +68,7 @@ int PKCS12_add_localkeyid(PKCS12_SAFEBAG *bag, unsigned char *name,
 	if (X509at_add1_attr_by_NID(&bag->attrib, NID_localKeyID,
 				V_ASN1_OCTET_STRING, name, namelen))
 		return 1;
-	else 
+	else
 		return 0;
 }
 

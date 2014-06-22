@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -414,7 +414,7 @@ static int pkey_rsa_decrypt(EVP_PKEY_CTX *ctx,
 							rctx->oaep_labellen,
 							rctx->md, rctx->mgf1md);
 		}
-	else 
+	else
 		ret = RSA_private_decrypt(inlen, in, out, ctx->pkey->pkey.rsa,
 							rctx->pad_mode);
 	if (ret < 0)
@@ -459,7 +459,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 			{
 			if (!check_padding_md(rctx->md, p1))
 				return 0;
-			if (p1 == RSA_PKCS1_PSS_PADDING) 
+			if (p1 == RSA_PKCS1_PSS_PADDING)
 				{
 				if (!(ctx->operation &
 				     (EVP_PKEY_OP_SIGN | EVP_PKEY_OP_VERIFY)))
@@ -467,7 +467,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 				if (!rctx->md)
 					rctx->md = EVP_sha1();
 				}
-			if (p1 == RSA_PKCS1_OAEP_PADDING) 
+			if (p1 == RSA_PKCS1_OAEP_PADDING)
 				{
 				if (!(ctx->operation & EVP_PKEY_OP_TYPE_CRYPT))
 					goto bad_pad;
@@ -742,7 +742,7 @@ static int pkey_rsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	return ret;
 	}
 
-const EVP_PKEY_METHOD rsa_pkey_meth = 
+const EVP_PKEY_METHOD rsa_pkey_meth =
 	{
 	EVP_PKEY_RSA,
 	EVP_PKEY_FLAG_AUTOARGLEN,

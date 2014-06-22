@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -219,7 +219,7 @@ int X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, X509 *, int),
 static void trtable_free(X509_TRUST *p)
 	{
 	if(!p) return;
-	if (p->flags & X509_TRUST_DYNAMIC) 
+	if (p->flags & X509_TRUST_DYNAMIC)
 		{
 		if (p->flags & X509_TRUST_DYNAMIC_NAME)
 			OPENSSL_free(p->name);

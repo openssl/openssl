@@ -5,21 +5,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -185,7 +185,7 @@ typedef struct pem_ctx_st
 	int num_recipient;
 	PEM_USER **recipient;
 
-	/* XXX(ben): don#t think this is used! 
+	/* XXX(ben): don#t think this is used!
 		STACK *x509_chain;	/ * certificate chain */
 	EVP_MD *md;		/* signature type */
 
@@ -224,7 +224,7 @@ typedef struct pem_ctx_st
 type *PEM_read_##name(FILE *fp, type **x, pem_password_cb *cb, void *u)\
 { \
 return PEM_ASN1_read((d2i_of_void *)d2i_##asn1, str,fp,(void **)x,cb,u); \
-} 
+}
 
 #define IMPLEMENT_PEM_write_fp(name, type, str, asn1) \
 int PEM_write_##name(FILE *fp, type *x) \
@@ -290,23 +290,23 @@ int PEM_write_bio_##name(BIO *bp, type *x, const EVP_CIPHER *enc, \
 
 #define IMPLEMENT_PEM_write(name, type, str, asn1) \
 	IMPLEMENT_PEM_write_bio(name, type, str, asn1) \
-	IMPLEMENT_PEM_write_fp(name, type, str, asn1) 
+	IMPLEMENT_PEM_write_fp(name, type, str, asn1)
 
 #define IMPLEMENT_PEM_write_const(name, type, str, asn1) \
 	IMPLEMENT_PEM_write_bio_const(name, type, str, asn1) \
-	IMPLEMENT_PEM_write_fp_const(name, type, str, asn1) 
+	IMPLEMENT_PEM_write_fp_const(name, type, str, asn1)
 
 #define IMPLEMENT_PEM_write_cb(name, type, str, asn1) \
 	IMPLEMENT_PEM_write_cb_bio(name, type, str, asn1) \
-	IMPLEMENT_PEM_write_cb_fp(name, type, str, asn1) 
+	IMPLEMENT_PEM_write_cb_fp(name, type, str, asn1)
 
 #define IMPLEMENT_PEM_write_cb_const(name, type, str, asn1) \
 	IMPLEMENT_PEM_write_cb_bio_const(name, type, str, asn1) \
-	IMPLEMENT_PEM_write_cb_fp_const(name, type, str, asn1) 
+	IMPLEMENT_PEM_write_cb_fp_const(name, type, str, asn1)
 
 #define IMPLEMENT_PEM_read(name, type, str, asn1) \
 	IMPLEMENT_PEM_read_bio(name, type, str, asn1) \
-	IMPLEMENT_PEM_read_fp(name, type, str, asn1) 
+	IMPLEMENT_PEM_read_fp(name, type, str, asn1)
 
 #define IMPLEMENT_PEM_rw(name, type, str, asn1) \
 	IMPLEMENT_PEM_read(name, type, str, asn1) \
@@ -370,7 +370,7 @@ int PEM_write_bio_##name(BIO *bp, type *x, const EVP_CIPHER *enc, \
 
 #define DECLARE_PEM_write(name, type) \
 	DECLARE_PEM_write_bio(name, type) \
-	DECLARE_PEM_write_fp(name, type) 
+	DECLARE_PEM_write_fp(name, type)
 
 #define DECLARE_PEM_write_const(name, type) \
 	DECLARE_PEM_write_bio_const(name, type) \
@@ -378,7 +378,7 @@ int PEM_write_bio_##name(BIO *bp, type *x, const EVP_CIPHER *enc, \
 
 #define DECLARE_PEM_write_cb(name, type) \
 	DECLARE_PEM_write_cb_bio(name, type) \
-	DECLARE_PEM_write_cb_fp(name, type) 
+	DECLARE_PEM_write_cb_fp(name, type)
 
 #define DECLARE_PEM_read(name, type) \
 	DECLARE_PEM_read_bio(name, type) \

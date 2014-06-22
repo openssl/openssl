@@ -265,12 +265,12 @@ d=12 ;(AP)	d	by value (input)
 
 	bicl3	#^XFFFFFFF8,r3,r6
 	bicl3	#^X00000007,r3,r3
-        
+
 	addl	r6,r2
 
 	rotl	#-3,r2,r2	; l = l >> 3
 	rotl	#-3,r3,r3	; h = h >> 3
-                
+
 	movl	r4,r7		; d' = d
 
 	movl	#0,r6		; r' = 0
@@ -283,13 +283,13 @@ d=12 ;(AP)	d	by value (input)
 	bicl2	#^X80000000,r4	; Since d is then a large number, the
 				; lowest bit is insignificant
 				; (contradict that, and I'll fix the problem!)
-1$:     
+1$:
 	ediv	r4,r2,r2,r3	; Do the actual division
 
 	tstl	r2
 	bgeq	3$
 	mnegl	r2,r2		; if q < 0, negate it
-3$:     
+3$:
 	tstl	r7
 	blss	4$
 	rotl	#3,r2,r2	;   q = q << 3

@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -66,7 +66,7 @@
  * user modifiable data about a certificate. This data is
  * appended to the X509 encoding when the *_X509_AUX routines
  * are used. This means that the "traditional" X509 routines
- * will simply ignore the extra data. 
+ * will simply ignore the extra data.
  */
 
 static X509_CERT_AUX *aux_get(X509 *x);

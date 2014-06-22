@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -176,7 +176,7 @@ struct drbg_ctx_st
 	/* Application data: typically used by test get_entropy */
 	void *app_data;
 	/* Implementation specific structures */
-	union 
+	union
 		{
 		DRBG_HASH_CTX hash;
 		DRBG_HMAC_CTX hmac;

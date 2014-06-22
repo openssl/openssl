@@ -15,7 +15,7 @@ PKCS7_sign - create a PKCS#7 signedData structure
 PKCS7_sign() creates and returns a PKCS#7 signedData structure. B<signcert> is
 the certificate to sign with, B<pkey> is the corresponsding private key.
 B<certs> is an optional additional set of certificates to include in the PKCS#7
-structure (for example any intermediate CAs in the chain). 
+structure (for example any intermediate CAs in the chain).
 
 The data to be signed is read from BIO B<data>.
 

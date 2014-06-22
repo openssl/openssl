@@ -1,6 +1,6 @@
 /* crypto/srp/srp_lib.c */
-/* Written by Christophe Renou (christophe.renou@edelweb.fr) with 
- * the precious help of Peter Sylvester (peter.sylvester@edelweb.fr) 
+/* Written by Christophe Renou (christophe.renou@edelweb.fr) with
+ * the precious help of Peter Sylvester (peter.sylvester@edelweb.fr)
  * for the EdelKey project and contributed to the OpenSSL project 2004.
  */
 /* ====================================================================
@@ -11,7 +11,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -117,13 +117,13 @@ BIGNUM *SRP_Calc_u(BIGNUM *A, BIGNUM *B, BIGNUM *N)
 	unsigned char cu[SHA_DIGEST_LENGTH];
 	unsigned char *cAB;
 	EVP_MD_CTX ctxt;
-	int longN;  
+	int longN;
 	if ((A == NULL) ||(B == NULL) || (N == NULL))
 		return NULL;
 
 	longN= BN_num_bytes(N);
 
-	if ((cAB = OPENSSL_malloc(2*longN)) == NULL) 
+	if ((cAB = OPENSSL_malloc(2*longN)) == NULL)
 		return NULL;
 
 	memset(cAB, 0, longN);
@@ -147,17 +147,17 @@ BIGNUM *SRP_Calc_u(BIGNUM *A, BIGNUM *B, BIGNUM *N)
 BIGNUM *SRP_Calc_server_key(BIGNUM *A, BIGNUM *v, BIGNUM *u, BIGNUM *b, BIGNUM *N)
 	{
 	BIGNUM *tmp = NULL, *S = NULL;
-	BN_CTX *bn_ctx; 
+	BN_CTX *bn_ctx;
 	
 	if (u == NULL || A == NULL || v == NULL || b == NULL || N == NULL)
-		return NULL; 
+		return NULL;
 
 	if ((bn_ctx = BN_CTX_new()) == NULL ||
 		(tmp = BN_new()) == NULL ||
 		(S = BN_new()) == NULL )
 		goto err;
 
-	/* S = (A*v**u) ** b */ 
+	/* S = (A*v**u) ** b */
 
 	if (!BN_mod_exp(tmp,v,u,N,bn_ctx))
 		goto err;
@@ -179,7 +179,7 @@ BIGNUM *SRP_Calc_B(BIGNUM *b, BIGNUM *N, BIGNUM *g, BIGNUM *v)
 
 	if (b == NULL || N == NULL || g == NULL || v == NULL ||
 		(bn_ctx = BN_CTX_new()) == NULL)
-		return NULL; 
+		return NULL;
 
 	if ( (kv = BN_new()) == NULL ||
 		(gb = BN_new()) == NULL ||
@@ -190,7 +190,7 @@ BIGNUM *SRP_Calc_B(BIGNUM *b, BIGNUM *N, BIGNUM *g, BIGNUM *v)
 
 	if (!BN_mod_exp(gb,g,b,N,bn_ctx) ||
 	   !(k = srp_Calc_k(N,g)) ||
-	   !BN_mod_mul(kv,v,k,N,bn_ctx) || 
+	   !BN_mod_mul(kv,v,k,N,bn_ctx) ||
 	   !BN_mod_add(B,gb,kv,N,bn_ctx))
 		{
 		BN_free(B);
@@ -200,7 +200,7 @@ err:
 	BN_CTX_free(bn_ctx);
 	BN_clear_free(kv);
 	BN_clear_free(gb);
-	BN_free(k); 
+	BN_free(k);
 	return B;
 	}
 
@@ -238,11 +238,11 @@ BIGNUM *SRP_Calc_x(BIGNUM *s, const char *user, const char *pass)
 
 BIGNUM *SRP_Calc_A(BIGNUM *a, BIGNUM *N, BIGNUM *g)
 	{
-	BN_CTX *bn_ctx; 
+	BN_CTX *bn_ctx;
 	BIGNUM * A = NULL;
 
 	if (a == NULL || N == NULL || g == NULL ||
-		(bn_ctx = BN_CTX_new()) == NULL) 
+		(bn_ctx = BN_CTX_new()) == NULL)
 		return NULL;
 
 	if ((A = BN_new()) != NULL &&
@@ -263,7 +263,7 @@ BIGNUM *SRP_Calc_client_key(BIGNUM *N, BIGNUM *B, BIGNUM *g, BIGNUM *x, BIGNUM *
 
 	if (u == NULL || B == NULL || N == NULL || g == NULL || x == NULL || a == NULL ||
 		(bn_ctx = BN_CTX_new()) == NULL)
-		return NULL; 
+		return NULL;
 
 	if ((tmp = BN_new()) == NULL ||
 		(tmp2 = BN_new())== NULL ||
@@ -299,7 +299,7 @@ err :
 int SRP_Verify_B_mod_N(BIGNUM *B, BIGNUM *N)
 	{
 	BIGNUM *r;
-	BN_CTX *bn_ctx; 
+	BN_CTX *bn_ctx;
 	int ret = 0;
 
 	if (B == NULL || N == NULL ||
@@ -325,7 +325,7 @@ int SRP_Verify_A_mod_N(BIGNUM *A, BIGNUM *N)
 	}
 
 
-/* Check if G and N are kwown parameters. 
+/* Check if G and N are kwown parameters.
    The values have been generated from the ietf-tls-srp draft version 8
 */
 char * SRP_check_known_gN_param(BIGNUM* g, BIGNUM* N)
@@ -339,7 +339,7 @@ char * SRP_check_known_gN_param(BIGNUM* g, BIGNUM* N)
 
 	for(i = 0; i < KNOWN_GN_NUMBER; i++)
 		{
-		if (BN_cmp(knowngN[i].g, g) == 0 && BN_cmp(knowngN[i].N, N) == 0) 
+		if (BN_cmp(knowngN[i].g, g) == 0 && BN_cmp(knowngN[i].N, N) == 0)
 			return knowngN[i].id;
 		}
 	return NULL;
@@ -349,7 +349,7 @@ SRP_gN *SRP_get_default_gN(const char *id)
 	{
 	size_t i;
 
-	if (id == NULL) 
+	if (id == NULL)
 		return knowngN;
 	for(i = 0; i < KNOWN_GN_NUMBER; i++)
 		{

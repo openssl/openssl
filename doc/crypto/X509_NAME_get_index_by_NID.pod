@@ -43,7 +43,7 @@ B<obj>, if no such entry exists -1 is returned. At most B<len> bytes
 will be written and the text written to B<buf> will be null
 terminated. The length of the output string written is returned
 excluding the terminating null. If B<buf> is <NULL> then the amount
-of space needed in B<buf> (excluding the final null) is returned. 
+of space needed in B<buf> (excluding the final null) is returned.
 
 =head1 NOTES
 

@@ -5,21 +5,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -62,54 +62,54 @@
 	Why BIO_f_reliable?
 
 	I wrote function which took BIO* as argument, read data from it
-	and processed it. Then I wanted to store the input file in 
+	and processed it. Then I wanted to store the input file in
 	encrypted form. OK I pushed BIO_f_cipher to the BIO stack
-	and everything was OK. BUT if user types wrong password 
+	and everything was OK. BUT if user types wrong password
 	BIO_f_cipher outputs only garbage and my function crashes. Yes
-	I can and I should fix my function, but BIO_f_cipher is 
+	I can and I should fix my function, but BIO_f_cipher is
 	easy way to add encryption support to many existing applications
-	and it's hard to debug and fix them all. 
+	and it's hard to debug and fix them all.
 
 	So I wanted another BIO which would catch the incorrect passwords and
-	file damages which cause garbage on BIO_f_cipher's output. 
+	file damages which cause garbage on BIO_f_cipher's output.
 
-	The easy way is to push the BIO_f_md and save the checksum at 
+	The easy way is to push the BIO_f_md and save the checksum at
 	the end of the file. However there are several problems with this
 	approach:
 
-	1) you must somehow separate checksum from actual data. 
-	2) you need lot's of memory when reading the file, because you 
+	1) you must somehow separate checksum from actual data.
+	2) you need lot's of memory when reading the file, because you
 	must read to the end of the file and verify the checksum before
-	letting the application to read the data. 
+	letting the application to read the data.
 	
-	BIO_f_reliable tries to solve both problems, so that you can 
+	BIO_f_reliable tries to solve both problems, so that you can
 	read and write arbitrary long streams using only fixed amount
 	of memory.
 
 	BIO_f_reliable splits data stream into blocks. Each block is prefixed
-	with it's length and suffixed with it's digest. So you need only 
-	several Kbytes of memory to buffer single block before verifying 
-	it's digest. 
+	with it's length and suffixed with it's digest. So you need only
+	several Kbytes of memory to buffer single block before verifying
+	it's digest.
 
 	BIO_f_reliable goes further and adds several important capabilities:
 
-	1) the digest of the block is computed over the whole stream 
+	1) the digest of the block is computed over the whole stream
 	-- so nobody can rearrange the blocks or remove or replace them.
 
-	2) to detect invalid passwords right at the start BIO_f_reliable 
+	2) to detect invalid passwords right at the start BIO_f_reliable
 	adds special prefix to the stream. In order to avoid known plain-text
 	attacks this prefix is generated as follows:
 
-		*) digest is initialized with random seed instead of 
+		*) digest is initialized with random seed instead of
 		standardized one.
 		*) same seed is written to output
-		*) well-known text is then hashed and the output 
+		*) well-known text is then hashed and the output
 		of the digest is also written to output.
 
 	reader can now read the seed from stream, hash the same string
 	and then compare the digest output.
 
-	Bad things: BIO_f_reliable knows what's going on in EVP_Digest. I 
+	Bad things: BIO_f_reliable knows what's going on in EVP_Digest. I
 	initially wrote and tested this code on x86 machine and wrote the
 	digests out in machine-dependent order :( There are people using
 	this code and I cannot change this easily without making existing
@@ -151,7 +151,7 @@ typedef struct ok_struct
 	int cont;		/* <= 0 when finished */
 	int finished;
 	EVP_MD_CTX md;
-	int blockout;		/* output block is ready */ 
+	int blockout;		/* output block is ready */
 	int sigio;		/* must process signature */
 	unsigned char buf[IOBS];
 	} BIO_OK_CTX;
@@ -337,7 +337,7 @@ static int ok_write(BIO *b, const char *in, int inl)
 	
 		if ((in == NULL) || (inl <= 0)) return(0);
 
-		n= (inl+ ctx->buf_len > OK_BLOCK_SIZE+ OK_BLOCK_BLOCK) ? 
+		n= (inl+ ctx->buf_len > OK_BLOCK_SIZE+ OK_BLOCK_BLOCK) ?
 			(int)(OK_BLOCK_SIZE+OK_BLOCK_BLOCK-ctx->buf_len) : inl;
 
 		memcpy((unsigned char *)(&(ctx->buf[ctx->buf_len])),(unsigned char *)in,n);
@@ -597,7 +597,7 @@ static int block_in(BIO* b)
 	tl|=ctx->buf[3];
 
 	if (ctx->buf_len < tl+ OK_BLOCK_BLOCK+ md->digest->md_size) return 1;
- 
+
 	if (!EVP_DigestUpdate(md,
 			(unsigned char*) &(ctx->buf[OK_BLOCK_BLOCK]), tl))
 		goto berr;

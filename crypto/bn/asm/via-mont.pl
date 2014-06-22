@@ -69,7 +69,7 @@
 # dsa 1024 bits 0.001346s 0.001595s    742.7    627.0
 # dsa 2048 bits 0.004745s 0.005582s    210.7    179.1
 #
-# Conclusions: 
+# Conclusions:
 # - VIA SDK leaves a *lot* of room for improvement (which this
 #   implementation successfully fills:-);
 # - 'rep montmul' gives up to >3x performance improvement depending on

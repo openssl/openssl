@@ -15,7 +15,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -75,7 +75,7 @@
  * relevant information from the response.
  */
 
-/* Add an OCSP_CERTID to an OCSP request. Return new OCSP_ONEREQ 
+/* Add an OCSP_CERTID to an OCSP request. Return new OCSP_ONEREQ
  * pointer: useful if we want to add extensions.
  */
 
@@ -192,7 +192,7 @@ int OCSP_response_status(OCSP_RESPONSE *resp)
 /* Extract basic response from OCSP_RESPONSE or NULL if
  * no basic response present.
  */
- 
+
 
 OCSP_BASICRESP *OCSP_response_get1_basic(OCSP_RESPONSE *resp)
 	{
@@ -250,7 +250,7 @@ int OCSP_resp_find(OCSP_BASICRESP *bs, OCSP_CERTID *id, int last)
 	}
 
 /* Extract status information from an OCSP_SINGLERESP structure.
- * Note: the revtime and reason values are only set if the 
+ * Note: the revtime and reason values are only set if the
  * certificate status is revoked. Returns numerical value of
  * status.
  */
@@ -269,7 +269,7 @@ int OCSP_single_get0_status(OCSP_SINGLERESP *single, int *reason,
 		{
 		OCSP_REVOKEDINFO *rev = cst->value.revoked;
 		if (revtime) *revtime = rev->revocationTime;
-		if (reason) 
+		if (reason)
 			{
 			if(rev->revocationReason)
 				*reason = ASN1_ENUMERATED_get(rev->revocationReason);
@@ -320,7 +320,7 @@ int OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd, ASN1_GENERALIZEDTIME *nex
 		OCSPerr(OCSP_F_OCSP_CHECK_VALIDITY, OCSP_R_ERROR_IN_THISUPDATE_FIELD);
 		ret = 0;
 		}
-	else 
+	else
 		{
 			t_tmp = t_now + nsec;
 			if (X509_cmp_time(thisupd, &t_tmp) > 0)
@@ -350,7 +350,7 @@ int OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd, ASN1_GENERALIZEDTIME *nex
 		OCSPerr(OCSP_F_OCSP_CHECK_VALIDITY, OCSP_R_ERROR_IN_NEXTUPDATE_FIELD);
 		ret = 0;
 		}
-	else 
+	else
 		{
 		t_tmp = t_now - nsec;
 		if (X509_cmp_time(nextupd, &t_tmp) < 0)

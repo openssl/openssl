@@ -45,7 +45,7 @@ hash functions directly.
 
 =head1 RETURN VALUES
 
-RIPEMD160() returns a pointer to the hash value. 
+RIPEMD160() returns a pointer to the hash value.
 
 RIPEMD160_Init(), RIPEMD160_Update() and RIPEMD160_Final() return 1 for
 success, 0 otherwise.

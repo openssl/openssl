@@ -1,6 +1,6 @@
 SSLeay 0.8.5g 24-Jan-1998
 built on Tue Jan 27 08:11:42 EST 1998
-options:bn(64,32) md2(int) rc4(idx,int) des(ptr,risc1,16,long) idea(int) blowfish(ptr2) 
+options:bn(64,32) md2(int) rc4(idx,int) des(ptr,risc1,16,long) idea(int) blowfish(ptr2)
 C flags:gcc -DL_ENDIAN -DTERMIO -DBN_ASM -O3 -fomit-frame-pointer -m486 -Wall -Wuninitialized -DSHA1_ASM -DMD5_ASM -DRMD160_ASM
 The 'numbers' are in 1000s of bytes per second processed.
 type              8 bytes     64 bytes    256 bytes   1024 bytes   8192 bytes

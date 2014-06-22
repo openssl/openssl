@@ -61,7 +61,7 @@
 
 	# put aside e_machine in case one has to treat specific
 	# platforms differently, see EM_ constants in elf.h for
-	# assortment... 
+	# assortment...
 	$self->{e_machine} = $elf_ehdr{e_machine};
 
 	#################################################

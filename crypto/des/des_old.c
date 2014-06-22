@@ -26,7 +26,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -144,8 +144,8 @@ void _ossl_old_des_decrypt3(DES_LONG *data, des_key_schedule ks1,
 	DES_decrypt3(data, (DES_key_schedule *)ks1, (DES_key_schedule *)ks2,
 		(DES_key_schedule *)ks3);
 	}
-void _ossl_old_des_ede3_cbc_encrypt(_ossl_old_des_cblock *input, _ossl_old_des_cblock *output, 
-	long length, des_key_schedule ks1, des_key_schedule ks2, 
+void _ossl_old_des_ede3_cbc_encrypt(_ossl_old_des_cblock *input, _ossl_old_des_cblock *output,
+	long length, des_key_schedule ks1, des_key_schedule ks2,
 	des_key_schedule ks3, _ossl_old_des_cblock *ivec, int enc)
 	{
 	DES_ede3_cbc_encrypt((unsigned char *)input, (unsigned char *)output,

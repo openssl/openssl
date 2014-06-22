@@ -2,12 +2,12 @@ Motorolla 68020 20mhz, NetBSD
 
 SSLeay 0.9.0t 29-May-1998
 built on Fri Jun  5 12:42:23 EST 1998
-options:bn(64,32) md2(char) rc4(idx,int) des(idx,cisc,16,long) idea(int) blowfish(idx) 
+options:bn(64,32) md2(char) rc4(idx,int) des(idx,cisc,16,long) idea(int) blowfish(idx)
 C flags:gcc -DTERMIOS -O3 -fomit-frame-pointer -Wall -DB_ENDIAN
 The 'numbers' are in 1000s of bytes per second processed.
 type              8 bytes     64 bytes    256 bytes   1024 bytes   8192 bytes
-md2               2176.00      5994.67      8079.73      8845.18      9077.01 
-mdc2              5730.67      6122.67      6167.66      6176.51      6174.87 
+md2               2176.00      5994.67      8079.73      8845.18      9077.01
+mdc2              5730.67      6122.67      6167.66      6176.51      6174.87
 md5                 29.10k      127.31k      209.66k      250.50k      263.99k
 hmac(md5)           12.33k       73.02k      160.17k      228.04k      261.15k
 sha1                11.27k       49.37k       84.31k      102.40k      109.23k

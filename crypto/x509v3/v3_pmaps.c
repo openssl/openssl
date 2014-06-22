@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -85,7 +85,7 @@ ASN1_SEQUENCE(POLICY_MAPPING) = {
 	ASN1_SIMPLE(POLICY_MAPPING, subjectDomainPolicy, ASN1_OBJECT)
 } ASN1_SEQUENCE_END(POLICY_MAPPING)
 
-ASN1_ITEM_TEMPLATE(POLICY_MAPPINGS) = 
+ASN1_ITEM_TEMPLATE(POLICY_MAPPINGS) =
 	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, POLICY_MAPPINGS,
 								POLICY_MAPPING)
 ASN1_ITEM_TEMPLATE_END(POLICY_MAPPINGS)

@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -523,7 +523,7 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
 
 /* Key Encrypted Key (KEK) RecipientInfo routines */
 
-int CMS_RecipientInfo_kekri_id_cmp(CMS_RecipientInfo *ri, 
+int CMS_RecipientInfo_kekri_id_cmp(CMS_RecipientInfo *ri,
 					const unsigned char *id, size_t idlen)
 	{
 	ASN1_OCTET_STRING tmp_os;
@@ -710,7 +710,7 @@ int CMS_RecipientInfo_kekri_get0_id(CMS_RecipientInfo *ri,
 	return 1;
 	}
 
-int CMS_RecipientInfo_set0_key(CMS_RecipientInfo *ri, 
+int CMS_RecipientInfo_set0_key(CMS_RecipientInfo *ri,
 				unsigned char *key, size_t keylen)
 	{
 	CMS_KEKRecipientInfo *kekri;
@@ -750,7 +750,7 @@ static int cms_RecipientInfo_kekri_encrypt(CMS_ContentInfo *cms,
 		}
 
 	if (AES_set_encrypt_key(kekri->key, kekri->keylen << 3, &actx))
-		{ 
+		{
 		CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_ENCRYPT,
 						CMS_R_ERROR_SETTING_KEY);
 		goto err;
@@ -759,7 +759,7 @@ static int cms_RecipientInfo_kekri_encrypt(CMS_ContentInfo *cms,
 	wkey = OPENSSL_malloc(ec->keylen + 8);
 
 	if (!wkey)
-		{ 
+		{
 		CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_ENCRYPT,
 						ERR_R_MALLOC_FAILURE);
 		goto err;
@@ -820,14 +820,14 @@ static int cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms,
 	/* If encrypted key length is invalid don't bother */
 
 	if (kekri->encryptedKey->length < 16)
-		{ 
+		{
 		CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_DECRYPT,
 					CMS_R_INVALID_ENCRYPTED_KEY_LENGTH);
 		goto err;
 		}
 
 	if (AES_set_decrypt_key(kekri->key, kekri->keylen << 3, &actx))
-		{ 
+		{
 		CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_DECRYPT,
 						CMS_R_ERROR_SETTING_KEY);
 		goto err;
@@ -836,7 +836,7 @@ static int cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms,
 	ukey = OPENSSL_malloc(kekri->encryptedKey->length - 8);
 
 	if (!ukey)
-		{ 
+		{
 		CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_DECRYPT,
 						ERR_R_MALLOC_FAILURE);
 		goto err;

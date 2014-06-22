@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -227,7 +227,7 @@ static int drbg_ec_instantiate(DRBG_CTX *dctx,
 				const unsigned char *pstr, size_t pstr_len)
 	{
 	DRBG_EC_CTX *ectx = &dctx->d.ec;
-	if (!hash_df(dctx, ectx->sbuf, 
+	if (!hash_df(dctx, ectx->sbuf,
 			ent, ent_len, nonce, nonce_len, pstr, pstr_len))
 		return 0;
 	if (!bin2bnbits(dctx, ectx->s, ectx->sbuf))
@@ -247,7 +247,7 @@ static int drbg_ec_reseed(DRBG_CTX *dctx,
 	if (ectx->exbits)
 		BN_lshift(ectx->s, ectx->s, ectx->exbits);
 	bn2binpad(ectx->tbuf, dctx->seedlen, ectx->s);
-	if (!hash_df(dctx, ectx->sbuf, ectx->tbuf, dctx->seedlen, 
+	if (!hash_df(dctx, ectx->sbuf, ectx->tbuf, dctx->seedlen,
 			ent, ent_len, adin, adin_len))
 		return 0;
 	if (!bin2bnbits(dctx, ectx->s, ectx->sbuf))

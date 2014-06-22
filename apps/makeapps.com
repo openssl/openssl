@@ -6,7 +6,7 @@ $!               A-Com Computing, Inc.
 $!               byer@mail.all-net.net
 $!
 $!  Changes by Richard Levitte <richard@levitte.org>
-$!             Zoltan Arpadffy <zoli@polarhome.com>   
+$!             Zoltan Arpadffy <zoli@polarhome.com>
 $!
 $!  This command files compiles and creates all the various different
 $!  "application" programs for the different types of encryption for OpenSSL.
@@ -198,7 +198,7 @@ $ COMPILEWITH_CC2 = ",S_SOCKET,S_SERVER,S_CLIENT,"
 $!
 $ PHASE := LIB
 $!
-$ RESTART: 
+$ RESTART:
 $!
 $!  Define An App Counter And Set It To "0".
 $!
@@ -378,7 +378,7 @@ $!
 $     CREATE 'OPT_FILE'
 $DECK
 !
-! Default System Options File To Link Against 
+! Default System Options File To Link Against
 ! The Sharable VAX C Runtime Library.
 !
 SYS$SHARE:VAXCRTL.EXE/SHARE
@@ -407,7 +407,7 @@ $!
 $     CREATE 'OPT_FILE'
 $DECK
 !
-! Default System Options File To Link Against 
+! Default System Options File To Link Against
 ! The Sharable C Runtime Library.
 !
 GNU_CC:[000000]GCCLIB/LIBRARY
@@ -442,7 +442,7 @@ $!
 $       CREATE 'OPT_FILE'
 $DECK
 !
-! Default System Options File To Link Against 
+! Default System Options File To Link Against
 ! The Sharable DEC C Runtime Library.
 !
 SYS$SHARE:DECC$SHR.EXE/SHARE
@@ -457,7 +457,7 @@ $!
 $       CREATE 'OPT_FILE'
 $DECK
 !
-! Default System Options File For non-VAX To Link Against 
+! Default System Options File For non-VAX To Link Against
 ! The Sharable C Runtime Library.
 !
 SYS$SHARE:CMA$OPEN_LIB_SHR/SHARE
@@ -545,7 +545,7 @@ $!  P1 Is NODEBUG, So Compile Without Debugger Information.
 $!
 $   DEBUGGER  = "NODEBUG"
 $   LINKMAP = "NOMAP"
-$   TRACEBACK = "NOTRACEBACK" 
+$   TRACEBACK = "NOTRACEBACK"
 $   GCC_OPTIMIZE = "OPTIMIZE"
 $   CC_OPTIMIZE = "OPTIMIZE"
 $   WRITE SYS$OUTPUT "No Debugger Information Will Be Produced During Compile."
@@ -656,7 +656,7 @@ $       WRITE SYS$OUTPUT -
 $       WRITE SYS$OUTPUT -
          "    64=ARGV  :  Compile with 64-bit (long) pointers (ARGV)."
 $       WRITE SYS$OUTPUT ""
-$! 
+$!
 $!      Time To EXIT.
 $!
 $       EXIT
@@ -697,7 +697,7 @@ $!
 $!  Check To See If We Have VAXC Or DECC.
 $!
 $     IF (ARCH.NES."VAX").OR.(F$TRNLNM("DECC$CC_DEFAULT").NES."")
-$     THEN 
+$     THEN
 $!
 $!      Looks Like DECC, Set To Use DECC.
 $!

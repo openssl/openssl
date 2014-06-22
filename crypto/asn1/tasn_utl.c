@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -92,7 +92,7 @@ int asn1_set_choice_selector(ASN1_VALUE **pval, int value, const ASN1_ITEM *it)
 	return ret;
 	}
 
-/* Do reference counting. The value 'op' decides what to do. 
+/* Do reference counting. The value 'op' decides what to do.
  * if it is +1 then the count is incremented. If op is 0 count is
  * set to 1. If op is -1 count is decremented and the return value
  * is the current reference count or 0 if no reference count exists.
@@ -119,7 +119,7 @@ int asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it)
 	fprintf(stderr, "%s: Reference Count: %d\n", it->sname, *lck);
 #endif
 #ifdef REF_CHECK
-	if (ret < 0) 
+	if (ret < 0)
 		fprintf(stderr, "%s, bad reference count\n", it->sname);
 #endif
 	return ret;
@@ -246,9 +246,9 @@ const ASN1_TEMPLATE *asn1_do_adb(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt,
 	 * NB: don't check for NID_undef here because it
 	 * might be a legitimate value in the table
 	 */
-	if (tt->flags & ASN1_TFLG_ADB_OID) 
+	if (tt->flags & ASN1_TFLG_ADB_OID)
 		selector = OBJ_obj2nid((ASN1_OBJECT *)*sfld);
-	else 
+	else
 		selector = ASN1_INTEGER_get((ASN1_INTEGER *)*sfld);
 
 	/* Try to find matching entry in table

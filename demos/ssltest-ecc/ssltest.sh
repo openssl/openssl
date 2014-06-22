@@ -66,7 +66,7 @@ if [ "$1" = "aecdh" ]; then
 for cipher in $AECDH_CIPHER_LIST
 do
     echo "Testing $cipher"
-    $SSLTEST $SSL_VERSION -cert $SERVER_PEM -cipher $cipher 
+    $SSLTEST $SSL_VERSION -cert $SERVER_PEM -cipher $cipher
 done
 #--------------------------------------------------------------
 for curve in $ELLIPTIC_CURVE_LIST
@@ -85,7 +85,7 @@ done
 fi
 
 #==============================================================
-# Both ECDH-ECDSA and ECDHE-ECDSA cipher suites require 
+# Both ECDH-ECDSA and ECDHE-ECDSA cipher suites require
 # the server to have an ECC certificate signed with ECDSA.
 CA_PEM=$CERTS_DIR/secp160r1TestCA.pem
 SERVER_PEM=$CERTS_DIR/secp160r2TestServer.pem
@@ -130,7 +130,7 @@ do
     $SSLTEST $SSL_VERSION -CAfile $CA_PEM \
 	-cert $SERVER_PEM -server_auth \
 	-c_cert $CLIENT_PEM -client_auth \
-	-cipher ECDHE-ECDSA-AES128-SHA -named_curve $curve 
+	-cipher ECDHE-ECDSA-AES128-SHA -named_curve $curve
 done
 fi
 

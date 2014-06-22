@@ -82,7 +82,7 @@ the documentation, will produce hideous results on a pentium pro.
 
 To get around this, des686.pl will generate code that is not as fast on
 a pentium, should be very good on a pentium pro.
-mov	eax,	ecx				# copy word 
+mov	eax,	ecx				# copy word
 shr	ecx,	8				# line up next byte
 and	eax,	0fch				# mask byte
 xor	edi	DWORD PTR 0x100+des_SP[eax] 	# xor in array lookup
