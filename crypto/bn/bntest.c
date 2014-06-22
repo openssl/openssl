@@ -5,21 +5,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- *
+ * 
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
+ * 
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
+ * 4. If you include any Windows specific code (or a derivative thereof) from 
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
+ * 
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -58,13 +58,13 @@
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
- * Portions of the attached software ("Contribution") are developed by
+ * Portions of the attached software ("Contribution") are developed by 
  * SUN MICROSYSTEMS, INC., and are contributed to the OpenSSL project.
  *
  * The Contribution is licensed pursuant to the Eric Young open source
  * license provided above.
  *
- * The binary polynomial arithmetic software is originally written by
+ * The binary polynomial arithmetic software is originally written by 
  * Sheueling Chang Shantz and Douglas Stebila of Sun Microsystems Laboratories.
  *
  */
@@ -677,7 +677,7 @@ int test_mul(BIO *bp)
 
 	ctx = BN_CTX_new();
 	if (ctx == NULL) EXIT(1);
-
+	
 	BN_init(&a);
 	BN_init(&b);
 	BN_init(&c);
@@ -1445,7 +1445,7 @@ int test_gf2m_mod_inv(BIO *bp,BN_CTX *ctx)
 
 	for (i=0; i<num0; i++)
 		{
-		BN_bntest_rand(a, 512, 0, 0);
+		BN_bntest_rand(a, 512, 0, 0); 
 		for (j=0; j < 2; j++)
 			{
 			BN_GF2m_mod_inv(c, a, b[j], ctx);
@@ -1502,7 +1502,7 @@ int test_gf2m_mod_div(BIO *bp,BN_CTX *ctx)
 
 	for (i=0; i<num0; i++)
 		{
-		BN_bntest_rand(a, 512, 0, 0);
+		BN_bntest_rand(a, 512, 0, 0); 
 		BN_bntest_rand(c, 512, 0, 0);
 		for (j=0; j < 2; j++)
 			{
@@ -1727,7 +1727,7 @@ int test_gf2m_mod_solve_quad(BIO *bp,BN_CTX *ctx)
 					}
 
 				}
-			else
+			else 
 				{
 #if 0 /* make test uses ouput in bc but bc can't handle GF(2^m) arithmetic */
 				if (bp != NULL)
@@ -1746,7 +1746,7 @@ int test_gf2m_mod_solve_quad(BIO *bp,BN_CTX *ctx)
 			}
 		}
 	if (s == 0)
-		{
+		{	
 		fprintf(stderr,"All %i tests of GF(2^m) modular solve quadratic resulted in no roots;\n", num0);
 		fprintf(stderr,"this is very unlikely and probably indicates an error.\n");
 		goto err;
@@ -1790,7 +1790,7 @@ int test_kron(BIO *bp, BN_CTX *ctx)
 	if (a == NULL || b == NULL || r == NULL || t == NULL) goto err;
 
 	BN_GENCB_set(&cb, genprime_cb, NULL);
-
+	
 	/* We test BN_kronecker(a, b, ctx) just for  b  odd (Jacobi symbol).
 	 * In this case we know that if  b  is prime, then BN_kronecker(a, b, ctx)
 	 * is congruent to $a^{(b-1)/2}$, modulo $b$ (Legendre symbol).
@@ -1816,7 +1816,7 @@ int test_kron(BIO *bp, BN_CTX *ctx)
 		if (!BN_rshift1(t, t)) goto err;
 		/* r := a^t mod b */
 		b->neg=0;
-
+		
 		if (!BN_mod_exp_recp(r, a, t, b, ctx)) goto err;
 		b->neg=1;
 
@@ -1834,13 +1834,13 @@ int test_kron(BIO *bp, BN_CTX *ctx)
 				}
 			legendre = -1;
 			}
-
+		
 		kronecker = BN_kronecker(a, b, ctx);
 		if (kronecker < -1) goto err;
 		/* we actually need BN_kronecker(a, |b|) */
 		if (a->neg && b->neg)
 			kronecker = -kronecker;
-
+		
 		if (legendre != kronecker)
 			{
 			fprintf(stderr, "legendre != kronecker; a = ");
@@ -1890,7 +1890,7 @@ int test_sqrt(BIO *bp, BN_CTX *ctx)
 			{
 			if (!BN_set_word(a, 32)) goto err;
 			if (!BN_set_word(r, 2*i + 1)) goto err;
-
+		
 			if (!BN_generate_prime_ex(p, 256, 0, a, r, &cb)) goto err;
 			putc('\n', stderr);
 			}
@@ -1930,7 +1930,7 @@ int test_sqrt(BIO *bp, BN_CTX *ctx)
 			putc('.', stderr);
 			fflush(stderr);
 			}
-
+		
 		putc('\n', stderr);
 		fflush(stderr);
 		}
@@ -2318,7 +2318,7 @@ int test_lshift1(BIO *bp)
 		    fprintf(stderr,"Left shift one test failed!\n");
 		    return 0;
 		    }
-
+		
 		BN_copy(a,b);
 		}
 	BN_free(a);
