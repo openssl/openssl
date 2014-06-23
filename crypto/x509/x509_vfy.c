@@ -763,7 +763,7 @@ static int check_id(X509_STORE_CTX *ctx)
 	X509_VERIFY_PARAM *vpm = ctx->param;
 	X509_VERIFY_PARAM_ID *id = vpm->id;
 	X509 *x = ctx->cert;
-	if (id->hosts && !check_hosts(x, id) <= 0)
+	if (id->hosts && check_hosts(x, id) <= 0)
 		{
 		if (!check_id_error(ctx, X509_V_ERR_HOSTNAME_MISMATCH))
 			return 0;
