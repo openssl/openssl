@@ -752,7 +752,7 @@ static int check_hosts(X509 *x, X509_VERIFY_PARAM_ID *id)
 	for (i = 0; i < n; ++i)
 		{
 		name = (unsigned char *)sk_OPENSSL_STRING_value(id->hosts, i);
-		if (X509_check_host(x, name, 0, id->hostflags)) > 0)
+		if (X509_check_host(x, name, 0, id->hostflags) > 0)
 			return 1;
 		}
 	return n == 0;
