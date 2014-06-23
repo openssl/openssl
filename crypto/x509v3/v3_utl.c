@@ -972,22 +972,46 @@ static int do_x509_check(X509 *x, const unsigned char *chk, size_t chklen,
 int X509_check_host(X509 *x, const unsigned char *chk, size_t chklen,
 					unsigned int flags)
 	{
+	if (chk == NULL)
+		return -2;
+	/*
+	 * Embedded NULs are disallowed, except as the last character of a
+	 * string of length 2 or more (tolerate caller including terminating
+	 * NUL in string length).
+	 */
 	if (chklen == 0)
-		chklen = chk ? strlen((char *)chk) : 0;
-	else if (chk && memchr(chk, '\0', chklen))
-		return 0;
+		chklen = strlen((char *)chk);
+	else if (memchr(chk, '\0', chklen > 1 ? chklen-1 : chklen))
+		return -2;
+	if (chklen > 1 && chk[chklen-1] == '\0')
+		--chklen;
 	return do_x509_check(x, chk, chklen, flags, GEN_DNS);
 	}
 
 int X509_check_email(X509 *x, const unsigned char *chk, size_t chklen,
 					unsigned int flags)
 	{
+	if (chk == NULL)
+		return -2;
+	/*
+	 * Embedded NULs are disallowed, except as the last character of a
+	 * string of length 2 or more (tolerate caller including terminating
+	 * NUL in string length).
+	 */
+	if (chklen == 0)
+		chklen = strlen((char *)chk);
+	else if (memchr(chk, '\0', chklen > 1 ? chklen-1 : chklen))
+		return -2;
+	if (chklen > 1 && chk[chklen-1] == '\0')
+		--chklen;
 	return do_x509_check(x, chk, chklen, flags, GEN_EMAIL);
 	}
 
 int X509_check_ip(X509 *x, const unsigned char *chk, size_t chklen,
 					unsigned int flags)
 	{
+	if (chk == NULL)
+		return -2;
 	return do_x509_check(x, chk, chklen, flags, GEN_IPADD);
 	}
 
@@ -995,6 +1019,8 @@ int X509_check_ip_asc(X509 *x, const char *ipasc, unsigned int flags)
 	{
 	unsigned char ipout[16];
 	int iplen;
+	if (ipasc == NULL)
+		return -2;
 	iplen = a2i_ipadd(ipout, ipasc);
 	if (iplen == 0)
 		return -2;
