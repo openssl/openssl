@@ -556,11 +556,9 @@ start:
 
 again:
 	if (!BN_rand(rnd, bits - prm_multiplier_bits, 1, 1)) goto err;
-	if (BN_num_bits(rnd) > bits - prm_multiplier_bits) goto again;
 	if (!adjust_rnd_for_dh(rnd, add, rem, t1, ctx)) goto err;
-	if (!BN_mul_word(rnd, prm_multiplier)) goto err;
-	if (BN_num_bits(rnd) > bits) goto again;
 
+	if (!BN_mul_word(rnd, prm_multiplier)) goto err;
 	if (!BN_rand_range(offset_index, offset_count)) goto err;
 
 	j = BN_get_word(offset_index);
