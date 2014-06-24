@@ -20,7 +20,8 @@
 #
 #		PMULL[2]	32-bit NEON(*)
 # Apple A7	1.76		5.62
-# Cortex-A5x	n/a		n/a
+# Cortex-A53	1.45		8.39
+# Cortex-A57	2.22		7.61
 #
 # (*)	presented for reference/comparison purposes;
 
