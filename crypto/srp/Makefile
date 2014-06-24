@@ -57,9 +57,6 @@ tags:
 
 tests:
 
-srptest: top srptest.c $(LIB)
-	$(CC) $(CFLAGS) -Wall -Werror -g -o srptest srptest.c $(LIB)
-
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
