@@ -163,10 +163,6 @@ install:
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-exptest:
-	rm -f exptest
-	gcc -I../../include -g2 -ggdb -o exptest exptest.c ../../libcrypto.a
-
 div:
 	rm -f a.out
 	gcc -I.. -g div.c ../../libcrypto.a
