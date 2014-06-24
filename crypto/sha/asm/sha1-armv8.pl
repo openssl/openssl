@@ -14,7 +14,8 @@
 #
 #		hardware-assisted	software(*)
 # Apple A7	2.31			4.13 (+14%)
-# Cortex-A5x	n/a			n/a
+# Cortex-A53	2.19			8.73 (+108%)
+# Cortex-A57	2.35			7.88 (+74%)
 #
 # (*)	Software results are presented mostly for reference purposes.
 

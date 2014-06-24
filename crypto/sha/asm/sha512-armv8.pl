@@ -14,12 +14,18 @@
 #
 #		SHA256-hw	SHA256(*)	SHA512
 # Apple A7	1.97		10.5 (+33%)	6.73 (-1%(**))
-# Cortex-A5x	n/a		n/a		n/a
+# Cortex-A53	2.38		15.6 (+110%)	10.1 (+190%(***))
+# Cortex-A57	2.31		11.6 (+86%)	7.51 (+260%(***))
 # 
 # (*)	Software SHA256 results are of lesser relevance, presented
 #	mostly for informational purposes.
 # (**)	The result is a trade-off: it's possible to improve it by
-#	10%, but at the cost of 20% loss on Cortex-A5x.
+#	10% (or by 1 cycle per round), but at the cost of 20% loss
+#	on Cortex-A53 (or by 4 cycles per round).
+# (***)	Super-impressive coefficients over gcc-generated code are
+#	indication of some compiler "pathology", most notably code
+#	generated with -mgeneral-regs-only is significanty faster
+#	and lags behind assembly only by 50-90%.
 
 $flavour=shift;
 $output=shift;
