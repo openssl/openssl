@@ -578,7 +578,7 @@ again:
 		{
 		for (i = 0; i < NUMPRIMES; i++)
 			{
-			mods[i] = 0;
+			mods[i] = (prime_t)BN_mod_word(rnd, (BN_ULONG)primes[i]);
 			}
 		}
 
@@ -588,11 +588,6 @@ loop:
 		{
 		for (i = first_prime_index; i < NUMPRIMES; i++)
 			{
-			if (mods[i] == 0)
-				{
-				mods[i] = (prime_t)BN_mod_word(rnd, (BN_ULONG)primes[i]);
-				}
-
 			if ((mods[i] + offset) % primes[i] <= max_rem)
 				{
 				j++;
