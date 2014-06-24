@@ -63,6 +63,10 @@ if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	$avx = ($1>=10) + ($1>=11);
 }
 
+if (!$avx && `$ENV{CC} -v` =~ /LLVM ([3-9]\.[0-9]+)/) {
+	$avx = ($1>=3.0) + ($1>=3.1);
+}
+
 open OUT,"| \"$^X\" $xlate $flavour $output";
 *STDOUT=*OUT;
 

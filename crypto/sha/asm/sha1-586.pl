@@ -128,6 +128,9 @@ $ymm=1 if ($xmm && !$ymm && $ARGV[0] eq "win32" &&
 		`ml 2>&1` =~ /Version ([0-9]+)\./ &&
 		$1>=10);	# first version supporting AVX
 
+$ymm=1 if ($xmm && !$ymm && `$ENV{CC} -v` =~ /LLVM ([3-9]\.[0-9]+)/ &&
+		$1>=3.0);	# first version supporting AVX
+
 $shaext=$xmm;	### set to zero if compiling for 1.0.1
 
 &external_label("OPENSSL_ia32cap_P") if ($xmm);
