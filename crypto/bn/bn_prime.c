@@ -126,6 +126,8 @@
  */
 #include "bn_prime.h"
 
+static int probable_prime(BIGNUM *rnd, int bits);
+static int probable_prime_single_word(BIGNUM *rnd, int bits);
 static int adjust_rnd_for_dh(BIGNUM *rnd, const BIGNUM *add, const BIGNUM *rem,
 	BIGNUM *temp_bn, BN_CTX *ctx);
 static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
@@ -352,63 +354,49 @@ err:
 	}
 
 int bn_probable_prime(BIGNUM *rnd, int bits)
-	{
+	{	
+	int ret = 0;
+
+	if (bits > BN_BITS2)
+		{
+		if (!probable_prime(rnd, bits)) goto err;
+		}
+	else
+		{
+		if (!probable_prime_single_word(rnd, bits)) goto err;
+		}
+
+	ret = 1;
+
+err:
+	bn_check_top(rnd);
+	return ret;
+	}
+
+static int probable_prime(BIGNUM *rnd, int bits)
+	{	
 	int i;
 	prime_t mods[NUMPRIMES];
 	BN_ULONG delta;
-	BN_ULONG maxdelta = BN_MASK2 - primes[NUMPRIMES-1];
-	char is_single_word = bits <= BN_BITS2;
-
+	BN_ULONG maxdelta = BN_MASK2 - primes[NUMPRIMES - 1] + 1;
+	
 again:
 	if (!BN_rand(rnd,bits,1,1)) return(0);
 	/* we now have a random number 'rnd' to test. */
 	for (i=1; i<NUMPRIMES; i++)
 		mods[i]=(prime_t)BN_mod_word(rnd,(BN_ULONG)primes[i]);
-	/* If bits is so small that it fits into a single word then we
-	 * additionally don't want to exceed that many bits. */
-	if (is_single_word)
-		{
-		BN_ULONG size_limit = (((BN_ULONG) 1) << bits) - BN_get_word(rnd) - 1;
-		if (size_limit < maxdelta)
-			maxdelta = size_limit;
-		}
+
 	delta=0;
 loop:
-	if (is_single_word)
+	for (i=1; i<NUMPRIMES; i++)
 		{
-		BN_ULONG rnd_word = BN_get_word(rnd);
-
-		/* In the case that the candidate prime is a single word then
-		 * we check that:
-		 *   1) It's greater than primes[i] because we shouldn't reject
-		 *      3 as being a prime number because it's a multiple of
-		 *      three.
-		 *   2) That it's not a multiple of a known prime. We don't
-		 *      check that rnd-1 is also coprime to all the known
-		 *      primes because there aren't many small primes where
-		 *      that's true. */
-		for (i=1; i<NUMPRIMES && primes[i]<rnd_word; i++)
+		/* check that rnd is not a prime and also
+		 * that gcd(rnd-1,primes) == 1 (except for 2) */
+		if (((mods[i]+delta)%primes[i]) <= 1)
 			{
-			if ((mods[i]+delta)%primes[i] == 0)
-				{
-				delta+=2;
-				if (delta > maxdelta) goto again;
-				goto loop;
-				}
-			}
-		}
-	else
-		{
-		for (i=1; i<NUMPRIMES; i++)
-			{
-			/* check that rnd is not a prime and also
-			 * that gcd(rnd-1,primes) == 1 (except for 2) */
-			if (((mods[i]+delta)%primes[i]) <= 1)
-				{
-				delta+=2;
-				if (delta > maxdelta) goto again;
-				goto loop;
-				}
+			delta+=2;
+			if (delta > maxdelta) goto again;
+			goto loop;
 			}
 		}
 	if (!BN_add_word(rnd,delta)) return(0);
@@ -416,6 +404,67 @@ loop:
 		goto again;
 	bn_check_top(rnd);
 	return(1);
+	}
+
+static int probable_prime_single_word(BIGNUM *rnd, int bits)
+	{
+	int i;
+	prime_t mods[NUMPRIMES];
+	BN_ULONG delta;
+	BN_ULONG rnd_word;
+	BN_ULONG size_limit;
+	BN_ULONG max_delta = BN_MASK2 - primes[NUMPRIMES - 1] + 1;
+	int ret = 0;
+	
+	OPENSSL_assert(bits <= BN_BITS2);
+
+again:
+	if (!BN_rand(rnd, bits, 1, 1)) goto err;
+	
+	rnd_word = BN_get_word(rnd);
+	
+	size_limit = (((BN_ULONG) 1) << bits) - rnd_word - 1;	
+	if (size_limit < max_delta)
+		{
+		max_delta = size_limit;
+		}
+
+	for (i = 0; i < NUMPRIMES && primes[i] < rnd_word; i++)
+		{
+		mods[i] = rnd_word % primes[i];
+		}
+
+	delta = 0;
+
+loop:
+	/* We check that the candidate prime:
+	 *   1) is greater than primes[i] because we shouldn't reject
+	 *      3 as being a prime number because it's a multiple of
+	 *      three.
+	 *   2) is not a multiple of a known prime. We don't
+	 *      check that rnd-1 is also coprime to all the known
+	 *      primes because there aren't many small primes where
+	 *      that's true. */
+	for (i = 1; i < NUMPRIMES && primes[i] < rnd_word; i++)
+		{
+		if ((mods[i] + delta) % primes[i] == 0)
+			{
+			delta += 2;
+
+			if (delta > max_delta) goto again;
+			
+			goto loop;
+			}
+		}
+		
+	if (!BN_add_word(rnd, delta)) goto err;
+	if (BN_num_bits(rnd) != bits) goto again;
+	
+	ret = 1;
+
+err:
+	bn_check_top(rnd);
+	return ret;
 	}
 
 int bn_probable_prime_dh(BIGNUM *rnd, int bits,
