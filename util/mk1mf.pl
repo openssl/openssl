@@ -66,6 +66,7 @@ my %mf_import = (
 	CMLL_ENC       => \$mf_cm_asm,
 	MODES_ASM_OBJ  => \$mf_modes_asm,
         ENGINES_ASM_OBJ=> \$mf_engines_asm,
+	PERLASM_SCHEME => \$mf_perlasm_scheme,
 	FIPSCANISTERONLY  => \$mf_fipscanisteronly,
 	FIPSCANISTERINTERNAL  => \$mf_fipscanisterinternal
 );
@@ -672,6 +673,7 @@ INC_D=$inc_dir
 INCO_D=$inc_dir${o}openssl
 
 PERL=$perl
+PERLASM_SCHEME=$mf_perlasm_scheme
 CP=$cp
 CP2=$cp2
 RM=$rm
