@@ -806,6 +806,8 @@ int MAIN(int argc, char **argv)
 	else if (host)
 		{
 #ifndef OPENSSL_NO_SOCK
+		if (!X509V3_add_value("User-Agent", SSLeay_version(SSLEAY_VERSION), &headers))
+			goto end;
 		resp = process_responder(bio_err, req, host, path,
 					port, use_ssl, headers, req_timeout);
 		if (!resp)
