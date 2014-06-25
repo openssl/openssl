@@ -70,6 +70,19 @@ $code.=<<___	if ($flavour =~ /64/);
 	add	x29,sp,#0
 ___
 $code.=<<___;
+	mov	$ptr,#-1
+	cmp	$inp,#0
+	b.eq	.Lenc_key_abort
+	cmp	$out,#0
+	b.eq	.Lenc_key_abort
+	mov	$ptr,#-2
+	cmp	$bits,#128
+	b.lt	.Lenc_key_abort
+	cmp	$bits,#256
+	b.gt	.Lenc_key_abort
+	tst	$bits,#0x3f
+	b.ne	.Lenc_key_abort
+
 	adr	$ptr,rcon
 	cmp	$bits,#192
 
@@ -209,8 +222,10 @@ $code.=<<___;
 
 .Ldone:
 	str	$rounds,[$out]
+	mov	$ptr,#0
 
-	eor	x0,x0,x0		// return value
+.Lenc_key_abort:
+	mov	x0,$ptr			// return value
 	`"ldr	x29,[sp],#16"		if ($flavour =~ /64/)`
 	ret
 .size	${prefix}_set_encrypt_key,.-${prefix}_set_encrypt_key
@@ -229,6 +244,9 @@ $code.=<<___	if ($flavour !~ /64/);
 ___
 $code.=<<___;
 	bl	.Lenc_key
+
+	cmp	x0,#0
+	b.ne	.Ldec_key_abort
 
 	sub	$out,$out,#240		// restore original $out
 	mov	x4,#-16
@@ -254,6 +272,7 @@ $code.=<<___;
 	vst1.32	{v0.16b},[$inp]
 
 	eor	x0,x0,x0		// return value
+.Ldec_key_abort:
 ___
 $code.=<<___	if ($flavour !~ /64/);
 	ldmia	sp!,{r4,pc}
