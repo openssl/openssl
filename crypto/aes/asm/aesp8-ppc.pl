@@ -89,8 +89,22 @@ Lconsts:
 .${prefix}_set_encrypt_key:
 Lset_encrypt_key:
 	mflr		r11
-	lis		r0,0xfff0
 	$PUSH		r11,$LRSAVE($sp)
+
+	li		$ptr,-1
+	${UCMP}i	$inp,0
+	beq-		Lenc_key_abort		# if ($inp==0) return -1;
+	${UCMP}i	$out,0
+	beq-		Lenc_key_abort		# if ($out==0) return -1;
+	li		$ptr,-2
+	cmpwi		$bits,128
+	blt-		Lenc_key_abort
+	cmpwi		$bits,256
+	bgt-		Lenc_key_abort
+	andi.		r0,$bits,0x3f
+	bne-		Lenc_key_abort
+
+	lis		r0,0xfff0
 	mfspr		$vrsave,256
 	mtspr		256,r0
 
@@ -321,10 +335,12 @@ Ldone:
 	lvx		$in1,0,$inp		# redundant in aligned case
 	vsel		$in1,$outhead,$in1,$outmask
 	stvx		$in1,0,$inp
-	xor		r3,r3,r3		# return value
+	li		$ptr,0
 	mtspr		256,$vrsave
 	stw		$rounds,0($out)
 
+Lenc_key_abort:
+	mr		r3,$ptr
 	blr
 	.long		0
 	.byte		0,12,0x14,1,0,0,3,0
@@ -339,6 +355,9 @@ Ldone:
 	$PUSH		r10,$FRAME+$LRSAVE($sp)
 	bl		Lset_encrypt_key
 	mtlr		r10
+
+	cmpwi		r3,0
+	bne-		Ldec_key_abort
 
 	slwi		$cnt,$rounds,4
 	subi		$inp,$out,240		# first round key
@@ -368,6 +387,7 @@ Ldeckey:
 	bdnz		Ldeckey
 
 	xor		r3,r3,r3		# return value
+Ldec_key_abort:
 	addi		$sp,$sp,$FRAME
 	blr
 	.long		0
