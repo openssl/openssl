@@ -78,20 +78,24 @@ die "can't locate x86_64-xlate.pl";
 if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
 		=~ /GNU assembler version ([2-9]\.[0-9]+)/) {
 	$avx = ($1>=2.19) + ($1>=2.22);
+	$addx = ($1>=2.23);
 }
 
 if (!$avx && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
 	    `nasm -v 2>&1` =~ /NASM version ([2-9]\.[0-9]+)/) {
 	$avx = ($1>=2.09) + ($1>=2.10);
+	$addx = ($1>=2.10);
 }
 
 if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	    `ml64 2>&1` =~ /Version ([0-9]+)\./) {
 	$avx = ($1>=10) + ($1>=11);
+	$addx = ($1>=11);
 }
 
 if (!$avx && `$ENV{CC} -v 2>&1` =~ /LLVM ([3-9]\.[0-9]+)/) {
 	$avx = ($1>=3.0) + ($1>=3.1);
+	$addx = 0;
 }
 
 open OUT,"| $^X $xlate $flavour $output";
@@ -1677,6 +1681,15 @@ $code.=<<___;
 .align	32
 rsaz_avx2_eligible:
 	mov	OPENSSL_ia32cap_P+8(%rip),%eax
+___
+$code.=<<___	if ($addx);
+	mov	\$`1<<8|1<<19`,%ecx
+	mov	\$0,%edx
+	and	%eax,%ecx
+	cmp	\$`1<<8|1<<19`,%ecx	# check for BMI2+AD*X
+	cmove	%edx,%eax
+___
+$code.=<<___;
 	and	\$`1<<5`,%eax
 	shr	\$5,%eax
 	ret

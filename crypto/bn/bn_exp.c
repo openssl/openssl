@@ -694,8 +694,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	 * RSAZ exponentiation. For further information see
 	 * crypto/bn/rsaz_exp.c and accompanying assembly modules.
 	 */
-	if (((OPENSSL_ia32cap_P[2]&0x80100) != 0x80100) /* check for MULX/AD*X */
-	    && (16 == a->top) && (16 == p->top) && (BN_num_bits(m) == 1024)
+	if ((16 == a->top) && (16 == p->top) && (BN_num_bits(m) == 1024)
 	    && rsaz_avx2_eligible())
 	    	{
 		if (NULL == bn_wexpand(rr, 16)) goto err;
