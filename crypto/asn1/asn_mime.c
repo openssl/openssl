@@ -853,7 +853,7 @@ static MIME_HEADER *mime_hdr_new(char *name, char *value)
 		}
 	}
 	mhdr = (MIME_HEADER *) OPENSSL_malloc(sizeof(MIME_HEADER));
-	if(!mhdr) return NULL;
+	if(!mhdr) goto err;
 	mhdr->name = tmpname;
 	mhdr->value = tmpval;
 	if(!(mhdr->params = sk_MIME_PARAM_new(mime_param_cmp)))
