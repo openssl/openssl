@@ -951,7 +951,8 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
 	 * already, otherwise the connected socket won't use it. */
 	sockopt_len = (socklen_t)(sizeof(sctp_assoc_t) + 256 * sizeof(uint8_t));
 	authchunks = OPENSSL_malloc(sockopt_len);
-	memset(authchunks, 0, sizeof(sockopt_len));
+	OPENSSL_assert(authchunks != NULL);
+	memset(authchunks, 0, sockopt_len);
 	ret = getsockopt(fd, IPPROTO_SCTP, SCTP_LOCAL_AUTH_CHUNKS, authchunks, &sockopt_len);
 	OPENSSL_assert(ret >= 0);
 
@@ -1241,7 +1242,8 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
 
 			optlen = (socklen_t)(sizeof(sctp_assoc_t) + 256 * sizeof(uint8_t));
 			authchunks = OPENSSL_malloc(optlen);
-			memset(authchunks, 0, sizeof(optlen));
+			OPENSSL_assert(authchunks != NULL);
+			memset(authchunks, 0, optlen);
 			ii = getsockopt(b->num, IPPROTO_SCTP, SCTP_PEER_AUTH_CHUNKS, authchunks, &optlen);
 			OPENSSL_assert(ii >= 0);
 
@@ -1308,6 +1310,7 @@ static int dgram_sctp_write(BIO *b, const char *in, int inl)
 		data->saved_message.bio = b;
 		data->saved_message.length = inl;
 		data->saved_message.data = OPENSSL_malloc(inl);
+		OPENSSL_assert(data->saved_message.data != NULL);
 		memcpy(data->saved_message.data, in, inl);
 		return inl;
 	}

@@ -2079,6 +2079,11 @@ int ssl3_get_certificate_request(SSL *s)
 		{
 		/* If we exceed static buffer copy all to cert structure */
 		s->cert->ctypes = OPENSSL_malloc(ctype_num);
+		if (s->cert->ctypes == NULL)
+			{
+			SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,ERR_R_MALLOC_FAILURE);
+			goto err;
+			}
 		memcpy(s->cert->ctypes, p, ctype_num);
 		s->cert->ctype_num = (size_t)ctype_num;
 		ctype_num=SSL3_CT_NUMBER;

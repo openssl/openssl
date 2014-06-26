@@ -1618,7 +1618,12 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 		if (curr->active)
 #endif
 			{
-			sk_SSL_CIPHER_push(cipherstack, curr->cipher);
+			if (!sk_SSL_CIPHER_push(cipherstack, curr->cipher))
+				{
+				OPENSSL_free(co_list);
+				sk_SSL_CIPHER_free(cipherstack);
+				return NULL;
+				}
 #ifdef CIPHER_DEBUG
 			printf("<%s>\n",curr->cipher->name);
 #endif
@@ -1951,6 +1956,13 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 
 	MemCheck_off();
 	comp=(SSL_COMP *)OPENSSL_malloc(sizeof(SSL_COMP));
+	if (comp == NULL)
+		{
+		MemCheck_on();
+		SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD,ERR_R_MALLOC_FAILURE);
+		return(1);
+		}
+
 	comp->id=id;
 	comp->method=cm;
 	load_builtin_compressions();

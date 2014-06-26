@@ -87,6 +87,7 @@ static void ERR_CAPI_error(int function, int reason, char *file, int line);
 #define CAPI_F_CAPI_RSA_PRIV_DEC			 110
 #define CAPI_F_CAPI_RSA_PRIV_ENC			 111
 #define CAPI_F_CAPI_RSA_SIGN				 112
+#define CAPI_F_CAPI_VTRACE				 118
 #define CAPI_F_CERT_SELECT_DIALOG			 117
 #define CAPI_F_CLIENT_CERT_SELECT			 116
 #define CAPI_F_WIDE_TO_ASC				 113

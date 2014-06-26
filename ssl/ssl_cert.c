@@ -322,6 +322,7 @@ CERT *ssl_cert_dup(CERT *cert)
 			default:
 				/* Can't happen. */
 				SSLerr(SSL_F_SSL_CERT_DUP, SSL_R_LIBRARY_BUG);
+                                goto err;
 				}
 			}
 
@@ -344,7 +345,7 @@ CERT *ssl_cert_dup(CERT *cert)
 			if (ret->pkeys[i].serverinfo == NULL)
 				{
 				SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_MALLOC_FAILURE);
-				return NULL;
+				goto err;
 				}
 			ret->pkeys[i].serverinfo_length =
 				cert->pkeys[i].serverinfo_length;
@@ -425,23 +426,8 @@ CERT *ssl_cert_dup(CERT *cert)
 
 	return(ret);
 	
-#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_ECDH)
 err:
-#endif
-#ifndef OPENSSL_NO_RSA
-	if (ret->rsa_tmp != NULL)
-		RSA_free(ret->rsa_tmp);
-#endif
-#ifndef OPENSSL_NO_DH
-	if (ret->dh_tmp != NULL)
-		DH_free(ret->dh_tmp);
-#endif
-#ifndef OPENSSL_NO_ECDH
-	if (ret->ecdh_tmp != NULL)
-		EC_KEY_free(ret->ecdh_tmp);
-#endif
-
-	ssl_cert_clear_certs(ret);
+	ssl_cert_free(ret);
 
 	return NULL;
 	}

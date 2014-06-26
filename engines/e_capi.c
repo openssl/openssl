@@ -320,6 +320,11 @@ static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 		}
 	ctx = ENGINE_get_ex_data(e, capi_idx);
 	out = BIO_new_fp(stdout, BIO_NOCLOSE);
+	if (out == NULL)
+		{
+		CAPIerr(CAPI_F_CAPI_CTRL, ERR_R_MALLOC_FAILURE);
+		return 0;
+		}
 	switch (cmd)
 		{
 		case CAPI_CMD_LIST_CSPS:
@@ -1049,6 +1054,11 @@ static void capi_vtrace(CAPI_CTX *ctx, int level, char *format, va_list argptr)
 	if (!ctx || (ctx->debug_level < level) || (!ctx->debug_file))
 		return;
 	out = BIO_new_file(ctx->debug_file, "a+");
+	if (out == NULL)
+		{
+		CAPIerr(CAPI_F_CAPI_VTRACE, ERR_R_MALLOC_FAILURE);
+		return;
+		}
 	BIO_vprintf(out, format, argptr);
 	BIO_free(out);
 	}
@@ -1123,6 +1133,8 @@ static int capi_get_provname(CAPI_CTX *ctx, LPSTR *pname, DWORD *ptype, DWORD id
 	if (!CryptEnumProviders(idx, NULL, 0, ptype, name, &len))
 		{
 		err = GetLastError();
+		if (sizeof(TCHAR) == sizeof(char))
+			OPENSSL_free(name);
 		if (err == ERROR_NO_MORE_ITEMS)
 			return 2;
 		CAPIerr(CAPI_F_CAPI_GET_PROVNAME, CAPI_R_CRYPTENUMPROVIDERS_ERROR);
@@ -1299,6 +1311,8 @@ char * capi_cert_get_fname(CAPI_CTX *ctx, PCCERT_CONTEXT cert)
 	if (!CertGetCertificateContextProperty(cert, CERT_FRIENDLY_NAME_PROP_ID, NULL, &dlen))
 		return NULL;
 	wfname = OPENSSL_malloc(dlen);
+	if (wfname == NULL)
+		return NULL;
 	if (CertGetCertificateContextProperty(cert, CERT_FRIENDLY_NAME_PROP_ID, wfname, &dlen))
 		{
 		char *fname = wide_to_asc(wfname);
@@ -1462,6 +1476,8 @@ static CAPI_KEY *capi_get_key(CAPI_CTX *ctx, const TCHAR *contname, TCHAR *provn
 	CAPI_KEY *key;
 	DWORD dwFlags = 0; 
 	key = OPENSSL_malloc(sizeof(CAPI_KEY));
+	if (key == NULL)
+		return NULL;
 	if (sizeof(TCHAR)==sizeof(char))
 		CAPI_trace(ctx, "capi_get_key, contname=%s, provname=%s, type=%d\n",
 						contname, provname, ptype);

@@ -123,7 +123,11 @@ int dtls1_new(SSL *s)
 	DTLS1_STATE *d1;
 
 	if (!ssl3_new(s)) return(0);
-	if ((d1=OPENSSL_malloc(sizeof *d1)) == NULL) return (0);
+	if ((d1=OPENSSL_malloc(sizeof *d1)) == NULL)
+		{
+		ssl3_free(s);
+		return (0);
+		}
 	memset(d1,0, sizeof *d1);
 
 	/* d1->handshake_epoch=0; */

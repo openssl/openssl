@@ -765,6 +765,7 @@ static int cryptodev_digest_update(EVP_MD_CTX *ctx, const void *data,
 	struct crypt_op cryp;
 	struct dev_crypto_state *state = ctx->md_data;
 	struct session_op *sess = &state->d_sess;
+	char *new_mac_data;
 
 	if (!data || state->d_fd < 0) {
 		printf("cryptodev_digest_update: illegal inputs \n");
@@ -777,12 +778,13 @@ static int cryptodev_digest_update(EVP_MD_CTX *ctx, const void *data,
 
 	if (!(ctx->flags & EVP_MD_CTX_FLAG_ONESHOT)) {
 		/* if application doesn't support one buffer */
-		state->mac_data = OPENSSL_realloc(state->mac_data, state->mac_len + count);
+		new_mac_data = OPENSSL_realloc(state->mac_data, state->mac_len + count);
 
-		if (!state->mac_data) {
+		if (!new_mac_data) {
 			printf("cryptodev_digest_update: realloc failed\n");
 			return (0);
 		}
+		state->mac_data = new_mac_data;
 
 		memcpy(state->mac_data + state->mac_len, data, count);
    		state->mac_len += count;
@@ -899,17 +901,22 @@ static int cryptodev_digest_copy(EVP_MD_CTX *to,const EVP_MD_CTX *from)
 	if (ioctl(dstate->d_fd, CIOCGSESSION, sess) < 0) {
 		put_dev_crypto(dstate->d_fd);
 		dstate->d_fd = -1;
-		printf("cryptodev_digest_init: Open session failed\n");
+		printf("cryptodev_digest_copy: Open session failed\n");
 		return (0);
 	}
 
 	if (fstate->mac_len != 0) {
 	        if (fstate->mac_data != NULL)
-	                {
-        		dstate->mac_data = OPENSSL_malloc(fstate->mac_len);
-	        	memcpy(dstate->mac_data, fstate->mac_data, fstate->mac_len);
-           		dstate->mac_len = fstate->mac_len;
-	        	}
+			{
+			dstate->mac_data = OPENSSL_malloc(fstate->mac_len);
+			if (dstate->mac_data == NULL)
+				{
+				printf("cryptodev_digest_copy: mac_data allocation failed\n");
+				return (0);
+				}
+			memcpy(dstate->mac_data, fstate->mac_data, fstate->mac_len);
+			dstate->mac_len = fstate->mac_len;
+			}
 	}
 
 	return 1;
@@ -1055,12 +1062,18 @@ cryptodev_asym(struct crypt_kop *kop, int rlen, BIGNUM *r, int slen, BIGNUM *s)
 		return (ret);
 
 	if (r) {
-		kop->crk_param[kop->crk_iparams].crp_p = calloc(rlen, sizeof(char));
+		kop->crk_param[kop->crk_iparams].crp_p = OPENSSL_malloc(rlen);
+		if (kop->crk_param[kop->crk_iparams].crp_p == NULL)
+			return (ret);
+		memset(kop->crk_param[kop->crk_iparams].crp_p,0,rlen);
 		kop->crk_param[kop->crk_iparams].crp_nbits = rlen * 8;
 		kop->crk_oparams++;
 	}
 	if (s) {
-		kop->crk_param[kop->crk_iparams+1].crp_p = calloc(slen, sizeof(char));
+		kop->crk_param[kop->crk_iparams+1].crp_p = OPENSSL_malloc(slen);
+		if (kop->crk_param[kop->crk_iparams+1].crp_p == NULL)
+			return (ret);
+		memset(kop->crk_param[kop->crk_iparams+1].crp_p,0,slen);
 		kop->crk_param[kop->crk_iparams+1].crp_nbits = slen * 8;
 		kop->crk_oparams++;
 	}

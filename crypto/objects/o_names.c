@@ -319,6 +319,8 @@ void OBJ_NAME_do_all_sorted(int type,void (*fn)(const OBJ_NAME *,void *arg),
 
 	d.type=type;
 	d.names=OPENSSL_malloc(lh_OBJ_NAME_num_items(names_lh)*sizeof *d.names);
+	if (d.names == NULL)
+		abort();
 	d.n=0;
 	OBJ_NAME_do_all(type,do_all_sorted_fn,&d);
 

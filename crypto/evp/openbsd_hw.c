@@ -134,6 +134,8 @@ static int dev_crypto_init_key(EVP_CIPHER_CTX *ctx,int cipher,
 	return 0;
 
     CDATA(ctx)->key=OPENSSL_malloc(MAX_HW_KEY);
+    if (CDATA(ctx)->key == NULL)
+        return 0;
 
     assert(ctx->cipher->iv_len <= MAX_HW_IV);
 
@@ -191,6 +193,8 @@ static int dev_crypto_cipher(EVP_CIPHER_CTX *ctx,unsigned char *out,
 	    if(((unsigned long)in&3) || cinl != inl)
 		{
 		cin=OPENSSL_malloc(cinl);
+		if (cin == NULL)
+		    return 0;
 		memcpy(cin,in,inl);
 		cryp.src=cin;
 		}
@@ -198,6 +202,12 @@ static int dev_crypto_cipher(EVP_CIPHER_CTX *ctx,unsigned char *out,
 	    if(((unsigned long)out&3) || cinl != inl)
 		{
 		cout=OPENSSL_malloc(cinl);
+		if (cout == NULL)
+		    {
+		    if (cin != NULL)
+			OPENSSL_free(cin);
+		    return 0;
+		    }
 		cryp.dst=cout;
 		}
 
@@ -372,11 +382,15 @@ static int dev_crypto_md5_update(EVP_MD_CTX *ctx,const void *data,
 				 unsigned long len)
     {
     MD_DATA *md_data=ctx->md_data;
+    char *tmp_md_data;
 
     if(ctx->flags&EVP_MD_CTX_FLAG_ONESHOT)
 	return do_digest(md_data->sess.ses,md_data->md,data,len);
 
-    md_data->data=OPENSSL_realloc(md_data->data,md_data->len+len);
+    tmp_md_data=OPENSSL_realloc(md_data->data,md_data->len+len);
+    if (tmp_md_data == NULL)
+	return 0;
+    md_data->data=tmp_md_data;
     memcpy(md_data->data+md_data->len,data,len);
     md_data->len+=len;
 
@@ -413,6 +427,8 @@ static int dev_crypto_md5_copy(EVP_MD_CTX *to,const EVP_MD_CTX *from)
     assert(from->digest->flags&EVP_MD_FLAG_ONESHOT);
 
     to_md->data=OPENSSL_malloc(from_md->len);
+    if (to_md->data == NULL)
+	return 0;
     memcpy(to_md->data,from_md->data,from_md->len);
 
     return 1;

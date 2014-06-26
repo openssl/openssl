@@ -101,6 +101,8 @@ static void tree_print(char *str, X509_POLICY_TREE *tree,
 	int i;
 	BIO *err;
 	err = BIO_new_fp(stderr, BIO_NOCLOSE);
+	if (err == NULL)
+		return;
 	if (!curr)
 		curr = tree->levels + tree->nlevel;
 	else

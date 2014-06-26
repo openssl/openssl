@@ -444,6 +444,12 @@ static int get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 			if (!hent)
 				{
 				hent = OPENSSL_malloc(sizeof(BY_DIR_HASH));
+				if (hent == NULL)
+					{
+					CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
+					ok = 0;
+					goto finish;
+					}
 				hent->hash = h;
 				hent->suffix = k;
 				if (!sk_BY_DIR_HASH_push(ent->hashes, hent))
