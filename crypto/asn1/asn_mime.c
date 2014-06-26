@@ -829,7 +829,7 @@ static char *strip_end(char *name)
 static MIME_HEADER *mime_hdr_new(char *name, char *value)
 {
 	MIME_HEADER *mhdr = NULL;
-	char *tmpname, *tmpval = NULL, *p;
+	char *tmpname = NULL, *tmpval = NULL, *p;
 	int c;
 	if(name) {
 		if(!(tmpname = BUF_strdup(name))) return NULL;
@@ -840,7 +840,7 @@ static MIME_HEADER *mime_hdr_new(char *name, char *value)
 				*p = c;
 			}
 		}
-	} else tmpname = NULL;
+	}
 	if(value) {
 		if(!(tmpval = BUF_strdup(value)))
 			goto err;
