@@ -851,7 +851,7 @@ static MIME_HEADER *mime_hdr_new(char *name, char *value)
 				*p = c;
 			}
 		}
-	} else tmpval = NULL;
+	}
 	mhdr = (MIME_HEADER *) OPENSSL_malloc(sizeof(MIME_HEADER));
 	if(!mhdr) return NULL;
 	mhdr->name = tmpname;
