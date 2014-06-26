@@ -918,6 +918,7 @@ int main(int argc, char **argv)
 	    if (proc_file(rfn, rspfile))
 		{
 		printf(">>> Processing failed for: %s <<<\n", rfn);
+               fclose(fp);
 		return 1;
 		}
 	    }
