@@ -456,11 +456,11 @@ static int asn1_set_seq_out(STACK_OF(ASN1_VALUE) *sk, unsigned char **out,
 			tmpdat = OPENSSL_malloc(skcontlen);
 			if (!derlst || !tmpdat)
 				{
-					if (derlst)
-						OPENSSL_free(derlst);
-					if (tmpdat)
-						OPENSSL_free(tmpdat);
-					return 0;
+				if (derlst)
+					OPENSSL_free(derlst);
+				if (tmpdat)
+					OPENSSL_free(tmpdat);
+				return 0;
 				}
 			}
 		}
