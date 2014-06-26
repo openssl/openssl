@@ -898,7 +898,7 @@ static int mime_hdr_addparam(MIME_HEADER *mhdr, char *name, char *value)
 	if (!sk_MIME_PARAM_push(mhdr->params, mparam))
 		goto err;
 	return 1;
-	err:
+err:
 	if (tmpname != NULL)
 		OPENSSL_free(tmpname);
 	if (tmpval != NULL)
