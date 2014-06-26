@@ -872,7 +872,7 @@ static MIME_HEADER *mime_hdr_new(char *name, char *value)
 		
 static int mime_hdr_addparam(MIME_HEADER *mhdr, char *name, char *value)
 {
-	char *tmpname, *tmpval=NULL, *p;
+	char *tmpname=NULL, *tmpval=NULL, *p;
 	int c;
 	MIME_PARAM *mparam=NULL;
 	if(name) {
@@ -885,7 +885,7 @@ static int mime_hdr_addparam(MIME_HEADER *mhdr, char *name, char *value)
 				*p = c;
 			}
 		}
-	} else tmpname = NULL;
+	}
 	if(value) {
 		tmpval = BUF_strdup(value);
 		if(!tmpval) goto err;
