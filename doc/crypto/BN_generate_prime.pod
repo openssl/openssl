@@ -40,7 +40,7 @@ Deprecated:
 =head1 DESCRIPTION
 
 BN_generate_prime_ex() generates a pseudo-random prime number of
-bit length B<bits>.
+at least bit length B<bits>.
 If B<ret> is not B<NULL>, it will be used to store the number.
 
 If B<cb> is not B<NULL>, it is used as follows:
