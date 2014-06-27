@@ -986,6 +986,7 @@ $code.=<<___;
 
 	vmovdqu	.Land_mask(%rip), $AND_MASK
 	mov	\$9, $i
+	vmovdqu	$ACC9, 32*9-128($rp)		# $ACC9 is zero after vzeroall
 	jmp	.Loop_mul_1024
 
 .align	32
