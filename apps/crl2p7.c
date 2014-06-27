@@ -142,7 +142,13 @@ int MAIN(int argc, char **argv)
 			{
 			if (--argc < 1) goto bad;
 			if(!certflst) certflst = sk_new_null();
-			sk_push(certflst,*(++argv));
+			if (!certflst)
+				goto end;
+			if (!sk_push(certflst,*(++argv)))
+				{
+				sk_free(certflst);
+				goto end;
+				}
 			}
 		else
 			{

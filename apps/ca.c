@@ -2751,6 +2751,9 @@ char *make_revocation_str(int rev_type, char *rev_arg)
 
 	revtm = X509_gmtime_adj(NULL, 0);
 
+	if (!revtm)
+		return NULL;
+
 	i = revtm->length + 1;
 
 	if (reason) i += strlen(reason) + 1;
