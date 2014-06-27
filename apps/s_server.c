@@ -1010,7 +1010,7 @@ int MAIN(int argc, char *argv[])
 	{
 	X509_VERIFY_PARAM *vpm = NULL;
 	int badarg = 0;
-	short port=PORT;
+	unsigned short port=PORT;
 	const char *unix_path=NULL;
 	int unlink_unix_path=0;
 	int (*server_cb)(char *hostname, int s, int stype, unsigned char *context);
