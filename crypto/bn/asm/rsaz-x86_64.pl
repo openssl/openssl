@@ -113,6 +113,11 @@ if (!$addx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	$addx = ($1>=11);
 }
 
+if (!$addx && `$ENV{CC} -v 2>&1` =~ /(^clang version|based on LLVM) ([3-9])\.([0-9]+)/) {
+	my $ver = $2 + $3/100.0;	# 3.1->3.01, 3.10->3.10
+	$addx = ($ver>=3.03);
+}
+
 ($out, $inp, $mod) = ("%rdi", "%rsi", "%rbp");	# common internal API
 {
 my ($out,$inp,$mod,$n0,$times) = ("%rdi","%rsi","%rdx","%rcx","%r8d");
