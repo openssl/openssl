@@ -1344,7 +1344,7 @@ OCSP_RESPONSE *process_responder(BIO *err, OCSP_REQUEST *req,
 		}
 	resp = query_responder(err, cbio, path, req, req_timeout);
 	if (!resp)
-		BIO_printf(bio_err, "Error querying OCSP responsder\n");
+		BIO_printf(bio_err, "Error querying OCSP responder\n");
 	end:
 	if (ctx)
 		SSL_CTX_free(ctx);
