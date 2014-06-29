@@ -107,7 +107,8 @@ int BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 int BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 	{
 	int max,min,dif;
-	BN_ULONG *ap,*bp,*rp,carry,t1,t2;
+	const BN_ULONG *ap,*bp;
+	BN_ULONG *rp,carry,t1,t2;
 	const BIGNUM *tmp;
 
 	bn_check_top(a);
@@ -168,7 +169,8 @@ int BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 int BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 	{
 	int max,min,dif;
-	register BN_ULONG t1,t2,*ap,*bp,*rp;
+	register BN_ULONG t1,t2,*rp;
+	register const BN_ULONG *ap,*bp;
 	int i,carry;
 #if defined(IRIX_CC_BUG) && !defined(LINT)
 	int dummy;

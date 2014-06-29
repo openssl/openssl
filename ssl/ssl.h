@@ -545,7 +545,7 @@ struct ssl_method_st
 	const SSL_CIPHER *(*get_cipher)(unsigned ncipher);
 	const struct ssl_method_st *(*get_ssl_method)(int version);
 	long (*get_timeout)(void);
-	struct ssl3_enc_method *ssl3_enc; /* Extra SSLv3/TLS stuff */
+	const struct ssl3_enc_method *ssl3_enc; /* Extra SSLv3/TLS stuff */
 	int (*ssl_version)(void);
 	long (*ssl_callback_ctrl)(SSL *s, int cb_id, void (*fp)(void));
 	long (*ssl_ctx_callback_ctrl)(SSL_CTX *s, int cb_id, void (*fp)(void));

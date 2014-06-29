@@ -72,7 +72,7 @@ static int dtls1_handshake_write(SSL *s);
 const char dtls1_version_str[]="DTLSv1" OPENSSL_VERSION_PTEXT;
 int dtls1_listen(SSL *s, struct sockaddr *client);
 
-SSL3_ENC_METHOD DTLSv1_enc_data={
+const SSL3_ENC_METHOD DTLSv1_enc_data={
     	tls1_enc,
 	tls1_mac,
 	tls1_setup_key_block,
@@ -91,7 +91,7 @@ SSL3_ENC_METHOD DTLSv1_enc_data={
 	dtls1_handshake_write	
 	};
 
-SSL3_ENC_METHOD DTLSv1_2_enc_data={
+const SSL3_ENC_METHOD DTLSv1_2_enc_data={
     	tls1_enc,
 	tls1_mac,
 	tls1_setup_key_block,

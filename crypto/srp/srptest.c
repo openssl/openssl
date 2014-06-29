@@ -40,7 +40,7 @@ static int run_srp(const char *username, const char *client_pass, const char *se
 	BIGNUM *Kserver = NULL;
 	unsigned char rand_tmp[RANDOM_SIZE];
 	/* use builtin 1024-bit params */
-	SRP_gN *GN = SRP_get_default_gN("1024");
+	const SRP_gN *GN = SRP_get_default_gN("1024");
 
 	if(GN == NULL)
 		{

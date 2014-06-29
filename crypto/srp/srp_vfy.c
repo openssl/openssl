@@ -417,7 +417,8 @@ int SRP_VBASE_init(SRP_VBASE *vb, char *verifier_file)
 		else if (pp[DB_srptype][0] == DB_SRP_VALID)
 			{
 			/* it is a user .... */
-			SRP_gN *lgN;
+			const SRP_gN *lgN;
+
 			if ((lgN = SRP_get_gN_by_id(pp[DB_srpgN],SRP_gN_tab))!=NULL)
 				{
 				error_code = SRP_ERR_MEMORY;
@@ -608,7 +609,8 @@ err:
 /*
    create a verifier (*salt,*verifier,g and N are BIGNUMs)
 */
-int SRP_create_verifier_BN(const char *user, const char *pass, BIGNUM **salt, BIGNUM **verifier, BIGNUM *N, BIGNUM *g)
+int SRP_create_verifier_BN(const char *user, const char *pass, BIGNUM **salt,
+			   BIGNUM **verifier, const BIGNUM *N, const BIGNUM *g)
 	{
 	int result=0;
 	BIGNUM *x = NULL;
