@@ -93,9 +93,10 @@ if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	$addx = ($1>=11);
 }
 
-if (!$avx && `$ENV{CC} -v 2>&1` =~ /LLVM ([3-9]\.[0-9]+)/) {
-	$avx = ($1>=3.0) + ($1>=3.1);
-	$addx = 0;
+if (!$avx && `$ENV{CC} -v 2>&1` =~ /(^clang version|based on LLVM) ([3-9])\.([0-9]+)/) {
+	my $ver = $2 + $3/100.0;	# 3.1->3.01, 3.10->3.10
+	$avx = ($ver>=3.0) + ($ver>=3.01);
+	$addx = ($ver>=3.03);
 }
 
 open OUT,"| $^X $xlate $flavour $output";
@@ -991,6 +992,7 @@ $code.=<<___;
 
 	vmovdqu	.Land_mask(%rip), $AND_MASK
 	mov	\$9, $i
+	vmovdqu	$ACC9, 32*9-128($rp)		# $ACC9 is zero after vzeroall
 	jmp	.Loop_mul_1024
 
 .align	32
