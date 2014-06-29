@@ -6,6 +6,7 @@ CFLAGS= $(INCLUDES) $(CFLAG)
 LIB=$(TOP)/libcrypto.a
 LIBOBJ=jpake.o jpake_err.o
 LIBSRC=jpake.c jpake_err.c
+SRC= $(LIBSRC)
 
 EXHEADER=jpake.h
 TEST=jpaketest.c
