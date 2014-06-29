@@ -162,7 +162,7 @@ const char ssl3_version_str[]="SSLv3" OPENSSL_VERSION_PTEXT;
 #define SSL3_NUM_CIPHERS	(sizeof(ssl3_ciphers)/sizeof(SSL_CIPHER))
 
 /* list of available SSLv3 ciphers (sorted by id) */
-OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
+OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[]={
 
 /* The RSA ciphers */
 /* Cipher 01 */
@@ -3099,7 +3099,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 /* end of list */
 	};
 
-SSL3_ENC_METHOD SSLv3_enc_data={
+const SSL3_ENC_METHOD SSLv3_enc_data={
 	ssl3_enc,
 	n_ssl3_mac,
 	ssl3_setup_key_block,
