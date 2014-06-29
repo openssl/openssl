@@ -1298,6 +1298,22 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 		/* Extra padding: tag appended to record */
 		return EVP_GCM_TLS_TAG_LEN;
 
+	case EVP_CTRL_COPY:
+		{
+			EVP_CIPHER_CTX *out = ptr;
+			EVP_AES_GCM_CTX *gctx_out = out->cipher_data;
+			if (gctx->iv == c->iv)
+				gctx_out->iv = out->iv;
+			else
+			{
+				gctx_out->iv = OPENSSL_malloc(gctx->ivlen);
+				if (!gctx_out->iv)
+					return 0;
+				memcpy(gctx_out->iv, gctx->iv, gctx->ivlen);
+			}
+			return 1;
+		}
+
 	default:
 		return -1;
 
@@ -1687,7 +1703,8 @@ static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 #define CUSTOM_FLAGS	(EVP_CIPH_FLAG_DEFAULT_ASN1 \
 		| EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER \
-		| EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT)
+		| EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT \
+		| EVP_CIPH_CUSTOM_COPY)
 
 BLOCK_CIPHER_custom(NID_aes,128,1,12,gcm,GCM,
 		EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS)
