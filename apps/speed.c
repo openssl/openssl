@@ -228,7 +228,7 @@ static int do_multi(int multi);
 
 #define ALGOR_NUM	30
 #define SIZE_NUM	5
-#define PRIME_NUM	3
+#define PRIME_NUM	9
 #define RSA_NUM		4
 #define DSA_NUM		3
 
@@ -246,7 +246,11 @@ static const char *names[ALGOR_NUM]={
 static double results[ALGOR_NUM][SIZE_NUM];
 static int lengths[SIZE_NUM]={16,64,256,1024,8*1024};
 static const char *prime_names[PRIME_NUM]={
-  "prime trial division", "prime trial division retry", "prime coprime" };
+  "fast prime trial division",
+  "prime trial division", "prime unbiased trial division",
+  "safe prime trial division", "safe prime unbiased trial division",
+  "prime coprime", "prime unbiased coprime" ,
+  "safe prime coprime", "safe prime unbiased coprime" };
 #ifndef OPENSSL_NO_RSA
 static double rsa_results[RSA_NUM][2];
 #endif
@@ -501,9 +505,15 @@ int MAIN(int argc, char **argv)
 	double d=0.0;
 	long c[ALGOR_NUM][SIZE_NUM];
 
-#define D_PRIME_TRIAL_DIVISION			0
-#define D_PRIME_TRIAL_DIVISION_RETRY	1
-#define D_PRIME_COPRIME					2
+#define D_PRIME_TRIAL_DIVISION_FAST		0
+#define D_PRIME_TRIAL_DIVISION			1
+#define D_PRIME_TRIAL_DIVISION_UNBIASED	2
+#define D_PRIME_TRIAL_DIVISION_SAFE		3
+#define D_PRIME_TRIAL_DIVISION_UNBIASED_SAFE	4
+#define D_PRIME_COPRIME					5
+#define D_PRIME_COPRIME_UNBIASED		6
+#define D_PRIME_COPRIME_SAFE			7
+#define D_PRIME_COPRIME_UNBIASED_SAFE	8
 	long prime_c[PRIME_NUM];
 
 #define	R_DSA_512	0
@@ -1014,12 +1024,24 @@ int MAIN(int argc, char **argv)
 			}
 		else
 #endif
-			 if (strcmp(*argv,"prime-trial-division") == 0)
+			 if (strcmp(*argv,"prime-trial-division-fast") == 0)
+			prime_doit[D_PRIME_TRIAL_DIVISION_FAST] = 1;
+		else if (strcmp(*argv,"prime-trial-division") == 0)
 			prime_doit[D_PRIME_TRIAL_DIVISION] = 1;
-		else if (strcmp(*argv,"prime-trial-division-retry") == 0)
-			prime_doit[D_PRIME_TRIAL_DIVISION_RETRY] = 1;
+		else if (strcmp(*argv,"prime-trial-division-unbiased") == 0)
+			prime_doit[D_PRIME_TRIAL_DIVISION_UNBIASED] = 1;
+		else if (strcmp(*argv,"prime-trial-division-safe") == 0)
+			prime_doit[D_PRIME_TRIAL_DIVISION_SAFE] = 1;
+		else if (strcmp(*argv,"prime-trial-division-unbiased-safe") == 0)
+			prime_doit[D_PRIME_TRIAL_DIVISION_UNBIASED_SAFE] = 1;
 		else if (strcmp(*argv,"prime-coprime") == 0)
 			prime_doit[D_PRIME_COPRIME] = 1;
+		else if (strcmp(*argv,"prime-coprime-unbiased") == 0)
+			prime_doit[D_PRIME_COPRIME_UNBIASED] = 1;
+		else if (strcmp(*argv,"prime-coprime-safe") == 0)
+			prime_doit[D_PRIME_COPRIME_SAFE] = 1;
+		else if (strcmp(*argv,"prime-coprime-unbiased-safe") == 0)
+			prime_doit[D_PRIME_COPRIME_UNBIASED_SAFE] = 1;
 		else if (strcmp(*argv,"prime") == 0)
 			{
 			for (i=0; i < PRIME_NUM; i++)
@@ -1361,9 +1383,15 @@ int MAIN(int argc, char **argv)
 		c[D_IGE_256_AES][i]=c[D_IGE_256_AES][i-1]*l0/l1;
 		}
 		
+	prime_c[D_PRIME_TRIAL_DIVISION_FAST]=count;
 	prime_c[D_PRIME_TRIAL_DIVISION]=count;
-	prime_c[D_PRIME_TRIAL_DIVISION_RETRY]=count;
+	prime_c[D_PRIME_TRIAL_DIVISION_UNBIASED]=count;
+	prime_c[D_PRIME_TRIAL_DIVISION_SAFE]=count;
+	prime_c[D_PRIME_TRIAL_DIVISION_UNBIASED_SAFE]=count;
 	prime_c[D_PRIME_COPRIME]=count;
+	prime_c[D_PRIME_COPRIME_UNBIASED]=count;
+	prime_c[D_PRIME_COPRIME_SAFE]=count;
+	prime_c[D_PRIME_COPRIME_UNBIASED_SAFE]=count;
 	
 #ifndef OPENSSL_NO_RSA
 	rsa_c[R_RSA_512][0]=count/2000;
@@ -2032,19 +2060,36 @@ int MAIN(int argc, char **argv)
 			}
 		}
 	
+	if (prime_doit[D_PRIME_TRIAL_DIVISION_FAST])
+		{
+		BIGNUM *rnd = BN_new();
+		
+		prime_print_message(prime_names[D_PRIME_TRIAL_DIVISION_FAST],
+							prime_c[D_PRIME_TRIAL_DIVISION_FAST]);
+			
+		Time_F(START);
+		for (count=0, run=1; COND(prime_c[D_PRIME_TRIAL_DIVISION_FAST]); count++)
+			if (!bn_probable_prime(rnd, 1024)) break;
+		
+		d=Time_F(STOP);
+		prime_print_result(D_PRIME_TRIAL_DIVISION_FAST, count, d);
+		
+		BN_free(rnd);
+		}
+	
 	if (prime_doit[D_PRIME_TRIAL_DIVISION])
 		{
 		BIGNUM *rnd = BN_new();
 		BIGNUM *add = BN_new();
 		BN_CTX *ctx = BN_CTX_new();
 		
-		BN_set_word(add, 2);
+		BN_set_word(add, 4);
 		prime_print_message(prime_names[D_PRIME_TRIAL_DIVISION],
 							prime_c[D_PRIME_TRIAL_DIVISION]);
 			
 		Time_F(START);
 		for (count=0, run=1; COND(prime_c[D_PRIME_TRIAL_DIVISION]); count++)
-			if (!bn_probable_prime_dh(rnd, 1024, add, NULL, ctx)) count--;
+			if (!bn_probable_prime_dh(rnd, 1024, add, NULL, ctx, 0, 1)) break;
 		
 		d=Time_F(STOP);
 		prime_print_result(D_PRIME_TRIAL_DIVISION, count, d);
@@ -2053,42 +2098,158 @@ int MAIN(int argc, char **argv)
 		BN_free(add);
 		BN_free(rnd);
 		}
-	
-	if (prime_doit[D_PRIME_TRIAL_DIVISION_RETRY])
-		{
-		BIGNUM *rnd = BN_new();
-		BN_CTX *ctx = BN_CTX_new();
-		
-		prime_print_message(prime_names[D_PRIME_TRIAL_DIVISION_RETRY],
-							prime_c[D_PRIME_TRIAL_DIVISION_RETRY]);
-			
-		Time_F(START);
-		for (count=0, run=1; COND(prime_c[D_PRIME_TRIAL_DIVISION_RETRY]); count++)
-			if (!bn_probable_prime_dh_retry(rnd, 1024, ctx)) count--;
-		
-		d=Time_F(STOP);
-		prime_print_result(D_PRIME_TRIAL_DIVISION_RETRY, count, d);
-		
-		BN_CTX_free(ctx);
-		BN_free(rnd);
-		}
-	
+
 	if (prime_doit[D_PRIME_COPRIME])
 		{
 		BIGNUM *rnd = BN_new();
+		BIGNUM *add = BN_new();
 		BN_CTX *ctx = BN_CTX_new();
-		
+
+		BN_set_word(add, 4);
 		prime_print_message(prime_names[D_PRIME_COPRIME],
 							prime_c[D_PRIME_COPRIME]);
-			
+
 		Time_F(START);
 		for (count=0, run=1; COND(prime_c[D_PRIME_COPRIME]); count++)
-			if (!bn_probable_prime_dh_coprime(rnd, 1024, ctx)) count--;
-		
+			if (!bn_probable_prime_dh_coprime(rnd, 1024, add, NULL, ctx, 0, 1)) break;
+
 		d=Time_F(STOP);
 		prime_print_result(D_PRIME_COPRIME, count, d);
-		
+
 		BN_CTX_free(ctx);
+		BN_free(add);
+		BN_free(rnd);
+		}
+
+	if (prime_doit[D_PRIME_TRIAL_DIVISION_UNBIASED])
+		{
+		BIGNUM *rnd = BN_new();
+		BIGNUM *add = BN_new();
+		BN_CTX *ctx = BN_CTX_new();
+
+		BN_set_word(add, 4);
+		prime_print_message(prime_names[D_PRIME_TRIAL_DIVISION_UNBIASED],
+							prime_c[D_PRIME_TRIAL_DIVISION_UNBIASED]);
+
+		Time_F(START);
+		for (count=0, run=1; COND(prime_c[D_PRIME_TRIAL_DIVISION_UNBIASED]); count++)
+			if (!bn_probable_prime_dh(rnd, 1024, add, NULL, ctx, 0, 0)) break;
+
+		d=Time_F(STOP);
+		prime_print_result(D_PRIME_TRIAL_DIVISION_UNBIASED, count, d);
+
+		BN_CTX_free(ctx);
+		BN_free(add);
+		BN_free(rnd);
+		}
+
+	if (prime_doit[D_PRIME_COPRIME_UNBIASED])
+		{
+		BIGNUM *rnd = BN_new();
+		BIGNUM *add = BN_new();
+		BN_CTX *ctx = BN_CTX_new();
+
+		BN_set_word(add, 4);
+		prime_print_message(prime_names[D_PRIME_COPRIME_UNBIASED],
+							prime_c[D_PRIME_COPRIME_UNBIASED]);
+
+		Time_F(START);
+		for (count=0, run=1; COND(prime_c[D_PRIME_COPRIME_UNBIASED]); count++)
+			if (!bn_probable_prime_dh_coprime(rnd, 1024, add, NULL, ctx, 0, 0)) break;
+
+		d=Time_F(STOP);
+		prime_print_result(D_PRIME_COPRIME_UNBIASED, count, d);
+
+		BN_CTX_free(ctx);
+		BN_free(add);
+		BN_free(rnd);
+		}
+
+	if (prime_doit[D_PRIME_TRIAL_DIVISION_SAFE])
+		{
+		BIGNUM *rnd = BN_new();
+		BIGNUM *add = BN_new();
+		BN_CTX *ctx = BN_CTX_new();
+
+		BN_set_word(add, 4);
+		prime_print_message(prime_names[D_PRIME_TRIAL_DIVISION_SAFE],
+							prime_c[D_PRIME_TRIAL_DIVISION_SAFE]);
+
+		Time_F(START);
+		for (count=0, run=1; COND(prime_c[D_PRIME_TRIAL_DIVISION_SAFE]); count++)
+			if (!bn_probable_prime_dh(rnd, 1024, add, NULL, ctx, 1, 1)) break;
+
+		d=Time_F(STOP);
+		prime_print_result(D_PRIME_TRIAL_DIVISION_SAFE, count, d);
+
+		BN_CTX_free(ctx);
+		BN_free(add);
+		BN_free(rnd);
+		}
+
+	if (prime_doit[D_PRIME_COPRIME_SAFE])
+		{
+		BIGNUM *rnd = BN_new();
+		BIGNUM *add = BN_new();
+		BN_CTX *ctx = BN_CTX_new();
+
+		BN_set_word(add, 4);
+		prime_print_message(prime_names[D_PRIME_COPRIME_SAFE],
+							prime_c[D_PRIME_COPRIME_SAFE]);
+
+		Time_F(START);
+		for (count=0, run=1; COND(prime_c[D_PRIME_COPRIME_SAFE]); count++)
+			if (!bn_probable_prime_dh_coprime(rnd, 1024, add, NULL, ctx, 1, 1)) break;
+
+		d=Time_F(STOP);
+		prime_print_result(D_PRIME_COPRIME_SAFE, count, d);
+
+		BN_CTX_free(ctx);
+		BN_free(add);
+		BN_free(rnd);
+		}
+
+	if (prime_doit[D_PRIME_TRIAL_DIVISION_UNBIASED_SAFE])
+		{
+		BIGNUM *rnd = BN_new();
+		BIGNUM *add = BN_new();
+		BN_CTX *ctx = BN_CTX_new();
+
+		BN_set_word(add, 4);
+		prime_print_message(prime_names[D_PRIME_TRIAL_DIVISION_UNBIASED_SAFE],
+							prime_c[D_PRIME_TRIAL_DIVISION_UNBIASED_SAFE]);
+
+		Time_F(START);
+		for (count=0, run=1; COND(prime_c[D_PRIME_TRIAL_DIVISION_UNBIASED_SAFE]); count++)
+			if (!bn_probable_prime_dh(rnd, 1024, add, NULL, ctx, 1, 0)) break;
+
+		d=Time_F(STOP);
+		prime_print_result(D_PRIME_TRIAL_DIVISION_UNBIASED_SAFE, count, d);
+
+		BN_CTX_free(ctx);
+		BN_free(add);
+		BN_free(rnd);
+		}
+
+	if (prime_doit[D_PRIME_COPRIME_UNBIASED_SAFE])
+		{
+		BIGNUM *rnd = BN_new();
+		BIGNUM *add = BN_new();
+		BN_CTX *ctx = BN_CTX_new();
+
+		BN_set_word(add, 4);
+		prime_print_message(prime_names[D_PRIME_COPRIME_UNBIASED_SAFE],
+							prime_c[D_PRIME_COPRIME_UNBIASED_SAFE]);
+
+		Time_F(START);
+		for (count=0, run=1; COND(prime_c[D_PRIME_COPRIME_UNBIASED_SAFE]); count++)
+			if (!bn_probable_prime_dh_coprime(rnd, 1024, add, NULL, ctx, 1, 0)) break;
+
+		d=Time_F(STOP);
+		prime_print_result(D_PRIME_COPRIME_UNBIASED_SAFE, count, d);
+
+		BN_CTX_free(ctx);
+		BN_free(add);
 		BN_free(rnd);
 		}
 
