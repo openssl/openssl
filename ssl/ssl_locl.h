@@ -777,9 +777,9 @@ OPENSSL_EXTERN const SSL_CIPHER ssl3_ciphers[];
 
 SSL_METHOD *ssl_bad_method(int ver);
 
-extern SSL3_ENC_METHOD TLSv1_enc_data;
-extern SSL3_ENC_METHOD TLSv1_1_enc_data;
-extern SSL3_ENC_METHOD TLSv1_2_enc_data;
+extern const SSL3_ENC_METHOD TLSv1_enc_data;
+extern const SSL3_ENC_METHOD TLSv1_1_enc_data;
+extern const SSL3_ENC_METHOD TLSv1_2_enc_data;
 extern const SSL3_ENC_METHOD SSLv3_enc_data;
 extern const SSL3_ENC_METHOD DTLSv1_enc_data;
 extern const SSL3_ENC_METHOD DTLSv1_2_enc_data;
