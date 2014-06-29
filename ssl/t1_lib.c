@@ -131,7 +131,7 @@ static int ssl_check_clienthello_tlsext_early(SSL *s);
 int ssl_check_serverhello_tlsext(SSL *s);
 #endif
 
-SSL3_ENC_METHOD TLSv1_enc_data={
+SSL3_ENC_METHOD const TLSv1_enc_data={
 	tls1_enc,
 	tls1_mac,
 	tls1_setup_key_block,
@@ -150,7 +150,7 @@ SSL3_ENC_METHOD TLSv1_enc_data={
 	ssl3_handshake_write
 	};
 
-SSL3_ENC_METHOD TLSv1_1_enc_data={
+SSL3_ENC_METHOD const TLSv1_1_enc_data={
 	tls1_enc,
 	tls1_mac,
 	tls1_setup_key_block,
@@ -169,7 +169,7 @@ SSL3_ENC_METHOD TLSv1_1_enc_data={
 	ssl3_handshake_write
 	};
 
-SSL3_ENC_METHOD TLSv1_2_enc_data={
+SSL3_ENC_METHOD const TLSv1_2_enc_data={
 	tls1_enc,
 	tls1_mac,
 	tls1_setup_key_block,
