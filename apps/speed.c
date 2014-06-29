@@ -229,7 +229,7 @@ static int do_multi(int multi);
 #define ALGOR_NUM	30
 #define SIZE_NUM	5
 #define PRIME_NUM	3
-#define RSA_NUM		4
+#define RSA_NUM		7
 #define DSA_NUM		3
 
 #define EC_NUM       16
@@ -512,7 +512,10 @@ int MAIN(int argc, char **argv)
 #define	R_RSA_512	0
 #define	R_RSA_1024	1
 #define	R_RSA_2048	2
-#define	R_RSA_4096	3
+#define	R_RSA_3072	3
+#define	R_RSA_4096	4
+#define	R_RSA_7680	5
+#define	R_RSA_15360	6
 
 #define R_EC_P160    0
 #define R_EC_P192    1	
@@ -534,12 +537,14 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_RSA
 	RSA *rsa_key[RSA_NUM];
 	long rsa_c[RSA_NUM][2];
-	static unsigned int rsa_bits[RSA_NUM]={512,1024,2048,4096};
+	static unsigned int rsa_bits[RSA_NUM]={512,1024,2048,3072,4096,7680,15360};
 	static unsigned char *rsa_data[RSA_NUM]=
-		{test512,test1024,test2048,test4096};
+		{test512,test1024,test2048,test3072,test4096,test7680,test15360};
 	static int rsa_data_length[RSA_NUM]={
 		sizeof(test512),sizeof(test1024),
-		sizeof(test2048),sizeof(test4096)};
+		sizeof(test2048),sizeof(test3072),
+		sizeof(test4096),sizeof(test7680),
+		sizeof(test15360)};
 #endif
 #ifndef OPENSSL_NO_DSA
 	DSA *dsa_key[DSA_NUM];
@@ -883,7 +888,10 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"rsa512") == 0) rsa_doit[R_RSA_512]=2;
 		else if (strcmp(*argv,"rsa1024") == 0) rsa_doit[R_RSA_1024]=2;
 		else if (strcmp(*argv,"rsa2048") == 0) rsa_doit[R_RSA_2048]=2;
+		else if (strcmp(*argv,"rsa3072") == 0) rsa_doit[R_RSA_3072]=2;
 		else if (strcmp(*argv,"rsa4096") == 0) rsa_doit[R_RSA_4096]=2;
+		else if (strcmp(*argv,"rsa7680") == 0) rsa_doit[R_RSA_7680]=2;
+		else if (strcmp(*argv,"rsa15360") == 0) rsa_doit[R_RSA_15360]=2;
 		else
 #ifndef OPENSSL_NO_RC2
 		     if (strcmp(*argv,"rc2-cbc") == 0) doit[D_CBC_RC2]=1;
@@ -953,7 +961,10 @@ int MAIN(int argc, char **argv)
 			rsa_doit[R_RSA_512]=1;
 			rsa_doit[R_RSA_1024]=1;
 			rsa_doit[R_RSA_2048]=1;
+			rsa_doit[R_RSA_3072]=1;
 			rsa_doit[R_RSA_4096]=1;
+			rsa_doit[R_RSA_7680]=1;
+			rsa_doit[R_RSA_15360]=1;
 			}
 		else
 #endif
@@ -1103,7 +1114,8 @@ int MAIN(int argc, char **argv)
 			BIO_printf(bio_err,"\n");
 
 #ifndef OPENSSL_NO_RSA
-			BIO_printf(bio_err,"rsa512   rsa1024  rsa2048  rsa4096\n");
+			BIO_printf(bio_err,"rsa512   rsa1024  rsa2048  rsa3072  rsa4096\n");
+			BIO_printf(bio_err,"rsa7680  rsa15360\n");
 #endif
 
 #ifndef OPENSSL_NO_DSA
