@@ -203,7 +203,7 @@ x509_lu.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 x509_lu.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 x509_lu.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 x509_lu.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-x509_lu.o: ../cryptlib.h x509_lu.c
+x509_lu.o: ../cryptlib.h x509_lcl.h x509_lu.c
 x509_obj.o: ../../e_os.h ../../include/openssl/asn1.h
 x509_obj.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 x509_obj.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
