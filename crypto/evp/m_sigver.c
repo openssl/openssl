@@ -113,6 +113,8 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 		}
 	if (EVP_PKEY_CTX_set_signature_md(ctx->pctx, type) <= 0)
 		return 0;
+	if (pctx)
+		*pctx = ctx->pctx;
 	if (ctx->pctx->pmeth->flags & EVP_PKEY_FLAG_SIGCTX_CUSTOM)
 		return 1;
 	if (!EVP_DigestInit_ex(ctx, type, e))
