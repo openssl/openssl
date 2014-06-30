@@ -246,10 +246,10 @@ static const char *names[ALGOR_NUM]={
 static double results[ALGOR_NUM][SIZE_NUM];
 static int lengths[SIZE_NUM]={16,64,256,1024,8*1024};
 static const char *prime_names[PRIME_NUM]={
-  "fast prime trial division",
+  "prime trial division (no dh)",
   "prime trial division", "prime unbiased trial division",
   "safe prime trial division", "safe prime unbiased trial division",
-  "prime coprime", "prime unbiased coprime" ,
+  "prime coprime", "prime unbiased coprime",
   "safe prime coprime", "safe prime unbiased coprime" };
 #ifndef OPENSSL_NO_RSA
 static double rsa_results[RSA_NUM][2];
@@ -505,7 +505,7 @@ int MAIN(int argc, char **argv)
 	double d=0.0;
 	long c[ALGOR_NUM][SIZE_NUM];
 
-#define D_PRIME_TRIAL_DIVISION_FAST		0
+#define D_PRIME_TRIAL_DIVISION_NO_DH	0
 #define D_PRIME_TRIAL_DIVISION			1
 #define D_PRIME_TRIAL_DIVISION_UNBIASED	2
 #define D_PRIME_TRIAL_DIVISION_SAFE		3
@@ -1024,8 +1024,8 @@ int MAIN(int argc, char **argv)
 			}
 		else
 #endif
-			 if (strcmp(*argv,"prime-trial-division-fast") == 0)
-			prime_doit[D_PRIME_TRIAL_DIVISION_FAST] = 1;
+			 if (strcmp(*argv,"prime-trial-division-no-dh") == 0)
+			prime_doit[D_PRIME_TRIAL_DIVISION_NO_DH] = 1;
 		else if (strcmp(*argv,"prime-trial-division") == 0)
 			prime_doit[D_PRIME_TRIAL_DIVISION] = 1;
 		else if (strcmp(*argv,"prime-trial-division-unbiased") == 0)
@@ -1383,7 +1383,7 @@ int MAIN(int argc, char **argv)
 		c[D_IGE_256_AES][i]=c[D_IGE_256_AES][i-1]*l0/l1;
 		}
 		
-	prime_c[D_PRIME_TRIAL_DIVISION_FAST]=count;
+	prime_c[D_PRIME_TRIAL_DIVISION_NO_DH]=count;
 	prime_c[D_PRIME_TRIAL_DIVISION]=count;
 	prime_c[D_PRIME_TRIAL_DIVISION_UNBIASED]=count;
 	prime_c[D_PRIME_TRIAL_DIVISION_SAFE]=count;
@@ -2060,19 +2060,19 @@ int MAIN(int argc, char **argv)
 			}
 		}
 	
-	if (prime_doit[D_PRIME_TRIAL_DIVISION_FAST])
+	if (prime_doit[D_PRIME_TRIAL_DIVISION_NO_DH])
 		{
 		BIGNUM *rnd = BN_new();
 		
-		prime_print_message(prime_names[D_PRIME_TRIAL_DIVISION_FAST],
-							prime_c[D_PRIME_TRIAL_DIVISION_FAST]);
+		prime_print_message(prime_names[D_PRIME_TRIAL_DIVISION_NO_DH],
+							prime_c[D_PRIME_TRIAL_DIVISION_NO_DH]);
 			
 		Time_F(START);
-		for (count=0, run=1; COND(prime_c[D_PRIME_TRIAL_DIVISION_FAST]); count++)
+		for (count=0, run=1; COND(prime_c[D_PRIME_TRIAL_DIVISION_NO_DH]); count++)
 			if (!bn_probable_prime(rnd, 1024)) break;
 		
 		d=Time_F(STOP);
-		prime_print_result(D_PRIME_TRIAL_DIVISION_FAST, count, d);
+		prime_print_result(D_PRIME_TRIAL_DIVISION_NO_DH, count, d);
 		
 		BN_free(rnd);
 		}
