@@ -161,6 +161,8 @@ my $lvx_u	= sub {	vsxmem_op(@_, 844); };	# lxvd2x
 my $stvx_u	= sub {	vsxmem_op(@_, 972); };	# stxvd2x
 my $lvdx_u	= sub {	vsxmem_op(@_, 588); };	# lxsdx
 my $stvdx_u	= sub {	vsxmem_op(@_, 716); };	# stxsdx
+my $lvx_4w	= sub { vsxmem_op(@_, 780); };	# lxvw4x
+my $stvx_4w	= sub { vsxmem_op(@_, 908); };	# stxvw4x
 
 # PowerISA 2.07 stuff
 sub vcrypto_op {
@@ -178,6 +180,7 @@ my $vpmsumb	= sub { vcrypto_op(@_, 1032); };
 my $vpmsumd	= sub { vcrypto_op(@_, 1224); };
 my $vpmsubh	= sub { vcrypto_op(@_, 1096); };
 my $vpmsumw	= sub { vcrypto_op(@_, 1160); };
+my $vaddudm	= sub { vcrypto_op(@_, 192);  };
 
 my $mtsle	= sub {
     my ($f, $arg) = @_;
