@@ -655,7 +655,7 @@ printf("client random\n");
 { int z; for (z=0; z<SSL3_RANDOM_SIZE; z++) printf("%02X%c",s->s3->client_random[z],((z+1)%16)?' ':'\n'); }
 printf("server random\n");
 { int z; for (z=0; z<SSL3_RANDOM_SIZE; z++) printf("%02X%c",s->s3->server_random[z],((z+1)%16)?' ':'\n'); }
-printf("pre-master\n");
+printf("master key\n");
 { int z; for (z=0; z<s->session->master_key_length; z++) printf("%02X%c",s->session->master_key[z],((z+1)%16)?' ':'\n'); }
 #endif
 	if (!tls1_generate_key_block(s,p1,p2,num))
