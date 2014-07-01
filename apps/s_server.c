@@ -1012,7 +1012,9 @@ int MAIN(int argc, char *argv[])
 	int badarg = 0;
 	short port=PORT;
 	const char *unix_path=NULL;
+#ifndef NO_SYS_UN_H
 	int unlink_unix_path=0;
+#endif
 	int (*server_cb)(char *hostname, int s, int stype, unsigned char *context);
 	char *CApath=NULL,*CAfile=NULL;
 	char *chCApath=NULL,*chCAfile=NULL;
@@ -2141,6 +2143,7 @@ bad:
 		server_cb = www_body;
 	else
 		server_cb = sv_body;
+#ifndef NO_SYS_UN_H
 	if (unix_path)
 		{
 		if (unlink_unix_path)
@@ -2148,6 +2151,7 @@ bad:
 		do_server_unix(unix_path,&accept_socket,server_cb, context, naccept);
 		}
 	else
+#endif
 		do_server(port,socket_type,&accept_socket,server_cb, context, naccept);
 	print_stats(bio_s_out,ctx);
 	ret=0;
