@@ -1265,6 +1265,16 @@ $libdir="lib$multilib" if $libdir eq "";
 
 $cflags = "$cflags$exp_cflags";
 
+# If supported, add flags to generate dependency information during
+# compilation.
+my $auto_dep_flags = "-MMD -MP";
+if (system("echo | $cc $auto_dep_flags -E - >dep_flags_check.out 2>&1") == 0)
+	{
+	$cflags = "$cflags $auto_dep_flags";
+	}
+unlink("dep_flags_check.out") if -f "dep_flags_check.out";
+unlink("-.d") if -f "-.d";
+
 # '%' in $lflags is used to split flags to "pre-" and post-flags
 my ($prelflags,$postlflags)=split('%',$lflags);
 if (defined($postlflags))	{ $lflags=$postlflags;	}
