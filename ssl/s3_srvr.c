@@ -1489,7 +1489,7 @@ int ssl3_get_client_hello(SSL *s)
 	 * ssl version is set	- sslv3
 	 * s->session		- The ssl session has been setup.
 	 * s->hit		- session reuse flag
-	 * s->tmp.new_cipher	- the new cipher to use.
+	 * s->s3->tmp.new_cipher- the new cipher to use.
 	 */
 
 	/* Handles TLS extensions that we couldn't check earlier */
