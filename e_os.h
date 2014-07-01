@@ -134,6 +134,7 @@ extern "C" {
 #endif
 
 #ifdef WIN32
+#define NO_SYS_UN_H
 #define get_last_sys_error()	GetLastError()
 #define clear_sys_error()	SetLastError(0)
 #if !defined(WINNT)
