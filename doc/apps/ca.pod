@@ -120,7 +120,7 @@ the 'ps' utility) this option should be used with caution.
 
 indicates the issued certificates are to be signed with the key
 the certificate requests were signed with (given with B<-keyfile>).
-Cerificate requests signed with a different key are ignored.  If
+Certificate requests signed with a different key are ignored.  If
 B<-spkac>, B<-ss_cert> or B<-gencrl> are given, B<-selfsign> is
 ignored.
 
@@ -237,7 +237,7 @@ configuration file, must be valid UTF8 strings.
 
 =item B<-multivalue-rdn>
 
-this option causes the -subj argument to be interpretedt with full
+This option causes the -subj argument to be interpretedt with full
 support for multivalued RDNs. Example:
 
 I</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
@@ -274,7 +274,7 @@ B<CACompromise>, B<affiliationChanged>, B<superseded>, B<cessationOfOperation>,
 B<certificateHold> or B<removeFromCRL>. The matching of B<reason> is case
 insensitive. Setting any revocation reason will make the CRL v2.
 
-In practive B<removeFromCRL> is not particularly useful because it is only used
+In practice B<removeFromCRL> is not particularly useful because it is only used
 in delta CRLs which are not currently implemented.
 
 =item B<-crl_hold instruction>
@@ -630,7 +630,7 @@ RFCs, regardless the contents of the request' subject the B<-noemailDN>
 option can be used. The behaviour should be more friendly and
 configurable.
 
-Cancelling some commands by refusing to certify a certificate can
+Canceling some commands by refusing to certify a certificate can
 create an empty file.
 
 =head1 WARNINGS
@@ -649,7 +649,7 @@ The B<copy_extensions> option should be used with caution. If care is
 not taken then it can be a security risk. For example if a certificate
 request contains a basicConstraints extension with CA:TRUE and the
 B<copy_extensions> value is set to B<copyall> and the user does not spot
-this when the certificate is displayed then this will hand the requestor
+this when the certificate is displayed then this will hand the requester
 a valid CA certificate.
 
 This situation can be avoided by setting B<copy_extensions> to B<copy>
