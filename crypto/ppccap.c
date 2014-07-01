@@ -54,6 +54,22 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_U
 	}
 #endif
 
+void sha256_block_p8(void *ctx,const void *inp,size_t len);
+void sha256_block_ppc(void *ctx,const void *inp,size_t len);
+void sha256_block_data_order(void *ctx,const void *inp,size_t len)
+	{
+	OPENSSL_ppccap_P&PPC_CRYPTO207?	sha256_block_p8(ctx,inp,len):
+					sha256_block_ppc(ctx,inp,len);
+	}
+
+void sha512_block_p8(void *ctx,const void *inp,size_t len);
+void sha512_block_ppc(void *ctx,const void *inp,size_t len);
+void sha512_block_data_order(void *ctx,const void *inp,size_t len)
+	{
+	OPENSSL_ppccap_P&PPC_CRYPTO207?	sha512_block_p8(ctx,inp,len):
+					sha512_block_ppc(ctx,inp,len);
+	}
+
 static sigjmp_buf ill_jmp;
 static void ill_handler (int sig) { siglongjmp(ill_jmp,sig); }
 
