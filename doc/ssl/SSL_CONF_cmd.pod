@@ -166,7 +166,7 @@ B<-DOPENSSL_SSL_DEBUG_BROKEN_PROTOCOL>.
 
 Currently supported B<cmd> names for configuration files (i.e. when the
 flag B<SSL_CONF_FLAG_FILE> is set) are listed below. All configuration file
-B<cmd> names and are case insensitive so B<signaturealgorithms> is recognised
+B<cmd> names are case insensitive so B<signaturealgorithms> is recognised
 as well as B<SignatureAlgorithms>. Unless otherwise stated the B<value> names
 are also case insensitive.
 
