@@ -1511,9 +1511,12 @@ bad:
 #endif
 
 re_start:
-
+#ifdef NO_SYS_UN_H
+	if (init_client(&s,host,port,socket_type) == 0)
+#else
 	if ((!unix_path && (init_client(&s,host,port,socket_type) == 0)) ||
 			(unix_path && (init_client_unix(&s,unix_path) == 0)))
+#endif
 		{
 		BIO_printf(bio_err,"connect:errno=%d\n",get_last_socket_error());
 		SHUTDOWN(s);
