@@ -617,6 +617,8 @@ EOF
 	$ex_libs .= " $zlib_lib" if $zlib_opt == 1;
 	}
 
+my $asm_def = $orig_platform eq 'copy' ? "" : "ASM=$bin_dir$asm";
+
 $defs= <<"EOF";
 # N.B. You MUST use -j on FreeBSD.
 # This makefile has been automatically generated from the OpenSSL distribution.
@@ -677,7 +679,7 @@ RANLIB=$ranlib
 MKDIR=$mkdir
 MKLIB=$bin_dir$mklib
 MLFLAGS=$mlflags
-#ASM=$bin_dir$asm
+$asm_def
 
 # FIPS validated module and support file locations
 
