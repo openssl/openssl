@@ -20,7 +20,7 @@ SSL_CTX_set_info_callback() sets the B<callback> function, that can be used to
 obtain state information for SSL objects created from B<ctx> during connection
 setup and use. The setting for B<ctx> is overridden from the setting for
 a specific SSL object, if specified.
-When B<callback> is NULL, not callback function is used.
+When B<callback> is NULL, no callback function is used.
 
 SSL_set_info_callback() sets the B<callback> function, that can be used to
 obtain state information for B<ssl> during connection setup and use.
