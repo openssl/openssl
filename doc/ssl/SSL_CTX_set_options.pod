@@ -44,7 +44,7 @@ secure renegotiation.
 =head1 NOTES
 
 The behaviour of the SSL library can be changed by setting several options.
-The options are coded as bitmasks and can be combined by a logical B<or>
+The options are coded as bitmasks and can be combined by a bitwise B<or>
 operation (|).
 
 SSL_CTX_set_options() and SSL_set_options() affect the (external)
