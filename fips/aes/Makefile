@@ -81,7 +81,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff testlist
+	rm -f *.o *.d asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff testlist
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 fips_aes_selftest.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h

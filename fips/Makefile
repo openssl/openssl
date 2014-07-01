@@ -209,7 +209,7 @@ depend:
 
 clean:
 	rm -f fipscanister.o.sha1 fips_premain_dso$(EXE_EXT) fips_standalone_sha1$(EXE_EXT) \
-		*.s *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+		*.s *.o *.d */*.o */*.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 	@target=clean; $(RECURSIVE_MAKE)
 
 dclean:
