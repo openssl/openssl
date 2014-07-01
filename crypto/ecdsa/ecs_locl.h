@@ -79,7 +79,7 @@ struct ecdsa_method
 	int (*finish)(EC_KEY *eckey);
 #endif
 	int flags;
-	char *app_data;
+	void *app_data;
 	};
 
 /* The ECDSA_METHOD was allocated and can be freed */

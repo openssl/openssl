@@ -347,4 +347,12 @@ void ECDSA_METHOD_free(ECDSA_METHOD *ecdsa_method)
 		OPENSSL_free(ecdsa_method);
 	}
 
+void ECDSA_METHOD_set_app_data(ECDSA_METHOD *ecdsa_method, void *app)
+	{
+	ecdsa_method->app_data = app;
+	}
 
+void * ECDSA_METHOD_get_app_data(ECDSA_METHOD *ecdsa_method)
+	{
+	return ecdsa_method->app_data;
+	}
