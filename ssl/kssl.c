@@ -2148,7 +2148,7 @@ krb5_error_code  kssl_check_authent(
 
 
 /*  Replaces krb5_build_principal_ext(), with varargs length == 2 (svc, host),
-**  because I dont't know how to stub varargs.
+**  because I don't know how to stub varargs.
 **  Returns krb5_error_code == ENOMEM on alloc error, otherwise
 **  passes back newly constructed principal, which should be freed by caller.
 */
