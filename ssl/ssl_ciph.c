@@ -926,7 +926,7 @@ static void ssl_cipher_apply_rule(unsigned long cipher_id,
 		int rule, int strength_bits,
 		CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
 	{
-	CIPHER_ORDER *head, *tail, *curr, *curr2, *last;
+	CIPHER_ORDER *head, *tail, *curr, *next, *last;
 	const SSL_CIPHER *cp;
 	int reverse = 0;
 
@@ -943,21 +943,25 @@ static void ssl_cipher_apply_rule(unsigned long cipher_id,
 
 	if (reverse)
 		{
-		curr = tail;
+		next = tail;
 		last = head;
 		}
 	else
 		{
-		curr = head;
+		next = head;
 		last = tail;
 		}
 
-	curr2 = curr;
+	curr = NULL;
 	for (;;)
 		{
-		if ((curr == NULL) || (curr == last)) break;
-		curr = curr2;
-		curr2 = reverse ? curr->prev : curr->next;
+		if (curr == last) break;
+
+		curr = next;
+
+		if (curr == NULL) break;
+
+		next = reverse ? curr->prev : curr->next;
 
 		cp = curr->cipher;
 
