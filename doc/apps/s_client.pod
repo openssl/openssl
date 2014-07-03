@@ -10,7 +10,6 @@ s_client - SSL/TLS client program
 B<openssl> B<s_client>
 [B<-connect host:port>]
 [B<-verify depth>]
-[B<-verify_return_error>]
 [B<-cert filename>]
 [B<-certform DER|PEM>]
 [B<-key filename>]
@@ -126,11 +125,6 @@ server certificate chain and turns on server certificate verification.
 Currently the verify operation continues after errors so all the problems
 with a certificate chain can be seen. As a side effect the connection
 will never fail due to a server certificate verify failure.
-
-=item B<-verify_return_error>
-
-Return verification errors instead of continuing. This will typically
-abort the handshake with a fatal error.
 
 =item B<-CApath directory>
 
@@ -375,8 +369,7 @@ The B<s_client> utility is a test tool and is designed to continue the
 handshake after any certificate verification errors. As a result it will
 accept any certificate chain (trusted or not) sent by the peer. None test
 applications should B<not> do this as it makes them vulnerable to a MITM
-attack. This behaviour can be changed by with the B<-verify_return_error>
-option: any verify errors are then returned aborting the handshake.
+attack.
 
 =head1 BUGS
 
