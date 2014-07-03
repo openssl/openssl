@@ -17,7 +17,6 @@ B<openssl> B<s_client>
 [B<-pass arg>]
 [B<-CApath directory>]
 [B<-CAfile filename>]
-[B<-trusted_first>]
 [B<-attime timestamp>]
 [B<-check_ss_sig>]
 [B<-crl_check>]
@@ -31,7 +30,6 @@ B<openssl> B<s_client>
 [B<-policy_check>]
 [B<-policy_print>]
 [B<-purpose purpose>]
-[B<-trusted_first>]
 [B<-use_deltas>]
 [B<-verify_depth num>]
 [B<-x509_strict>]
@@ -129,9 +127,7 @@ and to use when attempting to build the client certificate chain.
 B<explicit_policy>, B<-ignore_critical>, B<-inhibit_any>,
 B<-inhibit_map>, B<-issuer_checks>, B<-policy>,
 B<-policy_check>, B<-policy_print>, B<-purpose>,
-B<-trusted_first>, B<-use_deltas>,
-B<-verify_depth>,
-B<-x509_strict>
+B<-use_deltas>, B<-verify_depth>, B<-x509_strict>
 
 Set various certificate chain valiadition options. See the
 L<B<verify>|verify(1)> manual page for details.

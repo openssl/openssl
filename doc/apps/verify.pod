@@ -23,7 +23,6 @@ B<openssl> B<verify>
 [B<-policy_check>]
 [B<-policy_print>]
 [B<-purpose purpose>]
-[B<-trusted_first>]
 [B<-untrusted file>]
 [B<-use_deltas>]
 [B<-verbose>]
@@ -126,12 +125,6 @@ B<verify> will not consider certificate purpose during chain verification.
 Currently accepted uses are B<sslclient>, B<sslserver>, B<nssslserver>,
 B<smimesign>, B<smimeencrypt>. See the B<VERIFY OPERATION> section for more
 information.
-
-=item B<-trusted_first>
-
-Use certificates in CA file or CA directory before certificates in untrusted
-file when building the trust chain to verify certificates.
-This is mainly useful in environments with Bridge CA or Cross-Certified CAs.
 
 =item B<-untrusted file>
 
