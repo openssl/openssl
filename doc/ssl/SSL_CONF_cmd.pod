@@ -91,8 +91,8 @@ associated with B<cctx>.
 =item B<-cert>
 
 Attempts to use the file B<value> as the certificate for the appropriate
-context. It currently uses SSL_CTX_use_cerificate_chain_file if an B<SSL_CTX>
-structure is set or SSL_use_certifcate_file with filetype PEM if an B<SSL>
+context. It currently uses SSL_CTX_use_certificate_chain_file() if an B<SSL_CTX>
+structure is set or SSL_use_certificate_file() with filetype PEM if an B<SSL>
 structure is set. This option is only supported if certificate operations
 are permitted.
 
@@ -183,8 +183,8 @@ associated with B<cctx>.
 =item B<Certificate>
 
 Attempts to use the file B<value> as the certificate for the appropriate
-context. It currently uses SSL_CTX_use_cerificate_chain_file if an B<SSL_CTX>
-structure is set or SSL_use_certifcate_file with filetype PEM if an B<SSL>
+context. It currently uses SSL_CTX_use_certificate_chain_file() if an B<SSL_CTX>
+structure is set or SSL_use_certificate_file() with filetype PEM if an B<SSL>
 structure is set. This option is only supported if certificate operations
 are permitted.
 
