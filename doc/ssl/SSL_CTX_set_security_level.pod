@@ -144,7 +144,7 @@ of security requires the use of RSA keys of at least 15360 bits in size.
 Some restrictions can be gracefully handled: for example ciphersuites
 offering insufficient security are not sent by the client and will not
 be selected by the server. Other restrictions such as the peer certificate
-key size or the DH pameter size will abort the handshake with a fatal
+key size or the DH parameter size will abort the handshake with a fatal
 alert.
 
 Attempts to set certificates or parameters with insufficient security are
