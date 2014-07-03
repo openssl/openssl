@@ -26,7 +26,7 @@ the passed B<ssl> structure and set or clear any appropriate certificates. If
 the callback is successful it B<MUST> return 1 even if no certificates have
 been set. A zero is returned on error which will abort the handshake with a
 fatal internal error alert. A negative return value will suspend the handshake
-and the handshake function will return immediatly.
+and the handshake function will return immediately.
 L<SSL_get_error(3)|SSL_get_error(3)> will return SSL_ERROR_WANT_X509_LOOKUP to
 indicate, that the handshake was suspended. The next call to the handshake
 function will again lead to the call of cert_cb(). It is the job of the
