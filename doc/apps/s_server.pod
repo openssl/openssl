@@ -35,6 +35,7 @@ B<openssl> B<s_server>
 [B<-CAfile filename>]
 [B<-nocert>]
 [B<-cipher cipherlist>]
+[B<-serverpref>]
 [B<-quiet>]
 [B<-no_tmp_rsa>]
 [B<-ssl2>]
@@ -230,6 +231,10 @@ the client sends a list of supported ciphers the first client cipher
 also included in the server list is used. Because the client specifies
 the preference order, the order of the server cipherlist irrelevant. See
 the B<ciphers> command for more information.
+
+=item B<-serverpref>
+
+use the server's cipher preferences, rather than the client's preferences.
 
 =item B<-tlsextdebug>
 

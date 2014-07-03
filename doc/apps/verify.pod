@@ -12,6 +12,7 @@ B<openssl> B<verify>
 [B<-purpose purpose>]
 [B<-policy arg>]
 [B<-ignore_critical>]
+[B<-crlfile file>]
 [B<-crl_check>]
 [B<-crl_check_all>]
 [B<-policy_check>]
@@ -47,10 +48,16 @@ form ("hash" is the hashed certificate subject name: see the B<-hash> option
 of the B<x509> utility). Under Unix the B<c_rehash> script will automatically
 create symbolic links to a directory of certificates.
 
-=item B<-CAfile file>
-
+=item B<-crlfile file>
 A file of trusted certificates. The file should contain multiple certificates
 in PEM format concatenated together.
+
+File containing one or more CRL's (in PEM format) to load.
+
+=item B<-crl_check>
+
+Checks end entity certificate validity by attempting to look up a valid CRL.
+If a valid CRL cannot be found an error occurs.
 
 =item B<-untrusted file>
 
