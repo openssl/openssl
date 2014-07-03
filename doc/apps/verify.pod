@@ -11,6 +11,7 @@ B<openssl> B<verify>
 [B<-CApath directory>]
 [B<-attime timestamp>]
 [B<-check_ss_sig>]
+[B<-crlfile file>]
 [B<-crl_check>]
 [B<-crl_check_all>]
 [B<-explicit_policy>]
@@ -73,6 +74,10 @@ current system time. B<timestamp> is the number of seconds since
 
 Verify the signature on the self-signed root CA. This is disabled by default
 because it doesn't add any security.
+
+=item B<-crlfile file>
+
+File containing one or more CRL's (in PEM format) to load.
 
 =item B<-crl_check>
 
