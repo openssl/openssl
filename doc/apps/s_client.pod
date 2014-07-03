@@ -10,6 +10,7 @@ s_client - SSL/TLS client program
 B<openssl> B<s_client>
 [B<-connect host:port>]
 [B<-verify depth>]
+[B<-verify_return_error>]
 [B<-cert filename>]
 [B<-certform DER|PEM>]
 [B<-key filename>]
@@ -17,6 +18,33 @@ B<openssl> B<s_client>
 [B<-pass arg>]
 [B<-CApath directory>]
 [B<-CAfile filename>]
+[B<-trusted_first>]
+[B<-attime timestamp>]
+[B<-check_ss_sig>]
+[B<-crl_check>]
+[B<-crl_check_all>]
+[B<-explicit_policy>]
+[B<-extended_crl>]
+[B<-ignore_critical>]
+[B<-inhibit_any>]
+[B<-inhibit_map>]
+[B<-issuer_checks>]
+[B<-partial_chain>]
+[B<-policy arg>]
+[B<-policy_check>]
+[B<-policy_print>]
+[B<-purpose purpose>]
+[B<-suiteB_128>]
+[B<-suiteB_128_only>]
+[B<-suiteB_192>]
+[B<-trusted_first>]
+[B<-use_deltas>]
+[B<-verify_depth num>]
+[B<-verify_email email>]
+[B<-verify_hostname hostname>]
+[B<-verify_ip ip>]
+[B<-verify_name name>]
+[B<-x509_strict>]
 [B<-reconnect>]
 [B<-pause>]
 [B<-showcerts>]
@@ -37,12 +65,16 @@ B<openssl> B<s_client>
 [B<-bugs>]
 [B<-cipher cipherlist>]
 [B<-starttls protocol>]
+[B<-xmpphost hostname>]
 [B<-engine id>]
 [B<-tlsextdebug>]
 [B<-no_ticket>]
 [B<-sess_out filename>]
 [B<-sess_in filename>]
 [B<-rand file(s)>]
+[B<-serverinfo types>]
+[B<-auth>]
+[B<-auth_require_reneg>]
 
 =head1 DESCRIPTION
 
@@ -51,6 +83,11 @@ to a remote host using SSL/TLS. It is a I<very> useful diagnostic tool for
 SSL servers.
 
 =head1 OPTIONS
+
+In addition to the options below the B<s_client> utility also supports the
+common and client only options documented in the
+in the L<SSL_CONF_cmd(3)|SSL_CONF_cmd(3)/SUPPORTED COMMAND LINE COMMANDS>
+manual page.
 
 =over 4
 
@@ -90,6 +127,11 @@ Currently the verify operation continues after errors so all the problems
 with a certificate chain can be seen. As a side effect the connection
 will never fail due to a server certificate verify failure.
 
+=item B<-verify_return_error>
+
+Return verification errors instead of continuing. This will typically
+abort the handshake with a fatal error.
+
 =item B<-CApath directory>
 
 The directory to use for server certificate verification. This directory
@@ -100,6 +142,17 @@ also used when building the client certificate chain.
 
 A file containing trusted certificates to use during server authentication
 and to use when attempting to build the client certificate chain.
+
+=item B<-attime>, B<-check_ss_sig>, B<-crl_check>, B<-crl_check_all>,
+B<explicit_policy>, B<-extended_crl>, B<-ignore_critical>, B<-inhibit_any>,
+B<-inhibit_map>, B<-issuer_checks>, B<-partial_chain>, B<-policy>,
+B<-policy_check>, B<-policy_print>, B<-purpose>, B<-suiteB_128>,
+B<-suiteB_128_only>, B<-suiteB_192>, B<-trusted_first>, B<-use_deltas>,
+B<-verify_depth>, B<-verify_email>, B<-verify_hostname>, B<-verify_ip>,
+B<-verify_name>, B<-x509_strict>
+
+Set various certificate chain valiadition options. See the
+L<B<verify>|verify(1)> manual page for details.
 
 =item B<-reconnect>
 
@@ -138,6 +191,15 @@ print extensive debugging information including a hex dump of all traffic.
 
 show all protocol messages with hex dump.
 
+=item B<-trace>
+
+show verbose trace output of protocol messages. OpenSSL needs to be compiled
+with B<enable-ssl-trace> for this option to work.
+
+=item B<-msgfile>
+
+file to send output of B<-msg> or B<-trace> to, default standard output.
+
 =item B<-nbio_test>
 
 tests non-blocking I/O
@@ -161,6 +223,16 @@ input.
 inhibit printing of session and certificate information.  This implicitly
 turns on B<-ign_eof> as well.
 
+=item B<-psk_identity identity>
+
+Use the PSK identity B<identity> when using a PSK cipher suite.
+
+=item B<-psk key>
+
+Use the PSK key B<key> when using a PSK cipher suite. The key is
+given as a hexadecimal number without leading 0x, for example -psk
+1a2b3c4d.
+
 =item B<-ssl2>, B<-ssl3>, B<-tls1>, B<-no_ssl2>, B<-no_ssl3>, B<-no_tls1>
 
 these options disable the use of certain SSL or TLS protocols. By default
@@ -177,6 +249,11 @@ support SSL v2 and may need the B<-ssl2> option.
 there are several known bug in SSL and TLS implementations. Adding this
 option enables various workarounds.
 
+=item B<-brief>
+
+only provide a brief summary of connection parameters instead of the
+normal verbose output.
+
 =item B<-cipher cipherlist>
 
 this allows the cipher list sent by the client to be modified. Although
@@ -188,18 +265,22 @@ command for more information.
 
 send the protocol-specific message(s) to switch to TLS for communication.
 B<protocol> is a keyword for the intended protocol.  Currently, the only
-supported keywords are "smtp", "pop3", "imap", and "ftp".
+supported keywords are "smtp", "pop3", "imap", "ftp" and "xmpp".
+
+=item B<-xmpphost hostname>
+
+This option, when used with "-starttls xmpp", specifies the host for the
+"to" attribute of the stream element.
+If this option is not specified, then the host specified with "-connect"
+will be used.
 
 =item B<-tlsextdebug>
 
-print out a hex dump of any TLS extensions received from the server. Note: this
-option is only available if extension support is explicitly enabled at compile
-time
+print out a hex dump of any TLS extensions received from the server.
 
 =item B<-no_ticket>
 
-disable RFC4507bis session ticket support. Note: this option is only available
-if extension support is explicitly enabled at compile time
+disable RFC4507bis session ticket support. 
 
 =item B<-sess_out filename>
 
@@ -212,7 +293,7 @@ connection from this session.
 
 =item B<-engine id>
 
-specifying an engine (by it's unique B<id> string) will cause B<s_client>
+specifying an engine (by its unique B<id> string) will cause B<s_client>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
@@ -224,6 +305,22 @@ generator, or an EGD socket (see L<RAND_egd(3)|RAND_egd(3)>).
 Multiple files can be specified separated by a OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
+
+=item B<-serverinfo types>
+
+a list of comma-separated TLS Extension Types (numbers between 0 and 
+65535).  Each type will be sent as an empty ClientHello TLS Extension.
+The server's response (if any) will be encoded and displayed as a PEM
+file.
+
+=item B<-auth>
+
+send RFC 5878 client and server authorization extensions in the Client Hello as well as
+supplemental data if the server also sent the authorization extensions in the Server Hello.
+
+=item B<-auth_require_reneg>
+
+only send RFC 5878 client and server authorization extensions during renegotiation.
 
 =back
 
@@ -274,8 +371,12 @@ Since the SSLv23 client hello cannot include compression methods or extensions
 these will only be supported if its use is disabled, for example by using the
 B<-no_sslv2> option.
 
-TLS extensions are only supported in OpenSSL 0.9.8 if they are explictly
-enabled at compile time using for example the B<enable-tlsext> switch.
+The B<s_client> utility is a test tool and is designed to continue the
+handshake after any certificate verification errors. As a result it will
+accept any certificate chain (trusted or not) sent by the peer. None test
+applications should B<not> do this as it makes them vulnerable to a MITM
+attack. This behaviour can be changed by with the B<-verify_return_error>
+option: any verify errors are then returned aborting the handshake.
 
 =head1 BUGS
 
@@ -283,9 +384,6 @@ Because this program has a lot of options and also because some of
 the techniques used are rather old, the C source of s_client is rather
 hard to read and not a model of how things should be done. A typical
 SSL client program would be much simpler.
-
-The B<-verify> option should really exit if the server verification
-fails.
 
 The B<-prexit> option is a bit of a hack. We should really report
 information whenever a session is renegotiated.

@@ -61,7 +61,7 @@ Encode the B<NULL> type, the B<value> string must not be present.
 =item B<INTEGER>, B<INT>
 
 Encodes an ASN1 B<INTEGER> type. The B<value> string represents
-the value of the integer, it can be preceeded by a minus sign and
+the value of the integer, it can be preceded by a minus sign and
 is normally interpreted as a decimal value unless the prefix B<0x>
 is included.
 
@@ -103,7 +103,8 @@ bits is set to zero.
 =item B<UNIVERSALSTRING>, B<UNIV>, B<IA5>, B<IA5STRING>, B<UTF8>,
 B<UTF8String>, B<BMP>, B<BMPSTRING>, B<VISIBLESTRING>,
 B<VISIBLE>, B<PRINTABLESTRING>, B<PRINTABLE>, B<T61>,
-B<T61STRING>, B<TELETEXSTRING>, B<GeneralString>
+B<T61STRING>, B<TELETEXSTRING>, B<GeneralString>, B<NUMERICSTRING>,
+B<NUMERIC>
 
 These encode the corresponding string types. B<value> represents the
 contents of this structure. The format can be B<ASCII> or B<UTF8>.
