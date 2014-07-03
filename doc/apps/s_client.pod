@@ -23,26 +23,17 @@ B<openssl> B<s_client>
 [B<-crl_check>]
 [B<-crl_check_all>]
 [B<-explicit_policy>]
-[B<-extended_crl>]
 [B<-ignore_critical>]
 [B<-inhibit_any>]
 [B<-inhibit_map>]
 [B<-issuer_checks>]
-[B<-partial_chain>]
 [B<-policy arg>]
 [B<-policy_check>]
 [B<-policy_print>]
 [B<-purpose purpose>]
-[B<-suiteB_128>]
-[B<-suiteB_128_only>]
-[B<-suiteB_192>]
 [B<-trusted_first>]
 [B<-use_deltas>]
 [B<-verify_depth num>]
-[B<-verify_email email>]
-[B<-verify_hostname hostname>]
-[B<-verify_ip ip>]
-[B<-verify_name name>]
 [B<-x509_strict>]
 [B<-reconnect>]
 [B<-pause>]
@@ -71,9 +62,6 @@ B<openssl> B<s_client>
 [B<-sess_out filename>]
 [B<-sess_in filename>]
 [B<-rand file(s)>]
-[B<-serverinfo types>]
-[B<-auth>]
-[B<-auth_require_reneg>]
 
 =head1 DESCRIPTION
 
@@ -138,12 +126,12 @@ A file containing trusted certificates to use during server authentication
 and to use when attempting to build the client certificate chain.
 
 =item B<-attime>, B<-check_ss_sig>, B<-crl_check>, B<-crl_check_all>,
-B<explicit_policy>, B<-extended_crl>, B<-ignore_critical>, B<-inhibit_any>,
-B<-inhibit_map>, B<-issuer_checks>, B<-partial_chain>, B<-policy>,
-B<-policy_check>, B<-policy_print>, B<-purpose>, B<-suiteB_128>,
-B<-suiteB_128_only>, B<-suiteB_192>, B<-trusted_first>, B<-use_deltas>,
-B<-verify_depth>, B<-verify_email>, B<-verify_hostname>, B<-verify_ip>,
-B<-verify_name>, B<-x509_strict>
+B<explicit_policy>, B<-ignore_critical>, B<-inhibit_any>,
+B<-inhibit_map>, B<-issuer_checks>, B<-policy>,
+B<-policy_check>, B<-policy_print>, B<-purpose>,
+B<-trusted_first>, B<-use_deltas>,
+B<-verify_depth>,
+B<-x509_strict>
 
 Set various certificate chain valiadition options. See the
 L<B<verify>|verify(1)> manual page for details.
@@ -185,15 +173,6 @@ print extensive debugging information including a hex dump of all traffic.
 
 show all protocol messages with hex dump.
 
-=item B<-trace>
-
-show verbose trace output of protocol messages. OpenSSL needs to be compiled
-with B<enable-ssl-trace> for this option to work.
-
-=item B<-msgfile>
-
-file to send output of B<-msg> or B<-trace> to, default standard output.
-
 =item B<-nbio_test>
 
 tests non-blocking I/O
@@ -217,16 +196,6 @@ input.
 inhibit printing of session and certificate information.  This implicitly
 turns on B<-ign_eof> as well.
 
-=item B<-psk_identity identity>
-
-Use the PSK identity B<identity> when using a PSK cipher suite.
-
-=item B<-psk key>
-
-Use the PSK key B<key> when using a PSK cipher suite. The key is
-given as a hexadecimal number without leading 0x, for example -psk
-1a2b3c4d.
-
 =item B<-ssl2>, B<-ssl3>, B<-tls1>, B<-no_ssl2>, B<-no_ssl3>, B<-no_tls1>
 
 these options disable the use of certain SSL or TLS protocols. By default
@@ -242,11 +211,6 @@ support SSL v2 and may need the B<-ssl2> option.
 
 there are several known bug in SSL and TLS implementations. Adding this
 option enables various workarounds.
-
-=item B<-brief>
-
-only provide a brief summary of connection parameters instead of the
-normal verbose output.
 
 =item B<-cipher cipherlist>
 
@@ -299,22 +263,6 @@ generator, or an EGD socket (see L<RAND_egd(3)|RAND_egd(3)>).
 Multiple files can be specified separated by a OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
-
-=item B<-serverinfo types>
-
-a list of comma-separated TLS Extension Types (numbers between 0 and 
-65535).  Each type will be sent as an empty ClientHello TLS Extension.
-The server's response (if any) will be encoded and displayed as a PEM
-file.
-
-=item B<-auth>
-
-send RFC 5878 client and server authorization extensions in the Client Hello as well as
-supplemental data if the server also sent the authorization extensions in the Server Hello.
-
-=item B<-auth_require_reneg>
-
-only send RFC 5878 client and server authorization extensions during renegotiation.
 
 =back
 

@@ -14,29 +14,20 @@ B<openssl> B<verify>
 [B<-crl_check>]
 [B<-crl_check_all>]
 [B<-explicit_policy>]
-[B<-extended_crl>]
 [B<-help>]
 [B<-ignore_critical>]
 [B<-inhibit_any>]
 [B<-inhibit_map>]
 [B<-issuer_checks>]
-[B<-partial_chain>]
 [B<-policy arg>]
 [B<-policy_check>]
 [B<-policy_print>]
 [B<-purpose purpose>]
-[B<-suiteB_128>]
-[B<-suiteB_128_only>]
-[B<-suiteB_192>]
 [B<-trusted_first>]
 [B<-untrusted file>]
 [B<-use_deltas>]
 [B<-verbose>]
 [B<-verify_depth num>]
-[B<-verify_email email>]
-[B<-verify_hostname hostname>]
-[B<-verify_ip ip>]
-[B<-verify_name name>]
 [B<-x509_strict>]
 [B<->]
 [certificates]
@@ -88,11 +79,6 @@ to look up valid CRLs.
 
 Set policy variable require-explicit-policy (see RFC5280).
 
-=item B<-extended_crl>
-
-Enable extended CRL features such as indirect CRLs and alternate CRL
-signing keys.
-
 =item B<-help>
 
 Print out a usage message.
@@ -119,10 +105,6 @@ rejected. The presence of rejection messages does not itself imply that
 anything is wrong; during the normal verification process, several
 rejections may take place.
 
-=item B<-partial_chain>
-
-Allow partial certificate chain if at least one certificate is in trusted store.
-
 =item B<-policy arg>
 
 Enable policy processing and add B<arg> to the user-initial-policy-set (see
@@ -144,14 +126,6 @@ B<verify> will not consider certificate purpose during chain verification.
 Currently accepted uses are B<sslclient>, B<sslserver>, B<nssslserver>,
 B<smimesign>, B<smimeencrypt>. See the B<VERIFY OPERATION> section for more
 information.
-
-=item B<-suiteB_128_only>, B<-suiteB_128>, B<-suiteB_192>
-
-enable the Suite B mode operation at 128 bit Level of Security, 128 bit or
-192 bit, or only 192 bit Level of Security respectively.
-See RFC6460 for details. In particular the supported signature algorithms are
-reduced to support only ECDSA and SHA256 or SHA384 and only the elliptic curves
-P-256 and P-384.
 
 =item B<-trusted_first>
 
@@ -175,27 +149,6 @@ Print extra information about the operations being performed.
 =item B<-verify_depth num>
 
 Limit the maximum depth of the certificate chain to B<num> certificates.
-
-=item B<-verify_email email>
-
-Verify if the B<email> matches the email address in Subject Alternative Name or
-the email in the subject Distinguished Name.
-
-=item B<-verify_hostname hostname>
-
-Verify if the B<hostname> matches DNS name in Subject Alternative Name or
-Common Name in the subject certificate.
-
-=item B<-verify_ip ip>
-
-Verify if the B<ip> matches the IP address in Subject Alternative Name of
-the subject certificate.
-
-=item B<-verify_name name>
-
-Use default verification options like trust model and required certificate
-policies identified by B<name>.
-Supported usages include: default, pkcs7, smime_sign, ssl_client, ssl_server.
 
 =item B<-x509_strict>
 
