@@ -56,8 +56,6 @@ B<openssl> B<s_server>
 [B<-id_prefix arg>]
 [B<-rand file(s)>]
 [B<-serverinfo file>]
-[B<-auth>]
-[B<-auth_require_reneg>]
 [B<-no_resumption_on_reneg>]
 =head1 DESCRIPTION
 
@@ -292,19 +290,9 @@ followed by "length" bytes of extension data).  If the client sends
 an empty TLS ClientHello extension matching the type, the corresponding
 ServerHello extension will be returned.
 
-=item B<-auth>
-
-send RFC 5878 client and server authorization extensions in the Client Hello as well as
-supplemental data if the server also sent the authorization extensions in the Server Hello.
-
-=item B<-auth_require_reneg>
-
-only send RFC 5878 client and server authorization extensions during renegotiation.
-
 =item B<-no_resumption_on_reneg>
 
-set SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION flag.  Required in order to receive supplemental data
-during renegotiation if auth and auth_require_reneg are set.
+set SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION flag.
 
 =back
 

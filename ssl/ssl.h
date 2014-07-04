@@ -435,57 +435,6 @@ typedef struct {
 	void *arg;
 } custom_srv_ext_record;
 
-/* Callbacks and structures for handling Supplemental Data:
- *   srv_supp_data_first_cb_fn  - server sends Supplemental Data
- *   srv_supp_data_second_cb_fn - server receives Supplemental Data
- *   cli_supp_data_first_cb_fn  - client receives Supplemental Data
- *   cli_supp_data_second_cb_fn - client sends Supplemental Data
- *
- *   All these functions return nonzero on success.  Zero will terminate
- *   the handshake (and return a specific TLS Fatal alert, if the function
- *   declaration has an "al" parameter).  -1 for the "sending" functions
- *   will result in no supplemental data entry being added to the
- *   supplemental data message for the provided supplemental data type.
- *
- *   "supp_data_type" is a Supplemental Data Type from 0-65535.
- *   "in" is a pointer to TLS "supplemental_data_entry" being provided to the cb.
- *   "out" is used by the callback to return a pointer to "supplemental data"
- *     which OpenSSL will later copy into the TLS handshake.  The contents
- *     of this buffer should not be changed until the handshake is complete.
- *   "inlen" and "outlen" are Supplemental Data lengths from 0-65535.
- *   "al" is a TLS "AlertDescription" from 0-255 which WILL be sent as a
- *     fatal TLS alert, if the callback returns zero.
- */
-typedef int (*srv_supp_data_first_cb_fn)(SSL *s, unsigned short supp_data_type,
-					 const unsigned char **out,
-					 unsigned short *outlen, int *al, void *arg);
-typedef int (*srv_supp_data_second_cb_fn)(SSL *s, unsigned short supp_data_type,
-					  const unsigned char *in,
-					  unsigned short inlen, int *al,
-					  void *arg);
-
-typedef int (*cli_supp_data_first_cb_fn)(SSL *s, unsigned short supp_data_type,
-					 const unsigned char *in,
-					 unsigned short inlen, int *al,
-					 void *arg);
-typedef int (*cli_supp_data_second_cb_fn)(SSL *s, unsigned short supp_data_type,
-					  const unsigned char **out,
-					  unsigned short *outlen, int *al, void *arg);
-
-typedef struct {
-	unsigned short supp_data_type;
-	srv_supp_data_first_cb_fn fn1;
-	srv_supp_data_second_cb_fn fn2;
-	void *arg;
-} srv_supp_data_record;
-
-typedef struct {
-	unsigned short supp_data_type;
-	cli_supp_data_first_cb_fn fn1;
-	cli_supp_data_second_cb_fn fn2;
-	void *arg;
-} cli_supp_data_record;
-
 #endif
 
 #ifndef OPENSSL_NO_SSL_INTERN
@@ -1210,12 +1159,6 @@ struct ssl_ctx_st
 	size_t custom_cli_ext_records_count;
 	custom_srv_ext_record *custom_srv_ext_records;
 	size_t custom_srv_ext_records_count;
-
- 	/* Arrays containing the callbacks for Supplemental Data. */
- 	cli_supp_data_record *cli_supp_data_records;
-	size_t cli_supp_data_records_count;
-	srv_supp_data_record *srv_supp_data_records;
-	size_t srv_supp_data_records_count;
 	};
 
 #endif
@@ -1362,30 +1305,6 @@ int SSL_CTX_set_custom_cli_ext(SSL_CTX *ctx, unsigned short ext_type,
 int SSL_CTX_set_custom_srv_ext(SSL_CTX *ctx, unsigned short ext_type,
 			       custom_srv_ext_first_cb_fn fn1, 
 			       custom_srv_ext_second_cb_fn fn2, void *arg);
-
-/* Register callbacks to handle Supplemental Data as client or server.
- *
- * For SSL_CTX_set_srv_supp_data, a NULL srv_supp_data_first_cb_fn results in no supplemental data
- * being sent by the server for that TLS extension.
- * A NULL srv_supp_data_second_cb_fn results in no supplemental data
- * being received by the server for that TLS extension.
- *
- * For SSL_CTX_set_cli_supp_data, a NULL cli_supp_data_first_cb_fn results in no supplemental data
- * being received by the client for that TLS extension.
- * A NULL cli_supp_data_second_cb_fn results in no supplemental data
- * being sent by the client for that TLS extension.
- *
- * Returns nonzero on success.  You cannot register twice for the same supp_data_type.
- */
-int SSL_CTX_set_srv_supp_data(SSL_CTX *ctx,
-			      unsigned short supp_data_type,
-			      srv_supp_data_first_cb_fn fn1,
-			      srv_supp_data_second_cb_fn fn2, void *arg);
-
-int SSL_CTX_set_cli_supp_data(SSL_CTX *ctx,
-			      unsigned short supp_data_type,
-			      cli_supp_data_first_cb_fn fn1,
-			      cli_supp_data_second_cb_fn fn2, void *arg);
 
 #endif
 
@@ -2784,14 +2703,10 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_TLS1_CHECK_SERVERHELLO_TLSEXT		 274
 #define SSL_F_TLS1_ENC					 210
 #define SSL_F_TLS1_EXPORT_KEYING_MATERIAL		 314
-#define SSL_F_TLS1_GET_CLIENT_SUPPLEMENTAL_DATA		 338
-#define SSL_F_TLS1_GET_SERVER_SUPPLEMENTAL_DATA		 326
 #define SSL_F_TLS1_HEARTBEAT				 315
 #define SSL_F_TLS1_PREPARE_CLIENTHELLO_TLSEXT		 275
 #define SSL_F_TLS1_PREPARE_SERVERHELLO_TLSEXT		 276
 #define SSL_F_TLS1_PRF					 284
-#define SSL_F_TLS1_SEND_CLIENT_SUPPLEMENTAL_DATA	 339
-#define SSL_F_TLS1_SEND_SERVER_SUPPLEMENTAL_DATA	 327
 #define SSL_F_TLS1_SETUP_KEY_BLOCK			 211
 #define SSL_F_WRITE_PENDING				 212
 
@@ -3090,7 +3005,6 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_UNKNOWN_REMOTE_ERROR_TYPE			 253
 #define SSL_R_UNKNOWN_SSL_VERSION			 254
 #define SSL_R_UNKNOWN_STATE				 255
-#define SSL_R_UNKNOWN_SUPPLEMENTAL_DATA_TYPE		 373
 #define SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED	 338
 #define SSL_R_UNSUPPORTED_CIPHER			 256
 #define SSL_R_UNSUPPORTED_COMPRESSION_ALGORITHM		 257

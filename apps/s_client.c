@@ -214,45 +214,12 @@ static void sc_usage(void);
 static void print_stuff(BIO *berr,SSL *con,int full);
 #ifndef OPENSSL_NO_TLSEXT
 static int ocsp_resp_cb(SSL *s, void *arg);
-static int c_auth = 0;
-static int c_auth_require_reneg = 0;
 #endif
 static BIO *bio_c_out=NULL;
 static BIO *bio_c_msg=NULL;
 static int c_quiet=0;
 static int c_ign_eof=0;
 static int c_brief=0;
-
-#ifndef OPENSSL_NO_TLSEXT
-
-static unsigned char *generated_supp_data = NULL;
-
-static const unsigned char *most_recent_supplemental_data = NULL;
-static size_t most_recent_supplemental_data_length = 0;
-
-static int server_provided_server_authz = 0;
-static int server_provided_client_authz = 0;
-
-static const unsigned char auth_ext_data[]={TLSEXT_AUTHZDATAFORMAT_dtcp};
-
-static int suppdata_cb(SSL *s, unsigned short supp_data_type,
-		       const unsigned char *in,
-		       unsigned short inlen, int *al,
-		       void *arg);
-
-static int auth_suppdata_generate_cb(SSL *s, unsigned short supp_data_type,
-				     const unsigned char **out,
-				     unsigned short *outlen, int *al, void *arg);
-
-static int authz_tlsext_generate_cb(SSL *s, unsigned short ext_type,
-				    const unsigned char **out, unsigned short *outlen,
-				    int *al, void *arg);
-
-static int authz_tlsext_cb(SSL *s, unsigned short ext_type,
-			   const unsigned char *in,
-			   unsigned short inlen, int *al,
-			   void *arg);
-#endif
 
 #ifndef OPENSSL_NO_PSK
 /* Default PSK identity and key */
@@ -397,8 +364,6 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -status           - request certificate status from server\n");
 	BIO_printf(bio_err," -no_ticket        - disable use of RFC4507bis session tickets\n");
 	BIO_printf(bio_err," -serverinfo types - send empty ClientHello extensions (comma-separated numbers)\n");
-	BIO_printf(bio_err," -auth               - send and receive RFC 5878 TLS auth extensions and supplemental data\n");
-	BIO_printf(bio_err," -auth_require_reneg - Do not send TLS auth extensions until renegotiation\n");
 #endif
 # ifndef OPENSSL_NO_NEXTPROTONEG
 	BIO_printf(bio_err," -nextprotoneg arg - enable NPN extension, considering named protocols supported (comma-separated list)\n");
@@ -852,10 +817,6 @@ static char *jpake_secret = NULL;
 			c_tlsextdebug=1;
 		else if	(strcmp(*argv,"-status") == 0)
 			c_status_req=1;
-		else if	(strcmp(*argv,"-auth") == 0)
-			c_auth = 1;
-		else if	(strcmp(*argv,"-auth_require_reneg") == 0)
-			c_auth_require_reneg = 1;
 #endif
 #ifdef WATT32
 		else if (strcmp(*argv,"-wdebug") == 0)
@@ -1429,12 +1390,6 @@ bad:
 		}
 
 #endif
-	if (c_auth)
-		{
-		SSL_CTX_set_custom_cli_ext(ctx, TLSEXT_TYPE_client_authz, authz_tlsext_generate_cb, authz_tlsext_cb, bio_err);
-		SSL_CTX_set_custom_cli_ext(ctx, TLSEXT_TYPE_server_authz, authz_tlsext_generate_cb, authz_tlsext_cb, bio_err);
-		SSL_CTX_set_cli_supp_data(ctx, TLSEXT_SUPPLEMENTALDATATYPE_authz_data, suppdata_cb, auth_suppdata_generate_cb, bio_err);
-		}
 #endif
 
 	con=SSL_new(ctx);
@@ -1774,12 +1729,6 @@ SSL_set_tlsext_status_ids(con, ids);
 					BIO_puts(bio_err,
 						"CONNECTION ESTABLISHED\n");
 					print_ssl_summary(bio_err, con);
-					}
-				/*handshake is complete - free the generated supp data allocated in the callback */
-				if (generated_supp_data)
-					{
-					OPENSSL_free(generated_supp_data);
-					generated_supp_data = NULL;
 					}
 
 				print_stuff(bio_c_out,con,full_log);
@@ -2429,76 +2378,6 @@ static int ocsp_resp_cb(SSL *s, void *arg)
 	BIO_puts(arg, "======================================\n");
 	OCSP_RESPONSE_free(rsp);
 	return 1;
-	}
-
-static int authz_tlsext_cb(SSL *s, unsigned short ext_type,
-			   const unsigned char *in,
-			   unsigned short inlen, int *al,
-			   void *arg)
-	{
-	if (TLSEXT_TYPE_server_authz == ext_type)
-		server_provided_server_authz
-		  = (memchr(in, TLSEXT_AUTHZDATAFORMAT_dtcp, inlen) != NULL);
-
-	if (TLSEXT_TYPE_client_authz == ext_type)
-		server_provided_client_authz
-		  = (memchr(in, TLSEXT_AUTHZDATAFORMAT_dtcp, inlen) != NULL);
-
-	return 1;
-	}
-
-static int authz_tlsext_generate_cb(SSL *s, unsigned short ext_type,
-				    const unsigned char **out, unsigned short *outlen,
-				    int *al, void *arg)
-	{
-	if (c_auth)
-		{
-		/*if auth_require_reneg flag is set, only send extensions if
-		  renegotiation has occurred */
-		if (!c_auth_require_reneg || (c_auth_require_reneg && SSL_num_renegotiations(s)))
-			{
-			*out = auth_ext_data;
-			*outlen = 1;
-			return 1;
-			}
-		}
-	/* no auth extension to send */
-	return -1;
-	}
-
-static int suppdata_cb(SSL *s, unsigned short supp_data_type,
-		       const unsigned char *in,
-		       unsigned short inlen, int *al,
-		       void *arg)
-	{
-	if (supp_data_type == TLSEXT_SUPPLEMENTALDATATYPE_authz_data)
-		{
-		most_recent_supplemental_data = in;
-		most_recent_supplemental_data_length = inlen;
-		}
-	return 1;
-	}
-
-static int auth_suppdata_generate_cb(SSL *s, unsigned short supp_data_type,
-				     const unsigned char **out,
-				     unsigned short *outlen, int *al, void *arg)
-	{
-	if (c_auth && server_provided_client_authz && server_provided_server_authz)
-		{
-		/*if auth_require_reneg flag is set, only send supplemental data if
-		  renegotiation has occurred */
-		if (!c_auth_require_reneg
-		    || (c_auth_require_reneg && SSL_num_renegotiations(s)))
-			{
-			generated_supp_data = OPENSSL_malloc(10);
-			memcpy(generated_supp_data, "5432154321", 10);
-			*out = generated_supp_data;
-			*outlen = 10;
-			return 1;
-			}
-		}
-	/* no supplemental data to send */
-	return -1;
 	}
 
 #endif
