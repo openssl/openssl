@@ -1292,13 +1292,6 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **data, unsigned char *d,
 int ssl_prepare_clienthello_tlsext(SSL *s);
 int ssl_prepare_serverhello_tlsext(SSL *s);
 
-/* server only */
-int tls1_send_server_supplemental_data(SSL *s, int *skip);
-int tls1_get_client_supplemental_data(SSL *s);
-/* client only */
-int tls1_send_client_supplemental_data(SSL *s, int *skip);
-int tls1_get_server_supplemental_data(SSL *s);
-
 #ifndef OPENSSL_NO_HEARTBEATS
 int tls1_heartbeat(SSL *s);
 int dtls1_heartbeat(SSL *s);

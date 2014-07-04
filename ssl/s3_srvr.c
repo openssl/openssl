@@ -409,24 +409,9 @@ int ssl3_accept(SSL *s)
 					s->state=SSL3_ST_SW_CHANGE_A;
 #endif
 			else
-#ifndef OPENSSL_NO_TLSEXT
-				s->state = SSL3_ST_SW_SUPPLEMENTAL_DATA_A;
-#else
-			s->state = SSL3_ST_SW_CERT_A;
-#endif
+					s->state = SSL3_ST_SW_CERT_A;
 			s->init_num = 0;
 			break;
-
-#ifndef OPENSSL_NO_TLSEXT
-		case SSL3_ST_SW_SUPPLEMENTAL_DATA_A:
-		case SSL3_ST_SW_SUPPLEMENTAL_DATA_B:
-			ret = tls1_send_server_supplemental_data(s, &skip);
-			if (ret <= 0) goto end;
-
-			s->state = SSL3_ST_SW_CERT_A;
-			s->init_num = 0;
-			break;
-#endif
 
 		case SSL3_ST_SW_CERT_A:
 		case SSL3_ST_SW_CERT_B:
@@ -596,16 +581,7 @@ int ssl3_accept(SSL *s)
 
 			s->state=s->s3->tmp.next_state;
 			break;
-#ifndef OPENSSL_NO_TLSEXT
-		case SSL3_ST_SR_SUPPLEMENTAL_DATA_A:
-		case SSL3_ST_SR_SUPPLEMENTAL_DATA_B:
-			ret=tls1_get_client_supplemental_data(s);
-			if (ret <= 0) goto end;
-			s->s3->tmp.next_state=SSL3_ST_SR_CERT_A;
-			s->state=SSL3_ST_SW_FLUSH;
-			s->init_num=0;
-			break;
-#endif
+
 		case SSL3_ST_SR_CERT_A:
 		case SSL3_ST_SR_CERT_B:
 			/* Check for second client hello (MS SGC) */
@@ -614,10 +590,6 @@ int ssl3_accept(SSL *s)
 				goto end;
 			if (ret == 2)
 				s->state = SSL3_ST_SR_CLNT_HELLO_C;
-#ifndef OPENSSL_NO_TLSEXT
-			else if (ret == 3)
-				s->state = SSL3_ST_SR_SUPPLEMENTAL_DATA_A;
-#endif
 			else {
 				if (s->s3->tmp.cert_request)
 					{
@@ -913,10 +885,6 @@ int ssl3_check_client_hello(SSL *s)
 		&ok);
 	if (!ok) return((int)n);
 	s->s3->tmp.reuse_message = 1;
-#ifndef OPENSSL_NO_TLSEXT
-	if (s->s3->tmp.message_type == SSL3_MT_SUPPLEMENTAL_DATA)
-		return 3;
-#endif
 	if (s->s3->tmp.message_type == SSL3_MT_CLIENT_HELLO)
 		{
 		/* We only allow the client to restart the handshake once per
@@ -3755,156 +3723,4 @@ int ssl3_get_next_proto(SSL *s)
 	}
 # endif
 
-int tls1_send_server_supplemental_data(SSL *s, int *skip)
-	{
-	int al = 0;
-	if (s->ctx->srv_supp_data_records_count)
-		{
-		unsigned char *p = NULL;
-		unsigned char *size_loc = NULL;
-		srv_supp_data_record *record = NULL;
-		size_t length = 0;
-		size_t i = 0;
-
-		for (i = 0; i < s->ctx->srv_supp_data_records_count; i++)
-			{
-			const unsigned char *out = NULL;
-			unsigned short outlen = 0;
-			int cb_retval = 0;
-			record = &s->ctx->srv_supp_data_records[i];
-
-			/* NULL callback or -1 omits supp data entry */
-			if (!record->fn1)
-				continue;
-			cb_retval = record->fn1(s, record->supp_data_type,
-						&out, &outlen, &al, record->arg);
-			if (cb_retval == -1)
-				continue; /* skip this supp data entry */
-			if (cb_retval == 0)
-				{
-				SSLerr(SSL_F_TLS1_SEND_SERVER_SUPPLEMENTAL_DATA,ERR_R_BUF_LIB);
-				goto f_err;
-				}
-			if (outlen == 0 || TLSEXT_MAXLEN_supplemental_data < outlen + 4 + length)
-				{
-				SSLerr(SSL_F_TLS1_SEND_SERVER_SUPPLEMENTAL_DATA,ERR_R_BUF_LIB);
-				return 0;
-				}
-			/* write supp data entry...
-			 * if first entry, write handshake message type
-			 * jump back to write length at end */
-			if (length == 0)
-				{
-				/* 1 byte message type + 3 bytes for
-				 * message length */
-				if (!BUF_MEM_grow_clean(s->init_buf, 4))
-					{
-					SSLerr(SSL_F_TLS1_SEND_SERVER_SUPPLEMENTAL_DATA,ERR_R_BUF_LIB);
-					return 0;
-					}
-				p = (unsigned char *)s->init_buf->data;
-				*(p++) = SSL3_MT_SUPPLEMENTAL_DATA;
-				/* hold on to length field to update later */
-				size_loc = p;
-				/* skip over handshake length field (3
-				 * bytes) and supp_data length field
-				 * (3 bytes) */
-				p += 3 + 3;
-				length += 1 +3 +3;
-				}
-			/* 2 byte supp data type + 2 byte length + outlen */
-			if (!BUF_MEM_grow(s->init_buf, outlen + 4))
-				{
-				SSLerr(SSL_F_TLS1_SEND_SERVER_SUPPLEMENTAL_DATA,ERR_R_BUF_LIB);
-				return 0;
-				}
-			s2n(record->supp_data_type, p);
-			s2n(outlen, p);
-			memcpy(p, out, outlen);
-			/* update length to supp data type (2 bytes) +
-			 * supp data length (2 bytes) + supp data */
-			length += (outlen + 4);
-			p += outlen;
-			}
-		if (length > 0)
-			{
-			/* write handshake length */
-			l2n3(length - 4, size_loc);
-			/* supp_data length */
-			l2n3(length - 7, size_loc);
-			s->state = SSL3_ST_SW_SUPPLEMENTAL_DATA_B;
-			s->init_num = length;
-			s->init_off = 0;
-
-			return ssl3_do_write(s, SSL3_RT_HANDSHAKE);
-			}
-		}
-
-	/* no supp data message sent */
-	*skip = 1;
-	s->init_num = 0;
-	s->init_off = 0;
-	return 1;
-f_err:
-	ssl3_send_alert(s,SSL3_AL_FATAL,al);
-	return 0;
-	}
-
-int tls1_get_client_supplemental_data(SSL *s)
-	{
-	int al = 0;
-	int cb_retval = 0;
-	int ok;
-	long n;
-	const unsigned char *p, *d;
-	unsigned short supp_data_entry_type = 0;
-	unsigned short supp_data_entry_len = 0;
-	unsigned long supp_data_len = 0;
-	size_t i = 0;
-
-	n=s->method->ssl_get_message(s,
-				     SSL3_ST_SR_SUPPLEMENTAL_DATA_A,
-				     SSL3_ST_SR_SUPPLEMENTAL_DATA_B,
-				     SSL3_MT_SUPPLEMENTAL_DATA,
-				     /* use default limit */
-				     TLSEXT_MAXLEN_supplemental_data,
-				     &ok);
-
-	if (!ok) return((int)n);
-
-	p = (unsigned char *)s->init_msg;
-	d = p;
-
-	/* The message cannot be empty */
-	if (n < 3)
-		{
-		al = SSL_AD_DECODE_ERROR;
-		SSLerr(SSL_F_TLS1_GET_CLIENT_SUPPLEMENTAL_DATA,SSL_R_LENGTH_MISMATCH);
-		goto f_err;
-		}
-	n2l3(p, supp_data_len);
-	while (p<d+supp_data_len)
-		{
-		n2s(p, supp_data_entry_type);
-		n2s(p, supp_data_entry_len);
-		/* if there is a callback for this supp data type, send it */
-		for (i=0; i < s->ctx->srv_supp_data_records_count; i++)
-			{
-			if (s->ctx->srv_supp_data_records[i].supp_data_type == supp_data_entry_type && s->ctx->srv_supp_data_records[i].fn2)
-				{
-				cb_retval = s->ctx->srv_supp_data_records[i].fn2(s, supp_data_entry_type, p, supp_data_entry_len, &al, s->ctx->srv_supp_data_records[i].arg);
-				if (cb_retval == 0)
-					{
-					SSLerr(SSL_F_TLS1_GET_CLIENT_SUPPLEMENTAL_DATA, ERR_R_SSL_LIB);
-					goto f_err;
-					}
-				}
-			}
-		p+=supp_data_entry_len;
-		}
-	return 1;
-f_err:
-	ssl3_send_alert(s,SSL3_AL_FATAL,al);
-	return -1;
-	}
 #endif
