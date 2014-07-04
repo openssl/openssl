@@ -521,16 +521,6 @@ int custom_ext = 0;
 /* This set based on extension callbacks */
 int custom_ext_error = 0;
 
-/* Not IETF assigned supplemental data types */
-#define CUSTOM_SUPP_DATA_TYPE_0 100
-#define CUSTOM_SUPP_DATA_TYPE_1 101
-#define CUSTOM_SUPP_DATA_TYPE_2 102
-
-const char supp_data_0_string[] = "00000";
-
-int suppdata = 0;
-int suppdata_error = 0;
-
 static int serverinfo_cli_cb(SSL* s, unsigned short ext_type,
 			     const unsigned char* in, unsigned short inlen, 
 			     int* al, void* arg)
@@ -733,110 +723,6 @@ static int custom_ext_3_srv_second_cb(SSL *s, unsigned short ext_type,
 	return 1; /* Send "defg" */
 	}
 
-static int supp_data_0_srv_first_cb(SSL *s, unsigned short supp_data_type,
-				    const unsigned char **out,
-				    unsigned short *outlen, int *al, void *arg)
-	{
-	*out = (const unsigned char*)supp_data_0_string;
-	*outlen = strlen(supp_data_0_string);
-	if (arg != s)
-		suppdata_error = 1;
-	return 1;
-	}
-
-static int supp_data_0_srv_second_cb(SSL *s, unsigned short supp_data_type,
-				     const unsigned char *in,
-				     unsigned short inlen, int *al,
-				     void *arg)
-	{
-	if (supp_data_type != CUSTOM_SUPP_DATA_TYPE_0)
-		suppdata_error = 1;
-	if (inlen != strlen(supp_data_0_string))
-		suppdata_error = 1;
-	if (memcmp(in, supp_data_0_string, inlen) != 0)
-		suppdata_error = 1;
-	if (arg != s)
-		suppdata_error = 1;
-	return 1;
-	}
-
-static int supp_data_1_srv_first_cb(SSL *s, unsigned short supp_data_type,
-				    const unsigned char **out,
-				    unsigned short *outlen, int *al, void *arg)
-	{
-	return -1;
-	}
-
-static int supp_data_1_srv_second_cb(SSL *s, unsigned short supp_data_type,
-				     const unsigned char *in,
-				     unsigned short inlen, int *al,
-				     void *arg)
-	{
-	suppdata_error = 1;
-	return 1;
-	}
-
-static int supp_data_2_srv_second_cb(SSL *s, unsigned short supp_data_type,
-				const unsigned char *in,
-				unsigned short inlen, int *al,
-				void *arg)
-	{
-	suppdata_error = 1;
-	return 1;
-	}
-
-static int supp_data_0_cli_first_cb(SSL *s, unsigned short supp_data_type,
-				    const unsigned char *in,
-				    unsigned short inlen, int *al,
-				    void *arg)
-	{
-	if (supp_data_type != CUSTOM_SUPP_DATA_TYPE_0)
-		suppdata_error = 1;
-	if (inlen != strlen(supp_data_0_string))
-		suppdata_error = 1;
-	if (memcmp(in, supp_data_0_string, inlen) != 0)
-		suppdata_error = 1;
-	if (arg != s)
-		suppdata_error = 1;
-	return 1;
-	}
-
-static int supp_data_0_cli_second_cb(SSL *s, unsigned short supp_data_type,
-				     const unsigned char **out,
-				     unsigned short *outlen, int *al, void *arg)
-	{
-	*out = (const unsigned char*)supp_data_0_string;
-	*outlen = strlen(supp_data_0_string);
-	if (arg != s)
-		suppdata_error = 1;
-	return 1;
-	}
-
-static int supp_data_1_cli_first_cb(SSL *s, unsigned short supp_data_type,
-				    const unsigned char *in,
-				    unsigned short inlen, int *al,
-				    void *arg)
-	{
-	suppdata_error = 1;
-	return 1;
-	}
-
-static int supp_data_1_cli_second_cb(SSL *s, unsigned short supp_data_type,
-				     const unsigned char **out,
-				     unsigned short *outlen, int *al, void *arg)
-	{
-	return -1;
-	}
-
-static int supp_data_2_cli_first_cb(SSL *s, unsigned short supp_data_type,
-				    const unsigned char *in,
-				    unsigned short inlen, int *al,
-				    void *arg)
-	{
-	suppdata_error = 1;
-	return 1;
-	}
-
 static char *cipher=NULL;
 static int verbose=0;
 static int debug=0;
@@ -923,7 +809,6 @@ static void sv_usage(void)
 	fprintf(stderr," -alpn_client <string> - have client side offer ALPN\n");
 	fprintf(stderr," -alpn_server <string> - have server side offer ALPN\n");
 	fprintf(stderr," -alpn_expected <string> - the ALPN protocol that should be negotiated\n");
-	fprintf(stderr, "-suppdata - exercise supplemental data callbacks\n");
 	}
 
 static void print_details(SSL *c_ssl, const char *prefix)
@@ -1368,10 +1253,6 @@ int main(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			alpn_expected = *(++argv);
 			}
-		else if (strcmp(*argv,"-suppdata") == 0)
-			{
-			suppdata = 1;
-			}
 		else
 			{
 			fprintf(stderr,"unknown option %s\n",*argv);
@@ -1766,40 +1647,6 @@ bad:
 	c_ssl=SSL_new(c_ctx);
 	s_ssl=SSL_new(s_ctx);
 
-	if (suppdata)
-		{
-		/* TEST CASES */
-		/* client and server both send and receive, verify
-		 * additional arg passed back */
-		SSL_CTX_set_srv_supp_data(s_ctx, CUSTOM_SUPP_DATA_TYPE_0,
-					  supp_data_0_srv_first_cb,
-					  supp_data_0_srv_second_cb, s_ssl);
-		SSL_CTX_set_cli_supp_data(c_ctx, CUSTOM_SUPP_DATA_TYPE_0,
-					  supp_data_0_cli_first_cb,
-					  supp_data_0_cli_second_cb, c_ssl);
-
-		/* -1 response from sending server/client doesn't
-                 * receive, -1 response from sending client/server
-                 * doesn't receive */
-		SSL_CTX_set_srv_supp_data(s_ctx, CUSTOM_SUPP_DATA_TYPE_1,
-					  supp_data_1_srv_first_cb,
-					  supp_data_1_srv_second_cb, NULL);
-		SSL_CTX_set_cli_supp_data(c_ctx, CUSTOM_SUPP_DATA_TYPE_1,
-					  supp_data_1_cli_first_cb,
-					  supp_data_1_cli_second_cb, NULL);
-
-		/* null sending server/client doesn't receive, null
-		   sending client/server doesn't receive */
-		SSL_CTX_set_srv_supp_data(s_ctx, CUSTOM_SUPP_DATA_TYPE_2,
-					  /*supp_data_2_srv_first_cb*/NULL,
-					  supp_data_2_srv_second_cb, NULL);
-		SSL_CTX_set_cli_supp_data(c_ctx, CUSTOM_SUPP_DATA_TYPE_2,
-					  supp_data_2_cli_first_cb,
-					  /*supp_data_2_cli_second_cb*/NULL,
-					  NULL);
-
-		/* alerts set to non-zero and zero return values not tested */
-		}
 #ifndef OPENSSL_NO_KRB5
 	if (c_ssl  &&  c_ssl->kssl_ctx)
                 {
@@ -2586,11 +2433,6 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 		goto err;
 		}
 #endif
-	if (suppdata_error < 0)
-		{
-		ret = 1;
-		goto err;
-		}
 	if (verify_serverinfo() < 0)
 		{
 		ret = 1;

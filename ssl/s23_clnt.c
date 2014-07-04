@@ -370,8 +370,6 @@ static int ssl23_client_hello(SSL *s)
 #endif
 		if (s->ctx->custom_cli_ext_records_count != 0)
 			ssl2_compat = 0;
-		if (s->ctx->cli_supp_data_records_count != 0)
-			ssl2_compat = 0;
 		}
 #endif
 
