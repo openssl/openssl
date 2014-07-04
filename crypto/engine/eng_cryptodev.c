@@ -572,6 +572,19 @@ static int cryptodev_cleanup(EVP_CIPHER_CTX *ctx)
  * gets called when libcrypto requests a cipher NID.
  */
 
+static int cryptodev_cipher_ctrl(EVP_CIPHER_CTX *ctx, int type, int p1, void *p2)
+{
+    struct dev_crypto_state *state = ctx->cipher_data;
+    struct session_op *sess = &state->d_sess;
+
+    if (type == EVP_CTRL_COPY) {
+        EVP_CIPHER_CTX *out = p2;
+        return cryptodev_init_key(out, sess->key, ctx->iv, 0);
+    }
+
+    return 0;
+}
+
 /* RC4 */
 static EVP_CIPHER *rc4_cipher = NULL;
 static const EVP_CIPHER *cryptodev_rc4(void)
@@ -581,10 +594,12 @@ static const EVP_CIPHER *cryptodev_rc4(void)
 
         if ((cipher = EVP_CIPHER_meth_new(NID_rc4, 1, 16)) == NULL
             || !EVP_CIPHER_meth_set_iv_length(cipher, 0)
-            || !EVP_CIPHER_meth_set_flags(cipher, EVP_CIPH_VARIABLE_LENGTH)
+            || !EVP_CIPHER_meth_set_flags(cipher, EVP_CIPH_VARIABLE_LENGTH
+                                          | EVP_CIPH_CUSTOM_COPY)
             || !EVP_CIPHER_meth_set_init(cipher, cryptodev_init_key)
             || !EVP_CIPHER_meth_set_do_cipher(cipher, cryptodev_cipher)
             || !EVP_CIPHER_meth_set_cleanup(cipher, cryptodev_cleanup)
+            || !EVP_CIPHER_meth_set_ctrl(cipher, cryptodev_cipher_ctrl)
             || !EVP_CIPHER_meth_set_impl_ctx_size(cipher, sizeof(struct dev_crypto_state))) {
             EVP_CIPHER_meth_free(cipher);
             cipher = NULL;
@@ -603,10 +618,12 @@ static const EVP_CIPHER *cryptodev_des_cbc(void)
 
         if ((cipher = EVP_CIPHER_meth_new(NID_des_cbc, 8, 8)) == NULL
             || !EVP_CIPHER_meth_set_iv_length(cipher, 8)
-            || !EVP_CIPHER_meth_set_flags(cipher, EVP_CIPH_CBC_MODE)
+            || !EVP_CIPHER_meth_set_flags(cipher, EVP_CIPH_CBC_MODE
+                                          | EVP_CIPH_CUSTOM_COPY)
             || !EVP_CIPHER_meth_set_init(cipher, cryptodev_init_key)
             || !EVP_CIPHER_meth_set_do_cipher(cipher, cryptodev_cipher)
             || !EVP_CIPHER_meth_set_cleanup(cipher, cryptodev_cleanup)
+            || !EVP_CIPHER_meth_set_ctrl(cipher, cryptodev_cipher_ctrl)
             || !EVP_CIPHER_meth_set_impl_ctx_size(cipher, sizeof(struct dev_crypto_state))
             || !EVP_CIPHER_meth_set_set_asn1_params(cipher, EVP_CIPHER_set_asn1_iv)
             || !EVP_CIPHER_meth_set_get_asn1_params(cipher, EVP_CIPHER_get_asn1_iv)) {
@@ -627,10 +644,12 @@ static const EVP_CIPHER *cryptodev_3des_cbc(void)
 
         if ((cipher = EVP_CIPHER_meth_new(NID_des_ede3_cbc, 8, 24)) == NULL
             || !EVP_CIPHER_meth_set_iv_length(cipher, 8)
-            || !EVP_CIPHER_meth_set_flags(cipher, EVP_CIPH_CBC_MODE)
+            || !EVP_CIPHER_meth_set_flags(cipher, EVP_CIPH_CBC_MODE
+                                          | EVP_CIPH_CUSTOM_COPY)
             || !EVP_CIPHER_meth_set_init(cipher, cryptodev_init_key)
             || !EVP_CIPHER_meth_set_do_cipher(cipher, cryptodev_cipher)
             || !EVP_CIPHER_meth_set_cleanup(cipher, cryptodev_cleanup)
+            || !EVP_CIPHER_meth_set_ctrl(cipher, cryptodev_cipher_ctrl)
             || !EVP_CIPHER_meth_set_impl_ctx_size(cipher, sizeof(struct dev_crypto_state))
             || !EVP_CIPHER_meth_set_set_asn1_params(cipher, EVP_CIPHER_set_asn1_iv)
             || !EVP_CIPHER_meth_set_get_asn1_params(cipher, EVP_CIPHER_get_asn1_iv)) {
@@ -650,10 +669,12 @@ static const EVP_CIPHER *cryptodev_bf_cbc(void)
 
         if ((cipher = EVP_CIPHER_meth_new(NID_bf_cbc, 8, 16)) == NULL
             || !EVP_CIPHER_meth_set_iv_length(cipher, 8)
-            || !EVP_CIPHER_meth_set_flags(cipher, EVP_CIPH_CBC_MODE)
+            || !EVP_CIPHER_meth_set_flags(cipher, EVP_CIPH_CBC_MODE
+                                          | EVP_CIPH_CUSTOM_COPY)
             || !EVP_CIPHER_meth_set_init(cipher, cryptodev_init_key)
             || !EVP_CIPHER_meth_set_do_cipher(cipher, cryptodev_cipher)
             || !EVP_CIPHER_meth_set_cleanup(cipher, cryptodev_cleanup)
+            || !EVP_CIPHER_meth_set_ctrl(cipher, cryptodev_cipher_ctrl)
             || !EVP_CIPHER_meth_set_impl_ctx_size(cipher, sizeof(struct dev_crypto_state))
             || !EVP_CIPHER_meth_set_set_asn1_params(cipher, EVP_CIPHER_set_asn1_iv)
             || !EVP_CIPHER_meth_set_get_asn1_params(cipher, EVP_CIPHER_get_asn1_iv)) {
@@ -673,10 +694,12 @@ static const EVP_CIPHER *cryptodev_cast_cbc(void)
 
         if ((cipher = EVP_CIPHER_meth_new(NID_cast5_cbc, 8, 16)) == NULL
             || !EVP_CIPHER_meth_set_iv_length(cipher, 8)
-            || !EVP_CIPHER_meth_set_flags(cipher, EVP_CIPH_CBC_MODE)
+            || !EVP_CIPHER_meth_set_flags(cipher, EVP_CIPH_CBC_MODE
+                                          | EVP_CIPH_CUSTOM_COPY)
             || !EVP_CIPHER_meth_set_init(cipher, cryptodev_init_key)
             || !EVP_CIPHER_meth_set_do_cipher(cipher, cryptodev_cipher)
             || !EVP_CIPHER_meth_set_cleanup(cipher, cryptodev_cleanup)
+            || !EVP_CIPHER_meth_set_ctrl(cipher, cryptodev_cipher_ctrl)
             || !EVP_CIPHER_meth_set_impl_ctx_size(cipher, sizeof(struct dev_crypto_state))
             || !EVP_CIPHER_meth_set_set_asn1_params(cipher, EVP_CIPHER_set_asn1_iv)
             || !EVP_CIPHER_meth_set_get_asn1_params(cipher, EVP_CIPHER_get_asn1_iv)) {
@@ -696,10 +719,12 @@ static const EVP_CIPHER *cryptodev_aes_cbc(void)
 
         if ((cipher = EVP_CIPHER_meth_new(NID_aes_128_cbc, 16, 16)) == NULL
             || !EVP_CIPHER_meth_set_iv_length(cipher, 16)
-            || !EVP_CIPHER_meth_set_flags(cipher, EVP_CIPH_CBC_MODE)
+            || !EVP_CIPHER_meth_set_flags(cipher, EVP_CIPH_CBC_MODE
+                                          | EVP_CIPH_CUSTOM_COPY)
             || !EVP_CIPHER_meth_set_init(cipher, cryptodev_init_key)
             || !EVP_CIPHER_meth_set_do_cipher(cipher, cryptodev_cipher)
             || !EVP_CIPHER_meth_set_cleanup(cipher, cryptodev_cleanup)
+            || !EVP_CIPHER_meth_set_ctrl(cipher, cryptodev_cipher_ctrl)
             || !EVP_CIPHER_meth_set_impl_ctx_size(cipher, sizeof(struct dev_crypto_state))
             || !EVP_CIPHER_meth_set_set_asn1_params(cipher, EVP_CIPHER_set_asn1_iv)
             || !EVP_CIPHER_meth_set_get_asn1_params(cipher, EVP_CIPHER_get_asn1_iv)) {
@@ -719,10 +744,12 @@ static const EVP_CIPHER *cryptodev_aes_192_cbc(void)
 
         if ((cipher = EVP_CIPHER_meth_new(NID_aes_192_cbc, 16, 24)) == NULL
             || !EVP_CIPHER_meth_set_iv_length(cipher, 16)
-            || !EVP_CIPHER_meth_set_flags(cipher, EVP_CIPH_CBC_MODE)
+            || !EVP_CIPHER_meth_set_flags(cipher, EVP_CIPH_CBC_MODE
+                                          | EVP_CIPH_CUSTOM_COPY)
             || !EVP_CIPHER_meth_set_init(cipher, cryptodev_init_key)
             || !EVP_CIPHER_meth_set_do_cipher(cipher, cryptodev_cipher)
             || !EVP_CIPHER_meth_set_cleanup(cipher, cryptodev_cleanup)
+            || !EVP_CIPHER_meth_set_ctrl(cipher, cryptodev_cipher_ctrl)
             || !EVP_CIPHER_meth_set_impl_ctx_size(cipher, sizeof(struct dev_crypto_state))
             || !EVP_CIPHER_meth_set_set_asn1_params(cipher, EVP_CIPHER_set_asn1_iv)
             || !EVP_CIPHER_meth_set_get_asn1_params(cipher, EVP_CIPHER_get_asn1_iv)) {
@@ -742,10 +769,12 @@ static const EVP_CIPHER *cryptodev_aes_256_cbc(void)
 
         if ((cipher = EVP_CIPHER_meth_new(NID_aes_256_cbc, 16, 32)) == NULL
             || !EVP_CIPHER_meth_set_iv_length(cipher, 16)
-            || !EVP_CIPHER_meth_set_flags(cipher, EVP_CIPH_CBC_MODE)
+            || !EVP_CIPHER_meth_set_flags(cipher, EVP_CIPH_CBC_MODE
+                                          | EVP_CIPH_CUSTOM_COPY)
             || !EVP_CIPHER_meth_set_init(cipher, cryptodev_init_key)
             || !EVP_CIPHER_meth_set_do_cipher(cipher, cryptodev_cipher)
             || !EVP_CIPHER_meth_set_cleanup(cipher, cryptodev_cleanup)
+            || !EVP_CIPHER_meth_set_ctrl(cipher, cryptodev_cipher_ctrl)
             || !EVP_CIPHER_meth_set_impl_ctx_size(cipher, sizeof(struct dev_crypto_state))
             || !EVP_CIPHER_meth_set_set_asn1_params(cipher, EVP_CIPHER_set_asn1_iv)
             || !EVP_CIPHER_meth_set_get_asn1_params(cipher, EVP_CIPHER_get_asn1_iv)) {
@@ -766,10 +795,12 @@ static const EVP_CIPHER *cryptodev_aes_ctr(void)
 
         if ((cipher = EVP_CIPHER_meth_new(NID_aes_128_ctr, 16, 16)) == NULL
             || !EVP_CIPHER_meth_set_iv_length(cipher, 14)
-            || !EVP_CIPHER_meth_set_flags(cipher, EVP_CIPH_CTR_MODE)
+            || !EVP_CIPHER_meth_set_flags(cipher, EVP_CIPH_CTR_MODE
+                                          | EVP_CIPH_CUSTOM_COPY)
             || !EVP_CIPHER_meth_set_init(cipher, cryptodev_init_key)
             || !EVP_CIPHER_meth_set_do_cipher(cipher, cryptodev_cipher)
             || !EVP_CIPHER_meth_set_cleanup(cipher, cryptodev_cleanup)
+            || !EVP_CIPHER_meth_set_ctrl(cipher, cryptodev_cipher_ctrl)
             || !EVP_CIPHER_meth_set_impl_ctx_size(cipher, sizeof(struct dev_crypto_state))
             || !EVP_CIPHER_meth_set_set_asn1_params(cipher, EVP_CIPHER_set_asn1_iv)
             || !EVP_CIPHER_meth_set_get_asn1_params(cipher, EVP_CIPHER_get_asn1_iv)) {
@@ -789,10 +820,12 @@ static const EVP_CIPHER *cryptodev_aes_192_ctr(void)
 
         if ((cipher = EVP_CIPHER_meth_new(NID_aes_192_ctr, 16, 24)) == NULL
             || !EVP_CIPHER_meth_set_iv_length(cipher, 14)
-            || !EVP_CIPHER_meth_set_flags(cipher, EVP_CIPH_CTR_MODE)
+            || !EVP_CIPHER_meth_set_flags(cipher, EVP_CIPH_CTR_MODE
+                                          | EVP_CIPH_CUSTOM_COPY)
             || !EVP_CIPHER_meth_set_init(cipher, cryptodev_init_key)
             || !EVP_CIPHER_meth_set_do_cipher(cipher, cryptodev_cipher)
             || !EVP_CIPHER_meth_set_cleanup(cipher, cryptodev_cleanup)
+            || !EVP_CIPHER_meth_set_ctrl(cipher, cryptodev_cipher_ctrl)
             || !EVP_CIPHER_meth_set_impl_ctx_size(cipher, sizeof(struct dev_crypto_state))
             || !EVP_CIPHER_meth_set_set_asn1_params(cipher, EVP_CIPHER_set_asn1_iv)
             || !EVP_CIPHER_meth_set_get_asn1_params(cipher, EVP_CIPHER_get_asn1_iv)) {
@@ -812,10 +845,12 @@ static const EVP_CIPHER *cryptodev_aes_256_ctr(void)
 
         if ((cipher = EVP_CIPHER_meth_new(NID_aes_256_ctr, 16, 32)) == NULL
             || !EVP_CIPHER_meth_set_iv_length(cipher, 14)
-            || !EVP_CIPHER_meth_set_flags(cipher, EVP_CIPH_CTR_MODE)
+            || !EVP_CIPHER_meth_set_flags(cipher, EVP_CIPH_CTR_MODE
+                                          | EVP_CIPH_CUSTOM_COPY)
             || !EVP_CIPHER_meth_set_init(cipher, cryptodev_init_key)
             || !EVP_CIPHER_meth_set_do_cipher(cipher, cryptodev_cipher)
             || !EVP_CIPHER_meth_set_cleanup(cipher, cryptodev_cleanup)
+            || !EVP_CIPHER_meth_set_ctrl(cipher, cryptodev_cipher_ctrl)
             || !EVP_CIPHER_meth_set_impl_ctx_size(cipher, sizeof(struct dev_crypto_state))
             || !EVP_CIPHER_meth_set_set_asn1_params(cipher, EVP_CIPHER_set_asn1_iv)
             || !EVP_CIPHER_meth_set_get_asn1_params(cipher, EVP_CIPHER_get_asn1_iv)) {
