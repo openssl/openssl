@@ -505,150 +505,163 @@ cryptodev_cleanup(EVP_CIPHER_CTX *ctx)
  * gets called when libcrypto requests a cipher NID.
  */
 
+static int cryptodev_cipher_ctrl(EVP_CIPHER_CTX *ctx, int type, int p1, void *p2)
+{
+	struct dev_crypto_state *state = ctx->cipher_data;
+	struct session_op *sess = &state->d_sess;
+
+	if (type == EVP_CTRL_COPY) {
+		EVP_CIPHER_CTX *out = p2;
+		return cryptodev_init_key(out, sess->key, ctx->iv, 0);
+	}
+
+	return 0;
+}
+
 /* RC4 */
 const EVP_CIPHER cryptodev_rc4 = {
 	NID_rc4,
 	1, 16, 0,
-	EVP_CIPH_VARIABLE_LENGTH,
+	EVP_CIPH_VARIABLE_LENGTH|EVP_CIPH_CUSTOM_COPY,
 	cryptodev_init_key,
 	cryptodev_cipher,
 	cryptodev_cleanup,
 	sizeof(struct dev_crypto_state),
 	NULL,
 	NULL,
-	NULL
+	cryptodev_cipher_ctrl
 };
 
 /* DES CBC EVP */
 const EVP_CIPHER cryptodev_des_cbc = {
 	NID_des_cbc,
 	8, 8, 8,
-	EVP_CIPH_CBC_MODE,
+	EVP_CIPH_CBC_MODE|EVP_CIPH_CUSTOM_COPY,
 	cryptodev_init_key,
 	cryptodev_cipher,
 	cryptodev_cleanup,
 	sizeof(struct dev_crypto_state),
 	EVP_CIPHER_set_asn1_iv,
 	EVP_CIPHER_get_asn1_iv,
-	NULL
+	cryptodev_cipher_ctrl
 };
 
 /* 3DES CBC EVP */
 const EVP_CIPHER cryptodev_3des_cbc = {
 	NID_des_ede3_cbc,
 	8, 24, 8,
-	EVP_CIPH_CBC_MODE,
+	EVP_CIPH_CBC_MODE|EVP_CIPH_CUSTOM_COPY,
 	cryptodev_init_key,
 	cryptodev_cipher,
 	cryptodev_cleanup,
 	sizeof(struct dev_crypto_state),
 	EVP_CIPHER_set_asn1_iv,
 	EVP_CIPHER_get_asn1_iv,
-	NULL
+	cryptodev_cipher_ctrl
 };
 
 const EVP_CIPHER cryptodev_bf_cbc = {
 	NID_bf_cbc,
 	8, 16, 8,
-	EVP_CIPH_CBC_MODE,
+	EVP_CIPH_CBC_MODE|EVP_CIPH_CUSTOM_COPY,
 	cryptodev_init_key,
 	cryptodev_cipher,
 	cryptodev_cleanup,
 	sizeof(struct dev_crypto_state),
 	EVP_CIPHER_set_asn1_iv,
 	EVP_CIPHER_get_asn1_iv,
-	NULL
+	cryptodev_cipher_ctrl
 };
 
 const EVP_CIPHER cryptodev_cast_cbc = {
 	NID_cast5_cbc,
 	8, 16, 8,
-	EVP_CIPH_CBC_MODE,
+	EVP_CIPH_CBC_MODE|EVP_CIPH_CUSTOM_COPY,
 	cryptodev_init_key,
 	cryptodev_cipher,
 	cryptodev_cleanup,
 	sizeof(struct dev_crypto_state),
 	EVP_CIPHER_set_asn1_iv,
 	EVP_CIPHER_get_asn1_iv,
-	NULL
+	cryptodev_cipher_ctrl
 };
 
 const EVP_CIPHER cryptodev_aes_cbc = {
 	NID_aes_128_cbc,
 	16, 16, 16,
-	EVP_CIPH_CBC_MODE,
+	EVP_CIPH_CBC_MODE|EVP_CIPH_CUSTOM_COPY,
 	cryptodev_init_key,
 	cryptodev_cipher,
 	cryptodev_cleanup,
 	sizeof(struct dev_crypto_state),
 	EVP_CIPHER_set_asn1_iv,
 	EVP_CIPHER_get_asn1_iv,
-	NULL
+	cryptodev_cipher_ctrl
 };
 
 const EVP_CIPHER cryptodev_aes_192_cbc = {
 	NID_aes_192_cbc,
 	16, 24, 16,
-	EVP_CIPH_CBC_MODE,
+	EVP_CIPH_CBC_MODE|EVP_CIPH_CUSTOM_COPY,
 	cryptodev_init_key,
 	cryptodev_cipher,
 	cryptodev_cleanup,
 	sizeof(struct dev_crypto_state),
 	EVP_CIPHER_set_asn1_iv,
 	EVP_CIPHER_get_asn1_iv,
-	NULL
+	cryptodev_cipher_ctrl
 };
 
 const EVP_CIPHER cryptodev_aes_256_cbc = {
 	NID_aes_256_cbc,
 	16, 32, 16,
-	EVP_CIPH_CBC_MODE,
+	EVP_CIPH_CBC_MODE|EVP_CIPH_CUSTOM_COPY,
 	cryptodev_init_key,
 	cryptodev_cipher,
 	cryptodev_cleanup,
 	sizeof(struct dev_crypto_state),
 	EVP_CIPHER_set_asn1_iv,
 	EVP_CIPHER_get_asn1_iv,
-	NULL
+	cryptodev_cipher_ctrl
 };
 #ifdef CRYPTO_AES_CTR
 const EVP_CIPHER cryptodev_aes_ctr = {
 	NID_aes_128_ctr,
 	16, 16, 14,
-	EVP_CIPH_CTR_MODE,
+	EVP_CIPH_CTR_MODE|EVP_CIPH_CUSTOM_COPY,
 	cryptodev_init_key,
 	cryptodev_cipher,
 	cryptodev_cleanup,
 	sizeof(struct dev_crypto_state),
 	EVP_CIPHER_set_asn1_iv,
 	EVP_CIPHER_get_asn1_iv,
-	NULL
+	cryptodev_cipher_ctrl
 };
 
 const EVP_CIPHER cryptodev_aes_ctr_192 = {
 	NID_aes_192_ctr,
 	16, 24, 14,
-	EVP_CIPH_CTR_MODE,
+	EVP_CIPH_CTR_MODE|EVP_CIPH_CUSTOM_COPY,
 	cryptodev_init_key,
 	cryptodev_cipher,
 	cryptodev_cleanup,
 	sizeof(struct dev_crypto_state),
 	EVP_CIPHER_set_asn1_iv,
 	EVP_CIPHER_get_asn1_iv,
-	NULL
+	cryptodev_cipher_ctrl
 };
 
 const EVP_CIPHER cryptodev_aes_ctr_256 = {
 	NID_aes_256_ctr,
 	16, 32, 14,
-	EVP_CIPH_CTR_MODE,
+	EVP_CIPH_CTR_MODE|EVP_CIPH_CUSTOM_COPY,
 	cryptodev_init_key,
 	cryptodev_cipher,
 	cryptodev_cleanup,
 	sizeof(struct dev_crypto_state),
 	EVP_CIPHER_set_asn1_iv,
 	EVP_CIPHER_get_asn1_iv,
-	NULL
+	cryptodev_cipher_ctrl
 };
 #endif
 /*
