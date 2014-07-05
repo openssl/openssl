@@ -551,6 +551,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {ERR_REASON(SSL_R_SSL_CTX_HAS_NO_DEFAULT_SSL_VERSION),"ssl ctx has no default ssl version"},
 {ERR_REASON(SSL_R_SSL_HANDSHAKE_FAILURE) ,"ssl handshake failure"},
 {ERR_REASON(SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS),"ssl library has no ciphers"},
+{ERR_REASON(SSL_R_SSL_NEGATIVE_LENGTH)   ,"ssl negative length"},
 {ERR_REASON(SSL_R_SSL_SESSION_ID_CALLBACK_FAILED),"ssl session id callback failed"},
 {ERR_REASON(SSL_R_SSL_SESSION_ID_CONFLICT),"ssl session id conflict"},
 {ERR_REASON(SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG),"ssl session id context too long"},

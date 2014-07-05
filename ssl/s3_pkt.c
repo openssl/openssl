@@ -643,6 +643,13 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 #endif
 	SSL3_BUFFER *wb=&(s->s3->wbuf);
 	int i;
+	unsigned int u_len = (unsigned int)len;
+
+	if (len < 0)
+		{
+		SSLerr(SSL_F_SSL3_WRITE_BYTES,SSL_R_SSL_NEGATIVE_LENGTH);
+		return -1;
+		}
 
 	s->rwstate=SSL_NOTHING;
 	OPENSSL_assert(s->s3->wnum <= INT_MAX);
@@ -697,7 +704,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 	 * compromise is considered worthy.
 	 */
 	if (type==SSL3_RT_APPLICATION_DATA &&
-	    len >= 4*(int)(max_send_fragment=s->max_send_fragment) &&
+	    u_len >= 4*(max_send_fragment=s->max_send_fragment) &&
 	    s->compress==NULL && s->msg_callback==NULL &&
 	    !SSL_USE_ETM(s) && SSL_USE_EXPLICIT_IV(s) &&
 	    EVP_CIPHER_flags(s->enc_write_ctx->cipher)&EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)
@@ -718,7 +725,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 					EVP_CTRL_TLS1_1_MULTIBLOCK_MAX_BUFSIZE,
 					max_send_fragment,NULL);
 
-			if (len>=8*(int)max_send_fragment)	packlen *= 8;
+			if (u_len >= 8*max_send_fragment)	packlen *= 8;
 			else				packlen *= 4;
 
 			wb->buf=OPENSSL_malloc(packlen);
