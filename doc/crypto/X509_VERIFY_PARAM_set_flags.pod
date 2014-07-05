@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-X509_VERIFY_PARAM_set_flags, X509_VERIFY_PARAM_clear_flags, X509_VERIFY_PARAM_get_flags, X509_VERIFY_PARAM_set_purpose, X509_VERIFY_PARAM_set_trust, X509_VERIFY_PARAM_set_depth, X509_VERIFY_PARAM_get_depth, X509_VERIFY_PARAM_set_time, X509_VERIFY_PARAM_add0_policy, X509_VERIFY_PARAM_set1_policies, X509_VERIFY_PARAM_set1_host, X509_VERIFY_PARAM_add1_host, X509_VERIFY_PARAM_set_hostflags, X509_VERIFY_PARAM_set1_email, X509_VERIFY_PARAM_set1_ip, X509_VERIFY_PARAM_set1_ip_asc - X509 verification parameters
+X509_VERIFY_PARAM_set_flags, X509_VERIFY_PARAM_clear_flags, X509_VERIFY_PARAM_get_flags, X509_VERIFY_PARAM_set_purpose, X509_VERIFY_PARAM_set_trust, X509_VERIFY_PARAM_set_depth, X509_VERIFY_PARAM_get_depth, X509_VERIFY_PARAM_set_time, X509_VERIFY_PARAM_add0_policy, X509_VERIFY_PARAM_set1_policies, X509_VERIFY_PARAM_set1_host, X509_VERIFY_PARAM_add1_host, X509_VERIFY_PARAM_set_hostflags, X509_VERIFY_PARAM_get0_peername, X509_VERIFY_PARAM_set1_email, X509_VERIFY_PARAM_set1_ip, X509_VERIFY_PARAM_set1_ip_asc - X509 verification parameters
 
 =head1 SYNOPSIS
 
@@ -32,6 +32,7 @@ X509_VERIFY_PARAM_set_flags, X509_VERIFY_PARAM_clear_flags, X509_VERIFY_PARAM_ge
                                  const unsigned char *name, size_t namelen);
  void X509_VERIFY_PARAM_set_hostflags(X509_VERIFY_PARAM *param,
 				      unsigned int flags);
+ char *X509_VERIFY_PARAM_get0_peername(X509_VERIFY_PARAM *param);
  int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,
 				 const unsigned char *email, size_t emaillen);
  int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param,
@@ -94,6 +95,16 @@ set via X509_VERIFY_PARAM_set1_host() or X509_VERIFY_PARAM_add1_host()
 are retained, no change is made if B<name> is NULL or empty.  When
 multiple names are configured, the peer is considered verified when
 any name matches.
+
+X509_VERIFY_PARAM_get0_peername() returns the DNS hostname or subject
+CommonName from the peer certificate that matched one of the reference
+identifiers.  When wildcard matching is not disabled, or when a
+reference identifier specifies a parent domain (starts with ".")
+rather than a hostname, the peer name may be a wildcard name or a
+sub-domain of the reference identifier respectively.  The return
+string is allocated by the library and is no longer valid once the
+associated B<param> argument is freed.  Applications must not free
+the return value.
 
 X509_VERIFY_PARAM_set1_email() sets the expected RFC822 email address to
 B<email>.  If B<email> is NUL-terminated, B<emaillen> may be zero, otherwise

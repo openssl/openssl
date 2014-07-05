@@ -564,6 +564,7 @@ int X509_VERIFY_PARAM_add1_host(X509_VERIFY_PARAM *param,
 				const unsigned char *name, size_t namelen);
 void X509_VERIFY_PARAM_set_hostflags(X509_VERIFY_PARAM *param,
 					unsigned int flags);
+char *X509_VERIFY_PARAM_get0_peername(X509_VERIFY_PARAM *);
 int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,
 				const unsigned char *email, size_t emaillen);
 int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param,
