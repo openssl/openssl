@@ -276,7 +276,7 @@ static void run_cert(X509 *crt, const char *nameincert,
 		memcpy(name, *pname, namelen);
 
 		ret = X509_check_host(crt, (const unsigned char *)name,
-				      namelen, 0);
+				      namelen, 0, NULL);
 		match = -1;
 		if (ret < 0)
 			{
@@ -295,7 +295,8 @@ static void run_cert(X509 *crt, const char *nameincert,
 		check_message(fn, "host", nameincert, match, *pname);
 
 		ret = X509_check_host(crt, (const unsigned char *)name,
-				      namelen, X509_CHECK_FLAG_NO_WILDCARDS);
+				      namelen, X509_CHECK_FLAG_NO_WILDCARDS,
+				      NULL);
 		match = -1;
 		if (ret < 0)
 			{
