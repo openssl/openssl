@@ -135,7 +135,8 @@ static int probable_prime_dh_coprime(BIGNUM *rnd, const int bits,
 	const uint max_rem, const int biased);
 static int adjust_rnd_for_dh(BIGNUM *rnd, const BIGNUM *add, const BIGNUM *rem,
 	BIGNUM *temp_bn, BN_CTX *ctx);
-static int coprime_trial_division(BIGNUM *rnd, const uint max_rem);
+static int coprime_trial_division(BIGNUM *rnd, const int bits,
+	const uint max_rem);
 static int coprime_trial_division_biased(BIGNUM *rnd, const int bits,
 	uint prm_offsets[PRIME_OFFSET_COUNT], uint prm_offset_count,
 	const uint prm_multiplier, const uint max_rem,
@@ -198,7 +199,7 @@ int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe,
 
 	if (!(t = BN_CTX_get(ctx))) goto err;
 
-loop: 
+loop:
 	/* make a random number and set the top and bottom bits */
 	if (add == NULL)
 		{
@@ -280,7 +281,7 @@ int BN_is_prime_fasttest_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
 		ret = 0;
 		goto end;
 		}
-	
+
 	if (checks == BN_prime_checks)
 		{
 		checks = BN_prime_checks_for_size(BN_num_bits(a));
@@ -359,7 +360,7 @@ int BN_is_prime_fasttest_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
 	/* Montgomery setup for computations mod A */
 	if ((mont = BN_MONT_CTX_new()) == NULL) goto end;
 	if (!BN_MONT_CTX_set(mont, A, ctx)) goto end;
-	
+
 	for (i = 0; i < checks; i++)
 		{
 		if (!BN_pseudo_rand_range(check, A1)) goto end;
@@ -399,7 +400,7 @@ end:
 	}
 
 int bn_probable_prime(BIGNUM *rnd, int bits)
-	{	
+	{
 	int ret = 0;
 
 	if (bits > BN_BITS2)
@@ -419,16 +420,16 @@ err:
 	}
 
 static int probable_prime(BIGNUM *rnd, int bits)
-	{	
+	{
 	int i;
 	prime_t mods[NUMPRIMES];
 	BN_ULONG delta;
 	BN_ULONG maxdelta = BN_MASK2 - primes[NUMPRIMES - 1] + 1;
 	int ret = 0;
-	
+
 again:
 	if (!BN_rand(rnd, bits, 1, 1)) goto err;
-		
+
 	for (i=1; i < NUMPRIMES; i++)
 		{
 		mods[i] = (prime_t)BN_mod_word(rnd, (BN_ULONG)primes[i]);
@@ -451,9 +452,9 @@ loop:
 
 	if (!BN_add_word(rnd, delta)) goto err;
 	if (BN_num_bits(rnd) != bits) goto again;
-	
+
 	ret = 1;
-	
+
 err:
 	bn_check_top(rnd);
 	return ret;
@@ -468,15 +469,15 @@ static int probable_prime_single_word(BIGNUM *rnd, int bits)
 	BN_ULONG size_limit;
 	BN_ULONG max_delta = BN_MASK2 - primes[NUMPRIMES - 1] + 1;
 	int ret = 0;
-	
+
 	OPENSSL_assert(bits <= BN_BITS2);
 
 again:
 	if (!BN_rand(rnd, bits, 1, 1)) goto err;
-	
+
 	rnd_word = BN_get_word(rnd);
-	
-	size_limit = (((BN_ULONG) 1) << bits) - rnd_word - 1;	
+
+	size_limit = (((BN_ULONG) 1) << bits) - rnd_word - 1;
 	if (size_limit < max_delta)
 		{
 		max_delta = size_limit;
@@ -505,14 +506,14 @@ loop:
 			delta += 2;
 
 			if (delta > max_delta) goto again;
-			
+
 			goto loop;
 			}
 		}
-		
+
 	if (!BN_add_word(rnd, delta)) goto err;
 	if (BN_num_bits(rnd) != bits) goto again;
-	
+
 	ret = 1;
 
 err:
@@ -686,7 +687,7 @@ again:
 	else
 		{
 		if (!BN_add_word(rnd, initial_offset)) goto err;
-		trial_output = coprime_trial_division(rnd, max_rem);
+		trial_output = coprime_trial_division(rnd, bits, max_rem);
 		}
 
 	if (trial_output == -1) goto err;
@@ -734,7 +735,8 @@ err:
 	return ret;
 	}
 
-static int coprime_trial_division(BIGNUM *rnd, const uint max_rem)
+static int coprime_trial_division(BIGNUM *rnd, const int bits,
+	const uint max_rem)
 	{
 	uint i;
 
@@ -842,7 +844,7 @@ static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
 	/* If we get here, 'w' is the (a-1)/2-th power of the original 'w',
 	 * and it is neither -1 nor +1 -- so 'a' cannot be prime */
 	ret = 1;
-	
+
 end:
 	bn_check_top(w);
 	return ret;
