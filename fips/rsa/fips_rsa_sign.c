@@ -288,8 +288,11 @@ int FIPS_rsa_sign_digest(RSA *rsa, const unsigned char *md, int md_len,
 			*siglen=j;
 			}
 		psserr:
-		OPENSSL_cleanse(sbuf, i);
-		OPENSSL_free(sbuf);
+		if (sbuf)
+			{
+			OPENSSL_cleanse(sbuf, i);
+			OPENSSL_free(sbuf);
+			}
 		return ret;
 		}
 
