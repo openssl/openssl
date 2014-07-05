@@ -704,6 +704,7 @@ static int aesni_cbc_hmac_sha256_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 static int aesni_cbc_hmac_sha256_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 	{
 	EVP_AES_HMAC_SHA256 *key = data(ctx);
+	unsigned int u_arg = (unsigned int)arg;
 
 	switch (type)
 		{
@@ -714,7 +715,10 @@ static int aesni_cbc_hmac_sha256_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, vo
 
 		memset (hmac_key,0,sizeof(hmac_key));
 
-		if (arg > (int)sizeof(hmac_key)) {
+		if (arg < 0)
+			return -1;
+
+		if (u_arg > sizeof(hmac_key)) {
 			SHA256_Init(&key->head);
 			SHA256_Update(&key->head,ptr,arg);
 			SHA256_Final(hmac_key,&key->head);
@@ -774,7 +778,10 @@ static int aesni_cbc_hmac_sha256_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, vo
 		unsigned int n4x=1, x4;
 		unsigned int frag, last, packlen, inp_len;
 
-		if (arg<(int)sizeof(EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM)) return -1;
+		if (arg < 0)
+			return -1;
+
+		if (u_arg < sizeof(EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM)) return -1;
 
 		inp_len = param->inp[11]<<8|param->inp[12];
 
