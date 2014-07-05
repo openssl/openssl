@@ -128,8 +128,18 @@
 
 static int probable_prime(BIGNUM *rnd, int bits);
 static int probable_prime_single_word(BIGNUM *rnd, int bits);
+static int probable_prime_dh_coprime(BIGNUM *rnd, const int bits,
+	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx,
+	uint prm_offsets[PRIME_OFFSET_COUNT], uint prm_offset_count,
+	const uint prm_multiplier, const int prm_multiplier_bits,
+	const uint max_rem, const int biased);
 static int adjust_rnd_for_dh(BIGNUM *rnd, const BIGNUM *add, const BIGNUM *rem,
 	BIGNUM *temp_bn, BN_CTX *ctx);
+static int coprime_trial_division(BIGNUM *rnd, const uint max_rem);
+static int coprime_trial_division_biased(BIGNUM *rnd, const int bits,
+	uint prm_offsets[PRIME_OFFSET_COUNT], uint prm_offset_count,
+	const uint prm_multiplier, const uint max_rem,
+	const uint initial_offset_index, const BN_ULONG initial_offset);
 static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
 	const BIGNUM *a1_odd, int k, BN_CTX *ctx, BN_MONT_CTX *mont);
 
@@ -573,46 +583,46 @@ err:
 int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits,
 	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx, int safe, int biased)
 	{
-	int add_word;
-	int prm_multiplier_bits;
-	uint i;
-	uint j;
 	uint prm_offsets[PRIME_OFFSET_COUNT];
-	uint tmp_prm_offsets[PRIME_OFFSET_COUNT];
-	uint prm_offset_count;
-	uint prm_multiplier;
-	uint base_offset;
-	uint max_rem;
-	prime_t mods[NUMPRIMES];
-	BN_ULONG old_offset;
-	BN_ULONG offset;
+
+	if (safe)
+		{
+		if (bits <= safe_prime_multiplier_bits) goto fallback;
+
+		memcpy(prm_offsets, safe_prime_offsets, sizeof safe_prime_offsets);
+
+		return probable_prime_dh_coprime(
+			rnd, bits, add, rem, ctx, prm_offsets, SAFE_PRIME_OFFSET_COUNT,
+			safe_prime_multiplier, safe_prime_multiplier_bits, 1, biased);
+		}
+	else
+		{
+		if (bits <= prime_multiplier_bits) goto fallback;
+
+		memcpy(prm_offsets, prime_offsets, sizeof prime_offsets);
+
+		return probable_prime_dh_coprime(
+			rnd, bits, add, rem, ctx, prm_offsets, PRIME_OFFSET_COUNT,
+			prime_multiplier, prime_multiplier_bits, 0, biased);
+		}
+
+fallback:
+	return bn_probable_prime_dh(rnd, bits, add, rem, ctx, safe, biased);
+	}
+
+static int probable_prime_dh_coprime(BIGNUM *rnd, const int bits,
+	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx,
+	uint prm_offsets[PRIME_OFFSET_COUNT], uint prm_offset_count,
+	const uint prm_multiplier, const int prm_multiplier_bits,
+	const uint max_rem, const int biased)
+	{
+	int trial_output;
+	uint initial_offset_index;
+	BN_ULONG initial_offset;
 	BIGNUM *offset_index;
 	BIGNUM *offset_count;
 	BIGNUM *t1;
 	int ret = 0;
-	BN_ULONG max_offset = BN_MASK2 - primes[NUMPRIMES - 1] + 1;
-
-	if (safe)
-		{
-		memcpy(prm_offsets, safe_prime_offsets, sizeof safe_prime_offsets);
-		prm_offset_count = SAFE_PRIME_OFFSET_COUNT;
-		prm_multiplier = safe_prime_multiplier;
-		prm_multiplier_bits = safe_prime_multiplier_bits;
-		max_rem = 1;
-		}
-	else
-		{
-		memcpy(prm_offsets, prime_offsets, sizeof prime_offsets);
-		prm_offset_count = PRIME_OFFSET_COUNT;
-		prm_multiplier = prime_multiplier;
-		prm_multiplier_bits = prime_multiplier_bits;
-		max_rem = 0;
-		}
-
-	if (bits <= prm_multiplier_bits)
-		{
-		return bn_probable_prime_dh(rnd, bits, add, rem, ctx, safe, biased);
-		}
 
 	BN_CTX_start(ctx);
 	if ((t1 = BN_CTX_get(ctx)) == NULL) goto err;
@@ -621,33 +631,38 @@ int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits,
 
 	if (biased && add != NULL)
 		{
-		add_word = BN_get_word(add);
+		int add_word = BN_get_word(add);
 
-		if (add_word == 2) goto start;
-
-		/* we want the difference between any two offsets
-		 * to be a multiple of add, but the starting point
-		 * is arbitrary, so include the first offset */
-		tmp_prm_offsets[0] = prm_offsets[0];
-
-		j = 1;
-		old_offset = tmp_prm_offsets[0];
-		for (i = 1; i < prm_offset_count; i++)
+		if (add_word != 2)
 			{
-			offset = prm_offsets[i];
-			if ((offset - old_offset) % add_word == 0)
-				{
-				tmp_prm_offsets[j] = offset;
-				old_offset = offset;
-				j++;
-				}
-			}
+			BN_ULONG old_offset;
+			BN_ULONG offset;
+			uint temp_prm_offsets[PRIME_OFFSET_COUNT];
+			uint i;
+			uint j = 1;
 
-		memcpy(prm_offsets, tmp_prm_offsets, sizeof tmp_prm_offsets);
-		prm_offset_count = j;
+			/* we want the difference between any two offsets
+			 * to be a multiple of add, but the starting point
+			 * is arbitrary, so include the first offset */
+			temp_prm_offsets[0] = prm_offsets[0];
+
+			old_offset = temp_prm_offsets[0];
+			for (i = 1; i < prm_offset_count; i++)
+				{
+				offset = prm_offsets[i];
+				if ((offset - old_offset) % add_word == 0)
+					{
+					temp_prm_offsets[j] = offset;
+					old_offset = offset;
+					j++;
+					}
+				}
+
+			memcpy(prm_offsets, temp_prm_offsets, sizeof temp_prm_offsets);
+			prm_offset_count = j;
+			}
 		}
 
-start:
 	if (!BN_set_word(offset_count, prm_offset_count)) goto err;
 
 again:
@@ -657,61 +672,25 @@ again:
 	if (!BN_mul_word(rnd, prm_multiplier)) goto err;
 	if (!BN_rand_range(offset_index, offset_count)) goto err;
 
-	j = BN_get_word(offset_index);
-	offset = prm_offsets[j];
-	base_offset = 0;
-
-	if (!biased)
-		{
-		if (!BN_add_word(rnd, offset)) goto err;
-		}
-
-	if (BN_num_bits(rnd) != bits) goto again;
+	initial_offset_index = BN_get_word(offset_index);
+	initial_offset = prm_offsets[initial_offset_index];
 
 	/* we now have a random number 'rand' to test. */
 
 	if (biased)
 		{
-		for (i = 0; i < NUMPRIMES; i++)
-			{
-			mods[i] = (prime_t)BN_mod_word(rnd, (BN_ULONG)primes[i]);
-			}
-		}
-
-loop:
-	/* check that rnd is a prime, skipping coprimes */
-	if (biased)
-		{
-		for (i = first_prime_index; i < NUMPRIMES; i++)
-			{
-			if ((mods[i] + offset) % primes[i] <= max_rem)
-				{
-				j++;
-				if (j >= prm_offset_count)
-					{
-					j = 0;
-					base_offset += prm_multiplier;
-					}
-
-				offset = base_offset + prm_offsets[j];
-
-				if (offset > max_offset) goto again;
-
-				goto loop;
-				}
-			}
-
-		if (!BN_add_word(rnd, offset)) goto err;
-
-		if (BN_num_bits(rnd) != bits) goto again;
+		trial_output = coprime_trial_division_biased(
+			rnd, bits, prm_offsets, prm_offset_count, prm_multiplier, max_rem,
+			initial_offset_index, initial_offset);
 		}
 	else
 		{
-		for (i = first_prime_index; i < NUMPRIMES; i++)
-			{
-			if (BN_mod_word(rnd, (BN_ULONG)primes[i]) <= max_rem) goto again;
-			}
+		if (!BN_add_word(rnd, initial_offset)) goto err;
+		trial_output = coprime_trial_division(rnd, max_rem);
 		}
+
+	if (trial_output == -1) goto err;
+	if (!trial_output) goto again;
 
 	ret = 1;
 
@@ -753,6 +732,68 @@ static int adjust_rnd_for_dh(BIGNUM *rnd, const BIGNUM *add, const BIGNUM *rem,
 
 err:
 	return ret;
+	}
+
+static int coprime_trial_division(BIGNUM *rnd, const uint max_rem)
+	{
+	uint i;
+
+	if (BN_num_bits(rnd) != bits) return 0;
+
+	/* check that rnd is a prime, skipping coprimes */
+	for (i = first_prime_index; i < NUMPRIMES; i++)
+		{
+		if (BN_mod_word(rnd, (BN_ULONG)primes[i]) <= max_rem) return 0;
+		}
+
+	return 1;
+	}
+
+static int coprime_trial_division_biased(BIGNUM *rnd, const int bits,
+	uint prm_offsets[PRIME_OFFSET_COUNT], uint prm_offset_count,
+	const uint prm_multiplier, const uint max_rem,
+	const uint initial_offset_index, const BN_ULONG initial_offset)
+	{
+	prime_t mods[NUMPRIMES];
+	uint i;
+	uint j = initial_offset_index;
+	uint base_offset = 0;
+	BN_ULONG offset = initial_offset;
+	BN_ULONG max_offset = BN_MASK2 - primes[NUMPRIMES - 1] + 1;
+
+	if (BN_num_bits(rnd) != bits) return 0;
+
+	for (i = 0; i < NUMPRIMES; i++)
+		{
+		mods[i] = (prime_t)BN_mod_word(rnd, (BN_ULONG)primes[i]);
+		}
+
+loop:
+	/* check that rnd is a prime, skipping coprimes */
+	for (i = first_prime_index; i < NUMPRIMES; i++)
+		{
+		if ((mods[i] + offset) % primes[i] <= max_rem)
+			{
+			j++;
+			if (j >= prm_offset_count)
+				{
+				j = 0;
+				base_offset += prm_multiplier;
+				}
+
+			offset = base_offset + prm_offsets[j];
+
+			if (offset > max_offset) return 0;
+
+			goto loop;
+			}
+		}
+
+	if (!BN_add_word(rnd, offset)) return -1;
+
+	if (BN_num_bits(rnd) != bits) return 0;
+
+	return 1;
 	}
 
 static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
