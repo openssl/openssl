@@ -2306,7 +2306,7 @@ $code.=<<___;
 	.rva	.LSEH_end_$func
 	.rva	.LSEH_info_$func
 ___
-$code.=<<___ if ($SZ==4 && $shext);
+$code.=<<___ if ($SZ==4 && $shaext);
 	.rva	.LSEH_begin_${func}_shaext
 	.rva	.LSEH_end_${func}_shaext
 	.rva	.LSEH_info_${func}_shaext
