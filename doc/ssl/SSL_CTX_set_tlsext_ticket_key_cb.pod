@@ -74,7 +74,7 @@ further processing will occur. The following return values have meaning:
 
 =over 4
 
-=item 2
+=item Z<>2
 
 This indicates that the I<ctx> and I<hctx> have been set and the session can 
 continue on those parameters. Additionally it indicates that the session
@@ -82,12 +82,12 @@ ticket is in a renewal period and should be replaced. The OpenSSL library will
 call I<cb> again with an enc argument of 1 to set the new ticket (see RFC5077
 3.3 paragraph 2).
 
-=item 1
+=item Z<>1
 
 This indicates that the I<ctx> and I<hctx> have been set and the session can 
 continue on those parameters.
 
-=item 0
+=item Z<>0
 
 This indicates that it was not possible to set/retrieve a session ticket and 
 the SSL/TLS session will continue by by negiotationing a set of cryptographic
