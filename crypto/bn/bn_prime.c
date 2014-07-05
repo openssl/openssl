@@ -619,7 +619,7 @@ int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits,
 	if ((offset_index = BN_CTX_get(ctx)) == NULL) goto err;
 	if ((offset_count = BN_CTX_get(ctx)) == NULL) goto err;
 
-	if (add != NULL)
+	if (biased && add != NULL)
 		{
 		add_word = BN_get_word(add);
 
