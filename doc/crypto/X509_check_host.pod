@@ -9,7 +9,7 @@ X509_check_host, X509_check_email, X509_check_ip, X509_check_ip_asc - X.509 cert
  #include <openssl/x509.h>
 
  int X509_check_host(X509 *, const unsigned char *name,
-                     size_t namelen, unsigned int flags);
+                     size_t namelen, unsigned int flags, char **peername);
  int X509_check_email(X509 *, const unsigned char *address,
                      size_t addresslen, unsigned int flags);
  int X509_check_ip(X509 *, const unsigned char *address,
@@ -32,11 +32,16 @@ characters in the name string or zero in which case the length is
 calculated with strlen(name).  When B<name> starts with a dot (e.g
 ".example.com"), it will be matched by a certificate valid for any
 sub-domain of B<name>, (see also B<X509_CHECK_FLAG_SINGLE_LABEL_SUBDOMAINS>
-below).  Applications are strongly advised to use
-X509_VERIFY_PARAM_set1_host() in preference to explicitly calling
-L<X509_check_host(3)>, hostname checks are out of scope with the
-DANE-EE(3) certificate usage, and the internal check will be
-suppressed as appropriate when DANE support is added to OpenSSL.
+below).  When the certificate is matched and B<peername> is not
+NULL a pointer to a copy of the matching hostname or CommonName
+from the peer certificate is stored at the address passed in
+B<peername>.  The application is responsible for freeing the peername
+via OPENSSL_free() when it is no longer needed.  Applications are
+advised to use X509_VERIFY_PARAM_set1_host() in preference to
+explicitly calling L<X509_check_host(3)>, hostname checks are out
+of scope with the DANE-EE(3) certificate usage, and the internal
+check will be suppressed as appropriate when DANE support is added
+to OpenSSL.
 
 X509_check_email() checks if the certificate matches the specified
 email address.  Only the mailbox syntax of RFC 822 is supported,

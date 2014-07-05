@@ -853,8 +853,11 @@ static int equal_wildcard(const unsigned char *pattern, size_t pattern_len,
 
 static int do_check_string(ASN1_STRING *a, int cmp_type, equal_fn equal,
 				unsigned int flags,
-				const unsigned char *b, size_t blen)
+				const unsigned char *b, size_t blen,
+				char **peername)
 	{
+	int rv = 0;
+
 	if (!a->data || !a->length)
 		return 0;
 	if (cmp_type > 0)
@@ -862,27 +865,30 @@ static int do_check_string(ASN1_STRING *a, int cmp_type, equal_fn equal,
 		if (cmp_type != a->type)
 			return 0;
 		if (cmp_type == V_ASN1_IA5STRING)
-			return equal(a->data, a->length, b, blen, flags);
-		if (a->length == (int)blen && !memcmp(a->data, b, blen))
-			return 1;
-		else
-			return 0;
+			rv = equal(a->data, a->length, b, blen, flags);
+		else if (a->length == (int)blen && !memcmp(a->data, b, blen))
+			rv = 1;
+		if (rv > 0 && peername)
+			*peername = BUF_strndup((char *)a->data, a->length);
 		}
 	else
 		{
-		int astrlen, rv;
+		int astrlen;
 		unsigned char *astr;
 		astrlen = ASN1_STRING_to_UTF8(&astr, a);
 		if (astrlen < 0)
 			return -1;
 		rv = equal(astr, astrlen, b, blen, flags);
 		OPENSSL_free(astr);
-		return rv;
+		if (rv > 0 && peername)
+			*peername = BUF_strndup((char *)astr, astrlen);
 		}
+	return rv;
 	}
 
 static int do_x509_check(X509 *x, const unsigned char *chk, size_t chklen,
-					unsigned int flags, int check_type)
+					unsigned int flags, int check_type,
+					char **peername)
 	{
 	GENERAL_NAMES *gens = NULL;
 	X509_NAME *name = NULL;
@@ -890,6 +896,7 @@ static int do_x509_check(X509 *x, const unsigned char *chk, size_t chklen,
 	int cnid;
 	int alt_type;
 	int san_present = 0;
+	int rv = 0;
 	equal_fn equal;
 
 	/* See below, this flag is internal-only */
@@ -925,7 +932,6 @@ static int do_x509_check(X509 *x, const unsigned char *chk, size_t chklen,
 	gens = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
 	if (gens)
 		{
-		int rv = 0;
 		for (i = 0; i < sk_GENERAL_NAME_num(gens); i++)
 			{
 			GENERAL_NAME *gen;
@@ -940,16 +946,14 @@ static int do_x509_check(X509 *x, const unsigned char *chk, size_t chklen,
 				cstr = gen->d.dNSName;
 			else
 				cstr = gen->d.iPAddress;
-			if (do_check_string(cstr, alt_type, equal, flags,
-					    chk, chklen))
-				{
-				rv = 1;
+			/* Positive on success, negative on error! */
+			if ((rv = do_check_string(cstr, alt_type, equal, flags,
+						  chk, chklen, peername)) != 0)
 				break;
-				}
 			}
 		GENERAL_NAMES_free(gens);
-		if (rv)
-			return 1;
+		if (rv != 0)
+			return rv;
 		if (!cnid
 		    || (san_present
 		        && !(flags & X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT)))
@@ -963,14 +967,16 @@ static int do_x509_check(X509 *x, const unsigned char *chk, size_t chklen,
 		ASN1_STRING *str;
 		ne = X509_NAME_get_entry(name, i);
 		str = X509_NAME_ENTRY_get_data(ne);
-		if (do_check_string(str, -1, equal, flags, chk, chklen))
-			return 1;
+		/* Positive on success, negative on error! */
+		if ((rv = do_check_string(str, -1, equal, flags,
+					  chk, chklen, peername)) != 0)
+			return rv;
 		}
 	return 0;
 	}
 
 int X509_check_host(X509 *x, const unsigned char *chk, size_t chklen,
-					unsigned int flags)
+					unsigned int flags, char **peername)
 	{
 	if (chk == NULL)
 		return -2;
@@ -985,7 +991,7 @@ int X509_check_host(X509 *x, const unsigned char *chk, size_t chklen,
 		return -2;
 	if (chklen > 1 && chk[chklen-1] == '\0')
 		--chklen;
-	return do_x509_check(x, chk, chklen, flags, GEN_DNS);
+	return do_x509_check(x, chk, chklen, flags, GEN_DNS, peername);
 	}
 
 int X509_check_email(X509 *x, const unsigned char *chk, size_t chklen,
@@ -1004,7 +1010,7 @@ int X509_check_email(X509 *x, const unsigned char *chk, size_t chklen,
 		return -2;
 	if (chklen > 1 && chk[chklen-1] == '\0')
 		--chklen;
-	return do_x509_check(x, chk, chklen, flags, GEN_EMAIL);
+	return do_x509_check(x, chk, chklen, flags, GEN_EMAIL, NULL);
 	}
 
 int X509_check_ip(X509 *x, const unsigned char *chk, size_t chklen,
@@ -1012,7 +1018,7 @@ int X509_check_ip(X509 *x, const unsigned char *chk, size_t chklen,
 	{
 	if (chk == NULL)
 		return -2;
-	return do_x509_check(x, chk, chklen, flags, GEN_IPADD);
+	return do_x509_check(x, chk, chklen, flags, GEN_IPADD, NULL);
 	}
 
 int X509_check_ip_asc(X509 *x, const char *ipasc, unsigned int flags)
@@ -1024,7 +1030,7 @@ int X509_check_ip_asc(X509 *x, const char *ipasc, unsigned int flags)
 	iplen = a2i_ipadd(ipout, ipasc);
 	if (iplen == 0)
 		return -2;
-	return do_x509_check(x, ipout, (size_t)iplen, flags, GEN_IPADD);
+	return do_x509_check(x, ipout, (size_t)iplen, flags, GEN_IPADD, NULL);
 	}
 
 /* Convert IP addresses both IPv4 and IPv6 into an 
