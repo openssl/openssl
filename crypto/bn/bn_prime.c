@@ -565,7 +565,10 @@ int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits,
 		max_rem = 0;
 		}
 
-	OPENSSL_assert(bits > prm_multiplier_bits);
+	if (bits <= prm_multiplier_bits)
+		{
+		return bn_probable_prime_dh(rnd, bits, add, rem, ctx, safe, biased);
+		}
 
 	BN_CTX_start(ctx);
 	if ((t1 = BN_CTX_get(ctx)) == NULL) goto err;
