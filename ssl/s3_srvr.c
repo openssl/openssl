@@ -3052,7 +3052,7 @@ int ssl3_get_cert_verify(SSL *s)
 		SSL3_ST_SR_CERT_VRFY_A,
 		SSL3_ST_SR_CERT_VRFY_B,
 		-1,
-		516, /* Enough for 4096 bit RSA key with TLS v1.2 */
+		SSL3_RT_MAX_PLAIN_LENGTH,
 		&ok);
 
 	if (!ok) return((int)n);
