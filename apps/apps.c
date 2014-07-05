@@ -2948,7 +2948,8 @@ void print_cert_checks(BIO *bio, X509 *x,
 	if (checkhost)
 		{
 		BIO_printf(bio, "Hostname %s does%s match certificate\n",
-				checkhost, X509_check_host(x, checkhost, 0, 0)
+				checkhost,
+				X509_check_host(x, checkhost, 0, 0, NULL)
 						? "" : " NOT");
 		}
 
