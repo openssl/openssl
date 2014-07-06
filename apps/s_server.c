@@ -562,6 +562,10 @@ static void sv_usage(void)
 #endif
 	BIO_printf(bio_err," -keymatexport label   - Export keying material using label\n");
 	BIO_printf(bio_err," -keymatexportlen len  - Export len bytes of keying material (default 20)\n");
+	BIO_printf(bio_err," -status           - respond to certificate status requests\n");
+	BIO_printf(bio_err," -status_verbose   - enable status request verbose printout\n");
+	BIO_printf(bio_err," -status_timeout n - status request responder timeout\n");
+	BIO_printf(bio_err," -status_url URL   - status request fallback URL\n");
 	}
 
 static int local_argc=0;
