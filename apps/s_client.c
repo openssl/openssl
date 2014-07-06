@@ -293,6 +293,7 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -connect host:port - connect over TCP/IP (default is %s:%s)\n",SSL_HOST_NAME,PORT_STR);
 	BIO_printf(bio_err," -unix path    - connect over unix domain sockets\n");
 	BIO_printf(bio_err," -verify arg   - turn on peer certificate verification\n");
+	BIO_printf(bio_err," -verify_return_error - return verification errors\n");
 	BIO_printf(bio_err," -cert arg     - certificate file to use, PEM format assumed\n");
 	BIO_printf(bio_err," -certform arg - certificate format (PEM or DER) PEM default\n");
 	BIO_printf(bio_err," -key arg      - Private key file to use, in cert file if\n");
@@ -304,6 +305,7 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -trusted_first - Use local CA's first when building trust chain\n");
 	BIO_printf(bio_err," -reconnect    - Drop and re-make the connection with the same Session-ID\n");
 	BIO_printf(bio_err," -pause        - sleep(1) after each read(2) and write(2) system call\n");
+	BIO_printf(bio_err," -prexit       - print session information even on connection failure\n");
 	BIO_printf(bio_err," -showcerts    - show all certificates in the chain\n");
 	BIO_printf(bio_err," -debug        - extra output\n");
 #ifdef WATT32
