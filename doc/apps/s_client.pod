@@ -47,6 +47,7 @@ B<openssl> B<s_client>
 [B<-sess_out filename>]
 [B<-sess_in filename>]
 [B<-rand file(s)>]
+[B<-status>]
 
 =head1 DESCRIPTION
 
@@ -258,6 +259,11 @@ generator, or an EGD socket (see L<RAND_egd(3)|RAND_egd(3)>).
 Multiple files can be specified separated by a OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
+
+=item B<-status>
+
+sends a certificate status request to the server (OCSP stapling). The server
+response (if any) is printed out.
 
 =back
 
