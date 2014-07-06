@@ -56,6 +56,10 @@ B<openssl> B<s_server>
 [B<-no_ticket>]
 [B<-id_prefix arg>]
 [B<-rand file(s)>]
+[B<-status>]
+[B<-status_verbose>]
+[B<-status_timeout nsec>]
+[B<-status_url url>]
 
 =head1 DESCRIPTION
 
@@ -286,6 +290,25 @@ generator, or an EGD socket (see L<RAND_egd(3)|RAND_egd(3)>).
 Multiple files can be specified separated by a OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
+
+=item B<-status>
+
+enables certificate status request support (aka OCSP stapling).
+
+=item B<-status_verbose>
+
+enables certificate status request support (aka OCSP stapling) and gives
+a verbose printout of the OCSP response.
+
+=item B<-status_timeout nsec>
+
+sets the timeout for OCSP response to B<nsec> seconds.
+
+=item B<-status_url url>
+
+sets a fallback responder URL to use if no responder URL is present in the
+server certificate. Without this option an error is returned if the server
+certificate does not contain a responder address.
 
 =back
 
