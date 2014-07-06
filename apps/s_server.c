@@ -451,6 +451,7 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -context arg  - set session ID context\n");
 	BIO_printf(bio_err," -verify arg   - turn on peer certificate verification\n");
 	BIO_printf(bio_err," -Verify arg   - turn on peer certificate verification, must have a cert.\n");
+	BIO_printf(bio_err," -verify_return_error - return verification errors\n");
 	BIO_printf(bio_err," -cert arg     - certificate file to use\n");
 	BIO_printf(bio_err,"                 (default is %s)\n",TEST_CERT);
 	BIO_printf(bio_err," -naccept arg  - terminate after 'arg' connections\n");
@@ -530,6 +531,7 @@ static void sv_usage(void)
 #endif
 	BIO_printf(bio_err, "-no_resume_ephemeral - Disable caching and tickets if ephemeral (EC)DH is used\n");
 	BIO_printf(bio_err," -bugs         - Turn on SSL bug compatibility\n");
+	BIO_printf(bio_err," -hack         - workaround for early Netscape code\n");
 	BIO_printf(bio_err," -www          - Respond to a 'GET /' with a status page\n");
 	BIO_printf(bio_err," -WWW          - Respond to a 'GET /<path> HTTP/1.0' with file ./<path>\n");
 	BIO_printf(bio_err," -HTTP         - Respond to a 'GET /<path> HTTP/1.0' with file ./<path>\n");
