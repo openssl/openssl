@@ -57,6 +57,10 @@ B<openssl> B<s_server>
 [B<-rand file(s)>]
 [B<-serverinfo file>]
 [B<-no_resumption_on_reneg>]
+[B<-status>]
+[B<-status_verbose>]
+[B<-status_timeout nsec>]
+[B<-status_url url>]
 =head1 DESCRIPTION
 
 The B<s_server> command implements a generic SSL/TLS server which listens
@@ -293,6 +297,25 @@ ServerHello extension will be returned.
 =item B<-no_resumption_on_reneg>
 
 set SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION flag.
+
+=item B<-status>
+
+enables certificate status request support (aka OCSP stapling).
+
+=item B<-status_verbose>
+
+enables certificate status request support (aka OCSP stapling) and gives
+a verbose printout of the OCSP response.
+
+=item B<-status_timeout nsec>
+
+sets the timeout for OCSP response to B<nsec> seconds.
+
+=item B<-status_url url>
+
+sets a fallback responder URL to use if no responder URL is present in the
+server certificate. Without this option an error is returned if the server
+certificate does not contain a responder address.
 
 =back
 
