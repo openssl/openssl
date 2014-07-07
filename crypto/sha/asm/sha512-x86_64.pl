@@ -2339,10 +2339,12 @@ $code.=<<___;
 	.rva	se_handler
 	.rva	.Lprologue,.Lepilogue			# HandlerData[]
 ___
-$code.=<<___ if ($SZ==4);
+$code.=<<___ if ($SZ==4 && $shaext);
 .LSEH_info_${func}_shaext:
 	.byte	9,0,0,0
 	.rva	shaext_handler
+___
+$code.=<<___ if ($SZ==4);
 .LSEH_info_${func}_ssse3:
 	.byte	9,0,0,0
 	.rva	se_handler
