@@ -8,12 +8,12 @@ X509_check_host, X509_check_email, X509_check_ip, X509_check_ip_asc - X.509 cert
 
  #include <openssl/x509.h>
 
- int X509_check_host(X509 *, const unsigned char *name,
-                     size_t namelen, unsigned int flags, char **peername);
- int X509_check_email(X509 *, const unsigned char *address,
-                     size_t addresslen, unsigned int flags);
- int X509_check_ip(X509 *, const unsigned char *address,
-                   size_t addresslen, unsigned int flags);
+ int X509_check_host(X509 *, const char *name, size_t namelen,
+		     unsigned int flags, char **peername);
+ int X509_check_email(X509 *, const char *address, size_t addresslen,
+		      unsigned int flags);
+ int X509_check_ip(X509 *, const unsigned char *address, size_t addresslen,
+		   unsigned int flags);
  int X509_check_ip_asc(X509 *, const char *address, unsigned int flags);
 
 =head1 DESCRIPTION
