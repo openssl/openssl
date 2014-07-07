@@ -3013,14 +3013,15 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher)
 		for (count=0,run=1; run && count<0x7fffffff; count++)
 			{
 			unsigned char aad[13];
-			EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM mb_param = {NULL,aad,sizeof(aad),0};
+			EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM mb_param;
 			size_t len = mblengths[j];
 			int packlen;
 
-			aad[8] = 23;
-			aad[9] = 3;
+			memset(aad,0,8);/* avoid uninitialized values */
+			aad[8] = 23;	/* SSL3_RT_APPLICATION_DATA */
+			aad[9] = 3;	/* version */
 			aad[10] = 2;
-			aad[11] = 0;
+			aad[11] = 0;	/* length */
 			aad[12] = 0;
 			mb_param.out = NULL;
 			mb_param.inp = aad;
