@@ -342,8 +342,8 @@ unsigned char *next_protos_parse(unsigned short *outlen, const char *in);
 #endif  /* ndef OPENSSL_NO_TLSEXT */
 
 void print_cert_checks(BIO *bio, X509 *x,
-				const unsigned char *checkhost,
-				const unsigned char *checkemail,
+				const char *checkhost,
+				const char *checkemail,
 				const char *checkip);
 
 void store_setup_crl_download(X509_STORE *st);
