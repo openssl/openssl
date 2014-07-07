@@ -214,7 +214,8 @@ int MAIN(int argc, char **argv)
 	int need_rand = 0;
 	int checkend=0,checkoffset=0;
 	unsigned long nmflag = 0, certflag = 0;
-	unsigned char *checkhost = NULL, *checkemail = NULL;
+	char *checkhost = NULL;
+	char *checkemail = NULL;
 	char *checkip = NULL;
 #ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
@@ -474,12 +475,12 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-checkhost") == 0)
 			{
 			if (--argc < 1) goto bad;
-			checkhost=(unsigned char *)*(++argv);
+			checkhost=*(++argv);
 			}
 		else if (strcmp(*argv,"-checkemail") == 0)
 			{
 			if (--argc < 1) goto bad;
-			checkemail=(unsigned char *)*(++argv);
+			checkemail=*(++argv);
 			}
 		else if (strcmp(*argv,"-checkip") == 0)
 			{

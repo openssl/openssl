@@ -719,9 +719,9 @@ STACK_OF(OPENSSL_STRING) *X509_get1_ocsp(X509 *x);
  */
 #define _X509_CHECK_FLAG_DOT_SUBDOMAINS 0x8000
 
-int X509_check_host(X509 *x, const unsigned char *chk, size_t chklen,
+int X509_check_host(X509 *x, const char *chk, size_t chklen,
 					unsigned int flags, char **peername);
-int X509_check_email(X509 *x, const unsigned char *chk, size_t chklen,
+int X509_check_email(X509 *x, const char *chk, size_t chklen,
 					unsigned int flags);
 int X509_check_ip(X509 *x, const unsigned char *chk, size_t chklen,
 					unsigned int flags);
