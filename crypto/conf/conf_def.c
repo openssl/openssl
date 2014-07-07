@@ -324,7 +324,7 @@ again:
 			p=eat_ws(conf, end);
 			if (*p != ']')
 				{
-				if (*p != '\0')
+				if (*p != '\0' && ss != p)
 					{
 					ss=p;
 					goto again;
