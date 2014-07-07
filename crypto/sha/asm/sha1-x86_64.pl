@@ -1835,7 +1835,9 @@ se_handler:
 
 	jmp	.Lcommon_seh_tail
 .size	se_handler,.-se_handler
+___
 
+$code.=<<___ if ($shaext);
 .type	shaext_handler,\@abi-omnipotent
 .align	16
 shaext_handler:
@@ -1868,7 +1870,9 @@ shaext_handler:
 
 	jmp	.Lcommon_seh_tail
 .size	shaext_handler,.-shaext_handler
+___
 
+$code.=<<___;
 .type	ssse3_handler,\@abi-omnipotent
 .align	16
 ssse3_handler:
@@ -1991,9 +1995,13 @@ $code.=<<___;
 .LSEH_info_sha1_block_data_order:
 	.byte	9,0,0,0
 	.rva	se_handler
+___
+$code.=<<___ if ($shaext);
 .LSEH_info_sha1_block_data_order_shaext:
 	.byte	9,0,0,0
 	.rva	shaext_handler
+___
+$code.=<<___;
 .LSEH_info_sha1_block_data_order_ssse3:
 	.byte	9,0,0,0
 	.rva	ssse3_handler
