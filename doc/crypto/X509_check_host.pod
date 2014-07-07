@@ -18,38 +18,41 @@ X509_check_host, X509_check_email, X509_check_ip, X509_check_ip_asc - X.509 cert
 
 =head1 DESCRIPTION
 
-The certificate matching functions are intended to be called to check
-if a certificate matches a given host name, email address, or IP
-address.  The validity of the certificate and its trust level has to
-be checked by other means.
+The certificate matching functions are used to check whether a
+certificate matches a given host name, email address, or IP address.
+The validity of the certificate and its trust level has to be checked by
+other means.
 
-X509_check_host() checks if the certificate matches the specified
-host name, which must be encoded in the preferred name syntax
-described in section 3.5 of RFC 1034. Per section 6.4.2 of RFC 6125,
-B<name> values representing international domain names must be given
-in A-label form.  The B<namelen> argument must be the number of
-characters in the name string or zero in which case the length is
-calculated with strlen(name).  When B<name> starts with a dot (e.g
-".example.com"), it will be matched by a certificate valid for any
-sub-domain of B<name>, (see also B<X509_CHECK_FLAG_SINGLE_LABEL_SUBDOMAINS>
-below).  When the certificate is matched and B<peername> is not
-NULL a pointer to a copy of the matching hostname or CommonName
-from the peer certificate is stored at the address passed in
-B<peername>.  The application is responsible for freeing the peername
-via OPENSSL_free() when it is no longer needed.  Applications are
-advised to use X509_VERIFY_PARAM_set1_host() in preference to
-explicitly calling L<X509_check_host(3)>, hostname checks are out
-of scope with the DANE-EE(3) certificate usage, and the internal
-check will be suppressed as appropriate when DANE support is added
-to OpenSSL.
+X509_check_host() checks if the certificate Subject Alternative
+Name (SAN) or Subject CommonName (CN) matches the specified host
+name, which must be encoded in the preferred name syntax described
+in section 3.5 of RFC 1034.  By default, wildcards are supported
+and they match  only in the left-most label; but they may match
+part of that label with an explicit prefix or suffix.  For example,
+by default, the host B<name> "www.example.com" would match a
+certificate with a SAN or CN value of "*.example.com", "w*.example.com"
+or "*w.example.com".
+
+Per section 6.4.2 of RFC 6125, B<name> values representing international
+domain names must be given in A-label form.  The B<namelen> argument
+must be the number of characters in the name string or zero in which
+case the length is calculated with strlen(B<name>).  When B<name> starts
+with a dot (e.g ".example.com"), it will be matched by a certificate
+valid for any sub-domain of B<name>, (see also
+B<X509_CHECK_FLAG_SINGLE_LABEL_SUBDOMAINS> below).
+
+When the certificate is matched, and B<peername> is not NULL, a
+pointer to a copy of the matching SAN or CN from the peer certificate
+is stored at the address passed in B<peername>.  The application
+is responsible for freeing the peername via OPENSSL_free() when it
+is no longer needed.
 
 X509_check_email() checks if the certificate matches the specified
-email address.  Only the mailbox syntax of RFC 822 is supported,
+email B<address>.  Only the mailbox syntax of RFC 822 is supported,
 comments are not allowed, and no attempt is made to normalize quoted
 characters.  The B<addresslen> argument must be the number of
-characters in the address string. The B<namelen> argument must be
-the number of characters in the name string or zero in which case the
-length is calculated with strlen(name).
+characters in the address string or zero in which case the length
+is calculated with strlen(B<address>).
 
 X509_check_ip() checks if the certificate matches a specified IPv4 or
 IPv6 address.  The B<address> array is in binary format, in network
@@ -109,6 +112,14 @@ The functions return 1 for a successful match, 0 for a failed match
 and -1 for an internal error: typically a memory allocation failure.
 
 X509_check_ip_asc() can also return -2 if the IP address string is malformed.
+
+=head1 NOTES
+
+Applications are encouraged to use X509_VERIFY_PARAM_set1_host()
+rather than explicitly calling L<X509_check_host(3)>. Host name
+checks are out of scope with the DANE-EE(3) certificate usage,
+and the internal checks will be suppressed as appropriate when
+DANE support is added to OpenSSL.
 
 =head1 SEE ALSO
 
