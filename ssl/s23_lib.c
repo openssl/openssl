@@ -113,11 +113,7 @@ int ssl23_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p)
 
 	/* We can write SSLv2 and SSLv3 ciphers */
 	/* but no ECC ciphers */
-	if (c->algorithm_mkey == SSL_kECDHr ||
-		c->algorithm_mkey == SSL_kECDHe ||
-		c->algorithm_mkey == SSL_kEECDH ||
-		c->algorithm_auth == SSL_aECDH ||
-		c->algorithm_auth == SSL_aECDSA)
+	if (c->algorithms & (SSL_ECDH|SSL_aECDSA))
 		return 0;
 	if (p != NULL)
 		{
