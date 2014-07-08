@@ -1,0 +1,10 @@
+#
+# OpenSSL/crypto/x509v3/BSDmakefile
+#
+
+TOP= ../..
+.include "$(TOP)/configure.mk"
+.include "Makefile"
+.for d in $(SRC:.c=.d)
+.sinclude "$(d)"
+.endfor
