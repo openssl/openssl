@@ -22,8 +22,6 @@ all: test TAGS
 # For adapting this Makefile to a different system, only the following
 # definitions should need customizing:
 
-OPENSSLDIR=../..
-CC=gcc
 
 SYSCFLAGS=whatever
 SYSLIBS=whatever

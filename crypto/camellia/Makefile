@@ -3,15 +3,9 @@
 #
 
 DIR= camellia
-TOP=	../..
-CC=	cc
 CPP=	$(CC) -E
 INCLUDES=
-CFLAG=-g
-MAKEFILE=	Makefile
-AR=		ar r
 
-CMLL_ENC= camellia.o cmll_misc.o cmll_cbc.o
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 ASFLAGS= $(INCLUDES) $(ASFLAG)

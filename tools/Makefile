@@ -3,11 +3,7 @@
 #
 
 DIR=	tools
-TOP=	..
-CC=	cc
 INCLUDES= -I$(TOP) -I../../include
-CFLAG=-g
-MAKEFILE=	Makefile
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 

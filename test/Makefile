@@ -3,19 +3,10 @@
 #
 
 DIR=		test
-TOP=		..
-CC=		cc
 INCLUDES=	-I$(TOP) -I../include $(KRB5_INCLUDES) -I$(TOP)/fips
-CFLAG=		-g
-MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
-PERL=		perl
 # KRB5 stuff
-KRB5_INCLUDES=
-LIBKRB5=
 TEST=		fips_algvs.c igetest.c
 
-PEX_LIBS=
-EX_LIBS= #-lnsl -lsocket
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 

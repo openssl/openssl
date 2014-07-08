@@ -3,17 +3,10 @@
 #
 
 DIR=		fips
-TOP=		..
-CC=		cc
 INCLUDE=	-I. -I$(TOP) -I../include
 # INCLUDES targets sudbirs!
 INCLUDES=	-I.. -I../.. -I../../include
-CFLAG=		-g
-MAKEDEPPROG=	makedepend
-MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
-MAKEFILE=       Makefile
 RM=             rm -f
-AR=		ar r
 ARD=		ar d
 TEST=		fips_test_suite.c
 FIPS_TVDIR=	testvectors
@@ -26,8 +19,6 @@ RECURSIVE_MAKE=	[ -n "$(FDIRS)" ] && for i in $(FDIRS) ; do \
 		    $(MAKE) -e TOP=../.. DIR=$$i INCLUDES='${INCLUDES}' $$target ) || exit 1; \
 		done;
 
-PEX_LIBS=
-EX_LIBS=
  
 CFLAGS= $(INCLUDE) $(CFLAG) -DHMAC_EXT=\"$${HMAC_EXT:-sha1}\"
 ASFLAGS= $(INCLUDE) $(ASFLAG)

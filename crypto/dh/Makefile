@@ -3,12 +3,7 @@
 #
 
 DIR=	dh
-TOP=	../..
-CC=	cc
 INCLUDES= -I.. -I$(TOP) -I../../include
-CFLAG=-g
-MAKEFILE=	Makefile
-AR=		ar r
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 

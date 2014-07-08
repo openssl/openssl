@@ -3,14 +3,8 @@
 #
 
 DIR=	ssl
-TOP=	..
-CC=	cc
 INCLUDES= -I../crypto -I$(TOP) -I../include $(KRB5_INCLUDES)
-CFLAG=-g
-MAKEFILE=	Makefile
-AR=		ar r
 # KRB5 stuff
-KRB5_INCLUDES=
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 

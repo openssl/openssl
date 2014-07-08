@@ -3,15 +3,9 @@
 #
 
 DIR=	aes
-TOP=	../..
-CC=	cc
 CPP=	$(CC) -E
 INCLUDES=
-CFLAG=-g
-MAKEFILE=	Makefile
-AR=		ar r
 
-AES_ENC=aes_core.o aes_cbc.o
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 ASFLAGS= $(INCLUDES) $(ASFLAG)

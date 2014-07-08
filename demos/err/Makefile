@@ -3,11 +3,9 @@ SRC= main.c
 OBJ= main.o
 HEADER=test_err.h
 ERROBJ= test_err.o
-CC=gcc
 CFLAGS=-I../../include
 LDFLAGS=-L../.. -lcrypto
 
-PERL=perl
 
 testapp: $(OBJ) $(ERROBJ) $(HEADER)
 	$(CC) -o testapp $(OBJ) $(ERROBJ) $(LDFLAGS)

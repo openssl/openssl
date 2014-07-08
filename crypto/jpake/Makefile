@@ -1,5 +1,4 @@
 DIR=jpake
-TOP=../..
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 

@@ -3,11 +3,8 @@ SRC=		hw_zencod.c
 OBJ=		hw_zencod.o
 HEADER=		hw_zencod.h
 
-CC=		gcc
 PIC=		-fPIC
 CFLAGS=		-g -I../../../include $(PIC) -DENGINE_DYNAMIC_SUPPORT -DFLAT_INC
-AR=		ar r
-RANLIB=		ranlib
 
 LIB=		$(LIBNAME).a
 SHLIB=		$(LIBNAME).so

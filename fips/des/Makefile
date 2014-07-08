@@ -3,17 +3,7 @@
 #
 
 DIR=	des
-TOP=	../..
-CC=	cc
 INCLUDES=
-CFLAG=-g
-INSTALL_PREFIX=
-OPENSSLDIR=     /usr/local/ssl
-INSTALLTOP=/usr/local/ssl
-MAKEDEPPROG=	makedepend
-MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
-MAKEFILE=	Makefile
-AR=		ar r
 
 ASFLAGS= $(INCLUDES) $(ASFLAG)
 AFLAGS= $(ASFLAGS)

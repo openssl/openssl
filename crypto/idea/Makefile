@@ -3,12 +3,7 @@
 #
 
 DIR=	idea
-TOP=	../..
-CC=	cc
 INCLUDES=
-CFLAG=-g
-MAKEFILE=	Makefile
-AR=		ar r
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 

@@ -3,30 +3,20 @@
 #
 
 DIR=		crypto
-TOP=		..
-CC=		cc
 INCLUDE=	-I. -I$(TOP) -I../include $(ZLIB_INCLUDE)
 # INCLUDES targets sudbirs!
 INCLUDES=	-I.. -I../.. -I../modes -I../asn1 -I../evp -I../../include $(ZLIB_INCLUDE)
-CFLAG=		-g
-MAKEDEPPROG=	makedepend
-MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
-MAKEFILE=       Makefile
 RM=             rm -f
-AR=		ar r
 
 RECURSIVE_MAKE=	[ -n "$(SDIRS)" ] && for i in $(SDIRS) ; do \
 		    (cd $$i && echo "making $$target in $(DIR)/$$i..." && \
 		    $(MAKE) -e TOP=../.. DIR=$$i INCLUDES='$(INCLUDES)' $$target ) || exit 1; \
 		done;
 
-PEX_LIBS=
-EX_LIBS=
  
 CFLAGS= $(INCLUDE) $(CFLAG)
 ASFLAGS= $(INCLUDE) $(ASFLAG)
 AFLAGS=$(ASFLAGS)
-CPUID_OBJ=mem_clr.o
 
 LIBS=
 

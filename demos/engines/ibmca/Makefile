@@ -3,11 +3,8 @@ SRC=		hw_ibmca.c
 OBJ=		hw_ibmca.o
 HEADER=		hw_ibmca.h
 
-CC=		gcc
 PIC=		-fPIC
 CFLAGS=		-g -I../../../include $(PIC) -DENGINE_DYNAMIC_SUPPORT -DFLAT_INC
-AR=		ar r
-RANLIB=		ranlib
 
 LIB=		$(LIBNAME).a
 SHLIB=		$(LIBNAME).so

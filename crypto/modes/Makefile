@@ -3,14 +3,8 @@
 #
 
 DIR=	modes
-TOP=	../..
-CC=	cc
 INCLUDES= -I.. -I$(TOP) -I../../include
-CFLAG=-g
-MAKEFILE=	Makefile
-AR=		ar r
 
-MODES_ASM_OBJ=
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 ASFLAGS= $(INCLUDES) $(ASFLAG)

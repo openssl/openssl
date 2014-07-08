@@ -3,15 +3,9 @@
 #
 
 DIR=    sha
-TOP=    ../..
-CC=     cc
 CPP=    $(CC) -E
 INCLUDES=
-CFLAG=-g
-MAKEFILE=       Makefile
-AR=             ar r
 
-SHA1_ASM_OBJ=
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 ASFLAGS= $(INCLUDES) $(ASFLAG)

@@ -3,15 +3,9 @@
 #
 
 DIR=	whrlpool
-TOP=	../..
-CC=	cc
 CPP=	$(CC) -E
 INCLUDES=
-CFLAG=-g
-MAKEFILE=	Makefile
-AR=		ar r
 
-WP_ASM_OBJ=wp_block.o
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 ASFLAGS= $(INCLUDES) $(ASFLAG)

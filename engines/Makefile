@@ -3,23 +3,14 @@
 #
 
 DIR=	engines
-TOP=	..
-CC=	cc
 INCLUDES= -I../include
-CFLAG=-g
-MAKEFILE=	Makefile
-AR=		ar r
-ENGDIRS= ccgost
 
 RECURSIVE_MAKE=	[ -z "$(ENGDIRS)" ] || for i in $(ENGDIRS) ; do \
 		    (cd $$i && echo "making $$target in $(DIR)/$$i..." && \
 		    $(MAKE) -e TOP=../.. DIR=$$i $$target ) || exit 1; \
 		done;
 
-ENGINES_ASM_OBJ=
 
-PEX_LIBS=
-EX_LIBS=
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 ASFLAGS= $(INCLUDES) $(ASFLAG)
