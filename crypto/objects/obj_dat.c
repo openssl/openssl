@@ -140,7 +140,7 @@ static unsigned long added_obj_hash(const ADDED_OBJ *ca)
 		return 0;
 		}
 	ret&=0x3fffffffL;
-	ret|=ca->type<<30L;
+	ret|=((unsigned long)ca->type)<<30L;
 	return(ret);
 	}
 static IMPLEMENT_LHASH_HASH_FN(added_obj, ADDED_OBJ)
