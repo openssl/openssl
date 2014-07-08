@@ -518,7 +518,7 @@ makefile.one: files
 	sh util/do_ms.sh
 
 files:
-	$(PERL) $(TOP)/util/files.pl Makefile > $(TOP)/MINFO
+	$(PERL) $(TOP)/util/files.pl configure.mk Makefile > $(TOP)/MINFO
 	@set -e; target=files; $(RECURSIVE_BUILD_CMD)
 
 links:
