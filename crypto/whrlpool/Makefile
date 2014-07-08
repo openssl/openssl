@@ -79,9 +79,3 @@ dclean:
 clean:
 	rm -f *.s *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-wp_block.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
-wp_block.o: ../../include/openssl/whrlpool.h wp_block.c wp_locl.h
-wp_dgst.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
-wp_dgst.o: ../../include/openssl/whrlpool.h wp_dgst.c wp_locl.h

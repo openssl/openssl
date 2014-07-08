@@ -208,31 +208,3 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 	@target=dclean; $(RECURSIVE_MAKE)
 
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-fips.o: ../include/openssl/aes.h ../include/openssl/asn1.h
-fips.o: ../include/openssl/bio.h ../include/openssl/crypto.h
-fips.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
-fips.o: ../include/openssl/ec.h ../include/openssl/ecdsa.h
-fips.o: ../include/openssl/err.h ../include/openssl/evp.h
-fips.o: ../include/openssl/fips.h ../include/openssl/fips_rand.h
-fips.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
-fips.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-fips.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-fips.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
-fips.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-fips.o: ../include/openssl/stack.h ../include/openssl/symhacks.h fips.c
-fips.o: fips_locl.h
-fips_post.o: ../include/openssl/aes.h ../include/openssl/asn1.h
-fips_post.o: ../include/openssl/bio.h ../include/openssl/crypto.h
-fips_post.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
-fips_post.o: ../include/openssl/ec.h ../include/openssl/ecdsa.h
-fips_post.o: ../include/openssl/err.h ../include/openssl/evp.h
-fips_post.o: ../include/openssl/fips.h ../include/openssl/fips_rand.h
-fips_post.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
-fips_post.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-fips_post.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-fips_post.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
-fips_post.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-fips_post.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-fips_post.o: fips_locl.h fips_post.c

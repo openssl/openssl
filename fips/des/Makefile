@@ -71,33 +71,3 @@ dclean:
 
 clean:
 	rm -f *.o *.d asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff testlist
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-fips_des_selftest.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_des_selftest.o: ../../include/openssl/crypto.h
-fips_des_selftest.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-fips_des_selftest.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
-fips_des_selftest.o: ../../include/openssl/lhash.h
-fips_des_selftest.o: ../../include/openssl/obj_mac.h
-fips_des_selftest.o: ../../include/openssl/objects.h
-fips_des_selftest.o: ../../include/openssl/opensslconf.h
-fips_des_selftest.o: ../../include/openssl/opensslv.h
-fips_des_selftest.o: ../../include/openssl/ossl_typ.h
-fips_des_selftest.o: ../../include/openssl/safestack.h
-fips_des_selftest.o: ../../include/openssl/stack.h
-fips_des_selftest.o: ../../include/openssl/symhacks.h fips_des_selftest.c
-fips_desmovs.o: ../../e_os.h ../../include/openssl/aes.h
-fips_desmovs.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_desmovs.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
-fips_desmovs.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
-fips_desmovs.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-fips_desmovs.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-fips_desmovs.o: ../../include/openssl/fips.h ../../include/openssl/fips_rand.h
-fips_desmovs.o: ../../include/openssl/hmac.h ../../include/openssl/lhash.h
-fips_desmovs.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-fips_desmovs.o: ../../include/openssl/opensslconf.h
-fips_desmovs.o: ../../include/openssl/opensslv.h
-fips_desmovs.o: ../../include/openssl/ossl_typ.h
-fips_desmovs.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-fips_desmovs.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-fips_desmovs.o: ../../include/openssl/ui_compat.h ../fips_utl.h fips_desmovs.c

@@ -74,15 +74,3 @@ dclean:
 clean:
 	rm -f *.s *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-rc5_ecb.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-rc5_ecb.o: ../../include/openssl/rc5.h rc5_ecb.c rc5_locl.h
-rc5_enc.o: ../../include/openssl/opensslconf.h ../../include/openssl/rc5.h
-rc5_enc.o: rc5_enc.c rc5_locl.h
-rc5_skey.o: ../../include/openssl/opensslconf.h ../../include/openssl/rc5.h
-rc5_skey.o: rc5_locl.h rc5_skey.c
-rc5cfb64.o: ../../include/openssl/opensslconf.h ../../include/openssl/rc5.h
-rc5cfb64.o: rc5_locl.h rc5cfb64.c
-rc5ofb64.o: ../../include/openssl/opensslconf.h ../../include/openssl/rc5.h
-rc5ofb64.o: rc5_locl.h rc5ofb64.c

@@ -84,14 +84,3 @@ dclean:
 clean:
 	rm -f *.s *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-md5_dgst.o: ../../include/openssl/e_os2.h ../../include/openssl/md5.h
-md5_dgst.o: ../../include/openssl/opensslconf.h
-md5_dgst.o: ../../include/openssl/opensslv.h ../md32_common.h md5_dgst.c
-md5_dgst.o: md5_locl.h
-md5_one.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-md5_one.o: ../../include/openssl/md5.h ../../include/openssl/opensslconf.h
-md5_one.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-md5_one.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-md5_one.o: ../../include/openssl/symhacks.h md5_one.c

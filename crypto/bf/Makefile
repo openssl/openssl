@@ -77,16 +77,3 @@ dclean:
 clean:
 	rm -f *.s *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-bf_cfb64.o: ../../include/openssl/blowfish.h ../../include/openssl/e_os2.h
-bf_cfb64.o: ../../include/openssl/opensslconf.h bf_cfb64.c bf_locl.h
-bf_ecb.o: ../../include/openssl/blowfish.h ../../include/openssl/e_os2.h
-bf_ecb.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-bf_ecb.o: bf_ecb.c bf_locl.h
-bf_enc.o: ../../include/openssl/blowfish.h ../../include/openssl/e_os2.h
-bf_enc.o: ../../include/openssl/opensslconf.h bf_enc.c bf_locl.h
-bf_ofb64.o: ../../include/openssl/blowfish.h ../../include/openssl/e_os2.h
-bf_ofb64.o: ../../include/openssl/opensslconf.h bf_locl.h bf_ofb64.c
-bf_skey.o: ../../include/openssl/blowfish.h ../../include/openssl/e_os2.h
-bf_skey.o: ../../include/openssl/opensslconf.h bf_locl.h bf_pi.h bf_skey.c

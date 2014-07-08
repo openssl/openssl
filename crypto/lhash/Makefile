@@ -67,17 +67,3 @@ dclean:
 clean:
 	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-lh_stats.o: ../../e_os.h ../../include/openssl/bio.h
-lh_stats.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-lh_stats.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-lh_stats.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-lh_stats.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-lh_stats.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-lh_stats.o: ../../include/openssl/symhacks.h ../cryptlib.h lh_stats.c
-lhash.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
-lhash.o: ../../include/openssl/e_os2.h ../../include/openssl/lhash.h
-lhash.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-lhash.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-lhash.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h lhash.c

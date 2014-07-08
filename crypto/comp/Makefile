@@ -70,34 +70,3 @@ dclean:
 clean:
 	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-c_rle.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-c_rle.o: ../../include/openssl/comp.h ../../include/openssl/crypto.h
-c_rle.o: ../../include/openssl/e_os2.h ../../include/openssl/obj_mac.h
-c_rle.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-c_rle.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-c_rle.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-c_rle.o: ../../include/openssl/symhacks.h c_rle.c
-c_zlib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-c_zlib.o: ../../include/openssl/comp.h ../../include/openssl/crypto.h
-c_zlib.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-c_zlib.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-c_zlib.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-c_zlib.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-c_zlib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-c_zlib.o: ../../include/openssl/symhacks.h c_zlib.c
-comp_err.o: ../../include/openssl/bio.h ../../include/openssl/comp.h
-comp_err.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-comp_err.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
-comp_err.o: ../../include/openssl/opensslconf.h
-comp_err.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-comp_err.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-comp_err.o: ../../include/openssl/symhacks.h comp_err.c
-comp_lib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-comp_lib.o: ../../include/openssl/comp.h ../../include/openssl/crypto.h
-comp_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/obj_mac.h
-comp_lib.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-comp_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-comp_lib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-comp_lib.o: ../../include/openssl/symhacks.h comp_lib.c
