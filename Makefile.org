@@ -487,8 +487,8 @@ openssl.pc: Makefile
 	    echo 'Version: '$(VERSION); \
 	    echo 'Requires: libssl libcrypto' ) > openssl.pc
 
-Makefile: Makefile.org Configure config
-	@echo "Makefile is older than Makefile.org, Configure or config."
+Makefile: Makefile.org configure.mk.org Configure config
+	@echo "Makefile is older than Makefile.org, configure.mk.org, Configure or config."
 	@echo "Reconfigure the source tree (via './config' or 'perl Configure'), please."
 	@false
 
