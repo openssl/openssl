@@ -85,7 +85,8 @@ my @dirs = (
 "tools"
 );
 
-%top;
+my %top;
+files_dir (".", "configure.mk");
 
 my $fipscanisteronly = 0;
 
@@ -144,13 +145,9 @@ foreach (sort keys %sym)
 	{
 	print "$_=$sym{$_}\n";
 	}
-if ($dir eq "." && defined($sym{"BUILDENV"}))
+if ($dir eq "." && $makefile eq "configure.mk")
 	{
-	foreach (split(' ',$sym{"BUILDENV"}))
-		{
-		/^(.+)=/;
-		$top{$1}=$sym{$1};
-		}
+		@top{ keys %sym } = @sym{ keys %sym };
 	}
 
 print "RELATIVE_DIRECTORY=\n";
