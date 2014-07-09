@@ -347,9 +347,6 @@ tests: rehash
 report:
 	@$(PERL) util/selftest.pl
 
-depend:
-	@set -e; target=depend; $(RECURSIVE_BUILD_CMD)
-
 lint:
 	@set -e; target=lint; $(RECURSIVE_BUILD_CMD)
 
@@ -392,7 +389,7 @@ TABLE: Configure
 	(echo 'Output of `Configure TABLE'"':"; \
 	$(PERL) Configure TABLE) > TABLE
 
-update: errors stacks util/libeay.num util/ssleay.num crypto/objects/obj_dat.h crypto/objects/obj_xref.h apps/openssl-vms.cnf crypto/bn/bn_prime.h TABLE depend
+update: errors stacks util/libeay.num util/ssleay.num crypto/objects/obj_dat.h crypto/objects/obj_xref.h apps/openssl-vms.cnf crypto/bn/bn_prime.h TABLE
 
 # Build distribution tar-file. As the list of files returned by "find" is
 # pretty long, on several platforms a "too many arguments" error or similar
@@ -574,5 +571,3 @@ install_docs:
 				PLATFORM=$(PLATFORM) $$here/util/point.sh $$fn.$${sec}$(MANSUFFIX) "$$n".$${sec}$(MANSUFFIX); \
 			 done); \
 	done
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.

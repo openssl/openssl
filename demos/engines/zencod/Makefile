@@ -86,11 +86,3 @@ $(SHLIB).aix:	$(LIB)
 		$(LINK_SO)
 		touch $(SHLIB).aix
 
-depend:
-		sed -e '/^# DO NOT DELETE.*/,$$d' < Makefile > Makefile.tmp
-		echo '# DO NOT DELETE THIS LINE -- make depend depends on it.' >> Makefile.tmp
-		gcc -M $(CFLAGS) $(SRC) >> Makefile.tmp
-		perl ../../../util/clean-depend.pl < Makefile.tmp > Makefile.new
-		rm -f Makefile.tmp Makefile
-		mv Makefile.new Makefile
-

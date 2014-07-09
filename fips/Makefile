@@ -193,11 +193,6 @@ install:
 lint:
 	@target=lint; $(RECURSIVE_MAKE)
 
-depend:
-	@[ -z "$(THIS)" ] || $(MAKEDEPEND) -- $(CFLAG) $(INCLUDE) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
-	@[ -z "$(THIS)" ] || (set -e; target=depend; $(RECURSIVE_MAKE) )
-	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
-
 clean:
 	rm -f fipscanister.o.sha1 fips_premain_dso$(EXE_EXT) fips_standalone_sha1$(EXE_EXT) \
 		*.s *.o *.d */*.o */*.d *.obj lib tags core .pure .nfs* *.old *.bak fluff

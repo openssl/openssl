@@ -36,7 +36,6 @@ NM= nm
 PERL= perl
 TAR= tar
 TARFLAGS= --no-recursion
-MAKEDEPPROG= makedepend
 DEPFLAG= -DOPENSSL_NO_DEPRECATED
 LIBDIR=lib
 SHARED_LDFLAGS=

@@ -121,13 +121,6 @@ install:
 lint:
 	@target=lint; $(RECURSIVE_MAKE)
 
-depend:
-	@[ -z "$(THIS)" -o -f buildinf.h ] || touch buildinf.h # fake buildinf.h if it does not exist
-	@[ -z "$(THIS)" ] || $(MAKEDEPEND) -- $(CFLAG) $(INCLUDE) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
-	@[ -z "$(THIS)" -o -s buildinf.h ] || rm buildinf.h
-	@[ -z "$(THIS)" ] || (set -e; target=depend; $(RECURSIVE_MAKE) )
-	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
-
 clean:
 	rm -f buildinf.h *.s *.o *.d */*.o */*.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 	@target=clean; $(RECURSIVE_MAKE)
