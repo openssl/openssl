@@ -87,6 +87,7 @@ sub import_top_level_vars
 	}
 
 import_top_level_vars("Makefile");
+import_top_level_vars("configure.mk");
 
 $debug = 1 if $mf_platform =~ /^debug-/;
 
