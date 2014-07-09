@@ -760,10 +760,6 @@ if (!-d "ssl")
 		}
 	}
 
-# This is what $depflags will look like with the above defaults
-# (we need this to see if we should advise the user to run "make depend"):
-my $default_depflags = " -DOPENSSL_NO_EC_NISTP_64_GCC_128 -DOPENSSL_NO_GMP -DOPENSSL_NO_JPAKE -DOPENSSL_NO_MD2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_RFC3779 -DOPENSSL_NO_SCTP -DOPENSSL_NO_SSL_TRACE -DOPENSSL_NO_STORE -DOPENSSL_NO_UNIT_TEST";
-
 # Explicit "no-..." options will be collected in %disabled along with the defaults.
 # To remove something from %disabled, use "enable-foo" (unless it's experimental).
 # For symmetry, "disable-foo" is a synonym for "no-foo".
@@ -789,7 +785,6 @@ my $libkrb5="";
 my $target;
 my $options;
 my $symlink;
-my $make_depend=0;
 my %withargs=();
 
 my @argvcopy=@ARGV;
@@ -2072,7 +2067,6 @@ EOF
 	my $make_command = "$make PERL=\'$perl\'";
 	my $make_targets = "";
 	$make_targets .= " links" if $symlink;
-	$make_targets .= " depend" if $depflags ne $default_depflags && $make_depend;
 	$make_targets .= " gentests" if $symlink;
 	(system $make_command.$make_targets) == 0 or die "make $make_targets failed"
 		if $make_targets ne "";
@@ -2085,15 +2079,6 @@ EOF
 	    # No path for Perl known ...
 	    &dofile("tools/c_rehash",'/usr/local/bin/perl','^#!/', '#!%s','^my \$dir;$', 'my $dir = "' . $openssldir . '";',  '^my \$prefix;$', 'my $prefix = "' . $prefix . '";');
 	    &dofile("apps/CA.pl",'/usr/local/bin/perl','^#!/', '#!%s');
-	}
-	if ($depflags ne $default_depflags && !$make_depend && !$fipscanisteronly) {
-		print <<EOF;
-
-Since you've disabled or enabled at least one algorithm, you need to do
-the following before building:
-
-	make depend
-EOF
 	}
 }
 
