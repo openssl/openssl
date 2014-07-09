@@ -223,7 +223,7 @@ clean-shared:
 
 link-shared:
 	@ set -e; for i in $(SHLIBDIRS); do \
-		$(MAKE) -f Makefile.shared -e $(BUILDENV) \
+		cat configure.mk Makefile.shared | $(MAKE) -f - \
 			LIBNAME=$$i LIBVERSION=$(SHLIB_MAJOR).$(SHLIB_MINOR) \
 			LIBCOMPATVERSIONS=";$(SHLIB_VERSION_HISTORY)" \
 			symlink.$(SHLIB_TARGET); \
@@ -237,7 +237,7 @@ do_$(SHLIB_TARGET):
 		if [ "$$i" = "ssl" -a -n "$(LIBKRB5)" ]; then \
 			libs="$(LIBKRB5) $$libs"; \
 		fi; \
-		$(CLEARENV) && $(MAKE) -f Makefile.shared -e $(BUILDENV) \
+		cat configure.mk Makefile.shared | $(MAKE) -f - \
 			LIBNAME=$$i LIBVERSION=$(SHLIB_MAJOR).$(SHLIB_MINOR) \
 			LIBCOMPATVERSIONS=";$(SHLIB_VERSION_HISTORY)" \
 			LIBDEPS="$$libs $(EX_LIBS)" \

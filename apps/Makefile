@@ -75,7 +75,7 @@ req: sreq.o $(A_OBJ) $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
-	$(MAKE) -f $(TOP)/Makefile.shared -e \
+	cat $(TOP)/configure.mk $(TOP)/Makefile.shared | $(MAKE) -f - \
 		APPNAME=req OBJECTS="sreq.o $(A_OBJ) $(RAND_OBJ)" \
 		LIBDEPS="$(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS)" \
 		link_app.$${shlib_target}
@@ -137,7 +137,7 @@ $(EXE): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
 	LIBRARIES="$(LIBSSL) $(LIBKRB5) $(LIBCRYPTO)" ; \
-	$(MAKE) -f $(TOP)/Makefile.shared -e \
+	cat $(TOP)/configure.mk $(TOP)/Makefile.shared | $(MAKE) -f - \
 		APPNAME=$(EXE) OBJECTS="$(PROGRAM).o $(E_OBJ)" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}

@@ -71,7 +71,7 @@ lib:	$(LIBOBJ)
 	@if [ -n "$(SHARED_LIBS)" ]; then \
 		set -e; \
 		for l in $(LIBNAMES); do \
-			$(MAKE) -f ../Makefile.shared -e \
+			cat $(TOP)/configure.mk $(TOP)/Makefile.shared | $(MAKE) -f - \
 				LIBNAME=$$l LIBEXTRAS="e_$$l*.o" \
 				LIBDEPS='-L.. -lcrypto $(EX_LIBS)' \
 				link_o.$(SHLIB_TARGET); \

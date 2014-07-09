@@ -26,7 +26,7 @@ errors:
 
 lib: $(LIBOBJ)
 	if [ -n "$(SHARED_LIBS)" ]; then \
-		$(MAKE) -f $(TOP)/Makefile.shared -e \
+		cat $(TOP)/configure.mk $(TOP)/Makefile.shared | $(MAKE) -f - \
 			LIBNAME=$(LIBNAME) \
 			LIBEXTRAS='$(LIBOBJ)' \
 			LIBDEPS='-L$(TOP) -lcrypto' \

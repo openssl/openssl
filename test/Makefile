@@ -408,14 +408,14 @@ BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
 	LIBRARIES="$(LIBSSL) $(LIBCRYPTO) $(LIBKRB5)"; \
-	$(MAKE) -f $(TOP)/Makefile.shared -e \
+	cat $(TOP)/configure.mk $(TOP)/Makefile.shared | $(MAKE) -f - \
 		APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o $$testutil" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
 
 BUILD_CMD_STATIC=shlib_target=; \
 	LIBRARIES="$(DLIBSSL) $(DLIBCRYPTO) $(LIBKRB5)"; \
-	$(MAKE) -f $(TOP)/Makefile.shared -e \
+	cat $(TOP)/configure.mk $(TOP)/Makefile.shared | $(MAKE) -f - \
 		APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o $$testutil" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
@@ -461,7 +461,7 @@ FIPS_BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 	else \
 		LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
-	$(MAKE) -f $(TOP)/Makefile.shared -e \
+	cat $(TOP)/configure.mk $(TOP)/Makefile.shared | $(MAKE) -f - \
 		CC="$(CC)" APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
@@ -474,7 +474,7 @@ FIPS_CRYPTO_BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		FIPSLD_CC="$(CC)"; CC=$(TOP)/fips/fipsld; export CC FIPSLD_CC; \
 	fi; \
 	[ "$(FIPSCANLIB)" = "libfips" ] && LIBRARIES="$$LIBRARIES -lfips"; \
-	$(MAKE) -f $(TOP)/Makefile.shared -e \
+	cat $(TOP)/configure.mk $(TOP)/Makefile.shared | $(MAKE) -f - \
 		CC="$(CC)" APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
