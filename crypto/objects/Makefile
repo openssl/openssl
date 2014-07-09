@@ -51,7 +51,7 @@ obj_xref.h: objxref.pl obj_xref.txt obj_mac.num
 	@sleep 1; touch obj_xref.h; sleep 1
 
 files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
 
 links:
 	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)

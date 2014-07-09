@@ -168,7 +168,7 @@ fipsexe:	$(FIPSEXE)
 fipsalgvs:	$(FIPS_ALGVS)
 
 files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
 
 links:
 
