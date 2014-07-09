@@ -15,11 +15,6 @@ OPTIONS=
 CONFIGURE_ARGS=
 SHLIB_TARGET=
 
-# HERE indicates where this Makefile lives.  This can be used to indicate
-# where sub-Makefiles are expected to be.  Currently has very limited usage,
-# and should probably not be bothered with at all.
-HERE=.
-
 # INSTALL_PREFIX is for package builders so that they can configure
 # for, say, /usr/ and yet have everything installed to /tmp/somedir/usr/.
 # Normally it is left empty.
@@ -426,7 +421,7 @@ clean-shared:
 
 link-shared:
 	@ set -e; for i in $(SHLIBDIRS); do \
-		$(MAKE) -f $(HERE)/Makefile.shared -e $(BUILDENV) \
+		$(MAKE) -f Makefile.shared -e $(BUILDENV) \
 			LIBNAME=$$i LIBVERSION=$(SHLIB_MAJOR).$(SHLIB_MINOR) \
 			LIBCOMPATVERSIONS=";$(SHLIB_VERSION_HISTORY)" \
 			symlink.$(SHLIB_TARGET); \
@@ -692,9 +687,8 @@ install_sw:
 				fi; \
 			fi; \
 		done; \
-		(	here="`pwd`"; \
-			cd $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR); \
-			$(MAKE) -f $$here/Makefile HERE="$$here" link-shared ); \
+		(	cd $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR); \
+			$(MAKE) -f $$here/Makefile link-shared ); \
 		if [ "$(INSTALLTOP)" != "/usr" ]; then \
 			echo 'OpenSSL shared libraries have been installed in:'; \
 			echo '  $(INSTALLTOP)'; \
