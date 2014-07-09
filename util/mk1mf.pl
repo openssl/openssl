@@ -71,16 +71,22 @@ my %mf_import = (
 	FIPSCANISTERINTERNAL  => \$mf_fipscanisterinternal
 );
 
-open(IN,"<Makefile") || die "unable to open Makefile!\n";
-while(<IN>) {
-    my ($mf_opt, $mf_ref);
-    while (($mf_opt, $mf_ref) = each %mf_import) {
-    	if (/^$mf_opt\s*=\s*(.*)$/ && !defined($$mfref)) {
-	   $$mf_ref = $1;
+sub import_top_level_vars
+	{
+	my ($infile) = @_;
+	open(IN,"<$infile") || die "unable to open $infile!\n";
+	while(<IN>) {
+	    my ($mf_opt, $mf_ref);
+	    while (($mf_opt, $mf_ref) = each %mf_import) {
+		if (/^$mf_opt\s*=\s*(.*)$/ && !defined($$mfref)) {
+		   $$mf_ref = $1;
+		}
+	    }
 	}
-    }
-}
-close(IN);
+	close(IN);
+	}
+
+import_top_level_vars("Makefile");
 
 $debug = 1 if $mf_platform =~ /^debug-/;
 
