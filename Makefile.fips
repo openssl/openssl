@@ -518,12 +518,12 @@ makefile.one: files
 	sh util/do_ms.sh
 
 files:
-	$(PERL) $(TOP)/util/files.pl configure.mk Makefile > $(TOP)/MINFO
+	$(PERL) util/files.pl configure.mk Makefile > MINFO
 	@set -e; target=files; $(RECURSIVE_BUILD_CMD)
 
 links:
-	@$(PERL) $(TOP)/util/mkdir-p.pl include/openssl
-	@$(PERL) $(TOP)/util/mklink.pl include/openssl $(EXHEADER)
+	@$(PERL) util/mkdir-p.pl include/openssl
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER)
 	@set -e; dir=fips target=links; $(RECURSIVE_BUILD_CMD)
 	@(cd crypto ; SDIRS='$(LINKDIRS)' $(MAKE) -e links)
 
@@ -625,7 +625,7 @@ dist_pem_h:
 install: all install_sw
 
 install_sw:
-	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/bin \
+	@$(PERL) util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/bin \
 		$(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR) \
 		$(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl
 	@set -e; headerlist="$(EXHEADER)"; for i in $$headerlist;\
