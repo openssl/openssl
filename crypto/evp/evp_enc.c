@@ -233,6 +233,11 @@ skip_to_init:
 				memcpy(ctx->iv, iv, EVP_CIPHER_CTX_iv_length(ctx));
 			break;
 
+			case EVP_CIPH_XTS_MODE:
+			if(iv)
+				memcpy(ctx->iv, iv, EVP_CIPHER_CTX_iv_length(ctx));
+			break;
+
 			default:
 			return 0;
 			break;
