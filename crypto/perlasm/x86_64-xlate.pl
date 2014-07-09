@@ -270,15 +270,20 @@ my %globals;
 		sprintf "%s%s(%%%s)",	$self->{asterisk},$self->{label},$self->{base};
 	    }
 	} else {
-	    %szmap = (	b=>"BYTE$PTR", w=>"WORD$PTR", l=>"DWORD$PTR",
-	    		q=>"QWORD$PTR",o=>"OWORD$PTR",x=>"XMMWORD$PTR",
-			y=>"" );
+	    %szmap = (	b=>"BYTE$PTR",  w=>"WORD$PTR",
+			l=>"DWORD$PTR", d=>"DWORD$PTR",
+	    		q=>"QWORD$PTR", o=>"OWORD$PTR",
+			x=>"XMMWORD$PTR", y=>"YMMWORD$PTR", z=>"ZMMWORD$PTR" );
 
 	    $self->{label} =~ s/\./\$/g;
 	    $self->{label} =~ s/(?<![\w\$\.])0x([0-9a-f]+)/0$1h/ig;
 	    $self->{label} = "($self->{label})" if ($self->{label} =~ /[\*\+\-\/]/);
-	    $sz="q" if ($self->{asterisk} || opcode->mnemonic() =~ /^v?movq$/);
-	    $sz="l" if (opcode->mnemonic() =~ /^v?movd$/);
+
+	    ($self->{asterisk})					&& ($sz="q") ||
+	    (opcode->mnemonic() =~ /^v?mov([qd])$/)		&& ($sz=$1)  ||
+	    (opcode->mnemonic() =~ /^v?pinsr([qdwb])$/)		&& ($sz=$1)  ||
+	    (opcode->mnemonic() =~ /^vpbroadcast([qdwb])$/)	&& ($sz=$1)  ||
+	    (opcode->mnemonic() =~ /^vinsert[fi]128$/)		&& ($sz="x");
 
 	    if (defined($self->{index})) {
 		sprintf "%s[%s%s*%d%s]",$szmap{$sz},
@@ -536,7 +541,7 @@ my %globals;
 					$v="$current_segment\tENDS\n" if ($current_segment);
 					$current_segment = ".text\$";
 					$v.="$current_segment\tSEGMENT ";
-					$v.=$masm>=$masmref ? "ALIGN(64)" : "PAGE";
+					$v.=$masm>=$masmref ? "ALIGN(256)" : "PAGE";
 					$v.=" 'CODE'";
 				    }
 				    $self->{value} = $v;
@@ -834,6 +839,8 @@ if ($nasm) {
     print <<___;
 default	rel
 %define XMMWORD
+%define YMMWORD
+%define ZMMWORD
 ___
 } elsif ($masm) {
     print <<___;
@@ -897,6 +904,7 @@ while($line=<>) {
 		    # $insn.=$sz compensates for movq, pinsrw, ...
 		    if ($arg =~ /^xmm[0-9]+$/) { $insn.=$sz; $sz="x" if(!$sz); last; }
 		    if ($arg =~ /^ymm[0-9]+$/) { $insn.=$sz; $sz="y" if(!$sz); last; }
+		    if ($arg =~ /^zmm[0-9]+$/) { $insn.=$sz; $sz="z" if(!$sz); last; }
 		    if ($arg =~ /^mm[0-9]+$/)  { $insn.=$sz; $sz="q" if(!$sz); last; }
 		}
 		@args = reverse(@args);
