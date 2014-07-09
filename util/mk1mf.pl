@@ -893,6 +893,7 @@ if ($fips)
 sub fix_asm
 	{
 	my($asm, $dir) = @_;
+	return '' if not $asm;
 
 	$asm = " $asm";
 	$asm =~ s/\s+/ $dir\//g;
@@ -903,16 +904,34 @@ sub fix_asm
 	}
 
 if ($orig_platform eq 'copy') {
-	$lib_obj{CRYPTO} .= fix_asm($mf_md5_asm, 'crypto/md5');
-	$lib_obj{CRYPTO} .= fix_asm($mf_bn_asm, 'crypto/bn');
 	# cpuid is included by the crypto dir
 	#$lib_obj{CRYPTO} .= fix_asm($mf_cpuid_asm, 'crypto');
+	$lib_obj{CRYPTO} .= fix_asm($mf_bn_asm, 'crypto/bn');
+	$lib_obj{CRYPTO} .= fix_asm($mf_des_asm, 'crypto/des')
+		unless $no_des;
 	# AES asm files end up included by the aes dir itself
 	#$lib_obj{CRYPTO} .= fix_asm($mf_aes_asm, 'crypto/aes');
-	$lib_obj{CRYPTO} .= fix_asm($mf_sha_asm, 'crypto/sha');
-	$lib_obj{CRYPTO} .= fix_asm($mf_engines_asm, 'engines');
-	$lib_obj{CRYPTO} .= fix_asm($mf_rc4_asm, 'crypto/rc4');
+	$lib_obj{CRYPTO} .= fix_asm($mf_bf_asm, 'crypto/bf')
+		unless $no_bf;
+	$lib_obj{CRYPTO} .= fix_asm($mf_cast_asm, 'crypto/cast')
+		unless $no_cast;
+	$lib_obj{CRYPTO} .= fix_asm($mf_rc4_asm, 'crypto/rc4')
+		unless $no_rc4;
+	$lib_obj{CRYPTO} .= fix_asm($mf_rc5_asm, 'crypto/rc5')
+		unless $no_rc5;
+	$lib_obj{CRYPTO} .= fix_asm($mf_md5_asm, 'crypto/md5')
+		unless $no_md5;
+	$lib_obj{CRYPTO} .= fix_asm($mf_sha_asm, 'crypto/sha')
+		unless $no_sha1;
+	$lib_obj{CRYPTO} .= fix_asm($mf_rmd_asm, 'crypto/ripemd')
+		unless $no_ripemd;
+	$lib_obj{CRYPTO} .= fix_asm($mf_wp_asm, 'crypto/whrlpool')
+		unless $no_whirlpool;
+	$lib_obj{CRYPTO} .= fix_asm($mf_cm_asm, 'crypto/camellia')
+		unless $no_camellia;
 	$lib_obj{CRYPTO} .= fix_asm($mf_modes_asm, 'crypto/modes');
+	$lib_obj{CRYPTO} .= fix_asm($mf_engines_asm, 'engines')
+		unless $no_engine;
 }
 
 foreach (values %lib_nam)
@@ -1194,11 +1213,14 @@ sub do_defs
 		elsif ($_ =~ /CAST_ENC/){ $t="$_ "; }
 		elsif ($_ =~ /RC4_ENC/)	{ $t="$_ "; }
 		elsif ($_ =~ /RC5_ENC/)	{ $t="$_ "; }
-		elsif ($_ =~ /MD5_ASM/)	{ $t="$_ "; }
-		elsif ($_ =~ /SHA1_ASM/){ $t="$_ "; }
-		elsif ($_ =~ /RMD160_ASM/){ $t="$_ "; }
-		elsif ($_ =~ /WHIRLPOOL_ASM/){ $t="$_ "; }
-		elsif ($_ =~ /CPUID_ASM/){ $t="$_ "; }
+		elsif ($_ =~ /MD5_ASM_OBJ/)	{ $t="$_ "; }
+		elsif ($_ =~ /SHA1_ASM_OBJ/){ $t="$_ "; }
+		elsif ($_ =~ /RMD160_ASM_OBJ/){ $t="$_ "; }
+		elsif ($_ =~ /WP_ASM_OBJ/){ $t="$_ "; }
+		elsif ($_ =~ /CMLL_ENC/){ $t="$_ "; }
+		elsif ($_ =~ /CPUID_OBJ/){ $t="$_ "; }
+		elsif ($_ =~ /MODES_ASM_OBJ/){ $t="$_ "; }
+		elsif ($_ =~ /ENGINES_ASM_OBJ/){ $t="$_ "; }
 		else	{ $t="$location${o}$_$pf "; }
 
 		$Vars{$var}.="$t ";
