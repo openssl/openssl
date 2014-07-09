@@ -110,7 +110,7 @@ if (!$addx && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
 
 if (!$addx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	    `ml64 2>&1` =~ /Version ([0-9]+)\./) {
-	$addx = ($1>=11);
+	$addx = ($1>=12);
 }
 
 if (!$addx && `$ENV{CC} -v 2>&1` =~ /(^clang version|based on LLVM) ([3-9])\.([0-9]+)/) {

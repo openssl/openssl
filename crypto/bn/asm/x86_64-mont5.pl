@@ -50,7 +50,7 @@ if (!$addx && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
 
 if (!$addx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	    `ml64 2>&1` =~ /Version ([0-9]+)\./) {
-	$addx = ($1>=11);
+	$addx = ($1>=12);
 }
 
 # int bn_mul_mont_gather5(
