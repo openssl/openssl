@@ -79,8 +79,6 @@ int FIPS_drbg_init(DRBG_CTX *dctx, int type, unsigned int flags)
 		rv = fips_drbg_ctr_init(dctx);
 	if (rv == -2)
 		rv = fips_drbg_hmac_init(dctx);
-	if (rv == -2)
-		rv = fips_drbg_ec_init(dctx);
 
 	if (rv <= 0)
 		{

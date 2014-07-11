@@ -23,10 +23,10 @@ APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=	fips_rand.c fips_rand_selftest.c fips_drbg_lib.c \
-	fips_drbg_hash.c fips_drbg_hmac.c fips_drbg_ctr.c fips_drbg_ec.c \
+	fips_drbg_hash.c fips_drbg_hmac.c fips_drbg_ctr.c \
 	fips_drbg_selftest.c fips_drbg_rand.c fips_rand_lib.c
 LIBOBJ=	fips_rand.o fips_rand_selftest.o fips_drbg_lib.o \
-	fips_drbg_hash.o fips_drbg_hmac.o fips_drbg_ctr.o fips_drbg_ec.o \
+	fips_drbg_hash.o fips_drbg_hmac.o fips_drbg_ctr.o \
 	fips_drbg_selftest.o fips_drbg_rand.o fips_rand_lib.o
 
 SRC= $(LIBSRC)
@@ -105,18 +105,6 @@ fips_drbg_ctr.o: ../../include/openssl/ossl_typ.h
 fips_drbg_ctr.o: ../../include/openssl/safestack.h
 fips_drbg_ctr.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 fips_drbg_ctr.o: fips_drbg_ctr.c fips_rand_lcl.h
-fips_drbg_ec.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
-fips_drbg_ec.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-fips_drbg_ec.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-fips_drbg_ec.o: ../../include/openssl/ec.h ../../include/openssl/evp.h
-fips_drbg_ec.o: ../../include/openssl/fips.h ../../include/openssl/fips_rand.h
-fips_drbg_ec.o: ../../include/openssl/hmac.h ../../include/openssl/obj_mac.h
-fips_drbg_ec.o: ../../include/openssl/objects.h
-fips_drbg_ec.o: ../../include/openssl/opensslconf.h
-fips_drbg_ec.o: ../../include/openssl/opensslv.h
-fips_drbg_ec.o: ../../include/openssl/ossl_typ.h
-fips_drbg_ec.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-fips_drbg_ec.o: ../../include/openssl/symhacks.h fips_drbg_ec.c fips_rand_lcl.h
 fips_drbg_hash.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
 fips_drbg_hash.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
 fips_drbg_hash.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h

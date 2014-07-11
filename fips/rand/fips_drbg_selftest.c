@@ -133,9 +133,6 @@ typedef struct {
 #define make_drbg_test_data_df(nid, pr, p) \
 	make_drbg_test_data(nid, DRBG_FLAG_CTR_USE_DF, pr, p)
 
-#define make_drbg_test_data_ec(curve, md, pr, p) \
-	make_drbg_test_data((curve << 16) | md , 0, pr, p)
-
 static DRBG_SELFTEST_DATA drbg_test[] = {
 	make_drbg_test_data_df(NID_aes_128_ctr, aes_128_use_df, 0),
 	make_drbg_test_data_df(NID_aes_192_ctr, aes_192_use_df, 0),
@@ -153,18 +150,6 @@ static DRBG_SELFTEST_DATA drbg_test[] = {
 	make_drbg_test_data(NID_hmacWithSHA256, 0, hmac_sha256, 1),
 	make_drbg_test_data(NID_hmacWithSHA384, 0, hmac_sha384, 0),
 	make_drbg_test_data(NID_hmacWithSHA512, 0, hmac_sha512, 0),
-	make_drbg_test_data_ec(NID_X9_62_prime256v1, NID_sha1, p_256_sha1, 0),
-	make_drbg_test_data_ec(NID_X9_62_prime256v1, NID_sha224, p_256_sha224, 0),
-	make_drbg_test_data_ec(NID_X9_62_prime256v1, NID_sha256, p_256_sha256, 1),
-	make_drbg_test_data_ec(NID_X9_62_prime256v1, NID_sha384, p_256_sha384, 0),
-	make_drbg_test_data_ec(NID_X9_62_prime256v1, NID_sha512, p_256_sha512, 0),
-	make_drbg_test_data_ec(NID_secp384r1, NID_sha224, p_384_sha224, 0),
-	make_drbg_test_data_ec(NID_secp384r1, NID_sha256, p_384_sha256, 0),
-	make_drbg_test_data_ec(NID_secp384r1, NID_sha384, p_384_sha384, 0),
-	make_drbg_test_data_ec(NID_secp384r1, NID_sha512, p_384_sha512, 0),
-	make_drbg_test_data_ec(NID_secp521r1, NID_sha256, p_521_sha256, 0),
-	make_drbg_test_data_ec(NID_secp521r1, NID_sha384, p_521_sha384, 0),
-	make_drbg_test_data_ec(NID_secp521r1, NID_sha512, p_521_sha512, 0),
 	{0,0,0}
 	};
 
