@@ -409,13 +409,14 @@ for (;;)
 	if ($key eq "LIBKRB5")
 		{ $ex_libs .= " $val" if $val ne "";}
 
-	if ($key eq "TEST" && (!$fipscanisteronly || $dir =~ /^fips/ ))
+	if (($key eq "TEST" || $key =~ /TEST_/) &&
+		(!$fipscanisteronly || $dir =~ /^fips/ ))
 		{ $test.=&var_add($dir,$val, 0); }
 
-	if (($key eq "PROGS") || ($key eq "E_OBJ"))
+	if (($key eq "PROGS" || $key =~ /^PROGS_/) || ($key eq "E_OBJ"))
 		{ $e_exe.=&var_add($dir,$val, 0); }
 
-	if ($key eq "LIB")
+	if ($key eq "LIB" || $key =~ /^LIB_/)
 		{
 		$lib=$val;
 		$lib =~ s/^.*\/([^\/]+)$/$1/;
@@ -427,13 +428,13 @@ for (;;)
 		$otherlibs .= " $lib";
 		}
 
-	if ($key eq "EXHEADER")
+	if ($key eq "EXHEADER" || $key =~ /^EXHEADER_/)
 		{ $exheader.=&var_add($dir,$val, 1); }
 
-	if ($key eq "HEADER")
+	if ($key eq "HEADER" || $key =~ /^HEADER_/)
 		{ $header.=&var_add($dir,$val, 1); }
 
-	if ($key eq "LIBOBJ")
+	if ($key eq "LIBOBJ" || $key =~ /^LIBOBJ_/)
 	    {
 	    if ($dir ne "engines" || !$no_static_engine)
 		{ $libobj=&var_add($dir,$val, 0); }
