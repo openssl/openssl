@@ -64,12 +64,15 @@ HEADER=	apps.h progs.h s_apps.h \
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
-top:
+top: top_apps
+top_apps:
 	@(cd ..; $(MAKE) DIRS=$(DIR) all)
 
-all:	exe
+all: all_apps
+all_apps:	exe
 
-exe:	$(EXE)
+exe: exe_apps
+exe_apps:	$(EXE)
 
 req: sreq.o $(A_OBJ) $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
@@ -83,10 +86,12 @@ req: sreq.o $(A_OBJ) $(DLIBCRYPTO)
 sreq.o: req.c 
 	$(CC) -c $(INCLUDES) $(CFLAG) -o sreq.o req.c
 
-files:
+files: files_apps
+files_apps:
 	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
 
-install:
+install: install_apps
+install_apps:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@set -e; for i in $(EXE); \
 	do  \
@@ -106,22 +111,28 @@ install:
 	chmod 644 $(INSTALL_PREFIX)$(OPENSSLDIR)/openssl.cnf.new; \
 	mv -f  $(INSTALL_PREFIX)$(OPENSSLDIR)/openssl.cnf.new $(INSTALL_PREFIX)$(OPENSSLDIR)/openssl.cnf
 
-tags:
+tags: tags_apps
+tags_apps:
 	ctags $(SRC)
 
-tests:
+tests: tests_apps
+tests_apps:
 
-links:
+links: links_apps
+links_apps:
 
-lint:
+lint: lint_apps
+lint_apps:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
-dclean:
+dclean: dclean_apps
+dclean_apps:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 	rm -f CA.pl
 
-clean:
+clean: clean_apps
+clean_apps:
 	rm -f *.o *.d *.obj *.dll lib tags core .pure .nfs* *.old *.bak fluff $(EXE)
 	rm -f req
 

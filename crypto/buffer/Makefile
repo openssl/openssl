@@ -22,25 +22,31 @@ HEADER=	$(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
-top:
+top: top_crypto_buffer
+top_crypto_buffer:
 	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_crypto_buffer
+all_crypto_buffer:	lib
 
-lib:	$(LIBOBJ)
+lib: lib_crypto_buffer
+lib_crypto_buffer:	$(LIBOBJ)
 	$(ARX) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-files:
+files: files_crypto_buffer
+files_crypto_buffer:
 	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
 
-links:
+links: links_crypto_buffer
+links_crypto_buffer:
 	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
 	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
 	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
 
-install:
+install: install_crypto_buffer
+install_crypto_buffer:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
 	do  \
@@ -48,18 +54,23 @@ install:
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
+tags: tags_crypto_buffer
+tags_crypto_buffer:
 	ctags $(SRC)
 
-tests:
+tests: tests_crypto_buffer
+tests_crypto_buffer:
 
-lint:
+lint: lint_crypto_buffer
+lint_crypto_buffer:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
-dclean:
+dclean: dclean_crypto_buffer
+dclean_crypto_buffer:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 
-clean:
+clean: clean_crypto_buffer
+clean_crypto_buffer:
 	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 

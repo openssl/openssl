@@ -147,34 +147,43 @@ HEADER=	testutil.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
-top:
+top: top_test
+top_test:
 	(cd ..; $(MAKE) DIRS=$(DIR) TESTS=$(TESTS) all)
 
-all:	exe
+all: all_test
+all_test:	exe
 
-exe:	$(EXE) $(FIPSEXE) dummytest$(EXE_EXT)
+exe: exe_test
+exe_test:	$(EXE) $(FIPSEXE) dummytest$(EXE_EXT)
 
 fipsexe:	$(FIPSEXE)
 
 fipsalgvs:	$(FIPS_ALGVS)
 
-files:
+files: files_test
+files_test:
 	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
 
-links:
+links: links_test
+links_test:
 
 generate: $(SRC)
 $(SRC):
 	@sh $(TOP)/util/point.sh dummytest.c $@
 
-errors:
+errors: errors_test
+errors_test:
 
-install:
+install: install_test
+install_test:
 
-tags:
+tags: tags_test
+tags_test:
 	ctags $(SRC)
 
-tests:	exe apps $(TESTS)
+tests: tests_test
+tests_test:	exe apps $(TESTS)
 
 apps:
 	@(cd ..; $(MAKE) DIRS=apps all)
@@ -386,16 +395,19 @@ test_constant_time: $(CONSTTIMETEST)$(EXE_EXT)
 	@echo "Test constant time utilites"
 	../util/shlib_wrap.sh ./$(CONSTTIMETEST)
 
-lint:
+lint: lint_test
+lint_test:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
-dclean:
+dclean: dclean_test
+dclean_test:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 	rm -f $(SRC) $(SHA256TEST).c $(SHA512TEST).c evptests.txt newkey.pem testkey.pem \
 			testreq.pem
 
-clean:
+clean: clean_test
+clean_test:
 	rm -f .rnd tmp.bntest tmp.bctest *.o *.d *.obj *.dll lib tags core .pure .nfs* *.old *.bak fluff $(EXE) $(FIPSEXE) *.ss *.srl log dummytest
 
 $(DLIBSSL):

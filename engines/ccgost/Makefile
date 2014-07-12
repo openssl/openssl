@@ -13,18 +13,23 @@ SRC=$(LIBSRC)
 
 LIBNAME=gost
 
-top: 
+top: top_engines_ccgost
+top_engines_ccgost: 
 	(cd $(TOP); $(MAKE) DIRS=engines EDIRS=$(DIR) sub_all)
 
-all: lib
+all: all_engines_ccgost
+all_engines_ccgost: lib
 
-tags:
+tags: tags_engines_ccgost
+tags_engines_ccgost:
 	ctags $(SRC)
 
-errors:
+errors: errors_engines_ccgost
+errors_engines_ccgost:
 	$(PERL) ../../util/mkerr.pl -conf gost.ec -nostatic -write $(SRC)
 
-lib: $(LIBOBJ)
+lib: lib_engines_ccgost
+lib_engines_ccgost: $(LIBOBJ)
 	if [ -n "$(SHARED_LIBS)" ]; then \
 		cat $(TOP)/configure.mk $(TOP)/Makefile.shared | $(MAKE) -f - \
 			LIBNAME=$(LIBNAME) \
@@ -36,7 +41,8 @@ lib: $(LIBOBJ)
 	fi
 	@touch lib
 
-install:
+install: install_engines_ccgost
+install_engines_ccgost:
 	[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	if [ -n "$(SHARED_LIBS)" ]; then \
 		set -e; \
@@ -59,21 +65,27 @@ install:
 		mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$${pfx}$(LIBNAME)$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$${pfx}$(LIBNAME)$$sfx; \
 	fi
 
-links:
+links: links_engines_ccgost
+links_engines_ccgost:
 	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
 
-tests:
+tests: tests_engines_ccgost
+tests_engines_ccgost:
 
-files:
+files: files_engines_ccgost
+files_engines_ccgost:
 	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
 
-lint:
+lint: lint_engines_ccgost
+lint_engines_ccgost:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
-dclean:
+dclean: dclean_engines_ccgost
+dclean_engines_ccgost:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 
-clean:
+clean: clean_engines_ccgost
+clean_engines_ccgost:
 	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff *.so *.sl *.dll *.dylib
 

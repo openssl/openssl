@@ -34,25 +34,31 @@ HEADER=	bio_lcl.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
-top:
+top: top_crypto_bio
+top_crypto_bio:
 	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_crypto_bio
+all_crypto_bio:	lib
 
-lib:	$(LIBOBJ)
+lib: lib_crypto_bio
+lib_crypto_bio:	$(LIBOBJ)
 	$(ARX) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-files:
+files: files_crypto_bio
+files_crypto_bio:
 	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
 
-links:
+links: links_crypto_bio
+links_crypto_bio:
 	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
 	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
 	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
 
-install:
+install: install_crypto_bio
+install_crypto_bio:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
 	do  \
@@ -60,18 +66,23 @@ install:
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
+tags: tags_crypto_bio
+tags_crypto_bio:
 	ctags $(SRC)
 
-tests:
+tests: tests_crypto_bio
+tests_crypto_bio:
 
-lint:
+lint: lint_crypto_bio
+lint_crypto_bio:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
-dclean:
+dclean: dclean_crypto_bio
+dclean_crypto_bio:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 
-clean:
+clean: clean_crypto_bio
+clean_crypto_bio:
 	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 

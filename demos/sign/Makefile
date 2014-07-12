@@ -2,13 +2,16 @@ CFLAGS= -g -I../../include -Wall
 LIBS=  -L../.. -lcrypto
 EXAMPLES=sign
 
-all: $(EXAMPLES) 
+all: all_demos_sign
+all_demos_sign: $(EXAMPLES) 
 
 sign: sign.o
 	$(CC) -o sign sign.o $(LIBS)
 
-clean:	
+clean: clean_demos_sign
+clean_demos_sign:	
 	rm -f $(EXAMPLES) *.o
 
-test: all
+test: test_demos_sign
+test_demos_sign: all
 	./sign

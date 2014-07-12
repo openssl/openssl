@@ -27,12 +27,15 @@ HEADER=
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
-top:
+top: top_fips_sha
+top_fips_sha:
 	(cd $(TOP); $(MAKE) DIRS=fips SDIRS=$(DIR) sub_all)
 
-all:	../fips_standalone_sha1$(EXE_EXT) lib
+all: all_fips_sha
+all_fips_sha:	../fips_standalone_sha1$(EXE_EXT) lib
 
-lib:	$(LIBOBJ)
+lib: lib_fips_sha
+lib_fips_sha:	$(LIBOBJ)
 	@echo $(LIBOBJ) > lib
 
 ../fips_standalone_sha1$(EXE_EXT): fips_standalone_sha1.o
@@ -43,25 +46,30 @@ lib:	$(LIBOBJ)
 		$(HOSTCC) $(HOSTCFLAGS) -o $ $@ -I../../include -I../../crypto fips_standalone_sha1.c ../../crypto/sha/sha1dgst.c ; \
 	fi
 
-files:
+files: files_fips_sha
+files_fips_sha:
 	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
 
-links:
+links: links_fips_sha
+links_fips_sha:
 	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/include/openssl $(EXHEADER)
 	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/test $(TEST)
 	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/apps $(APPS)
 
-install:
+install: install_fips_sha
+install_fips_sha:
 	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
 	do  \
 	  (cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	  chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done
 
-tags:
+tags: tags_fips_sha
+tags_fips_sha:
 	ctags $(SRC)
 
-tests:
+tests: tests_fips_sha
+tests_fips_sha:
 
 Q=../testvectors/sha/req
 A=../testvectors/sha/rsp
@@ -82,7 +90,8 @@ VECTORS = SHA1LongMsg \
 	SHA512Monte \
 	SHA512ShortMsg
 
-fips_test:
+fips_test: fips_test_fips_sha
+fips_test_fips_sha:
 	-rm -rf $(A)
 	mkdir $(A)
 	for file in $(VECTORS); do \
@@ -91,13 +100,16 @@ fips_test:
 	    fi; \
 	done
 
-lint:
+lint: lint_fips_sha
+lint_fips_sha:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
-dclean:
+dclean: dclean_fips_sha
+dclean_fips_sha:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 
-clean:
+clean: clean_fips_sha
+clean_fips_sha:
 	rm -f *.o *.d asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff $(EXE)
 

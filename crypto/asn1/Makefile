@@ -48,10 +48,12 @@ HEADER=	$(EXHEADER) asn1_locl.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
-top:
+top: top_crypto_asn1
+top_crypto_asn1:
 	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-test:	test.c
+test: test_crypto_asn1
+test_crypto_asn1:	test.c
 	cc -g -I../../include -c test.c
 	cc -g -I../../include -o test test.o -L../.. -lcrypto
 
@@ -59,22 +61,27 @@ pk:	pk.c
 	cc -g -I../../include -c pk.c
 	cc -g -I../../include -o pk pk.o -L../.. -lcrypto
 
-all:	lib
+all: all_crypto_asn1
+all_crypto_asn1:	lib
 
-lib:	$(LIBOBJ)
+lib: lib_crypto_asn1
+lib_crypto_asn1:	$(LIBOBJ)
 	$(ARX) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-files:
+files: files_crypto_asn1
+files_crypto_asn1:
 	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
 
-links:
+links: links_crypto_asn1
+links_crypto_asn1:
 	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
 	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
 	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
 
-install:
+install: install_crypto_asn1
+install_crypto_asn1:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
 	do  \
@@ -82,19 +89,24 @@ install:
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
+tags: tags_crypto_asn1
+tags_crypto_asn1:
 	ctags $(SRC)
 
-tests:
+tests: tests_crypto_asn1
+tests_crypto_asn1:
 
-lint:
+lint: lint_crypto_asn1
+lint_crypto_asn1:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
-dclean:
+dclean: dclean_crypto_asn1
+dclean_crypto_asn1:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 
-clean:
+clean: clean_crypto_asn1
+clean_crypto_asn1:
 	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 

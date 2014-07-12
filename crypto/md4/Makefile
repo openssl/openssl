@@ -23,25 +23,31 @@ HEADER= md4_locl.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
-top:
+top: top_crypto_md4
+top_crypto_md4:
 	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:    lib
+all: all_crypto_md4
+all_crypto_md4:    lib
 
-lib:    $(LIBOBJ)
+lib: lib_crypto_md4
+lib_crypto_md4:    $(LIBOBJ)
 	$(ARX) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-files:
+files: files_crypto_md4
+files_crypto_md4:
 	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
 
-links:
+links: links_crypto_md4
+links_crypto_md4:
 	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
 	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
 	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
 
-install:
+install: install_crypto_md4
+install_crypto_md4:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
 	do  \
@@ -49,19 +55,24 @@ install:
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
+tags: tags_crypto_md4
+tags_crypto_md4:
 	ctags $(SRC)
 
-tests:
+tests: tests_crypto_md4
+tests_crypto_md4:
 
-lint:
+lint: lint_crypto_md4
+lint_crypto_md4:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
-dclean:
+dclean: dclean_crypto_md4
+dclean_crypto_md4:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 	rm -f ../../include/openssl/$(EXHEADER) ../../test/$(TEST) ../../apps/$(APPS)
 
-clean:
+clean: clean_crypto_md4
+clean_crypto_md4:
 	rm -f asm/mx86unix.cpp *.o *.d asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 

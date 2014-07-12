@@ -62,12 +62,15 @@ HEADER=	e_4758cca_err.c e_4758cca_err.h \
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
-top:
+top: top_engines
+top_engines:
 	(cd ..; $(MAKE) DIRS=$(DIR) all)
 
-all:	lib subdirs
+all: all_engines
+all_engines:	lib subdirs
 
-lib:	$(LIBOBJ)
+lib: lib_engines
+lib_engines:	$(LIBOBJ)
 	@if [ -n "$(SHARED_LIBS)" ]; then \
 		set -e; \
 		for l in $(LIBNAMES); do \
@@ -87,15 +90,18 @@ e_padlock-x86.s:	asm/e_padlock-x86.pl
 e_padlock-x86_64.s:	asm/e_padlock-x86_64.pl
 	$(PERL) asm/e_padlock-x86_64.pl $(PERLASM_SCHEME) > $@
 
-subdirs:
+subdirs: subdirs_engines
+subdirs_engines:
 	echo $(EDIRS)
 	@target=all; $(RECURSIVE_MAKE)
 
-files:
+files: files_engines
+files_engines:
 	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
 	@target=files; $(RECURSIVE_MAKE)
 
-links:
+links: links_engines
+links_engines:
 	@target=links; $(RECURSIVE_MAKE)
 
 # XXXXX This currently only works on systems that use .so as suffix
@@ -103,7 +109,8 @@ links:
 # dlfcn_name_converter and therefore stores the engines with .so suffix, too.
 # XXXXX This was extended to HP-UX dl targets, which use .sl suffix.
 # XXXXX This was extended to mingw targets, which use eay32.dll suffix without lib as prefix.
-install:
+install: install_engines
+install_engines:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@if [ -n "$(SHARED_LIBS)" ]; then \
 		set -e; \
@@ -130,28 +137,34 @@ install:
 	fi
 	@target=install; $(RECURSIVE_MAKE)
 
-tags:
+tags: tags_engines
+tags_engines:
 	ctags $(SRC)
 
-errors:
+errors: errors_engines
+errors_engines:
 	set -e; for l in $(LIBNAMES); do \
 		$(PERL) ../util/mkerr.pl -conf e_$$l.ec \
 			-nostatic -staticloader -write e_$$l.c; \
 	done
 	(cd ccgost; $(MAKE) PERL=$(PERL) errors)
 
-tests:
+tests: tests_engines
+tests_engines:
 
-lint:
+lint: lint_engines
+lint_engines:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 	@target=lint; $(RECURSIVE_MAKE)
 
-dclean:
+dclean: dclean_engines
+dclean_engines:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 	@target=dclean; $(RECURSIVE_MAKE)
 
-clean:
+clean: clean_engines
+clean_engines:
 	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 	@target=clean; $(RECURSIVE_MAKE)
 

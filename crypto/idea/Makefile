@@ -22,25 +22,31 @@ HEADER=	idea_lcl.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
-top:
+top: top_crypto_idea
+top_crypto_idea:
 	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_crypto_idea
+all_crypto_idea:	lib
 
-lib:	$(LIBOBJ)
+lib: lib_crypto_idea
+lib_crypto_idea:	$(LIBOBJ)
 	$(ARX) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-files:
+files: files_crypto_idea
+files_crypto_idea:
 	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
 
-links:
+links: links_crypto_idea
+links_crypto_idea:
 	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
 	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
 	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
 
-install:
+install: install_crypto_idea
+install_crypto_idea:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
 	do  \
@@ -48,18 +54,23 @@ install:
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
+tags: tags_crypto_idea
+tags_crypto_idea:
 	ctags $(SRC)
 
-tests:
+tests: tests_crypto_idea
+tests_crypto_idea:
 
-lint:
+lint: lint_crypto_idea
+lint_crypto_idea:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
-dclean:
+dclean: dclean_crypto_idea
+dclean_crypto_idea:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 
-clean:
+clean: clean_crypto_idea
+clean_crypto_idea:
 	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 

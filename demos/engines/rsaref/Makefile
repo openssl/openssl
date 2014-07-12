@@ -9,7 +9,8 @@ CFLAGS=		-g -I../../../include $(PIC) -DENGINE_DYNAMIC_SUPPORT
 LIB=		$(LIBNAME).a
 SHLIB=		$(LIBNAME).so
 
-all:
+all: all_demos_engines_rsaref
+all_demos_engines_rsaref:
 		@echo 'Please choose a system to build on:'
 		@echo ''
 		@echo 'tru64:    Tru64 Unix, Digital Unix, Digital OSF/1'
@@ -22,25 +23,35 @@ all:
 		@echo ''
 
 FORCE.install:
-install:	FORCE.install
+install: install_demos_engines_rsaref
+install_demos_engines_rsaref:	FORCE.install
 		cd install; \
 			make -f unix/makefile CFLAGS='-I. -DPROTOTYPES=1 -O -c' RSAREFLIB=librsaref.a librsaref.a
 
-FORCE.update:
-update:		FORCE.update
+FORCE.update: FORCE.update_demos_engines_rsaref
+FORCE.update_demos_engines_rsaref:
+update: update_demos_engines_rsaref
+update_demos_engines_rsaref:		FORCE.update
 		perl ../../../util/mkerr.pl -conf rsaref.ec \
 			-nostatic -staticloader -write rsaref.c
 
 darwin:		install $(SHLIB).darwin
 cygwin:		install $(SHLIB).cygwin
-gnu:		install $(SHLIB).gnu
+gnu: gnu_demos_engines_rsaref
+gnu_demos_engines_rsaref:		install $(SHLIB).gnu
 alpha-osf1:	install $(SHLIB).alpha-osf1
-tru64:		install $(SHLIB).tru64
-solaris:	install $(SHLIB).solaris
-irix:		install $(SHLIB).irix
-hpux32:		install $(SHLIB).hpux32
-hpux64:		install $(SHLIB).hpux64
-aix:		install $(SHLIB).aix
+tru64: tru64_demos_engines_rsaref
+tru64_demos_engines_rsaref:		install $(SHLIB).tru64
+solaris: solaris_demos_engines_rsaref
+solaris_demos_engines_rsaref:	install $(SHLIB).solaris
+irix: irix_demos_engines_rsaref
+irix_demos_engines_rsaref:		install $(SHLIB).irix
+hpux32: hpux32_demos_engines_rsaref
+hpux32_demos_engines_rsaref:		install $(SHLIB).hpux32
+hpux64: hpux64_demos_engines_rsaref
+hpux64_demos_engines_rsaref:		install $(SHLIB).hpux64
+aix: aix_demos_engines_rsaref
+aix_demos_engines_rsaref:		install $(SHLIB).aix
 reliantunix:	install $(SHLIB).reliantunix
 
 $(LIB):		$(OBJ)

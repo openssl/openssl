@@ -25,46 +25,58 @@ HEADER=
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
-top:
+top: top_fips_des
+top_fips_des:
 	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_fips_des
+all_fips_des:	lib
 
-lib:	$(LIBOBJ)
+lib: lib_fips_des
+lib_fips_des:	$(LIBOBJ)
 	@echo $(LIBOBJ) > lib
 
-files:
+files: files_fips_des
+files_fips_des:
 	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
 
-links:
+links: links_fips_des
+links_fips_des:
 	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/include/openssl $(EXHEADER)
 	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/test $(TEST)
 	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/apps $(APPS)
 
-install:
+install: install_fips_des
+install_fips_des:
 	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
 	do  \
 	  (cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	  chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done
 
-tags:
+tags: tags_fips_des
+tags_fips_des:
 	ctags $(SRC)
 
-tests:
+tests: tests_fips_des
+tests_fips_des:
 
-fips_test:
+fips_test: fips_test_fips_des
+fips_test_fips_des:
 	-find ../testvectors/tdes/req -name '*.req' > testlist
 	-rm -rf ../testvectors/tdes/rsp
 	mkdir ../testvectors/tdes/rsp
 	if [ -s testlist ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_desmovs -d testlist; fi
 
-lint:
+lint: lint_fips_des
+lint_fips_des:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
-dclean:
+dclean: dclean_fips_des
+dclean_fips_des:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 
-clean:
+clean: clean_fips_des
+clean_fips_des:
 	rm -f *.o *.d asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff testlist

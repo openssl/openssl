@@ -10,6 +10,7 @@ LDFLAGS=-L../.. -lcrypto
 testapp: $(OBJ) $(ERROBJ) $(HEADER)
 	$(CC) -o testapp $(OBJ) $(ERROBJ) $(LDFLAGS)
 	
-errors:
+errors: errors_demos_err
+errors_demos_err:
 	$(PERL) ../../util/mkerr.pl -conf test_err.ec \
 		-nostatic -write $(SRC)

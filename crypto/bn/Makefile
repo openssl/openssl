@@ -35,10 +35,12 @@ HEADER=	bn_lcl.h bn_prime.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
-top:
+top: top_crypto_bn
+top_crypto_bn:
 	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_crypto_bn
+all_crypto_bn:	lib
 
 bn_prime.h: bn_prime.pl
 	$(PERL) bn_prime.pl >bn_prime.h
@@ -49,7 +51,8 @@ divtest: divtest.c ../../libcrypto.a
 bnbug: bnbug.c ../../libcrypto.a top
 	cc -g -I../../include bnbug.c -o bnbug ../../libcrypto.a
 
-lib:	$(LIBOBJ)
+lib: lib_crypto_bn
+lib_crypto_bn:	$(LIBOBJ)
 	$(ARX) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
@@ -141,15 +144,18 @@ alpha-mont.s:	asm/alpha-mont.pl
 armv4-mont.o:	armv4-mont.S
 armv4-gf2m.o:	armv4-gf2m.S
 
-files:
+files: files_crypto_bn
+files_crypto_bn:
 	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
 
-links:
+links: links_crypto_bn
+links_crypto_bn:
 	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
 	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
 	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
 
-install:
+install: install_crypto_bn
+install_crypto_bn:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
 	do  \
@@ -161,18 +167,23 @@ div:
 	rm -f a.out
 	gcc -I.. -g div.c ../../libcrypto.a
 
-tags:
+tags: tags_crypto_bn
+tags_crypto_bn:
 	ctags $(SRC)
 
-tests:
+tests: tests_crypto_bn
+tests_crypto_bn:
 
-lint:
+lint: lint_crypto_bn
+lint_crypto_bn:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
-dclean:
+dclean: dclean_crypto_bn
+dclean_crypto_bn:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 
-clean:
+clean: clean_crypto_bn
+clean_crypto_bn:
 	rm -f *.s *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 

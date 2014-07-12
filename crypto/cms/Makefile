@@ -26,27 +26,34 @@ HEADER=	cms_lcl.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
-top:
+top: top_crypto_cms
+top_crypto_cms:
 	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-test:
+test: test_crypto_cms
+test_crypto_cms:
 
-all:	lib
+all: all_crypto_cms
+all_crypto_cms:	lib
 
-lib:	$(LIBOBJ)
+lib: lib_crypto_cms
+lib_crypto_cms:	$(LIBOBJ)
 	$(ARX) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-files:
+files: files_crypto_cms
+files_crypto_cms:
 	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
 
-links:
+links: links_crypto_cms
+links_crypto_cms:
 	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
 	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
 	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
 
-install:
+install: install_crypto_cms
+install_crypto_cms:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
 	do  \
@@ -54,18 +61,23 @@ install:
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
+tags: tags_crypto_cms
+tags_crypto_cms:
 	ctags $(SRC)
 
-tests:
+tests: tests_crypto_cms
+tests_crypto_cms:
 
-lint:
+lint: lint_crypto_cms
+lint_crypto_cms:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
-dclean:
+dclean: dclean_crypto_cms
+dclean_crypto_cms:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 
-clean:
+clean: clean_crypto_cms
+clean_crypto_cms:
 	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 

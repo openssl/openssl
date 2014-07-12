@@ -25,25 +25,31 @@ HEADER=	$(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
-top:
+top: top_crypto_pem
+top_crypto_pem:
 	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_crypto_pem
+all_crypto_pem:	lib
 
-lib:	$(LIBOBJ)
+lib: lib_crypto_pem
+lib_crypto_pem:	$(LIBOBJ)
 	$(ARX) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-files:
+files: files_crypto_pem
+files_crypto_pem:
 	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
 
-links: $(EXHEADER)
+links: links_crypto_pem
+links_crypto_pem: $(EXHEADER)
 	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
 	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
 	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
 
-install:
+install: install_crypto_pem
+install_crypto_pem:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
 	do  \
@@ -51,18 +57,23 @@ install:
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
+tags: tags_crypto_pem
+tags_crypto_pem:
 	ctags $(SRC)
 
-tests:
+tests: tests_crypto_pem
+tests_crypto_pem:
 
-lint:
+lint: lint_crypto_pem
+lint_crypto_pem:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
-dclean:
+dclean: dclean_crypto_pem
+dclean_crypto_pem:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 
-clean:
+clean: clean_crypto_pem
+clean_crypto_pem:
 	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 

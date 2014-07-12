@@ -39,12 +39,15 @@ HEADER=	des_locl.h rpc_des.h spr.h des_ver.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
-top:
+top: top_crypto_des
+top_crypto_des:
 	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_crypto_des
+all_crypto_des:	lib
 
-lib:	$(LIBOBJ)
+lib: lib_crypto_des
+lib_crypto_des:	$(LIBOBJ)
 	$(ARX) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
@@ -62,18 +65,22 @@ des-586.s:	asm/des-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
 crypt586.s:	asm/crypt586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
 	$(PERL) asm/crypt586.pl $(PERLASM_SCHEME) $(CFLAGS) > $@
 
-files:
+files: files_crypto_des
+files_crypto_des:
 	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
 
-links:
+links: links_crypto_des
+links_crypto_des:
 	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
 	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
 	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
 
 # We need to use force because 'install' matches 'INSTALL' on case
 # insensitive systems
-FRC.install:
-install: FRC.install
+FRC.install: FRC.install_crypto_des
+FRC.install_crypto_des:
+install: install_crypto_des
+install_crypto_des: FRC.install
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
 	do  \
@@ -81,18 +88,23 @@ install: FRC.install
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
+tags: tags_crypto_des
+tags_crypto_des:
 	ctags $(SRC)
 
-tests:
+tests: tests_crypto_des
+tests_crypto_des:
 
-lint:
+lint: lint_crypto_des
+lint_crypto_des:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
-dclean:
+dclean: dclean_crypto_des
+dclean_crypto_des:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 
-clean:
+clean: clean_crypto_des
+clean_crypto_des:
 	rm -f *.s *.o *.d *.obj des lib tags core .pure .nfs* *.old *.bak fluff
 

@@ -28,12 +28,15 @@ HEADER=	modes_lcl.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
-top:
+top: top_crypto_modes
+top_crypto_modes:
 	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_crypto_modes
+all_crypto_modes:	lib
 
-lib:	$(LIBOBJ)
+lib: lib_crypto_modes
+lib_crypto_modes:	$(LIBOBJ)
 	$(ARX) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
@@ -65,15 +68,18 @@ ghash-%.S:	asm/ghash-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
 ghash-armv4.o:	ghash-armv4.S
 ghashv8-armx.o:	ghashv8-armx.S
 
-files:
+files: files_crypto_modes
+files_crypto_modes:
 	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
 
-links:
+links: links_crypto_modes
+links_crypto_modes:
 	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
 	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
 	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
 
-install:
+install: install_crypto_modes
+install_crypto_modes:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
 	do  \
@@ -81,18 +87,23 @@ install:
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
+tags: tags_crypto_modes
+tags_crypto_modes:
 	ctags $(SRC)
 
-tests:
+tests: tests_crypto_modes
+tests_crypto_modes:
 
-lint:
+lint: lint_crypto_modes
+lint_crypto_modes:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
-dclean:
+dclean: dclean_crypto_modes
+dclean_crypto_modes:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 
-clean:
+clean: clean_crypto_modes
+clean_crypto_modes:
 	rm -f *.s *.o *.d */*.o */*.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 

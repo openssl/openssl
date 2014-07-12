@@ -22,12 +22,15 @@ HEADER=	$(EXHEADER) obj_dat.h obj_xref.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
-top:
+top: top_crypto_objects
+top_crypto_objects:
 	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	obj_dat.h obj_xref.h lib
+all: all_crypto_objects
+all_crypto_objects:	obj_dat.h obj_xref.h lib
 
-lib:	$(LIBOBJ)
+lib: lib_crypto_objects
+lib_crypto_objects:	$(LIBOBJ)
 	$(ARX) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
@@ -44,15 +47,18 @@ obj_xref.h: objxref.pl obj_xref.txt obj_mac.num
 	$(PERL) objxref.pl obj_mac.num obj_xref.txt > obj_xref.h
 	@sleep 1; touch obj_xref.h; sleep 1
 
-files:
+files: files_crypto_objects
+files_crypto_objects:
 	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
 
-links:
+links: links_crypto_objects
+links_crypto_objects:
 	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
 	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
 	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
 
-install:
+install: install_crypto_objects
+install_crypto_objects:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
 	do  \
@@ -60,18 +66,23 @@ install:
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
+tags: tags_crypto_objects
+tags_crypto_objects:
 	ctags $(SRC)
 
-tests:
+tests: tests_crypto_objects
+tests_crypto_objects:
 
-lint:
+lint: lint_crypto_objects
+lint_crypto_objects:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
-dclean:
+dclean: dclean_crypto_objects
+dclean_crypto_objects:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 
-clean:
+clean: clean_crypto_objects
+clean_crypto_objects:
 	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 

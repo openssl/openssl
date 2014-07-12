@@ -9,7 +9,8 @@ CFLAGS=		-g -I../../../include $(PIC) -DENGINE_DYNAMIC_SUPPORT -DFLAT_INC
 LIB=		$(LIBNAME).a
 SHLIB=		$(LIBNAME).so
 
-all:
+all: all_demos_engines_zencod
+all_demos_engines_zencod:
 		@echo 'Please choose a system to build on:'
 		@echo ''
 		@echo 'tru64:    Tru64 Unix, Digital Unix, Digital OSF/1'
@@ -21,18 +22,27 @@ all:
 		@echo 'gnu:      Generic GNU-based system (gcc and GNU ld)'
 		@echo ''
 
-FORCE.update:
-update:		FORCE.update
+FORCE.update: FORCE.update_demos_engines_zencod
+FORCE.update_demos_engines_zencod:
+update: update_demos_engines_zencod
+update_demos_engines_zencod:		FORCE.update
 		perl ../../../util/mkerr.pl -conf hw_zencod.ec \
 			-nostatic -staticloader -write hw_zencod.c
 
-gnu:		$(SHLIB).gnu
-tru64:		$(SHLIB).tru64
-solaris:	$(SHLIB).solaris
-irix:		$(SHLIB).irix
-hpux32:		$(SHLIB).hpux32
-hpux64:		$(SHLIB).hpux64
-aix:		$(SHLIB).aix
+gnu: gnu_demos_engines_zencod
+gnu_demos_engines_zencod:		$(SHLIB).gnu
+tru64: tru64_demos_engines_zencod
+tru64_demos_engines_zencod:		$(SHLIB).tru64
+solaris: solaris_demos_engines_zencod
+solaris_demos_engines_zencod:	$(SHLIB).solaris
+irix: irix_demos_engines_zencod
+irix_demos_engines_zencod:		$(SHLIB).irix
+hpux32: hpux32_demos_engines_zencod
+hpux32_demos_engines_zencod:		$(SHLIB).hpux32
+hpux64: hpux64_demos_engines_zencod
+hpux64_demos_engines_zencod:		$(SHLIB).hpux64
+aix: aix_demos_engines_zencod
+aix_demos_engines_zencod:		$(SHLIB).aix
 
 $(LIB):		$(OBJ)
 		$(AR) $(LIB) $(OBJ)

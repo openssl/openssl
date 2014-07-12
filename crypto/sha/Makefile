@@ -26,12 +26,15 @@ HEADER= sha_locl.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
-top:
+top: top_crypto_sha
+top_crypto_sha:
 	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:    lib
+all: all_crypto_sha
+all_crypto_sha:    lib
 
-lib:    $(LIBOBJ)
+lib: lib_crypto_sha
+lib_crypto_sha:    $(LIBOBJ)
 	$(ARX) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
@@ -94,15 +97,18 @@ sha1-armv8.o:		sha1-armv8.S
 sha256-armv8.o:		sha256-armv8.S
 sha512-armv8.o:		sha512-armv8.S
 
-files:
+files: files_crypto_sha
+files_crypto_sha:
 	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
 
-links:
+links: links_crypto_sha
+links_crypto_sha:
 	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
 	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
 	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
 
-install:
+install: install_crypto_sha
+install_crypto_sha:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
 	do  \
@@ -110,18 +116,23 @@ install:
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
+tags: tags_crypto_sha
+tags_crypto_sha:
 	ctags $(SRC)
 
-tests:
+tests: tests_crypto_sha
+tests_crypto_sha:
 
-lint:
+lint: lint_crypto_sha
+lint_crypto_sha:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
-dclean:
+dclean: dclean_crypto_sha
+dclean_crypto_sha:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 
-clean:
+clean: clean_crypto_sha
+clean_crypto_sha:
 	rm -f *.s *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 

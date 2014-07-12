@@ -17,7 +17,8 @@ auto-all:
 	*) echo "unknown system"; exit 1;; \
 	esac
 
-all: test TAGS
+all: all_demos_easy_tls
+all_demos_easy_tls: test_demos_easy_tls TAGS
 
 # For adapting this Makefile to a different system, only the following
 # definitions should need customizing:
@@ -108,13 +109,15 @@ CFLAGS=$(SYSCFLAGS) $(EXTRACFLAGS) $(INCLUDES)
 
 OBJS=easy-tls.o test.o
 
-clean:
+clean: clean_demos_easy_tls
+clean_demos_easy_tls:
 	@rm -f test
 	@rm -f TAGS
 	@rm -f *.o
 	@rm -f core
 
-test: $(OBJS)
+test: test_demos_easy_tls
+test_demos_easy_tls: $(OBJS)
 	$(CC) $(OBJS) $(LDFLAGS) -o test
 
 test.o: $(HEADERS)
