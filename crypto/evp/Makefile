@@ -2,18 +2,18 @@
 # OpenSSL/crypto/evp/Makefile
 #
 
-DIR=	evp
-INCLUDES= -I.. -I$(TOP) -I../../include
+DIR_crypto_evp=	evp
+INCLUDES_crypto_evp= -I.. -I$(TOP_crypto_evp) -I../../include
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_crypto_evp= $(INCLUDES_crypto_evp) $(CFLAG)
 
-GENERAL=Makefile
-TEST=evp_test.c p5_crpt2_test.c
+GENERAL_crypto_evp=Makefile
+TEST_crypto_evp=evp_test.c p5_crpt2_test.c
 TESTDATA=evptests.txt
-APPS=
+APPS_crypto_evp=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC= encode.c digest.c evp_enc.c evp_key.c evp_acnf.c evp_cnf.c \
+LIB_crypto_evp=$(TOP_crypto_evp)/libcrypto.a
+LIBSRC_crypto_evp= encode.c digest.c evp_enc.c evp_key.c evp_acnf.c evp_cnf.c \
 	e_des.c e_bf.c e_idea.c e_des3.c e_camellia.c\
 	e_rc4.c e_aes.c names.c e_seed.c \
 	e_xcbc_d.c e_rc2.c e_cast.c e_rc5.c \
@@ -26,7 +26,7 @@ LIBSRC= encode.c digest.c evp_enc.c evp_key.c evp_acnf.c evp_cnf.c \
 	e_old.c pmeth_lib.c pmeth_fn.c pmeth_gn.c m_sigver.c \
 	e_aes_cbc_hmac_sha1.c e_aes_cbc_hmac_sha256.c e_rc4_hmac_md5.c
 
-LIBOBJ=	encode.o digest.o evp_enc.o evp_key.o evp_acnf.o evp_cnf.o \
+LIBOBJ_crypto_evp=	encode.o digest.o evp_enc.o evp_key.o evp_acnf.o evp_cnf.o \
 	e_des.o e_bf.o e_idea.o e_des3.o e_camellia.o\
 	e_rc4.o e_aes.o names.o e_seed.o \
 	e_xcbc_d.o e_rc2.o e_cast.o e_rc5.o \
@@ -39,41 +39,41 @@ LIBOBJ=	encode.o digest.o evp_enc.o evp_key.o evp_acnf.o evp_cnf.o \
 	e_old.o pmeth_lib.o pmeth_fn.o pmeth_gn.o m_sigver.o \
 	e_aes_cbc_hmac_sha1.o e_aes_cbc_hmac_sha256.o e_rc4_hmac_md5.o
 
-SRC= $(LIBSRC)
+SRC_crypto_evp= $(LIBSRC_crypto_evp)
 
-EXHEADER= evp.h
-HEADER=	evp_locl.h $(EXHEADER)
+EXHEADER_crypto_evp= evp.h
+HEADER_crypto_evp=	evp_locl.h $(EXHEADER_crypto_evp)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_evp=    $(GENERAL_crypto_evp) $(SRC_crypto_evp) $(HEADER_crypto_evp)
 
 top: top_crypto_evp
 top_crypto_evp:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
+	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_evp) sub_all)
 
 all: all_crypto_evp
 all_crypto_evp:	lib
 
 lib: lib_crypto_evp
-lib_crypto_evp:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
+lib_crypto_evp:	$(LIBOBJ_crypto_evp)
+	$(ARX) $(LIB_crypto_evp) $(LIBOBJ_crypto_evp)
+	$(RANLIB) $(LIB_crypto_evp) || echo Never mind.
 	@touch lib
 
 files: files_crypto_evp
 files_crypto_evp:
-	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
+	$(PERL) $(TOP_crypto_evp)/util/files.pl TOP=$(TOP_crypto_evp) Makefile >> $(TOP_crypto_evp)/MINFO
 
 links: links_crypto_evp
 links_crypto_evp:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
+	@$(PERL) $(TOP_crypto_evp)/util/mklink.pl ../../include/openssl $(EXHEADER_crypto_evp)
+	@$(PERL) $(TOP_crypto_evp)/util/mklink.pl ../../test $(TEST_crypto_evp)
 	@[ -f $(TESTDATA) ] && cp $(TESTDATA) ../../test && echo "$(TESTDATA) -> ../../test/$(TESTDATA)"
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+	@$(PERL) $(TOP_crypto_evp)/util/mklink.pl ../../apps $(APPS_crypto_evp)
 
 install: install_crypto_evp
 install_crypto_evp:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_evp)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
@@ -81,14 +81,14 @@ install_crypto_evp:
 
 tags: tags_crypto_evp
 tags_crypto_evp:
-	ctags $(SRC)
+	ctags $(SRC_crypto_evp)
 
 tests: tests_crypto_evp
 tests_crypto_evp:
 
 lint: lint_crypto_evp
 lint_crypto_evp:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+	lint -DLINT $(INCLUDES_crypto_evp) $(SRC_crypto_evp)>fluff
 
 dclean: dclean_crypto_evp
 dclean_crypto_evp:
@@ -99,3 +99,5 @@ clean: clean_crypto_evp
 clean_crypto_evp:
 	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
+.c.o:
+	$(CC) $(CFLAGS_crypto_evp) $(CPPFLAGS) -c -o $@ $<

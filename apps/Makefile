@@ -2,27 +2,27 @@
 #  apps/Makefile
 #
 
-DIR=		apps
-INCLUDES=	-I$(TOP) -I../include $(KRB5_INCLUDES)
-RM=		rm -f
+DIR_apps=		apps
+INCLUDES_apps=	-I$(TOP_apps) -I../include $(KRB5_INCLUDES)
+RM_apps=		rm -f
 # KRB5 stuff
 
 
 
-CFLAGS= -DMONOLITH $(INCLUDES) $(CFLAG)
+CFLAGS_apps= -DMONOLITH $(INCLUDES_apps) $(CFLAG)
 
-GENERAL=Makefile makeapps.com install.com
+GENERAL_apps=Makefile makeapps.com install.com
 
-DLIBCRYPTO=../libcrypto.a
-DLIBSSL=../libssl.a
-LIBCRYPTO=-L.. -lcrypto
-LIBSSL=-L.. -lssl
+DLIBCRYPTO_apps=../libcrypto.a
+DLIBSSL_apps=../libssl.a
+LIBCRYPTO_apps=-L.. -lcrypto
+LIBSSL_apps=-L.. -lssl
 
 PROGRAM= openssl
 
 SCRIPTS=CA.sh CA.pl tsget
 
-EXE= $(PROGRAM)$(EXE_EXT)
+EXE_apps= $(PROGRAM)$(EXE_EXT)
 
 E_EXE=	verify asn1pars req dgst dh dhparam enc passwd gendh errstr \
 	ca crl rsa rsautl dsa dsaparam ec ecparam \
@@ -30,7 +30,7 @@ E_EXE=	verify asn1pars req dgst dh dhparam enc passwd gendh errstr \
 	s_time version pkcs7 cms crl2pkcs7 sess_id ciphers nseq pkcs12 \
 	pkcs8 pkey pkeyparam pkeyutl spkac smime rand engine ocsp prime ts srp
 
-PROGS= $(PROGRAM).c
+PROGS_apps= $(PROGRAM).c
 
 A_OBJ=apps.o
 A_SRC=apps.c
@@ -55,45 +55,45 @@ E_SRC=	verify.c asn1pars.c req.c dgst.c dh.c enc.c passwd.c gendh.c errstr.c ca.
 	ciphers.c nseq.c pkcs12.c pkcs8.c pkey.c pkeyparam.c pkeyutl.c \
 	spkac.c smime.c cms.c rand.c engine.c ocsp.c prime.c ts.c srp.c
 
-SRC=$(E_SRC)
+SRC_apps=$(E_SRC)
 
-EXHEADER=
-HEADER=	apps.h progs.h s_apps.h \
+EXHEADER_apps=
+HEADER_apps=	apps.h progs.h s_apps.h \
 	testdsa.h testrsa.h \
-	$(EXHEADER)
+	$(EXHEADER_apps)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_apps=    $(GENERAL_apps) $(SRC_apps) $(HEADER_apps)
 
 top: top_apps
 top_apps:
-	@(cd ..; $(MAKE) DIRS=$(DIR) all)
+	@(cd ..; $(MAKE) DIRS=$(DIR_apps) all)
 
 all: all_apps
 all_apps:	exe
 
 exe: exe_apps
-exe_apps:	$(EXE)
+exe_apps:	$(EXE_apps)
 
-req: sreq.o $(A_OBJ) $(DLIBCRYPTO)
+req: sreq.o $(A_OBJ) $(DLIBCRYPTO_apps)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
-	cat $(TOP)/configure.mk $(TOP)/Makefile.shared | $(MAKE) -f - \
+	cat $(TOP_apps)/configure.mk $(TOP_apps)/Makefile.shared | $(MAKE) -f - \
 		APPNAME=req OBJECTS="sreq.o $(A_OBJ) $(RAND_OBJ)" \
-		LIBDEPS="$(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS)" \
+		LIBDEPS="$(PEX_LIBS) $(LIBCRYPTO_apps) $(EX_LIBS)" \
 		link_app.$${shlib_target}
 
 sreq.o: req.c 
-	$(CC) -c $(INCLUDES) $(CFLAG) -o sreq.o req.c
+	$(CC) -c $(INCLUDES_apps) $(CFLAG) -o sreq.o req.c
 
 files: files_apps
 files_apps:
-	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
+	$(PERL) $(TOP_apps)/util/files.pl TOP=$(TOP_apps) Makefile >> $(TOP_apps)/MINFO
 
 install: install_apps
 install_apps:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@set -e; for i in $(EXE); \
+	@set -e; for i in $(EXE_apps); \
 	do  \
 	(echo installing $$i; \
 	 cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
@@ -113,7 +113,7 @@ install_apps:
 
 tags: tags_apps
 tags_apps:
-	ctags $(SRC)
+	ctags $(SRC_apps)
 
 tests: tests_apps
 tests_apps:
@@ -123,7 +123,7 @@ links_apps:
 
 lint: lint_apps
 lint_apps:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+	lint -DLINT $(INCLUDES_apps) $(SRC_apps)>fluff
 
 dclean: dclean_apps
 dclean_apps:
@@ -133,28 +133,30 @@ dclean_apps:
 
 clean: clean_apps
 clean_apps:
-	rm -f *.o *.d *.obj *.dll lib tags core .pure .nfs* *.old *.bak fluff $(EXE)
+	rm -f *.o *.d *.obj *.dll lib tags core .pure .nfs* *.old *.bak fluff $(EXE_apps)
 	rm -f req
 
-$(DLIBSSL):
+$(DLIBSSL_apps):
 	(cd ..; $(MAKE) DIRS=ssl all)
 
-$(DLIBCRYPTO):
+$(DLIBCRYPTO_apps):
 	(cd ..; $(MAKE) DIRS=crypto all)
 
-$(EXE): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
-	$(RM) $(EXE)
+$(EXE_apps): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO_apps) $(DLIBSSL_apps)
+	$(RM_apps) $(EXE_apps)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
-	LIBRARIES="$(LIBSSL) $(LIBKRB5) $(LIBCRYPTO)" ; \
-	cat $(TOP)/configure.mk $(TOP)/Makefile.shared | $(MAKE) -f - \
-		APPNAME=$(EXE) OBJECTS="$(PROGRAM).o $(E_OBJ)" \
+	LIBRARIES="$(LIBSSL_apps) $(LIBKRB5) $(LIBCRYPTO_apps)" ; \
+	cat $(TOP_apps)/configure.mk $(TOP_apps)/Makefile.shared | $(MAKE) -f - \
+		APPNAME=$(EXE_apps) OBJECTS="$(PROGRAM).o $(E_OBJ)" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
 	@(cd ..; $(MAKE) rehash)
 
 progs.h: progs.pl
 	$(PERL) progs.pl $(E_EXE) >progs.h
-	$(RM) $(PROGRAM).o
+	$(RM_apps) $(PROGRAM).o
 
+.c.o:
+	$(CC) $(CFLAGS_apps) $(CPPFLAGS) -c -o $@ $<

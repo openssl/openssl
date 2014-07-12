@@ -2,7 +2,7 @@
 # OpenSSL/crypto/pkcs7/GNUmakefile
 #
 
-TOP= ../..
-include $(TOP)/configure.mk
+TOP_crypto_pkcs7= ../..
+include $(TOP_crypto_pkcs7)/configure.mk
 include Makefile
--include $(SRC:.c=.d)
+-include $(SRC_crypto_pkcs7:.c=.d)

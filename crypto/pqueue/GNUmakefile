@@ -2,7 +2,7 @@
 # OpenSSL/crypto/pqueue/GNUmakefile
 #
 
-TOP= ../..
-include $(TOP)/configure.mk
+TOP_crypto_pqueue= ../..
+include $(TOP_crypto_pqueue)/configure.mk
 include Makefile
--include $(SRC:.c=.d)
+-include $(SRC_crypto_pqueue:.c=.d)

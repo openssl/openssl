@@ -2,9 +2,9 @@
 # OpenSSL/demos/sign/BSDmakefile
 #
 
-TOP= ../..
-.include "$(TOP)/configure.mk"
+TOP_demos_sign= ../..
+.include "$(TOP_demos_sign)/configure.mk"
 .include "Makefile"
-.for d in $(SRC:.c=.d)
+.for d in $(SRC_demos_sign:.c=.d)
 .sinclude "$(d)"
 .endfor

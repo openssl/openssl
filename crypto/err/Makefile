@@ -2,53 +2,53 @@
 # OpenSSL/crypto/err/Makefile
 #
 
-DIR=	err
-INCLUDES= -I.. -I$(TOP) -I../../include
+DIR_crypto_err=	err
+INCLUDES_crypto_err= -I.. -I$(TOP_crypto_err) -I../../include
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_crypto_err= $(INCLUDES_crypto_err) $(CFLAG)
 
-GENERAL=Makefile
-TEST=
-APPS=
+GENERAL_crypto_err=Makefile
+TEST_crypto_err=
+APPS_crypto_err=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=err.c err_all.c err_prn.c
-LIBOBJ=err.o err_all.o err_prn.o
+LIB_crypto_err=$(TOP_crypto_err)/libcrypto.a
+LIBSRC_crypto_err=err.c err_all.c err_prn.c
+LIBOBJ_crypto_err=err.o err_all.o err_prn.o
 
-SRC= $(LIBSRC)
+SRC_crypto_err= $(LIBSRC_crypto_err)
 
-EXHEADER= err.h
-HEADER=	$(EXHEADER)
+EXHEADER_crypto_err= err.h
+HEADER_crypto_err=	$(EXHEADER_crypto_err)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_err=    $(GENERAL_crypto_err) $(SRC_crypto_err) $(HEADER_crypto_err)
 
 top: top_crypto_err
 top_crypto_err:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
+	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_err) sub_all)
 
 all: all_crypto_err
 all_crypto_err:	lib
 
 lib: lib_crypto_err
-lib_crypto_err:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
+lib_crypto_err:	$(LIBOBJ_crypto_err)
+	$(ARX) $(LIB_crypto_err) $(LIBOBJ_crypto_err)
+	$(RANLIB) $(LIB_crypto_err) || echo Never mind.
 	@touch lib
 
 files: files_crypto_err
 files_crypto_err:
-	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
+	$(PERL) $(TOP_crypto_err)/util/files.pl TOP=$(TOP_crypto_err) Makefile >> $(TOP_crypto_err)/MINFO
 
 links: links_crypto_err
 links_crypto_err:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+	@$(PERL) $(TOP_crypto_err)/util/mklink.pl ../../include/openssl $(EXHEADER_crypto_err)
+	@$(PERL) $(TOP_crypto_err)/util/mklink.pl ../../test $(TEST_crypto_err)
+	@$(PERL) $(TOP_crypto_err)/util/mklink.pl ../../apps $(APPS_crypto_err)
 
 install: install_crypto_err
 install_crypto_err:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_err)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
@@ -56,14 +56,14 @@ install_crypto_err:
 
 tags: tags_crypto_err
 tags_crypto_err:
-	ctags $(SRC)
+	ctags $(SRC_crypto_err)
 
 tests: tests_crypto_err
 tests_crypto_err:
 
 lint: lint_crypto_err
 lint_crypto_err:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+	lint -DLINT $(INCLUDES_crypto_err) $(SRC_crypto_err)>fluff
 
 dclean: dclean_crypto_err
 dclean_crypto_err:
@@ -74,3 +74,5 @@ clean: clean_crypto_err
 clean_crypto_err:
 	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
+.c.o:
+	$(CC) $(CFLAGS_crypto_err) $(CPPFLAGS) -c -o $@ $<

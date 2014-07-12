@@ -2,7 +2,7 @@
 # OpenSSL/engines/GNUmakefile
 #
 
-TOP= ..
-include $(TOP)/configure.mk
+TOP_engines= ..
+include $(TOP_engines)/configure.mk
 include Makefile
--include $(SRC:.c=.d)
+-include $(SRC_engines:.c=.d)

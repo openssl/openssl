@@ -2,9 +2,9 @@
 # OpenSSL/crypto/pkcs12/BSDmakefile
 #
 
-TOP= ../..
-.include "$(TOP)/configure.mk"
+TOP_crypto_pkcs12= ../..
+.include "$(TOP_crypto_pkcs12)/configure.mk"
 .include "Makefile"
-.for d in $(SRC:.c=.d)
+.for d in $(SRC_crypto_pkcs12:.c=.d)
 .sinclude "$(d)"
 .endfor

@@ -2,53 +2,53 @@
 # OpenSSL/crypto/cmac/Makefile
 #
 
-DIR=	cmac
-INCLUDES=
+DIR_crypto_cmac=	cmac
+INCLUDES_crypto_cmac=
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_crypto_cmac= $(INCLUDES_crypto_cmac) $(CFLAG)
 
-GENERAL=Makefile
-TEST=
-APPS=
+GENERAL_crypto_cmac=Makefile
+TEST_crypto_cmac=
+APPS_crypto_cmac=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=cmac.c cm_ameth.c cm_pmeth.c
-LIBOBJ=cmac.o cm_ameth.o cm_pmeth.o
+LIB_crypto_cmac=$(TOP_crypto_cmac)/libcrypto.a
+LIBSRC_crypto_cmac=cmac.c cm_ameth.c cm_pmeth.c
+LIBOBJ_crypto_cmac=cmac.o cm_ameth.o cm_pmeth.o
 
-SRC= $(LIBSRC)
+SRC_crypto_cmac= $(LIBSRC_crypto_cmac)
 
-EXHEADER= cmac.h
-HEADER=	$(EXHEADER)
+EXHEADER_crypto_cmac= cmac.h
+HEADER_crypto_cmac=	$(EXHEADER_crypto_cmac)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_cmac=    $(GENERAL_crypto_cmac) $(SRC_crypto_cmac) $(HEADER_crypto_cmac)
 
 top: top_crypto_cmac
 top_crypto_cmac:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
+	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_cmac) sub_all)
 
 all: all_crypto_cmac
 all_crypto_cmac:	lib
 
 lib: lib_crypto_cmac
-lib_crypto_cmac:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
+lib_crypto_cmac:	$(LIBOBJ_crypto_cmac)
+	$(ARX) $(LIB_crypto_cmac) $(LIBOBJ_crypto_cmac)
+	$(RANLIB) $(LIB_crypto_cmac) || echo Never mind.
 	@touch lib
 
 files: files_crypto_cmac
 files_crypto_cmac:
-	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
+	$(PERL) $(TOP_crypto_cmac)/util/files.pl TOP=$(TOP_crypto_cmac) Makefile >> $(TOP_crypto_cmac)/MINFO
 
 links: links_crypto_cmac
 links_crypto_cmac:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+	@$(PERL) $(TOP_crypto_cmac)/util/mklink.pl ../../include/openssl $(EXHEADER_crypto_cmac)
+	@$(PERL) $(TOP_crypto_cmac)/util/mklink.pl ../../test $(TEST_crypto_cmac)
+	@$(PERL) $(TOP_crypto_cmac)/util/mklink.pl ../../apps $(APPS_crypto_cmac)
 
 install: install_crypto_cmac
 install_crypto_cmac:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_cmac)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
@@ -56,14 +56,14 @@ install_crypto_cmac:
 
 tags: tags_crypto_cmac
 tags_crypto_cmac:
-	ctags $(SRC)
+	ctags $(SRC_crypto_cmac)
 
 tests: tests_crypto_cmac
 tests_crypto_cmac:
 
 lint: lint_crypto_cmac
 lint_crypto_cmac:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+	lint -DLINT $(INCLUDES_crypto_cmac) $(SRC_crypto_cmac)>fluff
 
 dclean: dclean_crypto_cmac
 dclean_crypto_cmac:
@@ -74,3 +74,5 @@ clean: clean_crypto_cmac
 clean_crypto_cmac:
 	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
+.c.o:
+	$(CC) $(CFLAGS_crypto_cmac) $(CPPFLAGS) -c -o $@ $<

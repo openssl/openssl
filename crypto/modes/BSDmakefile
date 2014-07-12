@@ -2,9 +2,9 @@
 # OpenSSL/crypto/modes/BSDmakefile
 #
 
-TOP= ../..
-.include "$(TOP)/configure.mk"
+TOP_crypto_modes= ../..
+.include "$(TOP_crypto_modes)/configure.mk"
 .include "Makefile"
-.for d in $(SRC:.c=.d)
+.for d in $(SRC_crypto_modes:.c=.d)
 .sinclude "$(d)"
 .endfor

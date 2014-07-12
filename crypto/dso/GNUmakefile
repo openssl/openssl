@@ -2,7 +2,7 @@
 # OpenSSL/crypto/dso/GNUmakefile
 #
 
-TOP= ../..
-include $(TOP)/configure.mk
+TOP_crypto_dso= ../..
+include $(TOP_crypto_dso)/configure.mk
 include Makefile
--include $(SRC:.c=.d)
+-include $(SRC_crypto_dso:.c=.d)

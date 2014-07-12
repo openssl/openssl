@@ -2,7 +2,7 @@
 # OpenSSL/fips/hmac/GNUmakefile
 #
 
-TOP= ../..
-include $(TOP)/configure.mk
+TOP_fips_hmac= ../..
+include $(TOP_fips_hmac)/configure.mk
 include Makefile
--include $(SRC:.c=.d)
+-include $(SRC_fips_hmac:.c=.d)

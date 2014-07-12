@@ -2,7 +2,7 @@
 # OpenSSL/crypto/cms/GNUmakefile
 #
 
-TOP= ../..
-include $(TOP)/configure.mk
+TOP_crypto_cms= ../..
+include $(TOP_crypto_cms)/configure.mk
 include Makefile
--include $(SRC:.c=.d)
+-include $(SRC_crypto_cms:.c=.d)

@@ -2,7 +2,7 @@
 # OpenSSL/apps/GNUmakefile
 #
 
-TOP= ..
-include $(TOP)/configure.mk
+TOP_apps= ..
+include $(TOP_apps)/configure.mk
 include Makefile
--include $(SRC:.c=.d)
+-include $(SRC_apps:.c=.d)

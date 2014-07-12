@@ -2,53 +2,53 @@
 # OpenSSL/crypto/txt_db/Makefile
 #
 
-DIR=	txt_db
-INCLUDES=
+DIR_crypto_txt_db=	txt_db
+INCLUDES_crypto_txt_db=
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_crypto_txt_db= $(INCLUDES_crypto_txt_db) $(CFLAG)
 
-GENERAL=Makefile
-TEST=
-APPS=
+GENERAL_crypto_txt_db=Makefile
+TEST_crypto_txt_db=
+APPS_crypto_txt_db=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=txt_db.c
-LIBOBJ=txt_db.o
+LIB_crypto_txt_db=$(TOP_crypto_txt_db)/libcrypto.a
+LIBSRC_crypto_txt_db=txt_db.c
+LIBOBJ_crypto_txt_db=txt_db.o
 
-SRC= $(LIBSRC)
+SRC_crypto_txt_db= $(LIBSRC_crypto_txt_db)
 
-EXHEADER= txt_db.h
-HEADER=	$(EXHEADER)
+EXHEADER_crypto_txt_db= txt_db.h
+HEADER_crypto_txt_db=	$(EXHEADER_crypto_txt_db)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_txt_db=    $(GENERAL_crypto_txt_db) $(SRC_crypto_txt_db) $(HEADER_crypto_txt_db)
 
 top: top_crypto_txt_db
 top_crypto_txt_db:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
+	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_txt_db) sub_all)
 
 all: all_crypto_txt_db
 all_crypto_txt_db:	lib
 
 lib: lib_crypto_txt_db
-lib_crypto_txt_db:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
+lib_crypto_txt_db:	$(LIBOBJ_crypto_txt_db)
+	$(ARX) $(LIB_crypto_txt_db) $(LIBOBJ_crypto_txt_db)
+	$(RANLIB) $(LIB_crypto_txt_db) || echo Never mind.
 	@touch lib
 
 files: files_crypto_txt_db
 files_crypto_txt_db:
-	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
+	$(PERL) $(TOP_crypto_txt_db)/util/files.pl TOP=$(TOP_crypto_txt_db) Makefile >> $(TOP_crypto_txt_db)/MINFO
 
 links: links_crypto_txt_db
 links_crypto_txt_db:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+	@$(PERL) $(TOP_crypto_txt_db)/util/mklink.pl ../../include/openssl $(EXHEADER_crypto_txt_db)
+	@$(PERL) $(TOP_crypto_txt_db)/util/mklink.pl ../../test $(TEST_crypto_txt_db)
+	@$(PERL) $(TOP_crypto_txt_db)/util/mklink.pl ../../apps $(APPS_crypto_txt_db)
 
 install: install_crypto_txt_db
 install_crypto_txt_db:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_txt_db)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
@@ -56,14 +56,14 @@ install_crypto_txt_db:
 
 tags: tags_crypto_txt_db
 tags_crypto_txt_db:
-	ctags $(SRC)
+	ctags $(SRC_crypto_txt_db)
 
 tests: tests_crypto_txt_db
 tests_crypto_txt_db:
 
 lint: lint_crypto_txt_db
 lint_crypto_txt_db:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+	lint -DLINT $(INCLUDES_crypto_txt_db) $(SRC_crypto_txt_db)>fluff
 
 dclean: dclean_crypto_txt_db
 dclean_crypto_txt_db:
@@ -74,3 +74,5 @@ clean: clean_crypto_txt_db
 clean_crypto_txt_db:
 	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
+.c.o:
+	$(CC) $(CFLAGS_crypto_txt_db) $(CPPFLAGS) -c -o $@ $<

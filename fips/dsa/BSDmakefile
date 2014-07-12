@@ -2,9 +2,9 @@
 # OpenSSL/fips/dsa/BSDmakefile
 #
 
-TOP= ../..
-.include "$(TOP)/configure.mk"
+TOP_fips_dsa= ../..
+.include "$(TOP_fips_dsa)/configure.mk"
 .include "Makefile"
-.for d in $(SRC:.c=.d)
+.for d in $(SRC_fips_dsa:.c=.d)
 .sinclude "$(d)"
 .endfor

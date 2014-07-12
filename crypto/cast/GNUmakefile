@@ -2,7 +2,7 @@
 # OpenSSL/crypto/cast/GNUmakefile
 #
 
-TOP= ../..
-include $(TOP)/configure.mk
+TOP_crypto_cast= ../..
+include $(TOP_crypto_cast)/configure.mk
 include Makefile
--include $(SRC:.c=.d)
+-include $(SRC_crypto_cast:.c=.d)

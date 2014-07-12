@@ -2,7 +2,7 @@
 # OpenSSL/demos/engines/ibmca/GNUmakefile
 #
 
-TOP= ../../..
-include $(TOP)/configure.mk
+TOP_demos_engines_ibmca= ../../..
+include $(TOP_demos_engines_ibmca)/configure.mk
 include Makefile
--include $(SRC:.c=.d)
+-include $(SRC_demos_engines_ibmca:.c=.d)

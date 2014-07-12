@@ -103,11 +103,11 @@ EXTRACFLAGS=-DTLS_APP=\"test.h\"
 #
 # The rest shouldn't need to be touched.
 #
-LDFLAGS=$(SYSLIBS) $(OPENSSLLIBS)
-INCLUDES=$(OPENSSLINCLUDES)
-CFLAGS=$(SYSCFLAGS) $(EXTRACFLAGS) $(INCLUDES)
+LDFLAGS_demos_easy_tls=$(SYSLIBS) $(OPENSSLLIBS)
+INCLUDES_demos_easy_tls=$(OPENSSLINCLUDES)
+CFLAGS_demos_easy_tls=$(SYSCFLAGS) $(EXTRACFLAGS) $(INCLUDES_demos_easy_tls)
 
-OBJS=easy-tls.o test.o
+OBJS_demos_easy_tls=easy-tls.o test.o
 
 clean: clean_demos_easy_tls
 clean_demos_easy_tls:
@@ -117,8 +117,11 @@ clean_demos_easy_tls:
 	@rm -f core
 
 test: test_demos_easy_tls
-test_demos_easy_tls: $(OBJS)
-	$(CC) $(OBJS) $(LDFLAGS) -o test
+test_demos_easy_tls: $(OBJS_demos_easy_tls)
+	$(CC) $(OBJS_demos_easy_tls) $(LDFLAGS_demos_easy_tls) -o test
 
 test.o: $(HEADERS)
 easy-tls.o: $(HEADERS)
+
+.c.o:
+	$(CC) $(CFLAGS_demos_easy_tls) $(CPPFLAGS) -c -o $@ $<

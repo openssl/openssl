@@ -2,9 +2,9 @@
 # OpenSSL/demos/engines/ibmca/BSDmakefile
 #
 
-TOP= ../../..
-.include "$(TOP)/configure.mk"
+TOP_demos_engines_ibmca= ../../..
+.include "$(TOP_demos_engines_ibmca)/configure.mk"
 .include "Makefile"
-.for d in $(SRC:.c=.d)
+.for d in $(SRC_demos_engines_ibmca:.c=.d)
 .sinclude "$(d)"
 .endfor

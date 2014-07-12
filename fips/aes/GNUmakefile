@@ -2,7 +2,7 @@
 # OpenSSL/fips/aes/GNUmakefile
 #
 
-TOP= ../..
-include $(TOP)/configure.mk
+TOP_fips_aes= ../..
+include $(TOP_fips_aes)/configure.mk
 include Makefile
--include $(SRC:.c=.d)
+-include $(SRC_fips_aes:.c=.d)

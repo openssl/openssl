@@ -2,50 +2,49 @@
 # OpenSSL/fips/cmac/Makefile
 #
 
-DIR=	cmac
-INCLUDES=
+DIR_fips_cmac=	cmac
+INCLUDES_fips_cmac=
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_fips_cmac= $(INCLUDES_fips_cmac) $(CFLAG)
 
-GENERAL=Makefile
-TEST=fips_cmactest.c
-APPS=
+GENERAL_fips_cmac=Makefile
+TEST_fips_cmac=fips_cmactest.c
+APPS_fips_cmac=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC= fips_cmac_selftest.c
-LIBOBJ= fips_cmac_selftest.o
+LIB_fips_cmac=$(TOP_fips_cmac)/libcrypto.a
+LIBSRC_fips_cmac= fips_cmac_selftest.c
+LIBOBJ_fips_cmac= fips_cmac_selftest.o
 
-SRC= $(LIBSRC)
+SRC_fips_cmac= $(LIBSRC_fips_cmac)
 
-EXHEADER=
-HEADER=	$(EXHEADER)
+EXHEADER_fips_cmac=
+HEADER_fips_cmac=	$(EXHEADER_fips_cmac)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_fips_cmac=    $(GENERAL_fips_cmac) $(SRC_fips_cmac) $(HEADER_fips_cmac)
 
 top: top_fips_cmac
 top_fips_cmac:
-	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) sub_all)
+	(cd $(TOP_fips_cmac); $(MAKE) DIRS=fips FDIRS=$(DIR_fips_cmac) sub_all)
 
 all: all_fips_cmac
 all_fips_cmac:	lib
 
-lib: lib_fips_cmac
-lib_fips_cmac:	$(LIBOBJ)
-	@echo $(LIBOBJ) > lib
+lib:	$(LIBOBJ_fips_cmac)
+	@echo $(LIBOBJ_fips_cmac) > lib
 
 files: files_fips_cmac
 files_fips_cmac:
-	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
+	$(PERL) $(TOP_fips_cmac)/util/files.pl TOP=$(TOP_fips_cmac) Makefile >> $(TOP_fips_cmac)/MINFO
 
 links: links_fips_cmac
 links_fips_cmac:
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/apps $(APPS)
+	@$(PERL) $(TOP_fips_cmac)/util/mklink.pl $(TOP_fips_cmac)/include/openssl $(EXHEADER_fips_cmac)
+	@$(PERL) $(TOP_fips_cmac)/util/mklink.pl $(TOP_fips_cmac)/test $(TEST_fips_cmac)
+	@$(PERL) $(TOP_fips_cmac)/util/mklink.pl $(TOP_fips_cmac)/apps $(APPS_fips_cmac)
 
 install: install_fips_cmac
 install_fips_cmac:
-	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
+	@headerlist="$(EXHEADER_fips_cmac)"; for i in $$headerlist; \
 	do \
 	  (cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	  chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
@@ -53,24 +52,24 @@ install_fips_cmac:
 
 tags: tags_fips_cmac
 tags_fips_cmac:
-	ctags $(SRC)
+	ctags $(SRC_fips_cmac)
 
 tests: tests_fips_cmac
 tests_fips_cmac:
 
-Q=../testvectors/cmac/req
-A=../testvectors/cmac/rsp
+Q_fips_cmac=../testvectors/cmac/req
+A_fips_cmac=../testvectors/cmac/rsp
 
 fips_test: fips_test_fips_cmac
 fips_test_fips_cmac:
-	-rm -rf $(A)
-	mkdir $(A)
-	if [ -f $(Q)/CMACGenAES256.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_cmactest -g < $(Q)/CMACGenAES256.req > $(A)/CMACGenAES256.rsp; fi
-	if [ -f $(Q)/CMACVerAES256.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_cmactest -v < $(Q)/CMACVerAES256.req > $(A)/CMACVerAES256.rsp; fi
+	-rm -rf $(A_fips_cmac)
+	mkdir $(A_fips_cmac)
+	if [ -f $(Q_fips_cmac)/CMACGenAES256.req ]; then $(TOP_fips_cmac)/util/shlib_wrap.sh $(TOP_fips_cmac)/test/fips_cmactest -g < $(Q_fips_cmac)/CMACGenAES256.req > $(A_fips_cmac)/CMACGenAES256.rsp; fi
+	if [ -f $(Q_fips_cmac)/CMACVerAES256.req ]; then $(TOP_fips_cmac)/util/shlib_wrap.sh $(TOP_fips_cmac)/test/fips_cmactest -v < $(Q_fips_cmac)/CMACVerAES256.req > $(A_fips_cmac)/CMACVerAES256.rsp; fi
 
 lint: lint_fips_cmac
 lint_fips_cmac:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+	lint -DLINT $(INCLUDES_fips_cmac) $(SRC_fips_cmac)>fluff
 
 dclean: dclean_fips_cmac
 dclean_fips_cmac:
@@ -80,3 +79,6 @@ dclean_fips_cmac:
 clean: clean_fips_cmac
 clean_fips_cmac:
 	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
+
+.c.o:
+	$(CC) $(CFLAGS_fips_cmac) $(CPPFLAGS) -c -o $@ $<

@@ -2,23 +2,23 @@
 # test/Makefile
 #
 
-DIR=		test
-INCLUDES=	-I$(TOP) -I../include $(KRB5_INCLUDES) -I$(TOP)/fips
+DIR_test=		test
+INCLUDES_test=	-I$(TOP_test) -I../include $(KRB5_INCLUDES) -I$(TOP_test)/fips
 # KRB5 stuff
-TEST=		fips_algvs.c igetest.c
+TEST_test=		fips_algvs.c igetest.c
 
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_test= $(INCLUDES_test) $(CFLAG)
 
-GENERAL=Makefile maketests.com \
+GENERAL_test=Makefile maketests.com \
 	tests.com testenc.com tx509.com trsa.com tcrl.com tsid.com treq.com \
 	tpkcs7.com tpkcs7d.com tverify.com testgen.com testss.com testssl.com \
 	testca.com VMSca-response.1 VMSca-response.2
 
-DLIBCRYPTO= ../libcrypto.a
-DLIBSSL= ../libssl.a
-LIBCRYPTO= -L.. -lcrypto
-LIBSSL= -L.. -lssl
+DLIBCRYPTO_test= ../libcrypto.a
+DLIBSSL_test= ../libssl.a
+LIBCRYPTO_test= -L.. -lcrypto
+LIBSSL_test= -L.. -lssl
 LIBFIPS= -L.. -lfips
 
 BNTEST=		bntest
@@ -80,9 +80,9 @@ FIPS_ALGVS=	fips_algvs
 HEARTBEATTEST=  heartbeat_test
 CONSTTIMETEST=  constant_time_test
 
-TESTS=		alltests
+TESTS_test=		alltests
 
-EXE=	$(BNTEST)$(EXE_EXT) $(ECTEST)$(EXE_EXT)  $(ECDSATEST)$(EXE_EXT) $(ECDHTEST)$(EXE_EXT) $(IDEATEST)$(EXE_EXT) \
+EXE_test=	$(BNTEST)$(EXE_EXT) $(ECTEST)$(EXE_EXT)  $(ECDSATEST)$(EXE_EXT) $(ECDHTEST)$(EXE_EXT) $(IDEATEST)$(EXE_EXT) \
 	$(MD2TEST)$(EXE_EXT)  $(MD4TEST)$(EXE_EXT) $(MD5TEST)$(EXE_EXT) $(HMACTEST)$(EXE_EXT) $(WPTEST)$(EXE_EXT) \
 	$(RC2TEST)$(EXE_EXT) $(RC4TEST)$(EXE_EXT) $(RC5TEST)$(EXE_EXT) \
 	$(DESTEST)$(EXE_EXT) $(SHATEST)$(EXE_EXT) $(SHA1TEST)$(EXE_EXT) $(SHA256TEST)$(EXE_EXT) $(SHA512TEST)$(EXE_EXT) \
@@ -107,7 +107,7 @@ FIPSEXE=$(FIPS_SHATEST)$(EXE_EXT) $(FIPS_DESTEST)$(EXE_EXT) \
 
 # $(METHTEST)$(EXE_EXT)
 
-OBJ=	$(BNTEST).o $(ECTEST).o  $(ECDSATEST).o $(ECDHTEST).o $(IDEATEST).o \
+OBJ_test=	$(BNTEST).o $(ECTEST).o  $(ECDSATEST).o $(ECDHTEST).o $(IDEATEST).o \
 	$(MD2TEST).o $(MD4TEST).o $(MD5TEST).o \
 	$(HMACTEST).o $(WPTEST).o \
 	$(RC2TEST).o $(RC4TEST).o $(RC5TEST).o \
@@ -125,7 +125,7 @@ OBJ=	$(BNTEST).o $(ECTEST).o  $(ECDSATEST).o $(ECDHTEST).o $(IDEATEST).o \
 	$(GOST2814789TEST).o $(HEARTBEATTEST).o $(P5_CRPT2_TEST).o \
 	$(CONSTTIMETEST).o testutil.o
 
-SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
+SRC_test=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(MD2TEST).c  $(MD4TEST).c $(MD5TEST).c \
 	$(HMACTEST).c $(WPTEST).c \
 	$(RC2TEST).c $(RC4TEST).c $(RC5TEST).c \
@@ -142,20 +142,20 @@ SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(GOST2814789TEST).c $(HEARTBEATTEST).c $(P5_CRPT2_TEST).c \
 	$(CONSTTIMETEST).c testutil.c
 
-EXHEADER= 
-HEADER=	testutil.h $(EXHEADER)
+EXHEADER_test= 
+HEADER_test=	testutil.h $(EXHEADER_test)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_test=    $(GENERAL_test) $(SRC_test) $(HEADER_test)
 
 top: top_test
 top_test:
-	(cd ..; $(MAKE) DIRS=$(DIR) TESTS=$(TESTS) all)
+	(cd ..; $(MAKE) DIRS=$(DIR_test) TESTS=$(TESTS_test) all)
 
 all: all_test
 all_test:	exe
 
 exe: exe_test
-exe_test:	$(EXE) $(FIPSEXE) dummytest$(EXE_EXT)
+exe_test:	$(EXE_test) $(FIPSEXE) dummytest$(EXE_EXT)
 
 fipsexe:	$(FIPSEXE)
 
@@ -163,14 +163,14 @@ fipsalgvs:	$(FIPS_ALGVS)
 
 files: files_test
 files_test:
-	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
+	$(PERL) $(TOP_test)/util/files.pl TOP=$(TOP_test) Makefile >> $(TOP_test)/MINFO
 
 links: links_test
 links_test:
 
-generate: $(SRC)
-$(SRC):
-	@sh $(TOP)/util/point.sh dummytest.c $@
+generate: $(SRC_test)
+$(SRC_test):
+	@sh $(TOP_test)/util/point.sh dummytest.c $@
 
 errors: errors_test
 errors_test:
@@ -180,10 +180,10 @@ install_test:
 
 tags: tags_test
 tags_test:
-	ctags $(SRC)
+	ctags $(SRC_test)
 
 tests: tests_test
-tests_test:	exe apps $(TESTS)
+tests_test:	exe apps $(TESTS_test)
 
 apps:
 	@(cd ..; $(MAKE) DIRS=apps all)
@@ -397,83 +397,83 @@ test_constant_time: $(CONSTTIMETEST)$(EXE_EXT)
 
 lint: lint_test
 lint_test:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+	lint -DLINT $(INCLUDES_test) $(SRC_test)>fluff
 
 dclean: dclean_test
 dclean_test:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
-	rm -f $(SRC) $(SHA256TEST).c $(SHA512TEST).c evptests.txt newkey.pem testkey.pem \
+	rm -f $(SRC_test) $(SHA256TEST).c $(SHA512TEST).c evptests.txt newkey.pem testkey.pem \
 			testreq.pem
 
 clean: clean_test
 clean_test:
-	rm -f .rnd tmp.bntest tmp.bctest *.o *.d *.obj *.dll lib tags core .pure .nfs* *.old *.bak fluff $(EXE) $(FIPSEXE) *.ss *.srl log dummytest
+	rm -f .rnd tmp.bntest tmp.bctest *.o *.d *.obj *.dll lib tags core .pure .nfs* *.old *.bak fluff $(EXE_test) $(FIPSEXE) *.ss *.srl log dummytest
 
-$(DLIBSSL):
+$(DLIBSSL_test):
 	(cd ..; $(MAKE) DIRS=ssl all)
 
-$(DLIBCRYPTO):
+$(DLIBCRYPTO_test):
 	(cd ..; $(MAKE) DIRS=crypto all)
 
-BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
+BUILD_CMD_test=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
-	LIBRARIES="$(LIBSSL) $(LIBCRYPTO) $(LIBKRB5)"; \
-	cat $(TOP)/configure.mk $(TOP)/Makefile.shared | $(MAKE) -f - \
+	LIBRARIES="$(LIBSSL_test) $(LIBCRYPTO_test) $(LIBKRB5)"; \
+	cat $(TOP_test)/configure.mk $(TOP_test)/Makefile.shared | $(MAKE) -f - \
 		APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o $$testutil" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
 
 BUILD_CMD_STATIC=shlib_target=; \
-	LIBRARIES="$(DLIBSSL) $(DLIBCRYPTO) $(LIBKRB5)"; \
-	cat $(TOP)/configure.mk $(TOP)/Makefile.shared | $(MAKE) -f - \
+	LIBRARIES="$(DLIBSSL_test) $(DLIBCRYPTO_test) $(LIBKRB5)"; \
+	cat $(TOP_test)/configure.mk $(TOP_test)/Makefile.shared | $(MAKE) -f - \
 		APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o $$testutil" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
 
-$(RSATEST)$(EXE_EXT): $(RSATEST).o $(DLIBCRYPTO)
-	@target=$(RSATEST); $(BUILD_CMD)
+$(RSATEST)$(EXE_EXT): $(RSATEST).o $(DLIBCRYPTO_test)
+	@target=$(RSATEST); $(BUILD_CMD_test)
 
-$(BNTEST)$(EXE_EXT): $(BNTEST).o $(DLIBCRYPTO)
-	@target=$(BNTEST); $(BUILD_CMD)
+$(BNTEST)$(EXE_EXT): $(BNTEST).o $(DLIBCRYPTO_test)
+	@target=$(BNTEST); $(BUILD_CMD_test)
 
-$(ECTEST)$(EXE_EXT): $(ECTEST).o $(DLIBCRYPTO)
-	@target=$(ECTEST); $(BUILD_CMD)
+$(ECTEST)$(EXE_EXT): $(ECTEST).o $(DLIBCRYPTO_test)
+	@target=$(ECTEST); $(BUILD_CMD_test)
 
-$(EXPTEST)$(EXE_EXT): $(EXPTEST).o $(DLIBCRYPTO)
-	@target=$(EXPTEST); $(BUILD_CMD)
+$(EXPTEST)$(EXE_EXT): $(EXPTEST).o $(DLIBCRYPTO_test)
+	@target=$(EXPTEST); $(BUILD_CMD_test)
 
-$(IDEATEST)$(EXE_EXT): $(IDEATEST).o $(DLIBCRYPTO)
-	@target=$(IDEATEST); $(BUILD_CMD)
+$(IDEATEST)$(EXE_EXT): $(IDEATEST).o $(DLIBCRYPTO_test)
+	@target=$(IDEATEST); $(BUILD_CMD_test)
 
-$(MD2TEST)$(EXE_EXT): $(MD2TEST).o $(DLIBCRYPTO)
-	@target=$(MD2TEST); $(BUILD_CMD)
+$(MD2TEST)$(EXE_EXT): $(MD2TEST).o $(DLIBCRYPTO_test)
+	@target=$(MD2TEST); $(BUILD_CMD_test)
 
-$(SHATEST)$(EXE_EXT): $(SHATEST).o $(DLIBCRYPTO)
-	@target=$(SHATEST); $(BUILD_CMD)
+$(SHATEST)$(EXE_EXT): $(SHATEST).o $(DLIBCRYPTO_test)
+	@target=$(SHATEST); $(BUILD_CMD_test)
 
-$(SHA1TEST)$(EXE_EXT): $(SHA1TEST).o $(DLIBCRYPTO)
-	@target=$(SHA1TEST); $(BUILD_CMD)
+$(SHA1TEST)$(EXE_EXT): $(SHA1TEST).o $(DLIBCRYPTO_test)
+	@target=$(SHA1TEST); $(BUILD_CMD_test)
 
-$(SHA256TEST)$(EXE_EXT): $(SHA256TEST).o $(DLIBCRYPTO)
-	@target=$(SHA256TEST); $(BUILD_CMD)
+$(SHA256TEST)$(EXE_EXT): $(SHA256TEST).o $(DLIBCRYPTO_test)
+	@target=$(SHA256TEST); $(BUILD_CMD_test)
 
-$(SHA512TEST)$(EXE_EXT): $(SHA512TEST).o $(DLIBCRYPTO)
-	@target=$(SHA512TEST); $(BUILD_CMD)
+$(SHA512TEST)$(EXE_EXT): $(SHA512TEST).o $(DLIBCRYPTO_test)
+	@target=$(SHA512TEST); $(BUILD_CMD_test)
 
 FIPS_BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
 	if [ "$(FIPSCANLIB)" = "libfips" ]; then \
-		LIBRARIES="-L$(TOP) -lfips"; \
+		LIBRARIES="-L$(TOP_test) -lfips"; \
 	elif [ -n "$(FIPSCANLIB)" ]; then \
-		FIPSLD_CC="$(CC)"; CC=$(TOP)/fips/fipsld; export CC FIPSLD_CC; \
-		LIBRARIES="$${FIPSLIBDIR:-$(TOP)/fips/}fipscanister.o"; \
+		FIPSLD_CC="$(CC)"; CC=$(TOP_test)/fips/fipsld; export CC FIPSLD_CC; \
+		LIBRARIES="$${FIPSLIBDIR:-$(TOP_test)/fips/}fipscanister.o"; \
 	else \
-		LIBRARIES="$(LIBCRYPTO)"; \
+		LIBRARIES="$(LIBCRYPTO_test)"; \
 	fi; \
-	cat $(TOP)/configure.mk $(TOP)/Makefile.shared | $(MAKE) -f - \
+	cat $(TOP_test)/configure.mk $(TOP_test)/Makefile.shared | $(MAKE) -f - \
 		CC="$(CC)" APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
@@ -481,169 +481,172 @@ FIPS_BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 FIPS_CRYPTO_BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
-	LIBRARIES="$(LIBSSL) $(LIBCRYPTO) $(LIBKRB5)"; \
+	LIBRARIES="$(LIBSSL_test) $(LIBCRYPTO_test) $(LIBKRB5)"; \
 	if [ -z "$(SHARED_LIBS)" -a -n "$(FIPSCANLIB)" ] ; then \
-		FIPSLD_CC="$(CC)"; CC=$(TOP)/fips/fipsld; export CC FIPSLD_CC; \
+		FIPSLD_CC="$(CC)"; CC=$(TOP_test)/fips/fipsld; export CC FIPSLD_CC; \
 	fi; \
 	[ "$(FIPSCANLIB)" = "libfips" ] && LIBRARIES="$$LIBRARIES -lfips"; \
-	cat $(TOP)/configure.mk $(TOP)/Makefile.shared | $(MAKE) -f - \
+	cat $(TOP_test)/configure.mk $(TOP_test)/Makefile.shared | $(MAKE) -f - \
 		CC="$(CC)" APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
 
-$(FIPS_SHATEST)$(EXE_EXT): $(FIPS_SHATEST).o $(DLIBCRYPTO)
+$(FIPS_SHATEST)$(EXE_EXT): $(FIPS_SHATEST).o $(DLIBCRYPTO_test)
 	@target=$(FIPS_SHATEST); $(FIPS_BUILD_CMD)
 
-$(FIPS_AESTEST)$(EXE_EXT): $(FIPS_AESTEST).o $(DLIBCRYPTO)
+$(FIPS_AESTEST)$(EXE_EXT): $(FIPS_AESTEST).o $(DLIBCRYPTO_test)
 	@target=$(FIPS_AESTEST); $(FIPS_BUILD_CMD)
 
-$(FIPS_GCMTEST)$(EXE_EXT): $(FIPS_GCMTEST).o $(DLIBCRYPTO)
+$(FIPS_GCMTEST)$(EXE_EXT): $(FIPS_GCMTEST).o $(DLIBCRYPTO_test)
 	@target=$(FIPS_GCMTEST); $(FIPS_BUILD_CMD)
 
-$(FIPS_DESTEST)$(EXE_EXT): $(FIPS_DESTEST).o $(DLIBCRYPTO)
+$(FIPS_DESTEST)$(EXE_EXT): $(FIPS_DESTEST).o $(DLIBCRYPTO_test)
 	@target=$(FIPS_DESTEST); $(FIPS_BUILD_CMD)
 
-$(FIPS_HMACTEST)$(EXE_EXT): $(FIPS_HMACTEST).o $(DLIBCRYPTO)
+$(FIPS_HMACTEST)$(EXE_EXT): $(FIPS_HMACTEST).o $(DLIBCRYPTO_test)
 	@target=$(FIPS_HMACTEST); $(FIPS_BUILD_CMD)
 
-$(FIPS_RANDTEST)$(EXE_EXT): $(FIPS_RANDTEST).o $(DLIBCRYPTO)
+$(FIPS_RANDTEST)$(EXE_EXT): $(FIPS_RANDTEST).o $(DLIBCRYPTO_test)
 	@target=$(FIPS_RANDTEST); $(FIPS_BUILD_CMD)
 
-$(FIPS_RSAVTEST)$(EXE_EXT): $(FIPS_RSAVTEST).o $(DLIBCRYPTO)
+$(FIPS_RSAVTEST)$(EXE_EXT): $(FIPS_RSAVTEST).o $(DLIBCRYPTO_test)
 	@target=$(FIPS_RSAVTEST); $(FIPS_BUILD_CMD)
 
-$(FIPS_RSASTEST)$(EXE_EXT): $(FIPS_RSASTEST).o $(DLIBCRYPTO)
+$(FIPS_RSASTEST)$(EXE_EXT): $(FIPS_RSASTEST).o $(DLIBCRYPTO_test)
 	@target=$(FIPS_RSASTEST); $(FIPS_BUILD_CMD)
 
-$(FIPS_RSAGTEST)$(EXE_EXT): $(FIPS_RSAGTEST).o $(DLIBCRYPTO)
+$(FIPS_RSAGTEST)$(EXE_EXT): $(FIPS_RSAGTEST).o $(DLIBCRYPTO_test)
 	@target=$(FIPS_RSAGTEST); $(FIPS_BUILD_CMD)
 
-$(FIPS_DSATEST)$(EXE_EXT): $(FIPS_DSATEST).o $(DLIBCRYPTO)
+$(FIPS_DSATEST)$(EXE_EXT): $(FIPS_DSATEST).o $(DLIBCRYPTO_test)
 	@target=$(FIPS_DSATEST); $(FIPS_BUILD_CMD)
 
-$(FIPS_DSSVS)$(EXE_EXT): $(FIPS_DSSVS).o $(DLIBCRYPTO)
+$(FIPS_DSSVS)$(EXE_EXT): $(FIPS_DSSVS).o $(DLIBCRYPTO_test)
 	@target=$(FIPS_DSSVS); $(FIPS_BUILD_CMD)
 
-$(FIPS_DHVS)$(EXE_EXT): $(FIPS_DHVS).o $(DLIBCRYPTO)
+$(FIPS_DHVS)$(EXE_EXT): $(FIPS_DHVS).o $(DLIBCRYPTO_test)
 	@target=$(FIPS_DHVS); $(FIPS_BUILD_CMD)
 
-$(FIPS_ECDHVS)$(EXE_EXT): $(FIPS_ECDHVS).o $(DLIBCRYPTO)
+$(FIPS_ECDHVS)$(EXE_EXT): $(FIPS_ECDHVS).o $(DLIBCRYPTO_test)
 	@target=$(FIPS_ECDHVS); $(FIPS_BUILD_CMD)
 
-$(FIPS_ECDSAVS)$(EXE_EXT): $(FIPS_ECDSAVS).o $(DLIBCRYPTO)
+$(FIPS_ECDSAVS)$(EXE_EXT): $(FIPS_ECDSAVS).o $(DLIBCRYPTO_test)
 	@target=$(FIPS_ECDSAVS); $(FIPS_BUILD_CMD)
 
-$(FIPS_RNGVS)$(EXE_EXT): $(FIPS_RNGVS).o $(DLIBCRYPTO)
+$(FIPS_RNGVS)$(EXE_EXT): $(FIPS_RNGVS).o $(DLIBCRYPTO_test)
 	@target=$(FIPS_RNGVS); $(FIPS_BUILD_CMD)
 
-$(FIPS_DRBGVS)$(EXE_EXT): $(FIPS_DRBGVS).o $(DLIBCRYPTO)
+$(FIPS_DRBGVS)$(EXE_EXT): $(FIPS_DRBGVS).o $(DLIBCRYPTO_test)
 	@target=$(FIPS_DRBGVS); $(FIPS_BUILD_CMD)
 
-$(FIPS_TEST_SUITE)$(EXE_EXT): $(FIPS_TEST_SUITE).o $(DLIBCRYPTO)
+$(FIPS_TEST_SUITE)$(EXE_EXT): $(FIPS_TEST_SUITE).o $(DLIBCRYPTO_test)
 	@target=$(FIPS_TEST_SUITE); $(FIPS_BUILD_CMD)
 
-$(FIPS_CMACTEST)$(EXE_EXT): $(FIPS_CMACTEST).o $(DLIBCRYPTO)
+$(FIPS_CMACTEST)$(EXE_EXT): $(FIPS_CMACTEST).o $(DLIBCRYPTO_test)
 	@target=$(FIPS_CMACTEST); $(FIPS_BUILD_CMD)
 
-$(FIPS_ALGVS)$(EXE_EXT): $(FIPS_ALGVS).o $(DLIBCRYPTO)
+$(FIPS_ALGVS)$(EXE_EXT): $(FIPS_ALGVS).o $(DLIBCRYPTO_test)
 	@target=$(FIPS_ALGVS); $(FIPS_BUILD_CMD)
 
-$(RMDTEST)$(EXE_EXT): $(RMDTEST).o $(DLIBCRYPTO)
-	@target=$(RMDTEST); $(BUILD_CMD)
+$(RMDTEST)$(EXE_EXT): $(RMDTEST).o $(DLIBCRYPTO_test)
+	@target=$(RMDTEST); $(BUILD_CMD_test)
 
-$(MDC2TEST)$(EXE_EXT): $(MDC2TEST).o $(DLIBCRYPTO)
-	@target=$(MDC2TEST); $(BUILD_CMD)
+$(MDC2TEST)$(EXE_EXT): $(MDC2TEST).o $(DLIBCRYPTO_test)
+	@target=$(MDC2TEST); $(BUILD_CMD_test)
 
-$(MD4TEST)$(EXE_EXT): $(MD4TEST).o $(DLIBCRYPTO)
-	@target=$(MD4TEST); $(BUILD_CMD)
+$(MD4TEST)$(EXE_EXT): $(MD4TEST).o $(DLIBCRYPTO_test)
+	@target=$(MD4TEST); $(BUILD_CMD_test)
 
-$(MD5TEST)$(EXE_EXT): $(MD5TEST).o $(DLIBCRYPTO)
-	@target=$(MD5TEST); $(BUILD_CMD)
+$(MD5TEST)$(EXE_EXT): $(MD5TEST).o $(DLIBCRYPTO_test)
+	@target=$(MD5TEST); $(BUILD_CMD_test)
 
-$(HMACTEST)$(EXE_EXT): $(HMACTEST).o $(DLIBCRYPTO)
-	@target=$(HMACTEST); $(BUILD_CMD)
+$(HMACTEST)$(EXE_EXT): $(HMACTEST).o $(DLIBCRYPTO_test)
+	@target=$(HMACTEST); $(BUILD_CMD_test)
 
-$(WPTEST)$(EXE_EXT): $(WPTEST).o $(DLIBCRYPTO)
-	@target=$(WPTEST); $(BUILD_CMD)
+$(WPTEST)$(EXE_EXT): $(WPTEST).o $(DLIBCRYPTO_test)
+	@target=$(WPTEST); $(BUILD_CMD_test)
 
-$(RC2TEST)$(EXE_EXT): $(RC2TEST).o $(DLIBCRYPTO)
-	@target=$(RC2TEST); $(BUILD_CMD)
+$(RC2TEST)$(EXE_EXT): $(RC2TEST).o $(DLIBCRYPTO_test)
+	@target=$(RC2TEST); $(BUILD_CMD_test)
 
-$(BFTEST)$(EXE_EXT): $(BFTEST).o $(DLIBCRYPTO)
-	@target=$(BFTEST); $(BUILD_CMD)
+$(BFTEST)$(EXE_EXT): $(BFTEST).o $(DLIBCRYPTO_test)
+	@target=$(BFTEST); $(BUILD_CMD_test)
 
-$(CASTTEST)$(EXE_EXT): $(CASTTEST).o $(DLIBCRYPTO)
-	@target=$(CASTTEST); $(BUILD_CMD)
+$(CASTTEST)$(EXE_EXT): $(CASTTEST).o $(DLIBCRYPTO_test)
+	@target=$(CASTTEST); $(BUILD_CMD_test)
 
-$(RC4TEST)$(EXE_EXT): $(RC4TEST).o $(DLIBCRYPTO)
-	@target=$(RC4TEST); $(BUILD_CMD)
+$(RC4TEST)$(EXE_EXT): $(RC4TEST).o $(DLIBCRYPTO_test)
+	@target=$(RC4TEST); $(BUILD_CMD_test)
 
-$(RC5TEST)$(EXE_EXT): $(RC5TEST).o $(DLIBCRYPTO)
-	@target=$(RC5TEST); $(BUILD_CMD)
+$(RC5TEST)$(EXE_EXT): $(RC5TEST).o $(DLIBCRYPTO_test)
+	@target=$(RC5TEST); $(BUILD_CMD_test)
 
-$(DESTEST)$(EXE_EXT): $(DESTEST).o $(DLIBCRYPTO)
-	@target=$(DESTEST); $(BUILD_CMD)
+$(DESTEST)$(EXE_EXT): $(DESTEST).o $(DLIBCRYPTO_test)
+	@target=$(DESTEST); $(BUILD_CMD_test)
 
-$(GOST2814789TEST)$(EXE_EXT): $(GOST2814789TEST).o $(DLIBCRYPTO)
-	@target=$(GOST2814789TEST); $(BUILD_CMD)
+$(GOST2814789TEST)$(EXE_EXT): $(GOST2814789TEST).o $(DLIBCRYPTO_test)
+	@target=$(GOST2814789TEST); $(BUILD_CMD_test)
 
-$(RANDTEST)$(EXE_EXT): $(RANDTEST).o $(DLIBCRYPTO)
-	@target=$(RANDTEST); $(BUILD_CMD)
+$(RANDTEST)$(EXE_EXT): $(RANDTEST).o $(DLIBCRYPTO_test)
+	@target=$(RANDTEST); $(BUILD_CMD_test)
 
-$(DHTEST)$(EXE_EXT): $(DHTEST).o $(DLIBCRYPTO)
-	@target=$(DHTEST); $(BUILD_CMD)
+$(DHTEST)$(EXE_EXT): $(DHTEST).o $(DLIBCRYPTO_test)
+	@target=$(DHTEST); $(BUILD_CMD_test)
 
-$(DSATEST)$(EXE_EXT): $(DSATEST).o $(DLIBCRYPTO)
-	@target=$(DSATEST); $(BUILD_CMD)
+$(DSATEST)$(EXE_EXT): $(DSATEST).o $(DLIBCRYPTO_test)
+	@target=$(DSATEST); $(BUILD_CMD_test)
 
-$(METHTEST)$(EXE_EXT): $(METHTEST).o $(DLIBCRYPTO)
-	@target=$(METHTEST); $(BUILD_CMD)
+$(METHTEST)$(EXE_EXT): $(METHTEST).o $(DLIBCRYPTO_test)
+	@target=$(METHTEST); $(BUILD_CMD_test)
 
-$(SSLTEST)$(EXE_EXT): $(SSLTEST).o $(DLIBSSL) $(DLIBCRYPTO)
-	@target=$(SSLTEST); $(BUILD_CMD)
+$(SSLTEST)$(EXE_EXT): $(SSLTEST).o $(DLIBSSL_test) $(DLIBCRYPTO_test)
+	@target=$(SSLTEST); $(BUILD_CMD_test)
 
-$(ENGINETEST)$(EXE_EXT): $(ENGINETEST).o $(DLIBCRYPTO)
-	@target=$(ENGINETEST); $(BUILD_CMD)
+$(ENGINETEST)$(EXE_EXT): $(ENGINETEST).o $(DLIBCRYPTO_test)
+	@target=$(ENGINETEST); $(BUILD_CMD_test)
 
-$(EVPTEST)$(EXE_EXT): $(EVPTEST).o $(DLIBCRYPTO)
-	@target=$(EVPTEST); $(BUILD_CMD)
+$(EVPTEST)$(EXE_EXT): $(EVPTEST).o $(DLIBCRYPTO_test)
+	@target=$(EVPTEST); $(BUILD_CMD_test)
 
-$(P5_CRPT2_TEST)$(EXE_EXT): $(P5_CRPT2_TEST).o $(DLIBCRYPTO)
-	@target=$(P5_CRPT2_TEST); $(BUILD_CMD)
+$(P5_CRPT2_TEST)$(EXE_EXT): $(P5_CRPT2_TEST).o $(DLIBCRYPTO_test)
+	@target=$(P5_CRPT2_TEST); $(BUILD_CMD_test)
 
-$(ECDSATEST)$(EXE_EXT): $(ECDSATEST).o $(DLIBCRYPTO)
-	@target=$(ECDSATEST); $(BUILD_CMD)
+$(ECDSATEST)$(EXE_EXT): $(ECDSATEST).o $(DLIBCRYPTO_test)
+	@target=$(ECDSATEST); $(BUILD_CMD_test)
 
-$(ECDHTEST)$(EXE_EXT): $(ECDHTEST).o $(DLIBCRYPTO)
-	@target=$(ECDHTEST); $(BUILD_CMD)
+$(ECDHTEST)$(EXE_EXT): $(ECDHTEST).o $(DLIBCRYPTO_test)
+	@target=$(ECDHTEST); $(BUILD_CMD_test)
 
-$(IGETEST)$(EXE_EXT): $(IGETEST).o $(DLIBCRYPTO)
-	@target=$(IGETEST); $(BUILD_CMD)
+$(IGETEST)$(EXE_EXT): $(IGETEST).o $(DLIBCRYPTO_test)
+	@target=$(IGETEST); $(BUILD_CMD_test)
 
-$(JPAKETEST)$(EXE_EXT): $(JPAKETEST).o $(DLIBCRYPTO)
-	@target=$(JPAKETEST); $(BUILD_CMD)
+$(JPAKETEST)$(EXE_EXT): $(JPAKETEST).o $(DLIBCRYPTO_test)
+	@target=$(JPAKETEST); $(BUILD_CMD_test)
 
-$(SRPTEST)$(EXE_EXT): $(SRPTEST).o $(DLIBCRYPTO)
-	@target=$(SRPTEST); $(BUILD_CMD)
+$(SRPTEST)$(EXE_EXT): $(SRPTEST).o $(DLIBCRYPTO_test)
+	@target=$(SRPTEST); $(BUILD_CMD_test)
 
-$(V3NAMETEST)$(EXE_EXT): $(V3NAMETEST).o $(DLIBCRYPTO)
-	@target=$(V3NAMETEST); $(BUILD_CMD)
+$(V3NAMETEST)$(EXE_EXT): $(V3NAMETEST).o $(DLIBCRYPTO_test)
+	@target=$(V3NAMETEST); $(BUILD_CMD_test)
 
-$(HEARTBEATTEST)$(EXE_EXT): $(HEARTBEATTEST).o $(DLIBCRYPTO) testutil.o
+$(HEARTBEATTEST)$(EXE_EXT): $(HEARTBEATTEST).o $(DLIBCRYPTO_test) testutil.o
 	@target=$(HEARTBEATTEST) testutil=testutil.o; $(BUILD_CMD_STATIC)
 
 $(CONSTTIMETEST)$(EXE_EXT): $(CONSTTIMETEST).o
-	@target=$(CONSTTIMETEST) $(BUILD_CMD)
+	@target=$(CONSTTIMETEST) $(BUILD_CMD_test)
 
 #$(AESTEST).o: $(AESTEST).c
-#	$(CC) -c $(CFLAGS) -DINTERMEDIATE_VALUE_KAT -DTRACE_KAT_MCT $(AESTEST).c
+#	$(CC) -c $(CFLAGS_test) -DINTERMEDIATE_VALUE_KAT -DTRACE_KAT_MCT $(AESTEST).c
 
-#$(AESTEST)$(EXE_EXT): $(AESTEST).o $(DLIBCRYPTO)
+#$(AESTEST)$(EXE_EXT): $(AESTEST).o $(DLIBCRYPTO_test)
 #	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-#	  $(CC) -o $(AESTEST)$(EXE_EXT) $(CFLAGS) $(AESTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+#	  $(CC) -o $(AESTEST)$(EXE_EXT) $(CFLAGS_test) $(AESTEST).o $(PEX_LIBS) $(DLIBCRYPTO_test) $(EX_LIBS) ; \
 #	else \
-#	  $(CC) -o $(AESTEST)$(EXE_EXT) $(CFLAGS) $(AESTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
+#	  $(CC) -o $(AESTEST)$(EXE_EXT) $(CFLAGS_test) $(AESTEST).o $(PEX_LIBS) $(LIBCRYPTO_test) $(EX_LIBS) ; \
 #	fi
 
-dummytest$(EXE_EXT): dummytest.o $(DLIBCRYPTO)
-	@target=dummytest; $(BUILD_CMD)
+dummytest$(EXE_EXT): dummytest.o $(DLIBCRYPTO_test)
+	@target=dummytest; $(BUILD_CMD_test)
+
+.c.o:
+	$(CC) $(CFLAGS_test) $(CPPFLAGS) -c -o $@ $<

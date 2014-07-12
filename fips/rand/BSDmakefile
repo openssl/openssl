@@ -2,9 +2,9 @@
 # OpenSSL/fips/rand/BSDmakefile
 #
 
-TOP= ../..
-.include "$(TOP)/configure.mk"
+TOP_fips_rand= ../..
+.include "$(TOP_fips_rand)/configure.mk"
 .include "Makefile"
-.for d in $(SRC:.c=.d)
+.for d in $(SRC_fips_rand:.c=.d)
 .sinclude "$(d)"
 .endfor

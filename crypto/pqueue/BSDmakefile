@@ -2,9 +2,9 @@
 # OpenSSL/crypto/pqueue/BSDmakefile
 #
 
-TOP= ../..
-.include "$(TOP)/configure.mk"
+TOP_crypto_pqueue= ../..
+.include "$(TOP_crypto_pqueue)/configure.mk"
 .include "Makefile"
-.for d in $(SRC:.c=.d)
+.for d in $(SRC_crypto_pqueue:.c=.d)
 .sinclude "$(d)"
 .endfor

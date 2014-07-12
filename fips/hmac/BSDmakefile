@@ -2,9 +2,9 @@
 # OpenSSL/fips/hmac/BSDmakefile
 #
 
-TOP= ../..
-.include "$(TOP)/configure.mk"
+TOP_fips_hmac= ../..
+.include "$(TOP_fips_hmac)/configure.mk"
 .include "Makefile"
-.for d in $(SRC:.c=.d)
+.for d in $(SRC_fips_hmac:.c=.d)
 .sinclude "$(d)"
 .endfor

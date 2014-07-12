@@ -2,53 +2,52 @@
 # OpenSSL/fips/des/Makefile
 #
 
-DIR=	des
-INCLUDES=
+DIR_fips_des=	des
+INCLUDES_fips_des=
 
-ASFLAGS= $(INCLUDES) $(ASFLAG)
-AFLAGS= $(ASFLAGS)
+ASFLAGS_fips_des= $(INCLUDES_fips_des) $(ASFLAG)
+AFLAGS_fips_des= $(ASFLAGS_fips_des)
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_fips_des= $(INCLUDES_fips_des) $(CFLAG)
 
-GENERAL=Makefile
-TEST= fips_desmovs.c
-APPS=
+GENERAL_fips_des=Makefile
+TEST_fips_des= fips_desmovs.c
+APPS_fips_des=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=fips_des_selftest.c
-LIBOBJ=fips_des_selftest.o
+LIB_fips_des=$(TOP_fips_des)/libcrypto.a
+LIBSRC_fips_des=fips_des_selftest.c
+LIBOBJ_fips_des=fips_des_selftest.o
 
-SRC= $(LIBSRC)
+SRC_fips_des= $(LIBSRC_fips_des)
 
-EXHEADER=
-HEADER=
+EXHEADER_fips_des=
+HEADER_fips_des=
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_fips_des=    $(GENERAL_fips_des) $(SRC_fips_des) $(HEADER_fips_des)
 
 top: top_fips_des
 top_fips_des:
-	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) sub_all)
+	(cd $(TOP_fips_des); $(MAKE) DIRS=fips FDIRS=$(DIR_fips_des) sub_all)
 
 all: all_fips_des
 all_fips_des:	lib
 
-lib: lib_fips_des
-lib_fips_des:	$(LIBOBJ)
-	@echo $(LIBOBJ) > lib
+lib:	$(LIBOBJ_fips_des)
+	@echo $(LIBOBJ_fips_des) > lib
 
 files: files_fips_des
 files_fips_des:
-	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
+	$(PERL) $(TOP_fips_des)/util/files.pl TOP=$(TOP_fips_des) Makefile >> $(TOP_fips_des)/MINFO
 
 links: links_fips_des
 links_fips_des:
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/apps $(APPS)
+	@$(PERL) $(TOP_fips_des)/util/mklink.pl $(TOP_fips_des)/include/openssl $(EXHEADER_fips_des)
+	@$(PERL) $(TOP_fips_des)/util/mklink.pl $(TOP_fips_des)/test $(TEST_fips_des)
+	@$(PERL) $(TOP_fips_des)/util/mklink.pl $(TOP_fips_des)/apps $(APPS_fips_des)
 
 install: install_fips_des
 install_fips_des:
-	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
+	@headerlist="$(EXHEADER_fips_des)"; for i in $$headerlist; \
 	do  \
 	  (cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	  chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
@@ -56,7 +55,7 @@ install_fips_des:
 
 tags: tags_fips_des
 tags_fips_des:
-	ctags $(SRC)
+	ctags $(SRC_fips_des)
 
 tests: tests_fips_des
 tests_fips_des:
@@ -66,11 +65,11 @@ fips_test_fips_des:
 	-find ../testvectors/tdes/req -name '*.req' > testlist
 	-rm -rf ../testvectors/tdes/rsp
 	mkdir ../testvectors/tdes/rsp
-	if [ -s testlist ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_desmovs -d testlist; fi
+	if [ -s testlist ]; then $(TOP_fips_des)/util/shlib_wrap.sh $(TOP_fips_des)/test/fips_desmovs -d testlist; fi
 
 lint: lint_fips_des
 lint_fips_des:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+	lint -DLINT $(INCLUDES_fips_des) $(SRC_fips_des)>fluff
 
 dclean: dclean_fips_des
 dclean_fips_des:
@@ -80,3 +79,8 @@ dclean_fips_des:
 clean: clean_fips_des
 clean_fips_des:
 	rm -f *.o *.d asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff testlist
+
+.c.o:
+	$(CC) $(CFLAGS_fips_des) $(CPPFLAGS) -c -o $@ $<
+.s.o:
+	$(AS) $(ASFLAGS_fips_des) -o $@ $<

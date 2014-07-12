@@ -2,9 +2,9 @@
 # OpenSSL/demos/err/BSDmakefile
 #
 
-TOP= ../..
-.include "$(TOP)/configure.mk"
+TOP_demos_err= ../..
+.include "$(TOP_demos_err)/configure.mk"
 .include "Makefile"
-.for d in $(SRC:.c=.d)
+.for d in $(SRC_demos_err:.c=.d)
 .sinclude "$(d)"
 .endfor

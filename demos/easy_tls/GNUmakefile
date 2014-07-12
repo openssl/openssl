@@ -2,7 +2,7 @@
 # OpenSSL/demos/easy_tls/GNUmakefile
 #
 
-TOP= ../..
-include $(TOP)/configure.mk
+TOP_demos_easy_tls= ../..
+include $(TOP_demos_easy_tls)/configure.mk
 include Makefile
--include $(SRC:.c=.d)
+-include $(SRC_demos_easy_tls:.c=.d)

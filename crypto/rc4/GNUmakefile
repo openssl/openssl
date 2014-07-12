@@ -2,7 +2,7 @@
 # OpenSSL/crypto/rc4/GNUmakefile
 #
 
-TOP= ../..
-include $(TOP)/configure.mk
+TOP_crypto_rc4= ../..
+include $(TOP_crypto_rc4)/configure.mk
 include Makefile
--include $(SRC:.c=.d)
+-include $(SRC_crypto_rc4:.c=.d)

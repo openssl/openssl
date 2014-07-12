@@ -2,54 +2,54 @@
 # crypto/ecdh/Makefile
 #
 
-DIR=	ecdh
-INCLUDES= -I.. -I$(TOP) -I../../include
+DIR_crypto_ecdh=	ecdh
+INCLUDES_crypto_ecdh= -I.. -I$(TOP_crypto_ecdh) -I../../include
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_crypto_ecdh= $(INCLUDES_crypto_ecdh) $(CFLAG)
 
-GENERAL=Makefile
-TEST=ecdhtest.c
-APPS=
+GENERAL_crypto_ecdh=Makefile
+TEST_crypto_ecdh=ecdhtest.c
+APPS_crypto_ecdh=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=	ech_lib.c ech_ossl.c ech_key.c ech_err.c ech_kdf.c
+LIB_crypto_ecdh=$(TOP_crypto_ecdh)/libcrypto.a
+LIBSRC_crypto_ecdh=	ech_lib.c ech_ossl.c ech_key.c ech_err.c ech_kdf.c
 
-LIBOBJ=	ech_lib.o ech_ossl.o ech_key.o ech_err.o ech_kdf.o
+LIBOBJ_crypto_ecdh=	ech_lib.o ech_ossl.o ech_key.o ech_err.o ech_kdf.o
 
-SRC= $(LIBSRC)
+SRC_crypto_ecdh= $(LIBSRC_crypto_ecdh)
 
-EXHEADER= ecdh.h
-HEADER=	ech_locl.h $(EXHEADER)
+EXHEADER_crypto_ecdh= ecdh.h
+HEADER_crypto_ecdh=	ech_locl.h $(EXHEADER_crypto_ecdh)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_ecdh=    $(GENERAL_crypto_ecdh) $(SRC_crypto_ecdh) $(HEADER_crypto_ecdh)
 
 top: top_crypto_ecdh
 top_crypto_ecdh:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
+	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_ecdh) sub_all)
 
 all: all_crypto_ecdh
 all_crypto_ecdh:	lib
 
 lib: lib_crypto_ecdh
-lib_crypto_ecdh:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
+lib_crypto_ecdh:	$(LIBOBJ_crypto_ecdh)
+	$(ARX) $(LIB_crypto_ecdh) $(LIBOBJ_crypto_ecdh)
+	$(RANLIB) $(LIB_crypto_ecdh) || echo Never mind.
 	@touch lib
 
 files: files_crypto_ecdh
 files_crypto_ecdh:
-	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
+	$(PERL) $(TOP_crypto_ecdh)/util/files.pl TOP=$(TOP_crypto_ecdh) Makefile >> $(TOP_crypto_ecdh)/MINFO
 
 links: links_crypto_ecdh
 links_crypto_ecdh:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+	@$(PERL) $(TOP_crypto_ecdh)/util/mklink.pl ../../include/openssl $(EXHEADER_crypto_ecdh)
+	@$(PERL) $(TOP_crypto_ecdh)/util/mklink.pl ../../test $(TEST_crypto_ecdh)
+	@$(PERL) $(TOP_crypto_ecdh)/util/mklink.pl ../../apps $(APPS_crypto_ecdh)
 
 install: install_crypto_ecdh
 install_crypto_ecdh:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
+	@headerlist="$(EXHEADER_crypto_ecdh)"; for i in $$headerlist; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
@@ -57,14 +57,14 @@ install_crypto_ecdh:
 
 tags: tags_crypto_ecdh
 tags_crypto_ecdh:
-	ctags $(SRC)
+	ctags $(SRC_crypto_ecdh)
 
 tests: tests_crypto_ecdh
 tests_crypto_ecdh:
 
 lint: lint_crypto_ecdh
 lint_crypto_ecdh:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+	lint -DLINT $(INCLUDES_crypto_ecdh) $(SRC_crypto_ecdh)>fluff
 
 dclean: dclean_crypto_ecdh
 dclean_crypto_ecdh:
@@ -75,3 +75,5 @@ clean: clean_crypto_ecdh
 clean_crypto_ecdh:
 	rm -f *.o *.d */*.o */*.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
+.c.o:
+	$(CC) $(CFLAGS_crypto_ecdh) $(CPPFLAGS) -c -o $@ $<

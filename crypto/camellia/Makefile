@@ -2,66 +2,66 @@
 # crypto/camellia/Makefile
 #
 
-DIR= camellia
-CPP=	$(CC) -E
-INCLUDES=
+DIR_crypto_camellia= camellia
+CPP_crypto_camellia=	$(CC) -E
+INCLUDES_crypto_camellia=
 
 
-CFLAGS= $(INCLUDES) $(CFLAG)
-ASFLAGS= $(INCLUDES) $(ASFLAG)
-AFLAGS= $(ASFLAGS)
+CFLAGS_crypto_camellia= $(INCLUDES_crypto_camellia) $(CFLAG)
+ASFLAGS_crypto_camellia= $(INCLUDES_crypto_camellia) $(ASFLAG)
+AFLAGS_crypto_camellia= $(ASFLAGS_crypto_camellia)
 
-GENERAL=Makefile
+GENERAL_crypto_camellia=Makefile
 #TEST=camelliatest.c
-APPS=
+APPS_crypto_camellia=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=camellia.c cmll_misc.c cmll_ecb.c cmll_cbc.c cmll_ofb.c \
+LIB_crypto_camellia=$(TOP_crypto_camellia)/libcrypto.a
+LIBSRC_crypto_camellia=camellia.c cmll_misc.c cmll_ecb.c cmll_cbc.c cmll_ofb.c \
 	   cmll_cfb.c cmll_ctr.c 
 
-LIBOBJ= cmll_ecb.o cmll_ofb.o cmll_cfb.o cmll_ctr.o $(CMLL_ENC)
+LIBOBJ_crypto_camellia= cmll_ecb.o cmll_ofb.o cmll_cfb.o cmll_ctr.o $(CMLL_ENC)
 
-SRC= $(LIBSRC)
+SRC_crypto_camellia= $(LIBSRC_crypto_camellia)
 
-EXHEADER= camellia.h
-HEADER= cmll_locl.h $(EXHEADER)
+EXHEADER_crypto_camellia= camellia.h
+HEADER_crypto_camellia= cmll_locl.h $(EXHEADER_crypto_camellia)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_camellia=    $(GENERAL_crypto_camellia) $(SRC_crypto_camellia) $(HEADER_crypto_camellia)
 
 top: top_crypto_camellia
 top_crypto_camellia:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
+	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_camellia) sub_all)
 
 all: all_crypto_camellia
 all_crypto_camellia:	lib
 
 lib: lib_crypto_camellia
-lib_crypto_camellia:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
+lib_crypto_camellia:	$(LIBOBJ_crypto_camellia)
+	$(ARX) $(LIB_crypto_camellia) $(LIBOBJ_crypto_camellia)
+	$(RANLIB) $(LIB_crypto_camellia) || echo Never mind.
 	@touch lib
 
 cmll-x86.s:	asm/cmll-x86.pl ../perlasm/x86asm.pl
-	$(PERL) asm/cmll-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+	$(PERL) asm/cmll-x86.pl $(PERLASM_SCHEME) $(CFLAGS_crypto_camellia) $(PROCESSOR) > $@
 cmll-x86_64.s:  asm/cmll-x86_64.pl
 	$(PERL) asm/cmll-x86_64.pl $(PERLASM_SCHEME) > $@
 cmllt4-sparcv9.s: asm/cmllt4-sparcv9.pl
-	$(PERL) asm/cmllt4-sparcv9.pl $(CFLAGS) > $@
+	$(PERL) asm/cmllt4-sparcv9.pl $(CFLAGS_crypto_camellia) > $@
 
 files: files_crypto_camellia
 files_crypto_camellia:
-	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
+	$(PERL) $(TOP_crypto_camellia)/util/files.pl TOP=$(TOP_crypto_camellia) Makefile >> $(TOP_crypto_camellia)/MINFO
 
 links: links_crypto_camellia
 links_crypto_camellia:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+	@$(PERL) $(TOP_crypto_camellia)/util/mklink.pl ../../include/openssl $(EXHEADER_crypto_camellia)
+	@$(PERL) $(TOP_crypto_camellia)/util/mklink.pl ../../test $(TEST)
+	@$(PERL) $(TOP_crypto_camellia)/util/mklink.pl ../../apps $(APPS_crypto_camellia)
 
 install: install_crypto_camellia
 install_crypto_camellia:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_camellia)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
@@ -69,14 +69,14 @@ install_crypto_camellia:
 
 tags: tags_crypto_camellia
 tags_crypto_camellia:
-	ctags $(SRC)
+	ctags $(SRC_crypto_camellia)
 
 tests: tests_crypto_camellia
 tests_crypto_camellia:
 
 lint: lint_crypto_camellia
 lint_crypto_camellia:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+	lint -DLINT $(INCLUDES_crypto_camellia) $(SRC_crypto_camellia)>fluff
 
 dclean: dclean_crypto_camellia
 dclean_crypto_camellia:
@@ -87,3 +87,9 @@ clean: clean_crypto_camellia
 clean_crypto_camellia:
 	rm -f *.s *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
+.S.s:
+	$(CPP_crypto_camellia) $(CPPFLAGS) -o $@ $<
+.c.o:
+	$(CC) $(CFLAGS_crypto_camellia) $(CPPFLAGS) -c -o $@ $<
+.s.o:
+	$(AS) $(ASFLAGS_crypto_camellia) -o $@ $<

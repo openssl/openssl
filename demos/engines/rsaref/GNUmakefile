@@ -2,7 +2,7 @@
 # OpenSSL/demos/engines/rsaref/GNUmakefile
 #
 
-TOP= ../../..
-include $(TOP)/configure.mk
+TOP_demos_engines_rsaref= ../../..
+include $(TOP_demos_engines_rsaref)/configure.mk
 include Makefile
--include $(SRC:.c=.d)
+-include $(SRC_demos_engines_rsaref:.c=.d)

@@ -2,42 +2,42 @@
 # OpenSSL/crypto/bn/Makefile
 #
 
-DIR=	bn
-CPP=    $(CC) -E
-INCLUDES= -I.. -I$(TOP) -I../../include
+DIR_crypto_bn=	bn
+CPP_crypto_bn=    $(CC) -E
+INCLUDES_crypto_bn= -I.. -I$(TOP_crypto_bn) -I../../include
 
 
-CFLAGS= $(INCLUDES) $(CFLAG)
-ASFLAGS= $(INCLUDES) $(ASFLAG)
-AFLAGS= $(ASFLAGS)
+CFLAGS_crypto_bn= $(INCLUDES_crypto_bn) $(CFLAG)
+ASFLAGS_crypto_bn= $(INCLUDES_crypto_bn) $(ASFLAG)
+AFLAGS_crypto_bn= $(ASFLAGS_crypto_bn)
 
-GENERAL=Makefile
-TEST=bntest.c exptest.c
-APPS=
+GENERAL_crypto_bn=Makefile
+TEST_crypto_bn=bntest.c exptest.c
+APPS_crypto_bn=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=	bn_add.c bn_div.c bn_exp.c bn_lib.c bn_ctx.c bn_mul.c bn_mod.c \
+LIB_crypto_bn=$(TOP_crypto_bn)/libcrypto.a
+LIBSRC_crypto_bn=	bn_add.c bn_div.c bn_exp.c bn_lib.c bn_ctx.c bn_mul.c bn_mod.c \
 	bn_print.c bn_rand.c bn_shift.c bn_word.c bn_blind.c \
 	bn_kron.c bn_sqrt.c bn_gcd.c bn_prime.c bn_err.c bn_sqr.c bn_asm.c \
 	bn_recp.c bn_mont.c bn_mpi.c bn_exp2.c bn_gf2m.c bn_nist.c \
 	bn_depr.c bn_const.c bn_x931p.c
 
-LIBOBJ=	bn_add.o bn_div.o bn_exp.o bn_lib.o bn_ctx.o bn_mul.o bn_mod.o \
+LIBOBJ_crypto_bn=	bn_add.o bn_div.o bn_exp.o bn_lib.o bn_ctx.o bn_mul.o bn_mod.o \
 	bn_print.o bn_rand.o bn_shift.o bn_word.o bn_blind.o \
 	bn_kron.o bn_sqrt.o bn_gcd.o bn_prime.o bn_err.o bn_sqr.o $(BN_ASM) \
 	bn_recp.o bn_mont.o bn_mpi.o bn_exp2.o bn_gf2m.o bn_nist.o \
 	bn_depr.o bn_const.o bn_x931p.o
 
-SRC= $(LIBSRC)
+SRC_crypto_bn= $(LIBSRC_crypto_bn)
 
-EXHEADER= bn.h
-HEADER=	bn_lcl.h bn_prime.h $(EXHEADER)
+EXHEADER_crypto_bn= bn.h
+HEADER_crypto_bn=	bn_lcl.h bn_prime.h $(EXHEADER_crypto_bn)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_bn=    $(GENERAL_crypto_bn) $(SRC_crypto_bn) $(HEADER_crypto_bn)
 
 top: top_crypto_bn
 top_crypto_bn:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
+	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_bn) sub_all)
 
 all: all_crypto_bn
 all_crypto_bn:	lib
@@ -52,40 +52,40 @@ bnbug: bnbug.c ../../libcrypto.a top
 	cc -g -I../../include bnbug.c -o bnbug ../../libcrypto.a
 
 lib: lib_crypto_bn
-lib_crypto_bn:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
+lib_crypto_bn:	$(LIBOBJ_crypto_bn)
+	$(ARX) $(LIB_crypto_bn) $(LIBOBJ_crypto_bn)
+	$(RANLIB) $(LIB_crypto_bn) || echo Never mind.
 	@touch lib
 
 bn-586.s:	asm/bn-586.pl ../perlasm/x86asm.pl
-	$(PERL) asm/bn-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+	$(PERL) asm/bn-586.pl $(PERLASM_SCHEME) $(CFLAGS_crypto_bn) $(PROCESSOR) > $@
 co-586.s:	asm/co-586.pl ../perlasm/x86asm.pl
-	$(PERL) asm/co-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+	$(PERL) asm/co-586.pl $(PERLASM_SCHEME) $(CFLAGS_crypto_bn) $(PROCESSOR) > $@
 x86-mont.s:	asm/x86-mont.pl ../perlasm/x86asm.pl
-	$(PERL) asm/x86-mont.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+	$(PERL) asm/x86-mont.pl $(PERLASM_SCHEME) $(CFLAGS_crypto_bn) $(PROCESSOR) > $@
 x86-gf2m.s:	asm/x86-gf2m.pl ../perlasm/x86asm.pl
-	$(PERL) asm/x86-gf2m.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+	$(PERL) asm/x86-gf2m.pl $(PERLASM_SCHEME) $(CFLAGS_crypto_bn) $(PROCESSOR) > $@
 
 sparcv8.o:	asm/sparcv8.S
-	$(CC) $(CFLAGS) -c asm/sparcv8.S
+	$(CC) $(CFLAGS_crypto_bn) -c asm/sparcv8.S
 bn-sparcv9.o:	asm/sparcv8plus.S
-	$(CC) $(CFLAGS) -c -o $@ asm/sparcv8plus.S
+	$(CC) $(CFLAGS_crypto_bn) -c -o $@ asm/sparcv8plus.S
 sparcv9a-mont.s:	asm/sparcv9a-mont.pl
-	$(PERL) asm/sparcv9a-mont.pl $(CFLAGS) > $@
+	$(PERL) asm/sparcv9a-mont.pl $(CFLAGS_crypto_bn) > $@
 sparcv9-mont.s:		asm/sparcv9-mont.pl
-	$(PERL) asm/sparcv9-mont.pl $(CFLAGS) > $@
+	$(PERL) asm/sparcv9-mont.pl $(CFLAGS_crypto_bn) > $@
 vis3-mont.s:		asm/vis3-mont.pl
-	$(PERL) asm/vis3-mont.pl $(CFLAGS) > $@
+	$(PERL) asm/vis3-mont.pl $(CFLAGS_crypto_bn) > $@
 sparct4-mont.S:	asm/sparct4-mont.pl
-	$(PERL) asm/sparct4-mont.pl $(CFLAGS) > $@
+	$(PERL) asm/sparct4-mont.pl $(CFLAGS_crypto_bn) > $@
 sparcv9-gf2m.S:	asm/sparcv9-gf2m.pl
-	$(PERL) asm/sparcv9-gf2m.pl $(CFLAGS) > $@
+	$(PERL) asm/sparcv9-gf2m.pl $(CFLAGS_crypto_bn) > $@
 
 bn-mips3.o:	asm/mips3.s
 	@if [ "$(CC)" = "gcc" ]; then \
-		ABI=`expr "$(CFLAGS)" : ".*-mabi=\([n3264]*\)"` && \
+		ABI=`expr "$(CFLAGS_crypto_bn)" : ".*-mabi=\([n3264]*\)"` && \
 		as -$$ABI -O -o $@ asm/mips3.s; \
-	else	$(CC) -c $(CFLAGS) -o $@ asm/mips3.s; fi
+	else	$(CC) -c $(CFLAGS_crypto_bn) -o $@ asm/mips3.s; fi
 
 bn-mips.s:	asm/mips.pl
 	$(PERL) asm/mips.pl $(PERLASM_SCHEME) $@
@@ -93,12 +93,12 @@ mips-mont.s:	asm/mips-mont.pl
 	$(PERL)	asm/mips-mont.pl $(PERLASM_SCHEME) $@
 
 bn-s390x.o:	asm/s390x.S
-	$(CC) $(CFLAGS) -c -o $@ asm/s390x.S
+	$(CC) $(CFLAGS_crypto_bn) -c -o $@ asm/s390x.S
 s390x-gf2m.s:	asm/s390x-gf2m.pl
 	$(PERL) asm/s390x-gf2m.pl $(PERLASM_SCHEME) $@
 
 x86_64-gcc.o:	asm/x86_64-gcc.c
-	$(CC) $(CFLAGS) -c -o $@ asm/x86_64-gcc.c
+	$(CC) $(CFLAGS_crypto_bn) -c -o $@ asm/x86_64-gcc.c
 x86_64-mont.s:	asm/x86_64-mont.pl
 	$(PERL) asm/x86_64-mont.pl $(PERLASM_SCHEME) > $@
 x86_64-mont5.s:	asm/x86_64-mont5.pl
@@ -113,16 +113,16 @@ rsaz-avx2.s:	asm/rsaz-avx2.pl
 	$(PERL) asm/rsaz-avx2.pl $(PERLASM_SCHEME) > $@
 
 bn-ia64.s:	asm/ia64.S
-	$(CC) $(CFLAGS) -E asm/ia64.S > $@
+	$(CC) $(CFLAGS_crypto_bn) -E asm/ia64.S > $@
 ia64-mont.s:	asm/ia64-mont.pl
-	$(PERL) asm/ia64-mont.pl $@ $(CFLAGS)
+	$(PERL) asm/ia64-mont.pl $@ $(CFLAGS_crypto_bn)
 
 # GNU assembler fails to compile PA-RISC2 modules, insist on calling
 # vendor assembler...
 pa-risc2W.o: asm/pa-risc2W.s
-	$(PERL) $(TOP)/util/fipsas.pl $(TOP) $< /usr/ccs/bin/as -o pa-risc2W.o asm/pa-risc2W.s
+	$(PERL) $(TOP_crypto_bn)/util/fipsas.pl $(TOP_crypto_bn) $< /usr/ccs/bin/as -o pa-risc2W.o asm/pa-risc2W.s
 pa-risc2.o: asm/pa-risc2.s
-	$(PERL) $(TOP)/util/fipsas.pl $(TOP) $< /usr/ccs/bin/as -o pa-risc2.o asm/pa-risc2.s
+	$(PERL) $(TOP_crypto_bn)/util/fipsas.pl $(TOP_crypto_bn) $< /usr/ccs/bin/as -o pa-risc2.o asm/pa-risc2.s
 
 parisc-mont.s:	asm/parisc-mont.pl
 	$(PERL) asm/parisc-mont.pl $(PERLASM_SCHEME) $@
@@ -146,18 +146,18 @@ armv4-gf2m.o:	armv4-gf2m.S
 
 files: files_crypto_bn
 files_crypto_bn:
-	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
+	$(PERL) $(TOP_crypto_bn)/util/files.pl TOP=$(TOP_crypto_bn) Makefile >> $(TOP_crypto_bn)/MINFO
 
 links: links_crypto_bn
 links_crypto_bn:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+	@$(PERL) $(TOP_crypto_bn)/util/mklink.pl ../../include/openssl $(EXHEADER_crypto_bn)
+	@$(PERL) $(TOP_crypto_bn)/util/mklink.pl ../../test $(TEST_crypto_bn)
+	@$(PERL) $(TOP_crypto_bn)/util/mklink.pl ../../apps $(APPS_crypto_bn)
 
 install: install_crypto_bn
 install_crypto_bn:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_bn)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
@@ -169,14 +169,14 @@ div:
 
 tags: tags_crypto_bn
 tags_crypto_bn:
-	ctags $(SRC)
+	ctags $(SRC_crypto_bn)
 
 tests: tests_crypto_bn
 tests_crypto_bn:
 
 lint: lint_crypto_bn
 lint_crypto_bn:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+	lint -DLINT $(INCLUDES_crypto_bn) $(SRC_crypto_bn)>fluff
 
 dclean: dclean_crypto_bn
 dclean_crypto_bn:
@@ -187,3 +187,9 @@ clean: clean_crypto_bn
 clean_crypto_bn:
 	rm -f *.s *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
+.S.s:
+	$(CPP_crypto_bn) $(CPPFLAGS) -o $@ $<
+.c.o:
+	$(CC) $(CFLAGS_crypto_bn) $(CPPFLAGS) -c -o $@ $<
+.s.o:
+	$(AS) $(ASFLAGS_crypto_bn) -o $@ $<

@@ -2,17 +2,17 @@
 # OpenSSL/crypto/asn1/Makefile
 #
 
-DIR=	asn1
-INCLUDES= -I.. -I$(TOP) -I../../include
+DIR_crypto_asn1=	asn1
+INCLUDES_crypto_asn1= -I.. -I$(TOP_crypto_asn1) -I../../include
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_crypto_asn1= $(INCLUDES_crypto_asn1) $(CFLAG)
 
-GENERAL=Makefile README
-TEST=
-APPS=
+GENERAL_crypto_asn1=Makefile README
+TEST_crypto_asn1=
+APPS_crypto_asn1=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=	a_object.c a_bitstr.c a_utctm.c a_gentm.c a_time.c a_int.c a_octet.c \
+LIB_crypto_asn1=$(TOP_crypto_asn1)/libcrypto.a
+LIBSRC_crypto_asn1=	a_object.c a_bitstr.c a_utctm.c a_gentm.c a_time.c a_int.c a_octet.c \
 	a_print.c a_type.c a_set.c a_dup.c a_d2i_fp.c a_i2d_fp.c \
 	a_enum.c a_utf8.c a_sign.c a_digest.c a_verify.c a_mbstr.c a_strex.c \
 	x_algor.c x_val.c x_pubkey.c x_sig.c x_req.c x_attrib.c x_bignum.c \
@@ -26,7 +26,7 @@ LIBSRC=	a_object.c a_bitstr.c a_utctm.c a_gentm.c a_time.c a_int.c a_octet.c \
 	asn1_gen.c asn1_par.c asn1_lib.c asn1_err.c a_bytes.c a_strnid.c \
 	evp_asn1.c asn_pack.c p5_pbe.c p5_pbev2.c p8_pkey.c asn_moid.c \
 	asn_mstbl.c
-LIBOBJ= a_object.o a_bitstr.o a_utctm.o a_gentm.o a_time.o a_int.o a_octet.o \
+LIBOBJ_crypto_asn1= a_object.o a_bitstr.o a_utctm.o a_gentm.o a_time.o a_int.o a_octet.o \
 	a_print.o a_type.o a_set.o a_dup.o a_d2i_fp.o a_i2d_fp.o \
 	a_enum.o a_utf8.o a_sign.o a_digest.o a_verify.o a_mbstr.o a_strex.o \
 	x_algor.o x_val.o x_pubkey.o x_sig.o x_req.o x_attrib.o x_bignum.o \
@@ -41,16 +41,16 @@ LIBOBJ= a_object.o a_bitstr.o a_utctm.o a_gentm.o a_time.o a_int.o a_octet.o \
 	evp_asn1.o asn_pack.o p5_pbe.o p5_pbev2.o p8_pkey.o asn_moid.o \
 	asn_mstbl.o
 
-SRC= $(LIBSRC)
+SRC_crypto_asn1= $(LIBSRC_crypto_asn1)
 
-EXHEADER=  asn1.h asn1_mac.h asn1t.h
-HEADER=	$(EXHEADER) asn1_locl.h
+EXHEADER_crypto_asn1=  asn1.h asn1_mac.h asn1t.h
+HEADER_crypto_asn1=	$(EXHEADER_crypto_asn1) asn1_locl.h
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_asn1=    $(GENERAL_crypto_asn1) $(SRC_crypto_asn1) $(HEADER_crypto_asn1)
 
 top: top_crypto_asn1
 top_crypto_asn1:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
+	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_asn1) sub_all)
 
 test: test_crypto_asn1
 test_crypto_asn1:	test.c
@@ -65,25 +65,25 @@ all: all_crypto_asn1
 all_crypto_asn1:	lib
 
 lib: lib_crypto_asn1
-lib_crypto_asn1:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
+lib_crypto_asn1:	$(LIBOBJ_crypto_asn1)
+	$(ARX) $(LIB_crypto_asn1) $(LIBOBJ_crypto_asn1)
+	$(RANLIB) $(LIB_crypto_asn1) || echo Never mind.
 	@touch lib
 
 files: files_crypto_asn1
 files_crypto_asn1:
-	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
+	$(PERL) $(TOP_crypto_asn1)/util/files.pl TOP=$(TOP_crypto_asn1) Makefile >> $(TOP_crypto_asn1)/MINFO
 
 links: links_crypto_asn1
 links_crypto_asn1:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+	@$(PERL) $(TOP_crypto_asn1)/util/mklink.pl ../../include/openssl $(EXHEADER_crypto_asn1)
+	@$(PERL) $(TOP_crypto_asn1)/util/mklink.pl ../../test $(TEST_crypto_asn1)
+	@$(PERL) $(TOP_crypto_asn1)/util/mklink.pl ../../apps $(APPS_crypto_asn1)
 
 install: install_crypto_asn1
 install_crypto_asn1:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_asn1)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
@@ -91,14 +91,14 @@ install_crypto_asn1:
 
 tags: tags_crypto_asn1
 tags_crypto_asn1:
-	ctags $(SRC)
+	ctags $(SRC_crypto_asn1)
 
 tests: tests_crypto_asn1
 tests_crypto_asn1:
 
 lint: lint_crypto_asn1
 lint_crypto_asn1:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+	lint -DLINT $(INCLUDES_crypto_asn1) $(SRC_crypto_asn1)>fluff
 
 dclean: dclean_crypto_asn1
 dclean_crypto_asn1:
@@ -110,3 +110,5 @@ clean_crypto_asn1:
 	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 
+.c.o:
+	$(CC) $(CFLAGS_crypto_asn1) $(CPPFLAGS) -c -o $@ $<

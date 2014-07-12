@@ -2,7 +2,7 @@
 # OpenSSL/test/GNUmakefile
 #
 
-TOP= ..
-include $(TOP)/configure.mk
+TOP_test= ..
+include $(TOP_test)/configure.mk
 include Makefile
--include $(SRC:.c=.d)
+-include $(SRC_test:.c=.d)

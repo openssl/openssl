@@ -2,7 +2,7 @@
 # OpenSSL/demos/engines/cluster_labs/GNUmakefile
 #
 
-TOP= ../../..
-include $(TOP)/configure.mk
+TOP_demos_engines_cluster_labs= ../../..
+include $(TOP_demos_engines_cluster_labs)/configure.mk
 include Makefile
--include $(SRC:.c=.d)
+-include $(SRC_demos_engines_cluster_labs:.c=.d)

@@ -2,9 +2,9 @@
 # OpenSSL/crypto/dsa/BSDmakefile
 #
 
-TOP= ../..
-.include "$(TOP)/configure.mk"
+TOP_crypto_dsa= ../..
+.include "$(TOP_crypto_dsa)/configure.mk"
 .include "Makefile"
-.for d in $(SRC:.c=.d)
+.for d in $(SRC_crypto_dsa:.c=.d)
 .sinclude "$(d)"
 .endfor

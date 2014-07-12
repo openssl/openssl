@@ -2,53 +2,53 @@
 # OpenSSL/crypto/pqueue/Makefile
 #
 
-DIR=	pqueue
-INCLUDES=
+DIR_crypto_pqueue=	pqueue
+INCLUDES_crypto_pqueue=
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_crypto_pqueue= $(INCLUDES_crypto_pqueue) $(CFLAG)
 
-GENERAL=Makefile
-TEST=
-APPS=
+GENERAL_crypto_pqueue=Makefile
+TEST_crypto_pqueue=
+APPS_crypto_pqueue=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=pqueue.c
-LIBOBJ=pqueue.o
+LIB_crypto_pqueue=$(TOP_crypto_pqueue)/libcrypto.a
+LIBSRC_crypto_pqueue=pqueue.c
+LIBOBJ_crypto_pqueue=pqueue.o
 
-SRC= $(LIBSRC)
+SRC_crypto_pqueue= $(LIBSRC_crypto_pqueue)
 
-EXHEADER= pqueue.h
-HEADER=	$(EXHEADER)
+EXHEADER_crypto_pqueue= pqueue.h
+HEADER_crypto_pqueue=	$(EXHEADER_crypto_pqueue)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_pqueue=    $(GENERAL_crypto_pqueue) $(SRC_crypto_pqueue) $(HEADER_crypto_pqueue)
 
 top: top_crypto_pqueue
 top_crypto_pqueue:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
+	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_pqueue) sub_all)
 
 all: all_crypto_pqueue
 all_crypto_pqueue:	lib
 
 lib: lib_crypto_pqueue
-lib_crypto_pqueue:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
+lib_crypto_pqueue:	$(LIBOBJ_crypto_pqueue)
+	$(ARX) $(LIB_crypto_pqueue) $(LIBOBJ_crypto_pqueue)
+	$(RANLIB) $(LIB_crypto_pqueue) || echo Never mind.
 	@touch lib
 
 files: files_crypto_pqueue
 files_crypto_pqueue:
-	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
+	$(PERL) $(TOP_crypto_pqueue)/util/files.pl TOP=$(TOP_crypto_pqueue) Makefile >> $(TOP_crypto_pqueue)/MINFO
 
 links: links_crypto_pqueue
 links_crypto_pqueue:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+	@$(PERL) $(TOP_crypto_pqueue)/util/mklink.pl ../../include/openssl $(EXHEADER_crypto_pqueue)
+	@$(PERL) $(TOP_crypto_pqueue)/util/mklink.pl ../../test $(TEST_crypto_pqueue)
+	@$(PERL) $(TOP_crypto_pqueue)/util/mklink.pl ../../apps $(APPS_crypto_pqueue)
 
 install: install_crypto_pqueue
 install_crypto_pqueue:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_pqueue)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
@@ -56,14 +56,14 @@ install_crypto_pqueue:
 
 tags: tags_crypto_pqueue
 tags_crypto_pqueue:
-	ctags $(SRC)
+	ctags $(SRC_crypto_pqueue)
 
 tests: tests_crypto_pqueue
 tests_crypto_pqueue:
 
 lint: lint_crypto_pqueue
 lint_crypto_pqueue:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+	lint -DLINT $(INCLUDES_crypto_pqueue) $(SRC_crypto_pqueue)>fluff
 
 dclean: dclean_crypto_pqueue
 dclean_crypto_pqueue:
@@ -74,3 +74,5 @@ clean: clean_crypto_pqueue
 clean_crypto_pqueue:
 	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
+.c.o:
+	$(CC) $(CFLAGS_crypto_pqueue) $(CPPFLAGS) -c -o $@ $<

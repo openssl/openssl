@@ -2,9 +2,9 @@
 # OpenSSL/crypto/krb5/BSDmakefile
 #
 
-TOP= ../..
-.include "$(TOP)/configure.mk"
+TOP_crypto_krb5= ../..
+.include "$(TOP_crypto_krb5)/configure.mk"
 .include "Makefile"
-.for d in $(SRC:.c=.d)
+.for d in $(SRC_crypto_krb5:.c=.d)
 .sinclude "$(d)"
 .endfor

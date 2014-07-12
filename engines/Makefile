@@ -2,27 +2,27 @@
 # OpenSSL/engines/Makefile
 #
 
-DIR=	engines
-INCLUDES= -I../include
+DIR_engines=	engines
+INCLUDES_engines= -I../include
 
-RECURSIVE_MAKE=	[ -z "$(ENGDIRS)" ] || for i in $(ENGDIRS) ; do \
-		    (cd $$i && echo "making $$target in $(DIR)/$$i..." && \
+RECURSIVE_MAKE_engines=	[ -z "$(ENGDIRS)" ] || for i in $(ENGDIRS) ; do \
+		    (cd $$i && echo "making $$target in $(DIR_engines)/$$i..." && \
 		    $(MAKE) -e TOP=../.. DIR=$$i $$target ) || exit 1; \
 		done;
 
 
 
-CFLAGS= $(INCLUDES) $(CFLAG)
-ASFLAGS= $(INCLUDES) $(ASFLAG)
+CFLAGS_engines= $(INCLUDES_engines) $(CFLAG)
+ASFLAGS_engines= $(INCLUDES_engines) $(ASFLAG)
 
-GENERAL=Makefile engines.com install.com engine_vector.mar
-TEST=
-APPS=
+GENERAL_engines=Makefile engines.com install.com engine_vector.mar
+TEST_engines=
+APPS_engines=
 
-LIB=$(TOP)/libcrypto.a
+LIB_engines=$(TOP_engines)/libcrypto.a
 LIBNAMES= 4758cca aep atalla cswift gmp chil nuron sureware ubsec padlock capi
 
-LIBSRC=	e_4758cca.c \
+LIBSRC_engines=	e_4758cca.c \
 	e_aep.c \
 	e_atalla.c \
 	e_cswift.c \
@@ -33,7 +33,7 @@ LIBSRC=	e_4758cca.c \
 	e_ubsec.c \
 	e_padlock.c \
 	e_capi.c
-LIBOBJ= e_4758cca.o \
+LIBOBJ_engines= e_4758cca.o \
 	e_aep.o \
 	e_atalla.o \
 	e_cswift.o \
@@ -46,10 +46,10 @@ LIBOBJ= e_4758cca.o \
 	e_capi.o \
 	$(ENGINES_ASM_OBJ)
 
-SRC= $(LIBSRC)
+SRC_engines= $(LIBSRC_engines)
 
-EXHEADER= 
-HEADER=	e_4758cca_err.c e_4758cca_err.h \
+EXHEADER_engines= 
+HEADER_engines=	e_4758cca_err.c e_4758cca_err.h \
 	e_aep_err.c e_aep_err.h \
 	e_atalla_err.c e_atalla_err.h \
 	e_cswift_err.c e_cswift_err.h \
@@ -60,49 +60,49 @@ HEADER=	e_4758cca_err.c e_4758cca_err.h \
 	e_ubsec_err.c e_ubsec_err.h \
 	e_capi_err.c e_capi_err.h
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_engines=    $(GENERAL_engines) $(SRC_engines) $(HEADER_engines)
 
 top: top_engines
 top_engines:
-	(cd ..; $(MAKE) DIRS=$(DIR) all)
+	(cd ..; $(MAKE) DIRS=$(DIR_engines) all)
 
 all: all_engines
 all_engines:	lib subdirs
 
 lib: lib_engines
-lib_engines:	$(LIBOBJ)
+lib_engines:	$(LIBOBJ_engines)
 	@if [ -n "$(SHARED_LIBS)" ]; then \
 		set -e; \
 		for l in $(LIBNAMES); do \
-			cat $(TOP)/configure.mk $(TOP)/Makefile.shared | $(MAKE) -f - \
+			cat $(TOP_engines)/configure.mk $(TOP_engines)/Makefile.shared | $(MAKE) -f - \
 				LIBNAME=$$l LIBEXTRAS="e_$$l*.o" \
 				LIBDEPS='-L.. -lcrypto $(EX_LIBS)' \
 				link_o.$(SHLIB_TARGET); \
 		done; \
 	else \
-		$(AR) $(LIB) $(LIBOBJ); \
-		$(RANLIB) $(LIB) || echo Never mind.; \
+		$(AR) $(LIB_engines) $(LIBOBJ_engines); \
+		$(RANLIB) $(LIB_engines) || echo Never mind.; \
 	fi; \
 	touch lib
 
 e_padlock-x86.s:	asm/e_padlock-x86.pl
-	$(PERL) asm/e_padlock-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+	$(PERL) asm/e_padlock-x86.pl $(PERLASM_SCHEME) $(CFLAGS_engines) $(PROCESSOR) > $@
 e_padlock-x86_64.s:	asm/e_padlock-x86_64.pl
 	$(PERL) asm/e_padlock-x86_64.pl $(PERLASM_SCHEME) > $@
 
 subdirs: subdirs_engines
 subdirs_engines:
 	echo $(EDIRS)
-	@target=all; $(RECURSIVE_MAKE)
+	@target=all; $(RECURSIVE_MAKE_engines)
 
 files: files_engines
 files_engines:
-	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
-	@target=files; $(RECURSIVE_MAKE)
+	$(PERL) $(TOP_engines)/util/files.pl TOP=$(TOP_engines) Makefile >> $(TOP_engines)/MINFO
+	@target=files; $(RECURSIVE_MAKE_engines)
 
 links: links_engines
 links_engines:
-	@target=links; $(RECURSIVE_MAKE)
+	@target=links; $(RECURSIVE_MAKE_engines)
 
 # XXXXX This currently only works on systems that use .so as suffix
 # for shared libraries as well as for Cygwin which uses the
@@ -114,12 +114,12 @@ install_engines:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@if [ -n "$(SHARED_LIBS)" ]; then \
 		set -e; \
-		$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines; \
+		$(PERL) $(TOP_engines)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines; \
 		for l in $(LIBNAMES); do \
 			( echo installing $$l; \
 			  pfx=lib; \
 			  if ! expr "$(PLATFORM)" : "Cygwin" >/dev/null; then \
-				case "$(CFLAGS)" in \
+				case "$(CFLAGS_engines)" in \
 				*DSO_BEOS*)	sfx=".so";;	\
 				*DSO_DLFCN*)	sfx=`expr "$(SHLIB_EXT)" : '.*\(\.[a-z][a-z]*\)' \| ".so"`;;	\
 				*DSO_DL*)	sfx=".sl";;	\
@@ -135,11 +135,11 @@ install_engines:
 			  mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx ); \
 		done; \
 	fi
-	@target=install; $(RECURSIVE_MAKE)
+	@target=install; $(RECURSIVE_MAKE_engines)
 
 tags: tags_engines
 tags_engines:
-	ctags $(SRC)
+	ctags $(SRC_engines)
 
 errors: errors_engines
 errors_engines:
@@ -154,17 +154,21 @@ tests_engines:
 
 lint: lint_engines
 lint_engines:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
-	@target=lint; $(RECURSIVE_MAKE)
+	lint -DLINT $(INCLUDES_engines) $(SRC_engines)>fluff
+	@target=lint; $(RECURSIVE_MAKE_engines)
 
 dclean: dclean_engines
 dclean_engines:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
-	@target=dclean; $(RECURSIVE_MAKE)
+	@target=dclean; $(RECURSIVE_MAKE_engines)
 
 clean: clean_engines
 clean_engines:
 	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
-	@target=clean; $(RECURSIVE_MAKE)
+	@target=clean; $(RECURSIVE_MAKE_engines)
 
+.c.o:
+	$(CC) $(CFLAGS_engines) $(CPPFLAGS) -c -o $@ $<
+.s.o:
+	$(AS) $(ASFLAGS_engines) -o $@ $<

@@ -2,14 +2,14 @@
 # OpenSSL/tools/Makefile
 #
 
-DIR=	tools
-INCLUDES= -I$(TOP) -I../../include
+DIR_tools=	tools
+INCLUDES_tools= -I$(TOP_tools) -I../../include
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_tools= $(INCLUDES_tools) $(CFLAG)
 
-GENERAL=Makefile
-TEST=
-APPS= c_rehash
+GENERAL_tools=Makefile
+TEST_tools=
+APPS_tools= c_rehash
 MISC_APPS= c_hash c_info c_issuer c_name
 
 all: all_tools
@@ -18,7 +18,7 @@ all_tools:
 install: install_tools
 install_tools:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@for i in $(APPS) ; \
+	@for i in $(APPS_tools) ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
 	chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
@@ -33,7 +33,7 @@ install_tools:
 
 files: files_tools
 files_tools:
-	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
+	$(PERL) $(TOP_tools)/util/files.pl TOP=$(TOP_tools) Makefile >> $(TOP_tools)/MINFO
 
 links: links_tools
 links_tools:
@@ -56,3 +56,6 @@ dclean_tools:
 clean: clean_tools
 clean_tools:
 	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
+
+.c.o:
+	$(CC) $(CFLAGS_tools) $(CPPFLAGS) -c -o $@ $<

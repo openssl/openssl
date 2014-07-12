@@ -2,53 +2,53 @@
 # OpenSSL/crypto/lhash/Makefile
 #
 
-DIR=	lhash
-INCLUDES=
+DIR_crypto_lhash=	lhash
+INCLUDES_crypto_lhash=
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_crypto_lhash= $(INCLUDES_crypto_lhash) $(CFLAG)
 
-GENERAL=Makefile
-TEST=
-APPS=
+GENERAL_crypto_lhash=Makefile
+TEST_crypto_lhash=
+APPS_crypto_lhash=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=lhash.c lh_stats.c
-LIBOBJ=lhash.o lh_stats.o
+LIB_crypto_lhash=$(TOP_crypto_lhash)/libcrypto.a
+LIBSRC_crypto_lhash=lhash.c lh_stats.c
+LIBOBJ_crypto_lhash=lhash.o lh_stats.o
 
-SRC= $(LIBSRC)
+SRC_crypto_lhash= $(LIBSRC_crypto_lhash)
 
-EXHEADER= lhash.h
-HEADER=	$(EXHEADER)
+EXHEADER_crypto_lhash= lhash.h
+HEADER_crypto_lhash=	$(EXHEADER_crypto_lhash)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_lhash=    $(GENERAL_crypto_lhash) $(SRC_crypto_lhash) $(HEADER_crypto_lhash)
 
 top: top_crypto_lhash
 top_crypto_lhash:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
+	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_lhash) sub_all)
 
 all: all_crypto_lhash
 all_crypto_lhash:	lib
 
 lib: lib_crypto_lhash
-lib_crypto_lhash:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
+lib_crypto_lhash:	$(LIBOBJ_crypto_lhash)
+	$(ARX) $(LIB_crypto_lhash) $(LIBOBJ_crypto_lhash)
+	$(RANLIB) $(LIB_crypto_lhash) || echo Never mind.
 	@touch lib
 
 files: files_crypto_lhash
 files_crypto_lhash:
-	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
+	$(PERL) $(TOP_crypto_lhash)/util/files.pl TOP=$(TOP_crypto_lhash) Makefile >> $(TOP_crypto_lhash)/MINFO
 
 links: links_crypto_lhash
 links_crypto_lhash:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+	@$(PERL) $(TOP_crypto_lhash)/util/mklink.pl ../../include/openssl $(EXHEADER_crypto_lhash)
+	@$(PERL) $(TOP_crypto_lhash)/util/mklink.pl ../../test $(TEST_crypto_lhash)
+	@$(PERL) $(TOP_crypto_lhash)/util/mklink.pl ../../apps $(APPS_crypto_lhash)
 
 install: install_crypto_lhash
 install_crypto_lhash:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_lhash)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
@@ -56,14 +56,14 @@ install_crypto_lhash:
 
 tags: tags_crypto_lhash
 tags_crypto_lhash:
-	ctags $(SRC)
+	ctags $(SRC_crypto_lhash)
 
 tests: tests_crypto_lhash
 tests_crypto_lhash:
 
 lint: lint_crypto_lhash
 lint_crypto_lhash:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+	lint -DLINT $(INCLUDES_crypto_lhash) $(SRC_crypto_lhash)>fluff
 
 dclean: dclean_crypto_lhash
 dclean_crypto_lhash:
@@ -74,3 +74,5 @@ clean: clean_crypto_lhash
 clean_crypto_lhash:
 	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
+.c.o:
+	$(CC) $(CFLAGS_crypto_lhash) $(CPPFLAGS) -c -o $@ $<

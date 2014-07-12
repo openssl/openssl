@@ -2,7 +2,7 @@
 # OpenSSL/fips/cmac/GNUmakefile
 #
 
-TOP= ../..
-include $(TOP)/configure.mk
+TOP_fips_cmac= ../..
+include $(TOP_fips_cmac)/configure.mk
 include Makefile
--include $(SRC:.c=.d)
+-include $(SRC_fips_cmac:.c=.d)

@@ -2,7 +2,7 @@
 # OpenSSL/fips/dsa/GNUmakefile
 #
 
-TOP= ../..
-include $(TOP)/configure.mk
+TOP_fips_dsa= ../..
+include $(TOP_fips_dsa)/configure.mk
 include Makefile
--include $(SRC:.c=.d)
+-include $(SRC_fips_dsa:.c=.d)

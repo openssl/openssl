@@ -2,7 +2,7 @@
 # OpenSSL/crypto/pem/GNUmakefile
 #
 
-TOP= ../..
-include $(TOP)/configure.mk
+TOP_crypto_pem= ../..
+include $(TOP_crypto_pem)/configure.mk
 include Makefile
--include $(SRC:.c=.d)
+-include $(SRC_crypto_pem:.c=.d)

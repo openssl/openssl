@@ -2,7 +2,7 @@
 # OpenSSL/demos/bio/GNUmakefile
 #
 
-TOP= ../..
-include $(TOP)/configure.mk
+TOP_demos_bio= ../..
+include $(TOP_demos_bio)/configure.mk
 include Makefile
--include $(SRC:.c=.d)
+-include $(SRC_demos_bio:.c=.d)

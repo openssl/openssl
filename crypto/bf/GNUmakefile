@@ -2,7 +2,7 @@
 # OpenSSL/crypto/bf/GNUmakefile
 #
 
-TOP= ../..
-include $(TOP)/configure.mk
+TOP_crypto_bf= ../..
+include $(TOP_crypto_bf)/configure.mk
 include Makefile
--include $(SRC:.c=.d)
+-include $(SRC_crypto_bf:.c=.d)

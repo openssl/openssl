@@ -2,53 +2,53 @@
 # OpenSSL/crypto/stack/Makefile
 #
 
-DIR=	stack
-INCLUDES=
+DIR_crypto_stack=	stack
+INCLUDES_crypto_stack=
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_crypto_stack= $(INCLUDES_crypto_stack) $(CFLAG)
 
-GENERAL=Makefile
-TEST=
-APPS=
+GENERAL_crypto_stack=Makefile
+TEST_crypto_stack=
+APPS_crypto_stack=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=stack.c
-LIBOBJ=stack.o
+LIB_crypto_stack=$(TOP_crypto_stack)/libcrypto.a
+LIBSRC_crypto_stack=stack.c
+LIBOBJ_crypto_stack=stack.o
 
-SRC= $(LIBSRC)
+SRC_crypto_stack= $(LIBSRC_crypto_stack)
 
-EXHEADER= stack.h safestack.h
-HEADER=	$(EXHEADER)
+EXHEADER_crypto_stack= stack.h safestack.h
+HEADER_crypto_stack=	$(EXHEADER_crypto_stack)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_stack=    $(GENERAL_crypto_stack) $(SRC_crypto_stack) $(HEADER_crypto_stack)
 
 top: top_crypto_stack
 top_crypto_stack:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
+	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_stack) sub_all)
 
 all: all_crypto_stack
 all_crypto_stack:	lib
 
 lib: lib_crypto_stack
-lib_crypto_stack:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
+lib_crypto_stack:	$(LIBOBJ_crypto_stack)
+	$(ARX) $(LIB_crypto_stack) $(LIBOBJ_crypto_stack)
+	$(RANLIB) $(LIB_crypto_stack) || echo Never mind.
 	@touch lib
 
 files: files_crypto_stack
 files_crypto_stack:
-	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
+	$(PERL) $(TOP_crypto_stack)/util/files.pl TOP=$(TOP_crypto_stack) Makefile >> $(TOP_crypto_stack)/MINFO
 
 links: links_crypto_stack
 links_crypto_stack:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+	@$(PERL) $(TOP_crypto_stack)/util/mklink.pl ../../include/openssl $(EXHEADER_crypto_stack)
+	@$(PERL) $(TOP_crypto_stack)/util/mklink.pl ../../test $(TEST_crypto_stack)
+	@$(PERL) $(TOP_crypto_stack)/util/mklink.pl ../../apps $(APPS_crypto_stack)
 
 install: install_crypto_stack
 install_crypto_stack:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_stack)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
@@ -56,14 +56,14 @@ install_crypto_stack:
 
 tags: tags_crypto_stack
 tags_crypto_stack:
-	ctags $(SRC)
+	ctags $(SRC_crypto_stack)
 
 tests: tests_crypto_stack
 tests_crypto_stack:
 
 lint: lint_crypto_stack
 lint_crypto_stack:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+	lint -DLINT $(INCLUDES_crypto_stack) $(SRC_crypto_stack)>fluff
 
 dclean: dclean_crypto_stack
 dclean_crypto_stack:
@@ -74,3 +74,5 @@ clean: clean_crypto_stack
 clean_crypto_stack:
 	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
+.c.o:
+	$(CC) $(CFLAGS_crypto_stack) $(CPPFLAGS) -c -o $@ $<

@@ -2,7 +2,7 @@
 # OpenSSL/crypto/asn1/GNUmakefile
 #
 
-TOP= ../..
-include $(TOP)/configure.mk
+TOP_crypto_asn1= ../..
+include $(TOP_crypto_asn1)/configure.mk
 include Makefile
--include $(SRC:.c=.d)
+-include $(SRC_crypto_asn1:.c=.d)

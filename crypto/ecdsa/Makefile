@@ -2,54 +2,54 @@
 # crypto/ecdsa/Makefile
 #
 
-DIR=	ecdsa
-INCLUDES= -I.. -I$(TOP) -I../../include
+DIR_crypto_ecdsa=	ecdsa
+INCLUDES_crypto_ecdsa= -I.. -I$(TOP_crypto_ecdsa) -I../../include
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_crypto_ecdsa= $(INCLUDES_crypto_ecdsa) $(CFLAG)
 
-GENERAL=Makefile
-TEST=ecdsatest.c
-APPS=
+GENERAL_crypto_ecdsa=Makefile
+TEST_crypto_ecdsa=ecdsatest.c
+APPS_crypto_ecdsa=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=	ecs_lib.c ecs_asn1.c ecs_ossl.c ecs_sign.c ecs_vrf.c ecs_err.c
+LIB_crypto_ecdsa=$(TOP_crypto_ecdsa)/libcrypto.a
+LIBSRC_crypto_ecdsa=	ecs_lib.c ecs_asn1.c ecs_ossl.c ecs_sign.c ecs_vrf.c ecs_err.c
 
-LIBOBJ=	ecs_lib.o ecs_asn1.o ecs_ossl.o ecs_sign.o ecs_vrf.o ecs_err.o
+LIBOBJ_crypto_ecdsa=	ecs_lib.o ecs_asn1.o ecs_ossl.o ecs_sign.o ecs_vrf.o ecs_err.o
 
-SRC= $(LIBSRC)
+SRC_crypto_ecdsa= $(LIBSRC_crypto_ecdsa)
 
-EXHEADER= ecdsa.h
-HEADER=	ecs_locl.h $(EXHEADER)
+EXHEADER_crypto_ecdsa= ecdsa.h
+HEADER_crypto_ecdsa=	ecs_locl.h $(EXHEADER_crypto_ecdsa)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_ecdsa=    $(GENERAL_crypto_ecdsa) $(SRC_crypto_ecdsa) $(HEADER_crypto_ecdsa)
 
 top: top_crypto_ecdsa
 top_crypto_ecdsa:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
+	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_ecdsa) sub_all)
 
 all: all_crypto_ecdsa
 all_crypto_ecdsa:	lib
 
 lib: lib_crypto_ecdsa
-lib_crypto_ecdsa:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
+lib_crypto_ecdsa:	$(LIBOBJ_crypto_ecdsa)
+	$(ARX) $(LIB_crypto_ecdsa) $(LIBOBJ_crypto_ecdsa)
+	$(RANLIB) $(LIB_crypto_ecdsa) || echo Never mind.
 	@touch lib
 
 files: files_crypto_ecdsa
 files_crypto_ecdsa:
-	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
+	$(PERL) $(TOP_crypto_ecdsa)/util/files.pl TOP=$(TOP_crypto_ecdsa) Makefile >> $(TOP_crypto_ecdsa)/MINFO
 
 links: links_crypto_ecdsa
 links_crypto_ecdsa:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+	@$(PERL) $(TOP_crypto_ecdsa)/util/mklink.pl ../../include/openssl $(EXHEADER_crypto_ecdsa)
+	@$(PERL) $(TOP_crypto_ecdsa)/util/mklink.pl ../../test $(TEST_crypto_ecdsa)
+	@$(PERL) $(TOP_crypto_ecdsa)/util/mklink.pl ../../apps $(APPS_crypto_ecdsa)
 
 install: install_crypto_ecdsa
 install_crypto_ecdsa:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
+	@headerlist="$(EXHEADER_crypto_ecdsa)"; for i in $$headerlist; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
@@ -57,14 +57,14 @@ install_crypto_ecdsa:
 
 tags: tags_crypto_ecdsa
 tags_crypto_ecdsa:
-	ctags $(SRC)
+	ctags $(SRC_crypto_ecdsa)
 
 tests: tests_crypto_ecdsa
 tests_crypto_ecdsa:
 
 lint: lint_crypto_ecdsa
 lint_crypto_ecdsa:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+	lint -DLINT $(INCLUDES_crypto_ecdsa) $(SRC_crypto_ecdsa)>fluff
 
 dclean: dclean_crypto_ecdsa
 dclean_crypto_ecdsa:
@@ -75,3 +75,5 @@ clean: clean_crypto_ecdsa
 clean_crypto_ecdsa:
 	rm -f *.o *.d */*.o */*.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
+.c.o:
+	$(CC) $(CFLAGS_crypto_ecdsa) $(CPPFLAGS) -c -o $@ $<

@@ -1,13 +1,13 @@
-LIBNAME=	libzencod
-SRC=		hw_zencod.c
-OBJ=		hw_zencod.o
-HEADER=		hw_zencod.h
+LIBNAME_demos_engines_zencod=	libzencod
+SRC_demos_engines_zencod=		hw_zencod.c
+OBJ_demos_engines_zencod=		hw_zencod.o
+HEADER_demos_engines_zencod=		hw_zencod.h
 
-PIC=		-fPIC
-CFLAGS=		-g -I../../../include $(PIC) -DENGINE_DYNAMIC_SUPPORT -DFLAT_INC
+PIC_demos_engines_zencod=		-fPIC
+CFLAGS_demos_engines_zencod=		-g -I../../../include $(PIC_demos_engines_zencod) -DENGINE_DYNAMIC_SUPPORT -DFLAT_INC
 
-LIB=		$(LIBNAME).a
-SHLIB=		$(LIBNAME).so
+LIB_demos_engines_zencod=		$(LIBNAME_demos_engines_zencod).a
+SHLIB_demos_engines_zencod=		$(LIBNAME_demos_engines_zencod).so
 
 all: all_demos_engines_zencod
 all_demos_engines_zencod:
@@ -30,69 +30,71 @@ update_demos_engines_zencod:		FORCE.update
 			-nostatic -staticloader -write hw_zencod.c
 
 gnu: gnu_demos_engines_zencod
-gnu_demos_engines_zencod:		$(SHLIB).gnu
+gnu_demos_engines_zencod:		$(SHLIB_demos_engines_zencod).gnu
 tru64: tru64_demos_engines_zencod
-tru64_demos_engines_zencod:		$(SHLIB).tru64
+tru64_demos_engines_zencod:		$(SHLIB_demos_engines_zencod).tru64
 solaris: solaris_demos_engines_zencod
-solaris_demos_engines_zencod:	$(SHLIB).solaris
+solaris_demos_engines_zencod:	$(SHLIB_demos_engines_zencod).solaris
 irix: irix_demos_engines_zencod
-irix_demos_engines_zencod:		$(SHLIB).irix
+irix_demos_engines_zencod:		$(SHLIB_demos_engines_zencod).irix
 hpux32: hpux32_demos_engines_zencod
-hpux32_demos_engines_zencod:		$(SHLIB).hpux32
+hpux32_demos_engines_zencod:		$(SHLIB_demos_engines_zencod).hpux32
 hpux64: hpux64_demos_engines_zencod
-hpux64_demos_engines_zencod:		$(SHLIB).hpux64
+hpux64_demos_engines_zencod:		$(SHLIB_demos_engines_zencod).hpux64
 aix: aix_demos_engines_zencod
-aix_demos_engines_zencod:		$(SHLIB).aix
+aix_demos_engines_zencod:		$(SHLIB_demos_engines_zencod).aix
 
-$(LIB):		$(OBJ)
-		$(AR) $(LIB) $(OBJ)
-		- $(RANLIB) $(LIB)
+$(LIB_demos_engines_zencod):		$(OBJ_demos_engines_zencod)
+		$(AR) $(LIB_demos_engines_zencod) $(OBJ_demos_engines_zencod)
+		- $(RANLIB) $(LIB_demos_engines_zencod)
 
-LINK_SO=	\
-  ld -r -o $(LIBNAME).o $$ALLSYMSFLAGS $(LIB) && \
-  (nm -Pg $(LIBNAME).o | grep ' [BDT] ' | cut -f1 -d' ' > $(LIBNAME).exp; \
-   $$SHAREDCMD $$SHAREDFLAGS -o $(SHLIB) $(LIBNAME).o -L ../../.. -lcrypto -lc)
+LINK_SO_demos_engines_zencod=	\
+  ld -r -o $(LIBNAME_demos_engines_zencod).o $$ALLSYMSFLAGS $(LIB_demos_engines_zencod) && \
+  (nm -Pg $(LIBNAME_demos_engines_zencod).o | grep ' [BDT] ' | cut -f1 -d' ' > $(LIBNAME_demos_engines_zencod).exp; \
+   $$SHAREDCMD $$SHAREDFLAGS -o $(SHLIB_demos_engines_zencod) $(LIBNAME_demos_engines_zencod).o -L ../../.. -lcrypto -lc)
 
-$(SHLIB).gnu:	$(LIB)
+$(SHLIB_demos_engines_zencod).gnu:	$(LIB_demos_engines_zencod)
 		ALLSYMSFLAGS='--whole-archive' \
-		SHAREDFLAGS='-shared -Wl,-soname=$(SHLIB)' \
+		SHAREDFLAGS='-shared -Wl,-soname=$(SHLIB_demos_engines_zencod)' \
 		SHAREDCMD='$(CC)'; \
-		$(LINK_SO)
-		touch $(SHLIB).gnu
-$(SHLIB).tru64:	$(LIB)
+		$(LINK_SO_demos_engines_zencod)
+		touch $(SHLIB_demos_engines_zencod).gnu
+$(SHLIB_demos_engines_zencod).tru64:	$(LIB_demos_engines_zencod)
 		ALLSYMSFLAGS='-all' \
 		SHAREDFLAGS='-shared' \
 		SHAREDCMD='$(CC)'; \
-		$(LINK_SO)
-		touch $(SHLIB).tru64
-$(SHLIB).solaris:	$(LIB)
+		$(LINK_SO_demos_engines_zencod)
+		touch $(SHLIB_demos_engines_zencod).tru64
+$(SHLIB_demos_engines_zencod).solaris:	$(LIB_demos_engines_zencod)
 		ALLSYMSFLAGS='-z allextract' \
-		SHAREDFLAGS='-G -h $(SHLIB)' \
+		SHAREDFLAGS='-G -h $(SHLIB_demos_engines_zencod)' \
 		SHAREDCMD='$(CC)'; \
-		$(LINK_SO)
-		touch $(SHLIB).solaris
-$(SHLIB).irix:	$(LIB)
+		$(LINK_SO_demos_engines_zencod)
+		touch $(SHLIB_demos_engines_zencod).solaris
+$(SHLIB_demos_engines_zencod).irix:	$(LIB_demos_engines_zencod)
 		ALLSYMSFLAGS='-all' \
-		SHAREDFLAGS='-shared -Wl,-soname,$(SHLIB)' \
+		SHAREDFLAGS='-shared -Wl,-soname,$(SHLIB_demos_engines_zencod)' \
 		SHAREDCMD='$(CC)'; \
-		$(LINK_SO)
-		touch $(SHLIB).irix
-$(SHLIB).hpux32:	$(LIB)
+		$(LINK_SO_demos_engines_zencod)
+		touch $(SHLIB_demos_engines_zencod).irix
+$(SHLIB_demos_engines_zencod).hpux32:	$(LIB_demos_engines_zencod)
 		ALLSYMSFLAGS='-Fl' \
-		SHAREDFLAGS='+vnocompatwarnings -b -z +s +h $(SHLIB)' \
+		SHAREDFLAGS='+vnocompatwarnings -b -z +s +h $(SHLIB_demos_engines_zencod)' \
 		SHAREDCMD='/usr/ccs/bin/ld'; \
-		$(LINK_SO)
-		touch $(SHLIB).hpux32
-$(SHLIB).hpux64:	$(LIB)
+		$(LINK_SO_demos_engines_zencod)
+		touch $(SHLIB_demos_engines_zencod).hpux32
+$(SHLIB_demos_engines_zencod).hpux64:	$(LIB_demos_engines_zencod)
 		ALLSYMSFLAGS='+forceload' \
-		SHAREDFLAGS='-b -z +h $(SHLIB)' \
+		SHAREDFLAGS='-b -z +h $(SHLIB_demos_engines_zencod)' \
 		SHAREDCMD='/usr/ccs/bin/ld'; \
-		$(LINK_SO)
-		touch $(SHLIB).hpux64
-$(SHLIB).aix:	$(LIB)
+		$(LINK_SO_demos_engines_zencod)
+		touch $(SHLIB_demos_engines_zencod).hpux64
+$(SHLIB_demos_engines_zencod).aix:	$(LIB_demos_engines_zencod)
 		ALLSYMSFLAGS='-bnogc' \
-		SHAREDFLAGS='-G -bE:$(LIBNAME).exp -bM:SRE' \
+		SHAREDFLAGS='-G -bE:$(LIBNAME_demos_engines_zencod).exp -bM:SRE' \
 		SHAREDCMD='$(CC)'; \
-		$(LINK_SO)
-		touch $(SHLIB).aix
+		$(LINK_SO_demos_engines_zencod)
+		touch $(SHLIB_demos_engines_zencod).aix
 
+.c.o:
+	$(CC) $(CFLAGS_demos_engines_zencod) $(CPPFLAGS) -c -o $@ $<

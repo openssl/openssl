@@ -2,9 +2,9 @@
 # OpenSSL/tools/BSDmakefile
 #
 
-TOP= ..
-.include "$(TOP)/configure.mk"
+TOP_tools= ..
+.include "$(TOP_tools)/configure.mk"
 .include "Makefile"
-.for d in $(SRC:.c=.d)
+.for d in $(SRC_tools:.c=.d)
 .sinclude "$(d)"
 .endfor

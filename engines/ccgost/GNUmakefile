@@ -2,7 +2,7 @@
 # OpenSSL/engines/ccgost/GNUmakefile
 #
 
-TOP= ../..
-include $(TOP)/configure.mk
+TOP_engines_ccgost= ../..
+include $(TOP_engines_ccgost)/configure.mk
 include Makefile
--include $(SRC:.c=.d)
+-include $(SRC_engines_ccgost:.c=.d)

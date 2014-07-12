@@ -2,7 +2,7 @@
 # OpenSSL/crypto/md5/GNUmakefile
 #
 
-TOP= ../..
-include $(TOP)/configure.mk
+TOP_crypto_md5= ../..
+include $(TOP_crypto_md5)/configure.mk
 include Makefile
--include $(SRC:.c=.d)
+-include $(SRC_crypto_md5:.c=.d)

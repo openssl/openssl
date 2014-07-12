@@ -2,7 +2,7 @@
 # OpenSSL/fips/rand/GNUmakefile
 #
 
-TOP= ../..
-include $(TOP)/configure.mk
+TOP_fips_rand= ../..
+include $(TOP_fips_rand)/configure.mk
 include Makefile
--include $(SRC:.c=.d)
+-include $(SRC_fips_rand:.c=.d)

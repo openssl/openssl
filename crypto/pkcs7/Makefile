@@ -2,32 +2,32 @@
 # OpenSSL/crypto/pkcs7/Makefile
 #
 
-DIR=	pkcs7
-INCLUDES= -I.. -I$(TOP) -I../../include
+DIR_crypto_pkcs7=	pkcs7
+INCLUDES_crypto_pkcs7= -I.. -I$(TOP_crypto_pkcs7) -I../../include
 
  
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_crypto_pkcs7= $(INCLUDES_crypto_pkcs7) $(CFLAG)
 
-GENERAL=Makefile README
-TEST=
-APPS=
+GENERAL_crypto_pkcs7=Makefile README
+TEST_crypto_pkcs7=
+APPS_crypto_pkcs7=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=	pk7_asn1.c pk7_lib.c pkcs7err.c pk7_doit.c pk7_smime.c pk7_attr.c \
+LIB_crypto_pkcs7=$(TOP_crypto_pkcs7)/libcrypto.a
+LIBSRC_crypto_pkcs7=	pk7_asn1.c pk7_lib.c pkcs7err.c pk7_doit.c pk7_smime.c pk7_attr.c \
 	pk7_mime.c bio_pk7.c
-LIBOBJ= pk7_asn1.o pk7_lib.o pkcs7err.o pk7_doit.o pk7_smime.o pk7_attr.o \
+LIBOBJ_crypto_pkcs7= pk7_asn1.o pk7_lib.o pkcs7err.o pk7_doit.o pk7_smime.o pk7_attr.o \
 	pk7_mime.o bio_pk7.o
 
-SRC= $(LIBSRC)
+SRC_crypto_pkcs7= $(LIBSRC_crypto_pkcs7)
 
-EXHEADER=  pkcs7.h
-HEADER=	$(EXHEADER)
+EXHEADER_crypto_pkcs7=  pkcs7.h
+HEADER_crypto_pkcs7=	$(EXHEADER_crypto_pkcs7)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_pkcs7=    $(GENERAL_crypto_pkcs7) $(SRC_crypto_pkcs7) $(HEADER_crypto_pkcs7)
 
 top: top_crypto_pkcs7
 top_crypto_pkcs7:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
+	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_pkcs7) sub_all)
 
 test: test_crypto_pkcs7
 test_crypto_pkcs7:
@@ -36,25 +36,25 @@ all: all_crypto_pkcs7
 all_crypto_pkcs7:	lib
 
 lib: lib_crypto_pkcs7
-lib_crypto_pkcs7:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
+lib_crypto_pkcs7:	$(LIBOBJ_crypto_pkcs7)
+	$(ARX) $(LIB_crypto_pkcs7) $(LIBOBJ_crypto_pkcs7)
+	$(RANLIB) $(LIB_crypto_pkcs7) || echo Never mind.
 	@touch lib
 
 files: files_crypto_pkcs7
 files_crypto_pkcs7:
-	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) Makefile >> $(TOP)/MINFO
+	$(PERL) $(TOP_crypto_pkcs7)/util/files.pl TOP=$(TOP_crypto_pkcs7) Makefile >> $(TOP_crypto_pkcs7)/MINFO
 
 links: links_crypto_pkcs7
 links_crypto_pkcs7:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+	@$(PERL) $(TOP_crypto_pkcs7)/util/mklink.pl ../../include/openssl $(EXHEADER_crypto_pkcs7)
+	@$(PERL) $(TOP_crypto_pkcs7)/util/mklink.pl ../../test $(TEST_crypto_pkcs7)
+	@$(PERL) $(TOP_crypto_pkcs7)/util/mklink.pl ../../apps $(APPS_crypto_pkcs7)
 
 install: install_crypto_pkcs7
 install_crypto_pkcs7:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_pkcs7)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
@@ -62,14 +62,14 @@ install_crypto_pkcs7:
 
 tags: tags_crypto_pkcs7
 tags_crypto_pkcs7:
-	ctags $(SRC)
+	ctags $(SRC_crypto_pkcs7)
 
 tests: tests_crypto_pkcs7
 tests_crypto_pkcs7:
 
 lint: lint_crypto_pkcs7
 lint_crypto_pkcs7:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+	lint -DLINT $(INCLUDES_crypto_pkcs7) $(SRC_crypto_pkcs7)>fluff
 
 dclean: dclean_crypto_pkcs7
 dclean_crypto_pkcs7:
@@ -80,3 +80,5 @@ clean: clean_crypto_pkcs7
 clean_crypto_pkcs7:
 	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff enc dec sign verify
 
+.c.o:
+	$(CC) $(CFLAGS_crypto_pkcs7) $(CPPFLAGS) -c -o $@ $<

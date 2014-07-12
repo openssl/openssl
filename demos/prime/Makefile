@@ -1,16 +1,16 @@
-CFLAGS= -g -I../../include -Wall
-LIBS=  -L../.. -lcrypto
-EXAMPLES=prime
+CFLAGS_demos_prime= -g -I../../include -Wall
+LIBS_demos_prime=  -L../.. -lcrypto
+EXAMPLES_demos_prime=prime
 
 all: all_demos_prime
-all_demos_prime: $(EXAMPLES) 
+all_demos_prime: $(EXAMPLES_demos_prime) 
 
 prime: prime.o
-	$(CC) -o prime prime.o $(LIBS)
+	$(CC) -o prime prime.o $(LIBS_demos_prime)
 
 clean: clean_demos_prime
 clean_demos_prime:	
-	rm -f $(EXAMPLES) *.o
+	rm -f $(EXAMPLES_demos_prime) *.o
 
 test: test_demos_prime
 test_demos_prime: all
@@ -20,3 +20,6 @@ test_demos_prime: all
 	./prime 256
 	@echo Test creating a 512-bit prime
 	./prime 512
+
+.c.o:
+	$(CC) $(CFLAGS_demos_prime) $(CPPFLAGS) -c -o $@ $<

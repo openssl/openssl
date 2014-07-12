@@ -2,56 +2,56 @@
 # OpenSSL/crypto/Makefile
 #
 
-DIR=		crypto
-INCLUDE=	-I. -I$(TOP) -I../include $(ZLIB_INCLUDE)
-# INCLUDES targets sudbirs!
-INCLUDES=	-I.. -I../.. -I../modes -I../asn1 -I../evp -I../../include $(ZLIB_INCLUDE)
-RM=             rm -f
+DIR_crypto=		crypto
+INCLUDE_crypto=	-I. -I$(TOP_crypto) -I../include $(ZLIB_INCLUDE)
+# INCLUDES_crypto targets sudbirs!
+INCLUDES_crypto=	-I.. -I../.. -I../modes -I../asn1 -I../evp -I../../include $(ZLIB_INCLUDE)
+RM_crypto=             rm -f
 
-RECURSIVE_MAKE=	[ -n "$(SDIRS)" ] && for i in $(SDIRS) ; do \
-		    (cd $$i && echo "making $$target in $(DIR)/$$i..." && \
-		    $(MAKE) -e TOP=../.. DIR=$$i INCLUDES='$(INCLUDES)' $$target ) || exit 1; \
+RECURSIVE_MAKE_crypto=	[ -n "$(SDIRS)" ] && for i in $(SDIRS) ; do \
+		    (cd $$i && echo "making $$target in $(DIR_crypto)/$$i..." && \
+		    $(MAKE) -e TOP=../.. DIR=$$i INCLUDES_crypto_$$i='$(INCLUDES_crypto)' $$target ) || exit 1; \
 		done;
 
  
-CFLAGS= $(INCLUDE) $(CFLAG)
-ASFLAGS= $(INCLUDE) $(ASFLAG)
-AFLAGS=$(ASFLAGS)
+CFLAGS_crypto= $(INCLUDE_crypto) $(CFLAG)
+ASFLAGS_crypto= $(INCLUDE_crypto) $(ASFLAG)
+AFLAGS_crypto=$(ASFLAGS_crypto)
 
-LIBS=
+LIBS_crypto=
 
-GENERAL=Makefile README crypto-lib.com install.com
-TEST=constant_time_test.c
+GENERAL_crypto=Makefile README crypto-lib.com install.com
+TEST_crypto=constant_time_test.c
 
-LIB= $(TOP)/libcrypto.a
-SHARED_LIB= libcrypto$(SHLIB_EXT)
-LIBSRC=	cryptlib.c mem.c mem_clr.c mem_dbg.c cversion.c ex_data.c cpt_err.c \
+LIB_crypto= $(TOP_crypto)/libcrypto.a
+SHARED_LIB_crypto= libcrypto$(SHLIB_EXT)
+LIBSRC_crypto=	cryptlib.c mem.c mem_clr.c mem_dbg.c cversion.c ex_data.c cpt_err.c \
 	ebcdic.c uid.c o_time.c o_str.c o_dir.c thr_id.c lock.c fips_ers.c \
 	o_init.c o_fips.c
-LIBOBJ= cryptlib.o mem.o mem_dbg.o cversion.o ex_data.o cpt_err.o \
+LIBOBJ_crypto= cryptlib.o mem.o mem_dbg.o cversion.o ex_data.o cpt_err.o \
 	ebcdic.o uid.o o_time.o o_str.o o_dir.o thr_id.o lock.o fips_ers.o \
 	o_init.o o_fips.o $(CPUID_OBJ)
 
-SRC= $(LIBSRC)
+SRC_crypto= $(LIBSRC_crypto)
 
-EXHEADER= crypto.h opensslv.h opensslconf.h ebcdic.h symhacks.h \
+EXHEADER_crypto= crypto.h opensslv.h opensslconf.h ebcdic.h symhacks.h \
 	ossl_typ.h
-HEADER=	cryptlib.h buildinf.h md32_common.h o_str.h o_dir.h $(EXHEADER)
+HEADER_crypto=	cryptlib.h buildinf.h md32_common.h o_str.h o_dir.h $(EXHEADER_crypto)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto=    $(GENERAL_crypto) $(SRC_crypto) $(HEADER_crypto)
 
 top: top_crypto
 top_crypto:
-	@(cd ..; $(MAKE) DIRS=$(DIR) all)
+	@(cd ..; $(MAKE) DIRS=$(DIR_crypto) all)
 
 all: all_crypto
 all_crypto: shared
 
 fips: cryptlib.o thr_id.o uid.o $(CPUID_OBJ)
 	[ -n "$(SDIRS)" ] && for i in $(SDIRS) ; do \
-		    ( obj=`$(PERL) $(TOP)/util/fipsobj.pl $$i` && \
-			cd $$i && echo "making fips in $(DIR)/$$i..." && \
-		    $(MAKE) -e TOP=../.. DIR=$$i INCLUDES='$(INCLUDES)' $$obj ) || exit 1; \
+		    ( obj=`$(PERL) $(TOP_crypto)/util/fipsobj.pl $$i` && \
+			cd $$i && echo "making fips in $(DIR_crypto)/$$i..." && \
+		    $(MAKE) -e TOP=../.. DIR=$$i INCLUDES_crypto_$$i='$(INCLUDES_crypto)' $$obj ) || exit 1; \
 		done;
 
 buildinf.h: ../Makefile
@@ -63,19 +63,19 @@ buildinf.h: ../Makefile
 	echo '#endif' ) >buildinf.h
 
 x86cpuid.s:	x86cpuid.pl perlasm/x86asm.pl
-	$(PERL) x86cpuid.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+	$(PERL) x86cpuid.pl $(PERLASM_SCHEME) $(CFLAGS_crypto) $(PROCESSOR) > $@
 
-applink.o:	$(TOP)/ms/applink.c
-	$(CC) $(CFLAGS) -c -o $@ $(TOP)/ms/applink.c
+applink.o:	$(TOP_crypto)/ms/applink.c
+	$(CC) $(CFLAGS_crypto) -c -o $@ $(TOP_crypto)/ms/applink.c
 
-uplink.o:	$(TOP)/ms/uplink.c applink.o
-	$(CC) $(CFLAGS) -c -o $@ $(TOP)/ms/uplink.c
+uplink.o:	$(TOP_crypto)/ms/uplink.c applink.o
+	$(CC) $(CFLAGS_crypto) -c -o $@ $(TOP_crypto)/ms/uplink.c
 
-uplink-x86.s:	$(TOP)/ms/uplink-x86.pl
-	$(PERL) $(TOP)/ms/uplink-x86.pl $(PERLASM_SCHEME) > $@
+uplink-x86.s:	$(TOP_crypto)/ms/uplink-x86.pl
+	$(PERL) $(TOP_crypto)/ms/uplink-x86.pl $(PERLASM_SCHEME) > $@
 
 x86_64cpuid.s:	x86_64cpuid.pl;	$(PERL) x86_64cpuid.pl $(PERLASM_SCHEME) > $@
-ia64cpuid.s:	ia64cpuid.S;	$(CC) $(CFLAGS) -E ia64cpuid.S > $@
+ia64cpuid.s:	ia64cpuid.S;	$(CC) $(CFLAGS_crypto) -E ia64cpuid.S > $@
 ppccpuid.s:	ppccpuid.pl;	$(PERL) ppccpuid.pl $(PERLASM_SCHEME) $@
 pariscid.s:	pariscid.pl;	$(PERL) pariscid.pl $(PERLASM_SCHEME) $@
 alphacpuid.s:	alphacpuid.pl
@@ -85,60 +85,64 @@ alphacpuid.s:	alphacpuid.pl
 
 subdirs: subdirs_crypto
 subdirs_crypto:
-	@target=all; $(RECURSIVE_MAKE)
+	@target=all; $(RECURSIVE_MAKE_crypto)
 
 files: files_crypto
 files_crypto:
-	$(PERL) $(TOP)/util/files.pl TOP=$(TOP) "CPUID_OBJ=$(CPUID_OBJ)" Makefile >> $(TOP)/MINFO
-	@target=files; $(RECURSIVE_MAKE)
+	$(PERL) $(TOP_crypto)/util/files.pl TOP=$(TOP_crypto) "CPUID_OBJ=$(CPUID_OBJ)" Makefile >> $(TOP_crypto)/MINFO
+	@target=files; $(RECURSIVE_MAKE_crypto)
 
 links: links_crypto
 links_crypto:
-	@$(PERL) $(TOP)/util/mklink.pl ../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../apps $(APPS)
-	@target=links; $(RECURSIVE_MAKE)
+	@$(PERL) $(TOP_crypto)/util/mklink.pl ../include/openssl $(EXHEADER_crypto)
+	@$(PERL) $(TOP_crypto)/util/mklink.pl ../test $(TEST_crypto)
+	@target=links; $(RECURSIVE_MAKE_crypto)
 
-# lib: $(LIB): are splitted to avoid end-less loop
+# lib: $(LIB_crypto): are splitted to avoid end-less loop
 lib: lib_crypto
-lib_crypto:	$(LIB)
+lib_crypto:	$(LIB_crypto)
 	@touch lib
-$(LIB):	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
+$(LIB_crypto):	$(LIBOBJ_crypto)
+	$(ARX) $(LIB_crypto) $(LIBOBJ_crypto)
+	$(RANLIB) $(LIB_crypto) || echo Never mind.
 
 shared: shared_crypto
 shared_crypto: buildinf.h lib_crypto subdirs
 	if [ -n "$(SHARED_LIBS)" ]; then \
-		(cd ..; $(MAKE) $(SHARED_LIB)); \
+		(cd ..; $(MAKE) $(SHARED_LIB_crypto)); \
 	fi
 
 libs: libs_crypto
 libs_crypto:
-	@target=lib; $(RECURSIVE_MAKE)
+	@target=lib; $(RECURSIVE_MAKE_crypto)
 
 install: install_crypto
 install_crypto:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ;\
+	@headerlist="$(EXHEADER_crypto)"; for i in $$headerlist ;\
 	do \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
-	@target=install; $(RECURSIVE_MAKE)
+	@target=install; $(RECURSIVE_MAKE_crypto)
 
 lint: lint_crypto
 lint_crypto:
-	@target=lint; $(RECURSIVE_MAKE)
+	@target=lint; $(RECURSIVE_MAKE_crypto)
 
 clean: clean_crypto
 clean_crypto:
 	rm -f buildinf.h *.s *.o *.d */*.o */*.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
-	@target=clean; $(RECURSIVE_MAKE)
+	@target=clean; $(RECURSIVE_MAKE_crypto)
 
 dclean: dclean_crypto
 dclean_crypto:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 	rm -f opensslconf.h
-	@target=dclean; $(RECURSIVE_MAKE)
+	@target=dclean; $(RECURSIVE_MAKE_crypto)
+
+.c.o:
+	$(CC) $(CFLAGS_crypto) $(CPPFLAGS) -c -o $@ $<
+.s.o:
+	$(AS) $(ASFLAGS_crypto) -o $@ $<

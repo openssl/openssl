@@ -2,7 +2,7 @@
 # OpenSSL/fips/ecdh/GNUmakefile
 #
 
-TOP= ../..
-include $(TOP)/configure.mk
+TOP_fips_ecdh= ../..
+include $(TOP_fips_ecdh)/configure.mk
 include Makefile
--include $(SRC:.c=.d)
+-include $(SRC_fips_ecdh:.c=.d)

@@ -2,7 +2,7 @@
 # OpenSSL/crypto/mdc2/GNUmakefile
 #
 
-TOP= ../..
-include $(TOP)/configure.mk
+TOP_crypto_mdc2= ../..
+include $(TOP_crypto_mdc2)/configure.mk
 include Makefile
--include $(SRC:.c=.d)
+-include $(SRC_crypto_mdc2:.c=.d)
