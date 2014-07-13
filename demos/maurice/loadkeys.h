@@ -13,7 +13,7 @@
 #include <openssl/evp.h>
 
 EVP_PKEY * ReadPublicKey(const char *certfile);
-EVP_PKEY *ReadPrivateKey(const char *keyfile);
+EVP_PKEY * ReadPrivateKey(const char *keyfile);
 
 #endif
 
