@@ -75,3 +75,5 @@
 lib
 Makefile.save
 *.bak
+tags
+TAGS
