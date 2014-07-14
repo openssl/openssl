@@ -767,7 +767,7 @@ static int MS_CALLBACK ssl_servername_cb(SSL *s, int *ad, void *arg)
 	
 	if (servername)
 		{
-    		if (strcmp(servername,p->servername)) 
+    		if (strcasecmp(servername,p->servername)) 
 			return p->extension_error;
 		if (ctx2)
 			{
