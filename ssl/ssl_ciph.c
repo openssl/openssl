@@ -1715,7 +1715,7 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 		kx="SRP";
 		break;
 	case SSL_kGOST:
-		kx="VKO";
+		kx="GOST";
 		break;
 	default:
 		kx="unknown";
