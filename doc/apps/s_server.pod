@@ -88,6 +88,8 @@ B<openssl> B<s_server>
 [B<-status_verbose>]
 [B<-status_timeout nsec>]
 [B<-status_url url>]
+[B<-nextprotoneg protocols>]
+
 =head1 DESCRIPTION
 
 The B<s_server> command implements a generic SSL/TLS server which listens
@@ -386,6 +388,14 @@ sets the timeout for OCSP response to B<nsec> seconds.
 sets a fallback responder URL to use if no responder URL is present in the
 server certificate. Without this option an error is returned if the server
 certificate does not contain a responder address.
+
+=item B<-nextprotoneg protocols>
+
+enable Next Protocol Negotiation TLS extension and provide a
+comma-separated list of supported protocol names.
+The list should contain most wanted protocols first.
+Protocol names are printable ASCII strings, for example "http/1.1" or
+"spdy/3".
 
 =back
 
