@@ -155,6 +155,9 @@ the client. With the B<-verify> option a certificate is requested but the
 client does not have to send one, with the B<-Verify> option the client
 must supply a certificate or an error occurs.
 
+If the ciphersuite cannot request a client certificate (for example an
+anonymous ciphersuite or PSK) this option has no effect.
+
 =item B<-crl_check>, B<-crl_check_all>
 
 Check the peer certificate has not been revoked by its CA.
