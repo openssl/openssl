@@ -1095,6 +1095,14 @@ bad:
 		sv_usage();
 		goto end;
 		}
+#ifndef OPENSSL_NO_DTLS1
+	if (www && socket_type == SOCK_DGRAM)
+		{
+		BIO_printf(bio_err,
+				"Can't use -HTTP, -www or -WWW with DTLS\n");
+		goto end;
+		}
+#endif
 
 	SSL_load_error_strings();
 	OpenSSL_add_ssl_algorithms();
