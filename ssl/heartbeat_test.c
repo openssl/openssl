@@ -429,33 +429,24 @@ static int test_tls1_heartbleed_empty_payload()
 
 int main(int argc, char *argv[])
 	{
-	int num_failed;
+	int result = 0;
 
 	SSL_library_init();
 	SSL_load_error_strings();
 
-	num_failed = test_dtls1_not_bleeding() +
-	    test_dtls1_not_bleeding_empty_payload() +
-	    test_dtls1_heartbleed() +
-	    test_dtls1_heartbleed_empty_payload() +
-	    /* The following test causes an assertion failure at
-	     * ssl/d1_pkt.c:dtls1_write_bytes() in versions prior to 1.0.1g: */
-	    (OPENSSL_VERSION_NUMBER >= 0x1000107fL ?
-	     test_dtls1_heartbleed_excessive_plaintext_length() : 0) +
-	    test_tls1_not_bleeding() +
-	    test_tls1_not_bleeding_empty_payload() +
-	    test_tls1_heartbleed() +
-	    test_tls1_heartbleed_empty_payload() +
-	    0;
+	ADD_TEST(test_dtls1_not_bleeding);
+	ADD_TEST(test_dtls1_not_bleeding_empty_payload);
+	ADD_TEST(test_dtls1_heartbleed);
+	ADD_TEST(test_dtls1_heartbleed_empty_payload);
+	ADD_TEST(test_dtls1_heartbleed_excessive_plaintext_length);
+	ADD_TEST(test_tls1_not_bleeding);
+	ADD_TEST(test_tls1_not_bleeding_empty_payload);
+	ADD_TEST(test_tls1_heartbleed);
+	ADD_TEST(test_tls1_heartbleed_empty_payload);
 
+	result = run_tests(argv[0]);
 	ERR_print_errors_fp(stderr);
-
-	if (num_failed != 0)
-		{
-		printf("%d test%s failed\n", num_failed, num_failed != 1 ? "s" : "");
-		return EXIT_FAILURE;
-		}
-	return EXIT_SUCCESS;
+	return result;
 	}
 
 #else /* OPENSSL_NO_HEARTBEATS*/

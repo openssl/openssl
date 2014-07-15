@@ -129,7 +129,8 @@ OBJ=	$(BNTEST).o $(ECTEST).o  $(ECDSATEST).o $(ECDHTEST).o $(IDEATEST).o \
 	$(FIPS_TEST_SUITE).o $(FIPS_DHVS).o $(FIPS_ECDSAVS).o \
 	$(FIPS_ECDHVS).o $(FIPS_CMACTEST).o $(FIPS_ALGVS).o \
 	$(EVPTEST).o $(IGETEST).o $(JPAKETEST).o $(V3NAMETEST).o \
-	$(GOST2814789TEST).o $(HEARTBEATTEST).o $(P5_CRPT2_TEST).o
+	$(GOST2814789TEST).o $(HEARTBEATTEST).o $(P5_CRPT2_TEST).o \
+	testutil.o
 
 SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(MD2TEST).c  $(MD4TEST).c $(MD5TEST).c \
@@ -145,7 +146,8 @@ SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(FIPS_TEST_SUITE).c $(FIPS_DHVS).c $(FIPS_ECDSAVS).c \
 	$(FIPS_ECDHVS).c $(FIPS_CMACTEST).c $(FIPS_ALGVS).c \
 	$(EVPTEST).c $(IGETEST).c $(JPAKETEST).c $(V3NAMETEST).c \
-	$(GOST2814789TEST).c $(HEARTBEATTEST).c $(P5_CRPT2_TEST).c
+	$(GOST2814789TEST).c $(HEARTBEATTEST).c $(P5_CRPT2_TEST).c \
+	testutil.c
 
 EXHEADER= 
 HEADER=	$(EXHEADER)
@@ -416,14 +418,14 @@ BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 	fi; \
 	LIBRARIES="$(LIBSSL) $(LIBCRYPTO) $(LIBKRB5)"; \
 	$(MAKE) -f $(TOP)/Makefile.shared -e \
-		APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o" \
+		APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o $$testutil" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
 
 BUILD_CMD_STATIC=shlib_target=; \
 	LIBRARIES="$(DLIBSSL) $(DLIBCRYPTO) $(LIBKRB5)"; \
 	$(MAKE) -f $(TOP)/Makefile.shared -e \
-		APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o" \
+		APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o $$testutil" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
 
@@ -624,8 +626,8 @@ $(SRPTEST)$(EXE_EXT): $(SRPTEST).o $(DLIBCRYPTO)
 $(V3NAMETEST)$(EXE_EXT): $(V3NAMETEST).o $(DLIBCRYPTO)
 	@target=$(V3NAMETEST); $(BUILD_CMD)
 
-$(HEARTBEATTEST)$(EXE_EXT): $(HEARTBEATTEST).o $(DLIBCRYPTO)
-	@target=$(HEARTBEATTEST); $(BUILD_CMD_STATIC)
+$(HEARTBEATTEST)$(EXE_EXT): $(HEARTBEATTEST).o $(DLIBCRYPTO) testutil.o
+	@target=$(HEARTBEATTEST) testutil=testutil.o; $(BUILD_CMD_STATIC)
 
 #$(AESTEST).o: $(AESTEST).c
 #	$(CC) -c $(CFLAGS) -DINTERMEDIATE_VALUE_KAT -DTRACE_KAT_MCT $(AESTEST).c
