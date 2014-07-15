@@ -453,8 +453,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf, unsigned c
 #endif
 
 #ifndef OPENSSL_NO_EC
-	if (s->tlsext_ecpointformatlist != NULL &&
-	    s->version != DTLS1_VERSION)
+	if (s->tlsext_ecpointformatlist != NULL)
 		{
 		/* Add TLS extension ECPointFormats to the ClientHello message */
 		long lenmax; 
@@ -473,8 +472,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf, unsigned c
 		memcpy(ret, s->tlsext_ecpointformatlist, s->tlsext_ecpointformatlist_length);
 		ret+=s->tlsext_ecpointformatlist_length;
 		}
-	if (s->tlsext_ellipticcurvelist != NULL &&
-	    s->version != DTLS1_VERSION)
+	if (s->tlsext_ellipticcurvelist != NULL)
 		{
 		/* Add TLS extension EllipticCurves to the ClientHello message */
 		long lenmax; 
@@ -750,8 +748,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf, unsigned c
         }
 
 #ifndef OPENSSL_NO_EC
-	if (s->tlsext_ecpointformatlist != NULL &&
-	    s->version != DTLS1_VERSION)
+	if (s->tlsext_ecpointformatlist != NULL)
 		{
 		/* Add TLS extension ECPointFormats to the ServerHello message */
 		long lenmax; 
@@ -1154,8 +1151,7 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 #endif
 
 #ifndef OPENSSL_NO_EC
-		else if (type == TLSEXT_TYPE_ec_point_formats &&
-	             s->version != DTLS1_VERSION)
+		else if (type == TLSEXT_TYPE_ec_point_formats)
 			{
 			unsigned char *sdata = data;
 			int ecpointformatlist_length = *(sdata++);
@@ -1189,8 +1185,7 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 			fprintf(stderr,"\n");
 #endif
 			}
-		else if (type == TLSEXT_TYPE_elliptic_curves &&
-	             s->version != DTLS1_VERSION)
+		else if (type == TLSEXT_TYPE_elliptic_curves)
 			{
 			unsigned char *sdata = data;
 			int ellipticcurvelist_length = (*(sdata++) << 8);
@@ -1549,8 +1544,7 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 			}
 
 #ifndef OPENSSL_NO_EC
-		else if (type == TLSEXT_TYPE_ec_point_formats &&
-	             s->version != DTLS1_VERSION)
+		else if (type == TLSEXT_TYPE_ec_point_formats)
 			{
 			unsigned char *sdata = data;
 			int ecpointformatlist_length = *(sdata++);
