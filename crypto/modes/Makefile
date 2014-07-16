@@ -62,8 +62,6 @@ ghash-parisc.s:	asm/ghash-parisc.pl
 	$(PERL) asm/ghash-parisc.pl $(PERLASM_SCHEME) $@
 ghashv8-armx.S:	asm/ghashv8-armx.pl
 	$(PERL) asm/ghashv8-armx.pl $(PERLASM_SCHEME) $@
-ghashp8-ppc.s:	asm/ghashp8-ppc.pl
-	$(PERL) asm/ghashp8-ppc.pl $(PERLASM_SCHEME) $@
 
 # GNU make "catch all"
 ghash-%.S:	asm/ghash-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@

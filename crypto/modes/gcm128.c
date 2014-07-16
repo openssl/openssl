@@ -700,13 +700,6 @@ extern unsigned int OPENSSL_sparcv9cap_P[];
 void gcm_init_vis3(u128 Htable[16],const u64 Xi[2]);
 void gcm_gmult_vis3(u64 Xi[2],const u128 Htable[16]);
 void gcm_ghash_vis3(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
-#elif defined(OPENSSL_CPUID_OBJ) && (defined(__powerpc__) || defined(__ppc__) || defined(_ARCH_PPC))
-#  define GHASH_ASM_PPC
-#  define GCM_FUNCREF_4BIT
-extern unsigned int OPENSSL_ppccap_P[];
-void gcm_init_p8(u128 Htable[16],const u64 Xi[2]);
-void gcm_gmult_p8(u64 Xi[2],const u128 Htable[16]);
-void gcm_ghash_p8(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
 # endif
 #endif
 
@@ -805,16 +798,6 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx,void *key,block128_f block)
 		gcm_init_vis3(ctx->Htable,ctx->H.u);
 		ctx->gmult = gcm_gmult_vis3;
 		ctx->ghash = gcm_ghash_vis3;
-	} else {
-		gcm_init_4bit(ctx->Htable,ctx->H.u);
-		ctx->gmult = gcm_gmult_4bit;
-		ctx->ghash = gcm_ghash_4bit;
-	}
-# elif	defined(GHASH_ASM_PPC)
-	if (OPENSSL_ppccap_P[0] & (1<<2)) {
-		gcm_init_p8(ctx->Htable,ctx->H.u);
-		ctx->gmult = gcm_gmult_p8;
-		ctx->ghash = gcm_ghash_p8;
 	} else {
 		gcm_init_4bit(ctx->Htable,ctx->H.u);
 		ctx->gmult = gcm_gmult_4bit;
