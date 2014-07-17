@@ -58,6 +58,7 @@
 
 #include "testutil.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -74,6 +75,7 @@ static int num_tests = 0;
 
 void add_test(const char* test_case_name, int (*test_fn)())
 	{
+	assert(num_tests != (sizeof(all_tests) / sizeof(all_tests)[0]));
 	all_tests[num_tests].test_case_name = test_case_name;
 	all_tests[num_tests].test_fn = test_fn;
 	++num_tests;
