@@ -2098,7 +2098,11 @@ static int aes_wrap_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	EVP_AES_WRAP_CTX *wctx = ctx->cipher_data;
 	size_t rv;
 	if (inlen % 8)
-		return 0;
+		return -1;
+	if (ctx->encrypt && inlen < 8)
+		return -1;
+	if (!ctx->encrypt && inlen < 16)
+		return -1;
 	if (!out)
 		{
 		if (ctx->encrypt)
