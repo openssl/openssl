@@ -106,7 +106,7 @@ size_t CRYPTO_128_unwrap(void *key, const unsigned char *iv,
 	unsigned char *A, B[16], *R;
 	size_t i, j, t;
 	inlen -= 8;
-	if ((inlen & 0x7) || (inlen < 8) || (inlen > CRYPTO128_WRAP_MAX))
+	if ((inlen & 0x7) || (inlen < 16) || (inlen > CRYPTO128_WRAP_MAX))
 		return 0;
 	A = B;
 	t =  6 * (inlen >> 3);
