@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2001-2014 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -2086,7 +2086,7 @@ static int aes_wrap_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		}
 	if (iv)
 		{
-		memcpy(ctx->iv, iv, 8);
+		memcpy(ctx->iv, iv, EVP_CIPHER_CTX_iv_length(ctx));
 		wctx->iv = ctx->iv;
 		}
 	return 1;
@@ -2097,27 +2097,62 @@ static int aes_wrap_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	{
 	EVP_AES_WRAP_CTX *wctx = ctx->cipher_data;
 	size_t rv;
+	/* AES wrap with padding has IV length of 4, without padding 8 */
+	int pad = EVP_CIPHER_CTX_iv_length(ctx) == 4;
+	/* No final operation so always return zero length */
 	if (!in)
 		return 0;
-	if (inlen % 8)
+	/* Input length must always be non-zero */
+	if (!inlen)
 		return -1;
-	if (ctx->encrypt && inlen < 8)
+	/* If decrypting need at least 16 bytes and multiple of 8 */
+	if (!ctx->encrypt && (inlen < 16 || inlen & 0x7))
 		return -1;
-	if (!ctx->encrypt && inlen < 16)
+	/* If not padding input must be multiple of 8 */
+	if (!pad && inlen & 0x7)
 		return -1;
 	if (!out)
 		{
 		if (ctx->encrypt)
+			{
+			/* If padding round up to multiple of 8 */
+			if (pad)
+				inlen = (inlen + 7)/8 * 8;
+			/* 8 byte prefix */
 			return inlen + 8;
+			}
 		else
+			{
+			/* If not padding output will be exactly 8 bytes
+			 * smaller than input. If padding it will be at
+			 * least 8 bytes smaller but we don't know how
+			 * much.
+			 */
 			return inlen - 8;
+			}
 		}
-	if (ctx->encrypt)
-		rv = CRYPTO_128_wrap(&wctx->ks.ks, wctx->iv, out, in, inlen,
+	if (pad)
+		{
+		if (ctx->encrypt)
+			rv = CRYPTO_128_wrap_pad(&wctx->ks.ks, wctx->iv,
+						out, in, inlen,
 						(block128_f)AES_encrypt);
-	else
-		rv = CRYPTO_128_unwrap(&wctx->ks.ks, wctx->iv, out, in, inlen,
+		else
+			rv = CRYPTO_128_unwrap_pad(&wctx->ks.ks, wctx->iv,
+						out, in, inlen,
 						(block128_f)AES_decrypt);
+		}
+	else
+		{
+		if (ctx->encrypt)
+			rv = CRYPTO_128_wrap(&wctx->ks.ks, wctx->iv,
+						out, in, inlen,
+						(block128_f)AES_encrypt);
+		else
+			rv = CRYPTO_128_unwrap(&wctx->ks.ks, wctx->iv,
+						out, in, inlen,
+						(block128_f)AES_decrypt);
+		}
 	return rv ? (int)rv : -1;
 	}
 
@@ -2129,7 +2164,7 @@ static const EVP_CIPHER aes_128_wrap = {
 	NID_id_aes128_wrap,
 	8, 16, 8, WRAP_FLAGS,
 	aes_wrap_init_key, aes_wrap_cipher,
-	NULL,	
+	NULL,
 	sizeof(EVP_AES_WRAP_CTX),
 	NULL,NULL,NULL,NULL };
 
@@ -2142,7 +2177,7 @@ static const EVP_CIPHER aes_192_wrap = {
 	NID_id_aes192_wrap,
 	8, 24, 8, WRAP_FLAGS,
 	aes_wrap_init_key, aes_wrap_cipher,
-	NULL,	
+	NULL,
 	sizeof(EVP_AES_WRAP_CTX),
 	NULL,NULL,NULL,NULL };
 
@@ -2155,13 +2190,52 @@ static const EVP_CIPHER aes_256_wrap = {
 	NID_id_aes256_wrap,
 	8, 32, 8, WRAP_FLAGS,
 	aes_wrap_init_key, aes_wrap_cipher,
-	NULL,	
+	NULL,
 	sizeof(EVP_AES_WRAP_CTX),
 	NULL,NULL,NULL,NULL };
 
 const EVP_CIPHER *EVP_aes_256_wrap(void)
 	{
 	return &aes_256_wrap;
+	}
+
+static const EVP_CIPHER aes_128_wrap_pad = {
+	NID_id_aes128_wrap_pad,
+	8, 16, 4, WRAP_FLAGS,
+	aes_wrap_init_key, aes_wrap_cipher,
+	NULL,
+	sizeof(EVP_AES_WRAP_CTX),
+	NULL,NULL,NULL,NULL };
+
+const EVP_CIPHER *EVP_aes_128_wrap_pad(void)
+	{
+	return &aes_128_wrap_pad;
+	}
+
+static const EVP_CIPHER aes_192_wrap_pad = {
+	NID_id_aes192_wrap_pad,
+	8, 24, 4, WRAP_FLAGS,
+	aes_wrap_init_key, aes_wrap_cipher,
+	NULL,
+	sizeof(EVP_AES_WRAP_CTX),
+	NULL,NULL,NULL,NULL };
+
+const EVP_CIPHER *EVP_aes_192_wrap_pad(void)
+	{
+	return &aes_192_wrap_pad;
+	}
+
+static const EVP_CIPHER aes_256_wrap_pad = {
+	NID_id_aes256_wrap_pad,
+	8, 32, 4, WRAP_FLAGS,
+	aes_wrap_init_key, aes_wrap_cipher,
+	NULL,
+	sizeof(EVP_AES_WRAP_CTX),
+	NULL,NULL,NULL,NULL };
+
+const EVP_CIPHER *EVP_aes_256_wrap_pad(void)
+	{
+	return &aes_256_wrap_pad;
 	}
 
 #endif
