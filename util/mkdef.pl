@@ -307,6 +307,7 @@ $crypto.=" crypto/ec/ec.h" ; # unless $no_ec;
 $crypto.=" crypto/ecdsa/ecdsa.h" ; # unless $no_ecdsa;
 $crypto.=" crypto/ecdh/ecdh.h" ; # unless $no_ecdh;
 $crypto.=" crypto/hmac/hmac.h" ; # unless $no_hmac;
+$crypto.=" crypto/cmac/cmac.h" ;
 
 $crypto.=" crypto/engine/engine.h"; # unless $no_engine;
 $crypto.=" crypto/stack/stack.h" ; # unless $no_stack;
