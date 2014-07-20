@@ -10,9 +10,7 @@
 #include <crypto.h>
 #include <openssl/bn.h>
 
-#define PPC_FPU64	(1<<0)
-#define PPC_ALTIVEC	(1<<1)
-#define PPC_CRYPTO207	(1<<2)
+#include "ppc_arch.h"
 
 unsigned int OPENSSL_ppccap_P = 0;
 
