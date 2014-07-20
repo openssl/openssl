@@ -155,9 +155,18 @@ void AES_xts_decrypt(const char *inp,char *out,size_t len,
 			const unsigned char iv[16]);
 #endif
 
-#if	defined(VPAES_ASM) && (defined(__powerpc__) || defined(__ppc__) || defined(_ARCH_PPC))
-extern unsigned int OPENSSL_ppccap_P;
-#define	VPAES_CAPABLE	(OPENSSL_ppccap_P&(1<<1))
+#if	defined(OPENSSL_CPUID_OBJ) && (defined(__powerpc__) || defined(__ppc__) || defined(_ARCH_PPC))
+# include "ppc_arch.h"
+# ifdef VPAES_ASM
+#  define VPAES_CAPABLE	(OPENSSL_ppccap_P & PPC_ALTIVEC)
+# endif
+# define HWAES_CAPABLE	(OPENSSL_ppccap_P & PPC_CRYPTO207)
+# define HWAES_set_encrypt_key aes_p8_set_encrypt_key
+# define HWAES_set_decrypt_key aes_p8_set_decrypt_key
+# define HWAES_encrypt aes_p8_encrypt
+# define HWAES_decrypt aes_p8_decrypt
+# define HWAES_cbc_encrypt aes_p8_cbc_encrypt
+# define HWAES_ctr32_encrypt_blocks aes_p8_ctr32_encrypt_blocks
 #endif
 
 #if	defined(AES_ASM) && !defined(I386_ONLY) &&	(  \

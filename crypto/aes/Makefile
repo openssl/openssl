@@ -79,6 +79,8 @@ aes-ppc.s:	asm/aes-ppc.pl
 	$(PERL) asm/aes-ppc.pl $(PERLASM_SCHEME) $@
 vpaes-ppc.s:	asm/vpaes-ppc.pl
 	$(PERL) asm/vpaes-ppc.pl $(PERLASM_SCHEME) $@
+aesp8-ppc.s:	asm/aesp8-ppc.pl
+	$(PERL) asm/aesp8-ppc.pl $(PERLASM_SCHEME) $@
 
 aes-parisc.s:	asm/aes-parisc.pl
 	$(PERL) asm/aes-parisc.pl $(PERLASM_SCHEME) $@
