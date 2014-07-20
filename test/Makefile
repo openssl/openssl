@@ -150,7 +150,7 @@ SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	testutil.c
 
 EXHEADER= 
-HEADER=	$(EXHEADER)
+HEADER=	testutil.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
