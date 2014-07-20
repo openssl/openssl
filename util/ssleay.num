@@ -328,7 +328,7 @@ DTLS_method                             367	EXIST::FUNCTION:
 DTLS_client_method                      368	EXIST::FUNCTION:
 SSL_CIPHER_standard_name                369	EXIST::FUNCTION:SSL_TRACE
 SSL_set_alpn_protos                     370	EXIST::FUNCTION:
-SSL_CTX_set_srv_supp_data               371	EXIST::FUNCTION:TLSEXT
+SSL_CTX_set_srv_supp_data               371	NOEXIST::FUNCTION:
 SSL_CONF_cmd_argv                       372	EXIST::FUNCTION:
 DTLSv1_2_server_method                  373	EXIST::FUNCTION:
 SSL_COMP_set0_compression_methods       374	EXIST:!VMS:FUNCTION:COMP
@@ -360,7 +360,7 @@ SSL_check_chain                         399	EXIST::FUNCTION:TLSEXT
 SSL_certs_clear                         400	EXIST::FUNCTION:
 SSL_CONF_CTX_free                       401	EXIST::FUNCTION:
 SSL_trace                               402	EXIST::FUNCTION:SSL_TRACE
-SSL_CTX_set_cli_supp_data               403	EXIST::FUNCTION:TLSEXT
+SSL_CTX_set_cli_supp_data               403	NOEXIST::FUNCTION:
 DTLSv1_2_method                         404	EXIST::FUNCTION:
 DTLS_server_method                      405	EXIST::FUNCTION:
 SSL_CTX_use_serverinfo_file             406	EXIST::FUNCTION:STDIO,TLSEXT

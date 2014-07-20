@@ -4404,3 +4404,8 @@ X509V3_EXT_free                         4763	EXIST::FUNCTION:
 BIO_hex_string                          4764	EXIST::FUNCTION:
 X509_VERIFY_PARAM_set_hostflags         4765	EXIST::FUNCTION:
 BUF_strnlen                             4766	EXIST::FUNCTION:
+X509_VERIFY_PARAM_get0_peername         4767	EXIST::FUNCTION:
+ECDSA_METHOD_set_app_data               4768	EXIST::FUNCTION:ECDSA
+sk_deep_copy                            4769	EXIST::FUNCTION:
+ECDSA_METHOD_get_app_data               4770	EXIST::FUNCTION:ECDSA
+X509_VERIFY_PARAM_add1_host             4771	EXIST::FUNCTION:
