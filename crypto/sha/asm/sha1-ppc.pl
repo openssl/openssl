@@ -125,31 +125,31 @@ my ($i,$a,$b,$c,$d,$e,$f)=@_;
 my $j=$i+1;
 $code.=<<___ if ($i<79);
 	add	$f,$K,$e
+	xor	$t0,$b,$d
 	rotlwi	$e,$a,5
 	xor	@X[$j%16],@X[$j%16],@X[($j+2)%16]
 	add	$f,$f,@X[$i%16]
-	xor	$t0,$b,$c
+	xor	$t0,$t0,$c
 	xor	@X[$j%16],@X[$j%16],@X[($j+8)%16]
-	add	$f,$f,$e
-	rotlwi	$b,$b,30
-	xor	$t0,$t0,$d
-	xor	@X[$j%16],@X[$j%16],@X[($j+13)%16]
 	add	$f,$f,$t0
+	rotlwi	$b,$b,30
+	xor	@X[$j%16],@X[$j%16],@X[($j+13)%16]
+	add	$f,$f,$e
 	rotlwi	@X[$j%16],@X[$j%16],1
 ___
 $code.=<<___ if ($i==79);
 	add	$f,$K,$e
+	xor	$t0,$b,$d
 	rotlwi	$e,$a,5
 	lwz	r16,0($ctx)
 	add	$f,$f,@X[$i%16]
-	xor	$t0,$b,$c
+	xor	$t0,$t0,$c
 	lwz	r17,4($ctx)
-	add	$f,$f,$e
+	add	$f,$f,$t0
 	rotlwi	$b,$b,30
 	lwz	r18,8($ctx)
-	xor	$t0,$t0,$d
 	lwz	r19,12($ctx)
-	add	$f,$f,$t0
+	add	$f,$f,$e
 	lwz	r20,16($ctx)
 ___
 }
