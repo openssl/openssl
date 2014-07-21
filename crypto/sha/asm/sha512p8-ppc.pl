@@ -13,8 +13,8 @@
 # always virtualized setup with possibly throttled processor.
 # Relative comparison is therefore more informative. This module is
 # ~60% faster than integer-only sha512-ppc.pl. To anchor to something
-# else, SHA256 is 16% slower than sha1-ppc.pl and 2.5x slower than
-# hardware-assisted aes-128-cbc encrypt. SHA512 is 33% faster than
+# else, SHA256 is 24% slower than sha1-ppc.pl and 2.5x slower than
+# hardware-assisted aes-128-cbc encrypt. SHA512 is 20% faster than
 # sha1-ppc.pl and 1.6x slower than aes-128-cbc. Another interesting
 # result is degree of computational resources' utilization. POWER8 is
 # "massively multi-threaded chip" and difference between single- and
