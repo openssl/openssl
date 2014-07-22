@@ -310,6 +310,41 @@
 
  Changes between 1.0.1e and 1.0.2 [xx XXX xxxx]
 
+  *) Initial support for PowerISA 2.0.7, first implemented in POWER8.
+     This covers AES, SHA256/512 and GHASH. "Initial" means that most
+     common cases are optimized and there still is room for further
+     improvements. Vector Permutation AES for Altivec is also added.
+     [Andy Polyakov]
+
+  *) Add support for little-endian ppc64 Linux target.
+     [Marcelo Cerri (IBM)]
+
+  *) Initial support for AMRv8 ISA crypto extensions. This covers AES,
+     SHA1, SHA256 and GHASH. "Initial" means that most common cases
+     are optimized and there still is room for further improvements.
+     Both 32- and 64-bit modes are supported.
+     [Andy Polyakov, Ard Biesheuvel (Linaro)]
+
+  *) Improved ARMv7 NEON support.
+     [Andy Polyakov]
+
+  *) Support for SPARC Architecture 2011 crypto extensions, first
+     implemented in SPARC T4. This covers AES, DES, Camellia, SHA1,
+     SHA256/512, MD5, GHASH and modular exponentiation.
+     [Andy Polyakov, David Miller]
+
+  *) Accelerated modular exponentiation for Intel processors, a.k.a.
+     RSAZ.
+     [Shay Gueron (Intel Corp)]
+
+  *) Support for new and upcoming Intel processors, including AVX2,
+     BMI and SHA ISA extensions. This includes additional "stitched"
+     implementations, AESNI-SHA256 and GCM, and multi-buffer support
+     for TLS encrypt.
+
+     This work was sponsored by Intel Corp.
+     [Andy Polyakov]
+
   *) Keep original DTLS digest and encryption contexts in retransmission
      structures so we can use the previous session parameters if they need
      to be resent. (CVE-2013-6450)
