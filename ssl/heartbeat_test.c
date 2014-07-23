@@ -38,6 +38,8 @@
  * http://mike-bland.com/tags/heartbleed.html
  */
 
+#define OPENSSL_UNIT_TEST
+
 #include "../ssl/ssl_locl.h"
 
 #include "testutil.h"
@@ -46,7 +48,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if !defined(OPENSSL_NO_HEARTBEATS) && !defined(OPENSSL_SYS_WINDOWS)
+#if !defined(OPENSSL_NO_HEARTBEATS) && !defined(OPENSSL_NO_UNIT_TEST)
 
 /* As per https://tools.ietf.org/html/rfc6520#section-4 */
 #define MIN_PADDING_SIZE	16

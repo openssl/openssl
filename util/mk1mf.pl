@@ -1465,6 +1465,7 @@ sub read_options
 		"no-zlib" => 0,
 		"no-zlib-dynamic" => 0,
 		"no-ssl-trace" => 0,
+		"no-unit-test" => 0,
 		"fips" => \$fips,
 		"fipscanisterbuild" => [\$fips, \$fipscanisterbuild],
 		"fipscanisteronly" => [\$fips, \$fipscanisterbuild, \$fipscanisteronly],
