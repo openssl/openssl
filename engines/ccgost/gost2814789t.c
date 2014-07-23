@@ -28,7 +28,6 @@ int main(int argc, char *argv[])
 #include <openssl/obj_mac.h>
 
 #define CCGOST_ID "gost"
-#define CCGOST_DIR "../engines/ccgost"
 
 #include "../engines/ccgost/gost89.h"
 
@@ -1403,9 +1402,6 @@ int main(int argc, char *argv[])
     /* 
      * ccgost engine test on GostR3411_94_CryptoProParamSet
      */
-    #ifndef OPENSSL_NO_DYNAMIC_ENGINE
-	setenv("OPENSSL_ENGINES", CCGOST_DIR, 1);
-    #endif
     ERR_load_crypto_strings();
     ENGINE_load_builtin_engines();
     OPENSSL_load_builtin_modules();

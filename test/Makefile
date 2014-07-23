@@ -255,7 +255,7 @@ test_rand: $(RANDTEST)$(EXE_EXT)
 	../util/shlib_wrap.sh ./$(RANDTEST)
 
 test_gost2814789: $(GOST2814789TEST)$(EXE_EXT)
-	../util/shlib_wrap.sh ./$(GOST2814789TEST)
+	OPENSSL_ENGINES=../engines/ccgost ../util/shlib_wrap.sh ./$(GOST2814789TEST)
 
 test_enc: ../apps/openssl$(EXE_EXT) testenc
 	@sh ./testenc
