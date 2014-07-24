@@ -1088,6 +1088,13 @@ void ssl_set_client_disabled(SSL *s)
 		c->mask_k |= SSL_kPSK;
 		}
 #endif /* OPENSSL_NO_PSK */
+#ifndef OPENSSL_NO_SRP
+	if (!(s->srp_ctx.srp_Mask & SSL_kSRP))
+		{
+		c->mask_a |= SSL_aSRP;
+		c->mask_k |= SSL_kSRP;
+		}
+#endif
 	c->valid = 1;
 	}
 
