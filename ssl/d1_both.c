@@ -644,7 +644,8 @@ dtls1_reassemble_fragment(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 
 
 	/* If message is already reassembled, this must be a
-	 * retransmit and can be dropped.
+	 * retransmit and can be dropped. In this case item != NULL and so frag
+	 * does not need to be freed.
 	 */
 	if (frag->reassembly == NULL)
 		{
