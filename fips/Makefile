@@ -118,13 +118,6 @@ fips_end.o: fips_canister.c
 fips_premain_dso$(EXE_EXT): fips_premain.c
 	$(CC) $(CFLAGS_fips) -DFINGERPRINT_PREMAIN_DSO_LOAD -o $@ fips_premain.c \
 		$(FIPSLIBDIR)fipscanister.o ../libcrypto.a $(EX_LIBS)
-# this is executed only when linking with external fipscanister.o
-fips_standalone_sha1$(EXE_EXT):	sha/fips_standalone_sha1.c
-	if [ -z "$(HOSTCC)" ] ; then \
-		$(CC) $(CFLAGS_fips) -DFIPSCANISTER_O -o $@ sha/fips_standalone_sha1.c $(FIPSLIBDIR)fipscanister.o $(EX_LIBS) ; \
-	else \
-		$(HOSTCC) $(HOSTCFLAGS) -o $ $@ -I../include -I../crypto sha/fips_standalone_sha1.c ../crypto/sha/sha1dgst.c ; \
-	fi
 
 subdirs: subdirs_fips
 subdirs_fips:
