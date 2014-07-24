@@ -2,13 +2,6 @@
 ## Makefile for OpenSSL: fipscanister.o only
 ##
 
-
-# INSTALL_PREFIX is for package builders so that they can configure
-# for, say, /usr/ and yet have everything installed to /tmp/somedir/usr/.
-# Normally it is left empty.
-
-# Do not edit this manually. Use Configure --openssldir=DIR do change this!
-
 # NO_IDEA - Define to build without the IDEA algorithm
 # NO_RC4  - Define to build without the RC4 algorithm
 # NO_RC2  - Define to build without the RC2 algorithm
@@ -37,58 +30,10 @@
 # equal 4.
 # PKCS1_CHECK - pkcs1 tests.
 
-# We let the C compiler driver to take care of .s files. This is done in
-# order to be excused from maintaining a separate set of architecture
-# dependent assembler flags. E.g. if you throw -mcpu=ultrasparc at SPARC
-# gcc, then the driver will automatically translate it to -xarch=v8plus
-# and pass it down to assembler.
-
-# For x86 assembler: Set PROCESSOR to 386 if you want to support
-# the 80386.
-
-# CPUID module collects small commonly used assembler snippets
-
-# KRB5 stuff
-
-# Zlib stuff
-
-# This is the location of fipscanister.o and friends.
-# The FIPS module build will place it $(INSTALLTOP)/lib
-# but since $(INSTALLTOP) can only take the default value
-# when the module is built it will be in /usr/local/ssl/lib
-# $(INSTALLTOP) for this build may be different so hard
-# code the path.
-
-
-# This is set to "y" if fipscanister.o is compiled internally as
-# opposed to coming from an external validated location.
-
-
-# This is set if we only build fipscanister.o
-
-FIPSCANISTERONLY=y
-
-# The location of the library which contains fipscanister.o
-# normally it will be libcrypto unless fipsdso is set in which
-# case it will be libfips. If not compiling in FIPS mode at all
-# this is empty making it a useful test for a FIPS compile.
-
-
 # Shared library base address. Currently only used on Windows.
 #
 
 BASEADDR=
-
-
-# dirs in crypto to build
-# keep in mind that the above list is adjusted by ./Configure
-# according to no-xxx arguments...
-
-LINKDIRS=  \
-	objects sha hmac des aes modes \
-	bn ec rsa dsa ecdh cmac ecdsa dh engine \
-	buffer bio stack lhash rand err \
-	evp asn1 ui
 
 # tests to perform.  "alltests" is a special word indicating that all tests
 # should be performed.
