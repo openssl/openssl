@@ -796,6 +796,13 @@ int dtls1_send_client_key_exchange(SSL *s)
 			RSA *rsa;
 			unsigned char tmp_buf[SSL_MAX_MASTER_KEY_LENGTH];
 
+			if (s->session->sess_cert == NULL)
+				{
+				/* We should always have a server certificate with SSL_kRSA. */
+				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
+				goto err;
+				}
+
 			if (s->session->sess_cert->peer_rsa_tmp != NULL)
 				rsa=s->session->sess_cert->peer_rsa_tmp;
 			else
@@ -985,6 +992,13 @@ int dtls1_send_client_key_exchange(SSL *s)
 		else if (l & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
 			{
 			DH *dh_srvr,*dh_clnt;
+
+			if (s->session->sess_cert == NULL)
+				{
+				ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_UNEXPECTED_MESSAGE);
+				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,SSL_R_UNEXPECTED_MESSAGE);
+				goto err;
+				}
 
 			if (s->session->sess_cert->peer_dh_tmp != NULL)
 				dh_srvr=s->session->sess_cert->peer_dh_tmp;
@@ -1226,5 +1240,3 @@ int dtls1_send_client_certificate(SSL *s)
 	/* SSL3_ST_CW_CERT_D */
 	return(dtls1_do_write(s,SSL3_RT_HANDSHAKE));
 	}
-
-
