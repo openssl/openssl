@@ -54,14 +54,6 @@ testapps:
 	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP_fips)/Makefile reflect THIS=$@; fi
 
 all: all_fips
-all_fips:
-	@if [ -n "$(FIPSCANISTERONLY)" ]; then \
-		$(MAKE) -e subdirs lib ; \
-	elif [ -z "$(FIPSLIBDIR)" ]; then \
-		$(MAKE) -e subdirs lib fips_premain_dso$(EXE_EXT); \
-	else  \
-		$(MAKE) -e lib fips_premain_dso$(EXE_EXT) fips_standalone_sha1$(EXE_EXT); \
-	fi
 
 # Idea behind fipscanister.o is to "seize" the sequestered code between
 # known symbols for fingerprinting purposes, which would be commonly
