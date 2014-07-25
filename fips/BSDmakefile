@@ -5,7 +5,13 @@
 TOP_fips= ..
 .include "$(TOP_fips)/configure.mk"
 .include "Makefile"
+
+.if !empty $(FIPSCANISTERONLY)
+.elif empty $(FIPSLIBDIR)
+.else
 .include "fips_standalone_sha1.mk"
+.endif
+
 .for d in $(SRC_fips:.c=.d)
 .sinclude "$(d)"
 .endfor
