@@ -374,7 +374,7 @@ test_jpake: $(JPAKETEST)$(EXE_EXT)
 
 test_cms: ../apps/openssl$(EXE_EXT) cms-test.pl smcont.txt
 	@echo "CMS consistency test"
-	$(PERL) cms-test.pl
+	EXE_EXT="$(EXE_EXT)" $(PERL) cms-test.pl
 
 test_srp: $(SRPTEST)$(EXE_EXT)
 	@echo "Test SRP"
