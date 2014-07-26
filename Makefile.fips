@@ -384,7 +384,7 @@ tar:
 	find . -type d -print | xargs chmod 755
 	find . -type f -print | xargs chmod a+r
 	find . -type f -perm -0100 -print | xargs chmod a+x
-	find * \! -path CVS/\* \! -path \*/CVS/\* \! -name CVS \! -name .cvsignore \! -name STATUS \! -name TABLE | $(BUILDENV) LINKDIRS='$(LINKDIRS)' $(PERL) util/fipsdist.pl | sort > ../$(TARFILE).list; \
+	find * \! -path CVS/\* \! -path \*/CVS/\* \! -name CVS \! -name .cvsignore \! -name STATUS \! -name TABLE | FIPS_EX_OBJ='$(FIPS_EX_OBJ}' AES_ENC='$(AES_ENC)' BN_ASM='$(BN_ASM)' DES_ENC='$(DES_ENC)' SHA1_ASM_OBJ='$(SHA1_ASM_OBJ)' MODES_ASM_OBJ='$(MODES_ASM_OBJ)' LINKDIRS='$(LINKDIRS)' $(PERL) util/fipsdist.pl | sort > ../$(TARFILE).list; \
 	$(TAR) $(TARFLAGS) --files-from ../$(TARFILE).list -cvf - | \
 	tardy --user_number=0  --user_name=openssl \
 	      --group_number=0 --group_name=openssl \
