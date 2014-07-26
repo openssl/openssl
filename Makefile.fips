@@ -121,7 +121,7 @@ build_fips:
 build_crypto:
 	if [ -n "$(FIPSCANLIB)" ]; then \
 		EXCL_OBJ='$(AES_ENC) $(BN_ASM) $(DES_ENC) $(CPUID_OBJ) $(SHA1_ASM_OBJ) $(MODES_ASM_OBJ) $(FIPS_EX_OBJ)' ; export EXCL_OBJ ; \
-		ARX='$(PERL) $${TOP}/util/arx.pl $(AR)' ; \
+		ARX='EXCL_OBJ="$$EXCL_OBJ" $(PERL) $${TOP}/util/arx.pl $(AR)' ; \
 	else \
 		ARX='${AR}' ; \
 	fi ; export ARX ; \
