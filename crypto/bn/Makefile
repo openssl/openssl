@@ -120,9 +120,9 @@ ia64-mont.s:	asm/ia64-mont.pl
 # GNU assembler fails to compile PA-RISC2 modules, insist on calling
 # vendor assembler...
 pa-risc2W.o: asm/pa-risc2W.s
-	$(PERL) $(TOP_crypto_bn)/util/fipsas.pl $(TOP_crypto_bn) $< /usr/ccs/bin/as -o pa-risc2W.o asm/pa-risc2W.s
+	FIPSCANISTERINTERNAL="$(FIPSCANISTERINTERNAL)" $(PERL) $(TOP_crypto_bn)/util/fipsas.pl $(TOP_crypto_bn) $< /usr/ccs/bin/as -o pa-risc2W.o asm/pa-risc2W.s
 pa-risc2.o: asm/pa-risc2.s
-	$(PERL) $(TOP_crypto_bn)/util/fipsas.pl $(TOP_crypto_bn) $< /usr/ccs/bin/as -o pa-risc2.o asm/pa-risc2.s
+	FIPSCANISTERINTERNAL="$(FIPSCANISTERINTERNAL)" $(PERL) $(TOP_crypto_bn)/util/fipsas.pl $(TOP_crypto_bn) $< /usr/ccs/bin/as -o pa-risc2.o asm/pa-risc2.s
 
 parisc-mont.s:	asm/parisc-mont.pl
 	$(PERL) asm/parisc-mont.pl $(PERLASM_SCHEME) $@

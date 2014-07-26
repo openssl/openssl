@@ -165,7 +165,7 @@ build_crypto:
 		ARX='${AR}' ; \
 	fi ; export ARX ; \
 	if [ $(FIPSCANISTERINTERNAL) = "y" ]; then \
-		AS='$(PERL) $${TOP}/util/fipsas.pl $${TOP} $${<} $(CC) -c' ; \
+		AS='FIPSCANISTERINTERNAL="$(FIPSCANISTERINTERNAL)" $(PERL) $${TOP}/util/fipsas.pl $${TOP} $${<} $(CC) -c' ; \
 	else \
 		AS='$(CC) -c' ; \
 	fi ; export AS ; \
