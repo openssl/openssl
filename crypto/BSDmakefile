@@ -23,3 +23,28 @@ fips_objs_$(dir):
 
 fips: fips_objs_$(dir)
 .endfor
+
+# There is a reason for this CRYPTO_SUBDIRS_TARGET and CRYPTO_LIBS_TARGET
+# madness. See the BUGS section of the BSD make man page.
+CRYPTO_TARGETS= subdirs files links libs install lint clean dclean
+CRYPTO_SUBDIRS_TARGET= subdirs
+CRYPTO_LIBS_TARGET = libs
+.for target in $(CRYPTO_TARGETS)
+
+.if $(CRYPTO_SUBDIRS_TARGET) == $(target)
+CRYPTO_$(target)= all
+.elif $(CRYPTO_LIBS_TARGET) == $(target)
+CRYPTO_$(target)= lib
+.else
+CRYPTO_$(target)= $(target)
+.endif
+
+.for dir in $(SDIRS)
+$(target)_crypto_$(dir):
+	@cd $(dir) && echo "making $(CRYPTO_$(target)) in crypto/$(dir)..." && \
+	$(MAKE) -e TOP=../.. DIR=$(dir) INCLUDES_crypto_$(dir)='$(INCLUDES_crypto)' \
+	$(CRYPTO_$(target))
+
+$(target): $(target)_crypto_$(dir)
+.endfor
+.endfor

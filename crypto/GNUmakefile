@@ -23,3 +23,30 @@ fips: fips_objs_$(1)
 endef
 
 $(foreach dir,$(SDIRS),$(eval $(call FIPS_OBJS_RULE_template,$(dir))))
+
+# $(1) is the subdir, $(2) is the target, $(3) is the subdir target.
+define CRYPTO_SUBDIR_RULE_template
+$(2)_crypto_$(1):
+	@cd $(1) && echo "making $(3) in crypto/$(1)..." && \
+	$(MAKE) -e TOP=../.. DIR=$(1) INCLUDES_crypto_$(1)='$(INCLUDES_crypto)' \
+	$(3)
+
+$(2): $(2)_crypto_$(1)
+endef
+
+$(foreach dir, $(SDIRS), \
+  $(eval $(call CRYPTO_SUBDIR_RULE_template,$(dir),subdirs,all)))
+$(foreach dir, $(SDIRS), \
+  $(eval $(call CRYPTO_SUBDIR_RULE_template,$(dir),files,files)))
+$(foreach dir, $(SDIRS), \
+  $(eval $(call CRYPTO_SUBDIR_RULE_template,$(dir),links,links)))
+$(foreach dir, $(SDIRS), \
+  $(eval $(call CRYPTO_SUBDIR_RULE_template,$(dir),libs,lib)))
+$(foreach dir, $(SDIRS), \
+  $(eval $(call CRYPTO_SUBDIR_RULE_template,$(dir),install,install)))
+$(foreach dir, $(SDIRS), \
+  $(eval $(call CRYPTO_SUBDIR_RULE_template,$(dir),lint,lint)))
+$(foreach dir, $(SDIRS), \
+  $(eval $(call CRYPTO_SUBDIR_RULE_template,$(dir),clean,clean)))
+$(foreach dir, $(SDIRS), \
+  $(eval $(call CRYPTO_SUBDIR_RULE_template,$(dir),dclean,dclean)))
