@@ -48,11 +48,6 @@ all: all_crypto
 all_crypto: shared
 
 fips: cryptlib.o thr_id.o uid.o $(CPUID_OBJ)
-	[ -n "$(SDIRS)" ] && for i in $(SDIRS) ; do \
-		    ( obj=`$(PERL) $(TOP_crypto)/util/fipsobj.pl $$i` && \
-			cd $$i && echo "making fips in $(DIR_crypto)/$$i..." && \
-		    $(MAKE) -e TOP=../.. DIR=$$i INCLUDES_crypto_$$i='$(INCLUDES_crypto)' $$obj ) || exit 1; \
-		done;
 
 buildinf.h: ../Makefile
 	( echo "#ifndef MK1MF_BUILD"; \

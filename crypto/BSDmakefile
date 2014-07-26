@@ -8,3 +8,18 @@ TOP_crypto= ..
 .for d in $(SRC_crypto:.c=.d)
 .sinclude "$(d)"
 .endfor
+
+.for dir in $(SDIRS)
+fips_objs_$(dir):
+	@cd $(dir) && echo making fips in $(DIR_crypto)/$(dir)... && \
+	$(MAKE) -e TOP=../.. DIR=$(dir) INCLUDES_crypto_$(dir)='$(INCLUDES_crypto)' \
+	`FIPS_EX_OBJ="$(FIPS_EX_OBJ)"\
+	AES_ENC="$(AES_ENC)"\
+	BN_ASM="$(BN_ASM)"\
+	DES_ENC="$(DES_ENC)"\
+	SHA1_ASM_OBJ="$(SHA1_ASM_OBJ)"\
+	MODES_ASM_OBJ="$(MODES_ASM_OBJ)"\
+	$(PERL) $(TOP_crypto)/../util/fipsobj.pl $(dir)`
+
+fips: fips_objs_$(dir)
+.endfor
