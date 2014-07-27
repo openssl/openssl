@@ -168,8 +168,6 @@ HTMLDIR=$(OPENSSLDIR)/html
 SHELL=/bin/sh
 
 ONEDIRS=out tmp
-EDIRS=  times doc bugs util include certs ms shlib mt demos perl sf dep VMS
-WDIRS=  windows
 LIBS=   libcrypto.a libssl.a
 SHARED_CRYPTO=libcrypto$(SHLIB_EXT)
 SHARED_SSL=libssl$(SHLIB_EXT)
