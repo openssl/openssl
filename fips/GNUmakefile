@@ -2,8 +2,7 @@
 # OpenSSL/fips/GNUmakefile
 #
 
-include $(TOP_fips)/configure.mk
-include Makefile
+include fips/Makefile
 
 ifdef FIPSCANISTERONLY
 all_fips: subdirs_fips lib

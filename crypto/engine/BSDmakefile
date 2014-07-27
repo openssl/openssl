@@ -2,8 +2,7 @@
 # OpenSSL/crypto/engine/BSDmakefile
 #
 
-.include "$(TOP_crypto_engine)/configure.mk"
-.include "Makefile"
+.include "crypto/engine/Makefile"
 .for d in $(SRC_crypto_engine:.c=.d)
 .sinclude "$(d)"
 .endfor

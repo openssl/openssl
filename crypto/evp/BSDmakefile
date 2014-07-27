@@ -2,8 +2,7 @@
 # OpenSSL/crypto/evp/BSDmakefile
 #
 
-.include "$(TOP_crypto_evp)/configure.mk"
-.include "Makefile"
+.include "crypto/evp/Makefile"
 .for d in $(SRC_crypto_evp:.c=.d)
 .sinclude "$(d)"
 .endfor

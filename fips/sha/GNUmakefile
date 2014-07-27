@@ -2,8 +2,7 @@
 # OpenSSL/fips/sha/GNUmakefile
 #
 
-include $(TOP_fips_sha)/configure.mk
-include Makefile
+include fips/sha/Makefile
 
 ifdef FIPSCANISTERONLY
 include fips_standalone_sha1.mk

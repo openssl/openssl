@@ -2,6 +2,5 @@
 # OpenSSL/crypto/ripemd/GNUmakefile
 #
 
-include $(TOP_crypto_ripemd)/configure.mk
-include Makefile
+include crypto/ripemd/Makefile
 -include $(SRC_crypto_ripemd:.c=.d)

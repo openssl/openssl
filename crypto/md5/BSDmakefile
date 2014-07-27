@@ -2,8 +2,7 @@
 # OpenSSL/crypto/md5/BSDmakefile
 #
 
-.include "$(TOP_crypto_md5)/configure.mk"
-.include "Makefile"
+.include "crypto/md5/Makefile"
 .for d in $(SRC_crypto_md5:.c=.d)
 .sinclude "$(d)"
 .endfor

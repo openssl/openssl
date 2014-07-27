@@ -2,8 +2,7 @@
 # OpenSSL/crypto/rand/BSDmakefile
 #
 
-.include "$(TOP_crypto_rand)/configure.mk"
-.include "Makefile"
+.include "crypto/rand/Makefile"
 .for d in $(SRC_crypto_rand:.c=.d)
 .sinclude "$(d)"
 .endfor

@@ -2,8 +2,7 @@
 # OpenSSL/engines/GNUmakefile
 #
 
-include $(TOP_engines)/configure.mk
-include Makefile
+include engines/Makefile
 -include $(SRC_engines:.c=.d)
 
 # $(1) is the subdir, $(2) is the target, $(3) is the subdir target.

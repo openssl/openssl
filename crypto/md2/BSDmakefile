@@ -2,8 +2,7 @@
 # OpenSSL/crypto/md2/BSDmakefile
 #
 
-.include "$(TOP_crypto_md2)/configure.mk"
-.include "Makefile"
+.include "crypto/md2/Makefile"
 .for d in $(SRC_crypto_md2:.c=.d)
 .sinclude "$(d)"
 .endfor

@@ -2,6 +2,5 @@
 # OpenSSL/crypto/krb5/GNUmakefile
 #
 
-include $(TOP_crypto_krb5)/configure.mk
-include Makefile
+include crypto/krb5/Makefile
 -include $(SRC_crypto_krb5:.c=.d)

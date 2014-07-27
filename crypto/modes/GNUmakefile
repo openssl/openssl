@@ -2,6 +2,5 @@
 # OpenSSL/crypto/modes/GNUmakefile
 #
 
-include $(TOP_crypto_modes)/configure.mk
-include Makefile
+include crypto/modes/Makefile
 -include $(SRC_crypto_modes:.c=.d)

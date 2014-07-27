@@ -2,8 +2,7 @@
 # OpenSSL/fips/BSDmakefile
 #
 
-.include "$(TOP_fips)/configure.mk"
-.include "Makefile"
+.include "fips/Makefile"
 
 .if !empty $(FIPSCANISTERONLY)
 all_fips: subdirs_fips lib

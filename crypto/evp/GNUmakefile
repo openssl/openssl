@@ -2,6 +2,5 @@
 # OpenSSL/crypto/evp/GNUmakefile
 #
 
-include $(TOP_crypto_evp)/configure.mk
-include Makefile
+include crypto/evp/Makefile
 -include $(SRC_crypto_evp:.c=.d)

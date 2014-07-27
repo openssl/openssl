@@ -2,8 +2,7 @@
 # OpenSSL/test/BSDmakefile
 #
 
-.include "$(TOP_test)/configure.mk"
-.include "Makefile"
+.include "test/Makefile"
 .for d in $(SRC_test:.c=.d)
 .sinclude "$(d)"
 .endfor

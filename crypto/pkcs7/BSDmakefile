@@ -2,8 +2,7 @@
 # OpenSSL/crypto/pkcs7/BSDmakefile
 #
 
-.include "$(TOP_crypto_pkcs7)/configure.mk"
-.include "Makefile"
+.include "crypto/pkcs7/Makefile"
 .for d in $(SRC_crypto_pkcs7:.c=.d)
 .sinclude "$(d)"
 .endfor

@@ -2,6 +2,5 @@
 # OpenSSL/crypto/rsa/GNUmakefile
 #
 
-include $(TOP_crypto_rsa)/configure.mk
-include Makefile
+include crypto/rsa/Makefile
 -include $(SRC_crypto_rsa:.c=.d)

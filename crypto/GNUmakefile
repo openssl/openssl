@@ -2,8 +2,7 @@
 # OpenSSL/crypto/GNUmakefile
 #
 
-include $(TOP_crypto)/configure.mk
-include Makefile
+include crypto/Makefile
 -include $(SRC_crypto:.c=.d)
 
 define FIPS_OBJS_RULE_template

@@ -2,8 +2,7 @@
 # OpenSSL/crypto/cms/BSDmakefile
 #
 
-.include "$(TOP_crypto_cms)/configure.mk"
-.include "Makefile"
+.include "crypto/cms/Makefile"
 .for d in $(SRC_crypto_cms:.c=.d)
 .sinclude "$(d)"
 .endfor

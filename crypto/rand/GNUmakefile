@@ -2,6 +2,5 @@
 # OpenSSL/crypto/rand/GNUmakefile
 #
 
-include $(TOP_crypto_rand)/configure.mk
-include Makefile
+include crypto/rand/Makefile
 -include $(SRC_crypto_rand:.c=.d)

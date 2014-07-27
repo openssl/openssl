@@ -2,6 +2,5 @@
 # OpenSSL/crypto/des/GNUmakefile
 #
 
-include $(TOP_crypto_des)/configure.mk
-include Makefile
+include crypto/des/Makefile
 -include $(SRC_crypto_des:.c=.d)

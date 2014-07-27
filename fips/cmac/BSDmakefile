@@ -2,8 +2,7 @@
 # OpenSSL/fips/cmac/BSDmakefile
 #
 
-.include "$(TOP_fips_cmac)/configure.mk"
-.include "Makefile"
+.include "fips/cmac/Makefile"
 .for d in $(SRC_fips_cmac:.c=.d)
 .sinclude "$(d)"
 .endfor

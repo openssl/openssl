@@ -2,8 +2,7 @@
 # OpenSSL/crypto/hmac/BSDmakefile
 #
 
-.include "$(TOP_crypto_hmac)/configure.mk"
-.include "Makefile"
+.include "crypto/hmac/Makefile"
 .for d in $(SRC_crypto_hmac:.c=.d)
 .sinclude "$(d)"
 .endfor

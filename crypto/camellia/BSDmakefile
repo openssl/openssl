@@ -2,8 +2,7 @@
 # OpenSSL/crypto/camellia/BSDmakefile
 #
 
-.include "$(TOP_crypto_camellia)/configure.mk"
-.include "Makefile"
+.include "crypto/camellia/Makefile"
 .for d in $(SRC_crypto_camellia:.c=.d)
 .sinclude "$(d)"
 .endfor

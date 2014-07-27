@@ -2,6 +2,5 @@
 # OpenSSL/crypto/txt_db/GNUmakefile
 #
 
-include $(TOP_crypto_txt_db)/configure.mk
-include Makefile
+include crypto/txt_db/Makefile
 -include $(SRC_crypto_txt_db:.c=.d)

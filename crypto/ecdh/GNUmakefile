@@ -2,6 +2,5 @@
 # OpenSSL/crypto/ecdh/GNUmakefile
 #
 
-include $(TOP_crypto_ecdh)/configure.mk
-include Makefile
+include crypto/ecdh/Makefile
 -include $(SRC_crypto_ecdh:.c=.d)

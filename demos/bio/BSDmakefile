@@ -2,8 +2,7 @@
 # OpenSSL/demos/bio/BSDmakefile
 #
 
-.include "$(TOP_demos_bio)/configure.mk"
-.include "Makefile"
+.include "demos/bio/Makefile"
 .for d in $(SRC_demos_bio:.c=.d)
 .sinclude "$(d)"
 .endfor

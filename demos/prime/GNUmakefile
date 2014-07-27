@@ -2,6 +2,5 @@
 # OpenSSL/demos/prime/GNUmakefile
 #
 
-include $(TOP_demos_prime)/configure.mk
-include Makefile
+include demos/prime/Makefile
 -include $(SRC_demos_prime:.c=.d)

@@ -2,6 +2,5 @@
 # OpenSSL/crypto/srp/GNUmakefile
 #
 
-include $(TOP_crypto_srp)/configure.mk
-include Makefile
+include crypto/srp/Makefile
 -include $(SRC_crypto_srp:.c=.d)

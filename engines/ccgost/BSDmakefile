@@ -2,8 +2,7 @@
 # OpenSSL/engines/ccgost/BSDmakefile
 #
 
-.include "$(TOP_engines_ccgost)/configure.mk"
-.include "Makefile"
+.include "engines/ccgost/Makefile"
 .for d in $(SRC_engines_ccgost:.c=.d)
 .sinclude "$(d)"
 .endfor

@@ -2,6 +2,5 @@
 # OpenSSL/crypto/engine/GNUmakefile
 #
 
-include $(TOP_crypto_engine)/configure.mk
-include Makefile
+include crypto/engine/Makefile
 -include $(SRC_crypto_engine:.c=.d)

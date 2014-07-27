@@ -2,6 +2,5 @@
 # OpenSSL/crypto/bn/GNUmakefile
 #
 
-include $(TOP_crypto_bn)/configure.mk
-include Makefile
+include crypto/bn/Makefile
 -include $(SRC_crypto_bn:.c=.d)

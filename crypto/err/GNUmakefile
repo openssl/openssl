@@ -2,6 +2,5 @@
 # OpenSSL/crypto/err/GNUmakefile
 #
 
-include $(TOP_crypto_err)/configure.mk
-include Makefile
+include crypto/err/Makefile
 -include $(SRC_crypto_err:.c=.d)

@@ -2,6 +2,5 @@
 # OpenSSL/crypto/rc2/GNUmakefile
 #
 
-include $(TOP_crypto_rc2)/configure.mk
-include Makefile
+include crypto/rc2/Makefile
 -include $(SRC_crypto_rc2:.c=.d)

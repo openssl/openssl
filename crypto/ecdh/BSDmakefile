@@ -2,8 +2,7 @@
 # OpenSSL/crypto/ecdh/BSDmakefile
 #
 
-.include "$(TOP_crypto_ecdh)/configure.mk"
-.include "Makefile"
+.include "crypto/ecdh/Makefile"
 .for d in $(SRC_crypto_ecdh:.c=.d)
 .sinclude "$(d)"
 .endfor

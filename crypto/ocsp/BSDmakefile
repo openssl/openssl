@@ -2,8 +2,7 @@
 # OpenSSL/crypto/ocsp/BSDmakefile
 #
 
-.include "$(TOP_crypto_ocsp)/configure.mk"
-.include "Makefile"
+.include "crypto/ocsp/Makefile"
 .for d in $(SRC_crypto_ocsp:.c=.d)
 .sinclude "$(d)"
 .endfor

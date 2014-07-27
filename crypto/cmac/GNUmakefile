@@ -2,6 +2,5 @@
 # OpenSSL/crypto/cmac/GNUmakefile
 #
 
-include $(TOP_crypto_cmac)/configure.mk
-include Makefile
+include crypto/cmac/Makefile
 -include $(SRC_crypto_cmac:.c=.d)

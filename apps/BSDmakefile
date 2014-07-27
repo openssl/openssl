@@ -2,8 +2,7 @@
 # OpenSSL/apps/BSDmakefile
 #
 
-.include "$(TOP_apps)/configure.mk"
-.include "Makefile"
+.include "apps/Makefile"
 .for d in $(SRC_apps:.c=.d)
 .sinclude "$(d)"
 .endfor

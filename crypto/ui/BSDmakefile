@@ -2,8 +2,7 @@
 # OpenSSL/crypto/ui/BSDmakefile
 #
 
-.include "$(TOP_crypto_ui)/configure.mk"
-.include "Makefile"
+.include "crypto/ui/Makefile"
 .for d in $(SRC_crypto_ui:.c=.d)
 .sinclude "$(d)"
 .endfor

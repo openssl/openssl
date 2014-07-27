@@ -2,8 +2,7 @@
 # OpenSSL/fips/des/BSDmakefile
 #
 
-.include "$(TOP_fips_des)/configure.mk"
-.include "Makefile"
+.include "fips/des/Makefile"
 .for d in $(SRC_fips_des:.c=.d)
 .sinclude "$(d)"
 .endfor

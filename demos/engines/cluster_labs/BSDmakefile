@@ -2,8 +2,7 @@
 # OpenSSL/demos/engines/cluster_labs/BSDmakefile
 #
 
-.include "$(TOP_demos_engines_cluster_labs)/configure.mk"
-.include "Makefile"
+.include "demos/engines/cluster_labs/Makefile"
 .for d in $(SRC_demos_engines_cluster_labs:.c=.d)
 .sinclude "$(d)"
 .endfor
