@@ -143,8 +143,6 @@ lint_engines:
 
 dclean: dclean_engines
 dclean_engines:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_engines
 clean_engines:

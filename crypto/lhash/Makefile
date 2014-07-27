@@ -66,8 +66,6 @@ lint_crypto_lhash:
 
 dclean: dclean_crypto_lhash
 dclean_crypto_lhash:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_crypto_lhash
 clean_crypto_lhash:

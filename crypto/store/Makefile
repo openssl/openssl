@@ -68,8 +68,6 @@ lint_crypto_store:
 
 dclean: dclean_crypto_store
 dclean_crypto_store:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_crypto_store
 clean_crypto_store:

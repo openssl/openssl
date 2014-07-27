@@ -73,8 +73,6 @@ lint_fips_aes:
 
 dclean: dclean_fips_aes
 dclean_fips_aes:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_fips_aes
 clean_fips_aes:

@@ -179,8 +179,6 @@ lint_crypto_bn:
 
 dclean: dclean_crypto_bn
 dclean_crypto_bn:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_crypto_bn
 clean_crypto_bn:

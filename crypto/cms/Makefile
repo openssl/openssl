@@ -73,8 +73,6 @@ lint_crypto_cms:
 
 dclean: dclean_crypto_cms
 dclean_crypto_cms:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_crypto_cms
 clean_crypto_cms:

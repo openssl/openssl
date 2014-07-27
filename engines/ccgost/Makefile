@@ -81,8 +81,6 @@ lint_engines_ccgost:
 
 dclean: dclean_engines_ccgost
 dclean_engines_ccgost:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_engines_ccgost
 clean_engines_ccgost:

@@ -78,8 +78,6 @@ lint_crypto_objects:
 
 dclean: dclean_crypto_objects
 dclean_crypto_objects:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_crypto_objects
 clean_crypto_objects:

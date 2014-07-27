@@ -81,8 +81,6 @@ lint_fips_rand:
 
 dclean: dclean_fips_rand
 dclean_fips_rand:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_fips_rand
 clean_fips_rand:

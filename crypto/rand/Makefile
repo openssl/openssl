@@ -68,8 +68,6 @@ lint_crypto_rand:
 
 dclean: dclean_crypto_rand
 dclean_crypto_rand:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_crypto_rand
 clean_crypto_rand:

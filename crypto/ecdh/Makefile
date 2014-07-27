@@ -67,8 +67,6 @@ lint_crypto_ecdh:
 
 dclean: dclean_crypto_ecdh
 dclean_crypto_ecdh:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_crypto_ecdh
 clean_crypto_ecdh:

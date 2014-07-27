@@ -94,8 +94,6 @@ lint_ssl:
 
 dclean: dclean_ssl
 dclean_ssl:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_ssl
 clean_ssl:

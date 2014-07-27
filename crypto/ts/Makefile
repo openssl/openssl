@@ -71,8 +71,6 @@ lint_crypto_ts:
 
 dclean: dclean_crypto_ts
 dclean_crypto_ts:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_crypto_ts
 clean_crypto_ts:

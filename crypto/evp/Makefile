@@ -91,8 +91,6 @@ lint_crypto_evp:
 
 dclean: dclean_crypto_evp
 dclean_crypto_evp:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_crypto_evp
 clean_crypto_evp:

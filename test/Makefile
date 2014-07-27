@@ -401,8 +401,6 @@ lint_test:
 
 dclean: dclean_test
 dclean_test:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 	rm -f $(SRC_test) $(SHA256TEST).c $(SHA512TEST).c evptests.txt newkey.pem testkey.pem \
 			testreq.pem
 

@@ -38,8 +38,6 @@ install_crypto_jpake:
 
 dclean: dclean_crypto_jpake
 dclean_crypto_jpake:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_crypto_jpake
 clean_crypto_jpake:

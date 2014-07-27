@@ -49,8 +49,6 @@ errors_tools:
 
 dclean: dclean_tools
 dclean_tools:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 	rm -f c_rehash
 
 clean: clean_tools

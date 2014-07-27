@@ -74,8 +74,6 @@ lint_crypto_ripemd:
 
 dclean: dclean_crypto_ripemd
 dclean_crypto_ripemd:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_crypto_ripemd
 clean_crypto_ripemd:

@@ -100,8 +100,6 @@ lint_crypto_des:
 
 dclean: dclean_crypto_des
 dclean_crypto_des:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_crypto_des
 clean_crypto_des:

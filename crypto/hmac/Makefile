@@ -66,8 +66,6 @@ lint_crypto_hmac:
 
 dclean: dclean_crypto_hmac
 dclean_crypto_hmac:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_crypto_hmac
 clean_crypto_hmac:

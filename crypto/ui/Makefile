@@ -70,8 +70,6 @@ lint_crypto_ui:
 
 dclean: dclean_crypto_ui
 dclean_crypto_ui:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_crypto_ui
 clean_crypto_ui:

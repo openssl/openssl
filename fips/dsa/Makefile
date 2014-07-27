@@ -77,8 +77,6 @@ lint_fips_dsa:
 
 dclean: dclean_fips_dsa
 dclean_fips_dsa:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_fips_dsa
 clean_fips_dsa:

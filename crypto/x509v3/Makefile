@@ -76,8 +76,6 @@ lint_crypto_x509v3:
 
 dclean: dclean_crypto_x509v3
 dclean_crypto_x509v3:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_crypto_x509v3
 clean_crypto_x509v3:

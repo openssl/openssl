@@ -78,8 +78,6 @@ lint_crypto_whrlpool:
 
 dclean: dclean_crypto_whrlpool
 dclean_crypto_whrlpool:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_crypto_whrlpool
 clean_crypto_whrlpool:

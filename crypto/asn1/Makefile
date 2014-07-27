@@ -101,8 +101,6 @@ lint_crypto_asn1:
 
 dclean: dclean_crypto_asn1
 dclean_crypto_asn1:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_crypto_asn1
 clean_crypto_asn1:

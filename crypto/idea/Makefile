@@ -66,8 +66,6 @@ lint_crypto_idea:
 
 dclean: dclean_crypto_idea
 dclean_crypto_idea:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_crypto_idea
 clean_crypto_idea:

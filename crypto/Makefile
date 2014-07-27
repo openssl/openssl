@@ -109,8 +109,6 @@ clean_crypto:
 
 dclean: dclean_crypto
 dclean_crypto:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 	rm -f opensslconf.h
 
 .c.o:

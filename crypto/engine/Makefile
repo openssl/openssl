@@ -76,8 +76,6 @@ lint_crypto_engine:
 
 dclean: dclean_crypto_engine
 dclean_crypto_engine:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_crypto_engine
 clean_crypto_engine:

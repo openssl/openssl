@@ -79,8 +79,6 @@ lint_crypto_camellia:
 
 dclean: dclean_crypto_camellia
 dclean_crypto_camellia:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_crypto_camellia
 clean_crypto_camellia:

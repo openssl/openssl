@@ -73,8 +73,6 @@ lint_fips_cmac:
 
 dclean: dclean_fips_cmac
 dclean_fips_cmac:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_fips_cmac
 clean_fips_cmac:

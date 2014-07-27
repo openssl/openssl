@@ -82,8 +82,6 @@ lint_fips_rsa:
 
 dclean: dclean_fips_rsa
 dclean_fips_rsa:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_fips_rsa
 clean_fips_rsa:

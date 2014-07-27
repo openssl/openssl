@@ -67,8 +67,6 @@ lint_crypto_md4:
 
 dclean: dclean_crypto_md4
 dclean_crypto_md4:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 	rm -f ../../include/openssl/$(EXHEADER_crypto_md4) ../../test/$(TEST_crypto_md4) ../../apps/$(APPS_crypto_md4)
 
 clean: clean_crypto_md4

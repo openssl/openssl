@@ -66,8 +66,6 @@ lint_fips_dh:
 
 dclean: dclean_fips_dh
 dclean_fips_dh:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_fips_dh
 clean_fips_dh:

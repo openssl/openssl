@@ -175,8 +175,6 @@ clean_fips:
 
 dclean: dclean_fips
 dclean_fips:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 .c.o:
 	$(CC) $(CFLAGS_fips) $(CPPFLAGS) -c -o $@ $<

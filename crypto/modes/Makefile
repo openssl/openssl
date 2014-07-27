@@ -99,8 +99,6 @@ lint_crypto_modes:
 
 dclean: dclean_crypto_modes
 dclean_crypto_modes:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_crypto_modes
 clean_crypto_modes:

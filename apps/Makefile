@@ -127,8 +127,6 @@ lint_apps:
 
 dclean: dclean_apps
 dclean_apps:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 	rm -f CA.pl
 
 clean: clean_apps

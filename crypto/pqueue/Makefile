@@ -66,8 +66,6 @@ lint_crypto_pqueue:
 
 dclean: dclean_crypto_pqueue
 dclean_crypto_pqueue:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_crypto_pqueue
 clean_crypto_pqueue:

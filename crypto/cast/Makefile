@@ -73,8 +73,6 @@ lint_crypto_cast:
 
 dclean: dclean_crypto_cast
 dclean_crypto_cast:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_crypto_cast
 clean_crypto_cast:

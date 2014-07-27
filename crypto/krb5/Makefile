@@ -67,8 +67,6 @@ lint_crypto_krb5:
 
 dclean: dclean_crypto_krb5
 dclean_crypto_krb5:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_crypto_krb5
 clean_crypto_krb5:

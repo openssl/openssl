@@ -67,8 +67,6 @@ lint_crypto_seed:
 
 dclean: dclean_crypto_seed
 dclean_crypto_seed:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_crypto_seed
 clean_crypto_seed:

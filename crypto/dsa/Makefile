@@ -68,8 +68,6 @@ lint_crypto_dsa:
 
 dclean: dclean_crypto_dsa
 dclean_crypto_dsa:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_crypto_dsa
 clean_crypto_dsa:

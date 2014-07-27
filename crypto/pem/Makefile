@@ -69,8 +69,6 @@ lint_crypto_pem:
 
 dclean: dclean_crypto_pem
 dclean_crypto_pem:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_crypto_pem
 clean_crypto_pem:

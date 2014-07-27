@@ -66,8 +66,6 @@ lint_fips_ecdh:
 
 dclean: dclean_fips_ecdh
 dclean_fips_ecdh:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean: clean_fips_ecdh
 clean_fips_ecdh:
