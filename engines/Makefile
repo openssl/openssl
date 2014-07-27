@@ -92,7 +92,7 @@ e_padlock-x86_64.s:	asm/e_padlock-x86_64.pl
 
 subdirs: subdirs_engines
 subdirs_engines:
-	echo $(EDIRS)
+	echo $(ENGDIRS)
 	@target=all; $(RECURSIVE_MAKE_engines)
 
 files: files_engines

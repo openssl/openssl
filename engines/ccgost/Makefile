@@ -15,7 +15,7 @@ LIBNAME_engines_ccgost=gost
 
 top: top_engines_ccgost
 top_engines_ccgost: 
-	(cd $(TOP_engines_ccgost); $(MAKE) DIRS=engines EDIRS=$(DIR_engines_ccgost) sub_all)
+	(cd $(TOP_engines_ccgost); $(MAKE) DIRS=engines ENGDIRS=$(DIR_engines_ccgost) sub_all)
 
 all: all_engines_ccgost
 all_engines_ccgost: lib
