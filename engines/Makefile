@@ -5,13 +5,6 @@
 DIR_engines=	engines
 INCLUDES_engines= -I../include
 
-RECURSIVE_MAKE_engines=	[ -z "$(ENGDIRS)" ] || for i in $(ENGDIRS) ; do \
-		    (cd $$i && echo "making $$target in $(DIR_engines)/$$i..." && \
-		    $(MAKE) -e TOP=../.. DIR=$$i $$target ) || exit 1; \
-		done;
-
-
-
 CFLAGS_engines= $(INCLUDES_engines) $(CFLAG)
 ASFLAGS_engines= $(INCLUDES_engines) $(ASFLAG)
 
@@ -93,16 +86,10 @@ e_padlock-x86_64.s:	asm/e_padlock-x86_64.pl
 subdirs: subdirs_engines
 subdirs_engines:
 	echo $(ENGDIRS)
-	@target=all; $(RECURSIVE_MAKE_engines)
 
 files: files_engines
 files_engines:
 	$(PERL) $(TOP_engines)/util/files.pl TOP=$(TOP_engines) Makefile >> $(TOP_engines)/MINFO
-	@target=files; $(RECURSIVE_MAKE_engines)
-
-links: links_engines
-links_engines:
-	@target=links; $(RECURSIVE_MAKE_engines)
 
 # XXXXX This currently only works on systems that use .so as suffix
 # for shared libraries as well as for Cygwin which uses the
@@ -135,7 +122,6 @@ install_engines:
 			  mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx ); \
 		done; \
 	fi
-	@target=install; $(RECURSIVE_MAKE_engines)
 
 tags: tags_engines
 tags_engines:
@@ -155,18 +141,15 @@ tests_engines:
 lint: lint_engines
 lint_engines:
 	lint -DLINT $(INCLUDES_engines) $(SRC_engines)>fluff
-	@target=lint; $(RECURSIVE_MAKE_engines)
 
 dclean: dclean_engines
 dclean_engines:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
-	@target=dclean; $(RECURSIVE_MAKE_engines)
 
 clean: clean_engines
 clean_engines:
 	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
-	@target=clean; $(RECURSIVE_MAKE_engines)
 
 .c.o:
 	$(CC) $(CFLAGS_engines) $(CPPFLAGS) -c -o $@ $<
