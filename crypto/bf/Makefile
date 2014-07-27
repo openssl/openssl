@@ -2,7 +2,6 @@
 # OpenSSL/crypto/blowfish/Makefile
 #
 
-DIR_crypto_bf=	bf
 CPP_crypto_bf=	$(CC) -E
 INCLUDES_crypto_bf=
 
@@ -26,9 +25,6 @@ HEADER_crypto_bf=	bf_pi.h bf_locl.h $(EXHEADER_crypto_bf)
 
 ALL_crypto_bf=    $(GENERAL_crypto_bf) $(SRC_crypto_bf) $(HEADER_crypto_bf)
 
-top: top_crypto_bf
-top_crypto_bf:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_bf) sub_all)
 
 all: all_crypto_bf
 all_crypto_bf:	lib

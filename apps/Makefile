@@ -2,7 +2,6 @@
 #  apps/Makefile
 #
 
-DIR_apps=		apps
 INCLUDES_apps=	-I$(TOP_apps) -I../include $(KRB5_INCLUDES)
 RM_apps=		rm -f
 # KRB5 stuff
@@ -64,9 +63,6 @@ HEADER_apps=	apps.h progs.h s_apps.h \
 
 ALL_apps=    $(GENERAL_apps) $(SRC_apps) $(HEADER_apps)
 
-top: top_apps
-top_apps:
-	@(cd ..; $(MAKE) DIRS=$(DIR_apps) all)
 
 all: all_apps
 all_apps:	exe

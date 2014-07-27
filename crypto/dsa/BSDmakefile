@@ -2,7 +2,6 @@
 # OpenSSL/crypto/dsa/BSDmakefile
 #
 
-TOP_crypto_dsa= ../..
 .include "$(TOP_crypto_dsa)/configure.mk"
 .include "Makefile"
 .for d in $(SRC_crypto_dsa:.c=.d)

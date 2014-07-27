@@ -2,7 +2,6 @@
 # OpenSSL/crypto/md/Makefile
 #
 
-DIR_crypto_hmac=	hmac
 INCLUDES_crypto_hmac=
 
 CFLAGS_crypto_hmac= $(INCLUDES_crypto_hmac) $(CFLAG)
@@ -22,9 +21,6 @@ HEADER_crypto_hmac=	$(EXHEADER_crypto_hmac)
 
 ALL_crypto_hmac=    $(GENERAL_crypto_hmac) $(SRC_crypto_hmac) $(HEADER_crypto_hmac)
 
-top: top_crypto_hmac
-top_crypto_hmac:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_hmac) sub_all)
 
 all: all_crypto_hmac
 all_crypto_hmac:	lib

@@ -2,7 +2,6 @@
 # OpenSSL/crypto/buffer/Makefile
 #
 
-DIR_crypto_buffer=	buffer
 INCLUDES_crypto_buffer= -I.. -I$(TOP_crypto_buffer) -I../../include
 
 CFLAGS_crypto_buffer= $(INCLUDES_crypto_buffer) $(CFLAG)
@@ -22,9 +21,6 @@ HEADER_crypto_buffer=	$(EXHEADER_crypto_buffer)
 
 ALL_crypto_buffer=    $(GENERAL_crypto_buffer) $(SRC_crypto_buffer) $(HEADER_crypto_buffer)
 
-top: top_crypto_buffer
-top_crypto_buffer:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_buffer) sub_all)
 
 all: all_crypto_buffer
 all_crypto_buffer:	lib

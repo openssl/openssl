@@ -2,7 +2,6 @@
 # OpenSSL/fips/dh/Makefile
 #
 
-DIR_fips_dh=	dh
 INCLUDES_fips_dh=
 
 CFLAGS_fips_dh= $(INCLUDES_fips_dh) $(CFLAG)
@@ -22,9 +21,6 @@ HEADER_fips_dh=	$(EXHEADER_fips_dh)
 
 ALL_fips_dh=    $(GENERAL_fips_dh) $(SRC_fips_dh) $(HEADER_fips_dh)
 
-top: top_fips_dh
-top_fips_dh:
-	(cd $(TOP_fips_dh); $(MAKE) DIRS=fips FDIRS=$(DIR_fips_dh) sub_all)
 
 all: all_fips_dh
 all_fips_dh:	lib

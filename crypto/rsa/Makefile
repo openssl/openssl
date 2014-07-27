@@ -2,7 +2,6 @@
 # OpenSSL/crypto/rsa/Makefile
 #
 
-DIR_crypto_rsa=	rsa
 INCLUDES_crypto_rsa= -I.. -I$(TOP_crypto_rsa) -I../../include
 
 CFLAGS_crypto_rsa= $(INCLUDES_crypto_rsa) $(CFLAG)
@@ -28,9 +27,6 @@ HEADER_crypto_rsa=	$(EXHEADER_crypto_rsa)
 
 ALL_crypto_rsa=    $(GENERAL_crypto_rsa) $(SRC_crypto_rsa) $(HEADER_crypto_rsa)
 
-top: top_crypto_rsa
-top_crypto_rsa:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_rsa) sub_all)
 
 all: all_crypto_rsa
 all_crypto_rsa:	lib

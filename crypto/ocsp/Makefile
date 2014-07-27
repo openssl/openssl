@@ -2,7 +2,6 @@
 # OpenSSL/ocsp/Makefile
 #
 
-DIR_crypto_ocsp=	ocsp
 INCLUDES_crypto_ocsp= -I.. -I$(TOP_crypto_ocsp) -I../../include
 
 CFLAGS_crypto_ocsp= $(INCLUDES_crypto_ocsp) $(CFLAG)
@@ -25,9 +24,6 @@ HEADER_crypto_ocsp=	$(EXHEADER_crypto_ocsp)
 
 ALL_crypto_ocsp=    $(GENERAL_crypto_ocsp) $(SRC_crypto_ocsp) $(HEADER_crypto_ocsp)
 
-top: top_crypto_ocsp
-top_crypto_ocsp:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_ocsp) sub_all)
 
 all: all_crypto_ocsp
 all_crypto_ocsp:	lib

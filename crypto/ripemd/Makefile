@@ -2,7 +2,6 @@
 # OpenSSL/crypto/ripemd/Makefile
 #
 
-DIR_crypto_ripemd=    ripemd
 CPP_crypto_ripemd=    $(CC) -E
 INCLUDES_crypto_ripemd=
 
@@ -27,9 +26,6 @@ HEADER_crypto_ripemd= rmd_locl.h rmdconst.h $(EXHEADER_crypto_ripemd)
 
 ALL_crypto_ripemd=    $(GENERAL_crypto_ripemd) $(SRC_crypto_ripemd) $(HEADER_crypto_ripemd)
 
-top: top_crypto_ripemd
-top_crypto_ripemd:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_ripemd) sub_all)
 
 all: all_crypto_ripemd
 all_crypto_ripemd:    lib

@@ -2,7 +2,6 @@
 # OpenSSL/crypto/Makefile
 #
 
-DIR_crypto=		crypto
 INCLUDE_crypto=	-I. -I$(TOP_crypto) -I../include $(ZLIB_INCLUDE)
 # INCLUDES_crypto targets sudbirs!
 INCLUDES_crypto=	-I.. -I../.. -I../modes -I../asn1 -I../evp -I../../include $(ZLIB_INCLUDE)
@@ -34,9 +33,6 @@ HEADER_crypto=	cryptlib.h buildinf.h md32_common.h o_str.h o_dir.h $(EXHEADER_cr
 
 ALL_crypto=    $(GENERAL_crypto) $(SRC_crypto) $(HEADER_crypto)
 
-top: top_crypto
-top_crypto:
-	@(cd ..; $(MAKE) DIRS=$(DIR_crypto) all)
 
 all: all_crypto
 all_crypto: shared

@@ -1,4 +1,3 @@
-DIR_engines_ccgost=ccgost
 INCLUDES_engines_ccgost= -I../../include
 CFLAGS_engines_ccgost= $(INCLUDES_engines_ccgost) $(CFLAG)
 LIB_engines_ccgost=$(TOP_engines_ccgost)/libcrypto.a
@@ -13,9 +12,6 @@ SRC_engines_ccgost=$(LIBSRC_engines_ccgost)
 
 LIBNAME_engines_ccgost=gost
 
-top: top_engines_ccgost
-top_engines_ccgost: 
-	(cd $(TOP_engines_ccgost); $(MAKE) DIRS=engines ENGDIRS=$(DIR_engines_ccgost) sub_all)
 
 all: all_engines_ccgost
 all_engines_ccgost: lib

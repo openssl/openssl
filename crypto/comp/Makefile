@@ -2,7 +2,6 @@
 # OpenSSL/crypto/comp/Makefile
 #
 
-DIR_crypto_comp=	comp
 INCLUDES_crypto_comp= -I.. -I$(TOP_crypto_comp) -I../../include
 
 CFLAGS_crypto_comp= $(INCLUDES_crypto_comp) $(CFLAG)
@@ -25,9 +24,6 @@ HEADER_crypto_comp=	$(EXHEADER_crypto_comp)
 
 ALL_crypto_comp=    $(GENERAL_crypto_comp) $(SRC_crypto_comp) $(HEADER_crypto_comp)
 
-top: top_crypto_comp
-top_crypto_comp:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_comp) sub_all)
 
 all: all_crypto_comp
 all_crypto_comp:	lib

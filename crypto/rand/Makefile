@@ -2,7 +2,6 @@
 # OpenSSL/crypto/rand/Makefile
 #
 
-DIR_crypto_rand=	rand
 INCLUDES_crypto_rand=
 
 CFLAGS_crypto_rand= $(INCLUDES_crypto_rand) $(CFLAG)
@@ -24,9 +23,6 @@ HEADER_crypto_rand=	$(EXHEADER_crypto_rand)
 
 ALL_crypto_rand=    $(GENERAL_crypto_rand) $(SRC_crypto_rand) $(HEADER_crypto_rand)
 
-top: top_crypto_rand
-top_crypto_rand:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_rand) sub_all)
 
 all: all_crypto_rand
 all_crypto_rand:	lib

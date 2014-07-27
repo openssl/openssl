@@ -2,7 +2,6 @@
 # OpenSSL/fips/ecdsa/BSDmakefile
 #
 
-TOP_fips_ecdsa= ../..
 .include "$(TOP_fips_ecdsa)/configure.mk"
 .include "Makefile"
 .for d in $(SRC_fips_ecdsa:.c=.d)

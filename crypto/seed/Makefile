@@ -2,7 +2,6 @@
 # crypto/seed/Makefile
 #
 
-DIR_crypto_seed=	seed
 CPP_crypto_seed=	$(CC) -E
 INCLUDES_crypto_seed=
 
@@ -23,9 +22,6 @@ HEADER_crypto_seed= seed_locl.h $(EXHEADER_crypto_seed)
 
 ALL_crypto_seed=    $(GENERAL_crypto_seed) $(SRC_crypto_seed) $(HEADER_crypto_seed)
 
-top: top_crypto_seed
-top_crypto_seed:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_seed) sub_all)
 
 all: all_crypto_seed
 all_crypto_seed:	lib

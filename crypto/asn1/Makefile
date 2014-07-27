@@ -2,7 +2,6 @@
 # OpenSSL/crypto/asn1/Makefile
 #
 
-DIR_crypto_asn1=	asn1
 INCLUDES_crypto_asn1= -I.. -I$(TOP_crypto_asn1) -I../../include
 
 CFLAGS_crypto_asn1= $(INCLUDES_crypto_asn1) $(CFLAG)
@@ -48,9 +47,6 @@ HEADER_crypto_asn1=	$(EXHEADER_crypto_asn1) asn1_locl.h
 
 ALL_crypto_asn1=    $(GENERAL_crypto_asn1) $(SRC_crypto_asn1) $(HEADER_crypto_asn1)
 
-top: top_crypto_asn1
-top_crypto_asn1:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_asn1) sub_all)
 
 test: test_crypto_asn1
 test_crypto_asn1:	test.c

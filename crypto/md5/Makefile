@@ -2,7 +2,6 @@
 # OpenSSL/crypto/md5/Makefile
 #
 
-DIR_crypto_md5=    md5
 CPP_crypto_md5=    $(CC) -E
 INCLUDES_crypto_md5=-I.. -I$(TOP_crypto_md5) -I../../include
 
@@ -26,9 +25,6 @@ HEADER_crypto_md5= md5_locl.h $(EXHEADER_crypto_md5)
 
 ALL_crypto_md5=    $(GENERAL_crypto_md5) $(SRC_crypto_md5) $(HEADER_crypto_md5)
 
-top: top_crypto_md5
-top_crypto_md5:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_md5) sub_all)
 
 all: all_crypto_md5
 all_crypto_md5:    lib

@@ -2,7 +2,6 @@
 # OpenSSL/crypto/dsa/Makefile
 #
 
-DIR_crypto_dsa=	dsa
 INCLUDES_crypto_dsa= -I.. -I$(TOP_crypto_dsa) -I../../include
 
 CFLAGS_crypto_dsa= $(INCLUDES_crypto_dsa) $(CFLAG)
@@ -24,9 +23,6 @@ HEADER_crypto_dsa=	dsa_locl.h $(EXHEADER_crypto_dsa)
 
 ALL_crypto_dsa=    $(GENERAL_crypto_dsa) $(SRC_crypto_dsa) $(HEADER_crypto_dsa)
 
-top: top_crypto_dsa
-top_crypto_dsa:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_dsa) sub_all)
 
 all: all_crypto_dsa
 all_crypto_dsa:	lib

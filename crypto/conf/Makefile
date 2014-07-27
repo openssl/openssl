@@ -2,7 +2,6 @@
 # OpenSSL/crypto/conf/Makefile
 #
 
-DIR_crypto_conf=	conf
 INCLUDES_crypto_conf= -I.. -I$(TOP_crypto_conf) -I../../include
 
 CFLAGS_crypto_conf= $(INCLUDES_crypto_conf) $(CFLAG)
@@ -25,9 +24,6 @@ HEADER_crypto_conf=	conf_def.h $(EXHEADER_crypto_conf)
 
 ALL_crypto_conf=    $(GENERAL_crypto_conf) $(SRC_crypto_conf) $(HEADER_crypto_conf)
 
-top: top_crypto_conf
-top_crypto_conf:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_conf) sub_all)
 
 all: all_crypto_conf
 all_crypto_conf:	lib

@@ -2,7 +2,6 @@
 # OpenSSL/crypto/cmac/Makefile
 #
 
-DIR_crypto_cmac=	cmac
 INCLUDES_crypto_cmac=
 
 CFLAGS_crypto_cmac= $(INCLUDES_crypto_cmac) $(CFLAG)
@@ -22,9 +21,6 @@ HEADER_crypto_cmac=	$(EXHEADER_crypto_cmac)
 
 ALL_crypto_cmac=    $(GENERAL_crypto_cmac) $(SRC_crypto_cmac) $(HEADER_crypto_cmac)
 
-top: top_crypto_cmac
-top_crypto_cmac:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_cmac) sub_all)
 
 all: all_crypto_cmac
 all_crypto_cmac:	lib

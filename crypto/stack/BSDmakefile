@@ -2,7 +2,6 @@
 # OpenSSL/crypto/stack/BSDmakefile
 #
 
-TOP_crypto_stack= ../..
 .include "$(TOP_crypto_stack)/configure.mk"
 .include "Makefile"
 .for d in $(SRC_crypto_stack:.c=.d)

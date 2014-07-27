@@ -2,7 +2,6 @@
 # crypto/camellia/Makefile
 #
 
-DIR_crypto_camellia= camellia
 CPP_crypto_camellia=	$(CC) -E
 INCLUDES_crypto_camellia=
 
@@ -28,9 +27,6 @@ HEADER_crypto_camellia= cmll_locl.h $(EXHEADER_crypto_camellia)
 
 ALL_crypto_camellia=    $(GENERAL_crypto_camellia) $(SRC_crypto_camellia) $(HEADER_crypto_camellia)
 
-top: top_crypto_camellia
-top_crypto_camellia:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_camellia) sub_all)
 
 all: all_crypto_camellia
 all_crypto_camellia:	lib

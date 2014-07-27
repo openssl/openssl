@@ -2,7 +2,6 @@
 # OpenSSL/crypto/evp/Makefile
 #
 
-DIR_crypto_evp=	evp
 INCLUDES_crypto_evp= -I.. -I$(TOP_crypto_evp) -I../../include
 
 CFLAGS_crypto_evp= $(INCLUDES_crypto_evp) $(CFLAG)
@@ -46,9 +45,6 @@ HEADER_crypto_evp=	evp_locl.h $(EXHEADER_crypto_evp)
 
 ALL_crypto_evp=    $(GENERAL_crypto_evp) $(SRC_crypto_evp) $(HEADER_crypto_evp)
 
-top: top_crypto_evp
-top_crypto_evp:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_evp) sub_all)
 
 all: all_crypto_evp
 all_crypto_evp:	lib

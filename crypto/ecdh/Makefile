@@ -2,7 +2,6 @@
 # crypto/ecdh/Makefile
 #
 
-DIR_crypto_ecdh=	ecdh
 INCLUDES_crypto_ecdh= -I.. -I$(TOP_crypto_ecdh) -I../../include
 
 CFLAGS_crypto_ecdh= $(INCLUDES_crypto_ecdh) $(CFLAG)
@@ -23,9 +22,6 @@ HEADER_crypto_ecdh=	ech_locl.h $(EXHEADER_crypto_ecdh)
 
 ALL_crypto_ecdh=    $(GENERAL_crypto_ecdh) $(SRC_crypto_ecdh) $(HEADER_crypto_ecdh)
 
-top: top_crypto_ecdh
-top_crypto_ecdh:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_ecdh) sub_all)
 
 all: all_crypto_ecdh
 all_crypto_ecdh:	lib

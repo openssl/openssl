@@ -2,7 +2,6 @@
 # SSLeay/crypto/ts/Makefile
 #
 
-DIR_crypto_ts=	ts
 INCLUDES_crypto_ts= -I.. -I../../include
 
  
@@ -27,9 +26,6 @@ HEADER_crypto_ts=	$(EXHEADER_crypto_ts)
 
 ALL_crypto_ts=    $(GENERAL_crypto_ts) $(SRC_crypto_ts) $(HEADER_crypto_ts)
 
-top: top_crypto_ts
-top_crypto_ts:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_ts) sub_all)
 
 test: test_crypto_ts
 test_crypto_ts:

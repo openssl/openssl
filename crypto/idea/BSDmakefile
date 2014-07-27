@@ -2,7 +2,6 @@
 # OpenSSL/crypto/idea/BSDmakefile
 #
 
-TOP_crypto_idea= ../..
 .include "$(TOP_crypto_idea)/configure.mk"
 .include "Makefile"
 .for d in $(SRC_crypto_idea:.c=.d)

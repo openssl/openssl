@@ -2,7 +2,6 @@
 # OpenSSL/fips/sha/Makefile
 #
 
-DIR_fips_sha=	sha
 INCLUDES_fips_sha=
 
 ASFLAGS_fips_sha= $(INCLUDES_fips_sha) $(ASFLAG)
@@ -27,9 +26,6 @@ HEADER_fips_sha=
 
 ALL_fips_sha=    $(GENERAL_fips_sha) $(SRC_fips_sha) $(HEADER_fips_sha)
 
-top: top_fips_sha
-top_fips_sha:
-	(cd $(TOP_fips_sha); $(MAKE) DIRS=fips SDIRS=$(DIR_fips_sha) sub_all)
 
 all: all_fips_sha
 all_fips_sha:	../fips_standalone_sha1$(EXE_EXT) lib

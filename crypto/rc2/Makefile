@@ -2,7 +2,6 @@
 # OpenSSL/crypto/rc2/Makefile
 #
 
-DIR_crypto_rc2=	rc2
 INCLUDES_crypto_rc2=
 
 CFLAGS_crypto_rc2= $(INCLUDES_crypto_rc2) $(CFLAG)
@@ -22,9 +21,6 @@ HEADER_crypto_rc2=	rc2_locl.h $(EXHEADER_crypto_rc2)
 
 ALL_crypto_rc2=    $(GENERAL_crypto_rc2) $(SRC_crypto_rc2) $(HEADER_crypto_rc2)
 
-top: top_crypto_rc2
-top_crypto_rc2:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_rc2) sub_all)
 
 all: all_crypto_rc2
 all_crypto_rc2:	lib

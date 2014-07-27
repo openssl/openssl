@@ -2,7 +2,6 @@
 # OpenSSL/crypto/modes/Makefile
 #
 
-DIR_crypto_modes=	modes
 INCLUDES_crypto_modes= -I.. -I$(TOP_crypto_modes) -I../../include
 
 
@@ -28,9 +27,6 @@ HEADER_crypto_modes=	modes_lcl.h $(EXHEADER_crypto_modes)
 
 ALL_crypto_modes=    $(GENERAL_crypto_modes) $(SRC_crypto_modes) $(HEADER_crypto_modes)
 
-top: top_crypto_modes
-top_crypto_modes:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_modes) sub_all)
 
 all: all_crypto_modes
 all_crypto_modes:	lib

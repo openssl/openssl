@@ -2,7 +2,6 @@
 # OpenSSL/crypto/x509/Makefile
 #
 
-DIR_crypto_x509=	x509
 INCLUDES_crypto_x509= -I.. -I$(TOP_crypto_x509) -I../../include
 
 CFLAGS_crypto_x509= $(INCLUDES_crypto_x509) $(CFLAG)
@@ -32,9 +31,6 @@ HEADER_crypto_x509=	$(EXHEADER_crypto_x509) x509_lcl.h
 
 ALL_crypto_x509=    $(GENERAL_crypto_x509) $(SRC_crypto_x509) $(HEADER_crypto_x509)
 
-top: top_crypto_x509
-top_crypto_x509:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_x509) sub_all)
 
 all: all_crypto_x509
 all_crypto_x509:	lib

@@ -2,7 +2,6 @@
 # crypto/ecdsa/Makefile
 #
 
-DIR_crypto_ecdsa=	ecdsa
 INCLUDES_crypto_ecdsa= -I.. -I$(TOP_crypto_ecdsa) -I../../include
 
 CFLAGS_crypto_ecdsa= $(INCLUDES_crypto_ecdsa) $(CFLAG)
@@ -23,9 +22,6 @@ HEADER_crypto_ecdsa=	ecs_locl.h $(EXHEADER_crypto_ecdsa)
 
 ALL_crypto_ecdsa=    $(GENERAL_crypto_ecdsa) $(SRC_crypto_ecdsa) $(HEADER_crypto_ecdsa)
 
-top: top_crypto_ecdsa
-top_crypto_ecdsa:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_ecdsa) sub_all)
 
 all: all_crypto_ecdsa
 all_crypto_ecdsa:	lib

@@ -2,7 +2,6 @@
 # OpenSSL/demos/state_machine/BSDmakefile
 #
 
-TOP_demos_state_machine= ../..
 .include "$(TOP_demos_state_machine)/configure.mk"
 .include "Makefile"
 .for d in $(SRC_demos_state_machine:.c=.d)

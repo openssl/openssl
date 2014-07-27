@@ -2,7 +2,6 @@
 # OpenSSL/crypto/dso/Makefile
 #
 
-DIR_crypto_dso=	dso
 INCLUDES_crypto_dso= -I.. -I$(TOP_crypto_dso) -I../../include
 
 CFLAGS_crypto_dso= $(INCLUDES_crypto_dso) $(CFLAG)
@@ -24,9 +23,6 @@ HEADER_crypto_dso=	$(EXHEADER_crypto_dso)
 
 ALL_crypto_dso=    $(GENERAL_crypto_dso) $(SRC_crypto_dso) $(HEADER_crypto_dso)
 
-top: top_crypto_dso
-top_crypto_dso:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_dso) sub_all)
 
 all: all_crypto_dso
 all_crypto_dso:	lib

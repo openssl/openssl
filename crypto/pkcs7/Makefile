@@ -2,7 +2,6 @@
 # OpenSSL/crypto/pkcs7/Makefile
 #
 
-DIR_crypto_pkcs7=	pkcs7
 INCLUDES_crypto_pkcs7= -I.. -I$(TOP_crypto_pkcs7) -I../../include
 
  
@@ -25,9 +24,6 @@ HEADER_crypto_pkcs7=	$(EXHEADER_crypto_pkcs7)
 
 ALL_crypto_pkcs7=    $(GENERAL_crypto_pkcs7) $(SRC_crypto_pkcs7) $(HEADER_crypto_pkcs7)
 
-top: top_crypto_pkcs7
-top_crypto_pkcs7:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_pkcs7) sub_all)
 
 test: test_crypto_pkcs7
 test_crypto_pkcs7:

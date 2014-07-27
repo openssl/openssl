@@ -2,7 +2,6 @@
 # OpenSSL/tools/Makefile
 #
 
-DIR_tools=	tools
 INCLUDES_tools= -I$(TOP_tools) -I../include
 
 CFLAGS_tools= $(INCLUDES_tools) $(CFLAG)

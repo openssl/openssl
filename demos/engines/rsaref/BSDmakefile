@@ -2,7 +2,6 @@
 # OpenSSL/demos/engines/rsaref/BSDmakefile
 #
 
-TOP_demos_engines_rsaref= ../../..
 .include "$(TOP_demos_engines_rsaref)/configure.mk"
 .include "Makefile"
 .for d in $(SRC_demos_engines_rsaref:.c=.d)

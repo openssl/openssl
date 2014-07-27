@@ -2,7 +2,6 @@
 # OpenSSL/fips/rsa/Makefile
 #
 
-DIR_fips_rsa=	rsa
 INCLUDES_fips_rsa=
 
 CFLAGS_fips_rsa= $(INCLUDES_fips_rsa) $(CFLAG)
@@ -22,9 +21,6 @@ HEADER_fips_rsa=	$(EXHEADER_fips_rsa)
 
 ALL_fips_rsa=    $(GENERAL_fips_rsa) $(SRC_fips_rsa) $(HEADER_fips_rsa)
 
-top: top_fips_rsa
-top_fips_rsa:
-	(cd $(TOP_fips_rsa); $(MAKE) DIRS=fips FDIRS=$(DIR_fips_rsa) sub_all)
 
 all: all_fips_rsa
 all_fips_rsa:	lib

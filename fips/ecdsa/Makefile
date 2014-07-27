@@ -2,7 +2,6 @@
 # OpenSSL/fips/ecdsa/Makefile
 #
 
-DIR_fips_ecdsa=	ecdsa
 INCLUDES_fips_ecdsa=
 
 CFLAGS_fips_ecdsa= $(INCLUDES_fips_ecdsa) $(CFLAG)
@@ -22,9 +21,6 @@ HEADER_fips_ecdsa=	$(EXHEADER_fips_ecdsa)
 
 ALL_fips_ecdsa=    $(GENERAL_fips_ecdsa) $(SRC_fips_ecdsa) $(HEADER_fips_ecdsa)
 
-top: top_fips_ecdsa
-top_fips_ecdsa:
-	(cd $(TOP_fips_ecdsa); $(MAKE) DIRS=fips FDIRS=$(DIR_fips_ecdsa) sub_all)
 
 all: all_fips_ecdsa
 all_fips_ecdsa:	lib

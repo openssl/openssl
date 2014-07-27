@@ -2,7 +2,6 @@
 # OpenSSL/fips/rand/Makefile
 #
 
-DIR_fips_rand=	rand
 INCLUDES_fips_rand=
 
 CFLAGS_fips_rand= $(INCLUDES_fips_rand) $(CFLAG)
@@ -26,9 +25,6 @@ HEADER_fips_rand=	$(EXHEADER_fips_rand) fips_rand_lcl.h fips_drbg_selftest.h
 
 ALL_fips_rand=    $(GENERAL_fips_rand) $(SRC_fips_rand) $(HEADER_fips_rand)
 
-top: top_fips_rand
-top_fips_rand:
-	(cd $(TOP_fips_rand); $(MAKE) DIRS=fips SDIRS=$(DIR_fips_rand) sub_all)
 
 all: all_fips_rand
 all_fips_rand:	lib

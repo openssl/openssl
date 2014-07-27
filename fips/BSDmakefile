@@ -2,7 +2,6 @@
 # OpenSSL/fips/BSDmakefile
 #
 
-TOP_fips= ..
 .include "$(TOP_fips)/configure.mk"
 .include "Makefile"
 

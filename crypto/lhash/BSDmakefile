@@ -2,7 +2,6 @@
 # OpenSSL/crypto/lhash/BSDmakefile
 #
 
-TOP_crypto_lhash= ../..
 .include "$(TOP_crypto_lhash)/configure.mk"
 .include "Makefile"
 .for d in $(SRC_crypto_lhash:.c=.d)

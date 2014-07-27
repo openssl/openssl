@@ -2,7 +2,6 @@
 # OpenSSL/crypto/x509/BSDmakefile
 #
 
-TOP_crypto_x509= ../..
 .include "$(TOP_crypto_x509)/configure.mk"
 .include "Makefile"
 .for d in $(SRC_crypto_x509:.c=.d)

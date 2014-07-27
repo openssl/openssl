@@ -2,7 +2,6 @@
 # OpenSSL/crypto/md4/Makefile
 #
 
-DIR_crypto_md4=    md4
 CPP_crypto_md4=    $(CC) -E
 INCLUDES_crypto_md4=
 
@@ -23,9 +22,6 @@ HEADER_crypto_md4= md4_locl.h $(EXHEADER_crypto_md4)
 
 ALL_crypto_md4=    $(GENERAL_crypto_md4) $(SRC_crypto_md4) $(HEADER_crypto_md4)
 
-top: top_crypto_md4
-top_crypto_md4:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_md4) sub_all)
 
 all: all_crypto_md4
 all_crypto_md4:    lib

@@ -2,7 +2,6 @@
 # OpenSSL/crypto/bio/Makefile
 #
 
-DIR_crypto_bio=	bio
 INCLUDES_crypto_bio= -I.. -I$(TOP_crypto_bio) -I../../include
 
 CFLAGS_crypto_bio= $(INCLUDES_crypto_bio) $(CFLAG)
@@ -34,9 +33,6 @@ HEADER_crypto_bio=	bio_lcl.h $(EXHEADER_crypto_bio)
 
 ALL_crypto_bio=    $(GENERAL_crypto_bio) $(SRC_crypto_bio) $(HEADER_crypto_bio)
 
-top: top_crypto_bio
-top_crypto_bio:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_bio) sub_all)
 
 all: all_crypto_bio
 all_crypto_bio:	lib

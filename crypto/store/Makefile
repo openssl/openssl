@@ -2,7 +2,6 @@
 # OpenSSL/crypto/store/Makefile
 #
 
-DIR_crypto_store=	store
 INCLUDES_crypto_store= -I.. -I$(TOP_crypto_store) -I../../include
 
 CFLAGS_crypto_store= $(INCLUDES_crypto_store) $(CFLAG)
@@ -24,9 +23,6 @@ HEADER_crypto_store=	$(EXHEADER_crypto_store) str_locl.h
 
 ALL_crypto_store=    $(GENERAL_crypto_store) $(SRC_crypto_store) $(HEADER_crypto_store)
 
-top: top_crypto_store
-top_crypto_store:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_store) sub_all)
 
 all: all_crypto_store
 all_crypto_store:	lib

@@ -2,7 +2,6 @@
 # OpenSSL/crypto/dh/Makefile
 #
 
-DIR_crypto_dh=	dh
 INCLUDES_crypto_dh= -I.. -I$(TOP_crypto_dh) -I../../include
 
 CFLAGS_crypto_dh= $(INCLUDES_crypto_dh) $(CFLAG)
@@ -24,9 +23,6 @@ HEADER_crypto_dh=	$(EXHEADER_crypto_dh)
 
 ALL_crypto_dh=    $(GENERAL_crypto_dh) $(SRC_crypto_dh) $(HEADER_crypto_dh)
 
-top: top_crypto_dh
-top_crypto_dh:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_dh) sub_all)
 
 all: all_crypto_dh
 all_crypto_dh:	lib

@@ -2,7 +2,6 @@
 # OpenSSL/fips/utl/Makefile
 #
 
-DIR_fips_utl=	utl
 INCLUDES_fips_utl=
 
 CFLAGS_fips_utl= $(INCLUDES_fips_utl) $(CFLAG)
@@ -22,9 +21,6 @@ HEADER_fips_utl=	$(EXHEADER_fips_utl)
 
 ALL_fips_utl=    $(GENERAL_fips_utl) $(SRC_fips_utl) $(HEADER_fips_utl)
 
-top: top_fips_utl
-top_fips_utl:
-	(cd $(TOP_fips_utl); $(MAKE) DIRS=fips FDIRS=$(DIR_fips_utl) sub_all)
 
 all: all_fips_utl
 all_fips_utl:	lib

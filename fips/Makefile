@@ -2,7 +2,6 @@
 # OpenSSL/crypto/Makefile
 #
 
-DIR_fips=		fips
 INCLUDE_fips=	-I. -I$(TOP_fips) -I../include
 # INCLUDES_fips targets sudbirs!
 INCLUDES_fips=	-I.. -I../.. -I../../include
@@ -40,9 +39,6 @@ EXE_fips=fipsld fips_standalone_sha1
 
 ALL_fips=    $(GENERAL_fips) $(SRC_fips) $(HEADER_fips)
 
-top: top_fips
-top_fips:
-	@(cd ..; $(MAKE) DIRS=$(DIR_fips) all)
 
 testapps:
 	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP_fips)/Makefile reflect THIS=$@; fi

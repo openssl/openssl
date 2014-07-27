@@ -2,7 +2,6 @@
 # OpenSSL/krb5/Makefile
 #
 
-DIR_crypto_krb5=	krb5
 INCLUDES_crypto_krb5= -I.. -I$(TOP_crypto_krb5) -I../../include
 
 CFLAGS_crypto_krb5= $(INCLUDES_crypto_krb5) $(CFLAG)
@@ -23,9 +22,6 @@ HEADER_crypto_krb5=	$(EXHEADER_crypto_krb5)
 
 ALL_crypto_krb5=    $(GENERAL_crypto_krb5) $(SRC_crypto_krb5) $(HEADER_crypto_krb5)
 
-top: top_crypto_krb5
-top_crypto_krb5:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_krb5) sub_all)
 
 all: all_crypto_krb5
 all_crypto_krb5:	lib

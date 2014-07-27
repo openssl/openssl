@@ -2,7 +2,6 @@
 # OpenSSL/fips/ecdh/BSDmakefile
 #
 
-TOP_fips_ecdh= ../..
 .include "$(TOP_fips_ecdh)/configure.mk"
 .include "Makefile"
 .for d in $(SRC_fips_ecdh:.c=.d)

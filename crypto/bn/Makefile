@@ -2,7 +2,6 @@
 # OpenSSL/crypto/bn/Makefile
 #
 
-DIR_crypto_bn=	bn
 CPP_crypto_bn=    $(CC) -E
 INCLUDES_crypto_bn= -I.. -I$(TOP_crypto_bn) -I../../include
 
@@ -35,9 +34,6 @@ HEADER_crypto_bn=	bn_lcl.h bn_prime.h $(EXHEADER_crypto_bn)
 
 ALL_crypto_bn=    $(GENERAL_crypto_bn) $(SRC_crypto_bn) $(HEADER_crypto_bn)
 
-top: top_crypto_bn
-top_crypto_bn:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_bn) sub_all)
 
 all: all_crypto_bn
 all_crypto_bn:	lib

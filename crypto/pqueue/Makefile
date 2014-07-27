@@ -2,7 +2,6 @@
 # OpenSSL/crypto/pqueue/Makefile
 #
 
-DIR_crypto_pqueue=	pqueue
 INCLUDES_crypto_pqueue=
 
 CFLAGS_crypto_pqueue= $(INCLUDES_crypto_pqueue) $(CFLAG)
@@ -22,9 +21,6 @@ HEADER_crypto_pqueue=	$(EXHEADER_crypto_pqueue)
 
 ALL_crypto_pqueue=    $(GENERAL_crypto_pqueue) $(SRC_crypto_pqueue) $(HEADER_crypto_pqueue)
 
-top: top_crypto_pqueue
-top_crypto_pqueue:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_pqueue) sub_all)
 
 all: all_crypto_pqueue
 all_crypto_pqueue:	lib

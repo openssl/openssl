@@ -2,7 +2,6 @@
 # OpenSSL/crypto/pem/Makefile
 #
 
-DIR_crypto_pem=	pem
 INCLUDES_crypto_pem= -I.. -I$(TOP_crypto_pem) -I../../include
 
 CFLAGS_crypto_pem= $(INCLUDES_crypto_pem) $(CFLAG)
@@ -25,9 +24,6 @@ HEADER_crypto_pem=	$(EXHEADER_crypto_pem)
 
 ALL_crypto_pem=    $(GENERAL_crypto_pem) $(SRC_crypto_pem) $(HEADER_crypto_pem)
 
-top: top_crypto_pem
-top_crypto_pem:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_pem) sub_all)
 
 all: all_crypto_pem
 all_crypto_pem:	lib

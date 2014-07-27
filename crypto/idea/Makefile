@@ -2,7 +2,6 @@
 # OpenSSL/crypto/idea/Makefile
 #
 
-DIR_crypto_idea=	idea
 INCLUDES_crypto_idea=
 
 CFLAGS_crypto_idea= $(INCLUDES_crypto_idea) $(CFLAG)
@@ -22,9 +21,6 @@ HEADER_crypto_idea=	idea_lcl.h $(EXHEADER_crypto_idea)
 
 ALL_crypto_idea=    $(GENERAL_crypto_idea) $(SRC_crypto_idea) $(HEADER_crypto_idea)
 
-top: top_crypto_idea
-top_crypto_idea:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_idea) sub_all)
 
 all: all_crypto_idea
 all_crypto_idea:	lib

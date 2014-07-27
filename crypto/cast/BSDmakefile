@@ -2,7 +2,6 @@
 # OpenSSL/crypto/cast/BSDmakefile
 #
 
-TOP_crypto_cast= ../..
 .include "$(TOP_crypto_cast)/configure.mk"
 .include "Makefile"
 .for d in $(SRC_crypto_cast:.c=.d)

@@ -2,7 +2,6 @@
 # test/Makefile
 #
 
-DIR_test=		test
 INCLUDES_test=	-I$(TOP_test) -I../include $(KRB5_INCLUDES) -I$(TOP_test)/fips
 # KRB5 stuff
 TEST_test=		fips_algvs.c igetest.c
@@ -147,9 +146,6 @@ HEADER_test=	testutil.h $(EXHEADER_test)
 
 ALL_test=    $(GENERAL_test) $(SRC_test) $(HEADER_test)
 
-top: top_test
-top_test:
-	(cd ..; $(MAKE) DIRS=$(DIR_test) TESTS=$(TESTS_test) all)
 
 all: all_test
 all_test:	exe

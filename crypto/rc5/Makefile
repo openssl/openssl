@@ -2,7 +2,6 @@
 # OpenSSL/crypto/rc5/Makefile
 #
 
-DIR_crypto_rc5=	rc5
 CPP_crypto_rc5=	$(CC) -E
 INCLUDES_crypto_rc5=
 
@@ -26,9 +25,6 @@ HEADER_crypto_rc5=	rc5_locl.h $(EXHEADER_crypto_rc5)
 
 ALL_crypto_rc5=    $(GENERAL_crypto_rc5) $(SRC_crypto_rc5) $(HEADER_crypto_rc5)
 
-top: top_crypto_rc5
-top_crypto_rc5:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_rc5) sub_all)
 
 all: all_crypto_rc5
 all_crypto_rc5:	lib

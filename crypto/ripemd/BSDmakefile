@@ -2,7 +2,6 @@
 # OpenSSL/crypto/ripemd/BSDmakefile
 #
 
-TOP_crypto_ripemd= ../..
 .include "$(TOP_crypto_ripemd)/configure.mk"
 .include "Makefile"
 .for d in $(SRC_crypto_ripemd:.c=.d)

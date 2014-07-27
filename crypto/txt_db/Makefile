@@ -2,7 +2,6 @@
 # OpenSSL/crypto/txt_db/Makefile
 #
 
-DIR_crypto_txt_db=	txt_db
 INCLUDES_crypto_txt_db=
 
 CFLAGS_crypto_txt_db= $(INCLUDES_crypto_txt_db) $(CFLAG)
@@ -22,9 +21,6 @@ HEADER_crypto_txt_db=	$(EXHEADER_crypto_txt_db)
 
 ALL_crypto_txt_db=    $(GENERAL_crypto_txt_db) $(SRC_crypto_txt_db) $(HEADER_crypto_txt_db)
 
-top: top_crypto_txt_db
-top_crypto_txt_db:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_txt_db) sub_all)
 
 all: all_crypto_txt_db
 all_crypto_txt_db:	lib

@@ -2,7 +2,6 @@
 # OpenSSL/crypto/ui/Makefile
 #
 
-DIR_crypto_ui=	ui
 INCLUDES_crypto_ui= -I.. -I$(TOP_crypto_ui) -I../../include
 
 CFLAGS_crypto_ui= $(INCLUDES_crypto_ui) $(CFLAG)
@@ -26,9 +25,6 @@ HEADER_crypto_ui=	$(EXHEADER_crypto_ui) ui_locl.h
 
 ALL_crypto_ui=    $(GENERAL_crypto_ui) $(SRC_crypto_ui) $(HEADER_crypto_ui)
 
-top: top_crypto_ui
-top_crypto_ui:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_ui) sub_all)
 
 all: all_crypto_ui
 all_crypto_ui:	lib

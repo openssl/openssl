@@ -2,7 +2,6 @@
 # OpenSSL/fips/cmac/Makefile
 #
 
-DIR_fips_cmac=	cmac
 INCLUDES_fips_cmac=
 
 CFLAGS_fips_cmac= $(INCLUDES_fips_cmac) $(CFLAG)
@@ -22,9 +21,6 @@ HEADER_fips_cmac=	$(EXHEADER_fips_cmac)
 
 ALL_fips_cmac=    $(GENERAL_fips_cmac) $(SRC_fips_cmac) $(HEADER_fips_cmac)
 
-top: top_fips_cmac
-top_fips_cmac:
-	(cd $(TOP_fips_cmac); $(MAKE) DIRS=fips FDIRS=$(DIR_fips_cmac) sub_all)
 
 all: all_fips_cmac
 all_fips_cmac:	lib

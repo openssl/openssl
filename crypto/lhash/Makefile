@@ -2,7 +2,6 @@
 # OpenSSL/crypto/lhash/Makefile
 #
 
-DIR_crypto_lhash=	lhash
 INCLUDES_crypto_lhash=
 
 CFLAGS_crypto_lhash= $(INCLUDES_crypto_lhash) $(CFLAG)
@@ -22,9 +21,6 @@ HEADER_crypto_lhash=	$(EXHEADER_crypto_lhash)
 
 ALL_crypto_lhash=    $(GENERAL_crypto_lhash) $(SRC_crypto_lhash) $(HEADER_crypto_lhash)
 
-top: top_crypto_lhash
-top_crypto_lhash:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_lhash) sub_all)
 
 all: all_crypto_lhash
 all_crypto_lhash:	lib

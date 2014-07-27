@@ -2,7 +2,6 @@
 # crypto/whrlpool/Makefile
 #
 
-DIR_crypto_whrlpool=	whrlpool
 CPP_crypto_whrlpool=	$(CC) -E
 INCLUDES_crypto_whrlpool=
 
@@ -26,9 +25,6 @@ HEADER_crypto_whrlpool= wp_locl.h $(EXHEADER_crypto_whrlpool)
 
 ALL_crypto_whrlpool=    $(GENERAL_crypto_whrlpool) $(SRC_crypto_whrlpool) $(HEADER_crypto_whrlpool)
 
-top: top_crypto_whrlpool
-top_crypto_whrlpool:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_whrlpool) sub_all)
 
 all: all_crypto_whrlpool
 all_crypto_whrlpool:	lib

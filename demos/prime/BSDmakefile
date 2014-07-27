@@ -2,7 +2,6 @@
 # OpenSSL/demos/prime/BSDmakefile
 #
 
-TOP_demos_prime= ../..
 .include "$(TOP_demos_prime)/configure.mk"
 .include "Makefile"
 .for d in $(SRC_demos_prime:.c=.d)

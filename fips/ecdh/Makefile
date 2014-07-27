@@ -2,7 +2,6 @@
 # OpenSSL/fips/ecdh/Makefile
 #
 
-DIR_fips_ecdh=	ecdh
 INCLUDES_fips_ecdh=
 
 CFLAGS_fips_ecdh= $(INCLUDES_fips_ecdh) $(CFLAG)
@@ -22,9 +21,6 @@ HEADER_fips_ecdh=	$(EXHEADER_fips_ecdh)
 
 ALL_fips_ecdh=    $(GENERAL_fips_ecdh) $(SRC_fips_ecdh) $(HEADER_fips_ecdh)
 
-top: top_fips_ecdh
-top_fips_ecdh:
-	(cd $(TOP_fips_ecdh); $(MAKE) DIRS=fips FDIRS=$(DIR_fips_ecdh) sub_all)
 
 all: all_fips_ecdh
 all_fips_ecdh:	lib

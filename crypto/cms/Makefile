@@ -2,7 +2,6 @@
 # OpenSSL/crypto/cms/Makefile
 #
 
-DIR_crypto_cms=	cms
 INCLUDES_crypto_cms= -I.. -I$(TOP_crypto_cms) -I../../include
 
 CFLAGS_crypto_cms= $(INCLUDES_crypto_cms) $(CFLAG)
@@ -26,9 +25,6 @@ HEADER_crypto_cms=	cms_lcl.h $(EXHEADER_crypto_cms)
 
 ALL_crypto_cms=    $(GENERAL_crypto_cms) $(SRC_crypto_cms) $(HEADER_crypto_cms)
 
-top: top_crypto_cms
-top_crypto_cms:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_cms) sub_all)
 
 test: test_crypto_cms
 test_crypto_cms:

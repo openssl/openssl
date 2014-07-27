@@ -1,4 +1,3 @@
-DIR_crypto_srp=	srp
 INCLUDES_crypto_srp= -I.. -I$(TOP_crypto_srp) -I../../include
 
 CFLAGS_crypto_srp= $(INCLUDES_crypto_srp) $(CFLAG)
@@ -16,9 +15,6 @@ SRC_crypto_srp= $(LIBSRC_crypto_srp)
 EXHEADER_crypto_srp= srp.h
 HEADER_crypto_srp=	$(EXHEADER_crypto_srp)
 
-top: top_crypto_srp
-top_crypto_srp:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_srp) sub_all)
 
 all: all_crypto_srp
 all_crypto_srp:	lib

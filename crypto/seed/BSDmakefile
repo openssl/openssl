@@ -2,7 +2,6 @@
 # OpenSSL/crypto/seed/BSDmakefile
 #
 
-TOP_crypto_seed= ../..
 .include "$(TOP_crypto_seed)/configure.mk"
 .include "Makefile"
 .for d in $(SRC_crypto_seed:.c=.d)

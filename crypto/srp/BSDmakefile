@@ -2,7 +2,6 @@
 # OpenSSL/crypto/srp/BSDmakefile
 #
 
-TOP_crypto_srp= ../..
 .include "$(TOP_crypto_srp)/configure.mk"
 .include "Makefile"
 .for d in $(SRC_crypto_srp:.c=.d)

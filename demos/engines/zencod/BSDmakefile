@@ -2,7 +2,6 @@
 # OpenSSL/demos/engines/zencod/BSDmakefile
 #
 
-TOP_demos_engines_zencod= ../../..
 .include "$(TOP_demos_engines_zencod)/configure.mk"
 .include "Makefile"
 .for d in $(SRC_demos_engines_zencod:.c=.d)

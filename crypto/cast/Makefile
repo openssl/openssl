@@ -2,7 +2,6 @@
 # OpenSSL/crypto/cast/Makefile
 #
 
-DIR_crypto_cast=	cast
 CPP_crypto_cast=	$(CC) -E
 INCLUDES_crypto_cast=
 
@@ -26,9 +25,6 @@ HEADER_crypto_cast=	cast_s.h cast_lcl.h $(EXHEADER_crypto_cast)
 
 ALL_crypto_cast=    $(GENERAL_crypto_cast) $(SRC_crypto_cast) $(HEADER_crypto_cast)
 
-top: top_crypto_cast
-top_crypto_cast:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_cast) sub_all)
 
 all: all_crypto_cast
 all_crypto_cast:	lib

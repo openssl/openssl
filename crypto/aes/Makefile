@@ -2,7 +2,6 @@
 # crypto/aes/Makefile
 #
 
-DIR_crypto_aes=	aes
 CPP_crypto_aes=	$(CC) -E
 INCLUDES_crypto_aes=
 
@@ -29,9 +28,6 @@ HEADER_crypto_aes= aes_locl.h $(EXHEADER_crypto_aes)
 
 ALL_crypto_aes=    $(GENERAL_crypto_aes) $(SRC_crypto_aes) $(HEADER_crypto_aes)
 
-top: top_crypto_aes
-top_crypto_aes:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_aes) sub_all)
 
 all: all_crypto_aes
 all_crypto_aes:	lib

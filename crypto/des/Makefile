@@ -2,7 +2,6 @@
 # OpenSSL/crypto/des/Makefile
 #
 
-DIR_crypto_des=	des
 CPP_crypto_des=	$(CC) -E
 INCLUDES_crypto_des=-I$(TOP_crypto_des) -I../../include
 
@@ -39,9 +38,6 @@ HEADER_crypto_des=	des_locl.h rpc_des.h spr.h des_ver.h $(EXHEADER_crypto_des)
 
 ALL_crypto_des=    $(GENERAL_crypto_des) $(SRC_crypto_des) $(HEADER_crypto_des)
 
-top: top_crypto_des
-top_crypto_des:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_des) sub_all)
 
 all: all_crypto_des
 all_crypto_des:	lib

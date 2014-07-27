@@ -1,4 +1,3 @@
-DIR_crypto_jpake=jpake
 
 CFLAGS_crypto_jpake= $(INCLUDES) $(CFLAG)
 
@@ -10,9 +9,6 @@ SRC_crypto_jpake= $(LIBSRC_crypto_jpake)
 EXHEADER_crypto_jpake=jpake.h
 TEST_crypto_jpake=jpaketest.c
 
-top: top_crypto_jpake
-top_crypto_jpake:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_jpake) sub_all)
 
 all: all_crypto_jpake
 all_crypto_jpake:	lib

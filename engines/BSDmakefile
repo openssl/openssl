@@ -2,7 +2,6 @@
 # OpenSSL/engines/BSDmakefile
 #
 
-TOP_engines= ..
 .include "$(TOP_engines)/configure.mk"
 .include "Makefile"
 .for d in $(SRC_engines:.c=.d)

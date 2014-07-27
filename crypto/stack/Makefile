@@ -2,7 +2,6 @@
 # OpenSSL/crypto/stack/Makefile
 #
 
-DIR_crypto_stack=	stack
 INCLUDES_crypto_stack=
 
 CFLAGS_crypto_stack= $(INCLUDES_crypto_stack) $(CFLAG)
@@ -22,9 +21,6 @@ HEADER_crypto_stack=	$(EXHEADER_crypto_stack)
 
 ALL_crypto_stack=    $(GENERAL_crypto_stack) $(SRC_crypto_stack) $(HEADER_crypto_stack)
 
-top: top_crypto_stack
-top_crypto_stack:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_stack) sub_all)
 
 all: all_crypto_stack
 all_crypto_stack:	lib

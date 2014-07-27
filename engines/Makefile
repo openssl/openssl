@@ -2,7 +2,6 @@
 # OpenSSL/engines/Makefile
 #
 
-DIR_engines=	engines
 INCLUDES_engines= -I../include
 
 CFLAGS_engines= $(INCLUDES_engines) $(CFLAG)
@@ -55,9 +54,6 @@ HEADER_engines=	e_4758cca_err.c e_4758cca_err.h \
 
 ALL_engines=    $(GENERAL_engines) $(SRC_engines) $(HEADER_engines)
 
-top: top_engines
-top_engines:
-	(cd ..; $(MAKE) DIRS=$(DIR_engines) all)
 
 all: all_engines
 all_engines:	lib subdirs

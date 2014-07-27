@@ -2,7 +2,6 @@
 # OpenSSL/crypto/pkcs12/Makefile
 #
 
-DIR_crypto_pkcs12=	pkcs12
 INCLUDES_crypto_pkcs12= -I.. -I$(TOP_crypto_pkcs12) -I../../include
 
 CFLAGS_crypto_pkcs12= $(INCLUDES_crypto_pkcs12) $(CFLAG)
@@ -26,9 +25,6 @@ HEADER_crypto_pkcs12=	$(EXHEADER_crypto_pkcs12)
 
 ALL_crypto_pkcs12=    $(GENERAL_crypto_pkcs12) $(SRC_crypto_pkcs12) $(HEADER_crypto_pkcs12)
 
-top: top_crypto_pkcs12
-top_crypto_pkcs12:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_pkcs12) sub_all)
 
 test: test_crypto_pkcs12
 test_crypto_pkcs12:

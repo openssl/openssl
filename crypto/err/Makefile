@@ -2,7 +2,6 @@
 # OpenSSL/crypto/err/Makefile
 #
 
-DIR_crypto_err=	err
 INCLUDES_crypto_err= -I.. -I$(TOP_crypto_err) -I../../include
 
 CFLAGS_crypto_err= $(INCLUDES_crypto_err) $(CFLAG)
@@ -22,9 +21,6 @@ HEADER_crypto_err=	$(EXHEADER_crypto_err)
 
 ALL_crypto_err=    $(GENERAL_crypto_err) $(SRC_crypto_err) $(HEADER_crypto_err)
 
-top: top_crypto_err
-top_crypto_err:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_err) sub_all)
 
 all: all_crypto_err
 all_crypto_err:	lib

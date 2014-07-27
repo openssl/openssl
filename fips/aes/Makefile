@@ -2,7 +2,6 @@
 # OpenSSL/fips/aes/Makefile
 #
 
-DIR_fips_aes=	aes
 INCLUDES_fips_aes=
 
 ASFLAGS_fips_aes= $(INCLUDES_fips_aes) $(ASFLAG)
@@ -25,9 +24,6 @@ HEADER_fips_aes=
 
 ALL_fips_aes=    $(GENERAL_fips_aes) $(SRC_fips_aes) $(HEADER_fips_aes)
 
-top: top_fips_aes
-top_fips_aes:
-	(cd $(TOP_fips_aes); $(MAKE) DIRS=fips FDIRS=$(DIR_fips_aes) sub_all)
 
 all: all_fips_aes
 all_fips_aes:	lib

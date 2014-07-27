@@ -2,7 +2,6 @@
 # OpenSSL/crypto/objects/BSDmakefile
 #
 
-TOP_crypto_objects= ../..
 .include "$(TOP_crypto_objects)/configure.mk"
 .include "Makefile"
 .for d in $(SRC_crypto_objects:.c=.d)

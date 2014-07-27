@@ -2,7 +2,6 @@
 # OpenSSL/crypto/aes/BSDmakefile
 #
 
-TOP_crypto_aes= ../..
 .include "$(TOP_crypto_aes)/configure.mk"
 .include "Makefile"
 .for d in $(SRC_crypto_aes:.c=.d)

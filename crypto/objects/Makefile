@@ -2,7 +2,6 @@
 # OpenSSL/crypto/objects/Makefile
 #
 
-DIR_crypto_objects=	objects
 INCLUDES_crypto_objects= -I.. -I$(TOP_crypto_objects) -I../../include
 
 CFLAGS_crypto_objects= $(INCLUDES_crypto_objects) $(CFLAG)
@@ -22,9 +21,6 @@ HEADER_crypto_objects=	$(EXHEADER_crypto_objects) obj_dat.h obj_xref.h
 
 ALL_crypto_objects=    $(GENERAL_crypto_objects) $(SRC_crypto_objects) $(HEADER_crypto_objects)
 
-top: top_crypto_objects
-top_crypto_objects:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_objects) sub_all)
 
 all: all_crypto_objects
 all_crypto_objects:	obj_dat.h obj_xref.h lib

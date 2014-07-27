@@ -2,7 +2,6 @@
 # OpenSSL/ssl/Makefile
 #
 
-DIR_ssl=	ssl
 INCLUDES_ssl= -I../crypto -I$(TOP_ssl) -I../include $(KRB5_INCLUDES)
 # KRB5 stuff
 
@@ -44,9 +43,6 @@ HEADER_ssl=	$(EXHEADER_ssl) ssl_locl.h kssl_lcl.h
 
 ALL_ssl=    $(GENERAL_ssl) $(SRC_ssl) $(HEADER_ssl)
 
-top: top_ssl
-top_ssl:
-	(cd ..; $(MAKE) DIRS=$(DIR_ssl) all)
 
 all: all_ssl
 all_ssl:	shared

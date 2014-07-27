@@ -2,7 +2,6 @@
 # OpenSSL/crypto/engine/Makefile
 #
 
-DIR_crypto_engine=	engine
 INCLUDES_crypto_engine= -I.. -I$(TOP_crypto_engine) -I../../include
 
 CFLAGS_crypto_engine= $(INCLUDES_crypto_engine) $(CFLAG)
@@ -32,9 +31,6 @@ HEADER_crypto_engine=	$(EXHEADER_crypto_engine)
 
 ALL_crypto_engine=    $(GENERAL_crypto_engine) $(SRC_crypto_engine) $(HEADER_crypto_engine)
 
-top: top_crypto_engine
-top_crypto_engine:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_engine) sub_all)
 
 all: all_crypto_engine
 all_crypto_engine:	lib

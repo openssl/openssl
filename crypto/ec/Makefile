@@ -2,7 +2,6 @@
 # crypto/ec/Makefile
 #
 
-DIR_crypto_ec=	ec
 INCLUDES_crypto_ec= -I.. -I$(TOP_crypto_ec) -I../../include
 
 CFLAGS_crypto_ec= $(INCLUDES_crypto_ec) $(CFLAG)
@@ -33,9 +32,6 @@ HEADER_crypto_ec=	ec_lcl.h $(EXHEADER_crypto_ec)
 
 ALL_crypto_ec=    $(GENERAL_crypto_ec) $(SRC_crypto_ec) $(HEADER_crypto_ec)
 
-top: top_crypto_ec
-top_crypto_ec:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_ec) sub_all)
 
 all: all_crypto_ec
 all_crypto_ec:	lib

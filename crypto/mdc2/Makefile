@@ -2,7 +2,6 @@
 # OpenSSL/crypto/mdc2/Makefile
 #
 
-DIR_crypto_mdc2=	mdc2
 INCLUDES_crypto_mdc2=
 
 CFLAGS_crypto_mdc2= $(INCLUDES_crypto_mdc2) $(CFLAG)
@@ -22,9 +21,6 @@ HEADER_crypto_mdc2=	$(EXHEADER_crypto_mdc2)
 
 ALL_crypto_mdc2=    $(GENERAL_crypto_mdc2) $(SRC_crypto_mdc2) $(HEADER_crypto_mdc2)
 
-top: top_crypto_mdc2
-top_crypto_mdc2:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_mdc2) sub_all)
 
 all: all_crypto_mdc2
 all_crypto_mdc2:	lib

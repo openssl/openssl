@@ -2,7 +2,6 @@
 # OpenSSL/crypto/sha/Makefile
 #
 
-DIR_crypto_sha=    sha
 CPP_crypto_sha=    $(CC) -E
 INCLUDES_crypto_sha=
 
@@ -26,9 +25,6 @@ HEADER_crypto_sha= sha_locl.h $(EXHEADER_crypto_sha)
 
 ALL_crypto_sha=    $(GENERAL_crypto_sha) $(SRC_crypto_sha) $(HEADER_crypto_sha)
 
-top: top_crypto_sha
-top_crypto_sha:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR_crypto_sha) sub_all)
 
 all: all_crypto_sha
 all_crypto_sha:    lib
