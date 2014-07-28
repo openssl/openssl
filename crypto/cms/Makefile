@@ -36,8 +36,7 @@ test_crypto_cms:
 all: all_crypto_cms
 all_crypto_cms:	lib
 
-lib: lib_crypto_cms
-lib_crypto_cms:	$(LIBOBJ_crypto_cms)
+lib:	$(LIBOBJ_crypto_cms)
 	$(ARX) $(LIB_crypto_cms) $(LIBOBJ_crypto_cms)
 	$(RANLIB) $(LIB_crypto_cms) || echo Never mind.
 	@touch lib

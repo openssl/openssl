@@ -29,8 +29,7 @@ top_crypto_buffer:
 all: all_crypto_buffer
 all_crypto_buffer:	lib
 
-lib: lib_crypto_buffer
-lib_crypto_buffer:	$(LIBOBJ_crypto_buffer)
+lib:	$(LIBOBJ_crypto_buffer)
 	$(ARX) $(LIB_crypto_buffer) $(LIBOBJ_crypto_buffer)
 	$(RANLIB) $(LIB_crypto_buffer) || echo Never mind.
 	@touch lib

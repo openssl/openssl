@@ -29,8 +29,7 @@ top_crypto_hmac:
 all: all_crypto_hmac
 all_crypto_hmac:	lib
 
-lib: lib_crypto_hmac
-lib_crypto_hmac:	$(LIBOBJ_crypto_hmac)
+lib:	$(LIBOBJ_crypto_hmac)
 	$(ARX) $(LIB_crypto_hmac) $(LIBOBJ_crypto_hmac)
 	$(RANLIB) $(LIB_crypto_hmac) || echo Never mind.
 	@touch lib

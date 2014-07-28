@@ -31,8 +31,7 @@ top_crypto_dso:
 all: all_crypto_dso
 all_crypto_dso:	lib
 
-lib: lib_crypto_dso
-lib_crypto_dso:	$(LIBOBJ_crypto_dso)
+lib:	$(LIBOBJ_crypto_dso)
 	$(ARX) $(LIB_crypto_dso) $(LIBOBJ_crypto_dso)
 	$(RANLIB) $(LIB_crypto_dso) || echo Never mind.
 	@touch lib

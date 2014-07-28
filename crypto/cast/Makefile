@@ -33,8 +33,7 @@ top_crypto_cast:
 all: all_crypto_cast
 all_crypto_cast:	lib
 
-lib: lib_crypto_cast
-lib_crypto_cast:	$(LIBOBJ_crypto_cast)
+lib:	$(LIBOBJ_crypto_cast)
 	$(ARX) $(LIB_crypto_cast) $(LIBOBJ_crypto_cast)
 	$(RANLIB) $(LIB_crypto_cast) || echo Never mind.
 	@touch lib

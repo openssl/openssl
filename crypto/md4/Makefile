@@ -30,8 +30,7 @@ top_crypto_md4:
 all: all_crypto_md4
 all_crypto_md4:    lib
 
-lib: lib_crypto_md4
-lib_crypto_md4:    $(LIBOBJ_crypto_md4)
+lib:    $(LIBOBJ_crypto_md4)
 	$(ARX) $(LIB_crypto_md4) $(LIBOBJ_crypto_md4)
 	$(RANLIB) $(LIB_crypto_md4) || echo Never mind.
 	@touch lib

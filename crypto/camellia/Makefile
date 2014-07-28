@@ -35,8 +35,7 @@ top_crypto_camellia:
 all: all_crypto_camellia
 all_crypto_camellia:	lib
 
-lib: lib_crypto_camellia
-lib_crypto_camellia:	$(LIBOBJ_crypto_camellia)
+lib:	$(LIBOBJ_crypto_camellia)
 	$(ARX) $(LIB_crypto_camellia) $(LIBOBJ_crypto_camellia)
 	$(RANLIB) $(LIB_crypto_camellia) || echo Never mind.
 	@touch lib

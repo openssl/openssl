@@ -32,8 +32,7 @@ top_crypto_ocsp:
 all: all_crypto_ocsp
 all_crypto_ocsp:	lib
 
-lib: lib_crypto_ocsp
-lib_crypto_ocsp:	$(LIBOBJ_crypto_ocsp)
+lib:	$(LIBOBJ_crypto_ocsp)
 	$(ARX) $(LIB_crypto_ocsp) $(LIBOBJ_crypto_ocsp)
 	$(RANLIB) $(LIB_crypto_ocsp) || echo Never mind.
 	@touch lib

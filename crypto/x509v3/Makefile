@@ -39,8 +39,7 @@ top_crypto_x509v3:
 all: all_crypto_x509v3
 all_crypto_x509v3:	lib
 
-lib: lib_crypto_x509v3
-lib_crypto_x509v3:	$(LIBOBJ_crypto_x509v3)
+lib:	$(LIBOBJ_crypto_x509v3)
 	$(ARX) $(LIB_crypto_x509v3) $(LIBOBJ_crypto_x509v3)
 	$(RANLIB) $(LIB_crypto_x509v3) || echo Never mind.
 	@touch lib

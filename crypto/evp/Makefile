@@ -53,8 +53,7 @@ top_crypto_evp:
 all: all_crypto_evp
 all_crypto_evp:	lib
 
-lib: lib_crypto_evp
-lib_crypto_evp:	$(LIBOBJ_crypto_evp)
+lib:	$(LIBOBJ_crypto_evp)
 	$(ARX) $(LIB_crypto_evp) $(LIBOBJ_crypto_evp)
 	$(RANLIB) $(LIB_crypto_evp) || echo Never mind.
 	@touch lib

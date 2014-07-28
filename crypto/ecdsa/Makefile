@@ -30,8 +30,7 @@ top_crypto_ecdsa:
 all: all_crypto_ecdsa
 all_crypto_ecdsa:	lib
 
-lib: lib_crypto_ecdsa
-lib_crypto_ecdsa:	$(LIBOBJ_crypto_ecdsa)
+lib:	$(LIBOBJ_crypto_ecdsa)
 	$(ARX) $(LIB_crypto_ecdsa) $(LIBOBJ_crypto_ecdsa)
 	$(RANLIB) $(LIB_crypto_ecdsa) || echo Never mind.
 	@touch lib

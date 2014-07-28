@@ -23,8 +23,7 @@ top_crypto_srp:
 all: all_crypto_srp
 all_crypto_srp:	lib
 
-lib: lib_crypto_srp
-lib_crypto_srp:	$(LIBOBJ_crypto_srp)
+lib:	$(LIBOBJ_crypto_srp)
 	$(AR) $(LIB_crypto_srp) $(LIBOBJ_crypto_srp)
 	$(RANLIB) $(LIB_crypto_srp) || echo Never mind.
 	@touch lib

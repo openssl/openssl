@@ -36,8 +36,7 @@ top_crypto_aes:
 all: all_crypto_aes
 all_crypto_aes:	lib
 
-lib: lib_crypto_aes
-lib_crypto_aes:	$(LIBOBJ_crypto_aes)
+lib:	$(LIBOBJ_crypto_aes)
 	$(ARX) $(LIB_crypto_aes) $(LIBOBJ_crypto_aes)
 	$(RANLIB) $(LIB_crypto_aes) || echo Never mind.
 	@touch lib

@@ -35,8 +35,7 @@ top_crypto_modes:
 all: all_crypto_modes
 all_crypto_modes:	lib
 
-lib: lib_crypto_modes
-lib_crypto_modes:	$(LIBOBJ_crypto_modes)
+lib:	$(LIBOBJ_crypto_modes)
 	$(ARX) $(LIB_crypto_modes) $(LIBOBJ_crypto_modes)
 	$(RANLIB) $(LIB_crypto_modes) || echo Never mind.
 	@touch lib

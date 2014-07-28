@@ -28,8 +28,7 @@ errors: errors_engines_ccgost
 errors_engines_ccgost:
 	$(PERL) ../../util/mkerr.pl -conf gost.ec -nostatic -write $(SRC_engines_ccgost)
 
-lib: lib_engines_ccgost
-lib_engines_ccgost: $(LIBOBJ_engines_ccgost)
+lib: $(LIBOBJ_engines_ccgost)
 	if [ -n "$(SHARED_LIBS)" ]; then \
 		cat $(TOP_engines_ccgost)/configure.mk $(TOP_engines_ccgost)/Makefile.shared | $(MAKE) -f - \
 			LIBNAME=$(LIBNAME_engines_ccgost) \

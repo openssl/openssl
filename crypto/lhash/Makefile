@@ -29,8 +29,7 @@ top_crypto_lhash:
 all: all_crypto_lhash
 all_crypto_lhash:	lib
 
-lib: lib_crypto_lhash
-lib_crypto_lhash:	$(LIBOBJ_crypto_lhash)
+lib:	$(LIBOBJ_crypto_lhash)
 	$(ARX) $(LIB_crypto_lhash) $(LIBOBJ_crypto_lhash)
 	$(RANLIB) $(LIB_crypto_lhash) || echo Never mind.
 	@touch lib

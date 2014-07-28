@@ -40,8 +40,7 @@ top_crypto_ec:
 all: all_crypto_ec
 all_crypto_ec:	lib
 
-lib: lib_crypto_ec
-lib_crypto_ec:	$(LIBOBJ_crypto_ec)
+lib:	$(LIBOBJ_crypto_ec)
 	$(ARX) $(LIB_crypto_ec) $(LIBOBJ_crypto_ec)
 	$(RANLIB) $(LIB_crypto_ec) || echo Never mind.
 	@touch lib

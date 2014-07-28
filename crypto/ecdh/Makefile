@@ -30,8 +30,7 @@ top_crypto_ecdh:
 all: all_crypto_ecdh
 all_crypto_ecdh:	lib
 
-lib: lib_crypto_ecdh
-lib_crypto_ecdh:	$(LIBOBJ_crypto_ecdh)
+lib:	$(LIBOBJ_crypto_ecdh)
 	$(ARX) $(LIB_crypto_ecdh) $(LIBOBJ_crypto_ecdh)
 	$(RANLIB) $(LIB_crypto_ecdh) || echo Never mind.
 	@touch lib

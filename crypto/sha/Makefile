@@ -33,8 +33,7 @@ top_crypto_sha:
 all: all_crypto_sha
 all_crypto_sha:    lib
 
-lib: lib_crypto_sha
-lib_crypto_sha:    $(LIBOBJ_crypto_sha)
+lib:    $(LIBOBJ_crypto_sha)
 	$(ARX) $(LIB_crypto_sha) $(LIBOBJ_crypto_sha)
 	$(RANLIB) $(LIB_crypto_sha) || echo Never mind.
 	@touch lib

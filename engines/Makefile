@@ -62,8 +62,7 @@ top_engines:
 all: all_engines
 all_engines:	lib subdirs
 
-lib: lib_engines
-lib_engines:	$(LIBOBJ_engines)
+lib:	$(LIBOBJ_engines)
 	@if [ -n "$(SHARED_LIBS)" ]; then \
 		set -e; \
 		for l in $(LIBNAMES); do \

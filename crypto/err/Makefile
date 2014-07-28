@@ -29,8 +29,7 @@ top_crypto_err:
 all: all_crypto_err
 all_crypto_err:	lib
 
-lib: lib_crypto_err
-lib_crypto_err:	$(LIBOBJ_crypto_err)
+lib:	$(LIBOBJ_crypto_err)
 	$(ARX) $(LIB_crypto_err) $(LIBOBJ_crypto_err)
 	$(RANLIB) $(LIB_crypto_err) || echo Never mind.
 	@touch lib

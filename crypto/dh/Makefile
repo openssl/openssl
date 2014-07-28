@@ -31,8 +31,7 @@ top_crypto_dh:
 all: all_crypto_dh
 all_crypto_dh:	lib
 
-lib: lib_crypto_dh
-lib_crypto_dh:	$(LIBOBJ_crypto_dh)
+lib:	$(LIBOBJ_crypto_dh)
 	$(ARX) $(LIB_crypto_dh) $(LIBOBJ_crypto_dh)
 	$(RANLIB) $(LIB_crypto_dh) || echo Never mind.
 	@touch lib

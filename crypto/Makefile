@@ -82,15 +82,14 @@ links_crypto:
 	@$(PERL) $(TOP_crypto)/util/mklink.pl ../test $(TEST_crypto)
 
 # lib: $(LIB_crypto): are splitted to avoid end-less loop
-lib: lib_crypto
-lib_crypto:	$(LIB_crypto)
+lib:	$(LIB_crypto)
 	@touch lib
 $(LIB_crypto):	$(LIBOBJ_crypto)
 	$(ARX) $(LIB_crypto) $(LIBOBJ_crypto)
 	$(RANLIB) $(LIB_crypto) || echo Never mind.
 
 shared: shared_crypto
-shared_crypto: buildinf.h lib_crypto subdirs
+shared_crypto: buildinf.h lib subdirs
 	if [ -n "$(SHARED_LIBS)" ]; then \
 		(cd ..; $(MAKE) $(SHARED_LIB_crypto)); \
 	fi

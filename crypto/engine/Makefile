@@ -39,8 +39,7 @@ top_crypto_engine:
 all: all_crypto_engine
 all_crypto_engine:	lib
 
-lib: lib_crypto_engine
-lib_crypto_engine:	$(LIBOBJ_crypto_engine)
+lib:	$(LIBOBJ_crypto_engine)
 	$(ARX) $(LIB_crypto_engine) $(LIBOBJ_crypto_engine)
 	$(RANLIB) $(LIB_crypto_engine) || echo Never mind.
 	@touch lib

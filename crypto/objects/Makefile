@@ -29,8 +29,7 @@ top_crypto_objects:
 all: all_crypto_objects
 all_crypto_objects:	obj_dat.h obj_xref.h lib
 
-lib: lib_crypto_objects
-lib_crypto_objects:	$(LIBOBJ_crypto_objects)
+lib:	$(LIBOBJ_crypto_objects)
 	$(ARX) $(LIB_crypto_objects) $(LIBOBJ_crypto_objects)
 	$(RANLIB) $(LIB_crypto_objects) || echo Never mind.
 	@touch lib

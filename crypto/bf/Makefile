@@ -33,8 +33,7 @@ top_crypto_bf:
 all: all_crypto_bf
 all_crypto_bf:	lib
 
-lib: lib_crypto_bf
-lib_crypto_bf:	$(LIBOBJ_crypto_bf)
+lib:	$(LIBOBJ_crypto_bf)
 	$(ARX) $(LIB_crypto_bf) $(LIBOBJ_crypto_bf)
 	$(RANLIB) $(LIB_crypto_bf) || echo Never mind.
 	@touch lib

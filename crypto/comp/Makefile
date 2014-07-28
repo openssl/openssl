@@ -32,8 +32,7 @@ top_crypto_comp:
 all: all_crypto_comp
 all_crypto_comp:	lib
 
-lib: lib_crypto_comp
-lib_crypto_comp:	$(LIBOBJ_crypto_comp)
+lib:	$(LIBOBJ_crypto_comp)
 	$(ARX) $(LIB_crypto_comp) $(LIBOBJ_crypto_comp)
 	$(RANLIB) $(LIB_crypto_comp) || echo Never mind.
 	@touch lib

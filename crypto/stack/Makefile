@@ -29,8 +29,7 @@ top_crypto_stack:
 all: all_crypto_stack
 all_crypto_stack:	lib
 
-lib: lib_crypto_stack
-lib_crypto_stack:	$(LIBOBJ_crypto_stack)
+lib:	$(LIBOBJ_crypto_stack)
 	$(ARX) $(LIB_crypto_stack) $(LIBOBJ_crypto_stack)
 	$(RANLIB) $(LIB_crypto_stack) || echo Never mind.
 	@touch lib

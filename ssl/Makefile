@@ -51,8 +51,7 @@ top_ssl:
 all: all_ssl
 all_ssl:	shared
 
-lib: lib_ssl
-lib_ssl:	$(LIBOBJ_ssl)
+lib:	$(LIBOBJ_ssl)
 	$(AR) $(LIB_ssl) $(LIBOBJ_ssl)
 	$(RANLIB) $(LIB_ssl) || echo Never mind.
 	@touch lib

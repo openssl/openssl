@@ -33,8 +33,7 @@ top_crypto_whrlpool:
 all: all_crypto_whrlpool
 all_crypto_whrlpool:	lib
 
-lib: lib_crypto_whrlpool
-lib_crypto_whrlpool:	$(LIBOBJ_crypto_whrlpool)
+lib:	$(LIBOBJ_crypto_whrlpool)
 	$(ARX) $(LIB_crypto_whrlpool) $(LIBOBJ_crypto_whrlpool)
 	$(RANLIB) $(LIB_crypto_whrlpool) || echo Never mind.
 	@touch lib

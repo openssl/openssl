@@ -31,8 +31,7 @@ top_crypto_store:
 all: all_crypto_store
 all_crypto_store:	lib
 
-lib: lib_crypto_store
-lib_crypto_store:	$(LIBOBJ_crypto_store)
+lib:	$(LIBOBJ_crypto_store)
 	$(ARX) $(LIB_crypto_store) $(LIBOBJ_crypto_store)
 	$(RANLIB) $(LIB_crypto_store) || echo Never mind.
 	@touch lib

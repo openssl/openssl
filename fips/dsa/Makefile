@@ -31,8 +31,7 @@ top_fips_dsa:
 all: all_fips_dsa
 all_fips_dsa:	lib
 
-lib: lib_fips_dsa
-lib_fips_dsa:	$(LIBOBJ_fips_dsa)
+lib:	$(LIBOBJ_fips_dsa)
 	@echo $(LIBOBJ_fips_dsa) > lib
 
 files: files_fips_dsa

@@ -31,8 +31,7 @@ top_crypto_rand:
 all: all_crypto_rand
 all_crypto_rand:	lib
 
-lib: lib_crypto_rand
-lib_crypto_rand:	$(LIBOBJ_crypto_rand)
+lib:	$(LIBOBJ_crypto_rand)
 	$(ARX) $(LIB_crypto_rand) $(LIBOBJ_crypto_rand)
 	$(RANLIB) $(LIB_crypto_rand) || echo Never mind.
 	@touch lib

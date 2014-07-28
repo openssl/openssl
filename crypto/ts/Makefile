@@ -37,8 +37,7 @@ test_crypto_ts:
 all: all_crypto_ts
 all_crypto_ts:	lib
 
-lib: lib_crypto_ts
-lib_crypto_ts:	$(LIBOBJ_crypto_ts)
+lib:	$(LIBOBJ_crypto_ts)
 	$(ARX) $(LIB_crypto_ts) $(LIBOBJ_crypto_ts)
 	$(RANLIB) $(LIB_crypto_ts) || echo Never mind.
 	@touch lib

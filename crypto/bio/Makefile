@@ -41,8 +41,7 @@ top_crypto_bio:
 all: all_crypto_bio
 all_crypto_bio:	lib
 
-lib: lib_crypto_bio
-lib_crypto_bio:	$(LIBOBJ_crypto_bio)
+lib:	$(LIBOBJ_crypto_bio)
 	$(ARX) $(LIB_crypto_bio) $(LIBOBJ_crypto_bio)
 	$(RANLIB) $(LIB_crypto_bio) || echo Never mind.
 	@touch lib

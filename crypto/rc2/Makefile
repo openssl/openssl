@@ -29,8 +29,7 @@ top_crypto_rc2:
 all: all_crypto_rc2
 all_crypto_rc2:	lib
 
-lib: lib_crypto_rc2
-lib_crypto_rc2:	$(LIBOBJ_crypto_rc2)
+lib:	$(LIBOBJ_crypto_rc2)
 	$(ARX) $(LIB_crypto_rc2) $(LIBOBJ_crypto_rc2)
 	$(RANLIB) $(LIB_crypto_rc2) || echo Never mind.
 	@touch lib

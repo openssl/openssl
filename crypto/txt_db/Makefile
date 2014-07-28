@@ -29,8 +29,7 @@ top_crypto_txt_db:
 all: all_crypto_txt_db
 all_crypto_txt_db:	lib
 
-lib: lib_crypto_txt_db
-lib_crypto_txt_db:	$(LIBOBJ_crypto_txt_db)
+lib:	$(LIBOBJ_crypto_txt_db)
 	$(ARX) $(LIB_crypto_txt_db) $(LIBOBJ_crypto_txt_db)
 	$(RANLIB) $(LIB_crypto_txt_db) || echo Never mind.
 	@touch lib

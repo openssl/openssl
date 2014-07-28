@@ -29,8 +29,7 @@ top_crypto_pqueue:
 all: all_crypto_pqueue
 all_crypto_pqueue:	lib
 
-lib: lib_crypto_pqueue
-lib_crypto_pqueue:	$(LIBOBJ_crypto_pqueue)
+lib:	$(LIBOBJ_crypto_pqueue)
 	$(ARX) $(LIB_crypto_pqueue) $(LIBOBJ_crypto_pqueue)
 	$(RANLIB) $(LIB_crypto_pqueue) || echo Never mind.
 	@touch lib

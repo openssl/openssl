@@ -17,8 +17,7 @@ top_crypto_jpake:
 all: all_crypto_jpake
 all_crypto_jpake:	lib
 
-lib: lib_crypto_jpake
-lib_crypto_jpake:	$(LIBOBJ_crypto_jpake)
+lib:	$(LIBOBJ_crypto_jpake)
 	$(ARX) $(LIB_crypto_jpake) $(LIBOBJ_crypto_jpake)
 	$(RANLIB) $(LIB_crypto_jpake) || echo Never mind.
 	@touch lib

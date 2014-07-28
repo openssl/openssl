@@ -51,8 +51,7 @@ divtest: divtest.c ../../libcrypto.a
 bnbug: bnbug.c ../../libcrypto.a top
 	cc -g -I../../include bnbug.c -o bnbug ../../libcrypto.a
 
-lib: lib_crypto_bn
-lib_crypto_bn:	$(LIBOBJ_crypto_bn)
+lib:	$(LIBOBJ_crypto_bn)
 	$(ARX) $(LIB_crypto_bn) $(LIBOBJ_crypto_bn)
 	$(RANLIB) $(LIB_crypto_bn) || echo Never mind.
 	@touch lib

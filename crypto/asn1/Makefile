@@ -64,8 +64,7 @@ pk:	pk.c
 all: all_crypto_asn1
 all_crypto_asn1:	lib
 
-lib: lib_crypto_asn1
-lib_crypto_asn1:	$(LIBOBJ_crypto_asn1)
+lib:	$(LIBOBJ_crypto_asn1)
 	$(ARX) $(LIB_crypto_asn1) $(LIBOBJ_crypto_asn1)
 	$(RANLIB) $(LIB_crypto_asn1) || echo Never mind.
 	@touch lib

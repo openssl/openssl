@@ -35,8 +35,7 @@ test_crypto_pkcs7:
 all: all_crypto_pkcs7
 all_crypto_pkcs7:	lib
 
-lib: lib_crypto_pkcs7
-lib_crypto_pkcs7:	$(LIBOBJ_crypto_pkcs7)
+lib:	$(LIBOBJ_crypto_pkcs7)
 	$(ARX) $(LIB_crypto_pkcs7) $(LIBOBJ_crypto_pkcs7)
 	$(RANLIB) $(LIB_crypto_pkcs7) || echo Never mind.
 	@touch lib

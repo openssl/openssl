@@ -32,8 +32,7 @@ top_crypto_pem:
 all: all_crypto_pem
 all_crypto_pem:	lib
 
-lib: lib_crypto_pem
-lib_crypto_pem:	$(LIBOBJ_crypto_pem)
+lib:	$(LIBOBJ_crypto_pem)
 	$(ARX) $(LIB_crypto_pem) $(LIBOBJ_crypto_pem)
 	$(RANLIB) $(LIB_crypto_pem) || echo Never mind.
 	@touch lib

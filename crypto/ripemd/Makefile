@@ -34,8 +34,7 @@ top_crypto_ripemd:
 all: all_crypto_ripemd
 all_crypto_ripemd:    lib
 
-lib: lib_crypto_ripemd
-lib_crypto_ripemd:    $(LIBOBJ_crypto_ripemd)
+lib:    $(LIBOBJ_crypto_ripemd)
 	$(ARX) $(LIB_crypto_ripemd) $(LIBOBJ_crypto_ripemd)
 	$(RANLIB) $(LIB_crypto_ripemd) || echo Never mind.
 	@touch lib

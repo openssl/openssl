@@ -46,8 +46,7 @@ top_crypto_des:
 all: all_crypto_des
 all_crypto_des:	lib
 
-lib: lib_crypto_des
-lib_crypto_des:	$(LIBOBJ_crypto_des)
+lib:	$(LIBOBJ_crypto_des)
 	$(ARX) $(LIB_crypto_des) $(LIBOBJ_crypto_des)
 	$(RANLIB) $(LIB_crypto_des) || echo Never mind.
 	@touch lib

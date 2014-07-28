@@ -30,8 +30,7 @@ top_crypto_seed:
 all: all_crypto_seed
 all_crypto_seed:	lib
 
-lib: lib_crypto_seed
-lib_crypto_seed:	$(LIBOBJ_crypto_seed)
+lib:	$(LIBOBJ_crypto_seed)
 	$(ARX) $(LIB_crypto_seed) $(LIBOBJ_crypto_seed)
 	$(RANLIB) $(LIB_crypto_seed) || echo Never mind.
 	@touch lib

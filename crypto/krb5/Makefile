@@ -30,8 +30,7 @@ top_crypto_krb5:
 all: all_crypto_krb5
 all_crypto_krb5:	lib
 
-lib: lib_crypto_krb5
-lib_crypto_krb5:	$(LIBOBJ_crypto_krb5)
+lib:	$(LIBOBJ_crypto_krb5)
 	$(ARX) $(LIB_crypto_krb5) $(LIBOBJ_crypto_krb5)
 	$(RANLIB) $(LIB_crypto_krb5) || echo Never mind.
 	@touch lib

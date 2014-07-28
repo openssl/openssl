@@ -33,8 +33,7 @@ top_crypto_md5:
 all: all_crypto_md5
 all_crypto_md5:    lib
 
-lib: lib_crypto_md5
-lib_crypto_md5:    $(LIBOBJ_crypto_md5)
+lib:    $(LIBOBJ_crypto_md5)
 	$(ARX) $(LIB_crypto_md5) $(LIBOBJ_crypto_md5)
 	$(RANLIB) $(LIB_crypto_md5) || echo Never mind.
 	@touch lib

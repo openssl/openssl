@@ -33,8 +33,7 @@ top_crypto_rc4:
 all: all_crypto_rc4
 all_crypto_rc4:	lib
 
-lib: lib_crypto_rc4
-lib_crypto_rc4:	$(LIBOBJ_crypto_rc4)
+lib:	$(LIBOBJ_crypto_rc4)
 	$(ARX) $(LIB_crypto_rc4) $(LIBOBJ_crypto_rc4)
 	$(RANLIB) $(LIB_crypto_rc4) || echo Never mind.
 	@touch lib

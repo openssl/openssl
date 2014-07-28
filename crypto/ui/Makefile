@@ -33,8 +33,7 @@ top_crypto_ui:
 all: all_crypto_ui
 all_crypto_ui:	lib
 
-lib: lib_crypto_ui
-lib_crypto_ui:	$(LIBOBJ_crypto_ui)
+lib:	$(LIBOBJ_crypto_ui)
 	$(ARX) $(LIB_crypto_ui) $(LIBOBJ_crypto_ui)
 	$(RANLIB) $(LIB_crypto_ui) || echo Never mind.
 	@touch lib

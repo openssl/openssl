@@ -35,8 +35,7 @@ top_crypto_rsa:
 all: all_crypto_rsa
 all_crypto_rsa:	lib
 
-lib: lib_crypto_rsa
-lib_crypto_rsa:	$(LIBOBJ_crypto_rsa)
+lib:	$(LIBOBJ_crypto_rsa)
 	$(ARX) $(LIB_crypto_rsa) $(LIBOBJ_crypto_rsa)
 	$(RANLIB) $(LIB_crypto_rsa) || echo Never mind.
 	@touch lib

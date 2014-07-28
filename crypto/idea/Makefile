@@ -29,8 +29,7 @@ top_crypto_idea:
 all: all_crypto_idea
 all_crypto_idea:	lib
 
-lib: lib_crypto_idea
-lib_crypto_idea:	$(LIBOBJ_crypto_idea)
+lib:	$(LIBOBJ_crypto_idea)
 	$(ARX) $(LIB_crypto_idea) $(LIBOBJ_crypto_idea)
 	$(RANLIB) $(LIB_crypto_idea) || echo Never mind.
 	@touch lib

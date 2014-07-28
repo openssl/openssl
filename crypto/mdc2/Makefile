@@ -29,8 +29,7 @@ top_crypto_mdc2:
 all: all_crypto_mdc2
 all_crypto_mdc2:	lib
 
-lib: lib_crypto_mdc2
-lib_crypto_mdc2:	$(LIBOBJ_crypto_mdc2)
+lib:	$(LIBOBJ_crypto_mdc2)
 	$(ARX) $(LIB_crypto_mdc2) $(LIBOBJ_crypto_mdc2)
 	$(RANLIB) $(LIB_crypto_mdc2) || echo Never mind.
 	@touch lib
