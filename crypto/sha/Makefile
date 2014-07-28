@@ -46,11 +46,11 @@ sha512-586.s:	asm/sha512-586.pl ../perlasm/x86asm.pl
 	$(PERL) asm/sha512-586.pl $(PERLASM_SCHEME) $(CFLAGS_crypto_sha) $(PROCESSOR) > $@
 
 sha1-ia64.s:   asm/sha1-ia64.pl
-	(cd asm; $(PERL) sha1-ia64.pl ../$@ $(CFLAGS_crypto_sha))
+	$(PERL) asm/sha1-ia64.pl $@ $(CFLAGS_crypto_sha)
 sha256-ia64.s: asm/sha512-ia64.pl
-	(cd asm; $(PERL) sha512-ia64.pl ../$@ $(CFLAGS_crypto_sha))
+	$(PERL) asm/sha512-ia64.pl $@ $(CFLAGS_crypto_sha)
 sha512-ia64.s: asm/sha512-ia64.pl
-	(cd asm; $(PERL) sha512-ia64.pl ../$@ $(CFLAGS_crypto_sha))
+	$(PERL) asm/sha512-ia64.pl $@ $(CFLAGS_crypto_sha)
 
 sha256-armv4.S: asm/sha256-armv4.pl
 	$(PERL) $< $(PERLASM_SCHEME) $@
