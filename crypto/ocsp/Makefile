@@ -2,46 +2,46 @@
 # OpenSSL/ocsp/Makefile
 #
 
-INCLUDES_crypto_ocsp= -I.. -I$(TOP_crypto_ocsp) -I../../include
+INCLUDES_crypto_ocsp= -Icrypto -I. -Iinclude
 
 CFLAGS_crypto_ocsp= $(INCLUDES_crypto_ocsp) $(CFLAG)
 
-GENERAL_crypto_ocsp=Makefile README
+GENERAL_crypto_ocsp=crypto/ocsp/Makefile crypto/ocsp/README
 TEST_crypto_ocsp=
 APPS_crypto_ocsp=
 
-LIB_crypto_ocsp=$(TOP_crypto_ocsp)/libcrypto.a
-LIBSRC_crypto_ocsp= ocsp_asn.c ocsp_ext.c ocsp_ht.c ocsp_lib.c ocsp_cl.c \
-	ocsp_srv.c ocsp_prn.c ocsp_vfy.c ocsp_err.c
+LIB_crypto_ocsp=libcrypto.a
+LIBSRC_crypto_ocsp= crypto/ocsp/ocsp_asn.c crypto/ocsp/ocsp_ext.c crypto/ocsp/ocsp_ht.c crypto/ocsp/ocsp_lib.c crypto/ocsp/ocsp_cl.c \
+	crypto/ocsp/ocsp_srv.c crypto/ocsp/ocsp_prn.c crypto/ocsp/ocsp_vfy.c crypto/ocsp/ocsp_err.c
 
-LIBOBJ_crypto_ocsp= ocsp_asn.o ocsp_ext.o ocsp_ht.o ocsp_lib.o ocsp_cl.o \
-	ocsp_srv.o ocsp_prn.o ocsp_vfy.o ocsp_err.o
+LIBOBJ_crypto_ocsp= crypto/ocsp/ocsp_asn.o crypto/ocsp/ocsp_ext.o crypto/ocsp/ocsp_ht.o crypto/ocsp/ocsp_lib.o crypto/ocsp/ocsp_cl.o \
+	crypto/ocsp/ocsp_srv.o crypto/ocsp/ocsp_prn.o crypto/ocsp/ocsp_vfy.o crypto/ocsp/ocsp_err.o
 
 SRC_crypto_ocsp= $(LIBSRC_crypto_ocsp)
 
-EXHEADER_crypto_ocsp= ocsp.h
+EXHEADER_crypto_ocsp= crypto/ocsp/ocsp.h
 HEADER_crypto_ocsp=	$(EXHEADER_crypto_ocsp)
 
 ALL_crypto_ocsp=    $(GENERAL_crypto_ocsp) $(SRC_crypto_ocsp) $(HEADER_crypto_ocsp)
 
 
 all: all_crypto_ocsp
-all_crypto_ocsp:	lib
+all_crypto_ocsp:	crypto/ocsp/lib
 
-lib:	$(LIBOBJ_crypto_ocsp)
+crypto/ocsp/lib:	$(LIBOBJ_crypto_ocsp)
 	$(ARX) $(LIB_crypto_ocsp) $(LIBOBJ_crypto_ocsp)
 	$(RANLIB) $(LIB_crypto_ocsp) || echo Never mind.
-	@touch lib
+	@touch crypto/ocsp/lib
 
 files: files_crypto_ocsp
 files_crypto_ocsp:
-	$(PERL) $(TOP_crypto_ocsp)/util/files.pl TOP=$(TOP_crypto_ocsp) Makefile >> $(TOP_crypto_ocsp)/MINFO
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
 links: links_crypto_ocsp
 links_crypto_ocsp:
-	@$(PERL) $(TOP_crypto_ocsp)/util/mklink.pl ../../include/openssl $(EXHEADER_crypto_ocsp)
-	@$(PERL) $(TOP_crypto_ocsp)/util/mklink.pl ../../test $(TEST_crypto_ocsp)
-	@$(PERL) $(TOP_crypto_ocsp)/util/mklink.pl ../../apps $(APPS_crypto_ocsp)
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_ocsp)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_ocsp)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_ocsp)
 
 install: install_crypto_ocsp
 install_crypto_ocsp:
@@ -61,14 +61,14 @@ tests_crypto_ocsp:
 
 lint: lint_crypto_ocsp
 lint_crypto_ocsp:
-	lint -DLINT $(INCLUDES_crypto_ocsp) $(SRC_crypto_ocsp)>fluff
+	lint -DLINT $(INCLUDES_crypto_ocsp) $(SRC_crypto_ocsp)>crypto/ocsp/fluff
 
 dclean: dclean_crypto_ocsp
 dclean_crypto_ocsp:
 
 clean: clean_crypto_ocsp
 clean_crypto_ocsp:
-	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f crypto/ocsp/*.o crypto/ocsp/*.d crypto/ocsp/*.obj crypto/ocsp/lib crypto/ocsp/tags crypto/ocsp/core crypto/ocsp/.pure crypto/ocsp/.nfs* crypto/ocsp/*.old crypto/ocsp/*.bak crypto/ocsp/fluff
 
 .c.o:
 	$(CC) $(CFLAGS_crypto_ocsp) $(CPPFLAGS) -c -o $@ $<

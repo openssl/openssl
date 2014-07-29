@@ -6,39 +6,39 @@ INCLUDES_crypto_rc2=
 
 CFLAGS_crypto_rc2= $(INCLUDES_crypto_rc2) $(CFLAG)
 
-GENERAL_crypto_rc2=Makefile
-TEST_crypto_rc2=rc2test.c
+GENERAL_crypto_rc2=crypto/rc2/Makefile
+TEST_crypto_rc2=crypto/rc2/rc2test.c
 APPS_crypto_rc2=
 
-LIB_crypto_rc2=$(TOP_crypto_rc2)/libcrypto.a
-LIBSRC_crypto_rc2=rc2_ecb.c rc2_skey.c rc2_cbc.c rc2cfb64.c rc2ofb64.c
-LIBOBJ_crypto_rc2=rc2_ecb.o rc2_skey.o rc2_cbc.o rc2cfb64.o rc2ofb64.o
+LIB_crypto_rc2=libcrypto.a
+LIBSRC_crypto_rc2=crypto/rc2/rc2_ecb.c crypto/rc2/rc2_skey.c crypto/rc2/rc2_cbc.c crypto/rc2/rc2cfb64.c crypto/rc2/rc2ofb64.c
+LIBOBJ_crypto_rc2=crypto/rc2/rc2_ecb.o crypto/rc2/rc2_skey.o crypto/rc2/rc2_cbc.o crypto/rc2/rc2cfb64.o crypto/rc2/rc2ofb64.o
 
 SRC_crypto_rc2= $(LIBSRC_crypto_rc2)
 
-EXHEADER_crypto_rc2= rc2.h
-HEADER_crypto_rc2=	rc2_locl.h $(EXHEADER_crypto_rc2)
+EXHEADER_crypto_rc2= crypto/rc2/rc2.h
+HEADER_crypto_rc2=	crypto/rc2/rc2_locl.h $(EXHEADER_crypto_rc2)
 
 ALL_crypto_rc2=    $(GENERAL_crypto_rc2) $(SRC_crypto_rc2) $(HEADER_crypto_rc2)
 
 
 all: all_crypto_rc2
-all_crypto_rc2:	lib
+all_crypto_rc2:	crypto/rc2/lib
 
-lib:	$(LIBOBJ_crypto_rc2)
+crypto/rc2/lib:	$(LIBOBJ_crypto_rc2)
 	$(ARX) $(LIB_crypto_rc2) $(LIBOBJ_crypto_rc2)
 	$(RANLIB) $(LIB_crypto_rc2) || echo Never mind.
-	@touch lib
+	@touch crypto/rc2/lib
 
 files: files_crypto_rc2
 files_crypto_rc2:
-	$(PERL) $(TOP_crypto_rc2)/util/files.pl TOP=$(TOP_crypto_rc2) Makefile >> $(TOP_crypto_rc2)/MINFO
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
 links: links_crypto_rc2
 links_crypto_rc2:
-	@$(PERL) $(TOP_crypto_rc2)/util/mklink.pl ../../include/openssl $(EXHEADER_crypto_rc2)
-	@$(PERL) $(TOP_crypto_rc2)/util/mklink.pl ../../test $(TEST_crypto_rc2)
-	@$(PERL) $(TOP_crypto_rc2)/util/mklink.pl ../../apps $(APPS_crypto_rc2)
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_rc2)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_rc2)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_rc2)
 
 install: install_crypto_rc2
 install_crypto_rc2:
@@ -58,14 +58,14 @@ tests_crypto_rc2:
 
 lint: lint_crypto_rc2
 lint_crypto_rc2:
-	lint -DLINT $(INCLUDES_crypto_rc2) $(SRC_crypto_rc2)>fluff
+	lint -DLINT $(INCLUDES_crypto_rc2) $(SRC_crypto_rc2)>crypto/rc2/fluff
 
 dclean: dclean_crypto_rc2
 dclean_crypto_rc2:
 
 clean: clean_crypto_rc2
 clean_crypto_rc2:
-	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f crypto/rc2/*.o crypto/rc2/*.d crypto/rc2/*.obj crypto/rc2/lib crypto/rc2/tags crypto/rc2/core crypto/rc2/.pure crypto/rc2/.nfs* crypto/rc2/*.old crypto/rc2/*.bak crypto/rc2/fluff
 
 .c.o:
 	$(CC) $(CFLAGS_crypto_rc2) $(CPPFLAGS) -c -o $@ $<

@@ -2,26 +2,26 @@
 # OpenSSL/crypto/cms/Makefile
 #
 
-INCLUDES_crypto_cms= -I.. -I$(TOP_crypto_cms) -I../../include
+INCLUDES_crypto_cms= -Icrypto -I. -Iinclude
 
 CFLAGS_crypto_cms= $(INCLUDES_crypto_cms) $(CFLAG)
 
-GENERAL_crypto_cms=Makefile
+GENERAL_crypto_cms=crypto/cms/Makefile
 TEST_crypto_cms=
 APPS_crypto_cms=
 
-LIB_crypto_cms=$(TOP_crypto_cms)/libcrypto.a
-LIBSRC_crypto_cms= cms_lib.c cms_asn1.c cms_att.c cms_io.c cms_smime.c cms_err.c \
-	cms_sd.c cms_dd.c cms_cd.c cms_env.c cms_enc.c cms_ess.c \
-	cms_pwri.c cms_kari.c
-LIBOBJ_crypto_cms= cms_lib.o cms_asn1.o cms_att.o cms_io.o cms_smime.o cms_err.o \
-	cms_sd.o cms_dd.o cms_cd.o cms_env.o cms_enc.o cms_ess.o \
-	cms_pwri.o cms_kari.o
+LIB_crypto_cms=libcrypto.a
+LIBSRC_crypto_cms= crypto/cms/cms_lib.c crypto/cms/cms_asn1.c crypto/cms/cms_att.c crypto/cms/cms_io.c crypto/cms/cms_smime.c crypto/cms/cms_err.c \
+	crypto/cms/cms_sd.c crypto/cms/cms_dd.c crypto/cms/cms_cd.c crypto/cms/cms_env.c crypto/cms/cms_enc.c crypto/cms/cms_ess.c \
+	crypto/cms/cms_pwri.c crypto/cms/cms_kari.c
+LIBOBJ_crypto_cms= crypto/cms/cms_lib.o crypto/cms/cms_asn1.o crypto/cms/cms_att.o crypto/cms/cms_io.o crypto/cms/cms_smime.o crypto/cms/cms_err.o \
+	crypto/cms/cms_sd.o crypto/cms/cms_dd.o crypto/cms/cms_cd.o crypto/cms/cms_env.o crypto/cms/cms_enc.o crypto/cms/cms_ess.o \
+	crypto/cms/cms_pwri.o crypto/cms/cms_kari.o
 
 SRC_crypto_cms= $(LIBSRC_crypto_cms)
 
-EXHEADER_crypto_cms=  cms.h
-HEADER_crypto_cms=	cms_lcl.h $(EXHEADER_crypto_cms)
+EXHEADER_crypto_cms=  crypto/cms/cms.h
+HEADER_crypto_cms=	crypto/cms/cms_lcl.h $(EXHEADER_crypto_cms)
 
 ALL_crypto_cms=    $(GENERAL_crypto_cms) $(SRC_crypto_cms) $(HEADER_crypto_cms)
 
@@ -30,22 +30,22 @@ test: test_crypto_cms
 test_crypto_cms:
 
 all: all_crypto_cms
-all_crypto_cms:	lib
+all_crypto_cms:	crypto/cms/lib
 
-lib:	$(LIBOBJ_crypto_cms)
+crypto/cms/lib:	$(LIBOBJ_crypto_cms)
 	$(ARX) $(LIB_crypto_cms) $(LIBOBJ_crypto_cms)
 	$(RANLIB) $(LIB_crypto_cms) || echo Never mind.
-	@touch lib
+	@touch crypto/cms/lib
 
 files: files_crypto_cms
 files_crypto_cms:
-	$(PERL) $(TOP_crypto_cms)/util/files.pl TOP=$(TOP_crypto_cms) Makefile >> $(TOP_crypto_cms)/MINFO
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
 links: links_crypto_cms
 links_crypto_cms:
-	@$(PERL) $(TOP_crypto_cms)/util/mklink.pl ../../include/openssl $(EXHEADER_crypto_cms)
-	@$(PERL) $(TOP_crypto_cms)/util/mklink.pl ../../test $(TEST_crypto_cms)
-	@$(PERL) $(TOP_crypto_cms)/util/mklink.pl ../../apps $(APPS_crypto_cms)
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_cms)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_cms)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_cms)
 
 install: install_crypto_cms
 install_crypto_cms:
@@ -65,14 +65,14 @@ tests_crypto_cms:
 
 lint: lint_crypto_cms
 lint_crypto_cms:
-	lint -DLINT $(INCLUDES_crypto_cms) $(SRC_crypto_cms)>fluff
+	lint -DLINT $(INCLUDES_crypto_cms) $(SRC_crypto_cms)>crypto/cms/fluff
 
 dclean: dclean_crypto_cms
 dclean_crypto_cms:
 
 clean: clean_crypto_cms
 clean_crypto_cms:
-	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f crypto/cms/*.o crypto/cms/*.d crypto/cms/*.obj crypto/cms/lib crypto/cms/tags crypto/cms/core crypto/cms/.pure crypto/cms/.nfs* crypto/cms/*.old crypto/cms/*.bak crypto/cms/fluff
 
 .c.o:
 	$(CC) $(CFLAGS_crypto_cms) $(CPPFLAGS) -c -o $@ $<

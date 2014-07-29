@@ -2,12 +2,12 @@
 # OpenSSL/crypto/Makefile
 #
 
-INCLUDE_fips=	-I. -I$(TOP_fips) -I../include
+INCLUDE_fips=	-Ifips -I. -Iinclude
 # INCLUDES_fips targets sudbirs!
-INCLUDES_fips=	-I.. -I../.. -I../../include
+INCLUDES_fips=	-Ifips -I. -Iinclude
 RM_fips=             rm -f
 ARD=		ar d
-TEST_fips=		fips_test_suite.c
+TEST_fips=		fips/fips_test_suite.c
 FIPS_TVDIR=	testvectors
 FIPS_TVOK=	$$HOME/fips/tv.ok
 
@@ -21,27 +21,27 @@ LIBS_fips=
 
 FDIRS=sha rand des aes dsa ecdh ecdsa rsa dh cmac hmac utl
 
-GENERAL_fips=Makefile README fips-lib.com install.com
+GENERAL_fips=fips/Makefile fips/README fips/fips-lib.com fips/install.com
 
-LIB_fips= $(TOP_fips)/libcrypto.a
+LIB_fips= libcrypto.a
 SHARED_LIB_fips= $(FIPSCANLIB)$(SHLIB_EXT)
-LIBSRC_fips=fips.c fips_post.c
-LIBOBJ_fips=fips.o fips_post.o
+LIBSRC_fips=fips/fips.c fips/fips_post.c
+LIBOBJ_fips=fips/fips.o fips/fips_post.o
 
-FIPS_OBJ_LISTS=sha/lib hmac/lib rand/lib des/lib aes/lib dsa/lib rsa/lib \
-		dh/lib utl/lib ecdsa/lib ecdh/lib cmac/lib
+FIPS_OBJ_LISTS=fips/sha/lib fips/hmac/lib fips/rand/lib fips/des/lib fips/aes/lib fips/dsa/lib fips/rsa/lib \
+		fips/dh/lib fips/utl/lib fips/ecdsa/lib fips/ecdh/lib fips/cmac/lib
 
 SRC_fips= $(LIBSRC_fips)
 
-EXHEADER_fips=fips.h fipssyms.h
-HEADER_fips=$(EXHEADER_fips) fips_utl.h fips_locl.h fips_auth.h
-EXE_fips=fipsld fips_standalone_sha1
+EXHEADER_fips=fips/fips.h fips/fipssyms.h
+HEADER_fips=$(EXHEADER_fips) fips/fips_utl.h fips/fips_locl.h fips/fips_auth.h
+EXE_fips=fips/fipsld fips/fips_standalone_sha1
 
 ALL_fips=    $(GENERAL_fips) $(SRC_fips) $(HEADER_fips)
 
 
-testapps:
-	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP_fips)/Makefile reflect THIS=$@; fi
+fips/testapps:
+	@if [ -z "$(THIS)" ]; then $(MAKE) -f Makefile reflect THIS=$@; fi
 
 all: all_fips
 
@@ -60,16 +60,16 @@ all: all_fips
 # one in command line. So the idea is to identify gcc and deficient
 # vendor compiler drivers...
 
-fipscanister.o: fips_start.o $(LIBOBJ_fips) $(FIPS_OBJ_LISTS) fips_end.o
+fips/fipscanister.o: fips/fips_start.o $(LIBOBJ_fips) $(FIPS_OBJ_LISTS) fips/fips_end.o
 	FIPS_ASM=""; \
-	list="$(BN_ASM)"; for i in $$list; do FIPS_ASM="$$FIPS_ASM ../crypto/bn/$$i" ; done; \
-	list="$(AES_ENC)"; for i in $$list; do FIPS_ASM="$$FIPS_ASM ../crypto/aes/$$i" ; done; \
-	list="$(DES_ENC)"; for i in $$list; do FIPS_ASM="$$FIPS_ASM ../crypto/des/$$i" ; done; \
-	list="$(SHA1_ASM_OBJ)"; for i in $$list; do FIPS_ASM="$$FIPS_ASM ../crypto/sha/$$i" ; done; \
-	list="$(MODES_ASM_OBJ)"; for i in $$list; do FIPS_ASM="$$FIPS_ASM ../crypto/modes/$$i" ; done; \
+	list="$(BN_ASM)"; for i in $$list; do FIPS_ASM="$$FIPS_ASM $$i" ; done; \
+	list="$(AES_ENC)"; for i in $$list; do FIPS_ASM="$$FIPS_ASM $$i" ; done; \
+	list="$(DES_ENC)"; for i in $$list; do FIPS_ASM="$$FIPS_ASM $$i" ; done; \
+	list="$(SHA1_ASM_OBJ)"; for i in $$list; do FIPS_ASM="$$FIPS_ASM $$i" ; done; \
+	list="$(MODES_ASM_OBJ)"; for i in $$list; do FIPS_ASM="$$FIPS_ASM $$i" ; done; \
 	CPUID=""; \
-	list="$(CPUID_OBJ)"; for i in $$list; do CPUID="$$CPUID ../crypto/$$i" ; done; \
-	objs="fips_start.o $(LIBOBJ_fips) $(FIPS_EX_OBJ) $$CPUID $$FIPS_ASM"; \
+	list="$(CPUID_OBJ)"; for i in $$list; do CPUID="$$CPUID $$i" ; done; \
+	objs=fips/"fips_start.o $(LIBOBJ_fips) $(FIPS_EX_OBJ) $$CPUID $$FIPS_ASM"; \
 	for i in $(FIPS_OBJ_LISTS); do \
 		dir=`dirname $$i`; script="s|^|$$dir/|;s| | $$dir/|g"; \
 		objs="$$objs `sed "$$script" $$i`"; \
@@ -88,53 +88,53 @@ fipscanister.o: fips_start.o $(LIBOBJ_fips) $(FIPS_OBJ_LISTS) fips_end.o
 		OSF1|SunOS) set -x; /usr/ccs/bin/ld -r -o $@ $$objs ;; \
 		*) set -x; $(CC) $$cflags -r -o $@ $$objs ;; \
 	esac fi
-	./fips_standalone_sha1$(EXE_EXT) fipscanister.o > fipscanister.o.sha1
+	$(EXE_EXT) fips/fipscanister.o > fipscanister.o.sha1
 
 # If another exception is immediately required, assign approprite
 # site-specific ld command to FIPS_SITE_LD environment variable.
 
-fips_start.o: fips_canister.c
-	$(CC) $(CFLAGS_fips) -DFIPS_START -c -o $@ fips_canister.c
-fips_end.o: fips_canister.c
-	$(CC) $(CFLAGS_fips) -DFIPS_END -c -o $@ fips_canister.c
-fips_premain_dso$(EXE_EXT): fips_premain.c
-	$(CC) $(CFLAGS_fips) -DFINGERPRINT_PREMAIN_DSO_LOAD -o $@ fips_premain.c \
-		$(FIPSLIBDIR)fipscanister.o ../libcrypto.a $(EX_LIBS)
+fips/fips_start.o: fips/fips_canister.c
+	$(CC) $(CFLAGS_fips) -DFIPS_START -c -o $@ fips/fips_canister.c
+fips/fips_end.o: fips/fips_canister.c
+	$(CC) $(CFLAGS_fips) -DFIPS_END -c -o $@ fips/fips_canister.c
+fips/fips_premain_dso$(EXE_EXT): fips/fips_premain.c
+	$(CC) $(CFLAGS_fips) -DFINGERPRINT_PREMAIN_DSO_LOAD -o $@ fips/fips_premain.c \
+		$(FIPSLIBDIR)fipscanister.o ./libcrypto.a $(EX_LIBS)
 
 files: files_fips
 files_fips:
-	$(PERL) $(TOP_fips)/util/files.pl TOP=$(TOP_fips) Makefile >> $(TOP_fips)/MINFO
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
 links: links_fips
 links_fips:
-	@$(PERL) $(TOP_fips)/util/mklink.pl ../include/openssl $(EXHEADER_fips)
-	@$(PERL) $(TOP_fips)/util/mklink.pl ../test $(TEST_fips)
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_fips)
+	@$(PERL) util/mklink.pl ./test $(TEST_fips)
 
 # lib: and $(LIB_fips): are splitted to avoid end-less loop
-lib:	$(LIB_fips)
-	if [ "$(FIPSCANISTERINTERNAL)" = "n" -a -n "$(FIPSCANLOC)" ]; then $(AR) ../$(FIPSCANLIB).a $(FIPSCANLOC); fi
-	@touch lib
+fips/lib:	$(LIB_fips)
+	if [ "$(FIPSCANISTERINTERNAL)" = "n" -a -n "$(FIPSCANLOC)" ]; then $(AR) $(FIPSCANLIB).a $(FIPSCANLOC); fi
+	@touch fips/lib
 
 $(LIB_fips):	$(FIPSLIBDIR)fipscanister.o
 	$(AR) $(LIB_fips) $(FIPSLIBDIR)fipscanister.o
 	$(RANLIB) $(LIB_fips) || echo Never mind.
 
 $(FIPSCANLIB):	$(FIPSCANLOC)
-	$(AR) ../$(FIPSCANLIB).a $(FIPSCANLOC)
+	$(AR) $(FIPSCANLIB).a $(FIPSCANLOC)
 	if [ "$(FIPSCANLIB)" = "libfips" ]; then \
 		$(AR) $(LIB_fips) $(FIPSCANLOC) ; \
 		$(RANLIB) $(LIB_fips) || echo Never Mind. ; \
 	fi
-	$(RANLIB) ../$(FIPSCANLIB).a || echo Never mind.
-	@touch lib
+	$(RANLIB) $(FIPSCANLIB).a || echo Never mind.
+	@touch fips/lib
 
 shared: shared_fips
-shared_fips:	lib subdirs_fips fips_premain_dso$(EXE_EXT)
+shared_fips:	fips/lib subdirs_fips fips/fips_premain_dso$(EXE_EXT)
 
 fips_test: fips_test_fips
 fips_test_fips: all_fips
 
-fips_test_diff:
+fips/fips_test_diff:
 	@if diff -b -B -I '^\#' -cr -X fips-nodiff.txt $(FIPS_TVDIR) $(FIPS_TVOK) ; then \
 		echo "FIPS diff OK" ; \
 	else \
@@ -143,7 +143,7 @@ fips_test_diff:
 
 
 install: install_fips
-install_fips_before_subdirs:
+fips/install_fips_before_subdirs:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@headerlist="$(EXHEADER_fips)"; for i in $$headerlist ;\
 	do \
@@ -151,7 +151,7 @@ install_fips_before_subdirs:
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-install_fips: install_fips_subdirs
+install_fips: fips/install_fips_subdirs
 	for i in $(EXE_fips) ; \
 	do \
 		echo "installing $$i"; \
@@ -166,8 +166,8 @@ install_fips: install_fips_subdirs
 
 clean: clean_fips
 clean_fips:
-	rm -f fipscanister.o.sha1 fips_premain_dso$(EXE_EXT) fips_standalone_sha1$(EXE_EXT) \
-		*.s *.o *.d */*.o */*.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f fips/fipscanister.o.sha1 fips/fips_premain_dso$(EXE_EXT) fips/fips_standalone_sha1$(EXE_EXT) \
+		fips/*.s fips/*.o fips/*.d */*.o */*.d fips/*.obj fips/lib fips/tags fips/core fips/.pure fips/.nfs* fips/*.old fips/*.bak fips/fluff
 
 dclean: dclean_fips
 dclean_fips:

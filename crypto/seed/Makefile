@@ -7,39 +7,39 @@ INCLUDES_crypto_seed=
 
 CFLAGS_crypto_seed= $(INCLUDES_crypto_seed) $(CFLAG)
 
-GENERAL_crypto_seed=Makefile
+GENERAL_crypto_seed=crypto/seed/Makefile
 TEST_crypto_seed=
 APPS_crypto_seed=
 
-LIB_crypto_seed=$(TOP_crypto_seed)/libcrypto.a
-LIBSRC_crypto_seed=seed.c seed_ecb.c seed_cbc.c seed_cfb.c seed_ofb.c
-LIBOBJ_crypto_seed=seed.o seed_ecb.o seed_cbc.o seed_cfb.o seed_ofb.o
+LIB_crypto_seed=libcrypto.a
+LIBSRC_crypto_seed=crypto/seed/seed.c crypto/seed/seed_ecb.c crypto/seed/seed_cbc.c crypto/seed/seed_cfb.c crypto/seed/seed_ofb.c
+LIBOBJ_crypto_seed=crypto/seed/seed.o crypto/seed/seed_ecb.o crypto/seed/seed_cbc.o crypto/seed/seed_cfb.o crypto/seed/seed_ofb.o
 
 SRC_crypto_seed= $(LIBSRC_crypto_seed)
 
-EXHEADER_crypto_seed= seed.h
-HEADER_crypto_seed= seed_locl.h $(EXHEADER_crypto_seed)
+EXHEADER_crypto_seed= crypto/seed/seed.h
+HEADER_crypto_seed= crypto/seed/seed_locl.h $(EXHEADER_crypto_seed)
 
 ALL_crypto_seed=    $(GENERAL_crypto_seed) $(SRC_crypto_seed) $(HEADER_crypto_seed)
 
 
 all: all_crypto_seed
-all_crypto_seed:	lib
+all_crypto_seed:	crypto/seed/lib
 
-lib:	$(LIBOBJ_crypto_seed)
+crypto/seed/lib:	$(LIBOBJ_crypto_seed)
 	$(ARX) $(LIB_crypto_seed) $(LIBOBJ_crypto_seed)
 	$(RANLIB) $(LIB_crypto_seed) || echo Never mind.
-	@touch lib
+	@touch crypto/seed/lib
 
 files: files_crypto_seed
 files_crypto_seed:
-	$(PERL) $(TOP_crypto_seed)/util/files.pl TOP=$(TOP_crypto_seed) Makefile >> $(TOP_crypto_seed)/MINFO
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
 links: links_crypto_seed
 links_crypto_seed:
-	@$(PERL) $(TOP_crypto_seed)/util/mklink.pl ../../include/openssl $(EXHEADER_crypto_seed)
-	@$(PERL) $(TOP_crypto_seed)/util/mklink.pl ../../test $(TEST_crypto_seed)
-	@$(PERL) $(TOP_crypto_seed)/util/mklink.pl ../../apps $(APPS_crypto_seed)
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_seed)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_seed)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_seed)
 
 install: install_crypto_seed
 install_crypto_seed:
@@ -59,14 +59,14 @@ tests_crypto_seed:
 
 lint: lint_crypto_seed
 lint_crypto_seed:
-	lint -DLINT $(INCLUDES_crypto_seed) $(SRC_crypto_seed)>fluff
+	lint -DLINT $(INCLUDES_crypto_seed) $(SRC_crypto_seed)>crypto/seed/fluff
 
 dclean: dclean_crypto_seed
 dclean_crypto_seed:
 
 clean: clean_crypto_seed
 clean_crypto_seed:
-	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f crypto/seed/*.o crypto/seed/*.d crypto/seed/*.obj crypto/seed/lib crypto/seed/tags crypto/seed/core crypto/seed/.pure crypto/seed/.nfs* crypto/seed/*.old crypto/seed/*.bak crypto/seed/fluff
 
 .S.s:
 	$(CPP_crypto_seed) $(CPPFLAGS) -o $@ $<

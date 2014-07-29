@@ -9,14 +9,14 @@ AFLAGS_fips_sha= $(ASFLAGS_fips_sha)
 
 CFLAGS_fips_sha= $(INCLUDES_fips_sha) $(CFLAG)
 
-GENERAL_fips_sha=Makefile
-TEST_fips_sha= fips_shatest.c
+GENERAL_fips_sha=fips/sha/Makefile
+TEST_fips_sha= fips/sha/fips_shatest.c
 APPS_fips_sha=
-EXE_fips_sha= fips_standalone_sha1$(EXE_EXT)
+EXE_fips_sha= fips/sha/fips_standalone_sha1$(EXE_EXT)
 
-LIB_fips_sha=$(TOP_fips_sha)/libcrypto.a
-LIBSRC_fips_sha=fips_sha1_selftest.c
-LIBOBJ_fips_sha=fips_sha1_selftest.o
+LIB_fips_sha=libcrypto.a
+LIBSRC_fips_sha=fips/sha/fips_sha1_selftest.c
+LIBOBJ_fips_sha=fips/sha/fips_sha1_selftest.o
 
 SRC_fips_sha= $(LIBSRC_fips_sha)
 PROGS_fips_sha= fips_standalone_sha1.c
@@ -28,20 +28,20 @@ ALL_fips_sha=    $(GENERAL_fips_sha) $(SRC_fips_sha) $(HEADER_fips_sha)
 
 
 all: all_fips_sha
-all_fips_sha:	../fips_standalone_sha1$(EXE_EXT) lib
+all_fips_sha:	fips/fips_standalone_sha1$(EXE_EXT) fips/sha/lib
 
-lib:	$(LIBOBJ_fips_sha)
-	@echo $(LIBOBJ_fips_sha) > lib
+fips/sha/lib:	$(LIBOBJ_fips_sha)
+	@echo $(LIBOBJ_fips_sha) > fips/sha/lib
 
 files: files_fips_sha
 files_fips_sha:
-	$(PERL) $(TOP_fips_sha)/util/files.pl TOP=$(TOP_fips_sha) Makefile >> $(TOP_fips_sha)/MINFO
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
 links: links_fips_sha
 links_fips_sha:
-	@$(PERL) $(TOP_fips_sha)/util/mklink.pl $(TOP_fips_sha)/include/openssl $(EXHEADER_fips_sha)
-	@$(PERL) $(TOP_fips_sha)/util/mklink.pl $(TOP_fips_sha)/test $(TEST_fips_sha)
-	@$(PERL) $(TOP_fips_sha)/util/mklink.pl $(TOP_fips_sha)/apps $(APPS_fips_sha)
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_fips_sha)
+	@$(PERL) util/mklink.pl test $(TEST_fips_sha)
+	@$(PERL) util/mklink.pl apps $(APPS_fips_sha)
 
 install: install_fips_sha
 install_fips_sha:
@@ -83,20 +83,20 @@ fips_test_fips_sha:
 	mkdir $(A_fips_sha)
 	for file in $(VECTORS); do \
 	    if [ -f $(Q_fips_sha)/$$file.req ]; then \
-		$(TOP_fips_sha)/util/shlib_wrap.sh $(TOP_fips_sha)/test/fips_shatest $(Q_fips_sha)/$$file.req $(A_fips_sha)/$$file.rsp; \
+		util/shlib_wrap.sh test/fips_shatest $(Q_fips_sha)/$$file.req $(A_fips_sha)/$$file.rsp; \
 	    fi; \
 	done
 
 lint: lint_fips_sha
 lint_fips_sha:
-	lint -DLINT $(INCLUDES_fips_sha) $(SRC_fips_sha)>fluff
+	lint -DLINT $(INCLUDES_fips_sha) $(SRC_fips_sha)>fips/sha/fluff
 
 dclean: dclean_fips_sha
 dclean_fips_sha:
 
 clean: clean_fips_sha
 clean_fips_sha:
-	rm -f *.o *.d asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff $(EXE_fips_sha)
+	rm -f fips/sha/*.o fips/sha/*.d asm/*.o fips/sha/*.obj fips/sha/lib fips/sha/tags fips/sha/core fips/sha/.pure fips/sha/.nfs* fips/sha/*.old fips/sha/*.bak fips/sha/fluff $(EXE_fips_sha)
 
 .c.o:
 	$(CC) $(CFLAGS_fips_sha) $(CPPFLAGS) -c -o $@ $<

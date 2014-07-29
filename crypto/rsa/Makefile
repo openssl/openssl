@@ -2,49 +2,49 @@
 # OpenSSL/crypto/rsa/Makefile
 #
 
-INCLUDES_crypto_rsa= -I.. -I$(TOP_crypto_rsa) -I../../include
+INCLUDES_crypto_rsa= -Icrypto -I. -Iinclude
 
 CFLAGS_crypto_rsa= $(INCLUDES_crypto_rsa) $(CFLAG)
 
-GENERAL_crypto_rsa=Makefile
-TEST_crypto_rsa=rsa_test.c
+GENERAL_crypto_rsa=crypto/rsa/Makefile
+TEST_crypto_rsa=crypto/rsa/rsa_test.c
 APPS_crypto_rsa=
 
-LIB_crypto_rsa=$(TOP_crypto_rsa)/libcrypto.a
-LIBSRC_crypto_rsa= rsa_eay.c rsa_gen.c rsa_lib.c rsa_sign.c rsa_saos.c rsa_err.c \
-	rsa_pk1.c rsa_ssl.c rsa_none.c rsa_oaep.c rsa_chk.c rsa_null.c \
-	rsa_pss.c rsa_x931.c rsa_asn1.c rsa_depr.c rsa_ameth.c rsa_prn.c \
-	rsa_pmeth.c rsa_crpt.c rsa_x931g.c
-LIBOBJ_crypto_rsa= rsa_eay.o rsa_gen.o rsa_lib.o rsa_sign.o rsa_saos.o rsa_err.o \
-	rsa_pk1.o rsa_ssl.o rsa_none.o rsa_oaep.o rsa_chk.o rsa_null.o \
-	rsa_pss.o rsa_x931.o rsa_asn1.o rsa_depr.o rsa_ameth.o rsa_prn.o \
-	rsa_pmeth.o rsa_crpt.o rsa_x931g.o
+LIB_crypto_rsa=libcrypto.a
+LIBSRC_crypto_rsa= crypto/rsa/rsa_eay.c crypto/rsa/rsa_gen.c crypto/rsa/rsa_lib.c crypto/rsa/rsa_sign.c crypto/rsa/rsa_saos.c crypto/rsa/rsa_err.c \
+	crypto/rsa/rsa_pk1.c crypto/rsa/rsa_ssl.c crypto/rsa/rsa_none.c crypto/rsa/rsa_oaep.c crypto/rsa/rsa_chk.c crypto/rsa/rsa_null.c \
+	crypto/rsa/rsa_pss.c crypto/rsa/rsa_x931.c crypto/rsa/rsa_asn1.c crypto/rsa/rsa_depr.c crypto/rsa/rsa_ameth.c crypto/rsa/rsa_prn.c \
+	crypto/rsa/rsa_pmeth.c crypto/rsa/rsa_crpt.c crypto/rsa/rsa_x931g.c
+LIBOBJ_crypto_rsa= crypto/rsa/rsa_eay.o crypto/rsa/rsa_gen.o crypto/rsa/rsa_lib.o crypto/rsa/rsa_sign.o crypto/rsa/rsa_saos.o crypto/rsa/rsa_err.o \
+	crypto/rsa/rsa_pk1.o crypto/rsa/rsa_ssl.o crypto/rsa/rsa_none.o crypto/rsa/rsa_oaep.o crypto/rsa/rsa_chk.o crypto/rsa/rsa_null.o \
+	crypto/rsa/rsa_pss.o crypto/rsa/rsa_x931.o crypto/rsa/rsa_asn1.o crypto/rsa/rsa_depr.o crypto/rsa/rsa_ameth.o crypto/rsa/rsa_prn.o \
+	crypto/rsa/rsa_pmeth.o crypto/rsa/rsa_crpt.o crypto/rsa/rsa_x931g.o
 
 SRC_crypto_rsa= $(LIBSRC_crypto_rsa)
 
-EXHEADER_crypto_rsa= rsa.h
+EXHEADER_crypto_rsa= crypto/rsa/rsa.h
 HEADER_crypto_rsa=	$(EXHEADER_crypto_rsa)
 
 ALL_crypto_rsa=    $(GENERAL_crypto_rsa) $(SRC_crypto_rsa) $(HEADER_crypto_rsa)
 
 
 all: all_crypto_rsa
-all_crypto_rsa:	lib
+all_crypto_rsa:	crypto/rsa/lib
 
-lib:	$(LIBOBJ_crypto_rsa)
+crypto/rsa/lib:	$(LIBOBJ_crypto_rsa)
 	$(ARX) $(LIB_crypto_rsa) $(LIBOBJ_crypto_rsa)
 	$(RANLIB) $(LIB_crypto_rsa) || echo Never mind.
-	@touch lib
+	@touch crypto/rsa/lib
 
 files: files_crypto_rsa
 files_crypto_rsa:
-	$(PERL) $(TOP_crypto_rsa)/util/files.pl TOP=$(TOP_crypto_rsa) Makefile >> $(TOP_crypto_rsa)/MINFO
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
 links: links_crypto_rsa
 links_crypto_rsa:
-	@$(PERL) $(TOP_crypto_rsa)/util/mklink.pl ../../include/openssl $(EXHEADER_crypto_rsa)
-	@$(PERL) $(TOP_crypto_rsa)/util/mklink.pl ../../test $(TEST_crypto_rsa)
-	@$(PERL) $(TOP_crypto_rsa)/util/mklink.pl ../../apps $(APPS_crypto_rsa)
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_rsa)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_rsa)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_rsa)
 
 install: install_crypto_rsa
 install_crypto_rsa:
@@ -64,14 +64,14 @@ tests_crypto_rsa:
 
 lint: lint_crypto_rsa
 lint_crypto_rsa:
-	lint -DLINT $(INCLUDES_crypto_rsa) $(SRC_crypto_rsa)>fluff
+	lint -DLINT $(INCLUDES_crypto_rsa) $(SRC_crypto_rsa)>crypto/rsa/fluff
 
 dclean: dclean_crypto_rsa
 dclean_crypto_rsa:
 
 clean: clean_crypto_rsa
 clean_crypto_rsa:
-	rm -f *.o *.d */*.o */*.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f crypto/rsa/*.o crypto/rsa/*.d */*.o */*.d crypto/rsa/*.obj crypto/rsa/lib crypto/rsa/tags crypto/rsa/core crypto/rsa/.pure crypto/rsa/.nfs* crypto/rsa/*.old crypto/rsa/*.bak crypto/rsa/fluff
 
 .c.o:
 	$(CC) $(CFLAGS_crypto_rsa) $(CPPFLAGS) -c -o $@ $<

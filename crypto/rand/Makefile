@@ -6,41 +6,41 @@ INCLUDES_crypto_rand=
 
 CFLAGS_crypto_rand= $(INCLUDES_crypto_rand) $(CFLAG)
 
-GENERAL_crypto_rand=Makefile
-TEST_crypto_rand= randtest.c
+GENERAL_crypto_rand=crypto/rand/Makefile
+TEST_crypto_rand= crypto/rand/randtest.c
 APPS_crypto_rand=
 
-LIB_crypto_rand=$(TOP_crypto_rand)/libcrypto.a
-LIBSRC_crypto_rand=md_rand.c randfile.c rand_lib.c rand_err.c rand_egd.c \
-	rand_win.c rand_unix.c rand_os2.c rand_nw.c
-LIBOBJ_crypto_rand=md_rand.o randfile.o rand_lib.o rand_err.o rand_egd.o \
-	rand_win.o rand_unix.o rand_os2.o rand_nw.o
+LIB_crypto_rand=libcrypto.a
+LIBSRC_crypto_rand=crypto/rand/md_rand.c crypto/rand/randfile.c crypto/rand/rand_lib.c crypto/rand/rand_err.c crypto/rand/rand_egd.c \
+	crypto/rand/rand_win.c crypto/rand/rand_unix.c crypto/rand/rand_os2.c crypto/rand/rand_nw.c
+LIBOBJ_crypto_rand=crypto/rand/md_rand.o crypto/rand/randfile.o crypto/rand/rand_lib.o crypto/rand/rand_err.o crypto/rand/rand_egd.o \
+	crypto/rand/rand_win.o crypto/rand/rand_unix.o crypto/rand/rand_os2.o crypto/rand/rand_nw.o
 
 SRC_crypto_rand= $(LIBSRC_crypto_rand)
 
-EXHEADER_crypto_rand= rand.h
+EXHEADER_crypto_rand= crypto/rand/rand.h
 HEADER_crypto_rand=	$(EXHEADER_crypto_rand)
 
 ALL_crypto_rand=    $(GENERAL_crypto_rand) $(SRC_crypto_rand) $(HEADER_crypto_rand)
 
 
 all: all_crypto_rand
-all_crypto_rand:	lib
+all_crypto_rand:	crypto/rand/lib
 
-lib:	$(LIBOBJ_crypto_rand)
+crypto/rand/lib:	$(LIBOBJ_crypto_rand)
 	$(ARX) $(LIB_crypto_rand) $(LIBOBJ_crypto_rand)
 	$(RANLIB) $(LIB_crypto_rand) || echo Never mind.
-	@touch lib
+	@touch crypto/rand/lib
 
 files: files_crypto_rand
 files_crypto_rand:
-	$(PERL) $(TOP_crypto_rand)/util/files.pl TOP=$(TOP_crypto_rand) Makefile >> $(TOP_crypto_rand)/MINFO
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
 links: links_crypto_rand
 links_crypto_rand:
-	@$(PERL) $(TOP_crypto_rand)/util/mklink.pl ../../include/openssl $(EXHEADER_crypto_rand)
-	@$(PERL) $(TOP_crypto_rand)/util/mklink.pl ../../test $(TEST_crypto_rand)
-	@$(PERL) $(TOP_crypto_rand)/util/mklink.pl ../../apps $(APPS_crypto_rand)
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_rand)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_rand)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_rand)
 
 install: install_crypto_rand
 install_crypto_rand:
@@ -60,14 +60,14 @@ tests_crypto_rand:
 
 lint: lint_crypto_rand
 lint_crypto_rand:
-	lint -DLINT $(INCLUDES_crypto_rand) $(SRC_crypto_rand)>fluff
+	lint -DLINT $(INCLUDES_crypto_rand) $(SRC_crypto_rand)>crypto/rand/fluff
 
 dclean: dclean_crypto_rand
 dclean_crypto_rand:
 
 clean: clean_crypto_rand
 clean_crypto_rand:
-	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f crypto/rand/*.o crypto/rand/*.d crypto/rand/*.obj crypto/rand/lib crypto/rand/tags crypto/rand/core crypto/rand/.pure crypto/rand/.nfs* crypto/rand/*.old crypto/rand/*.bak crypto/rand/fluff
 
 .c.o:
 	$(CC) $(CFLAGS_crypto_rand) $(CPPFLAGS) -c -o $@ $<

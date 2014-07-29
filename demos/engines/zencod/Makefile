@@ -1,7 +1,7 @@
 LIBNAME_demos_engines_zencod=	libzencod
-SRC_demos_engines_zencod=		hw_zencod.c
-OBJ_demos_engines_zencod=		hw_zencod.o
-HEADER_demos_engines_zencod=		hw_zencod.h
+SRC_demos_engines_zencod=		demos/engines/zencod/hw_zencod.c
+OBJ_demos_engines_zencod=		demos/engines/zencod/hw_zencod.o
+HEADER_demos_engines_zencod=		demos/engines/zencod/hw_zencod.h
 
 PIC_demos_engines_zencod=		-fPIC
 CFLAGS_demos_engines_zencod=		-g -I../../../include $(PIC_demos_engines_zencod) -DENGINE_DYNAMIC_SUPPORT -DFLAT_INC
@@ -25,9 +25,9 @@ all_demos_engines_zencod:
 FORCE.update: FORCE.update_demos_engines_zencod
 FORCE.update_demos_engines_zencod:
 update: update_demos_engines_zencod
-update_demos_engines_zencod:		FORCE.update
-		perl ../../../util/mkerr.pl -conf hw_zencod.ec \
-			-nostatic -staticloader -write hw_zencod.c
+update_demos_engines_zencod:		FORCE.update_demos_engines_zencod
+		perl util/mkerr.pl -conf hw_zencod.ec \
+			-nostatic -staticloader -write demos/engines/zencod/hw_zencod.c
 
 gnu: gnu_demos_engines_zencod
 gnu_demos_engines_zencod:		$(SHLIB_demos_engines_zencod).gnu

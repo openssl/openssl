@@ -2,71 +2,71 @@
 # OpenSSL/ssl/Makefile
 #
 
-INCLUDES_ssl= -I../crypto -I$(TOP_ssl) -I../include $(KRB5_INCLUDES)
+INCLUDES_ssl= -Icrypto -I. -Iinclude $(KRB5_INCLUDES)
 # KRB5 stuff
 
 CFLAGS_ssl= $(INCLUDES_ssl) $(CFLAG)
 
-GENERAL_ssl=Makefile README ssl-lib.com install.com
-TEST_ssl=ssltest.c heartbeat_test.c
+GENERAL_ssl=ssl/Makefile ssl/README ssl/ssl-lib.com ssl/install.com
+TEST_ssl=ssl/ssltest.c ssl/heartbeat_test.c
 APPS_ssl=
 
-LIB_ssl=$(TOP_ssl)/libssl.a
+LIB_ssl=libssl.a
 SHARED_LIB_ssl= libssl$(SHLIB_EXT)
 LIBSRC_ssl=	\
-	s2_meth.c   s2_srvr.c s2_clnt.c  s2_lib.c  s2_enc.c s2_pkt.c \
-	s3_meth.c   s3_srvr.c s3_clnt.c  s3_lib.c  s3_enc.c s3_pkt.c s3_both.c s3_cbc.c \
-	s23_meth.c s23_srvr.c s23_clnt.c s23_lib.c          s23_pkt.c \
-	t1_meth.c   t1_srvr.c t1_clnt.c  t1_lib.c  t1_enc.c t1_ext.c \
-	d1_meth.c   d1_srvr.c d1_clnt.c  d1_lib.c  d1_pkt.c \
-	d1_both.c d1_enc.c d1_srtp.c \
-	ssl_lib.c ssl_err2.c ssl_cert.c ssl_sess.c \
-	ssl_ciph.c ssl_stat.c ssl_rsa.c \
-	ssl_asn1.c ssl_txt.c ssl_algs.c ssl_conf.c \
-	bio_ssl.c ssl_err.c kssl.c t1_reneg.c tls_srp.c t1_trce.c ssl_utst.c
+	ssl/s2_meth.c   ssl/s2_srvr.c ssl/s2_clnt.c  ssl/s2_lib.c  ssl/s2_enc.c ssl/s2_pkt.c \
+	ssl/s3_meth.c   ssl/s3_srvr.c ssl/s3_clnt.c  ssl/s3_lib.c  ssl/s3_enc.c ssl/s3_pkt.c ssl/s3_both.c ssl/s3_cbc.c \
+	ssl/s23_meth.c ssl/s23_srvr.c ssl/s23_clnt.c ssl/s23_lib.c          ssl/s23_pkt.c \
+	ssl/t1_meth.c   ssl/t1_srvr.c ssl/t1_clnt.c  ssl/t1_lib.c  ssl/t1_enc.c ssl/t1_ext.c \
+	ssl/d1_meth.c   ssl/d1_srvr.c ssl/d1_clnt.c  ssl/d1_lib.c  ssl/d1_pkt.c \
+	ssl/d1_both.c ssl/d1_enc.c ssl/d1_srtp.c \
+	ssl/ssl_lib.c ssl/ssl_err2.c ssl/ssl_cert.c ssl/ssl_sess.c \
+	ssl/ssl_ciph.c ssl/ssl_stat.c ssl/ssl_rsa.c \
+	ssl/ssl_asn1.c ssl/ssl_txt.c ssl/ssl_algs.c ssl/ssl_conf.c \
+	ssl/bio_ssl.c ssl/ssl_err.c ssl/kssl.c ssl/t1_reneg.c ssl/tls_srp.c ssl/t1_trce.c ssl/ssl_utst.c
 LIBOBJ_ssl= \
-	s2_meth.o  s2_srvr.o  s2_clnt.o  s2_lib.o  s2_enc.o s2_pkt.o \
-	s3_meth.o  s3_srvr.o  s3_clnt.o  s3_lib.o  s3_enc.o s3_pkt.o s3_both.o s3_cbc.o \
-	s23_meth.o s23_srvr.o s23_clnt.o s23_lib.o          s23_pkt.o \
-	t1_meth.o   t1_srvr.o t1_clnt.o  t1_lib.o  t1_enc.o t1_ext.o \
-	d1_meth.o   d1_srvr.o d1_clnt.o  d1_lib.o  d1_pkt.o \
-	d1_both.o d1_enc.o d1_srtp.o\
-	ssl_lib.o ssl_err2.o ssl_cert.o ssl_sess.o \
-	ssl_ciph.o ssl_stat.o ssl_rsa.o \
-	ssl_asn1.o ssl_txt.o ssl_algs.o ssl_conf.o \
-	bio_ssl.o ssl_err.o kssl.o t1_reneg.o tls_srp.o t1_trce.o ssl_utst.o
+	ssl/s2_meth.o  ssl/s2_srvr.o  ssl/s2_clnt.o  ssl/s2_lib.o  ssl/s2_enc.o ssl/s2_pkt.o \
+	ssl/s3_meth.o  ssl/s3_srvr.o  ssl/s3_clnt.o  ssl/s3_lib.o  ssl/s3_enc.o ssl/s3_pkt.o ssl/s3_both.o ssl/s3_cbc.o \
+	ssl/s23_meth.o ssl/s23_srvr.o ssl/s23_clnt.o ssl/s23_lib.o          ssl/s23_pkt.o \
+	ssl/t1_meth.o   ssl/t1_srvr.o ssl/t1_clnt.o  ssl/t1_lib.o  ssl/t1_enc.o ssl/t1_ext.o \
+	ssl/d1_meth.o   ssl/d1_srvr.o ssl/d1_clnt.o  ssl/d1_lib.o  ssl/d1_pkt.o \
+	ssl/d1_both.o ssl/d1_enc.o ssl/d1_srtp.o\
+	ssl/ssl_lib.o ssl/ssl_err2.o ssl/ssl_cert.o ssl/ssl_sess.o \
+	ssl/ssl_ciph.o ssl/ssl_stat.o ssl/ssl_rsa.o \
+	ssl/ssl_asn1.o ssl/ssl_txt.o ssl/ssl_algs.o ssl/ssl_conf.o \
+	ssl/bio_ssl.o ssl/ssl_err.o ssl/kssl.o ssl/t1_reneg.o ssl/tls_srp.o ssl/t1_trce.o ssl/ssl_utst.o
 
 SRC_ssl= $(LIBSRC_ssl)
 
-EXHEADER_ssl= ssl.h ssl2.h ssl3.h ssl23.h tls1.h dtls1.h kssl.h srtp.h
-HEADER_ssl=	$(EXHEADER_ssl) ssl_locl.h kssl_lcl.h
+EXHEADER_ssl= ssl/ssl.h ssl/ssl2.h ssl/ssl3.h ssl/ssl23.h ssl/tls1.h ssl/dtls1.h ssl/kssl.h ssl/srtp.h
+HEADER_ssl=	$(EXHEADER_ssl) ssl/ssl_locl.h ssl/kssl_lcl.h
 
 ALL_ssl=    $(GENERAL_ssl) $(SRC_ssl) $(HEADER_ssl)
 
 
 all: all_ssl
-all_ssl:	shared
+all_ssl:	shared_ssl
 
-lib:	$(LIBOBJ_ssl)
+ssl/lib:	$(LIBOBJ_ssl)
 	$(AR) $(LIB_ssl) $(LIBOBJ_ssl)
 	$(RANLIB) $(LIB_ssl) || echo Never mind.
-	@touch lib
+	@touch ssl/lib
 
 shared: shared_ssl
-shared_ssl: lib
+shared_ssl: ssl/lib
 	if [ -n "$(SHARED_LIBS)" ]; then \
-		(cd ..; $(MAKE) $(SHARED_LIB_ssl)); \
+		(cd ssl/..; $(MAKE) $(SHARED_LIB_ssl)); \
 	fi
 
 files: files_ssl
 files_ssl:
-	$(PERL) $(TOP_ssl)/util/files.pl TOP=$(TOP_ssl) Makefile >> $(TOP_ssl)/MINFO
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
 links: links_ssl
 links_ssl:
-	@$(PERL) $(TOP_ssl)/util/mklink.pl ../include/openssl $(EXHEADER_ssl)
-	@$(PERL) $(TOP_ssl)/util/mklink.pl ../test $(TEST_ssl)
-	@$(PERL) $(TOP_ssl)/util/mklink.pl ../apps $(APPS_ssl)
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_ssl)
+	@$(PERL) util/mklink.pl ./test $(TEST_ssl)
+	@$(PERL) util/mklink.pl ./apps $(APPS_ssl)
 
 install: install_ssl
 install_ssl:
@@ -86,14 +86,14 @@ tests_ssl:
 
 lint: lint_ssl
 lint_ssl:
-	lint -DLINT $(INCLUDES_ssl) $(SRC_ssl)>fluff
+	lint -DLINT $(INCLUDES_ssl) $(SRC_ssl)>ssl/fluff
 
 dclean: dclean_ssl
 dclean_ssl:
 
 clean: clean_ssl
 clean_ssl:
-	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f ssl/*.o ssl/*.d ssl/*.obj ssl/lib ssl/tags ssl/core ssl/.pure ssl/.nfs* ssl/*.old ssl/*.bak ssl/fluff
 
 .c.o:
 	$(CC) $(CFLAGS_ssl) $(CPPFLAGS) -c -o $@ $<

@@ -2,46 +2,46 @@
 # OpenSSL/crypto/comp/Makefile
 #
 
-INCLUDES_crypto_comp= -I.. -I$(TOP_crypto_comp) -I../../include
+INCLUDES_crypto_comp= -Icrypto -I. -Iinclude
 
 CFLAGS_crypto_comp= $(INCLUDES_crypto_comp) $(CFLAG)
 
-GENERAL_crypto_comp=Makefile
+GENERAL_crypto_comp=crypto/comp/Makefile
 TEST_crypto_comp=
 APPS_crypto_comp=
 
-LIB_crypto_comp=$(TOP_crypto_comp)/libcrypto.a
-LIBSRC_crypto_comp= comp_lib.c comp_err.c \
-	c_rle.c c_zlib.c
+LIB_crypto_comp=libcrypto.a
+LIBSRC_crypto_comp= crypto/comp/comp_lib.c crypto/comp/comp_err.c \
+	crypto/comp/c_rle.c crypto/comp/c_zlib.c
 
-LIBOBJ_crypto_comp=	comp_lib.o comp_err.o \
-	c_rle.o c_zlib.o
+LIBOBJ_crypto_comp=	crypto/comp/comp_lib.o crypto/comp/comp_err.o \
+	crypto/comp/c_rle.o crypto/comp/c_zlib.o
 
 SRC_crypto_comp= $(LIBSRC_crypto_comp)
 
-EXHEADER_crypto_comp= comp.h
+EXHEADER_crypto_comp= crypto/comp/comp.h
 HEADER_crypto_comp=	$(EXHEADER_crypto_comp)
 
 ALL_crypto_comp=    $(GENERAL_crypto_comp) $(SRC_crypto_comp) $(HEADER_crypto_comp)
 
 
 all: all_crypto_comp
-all_crypto_comp:	lib
+all_crypto_comp:	crypto/comp/lib
 
-lib:	$(LIBOBJ_crypto_comp)
+crypto/comp/lib:	$(LIBOBJ_crypto_comp)
 	$(ARX) $(LIB_crypto_comp) $(LIBOBJ_crypto_comp)
 	$(RANLIB) $(LIB_crypto_comp) || echo Never mind.
-	@touch lib
+	@touch crypto/comp/lib
 
 files: files_crypto_comp
 files_crypto_comp:
-	$(PERL) $(TOP_crypto_comp)/util/files.pl TOP=$(TOP_crypto_comp) Makefile >> $(TOP_crypto_comp)/MINFO
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
 links: links_crypto_comp
 links_crypto_comp:
-	@$(PERL) $(TOP_crypto_comp)/util/mklink.pl ../../include/openssl $(EXHEADER_crypto_comp)
-	@$(PERL) $(TOP_crypto_comp)/util/mklink.pl ../../test $(TEST_crypto_comp)
-	@$(PERL) $(TOP_crypto_comp)/util/mklink.pl ../../apps $(APPS_crypto_comp)
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_comp)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_comp)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_comp)
 
 install: install_crypto_comp
 install_crypto_comp:
@@ -61,14 +61,14 @@ tests_crypto_comp:
 
 lint: lint_crypto_comp
 lint_crypto_comp:
-	lint -DLINT $(INCLUDES_crypto_comp) $(SRC_crypto_comp)>fluff
+	lint -DLINT $(INCLUDES_crypto_comp) $(SRC_crypto_comp)>crypto/comp/fluff
 
 dclean: dclean_crypto_comp
 dclean_crypto_comp:
 
 clean: clean_crypto_comp
 clean_crypto_comp:
-	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f crypto/comp/*.o crypto/comp/*.d crypto/comp/*.obj crypto/comp/lib crypto/comp/tags crypto/comp/core crypto/comp/.pure crypto/comp/.nfs* crypto/comp/*.old crypto/comp/*.bak crypto/comp/fluff
 
 .c.o:
 	$(CC) $(CFLAGS_crypto_comp) $(CPPFLAGS) -c -o $@ $<

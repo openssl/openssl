@@ -2,45 +2,45 @@
 # OpenSSL/crypto/dh/Makefile
 #
 
-INCLUDES_crypto_dh= -I.. -I$(TOP_crypto_dh) -I../../include
+INCLUDES_crypto_dh= -Icrypto -I. -Iinclude
 
 CFLAGS_crypto_dh= $(INCLUDES_crypto_dh) $(CFLAG)
 
-GENERAL_crypto_dh=Makefile
-TEST_crypto_dh= dhtest.c
+GENERAL_crypto_dh=crypto/dh/Makefile
+TEST_crypto_dh= crypto/dh/dhtest.c
 APPS_crypto_dh=
 
-LIB_crypto_dh=$(TOP_crypto_dh)/libcrypto.a
-LIBSRC_crypto_dh= dh_asn1.c dh_gen.c dh_key.c dh_lib.c dh_check.c dh_err.c dh_depr.c \
-	dh_ameth.c dh_pmeth.c dh_prn.c dh_rfc5114.c dh_kdf.c
-LIBOBJ_crypto_dh= dh_asn1.o dh_gen.o dh_key.o dh_lib.o dh_check.o dh_err.o dh_depr.o \
-	dh_ameth.o dh_pmeth.o dh_prn.o dh_rfc5114.o dh_kdf.o
+LIB_crypto_dh=libcrypto.a
+LIBSRC_crypto_dh= crypto/dh/dh_asn1.c crypto/dh/dh_gen.c crypto/dh/dh_key.c crypto/dh/dh_lib.c crypto/dh/dh_check.c crypto/dh/dh_err.c crypto/dh/dh_depr.c \
+	crypto/dh/dh_ameth.c crypto/dh/dh_pmeth.c crypto/dh/dh_prn.c crypto/dh/dh_rfc5114.c crypto/dh/dh_kdf.c
+LIBOBJ_crypto_dh= crypto/dh/dh_asn1.o crypto/dh/dh_gen.o crypto/dh/dh_key.o crypto/dh/dh_lib.o crypto/dh/dh_check.o crypto/dh/dh_err.o crypto/dh/dh_depr.o \
+	crypto/dh/dh_ameth.o crypto/dh/dh_pmeth.o crypto/dh/dh_prn.o crypto/dh/dh_rfc5114.o crypto/dh/dh_kdf.o
 
 SRC_crypto_dh= $(LIBSRC_crypto_dh)
 
-EXHEADER_crypto_dh= dh.h
+EXHEADER_crypto_dh= crypto/dh/dh.h
 HEADER_crypto_dh=	$(EXHEADER_crypto_dh)
 
 ALL_crypto_dh=    $(GENERAL_crypto_dh) $(SRC_crypto_dh) $(HEADER_crypto_dh)
 
 
 all: all_crypto_dh
-all_crypto_dh:	lib
+all_crypto_dh:	crypto/dh/lib
 
-lib:	$(LIBOBJ_crypto_dh)
+crypto/dh/lib:	$(LIBOBJ_crypto_dh)
 	$(ARX) $(LIB_crypto_dh) $(LIBOBJ_crypto_dh)
 	$(RANLIB) $(LIB_crypto_dh) || echo Never mind.
-	@touch lib
+	@touch crypto/dh/lib
 
 files: files_crypto_dh
 files_crypto_dh:
-	$(PERL) $(TOP_crypto_dh)/util/files.pl TOP=$(TOP_crypto_dh) Makefile >> $(TOP_crypto_dh)/MINFO
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
 links: links_crypto_dh
 links_crypto_dh:
-	@$(PERL) $(TOP_crypto_dh)/util/mklink.pl ../../include/openssl $(EXHEADER_crypto_dh)
-	@$(PERL) $(TOP_crypto_dh)/util/mklink.pl ../../test $(TEST_crypto_dh)
-	@$(PERL) $(TOP_crypto_dh)/util/mklink.pl ../../apps $(APPS_crypto_dh)
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_dh)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_dh)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_dh)
 
 install: install_crypto_dh
 install_crypto_dh:
@@ -60,14 +60,14 @@ tests_crypto_dh:
 
 lint: lint_crypto_dh
 lint_crypto_dh:
-	lint -DLINT $(INCLUDES_crypto_dh) $(SRC_crypto_dh)>fluff
+	lint -DLINT $(INCLUDES_crypto_dh) $(SRC_crypto_dh)>crypto/dh/fluff
 
 dclean: dclean_crypto_dh
 dclean_crypto_dh:
 
 clean: clean_crypto_dh
 clean_crypto_dh:
-	rm -f *.o *.d */*.o */*.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f crypto/dh/*.o crypto/dh/*.d */*.o */*.d crypto/dh/*.obj crypto/dh/lib crypto/dh/tags crypto/dh/core crypto/dh/.pure crypto/dh/.nfs* crypto/dh/*.old crypto/dh/*.bak crypto/dh/fluff
 
 .c.o:
 	$(CC) $(CFLAGS_crypto_dh) $(CPPFLAGS) -c -o $@ $<

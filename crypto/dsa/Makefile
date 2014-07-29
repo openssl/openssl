@@ -2,45 +2,45 @@
 # OpenSSL/crypto/dsa/Makefile
 #
 
-INCLUDES_crypto_dsa= -I.. -I$(TOP_crypto_dsa) -I../../include
+INCLUDES_crypto_dsa= -Icrypto -I. -Iinclude
 
 CFLAGS_crypto_dsa= $(INCLUDES_crypto_dsa) $(CFLAG)
 
-GENERAL_crypto_dsa=Makefile
-TEST_crypto_dsa=dsatest.c
+GENERAL_crypto_dsa=crypto/dsa/Makefile
+TEST_crypto_dsa=crypto/dsa/dsatest.c
 APPS_crypto_dsa=
 
-LIB_crypto_dsa=$(TOP_crypto_dsa)/libcrypto.a
-LIBSRC_crypto_dsa= dsa_gen.c dsa_key.c dsa_lib.c dsa_asn1.c dsa_vrf.c dsa_sign.c \
-	dsa_err.c dsa_ossl.c dsa_depr.c dsa_ameth.c dsa_pmeth.c dsa_prn.c
-LIBOBJ_crypto_dsa= dsa_gen.o dsa_key.o dsa_lib.o dsa_asn1.o dsa_vrf.o dsa_sign.o \
-	dsa_err.o dsa_ossl.o dsa_depr.o dsa_ameth.o dsa_pmeth.o dsa_prn.o
+LIB_crypto_dsa=libcrypto.a
+LIBSRC_crypto_dsa= crypto/dsa/dsa_gen.c crypto/dsa/dsa_key.c crypto/dsa/dsa_lib.c crypto/dsa/dsa_asn1.c crypto/dsa/dsa_vrf.c crypto/dsa/dsa_sign.c \
+	crypto/dsa/dsa_err.c crypto/dsa/dsa_ossl.c crypto/dsa/dsa_depr.c crypto/dsa/dsa_ameth.c crypto/dsa/dsa_pmeth.c crypto/dsa/dsa_prn.c
+LIBOBJ_crypto_dsa= crypto/dsa/dsa_gen.o crypto/dsa/dsa_key.o crypto/dsa/dsa_lib.o crypto/dsa/dsa_asn1.o crypto/dsa/dsa_vrf.o crypto/dsa/dsa_sign.o \
+	crypto/dsa/dsa_err.o crypto/dsa/dsa_ossl.o crypto/dsa/dsa_depr.o crypto/dsa/dsa_ameth.o crypto/dsa/dsa_pmeth.o crypto/dsa/dsa_prn.o
 
 SRC_crypto_dsa= $(LIBSRC_crypto_dsa)
 
-EXHEADER_crypto_dsa= dsa.h
-HEADER_crypto_dsa=	dsa_locl.h $(EXHEADER_crypto_dsa)
+EXHEADER_crypto_dsa= crypto/dsa/dsa.h
+HEADER_crypto_dsa=	crypto/dsa/dsa_locl.h $(EXHEADER_crypto_dsa)
 
 ALL_crypto_dsa=    $(GENERAL_crypto_dsa) $(SRC_crypto_dsa) $(HEADER_crypto_dsa)
 
 
 all: all_crypto_dsa
-all_crypto_dsa:	lib
+all_crypto_dsa:	crypto/dsa/lib
 
-lib:	$(LIBOBJ_crypto_dsa)
+crypto/dsa/lib:	$(LIBOBJ_crypto_dsa)
 	$(ARX) $(LIB_crypto_dsa) $(LIBOBJ_crypto_dsa)
 	$(RANLIB) $(LIB_crypto_dsa) || echo Never mind.
-	@touch lib
+	@touch crypto/dsa/lib
 
 files: files_crypto_dsa
 files_crypto_dsa:
-	$(PERL) $(TOP_crypto_dsa)/util/files.pl TOP=$(TOP_crypto_dsa) Makefile >> $(TOP_crypto_dsa)/MINFO
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
 links: links_crypto_dsa
 links_crypto_dsa:
-	@$(PERL) $(TOP_crypto_dsa)/util/mklink.pl ../../include/openssl $(EXHEADER_crypto_dsa)
-	@$(PERL) $(TOP_crypto_dsa)/util/mklink.pl ../../test $(TEST_crypto_dsa)
-	@$(PERL) $(TOP_crypto_dsa)/util/mklink.pl ../../apps $(APPS_crypto_dsa)
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_dsa)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_dsa)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_dsa)
 
 install: install_crypto_dsa
 install_crypto_dsa:
@@ -60,14 +60,14 @@ tests_crypto_dsa:
 
 lint: lint_crypto_dsa
 lint_crypto_dsa:
-	lint -DLINT $(INCLUDES_crypto_dsa) $(SRC_crypto_dsa)>fluff
+	lint -DLINT $(INCLUDES_crypto_dsa) $(SRC_crypto_dsa)>crypto/dsa/fluff
 
 dclean: dclean_crypto_dsa
 dclean_crypto_dsa:
 
 clean: clean_crypto_dsa
 clean_crypto_dsa:
-	rm -f *.o *.d */*.o */*.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f crypto/dsa/*.o crypto/dsa/*.d */*.o */*.d crypto/dsa/*.obj crypto/dsa/lib crypto/dsa/tags crypto/dsa/core crypto/dsa/.pure crypto/dsa/.nfs* crypto/dsa/*.old crypto/dsa/*.bak crypto/dsa/fluff
 
 .c.o:
 	$(CC) $(CFLAGS_crypto_dsa) $(CPPFLAGS) -c -o $@ $<

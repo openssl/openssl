@@ -1,7 +1,7 @@
 LIBNAME_demos_engines_cluster_labs=	libclabs
-SRC_demos_engines_cluster_labs=		hw_cluster_labs.c
-OBJ_demos_engines_cluster_labs=		hw_cluster_labs.o
-HEADER_demos_engines_cluster_labs=		hw_cluster_labs.h
+SRC_demos_engines_cluster_labs=		demos/engines/cluster_labs/hw_cluster_labs.c
+OBJ_demos_engines_cluster_labs=		demos/engines/cluster_labs/hw_cluster_labs.o
+HEADER_demos_engines_cluster_labs=		demos/engines/cluster_labs/hw_cluster_labs.h
 
 PIC_demos_engines_cluster_labs=		-fPIC
 CFLAGS_demos_engines_cluster_labs=		-g -I../../../include $(PIC_demos_engines_cluster_labs) -DENGINE_DYNAMIC_SUPPORT -DFLAT_INC
@@ -25,9 +25,9 @@ all_demos_engines_cluster_labs:
 FORCE.update: FORCE.update_demos_engines_cluster_labs
 FORCE.update_demos_engines_cluster_labs:
 update: update_demos_engines_cluster_labs
-update_demos_engines_cluster_labs:		FORCE.update
-		perl ../../../util/mkerr.pl -conf hw_cluster_labs.ec \
-			-nostatic -staticloader -write hw_cluster_labs.c
+update_demos_engines_cluster_labs:		FORCE.update_demos_engines_cluster_labs
+		perl util/mkerr.pl -conf hw_cluster_labs.ec \
+			-nostatic -staticloader -write demos/engines/cluster_labs/hw_cluster_labs.c
 
 gnu: gnu_demos_engines_cluster_labs
 gnu_demos_engines_cluster_labs:		$(SHLIB_demos_engines_cluster_labs).gnu

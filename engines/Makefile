@@ -2,67 +2,67 @@
 # OpenSSL/engines/Makefile
 #
 
-INCLUDES_engines= -I../include
+INCLUDES_engines= -Iinclude
 
 CFLAGS_engines= $(INCLUDES_engines) $(CFLAG)
 ASFLAGS_engines= $(INCLUDES_engines) $(ASFLAG)
 
-GENERAL_engines=Makefile engines.com install.com engine_vector.mar
+GENERAL_engines=engines/Makefile engines/engines.com engines/install.com engines/engine_vector.mar
 TEST_engines=
 APPS_engines=
 
-LIB_engines=$(TOP_engines)/libcrypto.a
+LIB_engines=libcrypto.a
 LIBNAMES= 4758cca aep atalla cswift gmp chil nuron sureware ubsec padlock capi
 
-LIBSRC_engines=	e_4758cca.c \
-	e_aep.c \
-	e_atalla.c \
-	e_cswift.c \
-	e_gmp.c \
-	e_chil.c \
-	e_nuron.c \
-	e_sureware.c \
-	e_ubsec.c \
-	e_padlock.c \
-	e_capi.c
-LIBOBJ_engines= e_4758cca.o \
-	e_aep.o \
-	e_atalla.o \
-	e_cswift.o \
-	e_gmp.o \
-	e_chil.o \
-	e_nuron.o \
-	e_sureware.o \
-	e_ubsec.o \
-	e_padlock.o \
-	e_capi.o \
+LIBSRC_engines=	engines/e_4758cca.c \
+	engines/e_aep.c \
+	engines/e_atalla.c \
+	engines/e_cswift.c \
+	engines/e_gmp.c \
+	engines/e_chil.c \
+	engines/e_nuron.c \
+	engines/e_sureware.c \
+	engines/e_ubsec.c \
+	engines/e_padlock.c \
+	engines/e_capi.c
+LIBOBJ_engines= engines/e_4758cca.o \
+	engines/e_aep.o \
+	engines/e_atalla.o \
+	engines/e_cswift.o \
+	engines/e_gmp.o \
+	engines/e_chil.o \
+	engines/e_nuron.o \
+	engines/e_sureware.o \
+	engines/e_ubsec.o \
+	engines/e_padlock.o \
+	engines/e_capi.o \
 	$(ENGINES_ASM_OBJ)
 
 SRC_engines= $(LIBSRC_engines)
 
 EXHEADER_engines= 
-HEADER_engines=	e_4758cca_err.c e_4758cca_err.h \
-	e_aep_err.c e_aep_err.h \
-	e_atalla_err.c e_atalla_err.h \
-	e_cswift_err.c e_cswift_err.h \
-	e_gmp_err.c e_gmp_err.h \
-	e_chil_err.c e_chil_err.h \
-	e_nuron_err.c e_nuron_err.h \
-	e_sureware_err.c e_sureware_err.h \
-	e_ubsec_err.c e_ubsec_err.h \
-	e_capi_err.c e_capi_err.h
+HEADER_engines=	engines/e_4758cca_err.c engines/e_4758cca_err.h \
+	engines/e_aep_err.c engines/e_aep_err.h \
+	engines/e_atalla_err.c engines/e_atalla_err.h \
+	engines/e_cswift_err.c engines/e_cswift_err.h \
+	engines/e_gmp_err.c engines/e_gmp_err.h \
+	engines/e_chil_err.c engines/e_chil_err.h \
+	engines/e_nuron_err.c engines/e_nuron_err.h \
+	engines/e_sureware_err.c engines/e_sureware_err.h \
+	engines/e_ubsec_err.c engines/e_ubsec_err.h \
+	engines/e_capi_err.c engines/e_capi_err.h
 
 ALL_engines=    $(GENERAL_engines) $(SRC_engines) $(HEADER_engines)
 
 
 all: all_engines
-all_engines:	lib subdirs
+all_engines:	engines/lib engines/subdirs
 
-lib:	$(LIBOBJ_engines)
+engines/lib:	$(LIBOBJ_engines)
 	@if [ -n "$(SHARED_LIBS)" ]; then \
 		set -e; \
 		for l in $(LIBNAMES); do \
-			cat $(TOP_engines)/configure.mk $(TOP_engines)/Makefile.shared | $(MAKE) -f - \
+			cat configure.mk Makefile.shared | $(MAKE) -f - \
 				LIBNAME=$$l LIBEXTRAS="e_$$l*.o" \
 				LIBDEPS='-L.. -lcrypto $(EX_LIBS)' \
 				link_o.$(SHLIB_TARGET); \
@@ -71,20 +71,20 @@ lib:	$(LIBOBJ_engines)
 		$(AR) $(LIB_engines) $(LIBOBJ_engines); \
 		$(RANLIB) $(LIB_engines) || echo Never mind.; \
 	fi; \
-	touch lib
+	touch engines/lib
 
-e_padlock-x86.s:	asm/e_padlock-x86.pl
-	$(PERL) asm/e_padlock-x86.pl $(PERLASM_SCHEME) $(CFLAGS_engines) $(PROCESSOR) > $@
-e_padlock-x86_64.s:	asm/e_padlock-x86_64.pl
-	$(PERL) asm/e_padlock-x86_64.pl $(PERLASM_SCHEME) > $@
+engines/e_padlock-x86.s:	engines/asm/e_padlock-x86.pl
+	$(PERL) engines/asm/e_padlock-x86.pl $(PERLASM_SCHEME) $(CFLAGS_engines) $(PROCESSOR) > $@
+engines/e_padlock-x86_64.s:	engines/asm/e_padlock-x86_64.pl
+	$(PERL) engines/asm/e_padlock-x86_64.pl $(PERLASM_SCHEME) > $@
 
-subdirs: subdirs_engines
+engines/subdirs: subdirs_engines
 subdirs_engines:
 	echo $(ENGDIRS)
 
 files: files_engines
 files_engines:
-	$(PERL) $(TOP_engines)/util/files.pl TOP=$(TOP_engines) Makefile >> $(TOP_engines)/MINFO
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
 # XXXXX This currently only works on systems that use .so as suffix
 # for shared libraries as well as for Cygwin which uses the
@@ -96,10 +96,10 @@ install_engines:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@if [ -n "$(SHARED_LIBS)" ]; then \
 		set -e; \
-		$(PERL) $(TOP_engines)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines; \
+		$(PERL) util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines; \
 		for l in $(LIBNAMES); do \
 			( echo installing $$l; \
-			  pfx=lib; \
+			  pfx=engines/lib; \
 			  if ! expr "$(PLATFORM)" : "Cygwin" >/dev/null; then \
 				case "$(CFLAGS_engines)" in \
 				*DSO_BEOS*)	sfx=".so";;	\
@@ -125,8 +125,8 @@ tags_engines:
 errors: errors_engines
 errors_engines:
 	set -e; for l in $(LIBNAMES); do \
-		$(PERL) ../util/mkerr.pl -conf e_$$l.ec \
-			-nostatic -staticloader -write e_$$l.c; \
+		$(PERL) util/mkerr.pl -conf e_$$l.ec \
+			-nostatic -staticloader -write engines/e_$$l.c; \
 	done
 	(cd ccgost; $(MAKE) PERL=$(PERL) errors)
 
@@ -135,14 +135,14 @@ tests_engines:
 
 lint: lint_engines
 lint_engines:
-	lint -DLINT $(INCLUDES_engines) $(SRC_engines)>fluff
+	lint -DLINT $(INCLUDES_engines) $(SRC_engines)>engines/fluff
 
 dclean: dclean_engines
 dclean_engines:
 
 clean: clean_engines
 clean_engines:
-	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f engines/*.o engines/*.d engines/*.obj engines/lib engines/tags engines/core engines/.pure engines/.nfs* engines/*.old engines/*.bak engines/fluff
 
 .c.o:
 	$(CC) $(CFLAGS_engines) $(CPPFLAGS) -c -o $@ $<

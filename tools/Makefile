@@ -2,14 +2,14 @@
 # OpenSSL/tools/Makefile
 #
 
-INCLUDES_tools= -I$(TOP_tools) -I../include
+INCLUDES_tools= -I. -Iinclude
 
 CFLAGS_tools= $(INCLUDES_tools) $(CFLAG)
 
-GENERAL_tools=Makefile
+GENERAL_tools=tools/Makefile
 TEST_tools=
-APPS_tools= c_rehash
-MISC_APPS= c_hash c_info c_issuer c_name
+APPS_tools= tools/c_rehash
+MISC_APPS= tools/c_hash tools/c_info tools/c_issuer tools/c_name
 
 all: all_tools
 all_tools:
@@ -32,7 +32,7 @@ install_tools:
 
 files: files_tools
 files_tools:
-	$(PERL) $(TOP_tools)/util/files.pl TOP=$(TOP_tools) Makefile >> $(TOP_tools)/MINFO
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
 links: links_tools
 links_tools:
@@ -48,11 +48,11 @@ errors_tools:
 
 dclean: dclean_tools
 dclean_tools:
-	rm -f c_rehash
+	rm -f tools/c_rehash
 
 clean: clean_tools
 clean_tools:
-	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f tools/*.o tools/*.d tools/*.obj tools/lib tools/tags tools/core tools/.pure tools/.nfs* tools/*.old tools/*.bak tools/fluff
 
 .c.o:
 	$(CC) $(CFLAGS_tools) $(CPPFLAGS) -c -o $@ $<

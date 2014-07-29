@@ -1,12 +1,12 @@
-INCLUDES_engines_ccgost= -I../../include
+INCLUDES_engines_ccgost= -Iinclude
 CFLAGS_engines_ccgost= $(INCLUDES_engines_ccgost) $(CFLAG)
-LIB_engines_ccgost=$(TOP_engines_ccgost)/libcrypto.a
+LIB_engines_ccgost=libcrypto.a
 
-TEST_engines_ccgost=gost2814789t.c
+TEST_engines_ccgost=engines/ccgost/gost2814789t.c
 
-LIBSRC_engines_ccgost= gost2001.c gost2001_keyx.c gost89.c gost94_keyx.c gost_ameth.c gost_asn1.c gost_crypt.c gost_ctl.c gost_eng.c gosthash.c gost_keywrap.c gost_md.c gost_params.c gost_pmeth.c gost_sign.c
+LIBSRC_engines_ccgost= engines/ccgost/gost2001.c engines/ccgost/gost2001_keyx.c engines/ccgost/gost89.c engines/ccgost/gost94_keyx.c engines/ccgost/gost_ameth.c engines/ccgost/gost_asn1.c engines/ccgost/gost_crypt.c engines/ccgost/gost_ctl.c engines/ccgost/gost_eng.c engines/ccgost/gosthash.c engines/ccgost/gost_keywrap.c engines/ccgost/gost_md.c engines/ccgost/gost_params.c engines/ccgost/gost_pmeth.c engines/ccgost/gost_sign.c
 
-LIBOBJ_engines_ccgost= e_gost_err.o gost2001_keyx.o gost2001.o gost89.o gost94_keyx.o gost_ameth.o gost_asn1.o gost_crypt.o gost_ctl.o gost_eng.o gosthash.o gost_keywrap.o gost_md.o gost_params.o gost_pmeth.o gost_sign.o
+LIBOBJ_engines_ccgost= engines/ccgost/e_gost_err.o engines/ccgost/gost2001_keyx.o engines/ccgost/gost2001.o engines/ccgost/gost89.o engines/ccgost/gost94_keyx.o engines/ccgost/gost_ameth.o engines/ccgost/gost_asn1.o engines/ccgost/gost_crypt.o engines/ccgost/gost_ctl.o engines/ccgost/gost_eng.o engines/ccgost/gosthash.o engines/ccgost/gost_keywrap.o engines/ccgost/gost_md.o engines/ccgost/gost_params.o engines/ccgost/gost_pmeth.o engines/ccgost/gost_sign.o
 
 SRC_engines_ccgost=$(LIBSRC_engines_ccgost)
 
@@ -14,7 +14,7 @@ LIBNAME_engines_ccgost=gost
 
 
 all: all_engines_ccgost
-all_engines_ccgost: lib
+all_engines_ccgost: engines/ccgost/lib
 
 tags: tags_engines_ccgost
 tags_engines_ccgost:
@@ -22,19 +22,19 @@ tags_engines_ccgost:
 
 errors: errors_engines_ccgost
 errors_engines_ccgost:
-	$(PERL) ../../util/mkerr.pl -conf gost.ec -nostatic -write $(SRC_engines_ccgost)
+	$(PERL) util/mkerr.pl -conf gost.ec -nostatic -write $(SRC_engines_ccgost)
 
-lib: $(LIBOBJ_engines_ccgost)
+engines/ccgost/lib: $(LIBOBJ_engines_ccgost)
 	if [ -n "$(SHARED_LIBS)" ]; then \
-		cat $(TOP_engines_ccgost)/configure.mk $(TOP_engines_ccgost)/Makefile.shared | $(MAKE) -f - \
+		cat configure.mk Makefile.shared | $(MAKE) -f - \
 			LIBNAME=$(LIBNAME_engines_ccgost) \
 			LIBEXTRAS='$(LIBOBJ_engines_ccgost)' \
-			LIBDEPS='-L$(TOP_engines_ccgost) -lcrypto' \
+			LIBDEPS='-L. -lcrypto' \
 			link_o.$(SHLIB_TARGET); \
 	else \
 		$(AR) $(LIB_engines_ccgost) $(LIBOBJ_engines_ccgost); \
 	fi
-	@touch lib
+	@touch engines/ccgost/lib
 
 install: install_engines_ccgost
 install_engines_ccgost:
@@ -42,7 +42,7 @@ install_engines_ccgost:
 	if [ -n "$(SHARED_LIBS)" ]; then \
 		set -e; \
 		echo installing $(LIBNAME_engines_ccgost); \
-		pfx=lib; \
+		pfx=engines/ccgost/lib; \
 		if ! expr "$(PLATFORM)" : "Cygwin" >/dev/null; then \
 			case "$(CFLAGS_engines_ccgost)" in \
 			*DSO_BEOS*) sfx=".so";; \
@@ -62,25 +62,25 @@ install_engines_ccgost:
 
 links: links_engines_ccgost
 links_engines_ccgost:
-	@$(PERL) $(TOP_engines_ccgost)/util/mklink.pl ../../test $(TEST_engines_ccgost)
+	@$(PERL) util/mklink.pl ./test $(TEST_engines_ccgost)
 
 tests: tests_engines_ccgost
 tests_engines_ccgost:
 
 files: files_engines_ccgost
 files_engines_ccgost:
-	$(PERL) $(TOP_engines_ccgost)/util/files.pl TOP=$(TOP_engines_ccgost) Makefile >> $(TOP_engines_ccgost)/MINFO
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
 lint: lint_engines_ccgost
 lint_engines_ccgost:
-	lint -DLINT $(INCLUDES_engines_ccgost) $(SRC_engines_ccgost)>fluff
+	lint -DLINT $(INCLUDES_engines_ccgost) $(SRC_engines_ccgost)>engines/ccgost/fluff
 
 dclean: dclean_engines_ccgost
 dclean_engines_ccgost:
 
 clean: clean_engines_ccgost
 clean_engines_ccgost:
-	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff *.so *.sl *.dll *.dylib
+	rm -f engines/ccgost/*.o engines/ccgost/*.d engines/ccgost/*.obj engines/ccgost/lib engines/ccgost/tags engines/ccgost/core engines/ccgost/.pure engines/ccgost/.nfs* engines/ccgost/*.old engines/ccgost/*.bak engines/ccgost/fluff engines/ccgost/*.so engines/ccgost/*.sl engines/ccgost/*.dll engines/ccgost/*.dylib
 
 .c.o:
 	$(CC) $(CFLAGS_engines_ccgost) $(CPPFLAGS) -c -o $@ $<

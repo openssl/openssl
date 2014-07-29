@@ -1,38 +1,38 @@
-INCLUDES_crypto_srp= -I.. -I$(TOP_crypto_srp) -I../../include
+INCLUDES_crypto_srp= -Icrypto -I. -Iinclude
 
 CFLAGS_crypto_srp= $(INCLUDES_crypto_srp) $(CFLAG)
 
-GENERAL_crypto_srp=Makefile
-TEST_crypto_srp=srptest.c
+GENERAL_crypto_srp=crypto/srp/Makefile
+TEST_crypto_srp=crypto/srp/srptest.c
 APPS_crypto_srp=
 
-LIB_crypto_srp=$(TOP_crypto_srp)/libcrypto.a
-LIBSRC_crypto_srp=srp_lib.c srp_vfy.c
-LIBOBJ_crypto_srp=srp_lib.o srp_vfy.o
+LIB_crypto_srp=libcrypto.a
+LIBSRC_crypto_srp=crypto/srp/srp_lib.c crypto/srp/srp_vfy.c
+LIBOBJ_crypto_srp=crypto/srp/srp_lib.o crypto/srp/srp_vfy.o
 
 SRC_crypto_srp= $(LIBSRC_crypto_srp)
 
-EXHEADER_crypto_srp= srp.h
+EXHEADER_crypto_srp= crypto/srp/srp.h
 HEADER_crypto_srp=	$(EXHEADER_crypto_srp)
 
 
 all: all_crypto_srp
-all_crypto_srp:	lib
+all_crypto_srp:	crypto/srp/lib
 
-lib:	$(LIBOBJ_crypto_srp)
+crypto/srp/lib:	$(LIBOBJ_crypto_srp)
 	$(AR) $(LIB_crypto_srp) $(LIBOBJ_crypto_srp)
 	$(RANLIB) $(LIB_crypto_srp) || echo Never mind.
-	@touch lib
+	@touch crypto/srp/lib
 
 files: files_crypto_srp
 files_crypto_srp:
-	$(PERL) $(TOP_crypto_srp)/util/files.pl TOP=$(TOP_crypto_srp) Makefile >> $(TOP_crypto_srp)/MINFO
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
 links: links_crypto_srp
 links_crypto_srp:
-	@$(PERL) $(TOP_crypto_srp)/util/mklink.pl ../../include/openssl $(EXHEADER_crypto_srp)
-	@$(PERL) $(TOP_crypto_srp)/util/mklink.pl ../../test $(TEST_crypto_srp)
-	@$(PERL) $(TOP_crypto_srp)/util/mklink.pl ../../apps $(APPS_crypto_srp)
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_srp)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_srp)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_srp)
 
 install: install_crypto_srp
 install_crypto_srp:
@@ -52,14 +52,14 @@ tests_crypto_srp:
 
 lint: lint_crypto_srp
 lint_crypto_srp:
-	lint -DLINT $(INCLUDES_crypto_srp) $(SRC_crypto_srp)>fluff
+	lint -DLINT $(INCLUDES_crypto_srp) $(SRC_crypto_srp)>crypto/srp/fluff
 
 dclean: dclean_crypto_srp
 dclean_crypto_srp:
 
 clean: clean_crypto_srp
 clean_crypto_srp:
-	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f crypto/srp/*.o crypto/srp/*.d crypto/srp/*.obj crypto/srp/lib crypto/srp/tags crypto/srp/core crypto/srp/.pure crypto/srp/.nfs* crypto/srp/*.old crypto/srp/*.bak crypto/srp/fluff
 
 .c.o:
 	$(CC) $(CFLAGS_crypto_srp) $(CPPFLAGS) -c -o $@ $<

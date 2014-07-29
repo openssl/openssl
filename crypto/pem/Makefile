@@ -2,46 +2,46 @@
 # OpenSSL/crypto/pem/Makefile
 #
 
-INCLUDES_crypto_pem= -I.. -I$(TOP_crypto_pem) -I../../include
+INCLUDES_crypto_pem= -Icrypto -I. -Iinclude
 
 CFLAGS_crypto_pem= $(INCLUDES_crypto_pem) $(CFLAG)
 
-GENERAL_crypto_pem=Makefile
+GENERAL_crypto_pem=crypto/pem/Makefile
 TEST_crypto_pem=
 APPS_crypto_pem=
 
-LIB_crypto_pem=$(TOP_crypto_pem)/libcrypto.a
-LIBSRC_crypto_pem= pem_sign.c pem_seal.c pem_info.c pem_lib.c pem_all.c pem_err.c \
-	pem_x509.c pem_xaux.c pem_oth.c pem_pk8.c pem_pkey.c pvkfmt.c
+LIB_crypto_pem=libcrypto.a
+LIBSRC_crypto_pem= crypto/pem/pem_sign.c crypto/pem/pem_seal.c crypto/pem/pem_info.c crypto/pem/pem_lib.c crypto/pem/pem_all.c crypto/pem/pem_err.c \
+	crypto/pem/pem_x509.c crypto/pem/pem_xaux.c crypto/pem/pem_oth.c crypto/pem/pem_pk8.c crypto/pem/pem_pkey.c crypto/pem/pvkfmt.c
 
-LIBOBJ_crypto_pem=	pem_sign.o pem_seal.o pem_info.o pem_lib.o pem_all.o pem_err.o \
-	pem_x509.o pem_xaux.o pem_oth.o pem_pk8.o pem_pkey.o pvkfmt.o
+LIBOBJ_crypto_pem=	crypto/pem/pem_sign.o crypto/pem/pem_seal.o crypto/pem/pem_info.o crypto/pem/pem_lib.o crypto/pem/pem_all.o crypto/pem/pem_err.o \
+	crypto/pem/pem_x509.o crypto/pem/pem_xaux.o crypto/pem/pem_oth.o crypto/pem/pem_pk8.o crypto/pem/pem_pkey.o crypto/pem/pvkfmt.o
 
 SRC_crypto_pem= $(LIBSRC_crypto_pem)
 
-EXHEADER_crypto_pem= pem.h pem2.h
+EXHEADER_crypto_pem= crypto/pem/pem.h crypto/pem/pem2.h
 HEADER_crypto_pem=	$(EXHEADER_crypto_pem)
 
 ALL_crypto_pem=    $(GENERAL_crypto_pem) $(SRC_crypto_pem) $(HEADER_crypto_pem)
 
 
 all: all_crypto_pem
-all_crypto_pem:	lib
+all_crypto_pem:	crypto/pem/lib
 
-lib:	$(LIBOBJ_crypto_pem)
+crypto/pem/lib:	$(LIBOBJ_crypto_pem)
 	$(ARX) $(LIB_crypto_pem) $(LIBOBJ_crypto_pem)
 	$(RANLIB) $(LIB_crypto_pem) || echo Never mind.
-	@touch lib
+	@touch crypto/pem/lib
 
 files: files_crypto_pem
 files_crypto_pem:
-	$(PERL) $(TOP_crypto_pem)/util/files.pl TOP=$(TOP_crypto_pem) Makefile >> $(TOP_crypto_pem)/MINFO
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
 links: links_crypto_pem
 links_crypto_pem: $(EXHEADER_crypto_pem)
-	@$(PERL) $(TOP_crypto_pem)/util/mklink.pl ../../include/openssl $(EXHEADER_crypto_pem)
-	@$(PERL) $(TOP_crypto_pem)/util/mklink.pl ../../test $(TEST_crypto_pem)
-	@$(PERL) $(TOP_crypto_pem)/util/mklink.pl ../../apps $(APPS_crypto_pem)
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_pem)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_pem)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_pem)
 
 install: install_crypto_pem
 install_crypto_pem:
@@ -61,14 +61,14 @@ tests_crypto_pem:
 
 lint: lint_crypto_pem
 lint_crypto_pem:
-	lint -DLINT $(INCLUDES_crypto_pem) $(SRC_crypto_pem)>fluff
+	lint -DLINT $(INCLUDES_crypto_pem) $(SRC_crypto_pem)>crypto/pem/fluff
 
 dclean: dclean_crypto_pem
 dclean_crypto_pem:
 
 clean: clean_crypto_pem
 clean_crypto_pem:
-	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f crypto/pem/*.o crypto/pem/*.d crypto/pem/*.obj crypto/pem/lib crypto/pem/tags crypto/pem/core crypto/pem/.pure crypto/pem/.nfs* crypto/pem/*.old crypto/pem/*.bak crypto/pem/fluff
 
 .c.o:
 	$(CC) $(CFLAGS_crypto_pem) $(CPPFLAGS) -c -o $@ $<

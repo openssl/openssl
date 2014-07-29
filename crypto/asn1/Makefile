@@ -2,78 +2,78 @@
 # OpenSSL/crypto/asn1/Makefile
 #
 
-INCLUDES_crypto_asn1= -I.. -I$(TOP_crypto_asn1) -I../../include
+INCLUDES_crypto_asn1= -Icrypto -I. -Iinclude
 
 CFLAGS_crypto_asn1= $(INCLUDES_crypto_asn1) $(CFLAG)
 
-GENERAL_crypto_asn1=Makefile README
+GENERAL_crypto_asn1=crypto/asn1/Makefile crypto/asn1/README
 TEST_crypto_asn1=
 APPS_crypto_asn1=
 
-LIB_crypto_asn1=$(TOP_crypto_asn1)/libcrypto.a
-LIBSRC_crypto_asn1=	a_object.c a_bitstr.c a_utctm.c a_gentm.c a_time.c a_int.c a_octet.c \
-	a_print.c a_type.c a_set.c a_dup.c a_d2i_fp.c a_i2d_fp.c \
-	a_enum.c a_utf8.c a_sign.c a_digest.c a_verify.c a_mbstr.c a_strex.c \
-	x_algor.c x_val.c x_pubkey.c x_sig.c x_req.c x_attrib.c x_bignum.c \
-	x_long.c x_name.c x_x509.c x_x509a.c x_crl.c x_info.c x_spki.c nsseq.c \
-	x_nx509.c d2i_pu.c d2i_pr.c i2d_pu.c i2d_pr.c\
-	t_req.c t_x509.c t_x509a.c t_crl.c t_pkey.c t_spki.c t_bitst.c \
-	tasn_new.c tasn_fre.c tasn_enc.c tasn_dec.c tasn_utl.c tasn_typ.c \
-	tasn_prn.c tasn_scn.c ameth_lib.c \
-	f_int.c f_string.c n_pkey.c \
-	f_enum.c x_pkey.c a_bool.c x_exten.c bio_asn1.c bio_ndef.c asn_mime.c \
-	asn1_gen.c asn1_par.c asn1_lib.c asn1_err.c a_bytes.c a_strnid.c \
-	evp_asn1.c asn_pack.c p5_pbe.c p5_pbev2.c p8_pkey.c asn_moid.c \
-	asn_mstbl.c
-LIBOBJ_crypto_asn1= a_object.o a_bitstr.o a_utctm.o a_gentm.o a_time.o a_int.o a_octet.o \
-	a_print.o a_type.o a_set.o a_dup.o a_d2i_fp.o a_i2d_fp.o \
-	a_enum.o a_utf8.o a_sign.o a_digest.o a_verify.o a_mbstr.o a_strex.o \
-	x_algor.o x_val.o x_pubkey.o x_sig.o x_req.o x_attrib.o x_bignum.o \
-	x_long.o x_name.o x_x509.o x_x509a.o x_crl.o x_info.o x_spki.o nsseq.o \
-	x_nx509.o d2i_pu.o d2i_pr.o i2d_pu.o i2d_pr.o \
-	t_req.o t_x509.o t_x509a.o t_crl.o t_pkey.o t_spki.o t_bitst.o \
-	tasn_new.o tasn_fre.o tasn_enc.o tasn_dec.o tasn_utl.o tasn_typ.o \
-	tasn_prn.o tasn_scn.o ameth_lib.o \
-	f_int.o f_string.o n_pkey.o \
-	f_enum.o x_pkey.o a_bool.o x_exten.o bio_asn1.o bio_ndef.o asn_mime.o \
-	asn1_gen.o asn1_par.o asn1_lib.o asn1_err.o a_bytes.o a_strnid.o \
-	evp_asn1.o asn_pack.o p5_pbe.o p5_pbev2.o p8_pkey.o asn_moid.o \
-	asn_mstbl.o
+LIB_crypto_asn1=libcrypto.a
+LIBSRC_crypto_asn1=	crypto/asn1/a_object.c crypto/asn1/a_bitstr.c crypto/asn1/a_utctm.c crypto/asn1/a_gentm.c crypto/asn1/a_time.c crypto/asn1/a_int.c crypto/asn1/a_octet.c \
+	crypto/asn1/a_print.c crypto/asn1/a_type.c crypto/asn1/a_set.c crypto/asn1/a_dup.c crypto/asn1/a_d2i_fp.c crypto/asn1/a_i2d_fp.c \
+	crypto/asn1/a_enum.c crypto/asn1/a_utf8.c crypto/asn1/a_sign.c crypto/asn1/a_digest.c crypto/asn1/a_verify.c crypto/asn1/a_mbstr.c crypto/asn1/a_strex.c \
+	crypto/asn1/x_algor.c crypto/asn1/x_val.c crypto/asn1/x_pubkey.c crypto/asn1/x_sig.c crypto/asn1/x_req.c crypto/asn1/x_attrib.c crypto/asn1/x_bignum.c \
+	crypto/asn1/x_long.c crypto/asn1/x_name.c crypto/asn1/x_x509.c crypto/asn1/x_x509a.c crypto/asn1/x_crl.c crypto/asn1/x_info.c crypto/asn1/x_spki.c crypto/asn1/nsseq.c \
+	crypto/asn1/x_nx509.c crypto/asn1/d2i_pu.c crypto/asn1/d2i_pr.c crypto/asn1/i2d_pu.c crypto/asn1/i2d_pr.c\
+	crypto/asn1/t_req.c crypto/asn1/t_x509.c crypto/asn1/t_x509a.c crypto/asn1/t_crl.c crypto/asn1/t_pkey.c crypto/asn1/t_spki.c crypto/asn1/t_bitst.c \
+	crypto/asn1/tasn_new.c crypto/asn1/tasn_fre.c crypto/asn1/tasn_enc.c crypto/asn1/tasn_dec.c crypto/asn1/tasn_utl.c crypto/asn1/tasn_typ.c \
+	crypto/asn1/tasn_prn.c crypto/asn1/tasn_scn.c crypto/asn1/ameth_lib.c \
+	crypto/asn1/f_int.c crypto/asn1/f_string.c crypto/asn1/n_pkey.c \
+	crypto/asn1/f_enum.c crypto/asn1/x_pkey.c crypto/asn1/a_bool.c crypto/asn1/x_exten.c crypto/asn1/bio_asn1.c crypto/asn1/bio_ndef.c crypto/asn1/asn_mime.c \
+	crypto/asn1/asn1_gen.c crypto/asn1/asn1_par.c crypto/asn1/asn1_lib.c crypto/asn1/asn1_err.c crypto/asn1/a_bytes.c crypto/asn1/a_strnid.c \
+	crypto/asn1/evp_asn1.c crypto/asn1/asn_pack.c crypto/asn1/p5_pbe.c crypto/asn1/p5_pbev2.c crypto/asn1/p8_pkey.c crypto/asn1/asn_moid.c \
+	crypto/asn1/asn_mstbl.c
+LIBOBJ_crypto_asn1= crypto/asn1/a_object.o crypto/asn1/a_bitstr.o crypto/asn1/a_utctm.o crypto/asn1/a_gentm.o crypto/asn1/a_time.o crypto/asn1/a_int.o crypto/asn1/a_octet.o \
+	crypto/asn1/a_print.o crypto/asn1/a_type.o crypto/asn1/a_set.o crypto/asn1/a_dup.o crypto/asn1/a_d2i_fp.o crypto/asn1/a_i2d_fp.o \
+	crypto/asn1/a_enum.o crypto/asn1/a_utf8.o crypto/asn1/a_sign.o crypto/asn1/a_digest.o crypto/asn1/a_verify.o crypto/asn1/a_mbstr.o crypto/asn1/a_strex.o \
+	crypto/asn1/x_algor.o crypto/asn1/x_val.o crypto/asn1/x_pubkey.o crypto/asn1/x_sig.o crypto/asn1/x_req.o crypto/asn1/x_attrib.o crypto/asn1/x_bignum.o \
+	crypto/asn1/x_long.o crypto/asn1/x_name.o crypto/asn1/x_x509.o crypto/asn1/x_x509a.o crypto/asn1/x_crl.o crypto/asn1/x_info.o crypto/asn1/x_spki.o crypto/asn1/nsseq.o \
+	crypto/asn1/x_nx509.o crypto/asn1/d2i_pu.o crypto/asn1/d2i_pr.o crypto/asn1/i2d_pu.o crypto/asn1/i2d_pr.o \
+	crypto/asn1/t_req.o crypto/asn1/t_x509.o crypto/asn1/t_x509a.o crypto/asn1/t_crl.o crypto/asn1/t_pkey.o crypto/asn1/t_spki.o crypto/asn1/t_bitst.o \
+	crypto/asn1/tasn_new.o crypto/asn1/tasn_fre.o crypto/asn1/tasn_enc.o crypto/asn1/tasn_dec.o crypto/asn1/tasn_utl.o crypto/asn1/tasn_typ.o \
+	crypto/asn1/tasn_prn.o crypto/asn1/tasn_scn.o crypto/asn1/ameth_lib.o \
+	crypto/asn1/f_int.o crypto/asn1/f_string.o crypto/asn1/n_pkey.o \
+	crypto/asn1/f_enum.o crypto/asn1/x_pkey.o crypto/asn1/a_bool.o crypto/asn1/x_exten.o crypto/asn1/bio_asn1.o crypto/asn1/bio_ndef.o crypto/asn1/asn_mime.o \
+	crypto/asn1/asn1_gen.o crypto/asn1/asn1_par.o crypto/asn1/asn1_lib.o crypto/asn1/asn1_err.o crypto/asn1/a_bytes.o crypto/asn1/a_strnid.o \
+	crypto/asn1/evp_asn1.o crypto/asn1/asn_pack.o crypto/asn1/p5_pbe.o crypto/asn1/p5_pbev2.o crypto/asn1/p8_pkey.o crypto/asn1/asn_moid.o \
+	crypto/asn1/asn_mstbl.o
 
 SRC_crypto_asn1= $(LIBSRC_crypto_asn1)
 
-EXHEADER_crypto_asn1=  asn1.h asn1_mac.h asn1t.h
-HEADER_crypto_asn1=	$(EXHEADER_crypto_asn1) asn1_locl.h
+EXHEADER_crypto_asn1=  crypto/asn1/asn1.h crypto/asn1/asn1_mac.h crypto/asn1/asn1t.h
+HEADER_crypto_asn1=	$(EXHEADER_crypto_asn1) crypto/asn1/asn1_locl.h
 
 ALL_crypto_asn1=    $(GENERAL_crypto_asn1) $(SRC_crypto_asn1) $(HEADER_crypto_asn1)
 
 
 test: test_crypto_asn1
-test_crypto_asn1:	test.c
-	cc -g -I../../include -c test.c
-	cc -g -I../../include -o test test.o -L../.. -lcrypto
+test_crypto_asn1:	crypto/asn1/test.c
+	cc -g -Iinclude -c crypto/asn1/test.c
+	cc -g -Iinclude -o test crypto/asn1/test.o -L. -lcrypto
 
-pk:	pk.c
-	cc -g -I../../include -c pk.c
-	cc -g -I../../include -o pk pk.o -L../.. -lcrypto
+crypto/asn1/pk:	crypto/asn1/pk.c
+	cc -g -Iinclude -c crypto/asn1/pk.c
+	cc -g -Iinclude -o crypto/asn1/pk crypto/asn1/pk.o -L. -lcrypto
 
 all: all_crypto_asn1
-all_crypto_asn1:	lib
+all_crypto_asn1:	crypto/asn1/lib
 
-lib:	$(LIBOBJ_crypto_asn1)
+crypto/asn1/lib:	$(LIBOBJ_crypto_asn1)
 	$(ARX) $(LIB_crypto_asn1) $(LIBOBJ_crypto_asn1)
 	$(RANLIB) $(LIB_crypto_asn1) || echo Never mind.
-	@touch lib
+	@touch crypto/asn1/lib
 
 files: files_crypto_asn1
 files_crypto_asn1:
-	$(PERL) $(TOP_crypto_asn1)/util/files.pl TOP=$(TOP_crypto_asn1) Makefile >> $(TOP_crypto_asn1)/MINFO
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
 links: links_crypto_asn1
 links_crypto_asn1:
-	@$(PERL) $(TOP_crypto_asn1)/util/mklink.pl ../../include/openssl $(EXHEADER_crypto_asn1)
-	@$(PERL) $(TOP_crypto_asn1)/util/mklink.pl ../../test $(TEST_crypto_asn1)
-	@$(PERL) $(TOP_crypto_asn1)/util/mklink.pl ../../apps $(APPS_crypto_asn1)
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_asn1)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_asn1)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_asn1)
 
 install: install_crypto_asn1
 install_crypto_asn1:
@@ -93,14 +93,14 @@ tests_crypto_asn1:
 
 lint: lint_crypto_asn1
 lint_crypto_asn1:
-	lint -DLINT $(INCLUDES_crypto_asn1) $(SRC_crypto_asn1)>fluff
+	lint -DLINT $(INCLUDES_crypto_asn1) $(SRC_crypto_asn1)>crypto/asn1/fluff
 
 dclean: dclean_crypto_asn1
 dclean_crypto_asn1:
 
 clean: clean_crypto_asn1
 clean_crypto_asn1:
-	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f crypto/asn1/*.o crypto/asn1/*.d crypto/asn1/*.obj crypto/asn1/lib crypto/asn1/tags crypto/asn1/core crypto/asn1/.pure crypto/asn1/.nfs* crypto/asn1/*.old crypto/asn1/*.bak crypto/asn1/fluff
 
 
 .c.o:

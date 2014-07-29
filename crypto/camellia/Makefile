@@ -10,48 +10,48 @@ CFLAGS_crypto_camellia= $(INCLUDES_crypto_camellia) $(CFLAG)
 ASFLAGS_crypto_camellia= $(INCLUDES_crypto_camellia) $(ASFLAG)
 AFLAGS_crypto_camellia= $(ASFLAGS_crypto_camellia)
 
-GENERAL_crypto_camellia=Makefile
+GENERAL_crypto_camellia=crypto/camellia/Makefile
 #TEST=camelliatest.c
 APPS_crypto_camellia=
 
-LIB_crypto_camellia=$(TOP_crypto_camellia)/libcrypto.a
-LIBSRC_crypto_camellia=camellia.c cmll_misc.c cmll_ecb.c cmll_cbc.c cmll_ofb.c \
-	   cmll_cfb.c cmll_ctr.c 
+LIB_crypto_camellia=libcrypto.a
+LIBSRC_crypto_camellia=crypto/camellia/camellia.c crypto/camellia/cmll_misc.c crypto/camellia/cmll_ecb.c crypto/camellia/cmll_cbc.c crypto/camellia/cmll_ofb.c \
+	   crypto/camellia/cmll_cfb.c crypto/camellia/cmll_ctr.c 
 
-LIBOBJ_crypto_camellia= cmll_ecb.o cmll_ofb.o cmll_cfb.o cmll_ctr.o $(CMLL_ENC)
+LIBOBJ_crypto_camellia= crypto/camellia/cmll_ecb.o crypto/camellia/cmll_ofb.o crypto/camellia/cmll_cfb.o crypto/camellia/cmll_ctr.o $(CMLL_ENC)
 
 SRC_crypto_camellia= $(LIBSRC_crypto_camellia)
 
-EXHEADER_crypto_camellia= camellia.h
-HEADER_crypto_camellia= cmll_locl.h $(EXHEADER_crypto_camellia)
+EXHEADER_crypto_camellia= crypto/camellia/camellia.h
+HEADER_crypto_camellia= crypto/camellia/cmll_locl.h $(EXHEADER_crypto_camellia)
 
 ALL_crypto_camellia=    $(GENERAL_crypto_camellia) $(SRC_crypto_camellia) $(HEADER_crypto_camellia)
 
 
 all: all_crypto_camellia
-all_crypto_camellia:	lib
+all_crypto_camellia:	crypto/camellia/lib
 
-lib:	$(LIBOBJ_crypto_camellia)
+crypto/camellia/lib:	$(LIBOBJ_crypto_camellia)
 	$(ARX) $(LIB_crypto_camellia) $(LIBOBJ_crypto_camellia)
 	$(RANLIB) $(LIB_crypto_camellia) || echo Never mind.
-	@touch lib
+	@touch crypto/camellia/lib
 
-cmll-x86.s:	asm/cmll-x86.pl ../perlasm/x86asm.pl
-	$(PERL) asm/cmll-x86.pl $(PERLASM_SCHEME) $(CFLAGS_crypto_camellia) $(PROCESSOR) > $@
-cmll-x86_64.s:  asm/cmll-x86_64.pl
-	$(PERL) asm/cmll-x86_64.pl $(PERLASM_SCHEME) > $@
-cmllt4-sparcv9.s: asm/cmllt4-sparcv9.pl
-	$(PERL) asm/cmllt4-sparcv9.pl $(CFLAGS_crypto_camellia) > $@
+crypto/camellia/cmll-x86.s:	crypto/camellia/asm/cmll-x86.pl crypto/perlasm/x86asm.pl
+	$(PERL) crypto/camellia/asm/cmll-x86.pl $(PERLASM_SCHEME) $(CFLAGS_crypto_camellia) $(PROCESSOR) > $@
+crypto/camellia/cmll-x86_64.s:  crypto/camellia/asm/cmll-x86_64.pl
+	$(PERL) crypto/camellia/asm/cmll-x86_64.pl $(PERLASM_SCHEME) > $@
+crypto/camellia/cmllt4-sparcv9.s: crypto/camellia/asm/cmllt4-sparcv9.pl
+	$(PERL) crypto/camellia/asm/cmllt4-sparcv9.pl $(CFLAGS_crypto_camellia) > $@
 
 files: files_crypto_camellia
 files_crypto_camellia:
-	$(PERL) $(TOP_crypto_camellia)/util/files.pl TOP=$(TOP_crypto_camellia) Makefile >> $(TOP_crypto_camellia)/MINFO
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
 links: links_crypto_camellia
 links_crypto_camellia:
-	@$(PERL) $(TOP_crypto_camellia)/util/mklink.pl ../../include/openssl $(EXHEADER_crypto_camellia)
-	@$(PERL) $(TOP_crypto_camellia)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP_crypto_camellia)/util/mklink.pl ../../apps $(APPS_crypto_camellia)
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_camellia)
+	@$(PERL) util/mklink.pl ./test $(TEST)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_camellia)
 
 install: install_crypto_camellia
 install_crypto_camellia:
@@ -71,14 +71,14 @@ tests_crypto_camellia:
 
 lint: lint_crypto_camellia
 lint_crypto_camellia:
-	lint -DLINT $(INCLUDES_crypto_camellia) $(SRC_crypto_camellia)>fluff
+	lint -DLINT $(INCLUDES_crypto_camellia) $(SRC_crypto_camellia)>crypto/camellia/fluff
 
 dclean: dclean_crypto_camellia
 dclean_crypto_camellia:
 
 clean: clean_crypto_camellia
 clean_crypto_camellia:
-	rm -f *.s *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f crypto/camellia/*.s crypto/camellia/*.o crypto/camellia/*.d crypto/camellia/*.obj crypto/camellia/lib crypto/camellia/tags crypto/camellia/core crypto/camellia/.pure crypto/camellia/.nfs* crypto/camellia/*.old crypto/camellia/*.bak crypto/camellia/fluff
 
 .S.s:
 	$(CPP_crypto_camellia) $(CPPFLAGS) -o $@ $<

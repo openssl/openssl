@@ -1,7 +1,7 @@
 LIBNAME_demos_engines_rsaref=	librsaref
-SRC_demos_engines_rsaref=		rsaref.c
-OBJ_demos_engines_rsaref=		rsaref.o
-HEADER_demos_engines_rsaref=		rsaref.h
+SRC_demos_engines_rsaref=		demos/engines/rsaref/rsaref.c
+OBJ_demos_engines_rsaref=		demos/engines/rsaref/rsaref.o
+HEADER_demos_engines_rsaref=		demos/engines/rsaref/rsaref.h
 
 PIC_demos_engines_rsaref=		-fPIC
 CFLAGS_demos_engines_rsaref=		-g -I../../../include $(PIC_demos_engines_rsaref) -DENGINE_DYNAMIC_SUPPORT
@@ -22,37 +22,37 @@ all_demos_engines_rsaref:
 		@echo 'gnu:      Generic GNU-based system (gcc and GNU ld)'
 		@echo ''
 
-FORCE.install:
+demos/engines/rsaref/FORCE.install:
 install: install_demos_engines_rsaref
-install_demos_engines_rsaref:	FORCE.install
-		cd install; \
+install_demos_engines_rsaref:	demos/engines/rsaref/FORCE.install
+		cd demos/engines/rsaref/install; \
 			make -f unix/makefile CFLAGS='-I. -DPROTOTYPES=1 -O -c' RSAREFLIB=librsaref.a librsaref.a
 
 FORCE.update: FORCE.update_demos_engines_rsaref
 FORCE.update_demos_engines_rsaref:
 update: update_demos_engines_rsaref
-update_demos_engines_rsaref:		FORCE.update
-		perl ../../../util/mkerr.pl -conf rsaref.ec \
-			-nostatic -staticloader -write rsaref.c
+update_demos_engines_rsaref:		FORCE.update_demos_engines_rsaref
+		perl util/mkerr.pl -conf rsaref.ec \
+			-nostatic -staticloader -write demos/engines/rsaref/rsaref.c
 
-darwin:		install $(SHLIB_demos_engines_rsaref).darwin
-cygwin:		install $(SHLIB_demos_engines_rsaref).cygwin
+demos/engines/rsaref/darwin:		install_demos_engines_rsaref $(SHLIB_demos_engines_rsaref).darwin
+demos/engines/rsaref/cygwin:		install_demos_engines_rsaref $(SHLIB_demos_engines_rsaref).cygwin
 gnu: gnu_demos_engines_rsaref
-gnu_demos_engines_rsaref:		install $(SHLIB_demos_engines_rsaref).gnu
-alpha-osf1:	install $(SHLIB_demos_engines_rsaref).alpha-osf1
+gnu_demos_engines_rsaref:		install_demos_engines_rsaref $(SHLIB_demos_engines_rsaref).gnu
+demos/engines/rsaref/alpha-osf1:	install_demos_engines_rsaref $(SHLIB_demos_engines_rsaref).alpha-osf1
 tru64: tru64_demos_engines_rsaref
-tru64_demos_engines_rsaref:		install $(SHLIB_demos_engines_rsaref).tru64
+tru64_demos_engines_rsaref:		install_demos_engines_rsaref $(SHLIB_demos_engines_rsaref).tru64
 solaris: solaris_demos_engines_rsaref
-solaris_demos_engines_rsaref:	install $(SHLIB_demos_engines_rsaref).solaris
+solaris_demos_engines_rsaref:	install_demos_engines_rsaref $(SHLIB_demos_engines_rsaref).solaris
 irix: irix_demos_engines_rsaref
-irix_demos_engines_rsaref:		install $(SHLIB_demos_engines_rsaref).irix
+irix_demos_engines_rsaref:		install_demos_engines_rsaref $(SHLIB_demos_engines_rsaref).irix
 hpux32: hpux32_demos_engines_rsaref
-hpux32_demos_engines_rsaref:		install $(SHLIB_demos_engines_rsaref).hpux32
+hpux32_demos_engines_rsaref:		install_demos_engines_rsaref $(SHLIB_demos_engines_rsaref).hpux32
 hpux64: hpux64_demos_engines_rsaref
-hpux64_demos_engines_rsaref:		install $(SHLIB_demos_engines_rsaref).hpux64
+hpux64_demos_engines_rsaref:		install_demos_engines_rsaref $(SHLIB_demos_engines_rsaref).hpux64
 aix: aix_demos_engines_rsaref
-aix_demos_engines_rsaref:		install $(SHLIB_demos_engines_rsaref).aix
-reliantunix:	install $(SHLIB_demos_engines_rsaref).reliantunix
+aix_demos_engines_rsaref:		install_demos_engines_rsaref $(SHLIB_demos_engines_rsaref).aix
+demos/engines/rsaref/reliantunix:	install_demos_engines_rsaref $(SHLIB_demos_engines_rsaref).reliantunix
 
 $(LIB_demos_engines_rsaref):		$(OBJ_demos_engines_rsaref)
 		$(AR) $(LIB_demos_engines_rsaref) $(OBJ_demos_engines_rsaref)

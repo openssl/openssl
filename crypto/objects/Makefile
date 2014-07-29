@@ -2,55 +2,55 @@
 # OpenSSL/crypto/objects/Makefile
 #
 
-INCLUDES_crypto_objects= -I.. -I$(TOP_crypto_objects) -I../../include
+INCLUDES_crypto_objects= -Icrypto -I. -Iinclude
 
 CFLAGS_crypto_objects= $(INCLUDES_crypto_objects) $(CFLAG)
 
-GENERAL_crypto_objects=Makefile README
+GENERAL_crypto_objects=crypto/objects/Makefile crypto/objects/README
 TEST_crypto_objects=
 APPS_crypto_objects=
 
-LIB_crypto_objects=$(TOP_crypto_objects)/libcrypto.a
-LIBSRC_crypto_objects=	o_names.c obj_dat.c obj_lib.c obj_err.c obj_xref.c
-LIBOBJ_crypto_objects= o_names.o obj_dat.o obj_lib.o obj_err.o obj_xref.o
+LIB_crypto_objects=libcrypto.a
+LIBSRC_crypto_objects=	crypto/objects/o_names.c crypto/objects/obj_dat.c crypto/objects/obj_lib.c crypto/objects/obj_err.c crypto/objects/obj_xref.c
+LIBOBJ_crypto_objects= crypto/objects/o_names.o crypto/objects/obj_dat.o crypto/objects/obj_lib.o crypto/objects/obj_err.o crypto/objects/obj_xref.o
 
 SRC_crypto_objects= $(LIBSRC_crypto_objects)
 
-EXHEADER_crypto_objects= objects.h obj_mac.h
-HEADER_crypto_objects=	$(EXHEADER_crypto_objects) obj_dat.h obj_xref.h
+EXHEADER_crypto_objects= crypto/objects/objects.h crypto/objects/obj_mac.h
+HEADER_crypto_objects=	$(EXHEADER_crypto_objects) crypto/objects/obj_dat.h crypto/objects/obj_xref.h
 
 ALL_crypto_objects=    $(GENERAL_crypto_objects) $(SRC_crypto_objects) $(HEADER_crypto_objects)
 
 
 all: all_crypto_objects
-all_crypto_objects:	obj_dat.h obj_xref.h lib
+all_crypto_objects:	crypto/objects/obj_dat.h crypto/objects/obj_xref.h crypto/objects/lib
 
-lib:	$(LIBOBJ_crypto_objects)
+crypto/objects/lib:	$(LIBOBJ_crypto_objects)
 	$(ARX) $(LIB_crypto_objects) $(LIBOBJ_crypto_objects)
 	$(RANLIB) $(LIB_crypto_objects) || echo Never mind.
-	@touch lib
+	@touch crypto/objects/lib
 
-obj_dat.h: obj_dat.pl obj_mac.h
-	$(PERL) obj_dat.pl obj_mac.h obj_dat.h
+crypto/objects/obj_dat.h: crypto/objects/obj_dat.pl crypto/objects/obj_mac.h
+	$(PERL) crypto/objects/obj_dat.pl crypto/objects/obj_mac.h crypto/objects/obj_dat.h
 
 # objects.pl both reads and writes obj_mac.num
-obj_mac.h: objects.pl objects.txt obj_mac.num
-	$(PERL) objects.pl objects.txt obj_mac.num obj_mac.h
-	@sleep 1; touch obj_mac.h; sleep 1
+crypto/objects/obj_mac.h: crypto/objects/objects.pl crypto/objects/objects.txt crypto/objects/obj_mac.num
+	$(PERL) crypto/objects/objects.pl crypto/objects/objects.txt crypto/objects/obj_mac.num crypto/objects/obj_mac.h
+	@sleep 1; touch crypto/objects/obj_mac.h; sleep 1
 
-obj_xref.h: objxref.pl obj_xref.txt obj_mac.num
-	$(PERL) objxref.pl obj_mac.num obj_xref.txt > obj_xref.h
-	@sleep 1; touch obj_xref.h; sleep 1
+crypto/objects/obj_xref.h: crypto/objects/objxref.pl crypto/objects/obj_xref.txt crypto/objects/obj_mac.num
+	$(PERL) crypto/objects/objxref.pl crypto/objects/obj_mac.num crypto/objects/obj_xref.txt > crypto/objects/obj_xref.h
+	@sleep 1; touch crypto/objects/obj_xref.h; sleep 1
 
 files: files_crypto_objects
 files_crypto_objects:
-	$(PERL) $(TOP_crypto_objects)/util/files.pl TOP=$(TOP_crypto_objects) Makefile >> $(TOP_crypto_objects)/MINFO
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
 links: links_crypto_objects
 links_crypto_objects:
-	@$(PERL) $(TOP_crypto_objects)/util/mklink.pl ../../include/openssl $(EXHEADER_crypto_objects)
-	@$(PERL) $(TOP_crypto_objects)/util/mklink.pl ../../test $(TEST_crypto_objects)
-	@$(PERL) $(TOP_crypto_objects)/util/mklink.pl ../../apps $(APPS_crypto_objects)
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_objects)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_objects)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_objects)
 
 install: install_crypto_objects
 install_crypto_objects:
@@ -70,14 +70,14 @@ tests_crypto_objects:
 
 lint: lint_crypto_objects
 lint_crypto_objects:
-	lint -DLINT $(INCLUDES_crypto_objects) $(SRC_crypto_objects)>fluff
+	lint -DLINT $(INCLUDES_crypto_objects) $(SRC_crypto_objects)>crypto/objects/fluff
 
 dclean: dclean_crypto_objects
 dclean_crypto_objects:
 
 clean: clean_crypto_objects
 clean_crypto_objects:
-	rm -f *.o *.d *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f crypto/objects/*.o crypto/objects/*.d crypto/objects/*.obj crypto/objects/lib crypto/objects/tags crypto/objects/core crypto/objects/.pure crypto/objects/.nfs* crypto/objects/*.old crypto/objects/*.bak crypto/objects/fluff
 
 .c.o:
 	$(CC) $(CFLAGS_crypto_objects) $(CPPFLAGS) -c -o $@ $<

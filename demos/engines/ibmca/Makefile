@@ -1,7 +1,7 @@
 LIBNAME_demos_engines_ibmca=	libibmca
-SRC_demos_engines_ibmca=		hw_ibmca.c
-OBJ_demos_engines_ibmca=		hw_ibmca.o
-HEADER_demos_engines_ibmca=		hw_ibmca.h
+SRC_demos_engines_ibmca=		demos/engines/ibmca/hw_ibmca.c
+OBJ_demos_engines_ibmca=		demos/engines/ibmca/hw_ibmca.o
+HEADER_demos_engines_ibmca=		demos/engines/ibmca/hw_ibmca.h
 
 PIC_demos_engines_ibmca=		-fPIC
 CFLAGS_demos_engines_ibmca=		-g -I../../../include $(PIC_demos_engines_ibmca) -DENGINE_DYNAMIC_SUPPORT -DFLAT_INC
@@ -25,9 +25,9 @@ all_demos_engines_ibmca:
 FORCE.update: FORCE.update_demos_engines_ibmca
 FORCE.update_demos_engines_ibmca:
 update: update_demos_engines_ibmca
-update_demos_engines_ibmca:		FORCE.update
-		perl ../../../util/mkerr.pl -conf hw_ibmca.ec \
-			-nostatic -staticloader -write hw_ibmca.c
+update_demos_engines_ibmca:		FORCE.update_demos_engines_ibmca
+		perl util/mkerr.pl -conf hw_ibmca.ec \
+			-nostatic -staticloader -write demos/engines/ibmca/hw_ibmca.c
 
 gnu: gnu_demos_engines_ibmca
 gnu_demos_engines_ibmca:		$(SHLIB_demos_engines_ibmca).gnu
