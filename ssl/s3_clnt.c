@@ -954,6 +954,15 @@ int ssl3_get_server_hello(SSL *s)
 		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_WRONG_CIPHER_RETURNED);
 		goto f_err;
 		}
+#ifndef OPENSSL_NO_SRP
+	if (((c->algorithm_mkey & SSL_kSRP) || (c->algorithm_auth & SSL_aSRP)) &&
+		    !(s->srp_ctx.srp_Mask & SSL_kSRP))
+		{
+		al=SSL_AD_ILLEGAL_PARAMETER;
+		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_WRONG_CIPHER_RETURNED);
+		goto f_err;
+		}
+#endif /* OPENSSL_NO_SRP */
 	p+=ssl_put_cipher_by_char(s,NULL,NULL);
 
 	sk=ssl_get_ciphers_by_id(s);
