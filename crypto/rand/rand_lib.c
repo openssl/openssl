@@ -200,7 +200,7 @@ static size_t drbg_get_entropy(DRBG_CTX *ctx, unsigned char **pout,
 	*pout = OPENSSL_malloc(min_len);
 	if (!*pout)
 		return 0;
-	if (md_rand_bytes_lock(*pout, min_len, 0, 0) <= 0)
+	if (ssleay_rand_bytes(*pout, min_len, 0, 0) <= 0)
 		{
 		OPENSSL_free(*pout);
 		*pout = NULL;
