@@ -159,7 +159,6 @@ const char RAND_version[]="RAND" OPENSSL_VERSION_PTEXT;
 static void ssleay_rand_cleanup(void);
 static void ssleay_rand_seed(const void *buf, int num);
 static void ssleay_rand_add(const void *buf, int num, double add_entropy);
-static int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo);
 static int ssleay_rand_nopseudo_bytes(unsigned char *buf, int num);
 static int ssleay_rand_pseudo_bytes(unsigned char *buf, int num);
 static int ssleay_rand_status(void);
@@ -334,12 +333,7 @@ static void ssleay_rand_seed(const void *buf, int num)
 	ssleay_rand_add(buf, num, (double)num);
 	}
 
-static int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo)
-	{
-	return md_rand_bytes_lock(buf, num, pseudo, 1);
-	}
-
-int md_rand_bytes_lock(unsigned char *buf, int num, int pseudo, int lock)
+int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo, int lock)
 	{
 	static volatile int stirred_pool = 0;
 	int i,j,k,st_num,st_idx;
@@ -544,14 +538,14 @@ int md_rand_bytes_lock(unsigned char *buf, int num, int pseudo, int lock)
 
 static int ssleay_rand_nopseudo_bytes(unsigned char *buf, int num)
 	{
-	return ssleay_rand_bytes(buf, num, 0);
+	return ssleay_rand_bytes(buf, num, 0, 1);
 	}
 
 /* pseudo-random bytes that are guaranteed to be unique but not
    unpredictable */
 static int ssleay_rand_pseudo_bytes(unsigned char *buf, int num) 
 	{
-	return ssleay_rand_bytes(buf, num, 1);
+	return ssleay_rand_bytes(buf, num, 1, 1);
 	}
 
 static int ssleay_rand_status(void)
