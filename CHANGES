@@ -4,7 +4,10 @@
 
  Changes between 1.0.0m and 1.0.0n [xx XXX xxxx]
 
-  *)
+  *) Fix ec_GFp_simple_points_make_affine (thus, EC_POINTs_mul etc.)
+     for corner cases. (Certain input points at infinity could lead to
+     bogus results, with non-infinity inputs mapped to infinity too.)
+     [Bodo Moeller]
 
  Changes between 1.0.0l and 1.0.0m [5 Jun 2014]
 
