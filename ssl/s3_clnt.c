@@ -1469,6 +1469,12 @@ int ssl3_get_key_exchange(SSL *s)
 		p+=i;
 		n-=param_len;
 
+		if (!srp_verify_server_param(s, &al))
+			{
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_BAD_SRP_PARAMETERS);
+			goto f_err;
+			}
+
 /* We must check if there is a certificate */
 #ifndef OPENSSL_NO_RSA
 		if (alg_a & SSL_aRSA)
