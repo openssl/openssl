@@ -310,6 +310,11 @@
 
  Changes between 1.0.1e and 1.0.2 [xx XXX xxxx]
 
+  *) Fix ec_GFp_simple_points_make_affine (thus, EC_POINTs_mul etc.)
+     for corner cases. (Certain input points at infinity could lead to
+     bogus results, with non-infinity inputs mapped to infinity too.)
+     [Bodo Moeller]
+
   *) Initial support for PowerISA 2.0.7, first implemented in POWER8.
      This covers AES, SHA256/512 and GHASH. "Initial" means that most
      common cases are optimized and there still is room for further
