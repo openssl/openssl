@@ -2847,6 +2847,13 @@ int ssl3_get_client_key_exchange(SSL *s)
 				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,ERR_R_BN_LIB);
 				goto err;
 				}
+			if (BN_ucmp(s->srp_ctx.A, s->srp_ctx.N) >= 0
+				|| BN_is_zero(s->srp_ctx.A))
+				{
+				al=SSL_AD_ILLEGAL_PARAMETER;
+				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_BAD_SRP_PARAMETERS);
+				goto f_err;
+				}
 			if (s->session->srp_username != NULL)
 				OPENSSL_free(s->session->srp_username);
 			s->session->srp_username = BUF_strdup(s->srp_ctx.login);
