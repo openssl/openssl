@@ -425,20 +425,6 @@ typedef int (*custom_srv_ext_second_cb_fn)(SSL *s, unsigned short ext_type,
 					   const unsigned char **out,
 					   unsigned short *outlen, int *al, void *arg);
 
-typedef struct {
-	unsigned short ext_type;
-	custom_cli_ext_first_cb_fn fn1; 
-	custom_cli_ext_second_cb_fn fn2; 
-	void *arg;
-} custom_cli_ext_record;
-
-typedef struct {
-	unsigned short ext_type;
-	custom_srv_ext_first_cb_fn fn1; 
-	custom_srv_ext_second_cb_fn fn2; 
-	void *arg;
-} custom_srv_ext_record;
-
 #endif
 
 #ifndef OPENSSL_NO_SSL_INTERN
@@ -1160,11 +1146,6 @@ struct ssl_ctx_st
 	size_t tlsext_ellipticcurvelist_length;
 	unsigned char *tlsext_ellipticcurvelist;
 # endif /* OPENSSL_NO_EC */
-	/* Arrays containing the callbacks for custom TLS Extensions. */
-	custom_cli_ext_record *custom_cli_ext_records;
-	size_t custom_cli_ext_records_count;
-	custom_srv_ext_record *custom_srv_ext_records;
-	size_t custom_srv_ext_records_count;
 	};
 
 #endif
