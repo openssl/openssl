@@ -434,6 +434,27 @@ CERT *ssl_cert_dup(CERT *cert)
 
 	ret->ciphers_raw = NULL;
 
+#ifndef OPENSSL_NO_TLSEXT
+	if (cert->custom_cli_ext_records_count)
+		{
+		ret->custom_cli_ext_records = BUF_memdup(cert->custom_cli_ext_records, sizeof(custom_cli_ext_record) * cert->custom_cli_ext_records_count);
+		if (ret->custom_cli_ext_records == NULL)
+			goto err;
+		ret->custom_cli_ext_records_count =
+					cert->custom_cli_ext_records_count;
+		}
+
+	if (cert->custom_srv_ext_records_count)
+		{
+		ret->custom_srv_ext_records = BUF_memdup(cert->custom_srv_ext_records, sizeof(custom_srv_ext_record) * cert->custom_srv_ext_records_count);
+		if (ret->custom_srv_ext_records == NULL)
+			goto err;
+		ret->custom_srv_ext_records_count =
+					cert->custom_srv_ext_records_count;
+		}
+
+#endif
+
 	return(ret);
 	
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_ECDH)
@@ -450,6 +471,13 @@ err:
 #ifndef OPENSSL_NO_ECDH
 	if (ret->ecdh_tmp != NULL)
 		EC_KEY_free(ret->ecdh_tmp);
+#endif
+
+#ifndef OPENSSL_NO_TLSEXT
+	if (ret->custom_cli_ext_records)
+		OPENSSL_free(ret->custom_cli_ext_records);
+	if (ret->custom_srv_ext_records)
+		OPENSSL_free(ret->custom_srv_ext_records);
 #endif
 
 	ssl_cert_clear_certs(ret);
@@ -542,6 +570,12 @@ void ssl_cert_free(CERT *c)
 		X509_STORE_free(c->chain_store);
 	if (c->ciphers_raw)
 		OPENSSL_free(c->ciphers_raw);
+#ifndef OPENSSL_NO_TLSEXT
+	if (c->custom_cli_ext_records)
+		OPENSSL_free(c->custom_cli_ext_records);
+	if (c->custom_srv_ext_records)
+		OPENSSL_free(c->custom_srv_ext_records);
+#endif
 	OPENSSL_free(c);
 	}
 

@@ -1726,7 +1726,7 @@ void SSL_CTX_set_next_proto_select_cb(SSL_CTX *ctx, int (*cb) (SSL *s, unsigned 
 	}
 # endif
 
-int SSL_CTX_set_custom_cli_ext(SSL_CTX *ctx, unsigned short ext_type,
+static int cert_set_custom_cli_ext(CERT *cert, unsigned short ext_type,
 			       custom_cli_ext_first_cb_fn fn1, 
 			       custom_cli_ext_second_cb_fn fn2, void* arg)
 	{
@@ -1734,19 +1734,19 @@ int SSL_CTX_set_custom_cli_ext(SSL_CTX *ctx, unsigned short ext_type,
 	custom_cli_ext_record* record;
 
 	/* Check for duplicates */
-	for (i=0; i < ctx->custom_cli_ext_records_count; i++)
-		if (ext_type == ctx->custom_cli_ext_records[i].ext_type)
+	for (i=0; i < cert->custom_cli_ext_records_count; i++)
+		if (ext_type == cert->custom_cli_ext_records[i].ext_type)
 			return 0;
 
-	ctx->custom_cli_ext_records = OPENSSL_realloc(ctx->custom_cli_ext_records,
-						      (ctx->custom_cli_ext_records_count + 1) * 
+	cert->custom_cli_ext_records = OPENSSL_realloc(cert->custom_cli_ext_records,
+						      (cert->custom_cli_ext_records_count + 1) * 
 						      sizeof(custom_cli_ext_record));
-	if (!ctx->custom_cli_ext_records) {
-		ctx->custom_cli_ext_records_count = 0;
+	if (!cert->custom_cli_ext_records) {
+		cert->custom_cli_ext_records_count = 0;
 		return 0;
 	}
-	ctx->custom_cli_ext_records_count++;
-	record = &ctx->custom_cli_ext_records[ctx->custom_cli_ext_records_count - 1];
+	cert->custom_cli_ext_records_count++;
+	record = &cert->custom_cli_ext_records[cert->custom_cli_ext_records_count - 1];
 	record->ext_type = ext_type;
 	record->fn1 = fn1;
 	record->fn2 = fn2;
@@ -1754,7 +1754,7 @@ int SSL_CTX_set_custom_cli_ext(SSL_CTX *ctx, unsigned short ext_type,
 	return 1;
 	}
 
-int SSL_CTX_set_custom_srv_ext(SSL_CTX *ctx, unsigned short ext_type,
+static int cert_set_custom_srv_ext(CERT *cert, unsigned short ext_type,
 			       custom_srv_ext_first_cb_fn fn1, 
 			       custom_srv_ext_second_cb_fn fn2, void* arg)
 	{
@@ -1762,24 +1762,38 @@ int SSL_CTX_set_custom_srv_ext(SSL_CTX *ctx, unsigned short ext_type,
 	custom_srv_ext_record* record;
 
 	/* Check for duplicates */	
-	for (i=0; i < ctx->custom_srv_ext_records_count; i++)
-		if (ext_type == ctx->custom_srv_ext_records[i].ext_type)
+	for (i=0; i < cert->custom_srv_ext_records_count; i++)
+		if (ext_type == cert->custom_srv_ext_records[i].ext_type)
 			return 0;
 
-	ctx->custom_srv_ext_records = OPENSSL_realloc(ctx->custom_srv_ext_records,
-						      (ctx->custom_srv_ext_records_count + 1) * 
+	cert->custom_srv_ext_records = OPENSSL_realloc(cert->custom_srv_ext_records,
+						      (cert->custom_srv_ext_records_count + 1) * 
 						      sizeof(custom_srv_ext_record));
-	if (!ctx->custom_srv_ext_records) {
-		ctx->custom_srv_ext_records_count = 0;
+	if (!cert->custom_srv_ext_records) {
+		cert->custom_srv_ext_records_count = 0;
 		return 0;
 	}
-	ctx->custom_srv_ext_records_count++;
-	record = &ctx->custom_srv_ext_records[ctx->custom_srv_ext_records_count - 1];
+	cert->custom_srv_ext_records_count++;
+	record = &cert->custom_srv_ext_records[cert->custom_srv_ext_records_count - 1];
 	record->ext_type = ext_type;
 	record->fn1 = fn1;
 	record->fn2 = fn2;
 	record->arg = arg;
 	return 1;
+	}
+ 
+int SSL_CTX_set_custom_cli_ext(SSL_CTX *ctx, unsigned short ext_type,
+			       custom_cli_ext_first_cb_fn fn1, 
+			       custom_cli_ext_second_cb_fn fn2, void *arg)
+	{
+	return cert_set_custom_cli_ext(ctx->cert, ext_type, fn1, fn2,arg);
+	}
+
+int SSL_CTX_set_custom_srv_ext(SSL_CTX *ctx, unsigned short ext_type,
+			       custom_srv_ext_first_cb_fn fn1, 
+			       custom_srv_ext_second_cb_fn fn2, void *arg)
+	{
+	return cert_set_custom_srv_ext(ctx->cert, ext_type, fn1, fn2,arg);
 	}
 
 /* SSL_CTX_set_alpn_protos sets the ALPN protocol list on |ctx| to |protos|.
@@ -2053,10 +2067,6 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 #ifndef OPENSSL_NO_SRP
 	SSL_CTX_SRP_CTX_init(ret);
 #endif
-	ret->custom_cli_ext_records = NULL;
-	ret->custom_cli_ext_records_count = 0;
-	ret->custom_srv_ext_records = NULL;
-	ret->custom_srv_ext_records_count = 0;
 #ifndef OPENSSL_NO_BUF_FREELISTS
 	ret->freelist_max_len = SSL_MAX_BUF_FREELIST_LEN_DEFAULT;
 	ret->rbuf_freelist = OPENSSL_malloc(sizeof(SSL3_BUF_FREELIST));
@@ -2194,10 +2204,6 @@ void SSL_CTX_free(SSL_CTX *a)
 #endif
 #ifndef OPENSSL_NO_SRP
 	SSL_CTX_SRP_CTX_free(a);
-#endif
-#ifndef OPENSSL_NO_TLSEXT
-	OPENSSL_free(a->custom_cli_ext_records);
-	OPENSSL_free(a->custom_srv_ext_records);
 #endif
 #ifndef OPENSSL_NO_ENGINE
 	if (a->client_cert_engine)
