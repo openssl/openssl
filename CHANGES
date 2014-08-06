@@ -4,6 +4,46 @@
 
  Changes between 0.9.8za and 0.9.8zb [xx XXX xxxx]
 
+  *) OpenSSL DTLS clients enabling anonymous (EC)DH ciphersuites are subject
+     to a denial of service attack. A malicious server can crash the client
+     with a null pointer dereference (read) by specifying an anonymous (EC)DH
+     ciphersuite and sending carefully crafted handshake messages.
+
+     Thanks to Felix Gröbert (Google) for discovering and researching this
+     issue.
+     (CVE-2014-3510)
+     [Emilia Käsper]
+
+  *) By sending carefully crafted DTLS packets an attacker could cause openssl
+     to leak memory. This can be exploited through a Denial of Service attack.
+     Thanks to Adam Langley for discovering and researching this issue.
+     (CVE-2014-3507)
+     [Adam Langley]
+
+  *) An attacker can force openssl to consume large amounts of memory whilst
+     processing DTLS handshake messages. This can be exploited through a
+     Denial of Service attack.
+     Thanks to Adam Langley for discovering and researching this issue.
+     (CVE-2014-3506)
+     [Adam Langley]
+
+  *) An attacker can force an error condition which causes openssl to crash
+     whilst processing DTLS packets due to memory being freed twice. This
+     can be exploited through a Denial of Service attack.
+     Thanks to Adam Langley and Wan-Teh Chang for discovering and researching
+     this issue.
+     (CVE-2014-3505)
+     [Adam Langley]
+
+  *) A flaw in OBJ_obj2txt may cause pretty printing functions such as
+     X509_name_oneline, X509_name_print_ex et al. to leak some information
+     from the stack. Applications may be affected if they echo pretty printing
+     output to the attacker.
+
+     Thanks to Ivan Fratric (Google) for discovering this issue.
+     (CVE-2014-3508)
+     [Emilia Käsper, and Steve Henson]
+
   *) Fix ec_GFp_simple_points_make_affine (thus, EC_POINTs_mul etc.)
      for corner cases. (Certain input points at infinity could lead to
      bogus results, with non-infinity inputs mapped to infinity too.)
