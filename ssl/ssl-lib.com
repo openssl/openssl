@@ -222,7 +222,7 @@ $ LIB_SSL = "s2_meth,s2_srvr,s2_clnt,s2_lib,s2_enc,s2_pkt,"+ -
 	    "ssl_lib,ssl_err2,ssl_cert,ssl_sess,"+ -
 	    "ssl_ciph,ssl_stat,ssl_rsa,"+ -
 	    "ssl_asn1,ssl_txt,ssl_algs,"+ -
-	    "bio_ssl,ssl_err,kssl,tls_srp,t1_reneg"
+	    "bio_ssl,ssl_err,kssl,tls_srp,t1_reneg,ssl_utst"
 $!
 $ COMPILEWITH_CC5 = ""
 $!
