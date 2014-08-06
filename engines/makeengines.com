@@ -155,7 +155,7 @@ $   ENGINE_ = "engine_vector.mar"
 $   TV_OBJ_NAME = OBJ_DIR + F$PARSE(ENGINE_,,,"NAME","SYNTAX_ONLY") + ".OBJ"
 $   TV_OBJ = ",''TV_OBJ_NAME'"
 $ ENDIF
-$ ENGINE_4758CCA = "e_4758cca"
+$ ENGINE_4758cca = "e_4758cca"
 $ ENGINE_aep = "e_aep"
 $ ENGINE_atalla = "e_atalla"
 $ ENGINE_cswift = "e_cswift"
