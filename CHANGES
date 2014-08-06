@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.0m and 1.0.0n [xx XXX xxxx]
+ Changes between 1.0.0m and 1.0.0n [6 Aug 2014]
 
   *) OpenSSL DTLS clients enabling anonymous (EC)DH ciphersuites are subject
      to a denial of service attack. A malicious server can crash the client
