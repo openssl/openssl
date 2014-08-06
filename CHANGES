@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.1h and 1.0.1i [xx XXX xxxx]
+ Changes between 1.0.1h and 1.0.1i [6 Aug 2014]
 
   *) Fix SRP buffer overrun vulnerability. Invalid parameters passed to the
      SRP code can be overrun an internal buffer. Add sanity check that
