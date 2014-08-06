@@ -7,7 +7,12 @@
 
   Major changes between OpenSSL 1.0.0m and OpenSSL 1.0.0n [under development]
 
-      o
+      o Fix for CVE-2014-3510
+      o Fix for CVE-2014-3507
+      o Fix for CVE-2014-3506
+      o Fix for CVE-2014-3505
+      o Fix for CVE-2014-3509
+      o Fix for CVE-2014-3508
 
   Known issues in OpenSSL 1.0.0m:
 
