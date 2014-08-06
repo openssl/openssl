@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8za and 0.9.8zb [xx XXX xxxx]
+ Changes between 0.9.8za and 0.9.8zb [6 Aug 2014]
 
   *) OpenSSL DTLS clients enabling anonymous (EC)DH ciphersuites are subject
      to a denial of service attack. A malicious server can crash the client
