@@ -1930,8 +1930,10 @@ again:
 #ifdef CHARSET_EBCDIC
 					ascii2ebcdic(buf,buf,i);
 #endif
-					write(fileno(stdout),buf,
-						(unsigned int)i);
+					if (write(fileno(stdout),buf,
+						(unsigned int)i) != i)
+						goto err;
+						
 					if (SSL_pending(con)) goto again;
 					break;
 				case SSL_ERROR_WANT_WRITE:
