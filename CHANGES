@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 1.0.0n and 1.0.0o [xx XXX xxxx]
+
+  *)
+
  Changes between 1.0.0m and 1.0.0n [6 Aug 2014]
 
   *) OpenSSL DTLS clients enabling anonymous (EC)DH ciphersuites are subject
