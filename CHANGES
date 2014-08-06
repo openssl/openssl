@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.8zb and 0.9.8zc [xx XXX xxxx]
+
+  *)
+
  Changes between 0.9.8za and 0.9.8zb [6 Aug 2014]
 
   *) OpenSSL DTLS clients enabling anonymous (EC)DH ciphersuites are subject
