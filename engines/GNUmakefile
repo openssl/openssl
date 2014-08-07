@@ -28,3 +28,8 @@ $(foreach dir, $(ENGDIRS), \
   $(eval $(call ENGINES_SUBDIR_RULE_template,$(dir),clean,clean)))
 $(foreach dir, $(ENGDIRS), \
   $(eval $(call ENGINES_SUBDIR_RULE_template,$(dir),dclean,dclean)))
+
+engines/%.o: engines/%.c
+	$(CC) $(CFLAGS_engines) $(CPPFLAGS) -c -o $@ $<
+engines/%.o: engines/%.s
+	$(AS) $(ASFLAGS_engines) -o $@ $<

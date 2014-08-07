@@ -48,3 +48,8 @@ $(foreach dir, $(SDIRS), \
   $(eval $(call CRYPTO_SUBDIR_RULE_template,$(dir),clean,clean)))
 $(foreach dir, $(SDIRS), \
   $(eval $(call CRYPTO_SUBDIR_RULE_template,$(dir),dclean,dclean)))
+
+crypto/%.o: crypto/%.c
+	$(CC) $(CFLAGS_crypto) $(CPPFLAGS) -c -o $@ $<
+crypto/%.o: crypto/%.s
+	$(AS) $(ASFLAGS_crypto) -o $@ $<

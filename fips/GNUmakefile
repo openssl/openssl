@@ -47,3 +47,8 @@ $(foreach dir, $(FDIRS), \
 INSTALL_FIPS_SUBDIRS_TARGETS= $(foreach dir, $(FDIRS), install_fips_$(dir))
 $(INSTALL_FIPS_SUBDIRS_TARGETS): install_fips_before_subdirs
 install_fips_subdirs: $(INSTALL_FIPS_SUBDIRS_TARGETS)
+
+fips/%.o: fips/%.c
+	$(CC) $(CFLAGS_fips) $(CPPFLAGS) -c -o $@ $<
+fips/%.o: fips/%.s
+	$(AS) $(ASFLAGS_fips) -o $@ $<

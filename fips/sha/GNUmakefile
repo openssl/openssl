@@ -12,3 +12,8 @@ else
 endif
 
 -include $(SRC_fips_sha:.c=.d)
+
+fips/sha/%.o: fips/sha/%.c
+	$(CC) $(CFLAGS_fips_sha) $(CPPFLAGS) -c -o $@ $<
+fips/sha/%.o: fips/sha/%.s
+	$(AS) $(ASFLAGS_fips_sha) -o $@ $<
