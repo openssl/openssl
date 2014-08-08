@@ -404,12 +404,6 @@ clean: clean_test
 clean_test:
 	rm -f test/.rnd test/tmp.bntest test/tmp.bctest test/*.o test/*.d test/*.obj test/*.dll test/lib test/tags test/core test/.pure test/.nfs* test/*.old test/*.bak test/fluff $(EXE_test) $(FIPSEXE) test/*.ss test/*.srl test/log test/dummytest
 
-$(DLIBSSL_test):
-	(cd test/..; $(MAKE) DIRS=ssl all)
-
-$(DLIBCRYPTO_test):
-	(cd test/..; $(MAKE) DIRS=crypto all)
-
 BUILD_CMD_test=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
