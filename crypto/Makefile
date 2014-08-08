@@ -77,11 +77,8 @@ links_crypto:
 	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto)
 	@$(PERL) util/mklink.pl ./test $(TEST_crypto)
 
-# lib: $(LIB_crypto): are splitted to avoid end-less loop
-crypto/lib:	$(LIB_crypto)
-	@touch crypto/lib
-$(LIB_crypto):	$(LIBOBJ_crypto)
-	$(ARX) $(LIB_crypto) $(LIBOBJ_crypto)
+$(LIB_crypto): $(LIBOBJ_crypto)
+	$(ARX) $(LIB_crypto) $(LIBOBJ_crypto) $(LIBOBJ_subdirs)
 	$(RANLIB) $(LIB_crypto) || echo Never mind.
 
 shared: shared_crypto
@@ -97,7 +94,7 @@ install_crypto:
 
 clean: clean_crypto
 clean_crypto:
-	rm -f crypto/buildinf.h crypto/*.s crypto/*.o crypto/*.d */*.o */*.d crypto/*.obj crypto/lib crypto/tags crypto/core crypto/.pure crypto/.nfs* crypto/*.old crypto/*.bak crypto/fluff
+	rm -f crypto/buildinf.h crypto/*.s crypto/*.o crypto/*.d */*.o */*.d crypto/*.obj crypto/tags crypto/core crypto/.pure crypto/.nfs* crypto/*.old crypto/*.bak crypto/fluff
 
 dclean: dclean_crypto
 dclean_crypto:

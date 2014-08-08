@@ -24,10 +24,10 @@ $(foreach dir,$(SDIRS),$(eval $(call FIPS_OBJS_RULE_template,$(dir))))
 endif
 
 ifdef SHARED_LIBS
-$(SHARED_LIB_crypto): crypto/buildinf.h crypto/lib crypto/subdirs
+$(SHARED_LIB_crypto): $(LIB_crypto)
 shared_crypto: $(SHARED_LIB_crypto)
 else
-all_crypto: crypto/buildinf.h crypto/lib crypto/subdirs
+all_crypto: $(LIB_crypto)
 shared_crypto:
 endif
 
@@ -39,8 +39,8 @@ $(3)_crypto_$(1): $(3)_crypto_$(1)_announce
 $(2): $(3)_crypto_$(1)
 endef
 
-$(foreach dir, $(SDIRS), \
-  $(eval $(call CRYPTO_SUBDIR_RULE_template,$(dir),crypto/subdirs,all)))
+#$(foreach dir, $(SDIRS), \
+#  $(eval $(call CRYPTO_SUBDIR_RULE_template,$(dir),crypto/subdirs,all)))
 $(foreach dir, $(SDIRS), \
   $(eval $(call CRYPTO_SUBDIR_RULE_template,$(dir),files,files)))
 $(foreach dir, $(SDIRS), \
@@ -58,8 +58,13 @@ $(foreach dir, $(SDIRS), \
 
 include $(foreach dir, $(SDIRS), crypto/$(dir)/GNUmakefile)
 
-# TODO(mbland): add all of the crypto/*/lib target objects into
-# $(LIB_crypto) to allow parallelism.
+# The LIBOBJ_subdirs dependency of LIB_crypto has to be declared here, after
+# including all the other Makefiles. Declaring this dependency in
+# crypto/Makefile directly causes LIBOBJ_subdirs to be empty at the time
+# prerequisites are calculated.
+LIBOBJ_subdirs= $(foreach dir, $(SDIRS), $(LIBOBJ_crypto_$(dir)))
+$(LIBOBJ_crypto) $(LIBOBJ_subdirs): crypto/buildinf.h
+$(LIB_crypto): $(LIBOBJ_subdirs)
 
 crypto/%.o: crypto/%.c
 	$(CC) $(CFLAGS_crypto) $(CPPFLAGS) -c -o $@ $<

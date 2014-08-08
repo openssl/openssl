@@ -22,7 +22,8 @@ ALL_crypto_objects=    $(GENERAL_crypto_objects) $(SRC_crypto_objects) $(HEADER_
 
 
 all: all_crypto_objects
-all_crypto_objects:crypto/objects/obj_dat.h crypto/objects/obj_xref.h 	$(LIBOBJ_crypto_objects)
+all_crypto_objects:	$(LIBOBJ_crypto_objects)
+$(LIBOBJ_crypto_objects): crypto/objects/obj_dat.h crypto/objects/obj_xref.h
 
 
 crypto/objects/obj_dat.h: crypto/objects/obj_dat.pl crypto/objects/obj_mac.h
