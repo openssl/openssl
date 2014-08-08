@@ -127,9 +127,3 @@ clean: clean_crypto_aes
 clean_crypto_aes:
 	rm -f crypto/aes/*.s crypto/aes/*.o crypto/aes/*.d crypto/aes/*.obj crypto/aes/lib crypto/aes/tags crypto/aes/core crypto/aes/.pure crypto/aes/.nfs* crypto/aes/*.old crypto/aes/*.bak crypto/aes/fluff
 
-.S.s:
-	$(CPP_crypto_aes) $(CPPFLAGS) -o $@ $<
-.c.o:
-	$(CC) $(CFLAGS_crypto_aes) $(CPPFLAGS) -c -o $@ $<
-.s.o:
-	$(AS) $(ASFLAGS_crypto_aes) -o $@ $<

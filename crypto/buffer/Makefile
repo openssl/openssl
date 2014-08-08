@@ -67,5 +67,3 @@ clean: clean_crypto_buffer
 clean_crypto_buffer:
 	rm -f crypto/buffer/*.o crypto/buffer/*.d crypto/buffer/*.obj crypto/buffer/lib crypto/buffer/tags crypto/buffer/core crypto/buffer/.pure crypto/buffer/.nfs* crypto/buffer/*.old crypto/buffer/*.bak crypto/buffer/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_crypto_buffer) $(CPPFLAGS) -c -o $@ $<

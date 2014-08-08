@@ -98,7 +98,3 @@ clean: clean_fips_sha
 clean_fips_sha:
 	rm -f fips/sha/*.o fips/sha/*.d asm/*.o fips/sha/*.obj fips/sha/lib fips/sha/tags fips/sha/core fips/sha/.pure fips/sha/.nfs* fips/sha/*.old fips/sha/*.bak fips/sha/fluff $(EXE_fips_sha)
 
-.c.o:
-	$(CC) $(CFLAGS_fips_sha) $(CPPFLAGS) -c -o $@ $<
-.s.o:
-	$(AS) $(ASFLAGS_fips_sha) -o $@ $<

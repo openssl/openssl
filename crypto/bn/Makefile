@@ -180,9 +180,3 @@ clean: clean_crypto_bn
 clean_crypto_bn:
 	rm -f crypto/bn/*.s crypto/bn/*.o crypto/bn/*.d crypto/bn/*.obj crypto/bn/lib crypto/bn/tags crypto/bn/core crypto/bn/.pure crypto/bn/.nfs* crypto/bn/*.old crypto/bn/*.bak crypto/bn/fluff
 
-.S.s:
-	$(CPP_crypto_bn) $(CPPFLAGS) -o $@ $<
-.c.o:
-	$(CC) $(CFLAGS_crypto_bn) $(CPPFLAGS) -c -o $@ $<
-.s.o:
-	$(AS) $(ASFLAGS_crypto_bn) -o $@ $<

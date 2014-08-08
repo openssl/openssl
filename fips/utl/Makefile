@@ -60,5 +60,3 @@ clean: clean_fips_utl
 clean_fips_utl:
 	rm -f fips/utl/*.o fips/utl/*.d fips/utl/*.obj fips/utl/lib fips/utl/tags fips/utl/core fips/utl/.pure fips/utl/.nfs* fips/utl/*.old fips/utl/*.bak fips/utl/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_fips_utl) $(CPPFLAGS) -c -o $@ $<

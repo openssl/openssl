@@ -172,7 +172,3 @@ clean_fips:
 dclean: dclean_fips
 dclean_fips:
 
-.c.o:
-	$(CC) $(CFLAGS_fips) $(CPPFLAGS) -c -o $@ $<
-.s.o:
-	$(AS) $(ASFLAGS_fips) -o $@ $<

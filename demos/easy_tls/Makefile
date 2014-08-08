@@ -123,5 +123,3 @@ test_demos_easy_tls: $(OBJS_demos_easy_tls)
 demos/easy_tls/test.o: $(HEADERS)
 demos/easy_tls/easy-tls.o: $(HEADERS)
 
-.c.o:
-	$(CC) $(CFLAGS_demos_easy_tls) $(CPPFLAGS) -c -o $@ $<

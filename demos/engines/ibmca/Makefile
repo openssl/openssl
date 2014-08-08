@@ -96,5 +96,3 @@ $(SHLIB_demos_engines_ibmca).aix:	$(LIB_demos_engines_ibmca)
 		$(LINK_SO_demos_engines_ibmca)
 		touch $(SHLIB_demos_engines_ibmca).aix
 
-.c.o:
-	$(CC) $(CFLAGS_demos_engines_ibmca) $(CPPFLAGS) -c -o $@ $<

@@ -67,5 +67,3 @@ clean: clean_fips_ecdsa
 clean_fips_ecdsa:
 	rm -f fips/ecdsa/*.o fips/ecdsa/*.d fips/ecdsa/*.obj fips/ecdsa/lib fips/ecdsa/tags fips/ecdsa/core fips/ecdsa/.pure fips/ecdsa/.nfs* fips/ecdsa/*.old fips/ecdsa/*.bak fips/ecdsa/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_fips_ecdsa) $(CPPFLAGS) -c -o $@ $<

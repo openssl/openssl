@@ -21,5 +21,3 @@ clean: clean_demos_bio
 clean_demos_bio:	
 	rm -f $(EXAMPLES_demos_bio) demos/bio/*.o
 
-.c.o:
-	$(CC) $(CFLAGS_demos_bio) $(CPPFLAGS) -c -o $@ $<

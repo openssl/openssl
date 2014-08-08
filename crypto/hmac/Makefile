@@ -67,5 +67,3 @@ clean: clean_crypto_hmac
 clean_crypto_hmac:
 	rm -f crypto/hmac/*.o crypto/hmac/*.d crypto/hmac/*.obj crypto/hmac/lib crypto/hmac/tags crypto/hmac/core crypto/hmac/.pure crypto/hmac/.nfs* crypto/hmac/*.old crypto/hmac/*.bak crypto/hmac/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_crypto_hmac) $(CPPFLAGS) -c -o $@ $<

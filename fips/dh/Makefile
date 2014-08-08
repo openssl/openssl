@@ -67,5 +67,3 @@ clean: clean_fips_dh
 clean_fips_dh:
 	rm -f fips/dh/*.o fips/dh/*.d fips/dh/*.obj fips/dh/lib fips/dh/tags fips/dh/core fips/dh/.pure fips/dh/.nfs* fips/dh/*.old fips/dh/*.bak fips/dh/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_fips_dh) $(CPPFLAGS) -c -o $@ $<

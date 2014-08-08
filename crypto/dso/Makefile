@@ -69,5 +69,3 @@ clean: clean_crypto_dso
 clean_crypto_dso:
 	rm -f crypto/dso/*.o crypto/dso/*.d */*.o */*.d crypto/dso/*.obj crypto/dso/lib crypto/dso/tags crypto/dso/core crypto/dso/.pure crypto/dso/.nfs* crypto/dso/*.old crypto/dso/*.bak crypto/dso/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_crypto_dso) $(CPPFLAGS) -c -o $@ $<

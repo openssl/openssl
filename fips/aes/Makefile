@@ -74,7 +74,3 @@ clean: clean_fips_aes
 clean_fips_aes:
 	rm -f fips/aes/*.o fips/aes/*.d asm/*.o fips/aes/*.obj fips/aes/lib fips/aes/tags fips/aes/core fips/aes/.pure fips/aes/.nfs* fips/aes/*.old fips/aes/*.bak fips/aes/fluff fips/aes/testlist
 
-.c.o:
-	$(CC) $(CFLAGS_fips_aes) $(CPPFLAGS) -c -o $@ $<
-.s.o:
-	$(AS) $(ASFLAGS_fips_aes) -o $@ $<

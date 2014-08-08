@@ -10,5 +10,3 @@ test: test_demos_state_machine
 test_demos_state_machine: demos/state_machine/state_machine
 	demos/state_machine/state_machine 10000 apps/server.pem apps/server.pem
 
-.c.o:
-	$(CC) $(CFLAGS_demos_state_machine) $(CPPFLAGS) -c -o $@ $<

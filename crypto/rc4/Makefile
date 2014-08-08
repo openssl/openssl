@@ -95,9 +95,3 @@ clean: clean_crypto_rc4
 clean_crypto_rc4:
 	rm -f crypto/rc4/*.s crypto/rc4/*.o crypto/rc4/*.d crypto/rc4/*.obj crypto/rc4/lib crypto/rc4/tags crypto/rc4/core crypto/rc4/.pure crypto/rc4/.nfs* crypto/rc4/*.old crypto/rc4/*.bak crypto/rc4/fluff
 
-.S.s:
-	$(CPP_crypto_rc4) $(CPPFLAGS) -o $@ $<
-.c.o:
-	$(CC) $(CFLAGS_crypto_rc4) $(CPPFLAGS) -c -o $@ $<
-.s.o:
-	$(AS) $(ASFLAGS_crypto_rc4) -o $@ $<

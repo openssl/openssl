@@ -67,5 +67,3 @@ clean: clean_crypto_stack
 clean_crypto_stack:
 	rm -f crypto/stack/*.o crypto/stack/*.d crypto/stack/*.obj crypto/stack/lib crypto/stack/tags crypto/stack/core crypto/stack/.pure crypto/stack/.nfs* crypto/stack/*.old crypto/stack/*.bak crypto/stack/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_crypto_stack) $(CPPFLAGS) -c -o $@ $<

@@ -100,7 +100,3 @@ clean: clean_crypto_modes
 clean_crypto_modes:
 	rm -f crypto/modes/*.s crypto/modes/*.o crypto/modes/*.d */*.o */*.d crypto/modes/*.obj crypto/modes/lib crypto/modes/tags crypto/modes/core crypto/modes/.pure crypto/modes/.nfs* crypto/modes/*.old crypto/modes/*.bak crypto/modes/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_crypto_modes) $(CPPFLAGS) -c -o $@ $<
-.s.o:
-	$(AS) $(ASFLAGS_crypto_modes) -o $@ $<

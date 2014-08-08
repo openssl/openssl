@@ -103,5 +103,3 @@ clean_crypto_asn1:
 	rm -f crypto/asn1/*.o crypto/asn1/*.d crypto/asn1/*.obj crypto/asn1/lib crypto/asn1/tags crypto/asn1/core crypto/asn1/.pure crypto/asn1/.nfs* crypto/asn1/*.old crypto/asn1/*.bak crypto/asn1/fluff
 
 
-.c.o:
-	$(CC) $(CFLAGS_crypto_asn1) $(CPPFLAGS) -c -o $@ $<

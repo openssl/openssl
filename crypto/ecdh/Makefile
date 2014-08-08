@@ -68,5 +68,3 @@ clean: clean_crypto_ecdh
 clean_crypto_ecdh:
 	rm -f crypto/ecdh/*.o crypto/ecdh/*.d */*.o */*.d crypto/ecdh/*.obj crypto/ecdh/lib crypto/ecdh/tags crypto/ecdh/core crypto/ecdh/.pure crypto/ecdh/.nfs* crypto/ecdh/*.old crypto/ecdh/*.bak crypto/ecdh/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_crypto_ecdh) $(CPPFLAGS) -c -o $@ $<

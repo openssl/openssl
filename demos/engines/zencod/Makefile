@@ -96,5 +96,3 @@ $(SHLIB_demos_engines_zencod).aix:	$(LIB_demos_engines_zencod)
 		$(LINK_SO_demos_engines_zencod)
 		touch $(SHLIB_demos_engines_zencod).aix
 
-.c.o:
-	$(CC) $(CFLAGS_demos_engines_zencod) $(CPPFLAGS) -c -o $@ $<

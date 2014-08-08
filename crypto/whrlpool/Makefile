@@ -79,9 +79,3 @@ clean: clean_crypto_whrlpool
 clean_crypto_whrlpool:
 	rm -f crypto/whrlpool/*.s crypto/whrlpool/*.o crypto/whrlpool/*.d crypto/whrlpool/*.obj crypto/whrlpool/lib crypto/whrlpool/tags crypto/whrlpool/core crypto/whrlpool/.pure crypto/whrlpool/.nfs* crypto/whrlpool/*.old crypto/whrlpool/*.bak crypto/whrlpool/fluff
 
-.S.s:
-	$(CPP_crypto_whrlpool) $(CPPFLAGS) -o $@ $<
-.c.o:
-	$(CC) $(CFLAGS_crypto_whrlpool) $(CPPFLAGS) -c -o $@ $<
-.s.o:
-	$(AS) $(ASFLAGS_crypto_whrlpool) -o $@ $<

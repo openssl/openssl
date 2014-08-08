@@ -106,8 +106,3 @@ clean_crypto:
 dclean: dclean_crypto
 dclean_crypto:
 	rm -f crypto/opensslconf.h
-
-.c.o:
-	$(CC) $(CFLAGS_crypto) $(CPPFLAGS) -c -o $@ $<
-.s.o:
-	$(AS) $(ASFLAGS_crypto) -o $@ $<

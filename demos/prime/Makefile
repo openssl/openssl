@@ -21,5 +21,3 @@ test_demos_prime: all_demos_prime
 	@echo Test creating a 512-bit demos/prime/prime
 	demos/prime/prime 512
 
-.c.o:
-	$(CC) $(CFLAGS_demos_prime) $(CPPFLAGS) -c -o $@ $<

@@ -73,5 +73,3 @@ clean: clean_crypto_rsa
 clean_crypto_rsa:
 	rm -f crypto/rsa/*.o crypto/rsa/*.d */*.o */*.d crypto/rsa/*.obj crypto/rsa/lib crypto/rsa/tags crypto/rsa/core crypto/rsa/.pure crypto/rsa/.nfs* crypto/rsa/*.old crypto/rsa/*.bak crypto/rsa/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_crypto_rsa) $(CPPFLAGS) -c -o $@ $<

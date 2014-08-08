@@ -67,5 +67,3 @@ clean: clean_crypto_txt_db
 clean_crypto_txt_db:
 	rm -f crypto/txt_db/*.o crypto/txt_db/*.d crypto/txt_db/*.obj crypto/txt_db/lib crypto/txt_db/tags crypto/txt_db/core crypto/txt_db/.pure crypto/txt_db/.nfs* crypto/txt_db/*.old crypto/txt_db/*.bak crypto/txt_db/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_crypto_txt_db) $(CPPFLAGS) -c -o $@ $<

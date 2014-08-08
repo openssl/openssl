@@ -70,5 +70,3 @@ clean: clean_crypto_conf
 clean_crypto_conf:
 	rm -f crypto/conf/*.o crypto/conf/*.d crypto/conf/*.obj crypto/conf/lib crypto/conf/tags crypto/conf/core crypto/conf/.pure crypto/conf/.nfs* crypto/conf/*.old crypto/conf/*.bak crypto/conf/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_crypto_conf) $(CPPFLAGS) -c -o $@ $<

@@ -67,5 +67,3 @@ clean: clean_crypto_rc2
 clean_crypto_rc2:
 	rm -f crypto/rc2/*.o crypto/rc2/*.d crypto/rc2/*.obj crypto/rc2/lib crypto/rc2/tags crypto/rc2/core crypto/rc2/.pure crypto/rc2/.nfs* crypto/rc2/*.old crypto/rc2/*.bak crypto/rc2/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_crypto_rc2) $(CPPFLAGS) -c -o $@ $<

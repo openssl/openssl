@@ -67,5 +67,3 @@ clean: clean_crypto_lhash
 clean_crypto_lhash:
 	rm -f crypto/lhash/*.o crypto/lhash/*.d crypto/lhash/*.obj crypto/lhash/lib crypto/lhash/tags crypto/lhash/core crypto/lhash/.pure crypto/lhash/.nfs* crypto/lhash/*.old crypto/lhash/*.bak crypto/lhash/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_crypto_lhash) $(CPPFLAGS) -c -o $@ $<

@@ -77,5 +77,3 @@ clean: clean_crypto_x509v3
 clean_crypto_x509v3:
 	rm -f crypto/x509v3/*.o crypto/x509v3/*.d crypto/x509v3/*.obj crypto/x509v3/lib crypto/x509v3/tags crypto/x509v3/core crypto/x509v3/.pure crypto/x509v3/.nfs* crypto/x509v3/*.old crypto/x509v3/*.bak crypto/x509v3/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_crypto_x509v3) $(CPPFLAGS) -c -o $@ $<

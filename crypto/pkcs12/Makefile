@@ -74,5 +74,3 @@ clean: clean_crypto_pkcs12
 clean_crypto_pkcs12:
 	rm -f crypto/pkcs12/*.o crypto/pkcs12/*.d crypto/pkcs12/*.obj crypto/pkcs12/lib crypto/pkcs12/tags crypto/pkcs12/core crypto/pkcs12/.pure crypto/pkcs12/.nfs* crypto/pkcs12/*.old crypto/pkcs12/*.bak crypto/pkcs12/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_crypto_pkcs12) $(CPPFLAGS) -c -o $@ $<

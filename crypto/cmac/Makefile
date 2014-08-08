@@ -67,5 +67,3 @@ clean: clean_crypto_cmac
 clean_crypto_cmac:
 	rm -f crypto/cmac/*.o crypto/cmac/*.d crypto/cmac/*.obj crypto/cmac/lib crypto/cmac/tags crypto/cmac/core crypto/cmac/.pure crypto/cmac/.nfs* crypto/cmac/*.old crypto/cmac/*.bak crypto/cmac/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_crypto_cmac) $(CPPFLAGS) -c -o $@ $<

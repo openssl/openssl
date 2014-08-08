@@ -96,5 +96,3 @@ $(SHLIB_demos_engines_cluster_labs).aix:	$(LIB_demos_engines_cluster_labs)
 		$(LINK_SO_demos_engines_cluster_labs)
 		touch $(SHLIB_demos_engines_cluster_labs).aix
 
-.c.o:
-	$(CC) $(CFLAGS_demos_engines_cluster_labs) $(CPPFLAGS) -c -o $@ $<

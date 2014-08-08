@@ -79,5 +79,3 @@ clean: clean_crypto_bio
 clean_crypto_bio:
 	rm -f crypto/bio/*.o crypto/bio/*.d crypto/bio/*.obj crypto/bio/lib crypto/bio/tags crypto/bio/core crypto/bio/.pure crypto/bio/.nfs* crypto/bio/*.old crypto/bio/*.bak crypto/bio/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_crypto_bio) $(CPPFLAGS) -c -o $@ $<

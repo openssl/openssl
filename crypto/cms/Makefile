@@ -74,5 +74,3 @@ clean: clean_crypto_cms
 clean_crypto_cms:
 	rm -f crypto/cms/*.o crypto/cms/*.d crypto/cms/*.obj crypto/cms/lib crypto/cms/tags crypto/cms/core crypto/cms/.pure crypto/cms/.nfs* crypto/cms/*.old crypto/cms/*.bak crypto/cms/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_crypto_cms) $(CPPFLAGS) -c -o $@ $<

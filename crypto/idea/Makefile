@@ -67,5 +67,3 @@ clean: clean_crypto_idea
 clean_crypto_idea:
 	rm -f crypto/idea/*.o crypto/idea/*.d crypto/idea/*.obj crypto/idea/lib crypto/idea/tags crypto/idea/core crypto/idea/.pure crypto/idea/.nfs* crypto/idea/*.old crypto/idea/*.bak crypto/idea/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_crypto_idea) $(CPPFLAGS) -c -o $@ $<

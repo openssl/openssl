@@ -73,5 +73,3 @@ clean: clean_crypto_pkcs7
 clean_crypto_pkcs7:
 	rm -f crypto/pkcs7/*.o crypto/pkcs7/*.d crypto/pkcs7/*.obj crypto/pkcs7/lib crypto/pkcs7/tags crypto/pkcs7/core crypto/pkcs7/.pure crypto/pkcs7/.nfs* crypto/pkcs7/*.old crypto/pkcs7/*.bak crypto/pkcs7/fluff crypto/pkcs7/enc crypto/pkcs7/dec crypto/pkcs7/sign crypto/pkcs7/verify
 
-.c.o:
-	$(CC) $(CFLAGS_crypto_pkcs7) $(CPPFLAGS) -c -o $@ $<

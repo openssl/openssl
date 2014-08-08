@@ -83,5 +83,3 @@ clean: clean_fips_rsa
 clean_fips_rsa:
 	rm -f fips/rsa/*.o fips/rsa/*.d fips/rsa/*.obj fips/rsa/lib fips/rsa/tags fips/rsa/core fips/rsa/.pure fips/rsa/.nfs* fips/rsa/*.old fips/rsa/*.bak fips/rsa/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_fips_rsa) $(CPPFLAGS) -c -o $@ $<

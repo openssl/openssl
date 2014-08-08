@@ -82,5 +82,3 @@ clean: clean_engines_ccgost
 clean_engines_ccgost:
 	rm -f engines/ccgost/*.o engines/ccgost/*.d engines/ccgost/*.obj engines/ccgost/lib engines/ccgost/tags engines/ccgost/core engines/ccgost/.pure engines/ccgost/.nfs* engines/ccgost/*.old engines/ccgost/*.bak engines/ccgost/fluff engines/ccgost/*.so engines/ccgost/*.sl engines/ccgost/*.dll engines/ccgost/*.dylib
 
-.c.o:
-	$(CC) $(CFLAGS_engines_ccgost) $(CPPFLAGS) -c -o $@ $<

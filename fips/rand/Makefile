@@ -82,5 +82,3 @@ clean: clean_fips_rand
 clean_fips_rand:
 	rm -f fips/rand/*.o fips/rand/*.d fips/rand/*.obj fips/rand/lib fips/rand/tags fips/rand/core fips/rand/.pure fips/rand/.nfs* fips/rand/*.old fips/rand/*.bak fips/rand/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_fips_rand) $(CPPFLAGS) -c -o $@ $<

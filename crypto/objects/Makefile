@@ -79,5 +79,3 @@ clean: clean_crypto_objects
 clean_crypto_objects:
 	rm -f crypto/objects/*.o crypto/objects/*.d crypto/objects/*.obj crypto/objects/lib crypto/objects/tags crypto/objects/core crypto/objects/.pure crypto/objects/.nfs* crypto/objects/*.old crypto/objects/*.bak crypto/objects/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_crypto_objects) $(CPPFLAGS) -c -o $@ $<

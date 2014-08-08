@@ -92,5 +92,3 @@ clean: clean_crypto_evp
 clean_crypto_evp:
 	rm -f crypto/evp/*.o crypto/evp/*.d crypto/evp/*.obj crypto/evp/lib crypto/evp/tags crypto/evp/core crypto/evp/.pure crypto/evp/.nfs* crypto/evp/*.old crypto/evp/*.bak crypto/evp/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_crypto_evp) $(CPPFLAGS) -c -o $@ $<

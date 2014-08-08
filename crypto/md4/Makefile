@@ -69,7 +69,3 @@ clean: clean_crypto_md4
 clean_crypto_md4:
 	rm -f asm/mx86unix.cpp crypto/md4/*.o crypto/md4/*.d asm/*.o crypto/md4/*.obj crypto/md4/lib crypto/md4/tags crypto/md4/core crypto/md4/.pure crypto/md4/.nfs* crypto/md4/*.old crypto/md4/*.bak crypto/md4/fluff
 
-.S.s:
-	$(CPP_crypto_md4) $(CPPFLAGS) -o $@ $<
-.c.o:
-	$(CC) $(CFLAGS_crypto_md4) $(CPPFLAGS) -c -o $@ $<

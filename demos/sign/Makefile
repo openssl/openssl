@@ -16,5 +16,3 @@ test: test_demos_sign
 test_demos_sign: all_demos_sign
 	demos/sign/sign
 
-.c.o:
-	$(CC) $(CFLAGS_demos_sign) $(CPPFLAGS) -c -o $@ $<

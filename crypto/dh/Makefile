@@ -69,5 +69,3 @@ clean: clean_crypto_dh
 clean_crypto_dh:
 	rm -f crypto/dh/*.o crypto/dh/*.d */*.o */*.d crypto/dh/*.obj crypto/dh/lib crypto/dh/tags crypto/dh/core crypto/dh/.pure crypto/dh/.nfs* crypto/dh/*.old crypto/dh/*.bak crypto/dh/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_crypto_dh) $(CPPFLAGS) -c -o $@ $<

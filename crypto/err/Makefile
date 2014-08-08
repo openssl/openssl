@@ -67,5 +67,3 @@ clean: clean_crypto_err
 clean_crypto_err:
 	rm -f crypto/err/*.o crypto/err/*.d crypto/err/*.obj crypto/err/lib crypto/err/tags crypto/err/core crypto/err/.pure crypto/err/.nfs* crypto/err/*.old crypto/err/*.bak crypto/err/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_crypto_err) $(CPPFLAGS) -c -o $@ $<

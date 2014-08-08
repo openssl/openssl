@@ -67,5 +67,3 @@ clean: clean_crypto_mdc2
 clean_crypto_mdc2:
 	rm -f crypto/mdc2/*.o crypto/mdc2/*.d crypto/mdc2/*.obj crypto/mdc2/lib crypto/mdc2/tags crypto/mdc2/core crypto/mdc2/.pure crypto/mdc2/.nfs* crypto/mdc2/*.old crypto/mdc2/*.bak crypto/mdc2/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_crypto_mdc2) $(CPPFLAGS) -c -o $@ $<

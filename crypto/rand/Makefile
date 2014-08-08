@@ -69,5 +69,3 @@ clean: clean_crypto_rand
 clean_crypto_rand:
 	rm -f crypto/rand/*.o crypto/rand/*.d crypto/rand/*.obj crypto/rand/lib crypto/rand/tags crypto/rand/core crypto/rand/.pure crypto/rand/.nfs* crypto/rand/*.old crypto/rand/*.bak crypto/rand/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_crypto_rand) $(CPPFLAGS) -c -o $@ $<

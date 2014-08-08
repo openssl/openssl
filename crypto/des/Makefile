@@ -101,9 +101,3 @@ clean: clean_crypto_des
 clean_crypto_des:
 	rm -f crypto/des/*.s crypto/des/*.o crypto/des/*.d crypto/des/*.obj crypto/des/des crypto/des/lib crypto/des/tags crypto/des/core crypto/des/.pure crypto/des/.nfs* crypto/des/*.old crypto/des/*.bak crypto/des/fluff
 
-.S.s:
-	$(CPP_crypto_des) $(CPPFLAGS) -o $@ $<
-.c.o:
-	$(CC) $(CFLAGS_crypto_des) $(CPPFLAGS) -c -o $@ $<
-.s.o:
-	$(AS) $(ASFLAGS_crypto_des) -o $@ $<

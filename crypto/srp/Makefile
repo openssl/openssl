@@ -61,5 +61,3 @@ clean: clean_crypto_srp
 clean_crypto_srp:
 	rm -f crypto/srp/*.o crypto/srp/*.d crypto/srp/*.obj crypto/srp/lib crypto/srp/tags crypto/srp/core crypto/srp/.pure crypto/srp/.nfs* crypto/srp/*.old crypto/srp/*.bak crypto/srp/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_crypto_srp) $(CPPFLAGS) -c -o $@ $<

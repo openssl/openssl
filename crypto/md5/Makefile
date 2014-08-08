@@ -84,9 +84,3 @@ clean: clean_crypto_md5
 clean_crypto_md5:
 	rm -f crypto/md5/*.s crypto/md5/*.o crypto/md5/*.d crypto/md5/*.obj crypto/md5/lib crypto/md5/tags crypto/md5/core crypto/md5/.pure crypto/md5/.nfs* crypto/md5/*.old crypto/md5/*.bak crypto/md5/fluff
 
-.S.s:
-	$(CPP_crypto_md5) $(CPPFLAGS) -o $@ $<
-.c.o:
-	$(CC) $(CFLAGS_crypto_md5) $(CPPFLAGS) -c -o $@ $<
-.s.o:
-	$(AS) $(ASFLAGS_crypto_md5) -o $@ $<

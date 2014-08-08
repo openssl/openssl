@@ -78,5 +78,3 @@ clean: clean_fips_dsa
 clean_fips_dsa:
 	rm -f fips/dsa/*.o fips/dsa/*.d fips/dsa/*.obj fips/dsa/lib fips/dsa/tags fips/dsa/core fips/dsa/.pure fips/dsa/.nfs* fips/dsa/*.old fips/dsa/*.bak fips/dsa/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_fips_dsa) $(CPPFLAGS) -c -o $@ $<

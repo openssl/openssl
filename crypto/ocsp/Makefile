@@ -70,5 +70,3 @@ clean: clean_crypto_ocsp
 clean_crypto_ocsp:
 	rm -f crypto/ocsp/*.o crypto/ocsp/*.d crypto/ocsp/*.obj crypto/ocsp/lib crypto/ocsp/tags crypto/ocsp/core crypto/ocsp/.pure crypto/ocsp/.nfs* crypto/ocsp/*.old crypto/ocsp/*.bak crypto/ocsp/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_crypto_ocsp) $(CPPFLAGS) -c -o $@ $<

@@ -152,5 +152,3 @@ apps/progs.h: apps/progs.pl
 	$(PERL) apps/progs.pl $(E_EXE) >apps/progs.h
 	$(RM_apps) $(PROGRAM).o
 
-.c.o:
-	$(CC) $(CFLAGS_apps) $(CPPFLAGS) -c -o $@ $<

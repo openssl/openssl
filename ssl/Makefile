@@ -95,5 +95,3 @@ clean: clean_ssl
 clean_ssl:
 	rm -f ssl/*.o ssl/*.d ssl/*.obj ssl/lib ssl/tags ssl/core ssl/.pure ssl/.nfs* ssl/*.old ssl/*.bak ssl/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_ssl) $(CPPFLAGS) -c -o $@ $<

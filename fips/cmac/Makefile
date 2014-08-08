@@ -74,5 +74,3 @@ clean: clean_fips_cmac
 clean_fips_cmac:
 	rm -f fips/cmac/*.o fips/cmac/*.d fips/cmac/*.obj fips/cmac/lib fips/cmac/tags fips/cmac/core fips/cmac/.pure fips/cmac/.nfs* fips/cmac/*.old fips/cmac/*.bak fips/cmac/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_fips_cmac) $(CPPFLAGS) -c -o $@ $<

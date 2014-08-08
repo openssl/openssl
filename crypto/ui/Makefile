@@ -71,5 +71,3 @@ clean: clean_crypto_ui
 clean_crypto_ui:
 	rm -f crypto/ui/*.o crypto/ui/*.d */*.o */*.d crypto/ui/*.obj crypto/ui/lib crypto/ui/tags crypto/ui/core crypto/ui/.pure crypto/ui/.nfs* crypto/ui/*.old crypto/ui/*.bak crypto/ui/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_crypto_ui) $(CPPFLAGS) -c -o $@ $<

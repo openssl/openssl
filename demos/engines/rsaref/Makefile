@@ -118,5 +118,3 @@ $(SHLIB_demos_engines_rsaref).aix:	$(LIB_demos_engines_rsaref) install/librsaref
 		$(LINK_SO_demos_engines_rsaref)
 		touch $(SHLIB_demos_engines_rsaref).aix
 
-.c.o:
-	$(CC) $(CFLAGS_demos_engines_rsaref) $(CPPFLAGS) -c -o $@ $<

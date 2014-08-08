@@ -38,6 +38,3 @@ dclean_crypto_jpake:
 clean: clean_crypto_jpake
 clean_crypto_jpake:
 	rm -f crypto/jpake/*.s crypto/jpake/*.o crypto/jpake/*.d crypto/jpake/*.obj crypto/jpake/des crypto/jpake/lib crypto/jpake/tags crypto/jpake/core crypto/jpake/.pure crypto/jpake/.nfs* crypto/jpake/*.old crypto/jpake/*.bak crypto/jpake/fluff
-
-.c.o:
-	$(CC) $(CFLAGS_crypto_jpake) $(CPPFLAGS) -c -o $@ $<

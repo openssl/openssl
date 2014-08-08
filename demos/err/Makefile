@@ -15,5 +15,3 @@ errors_demos_err:
 	$(PERL) util/mkerr.pl -conf test_err.ec \
 		-nostatic -write $(SRC_demos_err)
 
-.c.o:
-	$(CC) $(CFLAGS_demos_err) $(CPPFLAGS) -c -o $@ $<

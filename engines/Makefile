@@ -144,7 +144,3 @@ clean: clean_engines
 clean_engines:
 	rm -f engines/*.o engines/*.d engines/*.obj engines/lib engines/tags engines/core engines/.pure engines/.nfs* engines/*.old engines/*.bak engines/fluff
 
-.c.o:
-	$(CC) $(CFLAGS_engines) $(CPPFLAGS) -c -o $@ $<
-.s.o:
-	$(AS) $(ASFLAGS_engines) -o $@ $<
