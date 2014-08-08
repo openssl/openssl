@@ -53,10 +53,6 @@ ssl/lib:	$(LIBOBJ_ssl)
 	@touch ssl/lib
 
 shared: shared_ssl
-shared_ssl: ssl/lib
-	if [ -n "$(SHARED_LIBS)" ]; then \
-		(cd ssl/..; $(MAKE) $(SHARED_LIB_ssl)); \
-	fi
 
 files: files_ssl
 files_ssl:

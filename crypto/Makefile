@@ -85,10 +85,6 @@ $(LIB_crypto):	$(LIBOBJ_crypto)
 	$(RANLIB) $(LIB_crypto) || echo Never mind.
 
 shared: shared_crypto
-shared_crypto: crypto/buildinf.h crypto/lib crypto/subdirs
-	if [ -n "$(SHARED_LIBS)" ]; then \
-		(cd crypto/..; $(MAKE) $(SHARED_LIB_crypto)); \
-	fi
 
 install: install_crypto
 install_crypto:
