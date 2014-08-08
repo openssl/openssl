@@ -33,9 +33,6 @@ build_all: build_libs build_apps build_tests build_tools
 
 build_libs: build_crypto build_fips build_ssl build_engines
 
-build_fips:
-	@dir=fips; target=all; [ -z "$(FIPSCANLIB)" ] || $(BUILD_ONE_CMD)
-
 build_crypto: all_crypto
 build_ssl: all_ssl
 build_engines: all_engines

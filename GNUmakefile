@@ -11,8 +11,10 @@ all_crypto: EXCL_OBJ=
 all_crypto: ARX= EXCL_OBJ="$(AES_ENC) $(BN_ASM) $(DES_ENC) $(CPUID_OBJ) \
 	$(SHA1_ASM_OBJ) $(MODES_ASM_OBJ) $(FIPS_EX_OBJ)" \
 	$(PERL) $${TOP}/util/arx.pl $(AR)
+build_fips: all_fips
 else
 all_crypto: ARX=$(AR)
+build_fips:
 endif
 
 ifeq ($(FIPSCANISTERINTERNAL), "y")
