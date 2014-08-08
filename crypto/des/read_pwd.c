@@ -266,7 +266,7 @@ int des_read_pw(char *buf, char *buff, int size, const char *prompt,
 	long status;
 	unsigned short channel = 0;
 #else
-#if !defined(OPENSSL_SYS_MSDOS) || defined(__DJGPP__)
+#if !defined(OPENSSL_SYS_MSDOS)
 	TTY_STRUCT tty_orig,tty_new;
 #endif
 #endif

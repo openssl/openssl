@@ -308,9 +308,6 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -prexit       - print session information even on connection failure\n");
 	BIO_printf(bio_err," -showcerts    - show all certificates in the chain\n");
 	BIO_printf(bio_err," -debug        - extra output\n");
-#ifdef WATT32
-	BIO_printf(bio_err," -wdebug       - WATT-32 tcp debugging\n");
-#endif
 	BIO_printf(bio_err," -msg          - Show protocol messages\n");
 	BIO_printf(bio_err," -nbio_test    - more ssl protocol testing\n");
 	BIO_printf(bio_err," -state        - print the 'ssl' states\n");
@@ -830,10 +827,6 @@ static char *jpake_secret = NULL;
 			c_tlsextdebug=1;
 		else if	(strcmp(*argv,"-status") == 0)
 			c_status_req=1;
-#endif
-#ifdef WATT32
-		else if (strcmp(*argv,"-wdebug") == 0)
-			dbug_init();
 #endif
 		else if	(strcmp(*argv,"-msg") == 0)
 			c_msg=1;

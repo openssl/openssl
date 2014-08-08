@@ -88,7 +88,7 @@
 #  include <sys/syslog.h>
 #elif defined(OPENSSL_SYS_NETWARE)
 #  define NO_SYSLOG
-#elif (!defined(MSDOS) || defined(WATT32)) && !defined(OPENSSL_SYS_VXWORKS) && !defined(NO_SYSLOG)
+#elif !defined(MSDOS) && !defined(OPENSSL_SYS_VXWORKS) && !defined(NO_SYSLOG)
 #  include <syslog.h>
 #endif
 
@@ -373,15 +373,11 @@ static void xcloselog(BIO* bp)
 {
 }
 
-#else /* Unix/Watt32 */
+#else /* Unix */
 
 static void xopenlog(BIO* bp, char* name, int level)
 {
-#ifdef WATT32   /* djgpp/DOS */
-	openlog(name, LOG_PID|LOG_CONS|LOG_NDELAY, level);
-#else
 	openlog(name, LOG_PID|LOG_CONS, level);
-#endif
 }
 
 static void xsyslog(BIO *bp, int priority, const char *string)
