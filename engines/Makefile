@@ -78,10 +78,6 @@ engines/e_padlock-x86.s:	engines/asm/e_padlock-x86.pl
 engines/e_padlock-x86_64.s:	engines/asm/e_padlock-x86_64.pl
 	$(PERL) engines/asm/e_padlock-x86_64.pl $(PERLASM_SCHEME) > $@
 
-engines/subdirs: subdirs_engines
-subdirs_engines:
-	echo $(ENGDIRS)
-
 files: files_engines
 files_engines:
 	$(PERL) util/files.pl TOP=. Makefile >> MINFO

@@ -28,33 +28,6 @@ CLEARENV=	TOP= && unset TOP $${LIB+LIB} $${LIBS+LIBS}	\
 		$${SHAREDCMD+SHAREDCMD} $${SHAREDFLAGS+SHAREDFLAGS}	\
 		$${SHARED_LIB+SHARED_LIB} $${LIBEXTRAS+LIBEXTRAS}
 
-# BUILD_CMD is a generic macro to build a given target in a given
-# subdirectory.  The target must be given through the shell variable
-# `target' and the subdirectory to build in must be given through `dir'.
-# This macro shouldn't be used directly, use RECURSIVE_BUILD_CMD or
-# BUILD_ONE_CMD instead.
-#
-# BUILD_ONE_CMD is a macro to build a given target in a given
-# subdirectory if that subdirectory is part of $(DIRS).  It requires
-# exactly the same shell variables as BUILD_CMD.
-#
-# RECURSIVE_BUILD_CMD is a macro to build a given target in all
-# subdirectories defined in $(DIRS).  It requires that the target
-# is given through the shell variable `target'.
-BUILD_CMD=  if [ -d "$$dir" ]; then \
-	    (	cd $$dir && echo "making $$target in $$dir..." && \
-		$(CLEARENV) && $(MAKE) -e TOP=.. DIR=$$dir $$target ) || exit 1; \
-	    fi
-RECURSIVE_BUILD_CMD=for dir in $(DIRS); do $(BUILD_CMD); done
-BUILD_ONE_CMD=\
-	if expr " $(DIRS) " : ".* $$dir " >/dev/null 2>&1; then \
-		$(BUILD_CMD); \
-	fi
-
-reflect:
-	@[ -n "$(THIS)" ] && $(CLEARENV) && $(MAKE) $(THIS) -e
-
-
 sub_all: build_all
 build_all: build_libs build_apps build_tests build_tools
 
@@ -63,33 +36,12 @@ build_libs: build_crypto build_fips build_ssl build_engines
 build_fips:
 	@dir=fips; target=all; [ -z "$(FIPSCANLIB)" ] || $(BUILD_ONE_CMD)
 
-build_crypto:
-	if [ -n "$(FIPSCANLIB)" ]; then \
-		EXCL_OBJ='$(AES_ENC) $(BN_ASM) $(EC_ASM) $(DES_ENC) $(CPUID_OBJ) $(SHA1_ASM_OBJ) $(MODES_ASM_OBJ) $(FIPS_EX_OBJ)' ; export EXCL_OBJ ; \
-		ARX='EXCL_OBJ="$$EXCL_OBJ" $(PERL) $${TOP}/util/arx.pl $(AR)' ; \
-	else \
-		ARX='${AR}' ; \
-	fi ; export ARX ; \
-	if [ $(FIPSCANISTERINTERNAL) = "y" ]; then \
-		AS='FIPSCANISTERINTERNAL="$(FIPSCANISTERINTERNAL)" $(PERL) $${TOP}/util/fipsas.pl $${TOP} $${<} $(CC) -c' ; \
-	else \
-		AS='$(CC) -c' ; \
-	fi ; export AS ; \
-		dir=crypto; target=all; $(BUILD_ONE_CMD)
-build_ssl:
-	@dir=ssl; target=all; $(BUILD_ONE_CMD)
-build_engines:
-	@dir=engines; target=all; AS='$(CC) -c'; export AS; $(BUILD_ONE_CMD)
-build_apps:
-	@dir=apps; target=all; $(BUILD_ONE_CMD)
-build_tests:
-	@dir=test; target=all; $(BUILD_ONE_CMD)
-build_tools:
-	@dir=tools; target=all; $(BUILD_ONE_CMD)
-
-all_testapps: build_libs build_testapps
-build_testapps:
-	@dir=crypto; target=testapps; $(BUILD_ONE_CMD)
+build_crypto: all_crypto
+build_ssl: all_ssl
+build_engines: all_engines
+build_apps: all_apps
+build_tests: all_test
+build_tools: all_tools
 
 libcrypto$(SHLIB_EXT): libcrypto.a build_fips
 	@if [ "$(SHLIB_TARGET)" != "" ]; then \
@@ -219,14 +171,14 @@ files:
 links:
 	@$(PERL) util/mkdir-p.pl include/openssl
 	@$(PERL) util/mklink.pl include/openssl $(EXHEADER)
-	@set -e; target=links; $(RECURSIVE_BUILD_CMD)
-	@if [ -z "$(FIPSCANLIB)" ]; then \
-		set -e; target=links; dir=fips ; $(BUILD_CMD) ; \
-	fi
+#	@set -e; target=links; $(RECURSIVE_BUILD_CMD)
+#	@if [ -z "$(FIPSCANLIB)" ]; then \
+#		set -e; target=links; dir=fips ; $(BUILD_CMD) ; \
+#	fi
 
-gentests:
-	@(cd test && echo "generating dummy tests (if needed)..." && \
-	$(CLEARENV) && $(MAKE) -e TESTS='$(TESTS)' OPENSSL_DEBUG_MEMORY=on generate );
+gentests_announce:
+	@echo "generating dummy tests (if needed)..."
+gentests: gentests_announce test/generate
 
 dclean:
 	rm -rf *.bak include/openssl certs/.0
@@ -245,10 +197,10 @@ rehash.time: certs apps
 
 test:   tests
 
-tests: rehash
-	@(cd test && echo "testing..." && \
-	$(CLEARENV) && $(MAKE) -e TOP=.. TESTS='$(TESTS)' OPENSSL_DEBUG_MEMORY=on OPENSSL_CONF=../apps/openssl.cnf tests );
-	OPENSSL_CONF=apps/openssl.cnf util/opensslwrap.sh version -a
+#tests: rehash
+#	@(cd test && echo "testing..." && \
+#	$(CLEARENV) && $(MAKE) -e TOP=.. TESTS='$(TESTS)' OPENSSL_DEBUG_MEMORY=on OPENSSL_CONF=../apps/openssl.cnf tests );
+#	OPENSSL_CONF=apps/openssl.cnf util/opensslwrap.sh version -a
 
 report:
 	@$(PERL) util/selftest.pl
@@ -263,10 +215,10 @@ tags TAGS: FORCE
 
 FORCE:
 
-errors:
-	$(PERL) util/ck_errf.pl -strict */*.c */*/*.c
-	$(PERL) util/mkerr.pl -recurse -write
-	(cd engines; $(MAKE) PERL=$(PERL) errors)
+#errors:
+#	$(PERL) util/ck_errf.pl -strict */*.c */*/*.c
+#	$(PERL) util/mkerr.pl -recurse -write
+#	(cd engines; $(MAKE) PERL=$(PERL) errors)
 
 stacks:
 	$(PERL) util/mkstack.pl -write
@@ -312,14 +264,14 @@ tar-snap:
 	      --prefix=openssl-$(VERSION) - > ../$(TARFILE);\
 	ls -l ../$(TARFILE)
 
-dist:   
-	$(PERL) Configure dist
-	@$(MAKE) dist_pem_h
-	@$(MAKE) SDIRS='$(SDIRS)' clean
-	@$(MAKE) TAR='$(TAR)' TARFLAGS='$(TARFLAGS)' tar
+#dist:   
+#	$(PERL) Configure dist
+#	@$(MAKE) dist_pem_h
+#	@$(MAKE) SDIRS='$(SDIRS)' clean
+#	@$(MAKE) TAR='$(TAR)' TARFLAGS='$(TARFLAGS)' tar
 
-dist_pem_h:
-	(cd crypto/pem; $(MAKE) -e pem.h; $(MAKE) clean)
+#dist_pem_h:
+#	(cd crypto/pem; $(MAKE) -e pem.h; $(MAKE) clean)
 
 install: all install_docs install_sw
 
