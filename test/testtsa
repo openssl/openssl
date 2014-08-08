@@ -6,19 +6,19 @@
 
 SH="/bin/sh"
 if test "$OSTYPE" = msdosdjgpp; then
-    PATH="../apps\;$PATH"
+    PATH="apps\;$PATH"
 else
-    PATH="../apps:$PATH"
+    PATH="apps:$PATH"
 fi
 export SH PATH
 
 OPENSSL_CONF="../CAtsa.cnf"
 export OPENSSL_CONF
-# Because that's what ../apps/CA.sh really looks at
+# Because that's what apps/CA.sh really looks at
 SSLEAY_CONFIG="-config $OPENSSL_CONF"
 export SSLEAY_CONFIG
 
-OPENSSL="`pwd`/../util/opensslwrap.sh"
+OPENSSL="`pwd`/util/opensslwrap.sh"
 export OPENSSL
 
 error () {
@@ -29,9 +29,9 @@ error () {
 
 setup_dir () {
 
-    rm -rf tsa 2>/dev/null
-    mkdir tsa
-    cd ./tsa
+    rm -rf test/tsa 2>/dev/null
+    mkdir test/tsa
+    cd test/tsa
 }
 
 clean_up_dir () {

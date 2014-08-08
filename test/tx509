@@ -1,11 +1,11 @@
 #!/bin/sh
 
-cmd='../util/shlib_wrap.sh ../apps/openssl x509'
+cmd='util/shlib_wrap.sh apps/openssl x509'
 
 if [ "$1"x != "x" ]; then
 	t=$1
 else
-	t=testx509.pem
+	t=test/testx509.pem
 fi
 
 echo testing X509 conversions

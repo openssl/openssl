@@ -1,11 +1,11 @@
 #!/bin/sh
 
-cmd='../util/shlib_wrap.sh ../apps/openssl crl'
+cmd='util/shlib_wrap.sh apps/openssl crl'
 
 if [ "$1"x != "x" ]; then
 	t=$1
 else
-	t=testcrl.pem
+	t=test/testcrl.pem
 fi
 
 echo testing crl conversions

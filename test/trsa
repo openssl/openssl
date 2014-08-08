@@ -1,16 +1,16 @@
 #!/bin/sh
 
-if ../util/shlib_wrap.sh ../apps/openssl no-rsa; then
+if util/shlib_wrap.sh apps/openssl no-rsa; then
   echo skipping rsa conversion test
   exit 0
 fi
 
-cmd='../util/shlib_wrap.sh ../apps/openssl rsa'
+cmd='util/shlib_wrap.sh apps/openssl rsa'
 
 if [ "$1"x != "x" ]; then
 	t=$1
 else
-	t=testrsa.pem
+	t=test/testrsa.pem
 fi
 
 echo testing rsa conversions

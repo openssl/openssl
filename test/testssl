@@ -1,25 +1,25 @@
 #!/bin/sh
 
 if [ "$1" = "" ]; then
-  key=../apps/server.pem
+  key=apps/server.pem
 else
   key="$1"
 fi
 if [ "$2" = "" ]; then
-  cert=../apps/server.pem
+  cert=apps/server.pem
 else
   cert="$2"
 fi
-ssltest="../util/shlib_wrap.sh ./ssltest -key $key -cert $cert -c_key $key -c_cert $cert"
+ssltest="util/shlib_wrap.sh test/ssltest -key $key -cert $cert -c_key $key -c_cert $cert"
 
-if ../util/shlib_wrap.sh ../apps/openssl x509 -in $cert -text -noout | fgrep 'DSA Public Key' >/dev/null; then
+if util/shlib_wrap.sh apps/openssl x509 -in $cert -text -noout | fgrep 'DSA Public Key' >/dev/null; then
   dsa_cert=YES
 else
   dsa_cert=NO
 fi
 
 if [ "$3" = "" ]; then
-  CA="-CApath ../certs"
+  CA="-CApath certs"
 else
   CA="-CAfile $3"
 fi
@@ -30,7 +30,7 @@ else
   extra="$4"
 fi
 
-serverinfo="./serverinfo.pem"
+serverinfo="test/serverinfo.pem"
 
 #############################################################################
 
@@ -124,7 +124,7 @@ $ssltest -bio_pair -server_auth -client_auth -app_verify $CA $extra || exit 1
 echo "Testing ciphersuites"
 for protocol in TLSv1.2 SSLv3; do
   echo "Testing ciphersuites for $protocol"
-  for cipher in `../util/shlib_wrap.sh ../apps/openssl ciphers "RSA+$protocol" | tr ':' ' '`; do
+  for cipher in `util/shlib_wrap.sh apps/openssl ciphers "RSA+$protocol" | tr ':' ' '`; do
     echo "Testing $cipher"
     prot=""
     if [ $protocol = "SSLv3" ] ; then
@@ -140,24 +140,24 @@ done
 
 #############################################################################
 
-if ../util/shlib_wrap.sh ../apps/openssl no-dh; then
+if util/shlib_wrap.sh apps/openssl no-dh; then
   echo skipping anonymous DH tests
 else
   echo test tls1 with 1024bit anonymous DH, multiple handshakes
   $ssltest -v -bio_pair -tls1 -cipher ADH -dhe1024dsa -num 10 -f -time $extra || exit 1
 fi
 
-if ../util/shlib_wrap.sh ../apps/openssl no-rsa; then
+if util/shlib_wrap.sh apps/openssl no-rsa; then
   echo skipping RSA tests
 else
   echo 'test tls1 with 1024bit RSA, no (EC)DHE, multiple handshakes'
-  ../util/shlib_wrap.sh ./ssltest -v -bio_pair -tls1 -cert ../apps/server2.pem -no_dhe -no_ecdhe -num 10 -f -time $extra || exit 1
+  util/shlib_wrap.sh test/ssltest -v -bio_pair -tls1 -cert apps/server2.pem -no_dhe -no_ecdhe -num 10 -f -time $extra || exit 1
 
-  if ../util/shlib_wrap.sh ../apps/openssl no-dh; then
+  if util/shlib_wrap.sh apps/openssl no-dh; then
     echo skipping RSA+DHE tests
   else
     echo test tls1 with 1024bit RSA, 1024bit DHE, multiple handshakes
-    ../util/shlib_wrap.sh ./ssltest -v -bio_pair -tls1 -cert ../apps/server2.pem -dhe1024dsa -num 10 -f -time $extra || exit 1
+    util/shlib_wrap.sh test/ssltest -v -bio_pair -tls1 -cert apps/server2.pem -dhe1024dsa -num 10 -f -time $extra || exit 1
   fi
 fi
 
@@ -207,7 +207,7 @@ $ssltest -bio_pair -tls1 -alpn_client bar,foo -alpn_server bar,foo -alpn_expecte
 $ssltest -bio_pair -tls1 -alpn_client foo,bar -alpn_server bar,foo -alpn_expected bar || exit 1
 $ssltest -bio_pair -tls1 -alpn_client baz -alpn_server bar,foo || exit 1
 
-if ../util/shlib_wrap.sh ../apps/openssl no-srp; then
+if util/shlib_wrap.sh apps/openssl no-srp; then
   echo skipping SRP tests
 else
   echo test tls1 with SRP
