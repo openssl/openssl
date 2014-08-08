@@ -1793,7 +1793,7 @@ int ssl3_send_alert(SSL *s, int level, int desc)
 		desc = SSL_AD_HANDSHAKE_FAILURE; /* SSL 3.0 does not have protocol_version alerts */
 	if (desc < 0) return -1;
 	/* If a fatal one, remove from cache */
-	if ((level == 2) && (s->session != NULL))
+	if ((level == SSL3_AL_FATAL) && (s->session != NULL))
 		SSL_CTX_remove_session(s->ctx,s->session);
 
 	s->s3->alert_dispatch=1;
