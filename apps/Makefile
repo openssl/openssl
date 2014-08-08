@@ -68,7 +68,7 @@ all: all_apps
 all_apps:	exe_apps
 
 exe: exe_apps
-exe_apps:	$(EXE_apps)
+exe_apps:	$(EXE_apps) rehash
 
 apps/req: apps/sreq.o $(A_OBJ) $(DLIBCRYPTO_apps)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
@@ -140,10 +140,9 @@ $(EXE_apps): apps/progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO_apps) $(DLIBSSL_app
 	fi; \
 	LIBRARIES="$(LIBSSL_apps) $(LIBKRB5) $(LIBCRYPTO_apps)" ; \
 	cat configure.mk Makefile.shared | $(MAKE) -f - \
-		APPNAME=$(EXE_apps) OBJECTS=apps/"$(PROGRAM).o $(E_OBJ)" \
+		APPNAME=$(EXE_apps) OBJECTS="$(PROGRAM).o $(E_OBJ)" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
-	@(cd apps/..; $(MAKE) rehash)
 
 apps/progs.h: apps/progs.pl
 	$(PERL) apps/progs.pl $(E_EXE) >apps/progs.h

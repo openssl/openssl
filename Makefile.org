@@ -185,7 +185,7 @@ dclean:
 	@set -e; target=dclean; $(RECURSIVE_BUILD_CMD)
 
 rehash: rehash.time
-rehash.time: certs apps
+rehash.time: certs $(EXE_apps)
 	@if [ -z "$(CROSS_COMPILE)" ]; then \
 		(OPENSSL="`pwd`/util/opensslwrap.sh"; \
 		[ -x "apps/openssl.exe" ] && OPENSSL="apps/openssl.exe" || :; \
@@ -197,10 +197,10 @@ rehash.time: certs apps
 
 test:   tests
 
-#tests: rehash
-#	@(cd test && echo "testing..." && \
-#	$(CLEARENV) && $(MAKE) -e TOP=.. TESTS='$(TESTS)' OPENSSL_DEBUG_MEMORY=on OPENSSL_CONF=../apps/openssl.cnf tests );
-#	OPENSSL_CONF=apps/openssl.cnf util/opensslwrap.sh version -a
+tests_announce:
+	@echo "testing..."
+tests: tests_announce rehash
+	OPENSSL_CONF=apps/openssl.cnf util/opensslwrap.sh version -a
 
 report:
 	@$(PERL) util/selftest.pl
