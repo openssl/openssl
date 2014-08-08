@@ -1485,7 +1485,7 @@ if (!$IsMK1MF)
 		}
 	}
 
-$cpuid_obj.=" uplink.o uplink-x86.o" if ($cflags =~ /\-DOPENSSL_USE_APPLINK/);
+$cpuid_obj.=" ms/uplink.o ms/uplink-x86.o" if ($cflags =~ /\-DOPENSSL_USE_APPLINK/);
 
 #
 # Platform fix-ups
@@ -1695,6 +1695,18 @@ if ($fipscanisterinternal eq "y")
 my $mforg = $fipscanisteronly ? "Makefile.fips" : "Makefile.org";
 my $cforg = $fipscanisteronly ? "configure.mk.fips" : "configure.mk.org";
 
+sub add_obj_dir_prefix
+	{
+	my ($dirname, $objs) = @_;
+	my @objs = split(/ /, $objs);
+	foreach my $i (0 .. $#objs)
+		{
+		my $obj = $objs[$i];
+		$objs[$i] = "$dirname/$obj" if index($obj, "/") == -1;
+		}
+  return join(' ', @objs);
+	}
+
 sub process_makefile
 	{
 	my ($infile) = @_;
@@ -1764,22 +1776,22 @@ sub process_makefile
 		s/^PEX_LIBS=.*$/PEX_LIBS= $prelflags/;
 		s/^EX_LIBS=.*$/EX_LIBS= $lflags/;
 		s/^EXE_EXT=.*$/EXE_EXT= $exe_ext/;
-		s/^CPUID_OBJ=.*$/CPUID_OBJ= $cpuid_obj/;
-		s/^BN_ASM=.*$/BN_ASM= $bn_obj/;
-		s/^EC_ASM=.*$/EC_ASM= $ec_obj/;
-		s/^DES_ENC=.*$/DES_ENC= $des_obj/;
-		s/^AES_ENC=.*$/AES_ENC= $aes_obj/;
-		s/^BF_ENC=.*$/BF_ENC= $bf_obj/;
-		s/^CAST_ENC=.*$/CAST_ENC= $cast_obj/;
-		s/^RC4_ENC=.*$/RC4_ENC= $rc4_obj/;
-		s/^RC5_ENC=.*$/RC5_ENC= $rc5_obj/;
-		s/^MD5_ASM_OBJ=.*$/MD5_ASM_OBJ= $md5_obj/;
-		s/^SHA1_ASM_OBJ=.*$/SHA1_ASM_OBJ= $sha1_obj/;
-		s/^RMD160_ASM_OBJ=.*$/RMD160_ASM_OBJ= $rmd160_obj/;
-		s/^WP_ASM_OBJ=.*$/WP_ASM_OBJ= $wp_obj/;
-		s/^CMLL_ENC=.*$/CMLL_ENC= $cmll_obj/;
-		s/^MODES_ASM_OBJ.=*$/MODES_ASM_OBJ= $modes_obj/;
-		s/^ENGINES_ASM_OBJ.=*$/ENGINES_ASM_OBJ= $engines_obj/;
+		s/^CPUID_OBJ=.*$/CPUID_OBJ= ${\add_obj_dir_prefix "crypto", $cpuid_obj}/;
+		s/^BN_ASM=.*$/BN_ASM= ${\add_obj_dir_prefix "crypto\/bn", $bn_obj}/;
+		s/^EC_ASM=.*$/EC_ASM= ${\add_obj_dir_prefix "crypto\/ec", $ec_obj}/;
+		s/^DES_ENC=.*$/DES_ENC= ${\add_obj_dir_prefix "crypto\/des", $des_obj}/;
+		s/^AES_ENC=.*$/AES_ENC= ${\add_obj_dir_prefix "crypto\/aes", $aes_obj}/;
+		s/^BF_ENC=.*$/BF_ENC= ${\add_obj_dir_prefix "crypto\/bf", $bf_obj}/;
+		s/^CAST_ENC=.*$/CAST_ENC= ${\add_obj_dir_prefix "crypto\/cast", $cast_obj}/;
+		s/^RC4_ENC=.*$/RC4_ENC= ${\add_obj_dir_prefix "crypto\/rc4", $rc4_obj}/;
+		s/^RC5_ENC=.*$/RC5_ENC= ${\add_obj_dir_prefix "crypto\/rc5", $rc5_obj}/;
+		s/^MD5_ASM_OBJ=.*$/MD5_ASM_OBJ= ${\add_obj_dir_prefix "crypto\/md5", $md5_obj}/;
+		s/^SHA1_ASM_OBJ=.*$/SHA1_ASM_OBJ= ${\add_obj_dir_prefix "crypto\/sha", $sha1_obj}/;
+		s/^RMD160_ASM_OBJ=.*$/RMD160_ASM_OBJ= ${\add_obj_dir_prefix "crypto\/ripemd", $rmd160_obj}/;
+		s/^WP_ASM_OBJ=.*$/WP_ASM_OBJ= ${\add_obj_dir_prefix "crypto\/whrlpool", $wp_obj}/;
+		s/^CMLL_ENC=.*$/CMLL_ENC= ${\add_obj_dir_prefix "crypto\/camellia", $cmll_obj}/;
+		s/^MODES_ASM_OBJ.=*$/MODES_ASM_OBJ= ${\add_obj_dir_prefix "crypto\/modes", $modes_obj}/;
+		s/^ENGINES_ASM_OBJ.=*$/ENGINES_ASM_OBJ= ${\add_obj_dir_prefix "engines", $engines_obj}/;
 		s/^PERLASM_SCHEME=.*$/PERLASM_SCHEME= $perlasm_scheme/;
 		s/^PROCESSOR=.*/PROCESSOR= $processor/;
 		s/^ARFLAGS=.*/ARFLAGS= $arflags/;
