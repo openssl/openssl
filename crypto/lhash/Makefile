@@ -22,12 +22,8 @@ ALL_crypto_lhash=    $(GENERAL_crypto_lhash) $(SRC_crypto_lhash) $(HEADER_crypto
 
 
 all: all_crypto_lhash
-all_crypto_lhash:	crypto/lhash/lib
+all_crypto_lhash:	$(LIBOBJ_crypto_lhash)
 
-crypto/lhash/lib:	$(LIBOBJ_crypto_lhash)
-	$(ARX) $(LIB_crypto_lhash) $(LIBOBJ_crypto_lhash)
-	$(RANLIB) $(LIB_crypto_lhash) || echo Never mind.
-	@touch crypto/lhash/lib
 
 files: files_crypto_lhash
 files_crypto_lhash:

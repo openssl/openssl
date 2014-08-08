@@ -23,12 +23,8 @@ ALL_crypto_ecdsa=    $(GENERAL_crypto_ecdsa) $(SRC_crypto_ecdsa) $(HEADER_crypto
 
 
 all: all_crypto_ecdsa
-all_crypto_ecdsa:	crypto/ecdsa/lib
+all_crypto_ecdsa:	$(LIBOBJ_crypto_ecdsa)
 
-crypto/ecdsa/lib:	$(LIBOBJ_crypto_ecdsa)
-	$(ARX) $(LIB_crypto_ecdsa) $(LIBOBJ_crypto_ecdsa)
-	$(RANLIB) $(LIB_crypto_ecdsa) || echo Never mind.
-	@touch crypto/ecdsa/lib
 
 files: files_crypto_ecdsa
 files_crypto_ecdsa:

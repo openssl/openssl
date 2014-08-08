@@ -24,12 +24,8 @@ ALL_crypto_store=    $(GENERAL_crypto_store) $(SRC_crypto_store) $(HEADER_crypto
 
 
 all: all_crypto_store
-all_crypto_store:	crypto/store/lib
+all_crypto_store:	$(LIBOBJ_crypto_store)
 
-crypto/store/lib:	$(LIBOBJ_crypto_store)
-	$(ARX) $(LIB_crypto_store) $(LIBOBJ_crypto_store)
-	$(RANLIB) $(LIB_crypto_store) || echo Never mind.
-	@touch crypto/store/lib
 
 files: files_crypto_store
 files_crypto_store:

@@ -26,12 +26,8 @@ ALL_crypto_whrlpool=    $(GENERAL_crypto_whrlpool) $(SRC_crypto_whrlpool) $(HEAD
 
 
 all: all_crypto_whrlpool
-all_crypto_whrlpool:	crypto/whrlpool/lib
+all_crypto_whrlpool:	$(LIBOBJ_crypto_whrlpool)
 
-crypto/whrlpool/lib:	$(LIBOBJ_crypto_whrlpool)
-	$(ARX) $(LIB_crypto_whrlpool) $(LIBOBJ_crypto_whrlpool)
-	$(RANLIB) $(LIB_crypto_whrlpool) || echo Never mind.
-	@touch crypto/whrlpool/lib
 
 crypto/whrlpool/wp-mmx.s:	crypto/whrlpool/asm/wp-mmx.pl crypto/perlasm/x86asm.pl
 	$(PERL) crypto/whrlpool/asm/wp-mmx.pl $(PERLASM_SCHEME) $(CFLAGS_crypto_whrlpool) $(PROCESSOR) > $@

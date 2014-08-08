@@ -26,12 +26,8 @@ ALL_crypto_bf=    $(GENERAL_crypto_bf) $(SRC_crypto_bf) $(HEADER_crypto_bf)
 
 
 all: all_crypto_bf
-all_crypto_bf:	crypto/bf/lib
+all_crypto_bf:	$(LIBOBJ_crypto_bf)
 
-crypto/bf/lib:	$(LIBOBJ_crypto_bf)
-	$(ARX) $(LIB_crypto_bf) $(LIBOBJ_crypto_bf)
-	$(RANLIB) $(LIB_crypto_bf) || echo Never mind.
-	@touch crypto/bf/lib
 
 crypto/bf/bf-586.s:	crypto/bf/asm/bf-586.pl crypto/perlasm/x86asm.pl crypto/perlasm/cbc.pl
 	$(PERL) crypto/bf/asm/bf-586.pl $(PERLASM_SCHEME) $(CFLAGS_crypto_bf) $(PROCESSOR) > $@

@@ -25,12 +25,8 @@ ALL_crypto_ocsp=    $(GENERAL_crypto_ocsp) $(SRC_crypto_ocsp) $(HEADER_crypto_oc
 
 
 all: all_crypto_ocsp
-all_crypto_ocsp:	crypto/ocsp/lib
+all_crypto_ocsp:	$(LIBOBJ_crypto_ocsp)
 
-crypto/ocsp/lib:	$(LIBOBJ_crypto_ocsp)
-	$(ARX) $(LIB_crypto_ocsp) $(LIBOBJ_crypto_ocsp)
-	$(RANLIB) $(LIB_crypto_ocsp) || echo Never mind.
-	@touch crypto/ocsp/lib
 
 files: files_crypto_ocsp
 files_crypto_ocsp:

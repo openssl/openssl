@@ -26,12 +26,8 @@ ALL_crypto_rc5=    $(GENERAL_crypto_rc5) $(SRC_crypto_rc5) $(HEADER_crypto_rc5)
 
 
 all: all_crypto_rc5
-all_crypto_rc5:	crypto/rc5/lib
+all_crypto_rc5:	$(LIBOBJ_crypto_rc5)
 
-crypto/rc5/lib:	$(LIBOBJ_crypto_rc5)
-	$(ARX) $(LIB_crypto_rc5) $(LIBOBJ_crypto_rc5)
-	$(RANLIB) $(LIB_crypto_rc5) || echo Never mind.
-	@touch crypto/rc5/lib
 
 crypto/rc5/rc5-586.s: crypto/rc5/asm/rc5-586.pl crypto/perlasm/x86asm.pl crypto/perlasm/cbc.pl
 	$(PERL) crypto/rc5/asm/rc5-586.pl $(PERLASM_SCHEME) $(CFLAGS_crypto_rc5) > $@

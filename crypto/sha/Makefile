@@ -26,12 +26,8 @@ ALL_crypto_sha=    $(GENERAL_crypto_sha) $(SRC_crypto_sha) $(HEADER_crypto_sha)
 
 
 all: all_crypto_sha
-all_crypto_sha:    crypto/sha/lib
+all_crypto_sha:    $(LIBOBJ_crypto_sha)
 
-crypto/sha/lib:    $(LIBOBJ_crypto_sha)
-	$(ARX) $(LIB_crypto_sha) $(LIBOBJ_crypto_sha)
-	$(RANLIB) $(LIB_crypto_sha) || echo Never mind.
-	@touch crypto/sha/lib
 
 crypto/sha/sha1-586.s:	crypto/sha/asm/sha1-586.pl crypto/perlasm/x86asm.pl
 	$(PERL) crypto/sha/asm/sha1-586.pl $(PERLASM_SCHEME) $(CFLAGS_crypto_sha) $(PROCESSOR) > $@

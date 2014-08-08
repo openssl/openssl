@@ -28,12 +28,8 @@ ALL_crypto_modes=    $(GENERAL_crypto_modes) $(SRC_crypto_modes) $(HEADER_crypto
 
 
 all: all_crypto_modes
-all_crypto_modes:	crypto/modes/lib
+all_crypto_modes:	$(LIBOBJ_crypto_modes)
 
-crypto/modes/lib:	$(LIBOBJ_crypto_modes)
-	$(ARX) $(LIB_crypto_modes) $(LIBOBJ_crypto_modes)
-	$(RANLIB) $(LIB_crypto_modes) || echo Never mind.
-	@touch crypto/modes/lib
 
 crypto/modes/ghash-ia64.s:	crypto/modes/asm/ghash-ia64.pl
 	$(PERL) crypto/modes/asm/ghash-ia64.pl $@ $(CFLAGS_crypto_modes)

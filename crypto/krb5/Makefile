@@ -23,12 +23,8 @@ ALL_crypto_krb5=    $(GENERAL_crypto_krb5) $(SRC_crypto_krb5) $(HEADER_crypto_kr
 
 
 all: all_crypto_krb5
-all_crypto_krb5:	crypto/krb5/lib
+all_crypto_krb5:	$(LIBOBJ_crypto_krb5)
 
-crypto/krb5/lib:	$(LIBOBJ_crypto_krb5)
-	$(ARX) $(LIB_crypto_krb5) $(LIBOBJ_crypto_krb5)
-	$(RANLIB) $(LIB_crypto_krb5) || echo Never mind.
-	@touch crypto/krb5/lib
 
 files: files_crypto_krb5
 files_crypto_krb5:

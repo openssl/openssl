@@ -16,12 +16,8 @@ HEADER_crypto_srp=	$(EXHEADER_crypto_srp)
 
 
 all: all_crypto_srp
-all_crypto_srp:	crypto/srp/lib
+all_crypto_srp:	$(LIBOBJ_crypto_srp)
 
-crypto/srp/lib:	$(LIBOBJ_crypto_srp)
-	$(AR) $(LIB_crypto_srp) $(LIBOBJ_crypto_srp)
-	$(RANLIB) $(LIB_crypto_srp) || echo Never mind.
-	@touch crypto/srp/lib
 
 files: files_crypto_srp
 files_crypto_srp:

@@ -26,12 +26,8 @@ ALL_crypto_rc4=    $(GENERAL_crypto_rc4) $(SRC_crypto_rc4) $(HEADER_crypto_rc4)
 
 
 all: all_crypto_rc4
-all_crypto_rc4:	crypto/rc4/lib
+all_crypto_rc4:	$(LIBOBJ_crypto_rc4)
 
-crypto/rc4/lib:	$(LIBOBJ_crypto_rc4)
-	$(ARX) $(LIB_crypto_rc4) $(LIBOBJ_crypto_rc4)
-	$(RANLIB) $(LIB_crypto_rc4) || echo Never mind.
-	@touch crypto/rc4/lib
 
 crypto/rc4/rc4-586.s:	crypto/rc4/asm/rc4-586.pl crypto/perlasm/x86asm.pl
 	$(PERL) crypto/rc4/asm/rc4-586.pl $(PERLASM_SCHEME) $(CFLAGS_crypto_rc4) $(PROCESSOR) > $@

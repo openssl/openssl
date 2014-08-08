@@ -27,12 +27,8 @@ ALL_crypto_ripemd=    $(GENERAL_crypto_ripemd) $(SRC_crypto_ripemd) $(HEADER_cry
 
 
 all: all_crypto_ripemd
-all_crypto_ripemd:    crypto/ripemd/lib
+all_crypto_ripemd:    $(LIBOBJ_crypto_ripemd)
 
-crypto/ripemd/lib:    $(LIBOBJ_crypto_ripemd)
-	$(ARX) $(LIB_crypto_ripemd) $(LIBOBJ_crypto_ripemd)
-	$(RANLIB) $(LIB_crypto_ripemd) || echo Never mind.
-	@touch crypto/ripemd/lib
 
 crypto/ripemd/rmd-586.s:	crypto/ripemd/asm/rmd-586.pl crypto/perlasm/x86asm.pl
 	$(PERL) crypto/ripemd/asm/rmd-586.pl $(PERLASM_SCHEME) $(CFLAGS_crypto_ripemd) > $@

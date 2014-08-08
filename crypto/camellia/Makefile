@@ -28,12 +28,8 @@ ALL_crypto_camellia=    $(GENERAL_crypto_camellia) $(SRC_crypto_camellia) $(HEAD
 
 
 all: all_crypto_camellia
-all_crypto_camellia:	crypto/camellia/lib
+all_crypto_camellia:	$(LIBOBJ_crypto_camellia)
 
-crypto/camellia/lib:	$(LIBOBJ_crypto_camellia)
-	$(ARX) $(LIB_crypto_camellia) $(LIBOBJ_crypto_camellia)
-	$(RANLIB) $(LIB_crypto_camellia) || echo Never mind.
-	@touch crypto/camellia/lib
 
 crypto/camellia/cmll-x86.s:	crypto/camellia/asm/cmll-x86.pl crypto/perlasm/x86asm.pl
 	$(PERL) crypto/camellia/asm/cmll-x86.pl $(PERLASM_SCHEME) $(CFLAGS_crypto_camellia) $(PROCESSOR) > $@

@@ -26,12 +26,8 @@ HEADER_crypto_ts=	$(EXHEADER_crypto_ts)
 ALL_crypto_ts=    $(GENERAL_crypto_ts) $(SRC_crypto_ts) $(HEADER_crypto_ts)
 
 all: all_crypto_ts
-all_crypto_ts:	crypto/ts/lib
+all_crypto_ts:	$(LIBOBJ_crypto_ts)
 
-crypto/ts/lib:	$(LIBOBJ_crypto_ts)
-	$(ARX) $(LIB_crypto_ts) $(LIBOBJ_crypto_ts)
-	$(RANLIB) $(LIB_crypto_ts) || echo Never mind.
-	@touch crypto/ts/lib
 
 files: files_crypto_ts
 files_crypto_ts:

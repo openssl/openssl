@@ -24,12 +24,8 @@ ALL_crypto_rand=    $(GENERAL_crypto_rand) $(SRC_crypto_rand) $(HEADER_crypto_ra
 
 
 all: all_crypto_rand
-all_crypto_rand:	crypto/rand/lib
+all_crypto_rand:	$(LIBOBJ_crypto_rand)
 
-crypto/rand/lib:	$(LIBOBJ_crypto_rand)
-	$(ARX) $(LIB_crypto_rand) $(LIBOBJ_crypto_rand)
-	$(RANLIB) $(LIB_crypto_rand) || echo Never mind.
-	@touch crypto/rand/lib
 
 files: files_crypto_rand
 files_crypto_rand:

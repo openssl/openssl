@@ -22,12 +22,8 @@ ALL_crypto_txt_db=    $(GENERAL_crypto_txt_db) $(SRC_crypto_txt_db) $(HEADER_cry
 
 
 all: all_crypto_txt_db
-all_crypto_txt_db:	crypto/txt_db/lib
+all_crypto_txt_db:	$(LIBOBJ_crypto_txt_db)
 
-crypto/txt_db/lib:	$(LIBOBJ_crypto_txt_db)
-	$(ARX) $(LIB_crypto_txt_db) $(LIBOBJ_crypto_txt_db)
-	$(RANLIB) $(LIB_crypto_txt_db) || echo Never mind.
-	@touch crypto/txt_db/lib
 
 files: files_crypto_txt_db
 files_crypto_txt_db:

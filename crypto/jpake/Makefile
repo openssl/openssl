@@ -11,12 +11,8 @@ TEST_crypto_jpake=crypto/jpake/jpaketest.c
 
 
 all: all_crypto_jpake
-all_crypto_jpake:	crypto/jpake/lib
+all_crypto_jpake:	$(LIBOBJ_crypto_jpake)
 
-crypto/jpake/lib:	$(LIBOBJ_crypto_jpake)
-	$(ARX) $(LIB_crypto_jpake) $(LIBOBJ_crypto_jpake)
-	$(RANLIB) $(LIB_crypto_jpake) || echo Never mind.
-	@touch crypto/jpake/lib
 
 links: links_crypto_jpake
 links_crypto_jpake:

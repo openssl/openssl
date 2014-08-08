@@ -25,12 +25,8 @@ ALL_crypto_conf=    $(GENERAL_crypto_conf) $(SRC_crypto_conf) $(HEADER_crypto_co
 
 
 all: all_crypto_conf
-all_crypto_conf:	crypto/conf/lib
+all_crypto_conf:	$(LIBOBJ_crypto_conf)
 
-crypto/conf/lib:	$(LIBOBJ_crypto_conf)
-	$(ARX) $(LIB_crypto_conf) $(LIBOBJ_crypto_conf)
-	$(RANLIB) $(LIB_crypto_conf) || echo Never mind.
-	@touch crypto/conf/lib
 
 files: files_crypto_conf
 files_crypto_conf:

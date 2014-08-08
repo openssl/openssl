@@ -23,12 +23,8 @@ ALL_crypto_ecdh=    $(GENERAL_crypto_ecdh) $(SRC_crypto_ecdh) $(HEADER_crypto_ec
 
 
 all: all_crypto_ecdh
-all_crypto_ecdh:	crypto/ecdh/lib
+all_crypto_ecdh:	$(LIBOBJ_crypto_ecdh)
 
-crypto/ecdh/lib:	$(LIBOBJ_crypto_ecdh)
-	$(ARX) $(LIB_crypto_ecdh) $(LIBOBJ_crypto_ecdh)
-	$(RANLIB) $(LIB_crypto_ecdh) || echo Never mind.
-	@touch crypto/ecdh/lib
 
 files: files_crypto_ecdh
 files_crypto_ecdh:

@@ -34,12 +34,8 @@ ALL_crypto_bio=    $(GENERAL_crypto_bio) $(SRC_crypto_bio) $(HEADER_crypto_bio)
 
 
 all: all_crypto_bio
-all_crypto_bio:	crypto/bio/lib
+all_crypto_bio:	$(LIBOBJ_crypto_bio)
 
-crypto/bio/lib:	$(LIBOBJ_crypto_bio)
-	$(ARX) $(LIB_crypto_bio) $(LIBOBJ_crypto_bio)
-	$(RANLIB) $(LIB_crypto_bio) || echo Never mind.
-	@touch crypto/bio/lib
 
 files: files_crypto_bio
 files_crypto_bio:

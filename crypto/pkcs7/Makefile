@@ -24,12 +24,8 @@ HEADER_crypto_pkcs7=	$(EXHEADER_crypto_pkcs7)
 ALL_crypto_pkcs7=    $(GENERAL_crypto_pkcs7) $(SRC_crypto_pkcs7) $(HEADER_crypto_pkcs7)
 
 all: all_crypto_pkcs7
-all_crypto_pkcs7:	crypto/pkcs7/lib
+all_crypto_pkcs7:	$(LIBOBJ_crypto_pkcs7)
 
-crypto/pkcs7/lib:	$(LIBOBJ_crypto_pkcs7)
-	$(ARX) $(LIB_crypto_pkcs7) $(LIBOBJ_crypto_pkcs7)
-	$(RANLIB) $(LIB_crypto_pkcs7) || echo Never mind.
-	@touch crypto/pkcs7/lib
 
 files: files_crypto_pkcs7
 files_crypto_pkcs7:

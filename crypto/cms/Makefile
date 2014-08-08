@@ -25,12 +25,8 @@ HEADER_crypto_cms=	crypto/cms/cms_lcl.h $(EXHEADER_crypto_cms)
 ALL_crypto_cms=    $(GENERAL_crypto_cms) $(SRC_crypto_cms) $(HEADER_crypto_cms)
 
 all: all_crypto_cms
-all_crypto_cms:	crypto/cms/lib
+all_crypto_cms:	$(LIBOBJ_crypto_cms)
 
-crypto/cms/lib:	$(LIBOBJ_crypto_cms)
-	$(ARX) $(LIB_crypto_cms) $(LIBOBJ_crypto_cms)
-	$(RANLIB) $(LIB_crypto_cms) || echo Never mind.
-	@touch crypto/cms/lib
 
 files: files_crypto_cms
 files_crypto_cms:

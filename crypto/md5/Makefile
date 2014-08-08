@@ -26,12 +26,8 @@ ALL_crypto_md5=    $(GENERAL_crypto_md5) $(SRC_crypto_md5) $(HEADER_crypto_md5)
 
 
 all: all_crypto_md5
-all_crypto_md5:    crypto/md5/lib
+all_crypto_md5:    $(LIBOBJ_crypto_md5)
 
-crypto/md5/lib:    $(LIBOBJ_crypto_md5)
-	$(ARX) $(LIB_crypto_md5) $(LIBOBJ_crypto_md5)
-	$(RANLIB) $(LIB_crypto_md5) || echo Never mind.
-	@touch crypto/md5/lib
 
 crypto/md5/md5-586.s:	crypto/md5/asm/md5-586.pl crypto/perlasm/x86asm.pl
 	$(PERL) crypto/md5/asm/md5-586.pl $(PERLASM_SCHEME) $(CFLAGS_crypto_md5) > $@

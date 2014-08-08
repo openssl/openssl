@@ -22,12 +22,8 @@ ALL_crypto_stack=    $(GENERAL_crypto_stack) $(SRC_crypto_stack) $(HEADER_crypto
 
 
 all: all_crypto_stack
-all_crypto_stack:	crypto/stack/lib
+all_crypto_stack:	$(LIBOBJ_crypto_stack)
 
-crypto/stack/lib:	$(LIBOBJ_crypto_stack)
-	$(ARX) $(LIB_crypto_stack) $(LIBOBJ_crypto_stack)
-	$(RANLIB) $(LIB_crypto_stack) || echo Never mind.
-	@touch crypto/stack/lib
 
 files: files_crypto_stack
 files_crypto_stack:

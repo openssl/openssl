@@ -22,12 +22,8 @@ ALL_crypto_err=    $(GENERAL_crypto_err) $(SRC_crypto_err) $(HEADER_crypto_err)
 
 
 all: all_crypto_err
-all_crypto_err:	crypto/err/lib
+all_crypto_err:	$(LIBOBJ_crypto_err)
 
-crypto/err/lib:	$(LIBOBJ_crypto_err)
-	$(ARX) $(LIB_crypto_err) $(LIBOBJ_crypto_err)
-	$(RANLIB) $(LIB_crypto_err) || echo Never mind.
-	@touch crypto/err/lib
 
 files: files_crypto_err
 files_crypto_err:

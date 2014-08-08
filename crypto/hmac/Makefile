@@ -22,12 +22,8 @@ ALL_crypto_hmac=    $(GENERAL_crypto_hmac) $(SRC_crypto_hmac) $(HEADER_crypto_hm
 
 
 all: all_crypto_hmac
-all_crypto_hmac:	crypto/hmac/lib
+all_crypto_hmac:	$(LIBOBJ_crypto_hmac)
 
-crypto/hmac/lib:	$(LIBOBJ_crypto_hmac)
-	$(ARX) $(LIB_crypto_hmac) $(LIBOBJ_crypto_hmac)
-	$(RANLIB) $(LIB_crypto_hmac) || echo Never mind.
-	@touch crypto/hmac/lib
 
 files: files_crypto_hmac
 files_crypto_hmac:

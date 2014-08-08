@@ -46,12 +46,8 @@ ALL_crypto_evp=    $(GENERAL_crypto_evp) $(SRC_crypto_evp) $(HEADER_crypto_evp)
 
 
 all: all_crypto_evp
-all_crypto_evp:	crypto/evp/lib
+all_crypto_evp:	$(LIBOBJ_crypto_evp)
 
-crypto/evp/lib:	$(LIBOBJ_crypto_evp)
-	$(ARX) $(LIB_crypto_evp) $(LIBOBJ_crypto_evp)
-	$(RANLIB) $(LIB_crypto_evp) || echo Never mind.
-	@touch crypto/evp/lib
 
 files: files_crypto_evp
 files_crypto_evp:

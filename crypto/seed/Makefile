@@ -23,12 +23,8 @@ ALL_crypto_seed=    $(GENERAL_crypto_seed) $(SRC_crypto_seed) $(HEADER_crypto_se
 
 
 all: all_crypto_seed
-all_crypto_seed:	crypto/seed/lib
+all_crypto_seed:	$(LIBOBJ_crypto_seed)
 
-crypto/seed/lib:	$(LIBOBJ_crypto_seed)
-	$(ARX) $(LIB_crypto_seed) $(LIBOBJ_crypto_seed)
-	$(RANLIB) $(LIB_crypto_seed) || echo Never mind.
-	@touch crypto/seed/lib
 
 files: files_crypto_seed
 files_crypto_seed:

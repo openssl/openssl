@@ -22,12 +22,8 @@ ALL_crypto_buffer=    $(GENERAL_crypto_buffer) $(SRC_crypto_buffer) $(HEADER_cry
 
 
 all: all_crypto_buffer
-all_crypto_buffer:	crypto/buffer/lib
+all_crypto_buffer:	$(LIBOBJ_crypto_buffer)
 
-crypto/buffer/lib:	$(LIBOBJ_crypto_buffer)
-	$(ARX) $(LIB_crypto_buffer) $(LIBOBJ_crypto_buffer)
-	$(RANLIB) $(LIB_crypto_buffer) || echo Never mind.
-	@touch crypto/buffer/lib
 
 files: files_crypto_buffer
 files_crypto_buffer:

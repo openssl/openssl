@@ -35,7 +35,7 @@ ALL_crypto_bn=    $(GENERAL_crypto_bn) $(SRC_crypto_bn) $(HEADER_crypto_bn)
 
 
 all: all_crypto_bn
-all_crypto_bn:	crypto/bn/lib
+all_crypto_bn:	$(LIBOBJ_crypto_bn)
 
 crypto/bn/bn_prime.h: crypto/bn/bn_prime.pl
 	$(PERL) crypto/bn/bn_prime.pl >crypto/bn/bn_prime.h
@@ -46,10 +46,6 @@ crypto/bn/divtest: crypto/bn/divtest.c ./libcrypto.a
 crypto/bn/bnbug: crypto/bn/bnbug.c ./libcrypto.a crypto/bn/top
 	cc -g -Iinclude crypto/bn/bnbug.c -o crypto/bn/bnbug ./libcrypto.a
 
-crypto/bn/lib:	$(LIBOBJ_crypto_bn)
-	$(ARX) $(LIB_crypto_bn) $(LIBOBJ_crypto_bn)
-	$(RANLIB) $(LIB_crypto_bn) || echo Never mind.
-	@touch crypto/bn/lib
 
 crypto/bn/bn-586.s:	crypto/bn/asm/bn-586.pl crypto/perlasm/x86asm.pl
 	$(PERL) crypto/bn/asm/bn-586.pl $(PERLASM_SCHEME) $(CFLAGS_crypto_bn) $(PROCESSOR) > $@

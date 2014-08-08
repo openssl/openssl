@@ -25,12 +25,8 @@ ALL_crypto_pem=    $(GENERAL_crypto_pem) $(SRC_crypto_pem) $(HEADER_crypto_pem)
 
 
 all: all_crypto_pem
-all_crypto_pem:	crypto/pem/lib
+all_crypto_pem:	$(LIBOBJ_crypto_pem)
 
-crypto/pem/lib:	$(LIBOBJ_crypto_pem)
-	$(ARX) $(LIB_crypto_pem) $(LIBOBJ_crypto_pem)
-	$(RANLIB) $(LIB_crypto_pem) || echo Never mind.
-	@touch crypto/pem/lib
 
 files: files_crypto_pem
 files_crypto_pem:

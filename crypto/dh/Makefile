@@ -24,12 +24,8 @@ ALL_crypto_dh=    $(GENERAL_crypto_dh) $(SRC_crypto_dh) $(HEADER_crypto_dh)
 
 
 all: all_crypto_dh
-all_crypto_dh:	crypto/dh/lib
+all_crypto_dh:	$(LIBOBJ_crypto_dh)
 
-crypto/dh/lib:	$(LIBOBJ_crypto_dh)
-	$(ARX) $(LIB_crypto_dh) $(LIBOBJ_crypto_dh)
-	$(RANLIB) $(LIB_crypto_dh) || echo Never mind.
-	@touch crypto/dh/lib
 
 files: files_crypto_dh
 files_crypto_dh:

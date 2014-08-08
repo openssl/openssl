@@ -22,12 +22,8 @@ ALL_crypto_idea=    $(GENERAL_crypto_idea) $(SRC_crypto_idea) $(HEADER_crypto_id
 
 
 all: all_crypto_idea
-all_crypto_idea:	crypto/idea/lib
+all_crypto_idea:	$(LIBOBJ_crypto_idea)
 
-crypto/idea/lib:	$(LIBOBJ_crypto_idea)
-	$(ARX) $(LIB_crypto_idea) $(LIBOBJ_crypto_idea)
-	$(RANLIB) $(LIB_crypto_idea) || echo Never mind.
-	@touch crypto/idea/lib
 
 files: files_crypto_idea
 files_crypto_idea:

@@ -28,12 +28,8 @@ ALL_crypto_rsa=    $(GENERAL_crypto_rsa) $(SRC_crypto_rsa) $(HEADER_crypto_rsa)
 
 
 all: all_crypto_rsa
-all_crypto_rsa:	crypto/rsa/lib
+all_crypto_rsa:	$(LIBOBJ_crypto_rsa)
 
-crypto/rsa/lib:	$(LIBOBJ_crypto_rsa)
-	$(ARX) $(LIB_crypto_rsa) $(LIBOBJ_crypto_rsa)
-	$(RANLIB) $(LIB_crypto_rsa) || echo Never mind.
-	@touch crypto/rsa/lib
 
 files: files_crypto_rsa
 files_crypto_rsa:

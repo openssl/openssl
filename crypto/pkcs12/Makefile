@@ -25,12 +25,8 @@ HEADER_crypto_pkcs12=	$(EXHEADER_crypto_pkcs12)
 ALL_crypto_pkcs12=    $(GENERAL_crypto_pkcs12) $(SRC_crypto_pkcs12) $(HEADER_crypto_pkcs12)
 
 all: all_crypto_pkcs12
-all_crypto_pkcs12:	crypto/pkcs12/lib
+all_crypto_pkcs12:	$(LIBOBJ_crypto_pkcs12)
 
-crypto/pkcs12/lib:	$(LIBOBJ_crypto_pkcs12)
-	$(ARX) $(LIB_crypto_pkcs12) $(LIBOBJ_crypto_pkcs12)
-	$(RANLIB) $(LIB_crypto_pkcs12) || echo Never mind.
-	@touch crypto/pkcs12/lib
 
 files: files_crypto_pkcs12
 files_crypto_pkcs12:

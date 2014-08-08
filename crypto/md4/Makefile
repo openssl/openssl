@@ -23,12 +23,8 @@ ALL_crypto_md4=    $(GENERAL_crypto_md4) $(SRC_crypto_md4) $(HEADER_crypto_md4)
 
 
 all: all_crypto_md4
-all_crypto_md4:    crypto/md4/lib
+all_crypto_md4:    $(LIBOBJ_crypto_md4)
 
-crypto/md4/lib:    $(LIBOBJ_crypto_md4)
-	$(ARX) $(LIB_crypto_md4) $(LIBOBJ_crypto_md4)
-	$(RANLIB) $(LIB_crypto_md4) || echo Never mind.
-	@touch crypto/md4/lib
 
 files: files_crypto_md4
 files_crypto_md4:

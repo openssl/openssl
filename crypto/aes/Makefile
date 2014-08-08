@@ -29,12 +29,8 @@ ALL_crypto_aes=    $(GENERAL_crypto_aes) $(SRC_crypto_aes) $(HEADER_crypto_aes)
 
 
 all: all_crypto_aes
-all_crypto_aes:	crypto/aes/lib
+all_crypto_aes:	$(LIBOBJ_crypto_aes)
 
-crypto/aes/lib:	$(LIBOBJ_crypto_aes)
-	$(ARX) $(LIB_crypto_aes) $(LIBOBJ_crypto_aes)
-	$(RANLIB) $(LIB_crypto_aes) || echo Never mind.
-	@touch crypto/aes/lib
 
 crypto/aes/aes-ia64.s: crypto/aes/asm/aes-ia64.S
 	$(CC) $(CFLAGS_crypto_aes) -E crypto/aes/asm/aes-ia64.S > $@

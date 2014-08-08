@@ -32,12 +32,8 @@ ALL_crypto_engine=    $(GENERAL_crypto_engine) $(SRC_crypto_engine) $(HEADER_cry
 
 
 all: all_crypto_engine
-all_crypto_engine:	crypto/engine/lib
+all_crypto_engine:	$(LIBOBJ_crypto_engine)
 
-crypto/engine/lib:	$(LIBOBJ_crypto_engine)
-	$(ARX) $(LIB_crypto_engine) $(LIBOBJ_crypto_engine)
-	$(RANLIB) $(LIB_crypto_engine) || echo Never mind.
-	@touch crypto/engine/lib
 
 files: files_crypto_engine
 files_crypto_engine:

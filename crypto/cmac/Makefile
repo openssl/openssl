@@ -22,12 +22,8 @@ ALL_crypto_cmac=    $(GENERAL_crypto_cmac) $(SRC_crypto_cmac) $(HEADER_crypto_cm
 
 
 all: all_crypto_cmac
-all_crypto_cmac:	crypto/cmac/lib
+all_crypto_cmac:	$(LIBOBJ_crypto_cmac)
 
-crypto/cmac/lib:	$(LIBOBJ_crypto_cmac)
-	$(ARX) $(LIB_crypto_cmac) $(LIBOBJ_crypto_cmac)
-	$(RANLIB) $(LIB_crypto_cmac) || echo Never mind.
-	@touch crypto/cmac/lib
 
 files: files_crypto_cmac
 files_crypto_cmac:

@@ -22,12 +22,8 @@ ALL_crypto_mdc2=    $(GENERAL_crypto_mdc2) $(SRC_crypto_mdc2) $(HEADER_crypto_md
 
 
 all: all_crypto_mdc2
-all_crypto_mdc2:	crypto/mdc2/lib
+all_crypto_mdc2:	$(LIBOBJ_crypto_mdc2)
 
-crypto/mdc2/lib:	$(LIBOBJ_crypto_mdc2)
-	$(ARX) $(LIB_crypto_mdc2) $(LIBOBJ_crypto_mdc2)
-	$(RANLIB) $(LIB_crypto_mdc2) || echo Never mind.
-	@touch crypto/mdc2/lib
 
 files: files_crypto_mdc2
 files_crypto_mdc2:

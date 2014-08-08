@@ -22,12 +22,8 @@ ALL_crypto_pqueue=    $(GENERAL_crypto_pqueue) $(SRC_crypto_pqueue) $(HEADER_cry
 
 
 all: all_crypto_pqueue
-all_crypto_pqueue:	crypto/pqueue/lib
+all_crypto_pqueue:	$(LIBOBJ_crypto_pqueue)
 
-crypto/pqueue/lib:	$(LIBOBJ_crypto_pqueue)
-	$(ARX) $(LIB_crypto_pqueue) $(LIBOBJ_crypto_pqueue)
-	$(RANLIB) $(LIB_crypto_pqueue) || echo Never mind.
-	@touch crypto/pqueue/lib
 
 files: files_crypto_pqueue
 files_crypto_pqueue:

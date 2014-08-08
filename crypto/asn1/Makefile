@@ -51,12 +51,8 @@ crypto/asn1/pk:	crypto/asn1/pk.c
 	cc -g -Iinclude -o crypto/asn1/pk crypto/asn1/pk.o -L. -lcrypto
 
 all: all_crypto_asn1
-all_crypto_asn1:	crypto/asn1/lib
+all_crypto_asn1:	$(LIBOBJ_crypto_asn1)
 
-crypto/asn1/lib:	$(LIBOBJ_crypto_asn1)
-	$(ARX) $(LIB_crypto_asn1) $(LIBOBJ_crypto_asn1)
-	$(RANLIB) $(LIB_crypto_asn1) || echo Never mind.
-	@touch crypto/asn1/lib
 
 files: files_crypto_asn1
 files_crypto_asn1:

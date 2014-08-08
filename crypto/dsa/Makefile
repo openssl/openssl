@@ -24,12 +24,8 @@ ALL_crypto_dsa=    $(GENERAL_crypto_dsa) $(SRC_crypto_dsa) $(HEADER_crypto_dsa)
 
 
 all: all_crypto_dsa
-all_crypto_dsa:	crypto/dsa/lib
+all_crypto_dsa:	$(LIBOBJ_crypto_dsa)
 
-crypto/dsa/lib:	$(LIBOBJ_crypto_dsa)
-	$(ARX) $(LIB_crypto_dsa) $(LIBOBJ_crypto_dsa)
-	$(RANLIB) $(LIB_crypto_dsa) || echo Never mind.
-	@touch crypto/dsa/lib
 
 files: files_crypto_dsa
 files_crypto_dsa:

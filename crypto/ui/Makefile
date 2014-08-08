@@ -26,12 +26,8 @@ ALL_crypto_ui=    $(GENERAL_crypto_ui) $(SRC_crypto_ui) $(HEADER_crypto_ui)
 
 
 all: all_crypto_ui
-all_crypto_ui:	crypto/ui/lib
+all_crypto_ui:	$(LIBOBJ_crypto_ui)
 
-crypto/ui/lib:	$(LIBOBJ_crypto_ui)
-	$(ARX) $(LIB_crypto_ui) $(LIBOBJ_crypto_ui)
-	$(RANLIB) $(LIB_crypto_ui) || echo Never mind.
-	@touch crypto/ui/lib
 
 files: files_crypto_ui
 files_crypto_ui:

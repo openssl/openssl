@@ -32,12 +32,8 @@ ALL_crypto_x509=    $(GENERAL_crypto_x509) $(SRC_crypto_x509) $(HEADER_crypto_x5
 
 
 all: all_crypto_x509
-all_crypto_x509:	crypto/x509/lib
+all_crypto_x509:	$(LIBOBJ_crypto_x509)
 
-crypto/x509/lib:	$(LIBOBJ_crypto_x509)
-	$(ARX) $(LIB_crypto_x509) $(LIBOBJ_crypto_x509)
-	$(RANLIB) $(LIB_crypto_x509) || echo Never mind.
-	@touch crypto/x509/lib
 
 files: files_crypto_x509
 files_crypto_x509:

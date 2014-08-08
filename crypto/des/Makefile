@@ -39,14 +39,10 @@ ALL_crypto_des=    $(GENERAL_crypto_des) $(SRC_crypto_des) $(HEADER_crypto_des)
 
 
 all: all_crypto_des
-all_crypto_des:	crypto/des/lib
+all_crypto_des:	$(LIBOBJ_crypto_des)
 
-crypto/des/lib:	$(LIBOBJ_crypto_des)
-	$(ARX) $(LIB_crypto_des) $(LIBOBJ_crypto_des)
-	$(RANLIB) $(LIB_crypto_des) || echo Never mind.
-	@touch crypto/des/lib
 
-crypto/des/des: crypto/des/des.o crypto/des/cbc3_enc.o crypto/des/lib
+crypto/des/des:crypto/des/des.o crypto/des/cbc3_enc.o 	$(LIBOBJ_crypto_des)
 	$(CC) $(CFLAGS_crypto_des) -o crypto/des/des crypto/des/des.o crypto/des/cbc3_enc.o $(LIB_crypto_des)
 
 crypto/des/des_enc-sparc.S:	crypto/des/asm/des_enc.m4

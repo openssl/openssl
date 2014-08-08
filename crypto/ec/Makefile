@@ -33,12 +33,8 @@ ALL_crypto_ec=    $(GENERAL_crypto_ec) $(SRC_crypto_ec) $(HEADER_crypto_ec)
 
 
 all: all_crypto_ec
-all_crypto_ec:	crypto/ec/lib
+all_crypto_ec:	$(LIBOBJ_crypto_ec)
 
-crypto/ec/lib:	$(LIBOBJ_crypto_ec)
-	$(ARX) $(LIB_crypto_ec) $(LIBOBJ_crypto_ec)
-	$(RANLIB) $(LIB_crypto_ec) || echo Never mind.
-	@touch crypto/ec/lib
 
 files: files_crypto_ec
 files_crypto_ec:

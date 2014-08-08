@@ -25,12 +25,8 @@ ALL_crypto_comp=    $(GENERAL_crypto_comp) $(SRC_crypto_comp) $(HEADER_crypto_co
 
 
 all: all_crypto_comp
-all_crypto_comp:	crypto/comp/lib
+all_crypto_comp:	$(LIBOBJ_crypto_comp)
 
-crypto/comp/lib:	$(LIBOBJ_crypto_comp)
-	$(ARX) $(LIB_crypto_comp) $(LIBOBJ_crypto_comp)
-	$(RANLIB) $(LIB_crypto_comp) || echo Never mind.
-	@touch crypto/comp/lib
 
 files: files_crypto_comp
 files_crypto_comp:

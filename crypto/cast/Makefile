@@ -26,12 +26,8 @@ ALL_crypto_cast=    $(GENERAL_crypto_cast) $(SRC_crypto_cast) $(HEADER_crypto_ca
 
 
 all: all_crypto_cast
-all_crypto_cast:	crypto/cast/lib
+all_crypto_cast:	$(LIBOBJ_crypto_cast)
 
-crypto/cast/lib:	$(LIBOBJ_crypto_cast)
-	$(ARX) $(LIB_crypto_cast) $(LIBOBJ_crypto_cast)
-	$(RANLIB) $(LIB_crypto_cast) || echo Never mind.
-	@touch crypto/cast/lib
 
 crypto/cast/cast-586.s:	crypto/cast/asm/cast-586.pl crypto/perlasm/x86asm.pl crypto/perlasm/cbc.pl
 	$(PERL)	crypto/cast/asm/cast-586.pl $(PERLASM_SCHEME) $(CLAGS) $(PROCESSOR) > $@

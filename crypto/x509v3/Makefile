@@ -32,12 +32,8 @@ ALL_crypto_x509v3=    $(GENERAL_crypto_x509v3) $(SRC_crypto_x509v3) $(HEADER_cry
 
 
 all: all_crypto_x509v3
-all_crypto_x509v3:	crypto/x509v3/lib
+all_crypto_x509v3:	$(LIBOBJ_crypto_x509v3)
 
-crypto/x509v3/lib:	$(LIBOBJ_crypto_x509v3)
-	$(ARX) $(LIB_crypto_x509v3) $(LIBOBJ_crypto_x509v3)
-	$(RANLIB) $(LIB_crypto_x509v3) || echo Never mind.
-	@touch crypto/x509v3/lib
 
 files: files_crypto_x509v3
 files_crypto_x509v3:
