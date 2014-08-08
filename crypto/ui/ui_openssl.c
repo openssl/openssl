@@ -296,7 +296,7 @@ static long tty_orig[3], tty_new[3]; /* XXX   Is there any guarantee that this w
 static long status;
 static unsigned short channel = 0;
 #else
-#if !defined(OPENSSL_SYS_MSDOS) || defined(__DJGPP__)
+#if !defined(OPENSSL_SYS_MSDOS)
 static TTY_STRUCT tty_orig,tty_new;
 #endif
 #endif

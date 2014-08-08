@@ -64,7 +64,7 @@
 
 void do_fp(FILE *f);
 void pt(unsigned char *md);
-#if !defined(_OSD_POSIX) && !defined(__DJGPP__)
+#if !defined(_OSD_POSIX)
 int read(int, void *, unsigned int);
 #endif
 

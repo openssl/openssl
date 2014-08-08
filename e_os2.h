@@ -85,7 +85,7 @@ extern "C" {
 /* ---------------------- Microsoft operating systems ---------------------- */
 
 /* Note that MSDOS actually denotes 32-bit environments running on top of
-   MS-DOS, such as DJGPP one. */
+   MS-DOS. */
 #if defined(OPENSSL_SYSNAME_MSDOS)
 # undef OPENSSL_SYS_UNIX
 # define OPENSSL_SYS_MSDOS

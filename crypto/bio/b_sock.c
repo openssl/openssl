@@ -494,12 +494,6 @@ int BIO_sock_init(void)
 			}
 		}
 #endif /* OPENSSL_SYS_WINDOWS */
-#ifdef WATT32
-	extern int _watt_do_exit;
-	_watt_do_exit = 0;    /* don't make sock_init() call exit() */
-	if (sock_init())
-		return (-1);
-#endif
 
 #if defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK)
     WORD wVerReq;
@@ -549,9 +543,6 @@ int BIO_socket_ioctl(int fd, long type, void *arg)
 	{
 	int i;
 
-#ifdef __DJGPP__
-	i=ioctlsocket(fd,type,(char *)arg);
-#else
 # if defined(OPENSSL_SYS_VMS)
 	/* 2011-02-18 SMS.
 	 * VMS ioctl() can't tolerate a 64-bit "void *arg", but we
@@ -574,9 +565,8 @@ int BIO_socket_ioctl(int fd, long type, void *arg)
 # else /* defined(OPENSSL_SYS_VMS) */
 #  define ARG arg
 # endif /* defined(OPENSSL_SYS_VMS) [else] */
-
 	i=ioctlsocket(fd,type,ARG);
-#endif /* __DJGPP__ */
+
 	if (i < 0)
 		SYSerr(SYS_F_IOCTLSOCKET,get_last_socket_error());
 	return(i);

@@ -277,7 +277,7 @@ sub ::asm_init
     {	print STDERR <<"EOF";
 Pick one target type from
 	elf	- Linux, FreeBSD, Solaris x86, etc.
-	a.out	- DJGPP, elder OpenBSD, etc.
+	a.out	- elder OpenBSD, etc.
 	coff	- GAS/COFF such as Win32 targets
 	win32n	- Windows 95/Windows NT NASM format
 	nw-nasm - NetWare NASM format

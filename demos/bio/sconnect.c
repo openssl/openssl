@@ -32,11 +32,6 @@ char *argv[];
 	else
 		host=argv[1];
 
-#ifdef WATT32
-	dbug_init();
-	sock_init();
-#endif
-
 	/* Lets get nice error messages */
 	SSL_load_error_strings();
 

@@ -168,7 +168,7 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&ret	();
 &function_end_B("OPENSSL_rdtsc");
 
-# This works in Ring 0 only [read DJGPP+MS-DOS+privileged DPMI host],
+# This works in Ring 0 only [read MS-DOS+privileged DPMI host],
 # but it's safe to call it on any [supported] 32-bit platform...
 # Just check for [non-]zero return value...
 &function_begin_B("OPENSSL_instrument_halt","EXTRN\t_OPENSSL_ia32cap_P:DWORD");
@@ -202,41 +202,6 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&ret	();
 &function_end_B("OPENSSL_instrument_halt");
 
-# Essentially there is only one use for this function. Under DJGPP:
-#
-#	#include <go32.h>
-#	...
-#	i=OPENSSL_far_spin(_dos_ds,0x46c);
-#	...
-# to obtain the number of spins till closest timer interrupt.
-
-&function_begin_B("OPENSSL_far_spin");
-	&pushf	();
-	&pop	("eax");
-	&bt	("eax",9);
-	&jnc	(&label("nospin"));	# interrupts are disabled
-
-	&mov	("eax",&DWP(4,"esp"));
-	&mov	("ecx",&DWP(8,"esp"));
-	&data_word (0x90d88e1e);	# push %ds, mov %eax,%ds
-	&xor	("eax","eax");
-	&mov	("edx",&DWP(0,"ecx"));
-	&jmp	(&label("spin"));
-
-	&align	(16);
-&set_label("spin");
-	&inc	("eax");
-	&cmp	("edx",&DWP(0,"ecx"));
-	&je	(&label("spin"));
-
-	&data_word (0x1f909090);	# pop	%ds
-	&ret	();
-
-&set_label("nospin");
-	&xor	("eax","eax");
-	&xor	("edx","edx");
-	&ret	();
-&function_end_B("OPENSSL_far_spin");
 
 &function_begin_B("OPENSSL_wipe_cpu","EXTRN\t_OPENSSL_ia32cap_P:DWORD");
 	&xor	("eax","eax");

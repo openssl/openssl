@@ -150,13 +150,6 @@ extern "C" {
 #define clear_socket_error()	WSASetLastError(0)
 #define readsocket(s,b,n)	recv((s),(b),(n),0)
 #define writesocket(s,b,n)	send((s),(b),(n),0)
-#elif defined(__DJGPP__)
-#define WATT32
-#define get_last_socket_error()	errno
-#define clear_socket_error()	errno=0
-#define closesocket(s)		close_s(s)
-#define readsocket(s,b,n)	read_s(s,b,n)
-#define writesocket(s,b,n)	send(s,b,n,0)
 #elif defined(MAC_OS_pre_X)
 #define get_last_socket_error()	errno
 #define clear_socket_error()	errno=0
@@ -227,19 +220,6 @@ extern "C" {
 
 #if (defined(WINDOWS) || defined(MSDOS))
 
-#  ifdef __DJGPP__
-#    include <unistd.h>
-#    include <sys/stat.h>
-#    include <sys/socket.h>
-#    include <tcp.h>
-#    include <netdb.h>
-#    define _setmode setmode
-#    define _O_TEXT O_TEXT
-#    define _O_BINARY O_BINARY
-#    undef DEVRANDOM
-#    define DEVRANDOM "/dev/urandom\x24"
-#  endif /* __DJGPP__ */
-
 #  ifndef S_IFDIR
 #    define S_IFDIR	_S_IFDIR
 #  endif
@@ -248,7 +228,7 @@ extern "C" {
 #    define S_IFMT	_S_IFMT
 #  endif
 
-#  if !defined(WINNT) && !defined(__DJGPP__)
+#  if !defined(WINNT)
 #    define NO_SYSLOG
 #  endif
 #  define NO_DIRENT
@@ -499,7 +479,7 @@ static unsigned int _strlen31(const char *str)
 #      define SSLeay_Read(a,b,c)	(-1)
 #      define SHUTDOWN(fd)		close(fd)
 #      define SHUTDOWN2(fd)		close(fd)
-#    elif !defined(__DJGPP__)
+#    else
 #      if defined(_WIN32_WCE) && _WIN32_WCE<410
 #        define getservbyname _masked_declaration_getservbyname
 #      endif
@@ -526,11 +506,6 @@ static unsigned int _strlen31(const char *str)
 #      define SSLeay_Read(a,b,c)	recv((a),(b),(c),0)
 #      define SHUTDOWN(fd)		{ shutdown((fd),0); closesocket(fd); }
 #      define SHUTDOWN2(fd)		{ shutdown((fd),2); closesocket(fd); }
-#    else
-#      define SSLeay_Write(a,b,c)	write_s(a,b,c,0)
-#      define SSLeay_Read(a,b,c)	read_s(a,b,c)
-#      define SHUTDOWN(fd)		close_s(fd)
-#      define SHUTDOWN2(fd)		close_s(fd)
 #    endif
 
 #  elif defined(MAC_OS_pre_X)
