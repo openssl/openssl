@@ -2,9 +2,8 @@
 # OpenSSL/crypto/pem/Makefile
 #
 
-INCLUDES_crypto_pem= -Icrypto -I. -Iinclude
 
-CFLAGS_crypto_pem= $(INCLUDES_crypto_pem) $(CFLAG)
+CFLAGS_crypto_pem= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_pem=crypto/pem/Makefile
 TEST_crypto_pem=
@@ -61,7 +60,7 @@ tests_crypto_pem:
 
 lint: lint_crypto_pem
 lint_crypto_pem:
-	lint -DLINT $(INCLUDES_crypto_pem) $(SRC_crypto_pem)>crypto/pem/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_pem)>crypto/pem/fluff
 
 dclean: dclean_crypto_pem
 dclean_crypto_pem:

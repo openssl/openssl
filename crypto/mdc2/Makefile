@@ -2,9 +2,8 @@
 # OpenSSL/crypto/mdc2/Makefile
 #
 
-INCLUDES_crypto_mdc2=
 
-CFLAGS_crypto_mdc2= $(INCLUDES_crypto_mdc2) $(CFLAG)
+CFLAGS_crypto_mdc2= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_mdc2=crypto/mdc2/Makefile
 TEST_crypto_mdc2= crypto/mdc2/mdc2test.c
@@ -58,7 +57,7 @@ tests_crypto_mdc2:
 
 lint: lint_crypto_mdc2
 lint_crypto_mdc2:
-	lint -DLINT $(INCLUDES_crypto_mdc2) $(SRC_crypto_mdc2)>crypto/mdc2/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_mdc2)>crypto/mdc2/fluff
 
 dclean: dclean_crypto_mdc2
 dclean_crypto_mdc2:

@@ -2,9 +2,8 @@
 # OpenSSL/crypto/ui/Makefile
 #
 
-INCLUDES_crypto_ui= -Icrypto -I. -Iinclude
 
-CFLAGS_crypto_ui= $(INCLUDES_crypto_ui) $(CFLAG)
+CFLAGS_crypto_ui= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_ui=crypto/ui/Makefile
 #TEST= uitest.c
@@ -62,7 +61,7 @@ tests_crypto_ui:
 
 lint: lint_crypto_ui
 lint_crypto_ui:
-	lint -DLINT $(INCLUDES_crypto_ui) $(SRC_crypto_ui)>crypto/ui/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_ui)>crypto/ui/fluff
 
 dclean: dclean_crypto_ui
 dclean_crypto_ui:

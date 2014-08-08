@@ -3,11 +3,10 @@
 #
 
 CPP_crypto_whrlpool=	$(CC) -E
-INCLUDES_crypto_whrlpool=
 
 
-CFLAGS_crypto_whrlpool= $(INCLUDES_crypto_whrlpool) $(CFLAG)
-ASFLAGS_crypto_whrlpool= $(INCLUDES_crypto_whrlpool) $(ASFLAG)
+CFLAGS_crypto_whrlpool= $(INCLUDES_crypto) $(CFLAG)
+ASFLAGS_crypto_whrlpool= $(INCLUDES_crypto) $(ASFLAG)
 AFLAGS_crypto_whrlpool= $(ASFLAGS_crypto_whrlpool)
 
 GENERAL_crypto_whrlpool=crypto/whrlpool/Makefile
@@ -70,7 +69,7 @@ tests_crypto_whrlpool:
 
 lint: lint_crypto_whrlpool
 lint_crypto_whrlpool:
-	lint -DLINT $(INCLUDES_crypto_whrlpool) $(SRC_crypto_whrlpool)>crypto/whrlpool/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_whrlpool)>crypto/whrlpool/fluff
 
 dclean: dclean_crypto_whrlpool
 dclean_crypto_whrlpool:

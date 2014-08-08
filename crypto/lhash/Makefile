@@ -2,9 +2,8 @@
 # OpenSSL/crypto/lhash/Makefile
 #
 
-INCLUDES_crypto_lhash=
 
-CFLAGS_crypto_lhash= $(INCLUDES_crypto_lhash) $(CFLAG)
+CFLAGS_crypto_lhash= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_lhash=crypto/lhash/Makefile
 TEST_crypto_lhash=
@@ -58,7 +57,7 @@ tests_crypto_lhash:
 
 lint: lint_crypto_lhash
 lint_crypto_lhash:
-	lint -DLINT $(INCLUDES_crypto_lhash) $(SRC_crypto_lhash)>crypto/lhash/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_lhash)>crypto/lhash/fluff
 
 dclean: dclean_crypto_lhash
 dclean_crypto_lhash:

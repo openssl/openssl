@@ -3,11 +3,10 @@
 #
 
 CPP_crypto_aes=	$(CC) -E
-INCLUDES_crypto_aes=
 
 
-CFLAGS_crypto_aes= $(INCLUDES_crypto_aes) $(CFLAG)
-ASFLAGS_crypto_aes= $(INCLUDES_crypto_aes) $(ASFLAG)
+CFLAGS_crypto_aes= $(INCLUDES_crypto) $(CFLAG)
+ASFLAGS_crypto_aes= $(INCLUDES_crypto) $(ASFLAG)
 AFLAGS_crypto_aes= $(ASFLAGS_crypto_aes)
 
 GENERAL_crypto_aes=crypto/aes/Makefile
@@ -118,7 +117,7 @@ tests_crypto_aes:
 
 lint: lint_crypto_aes
 lint_crypto_aes:
-	lint -DLINT $(INCLUDES_crypto_aes) $(SRC_crypto_aes)>crypto/aes/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_aes)>crypto/aes/fluff
 
 dclean: dclean_crypto_aes
 dclean_crypto_aes:

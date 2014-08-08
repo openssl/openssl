@@ -2,9 +2,8 @@
 # OpenSSL/crypto/stack/Makefile
 #
 
-INCLUDES_crypto_stack=
 
-CFLAGS_crypto_stack= $(INCLUDES_crypto_stack) $(CFLAG)
+CFLAGS_crypto_stack= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_stack=crypto/stack/Makefile
 TEST_crypto_stack=
@@ -58,7 +57,7 @@ tests_crypto_stack:
 
 lint: lint_crypto_stack
 lint_crypto_stack:
-	lint -DLINT $(INCLUDES_crypto_stack) $(SRC_crypto_stack)>crypto/stack/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_stack)>crypto/stack/fluff
 
 dclean: dclean_crypto_stack
 dclean_crypto_stack:

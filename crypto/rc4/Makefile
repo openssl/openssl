@@ -3,11 +3,10 @@
 #
 
 CPP_crypto_rc4=    $(CC) -E
-INCLUDES_crypto_rc4=
 
 
-CFLAGS_crypto_rc4= $(INCLUDES_crypto_rc4) $(CFLAG)
-ASFLAGS_crypto_rc4= $(INCLUDES_crypto_rc4) $(ASFLAG)
+CFLAGS_crypto_rc4= $(INCLUDES_crypto) $(CFLAG)
+ASFLAGS_crypto_rc4= $(INCLUDES_crypto) $(ASFLAG)
 AFLAGS_crypto_rc4= $(ASFLAGS_crypto_rc4)
 
 GENERAL_crypto_rc4=crypto/rc4/Makefile
@@ -86,7 +85,7 @@ tests_crypto_rc4:
 
 lint: lint_crypto_rc4
 lint_crypto_rc4:
-	lint -DLINT $(INCLUDES_crypto_rc4) $(SRC_crypto_rc4)>crypto/rc4/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_rc4)>crypto/rc4/fluff
 
 dclean: dclean_crypto_rc4
 dclean_crypto_rc4:

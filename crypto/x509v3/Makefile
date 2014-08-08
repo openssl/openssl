@@ -2,9 +2,8 @@
 # OpenSSL/crypto/x509v3/Makefile
 #
 
-INCLUDES_crypto_x509v3= -Icrypto -I. -Iinclude
 
-CFLAGS_crypto_x509v3= $(INCLUDES_crypto_x509v3) $(CFLAG)
+CFLAGS_crypto_x509v3= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_x509v3=crypto/x509v3/Makefile crypto/x509v3/README
 TEST_crypto_x509v3=crypto/x509v3/v3nametest.c
@@ -68,7 +67,7 @@ tests_crypto_x509v3:
 
 lint: lint_crypto_x509v3
 lint_crypto_x509v3:
-	lint -DLINT $(INCLUDES_crypto_x509v3) $(SRC_crypto_x509v3)>crypto/x509v3/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_x509v3)>crypto/x509v3/fluff
 
 dclean: dclean_crypto_x509v3
 dclean_crypto_x509v3:

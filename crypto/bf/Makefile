@@ -3,11 +3,10 @@
 #
 
 CPP_crypto_bf=	$(CC) -E
-INCLUDES_crypto_bf=
 
 
-CFLAGS_crypto_bf= $(INCLUDES_crypto_bf) $(CFLAG)
-ASFLAGS_crypto_bf= $(INCLUDES_crypto_bf) $(ASFLAG)
+CFLAGS_crypto_bf= $(INCLUDES_crypto) $(CFLAG)
+ASFLAGS_crypto_bf= $(INCLUDES_crypto) $(ASFLAG)
 AFLAGS_crypto_bf= $(ASFLAGS_crypto_bf)
 
 GENERAL_crypto_bf=crypto/bf/Makefile
@@ -69,7 +68,7 @@ tests_crypto_bf:
 
 lint: lint_crypto_bf
 lint_crypto_bf:
-	lint -DLINT $(INCLUDES_crypto_bf) $(SRC_crypto_bf)>crypto/bf/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_bf)>crypto/bf/fluff
 
 dclean: dclean_crypto_bf
 dclean_crypto_bf:

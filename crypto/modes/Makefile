@@ -2,11 +2,10 @@
 # OpenSSL/crypto/modes/Makefile
 #
 
-INCLUDES_crypto_modes= -Icrypto -I. -Iinclude
 
 
-CFLAGS_crypto_modes= $(INCLUDES_crypto_modes) $(CFLAG)
-ASFLAGS_crypto_modes= $(INCLUDES_crypto_modes) $(ASFLAG)
+CFLAGS_crypto_modes= $(INCLUDES_crypto) $(CFLAG)
+ASFLAGS_crypto_modes= $(INCLUDES_crypto) $(ASFLAG)
 AFLAGS_crypto_modes= $(ASFLAGS_crypto_modes)
 
 GENERAL_crypto_modes=crypto/modes/Makefile
@@ -91,7 +90,7 @@ tests_crypto_modes:
 
 lint: lint_crypto_modes
 lint_crypto_modes:
-	lint -DLINT $(INCLUDES_crypto_modes) $(SRC_crypto_modes)>crypto/modes/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_modes)>crypto/modes/fluff
 
 dclean: dclean_crypto_modes
 dclean_crypto_modes:

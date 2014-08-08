@@ -2,9 +2,8 @@
 # OpenSSL/crypto/engine/Makefile
 #
 
-INCLUDES_crypto_engine= -Icrypto -I. -Iinclude
 
-CFLAGS_crypto_engine= $(INCLUDES_crypto_engine) $(CFLAG)
+CFLAGS_crypto_engine= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_engine=crypto/engine/Makefile
 TEST_crypto_engine= crypto/engine/enginetest.c
@@ -68,7 +67,7 @@ tests_crypto_engine:
 
 lint: lint_crypto_engine
 lint_crypto_engine:
-	lint -DLINT $(INCLUDES_crypto_engine) $(SRC_crypto_engine)>crypto/engine/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_engine)>crypto/engine/fluff
 
 dclean: dclean_crypto_engine
 dclean_crypto_engine:

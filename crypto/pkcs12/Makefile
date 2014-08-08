@@ -2,9 +2,8 @@
 # OpenSSL/crypto/pkcs12/Makefile
 #
 
-INCLUDES_crypto_pkcs12= -Icrypto -I. -Iinclude
 
-CFLAGS_crypto_pkcs12= $(INCLUDES_crypto_pkcs12) $(CFLAG)
+CFLAGS_crypto_pkcs12= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_pkcs12=crypto/pkcs12/Makefile
 TEST_crypto_pkcs12=
@@ -65,7 +64,7 @@ tests_crypto_pkcs12:
 
 lint: lint_crypto_pkcs12
 lint_crypto_pkcs12:
-	lint -DLINT $(INCLUDES_crypto_pkcs12) $(SRC_crypto_pkcs12)>crypto/pkcs12/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_pkcs12)>crypto/pkcs12/fluff
 
 dclean: dclean_crypto_pkcs12
 dclean_crypto_pkcs12:

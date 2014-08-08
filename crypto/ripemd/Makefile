@@ -3,12 +3,11 @@
 #
 
 CPP_crypto_ripemd=    $(CC) -E
-INCLUDES_crypto_ripemd=
 
 RIP_ASM_OBJ=
 
-CFLAGS_crypto_ripemd= $(INCLUDES_crypto_ripemd) $(CFLAG)
-ASFLAGS_crypto_ripemd= $(INCLUDES_crypto_ripemd) $(ASFLAG)
+CFLAGS_crypto_ripemd= $(INCLUDES_crypto) $(CFLAG)
+ASFLAGS_crypto_ripemd= $(INCLUDES_crypto) $(ASFLAG)
 AFLAGS_crypto_ripemd= $(ASFLAGS_crypto_ripemd)
 
 GENERAL_crypto_ripemd=crypto/ripemd/Makefile
@@ -66,7 +65,7 @@ tests_crypto_ripemd:
 
 lint: lint_crypto_ripemd
 lint_crypto_ripemd:
-	lint -DLINT $(INCLUDES_crypto_ripemd) $(SRC_crypto_ripemd)>crypto/ripemd/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_ripemd)>crypto/ripemd/fluff
 
 dclean: dclean_crypto_ripemd
 dclean_crypto_ripemd:

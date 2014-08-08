@@ -2,9 +2,8 @@
 # OpenSSL/crypto/store/Makefile
 #
 
-INCLUDES_crypto_store= -Icrypto -I. -Iinclude
 
-CFLAGS_crypto_store= $(INCLUDES_crypto_store) $(CFLAG)
+CFLAGS_crypto_store= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_store=crypto/store/Makefile
 #TEST= storetest.c
@@ -60,7 +59,7 @@ tests_crypto_store:
 
 lint: lint_crypto_store
 lint_crypto_store:
-	lint -DLINT $(INCLUDES_crypto_store) $(SRC_crypto_store)>crypto/store/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_store)>crypto/store/fluff
 
 dclean: dclean_crypto_store
 dclean_crypto_store:

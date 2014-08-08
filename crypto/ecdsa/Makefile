@@ -2,9 +2,8 @@
 # crypto/ecdsa/Makefile
 #
 
-INCLUDES_crypto_ecdsa= -Icrypto -I. -Iinclude
 
-CFLAGS_crypto_ecdsa= $(INCLUDES_crypto_ecdsa) $(CFLAG)
+CFLAGS_crypto_ecdsa= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_ecdsa=crypto/ecdsa/Makefile
 TEST_crypto_ecdsa=crypto/ecdsa/ecdsatest.c
@@ -59,7 +58,7 @@ tests_crypto_ecdsa:
 
 lint: lint_crypto_ecdsa
 lint_crypto_ecdsa:
-	lint -DLINT $(INCLUDES_crypto_ecdsa) $(SRC_crypto_ecdsa)>crypto/ecdsa/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_ecdsa)>crypto/ecdsa/fluff
 
 dclean: dclean_crypto_ecdsa
 dclean_crypto_ecdsa:

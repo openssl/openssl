@@ -2,9 +2,8 @@
 # OpenSSL/crypto/dh/Makefile
 #
 
-INCLUDES_crypto_dh= -Icrypto -I. -Iinclude
 
-CFLAGS_crypto_dh= $(INCLUDES_crypto_dh) $(CFLAG)
+CFLAGS_crypto_dh= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_dh=crypto/dh/Makefile
 TEST_crypto_dh= crypto/dh/dhtest.c
@@ -60,7 +59,7 @@ tests_crypto_dh:
 
 lint: lint_crypto_dh
 lint_crypto_dh:
-	lint -DLINT $(INCLUDES_crypto_dh) $(SRC_crypto_dh)>crypto/dh/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_dh)>crypto/dh/fluff
 
 dclean: dclean_crypto_dh
 dclean_crypto_dh:

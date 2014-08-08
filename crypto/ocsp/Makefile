@@ -2,9 +2,8 @@
 # OpenSSL/ocsp/Makefile
 #
 
-INCLUDES_crypto_ocsp= -Icrypto -I. -Iinclude
 
-CFLAGS_crypto_ocsp= $(INCLUDES_crypto_ocsp) $(CFLAG)
+CFLAGS_crypto_ocsp= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_ocsp=crypto/ocsp/Makefile crypto/ocsp/README
 TEST_crypto_ocsp=
@@ -61,7 +60,7 @@ tests_crypto_ocsp:
 
 lint: lint_crypto_ocsp
 lint_crypto_ocsp:
-	lint -DLINT $(INCLUDES_crypto_ocsp) $(SRC_crypto_ocsp)>crypto/ocsp/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_ocsp)>crypto/ocsp/fluff
 
 dclean: dclean_crypto_ocsp
 dclean_crypto_ocsp:

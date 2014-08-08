@@ -2,9 +2,8 @@
 # OpenSSL/crypto/pqueue/Makefile
 #
 
-INCLUDES_crypto_pqueue=
 
-CFLAGS_crypto_pqueue= $(INCLUDES_crypto_pqueue) $(CFLAG)
+CFLAGS_crypto_pqueue= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_pqueue=crypto/pqueue/Makefile
 TEST_crypto_pqueue=
@@ -58,7 +57,7 @@ tests_crypto_pqueue:
 
 lint: lint_crypto_pqueue
 lint_crypto_pqueue:
-	lint -DLINT $(INCLUDES_crypto_pqueue) $(SRC_crypto_pqueue)>crypto/pqueue/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_pqueue)>crypto/pqueue/fluff
 
 dclean: dclean_crypto_pqueue
 dclean_crypto_pqueue:

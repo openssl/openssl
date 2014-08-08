@@ -2,9 +2,8 @@
 # OpenSSL/krb5/Makefile
 #
 
-INCLUDES_crypto_krb5= -Icrypto -I. -Iinclude
 
-CFLAGS_crypto_krb5= $(INCLUDES_crypto_krb5) $(CFLAG)
+CFLAGS_crypto_krb5= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_krb5=crypto/krb5/Makefile crypto/krb5/README
 TEST_crypto_krb5=
@@ -59,7 +58,7 @@ tests_crypto_krb5:
 
 lint: lint_crypto_krb5
 lint_crypto_krb5:
-	lint -DLINT $(INCLUDES_crypto_krb5) $(SRC_crypto_krb5)>crypto/krb5/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_krb5)>crypto/krb5/fluff
 
 dclean: dclean_crypto_krb5
 dclean_crypto_krb5:

@@ -2,9 +2,8 @@
 # OpenSSL/crypto/rsa/Makefile
 #
 
-INCLUDES_crypto_rsa= -Icrypto -I. -Iinclude
 
-CFLAGS_crypto_rsa= $(INCLUDES_crypto_rsa) $(CFLAG)
+CFLAGS_crypto_rsa= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_rsa=crypto/rsa/Makefile
 TEST_crypto_rsa=crypto/rsa/rsa_test.c
@@ -64,7 +63,7 @@ tests_crypto_rsa:
 
 lint: lint_crypto_rsa
 lint_crypto_rsa:
-	lint -DLINT $(INCLUDES_crypto_rsa) $(SRC_crypto_rsa)>crypto/rsa/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_rsa)>crypto/rsa/fluff
 
 dclean: dclean_crypto_rsa
 dclean_crypto_rsa:

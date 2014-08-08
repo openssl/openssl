@@ -2,9 +2,8 @@
 # OpenSSL/crypto/dso/Makefile
 #
 
-INCLUDES_crypto_dso= -Icrypto -I. -Iinclude
 
-CFLAGS_crypto_dso= $(INCLUDES_crypto_dso) $(CFLAG)
+CFLAGS_crypto_dso= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_dso=crypto/dso/Makefile
 TEST_crypto_dso=
@@ -60,7 +59,7 @@ tests_crypto_dso:
 
 lint: lint_crypto_dso
 lint_crypto_dso:
-	lint -DLINT $(INCLUDES_crypto_dso) $(SRC_crypto_dso)>crypto/dso/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_dso)>crypto/dso/fluff
 
 dclean: dclean_crypto_dso
 dclean_crypto_dso:

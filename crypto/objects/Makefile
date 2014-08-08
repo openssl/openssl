@@ -2,9 +2,8 @@
 # OpenSSL/crypto/objects/Makefile
 #
 
-INCLUDES_crypto_objects= -Icrypto -I. -Iinclude
 
-CFLAGS_crypto_objects= $(INCLUDES_crypto_objects) $(CFLAG)
+CFLAGS_crypto_objects= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_objects=crypto/objects/Makefile crypto/objects/README
 TEST_crypto_objects=
@@ -70,7 +69,7 @@ tests_crypto_objects:
 
 lint: lint_crypto_objects
 lint_crypto_objects:
-	lint -DLINT $(INCLUDES_crypto_objects) $(SRC_crypto_objects)>crypto/objects/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_objects)>crypto/objects/fluff
 
 dclean: dclean_crypto_objects
 dclean_crypto_objects:

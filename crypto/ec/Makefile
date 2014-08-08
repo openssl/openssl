@@ -2,10 +2,9 @@
 # crypto/ec/Makefile
 #
 
-INCLUDES_crypto_ec= -Icrypto -I. -Iinclude
 
-CFLAGS_crypto_ec= $(INCLUDES_crypto_ec) $(CFLAG)
-ASFLAGS_crypto_ec= $(INCLUDES_crypto_ec) $(ASFLAG)
+CFLAGS_crypto_ec= $(INCLUDES_crypto) $(CFLAG)
+ASFLAGS_crypto_ec= $(INCLUDES_crypto) $(ASFLAG)
 AFLAGS_crypto_ec= $(ASFLAGS_crypto_ec)
 
 GENERAL_crypto_ec=crypto/ec/Makefile
@@ -69,7 +68,7 @@ tests_crypto_ec:
 
 lint: lint_crypto_ec
 lint_crypto_ec:
-	lint -DLINT $(INCLUDES_crypto_ec) $(SRC_crypto_ec)>crypto/ec/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_ec)>crypto/ec/fluff
 
 dclean: dclean_crypto_ec
 dclean_crypto_ec:

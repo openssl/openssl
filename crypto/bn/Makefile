@@ -3,11 +3,10 @@
 #
 
 CPP_crypto_bn=    $(CC) -E
-INCLUDES_crypto_bn= -Icrypto -I. -Iinclude
 
 
-CFLAGS_crypto_bn= $(INCLUDES_crypto_bn) $(CFLAG)
-ASFLAGS_crypto_bn= $(INCLUDES_crypto_bn) $(ASFLAG)
+CFLAGS_crypto_bn= $(INCLUDES_crypto) $(CFLAG)
+ASFLAGS_crypto_bn= $(INCLUDES_crypto) $(ASFLAG)
 AFLAGS_crypto_bn= $(ASFLAGS_crypto_bn)
 
 GENERAL_crypto_bn=crypto/bn/Makefile
@@ -171,7 +170,7 @@ tests_crypto_bn:
 
 lint: lint_crypto_bn
 lint_crypto_bn:
-	lint -DLINT $(INCLUDES_crypto_bn) $(SRC_crypto_bn)>crypto/bn/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_bn)>crypto/bn/fluff
 
 dclean: dclean_crypto_bn
 dclean_crypto_bn:

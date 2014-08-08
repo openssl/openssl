@@ -2,9 +2,8 @@
 # OpenSSL/crypto/txt_db/Makefile
 #
 
-INCLUDES_crypto_txt_db=
 
-CFLAGS_crypto_txt_db= $(INCLUDES_crypto_txt_db) $(CFLAG)
+CFLAGS_crypto_txt_db= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_txt_db=crypto/txt_db/Makefile
 TEST_crypto_txt_db=
@@ -58,7 +57,7 @@ tests_crypto_txt_db:
 
 lint: lint_crypto_txt_db
 lint_crypto_txt_db:
-	lint -DLINT $(INCLUDES_crypto_txt_db) $(SRC_crypto_txt_db)>crypto/txt_db/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_txt_db)>crypto/txt_db/fluff
 
 dclean: dclean_crypto_txt_db
 dclean_crypto_txt_db:

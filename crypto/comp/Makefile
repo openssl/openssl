@@ -2,9 +2,8 @@
 # OpenSSL/crypto/comp/Makefile
 #
 
-INCLUDES_crypto_comp= -Icrypto -I. -Iinclude
 
-CFLAGS_crypto_comp= $(INCLUDES_crypto_comp) $(CFLAG)
+CFLAGS_crypto_comp= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_comp=crypto/comp/Makefile
 TEST_crypto_comp=
@@ -61,7 +60,7 @@ tests_crypto_comp:
 
 lint: lint_crypto_comp
 lint_crypto_comp:
-	lint -DLINT $(INCLUDES_crypto_comp) $(SRC_crypto_comp)>crypto/comp/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_comp)>crypto/comp/fluff
 
 dclean: dclean_crypto_comp
 dclean_crypto_comp:

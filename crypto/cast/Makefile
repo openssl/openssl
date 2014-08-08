@@ -3,11 +3,10 @@
 #
 
 CPP_crypto_cast=	$(CC) -E
-INCLUDES_crypto_cast=
 
 
-CFLAGS_crypto_cast= $(INCLUDES_crypto_cast) $(CFLAG)
-ASFLAGS_crypto_cast= $(INCLUDES_crypto_cast) $(ASFLAG)
+CFLAGS_crypto_cast= $(INCLUDES_crypto) $(CFLAG)
+ASFLAGS_crypto_cast= $(INCLUDES_crypto) $(ASFLAG)
 AFLAGS_crypto_cast= $(ASFLAGS_crypto_cast)
 
 GENERAL_crypto_cast=crypto/cast/Makefile
@@ -65,7 +64,7 @@ tests_crypto_cast:
 
 lint: lint_crypto_cast
 lint_crypto_cast:
-	lint -DLINT $(INCLUDES_crypto_cast) $(SRC_crypto_cast)>crypto/cast/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_cast)>crypto/cast/fluff
 
 dclean: dclean_crypto_cast
 dclean_crypto_cast:

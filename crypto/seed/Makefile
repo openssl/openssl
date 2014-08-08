@@ -3,9 +3,8 @@
 #
 
 CPP_crypto_seed=	$(CC) -E
-INCLUDES_crypto_seed=
 
-CFLAGS_crypto_seed= $(INCLUDES_crypto_seed) $(CFLAG)
+CFLAGS_crypto_seed= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_seed=crypto/seed/Makefile
 TEST_crypto_seed=
@@ -59,7 +58,7 @@ tests_crypto_seed:
 
 lint: lint_crypto_seed
 lint_crypto_seed:
-	lint -DLINT $(INCLUDES_crypto_seed) $(SRC_crypto_seed)>crypto/seed/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_seed)>crypto/seed/fluff
 
 dclean: dclean_crypto_seed
 dclean_crypto_seed:

@@ -3,9 +3,8 @@
 #
 
 CPP_crypto_md4=    $(CC) -E
-INCLUDES_crypto_md4=
 
-CFLAGS_crypto_md4= $(INCLUDES_crypto_md4) $(CFLAG)
+CFLAGS_crypto_md4= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_md4=crypto/md4/Makefile
 TEST_crypto_md4=crypto/md4/md4test.c
@@ -59,7 +58,7 @@ tests_crypto_md4:
 
 lint: lint_crypto_md4
 lint_crypto_md4:
-	lint -DLINT $(INCLUDES_crypto_md4) $(SRC_crypto_md4)>crypto/md4/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_md4)>crypto/md4/fluff
 
 dclean: dclean_crypto_md4
 dclean_crypto_md4:

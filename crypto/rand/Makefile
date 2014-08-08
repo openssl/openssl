@@ -2,9 +2,8 @@
 # OpenSSL/crypto/rand/Makefile
 #
 
-INCLUDES_crypto_rand=
 
-CFLAGS_crypto_rand= $(INCLUDES_crypto_rand) $(CFLAG)
+CFLAGS_crypto_rand= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_rand=crypto/rand/Makefile
 TEST_crypto_rand= crypto/rand/randtest.c
@@ -60,7 +59,7 @@ tests_crypto_rand:
 
 lint: lint_crypto_rand
 lint_crypto_rand:
-	lint -DLINT $(INCLUDES_crypto_rand) $(SRC_crypto_rand)>crypto/rand/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_rand)>crypto/rand/fluff
 
 dclean: dclean_crypto_rand
 dclean_crypto_rand:

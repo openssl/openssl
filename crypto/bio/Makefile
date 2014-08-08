@@ -2,9 +2,8 @@
 # OpenSSL/crypto/bio/Makefile
 #
 
-INCLUDES_crypto_bio= -Icrypto -I. -Iinclude
 
-CFLAGS_crypto_bio= $(INCLUDES_crypto_bio) $(CFLAG)
+CFLAGS_crypto_bio= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_bio=crypto/bio/Makefile
 TEST_crypto_bio=
@@ -70,7 +69,7 @@ tests_crypto_bio:
 
 lint: lint_crypto_bio
 lint_crypto_bio:
-	lint -DLINT $(INCLUDES_crypto_bio) $(SRC_crypto_bio)>crypto/bio/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_bio)>crypto/bio/fluff
 
 dclean: dclean_crypto_bio
 dclean_crypto_bio:

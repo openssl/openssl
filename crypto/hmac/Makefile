@@ -2,9 +2,8 @@
 # OpenSSL/crypto/md/Makefile
 #
 
-INCLUDES_crypto_hmac=
 
-CFLAGS_crypto_hmac= $(INCLUDES_crypto_hmac) $(CFLAG)
+CFLAGS_crypto_hmac= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_hmac=crypto/hmac/Makefile
 TEST_crypto_hmac=crypto/hmac/hmactest.c
@@ -58,7 +57,7 @@ tests_crypto_hmac:
 
 lint: lint_crypto_hmac
 lint_crypto_hmac:
-	lint -DLINT $(INCLUDES_crypto_hmac) $(SRC_crypto_hmac)>crypto/hmac/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_hmac)>crypto/hmac/fluff
 
 dclean: dclean_crypto_hmac
 dclean_crypto_hmac:

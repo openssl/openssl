@@ -3,11 +3,10 @@
 #
 
 CPP_crypto_camellia=	$(CC) -E
-INCLUDES_crypto_camellia=
 
 
-CFLAGS_crypto_camellia= $(INCLUDES_crypto_camellia) $(CFLAG)
-ASFLAGS_crypto_camellia= $(INCLUDES_crypto_camellia) $(ASFLAG)
+CFLAGS_crypto_camellia= $(INCLUDES_crypto) $(CFLAG)
+ASFLAGS_crypto_camellia= $(INCLUDES_crypto) $(ASFLAG)
 AFLAGS_crypto_camellia= $(ASFLAGS_crypto_camellia)
 
 GENERAL_crypto_camellia=crypto/camellia/Makefile
@@ -71,7 +70,7 @@ tests_crypto_camellia:
 
 lint: lint_crypto_camellia
 lint_crypto_camellia:
-	lint -DLINT $(INCLUDES_crypto_camellia) $(SRC_crypto_camellia)>crypto/camellia/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_camellia)>crypto/camellia/fluff
 
 dclean: dclean_crypto_camellia
 dclean_crypto_camellia:

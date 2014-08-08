@@ -2,9 +2,8 @@
 # OpenSSL/crypto/dsa/Makefile
 #
 
-INCLUDES_crypto_dsa= -Icrypto -I. -Iinclude
 
-CFLAGS_crypto_dsa= $(INCLUDES_crypto_dsa) $(CFLAG)
+CFLAGS_crypto_dsa= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_dsa=crypto/dsa/Makefile
 TEST_crypto_dsa=crypto/dsa/dsatest.c
@@ -60,7 +59,7 @@ tests_crypto_dsa:
 
 lint: lint_crypto_dsa
 lint_crypto_dsa:
-	lint -DLINT $(INCLUDES_crypto_dsa) $(SRC_crypto_dsa)>crypto/dsa/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_dsa)>crypto/dsa/fluff
 
 dclean: dclean_crypto_dsa
 dclean_crypto_dsa:

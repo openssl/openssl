@@ -2,9 +2,8 @@
 # OpenSSL/crypto/evp/Makefile
 #
 
-INCLUDES_crypto_evp= -Icrypto -I. -Iinclude
 
-CFLAGS_crypto_evp= $(INCLUDES_crypto_evp) $(CFLAG)
+CFLAGS_crypto_evp= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_evp=crypto/evp/Makefile
 TEST_crypto_evp=crypto/evp/evp_test.c crypto/evp/p5_crpt2_test.c
@@ -83,7 +82,7 @@ tests_crypto_evp:
 
 lint: lint_crypto_evp
 lint_crypto_evp:
-	lint -DLINT $(INCLUDES_crypto_evp) $(SRC_crypto_evp)>crypto/evp/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_evp)>crypto/evp/fluff
 
 dclean: dclean_crypto_evp
 dclean_crypto_evp:

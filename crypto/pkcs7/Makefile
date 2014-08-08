@@ -2,10 +2,9 @@
 # OpenSSL/crypto/pkcs7/Makefile
 #
 
-INCLUDES_crypto_pkcs7= -Icrypto -I. -Iinclude
 
  
-CFLAGS_crypto_pkcs7= $(INCLUDES_crypto_pkcs7) $(CFLAG)
+CFLAGS_crypto_pkcs7= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_pkcs7=crypto/pkcs7/Makefile crypto/pkcs7/README
 TEST_crypto_pkcs7=
@@ -64,7 +63,7 @@ tests_crypto_pkcs7:
 
 lint: lint_crypto_pkcs7
 lint_crypto_pkcs7:
-	lint -DLINT $(INCLUDES_crypto_pkcs7) $(SRC_crypto_pkcs7)>crypto/pkcs7/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_pkcs7)>crypto/pkcs7/fluff
 
 dclean: dclean_crypto_pkcs7
 dclean_crypto_pkcs7:

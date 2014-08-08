@@ -2,9 +2,8 @@
 # OpenSSL/crypto/conf/Makefile
 #
 
-INCLUDES_crypto_conf= -Icrypto -I. -Iinclude
 
-CFLAGS_crypto_conf= $(INCLUDES_crypto_conf) $(CFLAG)
+CFLAGS_crypto_conf= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_conf=crypto/conf/Makefile
 TEST_crypto_conf=
@@ -61,7 +60,7 @@ tests_crypto_conf:
 
 lint: lint_crypto_conf
 lint_crypto_conf:
-	lint -DLINT $(INCLUDES_crypto_conf) $(SRC_crypto_conf)>crypto/conf/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_conf)>crypto/conf/fluff
 
 dclean: dclean_crypto_conf
 dclean_crypto_conf:

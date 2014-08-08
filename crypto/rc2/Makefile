@@ -2,9 +2,8 @@
 # OpenSSL/crypto/rc2/Makefile
 #
 
-INCLUDES_crypto_rc2=
 
-CFLAGS_crypto_rc2= $(INCLUDES_crypto_rc2) $(CFLAG)
+CFLAGS_crypto_rc2= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_rc2=crypto/rc2/Makefile
 TEST_crypto_rc2=crypto/rc2/rc2test.c
@@ -58,7 +57,7 @@ tests_crypto_rc2:
 
 lint: lint_crypto_rc2
 lint_crypto_rc2:
-	lint -DLINT $(INCLUDES_crypto_rc2) $(SRC_crypto_rc2)>crypto/rc2/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_rc2)>crypto/rc2/fluff
 
 dclean: dclean_crypto_rc2
 dclean_crypto_rc2:

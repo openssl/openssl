@@ -2,9 +2,8 @@
 # OpenSSL/crypto/idea/Makefile
 #
 
-INCLUDES_crypto_idea=
 
-CFLAGS_crypto_idea= $(INCLUDES_crypto_idea) $(CFLAG)
+CFLAGS_crypto_idea= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_idea=crypto/idea/Makefile
 TEST_crypto_idea=crypto/idea/ideatest.c
@@ -58,7 +57,7 @@ tests_crypto_idea:
 
 lint: lint_crypto_idea
 lint_crypto_idea:
-	lint -DLINT $(INCLUDES_crypto_idea) $(SRC_crypto_idea)>crypto/idea/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_idea)>crypto/idea/fluff
 
 dclean: dclean_crypto_idea
 dclean_crypto_idea:

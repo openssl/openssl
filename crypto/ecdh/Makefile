@@ -2,9 +2,8 @@
 # crypto/ecdh/Makefile
 #
 
-INCLUDES_crypto_ecdh= -Icrypto -I. -Iinclude
 
-CFLAGS_crypto_ecdh= $(INCLUDES_crypto_ecdh) $(CFLAG)
+CFLAGS_crypto_ecdh= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_ecdh=crypto/ecdh/Makefile
 TEST_crypto_ecdh=crypto/ecdh/ecdhtest.c
@@ -59,7 +58,7 @@ tests_crypto_ecdh:
 
 lint: lint_crypto_ecdh
 lint_crypto_ecdh:
-	lint -DLINT $(INCLUDES_crypto_ecdh) $(SRC_crypto_ecdh)>crypto/ecdh/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_ecdh)>crypto/ecdh/fluff
 
 dclean: dclean_crypto_ecdh
 dclean_crypto_ecdh:

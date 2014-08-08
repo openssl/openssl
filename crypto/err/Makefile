@@ -2,9 +2,8 @@
 # OpenSSL/crypto/err/Makefile
 #
 
-INCLUDES_crypto_err= -Icrypto -I. -Iinclude
 
-CFLAGS_crypto_err= $(INCLUDES_crypto_err) $(CFLAG)
+CFLAGS_crypto_err= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_err=crypto/err/Makefile
 TEST_crypto_err=
@@ -58,7 +57,7 @@ tests_crypto_err:
 
 lint: lint_crypto_err
 lint_crypto_err:
-	lint -DLINT $(INCLUDES_crypto_err) $(SRC_crypto_err)>crypto/err/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_err)>crypto/err/fluff
 
 dclean: dclean_crypto_err
 dclean_crypto_err:

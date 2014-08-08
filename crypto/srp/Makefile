@@ -1,6 +1,5 @@
-INCLUDES_crypto_srp= -Icrypto -I. -Iinclude
 
-CFLAGS_crypto_srp= $(INCLUDES_crypto_srp) $(CFLAG)
+CFLAGS_crypto_srp= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_srp=crypto/srp/Makefile
 TEST_crypto_srp=crypto/srp/srptest.c
@@ -52,7 +51,7 @@ tests_crypto_srp:
 
 lint: lint_crypto_srp
 lint_crypto_srp:
-	lint -DLINT $(INCLUDES_crypto_srp) $(SRC_crypto_srp)>crypto/srp/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_srp)>crypto/srp/fluff
 
 dclean: dclean_crypto_srp
 dclean_crypto_srp:

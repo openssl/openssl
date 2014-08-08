@@ -3,11 +3,10 @@
 #
 
 CPP_crypto_sha=    $(CC) -E
-INCLUDES_crypto_sha=
 
 
-CFLAGS_crypto_sha= $(INCLUDES_crypto_sha) $(CFLAG)
-ASFLAGS_crypto_sha= $(INCLUDES_crypto_sha) $(ASFLAG)
+CFLAGS_crypto_sha= $(INCLUDES_crypto) $(CFLAG)
+ASFLAGS_crypto_sha= $(INCLUDES_crypto) $(ASFLAG)
 AFLAGS_crypto_sha= $(ASFLAGS_crypto_sha)
 
 GENERAL_crypto_sha=crypto/sha/Makefile
@@ -120,7 +119,7 @@ tests_crypto_sha:
 
 lint: lint_crypto_sha
 lint_crypto_sha:
-	lint -DLINT $(INCLUDES_crypto_sha) $(SRC_crypto_sha)>crypto/sha/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_sha)>crypto/sha/fluff
 
 dclean: dclean_crypto_sha
 dclean_crypto_sha:

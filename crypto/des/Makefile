@@ -3,10 +3,9 @@
 #
 
 CPP_crypto_des=	$(CC) -E
-INCLUDES_crypto_des=-I. -Iinclude
 
-CFLAGS_crypto_des= $(INCLUDES_crypto_des) $(CFLAG)
-ASFLAGS_crypto_des= $(INCLUDES_crypto_des) $(ASFLAG)
+CFLAGS_crypto_des= $(INCLUDES_crypto) $(CFLAG)
+ASFLAGS_crypto_des= $(INCLUDES_crypto) $(ASFLAG)
 AFLAGS_crypto_des= $(ASFLAGS_crypto_des)
 
 GENERAL_crypto_des=crypto/des/Makefile
@@ -92,7 +91,7 @@ tests_crypto_des:
 
 lint: lint_crypto_des
 lint_crypto_des:
-	lint -DLINT $(INCLUDES_crypto_des) $(SRC_crypto_des)>crypto/des/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_des)>crypto/des/fluff
 
 dclean: dclean_crypto_des
 dclean_crypto_des:

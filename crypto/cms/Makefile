@@ -2,9 +2,8 @@
 # OpenSSL/crypto/cms/Makefile
 #
 
-INCLUDES_crypto_cms= -Icrypto -I. -Iinclude
 
-CFLAGS_crypto_cms= $(INCLUDES_crypto_cms) $(CFLAG)
+CFLAGS_crypto_cms= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_cms=crypto/cms/Makefile
 TEST_crypto_cms=
@@ -65,7 +64,7 @@ tests_crypto_cms:
 
 lint: lint_crypto_cms
 lint_crypto_cms:
-	lint -DLINT $(INCLUDES_crypto_cms) $(SRC_crypto_cms)>crypto/cms/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_cms)>crypto/cms/fluff
 
 dclean: dclean_crypto_cms
 dclean_crypto_cms:

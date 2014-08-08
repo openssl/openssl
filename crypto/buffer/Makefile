@@ -2,9 +2,8 @@
 # OpenSSL/crypto/buffer/Makefile
 #
 
-INCLUDES_crypto_buffer= -Icrypto -I. -Iinclude
 
-CFLAGS_crypto_buffer= $(INCLUDES_crypto_buffer) $(CFLAG)
+CFLAGS_crypto_buffer= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_buffer=crypto/buffer/Makefile
 TEST_crypto_buffer=
@@ -58,7 +57,7 @@ tests_crypto_buffer:
 
 lint: lint_crypto_buffer
 lint_crypto_buffer:
-	lint -DLINT $(INCLUDES_crypto_buffer) $(SRC_crypto_buffer)>crypto/buffer/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_buffer)>crypto/buffer/fluff
 
 dclean: dclean_crypto_buffer
 dclean_crypto_buffer:

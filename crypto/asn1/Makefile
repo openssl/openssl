@@ -2,9 +2,8 @@
 # OpenSSL/crypto/asn1/Makefile
 #
 
-INCLUDES_crypto_asn1= -Icrypto -I. -Iinclude
 
-CFLAGS_crypto_asn1= $(INCLUDES_crypto_asn1) $(CFLAG)
+CFLAGS_crypto_asn1= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_asn1=crypto/asn1/Makefile crypto/asn1/README
 TEST_crypto_asn1=
@@ -93,7 +92,7 @@ tests_crypto_asn1:
 
 lint: lint_crypto_asn1
 lint_crypto_asn1:
-	lint -DLINT $(INCLUDES_crypto_asn1) $(SRC_crypto_asn1)>crypto/asn1/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_asn1)>crypto/asn1/fluff
 
 dclean: dclean_crypto_asn1
 dclean_crypto_asn1:

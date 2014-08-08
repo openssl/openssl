@@ -3,11 +3,10 @@
 #
 
 CPP_crypto_md5=    $(CC) -E
-INCLUDES_crypto_md5=-Icrypto -I. -Iinclude
 
 
-CFLAGS_crypto_md5= $(INCLUDES_crypto_md5) $(CFLAG)
-ASFLAGS_crypto_md5= $(INCLUDES_crypto_md5) $(ASFLAG)
+CFLAGS_crypto_md5= $(INCLUDES_crypto) $(CFLAG)
+ASFLAGS_crypto_md5= $(INCLUDES_crypto) $(ASFLAG)
 AFLAGS_crypto_md5= $(ASFLAGS_crypto_md5)
 
 GENERAL_crypto_md5=crypto/md5/Makefile
@@ -75,7 +74,7 @@ tests_crypto_md5:
 
 lint: lint_crypto_md5
 lint_crypto_md5:
-	lint -DLINT $(INCLUDES_crypto_md5) $(SRC_crypto_md5)>crypto/md5/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_md5)>crypto/md5/fluff
 
 dclean: dclean_crypto_md5
 dclean_crypto_md5:

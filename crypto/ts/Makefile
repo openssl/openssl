@@ -2,10 +2,9 @@
 # SSLeay/crypto/ts/Makefile
 #
 
-INCLUDES_crypto_ts= -Icrypto -Iinclude
 
  
-CFLAGS_crypto_ts= $(INCLUDES_crypto_ts) $(CFLAG)
+CFLAGS_crypto_ts= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_ts= crypto/ts/Makefile
 TEST_crypto_ts=
@@ -63,7 +62,7 @@ tags_crypto_ts:
 
 lint: lint_crypto_ts
 lint_crypto_ts:
-	lint -DLINT $(INCLUDES_crypto_ts) $(SRC_crypto_ts)>crypto/ts/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_ts)>crypto/ts/fluff
 
 dclean: dclean_crypto_ts
 dclean_crypto_ts:

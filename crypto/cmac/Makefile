@@ -2,9 +2,8 @@
 # OpenSSL/crypto/cmac/Makefile
 #
 
-INCLUDES_crypto_cmac=
 
-CFLAGS_crypto_cmac= $(INCLUDES_crypto_cmac) $(CFLAG)
+CFLAGS_crypto_cmac= $(INCLUDES_crypto) $(CFLAG)
 
 GENERAL_crypto_cmac=crypto/cmac/Makefile
 TEST_crypto_cmac=
@@ -58,7 +57,7 @@ tests_crypto_cmac:
 
 lint: lint_crypto_cmac
 lint_crypto_cmac:
-	lint -DLINT $(INCLUDES_crypto_cmac) $(SRC_crypto_cmac)>crypto/cmac/fluff
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_cmac)>crypto/cmac/fluff
 
 dclean: dclean_crypto_cmac
 dclean_crypto_cmac:
