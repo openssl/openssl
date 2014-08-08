@@ -24,10 +24,6 @@ HEADER_crypto_cms=	crypto/cms/cms_lcl.h $(EXHEADER_crypto_cms)
 
 ALL_crypto_cms=    $(GENERAL_crypto_cms) $(SRC_crypto_cms) $(HEADER_crypto_cms)
 
-
-test: test_crypto_cms
-test_crypto_cms:
-
 all: all_crypto_cms
 all_crypto_cms:	crypto/cms/lib
 

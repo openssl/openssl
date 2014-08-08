@@ -24,10 +24,6 @@ HEADER_crypto_pkcs12=	$(EXHEADER_crypto_pkcs12)
 
 ALL_crypto_pkcs12=    $(GENERAL_crypto_pkcs12) $(SRC_crypto_pkcs12) $(HEADER_crypto_pkcs12)
 
-
-test: test_crypto_pkcs12
-test_crypto_pkcs12:
-
 all: all_crypto_pkcs12
 all_crypto_pkcs12:	crypto/pkcs12/lib
 

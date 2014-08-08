@@ -25,10 +25,6 @@ HEADER_crypto_ts=	$(EXHEADER_crypto_ts)
 
 ALL_crypto_ts=    $(GENERAL_crypto_ts) $(SRC_crypto_ts) $(HEADER_crypto_ts)
 
-
-test: test_crypto_ts
-test_crypto_ts:
-
 all: all_crypto_ts
 all_crypto_ts:	crypto/ts/lib
 

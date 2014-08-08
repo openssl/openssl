@@ -23,10 +23,6 @@ HEADER_crypto_pkcs7=	$(EXHEADER_crypto_pkcs7)
 
 ALL_crypto_pkcs7=    $(GENERAL_crypto_pkcs7) $(SRC_crypto_pkcs7) $(HEADER_crypto_pkcs7)
 
-
-test: test_crypto_pkcs7
-test_crypto_pkcs7:
-
 all: all_crypto_pkcs7
 all_crypto_pkcs7:	crypto/pkcs7/lib
 

@@ -46,12 +46,6 @@ HEADER_crypto_asn1=	$(EXHEADER_crypto_asn1) crypto/asn1/asn1_locl.h
 
 ALL_crypto_asn1=    $(GENERAL_crypto_asn1) $(SRC_crypto_asn1) $(HEADER_crypto_asn1)
 
-
-test: test_crypto_asn1
-test_crypto_asn1:	crypto/asn1/test.c
-	cc -g -Iinclude -c crypto/asn1/test.c
-	cc -g -Iinclude -o test crypto/asn1/test.o -L. -lcrypto
-
 crypto/asn1/pk:	crypto/asn1/pk.c
 	cc -g -Iinclude -c crypto/asn1/pk.c
 	cc -g -Iinclude -o crypto/asn1/pk crypto/asn1/pk.o -L. -lcrypto

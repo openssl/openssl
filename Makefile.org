@@ -194,9 +194,9 @@ rehash.time: certs $(EXE_apps)
 
 test:   tests
 
-tests_announce:
+tests_announce: build_all
 	@echo "testing..."
-tests: tests_announce rehash
+tests: tests_announce
 	OPENSSL_CONF=apps/openssl.cnf util/opensslwrap.sh version -a
 
 report:

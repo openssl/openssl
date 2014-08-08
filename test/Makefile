@@ -179,9 +179,9 @@ tags_test:
 	ctags $(SRC_test)
 
 tests: tests_test
-tests_test:	exe_test all_apps $(TESTS_test)
+tests_test: test/alltests
 
-test/alltests: \
+test/alltests: rehash exe_test all_apps \
 	test/test_des test/test_idea test/test_sha test/test_md4 test/test_md5 test/test_hmac \
 	test/test_md2 test/test_mdc2 test/test_wp \
 	test/test_rmd test/test_rc2 test/test_rc4 test/test_rc5 test/test_bf test/test_cast \
