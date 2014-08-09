@@ -2971,7 +2971,7 @@ static int www_body(char *hostname, int s, int stype, unsigned char *context)
 				BIO_printf(bio_s_out,"read R BLOCK\n");
 #if defined(OPENSSL_SYS_NETWARE)
             delay(1000);
-#elif !defined(OPENSSL_SYS_MSDOS) && !defined(__DJGPP__)
+#elif !defined(OPENSSL_SYS_MSDOS)
 				sleep(1);
 #endif
 				continue;
