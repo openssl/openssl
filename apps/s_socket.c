@@ -178,7 +178,12 @@ static void sock_cleanup(void)
 
 static int ssl_sock_init(void)
 	{
-#if defined(OPENSSL_SYS_WINDOWS)
+#ifdef WATT32
+	extern int _watt_do_exit;
+	_watt_do_exit = 0;
+	if (sock_init())
+		return (0);
+#elif defined(OPENSSL_SYS_WINDOWS)
 	if (!wsa_init_done)
 		{
 		int err;
