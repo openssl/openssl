@@ -130,7 +130,9 @@ clean_apps:
 	rm -f apps/*.o apps/*.d apps/*.obj apps/*.dll apps/lib apps/tags apps/core apps/.pure apps/.nfs* apps/*.old apps/*.bak apps/fluff $(EXE_apps)
 	rm -f apps/req
 
-$(EXE_apps): apps/progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO_apps) $(DLIBSSL_apps)
+$(PROGRAM).o: apps/progs.h
+
+$(EXE_apps): $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO_apps) $(DLIBSSL_apps)
 	$(RM_apps) $(EXE_apps)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
@@ -143,5 +145,3 @@ $(EXE_apps): apps/progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO_apps) $(DLIBSSL_app
 
 apps/progs.h: apps/progs.pl
 	$(PERL) apps/progs.pl $(E_EXE) >apps/progs.h
-	$(RM_apps) $(PROGRAM).o
-
