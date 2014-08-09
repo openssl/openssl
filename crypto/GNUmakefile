@@ -39,8 +39,6 @@ $(3)_crypto_$(1): $(3)_crypto_$(1)_announce
 $(2): $(3)_crypto_$(1)
 endef
 
-#$(foreach dir, $(SDIRS), \
-#  $(eval $(call CRYPTO_SUBDIR_RULE_template,$(dir),crypto/subdirs,all)))
 $(foreach dir, $(SDIRS), \
   $(eval $(call CRYPTO_SUBDIR_RULE_template,$(dir),files,files)))
 $(foreach dir, $(SDIRS), \
