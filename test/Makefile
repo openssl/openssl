@@ -614,7 +614,7 @@ $(SRPTEST)$(EXE_EXT): $(SRPTEST).o $(DLIBCRYPTO_test)
 $(V3NAMETEST)$(EXE_EXT): $(V3NAMETEST).o $(DLIBCRYPTO_test)
 	@target=$(V3NAMETEST); $(BUILD_CMD_test)
 
-$(HEARTBEATTEST)$(EXE_EXT): $(HEARTBEATTEST).o $(DLIBCRYPTO_test) test/testutil.o
+$(HEARTBEATTEST)$(EXE_EXT): $(HEARTBEATTEST).o $(DLIBSSL_test) $(DLIBCRYPTO_test) test/testutil.o
 	@target=$(HEARTBEATTEST) testutil=test/testutil.o; $(BUILD_CMD_STATIC)
 
 $(CONSTTIMETEST)$(EXE_EXT): $(CONSTTIMETEST).o
