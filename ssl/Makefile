@@ -47,10 +47,9 @@ ALL_ssl=    $(GENERAL_ssl) $(SRC_ssl) $(HEADER_ssl)
 all: all_ssl
 all_ssl:	shared_ssl
 
-ssl/lib:	$(LIBOBJ_ssl)
+$(LIB_ssl): $(LIBOBJ_ssl)
 	$(AR) $(LIB_ssl) $(LIBOBJ_ssl)
 	$(RANLIB) $(LIB_ssl) || echo Never mind.
-	@touch ssl/lib
 
 shared: shared_ssl
 
@@ -89,5 +88,5 @@ dclean_ssl:
 
 clean: clean_ssl
 clean_ssl:
-	rm -f ssl/*.o ssl/*.d ssl/*.obj ssl/lib ssl/tags ssl/core ssl/.pure ssl/.nfs* ssl/*.old ssl/*.bak ssl/fluff
+	rm -f ssl/*.o ssl/*.d ssl/*.obj ssl/tags ssl/core ssl/.pure ssl/.nfs* ssl/*.old ssl/*.bak ssl/fluff
 

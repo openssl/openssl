@@ -130,9 +130,6 @@ clean_apps:
 	rm -f apps/*.o apps/*.d apps/*.obj apps/*.dll apps/lib apps/tags apps/core apps/.pure apps/.nfs* apps/*.old apps/*.bak apps/fluff $(EXE_apps)
 	rm -f apps/req
 
-$(DLIBSSL_apps):
-	(cd apps/..; $(MAKE) DIRS=ssl all)
-
 $(EXE_apps): apps/progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO_apps) $(DLIBSSL_apps)
 	$(RM_apps) $(EXE_apps)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \

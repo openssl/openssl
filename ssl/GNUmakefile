@@ -6,10 +6,10 @@ include ssl/Makefile
 -include $(SRC_ssl:.c=.d)
 
 ifdef SHARED_LIBS
-$(SHARED_LIB_ssl): ssl/lib
+$(SHARED_LIB_ssl): $(LIB_ssl)
 shared_ssl: $(SHARED_LIB_ssl)
 else
-all_ssl: ssl/lib
+all_ssl: $(LIB_ssl)
 shared_ssl:
 endif
 
