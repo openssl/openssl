@@ -78,7 +78,8 @@ links_crypto:
 	@$(PERL) util/mklink.pl ./test $(TEST_crypto)
 
 $(LIB_crypto): $(LIBOBJ_crypto)
-	$(ARX) $(LIB_crypto) $(LIBOBJ_crypto) $(LIBOBJ_subdirs)
+	$(ARX) $(LIB_crypto) $(LIBOBJ_crypto) $(LIBOBJ_subdirs) \
+	$(LIBOBJ_engines) $(LIBOBJ_engdirs)
 	$(RANLIB) $(LIB_crypto) || echo Never mind.
 
 shared: shared_crypto

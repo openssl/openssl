@@ -54,24 +54,7 @@ HEADER_engines=	engines/e_4758cca_err.c engines/e_4758cca_err.h \
 
 ALL_engines=    $(GENERAL_engines) $(SRC_engines) $(HEADER_engines)
 
-
 all: all_engines
-all_engines:	engines/lib engines/subdirs
-
-engines/lib:	$(LIBOBJ_engines)
-	@if [ -n "$(SHARED_LIBS)" ]; then \
-		set -e; \
-		for l in $(LIBNAMES); do \
-			cat configure.mk Makefile.shared | $(MAKE) -f - \
-				LIBNAME=$$l LIBEXTRAS="e_$$l*.o" \
-				LIBDEPS='-L.. -lcrypto $(EX_LIBS)' \
-				link_o.$(SHLIB_TARGET); \
-		done; \
-	else \
-		$(AR) $(LIB_engines) $(LIBOBJ_engines); \
-		$(RANLIB) $(LIB_engines) || echo Never mind.; \
-	fi; \
-	touch engines/lib
 
 engines/e_padlock-x86.s:	engines/asm/e_padlock-x86.pl
 	$(PERL) engines/asm/e_padlock-x86.pl $(PERLASM_SCHEME) $(CFLAGS_engines) $(PROCESSOR) > $@
