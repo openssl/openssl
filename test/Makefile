@@ -152,6 +152,7 @@ all_test:	exe_test
 
 exe: exe_test
 exe_test:	$(EXE_test) $(FIPSEXE) test/dummytest$(EXE_EXT)
+$(EXE_TEST): $(DLIBCRYPTO_test) $(DLIBSSL_test)
 
 test/fipsexe:	$(FIPSEXE)
 
