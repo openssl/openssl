@@ -424,24 +424,10 @@ CERT *ssl_cert_dup(CERT *cert)
 	ret->sec_ex = cert->sec_ex;
 
 #ifndef OPENSSL_NO_TLSEXT
-	if (cert->custom_cli_ext_records_count)
-		{
-		ret->custom_cli_ext_records = BUF_memdup(cert->custom_cli_ext_records, sizeof(custom_cli_ext_record) * cert->custom_cli_ext_records_count);
-		if (ret->custom_cli_ext_records == NULL)
-			goto err;
-		ret->custom_cli_ext_records_count =
-					cert->custom_cli_ext_records_count;
-		}
-
-	if (cert->custom_srv_ext_records_count)
-		{
-		ret->custom_srv_ext_records = BUF_memdup(cert->custom_srv_ext_records, sizeof(custom_srv_ext_record) * cert->custom_srv_ext_records_count);
-		if (ret->custom_srv_ext_records == NULL)
-			goto err;
-		ret->custom_srv_ext_records_count =
-					cert->custom_srv_ext_records_count;
-		}
-
+	if (!custom_exts_copy(&ret->cli_ext, &cert->cli_ext))
+		goto err;
+	if (!custom_exts_copy(&ret->srv_ext, &cert->srv_ext))
+		goto err;
 #endif
 
 	return(ret);
@@ -463,10 +449,8 @@ err:
 #endif
 
 #ifndef OPENSSL_NO_TLSEXT
-	if (ret->custom_cli_ext_records)
-		OPENSSL_free(ret->custom_cli_ext_records);
-	if (ret->custom_srv_ext_records)
-		OPENSSL_free(ret->custom_srv_ext_records);
+	custom_exts_free(&ret->cli_ext);
+	custom_exts_free(&ret->srv_ext);
 #endif
 
 	ssl_cert_clear_certs(ret);
@@ -560,10 +544,8 @@ void ssl_cert_free(CERT *c)
 	if (c->ciphers_raw)
 		OPENSSL_free(c->ciphers_raw);
 #ifndef OPENSSL_NO_TLSEXT
-	if (c->custom_cli_ext_records)
-		OPENSSL_free(c->custom_cli_ext_records);
-	if (c->custom_srv_ext_records)
-		OPENSSL_free(c->custom_srv_ext_records);
+	custom_exts_free(&c->cli_ext);
+	custom_exts_free(&c->srv_ext);
 #endif
 	OPENSSL_free(c);
 	}
