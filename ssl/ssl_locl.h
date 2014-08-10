@@ -534,17 +534,15 @@ typedef struct cert_pkey_st
 
 typedef struct {
 	unsigned short ext_type;
-	custom_cli_ext_first_cb_fn fn1; 
-	custom_cli_ext_second_cb_fn fn2; 
+	custom_ext_add_cb add_cb; 
+	custom_ext_parse_cb parse_cb; 
 	void *arg;
-} custom_cli_ext_record;
+} custom_ext_method;
 
 typedef struct {
-	unsigned short ext_type;
-	custom_srv_ext_first_cb_fn fn1; 
-	custom_srv_ext_second_cb_fn fn2; 
-	void *arg;
-} custom_srv_ext_record;
+	custom_ext_method *meths;
+	size_t meths_count;
+} custom_ext_methods;
 
 typedef struct cert_st
 	{
@@ -642,12 +640,9 @@ typedef struct cert_st
 	unsigned char *ciphers_raw;
 	size_t ciphers_rawlen;
 
-	/* Arrays containing the callbacks for custom TLS Extensions. */
-	custom_cli_ext_record *custom_cli_ext_records;
-	size_t custom_cli_ext_records_count;
-	custom_srv_ext_record *custom_srv_ext_records;
-	size_t custom_srv_ext_records_count;
-
+	/* Custom extension methods for server and client */
+	custom_ext_methods cli_ext;
+	custom_ext_methods srv_ext;
 	/* Security callback */
 	int (*sec_cb)(SSL *s, SSL_CTX *ctx, int op, int bits, int nid, void *other, void *ex);
 	/* Security level */
@@ -1412,6 +1407,21 @@ void tls_fips_digest_extra(
 	const unsigned char *data, size_t data_len, size_t orig_len);
 
 int srp_verify_server_param(SSL *s, int *al);
+
+/* t1_ext.c */
+
+int custom_ext_parse(SSL *s, int server,
+			unsigned short ext_type,
+			const unsigned char *ext_data, 
+			unsigned short ext_size,
+			int *al);
+int custom_ext_add(SSL *s, int server,
+			unsigned char **pret,
+			unsigned char *limit,
+			int *al);
+
+int custom_exts_copy(custom_ext_methods *dst, const custom_ext_methods *src);
+void custom_exts_free(custom_ext_methods *exts);
 
 #else
 
