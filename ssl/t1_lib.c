@@ -1446,38 +1446,9 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf, unsigned c
                 }
 
 	/* Add custom TLS Extensions to ClientHello */
-	if (s->cert->custom_cli_ext_records_count)
-		{
-		size_t i;
-		custom_cli_ext_record* record;
+	if (!custom_ext_add(s, 0, &ret, limit, al))
+		return NULL;
 
-		for (i = 0; i < s->cert->custom_cli_ext_records_count; i++)
-			{
-			const unsigned char* out = NULL;
-			unsigned short outlen = 0;
-
-			record = &s->cert->custom_cli_ext_records[i];
-			/* NULL callback sends empty extension */ 
-			/* -1 from callback omits extension */
-			if (record->fn1)
-				{
-				int cb_retval = 0;
-				cb_retval = record->fn1(s, record->ext_type,
-							&out, &outlen, al,
-							record->arg);
-				if (cb_retval == 0)
-					return NULL; /* error */
-				if (cb_retval == -1)
-					continue; /* skip this extension */
-				}
-			if (limit < ret + 4 + outlen)
-				return NULL;
-			s2n(record->ext_type, ret);
-			s2n(outlen, ret);
-			memcpy(ret, out, outlen);
-			ret += outlen;
-			}
-		}
 	/* Add padding to workaround bugs in F5 terminators.
 	 * See https://tools.ietf.org/html/draft-agl-tls-padding-03
 	 *
@@ -1520,8 +1491,6 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf, unsigned c
 	int extdatalen=0;
 	unsigned char *orig = buf;
 	unsigned char *ret = buf;
-	size_t i;
-	custom_srv_ext_record *record;
 #ifndef OPENSSL_NO_NEXTPROTONEG
 	int next_proto_neg_seen;
 #endif
@@ -1706,32 +1675,8 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf, unsigned c
 			}
 		}
 #endif
-
-	for (i = 0; i < s->cert->custom_srv_ext_records_count; i++)
-		{
-		const unsigned char *out = NULL;
-		unsigned short outlen = 0;
-		int cb_retval = 0;
-
-		record = &s->cert->custom_srv_ext_records[i];
-
-		/* NULL callback or -1 omits extension */
-		if (!record->fn2)
-			continue;
-		cb_retval = record->fn2(s, record->ext_type,
-								&out, &outlen, al,
-								record->arg);
-		if (cb_retval == 0)
-			return NULL; /* error */
-		if (cb_retval == -1)
-			continue; /* skip this extension */
-		if (limit < ret + 4 + outlen)
-			return NULL;
-		s2n(record->ext_type, ret);
-		s2n(outlen, ret);
-		memcpy(ret, out, outlen);
-		ret += outlen;
-		}
+	if (!custom_ext_add(s, 1, &ret, limit, al))
+		return NULL;
 
 	if (s->s3->alpn_selected)
 		{
@@ -2444,19 +2389,10 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 		 * so call the callback and record the extension number so that
 		 * an appropriate ServerHello may be later returned.
 		 */
-		else if (!s->hit && s->cert->custom_srv_ext_records_count)
+		else if (!s->hit)
 			{
-			custom_srv_ext_record *record;
-
-			for (i=0; i < s->cert->custom_srv_ext_records_count; i++)
-				{
-				record = &s->cert->custom_srv_ext_records[i];
-				if (type == record->ext_type)
-					{
-					if (record->fn1 && !record->fn1(s, type, data, size, al, record->arg))
-						return 0;
-					}						
-				}
+			if (!custom_ext_parse(s, 1, type, data, size, al))
+				return 0;
 			}
 
 		data+=size;
@@ -2782,22 +2718,8 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 		/* If this extension type was not otherwise handled, but 
 		 * matches a custom_cli_ext_record, then send it to the c
 		 * callback */
-		else if (s->cert->custom_cli_ext_records_count)
-			{
-			size_t i;
-			custom_cli_ext_record* record;
-
-			for (i = 0; i < s->cert->custom_cli_ext_records_count; i++)
-				{
-				record = &s->cert->custom_cli_ext_records[i];
-				if (record->ext_type == type)
-					{
-					if (record->fn2 && !record->fn2(s, type, data, size, al, record->arg))
-						return 0;
-					break;
-					}
-				}			
-			}
+		else if (!custom_ext_parse(s, 0, type, data, size, al))
+				return 0;
  
 		data += size;
 		}
