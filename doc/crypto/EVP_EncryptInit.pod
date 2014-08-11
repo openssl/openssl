@@ -161,7 +161,7 @@ after all operations using a cipher are complete so sensitive information
 does not remain in memory.
 
 EVP_EncryptInit(), EVP_DecryptInit() and EVP_CipherInit() behave in a
-similar way to EVP_EncryptInit_ex(), EVP_DecryptInit_ex and
+similar way to EVP_EncryptInit_ex(), EVP_DecryptInit_ex() and
 EVP_CipherInit_ex() except the B<ctx> parameter does not need to be
 initialized and they always use the default cipher implementation.
 
