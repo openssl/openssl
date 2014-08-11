@@ -372,7 +372,7 @@ static int asn1_cb(const char *elem, int len, void *bitstr)
 			arg->format = ASN1_GEN_FORMAT_BITLIST;
 		else
 			{
-			ASN1err(ASN1_F_ASN1_CB, ASN1_R_UNKOWN_FORMAT);
+			ASN1err(ASN1_F_ASN1_CB, ASN1_R_UNKNOWN_FORMAT);
 			return -1;
 			}
 		break;
