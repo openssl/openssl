@@ -863,35 +863,12 @@ static int serverinfo_srv_first_cb(SSL *s, unsigned short ext_type,
 				   unsigned short inlen, int *al,
 				   void *arg)
 	{
-	size_t i = 0;
 
 	if (inlen != 0)
 		{
 		*al = SSL_AD_DECODE_ERROR;
 		return 0;
 		}
-
-	/* if already in list, error out */
-	for (i = 0; i < s->s3->serverinfo_client_tlsext_custom_types_count; i++)
-		{
-		if (s->s3->serverinfo_client_tlsext_custom_types[i] == ext_type)
-			{
-			*al = SSL_AD_DECODE_ERROR;
-			return 0;
-			}
-		}
-	s->s3->serverinfo_client_tlsext_custom_types_count++;
-	s->s3->serverinfo_client_tlsext_custom_types = OPENSSL_realloc(
-	s->s3->serverinfo_client_tlsext_custom_types,
-	s->s3->serverinfo_client_tlsext_custom_types_count * 2);
-	if (s->s3->serverinfo_client_tlsext_custom_types == NULL)
-		{
-		s->s3->serverinfo_client_tlsext_custom_types_count = 0;
-		*al = TLS1_AD_INTERNAL_ERROR;
-		return 0;
-		}
-	s->s3->serverinfo_client_tlsext_custom_types[
-	s->s3->serverinfo_client_tlsext_custom_types_count - 1] = ext_type;
 
 	return 1;
 	}
@@ -902,22 +879,6 @@ static int serverinfo_srv_second_cb(SSL *s, unsigned short ext_type,
 	{
 	const unsigned char *serverinfo = NULL;
 	size_t serverinfo_length = 0;
-	size_t i = 0;
-	unsigned int match = 0;
-	/* Did the client send a TLS extension for this type? */
-	for (i = 0; i < s->s3->serverinfo_client_tlsext_custom_types_count; i++)
-		{
-		if (s->s3->serverinfo_client_tlsext_custom_types[i] == ext_type)
-			{
-			match = 1;
-			break;
-			}
-		}
-	if (!match)
-		{
-		/* extension not sent by client...don't send extension */
-		return -1;
-		}
 
 	/* Is there serverinfo data for the chosen server cert? */
 	if ((ssl_get_server_cert_serverinfo(s, &serverinfo,
