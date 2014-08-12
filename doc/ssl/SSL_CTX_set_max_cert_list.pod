@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_CTX_set_max_cert_list, SSL_CTX_get_max_cert_list, SSL_set_max_cert_list, SSL_get_max_cert_list, - manipulate allowed for the peer's certificate chain
+SSL_CTX_set_max_cert_list, SSL_CTX_get_max_cert_list, SSL_set_max_cert_list, SSL_get_max_cert_list - manipulate allowed size for the peer's certificate chain
 
 =head1 SYNOPSIS
 

@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-ASN1_OBJECT_new, ASN1_OBJECT_free, - object allocation functions
+ASN1_OBJECT_new, ASN1_OBJECT_free - object allocation functions
 
 =head1 SYNOPSIS
 
