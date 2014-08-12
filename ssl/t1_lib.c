@@ -1480,7 +1480,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf, unsigned c
 			}
                 ret += el;
                 }
-
+	custom_ext_init(&s->cert->cli_ext);
 	/* Add custom TLS Extensions to ClientHello */
 	if (!custom_ext_add(s, 0, &ret, limit, al))
 		return NULL;
@@ -2485,6 +2485,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, int n) 
 	{
 	int al = -1;
+	custom_ext_init(&s->cert->srv_ext);
 	if (ssl_scan_clienthello_tlsext(s, p, d, n, &al) <= 0) 
 		{
 		ssl3_send_alert(s,SSL3_AL_FATAL,al); 

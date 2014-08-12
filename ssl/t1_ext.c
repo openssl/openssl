@@ -73,6 +73,16 @@ static custom_ext_method *custom_ext_find(custom_ext_methods *exts,
 		}
 	return NULL;
 	}
+/* Initialise custom extensions flags to indicate neither sent nor
+ * received.
+ */
+void custom_ext_init(custom_ext_methods *exts)
+	{
+	size_t i;
+	custom_ext_method *meth = exts->meths;
+	for (i = 0; i < exts->meths_count; i++, meth++)
+		meth->ext_flags = 0;
+	}
 
 /* pass received custom extension data to the application for parsing */
 
@@ -86,7 +96,28 @@ int custom_ext_parse(SSL *s, int server,
 	custom_ext_method *meth;
 	meth = custom_ext_find(exts, ext_type);
 	/* If not found or no parse function set, return success */
-	if (!meth || !meth->parse_cb)
+	/* If not found return success */
+	if (!meth)
+		return 1;
+	if (!server)
+		{
+		/* If it's ServerHello we can't have any extensions not 
+		 * sent in ClientHello.
+		 */
+		if (!(meth->ext_flags & SSL_EXT_FLAG_SENT))
+			{
+			*al = TLS1_AD_UNSUPPORTED_EXTENSION;
+			return 0;
+			}
+		}
+	/* If already present it's a duplicate */
+	if (meth->ext_flags & SSL_EXT_FLAG_RECEIVED)
+		{
+		*al = TLS1_AD_DECODE_ERROR;
+		return 0;
+		}
+	meth->ext_flags |= SSL_EXT_FLAG_RECEIVED;
+	if (!meth->parse_cb)
 		return 1;
 
 	return meth->parse_cb(s, ext_type, ext_data, ext_size, al, meth->arg);
@@ -112,11 +143,17 @@ int custom_ext_add(SSL *s, int server,
 		unsigned short outlen = 0;
 		meth = exts->meths + i;
 
-		/* For servers no callback omits extension,
-		 * For clients it sends empty extension.
-		 */
-		if (server && !meth->add_cb)
-			continue;
+		if (server)
+			{
+			/* For ServerHello only send extensions present
+			 * in ClientHello.
+			 */
+			if (!(meth->ext_flags & SSL_EXT_FLAG_RECEIVED))
+				continue;
+			/* If callback absent for server skip it */
+			if (!meth->add_cb)
+				continue;
+			}
 		if (meth->add_cb)
 			{
 			int cb_retval = 0;
@@ -137,6 +174,14 @@ int custom_ext_add(SSL *s, int server,
 			memcpy(ret, out, outlen);
 			ret += outlen;
 			}
+		/* We can't send duplicates: code logic should prevent this */
+		OPENSSL_assert(!(meth->ext_flags & SSL_EXT_FLAG_SENT));
+		/* Indicate extension has been sent: this is both a sanity
+		 * check to ensure we don't send duplicate extensions
+		 * and indicates to servers that an extension can be
+		 * sent in ServerHello.
+		 */
+		meth->ext_flags |= SSL_EXT_FLAG_SENT;
 		}
 	*pret = ret;
 	return 1;
@@ -170,6 +215,30 @@ static int custom_ext_set(custom_ext_methods *exts,
 			void *arg)
 	{
 	custom_ext_method *meth;
+	/* See if it is a supported internally */
+	switch(ext_type)
+		{
+	case TLSEXT_TYPE_application_layer_protocol_negotiation:
+	case TLSEXT_TYPE_ec_point_formats:
+	case TLSEXT_TYPE_elliptic_curves:
+	case TLSEXT_TYPE_heartbeat:
+	case TLSEXT_TYPE_next_proto_neg:
+	case TLSEXT_TYPE_padding:
+	case TLSEXT_TYPE_renegotiate:
+	case TLSEXT_TYPE_server_name:
+	case TLSEXT_TYPE_session_ticket:
+	case TLSEXT_TYPE_signature_algorithms:
+	case TLSEXT_TYPE_srp:
+	case TLSEXT_TYPE_status_request:
+	case TLSEXT_TYPE_use_srtp:
+#ifdef TLSEXT_TYPE_opaque_prf_input
+	case TLSEXT_TYPE_opaque_prf_input:
+#endif
+#ifdef TLSEXT_TYPE_encrypt_then_mac
+	case TLSEXT_TYPE_encrypt_then_mac:
+#endif
+		return 0;
+		}
 	/* Search for duplicate */
 	if (custom_ext_find(exts, ext_type))
 		return 0;
@@ -183,6 +252,7 @@ static int custom_ext_set(custom_ext_methods *exts,
 		}
 
 	meth = exts->meths + exts->meths_count;
+	memset(meth, 0, sizeof(custom_ext_method));
 	meth->parse_cb = parse_cb;
 	meth->add_cb = add_cb;
 	meth->ext_type = ext_type;
