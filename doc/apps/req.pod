@@ -535,7 +535,7 @@ Sample configuration file prompting for field values:
  default_keyfile 	= privkey.pem
  distinguished_name	= req_distinguished_name
  attributes		= req_attributes
- x509_extensions	= v3_ca
+ req_extensions		= v3_ca
 
  dirstring_type = nobmp
 
