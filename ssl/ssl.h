@@ -1273,7 +1273,7 @@ const char *SSL_get_psk_identity(const SSL *s);
  * 
  * Returns nonzero on success.  You cannot register twice for the same 
  * extension number, and registering for an extension number already 
- * handled by OpenSSL will succeed, but the callbacks will not be invoked.
+ * handled by OpenSSL will fail.
  *
  * NULL can be registered for any callback function.  For the client
  * functions, a NULL custom_cli_ext_first_cb_fn sends an empty ClientHello
