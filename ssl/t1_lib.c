@@ -1868,14 +1868,6 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 	s->s3->next_proto_neg_seen = 0;
 #endif
 
-	/* Clear observed custom extensions */
-	s->s3->serverinfo_client_tlsext_custom_types_count = 0;
-	if (s->s3->serverinfo_client_tlsext_custom_types != NULL)
-		{
-		OPENSSL_free(s->s3->serverinfo_client_tlsext_custom_types);
-		s->s3->serverinfo_client_tlsext_custom_types = NULL;
-		}
-
 	if (s->s3->alpn_selected)
 		{
 		OPENSSL_free(s->s3->alpn_selected);

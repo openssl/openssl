@@ -568,13 +568,6 @@ typedef struct ssl3_state_st
 	char is_probably_safari;
 #endif /* !OPENSSL_NO_EC */
 
-        /* serverinfo_client_tlsext_custom_types contains an array of TLS Extension types which
-         * were advertised by the client in its ClientHello and leveraged by ServerInfo TLS extension callbacks.
-	 * The array does not contain any duplicates, and is in the same order
-	 * as the types were received in the client hello. */
-        unsigned short *serverinfo_client_tlsext_custom_types;
-        size_t serverinfo_client_tlsext_custom_types_count; /* how many serverinfo_client_tlsext_custom_types */
-
 	/* ALPN information
 	 * (we are in the process of transitioning from NPN to ALPN.) */
 
