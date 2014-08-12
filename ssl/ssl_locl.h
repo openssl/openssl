@@ -528,10 +528,25 @@ typedef struct cert_pkey_st
 
 typedef struct {
 	unsigned short ext_type;
+	/* Per-connection flags relating to this extension type: not used 
+	 * if part of an SSL_CTX structure.
+	 */
+	unsigned short ext_flags;
 	custom_ext_add_cb add_cb; 
 	custom_ext_parse_cb parse_cb; 
 	void *arg;
 } custom_ext_method;
+
+/* ext_flags values */
+
+/* Indicates an extension has been received.
+ * Used to check for unsolicited or duplicate extensions.
+ */
+#define SSL_EXT_FLAG_RECEIVED	0x1
+/* Indicates an extension has been sent: used to
+ * enable sending of corresponding ServerHello extension.
+ */
+#define SSL_EXT_FLAG_SENT	0x2
 
 typedef struct {
 	custom_ext_method *meths;
@@ -1379,6 +1394,8 @@ void tls_fips_digest_extra(
 int srp_verify_server_param(SSL *s, int *al);
 
 /* t1_ext.c */
+
+void custom_ext_init(custom_ext_methods *meths);
 
 int custom_ext_parse(SSL *s, int server,
 			unsigned short ext_type,
