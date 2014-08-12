@@ -2,12 +2,12 @@
 
 =head1 NAME
 
-dgst, md5, md4, md2, sha1, sha, mdc2, ripemd160 - message digests
+dgst, md5, md4, md2, sha1, sha, mdc2, ripemd160, sha224, sha256, sha384, sha512 - message digests
 
 =head1 SYNOPSIS
 
 B<openssl> B<dgst> 
-[B<-md5|-md4|-md2|-sha1|-sha|-mdc2|-ripemd160|-dss1>]
+[B<-md5|-md4|-md2|-sha1|-sha|-mdc2|-ripemd160|-sha224|-sha256|-sha384|-sha512|-dss1>]
 [B<-c>]
 [B<-d>]
 [B<-hex>]
@@ -22,7 +22,7 @@ B<openssl> B<dgst>
 [B<-hmac key>]
 [B<file...>]
 
-[B<md5|md4|md2|sha1|sha|mdc2|ripemd160>]
+[B<md5|md4|md2|sha1|sha|mdc2|ripemd160|sha224|sha256|sha384|sha512>]
 [B<-c>]
 [B<-d>]
 [B<file...>]
@@ -147,7 +147,7 @@ used.
 
 =head1 NOTES
 
-The digest of choice for all new applications is SHA1. Other digests are
+The digest of choice for all new applications is SHA256. Other digests are
 however still widely used.
 
 If you wish to sign or verify data using the DSA algorithm then the dss1

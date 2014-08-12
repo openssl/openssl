@@ -172,6 +172,18 @@ FUNCTION functions[] = {
 #ifndef OPENSSL_NO_RMD160
 	{FUNC_TYPE_MD,"rmd160",dgst_main},
 #endif
+#ifndef OPENSSL_NO_SHA224
+	{FUNC_TYPE_MD,"sha224",dgst_main},
+#endif
+#ifndef OPENSSL_NO_SHA256
+	{FUNC_TYPE_MD,"sha256",dgst_main},
+#endif
+#ifndef OPENSSL_NO_SHA384
+	{FUNC_TYPE_MD,"sha384",dgst_main},
+#endif
+#ifndef OPENSSL_NO_SHA512
+	{FUNC_TYPE_MD,"sha512",dgst_main},
+#endif
 #ifndef OPENSSL_NO_AES
 	{FUNC_TYPE_CIPHER,"aes-128-cbc",enc_main},
 #endif
