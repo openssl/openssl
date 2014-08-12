@@ -2038,7 +2038,7 @@ EOF
 	$make_targets .= " links" if $symlink;
 	$make_targets .= " depend" if $depflags ne $default_depflags && $make_depend;
 	$make_targets .= " gentests" if $symlink;
-	(system $make_command.$make_targets) == 0 or exit $?
+	(system $make_command.$make_targets) == 0 or die "make $make_targets failed"
 		if $make_targets ne "";
 	if ( $fipscanisteronly )
 		{}
