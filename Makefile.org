@@ -735,7 +735,7 @@ install_docs:
 	@pod2man="`cd ./util; ./pod2mantest $(PERL)`"; \
 	here="`pwd`"; \
 	filecase=; \
-	case "$(PLATFORM)" in DJGPP|Cygwin*|mingw*|darwin-*-cc) \
+	case "$(PLATFORM)" in DJGPP|Cygwin*|mingw*) \
 		filecase=-i; \
 	esac; \
 	set -e; for i in doc/apps/*.pod; do \
