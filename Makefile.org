@@ -714,7 +714,7 @@ install_html_docs:
 			echo "installing html/$$fn.$(HTMLSUFFIX)"; \
 			cat $$i \
 			| sed -r 's/L<([^)]*)(\([0-9]\))?\|([^)]*)(\([0-9]\))?>/L<\1|\3>/g' \
-			| pod2html --podroot=doc --htmlroot=.. --podpath=apps:crypto:ssl \
+			| pod2html --podroot=doc --htmlroot=.. --podpath=$$subdir:apps:crypto:ssl \
 			| sed -r 's/<!DOCTYPE.*//g' \
 			> $(INSTALL_PREFIX)$(HTMLDIR)/$$subdir/$$fn.$(HTMLSUFFIX); \
 			$(PERL) util/extract-names.pl < $$i | \
