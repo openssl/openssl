@@ -1318,8 +1318,8 @@ int ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT
 		{
 		for (i = 0; i < num; i++)
 			{
-			if (prod_Z[i] != NULL)
-				BN_clear_free(prod_Z[i]);
+			if (prod_Z[i] == NULL) break;
+			BN_clear_free(prod_Z[i]);
 			}
 		OPENSSL_free(prod_Z);
 		}
