@@ -917,3 +917,7 @@ aes_128_cbc_hmac_sha1		916
 aes_192_cbc_hmac_sha1		917
 aes_256_cbc_hmac_sha1		918
 rsaesOaep		919
+sha512_224WithRSAEncryption		920
+sha512_256WithRSAEncryption		921
+sha512_224		922
+sha512_256		923

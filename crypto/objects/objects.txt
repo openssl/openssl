@@ -174,6 +174,8 @@ pkcs1 11		: RSA-SHA256		: sha256WithRSAEncryption
 pkcs1 12		: RSA-SHA384		: sha384WithRSAEncryption
 pkcs1 13		: RSA-SHA512		: sha512WithRSAEncryption
 pkcs1 14		: RSA-SHA224		: sha224WithRSAEncryption
+pkcs1 15		: RSA-SHA512-224	: sha512-224WithRSAEncryption
+pkcs1 16		: RSA-SHA512-256	: sha512-256WithRSAEncryption
 
 pkcs 3			: pkcs3
 pkcs3 1			:			: dhKeyAgreement
@@ -906,6 +908,8 @@ nist_hashalgs 1		: SHA256		: sha256
 nist_hashalgs 2		: SHA384		: sha384
 nist_hashalgs 3		: SHA512		: sha512
 nist_hashalgs 4		: SHA224		: sha224
+nist_hashalgs 5		: SHA512-224		: sha512-224
+nist_hashalgs 6		: SHA512-256		: sha512-256
 
 # OIDs for dsa-with-sha224 and dsa-with-sha256
 !Alias dsa_with_sha2 nistAlgorithms 3

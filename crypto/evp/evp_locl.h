@@ -372,6 +372,8 @@ int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 #define SHA256_Init	private_SHA256_Init
 #define SHA384_Init	private_SHA384_Init
 #define SHA512_Init	private_SHA512_Init
+#define SHA512_224_Init	private_SHA512_224_Init
+#define SHA512_256_Init	private_SHA512_256_Init
 
 #define BF_set_key	private_BF_set_key
 #define CAST_set_key	private_CAST_set_key

@@ -91,6 +91,38 @@ fips_md_init(SHA512)
         return 1;
 	}
 
+fips_md_init_ctx(SHA512_224, SHA512)
+	{
+	c->h[0]=U64(0x8c3d37c819544da2);
+	c->h[1]=U64(0x73e1996689dcd4d6);
+	c->h[2]=U64(0x1dfab7ae32ff9c82);
+	c->h[3]=U64(0x679dd514582f9fcf);
+	c->h[4]=U64(0x0f6d2b697bd44da8);
+	c->h[5]=U64(0x77e36f7304c48942);
+	c->h[6]=U64(0x3f9d85a86a1d36c8);
+	c->h[7]=U64(0x1112e6ad91d692a1);
+
+        c->Nl=0;        c->Nh=0;
+        c->num=0;       c->md_len=SHA512_224_DIGEST_LENGTH;
+        return 1;
+	}
+
+fips_md_init_ctx(SHA512_256, SHA512)
+	{
+	c->h[0]=U64(0x22312194fc2bf72c);
+	c->h[1]=U64(0x9f555fa3c84c64c2);
+	c->h[2]=U64(0x2393b86b6f53b151);
+	c->h[3]=U64(0x963877195940eabd);
+	c->h[4]=U64(0x96283ee2a88effe3);
+	c->h[5]=U64(0xbe5e1e2553863992);
+	c->h[6]=U64(0x2b0199fc2c85b8aa);
+	c->h[7]=U64(0x0eb72ddc81c52ca2);
+
+        c->Nl=0;        c->Nh=0;
+        c->num=0;       c->md_len=SHA512_256_DIGEST_LENGTH;
+        return 1;
+	}
+
 #ifndef SHA512_ASM
 static
 #endif
@@ -167,6 +199,40 @@ int SHA512_Final (unsigned char *md, SHA512_CTX *c)
 				*(md++)	= (unsigned char)(t);
 				}
 			break;
+		case SHA512_224_DIGEST_LENGTH:
+			/* this digest length is not multiple of 8 */
+			for (n=0;n<(SHA512_224_DIGEST_LENGTH+7)/8;n++)
+				{
+				SHA_LONG64 t = c->h[n];
+
+				*(md++)	= (unsigned char)(t>>56);
+				*(md++)	= (unsigned char)(t>>48);
+				*(md++)	= (unsigned char)(t>>40);
+				*(md++)	= (unsigned char)(t>>32);
+				if (n!=SHA512_224_DIGEST_LENGTH/8)
+					{
+					*(md++)	= (unsigned char)(t>>24);
+					*(md++)	= (unsigned char)(t>>16);
+					*(md++)	= (unsigned char)(t>>8);
+					*(md++)	= (unsigned char)(t);
+					}
+				}
+			break;
+		case SHA512_256_DIGEST_LENGTH:
+			for (n=0;n<SHA512_256_DIGEST_LENGTH/8;n++)
+				{
+				SHA_LONG64 t = c->h[n];
+
+				*(md++)	= (unsigned char)(t>>56);
+				*(md++)	= (unsigned char)(t>>48);
+				*(md++)	= (unsigned char)(t>>40);
+				*(md++)	= (unsigned char)(t>>32);
+				*(md++)	= (unsigned char)(t>>24);
+				*(md++)	= (unsigned char)(t>>16);
+				*(md++)	= (unsigned char)(t>>8);
+				*(md++)	= (unsigned char)(t);
+				}
+			break;
 		/* ... as well as make sure md_len is not abused. */
 		default:	return 0;
 		}
@@ -175,6 +241,12 @@ int SHA512_Final (unsigned char *md, SHA512_CTX *c)
 	}
 
 int SHA384_Final (unsigned char *md,SHA512_CTX *c)
+{   return SHA512_Final (md,c);   }
+
+int SHA512_224_Final (unsigned char *md,SHA512_CTX *c)
+{   return SHA512_Final (md,c);   }
+
+int SHA512_256_Final (unsigned char *md,SHA512_CTX *c)
 {   return SHA512_Final (md,c);   }
 
 int SHA512_Update (SHA512_CTX *c, const void *_data, size_t len)
@@ -231,6 +303,12 @@ int SHA512_Update (SHA512_CTX *c, const void *_data, size_t len)
 int SHA384_Update (SHA512_CTX *c, const void *data, size_t len)
 {   return SHA512_Update (c,data,len);   }
 
+int SHA512_224_Update (SHA512_CTX *c, const void *data, size_t len)
+{   return SHA512_Update (c,data,len);   }
+
+int SHA512_256_Update (SHA512_CTX *c, const void *data, size_t len)
+{   return SHA512_Update (c,data,len);   }
+
 void SHA512_Transform (SHA512_CTX *c, const unsigned char *data)
 	{
 #ifndef SHA512_BLOCK_CAN_MANAGE_UNALIGNED_DATA
@@ -263,6 +341,32 @@ unsigned char *SHA512(const unsigned char *d, size_t n, unsigned char *md)
 	SHA512_Init(&c);
 	SHA512_Update(&c,d,n);
 	SHA512_Final(md,&c);
+	OPENSSL_cleanse(&c,sizeof(c));
+	return(md);
+	}
+
+unsigned char *SHA512_224(const unsigned char *d, size_t n, unsigned char *md)
+	{
+	SHA512_CTX c;
+	static unsigned char m[SHA512_224_DIGEST_LENGTH];
+
+	if (md == NULL) md=m;
+	SHA512_224_Init(&c);
+	SHA512_Update(&c,d,n);
+	SHA512_224_Final(md,&c);
+	OPENSSL_cleanse(&c,sizeof(c));
+	return(md);
+	}
+
+unsigned char *SHA512_256(const unsigned char *d, size_t n, unsigned char *md)
+	{
+	SHA512_CTX c;
+	static unsigned char m[SHA512_256_DIGEST_LENGTH];
+
+	if (md == NULL) md=m;
+	SHA512_256_Init(&c);
+	SHA512_Update(&c,d,n);
+	SHA512_256_Final(md,&c);
 	OPENSSL_cleanse(&c,sizeof(c));
 	return(md);
 	}

@@ -31,6 +31,14 @@ echo sha1test
 sha1test
 if errorlevel 1 goto done
 
+echo sha256t
+sha256t
+if errorlevel 1 goto done
+
+echo sha512t
+sha512t
+if errorlevel 1 goto done
+
 echo md5test
 md5test
 if errorlevel 1 goto done

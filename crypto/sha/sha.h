@@ -158,6 +158,8 @@ void SHA256_Transform(SHA256_CTX *c, const unsigned char *data);
 
 #define SHA384_DIGEST_LENGTH	48
 #define SHA512_DIGEST_LENGTH	64
+#define SHA512_224_DIGEST_LENGTH	SHA224_DIGEST_LENGTH
+#define SHA512_256_DIGEST_LENGTH	SHA256_DIGEST_LENGTH
 
 #ifndef OPENSSL_NO_SHA512
 /*
@@ -195,6 +197,8 @@ typedef struct SHA512state_st
 #ifdef OPENSSL_FIPS
 int private_SHA384_Init(SHA512_CTX *c);
 int private_SHA512_Init(SHA512_CTX *c);
+int private_SHA512_224_Init(SHA512_CTX *c);
+int private_SHA512_256_Init(SHA512_CTX *c);
 #endif
 int SHA384_Init(SHA512_CTX *c);
 int SHA384_Update(SHA512_CTX *c, const void *data, size_t len);
@@ -204,6 +208,14 @@ int SHA512_Init(SHA512_CTX *c);
 int SHA512_Update(SHA512_CTX *c, const void *data, size_t len);
 int SHA512_Final(unsigned char *md, SHA512_CTX *c);
 unsigned char *SHA512(const unsigned char *d, size_t n,unsigned char *md);
+int SHA512_224_Init(SHA512_CTX *c);
+int SHA512_224_Update(SHA512_CTX *c, const void *data, size_t len);
+int SHA512_224_Final(unsigned char *md, SHA512_CTX *c);
+unsigned char *SHA512_224(const unsigned char *d, size_t n,unsigned char *md);
+int SHA512_256_Init(SHA512_CTX *c);
+int SHA512_256_Update(SHA512_CTX *c, const void *data, size_t len);
+int SHA512_256_Final(unsigned char *md, SHA512_CTX *c);
+unsigned char *SHA512_256(const unsigned char *d, size_t n,unsigned char *md);
 void SHA512_Transform(SHA512_CTX *c, const unsigned char *data);
 #endif
 

@@ -73,6 +73,42 @@ unsigned char app_d3[SHA384_DIGEST_LENGTH] = {
 	0x07,0xb8,0xb3,0xdc,0x38,0xec,0xc4,0xeb,
 	0xae,0x97,0xdd,0xd8,0x7f,0x3d,0x89,0x85 };
 
+unsigned char app_e1[SHA512_224_DIGEST_LENGTH] = {
+	0x46,0x34,0x27,0x0f,0x70,0x7b,0x6a,0x54,
+	0xda,0xae,0x75,0x30,0x46,0x08,0x42,0xe2,
+	0x0e,0x37,0xed,0x26,0x5c,0xee,0xe9,0xa4,
+	0x3e,0x89,0x24,0xaa };
+
+unsigned char app_e2[SHA512_224_DIGEST_LENGTH] = {
+	0x23,0xfe,0xc5,0xbb,0x94,0xd6,0x0b,0x23,
+	0x30,0x81,0x92,0x64,0x0b,0x0c,0x45,0x33,
+	0x35,0xd6,0x64,0x73,0x4f,0xe4,0x0e,0x72,
+	0x68,0x67,0x4a,0xf9 };
+
+unsigned char app_e3[SHA512_224_DIGEST_LENGTH] = {
+	0x37,0xab,0x33,0x1d,0x76,0xf0,0xd3,0x6d,
+	0xe4,0x22,0xbd,0x0e,0xde,0xb2,0x2a,0x28,
+	0xac,0xcd,0x48,0x7b,0x7a,0x84,0x53,0xae,
+	0x96,0x5d,0xd2,0x87 };
+
+unsigned char app_f1[SHA512_256_DIGEST_LENGTH] = {
+	0x53,0x04,0x8e,0x26,0x81,0x94,0x1e,0xf9,
+	0x9b,0x2e,0x29,0xb7,0x6b,0x4c,0x7d,0xab,
+	0xe4,0xc2,0xd0,0xc6,0x34,0xfc,0x6d,0x46,
+	0xe0,0xe2,0xf1,0x31,0x07,0xe7,0xaf,0x23 };
+
+unsigned char app_f2[SHA512_256_DIGEST_LENGTH] = {
+	0x39,0x28,0xe1,0x84,0xfb,0x86,0x90,0xf8,
+	0x40,0xda,0x39,0x88,0x12,0x1d,0x31,0xbe,
+	0x65,0xcb,0x9d,0x3e,0xf8,0x3e,0xe6,0x14,
+	0x6f,0xea,0xc8,0x61,0xe1,0x9b,0x56,0x3a };
+
+unsigned char app_f3[SHA512_256_DIGEST_LENGTH] = {
+	0x9a,0x59,0xa0,0x52,0x93,0x01,0x87,0xa9,
+	0x70,0x38,0xca,0xe6,0x92,0xf3,0x07,0x08,
+	0xaa,0x64,0x91,0x92,0x3e,0xf5,0x19,0x43,
+	0x94,0xdc,0x68,0xd5,0x6c,0x74,0xfb,0x21 };
+
 int main (int argc,char **argv)
 { unsigned char md[SHA512_DIGEST_LENGTH];
   int		i;
@@ -170,6 +206,90 @@ int main (int argc,char **argv)
     EVP_MD_CTX_cleanup (&evp);
 
     if (memcmp(md,app_d3,sizeof(app_d3)))
+    {	fflush(stdout);
+	fprintf(stderr,"\nTEST 3 of 3 failed.\n");
+	return 1;
+    }
+    else
+	fprintf(stdout,"."); fflush(stdout);
+
+    fprintf(stdout," passed.\n"); fflush(stdout);
+
+    fprintf(stdout,"Testing SHA-512/224 ");
+
+    EVP_Digest ("abc",3,md,NULL,EVP_sha512_224(),NULL);
+    if (memcmp(md,app_e1,sizeof(app_e1)))
+    {	fflush(stdout);
+	fprintf(stderr,"\nTEST 1 of 3 failed.\n");
+	return 1;
+    }
+    else
+	fprintf(stdout,"."); fflush(stdout);
+
+    EVP_Digest ("abcdefgh""bcdefghi""cdefghij""defghijk"
+		"efghijkl""fghijklm""ghijklmn""hijklmno"
+		"ijklmnop""jklmnopq""klmnopqr""lmnopqrs"
+		"mnopqrst""nopqrstu",112,md,NULL,EVP_sha512_224(),NULL);
+    if (memcmp(md,app_e2,sizeof(app_e2)))
+    {	fflush(stdout);
+	fprintf(stderr,"\nTEST 2 of 3 failed.\n");
+	return 1;
+    }
+    else
+	fprintf(stdout,"."); fflush(stdout);
+
+    EVP_MD_CTX_init (&evp);
+    EVP_DigestInit_ex (&evp,EVP_sha512_224(),NULL);
+    for (i=0;i<1000000;i+=64)
+	EVP_DigestUpdate (&evp,	"aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
+				"aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa",
+				(1000000-i)<64?1000000-i:64);
+    EVP_DigestFinal_ex (&evp,md,NULL);
+    EVP_MD_CTX_cleanup (&evp);
+
+    if (memcmp(md,app_e3,sizeof(app_e3)))
+    {	fflush(stdout);
+	fprintf(stderr,"\nTEST 3 of 3 failed.\n");
+	return 1;
+    }
+    else
+	fprintf(stdout,"."); fflush(stdout);
+
+    fprintf(stdout," passed.\n"); fflush(stdout);
+
+    fprintf(stdout,"Testing SHA-512/256 ");
+
+    EVP_Digest ("abc",3,md,NULL,EVP_sha512_256(),NULL);
+    if (memcmp(md,app_f1,sizeof(app_f1)))
+    {	fflush(stdout);
+	fprintf(stderr,"\nTEST 1 of 3 failed.\n");
+	return 1;
+    }
+    else
+	fprintf(stdout,"."); fflush(stdout);
+
+    EVP_Digest ("abcdefgh""bcdefghi""cdefghij""defghijk"
+		"efghijkl""fghijklm""ghijklmn""hijklmno"
+		"ijklmnop""jklmnopq""klmnopqr""lmnopqrs"
+		"mnopqrst""nopqrstu",112,md,NULL,EVP_sha512_256(),NULL);
+    if (memcmp(md,app_f2,sizeof(app_f2)))
+    {	fflush(stdout);
+	fprintf(stderr,"\nTEST 2 of 3 failed.\n");
+	return 1;
+    }
+    else
+	fprintf(stdout,"."); fflush(stdout);
+
+    EVP_MD_CTX_init (&evp);
+    EVP_DigestInit_ex (&evp,EVP_sha512_256(),NULL);
+    for (i=0;i<1000000;i+=64)
+	EVP_DigestUpdate (&evp,	"aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
+				"aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa",
+				(1000000-i)<64?1000000-i:64);
+    EVP_DigestFinal_ex (&evp,md,NULL);
+    EVP_MD_CTX_cleanup (&evp);
+
+    if (memcmp(md,app_f3,sizeof(app_f3)))
     {	fflush(stdout);
 	fprintf(stderr,"\nTEST 3 of 3 failed.\n");
 	return 1;
