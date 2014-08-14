@@ -104,10 +104,10 @@ programs should prefer the "new" style, whilst the "old" style is provided
 for backwards compatibility purposes.
 
 For "new" style callbacks a BN_GENCB structure should be initialised with a
-call to BN_GENCB_set, where B<gencb> is a B<BN_GENCB *>, B<callback> is of
+call to BN_GENCB_set(), where B<gencb> is a B<BN_GENCB *>, B<callback> is of
 type B<int (*callback)(int, int, BN_GENCB *)> and B<cb_arg> is a B<void *>.
 "Old" style callbacks are the same except they are initialised with a call
-to BN_GENCB_set_old and B<callback> is of type
+to BN_GENCB_set_old() and B<callback> is of type
 B<void (*callback)(int, int, void *)>.
 
 A callback is invoked through a call to B<BN_GENCB_call>. This will check
