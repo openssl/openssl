@@ -279,13 +279,6 @@ DES_enc_read() and DES_end_write().  If set to I<DES_PCBC_MODE> (the
 default), DES_pcbc_encrypt is used.  If set to I<DES_CBC_MODE>
 DES_cbc_encrypt is used.
 
-=head1 NOTES
-
-Single-key DES is insecure due to its short key size.  ECB mode is
-not suitable for most applications; see L<des_modes(7)|des_modes(7)>.
-
-The L<evp(3)|evp(3)> library provides higher-level encryption functions.
-
 =head1 BUGS
 
 DES_3cbc_encrypt() is flawed and must not be used in applications.
@@ -314,9 +307,14 @@ ANSI X3.106
 The B<des> library was written to be source code compatible with
 the MIT Kerberos library.
 
-=head1 SEE ALSO
+=head1 NOTES
 
-crypt(3), L<des_modes(7)|des_modes(7)>, L<evp(3)|evp(3)>, L<rand(3)|rand(3)>
+Applications should use the higher level functions
+L<EVP_EncryptInit(3)|EVP_EncryptInit(3)> etc. instead of calling these
+functions directly.
+
+Single-key DES is insecure due to its short key size.  ECB mode is
+not suitable for most applications; see L<des_modes(7)|des_modes(7)>.
 
 =head1 HISTORY
 
@@ -353,5 +351,10 @@ MIT library.
 
 Eric Young (eay@cryptsoft.com). Modified for the OpenSSL project
 (http://www.openssl.org).
+
+=head1 SEE ALSO
+
+L<des_modes(7)|des_modes(7)>,
+L<EVP_EncryptInit(3)|EVP_EncryptInit(3)>
 
 =cut
