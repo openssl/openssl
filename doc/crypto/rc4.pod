@@ -37,26 +37,25 @@ Since RC4 is a stream cipher (the input is XORed with a pseudo-random
 key stream to produce the output), decryption uses the same function
 calls as encryption.
 
-Applications should use the higher level functions
-L<EVP_EncryptInit(3)|EVP_EncryptInit(3)>
-etc. instead of calling the RC4 functions directly.
-
 =head1 RETURN VALUES
 
 RC4_set_key() and RC4() do not return values.
 
 =head1 NOTE
 
-Certain conditions have to be observed to securely use stream ciphers.
-It is not permissible to perform multiple encryptions using the same
-key stream.
+Applications should use the higher level functions
+L<EVP_EncryptInit(3)|EVP_EncryptInit(3)> etc. instead of calling these
+functions directly.
 
-=head1 SEE ALSO
-
-L<blowfish(3)|blowfish(3)>, L<des(3)|des(3)>, L<rc2(3)|rc2(3)>
+It is difficult to securely use stream ciphers. For example, do not perform
+multiple encryptions using the same key stream.
 
 =head1 HISTORY
 
 RC4_set_key() and RC4() are available in all versions of SSLeay and OpenSSL.
+
+=head1 SEE ALSO
+
+L<EVP_EncryptInit(3)|EVP_EncryptInit(3)>
 
 =cut

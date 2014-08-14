@@ -67,7 +67,8 @@ EVP digest routines
 
 =head1 DESCRIPTION
 
-The EVP digest routines are a high level interface to message digests.
+The EVP digest routines are a high level interface to message digests,
+and should be used instead of the cipher-specific functions.
 
 EVP_MD_CTX_init() initializes digest context B<ctx>.
 

@@ -97,16 +97,12 @@ None of the functions presented here return any value.
 =head1 NOTE
 
 Applications should use the higher level functions
-L<EVP_EncryptInit(3)|EVP_EncryptInit(3)> etc. instead of calling the
-blowfish functions directly.
+L<EVP_EncryptInit(3)|EVP_EncryptInit(3)> etc. instead of calling these
+functions directly.
 
 =head1 SEE ALSO
 
+L<EVP_EncryptInit(3)|EVP_EncryptInit(3)>,
 L<des_modes(7)|des_modes(7)>
 
-=head1 HISTORY
-
-The Blowfish functions are available in all versions of SSLeay and OpenSSL.
-
 =cut
-
