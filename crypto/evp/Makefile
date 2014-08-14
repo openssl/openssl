@@ -302,6 +302,7 @@ e_null.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 e_null.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 e_null.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 e_null.o: ../cryptlib.h e_null.c
+e_old.o: e_old.c
 e_rc2.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 e_rc2.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 e_rc2.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
