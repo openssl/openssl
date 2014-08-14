@@ -68,6 +68,12 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
       char *extdirbuf = NULL;
       size_t dirlen = strlen (directory);
 
+      if (dirlen == 0)
+	{
+	  errno = ENOENT;
+	  return 0;
+	}
+
       *ctx = (LP_DIR_CTX *)malloc(sizeof(LP_DIR_CTX));
       if (*ctx == NULL)
 	{
