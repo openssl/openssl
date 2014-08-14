@@ -811,9 +811,9 @@ end:
 #ifndef OPENSSL_NO_TLSEXT
 static int serverinfo_find_extension(const unsigned char *serverinfo,
 				     size_t serverinfo_length,
-				     unsigned short extension_type,
+				     unsigned int extension_type,
 				     const unsigned char **extension_data,
-				     unsigned short *extension_length)
+				     size_t *extension_length)
 	{
 	*extension_data = NULL;
 	*extension_length = 0;
@@ -821,8 +821,8 @@ static int serverinfo_find_extension(const unsigned char *serverinfo,
 		return 0;
 	for (;;)
 		{
-		unsigned short type = 0; /* uint16 */
-		unsigned short len = 0;  /* uint16 */
+		unsigned int type = 0;
+		size_t len = 0;
 
 		/* end of serverinfo */
 		if (serverinfo_length == 0)
@@ -858,9 +858,9 @@ static int serverinfo_find_extension(const unsigned char *serverinfo,
 	return 0; /* Error */
 	}
 
-static int serverinfo_srv_first_cb(SSL *s, unsigned short ext_type,
+static int serverinfo_srv_parse_cb(SSL *s, unsigned int ext_type,
 				   const unsigned char *in,
-				   unsigned short inlen, int *al,
+				   size_t inlen, int *al,
 				   void *arg)
 	{
 
@@ -873,8 +873,8 @@ static int serverinfo_srv_first_cb(SSL *s, unsigned short ext_type,
 	return 1;
 	}
 
-static int serverinfo_srv_second_cb(SSL *s, unsigned short ext_type,
-				    const unsigned char **out, unsigned short *outlen,
+static int serverinfo_srv_add_cb(SSL *s, unsigned int ext_type,
+				    const unsigned char **out, size_t *outlen,
 				    int *al, void *arg)
 	{
 	const unsigned char *serverinfo = NULL;
@@ -906,8 +906,8 @@ static int serverinfo_process_buffer(const unsigned char *serverinfo,
 		return 0;
 	for (;;)
 		{
-		unsigned short ext_type = 0; /* uint16 */
-		unsigned short len = 0;  /* uint16 */
+		unsigned int ext_type = 0;
+		size_t len = 0;
 
 		/* end of serverinfo */
 		if (serverinfo_length == 0)
@@ -921,8 +921,8 @@ static int serverinfo_process_buffer(const unsigned char *serverinfo,
 		/* Register callbacks for extensions */
 		ext_type = (serverinfo[0] << 8) + serverinfo[1];
 		if (ctx && !SSL_CTX_set_custom_srv_ext(ctx, ext_type, 
-						       serverinfo_srv_first_cb,
-						       serverinfo_srv_second_cb, NULL))
+						       serverinfo_srv_parse_cb,
+						       serverinfo_srv_add_cb, NULL))
 			return 0;
 
 		serverinfo += 2;
