@@ -55,6 +55,11 @@
 
 int RSA_check_key(const RSA *key)
 	{
+	return RSA_check_key_ex(key, NULL);
+	}
+
+int RSA_check_key_ex(const RSA *key, BN_GENCB *cb)
+	{
 	BIGNUM *i, *j, *k, *l, *m;
 	BN_CTX *ctx;
 	int r;
@@ -81,7 +86,7 @@ int RSA_check_key(const RSA *key)
 		}
 	
 	/* p prime? */
-	r = BN_is_prime_ex(key->p, BN_prime_checks, NULL, NULL);
+	r = BN_is_prime_ex(key->p, BN_prime_checks, NULL, cb);
 	if (r != 1)
 		{
 		ret = r;
@@ -91,7 +96,7 @@ int RSA_check_key(const RSA *key)
 		}
 	
 	/* q prime? */
-	r = BN_is_prime_ex(key->q, BN_prime_checks, NULL, NULL);
+	r = BN_is_prime_ex(key->q, BN_prime_checks, NULL, cb);
 	if (r != 1)
 		{
 		ret = r;
