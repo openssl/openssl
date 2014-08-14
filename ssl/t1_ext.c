@@ -87,9 +87,9 @@ void custom_ext_init(custom_ext_methods *exts)
 /* pass received custom extension data to the application for parsing */
 
 int custom_ext_parse(SSL *s, int server,
-			unsigned short ext_type,
+			unsigned int ext_type,
 			const unsigned char *ext_data, 
-			unsigned short ext_size,
+			size_t ext_size,
 			int *al)
 	{
 	custom_ext_methods *exts = server ? &s->cert->srv_ext : &s->cert->cli_ext;
@@ -140,7 +140,7 @@ int custom_ext_add(SSL *s, int server,
 	for (i = 0; i < exts->meths_count; i++)
 		{
 		const unsigned char *out = NULL;
-		unsigned short outlen = 0;
+		size_t outlen = 0;
 		meth = exts->meths + i;
 
 		if (server)
@@ -165,7 +165,7 @@ int custom_ext_add(SSL *s, int server,
 			if (cb_retval == -1)
 					continue; /* skip this extension */
 			}
-		if (4 > limit - ret || outlen > limit - ret - 4)
+		if (4 > limit - ret || outlen > (size_t)(limit - ret - 4))
 			return 0;
 		s2n(meth->ext_type, ret);
 		s2n(outlen, ret);
@@ -209,7 +209,7 @@ void custom_exts_free(custom_ext_methods *exts)
 
 /* Set callbacks for a custom extension */
 static int custom_ext_set(custom_ext_methods *exts,
-			unsigned short ext_type,
+			unsigned int ext_type,
 			custom_ext_parse_cb parse_cb,
 			custom_ext_add_cb add_cb,
 			void *arg)
@@ -239,6 +239,9 @@ static int custom_ext_set(custom_ext_methods *exts,
 #endif
 		return 0;
 		}
+	/* Extension type must fit in 16 bits */
+	if (ext_type > 0xffff)
+		return 0;
 	/* Search for duplicate */
 	if (custom_ext_find(exts, ext_type))
 		return 0;
@@ -263,17 +266,20 @@ static int custom_ext_set(custom_ext_methods *exts,
 
 /* Application level functions to add custom extension callbacks */
 
-int SSL_CTX_set_custom_cli_ext(SSL_CTX *ctx, unsigned short ext_type,
-			       custom_cli_ext_first_cb_fn fn1, 
-			       custom_cli_ext_second_cb_fn fn2, void *arg)
+int SSL_CTX_set_custom_cli_ext(SSL_CTX *ctx, unsigned int ext_type,
+			       custom_ext_add_cb add_cb, 
+			       custom_ext_parse_cb parse_cb, void *arg)
+
 	{
-	return custom_ext_set(&ctx->cert->cli_ext, ext_type, fn2, fn1, arg);
+	return custom_ext_set(&ctx->cert->cli_ext, ext_type, parse_cb, add_cb,
+									arg);
 	}
 
-int SSL_CTX_set_custom_srv_ext(SSL_CTX *ctx, unsigned short ext_type,
-			       custom_srv_ext_first_cb_fn fn1, 
-			       custom_srv_ext_second_cb_fn fn2, void *arg)
+int SSL_CTX_set_custom_srv_ext(SSL_CTX *ctx, unsigned int ext_type,
+			       custom_ext_parse_cb parse_cb, 
+			       custom_ext_add_cb add_cb, void *arg)
 	{
-	return custom_ext_set(&ctx->cert->srv_ext, ext_type, fn1, fn2, arg);
+	return custom_ext_set(&ctx->cert->srv_ext, ext_type, parse_cb, add_cb,
+									arg);
 	}
 #endif

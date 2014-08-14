@@ -446,8 +446,8 @@ int custom_ext = 0;
 /* This set based on extension callbacks */
 int custom_ext_error = 0;
 
-static int serverinfo_cli_cb(SSL* s, unsigned short ext_type,
-			     const unsigned char* in, unsigned short inlen, 
+static int serverinfo_cli_cb(SSL* s, unsigned int ext_type,
+			     const unsigned char* in, size_t inlen, 
 			     int* al, void* arg)
 	{
 	if (ext_type == SCT_EXT_TYPE)
@@ -477,26 +477,26 @@ static int verify_serverinfo()
  * 3 - ClientHello with "abc", "defg" response
  */
 
-static int custom_ext_0_cli_first_cb(SSL *s, unsigned short ext_type,
+static int custom_ext_0_cli_add_cb(SSL *s, unsigned int ext_type,
 				     const unsigned char **out,
-				     unsigned short *outlen, int *al, void *arg)
+				     size_t *outlen, int *al, void *arg)
 	{
 	if (ext_type != CUSTOM_EXT_TYPE_0)
 		custom_ext_error = 1;
 	return -1;  /* Don't send an extension */
 	}
 
-static int custom_ext_0_cli_second_cb(SSL *s, unsigned short ext_type,
+static int custom_ext_0_cli_parse_cb(SSL *s, unsigned int ext_type,
 				      const unsigned char *in,
-				      unsigned short inlen, int *al,
+				      size_t inlen, int *al,
 				      void *arg)
 	{
 	return 1;
 	}
 
-static int custom_ext_1_cli_first_cb(SSL *s, unsigned short ext_type,
+static int custom_ext_1_cli_add_cb(SSL *s, unsigned int ext_type,
 				     const unsigned char **out,
-				     unsigned short *outlen, int *al, void *arg)
+				     size_t *outlen, int *al, void *arg)
 	{
 	if (ext_type != CUSTOM_EXT_TYPE_1)
 		custom_ext_error = 1;
@@ -505,17 +505,17 @@ static int custom_ext_1_cli_first_cb(SSL *s, unsigned short ext_type,
 	return 1; /* Send "abc" */
 	}
 
-static int custom_ext_1_cli_second_cb(SSL *s, unsigned short ext_type,
+static int custom_ext_1_cli_parse_cb(SSL *s, unsigned int ext_type,
 				      const unsigned char *in,
-				      unsigned short inlen, int *al,
+				      size_t inlen, int *al,
 				      void *arg)
 	{
 	return 1;
 	}
 
-static int custom_ext_2_cli_first_cb(SSL *s, unsigned short ext_type,
+static int custom_ext_2_cli_add_cb(SSL *s, unsigned int ext_type,
 				     const unsigned char **out,
-				     unsigned short *outlen, int *al, void *arg)
+				     size_t *outlen, int *al, void *arg)
 	{
 	if (ext_type != CUSTOM_EXT_TYPE_2)
 		custom_ext_error = 1;
@@ -524,9 +524,9 @@ static int custom_ext_2_cli_first_cb(SSL *s, unsigned short ext_type,
 	return 1; /* Send "abc" */
 	}
 
-static int custom_ext_2_cli_second_cb(SSL *s, unsigned short ext_type,
+static int custom_ext_2_cli_parse_cb(SSL *s, unsigned int ext_type,
 				      const unsigned char *in,
-				      unsigned short inlen, int *al,
+				      size_t inlen, int *al,
 				      void *arg)
 	{
 	if (ext_type != CUSTOM_EXT_TYPE_2)
@@ -536,9 +536,9 @@ static int custom_ext_2_cli_second_cb(SSL *s, unsigned short ext_type,
 	return 1;
 	}
 
-static int custom_ext_3_cli_first_cb(SSL *s, unsigned short ext_type,
+static int custom_ext_3_cli_add_cb(SSL *s, unsigned int ext_type,
 				     const unsigned char **out,
-				     unsigned short *outlen, int *al, void *arg)
+				     size_t *outlen, int *al, void *arg)
 	{
 	if (ext_type != CUSTOM_EXT_TYPE_3)
 		custom_ext_error = 1;
@@ -547,9 +547,9 @@ static int custom_ext_3_cli_first_cb(SSL *s, unsigned short ext_type,
 	return 1; /* Send "abc" */
 	}
 
-static int custom_ext_3_cli_second_cb(SSL *s, unsigned short ext_type,
+static int custom_ext_3_cli_parse_cb(SSL *s, unsigned int ext_type,
 				      const unsigned char *in,
-				      unsigned short inlen, int *al,
+				      size_t inlen, int *al,
 				      void *arg)
 	{
 	if (ext_type != CUSTOM_EXT_TYPE_3)
@@ -561,26 +561,26 @@ static int custom_ext_3_cli_second_cb(SSL *s, unsigned short ext_type,
 	return 1;
 	}
 
-/* custom_ext_0_cli_first_cb returns -1 - the server won't receive a callback for this extension */
-static int custom_ext_0_srv_first_cb(SSL *s, unsigned short ext_type,
+/* custom_ext_0_cli_parse_cb returns -1 - the server won't receive a callback for this extension */
+static int custom_ext_0_srv_parse_cb(SSL *s, unsigned int ext_type,
 				     const unsigned char *in,
-				     unsigned short inlen, int *al,
+				     size_t inlen, int *al,
 				     void *arg)
 	{
 	return 1;
 	}
 
 /* 'generate' callbacks are always called, even if the 'receive' callback isn't called */
-static int custom_ext_0_srv_second_cb(SSL *s, unsigned short ext_type,
+static int custom_ext_0_srv_add_cb(SSL *s, unsigned int ext_type,
 				      const unsigned char **out,
-				      unsigned short *outlen, int *al, void *arg)
+				      size_t *outlen, int *al, void *arg)
 	{
         return -1; /* Don't send an extension */
 	}
 
-static int custom_ext_1_srv_first_cb(SSL *s, unsigned short ext_type,
+static int custom_ext_1_srv_parse_cb(SSL *s, unsigned int ext_type,
 				const unsigned char *in,
-				unsigned short inlen, int *al,
+				size_t inlen, int *al,
 				void *arg)
 	{
 	if (ext_type != CUSTOM_EXT_TYPE_1)
@@ -593,16 +593,16 @@ static int custom_ext_1_srv_first_cb(SSL *s, unsigned short ext_type,
 	return 1;
 	}
 
-static int custom_ext_1_srv_second_cb(SSL *s, unsigned short ext_type,
+static int custom_ext_1_srv_add_cb(SSL *s, unsigned int ext_type,
 				      const unsigned char **out,
-				      unsigned short *outlen, int *al, void *arg)
+				      size_t *outlen, int *al, void *arg)
 	{
 	return -1; /* Don't send an extension */
 	}
 
-static int custom_ext_2_srv_first_cb(SSL *s, unsigned short ext_type,
+static int custom_ext_2_srv_parse_cb(SSL *s, unsigned int ext_type,
 				     const unsigned char *in,
-				     unsigned short inlen, int *al,
+				     size_t inlen, int *al,
 				     void *arg)
 	{
 	if (ext_type != CUSTOM_EXT_TYPE_2)
@@ -615,18 +615,18 @@ static int custom_ext_2_srv_first_cb(SSL *s, unsigned short ext_type,
 	return 1;
 	}
 
-static int custom_ext_2_srv_second_cb(SSL *s, unsigned short ext_type,
+static int custom_ext_2_srv_add_cb(SSL *s, unsigned int ext_type,
 				      const unsigned char **out,
-				      unsigned short *outlen, int *al, void *arg)
+				      size_t *outlen, int *al, void *arg)
 	{
 	*out = NULL;
 	*outlen = 0;
 	return 1; /* Send empty extension */
 	}
 
-static int custom_ext_3_srv_first_cb(SSL *s, unsigned short ext_type,
+static int custom_ext_3_srv_parse_cb(SSL *s, unsigned int ext_type,
 				     const unsigned char *in,
-				     unsigned short inlen, int *al,
+				     size_t inlen, int *al,
 				     void *arg)
 	{
 	if (ext_type != CUSTOM_EXT_TYPE_3)
@@ -639,9 +639,9 @@ static int custom_ext_3_srv_first_cb(SSL *s, unsigned short ext_type,
 	return 1;
 	}
 
-static int custom_ext_3_srv_second_cb(SSL *s, unsigned short ext_type,
+static int custom_ext_3_srv_add_cb(SSL *s, unsigned int ext_type,
 				      const unsigned char **out,
-				      unsigned short *outlen, int *al, void *arg)
+				      size_t *outlen, int *al, void *arg)
 	{
 	*out = (const unsigned char*)custom_ext_srv_string;
 	*outlen = strlen(custom_ext_srv_string);
@@ -1481,31 +1481,31 @@ bad:
 	if (custom_ext)
 		{
 		SSL_CTX_set_custom_cli_ext(c_ctx, CUSTOM_EXT_TYPE_0, 
-					   custom_ext_0_cli_first_cb, 
-					   custom_ext_0_cli_second_cb, NULL);
+					   custom_ext_0_cli_add_cb, 
+					   custom_ext_0_cli_parse_cb, NULL);
 		SSL_CTX_set_custom_cli_ext(c_ctx, CUSTOM_EXT_TYPE_1, 
-					   custom_ext_1_cli_first_cb, 
-					   custom_ext_1_cli_second_cb, NULL);
+					   custom_ext_1_cli_add_cb, 
+					   custom_ext_1_cli_parse_cb, NULL);
 		SSL_CTX_set_custom_cli_ext(c_ctx, CUSTOM_EXT_TYPE_2, 
-					   custom_ext_2_cli_first_cb, 
-					   custom_ext_2_cli_second_cb, NULL);
+					   custom_ext_2_cli_add_cb, 
+					   custom_ext_2_cli_parse_cb, NULL);
 		SSL_CTX_set_custom_cli_ext(c_ctx, CUSTOM_EXT_TYPE_3, 
-					   custom_ext_3_cli_first_cb, 
-					   custom_ext_3_cli_second_cb, NULL);
+					   custom_ext_3_cli_add_cb, 
+					   custom_ext_3_cli_parse_cb, NULL);
 
 
 		SSL_CTX_set_custom_srv_ext(s_ctx, CUSTOM_EXT_TYPE_0, 
-					   custom_ext_0_srv_first_cb, 
-					   custom_ext_0_srv_second_cb, NULL);
+					   custom_ext_0_srv_parse_cb, 
+					   custom_ext_0_srv_add_cb, NULL);
 		SSL_CTX_set_custom_srv_ext(s_ctx, CUSTOM_EXT_TYPE_1, 
-					   custom_ext_1_srv_first_cb, 
-					   custom_ext_1_srv_second_cb, NULL);
+					   custom_ext_1_srv_parse_cb, 
+					   custom_ext_1_srv_add_cb, NULL);
 		SSL_CTX_set_custom_srv_ext(s_ctx, CUSTOM_EXT_TYPE_2, 
-					   custom_ext_2_srv_first_cb, 
-					   custom_ext_2_srv_second_cb, NULL);
+					   custom_ext_2_srv_parse_cb, 
+					   custom_ext_2_srv_add_cb, NULL);
 		SSL_CTX_set_custom_srv_ext(s_ctx, CUSTOM_EXT_TYPE_3, 
-					   custom_ext_3_srv_first_cb, 
-					   custom_ext_3_srv_second_cb, NULL);
+					   custom_ext_3_srv_parse_cb, 
+					   custom_ext_3_srv_add_cb, NULL);
 		}
 
 	if (alpn_server)

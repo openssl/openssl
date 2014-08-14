@@ -1398,9 +1398,9 @@ int srp_verify_server_param(SSL *s, int *al);
 void custom_ext_init(custom_ext_methods *meths);
 
 int custom_ext_parse(SSL *s, int server,
-			unsigned short ext_type,
+			unsigned int ext_type,
 			const unsigned char *ext_data, 
-			unsigned short ext_size,
+			size_t ext_size,
 			int *al);
 int custom_ext_add(SSL *s, int server,
 			unsigned char **pret,
