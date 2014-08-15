@@ -337,9 +337,7 @@ int ASN1_INTEGER_set(ASN1_INTEGER *a, long v)
 	int j,k;
 	unsigned int i;
 	unsigned char buf[sizeof(long)+1];
-	long d;
 
-	a->type=V_ASN1_INTEGER;
 	if (a->length < (int)(sizeof(long)+1))
 		{
 		if (a->data != NULL)
@@ -352,18 +350,19 @@ int ASN1_INTEGER_set(ASN1_INTEGER *a, long v)
 		ASN1err(ASN1_F_ASN1_INTEGER_SET,ERR_R_MALLOC_FAILURE);
 		return(0);
 		}
-	d=v;
-	if (d < 0)
+	if (v < 0)
 		{
-		d= -d;
+		v= -v;
 		a->type=V_ASN1_NEG_INTEGER;
 		}
+	else
+		a->type=V_ASN1_INTEGER;
 
 	for (i=0; i<sizeof(long); i++)
 		{
-		if (d == 0) break;
-		buf[i]=(int)d&0xff;
-		d>>=8;
+		if (v == 0) break;
+		buf[i]=(int)v&0xff;
+		v>>=8;
 		}
 	j=0;
 	for (k=i-1; k >=0; k--)
