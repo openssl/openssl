@@ -109,7 +109,7 @@ static int old_hmac_decode(EVP_PKEY *pkey,
 	ASN1_OCTET_STRING *os;
 	os = ASN1_OCTET_STRING_new();
 	if (!os || !ASN1_OCTET_STRING_set(os, *pder, derlen))
-		return 0;
+		return -1;
 	EVP_PKEY_assign(pkey, EVP_PKEY_HMAC, os);
 	return 1;
 	}
@@ -124,7 +124,7 @@ static int old_hmac_encode(const EVP_PKEY *pkey, unsigned char **pder)
 			{
 			*pder = OPENSSL_malloc(os->length);
 			if (*pder == NULL)
-				return 0;
+				return -1;
 			inc = 0;
 			}
 		else inc = 1;
