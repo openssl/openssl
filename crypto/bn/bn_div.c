@@ -58,7 +58,6 @@
 
 #define OPENSSL_FIPSAPI
 
-#include <stdio.h>
 #include <openssl/bn.h>
 #include "cryptlib.h"
 #include "bn_lcl.h"
