@@ -178,7 +178,14 @@ static int process_pci_value(CONF_VALUE *val,
 					(*policy)->length + n + 1);
 
 				if (!tmp_data)
-					break;
+				{
+					OPENSSL_free((*policy)->data);
+					(*policy)->data = NULL;
+					(*policy)->length = 0;
+					X509V3err(X509V3_F_PROCESS_PCI_VALUE,ERR_R_MALLOC_FAILURE);
+					X509V3_conf_err(val);
+					goto err;
+				}
 
 				(*policy)->data = tmp_data;
 				memcpy(&(*policy)->data[(*policy)->length],
