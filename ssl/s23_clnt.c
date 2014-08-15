@@ -368,7 +368,7 @@ static int ssl23_client_hello(SSL *s)
 		if (s->ctx->tlsext_opaque_prf_input_callback != 0 || s->tlsext_opaque_prf_input != NULL)
 			ssl2_compat = 0;
 #endif
-		if (s->ctx->custom_cli_ext_records_count != 0)
+		if (s->cert->custom_cli_ext_records_count != 0)
 			ssl2_compat = 0;
 		}
 #endif
