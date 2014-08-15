@@ -447,6 +447,7 @@ static int get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 				if (hent == NULL)
 					{
 					CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
+					X509err(X509_F_GET_CERT_BY_SUBJECT,ERR_R_MALLOC_FAILURE);
 					ok = 0;
 					goto finish;
 					}
