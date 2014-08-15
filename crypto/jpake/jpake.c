@@ -196,6 +196,7 @@ static int zkp_hash(BIGNUM *h, const BIGNUM *zkpg, const JPAKE_STEP_PART *p,
 static int generate_zkp(JPAKE_STEP_PART *p, const BIGNUM *x,
 			 const BIGNUM *zkpg, JPAKE_CTX *ctx)
     {
+    int res = 0;
     BIGNUM *r = BN_new();
     BIGNUM *h = BN_new();
     BIGNUM *t = BN_new();
@@ -210,17 +211,19 @@ static int generate_zkp(JPAKE_STEP_PART *p, const BIGNUM *x,
 
    /* h=hash... */
     if (!zkp_hash(h, zkpg, p, ctx->p.name))
-	return 0;
+	goto end;
 
    /* b = r - x*h */
     BN_mod_mul(t, x, h, ctx->p.q, ctx->ctx);
     BN_mod_sub(p->zkpx.b, r, t, ctx->p.q, ctx->ctx);
 
+    res = 1;
+end:
    /* cleanup */
     BN_free(t);
     BN_free(h);
     BN_free(r);
-    return 1;
+    return res;
     }
 
 static int verify_zkp(const JPAKE_STEP_PART *p, const BIGNUM *zkpg,
