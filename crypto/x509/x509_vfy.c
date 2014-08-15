@@ -119,6 +119,7 @@ static int check_trust(X509_STORE_CTX *ctx);
 static int check_revocation(X509_STORE_CTX *ctx);
 static int check_cert(X509_STORE_CTX *ctx);
 static int check_policy(X509_STORE_CTX *ctx);
+static int get_issuer_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);
 
 static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
 			unsigned int *preasons,
