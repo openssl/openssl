@@ -118,7 +118,6 @@
 
 #define OPENSSL_FIPSAPI
 
-#include <stdio.h>
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
@@ -204,9 +203,6 @@ static int BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
 	r->top=max;
 	n0=mont->n0[0];
 
-#ifdef BN_COUNT
-	fprintf(stderr,"word BN_from_montgomery_word %d * %d\n",nl,nl);
-#endif
 	for (carry=0, i=0; i<nl; i++, rp++)
 		{
 #ifdef __TANDEM

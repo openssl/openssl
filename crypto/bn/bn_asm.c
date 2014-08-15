@@ -61,7 +61,6 @@
 # define NDEBUG
 #endif
 
-#include <stdio.h>
 #include <assert.h>
 #include <openssl/crypto.h>
 #include "cryptlib.h"
