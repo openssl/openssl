@@ -326,7 +326,7 @@ static int ASIdentifierChoice_is_canonical(ASIdentifierChoice *choice)
   for (i = 0; i < sk_ASIdOrRange_num(choice->u.asIdsOrRanges) - 1; i++) {
     ASIdOrRange *a = sk_ASIdOrRange_value(choice->u.asIdsOrRanges, i);
     ASIdOrRange *b = sk_ASIdOrRange_value(choice->u.asIdsOrRanges, i + 1);
-    ASN1_INTEGER *a_min, *a_max, *b_min, *b_max;
+    ASN1_INTEGER *a_min = NULL, *a_max = NULL, *b_min = NULL, *b_max = NULL;
 
     extract_min_max(a, &a_min, &a_max);
     extract_min_max(b, &b_min, &b_max);
@@ -427,7 +427,7 @@ static int ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
   for (i = 0; i < sk_ASIdOrRange_num(choice->u.asIdsOrRanges) - 1; i++) {
     ASIdOrRange *a = sk_ASIdOrRange_value(choice->u.asIdsOrRanges, i);
     ASIdOrRange *b = sk_ASIdOrRange_value(choice->u.asIdsOrRanges, i + 1);
-    ASN1_INTEGER *a_min, *a_max, *b_min, *b_max;
+    ASN1_INTEGER *a_min = NULL, *a_max = NULL, *b_min = NULL, *b_max = NULL;
 
     extract_min_max(a, &a_min, &a_max);
     extract_min_max(b, &b_min, &b_max);
@@ -685,7 +685,7 @@ int v3_asid_inherits(ASIdentifiers *asid)
  */
 static int asid_contains(ASIdOrRanges *parent, ASIdOrRanges *child)
 {
-  ASN1_INTEGER *p_min, *p_max, *c_min, *c_max;
+  ASN1_INTEGER *p_min = NULL, *p_max = NULL, *c_min = NULL, *c_max = NULL;
   int p, c;
 
   if (child == NULL || parent == child)
