@@ -357,7 +357,7 @@ cryptodev_usable_digests(const int **nids)
 	 * suck moose gonads - would be nice to be able to decide something
 	 * as reasonable default without having hackery that's card dependent.
 	 * of course, the default should probably be just do everything,
-	 * with perhaps a sysctl to turn algoritms off (or have them off
+	 * with perhaps a sysctl to turn algorithms off (or have them off
 	 * by default) on cards that generally suck like the hifn.
 	 */
 	*nids = NULL;

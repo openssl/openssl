@@ -344,7 +344,7 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
 			 * The fact that the loop is unrolled
 			 * 4-wise is a tribute to Intel. It's
 			 * the one that doesn't have enough
-			 * registers to accomodate more data.
+			 * registers to accommodate more data.
 			 * I'd unroll it 8-wise otherwise:-)
 			 *
 			 *		<appro@fy.chalmers.se>

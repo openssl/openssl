@@ -425,7 +425,7 @@ bn_mul_add_words:
 // version was peforming *all* additions in IALU and was starving
 // for those even on Itanium 2. In this version one addition is
 // moved to FPU and is folded with multiplication. This is at cost
-// of propogating the result from previous call to this subroutine
+// of propagating the result from previous call to this subroutine
 // to L2 cache... In other words negligible even for shorter keys.
 // *Overall* performance improvement [over previous version] varies
 // from 11 to 22 percent depending on key length.
@@ -495,7 +495,7 @@ bn_sqr_words:
 // scalability. The decision will very likely be reconsidered after the
 // benchmark program is profiled. I.e. if perfomance gain on Itanium
 // will appear larger than loss on "wider" IA-64, then the loop should
-// be explicitely split and the epilogue compressed.
+// be explicitly split and the epilogue compressed.
 .L_bn_sqr_words_ctop:
 { .mfi;	(p16)	ldf8		f32=[r33],8
 	(p25)	xmpy.lu		f42=f41,f41

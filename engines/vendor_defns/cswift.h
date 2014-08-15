@@ -93,7 +93,7 @@ typedef unsigned long     SW_U32;                 /* 32 bit integer   */
                                               /*    selfTestBitmap in      */
                                               /*    SW_ACCELERATOR_INFO for*/
                                               /*    details.               */
-#define SW_ERR_MISALIGN       (SW_ERR_BASE-20)/* Certain alogrithms require*/
+#define SW_ERR_MISALIGN       (SW_ERR_BASE-20)/* Certain algorithms require*/
                                               /*    key materials aligned  */
                                               /*    in certain order, e.g. */
                                               /*    128 bit for CRT        */
@@ -145,7 +145,7 @@ typedef unsigned long     SW_U32;                 /* 32 bit integer   */
 #define SW_CMD_NVREAD       6 /* perform read to nonvolatile RAM       */
 #define SW_CMD_NVWRITE      7 /* perform write to nonvolatile RAM      */
 
-typedef SW_U32            SW_ALGTYPE;             /* alogrithm type   */
+typedef SW_U32            SW_ALGTYPE;             /* algorithm type   */
 typedef SW_U32            SW_STATE;               /* state            */
 typedef SW_U32            SW_COMMAND_CODE;        /* command code     */
 typedef SW_U32            SW_COMMAND_BITMAP[4];   /* bitmap           */
@@ -203,7 +203,7 @@ typedef struct _SW_NVDATA {
 } SW_NVDATA;
 
 typedef struct _SW_PARAM {
-    SW_ALGTYPE    type;     /* type of the alogrithm                  */
+    SW_ALGTYPE    type;     /* type of the algorithm                  */
     union {
         SW_CRT    crt;
         SW_EXP    exp;

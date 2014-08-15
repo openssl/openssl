@@ -136,7 +136,7 @@ typedef unsigned long long	u64;
  * one quadword load. One can argue that that many single-byte loads
  * is too excessive, as one could load a quadword and "milk" it for
  * eight 8-bit values instead. Well, yes, but in order to do so *and*
- * avoid excessive loads you have to accomodate a handful of 64-bit
+ * avoid excessive loads you have to accommodate a handful of 64-bit
  * values in the register bank and issue a bunch of shifts and mask.
  * It's a tradeoff: loads vs. shift and mask in big register bank[!].
  * On most CPUs eight single-byte loads are faster and I let other

@@ -87,7 +87,7 @@ eric (about to go bushwalking for the 4 day easter break :-)
       This breaks things again :-(.  This is efficent since I cache
       the DER encoding of the RDN.
     - The text DN now puts in the numeric OID instead of UNKNOWN.
-    - req can now process arbitary OIDs in the config file.
+    - req can now process arbitrary OIDs in the config file.
     - I've been implementing md5 in x86 asm, much faster :-).
     - Started sha1 in x86 asm, needs more work.
     - Quite a few speedups in the BN stuff.  RSA public operation

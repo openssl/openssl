@@ -82,7 +82,7 @@ int ssl2_enc_init(SSL *s, int client)
 		OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL))
 		goto err;
 
-	/* make sure it's intialized in case the malloc for enc_write_ctx fails
+	/* make sure it's initialized in case the malloc for enc_write_ctx fails
 	 * and we exit with an error */
 	rs= s->enc_read_ctx;
 	EVP_CIPHER_CTX_init(rs);

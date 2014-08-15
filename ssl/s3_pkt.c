@@ -700,7 +700,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 	/*
 	 * Depending on platform multi-block can deliver several *times*
 	 * better performance. Downside is that it has to allocate
-	 * jumbo buffer to accomodate up to 8 records, but the
+	 * jumbo buffer to accommodate up to 8 records, but the
 	 * compromise is considered worthy.
 	 */
 	if (type==SSL3_RT_APPLICATION_DATA &&

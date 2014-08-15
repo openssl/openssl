@@ -115,7 +115,7 @@ fipscanister.o: fips_start.o $(LIBOBJ) $(FIPS_OBJ_LISTS) fips_end.o
 	esac fi
 	./fips_standalone_sha1$(EXE_EXT) fipscanister.o > fipscanister.o.sha1
 
-# If another exception is immediately required, assign approprite
+# If another exception is immediately required, assign appropriate
 # site-specific ld command to FIPS_SITE_LD environment variable.
 
 fips_start.o: fips_canister.c

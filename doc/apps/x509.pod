@@ -569,7 +569,7 @@ name.
 
 =head2 TEXT OPTIONS
 
-As well as customising the name output format, it is also possible to
+As well as customizing the name output format, it is also possible to
 customise the actual fields printed using the B<certopt> options when
 the B<text> option is present. The default behaviour is to print all fields.
 

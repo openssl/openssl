@@ -293,7 +293,7 @@ int MAIN(int argc, char **argv)
 			{
 			if (!args[1])	
 				goto argerr;
-			/* If previous -inkey arument add signer to list */
+			/* If previous -inkey argument add signer to list */
 			if (keyfile)
 				{
 				if (!signerfile)

@@ -270,7 +270,7 @@ extern "C" {
 #endif
 
 #ifndef OPENSSL_NO_DEPRECATED
-#define BN_FLG_FREE		0x8000	/* used for debuging */
+#define BN_FLG_FREE		0x8000	/* used for debugging */
 #endif
 #define BN_set_flags(b,n)	((b)->flags|=(n))
 #define BN_get_flags(b,n)	((b)->flags&(n))

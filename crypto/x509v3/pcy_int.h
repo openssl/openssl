@@ -163,7 +163,7 @@ struct X509_POLICY_TREE_st
 	 * are required.
 	 */
 	STACK_OF(X509_POLICY_DATA) *extra_data;
-	/* This is the authority constained policy set */
+	/* This is the authority constrained policy set */
 	STACK_OF(X509_POLICY_NODE) *auth_policies;
 	STACK_OF(X509_POLICY_NODE) *user_policies;
 	unsigned int flags;

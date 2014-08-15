@@ -462,7 +462,7 @@
      possible to have different stores per SSL structure or one store in
      the parent SSL_CTX. Include distint stores for certificate chain
      verification and chain building. New ctrl SSL_CTRL_BUILD_CERT_CHAIN
-     to build and store a certificate chain in CERT structure: returing
+     to build and store a certificate chain in CERT structure: returning
      an error if the chain cannot be built: this will allow applications
      to test if a chain is correctly configured.
 
@@ -984,8 +984,8 @@
      [Steve Henson]
 
   *) For FIPS capable OpenSSL interpret a NULL default public key method
-     as unset and return the appopriate default but do *not* set the default.
-     This means we can return the appopriate method in applications that
+     as unset and return the appropriate default but do *not* set the default.
+     This means we can return the appropriate method in applications that
      swicth between FIPS and non-FIPS modes.
      [Steve Henson]
 
@@ -1700,7 +1700,7 @@
 
   *) New option -sigopt to dgst utility. Update dgst to use
      EVP_Digest{Sign,Verify}*. These two changes make it possible to use
-     alternative signing paramaters such as X9.31 or PSS in the dgst 
+     alternative signing parameters such as X9.31 or PSS in the dgst 
      utility.
      [Steve Henson]
 
@@ -1720,7 +1720,7 @@
      most recently disabled ciphersuites when "HIGH" is parsed).
 
      Also, change ssl_create_cipher_list() (using this new
-     funcionality) such that between otherwise identical
+     functionality) such that between otherwise identical
      cihpersuites, ephemeral ECDH is preferred over ephemeral DH in
      the default order.
      [Bodo Moeller]
@@ -1985,7 +1985,7 @@
      manual pages.
      [Oliver Tappe <zooey@hirschkaefer.de>]
 
-  *) New utility "genpkey" this is analagous to "genrsa" etc except it can
+  *) New utility "genpkey" this is analogous to "genrsa" etc except it can
      generate keys for any algorithm. Extend and update EVP_PKEY_METHOD to
      support key and parameter generation and add initial key generation
      functionality for RSA.
@@ -3129,7 +3129,7 @@
      unofficial, and the ID has long expired.
      [Bodo Moeller]
 
-  *) Fix RSA blinding Heisenbug (problems sometimes occured on
+  *) Fix RSA blinding Heisenbug (problems sometimes occurred on
      dual-core machines) and other potential thread-safety issues.
      [Bodo Moeller]
 
@@ -4144,7 +4144,7 @@
      unofficial, and the ID has long expired.
      [Bodo Moeller]
 
-  *) Fix RSA blinding Heisenbug (problems sometimes occured on
+  *) Fix RSA blinding Heisenbug (problems sometimes occurred on
      dual-core machines) and other potential thread-safety issues.
      [Bodo Moeller]
 
@@ -4249,7 +4249,7 @@
 
   *) Added support for proxy certificates according to RFC 3820.
      Because they may be a security thread to unaware applications,
-     they must be explicitely allowed in run-time.  See
+     they must be explicitly allowed in run-time.  See
      docs/HOWTO/proxy_certificates.txt for further information.
      [Richard Levitte]
 
@@ -6826,7 +6826,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
   *) Fix ssl/s3_enc.c, ssl/t1_enc.c and ssl/s3_pkt.c so that we don't
      reveal whether illegal block cipher padding was found or a MAC
-     verification error occured.  (Neither SSLerr() codes nor alerts
+     verification error occurred.  (Neither SSLerr() codes nor alerts
      are directly visible to potential attackers, but the information
      may leak via logfiles.)
 
@@ -8459,7 +8459,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
   *) Changes to X509_ATTRIBUTE utilities. These have been renamed from
      X509_*() to X509at_*() on the grounds that they don't handle X509
-     structures and behave in an analagous way to the X509v3 functions:
+     structures and behave in an analogous way to the X509v3 functions:
      they shouldn't be called directly but wrapper functions should be used
      instead.
 
@@ -9233,7 +9233,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) Bugfix: ssl23_get_client_hello did not work properly when called in
      state SSL23_ST_SR_CLNT_HELLO_B, i.e. when the first 7 bytes of
      a SSLv2-compatible client hello for SSLv3 or TLSv1 could be read,
-     but a retry condition occured while trying to read the rest.
+     but a retry condition occurred while trying to read the rest.
      [Bodo Moeller]
 
   *) The PKCS7_ENC_CONTENT_new() function was setting the content type as
@@ -10103,7 +10103,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Matthias Loepfe <Matthias.Loepfe@adnovum.ch>]
 
   *) Fix Makefile.org so CC,CFLAG etc are passed to 'make links' add
-     advapi32.lib to Win32 build and change the pem test comparision
+     advapi32.lib to Win32 build and change the pem test comparison
      to fc.exe (thanks to Ulrich Kroener <kroneru@yahoo.com> for the
      suggestion). Fix misplaced ASNI prototypes and declarations in evp.h
      and crypto/des/ede_cbcm_enc.c.
@@ -10158,7 +10158,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      other platforms details on the command line without having to patch the
      Configure script everytime: One now can use ``perl Configure
      <id>:<details>'', i.e. platform ids are allowed to have details appended
-     to them (seperated by colons). This is treated as there would be a static
+     to them (separated by colons). This is treated as there would be a static
      pre-configured entry in Configure's %table under key <id> with value
      <details> and ``perl Configure <id>'' is called.  So, when you want to
      perform a quick test-compile under FreeBSD 3.1 with pgcc and without
