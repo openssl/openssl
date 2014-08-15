@@ -879,9 +879,9 @@ static int do_check_string(ASN1_STRING *a, int cmp_type, equal_fn equal,
 		if (astrlen < 0)
 			return -1;
 		rv = equal(astr, astrlen, (unsigned char *)b, blen, flags);
-		OPENSSL_free(astr);
 		if (rv > 0 && peername)
 			*peername = BUF_strndup((char *)astr, astrlen);
+		OPENSSL_free(astr);
 		}
 	return rv;
 	}
