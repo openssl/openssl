@@ -2383,7 +2383,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 		 */
 		else if (!s->hit)
 			{
-			if (!custom_ext_parse(s, 1, type, data, size, al))
+			if (custom_ext_parse(s, 1, type, data, size, al) <= 0)
 				return 0;
 			}
 
@@ -2711,7 +2711,7 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 		/* If this extension type was not otherwise handled, but 
 		 * matches a custom_cli_ext_record, then send it to the c
 		 * callback */
-		else if (!custom_ext_parse(s, 0, type, data, size, al))
+		else if (custom_ext_parse(s, 0, type, data, size, al) <= 0)
 				return 0;
  
 		data += size;
