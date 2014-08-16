@@ -1363,7 +1363,7 @@ bad:
 				{
 				SSL_CTX_set_custom_cli_ext(ctx,
 							   serverinfo_types[i],
-							   NULL, 
+							   NULL, NULL, NULL,
 							   serverinfo_cli_cb,
 							   NULL);
 				}
