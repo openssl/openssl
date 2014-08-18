@@ -203,7 +203,7 @@ static int ssl_mac_secret_size[SSL_MD_NUM_IDX]={
 	0,0,0,0,0,0
 	};
 
-static int ssl_handshake_digest_flag[SSL_MD_NUM_IDX]={
+static const int ssl_handshake_digest_flag[SSL_MD_NUM_IDX]={
 	SSL_HANDSHAKE_MAC_MD5,SSL_HANDSHAKE_MAC_SHA,
 	SSL_HANDSHAKE_MAC_GOST94, 0, SSL_HANDSHAKE_MAC_SHA256,
 	SSL_HANDSHAKE_MAC_SHA384
