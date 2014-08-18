@@ -819,9 +819,9 @@ ASN1_BIT_STRING *c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,const unsigned char **p
 int		ASN1_BIT_STRING_set(ASN1_BIT_STRING *a, unsigned char *d,
 			int length );
 int		ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value);
-int		ASN1_BIT_STRING_get_bit(ASN1_BIT_STRING *a, int n);
-int            ASN1_BIT_STRING_check(ASN1_BIT_STRING *a,
-                                     unsigned char *flags, int flags_len);
+int		ASN1_BIT_STRING_get_bit(const ASN1_BIT_STRING *a, int n);
+int            ASN1_BIT_STRING_check(const ASN1_BIT_STRING *a,
+                                     const unsigned char *flags, int flags_len);
 
 #ifndef OPENSSL_NO_BIO
 int ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,

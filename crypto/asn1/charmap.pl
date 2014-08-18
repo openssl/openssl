@@ -71,7 +71,7 @@ print <<EOF;
  * Mask of various character properties
  */
 
-static unsigned char char_type[] = {
+static const unsigned char char_type[] = {
 EOF
 
 for($i = 0; $i < 128; $i++) {

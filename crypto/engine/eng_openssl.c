@@ -234,8 +234,8 @@ IMPLEMENT_DYNAMIC_BIND_FN(bind_fn)
  */
 #include <openssl/rc4.h>
 #define TEST_RC4_KEY_SIZE		16
-static int test_cipher_nids[] = {NID_rc4,NID_rc4_40};
-static int test_cipher_nids_number = 2;
+static const int test_cipher_nids[] = {NID_rc4,NID_rc4_40};
+static const int test_cipher_nids_number = 2;
 typedef struct {
 	unsigned char key[TEST_RC4_KEY_SIZE];
 	RC4_KEY ks;
@@ -319,8 +319,8 @@ static int openssl_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
 #ifdef TEST_ENG_OPENSSL_SHA
 /* Much the same sort of comment as for TEST_ENG_OPENSSL_RC4 */
 #include <openssl/sha.h>
-static int test_digest_nids[] = {NID_sha1};
-static int test_digest_nids_number = 1;
+static const int test_digest_nids[] = {NID_sha1};
+static const int test_digest_nids_number = 1;
 static int test_sha1_init(EVP_MD_CTX *ctx)
 	{
 #ifdef TEST_ENG_OPENSSL_SHA_P_INIT

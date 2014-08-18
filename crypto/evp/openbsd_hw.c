@@ -326,7 +326,7 @@ static int dev_crypto_md5_init(EVP_MD_CTX *ctx)
 static int do_digest(int ses,unsigned char *md,const void *data,int len)
     {
     struct crypt_op cryp;
-    static unsigned char md5zero[16]=
+    static const unsigned char md5zero[16]=
 	{
 	0xd4,0x1d,0x8c,0xd9,0x8f,0x00,0xb2,0x04,
 	0xe9,0x80,0x09,0x98,0xec,0xf8,0x42,0x7e

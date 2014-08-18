@@ -232,7 +232,7 @@ typedef struct
 #define TLS_CURVE_CHAR2		0x1
 #define TLS_CURVE_PRIME		0x0
 
-static tls_curve_info nid_list[] =
+static const tls_curve_info nid_list[] =
 	{
 		{NID_sect163k1, 80, TLS_CURVE_CHAR2},/* sect163k1 (1) */
 		{NID_sect163r1, 80, TLS_CURVE_CHAR2},/* sect163r1 (2) */
@@ -428,7 +428,7 @@ static void tls1_get_curvelist(SSL *s, int sess,
 /* See if curve is allowed by security callback */
 static int tls_curve_allowed(SSL *s, const unsigned char *curve, int op)
 	{
-	tls_curve_info *cinfo;
+	const tls_curve_info *cinfo;
 	if (curve[0])
 		return 1;
 	if ((curve[1] < 1) || ((size_t)curve[1] >
