@@ -37,7 +37,7 @@ CRYPTO_destroy_dynlockid, CRYPTO_lock - OpenSSL thread support
  struct CRYPTO_dynlock_value;
 
  void CRYPTO_set_dynlock_create_callback(struct CRYPTO_dynlock_value *
-	(*dyn_create_function)(char *file, int line));
+	(*dyn_create_function)(const char *file, int line));
  void CRYPTO_set_dynlock_lock_callback(void (*dyn_lock_function)
 	(int mode, struct CRYPTO_dynlock_value *l,
 	const char *file, int line));
