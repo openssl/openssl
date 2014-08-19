@@ -521,9 +521,9 @@ int custom_ext = 0;
 /* This set based on extension callbacks */
 int custom_ext_error = 0;
 
-static int serverinfo_cli_cb(SSL* s, unsigned int ext_type,
-			     const unsigned char* in, size_t inlen, 
-			     int* al, void* arg)
+static int serverinfo_cli_parse_cb(SSL *s, unsigned int ext_type,
+				   const unsigned char *in, size_t inlen, 
+				   int *al, void *arg)
 	{
 	if (ext_type == SCT_EXT_TYPE)
 		serverinfo_sct_seen++;
@@ -1585,12 +1585,12 @@ bad:
 
 	if (serverinfo_sct)
 		SSL_CTX_add_client_custom_ext(c_ctx, SCT_EXT_TYPE,
-					   NULL, NULL, NULL,
-					   serverinfo_cli_cb, NULL);
+					      NULL, NULL, NULL,
+					      serverinfo_cli_parse_cb, NULL);
 	if (serverinfo_tack)
 		SSL_CTX_add_client_custom_ext(c_ctx, TACK_EXT_TYPE,
-					   NULL, NULL, NULL,
-					   serverinfo_cli_cb, NULL);
+					      NULL, NULL, NULL,
+					      serverinfo_cli_parse_cb, NULL);
 
 	if (serverinfo_file)
 		if (!SSL_CTX_use_serverinfo_file(s_ctx, serverinfo_file))
@@ -1602,31 +1602,39 @@ bad:
 	if (custom_ext)
 		{
 		SSL_CTX_add_client_custom_ext(c_ctx, CUSTOM_EXT_TYPE_0, 
-					   custom_ext_0_cli_add_cb, NULL, NULL,
-					   custom_ext_0_cli_parse_cb, NULL);
+					      custom_ext_0_cli_add_cb,
+					      NULL, NULL,
+					      custom_ext_0_cli_parse_cb, NULL);
 		SSL_CTX_add_client_custom_ext(c_ctx, CUSTOM_EXT_TYPE_1, 
-					   custom_ext_1_cli_add_cb, NULL, NULL,
-					   custom_ext_1_cli_parse_cb, NULL);
+					      custom_ext_1_cli_add_cb,
+					      NULL, NULL,
+					      custom_ext_1_cli_parse_cb, NULL);
 		SSL_CTX_add_client_custom_ext(c_ctx, CUSTOM_EXT_TYPE_2, 
-					   custom_ext_2_cli_add_cb, NULL, NULL,
-					   custom_ext_2_cli_parse_cb, NULL);
+					      custom_ext_2_cli_add_cb,
+					      NULL, NULL,
+					      custom_ext_2_cli_parse_cb, NULL);
 		SSL_CTX_add_client_custom_ext(c_ctx, CUSTOM_EXT_TYPE_3, 
-					   custom_ext_3_cli_add_cb, NULL, NULL,
-					   custom_ext_3_cli_parse_cb, NULL);
+					      custom_ext_3_cli_add_cb,
+					      NULL, NULL,
+					      custom_ext_3_cli_parse_cb, NULL);
 
 
 		SSL_CTX_add_server_custom_ext(s_ctx, CUSTOM_EXT_TYPE_0, 
-					   custom_ext_0_srv_add_cb, NULL, NULL,
-					   custom_ext_0_srv_parse_cb, NULL);
+					      custom_ext_0_srv_add_cb,
+					      NULL, NULL,
+					      custom_ext_0_srv_parse_cb, NULL);
 		SSL_CTX_add_server_custom_ext(s_ctx, CUSTOM_EXT_TYPE_1, 
-					   custom_ext_1_srv_add_cb, NULL, NULL,
-					   custom_ext_1_srv_parse_cb, NULL);
+					      custom_ext_1_srv_add_cb,
+					      NULL, NULL,
+					      custom_ext_1_srv_parse_cb, NULL);
 		SSL_CTX_add_server_custom_ext(s_ctx, CUSTOM_EXT_TYPE_2, 
-					   custom_ext_2_srv_add_cb, NULL, NULL,
-					   custom_ext_2_srv_parse_cb, NULL);
+					      custom_ext_2_srv_add_cb,
+					      NULL, NULL,
+					      custom_ext_2_srv_parse_cb, NULL);
 		SSL_CTX_add_server_custom_ext(s_ctx, CUSTOM_EXT_TYPE_3, 
-					   custom_ext_3_srv_add_cb, NULL, NULL,
-					   custom_ext_3_srv_parse_cb, NULL);
+					      custom_ext_3_srv_add_cb,
+					      NULL, NULL,
+					      custom_ext_3_srv_parse_cb, NULL);
 		}
 
 	if (alpn_server)

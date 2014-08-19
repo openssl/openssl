@@ -547,9 +547,9 @@ static int next_proto_cb(SSL *s, unsigned char **out, unsigned char *outlen, con
 	}
 # endif  /* ndef OPENSSL_NO_NEXTPROTONEG */
 
-static int serverinfo_cli_cb(SSL* s, unsigned int ext_type,
-			     const unsigned char* in, size_t inlen, 
-			     int* al, void* arg)
+static int serverinfo_cli_parse_cb(SSL* s, unsigned int ext_type,
+				   const unsigned char* in, size_t inlen, 
+				   int* al, void* arg)
 	{
 	char pem_name[100];
 	unsigned char ext_buf[4 + 65536];
@@ -1357,16 +1357,13 @@ bad:
 		}
 #endif
 #ifndef OPENSSL_NO_TLSEXT
-		if (serverinfo_types_count)
+		for (i = 0; i < serverinfo_types_count; i++)
 			{
-			for (i = 0; i < serverinfo_types_count; i++)
-				{
-				SSL_CTX_add_client_custom_ext(ctx,
-							   serverinfo_types[i],
-							   NULL, NULL, NULL,
-							   serverinfo_cli_cb,
-							   NULL);
-				}
+			SSL_CTX_add_client_custom_ext(ctx,
+						      serverinfo_types[i],
+						      NULL, NULL, NULL,
+						      serverinfo_cli_parse_cb,
+						      NULL);
 			}
 #endif
 

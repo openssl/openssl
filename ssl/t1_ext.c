@@ -59,10 +59,9 @@
 
 #ifndef OPENSSL_NO_TLSEXT
 
-/* Find a custom extension from the list */
-
+/* Find a custom extension from the list. */
 static custom_ext_method *custom_ext_find(custom_ext_methods *exts,
-						unsigned short ext_type)
+					  unsigned int ext_type)
 	{
 	size_t i;
 	custom_ext_method *meth = exts->meths;
@@ -84,18 +83,16 @@ void custom_ext_init(custom_ext_methods *exts)
 		meth->ext_flags = 0;
 	}
 
-/* pass received custom extension data to the application for parsing */
-
+/* Pass received custom extension data to the application for parsing. */
 int custom_ext_parse(SSL *s, int server,
-			unsigned int ext_type,
-			const unsigned char *ext_data, 
-			size_t ext_size,
-			int *al)
+		     unsigned int ext_type,
+		     const unsigned char *ext_data, 
+		     size_t ext_size,
+		     int *al)
 	{
 	custom_ext_methods *exts = server ? &s->cert->srv_ext : &s->cert->cli_ext;
 	custom_ext_method *meth;
 	meth = custom_ext_find(exts, ext_type);
-	/* If not found or no parse function set, return success */
 	/* If not found return success */
 	if (!meth)
 		return 1;
@@ -117,20 +114,20 @@ int custom_ext_parse(SSL *s, int server,
 		return 0;
 		}
 	meth->ext_flags |= SSL_EXT_FLAG_RECEIVED;
+	/* If no parse function set return success */
 	if (!meth->parse_cb)
 		return 1;
 
 	return meth->parse_cb(s, ext_type, ext_data, ext_size, al, meth->parse_arg);
 	}
 
-/* request custom extension data from the application and add to the
- * return buffer
+/* Request custom extension data from the application and add to the
+ * return buffer.
  */
-
 int custom_ext_add(SSL *s, int server,
-			unsigned char **pret,
-			unsigned char *limit,
-			int *al)
+		   unsigned char **pret,
+		   unsigned char *limit,
+		   int *al)
 	{
 	custom_ext_methods *exts = server ? &s->cert->srv_ext : &s->cert->cli_ext;
 	custom_ext_method *meth;
@@ -174,12 +171,12 @@ int custom_ext_add(SSL *s, int server,
 			memcpy(ret, out, outlen);
 			ret += outlen;
 			}
-		/* We can't send duplicates: code logic should prevent this */
+		/* We can't send duplicates: code logic should prevent this. */
 		OPENSSL_assert(!(meth->ext_flags & SSL_EXT_FLAG_SENT));
 		/* Indicate extension has been sent: this is both a sanity
 		 * check to ensure we don't send duplicate extensions
-		 * and indicates to servers that an extension can be
-		 * sent in ServerHello.
+		 * and indicates that it is not an error if the extension
+		 * is present in ServerHello.
 		 */
 		meth->ext_flags |= SSL_EXT_FLAG_SENT;
 		if (meth->free_cb)
@@ -190,7 +187,6 @@ int custom_ext_add(SSL *s, int server,
 	}
 
 /* Copy table of custom extensions */
-
 int custom_exts_copy(custom_ext_methods *dst, const custom_ext_methods *src)
 	{
 	if (src->meths_count)
@@ -209,16 +205,21 @@ void custom_exts_free(custom_ext_methods *exts)
 		OPENSSL_free(exts->meths);
 	}
 
-/* Set callbacks for a custom extension */
+/* Set callbacks for a custom extension. */
 static int custom_ext_meth_add(custom_ext_methods *exts,
-			unsigned int ext_type,
-			custom_ext_add_cb add_cb,
-			custom_ext_free_cb free_cb,
-			void *add_arg,
-			custom_ext_parse_cb parse_cb, void *parse_arg)
+			       unsigned int ext_type,
+			       custom_ext_add_cb add_cb,
+			       custom_ext_free_cb free_cb,
+			       void *add_arg,
+			       custom_ext_parse_cb parse_cb, void *parse_arg)
 	{
 	custom_ext_method *meth;
-	/* Don't add if extension supported internall */
+	/* Check application error: if add_cb is not set free_cb will never
+	 * be called.
+	 */
+	if (!add_cb && free_cb)
+		return 0;
+	/* Don't add if extension supported internally. */
 	if (SSL_extension_supported(ext_type))
 		return 0;
 	/* Extension type must fit in 16 bits */
@@ -228,7 +229,7 @@ static int custom_ext_meth_add(custom_ext_methods *exts,
 	if (custom_ext_find(exts, ext_type))
 		return 0;
 	exts->meths = OPENSSL_realloc(exts->meths,
-					(exts->meths_count + 1) * sizeof(custom_ext_method));
+				      (exts->meths_count + 1) * sizeof(custom_ext_method));
 
 	if (!exts->meths)
 		{
@@ -249,35 +250,34 @@ static int custom_ext_meth_add(custom_ext_methods *exts,
 	}
 
 /* Application level functions to add custom extension callbacks */
-
 int SSL_CTX_add_client_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
-			       custom_ext_add_cb add_cb,
-			       custom_ext_free_cb free_cb,
-                               void *add_arg,
-			       custom_ext_parse_cb parse_cb, void *parse_arg)
+			          custom_ext_add_cb add_cb,
+			          custom_ext_free_cb free_cb,
+                                  void *add_arg,
+			          custom_ext_parse_cb parse_cb, void *parse_arg)
 
 	{
 	return custom_ext_meth_add(&ctx->cert->cli_ext, ext_type,
-				add_cb, free_cb, add_arg,
-				parse_cb, parse_arg);
+				   add_cb, free_cb, add_arg,
+				   parse_cb, parse_arg);
 	}
 
 int SSL_CTX_add_server_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
-			       custom_ext_add_cb add_cb,
-			       custom_ext_free_cb free_cb,
-                               void *add_arg,
-			       custom_ext_parse_cb parse_cb, void *parse_arg)
+			          custom_ext_add_cb add_cb,
+			          custom_ext_free_cb free_cb,
+                                  void *add_arg,
+			          custom_ext_parse_cb parse_cb, void *parse_arg)
 	{
 	return custom_ext_meth_add(&ctx->cert->srv_ext, ext_type,
-				add_cb, free_cb, add_arg,
-				parse_cb, parse_arg);
+				   add_cb, free_cb, add_arg,
+				   parse_cb, parse_arg);
 	}
 
 int SSL_extension_supported(unsigned int ext_type)
 	{
-	/* See if it is a supported internally */
 	switch(ext_type)
 		{
+	/* Internally supported extensions. */
 	case TLSEXT_TYPE_application_layer_protocol_negotiation:
 	case TLSEXT_TYPE_ec_point_formats:
 	case TLSEXT_TYPE_elliptic_curves:
