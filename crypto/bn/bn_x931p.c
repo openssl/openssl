@@ -189,8 +189,8 @@ int BN_X931_derive_prime_ex(BIGNUM *p, BIGNUM *p1, BIGNUM *p2,
 	return ret;
 	}
 
-/* Generate pair of paramters Xp, Xq for X9.31 prime generation.
- * Note: nbits paramter is sum of number of bits in both.
+/* Generate pair of parameters Xp, Xq for X9.31 prime generation.
+ * Note: nbits parameter is sum of number of bits in both.
  */
 
 int BN_X931_generate_Xpq(BIGNUM *Xp, BIGNUM *Xq, int nbits, BN_CTX *ctx)
