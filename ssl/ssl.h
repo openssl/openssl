@@ -393,18 +393,18 @@ typedef int (*tls_session_secret_cb_fn)(SSL *s, void *secret, int *secret_len, S
 /* Typedefs for handling custom extensions */
 
 typedef int (*custom_ext_add_cb)(SSL *s, unsigned int ext_type,
-					  const unsigned char **out,
-					  size_t *outlen, int *al,
-					   void *add_arg);
+				 const unsigned char **out,
+				 size_t *outlen, int *al,
+				 void *add_arg);
 
 typedef void (*custom_ext_free_cb)(SSL *s, unsigned int ext_type,
-					   const unsigned char *out,
-					   void *add_arg);
+			  	   const unsigned char *out,
+				   void *add_arg);
 
 typedef int (*custom_ext_parse_cb)(SSL *s, unsigned int ext_type,
-					   const unsigned char *in,
-					   size_t inlen, int *al,
-					   void *parse_arg);
+				   const unsigned char *in,
+				   size_t inlen, int *al,
+				   void *parse_arg);
 
 
 #endif
@@ -1254,16 +1254,18 @@ const char *SSL_get_psk_identity(const SSL *s);
 /* Register callbacks to handle custom TLS Extensions for client or server. */
 
 int SSL_CTX_add_client_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
-			       custom_ext_add_cb add_cb,
-			       custom_ext_free_cb free_cb,
-                               void *add_arg,
-			       custom_ext_parse_cb parse_cb, void *parse_arg);
+			          custom_ext_add_cb add_cb,
+			          custom_ext_free_cb free_cb,
+				  void *add_arg,
+			          custom_ext_parse_cb parse_cb,
+				  void *parse_arg);
 
 int SSL_CTX_add_server_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
-			       custom_ext_add_cb add_cb,
-			       custom_ext_free_cb free_cb,
-                               void *add_arg,
-			       custom_ext_parse_cb parse_cb, void *parse_arg);
+			          custom_ext_add_cb add_cb,
+			          custom_ext_free_cb free_cb,
+				  void *add_arg,
+			          custom_ext_parse_cb parse_cb,
+				  void *parse_arg);
 
 int SSL_extension_supported(unsigned int ext_type);
 
