@@ -859,8 +859,8 @@ static int serverinfo_srv_parse_cb(SSL *s, unsigned int ext_type,
 	}
 
 static int serverinfo_srv_add_cb(SSL *s, unsigned int ext_type,
-				    const unsigned char **out, size_t *outlen,
-				    int *al, void *arg)
+			    	 const unsigned char **out, size_t *outlen,
+			 	 int *al, void *arg)
 	{
 	const unsigned char *serverinfo = NULL;
 	size_t serverinfo_length = 0;
@@ -906,10 +906,10 @@ static int serverinfo_process_buffer(const unsigned char *serverinfo,
 		/* Register callbacks for extensions */
 		ext_type = (serverinfo[0] << 8) + serverinfo[1];
 		if (ctx && !SSL_CTX_add_server_custom_ext(ctx, ext_type, 
-						       serverinfo_srv_add_cb,
-						       NULL, NULL,
-						       serverinfo_srv_parse_cb, 
-						       NULL))
+							  serverinfo_srv_add_cb,
+							  NULL, NULL,
+							  serverinfo_srv_parse_cb, 
+							  NULL))
 			return 0;
 
 		serverinfo += 2;
