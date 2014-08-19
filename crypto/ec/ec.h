@@ -888,7 +888,7 @@ int i2d_ECPrivateKey(EC_KEY *key, unsigned char **out);
 EC_KEY *d2i_ECParameters(EC_KEY **key, const unsigned char **in, long len);
 
 /** Encodes ec parameter and stores the result in a buffer.
- *  \param  key  the EC_KEY object with ec paramters to encode
+ *  \param  key  the EC_KEY object with ec parameters to encode
  *  \param  out  the buffer for the result (if NULL the function returns number
  *               of bytes needed).
  *  \return 1 on success and 0 if an error occurred.

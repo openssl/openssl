@@ -377,7 +377,7 @@ $code.=<<___				if ($mode eq "ctr32");
 .L${mode}_no_carry:
 ___
 $code.=<<___;
-	mov	%r8,$out		# restore paramters
+	mov	%r8,$out		# restore parameters
 	mov	%r11,$chunk
 	test	\$0x0f,$out
 	jz	.L${mode}_out_aligned
@@ -485,7 +485,7 @@ $code.=<<___				if ($mode eq "ctr32");
 	bswap	%eax
 	mov	%eax,-4($ctx)
 
-	mov	%r10,$len		# restore paramters
+	mov	%r10,$len		# restore parameters
 	sub	%r11,$len
 	mov	\$`16*0x10000`,$chunk
 	jz	.L${mode}_exit
