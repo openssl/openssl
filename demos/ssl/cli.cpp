@@ -42,8 +42,6 @@ void main ()
   SSL_load_error_strings();
   ctx = SSL_CTX_new (meth);                        CHK_NULL(ctx);
 
-  CHK_SSL(err);
-  
   /* ----------------------------------------------- */
   /* Create a socket and connect to server using normal socket calls. */
   
