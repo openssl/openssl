@@ -210,7 +210,7 @@ void custom_exts_free(custom_ext_methods *exts)
 	}
 
 /* Set callbacks for a custom extension */
-static int custom_ext_set(custom_ext_methods *exts,
+static int custom_ext_meth_add(custom_ext_methods *exts,
 			unsigned int ext_type,
 			custom_ext_add_cb add_cb,
 			custom_ext_free_cb free_cb,
@@ -250,25 +250,25 @@ static int custom_ext_set(custom_ext_methods *exts,
 
 /* Application level functions to add custom extension callbacks */
 
-int SSL_CTX_set_custom_cli_ext(SSL_CTX *ctx, unsigned int ext_type,
+int SSL_CTX_add_client_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
 			       custom_ext_add_cb add_cb,
 			       custom_ext_free_cb free_cb,
                                void *add_arg,
 			       custom_ext_parse_cb parse_cb, void *parse_arg)
 
 	{
-	return custom_ext_set(&ctx->cert->cli_ext, ext_type,
+	return custom_ext_meth_add(&ctx->cert->cli_ext, ext_type,
 				add_cb, free_cb, add_arg,
 				parse_cb, parse_arg);
 	}
 
-int SSL_CTX_set_custom_srv_ext(SSL_CTX *ctx, unsigned int ext_type,
+int SSL_CTX_add_server_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
 			       custom_ext_add_cb add_cb,
 			       custom_ext_free_cb free_cb,
                                void *add_arg,
 			       custom_ext_parse_cb parse_cb, void *parse_arg)
 	{
-	return custom_ext_set(&ctx->cert->srv_ext, ext_type,
+	return custom_ext_meth_add(&ctx->cert->srv_ext, ext_type,
 				add_cb, free_cb, add_arg,
 				parse_cb, parse_arg);
 	}

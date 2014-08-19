@@ -1361,7 +1361,7 @@ bad:
 			{
 			for (i = 0; i < serverinfo_types_count; i++)
 				{
-				SSL_CTX_set_custom_cli_ext(ctx,
+				SSL_CTX_add_client_custom_ext(ctx,
 							   serverinfo_types[i],
 							   NULL, NULL, NULL,
 							   serverinfo_cli_cb,

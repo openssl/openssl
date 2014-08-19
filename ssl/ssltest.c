@@ -1584,11 +1584,11 @@ bad:
 #endif
 
 	if (serverinfo_sct)
-		SSL_CTX_set_custom_cli_ext(c_ctx, SCT_EXT_TYPE,
+		SSL_CTX_add_client_custom_ext(c_ctx, SCT_EXT_TYPE,
 					   NULL, NULL, NULL,
 					   serverinfo_cli_cb, NULL);
 	if (serverinfo_tack)
-		SSL_CTX_set_custom_cli_ext(c_ctx, TACK_EXT_TYPE,
+		SSL_CTX_add_client_custom_ext(c_ctx, TACK_EXT_TYPE,
 					   NULL, NULL, NULL,
 					   serverinfo_cli_cb, NULL);
 
@@ -1601,30 +1601,30 @@ bad:
 
 	if (custom_ext)
 		{
-		SSL_CTX_set_custom_cli_ext(c_ctx, CUSTOM_EXT_TYPE_0, 
+		SSL_CTX_add_client_custom_ext(c_ctx, CUSTOM_EXT_TYPE_0, 
 					   custom_ext_0_cli_add_cb, NULL, NULL,
 					   custom_ext_0_cli_parse_cb, NULL);
-		SSL_CTX_set_custom_cli_ext(c_ctx, CUSTOM_EXT_TYPE_1, 
+		SSL_CTX_add_client_custom_ext(c_ctx, CUSTOM_EXT_TYPE_1, 
 					   custom_ext_1_cli_add_cb, NULL, NULL,
 					   custom_ext_1_cli_parse_cb, NULL);
-		SSL_CTX_set_custom_cli_ext(c_ctx, CUSTOM_EXT_TYPE_2, 
+		SSL_CTX_add_client_custom_ext(c_ctx, CUSTOM_EXT_TYPE_2, 
 					   custom_ext_2_cli_add_cb, NULL, NULL,
 					   custom_ext_2_cli_parse_cb, NULL);
-		SSL_CTX_set_custom_cli_ext(c_ctx, CUSTOM_EXT_TYPE_3, 
+		SSL_CTX_add_client_custom_ext(c_ctx, CUSTOM_EXT_TYPE_3, 
 					   custom_ext_3_cli_add_cb, NULL, NULL,
 					   custom_ext_3_cli_parse_cb, NULL);
 
 
-		SSL_CTX_set_custom_srv_ext(s_ctx, CUSTOM_EXT_TYPE_0, 
+		SSL_CTX_add_server_custom_ext(s_ctx, CUSTOM_EXT_TYPE_0, 
 					   custom_ext_0_srv_add_cb, NULL, NULL,
 					   custom_ext_0_srv_parse_cb, NULL);
-		SSL_CTX_set_custom_srv_ext(s_ctx, CUSTOM_EXT_TYPE_1, 
+		SSL_CTX_add_server_custom_ext(s_ctx, CUSTOM_EXT_TYPE_1, 
 					   custom_ext_1_srv_add_cb, NULL, NULL,
 					   custom_ext_1_srv_parse_cb, NULL);
-		SSL_CTX_set_custom_srv_ext(s_ctx, CUSTOM_EXT_TYPE_2, 
+		SSL_CTX_add_server_custom_ext(s_ctx, CUSTOM_EXT_TYPE_2, 
 					   custom_ext_2_srv_add_cb, NULL, NULL,
 					   custom_ext_2_srv_parse_cb, NULL);
-		SSL_CTX_set_custom_srv_ext(s_ctx, CUSTOM_EXT_TYPE_3, 
+		SSL_CTX_add_server_custom_ext(s_ctx, CUSTOM_EXT_TYPE_3, 
 					   custom_ext_3_srv_add_cb, NULL, NULL,
 					   custom_ext_3_srv_parse_cb, NULL);
 		}
