@@ -218,30 +218,9 @@ static int custom_ext_set(custom_ext_methods *exts,
 			custom_ext_parse_cb parse_cb, void *parse_arg)
 	{
 	custom_ext_method *meth;
-	/* See if it is a supported internally */
-	switch(ext_type)
-		{
-	case TLSEXT_TYPE_application_layer_protocol_negotiation:
-	case TLSEXT_TYPE_ec_point_formats:
-	case TLSEXT_TYPE_elliptic_curves:
-	case TLSEXT_TYPE_heartbeat:
-	case TLSEXT_TYPE_next_proto_neg:
-	case TLSEXT_TYPE_padding:
-	case TLSEXT_TYPE_renegotiate:
-	case TLSEXT_TYPE_server_name:
-	case TLSEXT_TYPE_session_ticket:
-	case TLSEXT_TYPE_signature_algorithms:
-	case TLSEXT_TYPE_srp:
-	case TLSEXT_TYPE_status_request:
-	case TLSEXT_TYPE_use_srtp:
-#ifdef TLSEXT_TYPE_opaque_prf_input
-	case TLSEXT_TYPE_opaque_prf_input:
-#endif
-#ifdef TLSEXT_TYPE_encrypt_then_mac
-	case TLSEXT_TYPE_encrypt_then_mac:
-#endif
+	/* Don't add if extension supported internall */
+	if (SSL_extension_supported(ext_type))
 		return 0;
-		}
 	/* Extension type must fit in 16 bits */
 	if (ext_type > 0xffff)
 		return 0;
@@ -292,5 +271,35 @@ int SSL_CTX_set_custom_srv_ext(SSL_CTX *ctx, unsigned int ext_type,
 	return custom_ext_set(&ctx->cert->srv_ext, ext_type,
 				add_cb, free_cb, add_arg,
 				parse_cb, parse_arg);
+	}
+
+int SSL_extension_supported(unsigned int ext_type)
+	{
+	/* See if it is a supported internally */
+	switch(ext_type)
+		{
+	case TLSEXT_TYPE_application_layer_protocol_negotiation:
+	case TLSEXT_TYPE_ec_point_formats:
+	case TLSEXT_TYPE_elliptic_curves:
+	case TLSEXT_TYPE_heartbeat:
+	case TLSEXT_TYPE_next_proto_neg:
+	case TLSEXT_TYPE_padding:
+	case TLSEXT_TYPE_renegotiate:
+	case TLSEXT_TYPE_server_name:
+	case TLSEXT_TYPE_session_ticket:
+	case TLSEXT_TYPE_signature_algorithms:
+	case TLSEXT_TYPE_srp:
+	case TLSEXT_TYPE_status_request:
+	case TLSEXT_TYPE_use_srtp:
+#ifdef TLSEXT_TYPE_opaque_prf_input
+	case TLSEXT_TYPE_opaque_prf_input:
+#endif
+#ifdef TLSEXT_TYPE_encrypt_then_mac
+	case TLSEXT_TYPE_encrypt_then_mac:
+#endif
+		return 1;
+	default:
+		return 0;
+		}
 	}
 #endif
