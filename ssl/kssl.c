@@ -2133,7 +2133,7 @@ krb5_error_code  kssl_check_authent(
 
 #ifdef KSSL_DEBUG
 	printf("kssl_check_authent: returns %d for client time ", *atimep);
-	if (auth && auth->ctime && auth->ctime->length && auth->ctime->data)
+	if (auth->ctime && auth->ctime->length && auth->ctime->data)
 		printf("%.*s\n", auth->ctime->length, auth->ctime->data);
 	else	printf("NULL\n");
 #endif	/* KSSL_DEBUG */
