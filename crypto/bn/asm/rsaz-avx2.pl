@@ -99,7 +99,7 @@ if (!$avx && `$ENV{CC} -v 2>&1` =~ /(^clang version|based on LLVM) ([3-9])\.([0-
 	$addx = ($ver>=3.03);
 }
 
-open OUT,"| $^X $xlate $flavour $output";
+open OUT,"| \"$^X\" $xlate $flavour $output";
 *STDOUT = *OUT;
 
 if ($avx>1) {{{
