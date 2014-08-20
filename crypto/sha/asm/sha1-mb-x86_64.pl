@@ -153,7 +153,7 @@ $code.=<<___ if ($i<14);			# just load input
 	psrld	\$2,$b
 	paddd	$t2,$e				# e+=rol(a,5)
 	 pshufb	$tx,@Xi[1]
-	 movd		`4*$j-16*4`(@ptr[2]),$t2
+	 movd		`4*$k-16*4`(@ptr[2]),$t2
 	por	$t1,$b				# b=rol(b,30)
 ___
 $code.=<<___ if ($i==14);			# just load input
