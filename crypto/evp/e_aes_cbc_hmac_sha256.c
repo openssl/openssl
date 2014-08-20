@@ -329,10 +329,18 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA256 *key,
 		len += 64+13;		/* 64 is HMAC header */
 		len *= 8;		/* convert to bits */
 		if (off<(64-8)) {
+#ifdef BSWAP4
+			blocks[i].d[15] = BSWAP4(len);
+#else
 			PUTU32(blocks[i].c+60,len);
+#endif
 			edges[i].blocks = 1;			
 		} else {
+#ifdef BSWAP4
+			blocks[i].d[31] = BSWAP4(len);
+#else
 			PUTU32(blocks[i].c+124,len);
+#endif
 			edges[i].blocks = 2;
 		}
 		edges[i].ptr = blocks[i].c;
@@ -343,6 +351,18 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA256 *key,
 
 	memset(blocks,0,sizeof(blocks));
 	for (i=0;i<x4;i++) {
+#ifdef BSWAP4
+		blocks[i].d[0] = BSWAP4(ctx->A[i]);	ctx->A[i] = key->tail.h[0];
+		blocks[i].d[1] = BSWAP4(ctx->B[i]);	ctx->B[i] = key->tail.h[1];
+		blocks[i].d[2] = BSWAP4(ctx->C[i]);	ctx->C[i] = key->tail.h[2];
+		blocks[i].d[3] = BSWAP4(ctx->D[i]);	ctx->D[i] = key->tail.h[3];
+		blocks[i].d[4] = BSWAP4(ctx->E[i]);	ctx->E[i] = key->tail.h[4];
+		blocks[i].d[5] = BSWAP4(ctx->F[i]);	ctx->F[i] = key->tail.h[5];
+		blocks[i].d[6] = BSWAP4(ctx->G[i]);	ctx->G[i] = key->tail.h[6];
+		blocks[i].d[7] = BSWAP4(ctx->H[i]);	ctx->H[i] = key->tail.h[7];
+		blocks[i].c[32] = 0x80;
+		blocks[i].d[15] = BSWAP4((64+32)*8);
+#else
 		PUTU32(blocks[i].c+0,ctx->A[i]);	ctx->A[i] = key->tail.h[0];
 		PUTU32(blocks[i].c+4,ctx->B[i]);	ctx->B[i] = key->tail.h[1];
 		PUTU32(blocks[i].c+8,ctx->C[i]);	ctx->C[i] = key->tail.h[2];
@@ -353,6 +373,7 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA256 *key,
 		PUTU32(blocks[i].c+28,ctx->H[i]);	ctx->H[i] = key->tail.h[7];
 		blocks[i].c[32] = 0x80;
 		PUTU32(blocks[i].c+60,(64+32)*8);
+#endif
 		edges[i].ptr = blocks[i].c;
 		edges[i].blocks = 1;
 	}
