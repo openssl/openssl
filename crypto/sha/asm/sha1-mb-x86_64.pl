@@ -107,6 +107,19 @@ my ($i,$a,$b,$c,$d,$e)=@_;
 my $j=$i+1;
 my $k=$i+2;
 
+# Loads are performed 2+3/4 iterations in advance. 3/4 means that out
+# of 4 words you would expect to be loaded per given iteration one is
+# spilled to next iteration. In other words indices in four input
+# streams are distributed as following:
+#
+# $i==0:	0,0,0,0,1,1,1,1,2,2,2,
+# $i==1:	2,3,3,3,
+# $i==2:	3,4,4,4,
+# ...
+# $i==13:	14,15,15,15,
+# $i==14:	15
+# 
+# Then at $i==15 Xupdate is applied one iteration in advance...
 $code.=<<___ if ($i==0);
 	movd		(@ptr[0]),@Xi[0]
 	 lea		`16*4`(@ptr[0]),@ptr[0]
