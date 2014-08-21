@@ -66,13 +66,11 @@ depend:
 	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
 	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
 
-dclean:
+clean:
+	rm -f asm/mx86unix.cpp *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 	rm -f ../../include/openssl/$(EXHEADER) ../../test/$(TEST) ../../apps/$(APPS)
-
-clean:
-	rm -f asm/mx86unix.cpp *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

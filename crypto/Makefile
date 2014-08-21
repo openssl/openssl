@@ -140,12 +140,10 @@ depend:
 clean:
 	rm -f buildinf.h *.s *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 	@target=clean; $(RECURSIVE_MAKE)
-
-dclean:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 	rm -f opensslconf.h
-	@target=dclean; $(RECURSIVE_MAKE)
+	@target=clean; $(RECURSIVE_MAKE)
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

@@ -134,14 +134,12 @@ depend:
 	    $(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(SRC); \
 	fi
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
-	rm -f CA.pl
-
 clean:
 	rm -f *.o *.obj *.dll lib tags core .pure .nfs* *.old *.bak fluff $(EXE)
 	rm -f req
+	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
+	mv -f Makefile.new $(MAKEFILE)
+	rm -f CA.pl
 
 $(DLIBSSL):
 	(cd ..; $(MAKE) DIRS=ssl all)

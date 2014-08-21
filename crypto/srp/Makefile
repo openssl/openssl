@@ -66,12 +66,10 @@ lint:
 depend:
 	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
-
 clean:
 	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
+	mv -f Makefile.new $(MAKEFILE)
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

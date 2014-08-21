@@ -162,13 +162,11 @@ depend:
 	@[ -z "$(THIS)" ] || $(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
 	@[ -z "$(THIS)" ] || (set -e; target=depend; $(RECURSIVE_MAKE) )
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
-	@target=dclean; $(RECURSIVE_MAKE)
-
 clean:
 	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	@target=clean; $(RECURSIVE_MAKE)
+	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
+	mv -f Makefile.new $(MAKEFILE)
 	@target=clean; $(RECURSIVE_MAKE)
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
