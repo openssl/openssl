@@ -398,14 +398,12 @@ depend:
 	    $(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(SRC); \
 	fi
 
-dclean:
+clean:
+	rm -f .rnd tmp.bntest tmp.bctest *.o *.obj *.dll lib tags core .pure .nfs* *.old *.bak fluff $(EXE) $(FIPSEXE) *.ss *.srl log dummytest
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 	rm -f $(SRC) $(SHA256TEST).c $(SHA512TEST).c evptests.txt newkey.pem testkey.pem \
 			testreq.pem
-
-clean:
-	rm -f .rnd tmp.bntest tmp.bctest *.o *.obj *.dll lib tags core .pure .nfs* *.old *.bak fluff $(EXE) $(FIPSEXE) *.ss *.srl log dummytest
 
 $(DLIBSSL):
 	(cd ..; $(MAKE) DIRS=ssl all)
