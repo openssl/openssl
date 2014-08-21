@@ -574,7 +574,7 @@ printf("\n");
 		if (empty_record_count > MAX_EMPTY_RECORDS)
 			{
 			al=SSL_AD_UNEXPECTED_MESSAGE;
-			SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_TOO_MANY_EMPTY_FRAGMENTS);
+			SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_RECORD_TOO_SMALL);
 			goto f_err;
 			}
 		goto again;
