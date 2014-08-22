@@ -1183,19 +1183,20 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
 		goto err;
 		}
 
+	if (ret->pub_key)
+		EC_POINT_clear_free(ret->pub_key);
+	ret->pub_key = EC_POINT_new(ret->group);
+	if (ret->pub_key == NULL)
+		{
+		ECerr(EC_F_D2I_ECPRIVATEKEY, ERR_R_EC_LIB);
+		goto err;
+		}
+
 	if (priv_key->publicKey)
 		{
 		const unsigned char *pub_oct;
 		size_t pub_oct_len;
 
-		if (ret->pub_key)
-			EC_POINT_clear_free(ret->pub_key);
-		ret->pub_key = EC_POINT_new(ret->group);
-		if (ret->pub_key == NULL)
-			{
-			ECerr(EC_F_D2I_ECPRIVATEKEY, ERR_R_EC_LIB);
-			goto err;
-			}
 		pub_oct     = M_ASN1_STRING_data(priv_key->publicKey);
 		pub_oct_len = M_ASN1_STRING_length(priv_key->publicKey);
 		/* save the point conversion form */
@@ -1206,6 +1207,16 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
 			ECerr(EC_F_D2I_ECPRIVATEKEY, ERR_R_EC_LIB);
 			goto err;
 			}
+		}
+	else
+		{
+		if (!EC_POINT_mul(ret->group, ret->pub_key, ret->priv_key, NULL, NULL, NULL))
+			{
+			ECerr(EC_F_D2I_ECPRIVATEKEY, ERR_R_EC_LIB);
+			goto err;
+			}
+		/* Remember the original private-key-only encoding. */
+		ret->enc_flag |= EC_PKEY_NO_PUBKEY;
 		}
 
 	ok = 1;
