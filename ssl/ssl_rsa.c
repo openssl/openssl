@@ -64,8 +64,8 @@
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 
-static int ssl_set_cert(CERT *c, X509 *x509);
-static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey);
+static int ssl_set_cert(CERT *c, X509 *x509, int force);
+static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey, int force);
 int SSL_use_certificate(SSL *ssl, X509 *x)
 	{
 	int rv;
@@ -86,7 +86,7 @@ int SSL_use_certificate(SSL *ssl, X509 *x)
 		SSLerr(SSL_F_SSL_USE_CERTIFICATE,ERR_R_MALLOC_FAILURE);
 		return(0);
 		}
-	return(ssl_set_cert(ssl->cert,x));
+	return(ssl_set_cert(ssl->cert,x,ssl->async_key_ex_cb != NULL));
 	}
 
 #ifndef OPENSSL_NO_STDIO
@@ -181,13 +181,13 @@ int SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa)
 	RSA_up_ref(rsa);
 	EVP_PKEY_assign_RSA(pkey,rsa);
 
-	ret=ssl_set_pkey(ssl->cert,pkey);
+	ret=ssl_set_pkey(ssl->cert,pkey,ssl->async_key_ex_cb != NULL);
 	EVP_PKEY_free(pkey);
 	return(ret);
 	}
 #endif
 
-static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
+static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey, int force)
 	{
 	int i;
 	/* Special case for DH: check two DH certificate types for a match.
@@ -229,7 +229,7 @@ static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
 			;
 		else
 #endif
-		if (!X509_check_private_key(c->pkeys[i].x509,pkey))
+		if (!force && !X509_check_private_key(c->pkeys[i].x509,pkey))
 			{
 			X509_free(c->pkeys[i].x509);
 			c->pkeys[i].x509 = NULL;
@@ -329,7 +329,7 @@ int SSL_use_PrivateKey(SSL *ssl, EVP_PKEY *pkey)
 		SSLerr(SSL_F_SSL_USE_PRIVATEKEY,ERR_R_MALLOC_FAILURE);
 		return(0);
 		}
-	ret=ssl_set_pkey(ssl->cert,pkey);
+	ret=ssl_set_pkey(ssl->cert,pkey,ssl->async_key_ex_cb != NULL);
 	return(ret);
 	}
 
@@ -418,10 +418,10 @@ int SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x)
 		SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE,ERR_R_MALLOC_FAILURE);
 		return(0);
 		}
-	return(ssl_set_cert(ctx->cert, x));
+	return(ssl_set_cert(ctx->cert, x,ctx->async_key_ex_cb != NULL));
 	}
 
-static int ssl_set_cert(CERT *c, X509 *x)
+static int ssl_set_cert(CERT *c, X509 *x, int force)
 	{
 	EVP_PKEY *pkey;
 	int i;
@@ -455,7 +455,7 @@ static int ssl_set_cert(CERT *c, X509 *x)
 			 ;
 		else
 #endif /* OPENSSL_NO_RSA */
-		if (!X509_check_private_key(x,c->pkeys[i].privatekey))
+		if (!force && !X509_check_private_key(x,c->pkeys[i].privatekey))
 			{
 			/* don't fail for a cert/key mismatch, just free
 			 * current private key (when switching to a different
@@ -572,7 +572,7 @@ int SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx, RSA *rsa)
 	RSA_up_ref(rsa);
 	EVP_PKEY_assign_RSA(pkey,rsa);
 
-	ret=ssl_set_pkey(ctx->cert, pkey);
+	ret=ssl_set_pkey(ctx->cert, pkey,ctx->async_key_ex_cb != NULL);
 	EVP_PKEY_free(pkey);
 	return(ret);
 	}
@@ -656,7 +656,7 @@ int SSL_CTX_use_PrivateKey(SSL_CTX *ctx, EVP_PKEY *pkey)
 		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY,ERR_R_MALLOC_FAILURE);
 		return(0);
 		}
-	return(ssl_set_pkey(ctx->cert,pkey));
+	return(ssl_set_pkey(ctx->cert,pkey,ctx->async_key_ex_cb != NULL));
 	}
 
 #ifndef OPENSSL_NO_STDIO

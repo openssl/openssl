@@ -413,6 +413,7 @@ SSL *SSL_new(SSL_CTX *ctx)
 	s->psk_client_callback=ctx->psk_client_callback;
 	s->psk_server_callback=ctx->psk_server_callback;
 #endif
+	s->async_key_ex_cb=ctx->async_key_ex_cb;
 
 	return(s);
 err:
@@ -806,6 +807,40 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count)
 		memcpy(buf, s->s3->tmp.peer_finish_md, count);
 		}
 	return ret;
+	}
+
+
+int SSL_supply(SSL* s, unsigned char* data, long len)
+	{
+	int async;
+	if (s->s3 == NULL)
+		return 0;
+
+	async = 1;
+	switch (s->state) {
+		case SSL3_ST_SR_KEY_EXCH_RSA_WAIT:
+			s->state=SSL3_ST_SR_KEY_EXCH_RSA_SUPPLY;
+			break;
+		case SSL3_ST_SW_KEY_EXCH_RSA_WAIT_A:
+			s->state=SSL3_ST_SW_KEY_EXCH_RSA_SUPPLY_A;
+			break;
+		case SSL3_ST_SW_KEY_EXCH_RSA_WAIT_B:
+			s->state=SSL3_ST_SW_KEY_EXCH_RSA_SUPPLY_B;
+			break;
+		default:
+			async = 0;
+			break;
+	}
+	if (async) {
+		s->rwstate=SSL_NOTHING;
+		BIO_set_flags(SSL_get_rbio(s), 0);
+	}
+	s->async_key_ex_data=data;
+	s->async_key_ex_len=len;
+	if (async)
+		return SSL_accept(s);
+	else
+		return 1;
 	}
 
 

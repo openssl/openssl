@@ -1146,6 +1146,11 @@ struct ssl_ctx_st
 	size_t tlsext_ellipticcurvelist_length;
 	unsigned char *tlsext_ellipticcurvelist;
 # endif /* OPENSSL_NO_EC */
+	void (*async_key_ex_cb)(SSL* s,
+													int type,
+													const char* md,
+													unsigned char* p,
+													long n);
 	};
 
 #endif
@@ -1570,6 +1575,17 @@ struct ssl_st
 	/* Callback for disabling session caching and ticket support
 	 * on a session basis, depending on the chosen cipher. */
 	int (*not_resumable_session_cb)(SSL *ssl, int is_forward_secure);
+
+	void (*async_key_ex_cb)(SSL* s,
+													int type,
+													const char* md,
+													unsigned char* p,
+													long n);
+	unsigned char* async_key_ex_data;
+	long async_key_ex_len;
+	/* Internal data, don't touch it */
+	void* async_key_ex_int;
+	unsigned int async_key_ex_int_n;
 	};
 
 #endif
@@ -1656,6 +1672,11 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 
 #define OpenSSL_add_ssl_algorithms()	SSL_library_init()
 #define SSLeay_add_ssl_algorithms()	SSL_library_init()
+
+/* Async key exchange params */
+#define SSL_KEY_EX_RSA 0x0
+#define SSL_KEY_EX_RSA_SIGN 0x1
+int SSL_supply(SSL* s, unsigned char* data, long len);
 
 /* this is for backward compatibility */
 #if 0 /* NEW_SSLEAY */
