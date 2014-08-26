@@ -561,20 +561,23 @@ static int custom_ext_3_cli_parse_cb(SSL *s, unsigned int ext_type,
 	return 1;
 	}
 
-/* custom_ext_0_cli_parse_cb returns -1 - the server won't receive a callback for this extension */
+/* custom_ext_0_cli_add_cb returns 0 - the server won't receive a callback for this extension */
 static int custom_ext_0_srv_parse_cb(SSL *s, unsigned int ext_type,
 				     const unsigned char *in,
 				     size_t inlen, int *al,
 				     void *arg)
 	{
+	custom_ext_error = 1;
 	return 1;
 	}
 
-/* 'generate' callbacks are always called, even if the 'receive' callback isn't called */
+/* 'add' callbacks are only called if the 'parse' callback is called */
 static int custom_ext_0_srv_add_cb(SSL *s, unsigned int ext_type,
 				      const unsigned char **out,
 				      size_t *outlen, int *al, void *arg)
 	{
+	/* Error: should not have been called */
+	custom_ext_error = 1;
         return 0; /* Don't send an extension */
 	}
 
