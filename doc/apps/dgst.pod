@@ -12,6 +12,8 @@ B<openssl> B<dgst>
 [B<-d>]
 [B<-hex>]
 [B<-binary>]
+[B<-hmac arg>]
+[B<-non-fips-allow>]
 [B<-out filename>]
 [B<-sign filename>]
 [B<-keyform arg>]
@@ -53,6 +55,14 @@ digest as opposed to a digital signature.
 =item B<-binary>
 
 output the digest or signature in binary form.
+
+=item B<-hmac arg>
+
+set the HMAC key to "arg".
+
+=item B<-non-fips-allow>
+
+allow use of non FIPS digest.
 
 =item B<-out filename>
 
