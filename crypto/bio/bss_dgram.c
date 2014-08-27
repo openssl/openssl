@@ -577,10 +577,10 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 			ret = -1;
 			break;
 			}
-		ret = -1;
 #else
-		break;
+		ret = -1;
 #endif
+		break;
 	case BIO_CTRL_DGRAM_QUERY_MTU:
 #if defined(OPENSSL_SYS_LINUX) && defined(IP_MTU)
 		addr_len = (socklen_t)sizeof(addr);
