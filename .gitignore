@@ -81,7 +81,9 @@
 /test/evptests.txt
 lib
 Makefile.save
-*.bak
 tags
 TAGS
+*.bak
 /ms/*.rc
+/ms/*.def
+/ms/*.mak
