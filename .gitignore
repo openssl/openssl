@@ -84,3 +84,4 @@ Makefile.save
 *.bak
 tags
 TAGS
+/ms/*.rc
