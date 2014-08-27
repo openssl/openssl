@@ -497,7 +497,7 @@ libclean:
 clean:	libclean
 	rm -f shlib/*.o *.o core a.out fluff rehash.time testlog make.log cctest cctest.c
 	@set -e; target=clean; $(RECURSIVE_BUILD_CMD)
-	rm -f $(LIBS)
+	rm -f $(LIBS) tags TAGS
 	rm -f openssl.pc libssl.pc libcrypto.pc
 	rm -f speed.* .pure
 	rm -f $(TARFILE)
@@ -557,9 +557,12 @@ depend:
 lint:
 	@set -e; target=lint; $(RECURSIVE_BUILD_CMD)
 
-tags:
-	rm -f TAGS
-	find . -name '[^.]*.[ch]' | xargs etags -a
+tags TAGS: FORCE
+	rm -f TAGS tags
+	-ctags -R .
+	-etags -R .
+
+FORCE:
 
 errors:
 	$(PERL) util/ck_errf.pl -strict */*.c */*/*.c
