@@ -189,7 +189,7 @@ rsa_oaep.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 rsa_oaep.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
 rsa_oaep.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 rsa_oaep.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-rsa_oaep.o: ../cryptlib.h rsa_oaep.c
+rsa_oaep.o: ../constant_time_locl.h ../cryptlib.h rsa_oaep.c
 rsa_pk1.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_pk1.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rsa_pk1.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -198,7 +198,8 @@ rsa_pk1.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 rsa_pk1.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 rsa_pk1.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
 rsa_pk1.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-rsa_pk1.o: ../../include/openssl/symhacks.h ../cryptlib.h rsa_pk1.c
+rsa_pk1.o: ../../include/openssl/symhacks.h ../constant_time_locl.h
+rsa_pk1.o: ../cryptlib.h rsa_pk1.c
 rsa_pss.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_pss.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rsa_pss.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
