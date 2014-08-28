@@ -72,6 +72,7 @@ FIPS_DSATEST=	fips_dsatest
 FIPS_DSSVS=	fips_dssvs
 FIPS_RNGVS=	fips_rngvs
 FIPS_TEST_SUITE=fips_test_suite
+CONSTTIMETEST=  constant_time_test
 
 TESTS=		alltests
 
@@ -88,7 +89,8 @@ EXE=	$(BNTEST)$(EXE_EXT) $(ECTEST)$(EXE_EXT)  $(ECDSATEST)$(EXE_EXT) $(ECDHTEST)
 	$(FIPS_HMACTEST)$(EXE_EXT) $(FIPS_RSAVTEST)$(EXE_EXT) \
 	$(FIPS_RSASTEST)$(EXE_EXT) $(FIPS_RSAGTEST)$(EXE_EXT) \
 	$(FIPS_DSSVS)$(EXE_EXT) $(FIPS_DSATEST)$(EXE_EXT) \
-	$(FIPS_RNGVS)$(EXE_EXT) $(FIPS_TEST_SUITE)$(EXE_EXT) jpaketest$(EXE_EXT)
+	$(FIPS_RNGVS)$(EXE_EXT) $(FIPS_TEST_SUITE)$(EXE_EXT) \
+	jpaketest$(EXE_EXT) $(CONSTTIMETEST)$(EXE_EXT)
 
 # $(METHTEST)$(EXE_EXT)
 
@@ -105,7 +107,7 @@ OBJ=	$(BNTEST).o $(ECTEST).o  $(ECDSATEST).o $(ECDHTEST).o $(IDEATEST).o \
 	$(FIPS_AESTEST).o $(FIPS_HMACTEST).o $(FIPS_RSAVTEST).o \
 	$(FIPS_RSASTEST).o $(FIPS_RSAGTEST).o \
 	$(FIPS_DSSVS).o $(FIPS_DSATEST).o $(FIPS_RNGVS).o $(FIPS_TEST_SUITE).o \
-	jpaketest.o
+	jpaketest.o $(CONSTTIMETEST).o
 
 SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(MD2TEST).c  $(MD4TEST).c $(MD5TEST).c \
@@ -119,7 +121,7 @@ SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(FIPS_AESTEST).c $(FIPS_HMACTEST).c $(FIPS_RSAVTEST).c \
 	$(FIPS_RSASTEST).c $(FIPS_RSAGTEST).c \
 	$(FIPS_DSSVS).c $(FIPS_DSATEST).c $(FIPS_RNGVS).c $(FIPS_TEST_SUITE).c \
-	jpaketest.c
+	jpaketest.c $(CONSTTIMETEST).c
 
 EXHEADER= 
 HEADER=	$(EXHEADER)
@@ -161,7 +163,8 @@ alltests: \
 	test_rand test_bn test_ec test_ecdsa test_ecdh \
 	test_enc test_x509 test_rsa test_crl test_sid \
 	test_gen test_req test_pkcs7 test_verify test_dh test_dsa \
-	test_ss test_ca test_engine test_evp test_ssl test_ige test_jpake
+	test_ss test_ca test_engine test_evp test_ssl test_ige test_jpake \
+	test_constant_time
 
 test_evp:
 	../util/shlib_wrap.sh ./$(EVPTEST) evptests.txt
@@ -332,6 +335,10 @@ test_ige: $(IGETEST)$(EXE_EXT)
 test_jpake: jpaketest$(EXE_EXT)
 	@echo "Test JPAKE"
 	../util/shlib_wrap.sh ./jpaketest
+
+test_constant_time: $(CONSTTIMETEST)$(EXE_EXT)
+	@echo "Test constant time utilites"
+	../util/shlib_wrap.sh ./$(CONSTTIMETEST)
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
@@ -527,6 +534,9 @@ $(IGETEST)$(EXE_EXT): $(IGETEST).o $(DLIBCRYPTO)
 jpaketest$(EXE_EXT): jpaketest.o $(DLIBCRYPTO)
 	@target=jpaketest; $(BUILD_CMD)
 
+$(CONSTTIMETEST)$(EXE_EXT): $(CONSTTIMETEST).o
+	@target=$(CONSTTIMETEST) $(BUILD_CMD)
+
 #$(AESTEST).o: $(AESTEST).c
 #	$(CC) -c $(CFLAGS) -DINTERMEDIATE_VALUE_KAT -DTRACE_KAT_MCT $(AESTEST).c
 
@@ -561,6 +571,9 @@ bntest.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
 bntest.o: ../include/openssl/x509_vfy.h bntest.c
 casttest.o: ../e_os.h ../include/openssl/cast.h ../include/openssl/e_os2.h
 casttest.o: ../include/openssl/opensslconf.h casttest.c
+constant_time_test.o: ../crypto/constant_time_locl.h ../e_os.h
+constant_time_test.o: ../include/openssl/e_os2.h
+constant_time_test.o: ../include/openssl/opensslconf.h constant_time_test.c
 destest.o: ../include/openssl/des.h ../include/openssl/des_old.h
 destest.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
 destest.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
@@ -866,11 +879,8 @@ md5test.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 md5test.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
 md5test.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 md5test.o: ../include/openssl/symhacks.h md5test.c
-mdc2test.o: ../include/openssl/buffer.h ../include/openssl/crypto.h
-mdc2test.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
-mdc2test.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-mdc2test.o: ../include/openssl/safestack.h ../include/openssl/stack.h
-mdc2test.o: ../include/openssl/symhacks.h mdc2test.c
+mdc2test.o: ../e_os.h ../include/openssl/e_os2.h
+mdc2test.o: ../include/openssl/opensslconf.h mdc2test.c
 randtest.o: ../e_os.h ../include/openssl/e_os2.h
 randtest.o: ../include/openssl/opensslconf.h ../include/openssl/ossl_typ.h
 randtest.o: ../include/openssl/rand.h randtest.c
