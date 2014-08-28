@@ -31,6 +31,7 @@ CPUID_OBJ=mem_clr.o
 LIBS=
 
 GENERAL=Makefile README crypto-lib.com install.com
+TEST=constant_time_test.c
 
 LIB= $(TOP)/libcrypto.a
 SHARED_LIB= libcrypto$(SHLIB_EXT)
