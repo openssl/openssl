@@ -74,6 +74,11 @@ flags currently defined - EC_PKEY_NO_PARAMETERS and EC_PKEY_NO_PUBKEY.  These fl
 converted into ASN1 in a call to i2d_ECPrivateKey. If EC_PKEY_NO_PARAMETERS is set then the public parameters for the curve are not encoded
 along with the private key. If EC_PKEY_NO_PUBKEY is set then the public key is not encoded along with the private key.
 
+When reading a private key encoded with EC_PKEY_NO_PUBKEY,
+d2i_ECPrivateKey generates the missing public key
+automatically. Private keys encoded with EC_PKEY_NO_PARAMETERS cannot
+be loaded using d2i_ECPrivateKey.
+
 The functions EC_KEY_get_conv_form and EC_KEY_set_conv_form get and set the point_conversion_form for the B<key>. For a description
 of point_conversion_forms please refer to L<EC_POINT_new(3)|EC_POINT_new(3)>.
 
