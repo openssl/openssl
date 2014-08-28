@@ -835,8 +835,8 @@ int SSL_supply(SSL* s, unsigned char* data, long len)
 		s->rwstate=SSL_NOTHING;
 		BIO_set_flags(SSL_get_rbio(s), 0);
 	}
-	s->async_key_ex_data=data;
-	s->async_key_ex_len=len;
+	s->async_key_ex.data=data;
+	s->async_key_ex.data_len=len;
 	if (async)
 		return SSL_accept(s);
 	else

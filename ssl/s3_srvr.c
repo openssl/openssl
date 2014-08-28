@@ -1614,6 +1614,26 @@ int ssl3_send_server_done(SSL *s)
 	return ssl_do_write(s);
 	}
 
+static unsigned char* ssl3_restore_async_packet(SSL *s)
+	{
+		SSL_ASYNC_KEY_EX *async;
+		unsigned char *d;
+
+		async=&s->async_key_ex;
+
+		d=NULL;
+		if (!BUF_MEM_grow_clean(s->init_buf,async->packet_len))
+			goto exit;
+
+		d=(unsigned char *)s->init_buf->data;
+		memcpy(d, async->packet, async->packet_len);
+
+exit:
+		OPENSSL_free(async->packet);
+		async->packet=NULL;
+		return d;
+	}
+
 int ssl3_send_server_key_exchange(SSL *s)
 	{
 #ifndef OPENSSL_NO_RSA
@@ -2037,22 +2057,38 @@ int ssl3_send_server_key_exchange(SSL *s)
 					j+=i;
 					}
 
+
 				/* Use supplied data */
 				if (s->state == SSL3_ST_SW_KEY_EXCH_RSA_SUPPLY_A)
 					{
 async_RSA_cont_a:
-					d=(unsigned char *)s->init_buf->data;
-					p=s->async_key_ex_int;
-					n=s->async_key_ex_int_n;
-					u=s->async_key_ex_len;
-					memcpy(&(p[2]), s->async_key_ex_data, u);
+					d=ssl3_restore_async_packet(s);
+					if (d == NULL)
+						{
+						SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_LIB_BUF);
+						goto err;
+						}
+					p=d + s->async_key_ex.int_off;
+					n=s->async_key_ex.int_n;
+					u=s->async_key_ex.data_len;
+					memcpy(&(p[2]), s->async_key_ex.data, u);
+					s->async_key_ex.data=NULL;
 					}
 				/* Switch to a wait state */
 				else if (s->async_key_ex_cb != NULL)
 					{
-					s->async_key_ex_data = NULL;
-					s->async_key_ex_int=p;
-					s->async_key_ex_int_n=n;
+					/* Save packet and state */
+					s->async_key_ex.packet=BUF_memdup(s->init_buf->data,
+																						s->init_buf->length);
+					if (s->async_key_ex.packet == NULL)
+						{
+						SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_LIB_BUF);
+						goto err;
+						}
+					s->async_key_ex.packet_len=s->init_buf->length;
+					s->async_key_ex.data=NULL;
+					s->async_key_ex.int_off=p - d;
+					s->async_key_ex.int_n=n;
 					s->async_key_ex_cb(s,
 										 SSL_KEY_EX_RSA_SIGN,
 										 EVP_MD_name(md),
@@ -2060,7 +2096,7 @@ async_RSA_cont_a:
 										 j);
 
 					/* Synchronous execution */
-					if (s->async_key_ex_data != NULL)
+					if (s->async_key_ex.data != NULL)
 						goto async_RSA_cont_a;
 					return 2;
 					}
@@ -2097,11 +2133,18 @@ async_RSA_cont_a:
 				if (s->state == SSL3_ST_SW_KEY_EXCH_RSA_SUPPLY_B)
 					{
 async_RSA_cont_b:
-					d=(unsigned char *)s->init_buf->data;
-					p=s->async_key_ex_int;
-					n=s->async_key_ex_int_n;
-					i=s->async_key_ex_len;
-					memcpy(&(p[2]), s->async_key_ex_data, i);
+					/* Restore packet data */
+					d=ssl3_restore_async_packet(s);
+					if (d == NULL)
+						{
+						SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_LIB_BUF);
+						goto err;
+						}
+					p=d + s->async_key_ex.int_off;
+					n=s->async_key_ex.int_n;
+					i=s->async_key_ex.data_len;
+					memcpy(&(p[2]), s->async_key_ex.data, i);
+					s->async_key_ex.data=NULL;
 					}
 				/* Switch to a wait state */
 				else if (s->async_key_ex_cb != NULL)
@@ -2122,16 +2165,25 @@ async_RSA_cont_b:
 								 &(d[4]),
 								 n);
 
-					s->async_key_ex_data = NULL;
-					s->async_key_ex_int=p;
-					s->async_key_ex_int_n=n;
+					/* Save packet and state */
+					s->async_key_ex.packet=BUF_memdup(s->init_buf->data,
+																						s->init_buf->length);
+					if (s->async_key_ex.packet == NULL)
+						{
+						SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_LIB_BUF);
+						goto err;
+						}
+					s->async_key_ex.packet_len=s->init_buf->length;
+					s->async_key_ex.data=NULL;
+					s->async_key_ex.int_off=p - d;
+					s->async_key_ex.int_n=n;
 					s->async_key_ex_cb(s, SSL_KEY_EX_RSA_SIGN, EVP_MD_name(md), q, j);
 
 					/* Synchronous execution */
-					if (s->async_key_ex_data != NULL)
+					if (s->async_key_ex.data != NULL)
 						goto async_RSA_cont_b;
 					return 3;
-				}
+					}
 			else
 				{
 				EVP_SignInit_ex(&md_ctx, md, NULL);
@@ -2396,19 +2448,20 @@ int ssl3_get_client_key_exchange(SSL *s)
 		if (s->state == SSL3_ST_SR_KEY_EXCH_RSA_SUPPLY)
 			{
 async_RSA_cont:
-				p=s->async_key_ex_data;
-				decrypt_len=s->async_key_ex_len;
+			p=s->async_key_ex.data;
+			decrypt_len=s->async_key_ex.data_len;
+			s->async_key_ex.data=NULL;
 			}
 		/* Switch to a wait state */
 		else if (s->async_key_ex_cb != NULL)
 			{
-				s->async_key_ex_data = NULL;
-				s->async_key_ex_cb(s, SSL_KEY_EX_RSA, NULL, p, n);
+			s->async_key_ex.data=NULL;
+			s->async_key_ex_cb(s, SSL_KEY_EX_RSA, NULL, p, n);
 
-				/* Synchronous execution */
-				if (s->async_key_ex_data != NULL)
-					goto async_RSA_cont;
-				return 3;
+			/* Synchronous execution */
+			if (s->async_key_ex.data != NULL)
+				goto async_RSA_cont;
+			return 3;
 			}
 		else
 			{

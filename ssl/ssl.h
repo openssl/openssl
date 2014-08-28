@@ -373,6 +373,7 @@ typedef struct ssl_cipher_st SSL_CIPHER;
 typedef struct ssl_session_st SSL_SESSION;
 typedef struct tls_sigalgs_st TLS_SIGALGS;
 typedef struct ssl_conf_ctx_st SSL_CONF_CTX;
+typedef struct ssl_async_key_ex_st SSL_ASYNC_KEY_EX;
 
 DECLARE_STACK_OF(SSL_CIPHER)
 
@@ -1300,6 +1301,16 @@ int SSL_CTX_set_custom_srv_ext(SSL_CTX *ctx, unsigned short ext_type,
 
 #endif
 
+struct ssl_async_key_ex_st {
+	unsigned char* data;
+	long data_len;
+	/* Internal data, don't touch it */
+	unsigned char* packet;
+	long packet_len;
+	unsigned int int_off;
+	long int_n;
+};
+
 #define SSL_NOTHING	1
 #define SSL_WRITING	2
 #define SSL_READING	3
@@ -1581,11 +1592,7 @@ struct ssl_st
 													const char* md,
 													unsigned char* p,
 													long n);
-	unsigned char* async_key_ex_data;
-	long async_key_ex_len;
-	/* Internal data, don't touch it */
-	void* async_key_ex_int;
-	unsigned int async_key_ex_int_n;
+	SSL_ASYNC_KEY_EX async_key_ex;
 	};
 
 #endif
