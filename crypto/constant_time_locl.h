@@ -81,38 +81,38 @@ static inline unsigned int constant_time_msb(unsigned int a);
 /*
  * Returns 0xff..f if a < b and 0 otherwise.
  */
-inline unsigned int constant_time_lt(unsigned int a, unsigned int b);
+static inline unsigned int constant_time_lt(unsigned int a, unsigned int b);
 /* Convenience method for getting an 8-bit mask. */
-inline unsigned char constant_time_lt_8(unsigned int a, unsigned int b);
+static inline unsigned char constant_time_lt_8(unsigned int a, unsigned int b);
 
 /*
  * Returns 0xff..f if a >= b and 0 otherwise.
  */
-inline unsigned int constant_time_ge(unsigned int a, unsigned int b);
+static inline unsigned int constant_time_ge(unsigned int a, unsigned int b);
 /* Convenience method for getting an 8-bit mask. */
-inline unsigned char constant_time_ge_8(unsigned int a, unsigned int b);
+static inline unsigned char constant_time_ge_8(unsigned int a, unsigned int b);
 
 /*
  * Returns 0xff..f if a == 0 and 0 otherwise.
  */
-inline unsigned int constant_time_is_zero(unsigned int a);
+static inline unsigned int constant_time_is_zero(unsigned int a);
 /* Convenience method for getting an 8-bit mask. */
-inline unsigned char constant_time_is_zero_8(unsigned int a);
+static inline unsigned char constant_time_is_zero_8(unsigned int a);
 
 
 /*
  * Returns 0xff..f if a == b and 0 otherwise.
  */
-inline unsigned int constant_time_eq(unsigned int a, unsigned int b);
+static inline unsigned int constant_time_eq(unsigned int a, unsigned int b);
 /* Convenience method for getting an 8-bit mask. */
-inline unsigned char constant_time_eq_8(unsigned int a, unsigned int b);
+static inline unsigned char constant_time_eq_8(unsigned int a, unsigned int b);
 
 static inline unsigned int constant_time_msb(unsigned int a)
 	{
 	return (unsigned int)((int)(a) >> (sizeof(int) * 8 - 1));
 	}
 
-inline unsigned int constant_time_lt(unsigned int a, unsigned int b)
+static inline unsigned int constant_time_lt(unsigned int a, unsigned int b)
 	{
 	unsigned int lt;
 	/* Case 1: msb(a) == msb(b). a < b iff the MSB of a - b is set.*/
@@ -122,12 +122,12 @@ inline unsigned int constant_time_lt(unsigned int a, unsigned int b)
 	return constant_time_msb(lt);
 	}
 
-inline unsigned char constant_time_lt_8(unsigned int a, unsigned int b)
+static inline unsigned char constant_time_lt_8(unsigned int a, unsigned int b)
 	{
 	return (unsigned char)(constant_time_lt(a, b));
 	}
 
-inline unsigned int constant_time_ge(unsigned int a, unsigned int b)
+static inline unsigned int constant_time_ge(unsigned int a, unsigned int b)
 	{
 	unsigned int ge;
 	/* Case 1: msb(a) == msb(b). a >= b iff the MSB of a - b is not set.*/
@@ -137,27 +137,27 @@ inline unsigned int constant_time_ge(unsigned int a, unsigned int b)
 	return constant_time_msb(ge);
 	}
 
-inline unsigned char constant_time_ge_8(unsigned int a, unsigned int b)
+static inline unsigned char constant_time_ge_8(unsigned int a, unsigned int b)
 	{
 	return (unsigned char)(constant_time_ge(a, b));
 	}
 
-inline unsigned int constant_time_is_zero(unsigned int a)
+static inline unsigned int constant_time_is_zero(unsigned int a)
 	{
 	return constant_time_msb(~a & (a - 1));
 	}
 
-inline unsigned char constant_time_is_zero_8(unsigned int a)
+static inline unsigned char constant_time_is_zero_8(unsigned int a)
 	{
 	return (unsigned char)(constant_time_is_zero(a));
 	}
 
-inline unsigned int constant_time_eq(unsigned int a, unsigned int b)
+static inline unsigned int constant_time_eq(unsigned int a, unsigned int b)
 	{
 	return constant_time_is_zero(a ^ b);
 	}
 
-inline unsigned char constant_time_eq_8(unsigned int a, unsigned int b)
+static inline unsigned char constant_time_eq_8(unsigned int a, unsigned int b)
 	{
 	return (unsigned char)(constant_time_eq(a, b));
 	}
