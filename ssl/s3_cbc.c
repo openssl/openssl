@@ -96,7 +96,7 @@ int ssl3_cbc_remove_padding(const SSL* s,
 	padding_length = good & (padding_length+1);
 	rec->length -= padding_length;
 	rec->type |= padding_length<<8;	/* kludge: pass padding length */
-	return (int)((good & 1) | (~good & -1));
+	return constant_time_select_int(good, 1, -1);
 	}
 
 /* tls1_cbc_remove_padding removes the CBC padding from the decrypted, TLS, CBC
@@ -193,7 +193,7 @@ int tls1_cbc_remove_padding(const SSL* s,
 	rec->length -= padding_length;
 	rec->type |= padding_length<<8;	/* kludge: pass padding length */
 
-	return (int)((good & 1) | (~good & -1));
+	return constant_time_select_int(good, 1, -1);
 	}
 
 /* ssl3_cbc_copy_mac copies |md_size| bytes from the end of |rec| to |out| in
@@ -652,7 +652,7 @@ void ssl3_cbc_digest_record(
 			/* If this is the block containing the end of the
 			 * application data, and we are at the offset for the
 			 * 0x80 value, then overwrite b with 0x80. */
-			b = (b&~is_past_c) | (0x80&is_past_c);
+                        b =  constant_time_select_8(is_past_c, 0x80, b);
 			/* If this the the block containing the end of the
 			 * application data and we're past the 0x80 value then
 			 * just write zero. */
@@ -668,7 +668,8 @@ void ssl3_cbc_digest_record(
 			if (j >= md_block_size - md_length_size)
 				{
 				/* If this is index_b, write a length byte. */
-				b = (b&~is_block_b) | (is_block_b&length_bytes[j-(md_block_size-md_length_size)]);
+				b = constant_time_select_8(
+					is_block_b, length_bytes[j-(md_block_size-md_length_size)], b);
 				}
 			block[j] = b;
 			}

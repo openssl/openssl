@@ -50,9 +50,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static const unsigned int CONSTTIME_TRUE = ~0;
+static const unsigned int CONSTTIME_TRUE = (unsigned)(~0);
 static const unsigned int CONSTTIME_FALSE = 0;
-static const unsigned char CONSTTIME_TRUE_8 = ~0;
+static const unsigned char CONSTTIME_TRUE_8 = 0xff;
 static const unsigned char CONSTTIME_FALSE_8 = 0;
 
 static int test_binary_op(unsigned int (*op)(unsigned int a, unsigned int b),
@@ -133,13 +133,86 @@ static int test_is_zero_8(unsigned int a)
         return 0;
 	}
 
+static int test_select(unsigned int a, unsigned int b)
+	{
+	unsigned int selected = constant_time_select(CONSTTIME_TRUE, a, b);
+	if (selected != a)
+		{
+		fprintf(stderr, "Test failed for constant_time_select(%du, %du,"
+			"%du): expected %du(first value), got %du\n",
+			CONSTTIME_TRUE, a, b, a, selected);
+		return 1;
+		}
+	selected = constant_time_select(CONSTTIME_FALSE, a, b);
+	if (selected != b)
+		{
+		fprintf(stderr, "Test failed for constant_time_select(%du, %du,"
+			"%du): expected %du(second value), got %du\n",
+			CONSTTIME_FALSE, a, b, b, selected);
+		return 1;
+		}
+	return 0;
+	}
+
+static int test_select_8(unsigned char a, unsigned char b)
+	{
+	unsigned char selected = constant_time_select_8(CONSTTIME_TRUE_8, a, b);
+	if (selected != a)
+		{
+		fprintf(stderr, "Test failed for constant_time_select(%u, %u,"
+			"%u): expected %u(first value), got %u\n",
+			CONSTTIME_TRUE, a, b, a, selected);
+		return 1;
+		}
+	selected = constant_time_select_8(CONSTTIME_FALSE_8, a, b);
+	if (selected != b)
+		{
+		fprintf(stderr, "Test failed for constant_time_select(%u, %u,"
+			"%u): expected %u(second value), got %u\n",
+			CONSTTIME_FALSE, a, b, b, selected);
+		return 1;
+		}
+	return 0;
+	}
+
+static int test_select_int(int a, int b)
+	{
+	int selected = constant_time_select_int(CONSTTIME_TRUE, a, b);
+	if (selected != a)
+		{
+		fprintf(stderr, "Test failed for constant_time_select(%du, %d,"
+			"%d): expected %d(first value), got %d\n",
+			CONSTTIME_TRUE, a, b, a, selected);
+		return 1;
+		}
+	selected = constant_time_select_int(CONSTTIME_FALSE, a, b);
+	if (selected != b)
+		{
+		fprintf(stderr, "Test failed for constant_time_select(%du, %d,"
+			"%d): expected %d(second value), got %d\n",
+			CONSTTIME_FALSE, a, b, b, selected);
+		return 1;
+		}
+	return 0;
+	}
+
+
 static unsigned int test_values[] = {0, 1, 1024, 12345, 32000, UINT_MAX/2-1,
                                      UINT_MAX/2, UINT_MAX/2+1, UINT_MAX-1,
                                      UINT_MAX};
 
+static unsigned char test_values_8[] = {0, 1, 2, 20, 32, 127, 128, 129, 255};
+
+static int signed_test_values[] = {0, 1, -1, 1024, -1024, 12345, -12345,
+				   32000, -32000, INT_MAX, INT_MIN, INT_MAX-1,
+				   INT_MIN+1};
+
+
 int main(int argc, char *argv[])
 	{
 	unsigned int a, b, i, j;
+	int c, d;
+	unsigned char e, f;
 	int num_failed = 0, num_all = 0;
 	fprintf(stdout, "Testing constant time operations...\n");
 
@@ -148,20 +221,8 @@ int main(int argc, char *argv[])
 		a = test_values[i];
 		num_failed += test_is_zero(a);
 		num_failed += test_is_zero_8(a);
-		num_failed += test_binary_op(&constant_time_lt,
-			"constant_time_lt", a, a, 0);
-		num_failed += test_binary_op_8(&constant_time_lt_8,
-			"constant_time_lt_8", a, a, 0);
-		num_failed += test_binary_op(&constant_time_ge,
-			"constant_time_ge", a, a, 1);
-		num_failed += test_binary_op_8(&constant_time_ge_8,
-			"constant_time_ge_8", a, a, 1);
-		num_failed += test_binary_op(&constant_time_eq,
-			"constant_time_eq", a, a, 1);
-		num_failed += test_binary_op_8(&constant_time_eq_8,
-			"constant_time_eq_8", a, a, 1);
-		num_all += 8;
-		for (j = i + 1; j < sizeof(test_values)/sizeof(int); ++j)
+		num_all += 2;
+		for (j = 0; j < sizeof(test_values)/sizeof(int); ++j)
 			{
 			b = test_values[j];
 			num_failed += test_binary_op(&constant_time_lt,
@@ -188,7 +249,30 @@ int main(int argc, char *argv[])
 				"constant_time_eq", b, a, b == a);
 			num_failed += test_binary_op_8(&constant_time_eq_8,
 				"constant_time_eq_8", b, a, b == a);
-			num_all += 12;
+			num_failed += test_select(a, b);
+			num_all += 13;
+			}
+		}
+
+	for (i = 0; i < sizeof(signed_test_values)/sizeof(int); ++i)
+		{
+		c = signed_test_values[i];
+		for (j = 0; j < sizeof(signed_test_values)/sizeof(int); ++j)
+			{
+			d = signed_test_values[j];
+			num_failed += test_select_int(c, d);
+			num_all += 1;
+			}
+		}
+
+	for (i = 0; i < sizeof(test_values_8); ++i)
+		{
+		e = test_values_8[i];
+		for (j = 0; j < sizeof(test_values_8); ++j)
+			{
+			f = test_values_8[j];
+			num_failed += test_select_8(e, f);
+			num_all += 1;
 			}
 		}
 
