@@ -66,7 +66,6 @@
 #include <string.h>
 #include "ec_lcl.h"
 #include <openssl/err.h>
-#include <string.h>
 
 EC_KEY *EC_KEY_new(void)
 	{
