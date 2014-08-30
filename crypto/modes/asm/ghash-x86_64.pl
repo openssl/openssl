@@ -64,6 +64,7 @@
 # Ivy Bridge	1.80(+7%)
 # Haswell	0.55(+93%) (if system doesn't support AVX)
 # Bulldozer	1.49(+27%)
+# Silvermont	2.88(+13%)
 
 # March 2013
 #
