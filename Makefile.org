@@ -711,7 +711,7 @@ install_sw:
 install_html_docs:
 	here="`pwd`"; \
 	filecase=; \
-	case "$(PLATFORM)" in DJGPP|Cygwin*|mingw*|darwin-*-cc) \
+	case "$(PLATFORM)" in DJGPP|Cygwin*|mingw*|darwin*-*-cc) \
 		filecase=-i; \
 	esac; \
 	for subdir in apps crypto ssl; do \
@@ -742,7 +742,7 @@ install_docs:
 	@pod2man="`cd ./util; ./pod2mantest $(PERL)`"; \
 	here="`pwd`"; \
 	filecase=; \
-	case "$(PLATFORM)" in DJGPP|Cygwin*|mingw*|darwin-*-cc) \
+	case "$(PLATFORM)" in DJGPP|Cygwin*|mingw*|darwin*-*-cc) \
 		filecase=-i; \
 	esac; \
 	set -e; for i in doc/apps/*.pod; do \
