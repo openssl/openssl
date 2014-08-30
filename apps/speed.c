@@ -93,9 +93,6 @@
 #include <string.h>
 #include <math.h>
 #include "apps.h"
-#ifdef OPENSSL_NO_STDIO
-#define APPS_WIN16
-#endif
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
@@ -209,7 +206,9 @@
 #endif
 
 #undef BUFSIZE
-#define BUFSIZE	((long)1024*8+1)
+#define BUFSIZE	(1024*8+1)
+#define MAX_MISALIGNMENT 63
+
 int run=0;
 
 static int mr=0;
@@ -363,6 +362,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+	unsigned char *buf_malloc=NULL, *buf2_malloc=NULL;
 	unsigned char *buf=NULL,*buf2=NULL;
 	int mret=1;
 	long count=0,save_count=0;
@@ -643,6 +643,7 @@ int MAIN(int argc, char **argv)
 	int multi=0;
 #endif
 	int multiblock=0;
+	int misalign=MAX_MISALIGNMENT+1;
 
 #ifndef TIMES
 	usertime=-1;
@@ -678,16 +679,20 @@ int MAIN(int argc, char **argv)
 		rsa_key[i]=NULL;
 #endif
 
-	if ((buf=(unsigned char *)OPENSSL_malloc((int)BUFSIZE)) == NULL)
+	if ((buf_malloc=(unsigned char *)OPENSSL_malloc(BUFSIZE+misalign)) == NULL)
 		{
 		BIO_printf(bio_err,"out of memory\n");
 		goto end;
 		}
-	if ((buf2=(unsigned char *)OPENSSL_malloc((int)BUFSIZE)) == NULL)
+	if ((buf2_malloc=(unsigned char *)OPENSSL_malloc(BUFSIZE+misalign)) == NULL)
 		{
 		BIO_printf(bio_err,"out of memory\n");
 		goto end;
 		}
+
+	misalign = 0;	/* set later and buf/buf2 are adjusted accordingly */
+	buf=buf_malloc;
+	buf2=buf2_malloc;
 
 	memset(c,0,sizeof(c));
 	memset(DES_iv,0,sizeof(DES_iv));
@@ -796,6 +801,25 @@ int MAIN(int argc, char **argv)
 		else if (argc > 0 && !strcmp(*argv,"-mb"))
 			{
 			multiblock=1;
+			j--;
+			}
+		else if (argc > 0 && !strcmp(*argv,"-misalign"))
+			{
+			argc--;
+			argv++;
+			if (argc == 0)
+				{
+				BIO_printf(bio_err,"no misalignment given\n");
+				goto end;
+				}
+			misalign=atoi(argv[0]);
+			if (misalign<0 || misalign>MAX_MISALIGNMENT)
+				{
+				BIO_printf(bio_err,"misalignment is outsize permitted range 0-%d\n",MAX_MISALIGNMENT);
+				goto end;
+				}
+			buf=buf_malloc+misalign;
+			buf2=buf2_malloc+misalign;
 			j--;
 			}
 		else
@@ -1184,6 +1208,8 @@ int MAIN(int argc, char **argv)
 			BIO_printf(bio_err,"-evp e          use EVP e.\n");
 			BIO_printf(bio_err,"-decrypt        time decryption instead of encryption (only EVP).\n");
 			BIO_printf(bio_err,"-mr             produce machine readable output.\n");
+			BIO_printf(bio_err,"-mb             perform multi-block benchmark (for specific ciphers)\n");
+			BIO_printf(bio_err,"-misalign n     perform benchmark with misaligned data\n");
 #ifndef NO_FORK
 			BIO_printf(bio_err,"-multi n        run n benchmarks in parallel.\n");
 #endif
@@ -2665,8 +2691,8 @@ show_res:
 
 end:
 	ERR_print_errors(bio_err);
-	if (buf != NULL) OPENSSL_free(buf);
-	if (buf2 != NULL) OPENSSL_free(buf2);
+	if (buf_malloc != NULL) OPENSSL_free(buf_malloc);
+	if (buf2_malloc != NULL) OPENSSL_free(buf2_malloc);
 #ifndef OPENSSL_NO_RSA
 	for (i=0; i<RSA_NUM; i++)
 		if (rsa_key[i] != NULL)
