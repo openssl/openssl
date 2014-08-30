@@ -14,7 +14,8 @@ B<c_rehash>
 
 =head1 DESCRIPTION
 
-B<c_rehash> scans directories and calculates a hash value of each C<.pem>
+B<c_rehash> scans directories and calculates a hash value of each
+C<.pem>, C<.crt>, C<.cer>, or C<.crl>
 file in the specified directory list and creates symbolic links
 for each file, where the name of the link is the hash value.
 This utility is useful as many programs that use OpenSSL require
@@ -42,7 +43,7 @@ incrementing the B<D> value. Duplicates are found by comparing the
 full SHA-1 fingerprint. A warning will be displayed if a duplicate
 is found.
 
-A warning will also be displayed if there are B<.pem> files that
+A warning will also be displayed if there are files that
 cannot be parsed as either a certificate or a CRL.
 
 The program uses the B<openssl> program to compute the hashes and
