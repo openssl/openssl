@@ -124,25 +124,25 @@ my $tlib="-lnsl -lsocket";
 my $bits1="THIRTY_TWO_BIT ";
 my $bits2="SIXTY_FOUR_BIT ";
 
-my $x86_asm="x86cpuid.o:bn-586.o co-586.o x86-mont.o x86-gf2m.o:des-586.o crypt586.o:aes-586.o vpaes-x86.o aesni-x86.o:bf-586.o:md5-586.o:sha1-586.o sha256-586.o sha512-586.o:cast-586.o:rc4-586.o:rmd-586.o:rc5-586.o:wp_block.o wp-mmx.o:cmll-x86.o:ghash-x86.o:e_padlock-x86.o";
+my $x86_asm="x86cpuid.o:bn-586.o co-586.o x86-mont.o x86-gf2m.o::des-586.o crypt586.o:aes-586.o vpaes-x86.o aesni-x86.o:bf-586.o:md5-586.o:sha1-586.o sha256-586.o sha512-586.o:cast-586.o:rc4-586.o:rmd-586.o:rc5-586.o:wp_block.o wp-mmx.o:cmll-x86.o:ghash-x86.o:e_padlock-x86.o";
 
 my $x86_elf_asm="$x86_asm:elf";
 
-my $x86_64_asm="x86_64cpuid.o:x86_64-gcc.o x86_64-mont.o x86_64-mont5.o x86_64-gf2m.o rsaz_exp.o rsaz-x86_64.o rsaz-avx2.o::aes-x86_64.o vpaes-x86_64.o bsaes-x86_64.o aesni-x86_64.o aesni-sha1-x86_64.o aesni-sha256-x86_64.o aesni-mb-x86_64.o::md5-x86_64.o:sha1-x86_64.o sha256-x86_64.o sha512-x86_64.o sha1-mb-x86_64.o sha256-mb-x86_64.o::rc4-x86_64.o rc4-md5-x86_64.o:::wp-x86_64.o:cmll-x86_64.o cmll_misc.o:ghash-x86_64.o aesni-gcm-x86_64.o:e_padlock-x86_64.o";
-my $ia64_asm="ia64cpuid.o:bn-ia64.o ia64-mont.o::aes_core.o aes_cbc.o aes-ia64.o::md5-ia64.o:sha1-ia64.o sha256-ia64.o sha512-ia64.o::rc4-ia64.o rc4_skey.o:::::ghash-ia64.o::void";
-my $sparcv9_asm="sparcv9cap.o sparccpuid.o:bn-sparcv9.o sparcv9-mont.o sparcv9a-mont.o vis3-mont.o sparct4-mont.o sparcv9-gf2m.o:des_enc-sparc.o fcrypt_b.o dest4-sparcv9.o:aes_core.o aes_cbc.o aes-sparcv9.o aest4-sparcv9.o::md5-sparcv9.o:sha1-sparcv9.o sha256-sparcv9.o sha512-sparcv9.o::::::camellia.o cmll_misc.o cmll_cbc.o cmllt4-sparcv9.o:ghash-sparcv9.o::void";
-my $sparcv8_asm=":sparcv8.o:des_enc-sparc.o fcrypt_b.o:::::::::::::void";
-my $alpha_asm="alphacpuid.o:bn_asm.o alpha-mont.o:::::sha1-alpha.o:::::::ghash-alpha.o::void";
-my $mips64_asm=":bn-mips.o mips-mont.o::aes_cbc.o aes-mips.o:::sha1-mips.o sha256-mips.o sha512-mips.o::::::::";
+my $x86_64_asm="x86_64cpuid.o:x86_64-gcc.o x86_64-mont.o x86_64-mont5.o x86_64-gf2m.o rsaz_exp.o rsaz-x86_64.o rsaz-avx2.o:::aes-x86_64.o vpaes-x86_64.o bsaes-x86_64.o aesni-x86_64.o aesni-sha1-x86_64.o aesni-sha256-x86_64.o aesni-mb-x86_64.o::md5-x86_64.o:sha1-x86_64.o sha256-x86_64.o sha512-x86_64.o sha1-mb-x86_64.o sha256-mb-x86_64.o::rc4-x86_64.o rc4-md5-x86_64.o:::wp-x86_64.o:cmll-x86_64.o cmll_misc.o:ghash-x86_64.o aesni-gcm-x86_64.o:e_padlock-x86_64.o";
+my $ia64_asm="ia64cpuid.o:bn-ia64.o ia64-mont.o:::aes_core.o aes_cbc.o aes-ia64.o::md5-ia64.o:sha1-ia64.o sha256-ia64.o sha512-ia64.o::rc4-ia64.o rc4_skey.o:::::ghash-ia64.o::void";
+my $sparcv9_asm="sparcv9cap.o sparccpuid.o:bn-sparcv9.o sparcv9-mont.o sparcv9a-mont.o vis3-mont.o sparct4-mont.o sparcv9-gf2m.o::des_enc-sparc.o fcrypt_b.o dest4-sparcv9.o:aes_core.o aes_cbc.o aes-sparcv9.o aest4-sparcv9.o::md5-sparcv9.o:sha1-sparcv9.o sha256-sparcv9.o sha512-sparcv9.o::::::camellia.o cmll_misc.o cmll_cbc.o cmllt4-sparcv9.o:ghash-sparcv9.o::void";
+my $sparcv8_asm=":sparcv8.o::des_enc-sparc.o fcrypt_b.o:::::::::::::void";
+my $alpha_asm="alphacpuid.o:bn_asm.o alpha-mont.o::::::sha1-alpha.o:::::::ghash-alpha.o::void";
+my $mips64_asm=":bn-mips.o mips-mont.o:::aes_cbc.o aes-mips.o:::sha1-mips.o sha256-mips.o sha512-mips.o::::::::";
 my $mips32_asm=$mips64_asm; $mips32_asm =~ s/\s*sha512\-mips\.o//;
-my $s390x_asm="s390xcap.o s390xcpuid.o:bn-s390x.o s390x-mont.o s390x-gf2m.o::aes-s390x.o aes-ctr.o aes-xts.o:::sha1-s390x.o sha256-s390x.o sha512-s390x.o::rc4-s390x.o:::::ghash-s390x.o:";
-my $armv4_asm="armcap.o armv4cpuid.o:bn_asm.o armv4-mont.o armv4-gf2m.o::aes_cbc.o aes-armv4.o bsaes-armv7.o aesv8-armx.o:::sha1-armv4-large.o sha256-armv4.o sha512-armv4.o:::::::ghash-armv4.o ghashv8-armx.o::void";
-my $aarch64_asm="armcap.o arm64cpuid.o mem_clr.o:::aes_core.o aes_cbc.o aesv8-armx.o:::sha1-armv8.o sha256-armv8.o sha512-armv8.o:::::::ghashv8-armx.o:";
-my $parisc11_asm="pariscid.o:bn_asm.o parisc-mont.o::aes_core.o aes_cbc.o aes-parisc.o:::sha1-parisc.o sha256-parisc.o sha512-parisc.o::rc4-parisc.o:::::ghash-parisc.o::32";
-my $parisc20_asm="pariscid.o:pa-risc2W.o parisc-mont.o::aes_core.o aes_cbc.o aes-parisc.o:::sha1-parisc.o sha256-parisc.o sha512-parisc.o::rc4-parisc.o:::::ghash-parisc.o::64";
-my $ppc64_asm="ppccpuid.o ppccap.o:bn-ppc.o ppc-mont.o ppc64-mont.o::aes_core.o aes_cbc.o aes-ppc.o vpaes-ppc.o aesp8-ppc.o:::sha1-ppc.o sha256-ppc.o sha512-ppc.o sha256p8-ppc.o sha512p8-ppc.o:::::::ghashp8-ppc.o:";
+my $s390x_asm="s390xcap.o s390xcpuid.o:bn-s390x.o s390x-mont.o s390x-gf2m.o:::aes-s390x.o aes-ctr.o aes-xts.o:::sha1-s390x.o sha256-s390x.o sha512-s390x.o::rc4-s390x.o:::::ghash-s390x.o:";
+my $armv4_asm="armcap.o armv4cpuid.o:bn_asm.o armv4-mont.o armv4-gf2m.o:::aes_cbc.o aes-armv4.o bsaes-armv7.o aesv8-armx.o:::sha1-armv4-large.o sha256-armv4.o sha512-armv4.o:::::::ghash-armv4.o ghashv8-armx.o::void";
+my $aarch64_asm="armcap.o arm64cpuid.o mem_clr.o::::aes_core.o aes_cbc.o aesv8-armx.o:::sha1-armv8.o sha256-armv8.o sha512-armv8.o:::::::ghashv8-armx.o:";
+my $parisc11_asm="pariscid.o:bn_asm.o parisc-mont.o:::aes_core.o aes_cbc.o aes-parisc.o:::sha1-parisc.o sha256-parisc.o sha512-parisc.o::rc4-parisc.o:::::ghash-parisc.o::32";
+my $parisc20_asm="pariscid.o:pa-risc2W.o parisc-mont.o:::aes_core.o aes_cbc.o aes-parisc.o:::sha1-parisc.o sha256-parisc.o sha512-parisc.o::rc4-parisc.o:::::ghash-parisc.o::64";
+my $ppc64_asm="ppccpuid.o ppccap.o:bn-ppc.o ppc-mont.o ppc64-mont.o:::aes_core.o aes_cbc.o aes-ppc.o vpaes-ppc.o aesp8-ppc.o:::sha1-ppc.o sha256-ppc.o sha512-ppc.o sha256p8-ppc.o sha512p8-ppc.o:::::::ghashp8-ppc.o:";
 my $ppc32_asm=$ppc64_asm;
-my $no_asm=":::::::::::::::void";
+my $no_asm="::::::::::::::::void";
 
 # As for $BSDthreads. Idea is to maintain "collective" set of flags,
 # which would cover all BSD flavors. -pthread applies to them all,
@@ -153,7 +153,7 @@ my $no_asm=":::::::::::::::void";
 # seems to be sufficient?
 my $BSDthreads="-pthread -D_THREAD_SAFE -D_REENTRANT";
 
-#config-string	$cc : $cflags : $unistd : $thread_cflag : $sys_id : $lflags : $bn_ops : $cpuid_obj : $bn_obj : $des_obj : $aes_obj : $bf_obj : $md5_obj : $sha1_obj : $cast_obj : $rc4_obj : $rmd160_obj : $rc5_obj : $wp_obj : $cmll_obj : $modes_obj : $engines_obj : $dso_scheme : $shared_target : $shared_cflag : $shared_ldflag : $shared_extension : $ranlib : $arflags : $multilib
+#config-string	$cc : $cflags : $unistd : $thread_cflag : $sys_id : $lflags : $bn_ops : $cpuid_obj : $bn_obj : $ec_obj : $des_obj : $aes_obj : $bf_obj : $md5_obj : $sha1_obj : $cast_obj : $rc4_obj : $rmd160_obj : $rc5_obj : $wp_obj : $cmll_obj : $modes_obj : $engines_obj : $dso_scheme : $shared_target : $shared_cflag : $shared_ldflag : $shared_extension : $ranlib : $arflags : $multilib
 
 my %table=(
 # File 'TABLE' (created by 'make TABLE') contains the data from this list,
@@ -196,7 +196,7 @@ my %table=(
 "debug-linux-ppro","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -mcpu=pentiumpro -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn",
 "debug-linux-elf","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -march=i486 -Wall::-D_REENTRANT::-lefence -ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "debug-linux-elf-noefence","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -march=i486 -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"debug-linux-ia32-aes", "gcc:-DAES_EXPERIMENTAL -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:x86cpuid.o:bn-586.o co-586.o x86-mont.o:des-586.o crypt586.o:aes_x86core.o aes_cbc.o aesni-x86.o:bf-586.o:md5-586.o:sha1-586.o sha256-586.o sha512-586.o:cast-586.o:rc4-586.o:rmd-586.o:rc5-586.o:wp_block.o wp-mmx.o::ghash-x86.o:e_padlock-x86.o:elf:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"debug-linux-ia32-aes", "gcc:-DAES_EXPERIMENTAL -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:x86cpuid.o:bn-586.o co-586.o x86-mont.o::des-586.o crypt586.o:aes_x86core.o aes_cbc.o aesni-x86.o:bf-586.o:md5-586.o:sha1-586.o sha256-586.o sha512-586.o:cast-586.o:rc4-586.o:rmd-586.o:rc5-586.o:wp_block.o wp-mmx.o::ghash-x86.o:e_padlock-x86.o:elf:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "debug-linux-generic32","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -DTERMIO -g -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "debug-linux-generic64","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -DTERMIO -g -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "debug-linux-x86_64","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -m64 -DL_ENDIAN -DTERMIO -g -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
@@ -303,7 +303,7 @@ my %table=(
 "hpux-parisc-gcc","gcc:-O3 -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT::-Wl,+s -ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1:${no_asm}:dl:hpux-shared:-fPIC:-shared:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "hpux-parisc1_1-gcc","gcc:-O3 -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT::-Wl,+s -ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1:${parisc11_asm}:dl:hpux-shared:-fPIC:-shared:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::/pa1.1",
 "hpux-parisc2-gcc","gcc:-march=2.0 -O3 -DB_ENDIAN -D_REENTRANT::::-Wl,+s -ldld:SIXTY_FOUR_BIT RC4_CHAR RC4_CHUNK DES_PTR DES_UNROLL DES_RISC1:".eval{my $asm=$parisc20_asm;$asm=~s/2W\./2\./;$asm=~s/:64/:32/;$asm}.":dl:hpux-shared:-fPIC:-shared:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::/pa20_32",
-"hpux64-parisc2-gcc","gcc:-O3 -DB_ENDIAN -D_REENTRANT::::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::pa-risc2W.o::::::::::::::void:dlfcn:hpux-shared:-fpic:-shared:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::/pa20_64",
+"hpux64-parisc2-gcc","gcc:-O3 -DB_ENDIAN -D_REENTRANT::::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::pa-risc2W.o:::::::::::::::void:dlfcn:hpux-shared:-fpic:-shared:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::/pa20_64",
 
 # More attempts at unified 10.X and 11.X targets for HP C compiler.
 #
@@ -417,7 +417,7 @@ my %table=(
 "linux-alpha+bwx-ccc","ccc:-fast -readonly_strings -DL_ENDIAN -DTERMIO::-D_REENTRANT:::SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL:${alpha_asm}",
 #
 # TI_CGT_C6000_7.3.x is a requirement
-"linux-c64xplus","cl6x:--linux -ea=.s -eo=.o -mv6400+ -o2 -ox -ms -pden -DOPENSSL_SMALL_FOOTPRINT::-D_REENTRANT:::BN_LLONG:c64xpluscpuid.o:bn-c64xplus.o c64xplus-gf2m.o::aes-c64xplus.o aes_cbc.o aes_ctr.o:::sha1-c64xplus.o sha256-c64xplus.o sha512-c64xplus.o::rc4-c64xplus.o:::::ghash-c64xplus.o::void:dlfcn:linux-shared:--pic:-z --sysv --shared:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):true",
+"linux-c64xplus","cl6x:--linux -ea=.s -eo=.o -mv6400+ -o2 -ox -ms -pden -DOPENSSL_SMALL_FOOTPRINT::-D_REENTRANT:::BN_LLONG:c64xpluscpuid.o:bn-c64xplus.o c64xplus-gf2m.o:::aes-c64xplus.o aes_cbc.o aes_ctr.o:::sha1-c64xplus.o sha256-c64xplus.o sha512-c64xplus.o::rc4-c64xplus.o:::::ghash-c64xplus.o::void:dlfcn:linux-shared:--pic:-z --sysv --shared:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):true",
 
 # Android: linux-* but without -DTERMIO and pointers to headers and libs.
 "android","gcc:-mandroid -I\$(ANDROID_DEV)/include -B\$(ANDROID_DEV)/lib -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
@@ -535,9 +535,9 @@ my %table=(
 # Visual C targets
 #
 # Win64 targets, WIN64I denotes IA-64 and WIN64A - AMD64
-"VC-WIN64I","cl:-W3 -Gs0 -Gy -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE:::WIN64I::SIXTY_FOUR_BIT RC4_CHUNK_LL DES_INT EXPORT_VAR_AS_FN:ia64cpuid.o:ia64.o ia64-mont.o::aes_core.o aes_cbc.o aes-ia64.o::md5-ia64.o:sha1-ia64.o sha256-ia64.o sha512-ia64.o:::::::ghash-ia64.o::ias:win32",
+"VC-WIN64I","cl:-W3 -Gs0 -Gy -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE:::WIN64I::SIXTY_FOUR_BIT RC4_CHUNK_LL DES_INT EXPORT_VAR_AS_FN:ia64cpuid.o:ia64.o ia64-mont.o:::aes_core.o aes_cbc.o aes-ia64.o::md5-ia64.o:sha1-ia64.o sha256-ia64.o sha512-ia64.o:::::::ghash-ia64.o::ias:win32",
 "VC-WIN64A","cl:-W3 -Gs0 -Gy -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE:::WIN64A::SIXTY_FOUR_BIT RC4_CHUNK_LL DES_INT EXPORT_VAR_AS_FN:".eval{my $asm=$x86_64_asm;$asm=~s/x86_64-gcc\.o/bn_asm.o/;$asm}.":auto:win32",
-"debug-VC-WIN64I","cl:-W3 -Gs0 -Gy -Zi -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE:::WIN64I::SIXTY_FOUR_BIT RC4_CHUNK_LL DES_INT EXPORT_VAR_AS_FN:ia64cpuid.o:ia64.o::aes_core.o aes_cbc.o aes-ia64.o::md5-ia64.o:sha1-ia64.o sha256-ia64.o sha512-ia64.o:::::::ghash-ia64.o::ias:win32",
+"debug-VC-WIN64I","cl:-W3 -Gs0 -Gy -Zi -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE:::WIN64I::SIXTY_FOUR_BIT RC4_CHUNK_LL DES_INT EXPORT_VAR_AS_FN:ia64cpuid.o:ia64.o:::aes_core.o aes_cbc.o aes-ia64.o::md5-ia64.o:sha1-ia64.o sha256-ia64.o sha512-ia64.o:::::::ghash-ia64.o::ias:win32",
 "debug-VC-WIN64A","cl:-W3 -Gs0 -Gy -Zi -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE:::WIN64A::SIXTY_FOUR_BIT RC4_CHUNK_LL DES_INT EXPORT_VAR_AS_FN:".eval{my $asm=$x86_64_asm;$asm=~s/x86_64-gcc\.o/bn_asm.o/;$asm}.":auto:win32",
 # x86 Win32 target defaults to ANSI API, if you want UNICODE, complement
 # 'perl Configure VC-WIN32' with '-DUNICODE -D_UNICODE'
@@ -653,6 +653,7 @@ my $idx_lflags = $idx++;
 my $idx_bn_ops = $idx++;
 my $idx_cpuid_obj = $idx++;
 my $idx_bn_obj = $idx++;
+my $idx_ec_obj = $idx++;
 my $idx_des_obj = $idx++;
 my $idx_aes_obj = $idx++;
 my $idx_bf_obj = $idx++;
@@ -1227,6 +1228,7 @@ my $lflags = $fields[$idx_lflags];
 my $bn_ops = $fields[$idx_bn_ops];
 my $cpuid_obj = $fields[$idx_cpuid_obj];
 my $bn_obj = $fields[$idx_bn_obj];
+my $ec_obj = $fields[$idx_ec_obj];
 my $des_obj = $fields[$idx_des_obj];
 my $aes_obj = $fields[$idx_aes_obj];
 my $bf_obj = $fields[$idx_bf_obj];
@@ -1404,7 +1406,7 @@ $lflags="$libs$lflags" if ($libs ne "");
 
 if ($no_asm)
 	{
-	$cpuid_obj=$bn_obj=
+	$cpuid_obj=$bn_obj=$ec_obj=
 	$des_obj=$aes_obj=$bf_obj=$cast_obj=$rc4_obj=$rc5_obj=$cmll_obj=
 	$modes_obj=$sha1_obj=$md5_obj=$rmd160_obj=$wp_obj=$engines_obj="";
 	$cflags=~s/\-D[BL]_ENDIAN//		if ($fips);
@@ -1749,6 +1751,7 @@ while (<IN>)
 	s/^EXE_EXT=.*$/EXE_EXT= $exe_ext/;
 	s/^CPUID_OBJ=.*$/CPUID_OBJ= $cpuid_obj/;
 	s/^BN_ASM=.*$/BN_ASM= $bn_obj/;
+	s/^EC_ASM=.*$/EC_ASM= $ec_obj/;
 	s/^DES_ENC=.*$/DES_ENC= $des_obj/;
 	s/^AES_ENC=.*$/AES_ENC= $aes_obj/;
 	s/^BF_ENC=.*$/BF_ENC= $bf_obj/;
@@ -1814,6 +1817,7 @@ print "CFLAG         =$cflags\n";
 print "EX_LIBS       =$lflags\n";
 print "CPUID_OBJ     =$cpuid_obj\n";
 print "BN_ASM        =$bn_obj\n";
+print "EC_ASM        =$ec_obj\n";
 print "DES_ENC       =$des_obj\n";
 print "AES_ENC       =$aes_obj\n";
 print "BF_ENC        =$bf_obj\n";
@@ -2248,12 +2252,12 @@ sub print_table_entry
 	{
 	my $target = shift;
 
-	(my $cc,my $cflags,my $unistd,my $thread_cflag,my $sys_id,my $lflags,
-	my $bn_ops,my $cpuid_obj,my $bn_obj,my $des_obj,my $aes_obj, my $bf_obj,
-	my $md5_obj,my $sha1_obj,my $cast_obj,my $rc4_obj,my $rmd160_obj,
-	my $rc5_obj,my $wp_obj,my $cmll_obj,my $modes_obj, my $engines_obj,
-	my $perlasm_scheme,my $dso_scheme,my $shared_target,my $shared_cflag,
-	my $shared_ldflag,my $shared_extension,my $ranlib,my $arflags,my $multilib)=
+	my ($cc, $cflags, $unistd, $thread_cflag, $sys_id, $lflags,
+	    $bn_ops, $cpuid_obj, $bn_obj, $ec_obj, $des_obj, $aes_obj, $bf_obj,
+	    $md5_obj, $sha1_obj, $cast_obj, $rc4_obj, $rmd160_obj,
+	    $rc5_obj, $wp_obj, $cmll_obj, $modes_obj, $engines_obj,
+	    $perlasm_scheme, $dso_scheme, $shared_target, $shared_cflag,
+	    $shared_ldflag, $shared_extension, $ranlib, $arflags, $multilib)=
 	split(/\s*:\s*/,$table{$target} . ":" x 30 , -1);
 
 	print <<EOF
@@ -2268,6 +2272,7 @@ sub print_table_entry
 \$bn_ops       = $bn_ops
 \$cpuid_obj    = $cpuid_obj
 \$bn_obj       = $bn_obj
+\$ec_obj       = $ec_obj
 \$des_obj      = $des_obj
 \$aes_obj      = $aes_obj
 \$bf_obj       = $bf_obj
