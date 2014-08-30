@@ -53,6 +53,7 @@
 # Bulldozer	36	-	27/22		17.0	13.6
 # VIA Nano	36	-	25/22		16.8	16.5
 # Atom		50	-	30/25		21.9	18.9
+# Silvermont	40	-	34/31		22.9	20.6
 #
 # (*)	numbers after slash are for unrolled loop, where applicable;
 # (**)	x86_64 assembly performance is presented for reference

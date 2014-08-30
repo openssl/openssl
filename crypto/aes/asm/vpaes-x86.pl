@@ -30,6 +30,7 @@
 # Core 2(**)	28.1/41.4/18.3		21.9/25.2(***)
 # Nehalem	27.9/40.4/18.1		10.2/11.9
 # Atom		70.7/92.1/60.1		61.1/75.4(***)
+# Silvermont	45.4/62.9/24.1		49.2/61.1(***)
 #
 # (*)	"Hyper-threading" in the context refers rather to cache shared
 #	among multiple cores, than to specifically Intel HTT. As vast

@@ -28,6 +28,7 @@
 # Bulldozer	121	-	50	14.0	13.5
 # VIA Nano	91	-	52	33	14.7
 # Atom		126	-	68	48(***)	14.7
+# Silvermont	97	-	58	42(***)	17.5
 #
 # (*)	whichever best applicable.
 # (**)	x86_64 assembler performance is presented for reference

@@ -93,16 +93,19 @@
 # P4		10.6		-
 # AMD K8	7.1		-
 # Core2		7.3		6.0/+22%	-
-# Atom		12.5		9.3(*)/+35%	-
 # Westmere	7.3		5.5/+33%	-
 # Sandy Bridge	8.8		6.2/+40%	5.1(**)/+73%
 # Ivy Bridge	7.2		4.8/+51%	4.7(**)/+53%
 # Haswell	6.5		4.3/+51%	4.1(**)/+58%
 # Bulldozer	11.6		6.0/+92%
 # VIA Nano	10.6		7.5/+41%
+# Atom		12.5		9.3(*)/+35%
+# Silvermont	14.5		9.9(*)/+46%
 #
 # (*)	Loop is 1056 instructions long and expected result is ~8.25.
-#	It remains mystery [to me] why ILP is limited to 1.7.
+#	The discrepancy is because of front-end limitations, so
+#	called MS-ROM penalties, and on Silvermont even rotate's
+#	limited parallelism.
 #
 # (**)	As per above comment, the result is for AVX *plus* sh[rl]d.
 
