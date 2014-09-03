@@ -519,6 +519,7 @@ int SCT_verify(const SCT *sct, const LogEntryType entry_type, X509 *cert,
 	       X509_PUBKEY *issuer_pubkey)
 	{
 	EVP_MD_CTX verifyctx;
+	EVP_PKEY *log_pkey = NULL;
 	unsigned char *log_spki = NULL, *issuer_spki = NULL;
 	unsigned char *digitally_signed = NULL;
 	unsigned char *p, *p2;
@@ -637,16 +638,17 @@ int SCT_verify(const SCT *sct, const LogEntryType entry_type, X509 *cert,
 	EVP_MD_CTX_init(&verifyctx);
 	if (!EVP_VerifyInit(&verifyctx, EVP_sha256())
 			|| !EVP_VerifyUpdate(&verifyctx, digitally_signed, len)
-			|| !EVP_VerifyFinal(&verifyctx, sct->sig, sct->siglen,
-					    X509_PUBKEY_get(log_pubkey)))
-		{
+			|| ((log_pkey=X509_PUBKEY_get(log_pubkey)) == NULL))
+		goto cleanup;
+	if ((ret=EVP_VerifyFinal(&verifyctx, sct->sig, sct->siglen,
+				 log_pkey)) == 0)
 		X509V3err(X509V3_F_SCT_VERIFY, X509V3_R_SCT_INVALID_SIGNATURE);
-		goto done;
-		}
 
-	ret = 1;
+	cleanup:
+	EVP_MD_CTX_cleanup(&verifyctx);
 
 	done:
+	if (log_pkey) EVP_PKEY_free(log_pkey);
 	if (issuer_spki) OPENSSL_free(issuer_spki);
 	if (digitally_signed) OPENSSL_free(digitally_signed);
 	if (log_spki) OPENSSL_free(log_spki);
@@ -790,10 +792,10 @@ static STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
 		return NULL;
 
 	p = oct->data;
-	if ((sk=o2i_SCT_LIST(a, &p, oct->length)) == NULL)
-		return NULL;
+	if ((sk=o2i_SCT_LIST(a, &p, oct->length)) != NULL)
+		*pp += length;
 
-	*pp += length;
+	M_ASN1_OCTET_STRING_free(oct);
 	return sk;
 	}
 
