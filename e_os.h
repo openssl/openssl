@@ -496,6 +496,10 @@ static unsigned int _strlen31(const char *str)
 
 /*************/
 
+#if defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_DGRAM)
+#  define OPENSSL_NO_DGRAM
+#endif
+
 #ifdef USE_SOCKETS
 #  if defined(WINDOWS) || defined(MSDOS)
       /* windows world */
