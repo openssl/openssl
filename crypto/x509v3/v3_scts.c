@@ -81,7 +81,7 @@ struct SCT_st {
 	 * inside "sct".
 	 */
 	unsigned char version;
-	unsigned char* logid;
+	unsigned char *logid;
 	unsigned short logidlen;
 	SCT_TIMESTAMP timestamp;
 	unsigned char *ext;
@@ -158,8 +158,8 @@ static void timestamp_print(BIO *out, SCT_TIMESTAMP timestamp)
 	}
 
 static int base64_decode(
-	const char* in,
-	unsigned char** out
+	const char *in,
+	unsigned char **out
 )
 {
 	EVP_ENCODE_CTX ctx;
