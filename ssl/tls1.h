@@ -244,7 +244,7 @@ extern "C" {
 #if 0 /* will have to be provided externally for now ,
        * i.e. build with -DTLSEXT_TYPE_opaque_prf_input=38183
        * using whatever extension number you'd like to try */
-# define TLSEXT_TYPE_opaque_prf_input		?? */
+# define TLSEXT_TYPE_opaque_prf_input		??
 #endif
 
 /* Temporary extension type */
