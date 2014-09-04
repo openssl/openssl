@@ -417,12 +417,11 @@ static int get_server_hello(SSL *s)
 		}
 	else
 		{
-#ifdef undef
+#if 0
 		/* very bad */
 		memset(s->session->session_id,0,
 			SSL_MAX_SSL_SESSION_ID_LENGTH_IN_BYTES);
 		s->session->session_id_length=0;
-		*/
 #endif
 
 		/* we need to do this in case we were trying to reuse a 
