@@ -553,6 +553,11 @@ static void keypair(FILE *in, FILE *out)
 	    int n=atoi(value);
 
 	    dsa = FIPS_dsa_new();
+	    if (!dsa)
+		{
+		fprintf(stderr, "DSA allocation error\n");
+		exit(1);
+		}
 	    if (!dsa2 && !dsa_builtin_paramgen(dsa, L, N, NULL, NULL, 0,
 						NULL, NULL, NULL, NULL))
 			{
@@ -579,8 +584,7 @@ static void keypair(FILE *in, FILE *out)
 		do_bn_print_name(out, "Y",dsa->pub_key);
 	    	fputs(RESP_EOL, out);
 		}
-	    if (dsa)
-		FIPS_dsa_free(dsa);
+	    FIPS_dsa_free(dsa);
 	    }
 	}
     }
