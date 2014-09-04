@@ -1490,12 +1490,18 @@ bad:
 			SSL_FILETYPE_PEM);
 		}
 
-	if (	(!SSL_CTX_load_verify_locations(s_ctx,CAfile,CApath)) ||
-		(!SSL_CTX_set_default_verify_paths(s_ctx)) ||
-		(!SSL_CTX_load_verify_locations(c_ctx,CAfile,CApath)) ||
+	if (	(!SSL_CTX_load_verify_locations(s_ctx,CAfile,CApath)) &&
+		(!SSL_CTX_set_default_verify_paths(s_ctx)))
+		{
+		/* fprintf(stderr,"SSL_load_verify_locations_server\n"); */
+		ERR_print_errors(bio_err);
+		/* goto end; */
+		}
+
+	if (	(!SSL_CTX_load_verify_locations(c_ctx,CAfile,CApath)) &&
 		(!SSL_CTX_set_default_verify_paths(c_ctx)))
 		{
-		/* fprintf(stderr,"SSL_load_verify_locations\n"); */
+		/* fprintf(stderr,"SSL_load_verify_locations_client\n"); */
 		ERR_print_errors(bio_err);
 		/* goto end; */
 		}

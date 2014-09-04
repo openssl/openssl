@@ -1375,7 +1375,7 @@ bad:
 
 	SSL_CTX_set_verify(ctx,verify,verify_callback);
 
-	if ((!SSL_CTX_load_verify_locations(ctx,CAfile,CApath)) ||
+	if ((!SSL_CTX_load_verify_locations(ctx,CAfile,CApath)) &&
 		(!SSL_CTX_set_default_verify_paths(ctx)))
 		{
 		/* BIO_printf(bio_err,"error setting default verify locations\n"); */
