@@ -541,7 +541,7 @@ int SCT_get0_signature_nid(const SCT *sct, int *nid)
 
 int SCT_verify(const SCT *sct, const LogEntryType entry_type, X509 *cert,
 	       const LogEntryType cert_type, X509_PUBKEY *log_pubkey,
-	       X509_PUBKEY *issuer_pubkey)
+	       X509 *issuer_cert)
 	{
 	EVP_MD_CTX verifyctx;
 	EVP_PKEY *log_pkey = NULL;
@@ -555,7 +555,7 @@ int SCT_verify(const SCT *sct, const LogEntryType entry_type, X509 *cert,
 	size_t len2;
 
 	if (!sct || !cert || !log_pubkey
-			|| ((entry_type == precert_entry) && !issuer_pubkey))
+			|| ((entry_type == precert_entry) && !issuer_cert))
 		{
 		X509V3err(X509V3_F_SCT_VERIFY, ERR_R_PASSED_NULL_PARAMETER);
 		return -1;
@@ -624,7 +624,8 @@ int SCT_verify(const SCT *sct, const LogEntryType entry_type, X509 *cert,
 	else	/* entry_type == precert_entry */
 		{
 		/* Calculate PreCert.issuer_key_hash */
-		if ((len=i2d_X509_PUBKEY(issuer_pubkey, &issuer_spki)) <= 0)
+		if ((len=i2d_X509_PUBKEY(issuer_cert->cert_info->key,
+					 &issuer_spki)) <= 0)
 			goto done;
 		if (!EVP_Digest(issuer_spki, len, p, &mdlen, EVP_sha256(),
 			        NULL))

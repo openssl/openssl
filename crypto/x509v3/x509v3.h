@@ -916,7 +916,7 @@ int SCT_get0_timestamp(const SCT *sct, SCT_TIMESTAMP *timestamp);
 int SCT_get0_signature_nid(const SCT *sct, int *nid);
 int SCT_verify(const SCT *sct, const LogEntryType entry_type, X509 *cert,
 	       const LogEntryType cert_type, X509_PUBKEY *log_pubkey,
-	       X509_PUBKEY *issuer_pubkey);
+	       X509 *issuer_cert);
 
 DECLARE_STACK_OF(SCT)
 
