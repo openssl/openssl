@@ -541,8 +541,7 @@ int SCT_get0_signature_nid(const SCT *sct, int *nid)
 	}
 
 int SCT_verify(const SCT *sct, const LogEntryType entry_type, X509 *cert,
-	       const LogEntryType cert_type, X509_PUBKEY *log_pubkey,
-	       X509 *issuer_cert)
+	       X509_PUBKEY *log_pubkey, X509 *issuer_cert)
 	{
 	EVP_MD_CTX verifyctx;
 	EVP_PKEY *log_pkey = NULL;
@@ -552,6 +551,7 @@ int SCT_verify(const SCT *sct, const LogEntryType entry_type, X509 *cert,
 	unsigned char md[32];
 	unsigned int mdlen = 32;
 	int ret = 0;
+	int nid_ext_to_delete;
 	int len;
 	size_t len2;
 
@@ -612,9 +612,14 @@ int SCT_verify(const SCT *sct, const LogEntryType entry_type, X509 *cert,
 	l2n8(sct->timestamp, p);
 	s2n(entry_type, p);
 
+	if (X509_get_ext_by_NID(cert, NID_ct_precert_poison, -1) != -1)
+		nid_ext_to_delete = NID_ct_precert_poison;
+	else
+		nid_ext_to_delete = NID_ct_precert_scts;
+
 	if (entry_type == x509_entry)
 		{
-		if (cert_type == precert_entry)
+		if (nid_ext_to_delete == NID_ct_precert_poison)
 			goto done;
 
 		p2 = p;
@@ -636,10 +641,7 @@ int SCT_verify(const SCT *sct, const LogEntryType entry_type, X509 *cert,
 		/* Append PreCert.tbs_certificate */
 		p2 = p;
 		p += 3;
-		if (sct_encode_precerttbs(cert, &p,
-					  (cert_type == x509_entry) ?
-						NID_ct_precert_scts :
-						NID_ct_precert_poison) < 0)
+		if (sct_encode_precerttbs(cert, &p, nid_ext_to_delete) < 0)
 			goto done;
 		}
 
