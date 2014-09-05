@@ -573,15 +573,8 @@ int SCT_verify(const SCT *sct, const LogEntryType entry_type, X509 *cert,
 		}
 
 	/* Check that SHA-256(log_pubkey) matches sct->logid */
-	if ((len=i2d_X509_PUBKEY(log_pubkey, NULL)) <= 0)
+	if ((len=i2d_X509_PUBKEY(log_pubkey, &log_spki)) <= 0)
 		return 0;
-	if ((p=log_spki=OPENSSL_malloc(len)) == NULL)
-		{
-		X509V3err(X509V3_F_SCT_VERIFY, ERR_R_MALLOC_FAILURE);
-		goto done;
-		}
-	if (i2d_X509_PUBKEY(log_pubkey, &p) <= 0)
-		goto done;
 	if (!EVP_Digest(log_spki, len, md, &mdlen, EVP_sha256(), NULL))
 		goto done;
 	if (memcmp(md, sct->logid, 32) != 0)
@@ -631,14 +624,7 @@ int SCT_verify(const SCT *sct, const LogEntryType entry_type, X509 *cert,
 	else	/* entry_type == precert_entry */
 		{
 		/* Calculate PreCert.issuer_key_hash */
-		if ((len=i2d_X509_PUBKEY(issuer_pubkey, NULL)) <= 0)
-			goto done;
-		if ((p2=issuer_spki=OPENSSL_malloc(len)) == NULL)
-			{
-			X509V3err(X509V3_F_SCT_VERIFY, ERR_R_MALLOC_FAILURE);
-			goto done;
-			}
-		if (i2d_X509_PUBKEY(issuer_pubkey, &p2) <= 0)
+		if ((len=i2d_X509_PUBKEY(issuer_pubkey, &issuer_spki)) <= 0)
 			goto done;
 		if (!EVP_Digest(issuer_spki, len, p, &mdlen, EVP_sha256(),
 			        NULL))
@@ -852,21 +838,7 @@ static int i2d_SCT_LIST(STACK_OF(SCT) *a, unsigned char **out)
 	if ((oct.length=i2o_SCT_LIST(a, &(oct.data))) == -1)
 		return -1;
 
-	if (out && !(*out))
-		{
-		if ((len=i2d_ASN1_OCTET_STRING(&oct, NULL)) == -1)
-			goto done;
-		if ((*out=OPENSSL_malloc(len)) == NULL)
-			{
-			X509V3err(X509V3_F_I2D_SCT_LIST, ERR_R_MALLOC_FAILURE);
-			len = -1;
-			goto done;
-			}
-		}
-
 	len = i2d_ASN1_OCTET_STRING(&oct, out);
-
-	done:
 	OPENSSL_free(oct.data);
 	return len;
 }
