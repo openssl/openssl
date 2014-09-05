@@ -14,7 +14,6 @@ LIBNAME_engines_ccgost=gost
 
 
 all: all_engines_ccgost
-all_engines_ccgost: engines/ccgost/lib
 
 tags: tags_engines_ccgost
 tags_engines_ccgost:
@@ -23,18 +22,6 @@ tags_engines_ccgost:
 errors: errors_engines_ccgost
 errors_engines_ccgost:
 	$(PERL) util/mkerr.pl -conf gost.ec -nostatic -write $(SRC_engines_ccgost)
-
-engines/ccgost/lib: $(LIBOBJ_engines_ccgost)
-	if [ -n "$(SHARED_LIBS)" ]; then \
-		cat configure.mk Makefile.shared | $(MAKE) -f - \
-			LIBNAME=$(LIBNAME_engines_ccgost) \
-			LIBEXTRAS='$(LIBOBJ_engines_ccgost)' \
-			LIBDEPS='-L. -lcrypto' \
-			link_o.$(SHLIB_TARGET); \
-	else \
-		$(AR) $(LIB_engines_ccgost) $(LIBOBJ_engines_ccgost); \
-	fi
-	@touch engines/ccgost/lib
 
 install: install_engines_ccgost
 install_engines_ccgost:
