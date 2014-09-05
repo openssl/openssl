@@ -213,6 +213,7 @@ static ERR_STRING_DATA X509V3_str_reasons[]=
 {ERR_REASON(X509V3_R_POLICY_WHEN_PROXY_LANGUAGE_REQUIRES_NO_POLICY),"policy when proxy language requires no policy"},
 {ERR_REASON(X509V3_R_SCT_INVALID)        ,"sct invalid"},
 {ERR_REASON(X509V3_R_SCT_INVALID_SIGNATURE),"sct invalid signature"},
+{ERR_REASON(X509V3_R_SCT_LIST_INVALID)   ,"sct list invalid"},
 {ERR_REASON(X509V3_R_SCT_LOG_ID_MISMATCH),"sct log id mismatch"},
 {ERR_REASON(X509V3_R_SCT_NOT_SET)        ,"sct not set"},
 {ERR_REASON(X509V3_R_SCT_UNSUPPORTED_VERSION),"sct unsupported version"},
