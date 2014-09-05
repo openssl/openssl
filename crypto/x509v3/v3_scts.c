@@ -255,24 +255,25 @@ static int sct_parse(SCT *sct)
 static int sct_encode_precerttbs(X509 *cert, unsigned char **tbsder,
 				 const int nid_ext_to_delete)
 	{
-	X509_CINF *cinf;
-	X509_EXTENSIONS *exts;
 	int index;
 
-	if (!cert || !tbsder || !(*tbsder)
-			|| (!(cinf = cert->cert_info))
-			|| (!(exts = cinf->extensions)))
-		return 0;
+	if (!cert || !tbsder || !(*tbsder))
+		return -1;
 
-	index = X509v3_get_ext_by_NID(exts, nid_ext_to_delete, -1);
+	index = X509_get_ext_by_NID(cert, nid_ext_to_delete, -1);
 	if (index != -1)
 		{
-		X509_EXTENSION *ext = X509v3_delete_ext(exts, index);
+		X509_EXTENSION *ext = X509_delete_ext(cert, index);
 		if (ext) X509_EXTENSION_free(ext);
+		/* Don't allow duplicate CT extensions */
+		if (X509_get_ext_by_NID(cert, nid_ext_to_delete, -1) != -1)
+			return -1;
 		}
+	else if (nid_ext_to_delete == NID_ct_precert_poison)
+		return -1;
 
-	cinf->enc.modified = 1;
-	return i2d_X509_CINF(cinf, tbsder);
+	cert->cert_info->enc.modified = 1;
+	return i2d_X509_CINF(cert->cert_info, tbsder);
 	}
 
 SCT *SCT_new(void)
