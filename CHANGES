@@ -4,6 +4,10 @@
 
  Changes between 1.0.1h and 1.0.2 [xx XXX xxxx]
 
+  *) Add support for the SignedCertificateTimestampList certificate and
+     OCSP response extensions from RFC6962.
+     [Rob Stradling]
+
   *) Fix ec_GFp_simple_points_make_affine (thus, EC_POINTs_mul etc.)
      for corner cases. (Certain input points at infinity could lead to
      bogus results, with non-infinity inputs mapped to infinity too.)
