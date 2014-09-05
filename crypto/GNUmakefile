@@ -5,6 +5,11 @@
 include crypto/Makefile
 -include $(SRC_crypto:.c=.d)
 
+# Ensure the "making all in..." announcements are printed, even if there is
+# nothing to build.
+all_crypto: $(LIBOBJ_crypto) $(foreach dir, $(SDIRS), all_crypto_$(dir)) \
+	all_engines
+
 define FIPS_OBJS_RULE_template
 fips_objs_$(1)_announce:
 	@echo making fips in $(DIR_crypto)/$(1)...
@@ -39,6 +44,8 @@ $(3)_crypto_$(1): $(3)_crypto_$(1)_announce
 $(2): $(3)_crypto_$(1)
 endef
 
+$(foreach dir, $(SDIRS), \
+  $(eval $(call CRYPTO_SUBDIR_RULE_template,$(dir),all,all)))
 $(foreach dir, $(SDIRS), \
   $(eval $(call CRYPTO_SUBDIR_RULE_template,$(dir),files,files)))
 $(foreach dir, $(SDIRS), \

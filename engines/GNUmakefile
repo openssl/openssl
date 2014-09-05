@@ -5,6 +5,10 @@
 include engines/Makefile
 -include $(SRC_engines:.c=.d)
 
+# Ensure the "making all in..." announcements are printed, even if there is
+# nothing to build.
+all_engines:	$(LIBOBJ_engines) $(foreach dir,$(ENGDIRS),all_engines_$(dir))
+
 ifdef SHARED_LIBS
 all_engines:	engines/lib
 engines/lib:	$(LIB_crypto)
@@ -16,8 +20,6 @@ engines/lib:	$(LIB_crypto)
 			link_o.$(SHLIB_TARGET); \
 	done; \
 	touch engines/lib
-else
-all_engines:	$(LIB_crypto)
 endif
 
 
@@ -29,6 +31,8 @@ $(3)_engines_$(1): $(3)_engines_$(1)_announce
 $(2): $(3)_engines_$(1)
 endef
 
+$(foreach dir, $(ENGDIRS), \
+  $(eval $(call ENGINES_SUBDIR_RULE_template,$(dir),all,all)))
 $(foreach dir, $(ENGDIRS), \
   $(eval $(call ENGINES_SUBDIR_RULE_template,$(dir),files,files)))
 $(foreach dir, $(ENGDIRS), \
