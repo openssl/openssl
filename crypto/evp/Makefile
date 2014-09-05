@@ -385,7 +385,8 @@ evp_enc.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
 evp_enc.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
 evp_enc.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 evp_enc.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-evp_enc.o: ../../include/openssl/x509_vfy.h ../cryptlib.h evp_enc.c evp_locl.h
+evp_enc.o: ../../include/openssl/x509_vfy.h ../constant_time_locl.h
+evp_enc.o: ../cryptlib.h evp_enc.c evp_locl.h
 evp_err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 evp_err.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 evp_err.o: ../../include/openssl/err.h ../../include/openssl/evp.h

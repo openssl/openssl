@@ -64,6 +64,7 @@
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
+#include "../constant_time_locl.h"
 #include "evp_locl.h"
 
 #ifdef OPENSSL_FIPS
@@ -301,11 +302,11 @@ int EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 
 int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	{
-	int i,n;
-	unsigned int b;
+	unsigned int i, b;
+	unsigned char pad, padding_good;
 
 	*outl=0;
-	b=ctx->cipher->block_size;
+	b=(unsigned int)(ctx->cipher->block_size);
 	if (ctx->flags & EVP_CIPH_NO_PADDING)
 		{
 		if(ctx->buf_len)
@@ -324,28 +325,34 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 			return(0);
 			}
 		OPENSSL_assert(b <= sizeof ctx->final);
-		n=ctx->final[b-1];
-		if (n == 0 || n > (int)b)
+		pad=ctx->final[b-1];
+
+		padding_good = (unsigned char)(~constant_time_is_zero_8(pad));
+		padding_good &= constant_time_ge_8(b, pad);
+
+                for (i = 1; i < b; ++i)
 			{
-			EVPerr(EVP_F_EVP_DECRYPTFINAL_EX,EVP_R_BAD_DECRYPT);
-			return(0);
+			unsigned char is_pad_index = constant_time_lt_8(i, pad);
+			unsigned char pad_byte_good = constant_time_eq_8(ctx->final[b-i-1], pad);
+			padding_good &= constant_time_select_8(is_pad_index, pad_byte_good, 0xff);
 			}
-		for (i=0; i<n; i++)
-			{
-			if (ctx->final[--b] != n)
-				{
-				EVPerr(EVP_F_EVP_DECRYPTFINAL_EX,EVP_R_BAD_DECRYPT);
-				return(0);
-				}
-			}
-		n=ctx->cipher->block_size-n;
-		for (i=0; i<n; i++)
-			out[i]=ctx->final[i];
-		*outl=n;
+
+		/*
+		 * At least 1 byte is always padding, so we always write b - 1
+		 * bytes to avoid a timing leak. The caller is required to have |b|
+		 * bytes space in |out| by the API contract.
+		 */
+		for (i = 0; i < b - 1; ++i)
+			out[i] = ctx->final[i] & padding_good;
+		/* Safe cast: for a good padding, EVP_MAX_IV_LENGTH >= b >= pad */
+		*outl = padding_good & ((unsigned char)(b - pad));
+		return padding_good & 1;
 		}
 	else
-		*outl=0;
-	return(1);
+		{
+		*outl = 0;
+		return 1;
+		}
 	}
 
 void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx)
