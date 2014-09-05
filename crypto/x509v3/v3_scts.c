@@ -55,7 +55,7 @@
  *
  */
 
-#include <stdio.h>
+#include <limits.h>
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 #include <openssl/evp.h>
@@ -71,6 +71,20 @@
 			 l|=((SCT_TIMESTAMP)(*((c)++)))<<16, \
 			 l|=((SCT_TIMESTAMP)(*((c)++)))<< 8, \
 			 l|=((SCT_TIMESTAMP)(*((c)++))))
+
+/* From RFC6962:
+ *      opaque SerializedSCT<1..2^16-1>;
+ *
+ *      struct {
+ *          SerializedSCT sct_list <1..2^16-1>;
+ *      } SignedCertificateTimestampList;
+ */
+#if INT_MAX < 65535
+#define MAX_SCT_SIZE		INT_MAX
+#else
+#define MAX_SCT_SIZE		65535
+#endif
+#define MAX_SCT_LIST_SIZE	MAX_SCT_SIZE
 
 struct SCT_st {
 	/* The encoded SCT */
@@ -93,7 +107,7 @@ struct SCT_st {
 };
 
 static STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
-				   long length);
+				   const int len);
 static int i2d_SCT_LIST(STACK_OF(SCT) *a, unsigned char **pp);
 static int i2r_SCT_LIST(X509V3_EXT_METHOD *method, STACK_OF(SCT) *sct_list,
 			BIO *out, int indent);
@@ -281,13 +295,18 @@ void SCT_free(SCT *sct)
 		}
 	}
 
-SCT *o2i_SCT(SCT **psct, const unsigned char **in, const unsigned long len)
+SCT *o2i_SCT(SCT **psct, const unsigned char **in, const size_t len)
 	{
 	SCT *sct = NULL;
 
 	if (!in || !(*in))
 		{
 		X509V3err(X509V3_F_O2I_SCT, ERR_R_PASSED_NULL_PARAMETER);
+		goto err;
+		}
+	else if (len > MAX_SCT_SIZE)
+		{
+		X509V3err(X509V3_F_O2I_SCT, X509V3_R_SCT_INVALID);
 		goto err;
 		}
 
@@ -371,7 +390,7 @@ int SCT_set0(SCT *sct, const unsigned char version, const char *logid_base64,
 	     const SCT_TIMESTAMP timestamp, const char *extensions_base64,
 	     const char *signature_base64)
 	{
-	int len;
+	size_t len;
 	unsigned char *p, *p2;
 
 	if (!sct || !logid_base64 || !extensions_base64 || !signature_base64)
@@ -389,8 +408,15 @@ int SCT_set0(SCT *sct, const unsigned char version, const char *logid_base64,
 		return 0;
 		}
 
-	sct->sctlen = 43 + ((strlen(extensions_base64) * 3) / 4) + 4
-			+ ((strlen(signature_base64) * 3) / 4);
+	len = 43 + ((strlen(extensions_base64) * 3) / 4) + 4
+		+ ((strlen(signature_base64) * 3) / 4);
+	if ((len > MAX_SCT_SIZE) || (strlen(logid_base64) != 44))
+		{
+		X509V3err(X509V3_F_SCT_SET0, X509V3_R_SCT_INVALID);
+		return 0;
+		}
+	sct->sctlen = (unsigned short)len;
+
 	if ((p=sct->sct=OPENSSL_malloc(sct->sctlen)) == NULL)
 		{
 		X509V3err(X509V3_F_SCT_SET0, ERR_R_MALLOC_FAILURE);
@@ -459,8 +485,7 @@ int SCT_get0_version(const SCT *sct, unsigned char *version)
 	return 1;
 	}
 
-int SCT_get0_logid(const SCT *sct, unsigned char **logid,
-		   unsigned short *logidlen)
+int SCT_get0_logid(const SCT *sct, unsigned char **logid, size_t *logidlen)
 	{
 	if (!sct || !logid || !logidlen)
 		{
@@ -527,6 +552,7 @@ int SCT_verify(const SCT *sct, const LogEntryType entry_type, X509 *cert,
 	unsigned int mdlen = 32;
 	int ret = 0;
 	int len;
+	size_t len2;
 
 	if (!sct || !cert || !log_pubkey
 			|| ((entry_type == precert_entry) && !issuer_pubkey))
@@ -575,12 +601,13 @@ int SCT_verify(const SCT *sct, const LogEntryType entry_type, X509 *cert,
 	 *		} signed_entry;
 	 * (2 bytes + sct->extlen)  CtExtensions extensions;
 	 */
-	if ((len=i2d_X509(cert, NULL)) < 0)
+	if ((len2=i2d_X509(cert, NULL)) < 0)
 		goto done;
-	len += 14 + sct->extlen
+	len2 += 14 + sct->extlen
 			+ 32	/* PreCert.issuer_key_hash */
 			+ 3;	/* Certificate length: <1..2^24-1> */
-	if ((p=digitally_signed=OPENSSL_malloc(len)) == NULL)
+	if ((len2 > INT_MAX)
+			|| (p=digitally_signed=OPENSSL_malloc(len2)) == NULL)
 		{
 		X509V3err(X509V3_F_SCT_VERIFY, ERR_R_MALLOC_FAILURE);
 		goto done;
@@ -632,12 +659,12 @@ int SCT_verify(const SCT *sct, const LogEntryType entry_type, X509 *cert,
 
 	s2n(sct->extlen, p);
 	memcpy(p, sct->ext, sct->extlen);
-	len = (p - digitally_signed) + sct->extlen;
+	len2 = (p - digitally_signed) + sct->extlen;
 
 	/* Verify signature */
 	EVP_MD_CTX_init(&verifyctx);
 	if (!EVP_VerifyInit(&verifyctx, EVP_sha256())
-			|| !EVP_VerifyUpdate(&verifyctx, digitally_signed, len)
+			|| !EVP_VerifyUpdate(&verifyctx, digitally_signed, len2)
 			|| ((log_pkey=X509_PUBKEY_get(log_pubkey)) == NULL))
 		goto cleanup;
 	if ((ret=EVP_VerifyFinal(&verifyctx, sct->sig, sct->siglen,
@@ -661,7 +688,7 @@ void SCT_LIST_free(STACK_OF(SCT) *a)
 	}
 
 STACK_OF(SCT) *o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
-			    long length)
+			    const size_t len)
 	{
 	STACK_OF(SCT) *sk = NULL;
 	SCT *sct;
@@ -672,11 +699,14 @@ STACK_OF(SCT) *o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
 		X509V3err(X509V3_F_O2I_SCT_LIST, ERR_R_PASSED_NULL_PARAMETER);
 		return NULL;
 		}
-
-	if (length < 2)
+	else if ((len < 2) || (len > MAX_SCT_LIST_SIZE))
+		{
+		X509V3err(X509V3_F_O2I_SCT_LIST, X509V3_R_SCT_LIST_INVALID);
 		return NULL;
+		}
+
 	n2s((*pp), listlen);
-	if (listlen != length - 2)
+	if (listlen != len - 2)
 		return NULL;
 
 	if (a && *a)
@@ -718,6 +748,7 @@ STACK_OF(SCT) *o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
 int i2o_SCT_LIST(STACK_OF(SCT) *a, unsigned char **pp)
 	{
 	int len, sctlen, i, newpp = 0;
+	size_t len2;
 	unsigned char *p = NULL, *p2;
 
 	if (!a)
@@ -731,7 +762,11 @@ int i2o_SCT_LIST(STACK_OF(SCT) *a, unsigned char **pp)
 		if (*pp == NULL)
 			{
 			if ((len=i2o_SCT_LIST(a, NULL)) == -1)
+				{
+				X509V3err(X509V3_F_I2O_SCT_LIST,
+					  X509V3_R_SCT_LIST_INVALID);
 				return -1;
+				}
 			if ((*pp=OPENSSL_malloc(len)) == NULL)
 				{
 				X509V3err(X509V3_F_I2O_SCT_LIST,
@@ -743,7 +778,7 @@ int i2o_SCT_LIST(STACK_OF(SCT) *a, unsigned char **pp)
 		p = (*pp) + 2;
 		}
 
-	len = 2;
+	len2 = 2;
 	for (i = 0; i < sk_SCT_num(a); i++)
 		{
 		if (pp)
@@ -754,16 +789,19 @@ int i2o_SCT_LIST(STACK_OF(SCT) *a, unsigned char **pp)
 		if ((sctlen=i2o_SCT(sk_SCT_value(a, i), &p)) == -1)
 			goto err;
 		if (pp) s2n(sctlen, p2);
-		len += 2 + sctlen;
+		len2 += 2 + sctlen;
 		}
+
+	if (len2 > MAX_SCT_LIST_SIZE)
+		goto err;
 
 	if (pp)
 		{
 		p = *pp;
-		s2n((len - 2), p);
+		s2n((len2 - 2), p);
 		}
-	if (!newpp) pp = pp + len;
-	return len;
+	if (!newpp) pp = pp + len2;
+	return len2;
 
 	err:
 	if (newpp)
@@ -775,7 +813,7 @@ int i2o_SCT_LIST(STACK_OF(SCT) *a, unsigned char **pp)
 	}
 
 static STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
-				   long length)
+				   const int len)
 	{
 	ASN1_OCTET_STRING *oct = NULL;
 	STACK_OF(SCT) *sk = NULL;
@@ -788,12 +826,12 @@ static STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
 		}
 
 	p = *pp;
-	if (d2i_ASN1_OCTET_STRING(&oct, &p, length) == NULL)
+	if (d2i_ASN1_OCTET_STRING(&oct, &p, len) == NULL)
 		return NULL;
 
 	p = oct->data;
 	if ((sk=o2i_SCT_LIST(a, &p, oct->length)) != NULL)
-		*pp += length;
+		*pp += len;
 
 	M_ASN1_OCTET_STRING_free(oct);
 	return sk;

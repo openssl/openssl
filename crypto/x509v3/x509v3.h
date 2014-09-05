@@ -905,14 +905,13 @@ typedef enum {
 
 SCT *SCT_new(void);
 void SCT_free(SCT *sct);
-SCT *o2i_SCT(SCT **psct, const unsigned char **in, const unsigned long len);
+SCT *o2i_SCT(SCT **psct, const unsigned char **in, const size_t len);
 int i2o_SCT(const SCT *sct, unsigned char **out);
 int SCT_set0(SCT *sct, const unsigned char version, const char *logid_base64,
 	     const SCT_TIMESTAMP timestamp, const char *extensions_base64,
 	     const char *signature_base64);
 int SCT_get0_version(const SCT *sct, unsigned char *version);
-int SCT_get0_logid(const SCT *sct, unsigned char **logid,
-		   unsigned short *logidlen);
+int SCT_get0_logid(const SCT *sct, unsigned char **logid, size_t *logidlen);
 int SCT_get0_timestamp(const SCT *sct, SCT_TIMESTAMP *timestamp);
 int SCT_get0_signature_nid(const SCT *sct, int *nid);
 int SCT_verify(const SCT *sct, const LogEntryType entry_type, X509 *cert,
@@ -923,7 +922,7 @@ DECLARE_STACK_OF(SCT)
 
 void SCT_LIST_free(STACK_OF(SCT) *a);
 STACK_OF(SCT) *o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
-			    long length);
+			    const size_t len);
 int i2o_SCT_LIST(STACK_OF(SCT) *a, unsigned char **pp);
 
 /* BEGIN ERROR CODES */
@@ -1075,6 +1074,7 @@ void ERR_load_X509V3_strings(void);
 #define X509V3_R_POLICY_WHEN_PROXY_LANGUAGE_REQUIRES_NO_POLICY 159
 #define X509V3_R_SCT_INVALID				 168
 #define X509V3_R_SCT_INVALID_SIGNATURE			 169
+#define X509V3_R_SCT_LIST_INVALID			 173
 #define X509V3_R_SCT_LOG_ID_MISMATCH			 170
 #define X509V3_R_SCT_NOT_SET				 171
 #define X509V3_R_SCT_UNSUPPORTED_VERSION		 172
