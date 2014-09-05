@@ -5,14 +5,14 @@
 include configure.mk
 include Makefile
 
-# $(1) is the subdir, $(2) is the target.
+# $(1) is the target, $(2) is the subdir.
 define DIRS_ANNOUNCE_template
-$(2)_$(1)_announce:
-	@echo "making $(2) in $(1)..."
-$(2)_$(1): $(2)_$(1)_announce
+$(1)_$(2)_announce:
+	@echo "making $(1) in $(2)..."
+$(1)_$(2): $(1)_$(2)_announce
 endef
 
-$(foreach dir, $(DIRS), $(eval $(call DIRS_ANNOUNCE_template,$(dir),all)))
+$(foreach dir, $(DIRS), $(eval $(call DIRS_ANNOUNCE_template,all,$(dir))))
 
 include $(foreach dir, $(DIRS), $(dir)/GNUmakefile)
 
