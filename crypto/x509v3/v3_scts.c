@@ -260,8 +260,8 @@ static int sct_encode_precerttbs(X509 *cert, unsigned char **tbsder,
 	int index;
 
 	if (!cert || !tbsder || !(*tbsder)
-			|| (!(cinf = X509_get_cert_info(cert)))
-			|| (!(exts = X509_CINF_get_extensions(cinf))))
+			|| (!(cinf = cert->cert_info))
+			|| (!(exts = cinf->extensions)))
 		return 0;
 
 	index = X509v3_get_ext_by_NID(exts, nid_ext_to_delete, -1);
@@ -271,7 +271,7 @@ static int sct_encode_precerttbs(X509 *cert, unsigned char **tbsder,
 		if (ext) X509_EXTENSION_free(ext);
 		}
 
-	X509_CINF_set_modified(cinf);
+	cinf->enc.modified = 1;
 	return i2d_X509_CINF(cinf, tbsder);
 	}
 
