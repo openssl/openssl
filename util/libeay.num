@@ -4509,3 +4509,4 @@ FIPS_x931_method                        4868	NOEXIST::FUNCTION:
 FIPS_post_set_callback                  4869	NOEXIST::FUNCTION:
 FIPS_drbg_get_app_data                  4870	NOEXIST::FUNCTION:
 FIPS_rsa_verify_ctx                     4871	NOEXIST::FUNCTION:
+i2d_re_X509_tbs                         4872	EXIST::FUNCTION:
