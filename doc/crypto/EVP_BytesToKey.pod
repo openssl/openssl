@@ -55,7 +55,10 @@ the IV.
 
 =head1 RETURN VALUES
 
-EVP_BytesToKey() returns the size of the derived key in bytes, or 0 on error.
+If B<data> is NULL, then EVP_BytesToKey() returns the number of bytes
+needed to store the derived key.
+Otherwise, EVP_BytesToKey() returns the size of the derived key in bytes,
+or 0 on error.
 
 =head1 SEE ALSO
 
