@@ -540,7 +540,7 @@ int SCT_get0_signature_nid(const SCT *sct, int *nid)
 	return 1;
 	}
 
-int SCT_verify(const SCT *sct, const LogEntryType entry_type, X509 *cert,
+int SCT_verify(const SCT *sct, const log_entry_type entry_type, X509 *cert,
 	       X509_PUBKEY *log_pubkey, X509 *issuer_cert)
 	{
 	EVP_MD_CTX verifyctx;
@@ -556,7 +556,7 @@ int SCT_verify(const SCT *sct, const LogEntryType entry_type, X509 *cert,
 	size_t len2;
 
 	if (!sct || !cert || !log_pubkey
-			|| ((entry_type == precert_entry) && !issuer_cert))
+			|| ((entry_type == PRECERT_ENTRY) && !issuer_cert))
 		{
 		X509V3err(X509V3_F_SCT_VERIFY, ERR_R_PASSED_NULL_PARAMETER);
 		return -1;
@@ -617,7 +617,7 @@ int SCT_verify(const SCT *sct, const LogEntryType entry_type, X509 *cert,
 	else
 		nid_ext_to_delete = NID_ct_precert_scts;
 
-	if (entry_type == x509_entry)
+	if (entry_type == X509_ENTRY)
 		{
 		if (nid_ext_to_delete == NID_ct_precert_poison)
 			goto done;
@@ -627,7 +627,7 @@ int SCT_verify(const SCT *sct, const LogEntryType entry_type, X509 *cert,
 		if (i2d_X509(cert, &p) < 0)
 			goto done;
 		}
-	else	/* entry_type == precert_entry */
+	else	/* entry_type == PRECERT_ENTRY */
 		{
 		/* Calculate PreCert.issuer_key_hash */
 		if ((len=i2d_X509_PUBKEY(issuer_cert->cert_info->key,

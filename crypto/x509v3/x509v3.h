@@ -899,9 +899,9 @@ int v3_addr_validate_resource_set(STACK_OF(X509) *chain,
 typedef struct SCT_st SCT;
 
 typedef enum {
-	x509_entry = 0,
-	precert_entry = 1
-} LogEntryType;
+	X509_ENTRY = 0,
+	PRECERT_ENTRY = 1
+} log_entry_type;
 
 SCT *SCT_new(void);
 void SCT_free(SCT *sct);
@@ -914,7 +914,7 @@ int SCT_get0_version(const SCT *sct, unsigned char *version);
 int SCT_get0_logid(const SCT *sct, unsigned char **logid, size_t *logidlen);
 int SCT_get0_timestamp(const SCT *sct, SCT_TIMESTAMP *timestamp);
 int SCT_get0_signature_nid(const SCT *sct, int *nid);
-int SCT_verify(const SCT *sct, const LogEntryType entry_type, X509 *cert,
+int SCT_verify(const SCT *sct, const log_entry_type entry_type, X509 *cert,
 	       X509_PUBKEY *log_pubkey, X509 *issuer_cert);
 
 DECLARE_STACK_OF(SCT)
