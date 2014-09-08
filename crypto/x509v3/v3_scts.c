@@ -107,7 +107,7 @@ struct SCT_st {
 };
 
 static STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
-				   const int len);
+				   int len);
 static int i2d_SCT_LIST(STACK_OF(SCT) *a, unsigned char **pp);
 static int i2r_SCT_LIST(X509V3_EXT_METHOD *method, STACK_OF(SCT) *sct_list,
 			BIO *out, int indent);
@@ -296,7 +296,7 @@ void SCT_free(SCT *sct)
 		}
 	}
 
-SCT *o2i_SCT(SCT **psct, const unsigned char **in, const size_t len)
+SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len)
 	{
 	SCT *sct = NULL;
 
@@ -540,7 +540,7 @@ int SCT_get0_signature_nid(const SCT *sct, int *nid)
 	return 1;
 	}
 
-int SCT_verify(const SCT *sct, const log_entry_type entry_type, X509 *cert,
+int SCT_verify(const SCT *sct, log_entry_type entry_type, X509 *cert,
 	       X509_PUBKEY *log_pubkey, X509 *issuer_cert)
 	{
 	EVP_MD_CTX verifyctx;
@@ -678,7 +678,7 @@ void SCT_LIST_free(STACK_OF(SCT) *a)
 	}
 
 STACK_OF(SCT) *o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
-			    const size_t len)
+			    size_t len)
 	{
 	STACK_OF(SCT) *sk = NULL;
 	SCT *sct;
@@ -803,7 +803,7 @@ int i2o_SCT_LIST(STACK_OF(SCT) *a, unsigned char **pp)
 	}
 
 static STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
-				   const int len)
+				   int len)
 	{
 	ASN1_OCTET_STRING *oct = NULL;
 	STACK_OF(SCT) *sk = NULL;

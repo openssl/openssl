@@ -905,7 +905,7 @@ typedef enum {
 
 SCT *SCT_new(void);
 void SCT_free(SCT *sct);
-SCT *o2i_SCT(SCT **psct, const unsigned char **in, const size_t len);
+SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len);
 int i2o_SCT(const SCT *sct, unsigned char **out);
 int SCT_set0(SCT *sct, const unsigned char version, const char *logid_base64,
 	     const SCT_TIMESTAMP timestamp, const char *extensions_base64,
@@ -921,7 +921,7 @@ DECLARE_STACK_OF(SCT)
 
 void SCT_LIST_free(STACK_OF(SCT) *a);
 STACK_OF(SCT) *o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
-			    const size_t len);
+			    size_t len);
 int i2o_SCT_LIST(STACK_OF(SCT) *a, unsigned char **pp);
 
 /* BEGIN ERROR CODES */
