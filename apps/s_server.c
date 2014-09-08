@@ -1805,7 +1805,7 @@ bad:
 		}
 #endif
 
-	if ((!SSL_CTX_load_verify_locations(ctx,CAfile,CApath)) ||
+	if ((!SSL_CTX_load_verify_locations(ctx,CAfile,CApath)) &&
 		(!SSL_CTX_set_default_verify_paths(ctx)))
 		{
 		/* BIO_printf(bio_err,"X509_load_verify_locations\n"); */
@@ -1878,7 +1878,7 @@ bad:
 		else
 			SSL_CTX_sess_set_cache_size(ctx2,128);
 
-		if ((!SSL_CTX_load_verify_locations(ctx2,CAfile,CApath)) ||
+		if ((!SSL_CTX_load_verify_locations(ctx2,CAfile,CApath)) &&
 			(!SSL_CTX_set_default_verify_paths(ctx2)))
 			{
 			ERR_print_errors(bio_err);
