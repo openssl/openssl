@@ -504,9 +504,9 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		return 1;
 
 		case EVP_PKEY_CTRL_RSA_KEYGEN_BITS:
-		if (p1 < 256)
+		if (p1 < 512)
 			{
-			RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_KEYBITS);
+			RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_KEY_SIZE_TOO_SMALL);
 			return -2;
 			}
 		rctx->nbits = p1;
