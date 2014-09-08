@@ -4,6 +4,10 @@
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
 
+  *) Increased the minimal RSA keysize from 256 to 512 bits [Rich Salz],
+     done while fixing the error code for the key-too-small case.
+     [Annie Yousar <a.yousar@informatik.hu-berlin.de>]
+
   *) Experimental support for a new, fast, unbiased prime candidate generator,
      bn_probable_prime_dh_coprime(). Not currently used by any prime generator.
      [Felix Laurie von Massenbach <felix@erbridge.co.uk>]
