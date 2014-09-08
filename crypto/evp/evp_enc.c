@@ -295,7 +295,7 @@ int EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *im
 	return EVP_CipherInit_ex(ctx, cipher, impl, key, iv, 0);
 	}
 
-int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
+int EVP_EncryptOrDecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	     const unsigned char *in, int inl)
 	{
 	int i,j,bl;
@@ -368,6 +368,17 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	return 1;
 	}
 
+int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
+	     const unsigned char *in, int inl)
+	{
+
+	if (!ctx->encrypt) {
+		/* Do not allow accidentally using a decryption context for encryption */
+		return 0;
+	}
+	return EVP_EncryptOrDecryptUpdate(ctx, out, outl, in, inl);
+	}
+
 int EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	{
 	int ret;
@@ -379,6 +390,11 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	{
 	int n,ret;
 	unsigned int i, b, bl;
+
+	if (!ctx->encrypt) {
+		/* Do not allow accidentally using a decryption context for encryption */
+		return 0;
+	}
 
 	if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER)
 		{
@@ -427,6 +443,11 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	int fix_len;
 	unsigned int b;
 
+	if (ctx->encrypt) {
+		/* Do not allow accidentally using an encryption context for decryption */
+		return 0;
+	}
+
 	if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER)
 		{
 		fix_len = ctx->cipher->do_cipher(ctx, out, in, inl);
@@ -447,7 +468,7 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 		}
 
 	if (ctx->flags & EVP_CIPH_NO_PADDING)
-		return EVP_EncryptUpdate(ctx, out, outl, in, inl);
+		return EVP_EncryptOrDecryptUpdate(ctx, out, outl, in, inl);
 
 	b=ctx->cipher->block_size;
 	OPENSSL_assert(b <= sizeof ctx->final);
@@ -462,7 +483,7 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 		fix_len = 0;
 
 
-	if(!EVP_EncryptUpdate(ctx,out,outl,in,inl))
+	if(!EVP_EncryptOrDecryptUpdate(ctx,out,outl,in,inl))
 		return 0;
 
 	/* if we have 'decrypted' a multiple of block size, make sure
@@ -494,6 +515,11 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	int i,n;
 	unsigned int b;
 	*outl=0;
+
+	if (ctx->encrypt) {
+		/* Do not allow accidentally using an encryption context for decryption */
+		return 0;
+	}
 
 	if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER)
 		{
