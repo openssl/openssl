@@ -520,7 +520,6 @@ static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
 	ctx->current_cert = x;
 	ctx->current_issuer = issuer;
 	return ctx->verify_cb(0, ctx);
-	return 0;
 }
 
 /* Alternative lookup method: look from a STACK stored in other_ctx */
