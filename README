@@ -135,8 +135,7 @@
     - Problem Description (steps that will reproduce the problem, if known)
     - Stack Traceback (if the application dumps core)
 
- Report the bug to the OpenSSL project via the Request Tracker
- (http://www.openssl.org/support/rt.html) by mail to:
+ Email the report to:
 
     openssl-bugs@openssl.org
 
@@ -144,10 +143,11 @@
  or support queries. Just because something doesn't work the way you expect
  does not mean it is necessarily a bug in OpenSSL.
 
- Note that mail to openssl-bugs@openssl.org is recorded in the publicly
- readable request tracker database and is forwarded to a public
- mailing list. Confidential mail may be sent to openssl-security@openssl.org
- (PGP key available from the key servers).
+ Note that mail to openssl-bugs@openssl.org is recorded in the public
+ request tracker database (see https://www.openssl.org/support/rt.html
+ for details) and also forwarded to a public mailing list. Confidential
+ mail may be sent to openssl-security@openssl.org (PGP key available from
+ the key servers).
 
  HOW TO CONTRIBUTE TO OpenSSL
  ----------------------------
