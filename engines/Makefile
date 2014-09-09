@@ -111,7 +111,10 @@ install:
 		for l in $(LIBNAMES); do \
 			( echo installing $$l; \
 			  pfx=lib; \
-			  if ! expr "$(PLATFORM)" : "Cygwin" >/dev/null; then \
+			  if expr "$(PLATFORM)" : "Cygwin" >/dev/null; then \
+				sfx=".so"; \
+				cp cyg$$l.dll $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx.new; \
+			  else \
 				case "$(CFLAGS)" in \
 				*DSO_BEOS*)	sfx=".so";;	\
 				*DSO_DLFCN*)	sfx=`expr "$(SHLIB_EXT)" : '.*\(\.[a-z][a-z]*\)' \| ".so"`;;	\
@@ -120,9 +123,6 @@ install:
 				*)		sfx=".bad";;	\
 				esac; \
 				cp $$pfx$$l$$sfx $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx.new; \
-			  else \
-				sfx=".so"; \
-				cp cyg$$l.dll $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx.new; \
 			  fi; \
 			  chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx.new; \
 			  mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx ); \
