@@ -379,7 +379,7 @@ static unsigned char *alpn_selected;
  * in a format suitable for passing to SSL_CTX_set_next_protos_advertised.
  *   outlen: (output) set to the length of the resulting buffer on success.
  *   err: (maybe NULL) on failure, an error message line is written to this BIO.
- *   in: a NUL termianted string like "abc,def,ghi"
+ *   in: a NUL terminated string like "abc,def,ghi"
  *
  *   returns: a malloced buffer or NULL on failure.
  */
@@ -752,7 +752,7 @@ static void sv_usage(void)
 	fprintf(stderr," -client_auth  - do client authentication\n");
 	fprintf(stderr," -proxy        - allow proxy certificates\n");
 	fprintf(stderr," -proxy_auth <val> - set proxy policy rights\n");
-	fprintf(stderr," -proxy_cond <val> - experssion to test proxy policy rights\n");
+	fprintf(stderr," -proxy_cond <val> - expression to test proxy policy rights\n");
 	fprintf(stderr," -v            - more output\n");
 	fprintf(stderr," -d            - debug output\n");
 	fprintf(stderr," -reuse        - use session-id reuse\n");
@@ -1028,7 +1028,7 @@ int main(int argc, char *argv[])
 #ifdef OPENSSL_FIPS
 			fips_mode=1;
 #else
-			fprintf(stderr,"not compiled with FIPS support, so exitting without running.\n");
+			fprintf(stderr,"not compiled with FIPS support, so exiting without running.\n");
 			EXIT(0);
 #endif
 			}
