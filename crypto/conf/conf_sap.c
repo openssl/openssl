@@ -99,6 +99,7 @@ void OPENSSL_config(const char *config_name)
 			ERR_print_errors(bio_err);
 			BIO_free(bio_err);
 			}
+		fprintf(stderr, "OpenSSL could not auto-configure.\n");
 		exit(1);
 		}
 
