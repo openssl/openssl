@@ -2,110 +2,67 @@
 # OpenSSL/crypto/ui/Makefile
 #
 
-DIR=	ui
-TOP=	../..
-CC=	cc
-INCLUDES= -I.. -I$(TOP) -I../../include
-CFLAG=-g
-MAKEFILE=	Makefile
-AR=		ar r
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_crypto_ui= $(INCLUDES_crypto) $(CFLAG)
 
-GENERAL=Makefile
+GENERAL_crypto_ui=crypto/ui/Makefile
 #TEST= uitest.c
-TEST=
-APPS=
+TEST_crypto_ui=
+APPS_crypto_ui=
 
-COMPATSRC= ui_compat.c
-COMPATOBJ= ui_compat.o
+COMPATSRC= crypto/ui/ui_compat.c
+COMPATOBJ= crypto/ui/ui_compat.o
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC= ui_err.c ui_lib.c ui_openssl.c ui_util.c $(COMPATSRC)
-LIBOBJ= ui_err.o ui_lib.o ui_openssl.o ui_util.o $(COMPATOBJ)
+LIB_crypto_ui=libcrypto.a
+LIBSRC_crypto_ui= crypto/ui/ui_err.c crypto/ui/ui_lib.c crypto/ui/ui_openssl.c crypto/ui/ui_util.c $(COMPATSRC)
+LIBOBJ_crypto_ui= crypto/ui/ui_err.o crypto/ui/ui_lib.o crypto/ui/ui_openssl.o crypto/ui/ui_util.o $(COMPATOBJ)
 
-SRC= $(LIBSRC)
+SRC_crypto_ui= $(LIBSRC_crypto_ui)
 
-EXHEADER= ui.h ui_compat.h
-HEADER=	$(EXHEADER) ui_locl.h
+EXHEADER_crypto_ui= crypto/ui/ui.h crypto/ui/ui_compat.h
+HEADER_crypto_ui=	$(EXHEADER_crypto_ui) crypto/ui/ui_locl.h
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_ui=    $(GENERAL_crypto_ui) $(SRC_crypto_ui) $(HEADER_crypto_ui)
 
-top:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_crypto_ui
+all_crypto_ui:	$(LIBOBJ_crypto_ui)
 
-lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
-	@touch lib
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_crypto_ui
+files_crypto_ui:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+links: links_crypto_ui
+links_crypto_ui:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_ui)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_ui)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_ui)
 
-install:
+install: install_crypto_ui
+install_crypto_ui:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_ui)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
-	ctags $(SRC)
+tags: tags_crypto_ui
+tags_crypto_ui:
+	ctags $(SRC_crypto_ui)
 
-tests:
+tests: tests_crypto_ui
+tests_crypto_ui:
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_crypto_ui
+lint_crypto_ui:
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_ui)>crypto/ui/fluff
 
-depend:
-	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+dclean: dclean_crypto_ui
+dclean_crypto_ui:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+clean: clean_crypto_ui
+clean_crypto_ui:
+	rm -f crypto/ui/*.o crypto/ui/*.d */*.o */*.d crypto/ui/*.obj crypto/ui/lib crypto/ui/tags crypto/ui/core crypto/ui/.pure crypto/ui/.nfs* crypto/ui/*.old crypto/ui/*.bak crypto/ui/fluff
 
-clean:
-	rm -f *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-ui_compat.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
-ui_compat.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-ui_compat.o: ../../include/openssl/stack.h ../../include/openssl/ui.h
-ui_compat.o: ../../include/openssl/ui_compat.h ui_compat.c
-ui_err.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
-ui_err.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-ui_err.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-ui_err.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-ui_err.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-ui_err.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h ui_err.c
-ui_lib.o: ../../e_os.h ../../include/openssl/bio.h
-ui_lib.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-ui_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-ui_lib.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-ui_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-ui_lib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-ui_lib.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-ui_lib.o: ../cryptlib.h ui_lib.c ui_locl.h
-ui_openssl.o: ../../e_os.h ../../include/openssl/bio.h
-ui_openssl.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-ui_openssl.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-ui_openssl.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-ui_openssl.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-ui_openssl.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-ui_openssl.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-ui_openssl.o: ../cryptlib.h ui_locl.h ui_openssl.c
-ui_util.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-ui_util.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-ui_util.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-ui_util.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-ui_util.o: ../../include/openssl/ui.h ui_locl.h ui_util.c

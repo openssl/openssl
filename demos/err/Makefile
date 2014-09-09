@@ -1,17 +1,17 @@
 # Minimal makefile to generate error codes and link a test app
-SRC= main.c
-OBJ= main.o
-HEADER=test_err.h
-ERROBJ= test_err.o
-CC=gcc
-CFLAGS=-I../../include
-LDFLAGS=-L../.. -lcrypto
+SRC_demos_err= demos/err/main.c
+OBJ_demos_err= demos/err/main.o
+HEADER_demos_err=demos/err/test_err.h
+ERROBJ= demos/err/test_err.o
+CFLAGS_demos_err=-I../../include
+LDFLAGS_demos_err=-L../.. -lcrypto
 
-PERL=perl
 
-testapp: $(OBJ) $(ERROBJ) $(HEADER)
-	$(CC) -o testapp $(OBJ) $(ERROBJ) $(LDFLAGS)
+demos/err/testapp: $(OBJ_demos_err) $(ERROBJ) $(HEADER_demos_err)
+	$(CC) -o demos/err/testapp $(OBJ_demos_err) $(ERROBJ) $(LDFLAGS_demos_err)
 	
-errors:
-	$(PERL) ../../util/mkerr.pl -conf test_err.ec \
-		-nostatic -write $(SRC)
+errors: errors_demos_err
+errors_demos_err:
+	$(PERL) util/mkerr.pl -conf test_err.ec \
+		-nostatic -write $(SRC_demos_err)
+

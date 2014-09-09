@@ -2,112 +2,61 @@
 # OpenSSL/fips/utl/Makefile
 #
 
-DIR=	utl
-TOP=	../..
-CC=	cc
-INCLUDES=
-CFLAG=-g
-INSTALL_PREFIX=
-OPENSSLDIR=     /usr/local/ssl
-INSTALLTOP=/usr/local/ssl
-MAKEDEPPROG=	makedepend
-MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
-MAKEFILE=	Makefile
-AR=		ar r
+INCLUDES_fips_utl=
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_fips_utl= $(INCLUDES_fips_utl) $(CFLAG)
 
-GENERAL=Makefile
-TEST=
-APPS=
+GENERAL_fips_utl=fips/utl/Makefile
+TEST_fips_utl=
+APPS_fips_utl=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC= fips_err.c fips_md.c fips_enc.c fips_lck.c fips_mem.c
-LIBOBJ= fips_err.o fips_md.o fips_enc.o fips_lck.o fips_mem.o
+LIB_fips_utl=libcrypto.a
+LIBSRC_fips_utl= fips/utl/fips_err.c fips/utl/fips_md.c fips/utl/fips_enc.c fips/utl/fips_lck.c fips/utl/fips_mem.c
+LIBOBJ_fips_utl= fips/utl/fips_err.o fips/utl/fips_md.o fips/utl/fips_enc.o fips/utl/fips_lck.o fips/utl/fips_mem.o
 
-SRC= $(LIBSRC)
+SRC_fips_utl= $(LIBSRC_fips_utl)
 
-EXHEADER=
-HEADER=	$(EXHEADER)
+EXHEADER_fips_utl=
+HEADER_fips_utl=	$(EXHEADER_fips_utl)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_fips_utl=    $(GENERAL_fips_utl) $(SRC_fips_utl) $(HEADER_fips_utl)
 
-top:
-	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_fips_utl
+all_fips_utl:	fips/utl/lib
 
-lib:	$(LIBOBJ)
-	@echo $(LIBOBJ) > lib
+fips/utl/lib:	$(LIBOBJ_fips_utl)
+	@echo $(LIBOBJ_fips_utl) > fips/utl/lib
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_fips_utl
+files_fips_utl:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/apps $(APPS)
+links: links_fips_utl
+links_fips_utl:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_fips_utl)
+	@$(PERL) util/mklink.pl test $(TEST_fips_utl)
+	@$(PERL) util/mklink.pl apps $(APPS_fips_utl)
 
-install:
-	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
+install: install_fips_utl
+install_fips_utl:
+	@headerlist="$(EXHEADER_fips_utl)"; for i in $$headerlist; \
 	do  \
 	  (cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	  chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done
 
-tags:
-	ctags $(SRC)
+tags: tags_fips_utl
+tags_fips_utl:
+	ctags $(SRC_fips_utl)
 
-tests:
+tests: tests_fips_utl
+tests_fips_utl:
 
-depend:
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(SRC) $(TEST)
+dclean: dclean_fips_utl
+dclean_fips_utl:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+clean: clean_fips_utl
+clean_fips_utl:
+	rm -f fips/utl/*.o fips/utl/*.d fips/utl/*.obj fips/utl/lib fips/utl/tags fips/utl/core fips/utl/.pure fips/utl/.nfs* fips/utl/*.old fips/utl/*.bak fips/utl/fluff
 
-clean:
-	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-fips_enc.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_enc.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-fips_enc.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-fips_enc.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
-fips_enc.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-fips_enc.o: ../../include/openssl/opensslconf.h
-fips_enc.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-fips_enc.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-fips_enc.o: ../../include/openssl/symhacks.h fips_enc.c
-fips_err.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
-fips_err.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-fips_err.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
-fips_err.o: ../../include/openssl/opensslconf.h
-fips_err.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-fips_err.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-fips_err.o: ../../include/openssl/symhacks.h fips_err.c
-fips_lck.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_lck.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-fips_lck.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
-fips_lck.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-fips_lck.o: ../../include/openssl/opensslconf.h
-fips_lck.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-fips_lck.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-fips_lck.o: ../../include/openssl/symhacks.h fips_lck.c
-fips_md.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_md.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-fips_md.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-fips_md.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
-fips_md.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-fips_md.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-fips_md.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-fips_md.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-fips_md.o: fips_md.c
-fips_mem.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
-fips_mem.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-fips_mem.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
-fips_mem.o: ../../include/openssl/opensslconf.h
-fips_mem.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-fips_mem.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-fips_mem.o: ../../include/openssl/symhacks.h fips_mem.c

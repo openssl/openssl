@@ -1,0 +1,8 @@
+#
+# OpenSSL/demos/engines/rsaref/BSDmakefile
+#
+
+.include "demos/engines/rsaref/Makefile"
+.for d in $(SRC_demos_engines_rsaref:.c=.d)
+.sinclude "$(d)"
+.endfor

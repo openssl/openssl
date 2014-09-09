@@ -2,25 +2,22 @@
 # OpenSSL/tools/Makefile
 #
 
-DIR=	tools
-TOP=	..
-CC=	cc
-INCLUDES= -I$(TOP) -I../../include
-CFLAG=-g
-MAKEFILE=	Makefile
+INCLUDES_tools= -I. -Iinclude
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_tools= $(INCLUDES_tools) $(CFLAG)
 
-GENERAL=Makefile
-TEST=
-APPS= c_rehash
-MISC_APPS= c_hash c_info c_issuer c_name
+GENERAL_tools=tools/Makefile
+TEST_tools=
+APPS_tools= tools/c_rehash
+MISC_APPS= tools/c_hash tools/c_info tools/c_issuer tools/c_name
 
-all:
+all: all_tools
+all_tools:
 
-install:
+install: install_tools
+install_tools:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@for i in $(APPS) ; \
+	@for i in $(APPS_tools) ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
 	chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
@@ -33,27 +30,27 @@ install:
 	mv -f $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i.new $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i ); \
 	done;
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_tools
+files_tools:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
+links: links_tools
+links_tools:
 
-lint:
+lint: lint_tools
+lint_tools:
 
-tags:
+tags: tags_tools
+tags_tools:
 
-errors:
+errors: errors_tools
+errors_tools:
 
-depend:
+dclean: dclean_tools
+dclean_tools:
+	rm -f tools/c_rehash
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
-	rm -f c_rehash
+clean: clean_tools
+clean_tools:
+	rm -f tools/*.o tools/*.d tools/*.obj tools/lib tools/tags tools/core tools/.pure tools/.nfs* tools/*.old tools/*.bak tools/fluff
 
-clean:
-	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-
-errors:
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.

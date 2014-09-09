@@ -2,86 +2,65 @@
 # OpenSSL/crypto/md4/Makefile
 #
 
-DIR=    md4
-TOP=    ../..
-CC=     cc
-CPP=    $(CC) -E
-INCLUDES=
-CFLAG=-g
-MAKEFILE=       Makefile
-AR=             ar r
+CPP_crypto_md4=    $(CC) -E
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_crypto_md4= $(INCLUDES_crypto) $(CFLAG)
 
-GENERAL=Makefile
-TEST=md4test.c
-APPS=md4.c
+GENERAL_crypto_md4=crypto/md4/Makefile
+TEST_crypto_md4=crypto/md4/md4test.c
+APPS_crypto_md4=crypto/md4/md4.c
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=md4_dgst.c md4_one.c
-LIBOBJ=md4_dgst.o md4_one.o
+LIB_crypto_md4=libcrypto.a
+LIBSRC_crypto_md4=crypto/md4/md4_dgst.c crypto/md4/md4_one.c
+LIBOBJ_crypto_md4=crypto/md4/md4_dgst.o crypto/md4/md4_one.o
 
-SRC= $(LIBSRC)
+SRC_crypto_md4= $(LIBSRC_crypto_md4)
 
-EXHEADER= md4.h
-HEADER= md4_locl.h $(EXHEADER)
+EXHEADER_crypto_md4= crypto/md4/md4.h
+HEADER_crypto_md4= crypto/md4/md4_locl.h $(EXHEADER_crypto_md4)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_md4=    $(GENERAL_crypto_md4) $(SRC_crypto_md4) $(HEADER_crypto_md4)
 
-top:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:    lib
+all: all_crypto_md4
+all_crypto_md4:    $(LIBOBJ_crypto_md4)
 
-lib:    $(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
-	@touch lib
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_crypto_md4
+files_crypto_md4:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+links: links_crypto_md4
+links_crypto_md4:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_md4)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_md4)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_md4)
 
-install:
+install: install_crypto_md4
+install_crypto_md4:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_md4)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
-	ctags $(SRC)
+tags: tags_crypto_md4
+tags_crypto_md4:
+	ctags $(SRC_crypto_md4)
 
-tests:
+tests: tests_crypto_md4
+tests_crypto_md4:
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_crypto_md4
+lint_crypto_md4:
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_md4)>crypto/md4/fluff
 
-depend:
-	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+dclean: dclean_crypto_md4
+dclean_crypto_md4:
+	rm -f $(EXHEADER_crypto_md4) $(TEST_crypto_md4) $(APPS_crypto_md4)
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
-	rm -f ../../include/openssl/$(EXHEADER) ../../test/$(TEST) ../../apps/$(APPS)
+clean: clean_crypto_md4
+clean_crypto_md4:
+	rm -f asm/mx86unix.cpp crypto/md4/*.o crypto/md4/*.d asm/*.o crypto/md4/*.obj crypto/md4/lib crypto/md4/tags crypto/md4/core crypto/md4/.pure crypto/md4/.nfs* crypto/md4/*.old crypto/md4/*.bak crypto/md4/fluff
 
-clean:
-	rm -f asm/mx86unix.cpp *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-md4_dgst.o: ../../include/openssl/e_os2.h ../../include/openssl/md4.h
-md4_dgst.o: ../../include/openssl/opensslconf.h
-md4_dgst.o: ../../include/openssl/opensslv.h ../md32_common.h md4_dgst.c
-md4_dgst.o: md4_locl.h
-md4_one.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-md4_one.o: ../../include/openssl/md4.h ../../include/openssl/opensslconf.h
-md4_one.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-md4_one.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-md4_one.o: ../../include/openssl/symhacks.h md4_one.c

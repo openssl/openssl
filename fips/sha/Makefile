@@ -2,80 +2,64 @@
 # OpenSSL/fips/sha/Makefile
 #
 
-DIR=	sha
-TOP=	../..
-CC=	cc
-INCLUDES=
-CFLAG=-g
-INSTALL_PREFIX=
-OPENSSLDIR=     /usr/local/ssl
-INSTALLTOP=/usr/local/ssl
-MAKEDEPPROG=	makedepend
-MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
-MAKEFILE=	Makefile
-AR=		ar r
-EXE_EXT=
+INCLUDES_fips_sha=
 
-ASFLAGS= $(INCLUDES) $(ASFLAG)
-AFLAGS= $(ASFLAGS)
+ASFLAGS_fips_sha= $(INCLUDES_fips_sha) $(ASFLAG)
+AFLAGS_fips_sha= $(ASFLAGS_fips_sha)
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_fips_sha= $(INCLUDES_fips_sha) $(CFLAG)
 
-GENERAL=Makefile
-TEST= fips_shatest.c
-APPS=
-EXE= fips_standalone_sha1$(EXE_EXT)
+GENERAL_fips_sha=fips/sha/Makefile
+TEST_fips_sha= fips/sha/fips_shatest.c
+APPS_fips_sha=
+EXE_fips_sha= fips/sha/fips_standalone_sha1$(EXE_EXT)
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=fips_sha1_selftest.c
-LIBOBJ=fips_sha1_selftest.o
+LIB_fips_sha=libcrypto.a
+LIBSRC_fips_sha=fips/sha/fips_sha1_selftest.c
+LIBOBJ_fips_sha=fips/sha/fips_sha1_selftest.o
 
-SRC= $(LIBSRC)
-PROGS= fips_standalone_sha1.c
+SRC_fips_sha= $(LIBSRC_fips_sha)
+PROGS_fips_sha= fips_standalone_sha1.c
 
-EXHEADER=
-HEADER=	
+EXHEADER_fips_sha=
+HEADER_fips_sha=	
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_fips_sha=    $(GENERAL_fips_sha) $(SRC_fips_sha) $(HEADER_fips_sha)
 
-top:
-	(cd $(TOP); $(MAKE) DIRS=fips SDIRS=$(DIR) sub_all)
 
-all:	../fips_standalone_sha1$(EXE_EXT) lib
+all: all_fips_sha
+all_fips_sha:	fips/fips_standalone_sha1$(EXE_EXT) fips/sha/lib
 
-lib:	$(LIBOBJ)
-	@echo $(LIBOBJ) > lib
+fips/sha/lib:	$(LIBOBJ_fips_sha)
+	@echo $(LIBOBJ_fips_sha) > fips/sha/lib
 
-../fips_standalone_sha1$(EXE_EXT): fips_standalone_sha1.o
-	if [ -z "$(HOSTCC)" ] ; then \
-	FIPS_SHA_ASM=""; for i in $(SHA1_ASM_OBJ) sha1dgst.o ; do FIPS_SHA_ASM="$$FIPS_SHA_ASM ../../crypto/sha/$$i" ; done; \
-	$(CC) -o $@ $(CFLAGS) fips_standalone_sha1.o $$FIPS_SHA_ASM ; \
-	else \
-		$(HOSTCC) $(HOSTCFLAGS) -o $ $@ -I../../include -I../../crypto fips_standalone_sha1.c ../../crypto/sha/sha1dgst.c ; \
-	fi
+files: files_fips_sha
+files_fips_sha:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+links: links_fips_sha
+links_fips_sha:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_fips_sha)
+	@$(PERL) util/mklink.pl test $(TEST_fips_sha)
+	@$(PERL) util/mklink.pl apps $(APPS_fips_sha)
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/apps $(APPS)
-
-install:
-	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
+install: install_fips_sha
+install_fips_sha:
+	@headerlist="$(EXHEADER_fips_sha)"; for i in $$headerlist; \
 	do  \
 	  (cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	  chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done
 
-tags:
-	ctags $(SRC)
+tags: tags_fips_sha
+tags_fips_sha:
+	ctags $(SRC_fips_sha)
 
-tests:
+tests: tests_fips_sha
+tests_fips_sha:
 
-Q=../testvectors/sha/req
-A=../testvectors/sha/rsp
+Q_fips_sha=../testvectors/sha/req
+A_fips_sha=../testvectors/sha/rsp
 
 VECTORS = SHA1LongMsg \
 	SHA1Monte \
@@ -93,69 +77,24 @@ VECTORS = SHA1LongMsg \
 	SHA512Monte \
 	SHA512ShortMsg
 
-fips_test:
-	-rm -rf $(A)
-	mkdir $(A)
+fips_test: fips_test_fips_sha
+fips_test_fips_sha:
+	-rm -rf $(A_fips_sha)
+	mkdir $(A_fips_sha)
 	for file in $(VECTORS); do \
-	    if [ -f $(Q)/$$file.req ]; then \
-		$(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_shatest $(Q)/$$file.req $(A)/$$file.rsp; \
+	    if [ -f $(Q_fips_sha)/$$file.req ]; then \
+		util/shlib_wrap.sh test/fips_shatest $(Q_fips_sha)/$$file.req $(A_fips_sha)/$$file.rsp; \
 	    fi; \
 	done
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_fips_sha
+lint_fips_sha:
+	lint -DLINT $(INCLUDES_fips_sha) $(SRC_fips_sha)>fips/sha/fluff
 
-depend:
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(SRC) $(TEST)
+dclean: dclean_fips_sha
+dclean_fips_sha:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+clean: clean_fips_sha
+clean_fips_sha:
+	rm -f fips/sha/*.o fips/sha/*.d asm/*.o fips/sha/*.obj fips/sha/lib fips/sha/tags fips/sha/core fips/sha/.pure fips/sha/.nfs* fips/sha/*.old fips/sha/*.bak fips/sha/fluff $(EXE_fips_sha)
 
-clean:
-	rm -f *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff $(EXE)
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-fips_sha1_selftest.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_sha1_selftest.o: ../../include/openssl/crypto.h
-fips_sha1_selftest.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-fips_sha1_selftest.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
-fips_sha1_selftest.o: ../../include/openssl/lhash.h
-fips_sha1_selftest.o: ../../include/openssl/obj_mac.h
-fips_sha1_selftest.o: ../../include/openssl/objects.h
-fips_sha1_selftest.o: ../../include/openssl/opensslconf.h
-fips_sha1_selftest.o: ../../include/openssl/opensslv.h
-fips_sha1_selftest.o: ../../include/openssl/ossl_typ.h
-fips_sha1_selftest.o: ../../include/openssl/safestack.h
-fips_sha1_selftest.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-fips_sha1_selftest.o: ../../include/openssl/symhacks.h fips_sha1_selftest.c
-fips_shatest.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
-fips_shatest.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-fips_shatest.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-fips_shatest.o: ../../include/openssl/ec.h ../../include/openssl/err.h
-fips_shatest.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
-fips_shatest.o: ../../include/openssl/fips_rand.h ../../include/openssl/hmac.h
-fips_shatest.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-fips_shatest.o: ../../include/openssl/objects.h
-fips_shatest.o: ../../include/openssl/opensslconf.h
-fips_shatest.o: ../../include/openssl/opensslv.h
-fips_shatest.o: ../../include/openssl/ossl_typ.h
-fips_shatest.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-fips_shatest.o: ../../include/openssl/symhacks.h ../fips_utl.h fips_shatest.c
-fips_standalone_sha1.o: ../../include/openssl/asn1.h
-fips_standalone_sha1.o: ../../include/openssl/bio.h
-fips_standalone_sha1.o: ../../include/openssl/crypto.h
-fips_standalone_sha1.o: ../../include/openssl/e_os2.h
-fips_standalone_sha1.o: ../../include/openssl/evp.h
-fips_standalone_sha1.o: ../../include/openssl/fips.h
-fips_standalone_sha1.o: ../../include/openssl/hmac.h
-fips_standalone_sha1.o: ../../include/openssl/obj_mac.h
-fips_standalone_sha1.o: ../../include/openssl/objects.h
-fips_standalone_sha1.o: ../../include/openssl/opensslconf.h
-fips_standalone_sha1.o: ../../include/openssl/opensslv.h
-fips_standalone_sha1.o: ../../include/openssl/ossl_typ.h
-fips_standalone_sha1.o: ../../include/openssl/safestack.h
-fips_standalone_sha1.o: ../../include/openssl/sha.h
-fips_standalone_sha1.o: ../../include/openssl/stack.h
-fips_standalone_sha1.o: ../../include/openssl/symhacks.h fips_standalone_sha1.c

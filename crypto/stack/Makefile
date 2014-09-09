@@ -2,83 +2,63 @@
 # OpenSSL/crypto/stack/Makefile
 #
 
-DIR=	stack
-TOP=	../..
-CC=	cc
-INCLUDES=
-CFLAG=-g
-MAKEFILE=	Makefile
-AR=		ar r
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_crypto_stack= $(INCLUDES_crypto) $(CFLAG)
 
-GENERAL=Makefile
-TEST=
-APPS=
+GENERAL_crypto_stack=crypto/stack/Makefile
+TEST_crypto_stack=
+APPS_crypto_stack=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=stack.c
-LIBOBJ=stack.o
+LIB_crypto_stack=libcrypto.a
+LIBSRC_crypto_stack=crypto/stack/stack.c
+LIBOBJ_crypto_stack=crypto/stack/stack.o
 
-SRC= $(LIBSRC)
+SRC_crypto_stack= $(LIBSRC_crypto_stack)
 
-EXHEADER= stack.h safestack.h
-HEADER=	$(EXHEADER)
+EXHEADER_crypto_stack= crypto/stack/stack.h crypto/stack/safestack.h
+HEADER_crypto_stack=	$(EXHEADER_crypto_stack)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_stack=    $(GENERAL_crypto_stack) $(SRC_crypto_stack) $(HEADER_crypto_stack)
 
-top:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_crypto_stack
+all_crypto_stack:	$(LIBOBJ_crypto_stack)
 
-lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
-	@touch lib
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_crypto_stack
+files_crypto_stack:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+links: links_crypto_stack
+links_crypto_stack:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_stack)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_stack)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_stack)
 
-install:
+install: install_crypto_stack
+install_crypto_stack:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_stack)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
-	ctags $(SRC)
+tags: tags_crypto_stack
+tags_crypto_stack:
+	ctags $(SRC_crypto_stack)
 
-tests:
+tests: tests_crypto_stack
+tests_crypto_stack:
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_crypto_stack
+lint_crypto_stack:
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_stack)>crypto/stack/fluff
 
-depend:
-	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+dclean: dclean_crypto_stack
+dclean_crypto_stack:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+clean: clean_crypto_stack
+clean_crypto_stack:
+	rm -f crypto/stack/*.o crypto/stack/*.d crypto/stack/*.obj crypto/stack/lib crypto/stack/tags crypto/stack/core crypto/stack/.pure crypto/stack/.nfs* crypto/stack/*.old crypto/stack/*.bak crypto/stack/fluff
 
-clean:
-	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-stack.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
-stack.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-stack.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-stack.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-stack.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-stack.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-stack.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-stack.o: ../../include/openssl/symhacks.h ../cryptlib.h stack.c

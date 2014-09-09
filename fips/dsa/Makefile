@@ -2,148 +2,79 @@
 # OpenSSL/fips/dsa/Makefile
 #
 
-DIR=	dsa
-TOP=	../..
-CC=	cc
-INCLUDES=
-CFLAG=-g
-INSTALL_PREFIX=
-OPENSSLDIR=     /usr/local/ssl
-INSTALLTOP=/usr/local/ssl
-MAKEDEPPROG=	makedepend
-MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
-MAKEFILE=	Makefile
-AR=		ar r
+INCLUDES_fips_dsa=
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_fips_dsa= $(INCLUDES_fips_dsa) $(CFLAG)
 
-GENERAL=Makefile
-TEST=fips_dsatest.c fips_dssvs.c
-APPS=
+GENERAL_fips_dsa=fips/dsa/Makefile
+TEST_fips_dsa=fips/dsa/fips_dsatest.c fips/dsa/fips_dssvs.c
+APPS_fips_dsa=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC= fips_dsa_selftest.c \
-	fips_dsa_lib.c fips_dsa_sign.c
-LIBOBJ= fips_dsa_selftest.o \
-	fips_dsa_lib.o fips_dsa_sign.o
+LIB_fips_dsa=libcrypto.a
+LIBSRC_fips_dsa= fips/dsa/fips_dsa_selftest.c \
+	fips/dsa/fips_dsa_lib.c fips/dsa/fips_dsa_sign.c
+LIBOBJ_fips_dsa= fips/dsa/fips_dsa_selftest.o \
+	fips/dsa/fips_dsa_lib.o fips/dsa/fips_dsa_sign.o
 
-SRC= $(LIBSRC)
+SRC_fips_dsa= $(LIBSRC_fips_dsa)
 
-EXHEADER=
-HEADER=	$(EXHEADER)
+EXHEADER_fips_dsa=
+HEADER_fips_dsa=	$(EXHEADER_fips_dsa)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_fips_dsa=    $(GENERAL_fips_dsa) $(SRC_fips_dsa) $(HEADER_fips_dsa)
 
-top:
-	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_fips_dsa
+all_fips_dsa:	fips/dsa/lib
 
-lib:	$(LIBOBJ)
-	@echo $(LIBOBJ) > lib
+fips/dsa/lib:	$(LIBOBJ_fips_dsa)
+	@echo $(LIBOBJ_fips_dsa) > fips/dsa/lib
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_fips_dsa
+files_fips_dsa:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/apps $(APPS)
+links: links_fips_dsa
+links_fips_dsa:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_fips_dsa)
+	@$(PERL) util/mklink.pl test $(TEST_fips_dsa)
+	@$(PERL) util/mklink.pl apps $(APPS_fips_dsa)
 
-install:
-	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
+install: install_fips_dsa
+install_fips_dsa:
+	@headerlist="$(EXHEADER_fips_dsa)"; for i in $$headerlist; \
 	do  \
 	  (cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	  chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done
 
-tags:
-	ctags $(SRC)
+tags: tags_fips_dsa
+tags_fips_dsa:
+	ctags $(SRC_fips_dsa)
 
-tests:
+tests: tests_fips_dsa
+tests_fips_dsa:
 
-Q=../testvectors/dsa/req
-A=../testvectors/dsa/rsp
+Q_fips_dsa=../testvectors/dsa/req
+A_fips_dsa=../testvectors/dsa/rsp
 
-fips_test:
+fips_test: fips_test_fips_dsa
+fips_test_fips_dsa:
 	-rm -rf $A
 	mkdir $A
-	if [ -f $(Q)/PQGGen.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_dssvs pqg < $(Q)/PQGGen.req > $(A)/PQGGen.rsp; fi
-	if [ -f $(Q)/KeyPair.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_dssvs keypair < $(Q)/KeyPair.req > $(A)/KeyPair.rsp; fi
-	if [ -f $(Q)/SigGen.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_dssvs siggen < $(Q)/SigGen.req > $(A)/SigGen.rsp; fi
-	if [ -f $(Q)/SigVer.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_dssvs sigver < $Q/SigVer.req > $A/SigVer.rsp; fi
+	if [ -f $(Q_fips_dsa)/PQGGen.req ]; then util/shlib_wrap.sh test/fips_dssvs pqg < $(Q_fips_dsa)/PQGGen.req > $(A_fips_dsa)/PQGGen.rsp; fi
+	if [ -f $(Q_fips_dsa)/KeyPair.req ]; then util/shlib_wrap.sh test/fips_dssvs keypair < $(Q_fips_dsa)/KeyPair.req > $(A_fips_dsa)/KeyPair.rsp; fi
+	if [ -f $(Q_fips_dsa)/SigGen.req ]; then util/shlib_wrap.sh test/fips_dssvs siggen < $(Q_fips_dsa)/SigGen.req > $(A_fips_dsa)/SigGen.rsp; fi
+	if [ -f $(Q_fips_dsa)/SigVer.req ]; then util/shlib_wrap.sh test/fips_dssvs sigver < $Q/SigVer.req > $A/SigVer.rsp; fi
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_fips_dsa
+lint_fips_dsa:
+	lint -DLINT $(INCLUDES_fips_dsa) $(SRC_fips_dsa)>fips/dsa/fluff
 
-depend:
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(SRC) $(TEST)
+dclean: dclean_fips_dsa
+dclean_fips_dsa:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+clean: clean_fips_dsa
+clean_fips_dsa:
+	rm -f fips/dsa/*.o fips/dsa/*.d fips/dsa/*.obj fips/dsa/lib fips/dsa/tags fips/dsa/core fips/dsa/.pure fips/dsa/.nfs* fips/dsa/*.old fips/dsa/*.bak fips/dsa/fluff
 
-clean:
-	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-fips_dsa_lib.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-fips_dsa_lib.o: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
-fips_dsa_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/fips.h
-fips_dsa_lib.o: ../../include/openssl/opensslconf.h
-fips_dsa_lib.o: ../../include/openssl/opensslv.h
-fips_dsa_lib.o: ../../include/openssl/ossl_typ.h
-fips_dsa_lib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-fips_dsa_lib.o: ../../include/openssl/symhacks.h fips_dsa_lib.c
-fips_dsa_selftest.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_dsa_selftest.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
-fips_dsa_selftest.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
-fips_dsa_selftest.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-fips_dsa_selftest.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
-fips_dsa_selftest.o: ../../include/openssl/obj_mac.h
-fips_dsa_selftest.o: ../../include/openssl/objects.h
-fips_dsa_selftest.o: ../../include/openssl/opensslconf.h
-fips_dsa_selftest.o: ../../include/openssl/opensslv.h
-fips_dsa_selftest.o: ../../include/openssl/ossl_typ.h
-fips_dsa_selftest.o: ../../include/openssl/safestack.h
-fips_dsa_selftest.o: ../../include/openssl/stack.h
-fips_dsa_selftest.o: ../../include/openssl/symhacks.h ../fips_locl.h
-fips_dsa_selftest.o: fips_dsa_selftest.c
-fips_dsa_sign.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_dsa_sign.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
-fips_dsa_sign.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
-fips_dsa_sign.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-fips_dsa_sign.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-fips_dsa_sign.o: ../../include/openssl/objects.h
-fips_dsa_sign.o: ../../include/openssl/opensslconf.h
-fips_dsa_sign.o: ../../include/openssl/opensslv.h
-fips_dsa_sign.o: ../../include/openssl/ossl_typ.h
-fips_dsa_sign.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-fips_dsa_sign.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-fips_dsa_sign.o: fips_dsa_sign.c
-fips_dsatest.o: ../../e_os.h ../../include/openssl/aes.h
-fips_dsatest.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_dsatest.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
-fips_dsatest.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
-fips_dsatest.o: ../../include/openssl/ec.h ../../include/openssl/err.h
-fips_dsatest.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
-fips_dsatest.o: ../../include/openssl/fips_rand.h ../../include/openssl/hmac.h
-fips_dsatest.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-fips_dsatest.o: ../../include/openssl/objects.h
-fips_dsatest.o: ../../include/openssl/opensslconf.h
-fips_dsatest.o: ../../include/openssl/opensslv.h
-fips_dsatest.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
-fips_dsatest.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-fips_dsatest.o: ../../include/openssl/symhacks.h ../fips_utl.h fips_dsatest.c
-fips_dssvs.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
-fips_dssvs.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-fips_dssvs.o: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
-fips_dssvs.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-fips_dssvs.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-fips_dssvs.o: ../../include/openssl/fips.h ../../include/openssl/fips_rand.h
-fips_dssvs.o: ../../include/openssl/hmac.h ../../include/openssl/lhash.h
-fips_dssvs.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-fips_dssvs.o: ../../include/openssl/opensslconf.h
-fips_dssvs.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-fips_dssvs.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-fips_dssvs.o: ../../include/openssl/symhacks.h ../fips_utl.h fips_dssvs.c

@@ -1,64 +1,36 @@
-DIR=jpake
-TOP=../..
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_crypto_jpake= $(INCLUDES) $(CFLAG)
 
-LIB=$(TOP)/libcrypto.a
-LIBOBJ=jpake.o jpake_err.o
-LIBSRC=jpake.c jpake_err.c
+LIB_crypto_jpake=libcrypto.a
+LIBOBJ_crypto_jpake=crypto/jpake/jpake.o crypto/jpake/jpake_err.o
+LIBSRC_crypto_jpake=crypto/jpake/jpake.c crypto/jpake/jpake_err.c
+SRC_crypto_jpake= $(LIBSRC_crypto_jpake)
 
-EXHEADER=jpake.h
-TEST=jpaketest.c
+EXHEADER_crypto_jpake=crypto/jpake/jpake.h
+TEST_crypto_jpake=crypto/jpake/jpaketest.c
 
-top:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_crypto_jpake
+all_crypto_jpake:	$(LIBOBJ_crypto_jpake)
 
-lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
-	@touch lib
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
+links: links_crypto_jpake
+links_crypto_jpake:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_jpake)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_jpake)
 
-install:
+install: install_crypto_jpake
+install_crypto_jpake:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_jpake)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-depend:
-	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+dclean: dclean_crypto_jpake
+dclean_crypto_jpake:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
-
-clean:
-	rm -f *.s *.o *.obj des lib tags core .pure .nfs* *.old *.bak fluff
-
-jpaketest: top jpaketest.c $(LIB)
-	$(CC) $(CFLAGS) -Wall -Werror -g -o jpaketest jpaketest.c $(LIB)
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-jpake.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-jpake.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-jpake.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
-jpake.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-jpake.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-jpake.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-jpake.o: ../../include/openssl/symhacks.h jpake.c jpake.h
-jpake_err.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-jpake_err.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-jpake_err.o: ../../include/openssl/err.h ../../include/openssl/jpake.h
-jpake_err.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-jpake_err.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-jpake_err.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-jpake_err.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-jpake_err.o: jpake_err.c
+clean: clean_crypto_jpake
+clean_crypto_jpake:
+	rm -f crypto/jpake/*.s crypto/jpake/*.o crypto/jpake/*.d crypto/jpake/*.obj crypto/jpake/des crypto/jpake/lib crypto/jpake/tags crypto/jpake/core crypto/jpake/.pure crypto/jpake/.nfs* crypto/jpake/*.old crypto/jpake/*.bak crypto/jpake/fluff

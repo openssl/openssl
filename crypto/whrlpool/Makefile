@@ -2,92 +2,75 @@
 # crypto/whrlpool/Makefile
 #
 
-DIR=	whrlpool
-TOP=	../..
-CC=	cc
-CPP=	$(CC) -E
-INCLUDES=
-CFLAG=-g
-MAKEFILE=	Makefile
-AR=		ar r
+CPP_crypto_whrlpool=	$(CC) -E
 
-WP_ASM_OBJ=wp_block.o
 
-CFLAGS= $(INCLUDES) $(CFLAG)
-ASFLAGS= $(INCLUDES) $(ASFLAG)
-AFLAGS= $(ASFLAGS)
+CFLAGS_crypto_whrlpool= $(INCLUDES_crypto) $(CFLAG)
+ASFLAGS_crypto_whrlpool= $(INCLUDES_crypto) $(ASFLAG)
+AFLAGS_crypto_whrlpool= $(ASFLAGS_crypto_whrlpool)
 
-GENERAL=Makefile
-TEST=wp_test.c
-APPS=
+GENERAL_crypto_whrlpool=crypto/whrlpool/Makefile
+TEST_crypto_whrlpool=crypto/whrlpool/wp_test.c
+APPS_crypto_whrlpool=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=wp_dgst.c wp_block.c
-LIBOBJ=wp_dgst.o $(WP_ASM_OBJ)
+LIB_crypto_whrlpool=libcrypto.a
+LIBSRC_crypto_whrlpool=crypto/whrlpool/wp_dgst.c crypto/whrlpool/wp_block.c
+LIBOBJ_crypto_whrlpool=crypto/whrlpool/wp_dgst.o $(WP_ASM_OBJ)
 
-SRC= $(LIBSRC)
+SRC_crypto_whrlpool= $(LIBSRC_crypto_whrlpool)
 
-EXHEADER= whrlpool.h
-HEADER= wp_locl.h $(EXHEADER)
+EXHEADER_crypto_whrlpool= crypto/whrlpool/whrlpool.h
+HEADER_crypto_whrlpool= crypto/whrlpool/wp_locl.h $(EXHEADER_crypto_whrlpool)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_whrlpool=    $(GENERAL_crypto_whrlpool) $(SRC_crypto_whrlpool) $(HEADER_crypto_whrlpool)
 
-top:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_crypto_whrlpool
+all_crypto_whrlpool:	$(LIBOBJ_crypto_whrlpool)
 
-lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
-	@touch lib
 
-wp-mmx.s:	asm/wp-mmx.pl ../perlasm/x86asm.pl
-	$(PERL) asm/wp-mmx.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+crypto/whrlpool/wp-mmx.s:	crypto/whrlpool/asm/wp-mmx.pl crypto/perlasm/x86asm.pl
+	$(PERL) crypto/whrlpool/asm/wp-mmx.pl $(PERLASM_SCHEME) $(CFLAGS_crypto_whrlpool) $(PROCESSOR) > $@
 
-wp-x86_64.s: asm/wp-x86_64.pl
-	$(PERL) asm/wp-x86_64.pl $(PERLASM_SCHEME) > $@
+crypto/whrlpool/wp-x86_64.s: crypto/whrlpool/asm/wp-x86_64.pl
+	$(PERL) crypto/whrlpool/asm/wp-x86_64.pl $(PERLASM_SCHEME) > $@
 
-$(LIBOBJ): $(LIBSRC)
+$(LIBOBJ_crypto_whrlpool): $(LIBSRC_crypto_whrlpool)
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_crypto_whrlpool
+files_crypto_whrlpool:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+links: links_crypto_whrlpool
+links_crypto_whrlpool:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_whrlpool)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_whrlpool)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_whrlpool)
 
-install:
+install: install_crypto_whrlpool
+install_crypto_whrlpool:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_whrlpool)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
-	ctags $(SRC)
+tags: tags_crypto_whrlpool
+tags_crypto_whrlpool:
+	ctags $(SRC_crypto_whrlpool)
 
-tests:
+tests: tests_crypto_whrlpool
+tests_crypto_whrlpool:
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_crypto_whrlpool
+lint_crypto_whrlpool:
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_whrlpool)>crypto/whrlpool/fluff
 
-depend:
-	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+dclean: dclean_crypto_whrlpool
+dclean_crypto_whrlpool:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+clean: clean_crypto_whrlpool
+clean_crypto_whrlpool:
+	rm -f crypto/whrlpool/*.s crypto/whrlpool/*.o crypto/whrlpool/*.d crypto/whrlpool/*.obj crypto/whrlpool/lib crypto/whrlpool/tags crypto/whrlpool/core crypto/whrlpool/.pure crypto/whrlpool/.nfs* crypto/whrlpool/*.old crypto/whrlpool/*.bak crypto/whrlpool/fluff
 
-clean:
-	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-wp_block.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
-wp_block.o: ../../include/openssl/whrlpool.h wp_block.c wp_locl.h
-wp_dgst.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
-wp_dgst.o: ../../include/openssl/whrlpool.h wp_dgst.c wp_locl.h

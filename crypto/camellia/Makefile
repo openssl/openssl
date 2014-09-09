@@ -2,104 +2,76 @@
 # crypto/camellia/Makefile
 #
 
-DIR= camellia
-TOP=	../..
-CC=	cc
-CPP=	$(CC) -E
-INCLUDES=
-CFLAG=-g
-MAKEFILE=	Makefile
-AR=		ar r
+CPP_crypto_camellia=	$(CC) -E
 
-CMLL_ENC= camellia.o cmll_misc.o cmll_cbc.o
 
-CFLAGS= $(INCLUDES) $(CFLAG)
-ASFLAGS= $(INCLUDES) $(ASFLAG)
-AFLAGS= $(ASFLAGS)
+CFLAGS_crypto_camellia= $(INCLUDES_crypto) $(CFLAG)
+ASFLAGS_crypto_camellia= $(INCLUDES_crypto) $(ASFLAG)
+AFLAGS_crypto_camellia= $(ASFLAGS_crypto_camellia)
 
-GENERAL=Makefile
+GENERAL_crypto_camellia=crypto/camellia/Makefile
 #TEST=camelliatest.c
-APPS=
+APPS_crypto_camellia=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=camellia.c cmll_misc.c cmll_ecb.c cmll_cbc.c cmll_ofb.c \
-	   cmll_cfb.c cmll_ctr.c 
+LIB_crypto_camellia=libcrypto.a
+LIBSRC_crypto_camellia=crypto/camellia/camellia.c crypto/camellia/cmll_misc.c crypto/camellia/cmll_ecb.c crypto/camellia/cmll_cbc.c crypto/camellia/cmll_ofb.c \
+	   crypto/camellia/cmll_cfb.c crypto/camellia/cmll_ctr.c 
 
-LIBOBJ= cmll_ecb.o cmll_ofb.o cmll_cfb.o cmll_ctr.o $(CMLL_ENC)
+LIBOBJ_crypto_camellia= crypto/camellia/cmll_ecb.o crypto/camellia/cmll_ofb.o crypto/camellia/cmll_cfb.o crypto/camellia/cmll_ctr.o $(CMLL_ENC)
 
-SRC= $(LIBSRC)
+SRC_crypto_camellia= $(LIBSRC_crypto_camellia)
 
-EXHEADER= camellia.h
-HEADER= cmll_locl.h $(EXHEADER)
+EXHEADER_crypto_camellia= crypto/camellia/camellia.h
+HEADER_crypto_camellia= crypto/camellia/cmll_locl.h $(EXHEADER_crypto_camellia)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_camellia=    $(GENERAL_crypto_camellia) $(SRC_crypto_camellia) $(HEADER_crypto_camellia)
 
-top:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_crypto_camellia
+all_crypto_camellia:	$(LIBOBJ_crypto_camellia)
 
-lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
-	@touch lib
 
-cmll-x86.s:	asm/cmll-x86.pl ../perlasm/x86asm.pl
-	$(PERL) asm/cmll-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
-cmll-x86_64.s:  asm/cmll-x86_64.pl
-	$(PERL) asm/cmll-x86_64.pl $(PERLASM_SCHEME) > $@
-cmllt4-sparcv9.s: asm/cmllt4-sparcv9.pl
-	$(PERL) asm/cmllt4-sparcv9.pl $(CFLAGS) > $@
+crypto/camellia/cmll-x86.s:	crypto/camellia/asm/cmll-x86.pl crypto/perlasm/x86asm.pl
+	$(PERL) crypto/camellia/asm/cmll-x86.pl $(PERLASM_SCHEME) $(CFLAGS_crypto_camellia) $(PROCESSOR) > $@
+crypto/camellia/cmll-x86_64.s:  crypto/camellia/asm/cmll-x86_64.pl
+	$(PERL) crypto/camellia/asm/cmll-x86_64.pl $(PERLASM_SCHEME) > $@
+crypto/camellia/cmllt4-sparcv9.s: crypto/camellia/asm/cmllt4-sparcv9.pl
+	$(PERL) crypto/camellia/asm/cmllt4-sparcv9.pl $(CFLAGS_crypto_camellia) > $@
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_crypto_camellia
+files_crypto_camellia:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+links: links_crypto_camellia
+links_crypto_camellia:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_camellia)
+	@$(PERL) util/mklink.pl ./test $(TEST)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_camellia)
 
-install:
+install: install_crypto_camellia
+install_crypto_camellia:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_camellia)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
-	ctags $(SRC)
+tags: tags_crypto_camellia
+tags_crypto_camellia:
+	ctags $(SRC_crypto_camellia)
 
-tests:
+tests: tests_crypto_camellia
+tests_crypto_camellia:
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_crypto_camellia
+lint_crypto_camellia:
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_camellia)>crypto/camellia/fluff
 
-depend:
-	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+dclean: dclean_crypto_camellia
+dclean_crypto_camellia:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+clean: clean_crypto_camellia
+clean_crypto_camellia:
+	rm -f crypto/camellia/*.s crypto/camellia/*.o crypto/camellia/*.d crypto/camellia/*.obj crypto/camellia/lib crypto/camellia/tags crypto/camellia/core crypto/camellia/.pure crypto/camellia/.nfs* crypto/camellia/*.old crypto/camellia/*.bak crypto/camellia/fluff
 
-clean:
-	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-camellia.o: ../../include/openssl/opensslconf.h camellia.c camellia.h
-camellia.o: cmll_locl.h
-cmll_cbc.o: ../../include/openssl/camellia.h ../../include/openssl/modes.h
-cmll_cbc.o: ../../include/openssl/opensslconf.h cmll_cbc.c
-cmll_cfb.o: ../../include/openssl/camellia.h ../../include/openssl/modes.h
-cmll_cfb.o: ../../include/openssl/opensslconf.h cmll_cfb.c
-cmll_ctr.o: ../../include/openssl/camellia.h ../../include/openssl/modes.h
-cmll_ctr.o: ../../include/openssl/opensslconf.h cmll_ctr.c
-cmll_ecb.o: ../../include/openssl/camellia.h
-cmll_ecb.o: ../../include/openssl/opensslconf.h cmll_ecb.c cmll_locl.h
-cmll_misc.o: ../../include/openssl/camellia.h
-cmll_misc.o: ../../include/openssl/opensslconf.h
-cmll_misc.o: ../../include/openssl/opensslv.h cmll_locl.h cmll_misc.c
-cmll_ofb.o: ../../include/openssl/camellia.h ../../include/openssl/modes.h
-cmll_ofb.o: ../../include/openssl/opensslconf.h cmll_ofb.c

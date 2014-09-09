@@ -2,105 +2,68 @@
 # OpenSSL/fips/ecdh/Makefile
 #
 
-DIR=	ecdh
-TOP=	../..
-CC=	cc
-INCLUDES=
-CFLAG=-g
-INSTALL_PREFIX=
-OPENSSLDIR=     /usr/local/ssl
-INSTALLTOP=/usr/local/ssl
-MAKEDEPPROG=	makedepend
-MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
-MAKEFILE=	Makefile
-AR=		ar r
+INCLUDES_fips_ecdh=
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_fips_ecdh= $(INCLUDES_fips_ecdh) $(CFLAG)
 
-GENERAL=Makefile
-TEST= fips_ecdhvs.c
-APPS=
+GENERAL_fips_ecdh=fips/ecdh/Makefile
+TEST_fips_ecdh= fips/ecdh/fips_ecdhvs.c
+APPS_fips_ecdh=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC= fips_ecdh_selftest.c
-LIBOBJ= fips_ecdh_selftest.o
+LIB_fips_ecdh=libcrypto.a
+LIBSRC_fips_ecdh= fips/ecdh/fips_ecdh_selftest.c
+LIBOBJ_fips_ecdh= fips/ecdh/fips_ecdh_selftest.o
 
-SRC= $(LIBSRC)
+SRC_fips_ecdh= $(LIBSRC_fips_ecdh)
 
-EXHEADER=
-HEADER=	$(EXHEADER)
+EXHEADER_fips_ecdh=
+HEADER_fips_ecdh=	$(EXHEADER_fips_ecdh)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_fips_ecdh=    $(GENERAL_fips_ecdh) $(SRC_fips_ecdh) $(HEADER_fips_ecdh)
 
-top:
-	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_fips_ecdh
+all_fips_ecdh:	fips/ecdh/lib
 
-lib:	$(LIBOBJ)
-	@echo $(LIBOBJ) > lib
+fips/ecdh/lib:	$(LIBOBJ_fips_ecdh)
+	@echo $(LIBOBJ_fips_ecdh) > fips/ecdh/lib
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_fips_ecdh
+files_fips_ecdh:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/apps $(APPS)
+links: links_fips_ecdh
+links_fips_ecdh:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_fips_ecdh)
+	@$(PERL) util/mklink.pl test $(TEST_fips_ecdh)
+	@$(PERL) util/mklink.pl apps $(APPS_fips_ecdh)
 
-install:
-	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
+install: install_fips_ecdh
+install_fips_ecdh:
+	@headerlist="$(EXHEADER_fips_ecdh)"; for i in $$headerlist; \
 	do  \
 	  (cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	  chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done
 
-tags:
-	ctags $(SRC)
+tags: tags_fips_ecdh
+tags_fips_ecdh:
+	ctags $(SRC_fips_ecdh)
 
-tests:
+tests: tests_fips_ecdh
+tests_fips_ecdh:
 
-fips_test:
+fips_test: fips_test_fips_ecdh
+fips_test_fips_ecdh:
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_fips_ecdh
+lint_fips_ecdh:
+	lint -DLINT $(INCLUDES_fips_ecdh) $(SRC_fips_ecdh)>fips/ecdh/fluff
 
-depend:
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(SRC) $(TEST)
+dclean: dclean_fips_ecdh
+dclean_fips_ecdh:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+clean: clean_fips_ecdh
+clean_fips_ecdh:
+	rm -f fips/ecdh/*.o fips/ecdh/*.d fips/ecdh/*.obj fips/ecdh/lib fips/ecdh/tags fips/ecdh/core fips/ecdh/.pure fips/ecdh/.nfs* fips/ecdh/*.old fips/ecdh/*.bak fips/ecdh/fluff
 
-clean:
-	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-fips_ecdh_selftest.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_ecdh_selftest.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
-fips_ecdh_selftest.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-fips_ecdh_selftest.o: ../../include/openssl/ecdh.h ../../include/openssl/err.h
-fips_ecdh_selftest.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
-fips_ecdh_selftest.o: ../../include/openssl/lhash.h
-fips_ecdh_selftest.o: ../../include/openssl/obj_mac.h
-fips_ecdh_selftest.o: ../../include/openssl/objects.h
-fips_ecdh_selftest.o: ../../include/openssl/opensslconf.h
-fips_ecdh_selftest.o: ../../include/openssl/opensslv.h
-fips_ecdh_selftest.o: ../../include/openssl/ossl_typ.h
-fips_ecdh_selftest.o: ../../include/openssl/safestack.h
-fips_ecdh_selftest.o: ../../include/openssl/stack.h
-fips_ecdh_selftest.o: ../../include/openssl/symhacks.h ../fips_locl.h
-fips_ecdh_selftest.o: fips_ecdh_selftest.c
-fips_ecdhvs.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
-fips_ecdhvs.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-fips_ecdhvs.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-fips_ecdhvs.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-fips_ecdhvs.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-fips_ecdhvs.o: ../../include/openssl/fips.h ../../include/openssl/fips_rand.h
-fips_ecdhvs.o: ../../include/openssl/hmac.h ../../include/openssl/lhash.h
-fips_ecdhvs.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-fips_ecdhvs.o: ../../include/openssl/opensslconf.h
-fips_ecdhvs.o: ../../include/openssl/opensslv.h
-fips_ecdhvs.o: ../../include/openssl/ossl_typ.h
-fips_ecdhvs.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-fips_ecdhvs.o: ../../include/openssl/symhacks.h ../fips_utl.h fips_ecdhvs.c

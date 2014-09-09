@@ -2,92 +2,63 @@
 # OpenSSL/crypto/mdc2/Makefile
 #
 
-DIR=	mdc2
-TOP=	../..
-CC=	cc
-INCLUDES=
-CFLAG=-g
-MAKEFILE=	Makefile
-AR=		ar r
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_crypto_mdc2= $(INCLUDES_crypto) $(CFLAG)
 
-GENERAL=Makefile
-TEST= mdc2test.c
-APPS=
+GENERAL_crypto_mdc2=crypto/mdc2/Makefile
+TEST_crypto_mdc2= crypto/mdc2/mdc2test.c
+APPS_crypto_mdc2=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=mdc2dgst.c mdc2_one.c
-LIBOBJ=mdc2dgst.o mdc2_one.o
+LIB_crypto_mdc2=libcrypto.a
+LIBSRC_crypto_mdc2=crypto/mdc2/mdc2dgst.c crypto/mdc2/mdc2_one.c
+LIBOBJ_crypto_mdc2=crypto/mdc2/mdc2dgst.o crypto/mdc2/mdc2_one.o
 
-SRC= $(LIBSRC)
+SRC_crypto_mdc2= $(LIBSRC_crypto_mdc2)
 
-EXHEADER= mdc2.h
-HEADER=	$(EXHEADER)
+EXHEADER_crypto_mdc2= crypto/mdc2/mdc2.h
+HEADER_crypto_mdc2=	$(EXHEADER_crypto_mdc2)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_mdc2=    $(GENERAL_crypto_mdc2) $(SRC_crypto_mdc2) $(HEADER_crypto_mdc2)
 
-top:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_crypto_mdc2
+all_crypto_mdc2:	$(LIBOBJ_crypto_mdc2)
 
-lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
-	@touch lib
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_crypto_mdc2
+files_crypto_mdc2:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+links: links_crypto_mdc2
+links_crypto_mdc2:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_mdc2)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_mdc2)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_mdc2)
 
-install:
+install: install_crypto_mdc2
+install_crypto_mdc2:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_mdc2)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
-	ctags $(SRC)
+tags: tags_crypto_mdc2
+tags_crypto_mdc2:
+	ctags $(SRC_crypto_mdc2)
 
-tests:
+tests: tests_crypto_mdc2
+tests_crypto_mdc2:
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_crypto_mdc2
+lint_crypto_mdc2:
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_mdc2)>crypto/mdc2/fluff
 
-depend:
-	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+dclean: dclean_crypto_mdc2
+dclean_crypto_mdc2:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+clean: clean_crypto_mdc2
+clean_crypto_mdc2:
+	rm -f crypto/mdc2/*.o crypto/mdc2/*.d crypto/mdc2/*.obj crypto/mdc2/lib crypto/mdc2/tags crypto/mdc2/core crypto/mdc2/.pure crypto/mdc2/.nfs* crypto/mdc2/*.old crypto/mdc2/*.bak crypto/mdc2/fluff
 
-clean:
-	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-mdc2_one.o: ../../e_os.h ../../include/openssl/bio.h
-mdc2_one.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-mdc2_one.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
-mdc2_one.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-mdc2_one.o: ../../include/openssl/lhash.h ../../include/openssl/mdc2.h
-mdc2_one.o: ../../include/openssl/opensslconf.h
-mdc2_one.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-mdc2_one.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-mdc2_one.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-mdc2_one.o: ../../include/openssl/ui_compat.h ../cryptlib.h mdc2_one.c
-mdc2dgst.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
-mdc2dgst.o: ../../include/openssl/des_old.h ../../include/openssl/e_os2.h
-mdc2dgst.o: ../../include/openssl/mdc2.h ../../include/openssl/opensslconf.h
-mdc2dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-mdc2dgst.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-mdc2dgst.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-mdc2dgst.o: ../../include/openssl/ui_compat.h mdc2dgst.c

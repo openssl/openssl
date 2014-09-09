@@ -1,0 +1,8 @@
+#
+# OpenSSL/fips/hmac/BSDmakefile
+#
+
+.include "fips/hmac/Makefile"
+.for d in $(SRC_fips_hmac:.c=.d)
+.sinclude "$(d)"
+.endfor

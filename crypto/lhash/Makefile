@@ -2,87 +2,63 @@
 # OpenSSL/crypto/lhash/Makefile
 #
 
-DIR=	lhash
-TOP=	../..
-CC=	cc
-INCLUDES=
-CFLAG=-g
-MAKEFILE=	Makefile
-AR=		ar r
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_crypto_lhash= $(INCLUDES_crypto) $(CFLAG)
 
-GENERAL=Makefile
-TEST=
-APPS=
+GENERAL_crypto_lhash=crypto/lhash/Makefile
+TEST_crypto_lhash=
+APPS_crypto_lhash=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=lhash.c lh_stats.c
-LIBOBJ=lhash.o lh_stats.o
+LIB_crypto_lhash=libcrypto.a
+LIBSRC_crypto_lhash=crypto/lhash/lhash.c crypto/lhash/lh_stats.c
+LIBOBJ_crypto_lhash=crypto/lhash/lhash.o crypto/lhash/lh_stats.o
 
-SRC= $(LIBSRC)
+SRC_crypto_lhash= $(LIBSRC_crypto_lhash)
 
-EXHEADER= lhash.h
-HEADER=	$(EXHEADER)
+EXHEADER_crypto_lhash= crypto/lhash/lhash.h
+HEADER_crypto_lhash=	$(EXHEADER_crypto_lhash)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_lhash=    $(GENERAL_crypto_lhash) $(SRC_crypto_lhash) $(HEADER_crypto_lhash)
 
-top:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_crypto_lhash
+all_crypto_lhash:	$(LIBOBJ_crypto_lhash)
 
-lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
-	@touch lib
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_crypto_lhash
+files_crypto_lhash:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+links: links_crypto_lhash
+links_crypto_lhash:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_lhash)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_lhash)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_lhash)
 
-install:
+install: install_crypto_lhash
+install_crypto_lhash:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_lhash)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
-	ctags $(SRC)
+tags: tags_crypto_lhash
+tags_crypto_lhash:
+	ctags $(SRC_crypto_lhash)
 
-tests:
+tests: tests_crypto_lhash
+tests_crypto_lhash:
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_crypto_lhash
+lint_crypto_lhash:
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_lhash)>crypto/lhash/fluff
 
-depend:
-	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+dclean: dclean_crypto_lhash
+dclean_crypto_lhash:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+clean: clean_crypto_lhash
+clean_crypto_lhash:
+	rm -f crypto/lhash/*.o crypto/lhash/*.d crypto/lhash/*.obj crypto/lhash/lib crypto/lhash/tags crypto/lhash/core crypto/lhash/.pure crypto/lhash/.nfs* crypto/lhash/*.old crypto/lhash/*.bak crypto/lhash/fluff
 
-clean:
-	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-lh_stats.o: ../../e_os.h ../../include/openssl/bio.h
-lh_stats.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-lh_stats.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-lh_stats.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-lh_stats.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-lh_stats.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-lh_stats.o: ../../include/openssl/symhacks.h ../cryptlib.h lh_stats.c
-lhash.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
-lhash.o: ../../include/openssl/e_os2.h ../../include/openssl/lhash.h
-lhash.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-lhash.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-lhash.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h lhash.c

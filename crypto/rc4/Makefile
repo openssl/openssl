@@ -2,119 +2,91 @@
 # OpenSSL/crypto/rc4/Makefile
 #
 
-DIR=	rc4
-TOP=	../..
-CC=	cc
-CPP=    $(CC) -E
-INCLUDES=
-CFLAG=-g
-AR=		ar r
+CPP_crypto_rc4=    $(CC) -E
 
-RC4_ENC=rc4_enc.o rc4_skey.o
 
-CFLAGS= $(INCLUDES) $(CFLAG)
-ASFLAGS= $(INCLUDES) $(ASFLAG)
-AFLAGS= $(ASFLAGS)
+CFLAGS_crypto_rc4= $(INCLUDES_crypto) $(CFLAG)
+ASFLAGS_crypto_rc4= $(INCLUDES_crypto) $(ASFLAG)
+AFLAGS_crypto_rc4= $(ASFLAGS_crypto_rc4)
 
-GENERAL=Makefile
-TEST=rc4test.c
-APPS=
+GENERAL_crypto_rc4=crypto/rc4/Makefile
+TEST_crypto_rc4=crypto/rc4/rc4test.c
+APPS_crypto_rc4=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=rc4_skey.c rc4_enc.c
-LIBOBJ=$(RC4_ENC)
+LIB_crypto_rc4=libcrypto.a
+LIBSRC_crypto_rc4=crypto/rc4/rc4_skey.c crypto/rc4/rc4_enc.c
+LIBOBJ_crypto_rc4=$(RC4_ENC)
 
-SRC= $(LIBSRC)
+SRC_crypto_rc4= $(LIBSRC_crypto_rc4)
 
-EXHEADER= rc4.h
-HEADER=	$(EXHEADER) rc4_locl.h
+EXHEADER_crypto_rc4= crypto/rc4/rc4.h
+HEADER_crypto_rc4=	$(EXHEADER_crypto_rc4) crypto/rc4/rc4_locl.h
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_rc4=    $(GENERAL_crypto_rc4) $(SRC_crypto_rc4) $(HEADER_crypto_rc4)
 
-top:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_crypto_rc4
+all_crypto_rc4:	$(LIBOBJ_crypto_rc4)
 
-lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
-	@touch lib
 
-rc4-586.s:	asm/rc4-586.pl ../perlasm/x86asm.pl
-	$(PERL) asm/rc4-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+crypto/rc4/rc4-586.s:	crypto/rc4/asm/rc4-586.pl crypto/perlasm/x86asm.pl
+	$(PERL) crypto/rc4/asm/rc4-586.pl $(PERLASM_SCHEME) $(CFLAGS_crypto_rc4) $(PROCESSOR) > $@
 
-rc4-x86_64.s: asm/rc4-x86_64.pl
-	$(PERL) asm/rc4-x86_64.pl $(PERLASM_SCHEME) > $@
-rc4-md5-x86_64.s:	asm/rc4-md5-x86_64.pl
-	$(PERL) asm/rc4-md5-x86_64.pl $(PERLASM_SCHEME) > $@
+crypto/rc4/rc4-x86_64.s: crypto/rc4/asm/rc4-x86_64.pl
+	$(PERL) crypto/rc4/asm/rc4-x86_64.pl $(PERLASM_SCHEME) > $@
+crypto/rc4/rc4-md5-x86_64.s:	crypto/rc4/asm/rc4-md5-x86_64.pl
+	$(PERL) crypto/rc4/asm/rc4-md5-x86_64.pl $(PERLASM_SCHEME) > $@
 
-rc4-ia64.S: asm/rc4-ia64.pl
-	$(PERL) asm/rc4-ia64.pl $(CFLAGS) > $@
+crypto/rc4/rc4-ia64.S: crypto/rc4/asm/rc4-ia64.pl
+	$(PERL) crypto/rc4/asm/rc4-ia64.pl $(CFLAGS_crypto_rc4) > $@
 
-rc4-parisc.s:	asm/rc4-parisc.pl
-	$(PERL) asm/rc4-parisc.pl $(PERLASM_SCHEME) $@
+crypto/rc4/rc4-parisc.s:	crypto/rc4/asm/rc4-parisc.pl
+	$(PERL) crypto/rc4/asm/rc4-parisc.pl $(PERLASM_SCHEME) $@
 
-rc4-ia64.s: rc4-ia64.S
-	@case `awk '/^#define RC4_INT/{print$$NF}' $(TOP)/include/openssl/opensslconf.h` in \
-	int)	set -x; $(CC) $(CFLAGS) -DSZ=4 -E rc4-ia64.S > $@ ;; \
-	char)	set -x; $(CC) $(CFLAGS) -DSZ=1 -E rc4-ia64.S > $@ ;; \
+crypto/rc4/rc4-ia64.s: crypto/rc4/rc4-ia64.S
+	@case `awk '/^#define RC4_INT/{print$$NF}' include/openssl/opensslconf.h` in \
+	int)	set -x; $(CC) $(CFLAGS_crypto_rc4) -DSZ=4 -E crypto/rc4/rc4-ia64.S > $@ ;; \
+	char)	set -x; $(CC) $(CFLAGS_crypto_rc4) -DSZ=1 -E crypto/rc4/rc4-ia64.S > $@ ;; \
 	*)	exit 1 ;; \
 	esac
 
 # GNU make "catch all"
-rc4-%.s:	asm/rc4-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
+crypto/rc4/rc4-%.s:	crypto/rc4/asm/rc4-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_crypto_rc4
+files_crypto_rc4:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+links: links_crypto_rc4
+links_crypto_rc4:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_rc4)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_rc4)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_rc4)
 
-install:
+install: install_crypto_rc4
+install_crypto_rc4:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_rc4)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
-	ctags $(SRC)
+tags: tags_crypto_rc4
+tags_crypto_rc4:
+	ctags $(SRC_crypto_rc4)
 
-tests:
+tests: tests_crypto_rc4
+tests_crypto_rc4:
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_crypto_rc4
+lint_crypto_rc4:
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_rc4)>crypto/rc4/fluff
 
-depend:
-	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+dclean: dclean_crypto_rc4
+dclean_crypto_rc4:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+clean: clean_crypto_rc4
+clean_crypto_rc4:
+	rm -f crypto/rc4/*.s crypto/rc4/*.o crypto/rc4/*.d crypto/rc4/*.obj crypto/rc4/lib crypto/rc4/tags crypto/rc4/core crypto/rc4/.pure crypto/rc4/.nfs* crypto/rc4/*.old crypto/rc4/*.bak crypto/rc4/fluff
 
-clean:
-	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-rc4_enc.o: ../../e_os.h ../../include/openssl/bio.h
-rc4_enc.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-rc4_enc.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-rc4_enc.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-rc4_enc.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-rc4_enc.o: ../../include/openssl/rc4.h ../../include/openssl/safestack.h
-rc4_enc.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-rc4_enc.o: ../cryptlib.h rc4_enc.c rc4_locl.h
-rc4_skey.o: ../../e_os.h ../../include/openssl/bio.h
-rc4_skey.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-rc4_skey.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-rc4_skey.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-rc4_skey.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-rc4_skey.o: ../../include/openssl/rc4.h ../../include/openssl/safestack.h
-rc4_skey.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-rc4_skey.o: ../cryptlib.h rc4_locl.h rc4_skey.c

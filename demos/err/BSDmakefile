@@ -1,0 +1,8 @@
+#
+# OpenSSL/demos/err/BSDmakefile
+#
+
+.include "demos/err/Makefile"
+.for d in $(SRC_demos_err:.c=.d)
+.sinclude "$(d)"
+.endfor

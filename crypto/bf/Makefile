@@ -2,97 +2,74 @@
 # OpenSSL/crypto/blowfish/Makefile
 #
 
-DIR=	bf
-TOP=	../..
-CC=	cc
-CPP=	$(CC) -E
-INCLUDES=
-CFLAG=-g
-MAKEFILE=	Makefile
-AR=		ar r
+CPP_crypto_bf=	$(CC) -E
 
-BF_ENC=		bf_enc.o
 
-CFLAGS= $(INCLUDES) $(CFLAG)
-ASFLAGS= $(INCLUDES) $(ASFLAG)
-AFLAGS= $(ASFLAGS)
+CFLAGS_crypto_bf= $(INCLUDES_crypto) $(CFLAG)
+ASFLAGS_crypto_bf= $(INCLUDES_crypto) $(ASFLAG)
+AFLAGS_crypto_bf= $(ASFLAGS_crypto_bf)
 
-GENERAL=Makefile
-TEST=bftest.c
-APPS=
+GENERAL_crypto_bf=crypto/bf/Makefile
+TEST_crypto_bf=crypto/bf/bftest.c
+APPS_crypto_bf=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=bf_skey.c bf_ecb.c bf_enc.c bf_cfb64.c bf_ofb64.c 
-LIBOBJ=bf_skey.o bf_ecb.o $(BF_ENC) bf_cfb64.o bf_ofb64.o
+LIB_crypto_bf=libcrypto.a
+LIBSRC_crypto_bf=crypto/bf/bf_skey.c crypto/bf/bf_ecb.c crypto/bf/bf_enc.c crypto/bf/bf_cfb64.c crypto/bf/bf_ofb64.c 
+LIBOBJ_crypto_bf=crypto/bf/bf_skey.o crypto/bf/bf_ecb.o $(BF_ENC) crypto/bf/bf_cfb64.o crypto/bf/bf_ofb64.o
 
-SRC= $(LIBSRC)
+SRC_crypto_bf= $(LIBSRC_crypto_bf)
 
-EXHEADER= blowfish.h
-HEADER=	bf_pi.h bf_locl.h $(EXHEADER)
+EXHEADER_crypto_bf= crypto/bf/blowfish.h
+HEADER_crypto_bf=	crypto/bf/bf_pi.h crypto/bf/bf_locl.h $(EXHEADER_crypto_bf)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_bf=    $(GENERAL_crypto_bf) $(SRC_crypto_bf) $(HEADER_crypto_bf)
 
-top:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_crypto_bf
+all_crypto_bf:	$(LIBOBJ_crypto_bf)
 
-lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
-	@touch lib
 
-bf-586.s:	asm/bf-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
-	$(PERL) asm/bf-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+crypto/bf/bf-586.s:	crypto/bf/asm/bf-586.pl crypto/perlasm/x86asm.pl crypto/perlasm/cbc.pl
+	$(PERL) crypto/bf/asm/bf-586.pl $(PERLASM_SCHEME) $(CFLAGS_crypto_bf) $(PROCESSOR) > $@
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_crypto_bf
+files_crypto_bf:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+links: links_crypto_bf
+links_crypto_bf:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_bf)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_bf)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_bf)
 
 # We need to use force because 'install' matches 'INSTALL' on case
 # insensitive systems
-FRC.install:
-install: FRC.install
+FRC.install: FRC.install_crypto_bf
+FRC.install_crypto_bf:
+install: install_crypto_bf
+install_crypto_bf: FRC.install_crypto_bf
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_bf)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
-	ctags $(SRC)
+tags: tags_crypto_bf
+tags_crypto_bf:
+	ctags $(SRC_crypto_bf)
 
-tests:
+tests: tests_crypto_bf
+tests_crypto_bf:
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_crypto_bf
+lint_crypto_bf:
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_bf)>crypto/bf/fluff
 
-depend:
-	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+dclean: dclean_crypto_bf
+dclean_crypto_bf:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+clean: clean_crypto_bf
+clean_crypto_bf:
+	rm -f crypto/bf/*.s crypto/bf/*.o crypto/bf/*.d crypto/bf/*.obj crypto/bf/lib crypto/bf/tags crypto/bf/core crypto/bf/.pure crypto/bf/.nfs* crypto/bf/*.old crypto/bf/*.bak crypto/bf/fluff
 
-clean:
-	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-bf_cfb64.o: ../../include/openssl/blowfish.h ../../include/openssl/e_os2.h
-bf_cfb64.o: ../../include/openssl/opensslconf.h bf_cfb64.c bf_locl.h
-bf_ecb.o: ../../include/openssl/blowfish.h ../../include/openssl/e_os2.h
-bf_ecb.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-bf_ecb.o: bf_ecb.c bf_locl.h
-bf_enc.o: ../../include/openssl/blowfish.h ../../include/openssl/e_os2.h
-bf_enc.o: ../../include/openssl/opensslconf.h bf_enc.c bf_locl.h
-bf_ofb64.o: ../../include/openssl/blowfish.h ../../include/openssl/e_os2.h
-bf_ofb64.o: ../../include/openssl/opensslconf.h bf_locl.h bf_ofb64.c
-bf_skey.o: ../../include/openssl/blowfish.h ../../include/openssl/e_os2.h
-bf_skey.o: ../../include/openssl/opensslconf.h bf_locl.h bf_pi.h bf_skey.c

@@ -2,83 +2,64 @@
 # OpenSSL/krb5/Makefile
 #
 
-DIR=	krb5
-TOP=	../..
-CC=	cc
-INCLUDES= -I.. -I$(TOP) -I../../include
-CFLAG=-g
-MAKEFILE=	Makefile
-AR=		ar r
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_crypto_krb5= $(INCLUDES_crypto) $(CFLAG)
 
-GENERAL=Makefile README
-TEST=
-APPS=
+GENERAL_crypto_krb5=crypto/krb5/Makefile crypto/krb5/README
+TEST_crypto_krb5=
+APPS_crypto_krb5=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC= krb5_asn.c
+LIB_crypto_krb5=libcrypto.a
+LIBSRC_crypto_krb5= crypto/krb5/krb5_asn.c
 
-LIBOBJ= krb5_asn.o
+LIBOBJ_crypto_krb5= crypto/krb5/krb5_asn.o
 
-SRC= $(LIBSRC)
+SRC_crypto_krb5= $(LIBSRC_crypto_krb5)
 
-EXHEADER= krb5_asn.h
-HEADER=	$(EXHEADER)
+EXHEADER_crypto_krb5= crypto/krb5/krb5_asn.h
+HEADER_crypto_krb5=	$(EXHEADER_crypto_krb5)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_krb5=    $(GENERAL_crypto_krb5) $(SRC_crypto_krb5) $(HEADER_crypto_krb5)
 
-top:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_crypto_krb5
+all_crypto_krb5:	$(LIBOBJ_crypto_krb5)
 
-lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
-	@touch lib
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_crypto_krb5
+files_crypto_krb5:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+links: links_crypto_krb5
+links_crypto_krb5:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_krb5)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_krb5)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_krb5)
 
-install:
+install: install_crypto_krb5
+install_crypto_krb5:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_krb5)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
-	ctags $(SRC)
+tags: tags_crypto_krb5
+tags_crypto_krb5:
+	ctags $(SRC_crypto_krb5)
 
-tests:
+tests: tests_crypto_krb5
+tests_crypto_krb5:
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_crypto_krb5
+lint_crypto_krb5:
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_krb5)>crypto/krb5/fluff
 
-depend:
-	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(LIBSRC)
+dclean: dclean_crypto_krb5
+dclean_crypto_krb5:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+clean: clean_crypto_krb5
+clean_crypto_krb5:
+	rm -f crypto/krb5/*.o crypto/krb5/*.d crypto/krb5/*.obj crypto/krb5/lib crypto/krb5/tags crypto/krb5/core crypto/krb5/.pure crypto/krb5/.nfs* crypto/krb5/*.old crypto/krb5/*.bak crypto/krb5/fluff
 
-clean:
-	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-krb5_asn.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
-krb5_asn.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
-krb5_asn.o: ../../include/openssl/e_os2.h ../../include/openssl/krb5_asn.h
-krb5_asn.o: ../../include/openssl/opensslconf.h
-krb5_asn.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-krb5_asn.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-krb5_asn.o: ../../include/openssl/symhacks.h krb5_asn.c

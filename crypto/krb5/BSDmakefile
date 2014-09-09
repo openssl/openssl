@@ -1,0 +1,8 @@
+#
+# OpenSSL/crypto/krb5/BSDmakefile
+#
+
+.include "crypto/krb5/Makefile"
+.for d in $(SRC_crypto_krb5:.c=.d)
+.sinclude "$(d)"
+.endfor

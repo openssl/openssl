@@ -1,0 +1,8 @@
+#
+# OpenSSL/crypto/lhash/BSDmakefile
+#
+
+.include "crypto/lhash/Makefile"
+.for d in $(SRC_crypto_lhash:.c=.d)
+.sinclude "$(d)"
+.endfor

@@ -1,18 +1,16 @@
-LIBNAME=	librsaref
-SRC=		rsaref.c
-OBJ=		rsaref.o
-HEADER=		rsaref.h
+LIBNAME_demos_engines_rsaref=	librsaref
+SRC_demos_engines_rsaref=		demos/engines/rsaref/rsaref.c
+OBJ_demos_engines_rsaref=		demos/engines/rsaref/rsaref.o
+HEADER_demos_engines_rsaref=		demos/engines/rsaref/rsaref.h
 
-CC=		gcc
-PIC=		-fPIC
-CFLAGS=		-g -I../../../include $(PIC) -DENGINE_DYNAMIC_SUPPORT
-AR=		ar r
-RANLIB=		ranlib
+PIC_demos_engines_rsaref=		-fPIC
+CFLAGS_demos_engines_rsaref=		-g -I../../../include $(PIC_demos_engines_rsaref) -DENGINE_DYNAMIC_SUPPORT
 
-LIB=		$(LIBNAME).a
-SHLIB=		$(LIBNAME).so
+LIB_demos_engines_rsaref=		$(LIBNAME_demos_engines_rsaref).a
+SHLIB_demos_engines_rsaref=		$(LIBNAME_demos_engines_rsaref).so
 
-all:
+all: all_demos_engines_rsaref
+all_demos_engines_rsaref:
 		@echo 'Please choose a system to build on:'
 		@echo ''
 		@echo 'tru64:    Tru64 Unix, Digital Unix, Digital OSF/1'
@@ -24,112 +22,99 @@ all:
 		@echo 'gnu:      Generic GNU-based system (gcc and GNU ld)'
 		@echo ''
 
-FORCE.install:
-install:	FORCE.install
-		cd install; \
+demos/engines/rsaref/FORCE.install:
+install: install_demos_engines_rsaref
+install_demos_engines_rsaref:	demos/engines/rsaref/FORCE.install
+		cd demos/engines/rsaref/install; \
 			make -f unix/makefile CFLAGS='-I. -DPROTOTYPES=1 -O -c' RSAREFLIB=librsaref.a librsaref.a
 
-FORCE.update:
-update:		FORCE.update
-		perl ../../../util/mkerr.pl -conf rsaref.ec \
-			-nostatic -staticloader -write rsaref.c
+FORCE.update: FORCE.update_demos_engines_rsaref
+FORCE.update_demos_engines_rsaref:
+update: update_demos_engines_rsaref
+update_demos_engines_rsaref:		FORCE.update_demos_engines_rsaref
+		perl util/mkerr.pl -conf rsaref.ec \
+			-nostatic -staticloader -write demos/engines/rsaref/rsaref.c
 
-darwin:		install $(SHLIB).darwin
-cygwin:		install $(SHLIB).cygwin
-gnu:		install $(SHLIB).gnu
-alpha-osf1:	install $(SHLIB).alpha-osf1
-tru64:		install $(SHLIB).tru64
-solaris:	install $(SHLIB).solaris
-irix:		install $(SHLIB).irix
-hpux32:		install $(SHLIB).hpux32
-hpux64:		install $(SHLIB).hpux64
-aix:		install $(SHLIB).aix
-reliantunix:	install $(SHLIB).reliantunix
+demos/engines/rsaref/darwin:		install_demos_engines_rsaref $(SHLIB_demos_engines_rsaref).darwin
+demos/engines/rsaref/cygwin:		install_demos_engines_rsaref $(SHLIB_demos_engines_rsaref).cygwin
+gnu: gnu_demos_engines_rsaref
+gnu_demos_engines_rsaref:		install_demos_engines_rsaref $(SHLIB_demos_engines_rsaref).gnu
+demos/engines/rsaref/alpha-osf1:	install_demos_engines_rsaref $(SHLIB_demos_engines_rsaref).alpha-osf1
+tru64: tru64_demos_engines_rsaref
+tru64_demos_engines_rsaref:		install_demos_engines_rsaref $(SHLIB_demos_engines_rsaref).tru64
+solaris: solaris_demos_engines_rsaref
+solaris_demos_engines_rsaref:	install_demos_engines_rsaref $(SHLIB_demos_engines_rsaref).solaris
+irix: irix_demos_engines_rsaref
+irix_demos_engines_rsaref:		install_demos_engines_rsaref $(SHLIB_demos_engines_rsaref).irix
+hpux32: hpux32_demos_engines_rsaref
+hpux32_demos_engines_rsaref:		install_demos_engines_rsaref $(SHLIB_demos_engines_rsaref).hpux32
+hpux64: hpux64_demos_engines_rsaref
+hpux64_demos_engines_rsaref:		install_demos_engines_rsaref $(SHLIB_demos_engines_rsaref).hpux64
+aix: aix_demos_engines_rsaref
+aix_demos_engines_rsaref:		install_demos_engines_rsaref $(SHLIB_demos_engines_rsaref).aix
+demos/engines/rsaref/reliantunix:	install_demos_engines_rsaref $(SHLIB_demos_engines_rsaref).reliantunix
 
-$(LIB):		$(OBJ)
-		$(AR) $(LIB) $(OBJ)
-		- $(RANLIB) $(LIB)
+$(LIB_demos_engines_rsaref):		$(OBJ_demos_engines_rsaref)
+		$(AR) $(LIB_demos_engines_rsaref) $(OBJ_demos_engines_rsaref)
+		- $(RANLIB) $(LIB_demos_engines_rsaref)
 
-LINK_SO=	\
-  ld -r -o $(LIBNAME).o $$ALLSYMSFLAGS $(LIB) install/librsaref.a && \
-  (nm -Pg $(LIBNAME).o | grep ' [BDT] ' | cut -f1 -d' ' > $(LIBNAME).exp; \
-   $$SHAREDCMD $$SHAREDFLAGS -o $(SHLIB) $(LIBNAME).o -L ../../.. -lcrypto -lc)
+LINK_SO_demos_engines_rsaref=	\
+  ld -r -o $(LIBNAME_demos_engines_rsaref).o $$ALLSYMSFLAGS $(LIB_demos_engines_rsaref) install/librsaref.a && \
+  (nm -Pg $(LIBNAME_demos_engines_rsaref).o | grep ' [BDT] ' | cut -f1 -d' ' > $(LIBNAME_demos_engines_rsaref).exp; \
+   $$SHAREDCMD $$SHAREDFLAGS -o $(SHLIB_demos_engines_rsaref) $(LIBNAME_demos_engines_rsaref).o -L ../../.. -lcrypto -lc)
 
-$(SHLIB).darwin:	$(LIB) install/librsaref.a
+$(SHLIB_demos_engines_rsaref).darwin:	$(LIB_demos_engines_rsaref) install/librsaref.a
 		ALLSYMSFLAGS='-all_load' \
-		SHAREDFLAGS='-dynamiclib -install_name $(SHLIB)' \
+		SHAREDFLAGS='-dynamiclib -install_name $(SHLIB_demos_engines_rsaref)' \
 		SHAREDCMD='$(CC)'; \
-		$(LINK_SO)
-		touch $(SHLIB).darwin
-$(SHLIB).cygwin:	$(LIB) install/librsaref.a
+		$(LINK_SO_demos_engines_rsaref)
+		touch $(SHLIB_demos_engines_rsaref).darwin
+$(SHLIB_demos_engines_rsaref).cygwin:	$(LIB_demos_engines_rsaref) install/librsaref.a
 		ALLSYMSFLAGS='--whole-archive' \
-		SHAREDFLAGS='-shared -Wl,-Bsymbolic -Wl,--out-implib,$(LIBNAME).dll.a' \
+		SHAREDFLAGS='-shared -Wl,-Bsymbolic -Wl,--out-implib,$(LIBNAME_demos_engines_rsaref).dll.a' \
 		SHAREDCMD='$(CC)'; \
-		$(LINK_SO)
-		touch $(SHLIB).cygwin
-$(SHLIB).gnu:	$(LIB) install/librsaref.a
+		$(LINK_SO_demos_engines_rsaref)
+		touch $(SHLIB_demos_engines_rsaref).cygwin
+$(SHLIB_demos_engines_rsaref).gnu:	$(LIB_demos_engines_rsaref) install/librsaref.a
 		ALLSYMSFLAGS='--whole-archive' \
-		SHAREDFLAGS='-shared -Wl,-soname=$(SHLIB)' \
+		SHAREDFLAGS='-shared -Wl,-soname=$(SHLIB_demos_engines_rsaref)' \
 		SHAREDCMD='$(CC)'; \
-		$(LINK_SO)
-		touch $(SHLIB).gnu
-$(SHLIB).tru64:	$(LIB) install/librsaref.a
+		$(LINK_SO_demos_engines_rsaref)
+		touch $(SHLIB_demos_engines_rsaref).gnu
+$(SHLIB_demos_engines_rsaref).tru64:	$(LIB_demos_engines_rsaref) install/librsaref.a
 		ALLSYMSFLAGS='-all' \
 		SHAREDFLAGS='-shared' \
 		SHAREDCMD='$(CC)'; \
-		$(LINK_SO)
-		touch $(SHLIB).tru64
-$(SHLIB).solaris:	$(LIB) install/librsaref.a
+		$(LINK_SO_demos_engines_rsaref)
+		touch $(SHLIB_demos_engines_rsaref).tru64
+$(SHLIB_demos_engines_rsaref).solaris:	$(LIB_demos_engines_rsaref) install/librsaref.a
 		ALLSYMSFLAGS='-z allextract' \
-		SHAREDFLAGS='-G -h $(SHLIB)' \
+		SHAREDFLAGS='-G -h $(SHLIB_demos_engines_rsaref)' \
 		SHAREDCMD='$(CC)'; \
-		$(LINK_SO)
-		touch $(SHLIB).solaris
-$(SHLIB).irix:	$(LIB) install/librsaref.a
+		$(LINK_SO_demos_engines_rsaref)
+		touch $(SHLIB_demos_engines_rsaref).solaris
+$(SHLIB_demos_engines_rsaref).irix:	$(LIB_demos_engines_rsaref) install/librsaref.a
 		ALLSYMSFLAGS='-all' \
-		SHAREDFLAGS='-shared -Wl,-soname,$(SHLIB)' \
+		SHAREDFLAGS='-shared -Wl,-soname,$(SHLIB_demos_engines_rsaref)' \
 		SHAREDCMD='$(CC)'; \
-		$(LINK_SO)
-		touch $(SHLIB).irix
-$(SHLIB).hpux32:	$(LIB) install/librsaref.a
+		$(LINK_SO_demos_engines_rsaref)
+		touch $(SHLIB_demos_engines_rsaref).irix
+$(SHLIB_demos_engines_rsaref).hpux32:	$(LIB_demos_engines_rsaref) install/librsaref.a
 		ALLSYMSFLAGS='-Fl' \
-		SHAREDFLAGS='+vnocompatwarnings -b -z +s +h $(SHLIB)' \
+		SHAREDFLAGS='+vnocompatwarnings -b -z +s +h $(SHLIB_demos_engines_rsaref)' \
 		SHAREDCMD='/usr/ccs/bin/ld'; \
-		$(LINK_SO)
-		touch $(SHLIB).hpux32
-$(SHLIB).hpux64:	$(LIB) install/librsaref.a
+		$(LINK_SO_demos_engines_rsaref)
+		touch $(SHLIB_demos_engines_rsaref).hpux32
+$(SHLIB_demos_engines_rsaref).hpux64:	$(LIB_demos_engines_rsaref) install/librsaref.a
 		ALLSYMSFLAGS='+forceload' \
-		SHAREDFLAGS='-b -z +h $(SHLIB)' \
+		SHAREDFLAGS='-b -z +h $(SHLIB_demos_engines_rsaref)' \
 		SHAREDCMD='/usr/ccs/bin/ld'; \
-		$(LINK_SO)
-		touch $(SHLIB).hpux64
-$(SHLIB).aix:	$(LIB) install/librsaref.a
+		$(LINK_SO_demos_engines_rsaref)
+		touch $(SHLIB_demos_engines_rsaref).hpux64
+$(SHLIB_demos_engines_rsaref).aix:	$(LIB_demos_engines_rsaref) install/librsaref.a
 		ALLSYMSFLAGS='-bnogc' \
-		SHAREDFLAGS='-G -bE:$(LIBNAME).exp -bM:SRE' \
+		SHAREDFLAGS='-G -bE:$(LIBNAME_demos_engines_rsaref).exp -bM:SRE' \
 		SHAREDCMD='$(CC)'; \
-		$(LINK_SO)
-		touch $(SHLIB).aix
+		$(LINK_SO_demos_engines_rsaref)
+		touch $(SHLIB_demos_engines_rsaref).aix
 
-depend:
-		sed -e '/^# DO NOT DELETE.*/,$$d' < Makefile > Makefile.tmp
-		echo '# DO NOT DELETE THIS LINE -- make depend depends on it.' >> Makefile.tmp
-		gcc -M $(CFLAGS) $(SRC) >> Makefile.tmp
-		perl ../../../util/clean-depend.pl < Makefile.tmp > Makefile.new
-		rm -f Makefile.tmp Makefile
-		mv Makefile.new Makefile
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-rsaref.o: ../../../include/openssl/asn1.h ../../../include/openssl/bio.h
-rsaref.o: ../../../include/openssl/bn.h ../../../include/openssl/crypto.h
-rsaref.o: ../../../include/openssl/dh.h ../../../include/openssl/dsa.h
-rsaref.o: ../../../include/openssl/e_os2.h ../../../include/openssl/engine.h
-rsaref.o: ../../../include/openssl/err.h ../../../include/openssl/lhash.h
-rsaref.o: ../../../include/openssl/opensslconf.h
-rsaref.o: ../../../include/openssl/opensslv.h
-rsaref.o: ../../../include/openssl/ossl_typ.h ../../../include/openssl/rand.h
-rsaref.o: ../../../include/openssl/rsa.h ../../../include/openssl/safestack.h
-rsaref.o: ../../../include/openssl/stack.h ../../../include/openssl/symhacks.h
-rsaref.o: ../../../include/openssl/ui.h rsaref.c rsaref_err.c rsaref_err.h
-rsaref.o: source/des.h source/global.h source/md2.h source/md5.h source/rsa.h
-rsaref.o: source/rsaref.h

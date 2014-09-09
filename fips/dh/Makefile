@@ -2,98 +2,68 @@
 # OpenSSL/fips/dh/Makefile
 #
 
-DIR=	dh
-TOP=	../..
-CC=	cc
-INCLUDES=
-CFLAG=-g
-INSTALL_PREFIX=
-OPENSSLDIR=     /usr/local/ssl
-INSTALLTOP=/usr/local/ssl
-MAKEDEPPROG=	makedepend
-MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
-MAKEFILE=	Makefile
-AR=		ar r
+INCLUDES_fips_dh=
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_fips_dh= $(INCLUDES_fips_dh) $(CFLAG)
 
-GENERAL=Makefile
-TEST= fips_dhvs.c
-APPS=
+GENERAL_fips_dh=fips/dh/Makefile
+TEST_fips_dh= fips/dh/fips_dhvs.c
+APPS_fips_dh=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC= fips_dh_lib.c
-LIBOBJ= fips_dh_lib.o
+LIB_fips_dh=libcrypto.a
+LIBSRC_fips_dh= fips/dh/fips_dh_lib.c
+LIBOBJ_fips_dh= fips/dh/fips_dh_lib.o
 
-SRC= $(LIBSRC)
+SRC_fips_dh= $(LIBSRC_fips_dh)
 
-EXHEADER=
-HEADER=	$(EXHEADER)
+EXHEADER_fips_dh=
+HEADER_fips_dh=	$(EXHEADER_fips_dh)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_fips_dh=    $(GENERAL_fips_dh) $(SRC_fips_dh) $(HEADER_fips_dh)
 
-top:
-	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_fips_dh
+all_fips_dh:	fips/dh/lib
 
-lib:	$(LIBOBJ)
-	@echo $(LIBOBJ) > lib
+fips/dh/lib:	$(LIBOBJ_fips_dh)
+	@echo $(LIBOBJ_fips_dh) > fips/dh/lib
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_fips_dh
+files_fips_dh:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/apps $(APPS)
+links: links_fips_dh
+links_fips_dh:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_fips_dh)
+	@$(PERL) util/mklink.pl test $(TEST_fips_dh)
+	@$(PERL) util/mklink.pl apps $(APPS_fips_dh)
 
-install:
-	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
+install: install_fips_dh
+install_fips_dh:
+	@headerlist="$(EXHEADER_fips_dh)"; for i in $$headerlist; \
 	do  \
 	  (cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	  chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done
 
-tags:
-	ctags $(SRC)
+tags: tags_fips_dh
+tags_fips_dh:
+	ctags $(SRC_fips_dh)
 
-tests:
+tests: tests_fips_dh
+tests_fips_dh:
 
-fips_test:
+fips_test: fips_test_fips_dh
+fips_test_fips_dh:
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_fips_dh
+lint_fips_dh:
+	lint -DLINT $(INCLUDES_fips_dh) $(SRC_fips_dh)>fips/dh/fluff
 
-depend:
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(SRC) $(TEST)
+dclean: dclean_fips_dh
+dclean_fips_dh:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+clean: clean_fips_dh
+clean_fips_dh:
+	rm -f fips/dh/*.o fips/dh/*.d fips/dh/*.obj fips/dh/lib fips/dh/tags fips/dh/core fips/dh/.pure fips/dh/.nfs* fips/dh/*.old fips/dh/*.bak fips/dh/fluff
 
-clean:
-	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-fips_dh_lib.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-fips_dh_lib.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
-fips_dh_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/fips.h
-fips_dh_lib.o: ../../include/openssl/opensslconf.h
-fips_dh_lib.o: ../../include/openssl/opensslv.h
-fips_dh_lib.o: ../../include/openssl/ossl_typ.h
-fips_dh_lib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-fips_dh_lib.o: ../../include/openssl/symhacks.h fips_dh_lib.c
-fips_dhvs.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
-fips_dhvs.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-fips_dhvs.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
-fips_dhvs.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-fips_dhvs.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-fips_dhvs.o: ../../include/openssl/fips.h ../../include/openssl/fips_rand.h
-fips_dhvs.o: ../../include/openssl/hmac.h ../../include/openssl/lhash.h
-fips_dhvs.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-fips_dhvs.o: ../../include/openssl/opensslconf.h
-fips_dhvs.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-fips_dhvs.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-fips_dhvs.o: ../../include/openssl/symhacks.h ../fips_utl.h fips_dhvs.c

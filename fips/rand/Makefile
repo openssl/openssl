@@ -2,278 +2,83 @@
 # OpenSSL/fips/rand/Makefile
 #
 
-DIR=	rand
-TOP=	../..
-CC=	cc
-INCLUDES=
-CFLAG=-g
-INSTALL_PREFIX=
-OPENSSLDIR=     /usr/local/ssl
-INSTALLTOP=/usr/local/ssl
-MAKEDEPPROG=	makedepend
-MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
-MAKEFILE=	Makefile
-AR=		ar r
+INCLUDES_fips_rand=
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_fips_rand= $(INCLUDES_fips_rand) $(CFLAG)
 
-GENERAL=Makefile
-TEST= fips_randtest.c fips_rngvs.c fips_drbgvs.c
-APPS=
+GENERAL_fips_rand=fips/rand/Makefile
+TEST_fips_rand= fips/rand/fips_randtest.c fips/rand/fips_rngvs.c fips/rand/fips_drbgvs.c
+APPS_fips_rand=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=	fips_rand.c fips_rand_selftest.c fips_drbg_lib.c \
-	fips_drbg_hash.c fips_drbg_hmac.c fips_drbg_ctr.c fips_drbg_ec.c \
-	fips_drbg_selftest.c fips_drbg_rand.c fips_rand_lib.c
-LIBOBJ=	fips_rand.o fips_rand_selftest.o fips_drbg_lib.o \
-	fips_drbg_hash.o fips_drbg_hmac.o fips_drbg_ctr.o fips_drbg_ec.o \
-	fips_drbg_selftest.o fips_drbg_rand.o fips_rand_lib.o
+LIB_fips_rand=libcrypto.a
+LIBSRC_fips_rand=	fips/rand/fips_rand.c fips/rand/fips_rand_selftest.c fips/rand/fips_drbg_lib.c \
+	fips/rand/fips_drbg_hash.c fips/rand/fips_drbg_hmac.c fips/rand/fips_drbg_ctr.c fips/rand/fips_drbg_ec.c \
+	fips/rand/fips_drbg_selftest.c fips/rand/fips_drbg_rand.c fips/rand/fips_rand_lib.c
+LIBOBJ_fips_rand=	fips/rand/fips_rand.o fips/rand/fips_rand_selftest.o fips/rand/fips_drbg_lib.o \
+	fips/rand/fips_drbg_hash.o fips/rand/fips_drbg_hmac.o fips/rand/fips_drbg_ctr.o fips/rand/fips_drbg_ec.o \
+	fips/rand/fips_drbg_selftest.o fips/rand/fips_drbg_rand.o fips/rand/fips_rand_lib.o
 
-SRC= $(LIBSRC)
+SRC_fips_rand= $(LIBSRC_fips_rand)
 
-EXHEADER= fips_rand.h
-HEADER=	$(EXHEADER) fips_rand_lcl.h fips_drbg_selftest.h
+EXHEADER_fips_rand= fips/rand/fips_rand.h
+HEADER_fips_rand=	$(EXHEADER_fips_rand) fips/rand/fips_rand_lcl.h fips/rand/fips_drbg_selftest.h
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_fips_rand=    $(GENERAL_fips_rand) $(SRC_fips_rand) $(HEADER_fips_rand)
 
-top:
-	(cd $(TOP); $(MAKE) DIRS=fips SDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_fips_rand
+all_fips_rand:	fips/rand/lib
 
-lib:	$(LIBOBJ)
-	@echo $(LIBOBJ) > lib
+fips/rand/lib:	$(LIBOBJ_fips_rand)
+	@echo $(LIBOBJ_fips_rand) > fips/rand/lib
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_fips_rand
+files_fips_rand:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/apps $(APPS)
+links: links_fips_rand
+links_fips_rand:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_fips_rand)
+	@$(PERL) util/mklink.pl test $(TEST_fips_rand)
+	@$(PERL) util/mklink.pl apps $(APPS_fips_rand)
 
-install:
-	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
+install: install_fips_rand
+install_fips_rand:
+	@headerlist="$(EXHEADER_fips_rand)"; for i in $$headerlist; \
 	do \
 	  (cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	  chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done
 
-tags:
-	ctags $(SRC)
+tags: tags_fips_rand
+tags_fips_rand:
+	ctags $(SRC_fips_rand)
 
-tests:
+tests: tests_fips_rand
+tests_fips_rand:
 
-Q=../testvectors/rng/req
-A=../testvectors/rng/rsp
+Q_fips_rand=../testvectors/rng/req
+A_fips_rand=../testvectors/rng/rsp
 
-fips_test:
-	-rm -rf $(A)
-	mkdir $(A)
-	if [ -f $(Q)/ANSI931_AES128MCT.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_rngvs mct < $(Q)/ANSI931_AES128MCT.req > $(A)/ANSI931_AES128MCT.rsp; fi
-	if [ -f $(Q)/ANSI931_AES192MCT.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_rngvs mct < $(Q)/ANSI931_AES192MCT.req > $(A)/ANSI931_AES192MCT.rsp; fi
-	if [ -f $(Q)/ANSI931_AES256MCT.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_rngvs mct < $(Q)/ANSI931_AES256MCT.req > $(A)/ANSI931_AES256MCT.rsp; fi
-	if [ -f $(Q)/ANSI931_AES128VST.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_rngvs vst < $(Q)/ANSI931_AES128VST.req > $(A)/ANSI931_AES128VST.rsp; fi
-	if [ -f $(Q)/ANSI931_AES192VST.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_rngvs vst < $(Q)/ANSI931_AES192VST.req > $(A)/ANSI931_AES192VST.rsp; fi
-	if [ -f $(Q)/ANSI931_AES256VST.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_rngvs vst < $(Q)/ANSI931_AES256VST.req > $(A)/ANSI931_AES256VST.rsp; fi
+fips_test: fips_test_fips_rand
+fips_test_fips_rand:
+	-rm -rf $(A_fips_rand)
+	mkdir $(A_fips_rand)
+	if [ -f $(Q_fips_rand)/ANSI931_AES128MCT.req ]; then util/shlib_wrap.sh test/fips_rngvs mct < $(Q_fips_rand)/ANSI931_AES128MCT.req > $(A_fips_rand)/ANSI931_AES128MCT.rsp; fi
+	if [ -f $(Q_fips_rand)/ANSI931_AES192MCT.req ]; then util/shlib_wrap.sh test/fips_rngvs mct < $(Q_fips_rand)/ANSI931_AES192MCT.req > $(A_fips_rand)/ANSI931_AES192MCT.rsp; fi
+	if [ -f $(Q_fips_rand)/ANSI931_AES256MCT.req ]; then util/shlib_wrap.sh test/fips_rngvs mct < $(Q_fips_rand)/ANSI931_AES256MCT.req > $(A_fips_rand)/ANSI931_AES256MCT.rsp; fi
+	if [ -f $(Q_fips_rand)/ANSI931_AES128VST.req ]; then util/shlib_wrap.sh test/fips_rngvs vst < $(Q_fips_rand)/ANSI931_AES128VST.req > $(A_fips_rand)/ANSI931_AES128VST.rsp; fi
+	if [ -f $(Q_fips_rand)/ANSI931_AES192VST.req ]; then util/shlib_wrap.sh test/fips_rngvs vst < $(Q_fips_rand)/ANSI931_AES192VST.req > $(A_fips_rand)/ANSI931_AES192VST.rsp; fi
+	if [ -f $(Q_fips_rand)/ANSI931_AES256VST.req ]; then util/shlib_wrap.sh test/fips_rngvs vst < $(Q_fips_rand)/ANSI931_AES256VST.req > $(A_fips_rand)/ANSI931_AES256VST.rsp; fi
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_fips_rand
+lint_fips_rand:
+	lint -DLINT $(INCLUDES_fips_rand) $(SRC_fips_rand)>fips/rand/fluff
 
-depend:
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(SRC) $(TEST)
+dclean: dclean_fips_rand
+dclean_fips_rand:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+clean: clean_fips_rand
+clean_fips_rand:
+	rm -f fips/rand/*.o fips/rand/*.d fips/rand/*.obj fips/rand/lib fips/rand/tags fips/rand/core fips/rand/.pure fips/rand/.nfs* fips/rand/*.old fips/rand/*.bak fips/rand/fluff
 
-clean:
-	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-fips_drbg_ctr.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
-fips_drbg_ctr.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
-fips_drbg_ctr.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-fips_drbg_ctr.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
-fips_drbg_ctr.o: ../../include/openssl/fips_rand.h ../../include/openssl/hmac.h
-fips_drbg_ctr.o: ../../include/openssl/obj_mac.h
-fips_drbg_ctr.o: ../../include/openssl/objects.h
-fips_drbg_ctr.o: ../../include/openssl/opensslconf.h
-fips_drbg_ctr.o: ../../include/openssl/opensslv.h
-fips_drbg_ctr.o: ../../include/openssl/ossl_typ.h
-fips_drbg_ctr.o: ../../include/openssl/safestack.h
-fips_drbg_ctr.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-fips_drbg_ctr.o: fips_drbg_ctr.c fips_rand_lcl.h
-fips_drbg_ec.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
-fips_drbg_ec.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-fips_drbg_ec.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-fips_drbg_ec.o: ../../include/openssl/ec.h ../../include/openssl/evp.h
-fips_drbg_ec.o: ../../include/openssl/fips.h ../../include/openssl/fips_rand.h
-fips_drbg_ec.o: ../../include/openssl/hmac.h ../../include/openssl/obj_mac.h
-fips_drbg_ec.o: ../../include/openssl/objects.h
-fips_drbg_ec.o: ../../include/openssl/opensslconf.h
-fips_drbg_ec.o: ../../include/openssl/opensslv.h
-fips_drbg_ec.o: ../../include/openssl/ossl_typ.h
-fips_drbg_ec.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-fips_drbg_ec.o: ../../include/openssl/symhacks.h fips_drbg_ec.c fips_rand_lcl.h
-fips_drbg_hash.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
-fips_drbg_hash.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
-fips_drbg_hash.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-fips_drbg_hash.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
-fips_drbg_hash.o: ../../include/openssl/fips_rand.h
-fips_drbg_hash.o: ../../include/openssl/hmac.h ../../include/openssl/obj_mac.h
-fips_drbg_hash.o: ../../include/openssl/objects.h
-fips_drbg_hash.o: ../../include/openssl/opensslconf.h
-fips_drbg_hash.o: ../../include/openssl/opensslv.h
-fips_drbg_hash.o: ../../include/openssl/ossl_typ.h
-fips_drbg_hash.o: ../../include/openssl/safestack.h
-fips_drbg_hash.o: ../../include/openssl/stack.h
-fips_drbg_hash.o: ../../include/openssl/symhacks.h fips_drbg_hash.c
-fips_drbg_hash.o: fips_rand_lcl.h
-fips_drbg_hmac.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
-fips_drbg_hmac.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
-fips_drbg_hmac.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-fips_drbg_hmac.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
-fips_drbg_hmac.o: ../../include/openssl/fips_rand.h
-fips_drbg_hmac.o: ../../include/openssl/hmac.h ../../include/openssl/obj_mac.h
-fips_drbg_hmac.o: ../../include/openssl/objects.h
-fips_drbg_hmac.o: ../../include/openssl/opensslconf.h
-fips_drbg_hmac.o: ../../include/openssl/opensslv.h
-fips_drbg_hmac.o: ../../include/openssl/ossl_typ.h
-fips_drbg_hmac.o: ../../include/openssl/safestack.h
-fips_drbg_hmac.o: ../../include/openssl/stack.h
-fips_drbg_hmac.o: ../../include/openssl/symhacks.h fips_drbg_hmac.c
-fips_drbg_hmac.o: fips_rand_lcl.h
-fips_drbg_lib.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
-fips_drbg_lib.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
-fips_drbg_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-fips_drbg_lib.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-fips_drbg_lib.o: ../../include/openssl/fips_rand.h ../../include/openssl/hmac.h
-fips_drbg_lib.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-fips_drbg_lib.o: ../../include/openssl/objects.h
-fips_drbg_lib.o: ../../include/openssl/opensslconf.h
-fips_drbg_lib.o: ../../include/openssl/opensslv.h
-fips_drbg_lib.o: ../../include/openssl/ossl_typ.h
-fips_drbg_lib.o: ../../include/openssl/safestack.h
-fips_drbg_lib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-fips_drbg_lib.o: fips_drbg_lib.c fips_rand_lcl.h
-fips_drbg_rand.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
-fips_drbg_rand.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
-fips_drbg_rand.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-fips_drbg_rand.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-fips_drbg_rand.o: ../../include/openssl/fips_rand.h
-fips_drbg_rand.o: ../../include/openssl/hmac.h ../../include/openssl/lhash.h
-fips_drbg_rand.o: ../../include/openssl/obj_mac.h
-fips_drbg_rand.o: ../../include/openssl/objects.h
-fips_drbg_rand.o: ../../include/openssl/opensslconf.h
-fips_drbg_rand.o: ../../include/openssl/opensslv.h
-fips_drbg_rand.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
-fips_drbg_rand.o: ../../include/openssl/safestack.h
-fips_drbg_rand.o: ../../include/openssl/stack.h
-fips_drbg_rand.o: ../../include/openssl/symhacks.h fips_drbg_rand.c
-fips_drbg_rand.o: fips_rand_lcl.h
-fips_drbg_selftest.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
-fips_drbg_selftest.o: ../../include/openssl/bio.h
-fips_drbg_selftest.o: ../../include/openssl/crypto.h
-fips_drbg_selftest.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-fips_drbg_selftest.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-fips_drbg_selftest.o: ../../include/openssl/fips_rand.h
-fips_drbg_selftest.o: ../../include/openssl/hmac.h
-fips_drbg_selftest.o: ../../include/openssl/lhash.h
-fips_drbg_selftest.o: ../../include/openssl/obj_mac.h
-fips_drbg_selftest.o: ../../include/openssl/objects.h
-fips_drbg_selftest.o: ../../include/openssl/opensslconf.h
-fips_drbg_selftest.o: ../../include/openssl/opensslv.h
-fips_drbg_selftest.o: ../../include/openssl/ossl_typ.h
-fips_drbg_selftest.o: ../../include/openssl/safestack.h
-fips_drbg_selftest.o: ../../include/openssl/stack.h
-fips_drbg_selftest.o: ../../include/openssl/symhacks.h ../fips_locl.h
-fips_drbg_selftest.o: fips_drbg_selftest.c fips_drbg_selftest.h fips_rand_lcl.h
-fips_drbgvs.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
-fips_drbgvs.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-fips_drbgvs.o: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
-fips_drbgvs.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-fips_drbgvs.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-fips_drbgvs.o: ../../include/openssl/fips.h ../../include/openssl/fips_rand.h
-fips_drbgvs.o: ../../include/openssl/hmac.h ../../include/openssl/lhash.h
-fips_drbgvs.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-fips_drbgvs.o: ../../include/openssl/opensslconf.h
-fips_drbgvs.o: ../../include/openssl/opensslv.h
-fips_drbgvs.o: ../../include/openssl/ossl_typ.h
-fips_drbgvs.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-fips_drbgvs.o: ../../include/openssl/symhacks.h ../fips_utl.h fips_drbgvs.c
-fips_rand.o: ../../e_os.h ../../include/openssl/aes.h
-fips_rand.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_rand.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-fips_rand.o: ../../include/openssl/ec.h ../../include/openssl/err.h
-fips_rand.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
-fips_rand.o: ../../include/openssl/fips_rand.h ../../include/openssl/hmac.h
-fips_rand.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-fips_rand.o: ../../include/openssl/objects.h
-fips_rand.o: ../../include/openssl/opensslconf.h
-fips_rand.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-fips_rand.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
-fips_rand.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-fips_rand.o: ../fips_locl.h fips_rand.c
-fips_rand_lib.o: ../../e_os.h ../../include/openssl/aes.h
-fips_rand_lib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_rand_lib.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-fips_rand_lib.o: ../../include/openssl/ec.h ../../include/openssl/err.h
-fips_rand_lib.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
-fips_rand_lib.o: ../../include/openssl/fips_rand.h ../../include/openssl/hmac.h
-fips_rand_lib.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-fips_rand_lib.o: ../../include/openssl/objects.h
-fips_rand_lib.o: ../../include/openssl/opensslconf.h
-fips_rand_lib.o: ../../include/openssl/opensslv.h
-fips_rand_lib.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
-fips_rand_lib.o: ../../include/openssl/safestack.h
-fips_rand_lib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-fips_rand_lib.o: fips_rand_lib.c
-fips_rand_selftest.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
-fips_rand_selftest.o: ../../include/openssl/bio.h
-fips_rand_selftest.o: ../../include/openssl/crypto.h
-fips_rand_selftest.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-fips_rand_selftest.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-fips_rand_selftest.o: ../../include/openssl/fips.h
-fips_rand_selftest.o: ../../include/openssl/fips_rand.h
-fips_rand_selftest.o: ../../include/openssl/hmac.h
-fips_rand_selftest.o: ../../include/openssl/lhash.h
-fips_rand_selftest.o: ../../include/openssl/obj_mac.h
-fips_rand_selftest.o: ../../include/openssl/objects.h
-fips_rand_selftest.o: ../../include/openssl/opensslconf.h
-fips_rand_selftest.o: ../../include/openssl/opensslv.h
-fips_rand_selftest.o: ../../include/openssl/ossl_typ.h
-fips_rand_selftest.o: ../../include/openssl/rand.h
-fips_rand_selftest.o: ../../include/openssl/safestack.h
-fips_rand_selftest.o: ../../include/openssl/stack.h
-fips_rand_selftest.o: ../../include/openssl/symhacks.h ../fips_locl.h
-fips_rand_selftest.o: fips_rand_selftest.c
-fips_randtest.o: ../../e_os.h ../../include/openssl/aes.h
-fips_randtest.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_randtest.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
-fips_randtest.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-fips_randtest.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-fips_randtest.o: ../../include/openssl/fips.h ../../include/openssl/fips_rand.h
-fips_randtest.o: ../../include/openssl/hmac.h ../../include/openssl/lhash.h
-fips_randtest.o: ../../include/openssl/obj_mac.h
-fips_randtest.o: ../../include/openssl/objects.h
-fips_randtest.o: ../../include/openssl/opensslconf.h
-fips_randtest.o: ../../include/openssl/opensslv.h
-fips_randtest.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
-fips_randtest.o: ../../include/openssl/safestack.h
-fips_randtest.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-fips_randtest.o: ../fips_utl.h fips_randtest.c
-fips_rngvs.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
-fips_rngvs.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-fips_rngvs.o: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
-fips_rngvs.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-fips_rngvs.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-fips_rngvs.o: ../../include/openssl/fips.h ../../include/openssl/fips_rand.h
-fips_rngvs.o: ../../include/openssl/hmac.h ../../include/openssl/lhash.h
-fips_rngvs.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-fips_rngvs.o: ../../include/openssl/opensslconf.h
-fips_rngvs.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-fips_rngvs.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
-fips_rngvs.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-fips_rngvs.o: ../fips_utl.h fips_rngvs.c

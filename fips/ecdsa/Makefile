@@ -2,129 +2,68 @@
 # OpenSSL/fips/ecdsa/Makefile
 #
 
-DIR=	ecdsa
-TOP=	../..
-CC=	cc
-INCLUDES=
-CFLAG=-g
-INSTALL_PREFIX=
-OPENSSLDIR=     /usr/local/ssl
-INSTALLTOP=/usr/local/ssl
-MAKEDEPPROG=	makedepend
-MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
-MAKEFILE=	Makefile
-AR=		ar r
+INCLUDES_fips_ecdsa=
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_fips_ecdsa= $(INCLUDES_fips_ecdsa) $(CFLAG)
 
-GENERAL=Makefile
-TEST= fips_ecdsavs.c
-APPS=
+GENERAL_fips_ecdsa=fips/ecdsa/Makefile
+TEST_fips_ecdsa= fips/ecdsa/fips_ecdsavs.c
+APPS_fips_ecdsa=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC= fips_ecdsa_lib.c fips_ecdsa_sign.c fips_ecdsa_selftest.c
-LIBOBJ= fips_ecdsa_lib.o fips_ecdsa_sign.o fips_ecdsa_selftest.o
+LIB_fips_ecdsa=libcrypto.a
+LIBSRC_fips_ecdsa= fips/ecdsa/fips_ecdsa_lib.c fips/ecdsa/fips_ecdsa_sign.c fips/ecdsa/fips_ecdsa_selftest.c
+LIBOBJ_fips_ecdsa= fips/ecdsa/fips_ecdsa_lib.o fips/ecdsa/fips_ecdsa_sign.o fips/ecdsa/fips_ecdsa_selftest.o
 
-SRC= $(LIBSRC)
+SRC_fips_ecdsa= $(LIBSRC_fips_ecdsa)
 
-EXHEADER=
-HEADER=	$(EXHEADER)
+EXHEADER_fips_ecdsa=
+HEADER_fips_ecdsa=	$(EXHEADER_fips_ecdsa)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_fips_ecdsa=    $(GENERAL_fips_ecdsa) $(SRC_fips_ecdsa) $(HEADER_fips_ecdsa)
 
-top:
-	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_fips_ecdsa
+all_fips_ecdsa:	fips/ecdsa/lib
 
-lib:	$(LIBOBJ)
-	@echo $(LIBOBJ) > lib
+fips/ecdsa/lib:	$(LIBOBJ_fips_ecdsa)
+	@echo $(LIBOBJ_fips_ecdsa) > fips/ecdsa/lib
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_fips_ecdsa
+files_fips_ecdsa:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/apps $(APPS)
+links: links_fips_ecdsa
+links_fips_ecdsa:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_fips_ecdsa)
+	@$(PERL) util/mklink.pl test $(TEST_fips_ecdsa)
+	@$(PERL) util/mklink.pl apps $(APPS_fips_ecdsa)
 
-install:
-	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
+install: install_fips_ecdsa
+install_fips_ecdsa:
+	@headerlist="$(EXHEADER_fips_ecdsa)"; for i in $$headerlist; \
 	do  \
 	  (cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	  chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done
 
-tags:
-	ctags $(SRC)
+tags: tags_fips_ecdsa
+tags_fips_ecdsa:
+	ctags $(SRC_fips_ecdsa)
 
-tests:
+tests: tests_fips_ecdsa
+tests_fips_ecdsa:
 
-fips_test:
+fips_test: fips_test_fips_ecdsa
+fips_test_fips_ecdsa:
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_fips_ecdsa
+lint_fips_ecdsa:
+	lint -DLINT $(INCLUDES_fips_ecdsa) $(SRC_fips_ecdsa)>fips/ecdsa/fluff
 
-depend:
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(SRC) $(TEST)
+dclean: dclean_fips_ecdsa
+dclean_fips_ecdsa:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+clean: clean_fips_ecdsa
+clean_fips_ecdsa:
+	rm -f fips/ecdsa/*.o fips/ecdsa/*.d fips/ecdsa/*.obj fips/ecdsa/lib fips/ecdsa/tags fips/ecdsa/core fips/ecdsa/.pure fips/ecdsa/.nfs* fips/ecdsa/*.old fips/ecdsa/*.bak fips/ecdsa/fluff
 
-clean:
-	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-fips_ecdsa_lib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_ecdsa_lib.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
-fips_ecdsa_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-fips_ecdsa_lib.o: ../../include/openssl/ecdsa.h ../../include/openssl/fips.h
-fips_ecdsa_lib.o: ../../include/openssl/opensslconf.h
-fips_ecdsa_lib.o: ../../include/openssl/opensslv.h
-fips_ecdsa_lib.o: ../../include/openssl/ossl_typ.h
-fips_ecdsa_lib.o: ../../include/openssl/safestack.h
-fips_ecdsa_lib.o: ../../include/openssl/stack.h
-fips_ecdsa_lib.o: ../../include/openssl/symhacks.h fips_ecdsa_lib.c
-fips_ecdsa_selftest.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_ecdsa_selftest.o: ../../include/openssl/bn.h
-fips_ecdsa_selftest.o: ../../include/openssl/crypto.h
-fips_ecdsa_selftest.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-fips_ecdsa_selftest.o: ../../include/openssl/ecdsa.h
-fips_ecdsa_selftest.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-fips_ecdsa_selftest.o: ../../include/openssl/fips.h
-fips_ecdsa_selftest.o: ../../include/openssl/lhash.h
-fips_ecdsa_selftest.o: ../../include/openssl/obj_mac.h
-fips_ecdsa_selftest.o: ../../include/openssl/objects.h
-fips_ecdsa_selftest.o: ../../include/openssl/opensslconf.h
-fips_ecdsa_selftest.o: ../../include/openssl/opensslv.h
-fips_ecdsa_selftest.o: ../../include/openssl/ossl_typ.h
-fips_ecdsa_selftest.o: ../../include/openssl/safestack.h
-fips_ecdsa_selftest.o: ../../include/openssl/stack.h
-fips_ecdsa_selftest.o: ../../include/openssl/symhacks.h fips_ecdsa_selftest.c
-fips_ecdsa_sign.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_ecdsa_sign.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
-fips_ecdsa_sign.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-fips_ecdsa_sign.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
-fips_ecdsa_sign.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
-fips_ecdsa_sign.o: ../../include/openssl/obj_mac.h
-fips_ecdsa_sign.o: ../../include/openssl/objects.h
-fips_ecdsa_sign.o: ../../include/openssl/opensslconf.h
-fips_ecdsa_sign.o: ../../include/openssl/opensslv.h
-fips_ecdsa_sign.o: ../../include/openssl/ossl_typ.h
-fips_ecdsa_sign.o: ../../include/openssl/safestack.h
-fips_ecdsa_sign.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-fips_ecdsa_sign.o: ../../include/openssl/symhacks.h fips_ecdsa_sign.c
-fips_ecdsavs.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
-fips_ecdsavs.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-fips_ecdsavs.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-fips_ecdsavs.o: ../../include/openssl/ec.h ../../include/openssl/ecdsa.h
-fips_ecdsavs.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-fips_ecdsavs.o: ../../include/openssl/fips_rand.h ../../include/openssl/hmac.h
-fips_ecdsavs.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-fips_ecdsavs.o: ../../include/openssl/objects.h
-fips_ecdsavs.o: ../../include/openssl/opensslconf.h
-fips_ecdsavs.o: ../../include/openssl/opensslv.h
-fips_ecdsavs.o: ../../include/openssl/ossl_typ.h
-fips_ecdsavs.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-fips_ecdsavs.o: ../../include/openssl/symhacks.h ../fips_utl.h fips_ecdsavs.c

@@ -1,0 +1,8 @@
+#
+# OpenSSL/crypto/whrlpool/BSDmakefile
+#
+
+.include "crypto/whrlpool/Makefile"
+.for d in $(SRC_crypto_whrlpool:.c=.d)
+.sinclude "$(d)"
+.endfor

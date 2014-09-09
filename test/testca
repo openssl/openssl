@@ -2,37 +2,37 @@
 
 SH="/bin/sh"
 if test "$OSTYPE" = msdosdjgpp; then
-    PATH="../apps\;$PATH"
+    PATH="apps\;$PATH"
 else
-    PATH="../apps:$PATH"
+    PATH="apps:$PATH"
 fi
 export SH PATH
 
-SSLEAY_CONFIG="-config CAss.cnf"
+SSLEAY_CONFIG="-config test/CAss.cnf"
 export SSLEAY_CONFIG
 
-OPENSSL="`pwd`/../util/opensslwrap.sh"
+OPENSSL="`pwd`/util/opensslwrap.sh"
 export OPENSSL
 
 /bin/rm -fr demoCA
-$SH ../apps/CA.sh -newca <<EOF
+$SH apps/CA.sh -newca <<EOF
 EOF
 
 if [ $? != 0 ]; then
 	exit 1;
 fi
 
-SSLEAY_CONFIG="-config Uss.cnf"
+SSLEAY_CONFIG="-config test/Uss.cnf"
 export SSLEAY_CONFIG
-$SH ../apps/CA.sh -newreq
+$SH apps/CA.sh -newreq
 if [ $? != 0 ]; then
 	exit 1;
 fi
 
 
-SSLEAY_CONFIG="-config ../apps/openssl.cnf"
+SSLEAY_CONFIG="-config apps/openssl.cnf"
 export SSLEAY_CONFIG
-$SH ../apps/CA.sh -sign  <<EOF
+$SH apps/CA.sh -sign  <<EOF
 y
 y
 EOF
@@ -41,7 +41,7 @@ if [ $? != 0 ]; then
 fi
 
 
-$SH ../apps/CA.sh -verify newcert.pem
+$SH apps/CA.sh -verify newcert.pem
 if [ $? != 0 ]; then
 	exit 1;
 fi

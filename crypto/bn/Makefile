@@ -2,389 +2,176 @@
 # OpenSSL/crypto/bn/Makefile
 #
 
-DIR=	bn
-TOP=	../..
-CC=	cc
-CPP=    $(CC) -E
-INCLUDES= -I.. -I$(TOP) -I../../include
-CFLAG=-g
-MAKEFILE=	Makefile
-AR=		ar r
+CPP_crypto_bn=    $(CC) -E
 
-BN_ASM=		bn_asm.o
 
-CFLAGS= $(INCLUDES) $(CFLAG)
-ASFLAGS= $(INCLUDES) $(ASFLAG)
-AFLAGS= $(ASFLAGS)
+CFLAGS_crypto_bn= $(INCLUDES_crypto) $(CFLAG)
+ASFLAGS_crypto_bn= $(INCLUDES_crypto) $(ASFLAG)
+AFLAGS_crypto_bn= $(ASFLAGS_crypto_bn)
 
-GENERAL=Makefile
-TEST=bntest.c exptest.c
-APPS=
+GENERAL_crypto_bn=crypto/bn/Makefile
+TEST_crypto_bn=crypto/bn/bntest.c crypto/bn/exptest.c
+APPS_crypto_bn=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=	bn_add.c bn_div.c bn_exp.c bn_lib.c bn_ctx.c bn_mul.c bn_mod.c \
-	bn_print.c bn_rand.c bn_shift.c bn_word.c bn_blind.c \
-	bn_kron.c bn_sqrt.c bn_gcd.c bn_prime.c bn_err.c bn_sqr.c bn_asm.c \
-	bn_recp.c bn_mont.c bn_mpi.c bn_exp2.c bn_gf2m.c bn_nist.c \
-	bn_depr.c bn_const.c bn_x931p.c
+LIB_crypto_bn=libcrypto.a
+LIBSRC_crypto_bn=	crypto/bn/bn_add.c crypto/bn/bn_div.c crypto/bn/bn_exp.c crypto/bn/bn_lib.c crypto/bn/bn_ctx.c crypto/bn/bn_mul.c crypto/bn/bn_mod.c \
+	crypto/bn/bn_print.c crypto/bn/bn_rand.c crypto/bn/bn_shift.c crypto/bn/bn_word.c crypto/bn/bn_blind.c \
+	crypto/bn/bn_kron.c crypto/bn/bn_sqrt.c crypto/bn/bn_gcd.c crypto/bn/bn_prime.c crypto/bn/bn_err.c crypto/bn/bn_sqr.c crypto/bn/bn_asm.c \
+	crypto/bn/bn_recp.c crypto/bn/bn_mont.c crypto/bn/bn_mpi.c crypto/bn/bn_exp2.c crypto/bn/bn_gf2m.c crypto/bn/bn_nist.c \
+	crypto/bn/bn_depr.c crypto/bn/bn_const.c crypto/bn/bn_x931p.c
 
-LIBOBJ=	bn_add.o bn_div.o bn_exp.o bn_lib.o bn_ctx.o bn_mul.o bn_mod.o \
-	bn_print.o bn_rand.o bn_shift.o bn_word.o bn_blind.o \
-	bn_kron.o bn_sqrt.o bn_gcd.o bn_prime.o bn_err.o bn_sqr.o $(BN_ASM) \
-	bn_recp.o bn_mont.o bn_mpi.o bn_exp2.o bn_gf2m.o bn_nist.o \
-	bn_depr.o bn_const.o bn_x931p.o
+LIBOBJ_crypto_bn=	crypto/bn/bn_add.o crypto/bn/bn_div.o crypto/bn/bn_exp.o crypto/bn/bn_lib.o crypto/bn/bn_ctx.o crypto/bn/bn_mul.o crypto/bn/bn_mod.o \
+	crypto/bn/bn_print.o crypto/bn/bn_rand.o crypto/bn/bn_shift.o crypto/bn/bn_word.o crypto/bn/bn_blind.o \
+	crypto/bn/bn_kron.o crypto/bn/bn_sqrt.o crypto/bn/bn_gcd.o crypto/bn/bn_prime.o crypto/bn/bn_err.o crypto/bn/bn_sqr.o $(BN_ASM) \
+	crypto/bn/bn_recp.o crypto/bn/bn_mont.o crypto/bn/bn_mpi.o crypto/bn/bn_exp2.o crypto/bn/bn_gf2m.o crypto/bn/bn_nist.o \
+	crypto/bn/bn_depr.o crypto/bn/bn_const.o crypto/bn/bn_x931p.o
 
-SRC= $(LIBSRC)
+SRC_crypto_bn= $(LIBSRC_crypto_bn)
 
-EXHEADER= bn.h
-HEADER=	bn_lcl.h bn_prime.h $(EXHEADER)
+EXHEADER_crypto_bn= crypto/bn/bn.h
+HEADER_crypto_bn=	crypto/bn/bn_lcl.h crypto/bn/bn_prime.h $(EXHEADER_crypto_bn)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_bn=    $(GENERAL_crypto_bn) $(SRC_crypto_bn) $(HEADER_crypto_bn)
 
-top:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_crypto_bn
+all_crypto_bn:	$(LIBOBJ_crypto_bn)
 
-bn_prime.h: bn_prime.pl
-	$(PERL) bn_prime.pl >bn_prime.h
+crypto/bn/bn_prime.h: crypto/bn/bn_prime.pl
+	$(PERL) crypto/bn/bn_prime.pl >crypto/bn/bn_prime.h
 
-divtest: divtest.c ../../libcrypto.a
-	cc -I../../include divtest.c -o divtest ../../libcrypto.a
+crypto/bn/divtest: crypto/bn/divtest.c ./libcrypto.a
+	cc -Iinclude crypto/bn/divtest.c -o crypto/bn/divtest ./libcrypto.a
 
-bnbug: bnbug.c ../../libcrypto.a top
-	cc -g -I../../include bnbug.c -o bnbug ../../libcrypto.a
+crypto/bn/bnbug: crypto/bn/bnbug.c ./libcrypto.a crypto/bn/top
+	cc -g -Iinclude crypto/bn/bnbug.c -o crypto/bn/bnbug ./libcrypto.a
 
-lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
-	@touch lib
 
-bn-586.s:	asm/bn-586.pl ../perlasm/x86asm.pl
-	$(PERL) asm/bn-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
-co-586.s:	asm/co-586.pl ../perlasm/x86asm.pl
-	$(PERL) asm/co-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
-x86-mont.s:	asm/x86-mont.pl ../perlasm/x86asm.pl
-	$(PERL) asm/x86-mont.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
-x86-gf2m.s:	asm/x86-gf2m.pl ../perlasm/x86asm.pl
-	$(PERL) asm/x86-gf2m.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+crypto/bn/bn-586.s:	crypto/bn/asm/bn-586.pl crypto/perlasm/x86asm.pl
+	$(PERL) crypto/bn/asm/bn-586.pl $(PERLASM_SCHEME) $(CFLAGS_crypto_bn) $(PROCESSOR) > $@
+crypto/bn/co-586.s:	crypto/bn/asm/co-586.pl crypto/perlasm/x86asm.pl
+	$(PERL) crypto/bn/asm/co-586.pl $(PERLASM_SCHEME) $(CFLAGS_crypto_bn) $(PROCESSOR) > $@
+crypto/bn/x86-mont.s:	crypto/bn/asm/x86-mont.pl crypto/perlasm/x86asm.pl
+	$(PERL) crypto/bn/asm/x86-mont.pl $(PERLASM_SCHEME) $(CFLAGS_crypto_bn) $(PROCESSOR) > $@
+crypto/bn/x86-gf2m.s:	crypto/bn/asm/x86-gf2m.pl crypto/perlasm/x86asm.pl
+	$(PERL) crypto/bn/asm/x86-gf2m.pl $(PERLASM_SCHEME) $(CFLAGS_crypto_bn) $(PROCESSOR) > $@
 
-sparcv8.o:	asm/sparcv8.S
-	$(CC) $(CFLAGS) -c asm/sparcv8.S
-bn-sparcv9.o:	asm/sparcv8plus.S
-	$(CC) $(CFLAGS) -c -o $@ asm/sparcv8plus.S
-sparcv9a-mont.s:	asm/sparcv9a-mont.pl
-	$(PERL) asm/sparcv9a-mont.pl $(CFLAGS) > $@
-sparcv9-mont.s:		asm/sparcv9-mont.pl
-	$(PERL) asm/sparcv9-mont.pl $(CFLAGS) > $@
-vis3-mont.s:		asm/vis3-mont.pl
-	$(PERL) asm/vis3-mont.pl $(CFLAGS) > $@
-sparct4-mont.S:	asm/sparct4-mont.pl
-	$(PERL) asm/sparct4-mont.pl $(CFLAGS) > $@
-sparcv9-gf2m.S:	asm/sparcv9-gf2m.pl
-	$(PERL) asm/sparcv9-gf2m.pl $(CFLAGS) > $@
+crypto/bn/sparcv8.o:	crypto/bn/asm/sparcv8.S
+	$(CC) $(CFLAGS_crypto_bn) -c crypto/bn/asm/sparcv8.S
+crypto/bn/bn-sparcv9.o:	crypto/bn/asm/sparcv8plus.S
+	$(CC) $(CFLAGS_crypto_bn) -c -o $@ crypto/bn/asm/sparcv8plus.S
+crypto/bn/sparcv9a-mont.s:	crypto/bn/asm/sparcv9a-mont.pl
+	$(PERL) crypto/bn/asm/sparcv9a-mont.pl $(CFLAGS_crypto_bn) > $@
+crypto/bn/sparcv9-mont.s:		crypto/bn/asm/sparcv9-mont.pl
+	$(PERL) crypto/bn/asm/sparcv9-mont.pl $(CFLAGS_crypto_bn) > $@
+crypto/bn/vis3-mont.s:		crypto/bn/asm/vis3-mont.pl
+	$(PERL) crypto/bn/asm/vis3-mont.pl $(CFLAGS_crypto_bn) > $@
+crypto/bn/sparct4-mont.S:	crypto/bn/asm/sparct4-mont.pl
+	$(PERL) crypto/bn/asm/sparct4-mont.pl $(CFLAGS_crypto_bn) > $@
+crypto/bn/sparcv9-gf2m.S:	crypto/bn/asm/sparcv9-gf2m.pl
+	$(PERL) crypto/bn/asm/sparcv9-gf2m.pl $(CFLAGS_crypto_bn) > $@
 
-bn-mips3.o:	asm/mips3.s
+crypto/bn/bn-mips3.o:	crypto/bn/asm/mips3.s
 	@if [ "$(CC)" = "gcc" ]; then \
-		ABI=`expr "$(CFLAGS)" : ".*-mabi=\([n3264]*\)"` && \
-		as -$$ABI -O -o $@ asm/mips3.s; \
-	else	$(CC) -c $(CFLAGS) -o $@ asm/mips3.s; fi
+		ABI=`expr "$(CFLAGS_crypto_bn)" : ".*-mabi=\([n3264]*\)"` && \
+		as -$$ABI -O -o $@ crypto/bn/asm/mips3.s; \
+	else	$(CC) -c $(CFLAGS_crypto_bn) -o $@ crypto/bn/asm/mips3.s; fi
 
-bn-mips.s:	asm/mips.pl
-	$(PERL) asm/mips.pl $(PERLASM_SCHEME) $@
-mips-mont.s:	asm/mips-mont.pl
-	$(PERL)	asm/mips-mont.pl $(PERLASM_SCHEME) $@
+crypto/bn/bn-mips.s:	crypto/bn/asm/mips.pl
+	$(PERL) crypto/bn/asm/mips.pl $(PERLASM_SCHEME) $@
+crypto/bn/mips-mont.s:	crypto/bn/asm/mips-mont.pl
+	$(PERL)	crypto/bn/asm/mips-mont.pl $(PERLASM_SCHEME) $@
 
-bn-s390x.o:	asm/s390x.S
-	$(CC) $(CFLAGS) -c -o $@ asm/s390x.S
-s390x-gf2m.s:	asm/s390x-gf2m.pl
-	$(PERL) asm/s390x-gf2m.pl $(PERLASM_SCHEME) $@
+crypto/bn/bn-s390x.o:	crypto/bn/asm/s390x.S
+	$(CC) $(CFLAGS_crypto_bn) -c -o $@ crypto/bn/asm/s390x.S
+crypto/bn/s390x-gf2m.s:	crypto/bn/asm/s390x-gf2m.pl
+	$(PERL) crypto/bn/asm/s390x-gf2m.pl $(PERLASM_SCHEME) $@
 
-x86_64-gcc.o:	asm/x86_64-gcc.c
-	$(CC) $(CFLAGS) -c -o $@ asm/x86_64-gcc.c
-x86_64-mont.s:	asm/x86_64-mont.pl
-	$(PERL) asm/x86_64-mont.pl $(PERLASM_SCHEME) > $@
-x86_64-mont5.s:	asm/x86_64-mont5.pl
-	$(PERL) asm/x86_64-mont5.pl $(PERLASM_SCHEME) > $@
-x86_64-gf2m.s:	asm/x86_64-gf2m.pl
-	$(PERL) asm/x86_64-gf2m.pl $(PERLASM_SCHEME) > $@
-modexp512-x86_64.s:	asm/modexp512-x86_64.pl
-	$(PERL) asm/modexp512-x86_64.pl $(PERLASM_SCHEME) > $@
-rsaz-x86_64.s:	asm/rsaz-x86_64.pl
-	$(PERL) asm/rsaz-x86_64.pl $(PERLASM_SCHEME) > $@
-rsaz-avx2.s:	asm/rsaz-avx2.pl 
-	$(PERL) asm/rsaz-avx2.pl $(PERLASM_SCHEME) > $@
+crypto/bn/x86_64-gcc.o:	crypto/bn/asm/x86_64-gcc.c
+	$(CC) $(CFLAGS_crypto_bn) -c -o $@ crypto/bn/asm/x86_64-gcc.c
+crypto/bn/x86_64-mont.s:	crypto/bn/asm/x86_64-mont.pl
+	$(PERL) crypto/bn/asm/x86_64-mont.pl $(PERLASM_SCHEME) > $@
+crypto/bn/x86_64-mont5.s:	crypto/bn/asm/x86_64-mont5.pl
+	$(PERL) crypto/bn/asm/x86_64-mont5.pl $(PERLASM_SCHEME) > $@
+crypto/bn/x86_64-gf2m.s:	crypto/bn/asm/x86_64-gf2m.pl
+	$(PERL) crypto/bn/asm/x86_64-gf2m.pl $(PERLASM_SCHEME) > $@
+crypto/bn/modexp512-x86_64.s:	crypto/bn/asm/modexp512-x86_64.pl
+	$(PERL) crypto/bn/asm/modexp512-x86_64.pl $(PERLASM_SCHEME) > $@
+crypto/bn/rsaz-x86_64.s:	crypto/bn/asm/rsaz-x86_64.pl
+	$(PERL) crypto/bn/asm/rsaz-x86_64.pl $(PERLASM_SCHEME) > $@
+crypto/bn/rsaz-avx2.s:	crypto/bn/asm/rsaz-avx2.pl 
+	$(PERL) crypto/bn/asm/rsaz-avx2.pl $(PERLASM_SCHEME) > $@
 
-bn-ia64.s:	asm/ia64.S
-	$(CC) $(CFLAGS) -E asm/ia64.S > $@
-ia64-mont.s:	asm/ia64-mont.pl
-	$(PERL) asm/ia64-mont.pl $@ $(CFLAGS)
+crypto/bn/bn-ia64.s:	crypto/bn/asm/ia64.S
+	$(CC) $(CFLAGS_crypto_bn) -E crypto/bn/asm/ia64.S > $@
+crypto/bn/ia64-mont.s:	crypto/bn/asm/ia64-mont.pl
+	$(PERL) crypto/bn/asm/ia64-mont.pl $@ $(CFLAGS_crypto_bn)
 
 # GNU assembler fails to compile PA-RISC2 modules, insist on calling
 # vendor assembler...
-pa-risc2W.o: asm/pa-risc2W.s
-	$(PERL) $(TOP)/util/fipsas.pl $(TOP) $< /usr/ccs/bin/as -o pa-risc2W.o asm/pa-risc2W.s
-pa-risc2.o: asm/pa-risc2.s
-	$(PERL) $(TOP)/util/fipsas.pl $(TOP) $< /usr/ccs/bin/as -o pa-risc2.o asm/pa-risc2.s
+crypto/bn/pa-risc2W.o: crypto/bn/asm/pa-risc2W.s
+	FIPSCANISTERINTERNAL="$(FIPSCANISTERINTERNAL)" $(PERL) util/fipsas.pl ./ $< /usr/ccs/bin/as -o crypto/bn/pa-risc2W.o crypto/bn/asm/pa-risc2W.s
+crypto/bn/pa-risc2.o: crypto/bn/asm/pa-risc2.s
+	FIPSCANISTERINTERNAL="$(FIPSCANISTERINTERNAL)" $(PERL) util/fipsas.pl ./ $< /usr/ccs/bin/as -o crypto/bn/pa-risc2.o crypto/bn/asm/pa-risc2.s
 
-parisc-mont.s:	asm/parisc-mont.pl
-	$(PERL) asm/parisc-mont.pl $(PERLASM_SCHEME) $@
+crypto/bn/parisc-mont.s:	crypto/bn/asm/parisc-mont.pl
+	$(PERL) crypto/bn/asm/parisc-mont.pl $(PERLASM_SCHEME) $@
 
 # ppc - AIX, Linux, MacOS X...
-bn-ppc.s:	asm/ppc.pl;	$(PERL) asm/ppc.pl $(PERLASM_SCHEME) $@
-ppc-mont.s:	asm/ppc-mont.pl;$(PERL) asm/ppc-mont.pl $(PERLASM_SCHEME) $@
-ppc64-mont.s:	asm/ppc64-mont.pl;$(PERL) asm/ppc64-mont.pl $(PERLASM_SCHEME) $@
+crypto/bn/bn-ppc.s:	crypto/bn/asm/ppc.pl;	$(PERL) crypto/bn/asm/ppc.pl $(PERLASM_SCHEME) $@
+crypto/bn/ppc-mont.s:	crypto/bn/asm/ppc-mont.pl;$(PERL) crypto/bn/asm/ppc-mont.pl $(PERLASM_SCHEME) $@
+crypto/bn/ppc64-mont.s:	crypto/bn/asm/ppc64-mont.pl;$(PERL) crypto/bn/asm/ppc64-mont.pl $(PERLASM_SCHEME) $@
 
-alpha-mont.s:	asm/alpha-mont.pl
+crypto/bn/alpha-mont.s:	crypto/bn/asm/alpha-mont.pl
 	(preproc=/tmp/$$$$.$@; trap "rm $$preproc" INT; \
-	$(PERL) asm/alpha-mont.pl > $$preproc && \
+	$(PERL) crypto/bn/asm/alpha-mont.pl > $$preproc && \
 	$(CC) -E $$preproc > $@ && rm $$preproc)
 
 # GNU make "catch all"
-%-mont.S:	asm/%-mont.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
-%-gf2m.S:	asm/%-gf2m.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
+crypto/bn/%-mont.S:	crypto/bn/asm/%-mont.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
+crypto/bn/%-gf2m.S:	crypto/bn/asm/%-gf2m.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
 
-armv4-mont.o:	armv4-mont.S
-armv4-gf2m.o:	armv4-gf2m.S
+crypto/bn/armv4-mont.o:	crypto/bn/armv4-mont.S
+crypto/bn/armv4-gf2m.o:	crypto/bn/armv4-gf2m.S
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_crypto_bn
+files_crypto_bn:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+links: links_crypto_bn
+links_crypto_bn:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_bn)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_bn)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_bn)
 
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+install: install_crypto_bn
+install_crypto_bn:
+	@[ -n "$(INSTALLTOP)" ] # should be set by crypto/bn/top Makefile...
+	@headerlist="$(EXHEADER_crypto_bn)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-exptest:
-	rm -f exptest
-	gcc -I../../include -g2 -ggdb -o exptest exptest.c ../../libcrypto.a
-
-div:
+crypto/bn/div:
 	rm -f a.out
-	gcc -I.. -g div.c ../../libcrypto.a
+	gcc -Icrypto -g crypto/bn/div.c ./libcrypto.a
 
-tags:
-	ctags $(SRC)
+tags: tags_crypto_bn
+tags_crypto_bn:
+	ctags $(SRC_crypto_bn)
 
-tests:
+tests: tests_crypto_bn
+tests_crypto_bn:
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_crypto_bn
+lint_crypto_bn:
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_bn)>crypto/bn/fluff
 
-depend:
-	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+dclean: dclean_crypto_bn
+dclean_crypto_bn:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+clean: clean_crypto_bn
+clean_crypto_bn:
+	rm -f crypto/bn/*.s crypto/bn/*.o crypto/bn/*.d crypto/bn/*.obj crypto/bn/lib crypto/bn/tags crypto/bn/core crypto/bn/.pure crypto/bn/.nfs* crypto/bn/*.old crypto/bn/*.bak crypto/bn/fluff
 
-clean:
-	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-bn_add.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
-bn_add.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bn_add.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-bn_add.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-bn_add.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bn_add.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bn_add.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_add.c bn_lcl.h
-bn_asm.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
-bn_asm.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bn_asm.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-bn_asm.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-bn_asm.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bn_asm.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bn_asm.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_asm.c bn_lcl.h
-bn_blind.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
-bn_blind.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bn_blind.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-bn_blind.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-bn_blind.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bn_blind.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bn_blind.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_blind.c bn_lcl.h
-bn_const.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-bn_const.o: ../../include/openssl/opensslconf.h
-bn_const.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bn_const.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bn_const.o: ../../include/openssl/symhacks.h bn.h bn_const.c
-bn_ctx.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
-bn_ctx.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bn_ctx.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-bn_ctx.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-bn_ctx.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bn_ctx.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bn_ctx.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_ctx.c bn_lcl.h
-bn_depr.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
-bn_depr.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bn_depr.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-bn_depr.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-bn_depr.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bn_depr.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
-bn_depr.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-bn_depr.o: ../cryptlib.h bn_depr.c bn_lcl.h
-bn_div.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
-bn_div.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bn_div.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-bn_div.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-bn_div.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bn_div.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bn_div.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_div.c bn_lcl.h
-bn_err.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-bn_err.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-bn_err.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
-bn_err.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-bn_err.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-bn_err.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-bn_err.o: bn_err.c
-bn_exp.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
-bn_exp.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bn_exp.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-bn_exp.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-bn_exp.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bn_exp.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bn_exp.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_exp.c bn_lcl.h
-bn_exp.o: rsaz_exp.h
-bn_exp2.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
-bn_exp2.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bn_exp2.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-bn_exp2.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-bn_exp2.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bn_exp2.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bn_exp2.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_exp2.c bn_lcl.h
-bn_gcd.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
-bn_gcd.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bn_gcd.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-bn_gcd.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-bn_gcd.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bn_gcd.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bn_gcd.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_gcd.c bn_lcl.h
-bn_gf2m.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
-bn_gf2m.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bn_gf2m.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-bn_gf2m.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-bn_gf2m.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bn_gf2m.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bn_gf2m.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_gf2m.c bn_lcl.h
-bn_kron.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
-bn_kron.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bn_kron.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-bn_kron.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-bn_kron.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bn_kron.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bn_kron.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_kron.c bn_lcl.h
-bn_lib.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
-bn_lib.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bn_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-bn_lib.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-bn_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bn_lib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bn_lib.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_lcl.h bn_lib.c
-bn_mod.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
-bn_mod.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bn_mod.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-bn_mod.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-bn_mod.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bn_mod.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bn_mod.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_lcl.h bn_mod.c
-bn_mont.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
-bn_mont.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bn_mont.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-bn_mont.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-bn_mont.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bn_mont.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bn_mont.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_lcl.h bn_mont.c
-bn_mpi.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
-bn_mpi.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bn_mpi.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-bn_mpi.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-bn_mpi.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bn_mpi.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bn_mpi.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_lcl.h bn_mpi.c
-bn_mul.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
-bn_mul.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bn_mul.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-bn_mul.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-bn_mul.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bn_mul.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bn_mul.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_lcl.h bn_mul.c
-bn_nist.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
-bn_nist.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bn_nist.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-bn_nist.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-bn_nist.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bn_nist.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bn_nist.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_lcl.h bn_nist.c
-bn_prime.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
-bn_prime.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bn_prime.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-bn_prime.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-bn_prime.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bn_prime.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
-bn_prime.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-bn_prime.o: ../cryptlib.h bn_lcl.h bn_prime.c bn_prime.h
-bn_print.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
-bn_print.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bn_print.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-bn_print.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-bn_print.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bn_print.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bn_print.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_lcl.h bn_print.c
-bn_rand.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
-bn_rand.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bn_rand.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-bn_rand.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-bn_rand.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bn_rand.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
-bn_rand.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-bn_rand.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_lcl.h bn_rand.c
-bn_recp.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
-bn_recp.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bn_recp.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-bn_recp.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-bn_recp.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bn_recp.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bn_recp.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_lcl.h bn_recp.c
-bn_shift.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
-bn_shift.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bn_shift.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-bn_shift.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-bn_shift.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bn_shift.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bn_shift.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_lcl.h bn_shift.c
-bn_sqr.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
-bn_sqr.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bn_sqr.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-bn_sqr.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-bn_sqr.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bn_sqr.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bn_sqr.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_lcl.h bn_sqr.c
-bn_sqrt.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
-bn_sqrt.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bn_sqrt.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-bn_sqrt.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-bn_sqrt.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bn_sqrt.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bn_sqrt.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_lcl.h bn_sqrt.c
-bn_word.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
-bn_word.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bn_word.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-bn_word.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-bn_word.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bn_word.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bn_word.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_lcl.h bn_word.c
-bn_x931p.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
-bn_x931p.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
-bn_x931p.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bn_x931p.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bn_x931p.o: ../../include/openssl/symhacks.h bn_x931p.c

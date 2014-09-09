@@ -2,125 +2,75 @@
 # OpenSSL/fips/aes/Makefile
 #
 
-DIR=	aes
-TOP=	../..
-CC=	cc
-INCLUDES=
-CFLAG=-g
-INSTALL_PREFIX=
-OPENSSLDIR=     /usr/local/ssl
-INSTALLTOP=/usr/local/ssl
-MAKEDEPPROG=	makedepend
-MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
-MAKEFILE=	Makefile
-AR=		ar r
+INCLUDES_fips_aes=
 
-ASFLAGS= $(INCLUDES) $(ASFLAG)
-AFLAGS= $(ASFLAGS)
+ASFLAGS_fips_aes= $(INCLUDES_fips_aes) $(ASFLAG)
+AFLAGS_fips_aes= $(ASFLAGS_fips_aes)
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_fips_aes= $(INCLUDES_fips_aes) $(CFLAG)
 
-GENERAL=Makefile
-TEST=fips_aesavs.c fips_gcmtest.c
-APPS=
+GENERAL_fips_aes=fips/aes/Makefile
+TEST_fips_aes=fips/aes/fips_aesavs.c fips/aes/fips_gcmtest.c
+APPS_fips_aes=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=fips_aes_selftest.c
-LIBOBJ=fips_aes_selftest.o
+LIB_fips_aes=libcrypto.a
+LIBSRC_fips_aes=fips/aes/fips_aes_selftest.c
+LIBOBJ_fips_aes=fips/aes/fips_aes_selftest.o
 
-SRC= $(LIBSRC)
+SRC_fips_aes= $(LIBSRC_fips_aes)
 
-EXHEADER=
-HEADER=
+EXHEADER_fips_aes=
+HEADER_fips_aes=
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_fips_aes=    $(GENERAL_fips_aes) $(SRC_fips_aes) $(HEADER_fips_aes)
 
-top:
-	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_fips_aes
+all_fips_aes:	fips/aes/lib
 
-lib:	$(LIBOBJ)
-	@echo $(LIBOBJ) > lib
+fips/aes/lib:	$(LIBOBJ_fips_aes)
+	@echo $(LIBOBJ_fips_aes) > fips/aes/lib
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_fips_aes
+files_fips_aes:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/apps $(APPS)
+links: links_fips_aes
+links_fips_aes:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_fips_aes)
+	@$(PERL) util/mklink.pl test $(TEST_fips_aes)
+	@$(PERL) util/mklink.pl apps $(APPS_fips_aes)
 
-install:
-	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
+install: install_fips_aes
+install_fips_aes:
+	@headerlist="$(EXHEADER_fips_aes)"; for i in $$headerlist; \
 	do  \
 	  (cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	  chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done
 
-tags:
-	ctags $(SRC)
+tags: tags_fips_aes
+tags_fips_aes:
+	ctags $(SRC_fips_aes)
 
-tests:
+tests: tests_fips_aes
+tests_fips_aes:
 
-fips_test:
+fips_test: fips_test_fips_aes
+fips_test_fips_aes:
 	-find ../testvectors/aes/req -name '*.req' > testlist
 	-rm -rf ../testvectors/aes/rsp
 	mkdir ../testvectors/aes/rsp
-	if [ -s testlist ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_aesavs -d testlist; fi
+	if [ -s testlist ]; then util/shlib_wrap.sh test/fips_aesavs -d testlist; fi
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_fips_aes
+lint_fips_aes:
+	lint -DLINT $(INCLUDES_fips_aes) $(SRC_fips_aes)>fips/aes/fluff
 
-depend:
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) \
-		$(SRC) $(TEST)
+dclean: dclean_fips_aes
+dclean_fips_aes:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+clean: clean_fips_aes
+clean_fips_aes:
+	rm -f fips/aes/*.o fips/aes/*.d asm/*.o fips/aes/*.obj fips/aes/lib fips/aes/tags fips/aes/core fips/aes/.pure fips/aes/.nfs* fips/aes/*.old fips/aes/*.bak fips/aes/fluff fips/aes/testlist
 
-clean:
-	rm -f *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff testlist
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-fips_aes_selftest.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_aes_selftest.o: ../../include/openssl/crypto.h
-fips_aes_selftest.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-fips_aes_selftest.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
-fips_aes_selftest.o: ../../include/openssl/lhash.h
-fips_aes_selftest.o: ../../include/openssl/obj_mac.h
-fips_aes_selftest.o: ../../include/openssl/objects.h
-fips_aes_selftest.o: ../../include/openssl/opensslconf.h
-fips_aes_selftest.o: ../../include/openssl/opensslv.h
-fips_aes_selftest.o: ../../include/openssl/ossl_typ.h
-fips_aes_selftest.o: ../../include/openssl/safestack.h
-fips_aes_selftest.o: ../../include/openssl/stack.h
-fips_aes_selftest.o: ../../include/openssl/symhacks.h ../fips_locl.h
-fips_aes_selftest.o: fips_aes_selftest.c
-fips_aesavs.o: ../../e_os.h ../../include/openssl/aes.h
-fips_aesavs.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_aesavs.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
-fips_aesavs.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-fips_aesavs.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-fips_aesavs.o: ../../include/openssl/fips.h ../../include/openssl/fips_rand.h
-fips_aesavs.o: ../../include/openssl/hmac.h ../../include/openssl/lhash.h
-fips_aesavs.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-fips_aesavs.o: ../../include/openssl/opensslconf.h
-fips_aesavs.o: ../../include/openssl/opensslv.h
-fips_aesavs.o: ../../include/openssl/ossl_typ.h
-fips_aesavs.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-fips_aesavs.o: ../../include/openssl/symhacks.h ../fips_utl.h fips_aesavs.c
-fips_gcmtest.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
-fips_gcmtest.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-fips_gcmtest.o: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
-fips_gcmtest.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-fips_gcmtest.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-fips_gcmtest.o: ../../include/openssl/fips.h ../../include/openssl/fips_rand.h
-fips_gcmtest.o: ../../include/openssl/hmac.h ../../include/openssl/lhash.h
-fips_gcmtest.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-fips_gcmtest.o: ../../include/openssl/opensslconf.h
-fips_gcmtest.o: ../../include/openssl/opensslv.h
-fips_gcmtest.o: ../../include/openssl/ossl_typ.h
-fips_gcmtest.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-fips_gcmtest.o: ../../include/openssl/symhacks.h ../fips_utl.h fips_gcmtest.c

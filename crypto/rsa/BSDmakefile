@@ -1,0 +1,8 @@
+#
+# OpenSSL/crypto/rsa/BSDmakefile
+#
+
+.include "crypto/rsa/Makefile"
+.for d in $(SRC_crypto_rsa:.c=.d)
+.sinclude "$(d)"
+.endfor

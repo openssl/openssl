@@ -66,20 +66,28 @@ my %mf_import = (
 	CMLL_ENC       => \$mf_cm_asm,
 	MODES_ASM_OBJ  => \$mf_modes_asm,
         ENGINES_ASM_OBJ=> \$mf_engines_asm,
+	PERLASM_SCHEME => \$mf_perlasm_scheme,
 	FIPSCANISTERONLY  => \$mf_fipscanisteronly,
 	FIPSCANISTERINTERNAL  => \$mf_fipscanisterinternal
 );
 
-open(IN,"<Makefile") || die "unable to open Makefile!\n";
-while(<IN>) {
-    my ($mf_opt, $mf_ref);
-    while (($mf_opt, $mf_ref) = each %mf_import) {
-    	if (/^$mf_opt\s*=\s*(.*)$/ && !defined($$mfref)) {
-	   $$mf_ref = $1;
+sub import_top_level_vars
+	{
+	my ($infile) = @_;
+	open(IN,"<$infile") || die "unable to open $infile!\n";
+	while(<IN>) {
+	    my ($mf_opt, $mf_ref);
+	    while (($mf_opt, $mf_ref) = each %mf_import) {
+		if (/^$mf_opt\s*=\s*(.*)$/ && !defined($$mfref)) {
+		   $$mf_ref = $1;
+		}
+	    }
 	}
-    }
-}
-close(IN);
+	close(IN);
+	}
+
+import_top_level_vars("Makefile");
+import_top_level_vars("configure.mk");
 
 $debug = 1 if $mf_platform =~ /^debug-/;
 
@@ -401,13 +409,14 @@ for (;;)
 	if ($key eq "LIBKRB5")
 		{ $ex_libs .= " $val" if $val ne "";}
 
-	if ($key eq "TEST" && (!$fipscanisteronly || $dir =~ /^fips/ ))
+	if (($key eq "TEST" || $key =~ /TEST_/) &&
+		(!$fipscanisteronly || $dir =~ /^fips/ ))
 		{ $test.=&var_add($dir,$val, 0); }
 
-	if (($key eq "PROGS") || ($key eq "E_OBJ"))
+	if (($key eq "PROGS" || $key =~ /^PROGS_/) || ($key eq "E_OBJ"))
 		{ $e_exe.=&var_add($dir,$val, 0); }
 
-	if ($key eq "LIB")
+	if ($key eq "LIB" || $key =~ /^LIB_/)
 		{
 		$lib=$val;
 		$lib =~ s/^.*\/([^\/]+)$/$1/;
@@ -419,13 +428,13 @@ for (;;)
 		$otherlibs .= " $lib";
 		}
 
-	if ($key eq "EXHEADER")
+	if ($key eq "EXHEADER" || $key =~ /^EXHEADER_/)
 		{ $exheader.=&var_add($dir,$val, 1); }
 
-	if ($key eq "HEADER")
+	if ($key eq "HEADER" || $key =~ /^HEADER_/)
 		{ $header.=&var_add($dir,$val, 1); }
 
-	if ($key eq "LIBOBJ")
+	if ($key eq "LIBOBJ" || $key =~ /^LIBOBJ_/)
 	    {
 	    if ($dir ne "engines" || !$no_static_engine)
 		{ $libobj=&var_add($dir,$val, 0); }
@@ -672,6 +681,7 @@ INC_D=$inc_dir
 INCO_D=$inc_dir${o}openssl
 
 PERL=$perl
+PERLASM_SCHEME=$mf_perlasm_scheme
 CP=$cp
 CP2=$cp2
 RM=$rm
@@ -891,6 +901,7 @@ if ($fips)
 sub fix_asm
 	{
 	my($asm, $dir) = @_;
+	return '' if not $asm;
 
 	$asm = " $asm";
 	$asm =~ s/\s+/ $dir\//g;
@@ -901,16 +912,34 @@ sub fix_asm
 	}
 
 if ($orig_platform eq 'copy') {
-	$lib_obj{CRYPTO} .= fix_asm($mf_md5_asm, 'crypto/md5');
-	$lib_obj{CRYPTO} .= fix_asm($mf_bn_asm, 'crypto/bn');
 	# cpuid is included by the crypto dir
 	#$lib_obj{CRYPTO} .= fix_asm($mf_cpuid_asm, 'crypto');
+	$lib_obj{CRYPTO} .= fix_asm($mf_bn_asm, 'crypto/bn');
+	$lib_obj{CRYPTO} .= fix_asm($mf_des_asm, 'crypto/des')
+		unless $no_des;
 	# AES asm files end up included by the aes dir itself
 	#$lib_obj{CRYPTO} .= fix_asm($mf_aes_asm, 'crypto/aes');
-	$lib_obj{CRYPTO} .= fix_asm($mf_sha_asm, 'crypto/sha');
-	$lib_obj{CRYPTO} .= fix_asm($mf_engines_asm, 'engines');
-	$lib_obj{CRYPTO} .= fix_asm($mf_rc4_asm, 'crypto/rc4');
+	$lib_obj{CRYPTO} .= fix_asm($mf_bf_asm, 'crypto/bf')
+		unless $no_bf;
+	$lib_obj{CRYPTO} .= fix_asm($mf_cast_asm, 'crypto/cast')
+		unless $no_cast;
+	$lib_obj{CRYPTO} .= fix_asm($mf_rc4_asm, 'crypto/rc4')
+		unless $no_rc4;
+	$lib_obj{CRYPTO} .= fix_asm($mf_rc5_asm, 'crypto/rc5')
+		unless $no_rc5;
+	$lib_obj{CRYPTO} .= fix_asm($mf_md5_asm, 'crypto/md5')
+		unless $no_md5;
+	$lib_obj{CRYPTO} .= fix_asm($mf_sha_asm, 'crypto/sha')
+		unless $no_sha1;
+	$lib_obj{CRYPTO} .= fix_asm($mf_rmd_asm, 'crypto/ripemd')
+		unless $no_ripemd;
+	$lib_obj{CRYPTO} .= fix_asm($mf_wp_asm, 'crypto/whrlpool')
+		unless $no_whirlpool;
+	$lib_obj{CRYPTO} .= fix_asm($mf_cm_asm, 'crypto/camellia')
+		unless $no_camellia;
 	$lib_obj{CRYPTO} .= fix_asm($mf_modes_asm, 'crypto/modes');
+	$lib_obj{CRYPTO} .= fix_asm($mf_engines_asm, 'engines')
+		unless $no_engine;
 }
 
 foreach (values %lib_nam)
@@ -1192,11 +1221,14 @@ sub do_defs
 		elsif ($_ =~ /CAST_ENC/){ $t="$_ "; }
 		elsif ($_ =~ /RC4_ENC/)	{ $t="$_ "; }
 		elsif ($_ =~ /RC5_ENC/)	{ $t="$_ "; }
-		elsif ($_ =~ /MD5_ASM/)	{ $t="$_ "; }
-		elsif ($_ =~ /SHA1_ASM/){ $t="$_ "; }
-		elsif ($_ =~ /RMD160_ASM/){ $t="$_ "; }
-		elsif ($_ =~ /WHIRLPOOL_ASM/){ $t="$_ "; }
-		elsif ($_ =~ /CPUID_ASM/){ $t="$_ "; }
+		elsif ($_ =~ /MD5_ASM_OBJ/)	{ $t="$_ "; }
+		elsif ($_ =~ /SHA1_ASM_OBJ/){ $t="$_ "; }
+		elsif ($_ =~ /RMD160_ASM_OBJ/){ $t="$_ "; }
+		elsif ($_ =~ /WP_ASM_OBJ/){ $t="$_ "; }
+		elsif ($_ =~ /CMLL_ENC/){ $t="$_ "; }
+		elsif ($_ =~ /CPUID_OBJ/){ $t="$_ "; }
+		elsif ($_ =~ /MODES_ASM_OBJ/){ $t="$_ "; }
+		elsif ($_ =~ /ENGINES_ASM_OBJ/){ $t="$_ "; }
 		else	{ $t="$location${o}$_$pf "; }
 
 		$Vars{$var}.="$t ";

@@ -1,0 +1,8 @@
+#
+# OpenSSL/crypto/cmac/BSDmakefile
+#
+
+.include "crypto/cmac/Makefile"
+.for d in $(SRC_crypto_cmac:.c=.d)
+.sinclude "$(d)"
+.endfor

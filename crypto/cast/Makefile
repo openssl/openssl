@@ -2,98 +2,70 @@
 # OpenSSL/crypto/cast/Makefile
 #
 
-DIR=	cast
-TOP=	../..
-CC=	cc
-CPP=	$(CC) -E
-INCLUDES=
-CFLAG=-g
-MAKEFILE=	Makefile
-AR=		ar r
+CPP_crypto_cast=	$(CC) -E
 
-CAST_ENC=c_enc.o
 
-CFLAGS= $(INCLUDES) $(CFLAG)
-ASFLAGS= $(INCLUDES) $(ASFLAG)
-AFLAGS= $(ASFLAGS)
+CFLAGS_crypto_cast= $(INCLUDES_crypto) $(CFLAG)
+ASFLAGS_crypto_cast= $(INCLUDES_crypto) $(ASFLAG)
+AFLAGS_crypto_cast= $(ASFLAGS_crypto_cast)
 
-GENERAL=Makefile
-TEST=casttest.c
-APPS=
+GENERAL_crypto_cast=crypto/cast/Makefile
+TEST_crypto_cast=crypto/cast/casttest.c
+APPS_crypto_cast=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=c_skey.c c_ecb.c c_enc.c c_cfb64.c c_ofb64.c 
-LIBOBJ=c_skey.o c_ecb.o $(CAST_ENC) c_cfb64.o c_ofb64.o
+LIB_crypto_cast=libcrypto.a
+LIBSRC_crypto_cast=crypto/cast/c_skey.c crypto/cast/c_ecb.c crypto/cast/c_enc.c crypto/cast/c_cfb64.c crypto/cast/c_ofb64.c 
+LIBOBJ_crypto_cast=crypto/cast/c_skey.o crypto/cast/c_ecb.o $(CAST_ENC) crypto/cast/c_cfb64.o crypto/cast/c_ofb64.o
 
-SRC= $(LIBSRC)
+SRC_crypto_cast= $(LIBSRC_crypto_cast)
 
-EXHEADER= cast.h
-HEADER=	cast_s.h cast_lcl.h $(EXHEADER)
+EXHEADER_crypto_cast= crypto/cast/cast.h
+HEADER_crypto_cast=	crypto/cast/cast_s.h crypto/cast/cast_lcl.h $(EXHEADER_crypto_cast)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_cast=    $(GENERAL_crypto_cast) $(SRC_crypto_cast) $(HEADER_crypto_cast)
 
-top:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_crypto_cast
+all_crypto_cast:	$(LIBOBJ_crypto_cast)
 
-lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
-	@touch lib
 
-cast-586.s:	asm/cast-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
-	$(PERL)	asm/cast-586.pl $(PERLASM_SCHEME) $(CLAGS) $(PROCESSOR) > $@
+crypto/cast/cast-586.s:	crypto/cast/asm/cast-586.pl crypto/perlasm/x86asm.pl crypto/perlasm/cbc.pl
+	$(PERL)	crypto/cast/asm/cast-586.pl $(PERLASM_SCHEME) $(CLAGS) $(PROCESSOR) > $@
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_crypto_cast
+files_crypto_cast:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+links: links_crypto_cast
+links_crypto_cast:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_cast)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_cast)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_cast)
 
-install:
+install: install_crypto_cast
+install_crypto_cast:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_cast)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
-	ctags $(SRC)
+tags: tags_crypto_cast
+tags_crypto_cast:
+	ctags $(SRC_crypto_cast)
 
-tests:
+tests: tests_crypto_cast
+tests_crypto_cast:
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_crypto_cast
+lint_crypto_cast:
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_cast)>crypto/cast/fluff
 
-depend:
-	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+dclean: dclean_crypto_cast
+dclean_crypto_cast:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+clean: clean_crypto_cast
+clean_crypto_cast:
+	rm -f crypto/cast/*.s crypto/cast/*.o crypto/cast/*.d crypto/cast/*.obj crypto/cast/lib crypto/cast/tags crypto/cast/core crypto/cast/.pure crypto/cast/.nfs* crypto/cast/*.old crypto/cast/*.bak crypto/cast/fluff
 
-clean:
-	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-c_cfb64.o: ../../e_os.h ../../include/openssl/cast.h
-c_cfb64.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
-c_cfb64.o: c_cfb64.c cast_lcl.h
-c_ecb.o: ../../e_os.h ../../include/openssl/cast.h
-c_ecb.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
-c_ecb.o: ../../include/openssl/opensslv.h c_ecb.c cast_lcl.h
-c_enc.o: ../../e_os.h ../../include/openssl/cast.h
-c_enc.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
-c_enc.o: c_enc.c cast_lcl.h
-c_ofb64.o: ../../e_os.h ../../include/openssl/cast.h
-c_ofb64.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
-c_ofb64.o: c_ofb64.c cast_lcl.h
-c_skey.o: ../../e_os.h ../../include/openssl/cast.h
-c_skey.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
-c_skey.o: c_skey.c cast_lcl.h cast_s.h

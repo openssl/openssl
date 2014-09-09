@@ -2,96 +2,63 @@
 # OpenSSL/crypto/buffer/Makefile
 #
 
-DIR=	buffer
-TOP=	../..
-CC=	cc
-INCLUDES= -I.. -I$(TOP) -I../../include
-CFLAG=-g
-MAKEFILE=	Makefile
-AR=		ar r
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_crypto_buffer= $(INCLUDES_crypto) $(CFLAG)
 
-GENERAL=Makefile
-TEST=
-APPS=
+GENERAL_crypto_buffer=crypto/buffer/Makefile
+TEST_crypto_buffer=
+APPS_crypto_buffer=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC= buffer.c buf_str.c buf_err.c
-LIBOBJ= buffer.o buf_str.o buf_err.o
+LIB_crypto_buffer=libcrypto.a
+LIBSRC_crypto_buffer= crypto/buffer/buffer.c crypto/buffer/buf_str.c crypto/buffer/buf_err.c
+LIBOBJ_crypto_buffer= crypto/buffer/buffer.o crypto/buffer/buf_str.o crypto/buffer/buf_err.o
 
-SRC= $(LIBSRC)
+SRC_crypto_buffer= $(LIBSRC_crypto_buffer)
 
-EXHEADER= buffer.h
-HEADER=	$(EXHEADER)
+EXHEADER_crypto_buffer= crypto/buffer/buffer.h
+HEADER_crypto_buffer=	$(EXHEADER_crypto_buffer)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_buffer=    $(GENERAL_crypto_buffer) $(SRC_crypto_buffer) $(HEADER_crypto_buffer)
 
-top:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_crypto_buffer
+all_crypto_buffer:	$(LIBOBJ_crypto_buffer)
 
-lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
-	@touch lib
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_crypto_buffer
+files_crypto_buffer:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+links: links_crypto_buffer
+links_crypto_buffer:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_buffer)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_buffer)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_buffer)
 
-install:
+install: install_crypto_buffer
+install_crypto_buffer:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_buffer)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
-	ctags $(SRC)
+tags: tags_crypto_buffer
+tags_crypto_buffer:
+	ctags $(SRC_crypto_buffer)
 
-tests:
+tests: tests_crypto_buffer
+tests_crypto_buffer:
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_crypto_buffer
+lint_crypto_buffer:
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_buffer)>crypto/buffer/fluff
 
-depend:
-	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+dclean: dclean_crypto_buffer
+dclean_crypto_buffer:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+clean: clean_crypto_buffer
+clean_crypto_buffer:
+	rm -f crypto/buffer/*.o crypto/buffer/*.d crypto/buffer/*.obj crypto/buffer/lib crypto/buffer/tags crypto/buffer/core crypto/buffer/.pure crypto/buffer/.nfs* crypto/buffer/*.old crypto/buffer/*.bak crypto/buffer/fluff
 
-clean:
-	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-buf_err.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-buf_err.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-buf_err.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
-buf_err.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-buf_err.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-buf_err.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-buf_err.o: buf_err.c
-buf_str.o: ../../e_os.h ../../include/openssl/bio.h
-buf_str.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-buf_str.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-buf_str.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-buf_str.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-buf_str.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-buf_str.o: ../../include/openssl/symhacks.h ../cryptlib.h buf_str.c
-buffer.o: ../../e_os.h ../../include/openssl/bio.h
-buffer.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-buffer.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-buffer.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-buffer.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-buffer.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-buffer.o: ../../include/openssl/symhacks.h ../cryptlib.h buffer.c

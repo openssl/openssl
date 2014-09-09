@@ -2,114 +2,75 @@
 # OpenSSL/fips/cmac/Makefile
 #
 
-DIR=	cmac
-TOP=	../..
-CC=	cc
-INCLUDES=
-CFLAG=-g
-INSTALL_PREFIX=
-OPENSSLDIR=     /usr/local/ssl
-INSTALLTOP=/usr/local/ssl
-MAKEDEPPROG=	makedepend
-MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
-MAKEFILE=	Makefile
-AR=		ar r
+INCLUDES_fips_cmac=
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_fips_cmac= $(INCLUDES_fips_cmac) $(CFLAG)
 
-GENERAL=Makefile
-TEST=fips_cmactest.c
-APPS=
+GENERAL_fips_cmac=fips/cmac/Makefile
+TEST_fips_cmac=fips/cmac/fips_cmactest.c
+APPS_fips_cmac=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC= fips_cmac_selftest.c
-LIBOBJ= fips_cmac_selftest.o
+LIB_fips_cmac=libcrypto.a
+LIBSRC_fips_cmac= fips/cmac/fips_cmac_selftest.c
+LIBOBJ_fips_cmac= fips/cmac/fips_cmac_selftest.o
 
-SRC= $(LIBSRC)
+SRC_fips_cmac= $(LIBSRC_fips_cmac)
 
-EXHEADER=
-HEADER=	$(EXHEADER)
+EXHEADER_fips_cmac=
+HEADER_fips_cmac=	$(EXHEADER_fips_cmac)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_fips_cmac=    $(GENERAL_fips_cmac) $(SRC_fips_cmac) $(HEADER_fips_cmac)
 
-top:
-	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_fips_cmac
+all_fips_cmac:	fips/cmac/lib
 
-lib:	$(LIBOBJ)
-	@echo $(LIBOBJ) > lib
+fips/cmac/lib:	$(LIBOBJ_fips_cmac)
+	@echo $(LIBOBJ_fips_cmac) > fips/cmac/lib
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_fips_cmac
+files_fips_cmac:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/apps $(APPS)
+links: links_fips_cmac
+links_fips_cmac:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_fips_cmac)
+	@$(PERL) util/mklink.pl test $(TEST_fips_cmac)
+	@$(PERL) util/mklink.pl apps $(APPS_fips_cmac)
 
-install:
-	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
+install: install_fips_cmac
+install_fips_cmac:
+	@headerlist="$(EXHEADER_fips_cmac)"; for i in $$headerlist; \
 	do \
 	  (cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	  chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done
 
-tags:
-	ctags $(SRC)
+tags: tags_fips_cmac
+tags_fips_cmac:
+	ctags $(SRC_fips_cmac)
 
-tests:
+tests: tests_fips_cmac
+tests_fips_cmac:
 
-Q=../testvectors/cmac/req
-A=../testvectors/cmac/rsp
+Q_fips_cmac=../testvectors/cmac/req
+A_fips_cmac=../testvectors/cmac/rsp
 
-fips_test:
-	-rm -rf $(A)
-	mkdir $(A)
-	if [ -f $(Q)/CMACGenAES256.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_cmactest -g < $(Q)/CMACGenAES256.req > $(A)/CMACGenAES256.rsp; fi
-	if [ -f $(Q)/CMACVerAES256.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_cmactest -v < $(Q)/CMACVerAES256.req > $(A)/CMACVerAES256.rsp; fi
+fips_test: fips_test_fips_cmac
+fips_test_fips_cmac:
+	-rm -rf $(A_fips_cmac)
+	mkdir $(A_fips_cmac)
+	if [ -f $(Q_fips_cmac)/CMACGenAES256.req ]; then util/shlib_wrap.sh test/fips_cmactest -g < $(Q_fips_cmac)/CMACGenAES256.req > $(A_fips_cmac)/CMACGenAES256.rsp; fi
+	if [ -f $(Q_fips_cmac)/CMACVerAES256.req ]; then util/shlib_wrap.sh test/fips_cmactest -v < $(Q_fips_cmac)/CMACVerAES256.req > $(A_fips_cmac)/CMACVerAES256.rsp; fi
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_fips_cmac
+lint_fips_cmac:
+	lint -DLINT $(INCLUDES_fips_cmac) $(SRC_fips_cmac)>fips/cmac/fluff
 
-depend:
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(SRC) $(TEST)
+dclean: dclean_fips_cmac
+dclean_fips_cmac:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+clean: clean_fips_cmac
+clean_fips_cmac:
+	rm -f fips/cmac/*.o fips/cmac/*.d fips/cmac/*.obj fips/cmac/lib fips/cmac/tags fips/cmac/core fips/cmac/.pure fips/cmac/.nfs* fips/cmac/*.old fips/cmac/*.bak fips/cmac/fluff
 
-clean:
-	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-fips_cmac_selftest.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_cmac_selftest.o: ../../include/openssl/cmac.h
-fips_cmac_selftest.o: ../../include/openssl/crypto.h
-fips_cmac_selftest.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-fips_cmac_selftest.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
-fips_cmac_selftest.o: ../../include/openssl/lhash.h
-fips_cmac_selftest.o: ../../include/openssl/obj_mac.h
-fips_cmac_selftest.o: ../../include/openssl/objects.h
-fips_cmac_selftest.o: ../../include/openssl/opensslconf.h
-fips_cmac_selftest.o: ../../include/openssl/opensslv.h
-fips_cmac_selftest.o: ../../include/openssl/ossl_typ.h
-fips_cmac_selftest.o: ../../include/openssl/safestack.h
-fips_cmac_selftest.o: ../../include/openssl/stack.h
-fips_cmac_selftest.o: ../../include/openssl/symhacks.h ../fips_locl.h
-fips_cmac_selftest.o: fips_cmac_selftest.c
-fips_cmactest.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
-fips_cmactest.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-fips_cmactest.o: ../../include/openssl/cmac.h ../../include/openssl/crypto.h
-fips_cmactest.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-fips_cmactest.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-fips_cmactest.o: ../../include/openssl/fips.h ../../include/openssl/fips_rand.h
-fips_cmactest.o: ../../include/openssl/hmac.h ../../include/openssl/lhash.h
-fips_cmactest.o: ../../include/openssl/obj_mac.h
-fips_cmactest.o: ../../include/openssl/objects.h
-fips_cmactest.o: ../../include/openssl/opensslconf.h
-fips_cmactest.o: ../../include/openssl/opensslv.h
-fips_cmactest.o: ../../include/openssl/ossl_typ.h
-fips_cmactest.o: ../../include/openssl/safestack.h
-fips_cmactest.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-fips_cmactest.o: ../fips_utl.h fips_cmactest.c

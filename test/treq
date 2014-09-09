@@ -1,11 +1,11 @@
 #!/bin/sh
 
-cmd='../util/shlib_wrap.sh ../apps/openssl req -config ../apps/openssl.cnf'
+cmd='util/shlib_wrap.sh apps/openssl req -config apps/openssl.cnf'
 
 if [ "$1"x != "x" ]; then
 	t=$1
 else
-	t=testreq.pem
+	t=test/testreq.pem
 fi
 
 if $cmd -in $t -inform p -noout -text 2>&1 | fgrep -i 'Unknown Public Key'; then

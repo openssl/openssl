@@ -2,93 +2,70 @@
 # OpenSSL/crypto/rc5/Makefile
 #
 
-DIR=	rc5
-TOP=	../..
-CC=	cc
-CPP=	$(CC) -E
-INCLUDES=
-CFLAG=-g
-MAKEFILE=	Makefile
-AR=		ar r
+CPP_crypto_rc5=	$(CC) -E
 
-RC5_ENC=		rc5_enc.o
 
-CFLAGS= $(INCLUDES) $(CFLAG)
-ASFLAGS= $(INCLUDES) $(ASFLAG)
-AFLAGS= $(ASFLAGS)
+CFLAGS_crypto_rc5= $(INCLUDES_crypto) $(CFLAG)
+ASFLAGS_crypto_rc5= $(INCLUDES_crypto) $(ASFLAG)
+AFLAGS_crypto_rc5= $(ASFLAGS_crypto_rc5)
 
-GENERAL=Makefile
-TEST=rc5test.c
-APPS=
+GENERAL_crypto_rc5=crypto/rc5/Makefile
+TEST_crypto_rc5=crypto/rc5/rc5test.c
+APPS_crypto_rc5=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=rc5_skey.c rc5_ecb.c rc5_enc.c rc5cfb64.c rc5ofb64.c 
-LIBOBJ=rc5_skey.o rc5_ecb.o $(RC5_ENC) rc5cfb64.o rc5ofb64.o
+LIB_crypto_rc5=libcrypto.a
+LIBSRC_crypto_rc5=crypto/rc5/rc5_skey.c crypto/rc5/rc5_ecb.c crypto/rc5/rc5_enc.c crypto/rc5/rc5cfb64.c crypto/rc5/rc5ofb64.c 
+LIBOBJ_crypto_rc5=crypto/rc5/rc5_skey.o crypto/rc5/rc5_ecb.o $(RC5_ENC) crypto/rc5/rc5cfb64.o crypto/rc5/rc5ofb64.o
 
-SRC= $(LIBSRC)
+SRC_crypto_rc5= $(LIBSRC_crypto_rc5)
 
-EXHEADER= rc5.h
-HEADER=	rc5_locl.h $(EXHEADER)
+EXHEADER_crypto_rc5= crypto/rc5/rc5.h
+HEADER_crypto_rc5=	crypto/rc5/rc5_locl.h $(EXHEADER_crypto_rc5)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_rc5=    $(GENERAL_crypto_rc5) $(SRC_crypto_rc5) $(HEADER_crypto_rc5)
 
-top:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_crypto_rc5
+all_crypto_rc5:	$(LIBOBJ_crypto_rc5)
 
-lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
-	@touch lib
 
-rc5-586.s: asm/rc5-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
-	$(PERL) asm/rc5-586.pl $(PERLASM_SCHEME) $(CFLAGS) > $@
+crypto/rc5/rc5-586.s: crypto/rc5/asm/rc5-586.pl crypto/perlasm/x86asm.pl crypto/perlasm/cbc.pl
+	$(PERL) crypto/rc5/asm/rc5-586.pl $(PERLASM_SCHEME) $(CFLAGS_crypto_rc5) > $@
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_crypto_rc5
+files_crypto_rc5:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+links: links_crypto_rc5
+links_crypto_rc5:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_rc5)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_rc5)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_rc5)
 
-install:
+install: install_crypto_rc5
+install_crypto_rc5:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_rc5)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
-	ctags $(SRC)
+tags: tags_crypto_rc5
+tags_crypto_rc5:
+	ctags $(SRC_crypto_rc5)
 
-tests:
+tests: tests_crypto_rc5
+tests_crypto_rc5:
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_crypto_rc5
+lint_crypto_rc5:
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_rc5)>crypto/rc5/fluff
 
-depend:
-	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+dclean: dclean_crypto_rc5
+dclean_crypto_rc5:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+clean: clean_crypto_rc5
+clean_crypto_rc5:
+	rm -f crypto/rc5/*.s crypto/rc5/*.o crypto/rc5/*.d crypto/rc5/*.obj crypto/rc5/lib crypto/rc5/tags crypto/rc5/core crypto/rc5/.pure crypto/rc5/.nfs* crypto/rc5/*.old crypto/rc5/*.bak crypto/rc5/fluff
 
-clean:
-	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-rc5_ecb.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-rc5_ecb.o: ../../include/openssl/rc5.h rc5_ecb.c rc5_locl.h
-rc5_enc.o: ../../include/openssl/opensslconf.h ../../include/openssl/rc5.h
-rc5_enc.o: rc5_enc.c rc5_locl.h
-rc5_skey.o: ../../include/openssl/opensslconf.h ../../include/openssl/rc5.h
-rc5_skey.o: rc5_locl.h rc5_skey.c
-rc5cfb64.o: ../../include/openssl/opensslconf.h ../../include/openssl/rc5.h
-rc5cfb64.o: rc5_locl.h rc5cfb64.c
-rc5ofb64.o: ../../include/openssl/opensslconf.h ../../include/openssl/rc5.h
-rc5ofb64.o: rc5_locl.h rc5ofb64.c

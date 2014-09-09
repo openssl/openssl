@@ -1,0 +1,8 @@
+#
+# OpenSSL/crypto/camellia/BSDmakefile
+#
+
+.include "crypto/camellia/Makefile"
+.for d in $(SRC_crypto_camellia:.c=.d)
+.sinclude "$(d)"
+.endfor

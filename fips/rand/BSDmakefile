@@ -1,0 +1,8 @@
+#
+# OpenSSL/fips/rand/BSDmakefile
+#
+
+.include "fips/rand/Makefile"
+.for d in $(SRC_fips_rand:.c=.d)
+.sinclude "$(d)"
+.endfor

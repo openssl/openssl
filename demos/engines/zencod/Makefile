@@ -1,18 +1,16 @@
-LIBNAME=	libzencod
-SRC=		hw_zencod.c
-OBJ=		hw_zencod.o
-HEADER=		hw_zencod.h
+LIBNAME_demos_engines_zencod=	libzencod
+SRC_demos_engines_zencod=		demos/engines/zencod/hw_zencod.c
+OBJ_demos_engines_zencod=		demos/engines/zencod/hw_zencod.o
+HEADER_demos_engines_zencod=		demos/engines/zencod/hw_zencod.h
 
-CC=		gcc
-PIC=		-fPIC
-CFLAGS=		-g -I../../../include $(PIC) -DENGINE_DYNAMIC_SUPPORT -DFLAT_INC
-AR=		ar r
-RANLIB=		ranlib
+PIC_demos_engines_zencod=		-fPIC
+CFLAGS_demos_engines_zencod=		-g -I../../../include $(PIC_demos_engines_zencod) -DENGINE_DYNAMIC_SUPPORT -DFLAT_INC
 
-LIB=		$(LIBNAME).a
-SHLIB=		$(LIBNAME).so
+LIB_demos_engines_zencod=		$(LIBNAME_demos_engines_zencod).a
+SHLIB_demos_engines_zencod=		$(LIBNAME_demos_engines_zencod).so
 
-all:
+all: all_demos_engines_zencod
+all_demos_engines_zencod:
 		@echo 'Please choose a system to build on:'
 		@echo ''
 		@echo 'tru64:    Tru64 Unix, Digital Unix, Digital OSF/1'
@@ -24,91 +22,77 @@ all:
 		@echo 'gnu:      Generic GNU-based system (gcc and GNU ld)'
 		@echo ''
 
-FORCE.update:
-update:		FORCE.update
-		perl ../../../util/mkerr.pl -conf hw_zencod.ec \
-			-nostatic -staticloader -write hw_zencod.c
+FORCE.update: FORCE.update_demos_engines_zencod
+FORCE.update_demos_engines_zencod:
+update: update_demos_engines_zencod
+update_demos_engines_zencod:		FORCE.update_demos_engines_zencod
+		perl util/mkerr.pl -conf hw_zencod.ec \
+			-nostatic -staticloader -write demos/engines/zencod/hw_zencod.c
 
-gnu:		$(SHLIB).gnu
-tru64:		$(SHLIB).tru64
-solaris:	$(SHLIB).solaris
-irix:		$(SHLIB).irix
-hpux32:		$(SHLIB).hpux32
-hpux64:		$(SHLIB).hpux64
-aix:		$(SHLIB).aix
+gnu: gnu_demos_engines_zencod
+gnu_demos_engines_zencod:		$(SHLIB_demos_engines_zencod).gnu
+tru64: tru64_demos_engines_zencod
+tru64_demos_engines_zencod:		$(SHLIB_demos_engines_zencod).tru64
+solaris: solaris_demos_engines_zencod
+solaris_demos_engines_zencod:	$(SHLIB_demos_engines_zencod).solaris
+irix: irix_demos_engines_zencod
+irix_demos_engines_zencod:		$(SHLIB_demos_engines_zencod).irix
+hpux32: hpux32_demos_engines_zencod
+hpux32_demos_engines_zencod:		$(SHLIB_demos_engines_zencod).hpux32
+hpux64: hpux64_demos_engines_zencod
+hpux64_demos_engines_zencod:		$(SHLIB_demos_engines_zencod).hpux64
+aix: aix_demos_engines_zencod
+aix_demos_engines_zencod:		$(SHLIB_demos_engines_zencod).aix
 
-$(LIB):		$(OBJ)
-		$(AR) $(LIB) $(OBJ)
-		- $(RANLIB) $(LIB)
+$(LIB_demos_engines_zencod):		$(OBJ_demos_engines_zencod)
+		$(AR) $(LIB_demos_engines_zencod) $(OBJ_demos_engines_zencod)
+		- $(RANLIB) $(LIB_demos_engines_zencod)
 
-LINK_SO=	\
-  ld -r -o $(LIBNAME).o $$ALLSYMSFLAGS $(LIB) && \
-  (nm -Pg $(LIBNAME).o | grep ' [BDT] ' | cut -f1 -d' ' > $(LIBNAME).exp; \
-   $$SHAREDCMD $$SHAREDFLAGS -o $(SHLIB) $(LIBNAME).o -L ../../.. -lcrypto -lc)
+LINK_SO_demos_engines_zencod=	\
+  ld -r -o $(LIBNAME_demos_engines_zencod).o $$ALLSYMSFLAGS $(LIB_demos_engines_zencod) && \
+  (nm -Pg $(LIBNAME_demos_engines_zencod).o | grep ' [BDT] ' | cut -f1 -d' ' > $(LIBNAME_demos_engines_zencod).exp; \
+   $$SHAREDCMD $$SHAREDFLAGS -o $(SHLIB_demos_engines_zencod) $(LIBNAME_demos_engines_zencod).o -L ../../.. -lcrypto -lc)
 
-$(SHLIB).gnu:	$(LIB)
+$(SHLIB_demos_engines_zencod).gnu:	$(LIB_demos_engines_zencod)
 		ALLSYMSFLAGS='--whole-archive' \
-		SHAREDFLAGS='-shared -Wl,-soname=$(SHLIB)' \
+		SHAREDFLAGS='-shared -Wl,-soname=$(SHLIB_demos_engines_zencod)' \
 		SHAREDCMD='$(CC)'; \
-		$(LINK_SO)
-		touch $(SHLIB).gnu
-$(SHLIB).tru64:	$(LIB)
+		$(LINK_SO_demos_engines_zencod)
+		touch $(SHLIB_demos_engines_zencod).gnu
+$(SHLIB_demos_engines_zencod).tru64:	$(LIB_demos_engines_zencod)
 		ALLSYMSFLAGS='-all' \
 		SHAREDFLAGS='-shared' \
 		SHAREDCMD='$(CC)'; \
-		$(LINK_SO)
-		touch $(SHLIB).tru64
-$(SHLIB).solaris:	$(LIB)
+		$(LINK_SO_demos_engines_zencod)
+		touch $(SHLIB_demos_engines_zencod).tru64
+$(SHLIB_demos_engines_zencod).solaris:	$(LIB_demos_engines_zencod)
 		ALLSYMSFLAGS='-z allextract' \
-		SHAREDFLAGS='-G -h $(SHLIB)' \
+		SHAREDFLAGS='-G -h $(SHLIB_demos_engines_zencod)' \
 		SHAREDCMD='$(CC)'; \
-		$(LINK_SO)
-		touch $(SHLIB).solaris
-$(SHLIB).irix:	$(LIB)
+		$(LINK_SO_demos_engines_zencod)
+		touch $(SHLIB_demos_engines_zencod).solaris
+$(SHLIB_demos_engines_zencod).irix:	$(LIB_demos_engines_zencod)
 		ALLSYMSFLAGS='-all' \
-		SHAREDFLAGS='-shared -Wl,-soname,$(SHLIB)' \
+		SHAREDFLAGS='-shared -Wl,-soname,$(SHLIB_demos_engines_zencod)' \
 		SHAREDCMD='$(CC)'; \
-		$(LINK_SO)
-		touch $(SHLIB).irix
-$(SHLIB).hpux32:	$(LIB)
+		$(LINK_SO_demos_engines_zencod)
+		touch $(SHLIB_demos_engines_zencod).irix
+$(SHLIB_demos_engines_zencod).hpux32:	$(LIB_demos_engines_zencod)
 		ALLSYMSFLAGS='-Fl' \
-		SHAREDFLAGS='+vnocompatwarnings -b -z +s +h $(SHLIB)' \
+		SHAREDFLAGS='+vnocompatwarnings -b -z +s +h $(SHLIB_demos_engines_zencod)' \
 		SHAREDCMD='/usr/ccs/bin/ld'; \
-		$(LINK_SO)
-		touch $(SHLIB).hpux32
-$(SHLIB).hpux64:	$(LIB)
+		$(LINK_SO_demos_engines_zencod)
+		touch $(SHLIB_demos_engines_zencod).hpux32
+$(SHLIB_demos_engines_zencod).hpux64:	$(LIB_demos_engines_zencod)
 		ALLSYMSFLAGS='+forceload' \
-		SHAREDFLAGS='-b -z +h $(SHLIB)' \
+		SHAREDFLAGS='-b -z +h $(SHLIB_demos_engines_zencod)' \
 		SHAREDCMD='/usr/ccs/bin/ld'; \
-		$(LINK_SO)
-		touch $(SHLIB).hpux64
-$(SHLIB).aix:	$(LIB)
+		$(LINK_SO_demos_engines_zencod)
+		touch $(SHLIB_demos_engines_zencod).hpux64
+$(SHLIB_demos_engines_zencod).aix:	$(LIB_demos_engines_zencod)
 		ALLSYMSFLAGS='-bnogc' \
-		SHAREDFLAGS='-G -bE:$(LIBNAME).exp -bM:SRE' \
+		SHAREDFLAGS='-G -bE:$(LIBNAME_demos_engines_zencod).exp -bM:SRE' \
 		SHAREDCMD='$(CC)'; \
-		$(LINK_SO)
-		touch $(SHLIB).aix
+		$(LINK_SO_demos_engines_zencod)
+		touch $(SHLIB_demos_engines_zencod).aix
 
-depend:
-		sed -e '/^# DO NOT DELETE.*/,$$d' < Makefile > Makefile.tmp
-		echo '# DO NOT DELETE THIS LINE -- make depend depends on it.' >> Makefile.tmp
-		gcc -M $(CFLAGS) $(SRC) >> Makefile.tmp
-		perl ../../../util/clean-depend.pl < Makefile.tmp > Makefile.new
-		rm -f Makefile.tmp Makefile
-		mv Makefile.new Makefile
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-rsaref.o: ../../../include/openssl/asn1.h ../../../include/openssl/bio.h
-rsaref.o: ../../../include/openssl/bn.h ../../../include/openssl/crypto.h
-rsaref.o: ../../../include/openssl/dh.h ../../../include/openssl/dsa.h
-rsaref.o: ../../../include/openssl/e_os2.h ../../../include/openssl/engine.h
-rsaref.o: ../../../include/openssl/err.h ../../../include/openssl/lhash.h
-rsaref.o: ../../../include/openssl/opensslconf.h
-rsaref.o: ../../../include/openssl/opensslv.h
-rsaref.o: ../../../include/openssl/ossl_typ.h ../../../include/openssl/rand.h
-rsaref.o: ../../../include/openssl/rsa.h ../../../include/openssl/safestack.h
-rsaref.o: ../../../include/openssl/stack.h ../../../include/openssl/symhacks.h
-rsaref.o: ../../../include/openssl/ui.h rsaref.c rsaref_err.c rsaref_err.h
-rsaref.o: source/des.h source/global.h source/md2.h source/md5.h source/rsa.h
-rsaref.o: source/rsaref.h

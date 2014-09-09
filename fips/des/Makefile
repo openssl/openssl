@@ -2,112 +2,75 @@
 # OpenSSL/fips/des/Makefile
 #
 
-DIR=	des
-TOP=	../..
-CC=	cc
-INCLUDES=
-CFLAG=-g
-INSTALL_PREFIX=
-OPENSSLDIR=     /usr/local/ssl
-INSTALLTOP=/usr/local/ssl
-MAKEDEPPROG=	makedepend
-MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
-MAKEFILE=	Makefile
-AR=		ar r
+INCLUDES_fips_des=
 
-ASFLAGS= $(INCLUDES) $(ASFLAG)
-AFLAGS= $(ASFLAGS)
+ASFLAGS_fips_des= $(INCLUDES_fips_des) $(ASFLAG)
+AFLAGS_fips_des= $(ASFLAGS_fips_des)
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_fips_des= $(INCLUDES_fips_des) $(CFLAG)
 
-GENERAL=Makefile
-TEST= fips_desmovs.c
-APPS=
+GENERAL_fips_des=fips/des/Makefile
+TEST_fips_des= fips/des/fips_desmovs.c
+APPS_fips_des=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=fips_des_selftest.c
-LIBOBJ=fips_des_selftest.o
+LIB_fips_des=libcrypto.a
+LIBSRC_fips_des=fips/des/fips_des_selftest.c
+LIBOBJ_fips_des=fips/des/fips_des_selftest.o
 
-SRC= $(LIBSRC)
+SRC_fips_des= $(LIBSRC_fips_des)
 
-EXHEADER=
-HEADER=
+EXHEADER_fips_des=
+HEADER_fips_des=
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_fips_des=    $(GENERAL_fips_des) $(SRC_fips_des) $(HEADER_fips_des)
 
-top:
-	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_fips_des
+all_fips_des:	fips/des/lib
 
-lib:	$(LIBOBJ)
-	@echo $(LIBOBJ) > lib
+fips/des/lib:	$(LIBOBJ_fips_des)
+	@echo $(LIBOBJ_fips_des) > fips/des/lib
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_fips_des
+files_fips_des:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/apps $(APPS)
+links: links_fips_des
+links_fips_des:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_fips_des)
+	@$(PERL) util/mklink.pl test $(TEST_fips_des)
+	@$(PERL) util/mklink.pl apps $(APPS_fips_des)
 
-install:
-	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
+install: install_fips_des
+install_fips_des:
+	@headerlist="$(EXHEADER_fips_des)"; for i in $$headerlist; \
 	do  \
 	  (cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	  chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done
 
-tags:
-	ctags $(SRC)
+tags: tags_fips_des
+tags_fips_des:
+	ctags $(SRC_fips_des)
 
-tests:
+tests: tests_fips_des
+tests_fips_des:
 
-fips_test:
+fips_test: fips_test_fips_des
+fips_test_fips_des:
 	-find ../testvectors/tdes/req -name '*.req' > testlist
 	-rm -rf ../testvectors/tdes/rsp
 	mkdir ../testvectors/tdes/rsp
-	if [ -s testlist ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_desmovs -d testlist; fi
+	if [ -s testlist ]; then util/shlib_wrap.sh test/fips_desmovs -d testlist; fi
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_fips_des
+lint_fips_des:
+	lint -DLINT $(INCLUDES_fips_des) $(SRC_fips_des)>fips/des/fluff
 
-depend:
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) \
-		$(SRC) $(TEST)
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+dclean: dclean_fips_des
+dclean_fips_des:
 
-clean:
-	rm -f *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff testlist
-# DO NOT DELETE THIS LINE -- make depend depends on it.
+clean: clean_fips_des
+clean_fips_des:
+	rm -f fips/des/*.o fips/des/*.d asm/*.o fips/des/*.obj fips/des/lib fips/des/tags fips/des/core fips/des/.pure fips/des/.nfs* fips/des/*.old fips/des/*.bak fips/des/fluff fips/des/testlist
 
-fips_des_selftest.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_des_selftest.o: ../../include/openssl/crypto.h
-fips_des_selftest.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-fips_des_selftest.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
-fips_des_selftest.o: ../../include/openssl/lhash.h
-fips_des_selftest.o: ../../include/openssl/obj_mac.h
-fips_des_selftest.o: ../../include/openssl/objects.h
-fips_des_selftest.o: ../../include/openssl/opensslconf.h
-fips_des_selftest.o: ../../include/openssl/opensslv.h
-fips_des_selftest.o: ../../include/openssl/ossl_typ.h
-fips_des_selftest.o: ../../include/openssl/safestack.h
-fips_des_selftest.o: ../../include/openssl/stack.h
-fips_des_selftest.o: ../../include/openssl/symhacks.h fips_des_selftest.c
-fips_desmovs.o: ../../e_os.h ../../include/openssl/aes.h
-fips_desmovs.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_desmovs.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
-fips_desmovs.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
-fips_desmovs.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-fips_desmovs.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-fips_desmovs.o: ../../include/openssl/fips.h ../../include/openssl/fips_rand.h
-fips_desmovs.o: ../../include/openssl/hmac.h ../../include/openssl/lhash.h
-fips_desmovs.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-fips_desmovs.o: ../../include/openssl/opensslconf.h
-fips_desmovs.o: ../../include/openssl/opensslv.h
-fips_desmovs.o: ../../include/openssl/ossl_typ.h
-fips_desmovs.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-fips_desmovs.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-fips_desmovs.o: ../../include/openssl/ui_compat.h ../fips_utl.h fips_desmovs.c

@@ -1,0 +1,29 @@
+#
+# OpenSSL/engines/BSDmakefile
+#
+
+.include "engines/Makefile"
+.for d in $(SRC_engines:.c=.d)
+.sinclude "$(d)"
+.endfor
+
+# There is a reason for this ENGINES_SUBDIRS_TARGET and ENGINES_LIBS_TARGET
+# madness. See the BUGS section of the BSD make man page.
+ENGINES_TARGETS= subdirs files links install lint clean dclean
+ENGINES_SUBDIRS_TARGET= subdirs
+.for target in $(ENGINES_TARGETS)
+
+.if $(ENGINES_SUBDIRS_TARGET) == $(target)
+ENGINES_$(target)= all
+.else
+ENGINES_$(target)= $(target)
+.endif
+
+.for dir in $(ENGDIRS)
+$(target)_engines_$(dir):
+	@cd $(dir) && echo "making $(ENGINES_$(target)) in engines/$(dir)..." && \
+	$(MAKE) -e TOP=../.. DIR=$(dir) $(ENGINES_$(target))
+
+$(target): $(target)_engines_$(dir)
+.endfor
+.endfor

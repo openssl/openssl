@@ -1,100 +1,58 @@
-DIR=	srp
-TOP=	../..
-CC=	cc
-INCLUDES= -I.. -I$(TOP) -I../../include
-CFLAG=-g
-INSTALL_PREFIX=
-OPENSSLDIR=     /usr/local/ssl
-INSTALLTOP=/usr/local/ssl
-MAKEDEPPROG=	makedepend
-MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
-MAKEFILE=	Makefile.ssl
-AR=		ar r
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_crypto_srp= $(INCLUDES_crypto) $(CFLAG)
 
-GENERAL=Makefile
-TEST=srptest.c
-APPS=
+GENERAL_crypto_srp=crypto/srp/Makefile
+TEST_crypto_srp=crypto/srp/srptest.c
+APPS_crypto_srp=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=srp_lib.c srp_vfy.c
-LIBOBJ=srp_lib.o srp_vfy.o
+LIB_crypto_srp=libcrypto.a
+LIBSRC_crypto_srp=crypto/srp/srp_lib.c crypto/srp/srp_vfy.c
+LIBOBJ_crypto_srp=crypto/srp/srp_lib.o crypto/srp/srp_vfy.o
 
-SRC= $(LIBSRC)
+SRC_crypto_srp= $(LIBSRC_crypto_srp)
 
-EXHEADER= srp.h
-HEADER=	$(EXHEADER)
+EXHEADER_crypto_srp= crypto/srp/srp.h
+HEADER_crypto_srp=	$(EXHEADER_crypto_srp)
 
-top:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_crypto_srp
+all_crypto_srp:	$(LIBOBJ_crypto_srp)
 
-lib:	$(LIBOBJ)
-	$(AR) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
-	@touch lib
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_crypto_srp
+files_crypto_srp:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+links: links_crypto_srp
+links_crypto_srp:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_srp)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_srp)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_srp)
 
-install:
+install: install_crypto_srp
+install_crypto_srp:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_srp)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
-	ctags $(SRC)
+tags: tags_crypto_srp
+tags_crypto_srp:
+	ctags $(SRC_crypto_srp)
 
-tests:
+tests: tests_crypto_srp
+tests_crypto_srp:
 
-srptest: top srptest.c $(LIB)
-	$(CC) $(CFLAGS) -Wall -Werror -g -o srptest srptest.c $(LIB)
+lint: lint_crypto_srp
+lint_crypto_srp:
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_srp)>crypto/srp/fluff
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+dclean: dclean_crypto_srp
+dclean_crypto_srp:
 
-depend:
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+clean: clean_crypto_srp
+clean_crypto_srp:
+	rm -f crypto/srp/*.o crypto/srp/*.d crypto/srp/*.obj crypto/srp/lib crypto/srp/tags crypto/srp/core crypto/srp/.pure crypto/srp/.nfs* crypto/srp/*.old crypto/srp/*.bak crypto/srp/fluff
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
-
-clean:
-	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-srp_lib.o: ../../e_os.h ../../include/openssl/asn1.h
-srp_lib.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-srp_lib.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-srp_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-srp_lib.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
-srp_lib.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-srp_lib.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-srp_lib.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-srp_lib.o: ../../include/openssl/sha.h ../../include/openssl/srp.h
-srp_lib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-srp_lib.o: ../cryptlib.h srp_grps.h srp_lcl.h srp_lib.c
-srp_vfy.o: ../../e_os.h ../../include/openssl/asn1.h
-srp_vfy.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-srp_vfy.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-srp_vfy.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-srp_vfy.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
-srp_vfy.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-srp_vfy.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-srp_vfy.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
-srp_vfy.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-srp_vfy.o: ../../include/openssl/srp.h ../../include/openssl/stack.h
-srp_vfy.o: ../../include/openssl/symhacks.h ../../include/openssl/txt_db.h
-srp_vfy.o: ../cryptlib.h srp_lcl.h srp_vfy.c

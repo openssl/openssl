@@ -1,0 +1,8 @@
+#
+# OpenSSL/demos/sign/BSDmakefile
+#
+
+.include "demos/sign/Makefile"
+.for d in $(SRC_demos_sign:.c=.d)
+.sinclude "$(d)"
+.endfor

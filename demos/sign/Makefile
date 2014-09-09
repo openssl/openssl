@@ -1,15 +1,18 @@
-CC=cc
-CFLAGS= -g -I../../include -Wall
-LIBS=  -L../.. -lcrypto
-EXAMPLES=sign
+CFLAGS_demos_sign= -g -I../../include -Wall
+LIBS_demos_sign=  -L. -lcrypto
+EXAMPLES_demos_sign=sign
 
-all: $(EXAMPLES) 
+all: all_demos_sign
+all_demos_sign: $(EXAMPLES_demos_sign) 
 
-sign: sign.o
-	$(CC) -o sign sign.o $(LIBS)
+demos/sign/sign: demos/sign/sign.o
+	$(CC) -o demos/sign/sign demos/sign/sign.o $(LIBS_demos_sign)
 
-clean:	
-	rm -f $(EXAMPLES) *.o
+clean: clean_demos_sign
+clean_demos_sign:	
+	rm -f $(EXAMPLES_demos_sign) demos/sign/*.o
 
-test: all
-	./sign
+test: test_demos_sign
+test_demos_sign: all_demos_sign
+	demos/sign/sign
+

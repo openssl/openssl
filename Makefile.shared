@@ -6,15 +6,12 @@
 # properly
 
 # CC contains the current compiler.  This one MUST be defined
-CC=cc
 CFLAGS=$(CFLAG)
 # LDFLAGS contains flags to be used when temporary object files (when building
 # shared libraries) are created, or when an application is linked.
 # SHARED_LDFLAGS contains flags to be used when the shared library is created.
 LDFLAGS=
-SHARED_LDFLAGS=
 
-NM=nm
 
 # LIBNAME contains just the name of the library, without prefix ("lib"
 # on Unix, "cyg" for certain forms under Cygwin...) or suffix (.a, .so,

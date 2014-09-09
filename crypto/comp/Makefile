@@ -2,107 +2,66 @@
 # OpenSSL/crypto/comp/Makefile
 #
 
-DIR=	comp
-TOP=	../..
-CC=	cc
-INCLUDES= -I.. -I$(TOP) -I../../include
-CFLAG=-g
-MAKEFILE=	Makefile
-AR=		ar r
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_crypto_comp= $(INCLUDES_crypto) $(CFLAG)
 
-GENERAL=Makefile
-TEST=
-APPS=
+GENERAL_crypto_comp=crypto/comp/Makefile
+TEST_crypto_comp=
+APPS_crypto_comp=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC= comp_lib.c comp_err.c \
-	c_rle.c c_zlib.c
+LIB_crypto_comp=libcrypto.a
+LIBSRC_crypto_comp= crypto/comp/comp_lib.c crypto/comp/comp_err.c \
+	crypto/comp/c_rle.c crypto/comp/c_zlib.c
 
-LIBOBJ=	comp_lib.o comp_err.o \
-	c_rle.o c_zlib.o
+LIBOBJ_crypto_comp=	crypto/comp/comp_lib.o crypto/comp/comp_err.o \
+	crypto/comp/c_rle.o crypto/comp/c_zlib.o
 
-SRC= $(LIBSRC)
+SRC_crypto_comp= $(LIBSRC_crypto_comp)
 
-EXHEADER= comp.h
-HEADER=	$(EXHEADER)
+EXHEADER_crypto_comp= crypto/comp/comp.h
+HEADER_crypto_comp=	$(EXHEADER_crypto_comp)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_comp=    $(GENERAL_crypto_comp) $(SRC_crypto_comp) $(HEADER_crypto_comp)
 
-top:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_crypto_comp
+all_crypto_comp:	$(LIBOBJ_crypto_comp)
 
-lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
-	@touch lib
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_crypto_comp
+files_crypto_comp:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+links: links_crypto_comp
+links_crypto_comp:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_comp)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_comp)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_comp)
 
-install:
+install: install_crypto_comp
+install_crypto_comp:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_comp)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
-	ctags $(SRC)
+tags: tags_crypto_comp
+tags_crypto_comp:
+	ctags $(SRC_crypto_comp)
 
-tests:
+tests: tests_crypto_comp
+tests_crypto_comp:
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_crypto_comp
+lint_crypto_comp:
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_comp)>crypto/comp/fluff
 
-depend:
-	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(LIBSRC)
+dclean: dclean_crypto_comp
+dclean_crypto_comp:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+clean: clean_crypto_comp
+clean_crypto_comp:
+	rm -f crypto/comp/*.o crypto/comp/*.d crypto/comp/*.obj crypto/comp/lib crypto/comp/tags crypto/comp/core crypto/comp/.pure crypto/comp/.nfs* crypto/comp/*.old crypto/comp/*.bak crypto/comp/fluff
 
-clean:
-	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-c_rle.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-c_rle.o: ../../include/openssl/comp.h ../../include/openssl/crypto.h
-c_rle.o: ../../include/openssl/e_os2.h ../../include/openssl/obj_mac.h
-c_rle.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-c_rle.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-c_rle.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-c_rle.o: ../../include/openssl/symhacks.h c_rle.c
-c_zlib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-c_zlib.o: ../../include/openssl/comp.h ../../include/openssl/crypto.h
-c_zlib.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-c_zlib.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-c_zlib.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-c_zlib.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-c_zlib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-c_zlib.o: ../../include/openssl/symhacks.h c_zlib.c
-comp_err.o: ../../include/openssl/bio.h ../../include/openssl/comp.h
-comp_err.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-comp_err.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
-comp_err.o: ../../include/openssl/opensslconf.h
-comp_err.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-comp_err.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-comp_err.o: ../../include/openssl/symhacks.h comp_err.c
-comp_lib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-comp_lib.o: ../../include/openssl/comp.h ../../include/openssl/crypto.h
-comp_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/obj_mac.h
-comp_lib.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-comp_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-comp_lib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-comp_lib.o: ../../include/openssl/symhacks.h comp_lib.c

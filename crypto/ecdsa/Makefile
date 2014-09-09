@@ -2,140 +2,64 @@
 # crypto/ecdsa/Makefile
 #
 
-DIR=	ecdsa
-TOP=	../..
-CC=	cc
-INCLUDES= -I.. -I$(TOP) -I../../include
-CFLAG=-g -Wall
-MAKEFILE=	Makefile
-AR=		ar r
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_crypto_ecdsa= $(INCLUDES_crypto) $(CFLAG)
 
-GENERAL=Makefile
-TEST=ecdsatest.c
-APPS=
+GENERAL_crypto_ecdsa=crypto/ecdsa/Makefile
+TEST_crypto_ecdsa=crypto/ecdsa/ecdsatest.c
+APPS_crypto_ecdsa=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=	ecs_lib.c ecs_asn1.c ecs_ossl.c ecs_sign.c ecs_vrf.c ecs_err.c
+LIB_crypto_ecdsa=libcrypto.a
+LIBSRC_crypto_ecdsa=	crypto/ecdsa/ecs_lib.c crypto/ecdsa/ecs_asn1.c crypto/ecdsa/ecs_ossl.c crypto/ecdsa/ecs_sign.c crypto/ecdsa/ecs_vrf.c crypto/ecdsa/ecs_err.c
 
-LIBOBJ=	ecs_lib.o ecs_asn1.o ecs_ossl.o ecs_sign.o ecs_vrf.o ecs_err.o
+LIBOBJ_crypto_ecdsa=	crypto/ecdsa/ecs_lib.o crypto/ecdsa/ecs_asn1.o crypto/ecdsa/ecs_ossl.o crypto/ecdsa/ecs_sign.o crypto/ecdsa/ecs_vrf.o crypto/ecdsa/ecs_err.o
 
-SRC= $(LIBSRC)
+SRC_crypto_ecdsa= $(LIBSRC_crypto_ecdsa)
 
-EXHEADER= ecdsa.h
-HEADER=	ecs_locl.h $(EXHEADER)
+EXHEADER_crypto_ecdsa= crypto/ecdsa/ecdsa.h
+HEADER_crypto_ecdsa=	crypto/ecdsa/ecs_locl.h $(EXHEADER_crypto_ecdsa)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_ecdsa=    $(GENERAL_crypto_ecdsa) $(SRC_crypto_ecdsa) $(HEADER_crypto_ecdsa)
 
-top:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_crypto_ecdsa
+all_crypto_ecdsa:	$(LIBOBJ_crypto_ecdsa)
 
-lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
-	@touch lib
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_crypto_ecdsa
+files_crypto_ecdsa:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+links: links_crypto_ecdsa
+links_crypto_ecdsa:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_ecdsa)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_ecdsa)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_ecdsa)
 
-install:
+install: install_crypto_ecdsa
+install_crypto_ecdsa:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
+	@headerlist="$(EXHEADER_crypto_ecdsa)"; for i in $$headerlist; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
-	ctags $(SRC)
+tags: tags_crypto_ecdsa
+tags_crypto_ecdsa:
+	ctags $(SRC_crypto_ecdsa)
 
-tests:
+tests: tests_crypto_ecdsa
+tests_crypto_ecdsa:
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_crypto_ecdsa
+lint_crypto_ecdsa:
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_ecdsa)>crypto/ecdsa/fluff
 
-depend:
-	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+dclean: dclean_crypto_ecdsa
+dclean_crypto_ecdsa:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+clean: clean_crypto_ecdsa
+clean_crypto_ecdsa:
+	rm -f crypto/ecdsa/*.o crypto/ecdsa/*.d */*.o */*.d crypto/ecdsa/*.obj crypto/ecdsa/lib crypto/ecdsa/tags crypto/ecdsa/core crypto/ecdsa/.pure crypto/ecdsa/.nfs* crypto/ecdsa/*.old crypto/ecdsa/*.bak crypto/ecdsa/fluff
 
-clean:
-	rm -f *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-ecs_asn1.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
-ecs_asn1.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
-ecs_asn1.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-ecs_asn1.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
-ecs_asn1.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-ecs_asn1.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-ecs_asn1.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-ecs_asn1.o: ../../include/openssl/symhacks.h ecs_asn1.c ecs_locl.h
-ecs_err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-ecs_err.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-ecs_err.o: ../../include/openssl/ec.h ../../include/openssl/ecdsa.h
-ecs_err.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
-ecs_err.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-ecs_err.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-ecs_err.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-ecs_err.o: ecs_err.c
-ecs_lib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-ecs_lib.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
-ecs_lib.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-ecs_lib.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-ecs_lib.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
-ecs_lib.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-ecs_lib.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-ecs_lib.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-ecs_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-ecs_lib.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
-ecs_lib.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-ecs_lib.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-ecs_lib.o: ../../include/openssl/x509_vfy.h ecs_lib.c ecs_locl.h
-ecs_ossl.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-ecs_ossl.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
-ecs_ossl.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-ecs_ossl.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
-ecs_ossl.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-ecs_ossl.o: ../../include/openssl/opensslconf.h
-ecs_ossl.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-ecs_ossl.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
-ecs_ossl.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-ecs_ossl.o: ecs_locl.h ecs_ossl.c
-ecs_sign.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-ecs_sign.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-ecs_sign.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-ecs_sign.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
-ecs_sign.o: ../../include/openssl/engine.h ../../include/openssl/evp.h
-ecs_sign.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-ecs_sign.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-ecs_sign.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-ecs_sign.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
-ecs_sign.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-ecs_sign.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-ecs_sign.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-ecs_sign.o: ecs_locl.h ecs_sign.c
-ecs_vrf.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-ecs_vrf.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-ecs_vrf.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-ecs_vrf.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
-ecs_vrf.o: ../../include/openssl/engine.h ../../include/openssl/evp.h
-ecs_vrf.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-ecs_vrf.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-ecs_vrf.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-ecs_vrf.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
-ecs_vrf.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-ecs_vrf.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-ecs_vrf.o: ../../include/openssl/x509_vfy.h ecs_locl.h ecs_vrf.c

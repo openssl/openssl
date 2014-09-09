@@ -1,0 +1,8 @@
+#
+# OpenSSL/demos/engines/cluster_labs/BSDmakefile
+#
+
+.include "demos/engines/cluster_labs/Makefile"
+.for d in $(SRC_demos_engines_cluster_labs:.c=.d)
+.sinclude "$(d)"
+.endfor

@@ -1,0 +1,8 @@
+#
+# OpenSSL/demos/engines/zencod/BSDmakefile
+#
+
+.include "demos/engines/zencod/Makefile"
+.for d in $(SRC_demos_engines_zencod:.c=.d)
+.sinclude "$(d)"
+.endfor

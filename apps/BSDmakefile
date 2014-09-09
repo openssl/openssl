@@ -1,0 +1,8 @@
+#
+# OpenSSL/apps/BSDmakefile
+#
+
+.include "apps/Makefile"
+.for d in $(SRC_apps:.c=.d)
+.sinclude "$(d)"
+.endfor

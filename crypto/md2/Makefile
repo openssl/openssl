@@ -2,88 +2,63 @@
 # OpenSSL/crypto/md/Makefile
 #
 
-DIR=	md2
-TOP=	../..
-CC=	cc
-INCLUDES=
-CFLAG=-g
-MAKEFILE=	Makefile
-AR=		ar r
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_crypto_md2= $(INCLUDES_crypto) $(CFLAG)
 
-GENERAL=Makefile
-TEST=md2test.c
-APPS=
+GENERAL_crypto_md2=crypto/md2/Makefile
+TEST_crypto_md2=crypto/md2/md2test.c
+APPS_crypto_md2=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=md2_dgst.c md2_one.c
-LIBOBJ=md2_dgst.o md2_one.o
+LIB_crypto_md2=libcrypto.a
+LIBSRC_crypto_md2=crypto/md2/md2_dgst.c crypto/md2/md2_one.c
+LIBOBJ_crypto_md2=crypto/md2/md2_dgst.o crypto/md2/md2_one.o
 
-SRC= $(LIBSRC)
+SRC_crypto_md2= $(LIBSRC_crypto_md2)
 
-EXHEADER= md2.h
-HEADER=	$(EXHEADER)
+EXHEADER_crypto_md2= crypto/md2/md2.h
+HEADER_crypto_md2=	$(EXHEADER_crypto_md2)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_md2=    $(GENERAL_crypto_md2) $(SRC_crypto_md2) $(HEADER_crypto_md2)
 
-top:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_crypto_md2
+all_crypto_md2:	$(LIBOBJ_crypto_md2)
 
-lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
-	@touch lib
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_crypto_md2
+files_crypto_md2:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+links: links_crypto_md2
+links_crypto_md2:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_md2)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_md2)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_md2)
 
-install:
+install: install_crypto_md2
+install_crypto_md2:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_md2)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
-	ctags $(SRC)
+tags: tags_crypto_md2
+tags_crypto_md2:
+	ctags $(SRC_crypto_md2)
 
-tests:
+tests: tests_crypto_md2
+tests_crypto_md2:
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_crypto_md2
+lint_crypto_md2:
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_md2)>crypto/md2/fluff
 
-depend:
-	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+dclean: dclean_crypto_md2
+dclean_crypto_md2:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+clean: clean_crypto_md2
+clean_crypto_md2:
+	rm -f crypto/md2/*.o crypto/md2/*.d crypto/md2/*.obj crypto/md2/lib crypto/md2/tags crypto/md2/core crypto/md2/.pure crypto/md2/.nfs* crypto/md2/*.old crypto/md2/*.bak crypto/md2/fluff
 
-clean:
-	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-md2_dgst.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-md2_dgst.o: ../../include/openssl/md2.h ../../include/openssl/opensslconf.h
-md2_dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-md2_dgst.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-md2_dgst.o: ../../include/openssl/symhacks.h md2_dgst.c
-md2_one.o: ../../e_os.h ../../include/openssl/bio.h
-md2_one.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-md2_one.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-md2_one.o: ../../include/openssl/lhash.h ../../include/openssl/md2.h
-md2_one.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-md2_one.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-md2_one.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-md2_one.o: ../cryptlib.h md2_one.c

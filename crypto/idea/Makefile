@@ -2,85 +2,63 @@
 # OpenSSL/crypto/idea/Makefile
 #
 
-DIR=	idea
-TOP=	../..
-CC=	cc
-INCLUDES=
-CFLAG=-g
-MAKEFILE=	Makefile
-AR=		ar r
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_crypto_idea= $(INCLUDES_crypto) $(CFLAG)
 
-GENERAL=Makefile
-TEST=ideatest.c
-APPS=
+GENERAL_crypto_idea=crypto/idea/Makefile
+TEST_crypto_idea=crypto/idea/ideatest.c
+APPS_crypto_idea=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=i_cbc.c i_cfb64.c i_ofb64.c i_ecb.c i_skey.c
-LIBOBJ=i_cbc.o i_cfb64.o i_ofb64.o i_ecb.o i_skey.o
+LIB_crypto_idea=libcrypto.a
+LIBSRC_crypto_idea=crypto/idea/i_cbc.c crypto/idea/i_cfb64.c crypto/idea/i_ofb64.c crypto/idea/i_ecb.c crypto/idea/i_skey.c
+LIBOBJ_crypto_idea=crypto/idea/i_cbc.o crypto/idea/i_cfb64.o crypto/idea/i_ofb64.o crypto/idea/i_ecb.o crypto/idea/i_skey.o
 
-SRC= $(LIBSRC)
+SRC_crypto_idea= $(LIBSRC_crypto_idea)
 
-EXHEADER= idea.h
-HEADER=	idea_lcl.h $(EXHEADER)
+EXHEADER_crypto_idea= crypto/idea/idea.h
+HEADER_crypto_idea=	crypto/idea/idea_lcl.h $(EXHEADER_crypto_idea)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_idea=    $(GENERAL_crypto_idea) $(SRC_crypto_idea) $(HEADER_crypto_idea)
 
-top:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_crypto_idea
+all_crypto_idea:	$(LIBOBJ_crypto_idea)
 
-lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
-	@touch lib
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_crypto_idea
+files_crypto_idea:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+links: links_crypto_idea
+links_crypto_idea:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_idea)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_idea)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_idea)
 
-install:
+install: install_crypto_idea
+install_crypto_idea:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_idea)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
-	ctags $(SRC)
+tags: tags_crypto_idea
+tags_crypto_idea:
+	ctags $(SRC_crypto_idea)
 
-tests:
+tests: tests_crypto_idea
+tests_crypto_idea:
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_crypto_idea
+lint_crypto_idea:
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_idea)>crypto/idea/fluff
 
-depend:
-	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+dclean: dclean_crypto_idea
+dclean_crypto_idea:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+clean: clean_crypto_idea
+clean_crypto_idea:
+	rm -f crypto/idea/*.o crypto/idea/*.d crypto/idea/*.obj crypto/idea/lib crypto/idea/tags crypto/idea/core crypto/idea/.pure crypto/idea/.nfs* crypto/idea/*.old crypto/idea/*.bak crypto/idea/fluff
 
-clean:
-	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-i_cbc.o: ../../include/openssl/idea.h ../../include/openssl/opensslconf.h
-i_cbc.o: i_cbc.c idea_lcl.h
-i_cfb64.o: ../../include/openssl/idea.h ../../include/openssl/opensslconf.h
-i_cfb64.o: i_cfb64.c idea_lcl.h
-i_ecb.o: ../../include/openssl/idea.h ../../include/openssl/opensslconf.h
-i_ecb.o: ../../include/openssl/opensslv.h i_ecb.c idea_lcl.h
-i_ofb64.o: ../../include/openssl/idea.h ../../include/openssl/opensslconf.h
-i_ofb64.o: i_ofb64.c idea_lcl.h
-i_skey.o: ../../include/openssl/idea.h ../../include/openssl/opensslconf.h
-i_skey.o: i_skey.c idea_lcl.h

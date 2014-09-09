@@ -1,0 +1,8 @@
+#
+# OpenSSL/fips/ecdh/BSDmakefile
+#
+
+.include "fips/ecdh/Makefile"
+.for d in $(SRC_fips_ecdh:.c=.d)
+.sinclude "$(d)"
+.endfor

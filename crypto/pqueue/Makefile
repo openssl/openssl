@@ -2,82 +2,63 @@
 # OpenSSL/crypto/pqueue/Makefile
 #
 
-DIR=	pqueue
-TOP=	../..
-CC=	cc
-INCLUDES=
-CFLAG=-g
-MAKEFILE=	Makefile
-AR=		ar r
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS_crypto_pqueue= $(INCLUDES_crypto) $(CFLAG)
 
-GENERAL=Makefile
-TEST=
-APPS=
+GENERAL_crypto_pqueue=crypto/pqueue/Makefile
+TEST_crypto_pqueue=
+APPS_crypto_pqueue=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=pqueue.c
-LIBOBJ=pqueue.o
+LIB_crypto_pqueue=libcrypto.a
+LIBSRC_crypto_pqueue=crypto/pqueue/pqueue.c
+LIBOBJ_crypto_pqueue=crypto/pqueue/pqueue.o
 
-SRC= $(LIBSRC)
+SRC_crypto_pqueue= $(LIBSRC_crypto_pqueue)
 
-EXHEADER= pqueue.h
-HEADER=	$(EXHEADER)
+EXHEADER_crypto_pqueue= crypto/pqueue/pqueue.h
+HEADER_crypto_pqueue=	$(EXHEADER_crypto_pqueue)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_pqueue=    $(GENERAL_crypto_pqueue) $(SRC_crypto_pqueue) $(HEADER_crypto_pqueue)
 
-top:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all: all_crypto_pqueue
+all_crypto_pqueue:	$(LIBOBJ_crypto_pqueue)
 
-lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
-	@touch lib
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_crypto_pqueue
+files_crypto_pqueue:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+links: links_crypto_pqueue
+links_crypto_pqueue:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_pqueue)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_pqueue)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_pqueue)
 
-install:
+install: install_crypto_pqueue
+install_crypto_pqueue:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_pqueue)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
-	ctags $(SRC)
+tags: tags_crypto_pqueue
+tags_crypto_pqueue:
+	ctags $(SRC_crypto_pqueue)
 
-tests:
+tests: tests_crypto_pqueue
+tests_crypto_pqueue:
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_crypto_pqueue
+lint_crypto_pqueue:
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_pqueue)>crypto/pqueue/fluff
 
-depend:
-	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+dclean: dclean_crypto_pqueue
+dclean_crypto_pqueue:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+clean: clean_crypto_pqueue
+clean_crypto_pqueue:
+	rm -f crypto/pqueue/*.o crypto/pqueue/*.d crypto/pqueue/*.obj crypto/pqueue/lib crypto/pqueue/tags crypto/pqueue/core crypto/pqueue/.pure crypto/pqueue/.nfs* crypto/pqueue/*.old crypto/pqueue/*.bak crypto/pqueue/fluff
 
-clean:
-	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-pqueue.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
-pqueue.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-pqueue.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-pqueue.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-pqueue.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-pqueue.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-pqueue.o: ../../include/openssl/symhacks.h ../cryptlib.h pqueue.c pqueue.h

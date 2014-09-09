@@ -1,0 +1,8 @@
+#
+# OpenSSL/demos/engines/ibmca/BSDmakefile
+#
+
+.include "demos/engines/ibmca/Makefile"
+.for d in $(SRC_demos_engines_ibmca:.c=.d)
+.sinclude "$(d)"
+.endfor

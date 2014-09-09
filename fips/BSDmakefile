@@ -1,0 +1,46 @@
+#
+# OpenSSL/fips/BSDmakefile
+#
+
+.include "fips/Makefile"
+
+.if !empty $(FIPSCANISTERONLY)
+all_fips: subdirs_fips lib
+.elif empty $(FIPSLIBDIR)
+all_fips: subdirs_fips lib fips_premain_dso$(EXE_EXT)
+.else
+all_fips: lib fips_premain_dso$(EXE_EXT) fips_standalone_sha1$(EXE_EXT)
+.include "fips_standalone_sha1.mk"
+.endif
+
+.for d in $(SRC_fips:.c=.d)
+.sinclude "$(d)"
+.endfor
+
+# There is a reason for this FIPS_SUBDIRS_TARGET and FIPS_LIBS_TARGET
+# madness. See the BUGS section of the BSD make man page.
+FIPS_TARGETS= subdirs files links libs fips_test install lint clean dclean
+FIPS_SUBDIRS_TARGET= subdirs
+FIPS_LIBS_TARGET = libs
+.for target in $(FIPS_TARGETS)
+
+.if $(FIPS_SUBDIRS_TARGET) == $(target)
+FIPS_$(target)= all
+.elif $(FIPS_LIBS_TARGET) == $(target)
+FIPS_$(target)= lib
+.else
+FIPS_$(target)= $(target)
+.endif
+
+.for dir in $(FDIRS)
+$(target)_fips_$(dir):
+	@cd $(dir) && echo "making $(FIPS_$(target)) in fips/$(dir)..." && \
+	$(MAKE) -e TOP=../.. DIR=$(dir) INCLUDES_fips_$(dir)='$(INCLUDES_fips)' \
+	$(FIPS_$(target))
+
+$(target): $(target)_fips_$(dir)
+
+install_fips_$(dir): install_fips_before_subdirs
+install_fips_subdirs: install_fips_$(dir)
+.endfor
+.endfor

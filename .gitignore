@@ -19,6 +19,7 @@
 /makefile.*
 /out.*
 /tmp.*
+/configure.mk
 
 # Most *.c files under test/ are symlinks
 /test/*.c
@@ -84,3 +85,5 @@ Makefile.save
 *.bak
 tags
 TAGS
+cscope.out
+*.d

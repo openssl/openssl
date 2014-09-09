@@ -2,102 +2,80 @@
 # OpenSSL/crypto/md5/Makefile
 #
 
-DIR=    md5
-TOP=    ../..
-CC=     cc
-CPP=    $(CC) -E
-INCLUDES=-I.. -I$(TOP) -I../../include
-CFLAG=-g
-MAKEFILE=       Makefile
-AR=             ar r
+CPP_crypto_md5=    $(CC) -E
 
-MD5_ASM_OBJ=
 
-CFLAGS= $(INCLUDES) $(CFLAG)
-ASFLAGS= $(INCLUDES) $(ASFLAG)
-AFLAGS= $(ASFLAGS)
+CFLAGS_crypto_md5= $(INCLUDES_crypto) $(CFLAG)
+ASFLAGS_crypto_md5= $(INCLUDES_crypto) $(ASFLAG)
+AFLAGS_crypto_md5= $(ASFLAGS_crypto_md5)
 
-GENERAL=Makefile
-TEST=md5test.c
-APPS=
+GENERAL_crypto_md5=crypto/md5/Makefile
+TEST_crypto_md5=crypto/md5/md5test.c
+APPS_crypto_md5=
 
-LIB=$(TOP)/libcrypto.a
-LIBSRC=md5_dgst.c md5_one.c
-LIBOBJ=md5_dgst.o md5_one.o $(MD5_ASM_OBJ)
+LIB_crypto_md5=libcrypto.a
+LIBSRC_crypto_md5=crypto/md5/md5_dgst.c crypto/md5/md5_one.c
+LIBOBJ_crypto_md5=crypto/md5/md5_dgst.o crypto/md5/md5_one.o $(MD5_ASM_OBJ)
 
-SRC= $(LIBSRC)
+SRC_crypto_md5= $(LIBSRC_crypto_md5)
 
-EXHEADER= md5.h
-HEADER= md5_locl.h $(EXHEADER)
+EXHEADER_crypto_md5= crypto/md5/md5.h
+HEADER_crypto_md5= crypto/md5/md5_locl.h $(EXHEADER_crypto_md5)
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_crypto_md5=    $(GENERAL_crypto_md5) $(SRC_crypto_md5) $(HEADER_crypto_md5)
 
-top:
-	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:    lib
+all: all_crypto_md5
+all_crypto_md5:    $(LIBOBJ_crypto_md5)
 
-lib:    $(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
-	@touch lib
 
-md5-586.s:	asm/md5-586.pl ../perlasm/x86asm.pl
-	$(PERL) asm/md5-586.pl $(PERLASM_SCHEME) $(CFLAGS) > $@
+crypto/md5/md5-586.s:	crypto/md5/asm/md5-586.pl crypto/perlasm/x86asm.pl
+	$(PERL) crypto/md5/asm/md5-586.pl $(PERLASM_SCHEME) $(CFLAGS_crypto_md5) > $@
 
-md5-x86_64.s:	asm/md5-x86_64.pl
-	$(PERL) asm/md5-x86_64.pl $(PERLASM_SCHEME) > $@
+crypto/md5/md5-x86_64.s:	crypto/md5/asm/md5-x86_64.pl
+	$(PERL) crypto/md5/asm/md5-x86_64.pl $(PERLASM_SCHEME) > $@
 
-md5-ia64.s: asm/md5-ia64.S
-	$(CC) $(CFLAGS) -E asm/md5-ia64.S | \
+crypto/md5/md5-ia64.s: crypto/md5/asm/md5-ia64.S
+	$(CC) $(CFLAGS_crypto_md5) -E crypto/md5/asm/md5-ia64.S | \
 	$(PERL) -ne 's/;\s+/;\n/g; print;' > $@
 
-md5-sparcv9.S:	asm/md5-sparcv9.pl
-	$(PERL) asm/md5-sparcv9.pl $@ $(CFLAGS)
+crypto/md5/md5-sparcv9.S:	crypto/md5/asm/md5-sparcv9.pl
+	$(PERL) crypto/md5/asm/md5-sparcv9.pl $@ $(CFLAGS_crypto_md5)
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+files: files_crypto_md5
+files_crypto_md5:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+links: links_crypto_md5
+links_crypto_md5:
+	@$(PERL) util/mklink.pl include/openssl $(EXHEADER_crypto_md5)
+	@$(PERL) util/mklink.pl ./test $(TEST_crypto_md5)
+	@$(PERL) util/mklink.pl ./apps $(APPS_crypto_md5)
 
-install:
+install: install_crypto_md5
+install_crypto_md5:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	@headerlist="$(EXHEADER_crypto_md5)"; for i in $$headerlist ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
-tags:
-	ctags $(SRC)
+tags: tags_crypto_md5
+tags_crypto_md5:
+	ctags $(SRC_crypto_md5)
 
-tests:
+tests: tests_crypto_md5
+tests_crypto_md5:
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
+lint: lint_crypto_md5
+lint_crypto_md5:
+	lint -DLINT $(INCLUDES_crypto) $(SRC_crypto_md5)>crypto/md5/fluff
 
-depend:
-	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+dclean: dclean_crypto_md5
+dclean_crypto_md5:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+clean: clean_crypto_md5
+clean_crypto_md5:
+	rm -f crypto/md5/*.s crypto/md5/*.o crypto/md5/*.d crypto/md5/*.obj crypto/md5/lib crypto/md5/tags crypto/md5/core crypto/md5/.pure crypto/md5/.nfs* crypto/md5/*.old crypto/md5/*.bak crypto/md5/fluff
 
-clean:
-	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-md5_dgst.o: ../../include/openssl/e_os2.h ../../include/openssl/md5.h
-md5_dgst.o: ../../include/openssl/opensslconf.h
-md5_dgst.o: ../../include/openssl/opensslv.h ../md32_common.h md5_dgst.c
-md5_dgst.o: md5_locl.h
-md5_one.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-md5_one.o: ../../include/openssl/md5.h ../../include/openssl/opensslconf.h
-md5_one.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-md5_one.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-md5_one.o: ../../include/openssl/symhacks.h md5_one.c

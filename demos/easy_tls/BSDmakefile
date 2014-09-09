@@ -1,0 +1,8 @@
+#
+# OpenSSL/demos/easy_tls/BSDmakefile
+#
+
+.include "demos/easy_tls/Makefile"
+.for d in $(SRC_demos_easy_tls:.c=.d)
+.sinclude "$(d)"
+.endfor

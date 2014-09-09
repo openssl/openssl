@@ -201,6 +201,8 @@ my %table=(
 "debug-linux-generic64","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -DTERMIO -g -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "debug-linux-x86_64","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -m64 -DL_ENDIAN -DTERMIO -g -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
 "dist",		"cc:-O::(unknown)::::::",
+"debug-test-64-clang",	"clang:$gcc_devteam_warn -Wno-error=overlength-strings -Wno-error=extended-offsetof -Wno-error=language-extension-token -Wno-error=unused-const-variable -Wstrict-overflow -Qunused-arguments -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DDEBUG_UNUSED -g3 -O3 -pipe::${BSDthreads}:::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"darwin64-debug-test-64-clang",  "clang:-arch x86_64 -DL_ENDIAN $gcc_devteam_warn -Wno-error=overlength-strings -Wno-error=extended-offsetof -Wno-error=language-extension-token -Wno-error=unused-const-variable -Wstrict-overflow -Qunused-arguments -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DDEBUG_UNUSED -g3 -O3 -pipe::${BSDthreads}:MACOSX::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:macosx:dlfcn:darwin-shared:-fPIC -fno-common:-arch x86_64 -dynamiclib:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
 
 # Basic configs that should work on any (32 and less bit) box
 "gcc",		"gcc:-O3::(unknown):::BN_LLONG:::",
@@ -758,10 +760,6 @@ if (!-d "ssl")
 		}
 	}
 
-# This is what $depflags will look like with the above defaults
-# (we need this to see if we should advise the user to run "make depend"):
-my $default_depflags = " -DOPENSSL_NO_EC_NISTP_64_GCC_128 -DOPENSSL_NO_GMP -DOPENSSL_NO_JPAKE -DOPENSSL_NO_MD2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_RFC3779 -DOPENSSL_NO_SCTP -DOPENSSL_NO_SSL_TRACE -DOPENSSL_NO_STORE -DOPENSSL_NO_UNIT_TEST";
-
 # Explicit "no-..." options will be collected in %disabled along with the defaults.
 # To remove something from %disabled, use "enable-foo" (unless it's experimental).
 # For symmetry, "disable-foo" is a synonym for "no-foo".
@@ -787,7 +785,6 @@ my $libkrb5="";
 my $target;
 my $options;
 my $symlink;
-my $make_depend=0;
 my %withargs=();
 
 my @argvcopy=@ARGV;
@@ -1263,6 +1260,16 @@ $libdir="lib$multilib" if $libdir eq "";
 
 $cflags = "$cflags$exp_cflags";
 
+# If supported, add flags to generate dependency information during
+# compilation.
+my $auto_dep_flags = "-MMD -MP";
+if (system("echo | $cc $auto_dep_flags -E - >dep_flags_check.out 2>&1") == 0)
+	{
+	$cflags = "$cflags $auto_dep_flags";
+	}
+unlink("dep_flags_check.out") if -f "dep_flags_check.out";
+unlink("-.d") if -f "-.d";
+
 # '%' in $lflags is used to split flags to "pre-" and post-flags
 my ($prelflags,$postlflags)=split('%',$lflags);
 if (defined($postlflags))	{ $lflags=$postlflags;	}
@@ -1478,7 +1485,7 @@ if (!$IsMK1MF)
 		}
 	}
 
-$cpuid_obj.=" uplink.o uplink-x86.o" if ($cflags =~ /\-DOPENSSL_USE_APPLINK/);
+$cpuid_obj.=" ms/uplink.o ms/uplink-x86.o" if ($cflags =~ /\-DOPENSSL_USE_APPLINK/);
 
 #
 # Platform fix-ups
@@ -1686,131 +1693,157 @@ if ($fipscanisterinternal eq "y")
 	}
 
 my $mforg = $fipscanisteronly ? "Makefile.fips" : "Makefile.org";
+my $cforg = $fipscanisteronly ? "configure.mk.fips" : "configure.mk.org";
 
-open(IN,"<$mforg") || die "unable to read $mforg:$!\n";
-unlink("$Makefile.new") || die "unable to remove old $Makefile.new:$!\n" if -e "$Makefile.new";
-open(OUT,">$Makefile.new") || die "unable to create $Makefile.new:$!\n";
-print OUT "### Generated automatically from $mforg by Configure.\n\n";
-my $sdirs=0;
-
-if ($fipscanisteronly)
+sub add_obj_dir_prefix
 	{
-	$aes_obj =~ s/aesni-sha1-x86_64.o//;
-	$bn_obj =~ s/modexp512-x86_64.o//;
+	my ($dirname, $objs) = @_;
+	my @objs = split(/ /, $objs);
+	foreach my $i (0 .. $#objs)
+		{
+		my $obj = $objs[$i];
+		$objs[$i] = "$dirname/$obj" if index($obj, "/") == -1;
+		}
+  return join(' ', @objs);
 	}
 
-while (<IN>)
+sub process_makefile
 	{
-	chomp;
-	$sdirs = 1 if /^SDIRS=/;
-	if ($sdirs) {
-		my $dir;
-		foreach $dir (@skip) {
-			s/(\s)$dir /$1/;
-			s/\s$dir$//;
+	my ($infile) = @_;
+	open(IN,"<$infile") || die "unable to read $infile:$!\n";
+
+	my $outfile = $infile;
+	$outfile =~ s{\.[^.]+$}{};
+	unlink("$outfile.new") || die "unable to remove old $outfile.new:$!\n"
+		if -e "$outfile.new";
+	open(OUT,">$outfile.new") || die "unable to create $outfile.new:$!\n";
+	print OUT "### Generated automatically from $infile by Configure.\n\n";
+	my $sdirs=0;
+
+	if ($fipscanisteronly)
+		{
+		$aes_obj =~ s/aesni-sha1-x86_64.o//;
+		$bn_obj =~ s/modexp512-x86_64.o//;
+		}
+
+	while (<IN>)
+		{
+		chomp;
+		$sdirs = 1 if /^SDIRS=/;
+		if ($sdirs) {
+			my $dir;
+			foreach $dir (@skip) {
+				s/(\s)$dir /$1/;
+				s/\s$dir$//;
 			}
 		}
-	$sdirs = 0 unless /\\$/;
-        s/fips // if (/^DIRS=/ && !$fips);
-        s/engines // if (/^DIRS=/ && $disabled{"engine"});
-	s/ccgost// if (/^ENGDIRS=/ && $disabled{"gost"});
-	s/^VERSION=.*/VERSION=$version/;
-	s/^MAJOR=.*/MAJOR=$major/;
-	s/^MINOR=.*/MINOR=$minor/;
-	s/^SHLIB_VERSION_NUMBER=.*/SHLIB_VERSION_NUMBER=$shlib_version_number/;
-	s/^SHLIB_VERSION_HISTORY=.*/SHLIB_VERSION_HISTORY=$shlib_version_history/;
-	s/^SHLIB_MAJOR=.*/SHLIB_MAJOR=$shlib_major/;
-	s/^SHLIB_MINOR=.*/SHLIB_MINOR=$shlib_minor/;
-	s/^SHLIB_EXT=.*/SHLIB_EXT=$shared_extension/;
-	s/^INSTALLTOP=.*$/INSTALLTOP=$prefix/;
-	s/^MULTILIB=.*$/MULTILIB=$multilib/;
-	s/^OPENSSLDIR=.*$/OPENSSLDIR=$openssldir/;
-	s/^LIBDIR=.*$/LIBDIR=$libdir/;
-	s/^INSTALL_PREFIX=.*$/INSTALL_PREFIX=$install_prefix/;
-	s/^PLATFORM=.*$/PLATFORM=$target/;
-	s/^OPTIONS=.*$/OPTIONS=$options/;
-	s/^CONFIGURE_ARGS=.*$/CONFIGURE_ARGS=$argvstring/;
-	if ($cross_compile_prefix)
-		{
-		s/^CC=.*$/CROSS_COMPILE= $cross_compile_prefix\nCC= \$\(CROSS_COMPILE\)$cc/;
-		s/^AR=\s*/AR= \$\(CROSS_COMPILE\)/;
-		s/^NM=\s*/NM= \$\(CROSS_COMPILE\)/;
-		s/^RANLIB=\s*/RANLIB= \$\(CROSS_COMPILE\)/;
-		s/^MAKEDEPPROG=.*$/MAKEDEPPROG= \$\(CROSS_COMPILE\)$cc/ if $cc eq "gcc";
+		$sdirs = 0 unless /\\$/;
+	        s/fips // if (/^DIRS=/ && !$fips);
+	        s/engines // if (/^DIRS=/ && $disabled{"engine"});
+		s/ccgost// if (/^ENGDIRS=/ && $disabled{"gost"});
+		s/^VERSION=.*/VERSION=$version/;
+		s/^MAJOR=.*/MAJOR=$major/;
+		s/^MINOR=.*/MINOR=$minor/;
+		s/^SHLIB_VERSION_NUMBER=.*/SHLIB_VERSION_NUMBER=$shlib_version_number/;
+		s/^SHLIB_VERSION_HISTORY=.*/SHLIB_VERSION_HISTORY=$shlib_version_history/;
+		s/^SHLIB_MAJOR=.*/SHLIB_MAJOR=$shlib_major/;
+		s/^SHLIB_MINOR=.*/SHLIB_MINOR=$shlib_minor/;
+		s/^SHLIB_EXT=.*/SHLIB_EXT=$shared_extension/;
+		s/^INSTALLTOP=.*$/INSTALLTOP=$prefix/;
+		s/^MULTILIB=.*$/MULTILIB=$multilib/;
+		s/^OPENSSLDIR=.*$/OPENSSLDIR=$openssldir/;
+		s/^LIBDIR=.*$/LIBDIR=$libdir/;
+		s/^INSTALL_PREFIX=.*$/INSTALL_PREFIX=$install_prefix/;
+		s/^PLATFORM=.*$/PLATFORM=$target/;
+		s/^OPTIONS=.*$/OPTIONS=$options/;
+		s/^CONFIGURE_ARGS=.*$/CONFIGURE_ARGS=$argvstring/;
+		if ($cross_compile_prefix)
+			{
+			s/^CC=.*$/CROSS_COMPILE= $cross_compile_prefix\nCC= \$\(CROSS_COMPILE\)$cc/;
+			s/^AR=\s*/AR= \$\(CROSS_COMPILE\)/;
+			s/^NM=\s*/NM= \$\(CROSS_COMPILE\)/;
+			s/^RANLIB=\s*/RANLIB= \$\(CROSS_COMPILE\)/;
+			s/^MAKEDEPPROG=.*$/MAKEDEPPROG= \$\(CROSS_COMPILE\)$cc/ if $cc eq "gcc";
+			}
+		else	{
+			s/^CC=.*$/CC= $cc/;
+			s/^AR=\s*ar/AR= $ar/;
+			s/^RANLIB=.*/RANLIB= $ranlib/;
+			s/^MAKEDEPPROG=.*$/MAKEDEPPROG= $cc/ if $cc eq "gcc" || ($cc eq 'cc' && $target =~ /darwin/);
+			}
+		s/^CFLAG=.*$/CFLAG= $cflags/;
+		s/^DEPFLAG=.*$/DEPFLAG=$depflags/;
+		s/^PEX_LIBS=.*$/PEX_LIBS= $prelflags/;
+		s/^EX_LIBS=.*$/EX_LIBS= $lflags/;
+		s/^EXE_EXT=.*$/EXE_EXT= $exe_ext/;
+		s/^CPUID_OBJ=.*$/CPUID_OBJ= ${\add_obj_dir_prefix "crypto", $cpuid_obj}/;
+		s/^BN_ASM=.*$/BN_ASM= ${\add_obj_dir_prefix "crypto\/bn", $bn_obj}/;
+		s/^EC_ASM=.*$/EC_ASM= ${\add_obj_dir_prefix "crypto\/ec", $ec_obj}/;
+		s/^DES_ENC=.*$/DES_ENC= ${\add_obj_dir_prefix "crypto\/des", $des_obj}/;
+		s/^AES_ENC=.*$/AES_ENC= ${\add_obj_dir_prefix "crypto\/aes", $aes_obj}/;
+		s/^BF_ENC=.*$/BF_ENC= ${\add_obj_dir_prefix "crypto\/bf", $bf_obj}/;
+		s/^CAST_ENC=.*$/CAST_ENC= ${\add_obj_dir_prefix "crypto\/cast", $cast_obj}/;
+		s/^RC4_ENC=.*$/RC4_ENC= ${\add_obj_dir_prefix "crypto\/rc4", $rc4_obj}/;
+		s/^RC5_ENC=.*$/RC5_ENC= ${\add_obj_dir_prefix "crypto\/rc5", $rc5_obj}/;
+		s/^MD5_ASM_OBJ=.*$/MD5_ASM_OBJ= ${\add_obj_dir_prefix "crypto\/md5", $md5_obj}/;
+		s/^SHA1_ASM_OBJ=.*$/SHA1_ASM_OBJ= ${\add_obj_dir_prefix "crypto\/sha", $sha1_obj}/;
+		s/^RMD160_ASM_OBJ=.*$/RMD160_ASM_OBJ= ${\add_obj_dir_prefix "crypto\/ripemd", $rmd160_obj}/;
+		s/^WP_ASM_OBJ=.*$/WP_ASM_OBJ= ${\add_obj_dir_prefix "crypto\/whrlpool", $wp_obj}/;
+		s/^CMLL_ENC=.*$/CMLL_ENC= ${\add_obj_dir_prefix "crypto\/camellia", $cmll_obj}/;
+		s/^MODES_ASM_OBJ.=*$/MODES_ASM_OBJ= ${\add_obj_dir_prefix "crypto\/modes", $modes_obj}/;
+		s/^ENGINES_ASM_OBJ.=*$/ENGINES_ASM_OBJ= ${\add_obj_dir_prefix "engines", $engines_obj}/;
+		s/^PERLASM_SCHEME=.*$/PERLASM_SCHEME= $perlasm_scheme/;
+		s/^PROCESSOR=.*/PROCESSOR= $processor/;
+		s/^ARFLAGS=.*/ARFLAGS= $arflags/;
+		s/^PERL=.*/PERL= $perl/;
+		s/^KRB5_INCLUDES=.*/KRB5_INCLUDES=$withargs{"krb5-include"}/;
+		s/^LIBKRB5=.*/LIBKRB5=$withargs{"krb5-lib"}/;
+		s/^LIBZLIB=.*/LIBZLIB=$withargs{"zlib-lib"}/;
+		s/^ZLIB_INCLUDE=.*/ZLIB_INCLUDE=$withargs{"zlib-include"}/;
+		s/^FIPSLIBDIR=.*/FIPSLIBDIR=$fipslibdir/;
+		s/^FIPSCANLIB=.*/FIPSCANLIB=libcrypto/ if $fips;
+		s/^SHARED_FIPS=.*/SHARED_FIPS=/;
+		s/^SHLIBDIRS=.*/SHLIBDIRS= crypto ssl/;
+		s/^FIPSCANISTERINTERNAL=.*/FIPSCANISTERINTERNAL=$fipscanisterinternal/;
+		s/^BASEADDR=.*/BASEADDR=$baseaddr/;
+		s/^SHLIB_TARGET=.*/SHLIB_TARGET=$shared_target/;
+		s/^SHLIB_MARK=.*/SHLIB_MARK=$shared_mark/;
+		s/^SHARED_LIBS=.*/SHARED_LIBS=\$(SHARED_CRYPTO) \$(SHARED_SSL)/ if (!$no_shared);
+		if ($shared_extension ne "" && $shared_extension =~ /^\.s([ol])\.[^\.]*$/)
+			{
+			my $sotmp = $1;
+			s/^SHARED_LIBS_LINK_EXTS=.*/SHARED_LIBS_LINK_EXTS=.s$sotmp/;
+			}
+		elsif ($shared_extension ne "" && $shared_extension =~ /^\.[^\.]*\.dylib$/)
+			{
+			s/^SHARED_LIBS_LINK_EXTS=.*/SHARED_LIBS_LINK_EXTS=.dylib/;
+			}
+		elsif ($shared_extension ne "" && $shared_extension =~ /^\.s([ol])\.[^\.]*\.[^\.]*$/)
+			{
+			my $sotmp = $1;
+			s/^SHARED_LIBS_LINK_EXTS=.*/SHARED_LIBS_LINK_EXTS=.s$sotmp.\$(SHLIB_MAJOR) .s$sotmp/;
+			}
+		elsif ($shared_extension ne "" && $shared_extension =~ /^\.[^\.]*\.[^\.]*\.dylib$/)
+			{
+			s/^SHARED_LIBS_LINK_EXTS=.*/SHARED_LIBS_LINK_EXTS=.\$(SHLIB_MAJOR).dylib .dylib/;
+			}
+		s/^SHARED_LDFLAGS=.*/SHARED_LDFLAGS=$shared_ldflag/;
+		if ($fipscanisteronly && exists $disabled{"ec2m"})
+			{
+			next if (/ec2_/ || /bn_gf2m/);
+			}
+		print OUT $_."\n";
 		}
-	else	{
-		s/^CC=.*$/CC= $cc/;
-		s/^AR=\s*ar/AR= $ar/;
-		s/^RANLIB=.*/RANLIB= $ranlib/;
-		s/^MAKEDEPPROG=.*$/MAKEDEPPROG= $cc/ if $cc eq "gcc" || ($cc eq 'cc' && $target =~ /darwin/);
-		}
-	s/^CFLAG=.*$/CFLAG= $cflags/;
-	s/^DEPFLAG=.*$/DEPFLAG=$depflags/;
-	s/^PEX_LIBS=.*$/PEX_LIBS= $prelflags/;
-	s/^EX_LIBS=.*$/EX_LIBS= $lflags/;
-	s/^EXE_EXT=.*$/EXE_EXT= $exe_ext/;
-	s/^CPUID_OBJ=.*$/CPUID_OBJ= $cpuid_obj/;
-	s/^BN_ASM=.*$/BN_ASM= $bn_obj/;
-	s/^EC_ASM=.*$/EC_ASM= $ec_obj/;
-	s/^DES_ENC=.*$/DES_ENC= $des_obj/;
-	s/^AES_ENC=.*$/AES_ENC= $aes_obj/;
-	s/^BF_ENC=.*$/BF_ENC= $bf_obj/;
-	s/^CAST_ENC=.*$/CAST_ENC= $cast_obj/;
-	s/^RC4_ENC=.*$/RC4_ENC= $rc4_obj/;
-	s/^RC5_ENC=.*$/RC5_ENC= $rc5_obj/;
-	s/^MD5_ASM_OBJ=.*$/MD5_ASM_OBJ= $md5_obj/;
-	s/^SHA1_ASM_OBJ=.*$/SHA1_ASM_OBJ= $sha1_obj/;
-	s/^RMD160_ASM_OBJ=.*$/RMD160_ASM_OBJ= $rmd160_obj/;
-	s/^WP_ASM_OBJ=.*$/WP_ASM_OBJ= $wp_obj/;
-	s/^CMLL_ENC=.*$/CMLL_ENC= $cmll_obj/;
-	s/^MODES_ASM_OBJ.=*$/MODES_ASM_OBJ= $modes_obj/;
-	s/^ENGINES_ASM_OBJ.=*$/ENGINES_ASM_OBJ= $engines_obj/;
-	s/^PERLASM_SCHEME=.*$/PERLASM_SCHEME= $perlasm_scheme/;
-	s/^PROCESSOR=.*/PROCESSOR= $processor/;
-	s/^ARFLAGS=.*/ARFLAGS= $arflags/;
-	s/^PERL=.*/PERL= $perl/;
-	s/^KRB5_INCLUDES=.*/KRB5_INCLUDES=$withargs{"krb5-include"}/;
-	s/^LIBKRB5=.*/LIBKRB5=$withargs{"krb5-lib"}/;
-	s/^LIBZLIB=.*/LIBZLIB=$withargs{"zlib-lib"}/;
-	s/^ZLIB_INCLUDE=.*/ZLIB_INCLUDE=$withargs{"zlib-include"}/;
-	s/^FIPSLIBDIR=.*/FIPSLIBDIR=$fipslibdir/;
-	s/^FIPSCANLIB=.*/FIPSCANLIB=libcrypto/ if $fips;
-	s/^SHARED_FIPS=.*/SHARED_FIPS=/;
-	s/^SHLIBDIRS=.*/SHLIBDIRS= crypto ssl/;
-	s/^FIPSCANISTERINTERNAL=.*/FIPSCANISTERINTERNAL=$fipscanisterinternal/;
-	s/^BASEADDR=.*/BASEADDR=$baseaddr/;
-	s/^SHLIB_TARGET=.*/SHLIB_TARGET=$shared_target/;
-	s/^SHLIB_MARK=.*/SHLIB_MARK=$shared_mark/;
-	s/^SHARED_LIBS=.*/SHARED_LIBS=\$(SHARED_CRYPTO) \$(SHARED_SSL)/ if (!$no_shared);
-	if ($shared_extension ne "" && $shared_extension =~ /^\.s([ol])\.[^\.]*$/)
-		{
-		my $sotmp = $1;
-		s/^SHARED_LIBS_LINK_EXTS=.*/SHARED_LIBS_LINK_EXTS=.s$sotmp/;
-		}
-	elsif ($shared_extension ne "" && $shared_extension =~ /^\.[^\.]*\.dylib$/)
-		{
-		s/^SHARED_LIBS_LINK_EXTS=.*/SHARED_LIBS_LINK_EXTS=.dylib/;
-		}
-	elsif ($shared_extension ne "" && $shared_extension =~ /^\.s([ol])\.[^\.]*\.[^\.]*$/)
-		{
-		my $sotmp = $1;
-		s/^SHARED_LIBS_LINK_EXTS=.*/SHARED_LIBS_LINK_EXTS=.s$sotmp.\$(SHLIB_MAJOR) .s$sotmp/;
-		}
-	elsif ($shared_extension ne "" && $shared_extension =~ /^\.[^\.]*\.[^\.]*\.dylib$/)
-		{
-		s/^SHARED_LIBS_LINK_EXTS=.*/SHARED_LIBS_LINK_EXTS=.\$(SHLIB_MAJOR).dylib .dylib/;
-		}
-	s/^SHARED_LDFLAGS=.*/SHARED_LDFLAGS=$shared_ldflag/;
-	if ($fipscanisteronly && exists $disabled{"ec2m"})
-		{
-		next if (/ec2_/ || /bn_gf2m/);
-		}
-	print OUT $_."\n";
+	close(IN);
+	close(OUT);
+	rename($outfile,"$outfile.bak") || die "unable to rename $outfile\n"
+		if -e $outfile;
+	rename("$outfile.new",$outfile) ||
+		die "unable to rename $outfile.new\n";
 	}
-close(IN);
-close(OUT);
-rename($Makefile,"$Makefile.bak") || die "unable to rename $Makefile\n" if -e $Makefile;
-rename("$Makefile.new",$Makefile) || die "unable to rename $Makefile.new\n";
+
+process_makefile $mforg;
+process_makefile $cforg;
 
 print "CC            =$cc\n";
 print "CFLAG         =$cflags\n";
@@ -2046,7 +2079,6 @@ EOF
 	my $make_command = "$make PERL=\'$perl\'";
 	my $make_targets = "";
 	$make_targets .= " links" if $symlink;
-	$make_targets .= " depend" if $depflags ne $default_depflags && $make_depend;
 	$make_targets .= " gentests" if $symlink;
 	(system $make_command.$make_targets) == 0 or die "make $make_targets failed"
 		if $make_targets ne "";
@@ -2059,15 +2091,6 @@ EOF
 	    # No path for Perl known ...
 	    &dofile("tools/c_rehash",'/usr/local/bin/perl','^#!/', '#!%s','^my \$dir;$', 'my $dir = "' . $openssldir . '";',  '^my \$prefix;$', 'my $prefix = "' . $prefix . '";');
 	    &dofile("apps/CA.pl",'/usr/local/bin/perl','^#!/', '#!%s');
-	}
-	if ($depflags ne $default_depflags && !$make_depend && !$fipscanisteronly) {
-		print <<EOF;
-
-Since you've disabled or enabled at least one algorithm, you need to do
-the following before building:
-
-	make depend
-EOF
 	}
 }
 

@@ -2,126 +2,85 @@
 # OpenSSL/engines/Makefile
 #
 
-DIR=	engines
-TOP=	..
-CC=	cc
-INCLUDES= -I../include
-CFLAG=-g
-MAKEFILE=	Makefile
-AR=		ar r
-ENGDIRS= ccgost
+INCLUDES_engines= -Iinclude
 
-RECURSIVE_MAKE=	[ -z "$(ENGDIRS)" ] || for i in $(ENGDIRS) ; do \
-		    (cd $$i && echo "making $$target in $(DIR)/$$i..." && \
-		    $(MAKE) -e TOP=../.. DIR=$$i $$target ) || exit 1; \
-		done;
+CFLAGS_engines= $(INCLUDES_engines) $(CFLAG)
+ASFLAGS_engines= $(INCLUDES_engines) $(ASFLAG)
 
-ENGINES_ASM_OBJ=
+GENERAL_engines=engines/Makefile engines/engines.com engines/install.com engines/engine_vector.mar
+TEST_engines=
+APPS_engines=
 
-PEX_LIBS=
-EX_LIBS=
-
-CFLAGS= $(INCLUDES) $(CFLAG)
-ASFLAGS= $(INCLUDES) $(ASFLAG)
-
-GENERAL=Makefile engines.com install.com engine_vector.mar
-TEST=
-APPS=
-
-LIB=$(TOP)/libcrypto.a
+LIB_engines=libcrypto.a
 LIBNAMES= 4758cca aep atalla cswift gmp chil nuron sureware ubsec padlock capi
 
-LIBSRC=	e_4758cca.c \
-	e_aep.c \
-	e_atalla.c \
-	e_cswift.c \
-	e_gmp.c \
-	e_chil.c \
-	e_nuron.c \
-	e_sureware.c \
-	e_ubsec.c \
-	e_padlock.c \
-	e_capi.c
-LIBOBJ= e_4758cca.o \
-	e_aep.o \
-	e_atalla.o \
-	e_cswift.o \
-	e_gmp.o \
-	e_chil.o \
-	e_nuron.o \
-	e_sureware.o \
-	e_ubsec.o \
-	e_padlock.o \
-	e_capi.o \
+LIBSRC_engines=	engines/e_4758cca.c \
+	engines/e_aep.c \
+	engines/e_atalla.c \
+	engines/e_cswift.c \
+	engines/e_gmp.c \
+	engines/e_chil.c \
+	engines/e_nuron.c \
+	engines/e_sureware.c \
+	engines/e_ubsec.c \
+	engines/e_padlock.c \
+	engines/e_capi.c
+LIBOBJ_engines= engines/e_4758cca.o \
+	engines/e_aep.o \
+	engines/e_atalla.o \
+	engines/e_cswift.o \
+	engines/e_gmp.o \
+	engines/e_chil.o \
+	engines/e_nuron.o \
+	engines/e_sureware.o \
+	engines/e_ubsec.o \
+	engines/e_padlock.o \
+	engines/e_capi.o \
 	$(ENGINES_ASM_OBJ)
 
-SRC= $(LIBSRC)
+SRC_engines= $(LIBSRC_engines)
 
-EXHEADER= 
-HEADER=	e_4758cca_err.c e_4758cca_err.h \
-	e_aep_err.c e_aep_err.h \
-	e_atalla_err.c e_atalla_err.h \
-	e_cswift_err.c e_cswift_err.h \
-	e_gmp_err.c e_gmp_err.h \
-	e_chil_err.c e_chil_err.h \
-	e_nuron_err.c e_nuron_err.h \
-	e_sureware_err.c e_sureware_err.h \
-	e_ubsec_err.c e_ubsec_err.h \
-	e_capi_err.c e_capi_err.h
+EXHEADER_engines= 
+HEADER_engines=	engines/e_4758cca_err.c engines/e_4758cca_err.h \
+	engines/e_aep_err.c engines/e_aep_err.h \
+	engines/e_atalla_err.c engines/e_atalla_err.h \
+	engines/e_cswift_err.c engines/e_cswift_err.h \
+	engines/e_gmp_err.c engines/e_gmp_err.h \
+	engines/e_chil_err.c engines/e_chil_err.h \
+	engines/e_nuron_err.c engines/e_nuron_err.h \
+	engines/e_sureware_err.c engines/e_sureware_err.h \
+	engines/e_ubsec_err.c engines/e_ubsec_err.h \
+	engines/e_capi_err.c engines/e_capi_err.h
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL_engines=    $(GENERAL_engines) $(SRC_engines) $(HEADER_engines)
 
-top:
-	(cd ..; $(MAKE) DIRS=$(DIR) all)
+all: all_engines
 
-all:	lib subdirs
+engines/e_padlock-x86.s:	engines/asm/e_padlock-x86.pl
+	$(PERL) engines/asm/e_padlock-x86.pl $(PERLASM_SCHEME) $(CFLAGS_engines) $(PROCESSOR) > $@
+engines/e_padlock-x86_64.s:	engines/asm/e_padlock-x86_64.pl
+	$(PERL) engines/asm/e_padlock-x86_64.pl $(PERLASM_SCHEME) > $@
 
-lib:	$(LIBOBJ)
-	@if [ -n "$(SHARED_LIBS)" ]; then \
-		set -e; \
-		for l in $(LIBNAMES); do \
-			$(MAKE) -f ../Makefile.shared -e \
-				LIBNAME=$$l LIBEXTRAS="e_$$l*.o" \
-				LIBDEPS='-L.. -lcrypto $(EX_LIBS)' \
-				link_o.$(SHLIB_TARGET); \
-		done; \
-	else \
-		$(AR) $(LIB) $(LIBOBJ); \
-		$(RANLIB) $(LIB) || echo Never mind.; \
-	fi; \
-	touch lib
-
-e_padlock-x86.s:	asm/e_padlock-x86.pl
-	$(PERL) asm/e_padlock-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
-e_padlock-x86_64.s:	asm/e_padlock-x86_64.pl
-	$(PERL) asm/e_padlock-x86_64.pl $(PERLASM_SCHEME) > $@
-
-subdirs:
-	echo $(EDIRS)
-	@target=all; $(RECURSIVE_MAKE)
-
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-	@target=files; $(RECURSIVE_MAKE)
-
-links:
-	@target=links; $(RECURSIVE_MAKE)
+files: files_engines
+files_engines:
+	$(PERL) util/files.pl TOP=. Makefile >> MINFO
 
 # XXXXX This currently only works on systems that use .so as suffix
 # for shared libraries as well as for Cygwin which uses the
 # dlfcn_name_converter and therefore stores the engines with .so suffix, too.
 # XXXXX This was extended to HP-UX dl targets, which use .sl suffix.
 # XXXXX This was extended to mingw targets, which use eay32.dll suffix without lib as prefix.
-install:
+install: install_engines
+install_engines:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@if [ -n "$(SHARED_LIBS)" ]; then \
 		set -e; \
-		$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines; \
+		$(PERL) util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines; \
 		for l in $(LIBNAMES); do \
 			( echo installing $$l; \
-			  pfx=lib; \
+			  pfx=engines/lib; \
 			  if ! expr "$(PLATFORM)" : "Cygwin" >/dev/null; then \
-				case "$(CFLAGS)" in \
+				case "$(CFLAGS_engines)" in \
 				*DSO_BEOS*)	sfx=".so";;	\
 				*DSO_DLFCN*)	sfx=`expr "$(SHLIB_EXT)" : '.*\(\.[a-z][a-z]*\)' \| ".so"`;;	\
 				*DSO_DL*)	sfx=".sl";;	\
@@ -137,209 +96,30 @@ install:
 			  mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx ); \
 		done; \
 	fi
-	@target=install; $(RECURSIVE_MAKE)
 
-tags:
-	ctags $(SRC)
+tags: tags_engines
+tags_engines:
+	ctags $(SRC_engines)
 
-errors:
+errors: errors_engines
+errors_engines:
 	set -e; for l in $(LIBNAMES); do \
-		$(PERL) ../util/mkerr.pl -conf e_$$l.ec \
-			-nostatic -staticloader -write e_$$l.c; \
+		$(PERL) util/mkerr.pl -conf e_$$l.ec \
+			-nostatic -staticloader -write engines/e_$$l.c; \
 	done
 	(cd ccgost; $(MAKE) PERL=$(PERL) errors)
 
-tests:
+tests: tests_engines
+tests_engines:
 
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
-	@target=lint; $(RECURSIVE_MAKE)
+lint: lint_engines
+lint_engines:
+	lint -DLINT $(INCLUDES_engines) $(SRC_engines)>engines/fluff
 
-depend:
-	@if [ -z "$(THIS)" ]; then \
-	    $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; \
-	fi
-	@[ -z "$(THIS)" ] || $(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
-	@[ -z "$(THIS)" ] || (set -e; target=depend; $(RECURSIVE_MAKE) )
+dclean: dclean_engines
+dclean_engines:
 
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
-	@target=dclean; $(RECURSIVE_MAKE)
+clean: clean_engines
+clean_engines:
+	rm -f engines/*.o engines/*.d engines/*.obj engines/lib engines/tags engines/core engines/.pure engines/.nfs* engines/*.old engines/*.bak engines/fluff
 
-clean:
-	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-	@target=clean; $(RECURSIVE_MAKE)
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-e_4758cca.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-e_4758cca.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-e_4758cca.o: ../include/openssl/crypto.h ../include/openssl/dso.h
-e_4758cca.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-e_4758cca.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
-e_4758cca.o: ../include/openssl/engine.h ../include/openssl/err.h
-e_4758cca.o: ../include/openssl/evp.h ../include/openssl/lhash.h
-e_4758cca.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-e_4758cca.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-e_4758cca.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
-e_4758cca.o: ../include/openssl/rand.h ../include/openssl/rsa.h
-e_4758cca.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-e_4758cca.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-e_4758cca.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
-e_4758cca.o: e_4758cca.c e_4758cca_err.c e_4758cca_err.h
-e_4758cca.o: vendor_defns/hw_4758_cca.h
-e_aep.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-e_aep.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-e_aep.o: ../include/openssl/crypto.h ../include/openssl/dh.h
-e_aep.o: ../include/openssl/dsa.h ../include/openssl/dso.h
-e_aep.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-e_aep.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
-e_aep.o: ../include/openssl/engine.h ../include/openssl/err.h
-e_aep.o: ../include/openssl/evp.h ../include/openssl/lhash.h
-e_aep.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-e_aep.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-e_aep.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
-e_aep.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-e_aep.o: ../include/openssl/sha.h ../include/openssl/stack.h
-e_aep.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
-e_aep.o: ../include/openssl/x509_vfy.h e_aep.c e_aep_err.c e_aep_err.h
-e_aep.o: vendor_defns/aep.h
-e_atalla.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-e_atalla.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-e_atalla.o: ../include/openssl/crypto.h ../include/openssl/dh.h
-e_atalla.o: ../include/openssl/dsa.h ../include/openssl/dso.h
-e_atalla.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-e_atalla.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
-e_atalla.o: ../include/openssl/engine.h ../include/openssl/err.h
-e_atalla.o: ../include/openssl/evp.h ../include/openssl/lhash.h
-e_atalla.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-e_atalla.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-e_atalla.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
-e_atalla.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-e_atalla.o: ../include/openssl/sha.h ../include/openssl/stack.h
-e_atalla.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
-e_atalla.o: ../include/openssl/x509_vfy.h e_atalla.c e_atalla_err.c
-e_atalla.o: e_atalla_err.h vendor_defns/atalla.h
-e_capi.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-e_capi.o: ../include/openssl/buffer.h ../include/openssl/crypto.h
-e_capi.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-e_capi.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
-e_capi.o: ../include/openssl/engine.h ../include/openssl/evp.h
-e_capi.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
-e_capi.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-e_capi.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-e_capi.o: ../include/openssl/pkcs7.h ../include/openssl/safestack.h
-e_capi.o: ../include/openssl/sha.h ../include/openssl/stack.h
-e_capi.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
-e_capi.o: ../include/openssl/x509_vfy.h e_capi.c
-e_chil.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-e_chil.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-e_chil.o: ../include/openssl/crypto.h ../include/openssl/dh.h
-e_chil.o: ../include/openssl/dso.h ../include/openssl/e_os2.h
-e_chil.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-e_chil.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
-e_chil.o: ../include/openssl/err.h ../include/openssl/evp.h
-e_chil.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
-e_chil.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-e_chil.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-e_chil.o: ../include/openssl/pem.h ../include/openssl/pem2.h
-e_chil.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
-e_chil.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-e_chil.o: ../include/openssl/sha.h ../include/openssl/stack.h
-e_chil.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
-e_chil.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h e_chil.c
-e_chil.o: e_chil_err.c e_chil_err.h vendor_defns/hwcryptohook.h
-e_cswift.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-e_cswift.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-e_cswift.o: ../include/openssl/crypto.h ../include/openssl/dh.h
-e_cswift.o: ../include/openssl/dsa.h ../include/openssl/dso.h
-e_cswift.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-e_cswift.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
-e_cswift.o: ../include/openssl/engine.h ../include/openssl/err.h
-e_cswift.o: ../include/openssl/evp.h ../include/openssl/lhash.h
-e_cswift.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-e_cswift.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-e_cswift.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
-e_cswift.o: ../include/openssl/rand.h ../include/openssl/rsa.h
-e_cswift.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-e_cswift.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-e_cswift.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h e_cswift.c
-e_cswift.o: e_cswift_err.c e_cswift_err.h vendor_defns/cswift.h
-e_gmp.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-e_gmp.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-e_gmp.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-e_gmp.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-e_gmp.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
-e_gmp.o: ../include/openssl/evp.h ../include/openssl/lhash.h
-e_gmp.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-e_gmp.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-e_gmp.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
-e_gmp.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-e_gmp.o: ../include/openssl/sha.h ../include/openssl/stack.h
-e_gmp.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
-e_gmp.o: ../include/openssl/x509_vfy.h e_gmp.c
-e_nuron.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-e_nuron.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-e_nuron.o: ../include/openssl/crypto.h ../include/openssl/dh.h
-e_nuron.o: ../include/openssl/dsa.h ../include/openssl/dso.h
-e_nuron.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-e_nuron.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
-e_nuron.o: ../include/openssl/engine.h ../include/openssl/err.h
-e_nuron.o: ../include/openssl/evp.h ../include/openssl/lhash.h
-e_nuron.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-e_nuron.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-e_nuron.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
-e_nuron.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-e_nuron.o: ../include/openssl/sha.h ../include/openssl/stack.h
-e_nuron.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
-e_nuron.o: ../include/openssl/x509_vfy.h e_nuron.c e_nuron_err.c e_nuron_err.h
-e_padlock.o: ../include/openssl/aes.h ../include/openssl/asn1.h
-e_padlock.o: ../include/openssl/bio.h ../include/openssl/buffer.h
-e_padlock.o: ../include/openssl/crypto.h ../include/openssl/dso.h
-e_padlock.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-e_padlock.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
-e_padlock.o: ../include/openssl/engine.h ../include/openssl/err.h
-e_padlock.o: ../include/openssl/evp.h ../include/openssl/lhash.h
-e_padlock.o: ../include/openssl/modes.h ../include/openssl/obj_mac.h
-e_padlock.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-e_padlock.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-e_padlock.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
-e_padlock.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-e_padlock.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-e_padlock.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
-e_padlock.o: e_padlock.c
-e_sureware.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-e_sureware.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-e_sureware.o: ../include/openssl/crypto.h ../include/openssl/dh.h
-e_sureware.o: ../include/openssl/dsa.h ../include/openssl/dso.h
-e_sureware.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-e_sureware.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
-e_sureware.o: ../include/openssl/engine.h ../include/openssl/err.h
-e_sureware.o: ../include/openssl/evp.h ../include/openssl/lhash.h
-e_sureware.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-e_sureware.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-e_sureware.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
-e_sureware.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
-e_sureware.o: ../include/openssl/rand.h ../include/openssl/rsa.h
-e_sureware.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-e_sureware.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-e_sureware.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
-e_sureware.o: e_sureware.c e_sureware_err.c e_sureware_err.h
-e_sureware.o: vendor_defns/sureware.h
-e_ubsec.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-e_ubsec.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-e_ubsec.o: ../include/openssl/crypto.h ../include/openssl/dh.h
-e_ubsec.o: ../include/openssl/dsa.h ../include/openssl/dso.h
-e_ubsec.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-e_ubsec.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
-e_ubsec.o: ../include/openssl/engine.h ../include/openssl/err.h
-e_ubsec.o: ../include/openssl/evp.h ../include/openssl/lhash.h
-e_ubsec.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-e_ubsec.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-e_ubsec.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
-e_ubsec.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-e_ubsec.o: ../include/openssl/sha.h ../include/openssl/stack.h
-e_ubsec.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
-e_ubsec.o: ../include/openssl/x509_vfy.h e_ubsec.c e_ubsec_err.c e_ubsec_err.h
-e_ubsec.o: vendor_defns/hw_ubsec.h

@@ -1,0 +1,8 @@
+#
+# OpenSSL/crypto/pqueue/BSDmakefile
+#
+
+.include "crypto/pqueue/Makefile"
+.for d in $(SRC_crypto_pqueue:.c=.d)
+.sinclude "$(d)"
+.endfor

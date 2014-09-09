@@ -1,5 +1,7 @@
 #!/usr/local/bin/perl
 
+use File::Basename;
+
 # mklink.pl
 
 # The first command line argument is a non-empty relative path
@@ -54,20 +56,21 @@ $symlink_exists=eval {symlink("",""); 1};
 if ($^O eq "msys") { $symlink_exists=0 };
 foreach $file (@files) {
     my $err = "";
+    my $file_base = basename($file);
     if ($symlink_exists) {
-	unlink "$from/$file";
-	symlink("$to/$file", "$from/$file") or $err = " [$!]";
+	unlink "$from/$file_base";
+	symlink("$to/$file", "$from/$file_base") or $err = " [$!]";
     } else {
-	unlink "$from/$file"; 
+	unlink "$from/$file_base";
 	open (OLD, "<$file") or die "Can't open $file: $!";
-	open (NEW, ">$from/$file") or die "Can't open $from/$file: $!";
+	open (NEW, ">$from/$file_base") or die "Can't open $from/$file_base: $!";
 	binmode(OLD);
 	binmode(NEW);
 	while (<OLD>) {
 	    print NEW $_;
 	}
 	close (OLD) or die "Can't close $file: $!";
-	close (NEW) or die "Can't close $from/$file: $!";
+	close (NEW) or die "Can't close $from/$file_base: $!";
     }
-    print $file . " => $from/$file$err\n";
+    print $file . " => $from/$file_base$err\n";
 }
