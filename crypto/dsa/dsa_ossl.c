@@ -449,9 +449,7 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 	ret=(BN_ucmp(&u1, sig->r) == 0);
 
 	err:
-	/* XXX: surely this is wrong - if ret is 0, it just didn't verify;
-	   there is no error in BN. Test should be ret == -1 (Ben) */
-	if (ret != 1) DSAerr(DSA_F_DSA_DO_VERIFY,ERR_R_BN_LIB);
+	if (ret < 0) DSAerr(DSA_F_DSA_DO_VERIFY,ERR_R_BN_LIB);
 	if (ctx != NULL) BN_CTX_free(ctx);
 	BN_free(&u1);
 	BN_free(&u2);
