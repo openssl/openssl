@@ -106,7 +106,7 @@ static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method,
 	unsigned char pkey_dig[EVP_MAX_MD_SIZE];
 	unsigned int diglen;
 
-	if(strcmp(str, "hash")) return s2i_ASN1_OCTET_STRING(method, ctx, str);
+	if(strcmp(str, "hash") && strcmp(str, "belt-hash")) return s2i_ASN1_OCTET_STRING(method, ctx, str);
 
 	if(!(oct = M_ASN1_OCTET_STRING_new())) {
 		X509V3err(X509V3_F_S2I_SKEY_ID,ERR_R_MALLOC_FAILURE);
@@ -128,8 +128,14 @@ static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method,
 		X509V3err(X509V3_F_S2I_SKEY_ID,X509V3_R_NO_PUBLIC_KEY);
 		goto err;
 	}
-
-	if (!EVP_Digest(pk->data, pk->length, pkey_dig, &diglen, EVP_sha1(), NULL))
+	
+	EVP_MD* md = EVP_sha1();
+	ENGINE* engine = NULL;
+	if (!strcmp(str, "belt-hash")) {
+		md = EVP_get_digestbyname("belt-hash");
+		engine = NULL;
+	}
+	if (!EVP_Digest(pk->data, pk->length, pkey_dig, &diglen, md , NULL))
 		goto err;
 
 	if(!M_ASN1_OCTET_STRING_set(oct, pkey_dig, diglen)) {
