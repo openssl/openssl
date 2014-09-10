@@ -50,7 +50,7 @@ install:
 		if expr "$(PLATFORM)" : "Cygwin" >/dev/null; then \
 			sfx=".so"; \
 			cp cyg$(LIBNAME).dll $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$${pfx}$(LIBNAME)$$sfx.new; \
-		else; \
+		else \
 			case "$(CFLAGS)" in \
 			*DSO_BEOS*) sfx=".so";; \
 			*DSO_DLFCN*) sfx=`expr "$(SHLIB_EXT)" : '.*\(\.[a-z][a-z]*\)' \| ".so"`;; \
