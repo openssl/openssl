@@ -16,9 +16,15 @@
 /*.pc
 /rehash.time
 /inc.*
+/inc32
 /makefile.*
 /out.*
 /tmp.*
+/tmp32
+/tmp32dll
+/out32
+/out32dll
+
 
 # Most *.c files under test/ are symlinks
 /test/*.c
