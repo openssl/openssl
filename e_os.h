@@ -113,6 +113,7 @@ extern "C" {
  ********************************************************************/
 /* The following is used because of the small stack in some
  * Microsoft operating systems */
+
 #if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYSNAME_WIN32)
 #  define MS_STATIC	static
 #else
@@ -352,8 +353,11 @@ static unsigned int _strlen31(const char *str)
 #    define _int64 __int64
 #    define _kbhit kbhit
 #  endif
-
-#  define EXIT(n) exit(n)
+#  if defined (OPENSSL_WINAPP)
+#    define EXIT(n) return(n)
+#  else
+#    define EXIT(n) exit(n)
+#  endif
 #  define LIST_SEPARATOR_CHAR ';'
 #  ifndef X_OK
 #    define X_OK	0
@@ -683,7 +687,7 @@ extern char *sys_errlist[]; extern int sys_nerr;
 #endif
 
 #ifndef OPENSSL_EXIT
-# if defined(MONOLITH) && !defined(OPENSSL_C)
+# if defined(OPENSSL_WINAPP) || (defined(MONOLITH) && !defined(OPENSSL_C))
 #  define OPENSSL_EXIT(n) return(n)
 # else
 #  define OPENSSL_EXIT(n) do { EXIT(n); return(n); } while(0)

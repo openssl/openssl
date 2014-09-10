@@ -120,8 +120,10 @@
 #ifndef _WIN32_WINNT
 # define _WIN32_WINNT 0x0400
 #endif
-#include <wincrypt.h>
-#include <tlhelp32.h>
+#if !defined(OPENSSL_WINAPP)
+# include <wincrypt.h>
+# include <tlhelp32.h>
+#endif
 
 /* Limit the time spent walking through the heap, processes, threads and modules to
    a maximum of 1000 miliseconds each, unless CryptoGenRandom failed */
@@ -158,7 +160,7 @@ typedef struct tagCURSORINFO
 #define CURSOR_SHOWING     0x00000001
 #endif /* CURSOR_SHOWING */
 
-#if !defined(OPENSSL_SYS_WINCE)
+#if !defined(OPENSSL_SYS_WINCE) && !defined(OPENSSL_WINAPP)
 typedef BOOL (WINAPI *CRYPTACQUIRECONTEXTW)(HCRYPTPROV *, LPCWSTR, LPCWSTR,
 				    DWORD, DWORD);
 typedef BOOL (WINAPI *CRYPTGENRANDOM)(HCRYPTPROV, DWORD, BYTE *);
@@ -191,6 +193,7 @@ typedef NET_API_STATUS (NET_API_FUNCTION * NETFREE)(LPBYTE);
 #endif /* 1 */
 #endif /* !OPENSSL_SYS_WINCE */
 
+#if !defined(OPENSSL_WINAPP) //Rand_Poll is defined on ms/winrt.cpp for Windows Store && Windows Phone versions of openssl
 int RAND_poll(void)
 {
 	MEMORYSTATUS m;
@@ -632,7 +635,7 @@ int RAND_poll(void)
 
 	return(1);
 }
-
+#endif //!defined(OPENSSL_WINAPP)
 int RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam)
         {
         double add_entropy=0;
@@ -739,7 +742,7 @@ static void readtimer(void)
 
 static void readscreen(void)
 {
-#if !defined(OPENSSL_SYS_WINCE) && !defined(OPENSSL_SYS_WIN32_CYGWIN)
+#if !defined(OPENSSL_SYS_WINCE) && !defined(OPENSSL_SYS_WIN32_CYGWIN) && !defined(OPENSSL_WINAPP)
   HDC		hScrDC;		/* screen DC */
   HDC		hMemDC;		/* memory DC */
   HBITMAP	hBitmap;	/* handle for our bitmap */

@@ -135,6 +135,24 @@ elsif ($FLAVOR =~ /CE/)
     $dbg_cflags=' /Od -DDEBUG -D_DEBUG';
     $lflags="/nologo /opt:ref $wcelflag";
     }
+elsif ($FLAVOR =~ /PHONE/)
+    {
+        #Windows Phone
+    $base_cflags= " $mf_cflag";
+    my $f = ' /MD';
+    $opt_cflags=$f.' /Ox /O2 /Ob2';
+    $dbg_cflags=$f.'d /Od -DDEBUG -D_DEBUG';
+    $lflags="/nologo /subsystem:console /opt:ref \"WindowsPhoneCore.lib\" \"RuntimeObject.lib\" \"PhoneAppModelHost.lib\" /NODEFAULTLIB:\"kernel32.lib\" /NODEFAULTLIB:\"ole32.lib\" /APPCONTAINER";
+    }
+elsif ($FLAVOR =~ /STORE/)
+    {
+        #Windows Store
+    $base_cflags= " $mf_cflag";
+    my $f = ' /MD';
+    $opt_cflags=$f.' /Ox /O2 /Ob2';
+    $dbg_cflags=$f.'d /Od -DDEBUG -D_DEBUG';
+    $lflags="/nologo /APPCONTAINER";
+    }
 else	# Win32
     {
     $base_cflags= " $mf_cflag";
@@ -177,6 +195,12 @@ $link="link";
 $rsc="rc";
 $efile="/out:";
 $exep='.exe';
+
+#No exes allowed for Phone/Store, instead test binaries are compiled as DLLs and are tested via LoadPackagedLibrary
+if($FLAVOR =~ /PHONE|STORE/)
+	{
+	$exep=".dll";
+	}
 if ($no_sock)		{ $ex_libs=''; }
 elsif ($FLAVOR =~ /CE/)	{ $ex_libs='ws2.lib'; }
 else			{ $ex_libs='ws2_32.lib'; }
@@ -199,6 +223,10 @@ if ($FLAVOR =~ /CE/)
 	$ex_libs.=' $(PORTSDK_LIBPATH)/portlib.lib'	if (defined($ENV{'PORTSDK_LIBPATH'}));
 	$ex_libs.=' /nodefaultlib coredll.lib corelibc.lib' if ($ENV{'TARGETCPU'} eq "X86");
 	}
+elsif($FLAVOR =~ /PHONE|STORE/)
+	{
+		#All Phone/Store API are unicode
+	}
 else
 	{
 	$ex_libs.=' gdi32.lib advapi32.lib crypt32.lib user32.lib';
@@ -217,7 +245,12 @@ $shlibp=($shlib)?".dll":".lib";
 $lfile='/out:';
 
 $shlib_ex_obj="";
-$app_ex_obj="setargv.obj" if ($FLAVOR !~ /CE/);
+$app_ex_obj="setargv.obj" if ($FLAVOR !~ /CE/ and $FLAVOR !~/PHONE/ and $FLAVOR !~/STORE/);
+
+#link C++/CX object for WinPhone/Store
+if ($FLAVOR =~ /PHONE|STORE/) {
+	$shlib_ex_obj=$app_ex_obj="\$(OBJ_D)\\winrt.obj";
+}
 if ($FLAVOR =~ /WIN64A/) {
 	if (`nasm -v 2>NUL` =~ /NASM version ([0-9]+\.[0-9]+)/ && $1 >= 2.0) {
 		$asm='nasm -f win64 -DNEAR -Ox -g';
@@ -389,12 +422,20 @@ sub do_link_rule
 		$ret.="\t\$(FIPSLINK) \$(LFLAGS) /map $efile$target @<<\n";
 		$ret.="\t\$(APP_EX_OBJ) $files \$(OBJ_D)${o}fips_premain.obj $libs\n<<\n";
 		}
+	elsif ($FLAVOR =~ /PHONE|STORE/)
+		{
+		#compile exe as DLL for windows phone/store for testing binaries
+		#$ret.="\t\$(MKLIB) /out:$target @<<\n";
+		#$ret.="\t$files \n<<\n";
+		$ret.="\t\$(LINK) /dll /EXPORT:winrt_main \$(LFLAGS) $efile$target @<<\n";
+		$ret.="\t\$(APP_EX_OBJ) $files $libs\n<<\n";
+		}
 	else
 		{
 		$ret.="\t\$(LINK) \$(LFLAGS) $efile$target @<<\n";
 		$ret.="\t\$(APP_EX_OBJ) $files $libs\n<<\n";
 		}
-    	$ret.="\tIF EXIST \$@.manifest mt -nologo -manifest \$@.manifest -outputresource:\$@;1\n\n";
+	$ret.="\tIF EXIST \$@.manifest mt -nologo -manifest \$@.manifest -outputresource:\$@;1\n\n" if (!($FLAVOR =~ /PHONE|STORE/));
 	return($ret);
 	}
 

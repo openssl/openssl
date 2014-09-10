@@ -310,7 +310,7 @@ static void recsig(int);
 static void pushsig(void);
 static void popsig(void);
 #endif
-#if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN16)
+#if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN16) && !defined(OPENSSL_WINAPP)
 static int noecho_fgets(char *buf, int size, FILE *tty);
 #endif
 static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl);
@@ -419,7 +419,7 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
 	int ok;
 	char result[BUFSIZ];
 	int maxsize = BUFSIZ-1;
-#if !defined(OPENSSL_SYS_WIN16) && !defined(OPENSSL_SYS_WINCE)
+#if !defined(OPENSSL_SYS_WIN16) && !defined(OPENSSL_SYS_WINCE) && !defined(OPENSSL_WINAPP)
 	char *p;
 
 	intr_signal=0;
@@ -671,7 +671,7 @@ static void recsig(int i)
 #endif
 
 /* Internal functions specific for Windows */
-#if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN16) && !defined(OPENSSL_SYS_WINCE)
+#if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN16) && !defined(OPENSSL_SYS_WINCE) && !defined(OPENSSL_WINAPP) 
 static int noecho_fgets(char *buf, int size, FILE *tty)
 	{
 	int i;

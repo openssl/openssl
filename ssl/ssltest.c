@@ -207,6 +207,9 @@
 #elif defined(OPENSSL_SYS_NETWARE)
 #  define TEST_SERVER_CERT "\\openssl\\apps\\server.pem"
 #  define TEST_CLIENT_CERT "\\openssl\\apps\\client.pem"
+#elif defined(OPENSSL_WINAPP)
+#  define TEST_SERVER_CERT "server.pem"
+#  define TEST_CLIENT_CERT "client.pem"
 #else
 #  define TEST_SERVER_CERT "../apps/server.pem"
 #  define TEST_CLIENT_CERT "../apps/client.pem"

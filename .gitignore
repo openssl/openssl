@@ -1,5 +1,6 @@
 # Object files
 *.o
+*.obj
 
 # editor artefacts
 *.swp
@@ -13,12 +14,14 @@
 /MINFO
 /*.a
 /include
+/inc32
 /*.pc
 /rehash.time
 /inc.*
 /makefile.*
 /out.*
 /tmp.*
+/vsout
 
 # Most *.c files under test/ are symlinks
 /test/*.c
@@ -54,6 +57,12 @@
 !/crypto/bn/asm/pa-risc2.s
 !/crypto/bn/asm/pa-risc2W.s
 
+# Windows generated build files
+ms/libeay32.def
+ms/nt.mak
+ms/ntdll.mak
+ms/ssleay32.def
+
 # Executables
 /apps/openssl
 /test/sha256t
@@ -69,6 +78,8 @@
 /test/fips_ecdsavs
 /test/fips_rngvs
 /test/fips_test_suite
+/out32
+/tmp32
 *.so*
 *.dylib*
 *.dll*

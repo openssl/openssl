@@ -284,8 +284,14 @@ static SIGRETTYPE sig_done(int sig)
 
 #define START	0
 #define STOP	1
-
-#if defined(_WIN32)
+#if defined (OPENSSL_WINAPP)
+static double Time_F(int s)
+	{
+	double ret = app_tminterval(s,usertime);
+	//Simplify measure of time in WINRT, Note that openssl.dll binary is used for testing only on Windows Phone/Windows Store.
+	return ret;
+	}
+#elif defined(_WIN32)
 
 #if !defined(SIGALRM)
 # define SIGALRM

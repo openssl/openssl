@@ -96,6 +96,8 @@ $infile="MINFO";
 
 %ops=(
 	"VC-WIN32",   "Microsoft Visual C++ [4-6] - Windows NT or 9X",
+	"VC-WINPHONE","Microsoft Visual C++ [12] - Windows Phone 8.0 or Windows Phone 8.1",
+	"VC-WINSTORE","Microsoft Visual C++ [12] - Windows Store 8.0 or Windows Store 8.1",
 	"VC-WIN64I",  "Microsoft C/C++ - Win64/IA-64",
 	"VC-WIN64A",  "Microsoft C/C++ - Win64/x64",
 	"VC-CE",   "Microsoft eMbedded Visual C++ 3.0 - Windows CE ONLY",
@@ -929,6 +931,14 @@ foreach (values %lib_nam)
 	$rules.=&do_compile_rule("\$(OBJ_D)",$lib_obj{$_},$lib);
 	}
 
+# C++/CX extensions for winrt.obj, so we can generate entropy on the platform using these extensions.
+if ($platform eq "VC-WINPHONE" or $platform eq "VC-WINSTORE") {
+    $rules.= <<"EOF";
+\$(OBJ_D)\\winrt.obj: \$(SRC_D)\\ms\\winrt.cpp
+	\$(CC)  /ZW:nostdlib /EHsc /ZW /Fo\$(OBJ_D)\\winrt.obj /FUPlatform.winmd /FUWindows.winmd   \$(LIB_CFLAGS) -c \$(SRC_D)\\ms\\winrt.cpp
+
+EOF
+}
 # hack to add version info on MSVC
 if (($platform eq "VC-WIN32") || ($platform eq "VC-WIN64A")
 	|| ($platform eq "VC-WIN64I") || ($platform eq "VC-NT")) {
@@ -1210,6 +1220,12 @@ sub do_defs
 		elsif ($var eq "SSLOBJ")
 			{ $ret.="\$(OBJ_D)\\\$(SSL).res "; }
 		}
+	# add winrt object compiled with C++/CX extensions
+	if ($platform eq "VC-WINPHONE" or $platform eq "VC-WINSTORE")
+		{
+		if ($var eq "CRYPTOOBJ")
+			{ $ret.="\$(OBJ_D)\\winrt.obj "; }
+		}
 	chomp($ret);
 	$ret.="\n\n";
 	return($ret);
@@ -1313,6 +1329,8 @@ sub cc_compile_target
 	local($ret);
 	
 	$ex_flags.=" -DMK1MF_BUILD -D$platform_cpp_symbol" if ($source =~ /cversion/);
+	# C defines are hooked at source level on winrtdef.h
+	$ex_flags.=" -I\$(SRC_D)\\ms -FIwinrtdef.h" if ($platform =~ /VC-WINPHONE/ || $platform =~ /VC-WINSTORE/);
 	$target =~ s/\//$o/g if $o ne "/";
 	$source =~ s/\//$o/g if $o ne "/";
 	$ret ="$target: \$(SRC_D)$o$source\n\t";

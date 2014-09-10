@@ -100,14 +100,24 @@ int main(int argc, char * argv[]) { puts("Elliptic curves are disabled."); retur
 /* suppress "too big too optimize" warning */
 #pragma warning(disable:4959)
 #endif
-
-#define ABORT do { \
-	fflush(stdout); \
-	fprintf(stderr, "%s:%d: ABORT\n", __FILE__, __LINE__); \
-	ERR_print_errors_fp(stderr); \
-	EXIT(1); \
-} while (0)
-
+/* For WindowsPhone & WindowsStore EXIT(n) is defined as a return(n)
+   since exit(0) will cause an uncaught exception that is not the expected workflow for other tests.
+   in this case abort can cause the exception since it is ok to fail the tests at this point */
+#if defined(OPENSSL_WINAPP)
+  #define ABORT do { \
+	 fflush(stdout); \
+	 fprintf(stderr, "%s:%d: ABORT\n", __FILE__, __LINE__); \
+	 ERR_print_errors_fp(stderr); \
+	 exit(1); \
+ } while (0)
+#else
+ #define ABORT do { \
+	 fflush(stdout); \
+	 fprintf(stderr, "%s:%d: ABORT\n", __FILE__, __LINE__); \
+	 ERR_print_errors_fp(stderr); \
+	 EXIT(1); \
+ } while (0)
+#endif
 #define TIMING_BASE_PT 0
 #define TIMING_RAND_PT 1
 #define TIMING_SIMUL 2
