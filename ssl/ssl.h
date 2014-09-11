@@ -685,6 +685,32 @@ struct ssl_session_st
  */
 #define SSL_MODE_SEND_CLIENTHELLO_TIME 0x00000020L
 #define SSL_MODE_SEND_SERVERHELLO_TIME 0x00000040L
+/* If set - SSL_ERROR_WANT_RSA_DECRYPT/SSL_ERROR_WANT_SIGN may be returned
+ * by SSL_read()/SSL_write()/SSL_accept(), when the key exchange requires the
+ * use of the RSA private key.
+ *
+ * In such case following functions should be called in order to get input
+ * data and input length:
+ *
+ *     SSL_get_key_ex_data()
+ *     SSL_get_key_ex_len()
+ *
+ * In case of SSL_ERROR_WANT_SIGN - SSL_get_key_ex_type() will return the
+ * type of the private key that should be used for signature.
+ * SSL_get_key_ex_md() - for getting the nid of digest. Note that it may return
+ * NID_md5_sha1, which could only be supplied to RSA_sign() and is not accepted
+ * by general EVP methods.
+ *
+ * After performing this operation (decrypt / sign), the output data should be
+ * supplied via:
+ *
+ *     SSL_supply_key_ex_data()
+ *
+ * Next either of SSL_accept()/SSL_read()/SSL_write() may be called to continue
+ * the handshake.
+ */
+
+#define SSL_MODE_ASYNC_KEY_EX          0x00000080L
 
 /* Cert related flags */
 /* Many implementations ignore some aspects of the TLS standards such as
@@ -1275,12 +1301,16 @@ int SSL_extension_supported(unsigned int ext_type);
 #define SSL_WRITING	2
 #define SSL_READING	3
 #define SSL_X509_LOOKUP	4
+#define SSL_RSA_DECRYPT	5
+#define SSL_SIGN	6
 
 /* These will only be used when doing non-blocking IO */
 #define SSL_want_nothing(s)	(SSL_want(s) == SSL_NOTHING)
 #define SSL_want_read(s)	(SSL_want(s) == SSL_READING)
 #define SSL_want_write(s)	(SSL_want(s) == SSL_WRITING)
 #define SSL_want_x509_lookup(s)	(SSL_want(s) == SSL_X509_LOOKUP)
+#define SSL_want_rsa_decrypt(s)	(SSL_want(s) == SSL_RSA_DECRYPT)
+#define SSL_want_sign(s)	(SSL_want(s) == SSL_SIGN)
 
 #define SSL_MAC_FLAG_READ_MAC_STREAM 1
 #define SSL_MAC_FLAG_WRITE_MAC_STREAM 2
@@ -1546,6 +1576,17 @@ struct ssl_st
 	/* Callback for disabling session caching and ticket support
 	 * on a session basis, depending on the chosen cipher. */
 	int (*not_resumable_session_cb)(SSL *ssl, int is_forward_secure);
+	struct
+		{
+		/* Input data for key exchange */
+		unsigned char* data;
+		/* Input length */
+		long len;
+		/* Digest type for signature */
+		int md;
+		/* EVP_PKEY type */
+		int type;
+		} key_ex;
 	};
 
 #endif
@@ -1633,6 +1674,26 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 #define OpenSSL_add_ssl_algorithms()	SSL_library_init()
 #define SSLeay_add_ssl_algorithms()	SSL_library_init()
 
+/*
+ * Async key exchange methods
+ * See SSL_MODE_ASYNC_KEY_EX for detailed documentation
+ */
+
+/* Input data for async key exchange */
+const unsigned char* SSL_get_key_ex_data(const SSL *s);
+
+/* Input length for async key exchange */
+long SSL_get_key_ex_len(const SSL *s);
+
+/* Signature digest algorithm NID */
+int SSL_get_key_ex_md(const SSL *s);
+
+/* Signature private key type, EVP_PKEY_RSA/EVP_PKEY_ECC/... */
+int SSL_get_key_ex_type(const SSL *s);
+
+/* Supply the key exchange data */
+int SSL_supply_key_ex_data(SSL *s, unsigned char *data, long len);
+
 /* this is for backward compatibility */
 #if 0 /* NEW_SSLEAY */
 #define SSL_CTX_set_default_verify(a,b,c) SSL_CTX_set_verify(a,b,c)
@@ -1703,6 +1764,8 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_ERROR_ZERO_RETURN		6
 #define SSL_ERROR_WANT_CONNECT		7
 #define SSL_ERROR_WANT_ACCEPT		8
+#define SSL_ERROR_WANT_RSA_DECRYPT		9
+#define SSL_ERROR_WANT_SIGN		10
 
 #define SSL_CTRL_NEED_TMP_RSA			1
 #define SSL_CTRL_SET_TMP_RSA			2

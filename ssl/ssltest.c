@@ -224,6 +224,7 @@ static void free_tmp_rsa(void);
 #endif
 static int MS_CALLBACK app_verify_callback(X509_STORE_CTX *ctx, void *arg);
 #define APP_CALLBACK_STRING "Test Callback Argument"
+static int handle_async_key_ex(SSL *s);
 struct app_verify_arg
 	{
 	char *string;
@@ -812,6 +813,7 @@ static void sv_usage(void)
 	fprintf(stderr," -alpn_client <string> - have client side offer ALPN\n");
 	fprintf(stderr," -alpn_server <string> - have server side offer ALPN\n");
 	fprintf(stderr," -alpn_expected <string> - the ALPN protocol that should be negotiated\n");
+	fprintf(stderr," -async_key_ex - use SSL_MODE_ASYNC_KEY_EX\n");
 	}
 
 static void print_details(SSL *c_ssl, const char *prefix)
@@ -992,6 +994,7 @@ int main(int argc, char *argv[])
 #ifdef OPENSSL_FIPS
 	int fips_mode=0;
 #endif
+	int async_key_ex=0;
 
 	verbose = 0;
 	debug = 0;
@@ -1256,6 +1259,8 @@ int main(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			alpn_expected = *(++argv);
 			}
+		else if	(strcmp(*argv,"-async_key_ex") == 0)
+			async_key_ex=1;
 		else
 			{
 			fprintf(stderr,"unknown option %s\n",*argv);
@@ -1454,10 +1459,18 @@ bad:
 		SSL_CTX_set_tmp_ecdh(s_ctx, ecdh);
 		SSL_CTX_set_options(s_ctx, SSL_OP_SINGLE_ECDH_USE);
 		EC_KEY_free(ecdh);
+
 		}
 #else
 	(void)no_ecdhe;
 #endif
+
+	if (async_key_ex)
+		{
+		long mode;
+		mode = SSL_CTX_get_mode(s_ctx);
+		SSL_CTX_set_mode(s_ctx, mode | SSL_MODE_ASYNC_KEY_EX);
+		}
 
 #ifndef OPENSSL_NO_RSA
 	SSL_CTX_set_tmp_rsa_callback(s_ctx,tmp_rsa_cb);
@@ -1922,7 +1935,9 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
 					i = sizeof sbuf;
 				else
 					i = (int)sw_num;
-				r = BIO_write(s_ssl_bio, sbuf, i);
+				do
+					r = BIO_write(s_ssl_bio, sbuf, i);
+				while (r < 0 && handle_async_key_ex(s_ssl));
 				if (r < 0)
 					{
 					if (!BIO_should_retry(s_ssl_bio))
@@ -1949,7 +1964,9 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
 				{
 				/* Read from client. */
 
-				r = BIO_read(s_ssl_bio, sbuf, sizeof(sbuf));
+				do
+					r = BIO_read(s_ssl_bio, sbuf, sizeof(sbuf));
+				while (r < 0 && handle_async_key_ex(s_ssl));
 				if (r < 0)
 					{
 					if (!BIO_should_retry(s_ssl_bio))
@@ -2349,7 +2366,9 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 			{
 			if (!s_write)
 				{
-				i=BIO_read(s_bio,sbuf,bufsiz);
+				do
+					i=BIO_read(s_bio,sbuf,bufsiz);
+				while (i < 0 && handle_async_key_ex(s_ssl));
 				if (i < 0)
 					{
 					s_r=0;
@@ -2396,7 +2415,9 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 				{
 				j = (sw_num > bufsiz) ?
 					(int)bufsiz : (int)sw_num;
-				i=BIO_write(s_bio,sbuf,j);
+				do
+					i=BIO_write(s_bio,sbuf,j);
+				while (i < 0 && handle_async_key_ex(s_ssl));
 				if (i < 0)
 					{
 					s_r=0;
@@ -3229,4 +3250,99 @@ static int do_test_cipherlist(void)
 #endif
 
 	return 1;
+	}
+
+static unsigned char buf[1024];
+
+static int handle_async_key_ex(SSL *s)
+	{
+	EVP_PKEY* pkey;
+	if (!(SSL_get_mode(s) & SSL_MODE_ASYNC_KEY_EX))
+		return 0;
+
+	fprintf(stderr, "performing async key ex\n");
+
+	pkey = SSL_CTX_get0_privatekey(s->ctx);
+	if (pkey == NULL)
+		{
+		fprintf(stderr, "async key ex: no private key\n");
+		return 0;
+		}
+
+	if (SSL_want_sign(s) && SSL_get_key_ex_md(s) == NID_md5_sha1)
+		{
+		assert(SSL_get_key_ex_type(s) == EVP_PKEY_RSA);
+		unsigned int len;
+		if (pkey->type != EVP_PKEY_RSA)
+			{
+			fprintf(stderr, "async key ex: non-rsa private key for sign\n");
+			return 0;
+			}
+		if (RSA_sign(NID_md5_sha1,
+								 SSL_get_key_ex_data(s),
+								 SSL_get_key_ex_len(s),
+								 buf,
+								 &len,
+								 pkey->pkey.rsa) <= 0)
+			{
+			fprintf(stderr, "async key ex: rsa sign failure\n");
+			return 0;
+			}
+		if (!SSL_supply_key_ex_data(s, buf, len))
+			return 0;
+		return SSL_accept(s);
+		}
+	if (SSL_want_sign(s) && SSL_get_key_ex_md(s) != NID_md5_sha1)
+		{
+		assert(SSL_get_key_ex_type(s) == pkey->type);
+		EVP_MD_CTX md_ctx;
+		const EVP_MD *md = NULL;
+		unsigned int len;
+
+		md = EVP_get_digestbynid(SSL_get_key_ex_md(s));
+		if (md == NULL)
+			{
+			fprintf(stderr, "async key ex: md not found\n");
+			return 0;
+			}
+
+		EVP_MD_CTX_init(&md_ctx);
+
+		EVP_SignInit_ex(&md_ctx, md, NULL);
+		EVP_SignUpdate(&md_ctx, SSL_get_key_ex_data(s), SSL_get_key_ex_len(s));
+		len = sizeof(buf);
+		if (!EVP_SignFinal(&md_ctx, buf, &len, pkey))
+			{
+			fprintf(stderr, "async key ex: sign failure\n");
+			return 0;
+			}
+
+		if (!SSL_supply_key_ex_data(s, buf, len))
+			return 0;
+		return SSL_accept(s);
+		}
+	if (SSL_want_rsa_decrypt(s))
+		{
+		int len;
+		if (pkey->type != EVP_PKEY_RSA)
+			{
+			fprintf(stderr, "async key ex: non-rsa private key for decryption\n");
+			return 0;
+			}
+		len = RSA_private_decrypt(SSL_get_key_ex_len(s),
+															SSL_get_key_ex_data(s),
+															buf,
+															pkey->pkey.rsa,
+															RSA_PKCS1_PADDING);
+		if (len == -1)
+			{
+			fprintf(stderr, "async key ex: rsa decrypt failed\n");
+			return 0;
+			}
+
+		if (!SSL_supply_key_ex_data(s, buf, len))
+			return 0;
+		return SSL_accept(s);
+		}
+	return 0;
 	}
