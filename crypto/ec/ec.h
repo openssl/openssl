@@ -243,6 +243,12 @@ int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator, const BIG
  */
 const EC_POINT *EC_GROUP_get0_generator(const EC_GROUP *group);
 
+/** Returns the montgomery data for order(Generator)
+ *  \param  group  EC_GROUP object
+ *  \return the currently used generator (possibly NULL).
+*/
+BN_MONT_CTX *EC_GROUP_get_mont_data(const EC_GROUP *group);
+
 /** Gets the order of a EC_GROUP
  *  \param  group  EC_GROUP object
  *  \param  order  BIGNUM to which the order is copied
