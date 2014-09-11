@@ -373,6 +373,7 @@ typedef struct ssl_cipher_st SSL_CIPHER;
 typedef struct ssl_session_st SSL_SESSION;
 typedef struct tls_sigalgs_st TLS_SIGALGS;
 typedef struct ssl_conf_ctx_st SSL_CONF_CTX;
+typedef struct ssl_async_key_ex_st SSL_ASYNC_KEY_EX;
 
 DECLARE_STACK_OF(SSL_CIPHER)
 
@@ -1128,6 +1129,11 @@ struct ssl_ctx_st
 	size_t tlsext_ellipticcurvelist_length;
 	unsigned char *tlsext_ellipticcurvelist;
 # endif /* OPENSSL_NO_EC */
+	void (*async_key_ex_cb)(SSL* s,
+													int type,
+													const char* md,
+													unsigned char* p,
+													long n);
 	};
 
 #endif
@@ -1270,6 +1276,16 @@ int SSL_CTX_add_server_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
 int SSL_extension_supported(unsigned int ext_type);
 
 #endif
+
+struct ssl_async_key_ex_st {
+	unsigned char* data;
+	long data_len;
+	/* Internal data, don't touch it */
+	unsigned char* packet;
+	long packet_len;
+	unsigned int int_off;
+	long int_n;
+};
 
 #define SSL_NOTHING	1
 #define SSL_WRITING	2
@@ -1546,6 +1562,13 @@ struct ssl_st
 	/* Callback for disabling session caching and ticket support
 	 * on a session basis, depending on the chosen cipher. */
 	int (*not_resumable_session_cb)(SSL *ssl, int is_forward_secure);
+
+	void (*async_key_ex_cb)(SSL* s,
+													int type,
+													const char* md,
+													unsigned char* p,
+													long n);
+	SSL_ASYNC_KEY_EX async_key_ex;
 	};
 
 #endif
@@ -1632,6 +1655,11 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 
 #define OpenSSL_add_ssl_algorithms()	SSL_library_init()
 #define SSLeay_add_ssl_algorithms()	SSL_library_init()
+
+/* Async key exchange params */
+#define SSL_KEY_EX_RSA 0x0
+#define SSL_KEY_EX_RSA_SIGN 0x1
+int SSL_supply(SSL* s, unsigned char* data, long len);
 
 /* this is for backward compatibility */
 #if 0 /* NEW_SSLEAY */
