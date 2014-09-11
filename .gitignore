@@ -20,8 +20,13 @@
 /inc.*
 /makefile.*
 /out.*
+/out32
+/out32dll
 /tmp.*
+/tmp32
+/tmp32dll
 /vsout
+
 
 # Most *.c files under test/ are symlinks
 /test/*.c
