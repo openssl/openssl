@@ -1,6 +1,6 @@
 /* crypto/ec/ec_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2013 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2014 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -200,6 +200,11 @@ static ERR_STRING_DATA EC_str_functs[]=
 {ERR_FUNC(EC_F_NISTP224_PRE_COMP_NEW),	"NISTP224_PRE_COMP_NEW"},
 {ERR_FUNC(EC_F_NISTP256_PRE_COMP_NEW),	"NISTP256_PRE_COMP_NEW"},
 {ERR_FUNC(EC_F_NISTP521_PRE_COMP_NEW),	"NISTP521_PRE_COMP_NEW"},
+{ERR_FUNC(EC_F_NISTZ256_GET_AFFINE_COORDINATES),	"NISTZ256_GET_AFFINE_COORDINATES"},
+{ERR_FUNC(EC_F_NISTZ256_POINTS_MUL),	"NISTZ256_POINTS_MUL"},
+{ERR_FUNC(EC_F_NISTZ256_POINTS_MUL_W),	"NISTZ256_POINTS_MUL_W"},
+{ERR_FUNC(EC_F_NISTZ256_PRECOMPUTE_MULT),	"NISTZ256_PRECOMPUTE_MULT"},
+{ERR_FUNC(EC_F_NISTZ256_PRE_COMP_NEW),	"NISTZ256_PRE_COMP_NEW"},
 {ERR_FUNC(EC_F_O2I_ECPUBLICKEY),	"o2i_ECPublicKey"},
 {ERR_FUNC(EC_F_OLD_EC_PRIV_DECODE),	"OLD_EC_PRIV_DECODE"},
 {ERR_FUNC(EC_F_PKEY_EC_CTRL),	"PKEY_EC_CTRL"},

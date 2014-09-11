@@ -48,6 +48,12 @@ lib:	$(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
+ecp_nistz256-x86_64.s: asm/ecp_nistz256-x86_64.pl
+	$(PERL) asm/ecp_nistz256-x86_64.pl $(PERLASM_SCHEME) > $@
+
+ecp_nistz256-avx2.s:   asm/ecp_nistz256-avx2.pl
+	$(PERL) asm/ecp_nistz256-avx2.pl $(PERLASM_SCHEME) > $@
+
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 

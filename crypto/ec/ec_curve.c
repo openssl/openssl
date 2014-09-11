@@ -2291,11 +2291,15 @@ static const ec_list_element curve_list[] = {
 	{ NID_X9_62_prime239v1, &_EC_X9_62_PRIME_239V1.h, 0, "X9.62 curve over a 239 bit prime field" },
 	{ NID_X9_62_prime239v2, &_EC_X9_62_PRIME_239V2.h, 0, "X9.62 curve over a 239 bit prime field" },
 	{ NID_X9_62_prime239v3, &_EC_X9_62_PRIME_239V3.h, 0, "X9.62 curve over a 239 bit prime field" },
-#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
-	{ NID_X9_62_prime256v1, &_EC_X9_62_PRIME_256V1.h, EC_GFp_nistp256_method, "X9.62/SECG curve over a 256 bit prime field" },
+	{ NID_X9_62_prime256v1, &_EC_X9_62_PRIME_256V1.h,
+#if defined(ECP_NISTZ256_ASM)
+		EC_GFp_nistz256_method,
+#elif !defined(OPENSSL_NO_EC_NISTP_64_GCC_128)
+		EC_GFp_nistp256_method,
 #else
-	{ NID_X9_62_prime256v1, &_EC_X9_62_PRIME_256V1.h, 0, "X9.62/SECG curve over a 256 bit prime field" },
+		0,
 #endif
+		"X9.62/SECG curve over a 256 bit prime field" },
 #ifndef OPENSSL_NO_EC2M
 	/* characteristic two field curves */
 	/* NIST/SECG curves */
