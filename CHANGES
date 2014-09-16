@@ -7352,7 +7352,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Bodo Moeller; problems reported by Anders Gertz <gertz@epact.se>]     
 
   *) Correct util/mkdef.pl to be selective about disabled algorithms.
-     Previously, it would create entries for disableed algorithms no
+     Previously, it would create entries for disabled algorithms no
      matter what.
      [Richard Levitte]
 
