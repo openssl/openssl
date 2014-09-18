@@ -13,7 +13,7 @@ AR=		ar r
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile README
-TEST=v3nametest.c
+TEST=v3nametest.c sct_test.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a

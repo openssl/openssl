@@ -87,6 +87,7 @@ FIPS_TEST_SUITE=fips_test_suite
 FIPS_CMACTEST=	fips_cmactest
 FIPS_ALGVS=	fips_algvs
 HEARTBEATTEST=  heartbeat_test
+SCTTEST=	sct_test
 
 TESTS=		alltests
 
@@ -100,7 +101,7 @@ EXE=	$(BNTEST)$(EXE_EXT) $(ECTEST)$(EXE_EXT)  $(ECDSATEST)$(EXE_EXT) $(ECDHTEST)
 	$(BFTEST)$(EXE_EXT) $(CASTTEST)$(EXE_EXT) $(SSLTEST)$(EXE_EXT) \
 	$(EXPTEST)$(EXE_EXT) $(DSATEST)$(EXE_EXT) $(RSATEST)$(EXE_EXT) \
 	$(EVPTEST)$(EXE_EXT) $(IGETEST)$(EXE_EXT) $(JPAKETEST)$(EXE_EXT) $(SRPTEST)$(EXE_EXT) \
-	$(V3NAMETEST)$(EXE_EXT) $(HEARTBEATTEST)$(EXE_EXT) $(P5_CRPT2_TEST)$(EXE_EXT)
+	$(V3NAMETEST)$(EXE_EXT) $(HEARTBEATTEST)$(EXE_EXT) $(P5_CRPT2_TEST)$(EXE_EXT) $(SCTTEST)$(EXE_EXT)
 
 FIPSEXE=$(FIPS_SHATEST)$(EXE_EXT) $(FIPS_DESTEST)$(EXE_EXT) \
 	$(FIPS_RANDTEST)$(EXE_EXT) $(FIPS_AESTEST)$(EXE_EXT) \
@@ -130,7 +131,7 @@ OBJ=	$(BNTEST).o $(ECTEST).o  $(ECDSATEST).o $(ECDHTEST).o $(IDEATEST).o \
 	$(FIPS_ECDHVS).o $(FIPS_CMACTEST).o $(FIPS_ALGVS).o \
 	$(EVPTEST).o $(IGETEST).o $(JPAKETEST).o $(V3NAMETEST).o \
 	$(GOST2814789TEST).o $(HEARTBEATTEST).o $(P5_CRPT2_TEST).o \
-	testutil.o
+	$(SCTTEST).o testutil.o
 
 SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(MD2TEST).c  $(MD4TEST).c $(MD5TEST).c \
@@ -147,7 +148,7 @@ SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(FIPS_ECDHVS).c $(FIPS_CMACTEST).c $(FIPS_ALGVS).c \
 	$(EVPTEST).c $(IGETEST).c $(JPAKETEST).c $(V3NAMETEST).c \
 	$(GOST2814789TEST).c $(HEARTBEATTEST).c $(P5_CRPT2_TEST).c \
-	testutil.c
+	$(SCTTEST).c testutil.c
 
 EXHEADER= 
 HEADER=	testutil.h $(EXHEADER)
@@ -195,7 +196,7 @@ alltests: \
 	test_gen test_req test_pkcs7 test_verify test_dh test_dsa \
 	test_ss test_ca test_engine test_evp test_ssl test_tsa test_ige \
 	test_jpake test_srp test_cms test_v3name test_ocsp \
-	test_gost2814789 test_heartbeat test_p5_crpt2
+	test_gost2814789 test_heartbeat test_p5_crpt2 test_sct
 
 test_evp: $(EVPTEST)$(EXE_EXT) evptests.txt
 	../util/shlib_wrap.sh ./$(EVPTEST) evptests.txt
@@ -387,6 +388,10 @@ test_ocsp: ../apps/openssl$(EXE_EXT) tocsp
 
 test_heartbeat: $(HEARTBEATTEST)$(EXE_EXT)
 	../util/shlib_wrap.sh ./$(HEARTBEATTEST)
+
+test_sct: $(SCTTEST)$(EXE_EXT)
+	@echo "Test SCT"
+	../util/shlib_wrap.sh sh ./tsct ./$(SCTTEST)$(EXE_EXT)
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
@@ -628,6 +633,9 @@ $(V3NAMETEST)$(EXE_EXT): $(V3NAMETEST).o $(DLIBCRYPTO)
 
 $(HEARTBEATTEST)$(EXE_EXT): $(HEARTBEATTEST).o $(DLIBCRYPTO) testutil.o
 	@target=$(HEARTBEATTEST) testutil=testutil.o; $(BUILD_CMD_STATIC)
+
+$(SCTTEST)$(EXE_EXT): $(SCTTEST).o $(DLIBCRYPTO)
+	@target=$(SCTTEST); $(BUILD_CMD)
 
 #$(AESTEST).o: $(AESTEST).c
 #	$(CC) -c $(CFLAGS) -DINTERMEDIATE_VALUE_KAT -DTRACE_KAT_MCT $(AESTEST).c
