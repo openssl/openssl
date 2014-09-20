@@ -60,9 +60,9 @@ sha256-armv4.S: asm/sha256-armv4.pl
 	$(PERL) $< $(PERLASM_SCHEME) $@
 
 sha1-alpha.s:	asm/sha1-alpha.pl
-	(preproc=/tmp/$$$$.$@; trap "rm $$preproc" INT; \
+	(preproc=$$$$.$@.S; trap "rm $$preproc" INT; \
 	$(PERL) asm/sha1-alpha.pl > $$preproc && \
-	$(CC) -E $$preproc > $@ && rm $$preproc)
+	$(CC) -E -P $$preproc > $@ && rm $$preproc)
 
 # Solaris make has to be explicitly told
 sha1-x86_64.s:	asm/sha1-x86_64.pl;	$(PERL) asm/sha1-x86_64.pl $(PERLASM_SCHEME) > $@
