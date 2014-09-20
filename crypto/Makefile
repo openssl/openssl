@@ -78,9 +78,9 @@ ia64cpuid.s: ia64cpuid.S;	$(CC) $(CFLAGS) -E ia64cpuid.S > $@
 ppccpuid.s:	ppccpuid.pl;	$(PERL) ppccpuid.pl $(PERLASM_SCHEME) $@
 pariscid.s:	pariscid.pl;	$(PERL) pariscid.pl $(PERLASM_SCHEME) $@
 alphacpuid.s:	alphacpuid.pl
-	(preproc=/tmp/$$$$.$@; trap "rm $$preproc" INT; \
+	(preproc=$$$$.$@.S; trap "rm $$preproc" INT; \
 	$(PERL) alphacpuid.pl > $$preproc && \
-	$(CC) -E $$preproc > $@ && rm $$preproc)
+	$(CC) -E -P $$preproc > $@ && rm $$preproc)
 
 testapps:
 	[ -z "$(THIS)" ] || (	if echo $(SDIRS) | fgrep ' des '; \
