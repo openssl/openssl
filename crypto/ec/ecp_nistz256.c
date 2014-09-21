@@ -124,10 +124,10 @@ static const BN_ULONG ONE[P256_LIMBS] = {
     TOBN(0xffffffff, 0xffffffff), TOBN(0x00000000, 0xfffffffe)
 };
 
-static void *ec_pre_comp_dup(void *);
-static void ec_pre_comp_free(void *);
-static void ec_pre_comp_clear_free(void *);
-static EC_PRE_COMP *ec_pre_comp_new(const EC_GROUP * group);
+static void *ecp_nistz256_pre_comp_dup(void *);
+static void ecp_nistz256_pre_comp_free(void *);
+static void ecp_nistz256_pre_comp_clear_free(void *);
+static EC_PRE_COMP *ecp_nistz256_pre_comp_new(const EC_GROUP * group);
 
 /* Precomputed tables for the default generator */
 #include "ecp_nistz256_table.c"
@@ -571,7 +571,7 @@ static void ecp_nistz256_windowed_mul(const EC_GROUP * group,
         || (p_str =
             OPENSSL_malloc(num * 33 * sizeof(unsigned char))) == NULL
         || (scalars = OPENSSL_malloc(num * sizeof(BIGNUM *))) == NULL) {
-        ECerr(EC_F_NISTZ256_POINTS_MUL_W, ERR_R_MALLOC_FAILURE);
+        ECerr(EC_F_ECP_NISTZ256_WINDOWED_MUL, ERR_R_MALLOC_FAILURE);
         goto err;
     } else {
         table = (void *)ALIGNPTR(table_storage, 64);
@@ -586,7 +586,7 @@ static void ecp_nistz256_windowed_mul(const EC_GROUP * group,
             if ((mod = BN_CTX_get(ctx)) == NULL)
                 goto err;
             if (!BN_nnmod(mod, scalar[i], &group->order, ctx)) {
-                ECerr(EC_F_NISTZ256_POINTS_MUL_W, ERR_R_BN_LIB);
+                ECerr(EC_F_ECP_NISTZ256_WINDOWED_MUL, ERR_R_BN_LIB);
                 goto err;
             }
             scalars[i] = mod;
@@ -619,7 +619,7 @@ static void ecp_nistz256_windowed_mul(const EC_GROUP * group,
         if (!ecp_nistz256_bignum_to_field_elem(row[1 - 1].X, &point[i]->X)
             || !ecp_nistz256_bignum_to_field_elem(row[1 - 1].Y, &point[i]->Y)
             || !ecp_nistz256_bignum_to_field_elem(row[1 - 1].Z, &point[i]->Z)) {
-            ECerr(EC_F_NISTZ256_POINTS_MUL_W, EC_R_COORDINATES_OUT_OF_RANGE);
+            ECerr(EC_F_ECP_NISTZ256_WINDOWED_MUL, EC_R_COORDINATES_OUT_OF_RANGE);
             goto err;
         }
 
@@ -736,12 +736,13 @@ static int ecp_nistz256_mult_precompute(EC_GROUP * group, BN_CTX * ctx)
     unsigned char *precomp_storage = NULL;
 
     /* if there is an old EC_PRE_COMP object, throw it away */
-    EC_EX_DATA_free_data(&group->extra_data, ec_pre_comp_dup,
-                         ec_pre_comp_free, ec_pre_comp_clear_free);
+    EC_EX_DATA_free_data(&group->extra_data, ecp_nistz256_pre_comp_dup,
+                         ecp_nistz256_pre_comp_free,
+                         ecp_nistz256_pre_comp_clear_free);
 
     generator = EC_GROUP_get0_generator(group);
     if (generator == NULL) {
-        ECerr(EC_F_NISTZ256_PRECOMPUTE_MULT, EC_R_UNDEFINED_GENERATOR);
+        ECerr(EC_F_ECP_NISTZ256_MULT_PRECOMPUTE, EC_R_UNDEFINED_GENERATOR);
         return 0;
     }
 
@@ -751,7 +752,7 @@ static int ecp_nistz256_mult_precompute(EC_GROUP * group, BN_CTX * ctx)
         return 1;
     }
 
-    if ((pre_comp = ec_pre_comp_new(group)) == NULL)
+    if ((pre_comp = ecp_nistz256_pre_comp_new(group)) == NULL)
         return 0;
 
     if (ctx == NULL) {
@@ -770,7 +771,7 @@ static int ecp_nistz256_mult_precompute(EC_GROUP * group, BN_CTX * ctx)
         goto err;
 
     if (BN_is_zero(order)) {
-        ECerr(EC_F_NISTZ256_PRECOMPUTE_MULT, EC_R_UNKNOWN_ORDER);
+        ECerr(EC_F_ECP_NISTZ256_MULT_PRECOMPUTE, EC_R_UNKNOWN_ORDER);
         goto err;
     }
 
@@ -778,7 +779,7 @@ static int ecp_nistz256_mult_precompute(EC_GROUP * group, BN_CTX * ctx)
 
     if ((precomp_storage =
          OPENSSL_malloc(37 * 64 * sizeof(P256_POINT_AFFINE) + 64)) == NULL) {
-        ECerr(EC_F_NISTZ256_PRECOMPUTE_MULT, ERR_R_MALLOC_FAILURE);
+        ECerr(EC_F_ECP_NISTZ256_MULT_PRECOMPUTE, ERR_R_MALLOC_FAILURE);
         goto err;
     } else {
         preComputedTable = (void *)ALIGNPTR(precomp_storage, 64);
@@ -816,8 +817,9 @@ static int ecp_nistz256_mult_precompute(EC_GROUP * group, BN_CTX * ctx)
     precomp_storage = NULL;
 
     if (!EC_EX_DATA_set_data(&group->extra_data, pre_comp,
-                             ec_pre_comp_dup, ec_pre_comp_free,
-                             ec_pre_comp_clear_free)) {
+                             ecp_nistz256_pre_comp_dup,
+                             ecp_nistz256_pre_comp_free,
+                             ecp_nistz256_pre_comp_clear_free)) {
         goto err;
     }
 
@@ -829,7 +831,7 @@ err:
     if (ctx != NULL)
         BN_CTX_end(ctx);
     if (pre_comp)
-        ec_pre_comp_free(pre_comp);
+        ecp_nistz256_pre_comp_free(pre_comp);
     if (precomp_storage)
         OPENSSL_free(precomp_storage);
     if (P)
@@ -1090,7 +1092,7 @@ static int ecp_nistz256_points_mul(const EC_GROUP * group,
     BIGNUM *tmp_scalar;
 
     if (group->meth != r->meth) {
-        ECerr(EC_F_NISTZ256_POINTS_MUL, EC_R_INCOMPATIBLE_OBJECTS);
+        ECerr(EC_F_ECP_NISTZ256_POINTS_MUL, EC_R_INCOMPATIBLE_OBJECTS);
         return 0;
     }
     if ((scalar == NULL) && (num == 0))
@@ -1098,7 +1100,7 @@ static int ecp_nistz256_points_mul(const EC_GROUP * group,
 
     for (j = 0; j < num; j++) {
         if (group->meth != points[j]->meth) {
-            ECerr(EC_F_NISTZ256_POINTS_MUL, EC_R_INCOMPATIBLE_OBJECTS);
+            ECerr(EC_F_ECP_NISTZ256_POINTS_MUL, EC_R_INCOMPATIBLE_OBJECTS);
             return 0;
         }
     }
@@ -1114,14 +1116,15 @@ static int ecp_nistz256_points_mul(const EC_GROUP * group,
     if (scalar) {
         generator = EC_GROUP_get0_generator(group);
         if (generator == NULL) {
-            ECerr(EC_F_NISTZ256_POINTS_MUL, EC_R_UNDEFINED_GENERATOR);
+            ECerr(EC_F_ECP_NISTZ256_POINTS_MUL, EC_R_UNDEFINED_GENERATOR);
             goto err;
         }
 
         /* look if we can use precomputed multiples of generator */
         pre_comp =
-            EC_EX_DATA_get_data(group->extra_data, ec_pre_comp_dup,
-                                ec_pre_comp_free, ec_pre_comp_clear_free);
+            EC_EX_DATA_get_data(group->extra_data, ecp_nistz256_pre_comp_dup,
+                                ecp_nistz256_pre_comp_free,
+                                ecp_nistz256_pre_comp_clear_free);
 
         if (pre_comp) {
             /* If there is a precomputed table for the generator,
@@ -1156,7 +1159,7 @@ static int ecp_nistz256_points_mul(const EC_GROUP * group,
                     goto err;
 
                 if (!BN_nnmod(tmp_scalar, scalar, &group->order, ctx)) {
-                    ECerr(EC_F_NISTZ256_POINTS_MUL, ERR_R_BN_LIB);
+                    ECerr(EC_F_ECP_NISTZ256_POINTS_MUL, ERR_R_BN_LIB);
                     goto err;
                 }
                 scalar = tmp_scalar;
@@ -1232,14 +1235,14 @@ static int ecp_nistz256_points_mul(const EC_GROUP * group,
 
         new_scalars = OPENSSL_malloc((num + 1) * sizeof(BIGNUM *));
         if (!new_scalars) {
-            ECerr(EC_F_NISTZ256_POINTS_MUL, ERR_R_MALLOC_FAILURE);
+            ECerr(EC_F_ECP_NISTZ256_POINTS_MUL, ERR_R_MALLOC_FAILURE);
             return 0;
         }
 
         new_points = OPENSSL_malloc((num + 1) * sizeof(EC_POINT *));
         if (!new_points) {
             OPENSSL_free(new_scalars);
-            ECerr(EC_F_NISTZ256_POINTS_MUL, ERR_R_MALLOC_FAILURE);
+            ECerr(EC_F_ECP_NISTZ256_POINTS_MUL, ERR_R_MALLOC_FAILURE);
             return 0;
         }
 
@@ -1293,15 +1296,14 @@ static int ecp_nistz256_get_affine(const EC_GROUP * group,
     BN_ULONG point_x[P256_LIMBS], point_y[P256_LIMBS], point_z[P256_LIMBS];
 
     if (EC_POINT_is_at_infinity(group, point)) {
-        ECerr(EC_F_NISTZ256_GET_AFFINE_COORDINATES, EC_R_POINT_AT_INFINITY);
+        ECerr(EC_F_ECP_NISTZ256_GET_AFFINE, EC_R_POINT_AT_INFINITY);
         return 0;
     }
 
     if (!ecp_nistz256_bignum_to_field_elem(point_x, &point->X) ||
         !ecp_nistz256_bignum_to_field_elem(point_y, &point->Y) ||
         !ecp_nistz256_bignum_to_field_elem(point_z, &point->Z)) {
-        ECerr(EC_F_NISTZ256_GET_AFFINE_COORDINATES,
-              EC_R_COORDINATES_OUT_OF_RANGE);
+        ECerr(EC_F_ECP_NISTZ256_GET_AFFINE, EC_R_COORDINATES_OUT_OF_RANGE);
         return 0;
     }
 
@@ -1328,7 +1330,7 @@ static int ecp_nistz256_get_affine(const EC_GROUP * group,
     return 1;
 }
 
-static EC_PRE_COMP *ec_pre_comp_new(const EC_GROUP * group)
+static EC_PRE_COMP *ecp_nistz256_pre_comp_new(const EC_GROUP * group)
 {
     EC_PRE_COMP *ret = NULL;
 
@@ -1338,7 +1340,7 @@ static EC_PRE_COMP *ec_pre_comp_new(const EC_GROUP * group)
     ret = (EC_PRE_COMP *) OPENSSL_malloc(sizeof(EC_PRE_COMP));
 
     if (!ret) {
-        ECerr(EC_F_NISTZ256_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
+        ECerr(EC_F_ECP_NISTZ256_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
         return ret;
     }
 
@@ -1350,7 +1352,7 @@ static EC_PRE_COMP *ec_pre_comp_new(const EC_GROUP * group)
     return ret;
 }
 
-static void *ec_pre_comp_dup(void *src_)
+static void *ecp_nistz256_pre_comp_dup(void *src_)
 {
     EC_PRE_COMP *src = src_;
 
@@ -1360,7 +1362,7 @@ static void *ec_pre_comp_dup(void *src_)
     return src_;
 }
 
-static void ec_pre_comp_free(void *pre_)
+static void ecp_nistz256_pre_comp_free(void *pre_)
 {
     int i;
     EC_PRE_COMP *pre = pre_;
@@ -1378,7 +1380,7 @@ static void ec_pre_comp_free(void *pre_)
     OPENSSL_free(pre);
 }
 
-static void ec_pre_comp_clear_free(void *pre_)
+static void ecp_nistz256_pre_comp_clear_free(void *pre_)
 {
     int i;
     EC_PRE_COMP *pre = pre_;
@@ -1408,9 +1410,9 @@ static int ecp_nistz256_window_have_precompute_mult(const EC_GROUP * group)
         return 1;
     }
 
-    return EC_EX_DATA_get_data(group->extra_data, ec_pre_comp_dup,
-                               ec_pre_comp_free,
-                               ec_pre_comp_clear_free) != NULL;
+    return EC_EX_DATA_get_data(group->extra_data, ecp_nistz256_pre_comp_dup,
+                               ecp_nistz256_pre_comp_free,
+                               ecp_nistz256_pre_comp_clear_free) != NULL;
 }
 
 const EC_METHOD *EC_GFp_nistz256_method(void)
