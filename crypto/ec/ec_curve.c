@@ -69,6 +69,10 @@
  *
  */
 
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
+
 #include <string.h>
 #include "ec_lcl.h"
 #include <openssl/err.h>
@@ -2508,6 +2512,10 @@ EC_GROUP *EC_GROUP_new_by_curve_name(int nid)
 	size_t i;
 	EC_GROUP *ret = NULL;
 
+#ifdef OPENSSL_FIPS
+	if (FIPS_mode())
+		return FIPS_ec_group_new_by_curve_name(nid);
+#endif
 	if (nid <= 0)
 		return NULL;
 

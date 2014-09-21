@@ -194,6 +194,13 @@ struct ec_group_st {
 
 	int curve_name;/* optional NID for named curve */
 	int asn1_flag; /* flag to control the asn1 encoding */
+	/*
+	 * Kludge: upper bit of ans1_flag is used to denote structure
+	 * version. Is set, then last field is present. This is done
+	 * for interoperation with FIPS code.
+	 */
+#define EC_GROUP_ASN1_FLAG_MASK 0x7fffffff
+#define EC_GROUP_VERSION(p) (p->asn1_flag&~EC_GROUP_ASN1_FLAG_MASK)
 	point_conversion_form_t asn1_form;
 
 	unsigned char *seed; /* optional seed for parameters (appears in ASN1) */
@@ -454,4 +461,10 @@ int ec_precompute_mont_data(EC_GROUP *);
  *  \return  EC_METHOD object
  */
 const EC_METHOD *EC_GFp_nistz256_method(void);
+#endif
+
+#ifdef OPENSSL_FIPS
+EC_GROUP *FIPS_ec_group_new_curve_gfp(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
+EC_GROUP *FIPS_ec_group_new_curve_gf2m(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
+EC_GROUP *FIPS_ec_group_new_by_curve_name(int nid);
 #endif

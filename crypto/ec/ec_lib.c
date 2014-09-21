@@ -105,7 +105,7 @@ EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
 	BN_init(&ret->cofactor);
 
 	ret->curve_name = 0;	
-	ret->asn1_flag  = 0;
+	ret->asn1_flag  = ~EC_GROUP_ASN1_FLAG_MASK;
 	ret->asn1_form  = POINT_CONVERSION_UNCOMPRESSED;
 
 	ret->seed = NULL;
@@ -130,7 +130,7 @@ void EC_GROUP_free(EC_GROUP *group)
 
 	EC_EX_DATA_free_all_data(&group->extra_data);
 
-	if (group->mont_data)
+	if (EC_GROUP_VERSION(group) && group->mont_data)
 		BN_MONT_CTX_free(group->mont_data);
 
 	if (group->generator != NULL)
@@ -156,7 +156,7 @@ void EC_GROUP_clear_free(EC_GROUP *group)
 
 	EC_EX_DATA_clear_free_all_data(&group->extra_data);
 
-	if (group->mont_data)
+	if (EC_GROUP_VERSION(group) && group->mont_data)
 		BN_MONT_CTX_free(group->mont_data);
 
 	if (group->generator != NULL)
@@ -204,7 +204,7 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 			return 0;
 		}
 
-	if (src->mont_data != NULL)
+	if (EC_GROUP_VERSION(src) && src->mont_data != NULL)
 		{
 		if (dest->mont_data == NULL)
 			{
@@ -216,7 +216,7 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 	else
 		{
 		/* src->generator == NULL */
-		if (dest->mont_data != NULL)
+		if (EC_GROUP_VERSION(dest) && dest->mont_data != NULL)
 			{
 			BN_MONT_CTX_free(dest->mont_data);
 			dest->mont_data = NULL;
@@ -348,7 +348,7 @@ const EC_POINT *EC_GROUP_get0_generator(const EC_GROUP *group)
 
 BN_MONT_CTX *EC_GROUP_get_mont_data(const EC_GROUP *group)
 	{
-	return group->mont_data;
+	return EC_GROUP_VERSION(group) ? group->mont_data : NULL;
 	}
 
 int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx)
@@ -383,13 +383,14 @@ int EC_GROUP_get_curve_name(const EC_GROUP *group)
 
 void EC_GROUP_set_asn1_flag(EC_GROUP *group, int flag)
 	{
-	group->asn1_flag = flag;
+	group->asn1_flag &= ~EC_GROUP_ASN1_FLAG_MASK;
+	group->asn1_flag |= flag&EC_GROUP_ASN1_FLAG_MASK;
 	}
 
 
 int EC_GROUP_get_asn1_flag(const EC_GROUP *group)
 	{
-	return group->asn1_flag;
+	return group->asn1_flag&EC_GROUP_ASN1_FLAG_MASK;
 	}
 
 
@@ -1136,6 +1137,9 @@ int ec_precompute_mont_data(EC_GROUP *group)
 	{
 	BN_CTX *ctx = BN_CTX_new();
 	int ret = 0;
+
+	if (!EC_GROUP_VERSION(group))
+		goto err;
 
 	if (group->mont_data)
 		{
