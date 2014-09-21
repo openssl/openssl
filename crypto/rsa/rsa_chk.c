@@ -67,7 +67,7 @@ int RSA_check_key_ex(const RSA *key, BN_GENCB *cb)
 
 	if (!key->p || !key->q || !key->n || !key->e || !key->d)
 		{
-		RSAerr(RSA_F_RSA_CHECK_KEY, RSA_R_VALUE_MISSING);
+		RSAerr(RSA_F_RSA_CHECK_KEY_EX, RSA_R_VALUE_MISSING);
 		return 0;
 		}
 	
@@ -81,7 +81,7 @@ int RSA_check_key_ex(const RSA *key, BN_GENCB *cb)
 		m == NULL || ctx == NULL)
 		{
 		ret = -1;
-		RSAerr(RSA_F_RSA_CHECK_KEY, ERR_R_MALLOC_FAILURE);
+		RSAerr(RSA_F_RSA_CHECK_KEY_EX, ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
 	
@@ -92,7 +92,7 @@ int RSA_check_key_ex(const RSA *key, BN_GENCB *cb)
 		ret = r;
 		if (r != 0)
 			goto err;
-		RSAerr(RSA_F_RSA_CHECK_KEY, RSA_R_P_NOT_PRIME);
+		RSAerr(RSA_F_RSA_CHECK_KEY_EX, RSA_R_P_NOT_PRIME);
 		}
 	
 	/* q prime? */
@@ -102,7 +102,7 @@ int RSA_check_key_ex(const RSA *key, BN_GENCB *cb)
 		ret = r;
 		if (r != 0)
 			goto err;
-		RSAerr(RSA_F_RSA_CHECK_KEY, RSA_R_Q_NOT_PRIME);
+		RSAerr(RSA_F_RSA_CHECK_KEY_EX, RSA_R_Q_NOT_PRIME);
 		}
 	
 	/* n = p*q? */
@@ -112,7 +112,7 @@ int RSA_check_key_ex(const RSA *key, BN_GENCB *cb)
 	if (BN_cmp(i, key->n) != 0)
 		{
 		ret = 0;
-		RSAerr(RSA_F_RSA_CHECK_KEY, RSA_R_N_DOES_NOT_EQUAL_P_Q);
+		RSAerr(RSA_F_RSA_CHECK_KEY_EX, RSA_R_N_DOES_NOT_EQUAL_P_Q);
 		}
 	
 	/* d*e = 1  mod lcm(p-1,q-1)? */
@@ -136,7 +136,7 @@ int RSA_check_key_ex(const RSA *key, BN_GENCB *cb)
 	if (!BN_is_one(i))
 		{
 		ret = 0;
-		RSAerr(RSA_F_RSA_CHECK_KEY, RSA_R_D_E_NOT_CONGRUENT_TO_1);
+		RSAerr(RSA_F_RSA_CHECK_KEY_EX, RSA_R_D_E_NOT_CONGRUENT_TO_1);
 		}
 	
 	if (key->dmp1 != NULL && key->dmq1 != NULL && key->iqmp != NULL)
@@ -151,7 +151,7 @@ int RSA_check_key_ex(const RSA *key, BN_GENCB *cb)
 		if (BN_cmp(j, key->dmp1) != 0)
 			{
 			ret = 0;
-			RSAerr(RSA_F_RSA_CHECK_KEY,
+			RSAerr(RSA_F_RSA_CHECK_KEY_EX,
 				RSA_R_DMP1_NOT_CONGRUENT_TO_D);
 			}
 	
@@ -165,7 +165,7 @@ int RSA_check_key_ex(const RSA *key, BN_GENCB *cb)
 		if (BN_cmp(j, key->dmq1) != 0)
 			{
 			ret = 0;
-			RSAerr(RSA_F_RSA_CHECK_KEY,
+			RSAerr(RSA_F_RSA_CHECK_KEY_EX,
 				RSA_R_DMQ1_NOT_CONGRUENT_TO_D);
 			}
 	
@@ -179,7 +179,7 @@ int RSA_check_key_ex(const RSA *key, BN_GENCB *cb)
 		if (BN_cmp(i, key->iqmp) != 0)
 			{
 			ret = 0;
-			RSAerr(RSA_F_RSA_CHECK_KEY,
+			RSAerr(RSA_F_RSA_CHECK_KEY_EX,
 				RSA_R_IQMP_NOT_INVERSE_OF_Q);
 			}
 		}
