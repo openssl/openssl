@@ -125,7 +125,7 @@ my $tc = 0;
 sub tab{
   my $space="";
   for(my $i=0;$i<$tc;$i++){
-    $space.="  ";
+    $space.="\t";
   }
   return $space;
 }
@@ -151,16 +151,16 @@ sub processBatch{
   for my $p (@paths)
   {
     my $pp = $p."\\".$file;
-        if(open($info, $pp))
-        {
-          $opened=1;
-          last;
-        }
-        if(open($info, $pp.".bat"))
-        {
-          $opened=1;
-          last;
-        }
+    if(open($info, $pp))
+    {
+      $opened=1;
+      last;
+    }
+    if(open($info, $pp.".bat"))
+    {
+      $opened=1;
+      last;
+    }
   }
   $opened == 1 or die "Could not open $file: $!";
   my $count = 0;
@@ -322,7 +322,8 @@ $function.='
     OutputDebugStringA("---------------STDOUT-------------\n");
     std::ifstream file(LocalFolderFile("openssl.test.stdout.log"));
     std::string temp;
-    while (std::getline(file, temp)) {
+    while (std::getline(file, temp))
+    {
       OutputDebugStringA(temp.c_str());
       OutputDebugStringA("\r\n");
     }
@@ -331,7 +332,8 @@ $function.='
     OutputDebugStringA("---------------STDERR-------------\n");
     std::ifstream file(LocalFolderFile("openssl.test.stderr.log"));
     std::string temp;
-    while (std::getline(file, temp)) {
+    while (std::getline(file, temp))
+    {
       OutputDebugStringA(temp.c_str());
       OutputDebugStringA("\r\n");
     }
@@ -373,26 +375,45 @@ Platform::String^ charArrayToPlatformString(int argc, char **argv)
 void dynload(Platform::String^ modName, int argc, std::string* argv_const, winrtcomponent::testClass ^T)
 {
   //Conversion from const char to char since openssl methods writes on these arguments...
-  char **argv;
+  char **argv = NULL;
+  HMODULE module = NULL;
+
   argv = new char*[argc];
+  if (argv == NULL)
+  {
+    errorlevel = 1;
+    goto cleanup;
+  }
+  memset(argv, 0, argc * sizeof(char*));
+
   for (int i = 0; i < argc; i++)
   {
     unsigned int l = argv_const[i].length();
     argv[i] = new char [l+1];
-    for (unsigned j = 0; j < l; j++)argv[i][j] = argv_const[i][j];
+    if (argv[i] == NULL)
+    {
+      errorlevel = 1;
+      goto cleanup;
+    }
+
+    for (unsigned j = 0; j < l; j++)
+    {
+      argv[i][j] = argv_const[i][j];
+    }
     argv[i][l] = 0;
   }
-  HMODULE module = LoadPackagedLibrary(modName->Data(), 0);
+
+  module = LoadPackagedLibrary(modName->Data(), 0);
   winrt_main pMain = (winrt_main) GetProcAddress(module, "winrt_main");
-  if (!pMain){
+  if (!pMain)
+  {
     errorlevel = 1;
-    return;
+    goto cleanup;
   }
   try
   {
     LARGE_INTEGER frequency, start, end;
     QueryPerformanceFrequency(&frequency);
-
     QueryPerformanceCounter(&start);
 
     int errorcode = pMain(argc, argv);
@@ -407,13 +428,21 @@ void dynload(Platform::String^ modName, int argc, std::string* argv_const, winrt
     errorlevel = 1;
   }
 
-  FreeLibrary(module);
+cleanup:
+  if (module != NULL)
+  {
+    FreeLibrary(module);
+  }
   for (int i = 0; i < argc; i++)
   {
-    delete []argv[i];
+    if (argv[i] != NULL)
+    {
+      delete []argv[i];
+    }
   }
   delete []argv;
 }
+
 int winrtcomponent::testClass::test()
 END_MESSAGE
 print $cpp "$cppOutputFile$function";

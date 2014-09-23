@@ -104,11 +104,13 @@ int main(int argc, char * argv[]) { puts("Elliptic curves are disabled."); retur
    since exit(0) will cause an uncaught exception that is not the expected workflow for other tests.
    in this case abort can cause the exception since it is ok to fail the tests at this point */
 #if defined(OPENSSL_WINAPP)
+  int testFailed = 0;
   #define ABORT do { \
 	 fflush(stdout); \
 	 fprintf(stderr, "%s:%d: ABORT\n", __FILE__, __LINE__); \
 	 ERR_print_errors_fp(stderr); \
-	 exit(1); \
+	 testFailed = 1; \
+	 return; \
  } while (0)
 #else
  #define ABORT do { \
@@ -1529,7 +1531,11 @@ int main(int argc, char *argv[])
 	ERR_free_strings();
 	ERR_remove_thread_state(NULL);
 	CRYPTO_mem_leaks_fp(stderr);
-	
+
+#if defined(OPENSSL_WINAPP)
+	return testFailed;
+#else
 	return 0;
+#endif
 	}
 #endif

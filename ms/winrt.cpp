@@ -48,15 +48,12 @@ unsigned entropyRT(BYTE *buffer, unsigned len)
 	using namespace Windows::Storage::Streams;
 	IBuffer ^buf = CryptographicBuffer::GenerateRandom(len);
 	Array<unsigned char> ^arr;
-	unsigned arrayLen = 0;
 	CryptographicBuffer::CopyToByteArray(buf, &arr);
-	if (arr != NULL)
-		{
-		// Make sure not to overflow the copy
-		arrayLen = (arr->Length > len) ? len : arr->Length;
-		memcpy(buffer, arr->Data, arrayLen);
-		}
+	unsigned arrayLen = arr->Length;
 
+	// Make sure not to overflow the copy
+	arrayLen = (arrayLen > len) ? len : arrayLen;
+	memcpy(buffer, arr->Data, arrayLen);
 	return arrayLen;
 	}
 #endif
