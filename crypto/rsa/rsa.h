@@ -523,6 +523,7 @@ void ERR_load_RSA_strings(void);
 #define RSA_F_RSA_ALGOR_TO_MD				 156
 #define RSA_F_RSA_BUILTIN_KEYGEN			 129
 #define RSA_F_RSA_CHECK_KEY				 123
+#define RSA_F_RSA_CHECK_KEY_EX				 160
 #define RSA_F_RSA_CMS_DECRYPT				 159
 #define RSA_F_RSA_EAY_PRIVATE_DECRYPT			 101
 #define RSA_F_RSA_EAY_PRIVATE_ENCRYPT			 102
