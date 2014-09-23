@@ -4409,8 +4409,8 @@ ECDSA_METHOD_set_app_data               4768	EXIST::FUNCTION:ECDSA
 sk_deep_copy                            4769	EXIST::FUNCTION:
 ECDSA_METHOD_get_app_data               4770	EXIST::FUNCTION:ECDSA
 X509_VERIFY_PARAM_add1_host             4771	EXIST::FUNCTION:
-FIPS_dsa_sign_ctx                       4772	EXIST:OPENSSL_FIPS:FUNCTION:DSA
-FIPS_ecdsa_sign                         4773	EXIST:OPENSSL_FIPS:FUNCTION:ECDSA
+EC_GROUP_get_mont_data                  4772	EXIST::FUNCTION:EC
+i2d_re_X509_tbs                         4773	EXIST::FUNCTION:
 RSA_security_bits                       4774	EXIST::FUNCTION:RSA
 FIPS_ecdsa_verify_digest                4775	EXIST:OPENSSL_FIPS:FUNCTION:ECDSA
 FIPS_ecdsa_verify                       4776	EXIST:OPENSSL_FIPS:FUNCTION:ECDSA
@@ -4509,4 +4509,8 @@ FIPS_x931_method                        4868	NOEXIST::FUNCTION:
 FIPS_post_set_callback                  4869	NOEXIST::FUNCTION:
 FIPS_drbg_get_app_data                  4870	NOEXIST::FUNCTION:
 FIPS_rsa_verify_ctx                     4871	NOEXIST::FUNCTION:
-i2d_re_X509_tbs                         4872	EXIST::FUNCTION:
+RSA_check_key_ex                        4872	EXIST::FUNCTION:RSA
+i2s_ASN1_IA5STRING                      4874	EXIST::FUNCTION:
+s2i_ASN1_IA5STRING                      4875	EXIST::FUNCTION:
+FIPS_dsa_sign_ctx                       4876	EXIST:OPENSSL_FIPS:FUNCTION:DSA
+FIPS_ecdsa_sign                         4877	EXIST:OPENSSL_FIPS:FUNCTION:ECDSA
