@@ -619,6 +619,12 @@
      certificates.
      [Steve Henson]
 
+  *) New function i2d_re_X509_tbs for re-encoding the TBS portion of
+     the certificate.
+     Note: Related 1.0.2-beta specific macros X509_get_cert_info,
+     X509_CINF_set_modified, X509_CINF_get_issuer, X509_CINF_get_extensions and
+     X509_CINF_get_signature were reverted post internal team review.
+
  Changes between 1.0.1g and 1.0.1h [5 Jun 2014]
 
   *) Fix for SSL/TLS MITM flaw. An attacker using a carefully crafted
