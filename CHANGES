@@ -4,6 +4,10 @@
 
  Changes between 1.0.1h and 1.0.2 [xx XXX xxxx]
 
+  *) Accelerated NIST P-256 elliptic curve implementation for x86_64
+     (other platforms pending).
+     [Shay Gueron (Intel Corp), Andy Polyakov]
+
   *) Add support for the SignedCertificateTimestampList certificate and
      OCSP response extensions from RFC6962.
      [Rob Stradling]
