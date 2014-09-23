@@ -93,10 +93,10 @@ sub hash_dir {
 	my %hashlist;
 	print "Doing $_[0]\n";
 	chdir $_[0];
+	opendir(DIR, ".");
+	my @flist = readdir(DIR);
+	closedir DIR;
 	if ( $removelinks ) {
-		opendir(DIR, ".");
-		my @flist = readdir(DIR);
-		closedir DIR;
 		# Delete any existing symbolic links
 		foreach (grep {/^[\da-f]+\.r{0,1}\d+$/} @flist) {
 			if(-l $_) {

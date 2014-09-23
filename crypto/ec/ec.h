@@ -245,6 +245,12 @@ int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator, const BIG
  */
 const EC_POINT *EC_GROUP_get0_generator(const EC_GROUP *group);
 
+/** Returns the montgomery data for order(Generator)
+ *  \param  group  EC_GROUP object
+ *  \return the currently used generator (possibly NULL).
+*/
+BN_MONT_CTX *EC_GROUP_get_mont_data(const EC_GROUP *group);
+
 /** Gets the order of a EC_GROUP
  *  \param  group  EC_GROUP object
  *  \param  order  BIGNUM to which the order is copied
@@ -1176,6 +1182,11 @@ void ERR_load_EC_strings(void);
 #define EC_F_NISTP224_PRE_COMP_NEW			 227
 #define EC_F_NISTP256_PRE_COMP_NEW			 236
 #define EC_F_NISTP521_PRE_COMP_NEW			 237
+#define EC_F_ECP_NISTZ256_GET_AFFINE			 240
+#define EC_F_ECP_NISTZ256_POINTS_MUL			 241
+#define EC_F_ECP_NISTZ256_WINDOWED_MUL			 242
+#define EC_F_ECP_NISTZ256_MULT_PRECOMPUTE		 243
+#define EC_F_ECP_NISTZ256_PRE_COMP_NEW			 244
 #define EC_F_O2I_ECPUBLICKEY				 152
 #define EC_F_OLD_EC_PRIV_DECODE				 222
 #define EC_F_PKEY_EC_CTRL				 197
