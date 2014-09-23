@@ -1071,7 +1071,7 @@ int BN_nist_mod_521(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	int	top = a->top, i;
 	BN_ULONG *r_d, *a_d = a->d,
 		 t_d[BN_NIST_521_TOP],
-		 val,tmp,*res;
+		 *res;
 	PTR_SIZE_INT mask;
 	static const BIGNUM _bignum_nist_p_521_sqr = {
 		(BN_ULONG *)_nist_p_521_sqr,
@@ -1106,13 +1106,12 @@ int BN_nist_mod_521(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	/* upper 521 bits, copy ... */
 	nist_cp_bn_0(t_d,a_d + (BN_NIST_521_TOP-1), top - (BN_NIST_521_TOP-1),BN_NIST_521_TOP);
 	/* ... and right shift */
-	for (val=t_d[0],i=0; i<BN_NIST_521_TOP-1; i++)
+	for (i=0; i<BN_NIST_521_TOP-1; i++)
 		{
-		tmp = val>>BN_NIST_521_RSHIFT;
-		val = t_d[i+1];
-		t_d[i] = (tmp | val<<BN_NIST_521_LSHIFT) & BN_MASK2;
+		t_d[i] = ((t_d[i] >> BN_NIST_521_RSHIFT) |
+		 (t_d[i+1] << BN_NIST_521_LSHIFT)) & BN_MASK2;
 		}
-	t_d[i] = val>>BN_NIST_521_RSHIFT;
+	t_d[i] = t_d[i]>>BN_NIST_521_RSHIFT;
 	/* lower 521 bits */
 	r_d[i] &= BN_NIST_521_TOP_MASK;
 
