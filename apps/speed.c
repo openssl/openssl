@@ -272,9 +272,6 @@ static SIGRETTYPE sig_done(int sig)
 	{
 	signal(SIGALRM,sig_done);
 	run=0;
-#ifdef LINT
-	sig=sig;
-#endif
 	}
 #endif
 
@@ -2649,9 +2646,6 @@ static void print_message(const char *s, long num, int length)
 		   : "Doing %s %ld times on %d size blocks: ",s,num,length);
 	(void)BIO_flush(bio_err);
 #endif
-#ifdef LINT
-	num=num;
-#endif
 	}
 
 static void pkey_print_message(const char *str, const char *str2, long num,
@@ -2666,9 +2660,6 @@ static void pkey_print_message(const char *str, const char *str2, long num,
 	BIO_printf(bio_err,mr ? "+DNP:%ld:%d:%s:%s\n"
 			   : "Doing %ld %d bit %s %s's: ",num,bits,str,str2);
 	(void)BIO_flush(bio_err);
-#endif
-#ifdef LINT
-	num=num;
 #endif
 	}
 

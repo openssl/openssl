@@ -537,9 +537,6 @@ static void MS_CALLBACK cb(int p, int n, void *arg)
 	if (p == 3) c='\n';
 	BIO_write((BIO *)arg,&c,1);
 	(void)BIO_flush((BIO *)arg);
-#ifdef LINT
-	p=n;
-#endif
 	}
 #endif
 #endif

@@ -462,9 +462,6 @@ static void popsig(void)
 static void recsig(int i)
 	{
 	longjmp(save,1);
-#ifdef LINT
-	i=i;
-#endif
 	}
 
 #ifdef OPENSSL_SYS_MSDOS

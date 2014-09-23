@@ -86,14 +86,8 @@ int main(int argc, char *argv[])
 		for (i=0; i<8; i++)
 			printf("%02x ",k1[i]);
 		printf("\n");
-		exit(1);
+		return(1);
 		}
-	else
-		{
-		printf("error %d\n",i);
-		exit(0);
-		}
-#ifdef LINT
+	printf("error %d\n",i);
 	return(0);
-#endif
 	}
