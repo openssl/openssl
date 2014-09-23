@@ -4516,3 +4516,4 @@ s2i_ASN1_IA5STRING                      4875	EXIST::FUNCTION:
 bn_probable_prime_dh_retry              4876	EXIST::FUNCTION:
 bn_probable_prime_dh_coprime            4877	EXIST::FUNCTION:
 bn_probable_prime_dh                    4878	EXIST::FUNCTION:
+EC_GROUP_get_mont_data                  4879	EXIST::FUNCTION:EC
