@@ -612,7 +612,6 @@ extern "C" {
 /* #define	X509_get_serialNumber(x) ((x)->cert_info->serialNumber) */
 #define		X509_get_notBefore(x) ((x)->cert_info->validity->notBefore)
 #define		X509_get_notAfter(x) ((x)->cert_info->validity->notAfter)
-#define		X509_get_cinf(x) ((x)->cert_info)
 #define		X509_extract_key(x)	X509_get_pubkey(x) /*****/
 #define		X509_REQ_get_version(x) ASN1_INTEGER_get((x)->req_info->version)
 #define		X509_REQ_get_subject_name(x) ((x)->req_info->subject)
