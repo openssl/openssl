@@ -560,9 +560,6 @@ static int MS_CALLBACK dh_cb(int p, int n, BN_GENCB *cb)
 	if (p == 3) c='\n';
 	BIO_write(BN_GENCB_get_arg(cb),&c,1);
 	(void)BIO_flush(BN_GENCB_get_arg(cb));
-#ifdef LINT
-	p=n;
-#endif
 	return 1;
 	}
 
