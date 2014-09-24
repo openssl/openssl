@@ -94,16 +94,9 @@ static void sha_block_data_order (SHA_CTX *c, const void *p,size_t num);
 # define HASH_FINAL              	SHA1_Final
 # define HASH_INIT			SHA1_Init
 # define HASH_BLOCK_DATA_ORDER   	sha1_block_data_order
-# if defined(__MWERKS__) && defined(__MC68K__)
-   /* Metrowerks for Motorola fails otherwise:-( <appro@fy.chalmers.se> */
-#  define Xupdate(a,ix,ia,ib,ic,id)	do { (a)=(ia^ib^ic^id);		\
-					     ix=(a)=ROTATE((a),1);	\
-					} while (0)
-# else
-#  define Xupdate(a,ix,ia,ib,ic,id)	( (a)=(ia^ib^ic^id),	\
+# define Xupdate(a,ix,ia,ib,ic,id)	( (a)=(ia^ib^ic^id),	\
 					  ix=(a)=ROTATE((a),1)	\
 					)
-# endif
 
 #ifndef SHA1_ASM
 static

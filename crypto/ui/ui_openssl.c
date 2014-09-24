@@ -202,7 +202,7 @@
 # undef  SGTTY
 #endif
 
-#if !defined(TERMIO) && !defined(TERMIOS) && !defined(OPENSSL_SYS_VMS) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_MACINTOSH_CLASSIC) && !defined(MAC_OS_GUSI_SOURCE)
+#if !defined(TERMIO) && !defined(TERMIOS) && !defined(OPENSSL_SYS_VMS) && !defined(OPENSSL_SYS_MSDOS) && !defined(MAC_OS_GUSI_SOURCE)
 # undef  TERMIOS
 # undef  TERMIO
 # define SGTTY
@@ -244,7 +244,7 @@
 # define TTY_set(tty,data)	ioctl(tty,TIOCSETP,data)
 #endif
 
-#if !defined(_LIBC) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_VMS) && !defined(OPENSSL_SYS_MACINTOSH_CLASSIC) && !defined(OPENSSL_SYS_SUNOS)
+#if !defined(_LIBC) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_VMS) && !defined(OPENSSL_SYS_SUNOS)
 # include <sys/ioctl.h>
 #endif
 
@@ -268,7 +268,7 @@ struct IOSB {
 	typedef int sig_atomic_t;
 #endif
 
-#if defined(OPENSSL_SYS_MACINTOSH_CLASSIC) || defined(MAC_OS_GUSI_SOURCE) || defined(OPENSSL_SYS_NETWARE)
+#if defined(MAC_OS_GUSI_SOURCE) || defined(OPENSSL_SYS_NETWARE)
 /*
  * This one needs work. As a matter of fact the code is unoperational
  * and this is only a trick to get it compiled.
@@ -484,7 +484,7 @@ static int open_console(UI *ui)
 	CRYPTO_w_lock(CRYPTO_LOCK_UI);
 	is_a_tty = 1;
 
-#if defined(OPENSSL_SYS_MACINTOSH_CLASSIC) || defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_NETWARE) || defined(OPENSSL_SYS_BEOS)
+#if defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_NETWARE) || defined(OPENSSL_SYS_BEOS)
 	tty_in=stdin;
 	tty_out=stderr;
 #else
