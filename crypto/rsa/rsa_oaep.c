@@ -18,7 +18,7 @@
  * an equivalent notion.
  */
 
-#include "../constant_time_locl.h"
+#include "constant_time_locl.h"
 
 #if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA1)
 #include <stdio.h>
