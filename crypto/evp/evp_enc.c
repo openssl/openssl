@@ -67,7 +67,7 @@
 #ifdef OPENSSL_FIPS
 #include <openssl/fips.h>
 #endif
-#include "../constant_time_locl.h"
+#include "constant_time_locl.h"
 #include "evp_locl.h"
 
 #ifdef OPENSSL_FIPS
