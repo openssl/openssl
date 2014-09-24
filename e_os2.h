@@ -70,12 +70,6 @@ extern "C" {
 
 #define OPENSSL_SYS_UNIX
 
-/* ----------------------- Macintosh, before MacOS X ----------------------- */
-#if defined(__MWERKS__) && defined(macintosh) || defined(OPENSSL_SYSNAME_MAC)
-# undef OPENSSL_SYS_UNIX
-# define OPENSSL_SYS_MACINTOSH_CLASSIC
-#endif
-
 /* ----------------------- NetWare ----------------------------------------- */
 #if defined(NETWARE) || defined(OPENSSL_SYSNAME_NETWARE)
 # undef OPENSSL_SYS_UNIX
@@ -175,10 +169,6 @@ extern "C" {
 #  define OPENSSL_SYS_NEWS4
 # endif
 # ifdef OPENSSL_SYSNAME_MACOSX
-#  define OPENSSL_SYS_MACOSX
-# endif
-# ifdef OPENSSL_SYSNAME_MACOSX_RHAPSODY
-#  define OPENSSL_SYS_MACOSX_RHAPSODY
 #  define OPENSSL_SYS_MACOSX
 # endif
 # ifdef OPENSSL_SYSNAME_SUNOS
@@ -287,10 +277,6 @@ extern "C" {
 # define OPENSSL_IMPLEMENT_GLOBAL(type,name,value) OPENSSL_GLOBAL type _shadow_##name=value;
 # define OPENSSL_DECLARE_GLOBAL(type,name) OPENSSL_EXPORT type _shadow_##name
 # define OPENSSL_GLOBAL_REF(name) _shadow_##name
-#endif
-
-#if defined(OPENSSL_SYS_MACINTOSH_CLASSIC) && macintosh==1 && !defined(MAC_OS_GUSI_SOURCE)
-#  define ossl_ssize_t long
 #endif
 
 #ifdef OPENSSL_SYS_MSDOS

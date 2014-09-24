@@ -129,7 +129,7 @@
 #undef  SGTTY
 #endif
 
-#if !defined(TERMIO) && !defined(TERMIOS) && !defined(OPENSSL_SYS_VMS) && !defined(OPENSSL_SYS_MSDOS) && !defined(MAC_OS_pre_X) && !defined(MAC_OS_GUSI_SOURCE)
+#if !defined(TERMIO) && !defined(TERMIOS) && !defined(OPENSSL_SYS_VMS) && !defined(OPENSSL_SYS_MSDOS)
 #undef  TERMIOS
 #undef  TERMIO
 #define SGTTY
@@ -165,7 +165,7 @@
 #define TTY_set(tty,data)	ioctl(tty,TIOCSETP,data)
 #endif
 
-#if !defined(_LIBC) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_VMS) && !defined(MAC_OS_pre_X)
+#if !defined(_LIBC) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_VMS)
 #include <sys/ioctl.h>
 #endif
 
@@ -186,14 +186,6 @@ struct IOSB {
 	};
 #endif
 
-#if defined(MAC_OS_pre_X) || defined(MAC_OS_GUSI_SOURCE)
-/*
- * This one needs work. As a matter of fact the code is unoperational
- * and this is only a trick to get it compiled.
- *					<appro@fy.chalmers.se>
- */
-#define TTY_STRUCT int
-#endif
 
 #ifndef NX509_SIG
 #define NX509_SIG 32
@@ -294,7 +286,7 @@ int des_read_pw(char *buf, char *buff, int size, const char *prompt,
 #ifdef OPENSSL_SYS_MSDOS
 	if ((tty=fopen("con","r")) == NULL)
 		tty=stdin;
-#elif defined(MAC_OS_pre_X) || defined(OPENSSL_SYS_VXWORKS)
+#elif defined(OPENSSL_SYS_VXWORKS)
 	tty=stdin;
 #else
 #ifndef OPENSSL_SYS_MPE

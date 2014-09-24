@@ -192,7 +192,7 @@
 #include "../crypto/bn/bn_lcl.h"
 
 #ifndef HAVE_FORK
-# if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MACINTOSH_CLASSIC) || defined(OPENSSL_SYS_OS2) || defined(OPENSSL_SYS_NETWARE)
+# if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_OS2) || defined(OPENSSL_SYS_NETWARE)
 #  define HAVE_FORK 0
 # else
 #  define HAVE_FORK 1

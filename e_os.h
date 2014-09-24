@@ -94,20 +94,6 @@ extern "C" {
 #  define NO_SYSLOG
 #endif
   
-#if defined(OPENSSL_SYS_MACINTOSH_CLASSIC)
-# if macintosh==1
-#  ifndef MAC_OS_GUSI_SOURCE
-#    define MAC_OS_pre_X
-#    define NO_SYS_TYPES_H
-#  endif
-#  define NO_SYS_PARAM_H
-#  define NO_CHMOD
-#  define NO_SYSLOG
-#  undef  DEVRANDOM
-#  define GETPID_IS_MEANINGLESS
-# endif
-#endif
-
 /********************************************************************
  The Microsoft section
  ********************************************************************/
@@ -157,12 +143,6 @@ extern "C" {
 #define closesocket(s)		close_s(s)
 #define readsocket(s,b,n)	read_s(s,b,n)
 #define writesocket(s,b,n)	send(s,b,n,0)
-#elif defined(MAC_OS_pre_X)
-#define get_last_socket_error()	errno
-#define clear_socket_error()	errno=0
-#define closesocket(s)		MacSocket_close(s)
-#define readsocket(s,b,n)	MacSocket_recv((s),(b),(n),true)
-#define writesocket(s,b,n)	MacSocket_send((s),(b),(n))
 #elif defined(OPENSSL_SYS_VMS)
 #define get_last_socket_error() errno
 #define clear_socket_error()    errno=0
@@ -545,14 +525,6 @@ static unsigned int _strlen31(const char *str)
 #      define SHUTDOWN(fd)		close_s(fd)
 #      define SHUTDOWN2(fd)		close_s(fd)
 #    endif
-
-#  elif defined(MAC_OS_pre_X)
-
-#    include "MacSocket.h"
-#    define SSLeay_Write(a,b,c)		MacSocket_send((a),(b),(c))
-#    define SSLeay_Read(a,b,c)		MacSocket_recv((a),(b),(c),true)
-#    define SHUTDOWN(fd)		MacSocket_close(fd)
-#    define SHUTDOWN2(fd)		MacSocket_close(fd)
 
 #  elif defined(OPENSSL_SYS_NETWARE)
          /* NetWare uses the WinSock2 interfaces by default, but can be configured for BSD
