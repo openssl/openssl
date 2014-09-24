@@ -64,7 +64,7 @@
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
-#include "../constant_time_locl.h"
+#include "constant_time_locl.h"
 #include "evp_locl.h"
 
 #ifdef OPENSSL_FIPS
