@@ -64,7 +64,7 @@
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
-#include "../constant_time_locl.h"
+#include "constant_time_locl.h"
 #include "evp_locl.h"
 
 const char EVP_version[]="EVP" OPENSSL_VERSION_PTEXT;
