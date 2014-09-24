@@ -360,15 +360,6 @@ static unsigned int _strlen31(const char *str)
 #    define DEFAULT_HOME  "C:"
 #  endif
 
-/*
- * Visual Studio: inline is available in C++ only, however
- * __inline is available for C, see
- * http://msdn.microsoft.com/en-us/library/z8y1yy88.aspx
- */
-#if defined(_MSC_VER) && !defined(__cplusplus) && !defined(inline)
-#  define inline __inline
-#endif
-
 #else /* The non-microsoft world */
 
 #  ifdef OPENSSL_SYS_VMS
@@ -710,6 +701,23 @@ struct servent *getservbyname(const char *name, const char *proto);
 
 #endif
 /* end vxworks */
+
+#if !defined(inline) && !defined(__cplusplus)
+# if defined(__STDC_VERSION__) && __STDC_VERSION__>=199901L
+   /* do nothing, inline works */
+# elif defined(__GNUC__) && __GNUC__>=3 && !defined(__NO_INLINE__)
+   /* do nothing, inline works */
+# elif defined(_MSC_VER)
+  /*
+   * Visual Studio: inline is available in C++ only, however
+   * __inline is available for C, see
+   * http://msdn.microsoft.com/en-us/library/z8y1yy88.aspx
+   */
+#  define inline __inline
+# else
+#  define inline
+# endif
+#endif
 
 #ifdef  __cplusplus
 }
