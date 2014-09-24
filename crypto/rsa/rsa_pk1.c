@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#include "../constant_time_locl.h"
+#include "constant_time_locl.h"
 
 #include <stdio.h>
 #include "cryptlib.h"
