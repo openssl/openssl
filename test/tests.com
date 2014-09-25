@@ -56,7 +56,7 @@ $	    tests := -
 	test_enc,test_x509,test_rsa,test_crl,test_sid,-
 	test_gen,test_req,test_pkcs7,test_verify,test_dh,test_dsa,-
 	test_ss,test_ca,test_engine,test_evp,test_ssl,test_tsa,test_ige,-
-	test_jpake,test_srp,test_cms,test_heartbeat
+	test_jpake,test_srp,test_cms,test_heartbeat,test_constant_time
 $	endif
 $	tests = f$edit(tests,"COLLAPSE")
 $
@@ -96,6 +96,7 @@ $	JPAKETEST :=	jpaketest
 $	SRPTEST :=	srptest
 $	ASN1TEST :=	asn1test
 $	HEARTBEATTEST := heartbeat_test
+$	CONSTTIMETEST := constant_time_test
 $!
 $	tests_i = 0
 $ loop_tests:
@@ -370,6 +371,10 @@ $	return
 $ test_heartbeat:
 $       write sys$output "Test HEARTBEAT"
 $       mcr 'texe_dir''heartbeattest'
+$       return
+$ test_constant_time:
+$       write sys$output "Test constant time utilities"
+$       mcr 'texe_dir''consttimetest'
 $       return
 $
 $
