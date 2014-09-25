@@ -22,6 +22,10 @@
 #endif // __LP64__
 #endif // x86 or amd64
 
+#ifdef __aarch64__
+#define SYS_getrandom 384
+#endif
+
 #endif // !defined(SYS_getrandom)
 
 #if defined(OPENSSL_SYS_LINUX) && defined(SYS_getrandom)
