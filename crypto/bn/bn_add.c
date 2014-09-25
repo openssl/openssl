@@ -171,9 +171,6 @@ int BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 	register BN_ULONG t1,t2,*rp;
 	register const BN_ULONG *ap,*bp;
 	int i,carry;
-#if defined(IRIX_CC_BUG) && !defined(LINT)
-	int dummy;
-#endif
 
 	bn_check_top(a);
 	bn_check_top(b);
@@ -210,9 +207,6 @@ int BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 			carry=(t1 < t2);
 			t1=(t1-t2)&BN_MASK2;
 			}
-#if defined(IRIX_CC_BUG) && !defined(LINT)
-		dummy=t1;
-#endif
 		*(rp++)=t1&BN_MASK2;
 		}
 #else

@@ -657,13 +657,6 @@ extern char *sys_errlist[]; extern int sys_nerr;
 
 #define DG_GCC_BUG	/* gcc < 2.6.3 on DGUX */
 
-#ifdef sgi
-#define IRIX_CC_BUG	/* all version of IRIX I've tested (4.* 5.*) */
-#endif
-#ifdef OPENSSL_SYS_SNI
-#define IRIX_CC_BUG	/* CDS++ up to V2.0Bsomething suffered from the same bug.*/
-#endif
-
 #if defined(OPENSSL_SYS_WINDOWS)
 #  define strcasecmp _stricmp
 #  define strncasecmp _strnicmp
