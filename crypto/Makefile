@@ -46,7 +46,8 @@ SRC= $(LIBSRC)
 
 EXHEADER= crypto.h opensslv.h opensslconf.h ebcdic.h symhacks.h \
 	ossl_typ.h
-HEADER=	cryptlib.h buildinf.h md32_common.h o_str.h o_dir.h $(EXHEADER)
+HEADER=	cryptlib.h buildinf.h md32_common.h o_str.h o_dir.h \
+	constant_time_locl.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
