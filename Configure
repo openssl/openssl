@@ -3,6 +3,8 @@ eval 'exec perl -S $0 ${1+"$@"}'
     if $running_under_some_shell;
 ##
 ##  Configure -- OpenSSL source tree configuration script
+##  If editing this file, run this command before committing
+##	make -f Makefile.org TABLE
 ##
 
 require 5.000;

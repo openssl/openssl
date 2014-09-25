@@ -5678,40 +5678,6 @@ $ranlib       =
 $arflags      = 
 $multilib     = 
 
-*** rhapsody-ppc-cc
-$cc           = cc
-$cflags       = -O3 -DB_ENDIAN
-$unistd       = 
-$thread_cflag = (unknown)
-$sys_id       = MACOSX_RHAPSODY
-$lflags       = 
-$bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR
-$cpuid_obj    = 
-$bn_obj       = 
-$ec_obj       = 
-$des_obj      = 
-$aes_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-$wp_obj       = 
-$cmll_obj     = 
-$modes_obj    = 
-$engines_obj  = 
-$perlasm_scheme = void
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-$shared_ldflag = 
-$shared_extension = 
-$ranlib       = 
-$arflags      = 
-$multilib     = 
-
 *** sco5-cc
 $cc           = cc
 $cflags       = -belf
