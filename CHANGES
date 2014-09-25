@@ -4,7 +4,15 @@
 
  Changes between 1.0.1i and 1.0.1j [xx XXX xxxx]
 
-  *)
+  *) Add additional DigestInfo checks.
+ 
+     Reencode DigestInto in DER and check against the original when
+     verifying RSA signature: this will reject any improperly encoded
+     DigestInfo structures.
+
+     Note: this is a precautionary measure and no attacks are currently known.
+
+     [Steve Henson]
 
  Changes between 1.0.1h and 1.0.1i [6 Aug 2014]
 
