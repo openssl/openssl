@@ -204,7 +204,7 @@ static inline unsigned char constant_time_select_8(unsigned char mask,
 	return (unsigned char)(constant_time_select(mask, a, b));
 	}
 
-inline int constant_time_select_int(unsigned int mask, int a, int b)
+static inline int constant_time_select_int(unsigned int mask, int a, int b)
 	{
 	return (int)(constant_time_select(mask, (unsigned)(a), (unsigned)(b)));
 	}
