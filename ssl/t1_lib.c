@@ -2434,6 +2434,10 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 							      al))
 				return 0;
                         }
+#ifdef TLSEXT_TYPE_encrypt_then_mac
+		else if (type == TLSEXT_TYPE_encrypt_then_mac)
+			s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
+#endif
 		/* If this ClientHello extension was unhandled and this is 
 		 * a nonresumed connection, check whether the extension is a 
 		 * custom TLS Extension (has a custom_srv_ext_record), and if
@@ -2445,10 +2449,6 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 			if (custom_ext_parse(s, 1, type, data, size, al) <= 0)
 				return 0;
 			}
-#ifdef TLSEXT_TYPE_encrypt_then_mac
-		else if (type == TLSEXT_TYPE_encrypt_then_mac)
-			s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
-#endif
 
 		data+=size;
 		}
@@ -2774,11 +2774,6 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 							      al))
                                 return 0;
                         }
-		/* If this extension type was not otherwise handled, but 
-		 * matches a custom_cli_ext_record, then send it to the c
-		 * callback */
-		else if (custom_ext_parse(s, 0, type, data, size, al) <= 0)
-				return 0;
 #ifdef TLSEXT_TYPE_encrypt_then_mac
 		else if (type == TLSEXT_TYPE_encrypt_then_mac)
 			{
@@ -2787,6 +2782,11 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 				s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
 			}
 #endif
+		/* If this extension type was not otherwise handled, but 
+		 * matches a custom_cli_ext_record, then send it to the c
+		 * callback */
+		else if (custom_ext_parse(s, 0, type, data, size, al) <= 0)
+				return 0;
  
 		data += size;
 		}
