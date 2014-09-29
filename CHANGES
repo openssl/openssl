@@ -4,7 +4,15 @@
 
  Changes between 0.9.8zb and 0.9.8zc [xx XXX xxxx]
 
-  *)
+  *) Add additional DigestInfo checks.
+ 
+     Reencode DigestInto in DER and check against the original when
+     verifying RSA signature: this will reject any improperly encoded
+     DigestInfo structures.
+
+     Note: this is a precautionary measure and no attacks are currently known.
+
+     [Steve Henson]
 
  Changes between 0.9.8za and 0.9.8zb [6 Aug 2014]
 
