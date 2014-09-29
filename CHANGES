@@ -625,17 +625,19 @@
      X509_CINF_set_modified, X509_CINF_get_issuer, X509_CINF_get_extensions and
      X509_CINF_get_signature were reverted post internal team review.
 
- Changes between 1.0.1g and 1.0.1h [5 Jun 2014]
+ Changes between 1.0.1i and 1.0.1j [xx XXX xxxx]
 
   *) Add additional DigestInfo checks.
  
-     Reencode DigestInto in DER and check against the original: this
-     will reject any improperly encoded DigestInfo structures.
+     Reencode DigestInto in DER and check against the original when
+     verifying RSA signature: this will reject any improperly encoded
+     DigestInfo structures.
 
-     Note: this is a precautionary measure OpenSSL and no attacks
-     are currently known.
+     Note: this is a precautionary measure and no attacks are currently known.
 
      [Steve Henson]
+
+ Changes between 1.0.1g and 1.0.1h [5 Jun 2014]
 
   *) Fix for SSL/TLS MITM flaw. An attacker using a carefully crafted
      handshake can force the use of weak keying material in OpenSSL
