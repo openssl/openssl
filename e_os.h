@@ -274,7 +274,7 @@ extern "C" {
 #    ifdef _WIN64
 #      define strlen(s) _strlen31(s)
 /* cut strings to 2GB */
-static unsigned int _strlen31(const char *str)
+static __inline unsigned int _strlen31(const char *str)
 	{
 	unsigned int len=0;
 	while (*str && len<0x80000000U) str++, len++;
@@ -657,6 +657,13 @@ extern char *sys_errlist[]; extern int sys_nerr;
 
 #define DG_GCC_BUG	/* gcc < 2.6.3 on DGUX */
 
+#ifdef sgi
+#define IRIX_CC_BUG	/* all version of IRIX I've tested (4.* 5.*) */
+#endif
+#ifdef OPENSSL_SYS_SNI
+#define IRIX_CC_BUG	/* CDS++ up to V2.0Bsomething suffered from the same bug.*/
+#endif
+
 #if defined(OPENSSL_SYS_WINDOWS)
 #  define strcasecmp _stricmp
 #  define strncasecmp _strnicmp
@@ -720,8 +727,8 @@ struct servent *getservbyname(const char *name, const char *proto);
 #if !defined(inline) && !defined(__cplusplus)
 # if defined(__STDC_VERSION__) && __STDC_VERSION__>=199901L
    /* do nothing, inline works */
-# elif defined(__GNUC__) && __GNUC__>=3 && !defined(__NO_INLINE__)
-   /* do nothing, inline works */
+# elif defined(__GNUC__) && __GNUC__>=2
+#  define inline __inline__
 # elif defined(_MSC_VER)
   /*
    * Visual Studio: inline is available in C++ only, however
