@@ -1485,8 +1485,11 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf, unsigned c
 	if (!custom_ext_add(s, 0, &ret, limit, al))
 		return NULL;
 #ifdef TLSEXT_TYPE_encrypt_then_mac
-	s2n(TLSEXT_TYPE_encrypt_then_mac,ret);
-	s2n(0,ret);
+	if (s->version != SSL3_VERSION)
+		{
+		s2n(TLSEXT_TYPE_encrypt_then_mac,ret);
+		s2n(0,ret);
+		}
 #endif
 
 	/* Add padding to workaround bugs in F5 terminators.
@@ -1719,10 +1722,12 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf, unsigned c
 #ifdef TLSEXT_TYPE_encrypt_then_mac
 	if (s->s3->flags & TLS1_FLAGS_ENCRYPT_THEN_MAC)
 		{
-		/* Don't use encrypt_then_mac if AEAD: might want
-		 * to disable for other ciphersuites too.
+		/* Don't use encrypt_then_mac if AEAD, RC4 or SSL 3.0:
+		 * might want to disable for other cases too.
 		 */
-		if (s->s3->tmp.new_cipher->algorithm_mac == SSL_AEAD)
+		if (s->s3->tmp.new_cipher->algorithm_mac == SSL_AEAD
+		    || s->s3->tmp.new_cipher->algorithm_enc == SSL_RC4
+		    || s->version == SSL3_VERSION)
 			s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC;
 		else
 			{
@@ -2436,7 +2441,10 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
                         }
 #ifdef TLSEXT_TYPE_encrypt_then_mac
 		else if (type == TLSEXT_TYPE_encrypt_then_mac)
-			s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
+			{
+			if (s->version != SSL3_VERSION)
+				s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
+			}
 #endif
 		/* If this ClientHello extension was unhandled and this is 
 		 * a nonresumed connection, check whether the extension is a 
@@ -2777,8 +2785,10 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 #ifdef TLSEXT_TYPE_encrypt_then_mac
 		else if (type == TLSEXT_TYPE_encrypt_then_mac)
 			{
-			/* Ignore if inappropriate ciphersuite */
-			if (s->s3->tmp.new_cipher->algorithm_mac != SSL_AEAD)
+			/* Ignore if inappropriate ciphersuite or SSL 3.0 */
+			if (s->s3->tmp.new_cipher->algorithm_mac != SSL_AEAD
+			    && s->s3->tmp.new_cipher->algorithm_enc != SSL_RC4
+			    && s->version != SSL3_VERSION)
 				s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
 			}
 #endif
