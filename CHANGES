@@ -52,6 +52,11 @@
      This work was sponsored by Intel Corp.
      [Andy Polyakov]
 
+  *) Support for DTLS 1.2. This adds two sets of DTLS methods: DTLS_*_method()
+     supports both DTLS 1.2 and 1.0 and should use whatever version the peer
+     supports and DTLSv1_2_*_method() which supports DTLS 1.2 only.
+     [Steve Henson]
+
   *) Use algorithm specific chains in SSL_CTX_use_certificate_chain_file():
      this fixes a limiation in previous versions of OpenSSL.
      [Steve Henson]
