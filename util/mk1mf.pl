@@ -52,6 +52,7 @@ my %mf_import = (
         ENGINES_ASM_OBJ=> \$mf_engines_asm,
 	BASEADDR       => \$baseaddr,
 	FIPSDIR        => \$fipsdir,
+	EC_ASM	       => \$mf_ec_asm,
 );
 
 open(IN,"<Makefile") || die "unable to open Makefile!\n";
@@ -730,6 +731,7 @@ if ($orig_platform eq 'copy') {
 	$lib_obj{CRYPTO} .= fix_asm($mf_engines_asm, 'engines');
 	$lib_obj{CRYPTO} .= fix_asm($mf_rc4_asm, 'crypto/rc4');
 	$lib_obj{CRYPTO} .= fix_asm($mf_modes_asm, 'crypto/modes');
+	$lib_obj{CRYPTO} .= fix_asm($mf_ec_asm, 'crypto/ec');
 }
 
 foreach (values %lib_nam)
