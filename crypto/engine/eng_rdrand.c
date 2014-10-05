@@ -59,24 +59,32 @@
      defined(__x86_64) || defined(__x86_64__) || \
      defined(_M_AMD64) || defined (_M_X64)) && defined(OPENSSL_CPUID_OBJ)
 
-size_t OPENSSL_ia32_rdrand(void);
+size_t OPENSSL_ia32_rdrand(size_t* buf, size_t num);
 
 static int get_random_bytes (unsigned char *buf, int num)
 	{
-	size_t rnd;
+	size_t ret = 0; // ret < wanted_qwords as soon as rdrand fails
+	size_t num_qwords = num/sizeof(size_t);
+	num = num % sizeof(size_t);
+	size_t *p = (size_t *)buf;
 
-	while (num>=(int)sizeof(size_t)) {
-		if ((rnd = OPENSSL_ia32_rdrand()) == 0) return 0;
-
-		*((size_t *)buf) = rnd;
-		buf += sizeof(size_t);
-		num -= sizeof(size_t);
-	}
-	if (num) {
-		if ((rnd = OPENSSL_ia32_rdrand()) == 0) return 0;
-
-		memcpy (buf,&rnd,num);
-	}
+	while (num_qwords)
+		{
+		ret = OPENSSL_ia32_rdrand(p, num_qwords);
+		p += ret;
+		num_qwords -= ret;
+		}
+	// due to num < sizeof(size_t) a single size_t suffices
+	while (num)
+		{
+		size_t rnd;
+		ret = OPENSSL_ia32_rdrand(&rnd, 1);
+		if (ret)
+			{
+			memcpy((void *)p, &rnd, num);
+			num -= 1;
+			}
+		}
 
 	return 1;
 	}
