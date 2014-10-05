@@ -113,6 +113,7 @@ static int bind_helper(ENGINE *e)
 	{
 	if (!ENGINE_set_id(e, engine_e_linux_getrandom_id) ||
 	    !ENGINE_set_name(e, engine_e_linux_getrandom_name) ||
+	    !ENGINE_set_flags(e, ENGINE_FLAGS_NO_REGISTER_ALL) ||
 	    !ENGINE_set_init_function(e, linux_getrandom_init) ||
 	    !ENGINE_set_RAND(e, &linux_getrandom_meth) )
 		return 0;
