@@ -3209,15 +3209,28 @@ SSL_CTX *SSL_get_SSL_CTX(const SSL *ssl)
 
 SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX* ctx)
 	{
+	CERT *ocert = ssl->cert;
 	if (ssl->ctx == ctx)
 		return ssl->ctx;
 #ifndef OPENSSL_NO_TLSEXT
 	if (ctx == NULL)
 		ctx = ssl->initial_ctx;
 #endif
-	if (ssl->cert != NULL)
-		ssl_cert_free(ssl->cert);
 	ssl->cert = ssl_cert_dup(ctx->cert);
+	if (ocert)
+		{
+		/* Preserve any already negotiated parameters */
+		if (ssl->server)
+			{
+			ssl->cert->peer_sigalgs = ocert->peer_sigalgs;
+			ssl->cert->peer_sigalgslen = ocert->peer_sigalgslen;
+			ocert->peer_sigalgs = NULL;
+			ssl->cert->ciphers_raw = ocert->ciphers_raw;
+			ssl->cert->ciphers_rawlen = ocert->ciphers_rawlen;
+			ocert->ciphers_raw = NULL;
+			}
+		ssl_cert_free(ocert);
+		}
 	CRYPTO_add(&ctx->references,1,CRYPTO_LOCK_SSL_CTX);
 	if (ssl->ctx != NULL)
 		SSL_CTX_free(ssl->ctx); /* decrement reference count */
