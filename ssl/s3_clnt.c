@@ -2168,10 +2168,16 @@ int ssl3_get_certificate_request(SSL *s)
 			s->cert->pkeys[i].digest = NULL;
 			s->cert->pkeys[i].valid_flags = 0;
 			}
-		if ((llen & 1) || !tls1_process_sigalgs(s, p, llen))
+		if ((llen & 1) || !tls1_save_sigalgs(s, p, llen))
 			{
 			ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_DECODE_ERROR);
 			SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,SSL_R_SIGNATURE_ALGORITHMS_ERROR);
+			goto err;
+			}
+		if (!tls1_process_sigalgs(s))
+			{
+			ssl3_send_alert(s,SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+			SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST, ERR_R_MALLOC_FAILURE);
 			goto err;
 			}
 		p += llen;
