@@ -1920,7 +1920,6 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 	unsigned short len;
 	unsigned char *data = *p;
 	int renegotiate_seen = 0;
-	size_t i;
 
 	s->servername_done = 0;
 	s->tlsext_status_type = -1;
@@ -1949,18 +1948,6 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 		{
 		OPENSSL_free(s->cert->peer_sigalgs);
 		s->cert->peer_sigalgs = NULL;
-		}
-	/* Clear any shared sigtnature algorithms */
-	if (s->cert->shared_sigalgs)
-		{
-		OPENSSL_free(s->cert->shared_sigalgs);
-		s->cert->shared_sigalgs = NULL;
-		}
-	/* Clear certificate digests and validity flags */
-	for (i = 0; i < SSL_PKEY_NUM; i++)
-		{
-		s->cert->pkeys[i].digest = NULL;
-		s->cert->pkeys[i].valid_flags = 0;
 		}
 
 #ifdef TLSEXT_TYPE_encrypt_then_mac
@@ -2252,19 +2239,9 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 				*al = SSL_AD_DECODE_ERROR;
 				return 0;
 				}
-			if (!tls1_process_sigalgs(s, data, dsize))
+			if (!tls1_save_sigalgs(s, data, dsize))
 				{
 				*al = SSL_AD_DECODE_ERROR;
-				return 0;
-				}
-			/* If sigalgs received and no shared algorithms fatal
-			 * error.
-			 */
-			if (s->cert->peer_sigalgs && !s->cert->shared_sigalgs)
-				{
-				SSLerr(SSL_F_SSL_SCAN_CLIENTHELLO_TLSEXT,
-					SSL_R_NO_SHARED_SIGATURE_ALGORITHMS);
-				*al = SSL_AD_ILLEGAL_PARAMETER;
 				return 0;
 				}
 			}
@@ -2476,9 +2453,6 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 				SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
 		return 0;
 		}
-	/* If no signature algorithms extension set default values */
-	if (!s->cert->peer_sigalgs)
-		ssl_cert_set_default_md(s->cert);
 
 	return 1;
 	}
@@ -2998,6 +2972,7 @@ int ssl_check_clienthello_tlsext_late(SSL *s)
 	{
 	int ret = SSL_TLSEXT_ERR_OK;
 	int al;
+	size_t i;
 
 	/* If status request then ask callback what to do.
  	 * Note: this must be called after servername callbacks in case
@@ -3042,6 +3017,43 @@ int ssl_check_clienthello_tlsext_late(SSL *s)
 		}
 	else
 		s->tlsext_status_expected = 0;
+
+	/* Clear any shared sigtnature algorithms */
+	if (s->cert->shared_sigalgs)
+		{
+		OPENSSL_free(s->cert->shared_sigalgs);
+		s->cert->shared_sigalgs = NULL;
+		}
+	/* Clear certificate digests and validity flags */
+	for (i = 0; i < SSL_PKEY_NUM; i++)
+		{
+		s->cert->pkeys[i].digest = NULL;
+		s->cert->pkeys[i].valid_flags = 0;
+		}
+
+	/* If sigalgs received process it. */
+	if (s->cert->peer_sigalgs)
+		{
+		if (!tls1_process_sigalgs(s))
+			{
+			SSLerr(SSL_F_SSL_CHECK_CLIENTHELLO_TLSEXT_LATE,
+					ERR_R_MALLOC_FAILURE);
+			ret = SSL_TLSEXT_ERR_ALERT_FATAL;
+			al = SSL_AD_INTERNAL_ERROR;
+			goto err;
+			}
+		/* Fatal error is no shared signature algorithms */
+		if (!s->cert->shared_sigalgs)
+			{
+			SSLerr(SSL_F_SSL_CHECK_CLIENTHELLO_TLSEXT_LATE,
+					SSL_R_NO_SHARED_SIGATURE_ALGORITHMS);
+			ret = SSL_TLSEXT_ERR_ALERT_FATAL;
+			al = SSL_AD_ILLEGAL_PARAMETER;
+			goto err;
+			}
+		}
+	else
+		ssl_cert_set_default_md(s->cert);
 
  err:
 	switch (ret)
@@ -3771,13 +3783,9 @@ static int tls1_set_shared_sigalgs(SSL *s)
 
 /* Set preferred digest for each key type */
 
-int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
+int tls1_save_sigalgs(SSL *s, const unsigned char *data, int dsize)
 	{
-	int idx;
-	size_t i;
-	const EVP_MD *md;
 	CERT *c = s->cert;
-	TLS_SIGALGS *sigptr;
 	/* Extension ignored for inappropriate versions */
 	if (!SSL_USE_SIGALGS(s))
 		return 1;
@@ -3792,8 +3800,18 @@ int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 		return 0;
 	c->peer_sigalgslen = dsize;
 	memcpy(c->peer_sigalgs, data, dsize);
+	return 1;
+	}
 
-	tls1_set_shared_sigalgs(s);
+int tls1_process_sigalgs(SSL *s)
+	{
+	int idx;
+	size_t i;
+	const EVP_MD *md;
+	CERT *c = s->cert;
+	TLS_SIGALGS *sigptr;
+	if (!tls1_set_shared_sigalgs(s))
+		return 0;
 
 #ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
 	if (s->cert->cert_flags & SSL_CERT_FLAG_BROKEN_PROTOCOL)

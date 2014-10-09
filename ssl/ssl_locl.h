@@ -1382,7 +1382,8 @@ int ssl_parse_clienthello_renegotiate_ext(SSL *s, unsigned char *d, int len,
 long ssl_get_algorithm2(SSL *s);
 size_t tls12_copy_sigalgs(SSL *s, unsigned char *out,
 				const unsigned char *psig, size_t psiglen);
-int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize);
+int tls1_save_sigalgs(SSL *s, const unsigned char *data, int dsize);
+int tls1_process_sigalgs(SSL *s);
 size_t tls12_get_psigalgs(SSL *s, const unsigned char **psigs);
 int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s,
 				const unsigned char *sig, EVP_PKEY *pkey);
