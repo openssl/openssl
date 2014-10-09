@@ -12,10 +12,15 @@ extern "C"
 	int RAND_poll(void);
 }
 #endif
-//Entropy collection when CryptographicBuffer is not available (Windows Phone 8.0)
-//The easiest way to generate random data would be CoCreateGuid
+
 #if defined(OPENSSL_WINAPP_NOCRYPTOGRAPHICBUFFER)
-	#include <combaseapi.h>
+#include <combaseapi.h>
+
+// For Windows Phone 8, the Cryptography namespace is not avaialble from WinRT
+// native code. Since we're only looking to generate random data, CoCreateGuid
+// on WindowsPhone 8 internally calls GenerateRandom giving us an
+// easy way to get to the API.
+
 unsigned entropyRT(BYTE *buffer, unsigned len)
 	{
 	unsigned bytesLeft = len;
