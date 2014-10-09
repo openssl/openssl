@@ -7,7 +7,7 @@ exit /b
 	call "%_VS12VC%\vcvarsall" x86_arm
 	set PATH=%_VS12VC\Bin%;%PATH%
 	set INCLUDE=%_WPKITS81%\Include;%_WPKITS81%\Include\abi;%_WPKITS81%\Include\mincore;%_WPKITS81%\Include\minwin;%_WPKITS81%\Include\wrl;%INCLUDE%
-	set LIB=%_WPKITS81%\lib\ARM;%_VS12VC%\lib\ARM;
+	set LIB=%_WPKITS81%\lib\ARM;%_VS12VC%\lib\store\ARM;
 	set LIBPATH=%LIBPATH%;%_VS12VC%\vcpackages;%WindowsSDK_ExecutablePath_x86%\..\..\Tools\MDILXAPCompile\WinMDs
 	goto :eof
 
@@ -38,7 +38,7 @@ exit /b
 	call "%_VS12VC%\vcvarsall" x86
 	set INCLUDE=%_VS12VC%\include;%_VS12VC%\atlmfc\include;%_WSKITS81%\Include\um;%_WSKITS81%\Include\shared;%_WSKITS81%\Include\winrt;
 	set LIB=%_VS12VC%\lib\store;%_VS12VC%\atlmfc\lib;%_WSKITS81%\lib\winv6.3\um\x86;
-	set LIBPATH=%_WSKITS81%\References\CommonConfiguration\Neutral;%_VS12VC%\atlmfc\lib;%_VS12VC%\lib;%_VS12VC%\vcpackages;%WindowsSDK_ExecutablePath_x86%\..\..\Tools\MDILXAPCompile\WinMDs
+	set LIBPATH=%_WSKITS81%\References\CommonConfiguration\Neutral;%_VS12VC%\atlmfc\lib;%_VS12VC%\lib\store;%_VS12VC%\vcpackages;%WindowsSDK_ExecutablePath_x86%\..\..\Tools\MDILXAPCompile\WinMDs
 	goto :eof
 
 :set_ws8.1x64
@@ -46,8 +46,8 @@ exit /b
 	call:setVar _WSKITS81 WindowsKits8.1
 	call "%_VS12VC%\vcvarsall" x64
 	set INCLUDE=%_VS12VC%\include;%_VS12VC%\atlmfc\include;%_WSKITS81%\Include\um;%_WSKITS81%\Include\shared;%_WSKITS81%\Include\winrt;
-	set LIB=%_VS12VC%\lib\amd64;%_VS12VC%\atlmfc\lib\amd64;%_WSKITS81%\lib\winv6.3\um\x64;
-	set LIBPATH=%_WSKITS81%\References\CommonConfiguration\Neutral;%_VS12VC%\atlmfc\lib\amd64;%_VS12VC%\lib;%_VS12VC%\vcpackages;%WindowsSDK_ExecutablePath_x86%\..\..\Tools\MDILXAPCompile\WinMDs
+	set LIB=%_VS12VC%\lib\store\amd64;%_VS12VC%\atlmfc\lib\amd64;%_WSKITS81%\lib\winv6.3\um\x64;
+	set LIBPATH=%_WSKITS81%\References\CommonConfiguration\Neutral;%_VS12VC%\atlmfc\lib\amd64;%_VS12VC%\lib\store;%_VS12VC%\vcpackages;%WindowsSDK_ExecutablePath_x86%\..\..\Tools\MDILXAPCompile\WinMDs
 	goto :eof
 
 :set_ws8.1arm
@@ -55,8 +55,8 @@ exit /b
 	call:setVar _WSKITS81 WindowsKits8.1
 	call "%_VS12VC%\vcvarsall" x86_arm
 	set INCLUDE=%_VS12VC%\include;%_VS12VC%\atlmfc\include;%_WSKITS81%\Include\um;%_WSKITS81%\Include\shared;%_WSKITS81%\Include\winrt;
-	set LIB=%_VS12VC%\lib\arm;%_VS12VC%\atlmfc\lib\arm;%_WSKITS81%\lib\winv6.3\um\arm;
-	set LIBPATH=%_WSKITS81%\References\CommonConfiguration\Neutral;%_VS12VC%\atlmfc\lib\arm;%_VS12VC%\lib;%_VS12VC%\vcpackages;%WindowsSDK_ExecutablePath_x86%\..\..\Tools\MDILXAPCompile\WinMDs
+	set LIB=%_VS12VC%\lib\store\arm;%_VS12VC%\atlmfc\lib\arm;%_WSKITS81%\lib\winv6.3\um\arm;
+	set LIBPATH=%_WSKITS81%\References\CommonConfiguration\Neutral;%_VS12VC%\atlmfc\lib\arm;%_VS12VC%\lib\store;%_VS12VC%\vcpackages;%WindowsSDK_ExecutablePath_x86%\..\..\Tools\MDILXAPCompile\WinMDs
 	goto :eof
 
 :setVar

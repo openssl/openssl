@@ -55,7 +55,7 @@ goto :eof
 	if "%1"=="Store" set VC-CONFIGURATION=VC-WINSTORE
 	if "%3"=="Dll" set Dll=dll
 	if "%4"=="Unicode" set EXTRAFLAGS=%EXTRAFLAGS% -DUNICODE -D_UNICODE
-	if "%5"=="Debug" set EXTRAFLAGS=%EXTRAFLAGS% -Zi -Od
+	if "%5"=="Debug" set EXTRAFLAGS=%EXTRAFLAGS% -Zi
 	if "%2"=="8.0" set EXTRAFLAGS=%EXTRAFLAGS% -DOPENSSL_WINAPP_NOCRYPTOGRAPHICBUFFER
 	if not exist vsout\%PROJECTLOC%\%5\%6\tmp mkdir vsout\%PROJECTLOC%\%5\%6\tmp
 	if not exist vsout\%PROJECTLOC%\%5\%6\bin mkdir vsout\%PROJECTLOC%\%5\%6\bin	
