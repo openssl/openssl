@@ -89,7 +89,7 @@ static int hmac_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 	switch (op)
 		{
 		case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
-		*(int *)arg2 = NID_sha1;
+		*(int *)arg2 = NID_sha256;
 		return 1;
 
 		default:
@@ -123,6 +123,8 @@ static int old_hmac_encode(const EVP_PKEY *pkey, unsigned char **pder)
 		if (!*pder)
 			{
 			*pder = OPENSSL_malloc(os->length);
+			if (*pder == NULL)
+				return -1;
 			inc = 0;
 			}
 		else inc = 1;

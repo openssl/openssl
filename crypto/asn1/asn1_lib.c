@@ -131,6 +131,9 @@ int ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
 	*pclass=xclass;
 	if (!asn1_get_length(&p,&inf,plength,(int)max)) goto err;
 
+	if (inf && !(ret & V_ASN1_CONSTRUCTED))
+		goto err;
+
 #if 0
 	fprintf(stderr,"p=%d + *plength=%ld > omax=%ld + *pp=%d  (%d > %d)\n", 
 		(int)p,*plength,omax,(int)*pp,(int)(p+ *plength),
@@ -170,14 +173,20 @@ static int asn1_get_length(const unsigned char **pp, int *inf, long *rl, int max
 		i= *p&0x7f;
 		if (*(p++) & 0x80)
 			{
+			if (max < (int)i)
+				return 0;
+			/* Skip leading zeroes */
+			while (i && *p == 0)
+				{
+				p++;
+				i--;
+				}
 			if (i > sizeof(long))
 				return 0;
-			if (max-- == 0) return(0);
 			while (i-- > 0)
 				{
 				ret<<=8L;
 				ret|= *(p++);
-				if (max-- == 0) return(0);
 				}
 			}
 		else

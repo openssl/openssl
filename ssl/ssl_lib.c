@@ -1459,6 +1459,10 @@ char *SSL_get_shared_ciphers(const SSL *s,char *buf,int len)
 
 	p=buf;
 	sk=s->session->ciphers;
+
+	if (sk_SSL_CIPHER_num(sk) == 0)
+		return NULL;
+
 	for (i=0; i<sk_SSL_CIPHER_num(sk); i++)
 		{
 		int n;
@@ -1747,62 +1751,6 @@ void SSL_CTX_set_next_proto_select_cb(SSL_CTX *ctx, int (*cb) (SSL *s, unsigned 
 	}
 # endif
 
-int SSL_CTX_set_custom_cli_ext(SSL_CTX *ctx, unsigned short ext_type,
-			       custom_cli_ext_first_cb_fn fn1, 
-			       custom_cli_ext_second_cb_fn fn2, void* arg)
-	{
-	size_t i;
-	custom_cli_ext_record* record;
-
-	/* Check for duplicates */
-	for (i=0; i < ctx->custom_cli_ext_records_count; i++)
-		if (ext_type == ctx->custom_cli_ext_records[i].ext_type)
-			return 0;
-
-	ctx->custom_cli_ext_records = OPENSSL_realloc(ctx->custom_cli_ext_records,
-						      (ctx->custom_cli_ext_records_count + 1) * 
-						      sizeof(custom_cli_ext_record));
-	if (!ctx->custom_cli_ext_records) {
-		ctx->custom_cli_ext_records_count = 0;
-		return 0;
-	}
-	ctx->custom_cli_ext_records_count++;
-	record = &ctx->custom_cli_ext_records[ctx->custom_cli_ext_records_count - 1];
-	record->ext_type = ext_type;
-	record->fn1 = fn1;
-	record->fn2 = fn2;
-	record->arg = arg;
-	return 1;
-	}
-
-int SSL_CTX_set_custom_srv_ext(SSL_CTX *ctx, unsigned short ext_type,
-			       custom_srv_ext_first_cb_fn fn1, 
-			       custom_srv_ext_second_cb_fn fn2, void* arg)
-	{
-	size_t i;
-	custom_srv_ext_record* record;
-
-	/* Check for duplicates */	
-	for (i=0; i < ctx->custom_srv_ext_records_count; i++)
-		if (ext_type == ctx->custom_srv_ext_records[i].ext_type)
-			return 0;
-
-	ctx->custom_srv_ext_records = OPENSSL_realloc(ctx->custom_srv_ext_records,
-						      (ctx->custom_srv_ext_records_count + 1) * 
-						      sizeof(custom_srv_ext_record));
-	if (!ctx->custom_srv_ext_records) {
-		ctx->custom_srv_ext_records_count = 0;
-		return 0;
-	}
-	ctx->custom_srv_ext_records_count++;
-	record = &ctx->custom_srv_ext_records[ctx->custom_srv_ext_records_count - 1];
-	record->ext_type = ext_type;
-	record->fn1 = fn1;
-	record->fn2 = fn2;
-	record->arg = arg;
-	return 1;
-	}
-
 /* SSL_CTX_set_alpn_protos sets the ALPN protocol list on |ctx| to |protos|.
  * |protos| must be in wire-format (i.e. a series of non-empty, 8-bit
  * length-prefixed strings).
@@ -1873,65 +1821,6 @@ void SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
 		*len = 0;
 	else
 		*len = ssl->s3->alpn_selected_len;
-	}
-
-int SSL_CTX_set_cli_supp_data(SSL_CTX *ctx,
-			      unsigned short supp_data_type,
-			      cli_supp_data_first_cb_fn fn1,
-			      cli_supp_data_second_cb_fn fn2, void* arg)
-	{
-	size_t i;
-	cli_supp_data_record* record;
-
-	/* Check for duplicates */
-	for (i=0; i < ctx->cli_supp_data_records_count; i++)
-		if (supp_data_type == ctx->cli_supp_data_records[i].supp_data_type)
-			return 0;
-
-	ctx->cli_supp_data_records = OPENSSL_realloc(ctx->cli_supp_data_records,
-	  (ctx->cli_supp_data_records_count+1) * sizeof(cli_supp_data_record));
-	if (!ctx->cli_supp_data_records)
-		{
-		ctx->cli_supp_data_records_count = 0;
-		return 0;
-		}
-	ctx->cli_supp_data_records_count++;
-	record = &ctx->cli_supp_data_records[ctx->cli_supp_data_records_count - 1];
-	record->supp_data_type = supp_data_type;
-	record->fn1 = fn1;
-	record->fn2 = fn2;
-	record->arg = arg;
-	return 1;
-	}
-
-int SSL_CTX_set_srv_supp_data(SSL_CTX *ctx,
-			      unsigned short supp_data_type,
-			      srv_supp_data_first_cb_fn fn1,
-			      srv_supp_data_second_cb_fn fn2, void* arg)
-	{
-	size_t i;
-	srv_supp_data_record* record;
-
-	/* Check for duplicates */
-	for (i=0; i < ctx->srv_supp_data_records_count; i++)
-		if (supp_data_type == ctx->srv_supp_data_records[i].supp_data_type)
-			return 0;
-
-	ctx->srv_supp_data_records = OPENSSL_realloc(ctx->srv_supp_data_records,
-	  (ctx->srv_supp_data_records_count+1) * sizeof(srv_supp_data_record));
-	if (!ctx->srv_supp_data_records)
-		{
-		ctx->srv_supp_data_records_count = 0;
-		return 0;
-		}
-	ctx->srv_supp_data_records_count++;
-	record = &ctx->srv_supp_data_records[ctx->srv_supp_data_records_count - 1];
-	record->supp_data_type = supp_data_type;
-	record->fn1 = fn1;
-	record->fn2 = fn2;
-	record->arg = arg;
-
-	return 1;
 	}
 
 #endif /* !OPENSSL_NO_TLSEXT */
@@ -2133,14 +2022,6 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 #ifndef OPENSSL_NO_SRP
 	SSL_CTX_SRP_CTX_init(ret);
 #endif
-	ret->custom_cli_ext_records = NULL;
-	ret->custom_cli_ext_records_count = 0;
-	ret->custom_srv_ext_records = NULL;
-	ret->custom_srv_ext_records_count = 0;
-	ret->cli_supp_data_records = NULL;
-	ret->cli_supp_data_records_count = 0;
-	ret->srv_supp_data_records = NULL;
-	ret->srv_supp_data_records_count = 0;
 #ifndef OPENSSL_NO_BUF_FREELISTS
 	ret->freelist_max_len = SSL_MAX_BUF_FREELIST_LEN_DEFAULT;
 	ret->rbuf_freelist = OPENSSL_malloc(sizeof(SSL3_BUF_FREELIST));
@@ -2278,12 +2159,6 @@ void SSL_CTX_free(SSL_CTX *a)
 #endif
 #ifndef OPENSSL_NO_SRP
 	SSL_CTX_SRP_CTX_free(a);
-#endif
-#ifndef OPENSSL_NO_TLSEXT
-	OPENSSL_free(a->custom_cli_ext_records);
-	OPENSSL_free(a->custom_srv_ext_records);
-	OPENSSL_free(a->cli_supp_data_records);
-	OPENSSL_free(a->srv_supp_data_records);
 #endif
 #ifndef OPENSSL_NO_ENGINE
 	if (a->client_cert_engine)
@@ -3699,7 +3574,6 @@ void *SSL_CTX_get0_security_ex_data(const SSL_CTX *ctx)
 	{
 	return ctx->cert->sec_ex;
 	}
-
 
 #if defined(_WINDLL) && defined(OPENSSL_SYS_WIN16)
 #include "../crypto/bio/bss_file.c"

@@ -7,11 +7,11 @@ static const char *const names[] =
 	{
 	"a", "b", ".", "*", "@",
 	".a", "a.", ".b", "b.", ".*", "*.", "*@", "@*", "a@", "@a", "b@", "..",
-	"@@", "**",
-	"*.com", "*com", "*.*.com", "*com", "com*", "*example.com",
-	"*@example.com", "test@*.example.com",
-	"example.com", "www.example.com", "test.www.example.com",
-	"*.example.com", "*.www.example.com", "test.*.example.com", "www.*.com",
+	"@@", "**", "*.com", "*com", "*.*.com", "*com", "com*", "*example.com",
+	"*@example.com", "test@*.example.com", "example.com", "www.example.com",
+	"test.www.example.com", "*.example.com", "*.www.example.com",
+	"test.*.example.com", "www.*.com",
+	".www.example.com", "*www.example.com",
 	"example.net", "xn--rger-koa.example.com",
 	"a.example.com", "b.example.com",
 	"postmaster@example.com", "Postmaster@example.com",
@@ -21,28 +21,30 @@ static const char *const names[] =
 
 static const char *const exceptions[] =
 	{
-	"set CN: host: [*.example.com] does not match [*.example.com]",
 	"set CN: host: [*.example.com] matches [a.example.com]",
 	"set CN: host: [*.example.com] matches [b.example.com]",
 	"set CN: host: [*.example.com] matches [www.example.com]",
 	"set CN: host: [*.example.com] matches [xn--rger-koa.example.com]",
-	"set CN: host: [test.*.example.com] does not match [test.*.example.com]",
-	"set CN: host: [test.*.example.com] matches [test.www.example.com]",
-	"set CN: host: [*.www.example.com] does not match [*.www.example.com]",
 	"set CN: host: [*.www.example.com] matches [test.www.example.com]",
+	"set CN: host: [*.www.example.com] matches [.www.example.com]",
+	"set CN: host: [*www.example.com] matches [www.example.com]",
+	"set CN: host: [test.www.example.com] matches [.www.example.com]",
+	"set CN: host-no-wildcards: [*.www.example.com] matches [.www.example.com]",
+	"set CN: host-no-wildcards: [test.www.example.com] matches [.www.example.com]",
 	"set emailAddress: email: [postmaster@example.com] does not match [Postmaster@example.com]",
 	"set emailAddress: email: [postmaster@EXAMPLE.COM] does not match [Postmaster@example.com]",
 	"set emailAddress: email: [Postmaster@example.com] does not match [postmaster@example.com]",
 	"set emailAddress: email: [Postmaster@example.com] does not match [postmaster@EXAMPLE.COM]",
 	"set dnsName: host: [*.example.com] matches [www.example.com]",
-	"set dnsName: host: [*.example.com] does not match [*.example.com]",
 	"set dnsName: host: [*.example.com] matches [a.example.com]",
 	"set dnsName: host: [*.example.com] matches [b.example.com]",
 	"set dnsName: host: [*.example.com] matches [xn--rger-koa.example.com]",
 	"set dnsName: host: [*.www.example.com] matches [test.www.example.com]",
-	"set dnsName: host: [*.www.example.com] does not match [*.www.example.com]",
-	"set dnsName: host: [test.*.example.com] matches [test.www.example.com]",
-	"set dnsName: host: [test.*.example.com] does not match [test.*.example.com]",
+	"set dnsName: host-no-wildcards: [*.www.example.com] matches [.www.example.com]",
+	"set dnsName: host-no-wildcards: [test.www.example.com] matches [.www.example.com]",
+	"set dnsName: host: [*.www.example.com] matches [.www.example.com]",
+	"set dnsName: host: [*www.example.com] matches [www.example.com]",
+	"set dnsName: host: [test.www.example.com] matches [.www.example.com]",
 	"set rfc822Name: email: [postmaster@example.com] does not match [Postmaster@example.com]",
 	"set rfc822Name: email: [Postmaster@example.com] does not match [postmaster@example.com]",
 	"set rfc822Name: email: [Postmaster@example.com] does not match [postmaster@EXAMPLE.COM]",
@@ -273,8 +275,7 @@ static void run_cert(X509 *crt, const char *nameincert,
 		int match, ret;
 		memcpy(name, *pname, namelen);
 
-		ret = X509_check_host(crt, (const unsigned char *)name,
-				      namelen, 0);
+		ret = X509_check_host(crt, name, namelen, 0, NULL);
 		match = -1;
 		if (ret < 0)
 			{
@@ -292,8 +293,8 @@ static void run_cert(X509 *crt, const char *nameincert,
 			match = 1;
 		check_message(fn, "host", nameincert, match, *pname);
 
-		ret = X509_check_host(crt, (const unsigned char *)name,
-				      namelen, X509_CHECK_FLAG_NO_WILDCARDS);
+		ret = X509_check_host(crt, name, namelen,
+				      X509_CHECK_FLAG_NO_WILDCARDS, NULL);
 		match = -1;
 		if (ret < 0)
 			{
@@ -312,8 +313,7 @@ static void run_cert(X509 *crt, const char *nameincert,
 		check_message(fn, "host-no-wildcards",
 			      nameincert, match, *pname);
 
-		ret = X509_check_email(crt, (const unsigned char *)name,
-				       namelen, 0);
+		ret = X509_check_email(crt, name, namelen, 0);
 		match = -1;
 		if (fn->email)
 			{

@@ -7,17 +7,49 @@
 .global	_armv7_neon_probe
 .type	_armv7_neon_probe,%function
 _armv7_neon_probe:
-	.word	0xf26ee1fe	@ vorr	q15,q15,q15
-	.word	0xe12fff1e	@ bx	lr
+	.byte	0xf0,0x01,0x60,0xf2	@ vorr	q8,q8,q8
+	.byte	0x1e,0xff,0x2f,0xe1	@ bx	lr
 .size	_armv7_neon_probe,.-_armv7_neon_probe
 
 .global	_armv7_tick
 .type	_armv7_tick,%function
 _armv7_tick:
-	mrc	p15,0,r0,c9,c13,0
-	.word	0xe12fff1e	@ bx	lr
+	mrrc	p15,1,r0,r1,c14		@ CNTVCT
+#if __ARM_ARCH__>=5
+	bx	lr
+#else
+	.word	0xe12fff1e		@ bx	lr
+#endif
 .size	_armv7_tick,.-_armv7_tick
 
+.global	_armv8_aes_probe
+.type	_armv8_aes_probe,%function
+_armv8_aes_probe:
+	.byte	0x00,0x03,0xb0,0xf3	@ aese.8	q0,q0
+	.byte	0x1e,0xff,0x2f,0xe1	@ bx	lr
+.size	_armv8_aes_probe,.-_armv8_aes_probe
+
+.global	_armv8_sha1_probe
+.type	_armv8_sha1_probe,%function
+_armv8_sha1_probe:
+	.byte	0x40,0x0c,0x00,0xf2	@ sha1c.32	q0,q0,q0
+	.byte	0x1e,0xff,0x2f,0xe1	@ bx	lr
+.size	_armv8_sha1_probe,.-_armv8_sha1_probe
+
+.global	_armv8_sha256_probe
+.type	_armv8_sha256_probe,%function
+_armv8_sha256_probe:
+	.byte	0x40,0x0c,0x00,0xf3	@ sha256h.32	q0,q0,q0
+	.byte	0x1e,0xff,0x2f,0xe1	@ bx lr
+.size	_armv8_sha256_probe,.-_armv8_sha256_probe
+.global	_armv8_pmull_probe
+.type	_armv8_pmull_probe,%function
+_armv8_pmull_probe:
+	.byte	0x00,0x0e,0xa0,0xf2	@ vmull.p64	q0,d0,d0
+	.byte	0x1e,0xff,0x2f,0xe1	@ bx	lr
+.size	_armv8_pmull_probe,.-_armv8_pmull_probe
+
+.align	5
 .global	OPENSSL_atomic_add
 .type	OPENSSL_atomic_add,%function
 OPENSSL_atomic_add:
@@ -28,7 +60,7 @@ OPENSSL_atomic_add:
 	cmp	r2,#0
 	bne	.Ladd
 	mov	r0,r3
-	.word	0xe12fff1e	@ bx	lr
+	bx	lr
 #else
 	stmdb	sp!,{r4-r6,lr}
 	ldr	r2,.Lspinlock
@@ -81,9 +113,13 @@ OPENSSL_cleanse:
 	adds	r1,r1,#4
 	bne	.Little
 .Lcleanse_done:
+#if __ARM_ARCH__>=5
+	bx	lr
+#else
 	tst	lr,#1
 	moveq	pc,lr
 	.word	0xe12fff1e	@ bx	lr
+#endif
 .size	OPENSSL_cleanse,.-OPENSSL_cleanse
 
 .global	OPENSSL_wipe_cpu
@@ -97,41 +133,53 @@ OPENSSL_wipe_cpu:
 	eor	ip,ip,ip
 	tst	r0,#1
 	beq	.Lwipe_done
-	.word	0xf3000150	@ veor    q0, q0, q0
-	.word	0xf3022152	@ veor    q1, q1, q1
-	.word	0xf3044154	@ veor    q2, q2, q2
-	.word	0xf3066156	@ veor    q3, q3, q3
-	.word	0xf34001f0	@ veor    q8, q8, q8
-	.word	0xf34221f2	@ veor    q9, q9, q9
-	.word	0xf34441f4	@ veor    q10, q10, q10
-	.word	0xf34661f6	@ veor    q11, q11, q11
-	.word	0xf34881f8	@ veor    q12, q12, q12
-	.word	0xf34aa1fa	@ veor    q13, q13, q13
-	.word	0xf34cc1fc	@ veor    q14, q14, q14
-	.word	0xf34ee1fe	@ veor    q15, q15, q15
+	.byte	0x50,0x01,0x00,0xf3	@ veor	q0, q0, q0
+	.byte	0x52,0x21,0x02,0xf3	@ veor	q1, q1, q1
+	.byte	0x54,0x41,0x04,0xf3	@ veor	q2, q2, q2
+	.byte	0x56,0x61,0x06,0xf3	@ veor	q3, q3, q3
+	.byte	0xf0,0x01,0x40,0xf3	@ veor	q8, q8, q8
+	.byte	0xf2,0x21,0x42,0xf3	@ veor	q9, q9, q9
+	.byte	0xf4,0x41,0x44,0xf3	@ veor	q10, q10, q10
+	.byte	0xf6,0x61,0x46,0xf3	@ veor	q11, q11, q11
+	.byte	0xf8,0x81,0x48,0xf3	@ veor	q12, q12, q12
+	.byte	0xfa,0xa1,0x4a,0xf3	@ veor	q13, q13, q13
+	.byte	0xfc,0xc1,0x4c,0xf3	@ veor	q14, q14, q14
+	.byte	0xfe,0xe1,0x4e,0xf3	@ veor	q14, q14, q14
 .Lwipe_done:
 	mov	r0,sp
+#if __ARM_ARCH__>=5
+	bx	lr
+#else
 	tst	lr,#1
 	moveq	pc,lr
 	.word	0xe12fff1e	@ bx	lr
+#endif
 .size	OPENSSL_wipe_cpu,.-OPENSSL_wipe_cpu
 
 .global	OPENSSL_instrument_bus
 .type	OPENSSL_instrument_bus,%function
 OPENSSL_instrument_bus:
 	eor	r0,r0,r0
+#if __ARM_ARCH__>=5
+	bx	lr
+#else
 	tst	lr,#1
 	moveq	pc,lr
 	.word	0xe12fff1e	@ bx	lr
+#endif
 .size	OPENSSL_instrument_bus,.-OPENSSL_instrument_bus
 
 .global	OPENSSL_instrument_bus2
 .type	OPENSSL_instrument_bus2,%function
 OPENSSL_instrument_bus2:
 	eor	r0,r0,r0
+#if __ARM_ARCH__>=5
+	bx	lr
+#else
 	tst	lr,#1
 	moveq	pc,lr
 	.word	0xe12fff1e	@ bx	lr
+#endif
 .size	OPENSSL_instrument_bus2,.-OPENSSL_instrument_bus2
 
 .align	5

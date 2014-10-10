@@ -143,6 +143,7 @@ SetBlob
         qsort( rgSetBlob, sk_OPENSSL_BLOCK_num(a), sizeof(MYBLOB), SetBlobCmp);
 		if (!(pTempMem = OPENSSL_malloc(totSize)))
 			{
+			OPENSSL_free(rgSetBlob);
 			ASN1err(ASN1_F_I2D_ASN1_SET,ERR_R_MALLOC_FAILURE);
 			return(0);
 			}

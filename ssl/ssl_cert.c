@@ -423,6 +423,13 @@ CERT *ssl_cert_dup(CERT *cert)
 	ret->sec_level = cert->sec_level;
 	ret->sec_ex = cert->sec_ex;
 
+#ifndef OPENSSL_NO_TLSEXT
+	if (!custom_exts_copy(&ret->cli_ext, &cert->cli_ext))
+		goto err;
+	if (!custom_exts_copy(&ret->srv_ext, &cert->srv_ext))
+		goto err;
+#endif
+
 	return(ret);
 	
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_ECDH)
@@ -439,6 +446,11 @@ err:
 #ifndef OPENSSL_NO_ECDH
 	if (ret->ecdh_tmp != NULL)
 		EC_KEY_free(ret->ecdh_tmp);
+#endif
+
+#ifndef OPENSSL_NO_TLSEXT
+	custom_exts_free(&ret->cli_ext);
+	custom_exts_free(&ret->srv_ext);
 #endif
 
 	ssl_cert_clear_certs(ret);
@@ -531,6 +543,10 @@ void ssl_cert_free(CERT *c)
 		X509_STORE_free(c->chain_store);
 	if (c->ciphers_raw)
 		OPENSSL_free(c->ciphers_raw);
+#ifndef OPENSSL_NO_TLSEXT
+	custom_exts_free(&c->cli_ext);
+	custom_exts_free(&c->srv_ext);
+#endif
 	OPENSSL_free(c);
 	}
 

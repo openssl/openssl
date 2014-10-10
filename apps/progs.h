@@ -107,16 +107,16 @@ FUNCTION functions[] = {
 	{FUNC_TYPE_GENERAL,"gendsa",gendsa_main},
 #endif
 	{FUNC_TYPE_GENERAL,"genpkey",genpkey_main},
-#if !defined(OPENSSL_NO_SOCK) && !(defined(OPENSSL_NO_SSL2) && defined(OPENSSL_NO_SSL3))
+#if !defined(OPENSSL_NO_SOCK)
 	{FUNC_TYPE_GENERAL,"s_server",s_server_main},
 #endif
-#if !defined(OPENSSL_NO_SOCK) && !(defined(OPENSSL_NO_SSL2) && defined(OPENSSL_NO_SSL3))
+#if !defined(OPENSSL_NO_SOCK)
 	{FUNC_TYPE_GENERAL,"s_client",s_client_main},
 #endif
 #ifndef OPENSSL_NO_SPEED
 	{FUNC_TYPE_GENERAL,"speed",speed_main},
 #endif
-#if !defined(OPENSSL_NO_SOCK) && !(defined(OPENSSL_NO_SSL2) && defined(OPENSSL_NO_SSL3))
+#if !defined(OPENSSL_NO_SOCK)
 	{FUNC_TYPE_GENERAL,"s_time",s_time_main},
 #endif
 	{FUNC_TYPE_GENERAL,"version",version_main},
@@ -126,7 +126,7 @@ FUNCTION functions[] = {
 #endif
 	{FUNC_TYPE_GENERAL,"crl2pkcs7",crl2pkcs7_main},
 	{FUNC_TYPE_GENERAL,"sess_id",sess_id_main},
-#if !defined(OPENSSL_NO_SOCK) && !(defined(OPENSSL_NO_SSL2) && defined(OPENSSL_NO_SSL3))
+#if !defined(OPENSSL_NO_SOCK)
 	{FUNC_TYPE_GENERAL,"ciphers",ciphers_main},
 #endif
 	{FUNC_TYPE_GENERAL,"nseq",nseq_main},
@@ -171,6 +171,18 @@ FUNCTION functions[] = {
 #endif
 #ifndef OPENSSL_NO_RMD160
 	{FUNC_TYPE_MD,"rmd160",dgst_main},
+#endif
+#ifndef OPENSSL_NO_SHA224
+	{FUNC_TYPE_MD,"sha224",dgst_main},
+#endif
+#ifndef OPENSSL_NO_SHA256
+	{FUNC_TYPE_MD,"sha256",dgst_main},
+#endif
+#ifndef OPENSSL_NO_SHA384
+	{FUNC_TYPE_MD,"sha384",dgst_main},
+#endif
+#ifndef OPENSSL_NO_SHA512
+	{FUNC_TYPE_MD,"sha512",dgst_main},
 #endif
 #ifndef OPENSSL_NO_AES
 	{FUNC_TYPE_CIPHER,"aes-128-cbc",enc_main},

@@ -9,6 +9,7 @@ s_client - SSL/TLS client program
 
 B<openssl> B<s_client>
 [B<-connect host:port>]
+[B<-servername name>]
 [B<-verify depth>]
 [B<-verify_return_error>]
 [B<-cert filename>]
@@ -18,6 +19,33 @@ B<openssl> B<s_client>
 [B<-pass arg>]
 [B<-CApath directory>]
 [B<-CAfile filename>]
+[B<-trusted_first>]
+[B<-attime timestamp>]
+[B<-check_ss_sig>]
+[B<-crl_check>]
+[B<-crl_check_all>]
+[B<-explicit_policy>]
+[B<-extended_crl>]
+[B<-ignore_critical>]
+[B<-inhibit_any>]
+[B<-inhibit_map>]
+[B<-issuer_checks>]
+[B<-partial_chain>]
+[B<-policy arg>]
+[B<-policy_check>]
+[B<-policy_print>]
+[B<-purpose purpose>]
+[B<-suiteB_128>]
+[B<-suiteB_128_only>]
+[B<-suiteB_192>]
+[B<-trusted_first>]
+[B<-use_deltas>]
+[B<-verify_depth num>]
+[B<-verify_email email>]
+[B<-verify_hostname hostname>]
+[B<-verify_ip ip>]
+[B<-verify_name name>]
+[B<-x509_strict>]
 [B<-reconnect>]
 [B<-pause>]
 [B<-showcerts>]
@@ -28,6 +56,7 @@ B<openssl> B<s_client>
 [B<-nbio>]
 [B<-crlf>]
 [B<-ign_eof>]
+[B<-no_ign_eof>]
 [B<-quiet>]
 [B<-ssl2>]
 [B<-ssl3>]
@@ -37,6 +66,7 @@ B<openssl> B<s_client>
 [B<-no_tls1>]
 [B<-bugs>]
 [B<-cipher cipherlist>]
+[B<-serverpref>]
 [B<-starttls protocol>]
 [B<-xmpphost hostname>]
 [B<-engine id>]
@@ -46,8 +76,8 @@ B<openssl> B<s_client>
 [B<-sess_in filename>]
 [B<-rand file(s)>]
 [B<-serverinfo types>]
-[B<-auth>]
-[B<-auth_require_reneg>]
+[B<-status>]
+[B<-nextprotoneg protocols>]
 
 =head1 DESCRIPTION
 
@@ -68,6 +98,10 @@ manual page.
 
 This specifies the host and optional port to connect to. If not specified
 then an attempt is made to connect to the local host on port 4433.
+
+=item B<-servername name>
+
+Set the TLS SNI (Server Name Indication) extension in the ClientHello message.
 
 =item B<-cert certname>
 
@@ -116,9 +150,15 @@ also used when building the client certificate chain.
 A file containing trusted certificates to use during server authentication
 and to use when attempting to build the client certificate chain.
 
-=item B<-purpose, -ignore_critical, -issuer_checks, -crl_check, -crl_check_all, -policy_check, -extended_crl, -x509_strict, -policy -check_ss_sig>
+=item B<-attime>, B<-check_ss_sig>, B<-crl_check>, B<-crl_check_all>,
+B<explicit_policy>, B<-extended_crl>, B<-ignore_critical>, B<-inhibit_any>,
+B<-inhibit_map>, B<-issuer_checks>, B<-partial_chain>, B<-policy>,
+B<-policy_check>, B<-policy_print>, B<-purpose>, B<-suiteB_128>,
+B<-suiteB_128_only>, B<-suiteB_192>, B<-trusted_first>, B<-use_deltas>,
+B<-verify_depth>, B<-verify_email>, B<-verify_hostname>, B<-verify_ip>,
+B<-verify_name>, B<-x509_strict>
 
-Set various certificate chain valiadition option. See the
+Set various certificate chain valiadition options. See the
 L<B<verify>|verify(1)> manual page for details.
 
 =item B<-reconnect>
@@ -190,6 +230,11 @@ input.
 inhibit printing of session and certificate information.  This implicitly
 turns on B<-ign_eof> as well.
 
+=item B<-no_ign_eof>
+
+shut down the connection when end of file is reached in the input.
+Can be used to override the implicit B<-ign_eof> after B<-quiet>.
+
 =item B<-psk_identity identity>
 
 Use the PSK identity B<identity> when using a PSK cipher suite.
@@ -227,6 +272,10 @@ this allows the cipher list sent by the client to be modified. Although
 the server determines which cipher suite is used it should take the first
 supported cipher in the list sent by the client. See the B<ciphers>
 command for more information.
+
+=item B<-serverpref>
+
+use the server's cipher preferences; only used for SSLV2.
 
 =item B<-starttls protocol>
 
@@ -280,14 +329,21 @@ a list of comma-separated TLS Extension Types (numbers between 0 and
 The server's response (if any) will be encoded and displayed as a PEM
 file.
 
-=item B<-auth>
+=item B<-status>
 
-send RFC 5878 client and server authorization extensions in the Client Hello as well as
-supplemental data if the server also sent the authorization extensions in the Server Hello.
+sends a certificate status request to the server (OCSP stapling). The server
+response (if any) is printed out.
 
-=item B<-auth_require_reneg>
+=item B<-nextprotoneg protocols>
 
-only send RFC 5878 client and server authorization extensions during renegotiation.
+enable Next Protocol Negotiation TLS extension and provide a list of
+comma-separated protocol names that the client should advertise
+support for. The list should contain most wanted protocols first.
+Protocol names are printable ASCII strings, for example "http/1.1" or
+"spdy/3".
+Empty list of protocols is treated specially and will cause the client to
+advertise support for the TLS extension but disconnect just after
+reciving ServerHello with a list of server supported protocols.
 
 =back
 

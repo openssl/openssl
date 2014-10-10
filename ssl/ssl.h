@@ -266,6 +266,7 @@ extern "C" {
 #define SSL_TXT_aGOST94	"aGOST94"
 #define SSL_TXT_aGOST01 "aGOST01"
 #define SSL_TXT_aGOST  "aGOST"
+#define SSL_TXT_aSRP            "aSRP"
 
 #define	SSL_TXT_DSS		"DSS"
 #define SSL_TXT_DH		"DH"
@@ -388,106 +389,23 @@ typedef int (*tls_session_ticket_ext_cb_fn)(SSL *s, const unsigned char *data, i
 typedef int (*tls_session_secret_cb_fn)(SSL *s, void *secret, int *secret_len, STACK_OF(SSL_CIPHER) *peer_ciphers, SSL_CIPHER **cipher, void *arg);
 
 #ifndef OPENSSL_NO_TLSEXT
-/* Callbacks and structures for handling custom TLS Extensions: 
- *   cli_ext_first_cb  - sends data for ClientHello TLS Extension
- *   cli_ext_second_cb - receives data from ServerHello TLS Extension
- *   srv_ext_first_cb  - receives data from ClientHello TLS Extension
- *   srv_ext_second_cb - sends data for ServerHello TLS Extension
- *
- *   All these functions return nonzero on success.  Zero will terminate
- *   the handshake (and return a specific TLS Fatal alert, if the function
- *   declaration has an "al" parameter).  -1 for the "sending" functions
- *   will cause the TLS Extension to be omitted.
- * 
- *   "ext_type" is a TLS "ExtensionType" from 0-65535.
- *   "in" is a pointer to TLS "extension_data" being provided to the cb.
- *   "out" is used by the callback to return a pointer to "extension data"
- *     which OpenSSL will later copy into the TLS handshake.  The contents
- *     of this buffer should not be changed until the handshake is complete.
- *   "inlen" and "outlen" are TLS Extension lengths from 0-65535.
- *   "al" is a TLS "AlertDescription" from 0-255 which WILL be sent as a 
- *     fatal TLS alert, if the callback returns zero.
- */
-typedef int (*custom_cli_ext_first_cb_fn)(SSL *s, unsigned short ext_type,
-					  const unsigned char **out,
-					  unsigned short *outlen, int *al, void *arg);
-typedef int (*custom_cli_ext_second_cb_fn)(SSL *s, unsigned short ext_type,
-					   const unsigned char *in,
-					   unsigned short inlen, int *al,
-					   void *arg);
 
-typedef int (*custom_srv_ext_first_cb_fn)(SSL *s, unsigned short ext_type,
-					  const unsigned char *in,
-					  unsigned short inlen, int *al,
-					  void *arg);
-typedef int (*custom_srv_ext_second_cb_fn)(SSL *s, unsigned short ext_type,
-					   const unsigned char **out,
-					   unsigned short *outlen, int *al, void *arg);
+/* Typedefs for handling custom extensions */
 
-typedef struct {
-	unsigned short ext_type;
-	custom_cli_ext_first_cb_fn fn1; 
-	custom_cli_ext_second_cb_fn fn2; 
-	void *arg;
-} custom_cli_ext_record;
+typedef int (*custom_ext_add_cb)(SSL *s, unsigned int ext_type,
+				 const unsigned char **out,
+				 size_t *outlen, int *al,
+				 void *add_arg);
 
-typedef struct {
-	unsigned short ext_type;
-	custom_srv_ext_first_cb_fn fn1; 
-	custom_srv_ext_second_cb_fn fn2; 
-	void *arg;
-} custom_srv_ext_record;
+typedef void (*custom_ext_free_cb)(SSL *s, unsigned int ext_type,
+			  	   const unsigned char *out,
+				   void *add_arg);
 
-/* Callbacks and structures for handling Supplemental Data:
- *   srv_supp_data_first_cb_fn  - server sends Supplemental Data
- *   srv_supp_data_second_cb_fn - server receives Supplemental Data
- *   cli_supp_data_first_cb_fn  - client receives Supplemental Data
- *   cli_supp_data_second_cb_fn - client sends Supplemental Data
- *
- *   All these functions return nonzero on success.  Zero will terminate
- *   the handshake (and return a specific TLS Fatal alert, if the function
- *   declaration has an "al" parameter).  -1 for the "sending" functions
- *   will result in no supplemental data entry being added to the
- *   supplemental data message for the provided supplemental data type.
- *
- *   "supp_data_type" is a Supplemental Data Type from 0-65535.
- *   "in" is a pointer to TLS "supplemental_data_entry" being provided to the cb.
- *   "out" is used by the callback to return a pointer to "supplemental data"
- *     which OpenSSL will later copy into the TLS handshake.  The contents
- *     of this buffer should not be changed until the handshake is complete.
- *   "inlen" and "outlen" are Supplemental Data lengths from 0-65535.
- *   "al" is a TLS "AlertDescription" from 0-255 which WILL be sent as a
- *     fatal TLS alert, if the callback returns zero.
- */
-typedef int (*srv_supp_data_first_cb_fn)(SSL *s, unsigned short supp_data_type,
-					 const unsigned char **out,
-					 unsigned short *outlen, int *al, void *arg);
-typedef int (*srv_supp_data_second_cb_fn)(SSL *s, unsigned short supp_data_type,
-					  const unsigned char *in,
-					  unsigned short inlen, int *al,
-					  void *arg);
+typedef int (*custom_ext_parse_cb)(SSL *s, unsigned int ext_type,
+				   const unsigned char *in,
+				   size_t inlen, int *al,
+				   void *parse_arg);
 
-typedef int (*cli_supp_data_first_cb_fn)(SSL *s, unsigned short supp_data_type,
-					 const unsigned char *in,
-					 unsigned short inlen, int *al,
-					 void *arg);
-typedef int (*cli_supp_data_second_cb_fn)(SSL *s, unsigned short supp_data_type,
-					  const unsigned char **out,
-					  unsigned short *outlen, int *al, void *arg);
-
-typedef struct {
-	unsigned short supp_data_type;
-	srv_supp_data_first_cb_fn fn1;
-	srv_supp_data_second_cb_fn fn2;
-	void *arg;
-} srv_supp_data_record;
-
-typedef struct {
-	unsigned short supp_data_type;
-	cli_supp_data_first_cb_fn fn1;
-	cli_supp_data_second_cb_fn fn2;
-	void *arg;
-} cli_supp_data_record;
 
 #endif
 
@@ -544,7 +462,7 @@ struct ssl_method_st
 	const SSL_CIPHER *(*get_cipher)(unsigned ncipher);
 	const struct ssl_method_st *(*get_ssl_method)(int version);
 	long (*get_timeout)(void);
-	struct ssl3_enc_method *ssl3_enc; /* Extra SSLv3/TLS stuff */
+	const struct ssl3_enc_method *ssl3_enc; /* Extra SSLv3/TLS stuff */
 	int (*ssl_version)(void);
 	long (*ssl_callback_ctrl)(SSL *s, int cb_id, void (*fp)(void));
 	long (*ssl_ctx_callback_ctrl)(SSL_CTX *s, int cb_id, void (*fp)(void));
@@ -662,7 +580,7 @@ struct ssl_session_st
 /* Allow initial connection to servers that don't support RI */
 #define SSL_OP_LEGACY_SERVER_CONNECT			0x00000004L
 #define SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG		0x00000008L
-#define SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG		0x00000010L
+#define SSL_OP_TLSEXT_PADDING				0x00000010L
 #define SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER		0x00000020L
 #define SSL_OP_SAFARI_ECDHE_ECDSA_BUG			0x00000040L
 #define SSL_OP_SSLEAY_080_CLIENT_DH_BUG			0x00000080L
@@ -671,6 +589,8 @@ struct ssl_session_st
 
 /* Hasn't done anything since OpenSSL 0.9.7h, retained for compatibility */
 #define SSL_OP_MSIE_SSLV2_RSA_PADDING			0x0
+/* Refers to ancient SSLREF and SSLv2, retained for compatibility */
+#define SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG		0x0
 
 /* Disable SSL 3.0/TLS 1.0 CBC vulnerability workaround that was added
  * in OpenSSL 0.9.6d.  Usually (depending on the application protocol)
@@ -1208,17 +1128,6 @@ struct ssl_ctx_st
 	size_t tlsext_ellipticcurvelist_length;
 	unsigned char *tlsext_ellipticcurvelist;
 # endif /* OPENSSL_NO_EC */
-	/* Arrays containing the callbacks for custom TLS Extensions. */
-	custom_cli_ext_record *custom_cli_ext_records;
-	size_t custom_cli_ext_records_count;
-	custom_srv_ext_record *custom_srv_ext_records;
-	size_t custom_srv_ext_records_count;
-
- 	/* Arrays containing the callbacks for Supplemental Data. */
- 	cli_supp_data_record *cli_supp_data_records;
-	size_t cli_supp_data_records_count;
-	srv_supp_data_record *srv_supp_data_records;
-	size_t srv_supp_data_records_count;
 	};
 
 #endif
@@ -1342,53 +1251,23 @@ const char *SSL_get_psk_identity(const SSL *s);
 #endif
 
 #ifndef OPENSSL_NO_TLSEXT
-/* Register callbacks to handle custom TLS Extensions as client or server.
- * 
- * Returns nonzero on success.  You cannot register twice for the same 
- * extension number, and registering for an extension number already 
- * handled by OpenSSL will succeed, but the callbacks will not be invoked.
- *
- * NULL can be registered for any callback function.  For the client
- * functions, a NULL custom_cli_ext_first_cb_fn sends an empty ClientHello
- * Extension, and a NULL custom_cli_ext_second_cb_fn ignores the ServerHello
- * response (if any).
- *
- * For the server functions, a NULL custom_srv_ext_first_cb_fn means the
- * ClientHello extension's data will be ignored, but the extension will still
- * be noted and custom_srv_ext_second_cb_fn will still be invoked.  A NULL
- * custom_srv_ext_second_cb doesn't send a ServerHello extension.
- */
-int SSL_CTX_set_custom_cli_ext(SSL_CTX *ctx, unsigned short ext_type,
-			       custom_cli_ext_first_cb_fn fn1, 
-			       custom_cli_ext_second_cb_fn fn2, void *arg);
+/* Register callbacks to handle custom TLS Extensions for client or server. */
 
-int SSL_CTX_set_custom_srv_ext(SSL_CTX *ctx, unsigned short ext_type,
-			       custom_srv_ext_first_cb_fn fn1, 
-			       custom_srv_ext_second_cb_fn fn2, void *arg);
+int SSL_CTX_add_client_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
+			          custom_ext_add_cb add_cb,
+			          custom_ext_free_cb free_cb,
+				  void *add_arg,
+			          custom_ext_parse_cb parse_cb,
+				  void *parse_arg);
 
-/* Register callbacks to handle Supplemental Data as client or server.
- *
- * For SSL_CTX_set_srv_supp_data, a NULL srv_supp_data_first_cb_fn results in no supplemental data
- * being sent by the server for that TLS extension.
- * A NULL srv_supp_data_second_cb_fn results in no supplemental data
- * being received by the server for that TLS extension.
- *
- * For SSL_CTX_set_cli_supp_data, a NULL cli_supp_data_first_cb_fn results in no supplemental data
- * being received by the client for that TLS extension.
- * A NULL cli_supp_data_second_cb_fn results in no supplemental data
- * being sent by the client for that TLS extension.
- *
- * Returns nonzero on success.  You cannot register twice for the same supp_data_type.
- */
-int SSL_CTX_set_srv_supp_data(SSL_CTX *ctx,
-			      unsigned short supp_data_type,
-			      srv_supp_data_first_cb_fn fn1,
-			      srv_supp_data_second_cb_fn fn2, void *arg);
+int SSL_CTX_add_server_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
+			          custom_ext_add_cb add_cb,
+			          custom_ext_free_cb free_cb,
+				  void *add_arg,
+			          custom_ext_parse_cb parse_cb,
+				  void *parse_arg);
 
-int SSL_CTX_set_cli_supp_data(SSL_CTX *ctx,
-			      unsigned short supp_data_type,
-			      cli_supp_data_first_cb_fn fn1,
-			      cli_supp_data_second_cb_fn fn2, void *arg);
+int SSL_extension_supported(unsigned int ext_type);
 
 #endif
 
@@ -2176,7 +2055,7 @@ void SSL_set_cert_cb(SSL *s, int (*cb)(SSL *ssl, void *arg), void *arg);
 #ifndef OPENSSL_NO_RSA
 int	SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa);
 #endif
-int	SSL_use_RSAPrivateKey_ASN1(SSL *ssl, unsigned char *d, long len);
+int	SSL_use_RSAPrivateKey_ASN1(SSL *ssl, const unsigned char *d, long len);
 int	SSL_use_PrivateKey(SSL *ssl, EVP_PKEY *pkey);
 int	SSL_use_PrivateKey_ASN1(int pk,SSL *ssl, const unsigned char *d, long len);
 int	SSL_use_certificate(SSL *ssl, X509 *x);
@@ -2204,10 +2083,8 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file);
 int	SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
 					    const char *file);
 #ifndef OPENSSL_SYS_VMS
-#ifndef OPENSSL_SYS_MACINTOSH_CLASSIC /* XXXXX: Better scheme needed! [was: #ifndef MAC_OS_pre_X] */
 int	SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
 					   const char *dir);
-#endif
 #endif
 
 #endif
@@ -2235,6 +2112,7 @@ int	SSL_SESSION_print_fp(FILE *fp,const SSL_SESSION *ses);
 #endif
 #ifndef OPENSSL_NO_BIO
 int	SSL_SESSION_print(BIO *fp,const SSL_SESSION *ses);
+int	SSL_SESSION_print_keylog(BIO *bp, const SSL_SESSION *x);
 #endif
 void	SSL_SESSION_free(SSL_SESSION *ses);
 int	i2d_SSL_SESSION(SSL_SESSION *in,unsigned char **pp);
@@ -2647,6 +2525,10 @@ int (*SSL_CTX_get_security_callback(const SSL_CTX *ctx))(SSL *s, SSL_CTX *ctx, i
 void SSL_CTX_set0_security_ex_data(SSL_CTX *ctx, void *ex);
 void *SSL_CTX_get0_security_ex_data(const SSL_CTX *ctx);
 
+#ifndef OPENSSL_NO_UNIT_TEST
+const struct openssl_ssl_test_functions *SSL_test_functions(void);
+#endif
+
 /* BEGIN ERROR CODES */
 /* The following lines are auto generated by the script mkerr.pl. Any changes
  * made after this point may be overwritten when the script is next run.
@@ -2656,8 +2538,6 @@ void ERR_load_SSL_strings(void);
 /* Error codes for the SSL functions. */
 
 /* Function codes. */
-#define SSL_F_AUTHZ_FIND_DATA				 330
-#define SSL_F_AUTHZ_VALIDATE				 323
 #define SSL_F_CHECK_SUITEB_CIPHER_LIST			 331
 #define SSL_F_CLIENT_CERTIFICATE			 100
 #define SSL_F_CLIENT_FINISHED				 167
@@ -2701,7 +2581,6 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_GET_SERVER_HELLO				 109
 #define SSL_F_GET_SERVER_VERIFY				 110
 #define SSL_F_I2D_SSL_SESSION				 111
-#define SSL_F_READ_AUTHZ				 329
 #define SSL_F_READ_N					 112
 #define SSL_F_REQUEST_CERTIFICATE			 113
 #define SSL_F_SERVER_FINISH				 239
@@ -2809,7 +2688,6 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_CTX_SET_SESSION_ID_CONTEXT		 219
 #define SSL_F_SSL_CTX_SET_SSL_VERSION			 170
 #define SSL_F_SSL_CTX_SET_TRUST				 229
-#define SSL_F_SSL_CTX_USE_AUTHZ				 324
 #define SSL_F_SSL_CTX_USE_CERTIFICATE			 171
 #define SSL_F_SSL_CTX_USE_CERTIFICATE_ASN1		 172
 #define SSL_F_SSL_CTX_USE_CERTIFICATE_CHAIN_FILE	 220
@@ -2851,7 +2729,6 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_SESSION_PRINT_FP			 190
 #define SSL_F_SSL_SESSION_SET1_ID_CONTEXT		 312
 #define SSL_F_SSL_SESS_CERT_NEW				 225
-#define SSL_F_SSL_SET_AUTHZ				 325
 #define SSL_F_SSL_SET_CERT				 191
 #define SSL_F_SSL_SET_CIPHER_LIST			 271
 #define SSL_F_SSL_SET_FD				 192
@@ -2868,7 +2745,6 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_UNDEFINED_CONST_FUNCTION		 243
 #define SSL_F_SSL_UNDEFINED_FUNCTION			 197
 #define SSL_F_SSL_UNDEFINED_VOID_FUNCTION		 244
-#define SSL_F_SSL_USE_AUTHZ				 328
 #define SSL_F_SSL_USE_CERTIFICATE			 198
 #define SSL_F_SSL_USE_CERTIFICATE_ASN1			 199
 #define SSL_F_SSL_USE_CERTIFICATE_FILE			 200
@@ -2887,21 +2763,16 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_TLS1_CHECK_SERVERHELLO_TLSEXT		 274
 #define SSL_F_TLS1_ENC					 210
 #define SSL_F_TLS1_EXPORT_KEYING_MATERIAL		 314
-#define SSL_F_TLS1_GET_CLIENT_SUPPLEMENTAL_DATA		 335
-#define SSL_F_TLS1_GET_SERVER_SUPPLEMENTAL_DATA		 326
 #define SSL_F_TLS1_HEARTBEAT				 315
 #define SSL_F_TLS1_PREPARE_CLIENTHELLO_TLSEXT		 275
 #define SSL_F_TLS1_PREPARE_SERVERHELLO_TLSEXT		 276
 #define SSL_F_TLS1_PRF					 284
-#define SSL_F_TLS1_SEND_CLIENT_SUPPLEMENTAL_DATA	 338
-#define SSL_F_TLS1_SEND_SERVER_SUPPLEMENTAL_DATA	 327
 #define SSL_F_TLS1_SETUP_KEY_BLOCK			 211
 #define SSL_F_WRITE_PENDING				 212
 
 /* Reason codes. */
 #define SSL_R_APP_DATA_IN_HANDSHAKE			 100
 #define SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT 272
-#define SSL_R_AUTHZ_DATA_TOO_LARGE			 375
 #define SSL_R_BAD_ALERT_RECORD				 101
 #define SSL_R_BAD_AUTHENTICATION_TYPE			 102
 #define SSL_R_BAD_CHANGE_CIPHER_SPEC			 103
@@ -2937,6 +2808,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_BAD_SRP_B_LENGTH				 348
 #define SSL_R_BAD_SRP_G_LENGTH				 349
 #define SSL_R_BAD_SRP_N_LENGTH				 350
+#define SSL_R_BAD_SRP_PARAMETERS			 371
 #define SSL_R_BAD_SRP_S_LENGTH				 351
 #define SSL_R_BAD_SRTP_MKI_VALUE			 352
 #define SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST		 353
@@ -2998,8 +2870,6 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_ILLEGAL_PADDING				 283
 #define SSL_R_ILLEGAL_SUITEB_DIGEST			 380
 #define SSL_R_INCONSISTENT_COMPRESSION			 340
-#define SSL_R_INVALID_AUDIT_PROOF			 371
-#define SSL_R_INVALID_AUTHZ_DATA			 374
 #define SSL_R_INVALID_CHALLENGE_LENGTH			 158
 #define SSL_R_INVALID_COMMAND				 280
 #define SSL_R_INVALID_COMPRESSION_ALGORITHM		 341
@@ -3146,6 +3016,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_SSL_CTX_HAS_NO_DEFAULT_SSL_VERSION	 228
 #define SSL_R_SSL_HANDSHAKE_FAILURE			 229
 #define SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS		 230
+#define SSL_R_SSL_NEGATIVE_LENGTH			 372
 #define SSL_R_SSL_SESSION_ID_CALLBACK_FAILED		 301
 #define SSL_R_SSL_SESSION_ID_CONFLICT			 302
 #define SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG		 273
@@ -3175,7 +3046,6 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST		 157
 #define SSL_R_TLS_PEER_DID_NOT_RESPOND_WITH_CERTIFICATE_LIST 233
 #define SSL_R_TLS_RSA_ENCRYPTED_VALUE_LENGTH_IS_WRONG	 234
-#define SSL_R_TOO_MANY_EMPTY_FRAGMENTS			 393
 #define SSL_R_TRIED_TO_USE_UNSUPPORTED_CIPHER		 235
 #define SSL_R_UNABLE_TO_DECODE_DH_CERTS			 236
 #define SSL_R_UNABLE_TO_DECODE_ECDH_CERTS		 313
@@ -3191,7 +3061,6 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_UNEXPECTED_RECORD				 245
 #define SSL_R_UNINITIALIZED				 276
 #define SSL_R_UNKNOWN_ALERT_TYPE			 246
-#define SSL_R_UNKNOWN_AUTHZ_DATA_TYPE			 372
 #define SSL_R_UNKNOWN_CERTIFICATE_TYPE			 247
 #define SSL_R_UNKNOWN_CIPHER_RETURNED			 248
 #define SSL_R_UNKNOWN_CIPHER_TYPE			 249
@@ -3203,7 +3072,6 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_UNKNOWN_REMOTE_ERROR_TYPE			 253
 #define SSL_R_UNKNOWN_SSL_VERSION			 254
 #define SSL_R_UNKNOWN_STATE				 255
-#define SSL_R_UNKNOWN_SUPPLEMENTAL_DATA_TYPE		 373
 #define SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED	 338
 #define SSL_R_UNSUPPORTED_CIPHER			 256
 #define SSL_R_UNSUPPORTED_COMPRESSION_ALGORITHM		 257

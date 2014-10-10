@@ -1,6 +1,10 @@
 #ifndef HEADER_OPENSSLV_H
 #define HEADER_OPENSSLV_H
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 /* Numeric release version identifier:
  * MNNFFPPS: major minor fix patch status
  * The status nibble has one of the values 0 for development, 1 to e for betas
@@ -86,4 +90,7 @@
 #define SHLIB_VERSION_NUMBER "1.1.0"
 
 
+#ifdef  __cplusplus
+}
+#endif
 #endif /* HEADER_OPENSSLV_H */

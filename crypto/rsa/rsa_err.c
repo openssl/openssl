@@ -1,6 +1,6 @@
 /* crypto/rsa/rsa_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2013 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2014 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -85,6 +85,7 @@ static ERR_STRING_DATA RSA_str_functs[]=
 {ERR_FUNC(RSA_F_RSA_ALGOR_TO_MD),	"RSA_ALGOR_TO_MD"},
 {ERR_FUNC(RSA_F_RSA_BUILTIN_KEYGEN),	"RSA_BUILTIN_KEYGEN"},
 {ERR_FUNC(RSA_F_RSA_CHECK_KEY),	"RSA_check_key"},
+{ERR_FUNC(RSA_F_RSA_CHECK_KEY_EX),	"RSA_check_key_ex"},
 {ERR_FUNC(RSA_F_RSA_CMS_DECRYPT),	"RSA_CMS_DECRYPT"},
 {ERR_FUNC(RSA_F_RSA_EAY_PRIVATE_DECRYPT),	"RSA_EAY_PRIVATE_DECRYPT"},
 {ERR_FUNC(RSA_F_RSA_EAY_PRIVATE_ENCRYPT),	"RSA_EAY_PRIVATE_ENCRYPT"},
@@ -180,6 +181,7 @@ static ERR_STRING_DATA RSA_str_reasons[]=
 {ERR_REASON(RSA_R_OAEP_DECODING_ERROR)   ,"oaep decoding error"},
 {ERR_REASON(RSA_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE),"operation not supported for this keytype"},
 {ERR_REASON(RSA_R_PADDING_CHECK_FAILED)  ,"padding check failed"},
+{ERR_REASON(RSA_R_PKCS_DECODING_ERROR)   ,"pkcs decoding error"},
 {ERR_REASON(RSA_R_P_NOT_PRIME)           ,"p not prime"},
 {ERR_REASON(RSA_R_Q_NOT_PRIME)           ,"q not prime"},
 {ERR_REASON(RSA_R_RSA_OPERATIONS_NOT_SUPPORTED),"rsa operations not supported"},

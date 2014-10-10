@@ -1,37 +1,10 @@
 #!/usr/local/bin/perl
 #
-# CA - wrapper around ca to make it easier to use ... basically ca requires
-#      some setup stuff to be done before you can use it and this makes
-#      things easier between now and when Eric is convinced to fix it :-)
+# CA - wrapper around ca to make it easier to use
 #
 # CA -newca ... will setup the right stuff
 # CA -newreq[-nodes] ... will generate a certificate request 
 # CA -sign ... will sign the generated request and output 
-#
-# At the end of that grab newreq.pem and newcert.pem (one has the key 
-# and the other the certificate) and cat them together and that is what
-# you want/need ... I'll make even this a little cleaner later.
-#
-#
-# 12-Jan-96 tjh    Added more things ... including CA -signcert which
-#                  converts a certificate to a request and then signs it.
-# 10-Jan-96 eay    Fixed a few more bugs and added the SSLEAY_CONFIG
-#		   environment variable so this can be driven from
-#		   a script.
-# 25-Jul-96 eay    Cleaned up filenames some more.
-# 11-Jun-96 eay    Fixed a few filename missmatches.
-# 03-May-96 eay    Modified to use 'ssleay cmd' instead of 'cmd'.
-# 18-Apr-96 tjh    Original hacking
-#
-# Tim Hudson
-# tjh@cryptsoft.com
-#
-
-# 27-Apr-98 snh    Translation into perl, fix existing CA bug.
-#
-#
-# Steve Henson
-# shenson@bigfoot.com
 
 # default openssl.cnf file has setup as per the following
 # demoCA ... where everything is stored
@@ -57,6 +30,7 @@ $CATOP="./demoCA";
 $CAKEY="cakey.pem";
 $CAREQ="careq.pem";
 $CACERT="cacert.pem";
+$CACRL="crl.pem";
 
 $DIRMODE = 0777;
 
@@ -65,6 +39,7 @@ $RET = 0;
 foreach (@ARGV) {
 	if ( /^(-\?|-h|-help)$/ ) {
 	    print STDERR "usage: CA -newcert|-newreq|-newreq-nodes|-newca|-sign|-verify\n";
+	    print STDERR "       CA -crl|-revoke cert-filename [reason]\n";
 	    exit 0;
 	} elsif (/^-newcert$/) {
 	    # create a certificate
@@ -160,16 +135,49 @@ foreach (@ARGV) {
 	    } else {
 		    system ("$VERIFY -CAfile $CATOP/$CACERT newcert.pem");
 		    $RET=$?;
-	    	    exit 0;
+		    exit $RET;
 	    }
+	} elsif (/^-crl$/) {
+		system ("$CA -gencrl -out $CATOP/crl/$CACRL");
+		$RET=$?;
+		print "Generated CRL is in $CATOP/crl/$CACRL\n" if (!$RET);
+	} elsif (/^-revoke$/) {
+		my $cname = $ARGV[1];
+		if (!defined $cname) {
+			print "Certificate filename is required; reason optional.\n";
+			exit 1;
+		}
+		my $reason = $ARGV[2];
+		$reason = " -crl_reason $reason"
+			if defined $reason && crl_reason_ok($reason);
+		my $cmd = "$CA -revoke \"$cname\"".$reason;
+		system ($cmd);
+		$RET=$?;
+		exit $RET;
 	} else {
 	    print STDERR "Unknown arg $_\n";
 	    print STDERR "usage: CA -newcert|-newreq|-newreq-nodes|-newca|-sign|-verify\n";
+	    print STDERR "       CA -crl|-revoke cert-filename [reason]\n";
 	    exit 1;
 	}
 }
 
 exit $RET;
+
+sub crl_reason_ok {
+	my ($r) = shift;
+	if ($r eq 'unspecified' || $r eq 'keyCompromise' ||
+	$r eq 'CACompromise' || $r eq 'affiliationChanged' ||
+	$r eq 'superseded' || $r eq 'cessationOfOperation' ||
+	$r eq 'certificateHold' || $r eq 'removeFromCRL') {
+		return 1;
+	}
+	print STDERR "Invalid CRL reason; must be one of:\n";
+	print STDERR "    unspecified, keyCompromise, CACompromise,\n";
+	print STDERR "    affiliationChanged, superseded, cessationOfOperation\n";
+	print STDERR "    certificateHold, removeFromCRL";
+	exit 1;
+}
 
 sub cp_pem {
 my ($infile, $outfile, $bound) = @_;

@@ -819,9 +819,9 @@ ASN1_BIT_STRING *c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,const unsigned char **p
 int		ASN1_BIT_STRING_set(ASN1_BIT_STRING *a, unsigned char *d,
 			int length );
 int		ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value);
-int		ASN1_BIT_STRING_get_bit(ASN1_BIT_STRING *a, int n);
-int            ASN1_BIT_STRING_check(ASN1_BIT_STRING *a,
-                                     unsigned char *flags, int flags_len);
+int		ASN1_BIT_STRING_get_bit(const ASN1_BIT_STRING *a, int n);
+int            ASN1_BIT_STRING_check(const ASN1_BIT_STRING *a,
+                                     const unsigned char *flags, int flags_len);
 
 #ifndef OPENSSL_NO_BIO
 int ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,
@@ -1411,7 +1411,6 @@ void ERR_load_ASN1_strings(void);
 #define ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE			 163
 #define ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM		 199
 #define ASN1_R_UNKNOWN_TAG				 194
-#define ASN1_R_UNKOWN_FORMAT				 195
 #define ASN1_R_UNSUPPORTED_ANY_DEFINED_BY_TYPE		 164
 #define ASN1_R_UNSUPPORTED_CIPHER			 165
 #define ASN1_R_UNSUPPORTED_ENCRYPTION_ALGORITHM		 166

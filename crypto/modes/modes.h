@@ -7,6 +7,9 @@
 
 #include <stddef.h>
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
 typedef void (*block128_f)(const unsigned char in[16],
 			unsigned char out[16],
 			const void *key);
@@ -141,3 +144,12 @@ size_t CRYPTO_128_wrap(void *key, const unsigned char *iv,
 size_t CRYPTO_128_unwrap(void *key, const unsigned char *iv,
 		unsigned char *out,
 		const unsigned char *in, size_t inlen, block128_f block);
+size_t CRYPTO_128_wrap_pad(void *key, const unsigned char *icv,
+		unsigned char *out,
+		const unsigned char *in, size_t inlen, block128_f block);
+size_t CRYPTO_128_unwrap_pad(void *key, const unsigned char *icv,
+		unsigned char *out,
+		const unsigned char *in, size_t inlen, block128_f block);
+#ifdef  __cplusplus
+}
+#endif

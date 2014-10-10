@@ -15,7 +15,7 @@
 #		this	+aesni(i)	sha1	aesni-sha1	gain(iv)
 # -------------------------------------------------------------------
 # Westmere(ii)	10.7/n	+1.28=3.96(n=4)	5.30	6.66		+68%
-# Atom(ii)	18.9?/n	+3.93=8.66(n=4)	10.0	14.0		+62%
+# Atom(ii)	18.1/n	+3.93=8.46(n=4)	9.37	12.8		+51%
 # Sandy Bridge	(8.16	+5.15=13.3)/n	4.99	5.98		+80%
 # Ivy Bridge	(8.08	+5.14=13.2)/n	4.60	5.54		+68%
 # Haswell(iii)	(8.96	+5.00=14.0)/n	3.57	4.55		+160%
@@ -56,6 +56,10 @@ if (!$avx && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
 if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	   `ml64 2>&1` =~ /Version ([0-9]+)\./) {
 	$avx = ($1>=10) + ($1>=11);
+}
+
+if (!$avx && `$ENV{CC} -v 2>&1` =~ /(^clang version|based on LLVM) ([3-9]\.[0-9]+)/) {
+	$avx = ($2>=3.0) + ($2>3.0);
 }
 
 open OUT,"| \"$^X\" $xlate $flavour $output";
@@ -103,6 +107,19 @@ my ($i,$a,$b,$c,$d,$e)=@_;
 my $j=$i+1;
 my $k=$i+2;
 
+# Loads are performed 2+3/4 iterations in advance. 3/4 means that out
+# of 4 words you would expect to be loaded per given iteration one is
+# spilled to next iteration. In other words indices in four input
+# streams are distributed as following:
+#
+# $i==0:	0,0,0,0,1,1,1,1,2,2,2,
+# $i==1:	2,3,3,3,
+# $i==2:	3,4,4,4,
+# ...
+# $i==13:	14,15,15,15,
+# $i==14:	15
+# 
+# Then at $i==15 Xupdate is applied one iteration in advance...
 $code.=<<___ if ($i==0);
 	movd		(@ptr[0]),@Xi[0]
 	 lea		`16*4`(@ptr[0]),@ptr[0]
@@ -149,7 +166,7 @@ $code.=<<___ if ($i<14);			# just load input
 	psrld	\$2,$b
 	paddd	$t2,$e				# e+=rol(a,5)
 	 pshufb	$tx,@Xi[1]
-	 movd		`4*$j-16*4`(@ptr[2]),$t2
+	 movd		`4*$k-16*4`(@ptr[2]),$t2
 	por	$t1,$b				# b=rol(b,30)
 ___
 $code.=<<___ if ($i==14);			# just load input
@@ -338,9 +355,11 @@ $code.=<<___;
 .type	sha1_multi_block,\@function,3
 .align	32
 sha1_multi_block:
+	mov	OPENSSL_ia32cap_P+4(%rip),%rcx
+	bt	\$61,%rcx			# check SHA bit
+	jc	_shaext_shortcut
 ___
 $code.=<<___ if ($avx);
-	mov	OPENSSL_ia32cap_P+4(%rip),%rcx
 	test	\$`1<<28`,%ecx
 	jnz	_avx_shortcut
 ___
@@ -366,6 +385,7 @@ $code.=<<___;
 	sub	\$`$REG_SZ*18`,%rsp
 	and	\$-256,%rsp
 	mov	%rax,`$REG_SZ*17`(%rsp)		# original %rsp
+.Lbody:
 	lea	K_XX_XX(%rip),$Tbl
 	lea	`$REG_SZ*16`(%rsp),%rbx
 
@@ -476,9 +496,265 @@ $code.=<<___;
 	mov	-16(%rax),%rbp
 	mov	-8(%rax),%rbx
 	lea	(%rax),%rsp
+.Lepilogue:
 	ret
 .size	sha1_multi_block,.-sha1_multi_block
 ___
+						{{{
+my ($ABCD0,$E0,$E0_,$BSWAP,$ABCD1,$E1,$E1_)=map("%xmm$_",(0..3,8..10));
+my @MSG0=map("%xmm$_",(4..7));
+my @MSG1=map("%xmm$_",(11..14));
+
+$code.=<<___;
+.type	sha1_multi_block_shaext,\@function,3
+.align	32
+sha1_multi_block_shaext:
+_shaext_shortcut:
+	mov	%rsp,%rax
+	push	%rbx
+	push	%rbp
+___
+$code.=<<___ if ($win64);
+	lea	-0xa8(%rsp),%rsp
+	movaps	%xmm6,(%rsp)
+	movaps	%xmm7,0x10(%rsp)
+	movaps	%xmm8,0x20(%rsp)
+	movaps	%xmm9,0x30(%rsp)
+	movaps	%xmm10,-0x78(%rax)
+	movaps	%xmm11,-0x68(%rax)
+	movaps	%xmm12,-0x58(%rax)
+	movaps	%xmm13,-0x48(%rax)
+	movaps	%xmm14,-0x38(%rax)
+	movaps	%xmm15,-0x28(%rax)
+___
+$code.=<<___;
+	sub	\$`$REG_SZ*18`,%rsp
+	shl	\$1,$num			# we process pair at a time
+	and	\$-256,%rsp
+	lea	0x40($ctx),$ctx			# size optimization
+	mov	%rax,`$REG_SZ*17`(%rsp)		# original %rsp
+.Lbody_shaext:
+	lea	`$REG_SZ*16`(%rsp),%rbx
+	movdqa	K_XX_XX+0x80(%rip),$BSWAP	# byte-n-word swap
+
+.Loop_grande_shaext:
+	mov	$num,`$REG_SZ*17+8`(%rsp)	# orignal $num
+	xor	$num,$num
+___
+for($i=0;$i<2;$i++) {
+    $code.=<<___;
+	mov	`16*$i+0`($inp),@ptr[$i]	# input pointer
+	mov	`16*$i+8`($inp),%ecx		# number of blocks
+	cmp	$num,%ecx
+	cmovg	%ecx,$num			# find maximum
+	test	%ecx,%ecx
+	mov	%ecx,`4*$i`(%rbx)		# initialize counters
+	cmovle	%rsp,@ptr[$i]			# cancel input
+___
+}
+$code.=<<___;
+	test	$num,$num
+	jz	.Ldone_shaext
+
+	movq		0x00-0x40($ctx),$ABCD0	# a1.a0
+	movq		0x20-0x40($ctx),@MSG0[0]# b1.b0
+	movq		0x40-0x40($ctx),@MSG0[1]# c1.c0
+	movq		0x60-0x40($ctx),@MSG0[2]# d1.d0
+	movq		0x80-0x40($ctx),@MSG0[3]# e1.e0
+
+	punpckldq	@MSG0[0],$ABCD0		# b1.a1.b0.a0
+	punpckldq	@MSG0[2],@MSG0[1]	# d1.c1.d0.c0
+
+	movdqa		$ABCD0,$ABCD1
+	punpcklqdq	@MSG0[1],$ABCD0		# d0.c0.b0.a0
+	punpckhqdq	@MSG0[1],$ABCD1		# d1.c1.b1.a1
+
+	pshufd		\$0b00111111,@MSG0[3],$E0
+	pshufd		\$0b01111111,@MSG0[3],$E1
+	pshufd		\$0b00011011,$ABCD0,$ABCD0
+	pshufd		\$0b00011011,$ABCD1,$ABCD1
+	jmp		.Loop_shaext
+
+.align	32
+.Loop_shaext:
+	movdqu		0x00(@ptr[0]),@MSG0[0]
+	 movdqu		0x00(@ptr[1]),@MSG1[0]
+	movdqu		0x10(@ptr[0]),@MSG0[1]
+	 movdqu		0x10(@ptr[1]),@MSG1[1]
+	movdqu		0x20(@ptr[0]),@MSG0[2]
+	pshufb		$BSWAP,@MSG0[0]
+	 movdqu		0x20(@ptr[1]),@MSG1[2]
+	 pshufb		$BSWAP,@MSG1[0]
+	movdqu		0x30(@ptr[0]),@MSG0[3]
+	lea		0x40(@ptr[0]),@ptr[0]
+	pshufb		$BSWAP,@MSG0[1]
+	 movdqu		0x30(@ptr[1]),@MSG1[3]
+	 lea		0x40(@ptr[1]),@ptr[1]
+	 pshufb		$BSWAP,@MSG1[1]
+
+	movdqa		$E0,0x50(%rsp)		# offload
+	paddd		@MSG0[0],$E0
+	 movdqa		$E1,0x70(%rsp)
+	 paddd		@MSG1[0],$E1
+	movdqa		$ABCD0,0x40(%rsp)	# offload
+	movdqa		$ABCD0,$E0_
+	 movdqa		$ABCD1,0x60(%rsp)
+	 movdqa		$ABCD1,$E1_
+	sha1rnds4	\$0,$E0,$ABCD0		# 0-3
+	sha1nexte	@MSG0[1],$E0_
+	 sha1rnds4	\$0,$E1,$ABCD1		# 0-3
+	 sha1nexte	@MSG1[1],$E1_
+	pshufb		$BSWAP,@MSG0[2]
+	prefetcht0	127(@ptr[0])
+	sha1msg1	@MSG0[1],@MSG0[0]
+	 pshufb		$BSWAP,@MSG1[2]
+	 prefetcht0	127(@ptr[1])
+	 sha1msg1	@MSG1[1],@MSG1[0]
+
+	pshufb		$BSWAP,@MSG0[3]
+	movdqa		$ABCD0,$E0
+	 pshufb		$BSWAP,@MSG1[3]
+	 movdqa		$ABCD1,$E1
+	sha1rnds4	\$0,$E0_,$ABCD0		# 4-7
+	sha1nexte	@MSG0[2],$E0
+	 sha1rnds4	\$0,$E1_,$ABCD1		# 4-7
+	 sha1nexte	@MSG1[2],$E1
+	pxor		@MSG0[2],@MSG0[0]
+	sha1msg1	@MSG0[2],@MSG0[1]
+	 pxor		@MSG1[2],@MSG1[0]
+	 sha1msg1	@MSG1[2],@MSG1[1]
+___
+for($i=2;$i<20-4;$i++) {
+$code.=<<___;
+	movdqa		$ABCD0,$E0_
+	 movdqa		$ABCD1,$E1_
+	sha1rnds4	\$`int($i/5)`,$E0,$ABCD0	# 8-11
+	sha1nexte	@MSG0[3],$E0_
+	 sha1rnds4	\$`int($i/5)`,$E1,$ABCD1	# 8-11
+	 sha1nexte	@MSG1[3],$E1_
+	sha1msg2	@MSG0[3],@MSG0[0]
+	 sha1msg2	@MSG1[3],@MSG1[0]
+	pxor		@MSG0[3],@MSG0[1]
+	sha1msg1	@MSG0[3],@MSG0[2]
+	 pxor		@MSG1[3],@MSG1[1]
+	 sha1msg1	@MSG1[3],@MSG1[2]
+___
+	($E0,$E0_)=($E0_,$E0);		($E1,$E1_)=($E1_,$E1);
+	push(@MSG0,shift(@MSG0));	push(@MSG1,shift(@MSG1));
+}
+$code.=<<___;
+	movdqa		$ABCD0,$E0_
+	 movdqa		$ABCD1,$E1_
+	sha1rnds4	\$3,$E0,$ABCD0		# 64-67
+	sha1nexte	@MSG0[3],$E0_
+	 sha1rnds4	\$3,$E1,$ABCD1		# 64-67
+	 sha1nexte	@MSG1[3],$E1_
+	sha1msg2	@MSG0[3],@MSG0[0]
+	 sha1msg2	@MSG1[3],@MSG1[0]
+	pxor		@MSG0[3],@MSG0[1]
+	 pxor		@MSG1[3],@MSG1[1]
+
+	mov		\$1,%ecx
+	pxor		@MSG0[2],@MSG0[2]	# zero
+	cmp		4*0(%rbx),%ecx		# examine counters
+	cmovge		%rsp,@ptr[0]		# cancel input
+
+	movdqa		$ABCD0,$E0
+	 movdqa		$ABCD1,$E1
+	sha1rnds4	\$3,$E0_,$ABCD0		# 68-71
+	sha1nexte	@MSG0[0],$E0
+	 sha1rnds4	\$3,$E1_,$ABCD1		# 68-71
+	 sha1nexte	@MSG1[0],$E1
+	sha1msg2	@MSG0[0],@MSG0[1]
+	 sha1msg2	@MSG1[0],@MSG1[1]
+
+	cmp		4*1(%rbx),%ecx
+	cmovge		%rsp,@ptr[1]
+	movq		(%rbx),@MSG0[0]		# pull counters
+
+	movdqa		$ABCD0,$E0_
+	 movdqa		$ABCD1,$E1_
+	sha1rnds4	\$3,$E0,$ABCD0		# 72-75
+	sha1nexte	@MSG0[1],$E0_
+	 sha1rnds4	\$3,$E1,$ABCD1		# 72-75
+	 sha1nexte	@MSG1[1],$E1_
+
+	pshufd		\$0x00,@MSG0[0],@MSG1[2]
+	pshufd		\$0x55,@MSG0[0],@MSG1[3]
+	movdqa		@MSG0[0],@MSG0[1]
+	pcmpgtd		@MSG0[2],@MSG1[2]
+	pcmpgtd		@MSG0[2],@MSG1[3]
+
+	movdqa		$ABCD0,$E0
+	 movdqa		$ABCD1,$E1
+	sha1rnds4	\$3,$E0_,$ABCD0		# 76-79
+	sha1nexte	$MSG0[2],$E0
+	 sha1rnds4	\$3,$E1_,$ABCD1		# 76-79
+	 sha1nexte	$MSG0[2],$E1
+
+	pcmpgtd		@MSG0[2],@MSG0[1]	# counter mask
+	pand		@MSG1[2],$ABCD0
+	pand		@MSG1[2],$E0
+	 pand		@MSG1[3],$ABCD1
+	 pand		@MSG1[3],$E1
+	paddd		@MSG0[1],@MSG0[0]	# counters--
+
+	paddd		0x40(%rsp),$ABCD0
+	paddd		0x50(%rsp),$E0
+	 paddd		0x60(%rsp),$ABCD1
+	 paddd		0x70(%rsp),$E1
+
+	movq		@MSG0[0],(%rbx)		# save counters
+	dec		$num
+	jnz		.Loop_shaext
+
+	mov		`$REG_SZ*17+8`(%rsp),$num
+
+	pshufd		\$0b00011011,$ABCD0,$ABCD0
+	pshufd		\$0b00011011,$ABCD1,$ABCD1
+
+	movdqa		$ABCD0,@MSG0[0]
+	punpckldq	$ABCD1,$ABCD0		# b1.b0.a1.a0
+	punpckhdq	$ABCD1,@MSG0[0]		# d1.d0.c1.c0
+	punpckhdq	$E1,$E0			# e1.e0.xx.xx
+	movq		$ABCD0,0x00-0x40($ctx)	# a1.a0
+	psrldq		\$8,$ABCD0
+	movq		@MSG0[0],0x40-0x40($ctx)# c1.c0
+	psrldq		\$8,@MSG0[0]
+	movq		$ABCD0,0x20-0x40($ctx)	# b1.b0
+	psrldq		\$8,$E0
+	movq		@MSG0[0],0x60-0x40($ctx)# d1.d0
+	movq		$E0,0x80-0x40($ctx)	# e1.e0
+
+	lea	`$REG_SZ/2`($ctx),$ctx
+	lea	`16*2`($inp),$inp
+	dec	$num
+	jnz	.Loop_grande_shaext
+
+.Ldone_shaext:
+	#mov	`$REG_SZ*17`(%rsp),%rax		# original %rsp
+___
+$code.=<<___ if ($win64);
+	movaps	-0xb8(%rax),%xmm6
+	movaps	-0xa8(%rax),%xmm7
+	movaps	-0x98(%rax),%xmm8
+	movaps	-0x88(%rax),%xmm9
+	movaps	-0x78(%rax),%xmm10
+	movaps	-0x68(%rax),%xmm11
+	movaps	-0x58(%rax),%xmm12
+	movaps	-0x48(%rax),%xmm13
+	movaps	-0x38(%rax),%xmm14
+	movaps	-0x28(%rax),%xmm15
+___
+$code.=<<___;
+	mov	-16(%rax),%rbp
+	mov	-8(%rax),%rbx
+	lea	(%rax),%rsp
+.Lepilogue_shaext:
+	ret
+.size	sha1_multi_block_shaext,.-sha1_multi_block_shaext
+___
+						}}}
 
 						if ($avx) {{{
 sub BODY_00_19_avx {
@@ -752,6 +1028,7 @@ $code.=<<___;
 	sub	\$`$REG_SZ*18`, %rsp
 	and	\$-256,%rsp
 	mov	%rax,`$REG_SZ*17`(%rsp)		# original %rsp
+.Lbody_avx:
 	lea	K_XX_XX(%rip),$Tbl
 	lea	`$REG_SZ*16`(%rsp),%rbx
 
@@ -858,6 +1135,7 @@ $code.=<<___;
 	mov	-16(%rax),%rbp
 	mov	-8(%rax),%rbx
 	lea	(%rax),%rsp
+.Lepilogue_avx:
 	ret
 .size	sha1_multi_block_avx,.-sha1_multi_block_avx
 ___
@@ -904,6 +1182,7 @@ $code.=<<___;
 	sub	\$`$REG_SZ*18`, %rsp
 	and	\$-256,%rsp
 	mov	%rax,`$REG_SZ*17`(%rsp)		# original %rsp
+.Lbody_avx2:
 	lea	K_XX_XX(%rip),$Tbl
 	shr	\$1,$num
 
@@ -1015,6 +1294,7 @@ $code.=<<___;
 	mov	-16(%rax),%rbp
 	mov	-8(%rax),%rbx
 	lea	(%rax),%rsp
+.Lepilogue_avx2:
 	ret
 .size	sha1_multi_block_avx2,.-sha1_multi_block_avx2
 ___
@@ -1033,10 +1313,253 @@ K_XX_XX:
 	.long	0xca62c1d6,0xca62c1d6,0xca62c1d6,0xca62c1d6	# K_60_79
 	.long	0x00010203,0x04050607,0x08090a0b,0x0c0d0e0f	# pbswap
 	.long	0x00010203,0x04050607,0x08090a0b,0x0c0d0e0f	# pbswap
+	.byte	0xf,0xe,0xd,0xc,0xb,0xa,0x9,0x8,0x7,0x6,0x5,0x4,0x3,0x2,0x1,0x0
+	.asciz	"SHA1 multi-block transform for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
 ___
+
+if ($win64) {
+# EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
+#		CONTEXT *context,DISPATCHER_CONTEXT *disp)
+$rec="%rcx";
+$frame="%rdx";
+$context="%r8";
+$disp="%r9";
+
+$code.=<<___;
+.extern	__imp_RtlVirtualUnwind
+.type	se_handler,\@abi-omnipotent
+.align	16
+se_handler:
+	push	%rsi
+	push	%rdi
+	push	%rbx
+	push	%rbp
+	push	%r12
+	push	%r13
+	push	%r14
+	push	%r15
+	pushfq
+	sub	\$64,%rsp
+
+	mov	120($context),%rax	# pull context->Rax
+	mov	248($context),%rbx	# pull context->Rip
+
+	mov	8($disp),%rsi		# disp->ImageBase
+	mov	56($disp),%r11		# disp->HandlerData
+
+	mov	0(%r11),%r10d		# HandlerData[0]
+	lea	(%rsi,%r10),%r10	# end of prologue label
+	cmp	%r10,%rbx		# context->Rip<.Lbody
+	jb	.Lin_prologue
+
+	mov	152($context),%rax	# pull context->Rsp
+
+	mov	4(%r11),%r10d		# HandlerData[1]
+	lea	(%rsi,%r10),%r10	# epilogue label
+	cmp	%r10,%rbx		# context->Rip>=.Lepilogue
+	jae	.Lin_prologue
+
+	mov	`16*17`(%rax),%rax	# pull saved stack pointer
+
+	mov	-8(%rax),%rbx
+	mov	-16(%rax),%rbp
+	mov	%rbx,144($context)	# restore context->Rbx
+	mov	%rbp,160($context)	# restore context->Rbp
+
+	lea	-24-10*16(%rax),%rsi
+	lea	512($context),%rdi	# &context.Xmm6
+	mov	\$20,%ecx
+	.long	0xa548f3fc		# cld; rep movsq
+
+.Lin_prologue:
+	mov	8(%rax),%rdi
+	mov	16(%rax),%rsi
+	mov	%rax,152($context)	# restore context->Rsp
+	mov	%rsi,168($context)	# restore context->Rsi
+	mov	%rdi,176($context)	# restore context->Rdi
+
+	mov	40($disp),%rdi		# disp->ContextRecord
+	mov	$context,%rsi		# context
+	mov	\$154,%ecx		# sizeof(CONTEXT)
+	.long	0xa548f3fc		# cld; rep movsq
+
+	mov	$disp,%rsi
+	xor	%rcx,%rcx		# arg1, UNW_FLAG_NHANDLER
+	mov	8(%rsi),%rdx		# arg2, disp->ImageBase
+	mov	0(%rsi),%r8		# arg3, disp->ControlPc
+	mov	16(%rsi),%r9		# arg4, disp->FunctionEntry
+	mov	40(%rsi),%r10		# disp->ContextRecord
+	lea	56(%rsi),%r11		# &disp->HandlerData
+	lea	24(%rsi),%r12		# &disp->EstablisherFrame
+	mov	%r10,32(%rsp)		# arg5
+	mov	%r11,40(%rsp)		# arg6
+	mov	%r12,48(%rsp)		# arg7
+	mov	%rcx,56(%rsp)		# arg8, (NULL)
+	call	*__imp_RtlVirtualUnwind(%rip)
+
+	mov	\$1,%eax		# ExceptionContinueSearch
+	add	\$64,%rsp
+	popfq
+	pop	%r15
+	pop	%r14
+	pop	%r13
+	pop	%r12
+	pop	%rbp
+	pop	%rbx
+	pop	%rdi
+	pop	%rsi
+	ret
+.size	se_handler,.-se_handler
+___
+$code.=<<___ if ($avx>1);
+.type	avx2_handler,\@abi-omnipotent
+.align	16
+avx2_handler:
+	push	%rsi
+	push	%rdi
+	push	%rbx
+	push	%rbp
+	push	%r12
+	push	%r13
+	push	%r14
+	push	%r15
+	pushfq
+	sub	\$64,%rsp
+
+	mov	120($context),%rax	# pull context->Rax
+	mov	248($context),%rbx	# pull context->Rip
+
+	mov	8($disp),%rsi		# disp->ImageBase
+	mov	56($disp),%r11		# disp->HandlerData
+
+	mov	0(%r11),%r10d		# HandlerData[0]
+	lea	(%rsi,%r10),%r10	# end of prologue label
+	cmp	%r10,%rbx		# context->Rip<body label
+	jb	.Lin_prologue
+
+	mov	152($context),%rax	# pull context->Rsp
+
+	mov	4(%r11),%r10d		# HandlerData[1]
+	lea	(%rsi,%r10),%r10	# epilogue label
+	cmp	%r10,%rbx		# context->Rip>=epilogue label
+	jae	.Lin_prologue
+
+	mov	`32*17`($context),%rax	# pull saved stack pointer
+
+	mov	-8(%rax),%rbx
+	mov	-16(%rax),%rbp
+	mov	-24(%rax),%r12
+	mov	-32(%rax),%r13
+	mov	-40(%rax),%r14
+	mov	-48(%rax),%r15
+	mov	%rbx,144($context)	# restore context->Rbx
+	mov	%rbp,160($context)	# restore context->Rbp
+	mov	%r12,216($context)	# restore cotnext->R12
+	mov	%r13,224($context)	# restore cotnext->R13
+	mov	%r14,232($context)	# restore cotnext->R14
+	mov	%r15,240($context)	# restore cotnext->R15
+
+	lea	-56-10*16(%rax),%rsi
+	lea	512($context),%rdi	# &context.Xmm6
+	mov	\$20,%ecx
+	.long	0xa548f3fc		# cld; rep movsq
+
+	jmp	.Lin_prologue
+.size	avx2_handler,.-avx2_handler
+___
+$code.=<<___;
+.section	.pdata
+.align	4
+	.rva	.LSEH_begin_sha1_multi_block
+	.rva	.LSEH_end_sha1_multi_block
+	.rva	.LSEH_info_sha1_multi_block
+	.rva	.LSEH_begin_sha1_multi_block_shaext
+	.rva	.LSEH_end_sha1_multi_block_shaext
+	.rva	.LSEH_info_sha1_multi_block_shaext
+___
+$code.=<<___ if ($avx);
+	.rva	.LSEH_begin_sha1_multi_block_avx
+	.rva	.LSEH_end_sha1_multi_block_avx
+	.rva	.LSEH_info_sha1_multi_block_avx
+___
+$code.=<<___ if ($avx>1);
+	.rva	.LSEH_begin_sha1_multi_block_avx2
+	.rva	.LSEH_end_sha1_multi_block_avx2
+	.rva	.LSEH_info_sha1_multi_block_avx2
+___
+$code.=<<___;
+.section	.xdata
+.align	8
+.LSEH_info_sha1_multi_block:
+	.byte	9,0,0,0
+	.rva	se_handler
+	.rva	.Lbody,.Lepilogue			# HandlerData[]
+.LSEH_info_sha1_multi_block_shaext:
+	.byte	9,0,0,0
+	.rva	se_handler
+	.rva	.Lbody_shaext,.Lepilogue_shaext	# HandlerData[]
+___
+$code.=<<___ if ($avx);
+.LSEH_info_sha1_multi_block_avx:
+	.byte	9,0,0,0
+	.rva	se_handler
+	.rva	.Lbody_avx,.Lepilogue_avx		# HandlerData[]
+___
+$code.=<<___ if ($avx>1);
+.LSEH_info_sha1_multi_block_avx2:
+	.byte	9,0,0,0
+	.rva	avx2_handler
+	.rva	.Lbody_avx2,.Lepilogue_avx2		# HandlerData[]
+___
+}
+####################################################################
+
+sub rex {
+  local *opcode=shift;
+  my ($dst,$src)=@_;
+  my $rex=0;
+
+    $rex|=0x04			if ($dst>=8);
+    $rex|=0x01			if ($src>=8);
+    unshift @opcode,$rex|0x40	if ($rex);
+}
+
+sub sha1rnds4 {
+    if (@_[0] =~ /\$([x0-9a-f]+),\s*%xmm([0-9]+),\s*%xmm([0-9]+)/) {
+      my @opcode=(0x0f,0x3a,0xcc);
+	rex(\@opcode,$3,$2);
+	push @opcode,0xc0|($2&7)|(($3&7)<<3);		# ModR/M
+	my $c=$1;
+	push @opcode,$c=~/^0/?oct($c):$c;
+	return ".byte\t".join(',',@opcode);
+    } else {
+	return "sha1rnds4\t".@_[0];
+    }
+}
+
+sub sha1op38 {
+    my $instr = shift;
+    my %opcodelet = (
+		"sha1nexte" => 0xc8,
+  		"sha1msg1"  => 0xc9,
+		"sha1msg2"  => 0xca	);
+
+    if (defined($opcodelet{$instr}) && @_[0] =~ /%xmm([0-9]+),\s*%xmm([0-9]+)/) {
+      my @opcode=(0x0f,0x38);
+	rex(\@opcode,$2,$1);
+	push @opcode,$opcodelet{$instr};
+	push @opcode,0xc0|($1&7)|(($2&7)<<3);		# ModR/M
+	return ".byte\t".join(',',@opcode);
+    } else {
+	return $instr."\t".@_[0];
+    }
+}
 
 foreach (split("\n",$code)) {
 	s/\`([^\`]*)\`/eval($1)/ge;
+
+	s/\b(sha1rnds4)\s+(.*)/sha1rnds4($2)/geo		or
+	s/\b(sha1[^\s]*)\s+(.*)/sha1op38($1,$2)/geo		or
 
 	s/\b(vmov[dq])\b(.+)%ymm([0-9]+)/$1$2%xmm$3/go		or
 	s/\b(vmovdqu)\b(.+)%x%ymm([0-9]+)/$1$2%xmm$3/go		or
@@ -1044,6 +1567,7 @@ foreach (split("\n",$code)) {
 	s/\b(vpextr[qd])\b(.+)%ymm([0-9]+)/$1$2%xmm$3/go	or
 	s/\b(vinserti128)\b(\s+)%ymm/$1$2\$1,%xmm/go		or
 	s/\b(vpbroadcast[qd]\s+)%ymm([0-9]+)/$1%xmm$2/go;
+
 	print $_,"\n";
 }
 

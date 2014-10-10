@@ -224,20 +224,6 @@ static DH *load_dh_param(const char *dhfile);
 static void s_server_init(void);
 #endif
 
-#ifndef OPENSSL_NO_TLSEXT
-
-static const unsigned char auth_ext_data[]={TLSEXT_AUTHZDATAFORMAT_dtcp};
-
-static unsigned char *generated_supp_data = NULL;
-
-static const unsigned char *most_recent_supplemental_data = NULL;
-static size_t most_recent_supplemental_data_length = 0;
-
-static int client_provided_server_authz = 0;
-static int client_provided_client_authz = 0;
-
-#endif
-
 /* static int load_CA(SSL_CTX *ctx, char *file);*/
 
 #undef BUFSIZZ
@@ -302,29 +288,9 @@ static int cert_chain = 0;
 #endif
 
 #ifndef OPENSSL_NO_TLSEXT
-static int suppdata_cb(SSL *s, unsigned short supp_data_type,
-		       const unsigned char *in,
-		       unsigned short inlen, int *al,
-		       void *arg);
-
-static int auth_suppdata_generate_cb(SSL *s, unsigned short supp_data_type,
-				     const unsigned char **out,
-				     unsigned short *outlen, int *al, void *arg);
-
-static int authz_tlsext_generate_cb(SSL *s, unsigned short ext_type,
-				    const unsigned char **out, unsigned short *outlen,
-				    int *al, void *arg);
-
-static int authz_tlsext_cb(SSL *s, unsigned short ext_type,
-			   const unsigned char *in,
-			   unsigned short inlen, int *al,
-			   void *arg);
-
 static BIO *serverinfo_in = NULL;
 static const char *s_serverinfo_file = NULL;
 
-static int c_auth = 0;
-static int c_auth_require_reneg = 0;
 #endif
 
 #ifndef OPENSSL_NO_PSK
@@ -479,16 +445,18 @@ static void sv_usage(void)
 	{
 	BIO_printf(bio_err,"usage: s_server [args ...]\n");
 	BIO_printf(bio_err,"\n");
-	BIO_printf(bio_err," -accept arg   - port to accept on (default is %d)\n",PORT);
+	BIO_printf(bio_err," -accept port  - TCP/IP port to accept on (default is %d)\n",PORT);
+	BIO_printf(bio_err," -unix path    - unix domain socket to accept on\n");
+	BIO_printf(bio_err," -unlink       - for -unix, unlink existing socket first\n");
 	BIO_printf(bio_err," -context arg  - set session ID context\n");
 	BIO_printf(bio_err," -verify arg   - turn on peer certificate verification\n");
 	BIO_printf(bio_err," -Verify arg   - turn on peer certificate verification, must have a cert.\n");
+	BIO_printf(bio_err," -verify_return_error - return verification errors\n");
 	BIO_printf(bio_err," -cert arg     - certificate file to use\n");
 	BIO_printf(bio_err,"                 (default is %s)\n",TEST_CERT);
+	BIO_printf(bio_err," -naccept arg  - terminate after 'arg' connections\n");
 #ifndef OPENSSL_NO_TLSEXT
 	BIO_printf(bio_err," -serverinfo arg - PEM serverinfo file for certificate\n");
-	BIO_printf(bio_err," -auth               - send and receive RFC 5878 TLS auth extensions and supplemental data\n");
-	BIO_printf(bio_err," -auth_require_reneg - Do not send TLS auth extensions until renegotiation\n");
 #endif
     BIO_printf(bio_err," -no_resumption_on_reneg - set SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION flag\n");
 	BIO_printf(bio_err," -crl_check    - check the peer certificate has not been revoked by its CA.\n" \
@@ -523,6 +491,7 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -state        - Print the SSL states\n");
 	BIO_printf(bio_err," -CApath arg   - PEM format directory of CA's\n");
 	BIO_printf(bio_err," -CAfile arg   - PEM format file of CA's\n");
+	BIO_printf(bio_err," -trusted_first - Use locally trusted CA's first when building trust chain\n");
 	BIO_printf(bio_err," -nocert       - Don't use any certificates (Anon-DH)\n");
 	BIO_printf(bio_err," -cipher arg   - play with 'openssl ciphers' to see what goes here\n");
 	BIO_printf(bio_err," -serverpref   - Use server's cipher preferences\n");
@@ -562,6 +531,7 @@ static void sv_usage(void)
 #endif
 	BIO_printf(bio_err, "-no_resume_ephemeral - Disable caching and tickets if ephemeral (EC)DH is used\n");
 	BIO_printf(bio_err," -bugs         - Turn on SSL bug compatibility\n");
+	BIO_printf(bio_err," -hack         - workaround for early Netscape code\n");
 	BIO_printf(bio_err," -www          - Respond to a 'GET /' with a status page\n");
 	BIO_printf(bio_err," -WWW          - Respond to a 'GET /<path> HTTP/1.0' with file ./<path>\n");
 	BIO_printf(bio_err," -HTTP         - Respond to a 'GET /<path> HTTP/1.0' with file ./<path>\n");
@@ -589,6 +559,10 @@ static void sv_usage(void)
 #endif
 	BIO_printf(bio_err," -keymatexport label   - Export keying material using label\n");
 	BIO_printf(bio_err," -keymatexportlen len  - Export len bytes of keying material (default 20)\n");
+	BIO_printf(bio_err," -status           - respond to certificate status requests\n");
+	BIO_printf(bio_err," -status_verbose   - enable status request verbose printout\n");
+	BIO_printf(bio_err," -status_timeout n - status request responder timeout\n");
+	BIO_printf(bio_err," -status_url URL   - status request fallback URL\n");
 	}
 
 static int local_argc=0;
@@ -766,7 +740,7 @@ static int MS_CALLBACK ssl_servername_cb(SSL *s, int *ad, void *arg)
 	
 	if (servername)
 		{
-    		if (strcmp(servername,p->servername)) 
+    		if (strcasecmp(servername,p->servername)) 
 			return p->extension_error;
 		if (ctx2)
 			{
@@ -1007,6 +981,11 @@ int MAIN(int argc, char *argv[])
 	X509_VERIFY_PARAM *vpm = NULL;
 	int badarg = 0;
 	short port=PORT;
+	const char *unix_path=NULL;
+#ifndef NO_SYS_UN_H
+	int unlink_unix_path=0;
+#endif
+	int (*server_cb)(char *hostname, int s, int stype, unsigned char *context);
 	char *CApath=NULL,*CAfile=NULL;
 	char *chCApath=NULL,*chCAfile=NULL;
 	char *vfyCApath=NULL,*vfyCAfile=NULL;
@@ -1099,6 +1078,25 @@ int MAIN(int argc, char *argv[])
 			if (!extract_port(*(++argv),&port))
 				goto bad;
 			}
+		else if (strcmp(*argv,"-unix") == 0)
+			{
+#ifdef NO_SYS_UN_H
+			BIO_printf(bio_err, "unix domain sockets unsupported\n");
+			goto bad;
+#else
+			if (--argc < 1) goto bad;
+			unix_path = *(++argv);
+#endif
+			}
+		else if (strcmp(*argv,"-unlink") == 0)
+			{
+#ifdef NO_SYS_UN_H
+			BIO_printf(bio_err, "unix domain sockets unsupported\n");
+			goto bad;
+#else
+			unlink_unix_path = 1;
+#endif
+			}
 		else if	(strcmp(*argv,"-naccept") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -1150,15 +1148,7 @@ int MAIN(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			s_serverinfo_file = *(++argv);
 			}
-		else if	(strcmp(*argv,"-auth") == 0)
-			{
-			c_auth = 1;
-			}
 #endif
-		else if	(strcmp(*argv,"-auth_require_reneg") == 0)
-			{
-			c_auth_require_reneg = 1;
-			}
 		else if	(strcmp(*argv,"-certform") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -1542,7 +1532,20 @@ bad:
 		sv_usage();
 		goto end;
 		}
+#ifndef OPENSSL_NO_DTLS1
+	if (www && socket_type == SOCK_DGRAM)
+		{
+		BIO_printf(bio_err,
+				"Can't use -HTTP, -www or -WWW with DTLS\n");
+		goto end;
+		}
+#endif
 
+	if (unix_path && (socket_type != SOCK_STREAM))
+		{
+		BIO_printf(bio_err, "Can't use unix sockets and datagrams together\n");
+			goto end;
+		}
 #if !defined(OPENSSL_NO_JPAKE) && !defined(OPENSSL_NO_PSK)
 	if (jpake_secret)
 		{
@@ -1964,12 +1967,6 @@ bad:
 		ERR_print_errors(bio_err);
 		goto end;
 		}
-	if (c_auth)
-		{
-		SSL_CTX_set_custom_srv_ext(ctx, TLSEXT_TYPE_client_authz, authz_tlsext_cb, authz_tlsext_generate_cb, bio_err);
-		SSL_CTX_set_custom_srv_ext(ctx, TLSEXT_TYPE_server_authz, authz_tlsext_cb, authz_tlsext_generate_cb, bio_err);
-		SSL_CTX_set_srv_supp_data(ctx, TLSEXT_SUPPLEMENTALDATATYPE_authz_data, auth_suppdata_generate_cb, suppdata_cb, bio_err);
-		}
 #endif
 #ifndef OPENSSL_NO_TLSEXT
 	if (ctx2 && !set_cert_key_stuff(ctx2,s_cert2,s_key2, NULL, build_chain))
@@ -2105,11 +2102,21 @@ bad:
 	BIO_printf(bio_s_out,"ACCEPT\n");
 	(void)BIO_flush(bio_s_out);
 	if (rev)
-		do_server(port,socket_type,&accept_socket,rev_body, context, naccept);
+		server_cb = rev_body;
 	else if (www)
-		do_server(port,socket_type,&accept_socket,www_body, context, naccept);
+		server_cb = www_body;
 	else
-		do_server(port,socket_type,&accept_socket,sv_body, context, naccept);
+		server_cb = sv_body;
+#ifndef NO_SYS_UN_H
+	if (unix_path)
+		{
+		if (unlink_unix_path)
+			unlink(unix_path);
+		do_server_unix(unix_path,&accept_socket,server_cb, context, naccept);
+		}
+	else
+#endif
+		do_server(port,socket_type,&accept_socket,server_cb, context, naccept);
 	print_stats(bio_s_out,ctx);
 	ret=0;
 end:
@@ -2679,12 +2686,6 @@ static int init_ssl_connection(SSL *con)
 			i=SSL_accept(con);
 		}
 #endif
-	/*handshake is complete - free the generated supp data allocated in the callback */
-	if (generated_supp_data)
-		{
-        OPENSSL_free(generated_supp_data);
-		generated_supp_data = NULL;
-		}
 
 	if (i <= 0)
 		{
@@ -2970,7 +2971,7 @@ static int www_body(char *hostname, int s, int stype, unsigned char *context)
 				BIO_printf(bio_s_out,"read R BLOCK\n");
 #if defined(OPENSSL_SYS_NETWARE)
             delay(1000);
-#elif !defined(OPENSSL_SYS_MSDOS) && !defined(__DJGPP__)
+#elif !defined(OPENSSL_SYS_MSDOS)
 				sleep(1);
 #endif
 				continue;
@@ -3365,7 +3366,7 @@ static int rev_body(char *hostname, int s, int stype, unsigned char *context)
 				BIO_printf(bio_s_out,"read R BLOCK\n");
 #if defined(OPENSSL_SYS_NETWARE)
             delay(1000);
-#elif !defined(OPENSSL_SYS_MSDOS) && !defined(__DJGPP__)
+#elif !defined(OPENSSL_SYS_MSDOS)
 				sleep(1);
 #endif
 				continue;
@@ -3572,77 +3573,3 @@ static void free_sessions(void)
 		}
 	first = NULL;
 	}
-
-#ifndef OPENSSL_NO_TLSEXT
-static int authz_tlsext_cb(SSL *s, unsigned short ext_type,
-			   const unsigned char *in,
-			   unsigned short inlen, int *al,
-			   void *arg)
-	{
-	if (TLSEXT_TYPE_server_authz == ext_type)
-		client_provided_server_authz
-		  = memchr(in,	TLSEXT_AUTHZDATAFORMAT_dtcp, inlen) != NULL;
-
-	if (TLSEXT_TYPE_client_authz == ext_type)
-		client_provided_client_authz
-		  = memchr(in, TLSEXT_AUTHZDATAFORMAT_dtcp, inlen) != NULL;
-
-	return 1;
-	}
-
-static int authz_tlsext_generate_cb(SSL *s, unsigned short ext_type,
-				    const unsigned char **out, unsigned short *outlen,
-				    int *al, void *arg)
-	{
-	if (c_auth && client_provided_client_authz && client_provided_server_authz)
-		{
-		/*if auth_require_reneg flag is set, only send extensions if
-		  renegotiation has occurred */
-		if (!c_auth_require_reneg
-		    || (c_auth_require_reneg && SSL_num_renegotiations(s)))
-			{
-			*out = auth_ext_data;
-			*outlen = 1;
-			return 1;
-			}
-		}
-	/* no auth extension to send */
-	return -1;
-	}
-
-static int suppdata_cb(SSL *s, unsigned short supp_data_type,
-		       const unsigned char *in,
-		       unsigned short inlen, int *al,
-		       void *arg)
-	{
-	if (supp_data_type == TLSEXT_SUPPLEMENTALDATATYPE_authz_data)
-		{
-		most_recent_supplemental_data = in;
-		most_recent_supplemental_data_length = inlen;
-		}
-	return 1;
-	}
-
-static int auth_suppdata_generate_cb(SSL *s, unsigned short supp_data_type,
-				     const unsigned char **out,
-				     unsigned short *outlen, int *al, void *arg)
-	{
-	if (c_auth && client_provided_client_authz && client_provided_server_authz)
-		{
-		/*if auth_require_reneg flag is set, only send supplemental data if
-		  renegotiation has occurred */
-		if (!c_auth_require_reneg
-		    || (c_auth_require_reneg && SSL_num_renegotiations(s)))
-			{
-			generated_supp_data = OPENSSL_malloc(10);
-			memcpy(generated_supp_data, "1234512345", 10);
-			*out = generated_supp_data;
-			*outlen = 10;
-			return 1;
-			}
-		}
-	/* no supplemental data to send */
-	return -1;
-	}
-#endif
-

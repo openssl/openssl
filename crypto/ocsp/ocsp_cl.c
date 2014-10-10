@@ -148,13 +148,12 @@ int OCSP_request_sign(OCSP_REQUEST   *req,
 		      unsigned long flags)
         {
 	int i;
-	OCSP_SIGNATURE *sig;
 	X509 *x;
 
 	if (!OCSP_request_set1_name(req, X509_get_subject_name(signer)))
 			goto err;
 
-	if (!(req->optionalSignature = sig = OCSP_SIGNATURE_new())) goto err;
+	if (!(req->optionalSignature = OCSP_SIGNATURE_new())) goto err;
 	if (key)
 		{
 		if (!X509_check_private_key(signer, key))

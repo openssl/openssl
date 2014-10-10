@@ -39,10 +39,6 @@ RIPEMD160_Final() places the message digest in B<md>, which must have
 space for RIPEMD160_DIGEST_LENGTH == 20 bytes of output, and erases
 the B<RIPEMD160_CTX>.
 
-Applications should use the higher level functions
-L<EVP_DigestInit(3)|EVP_DigestInit(3)> etc. instead of calling the
-hash functions directly.
-
 =head1 RETURN VALUES
 
 RIPEMD160() returns a pointer to the hash value. 
@@ -50,17 +46,18 @@ RIPEMD160() returns a pointer to the hash value.
 RIPEMD160_Init(), RIPEMD160_Update() and RIPEMD160_Final() return 1 for
 success, 0 otherwise.
 
+=head1 NOTE
+
+Applications should use the higher level functions
+L<EVP_DigestInit(3)|EVP_DigestInit(3)> etc. instead of calling these
+functions directly.
+
 =head1 CONFORMING TO
 
 ISO/IEC 10118-3 (draft) (??)
 
 =head1 SEE ALSO
 
-L<sha(3)|sha(3)>, L<hmac(3)|hmac(3)>, L<EVP_DigestInit(3)|EVP_DigestInit(3)>
-
-=head1 HISTORY
-
-RIPEMD160(), RIPEMD160_Init(), RIPEMD160_Update() and
-RIPEMD160_Final() are available since SSLeay 0.9.0.
+L<EVP_DigestInit(3)|EVP_DigestInit(3)>
 
 =cut

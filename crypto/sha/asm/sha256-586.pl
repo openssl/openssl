@@ -34,6 +34,10 @@
 # (Biggest improvement coefficient is on upcoming Atom Silvermont,
 # not shown.) Add AVX+BMI code path.
 #
+# March 2014.
+#
+# Add support for Intel SHA Extensions.
+#
 # Performance in clock cycles per processed byte (less is better):
 #
 #		gcc	icc	x86 asm(*)	SIMD	x86_64 asm(**)	
@@ -49,6 +53,7 @@
 # Bulldozer	36	-	27/22		17.0	13.6
 # VIA Nano	36	-	25/22		16.8	16.5
 # Atom		50	-	30/25		21.9	18.9
+# Silvermont	40	-	34/31		22.9	20.6
 #
 # (*)	numbers after slash are for unrolled loop, where applicable;
 # (**)	x86_64 assembly performance is presented for reference
@@ -77,6 +82,12 @@ if ($xmm && !$avx && $ARGV[0] eq "win32" &&
 		`ml 2>&1` =~ /Version ([0-9]+)\./) {
 	$avx = ($1>=10) + ($1>=11);
 }
+
+if ($xmm && !$avx && `$ENV{CC} -v 2>&1` =~ /(^clang version|based on LLVM) ([3-9]\.[0-9]+)/) {
+	$avx = ($2>=3.0) + ($2>3.0);
+}
+
+$shaext=$xmm;	### set to zero if compiling for 1.0.1
 
 $unroll_after = 64*4;	# If pre-evicted from L1P cache first spin of
 			# fully unrolled loop was measured to run about
@@ -196,8 +207,13 @@ sub BODY_00_15() {
 	&mov	("ebx",&DWP(4,"edx"));
 	&test	("ecx",1<<20);		# check for P4
 	&jnz	(&label("loop"));
+	&mov	("edx",&DWP(8,"edx"))	if ($xmm);
+	&test	("ecx",1<<24);		# check for FXSR
+	&jz	($unroll_after?&label("no_xmm"):&label("loop"));
 	&and	("ecx",1<<30);		# mask "Intel CPU" bit
 	&and	("ebx",1<<28|1<<9);	# mask AVX and SSSE3 bits
+	&test	("edx",1<<29)		if ($shaext);	# check for SHA
+	&jnz	(&label("shaext"))	if ($shaext);
 	&or	("ecx","ebx");
 	&and	("ecx",1<<28|1<<30);
 	&cmp	("ecx",1<<28|1<<30);
@@ -209,6 +225,7 @@ sub BODY_00_15() {
 	&je	(&label("loop_shrd"));
 					}
 						if ($unroll_after) {
+&set_label("no_xmm");
 	&sub	("eax","edi");
 	&cmp	("eax",$unroll_after);
 	&jae	(&label("unrolled"));
@@ -495,6 +512,146 @@ my @AH=($A,$K256);
 &function_end_A();
 }
 						if (!$i386 && $xmm) {{{
+if ($shaext) {
+######################################################################
+# Intel SHA Extensions implementation of SHA256 update function.
+#
+my ($ctx,$inp,$end)=("esi","edi","eax");
+my ($Wi,$ABEF,$CDGH,$TMP)=map("xmm$_",(0..2,7));
+my @MSG=map("xmm$_",(3..6));
+
+sub sha256op38 {
+ my ($opcodelet,$dst,$src)=@_;
+    if ("$dst:$src" =~ /xmm([0-7]):xmm([0-7])/)
+    {	&data_byte(0x0f,0x38,$opcodelet,0xc0|($1<<3)|$2);	}
+}
+sub sha256rnds2	{ sha256op38(0xcb,@_); }
+sub sha256msg1	{ sha256op38(0xcc,@_); }
+sub sha256msg2	{ sha256op38(0xcd,@_); }
+
+&set_label("shaext",32);
+	&sub		("esp",32);
+
+	&movdqu		($ABEF,&QWP(0,$ctx));		# DCBA
+	&lea		($K256,&DWP(0x80,$K256));
+	&movdqu		($CDGH,&QWP(16,$ctx));		# HGFE
+	&movdqa		($TMP,&QWP(0x100-0x80,$K256));	# byte swap mask
+
+	&pshufd		($Wi,$ABEF,0x1b);		# ABCD
+	&pshufd		($ABEF,$ABEF,0xb1);		# CDAB
+	&pshufd		($CDGH,$CDGH,0x1b);		# EFGH
+	&palignr	($ABEF,$CDGH,8);		# ABEF
+	&punpcklqdq	($CDGH,$Wi);			# CDGH
+	&jmp		(&label("loop_shaext"));
+
+&set_label("loop_shaext",16);
+	&movdqu		(@MSG[0],&QWP(0,$inp));
+	&movdqu		(@MSG[1],&QWP(0x10,$inp));
+	&movdqu		(@MSG[2],&QWP(0x20,$inp));
+	&pshufb		(@MSG[0],$TMP);
+	&movdqu		(@MSG[3],&QWP(0x30,$inp));
+	&movdqa		(&QWP(16,"esp"),$CDGH);		# offload
+
+	&movdqa		($Wi,&QWP(0*16-0x80,$K256));
+	&paddd		($Wi,@MSG[0]);
+	&pshufb		(@MSG[1],$TMP);
+	&sha256rnds2	($CDGH,$ABEF);			# 0-3
+	&pshufd		($Wi,$Wi,0x0e);
+	&nop		();
+	&movdqa		(&QWP(0,"esp"),$ABEF);		# offload
+	&sha256rnds2	($ABEF,$CDGH);
+
+	&movdqa		($Wi,&QWP(1*16-0x80,$K256));
+	&paddd		($Wi,@MSG[1]);
+	&pshufb		(@MSG[2],$TMP);
+	&sha256rnds2	($CDGH,$ABEF);			# 4-7
+	&pshufd		($Wi,$Wi,0x0e);
+	&lea		($inp,&DWP(0x40,$inp));
+	&sha256msg1	(@MSG[0],@MSG[1]);
+	&sha256rnds2	($ABEF,$CDGH);
+
+	&movdqa		($Wi,&QWP(2*16-0x80,$K256));
+	&paddd		($Wi,@MSG[2]);
+	&pshufb		(@MSG[3],$TMP);
+	&sha256rnds2	($CDGH,$ABEF);			# 8-11
+	&pshufd		($Wi,$Wi,0x0e);
+	&movdqa		($TMP,@MSG[3]);
+	&palignr	($TMP,@MSG[2],4);
+	&nop		();
+	&paddd		(@MSG[0],$TMP);
+	&sha256msg1	(@MSG[1],@MSG[2]);
+	&sha256rnds2	($ABEF,$CDGH);
+
+	&movdqa		($Wi,&QWP(3*16-0x80,$K256));
+	&paddd		($Wi,@MSG[3]);
+	&sha256msg2	(@MSG[0],@MSG[3]);
+	&sha256rnds2	($CDGH,$ABEF);			# 12-15
+	&pshufd		($Wi,$Wi,0x0e);
+	&movdqa		($TMP,@MSG[0]);
+	&palignr	($TMP,@MSG[3],4);
+	&nop		();
+	&paddd		(@MSG[1],$TMP);
+	&sha256msg1	(@MSG[2],@MSG[3]);
+	&sha256rnds2	($ABEF,$CDGH);
+
+for($i=4;$i<16-3;$i++) {
+	&movdqa		($Wi,&QWP($i*16-0x80,$K256));
+	&paddd		($Wi,@MSG[0]);
+	&sha256msg2	(@MSG[1],@MSG[0]);
+	&sha256rnds2	($CDGH,$ABEF);			# 16-19...
+	&pshufd		($Wi,$Wi,0x0e);
+	&movdqa		($TMP,@MSG[1]);
+	&palignr	($TMP,@MSG[0],4);
+	&nop		();
+	&paddd		(@MSG[2],$TMP);
+	&sha256msg1	(@MSG[3],@MSG[0]);
+	&sha256rnds2	($ABEF,$CDGH);
+
+	push(@MSG,shift(@MSG));
+}
+	&movdqa		($Wi,&QWP(13*16-0x80,$K256));
+	&paddd		($Wi,@MSG[0]);
+	&sha256msg2	(@MSG[1],@MSG[0]);
+	&sha256rnds2	($CDGH,$ABEF);			# 52-55
+	&pshufd		($Wi,$Wi,0x0e);
+	&movdqa		($TMP,@MSG[1])
+	&palignr	($TMP,@MSG[0],4);
+	&sha256rnds2	($ABEF,$CDGH);
+	&paddd		(@MSG[2],$TMP);
+
+	&movdqa		($Wi,&QWP(14*16-0x80,$K256));
+	&paddd		($Wi,@MSG[1]);
+	&sha256rnds2	($CDGH,$ABEF);			# 56-59
+	&pshufd		($Wi,$Wi,0x0e);
+	&sha256msg2	(@MSG[2],@MSG[1]);
+	&movdqa		($TMP,&QWP(0x100-0x80,$K256));	# byte swap mask
+	&sha256rnds2	($ABEF,$CDGH);
+
+	&movdqa		($Wi,&QWP(15*16-0x80,$K256));
+	&paddd		($Wi,@MSG[2]);
+	&nop		();
+	&sha256rnds2	($CDGH,$ABEF);			# 60-63
+	&pshufd		($Wi,$Wi,0x0e);
+	&cmp		($end,$inp);
+	&nop		();
+	&sha256rnds2	($ABEF,$CDGH);
+
+	&paddd		($CDGH,&QWP(16,"esp"));
+	&paddd		($ABEF,&QWP(0,"esp"));
+	&jnz		(&label("loop_shaext"));
+
+	&pshufd		($CDGH,$CDGH,0xb1);		# DCHG
+	&pshufd		($TMP,$ABEF,0x1b);		# FEBA
+	&pshufd		($ABEF,$ABEF,0xb1);		# BAFE
+	&punpckhqdq	($ABEF,$CDGH);			# DCBA
+	&palignr	($CDGH,$TMP,8);			# HGFE
+
+	&mov		("esp",&DWP(32+12,"esp"));
+	&movdqu		(&QWP(0,$ctx),$ABEF);
+	&movdqu		(&QWP(16,$ctx),$CDGH);
+&function_end_A();
+}
+
 my @X = map("xmm$_",(0..3));
 my ($t0,$t1,$t2,$t3) = map("xmm$_",(4..7));
 my @AH = ($A,$T);
@@ -811,7 +968,6 @@ sub body_00_15 () {
 						if ($avx) {
 &set_label("AVX",32);
 						if ($avx>1) {
-	&mov	("edx",&DWP(8,"edx"));
 	&and	("edx",1<<8|1<<3);		# check for BMI2+BMI1
 	&cmp	("edx",1<<8|1<<3);
 	&je	(&label("AVX_BMI"));

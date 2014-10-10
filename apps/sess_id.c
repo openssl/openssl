@@ -73,12 +73,12 @@ static const char *sess_id_usage[]={
 "usage: sess_id args\n",
 "\n",
 " -inform arg     - input format - default PEM (DER or PEM)\n",
-" -outform arg    - output format - default PEM\n",
+" -outform arg    - output format - default PEM (PEM, DER or NSS)\n",
 " -in arg         - input file - default stdin\n",
 " -out arg        - output file - default stdout\n",
 " -text           - print ssl session id details\n",
 " -cert           - output certificate \n",
-" -noout          - no CRL output\n",
+" -noout          - no output of encoded session info\n",
 " -context arg    - set the session ID context\n",
 NULL
 };
@@ -246,6 +246,8 @@ bad:
 			i=i2d_SSL_SESSION_bio(out,x);
 		else if (outformat == FORMAT_PEM)
 			i=PEM_write_bio_SSL_SESSION(out,x);
+		else if (outformat == FORMAT_NSS)
+			i=SSL_SESSION_print_keylog(out,x);
 		else	{
 			BIO_printf(bio_err,"bad output format specified for outfile\n");
 			goto end;

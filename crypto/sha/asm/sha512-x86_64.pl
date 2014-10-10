@@ -67,7 +67,12 @@
 # significant 128-bit halves and data from second to most significant.
 # The data is then processed with same SIMD instruction sequence as
 # for AVX, but with %ymm as operands. Side effect is increased stack
-# frame, 448 additional bytes in SHA256 and 1152 in SHA512.
+# frame, 448 additional bytes in SHA256 and 1152 in SHA512, and 1.2KB
+# code size increase.
+#
+# March 2014.
+#
+# Add support for Intel SHA Extensions.
 
 ######################################################################
 # Current performance in cycles per processed byte (less is better):
@@ -84,6 +89,7 @@
 # Bulldozer	21.1	13.6(+54%)  13.6(+54%(***)) 13.5    8.58(+57%)
 # VIA Nano	23.0	16.5(+39%)  -		    14.7    -
 # Atom		23.0	18.9(+22%)  -		    14.7    -
+# Silvermont	27.4	20.6(+33%)  -               17.5    -
 #
 # (*)	whichever best applicable;
 # (**)	switch from ror to shrd stands for fair share of improvement;
@@ -117,6 +123,13 @@ if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	   `ml64 2>&1` =~ /Version ([0-9]+)\./) {
 	$avx = ($1>=10) + ($1>=11);
 }
+
+if (!$avx && `$ENV{CC} -v 2>&1` =~ /(^clang version|based on LLVM) ([3-9]\.[0-9]+)/) {
+	$avx = ($2>=3.0) + ($2>3.0);
+}
+
+$shaext=1;	### set to zero if compiling for 1.0.1
+$avx=1		if (!$shaext && $avx);
 
 open OUT,"| \"$^X\" $xlate $flavour $output";
 *STDOUT=*OUT;
@@ -253,6 +266,10 @@ $code.=<<___ if ($SZ==4 || $avx);
 	mov	0(%r11),%r9d
 	mov	4(%r11),%r10d
 	mov	8(%r11),%r11d
+___
+$code.=<<___ if ($SZ==4 && $shaext);
+	test	\$`1<<29`,%r11d		# check for SHA
+	jnz	_shaext_shortcut
 ___
 $code.=<<___ if ($avx && $SZ==8);
 	test	\$`1<<11`,%r10d		# check for XOP
@@ -509,6 +526,166 @@ ___
 ######################################################################
 # SIMD code paths
 #
+if ($SZ==4 && $shaext) {{{
+######################################################################
+# Intel SHA Extensions implementation of SHA256 update function.
+#
+my ($ctx,$inp,$num,$Tbl)=("%rdi","%rsi","%rdx","%rcx");
+
+my ($Wi,$ABEF,$CDGH,$TMP,$BSWAP,$ABEF_SAVE,$CDGH_SAVE)=map("%xmm$_",(0..2,7..10));
+my @MSG=map("%xmm$_",(3..6));
+
+$code.=<<___;
+.type	sha256_block_data_order_shaext,\@function,3
+.align	64
+sha256_block_data_order_shaext:
+_shaext_shortcut:
+___
+$code.=<<___ if ($win64);
+	lea	`-8-5*16`(%rsp),%rsp
+	movaps	%xmm6,-8-5*16(%rax)
+	movaps	%xmm7,-8-4*16(%rax)
+	movaps	%xmm8,-8-3*16(%rax)
+	movaps	%xmm9,-8-2*16(%rax)
+	movaps	%xmm10,-8-1*16(%rax)
+.Lprologue_shaext:
+___
+$code.=<<___;
+	lea		K256+0x80(%rip),$Tbl
+	movdqu		($ctx),$ABEF		# DCBA
+	movdqu		16($ctx),$CDGH		# HGFE
+	movdqa		0x200-0x80($Tbl),$TMP	# byte swap mask
+
+	pshufd		\$0x1b,$ABEF,$Wi	# ABCD
+	pshufd		\$0xb1,$ABEF,$ABEF	# CDAB
+	pshufd		\$0x1b,$CDGH,$CDGH	# EFGH
+	movdqa		$TMP,$BSWAP		# offload
+	palignr		\$8,$CDGH,$ABEF		# ABEF
+	punpcklqdq	$Wi,$CDGH		# CDGH
+	jmp		.Loop_shaext
+
+.align	16
+.Loop_shaext:
+	movdqu		($inp),@MSG[0]
+	movdqu		0x10($inp),@MSG[1]
+	movdqu		0x20($inp),@MSG[2]
+	pshufb		$TMP,@MSG[0]
+	movdqu		0x30($inp),@MSG[3]
+
+	movdqa		0*32-0x80($Tbl),$Wi
+	paddd		@MSG[0],$Wi
+	pshufb		$TMP,@MSG[1]
+	movdqa		$CDGH,$CDGH_SAVE	# offload
+	sha256rnds2	$ABEF,$CDGH		# 0-3
+	pshufd		\$0x0e,$Wi,$Wi
+	nop
+	movdqa		$ABEF,$ABEF_SAVE	# offload
+	sha256rnds2	$CDGH,$ABEF
+
+	movdqa		1*32-0x80($Tbl),$Wi
+	paddd		@MSG[1],$Wi
+	pshufb		$TMP,@MSG[2]
+	sha256rnds2	$ABEF,$CDGH		# 4-7
+	pshufd		\$0x0e,$Wi,$Wi
+	lea		0x40($inp),$inp
+	sha256msg1	@MSG[1],@MSG[0]
+	sha256rnds2	$CDGH,$ABEF
+
+	movdqa		2*32-0x80($Tbl),$Wi
+	paddd		@MSG[2],$Wi
+	pshufb		$TMP,@MSG[3]
+	sha256rnds2	$ABEF,$CDGH		# 8-11
+	pshufd		\$0x0e,$Wi,$Wi
+	movdqa		@MSG[3],$TMP
+	palignr		\$4,@MSG[2],$TMP
+	nop
+	paddd		$TMP,@MSG[0]
+	sha256msg1	@MSG[2],@MSG[1]
+	sha256rnds2	$CDGH,$ABEF
+
+	movdqa		3*32-0x80($Tbl),$Wi
+	paddd		@MSG[3],$Wi
+	sha256msg2	@MSG[3],@MSG[0]
+	sha256rnds2	$ABEF,$CDGH		# 12-15
+	pshufd		\$0x0e,$Wi,$Wi
+	movdqa		@MSG[0],$TMP
+	palignr		\$4,@MSG[3],$TMP
+	nop
+	paddd		$TMP,@MSG[1]
+	sha256msg1	@MSG[3],@MSG[2]
+	sha256rnds2	$CDGH,$ABEF
+___
+for($i=4;$i<16-3;$i++) {
+$code.=<<___;
+	movdqa		$i*32-0x80($Tbl),$Wi
+	paddd		@MSG[0],$Wi
+	sha256msg2	@MSG[0],@MSG[1]
+	sha256rnds2	$ABEF,$CDGH		# 16-19...
+	pshufd		\$0x0e,$Wi,$Wi
+	movdqa		@MSG[1],$TMP
+	palignr		\$4,@MSG[0],$TMP
+	nop
+	paddd		$TMP,@MSG[2]
+	sha256msg1	@MSG[0],@MSG[3]
+	sha256rnds2	$CDGH,$ABEF
+___
+	push(@MSG,shift(@MSG));
+}
+$code.=<<___;
+	movdqa		13*32-0x80($Tbl),$Wi
+	paddd		@MSG[0],$Wi
+	sha256msg2	@MSG[0],@MSG[1]
+	sha256rnds2	$ABEF,$CDGH		# 52-55
+	pshufd		\$0x0e,$Wi,$Wi
+	movdqa		@MSG[1],$TMP
+	palignr		\$4,@MSG[0],$TMP
+	sha256rnds2	$CDGH,$ABEF
+	paddd		$TMP,@MSG[2]
+
+	movdqa		14*32-0x80($Tbl),$Wi
+	paddd		@MSG[1],$Wi
+	sha256rnds2	$ABEF,$CDGH		# 56-59
+	pshufd		\$0x0e,$Wi,$Wi
+	sha256msg2	@MSG[1],@MSG[2]
+	movdqa		$BSWAP,$TMP
+	sha256rnds2	$CDGH,$ABEF
+
+	movdqa		15*32-0x80($Tbl),$Wi
+	paddd		@MSG[2],$Wi
+	nop
+	sha256rnds2	$ABEF,$CDGH		# 60-63
+	pshufd		\$0x0e,$Wi,$Wi
+	dec		$num
+	nop
+	sha256rnds2	$CDGH,$ABEF
+
+	paddd		$CDGH_SAVE,$CDGH
+	paddd		$ABEF_SAVE,$ABEF
+	jnz		.Loop_shaext
+
+	pshufd		\$0xb1,$CDGH,$CDGH	# DCHG
+	pshufd		\$0x1b,$ABEF,$TMP	# FEBA
+	pshufd		\$0xb1,$ABEF,$ABEF	# BAFE
+	punpckhqdq	$CDGH,$ABEF		# DCBA
+	palignr		\$8,$TMP,$CDGH		# HGFE
+
+	movdqu	$ABEF,($ctx)
+	movdqu	$CDGH,16($ctx)
+___
+$code.=<<___ if ($win64);
+	movaps	-8-5*16(%rax),%xmm6
+	movaps	-8-4*16(%rax),%xmm7
+	movaps	-8-3*16(%rax),%xmm8
+	movaps	-8-2*16(%rax),%xmm9
+	movaps	-8-1*16(%rax),%xmm10
+	mov	%rax,%rsp
+.Lepilogue_shaext:
+___
+$code.=<<___;
+	ret
+.size	sha256_block_data_order_shaext,.-sha256_block_data_order_shaext
+___
+}}}
 {{{
 
 my $a4=$T1;
@@ -620,13 +797,13 @@ $code.=<<___;
 	movdqu	0x00($inp),@X[0]
 	movdqu	0x10($inp),@X[1]
 	movdqu	0x20($inp),@X[2]
-	movdqu	0x30($inp),@X[3]
 	pshufb	$t3,@X[0]
+	movdqu	0x30($inp),@X[3]
 	lea	$TABLE(%rip),$Tbl
 	pshufb	$t3,@X[1]
 	movdqa	0x00($Tbl),$t0
-	pshufb	$t3,@X[2]
 	movdqa	0x20($Tbl),$t1
+	pshufb	$t3,@X[2]
 	paddd	@X[0],$t0
 	movdqa	0x40($Tbl),$t2
 	pshufb	$t3,@X[3]
@@ -2086,12 +2263,54 @@ $code.=<<___;
 	pop	%rsi
 	ret
 .size	se_handler,.-se_handler
+___
 
+$code.=<<___ if ($SZ==4 && $shaext);
+.type	shaext_handler,\@abi-omnipotent
+.align	16
+shaext_handler:
+	push	%rsi
+	push	%rdi
+	push	%rbx
+	push	%rbp
+	push	%r12
+	push	%r13
+	push	%r14
+	push	%r15
+	pushfq
+	sub	\$64,%rsp
+
+	mov	120($context),%rax	# pull context->Rax
+	mov	248($context),%rbx	# pull context->Rip
+
+	lea	.Lprologue_shaext(%rip),%r10
+	cmp	%r10,%rbx		# context->Rip<.Lprologue
+	jb	.Lin_prologue
+
+	lea	.Lepilogue_shaext(%rip),%r10
+	cmp	%r10,%rbx		# context->Rip>=.Lepilogue
+	jae	.Lin_prologue
+
+	lea	-8-5*16(%rax),%rsi
+	lea	512($context),%rdi	# &context.Xmm6
+	mov	\$10,%ecx
+	.long	0xa548f3fc		# cld; rep movsq
+
+	jmp	.Lin_prologue
+.size	shaext_handler,.-shaext_handler
+___
+
+$code.=<<___;
 .section	.pdata
 .align	4
 	.rva	.LSEH_begin_$func
 	.rva	.LSEH_end_$func
 	.rva	.LSEH_info_$func
+___
+$code.=<<___ if ($SZ==4 && $shaext);
+	.rva	.LSEH_begin_${func}_shaext
+	.rva	.LSEH_end_${func}_shaext
+	.rva	.LSEH_info_${func}_shaext
 ___
 $code.=<<___ if ($SZ==4);
 	.rva	.LSEH_begin_${func}_ssse3
@@ -2121,6 +2340,11 @@ $code.=<<___;
 	.rva	se_handler
 	.rva	.Lprologue,.Lepilogue			# HandlerData[]
 ___
+$code.=<<___ if ($SZ==4 && $shaext);
+.LSEH_info_${func}_shaext:
+	.byte	9,0,0,0
+	.rva	shaext_handler
+___
 $code.=<<___ if ($SZ==4);
 .LSEH_info_${func}_ssse3:
 	.byte	9,0,0,0
@@ -2147,6 +2371,28 @@ $code.=<<___ if ($avx>1);
 ___
 }
 
-$code =~ s/\`([^\`]*)\`/eval $1/gem;
-print $code;
+sub sha256op38 {
+    my $instr = shift;
+    my %opcodelet = (
+		"sha256rnds2" => 0xcb,
+  		"sha256msg1"  => 0xcc,
+		"sha256msg2"  => 0xcd	);
+
+    if (defined($opcodelet{$instr}) && @_[0] =~ /%xmm([0-7]),\s*%xmm([0-7])/) {
+      my @opcode=(0x0f,0x38);
+	push @opcode,$opcodelet{$instr};
+	push @opcode,0xc0|($1&7)|(($2&7)<<3);		# ModR/M
+	return ".byte\t".join(',',@opcode);
+    } else {
+	return $instr."\t".@_[0];
+    }
+}
+
+foreach (split("\n",$code)) {
+	s/\`([^\`]*)\`/eval $1/geo;
+
+	s/\b(sha256[^\s]*)\s+(.*)/sha256op38($1,$2)/geo;
+
+	print $_,"\n";
+}
 close STDOUT;

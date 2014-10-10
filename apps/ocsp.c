@@ -626,6 +626,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-path              path to use in OCSP request\n");
 		BIO_printf (bio_err, "-CApath dir        trusted certificates directory\n");
 		BIO_printf (bio_err, "-CAfile file       trusted certificates file\n");
+		BIO_printf (bio_err, "-trusted_first     use locally trusted CA's first when building trust chain\n");
 		BIO_printf (bio_err, "-VAfile file       validator certificates file\n");
 		BIO_printf (bio_err, "-validity_period n maximum validity discrepancy in seconds\n");
 		BIO_printf (bio_err, "-status_age n      maximum status age in seconds\n");
@@ -1468,7 +1469,7 @@ OCSP_RESPONSE *process_responder(BIO *err, OCSP_REQUEST *req,
 		}
 	resp = query_responder(err, cbio, path, headers, req, req_timeout);
 	if (!resp)
-		BIO_printf(bio_err, "Error querying OCSP responsder\n");
+		BIO_printf(bio_err, "Error querying OCSP responder\n");
 	end:
 	if (cbio)
 		BIO_free_all(cbio);

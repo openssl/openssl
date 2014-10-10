@@ -146,15 +146,6 @@
 #  define ROTATE(a,n)	_lrotl(a,n)
 # elif defined(__ICC)
 #  define ROTATE(a,n)	_rotl(a,n)
-# elif defined(__MWERKS__)
-#  if defined(__POWERPC__)
-#   define ROTATE(a,n)	__rlwinm(a,n,0,31)
-#  elif defined(__MC68K__)
-    /* Motorola specific tweak. <appro@fy.chalmers.se> */
-#   define ROTATE(a,n)	( n<24 ? __rol(a,n) : __ror(a,32-n) )
-#  else
-#   define ROTATE(a,n)	__rol(a,n)
-#  endif
 # elif defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
   /*
    * Some GNU C inline assembler templates. Note that these are
@@ -235,10 +226,10 @@
 #   endif
 #  endif
 # endif
-#endif
-#if defined(__s390__) || defined(__s390x__)
-# define HOST_c2l(c,l) ((l)=*((const unsigned int *)(c)), (c)+=4, (l))
-# define HOST_l2c(l,c) (*((unsigned int *)(c))=(l), (c)+=4, (l))
+# if defined(__s390__) || defined(__s390x__)
+#  define HOST_c2l(c,l) ((l)=*((const unsigned int *)(c)), (c)+=4, (l))
+#  define HOST_l2c(l,c) (*((unsigned int *)(c))=(l), (c)+=4, (l))
+# endif
 #endif
 
 #ifndef HOST_c2l
@@ -269,12 +260,12 @@
 				   (c)+=4; (l);				})
 #  endif
 # endif
-#endif
-#if defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__)
-# ifndef B_ENDIAN
-   /* See comment in DATA_ORDER_IS_BIG_ENDIAN section. */
-#  define HOST_c2l(c,l)	((l)=*((const unsigned int *)(c)), (c)+=4, l)
-#  define HOST_l2c(l,c)	(*((unsigned int *)(c))=(l), (c)+=4, l)
+# if defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__)
+#  ifndef B_ENDIAN
+    /* See comment in DATA_ORDER_IS_BIG_ENDIAN section. */
+#   define HOST_c2l(c,l)	((l)=*((const unsigned int *)(c)), (c)+=4, l)
+#   define HOST_l2c(l,c)	(*((unsigned int *)(c))=(l), (c)+=4, l)
+#  endif
 # endif
 #endif
 

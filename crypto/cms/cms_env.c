@@ -973,7 +973,7 @@ static void cms_env_set_version(CMS_EnvelopedData *env)
 			env->version = 3;
 			return;
 			}
-		else if (ri->type != CMS_RECIPINFO_TRANS)
+		else if (ri->type != CMS_RECIPINFO_TRANS || ri->d.ktri->version != 0)
 			{
 			env->version = 2;
 			}

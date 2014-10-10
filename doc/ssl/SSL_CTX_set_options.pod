@@ -44,7 +44,7 @@ secure renegotiation.
 =head1 NOTES
 
 The behaviour of the SSL library can be changed by setting several options.
-The options are coded as bitmasks and can be combined by a logical B<or>
+The options are coded as bitmasks and can be combined by a bitwise B<or>
 operation (|).
 
 SSL_CTX_set_options() and SSL_set_options() affect the (external)
@@ -111,6 +111,12 @@ Disables a countermeasure against a SSL 3.0/TLS 1.0 protocol
 vulnerability affecting CBC ciphers, which cannot be handled by some
 broken SSL implementations.  This option has no effect for connections
 using other ciphers.
+
+=item SSL_OP_TLSEXT_PADDING
+
+Adds a padding extension to ensure the ClientHello size is never between
+256 and 511 bytes in length. This is needed as a workaround for some
+implementations.
 
 =item SSL_OP_ALL
 
@@ -250,7 +256,7 @@ Connections and renegotiation are always permitted by OpenSSL implementations.
 
 =head2 Unpatched client and patched OpenSSL server
 
-The initial connection suceeds but client renegotiation is denied by the
+The initial connection succeeds but client renegotiation is denied by the
 server with a B<no_renegotiation> warning alert if TLS v1.0 is used or a fatal
 B<handshake_failure> alert in SSL v3.0.
 

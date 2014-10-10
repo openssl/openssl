@@ -246,6 +246,9 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA1 *key,
 #endif
 	for (i=0;i<x4;i++) {
 		unsigned int len = (i==(x4-1)?last:frag);
+#if !defined(BSWAP8)
+		unsigned int carry, j;
+#endif
 
 		ctx->A[i] = key->md.h0;
 		ctx->B[i] = key->md.h1;
@@ -257,13 +260,9 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA1 *key,
 #if defined(BSWAP8)
 		blocks[i].q[0] = BSWAP8(seqnum+i);
 #else
-		blocks[i].c[7] += ((u8*)key->md.data)[7]+i;
-		if (blocks[i].c[7] < i) {
-			int j;
-
-			for (j=6;j>=0;j--) {
-				if (blocks[i].c[j]=((u8*)key->md.data)[j]+1) break;
-			}
+		for (carry=i,j=8;j--;) {
+			blocks[i].c[j] = ((u8*)key->md.data)[j]+carry;
+			carry = (blocks[i].c[j]-carry)>>(sizeof(carry)*8-1);
 		}
 #endif
 		blocks[i].c[8] = ((u8*)key->md.data)[8];
@@ -331,10 +330,18 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA1 *key,
 		len += 64+13;		/* 64 is HMAC header */
 		len *= 8;		/* convert to bits */
 		if (off<(64-8)) {
+#ifdef BSWAP4
 			blocks[i].d[15] = BSWAP4(len);
+#else
+			PUTU32(blocks[i].c+60,len);
+#endif
 			edges[i].blocks = 1;			
 		} else {
+#ifdef BSWAP4
 			blocks[i].d[31] = BSWAP4(len);
+#else
+			PUTU32(blocks[i].c+124,len);
+#endif
 			edges[i].blocks = 2;
 		}
 		edges[i].ptr = blocks[i].c;
@@ -345,6 +352,7 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA1 *key,
 
 	memset(blocks,0,sizeof(blocks));
 	for (i=0;i<x4;i++) {
+#ifdef BSWAP4
 		blocks[i].d[0] = BSWAP4(ctx->A[i]);	ctx->A[i] = key->tail.h0;
 		blocks[i].d[1] = BSWAP4(ctx->B[i]);	ctx->B[i] = key->tail.h1;
 		blocks[i].d[2] = BSWAP4(ctx->C[i]);	ctx->C[i] = key->tail.h2;
@@ -352,6 +360,15 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA1 *key,
 		blocks[i].d[4] = BSWAP4(ctx->E[i]);	ctx->E[i] = key->tail.h4;
 		blocks[i].c[20] = 0x80;
 		blocks[i].d[15] = BSWAP4((64+20)*8);
+#else
+		PUTU32(blocks[i].c+0,ctx->A[i]);	ctx->A[i] = key->tail.h0;
+		PUTU32(blocks[i].c+4,ctx->B[i]);	ctx->B[i] = key->tail.h1;
+		PUTU32(blocks[i].c+8,ctx->C[i]);	ctx->C[i] = key->tail.h2;
+		PUTU32(blocks[i].c+12,ctx->D[i]);	ctx->D[i] = key->tail.h3;
+		PUTU32(blocks[i].c+16,ctx->E[i]);	ctx->E[i] = key->tail.h4;
+		blocks[i].c[20] = 0x80;
+		PUTU32(blocks[i].c+60,(64+20)*8);
+#endif
 		edges[i].ptr = blocks[i].c;
 		edges[i].blocks = 1;
 	}
@@ -369,11 +386,11 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA1 *key,
 		out += 5+16+len;
 
 		/* write MAC */
-		((u32 *)out)[0] = BSWAP4(ctx->A[i]);
-		((u32 *)out)[1] = BSWAP4(ctx->B[i]);
-		((u32 *)out)[2] = BSWAP4(ctx->C[i]);
-		((u32 *)out)[3] = BSWAP4(ctx->D[i]);
-		((u32 *)out)[4] = BSWAP4(ctx->E[i]);
+		PUTU32(out+0,ctx->A[i]);
+		PUTU32(out+4,ctx->B[i]);
+		PUTU32(out+8,ctx->C[i]);
+		PUTU32(out+12,ctx->D[i]);
+		PUTU32(out+16,ctx->E[i]);
 		out += 20;
 		len += 20;
 
@@ -822,7 +839,7 @@ static int aesni_cbc_hmac_sha1_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void
 		unsigned int n4x=1, x4;
 		unsigned int frag, last, packlen, inp_len;
 
-		if (arg<sizeof(EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM)) return -1;
+		if (arg<(int)sizeof(EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM)) return -1;
 
 		inp_len = param->inp[11]<<8|param->inp[12];
 

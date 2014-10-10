@@ -145,7 +145,7 @@ static int def_init_default(CONF *conf)
 		return 0;
 
 	conf->meth = &default_method;
-	conf->meth_data = CONF_type_default;
+	conf->meth_data = (void *)CONF_type_default;
 	conf->data = NULL;
 
 	return 1;
@@ -321,7 +321,7 @@ again:
 			p=eat_ws(conf, end);
 			if (*p != ']')
 				{
-				if (*p != '\0')
+				if (*p != '\0' && ss != p)
 					{
 					ss=p;
 					goto again;

@@ -79,12 +79,18 @@ aes-ppc.s:	asm/aes-ppc.pl
 	$(PERL) asm/aes-ppc.pl $(PERLASM_SCHEME) $@
 vpaes-ppc.s:	asm/vpaes-ppc.pl
 	$(PERL) asm/vpaes-ppc.pl $(PERLASM_SCHEME) $@
+aesp8-ppc.s:	asm/aesp8-ppc.pl
+	$(PERL) asm/aesp8-ppc.pl $(PERLASM_SCHEME) $@
 
 aes-parisc.s:	asm/aes-parisc.pl
 	$(PERL) asm/aes-parisc.pl $(PERLASM_SCHEME) $@
 
 aes-mips.S:	asm/aes-mips.pl
 	$(PERL) asm/aes-mips.pl $(PERLASM_SCHEME) $@
+
+aesv8-armx.S:	asm/aesv8-armx.pl
+	$(PERL) asm/aesv8-armx.pl $(PERLASM_SCHEME) $@
+aesv8-armx.o:	aesv8-armx.S
 
 # GNU make "catch all"
 aes-%.S:	asm/aes-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@

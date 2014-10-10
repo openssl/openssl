@@ -61,6 +61,7 @@
 #include <openssl/lhash.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+#include "x509_lcl.h"
 
 X509_LOOKUP *X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
 	{
@@ -639,6 +640,7 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 	X509_NAME *xn;
 	X509_OBJECT obj, *pobj;
 	int i, ok, idx, ret;
+	*issuer = NULL;
 	xn=X509_get_issuer_name(x);
 	ok=X509_STORE_get_by_subject(ctx,X509_LU_X509,xn,&obj);
 	if (ok != X509_LU_X509)
@@ -660,8 +662,11 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 	/* If certificate matches all OK */
 	if (ctx->check_issued(ctx, x, obj.data.x509))
 		{
-		*issuer = obj.data.x509;
-		return 1;
+		if (x509_check_cert_time(ctx, obj.data.x509, 1))
+			{
+			*issuer = obj.data.x509;
+			return 1;
+			}
 		}
 	X509_OBJECT_free_contents(&obj);
 
@@ -683,13 +688,22 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 			if (ctx->check_issued(ctx, x, pobj->data.x509))
 				{
 				*issuer = pobj->data.x509;
-				X509_OBJECT_up_ref_count(pobj);
 				ret = 1;
-				break;
+				/*
+				 * If times check, exit with match,
+				 * otherwise keep looking. Leave last
+				 * match in issuer so we return nearest
+				 * match if no certificate time is OK.
+				 */
+
+				if (x509_check_cert_time(ctx, *issuer, 1))
+					break;
 				}
 			}
 		}
 	CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
+	if (*issuer)
+		CRYPTO_add(&(*issuer)->references,1,CRYPTO_LOCK_X509);
 	return ret;
 	}
 

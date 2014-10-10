@@ -479,6 +479,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-text          include or delete text MIME headers\n");
 		BIO_printf (bio_err, "-CApath dir    trusted certificates directory\n");
 		BIO_printf (bio_err, "-CAfile file   trusted certificates file\n");
+		BIO_printf (bio_err, "-trusted_first use locally trusted CA's first when building trust chain\n");
 		BIO_printf (bio_err, "-crl_check     check revocation status of signer's certificate using CRLs\n");
 		BIO_printf (bio_err, "-crl_check_all check revocation status of signer's certificate chain using CRLs\n");
 #ifndef OPENSSL_NO_ENGINE
@@ -541,8 +542,8 @@ int MAIN(int argc, char **argv)
 		{
 		if (!cipher)
 			{
-#ifndef OPENSSL_NO_RC2			
-			cipher = EVP_rc2_40_cbc();
+#ifndef OPENSSL_NO_DES			
+			cipher = EVP_des_ede3_cbc();
 #else
 			BIO_printf(bio_err, "No cipher selected\n");
 			goto end;
@@ -704,6 +705,14 @@ int MAIN(int argc, char **argv)
 			p7 = PKCS7_sign(NULL, NULL, other, in, flags);
 			if (!p7)
 				goto end;
+			if (flags & PKCS7_NOCERTS)
+				{
+				for (i = 0; i < sk_X509_num(other); i++)
+					{
+					X509 *x = sk_X509_value(other, i);
+					PKCS7_add_certificate(p7, x);
+					}
+				}
 			}
 		else
 			flags |= PKCS7_REUSE_DIGEST;

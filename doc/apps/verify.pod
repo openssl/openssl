@@ -7,25 +7,38 @@ verify - Utility to verify certificates.
 =head1 SYNOPSIS
 
 B<openssl> B<verify>
-[B<-CApath directory>]
 [B<-CAfile file>]
-[B<-purpose purpose>]
-[B<-policy arg>]
-[B<-ignore_critical>]
+[B<-CApath directory>]
+[B<-attime timestamp>]
+[B<-check_ss_sig>]
+[B<-crlfile file>]
 [B<-crl_check>]
 [B<-crl_check_all>]
-[B<-policy_check>]
 [B<-explicit_policy>]
+[B<-extended_crl>]
+[B<-help>]
+[B<-ignore_critical>]
 [B<-inhibit_any>]
 [B<-inhibit_map>]
-[B<-x509_strict>]
-[B<-extended_crl>]
-[B<-use_deltas>]
-[B<-policy_print>]
-[B<-untrusted file>]
-[B<-help>]
 [B<-issuer_checks>]
+[B<-partial_chain>]
+[B<-policy arg>]
+[B<-policy_check>]
+[B<-policy_print>]
+[B<-purpose purpose>]
+[B<-suiteB_128>]
+[B<-suiteB_128_only>]
+[B<-suiteB_192>]
+[B<-trusted_first>]
+[B<-untrusted file>]
+[B<-use_deltas>]
 [B<-verbose>]
+[B<-verify_depth num>]
+[B<-verify_email email>]
+[B<-verify_hostname hostname>]
+[B<-verify_ip ip>]
+[B<-verify_name name>]
+[B<-x509_strict>]
 [B<->]
 [certificates]
 
@@ -38,6 +51,11 @@ The B<verify> command verifies certificate chains.
 
 =over 4
 
+=item B<-CAfile file>
+
+A file of trusted certificates. The file should contain multiple certificates
+in PEM format concatenated together.
+
 =item B<-CApath directory>
 
 A directory of trusted certificates. The certificates should have names
@@ -46,31 +64,57 @@ form ("hash" is the hashed certificate subject name: see the B<-hash> option
 of the B<x509> utility). Under Unix the B<c_rehash> script will automatically
 create symbolic links to a directory of certificates.
 
-=item B<-CAfile file>
+=item B<-attime timestamp>
 
-A file of trusted certificates. The file should contain multiple certificates
-in PEM format concatenated together.
+Perform validation checks using time specified by B<timestamp> and not
+current system time. B<timestamp> is the number of seconds since
+01.01.1970 (UNIX time).
 
-=item B<-untrusted file>
+=item B<-check_ss_sig>
 
-A file of untrusted certificates. The file should contain multiple certificates
-in PEM format concatenated together.
+Verify the signature on the self-signed root CA. This is disabled by default
+because it doesn't add any security.
 
-=item B<-purpose purpose>
+=item B<-crlfile file>
 
-The intended use for the certificate. If this option is not specified,
-B<verify> will not consider certificate purpose during chain verification.
-Currently accepted uses are B<sslclient>, B<sslserver>, B<nssslserver>,
-B<smimesign>, B<smimeencrypt>. See the B<VERIFY OPERATION> section for more
-information.
+File containing one or more CRL's (in PEM format) to load.
+
+=item B<-crl_check>
+
+Checks end entity certificate validity by attempting to look up a valid CRL.
+If a valid CRL cannot be found an error occurs.
+
+=item B<-crl_check_all>
+
+Checks the validity of B<all> certificates in the chain by attempting
+to look up valid CRLs.
+
+=item B<-explicit_policy>
+
+Set policy variable require-explicit-policy (see RFC5280).
+
+=item B<-extended_crl>
+
+Enable extended CRL features such as indirect CRLs and alternate CRL
+signing keys.
 
 =item B<-help>
 
 Print out a usage message.
 
-=item B<-verbose>
+=item B<-ignore_critical>
 
-Print extra information about the operations being performed.
+Normally if an unhandled critical extension is present which is not
+supported by OpenSSL the certificate is rejected (as required by RFC5280).
+If this option is set critical extensions are ignored.
+
+=item B<-inhibit_any>
+
+Set policy variable inhibit-any-policy (see RFC5280).
+
+=item B<-inhibit_map>
+
+Set policy variable inhibit-policy-mapping (see RFC5280).
 
 =item B<-issuer_checks>
 
@@ -79,6 +123,10 @@ current certificate. This shows why each candidate issuer certificate was
 rejected. The presence of rejection messages does not itself imply that
 anything is wrong; during the normal verification process, several
 rejections may take place.
+
+=item B<-partial_chain>
+
+Allow partial certificate chain if at least one certificate is in trusted store.
 
 =item B<-policy arg>
 
@@ -90,56 +138,74 @@ This argument can appear more than once.
 
 Enables certificate policy processing.
 
-=item B<-explicit_policy>
-
-Set policy variable require-explicit-policy (see RFC5280).
-
-=item B<-inhibit_any>
-
-Set policy variable inhibit-any-policy (see RFC5280).
-
-=item B<-inhibit_map>
-
-Set policy variable inhibit-policy-mapping (see RFC5280).
-
 =item B<-policy_print>
 
 Print out diagnostics related to policy processing.
 
-=item B<-crl_check>
+=item B<-purpose purpose>
 
-Checks end entity certificate validity by attempting to look up a valid CRL.
-If a valid CRL cannot be found an error occurs. 
+The intended use for the certificate. If this option is not specified,
+B<verify> will not consider certificate purpose during chain verification.
+Currently accepted uses are B<sslclient>, B<sslserver>, B<nssslserver>,
+B<smimesign>, B<smimeencrypt>. See the B<VERIFY OPERATION> section for more
+information.
 
-=item B<-crl_check_all>
+=item B<-suiteB_128_only>, B<-suiteB_128>, B<-suiteB_192>
 
-Checks the validity of B<all> certificates in the chain by attempting
-to look up valid CRLs.
+enable the Suite B mode operation at 128 bit Level of Security, 128 bit or
+192 bit, or only 192 bit Level of Security respectively.
+See RFC6460 for details. In particular the supported signature algorithms are
+reduced to support only ECDSA and SHA256 or SHA384 and only the elliptic curves
+P-256 and P-384.
 
-=item B<-ignore_critical>
+=item B<-trusted_first>
 
-Normally if an unhandled critical extension is present which is not
-supported by OpenSSL the certificate is rejected (as required by RFC5280).
-If this option is set critical extensions are ignored.
+Use certificates in CA file or CA directory before certificates in untrusted
+file when building the trust chain to verify certificates.
+This is mainly useful in environments with Bridge CA or Cross-Certified CAs.
 
-=item B<-x509_strict>
+=item B<-untrusted file>
 
-For strict X.509 compliance, disable non-compliant workarounds for broken
-certificates.
-
-=item B<-extended_crl>
-
-Enable extended CRL features such as indirect CRLs and alternate CRL
-signing keys.
+A file of untrusted certificates. The file should contain multiple certificates
+in PEM format concatenated together.
 
 =item B<-use_deltas>
 
 Enable support for delta CRLs.
 
-=item B<-check_ss_sig>
+=item B<-verbose>
 
-Verify the signature on the self-signed root CA. This is disabled by default
-because it doesn't add any security.
+Print extra information about the operations being performed.
+
+=item B<-verify_depth num>
+
+Limit the maximum depth of the certificate chain to B<num> certificates.
+
+=item B<-verify_email email>
+
+Verify if the B<email> matches the email address in Subject Alternative Name or
+the email in the subject Distinguished Name.
+
+=item B<-verify_hostname hostname>
+
+Verify if the B<hostname> matches DNS name in Subject Alternative Name or
+Common Name in the subject certificate.
+
+=item B<-verify_ip ip>
+
+Verify if the B<ip> matches the IP address in Subject Alternative Name of
+the subject certificate.
+
+=item B<-verify_name name>
+
+Use default verification options like trust model and required certificate
+policies identified by B<name>.
+Supported usages include: default, pkcs7, smime_sign, ssl_client, ssl_server.
+
+=item B<-x509_strict>
+
+For strict X.509 compliance, disable non-compliant workarounds for broken
+certificates.
 
 =item B<->
 
@@ -386,10 +452,10 @@ an application specific error. Unused.
 
 =head1 BUGS
 
-Although the issuer checks are a considerably improvement over the old technique they still
+Although the issuer checks are a considerable improvement over the old technique they still
 suffer from limitations in the underlying X509_LOOKUP API. One consequence of this is that
 trusted certificates with matching subject name must either appear in a file (as specified by the
-B<-CAfile> option) or a directory (as specified by B<-CApath>. If they occur in both then only
+B<-CAfile> option) or a directory (as specified by B<-CApath>). If they occur in both then only
 the certificates in the file will be recognised.
 
 Previous versions of OpenSSL assume certificates with matching subject name are identical and

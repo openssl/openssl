@@ -473,14 +473,16 @@ static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, int ktype)
 	if (ktype > 0)
 		{
 		public_key = EC_KEY_get0_public_key(x);
-		if ((pub_key = EC_POINT_point2bn(group, public_key,
-			EC_KEY_get_conv_form(x), NULL, ctx)) == NULL)
+		if (public_key != NULL)
 			{
-			reason = ERR_R_EC_LIB;
-			goto err;
-			}
-		if (pub_key)
+			if ((pub_key = EC_POINT_point2bn(group, public_key,
+				EC_KEY_get_conv_form(x), NULL, ctx)) == NULL)
+				{
+				reason = ERR_R_EC_LIB;
+				goto err;
+				}
 			buf_len = (size_t)BN_num_bytes(pub_key);
+			}
 		}
 
 	if (ktype == 2)
@@ -647,7 +649,7 @@ static int ec_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 #endif
 
 		case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
-		*(int *)arg2 = NID_sha1;
+		*(int *)arg2 = NID_sha256;
 		return 2;
 
 		default:

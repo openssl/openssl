@@ -342,8 +342,8 @@ unsigned char *next_protos_parse(unsigned short *outlen, const char *in);
 #endif  /* ndef OPENSSL_NO_TLSEXT */
 
 void print_cert_checks(BIO *bio, X509 *x,
-				const unsigned char *checkhost,
-				const unsigned char *checkemail,
+				const char *checkhost,
+				const char *checkemail,
 				const char *checkip);
 
 void store_setup_crl_download(X509_STORE *st);
@@ -363,6 +363,7 @@ void store_setup_crl_download(X509_STORE *st);
 #define FORMAT_MSBLOB	11	/* MS Key blob format */
 #define FORMAT_PVK	12	/* MS PVK file format */
 #define FORMAT_HTTP	13	/* Download using HTTP */
+#define FORMAT_NSS	14	/* NSS keylog format */
 
 #define EXT_COPY_NONE	0
 #define EXT_COPY_ADD	1

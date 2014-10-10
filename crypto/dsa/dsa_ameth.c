@@ -307,7 +307,7 @@ static int dsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 	unsigned char *dp = NULL;
 	int dplen;
 
-	if (!pkey->pkey.dsa->priv_key)
+	if (!pkey->pkey.dsa || !pkey->pkey.dsa->priv_key)
 		{
 		DSAerr(DSA_F_DSA_PRIV_ENCODE,DSA_R_MISSING_PARAMETERS);
 		goto err;
@@ -643,7 +643,7 @@ static int dsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 #endif
 
 		case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
-		*(int *)arg2 = NID_sha1;
+		*(int *)arg2 = NID_sha256;
 		return 2;
 
 		default:
@@ -717,4 +717,3 @@ const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[] =
 		old_dsa_priv_encode
 		}
 	};
-

@@ -44,7 +44,7 @@ certs		= $dir/certs		# Where the issued certs are kept
 crl_dir		= $dir/crl		# Where the issued crl are kept
 database	= $dir/index.txt	# database index file.
 #unique_subject	= no			# Set to 'no' to allow creation of
-					# several ctificates with same subject.
+					# several certs with same subject.
 new_certs_dir	= $dir/newcerts		# default place for new certs.
 
 certificate	= $dir/cacert.pem 	# The CA certificate
@@ -103,7 +103,7 @@ emailAddress		= optional
 
 ####################################################################
 [ req ]
-default_bits		= 1024
+default_bits		= 2048
 default_keyfile 	= privkey.pem
 distinguished_name	= req_distinguished_name
 attributes		= req_attributes

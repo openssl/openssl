@@ -40,6 +40,7 @@
 # Core 2    	9.30		8.69		+7%
 # Nehalem(**) 	7.63		6.88		+11%
 # Atom	    	17.1		16.4		+4%
+# Silvermont	-		12.9
 #
 # (*)	Comparison is not completely fair, because "this" is ECB,
 #	i.e. no extra processing such as counter values calculation
@@ -78,6 +79,7 @@
 # Core 2	9.98
 # Nehalem	7.80
 # Atom		17.9
+# Silvermont	14.0
 #
 # November 2011.
 #

@@ -212,7 +212,7 @@ int ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value)
 	return(1);
 	}
 
-int ASN1_BIT_STRING_get_bit(ASN1_BIT_STRING *a, int n)
+int ASN1_BIT_STRING_get_bit(const ASN1_BIT_STRING *a, int n)
 	{
 	int w,v;
 
@@ -229,8 +229,8 @@ int ASN1_BIT_STRING_get_bit(ASN1_BIT_STRING *a, int n)
  * which is not specified in 'flags', 1 otherwise.
  * 'len' is the length of 'flags'.
  */
-int ASN1_BIT_STRING_check(ASN1_BIT_STRING *a,
-			  unsigned char *flags, int flags_len)
+int ASN1_BIT_STRING_check(const ASN1_BIT_STRING *a,
+			  const unsigned char *flags, int flags_len)
 	{
 	int i, ok;
 	/* Check if there is one bit set at all. */

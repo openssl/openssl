@@ -67,7 +67,8 @@ my %mf_import = (
 	MODES_ASM_OBJ  => \$mf_modes_asm,
         ENGINES_ASM_OBJ=> \$mf_engines_asm,
 	FIPSCANISTERONLY  => \$mf_fipscanisteronly,
-	FIPSCANISTERINTERNAL  => \$mf_fipscanisterinternal
+	FIPSCANISTERINTERNAL  => \$mf_fipscanisterinternal,
+	EC_ASM	       => \$mf_ec_asm,
 );
 
 open(IN,"<Makefile") || die "unable to open Makefile!\n";
@@ -455,6 +456,14 @@ for (;;)
 	}
 close(IN);
 
+if ($orig_platform eq 'copy')
+	{
+	# Remove opensslconf.h so it doesn't get updated if we configure a
+	# different branch.
+	$exheader =~ s/[^ ]+\/opensslconf.h//;
+	$header =~ s/[^ ]+\/opensslconf.h//;
+	}
+
 if ($fips)
 	{
 
@@ -609,6 +618,8 @@ EOF
 	$ex_libs .= " $zlib_lib" if $zlib_opt == 1;
 	}
 
+my $asm_def = $orig_platform eq 'copy' ? "" : "ASM=$bin_dir$asm";
+
 $defs= <<"EOF";
 # N.B. You MUST use -j on FreeBSD.
 # This makefile has been automatically generated from the OpenSSL distribution.
@@ -669,7 +680,7 @@ RANLIB=$ranlib
 MKDIR=$mkdir
 MKLIB=$bin_dir$mklib
 MLFLAGS=$mlflags
-#ASM=$bin_dir$asm
+$asm_def
 
 # FIPS validated module and support file locations
 
@@ -756,6 +767,7 @@ $banner
 # This needs to be invoked once, when the makefile is first constructed, or
 # after cleaning.
 init: \$(TMP_D) \$(LIB_D) \$(INC_D) \$(INCO_D) \$(BIN_D) \$(TEST_D) headers
+	\$(PERL) \$(SRC_D)/util/copy-if-different.pl "\$(SRC_D)/crypto/opensslconf.h" "\$(INCO_D)/opensslconf.h"
 
 headers: \$(HEADER) \$(EXHEADER)
 
@@ -900,6 +912,7 @@ if ($orig_platform eq 'copy') {
 	$lib_obj{CRYPTO} .= fix_asm($mf_engines_asm, 'engines');
 	$lib_obj{CRYPTO} .= fix_asm($mf_rc4_asm, 'crypto/rc4');
 	$lib_obj{CRYPTO} .= fix_asm($mf_modes_asm, 'crypto/modes');
+	$lib_obj{CRYPTO} .= fix_asm($mf_ec_asm, 'crypto/ec');
 }
 
 foreach (values %lib_nam)
@@ -1454,6 +1467,7 @@ sub read_options
 		"no-zlib" => 0,
 		"no-zlib-dynamic" => 0,
 		"no-ssl-trace" => 0,
+		"no-unit-test" => 0,
 		"fips" => \$fips,
 		"fipscanisterbuild" => [\$fips, \$fipscanisterbuild],
 		"fipscanisteronly" => [\$fips, \$fipscanisterbuild, \$fipscanisteronly],

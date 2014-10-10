@@ -53,6 +53,10 @@ if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	$avx = ($1>=10) + ($1>=11);
 }
 
+if (!$avx && `$ENV{CC} -v 2>&1` =~ /(^clang version|based on LLVM) ([3-9]\.[0-9]+)/) {
+	$avx = ($2>=3.0) + ($2>3.0);
+}
+
 open OUT,"| \"$^X\" $xlate $flavour $output";
 *STDOUT=*OUT;
 
@@ -88,7 +92,7 @@ _aesni_ctr32_ghash_6x:
 
 .align	32
 .Loop6x:
-	add		\$6<<24,$counter
+	add		\$`6<<24`,$counter
 	jc		.Lhandle_ctr32		# discard $inout[1-5]?
 	vmovdqu		0x00-0x20($Xip),$Hkey	# $Hkey^1
 	  vpaddb	$T2,$inout5,$T1		# next counter value
@@ -516,7 +520,7 @@ _aesni_ctr32_6x:
 	vmovups		0x10-0x80($key),$rndkey
 	lea		0x20-0x80($key),%r12
 	vpxor		$Z0,$T1,$inout0
-	add		\$6<<24,$counter
+	add		\$`6<<24`,$counter
 	jc		.Lhandle_ctr32_2
 	vpaddb		$T2,$T1,$inout1
 	vpaddb		$T2,$inout1,$inout2

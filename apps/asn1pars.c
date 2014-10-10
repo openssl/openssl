@@ -80,6 +80,7 @@
 #undef PROG
 #define PROG	asn1parse_main
 
+
 int MAIN(int, char **);
 
 static int do_generate(BIO *bio, char *genstr, char *genconf, BUF_MEM *buf);
@@ -90,8 +91,8 @@ int MAIN(int argc, char **argv)
 	unsigned int length=0;
 	long num,tmplen;
 	BIO *in=NULL,*out=NULL,*b64=NULL, *derout = NULL;
-	int informat,indent=0, noout = 0, dump = 0;
-	char *infile=NULL,*str=NULL,*prog,*oidfile=NULL, *derfile=NULL;
+	int informat,indent=0, noout = 0, dump = 0, strictpem = 0;
+	char *infile=NULL,*str=NULL,*prog,*oidfile=NULL, *derfile=NULL, *name=NULL, *header=NULL;
 	char *genstr=NULL, *genconf=NULL;
 	unsigned char *tmpbuf;
 	const unsigned char *ctmpbuf;
@@ -181,6 +182,11 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			genconf= *(++argv);
 			}
+		else if (strcmp(*argv,"-strictpem") == 0)
+			{
+			strictpem = 1;
+			informat = FORMAT_PEM;
+			}
 		else
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);
@@ -211,6 +217,8 @@ bad:
 		BIO_printf(bio_err,"               ASN1 blob wrappings\n");
 		BIO_printf(bio_err," -genstr str   string to generate ASN1 structure from\n");
 		BIO_printf(bio_err," -genconf file file to generate ASN1 structure from\n");
+		BIO_printf(bio_err," -strictpem    do not attempt base64 decode outside PEM markers (-inform \n");
+		BIO_printf(bio_err,"               will be ignored)\n");
 		goto end;
 		}
 
@@ -261,44 +269,58 @@ bad:
 		}
 	}
 
-	if ((buf=BUF_MEM_new()) == NULL) goto end;
-	if (!BUF_MEM_grow(buf,BUFSIZ*8)) goto end; /* Pre-allocate :-) */
-
-	if (genstr || genconf)
+	if(strictpem)
 		{
-		num = do_generate(bio_err, genstr, genconf, buf);
-		if (num < 0)
+		if(PEM_read_bio(in, &name, &header, (unsigned char **)&str, &num) != 1)
 			{
+			BIO_printf(bio_err,"Error reading PEM file\n");
 			ERR_print_errors(bio_err);
 			goto end;
 			}
 		}
-
 	else
 		{
 
-		if (informat == FORMAT_PEM)
-			{
-			BIO *tmp;
+		if ((buf=BUF_MEM_new()) == NULL) goto end;
+		if (!BUF_MEM_grow(buf,BUFSIZ*8)) goto end; /* Pre-allocate :-) */
 
-			if ((b64=BIO_new(BIO_f_base64())) == NULL)
+		if (genstr || genconf)
+			{
+			num = do_generate(bio_err, genstr, genconf, buf);
+			if (num < 0)
+				{
+				ERR_print_errors(bio_err);
 				goto end;
-			BIO_push(b64,in);
-			tmp=in;
-			in=b64;
-			b64=tmp;
+				}
 			}
 
-		num=0;
-		for (;;)
+		else
 			{
-			if (!BUF_MEM_grow(buf,(int)num+BUFSIZ)) goto end;
-			i=BIO_read(in,&(buf->data[num]),BUFSIZ);
-			if (i <= 0) break;
-			num+=i;
+
+			if (informat == FORMAT_PEM)
+				{
+				BIO *tmp;
+
+				if ((b64=BIO_new(BIO_f_base64())) == NULL)
+					goto end;
+				BIO_push(b64,in);
+				tmp=in;
+				in=b64;
+				b64=tmp;
+				}
+
+			num=0;
+			for (;;)
+				{
+				if (!BUF_MEM_grow(buf,(int)num+BUFSIZ)) goto end;
+				i=BIO_read(in,&(buf->data[num]),BUFSIZ);
+				if (i <= 0) break;
+				num+=i;
+				}
 			}
+		str=buf->data;
+
 		}
-	str=buf->data;
 
 	/* If any structs to parse go through in sequence */
 
@@ -377,6 +399,9 @@ end:
 	if (ret != 0)
 		ERR_print_errors(bio_err);
 	if (buf != NULL) BUF_MEM_free(buf);
+	if (name != NULL) OPENSSL_free(name);
+	if (header != NULL) OPENSSL_free(header);
+	if (strictpem && str != NULL) OPENSSL_free(str);
 	if (at != NULL) ASN1_TYPE_free(at);
 	if (osk != NULL) sk_OPENSSL_STRING_free(osk);
 	OBJ_cleanup();

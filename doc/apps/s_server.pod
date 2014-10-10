@@ -34,8 +34,34 @@ B<openssl> B<s_server>
 [B<-state>]
 [B<-CApath directory>]
 [B<-CAfile filename>]
+[B<-attime timestamp>]
+[B<-check_ss_sig>]
+[B<-explicit_policy>]
+[B<-extended_crl>]
+[B<-ignore_critical>]
+[B<-inhibit_any>]
+[B<-inhibit_map>]
+[B<-issuer_checks>]
+[B<-partial_chain>]
+[B<-policy arg>]
+[B<-policy_check>]
+[B<-policy_print>]
+[B<-purpose purpose>]
+[B<-suiteB_128>]
+[B<-suiteB_128_only>]
+[B<-suiteB_192>]
+[B<-trusted_first>]
+[B<-use_deltas>]
+[B<-verify_depth num>]
+[B<-verify_return_error>]
+[B<-verify_email email>]
+[B<-verify_hostname hostname>]
+[B<-verify_ip ip>]
+[B<-verify_name name>]
+[B<-x509_strict>]
 [B<-nocert>]
 [B<-cipher cipherlist>]
+[B<-serverpref>]
 [B<-quiet>]
 [B<-no_tmp_rsa>]
 [B<-ssl2>]
@@ -45,6 +71,7 @@ B<openssl> B<s_server>
 [B<-no_ssl3>]
 [B<-no_tls1>]
 [B<-no_dhe>]
+[B<-no_ecdhe>]
 [B<-bugs>]
 [B<-brief>]
 [B<-hack>]
@@ -57,9 +84,13 @@ B<openssl> B<s_server>
 [B<-id_prefix arg>]
 [B<-rand file(s)>]
 [B<-serverinfo file>]
-[B<-auth>]
-[B<-auth_require_reneg>]
 [B<-no_resumption_on_reneg>]
+[B<-status>]
+[B<-status_verbose>]
+[B<-status_timeout nsec>]
+[B<-status_url url>]
+[B<-nextprotoneg protocols>]
+
 =head1 DESCRIPTION
 
 The B<s_server> command implements a generic SSL/TLS server which listens
@@ -145,18 +176,15 @@ a static set of parameters hard coded into the s_server program will be used.
 if this option is set then no DH parameters will be loaded effectively
 disabling the ephemeral DH cipher suites.
 
+=item B<-no_ecdhe>
+
+if this option is set then no ECDH parameters will be loaded effectively
+disabling the ephemeral ECDH cipher suites.
+
 =item B<-no_tmp_rsa>
 
 certain export cipher suites sometimes use a temporary RSA key, this option
 disables temporary RSA key generation.
-
-=item B<-verify depth>, B<-Verify depth>
-
-The verify depth to use. This specifies the maximum length of the
-client certificate chain and makes the server request a certificate from
-the client. With the B<-verify> option a certificate is requested but the
-client does not have to send one, with the B<-Verify> option the client
-must supply a certificate or an error occurs.
 
 =item B<-crl_check>, B<-crl_check_all>
 
@@ -176,6 +204,33 @@ A file containing trusted certificates to use during client authentication
 and to use when attempting to build the server certificate chain. The list
 is also used in the list of acceptable client CAs passed to the client when
 a certificate is requested.
+
+=item B<-verify depth>, B<-Verify depth>
+
+The verify depth to use. This specifies the maximum length of the
+client certificate chain and makes the server request a certificate from
+the client. With the B<-verify> option a certificate is requested but the
+client does not have to send one, with the B<-Verify> option the client
+must supply a certificate or an error occurs.
+
+If the ciphersuite cannot request a client certificate (for example an
+anonymous ciphersuite or PSK) this option has no effect.
+
+=item B<-attime>, B<-check_ss_sig>, B<explicit_policy>, B<-extended_crl>,
+B<-ignore_critical>, B<-inhibit_any>, B<-inhibit_map>, B<-issuer_checks>,
+B<-partial_chain>, B<-policy>, B<-policy_check>, B<-policy_print>, B<-purpose>,
+B<-suiteB_128>, B<-suiteB_128_only>, B<-suiteB_192>, B<-trusted_first>,
+B<-use_deltas>, B<-verify_depth>, B<-verify_email>, B<-verify_hostname>,
+B<-verify_ip>, B<-verify_name>, B<-x509_strict>
+
+Set different peer certificate verification options.
+See the L<B<verify>|verify(1)> manual page for details.
+
+=item B<-verify_return_error>
+
+Verification errors normally just print a message but allow the
+connection to continue, for debugging purposes.
+If this option is used, then verification errors close the connection.
 
 =item B<-state>
 
@@ -253,6 +308,10 @@ also included in the server list is used. Because the client specifies
 the preference order, the order of the server cipherlist irrelevant. See
 the B<ciphers> command for more information.
 
+=item B<-serverpref>
+
+use the server's cipher preferences, rather than the client's preferences.
+
 =item B<-tlsextdebug>
 
 print out a hex dump of any TLS extensions received from the server.
@@ -317,19 +376,36 @@ followed by "length" bytes of extension data).  If the client sends
 an empty TLS ClientHello extension matching the type, the corresponding
 ServerHello extension will be returned.
 
-=item B<-auth>
-
-send RFC 5878 client and server authorization extensions in the Client Hello as well as
-supplemental data if the server also sent the authorization extensions in the Server Hello.
-
-=item B<-auth_require_reneg>
-
-only send RFC 5878 client and server authorization extensions during renegotiation.
-
 =item B<-no_resumption_on_reneg>
 
-set SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION flag.  Required in order to receive supplemental data
-during renegotiation if auth and auth_require_reneg are set.
+set SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION flag.
+
+=item B<-status>
+
+enables certificate status request support (aka OCSP stapling).
+
+=item B<-status_verbose>
+
+enables certificate status request support (aka OCSP stapling) and gives
+a verbose printout of the OCSP response.
+
+=item B<-status_timeout nsec>
+
+sets the timeout for OCSP response to B<nsec> seconds.
+
+=item B<-status_url url>
+
+sets a fallback responder URL to use if no responder URL is present in the
+server certificate. Without this option an error is returned if the server
+certificate does not contain a responder address.
+
+=item B<-nextprotoneg protocols>
+
+enable Next Protocol Negotiation TLS extension and provide a
+comma-separated list of supported protocol names.
+The list should contain most wanted protocols first.
+Protocol names are printable ASCII strings, for example "http/1.1" or
+"spdy/3".
 
 =back
 

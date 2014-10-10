@@ -1,6 +1,6 @@
 /* start of generated data */
 
-static BN_ULONG bn_group_1024_value[] = {
+static const BN_ULONG bn_group_1024_value[] = {
 	bn_pack4(0x9FC6,0x1D2F,0xC0EB,0x06E3),
 	bn_pack4(0xFD51,0x38FE,0x8376,0x435B),
 	bn_pack4(0x2FD4,0xCBF4,0x976E,0xAA9A),
@@ -18,15 +18,15 @@ static BN_ULONG bn_group_1024_value[] = {
 	bn_pack4(0x9C33,0xF80A,0xFA8F,0xC5E8),
 	bn_pack4(0xEEAF,0x0AB9,0xADB3,0x8DD6)
 };
-static BIGNUM bn_group_1024 = {
-	bn_group_1024_value,
+static const BIGNUM bn_group_1024 = {
+	(BN_ULONG*)bn_group_1024_value,
 	(sizeof bn_group_1024_value)/sizeof(BN_ULONG),
 	(sizeof bn_group_1024_value)/sizeof(BN_ULONG),
 	0,
 	BN_FLG_STATIC_DATA
 };
 
-static BN_ULONG bn_group_1536_value[] = {
+static const BN_ULONG bn_group_1536_value[] = {
 	bn_pack4(0xCF76,0xE3FE,0xD135,0xF9BB),
 	bn_pack4(0x1518,0x0F93,0x499A,0x234D),
 	bn_pack4(0x8CE7,0xA28C,0x2442,0xC6F3),
@@ -52,15 +52,15 @@ static BN_ULONG bn_group_1536_value[] = {
 	bn_pack4(0xB1F1,0x2A86,0x17A4,0x7BBB),
 	bn_pack4(0x9DEF,0x3CAF,0xB939,0x277A)
 };
-static BIGNUM bn_group_1536 = {
-	bn_group_1536_value,
+static const BIGNUM bn_group_1536 = {
+	(BN_ULONG*)bn_group_1536_value,
 	(sizeof bn_group_1536_value)/sizeof(BN_ULONG),
 	(sizeof bn_group_1536_value)/sizeof(BN_ULONG),
 	0,
 	BN_FLG_STATIC_DATA
 };
 
-static BN_ULONG bn_group_2048_value[] = {
+static const BN_ULONG bn_group_2048_value[] = {
 	bn_pack4(0x0FA7,0x111F,0x9E4A,0xFF73),
 	bn_pack4(0x9B65,0xE372,0xFCD6,0x8EF2),
 	bn_pack4(0x35DE,0x236D,0x525F,0x5475),
@@ -94,15 +94,15 @@ static BN_ULONG bn_group_2048_value[] = {
 	bn_pack4(0xF166,0xDE5E,0x1389,0x582F),
 	bn_pack4(0xAC6B,0xDB41,0x324A,0x9A9B)
 };
-static BIGNUM bn_group_2048 = {
-	bn_group_2048_value,
+static const BIGNUM bn_group_2048 = {
+	(BN_ULONG*)bn_group_2048_value,
 	(sizeof bn_group_2048_value)/sizeof(BN_ULONG),
 	(sizeof bn_group_2048_value)/sizeof(BN_ULONG),
 	0,
 	BN_FLG_STATIC_DATA
 };
 
-static BN_ULONG bn_group_3072_value[] = {
+static const BN_ULONG bn_group_3072_value[] = {
 	bn_pack4(0xFFFF,0xFFFF,0xFFFF,0xFFFF),
 	bn_pack4(0x4B82,0xD120,0xA93A,0xD2CA),
 	bn_pack4(0x43DB,0x5BFC,0xE0FD,0x108E),
@@ -152,15 +152,15 @@ static BN_ULONG bn_group_3072_value[] = {
 	bn_pack4(0xC90F,0xDAA2,0x2168,0xC234),
 	bn_pack4(0xFFFF,0xFFFF,0xFFFF,0xFFFF)
 };
-static BIGNUM bn_group_3072 = {
-	bn_group_3072_value,
+static const BIGNUM bn_group_3072 = {
+	(BN_ULONG*)bn_group_3072_value,
 	(sizeof bn_group_3072_value)/sizeof(BN_ULONG),
 	(sizeof bn_group_3072_value)/sizeof(BN_ULONG),
 	0,
 	BN_FLG_STATIC_DATA
 };
 
-static BN_ULONG bn_group_4096_value[] = {
+static const BN_ULONG bn_group_4096_value[] = {
 	bn_pack4(0xFFFF,0xFFFF,0xFFFF,0xFFFF),
 	bn_pack4(0x4DF4,0x35C9,0x3406,0x3199),
 	bn_pack4(0x86FF,0xB7DC,0x90A6,0xC08F),
@@ -226,15 +226,15 @@ static BN_ULONG bn_group_4096_value[] = {
 	bn_pack4(0xC90F,0xDAA2,0x2168,0xC234),
 	bn_pack4(0xFFFF,0xFFFF,0xFFFF,0xFFFF)
 };
-static BIGNUM bn_group_4096 = {
-	bn_group_4096_value,
+static const BIGNUM bn_group_4096 = {
+	(BN_ULONG*)bn_group_4096_value,
 	(sizeof bn_group_4096_value)/sizeof(BN_ULONG),
 	(sizeof bn_group_4096_value)/sizeof(BN_ULONG),
 	0,
 	BN_FLG_STATIC_DATA
 };
 
-static BN_ULONG bn_group_6144_value[] = {
+static const BN_ULONG bn_group_6144_value[] = {
 	bn_pack4(0xFFFF,0xFFFF,0xFFFF,0xFFFF),
 	bn_pack4(0xE694,0xF91E,0x6DCC,0x4024),
 	bn_pack4(0x12BF,0x2D5B,0x0B74,0x74D6),
@@ -332,15 +332,15 @@ static BN_ULONG bn_group_6144_value[] = {
 	bn_pack4(0xC90F,0xDAA2,0x2168,0xC234),
 	bn_pack4(0xFFFF,0xFFFF,0xFFFF,0xFFFF)
 };
-static BIGNUM bn_group_6144 = {
-	bn_group_6144_value,
+static const BIGNUM bn_group_6144 = {
+	(BN_ULONG*)bn_group_6144_value,
 	(sizeof bn_group_6144_value)/sizeof(BN_ULONG),
 	(sizeof bn_group_6144_value)/sizeof(BN_ULONG),
 	0,
 	BN_FLG_STATIC_DATA
 };
 
-static BN_ULONG bn_group_8192_value[] = {
+static const BN_ULONG bn_group_8192_value[] = {
 	bn_pack4(0xFFFF,0xFFFF,0xFFFF,0xFFFF),
 	bn_pack4(0x60C9,0x80DD,0x98ED,0xD3DF),
 	bn_pack4(0xC81F,0x56E8,0x80B9,0x6E71),
@@ -470,33 +470,33 @@ static BN_ULONG bn_group_8192_value[] = {
 	bn_pack4(0xC90F,0xDAA2,0x2168,0xC234),
 	bn_pack4(0xFFFF,0xFFFF,0xFFFF,0xFFFF)
 };
-static BIGNUM bn_group_8192 = {
-	bn_group_8192_value,
+static const BIGNUM bn_group_8192 = {
+	(BN_ULONG*)bn_group_8192_value,
 	(sizeof bn_group_8192_value)/sizeof(BN_ULONG),
 	(sizeof bn_group_8192_value)/sizeof(BN_ULONG),
 	0,
 	BN_FLG_STATIC_DATA
 };
 
-static BN_ULONG bn_generator_19_value[] = {19} ;
-static BIGNUM bn_generator_19 = {
-	bn_generator_19_value,
+static const BN_ULONG bn_generator_19_value[] = {19} ;
+static const BIGNUM bn_generator_19 = {
+	(BN_ULONG*)bn_generator_19_value,
 	1,
 	1,
 	0,
 	BN_FLG_STATIC_DATA
 };
-static BN_ULONG bn_generator_5_value[] = {5} ;
-static BIGNUM bn_generator_5 = {
-	bn_generator_5_value,
+static const BN_ULONG bn_generator_5_value[] = {5} ;
+static const BIGNUM bn_generator_5 = {
+	(BN_ULONG*)bn_generator_5_value,
 	1,
 	1,
 	0,
 	BN_FLG_STATIC_DATA
 };
-static BN_ULONG bn_generator_2_value[] = {2} ;
-static BIGNUM bn_generator_2 = {
-	bn_generator_2_value,
+static const BN_ULONG bn_generator_2_value[] = {2} ;
+static const BIGNUM bn_generator_2 = {
+	(BN_ULONG*)bn_generator_2_value,
 	1,
 	1,
 	0,
@@ -504,13 +504,13 @@ static BIGNUM bn_generator_2 = {
 };
 
 static SRP_gN knowngN[] = {
-	{"8192",&bn_generator_19 , &bn_group_8192},
-	{"6144",&bn_generator_5 , &bn_group_6144},
-	{"4096",&bn_generator_5 , &bn_group_4096},
-	{"3072",&bn_generator_5 , &bn_group_3072},
-	{"2048",&bn_generator_2 , &bn_group_2048},
-	{"1536",&bn_generator_2 , &bn_group_1536},
-	{"1024",&bn_generator_2 , &bn_group_1024},
+	{"8192",(BIGNUM*)&bn_generator_19 , (BIGNUM*)&bn_group_8192},
+	{"6144",(BIGNUM*)&bn_generator_5 , (BIGNUM*)&bn_group_6144},
+	{"4096",(BIGNUM*)&bn_generator_5 , (BIGNUM*)&bn_group_4096},
+	{"3072",(BIGNUM*)&bn_generator_5 , (BIGNUM*)&bn_group_3072},
+	{"2048",(BIGNUM*)&bn_generator_2 , (BIGNUM*)&bn_group_2048},
+	{"1536",(BIGNUM*)&bn_generator_2 , (BIGNUM*)&bn_group_1536},
+	{"1024",(BIGNUM*)&bn_generator_2 , (BIGNUM*)&bn_group_1024},
 };
 #define KNOWN_GN_NUMBER sizeof(knowngN) / sizeof(SRP_gN)
 

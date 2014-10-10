@@ -494,6 +494,9 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 		r->d[0] = (0-m->d[0])&BN_MASK2;
 		for(i=1;i<j;i++) r->d[i] = (~m->d[i])&BN_MASK2;
 		r->top = j;
+		/* Upper words will be zero if the corresponding words of 'm'
+		 * were 0xfff[...], so decrement r->top accordingly. */
+		bn_correct_top(r);
 		}
 	else
 #endif
@@ -691,8 +694,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	 * RSAZ exponentiation. For further information see
 	 * crypto/bn/rsaz_exp.c and accompanying assembly modules.
 	 */
-	if (((OPENSSL_ia32cap_P[2]&0x80100) != 0x80100) /* check for MULX/AD*X */
-	    && (16 == a->top) && (16 == p->top) && (BN_num_bits(m) == 1024)
+	if ((16 == a->top) && (16 == p->top) && (BN_num_bits(m) == 1024)
 	    && rsaz_avx2_eligible())
 	    	{
 		if (NULL == bn_wexpand(rr, 16)) goto err;
@@ -907,7 +909,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 
     /* Dedicated window==4 case improves 512-bit RSA sign by ~15%, but as
      * 512-bit RSA is hardly relevant, we omit it to spare size... */ 
-    if (window==5)
+    if (window==5 && top>1)
 	{
 	void bn_mul_mont_gather5(BN_ULONG *rp,const BN_ULONG *ap,
 			const void *table,const BN_ULONG *np,

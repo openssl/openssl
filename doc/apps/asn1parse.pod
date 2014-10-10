@@ -15,9 +15,12 @@ B<openssl> B<asn1parse>
 [B<-length number>]
 [B<-i>]
 [B<-oid filename>]
+[B<-dump>]
+[B<-dlimit num>]
 [B<-strparse offset>]
 [B<-genstr string>]
 [B<-genconf file>]
+[B<-strictpem>]
 
 =head1 DESCRIPTION
 
@@ -64,6 +67,14 @@ indents the output according to the "depth" of the structures.
 a file containing additional OBJECT IDENTIFIERs (OIDs). The format of this
 file is described in the NOTES section below.
 
+=item B<-dump>
+
+dump unknown data in hex format.
+
+=item B<-dlimit num>
+
+like B<-dump>, but only the first B<num> bytes are output.
+
 =item B<-strparse offset>
 
 parse the contents octets of the ASN.1 object starting at B<offset>. This
@@ -78,6 +89,14 @@ B<asn1>. The encoded data is passed through the ASN1 parser and printed out as
 though it came from a file, the contents can thus be examined and written to a
 file using the B<out> option. 
 
+=item B<-strictpem>
+
+If this option is used then B<-inform> will be ignored. Without this option any
+data in a PEM format input file will be treated as being base64 encoded and
+processed whether it has the normal PEM BEGIN and END markers or not. This
+option will ignore any data prior to the start of the BEGIN marker, or after an
+END marker in a PEM file.
+
 =back
 
 =head2 OUTPUT
@@ -88,7 +107,7 @@ The output will typically contain lines like this:
 
 .....
 
-  229:d=3  hl=3 l= 141 prim: BIT STRING        
+  229:d=3  hl=3 l= 141 prim: BIT STRING
   373:d=2  hl=3 l= 162 cons: cont [ 3 ]        
   376:d=3  hl=3 l= 159 cons: SEQUENCE          
   379:d=4  hl=2 l=  29 cons: SEQUENCE          

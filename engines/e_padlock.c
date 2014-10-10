@@ -333,7 +333,7 @@ padlock_available(void)
 #endif
 
 /* List of supported ciphers. */
-static int padlock_cipher_nids[] = {
+static const int padlock_cipher_nids[] = {
 	NID_aes_128_ecb,
 	NID_aes_128_cbc,
 	NID_aes_128_cfb,

@@ -285,7 +285,7 @@ int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, int len)
 			send_time = (s->mode & SSL_MODE_SEND_CLIENTHELLO_TIME) != 0;
 		if (send_time)
 			{
-			unsigned long Time = time(NULL);
+			unsigned long Time = (unsigned long)time(NULL);
 			unsigned char *p = result;
 			l2n(Time, p);
 			return RAND_pseudo_bytes(p, len-4);
@@ -368,9 +368,7 @@ static int ssl23_client_hello(SSL *s)
 		if (s->ctx->tlsext_opaque_prf_input_callback != 0 || s->tlsext_opaque_prf_input != NULL)
 			ssl2_compat = 0;
 #endif
-		if (s->ctx->custom_cli_ext_records_count != 0)
-			ssl2_compat = 0;
-		if (s->ctx->cli_supp_data_records_count != 0)
+		if (s->cert->cli_ext.meths_count != 0)
 			ssl2_compat = 0;
 		}
 #endif

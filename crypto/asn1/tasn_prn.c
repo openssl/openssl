@@ -401,8 +401,8 @@ static int asn1_print_fsname(BIO *out, int indent,
 			const char *fname, const char *sname,
 			const ASN1_PCTX *pctx)
 	{
-	static char spaces[] = "                    ";
-	const int nspaces = sizeof(spaces) - 1;
+	static const char spaces[] = "                    ";
+	static const int nspaces = sizeof(spaces) - 1;
 
 #if 0
 	if (!sname && !fname)

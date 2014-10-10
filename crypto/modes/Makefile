@@ -55,17 +55,21 @@ aesni-gcm-x86_64.s:	asm/aesni-gcm-x86_64.pl
 ghash-sparcv9.s:	asm/ghash-sparcv9.pl
 	$(PERL) asm/ghash-sparcv9.pl $@ $(CFLAGS)
 ghash-alpha.s:	asm/ghash-alpha.pl
-	(preproc=/tmp/$$$$.$@; trap "rm $$preproc" INT; \
+	(preproc=$$$$.$@.S; trap "rm $$preproc" INT; \
 	$(PERL) asm/ghash-alpha.pl > $$preproc && \
-	$(CC) -E $$preproc > $@ && rm $$preproc)
-
+	$(CC) -E -P $$preproc > $@ && rm $$preproc)
 ghash-parisc.s:	asm/ghash-parisc.pl
 	$(PERL) asm/ghash-parisc.pl $(PERLASM_SCHEME) $@
+ghashv8-armx.S:	asm/ghashv8-armx.pl
+	$(PERL) asm/ghashv8-armx.pl $(PERLASM_SCHEME) $@
+ghashp8-ppc.s:	asm/ghashp8-ppc.pl
+	$(PERL) asm/ghashp8-ppc.pl $(PERLASM_SCHEME) $@
 
 # GNU make "catch all"
 ghash-%.S:	asm/ghash-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
 
 ghash-armv4.o:	ghash-armv4.S
+ghashv8-armx.o:	ghashv8-armx.S
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO

@@ -256,6 +256,21 @@ ECDSA_METHOD *ECDSA_METHOD_new(ECDSA_METHOD *ecdsa_method);
  */
 void ECDSA_METHOD_free(ECDSA_METHOD *ecdsa_method);
 
+/**  Sets application specific data in the ECDSA_METHOD
+ *   \param  ecdsa_method pointer to existing ECDSA_METHOD
+ *   \param  app application specific data to set
+ */
+
+void ECDSA_METHOD_set_app_data(ECDSA_METHOD *ecdsa_method, void *app);
+
+/** Returns application specific data from a ECDSA_METHOD structure
+ *  \param ecdsa_method pointer to ECDSA_METHOD structure
+ *  \return pointer to application specific data.
+ */
+
+
+void * ECDSA_METHOD_get_app_data(ECDSA_METHOD *ecdsa_method);
+
 /**  Set the ECDSA_do_sign function in the ECDSA_METHOD
  *   \param  ecdsa_method  pointer to existing ECDSA_METHOD
  *   \param  ecdsa_do_sign a funtion of type ECDSA_do_sign

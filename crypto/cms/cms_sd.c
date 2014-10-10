@@ -159,8 +159,8 @@ static void cms_sd_set_version(CMS_SignedData *sd)
 			if (sd->version < 3)
 				sd->version = 3;
 			}
-		else
-			sd->version = 1;
+		else if (si->version < 1)
+			si->version = 1;
 		}
 
 	if (sd->version < 1)
@@ -680,7 +680,10 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
 			goto err;
 			}
 		if (EVP_PKEY_sign(pctx, sig, &siglen, md, mdlen) <= 0)
+			{
+			OPENSSL_free(sig);
 			goto err;
+			}
 		ASN1_STRING_set0(si->signature, sig, siglen);
 		}
 	else

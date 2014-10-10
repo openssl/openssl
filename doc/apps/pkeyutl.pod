@@ -157,7 +157,7 @@ signed or verified directly instead of using a B<DigestInfo> structure. If a
 digest is set then the a B<DigestInfo> structure is used and its the length
 must correspond to the digest type.
 
-For B<oeap> mode only encryption and decryption is supported.
+For B<oaep> mode only encryption and decryption is supported.
 
 For B<x931> if the digest type is set it is used to format the block data
 otherwise the first byte is used to specify the X9.31 digest ID. Sign,

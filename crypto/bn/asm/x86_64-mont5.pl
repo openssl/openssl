@@ -50,7 +50,12 @@ if (!$addx && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
 
 if (!$addx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	    `ml64 2>&1` =~ /Version ([0-9]+)\./) {
-	$addx = ($1>=11);
+	$addx = ($1>=12);
+}
+
+if (!$addx && `$ENV{CC} -v 2>&1` =~ /(^clang version|based on LLVM) ([3-9])\.([0-9]+)/) {
+	my $ver = $2 + $3/100.0;	# 3.1->3.01, 3.10->3.10
+	$addx = ($ver>=3.03);
 }
 
 # int bn_mul_mont_gather5(

@@ -428,6 +428,7 @@ typedef struct ssl3_buffer_st
 #define TLS1_FLAGS_TLS_PADDING_BUG		0x0008
 #define TLS1_FLAGS_SKIP_CERT_VERIFY		0x0010
 #define TLS1_FLAGS_KEEP_HANDSHAKE		0x0020
+#define SSL3_FLAGS_CCS_OK			0x0080
  
 /* SSL3_FLAGS_SGC_RESTART_DONE is set when we
  * restart a handshake because of MS SGC and so prevents us
@@ -440,7 +441,7 @@ typedef struct ssl3_buffer_st
  */
 #define SSL3_FLAGS_SGC_RESTART_DONE		0x0040
 /* Set if we encrypt then mac instead of usual mac then encrypt */
-#define TLS1_FLAGS_ENCRYPT_THEN_MAC		0x0080
+#define TLS1_FLAGS_ENCRYPT_THEN_MAC		0x0100
 
 #ifndef OPENSSL_NO_SSL_INTERN
 
@@ -583,12 +584,6 @@ typedef struct ssl3_state_st
 #endif
 
 #ifndef OPENSSL_NO_TLSEXT
-        /* serverinfo_client_tlsext_custom_types contains an array of TLS Extension types which
-         * were advertised by the client in its ClientHello and leveraged by ServerInfo TLS extension callbacks.
-	 * The array does not contain any duplicates, and is in the same order
-	 * as the types were received in the client hello. */
-        unsigned short *serverinfo_client_tlsext_custom_types;
-        size_t serverinfo_client_tlsext_custom_types_count; /* how many serverinfo_client_tlsext_custom_types */
 
 	/* ALPN information
 	 * (we are in the process of transitioning from NPN to ALPN.) */
@@ -636,10 +631,6 @@ typedef struct ssl3_state_st
 #define SSL3_ST_CR_CERT_REQ_B		(0x151|SSL_ST_CONNECT)
 #define SSL3_ST_CR_SRVR_DONE_A		(0x160|SSL_ST_CONNECT)
 #define SSL3_ST_CR_SRVR_DONE_B		(0x161|SSL_ST_CONNECT)
-#ifndef OPENSSL_NO_TLSEXT
-#define SSL3_ST_CR_SUPPLEMENTAL_DATA_A	(0x212|SSL_ST_CONNECT)
-#define SSL3_ST_CR_SUPPLEMENTAL_DATA_B  (0x213|SSL_ST_CONNECT)
-#endif
 /* write to server */
 #define SSL3_ST_CW_CERT_A		(0x170|SSL_ST_CONNECT)
 #define SSL3_ST_CW_CERT_B		(0x171|SSL_ST_CONNECT)
@@ -654,10 +645,6 @@ typedef struct ssl3_state_st
 #ifndef OPENSSL_NO_NEXTPROTONEG
 #define SSL3_ST_CW_NEXT_PROTO_A		(0x200|SSL_ST_CONNECT)
 #define SSL3_ST_CW_NEXT_PROTO_B		(0x201|SSL_ST_CONNECT)
-#endif
-#ifndef OPENSSL_NO_TLSEXT
-#define SSL3_ST_CW_SUPPLEMENTAL_DATA_A		(0x222|SSL_ST_CONNECT)
-#define SSL3_ST_CW_SUPPLEMENTAL_DATA_B		(0x223|SSL_ST_CONNECT)
 #endif
 #define SSL3_ST_CW_FINISHED_A		(0x1B0|SSL_ST_CONNECT)
 #define SSL3_ST_CW_FINISHED_B		(0x1B1|SSL_ST_CONNECT)
@@ -684,10 +671,6 @@ typedef struct ssl3_state_st
 #define SSL3_ST_SR_CLNT_HELLO_B		(0x111|SSL_ST_ACCEPT)
 #define SSL3_ST_SR_CLNT_HELLO_C		(0x112|SSL_ST_ACCEPT)
 #define SSL3_ST_SR_CLNT_HELLO_D		(0x115|SSL_ST_ACCEPT)
-#ifndef OPENSSL_NO_TLSEXT
-#define SSL3_ST_SR_SUPPLEMENTAL_DATA_A		(0x212|SSL_ST_ACCEPT)
-#define SSL3_ST_SR_SUPPLEMENTAL_DATA_B		(0x213|SSL_ST_ACCEPT)
-#endif
 /* write to client */
 #define DTLS1_ST_SW_HELLO_VERIFY_REQUEST_A (0x113|SSL_ST_ACCEPT)
 #define DTLS1_ST_SW_HELLO_VERIFY_REQUEST_B (0x114|SSL_ST_ACCEPT)
@@ -728,10 +711,6 @@ typedef struct ssl3_state_st
 #define SSL3_ST_SW_SESSION_TICKET_B	(0x1F1|SSL_ST_ACCEPT)
 #define SSL3_ST_SW_CERT_STATUS_A	(0x200|SSL_ST_ACCEPT)
 #define SSL3_ST_SW_CERT_STATUS_B	(0x201|SSL_ST_ACCEPT)
-#ifndef OPENSSL_NO_TLSEXT
-#define SSL3_ST_SW_SUPPLEMENTAL_DATA_A	(0x222|SSL_ST_ACCEPT)
-#define SSL3_ST_SW_SUPPLEMENTAL_DATA_B	(0x223|SSL_ST_ACCEPT)
-#endif
 
 #define SSL3_MT_HELLO_REQUEST			0
 #define SSL3_MT_CLIENT_HELLO			1
@@ -745,9 +724,6 @@ typedef struct ssl3_state_st
 #define SSL3_MT_CLIENT_KEY_EXCHANGE		16
 #define SSL3_MT_FINISHED			20
 #define SSL3_MT_CERTIFICATE_STATUS		22
-#ifndef OPENSSL_NO_TLSEXT
-#define SSL3_MT_SUPPLEMENTAL_DATA		23
-#endif
 #ifndef OPENSSL_NO_NEXTPROTONEG
 #define SSL3_MT_NEXT_PROTO			67
 #endif

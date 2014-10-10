@@ -235,6 +235,8 @@ struct ec_group_st {
 	void *field_data1; /* method-specific (e.g., Montgomery structure) */
 	void *field_data2; /* method-specific */
 	int (*field_mod_func)(BIGNUM *, const BIGNUM *, const BIGNUM *,	BN_CTX *); /* method-specific */
+
+	BN_MONT_CTX *mont_data;    /* data for ECDSA inverse */
 } /* EC_GROUP */;
 
 struct ec_key_st {
@@ -404,7 +406,7 @@ int ec_GF2m_simple_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 int ec_GF2m_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
 int ec_GF2m_have_precompute_mult(const EC_GROUP *group);
 
-#ifndef OPENSSL_EC_NISTP_64_GCC_128
+#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
 /* method functions in ecp_nistp224.c */
 int ec_GFp_nistp224_group_init(EC_GROUP *group);
 int ec_GFp_nistp224_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a, const BIGNUM *n, BN_CTX *);
@@ -443,4 +445,13 @@ void ec_GFp_nistp_points_make_affine_internal(size_t num, void *point_array,
 	void (*felem_inv)(void *out, const void *in),
 	void (*felem_contract)(void *out, const void *in));
 void ec_GFp_nistp_recode_scalar_bits(unsigned char *sign, unsigned char *digit, unsigned char in);
+#endif
+int ec_precompute_mont_data(EC_GROUP *);
+
+#ifdef ECP_NISTZ256_ASM
+/** Returns GFp methods using montgomery multiplication, with x86-64 optimized
+ * P256. See http://eprint.iacr.org/2013/816.
+ *  \return  EC_METHOD object
+ */
+const EC_METHOD *EC_GFp_nistz256_method(void);
 #endif

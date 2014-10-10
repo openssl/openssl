@@ -69,7 +69,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/objects.h>
-#include "vpm_int.h"
+#include "x509_lcl.h"
 
 /* CRL score values */
 
@@ -119,6 +119,7 @@ static int check_trust(X509_STORE_CTX *ctx);
 static int check_revocation(X509_STORE_CTX *ctx);
 static int check_cert(X509_STORE_CTX *ctx);
 static int check_policy(X509_STORE_CTX *ctx);
+static int get_issuer_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);
 
 static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
 			unsigned int *preasons,
@@ -469,14 +470,18 @@ end:
 static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
 {
 	int i;
-	X509 *issuer;
+	X509 *issuer, *rv = NULL;;
 	for (i = 0; i < sk_X509_num(sk); i++)
 		{
 		issuer = sk_X509_value(sk, i);
 		if (ctx->check_issued(ctx, x, issuer))
-			return issuer;
+			{
+			rv = issuer;
+			if (x509_check_cert_time(ctx, rv, 1))
+				break;
+			}
 		}
-	return NULL;
+	return rv;
 }
 
 /* Given a possible certificate and issuer check them */
@@ -515,7 +520,6 @@ static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
 	ctx->current_cert = x;
 	ctx->current_issuer = issuer;
 	return ctx->verify_cb(0, ctx);
-	return 0;
 }
 
 /* Alternative lookup method: look from a STACK stored in other_ctx */
@@ -739,22 +743,38 @@ static int check_id_error(X509_STORE_CTX *ctx, int errcode)
 	return ctx->verify_cb(0, ctx);
 	}
 
+static int check_hosts(X509 *x, X509_VERIFY_PARAM_ID *id)
+	{
+	int i;
+	int n = sk_OPENSSL_STRING_num(id->hosts);
+	char *name;
+
+	for (i = 0; i < n; ++i)
+		{
+		name = sk_OPENSSL_STRING_value(id->hosts, i);
+		if (X509_check_host(x, name, 0, id->hostflags,
+				    &id->peername) > 0)
+			return 1;
+		}
+	return n == 0;
+	}
+
 static int check_id(X509_STORE_CTX *ctx)
 	{
 	X509_VERIFY_PARAM *vpm = ctx->param;
 	X509_VERIFY_PARAM_ID *id = vpm->id;
 	X509 *x = ctx->cert;
-	if (id->host && !X509_check_host(x, id->host, id->hostlen, 0))
+	if (id->hosts && check_hosts(x, id) <= 0)
 		{
 		if (!check_id_error(ctx, X509_V_ERR_HOSTNAME_MISMATCH))
 			return 0;
 		}
-	if (id->email && !X509_check_email(x, id->email, id->emaillen, 0))
+	if (id->email && X509_check_email(x, id->email, id->emaillen, 0) <= 0)
 		{
 		if (!check_id_error(ctx, X509_V_ERR_EMAIL_MISMATCH))
 			return 0;
 		}
-	if (id->ip && !X509_check_ip(x, id->ip, id->iplen, 0))
+	if (id->ip && X509_check_ip(x, id->ip, id->iplen, 0) <= 0)
 		{
 		if (!check_id_error(ctx, X509_V_ERR_IP_ADDRESS_MISMATCH))
 			return 0;
@@ -1693,7 +1713,7 @@ static int check_policy(X509_STORE_CTX *ctx)
 	return 1;
 	}
 
-static int check_cert_time(X509_STORE_CTX *ctx, X509 *x)
+int x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int quiet)
 	{
 	time_t *ptime;
 	int i;
@@ -1706,6 +1726,8 @@ static int check_cert_time(X509_STORE_CTX *ctx, X509 *x)
 	i=X509_cmp_time(X509_get_notBefore(x), ptime);
 	if (i == 0)
 		{
+		if (quiet)
+			return 0;
 		ctx->error=X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD;
 		ctx->current_cert=x;
 		if (!ctx->verify_cb(0, ctx))
@@ -1714,6 +1736,8 @@ static int check_cert_time(X509_STORE_CTX *ctx, X509 *x)
 
 	if (i > 0)
 		{
+		if (quiet)
+			return 0;
 		ctx->error=X509_V_ERR_CERT_NOT_YET_VALID;
 		ctx->current_cert=x;
 		if (!ctx->verify_cb(0, ctx))
@@ -1723,6 +1747,8 @@ static int check_cert_time(X509_STORE_CTX *ctx, X509 *x)
 	i=X509_cmp_time(X509_get_notAfter(x), ptime);
 	if (i == 0)
 		{
+		if (quiet)
+			return 0;
 		ctx->error=X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD;
 		ctx->current_cert=x;
 		if (!ctx->verify_cb(0, ctx))
@@ -1731,6 +1757,8 @@ static int check_cert_time(X509_STORE_CTX *ctx, X509 *x)
 
 	if (i < 0)
 		{
+		if (quiet)
+			return 0;
 		ctx->error=X509_V_ERR_CERT_HAS_EXPIRED;
 		ctx->current_cert=x;
 		if (!ctx->verify_cb(0, ctx))
@@ -1814,7 +1842,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
 		xs->valid = 1;
 
 		check_cert:
-		ok = check_cert_time(ctx, xs);
+		ok = x509_check_cert_time(ctx, xs, 0);
 		if (!ok)
 			goto end;
 

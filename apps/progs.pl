@@ -32,7 +32,7 @@ foreach (@ARGV)
 	push(@files,$_);
 	$str="\t{FUNC_TYPE_GENERAL,\"$_\",${_}_main},\n";
 	if (($_ =~ /^s_/) || ($_ =~ /^ciphers$/))
-		{ print "#if !defined(OPENSSL_NO_SOCK) && !(defined(OPENSSL_NO_SSL2) && defined(OPENSSL_NO_SSL3))\n${str}#endif\n"; } 
+		{ print "#if !defined(OPENSSL_NO_SOCK)\n${str}#endif\n"; } 
 	elsif ( ($_ =~ /^speed$/))
 		{ print "#ifndef OPENSSL_NO_SPEED\n${str}#endif\n"; }
 	elsif ( ($_ =~ /^engine$/))
@@ -57,7 +57,7 @@ foreach (@ARGV)
 		{ print $str; }
 	}
 
-foreach ("md2","md4","md5","sha","sha1","mdc2","rmd160")
+foreach ("md2","md4","md5","sha","sha1","mdc2","rmd160","sha224","sha256","sha384","sha512")
 	{
 	push(@files,$_);
 	printf "#ifndef OPENSSL_NO_".uc($_)."\n\t{FUNC_TYPE_MD,\"".$_."\",dgst_main},\n#endif\n";

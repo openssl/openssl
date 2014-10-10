@@ -636,21 +636,34 @@ static int multi_split(BIO *bio, char *bound, STACK_OF(BIO) **ret)
 	first = 1;
 	parts = sk_BIO_new_null();
 	*ret = parts;
+	if (*ret == NULL)
+		return 0;
 	while ((len = BIO_gets(bio, linebuf, MAX_SMLEN)) > 0) {
 		state = mime_bound_check(linebuf, len, bound, blen);
 		if(state == 1) {
 			first = 1;
 			part++;
 		} else if(state == 2) {
-			sk_BIO_push(parts, bpart);
+			if (!sk_BIO_push(parts, bpart))
+				{
+				BIO_free(bpart);
+				return 0;
+				}
 			return 1;
 		} else if(part) {
 			/* Strip CR+LF from linebuf */
 			next_eol = strip_eol(linebuf, &len, 0);
 			if(first) {
 				first = 0;
-				if(bpart) sk_BIO_push(parts, bpart);
+				if(bpart)
+					if (!sk_BIO_push(parts, bpart))
+						{
+						BIO_free(bpart);
+						return 0;
+						}
 				bpart = BIO_new(BIO_s_mem());
+				if (bpart == NULL)
+					return 0;
 				BIO_set_mem_eof_return(bpart, 0);
 			} else if (eol)
 				BIO_write(bpart, "\r\n", 2);
@@ -659,6 +672,8 @@ static int multi_split(BIO *bio, char *bound, STACK_OF(BIO) **ret)
 				BIO_write(bpart, linebuf, len);
 		}
 	}
+	if (bpart != NULL)
+		BIO_free(bpart);
 	return 0;
 }
 
@@ -683,6 +698,8 @@ static STACK_OF(MIME_HEADER) *mime_parse_hdr(BIO *bio)
 	int len, state, save_state = 0;
 
 	headers = sk_MIME_HEADER_new(mime_hdr_cmp);
+	if (!headers)
+		return NULL;
 	while ((len = BIO_gets(bio, linebuf, MAX_SMLEN)) > 0) {
 	/* If whitespace at line start then continuation line */
 	if(mhdr && isspace((unsigned char)linebuf[0])) state = MIME_NAME;
@@ -815,8 +832,8 @@ static char *strip_end(char *name)
 
 static MIME_HEADER *mime_hdr_new(char *name, char *value)
 {
-	MIME_HEADER *mhdr;
-	char *tmpname, *tmpval, *p;
+	MIME_HEADER *mhdr = NULL;
+	char *tmpname = NULL, *tmpval = NULL, *p;
 	int c;
 	if(name) {
 		if(!(tmpname = BUF_strdup(name))) return NULL;
@@ -827,9 +844,10 @@ static MIME_HEADER *mime_hdr_new(char *name, char *value)
 				*p = c;
 			}
 		}
-	} else tmpname = NULL;
+	}
 	if(value) {
-		if(!(tmpval = BUF_strdup(value))) return NULL;
+		if(!(tmpval = BUF_strdup(value)))
+			goto err;
 		for(p = tmpval ; *p; p++) {
 			c = (unsigned char)*p;
 			if(isupper(c)) {
@@ -837,23 +855,33 @@ static MIME_HEADER *mime_hdr_new(char *name, char *value)
 				*p = c;
 			}
 		}
-	} else tmpval = NULL;
+	}
 	mhdr = (MIME_HEADER *) OPENSSL_malloc(sizeof(MIME_HEADER));
-	if(!mhdr) return NULL;
+	if(!mhdr) goto err;
 	mhdr->name = tmpname;
 	mhdr->value = tmpval;
-	if(!(mhdr->params = sk_MIME_PARAM_new(mime_param_cmp))) return NULL;
+	if(!(mhdr->params = sk_MIME_PARAM_new(mime_param_cmp)))
+		goto err;
 	return mhdr;
+
+	err:
+	if (tmpname != NULL)
+		OPENSSL_free(tmpname);
+	if (tmpval != NULL)
+		OPENSSL_free(tmpval);
+	if (mhdr != NULL)
+		OPENSSL_free(mhdr);
+	return NULL;
 }
 		
 static int mime_hdr_addparam(MIME_HEADER *mhdr, char *name, char *value)
 {
-	char *tmpname, *tmpval, *p;
+	char *tmpname=NULL, *tmpval=NULL, *p;
 	int c;
-	MIME_PARAM *mparam;
+	MIME_PARAM *mparam=NULL;
 	if(name) {
 		tmpname = BUF_strdup(name);
-		if(!tmpname) return 0;
+		if(!tmpname) goto err;
 		for(p = tmpname ; *p; p++) {
 			c = (unsigned char)*p;
 			if(isupper(c)) {
@@ -861,18 +889,27 @@ static int mime_hdr_addparam(MIME_HEADER *mhdr, char *name, char *value)
 				*p = c;
 			}
 		}
-	} else tmpname = NULL;
+	}
 	if(value) {
 		tmpval = BUF_strdup(value);
-		if(!tmpval) return 0;
-	} else tmpval = NULL;
+		if(!tmpval) goto err;
+	}
 	/* Parameter values are case sensitive so leave as is */
 	mparam = (MIME_PARAM *) OPENSSL_malloc(sizeof(MIME_PARAM));
-	if(!mparam) return 0;
+	if(!mparam) goto err;
 	mparam->param_name = tmpname;
 	mparam->param_value = tmpval;
-	sk_MIME_PARAM_push(mhdr->params, mparam);
+	if (!sk_MIME_PARAM_push(mhdr->params, mparam))
+		goto err;
 	return 1;
+err:
+	if (tmpname != NULL)
+		OPENSSL_free(tmpname);
+	if (tmpval != NULL)
+		OPENSSL_free(tmpval);
+	if (mparam != NULL)
+		OPENSSL_free(mparam);
+	return 0;
 }
 
 static int mime_hdr_cmp(const MIME_HEADER * const *a,

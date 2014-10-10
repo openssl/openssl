@@ -65,7 +65,12 @@ if (!$addx && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
 
 if (!$addx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	    `ml64 2>&1` =~ /Version ([0-9]+)\./) {
-	$addx = ($1>=11);
+	$addx = ($1>=12);
+}
+
+if (!$addx && `$ENV{CC} -v 2>&1` =~ /(^clang version|based on LLVM) ([3-9])\.([0-9]+)/) {
+	my $ver = $2 + $3/100.0;	# 3.1->3.01, 3.10->3.10
+	$addx = ($ver>=3.03);
 }
 
 # int bn_mul_mont(
@@ -742,9 +747,11 @@ my @A0=("%r10","%r11");
 my @A1=("%r12","%r13");
 my ($a0,$a1,$ai)=("%r14","%r15","%rbx");
 
+$code.=<<___	if ($addx);
+.extern	bn_sqrx8x_internal		# see x86_64-mont5 module
+___
 $code.=<<___;
 .extern	bn_sqr8x_internal		# see x86_64-mont5 module
-.extern	bn_sqrx8x_internal		# see x86_64-mont5 module
 
 .type	bn_sqr8x_mont,\@function,6
 .align	32

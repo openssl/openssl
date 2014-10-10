@@ -54,11 +54,6 @@ ISO/IEC 10118-2, with DES
 
 =head1 SEE ALSO
 
-L<sha(3)|sha(3)>, L<EVP_DigestInit(3)|EVP_DigestInit(3)>
-
-=head1 HISTORY
-
-MDC2(), MDC2_Init(), MDC2_Update() and MDC2_Final() are available since
-SSLeay 0.8.
+L<EVP_DigestInit(3)|EVP_DigestInit(3)>
 
 =cut

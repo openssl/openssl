@@ -90,9 +90,8 @@ int X509_REQ_print_fp(FILE *fp, X509_REQ *x)
 
 int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags, unsigned long cflag)
 	{
-	unsigned long l;
+	long l;
 	int i;
-	const char *neg;
 	X509_REQ_INFO *ri;
 	EVP_PKEY *pkey;
 	STACK_OF(X509_ATTRIBUTE) *sk;
@@ -117,12 +116,8 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags, unsigned long
 		}
 	if(!(cflag & X509_FLAG_NO_VERSION))
 		{
-		neg=(ri->version->type == V_ASN1_NEG_INTEGER)?"-":"";
-		l=0;
-		for (i=0; i<ri->version->length; i++)
-			{ l<<=8; l+=ri->version->data[i]; }
-		if(BIO_printf(bp,"%8sVersion: %s%lu (%s0x%lx)\n","",neg,l,neg,
-			      l) <= 0)
+		l = X509_REQ_get_version(x);
+		if(BIO_printf(bp,"%8sVersion: %ld (0x%lx)\n","",l+1, l) <= 0)
 		    goto err;
 		}
         if(!(cflag & X509_FLAG_NO_SUBJECT))

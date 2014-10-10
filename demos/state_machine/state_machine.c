@@ -305,10 +305,8 @@ int main(int argc,char **argv)
     szCertificateFile=argv[2];
     szKeyFile=argv[3];
 
-    SSL_library_init();
     OpenSSL_add_ssl_algorithms();
     SSL_load_error_strings();
-    ERR_load_crypto_strings();
 
     nFD=OpenSocket(nPort);
 

@@ -655,7 +655,7 @@ printf("client random\n");
 { int z; for (z=0; z<SSL3_RANDOM_SIZE; z++) printf("%02X%c",s->s3->client_random[z],((z+1)%16)?' ':'\n'); }
 printf("server random\n");
 { int z; for (z=0; z<SSL3_RANDOM_SIZE; z++) printf("%02X%c",s->s3->server_random[z],((z+1)%16)?' ':'\n'); }
-printf("pre-master\n");
+printf("master key\n");
 { int z; for (z=0; z<s->session->master_key_length; z++) printf("%02X%c",s->session->master_key[z],((z+1)%16)?' ':'\n'); }
 #endif
 	if (!tls1_generate_key_block(s,p1,p2,num))
@@ -1067,14 +1067,10 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 	if (!stream_mac)
 		EVP_MD_CTX_cleanup(&hmac);
 #ifdef TLS_DEBUG
-printf("sec=");
-{unsigned int z; for (z=0; z<md_size; z++) printf("%02X ",mac_sec[z]); printf("\n"); }
 printf("seq=");
 {int z; for (z=0; z<8; z++) printf("%02X ",seq[z]); printf("\n"); }
-printf("buf=");
-{int z; for (z=0; z<5; z++) printf("%02X ",buf[z]); printf("\n"); }
 printf("rec=");
-{unsigned int z; for (z=0; z<rec->length; z++) printf("%02X ",buf[z]); printf("\n"); }
+{unsigned int z; for (z=0; z<rec->length; z++) printf("%02X ",rec->data[z]); printf("\n"); }
 #endif
 
 	if (!SSL_IS_DTLS(ssl))
@@ -1169,7 +1165,7 @@ int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
 	int rv;
 
 #ifdef KSSL_DEBUG
-	printf ("tls1_export_keying_material(%p,%p,%d,%s,%d,%p,%d)\n", s, out, olen, label, llen, p, plen);
+	printf ("tls1_export_keying_material(%p,%p,%d,%s,%d,%p,%d)\n", s, out, olen, label, llen, context, contextlen);
 #endif	/* KSSL_DEBUG */
 
 	buff = OPENSSL_malloc(olen);
@@ -1222,7 +1218,7 @@ int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
 	if (memcmp(val, TLS_MD_KEY_EXPANSION_CONST,
 		 TLS_MD_KEY_EXPANSION_CONST_SIZE) == 0) goto err1;
 
-	rv = tls1_PRF(s->s3->tmp.new_cipher->algorithm2,
+	rv = tls1_PRF(ssl_get_algorithm2(s),
 		      val, vallen,
 		      NULL, 0,
 		      NULL, 0,

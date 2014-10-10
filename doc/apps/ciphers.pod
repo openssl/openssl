@@ -132,8 +132,8 @@ specified.
 =item B<COMPLEMENTOFDEFAULT>
 
 the ciphers included in B<ALL>, but not enabled by default. Currently
-this is B<ADH>. Note that this rule does not cover B<eNULL>, which is
-not included by B<ALL> (use B<COMPLEMENTOFALL> if necessary).
+this is B<ADH> and B<AECDH>. Note that this rule does not cover B<eNULL>,
+which is not included by B<ALL> (use B<COMPLEMENTOFALL> if necessary).
 
 =item B<ALL>
 
@@ -182,21 +182,58 @@ included.
 =item B<aNULL>
 
 the cipher suites offering no authentication. This is currently the anonymous
-DH algorithms. These cipher suites are vulnerable to a "man in the middle"
-attack and so their use is normally discouraged.
+DH algorithms and anonymous ECDH algorithms. These cipher suites are vulnerable
+to a "man in the middle" attack and so their use is normally discouraged.
 
 =item B<kRSA>, B<aRSA>, B<RSA>
 
 cipher suites using RSA key exchange, authentication or either respectively.
 
-=item B<kDHE>
-
-cipher suites using ephemeral DH key agreement.
-
 =item B<kDHr>, B<kDHd>, B<kDH>
 
 cipher suites using DH key agreement and DH certificates signed by CAs with RSA
 and DSS keys or either respectively.
+
+=item B<kDHE>, B<kEDH>
+
+cipher suites using ephemeral DH key agreement, including anonymous cipher
+suites.
+
+=item B<DHE>, B<EDH>
+
+cipher suites using authenticated ephemeral DH key agreement.
+
+=item B<ADH>
+
+anonymous DH cipher suites, note that this does not include anonymous Elliptic
+Curve DH (ECDH) cipher suites.
+
+=item B<DH>
+
+cipher suites using DH, including anonymous DH, ephemeral DH and fixed DH.
+
+=item B<kECDHr>, B<kECDHe>, B<kECDH>
+
+cipher suites using fixed ECDH key agreement signed by CAs with RSA and ECDSA
+keys or either respectively.
+
+=item B<kEECDH>, B<kECDHE>
+
+cipher suites using ephemeral ECDH key agreement, including anonymous
+cipher suites.
+
+=item B<ECDHE>, B<EECDHE>
+
+cipher suites using authenticated ephemeral ECDH key agreement.
+
+=item B<AECDH>
+
+anonymous Elliptic Curve Diffie Hellman cipher suites.
+
+=item B<ECDH>
+
+cipher suites using ECDH key exchange, including anonymous, ephemeral and
+fixed ECDH.
 
 =item B<aDSS>, B<DSS>
 
@@ -207,6 +244,16 @@ cipher suites using DSS authentication, i.e. the certificates carry DSS keys.
 cipher suites effectively using DH authentication, i.e. the certificates carry
 DH keys.
 
+=item B<aECDH>
+
+cipher suites effectively using ECDH authentication, i.e. the certificates
+carry ECDH keys.
+
+=item B<aECDSA>, B<ECDSA>
+
+cipher suites using ECDSA authentication, i.e. the certificates carry ECDSA
+keys.
+
 =item B<kFZA>, B<aFZA>, B<eFZA>, B<FZA>
 
 ciphers suites using FORTEZZA key exchange, authentication, encryption or all
@@ -216,14 +263,6 @@ FORTEZZA algorithms. Not implemented.
 
 TLS v1.2, TLS v1.0, SSL v3.0 or SSL v2.0 cipher suites respectively. Note:
 there are no ciphersuites specific to TLS v1.1.
-
-=item B<DH>
-
-cipher suites using DH, including anonymous DH, ephemeral DH and fixed DH.
-
-=item B<ADH>
-
-anonymous DH cipher suites.
 
 =item B<AES128>, B<AES256>, B<AES>
 
@@ -463,7 +502,7 @@ Note: these ciphers can also be used in SSL v3.
  TLS_DHE_DSS_WITH_RC4_128_SHA            DHE-DSS-RC4-SHA
 
 =head2 Elliptic curve cipher suites.
- 
+
  TLS_ECDH_RSA_WITH_NULL_SHA              ECDH-RSA-NULL-SHA
  TLS_ECDH_RSA_WITH_RC4_128_SHA           ECDH-RSA-RC4-SHA
  TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA      ECDH-RSA-DES-CBC3-SHA
@@ -548,6 +587,17 @@ Note: these ciphers can also be used in SSL v3.
  TLS_DH_anon_WITH_AES_128_GCM_SHA256       ADH-AES128-GCM-SHA256
  TLS_DH_anon_WITH_AES_256_GCM_SHA384       ADH-AES256-GCM-SHA384
 
+=head2 Camellia HMAC-Based ciphersuites from RFC6367, extending TLS v1.2
+
+ TLS_ECDHE_ECDSA_WITH_CAMELLIA_128_CBC_SHA256 ECDHE-ECDSA-CAMELLIA128-SHA256
+ TLS_ECDHE_ECDSA_WITH_CAMELLIA_256_CBC_SHA384 ECDHE-ECDSA-CAMELLIA256-SHA384
+ TLS_ECDH_ECDSA_WITH_CAMELLIA_128_CBC_SHA256  ECDH-ECDSA-CAMELLIA128-SHA256
+ TLS_ECDH_ECDSA_WITH_CAMELLIA_256_CBC_SHA384  ECDH-ECDSA-CAMELLIA256-SHA384
+ TLS_ECDHE_RSA_WITH_CAMELLIA_128_CBC_SHA256   ECDHE-RSA-CAMELLIA128-SHA256
+ TLS_ECDHE_RSA_WITH_CAMELLIA_256_CBC_SHA384   ECDHE-RSA-CAMELLIA256-SHA384
+ TLS_ECDH_RSA_WITH_CAMELLIA_128_CBC_SHA256    ECDH-RSA-CAMELLIA128-SHA256
+ TLS_ECDH_RSA_WITH_CAMELLIA_256_CBC_SHA384    ECDH-RSA-CAMELLIA256-SHA384
+
 =head2 Pre shared keying (PSK) cipheruites
 
  TLS_PSK_WITH_RC4_128_SHA                  PSK-RC4-SHA
@@ -582,6 +632,11 @@ strength:
 
  openssl ciphers -v 'ALL:!ADH:@STRENGTH'
 
+Include all ciphers except ones with no encryption (eNULL) or no
+authentication (aNULL):
+
+ openssl ciphers -v 'ALL:!aNULL'
+
 Include only 3DES ciphers and then place RSA ciphers last:
 
  openssl ciphers -v '3DES:+RSA'
@@ -597,7 +652,7 @@ encryption.
 
 Set security level to 2 and display all ciphers consistent with level 2:
 
- openssl ciphers -v 'ALL:@SECLEVEL=2'
+ openssl ciphers -s -v 'ALL:@SECLEVEL=2'
 
 =head1 SEE ALSO
 

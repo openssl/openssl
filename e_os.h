@@ -94,20 +94,6 @@ extern "C" {
 #  define NO_SYSLOG
 #endif
   
-#if defined(OPENSSL_SYS_MACINTOSH_CLASSIC)
-# if macintosh==1
-#  ifndef MAC_OS_GUSI_SOURCE
-#    define MAC_OS_pre_X
-#    define NO_SYS_TYPES_H
-#  endif
-#  define NO_SYS_PARAM_H
-#  define NO_CHMOD
-#  define NO_SYSLOG
-#  undef  DEVRANDOM
-#  define GETPID_IS_MEANINGLESS
-# endif
-#endif
-
 /********************************************************************
  The Microsoft section
  ********************************************************************/
@@ -134,6 +120,7 @@ extern "C" {
 #endif
 
 #ifdef WIN32
+#define NO_SYS_UN_H
 #define get_last_sys_error()	GetLastError()
 #define clear_sys_error()	SetLastError(0)
 #if !defined(WINNT)
@@ -156,12 +143,6 @@ extern "C" {
 #define closesocket(s)		close_s(s)
 #define readsocket(s,b,n)	read_s(s,b,n)
 #define writesocket(s,b,n)	send(s,b,n,0)
-#elif defined(MAC_OS_pre_X)
-#define get_last_socket_error()	errno
-#define clear_socket_error()	errno=0
-#define closesocket(s)		MacSocket_close(s)
-#define readsocket(s,b,n)	MacSocket_recv((s),(b),(n),true)
-#define writesocket(s,b,n)	MacSocket_send((s),(b),(n))
 #elif defined(OPENSSL_SYS_VMS)
 #define get_last_socket_error() errno
 #define clear_socket_error()    errno=0
@@ -293,7 +274,7 @@ extern "C" {
 #    ifdef _WIN64
 #      define strlen(s) _strlen31(s)
 /* cut strings to 2GB */
-static unsigned int _strlen31(const char *str)
+static __inline unsigned int _strlen31(const char *str)
 	{
 	unsigned int len=0;
 	while (*str && len<0x80000000U) str++, len++;
@@ -310,7 +291,7 @@ static unsigned int _strlen31(const char *str)
 #      undef isxdigit
 #    endif
 #    if defined(_MSC_VER) && !defined(_WIN32_WCE) && !defined(_DLL) && defined(stdin)
-#      if _MSC_VER>=1300
+#      if _MSC_VER>=1300 && _MSC_VER<1600
 #        undef stdin
 #        undef stdout
 #        undef stderr
@@ -318,7 +299,7 @@ static unsigned int _strlen31(const char *str)
 #        define stdin  (&__iob_func()[0])
 #        define stdout (&__iob_func()[1])
 #        define stderr (&__iob_func()[2])
-#      elif defined(I_CAN_LIVE_WITH_LNK4049)
+#      elif _MSC_VER<1300 && defined(I_CAN_LIVE_WITH_LNK4049)
 #        undef stdin
 #        undef stdout
 #        undef stderr
@@ -378,7 +359,7 @@ static unsigned int _strlen31(const char *str)
 #  define check_winnt() (1)
 #else
 #  define check_winnt() (GetVersion() < 0x80000000)
-#endif 
+#endif
 
 #else /* The non-microsoft world */
 
@@ -489,6 +470,10 @@ static unsigned int _strlen31(const char *str)
 
 /*************/
 
+#if defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_DGRAM)
+#  define OPENSSL_NO_DGRAM
+#endif
+
 #ifdef USE_SOCKETS
 #  if defined(WINDOWS) || defined(MSDOS)
       /* windows world */
@@ -532,14 +517,6 @@ static unsigned int _strlen31(const char *str)
 #      define SHUTDOWN2(fd)		close_s(fd)
 #    endif
 
-#  elif defined(MAC_OS_pre_X)
-
-#    include "MacSocket.h"
-#    define SSLeay_Write(a,b,c)		MacSocket_send((a),(b),(c))
-#    define SSLeay_Read(a,b,c)		MacSocket_recv((a),(b),(c),true)
-#    define SHUTDOWN(fd)		MacSocket_close(fd)
-#    define SHUTDOWN2(fd)		MacSocket_close(fd)
-
 #  elif defined(OPENSSL_SYS_NETWARE)
          /* NetWare uses the WinSock2 interfaces by default, but can be configured for BSD
          */
@@ -579,6 +556,16 @@ static unsigned int _strlen31(const char *str)
 #      include <inet.h>
 #    else
 #      include <sys/socket.h>
+#      ifndef NO_SYS_UN_H
+#        ifdef OPENSSL_SYS_VXWORKS
+#          include <streams/un.h>
+#        else
+#          include <sys/un.h>
+#        endif
+#        ifndef UNIX_PATH_MAX
+#          define UNIX_PATH_MAX sizeof(((struct sockaddr_un *)NULL)->sun_path)
+#        endif
+#      endif
 #      ifdef FILIO_H
 #        include <sys/filio.h> /* Added for FIONBIO under unixware */
 #      endif
@@ -737,10 +724,25 @@ struct servent *getservbyname(const char *name, const char *proto);
 #include <OS.h>
 #endif
 
+#if !defined(inline) && !defined(__cplusplus)
+# if defined(__STDC_VERSION__) && __STDC_VERSION__>=199901L
+   /* do nothing, inline works */
+# elif defined(__GNUC__) && __GNUC__>=2
+#  define inline __inline__
+# elif defined(_MSC_VER)
+  /*
+   * Visual Studio: inline is available in C++ only, however
+   * __inline is available for C, see
+   * http://msdn.microsoft.com/en-us/library/z8y1yy88.aspx
+   */
+#  define inline __inline
+# else
+#  define inline
+# endif
+#endif
 
 #ifdef  __cplusplus
 }
 #endif
 
 #endif
-

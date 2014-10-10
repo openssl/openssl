@@ -325,6 +325,7 @@ int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1, BIGNUM *q2,
 int RSA_X931_generate_key_ex(RSA *rsa, int bits, const BIGNUM *e, BN_GENCB *cb);
 
 int	RSA_check_key(const RSA *);
+int	RSA_check_key_ex(const RSA *, BN_GENCB *cb);
 	/* next 4 return -1 on error */
 int	RSA_public_encrypt(int flen, const unsigned char *from,
 		unsigned char *to, RSA *rsa,int padding);
@@ -522,6 +523,7 @@ void ERR_load_RSA_strings(void);
 #define RSA_F_RSA_ALGOR_TO_MD				 156
 #define RSA_F_RSA_BUILTIN_KEYGEN			 129
 #define RSA_F_RSA_CHECK_KEY				 123
+#define RSA_F_RSA_CHECK_KEY_EX				 160
 #define RSA_F_RSA_CMS_DECRYPT				 159
 #define RSA_F_RSA_EAY_PRIVATE_DECRYPT			 101
 #define RSA_F_RSA_EAY_PRIVATE_ENCRYPT			 102
@@ -614,6 +616,7 @@ void ERR_load_RSA_strings(void);
 #define RSA_R_OAEP_DECODING_ERROR			 121
 #define RSA_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE	 148
 #define RSA_R_PADDING_CHECK_FAILED			 114
+#define RSA_R_PKCS_DECODING_ERROR			 159
 #define RSA_R_P_NOT_PRIME				 128
 #define RSA_R_Q_NOT_PRIME				 129
 #define RSA_R_RSA_OPERATIONS_NOT_SUPPORTED		 130
@@ -622,7 +625,7 @@ void ERR_load_RSA_strings(void);
 #define RSA_R_SSLV3_ROLLBACK_ATTACK			 115
 #define RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD 116
 #define RSA_R_UNKNOWN_ALGORITHM_TYPE			 117
-#define RSA_R_UNKNOWN_DIGEST				 159
+#define RSA_R_UNKNOWN_DIGEST				 166
 #define RSA_R_UNKNOWN_MASK_DIGEST			 151
 #define RSA_R_UNKNOWN_PADDING_TYPE			 118
 #define RSA_R_UNKNOWN_PSS_DIGEST			 152

@@ -71,8 +71,8 @@ struct status_map_st
 
 /* Local function declarations. */
 
-static int TS_status_map_print(BIO *bio, struct status_map_st *a,
-			       ASN1_BIT_STRING *v);
+static int TS_status_map_print(BIO *bio, const struct status_map_st *a,
+			       const ASN1_BIT_STRING *v);
 static int TS_ACCURACY_print_bio(BIO *bio, const TS_ACCURACY *accuracy);
 
 /* Function definitions. */
@@ -105,7 +105,7 @@ int TS_STATUS_INFO_print_bio(BIO *bio, TS_STATUS_INFO *a)
 		"Revocation warning.",
 		"Revoked."
 		};
-	static struct status_map_st failure_map[] =
+	static const struct status_map_st failure_map[] =
 		{
 		{ TS_INFO_BAD_ALG,
 		"unrecognized or unsupported algorithm identifier" },
@@ -162,8 +162,8 @@ int TS_STATUS_INFO_print_bio(BIO *bio, TS_STATUS_INFO *a)
 	return 1;
 	}
 
-static int TS_status_map_print(BIO *bio, struct status_map_st *a,
-			       ASN1_BIT_STRING *v)
+static int TS_status_map_print(BIO *bio, const struct status_map_st *a,
+			       const ASN1_BIT_STRING *v)
 	{
 	int lines = 0;
 

@@ -88,6 +88,7 @@ PROCESSOR=
 # CPUID module collects small commonly used assembler snippets
 CPUID_OBJ= 
 BN_ASM= bn_asm.o
+EC_ASM=
 DES_ENC= des_enc.o fcrypt_b.o
 AES_ENC= aes_core.o aes_cbc.o
 BF_ENC= bf_enc.o
@@ -223,8 +224,8 @@ BUILDENV=	PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)' \
 		EXE_EXT='$(EXE_EXT)' SHARED_LIBS='$(SHARED_LIBS)'	\
 		SHLIB_EXT='$(SHLIB_EXT)' SHLIB_TARGET='$(SHLIB_TARGET)'	\
 		PEX_LIBS='$(PEX_LIBS)' EX_LIBS='$(EX_LIBS)'	\
-		CPUID_OBJ='$(CPUID_OBJ)'			\
-		BN_ASM='$(BN_ASM)' DES_ENC='$(DES_ENC)' 	\
+		CPUID_OBJ='$(CPUID_OBJ)' BN_ASM='$(BN_ASM)'	\
+		EC_ASM='$(EC_ASM)' DES_ENC='$(DES_ENC)' 	\
 		AES_ENC='$(AES_ENC)' CMLL_ENC='$(CMLL_ENC)'	\
 		BF_ENC='$(BF_ENC)' CAST_ENC='$(CAST_ENC)'	\
 		RC4_ENC='$(RC4_ENC)' RC5_ENC='$(RC5_ENC)'	\
@@ -363,7 +364,7 @@ build_fips:
 
 build_crypto:
 	if [ -n "$(FIPSCANLIB)" ]; then \
-		EXCL_OBJ='$(AES_ENC) $(BN_ASM) $(DES_ENC) $(CPUID_OBJ) $(SHA1_ASM_OBJ) $(MODES_ASM_OBJ) $(FIPS_EX_OBJ)' ; export EXCL_OBJ ; \
+		EXCL_OBJ='$(AES_ENC) $(BN_ASM) $(EC_ASM) $(DES_ENC) $(CPUID_OBJ) $(SHA1_ASM_OBJ) $(MODES_ASM_OBJ) $(FIPS_EX_OBJ)' ; export EXCL_OBJ ; \
 		ARX='$(PERL) $${TOP}/util/arx.pl $(AR)' ; \
 	else \
 		ARX='${AR}' ; \
@@ -467,11 +468,11 @@ libssl.pc: Makefile
 	    echo 'libdir=$${exec_prefix}/$(LIBDIR)'; \
 	    echo 'includedir=$${prefix}/include'; \
 	    echo ''; \
-	    echo 'Name: OpenSSL'; \
+	    echo 'Name: OpenSSL-libssl'; \
 	    echo 'Description: Secure Sockets Layer and cryptography libraries'; \
 	    echo 'Version: '$(VERSION); \
-	    echo 'Requires: '; \
-	    echo 'Libs: -L$${libdir} -lssl -lcrypto'; \
+	    echo 'Requires.private: libcrypto'; \
+	    echo 'Libs: -L$${libdir} -lssl'; \
 	    echo 'Libs.private: $(EX_LIBS)'; \
 	    echo 'Cflags: -I$${includedir} $(KRB5_INCLUDES)' ) > libssl.pc
 
@@ -484,10 +485,7 @@ openssl.pc: Makefile
 	    echo 'Name: OpenSSL'; \
 	    echo 'Description: Secure Sockets Layer and cryptography libraries and tools'; \
 	    echo 'Version: '$(VERSION); \
-	    echo 'Requires: '; \
-	    echo 'Libs: -L$${libdir} -lssl -lcrypto'; \
-	    echo 'Libs.private: $(EX_LIBS)'; \
-	    echo 'Cflags: -I$${includedir} $(KRB5_INCLUDES)' ) > openssl.pc
+	    echo 'Requires: libssl libcrypto' ) > openssl.pc
 
 Makefile: Makefile.org Configure config
 	@echo "Makefile is older than Makefile.org, Configure or config."
@@ -500,7 +498,7 @@ libclean:
 clean:	libclean
 	rm -f shlib/*.o *.o core a.out fluff rehash.time testlog make.log cctest cctest.c
 	@set -e; target=clean; $(RECURSIVE_BUILD_CMD)
-	rm -f $(LIBS)
+	rm -f $(LIBS) tags TAGS
 	rm -f openssl.pc libssl.pc libcrypto.pc
 	rm -f speed.* .pure
 	rm -f $(TARFILE)
@@ -560,9 +558,12 @@ depend:
 lint:
 	@set -e; target=lint; $(RECURSIVE_BUILD_CMD)
 
-tags:
-	rm -f TAGS
-	find . -name '[^.]*.[ch]' | xargs etags -a
+tags TAGS: FORCE
+	rm -f TAGS tags
+	-ctags -R .
+	-etags -R .
+
+FORCE:
 
 errors:
 	$(PERL) util/ck_errf.pl -strict */*.c */*/*.c
@@ -710,6 +711,10 @@ install_sw:
 
 install_html_docs:
 	here="`pwd`"; \
+	filecase=; \
+	case "$(PLATFORM)" in DJGPP|Cygwin*|mingw*|darwin*-*-cc) \
+		filecase=-i; \
+	esac; \
 	for subdir in apps crypto ssl; do \
 		mkdir -p $(INSTALL_PREFIX)$(HTMLDIR)/$$subdir; \
 		for i in doc/$$subdir/*.pod; do \
@@ -717,7 +722,7 @@ install_html_docs:
 			echo "installing html/$$fn.$(HTMLSUFFIX)"; \
 			cat $$i \
 			| sed -r 's/L<([^)]*)(\([0-9]\))?\|([^)]*)(\([0-9]\))?>/L<\1|\3>/g' \
-			| pod2html --podroot=doc --htmlroot=.. --podpath=apps:crypto:ssl \
+			| pod2html --podroot=doc --htmlroot=.. --podpath=$$subdir:apps:crypto:ssl \
 			| sed -r 's/<!DOCTYPE.*//g' \
 			> $(INSTALL_PREFIX)$(HTMLDIR)/$$subdir/$$fn.$(HTMLSUFFIX); \
 			$(PERL) util/extract-names.pl < $$i | \
@@ -738,7 +743,7 @@ install_docs:
 	@pod2man="`cd ./util; ./pod2mantest $(PERL)`"; \
 	here="`pwd`"; \
 	filecase=; \
-	case "$(PLATFORM)" in DJGPP|Cygwin*|mingw*) \
+	case "$(PLATFORM)" in DJGPP|Cygwin*|mingw*|darwin*-*-cc) \
 		filecase=-i; \
 	esac; \
 	set -e; for i in doc/apps/*.pod; do \

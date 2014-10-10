@@ -13,7 +13,7 @@ AR=		ar r
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
-TEST=evp_test.c
+TEST=evp_test.c p5_crpt2_test.c
 TESTDATA=evptests.txt
 APPS=
 
@@ -406,7 +406,7 @@ evp_enc.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
 evp_enc.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 evp_enc.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 evp_enc.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-evp_enc.o: ../cryptlib.h evp_enc.c evp_locl.h
+evp_enc.o: ../constant_time_locl.h ../cryptlib.h evp_enc.c evp_locl.h
 evp_err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 evp_err.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 evp_err.o: ../../include/openssl/err.h ../../include/openssl/evp.h

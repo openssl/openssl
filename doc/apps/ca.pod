@@ -13,6 +13,8 @@ B<openssl> B<ca>
 [B<-name section>]
 [B<-gencrl>]
 [B<-revoke file>]
+[B<-status serial>]
+[B<-updatedb>]
 [B<-crl_reason reason>]
 [B<-crl_hold instruction>]
 [B<-crl_compromise time>]
@@ -26,6 +28,7 @@ B<openssl> B<ca>
 [B<-md arg>]
 [B<-policy arg>]
 [B<-keyfile arg>]
+[B<-keyform PEM|DER>]
 [B<-key arg>]
 [B<-passin arg>]
 [B<-cert file>]
@@ -83,7 +86,7 @@ a single self signed certificate to be signed by the CA.
 
 a file containing a single Netscape signed public key and challenge
 and additional field values to be signed by the CA. See the B<SPKAC FORMAT>
-section for information on the required format.
+section for information on the required input and output format.
 
 =item B<-infiles>
 
@@ -94,7 +97,7 @@ are assumed to the the names of files containing certificate requests.
 
 the output file to output certificates to. The default is standard
 output. The certificate details will also be printed out to this
-file.
+file in PEM format (except that B<-spkac> outputs DER format).
 
 =item B<-outdir directory>
 
@@ -110,6 +113,11 @@ the CA certificate file.
 
 the private key to sign requests with.
 
+=item B<-keyform PEM|DER>
+
+the format of the data in the private key file.
+The default is PEM.
+
 =item B<-key password>
 
 the password used to encrypt the private key. Since on some
@@ -120,7 +128,7 @@ the 'ps' utility) this option should be used with caution.
 
 indicates the issued certificates are to be signed with the key
 the certificate requests were signed with (given with B<-keyfile>).
-Cerificate requests signed with a different key are ignored.  If
+Certificate requests signed with a different key are ignored.  If
 B<-spkac>, B<-ss_cert> or B<-gencrl> are given, B<-selfsign> is
 ignored.
 
@@ -237,7 +245,7 @@ configuration file, must be valid UTF8 strings.
 
 =item B<-multivalue-rdn>
 
-this option causes the -subj argument to be interpretedt with full
+This option causes the -subj argument to be interpretedt with full
 support for multivalued RDNs. Example:
 
 I</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
@@ -267,6 +275,15 @@ the number of hours before the next CRL is due.
 
 a filename containing a certificate to revoke.
 
+=item B<-status serial>
+
+displays the revocation status of the certificate with the specified
+serial number and exits.
+
+=item B<-updatedb>
+
+Updates the database index to purge expired certificates.
+
 =item B<-crl_reason reason>
 
 revocation reason, where B<reason> is one of: B<unspecified>, B<keyCompromise>,
@@ -274,7 +291,7 @@ B<CACompromise>, B<affiliationChanged>, B<superseded>, B<cessationOfOperation>,
 B<certificateHold> or B<removeFromCRL>. The matching of B<reason> is case
 insensitive. Setting any revocation reason will make the CRL v2.
 
-In practive B<removeFromCRL> is not particularly useful because it is only used
+In practice B<removeFromCRL> is not particularly useful because it is only used
 in delta CRLs which are not currently implemented.
 
 =item B<-crl_hold instruction>
@@ -499,6 +516,10 @@ the SPKAC and also the required DN components as name value pairs.
 If you need to include the same component twice then it can be
 preceded by a number and a '.'.
 
+When processing SPKAC format, the output is DER if the B<-out>
+flag is used, but PEM format if sending to stdout or the B<-outdir>
+flag is used.
+
 =head1 EXAMPLES
 
 Note: these examples assume that the B<ca> directory structure is
@@ -630,7 +651,7 @@ RFCs, regardless the contents of the request' subject the B<-noemailDN>
 option can be used. The behaviour should be more friendly and
 configurable.
 
-Cancelling some commands by refusing to certify a certificate can
+Canceling some commands by refusing to certify a certificate can
 create an empty file.
 
 =head1 WARNINGS
@@ -649,7 +670,7 @@ The B<copy_extensions> option should be used with caution. If care is
 not taken then it can be a security risk. For example if a certificate
 request contains a basicConstraints extension with CA:TRUE and the
 B<copy_extensions> value is set to B<copyall> and the user does not spot
-this when the certificate is displayed then this will hand the requestor
+this when the certificate is displayed then this will hand the requester
 a valid CA certificate.
 
 This situation can be avoided by setting B<copy_extensions> to B<copy>

@@ -233,10 +233,6 @@ DECLARE_PKCS12_STACK_OF(PKCS7)
 		(OBJ_obj2nid((a)->type) == NID_pkcs7_signedAndEnveloped)
 #define PKCS7_type_is_data(a)   (OBJ_obj2nid((a)->type) == NID_pkcs7_data)
 #define PKCS7_type_is_digest(a)   (OBJ_obj2nid((a)->type) == NID_pkcs7_digest)
-#define PKCS7_type_is_encrypted(a) \
-		(OBJ_obj2nid((a)->type) == NID_pkcs7_encrypted)
-
-#define PKCS7_type_is_digest(a)   (OBJ_obj2nid((a)->type) == NID_pkcs7_digest)
 
 #define PKCS7_set_detached(p,v) \
 		PKCS7_ctrl(p,PKCS7_OP_SET_DETACHED_SIGNATURE,v,NULL)
@@ -456,6 +452,7 @@ void ERR_load_PKCS7_strings(void);
 #define PKCS7_R_ERROR_SETTING_CIPHER			 121
 #define PKCS7_R_INVALID_MIME_TYPE			 131
 #define PKCS7_R_INVALID_NULL_POINTER			 143
+#define PKCS7_R_INVALID_SIGNED_DATA_TYPE		 155
 #define PKCS7_R_MIME_NO_CONTENT_TYPE			 132
 #define PKCS7_R_MIME_PARSE_ERROR			 133
 #define PKCS7_R_MIME_SIG_PARSE_ERROR			 134

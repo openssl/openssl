@@ -56,7 +56,6 @@
  * [including the GNU Public Licence.]
  */
 
-#include <stdio.h>
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
@@ -68,15 +67,13 @@ int BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 	int ret = 0;
 	BIGNUM *tmp,*rr;
 
-#ifdef BN_COUNT
-	fprintf(stderr,"BN_sqr %d * %d\n",a->top,a->top);
-#endif
 	bn_check_top(a);
 
 	al=a->top;
 	if (al <= 0)
 		{
 		r->top=0;
+		r->neg = 0;
 		return 1;
 		}
 
@@ -209,9 +206,6 @@ void bn_sqr_recursive(BN_ULONG *r, const BN_ULONG *a, int n2, BN_ULONG *t)
 	int zero,c1;
 	BN_ULONG ln,lo,*p;
 
-#ifdef BN_COUNT
-	fprintf(stderr," bn_sqr_recursive %d * %d\n",n2,n2);
-#endif
 	if (n2 == 4)
 		{
 #ifndef BN_SQR_COMBA

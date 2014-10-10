@@ -6,6 +6,10 @@ open STDOUT,">$output";
 
 $code.=<<___;
 	.text
+
+	.if	.ASSEMBLER_VERSION<7000000
+	.asg	0,__TI_EABI__
+	.endif
 	.if	__TI_EABI__
 	.asg	OPENSSL_rdtsc,_OPENSSL_rdtsc
 	.asg	OPENSSL_cleanse,_OPENSSL_cleanse

@@ -56,8 +56,15 @@ if (!$avx && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
 
 if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	   `ml64 2>&1` =~ /Version ([0-9]+)\./) {
-	$avx = ($1>=10) + ($1>=11);
+	$avx = ($1>=10) + ($1>=12);
 }
+
+if (!$avx && `$ENV{CC} -v 2>&1` =~ /(^clang version|based on LLVM) ([3-9]\.[0-9]+)/) {
+	$avx = ($2>=3.0) + ($2>3.0);
+}
+
+$shaext=$avx;	### set to zero if compiling for 1.0.1
+$avx=1		if (!$shaext && $avx);
 
 open OUT,"| \"$^X\" $xlate $flavour $output";
 *STDOUT=*OUT;
@@ -106,14 +113,22 @@ $code=<<___;
 .align	16
 $func:
 ___
-$code.=<<___ if ($avx);
+						if ($avx) {
+$code.=<<___;
 	lea	OPENSSL_ia32cap_P(%rip),%r11
 	mov	\$1,%eax
 	cmp	\$0,`$win64?"%rcx":"%rdi"`
 	je	.Lprobe
 	mov	0(%r11),%eax
-	mov	4(%r11),%r10d
-	mov	8(%r11),%r11d
+	mov	4(%r11),%r10
+___
+$code.=<<___ if ($shaext);
+	bt	\$61,%r10			# check for SHA
+	jc	${func}_shaext
+___
+$code.=<<___;
+	mov	%r10,%r11
+	shr	\$32,%r11
 
 	test	\$`1<<11`,%r10d			# check for XOP
 	jnz	${func}_xop
@@ -123,7 +138,7 @@ $code.=<<___ if ($avx>1);
 	cmp	\$`1<<8|1<<5|1<<3`,%r11d
 	je	${func}_avx2
 ___
-$code.=<<___ if ($avx);
+$code.=<<___;
 	and	\$`1<<30`,%eax			# mask "Intel CPU" bit
 	and	\$`1<<28|1<<9`,%r10d		# mask AVX+SSSE3 bits
 	or	%eax,%r10d
@@ -131,6 +146,7 @@ $code.=<<___ if ($avx);
 	je	${func}_avx
 	ud2
 ___
+						}
 $code.=<<___;
 	xor	%eax,%eax
 	cmp	\$0,`$win64?"%rcx":"%rdi"`
@@ -1196,6 +1212,289 @@ $code.=<<___;
 .size	${func}_avx2,.-${func}_avx2
 ___
 }}
+}}
+{{
+my ($in0,$out,$len,$key,$ivp,$ctx,$inp)=("%rdi","%rsi","%rdx","%rcx","%r8","%r9","%r10");
+
+my ($rounds,$Tbl)=("%r11d","%rbx");
+
+my ($iv,$in,$rndkey0)=map("%xmm$_",(6,14,15));
+my @rndkey=("%xmm4","%xmm5");
+my $r=0;
+my $sn=0;
+
+my ($Wi,$ABEF,$CDGH,$TMP,$BSWAP,$ABEF_SAVE,$CDGH_SAVE)=map("%xmm$_",(0..3,7..9));
+my @MSG=map("%xmm$_",(10..13));
+
+my $aesenc=sub {
+  use integer;
+  my ($n,$k)=($r/10,$r%10);
+    if ($k==0) {
+      $code.=<<___;
+	movups		`16*$n`($in0),$in		# load input
+	xorps		$rndkey0,$in
+___
+      $code.=<<___ if ($n);
+	movups		$iv,`16*($n-1)`($out,$in0)	# write output
+___
+      $code.=<<___;
+	xorps		$in,$iv
+	movups		`32+16*$k-112`($key),$rndkey[1]
+	aesenc		$rndkey[0],$iv
+___
+    } elsif ($k==9) {
+      $sn++;
+      $code.=<<___;
+	cmp		\$11,$rounds
+	jb		.Laesenclast$sn
+	movups		`32+16*($k+0)-112`($key),$rndkey[1]
+	aesenc		$rndkey[0],$iv
+	movups		`32+16*($k+1)-112`($key),$rndkey[0]
+	aesenc		$rndkey[1],$iv
+	je		.Laesenclast$sn
+	movups		`32+16*($k+2)-112`($key),$rndkey[1]
+	aesenc		$rndkey[0],$iv
+	movups		`32+16*($k+3)-112`($key),$rndkey[0]
+	aesenc		$rndkey[1],$iv
+.Laesenclast$sn:
+	aesenclast	$rndkey[0],$iv
+	movups		16-112($key),$rndkey[1]		# forward reference
+	nop
+___
+    } else {
+      $code.=<<___;
+	movups		`32+16*$k-112`($key),$rndkey[1]
+	aesenc		$rndkey[0],$iv
+___
+    }
+    $r++;	unshift(@rndkey,pop(@rndkey));
+};
+
+if ($shaext) {
+my $Tbl="%rax";
+
+$code.=<<___;
+.type	${func}_shaext,\@function,6
+.align	32
+${func}_shaext:
+	mov	`($win64?56:8)`(%rsp),$inp	# load 7th argument
+___
+$code.=<<___ if ($win64);
+	lea	`-8-10*16`(%rsp),%rsp
+	movaps	%xmm6,-8-10*16(%rax)
+	movaps	%xmm7,-8-9*16(%rax)
+	movaps	%xmm8,-8-8*16(%rax)
+	movaps	%xmm9,-8-7*16(%rax)
+	movaps	%xmm10,-8-6*16(%rax)
+	movaps	%xmm11,-8-5*16(%rax)
+	movaps	%xmm12,-8-4*16(%rax)
+	movaps	%xmm13,-8-3*16(%rax)
+	movaps	%xmm14,-8-2*16(%rax)
+	movaps	%xmm15,-8-1*16(%rax)
+.Lprologue_shaext:
+___
+$code.=<<___;
+	lea		K256+0x80(%rip),$Tbl
+	movdqu		($ctx),$ABEF		# DCBA
+	movdqu		16($ctx),$CDGH		# HGFE
+	movdqa		0x200-0x80($Tbl),$TMP	# byte swap mask
+
+	mov		240($key),$rounds
+	sub		$in0,$out
+	movups		($key),$rndkey0		# $key[0]
+	movups		16($key),$rndkey[0]	# forward reference
+	lea		112($key),$key		# size optimization
+
+	pshufd		\$0x1b,$ABEF,$Wi	# ABCD
+	pshufd		\$0xb1,$ABEF,$ABEF	# CDAB
+	pshufd		\$0x1b,$CDGH,$CDGH	# EFGH
+	movdqa		$TMP,$BSWAP		# offload
+	palignr		\$8,$CDGH,$ABEF		# ABEF
+	punpcklqdq	$Wi,$CDGH		# CDGH
+
+	jmp	.Loop_shaext
+
+.align	16
+.Loop_shaext:
+	movdqu		($inp),@MSG[0]
+	movdqu		0x10($inp),@MSG[1]
+	movdqu		0x20($inp),@MSG[2]
+	pshufb		$TMP,@MSG[0]
+	movdqu		0x30($inp),@MSG[3]
+
+	movdqa		0*32-0x80($Tbl),$Wi
+	paddd		@MSG[0],$Wi
+	pshufb		$TMP,@MSG[1]
+	movdqa		$CDGH,$CDGH_SAVE	# offload
+	movdqa		$ABEF,$ABEF_SAVE	# offload
+___
+	&$aesenc();
+$code.=<<___;
+	sha256rnds2	$ABEF,$CDGH		# 0-3
+	pshufd		\$0x0e,$Wi,$Wi
+___
+	&$aesenc();
+$code.=<<___;
+	sha256rnds2	$CDGH,$ABEF
+
+	movdqa		1*32-0x80($Tbl),$Wi
+	paddd		@MSG[1],$Wi
+	pshufb		$TMP,@MSG[2]
+	lea		0x40($inp),$inp
+___
+	&$aesenc();
+$code.=<<___;
+	sha256rnds2	$ABEF,$CDGH		# 4-7
+	pshufd		\$0x0e,$Wi,$Wi
+___
+	&$aesenc();
+$code.=<<___;
+	sha256rnds2	$CDGH,$ABEF
+
+	movdqa		2*32-0x80($Tbl),$Wi
+	paddd		@MSG[2],$Wi
+	pshufb		$TMP,@MSG[3]
+	sha256msg1	@MSG[1],@MSG[0]
+___
+	&$aesenc();
+$code.=<<___;
+	sha256rnds2	$ABEF,$CDGH		# 8-11
+	pshufd		\$0x0e,$Wi,$Wi
+	movdqa		@MSG[3],$TMP
+	palignr		\$4,@MSG[2],$TMP
+	paddd		$TMP,@MSG[0]
+___
+	&$aesenc();
+$code.=<<___;
+	sha256rnds2	$CDGH,$ABEF
+
+	movdqa		3*32-0x80($Tbl),$Wi
+	paddd		@MSG[3],$Wi
+	sha256msg2	@MSG[3],@MSG[0]
+	sha256msg1	@MSG[2],@MSG[1]
+___
+	&$aesenc();
+$code.=<<___;
+	sha256rnds2	$ABEF,$CDGH		# 12-15
+	pshufd		\$0x0e,$Wi,$Wi
+___
+	&$aesenc();
+$code.=<<___;
+	movdqa		@MSG[0],$TMP
+	palignr		\$4,@MSG[3],$TMP
+	paddd		$TMP,@MSG[1]
+	sha256rnds2	$CDGH,$ABEF
+___
+for($i=4;$i<16-3;$i++) {
+	&$aesenc()	if (($r%10)==0);
+$code.=<<___;
+	movdqa		$i*32-0x80($Tbl),$Wi
+	paddd		@MSG[0],$Wi
+	sha256msg2	@MSG[0],@MSG[1]
+	sha256msg1	@MSG[3],@MSG[2]
+___
+	&$aesenc();
+$code.=<<___;
+	sha256rnds2	$ABEF,$CDGH		# 16-19...
+	pshufd		\$0x0e,$Wi,$Wi
+	movdqa		@MSG[1],$TMP
+	palignr		\$4,@MSG[0],$TMP
+	paddd		$TMP,@MSG[2]
+___
+	&$aesenc();
+	&$aesenc()	if ($r==19);
+$code.=<<___;
+	sha256rnds2	$CDGH,$ABEF
+___
+	push(@MSG,shift(@MSG));
+}
+$code.=<<___;
+	movdqa		13*32-0x80($Tbl),$Wi
+	paddd		@MSG[0],$Wi
+	sha256msg2	@MSG[0],@MSG[1]
+	sha256msg1	@MSG[3],@MSG[2]
+___
+	&$aesenc();
+$code.=<<___;
+	sha256rnds2	$ABEF,$CDGH		# 52-55
+	pshufd		\$0x0e,$Wi,$Wi
+	movdqa		@MSG[1],$TMP
+	palignr		\$4,@MSG[0],$TMP
+	paddd		$TMP,@MSG[2]
+___
+	&$aesenc();
+	&$aesenc();
+$code.=<<___;
+	sha256rnds2	$CDGH,$ABEF
+
+	movdqa		14*32-0x80($Tbl),$Wi
+	paddd		@MSG[1],$Wi
+	sha256msg2	@MSG[1],@MSG[2]
+	movdqa		$BSWAP,$TMP
+___
+	&$aesenc();
+$code.=<<___;
+	sha256rnds2	$ABEF,$CDGH		# 56-59
+	pshufd		\$0x0e,$Wi,$Wi
+___
+	&$aesenc();
+$code.=<<___;
+	sha256rnds2	$CDGH,$ABEF
+
+	movdqa		15*32-0x80($Tbl),$Wi
+	paddd		@MSG[2],$Wi
+___
+	&$aesenc();
+	&$aesenc();
+$code.=<<___;
+	sha256rnds2	$ABEF,$CDGH		# 60-63
+	pshufd		\$0x0e,$Wi,$Wi
+___
+	&$aesenc();
+$code.=<<___;
+	sha256rnds2	$CDGH,$ABEF
+	#pxor		$CDGH,$rndkey0		# black magic
+___
+	while ($r<40)	{ &$aesenc(); }		# remaining aesenc's
+$code.=<<___;
+	#xorps		$CDGH,$rndkey0		# black magic
+	paddd		$CDGH_SAVE,$CDGH
+	paddd		$ABEF_SAVE,$ABEF
+
+	dec		$len
+	movups		$iv,48($out,$in0)	# write output
+	lea		64($in0),$in0
+	jnz		.Loop_shaext
+
+	pshufd		\$0xb1,$CDGH,$CDGH	# DCHG
+	pshufd		\$0x1b,$ABEF,$TMP	# FEBA
+	pshufd		\$0xb1,$ABEF,$ABEF	# BAFE
+	punpckhqdq	$CDGH,$ABEF		# DCBA
+	palignr		\$8,$TMP,$CDGH		# HGFE
+
+	movups		$iv,($ivp)		# write IV
+	movdqu		$ABEF,($ctx)
+	movdqu		$CDGH,16($ctx)
+___
+$code.=<<___ if ($win64);
+	movaps	0*16(%rsp),%xmm6
+	movaps	1*16(%rsp),%xmm7
+	movaps	2*16(%rsp),%xmm8
+	movaps	3*16(%rsp),%xmm9
+	movaps	4*16(%rsp),%xmm10
+	movaps	5*16(%rsp),%xmm11
+	movaps	6*16(%rsp),%xmm12
+	movaps	7*16(%rsp),%xmm13
+	movaps	8*16(%rsp),%xmm14
+	movaps	9*16(%rsp),%xmm15
+	lea	8+10*16(%rsp),%rsp
+.Lepilogue_shaext:
+___
+$code.=<<___;
+	ret
+.size	${func}_shaext,.-${func}_shaext
+___
+}
 }}}}}
 
 # EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
@@ -1239,6 +1538,19 @@ se_handler:
 	lea	(%rsi,%r10),%r10	# epilogue label
 	cmp	%r10,%rbx		# context->Rip>=epilogue label
 	jae	.Lin_prologue
+___
+$code.=<<___ if ($shaext);
+	lea	aesni_cbc_sha256_enc_shaext(%rip),%r10
+	cmp	%r10,%rbx
+	jb	.Lnot_in_shaext
+
+	lea	(%rax),%rsi
+	lea	512($context),%rdi	# &context.Xmm6
+	mov	\$20,%ecx
+	.long	0xa548f3fc		# cld; rep movsq
+	lea	168(%rax),%rax		# adjust stack pointer
+	jmp	.Lin_prologue
+.Lnot_in_shaext:
 ___
 $code.=<<___ if ($avx>1);
 	lea	.Lavx2_shortcut(%rip),%r10
@@ -1326,6 +1638,11 @@ $code.=<<___ if ($avx>1);
 	.rva	.LSEH_end_${func}_avx2
 	.rva	.LSEH_info_${func}_avx2
 ___
+$code.=<<___ if ($shaext);
+	.rva	.LSEH_begin_${func}_shaext
+	.rva	.LSEH_end_${func}_shaext
+	.rva	.LSEH_info_${func}_shaext
+___
 $code.=<<___ if ($avx);
 .section	.xdata
 .align	8
@@ -1345,8 +1662,47 @@ $code.=<<___ if ($avx>1);
 	.rva	se_handler
 	.rva	.Lprologue_avx2,.Lepilogue_avx2		# HandlerData[]
 ___
+$code.=<<___ if ($shaext);
+.LSEH_info_${func}_shaext:
+	.byte	9,0,0,0
+	.rva	se_handler
+	.rva	.Lprologue_shaext,.Lepilogue_shaext	# HandlerData[]
+___
+}
+
+####################################################################
+sub rex {
+  local *opcode=shift;
+  my ($dst,$src)=@_;
+  my $rex=0;
+
+    $rex|=0x04			if($dst>=8);
+    $rex|=0x01			if($src>=8);
+    unshift @opcode,$rex|0x40	if($rex);
+}
+
+{
+  my %opcodelet = (
+		"sha256rnds2" => 0xcb,
+  		"sha256msg1"  => 0xcc,
+		"sha256msg2"  => 0xcd	);
+
+  sub sha256op38 {
+    my $instr = shift;
+
+    if (defined($opcodelet{$instr}) && @_[0] =~ /%xmm([0-9]+),\s*%xmm([0-9]+)/) {
+      my @opcode=(0x0f,0x38);
+	rex(\@opcode,$2,$1);
+	push @opcode,$opcodelet{$instr};
+	push @opcode,0xc0|($1&7)|(($2&7)<<3);		# ModR/M
+	return ".byte\t".join(',',@opcode);
+    } else {
+	return $instr."\t".@_[0];
+    }
+  }
 }
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
+$code =~ s/\b(sha256[^\s]*)\s+(.*)/sha256op38($1,$2)/gem;
 print $code;
 close STDOUT;

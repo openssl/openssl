@@ -135,9 +135,8 @@ depend on a global variable.
 
 DES_set_odd_parity() sets the parity of the passed I<key> to odd.
 
-DES_is_weak_key() returns 1 is the passed key is a weak key, 0 if it
-is ok.  The probability that a randomly generated key is weak is
-1/2^52, so it is not really worth checking for them.
+DES_is_weak_key() returns 1 if the passed key is a weak key, 0 if it
+is ok.  
 
 The following routines mostly operate on an input and output stream of
 I<DES_cblock>s.
@@ -181,7 +180,7 @@ of 24 bytes.  This is much better than CBC DES.
 
 DES_ede3_cbc_encrypt() implements outer triple CBC DES encryption with
 three keys. This means that each DES operation inside the CBC mode is
-really an C<C=E(ks3,D(ks2,E(ks1,M)))>.  This mode is used by SSL.
+an C<C=E(ks3,D(ks2,E(ks1,M)))>.  This mode is used by SSL.
 
 The DES_ede2_cbc_encrypt() macro implements two-key Triple-DES by
 reusing I<ks1> for the final encryption.  C<C=E(ks1,D(ks2,E(ks1,M)))>.
@@ -280,13 +279,6 @@ DES_enc_read() and DES_end_write().  If set to I<DES_PCBC_MODE> (the
 default), DES_pcbc_encrypt is used.  If set to I<DES_CBC_MODE>
 DES_cbc_encrypt is used.
 
-=head1 NOTES
-
-Single-key DES is insecure due to its short key size.  ECB mode is
-not suitable for most applications; see L<des_modes(7)|des_modes(7)>.
-
-The L<evp(3)|evp(3)> library provides higher-level encryption functions.
-
 =head1 BUGS
 
 DES_3cbc_encrypt() is flawed and must not be used in applications.
@@ -315,9 +307,14 @@ ANSI X3.106
 The B<des> library was written to be source code compatible with
 the MIT Kerberos library.
 
-=head1 SEE ALSO
+=head1 NOTES
 
-crypt(3), L<des_modes(7)|des_modes(7)>, L<evp(3)|evp(3)>, L<rand(3)|rand(3)>
+Applications should use the higher level functions
+L<EVP_EncryptInit(3)|EVP_EncryptInit(3)> etc. instead of calling these
+functions directly.
+
+Single-key DES is insecure due to its short key size.  ECB mode is
+not suitable for most applications; see L<des_modes(7)|des_modes(7)>.
 
 =head1 HISTORY
 
@@ -354,5 +351,10 @@ MIT library.
 
 Eric Young (eay@cryptsoft.com). Modified for the OpenSSL project
 (http://www.openssl.org).
+
+=head1 SEE ALSO
+
+L<des_modes(7)|des_modes(7)>,
+L<EVP_EncryptInit(3)|EVP_EncryptInit(3)>
 
 =cut

@@ -111,7 +111,6 @@
 
 #define OPENSSL_FIPSAPI
 
-#include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
@@ -494,7 +493,7 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 	if (padding == RSA_X931_PADDING)
 		{
 		BN_sub(f, rsa->n, ret);
-		if (BN_cmp(ret, f))
+		if (BN_cmp(ret, f) > 0)
 			res = f;
 		else
 			res = ret;

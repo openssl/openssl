@@ -1,3 +1,9 @@
+NOTE:
+	This is a planned replacement for X509_STORE.
+	It is incomplete, has compile errors, and is
+	not built as part of the standard configuration.
+
+
 The STORE type
 ==============
 

@@ -177,8 +177,7 @@ int fbytes(unsigned char *buf, int num)
 		ret = 0;
 	else 
 		ret = 1;
-	if (tmp)
-		BN_free(tmp);
+	BN_free(tmp);
 	return ret;
 	}
 

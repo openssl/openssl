@@ -296,7 +296,7 @@ end:
 	}
 #endif
 
-int SSL_use_RSAPrivateKey_ASN1(SSL *ssl, unsigned char *d, long len)
+int SSL_use_RSAPrivateKey_ASN1(SSL *ssl, const unsigned char *d, long len)
 	{
 	int ret;
 	const unsigned char *p;
@@ -811,9 +811,9 @@ end:
 #ifndef OPENSSL_NO_TLSEXT
 static int serverinfo_find_extension(const unsigned char *serverinfo,
 				     size_t serverinfo_length,
-				     unsigned short extension_type,
+				     unsigned int extension_type,
 				     const unsigned char **extension_data,
-				     unsigned short *extension_length)
+				     size_t *extension_length)
 	{
 	*extension_data = NULL;
 	*extension_length = 0;
@@ -821,8 +821,8 @@ static int serverinfo_find_extension(const unsigned char *serverinfo,
 		return 0;
 	for (;;)
 		{
-		unsigned short type = 0; /* uint16 */
-		unsigned short len = 0;  /* uint16 */
+		unsigned int type = 0;
+		size_t len = 0;
 
 		/* end of serverinfo */
 		if (serverinfo_length == 0)
@@ -858,12 +858,11 @@ static int serverinfo_find_extension(const unsigned char *serverinfo,
 	return 0; /* Error */
 	}
 
-static int serverinfo_srv_first_cb(SSL *s, unsigned short ext_type,
+static int serverinfo_srv_parse_cb(SSL *s, unsigned int ext_type,
 				   const unsigned char *in,
-				   unsigned short inlen, int *al,
+				   size_t inlen, int *al,
 				   void *arg)
 	{
-	size_t i = 0;
 
 	if (inlen != 0)
 		{
@@ -871,53 +870,15 @@ static int serverinfo_srv_first_cb(SSL *s, unsigned short ext_type,
 		return 0;
 		}
 
-	/* if already in list, error out */
-	for (i = 0; i < s->s3->serverinfo_client_tlsext_custom_types_count; i++)
-		{
-		if (s->s3->serverinfo_client_tlsext_custom_types[i] == ext_type)
-			{
-			*al = SSL_AD_DECODE_ERROR;
-			return 0;
-			}
-		}
-	s->s3->serverinfo_client_tlsext_custom_types_count++;
-	s->s3->serverinfo_client_tlsext_custom_types = OPENSSL_realloc(
-	s->s3->serverinfo_client_tlsext_custom_types,
-	s->s3->serverinfo_client_tlsext_custom_types_count * 2);
-	if (s->s3->serverinfo_client_tlsext_custom_types == NULL)
-		{
-		s->s3->serverinfo_client_tlsext_custom_types_count = 0;
-		*al = TLS1_AD_INTERNAL_ERROR;
-		return 0;
-		}
-	s->s3->serverinfo_client_tlsext_custom_types[
-	s->s3->serverinfo_client_tlsext_custom_types_count - 1] = ext_type;
-
 	return 1;
 	}
 
-static int serverinfo_srv_second_cb(SSL *s, unsigned short ext_type,
-				    const unsigned char **out, unsigned short *outlen,
-				    int *al, void *arg)
+static int serverinfo_srv_add_cb(SSL *s, unsigned int ext_type,
+			    	 const unsigned char **out, size_t *outlen,
+			 	 int *al, void *arg)
 	{
 	const unsigned char *serverinfo = NULL;
 	size_t serverinfo_length = 0;
-	size_t i = 0;
-	unsigned int match = 0;
-	/* Did the client send a TLS extension for this type? */
-	for (i = 0; i < s->s3->serverinfo_client_tlsext_custom_types_count; i++)
-		{
-		if (s->s3->serverinfo_client_tlsext_custom_types[i] == ext_type)
-			{
-			match = 1;
-			break;
-			}
-		}
-	if (!match)
-		{
-		/* extension not sent by client...don't send extension */
-		return -1;
-		}
 
 	/* Is there serverinfo data for the chosen server cert? */
 	if ((ssl_get_server_cert_serverinfo(s, &serverinfo,
@@ -945,8 +906,8 @@ static int serverinfo_process_buffer(const unsigned char *serverinfo,
 		return 0;
 	for (;;)
 		{
-		unsigned short ext_type = 0; /* uint16 */
-		unsigned short len = 0;  /* uint16 */
+		unsigned int ext_type = 0;
+		size_t len = 0;
 
 		/* end of serverinfo */
 		if (serverinfo_length == 0)
@@ -959,9 +920,11 @@ static int serverinfo_process_buffer(const unsigned char *serverinfo,
 
 		/* Register callbacks for extensions */
 		ext_type = (serverinfo[0] << 8) + serverinfo[1];
-		if (ctx && !SSL_CTX_set_custom_srv_ext(ctx, ext_type, 
-						       serverinfo_srv_first_cb,
-						       serverinfo_srv_second_cb, NULL))
+		if (ctx && !SSL_CTX_add_server_custom_ext(ctx, ext_type, 
+							  serverinfo_srv_add_cb,
+							  NULL, NULL,
+							  serverinfo_srv_parse_cb, 
+							  NULL))
 			return 0;
 
 		serverinfo += 2;

@@ -269,7 +269,7 @@ static int pkey_ctrl_gost(EVP_PKEY *pkey, int op,
 		case ASN1_PKEY_CTRL_CMS_ENVELOPE:
 			if (arg1 == 0)
 				{
-				X509_ALGOR *alg;
+				X509_ALGOR *alg = NULL;
 				ASN1_STRING * params = encode_gost_algor_params(pkey);
 				if (!params) 
 					{
@@ -624,6 +624,12 @@ static int pub_decode_gost94(EVP_PKEY *pk, X509_PUBKEY *pub)
 		return 0;
 		}	
 	databuf = OPENSSL_malloc(octet->length);
+	if (databuf == NULL)
+		{
+		GOSTerr(GOST_F_PUB_DECODE_GOST94,ERR_R_MALLOC_FAILURE);
+		ASN1_OCTET_STRING_free(octet);
+		return 0;
+		}
 	for (i=0,j=octet->length-1;i<octet->length;i++,j--)
 		{
 		databuf[j]=octet->data[i];
@@ -655,8 +661,19 @@ static int pub_encode_gost94(X509_PUBKEY *pub,const EVP_PKEY *pk)
 		}	
 	data_len = BN_num_bytes(dsa->pub_key);
 	databuf = OPENSSL_malloc(data_len);
+	if (databuf == NULL)
+		{
+		GOSTerr(GOST_F_PUB_ENCODE_GOST94,ERR_R_MALLOC_FAILURE);
+		return 0;
+		}
 	BN_bn2bin(dsa->pub_key,databuf);
 	octet = ASN1_OCTET_STRING_new();
+	if (octet == NULL)
+		{
+		GOSTerr(GOST_F_PUB_ENCODE_GOST94,ERR_R_MALLOC_FAILURE);
+		OPENSSL_free(databuf);
+		return 0;
+		}
 	ASN1_STRING_set(octet,NULL,data_len);
 	sptr = ASN1_STRING_data(octet);
 	for (i=0,j=data_len-1; i< data_len;i++,j--)
@@ -695,6 +712,12 @@ static int pub_decode_gost01(EVP_PKEY *pk,X509_PUBKEY *pub)
 		return 0;
 		}	
 	databuf = OPENSSL_malloc(octet->length);
+	if (databuf == NULL)
+		{
+		GOSTerr(GOST_F_PUB_DECODE_GOST01,ERR_R_MALLOC_FAILURE);
+		ASN1_OCTET_STRING_free(octet);
+		return 0;
+		}
 	for (i=0,j=octet->length-1;i<octet->length;i++,j--)
 		{
 		databuf[j]=octet->data[i];
@@ -756,6 +779,7 @@ static int pub_encode_gost01(X509_PUBKEY *pub,const EVP_PKEY *pk)
 		{
 		GOSTerr(GOST_F_PUB_ENCODE_GOST01,
 			GOST_R_PUBLIC_KEY_UNDEFINED);
+		BN_free(order);
 		return 0;
 		}	
 	X=BN_new();
@@ -765,6 +789,13 @@ static int pub_encode_gost01(X509_PUBKEY *pub,const EVP_PKEY *pk)
 	data_len = 2*BN_num_bytes(order);
 	BN_free(order);
 	databuf = OPENSSL_malloc(data_len);
+	if (databuf == NULL)
+		{
+		GOSTerr(GOST_F_PUB_ENCODE_GOST01,ERR_R_MALLOC_FAILURE);
+		BN_free(X);
+		BN_free(Y);
+		return 0;
+		}
 	memset(databuf,0,data_len);
 	
 	store_bignum(X,databuf+data_len/2,data_len/2);
@@ -773,6 +804,12 @@ static int pub_encode_gost01(X509_PUBKEY *pub,const EVP_PKEY *pk)
 	BN_free(X);
 	BN_free(Y);
 	octet = ASN1_OCTET_STRING_new();
+	if (octet == NULL)
+		{
+		GOSTerr(GOST_F_PUB_ENCODE_GOST01,ERR_R_MALLOC_FAILURE);
+		OPENSSL_free(databuf);
+		return 0;
+		}
 	ASN1_STRING_set(octet,NULL,data_len);
 	sptr=ASN1_STRING_data(octet);
     for (i=0,j=data_len-1;i<data_len;i++,j--) 
