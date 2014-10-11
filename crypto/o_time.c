@@ -61,7 +61,7 @@
 
 #include <openssl/e_os2.h>
 #include <string.h>
-#include "crypto.h"
+#include <openssl/crypto.h>
 
 #ifdef OPENSSL_SYS_VMS
 # if __CRTL_VER >= 70000000 && \

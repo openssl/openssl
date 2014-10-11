@@ -55,7 +55,7 @@
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
-#include "cms.h"
+#include <openssl/cms.h>
 #include "cms_lcl.h"
 
 /* CMS SignedData Attribute utilities */
