@@ -57,7 +57,7 @@
 #include <openssl/pem.h>
 #include <openssl/bio.h>
 #include <openssl/asn1.h>
-#include "cms.h"
+#include <openssl/cms.h>
 #include "cms_lcl.h"
 
 IMPLEMENT_ASN1_FUNCTIONS(CMS_ContentInfo)
