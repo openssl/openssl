@@ -15,7 +15,7 @@ CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
 TEST=md4test.c
-APPS=md4.c
+APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=md4_dgst.c md4_one.c
