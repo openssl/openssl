@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 1.0.0o and 1.0.0p [xx XXX xxxx]
+
+  *)
+
  Changes between 1.0.0n and 1.0.0o [15 Oct 2014]
 
   *) Session Ticket Memory Leak.
