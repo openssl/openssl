@@ -1296,6 +1296,8 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p,
 
 	if (sk == NULL) return(0);
 	q=p;
+	if (put_cb == NULL)
+		put_cb = s->method->put_cipher_by_char;
 
 	for (i=0; i<sk_SSL_CIPHER_num(sk); i++)
 		{
@@ -1305,24 +1307,36 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p,
                     continue;
 #endif /* OPENSSL_NO_KRB5 */                    
 
-		j = put_cb ? put_cb(c,p) : ssl_put_cipher_by_char(s,c,p);
+		j = put_cb(c,p);
 		p+=j;
 		}
-	/* If p == q, no ciphers and caller indicates an error. Otherwise
-	 * add SCSV if not renegotiating.
-	 */
-	if (p != q && !s->new_session)
+	/* If p == q, no ciphers; caller indicates an error.
+	 * Otherwise, add applicable SCSVs. */
+	if (p != q)
 		{
-		static SSL_CIPHER scsv =
+		if (!s->new_session)
 			{
-			0, NULL, SSL3_CK_SCSV, 0, 0, 0, 0, 0, 0, 0,
-			};
-		j = put_cb ? put_cb(&scsv,p) : ssl_put_cipher_by_char(s,&scsv,p);
-		p+=j;
+			static SSL_CIPHER scsv =
+				{
+				0, NULL, SSL3_CK_SCSV, 0, 0, 0, 0, 0, 0, 0,
+				};
+			j = put_cb(&scsv,p);
+			p+=j;
 #ifdef OPENSSL_RI_DEBUG
-		fprintf(stderr, "SCSV sent by client\n");
+			fprintf(stderr, "TLS_EMPTY_RENEGOTIATION_INFO_SCSV sent by client\n");
 #endif
-		}
+			}
+
+		if (s->mode & SSL_MODE_SEND_FALLBACK_SCSV)
+			{
+			static SSL_CIPHER scsv =
+				{
+				0, NULL, SSL3_CK_FALLBACK_SCSV, 0, 0, 0, 0, 0, 0, 0,
+				};
+			j = put_cb(&scsv,p);
+			p+=j;
+			}
+ 		}
 
 	return(p-q);
 	}
@@ -1333,11 +1347,12 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,unsigned char *p,int num,
 	SSL_CIPHER *c;
 	STACK_OF(SSL_CIPHER) *sk;
 	int i,n;
+
 	if (s->s3)
 		s->s3->send_connection_binding = 0;
 
 	n=ssl_put_cipher_by_char(s,NULL,NULL);
-	if ((num%n) != 0)
+	if (n == 0 || (num%n) != 0)
 		{
 		SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST,SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
 		return(NULL);
@@ -1352,7 +1367,7 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,unsigned char *p,int num,
 
 	for (i=0; i<num; i+=n)
 		{
-		/* Check for SCSV */
+		/* Check for TLS_EMPTY_RENEGOTIATION_INFO_SCSV */
 		if (s->s3 && (n != 3 || !p[0]) &&
 			(p[n-2] == ((SSL3_CK_SCSV >> 8) & 0xff)) &&
 			(p[n-1] == (SSL3_CK_SCSV & 0xff)))
@@ -1369,6 +1384,23 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,unsigned char *p,int num,
 #ifdef OPENSSL_RI_DEBUG
 			fprintf(stderr, "SCSV received by server\n");
 #endif
+			continue;
+			}
+
+		/* Check for TLS_FALLBACK_SCSV */
+		if ((n != 3 || !p[0]) &&
+			(p[n-2] == ((SSL3_CK_FALLBACK_SCSV >> 8) & 0xff)) &&
+			(p[n-1] == (SSL3_CK_FALLBACK_SCSV & 0xff)))
+			{
+			/* The SCSV indicates that the client previously tried a higher version.
+			 * Fail if the current version is an unexpected downgrade. */
+			if (!SSL_ctrl(s, SSL_CTRL_CHECK_PROTO_VERSION, 0, NULL))
+				{
+				SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST,SSL_R_INAPPROPRIATE_FALLBACK);
+				if (s->s3)
+					ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_INAPPROPRIATE_FALLBACK);
+				goto err;
+				}
 			continue;
 			}
 
