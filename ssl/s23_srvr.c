@@ -421,6 +421,9 @@ int ssl23_get_client_hello(SSL *s)
 			}
 		}
 
+	/* ensure that TLS_MAX_VERSION is up-to-date */
+	OPENSSL_assert(s->version <= TLS_MAX_VERSION);
+
 #ifdef OPENSSL_FIPS
 	if (FIPS_mode() && (s->version < TLS1_VERSION))
 		{

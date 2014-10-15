@@ -4,6 +4,12 @@
 
  Changes between 1.0.1i and 1.0.1j [xx XXX xxxx]
 
+  *) Add support for TLS_FALLBACK_SCSV.
+     Client applications doing fallback retries should call
+     SSL_set_mode(s, SSL_MODE_SEND_FALLBACK_SCSV).
+     (CVE-2014-3566)
+     [Adam Langley, Bodo Moeller]
+
   *) Add additional DigestInfo checks.
  
      Reencode DigestInto in DER and check against the original when
