@@ -389,6 +389,9 @@ int ssl23_get_client_hello(SSL *s)
 			}
 		}
 
+	/* ensure that TLS_MAX_VERSION is up-to-date */
+	OPENSSL_assert(s->version <= TLS_MAX_VERSION);
+
 	if (s->state == SSL23_ST_SR_CLNT_HELLO_B)
 		{
 		/* we have SSLv3/TLSv1 in an SSLv2 header

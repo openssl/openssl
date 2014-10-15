@@ -605,6 +605,10 @@ typedef struct ssl_session_st
  * TLS only.)  "Released" buffers are put onto a free-list in the context
  * or just freed (depending on the context's setting for freelist_max_len). */
 #define SSL_MODE_RELEASE_BUFFERS 0x00000010L
+/* Send TLS_FALLBACK_SCSV in the ClientHello.
+ * To be set by applications that reconnect with a downgraded protocol
+ * version; see draft-ietf-tls-downgrade-scsv-00 for details. */
+#define SSL_MODE_SEND_FALLBACK_SCSV 0x00000080L
 
 /* Note: SSL[_CTX]_set_{options,mode} use |= op on the previous value,
  * they cannot be used to clear bits. */
@@ -1328,6 +1332,7 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_AD_BAD_CERTIFICATE_STATUS_RESPONSE TLS1_AD_BAD_CERTIFICATE_STATUS_RESPONSE
 #define SSL_AD_BAD_CERTIFICATE_HASH_VALUE TLS1_AD_BAD_CERTIFICATE_HASH_VALUE
 #define SSL_AD_UNKNOWN_PSK_IDENTITY     TLS1_AD_UNKNOWN_PSK_IDENTITY /* fatal */
+#define SSL_AD_INAPPROPRIATE_FALLBACK	TLS1_AD_INAPPROPRIATE_FALLBACK /* fatal */
 
 #define SSL_ERROR_NONE			0
 #define SSL_ERROR_SSL			1
@@ -1420,6 +1425,8 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_GET_RI_SUPPORT			76
 #define SSL_CTRL_CLEAR_OPTIONS			77
 #define SSL_CTRL_CLEAR_MODE			78
+
+#define SSL_CTRL_CHECK_PROTO_VERSION		119
 
 #define DTLSv1_get_timeout(ssl, arg) \
 	SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)
@@ -2106,6 +2113,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_HTTPS_PROXY_REQUEST			 155
 #define SSL_R_HTTP_REQUEST				 156
 #define SSL_R_ILLEGAL_PADDING				 283
+#define SSL_R_INAPPROPRIATE_FALLBACK			 373
 #define SSL_R_INCONSISTENT_COMPRESSION			 340
 #define SSL_R_INVALID_CHALLENGE_LENGTH			 158
 #define SSL_R_INVALID_COMMAND				 280
@@ -2244,6 +2252,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_TLSV1_ALERT_DECRYPTION_FAILED		 1021
 #define SSL_R_TLSV1_ALERT_DECRYPT_ERROR			 1051
 #define SSL_R_TLSV1_ALERT_EXPORT_RESTRICTION		 1060
+#define SSL_R_TLSV1_ALERT_INAPPROPRIATE_FALLBACK	 1086
 #define SSL_R_TLSV1_ALERT_INSUFFICIENT_SECURITY		 1071
 #define SSL_R_TLSV1_ALERT_INTERNAL_ERROR		 1080
 #define SSL_R_TLSV1_ALERT_NO_RENEGOTIATION		 1100
