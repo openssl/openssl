@@ -604,10 +604,6 @@ int MAIN(int argc, char **argv)
 			meth=DTLSv1_client_method();
 			socket_type=SOCK_DGRAM;
 			}
-		else if (strcmp(*argv,"-fallback_scsv") == 0)
-			{
-			fallback_scsv = 1;
-			}
 		else if (strcmp(*argv,"-timeout") == 0)
 			enable_timeouts=1;
 		else if (strcmp(*argv,"-mtu") == 0)
@@ -616,6 +612,10 @@ int MAIN(int argc, char **argv)
 			socket_mtu = atol(*(++argv));
 			}
 #endif
+		else if (strcmp(*argv,"-fallback_scsv") == 0)
+			{
+			fallback_scsv = 1;
+			}
 		else if (strcmp(*argv,"-bugs") == 0)
 			bugs=1;
 		else if	(strcmp(*argv,"-keyform") == 0)
