@@ -879,8 +879,11 @@ md5test.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 md5test.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
 md5test.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 md5test.o: ../include/openssl/symhacks.h md5test.c
-mdc2test.o: ../e_os.h ../include/openssl/e_os2.h
-mdc2test.o: ../include/openssl/opensslconf.h mdc2test.c
+mdc2test.o: ../include/openssl/buffer.h ../include/openssl/crypto.h
+mdc2test.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
+mdc2test.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+mdc2test.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+mdc2test.o: ../include/openssl/symhacks.h mdc2test.c
 randtest.o: ../e_os.h ../include/openssl/e_os2.h
 randtest.o: ../include/openssl/opensslconf.h ../include/openssl/ossl_typ.h
 randtest.o: ../include/openssl/rand.h randtest.c
