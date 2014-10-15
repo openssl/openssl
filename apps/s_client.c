@@ -927,10 +927,6 @@ static char *jpake_secret = NULL;
 			meth=DTLSv1_2_client_method();
 			socket_type=SOCK_DGRAM;
 			}
-		else if (strcmp(*argv,"-fallback_scsv") == 0)
-			{
-			fallback_scsv = 1;
-			}
 		else if (strcmp(*argv,"-timeout") == 0)
 			enable_timeouts=1;
 		else if (strcmp(*argv,"-mtu") == 0)
@@ -939,6 +935,10 @@ static char *jpake_secret = NULL;
 			socket_mtu = atol(*(++argv));
 			}
 #endif
+		else if (strcmp(*argv,"-fallback_scsv") == 0)
+			{
+			fallback_scsv = 1;
+			}
 		else if	(strcmp(*argv,"-keyform") == 0)
 			{
 			if (--argc < 1) goto bad;
