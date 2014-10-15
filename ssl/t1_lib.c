@@ -1462,7 +1462,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf, unsigned c
 		ret += s->alpn_client_proto_list_len;
 		}
 
-        if(SSL_get_srtp_profiles(s))
+        if(SSL_IS_DTLS(s) && SSL_get_srtp_profiles(s))
                 {
                 int el;
 
@@ -1642,7 +1642,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf, unsigned c
 		}
 #endif
 
-        if(s->srtp_profile)
+        if(SSL_IS_DTLS(s) && s->srtp_profile)
                 {
                 int el;
 
@@ -2433,7 +2433,8 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 			}
 
 		/* session ticket processed earlier */
-		else if (type == TLSEXT_TYPE_use_srtp)
+		else if (SSL_IS_DTLS(s) && SSL_get_srtp_profiles(s)
+				&& type == TLSEXT_TYPE_use_srtp)
                         {
 			if(ssl_parse_clienthello_use_srtp_ext(s, data, size,
 							      al))
@@ -2776,7 +2777,7 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 				}
 			}
 #endif
-		else if (type == TLSEXT_TYPE_use_srtp)
+		else if (SSL_IS_DTLS(s) && type == TLSEXT_TYPE_use_srtp)
                         {
                         if(ssl_parse_serverhello_use_srtp_ext(s, data, size,
 							      al))
