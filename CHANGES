@@ -305,6 +305,12 @@
 
  Changes between 1.0.1h and 1.0.2 [xx XXX xxxx]
 
+  *) Add support for TLS_FALLBACK_SCSV.
+     Client applications doing fallback retries should call
+     SSL_set_mode(s, SSL_MODE_SEND_FALLBACK_SCSV).
+     (CVE-2014-3566)
+     [Adam Langley, Bodo Moeller]
+
   *) Accelerated NIST P-256 elliptic curve implementation for x86_64
      (other platforms pending).
      [Shay Gueron (Intel Corp), Andy Polyakov]
