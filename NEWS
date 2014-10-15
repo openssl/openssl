@@ -5,7 +5,7 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Major changes between OpenSSL 1.0.1i and OpenSSL 1.0.1j [under development]
+  Major changes between OpenSSL 1.0.1i and OpenSSL 1.0.1j [15 Oct 2014]
 
       o Fix for CVE-2014-3513
       o Fix for CVE-2014-3567

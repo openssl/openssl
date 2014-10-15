@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.1i and 1.0.1j [xx XXX xxxx]
+ Changes between 1.0.1i and 1.0.1j [15 Oct 2014]
 
   *) SRTP Memory Leak.
 
