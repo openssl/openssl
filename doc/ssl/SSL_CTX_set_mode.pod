@@ -61,6 +61,12 @@ deal with read/write operations returning without success report. The
 flag SSL_MODE_AUTO_RETRY will cause read/write operations to only
 return after the handshake and successful completion.
 
+=item SSL_MODE_FALLBACK_SCSV
+
+Send TLS_FALLBACK_SCSV in the ClientHello.
+To be set by applications that reconnect with a downgraded protocol
+version; see draft-ietf-tls-downgrade-scsv-00 for details.
+
 =back
 
 =head1 RETURN VALUES
