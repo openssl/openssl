@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8zb and 0.9.8zc [xx XXX xxxx]
+ Changes between 0.9.8zb and 0.9.8zc [15 Oct 2014]
 
   *) Session Ticket Memory Leak.
 
