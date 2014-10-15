@@ -752,6 +752,9 @@ static int ssl23_get_server_hello(SSL *s)
 			goto err;
 			}
 
+		/* ensure that TLS_MAX_VERSION is up-to-date */
+		OPENSSL_assert(s->version <= TLS_MAX_VERSION);
+
 		if (!ssl_security(s, SSL_SECOP_VERSION, 0, s->version, NULL))
 			{
 			SSLerr(SSL_F_SSL23_GET_SERVER_HELLO,SSL_R_VERSION_TOO_LOW);
