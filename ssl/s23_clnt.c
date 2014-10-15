@@ -748,6 +748,9 @@ static int ssl23_get_server_hello(SSL *s)
 			goto err;
 			}
 
+		/* ensure that TLS_MAX_VERSION is up-to-date */
+		OPENSSL_assert(s->version <= TLS_MAX_VERSION);
+
 		if (p[0] == SSL3_RT_ALERT && p[5] != SSL3_AL_WARNING)
 			{
 			/* fatal alert */
