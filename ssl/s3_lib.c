@@ -2828,6 +2828,74 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 
 #endif /* OPENSSL_NO_ECDH */
 
+#ifndef OPENSSL_NO_RLWEKEX
+	/* Cipher D000 */
+	{
+	1,
+	TLS1_TXT_RLWE_RSA_WITH_AES_128_GCM_SHA256,
+	TLS1_CK_RLWE_RSA_WITH_AES_128_GCM_SHA256,
+	SSL_kRLWE,
+	SSL_aRSA,
+	SSL_AES128GCM,
+	SSL_AEAD,
+	SSL_TLSV1_2,
+	SSL_NOT_EXP|SSL_HIGH,
+	SSL_HANDSHAKE_MAC_SHA256|TLS1_PRF_SHA256,
+	128,
+	128,
+	},
+
+	/* Cipher D001 */
+	{
+	1,
+	TLS1_TXT_RLWE_ECDSA_WITH_AES_128_GCM_SHA256,
+	TLS1_CK_RLWE_ECDSA_WITH_AES_128_GCM_SHA256,
+	SSL_kRLWE,
+	SSL_aECDSA,
+	SSL_AES128GCM,
+	SSL_AEAD,
+	SSL_TLSV1_2,
+	SSL_NOT_EXP|SSL_HIGH,
+	SSL_HANDSHAKE_MAC_SHA256|TLS1_PRF_SHA256,
+	128,
+	128,
+	},
+
+#ifdef OPENSSL_HYBRID_RLWE_ECDHE
+	/* Cipher D002 */
+	{
+	1,
+	TLS1_TXT_RLWE_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+	TLS1_CK_RLWE_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+	SSL_kRLWE|SSL_kEECDH,
+	SSL_aRSA,
+	SSL_AES128GCM,
+	SSL_AEAD,
+	SSL_TLSV1_2,
+	SSL_NOT_EXP|SSL_HIGH,
+	SSL_HANDSHAKE_MAC_SHA256|TLS1_PRF_SHA256,
+	128,
+	128,
+	},
+
+	/* Cipher D003 */
+	{
+	1,
+	TLS1_TXT_RLWE_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+	TLS1_CK_RLWE_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+	SSL_kRLWE|SSL_kEECDH,
+	SSL_aECDSA,
+	SSL_AES128GCM,
+	SSL_AEAD,
+	SSL_TLSV1_2,
+	SSL_NOT_EXP|SSL_HIGH,
+	SSL_HANDSHAKE_MAC_SHA256|TLS1_PRF_SHA256,
+	128,
+	128,
+	},
+#endif
+
+#endif
 
 #ifdef TEMP_GOST_TLS
 /* Cipher FF00 */
@@ -2984,6 +3052,10 @@ void ssl3_free(SSL *s)
 	if (s->s3->tmp.ecdh != NULL)
 		EC_KEY_free(s->s3->tmp.ecdh);
 #endif
+#ifndef OPENSSL_NO_RLWEKEX
+	if (s->s3->tmp.rlwe != NULL)
+		RLWE_PAIR_free(s->s3->tmp.rlwe);
+#endif
 
 	if (s->s3->tmp.ca_names != NULL)
 		sk_X509_NAME_pop_free(s->s3->tmp.ca_names,X509_NAME_free);
@@ -3035,6 +3107,13 @@ void ssl3_clear(SSL *s)
 		{
 		EC_KEY_free(s->s3->tmp.ecdh);
 		s->s3->tmp.ecdh = NULL;
+		}
+#endif
+#ifndef OPENSSL_NO_RLWEKEX
+	if (s->s3->tmp.rlwe != NULL)
+		{
+		RLWE_PAIR_free(s->s3->tmp.rlwe);
+		s->s3->tmp.rlwe = NULL;
 		}
 #endif
 #ifndef OPENSSL_NO_TLSEXT

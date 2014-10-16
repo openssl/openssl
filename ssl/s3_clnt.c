@@ -1294,6 +1294,10 @@ int ssl3_get_key_exchange(SSL *s)
 	int curve_nid = 0;
 	int encoded_pt_len = 0;
 #endif
+#ifndef OPENSSL_NO_RLWEKEX
+	RLWE_PUB *srvr_rlwepub = NULL;
+	int encoded_rlwepub_len = 0;
+#endif
 
 	/* use same message size as in ssl3_get_certificate_request()
 	 * as ServerKeyExchange message may be skipped */
@@ -1346,6 +1350,18 @@ int ssl3_get_key_exchange(SSL *s)
 			{
 			EC_KEY_free(s->session->sess_cert->peer_ecdh_tmp);
 			s->session->sess_cert->peer_ecdh_tmp=NULL;
+			}
+#endif
+#ifndef OPENSSL_NO_RLWEKEX
+		if (s->session->sess_cert->peer_rlwepub_tmp)
+			{
+			RLWE_PUB_free(s->session->sess_cert->peer_rlwepub_tmp);
+			s->session->sess_cert->peer_rlwepub_tmp=NULL;
+			}
+		if (s->session->sess_cert->peer_rlwerec_tmp)
+			{
+			RLWE_REC_free(s->session->sess_cert->peer_rlwerec_tmp);
+			s->session->sess_cert->peer_rlwerec_tmp=NULL;
 			}
 #endif
 		}
@@ -1717,6 +1733,44 @@ int ssl3_get_key_exchange(SSL *s)
 		}
 #endif /* !OPENSSL_NO_DH */
 
+#ifndef OPENSSL_NO_RLWEKEX
+	else if ((alg_k & SSL_kRLWE) && !(alg_k & SSL_kEECDH))
+		{
+		/* Get the encoded RLWE public key and reconciliation data */
+		if ((srvr_rlwepub = RLWE_PUB_new()) == NULL)
+			{
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
+			goto err;
+			}
+
+		encoded_rlwepub_len = (p[0] << 8) | p[1];
+		p += 2;
+		n -= 2;
+		if ((encoded_rlwepub_len >= n) ||
+			(o2i_RLWE_PUB(&srvr_rlwepub, p, encoded_rlwepub_len) == NULL))
+			{
+			al=SSL_AD_DECODE_ERROR;
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_BAD_RLWE_PUB);
+			goto f_err;
+			}
+
+		n-=encoded_rlwepub_len;
+		p+=encoded_rlwepub_len;
+		param_len = 2 + encoded_rlwepub_len;
+
+		if (0) ;
+#ifndef OPENSSL_NO_RSA
+		else if (alg_a & SSL_aRSA)
+			pkey=X509_get_pubkey(s->session->sess_cert->peer_pkeys[SSL_PKEY_RSA_ENC].x509);
+#endif
+#ifndef OPENSSL_NO_ECDSA
+		else if (alg_a & SSL_aECDSA)
+			pkey=X509_get_pubkey(s->session->sess_cert->peer_pkeys[SSL_PKEY_ECC].x509);
+#endif
+		s->session->sess_cert->peer_rlwepub_tmp=srvr_rlwepub;
+		}
+#endif /* !OPENSSL_NO_RLWEKEX */
+
 #ifndef OPENSSL_NO_ECDH
 	else if (alg_k & SSL_kEECDH)
 		{
@@ -1802,6 +1856,33 @@ int ssl3_get_key_exchange(SSL *s)
 
 		n-=param_len;
 		p+=encoded_pt_len;
+
+#ifdef OPENSSL_HYBRID_RLWE_ECDHE
+		if (alg_k & SSL_kRLWE) {
+			/* Get the encoded RLWE public key and reconciliation data */
+			if ((srvr_rlwepub = RLWE_PUB_new()) == NULL)
+				{
+				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
+				goto err;
+				}
+
+			encoded_rlwepub_len = (p[0] << 8) | p[1];
+			p += 2;
+			n -= 2;
+			if ((encoded_rlwepub_len >= n) ||
+				(o2i_RLWE_PUB(&srvr_rlwepub, p, encoded_rlwepub_len) == NULL))
+				{
+				al=SSL_AD_DECODE_ERROR;
+				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_BAD_RLWE_PUB);
+				goto f_err;
+				}
+
+			n-=encoded_rlwepub_len;
+			p+=encoded_rlwepub_len;
+			param_len += 2 + encoded_rlwepub_len;
+			s->session->sess_cert->peer_rlwepub_tmp=srvr_rlwepub;
+		}
+#endif
 
 		/* The ECC/TLS specification does not mention
 		 * the use of DSA to sign ECParameters in the server
@@ -1984,6 +2065,9 @@ err:
 	EC_POINT_free(srvr_ecpoint);
 	if (ecdh != NULL)
 		EC_KEY_free(ecdh);
+#endif
+#ifndef OPENSSL_NO_RLWEKEX
+	RLWE_PUB_free(srvr_rlwepub);
 #endif
 	EVP_MD_CTX_cleanup(&md_ctx);
 	return(-1);
@@ -2351,6 +2435,10 @@ int ssl3_send_client_key_exchange(SSL *s)
 	{
 	unsigned char *p,*d;
 	int n;
+#ifdef OPENSSL_HYBRID_RLWE_ECDHE
+	unsigned char *pprime;
+	int nprime;
+#endif
 	unsigned long alg_k;
 #ifndef OPENSSL_NO_RSA
 	unsigned char *q;
@@ -2366,6 +2454,16 @@ int ssl3_send_client_key_exchange(SSL *s)
 	unsigned char *encodedPoint = NULL;
 	int encoded_pt_len = 0;
 	BN_CTX * bn_ctx = NULL;
+#endif
+#ifndef OPENSSL_NO_RLWEKEX
+	RLWE_PAIR *clnt_rlwe = NULL;
+	RLWE_REC *clnt_rlwerec = NULL;
+	const RLWE_PUB *srvr_rlwepub = NULL;
+	unsigned char *encoded_rlwepub = NULL;
+	int encoded_rlwepub_len = 0;
+	unsigned char *encoded_rlwerec = NULL;
+	int encoded_rlwerec_len = 0;
+	RLWE_CTX * rlwe_ctx = NULL;
 #endif
 
 	if (s->state == SSL3_ST_CW_KEY_EXCH_A)
@@ -2777,6 +2875,63 @@ int ssl3_send_client_key_exchange(SSL *s)
 				goto err;
 				}
 
+#ifdef OPENSSL_HYBRID_RLWE_ECDHE
+			if (alg_k & SSL_kRLWE) {
+				srvr_rlwepub = s->session->sess_cert->peer_rlwepub_tmp;
+
+				if (srvr_rlwepub == NULL)
+					{
+					SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+					    ERR_R_INTERNAL_ERROR);
+					goto err;
+					}
+
+				if ((clnt_rlwe=RLWE_PAIR_new()) == NULL) 
+					{
+					SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
+					goto err;
+					}
+				if ((clnt_rlwerec=RLWE_REC_new()) == NULL) 
+					{
+					SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
+					goto err;
+					}
+
+				if ((rlwe_ctx = RLWE_CTX_new()) == NULL)
+					{
+					SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
+					goto err;
+					}
+
+				/* Generate a new RLWE key pair */
+				if (!(RLWE_PAIR_generate_key(clnt_rlwe, rlwe_ctx)))
+					{
+					SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_RLWE_LIB);
+					goto err;
+					}
+
+				/* use the 'pprime' buffer for the RLWE shared key, but
+				 * make sure to clear it out afterwards
+				 */
+
+				if ((pprime = OPENSSL_malloc(1024)) == NULL) {
+					SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
+					goto err;					
+				}
+
+				nprime = RLWEKEX_compute_key_bob(pprime, 1024, clnt_rlwerec, srvr_rlwepub, clnt_rlwe, NULL, rlwe_ctx);
+				if (nprime <= 0)
+					{
+					SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_RLWE_LIB);
+					goto err;
+					}
+				// FIXME: I have no idea if this is safe, as I don't know how big p is, but let's try it anyway for testing purposes.
+				memcpy(p + n, pprime, nprime);
+				n += nprime;
+				OPENSSL_free(pprime);
+			}
+#endif
+
 			/* generate master key from the result */
 			s->session->master_key_length = s->method->ssl3_enc \
 			    -> generate_master_secret(s, 
@@ -2823,9 +2978,39 @@ int ssl3_send_client_key_exchange(SSL *s)
 				p += 1; 
 				/* copy the point */
 				memcpy((unsigned char *)p, encodedPoint, n);
+				p += n;
 				/* increment n to account for length field */
 				n += 1; 
 				}
+
+#ifdef OPENSSL_HYBRID_RLWE_ECDHE
+			if (alg_k & SSL_kRLWE) {
+				/* Encode the public key and reconciliation data */
+				encoded_rlwepub_len = i2o_RLWE_PUB(RLWE_PAIR_get_publickey(clnt_rlwe), &encoded_rlwepub);
+				encoded_rlwerec_len = i2o_RLWE_REC(clnt_rlwerec, &encoded_rlwerec);
+
+				p[0] = (encoded_rlwepub_len >> 8) & 0xFF;
+				p[1] =  encoded_rlwepub_len       & 0xFF;
+				p += 2;
+				memcpy((unsigned char *)p, encoded_rlwepub, encoded_rlwepub_len);
+				p += encoded_rlwepub_len;
+
+				p[0] = (encoded_rlwerec_len >> 8) & 0xFF;
+				p[1] =  encoded_rlwerec_len       & 0xFF;
+				p += 2;
+				memcpy((unsigned char *)p, encoded_rlwerec, encoded_rlwerec_len);
+				p += encoded_rlwerec_len;
+
+				n += 4 + encoded_rlwepub_len + encoded_rlwerec_len;
+
+				/* Free allocated memory */
+				RLWE_CTX_free(rlwe_ctx);
+				OPENSSL_free(encoded_rlwepub);
+				OPENSSL_free(encoded_rlwerec);
+				RLWE_PAIR_free(clnt_rlwe);
+				RLWE_REC_free(clnt_rlwerec);
+			}
+#endif
 
 			/* Free allocated memory */
 			BN_CTX_free(bn_ctx);
@@ -2835,6 +3020,87 @@ int ssl3_send_client_key_exchange(SSL *s)
 			EVP_PKEY_free(srvr_pub_pkey);
 			}
 #endif /* !OPENSSL_NO_ECDH */
+#ifndef OPENSSL_NO_RLWEKEX
+		else if ((alg_k & SSL_kRLWE) && !(alg_k & SSL_kEECDH))
+			{
+			srvr_rlwepub = s->session->sess_cert->peer_rlwepub_tmp;
+
+			if (srvr_rlwepub == NULL)
+				{
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+				    ERR_R_INTERNAL_ERROR);
+				goto err;
+				}
+
+			if ((clnt_rlwe=RLWE_PAIR_new()) == NULL) 
+				{
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
+				goto err;
+				}
+			if ((clnt_rlwerec=RLWE_REC_new()) == NULL) 
+				{
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
+				goto err;
+				}
+
+			if ((rlwe_ctx = RLWE_CTX_new()) == NULL)
+				{
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
+				goto err;
+				}
+
+			/* Generate a new RLWE key pair */
+			if (!(RLWE_PAIR_generate_key(clnt_rlwe, rlwe_ctx)))
+				{
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_RLWE_LIB);
+				goto err;
+				}
+
+			/* use the 'p' output buffer for the RLWE shared key, but
+			 * make sure to clear it out afterwards
+			 */
+
+			n = RLWEKEX_compute_key_bob(p, 1024, clnt_rlwerec, srvr_rlwepub, clnt_rlwe, NULL, rlwe_ctx);
+			if (n <= 0)
+				{
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_RLWE_LIB);
+				goto err;
+				}
+
+			/* generate master key from the result */
+			s->session->master_key_length = s->method->ssl3_enc \
+			    -> generate_master_secret(s, 
+				s->session->master_key,
+				p, n);
+
+			memset(p, 0, n); /* clean up */
+
+			/* Encode the public key and reconciliation data */
+			encoded_rlwepub_len = i2o_RLWE_PUB(RLWE_PAIR_get_publickey(clnt_rlwe), &encoded_rlwepub);
+			encoded_rlwerec_len = i2o_RLWE_REC(clnt_rlwerec, &encoded_rlwerec);
+
+			p[0] = (encoded_rlwepub_len >> 8) & 0xFF;
+			p[1] =  encoded_rlwepub_len       & 0xFF;
+			p += 2;
+			memcpy((unsigned char *)p, encoded_rlwepub, encoded_rlwepub_len);
+			p += encoded_rlwepub_len;
+
+			p[0] = (encoded_rlwerec_len >> 8) & 0xFF;
+			p[1] =  encoded_rlwerec_len       & 0xFF;
+			p += 2;
+			memcpy((unsigned char *)p, encoded_rlwerec, encoded_rlwerec_len);
+			p += encoded_rlwerec_len;
+
+			n = 4 + encoded_rlwepub_len + encoded_rlwerec_len;
+
+			/* Free allocated memory */
+			RLWE_CTX_free(rlwe_ctx);
+			OPENSSL_free(encoded_rlwepub);
+			OPENSSL_free(encoded_rlwerec);
+			RLWE_PAIR_free(clnt_rlwe);
+			RLWE_REC_free(clnt_rlwerec);
+			}
+#endif /* !OPENSSL_NO_RLWEKEX */
 		else if (alg_k & SSL_kGOST) 
 			{
 			/* GOST key exchange message creation */
@@ -3078,6 +3344,13 @@ err:
 	if (clnt_ecdh != NULL) 
 		EC_KEY_free(clnt_ecdh);
 	EVP_PKEY_free(srvr_pub_pkey);
+#endif
+#ifndef OPENSSL_NO_RLWEKEX
+	RLWE_CTX_free(rlwe_ctx);
+	OPENSSL_free(encoded_rlwepub);
+	OPENSSL_free(encoded_rlwerec);
+	RLWE_PAIR_free(clnt_rlwe);
+	RLWE_REC_free(clnt_rlwerec);
 #endif
 	return(-1);
 	}

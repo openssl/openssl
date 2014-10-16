@@ -161,6 +161,9 @@
 #ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
+#ifndef OPENSSL_NO_RLWEKEX
+#include <openssl/rlwekex.h>
+#endif
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 #include <openssl/symhacks.h>
@@ -299,6 +302,7 @@
 #define SSL_kPSK		0x00000100L /* PSK */
 #define SSL_kGOST       0x00000200L /* GOST key exchange */
 #define SSL_kSRP        0x00000400L /* SRP */
+#define SSL_kRLWE		0x00000800L /* Ring Learning with Errors */
 
 /* Bits for algorithm_auth (server authentication) */
 #define SSL_aRSA		0x00000001L /* RSA auth */
@@ -513,6 +517,9 @@ typedef struct cert_st
 	/* Callback for generating ephemeral ECDH keys */
 	EC_KEY *(*ecdh_tmp_cb)(SSL *ssl,int is_export,int keysize);
 #endif
+#ifndef OPENSSL_NO_RLWEKEX
+	RLWE_PAIR *rlwe_tmp;
+#endif
 
 	CERT_PKEY pkeys[SSL_PKEY_NUM];
 
@@ -540,6 +547,10 @@ typedef struct sess_cert_st
 #endif
 #ifndef OPENSSL_NO_ECDH
 	EC_KEY *peer_ecdh_tmp;
+#endif
+#ifndef OPENSSL_NO_RLWEKEX
+	RLWE_PUB *peer_rlwepub_tmp;
+	RLWE_REC *peer_rlwerec_tmp;
 #endif
 
 	int references; /* actually always 1 at the moment */

@@ -79,6 +79,7 @@
 #define DSA_SECONDS	10
 #define ECDSA_SECONDS   10
 #define ECDH_SECONDS    10
+#define RLWEKEX_SECONDS    10
 
 /* 11-Sep-92 Andrew Daviel   Support for Silicon Graphics IRIX added */
 /* 06-Apr-92 Luke Brennan    Support for VMS and add extra signal calls */
@@ -189,6 +190,9 @@
 #ifndef OPENSSL_NO_ECDH
 #include <openssl/ecdh.h>
 #endif
+#ifndef OPENSSL_NO_RLWEKEX
+#include <openssl/rlwekex.h>
+#endif
 #include <openssl/modes.h>
 
 #ifdef OPENSSL_FIPS
@@ -247,6 +251,9 @@ static int do_multi(int multi);
 #define EC_NUM       16
 #define MAX_ECDH_SIZE 256
 
+#define RLWEKEX_NUM	1
+#define MAX_RLWEKEX_SIZE 256
+
 static const char *names[ALGOR_NUM]={
   "md2","mdc2","md4","md5","hmac(md5)","sha1","rmd160","rc4",
   "des cbc","des ede3","idea cbc","seed cbc",
@@ -268,6 +275,9 @@ static double ecdsa_results[EC_NUM][2];
 #endif
 #ifndef OPENSSL_NO_ECDH
 static double ecdh_results[EC_NUM][1];
+#endif
+#ifndef OPENSSL_NO_RLWEKEX
+static double rlwekex_results[RLWEKEX_NUM][3];
 #endif
 
 #if defined(OPENSSL_NO_DSA) && !(defined(OPENSSL_NO_ECDSA) && defined(OPENSSL_NO_ECDH))
@@ -341,7 +351,8 @@ static double Time_F(int s)
 #endif
 
 
-#ifndef OPENSSL_NO_ECDH
+#if defined(OPENSSL_NO_ECDH) && defined(OPENSSL_NO_RLWEKEX)
+#else
 static const int KDF1_SHA1_len = 20;
 static void *KDF1_SHA1(const void *in, size_t inlen, void *out, size_t *outlen)
 	{
@@ -355,7 +366,7 @@ static void *KDF1_SHA1(const void *in, size_t inlen, void *out, size_t *outlen)
 	return NULL;
 #endif	/* OPENSSL_NO_SHA */
 	}
-#endif	/* OPENSSL_NO_ECDH */
+#endif	/* defined(OPENSSL_NO_ECDH) || defined(OPENSSL_NO_RLWEKEX) */
 
 
 int MAIN(int, char **);
@@ -613,6 +624,15 @@ int MAIN(int argc, char **argv)
 	long ecdh_c[EC_NUM][2];
 #endif
 
+#ifndef OPENSSL_NO_RLWEKEX
+	RLWE_PAIR *rlwekex_a[RLWEKEX_NUM], *rlwekex_b[RLWEKEX_NUM];
+	RLWE_REC *rlwekex_rec[RLWEKEX_NUM];
+	RLWE_CTX *rlwekex_ctx;
+	unsigned char rlwekex_secret_a[MAX_RLWEKEX_SIZE], rlwekex_secret_b[MAX_RLWEKEX_SIZE];
+	int rlwekex_secret_size_a, rlwekex_secret_size_b;
+	long rlwekex_c[RLWEKEX_NUM][3];
+#endif
+
 	int rsa_doit[RSA_NUM];
 	int dsa_doit[DSA_NUM];
 #ifndef OPENSSL_NO_ECDSA
@@ -620,6 +640,9 @@ int MAIN(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_ECDH
         int ecdh_doit[EC_NUM];
+#endif
+#ifndef OPENSSL_NO_RLWEKEX
+        int rlwekex_doit[RLWEKEX_NUM];
 #endif
 	int doit[ALGOR_NUM];
 	int pr_header=0;
@@ -647,6 +670,15 @@ int MAIN(int argc, char **argv)
 		{
 		ecdh_a[i] = NULL;
 		ecdh_b[i] = NULL;
+		}
+#endif
+#ifndef OPENSSL_NO_RLWEKEX
+	rlwekex_ctx = NULL;
+	for (i=0; i<RLWEKEX_NUM; i++)
+		{
+		rlwekex_a[i] = NULL;
+		rlwekex_b[i] = NULL;
+		rlwekex_rec[i] = NULL;
 		}
 #endif
 
@@ -692,6 +724,10 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_ECDH
 	for (i=0; i<EC_NUM; i++)
 		ecdh_doit[i]=0;
+#endif
+#ifndef OPENSSL_NO_RLWEKEX
+	for (i=0; i<RLWEKEX_NUM; i++)
+		rlwekex_doit[i]=0;
 #endif
 
 	
@@ -1005,6 +1041,14 @@ int MAIN(int argc, char **argv)
 			}
 		else
 #endif
+#ifndef OPENSSL_NO_RLWEKEX
+		     if (strcmp(*argv,"rlwekex") == 0)
+			{
+			for (i=0; i < RLWEKEX_NUM; i++)
+				rlwekex_doit[i]=1;
+			}
+		else
+#endif
 			{
 			BIO_printf(bio_err,"Error: bad option or value\n");
 			BIO_printf(bio_err,"\n");
@@ -1100,6 +1144,9 @@ int MAIN(int argc, char **argv)
 			BIO_printf(bio_err,"ecdhb163  ecdhb233  ecdhb283  ecdhb409  ecdhb571\n");
 			BIO_printf(bio_err,"ecdh\n");
 #endif
+#ifndef OPENSSL_NO_RLWEKEX
+			BIO_printf(bio_err,"rlwekex\n");
+#endif
 
 #ifndef OPENSSL_NO_IDEA
 			BIO_printf(bio_err,"idea     ");
@@ -1176,6 +1223,10 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_ECDH
 		for (i=0; i<EC_NUM; i++)
 			ecdh_doit[i]=1;
+#endif
+#ifndef OPENSSL_NO_RLWEKEX
+		for (i=0; i<RLWEKEX_NUM; i++)
+			rlwekex_doit[i]=1;
 #endif
 		}
 	for (i=0; i<ALGOR_NUM; i++)
@@ -1483,6 +1534,12 @@ int MAIN(int argc, char **argv)
 				}
 			}
 		}
+#endif
+#ifndef OPENSSL_NO_RLWEKEX
+	for (i=0; i<=RLWEKEX_NUM; i++) {
+		rlwekex_c[i][0]=count/1000;
+		rlwekex_c[i][1]=count/1000;
+	}
 #endif
 
 #define COND(d)	(count < (d))
@@ -2389,6 +2446,105 @@ int MAIN(int argc, char **argv)
 		}
 	if (rnd_fake) RAND_cleanup();
 #endif
+
+#ifndef OPENSSL_NO_RWLEKEX
+	if (RAND_status() != 1)
+		{
+		RAND_seed(rnd_seed, sizeof rnd_seed);
+		rnd_fake = 1;
+		}
+	rlwekex_ctx = RLWE_CTX_new();
+	if (rlwekex_ctx == NULL)
+		{
+		BIO_printf(bio_err,"RLWEKEX failure.\n");
+		ERR_print_errors(bio_err);
+		rsa_count=1;
+		}
+	else 
+		{
+		for (j=0; j<RLWEKEX_NUM; j++)
+			{
+			if (!rlwekex_doit[j]) continue;
+			rlwekex_a[j] = RLWE_PAIR_new();
+			rlwekex_b[j] = RLWE_PAIR_new();
+			rlwekex_rec[j] = RLWE_REC_new();
+			if ((rlwekex_a[j] == NULL) || (rlwekex_b[j] == NULL) || (rlwekex_rec[j] == NULL))
+				{
+				BIO_printf(bio_err,"RLWEKEX failure.\n");
+				ERR_print_errors(bio_err);
+				rsa_count=1;
+				}
+			else
+				{
+
+				/* Time RLWEKEX key generation */
+				pkey_print_message("rlwe","key generation", rlwekex_c[j][0], 1024, RLWEKEX_SECONDS);
+				Time_F(START);
+				for (count=0,run=1; COND(rlwekex_c[j][0]); count++)
+					{
+					RLWE_PAIR_generate_key(rlwekex_a[j], rlwekex_ctx);
+					}
+				d=Time_F(STOP);
+				BIO_printf(bio_err, mr ? "+R9:%ld:%d:%.2f\n" :"%ld n=%d RLWE key generations in %.2fs\n",
+					count, 1024, d);
+				rlwekex_results[j][0]=d/(double)count;
+				rsa_count=count;
+
+				rlwekex_secret_size_b = KDF1_SHA1_len;
+				rlwekex_secret_size_a = KDF1_SHA1_len;
+				/* generate two RLWE key pairs */
+				if (!RLWE_PAIR_generate_key(rlwekex_a[j], rlwekex_ctx) ||
+					!RLWE_PAIR_generate_key(rlwekex_b[j], rlwekex_ctx))
+					{
+					BIO_printf(bio_err,"RLWEKEX key generation failure.\n");
+					ERR_print_errors(bio_err);
+					rsa_count=1;		
+					}
+				else
+					{
+					/* Time RLWEKEX Bob shared secret generation */
+					pkey_print_message("rlwe","Bob shared secret", rlwekex_c[j][1], 1024, RLWEKEX_SECONDS);
+					Time_F(START);
+					for (count=0,run=1; COND(rlwekex_c[j][1]); count++)
+						{
+						RLWEKEX_compute_key_bob(rlwekex_secret_b, rlwekex_secret_size_b, rlwekex_rec[j], 
+							RLWE_PAIR_get_publickey(rlwekex_a[j]), rlwekex_b[j], KDF1_SHA1, rlwekex_ctx);
+						}
+					d=Time_F(STOP);
+					BIO_printf(bio_err, mr ? "+R10:%ld:%d:%.2f\n" :"%ld n=%d RLWE Bob shared secret in %.2fs\n",
+						count, 1024, d);
+					rlwekex_results[j][1]=d/(double)count;
+					rsa_count=count;
+
+					/* Time RLWEKEX Alice shared secret generation */
+					pkey_print_message("rlwe","Alice shared secret", rlwekex_c[j][2], 1024, RLWEKEX_SECONDS);
+					Time_F(START);
+					for (count=0,run=1; COND(rlwekex_c[j][2]); count++)
+						{
+						RLWEKEX_compute_key_alice(rlwekex_secret_a, rlwekex_secret_size_a, 
+							RLWE_PAIR_get_publickey(rlwekex_b[j]), rlwekex_rec[j], rlwekex_a[j], KDF1_SHA1, rlwekex_ctx);
+						}
+					d=Time_F(STOP);
+					BIO_printf(bio_err, mr ? "+R11:%ld:%d:%.2f\n" :"%ld n=%d RLWE Alice shared secret in %.2fs\n",
+						count, 1024, d);
+					rlwekex_results[j][2]=d/(double)count;
+					rsa_count=count;
+
+					}
+				}
+
+			if (rsa_count <= 1)
+				{
+				/* if longer than 10s, don't do any more */
+				for (j++; j<RLWEKEX_NUM; j++)
+					rlwekex_doit[j]=0;
+				}
+			}
+
+		}
+	if (rnd_fake) RAND_cleanup();
+#endif
+
 #ifndef NO_FORK
 show_res:
 #endif
@@ -2537,6 +2693,30 @@ show_res:
 		}
 #endif
 
+#ifndef OPENSSL_NO_RLWEKEX
+	j=1;
+	for (k=0; k<RLWEKEX_NUM; k++)
+		{
+		if (!rlwekex_doit[k]) continue;
+		if (j && !mr)
+			{
+			printf("%19skeygen   keygen/s   Bob shared      Bob/s   Alice shared    Alice/s\n"," ");
+			j=0;
+			}
+		if (mr)
+			fprintf(stdout,"+F6:%u:%u:%f:%f:%f\n",
+				k, 1024,
+				rlwekex_results[k][0], rlwekex_results[k][1], rlwekex_results[k][2]);
+
+		else
+			fprintf(stdout,"rlwe n=%4u     %8.4fs    %8.1f   %8.4fs   %8.1f      %8.4fs   %8.1f\n",
+				1024,
+				rlwekex_results[k][0], 1.0/rlwekex_results[k][0],
+				rlwekex_results[k][1], 1.0/rlwekex_results[k][1],
+				rlwekex_results[k][2], 1.0/rlwekex_results[k][2]);
+		}
+#endif
+
 	mret=0;
 
 end:
@@ -2566,6 +2746,17 @@ end:
 			EC_KEY_free(ecdh_a[i]);
 		if (ecdh_b[i] != NULL)
 			EC_KEY_free(ecdh_b[i]);
+	}
+#endif
+#ifndef OPENSSL_NO_RLWEKEX
+	for (i=0; i<RLWEKEX_NUM; i++)
+	{
+		if (rlwekex_a[i] != NULL)
+			RLWE_PAIR_free(rlwekex_a[i]);
+		if (rlwekex_b[i] != NULL)
+			RLWE_PAIR_free(rlwekex_b[i]);
+		if (rlwekex_rec[i] != NULL)
+			RLWE_REC_free(rlwekex_rec[i]);
 	}
 #endif
 
@@ -2822,6 +3013,25 @@ static int do_multi(int multi)
 					ecdh_results[k][0]=1/(1/ecdh_results[k][0]+1/d);
 				else
 					ecdh_results[k][0]=d;
+
+				}
+#endif
+
+#ifndef OPENSSL_NO_RLWEKEX
+			else if(!strncmp(buf,"+F6:",4))
+				{
+				int k;
+				double d;
+				
+				p=buf+4;
+				k=atoi(sstrsep(&p,sep));
+				sstrsep(&p,sep);
+
+				d=atof(sstrsep(&p,sep));
+				if(n)
+					rlwekex_results[k][0]=1/(1/rlwekex_results[k][0]+1/d);
+				else
+					rlwekex_results[k][0]=d;
 
 				}
 #endif
