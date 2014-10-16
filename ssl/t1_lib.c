@@ -1462,7 +1462,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf, unsigned c
 		ret += s->alpn_client_proto_list_len;
 		}
 
-        if(SSL_get_srtp_profiles(s))
+        if(SSL_IS_DTLS(s) && SSL_get_srtp_profiles(s))
                 {
                 int el;
 
@@ -1485,8 +1485,11 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf, unsigned c
 	if (!custom_ext_add(s, 0, &ret, limit, al))
 		return NULL;
 #ifdef TLSEXT_TYPE_encrypt_then_mac
-	s2n(TLSEXT_TYPE_encrypt_then_mac,ret);
-	s2n(0,ret);
+	if (s->version != SSL3_VERSION)
+		{
+		s2n(TLSEXT_TYPE_encrypt_then_mac,ret);
+		s2n(0,ret);
+		}
 #endif
 
 	/* Add padding to workaround bugs in F5 terminators.
@@ -1639,7 +1642,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf, unsigned c
 		}
 #endif
 
-        if(s->srtp_profile)
+        if(SSL_IS_DTLS(s) && s->srtp_profile)
                 {
                 int el;
 
@@ -1719,10 +1722,12 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf, unsigned c
 #ifdef TLSEXT_TYPE_encrypt_then_mac
 	if (s->s3->flags & TLS1_FLAGS_ENCRYPT_THEN_MAC)
 		{
-		/* Don't use encrypt_then_mac if AEAD: might want
-		 * to disable for other ciphersuites too.
+		/* Don't use encrypt_then_mac if AEAD, RC4 or SSL 3.0:
+		 * might want to disable for other cases too.
 		 */
-		if (s->s3->tmp.new_cipher->algorithm_mac == SSL_AEAD)
+		if (s->s3->tmp.new_cipher->algorithm_mac == SSL_AEAD
+		    || s->s3->tmp.new_cipher->algorithm_enc == SSL_RC4
+		    || s->version == SSL3_VERSION)
 			s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC;
 		else
 			{
@@ -2428,12 +2433,20 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 			}
 
 		/* session ticket processed earlier */
-		else if (type == TLSEXT_TYPE_use_srtp)
+		else if (SSL_IS_DTLS(s) && SSL_get_srtp_profiles(s)
+				&& type == TLSEXT_TYPE_use_srtp)
                         {
 			if(ssl_parse_clienthello_use_srtp_ext(s, data, size,
 							      al))
 				return 0;
                         }
+#ifdef TLSEXT_TYPE_encrypt_then_mac
+		else if (type == TLSEXT_TYPE_encrypt_then_mac)
+			{
+			if (s->version != SSL3_VERSION)
+				s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
+			}
+#endif
 		/* If this ClientHello extension was unhandled and this is 
 		 * a nonresumed connection, check whether the extension is a 
 		 * custom TLS Extension (has a custom_srv_ext_record), and if
@@ -2445,10 +2458,6 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 			if (custom_ext_parse(s, 1, type, data, size, al) <= 0)
 				return 0;
 			}
-#ifdef TLSEXT_TYPE_encrypt_then_mac
-		else if (type == TLSEXT_TYPE_encrypt_then_mac)
-			s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
-#endif
 
 		data+=size;
 		}
@@ -2768,25 +2777,27 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 				}
 			}
 #endif
-		else if (type == TLSEXT_TYPE_use_srtp)
+		else if (SSL_IS_DTLS(s) && type == TLSEXT_TYPE_use_srtp)
                         {
                         if(ssl_parse_serverhello_use_srtp_ext(s, data, size,
 							      al))
                                 return 0;
                         }
+#ifdef TLSEXT_TYPE_encrypt_then_mac
+		else if (type == TLSEXT_TYPE_encrypt_then_mac)
+			{
+			/* Ignore if inappropriate ciphersuite or SSL 3.0 */
+			if (s->s3->tmp.new_cipher->algorithm_mac != SSL_AEAD
+			    && s->s3->tmp.new_cipher->algorithm_enc != SSL_RC4
+			    && s->version != SSL3_VERSION)
+				s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
+			}
+#endif
 		/* If this extension type was not otherwise handled, but 
 		 * matches a custom_cli_ext_record, then send it to the c
 		 * callback */
 		else if (custom_ext_parse(s, 0, type, data, size, al) <= 0)
 				return 0;
-#ifdef TLSEXT_TYPE_encrypt_then_mac
-		else if (type == TLSEXT_TYPE_encrypt_then_mac)
-			{
-			/* Ignore if inappropriate ciphersuite */
-			if (s->s3->tmp.new_cipher->algorithm_mac != SSL_AEAD)
-				s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
-			}
-#endif
  
 		data += size;
 		}
@@ -3369,7 +3380,10 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 	HMAC_Final(&hctx, tick_hmac, NULL);
 	HMAC_CTX_cleanup(&hctx);
 	if (CRYPTO_memcmp(tick_hmac, etick + eticklen, mlen))
+		{
+		EVP_CIPHER_CTX_cleanup(&ctx);
 		return 2;
+		}
 	/* Attempt to decrypt session data */
 	/* Move p after IV to start of encrypted ticket, update length */
 	p = etick + 16 + EVP_CIPHER_CTX_iv_length(&ctx);

@@ -685,6 +685,10 @@ struct ssl_session_st
  */
 #define SSL_MODE_SEND_CLIENTHELLO_TIME 0x00000020L
 #define SSL_MODE_SEND_SERVERHELLO_TIME 0x00000040L
+/* Send TLS_FALLBACK_SCSV in the ClientHello.
+ * To be set by applications that reconnect with a downgraded protocol
+ * version; see draft-ietf-tls-downgrade-scsv-00 for details. */
+#define SSL_MODE_SEND_FALLBACK_SCSV 0x00000080L
 
 /* Cert related flags */
 /* Many implementations ignore some aspects of the TLS standards such as
@@ -1693,6 +1697,7 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_AD_BAD_CERTIFICATE_STATUS_RESPONSE TLS1_AD_BAD_CERTIFICATE_STATUS_RESPONSE
 #define SSL_AD_BAD_CERTIFICATE_HASH_VALUE TLS1_AD_BAD_CERTIFICATE_HASH_VALUE
 #define SSL_AD_UNKNOWN_PSK_IDENTITY     TLS1_AD_UNKNOWN_PSK_IDENTITY /* fatal */
+#define SSL_AD_INAPPROPRIATE_FALLBACK	TLS1_AD_INAPPROPRIATE_FALLBACK /* fatal */
 
 #define SSL_ERROR_NONE			0
 #define SSL_ERROR_SSL			1
@@ -1832,11 +1837,14 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_SELECT_CURRENT_CERT		116
 #define SSL_CTRL_SET_CURRENT_CERT		117
 
+#define SSL_CTRL_SET_DH_AUTO			118
+#define SSL_CTRL_CHECK_PROTO_VERSION		119
+
+
 #define SSL_CERT_SET_FIRST			1
 #define SSL_CERT_SET_NEXT			2
 #define SSL_CERT_SET_SERVER			3
 
-#define SSL_CTRL_SET_DH_AUTO			118
 
 #define DTLSv1_get_timeout(ssl, arg) \
 	SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)
@@ -2083,10 +2091,8 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file);
 int	SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
 					    const char *file);
 #ifndef OPENSSL_SYS_VMS
-#ifndef OPENSSL_SYS_MACINTOSH_CLASSIC /* XXXXX: Better scheme needed! [was: #ifndef MAC_OS_pre_X] */
 int	SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
 					   const char *dir);
-#endif
 #endif
 
 #endif
@@ -2871,6 +2877,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_HTTP_REQUEST				 156
 #define SSL_R_ILLEGAL_PADDING				 283
 #define SSL_R_ILLEGAL_SUITEB_DIGEST			 380
+#define SSL_R_INAPPROPRIATE_FALLBACK			 373
 #define SSL_R_INCONSISTENT_COMPRESSION			 340
 #define SSL_R_INVALID_CHALLENGE_LENGTH			 158
 #define SSL_R_INVALID_COMMAND				 280
@@ -3029,6 +3036,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_TLSV1_ALERT_DECRYPTION_FAILED		 1021
 #define SSL_R_TLSV1_ALERT_DECRYPT_ERROR			 1051
 #define SSL_R_TLSV1_ALERT_EXPORT_RESTRICTION		 1060
+#define SSL_R_TLSV1_ALERT_INAPPROPRIATE_FALLBACK	 1086
 #define SSL_R_TLSV1_ALERT_INSUFFICIENT_SECURITY		 1071
 #define SSL_R_TLSV1_ALERT_INTERNAL_ERROR		 1080
 #define SSL_R_TLSV1_ALERT_NO_RENEGOTIATION		 1100

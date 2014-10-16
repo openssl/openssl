@@ -125,9 +125,11 @@ static const SSL_METHOD *ssl23_get_client_method(int ver)
 	if (ver == SSL2_VERSION)
 		return(SSLv2_client_method());
 #endif
+#ifndef OPENSSL_NO_SSL3
 	if (ver == SSL3_VERSION)
 		return(SSLv3_client_method());
-	else if (ver == TLS1_VERSION)
+#endif
+	if (ver == TLS1_VERSION)
 		return(TLSv1_client_method());
 	else if (ver == TLS1_1_VERSION)
 		return(TLSv1_1_client_method());
@@ -714,6 +716,7 @@ static int ssl23_get_server_hello(SSL *s)
 		{
 		/* we have sslv3 or tls1 (server hello or alert) */
 
+#ifndef OPENSSL_NO_SSL3
 		if ((p[2] == SSL3_VERSION_MINOR) &&
 			!(s->options & SSL_OP_NO_SSLv3))
 			{
@@ -728,7 +731,9 @@ static int ssl23_get_server_hello(SSL *s)
 			s->version=SSL3_VERSION;
 			s->method=SSLv3_client_method();
 			}
-		else if ((p[2] == TLS1_VERSION_MINOR) &&
+		else
+#endif
+		if ((p[2] == TLS1_VERSION_MINOR) &&
 			!(s->options & SSL_OP_NO_TLSv1))
 			{
 			s->version=TLS1_VERSION;
@@ -751,6 +756,9 @@ static int ssl23_get_server_hello(SSL *s)
 			SSLerr(SSL_F_SSL23_GET_SERVER_HELLO,SSL_R_UNSUPPORTED_PROTOCOL);
 			goto err;
 			}
+
+		/* ensure that TLS_MAX_VERSION is up-to-date */
+		OPENSSL_assert(s->version <= TLS_MAX_VERSION);
 
 		if (!ssl_security(s, SSL_SECOP_VERSION, 0, s->version, NULL))
 			{

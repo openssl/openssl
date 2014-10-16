@@ -4409,8 +4409,8 @@ ECDSA_METHOD_set_app_data               4768	EXIST::FUNCTION:ECDSA
 sk_deep_copy                            4769	EXIST::FUNCTION:
 ECDSA_METHOD_get_app_data               4770	EXIST::FUNCTION:ECDSA
 X509_VERIFY_PARAM_add1_host             4771	EXIST::FUNCTION:
-FIPS_dsa_sign_ctx                       4772	EXIST:OPENSSL_FIPS:FUNCTION:DSA
-FIPS_ecdsa_sign                         4773	EXIST:OPENSSL_FIPS:FUNCTION:ECDSA
+EC_GROUP_get_mont_data                  4772	EXIST::FUNCTION:EC
+i2d_re_X509_tbs                         4773	EXIST::FUNCTION:
 RSA_security_bits                       4774	EXIST::FUNCTION:RSA
 FIPS_ecdsa_verify_digest                4775	EXIST:OPENSSL_FIPS:FUNCTION:ECDSA
 FIPS_ecdsa_verify                       4776	EXIST:OPENSSL_FIPS:FUNCTION:ECDSA
@@ -4513,7 +4513,9 @@ i2d_re_X509_tbs                         4872	EXIST::FUNCTION:
 RSA_check_key_ex                        4873	EXIST::FUNCTION:RSA
 i2s_ASN1_IA5STRING                      4874	EXIST::FUNCTION:
 s2i_ASN1_IA5STRING                      4875	EXIST::FUNCTION:
-bn_probable_prime_dh_retry              4876	EXIST::FUNCTION:
-bn_probable_prime_dh_coprime            4877	EXIST::FUNCTION:
-bn_probable_prime_dh                    4878	EXIST::FUNCTION:
-EC_GROUP_get_mont_data                  4879	EXIST::FUNCTION:EC
+FIPS_dsa_sign_ctx                       4876	EXIST:OPENSSL_FIPS:FUNCTION:DSA
+FIPS_ecdsa_sign                         4877	EXIST:OPENSSL_FIPS:FUNCTION:ECDSA
+bn_probable_prime_dh_retry              4878	EXIST::FUNCTION:
+bn_probable_prime_dh_coprime            4879	EXIST::FUNCTION:
+bn_probable_prime_dh                    4880	EXIST::FUNCTION:
+EC_GROUP_get_mont_data                  4881	EXIST::FUNCTION:EC

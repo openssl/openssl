@@ -146,15 +146,6 @@
 #  define ROTATE(a,n)	_lrotl(a,n)
 # elif defined(__ICC)
 #  define ROTATE(a,n)	_rotl(a,n)
-# elif defined(__MWERKS__)
-#  if defined(__POWERPC__)
-#   define ROTATE(a,n)	__rlwinm(a,n,0,31)
-#  elif defined(__MC68K__)
-    /* Motorola specific tweak. <appro@fy.chalmers.se> */
-#   define ROTATE(a,n)	( n<24 ? __rol(a,n) : __ror(a,32-n) )
-#  else
-#   define ROTATE(a,n)	__rol(a,n)
-#  endif
 # elif defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
   /*
    * Some GNU C inline assembler templates. Note that these are
