@@ -70,7 +70,6 @@
 
 #include "ec_lcl.h"
 
-__fips_constseg
 static const char EC_version[] = "EC" OPENSSL_VERSION_PTEXT;
 
 

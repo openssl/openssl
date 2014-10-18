@@ -14,7 +14,6 @@
 #include <openssl/sha.h>
 #include <openssl/opensslv.h>
 
-__fips_constseg
 const char SHA256_version[]="SHA-256" OPENSSL_VERSION_PTEXT;
 
 int SHA224_Init (SHA256_CTX *c)
@@ -116,7 +115,6 @@ void sha256_block_data_order (SHA256_CTX *ctx, const void *in, size_t num);
 #include "md32_common.h"
 
 #ifndef SHA256_ASM
-__fips_constseg
 static const SHA_LONG K256[64] = {
 	0x428a2f98UL,0x71374491UL,0xb5c0fbcfUL,0xe9b5dba5UL,
 	0x3956c25bUL,0x59f111f1UL,0x923f82a4UL,0xab1c5ed5UL,

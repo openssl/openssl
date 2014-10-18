@@ -63,7 +63,6 @@ typedef unsigned short prime_t;
 #define NUMPRIMES 54
 typedef unsigned char prime_t;
 #endif
-__fips_constseg
 static const prime_t primes[NUMPRIMES]=
 	{
 	   2,   3,   5,   7,  11,  13,  17,  19,

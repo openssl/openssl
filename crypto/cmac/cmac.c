@@ -141,7 +141,6 @@ int CMAC_CTX_copy(CMAC_CTX *out, const CMAC_CTX *in)
 int CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen, 
 			const EVP_CIPHER *cipher, ENGINE *impl)
 	{
-	__fips_constseg
 	static const unsigned char zero_iv[EVP_MAX_BLOCK_LENGTH] = {0};
 	/* All zeros means restart */
 	if (!key && !cipher && !impl && keylen == 0)

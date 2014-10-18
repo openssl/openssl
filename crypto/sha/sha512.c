@@ -50,7 +50,6 @@
 
 #include "cryptlib.h"
 
-__fips_constseg
 const char SHA512_version[]="SHA-512" OPENSSL_VERSION_PTEXT;
 
 #if defined(__i386) || defined(__i386__) || defined(_M_IX86) || \
@@ -270,7 +269,6 @@ unsigned char *SHA512(const unsigned char *d, size_t n, unsigned char *md)
 	}
 
 #ifndef SHA512_ASM
-__fips_constseg
 static const SHA_LONG64 K512[80] = {
         U64(0x428a2f98d728ae22),U64(0x7137449123ef65cd),
         U64(0xb5c0fbcfec4d3b2f),U64(0xe9b5dba58189dbbc),

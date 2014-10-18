@@ -101,7 +101,6 @@
 /* Maximum number of iterations before BN_GF2m_mod_solve_quad_arr should fail. */
 #define MAX_ITERATIONS 50
 
-__fips_constseg
 static const BN_ULONG SQR_tb[16] =
   {     0,     1,     4,     5,    16,    17,    20,    21,
        64,    65,    68,    69,    80,    81,    84,    85 };

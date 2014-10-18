@@ -68,7 +68,6 @@
 
 OPENSSL_IMPLEMENT_GLOBAL(int,DES_check_key,0)	/* defaults to false */
 
-__fips_constseg
 static const unsigned char odd_parity[256]={
   1,  1,  2,  2,  4,  4,  7,  7,  8,  8, 11, 11, 13, 13, 14, 14,
  16, 16, 19, 19, 21, 21, 22, 22, 25, 25, 26, 26, 28, 28, 31, 31,
@@ -117,7 +116,6 @@ int DES_check_key_parity(const_DES_cblock *key)
  * (and actual cblock values).
  */
 #define NUM_WEAK_KEY	16
-__fips_constseg
 static const DES_cblock weak_keys[NUM_WEAK_KEY]={
 	/* weak keys */
 	{0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01},
@@ -163,7 +161,6 @@ int DES_is_weak_key(const_DES_cblock *key)
 #define HPERM_OP(a,t,n,m) ((t)=((((a)<<(16-(n)))^(a))&(m)),\
 	(a)=(a)^(t)^(t>>(16-(n))))
 
-__fips_constseg
 static const DES_LONG des_skb[8][64]={
 	{
 	/* for C bits (numbered as per FIPS 46) 1 2 3 4 5 6 */
@@ -340,7 +337,6 @@ int DES_set_key_checked(const_DES_cblock *key, DES_key_schedule *schedule)
 
 void DES_set_key_unchecked(const_DES_cblock *key, DES_key_schedule *schedule)
 	{
-	__fips_constseg
 	static const int shifts2[16]={0,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0};
 	register DES_LONG c,d,t,s,t2;
 	register const unsigned char *in;
