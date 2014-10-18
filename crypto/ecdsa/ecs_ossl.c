@@ -561,32 +561,3 @@ err:
 		EC_POINT_free(point);
 	return ret;
 }
-
-#ifdef OPENSSL_FIPSCANISTER
-/* FIPS stanadlone version of ecdsa_check: just return FIPS method */
-ECDSA_DATA *fips_ecdsa_check(EC_KEY *key)
-	{
-	static ECDSA_DATA rv = {
-		0,0,0,
-		&openssl_ecdsa_meth
-		};
-	return &rv;
-	}
-/* Standalone digest sign and verify */
-int FIPS_ecdsa_verify_digest(EC_KEY *key,
-			const unsigned char *dig, int dlen, ECDSA_SIG *s)
-	{
-	ECDSA_DATA *ecdsa = ecdsa_check(key);
-	if (ecdsa == NULL)
-		return 0;
-	return ecdsa->meth->ecdsa_do_verify(dig, dlen, s, key);
-	}
-ECDSA_SIG * FIPS_ecdsa_sign_digest(EC_KEY *key,
-					const unsigned char *dig, int dlen)
-	{
-	ECDSA_DATA *ecdsa = ecdsa_check(key);
-	if (ecdsa == NULL)
-		return NULL;
-	return ecdsa->meth->ecdsa_do_sign(dig, dlen, NULL, NULL, key);
-	}
-#endif
