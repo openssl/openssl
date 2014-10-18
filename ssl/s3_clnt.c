@@ -156,9 +156,6 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/md5.h>
-#ifdef OPENSSL_FIPS
-#include <openssl/fips.h>
-#endif
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif
