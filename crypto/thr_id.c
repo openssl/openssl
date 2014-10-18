@@ -130,7 +130,6 @@ void CRYPTO_THREADID_set_numeric(CRYPTO_THREADID *id, unsigned long val)
 	id->val = val;
 	}
 
-__fips_constseg
 static const unsigned char hash_coeffs[] = { 3, 5, 7, 11, 13, 17, 19, 23 };
 void CRYPTO_THREADID_set_pointer(CRYPTO_THREADID *id, void *ptr)
 	{

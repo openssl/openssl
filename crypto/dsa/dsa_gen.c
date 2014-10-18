@@ -697,7 +697,6 @@ end:
 
 	for (;;)
 		{
-		__fips_constseg
 		static const unsigned char ggen[4] = {0x67,0x67,0x65,0x6e};
 		if (idx >= 0)
 			{

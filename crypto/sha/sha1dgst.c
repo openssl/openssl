@@ -65,7 +65,6 @@
 
 #include <openssl/opensslv.h>
 
-__fips_constseg
 const char SHA1_version[]="SHA1" OPENSSL_VERSION_PTEXT;
 
 /* The implementation is in ../md32_common.h */

@@ -148,7 +148,6 @@ static void gcm_gmult_8bit(u64 Xi[2], const u128 Htable[256])
 	const u8 *xi = (const u8 *)Xi+15;
 	size_t rem, n = *xi;
 	const union { long one; char little; } is_endian = {1};
-	__fips_constseg
 	static const size_t rem_8bit[256] = {
 		PACK(0x0000), PACK(0x01C2), PACK(0x0384), PACK(0x0246),
 		PACK(0x0708), PACK(0x06CA), PACK(0x048C), PACK(0x054E),
@@ -327,7 +326,6 @@ static void gcm_init_4bit(u128 Htable[16], u64 H[2])
 }
 
 #ifndef GHASH_ASM
-__fips_constseg
 static const size_t rem_4bit[16] = {
 	PACK(0x0000), PACK(0x1C20), PACK(0x3840), PACK(0x2460),
 	PACK(0x7080), PACK(0x6CA0), PACK(0x48C0), PACK(0x54E0),
@@ -463,7 +461,6 @@ static void gcm_ghash_4bit(u64 Xi[2],const u128 Htable[16],
      */ 
     u128 Hshr4[16];	/* Htable shifted right by 4 bits */
     u8   Hshl4[16];	/* Htable shifted left  by 4 bits */
-    __fips_constseg
     static const unsigned short rem_8bit[256] = {
 	0x0000, 0x01C2, 0x0384, 0x0246, 0x0708, 0x06CA, 0x048C, 0x054E,
 	0x0E10, 0x0FD2, 0x0D94, 0x0C56, 0x0918, 0x08DA, 0x0A9C, 0x0B5E,

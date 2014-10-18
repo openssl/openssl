@@ -86,7 +86,6 @@ typedef struct {
 } EC_CURVE_DATA;
 
 /* the nist prime curves */
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+24*6]; }
 	_EC_NIST_PRIME_192 = {
 	{ NID_X9_62_prime_field,20,24,1 },
@@ -113,7 +112,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+24*6]; }
 	  0xB4,0xD2,0x28,0x31 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+28*6]; }
 	_EC_NIST_PRIME_224 = {
 	{ NID_X9_62_prime_field,20,28,1 },
@@ -140,7 +138,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+28*6]; }
 	  0x13,0xDD,0x29,0x45,0x5C,0x5C,0x2A,0x3D }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+48*6]; }
 	_EC_NIST_PRIME_384 = {
 	{ NID_X9_62_prime_field,20,48,1 },
@@ -179,7 +176,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+48*6]; }
 	  0xEC,0xEC,0x19,0x6A,0xCC,0xC5,0x29,0x73 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+66*6]; }
 	_EC_NIST_PRIME_521 = {
 	{ NID_X9_62_prime_field,20,66,1 },
@@ -231,7 +227,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+66*6]; }
 	};
 
 /* the x9.62 prime curves (minus the nist prime curves) */
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+24*6]; }
 	_EC_X9_62_PRIME_192V2 = {
 	{ NID_X9_62_prime_field,20,24,1 },
@@ -258,7 +253,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+24*6]; }
 	  0x48,0xD8,0xDD,0x31 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+24*6]; }
 	_EC_X9_62_PRIME_192V3 = {
 	{ NID_X9_62_prime_field,20,24,1 },
@@ -285,7 +279,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+24*6]; }
 	  0xF6,0x40,0xEC,0x13 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+30*6]; }
 	_EC_X9_62_PRIME_239V1 = {
 	{ NID_X9_62_prime_field,20,30,1 },
@@ -317,7 +310,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+30*6]; }
 	  0x90,0x71,0xFB,0xD1,0x52,0x26,0x88,0x90,0x9D,0x0B }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+30*6]; }
 	_EC_X9_62_PRIME_239V2 = {
 	{ NID_X9_62_prime_field,20,30,1 },
@@ -349,7 +341,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+30*6]; }
 	  0x77,0xD4,0x14,0xC0,0x38,0x21,0xBC,0x58,0x20,0x63 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+30*6]; }
 	_EC_X9_62_PRIME_239V3 = {
 	{ NID_X9_62_prime_field,20,30,1 },
@@ -382,7 +373,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+30*6]; }
 	};
 
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+32*6]; }
 	_EC_X9_62_PRIME_256V1 = {
 	{ NID_X9_62_prime_field,20,32,1 },
@@ -416,7 +406,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+32*6]; }
 	};
 
 /* the secg prime curves (minus the nist and x9.62 prime curves) */
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+14*6]; }
 	_EC_SECG_PRIME_112R1 = {
 	{ NID_X9_62_prime_field,20,14,1 },
@@ -437,7 +426,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+14*6]; }
 	  0xAC,0x65,0x61,0xC5 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+14*6]; }
 	_EC_SECG_PRIME_112R2 = {
 	{ NID_X9_62_prime_field,20,14,4 },
@@ -458,7 +446,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+14*6]; }
 	  0x05,0x20,0xD0,0x4B }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+16*6]; }
 	_EC_SECG_PRIME_128R1 = {
 	{ NID_X9_62_prime_field,20,16,1 },
@@ -479,7 +466,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+16*6]; }
 	  0x0D,0x1B,0x90,0x38,0xA1,0x15 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+16*6]; }
 	_EC_SECG_PRIME_128R2 = {
 	{ NID_X9_62_prime_field,20,16,4 },
@@ -500,7 +486,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+16*6]; }
 	  0x24,0x72,0x06,0x13,0xB5,0xA3 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[0+21*6]; }
 	_EC_SECG_PRIME_160K1 = {
 	{ NID_X9_62_prime_field,0,21,1 },
@@ -525,7 +510,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[0+21*6]; }
 	  0xB3 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+21*6]; }
 	_EC_SECG_PRIME_160R1 = {
 	{ NID_X9_62_prime_field,20,21,1 },
@@ -552,7 +536,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+21*6]; }
 	  0x57 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+21*6]; }
 	_EC_SECG_PRIME_160R2 = {
 	{ NID_X9_62_prime_field,20,21,1 },
@@ -579,7 +562,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+21*6]; }
 	  0x6B }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[0+24*6]; }
 	_EC_SECG_PRIME_192K1 = {
 	{ NID_X9_62_prime_field,0,24,1 },
@@ -604,7 +586,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[0+24*6]; }
 	  0x74,0xDE,0xFD,0x8D }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[0+29*6]; }
 	_EC_SECG_PRIME_224K1 = {
 	{ NID_X9_62_prime_field,0,29,1 },
@@ -629,7 +610,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[0+29*6]; }
 	  0x84,0xCA,0xF0,0xA9,0x71,0x76,0x9F,0xB1,0xF7 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[0+32*6]; }
 	_EC_SECG_PRIME_256K1 = {
 	{ NID_X9_62_prime_field,0,32,1 },
@@ -661,7 +641,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[0+32*6]; }
 	};
 
 /* some wap/wtls curves */
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[0+15*6]; }
 	_EC_WTLS_8 = {
 	{ NID_X9_62_prime_field,0,15,1 },
@@ -680,7 +659,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[0+15*6]; }
 	  0x55,0x1A,0xD8,0x37,0xE9 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[0+21*6]; }
 	_EC_WTLS_9 = {
 	{ NID_X9_62_prime_field,0,21,1 },
@@ -705,7 +683,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[0+21*6]; }
 	  0x33 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[0+28*6]; }
 	_EC_WTLS_12 = {
 	{ NID_X9_62_prime_field,0,28,1 },
@@ -733,7 +710,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[0+28*6]; }
 #ifndef OPENSSL_NO_EC2M
 
 /* characteristic two curves */
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+15*6]; }
 	_EC_SECG_CHAR2_113R1 = {
 	{ NID_X9_62_characteristic_two_field,20,15,2 },
@@ -754,7 +730,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+15*6]; }
 	  0xEC,0x8A,0x39,0xE5,0x6F }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+15*6]; }
 	_EC_SECG_CHAR2_113R2 = {
 	{ NID_X9_62_characteristic_two_field,20,15,2 },
@@ -775,7 +750,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+15*6]; }
 	  0x9B,0x24,0x96,0xAF,0x93 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+17*6]; }
 	_EC_SECG_CHAR2_131R1 = {
 	{ NID_X9_62_characteristic_two_field,20,17,2 },
@@ -796,7 +770,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+17*6]; }
 	  0x23,0x95,0x3A,0x94,0x64,0xB5,0x4D }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+17*6]; }
 	_EC_SECG_CHAR2_131R2 = {
 	{ NID_X9_62_characteristic_two_field,20,17,2 },
@@ -817,7 +790,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+17*6]; }
 	  0x54,0xA2,0x33,0x04,0x9B,0xA9,0x8F }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[0+21*6]; }
 	_EC_NIST_CHAR2_163K = {
 	{ NID_X9_62_characteristic_two_field,0,21,2 },
@@ -842,7 +814,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[0+21*6]; }
 	  0xEF }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[0+21*6]; }
 	_EC_SECG_CHAR2_163R1 = {
 	{ NID_X9_62_characteristic_two_field,0,21,2 },
@@ -874,7 +845,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[0+21*6]; }
 	  0x9B }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[0+21*6]; }
 	_EC_NIST_CHAR2_163B = {
 	{ NID_X9_62_characteristic_two_field,0,21,2 },
@@ -905,7 +875,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[0+21*6]; }
 	  0x33 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+25*6]; }
 	_EC_SECG_CHAR2_193R1 = {
 	{ NID_X9_62_characteristic_two_field,20,25,2 },
@@ -932,7 +901,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+25*6]; }
 	  0xCC,0x92,0x0E,0xBA,0x49 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+25*6]; }
 	_EC_SECG_CHAR2_193R2 = {
 	{ NID_X9_62_characteristic_two_field,20,25,2 },
@@ -959,7 +927,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+25*6]; }
 	  0xCC,0xD4,0xEE,0x99,0xD5 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[0+30*6]; }
 	_EC_NIST_CHAR2_233K = {
 	{ NID_X9_62_characteristic_two_field,0,30,4 },
@@ -989,7 +956,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[0+30*6]; }
 	  0xBC,0xD4,0x6E,0xFB,0x1A,0xD5,0xF1,0x73,0xAB,0xDF }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+30*6]; }
 	_EC_NIST_CHAR2_233B = {
 	{ NID_X9_62_characteristic_two_field,20,30,2 },
@@ -1021,7 +987,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+30*6]; }
 	  0x8A,0x69,0x22,0x03,0x1D,0x26,0x03,0xCF,0xE0,0xD7 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[0+30*6]; }
 	_EC_SECG_CHAR2_239K1 = {
 	{ NID_X9_62_characteristic_two_field,0,30,4 },
@@ -1051,7 +1016,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[0+30*6]; }
 	  0xB6,0xE9,0x1F,0x1C,0x1D,0xA8,0x00,0xE4,0x78,0xA5 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[0+36*6]; }
 	_EC_NIST_CHAR2_283K = {
 	{ NID_X9_62_characteristic_two_field,0,36,4 },
@@ -1082,7 +1046,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[0+36*6]; }
 	  0x1E,0x06,0x1E,0x16,0x3C,0x61 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+36*6]; }
 	_EC_NIST_CHAR2_283B = {
 	{ NID_X9_62_characteristic_two_field,20,36,2 },
@@ -1115,7 +1078,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+36*6]; }
 	  0x2A,0x7C,0xEF,0xAD,0xB3,0x07 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[0+52*6]; }
 	_EC_NIST_CHAR2_409K = {
 	{ NID_X9_62_characteristic_two_field,0,52,4 },
@@ -1158,7 +1120,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[0+52*6]; }
 	  0x5F,0xCF }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+52*6]; }
 	_EC_NIST_CHAR2_409B = {
 	{ NID_X9_62_characteristic_two_field,20,52,2 },
@@ -1203,7 +1164,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+52*6]; }
 	  0x11,0x73 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[0+72*6]; }
 	_EC_NIST_CHAR2_571K = {
 	{ NID_X9_62_characteristic_two_field,0,72,4 },
@@ -1258,7 +1218,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[0+72*6]; }
 	  0x10,0x01 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+72*6]; }
 	_EC_NIST_CHAR2_571B = {
 	{ NID_X9_62_characteristic_two_field,20,72,2 },
@@ -1315,7 +1274,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+72*6]; }
 	  0x4E,0x47 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+21*6]; }
 	_EC_X9_62_CHAR2_163V1 = {
 	{ NID_X9_62_characteristic_two_field,20,21,2 },
@@ -1342,7 +1300,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+21*6]; }
 	  0xC1 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+21*6]; }
 	_EC_X9_62_CHAR2_163V2 = {
 	{ NID_X9_62_characteristic_two_field,20,21,2 },
@@ -1369,7 +1326,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+21*6]; }
 	  0xA7 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+21*6]; }
 	_EC_X9_62_CHAR2_163V3 = {
 	{ NID_X9_62_characteristic_two_field,20,21,2 },
@@ -1396,7 +1352,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+21*6]; }
 	  0x09 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[0+23*6]; }
 	_EC_X9_62_CHAR2_176V1 = {
 	{ NID_X9_62_characteristic_two_field,0,23,0xFF6E },
@@ -1421,7 +1376,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[0+23*6]; }
 	  0xFE,0x26,0xAD }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+24*6]; }
 	_EC_X9_62_CHAR2_191V1 = {
 	{ NID_X9_62_characteristic_two_field,20,24,2 },
@@ -1448,7 +1402,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+24*6]; }
 	  0x93,0xBB,0xB9,0xA5 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+24*6]; }
 	_EC_X9_62_CHAR2_191V2 = {
 	{ NID_X9_62_characteristic_two_field,20,24,4 },
@@ -1475,7 +1428,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+24*6]; }
 	  0xE0,0x6B,0x81,0x73 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+24*6]; }
 	_EC_X9_62_CHAR2_191V3 = {
 	{ NID_X9_62_characteristic_two_field,20,24,6 },
@@ -1502,7 +1454,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+24*6]; }
 	  0x28,0x8A,0x3E,0xA3 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[0+27*6]; }
 	_EC_X9_62_CHAR2_208W1 = {
 	{ NID_X9_62_characteristic_two_field,0,27,0xFE48 },
@@ -1527,7 +1478,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[0+27*6]; }
 	  0xBD,0xD5,0x71,0x7E,0x21,0x2F,0x9D }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+30*6]; }
 	_EC_X9_62_CHAR2_239V1 = {
 	{ NID_X9_62_characteristic_two_field,20,30,4 },
@@ -1559,7 +1509,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+30*6]; }
 	  0x49,0x2A,0x49,0x93,0xF1,0xCA,0xD6,0x66,0xE4,0x47 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+30*6]; }
 	_EC_X9_62_CHAR2_239V2 = {
 	{ NID_X9_62_characteristic_two_field,20,30,6 },
@@ -1591,7 +1540,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+30*6]; }
 	  0x9C,0x31,0xE3,0xFC,0xDF,0x15,0x46,0x24,0x52,0x2D }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+30*6]; }
 	_EC_X9_62_CHAR2_239V3 = {
 	{ NID_X9_62_characteristic_two_field,20,30,0xA },
@@ -1623,7 +1571,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+30*6]; }
 	  0xDF,0x90,0x3E,0xF9,0x88,0x8B,0x8A,0x0E,0x4C,0xFF }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[0+35*6]; }
 	_EC_X9_62_CHAR2_272W1 = {
 	{ NID_X9_62_characteristic_two_field,0,35,0xFF06 },
@@ -1654,7 +1601,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[0+35*6]; }
 	  0x8F,0x1E,0x62,0x95,0x21 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[0+39*6]; }
 	_EC_X9_62_CHAR2_304W1 = {
 	{ NID_X9_62_characteristic_two_field,0,39,0xFE2E },
@@ -1685,7 +1631,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[0+39*6]; }
 	  0x61,0xDA,0x68,0x99,0x16,0x44,0x43,0x05,0x1D }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[20+45*6]; }
 	_EC_X9_62_CHAR2_359V1 = {
 	{ NID_X9_62_characteristic_two_field,20,45,0x4C },
@@ -1724,7 +1669,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[20+45*6]; }
 	  0xF4,0x90,0x75,0x8D,0x3B }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[0+47*6]; }
 	_EC_X9_62_CHAR2_368W1 = {
 	{ NID_X9_62_characteristic_two_field,0,47,0xFF70 },
@@ -1761,7 +1705,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[0+47*6]; }
 	  0x31,0xE9,0xCF,0xCE,0x5B,0xD9,0x67 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[0+54*6]; }
 	_EC_X9_62_CHAR2_431R1 = {
 	{ NID_X9_62_characteristic_two_field,0,54,0x2760 },
@@ -1804,7 +1747,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[0+54*6]; }
 	  0xC1,0xAD,0x4A,0x91 }
 	};
 
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[0+15*6]; }
 	_EC_WTLS_1 = {
 	{ NID_X9_62_characteristic_two_field,0,15,2 },
@@ -1829,7 +1771,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[0+15*6]; }
  * As the group order is not a prime this curve is not suitable
  * for ECDSA.
  */
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[0+20*6]; }
 	_EC_IPSEC_155_ID3 = {
 	{ NID_X9_62_characteristic_two_field,0,20,3 },
@@ -1858,7 +1799,6 @@ static const struct { EC_CURVE_DATA h; unsigned char data[0+20*6]; }
  * As the group order is not a prime this curve is not suitable
  * for ECDSA.
  */
-__fips_constseg
 static const struct { EC_CURVE_DATA h; unsigned char data[0+24*6]; }
 	_EC_IPSEC_185_ID4 = {
 	{ NID_X9_62_characteristic_two_field,0,24,2 },

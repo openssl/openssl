@@ -68,7 +68,6 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
-__fips_constseg
 const char BN_version[]="Big Number" OPENSSL_VERSION_PTEXT;
 
 /* This stuff appears to be completely unused, so is deprecated */
@@ -143,7 +142,6 @@ const BIGNUM *BN_value_one(void)
 
 int BN_num_bits_word(BN_ULONG l)
 	{
-	__fips_constseg
 	static const unsigned char bits[256]={
 		0,1,2,2,3,3,3,3,4,4,4,4,4,4,4,4,
 		5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,

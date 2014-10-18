@@ -56,7 +56,6 @@
  * [including the GNU Public Licence.]
  */
 
-__fips_constseg
 OPENSSL_GLOBAL const DES_LONG DES_SPtrans[8][64]={
 {
 /* nibble 0 */
