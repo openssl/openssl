@@ -78,7 +78,7 @@ LIBDIR=lib
 # dependent assembler flags. E.g. if you throw -mcpu=ultrasparc at SPARC
 # gcc, then the driver will automatically translate it to -xarch=v8plus
 # and pass it down to assembler.
-#AS=$(CC) -c
+AS=$(CC) -c
 ASFLAG=$(CFLAG)
 
 # For x86 assembler: Set PROCESSOR to 386 if you want to support
@@ -121,15 +121,9 @@ LIBZLIB=
 
 FIPSLIBDIR=/usr/local/ssl/$(LIBDIR)/
 
-# This is set to "y" if fipscanister.o is compiled internally as
-# opposed to coming from an external validated location.
-
-FIPSCANISTERINTERNAL=n
-
 # The location of the library which contains fipscanister.o
-# normally it will be libcrypto unless fipsdso is set in which
-# case it will be libfips. If not compiling in FIPS mode at all
-# this is empty making it a useful test for a FIPS compile.
+# normally it will be libcrypto. If not compiling in FIPS mode
+# at all this is empty making it a useful test for a FIPS compile.
 
 FIPSCANLIB=
 
@@ -207,7 +201,7 @@ CLEARENV=	TOP= && unset TOP $${LIB+LIB} $${LIBS+LIBS}	\
 
 BUILDENV=	PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)' \
 		CC='$(CC)' CFLAG='$(CFLAG)' 			\
-		ASFLAG='$(CFLAG) -c'			\
+		AS='$(CC)' ASFLAG='$(CFLAG) -c'			\
 		AR='$(AR)' NM='$(NM)' RANLIB='$(RANLIB)'	\
 		CROSS_COMPILE='$(CROSS_COMPILE)'	\
 		PERL='$(PERL)' ENGDIRS='$(ENGDIRS)'		\
@@ -357,24 +351,10 @@ FIPS_EX_OBJ= ../crypto/aes/aes_cfb.o \
 sub_all: build_all
 build_all: build_libs build_apps build_tests build_tools
 
-build_libs: build_crypto build_fips build_ssl build_engines
-
-build_fips:
-	@dir=fips; target=all; [ -z "$(FIPSCANLIB)" ] || $(BUILD_ONE_CMD)
+build_libs: build_crypto build_ssl build_engines
 
 build_crypto:
-	if [ -n "$(FIPSCANLIB)" ]; then \
-		EXCL_OBJ='$(AES_ENC) $(BN_ASM) $(EC_ASM) $(DES_ENC) $(CPUID_OBJ) $(SHA1_ASM_OBJ) $(MODES_ASM_OBJ) $(FIPS_EX_OBJ)' ; export EXCL_OBJ ; \
-		ARX='$(PERL) $${TOP}/util/arx.pl $(AR)' ; \
-	else \
-		ARX='${AR}' ; \
-	fi ; export ARX ; \
-	if [ $(FIPSCANISTERINTERNAL) = "y" ]; then \
-		AS='$(PERL) $${TOP}/util/fipsas.pl $${TOP} $${<} $(CC) -c' ; \
-	else \
-		AS='$(CC) -c' ; \
-	fi ; export AS ; \
-		dir=crypto; target=all; $(BUILD_ONE_CMD)
+	@dir=crypto; target=all; $(BUILD_ONE_CMD)
 build_ssl:
 	@dir=ssl; target=all; $(BUILD_ONE_CMD)
 build_engines:
@@ -390,7 +370,7 @@ all_testapps: build_libs build_testapps
 build_testapps:
 	@dir=crypto; target=testapps; $(BUILD_ONE_CMD)
 
-libcrypto$(SHLIB_EXT): libcrypto.a build_fips
+libcrypto$(SHLIB_EXT): libcrypto.a
 	@if [ "$(SHLIB_TARGET)" != "" ]; then \
 		if [ "$(FIPSCANLIB)" = "libcrypto" ]; then \
 			FIPSLD_CC="$(CC)"; CC=fips/fipsld; \
