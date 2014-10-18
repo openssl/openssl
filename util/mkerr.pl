@@ -116,8 +116,7 @@ EOF
 }
 
 if($recurse) {
-	@source = ( <crypto/*.c>, <crypto/*/*.c>, <ssl/*.c>,
-			<fips/*.c>, <fips/*/*.c>);
+	@source = ( <crypto/*.c>, <crypto/*/*.c>, <ssl/*.c> )
 } else {
 	@source = @ARGV;
 }
