@@ -139,16 +139,6 @@
    one way or another */
 #include <openssl/symhacks.h>
 
-/* For FIPS mode rename all OpenSSL symbols to avoid clashes with a
- * non-FIPS OpenSSL.
- */
-
-#if defined(OPENSSL_FIPSCANISTER)
-# include <openssl/fipssyms.h>
-#else
-# define __fips_constseg
-#endif
-
 #ifdef  __cplusplus
 extern "C" {
 #endif
