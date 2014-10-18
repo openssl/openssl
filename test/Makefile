@@ -67,25 +67,6 @@ IGETEST=	igetest
 JPAKETEST=	jpaketest
 SRPTEST=	srptest
 V3NAMETEST=	v3nametest
-FIPS_SHATEST=	fips_shatest
-FIPS_DESTEST=	fips_desmovs
-FIPS_RANDTEST=	fips_randtest
-FIPS_AESTEST=	fips_aesavs
-FIPS_GCMTEST=	fips_gcmtest
-FIPS_HMACTEST=	fips_hmactest
-FIPS_RSAVTEST=	fips_rsavtest
-FIPS_RSASTEST=	fips_rsastest
-FIPS_RSAGTEST=	fips_rsagtest
-FIPS_DSATEST=	fips_dsatest
-FIPS_DSSVS=	fips_dssvs
-FIPS_RNGVS=	fips_rngvs
-FIPS_DRBGVS=	fips_drbgvs
-FIPS_DHVS=	fips_dhvs
-FIPS_ECDHVS=	fips_ecdhvs
-FIPS_ECDSAVS=	fips_ecdsavs
-FIPS_TEST_SUITE=fips_test_suite
-FIPS_CMACTEST=	fips_cmactest
-FIPS_ALGVS=	fips_algvs
 HEARTBEATTEST=  heartbeat_test
 CONSTTIMETEST=  constant_time_test
 
@@ -104,16 +85,6 @@ EXE=	$(BNTEST)$(EXE_EXT) $(ECTEST)$(EXE_EXT)  $(ECDSATEST)$(EXE_EXT) $(ECDHTEST)
 	$(V3NAMETEST)$(EXE_EXT) $(HEARTBEATTEST)$(EXE_EXT) $(P5_CRPT2_TEST)$(EXE_EXT) \
 	$(CONSTTIMETEST)$(EXE_EXT)
 
-FIPSEXE=$(FIPS_SHATEST)$(EXE_EXT) $(FIPS_DESTEST)$(EXE_EXT) \
-	$(FIPS_RANDTEST)$(EXE_EXT) $(FIPS_AESTEST)$(EXE_EXT) \
-	$(FIPS_HMACTEST)$(EXE_EXT) $(FIPS_RSAVTEST)$(EXE_EXT) \
-	$(FIPS_RSASTEST)$(EXE_EXT) $(FIPS_RSAGTEST)$(EXE_EXT) \
-	$(FIPS_DSSVS)$(EXE_EXT) $(FIPS_DSATEST)$(EXE_EXT) \
-	$(FIPS_RNGVS)$(EXE_EXT) $(FIPS_DRBGVS)$(EXE_EXT) \
-	$(FIPS_DHVS)$(EXE_EXT)  $(FIPS_TEST_SUITE)$(EXE_EXT)  \
-	$(FIPS_GCMTEST)$(EXE_EXT) $(FIPS_ECDSAVS)$(EXE_EXT) \
-	$(FIPS_ECDHVS)$(EXE_EXT) $(FIPS_CMACTEST)$(EXE_EXT)
-
 # $(METHTEST)$(EXE_EXT)
 
 OBJ=	$(BNTEST).o $(ECTEST).o  $(ECDSATEST).o $(ECDHTEST).o $(IDEATEST).o \
@@ -124,12 +95,6 @@ OBJ=	$(BNTEST).o $(ECTEST).o  $(ECDSATEST).o $(ECDHTEST).o $(IDEATEST).o \
 	$(MDC2TEST).o $(RMDTEST).o \
 	$(RANDTEST).o $(DHTEST).o $(ENGINETEST).o $(CASTTEST).o \
 	$(BFTEST).o  $(SSLTEST).o  $(DSATEST).o  $(EXPTEST).o $(RSATEST).o \
-	$(FIPS_SHATEST).o $(FIPS_DESTEST).o $(FIPS_RANDTEST).o \
-	$(FIPS_AESTEST).o $(FIPS_HMACTEST).o $(FIPS_RSAVTEST).o \
-	$(FIPS_RSASTEST).o $(FIPS_RSAGTEST).o $(FIPS_GCMTEST).o \
-	$(FIPS_DSSVS).o $(FIPS_DSATEST).o $(FIPS_RNGVS).o $(FIPS_DRBGVS).o \
-	$(FIPS_TEST_SUITE).o $(FIPS_DHVS).o $(FIPS_ECDSAVS).o \
-	$(FIPS_ECDHVS).o $(FIPS_CMACTEST).o $(FIPS_ALGVS).o \
 	$(EVPTEST).o $(IGETEST).o $(JPAKETEST).o $(V3NAMETEST).o \
 	$(GOST2814789TEST).o $(HEARTBEATTEST).o $(P5_CRPT2_TEST).o \
 	$(CONSTTIMETEST).o testutil.o
@@ -141,12 +106,6 @@ SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(DESTEST).c $(SHATEST).c $(SHA1TEST).c $(MDC2TEST).c $(RMDTEST).c \
 	$(RANDTEST).c $(DHTEST).c $(ENGINETEST).c $(CASTTEST).c \
 	$(BFTEST).c  $(SSLTEST).c $(DSATEST).c   $(EXPTEST).c $(RSATEST).c \
-	$(FIPS_SHATEST).c $(FIPS_DESTEST).c $(FIPS_RANDTEST).c \
-	$(FIPS_AESTEST).c $(FIPS_HMACTEST).c $(FIPS_RSAVTEST).c \
-	$(FIPS_RSASTEST).c $(FIPS_RSAGTEST).c $(FIPS_GCMTEST).c \
-	$(FIPS_DSSVS).c $(FIPS_DSATEST).c $(FIPS_RNGVS).c $(FIPS_DRBGVS).c \
-	$(FIPS_TEST_SUITE).c $(FIPS_DHVS).c $(FIPS_ECDSAVS).c \
-	$(FIPS_ECDHVS).c $(FIPS_CMACTEST).c $(FIPS_ALGVS).c \
 	$(EVPTEST).c $(IGETEST).c $(JPAKETEST).c $(V3NAMETEST).c \
 	$(GOST2814789TEST).c $(HEARTBEATTEST).c $(P5_CRPT2_TEST).c \
 	$(CONSTTIMETEST).c testutil.c
@@ -161,11 +120,7 @@ top:
 
 all:	exe
 
-exe:	$(EXE) $(FIPSEXE) dummytest$(EXE_EXT)
-
-fipsexe:	$(FIPSEXE)
-
-fipsalgvs:	$(FIPS_ALGVS)
+exe:	$(EXE) dummytest$(EXE_EXT)
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
@@ -412,7 +367,7 @@ dclean:
 			testreq.pem
 
 clean:
-	rm -f .rnd tmp.bntest tmp.bctest *.o *.obj *.dll lib tags core .pure .nfs* *.old *.bak fluff $(EXE) $(FIPSEXE) *.ss *.srl log dummytest
+	rm -f .rnd tmp.bntest tmp.bctest *.o *.obj *.dll lib tags core .pure .nfs* *.old *.bak fluff $(EXE) *.ss *.srl log dummytest
 
 $(DLIBSSL):
 	(cd ..; $(MAKE) DIRS=ssl all)
@@ -494,63 +449,6 @@ FIPS_CRYPTO_BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		CC="$${CC}" APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
-
-$(FIPS_SHATEST)$(EXE_EXT): $(FIPS_SHATEST).o $(DLIBCRYPTO)
-	@target=$(FIPS_SHATEST); $(FIPS_BUILD_CMD)
-
-$(FIPS_AESTEST)$(EXE_EXT): $(FIPS_AESTEST).o $(DLIBCRYPTO)
-	@target=$(FIPS_AESTEST); $(FIPS_BUILD_CMD)
-
-$(FIPS_GCMTEST)$(EXE_EXT): $(FIPS_GCMTEST).o $(DLIBCRYPTO)
-	@target=$(FIPS_GCMTEST); $(FIPS_BUILD_CMD)
-
-$(FIPS_DESTEST)$(EXE_EXT): $(FIPS_DESTEST).o $(DLIBCRYPTO)
-	@target=$(FIPS_DESTEST); $(FIPS_BUILD_CMD)
-
-$(FIPS_HMACTEST)$(EXE_EXT): $(FIPS_HMACTEST).o $(DLIBCRYPTO)
-	@target=$(FIPS_HMACTEST); $(FIPS_BUILD_CMD)
-
-$(FIPS_RANDTEST)$(EXE_EXT): $(FIPS_RANDTEST).o $(DLIBCRYPTO)
-	@target=$(FIPS_RANDTEST); $(FIPS_BUILD_CMD)
-
-$(FIPS_RSAVTEST)$(EXE_EXT): $(FIPS_RSAVTEST).o $(DLIBCRYPTO)
-	@target=$(FIPS_RSAVTEST); $(FIPS_BUILD_CMD)
-
-$(FIPS_RSASTEST)$(EXE_EXT): $(FIPS_RSASTEST).o $(DLIBCRYPTO)
-	@target=$(FIPS_RSASTEST); $(FIPS_BUILD_CMD)
-
-$(FIPS_RSAGTEST)$(EXE_EXT): $(FIPS_RSAGTEST).o $(DLIBCRYPTO)
-	@target=$(FIPS_RSAGTEST); $(FIPS_BUILD_CMD)
-
-$(FIPS_DSATEST)$(EXE_EXT): $(FIPS_DSATEST).o $(DLIBCRYPTO)
-	@target=$(FIPS_DSATEST); $(FIPS_BUILD_CMD)
-
-$(FIPS_DSSVS)$(EXE_EXT): $(FIPS_DSSVS).o $(DLIBCRYPTO)
-	@target=$(FIPS_DSSVS); $(FIPS_BUILD_CMD)
-
-$(FIPS_DHVS)$(EXE_EXT): $(FIPS_DHVS).o $(DLIBCRYPTO)
-	@target=$(FIPS_DHVS); $(FIPS_BUILD_CMD)
-
-$(FIPS_ECDHVS)$(EXE_EXT): $(FIPS_ECDHVS).o $(DLIBCRYPTO)
-	@target=$(FIPS_ECDHVS); $(FIPS_BUILD_CMD)
-
-$(FIPS_ECDSAVS)$(EXE_EXT): $(FIPS_ECDSAVS).o $(DLIBCRYPTO)
-	@target=$(FIPS_ECDSAVS); $(FIPS_BUILD_CMD)
-
-$(FIPS_RNGVS)$(EXE_EXT): $(FIPS_RNGVS).o $(DLIBCRYPTO)
-	@target=$(FIPS_RNGVS); $(FIPS_BUILD_CMD)
-
-$(FIPS_DRBGVS)$(EXE_EXT): $(FIPS_DRBGVS).o $(DLIBCRYPTO)
-	@target=$(FIPS_DRBGVS); $(FIPS_BUILD_CMD)
-
-$(FIPS_TEST_SUITE)$(EXE_EXT): $(FIPS_TEST_SUITE).o $(DLIBCRYPTO)
-	@target=$(FIPS_TEST_SUITE); $(FIPS_BUILD_CMD)
-
-$(FIPS_CMACTEST)$(EXE_EXT): $(FIPS_CMACTEST).o $(DLIBCRYPTO)
-	@target=$(FIPS_CMACTEST); $(FIPS_BUILD_CMD)
-
-$(FIPS_ALGVS)$(EXE_EXT): $(FIPS_ALGVS).o $(DLIBCRYPTO)
-	@target=$(FIPS_ALGVS); $(FIPS_BUILD_CMD)
 
 $(RMDTEST)$(EXE_EXT): $(RMDTEST).o $(DLIBCRYPTO)
 	@target=$(RMDTEST); $(BUILD_CMD)
