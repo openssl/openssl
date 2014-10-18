@@ -115,9 +115,6 @@
 #include <openssl/rand.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
-#ifdef OPENSSL_FIPS
-#include <openssl/fips.h>
-#endif
 
 static const SSL_METHOD *ssl23_get_server_method(int ver);
 int ssl23_get_client_hello(SSL *s);
@@ -419,14 +416,12 @@ int ssl23_get_client_hello(SSL *s)
 		goto err;
 		}
 
-#ifdef OPENSSL_FIPS
 	if (FIPS_mode() && (s->version < TLS1_VERSION))
 		{
 		SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,
 					SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE);
 		goto err;
 		}
-#endif
 
 	if (!ssl_security(s, SSL_SECOP_VERSION, 0, s->version, NULL))
 		{

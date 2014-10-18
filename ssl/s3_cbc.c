@@ -353,10 +353,8 @@ static void tls1_sha512_final_raw(void* ctx, unsigned char *md_out)
  * which ssl3_cbc_digest_record supports. */
 char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx)
 	{
-#ifdef OPENSSL_FIPS
 	if (FIPS_mode())
 		return 0;
-#endif
 	switch (EVP_MD_CTX_type(ctx))
 		{
 		case NID_md5:
@@ -705,8 +703,6 @@ void ssl3_cbc_digest_record(
 	EVP_MD_CTX_cleanup(&md_ctx);
 	}
 
-#ifdef OPENSSL_FIPS
-
 /* Due to the need to use EVP in FIPS mode we can't reimplement digests but
  * we can ensure the number of blocks processed is equal for all cases
  * by digesting additional data.
@@ -750,4 +746,3 @@ void tls_fips_digest_extra(
 	EVP_DigestSignUpdate(mac_ctx, data,
 				(blocks_orig - blocks_data + 1) * block_size);
 	}
-#endif
