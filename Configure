@@ -703,8 +703,6 @@ my $install_prefix= "$ENV{'INSTALL_PREFIX'}";
 my $cross_compile_prefix="";
 my $fipslibdir="/usr/local/ssl/fips-2.0/lib/";
 my $nofipscanistercheck=0;
-my $fipscanisterinternal="n";
-my $fipscanisteronly = 0;
 my $baseaddr="0xFB00000";
 my $no_threads=0;
 my $threads=0;
@@ -760,21 +758,6 @@ my %disabled = ( # "what"         => "comment" [or special keyword "experimental
 		 "zlib-dynamic"   => "default"
 	       );
 my @experimental = ();
-
-# If ssl directory missing assume truncated FIPS tarball
-if (!-d "ssl")
-	{
-	print STDERR "Auto Configuring fipsonly\n";
-	$fips = 1;
-	$nofipscanistercheck = 1;
-	$fipslibdir="";
-	$fipscanisterinternal="y";
-	$fipscanisteronly = 2;
-	if (! -f "crypto/bn/bn_gf2m.c" )
-		{
-		$disabled{ec2m} = "forced";
-		}
-	}
 
 # This is what $depflags will look like with the above defaults
 # (we need this to see if we should advise the user to run "make depend"):
@@ -924,32 +907,6 @@ PROCESS_ARGS:
 			{
 			$fips = 1;
 			$nofipscanistercheck = 1;
-			}
-		elsif (/^fipscheck$/)
-			{
-			if ($fipscanisteronly != 2)
-				{
-				print STDERR <<"EOF";
-ERROR: FIPS not autodetected. Not running from restricted tarball??
-EOF
-				exit(1);
-				}
-			}
-		elsif (/^fipscanisteronly$/)
-			{
-			$fips = 1;
-			$nofipscanistercheck = 1;
-			$fipslibdir="";
-			$fipscanisterinternal="y";
-			$fipscanisteronly = 1;
-			}
-		elsif (/^fipscanisterbuild$/)
-			{
-			$fips = 1;
-			$nofipscanistercheck = 1;
-			$fipslibdir="";
-			$fipscanisterinternal="y";
-			$fipscanisteronly = 1;
 			}
 		elsif (/^[-+]/)
 			{
@@ -1574,11 +1531,6 @@ $cflags.=" -DOPENSSL_BN_ASM_GF2m" if ($bn_obj =~ /-gf2m/);
 if ($fips)
 	{
 	$openssl_other_defines.="#define OPENSSL_FIPS\n";
-	if ($fipscanisterinternal eq "y")
-		{
-		$openssl_other_defines.="#define OPENSSL_FIPSCANISTER\n";
-		$cflags = "-DOPENSSL_FIPSCANISTER $cflags";
-		}
 	}
 
 $cpuid_obj="mem_clr.o"	unless ($cpuid_obj =~ /\.o$/);
@@ -1619,7 +1571,6 @@ if ($aes_obj =~ /\.o$/)
 	# aes-xts.o indicates presence of AES_xts_[en|de]crypt...
 	$cflags.=" -DAES_XTS_ASM" if ($aes_obj =~ s/\s*aes\-xts\.o//);
 	$aes_obj =~ s/\s*(vpaes|aesni)\-x86\.o//g if ($no_sse2);
-	$aes_obj =~ s/\s*(vp|bs)aes-\w*\.o//g if ($fipscanisterinternal eq "y");
 	$cflags.=" -DVPAES_ASM" if ($aes_obj =~ m/vpaes/);
 	$cflags.=" -DBSAES_ASM" if ($aes_obj =~ m/bsaes/);
 	}
@@ -1690,34 +1641,11 @@ if ($strict_warnings)
 		}
 	}
 
-if ($fipscanisterinternal eq "y")
-	{
-	open(IN,"<fips/fips_auth.in") || die "can't open fips_auth.in";
-	open(OUT,">fips/fips_auth.h") || die "can't open fips_auth.h";
-	while(<IN>)
-		{
-		s/FIPS_AUTH_KEY.*$/FIPS_AUTH_KEY $fips_auth_key/ if defined $fips_auth_key;
-		s/FIPS_AUTH_CRYPTO_OFFICER.*$/FIPS_AUTH_CRYPTO_OFFICER $fips_auth_officer/ if defined $fips_auth_officer;
-		s/FIPS_AUTH_CRYPTO_USER.*$/FIPS_AUTH_CRYPTO_USER $fips_auth_user/ if defined $fips_auth_user;
-		print OUT $_;
-		}
-	close IN;
-	close OUT;
-	}
-
-my $mforg = $fipscanisteronly ? "Makefile.fips" : "Makefile.org";
-
-open(IN,"<$mforg") || die "unable to read $mforg:$!\n";
+open(IN,"<Makefile.org") || die "unable to read Makefile.org:$!\n";
 unlink("$Makefile.new") || die "unable to remove old $Makefile.new:$!\n" if -e "$Makefile.new";
 open(OUT,">$Makefile.new") || die "unable to create $Makefile.new:$!\n";
-print OUT "### Generated automatically from $mforg by Configure.\n\n";
+print OUT "### Generated automatically from Makefile.org by Configure.\n\n";
 my $sdirs=0;
-
-if ($fipscanisteronly)
-	{
-	$aes_obj =~ s/aesni-sha1-x86_64.o//;
-	$bn_obj =~ s/modexp512-x86_64.o//;
-	}
 
 while (<IN>)
 	{
@@ -1797,7 +1725,6 @@ while (<IN>)
 	s/^FIPSCANLIB=.*/FIPSCANLIB=libcrypto/ if $fips;
 	s/^SHARED_FIPS=.*/SHARED_FIPS=/;
 	s/^SHLIBDIRS=.*/SHLIBDIRS= crypto ssl/;
-	s/^FIPSCANISTERINTERNAL=.*/FIPSCANISTERINTERNAL=$fipscanisterinternal/;
 	s/^BASEADDR=.*/BASEADDR=$baseaddr/;
 	s/^SHLIB_TARGET=.*/SHLIB_TARGET=$shared_target/;
 	s/^SHLIB_MARK=.*/SHLIB_MARK=$shared_mark/;
@@ -1821,10 +1748,6 @@ while (<IN>)
 		s/^SHARED_LIBS_LINK_EXTS=.*/SHARED_LIBS_LINK_EXTS=.\$(SHLIB_MAJOR).dylib .dylib/;
 		}
 	s/^SHARED_LDFLAGS=.*/SHARED_LDFLAGS=$shared_ldflag/;
-	if ($fipscanisteronly && exists $disabled{"ec2m"})
-		{
-		next if (/ec2_/ || /bn_gf2m/);
-		}
 	print OUT $_."\n";
 	}
 close(IN);
@@ -2070,9 +1993,7 @@ EOF
 	$make_targets .= " gentests" if $symlink;
 	(system $make_command.$make_targets) == 0 or die "make $make_targets failed"
 		if $make_targets ne "";
-	if ( $fipscanisteronly )
-		{}
-	elsif ( $perl =~ m@^/@) {
+	if ( $perl =~ m@^/@) {
 	    &dofile("tools/c_rehash",$perl,'^#!/', '#!%s','^my \$dir;$', 'my $dir = "' . $openssldir . '";', '^my \$prefix;$', 'my $prefix = "' . $prefix . '";');
 	    &dofile("apps/CA.pl",$perl,'^#!/', '#!%s');
 	} else {
@@ -2080,7 +2001,7 @@ EOF
 	    &dofile("tools/c_rehash",'/usr/local/bin/perl','^#!/', '#!%s','^my \$dir;$', 'my $dir = "' . $openssldir . '";',  '^my \$prefix;$', 'my $prefix = "' . $prefix . '";');
 	    &dofile("apps/CA.pl",'/usr/local/bin/perl','^#!/', '#!%s');
 	}
-	if ($depflags ne $default_depflags && !$make_depend && !$fipscanisteronly) {
+	if ($depflags ne $default_depflags && !$make_depend) {
 		print <<EOF;
 
 Since you've disabled or enabled at least one algorithm, you need to do
@@ -2183,21 +2104,6 @@ for this platform yet, so it will pretend you gave the option 'no-shared'.  If
 you can inform the developpers (openssl-dev\@openssl.org) how to support shared
 libraries on this platform, they will at least look at it and try their best
 (but please first make sure you have tried with a current version of OpenSSL).
-EOF
-
-print <<\EOF if ($fipscanisterinternal eq "y");
-
-WARNING: OpenSSL has been configured using unsupported option(s) to internally
-generate a fipscanister.o object module for TESTING PURPOSES ONLY; that
-compiled module is NOT FIPS 140-2 validated and CANNOT be used to replace the
-OpenSSL FIPS Object Module as identified by the CMVP
-(http://csrc.nist.gov/cryptval/) in any application requiring the use of FIPS
-140-2 validated software.
-
-This is a test OpenSSL 2.0 FIPS module.
-
-See the file README.FIPS for details of how to build a test library.
-
 EOF
 
 exit(0);
