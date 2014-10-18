@@ -428,12 +428,10 @@ BN_ULONG bn_sub_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n)
 
 #if defined(BN_MUL_COMBA) && !defined(OPENSSL_SMALL_FOOTPRINT)
 
-#ifndef OPENSSL_FIPSCANISTER
 #undef bn_mul_comba8
 #undef bn_mul_comba4
 #undef bn_sqr_comba8
 #undef bn_sqr_comba4
-#endif
 
 /* mul_add_c(a,b,c0,c1,c2)  -- c+=a*b for three word number c=(c2,c1,c0) */
 /* mul_add_c2(a,b,c0,c1,c2) -- c+=2*a*b for three word number c=(c2,c1,c0) */
@@ -948,10 +946,8 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_U
 #else /* !BN_MUL_COMBA */
 
 /* hmm... is it faster just to do a multiply? */
-#ifndef OPENSSL_FIPSCANISTER
 #undef bn_sqr_comba4
 #undef bn_sqr_comba8
-#endif
 void bn_sqr_comba4(BN_ULONG *r, const BN_ULONG *a)
 	{
 	BN_ULONG t[8];

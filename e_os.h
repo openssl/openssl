@@ -316,10 +316,8 @@ static __inline unsigned int _strlen31(const char *str)
 #      endif
 #    endif
 #  endif
-#  if !defined(OPENSSL_FIPSCANISTER)
 #    include <io.h>
 #    include <fcntl.h>
-#  endif
 
 #  ifdef OPENSSL_SYS_WINCE
 #    define OPENSSL_NO_POSIX_IO
