@@ -144,11 +144,6 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
 		goto err;
 	}
 
-#ifdef OPENSSL_FIPS
-	if (!fips_check_ec_prng(eckey))
-		goto err;
-#endif
-	
 	do
 	{
 		/* get random k */	
@@ -289,14 +284,6 @@ static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 	ECDSA_DATA *ecdsa;
 	const BIGNUM *priv_key;
 
-#ifdef OPENSSL_FIPS
-	if(FIPS_selftest_failed())
-		{
-		FIPSerr(FIPS_F_ECDSA_DO_SIGN,FIPS_R_FIPS_SELFTEST_FAILED);
-		return NULL;
-		}
-#endif
-
 	ecdsa    = ecdsa_check(eckey);
 	group    = EC_KEY_get0_group(eckey);
 	priv_key = EC_KEY_get0_private_key(eckey);
@@ -306,11 +293,6 @@ static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 		ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_PASSED_NULL_PARAMETER);
 		return NULL;
 	}
-
-#ifdef OPENSSL_FIPS
-	if (!fips_check_ec_prng(eckey))
-		return NULL;
-#endif
 
 	ret = ECDSA_SIG_new();
 	if (!ret)
@@ -431,14 +413,6 @@ static int ecdsa_do_verify(const unsigned char *dgst, int dgst_len,
 	EC_POINT *point = NULL;
 	const EC_GROUP *group;
 	const EC_POINT *pub_key;
-
-#ifdef OPENSSL_FIPS
-	if(FIPS_selftest_failed())
-		{
-		FIPSerr(FIPS_F_ECDSA_DO_VERIFY,FIPS_R_FIPS_SELFTEST_FAILED);
-		return -1;
-		}
-#endif
 
 	/* check input values */
 	if (eckey == NULL || (group = EC_KEY_get0_group(eckey)) == NULL ||

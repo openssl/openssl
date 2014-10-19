@@ -233,85 +233,12 @@ int EC_KEY_up_ref(EC_KEY *r)
 	return ((i > 1) ? 1 : 0);
 	}
 
-#ifdef OPENSSL_FIPS
-
-#include <openssl/evp.h>
-#include <openssl/fips.h>
-#include <openssl/fips_rand.h>
-
-static int fips_check_ec(EC_KEY *key)
-	{
-	EVP_PKEY pk;
-	unsigned char tbs[] = "ECDSA Pairwise Check Data";
-    	pk.type = EVP_PKEY_EC;
-    	pk.pkey.ec = key;
-
-	if (!fips_pkey_signature_test(FIPS_TEST_PAIRWISE,
-					&pk, tbs, 0, NULL, 0, NULL, 0, NULL))
-		{
-		FIPSerr(FIPS_F_FIPS_CHECK_EC,FIPS_R_PAIRWISE_TEST_FAILED);
-		fips_set_selftest_fail();
-		return 0;
-		}
-	return 1;
-	}
-
-int fips_check_ec_prng(EC_KEY *ec)
-	{
-	int bits, strength;
-	if (!FIPS_module_mode())
-		return 1;
-
-	if (ec->flags & (EC_FLAG_NON_FIPS_ALLOW|EC_FLAG_FIPS_CHECKED))
-		return 1;
-
-	if (!ec->group)
-		return 1;
-
-	bits = BN_num_bits(&ec->group->order);
-
-	if (bits < 160)
-		{
-	    	FIPSerr(FIPS_F_FIPS_CHECK_EC_PRNG,FIPS_R_KEY_TOO_SHORT);
-		return 0;
-		}
-	/* Comparable algorithm strengths: from SP800-57 table 2 */
-	if (bits >= 512)
-		strength = 256;
-	else if (bits >= 384)
-		strength = 192;
-	else if (bits >= 256)
-		strength = 128;
-	else if (bits >= 224)
-		strength = 112;
-	else
-		strength = 80;
-
-
-	if (FIPS_rand_strength() >= strength)
-		return 1;
-
-	FIPSerr(FIPS_F_FIPS_CHECK_EC_PRNG,FIPS_R_PRNG_STRENGTH_TOO_LOW);
-	return 0;
-
-	}
-
-#endif
-
 int EC_KEY_generate_key(EC_KEY *eckey)
 	{	
 	int	ok = 0;
 	BN_CTX	*ctx = NULL;
 	BIGNUM	*priv_key = NULL, *order = NULL;
 	EC_POINT *pub_key = NULL;
-
-#ifdef OPENSSL_FIPS
-	if(FIPS_selftest_failed())
-		{
-		FIPSerr(FIPS_F_EC_KEY_GENERATE_KEY,FIPS_R_FIPS_SELFTEST_FAILED);
-		return 0;
-		}
-#endif
 
 	if (!eckey || !eckey->group)
 		{
@@ -334,11 +261,6 @@ int EC_KEY_generate_key(EC_KEY *eckey)
 	if (!EC_GROUP_get_order(eckey->group, order, ctx))
 		goto err;
 
-#ifdef OPENSSL_FIPS
-	if (!fips_check_ec_prng(eckey))
-		goto err;
-#endif
-
 	do
 		if (!BN_rand_range(priv_key, order))
 			goto err;
@@ -358,15 +280,6 @@ int EC_KEY_generate_key(EC_KEY *eckey)
 
 	eckey->priv_key = priv_key;
 	eckey->pub_key  = pub_key;
-
-#ifdef OPENSSL_FIPS
-	if(!fips_check_ec(eckey))
-		{
-		eckey->priv_key = NULL;
-		eckey->pub_key  = NULL;
-	    	goto err;
-		}
-#endif
 
 	ok=1;
 
