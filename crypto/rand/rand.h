@@ -71,10 +71,6 @@
 extern "C" {
 #endif
 
-#if defined(OPENSSL_FIPS)
-#define FIPS_RAND_SIZE_T size_t
-#endif
-
 /* Already defined in ossl_typ.h */
 /* typedef struct rand_meth_st RAND_METHOD; */
 
