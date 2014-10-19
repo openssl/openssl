@@ -81,10 +81,6 @@
 #include <openssl/bn.h>
 #include <openssl/rand.h>
 #include <openssl/sha.h>
-#ifdef OPENSSL_FIPS
-#include <openssl/fips.h>
-#include <openssl/fips_rand.h>
-#endif
 
 #include "dsa_locl.h"
 
@@ -133,21 +129,6 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
 	int r=0;
 	BN_CTX *ctx=NULL;
 	unsigned int h=2;
-
-#ifdef OPENSSL_FIPS
-	if(FIPS_selftest_failed())
-	    {
-	    FIPSerr(FIPS_F_DSA_BUILTIN_PARAMGEN, FIPS_R_FIPS_SELFTEST_FAILED);
-	    goto err;
-	    }
-
-	if (FIPS_module_mode() && !(ret->flags & DSA_FLAG_NON_FIPS_ALLOW) 
-			&& (bits < OPENSSL_DSA_FIPS_MIN_MODULUS_BITS))
-		{
-		DSAerr(DSA_F_DSA_BUILTIN_PARAMGEN, DSA_R_KEY_SIZE_TOO_SMALL);
-		goto err;
-		}
-#endif
 
 	if (qsize != SHA_DIGEST_LENGTH && qsize != SHA224_DIGEST_LENGTH &&
 	    qsize != SHA256_DIGEST_LENGTH)
@@ -372,80 +353,6 @@ err:
 	return ok;
 	}
 
-#ifdef OPENSSL_FIPS
-
-/* Security strength of parameter values for (L,N): see FIPS186-3 4.2
- * and SP800-131A
- */
-
-
-static int fips_ffc_strength(size_t L, size_t N)
-	{
-	if (L >= 15360 && N >= 512)
-		return 256;
-	if (L >= 7680 && N >= 384)
-		return 192;
-	if (L >= 3072 && N >= 256)
-		return 128;
-	if (L >= 2048 && N >= 224)
-		return 112;
-	if (L >= 1024 && N >= 160)
-		return  80;
-	return 0;
-	}
-
-/* Valid DSA2 parameters from FIPS 186-3 */
-
-static int dsa2_valid_parameters(size_t L, size_t N)
-	{
-	if (L == 1024 && N == 160)
-		return 80;
-	if (L == 2048 && N == 224)
-		return 112;
-	if (L == 2048 && N == 256)
-		return 112;
-	if (L == 3072 && N == 256)
-		return 128;
-	return 0;
-	}
-
-int fips_check_dsa_prng(DSA *dsa, size_t L, size_t N)
-	{
-	int strength;
-	if (!FIPS_module_mode())
-		return 1;
-
-	if (dsa->flags & (DSA_FLAG_NON_FIPS_ALLOW|DSA_FLAG_FIPS_CHECKED))
-		return 1;
-
-	if (!L || !N)
-		{
-		L = BN_num_bits(dsa->p);
-		N = BN_num_bits(dsa->q);
-		}
-	if (!dsa2_valid_parameters(L, N))
-		{
-		FIPSerr(FIPS_F_FIPS_CHECK_DSA_PRNG, FIPS_R_INVALID_PARAMETERS);
-		return 0;
-		}
-
-	strength = fips_ffc_strength(L, N);
-
-	if (!strength)
-		{
-	    	FIPSerr(FIPS_F_FIPS_CHECK_DSA_PRNG,FIPS_R_KEY_TOO_SHORT);
-		return 0;
-		}
-
-	if (FIPS_rand_strength() >= strength)
-		return 1;
-
-	FIPSerr(FIPS_F_FIPS_CHECK_DSA_PRNG,FIPS_R_PRNG_STRENGTH_TOO_LOW);
-	return 0;
-
-	}
-#endif /* OPENSSL_FIPS */
-
 /* This is a parameter generation algorithm for the DSA2 algorithm as
  * described in FIPS 186-3.
  */
@@ -470,18 +377,6 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
 	unsigned int h=2;
 
 	EVP_MD_CTX_init(&mctx);
-
-#ifdef OPENSSL_FIPS
-	if(FIPS_selftest_failed())
-	    {
-	    FIPSerr(FIPS_F_DSA_BUILTIN_PARAMGEN2,
-		    FIPS_R_FIPS_SELFTEST_FAILED);
-	    goto err;
-	    }
-
-	if (!fips_check_dsa_prng(ret, L, N))
-		goto err;
-#endif
 
 	if (evpmd == NULL)
 		{

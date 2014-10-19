@@ -67,9 +67,6 @@
 #include <openssl/dsa.h>
 #include <openssl/rand.h>
 #include <openssl/asn1.h>
-#ifdef OPENSSL_FIPS
-#include <openssl/fips.h>
-#endif
 
 static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa);
 static int dsa_sign_setup_no_digest(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp);
@@ -145,23 +142,6 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	int reason=ERR_R_BN_LIB;
 	DSA_SIG *ret=NULL;
 	int noredo = 0;
-
-#ifdef OPENSSL_FIPS
-	if(FIPS_selftest_failed())
-	    {
-	    FIPSerr(FIPS_F_DSA_DO_SIGN,FIPS_R_FIPS_SELFTEST_FAILED);
-	    return NULL;
-	    }
-
-	if (FIPS_module_mode() && !(dsa->flags & DSA_FLAG_NON_FIPS_ALLOW) 
-		&& (BN_num_bits(dsa->p) < OPENSSL_DSA_FIPS_MIN_MODULUS_BITS))
-		{
-		DSAerr(DSA_F_DSA_DO_SIGN, DSA_R_KEY_SIZE_TOO_SMALL);
-		return NULL;
-		}
-	if (!fips_check_dsa_prng(dsa, 0, 0))
-		goto err;
-#endif
 
 	BN_init(&m);
 	BN_init(&xr);
@@ -371,21 +351,6 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 		DSAerr(DSA_F_DSA_DO_VERIFY,DSA_R_BAD_Q_VALUE);
 		return -1;
 		}
-
-#ifdef OPENSSL_FIPS
-	if(FIPS_selftest_failed())
-	    {
-	    FIPSerr(FIPS_F_DSA_DO_VERIFY,FIPS_R_FIPS_SELFTEST_FAILED);
-	    return -1;
-	    }
-
-	if (FIPS_module_mode() && !(dsa->flags & DSA_FLAG_NON_FIPS_ALLOW) 
-		&& (BN_num_bits(dsa->p) < OPENSSL_DSA_FIPS_MIN_MODULUS_BITS))
-		{
-		DSAerr(DSA_F_DSA_DO_VERIFY, DSA_R_KEY_SIZE_TOO_SMALL);
-		return -1;
-		}
-#endif
 
 	if (BN_num_bits(dsa->p) > OPENSSL_DSA_MAX_MODULUS_BITS)
 		{
