@@ -67,10 +67,6 @@
 #include <openssl/sha.h>
 #include "rsa_locl.h"
 
-#ifdef OPENSSL_FIPS
-#include <openssl/fips.h>
-#endif
-
 static const unsigned char zeroes[] = {0,0,0,0,0,0,0,0};
 
 #if defined(_MSC_VER) && defined(_ARM_)

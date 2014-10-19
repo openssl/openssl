@@ -70,112 +70,6 @@
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
 
-#ifdef OPENSSL_FIPS
-
-
-#include <openssl/fips.h>
-#include <openssl/fips_rand.h>
-#include <openssl/evp.h>
-
-/* Check PRNG has sufficient security level to handle an RSA operation */
-
-int fips_check_rsa_prng(RSA *rsa, int bits)
-	{
-	int strength;
-	if (!FIPS_module_mode())
-		return 1;
-
-	if (rsa->flags & (RSA_FLAG_NON_FIPS_ALLOW|RSA_FLAG_CHECKED))
-		return 1;
-
-	if (bits == 0)
-		bits = BN_num_bits(rsa->n);
-
-	/* Should never happen */
-	if (bits < 1024)
-		{
-	    	FIPSerr(FIPS_F_FIPS_CHECK_RSA_PRNG,FIPS_R_KEY_TOO_SHORT);
-		return 0;
-		}
-	/* From SP800-57 */
-	if (bits < 2048)
-		strength = 80;
-	else if (bits < 3072)
-		strength = 112;
-	else if (bits < 7680)
-		strength = 128;
-	else if (bits < 15360)
-		strength = 192;
-	else 
-		strength = 256;
-
-	if (FIPS_rand_strength() >= strength)
-		return 1;
-
-	FIPSerr(FIPS_F_FIPS_CHECK_RSA_PRNG,FIPS_R_PRNG_STRENGTH_TOO_LOW);
-	return 0;
-	}
-	
-
-int fips_check_rsa(RSA *rsa)
-	{
-	const unsigned char tbs[] = "RSA Pairwise Check Data";
-	unsigned char *ctbuf = NULL, *ptbuf = NULL;
-	int len, ret = 0;
-	EVP_PKEY pk;
-    	pk.type = EVP_PKEY_RSA;
-    	pk.pkey.rsa = rsa;
-
-	/* Perform pairwise consistency signature test */
-	if (!fips_pkey_signature_test(FIPS_TEST_PAIRWISE, &pk, tbs, 0,
-			NULL, 0, NULL, RSA_PKCS1_PADDING, NULL)
-		|| !fips_pkey_signature_test(FIPS_TEST_PAIRWISE, &pk, tbs, 0,
-			NULL, 0, NULL, RSA_X931_PADDING, NULL)
-		|| !fips_pkey_signature_test(FIPS_TEST_PAIRWISE, &pk, tbs, 0,
-			NULL, 0, NULL, RSA_PKCS1_PSS_PADDING, NULL))
-		goto err;
-	/* Now perform pairwise consistency encrypt/decrypt test */
-	ctbuf = OPENSSL_malloc(RSA_size(rsa));
-	if (!ctbuf)
-		goto err;
-
-	len = RSA_public_encrypt(sizeof(tbs) - 1, tbs, ctbuf, rsa, RSA_PKCS1_PADDING);
-	if (len <= 0)
-		goto err;
-	/* Check ciphertext doesn't match plaintext */
-	if ((len == (sizeof(tbs) - 1)) && !memcmp(tbs, ctbuf, len))
-		goto err;
-	ptbuf = OPENSSL_malloc(RSA_size(rsa));
-
-	if (!ptbuf)
-		goto err;
-	len = RSA_private_decrypt(len, ctbuf, ptbuf, rsa, RSA_PKCS1_PADDING);
-	if (len != (sizeof(tbs) - 1))
-		goto err;
-	if (memcmp(ptbuf, tbs, len))
-		goto err;
-
-	ret = 1;
-
-	if (!ptbuf)
-		goto err;
-	
-	err:
-	if (ret == 0)
-		{
-		fips_set_selftest_fail();
-		FIPSerr(FIPS_F_FIPS_CHECK_RSA,FIPS_R_PAIRWISE_TEST_FAILED);
-		}
-
-	if (ctbuf)
-		OPENSSL_free(ctbuf);
-	if (ptbuf)
-		OPENSSL_free(ptbuf);
-
-	return ret;
-	}
-#endif
-
 static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb);
 
 /* NB: this wrapper would normally be placed in rsa_lib.c and the static
@@ -197,23 +91,6 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 	BIGNUM *pr0,*d,*p;
 	int bitsp,bitsq,ok= -1,n=0;
 	BN_CTX *ctx=NULL;
-
-#ifdef OPENSSL_FIPS
-	if(FIPS_selftest_failed())
-	    {
-	    FIPSerr(FIPS_F_RSA_BUILTIN_KEYGEN,FIPS_R_FIPS_SELFTEST_FAILED);
-	    return 0;
-	    }
-
-	if (FIPS_module_mode() && !(rsa->flags & RSA_FLAG_NON_FIPS_ALLOW) 
-		&& (bits < OPENSSL_RSA_FIPS_MIN_MODULUS_BITS))
-	    {
-	    FIPSerr(FIPS_F_RSA_BUILTIN_KEYGEN,FIPS_R_KEY_TOO_SHORT);
-	    return 0;
-	    }
-	if (!fips_check_rsa_prng(rsa, bits))
-	    return 0;
-#endif
 
 	ctx=BN_CTX_new();
 	if (ctx == NULL) goto err;
@@ -325,11 +202,6 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 	else
 		p = rsa->p;
 	if (!BN_mod_inverse(rsa->iqmp,rsa->q,p,ctx)) goto err;
-
-#ifdef OPENSSL_FIPS
-	if(!fips_check_rsa(rsa))
-	    goto err;
-#endif
 
 	ok=1;
 err:
