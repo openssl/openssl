@@ -213,21 +213,6 @@ void	DSA_set_default_method(const DSA_METHOD *);
 const DSA_METHOD *DSA_get_default_method(void);
 int	DSA_set_method(DSA *dsa, const DSA_METHOD *);
 
-#ifdef OPENSSL_FIPS
-DSA *	FIPS_dsa_new(void);
-void	FIPS_dsa_free (DSA *r);
-DSA_SIG * FIPS_dsa_sign_digest(DSA *dsa, const unsigned char *dig, int dlen);
-DSA_SIG * FIPS_dsa_sign_ctx(DSA *dsa, EVP_MD_CTX *ctx);
-int FIPS_dsa_verify_digest(DSA *dsa,
-				const unsigned char *dig, int dlen, DSA_SIG *s);
-int FIPS_dsa_verify_ctx(DSA *dsa, EVP_MD_CTX *ctx, DSA_SIG *s);
-int FIPS_dsa_verify(DSA *dsa, const unsigned char *msg, size_t msglen,
-			const EVP_MD *mhash, DSA_SIG *s);
-DSA_SIG * FIPS_dsa_sign(DSA *dsa, const unsigned char *msg, size_t msglen,
-			const EVP_MD *mhash);
-
-#endif
-
 DSA *	DSA_new(void);
 DSA *	DSA_new_method(ENGINE *engine);
 void	DSA_free (DSA *r);
