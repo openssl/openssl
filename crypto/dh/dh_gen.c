@@ -68,10 +68,6 @@
 #include <openssl/bn.h>
 #include <openssl/dh.h>
 
-#ifdef OPENSSL_FIPS
-#include <openssl/fips.h>
-#endif
-
 static int dh_builtin_genparams(DH *ret, int prime_len, int generator, BN_GENCB *cb);
 
 int DH_generate_parameters_ex(DH *ret, int prime_len, int generator, BN_GENCB *cb)
@@ -111,20 +107,6 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator, BN_GENCB 
 	BIGNUM *t1,*t2;
 	int g,ok= -1;
 	BN_CTX *ctx=NULL;
-
-#ifdef OPENSSL_FIPS
-	if(FIPS_selftest_failed())
-		{
-		FIPSerr(FIPS_F_DH_BUILTIN_GENPARAMS,FIPS_R_FIPS_SELFTEST_FAILED);
-		return 0;
-		}
-
-	if (FIPS_module_mode() && (prime_len < OPENSSL_DH_FIPS_MIN_MODULUS_BITS))
-		{
-		DHerr(DH_F_DH_BUILTIN_GENPARAMS, DH_R_KEY_SIZE_TOO_SMALL);
-		goto err;
-		}
-#endif
 
 	ctx=BN_CTX_new();
 	if (ctx == NULL) goto err;

@@ -188,11 +188,6 @@ DH *DHparams_dup(DH *);
 
 const DH_METHOD *DH_OpenSSL(void);
 
-#ifdef OPENSSL_FIPS
-DH *	FIPS_dh_new(void);
-void	FIPS_dh_free(DH *dh);
-#endif
-
 void DH_set_default_method(const DH_METHOD *meth);
 const DH_METHOD *DH_get_default_method(void);
 int DH_set_method(DH *dh, const DH_METHOD *meth);
