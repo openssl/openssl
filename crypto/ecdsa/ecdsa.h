@@ -228,22 +228,6 @@ int 	  ECDSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new
 int 	  ECDSA_set_ex_data(EC_KEY *d, int idx, void *arg);
 void 	  *ECDSA_get_ex_data(EC_KEY *d, int idx);
 
-#ifdef OPENSSL_FIPS
-/* Standalone FIPS signature operations */
-ECDSA_SIG * FIPS_ecdsa_sign_digest(EC_KEY *key,
-					const unsigned char *dig, int dlen);
-ECDSA_SIG * FIPS_ecdsa_sign_ctx(EC_KEY *key, EVP_MD_CTX *ctx);
-int FIPS_ecdsa_verify_digest(EC_KEY *key,
-			const unsigned char *dig, int dlen, ECDSA_SIG *s);
-int FIPS_ecdsa_verify_ctx(EC_KEY *key, EVP_MD_CTX *ctx, ECDSA_SIG *s);
-int FIPS_ecdsa_verify(EC_KEY *key, const unsigned char *msg, size_t msglen,
-			const EVP_MD *mhash, ECDSA_SIG *s);
-ECDSA_SIG * FIPS_ecdsa_sign(EC_KEY *key,
-			const unsigned char *msg, size_t msglen,
-			const EVP_MD *mhash);
-#endif
-
-
 /** Allocates and initialize a ECDSA_METHOD structure
  *  \param ecdsa_method pointer to ECDSA_METHOD to copy.  (May be NULL)
  *  \return pointer to a ECDSA_METHOD structure or NULL if an error occurred
