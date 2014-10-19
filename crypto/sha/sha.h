@@ -70,10 +70,6 @@ extern "C" {
 #error SHA is disabled.
 #endif
 
-#if defined(OPENSSL_FIPS)
-#define FIPS_SHA_SIZE_T size_t
-#endif
-
 /*
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  * ! SHA_LONG has to be at least 32 bits wide. If it's wider, then !
