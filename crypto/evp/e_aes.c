@@ -1285,9 +1285,9 @@ static int aes_ctr_cipher (EVP_CIPHER_CTX *ctx, unsigned char *out,
 	return 1;
 }
 
-BLOCK_CIPHER_generic_pack(NID_aes,128,EVP_CIPH_FLAG_FIPS)
-BLOCK_CIPHER_generic_pack(NID_aes,192,EVP_CIPH_FLAG_FIPS)
-BLOCK_CIPHER_generic_pack(NID_aes,256,EVP_CIPH_FLAG_FIPS)
+BLOCK_CIPHER_generic_pack(NID_aes,128,0)
+BLOCK_CIPHER_generic_pack(NID_aes,192,0)
+BLOCK_CIPHER_generic_pack(NID_aes,256,0)
 
 static int aes_gcm_cleanup(EVP_CIPHER_CTX *c)
 	{
@@ -1330,11 +1330,6 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 	case EVP_CTRL_GCM_SET_IVLEN:
 		if (arg <= 0)
 			return 0;
-#ifdef OPENSSL_FIPS
-		if (FIPS_module_mode() && !(c->flags & EVP_CIPH_FLAG_NON_FIPS_ALLOW)
-						 && arg < 12)
-			return 0;
-#endif
 		/* Allocate memory for IV if needed */
 		if ((arg > EVP_MAX_IV_LENGTH) && (arg > gctx->ivlen))
 			{
@@ -1838,11 +1833,11 @@ static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		| EVP_CIPH_CUSTOM_COPY)
 
 BLOCK_CIPHER_custom(NID_aes,128,1,12,gcm,GCM,
-		EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS)
+		EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS)
 BLOCK_CIPHER_custom(NID_aes,192,1,12,gcm,GCM,
-		EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS)
+		EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS)
 BLOCK_CIPHER_custom(NID_aes,256,1,12,gcm,GCM,
-		EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS)
+		EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS)
 
 static int aes_xts_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 	{
@@ -1976,15 +1971,6 @@ static int aes_xts_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		return 0;
 	if (!out || !in || len<AES_BLOCK_SIZE)
 		return 0;
-#ifdef OPENSSL_FIPS
-	/* Requirement of SP800-38E */
-	if (FIPS_module_mode() && !(ctx->flags & EVP_CIPH_FLAG_NON_FIPS_ALLOW) &&
-			(len > (1UL<<20)*16))
-		{
-		EVPerr(EVP_F_AES_XTS_CIPHER, EVP_R_TOO_LARGE);
-		return 0;
-		}
-#endif
 	if (xctx->stream)
 		(*xctx->stream)(in, out, len,
 				xctx->xts.key1, xctx->xts.key2, ctx->iv);
@@ -2000,8 +1986,8 @@ static int aes_xts_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			 | EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT \
 			 | EVP_CIPH_CUSTOM_COPY)
 
-BLOCK_CIPHER_custom(NID_aes,128,1,16,xts,XTS,EVP_CIPH_FLAG_FIPS|XTS_FLAGS)
-BLOCK_CIPHER_custom(NID_aes,256,1,16,xts,XTS,EVP_CIPH_FLAG_FIPS|XTS_FLAGS)
+BLOCK_CIPHER_custom(NID_aes,128,1,16,xts,XTS,XTS_FLAGS)
+BLOCK_CIPHER_custom(NID_aes,256,1,16,xts,XTS,XTS_FLAGS)
 
 static int aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 	{
@@ -2183,9 +2169,9 @@ static int aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 #define aes_ccm_cleanup NULL
 
-BLOCK_CIPHER_custom(NID_aes,128,1,12,ccm,CCM,EVP_CIPH_FLAG_FIPS|CUSTOM_FLAGS)
-BLOCK_CIPHER_custom(NID_aes,192,1,12,ccm,CCM,EVP_CIPH_FLAG_FIPS|CUSTOM_FLAGS)
-BLOCK_CIPHER_custom(NID_aes,256,1,12,ccm,CCM,EVP_CIPH_FLAG_FIPS|CUSTOM_FLAGS)
+BLOCK_CIPHER_custom(NID_aes,128,1,12,ccm,CCM,CUSTOM_FLAGS)
+BLOCK_CIPHER_custom(NID_aes,192,1,12,ccm,CCM,CUSTOM_FLAGS)
+BLOCK_CIPHER_custom(NID_aes,256,1,12,ccm,CCM,CUSTOM_FLAGS)
 
 typedef struct
 	{

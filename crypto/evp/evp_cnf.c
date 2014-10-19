@@ -64,10 +64,6 @@
 #include <openssl/dso.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#ifdef OPENSSL_FIPS
-#include <openssl/fips.h>
-#endif
-
 
 /* Algorithm configuration module. */
 
