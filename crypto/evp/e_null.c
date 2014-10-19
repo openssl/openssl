@@ -68,8 +68,7 @@ static int null_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 static const EVP_CIPHER n_cipher=
 	{
 	NID_undef,
-	1,0,0,
-	EVP_CIPH_FLAG_FIPS,
+	1,0,0,0,
 	null_init_key,
 	null_cipher,
 	NULL,
