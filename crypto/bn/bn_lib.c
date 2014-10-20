@@ -61,7 +61,7 @@
 # define NDEBUG
 #endif
 
-#define OPENSSL_FIPSAPI
+
 
 #include <assert.h>
 #include <limits.h>

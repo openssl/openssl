@@ -62,7 +62,7 @@
  * - Geoff
  */
 
-#define OPENSSL_FIPSAPI
+
 
 #include <stdio.h>
 #include <time.h>

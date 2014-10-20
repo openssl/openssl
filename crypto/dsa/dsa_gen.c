@@ -73,7 +73,7 @@
 
 #ifndef OPENSSL_NO_SHA
 
-#define OPENSSL_FIPSAPI
+
 
 #include <stdio.h>
 #include "cryptlib.h"

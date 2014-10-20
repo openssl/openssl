@@ -109,7 +109,7 @@
  *
  */
 
-#define OPENSSL_FIPSAPI
+
 
 #ifdef MD_RAND_DEBUG
 # ifndef NDEBUG

@@ -62,7 +62,7 @@
  * and contributed to the OpenSSL project.
  */
 
-#define OPENSSL_FIPSAPI
+
 
 #include <openssl/err.h>
 #include <openssl/symhacks.h>

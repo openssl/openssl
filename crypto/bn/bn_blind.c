@@ -109,7 +109,7 @@
  * [including the GNU Public Licence.]
  */
 
-#define OPENSSL_FIPSAPI
+
 
 #include "cryptlib.h"
 #include "bn_lcl.h"

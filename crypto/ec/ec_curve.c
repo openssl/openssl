@@ -69,7 +69,7 @@
  *
  */
 
-#define OPENSSL_FIPSAPI
+
 
 #include <string.h>
 #include "ec_lcl.h"
