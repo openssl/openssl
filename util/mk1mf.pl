@@ -786,12 +786,6 @@ foreach (values %lib_nam)
 	$lib_obj=$lib_obj{$_};
 	local($slib)=$shlib;
 
-	if (($_ eq "SSL") && $no_ssl2 && $no_ssl3)
-		{
-		$rules.="\$(O_SSL):\n\n"; 
-		next;
-		}
-
 	if ((!$fips && ($_ eq "CRYPTO")) || ($fips && ($_ eq "FIPS")))
 		{
 		if ($cpuid_asm_obj ne "")
