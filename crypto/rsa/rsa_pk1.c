@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#define OPENSSL_FIPSAPI
+
 
 #include "constant_time_locl.h"
 

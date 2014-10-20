@@ -67,7 +67,7 @@
  *
  */
 
-#define OPENSSL_FIPSAPI
+
 
 #include "ech_locl.h"
 

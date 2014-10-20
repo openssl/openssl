@@ -51,7 +51,7 @@
  * ====================================================================
  */
 
-#define OPENSSL_FIPSAPI
+
 
 #include <string.h>
 #include <openssl/ecdh.h>

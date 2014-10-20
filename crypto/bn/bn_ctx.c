@@ -60,7 +60,7 @@
 #endif
 #endif
 
-#define OPENSSL_FIPSAPI
+
 
 #include <assert.h>
 

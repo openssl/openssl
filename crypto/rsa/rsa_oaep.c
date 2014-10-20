@@ -18,7 +18,7 @@
  * an equivalent notion.
  */
 
-#define OPENSSL_FIPSAPI
+
 
 #include "constant_time_locl.h"
 

@@ -109,7 +109,7 @@
  *
  */
 
-#define OPENSSL_FIPSAPI
+
 
 #include "cryptlib.h"
 #include <openssl/rand.h>

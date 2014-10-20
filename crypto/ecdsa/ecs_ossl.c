@@ -56,7 +56,7 @@
  *
  */
 
-#define OPENSSL_FIPSAPI
+
 
 #include "ecs_locl.h"
 #include <openssl/err.h>

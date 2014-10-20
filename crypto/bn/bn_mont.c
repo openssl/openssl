@@ -116,7 +116,7 @@
  * sections 3.8 and 4.2 in http://security.ece.orst.edu/koc/papers/r01rsasw.pdf
  */
 
-#define OPENSSL_FIPSAPI
+
 
 #include "cryptlib.h"
 #include "bn_lcl.h"

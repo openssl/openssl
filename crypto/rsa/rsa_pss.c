@@ -56,7 +56,7 @@
  *
  */
 
-#define OPENSSL_FIPSAPI
+
 
 #include <stdio.h>
 #include "cryptlib.h"
