@@ -2424,17 +2424,6 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 							      al))
 				return 0;
                         }
-		/* If this ClientHello extension was unhandled and this is 
-		 * a nonresumed connection, check whether the extension is a 
-		 * custom TLS Extension (has a custom_srv_ext_record), and if
-		 * so call the callback and record the extension number so that
-		 * an appropriate ServerHello may be later returned.
-		 */
-		else if (!s->hit)
-			{
-			if (custom_ext_parse(s, 1, type, data, size, al) <= 0)
-				return 0;
-			}
 
 		data+=size;
 		}
@@ -2460,10 +2449,51 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 	return 1;
 	}
 
+/*
+ * Parse any custom extensions found.  "data" is the start of the extension data
+ * and "limit" is the end of the record. TODO: add strict syntax checking.
+ */
+
+static int ssl_scan_clienthello_custom_tlsext(SSL *s, const unsigned char *data, const unsigned char *limit, int *al) 
+	{	
+	unsigned short type, size, len;
+	/* If resumed session or no custom extensions nothing to do */
+	if (s->hit || s->cert->srv_ext.meths_count == 0)
+		return 1;
+
+	if (data >= limit - 2)
+		return 1;
+	n2s(data, len);
+
+	if (data > limit - len) 
+		return 1;
+
+	while (data <= limit - 4)
+		{
+		n2s(data, type);
+		n2s(data, size);
+
+		if (data+size > limit)
+	   		return 1;
+		if (custom_ext_parse(s, 1 /* server */, type, data, size, al) <= 0)
+			return 0;
+
+		data+=size;
+		}
+
+	return 1;
+	}
+
 int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, int n) 
 	{
 	int al = -1;
-	custom_ext_init(&s->cert->srv_ext);
+	unsigned char *ptmp = *p;
+	/*
+	 * Internally supported extensions are parsed first so SNI can be handled
+	 * before custom extensions. An application processing SNI will typically
+	 * switch the parent context using SSL_set_SSL_CTX and custom extensions
+	 * need to be handled by the new SSL_CTX structure.
+	 */
 	if (ssl_scan_clienthello_tlsext(s, p, d, n, &al) <= 0) 
 		{
 		ssl3_send_alert(s,SSL3_AL_FATAL,al); 
@@ -2475,6 +2505,14 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 		SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_TLSEXT,SSL_R_CLIENTHELLO_TLSEXT);
 		return 0;
 		}
+
+	custom_ext_init(&s->cert->srv_ext);
+	if (ssl_scan_clienthello_custom_tlsext(s, ptmp, d + n, &al) <= 0) 
+		{
+		ssl3_send_alert(s,SSL3_AL_FATAL,al); 
+		return 0;
+		}
+
 	return 1;
 }
 
