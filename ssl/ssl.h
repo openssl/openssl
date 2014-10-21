@@ -606,8 +606,13 @@ typedef struct ssl_session_st
  * or just freed (depending on the context's setting for freelist_max_len). */
 #define SSL_MODE_RELEASE_BUFFERS 0x00000010L
 /* Send TLS_FALLBACK_SCSV in the ClientHello.
- * To be set by applications that reconnect with a downgraded protocol
- * version; see draft-ietf-tls-downgrade-scsv-00 for details. */
+ * To be set only by applications that reconnect with a downgraded protocol
+ * version; see draft-ietf-tls-downgrade-scsv-00 for details.
+ *
+ * DO NOT ENABLE THIS if your application attempts a normal handshake.
+ * Only use this in explicit fallback retries, following the guidance
+ * in draft-ietf-tls-downgrade-scsv-00.
+ */
 #define SSL_MODE_SEND_FALLBACK_SCSV 0x00000080L
 
 /* Note: SSL[_CTX]_set_{options,mode} use |= op on the previous value,
