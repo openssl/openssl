@@ -505,8 +505,9 @@ int MAIN(int argc, char **argv)
 #define D_PRIME_TRIAL_DIVISION			0
 #define D_PRIME_TRIAL_DIVISION_RETRY	1
 #define D_PRIME_COPRIME					2
+#ifndef OPENSSL_SYS_WIN32
 	long prime_c[PRIME_NUM];
-
+#endif
 #define	R_DSA_512	0
 #define	R_DSA_1024	1
 #define	R_DSA_2048	2
@@ -2089,7 +2090,7 @@ int MAIN(int argc, char **argv)
 			print_result(D_EVP,j,count,d);
 			}
 		}
-	
+#ifndef OPENSSL_SYS_WIN32
 	if (prime_doit[D_PRIME_TRIAL_DIVISION])
 		{
 		BIGNUM *rnd = BN_new();
@@ -2149,7 +2150,7 @@ int MAIN(int argc, char **argv)
 		BN_CTX_free(ctx);
 		BN_free(rnd);
 		}
-
+#endif
 	RAND_pseudo_bytes(buf,36);
 #ifndef OPENSSL_NO_RSA
 	for (j=0; j<RSA_NUM; j++)
