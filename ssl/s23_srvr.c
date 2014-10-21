@@ -559,7 +559,7 @@ int ssl23_get_client_hello(SSL *s)
 	if ((type == 2) || (type == 3))
 		{
 		/* we have SSLv3/TLSv1 (type 2: SSL2 style, type 3: SSL3/TLS style) */
-		const SSL_METHOD *new_method;
+		SSL_METHOD *new_method;
 		new_method = ssl23_get_server_method(s->version);
 		if (new_method == NULL)
 			{
