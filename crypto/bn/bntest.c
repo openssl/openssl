@@ -273,8 +273,12 @@ int main(int argc, char *argv[])
 	if (!test_small_prime(out,ctx)) goto err;
 	(void)BIO_flush(out);
 
+#ifdef OPENSSL_SYS_WIN32
+	message(out,"Probable prime generation with coprimes disabled");
+#else
 	message(out,"Probable prime generation with coprimes");
 	if (!test_probable_prime_coprime(out,ctx)) goto err;
+#endif
 	(void)BIO_flush(out);
 
 #ifndef OPENSSL_NO_EC2M
@@ -1929,7 +1933,7 @@ err:
 	BN_clear(&r);
 	return ret;
 	}
-
+#ifndef OPENSSL_SYS_WIN32
 int test_probable_prime_coprime(BIO *bp, BN_CTX *ctx)
 	{
 	int i, j, ret = 0;
@@ -1960,7 +1964,7 @@ err:
 	BN_clear(&r);
 	return ret;
 	}
-
+#endif
 int test_lshift(BIO *bp,BN_CTX *ctx,BIGNUM *a_)
 	{
 	BIGNUM *a,*b,*c,*d;
