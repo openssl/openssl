@@ -45,7 +45,7 @@
 
   *) Accelerated NIST P-256 elliptic curve implementation for x86_64
      (other platforms pending).
-     [Shay Gueron (Intel Corp), Andy Polyakov]
+     [Shay Gueron & Vlad Krasnov (Intel Corp), Andy Polyakov]
 
   *) Add support for the SignedCertificateTimestampList certificate and
      OCSP response extensions from RFC6962.
@@ -81,7 +81,7 @@
 
   *) Accelerated modular exponentiation for Intel processors, a.k.a.
      RSAZ.
-     [Shay Gueron (Intel Corp)]
+     [Shay Gueron & Vlad Krasnov (Intel Corp)]
 
   *) Support for new and upcoming Intel processors, including AVX2,
      BMI and SHA ISA extensions. This includes additional "stitched"
