@@ -3876,8 +3876,42 @@ $ranlib       =
 $arflags      = 
 $multilib     = 
 
+*** ios64-cross
+$cc           = cc
+$cflags       = -O3 -arch arm64 -mios-version-min=7.0.0 -isysroot $(CROSS_TOP)/SDKs/$(CROSS_SDK) -fno-common
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = iOS
+$lflags       = -Wl,-search_paths_first%
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHAR -RC4_CHUNK DES_INT DES_UNROLL -BF_PTR
+$cpuid_obj    = 
+$bn_obj       = 
+$ec_obj       = 
+$des_obj      = 
+$aes_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$wp_obj       = 
+$cmll_obj     = 
+$modes_obj    = 
+$engines_obj  = 
+$perlasm_scheme = void
+$dso_scheme   = dlfcn
+$shared_target= darwin-shared
+$shared_cflag = -fPIC -fno-common
+$shared_ldflag = -dynamiclib
+$shared_extension = .$(SHLIB_MAJOR).$(SHLIB_MINOR).dylib
+$ranlib       = 
+$arflags      = 
+$multilib     = 
+
 *** iphoneos-cross
-$cc           = llvm-gcc
+$cc           = cc
 $cflags       = -O3 -isysroot $(CROSS_TOP)/SDKs/$(CROSS_SDK) -fomit-frame-pointer -fno-common
 $unistd       = 
 $thread_cflag = -D_REENTRANT
