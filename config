@@ -572,6 +572,8 @@ case "$GUESSOS" in
   *-*-iphoneos)
 	options="$options -arch%20${MACHINE}"
 	OUT="iphoneos-cross" ;;
+  arm64-*-iphoneos|*-*-ios64)
+	OUT="ios64-cross" ;;
   alpha-*-linux2)
         ISA=`awk '/cpu model/{print$4;exit(0);}' /proc/cpuinfo`
 	case ${ISA:-generic} in
