@@ -395,6 +395,7 @@ int CRYPTO_is_mem_check_on(void);
 #define OPENSSL_malloc_locked(num) \
 	CRYPTO_malloc_locked((int)num,__FILE__,__LINE__)
 #define OPENSSL_free_locked(addr) CRYPTO_free_locked(addr)
+#define OPENSSL_MALLOC_MAX_NELEMS(type)  (((1U<<(sizeof(int)*8-1))-1)/sizeof(type))
 
 
 const char *SSLeay_version(int type);
