@@ -666,6 +666,14 @@
      (CVE-2014-3572)
      [Steve Henson]
 
+  *) Remove non-export ephemeral RSA code on client and server. This code
+     violated the TLS standard by allowing the use of temporary RSA keys in
+     non-export ciphersuites and could be used by a server to effectively
+     downgrade the RSA key length used to a value smaller than the server
+     certificate. Thanks for Karthikeyan Bhargavan for reporting this issue.
+     (CVE-2015-0204)
+     [Steve Henson]
+
   *) Ensure that the session ID context of an SSL is updated when its
      SSL_CTX is updated via SSL_set_SSL_CTX.
 
