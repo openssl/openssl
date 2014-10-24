@@ -4,6 +4,13 @@
 
  Changes between 1.0.0o and 1.0.0p [xx XXX xxxx]
 
+  *) Abort handshake if server key exchange message is omitted for ephemeral
+     ECDH ciphersuites.
+
+     Thanks to Karthikeyan Bhargavan for reporting this issue.
+     (CVE-2014-3572)
+     [Steve Henson]
+
   *) Fix various certificate fingerprint issues.
 
      By using non-DER or invalid encodings outside the signed portion of a
