@@ -20,8 +20,8 @@ my @fips_dsa_test_list = (
 );
 
 my @fips_dsa_pqgver_test_list = (
-
-    [ "PQGVer",  "fips_dssvs pqgver", "path:[^C]DSA/.*PQGVer" ]
+    "DSA",
+    [ "PQGVer",  "fips_dssvs pqgver"]
 
 );
 
@@ -34,7 +34,7 @@ my @fips_dsa2_test_list = (
     [ "KeyPair", "fips_dssvs keypair", "path:[^C]DSA2/.*KeyPair" ],
     [ "SigGen",  "fips_dssvs siggen", "path:[^C]DSA2/.*SigGen" ],
     [ "SigVer",  "fips_dssvs sigver", "path:[^C]DSA2/.*SigVer" ],
-    [ "PQGVer",  "fips_dssvs pqgver", "path:[^C]DSA2/.*PQGVer" ]
+    [ "PQGVer",  "fips_dssvs pqgver", "file:L\\s*=.*N\\s*=" ]
 
 );
 
@@ -47,7 +47,9 @@ my @fips_ecdsa_test_list = (
     [ "PKV",  "fips_ecdsavs PKV", "path:/ECDSA/.*PKV" ],
     [ "SigGen",  "fips_ecdsavs SigGen", "path:/ECDSA/.*SigGen" ],
     [ "SigVer",  "fips_ecdsavs SigVer", "path:/ECDSA/.*SigVer" ],
+);
 
+my @fips_ecdsa2_test_list = (
     "ECDSA2",
 
     [ "KeyPair", "fips_ecdsavs KeyPair", "path:/ECDSA2/.*KeyPair" ],
@@ -65,9 +67,9 @@ my @fips_rsa_test_list = (
 
     [ "SigGen15",  "fips_rsastest" ],
     [ "SigVer15",  "fips_rsavtest" ],
-    [ "SigVerRSA", "fips_rsavtest -x931" ],
+    [ "SigVer(X9.31)", "fips_rsavtest -x931", 'file:9\.31' ],
     [ "KeyGenRSA", "fips_rsagtest" ],
-    [ "SigGenRSA", "fips_rsastest -x931" ]
+    [ "SigGen(X9.31)", "fips_rsastest -x931" , 'file:9\.31']
 
 );
 
@@ -79,21 +81,22 @@ my @fips_rsa_test_list = (
 # RSA PSS salt length 0 tests
 
 my @fips_rsa_pss0_test_list = (
-
+    "RSA",
     [ "SigGenPSS(0)", "fips_rsastest -saltlen 0",
-					'file:^\s*#\s*salt\s+len:\s+0\s*$' ],
+					'file:salt\s+len:\s+0' ],
     [ "SigVerPSS(0)", "fips_rsavtest -saltlen 0",
-					'file:^\s*#\s*salt\s+len:\s+0\s*$' ],
+					'file:salt\s+len:\s+0' ],
 
 );
 
 # RSA PSS salt length 62 tests
 
 my @fips_rsa_pss62_test_list = (
+    "RSA",
     [ "SigGenPSS(62)", "fips_rsastest -saltlen 62",
-					'file:^\s*#\s*salt\s+len:\s+62\s*$' ],
+					'file:salt\s+len:\s+62' ],
     [ "SigVerPSS(62)", "fips_rsavtest -saltlen 62",
-					'file:^\s*#\s*salt\s+len:\s+62\s*$' ],
+					'file:salt\s+len:\s+62' ],
 );
 
 # SHA tests
@@ -511,12 +514,14 @@ my $no_warn_bogus = 0;
 my $rmcmd = "rm -rf";
 my $mkcmd = "mkdir";
 my $cmpall = 0;
+my $info = 0;
 
 my %fips_enabled = (
     "dsa"        => 1,
     "dsa2"       => 2,
     "dsa-pqgver"  => 2,
     "ecdsa"      => 2,
+    "ecdsa2"     => 2,
     "rsa"        => 1,
     "rsa-pss0"  => 2,
     "rsa-pss62" => 1,
@@ -576,6 +581,12 @@ foreach (@ARGV) {
     }
     elsif ( $_ eq "--notest" ) {
         $notest = 1;
+    }
+    elsif ( $_ eq "--debug-detect" ) {
+        $notest = 1;
+        $ignore_missing = 1;
+        $ignore_bogus = 1;
+        $info = 1;
     }
     elsif ( $_ eq "--quiet" ) {
         $quiet = 1;
@@ -640,13 +651,15 @@ if (!$fips_enabled{"v2"}) {
 }
 
 push @fips_test_list, @fips_dsa_test_list       if $fips_enabled{"dsa"};
-push @fips_test_list, @fips_dsa_pqgver_test_list if $fips_enabled{"dsa-pqgver"};
 push @fips_test_list, @fips_dsa2_test_list      if $fips_enabled{"dsa2"};
+push @fips_test_list, @fips_dsa_pqgver_test_list if $fips_enabled{"dsa-pqgver"};
 push @fips_test_list, @fips_ecdsa_test_list     if $fips_enabled{"ecdsa"};
+push @fips_test_list, @fips_ecdsa2_test_list     if $fips_enabled{"ecdsa2"};
 push @fips_test_list, @fips_rsa_test_list       if $fips_enabled{"rsa"};
 push @fips_test_list, @fips_rsa_pss0_test_list  if $fips_enabled{"rsa-pss0"};
 push @fips_test_list, @fips_rsa_pss62_test_list if $fips_enabled{"rsa-pss62"};
 push @fips_test_list, @fips_sha_test_list       if $fips_enabled{"sha"};
+push @fips_test_list, @fips_drbg_test_list	if $fips_enabled{"drbg"};
 push @fips_test_list, @fips_hmac_test_list      if $fips_enabled{"hmac"};
 push @fips_test_list, @fips_cmac_test_list      if $fips_enabled{"cmac"};
 push @fips_test_list, @fips_rand_aes_test_list  if $fips_enabled{"rand-aes"};
@@ -655,7 +668,6 @@ push @fips_test_list, @fips_aes_test_list       if $fips_enabled{"aes"};
 push @fips_test_list, @fips_aes_cfb1_test_list  if $fips_enabled{"aes-cfb1"};
 push @fips_test_list, @fips_des3_test_list      if $fips_enabled{"des3"};
 push @fips_test_list, @fips_des3_cfb1_test_list if $fips_enabled{"des3-cfb1"};
-push @fips_test_list, @fips_drbg_test_list	if $fips_enabled{"drbg"};
 push @fips_test_list, @fips_aes_ccm_test_list	if $fips_enabled{"aes-ccm"};
 push @fips_test_list, @fips_aes_gcm_test_list	if $fips_enabled{"aes-gcm"};
 push @fips_test_list, @fips_aes_xts_test_list	if $fips_enabled{"aes-xts"};
@@ -710,9 +722,9 @@ sanity_check_files();
 my ( $runerr, $cmperr, $cmpok, $scheckrunerr, $scheckerr, $scheckok, $skipcnt )
   = ( 0, 0, 0, 0, 0, 0, 0 );
 
-exit(0) if $notest;
 print "Outputting commands to $outfile\n" if $outfile ne "";
 run_tests( $verify, $win32, $tprefix, $filter, $tvdir, $outfile );
+exit(0) if $notest;
 
 if ($verify) {
     print "ALGORITHM TEST VERIFY SUMMARY REPORT:\n";
@@ -778,7 +790,7 @@ EOF
 while (my ($key, $value) = each %fips_enabled)
 	{
 	printf "\t\t%-20s(%s by default)\n", $key ,
-			$value == 1 ? "enabled" : "disabled";
+			$value != 0 ? "enabled" : "disabled";
 	}
 }
 
@@ -817,13 +829,14 @@ sub sanity_check_exe {
 sub find_files {
     my ( $filter, $dir ) = @_;
     my ( $dirh, $testname, $tref );
+    my $ttype;
     opendir( $dirh, $dir );
     while ( $_ = readdir($dirh) ) {
         next if ( $_ eq "." || $_ eq ".." );
         $_ = "$dir/$_";
         if ( -f "$_" ) {
             if (/\/([^\/]*)\.rsp$/) {
-		$tref = find_test($1, $_);
+		$tref = find_test($1, $_, \$ttype);
                 if ( defined $tref ) {
 		    $testname = $$tref[0];
                     if ( $$tref[4] eq "" ) {
@@ -831,7 +844,7 @@ sub find_files {
                     }
                     else {
                         print STDERR
-"WARNING: duplicate response file $_ for test $testname\n";
+"WARNING: duplicate response file $_ for $ttype test $testname\n";
                         $nbogus++;
                     }
                 }
@@ -842,21 +855,28 @@ sub find_files {
             }
             next unless /$filter.*\.req$/i;
             if (/\/([^\/]*)\.req$/) {
-		$tref = find_test($1, $_);
+		$tref = find_test($1, $_, \$ttype);
                 if ( defined $tref ) {
 		    $testname = $$tref[0];
-                    if ( $$tref[3] eq "" ) {
+                    my $tfname = $$tref[3];
+                    if ( $tfname eq "" ) {
                         $$tref[3] = $_;
                     }
                     else {
                         print STDERR
-"WARNING: duplicate request file $_ for test $testname\n";
+"WARNING: duplicate request file $_ for $ttype test $testname\n";
+			if ($info) {
+			    print_file_start($_, \*STDERR);
+			    print STDERR "Original filename $tfname\n";
+			    print_file_start($tfname, \*STDERR);
+			}
                         $nbogus++;
                     }
 
                 }
                 elsif ( !/SHAmix\.req$/ ) {
                     print STDERR "WARNING: unrecognized filename $_\n" unless $no_warn_bogus;
+		    print_file_start($_, \*STDERR) if $info;
                     $nbogus++;
                 }
             }
@@ -873,13 +893,15 @@ sub find_files {
 #
 
 sub find_test {
-    my ( $test, $path ) = @_;
+    my ( $test, $path, $type ) = @_;
     foreach $tref (@fips_test_list) {
-        next unless ref($tref);
+	if (!ref($tref)) {
+		$$type = $tref;
+		next;
+	}
         my ( $tst, $cmd, $excmd, $req, $resp ) = @$tref;
 	my $regexp;
 	$tst =~ s/\(.*$//;
-	$test =~ s/_186-2//;
 	if (defined $excmd) {
 		if ($excmd =~ /^path:(.*)$/) {
 			my $fmatch = $1;
@@ -890,7 +912,7 @@ sub find_test {
 			$regexp = $1;
 		}
 	}
-	if ($test eq $tst) {
+	if ($test =~ /^$tst/) {
 		return $tref if (!defined $regexp);
 		my $found = 0;
 		my $line;
@@ -910,22 +932,26 @@ sub find_test {
 
 sub sanity_check_files {
     my $bad = 0;
+    my $ttype;
     foreach (@fips_test_list) {
-        next unless ref($_);
+	if (!ref($_)) {
+	    $ttype = $_;
+	    next;
+	}
         my ( $tst, $cmd, $regexp, $req, $resp ) = @$_;
 
         #print STDERR "FILES $tst, $cmd, $req, $resp\n";
         if ( $req eq "" ) {
-            print STDERR "WARNING: missing request file for $tst\n" unless $no_warn_missing;
+            print STDERR "WARNING: missing request file for $ttype test $tst\n" unless $no_warn_missing;
             $bad = 1;
             next;
         }
         if ( $verify && $resp eq "" ) {
-            print STDERR "WARNING: no response file for test $tst\n";
+            print STDERR "WARNING: no response file for $ttype test test $tst\n";
             $bad = 1;
         }
         elsif ( !$verify && $resp ne "" ) {
-            print STDERR "WARNING: response file $resp will be overwritten\n";
+            print STDERR "WARNING: response file $resp for $ttype test $tst will be overwritten\n";
         }
     }
     if ($bad) {
@@ -988,26 +1014,37 @@ END
 	    if ($outfile ne "") {
 		print "Generating script for $_ tests\n";
 		print OUT "\n\n\necho \"Running $_ tests\"\n" unless $minimal_script;
-	    } else {	
+	    } elsif ($notest) {	
+            	print "Info for $_ tests:\n";
+	    } else {
             	print "Running $_ tests\n" unless $quiet;
 	    }
 	    $ttype = $_;
             next;
         }
         my ( $tname, $tcmd, $regexp, $req, $rsp ) = @$_;
+	if ($notest) {
+	    if ($req ne "") {
+	    	print "Test $ttype, $tname: $req\n";
+		print_file_start($req, \*STDOUT) if ($info);
+	    } else {
+		print "$tname: not found\n";
+	    }
+	    next;
+	}
         my $out = $rsp;
         if ($verify) {
             $out =~ s/\.rsp$/.tst/;
         }
         if ( $req eq "" ) {
             print STDERR
-              "WARNING: Request file for $tname missing: test skipped\n" unless $no_warn_missing;
+              "WARNING: Request file for $ttype test $tname missing: test skipped\n" unless $no_warn_missing;
             $skipcnt++;
             next;
         }
         if ( $verify && $rsp eq "" ) {
             print STDERR
-              "WARNING: Response file for $tname missing: test skipped\n";
+              "WARNING: Response file for $ttype test $tname missing: test skipped\n";
             $skipcnt++;
             next;
         }
@@ -1210,4 +1247,23 @@ sub next_line {
         return uc $_;
     }
     return undef;
+}
+
+sub print_file_start {
+    my ($fname, $fh) = @_;
+    print $fh "======\n";
+    open IN, $fname;
+    while (<IN>) {
+	my $line = $_;
+	s/#.*$//;
+	last unless (/^\s*$/);
+	print $fh $line;
+    }
+    my $lines = 0;
+    while (<IN>) {
+	print $fh $_;
+	last if $lines++ > 10;
+    }
+    close IN;
+    print $fh "======\n";
 }
