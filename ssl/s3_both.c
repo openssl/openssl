@@ -411,17 +411,6 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 			SSLerr(SSL_F_SSL3_GET_MESSAGE,SSL_R_UNEXPECTED_MESSAGE);
 			goto f_err;
 			}
-		if ((mt < 0) && (*p == SSL3_MT_CLIENT_HELLO) &&
-					(st1 == SSL3_ST_SR_CERT_A) &&
-					(stn == SSL3_ST_SR_CERT_B))
-			{
-			/* At this point we have got an MS SGC second client
-			 * hello (maybe we should always allow the client to
-			 * start a new handshake?). We need to restart the mac.
-			 * Don't increment {num,total}_renegotiations because
-			 * we have not completed the handshake. */
-			ssl3_init_finished_mac(s);
-			}
 
 		s->s3->tmp.message_type= *(p++);
 
