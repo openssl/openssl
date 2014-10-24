@@ -4,6 +4,13 @@
 
  Changes between 1.0.1j and 1.0.1k [xx XXX xxxx]
 
+  *) Abort handshake if server key exchange message is omitted for ephemeral
+     ECDH ciphersuites.
+
+     Thanks to Karthikeyan Bhargavan for reporting this issue.
+     (CVE-2014-3572)
+     [Steve Henson]
+
   *) Ensure that the session ID context of an SSL is updated when its
      SSL_CTX is updated via SSL_set_SSL_CTX.
 
