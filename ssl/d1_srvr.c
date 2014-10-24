@@ -610,24 +610,13 @@ int dtls1_accept(SSL *s)
 
 		case SSL3_ST_SR_CERT_A:
 		case SSL3_ST_SR_CERT_B:
-			/* Check for second client hello (MS SGC) */
-			ret = ssl3_check_client_hello(s);
-			if (ret <= 0)
-				goto end;
-			if (ret == 2)
+			if (s->s3->tmp.cert_request)
 				{
-				dtls1_stop_timer(s);
-				s->state = SSL3_ST_SR_CLNT_HELLO_C;
+				ret=ssl3_get_client_certificate(s);
+				if (ret <= 0) goto end;
 				}
-			else {
-				if (s->s3->tmp.cert_request)
-					{
-					ret=ssl3_get_client_certificate(s);
-					if (ret <= 0) goto end;
-					}
-				s->init_num=0;
-				s->state=SSL3_ST_SR_KEY_EXCH_A;
-			}
+			s->init_num=0;
+			s->state=SSL3_ST_SR_KEY_EXCH_A;
 			break;
 
 		case SSL3_ST_SR_KEY_EXCH_A:
