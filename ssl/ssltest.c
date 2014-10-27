@@ -816,10 +816,52 @@ static void sv_usage(void)
 	fprintf(stderr," -alpn_expected <string> - the ALPN protocol that should be negotiated\n");
 	}
 
+static void print_key_details(BIO *out, EVP_PKEY *key)
+	{
+	int keyid = EVP_PKEY_id(key);
+#ifndef OPENSSL_NO_EC
+	if (keyid == EVP_PKEY_EC)
+		{
+		EC_KEY *ec = EVP_PKEY_get1_EC_KEY(key);
+		int nid;
+		const char *cname;
+		nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
+		EC_KEY_free(ec);
+		cname = EC_curve_nid2nist(nid);
+		if (!cname)
+			cname = OBJ_nid2sn(nid);
+		BIO_printf(out, "%d bits EC (%s)",
+						EVP_PKEY_bits(key), cname);
+		}
+	else
+#endif
+		{
+		const char *algname;
+		switch (keyid)
+			{
+		case EVP_PKEY_RSA:
+			algname = "RSA";
+			break;
+		case EVP_PKEY_DSA:
+			algname = "DSA";
+			break;
+		case EVP_PKEY_DH:
+			algname = "DH";
+			break;
+		default:
+			algname = OBJ_nid2sn(keyid);
+			break;
+			}
+		BIO_printf(out, "%d bits %s", EVP_PKEY_bits(key), algname);
+		}
+	}
+
 static void print_details(SSL *c_ssl, const char *prefix)
 	{
 	const SSL_CIPHER *ciph;
+	int mdnid;
 	X509 *cert;
+	EVP_PKEY *pkey;
 		
 	ciph=SSL_get_current_cipher(c_ssl);
 	BIO_printf(bio_stdout,"%s%s, cipher %s %s",
@@ -830,33 +872,23 @@ static void print_details(SSL *c_ssl, const char *prefix)
 	cert=SSL_get_peer_certificate(c_ssl);
 	if (cert != NULL)
 		{
-		EVP_PKEY *pkey = X509_get_pubkey(cert);
+		pkey = X509_get_pubkey(cert);
 		if (pkey != NULL)
 			{
-			if (0) 
-				;
-#ifndef OPENSSL_NO_RSA
-			else if (pkey->type == EVP_PKEY_RSA && pkey->pkey.rsa != NULL
-				&& pkey->pkey.rsa->n != NULL)
-				{
-				BIO_printf(bio_stdout, ", %d bit RSA",
-					BN_num_bits(pkey->pkey.rsa->n));
-				}
-#endif
-#ifndef OPENSSL_NO_DSA
-			else if (pkey->type == EVP_PKEY_DSA && pkey->pkey.dsa != NULL
-				&& pkey->pkey.dsa->p != NULL)
-				{
-				BIO_printf(bio_stdout, ", %d bit DSA",
-					BN_num_bits(pkey->pkey.dsa->p));
-				}
-#endif
+			BIO_puts(bio_stdout, ", ");
+			print_key_details(bio_stdout, pkey);
 			EVP_PKEY_free(pkey);
 			}
 		X509_free(cert);
 		}
-	/* The SSL API does not allow us to look at temporary RSA/DH keys,
-	 * otherwise we should print their lengths too */
+	if (SSL_get_server_tmp_key(c_ssl, &pkey))
+		{
+		BIO_puts(bio_stdout, ", temp key: ");
+		print_key_details(bio_stdout, pkey);
+		EVP_PKEY_free(pkey);
+		}
+        if (SSL_get_peer_signature_nid(c_ssl, &mdnid))
+                BIO_printf(bio_stdout, ", digest=%s", OBJ_nid2sn(mdnid));
 	BIO_printf(bio_stdout,"\n");
 	}
 
