@@ -996,6 +996,10 @@ int main(int argc, char *argv[])
 #endif
         int no_protocol = 0;
 
+	SSL_CONF_CTX *s_cctx = NULL, *c_cctx = NULL;
+	STACK_OF(OPENSSL_STRING) *conf_args = NULL;
+	const char *arg = NULL, *argn = NULL;
+
 	verbose = 0;
 	debug = 0;
 	cipher = 0;
@@ -1020,6 +1024,31 @@ int main(int argc, char *argv[])
 	RAND_seed(rnd_seed, sizeof rnd_seed);
 
 	bio_stdout=BIO_new_fp(stdout,BIO_NOCLOSE|BIO_FP_TEXT);
+
+	s_cctx = SSL_CONF_CTX_new();
+	c_cctx = SSL_CONF_CTX_new();
+
+	if (!s_cctx || !c_cctx)
+		{
+		ERR_print_errors(bio_err);
+		goto end;
+		}
+
+	SSL_CONF_CTX_set_flags(s_cctx,
+			       SSL_CONF_FLAG_CMDLINE|SSL_CONF_FLAG_SERVER);
+	if (!SSL_CONF_CTX_set1_prefix(s_cctx, "-s_"))
+		{
+		ERR_print_errors(bio_err);
+		goto end;
+		}
+
+	SSL_CONF_CTX_set_flags(c_cctx,
+			       SSL_CONF_FLAG_CMDLINE|SSL_CONF_FLAG_CLIENT);
+	if (!SSL_CONF_CTX_set1_prefix(c_cctx, "-c_"))
+		{
+		ERR_print_errors(bio_err);
+		goto end;
+		}
 
 	argc--;
 	argv++;
@@ -1276,8 +1305,40 @@ int main(int argc, char *argv[])
 			}
 		else
 			{
-			fprintf(stderr,"unknown option %s\n",*argv);
-			badop=1;
+			int rv;
+			arg = argv[0];
+			argn = argv[1];
+			/* Try to process command using SSL_CONF */
+			rv = SSL_CONF_cmd_argv(c_cctx, &argc, &argv);
+			/* If not processed try server */
+			if (rv == 0)
+				rv = SSL_CONF_cmd_argv(s_cctx, &argc, &argv);
+			/* Recognised: store it for later use */
+			if (rv > 0)
+				{
+				if (rv == 1)
+					argn = NULL;
+				if (!conf_args)
+					{
+					conf_args = sk_OPENSSL_STRING_new_null();
+					if (!conf_args)
+						goto end;
+					}
+				if (!sk_OPENSSL_STRING_push(conf_args, arg))
+					goto end;
+				if (!sk_OPENSSL_STRING_push(conf_args, argn))
+					goto end;
+				continue;
+				}
+			if (rv == -3)
+				BIO_printf(bio_err, "Missing argument for %s\n",
+									arg);
+			else if (rv < 0)
+				BIO_printf(bio_err, "Error with command %s\n",
+									arg);
+			else if (rv == 0)
+				BIO_printf(bio_err,"unknown option %s\n", arg);
+			badop = 1;
 			break;
 			}
 		argc--;
@@ -1440,6 +1501,35 @@ bad:
 		{
 		SSL_CTX_set_cipher_list(c_ctx,cipher);
 		SSL_CTX_set_cipher_list(s_ctx,cipher);
+		}
+
+	/* Process SSL_CONF arguments */
+	SSL_CONF_CTX_set_ssl_ctx(c_cctx, c_ctx);
+	SSL_CONF_CTX_set_ssl_ctx(s_cctx, s_ctx);
+
+	for (i = 0; i < sk_OPENSSL_STRING_num(conf_args); i += 2)
+		{
+		int rv;
+		arg = sk_OPENSSL_STRING_value(conf_args, i);
+		argn = sk_OPENSSL_STRING_value(conf_args, i + 1);
+		rv = SSL_CONF_cmd(c_cctx, arg, argn);
+		/* If not recognised use server context */
+		if (rv == -2)
+			rv = SSL_CONF_cmd(s_cctx, arg, argn);
+		if (rv <= 0)
+			{
+			BIO_printf(bio_err, "Error processing %s %s\n",
+						arg, argn ? argn : "");
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+		}
+
+	if (!SSL_CONF_CTX_finish(s_cctx) || !SSL_CONF_CTX_finish(c_cctx))
+		{
+		BIO_puts(bio_err, "Error finishing context\n");
+		ERR_print_errors(bio_err);
+		goto end;
 		}
 
 #ifndef OPENSSL_NO_DH
@@ -1761,6 +1851,12 @@ bad:
 end:
 	if (s_ctx != NULL) SSL_CTX_free(s_ctx);
 	if (c_ctx != NULL) SSL_CTX_free(c_ctx);
+
+	if (s_cctx)
+		SSL_CONF_CTX_free(s_cctx);
+	if (c_cctx)
+		SSL_CONF_CTX_free(c_cctx);
+	sk_OPENSSL_STRING_free(conf_args);
 
 	if (bio_stdout != NULL) BIO_free(bio_stdout);
 
