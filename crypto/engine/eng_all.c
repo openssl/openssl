@@ -82,6 +82,8 @@ void ENGINE_load_builtin_engines(void)
 #ifndef OPENSSL_NO_HW_4758_CCA
 	ENGINE_load_4758cca();
 #endif
+/*
+ * These engines have been disabled as they do not currently build
 #ifndef OPENSSL_NO_HW_AEP
 	ENGINE_load_aep();
 #endif
@@ -103,6 +105,7 @@ void ENGINE_load_builtin_engines(void)
 #ifndef OPENSSL_NO_HW_UBSEC
 	ENGINE_load_ubsec();
 #endif
+*/
 #ifndef OPENSSL_NO_HW_PADLOCK
 	ENGINE_load_padlock();
 #endif
