@@ -71,6 +71,7 @@
 
 #include <openssl/err.h>
 
+#include "internal/bn_int.h"
 #include "ec_lcl.h"
 
 #ifndef OPENSSL_NO_EC2M
@@ -98,7 +99,7 @@ static int gf2m_Mdouble(const EC_GROUP *group, BIGNUM *x, BIGNUM *z, BN_CTX *ctx
 	if (!group->meth->field_mul(group, z, x, t1, ctx)) goto err;
 	if (!group->meth->field_sqr(group, x, x, ctx)) goto err;
 	if (!group->meth->field_sqr(group, t1, t1, ctx)) goto err;
-	if (!group->meth->field_mul(group, t1, &group->b, t1, ctx)) goto err;
+	if (!group->meth->field_mul(group, t1, group->b, t1, ctx)) goto err;
 	if (!BN_GF2m_add(x, x, t1)) goto err;
 
 	ret = 1;
@@ -249,24 +250,24 @@ static int ec_GF2m_montgomery_point_multiply(const EC_GROUP *group, EC_POINT *r,
 	z1 = BN_CTX_get(ctx);
 	if (z1 == NULL) goto err;
 
-	x2 = &r->X;
-	z2 = &r->Y;
+	x2 = r->X;
+	z2 = r->Y;
 
-	bn_wexpand(x1, group->field.top);
-	bn_wexpand(z1, group->field.top);
-	bn_wexpand(x2, group->field.top);
-	bn_wexpand(z2, group->field.top);
+	bn_wexpand(x1, bn_get_top(group->field));
+	bn_wexpand(z1, bn_get_top(group->field));
+	bn_wexpand(x2, bn_get_top(group->field));
+	bn_wexpand(z2, bn_get_top(group->field));
 
-	if (!BN_GF2m_mod_arr(x1, &point->X, group->poly)) goto err; /* x1 = x */
+	if (!BN_GF2m_mod_arr(x1, point->X, group->poly)) goto err; /* x1 = x */
 	if (!BN_one(z1)) goto err; /* z1 = 1 */
 	if (!group->meth->field_sqr(group, z2, x1, ctx)) goto err; /* z2 = x1^2 = x^2 */
 	if (!group->meth->field_sqr(group, x2, z2, ctx)) goto err;
-	if (!BN_GF2m_add(x2, x2, &group->b)) goto err; /* x2 = x^4 + b */
+	if (!BN_GF2m_add(x2, x2, group->b)) goto err; /* x2 = x^4 + b */
 
 	/* find top most bit and go one past it */
-	i = scalar->top - 1;
+	i = bn_get_top(scalar) - 1;
 	mask = BN_TBIT;
-	word = scalar->d[i];
+	word = bn_get_words(scalar)[i];
 	while (!(word & mask)) mask >>= 1;
 	mask >>= 1;
 	/* if top most bit was at word break, go to next word */
@@ -278,22 +279,22 @@ static int ec_GF2m_montgomery_point_multiply(const EC_GROUP *group, EC_POINT *r,
 
 	for (; i >= 0; i--)
 		{
-		word = scalar->d[i];
+		word = bn_get_words(scalar)[i];
 		while (mask)
 			{
-			BN_consttime_swap(word & mask, x1, x2, group->field.top);
-			BN_consttime_swap(word & mask, z1, z2, group->field.top);
-			if (!gf2m_Madd(group, &point->X, x2, z2, x1, z1, ctx)) goto err;
+			BN_consttime_swap(word & mask, x1, x2, bn_get_top(group->field));
+			BN_consttime_swap(word & mask, z1, z2, bn_get_top(group->field));
+			if (!gf2m_Madd(group, point->X, x2, z2, x1, z1, ctx)) goto err;
 			if (!gf2m_Mdouble(group, x1, z1, ctx)) goto err;
-			BN_consttime_swap(word & mask, x1, x2, group->field.top);
-			BN_consttime_swap(word & mask, z1, z2, group->field.top);
+			BN_consttime_swap(word & mask, x1, x2, bn_get_top(group->field));
+			BN_consttime_swap(word & mask, z1, z2, bn_get_top(group->field));
 			mask >>= 1;
 			}
 		mask = BN_TBIT;
 		}
 
 	/* convert out of "projective" coordinates */
-	i = gf2m_Mxy(group, &point->X, &point->Y, x1, z1, x2, z2, ctx);
+	i = gf2m_Mxy(group, point->X, point->Y, x1, z1, x2, z2, ctx);
 	if (i == 0) goto err;
 	else if (i == 1) 
 		{
@@ -301,13 +302,13 @@ static int ec_GF2m_montgomery_point_multiply(const EC_GROUP *group, EC_POINT *r,
 		}
 	else
 		{
-		if (!BN_one(&r->Z)) goto err;
+		if (!BN_one(r->Z)) goto err;
 		r->Z_is_one = 1;
 		}
 
 	/* GF(2^m) field elements should always have BIGNUM::neg = 0 */
-	BN_set_negative(&r->X, 0);
-	BN_set_negative(&r->Y, 0);
+	BN_set_negative(r->X, 0);
+	BN_set_negative(r->Y, 0);
 
 	ret = 1;
 

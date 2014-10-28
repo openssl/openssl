@@ -5,7 +5,7 @@
 DIR=	ec
 TOP=	../..
 CC=	cc
-INCLUDES= -I.. -I$(TOP) -I../../include
+INCLUDES= -I.. -I$(TOP) -I../include -I../../include
 CFLAG=-g
 MAKEFILE=	Makefile
 AR=		ar r
@@ -98,7 +98,8 @@ ec2_mult.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 ec2_mult.o: ../../include/openssl/obj_mac.h ../../include/openssl/opensslconf.h
 ec2_mult.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ec2_mult.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-ec2_mult.o: ../../include/openssl/symhacks.h ec2_mult.c ec_lcl.h
+ec2_mult.o: ../../include/openssl/symhacks.h ../include/internal/bn_int.h
+ec2_mult.o: ec2_mult.c ec_lcl.h
 ec2_oct.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 ec2_oct.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 ec2_oct.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
@@ -114,7 +115,8 @@ ec2_smpl.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 ec2_smpl.o: ../../include/openssl/obj_mac.h ../../include/openssl/opensslconf.h
 ec2_smpl.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ec2_smpl.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-ec2_smpl.o: ../../include/openssl/symhacks.h ec2_smpl.c ec_lcl.h
+ec2_smpl.o: ../../include/openssl/symhacks.h ../include/internal/bn_int.h
+ec2_smpl.o: ec2_smpl.c ec_lcl.h
 ec_ameth.o: ../../e_os.h ../../include/openssl/asn1.h
 ec_ameth.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 ec_ameth.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
@@ -193,7 +195,8 @@ ec_mult.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 ec_mult.o: ../../include/openssl/obj_mac.h ../../include/openssl/opensslconf.h
 ec_mult.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ec_mult.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-ec_mult.o: ../../include/openssl/symhacks.h ec_lcl.h ec_mult.c
+ec_mult.o: ../../include/openssl/symhacks.h ../include/internal/bn_int.h
+ec_mult.o: ec_lcl.h ec_mult.c
 ec_oct.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 ec_oct.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 ec_oct.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h

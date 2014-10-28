@@ -99,7 +99,7 @@ int ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *po
 	 */
 
 	/* tmp1 := x^3 */
-	if (!BN_nnmod(x, x_, &group->field,ctx)) goto err;
+	if (!BN_nnmod(x, x_, group->field,ctx)) goto err;
 	if (group->meth->field_decode == 0)
 		{
 		/* field_{sqr,mul} work on standard representation */
@@ -108,45 +108,45 @@ int ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *po
 		}
 	else
 		{
-		if (!BN_mod_sqr(tmp2, x_, &group->field, ctx)) goto err;
-		if (!BN_mod_mul(tmp1, tmp2, x_, &group->field, ctx)) goto err;
+		if (!BN_mod_sqr(tmp2, x_, group->field, ctx)) goto err;
+		if (!BN_mod_mul(tmp1, tmp2, x_, group->field, ctx)) goto err;
 		}
 	
 	/* tmp1 := tmp1 + a*x */
 	if (group->a_is_minus3)
 		{
-		if (!BN_mod_lshift1_quick(tmp2, x, &group->field)) goto err;
-		if (!BN_mod_add_quick(tmp2, tmp2, x, &group->field)) goto err;
-		if (!BN_mod_sub_quick(tmp1, tmp1, tmp2, &group->field)) goto err;
+		if (!BN_mod_lshift1_quick(tmp2, x, group->field)) goto err;
+		if (!BN_mod_add_quick(tmp2, tmp2, x, group->field)) goto err;
+		if (!BN_mod_sub_quick(tmp1, tmp1, tmp2, group->field)) goto err;
 		}
 	else
 		{
 		if (group->meth->field_decode)
 			{
-			if (!group->meth->field_decode(group, tmp2, &group->a, ctx)) goto err;
-			if (!BN_mod_mul(tmp2, tmp2, x, &group->field, ctx)) goto err;
+			if (!group->meth->field_decode(group, tmp2, group->a, ctx)) goto err;
+			if (!BN_mod_mul(tmp2, tmp2, x, group->field, ctx)) goto err;
 			}
 		else
 			{
 			/* field_mul works on standard representation */
-			if (!group->meth->field_mul(group, tmp2, &group->a, x, ctx)) goto err;
+			if (!group->meth->field_mul(group, tmp2, group->a, x, ctx)) goto err;
 			}
 		
-		if (!BN_mod_add_quick(tmp1, tmp1, tmp2, &group->field)) goto err;
+		if (!BN_mod_add_quick(tmp1, tmp1, tmp2, group->field)) goto err;
 		}
 	
 	/* tmp1 := tmp1 + b */
 	if (group->meth->field_decode)
 		{
-		if (!group->meth->field_decode(group, tmp2, &group->b, ctx)) goto err;
-		if (!BN_mod_add_quick(tmp1, tmp1, tmp2, &group->field)) goto err;
+		if (!group->meth->field_decode(group, tmp2, group->b, ctx)) goto err;
+		if (!BN_mod_add_quick(tmp1, tmp1, tmp2, group->field)) goto err;
 		}
 	else
 		{
-		if (!BN_mod_add_quick(tmp1, tmp1, &group->b, &group->field)) goto err;
+		if (!BN_mod_add_quick(tmp1, tmp1, group->b, group->field)) goto err;
 		}
 	
-	if (!BN_mod_sqrt(y, tmp1, &group->field, ctx))
+	if (!BN_mod_sqrt(y, tmp1, group->field, ctx))
 		{
 		unsigned long err = ERR_peek_last_error();
 		
@@ -166,7 +166,7 @@ int ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *po
 			{
 			int kron;
 
-			kron = BN_kronecker(x, &group->field, ctx);
+			kron = BN_kronecker(x, group->field, ctx);
 			if (kron == -2) goto err;
 
 			if (kron == 1)
@@ -176,7 +176,7 @@ int ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *po
 				ECerr(EC_F_EC_GFP_SIMPLE_SET_COMPRESSED_COORDINATES, EC_R_INVALID_COMPRESSED_POINT);
 			goto err;
 			}
-		if (!BN_usub(y, &group->field, y)) goto err;
+		if (!BN_usub(y, group->field, y)) goto err;
 		}
 	if (y_bit != BN_is_odd(y))
 		{
@@ -230,7 +230,7 @@ size_t ec_GFp_simple_point2oct(const EC_GROUP *group, const EC_POINT *point, poi
 
 
 	/* ret := required output buffer length */
-	field_len = BN_num_bytes(&group->field);
+	field_len = BN_num_bytes(group->field);
 	ret = (form == POINT_CONVERSION_COMPRESSED) ? 1 + field_len : 1 + 2*field_len;
 
 	/* if 'buf' is NULL, just return required length */
@@ -364,7 +364,7 @@ int ec_GFp_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
 		return EC_POINT_set_to_infinity(group, point);
 		}
 	
-	field_len = BN_num_bytes(&group->field);
+	field_len = BN_num_bytes(group->field);
 	enc_len = (form == POINT_CONVERSION_COMPRESSED) ? 1 + field_len : 1 + 2*field_len;
 
 	if (len != enc_len)
@@ -386,7 +386,7 @@ int ec_GFp_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
 	if (y == NULL) goto err;
 
 	if (!BN_bin2bn(buf + 1, field_len, x)) goto err;
-	if (BN_ucmp(x, &group->field) >= 0)
+	if (BN_ucmp(x, group->field) >= 0)
 		{
 		ECerr(EC_F_EC_GFP_SIMPLE_OCT2POINT, EC_R_INVALID_ENCODING);
 		goto err;
@@ -399,7 +399,7 @@ int ec_GFp_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
 	else
 		{
 		if (!BN_bin2bn(buf + 1 + field_len, field_len, y)) goto err;
-		if (BN_ucmp(y, &group->field) >= 0)
+		if (BN_ucmp(y, group->field) >= 0)
 			{
 			ECerr(EC_F_EC_GFP_SIMPLE_OCT2POINT, EC_R_INVALID_ENCODING);
 			goto err;

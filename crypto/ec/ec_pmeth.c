@@ -336,7 +336,7 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 			if (!ec_key->group)
 				return -2;
 			/* If cofactor is 1 cofactor mode does nothing */
-			if (BN_is_one(&ec_key->group->cofactor))
+			if (BN_is_one(ec_key->group->cofactor))
 				return 1;
 			if (!dctx->co_key)
 				{

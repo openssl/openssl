@@ -190,7 +190,7 @@ struct ec_group_st {
 	const EC_METHOD *meth;
 
 	EC_POINT *generator; /* optional */
-	BIGNUM order, cofactor;
+	BIGNUM *order, *cofactor;
 
 	int curve_name;/* optional NID for named curve */
 	int asn1_flag; /* flag to control the asn1 encoding */
@@ -204,7 +204,7 @@ struct ec_group_st {
 	/* The following members are handled by the method functions,
 	 * even if they appear generic */
 	
-	BIGNUM field; /* Field specification.
+	BIGNUM *field; /* Field specification.
 	               * For curves over GF(p), this is the modulus;
 	               * for curves over GF(2^m), this is the 
 	               * irreducible polynomial defining the field.
@@ -219,7 +219,7 @@ struct ec_group_st {
 	              * non-zero terms.
 	              */
 
-	BIGNUM a, b; /* Curve coefficients.
+	BIGNUM *a, *b; /* Curve coefficients.
 	              * (Here the assumption is that BIGNUMs can be used
 	              * or abused for all kinds of fields, not just GF(p).)
 	              * For characteristic  > 3,  the curve is defined
@@ -280,9 +280,9 @@ struct ec_point_st {
 	/* All members except 'meth' are handled by the method functions,
 	 * even if they appear generic */
 
-	BIGNUM X;
-	BIGNUM Y;
-	BIGNUM Z; /* Jacobian projective coordinates:
+	BIGNUM *X;
+	BIGNUM *Y;
+	BIGNUM *Z; /* Jacobian projective coordinates:
 	           * (X, Y, Z)  represents  (X/Z^2, Y/Z^3)  if  Z != 0 */
 	int Z_is_one; /* enable optimized point arithmetics for special case */
 } /* EC_POINT */;

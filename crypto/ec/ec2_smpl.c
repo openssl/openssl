@@ -71,6 +71,7 @@
 
 #include <openssl/err.h>
 
+#include "internal/bn_int.h"
 #include "ec_lcl.h"
 
 #ifndef OPENSSL_NO_EC2M
@@ -129,9 +130,17 @@ const EC_METHOD *EC_GF2m_simple_method(void)
  */
 int ec_GF2m_simple_group_init(EC_GROUP *group)
 	{
-	BN_init(&group->field);
-	BN_init(&group->a);
-	BN_init(&group->b);
+	group->field = BN_new();
+	group->a = BN_new();
+	group->b = BN_new();
+
+	if(!group->field || !group->a || !group->b)
+		{
+		if(group->field) BN_free(group->field);
+		if(group->a) BN_free(group->a);
+		if(group->b) BN_free(group->b);
+		return 0;
+		}
 	return 1;
 	}
 
@@ -141,9 +150,9 @@ int ec_GF2m_simple_group_init(EC_GROUP *group)
  */
 void ec_GF2m_simple_group_finish(EC_GROUP *group)
 	{
-	BN_free(&group->field);
-	BN_free(&group->a);
-	BN_free(&group->b);
+	BN_free(group->field);
+	BN_free(group->a);
+	BN_free(group->b);
 	}
 
 
@@ -152,9 +161,9 @@ void ec_GF2m_simple_group_finish(EC_GROUP *group)
  */
 void ec_GF2m_simple_group_clear_finish(EC_GROUP *group)
 	{
-	BN_clear_free(&group->field);
-	BN_clear_free(&group->a);
-	BN_clear_free(&group->b);
+	BN_clear_free(group->field);
+	BN_clear_free(group->a);
+	BN_clear_free(group->b);
 	group->poly[0] = 0;
 	group->poly[1] = 0;
 	group->poly[2] = 0;
@@ -169,20 +178,19 @@ void ec_GF2m_simple_group_clear_finish(EC_GROUP *group)
  */
 int ec_GF2m_simple_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 	{
-	int i;
-	if (!BN_copy(&dest->field, &src->field)) return 0;
-	if (!BN_copy(&dest->a, &src->a)) return 0;
-	if (!BN_copy(&dest->b, &src->b)) return 0;
+	if (!BN_copy(dest->field, src->field)) return 0;
+	if (!BN_copy(dest->a, src->a)) return 0;
+	if (!BN_copy(dest->b, src->b)) return 0;
 	dest->poly[0] = src->poly[0];
 	dest->poly[1] = src->poly[1];
 	dest->poly[2] = src->poly[2];
 	dest->poly[3] = src->poly[3];
 	dest->poly[4] = src->poly[4];
 	dest->poly[5] = src->poly[5];
-	if (bn_wexpand(&dest->a, (int)(dest->poly[0] + BN_BITS2 - 1) / BN_BITS2) == NULL) return 0;
-	if (bn_wexpand(&dest->b, (int)(dest->poly[0] + BN_BITS2 - 1) / BN_BITS2) == NULL) return 0;
-	for (i = dest->a.top; i < dest->a.dmax; i++) dest->a.d[i] = 0;
-	for (i = dest->b.top; i < dest->b.dmax; i++) dest->b.d[i] = 0;
+	if (bn_wexpand(dest->a, (int)(dest->poly[0] + BN_BITS2 - 1) / BN_BITS2) == NULL) return 0;
+	if (bn_wexpand(dest->b, (int)(dest->poly[0] + BN_BITS2 - 1) / BN_BITS2) == NULL) return 0;
+	bn_set_all_zero(dest->a);
+	bn_set_all_zero(dest->b);
 	return 1;
 	}
 
@@ -194,8 +202,8 @@ int ec_GF2m_simple_group_set_curve(EC_GROUP *group,
 	int ret = 0, i;
 
 	/* group->field */
-	if (!BN_copy(&group->field, p)) goto err;
-	i = BN_GF2m_poly2arr(&group->field, group->poly, 6) - 1;
+	if (!BN_copy(group->field, p)) goto err;
+	i = BN_GF2m_poly2arr(group->field, group->poly, 6) - 1;
 	if ((i != 5) && (i != 3))
 		{
 		ECerr(EC_F_EC_GF2M_SIMPLE_GROUP_SET_CURVE, EC_R_UNSUPPORTED_FIELD);
@@ -203,14 +211,14 @@ int ec_GF2m_simple_group_set_curve(EC_GROUP *group,
 		}
 
 	/* group->a */
-	if (!BN_GF2m_mod_arr(&group->a, a, group->poly)) goto err;
-	if(bn_wexpand(&group->a, (int)(group->poly[0] + BN_BITS2 - 1) / BN_BITS2) == NULL) goto err;
-	for (i = group->a.top; i < group->a.dmax; i++) group->a.d[i] = 0;
+	if (!BN_GF2m_mod_arr(group->a, a, group->poly)) goto err;
+	if(bn_wexpand(group->a, (int)(group->poly[0] + BN_BITS2 - 1) / BN_BITS2) == NULL) goto err;
+	bn_set_all_zero(group->a);
 	
 	/* group->b */
-	if (!BN_GF2m_mod_arr(&group->b, b, group->poly)) goto err;
-	if(bn_wexpand(&group->b, (int)(group->poly[0] + BN_BITS2 - 1) / BN_BITS2) == NULL) goto err;
-	for (i = group->b.top; i < group->b.dmax; i++) group->b.d[i] = 0;
+	if (!BN_GF2m_mod_arr(group->b, b, group->poly)) goto err;
+	if(bn_wexpand(group->b, (int)(group->poly[0] + BN_BITS2 - 1) / BN_BITS2) == NULL) goto err;
+	bn_set_all_zero(group->b);
 		
 	ret = 1;
   err:
@@ -227,17 +235,17 @@ int ec_GF2m_simple_group_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, 
 	
 	if (p != NULL)
 		{
-		if (!BN_copy(p, &group->field)) return 0;
+		if (!BN_copy(p, group->field)) return 0;
 		}
 
 	if (a != NULL)
 		{
-		if (!BN_copy(a, &group->a)) goto err;
+		if (!BN_copy(a, group->a)) goto err;
 		}
 
 	if (b != NULL)
 		{
-		if (!BN_copy(b, &group->b)) goto err;
+		if (!BN_copy(b, group->b)) goto err;
 		}
 	
 	ret = 1;
@@ -250,7 +258,7 @@ int ec_GF2m_simple_group_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, 
 /* Gets the degree of the field.  For a curve over GF(2^m) this is the value m. */
 int ec_GF2m_simple_group_get_degree(const EC_GROUP *group)
 	{
-	return BN_num_bits(&group->field)-1;
+	return BN_num_bits(group->field)-1;
 	}
 
 
@@ -276,7 +284,7 @@ int ec_GF2m_simple_group_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
 	b = BN_CTX_get(ctx);
 	if (b == NULL) goto err;
 
-	if (!BN_GF2m_mod_arr(b, &group->b, group->poly)) goto err;
+	if (!BN_GF2m_mod_arr(b, group->b, group->poly)) goto err;
 	
 	/* check the discriminant:
 	 * y^2 + x*y = x^3 + a*x^2 + b is an elliptic curve <=> b != 0 (mod p) 
@@ -297,9 +305,17 @@ err:
 /* Initializes an EC_POINT. */
 int ec_GF2m_simple_point_init(EC_POINT *point)
 	{
-	BN_init(&point->X);
-	BN_init(&point->Y);
-	BN_init(&point->Z);
+	point->X = BN_new();
+	point->Y = BN_new();
+	point->Z = BN_new();
+
+	if(!point->X || !point->Y || !point->Z)
+		{
+		if(point->X) BN_free(point->X);
+		if(point->Y) BN_free(point->Y);
+		if(point->Z) BN_free(point->Z);
+		return 0;
+		}
 	return 1;
 	}
 
@@ -307,18 +323,18 @@ int ec_GF2m_simple_point_init(EC_POINT *point)
 /* Frees an EC_POINT. */
 void ec_GF2m_simple_point_finish(EC_POINT *point)
 	{
-	BN_free(&point->X);
-	BN_free(&point->Y);
-	BN_free(&point->Z);
+	BN_free(point->X);
+	BN_free(point->Y);
+	BN_free(point->Z);
 	}
 
 
 /* Clears and frees an EC_POINT. */
 void ec_GF2m_simple_point_clear_finish(EC_POINT *point)
 	{
-	BN_clear_free(&point->X);
-	BN_clear_free(&point->Y);
-	BN_clear_free(&point->Z);
+	BN_clear_free(point->X);
+	BN_clear_free(point->Y);
+	BN_clear_free(point->Z);
 	point->Z_is_one = 0;
 	}
 
@@ -326,9 +342,9 @@ void ec_GF2m_simple_point_clear_finish(EC_POINT *point)
 /* Copy the contents of one EC_POINT into another.  Assumes dest is initialized. */
 int ec_GF2m_simple_point_copy(EC_POINT *dest, const EC_POINT *src)
 	{
-	if (!BN_copy(&dest->X, &src->X)) return 0;
-	if (!BN_copy(&dest->Y, &src->Y)) return 0;
-	if (!BN_copy(&dest->Z, &src->Z)) return 0;
+	if (!BN_copy(dest->X, src->X)) return 0;
+	if (!BN_copy(dest->Y, src->Y)) return 0;
+	if (!BN_copy(dest->Z, src->Z)) return 0;
 	dest->Z_is_one = src->Z_is_one;
 
 	return 1;
@@ -341,7 +357,7 @@ int ec_GF2m_simple_point_copy(EC_POINT *dest, const EC_POINT *src)
 int ec_GF2m_simple_point_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
 	{
 	point->Z_is_one = 0;
-	BN_zero(&point->Z);
+	BN_zero(point->Z);
 	return 1;
 	}
 
@@ -359,12 +375,12 @@ int ec_GF2m_simple_point_set_affine_coordinates(const EC_GROUP *group, EC_POINT 
 		return 0;
 		}
 
-	if (!BN_copy(&point->X, x)) goto err;
-	BN_set_negative(&point->X, 0);
-	if (!BN_copy(&point->Y, y)) goto err;
-	BN_set_negative(&point->Y, 0);
-	if (!BN_copy(&point->Z, BN_value_one())) goto err;
-	BN_set_negative(&point->Z, 0);
+	if (!BN_copy(point->X, x)) goto err;
+	BN_set_negative(point->X, 0);
+	if (!BN_copy(point->Y, y)) goto err;
+	BN_set_negative(point->Y, 0);
+	if (!BN_copy(point->Z, BN_value_one())) goto err;
+	BN_set_negative(point->Z, 0);
 	point->Z_is_one = 1;
 	ret = 1;
 
@@ -387,19 +403,19 @@ int ec_GF2m_simple_point_get_affine_coordinates(const EC_GROUP *group, const EC_
 		return 0;
 		}
 
-	if (BN_cmp(&point->Z, BN_value_one())) 
+	if (BN_cmp(point->Z, BN_value_one()))
 		{
 		ECerr(EC_F_EC_GF2M_SIMPLE_POINT_GET_AFFINE_COORDINATES, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 		}
 	if (x != NULL)
 		{
-		if (!BN_copy(x, &point->X)) goto err;
+		if (!BN_copy(x, point->X)) goto err;
 		BN_set_negative(x, 0);
 		}
 	if (y != NULL)
 		{
-		if (!BN_copy(y, &point->Y)) goto err;
+		if (!BN_copy(y, point->Y)) goto err;
 		BN_set_negative(y, 0);
 		}
 	ret = 1;
@@ -449,8 +465,8 @@ int ec_GF2m_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, co
 
 	if (a->Z_is_one) 
 		{
-		if (!BN_copy(x0, &a->X)) goto err;
-		if (!BN_copy(y0, &a->Y)) goto err;
+		if (!BN_copy(x0, a->X)) goto err;
+		if (!BN_copy(y0, a->Y)) goto err;
 		}
 	else
 		{
@@ -458,8 +474,8 @@ int ec_GF2m_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, co
 		}
 	if (b->Z_is_one) 
 		{
-		if (!BN_copy(x1, &b->X)) goto err;
-		if (!BN_copy(y1, &b->Y)) goto err;
+		if (!BN_copy(x1, b->X)) goto err;
+		if (!BN_copy(y1, b->Y)) goto err;
 		}
 	else
 		{
@@ -473,7 +489,7 @@ int ec_GF2m_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, co
 		if (!BN_GF2m_add(s, y0, y1)) goto err;
 		if (!group->meth->field_div(group, s, s, t, ctx)) goto err;
 		if (!group->meth->field_sqr(group, x2, s, ctx)) goto err;
-		if (!BN_GF2m_add(x2, x2, &group->a)) goto err;
+		if (!BN_GF2m_add(x2, x2, group->a)) goto err;
 		if (!BN_GF2m_add(x2, x2, s)) goto err;
 		if (!BN_GF2m_add(x2, x2, t)) goto err;
 		}
@@ -490,7 +506,7 @@ int ec_GF2m_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, co
 		
 		if (!group->meth->field_sqr(group, x2, s, ctx)) goto err;
 		if (!BN_GF2m_add(x2, x2, s)) goto err;
-		if (!BN_GF2m_add(x2, x2, &group->a)) goto err;
+		if (!BN_GF2m_add(x2, x2, group->a)) goto err;
 		}
 
 	if (!BN_GF2m_add(y2, x1, x2)) goto err;
@@ -521,19 +537,19 @@ int ec_GF2m_simple_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, BN
 
 int ec_GF2m_simple_invert(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
 	{
-	if (EC_POINT_is_at_infinity(group, point) || BN_is_zero(&point->Y))
+	if (EC_POINT_is_at_infinity(group, point) || BN_is_zero(point->Y))
 		/* point is its own inverse */
 		return 1;
 	
 	if (!EC_POINT_make_affine(group, point, ctx)) return 0;
-	return BN_GF2m_add(&point->Y, &point->X, &point->Y);
+	return BN_GF2m_add(point->Y, point->X, point->Y);
 	}
 
 
 /* Indicates whether the given point is the point at infinity. */
 int ec_GF2m_simple_is_at_infinity(const EC_GROUP *group, const EC_POINT *point)
 	{
-	return BN_is_zero(&point->Z);
+	return BN_is_zero(point->Z);
 	}
 
 
@@ -575,12 +591,12 @@ int ec_GF2m_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_
 	 *  <=> x^3 + a*x^2 + x*y + b + y^2 = 0
 	 *  <=> ((x + a) * x + y ) * x + b + y^2 = 0
 	 */
-	if (!BN_GF2m_add(lh, &point->X, &group->a)) goto err;
-	if (!field_mul(group, lh, lh, &point->X, ctx)) goto err;
-	if (!BN_GF2m_add(lh, lh, &point->Y)) goto err;
-	if (!field_mul(group, lh, lh, &point->X, ctx)) goto err;
-	if (!BN_GF2m_add(lh, lh, &group->b)) goto err;
-	if (!field_sqr(group, y2, &point->Y, ctx)) goto err;
+	if (!BN_GF2m_add(lh, point->X, group->a)) goto err;
+	if (!field_mul(group, lh, lh, point->X, ctx)) goto err;
+	if (!BN_GF2m_add(lh, lh, point->Y)) goto err;
+	if (!field_mul(group, lh, lh, point->X, ctx)) goto err;
+	if (!BN_GF2m_add(lh, lh, group->b)) goto err;
+	if (!field_sqr(group, y2, point->Y, ctx)) goto err;
 	if (!BN_GF2m_add(lh, lh, y2)) goto err;
 	ret = BN_is_zero(lh);
  err:
@@ -612,7 +628,7 @@ int ec_GF2m_simple_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT 
 	
 	if (a->Z_is_one && b->Z_is_one)
 		{
-		return ((BN_cmp(&a->X, &b->X) == 0) && BN_cmp(&a->Y, &b->Y) == 0) ? 0 : 1;
+		return ((BN_cmp(a->X, b->X) == 0) && BN_cmp(a->Y, b->Y) == 0) ? 0 : 1;
 		}
 
 	if (ctx == NULL)
@@ -663,9 +679,9 @@ int ec_GF2m_simple_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *c
 	if (y == NULL) goto err;
 	
 	if (!EC_POINT_get_affine_coordinates_GF2m(group, point, x, y, ctx)) goto err;
-	if (!BN_copy(&point->X, x)) goto err;
-	if (!BN_copy(&point->Y, y)) goto err;
-	if (!BN_one(&point->Z)) goto err;
+	if (!BN_copy(point->X, x)) goto err;
+	if (!BN_copy(point->Y, y)) goto err;
+	if (!BN_one(point->Z)) goto err;
 	
 	ret = 1;		
 
@@ -707,7 +723,7 @@ int ec_GF2m_simple_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a, 
 /* Wrapper to simple binary polynomial field division implementation. */
 int ec_GF2m_simple_field_div(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 	{
-	return BN_GF2m_mod_div(r, a, b, &group->field, ctx);
+	return BN_GF2m_mod_div(r, a, b, group->field, ctx);
 	}
 
 #endif

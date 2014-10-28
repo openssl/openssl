@@ -326,7 +326,7 @@ int EC_KEY_check_key(const EC_KEY *eckey)
 		goto err;
 		}
 	/* testing whether pub_key * order is the point at infinity */
-	order = &eckey->group->order;
+	order = eckey->group->order;
 	if (BN_is_zero(order))
 		{
 		ECerr(EC_F_EC_KEY_CHECK_KEY, EC_R_INVALID_GROUP_ORDER);
@@ -427,8 +427,8 @@ int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x, BIGNUM *y)
 	 * field order: if not values are out of range.
 	 */
 	if (BN_cmp(x, tx) || BN_cmp(y, ty)
-		|| (BN_cmp(x, &key->group->field) >= 0)
-		|| (BN_cmp(y, &key->group->field) >= 0))
+		|| (BN_cmp(x, key->group->field) >= 0)
+		|| (BN_cmp(y, key->group->field) >= 0))
 		{
 		ECerr(EC_F_EC_KEY_SET_PUBLIC_KEY_AFFINE_COORDINATES,
 			EC_R_COORDINATES_OUT_OF_RANGE);

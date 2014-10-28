@@ -667,7 +667,7 @@ static void prime_field_tests(void)
 	{
 		const EC_POINT *points[4];
 		const BIGNUM *scalars[4];
-		BIGNUM scalar3;
+		BIGNUM *scalar3;
 	
 		if (EC_POINT_is_at_infinity(group, Q)) ABORT;
 		points[0] = Q;
@@ -713,16 +713,17 @@ static void prime_field_tests(void)
 		scalars[1] = y;
 		scalars[2] = z; /* z = -(x+y) */
 
-		BN_init(&scalar3);
-		BN_zero(&scalar3);
-		scalars[3] = &scalar3;
+		scalar3 = BN_new();
+		if(!scalar3) ABORT;
+		BN_zero(scalar3);
+		scalars[3] = scalar3;
 
 		if (!EC_POINTs_mul(group, P, NULL, 4, points, scalars, ctx)) ABORT;
 		if (!EC_POINT_is_at_infinity(group, P)) ABORT;
 
 		fprintf(stdout, " ok\n\n");
 
-		BN_free(&scalar3);
+		BN_free(scalar3);
 	}
 
 

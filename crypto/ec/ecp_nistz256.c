@@ -28,7 +28,7 @@
 
 #include <string.h>
 
-#include <openssl/bn.h>
+#include "internal/bn_int.h"
 #include <openssl/err.h>
 #include <openssl/ec.h>
 #include "cryptlib.h"
@@ -543,12 +543,7 @@ static void ecp_nistz256_mod_inverse(BN_ULONG r[P256_LIMBS],
 static int ecp_nistz256_bignum_to_field_elem(BN_ULONG out[P256_LIMBS],
                                              const BIGNUM * in)
 {
-    if (in->top > P256_LIMBS)
-        return 0;
-
-    memset(out, 0, sizeof(BN_ULONG) * P256_LIMBS);
-    memcpy(out, in->d, sizeof(BN_ULONG) * in->top);
-    return 1;
+    return bn_copy_words(out, in, P256_LIMBS);
 }
 
 /* r = sum(scalar[i]*point[i]) */
@@ -589,7 +584,7 @@ static void ecp_nistz256_windowed_mul(const EC_GROUP * group,
 
             if ((mod = BN_CTX_get(ctx)) == NULL)
                 goto err;
-            if (!BN_nnmod(mod, scalar[i], &group->order, ctx)) {
+            if (!BN_nnmod(mod, scalar[i], group->order, ctx)) {
                 ECerr(EC_F_ECP_NISTZ256_WINDOWED_MUL, ERR_R_BN_LIB);
                 goto err;
             }
@@ -597,8 +592,8 @@ static void ecp_nistz256_windowed_mul(const EC_GROUP * group,
         } else
             scalars[i] = scalar[i];
 
-        for (j = 0; j < scalars[i]->top * BN_BYTES; j += BN_BYTES) {
-            BN_ULONG d = scalars[i]->d[j / BN_BYTES];
+        for (j = 0; j < bn_get_top(scalars[i]) * BN_BYTES; j += BN_BYTES) {
+            BN_ULONG d = bn_get_words(scalars[i])[j / BN_BYTES];
 
             p_str[i][j + 0] = d & 0xff;
             p_str[i][j + 1] = (d >> 8) & 0xff;
@@ -615,9 +610,9 @@ static void ecp_nistz256_windowed_mul(const EC_GROUP * group,
         for (; j < 33; j++)
             p_str[i][j] = 0;
 
-        if (!ecp_nistz256_bignum_to_field_elem(temp[0].X, &point[i]->X)
-            || !ecp_nistz256_bignum_to_field_elem(temp[0].Y, &point[i]->Y)
-            || !ecp_nistz256_bignum_to_field_elem(temp[0].Z, &point[i]->Z)) {
+        if (!ecp_nistz256_bignum_to_field_elem(temp[0].X, point[i]->X)
+            || !ecp_nistz256_bignum_to_field_elem(temp[0].Y, point[i]->Y)
+            || !ecp_nistz256_bignum_to_field_elem(temp[0].Z, point[i]->Z)) {
             ECerr(EC_F_ECP_NISTZ256_WINDOWED_MUL, EC_R_COORDINATES_OUT_OF_RANGE);
             goto err;
         }
@@ -737,11 +732,12 @@ const static BN_ULONG def_yG[P256_LIMBS] = {
  * P-256 generator. */
 static int ecp_nistz256_is_affine_G(const EC_POINT * generator)
 {
-    return (generator->X.top == P256_LIMBS) &&
-        (generator->Y.top == P256_LIMBS) &&
-        (generator->Z.top == (P256_LIMBS - P256_LIMBS / 8)) &&
-        is_equal(generator->X.d, def_xG) &&
-        is_equal(generator->Y.d, def_yG) && is_one(generator->Z.d);
+    return (bn_get_top(generator->X) == P256_LIMBS) &&
+        (bn_get_top(generator->Y) == P256_LIMBS) &&
+        (bn_get_top(generator->Z) == (P256_LIMBS - P256_LIMBS / 8)) &&
+        is_equal(bn_get_words(generator->X), def_xG) &&
+        is_equal(bn_get_words(generator->Y), def_yG) &&
+        is_one(bn_get_words(generator->Z));
 }
 
 static int ecp_nistz256_mult_precompute(EC_GROUP * group, BN_CTX * ctx)
@@ -825,8 +821,8 @@ static int ecp_nistz256_mult_precompute(EC_GROUP * group, BN_CTX * ctx)
              * ec_GFp_simple_points_make_affine and make multiple
              * points affine at the same time. */
             ec_GFp_simple_make_affine(group, P, ctx);
-            ecp_nistz256_bignum_to_field_elem(temp.X, &P->X);
-            ecp_nistz256_bignum_to_field_elem(temp.Y, &P->Y);
+            ecp_nistz256_bignum_to_field_elem(temp.X, P->X);
+            ecp_nistz256_bignum_to_field_elem(temp.Y, P->Y);
             ecp_nistz256_scatter_w7(preComputedTable[j], &temp, k);
             for (i = 0; i < 7; i++)
                 ec_GFp_simple_dbl(group, P, P, ctx);
@@ -1069,23 +1065,28 @@ static int ecp_nistz256_set_from_affine(EC_POINT * out, const EC_GROUP * group,
                                         const P256_POINT_AFFINE * in,
                                         BN_CTX * ctx)
 {
-    BIGNUM x, y;
+    BIGNUM *x, *y;
     BN_ULONG d_x[P256_LIMBS], d_y[P256_LIMBS];
     int ret = 0;
 
+    x = BN_new();
+    if(!x)
+        return 0;
+    y = BN_new();
+    if(!y) {
+        BN_free(x);
+        return 0;
+    }
     memcpy(d_x, in->X, sizeof(d_x));
-    x.d = d_x;
-    x.dmax = x.top = P256_LIMBS;
-    x.neg = 0;
-    x.flags = BN_FLG_STATIC_DATA;
+    bn_set_static_words(x, d_x, P256_LIMBS);
 
     memcpy(d_y, in->Y, sizeof(d_y));
-    y.d = d_y;
-    y.dmax = y.top = P256_LIMBS;
-    y.neg = 0;
-    y.flags = BN_FLG_STATIC_DATA;
+    bn_set_static_words(y, d_y, P256_LIMBS);
 
-    ret = EC_POINT_set_affine_coordinates_GFp(group, out, &x, &y, ctx);
+    ret = EC_POINT_set_affine_coordinates_GFp(group, out, x, y, ctx);
+
+    if(x) BN_free(x);
+    if(y) BN_free(y);
 
     return ret;
 }
@@ -1134,12 +1135,12 @@ static int ecp_nistz256_points_mul(const EC_GROUP * group,
     }
 
     /* Need 256 bits for space for all coordinates. */
-    bn_wexpand(&r->X, P256_LIMBS);
-    bn_wexpand(&r->Y, P256_LIMBS);
-    bn_wexpand(&r->Z, P256_LIMBS);
-    r->X.top = P256_LIMBS;
-    r->Y.top = P256_LIMBS;
-    r->Z.top = P256_LIMBS;
+    bn_wexpand(r->X, P256_LIMBS);
+    bn_wexpand(r->Y, P256_LIMBS);
+    bn_wexpand(r->Z, P256_LIMBS);
+    bn_set_top(r->X, P256_LIMBS);
+    bn_set_top(r->Y, P256_LIMBS);
+    bn_set_top(r->Z, P256_LIMBS);
 
     if (scalar) {
         generator = EC_GROUP_get0_generator(group);
@@ -1187,15 +1188,15 @@ static int ecp_nistz256_points_mul(const EC_GROUP * group,
                 if ((tmp_scalar = BN_CTX_get(ctx)) == NULL)
                     goto err;
 
-                if (!BN_nnmod(tmp_scalar, scalar, &group->order, ctx)) {
+                if (!BN_nnmod(tmp_scalar, scalar, group->order, ctx)) {
                     ECerr(EC_F_ECP_NISTZ256_POINTS_MUL, ERR_R_BN_LIB);
                     goto err;
                 }
                 scalar = tmp_scalar;
             }
 
-            for (i = 0; i < scalar->top * BN_BYTES; i += BN_BYTES) {
-                BN_ULONG d = scalar->d[i / BN_BYTES];
+            for (i = 0; i < bn_get_top(scalar) * BN_BYTES; i += BN_BYTES) {
+                BN_ULONG d = bn_get_words(scalar)[i / BN_BYTES];
 
                 p_str[i + 0] = d & 0xff;
                 p_str[i + 1] = (d >> 8) & 0xff;
@@ -1301,12 +1302,12 @@ static int ecp_nistz256_points_mul(const EC_GROUP * group,
         OPENSSL_free(scalars);
     }
 
-    memcpy(r->X.d, p.p.X, sizeof(p.p.X));
-    memcpy(r->Y.d, p.p.Y, sizeof(p.p.Y));
-    memcpy(r->Z.d, p.p.Z, sizeof(p.p.Z));
-    bn_correct_top(&r->X);
-    bn_correct_top(&r->Y);
-    bn_correct_top(&r->Z);
+    bn_set_data(r->X, p.p.X, sizeof(p.p.X));
+    bn_set_data(r->Y, p.p.Y, sizeof(p.p.Y));
+    bn_set_data(r->Z, p.p.Z, sizeof(p.p.Z));
+    bn_correct_top(r->X);
+    bn_correct_top(r->Y);
+    bn_correct_top(r->Z);
 
     ret = 1;
 
@@ -1329,9 +1330,9 @@ static int ecp_nistz256_get_affine(const EC_GROUP * group,
         return 0;
     }
 
-    if (!ecp_nistz256_bignum_to_field_elem(point_x, &point->X) ||
-        !ecp_nistz256_bignum_to_field_elem(point_y, &point->Y) ||
-        !ecp_nistz256_bignum_to_field_elem(point_z, &point->Z)) {
+    if (!ecp_nistz256_bignum_to_field_elem(point_x, point->X) ||
+        !ecp_nistz256_bignum_to_field_elem(point_y, point->Y) ||
+        !ecp_nistz256_bignum_to_field_elem(point_z, point->Z)) {
         ECerr(EC_F_ECP_NISTZ256_GET_AFFINE, EC_R_COORDINATES_OUT_OF_RANGE);
         return 0;
     }
@@ -1342,8 +1343,8 @@ static int ecp_nistz256_get_affine(const EC_GROUP * group,
 
     if (x != NULL) {
         bn_wexpand(x, P256_LIMBS);
-        x->top = P256_LIMBS;
-        ecp_nistz256_from_mont(x->d, x_aff);
+        bn_set_top(x, P256_LIMBS);
+        ecp_nistz256_from_mont(bn_get_words(x), x_aff);
         bn_correct_top(x);
     }
 
@@ -1351,8 +1352,8 @@ static int ecp_nistz256_get_affine(const EC_GROUP * group,
         ecp_nistz256_mul_mont(z_inv3, z_inv3, z_inv2);
         ecp_nistz256_mul_mont(y_aff, z_inv3, point_y);
         bn_wexpand(y, P256_LIMBS);
-        y->top = P256_LIMBS;
-        ecp_nistz256_from_mont(y->d, y_aff);
+        bn_set_top(y, P256_LIMBS);
+        ecp_nistz256_from_mont(bn_get_words(y), y_aff);
         bn_correct_top(y);
     }
 
