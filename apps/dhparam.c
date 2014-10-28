@@ -292,8 +292,15 @@ bad:
 
 	if(num) {
 
-		BN_GENCB cb;
-		BN_GENCB_set(&cb, dh_cb, bio_err);
+		BN_GENCB *cb;
+		cb = BN_GENCB_new();
+		if(!cb)
+			{
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+
+		BN_GENCB_set(cb, dh_cb, bio_err);
 		if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL)
 			{
 			BIO_printf(bio_err,"warning, not much extra random data, consider using the -rand option\n");
@@ -309,9 +316,10 @@ bad:
 			
 			BIO_printf(bio_err,"Generating DSA parameters, %d bit long prime\n",num);
 			if(!dsa || !DSA_generate_parameters_ex(dsa, num,
-						NULL, 0, NULL, NULL, &cb))
+						NULL, 0, NULL, NULL, cb))
 				{
 				if(dsa) DSA_free(dsa);
+				BN_GENCB_free(cb);
 				ERR_print_errors(bio_err);
 				goto end;
 				}
@@ -320,6 +328,7 @@ bad:
 			DSA_free(dsa);
 			if (dh == NULL)
 				{
+				BN_GENCB_free(cb);
 				ERR_print_errors(bio_err);
 				goto end;
 				}
@@ -330,13 +339,15 @@ bad:
 			dh = DH_new();
 			BIO_printf(bio_err,"Generating DH parameters, %d bit long safe prime, generator %d\n",num,g);
 			BIO_printf(bio_err,"This is going to take a long time\n");
-			if(!dh || !DH_generate_parameters_ex(dh, num, g, &cb))
+			if(!dh || !DH_generate_parameters_ex(dh, num, g, cb))
 				{
+				BN_GENCB_free(cb);
 				ERR_print_errors(bio_err);
 				goto end;
 				}
 			}
 
+		BN_GENCB_free(cb);
 		app_RAND_write_file(NULL, bio_err);
 	} else {
 
@@ -547,8 +558,8 @@ static int MS_CALLBACK dh_cb(int p, int n, BN_GENCB *cb)
 	if (p == 1) c='+';
 	if (p == 2) c='*';
 	if (p == 3) c='\n';
-	BIO_write(cb->arg,&c,1);
-	(void)BIO_flush(cb->arg);
+	BIO_write(BN_GENCB_get_arg(cb),&c,1);
+	(void)BIO_flush(BN_GENCB_get_arg(cb));
 #ifdef LINT
 	p=n;
 #endif

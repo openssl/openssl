@@ -88,7 +88,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
-	BN_GENCB cb;
+	BN_GENCB *cb=NULL;
 	DH *dh=NULL;
 	int ret=1,num=DEFBITS;
 	int g=2;
@@ -101,10 +101,15 @@ int MAIN(int argc, char **argv)
 
 	apps_startup();
 
-	BN_GENCB_set(&cb, dh_cb, bio_err);
 	if (bio_err == NULL)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
+
+	cb = BN_GENCB_new();
+	if(!cb)
+		goto end;
+
+	BN_GENCB_set(cb, dh_cb, bio_err);
 
 	if (!load_config(bio_err, NULL))
 		goto end;
@@ -200,7 +205,7 @@ bad:
 	BIO_printf(bio_err,"Generating DH parameters, %d bit long safe prime, generator %d\n",num,g);
 	BIO_printf(bio_err,"This is going to take a long time\n");
 
-	if(((dh = DH_new()) == NULL) || !DH_generate_parameters_ex(dh, num, g, &cb))
+	if(((dh = DH_new()) == NULL) || !DH_generate_parameters_ex(dh, num, g, cb))
 		goto end;
 		
 	app_RAND_write_file(NULL, bio_err);
@@ -213,6 +218,7 @@ end:
 		ERR_print_errors(bio_err);
 	if (out != NULL) BIO_free_all(out);
 	if (dh != NULL) DH_free(dh);
+	if (cb != NULL) BN_GENCB_free(cb);
 	apps_shutdown();
 	OPENSSL_EXIT(ret);
 	}
@@ -225,8 +231,8 @@ static int MS_CALLBACK dh_cb(int p, int n, BN_GENCB *cb)
 	if (p == 1) c='+';
 	if (p == 2) c='*';
 	if (p == 3) c='\n';
-	BIO_write(cb->arg,&c,1);
-	(void)BIO_flush(cb->arg);
+	BIO_write(BN_GENCB_get_arg(cb),&c,1);
+	(void)BIO_flush(BN_GENCB_get_arg(cb));
 #ifdef LINT
 	p=n;
 #endif

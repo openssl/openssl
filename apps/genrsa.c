@@ -88,18 +88,18 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
-	BN_GENCB cb;
+	BN_GENCB *cb = NULL;
 #ifndef OPENSSL_NO_ENGINE
 	ENGINE *e = NULL;
 #endif
 	int ret=1;
 	int non_fips_allow = 0;
-	int i,num=DEFBITS;
-	long l;
+	int num=DEFBITS;
 	const EVP_CIPHER *enc=NULL;
 	unsigned long f4=RSA_F4;
 	char *outfile=NULL;
 	char *passargout = NULL, *passout = NULL;
+	char *hexe, *dece;
 #ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
 #endif
@@ -107,11 +107,14 @@ int MAIN(int argc, char **argv)
 	BIO *out=NULL;
 	BIGNUM *bn = BN_new();
 	RSA *rsa = NULL;
-
 	if(!bn) goto err;
 
+	cb = BN_GENCB_new();
+	if(!cb) goto err;
+
 	apps_startup();
-	BN_GENCB_set(&cb, genrsa_cb, bio_err);
+
+	BN_GENCB_set(cb, genrsa_cb, bio_err);
 
 	if (bio_err == NULL)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
@@ -279,23 +282,19 @@ bad:
 	if (non_fips_allow)
 		rsa->flags |= RSA_FLAG_NON_FIPS_ALLOW;
 
-	if(!BN_set_word(bn, f4) || !RSA_generate_key_ex(rsa, num, bn, &cb))
+	if(!BN_set_word(bn, f4) || !RSA_generate_key_ex(rsa, num, bn, cb))
 		goto err;
 		
 	app_RAND_write_file(NULL, bio_err);
 
-	/* We need to do the following for when the base number size is <
-	 * long, esp windows 3.1 :-(. */
-	l=0L;
-	for (i=0; i<rsa->e->top; i++)
+	hexe = BN_bn2hex(rsa->e);
+	dece = BN_bn2dec(rsa->e);
+	if(hexe && dece)
 		{
-#ifndef SIXTY_FOUR_BIT
-		l<<=BN_BITS4;
-		l<<=BN_BITS4;
-#endif
-		l+=rsa->e->d[i];
+		BIO_printf(bio_err,"e is %s (0x%s)\n",dece, hexe);
 		}
-	BIO_printf(bio_err,"e is %ld (0x%lX)\n",l,l);
+	if(hexe) OPENSSL_free(hexe);
+	if(dece) OPENSSL_free(dece);
 	{
 	PW_CB_DATA cb_data;
 	cb_data.password = passout;
@@ -308,6 +307,7 @@ bad:
 	ret=0;
 err:
 	if (bn) BN_free(bn);
+	if (cb) BN_GENCB_free(cb);
 	if (rsa) RSA_free(rsa);
 	if (out) BIO_free_all(out);
 	if(passout) OPENSSL_free(passout);
@@ -325,8 +325,8 @@ static int MS_CALLBACK genrsa_cb(int p, int n, BN_GENCB *cb)
 	if (p == 1) c='+';
 	if (p == 2) c='*';
 	if (p == 3) c='\n';
-	BIO_write(cb->arg,&c,1);
-	(void)BIO_flush(cb->arg);
+	BIO_write(BN_GENCB_get_arg(cb),&c,1);
+	(void)BIO_flush(BN_GENCB_get_arg(cb));
 #ifdef LINT
 	p=n;
 #endif
