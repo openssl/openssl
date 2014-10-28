@@ -136,7 +136,7 @@ static BIO *bio_err=NULL;
 
 int main(int argc, char **argv)
 	{
-	BN_GENCB cb;
+	BN_GENCB *cb;
 	DSA *dsa=NULL;
 	int counter,ret=0,i,j;
 	unsigned char buf[256];
@@ -156,9 +156,12 @@ int main(int argc, char **argv)
 
 	BIO_printf(bio_err,"test generation of DSA parameters\n");
 
-	BN_GENCB_set(&cb, dsa_cb, bio_err);
+	cb = BN_GENCB_new();
+	if(!cb) goto end;
+
+	BN_GENCB_set(cb, dsa_cb, bio_err);
 	if(((dsa = DSA_new()) == NULL) || !DSA_generate_parameters_ex(dsa, 512,
-				seed, 20, &counter, &h, &cb))
+				seed, 20, &counter, &h, cb))
 		goto end;
 
 	BIO_printf(bio_err,"seed\n");
@@ -221,6 +224,7 @@ end:
 	if (!ret)
 		ERR_print_errors(bio_err);
 	if (dsa != NULL) DSA_free(dsa);
+	if (cb != NULL) BN_GENCB_free(cb);
 	CRYPTO_cleanup_all_ex_data();
 	ERR_remove_thread_state(NULL);
 	ERR_free_strings();
@@ -246,8 +250,8 @@ static int MS_CALLBACK dsa_cb(int p, int n, BN_GENCB *arg)
 	if (p == 1) c='+';
 	if (p == 2) { c='*'; ok++; }
 	if (p == 3) c='\n';
-	BIO_write(arg->arg,&c,1);
-	(void)BIO_flush(arg->arg);
+	BIO_write(BN_GENCB_get_arg(arg),&c,1);
+	(void)BIO_flush(BN_GENCB_get_arg(arg));
 
 	if (!ok && (p == 0) && (num > 1))
 		{
