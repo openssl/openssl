@@ -246,20 +246,25 @@ static int pkey_dsa_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	{
 	DSA *dsa = NULL;
 	DSA_PKEY_CTX *dctx = ctx->data;
-	BN_GENCB *pcb, cb;
+	BN_GENCB *pcb;
 	int ret;
 	if (ctx->pkey_gencb)
 		{
-		pcb = &cb;
+		pcb = BN_GENCB_new();
+		if(!pcb) return 0;
 		evp_pkey_set_cb_translate(pcb, ctx);
 		}
 	else
 		pcb = NULL;
 	dsa = DSA_new();
 	if (!dsa)
+		{
+		if(pcb) BN_GENCB_free(pcb);
 		return 0;
+		}
 	ret = dsa_builtin_paramgen(dsa, dctx->nbits, dctx->qbits, dctx->pmd,
 	                           NULL, 0, NULL, NULL, NULL, pcb);
+	if(pcb) BN_GENCB_free(pcb);
 	if (ret)
 		EVP_PKEY_assign_DSA(pkey, dsa);
 	else
