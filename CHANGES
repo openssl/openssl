@@ -305,6 +305,13 @@
 
  Changes between 1.0.1j and 1.0.2 [xx XXX xxxx]
 
+   *) Tighten client-side session ticket handling during renegotiation:
+      ensure that the client only accepts a session ticket if the server sends
+      the extension anew in the ServerHello. Previously, a TLS client would
+      reuse the old extension state and thus accept a session ticket if one was
+      announced in the initial ServerHello.
+      [Emilia Käsper]
+
   *) Accelerated NIST P-256 elliptic curve implementation for x86_64
      (other platforms pending).
      [Shay Gueron & Vlad Krasnov (Intel Corp), Andy Polyakov]
@@ -624,6 +631,15 @@
      Note: Related 1.0.2-beta specific macros X509_get_cert_info,
      X509_CINF_set_modified, X509_CINF_get_issuer, X509_CINF_get_extensions and
      X509_CINF_get_signature were reverted post internal team review.
+
+ Changes between 1.0.1j and 1.0.1k [xx XXX xxxx]
+
+   *) Tighten client-side session ticket handling during renegotiation:
+      ensure that the client only accepts a session ticket if the server sends
+      the extension anew in the ServerHello. Previously, a TLS client would
+      reuse the old extension state and thus accept a session ticket if one was
+      announced in the initial ServerHello.
+      [Emilia Käsper]
 
  Changes between 1.0.1i and 1.0.1j [15 Oct 2014]
 
