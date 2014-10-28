@@ -172,7 +172,7 @@ int ec_GFp_nist_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
 		if ((ctx_new = ctx = BN_CTX_new()) == NULL) goto err;
 
 	if (!BN_mul(r, a, b, ctx)) goto err;
-	if (!group->field_mod_func(r, r, &group->field, ctx))
+	if (!group->field_mod_func(r, r, group->field, ctx))
 		goto err;
 
 	ret=1;
@@ -198,7 +198,7 @@ int ec_GFp_nist_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
 		if ((ctx_new = ctx = BN_CTX_new()) == NULL) goto err;
 
 	if (!BN_sqr(r, a, ctx)) goto err;
-	if (!group->field_mod_func(r, r, &group->field, ctx))
+	if (!group->field_mod_func(r, r, group->field, ctx))
 		goto err;
 
 	ret=1;

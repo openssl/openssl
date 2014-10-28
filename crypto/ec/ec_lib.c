@@ -103,8 +103,11 @@ EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
 	ret->mont_data = NULL;
 
 	ret->generator = NULL;
-	BN_init(&ret->order);
-	BN_init(&ret->cofactor);
+	ret->order = BN_new();
+	ret->cofactor = NULL;
+	if(!ret->order) goto err;
+	ret->cofactor = BN_new();
+	if(!ret->cofactor) goto err;
 
 	ret->curve_name = 0;	
 	ret->asn1_flag  = 0;
@@ -113,13 +116,14 @@ EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
 	ret->seed = NULL;
 	ret->seed_len = 0;
 
-	if (!meth->group_init(ret))
-		{
-		OPENSSL_free(ret);
-		return NULL;
-		}
+	if (!meth->group_init(ret)) goto err;
 	
 	return ret;
+err:
+	if(ret->order) BN_free(ret->order);
+	if(ret->cofactor) BN_free(ret->cofactor);
+	OPENSSL_free(ret);
+	return NULL;
 	}
 
 
@@ -137,8 +141,8 @@ void EC_GROUP_free(EC_GROUP *group)
 
 	if (group->generator != NULL)
 		EC_POINT_free(group->generator);
-	BN_free(&group->order);
-	BN_free(&group->cofactor);
+	BN_free(group->order);
+	BN_free(group->cofactor);
 
 	if (group->seed)
 		OPENSSL_free(group->seed);
@@ -163,8 +167,8 @@ void EC_GROUP_clear_free(EC_GROUP *group)
 
 	if (group->generator != NULL)
 		EC_POINT_clear_free(group->generator);
-	BN_clear_free(&group->order);
-	BN_clear_free(&group->cofactor);
+	BN_clear_free(group->order);
+	BN_clear_free(group->cofactor);
 
 	if (group->seed)
 		{
@@ -244,8 +248,8 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 			}
 		}
 
-	if (!BN_copy(&dest->order, &src->order)) return 0;
-	if (!BN_copy(&dest->cofactor, &src->cofactor)) return 0;
+	if (!BN_copy(dest->order, src->order)) return 0;
+	if (!BN_copy(dest->cofactor, src->cofactor)) return 0;
 
 	dest->curve_name = src->curve_name;
 	dest->asn1_flag  = src->asn1_flag;
@@ -325,14 +329,14 @@ int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator, const BIG
 	if (!EC_POINT_copy(group->generator, generator)) return 0;
 
 	if (order != NULL)
-		{ if (!BN_copy(&group->order, order)) return 0; }	
+		{ if (!BN_copy(group->order, order)) return 0; }
 	else
-		BN_zero(&group->order);
+		BN_zero(group->order);
 
 	if (cofactor != NULL)
-		{ if (!BN_copy(&group->cofactor, cofactor)) return 0; }	
+		{ if (!BN_copy(group->cofactor, cofactor)) return 0; }
 	else
-		BN_zero(&group->cofactor);
+		BN_zero(group->cofactor);
 
 	/* We ignore the return value because some groups have an order with
 	 * factors of two, which makes the Montgomery setup fail.
@@ -355,7 +359,7 @@ BN_MONT_CTX *EC_GROUP_get_mont_data(const EC_GROUP *group)
 
 int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx)
 	{
-	if (!BN_copy(order, &group->order))
+	if (!BN_copy(order, group->order))
 		return 0;
 
 	return !BN_is_zero(order);
@@ -364,10 +368,10 @@ int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx)
 
 int EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor, BN_CTX *ctx)
 	{
-	if (!BN_copy(cofactor, &group->cofactor))
+	if (!BN_copy(cofactor, group->cofactor))
 		return 0;
 
-	return !BN_is_zero(&group->cofactor);
+	return !BN_is_zero(group->cofactor);
 	}
 
 
@@ -1152,7 +1156,7 @@ int ec_precompute_mont_data(EC_GROUP *group)
 	if (!group->mont_data)
 		goto err;
 
-	if (!BN_MONT_CTX_set(group->mont_data, &group->order, ctx))
+	if (!BN_MONT_CTX_set(group->mont_data, group->order, ctx))
 		{
 		BN_MONT_CTX_free(group->mont_data);
 		group->mont_data = NULL;
