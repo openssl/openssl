@@ -1064,7 +1064,7 @@ asn1_add_error                          1091	EXIST::FUNCTION:
 d2i_ASN1_BMPSTRING                      1092	EXIST::FUNCTION:
 i2d_ASN1_BMPSTRING                      1093	EXIST::FUNCTION:
 BIO_f_ber                               1094	NOEXIST::FUNCTION:
-BN_init                                 1095	EXIST::FUNCTION:
+BN_init                                 1095	NOEXIST::FUNCTION:
 COMP_CTX_new                            1096	EXIST::FUNCTION:
 COMP_CTX_free                           1097	EXIST::FUNCTION:
 COMP_CTX_compress_block                 1098	NOEXIST::FUNCTION:
@@ -1097,15 +1097,15 @@ bn_mul_recursive                        1124	NOEXIST::FUNCTION:
 bn_mul_part_recursive                   1125	NOEXIST::FUNCTION:
 bn_sqr_recursive                        1126	NOEXIST::FUNCTION:
 bn_mul_low_normal                       1127	NOEXIST::FUNCTION:
-BN_RECP_CTX_init                        1128	EXIST::FUNCTION:
+BN_RECP_CTX_init                        1128	NOEXIST::FUNCTION:
 BN_RECP_CTX_new                         1129	EXIST::FUNCTION:
 BN_RECP_CTX_free                        1130	EXIST::FUNCTION:
 BN_RECP_CTX_set                         1131	EXIST::FUNCTION:
 BN_mod_mul_reciprocal                   1132	EXIST::FUNCTION:
 BN_mod_exp_recp                         1133	EXIST::FUNCTION:
 BN_div_recp                             1134	EXIST::FUNCTION:
-BN_CTX_init                             1135	EXIST::FUNCTION:DEPRECATED
-BN_MONT_CTX_init                        1136	EXIST::FUNCTION:
+BN_CTX_init                             1135	NOEXIST::FUNCTION:
+BN_MONT_CTX_init                        1136	NOEXIST::FUNCTION:
 RAND_get_rand_method                    1137	EXIST::FUNCTION:
 PKCS7_add_attribute                     1138	EXIST::FUNCTION:
 PKCS7_add_signed_attribute              1139	EXIST::FUNCTION:

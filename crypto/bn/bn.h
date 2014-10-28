@@ -292,55 +292,6 @@ typedef struct bn_recp_ctx_st BN_RECP_CTX;
 typedef struct bn_gencb_st BN_GENCB;
 #endif
 
-struct bignum_st
-	{
-	BN_ULONG *d;	/* Pointer to an array of 'BN_BITS2' bit chunks. */
-	int top;	/* Index of last used d +1. */
-	/* The next are internal book keeping for bn_expand. */
-	int dmax;	/* Size of the d array. */
-	int neg;	/* one if the number is negative */
-	int flags;
-	};
-
-/* Used for montgomery multiplication */
-struct bn_mont_ctx_st
-	{
-	int ri;        /* number of bits in R */
-	BIGNUM RR;     /* used to convert to montgomery form */
-	BIGNUM N;      /* The modulus */
-	BIGNUM Ni;     /* R*(1/R mod N) - N*Ni = 1
-	                * (Ni is only stored for bignum algorithm) */
-	BN_ULONG n0[2];/* least significant word(s) of Ni;
-	                  (type changed with 0.9.9, was "BN_ULONG n0;" before) */
-	int flags;
-	};
-
-/* Used for reciprocal division/mod functions
- * It cannot be shared between threads
- */
-struct bn_recp_ctx_st
-	{
-	BIGNUM N;	/* the divisor */
-	BIGNUM Nr;	/* the reciprocal */
-	int num_bits;
-	int shift;
-	int flags;
-	};
-
-/* Used for slow "generation" functions. */
-struct bn_gencb_st
-	{
-	unsigned int ver;	/* To handle binary (in)compatibility */
-	void *arg;		/* callback-specific data */
-	union
-		{
-		/* if(ver==1) - handles old style callbacks */
-		void (*cb_1)(int, int, void *);
-		/* if(ver==2) - new callback style */
-		int (*cb_2)(int, int, BN_GENCB *);
-		} cb;
-	};
-
 /* Wrapper function to make using BN_GENCB easier,  */
 int BN_GENCB_call(BN_GENCB *cb, int a, int b);
 
@@ -400,9 +351,6 @@ void BN_zero_ex(BIGNUM *a);
 const BIGNUM *BN_value_one(void);
 char *	BN_options(void);
 BN_CTX *BN_CTX_new(void);
-#ifndef OPENSSL_NO_DEPRECATED
-void	BN_CTX_init(BN_CTX *c);
-#endif
 void	BN_CTX_free(BN_CTX *c);
 void	BN_CTX_start(BN_CTX *ctx);
 BIGNUM *BN_CTX_get(BN_CTX *ctx);
@@ -415,7 +363,6 @@ int	BN_num_bits(const BIGNUM *a);
 int	BN_num_bits_word(BN_ULONG l);
 int	BN_security_bits(int L, int N);
 BIGNUM *BN_new(void);
-void	BN_init(BIGNUM *);
 void	BN_clear_free(BIGNUM *a);
 BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b);
 void	BN_swap(BIGNUM *a, BIGNUM *b);
@@ -548,7 +495,6 @@ int BN_X931_generate_prime_ex(BIGNUM *p, BIGNUM *p1, BIGNUM *p2,
 			BN_GENCB *cb);
 
 BN_MONT_CTX *BN_MONT_CTX_new(void );
-void BN_MONT_CTX_init(BN_MONT_CTX *ctx);
 int BN_mod_mul_montgomery(BIGNUM *r,const BIGNUM *a,const BIGNUM *b,
 	BN_MONT_CTX *mont, BN_CTX *ctx);
 int BN_to_montgomery(BIGNUM *r,const BIGNUM *a, BN_MONT_CTX *mont, BN_CTX *ctx);
@@ -589,7 +535,6 @@ void BN_set_params(int mul,int high,int low,int mont);
 int BN_get_params(int which); /* 0, mul, 1 high, 2 low, 3 mont */
 #endif
 
-void	BN_RECP_CTX_init(BN_RECP_CTX *recp);
 BN_RECP_CTX *BN_RECP_CTX_new(void);
 void	BN_RECP_CTX_free(BN_RECP_CTX *recp);
 int	BN_RECP_CTX_set(BN_RECP_CTX *recp,const BIGNUM *rdiv,BN_CTX *ctx);
