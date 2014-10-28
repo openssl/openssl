@@ -716,7 +716,7 @@ static int pkey_rsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	{
 	RSA *rsa = NULL;
 	RSA_PKEY_CTX *rctx = ctx->data;
-	BN_GENCB *pcb, cb;
+	BN_GENCB *pcb;
 	int ret;
 	if (!rctx->pub_exp)
 		{
@@ -729,12 +729,18 @@ static int pkey_rsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 		return 0;
 	if (ctx->pkey_gencb)
 		{
-		pcb = &cb;
+		pcb = BN_GENCB_new();
+		if(!pcb)
+			{
+			RSA_free(rsa);
+			return 0;
+			}
 		evp_pkey_set_cb_translate(pcb, ctx);
 		}
 	else
 		pcb = NULL;
 	ret = RSA_generate_key_ex(rsa, rctx->nbits, rctx->pub_exp, pcb);
+	BN_GENCB_free(pcb);
 	if (ret > 0)
 		EVP_PKEY_assign_RSA(pkey, rsa);
 	else

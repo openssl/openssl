@@ -87,10 +87,16 @@ int RSA_generate_key_ex(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 	{
 	BIGNUM *r0=NULL,*r1=NULL,*r2=NULL,*r3=NULL,*tmp;
-	BIGNUM local_r0,local_d,local_p;
+	BIGNUM *local_r0, *local_d, *local_p;
 	BIGNUM *pr0,*d,*p;
 	int bitsp,bitsq,ok= -1,n=0;
 	BN_CTX *ctx=NULL;
+
+	local_r0 = BN_new();
+	local_d = BN_new();
+	local_p = BN_new();
+	if(!local_r0 || !local_d || !local_p)
+		goto err;
 
 	ctx=BN_CTX_new();
 	if (ctx == NULL) goto err;
@@ -171,7 +177,7 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 	if (!BN_mul(r0,r1,r2,ctx)) goto err;	/* (p-1)(q-1) */
 	if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME))
 		{
-		  pr0 = &local_r0;
+		  pr0 = local_r0;
 		  BN_with_flags(pr0, r0, BN_FLG_CONSTTIME);
 		}
 	else
@@ -181,7 +187,7 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 	/* set up d for correct BN_FLG_CONSTTIME flag */
 	if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME))
 		{
-		d = &local_d;
+		d = local_d;
 		BN_with_flags(d, rsa->d, BN_FLG_CONSTTIME);
 		}
 	else
@@ -196,7 +202,7 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 	/* calculate inverse of q mod p */
 	if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME))
 		{
-		p = &local_p;
+		p = local_p;
 		BN_with_flags(p, rsa->p, BN_FLG_CONSTTIME);
 		}
 	else
@@ -205,6 +211,9 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 
 	ok=1;
 err:
+	if(local_r0) BN_free(local_r0);
+	if(local_d) BN_free(local_d);
+	if(local_p) BN_free(local_p);
 	if (ok == -1)
 		{
 		RSAerr(RSA_F_RSA_BUILTIN_KEYGEN,ERR_LIB_BN);

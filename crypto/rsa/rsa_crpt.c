@@ -62,7 +62,7 @@
 #include <openssl/crypto.h>
 #include "cryptlib.h"
 #include <openssl/lhash.h>
-#include <openssl/bn.h>
+#include "internal/bn_int.h"
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
 
@@ -156,7 +156,7 @@ err:
 
 BN_BLINDING *RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
 {
-	BIGNUM local_n;
+	BIGNUM *local_n = NULL;
 	BIGNUM *e,*n;
 	BN_CTX *ctx;
 	BN_BLINDING *ret = NULL;
@@ -189,17 +189,22 @@ BN_BLINDING *RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
 		e = rsa->e;
 
 	
-	if ((RAND_status() == 0) && rsa->d != NULL && rsa->d->d != NULL)
+	if ((RAND_status() == 0) && rsa->d != NULL && bn_get_words(rsa->d) != NULL)
 		{
 		/* if PRNG is not properly seeded, resort to secret
 		 * exponent as unpredictable seed */
-		RAND_add(rsa->d->d, rsa->d->dmax * sizeof rsa->d->d[0], 0.0);
+		RAND_add(bn_get_words(rsa->d), bn_get_dmax(rsa->d) * sizeof(BN_ULONG), 0.0);
 		}
 
 	if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME))
 		{
 		/* Set BN_FLG_CONSTTIME flag */
-		n = &local_n;
+		local_n = n = BN_new();
+		if(!local_n)
+			{
+			RSAerr(RSA_F_RSA_SETUP_BLINDING, ERR_R_MALLOC_FAILURE);
+			goto err;
+			}
 		BN_with_flags(n, rsa->n, BN_FLG_CONSTTIME);
 		}
 	else
@@ -219,6 +224,8 @@ err:
 		BN_CTX_free(ctx);
 	if(rsa->e == NULL)
 		BN_free(e);
+	if(local_n)
+		BN_free(local_n);
 
 	return ret;
 }
