@@ -119,6 +119,7 @@ int MAIN(int argc, char **argv)
 	int numbits= -1,num,genkey=0;
 	int need_rand=0;
 	int non_fips_allow = 0;
+	BN_GENCB *cb = NULL;
 #ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
 #endif
@@ -291,8 +292,13 @@ bad:
 
 	if (numbits > 0)
 		{
-		BN_GENCB cb;
-		BN_GENCB_set(&cb, dsa_cb, bio_err);
+		cb = BN_GENCB_new();
+		if(!cb)
+			{
+			BIO_printf(bio_err,"Error allocating BN_GENCB object\n");
+			goto end;
+			}
+		BN_GENCB_set(cb, dsa_cb, bio_err);
 		assert(need_rand);
 		dsa = DSA_new();
 		if(!dsa)
@@ -320,7 +326,7 @@ bad:
 		alarm(timebomb);
 	}
 #endif
-	        if(!DSA_generate_parameters_ex(dsa,num,NULL,0,NULL,NULL, &cb))
+	        if(!DSA_generate_parameters_ex(dsa,num,NULL,0,NULL,NULL, cb))
 			{
 #ifdef GENCB_TEST
 			if(stop_keygen_flag)
@@ -458,6 +464,7 @@ bad:
 		app_RAND_write_file(NULL, bio_err);
 	ret=0;
 end:
+	if (cb != NULL) BN_GENCB_free(cb);
 	if (in != NULL) BIO_free(in);
 	if (out != NULL) BIO_free_all(out);
 	if (dsa != NULL) DSA_free(dsa);
@@ -473,8 +480,8 @@ static int MS_CALLBACK dsa_cb(int p, int n, BN_GENCB *cb)
 	if (p == 1) c='+';
 	if (p == 2) c='*';
 	if (p == 3) c='\n';
-	BIO_write(cb->arg,&c,1);
-	(void)BIO_flush(cb->arg);
+	BIO_write(BN_GENCB_get_arg(cb),&c,1);
+	(void)BIO_flush(BN_GENCB_get_arg(cb));
 #ifdef LINT
 	p=n;
 #endif
