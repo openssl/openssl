@@ -167,9 +167,9 @@
 #include <openssl/engine.h>
 #endif
 
-static const SSL_METHOD *ssl3_get_client_method(int ver);
 static int ca_dn_cmp(const X509_NAME * const *a,const X509_NAME * const *b);
 
+#ifndef OPENSSL_NO_SSL3_METHOD
 static const SSL_METHOD *ssl3_get_client_method(int ver)
 	{
 	if (ver == SSL3_VERSION)
@@ -182,6 +182,7 @@ IMPLEMENT_ssl3_meth_func(SSLv3_client_method,
 			ssl_undefined_function,
 			ssl3_connect,
 			ssl3_get_client_method)
+#endif
 
 int ssl3_connect(SSL *s)
 	{
