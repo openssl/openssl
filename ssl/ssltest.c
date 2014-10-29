@@ -345,7 +345,7 @@ static void sv_usage(void)
 #ifndef OPENSSL_NO_SSL2
 	fprintf(stderr," -ssl2         - use SSLv2\n");
 #endif
-#ifndef OPENSSL_NO_SSL3
+#ifndef OPENSSL_NO_SSL3_METHOD
 	fprintf(stderr," -ssl3         - use SSLv3\n");
 #endif
 #ifndef OPENSSL_NO_TLS1
@@ -676,7 +676,7 @@ int main(int argc, char *argv[])
 			}
 		else if	(strcmp(*argv,"-ssl3") == 0)
 			{
-#ifdef OPENSSL_NO_SSL3
+#ifdef OPENSSL_NO_SSL3_METHOD
 			no_protocol = 1;
 #endif
 			ssl3 = 1;
