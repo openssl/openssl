@@ -108,6 +108,8 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CAPIENG",
 			 # SSL v2
 			 "SSL2",
+			 # SSL v3 method
+			 "SSL3_METHOD",
 			 # JPAKE
 			 "JPAKE",
 			 # NEXTPROTONEG
@@ -144,7 +146,7 @@ my $no_fp_api; my $no_static_engine=1; my $no_gmp; my $no_deprecated;
 my $no_rfc3779; my $no_psk; my $no_tlsext; my $no_cms; my $no_capieng;
 my $no_jpake; my $no_srp; my $no_ssl2; my $no_ec2m; my $no_nistp_gcc; 
 my $no_nextprotoneg; my $no_sctp; my $no_srtp; my $no_ssl_trace;
-my $no_unit_test;
+my $no_unit_test; my $no_ssl3_method;
 
 my $fips;
 
@@ -239,6 +241,7 @@ foreach (@ARGV, split(/ /, $options))
  	elsif (/^no-ec-nistp224-64-gcc-128$/)	{ $no_nistp_gcc=1; }
 	elsif (/^no-nextprotoneg$/)	{ $no_nextprotoneg=1; }
 	elsif (/^no-ssl2$/)	{ $no_ssl2=1; }
+	elsif (/^no-ssl3-method$/) { $no_ssl3_method=1; }
 	elsif (/^no-ssl-trace$/) { $no_ssl_trace=1; }
 	elsif (/^no-capieng$/)	{ $no_capieng=1; }
 	elsif (/^no-jpake$/)	{ $no_jpake=1; }
@@ -1210,6 +1213,7 @@ sub is_valid
 			if ($keyword eq "EC2M" && $no_ec2m) { return 0; }
 			if ($keyword eq "NEXTPROTONEG" && $no_nextprotoneg) { return 0; }
 			if ($keyword eq "SSL2" && $no_ssl2) { return 0; }
+			if ($keyword eq "SSL3_METHOD" && $no_ssl3_method) { return 0; }
 			if ($keyword eq "SSL_TRACE" && $no_ssl_trace) { return 0; }
 			if ($keyword eq "CAPIENG" && $no_capieng) { return 0; }
 			if ($keyword eq "JPAKE" && $no_jpake) { return 0; }

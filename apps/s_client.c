@@ -336,7 +336,9 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -srp_strength int - minimal mength in bits for N (default %d).\n",SRP_MINIMAL_N);
 #endif
 	BIO_printf(bio_err," -ssl2         - just use SSLv2\n");
+#ifndef OPENSSL_NO_SSL3_METHOD
 	BIO_printf(bio_err," -ssl3         - just use SSLv3\n");
+#endif
 	BIO_printf(bio_err," -tls1_2       - just use TLSv1.2\n");
 	BIO_printf(bio_err," -tls1_1       - just use TLSv1.1\n");
 	BIO_printf(bio_err," -tls1         - just use TLSv1\n");
@@ -914,7 +916,7 @@ static char *jpake_secret = NULL;
 		else if	(strcmp(*argv,"-ssl2") == 0)
 			meth=SSLv2_client_method();
 #endif
-#ifndef OPENSSL_NO_SSL3
+#ifndef OPENSSL_NO_SSL3_METHOD
 		else if	(strcmp(*argv,"-ssl3") == 0)
 			meth=SSLv3_client_method();
 #endif

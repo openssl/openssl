@@ -170,6 +170,7 @@
 #endif
 #include <openssl/md5.h>
 
+#ifndef OPENSSL_NO_SSL3_METHOD
 static const SSL_METHOD *ssl3_get_server_method(int ver);
 
 static const SSL_METHOD *ssl3_get_server_method(int ver)
@@ -179,6 +180,12 @@ static const SSL_METHOD *ssl3_get_server_method(int ver)
 	else
 		return(NULL);
 	}
+
+IMPLEMENT_ssl3_meth_func(SSLv3_server_method,
+			ssl3_accept,
+			ssl_undefined_function,
+			ssl3_get_server_method)
+#endif
 
 #ifndef OPENSSL_NO_SRP
 static int ssl_check_srp_ext_ClientHello(SSL *s, int *al)
@@ -205,11 +212,6 @@ static int ssl_check_srp_ext_ClientHello(SSL *s, int *al)
 	return ret;
 	}
 #endif
-
-IMPLEMENT_ssl3_meth_func(SSLv3_server_method,
-			ssl3_accept,
-			ssl_undefined_function,
-			ssl3_get_server_method)
 
 int ssl3_accept(SSL *s)
 	{
