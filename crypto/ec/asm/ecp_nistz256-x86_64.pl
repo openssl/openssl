@@ -42,7 +42,8 @@
 # VIA Nano	+37-130%
 #
 # Ranges denote minimum and maximum improvement coefficients depending
-# on benchmark.
+# on benchmark. Lower coefficients are for ECDSA sign, relatively
+# fastest server-side operation.
 
 $flavour = shift;
 $output  = shift;
@@ -3134,7 +3135,7 @@ ___
 # Convert ecp_nistz256_table.c to layout expected by ecp_nistz_gather_w7
 #
 open TABLE,"<ecp_nistz256_table.c"		or 
-open TABLE,"<${dir}/../ecp_nistz256_table.c"	or 
+open TABLE,"<${dir}../ecp_nistz256_table.c"	or 
 die "failed to open ecp_nistz256_table.c:",$!;
 
 use integer;
