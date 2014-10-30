@@ -97,8 +97,8 @@ static int run_rfc5114_tests(void);
 
 int main(int argc, char *argv[])
 	{
-	BN_GENCB _cb;
-	DH *a;
+	BN_GENCB *_cb;
+	DH *a=NULL;
 	DH *b=NULL;
 	char buf[12];
 	unsigned char *abuf=NULL,*bbuf=NULL;
@@ -119,9 +119,12 @@ int main(int argc, char *argv[])
 	if (out == NULL) EXIT(1);
 	BIO_set_fp(out,stdout,BIO_NOCLOSE);
 
-	BN_GENCB_set(&_cb, &cb, out);
+	_cb = BN_GENCB_new();
+	if(!_cb)
+		goto err;
+	BN_GENCB_set(_cb, &cb, out);
 	if(((a = DH_new()) == NULL) || !DH_generate_parameters_ex(a, 64,
-				DH_GENERATOR_5, &_cb))
+				DH_GENERATOR_5, _cb))
 		goto err;
 
 	if (!DH_check(a, &i)) goto err;
@@ -204,6 +207,7 @@ err:
 	if (bbuf != NULL) OPENSSL_free(bbuf);
 	if(b != NULL) DH_free(b);
 	if(a != NULL) DH_free(a);
+	if(_cb) BN_GENCB_free(_cb);
 	BIO_free(out);
 #ifdef OPENSSL_SYS_NETWARE
     if (ret) printf("ERROR: %d\n", ret);
@@ -220,8 +224,8 @@ static int MS_CALLBACK cb(int p, int n, BN_GENCB *arg)
 	if (p == 1) c='+';
 	if (p == 2) c='*';
 	if (p == 3) c='\n';
-	BIO_write(arg->arg,&c,1);
-	(void)BIO_flush(arg->arg);
+	BIO_write(BN_GENCB_get_arg(arg),&c,1);
+	(void)BIO_flush(BN_GENCB_get_arg(arg));
 #ifdef LINT
 	p=n;
 #endif

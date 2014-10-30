@@ -363,7 +363,7 @@ static int pkey_dh_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	{
 	DH *dh = NULL;
 	DH_PKEY_CTX *dctx = ctx->data;
-	BN_GENCB *pcb, cb;
+	BN_GENCB *pcb;
 	int ret;
 	if (dctx->rfc5114_param)
 		{
@@ -390,7 +390,7 @@ static int pkey_dh_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 
 	if (ctx->pkey_gencb)
 		{
-		pcb = &cb;
+		pcb = BN_GENCB_new();
 		evp_pkey_set_cb_translate(pcb, ctx);
 		}
 	else
@@ -400,6 +400,7 @@ static int pkey_dh_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 		{
 		DSA *dsa_dh;
 		dsa_dh = dsa_dh_generate(dctx, pcb);
+		if(pcb) BN_GENCB_free(pcb);
 		if (!dsa_dh)
 			return 0;
 		dh = DSA_dup_DH(dsa_dh);
@@ -412,10 +413,13 @@ static int pkey_dh_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 #endif
 	dh = DH_new();
 	if (!dh)
+		{
+		if(pcb) BN_GENCB_free(pcb);
 		return 0;
+		}
 	ret = DH_generate_parameters_ex(dh,
 					dctx->prime_len, dctx->generator, pcb);
-		
+	if(pcb) BN_GENCB_free(pcb);
 	if (ret)
 		EVP_PKEY_assign_DH(pkey, dh);
 	else
