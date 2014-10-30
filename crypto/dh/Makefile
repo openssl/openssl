@@ -152,7 +152,8 @@ dh_key.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 dh_key.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 dh_key.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
 dh_key.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-dh_key.o: ../../include/openssl/symhacks.h ../cryptlib.h dh_key.c
+dh_key.o: ../../include/openssl/symhacks.h ../cryptlib.h
+dh_key.o: ../include/internal/bn_int.h dh_key.c
 dh_lib.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 dh_lib.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 dh_lib.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
