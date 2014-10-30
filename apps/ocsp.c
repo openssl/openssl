@@ -649,7 +649,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-ndays n	 	 number of days before next update\n");
 		BIO_printf (bio_err, "-resp_key_id       identify reponse by signing certificate key ID\n");
 		BIO_printf (bio_err, "-nrequest n        number of requests to accept (default unlimited)\n");
-		BIO_printf (bio_err, "-<dgst alg>     use specified digest in the request\n");
+		BIO_printf (bio_err, "-<dgst alg>        use specified digest in the request\n");
 		goto end;
 		}
 
@@ -806,6 +806,8 @@ int MAIN(int argc, char **argv)
 	else if (host)
 		{
 #ifndef OPENSSL_NO_SOCK
+		if (!X509V3_add_value("User-Agent", SSLeay_version(SSLEAY_VERSION), &headers))
+			goto end;
 		resp = process_responder(bio_err, req, host, path,
 					port, use_ssl, headers, req_timeout);
 		if (!resp)
