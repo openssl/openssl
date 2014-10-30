@@ -3,6 +3,25 @@
 .text
 .code	32
 
+@ Special note about using .byte directives to encode instructions.
+@ Initial reason for hand-coding instructions was to allow module to
+@ be compilable by legacy tool-chains. At later point it was pointed
+@ out that since ARMv7, instructions are always encoded in little-endian
+@ order, therefore one has to opt for endian-neutral presentation.
+@ Contemporary tool-chains offer .inst directive for this purpose,
+@ but not legacy ones. Therefore .byte. But there is an exception,
+@ namely ARMv7-R profile still allows for big-endian encoding even for
+@ instructions. This raises the question what if probe instructions
+@ appear executable to such processor operating in big-endian order?
+@ They have to be chosen in a way that avoids this problem. As failed
+@ NEON probe disables a number of other probes we have to ensure that
+@ only NEON probe instruction doesn't appear executable in big-endian
+@ order, therefore 'vorr q8,q8,q8', and not some other register. The
+@ only probe that is not bypassed on failed NEON probe is _armv7_tick,
+@ where you'll spot 'mov r0,r6' that serves this purpose. Basic idea is
+@ that if fetched in alternative byte oder instruction should crash to
+@ denote lack of probed capability...
+
 .align	5
 .global	_armv7_neon_probe
 .type	_armv7_neon_probe,%function
@@ -14,12 +33,10 @@ _armv7_neon_probe:
 .global	_armv7_tick
 .type	_armv7_tick,%function
 _armv7_tick:
-	mrrc	p15,1,r0,r1,c14		@ CNTVCT
-#if __ARM_ARCH__>=5
-	bx	lr
-#else
-	.word	0xe12fff1e		@ bx	lr
-#endif
+	.byte	0x06,0x00,0xa0,0xe1	@ mov	r0,r6
+	.byte	0x1e,0x0f,0x51,0xec	@ mrrc	p15,1,r0,r1,c14	@ CNTVCT
+	.byte	0x1e,0xff,0x2f,0xe1	@ bx	lr
+	nop
 .size	_armv7_tick,.-_armv7_tick
 
 .global	_armv8_aes_probe
