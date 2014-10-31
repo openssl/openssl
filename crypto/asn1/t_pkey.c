@@ -60,7 +60,7 @@
 #include "cryptlib.h"
 #include <openssl/objects.h>
 #include <openssl/buffer.h>
-#include <openssl/bn.h>
+#include "internal/bn_int.h"
 
 int ASN1_bn_print(BIO *bp, const char *number, const BIGNUM *num,
 			unsigned char *buf, int off)
@@ -82,8 +82,8 @@ int ASN1_bn_print(BIO *bp, const char *number, const BIGNUM *num,
 	if (BN_num_bytes(num) <= BN_BYTES)
 		{
 		if (BIO_printf(bp,"%s %s%lu (%s0x%lx)\n",number,neg,
-			(unsigned long)num->d[0],neg,(unsigned long)num->d[0])
-			<= 0) return(0);
+			(unsigned long)bn_get_words(num)[0],neg,
+			(unsigned long)bn_get_words(num)[0])<= 0) return(0);
 		}
 	else
 		{
