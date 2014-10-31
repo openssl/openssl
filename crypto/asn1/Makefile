@@ -612,7 +612,7 @@ t_pkey.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 t_pkey.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 t_pkey.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 t_pkey.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-t_pkey.o: ../cryptlib.h t_pkey.c
+t_pkey.o: ../cryptlib.h ../include/internal/bn_int.h t_pkey.c
 t_req.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 t_req.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 t_req.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
