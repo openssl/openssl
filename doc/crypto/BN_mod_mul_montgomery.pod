@@ -11,7 +11,6 @@ BN_from_montgomery, BN_to_montgomery - Montgomery multiplication
  #include <openssl/bn.h>
 
  BN_MONT_CTX *BN_MONT_CTX_new(void);
- void BN_MONT_CTX_init(BN_MONT_CTX *ctx);
  void BN_MONT_CTX_free(BN_MONT_CTX *mont);
 
  int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *m, BN_CTX *ctx);
@@ -34,7 +33,6 @@ but they may be useful when several operations are to be performed
 using the same modulus.
 
 BN_MONT_CTX_new() allocates and initializes a B<BN_MONT_CTX> structure.
-BN_MONT_CTX_init() initializes an existing uninitialized B<BN_MONT_CTX>.
 
 BN_MONT_CTX_set() sets up the I<mont> structure from the modulus I<m>
 by precomputing its inverse and a value R.
@@ -55,27 +53,12 @@ Note that I<a> must be non-negative and smaller than the modulus.
 For all functions, I<ctx> is a previously allocated B<BN_CTX> used for
 temporary variables.
 
-The B<BN_MONT_CTX> structure is defined as follows:
-
- typedef struct bn_mont_ctx_st
-        {
-        int ri;         /* number of bits in R */
-        BIGNUM RR;      /* R^2 (used to convert to Montgomery form) */
-        BIGNUM N;       /* The modulus */
-        BIGNUM Ni;      /* R*(1/R mod N) - N*Ni = 1
-                         * (Ni is only stored for bignum algorithm) */
-        BN_ULONG n0;    /* least significant word of Ni */
-        int flags;
-        } BN_MONT_CTX;
-
-BN_to_montgomery() is a macro.
-
 =head1 RETURN VALUES
 
 BN_MONT_CTX_new() returns the newly allocated B<BN_MONT_CTX>, and NULL
 on error.
 
-BN_MONT_CTX_init() and BN_MONT_CTX_free() have no return values.
+BN_MONT_CTX_free() has no return value.
 
 For the other functions, 1 is returned for success, 0 on error.
 The error codes can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
@@ -84,6 +67,26 @@ The error codes can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
 
 The inputs must be reduced modulo B<m>, otherwise the result will be
 outside the expected range.
+
+=head1 REMOVED FUNCTIONALITY
+
+ void BN_MONT_CTX_init(BN_MONT_CTX *c);
+
+BN_MONT_CTX_init() is no longer available as of OpenSSL 1.1.0. It was used to
+initialize an existing uninitialized B<BN_MONT_CTX>. Typically this would be
+done as follows:
+
+ BN_MONT_CTX ctx;
+ BN_MONT_CTX_init(&ctx);
+
+Instead applications should create a BN_MONT_CTX structure using
+BN_MONT_CTX_new:
+
+ BN_MONT_CTX *ctx;
+ ctx = BN_MONT_CTX_new();
+ if(!ctx) /* handle error */
+ ...
+ BN_MONT_CTX_free(ctx);
 
 =head1 SEE ALSO
 
@@ -97,5 +100,6 @@ BN_mod_mul_montgomery(), BN_from_montgomery() and BN_to_montgomery()
 are available in all versions of SSLeay and OpenSSL.
 
 BN_MONT_CTX_init() and BN_MONT_CTX_copy() were added in SSLeay 0.9.1b.
+BN_MONT_CTX_init was removed in OpenSSL 1.1.0
 
 =cut
