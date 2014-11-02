@@ -62,6 +62,13 @@
 extern "C" {
 #endif
 
+#define bn_expand(a,bits) ((((((bits+BN_BITS2-1))/BN_BITS2)) <= (a)->dmax)?\
+	(a):bn_expand2((a),(bits+BN_BITS2-1)/BN_BITS2))
+BIGNUM *bn_wexpand(BIGNUM *a, int words);
+BIGNUM *bn_expand2(BIGNUM *a, int words);
+
+void bn_correct_top(BIGNUM *a);
+
 /* Determine the modified width-(w+1) Non-Adjacent Form (wNAF) of 'scalar'.
  * This is an array  r[]  of values that are either zero or odd with an
  * absolute value less than  2^w  satisfying
