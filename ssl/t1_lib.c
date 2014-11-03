@@ -1147,14 +1147,37 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf, unsigned c
 		}
 #endif
 
-	/* don't add extensions for SSLv3 unless doing secure renegotiation */
-	if (s->client_version == SSL3_VERSION
-					&& !s->s3->send_connection_binding)
-		return orig;
-
 	ret+=2;
 
 	if (ret>=limit) return NULL; /* this really never occurs, but ... */
+
+        /* Add RI if renegotiating */
+        if (s->renegotiate)
+          {
+          int el;
+
+          if(!ssl_add_clienthello_renegotiate_ext(s, 0, &el, 0))
+              {
+              SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+              return NULL;
+              }
+
+          if((limit - ret - 4 - el) < 0) return NULL;
+
+          s2n(TLSEXT_TYPE_renegotiate,ret);
+          s2n(el,ret);
+
+          if(!ssl_add_clienthello_renegotiate_ext(s, ret, &el, el))
+              {
+              SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+              return NULL;
+              }
+
+          ret += el;
+        }
+	/* Only add RI for SSLv3 */
+	if (s->client_version == SSL3_VERSION)
+		goto done;
 
  	if (s->tlsext_hostname != NULL)
 		{ 
@@ -1187,31 +1210,6 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf, unsigned c
 		memcpy(ret, s->tlsext_hostname, size_str);
 		ret+=size_str;
 		}
-
-        /* Add RI if renegotiating */
-        if (s->renegotiate)
-          {
-          int el;
-          
-          if(!ssl_add_clienthello_renegotiate_ext(s, 0, &el, 0))
-              {
-              SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
-              return NULL;
-              }
-
-          if((limit - ret - 4 - el) < 0) return NULL;
-          
-          s2n(TLSEXT_TYPE_renegotiate,ret);
-          s2n(el,ret);
-
-          if(!ssl_add_clienthello_renegotiate_ext(s, ret, &el, el))
-              {
-              SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
-              return NULL;
-              }
-
-          ret += el;
-        }
 
 #ifndef OPENSSL_NO_SRP
 	/* Add SRP username if there is one */
@@ -1484,11 +1482,8 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf, unsigned c
 	if (!custom_ext_add(s, 0, &ret, limit, al))
 		return NULL;
 #ifdef TLSEXT_TYPE_encrypt_then_mac
-	if (s->version != SSL3_VERSION)
-		{
-		s2n(TLSEXT_TYPE_encrypt_then_mac,ret);
-		s2n(0,ret);
-		}
+	s2n(TLSEXT_TYPE_encrypt_then_mac,ret);
+	s2n(0,ret);
 #endif
 
 	/* Add padding to workaround bugs in F5 terminators.
@@ -1521,6 +1516,8 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf, unsigned c
 			}
 		}
 
+	done:
+
 	if ((extdatalen = ret-orig-2)== 0) 
 		return orig;
 
@@ -1542,20 +1539,9 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf, unsigned c
 	int using_ecc = (alg_k & (SSL_kECDHE|SSL_kECDHr|SSL_kECDHe)) || (alg_a & SSL_aECDSA);
 	using_ecc = using_ecc && (s->session->tlsext_ecpointformatlist != NULL);
 #endif
-	/* don't add extensions for SSLv3, unless doing secure renegotiation */
-	if (s->version == SSL3_VERSION && !s->s3->send_connection_binding)
-		return orig;
 	
 	ret+=2;
 	if (ret>=limit) return NULL; /* this really never occurs, but ... */
-
-	if (!s->hit && s->servername_done == 1 && s->session->tlsext_hostname != NULL)
-		{ 
-		if ((long)(limit - ret - 4) < 0) return NULL; 
-
-		s2n(TLSEXT_TYPE_server_name,ret);
-		s2n(0,ret);
-		}
 
 	if(s->s3->send_connection_binding)
         {
@@ -1580,6 +1566,18 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf, unsigned c
 
           ret += el;
         }
+
+	/* Only add RI for SSLv3 */
+	if (s->version == SSL3_VERSION)
+		goto done;
+
+	if (!s->hit && s->servername_done == 1 && s->session->tlsext_hostname != NULL)
+		{
+		if ((long)(limit - ret - 4) < 0) return NULL;
+
+		s2n(TLSEXT_TYPE_server_name,ret);
+		s2n(0,ret);
+		}
 
 #ifndef OPENSSL_NO_EC
 	if (using_ecc)
@@ -1721,12 +1719,11 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf, unsigned c
 #ifdef TLSEXT_TYPE_encrypt_then_mac
 	if (s->s3->flags & TLS1_FLAGS_ENCRYPT_THEN_MAC)
 		{
-		/* Don't use encrypt_then_mac if AEAD, RC4 or SSL 3.0:
+		/* Don't use encrypt_then_mac if AEAD or RC4
 		 * might want to disable for other cases too.
 		 */
 		if (s->s3->tmp.new_cipher->algorithm_mac == SSL_AEAD
-		    || s->s3->tmp.new_cipher->algorithm_enc == SSL_RC4
-		    || s->version == SSL3_VERSION)
+		    || s->s3->tmp.new_cipher->algorithm_enc == SSL_RC4)
 			s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC;
 		else
 			{
@@ -1750,6 +1747,8 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf, unsigned c
 		memcpy(ret, selected, len);
 		ret += len;
 		}
+
+	done:
 
 	if ((extdatalen = ret-orig-2)== 0) 
 		return orig;
@@ -1973,6 +1972,14 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 		if (s->tlsext_debug_cb)
 			s->tlsext_debug_cb(s, 0, type, data, size,
 						s->tlsext_debug_arg);
+		if (type == TLSEXT_TYPE_renegotiate)
+			{
+			if(!ssl_parse_clienthello_renegotiate_ext(s, data, size, al))
+				return 0;
+			renegotiate_seen = 1;
+			}
+		else if (s->version == SSL3_VERSION)
+			{}
 /* The servername extension is treated as follows:
 
    - Only the hostname type is supported with a maximum length of 255.
@@ -1996,7 +2003,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 
 */      
 
-		if (type == TLSEXT_TYPE_server_name)
+		else if (type == TLSEXT_TYPE_server_name)
 			{
 			unsigned char *sdata;
 			int servname_type;
@@ -2217,12 +2224,6 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 				return 0;
 				}
 			}
-		else if (type == TLSEXT_TYPE_renegotiate)
-			{
-			if(!ssl_parse_clienthello_renegotiate_ext(s, data, size, al))
-				return 0;
-			renegotiate_seen = 1;
-			}
 		else if (type == TLSEXT_TYPE_signature_algorithms)
 			{
 			int dsize;
@@ -2418,10 +2419,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
                         }
 #ifdef TLSEXT_TYPE_encrypt_then_mac
 		else if (type == TLSEXT_TYPE_encrypt_then_mac)
-			{
-			if (s->version != SSL3_VERSION)
-				s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
-			}
+			s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
 #endif
 		/* If this ClientHello extension was unhandled and this is 
 		 * a nonresumed connection, check whether the extension is a 
@@ -2544,7 +2542,16 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 			s->tlsext_debug_cb(s, 1, type, data, size,
 						s->tlsext_debug_arg);
 
-		if (type == TLSEXT_TYPE_server_name)
+
+		if (type == TLSEXT_TYPE_renegotiate)
+			{
+			if(!ssl_parse_serverhello_renegotiate_ext(s, data, size, al))
+				return 0;
+			renegotiate_seen = 1;
+			}
+		else if (s->version == SSL3_VERSION)
+			{}
+		else if (type == TLSEXT_TYPE_server_name)
 			{
 			if (s->tlsext_hostname == NULL || size > 0)
 				{
@@ -2726,13 +2733,6 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 			memcpy(s->s3->alpn_selected, data + 3, len);
 			s->s3->alpn_selected_len = len;
 			}
-
-		else if (type == TLSEXT_TYPE_renegotiate)
-			{
-			if(!ssl_parse_serverhello_renegotiate_ext(s, data, size, al))
-				return 0;
-			renegotiate_seen = 1;
-			}
 #ifndef OPENSSL_NO_HEARTBEATS
 		else if (type == TLSEXT_TYPE_heartbeat)
 			{
@@ -2759,10 +2759,9 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 #ifdef TLSEXT_TYPE_encrypt_then_mac
 		else if (type == TLSEXT_TYPE_encrypt_then_mac)
 			{
-			/* Ignore if inappropriate ciphersuite or SSL 3.0 */
+			/* Ignore if inappropriate ciphersuite */
 			if (s->s3->tmp.new_cipher->algorithm_mac != SSL_AEAD
-			    && s->s3->tmp.new_cipher->algorithm_enc != SSL_RC4
-			    && s->version != SSL3_VERSION)
+			    && s->s3->tmp.new_cipher->algorithm_enc != SSL_RC4)
 				s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
 			}
 #endif
