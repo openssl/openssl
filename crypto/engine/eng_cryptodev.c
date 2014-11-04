@@ -2,6 +2,7 @@
  * Copyright (c) 2002 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2002 Theo de Raadt
  * Copyright (c) 2002 Markus Friedl
+ * Copyright (c) 2012 Nikos Mavrogiannopoulos
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -74,8 +75,6 @@ struct dev_crypto_state {
 	int d_fd;
 
 #ifdef USE_CRYPTODEV_DIGESTS
-	char dummy_mac_key[HASH_MAX_LEN];
-
 	unsigned char digest_res[HASH_MAX_LEN];
 	char *mac_data;
 	int mac_len;
@@ -162,15 +161,21 @@ static struct {
 static struct {
 	int	id;
 	int	nid;
-	int 	keylen;
+	int 	digestlen;
 } digests[] = {
+#if 0
+        /* HMAC is not supported */
 	{ CRYPTO_MD5_HMAC,		NID_hmacWithMD5,	16},
 	{ CRYPTO_SHA1_HMAC,		NID_hmacWithSHA1,	20},
-	{ CRYPTO_RIPEMD160_HMAC,	NID_ripemd160,		16/*?*/},
-	{ CRYPTO_MD5_KPDK,		NID_undef,		0},
-	{ CRYPTO_SHA1_KPDK,		NID_undef,		0},
+	{ CRYPTO_SHA2_256_HMAC,		NID_hmacWithSHA256,	32},
+	{ CRYPTO_SHA2_384_HMAC,		NID_hmacWithSHA384,	48},
+	{ CRYPTO_SHA2_512_HMAC,		NID_hmacWithSHA512,	64},
+#endif
 	{ CRYPTO_MD5,			NID_md5,		16},
 	{ CRYPTO_SHA1,			NID_sha1,		20},
+	{ CRYPTO_SHA2_256,		NID_sha256,		32},
+	{ CRYPTO_SHA2_384,		NID_sha384,		48},
+	{ CRYPTO_SHA2_512,		NID_sha512,		64},
 	{ 0,				NID_undef,		0},
 };
 #endif
@@ -248,13 +253,14 @@ get_cryptodev_ciphers(const int **cnids)
 	static int nids[CRYPTO_ALGORITHM_MAX];
 	struct session_op sess;
 	int fd, i, count = 0;
+	unsigned char fake_key[CRYPTO_CIPHER_MAX_KEY_LEN];
 
 	if ((fd = get_dev_crypto()) < 0) {
 		*cnids = NULL;
 		return (0);
 	}
 	memset(&sess, 0, sizeof(sess));
-	sess.key = (caddr_t)"123456789abcdefghijklmno";
+	sess.key = (void*)fake_key;
 
 	for (i = 0; ciphers[i].id && count < CRYPTO_ALGORITHM_MAX; i++) {
 		if (ciphers[i].nid == NID_undef)
@@ -286,6 +292,7 @@ static int
 get_cryptodev_digests(const int **cnids)
 {
 	static int nids[CRYPTO_ALGORITHM_MAX];
+	unsigned char fake_key[CRYPTO_CIPHER_MAX_KEY_LEN];
 	struct session_op sess;
 	int fd, i, count = 0;
 
@@ -294,12 +301,12 @@ get_cryptodev_digests(const int **cnids)
 		return (0);
 	}
 	memset(&sess, 0, sizeof(sess));
-	sess.mackey = (caddr_t)"123456789abcdefghijklmno";
+	sess.mackey = fake_key;
 	for (i = 0; digests[i].id && count < CRYPTO_ALGORITHM_MAX; i++) {
 		if (digests[i].nid == NID_undef)
 			continue;
 		sess.mac = digests[i].id;
-		sess.mackeylen = digests[i].keylen;
+		sess.mackeylen = 8;
 		sess.cipher = 0;
 		if (ioctl(fd, CIOCGSESSION, &sess) != -1 &&
 		    ioctl(fd, CIOCFSESSION, &sess.ses) != -1)
@@ -387,14 +394,14 @@ cryptodev_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	cryp.ses = sess->ses;
 	cryp.flags = 0;
 	cryp.len = inl;
-	cryp.src = (caddr_t) in;
-	cryp.dst = (caddr_t) out;
+	cryp.src = (void*) in;
+	cryp.dst = (void*) out;
 	cryp.mac = 0;
 
 	cryp.op = ctx->encrypt ? COP_ENCRYPT : COP_DECRYPT;
 
 	if (ctx->cipher->iv_len) {
-		cryp.iv = (caddr_t) ctx->iv;
+		cryp.iv = (void*) ctx->iv;
 		if (!ctx->encrypt) {
 			iiv = in + inl - ctx->cipher->iv_len;
 			memcpy(save_iv, iiv, ctx->cipher->iv_len);
@@ -445,7 +452,7 @@ cryptodev_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	if ((state->d_fd = get_dev_crypto()) < 0)
 		return (0);
 
-	sess->key = (caddr_t)key;
+	sess->key = (void*)key;
 	sess->keylen = ctx->key_len;
 	sess->cipher = cipher;
 
@@ -715,18 +722,6 @@ digest_nid_to_cryptodev(int nid)
 }
 
 
-static int
-digest_key_length(int nid)
-{
-	int i;
-
-	for (i = 0; digests[i].id; i++)
-		if (digests[i].nid == nid)
-			return digests[i].keylen;
-	return (0);
-}
-
-
 static int cryptodev_digest_init(EVP_MD_CTX *ctx)
 {
 	struct dev_crypto_state *state = ctx->md_data;
@@ -737,7 +732,6 @@ static int cryptodev_digest_init(EVP_MD_CTX *ctx)
 		printf("cryptodev_digest_init: Can't get digest \n");
 		return (0);
 	}
-
 	memset(state, 0, sizeof(struct dev_crypto_state));
 
 	if ((state->d_fd = get_dev_crypto()) < 0) {
@@ -745,8 +739,8 @@ static int cryptodev_digest_init(EVP_MD_CTX *ctx)
 		return (0);
 	}
 
-	sess->mackey = state->dummy_mac_key;
-	sess->mackeylen = digest_key_length(ctx->digest->type);
+	sess->mackey = NULL;
+	sess->mackeylen = 0;
 	sess->mac = digest;
 
 	if (ioctl(state->d_fd, CIOCGSESSION, sess) < 0) {
@@ -762,8 +756,8 @@ static int cryptodev_digest_init(EVP_MD_CTX *ctx)
 static int cryptodev_digest_update(EVP_MD_CTX *ctx, const void *data,
 		size_t count)
 {
-	struct crypt_op cryp;
 	struct dev_crypto_state *state = ctx->md_data;
+	struct crypt_op cryp;
 	struct session_op *sess = &state->d_sess;
 	char *new_mac_data;
 
@@ -773,7 +767,7 @@ static int cryptodev_digest_update(EVP_MD_CTX *ctx, const void *data,
 	}
 
 	if (!count) {
-		return (0);
+		return (1);
 	}
 
 	if (!(ctx->flags & EVP_MD_CTX_FLAG_ONESHOT)) {
@@ -797,9 +791,9 @@ static int cryptodev_digest_update(EVP_MD_CTX *ctx, const void *data,
 	cryp.ses = sess->ses;
 	cryp.flags = 0;
 	cryp.len = count;
-	cryp.src = (caddr_t) data;
+	cryp.src = (void*) data;
 	cryp.dst = NULL;
-	cryp.mac = (caddr_t) state->digest_res;
+	cryp.mac = (void*) state->digest_res;
 	if (ioctl(state->d_fd, CIOCCRYPT, &cryp) < 0) {
 		printf("cryptodev_digest_update: digest failed\n");
 		return (0);
@@ -814,8 +808,6 @@ static int cryptodev_digest_final(EVP_MD_CTX *ctx, unsigned char *md)
 	struct dev_crypto_state *state = ctx->md_data;
 	struct session_op *sess = &state->d_sess;
 
-	int ret = 1;
-
 	if (!md || state->d_fd < 0) {
 		printf("cryptodev_digest_final: illegal input\n");
 		return(0);
@@ -829,7 +821,7 @@ static int cryptodev_digest_final(EVP_MD_CTX *ctx, unsigned char *md)
 		cryp.len = state->mac_len;
 		cryp.src = state->mac_data;
 		cryp.dst = NULL;
-		cryp.mac = (caddr_t)md;
+		cryp.mac = (void*)md;
 		if (ioctl(state->d_fd, CIOCCRYPT, &cryp) < 0) {
 			printf("cryptodev_digest_final: digest failed\n");
 			return (0);
@@ -840,7 +832,7 @@ static int cryptodev_digest_final(EVP_MD_CTX *ctx, unsigned char *md)
 
 	memcpy(md, state->digest_res, ctx->digest->md_size);
 
-	return (ret);
+	return 1;
 }
 
 
@@ -892,8 +884,8 @@ static int cryptodev_digest_copy(EVP_MD_CTX *to,const EVP_MD_CTX *from)
 
 	digest = digest_nid_to_cryptodev(to->digest->type);
 
-	sess->mackey = dstate->dummy_mac_key;
-	sess->mackeylen = digest_key_length(to->digest->type);
+	sess->mackey = NULL;
+	sess->mackeylen = 0;
 	sess->mac = digest;
 
 	dstate->d_fd = get_dev_crypto();
@@ -923,34 +915,117 @@ static int cryptodev_digest_copy(EVP_MD_CTX *to,const EVP_MD_CTX *from)
 }
 
 
-const EVP_MD cryptodev_sha1 = {
+static const EVP_MD cryptodev_sha1 = {
 	NID_sha1,
-	NID_undef, 
+	NID_sha1WithRSAEncryption,
 	SHA_DIGEST_LENGTH, 
+#if defined(EVP_MD_FLAG_PKEY_METHOD_SIGNATURE) && defined(EVP_MD_FLAG_DIGALGID_ABSENT)
+	EVP_MD_FLAG_PKEY_METHOD_SIGNATURE|
+	EVP_MD_FLAG_DIGALGID_ABSENT|
+#endif
 	EVP_MD_FLAG_ONESHOT,
 	cryptodev_digest_init,
 	cryptodev_digest_update,
 	cryptodev_digest_final,
 	cryptodev_digest_copy,
 	cryptodev_digest_cleanup,
-	EVP_PKEY_NULL_method,
+	EVP_PKEY_RSA_method,
 	SHA_CBLOCK,
-	sizeof(struct dev_crypto_state),
+	sizeof(EVP_MD *)+sizeof(struct dev_crypto_state),
 };
 
-const EVP_MD cryptodev_md5 = {
-	NID_md5,
-	NID_undef, 
-	16 /* MD5_DIGEST_LENGTH */, 
+static const EVP_MD cryptodev_sha256 = {
+	NID_sha256,
+	NID_sha256WithRSAEncryption,
+	SHA256_DIGEST_LENGTH, 
+#if defined(EVP_MD_FLAG_PKEY_METHOD_SIGNATURE) && defined(EVP_MD_FLAG_DIGALGID_ABSENT)
+	EVP_MD_FLAG_PKEY_METHOD_SIGNATURE|
+	EVP_MD_FLAG_DIGALGID_ABSENT|
+#endif
 	EVP_MD_FLAG_ONESHOT,
 	cryptodev_digest_init,
 	cryptodev_digest_update,
 	cryptodev_digest_final,
 	cryptodev_digest_copy,
 	cryptodev_digest_cleanup,
-	EVP_PKEY_NULL_method,
+	EVP_PKEY_RSA_method,
+	SHA256_CBLOCK,
+	sizeof(EVP_MD *)+sizeof(struct dev_crypto_state),
+};
+static const EVP_MD cryptodev_sha224 = {
+	NID_sha224,
+	NID_sha224WithRSAEncryption, 
+	SHA224_DIGEST_LENGTH, 
+#if defined(EVP_MD_FLAG_PKEY_METHOD_SIGNATURE) && defined(EVP_MD_FLAG_DIGALGID_ABSENT)
+	EVP_MD_FLAG_PKEY_METHOD_SIGNATURE|
+	EVP_MD_FLAG_DIGALGID_ABSENT|
+#endif
+	EVP_MD_FLAG_ONESHOT,
+	cryptodev_digest_init,
+	cryptodev_digest_update,
+	cryptodev_digest_final,
+	cryptodev_digest_copy,
+	cryptodev_digest_cleanup,
+	EVP_PKEY_RSA_method,
+	SHA256_CBLOCK,
+	sizeof(EVP_MD *)+sizeof(struct dev_crypto_state),
+};
+
+static const EVP_MD cryptodev_sha384 = {
+	NID_sha384,
+	NID_sha384WithRSAEncryption, 
+	SHA384_DIGEST_LENGTH, 
+#if defined(EVP_MD_FLAG_PKEY_METHOD_SIGNATURE) && defined(EVP_MD_FLAG_DIGALGID_ABSENT)
+	EVP_MD_FLAG_PKEY_METHOD_SIGNATURE|
+	EVP_MD_FLAG_DIGALGID_ABSENT|
+#endif
+	EVP_MD_FLAG_ONESHOT,
+	cryptodev_digest_init,
+	cryptodev_digest_update,
+	cryptodev_digest_final,
+	cryptodev_digest_copy,
+	cryptodev_digest_cleanup,
+	EVP_PKEY_RSA_method,
+	SHA512_CBLOCK,
+	sizeof(EVP_MD *)+sizeof(struct dev_crypto_state),
+};
+
+static const EVP_MD cryptodev_sha512 = {
+	NID_sha512,
+	NID_sha512WithRSAEncryption, 
+	SHA512_DIGEST_LENGTH, 
+#if defined(EVP_MD_FLAG_PKEY_METHOD_SIGNATURE) && defined(EVP_MD_FLAG_DIGALGID_ABSENT)
+	EVP_MD_FLAG_PKEY_METHOD_SIGNATURE|
+	EVP_MD_FLAG_DIGALGID_ABSENT|
+#endif
+	EVP_MD_FLAG_ONESHOT,
+	cryptodev_digest_init,
+	cryptodev_digest_update,
+	cryptodev_digest_final,
+	cryptodev_digest_copy,
+	cryptodev_digest_cleanup,
+	EVP_PKEY_RSA_method,
+	SHA512_CBLOCK,
+	sizeof(EVP_MD *)+sizeof(struct dev_crypto_state),
+};
+
+static const EVP_MD cryptodev_md5 = {
+	NID_md5,
+	NID_md5WithRSAEncryption, 
+	16 /* MD5_DIGEST_LENGTH */, 
+#if defined(EVP_MD_FLAG_PKEY_METHOD_SIGNATURE) && defined(EVP_MD_FLAG_DIGALGID_ABSENT)
+	EVP_MD_FLAG_PKEY_METHOD_SIGNATURE|
+	EVP_MD_FLAG_DIGALGID_ABSENT|
+#endif
+	EVP_MD_FLAG_ONESHOT,
+	cryptodev_digest_init,
+	cryptodev_digest_update,
+	cryptodev_digest_final,
+	cryptodev_digest_copy,
+	cryptodev_digest_cleanup,
+	EVP_PKEY_RSA_method,
 	64 /* MD5_CBLOCK */,
-	sizeof(struct dev_crypto_state),
+	sizeof(EVP_MD *)+sizeof(struct dev_crypto_state),
 };
 
 #endif /* USE_CRYPTODEV_DIGESTS */
@@ -970,6 +1045,18 @@ cryptodev_engine_digests(ENGINE *e, const EVP_MD **digest,
 		break;
 	case NID_sha1:
 		*digest = &cryptodev_sha1;
+ 		break;
+	case NID_sha224:
+		*digest = &cryptodev_sha224;
+ 		break;
+	case NID_sha256:
+		*digest = &cryptodev_sha256;
+ 		break;
+	case NID_sha384:
+		*digest = &cryptodev_sha384;
+ 		break;
+	case NID_sha512:
+		*digest = &cryptodev_sha512;
  		break;
 	default:
 #endif /* USE_CRYPTODEV_DIGESTS */
@@ -1002,7 +1089,7 @@ bn2crparam(const BIGNUM *a, struct crparam *crp)
 		return (1);
 	memset(b, 0, bytes);
 
-	crp->crp_p = (caddr_t) b;
+	crp->crp_p = (void*) b;
 	crp->crp_nbits = bits;
 
 	for (i = 0, j = 0; i < a->top; i++) {
@@ -1255,7 +1342,7 @@ cryptodev_dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	kop.crk_op = CRK_DSA_SIGN;
 
 	/* inputs: dgst dsa->p dsa->q dsa->g dsa->priv_key */
-	kop.crk_param[0].crp_p = (caddr_t)dgst;
+	kop.crk_param[0].crp_p = (void*)dgst;
 	kop.crk_param[0].crp_nbits = dlen * 8;
 	if (bn2crparam(dsa->p, &kop.crk_param[1]))
 		goto err;
@@ -1295,7 +1382,7 @@ cryptodev_dsa_verify(const unsigned char *dgst, int dlen,
 	kop.crk_op = CRK_DSA_VERIFY;
 
 	/* inputs: dgst dsa->p dsa->q dsa->g dsa->pub_key sig->r sig->s */
-	kop.crk_param[0].crp_p = (caddr_t)dgst;
+	kop.crk_param[0].crp_p = (void*)dgst;
 	kop.crk_param[0].crp_nbits = dlen * 8;
 	if (bn2crparam(dsa->p, &kop.crk_param[1]))
 		goto err;
@@ -1373,9 +1460,10 @@ cryptodev_dh_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 		goto err;
 	kop.crk_iparams = 3;
 
-	kop.crk_param[3].crp_p = (caddr_t) key;
-	kop.crk_param[3].crp_nbits = keylen * 8;
+	kop.crk_param[3].crp_p = (void*) key;
+	kop.crk_param[3].crp_nbits = keylen;
 	kop.crk_oparams = 1;
+	dhret = keylen/8;
 
 	if (ioctl(fd, CIOCKEY, &kop) == -1) {
 		const DH_METHOD *meth = DH_OpenSSL();
@@ -1447,7 +1535,7 @@ ENGINE_load_cryptodev(void)
 	put_dev_crypto(fd);
 
 	if (!ENGINE_set_id(engine, "cryptodev") ||
-	    !ENGINE_set_name(engine, "BSD cryptodev engine") ||
+	    !ENGINE_set_name(engine, "cryptodev engine") ||
 	    !ENGINE_set_ciphers(engine, cryptodev_engine_ciphers) ||
 	    !ENGINE_set_digests(engine, cryptodev_engine_digests) ||
 	    !ENGINE_set_ctrl_function(engine, cryptodev_ctrl) ||
