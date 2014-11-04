@@ -177,12 +177,12 @@ cipher suites using RSA key exchange.
 cipher suites using DH key agreement and DH certificates signed by CAs with RSA
 and DSS keys or either respectively.
 
-=item B<kEDH>
+=item B<kDHE>
 
 cipher suites using ephemeral DH key agreement, including anonymous cipher
 suites.
 
-=item B<EDH>
+=item B<DHE>
 
 cipher suites using authenticated ephemeral DH key agreement.
 
@@ -407,12 +407,12 @@ e.g. DES-CBC3-SHA. In these cases, RSA authentication is used.
  TLS_DH_RSA_EXPORT_WITH_DES40_CBC_SHA    Not implemented.
  TLS_DH_RSA_WITH_DES_CBC_SHA             Not implemented.
  TLS_DH_RSA_WITH_3DES_EDE_CBC_SHA        Not implemented.
- TLS_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA   EXP-EDH-DSS-DES-CBC-SHA
- TLS_DHE_DSS_WITH_DES_CBC_SHA            EDH-DSS-CBC-SHA
- TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA       EDH-DSS-DES-CBC3-SHA
- TLS_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA   EXP-EDH-RSA-DES-CBC-SHA
- TLS_DHE_RSA_WITH_DES_CBC_SHA            EDH-RSA-DES-CBC-SHA
- TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA       EDH-RSA-DES-CBC3-SHA
+ TLS_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA   EXP-DHE-DSS-DES-CBC-SHA
+ TLS_DHE_DSS_WITH_DES_CBC_SHA            DHE-DSS-CBC-SHA
+ TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA       DHE-DSS-DES-CBC3-SHA
+ TLS_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA   EXP-DHE-RSA-DES-CBC-SHA
+ TLS_DHE_RSA_WITH_DES_CBC_SHA            DHE-RSA-DES-CBC-SHA
+ TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA       DHE-RSA-DES-CBC3-SHA
 
  TLS_DH_anon_EXPORT_WITH_RC4_40_MD5      EXP-ADH-RC4-MD5
  TLS_DH_anon_WITH_RC4_128_MD5            ADH-RC4-MD5
