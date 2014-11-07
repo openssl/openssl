@@ -911,7 +911,7 @@ const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
 
 #if defined(OPENSSL_CPUID_OBJ) && (defined(__arm__) || defined(__arm) || defined(__aarch64__))
 #include "arm_arch.h"
-#if __ARM_ARCH__>=7
+#if __ARM_MAX_ARCH__>=7
 # if defined(BSAES_ASM)
 #  define BSAES_CAPABLE	(OPENSSL_armcap_P & ARMV7_NEON)
 # endif
