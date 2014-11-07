@@ -3,69 +3,6 @@
 .text
 .code	32
 
-@ Special note about using .byte directives to encode instructions.
-@ Initial reason for hand-coding instructions was to allow module to
-@ be compilable by legacy tool-chains. At later point it was pointed
-@ out that since ARMv7, instructions are always encoded in little-endian
-@ order, therefore one has to opt for endian-neutral presentation.
-@ Contemporary tool-chains offer .inst directive for this purpose,
-@ but not legacy ones. Therefore .byte. But there is an exception,
-@ namely ARMv7-R profile still allows for big-endian encoding even for
-@ instructions. This raises the question what if probe instructions
-@ appear executable to such processor operating in big-endian order?
-@ They have to be chosen in a way that avoids this problem. As failed
-@ NEON probe disables a number of other probes we have to ensure that
-@ only NEON probe instruction doesn't appear executable in big-endian
-@ order, therefore 'vorr q8,q8,q8', and not some other register. The
-@ only probe that is not bypassed on failed NEON probe is _armv7_tick,
-@ where you'll spot 'mov r0,r6' that serves this purpose. Basic idea is
-@ that if fetched in alternative byte oder instruction should crash to
-@ denote lack of probed capability...
-
-.align	5
-.global	_armv7_neon_probe
-.type	_armv7_neon_probe,%function
-_armv7_neon_probe:
-	.byte	0xf0,0x01,0x60,0xf2	@ vorr	q8,q8,q8
-	.byte	0x1e,0xff,0x2f,0xe1	@ bx	lr
-.size	_armv7_neon_probe,.-_armv7_neon_probe
-
-.global	_armv7_tick
-.type	_armv7_tick,%function
-_armv7_tick:
-	.byte	0x06,0x00,0xa0,0xe1	@ mov	r0,r6
-	.byte	0x1e,0x0f,0x51,0xec	@ mrrc	p15,1,r0,r1,c14	@ CNTVCT
-	.byte	0x1e,0xff,0x2f,0xe1	@ bx	lr
-	nop
-.size	_armv7_tick,.-_armv7_tick
-
-.global	_armv8_aes_probe
-.type	_armv8_aes_probe,%function
-_armv8_aes_probe:
-	.byte	0x00,0x03,0xb0,0xf3	@ aese.8	q0,q0
-	.byte	0x1e,0xff,0x2f,0xe1	@ bx	lr
-.size	_armv8_aes_probe,.-_armv8_aes_probe
-
-.global	_armv8_sha1_probe
-.type	_armv8_sha1_probe,%function
-_armv8_sha1_probe:
-	.byte	0x40,0x0c,0x00,0xf2	@ sha1c.32	q0,q0,q0
-	.byte	0x1e,0xff,0x2f,0xe1	@ bx	lr
-.size	_armv8_sha1_probe,.-_armv8_sha1_probe
-
-.global	_armv8_sha256_probe
-.type	_armv8_sha256_probe,%function
-_armv8_sha256_probe:
-	.byte	0x40,0x0c,0x00,0xf3	@ sha256h.32	q0,q0,q0
-	.byte	0x1e,0xff,0x2f,0xe1	@ bx lr
-.size	_armv8_sha256_probe,.-_armv8_sha256_probe
-.global	_armv8_pmull_probe
-.type	_armv8_pmull_probe,%function
-_armv8_pmull_probe:
-	.byte	0x00,0x0e,0xa0,0xf2	@ vmull.p64	q0,d0,d0
-	.byte	0x1e,0xff,0x2f,0xe1	@ bx	lr
-.size	_armv8_pmull_probe,.-_armv8_pmull_probe
-
 .align	5
 .global	OPENSSL_atomic_add
 .type	OPENSSL_atomic_add,%function
@@ -139,30 +76,81 @@ OPENSSL_cleanse:
 #endif
 .size	OPENSSL_cleanse,.-OPENSSL_cleanse
 
+#if __ARM_MAX_ARCH__>=7
+.arch	armv7-a
+.fpu	neon
+
+.align	5
+.global	_armv7_neon_probe
+.type	_armv7_neon_probe,%function
+_armv7_neon_probe:
+	vorr	q0,q0,q0
+	bx	lr
+.size	_armv7_neon_probe,.-_armv7_neon_probe
+
+.global	_armv7_tick
+.type	_armv7_tick,%function
+_armv7_tick:
+	mrrc	p15,1,r0,r1,c14		@ CNTVCT
+	bx	lr
+.size	_armv7_tick,.-_armv7_tick
+
+.global	_armv8_aes_probe
+.type	_armv8_aes_probe,%function
+_armv8_aes_probe:
+	.byte	0x00,0x03,0xb0,0xf3	@ aese.8	q0,q0
+	bx	lr
+.size	_armv8_aes_probe,.-_armv8_aes_probe
+
+.global	_armv8_sha1_probe
+.type	_armv8_sha1_probe,%function
+_armv8_sha1_probe:
+	.byte	0x40,0x0c,0x00,0xf2	@ sha1c.32	q0,q0,q0
+	bx	lr
+.size	_armv8_sha1_probe,.-_armv8_sha1_probe
+
+.global	_armv8_sha256_probe
+.type	_armv8_sha256_probe,%function
+_armv8_sha256_probe:
+	.byte	0x40,0x0c,0x00,0xf3	@ sha256h.32	q0,q0,q0
+	bx	lr
+.size	_armv8_sha256_probe,.-_armv8_sha256_probe
+.global	_armv8_pmull_probe
+.type	_armv8_pmull_probe,%function
+_armv8_pmull_probe:
+	.byte	0x00,0x0e,0xa0,0xf2	@ vmull.p64	q0,d0,d0
+	bx	lr
+.size	_armv8_pmull_probe,.-_armv8_pmull_probe
+#endif
+
 .global	OPENSSL_wipe_cpu
 .type	OPENSSL_wipe_cpu,%function
 OPENSSL_wipe_cpu:
+#if __ARM_MAX_ARCH__>=7
 	ldr	r0,.LOPENSSL_armcap
 	adr	r1,.LOPENSSL_armcap
 	ldr	r0,[r1,r0]
+#endif
 	eor	r2,r2,r2
 	eor	r3,r3,r3
 	eor	ip,ip,ip
+#if __ARM_MAX_ARCH__>=7
 	tst	r0,#1
 	beq	.Lwipe_done
-	.byte	0x50,0x01,0x00,0xf3	@ veor	q0, q0, q0
-	.byte	0x52,0x21,0x02,0xf3	@ veor	q1, q1, q1
-	.byte	0x54,0x41,0x04,0xf3	@ veor	q2, q2, q2
-	.byte	0x56,0x61,0x06,0xf3	@ veor	q3, q3, q3
-	.byte	0xf0,0x01,0x40,0xf3	@ veor	q8, q8, q8
-	.byte	0xf2,0x21,0x42,0xf3	@ veor	q9, q9, q9
-	.byte	0xf4,0x41,0x44,0xf3	@ veor	q10, q10, q10
-	.byte	0xf6,0x61,0x46,0xf3	@ veor	q11, q11, q11
-	.byte	0xf8,0x81,0x48,0xf3	@ veor	q12, q12, q12
-	.byte	0xfa,0xa1,0x4a,0xf3	@ veor	q13, q13, q13
-	.byte	0xfc,0xc1,0x4c,0xf3	@ veor	q14, q14, q14
-	.byte	0xfe,0xe1,0x4e,0xf3	@ veor	q14, q14, q14
+	veor	q0, q0, q0
+	veor	q1, q1, q1
+	veor	q2, q2, q2
+	veor	q3, q3, q3
+	veor	q8, q8, q8
+	veor	q9, q9, q9
+	veor	q10, q10, q10
+	veor	q11, q11, q11
+	veor	q12, q12, q12
+	veor	q13, q13, q13
+	veor	q14, q14, q14
+	veor	q15, q15, q15
 .Lwipe_done:
+#endif
 	mov	r0,sp
 #if __ARM_ARCH__>=5
 	bx	lr
@@ -200,8 +188,10 @@ OPENSSL_instrument_bus2:
 .size	OPENSSL_instrument_bus2,.-OPENSSL_instrument_bus2
 
 .align	5
+#if __ARM_MAX_ARCH__>=7
 .LOPENSSL_armcap:
 .word	OPENSSL_armcap_P-.LOPENSSL_armcap
+#endif
 #if __ARM_ARCH__>=6
 .align	5
 #else

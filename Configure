@@ -350,8 +350,34 @@ my %table=(
 # throw in -D[BL]_ENDIAN, whichever appropriate...
 "linux-generic32","gcc:-DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-ppc",	"gcc:-DB_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_RISC1 DES_UNROLL:${ppc32_asm}:linux32:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-# It's believed that majority of ARM toolchains predefine appropriate -march.
-# If you compiler does not, do complement config command line with one!
+
+#######################################################################
+# Note that -march is not among compiler options in below linux-armv4
+# target line. Not specifying one is intentional to give you choice to:
+#
+# a) rely on your compiler default by not specifying one;
+# b) specify your target platform explicitly for optimal performance,
+#    e.g. -march=armv6 or -march=armv7-a;
+# c) build "universal" binary that targets *range* of platforms by
+#    specifying minimum and maximum supported architecture;
+#
+# As for c) option. It actually makes no sense to specify maximum to be
+# less than ARMv7, because it's the least requirement for run-time
+# switch between platform-specific code paths. And without run-time
+# switch performance would be equivalent to one for minimum. Secondly,
+# there are some natural limitations that you'd have to accept and
+# respect. Most notably you can *not* build "universal" binary for
+# big-endian platform. This is because ARMv7 processor always picks
+# instructions in little-endian order. Another similar limitation is
+# that -mthumb can't "cross" -march=armv6t2 boundary, because that's
+# where it became Thumb-2. Well, this limitation is a bit artificial,
+# because it's not really impossible, but it's deemed too tricky to
+# support. And of course you have to be sure that your binutils are
+# actually up to the task of handling maximum target platform. With all
+# this in mind here is an example of how to configure "universal" build:
+#
+#       ./Configure linux-armv4 -march=armv6 -D__ARM_MAX_ARCH__=8
+#
 "linux-armv4",	"gcc:-DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${armv4_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-aarch64","gcc:-DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${aarch64_asm}:linux64:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 # Configure script adds minimally required -march for assembly support,
