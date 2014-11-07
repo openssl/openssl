@@ -7,8 +7,12 @@
 
 #include "arm_arch.h"
 
-unsigned int OPENSSL_armcap_P;
+unsigned int OPENSSL_armcap_P=0;
 
+#if __ARM_MAX_ARCH__<7
+void OPENSSL_cpuid_setup(void) {}
+unsigned long OPENSSL_rdtsc(void) { return 0; }
+#else
 static sigset_t all_masked;
 
 static sigjmp_buf ill_jmp;
@@ -155,3 +159,4 @@ void OPENSSL_cpuid_setup(void)
 	sigaction (SIGILL,&ill_oact,NULL);
 	sigprocmask(SIG_SETMASK,&oset,NULL);
 	}
+#endif

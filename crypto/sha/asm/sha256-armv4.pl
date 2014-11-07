@@ -177,8 +177,10 @@ K256:
 .word	0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
 .size	K256,.-K256
 .word	0				@ terminator
+#if __ARM_MAX_ARCH__>=7
 .LOPENSSL_armcap:
 .word	OPENSSL_armcap_P-sha256_block_data_order
+#endif
 .align	5
 
 .global	sha256_block_data_order
@@ -186,7 +188,7 @@ K256:
 sha256_block_data_order:
 	sub	r3,pc,#8		@ sha256_block_data_order
 	add	$len,$inp,$len,lsl#6	@ len to point at the end of inp
-#if __ARM_ARCH__>=7
+#if __ARM_MAX_ARCH__>=7
 	ldr	r12,.LOPENSSL_armcap
 	ldr	r12,[r3,r12]		@ OPENSSL_armcap_P
 	tst	r12,#ARMV8_SHA256
@@ -423,7 +425,8 @@ sub body_00_15 () {
 }
 
 $code.=<<___;
-#if __ARM_ARCH__>=7
+#if __ARM_MAX_ARCH__>=7
+.arch	armv7-a
 .fpu	neon
 
 .type	sha256_block_data_order_neon,%function
@@ -545,7 +548,7 @@ my ($W0,$W1,$ABCD_SAVE,$EFGH_SAVE)=map("q$_",(12..15));
 my $Ktbl="r3";
 
 $code.=<<___;
-#if __ARM_ARCH__>=7
+#if __ARM_MAX_ARCH__>=7
 .type	sha256_block_data_order_armv8,%function
 .align	5
 sha256_block_data_order_armv8:
@@ -616,7 +619,9 @@ ___
 $code.=<<___;
 .asciz  "SHA256 block transform for ARMv4/NEON/ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
 .align	2
+#if __ARM_MARCH_ARCH__>=7
 .comm   OPENSSL_armcap_P,4,4
+#endif
 ___
 
 {   my  %opcode = (

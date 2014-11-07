@@ -48,6 +48,18 @@
 # endif
 #endif
 
+#if !defined(__ARM_MAX_ARCH__)
+# define __ARM_MAX_ARCH__ __ARM_ARCH__
+#endif
+
+#if __ARM_MAX_ARCH__<__ARM_ARCH__
+# error "__ARM_MAX_ARCH__ can't be less than __ARM_ARCH__"
+#elif __ARM_MAX_ARCH__!=__ARM_ARCH__
+# if __ARM_ARCH__<7 && __ARM_MAX_ARCH__>=7 && defined(__ARMEB__)
+#  error "can't build universal big-endian binary"
+# endif
+#endif
+
 #if !__ASSEMBLER__
 extern unsigned int OPENSSL_armcap_P;
 #endif
