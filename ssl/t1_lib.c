@@ -312,7 +312,7 @@ static const unsigned char suiteb_curves[] =
 
 int tls1_ec_curve_id2nid(int curve_id)
 	{
-	/* ECC curves from draft-ietf-tls-ecc-12.txt (Oct. 17, 2005) */
+	/* ECC curves from RFC 4492 */
 	if ((curve_id < 1) || ((unsigned int)curve_id >
 				sizeof(nid_list)/sizeof(nid_list[0])))
 		return 0;
@@ -321,7 +321,7 @@ int tls1_ec_curve_id2nid(int curve_id)
 
 int tls1_ec_nid2curve_id(int nid)
 	{
-	/* ECC curves from draft-ietf-tls-ecc-12.txt (Oct. 17, 2005) */
+	/* ECC curves from RFC 4492 */
 	switch (nid)
 		{
 	case NID_sect163k1: /* sect163k1 (1) */
@@ -1290,11 +1290,6 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf, unsigned c
 
 		plistlen = etmp - ret - 4;
 
-		/* NB: draft-ietf-tls-ecc-12.txt uses a one-byte prefix for
-		 * elliptic_curve_list, but the examples use two bytes.
-		 * http://www1.ietf.org/mail-archive/web/tls/current/msg00538.html
-		 * resolves this to two bytes.
-		 */
 		s2n(plistlen + 2, ret);
 		s2n(plistlen, ret);
 		ret+=plistlen;
