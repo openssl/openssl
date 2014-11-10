@@ -129,7 +129,7 @@ static inline int constant_time_select_int(unsigned int mask, int a, int b);
 
 static inline unsigned int constant_time_msb(unsigned int a)
 	{
-	return -(a >> (sizeof(unsigned int) * 8 - 1));
+	return 0-(a >> (sizeof(a) * 8 - 1));
 	}
 
 static inline unsigned int constant_time_lt(unsigned int a, unsigned int b)
