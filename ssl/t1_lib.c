@@ -113,6 +113,9 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
+#ifdef OPENSSL_NO_EC2M
+#include <openssl/ec.h>
+#endif
 #include <openssl/ocsp.h>
 #include <openssl/rand.h>
 #include "ssl_locl.h"
@@ -260,31 +263,43 @@ static const unsigned char ecformats_default[] =
 
 static const unsigned char eccurves_default[] =
 	{
+#ifndef OPENSSL_NO_EC2M
 		0,14, /* sect571r1 (14) */ 
 		0,13, /* sect571k1 (13) */ 
+#endif
 		0,25, /* secp521r1 (25) */	
 		0,28, /* brainpool512r1 (28) */	
+#ifndef OPENSSL_NO_EC2M
 		0,11, /* sect409k1 (11) */ 
 		0,12, /* sect409r1 (12) */
+#endif
 		0,27, /* brainpoolP384r1 (27) */	
 		0,24, /* secp384r1 (24) */
+#ifndef OPENSSL_NO_EC2M
 		0,9,  /* sect283k1 (9) */
 		0,10, /* sect283r1 (10) */ 
+#endif
 		0,26, /* brainpoolP256r1 (26) */	
 		0,22, /* secp256k1 (22) */ 
 		0,23, /* secp256r1 (23) */ 
+#ifndef OPENSSL_NO_EC2M
 		0,8,  /* sect239k1 (8) */ 
 		0,6,  /* sect233k1 (6) */
 		0,7,  /* sect233r1 (7) */ 
+#endif
 		0,20, /* secp224k1 (20) */ 
 		0,21, /* secp224r1 (21) */
+#ifndef OPENSSL_NO_EC2M
 		0,4,  /* sect193r1 (4) */ 
 		0,5,  /* sect193r2 (5) */ 
+#endif
 		0,18, /* secp192k1 (18) */
 		0,19, /* secp192r1 (19) */ 
+#ifndef OPENSSL_NO_EC2M
 		0,1,  /* sect163k1 (1) */
 		0,2,  /* sect163r1 (2) */
 		0,3,  /* sect163r2 (3) */
+#endif
 		0,15, /* secp160k1 (15) */
 		0,16, /* secp160r1 (16) */ 
 		0,17, /* secp160r2 (17) */ 
@@ -300,37 +315,49 @@ static const unsigned char suiteb_curves[] =
 /* Brainpool not allowed in FIPS mode */
 static const unsigned char fips_curves_default[] =
 	{
-		0,14, /* sect571r1 (14) */ 
-		0,13, /* sect571k1 (13) */ 
-		0,25, /* secp521r1 (25) */	
-		0,11, /* sect409k1 (11) */ 
+#ifndef OPENSSL_NO_EC2M
+		0,14, /* sect571r1 (14) */
+		0,13, /* sect571k1 (13) */
+#endif
+		0,25, /* secp521r1 (25) */
+#ifndef OPENSSL_NO_EC2M
+		0,11, /* sect409k1 (11) */
 		0,12, /* sect409r1 (12) */
+#endif
 		0,24, /* secp384r1 (24) */
+#ifndef OPENSSL_NO_EC2M
 		0,9,  /* sect283k1 (9) */
-		0,10, /* sect283r1 (10) */ 
-		0,22, /* secp256k1 (22) */ 
-		0,23, /* secp256r1 (23) */ 
-		0,8,  /* sect239k1 (8) */ 
+		0,10, /* sect283r1 (10) */
+#endif
+		0,22, /* secp256k1 (22) */
+		0,23, /* secp256r1 (23) */
+#ifndef OPENSSL_NO_EC2M
+		0,8,  /* sect239k1 (8) */
 		0,6,  /* sect233k1 (6) */
-		0,7,  /* sect233r1 (7) */ 
+		0,7,  /* sect233r1 (7) */
+#endif
 		0,20, /* secp224k1 (20) */ 
 		0,21, /* secp224r1 (21) */
-		0,4,  /* sect193r1 (4) */ 
-		0,5,  /* sect193r2 (5) */ 
+#ifndef OPENSSL_NO_EC2M
+		0,4,  /* sect193r1 (4) */
+		0,5,  /* sect193r2 (5) */
+#endif
 		0,18, /* secp192k1 (18) */
-		0,19, /* secp192r1 (19) */ 
+		0,19, /* secp192r1 (19) */
+#ifndef OPENSSL_NO_EC2M
 		0,1,  /* sect163k1 (1) */
 		0,2,  /* sect163r1 (2) */
 		0,3,  /* sect163r2 (3) */
+#endif
 		0,15, /* secp160k1 (15) */
-		0,16, /* secp160r1 (16) */ 
-		0,17, /* secp160r2 (17) */ 
+		0,16, /* secp160r1 (16) */
+		0,17, /* secp160r2 (17) */
 	};
 #endif
 
 int tls1_ec_curve_id2nid(int curve_id)
 	{
-	/* ECC curves from draft-ietf-tls-ecc-12.txt (Oct. 17, 2005) */
+	/* ECC curves from RFC 4492 */
 	if ((curve_id < 1) || ((unsigned int)curve_id >
 				sizeof(nid_list)/sizeof(nid_list[0])))
 		return 0;
@@ -339,7 +366,7 @@ int tls1_ec_curve_id2nid(int curve_id)
 
 int tls1_ec_nid2curve_id(int nid)
 	{
-	/* ECC curves from draft-ietf-tls-ecc-12.txt (Oct. 17, 2005) */
+	/* ECC curves from RFC 4492 */
 	switch (nid)
 		{
 	case NID_sect163k1: /* sect163k1 (1) */
@@ -555,6 +582,10 @@ int tls1_set_curves(unsigned char **pext, size_t *pextlen,
 	 * while curve ids < 32 
 	 */
 	unsigned long dup_list = 0;
+#ifdef OPENSSL_NO_EC2M
+	EC_GROUP *curve;
+#endif
+
 	clist = OPENSSL_malloc(ncurves * 2);
 	if (!clist)
 		return 0;
@@ -570,6 +601,19 @@ int tls1_set_curves(unsigned char **pext, size_t *pextlen,
 			OPENSSL_free(clist);
 			return 0;
 			}
+#endif
+#ifdef OPENSSL_NO_EC2M
+		curve = EC_GROUP_new_by_curve_name(curves[i]);
+		if(!curve ||
+			EC_METHOD_get_field_type(EC_GROUP_method_of(curve))
+				== NID_X9_62_characteristic_two_field)
+			{
+				if(curve) EC_GROUP_free(curve);
+				OPENSSL_free(clist);
+				return 0;
+			}
+		else
+			EC_GROUP_free(curve);
 #endif
 		idmask = 1L << id;
 		if (!id || (dup_list & idmask))
@@ -1306,12 +1350,6 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf, unsigned c
 		
 		s2n(TLSEXT_TYPE_elliptic_curves,ret);
 		s2n(plistlen + 2, ret);
-
-		/* NB: draft-ietf-tls-ecc-12.txt uses a one-byte prefix for
-		 * elliptic_curve_list, but the examples use two bytes.
-		 * http://www1.ietf.org/mail-archive/web/tls/current/msg00538.html
-		 * resolves this to two bytes.
-		 */
 		s2n(plistlen, ret);
 		memcpy(ret, plist, plistlen);
 		ret+=plistlen;
