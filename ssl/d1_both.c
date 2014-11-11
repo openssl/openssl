@@ -1360,7 +1360,7 @@ dtls1_process_heartbeat(SSL *s)
 			&s->s3->rrec.data[0], s->s3->rrec.length,
 			s, s->msg_callback_arg);
 
-	/* Read type and payload length first */
+	/* Read type and payload length */
 	if (1 + 2 + 16 > s->s3->rrec.length)
 		return 0; /* silently discard */
 	if (s->s3->rrec.length > SSL3_RT_MAX_PLAIN_LENGTH)
