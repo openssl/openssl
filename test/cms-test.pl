@@ -83,6 +83,7 @@ my $halt_err = 1;
 
 my $badcmd = 0;
 my $no_ec;
+my $no_ec2m;
 my $ossl8 = `$ossl_path version -v` =~ /0\.9\.8/;
 
 system ("$ossl_path no-ec >/dev/null");
@@ -98,7 +99,21 @@ else
 	{
 	die "Error checking for EC support\n";
 	}
-
+    
+system ("$ossl_path no-ec2m >/dev/null");
+if ($? == 0)
+	{
+	$no_ec2m = 1;
+	}
+elsif ($? == 256)
+	{
+	$no_ec2m = 0;
+	}
+else
+	{
+	die "Error checking for EC2M support\n";
+	}
+    
 my @smime_pkcs7_tests = (
 
     [
@@ -490,6 +505,11 @@ sub run_smime_tests {
 	if ($no_ec && $tnam =~ /ECDH/)
 		{
 		print "$tnam: skipped, EC disabled\n";
+		next;
+		}
+	if ($no_ec2m && $tnam =~ /K-283/)
+		{
+		print "$tnam: skipped, EC2M disabled\n";
 		next;
 		}
         system("$scmd$rscmd$redir");
