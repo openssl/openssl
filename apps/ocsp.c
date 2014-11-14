@@ -622,6 +622,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-nonce             add OCSP nonce to request\n");
 		BIO_printf (bio_err, "-no_nonce          don't add OCSP nonce to request\n");
 		BIO_printf (bio_err, "-url URL           OCSP responder URL\n");
+		BIO_printf (bio_err, "-header name value add the specified header to the HTTP request\n");
 		BIO_printf (bio_err, "-host host:n       send OCSP request to host on port n\n");
 		BIO_printf (bio_err, "-path              path to use in OCSP request\n");
 		BIO_printf (bio_err, "-CApath dir        trusted certificates directory\n");
