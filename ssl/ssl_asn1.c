@@ -117,6 +117,7 @@ typedef struct ssl_session_asn1_st
 #ifndef OPENSSL_NO_SRP
 	ASN1_OCTET_STRING srp_username;
 #endif /* OPENSSL_NO_SRP */
+	ASN1_OCTET_STRING extended_master_key;
 	} SSL_SESSION_ASN1;
 
 int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
@@ -136,6 +137,7 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 #ifndef OPENSSL_NO_SRP
 	int v12=0;
 #endif
+	int v13=0;
 	long l;
 	SSL_SESSION_ASN1 a;
 	M_ASN1_I2D_vars(in);
@@ -282,6 +284,10 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 		}
 #endif /* OPENSSL_NO_SRP */
 
+	a.extended_master_key.length=1;
+	a.extended_master_key.type=V_ASN1_OCTET_STRING;
+	a.extended_master_key.data=&(in->extended_master_key);
+
 	M_ASN1_I2D_len(&(a.version),		i2d_ASN1_INTEGER);
 	M_ASN1_I2D_len(&(a.ssl_version),	i2d_ASN1_INTEGER);
 	M_ASN1_I2D_len(&(a.cipher),		i2d_ASN1_OCTET_STRING);
@@ -325,6 +331,7 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	if (in->srp_username)
         	M_ASN1_I2D_len_EXP_opt(&(a.srp_username), i2d_ASN1_OCTET_STRING,12,v12);
 #endif /* OPENSSL_NO_SRP */
+	M_ASN1_I2D_len_EXP_opt(&(a.extended_master_key), i2d_ASN1_OCTET_STRING,13,v13);
 
 	M_ASN1_I2D_seq_total();
 
@@ -373,6 +380,7 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	if (in->srp_username)
 		M_ASN1_I2D_put_EXP_opt(&(a.srp_username), i2d_ASN1_OCTET_STRING,12,v12);
 #endif /* OPENSSL_NO_SRP */
+	M_ASN1_I2D_put_EXP_opt(&(a.extended_master_key), i2d_ASN1_OCTET_STRING,13,v13);
 	M_ASN1_I2D_finish();
 	}
 
@@ -641,6 +649,21 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 	else
 		ret->srp_username=NULL;
 #endif /* OPENSSL_NO_SRP */
+
+	os.length=0;
+	os.data=NULL;
+	M_ASN1_D2I_get_EXP_opt(osp,d2i_ASN1_OCTET_STRING,13);
+	if (!os.data)
+		goto err;
+	if (os.length != 1)
+		{
+		OPENSSL_free(os.data);
+		goto err;
+		}
+	ret->extended_master_key=os.data[0];
+	OPENSSL_free(os.data);
+	os.length=0;
+	os.data=NULL;
 
 	M_ASN1_D2I_Finish(a,SSL_SESSION_free,SSL_F_D2I_SSL_SESSION);
 	}

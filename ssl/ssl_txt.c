@@ -165,6 +165,9 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 		{
 		if (BIO_printf(bp,"%02X",x->master_key[i]) <= 0) goto err;
 		}
+	if (BIO_printf(bp,"\n    Extended Master-Key: %s",
+			x->extended_master_key ? "Yes" : "No") <= 0)
+		goto err;
 	if (BIO_puts(bp,"\n    Key-Arg   : ") <= 0) goto err;
 	if (x->key_arg_length == 0)
 		{

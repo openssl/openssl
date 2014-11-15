@@ -173,8 +173,9 @@ extern "C" {
 /* SSLeay version number for ASN.1 encoding of the session information */
 /* Version 0 - initial version
  * Version 1 - added the optional peer certificate
+ * Version 2 - added extended master key information
  */
-#define SSL_SESSION_ASN1_VERSION 0x0001
+#define SSL_SESSION_ASN1_VERSION 0x0002
 
 /* text strings for the ciphers */
 #define SSL_TXT_NULL_WITH_MD5		SSL2_TXT_NULL_WITH_MD5			
@@ -488,7 +489,8 @@ struct ssl_method_st
  *	Ticket_lifetime_hint [9] EXPLICIT INTEGER, -- server's lifetime hint for session ticket
  *	Ticket [10]             EXPLICIT OCTET STRING, -- session ticket (clients only)
  *	Compression_meth [11]   EXPLICIT OCTET STRING, -- optional compression method
- *	SRP_username [ 12 ] EXPLICIT OCTET STRING -- optional SRP username
+ *	SRP_username [ 12 ] EXPLICIT OCTET STRING, -- optional SRP username
+ *	Extended_master_key [ 13 ]	EXPLICIT OCTET STRING	-- whether the master key is extended
  *	}
  * Look in ssl/ssl_asn1.c for more details
  * I'm using EXPLICIT tags so I can read the damn things using asn1parse :-).
@@ -571,6 +573,7 @@ struct ssl_session_st
 #ifndef OPENSSL_NO_SRP
 	char *srp_username;
 #endif
+	unsigned char extended_master_key;
 	};
 
 #endif
@@ -790,6 +793,8 @@ struct ssl_session_st
 
 #define SSL_get_secure_renegotiation_support(ssl) \
 	SSL_ctrl((ssl), SSL_CTRL_GET_RI_SUPPORT, 0, NULL)
+#define SSL_get_extended_master_secret_support(ssl) \
+	SSL_ctrl((ssl), SSL_CTRL_GET_EXT_MS_SUPPORT, 0, NULL)
 
 #ifndef OPENSSL_NO_HEARTBEATS
 #define SSL_heartbeat(ssl) \
@@ -1850,6 +1855,8 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CERT_SET_NEXT			2
 #define SSL_CERT_SET_SERVER			3
 
+
+#define SSL_CTRL_GET_EXT_MS_SUPPORT			91
 
 #define DTLSv1_get_timeout(ssl, arg) \
 	SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)

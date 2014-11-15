@@ -1094,7 +1094,8 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
 	unsigned char buff[SSL_MAX_MASTER_KEY_LENGTH];
 	const void *co = NULL, *so = NULL;
 	int col = 0, sol = 0;
-
+	unsigned char session_hash[SSL_MAX_DIGEST*EVP_MAX_MD_SIZE];
+	unsigned int session_hash_len;
 
 #ifdef KSSL_DEBUG
 	printf ("tls1_generate_master_secret(%p,%p, %p, %d)\n", s,out, p,len);
@@ -1112,6 +1113,24 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
 		}
 #endif
 
+	if (s->s3->extended_ms_seen)
+		{
+		session_hash_len =
+			ssl3_digest_handshake_log(s,
+				session_hash,
+				sizeof session_hash);
+		s->session->extended_master_key = 1;
+		tls1_PRF(ssl_get_algorithm2(s),
+			TLS_MD_EXTENDED_MASTER_SECRET_CONST,TLS_MD_EXTENDED_MASTER_SECRET_CONST_SIZE,
+			session_hash,session_hash_len,
+			co, col,
+			so, sol,
+			NULL,0,
+			p,len,
+			s->session->master_key,buff,sizeof buff);
+		}
+	else
+		{
 	tls1_PRF(ssl_get_algorithm2(s),
 		TLS_MD_MASTER_SECRET_CONST,TLS_MD_MASTER_SECRET_CONST_SIZE,
 		s->s3->client_random,SSL3_RANDOM_SIZE,
@@ -1120,13 +1139,22 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
 		so, sol,
 		p,len,
 		s->session->master_key,buff,sizeof buff);
+		}
 #ifdef SSL_DEBUG
 	fprintf(stderr, "Premaster Secret:\n");
 	BIO_dump_fp(stderr, (char *)p, len);
+	if (s->s3->extended_ms_seen)
+		{
+		fprintf(stderr, "Session Hash:\n");
+		BIO_dump_fp(stderr, (char *)session_hash, session_hash_len);
+		}
+	else
+		{
 	fprintf(stderr, "Client Random:\n");
 	BIO_dump_fp(stderr, (char *)s->s3->client_random, SSL3_RANDOM_SIZE);
 	fprintf(stderr, "Server Random:\n");
 	BIO_dump_fp(stderr, (char *)s->s3->server_random, SSL3_RANDOM_SIZE);
+		}
 	fprintf(stderr, "Master Secret:\n");
 	BIO_dump_fp(stderr, (char *)s->session->master_key, SSL3_MASTER_SECRET_SIZE);
 #endif
@@ -1215,6 +1243,8 @@ int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
 		 TLS_MD_SERVER_FINISH_CONST_SIZE) == 0) goto err1;
 	if (memcmp(val, TLS_MD_MASTER_SECRET_CONST,
 		 TLS_MD_MASTER_SECRET_CONST_SIZE) == 0) goto err1;
+	if (memcmp(val, TLS_MD_EXTENDED_MASTER_SECRET_CONST,
+		TLS_MD_EXTENDED_MASTER_SECRET_CONST_SIZE) == 0) goto err1;
 	if (memcmp(val, TLS_MD_KEY_EXPANSION_CONST,
 		 TLS_MD_KEY_EXPANSION_CONST_SIZE) == 0) goto err1;
 

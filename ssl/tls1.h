@@ -249,6 +249,11 @@ extern "C" {
  */
 #define TLSEXT_TYPE_encrypt_then_mac	22
 
+/* Extension type for Extended Master Secret
+ * https://tools.ietf.org/id/draft-ietf-tls-session-hash.txt
+ */
+ #define TLSEXT_TYPE_master_secret		23
+
 /* ExtensionType value from RFC4507 */
 #define TLSEXT_TYPE_session_ticket		35
 
@@ -779,7 +784,7 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
 
 #define TLS1_FINISH_MAC_LENGTH		12
 
-#define TLS_MD_MAX_CONST_SIZE			20
+#define TLS_MD_MAX_CONST_SIZE			22
 #define TLS_MD_CLIENT_FINISH_CONST		"client finished"
 #define TLS_MD_CLIENT_FINISH_CONST_SIZE		15
 #define TLS_MD_SERVER_FINISH_CONST		"server finished"
@@ -796,6 +801,8 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
 #define TLS_MD_IV_BLOCK_CONST_SIZE		8
 #define TLS_MD_MASTER_SECRET_CONST		"master secret"
 #define TLS_MD_MASTER_SECRET_CONST_SIZE		13
+#define TLS_MD_EXTENDED_MASTER_SECRET_CONST	"extended master secret"
+#define TLS_MD_EXTENDED_MASTER_SECRET_CONST_SIZE	22
 
 #ifdef CHARSET_EBCDIC
 #undef TLS_MD_CLIENT_FINISH_CONST
@@ -814,6 +821,8 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
 #define TLS_MD_IV_BLOCK_CONST         "\x49\x56\x20\x62\x6c\x6f\x63\x6b"  /*IV block*/
 #undef TLS_MD_MASTER_SECRET_CONST
 #define TLS_MD_MASTER_SECRET_CONST    "\x6d\x61\x73\x74\x65\x72\x20\x73\x65\x63\x72\x65\x74"  /*master secret*/
+#undef TLS_MD_EXTENDED_MASTER_SECRET_CONST
+#define TLS_MD_EXTENDED_MASTER_SECRET_CONST    "\x65\x78\x74\x65\x63\x64\x65\x64\x20\x6d\x61\x73\x74\x65\x72\x20\x73\x65\x63\x72\x65\x74"  /*extended master secret*/
 #endif
 
 /* TLS Session Ticket extension struct */

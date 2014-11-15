@@ -1209,6 +1209,10 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf, unsigned c
           ret += el;
         }
 
+		/* Add TLS extended master secret */
+		s2n(TLSEXT_TYPE_master_secret,ret);
+		s2n(0,ret);
+
 #ifndef OPENSSL_NO_SRP
 	/* Add SRP username if there is one */
 	if (s->srp_ctx.login != NULL)
@@ -1582,6 +1586,13 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf, unsigned c
           ret += el;
         }
 
+	/* Add extended master secret if we have received one */
+	if (s->s3->extended_ms_seen)
+		{
+		s2n(TLSEXT_TYPE_master_secret,ret);
+		s2n(0,ret);
+		}
+
 #ifndef OPENSSL_NO_EC
 	if (using_ecc)
 		{
@@ -1927,6 +1938,8 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 	s->s3->next_proto_neg_seen = 0;
 #endif
 
+	s->s3->extended_ms_seen = 0;
+
 	if (s->s3->alpn_selected)
 		{
 		OPENSSL_free(s->s3->alpn_selected);
@@ -2224,6 +2237,15 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 				return 0;
 			renegotiate_seen = 1;
 			}
+		else if (type == TLSEXT_TYPE_master_secret)
+			{
+			if (size != 0)
+				{
+				*al = SSL_AD_DECODE_ERROR;
+				return 0;
+				}
+			s->s3->extended_ms_seen = 1;
+			}
 		else if (type == TLSEXT_TYPE_signature_algorithms)
 			{
 			int dsize;
@@ -2508,6 +2530,8 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 	s->s3->next_proto_neg_seen = 0;
 #endif
 
+	s->s3->extended_ms_seen = 0;
+
 	if (s->s3->alpn_selected)
 		{
 		OPENSSL_free(s->s3->alpn_selected);
@@ -2733,6 +2757,15 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 			if(!ssl_parse_serverhello_renegotiate_ext(s, data, size, al))
 				return 0;
 			renegotiate_seen = 1;
+			}
+		else if (type == TLSEXT_TYPE_master_secret)
+			{
+			if (size!=0)
+				{
+				*al = SSL_AD_DECODE_ERROR;
+				return 0;
+				}
+			s->s3->extended_ms_seen = 1;
 			}
 #ifndef OPENSSL_NO_HEARTBEATS
 		else if (type == TLSEXT_TYPE_heartbeat)

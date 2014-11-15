@@ -2487,6 +2487,8 @@ int ssl3_send_client_key_exchange(SSL *s)
 	{
 	unsigned char *p;
 	int n;
+	unsigned char *final_pre_ms = NULL;
+	int final_pre_ms_len = 0;
 	unsigned long alg_k;
 #ifndef OPENSSL_NO_RSA
 	unsigned char *q;
@@ -2502,6 +2504,10 @@ int ssl3_send_client_key_exchange(SSL *s)
 	unsigned char *encodedPoint = NULL;
 	int encoded_pt_len = 0;
 	BN_CTX * bn_ctx = NULL;
+#endif
+
+#ifndef OPENSSL_NO_SRP
+	int is_srp_kex = 0;
 #endif
 
 	if (s->state == SSL3_ST_CW_KEY_EXCH_A)
@@ -2571,10 +2577,13 @@ int ssl3_send_client_key_exchange(SSL *s)
 				n+=2;
 				}
 
-			s->session->master_key_length=
-				s->method->ssl3_enc->generate_master_secret(s,
-					s->session->master_key,
-					tmp_buf,sizeof tmp_buf);
+			final_pre_ms = (unsigned char *)OPENSSL_malloc(sizeof tmp_buf);
+			if (final_pre_ms == NULL) {
+				OPENSSL_cleanse(tmp_buf,sizeof tmp_buf);
+				return(-1);
+			}
+			final_pre_ms_len = sizeof tmp_buf;
+			memcpy(final_pre_ms,tmp_buf,sizeof tmp_buf);
 			OPENSSL_cleanse(tmp_buf,sizeof tmp_buf);
 			}
 #endif
@@ -2703,12 +2712,15 @@ int ssl3_send_client_key_exchange(SSL *s)
 			p+=outl;
 			n+=outl + 2;
 
-			s->session->master_key_length=
-				s->method->ssl3_enc->generate_master_secret(s,
-					s->session->master_key,
-					tmp_buf, sizeof tmp_buf);
-
-			OPENSSL_cleanse(tmp_buf, sizeof tmp_buf);
+			final_pre_ms = (unsigned char *)OPENSSL_malloc(sizeof tmp_buf);
+			if (final_pre_ms == NULL) {
+				OPENSSL_cleanse(tmp_buf,sizeof tmp_buf);
+				OPENSSL_cleanse(epms, outl);
+				return(-1);
+			}
+			final_pre_ms_len = sizeof tmp_buf;
+			memcpy(final_pre_ms,tmp_buf,sizeof tmp_buf);
+			OPENSSL_cleanse(tmp_buf,sizeof tmp_buf);
 			OPENSSL_cleanse(epms, outl);
 			}
 #endif
@@ -2792,10 +2804,13 @@ int ssl3_send_client_key_exchange(SSL *s)
 				goto err;
 				}
 
-			/* generate master key from the result */
-			s->session->master_key_length=
-				s->method->ssl3_enc->generate_master_secret(s,
-					s->session->master_key,p,n);
+			final_pre_ms = (unsigned char *)OPENSSL_malloc(n);
+			if (final_pre_ms == NULL) {
+				memset(p,0,n);
+				return(-1);
+			}
+			final_pre_ms_len = n;
+			memcpy(final_pre_ms,p,n);
 			/* clean up */
 			memset(p,0,n);
 
@@ -2950,11 +2965,13 @@ int ssl3_send_client_key_exchange(SSL *s)
 				goto err;
 				}
 
-			/* generate master key from the result */
-			s->session->master_key_length = s->method->ssl3_enc \
-			    -> generate_master_secret(s, 
-				s->session->master_key,
-				p, n);
+			final_pre_ms = (unsigned char *)OPENSSL_malloc(n);
+			if (final_pre_ms == NULL) {
+				memset(p, 0, n);
+				return(-1);
+			}
+			final_pre_ms_len = n;
+			memcpy(final_pre_ms,p,n);
 
 			memset(p, 0, n); /* clean up */
 
@@ -3092,9 +3109,13 @@ int ssl3_send_client_key_exchange(SSL *s)
 				s->s3->flags |= TLS1_FLAGS_SKIP_CERT_VERIFY;
 				}
 			EVP_PKEY_CTX_free(pkey_ctx);
-			s->session->master_key_length=
-				s->method->ssl3_enc->generate_master_secret(s,
-					s->session->master_key,premaster_secret,32);
+			final_pre_ms = (unsigned char *)OPENSSL_malloc(32);
+			if (final_pre_ms == NULL) {
+				EVP_PKEY_free(pub_key);
+				return(-1);
+			}
+			final_pre_ms_len = 32;
+			memcpy(final_pre_ms,premaster_secret,32);
 			EVP_PKEY_free(pub_key);
 
 			}
@@ -3124,11 +3145,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 				goto err;
 				}
 
-			if ((s->session->master_key_length = SRP_generate_client_master_secret(s,s->session->master_key))<0)
-				{
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
-				goto err;
-				}
+			is_srp_kex = 1;
 			}
 #endif
 #ifndef OPENSSL_NO_PSK
@@ -3206,13 +3223,17 @@ int ssl3_send_client_key_exchange(SSL *s)
 				goto psk_err;
 				}
 
-			s->session->master_key_length =
-				s->method->ssl3_enc->generate_master_secret(s,
-					s->session->master_key,
-					psk_or_pre_ms, pre_ms_len);
+			final_pre_ms = (unsigned char *)OPENSSL_malloc(pre_ms_len);
+			if (final_pre_ms == NULL) {
+				psk_err =1;
+				goto psk_err;
+			}
+			final_pre_ms_len = pre_ms_len;
+			memcpy(final_pre_ms,psk_or_pre_ms,pre_ms_len);
 			s2n(identity_len, p);
 			memcpy(p, identity, identity_len);
 			n = 2 + identity_len;
+
 			psk_err = 0;
 		psk_err:
 			OPENSSL_cleanse(identity, sizeof(identity));
@@ -3238,7 +3259,32 @@ int ssl3_send_client_key_exchange(SSL *s)
 		}
 
 	/* SSL3_ST_CW_KEY_EXCH_B */
-	return ssl_do_write(s);
+	if (ssl_do_write(s) == 1)
+			{
+#ifndef OPENSSL_NO_SRP
+			if (is_srp_kex)
+				{
+				if ((s->session->master_key_length = SRP_generate_client_master_secret(s,s->session->master_key))<0)
+					{
+					SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
+					goto err;
+					}
+				}
+			else
+				{
+#endif
+			s->session->master_key_length =
+					s->method->ssl3_enc->generate_master_secret(s,
+							s->session->master_key,
+							final_pre_ms, final_pre_ms_len);
+			OPENSSL_cleanse(final_pre_ms,final_pre_ms_len);
+			OPENSSL_free(final_pre_ms);
+#ifndef OPENSSL_NO_SRP
+				}
+#endif
+			return (1);
+			}
+
 err:
 #ifndef OPENSSL_NO_ECDH
 	BN_CTX_free(bn_ctx);
