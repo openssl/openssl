@@ -975,10 +975,18 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
 	/* Activate SCTP-AUTH for DATA and FORWARD-TSN chunks */
 	auth.sauth_chunk = OPENSSL_SCTP_DATA_CHUNK_TYPE;
 	ret = setsockopt(fd, IPPROTO_SCTP, SCTP_AUTH_CHUNK, &auth, sizeof(struct sctp_authchunk));
-	OPENSSL_assert(ret >= 0);
+	if (ret < 0)
+		{
+		BIO_vfree(bio);
+		return(NULL);
+		}
 	auth.sauth_chunk = OPENSSL_SCTP_FORWARD_CUM_TSN_CHUNK_TYPE;
 	ret = setsockopt(fd, IPPROTO_SCTP, SCTP_AUTH_CHUNK, &auth, sizeof(struct sctp_authchunk));
-	OPENSSL_assert(ret >= 0);
+	if (ret < 0)
+		{
+		BIO_vfree(bio);
+		return(NULL);
+		}
 
 	/* Test if activation was successful. When using accept(),
 	 * SCTP-AUTH has to be activated for the listening socket
@@ -987,7 +995,13 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
 	authchunks = OPENSSL_malloc(sockopt_len);
 	memset(authchunks, 0, sizeof(sockopt_len));
 	ret = getsockopt(fd, IPPROTO_SCTP, SCTP_LOCAL_AUTH_CHUNKS, authchunks, &sockopt_len);
-	OPENSSL_assert(ret >= 0);
+
+	if (ret < 0)
+		{
+		OPENSSL_free(authchunks);
+		BIO_vfree(bio);
+		return(NULL);
+		}
 
 	for (p = (unsigned char*) authchunks->gauth_chunks;
 	     p < (unsigned char*) authchunks + sockopt_len;
@@ -1009,16 +1023,28 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
 	event.se_type = SCTP_AUTHENTICATION_EVENT;
 	event.se_on = 1;
 	ret = setsockopt(fd, IPPROTO_SCTP, SCTP_EVENT, &event, sizeof(struct sctp_event));
-	OPENSSL_assert(ret >= 0);
+	if (ret < 0)
+		{
+		BIO_vfree(bio);
+		return(NULL);
+		}
 #else
 	sockopt_len = (socklen_t) sizeof(struct sctp_event_subscribe);
 	ret = getsockopt(fd, IPPROTO_SCTP, SCTP_EVENTS, &event, &sockopt_len);
-	OPENSSL_assert(ret >= 0);
+	if (ret < 0)
+		{
+		BIO_vfree(bio);
+		return(NULL);
+		}
 
 	event.sctp_authentication_event = 1;
 
 	ret = setsockopt(fd, IPPROTO_SCTP, SCTP_EVENTS, &event, sizeof(struct sctp_event_subscribe));
-	OPENSSL_assert(ret >= 0);
+	if (ret < 0)
+		{
+		BIO_vfree(bio);
+		return(NULL);
+		}
 #endif
 #endif
 
@@ -1026,7 +1052,11 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
 	 * larger than the max record size of 2^14 + 2048 + 13
 	 */
 	ret = setsockopt(fd, IPPROTO_SCTP, SCTP_PARTIAL_DELIVERY_POINT, &optval, sizeof(optval));
-	OPENSSL_assert(ret >= 0);
+	if (ret < 0)
+		{
+		BIO_vfree(bio);
+		return(NULL);
+		}
 
 	return(bio);
 	}
@@ -1191,16 +1221,28 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
 					event.se_type = SCTP_SENDER_DRY_EVENT;
 					event.se_on = 0;
 					i = setsockopt(b->num, IPPROTO_SCTP, SCTP_EVENT, &event, sizeof(struct sctp_event));
-					OPENSSL_assert(i >= 0);
+					if (i < 0)
+						{
+						ret = i;
+						break;
+						}
 #else
 					eventsize = sizeof(struct sctp_event_subscribe);
 					i = getsockopt(b->num, IPPROTO_SCTP, SCTP_EVENTS, &event, &eventsize);
-					OPENSSL_assert(i >= 0);
+					if (i < 0)
+						{
+						ret = i;
+						break;
+						}
 
 					event.sctp_sender_dry_event = 0;
 
 					i = setsockopt(b->num, IPPROTO_SCTP, SCTP_EVENTS, &event, sizeof(struct sctp_event_subscribe));
-					OPENSSL_assert(i >= 0);
+					if (i < 0)
+						{
+						ret = i;
+						break;
+						}
 #endif
 					}
 
@@ -1233,8 +1275,8 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
 			 */
 			optlen = (socklen_t) sizeof(int);
 			ret = getsockopt(b->num, SOL_SOCKET, SO_RCVBUF, &optval, &optlen);
-			OPENSSL_assert(ret >= 0);
-			OPENSSL_assert(optval >= 18445);
+			if (ret >= 0)
+				OPENSSL_assert(optval >= 18445);
 
 			/* Test if SCTP doesn't partially deliver below
 			 * max record size (2^14 + 2048 + 13)
@@ -1242,8 +1284,8 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
 			optlen = (socklen_t) sizeof(int);
 			ret = getsockopt(b->num, IPPROTO_SCTP, SCTP_PARTIAL_DELIVERY_POINT,
 			                 &optval, &optlen);
-			OPENSSL_assert(ret >= 0);
-			OPENSSL_assert(optval >= 18445);
+			if (ret >= 0)
+				OPENSSL_assert(optval >= 18445);
 
 			/* Partially delivered notification??? Probably a bug.... */
 			OPENSSL_assert(!(msg.msg_flags & MSG_NOTIFICATION));
@@ -1277,15 +1319,15 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
 			authchunks = OPENSSL_malloc(optlen);
 			memset(authchunks, 0, sizeof(optlen));
 			ii = getsockopt(b->num, IPPROTO_SCTP, SCTP_PEER_AUTH_CHUNKS, authchunks, &optlen);
-			OPENSSL_assert(ii >= 0);
 
-			for (p = (unsigned char*) authchunks->gauth_chunks;
-				 p < (unsigned char*) authchunks + optlen;
-				 p += sizeof(uint8_t))
-				{
-				if (*p == OPENSSL_SCTP_DATA_CHUNK_TYPE) auth_data = 1;
-				if (*p == OPENSSL_SCTP_FORWARD_CUM_TSN_CHUNK_TYPE) auth_forward = 1;
-				}
+			if (ii >= 0)
+				for (p = (unsigned char*) authchunks->gauth_chunks;
+				     p < (unsigned char*) authchunks + optlen;
+				     p += sizeof(uint8_t))
+					{
+					if (*p == OPENSSL_SCTP_DATA_CHUNK_TYPE) auth_data = 1;
+					if (*p == OPENSSL_SCTP_FORWARD_CUM_TSN_CHUNK_TYPE) auth_forward = 1;
+					}
 
 			OPENSSL_free(authchunks);
 
