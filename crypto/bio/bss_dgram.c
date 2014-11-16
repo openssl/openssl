@@ -1082,6 +1082,13 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
 			msg.msg_flags = 0;
 			n = recvmsg(b->num, &msg, 0);
 
+			if (n <= 0)
+				{
+				if (n < 0)
+					ret = n;
+				break;
+				}
+
 			if (msg.msg_controllen > 0)
 				{
 				for (cmsg = CMSG_FIRSTHDR(&msg); cmsg; cmsg = CMSG_NXTHDR(&msg, cmsg))
@@ -1119,13 +1126,6 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
 						}
 #endif
 					}
-				}
-
-			if (n <= 0)
-				{
-				if (n < 0)
-					ret = n;
-				break;
 				}
 
 			if (msg.msg_flags & MSG_NOTIFICATION)
