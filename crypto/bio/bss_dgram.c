@@ -1046,7 +1046,12 @@ static int dgram_sctp_free(BIO *a)
 		return 0;
 
 	data = (bio_dgram_sctp_data *)a->ptr;
-	if(data != NULL) OPENSSL_free(data);
+	if(data != NULL)
+		{
+		if(data->saved_message.data != NULL)
+			OPENSSL_free(data->saved_message.data);
+		OPENSSL_free(data);
+		}
 
 	return(1);
 	}
@@ -1163,6 +1168,7 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
 						dgram_sctp_write(data->saved_message.bio, data->saved_message.data,
 						                 data->saved_message.length);
 						OPENSSL_free(data->saved_message.data);
+						data->saved_message.data = NULL;
 						data->saved_message.length = 0;
 						}
 
@@ -1334,9 +1340,11 @@ static int dgram_sctp_write(BIO *b, const char *in, int inl)
 	if (data->save_shutdown && !BIO_dgram_sctp_wait_for_dry(b))
 	{
 		data->saved_message.bio = b;
-		data->saved_message.length = inl;
+		if (data->saved_message.data)
+			OPENSSL_free(data->saved_message.data);
 		data->saved_message.data = OPENSSL_malloc(inl);
 		memcpy(data->saved_message.data, in, inl);
+		data->saved_message.length = inl;
 		return inl;
 	}
 
