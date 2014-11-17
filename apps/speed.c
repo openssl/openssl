@@ -2739,27 +2739,6 @@ static int do_multi(int multi)
 				else
 					rsa_results[k][1]=d;
 				}
-			else if(!strncmp(buf,"+F2:",4))
-				{
-				int k;
-				double d;
-				
-				p=buf+4;
-				k=atoi(sstrsep(&p,sep));
-				sstrsep(&p,sep);
-
-				d=atof(sstrsep(&p,sep));
-				if(n)
-					rsa_results[k][0]=1/(1/rsa_results[k][0]+1/d);
-				else
-					rsa_results[k][0]=d;
-
-				d=atof(sstrsep(&p,sep));
-				if(n)
-					rsa_results[k][1]=1/(1/rsa_results[k][1]+1/d);
-				else
-					rsa_results[k][1]=d;
-				}
 #ifndef OPENSSL_NO_DSA
 			else if(!strncmp(buf,"+F3:",4))
 				{
