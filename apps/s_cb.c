@@ -1402,9 +1402,15 @@ int load_excert(SSL_EXCERT **pexc, BIO *err)
 		if (!exc->cert)
 			return 0;
 		if (exc->keyfile)
-			exc->keyfile = exc->certfile;
-		exc->key = load_key(err, exc->certfile, exc->certform, 0,
-					NULL, NULL, "Server Certificate");
+			{
+			exc->key = load_key(err, exc->keyfile, exc->keyform,
+					    0, NULL, NULL, "Server Key");
+			}
+		else
+			{
+			exc->key = load_key(err, exc->certfile, exc->certform,
+					    0, NULL, NULL, "Server Key");
+			}
 		if (!exc->key)
 			return 0;
 		if (exc->chainfile)
@@ -1413,7 +1419,7 @@ int load_excert(SSL_EXCERT **pexc, BIO *err)
 						exc->chainfile, FORMAT_PEM,
 						NULL, NULL,
 						"Server Chain");
-			if (!exc->chainfile)
+			if (!exc->chain)
 				return 0;
 			}
 		}
