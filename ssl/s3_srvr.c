@@ -1371,6 +1371,11 @@ int ssl3_get_client_hello(SSL *s)
 			goto f_err;
 			}
 		ciphers=NULL;
+		if (!tls1_set_server_sigalgs(s))
+			{
+			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_CLIENTHELLO_TLSEXT);
+			goto err;
+			}
 		/* Let cert callback update server certificates if required */
 		retry_cert:		
 		if (s->cert->cert_cb)
