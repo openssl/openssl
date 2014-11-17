@@ -2967,11 +2967,54 @@ static int ssl_check_clienthello_tlsext_early(SSL *s)
 		}
 	}
 
+int tls1_set_server_sigalgs(SSL *s)
+	{
+	int al;
+	size_t i;
+	/* Clear any shared sigtnature algorithms */
+	if (s->cert->shared_sigalgs)
+		{
+		OPENSSL_free(s->cert->shared_sigalgs);
+		s->cert->shared_sigalgs = NULL;
+		}
+	/* Clear certificate digests and validity flags */
+	for (i = 0; i < SSL_PKEY_NUM; i++)
+		{
+		s->cert->pkeys[i].digest = NULL;
+		s->cert->pkeys[i].valid_flags = 0;
+		}
+
+	/* If sigalgs received process it. */
+	if (s->cert->peer_sigalgs)
+		{
+		if (!tls1_process_sigalgs(s))
+			{
+			SSLerr(SSL_F_TLS1_SET_SERVER_SIGALGS,
+					ERR_R_MALLOC_FAILURE);
+			al = SSL_AD_INTERNAL_ERROR;
+			goto err;
+			}
+		/* Fatal error is no shared signature algorithms */
+		if (!s->cert->shared_sigalgs)
+			{
+			SSLerr(SSL_F_TLS1_SET_SERVER_SIGALGS,
+					SSL_R_NO_SHARED_SIGATURE_ALGORITHMS);
+			al = SSL_AD_ILLEGAL_PARAMETER;
+			goto err;
+			}
+		}
+	else
+		ssl_cert_set_default_md(s->cert);
+	return 1;
+	err:
+	ssl3_send_alert(s, SSL3_AL_FATAL, al);
+	return 0;
+	}
+
 int ssl_check_clienthello_tlsext_late(SSL *s)
 	{
 	int ret = SSL_TLSEXT_ERR_OK;
 	int al;
-	size_t i;
 
 	/* If status request then ask callback what to do.
  	 * Note: this must be called after servername callbacks in case
@@ -3016,43 +3059,6 @@ int ssl_check_clienthello_tlsext_late(SSL *s)
 		}
 	else
 		s->tlsext_status_expected = 0;
-
-	/* Clear any shared sigtnature algorithms */
-	if (s->cert->shared_sigalgs)
-		{
-		OPENSSL_free(s->cert->shared_sigalgs);
-		s->cert->shared_sigalgs = NULL;
-		}
-	/* Clear certificate digests and validity flags */
-	for (i = 0; i < SSL_PKEY_NUM; i++)
-		{
-		s->cert->pkeys[i].digest = NULL;
-		s->cert->pkeys[i].valid_flags = 0;
-		}
-
-	/* If sigalgs received process it. */
-	if (s->cert->peer_sigalgs)
-		{
-		if (!tls1_process_sigalgs(s))
-			{
-			SSLerr(SSL_F_SSL_CHECK_CLIENTHELLO_TLSEXT_LATE,
-					ERR_R_MALLOC_FAILURE);
-			ret = SSL_TLSEXT_ERR_ALERT_FATAL;
-			al = SSL_AD_INTERNAL_ERROR;
-			goto err;
-			}
-		/* Fatal error is no shared signature algorithms */
-		if (!s->cert->shared_sigalgs)
-			{
-			SSLerr(SSL_F_SSL_CHECK_CLIENTHELLO_TLSEXT_LATE,
-					SSL_R_NO_SHARED_SIGATURE_ALGORITHMS);
-			ret = SSL_TLSEXT_ERR_ALERT_FATAL;
-			al = SSL_AD_ILLEGAL_PARAMETER;
-			goto err;
-			}
-		}
-	else
-		ssl_cert_set_default_md(s->cert);
 
  err:
 	switch (ret)
