@@ -435,6 +435,10 @@ static int tls_curve_allowed(SSL *s, const unsigned char *curve, int op)
 				sizeof(nid_list)/sizeof(nid_list[0])))
 		return 0;
 	cinfo = &nid_list[curve[1]-1];
+#ifdef OPENSSL_NO_EC2M
+	if (cinfo->flags & TLS_CURVE_CHAR2)
+		return 0;
+#endif
 	return ssl_security(s, op, cinfo->secbits, cinfo->nid, (void *)curve);
 	}
 
