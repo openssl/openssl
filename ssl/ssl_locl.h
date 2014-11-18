@@ -1250,7 +1250,9 @@ int tls1_set_curves(unsigned char **pext, size_t *pextlen,
 			int *curves, size_t ncurves);
 int tls1_set_curves_list(unsigned char **pext, size_t *pextlen, 
 				const char *str);
+#ifndef OPENSSL_NO_ECDH
 int tls1_check_ec_tmp_key(SSL *s, unsigned long id);
+#endif /* OPENSSL_NO_ECDH */
 #endif /* OPENSSL_NO_EC */
 
 #ifndef OPENSSL_NO_TLSEXT
