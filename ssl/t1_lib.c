@@ -887,6 +887,7 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int set_ee_md)
 		}
 	return rv;
 	}
+#ifndef OPENSSL_NO_ECDH
 /* Check EC temporary key is compatible with client extensions */
 int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
 	{
@@ -953,6 +954,7 @@ int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
 	return tls1_check_ec_key(s, curve_id, NULL);
 #endif
 	}
+#endif /* OPENSSL_NO_ECDH */
 
 #else
 
