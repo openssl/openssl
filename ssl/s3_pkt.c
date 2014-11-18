@@ -1118,8 +1118,7 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 		wr->length += eivlen;
 		}
 
-	/* ssl3_enc can only have an error on read */
-	s->method->ssl3_enc->enc(s,1);
+	if(s->method->ssl3_enc->enc(s,1)<1) goto err;
 
 	if (SSL_USE_ETM(s) && mac_size != 0)
 		{
