@@ -1816,6 +1816,7 @@ static int security_callback_debug(SSL *s, SSL_CTX *ctx,
 		BIO_puts(sdb->out, SSL_CIPHER_get_name(other));
 		break;
 
+#ifndef OPENSSL_NO_EC
 	case SSL_SECOP_OTHER_CURVE:
 			{
 			const char *cname;
@@ -1825,6 +1826,7 @@ static int security_callback_debug(SSL *s, SSL_CTX *ctx,
 			BIO_puts(sdb->out, cname);
 			}
 			break;
+#endif
 
 	case SSL_SECOP_OTHER_DH:
 			{
