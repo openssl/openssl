@@ -4000,6 +4000,7 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 				}
 			ok = ok && ec_ok;
 			}
+#ifndef OPENSSL_NO_ECDH
 		if (
 			/* if we are considering an ECC cipher suite that uses an ephemeral EC key */
 			(alg_k & SSL_kEECDH)
@@ -4047,6 +4048,7 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 				}
 			ok = ok && ec_ok;
 			}
+#endif /* OPENSSL_NO_ECDH */
 #endif /* OPENSSL_NO_EC */
 #endif /* OPENSSL_NO_TLSEXT */
 
