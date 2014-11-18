@@ -2361,8 +2361,10 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 		x = cpk->x509;
 		/* This call populates extension flags (ex_flags) */
 		X509_check_purpose(x, -1, 0);
+#ifndef OPENSSL_NO_ECDH
 		ecdh_ok = (x->ex_flags & EXFLAG_KUSAGE) ?
 		    (x->ex_kusage & X509v3_KU_KEY_AGREEMENT) : 1;
+#endif
 		ecdsa_ok = (x->ex_flags & EXFLAG_KUSAGE) ?
 		    (x->ex_kusage & X509v3_KU_DIGITAL_SIGNATURE) : 1;
 		if (!(cpk->valid_flags & CERT_PKEY_SIGN))

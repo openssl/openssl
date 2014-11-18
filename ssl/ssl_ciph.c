@@ -1436,6 +1436,7 @@ static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
 		return 0;
 		}
 
+#ifndef OPENSSL_NO_ECDH
 	switch(suiteb_flags)
 		{
 	case SSL_CERT_FLAG_SUITEB_128_LOS:
@@ -1454,6 +1455,10 @@ static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
 	/* Set auto ECDH parameter determination */
 	c->ecdh_tmp_auto = 1;
 	return 1;
+#else
+	SSLerr(SSL_F_CHECK_SUITEB_CIPHER_LIST, SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
+	return 0;
+#endif
 	}
 #endif
 
