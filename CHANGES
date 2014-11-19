@@ -310,6 +310,10 @@
       the extension anew in the ServerHello. Previously, a TLS client would
       reuse the old extension state and thus accept a session ticket if one was
       announced in the initial ServerHello.
+
+      Similarly, ensure that the client requires a session ticket if one
+      was advertised in the ServerHello. Previously, a TLS client would
+      ignore a missing NewSessionTicket message.
       [Emilia Käsper]
 
   *) Accelerated NIST P-256 elliptic curve implementation for x86_64
@@ -639,6 +643,10 @@
       the extension anew in the ServerHello. Previously, a TLS client would
       reuse the old extension state and thus accept a session ticket if one was
       announced in the initial ServerHello.
+
+      Similarly, ensure that the client requires a session ticket if one
+      was advertised in the ServerHello. Previously, a TLS client would
+      ignore a missing NewSessionTicket message.
       [Emilia Käsper]
 
  Changes between 1.0.1i and 1.0.1j [15 Oct 2014]
