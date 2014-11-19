@@ -1408,7 +1408,10 @@ int MAIN(int argc, char *argv[])
 			{ www=3; }
 #ifndef OPENSSL_NO_SSL2
 		else if	(strcmp(*argv,"-ssl2") == 0)
-			{ meth=SSLv2_server_method(); }
+			{
+			no_ecdhe=1;
+			meth=SSLv2_server_method();
+			}
 #endif
 #ifndef OPENSSL_NO_SSL3_METHOD
 		else if	(strcmp(*argv,"-ssl3") == 0)
