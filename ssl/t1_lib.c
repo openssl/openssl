@@ -2504,6 +2504,7 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 #ifndef OPENSSL_NO_NEXTPROTONEG
 	s->s3->next_proto_neg_seen = 0;
 #endif
+        s->tlsext_ticket_expected = 0;
 
 	if (s->s3->alpn_selected)
 		{
