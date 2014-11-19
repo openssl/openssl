@@ -305,6 +305,11 @@
 
  Changes between 1.0.1j and 1.0.2 [xx XXX xxxx]
 
+   *) Tighten handling of the ChangeCipherSpec (CCS) message: reject
+      early CCS messages during renegotiation. (Note that because
+      renegotiation is encrypted, this early CCS was not exploitable.)
+      [Emilia Käsper]
+
    *) Tighten client-side session ticket handling during renegotiation:
       ensure that the client only accepts a session ticket if the server sends
       the extension anew in the ServerHello. Previously, a TLS client would
@@ -637,6 +642,11 @@
      X509_CINF_get_signature were reverted post internal team review.
 
  Changes between 1.0.1j and 1.0.1k [xx XXX xxxx]
+
+   *) Tighten handling of the ChangeCipherSpec (CCS) message: reject
+      early CCS messages during renegotiation. (Note that because
+      renegotiation is encrypted, this early CCS was not exploitable.)
+      [Emilia Käsper]
 
    *) Tighten client-side session ticket handling during renegotiation:
       ensure that the client only accepts a session ticket if the server sends
