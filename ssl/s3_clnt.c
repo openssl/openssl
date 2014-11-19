@@ -984,6 +984,8 @@ int ssl3_get_server_hello(SSL *s)
 	memcpy(s->s3->server_random,p,SSL3_RANDOM_SIZE);
 	p+=SSL3_RANDOM_SIZE;
 
+	s->hit = 0;
+
 	/* get the session-id */
 	j= *(p++);
 
@@ -1007,12 +1009,13 @@ int ssl3_get_server_hello(SSL *s)
 			{
 			s->session->cipher = pref_cipher ?
 				pref_cipher : ssl_get_cipher_by_char(s, p+j);
-	    		s->s3->flags |= SSL3_FLAGS_CCS_OK;
+			s->hit = 1;
+			s->s3->flags |= SSL3_FLAGS_CCS_OK;
 			}
 		}
 #endif /* OPENSSL_NO_TLSEXT */
 
-	if (j != 0 && j == s->session->session_id_length
+	if (!s->hit && j != 0 && j == s->session->session_id_length
 	    && memcmp(p,s->session->session_id,j) == 0)
 	    {
 	    if(s->sid_ctx_length != s->session->sid_ctx_length
@@ -1026,11 +1029,11 @@ int ssl3_get_server_hello(SSL *s)
 	    s->s3->flags |= SSL3_FLAGS_CCS_OK;
 	    s->hit=1;
 	    }
-	else	/* a miss or crap from the other end */
+	/* a miss or crap from the other end */
+	if (!s->hit)
 		{
 		/* If we were trying for session-id reuse, make a new
 		 * SSL_SESSION so we don't stuff up other people */
-		s->hit=0;
 		if (s->session->session_id_length > 0)
 			{
 			if (!ssl_get_new_session(s,0))
