@@ -314,20 +314,6 @@ int ssl3_connect(SSL *s)
 			break;
 		case SSL3_ST_CR_CERT_A:
 		case SSL3_ST_CR_CERT_B:
-#ifndef OPENSSL_NO_TLSEXT
-			ret=ssl3_check_finished(s);
-			if (ret <= 0) goto end;
-			if (ret == 2)
-				{
-				s->hit = 1;
-				if (s->tlsext_ticket_expected)
-					s->state=SSL3_ST_CR_SESSION_TICKET_A;
-				else
-					s->state=SSL3_ST_CR_FINISHED_A;
-				s->init_num=0;
-				break;
-				}
-#endif
 			/* Check if it is anon DH/ECDH, SRP auth */
 			/* or PSK */
 			if (!(s->s3->tmp.new_cipher->algorithm_auth & (SSL_aNULL|SSL_aSRP)) &&
@@ -672,11 +658,7 @@ int ssl3_client_hello(SSL *s)
 		SSL_SESSION *sess = s->session;
 		if ((sess == NULL) ||
 			(sess->ssl_version != s->version) ||
-#ifdef OPENSSL_NO_TLSEXT
 			!sess->session_id_length ||
-#else
-			(!sess->session_id_length && !sess->tlsext_tick) ||
-#endif
 			(sess->not_resumable))
 			{
 			if (!ssl_get_new_session(s,0))
@@ -3684,41 +3666,8 @@ int ssl3_send_next_proto(SSL *s)
 		}
 
 	return ssl3_do_write(s, SSL3_RT_HANDSHAKE);
-}
-#endif  /* !OPENSSL_NO_TLSEXT && !OPENSSL_NO_NEXTPROTONEG */
-
-/* Check to see if handshake is full or resumed. Usually this is just a
- * case of checking to see if a cache hit has occurred. In the case of
- * session tickets we have to check the next message to be sure.
- */
-
-#ifndef OPENSSL_NO_TLSEXT
-int ssl3_check_finished(SSL *s)
-	{
-	int ok;
-	long n;
-
-	/* If we have no ticket it cannot be a resumed session. */
-	if (!s->session->tlsext_tick)
-		return 1;
-	/* this function is called when we really expect a Certificate
-	 * message, so permit appropriate message length */
-	n=s->method->ssl_get_message(s,
-		SSL3_ST_CR_CERT_A,
-		SSL3_ST_CR_CERT_B,
-		-1,
-		s->max_cert_list,
-		&ok);
-	if (!ok) return((int)n);
-	s->s3->tmp.reuse_message = 1;
-
-	if ((s->s3->tmp.message_type == SSL3_MT_FINISHED)
-		|| (s->s3->tmp.message_type == SSL3_MT_NEWSESSION_TICKET))
-		return 2;
-
-	return 1;
 	}
-#endif
+#endif  /* !OPENSSL_NO_TLSEXT && !OPENSSL_NO_NEXTPROTONEG */
 
 int ssl_do_client_cert_cb(SSL *s, X509 **px509, EVP_PKEY **ppkey)
 	{
@@ -3737,4 +3686,3 @@ int ssl_do_client_cert_cb(SSL *s, X509 **px509, EVP_PKEY **ppkey)
 		i = s->ctx->client_cert_cb(s,px509,ppkey);
 	return i;
 	}
-
