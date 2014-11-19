@@ -249,6 +249,9 @@ int dtls1_connect(SSL *s)
 			memset(s->s3->client_random,0,sizeof(s->s3->client_random));
 			s->d1->send_cookie = 0;
 			s->hit = 0;
+			s->d1->change_cipher_spec_ok = 0;
+			/* Should have been reset by ssl3_get_finished, too. */
+			s->s3->change_cipher_spec = 0;
 			break;
 
 #ifndef OPENSSL_NO_SCTP
@@ -492,7 +495,6 @@ int dtls1_connect(SSL *s)
 				else
 #endif
 					s->state=SSL3_ST_CW_CHANGE_A;
-				s->s3->change_cipher_spec=0;
 				}
 
 			s->init_num=0;
@@ -513,7 +515,6 @@ int dtls1_connect(SSL *s)
 #endif
 				s->state=SSL3_ST_CW_CHANGE_A;
 			s->init_num=0;
-			s->s3->change_cipher_spec=0;
 			break;
 
 		case SSL3_ST_CW_CHANGE_A:

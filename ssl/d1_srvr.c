@@ -246,6 +246,9 @@ int dtls1_accept(SSL *s)
 				}
 
 			s->init_num=0;
+			s->d1->change_cipher_spec_ok = 0;
+			/* Should have been reset by ssl3_get_finished, too. */
+			s->s3->change_cipher_spec = 0;
 
 			if (s->state != SSL_ST_RENEGOTIATE)
 				{
@@ -658,8 +661,14 @@ int dtls1_accept(SSL *s)
 
 		case SSL3_ST_SR_CERT_VRFY_A:
 		case SSL3_ST_SR_CERT_VRFY_B:
-
-			s->d1->change_cipher_spec_ok = 1;
+			/*
+			 * This *should* be the first time we enable CCS, but be
+			 * extra careful about surrounding code changes. We need
+			 * to set this here because we don't know if we're
+			 * expecting a CertificateVerify or not.
+			 */
+			if (!s->s3->change_cipher_spec)
+				s->d1->change_cipher_spec_ok = 1;
 			/* we should decide if we expected this one */
 			ret=ssl3_get_cert_verify(s);
 			if (ret <= 0) goto end;
@@ -675,7 +684,18 @@ int dtls1_accept(SSL *s)
 
 		case SSL3_ST_SR_FINISHED_A:
 		case SSL3_ST_SR_FINISHED_B:
-			s->d1->change_cipher_spec_ok = 1;
+			/*
+			 * Enable CCS for resumed handshakes.
+			 * In a full handshake, we end up here through
+			 * SSL3_ST_SR_CERT_VRFY_B, so change_cipher_spec_ok was
+			 * already set. Receiving a CCS clears the flag, so make
+			 * sure not to re-enable it to ban duplicates.
+			 * s->s3->change_cipher_spec is set when a CCS is
+			 * processed in d1_pkt.c, and remains set until
+			 * the client's Finished message is read.
+			 */
+			if (!s->s3->change_cipher_spec)
+				s->d1->change_cipher_spec_ok = 1;
 			ret=ssl3_get_finished(s,SSL3_ST_SR_FINISHED_A,
 				SSL3_ST_SR_FINISHED_B);
 			if (ret <= 0) goto end;

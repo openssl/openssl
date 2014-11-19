@@ -252,6 +252,10 @@ typedef struct dtls1_state_st
 	unsigned int handshake_fragment_len;
 
 	unsigned int retransmitting;
+	/*
+	 * Set when the handshake is ready to process peer's ChangeCipherSpec message.
+	 * Cleared after the message has been processed.
+	 */
 	unsigned int change_cipher_spec_ok;
 
 #ifndef OPENSSL_NO_SCTP
