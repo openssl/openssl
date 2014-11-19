@@ -53,7 +53,7 @@ RC5TEST=	rc5test
 BFTEST=		bftest
 CASTTEST=	casttest
 DESTEST=	destest
-GOST2814789TEST=gost2814789t
+GOST2814789TEST=gost2814789test
 RANDTEST=	randtest
 DHTEST=		dhtest
 DSATEST=	dsatest
@@ -664,20 +664,21 @@ exptest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 exptest.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
 exptest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 exptest.o: ../include/openssl/symhacks.h exptest.c
-gost2814789t.o: ../engines/ccgost/gost89.h ../include/openssl/asn1.h
-gost2814789t.o: ../include/openssl/bio.h ../include/openssl/buffer.h
-gost2814789t.o: ../include/openssl/conf.h ../include/openssl/crypto.h
-gost2814789t.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-gost2814789t.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
-gost2814789t.o: ../include/openssl/engine.h ../include/openssl/err.h
-gost2814789t.o: ../include/openssl/evp.h ../include/openssl/hmac.h
-gost2814789t.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
-gost2814789t.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-gost2814789t.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-gost2814789t.o: ../include/openssl/pkcs7.h ../include/openssl/safestack.h
-gost2814789t.o: ../include/openssl/sha.h ../include/openssl/stack.h
-gost2814789t.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
-gost2814789t.o: ../include/openssl/x509_vfy.h gost2814789t.c
+gost2814789test.o: ../engines/ccgost/gost89.h ../include/openssl/asn1.h
+gost2814789test.o: ../include/openssl/bio.h ../include/openssl/buffer.h
+gost2814789test.o: ../include/openssl/conf.h ../include/openssl/crypto.h
+gost2814789test.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+gost2814789test.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+gost2814789test.o: ../include/openssl/engine.h ../include/openssl/err.h
+gost2814789test.o: ../include/openssl/evp.h ../include/openssl/hmac.h
+gost2814789test.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
+gost2814789test.o: ../include/openssl/objects.h
+gost2814789test.o: ../include/openssl/opensslconf.h
+gost2814789test.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+gost2814789test.o: ../include/openssl/pkcs7.h ../include/openssl/safestack.h
+gost2814789test.o: ../include/openssl/sha.h ../include/openssl/stack.h
+gost2814789test.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
+gost2814789test.o: ../include/openssl/x509_vfy.h gost2814789test.c
 heartbeat_test.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 heartbeat_test.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 heartbeat_test.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
