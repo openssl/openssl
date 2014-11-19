@@ -2288,24 +2288,13 @@ int ssl3_get_new_session_ticket(SSL *s)
 	n=s->method->ssl_get_message(s,
 		SSL3_ST_CR_SESSION_TICKET_A,
 		SSL3_ST_CR_SESSION_TICKET_B,
-		-1,
+		SSL3_MT_NEWSESSION_TICKET,
 		16384,
 		&ok);
 
 	if (!ok)
 		return((int)n);
 
-	if (s->s3->tmp.message_type == SSL3_MT_FINISHED)
-		{
-		s->s3->tmp.reuse_message=1;
-		return(1);
-		}
-	if (s->s3->tmp.message_type != SSL3_MT_NEWSESSION_TICKET)
-		{
-		al=SSL_AD_UNEXPECTED_MESSAGE;
-		SSLerr(SSL_F_SSL3_GET_NEW_SESSION_TICKET,SSL_R_BAD_MESSAGE_TYPE);
-		goto f_err;
-		}
 	if (n < 6)
 		{
 		/* need at least ticket_lifetime_hint + ticket length */
