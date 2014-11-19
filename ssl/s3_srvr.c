@@ -301,6 +301,9 @@ int ssl3_accept(SSL *s)
 			s->init_num=0;
 			s->s3->flags &= ~SSL3_FLAGS_SGC_RESTART_DONE;
 			s->s3->flags &= ~TLS1_FLAGS_SKIP_CERT_VERIFY;
+			s->s3->flags &= ~SSL3_FLAGS_CCS_OK;
+			/* Should have been reset by ssl3_get_finished, too. */
+			s->s3->change_cipher_spec = 0;
 
 			if (s->state != SSL_ST_RENEGOTIATE)
 				{
@@ -676,8 +679,14 @@ int ssl3_accept(SSL *s)
 
 		case SSL3_ST_SR_CERT_VRFY_A:
 		case SSL3_ST_SR_CERT_VRFY_B:
-
-			s->s3->flags |= SSL3_FLAGS_CCS_OK;
+			/*
+			 * This *should* be the first time we enable CCS, but be
+			 * extra careful about surrounding code changes. We need
+			 * to set this here because we don't know if we're
+			 * expecting a CertificateVerify or not.
+			 */
+			if (!s->s3->change_cipher_spec)
+				s->s3->flags |= SSL3_FLAGS_CCS_OK;
 			/* we should decide if we expected this one */
 			ret=ssl3_get_cert_verify(s);
 			if (ret <= 0) goto end;
@@ -696,6 +705,19 @@ int ssl3_accept(SSL *s)
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
 		case SSL3_ST_SR_NEXT_PROTO_A:
 		case SSL3_ST_SR_NEXT_PROTO_B:
+			/*
+			 * Enable CCS for resumed handshakes with NPN.
+			 * In a full handshake with NPN, we end up here through
+			 * SSL3_ST_SR_CERT_VRFY_B, where SSL3_FLAGS_CCS_OK was
+			 * already set. Receiving a CCS clears the flag, so make
+			 * sure not to re-enable it to ban duplicates.
+			 * s->s3->change_cipher_spec is set when a CCS is
+			 * processed in s3_pkt.c, and remains set until
+			 * the client's Finished message is read.
+			 */
+			if (!s->s3->change_cipher_spec)
+				s->s3->flags |= SSL3_FLAGS_CCS_OK;
+
 			ret=ssl3_get_next_proto(s);
 			if (ret <= 0) goto end;
 			s->init_num = 0;
@@ -705,7 +727,18 @@ int ssl3_accept(SSL *s)
 
 		case SSL3_ST_SR_FINISHED_A:
 		case SSL3_ST_SR_FINISHED_B:
-			s->s3->flags |= SSL3_FLAGS_CCS_OK;
+			/*
+			 * Enable CCS for resumed handshakes without NPN.
+			 * In a full handshake, we end up here through
+			 * SSL3_ST_SR_CERT_VRFY_B, where SSL3_FLAGS_CCS_OK was
+			 * already set. Receiving a CCS clears the flag, so make
+			 * sure not to re-enable it to ban duplicates.
+			 * s->s3->change_cipher_spec is set when a CCS is
+			 * processed in s3_pkt.c, and remains set until
+			 * the client's Finished message is read.
+			 */
+			if (!s->s3->change_cipher_spec)
+				s->s3->flags |= SSL3_FLAGS_CCS_OK;
 			ret=ssl3_get_finished(s,SSL3_ST_SR_FINISHED_A,
 				SSL3_ST_SR_FINISHED_B);
 			if (ret <= 0) goto end;
@@ -777,7 +810,6 @@ int ssl3_accept(SSL *s)
 #else
 				if (s->s3->next_proto_neg_seen)
 					{
-					s->s3->flags |= SSL3_FLAGS_CCS_OK;
 					s->s3->tmp.next_state=SSL3_ST_SR_NEXT_PROTO_A;
 					}
 				else
