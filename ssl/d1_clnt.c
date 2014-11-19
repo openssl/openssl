@@ -370,20 +370,6 @@ int dtls1_connect(SSL *s)
 
 		case SSL3_ST_CR_CERT_A:
 		case SSL3_ST_CR_CERT_B:
-#ifndef OPENSSL_NO_TLSEXT
-			ret=ssl3_check_finished(s);
-			if (ret <= 0) goto end;
-			if (ret == 2)
-				{
-				s->hit = 1;
-				if (s->tlsext_ticket_expected)
-					s->state=SSL3_ST_CR_SESSION_TICKET_A;
-				else
-					s->state=SSL3_ST_CR_FINISHED_A;
-				s->init_num=0;
-				break;
-				}
-#endif
 			/* Check if it is anon DH or PSK */
 			if (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL) &&
 			    !(s->s3->tmp.new_cipher->algorithm_mkey & SSL_kPSK))
