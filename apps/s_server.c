@@ -508,8 +508,12 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -srpvfile file      - The verifier file for SRP\n");
 	BIO_printf(bio_err," -srpuserseed string - A seed string for a default user salt.\n");
 #endif
+#ifndef OPENSSL_NO_SSL2
 	BIO_printf(bio_err," -ssl2         - Just talk SSLv2\n");
+#endif
+#ifndef OPENSSL_NO_SSL3
 	BIO_printf(bio_err," -ssl3         - Just talk SSLv3\n");
+#endif
 	BIO_printf(bio_err," -tls1_2       - Just talk TLSv1.2\n");
 	BIO_printf(bio_err," -tls1_1       - Just talk TLSv1.1\n");
 	BIO_printf(bio_err," -tls1         - Just talk TLSv1\n");
@@ -518,8 +522,12 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -timeout      - Enable timeouts\n");
 	BIO_printf(bio_err," -mtu          - Set link layer MTU\n");
 	BIO_printf(bio_err," -chain        - Read a certificate chain\n");
+#ifndef OPENSSL_NO_SSL2
 	BIO_printf(bio_err," -no_ssl2      - Just disable SSLv2\n");
+#endif
+#ifndef OPENSSL_NO_SSL3
 	BIO_printf(bio_err," -no_ssl3      - Just disable SSLv3\n");
+#endif
 	BIO_printf(bio_err," -no_tls1      - Just disable TLSv1\n");
 	BIO_printf(bio_err," -no_tls1_1    - Just disable TLSv1.1\n");
 	BIO_printf(bio_err," -no_tls1_2    - Just disable TLSv1.2\n");
