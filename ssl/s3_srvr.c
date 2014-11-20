@@ -1054,7 +1054,16 @@ int ssl3_get_client_hello(SSL *s)
 	else
 		{
 		i=ssl_get_prev_session(s, p, j, d + n);
-		if (i == 1)
+		/*
+		 * Only resume if the session's version matches the negotiated
+		 * version.
+		 * RFC 5246 does not provide much useful advice on resumption
+		 * with a different protocol version. It doesn't forbid it but
+		 * the sanity of such behaviour would be questionable.
+		 * In practice, clients do not accept a version mismatch and
+		 * will abort the handshake with an error.
+		 */
+		if (i == 1 && s->version == s->session->ssl_version)
 			{ /* previous session */
 			s->hit=1;
 			}
