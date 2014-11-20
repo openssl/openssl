@@ -303,23 +303,7 @@
      whose return value is often ignored. 
      [Steve Henson]
 
- Changes between 1.0.1j and 1.0.2 [xx XXX xxxx]
-
-   *) Tighten handling of the ChangeCipherSpec (CCS) message: reject
-      early CCS messages during renegotiation. (Note that because
-      renegotiation is encrypted, this early CCS was not exploitable.)
-      [Emilia Käsper]
-
-   *) Tighten client-side session ticket handling during renegotiation:
-      ensure that the client only accepts a session ticket if the server sends
-      the extension anew in the ServerHello. Previously, a TLS client would
-      reuse the old extension state and thus accept a session ticket if one was
-      announced in the initial ServerHello.
-
-      Similarly, ensure that the client requires a session ticket if one
-      was advertised in the ServerHello. Previously, a TLS client would
-      ignore a missing NewSessionTicket message.
-      [Emilia Käsper]
+ Changes between 1.0.1k and 1.0.2 [xx XXX xxxx]
 
   *) Accelerated NIST P-256 elliptic curve implementation for x86_64
      (other platforms pending).
