@@ -627,6 +627,12 @@
 
  Changes between 1.0.1j and 1.0.1k [xx XXX xxxx]
 
+   *) Do not resume sessions on the server if the negotiated protocol
+      version does not match the session's version. Resuming with a different
+      version, while not strictly forbidden by the RFC, is of questionable
+      sanity and breaks all known clients.
+      [David Benjamin, Emilia Käsper]
+
    *) Tighten handling of the ChangeCipherSpec (CCS) message: reject
       early CCS messages during renegotiation. (Note that because
       renegotiation is encrypted, this early CCS was not exploitable.)
