@@ -1250,7 +1250,7 @@ struct chain_flags chain_flags_list[] =
 	};
 
 
-static void print_chain_flags(BIO *out, int flags)
+static void print_chain_flags(BIO *out, SSL *s, int flags)
 	{
 	struct chain_flags *ctmp = chain_flags_list;
 	while(ctmp->name)
@@ -1259,6 +1259,11 @@ static void print_chain_flags(BIO *out, int flags)
 				flags & ctmp->flag ? "OK" : "NOT OK");
 		ctmp++;
 		}
+	BIO_printf(out, "\tSuite B: ");
+	if (SSL_set_cert_flags(s, 0) & SSL_CERT_FLAG_SUITEB_128_LOS)
+		BIO_puts(out, flags & CERT_PKEY_SUITEB ? "OK\n" : "NOT OK\n");
+	else
+		BIO_printf(out, "not tested\n");
 	}
 
 /* Very basic selection callback: just use any certificate chain
@@ -1301,7 +1306,7 @@ static int set_cert_cb(SSL *ssl, void *arg)
 							XN_FLAG_ONELINE);
 		BIO_puts(bio_err, "\n");
 		
-		print_chain_flags(bio_err, rv);
+		print_chain_flags(bio_err, ssl, rv);
 		if (rv & CERT_PKEY_VALID)
 			{
 			SSL_use_certificate(ssl, exc->cert);
