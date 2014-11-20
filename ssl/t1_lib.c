@@ -4294,13 +4294,10 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
 		if (check_flags)
 			check_flags |= CERT_PKEY_SUITEB;
 		ok = X509_chain_check_suiteb(NULL, x, chain, suiteb_flags);
-		if (ok != X509_V_OK)
-			{
-			if (check_flags)
-				rv |= CERT_PKEY_SUITEB;
-			else
-				goto end;
-			}
+		if (ok == X509_V_OK)
+			rv |= CERT_PKEY_SUITEB;
+		else if (!check_flags)
+			goto end;
 		}
 
 	/* Check all signature algorithms are consistent with
