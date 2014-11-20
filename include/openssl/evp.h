@@ -766,6 +766,7 @@ const EVP_MD *EVP_md4(void);
 # endif
 # ifndef OPENSSL_NO_MD5
 const EVP_MD *EVP_md5(void);
+const EVP_MD *EVP_md5_sha1(void);
 # endif
 const EVP_MD *EVP_sha1(void);
 const EVP_MD *EVP_dss1(void);
