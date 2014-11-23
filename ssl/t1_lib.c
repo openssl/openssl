@@ -3937,10 +3937,10 @@ int SSL_get_shared_sigalgs(SSL *s, int idx,
 int
 tls1_process_heartbeat(SSL *s)
 	{
+	unsigned int TLS1_HB_MIN_PADDING = 16;
 	unsigned char *p = &s->s3->rrec.data[0], *pl;
 	unsigned short hbtype;
 	unsigned int payload;
-	unsigned int padding = 16; /* Use minimum padding */
 
 	if (s->msg_callback)
 		s->msg_callback(0, s->version, TLS1_RT_HEARTBEAT,
@@ -3948,11 +3948,11 @@ tls1_process_heartbeat(SSL *s)
 			s, s->msg_callback_arg);
 
 	/* Read type and payload length first */
-	if (1 + 2 + 16 > s->s3->rrec.length)
+	if (1 + 2 + TLS1_HB_MIN_PADDING > s->s3->rrec.length)
 		return 0; /* silently discard */
 	hbtype = *p++;
 	n2s(p, payload);
-	if (1 + 2 + payload + 16 > s->s3->rrec.length)
+	if (1 + 2 + payload + TLS1_HB_MIN_PADDING > s->s3->rrec.length)
 		return 0; /* silently discard per RFC 6520 sec. 4 */
 	pl = p;
 
@@ -3960,27 +3960,37 @@ tls1_process_heartbeat(SSL *s)
 		{
 		unsigned char *buffer, *bp;
 		int r;
+		unsigned int padding = TLS1_HB_MIN_PADDING; /* Use minimum padding */
+ 		unsigned int write_length = 1 /* heartbeat type */ +
+ 					    2 /* heartbeat length */ +
+ 					    payload + padding;
 
 		/* Allocate memory for the response, size is 1 bytes
 		 * message type, plus 2 bytes payload length, plus
 		 * payload, plus padding
 		 */
-		buffer = OPENSSL_malloc(1 + 2 + payload + padding);
+		buffer = OPENSSL_malloc(write_length);
 		bp = buffer;
 		
 		/* Enter response type, length and copy payload */
 		*bp++ = TLS1_HB_RESPONSE;
 		s2n(payload, bp);
-		memcpy(bp, pl, payload);
-		bp += payload;
+		if (payload > 0)
+			{
+			memcpy(bp, pl, payload);
+			bp += payload;
+			}
 		/* Random padding */
 		RAND_pseudo_bytes(bp, padding);
+		bp += padding;
 
-		r = ssl3_write_bytes(s, TLS1_RT_HEARTBEAT, buffer, 3 + payload + padding);
+		OPENSSL_assert(&buffer[write_length] == bp);
+
+		r = ssl3_write_bytes(s, TLS1_RT_HEARTBEAT, buffer, write_length);
 
 		if (r >= 0 && s->msg_callback)
 			s->msg_callback(1, s->version, TLS1_RT_HEARTBEAT,
-				buffer, 3 + payload + padding,
+				buffer, write_length,
 				s, s->msg_callback_arg);
 
 		OPENSSL_free(buffer);
@@ -3993,14 +4003,16 @@ tls1_process_heartbeat(SSL *s)
 		unsigned int seq;
 		
 		/* We only send sequence numbers (2 bytes unsigned int),
-		 * and 16 random bytes, so we just try to read the
-		 * sequence number */
-		n2s(pl, seq);
-		
-		if (payload == 18 && seq == s->tlsext_hb_seq)
+		 * so we confirm the response payload contains (only) that. */
+		if (2 == payload)
 			{
-			s->tlsext_hb_seq++;
-			s->tlsext_hb_pending = 0;
+			n2s(pl, seq);
+
+			if (seq == s->tlsext_hb_seq)
+				{
+				s->tlsext_hb_seq++;
+				s->tlsext_hb_pending = 0;
+				}
 			}
 		}
 
@@ -4010,10 +4022,14 @@ tls1_process_heartbeat(SSL *s)
 int
 tls1_heartbeat(SSL *s)
 	{
+	unsigned int TLS1_HB_MIN_PADDING = 16;
 	unsigned char *buf, *p;
 	int ret;
-	unsigned int payload = 18; /* Sequence number + random bytes */
-	unsigned int padding = 16; /* Use minimum padding */
+	unsigned int payload = 2; /* Sequence number */
+	unsigned int padding = TLS1_HB_MIN_PADDING; /* Use minimum padding */
+	unsigned int write_length = 1 /* heartbeat type */ +
+				    2 /* heartbeat length */ +
+				    payload + padding;
 
 	/* Only send if peer supports and accepts HB requests... */
 	if (!(s->tlsext_heartbeat & SSL_TLSEXT_HB_ENABLED) ||
@@ -4036,41 +4052,38 @@ tls1_heartbeat(SSL *s)
 		SSLerr(SSL_F_TLS1_HEARTBEAT,SSL_R_UNEXPECTED_MESSAGE);
 		return -1;
 		}
-		
-	/* Check if padding is too long, payload and padding
-	 * must not exceed 2^14 - 3 = 16381 bytes in total.
-	 */
-	OPENSSL_assert(payload + padding <= 16381);
 
-	/* Create HeartBeat message, we just use a sequence number
-	 * as payload to distuingish different messages and add
-	 * some random stuff.
+	/* Check that we are not attempting to write more
+	 * than the plaintext limit. */
+	OPENSSL_assert(write_length <= SSL3_RT_MAX_PLAIN_LENGTH);
+
+	/* Create heartbeat message, we just use a sequence number
+	 * as payload to distinguish different messages.
 	 *  - Message Type, 1 byte
 	 *  - Payload Length, 2 bytes (unsigned int)
 	 *  - Payload, the sequence number (2 bytes uint)
-	 *  - Payload, random bytes (16 bytes uint)
-	 *  - Padding
+	 *  - Padding (random bytes)
 	 */
-	buf = OPENSSL_malloc(1 + 2 + payload + padding);
+	buf = OPENSSL_malloc(write_length);
 	p = buf;
 	/* Message Type */
 	*p++ = TLS1_HB_REQUEST;
-	/* Payload length (18 bytes here) */
+	/* Payload length */
 	s2n(payload, p);
-	/* Sequence number */
+	/* Payload (sequence number) */
 	s2n(s->tlsext_hb_seq, p);
-	/* 16 random bytes */
-	RAND_pseudo_bytes(p, 16);
-	p += 16;
 	/* Random padding */
 	RAND_pseudo_bytes(p, padding);
+	p += padding;
 
-	ret = ssl3_write_bytes(s, TLS1_RT_HEARTBEAT, buf, 3 + payload + padding);
+	OPENSSL_assert(&buf[write_length] == p);
+
+	ret = ssl3_write_bytes(s, TLS1_RT_HEARTBEAT, buf, write_length);
 	if (ret >= 0)
 		{
 		if (s->msg_callback)
 			s->msg_callback(1, s->version, TLS1_RT_HEARTBEAT,
-				buf, 3 + payload + padding,
+				buf, write_length,
 				s, s->msg_callback_arg);
 
 		s->tlsext_hb_pending = 1;
