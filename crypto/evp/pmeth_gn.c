@@ -186,7 +186,7 @@ static int trans_cb(int a, int b, BN_GENCB *gcb)
 
 void evp_pkey_set_cb_translate(BN_GENCB *cb, EVP_PKEY_CTX *ctx)
 	{
-	BN_GENCB_set(cb, trans_cb, ctx)
+	BN_GENCB_set(cb, trans_cb, ctx);
 	}
 
 int EVP_PKEY_CTX_get_keygen_info(EVP_PKEY_CTX *ctx, int idx)

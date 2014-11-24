@@ -911,3 +911,129 @@ int BN_security_bits(int L, int N)
 		return 0;
 	return bits >= secbits ? secbits : bits;
 	}
+
+
+void BN_zero_ex(BIGNUM *a)
+	{
+	a->top = 0;
+	a->neg = 0;
+	}
+
+int BN_abs_is_word(const BIGNUM *a, const BN_ULONG w)
+	{
+	return ((a->top == 1) && (a->d[0] == w)) || ((w == 0) && (a->top == 0));
+	}
+
+int BN_is_zero(const BIGNUM *a)
+	{
+	return a->top == 0;
+	}
+
+int BN_is_one(const BIGNUM *a)
+	{
+	return BN_abs_is_word(a, 1) && !a->neg;
+	}
+
+int BN_is_word(const BIGNUM *a, const BN_ULONG w)
+	{
+	return BN_abs_is_word(a, w) && (!w || !a->neg);
+	}
+
+int BN_is_odd(const BIGNUM *a)
+	{
+	return (a->top > 0) && (a->d[0] & 1);
+	}
+
+int BN_is_negative(const BIGNUM *a)
+	{
+	return (a->neg != 0);
+	}
+
+int BN_to_montgomery(BIGNUM *r,const BIGNUM *a,	BN_MONT_CTX *mont, BN_CTX *ctx)
+	{
+	return BN_mod_mul_montgomery(r,a,&(mont->RR),mont,ctx);
+	}
+
+void BN_with_flags(BIGNUM *dest, const BIGNUM *b, int n)
+	{
+	dest->d=b->d;
+	dest->top=b->top;
+	dest->dmax=b->dmax;
+	dest->neg=b->neg;
+	dest->flags=((dest->flags & BN_FLG_MALLOCED)
+		|  (b->flags & ~BN_FLG_MALLOCED)
+		|  BN_FLG_STATIC_DATA
+		|  n);
+	}
+
+BN_GENCB *BN_GENCB_new(void)
+	{
+	BN_GENCB *ret;
+
+	if ((ret=(BN_GENCB *)OPENSSL_malloc(sizeof(BN_GENCB))) == NULL)
+		{
+		BNerr(BN_F_BN_GENCB_NEW,ERR_R_MALLOC_FAILURE);
+		return(NULL);
+		}
+
+	return ret;
+	}
+
+void BN_GENCB_free(BN_GENCB *cb)
+	{
+	if (cb == NULL) return;
+	OPENSSL_free(cb);
+	}
+
+void BN_set_flags(BIGNUM *b, int n)
+	{
+	b->flags|=n;
+	}
+
+int BN_get_flags(const BIGNUM *b, int n)
+	{
+	return b->flags&n;
+	}
+
+/* Populate a BN_GENCB structure with an "old"-style callback */
+void BN_GENCB_set_old(BN_GENCB *gencb, void (*callback)(int, int, void *), void *cb_arg)
+	{
+	BN_GENCB *tmp_gencb = gencb;
+	tmp_gencb->ver = 1;
+	tmp_gencb->arg = cb_arg;
+	tmp_gencb->cb.cb_1 = callback;
+	}
+
+/* Populate a BN_GENCB structure with a "new"-style callback */
+void BN_GENCB_set(BN_GENCB *gencb, int (*callback)(int, int, BN_GENCB *), void *cb_arg)
+	{
+	BN_GENCB *tmp_gencb = gencb;
+	tmp_gencb->ver = 2;
+	tmp_gencb->arg = cb_arg;
+	tmp_gencb->cb.cb_2 = callback;
+	}
+
+void *BN_GENCB_get_arg(BN_GENCB *cb)
+	{
+	return cb->arg;
+	}
+
+
+BIGNUM *bn_wexpand(BIGNUM *a, int words)
+	{
+	return (words <= a->dmax)?a:bn_expand2(a,words);
+	}
+
+void bn_correct_top(BIGNUM *a)
+	{
+	BN_ULONG *ftl;
+	int tmp_top = a->top;
+
+	if (tmp_top > 0)
+		{
+		for (ftl= &(a->d[tmp_top-1]); tmp_top > 0; tmp_top--)
+			if (*(ftl--)) break;
+		a->top = tmp_top;
+		}
+	bn_pollute(a);
+	}

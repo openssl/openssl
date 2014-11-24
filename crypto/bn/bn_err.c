@@ -1,6 +1,6 @@
 /* crypto/bn/bn_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2013 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2014 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -78,6 +78,7 @@ static ERR_STRING_DATA BN_str_functs[]=
 {ERR_FUNC(BN_F_BN_BLINDING_UPDATE),	"BN_BLINDING_update"},
 {ERR_FUNC(BN_F_BN_BN2DEC),	"BN_bn2dec"},
 {ERR_FUNC(BN_F_BN_BN2HEX),	"BN_bn2hex"},
+{ERR_FUNC(BN_F_BN_COMPUTE_WNAF),	"bn_compute_wNAF"},
 {ERR_FUNC(BN_F_BN_CTX_GET),	"BN_CTX_get"},
 {ERR_FUNC(BN_F_BN_CTX_NEW),	"BN_CTX_new"},
 {ERR_FUNC(BN_F_BN_CTX_START),	"BN_CTX_start"},
@@ -87,6 +88,7 @@ static ERR_STRING_DATA BN_str_functs[]=
 {ERR_FUNC(BN_F_BN_EXP),	"BN_exp"},
 {ERR_FUNC(BN_F_BN_EXPAND2),	"bn_expand2"},
 {ERR_FUNC(BN_F_BN_EXPAND_INTERNAL),	"BN_EXPAND_INTERNAL"},
+{ERR_FUNC(BN_F_BN_GENCB_NEW),	"BN_GENCB_new"},
 {ERR_FUNC(BN_F_BN_GENERATE_DSA_NONCE),	"BN_generate_dsa_nonce"},
 {ERR_FUNC(BN_F_BN_GENERATE_PRIME_EX),	"BN_generate_prime_ex"},
 {ERR_FUNC(BN_F_BN_GF2M_MOD),	"BN_GF2m_mod"},
