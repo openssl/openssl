@@ -73,37 +73,42 @@ static const char rnd_seed[] = "string to make the random number generator think
 
 /* test_exp_mod_zero tests that x**0 mod 1 == 0. It returns zero on success. */
 static int test_exp_mod_zero() {
-	BIGNUM a, p, m;
-	BIGNUM r;
+	BIGNUM *a = NULL, *p = NULL, *m = NULL;
+	BIGNUM *r = NULL;
 	BN_CTX *ctx = BN_CTX_new();
 	int ret = 1;
 
-	BN_init(&m);
-	BN_one(&m);
+	m = BN_new();
+	if(!m) goto err;
+	BN_one(m);
 
-	BN_init(&a);
-	BN_one(&a);
+	a = BN_new();
+	if(!a) goto err;
+	BN_one(a);
 
-	BN_init(&p);
-	BN_zero(&p);
+	p = BN_new();
+	if(!p) goto err;
+	BN_zero(p);
 
-	BN_init(&r);
-	BN_mod_exp(&r, &a, &p, &m, ctx);
+	r = BN_new();
+	if(!r) goto err;
+	BN_mod_exp(r, a, p, m, ctx);
 	BN_CTX_free(ctx);
 
-	if (BN_is_zero(&r))
+	if (BN_is_zero(r))
 		ret = 0;
 	else
 		{
 		printf("1**0 mod 1 = ");
-		BN_print_fp(stdout, &r);
+		BN_print_fp(stdout, r);
 		printf(", should be 0\n");
 		}
 
-	BN_free(&r);
-	BN_free(&a);
-	BN_free(&p);
-	BN_free(&m);
+err:
+	BN_free(r);
+	BN_free(a);
+	BN_free(p);
+	BN_free(m);
 
 	return ret;
 }
