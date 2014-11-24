@@ -5,7 +5,7 @@
 DIR=		test
 TOP=		..
 CC=		cc
-INCLUDES=	-I$(TOP) -I../include $(KRB5_INCLUDES) -I$(TOP)/fips
+INCLUDES=	-I$(TOP) -I../include -I../crypto/include $(KRB5_INCLUDES) -I$(TOP)/fips
 CFLAG=		-g
 MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 PERL=		perl
@@ -554,21 +554,21 @@ dummytest$(EXE_EXT): dummytest.o $(DLIBCRYPTO)
 
 bftest.o: ../e_os.h ../include/openssl/blowfish.h ../include/openssl/e_os2.h
 bftest.o: ../include/openssl/opensslconf.h bftest.c
-bntest.o: ../crypto/bn/bn_lcl.h ../e_os.h ../include/openssl/asn1.h
-bntest.o: ../include/openssl/bio.h ../include/openssl/bn.h
-bntest.o: ../include/openssl/buffer.h ../include/openssl/crypto.h
-bntest.o: ../include/openssl/dh.h ../include/openssl/dsa.h
-bntest.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-bntest.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
-bntest.o: ../include/openssl/err.h ../include/openssl/evp.h
-bntest.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
-bntest.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-bntest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-bntest.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
-bntest.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-bntest.o: ../include/openssl/sha.h ../include/openssl/stack.h
-bntest.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
-bntest.o: ../include/openssl/x509_vfy.h bntest.c
+bntest.o: ../crypto/bn/bn_lcl.h ../crypto/include/internal/bn_int.h ../e_os.h
+bntest.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+bntest.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+bntest.o: ../include/openssl/crypto.h ../include/openssl/dh.h
+bntest.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
+bntest.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
+bntest.o: ../include/openssl/ecdsa.h ../include/openssl/err.h
+bntest.o: ../include/openssl/evp.h ../include/openssl/lhash.h
+bntest.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+bntest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+bntest.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
+bntest.o: ../include/openssl/rand.h ../include/openssl/rsa.h
+bntest.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+bntest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+bntest.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h bntest.c
 casttest.o: ../e_os.h ../include/openssl/cast.h ../include/openssl/e_os2.h
 casttest.o: ../include/openssl/opensslconf.h casttest.c
 constant_time_test.o: ../crypto/constant_time_locl.h ../e_os.h

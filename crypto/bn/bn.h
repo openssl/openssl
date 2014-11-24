@@ -272,19 +272,14 @@ extern "C" {
 #ifndef OPENSSL_NO_DEPRECATED
 #define BN_FLG_FREE		0x8000	/* used for debuging */
 #endif
-#define BN_set_flags(b,n)	((b)->flags|=(n))
-#define BN_get_flags(b,n)	((b)->flags&(n))
+
+void BN_set_flags(BIGNUM *b, int n);
+int BN_get_flags(const BIGNUM *b, int n);
 
 /* get a clone of a BIGNUM with changed flags, for *temporary* use only
  * (the two BIGNUMs cannot not be used in parallel!) */
-#define BN_with_flags(dest,b,n)  ((dest)->d=(b)->d, \
-                                  (dest)->top=(b)->top, \
-                                  (dest)->dmax=(b)->dmax, \
-                                  (dest)->neg=(b)->neg, \
-                                  (dest)->flags=(((dest)->flags & BN_FLG_MALLOCED) \
-                                                 |  ((b)->flags & ~BN_FLG_MALLOCED) \
-                                                 |  BN_FLG_STATIC_DATA \
-                                                 |  (n)))
+void BN_with_flags(BIGNUM *dest, const BIGNUM *b, int n);
+
 
 /* Already declared in ossl_typ.h */
 #if 0
@@ -345,20 +340,21 @@ struct bn_gencb_st
 		int (*cb_2)(int, int, BN_GENCB *);
 		} cb;
 	};
+
 /* Wrapper function to make using BN_GENCB easier,  */
 int BN_GENCB_call(BN_GENCB *cb, int a, int b);
-/* Macro to populate a BN_GENCB structure with an "old"-style callback */
-#define BN_GENCB_set_old(gencb, callback, cb_arg) { \
-		BN_GENCB *tmp_gencb = (gencb); \
-		tmp_gencb->ver = 1; \
-		tmp_gencb->arg = (cb_arg); \
-		tmp_gencb->cb.cb_1 = (callback); }
-/* Macro to populate a BN_GENCB structure with a "new"-style callback */
-#define BN_GENCB_set(gencb, callback, cb_arg) { \
-		BN_GENCB *tmp_gencb = (gencb); \
-		tmp_gencb->ver = 2; \
-		tmp_gencb->arg = (cb_arg); \
-		tmp_gencb->cb.cb_2 = (callback); }
+
+BN_GENCB *BN_GENCB_new(void);
+void BN_GENCB_free(BN_GENCB *cb);
+
+/* Populate a BN_GENCB structure with an "old"-style callback */
+void BN_GENCB_set_old(BN_GENCB *gencb, void (*callback)(int, int, void *), void *cb_arg);
+
+/* Populate a BN_GENCB structure with a "new"-style callback */
+void BN_GENCB_set(BN_GENCB *gencb, int (*callback)(int, int, BN_GENCB *), void *cb_arg);
+
+
+void *BN_GENCB_get_arg(BN_GENCB *cb);
 
 #define BN_prime_checks 0 /* default: select number of iterations
 			     based on the size of the number */
@@ -383,21 +379,18 @@ int BN_GENCB_call(BN_GENCB *cb, int a, int b);
 
 #define BN_num_bytes(a)	((BN_num_bits(a)+7)/8)
 
-/* Note that BN_abs_is_word didn't work reliably for w == 0 until 0.9.8 */
-#define BN_abs_is_word(a,w) ((((a)->top == 1) && ((a)->d[0] == (BN_ULONG)(w))) || \
-				(((w) == 0) && ((a)->top == 0)))
-#define BN_is_zero(a)       ((a)->top == 0)
-#define BN_is_one(a)        (BN_abs_is_word((a),1) && !(a)->neg)
-#define BN_is_word(a,w)     (BN_abs_is_word((a),(w)) && (!(w) || !(a)->neg))
-#define BN_is_odd(a)	    (((a)->top > 0) && ((a)->d[0] & 1))
+
+int BN_abs_is_word(const BIGNUM *a, const BN_ULONG w);
+int BN_is_zero(const BIGNUM *a);
+int BN_is_one(const BIGNUM *a);
+int BN_is_word(const BIGNUM *a, const BN_ULONG w);
+int BN_is_odd(const BIGNUM *a);
+
 
 #define BN_one(a)	(BN_set_word((a),1))
-#define BN_zero_ex(a) \
-	do { \
-		BIGNUM *_tmp_bn = (a); \
-		_tmp_bn->top = 0; \
-		_tmp_bn->neg = 0; \
-	} while(0)
+
+void BN_zero_ex(BIGNUM *a);
+
 #ifdef OPENSSL_NO_DEPRECATED
 #define BN_zero(a)	BN_zero_ex(a)
 #else
@@ -445,7 +438,7 @@ void	BN_set_negative(BIGNUM *b, int n);
  * \param  a  pointer to the BIGNUM object
  * \return 1 if a < 0 and 0 otherwise
  */
-#define BN_is_negative(a) ((a)->neg != 0)
+int	BN_is_negative(const BIGNUM *b);
 
 int	BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
 	BN_CTX *ctx);
@@ -558,8 +551,7 @@ BN_MONT_CTX *BN_MONT_CTX_new(void );
 void BN_MONT_CTX_init(BN_MONT_CTX *ctx);
 int BN_mod_mul_montgomery(BIGNUM *r,const BIGNUM *a,const BIGNUM *b,
 	BN_MONT_CTX *mont, BN_CTX *ctx);
-#define BN_to_montgomery(r,a,mont,ctx)	BN_mod_mul_montgomery(\
-	(r),(a),&((mont)->RR),(mont),(ctx))
+int BN_to_montgomery(BIGNUM *r,const BIGNUM *a, BN_MONT_CTX *mont, BN_CTX *ctx);
 int BN_from_montgomery(BIGNUM *r,const BIGNUM *a,
 	BN_MONT_CTX *mont, BN_CTX *ctx);
 void BN_MONT_CTX_free(BN_MONT_CTX *mont);
@@ -687,7 +679,7 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range, const BIGNUM *priv,
 
 #define bn_expand(a,bits) ((((((bits+BN_BITS2-1))/BN_BITS2)) <= (a)->dmax)?\
 	(a):bn_expand2((a),(bits+BN_BITS2-1)/BN_BITS2))
-#define bn_wexpand(a,words) (((words) <= (a)->dmax)?(a):bn_expand2((a),(words)))
+BIGNUM *bn_wexpand(BIGNUM *a, int words);
 BIGNUM *bn_expand2(BIGNUM *a, int words);
 #ifndef OPENSSL_NO_DEPRECATED
 BIGNUM *bn_dup_expand(const BIGNUM *a, int words); /* unused */
@@ -782,18 +774,8 @@ int RAND_pseudo_bytes(unsigned char *buf,int num);
 
 #endif
 
-#define bn_correct_top(a) \
-        { \
-        BN_ULONG *ftl; \
-	int tmp_top = (a)->top; \
-	if (tmp_top > 0) \
-		{ \
-		for (ftl= &((a)->d[tmp_top-1]); tmp_top > 0; tmp_top--) \
-			if (*(ftl--)) break; \
-		(a)->top = tmp_top; \
-		} \
-	bn_pollute(a); \
-	}
+void bn_correct_top(BIGNUM *a);
+
 
 BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w);
 BN_ULONG bn_mul_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w);
@@ -816,6 +798,7 @@ BIGNUM *get_rfc3526_prime_8192(BIGNUM *bn);
 
 int BN_bntest_rand(BIGNUM *rnd, int bits, int top,int bottom);
 
+
 /* BEGIN ERROR CODES */
 /* The following lines are auto generated by the script mkerr.pl. Any changes
  * made after this point may be overwritten when the script is next run.
@@ -833,6 +816,7 @@ void ERR_load_BN_strings(void);
 #define BN_F_BN_BLINDING_UPDATE				 103
 #define BN_F_BN_BN2DEC					 104
 #define BN_F_BN_BN2HEX					 105
+#define BN_F_BN_COMPUTE_WNAF				 142
 #define BN_F_BN_CTX_GET					 116
 #define BN_F_BN_CTX_NEW					 106
 #define BN_F_BN_CTX_START				 129
@@ -842,6 +826,7 @@ void ERR_load_BN_strings(void);
 #define BN_F_BN_EXP					 123
 #define BN_F_BN_EXPAND2					 108
 #define BN_F_BN_EXPAND_INTERNAL				 120
+#define BN_F_BN_GENCB_NEW				 143
 #define BN_F_BN_GENERATE_DSA_NONCE			 140
 #define BN_F_BN_GENERATE_PRIME_EX			 141
 #define BN_F_BN_GF2M_MOD				 131
