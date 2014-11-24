@@ -189,7 +189,7 @@
 #endif
 #include <openssl/modes.h>
 
-#include "../crypto/bn/bn_lcl.h"
+#include <openssl/bn.h>
 
 #ifndef HAVE_FORK
 # if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_OS2) || defined(OPENSSL_SYS_NETWARE)
@@ -216,11 +216,9 @@ static int usertime=1;
 
 static double Time_F(int s);
 static void print_message(const char *s,long num,int length);
-static void prime_print_message(const char *s, long num);
 static void pkey_print_message(const char *str, const char *str2,
 	long num, int bits, int sec);
 static void print_result(int alg,int run_no,int count,double time_used);
-static void prime_print_result(int alg, int count, double time_used);
 #ifndef NO_FORK
 static int do_multi(int multi);
 #endif
@@ -244,8 +242,6 @@ static const char *names[ALGOR_NUM]={
   "aes-128 ige","aes-192 ige","aes-256 ige","ghash" };
 static double results[ALGOR_NUM][SIZE_NUM];
 static int lengths[SIZE_NUM]={16,64,256,1024,8*1024};
-static const char *prime_names[PRIME_NUM]={
-  "prime trial division", "prime trial division retry", "prime coprime" };
 #ifndef OPENSSL_NO_RSA
 static double rsa_results[RSA_NUM][2];
 #endif
@@ -502,11 +498,7 @@ int MAIN(int argc, char **argv)
 	double d=0.0;
 	long c[ALGOR_NUM][SIZE_NUM];
 
-#define D_PRIME_TRIAL_DIVISION			0
-#define D_PRIME_TRIAL_DIVISION_RETRY	1
-#define D_PRIME_COPRIME					2
 #ifndef OPENSSL_SYS_WIN32
-	long prime_c[PRIME_NUM];
 #endif
 #define	R_DSA_512	0
 #define	R_DSA_1024	1
@@ -626,7 +618,6 @@ int MAIN(int argc, char **argv)
 	long ecdh_c[EC_NUM][2];
 #endif
 
-	int prime_doit[PRIME_NUM];
 	int rsa_doit[RSA_NUM];
 	int dsa_doit[DSA_NUM];
 #ifndef OPENSSL_NO_ECDSA
@@ -713,9 +704,6 @@ int MAIN(int argc, char **argv)
 	for (i=0; i<EC_NUM; i++)
 		ecdh_doit[i]=0;
 #endif
-	for (i=0; i<PRIME_NUM; i++)
-		prime_doit[i]=0;
-
 	
 	j=0;
 	argc--;
@@ -1057,18 +1045,6 @@ int MAIN(int argc, char **argv)
 			}
 		else
 #endif
-			 if (strcmp(*argv,"prime-trial-division") == 0)
-			prime_doit[D_PRIME_TRIAL_DIVISION] = 1;
-		else if (strcmp(*argv,"prime-trial-division-retry") == 0)
-			prime_doit[D_PRIME_TRIAL_DIVISION_RETRY] = 1;
-		else if (strcmp(*argv,"prime-coprime") == 0)
-			prime_doit[D_PRIME_COPRIME] = 1;
-		else if (strcmp(*argv,"prime") == 0)
-			{
-			for (i=0; i < PRIME_NUM; i++)
-				prime_doit[i]=1;
-			}
-		else
 			{
 			BIO_printf(bio_err,"Error: bad option or value\n");
 			BIO_printf(bio_err,"\n");
@@ -1196,7 +1172,6 @@ int MAIN(int argc, char **argv)
     !defined(OPENSSL_NO_AES) || !defined(OPENSSL_NO_CAMELLIA)
 			BIO_printf(bio_err,"\n");
 #endif
-			BIO_printf(bio_err,"prime-trial-division  prime-coprime\n");
 
 			BIO_printf(bio_err,"\n");
 			BIO_printf(bio_err,"Available options:\n");
@@ -1406,10 +1381,7 @@ int MAIN(int argc, char **argv)
 		c[D_IGE_192_AES][i]=c[D_IGE_192_AES][i-1]*l0/l1;
 		c[D_IGE_256_AES][i]=c[D_IGE_256_AES][i-1]*l0/l1;
 		}
-		
-	prime_c[D_PRIME_TRIAL_DIVISION]=count;
-	prime_c[D_PRIME_TRIAL_DIVISION_RETRY]=count;
-	prime_c[D_PRIME_COPRIME]=count;
+
 	
 #ifndef OPENSSL_NO_RSA
 	rsa_c[R_RSA_512][0]=count/2000;
@@ -2091,65 +2063,6 @@ int MAIN(int argc, char **argv)
 			}
 		}
 #ifndef OPENSSL_SYS_WIN32
-	if (prime_doit[D_PRIME_TRIAL_DIVISION])
-		{
-		BIGNUM *rnd = BN_new();
-		BIGNUM *add = BN_new();
-		BN_CTX *ctx = BN_CTX_new();
-		
-		BN_set_word(add, 2);
-		prime_print_message(prime_names[D_PRIME_TRIAL_DIVISION],
-							prime_c[D_PRIME_TRIAL_DIVISION]);
-			
-		Time_F(START);
-		for (count=0, run=1; COND(prime_c[D_PRIME_TRIAL_DIVISION]); count++)
-			if (!bn_probable_prime_dh(rnd, 1024, add, NULL, ctx)) count--;
-		
-		d=Time_F(STOP);
-		prime_print_result(D_PRIME_TRIAL_DIVISION, count, d);
-		
-		BN_CTX_free(ctx);
-		BN_free(add);
-		BN_free(rnd);
-		}
-	
-	if (prime_doit[D_PRIME_TRIAL_DIVISION_RETRY])
-		{
-		BIGNUM *rnd = BN_new();
-		BN_CTX *ctx = BN_CTX_new();
-		
-		prime_print_message(prime_names[D_PRIME_TRIAL_DIVISION_RETRY],
-							prime_c[D_PRIME_TRIAL_DIVISION_RETRY]);
-			
-		Time_F(START);
-		for (count=0, run=1; COND(prime_c[D_PRIME_TRIAL_DIVISION_RETRY]); count++)
-			if (!bn_probable_prime_dh_retry(rnd, 1024, ctx)) count--;
-		
-		d=Time_F(STOP);
-		prime_print_result(D_PRIME_TRIAL_DIVISION_RETRY, count, d);
-		
-		BN_CTX_free(ctx);
-		BN_free(rnd);
-		}
-	
-	if (prime_doit[D_PRIME_COPRIME])
-		{
-		BIGNUM *rnd = BN_new();
-		BN_CTX *ctx = BN_CTX_new();
-		
-		prime_print_message(prime_names[D_PRIME_COPRIME],
-							prime_c[D_PRIME_COPRIME]);
-			
-		Time_F(START);
-		for (count=0, run=1; COND(prime_c[D_PRIME_COPRIME]); count++)
-			if (!bn_probable_prime_dh_coprime(rnd, 1024, ctx)) count--;
-		
-		d=Time_F(STOP);
-		prime_print_result(D_PRIME_COPRIME, count, d);
-		
-		BN_CTX_free(ctx);
-		BN_free(rnd);
-		}
 #endif
 	RAND_pseudo_bytes(buf,36);
 #ifndef OPENSSL_NO_RSA
@@ -2741,23 +2654,6 @@ static void print_message(const char *s, long num, int length)
 #endif
 	}
 
-static void prime_print_message(const char *s, long num)
-	{
-#ifdef SIGALRM
-	BIO_printf(bio_err,mr ? "+DT:%s:%d\n"
-		   : "Doing %s for %ds: ", s, PRIME_SECONDS);
-	(void)BIO_flush(bio_err);
-	alarm(PRIME_SECONDS);
-#else
-	BIO_printf(bio_err,mr ? "+DN:%s:%ld\n"
-		   : "Doing %s %ld times: ", s, num);
-	(void)BIO_flush(bio_err);
-#endif
-#ifdef LINT
-	num=num;
-#endif
-	}
-
 static void pkey_print_message(const char *str, const char *str2, long num,
 	int bits, int tm)
 	{
@@ -2781,14 +2677,6 @@ static void print_result(int alg,int run_no,int count,double time_used)
 	BIO_printf(bio_err,mr ? "+R:%d:%s:%f\n"
 		   : "%d %s's in %.2fs\n",count,names[alg],time_used);
 	results[alg][run_no]=((double)count)/time_used*lengths[run_no];
-	}
-
-static void prime_print_result(int alg, int count, double time_used)
-	{
-	BIO_printf(bio_err,
-			   mr ? "+R:%d:%s:%f:%f\n" : "%d %s's in %.2fs (%.2f microseconds / run)\n",
-			   count, prime_names[alg], time_used,
-			   time_used / ((double)count) * 1000000);
 	}
 
 #ifndef NO_FORK
