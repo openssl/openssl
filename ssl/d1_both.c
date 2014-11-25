@@ -211,8 +211,7 @@ dtls1_hm_fragment_new(unsigned long frag_len, int reassembly)
 	return frag;
 	}
 
-static void
-dtls1_hm_fragment_free(hm_fragment *frag)
+void dtls1_hm_fragment_free(hm_fragment *frag)
 	{
 
 	if (frag->msg_header.is_ccs)
