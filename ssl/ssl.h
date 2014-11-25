@@ -2241,9 +2241,9 @@ const SSL_METHOD *SSLv3_server_method(void);	/* SSLv3 */
 const SSL_METHOD *SSLv3_client_method(void);	/* SSLv3 */
 #endif
 
-const SSL_METHOD *SSLv23_method(void);	/* SSLv3 but can rollback to v2 */
-const SSL_METHOD *SSLv23_server_method(void);	/* SSLv3 but can rollback to v2 */
-const SSL_METHOD *SSLv23_client_method(void);	/* SSLv3 but can rollback to v2 */
+const SSL_METHOD *SSLv23_method(void);	/* Negotiate highest available SSL/TLS version */
+const SSL_METHOD *SSLv23_server_method(void);	/* Negotiate highest available SSL/TLS version */
+const SSL_METHOD *SSLv23_client_method(void);	/* Negotiate highest available SSL/TLS version */
 
 const SSL_METHOD *TLSv1_method(void);		/* TLSv1.0 */
 const SSL_METHOD *TLSv1_server_method(void);	/* TLSv1.0 */
