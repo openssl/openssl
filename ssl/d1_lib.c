@@ -160,16 +160,14 @@ static void dtls1_clear_queues(SSL *s)
     while( (item = pqueue_pop(s->d1->buffered_messages)) != NULL)
         {
         frag = (hm_fragment *)item->data;
-        OPENSSL_free(frag->fragment);
-        OPENSSL_free(frag);
+        dtls1_hm_fragment_free(frag);
         pitem_free(item);
         }
 
     while ( (item = pqueue_pop(s->d1->sent_messages)) != NULL)
         {
         frag = (hm_fragment *)item->data;
-        OPENSSL_free(frag->fragment);
-        OPENSSL_free(frag);
+        dtls1_hm_fragment_free(frag);
         pitem_free(item);
         }
 
