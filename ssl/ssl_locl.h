@@ -1265,7 +1265,6 @@ int dtls1_get_record(SSL *s);
 int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
 	unsigned int len, int create_empty_fragement);
 int dtls1_dispatch_alert(SSL *s);
-int dtls1_enc(SSL *s, int snd);
 
 int ssl_init_wbio_buffer(SSL *s, int push);
 void ssl_free_wbio_buffer(SSL *s);
