@@ -137,7 +137,7 @@ int ssl2_enc(SSL *s, int send)
 		}
 
 	/* check for NULL cipher */
-	if (ds == NULL) return;
+	if (ds == NULL) return 1;
 
 
 	bs=ds->cipher->block_size;
