@@ -649,6 +649,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-resp_key_id       identify reponse by signing certificate key ID\n");
 		BIO_printf (bio_err, "-nrequest n        number of requests to accept (default unlimited)\n");
 		BIO_printf (bio_err, "-<dgst alg>     use specified digest in the request\n");
+		BIO_printf (bio_err, "-timeout n timeout connection to OCSP responder after n seconds\n");
 		goto end;
 		}
 
