@@ -294,35 +294,6 @@ CERT *ssl_cert_dup(CERT *cert)
 			rpk->privatekey = cpk->privatekey;
 			CRYPTO_add(&cpk->privatekey->references, 1,
 				CRYPTO_LOCK_EVP_PKEY);
-
-			switch(i) 
-				{
-				/* If there was anything special to do for
-				 * certain types of keys, we'd do it here.
-				 * (Nothing at the moment, I think.) */
-
-			case SSL_PKEY_RSA_ENC:
-			case SSL_PKEY_RSA_SIGN:
-				/* We have an RSA key. */
-				break;
-				
-			case SSL_PKEY_DSA_SIGN:
-				/* We have a DSA key. */
-				break;
-				
-			case SSL_PKEY_DH_RSA:
-			case SSL_PKEY_DH_DSA:
-				/* We have a DH key. */
-				break;
-
-			case SSL_PKEY_ECC:
-				/* We have an ECC key */
-				break;
-
-			default:
-				/* Can't happen. */
-				SSLerr(SSL_F_SSL_CERT_DUP, SSL_R_LIBRARY_BUG);
-				}
 			}
 
 		if (cpk->chain)
