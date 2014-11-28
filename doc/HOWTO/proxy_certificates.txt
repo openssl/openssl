@@ -1,4 +1,3 @@
-<DRAFT!>
 			HOWTO proxy certificates
 
 0. WARNING
@@ -89,18 +88,18 @@ The policy value has a specific syntax, {syntag}:{string}, where the syntag
 determines what will be done with the string.  The following syntags are
 recognised:
 
-  text	indicates that the string is simply bytes, without any encoding:
+  text  indicates that the string is simply bytes, without any encoding:
 
-    		policy=text:räksmörgås
+          policy=text:räksmörgås
 
-  	    Previous versions of this design had a specific tag for UTF-8 text.
+        Previous versions of this design had a specific tag for UTF-8 text.
         However, since the bytes are copied as-is anyway, there is no need for
         such a specific tag.
 
-  hex	  indicates the string is encoded in hex, with colons between each byte
+  hex   indicates the string is encoded in hex, with colons between each byte
         (every second hex digit):
 
-     	  policy=hex:72:E4:6B:73:6D:F6:72:67:E5:73
+          policy=hex:72:E4:6B:73:6D:F6:72:67:E5:73
 
         Previous versions of this design had a tag to insert a complete DER
         blob.  However, the only legal use for this would be to surround the
@@ -206,7 +205,7 @@ Here is some skeleton code you can fill in:
 
         if (xs->ex_flags & EXFLAG_PROXY)
           {
-	    YOUR_RIGHTS *rights =
+            YOUR_RIGHTS *rights =
               (YOUR_RIGHTS *)X509_STORE_CTX_get_ex_data(ctx,
                 get_proxy_auth_ex_data_idx());
             PROXY_CERT_INFO_EXTENSION *pci =
@@ -240,7 +239,7 @@ Here is some skeleton code you can fill in:
                 {
                   int i;
                   YOUR_RIGHTS tmp_rights;
-		  memset(tmp_rights.rights, 0, sizeof(tmp_rights.rights));
+                  memset(tmp_rights.rights, 0, sizeof(tmp_rights.rights));
 
                   /* process_rights() is supposed to be a procedure
                      that takes a string and it's length, interprets
@@ -261,7 +260,7 @@ Here is some skeleton code you can fill in:
           {
             /* We have a EE certificate, let's use it to set default!
             */
-	    YOUR_RIGHTS *rights =
+            YOUR_RIGHTS *rights =
               (YOUR_RIGHTS *)X509_STORE_CTX_get_ex_data(ctx,
                 get_proxy_auth_ex_data_idx());
 
