@@ -1,7 +1,0 @@
-lib
-Makefile.save
-des
-*.flc
-semantic.cache
-crypt*.s
-des-*.s
