@@ -291,9 +291,9 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -host host     - use -connect instead\n");
 	BIO_printf(bio_err," -port port     - use -connect instead\n");
 	BIO_printf(bio_err," -connect host:port - who to connect to (default is %s:%s)\n",SSL_HOST_NAME,PORT_STR);
-	BIO_printf(bio_err," -checkhost host - check peer certificate matches \"host\"\n");
-	BIO_printf(bio_err," -checkemail email - check peer certificate matches \"email\"\n");
-	BIO_printf(bio_err," -checkip ipaddr - check peer certificate matches \"ipaddr\"\n");
+	BIO_printf(bio_err," -verify_host host - check peer certificate matches \"host\"\n");
+	BIO_printf(bio_err," -verify_email email - check peer certificate matches \"email\"\n");
+	BIO_printf(bio_err," -verify_ip ipaddr - check peer certificate matches \"ipaddr\"\n");
 
 	BIO_printf(bio_err," -verify arg   - turn on peer certificate verification\n");
 	BIO_printf(bio_err," -verify_return_error - return verification errors\n");
