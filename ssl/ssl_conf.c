@@ -218,6 +218,7 @@ static int ctrl_str_option(SSL_CONF_CTX *cctx, const char *cmd)
 #ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
 		SSL_FLAG_TBL_CERT("debug_broken_protocol", SSL_CERT_FLAG_BROKEN_PROTOCOL),
 #endif
+		SSL_FLAG_TBL("no_tlsext", SSL_OP_NO_TLSEXT),
 		};
 	cctx->tbl = ssl_option_single;
 	cctx->ntbl = sizeof(ssl_option_single)/sizeof(ssl_flag_tbl);
@@ -360,6 +361,7 @@ static int cmd_Options(SSL_CONF_CTX *cctx, const char *value)
 		SSL_FLAG_TBL_SRV("DHSingle", SSL_OP_SINGLE_DH_USE),
 		SSL_FLAG_TBL_SRV("ECDHSingle", SSL_OP_SINGLE_ECDH_USE),
 		SSL_FLAG_TBL("UnsafeLegacyRenegotiation", SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION),
+		SSL_FLAG_TBL_INV("TLSExtensions", SSL_OP_NO_TLSEXT),
 		};
 	if (!(cctx->flags & SSL_CONF_FLAG_FILE))
 		return -2;

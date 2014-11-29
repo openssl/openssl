@@ -127,6 +127,11 @@ Disables support for SSL/TLS compression, same as setting B<SSL_OP_NO_COMPRESS>.
 
 Disables support for session tickets, same as setting B<SSL_OP_NO_TICKET>.
 
+=item B<-no_tlsext>
+
+Disables sending any and all TLS extensions in Client Hello, including session
+tickets, supported curves, heartbeat, etc. same as setting B<SSL_OP_NO_TLSEXT>.
+
 =item B<-serverpref>
 
 Use server and not client preference order when determining which cipher suite,
@@ -295,6 +300,11 @@ B<ServerPreference> use server and not client preference order when
 determining which cipher suite, signature algorithm or elliptic curve
 to use for an incoming connection.  Equivalent to
 B<SSL_OP_CIPHER_SERVER_PREFERENCE>. Only used by servers.
+
+B<TLSExtensions>: send TLS extensions in Client Hello, set by default.
+Note that disabling extensions will break other options like SRP, ALPN, NPN or
+server name indication among others. Inverse of B<SSL_OP_NO_TLSEXT>: that is
+B<-TLSExtensions> is the same as setting B<SSL_OP_NO_TLSEXT>.
 
 B<NoResumptionOnRenegotiation> set
 B<SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION> flag. Only used by servers.

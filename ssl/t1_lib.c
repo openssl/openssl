@@ -1179,6 +1179,10 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf, unsigned c
 	if (s->client_version == SSL3_VERSION)
 		goto done;
 
+	/* skip all options if asked for it */
+	if (s->options & SSL_OP_NO_TLSEXT)
+		goto done;
+
  	if (s->tlsext_hostname != NULL)
 		{ 
 		/* Add TLS extension servername to the Client Hello message */

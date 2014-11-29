@@ -592,6 +592,10 @@ struct ssl_session_st
 /* Refers to ancient SSLREF and SSLv2, retained for compatibility */
 #define SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG		0x0
 
+/* Disables sending any TLS extensions, even if required by used protocol
+ * version, ciphers or other options */
+#define SSL_OP_NO_TLSEXT				0x00000400L
+
 /* Disable SSL 3.0/TLS 1.0 CBC vulnerability workaround that was added
  * in OpenSSL 0.9.6d.  Usually (depending on the application protocol)
  * the workaround is not needed.  Unfortunately some broken SSL/TLS
