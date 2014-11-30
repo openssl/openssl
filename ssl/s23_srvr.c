@@ -123,10 +123,6 @@ static const SSL_METHOD *ssl23_get_server_method(int ver);
 int ssl23_get_client_hello(SSL *s);
 static const SSL_METHOD *ssl23_get_server_method(int ver)
 	{
-#ifndef OPENSSL_NO_SSL2
-	if (ver == SSL2_VERSION)
-		return(SSLv2_server_method());
-#endif
 #ifndef OPENSSL_NO_SSL3
 	if (ver == SSL3_VERSION)
 		return(SSLv3_server_method());
@@ -236,7 +232,6 @@ end:
 	return(ret);
 	}
 
-
 int ssl23_get_client_hello(SSL *s)
 	{
 	char buf_space[11]; /* Request this many bytes in initial read.
@@ -283,8 +278,6 @@ int ssl23_get_client_hello(SSL *s)
 				{
 				v[0]=p[3]; v[1]=p[4];
 				/* SSLv2 */
-				if (!(s->options & SSL_OP_NO_SSLv2))
-					type=1;
 				}
 			else if (p[3] == SSL3_VERSION_MAJOR)
 				{
@@ -317,10 +310,6 @@ int ssl23_get_client_hello(SSL *s)
 						/* type=2; */
 						s->state=SSL23_ST_SR_CLNT_HELLO_B;
 						}
-					else if (!(s->options & SSL_OP_NO_SSLv2))
-						{
-						type=1;
-						}
 					}
 				else if (!(s->options & SSL_OP_NO_SSLv3))
 					{
@@ -328,9 +317,6 @@ int ssl23_get_client_hello(SSL *s)
 					/* type=2; */
 					s->state=SSL23_ST_SR_CLNT_HELLO_B;
 					}
-				else if (!(s->options & SSL_OP_NO_SSLv2))
-					type=1;
-
 				}
 			}
 		else if ((p[0] == SSL3_RT_HANDSHAKE) &&
@@ -564,54 +550,6 @@ int ssl23_get_client_hello(SSL *s)
 	/* imaginary new state (for program structure): */
 	/* s->state = SSL23_SR_CLNT_HELLO_C */
 
-	if (type == 1)
-		{
-#ifdef OPENSSL_NO_SSL2
-		SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,SSL_R_UNSUPPORTED_PROTOCOL);
-		goto err;
-#else
-		/* we are talking sslv2 */
-		/* we need to clean up the SSLv3/TLSv1 setup and put in the
-		 * sslv2 stuff. */
-
-		if (s->s2 == NULL)
-			{
-			if (!ssl2_new(s))
-				goto err;
-			}
-		else
-			ssl2_clear(s);
-
-		if (s->s3 != NULL) ssl3_free(s);
-
-		if (!BUF_MEM_grow_clean(s->init_buf,
-			SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER))
-			{
-			goto err;
-			}
-
-		s->state=SSL2_ST_GET_CLIENT_HELLO_A;
-		if (s->options & SSL_OP_NO_TLSv1 && s->options & SSL_OP_NO_SSLv3)
-			s->s2->ssl2_rollback=0;
-		else
-			/* reject SSL 2.0 session if client supports SSL 3.0 or TLS 1.0
-			 * (SSL 3.0 draft/RFC 2246, App. E.2) */
-			s->s2->ssl2_rollback=1;
-
-		/* setup the n bytes we have read so we get them from
-		 * the sslv2 buffer */
-		s->rstate=SSL_ST_READ_HEADER;
-		s->packet_length=n;
-		s->packet= &(s->s2->rbuf[0]);
-		memcpy(s->packet,buf,n);
-		s->s2->rbuf_left=n;
-		s->s2->rbuf_offs=0;
-
-		s->method=SSLv2_server_method();
-		s->handshake_func=s->method->ssl_accept;
-#endif
-		}
-
 	if ((type == 2) || (type == 3))
 		{
 		/* we have SSLv3/TLSv1 (type 2: SSL2 style, type 3: SSL3/TLS style) */
@@ -655,8 +593,7 @@ int ssl23_get_client_hello(SSL *s)
 #endif
 		s->handshake_func=s->method->ssl_accept;
 		}
-	
-	if ((type < 1) || (type > 3))
+	else
 		{
 		/* bad, very bad */
 		SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,SSL_R_UNKNOWN_PROTOCOL);

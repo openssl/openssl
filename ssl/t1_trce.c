@@ -106,7 +106,6 @@ static int do_ssl_trace_list(BIO *bio, int indent,
 /* Version number */
 
 static ssl_trace_tbl ssl_version_tbl[] = {
-	{SSL2_VERSION,		"SSL 2.0"},
 	{SSL3_VERSION,		"SSL 3.0"},
 	{TLS1_VERSION,		"TLS 1.0"},
 	{TLS1_1_VERSION,	"TLS 1.1"},
@@ -1252,8 +1251,6 @@ static int ssl_print_heartbeat(BIO *bio, int indent,
 
 const char *SSL_CIPHER_standard_name(const SSL_CIPHER *c)
 	{
-	if (c->algorithm_ssl & SSL_SSLV2)
-		return NULL;
 	return ssl_trace_str(c->id & 0xFFFF, ssl_ciphers_tbl);
 	}
 

@@ -1389,9 +1389,6 @@ static int ssl_security_default_callback(SSL *s, SSL_CTX *ctx, int op, int bits,
 		/* No ciphers below security level */
 		if (bits < minbits)
 			return 0;
-		/* No SSLv2 ciphers */
-		if ((SSL_CIPHER_get_id(c) >> 24) == 0x2)
-			return 0;
 		/* No unauthenticated ciphersuites */
 		if (c->algorithm_auth & SSL_aNULL)
 			return 0;
@@ -1410,9 +1407,6 @@ static int ssl_security_default_callback(SSL *s, SSL_CTX *ctx, int op, int bits,
 		break;
 		}
 	case SSL_SECOP_VERSION:
-		/* SSLv2 allowed only on level zero */
-		if (nid == SSL2_VERSION)
-			return 0;
 		/* SSLv3 not allowed on level 2 */
 		if (nid <= SSL3_VERSION && level >= 2)
 			return 0;
@@ -1432,9 +1426,6 @@ static int ssl_security_default_callback(SSL *s, SSL_CTX *ctx, int op, int bits,
 		if (level >= 3)
 			return 0;
 		break;
-	case SSL_SECOP_SSL2_COMPAT:
-		/* SSLv2 compatible client hello only for level zero */
-		return 0;
 	default:
 		if (bits < minbits)
 			return 0;

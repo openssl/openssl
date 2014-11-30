@@ -14,7 +14,7 @@ SSL_new - create a new SSL structure for a connection
 
 SSL_new() creates a new B<SSL> structure which is needed to hold the
 data for a TLS/SSL connection. The new structure inherits the settings
-of the underlying context B<ctx>: connection method (SSLv2/v3/TLSv1),
+of the underlying context B<ctx>: connection method,
 options, verification settings, timeout settings.
 
 =head1 RETURN VALUES

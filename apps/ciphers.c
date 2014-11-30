@@ -73,7 +73,6 @@ static const char *ciphers_usage[]={
 "usage: ciphers args\n",
 " -v          - verbose mode, a textual listing of the SSL/TLS ciphers in OpenSSL\n",
 " -V          - even more verbose\n",
-" -ssl2       - SSL2 mode\n",
 " -ssl3       - SSL3 mode\n",
 " -tls1       - TLS1 mode\n",
 NULL
@@ -129,10 +128,6 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_SSL_TRACE
 		else if (strcmp(*argv,"-stdname") == 0)
 			stdname=verbose=1;
-#endif
-#ifndef OPENSSL_NO_SSL2
-		else if (strcmp(*argv,"-ssl2") == 0)
-			meth=SSLv2_client_method();
 #endif
 #ifndef OPENSSL_NO_SSL3
 		else if (strcmp(*argv,"-ssl3") == 0)
@@ -210,9 +205,7 @@ int MAIN(int argc, char **argv)
 				int id2 = (int)((id >> 8) & 0xffL);
 				int id3 = (int)(id & 0xffL);
 				
-				if ((id & 0xff000000L) == 0x02000000L)
-					BIO_printf(STDout, "     0x%02X,0x%02X,0x%02X - ", id1, id2, id3); /* SSL2 cipher */
-				else if ((id & 0xff000000L) == 0x03000000L)
+				if ((id & 0xff000000L) == 0x03000000L)
 					BIO_printf(STDout, "          0x%02X,0x%02X - ", id2, id3); /* SSL3 cipher */
 				else
 					BIO_printf(STDout, "0x%02X,0x%02X,0x%02X,0x%02X - ", id0, id1, id2, id3); /* whatever */

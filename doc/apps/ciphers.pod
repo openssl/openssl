@@ -10,7 +10,6 @@ B<openssl> B<ciphers>
 [B<-s>]
 [B<-v>]
 [B<-V>]
-[B<-ssl2>]
 [B<-ssl3>]
 [B<-tls1>]
 [B<-stdname>]
@@ -35,12 +34,9 @@ not used then ciphers excluded by the security level will still be listed.
 =item B<-v>
 
 Verbose option. List ciphers with a complete description of
-protocol version (SSLv2 or SSLv3; the latter includes TLS), key exchange,
+protocol version, key exchange,
 authentication, encryption and mac algorithms used along with any key size
 restrictions and whether the algorithm is classed as an "export" cipher.
-Note that without the B<-v> option, ciphers may seem to appear twice
-in a cipher list; this is when similar ciphers are available for
-SSL v2 and for SSL v3/TLS v1.
 
 =item B<-V>
 
@@ -49,10 +45,6 @@ Like B<-v>, but include cipher suite codes in output (hex format).
 =item B<-ssl3>
 
 only include SSL v3 ciphers.
-
-=item B<-ssl2>
-
-only include SSL v2 ciphers.
 
 =item B<-tls1>
 
@@ -259,9 +251,9 @@ keys.
 ciphers suites using FORTEZZA key exchange, authentication, encryption or all
 FORTEZZA algorithms. Not implemented.
 
-=item B<TLSv1.2>, B<TLSv1>, B<SSLv3>, B<SSLv2>
+=item B<TLSv1.2>, B<TLSv1>, B<SSLv3>
 
-TLS v1.2, TLS v1.0, SSL v3.0 or SSL v2.0 cipher suites respectively. Note:
+TLS v1.2, TLS v1.0 or SSL v3.0 cipher suites respectively. Note:
 there are no ciphersuites specific to TLS v1.1.
 
 =item B<AES128>, B<AES256>, B<AES>
@@ -604,17 +596,6 @@ Note: these ciphers can also be used in SSL v3.
  TLS_PSK_WITH_3DES_EDE_CBC_SHA             PSK-3DES-EDE-CBC-SHA
  TLS_PSK_WITH_AES_128_CBC_SHA              PSK-AES128-CBC-SHA
  TLS_PSK_WITH_AES_256_CBC_SHA              PSK-AES256-CBC-SHA
-
-=head2 Deprecated SSL v2.0 cipher suites.
-
- SSL_CK_RC4_128_WITH_MD5                 RC4-MD5
- SSL_CK_RC4_128_EXPORT40_WITH_MD5        EXP-RC4-MD5
- SSL_CK_RC2_128_CBC_WITH_MD5             RC2-MD5
- SSL_CK_RC2_128_CBC_EXPORT40_WITH_MD5    EXP-RC2-MD5
- SSL_CK_IDEA_128_CBC_WITH_MD5            IDEA-CBC-MD5
- SSL_CK_DES_64_CBC_WITH_MD5              DES-CBC-MD5
- SSL_CK_DES_192_EDE3_CBC_WITH_MD5        DES-CBC3-MD5
-
 
 =head1 NOTES
 

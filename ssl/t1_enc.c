@@ -535,7 +535,6 @@ printf("which = %04X\nmac key=",which);
 			}
 		}
 
-	s->session->key_arg_length=0;
 #ifdef KSSL_DEBUG
 	{
         int i;

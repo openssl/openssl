@@ -236,13 +236,13 @@ unsigned int SSL_SESSION_get_compress_id(const SSL_SESSION *s)
 	return s->compress_meth;
 	}
 
-/* Even with SSLv2, we have 16 bytes (128 bits) of session ID space. SSLv3/TLSv1
- * has 32 bytes (256 bits). As such, filling the ID with random gunk repeatedly
+/* SSLv3/TLSv1 has 32 bytes (256 bits) of session ID space. As such, filling
+ * the ID with random junk repeatedly
  * until we have no conflict is going to complete in one iteration pretty much
  * "most" of the time (btw: understatement). So, if it takes us 10 iterations
  * and we still can't avoid a conflict - well that's a reasonable point to call
  * it quits. Either the RAND code is broken or someone is trying to open roughly
- * very close to 2^128 (or 2^256) SSL sessions to our server. How you might
+ * very close to 2^256 SSL sessions to our server. How you might
  * store that many sessions is perhaps a more interesting question ... */
 
 #define MAX_SESS_ID_ATTEMPTS 10
@@ -293,12 +293,7 @@ int ssl_get_new_session(SSL *s, int session)
 
 	if (session)
 		{
-		if (s->version == SSL2_VERSION)
-			{
-			ss->ssl_version=SSL2_VERSION;
-			ss->session_id_length=SSL2_SSL_SESSION_ID_LENGTH;
-			}
-		else if (s->version == SSL3_VERSION)
+		if (s->version == SSL3_VERSION)
 			{
 			ss->ssl_version=SSL3_VERSION;
 			ss->session_id_length=SSL3_SSL_SESSION_ID_LENGTH;
@@ -388,11 +383,7 @@ int ssl_get_new_session(SSL *s, int session)
 			SSL_SESSION_free(ss);
 			return(0);
 			}
-		/* If the session length was shrunk and we're SSLv2, pad it */
-		if((tmp < ss->session_id_length) && (s->version == SSL2_VERSION))
-			memset(ss->session_id + tmp, 0, ss->session_id_length - tmp);
-		else
-			ss->session_id_length = tmp;
+		ss->session_id_length = tmp;
 		/* Finally, check for a conflict */
 		if(SSL_has_matching_session_id(s, ss->session_id,
 						ss->session_id_length))
@@ -745,7 +736,6 @@ void SSL_SESSION_free(SSL_SESSION *ss)
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data);
 
-	OPENSSL_cleanse(ss->key_arg,sizeof ss->key_arg);
 	OPENSSL_cleanse(ss->master_key,sizeof ss->master_key);
 	OPENSSL_cleanse(ss->session_id,sizeof ss->session_id);
 	if (ss->sess_cert != NULL) ssl_sess_cert_free(ss->sess_cert);

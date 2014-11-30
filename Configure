@@ -847,7 +847,6 @@ PROCESS_ARGS:
 				{
 				if ($1 eq "ssl")
 					{
-					$disabled{"ssl2"} = "option(ssl)";
 					$disabled{"ssl3"} = "option(ssl)";
 					}
 				elsif ($1 eq "tls")
@@ -1060,12 +1059,6 @@ if (defined($disabled{"ec"}))
 	{
 	$disabled{"ecdsa"} = "forced";
 	$disabled{"ecdh"} = "forced";
-	}
-
-# SSL 2.0 requires MD5 and RSA
-if (defined($disabled{"md5"}) || defined($disabled{"rsa"}))
-	{
-	$disabled{"ssl2"} = "forced";
 	}
 
 # SSL 3.0 and TLS requires MD5 and SHA and either RSA or DSA+DH

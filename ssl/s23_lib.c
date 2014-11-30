@@ -67,46 +67,26 @@ long ssl23_default_timeout(void)
 
 int ssl23_num_ciphers(void)
 	{
-	return(ssl3_num_ciphers()
-#ifndef OPENSSL_NO_SSL2
-	       + ssl2_num_ciphers()
-#endif
-	    );
+	return(ssl3_num_ciphers());
 	}
 
 const SSL_CIPHER *ssl23_get_cipher(unsigned int u)
 	{
-	unsigned int uu=ssl3_num_ciphers();
-
-	if (u < uu)
-		return(ssl3_get_cipher(u));
-	else
-#ifndef OPENSSL_NO_SSL2
-		return(ssl2_get_cipher(u-uu));
-#else
-		return(NULL);
-#endif
+	return(ssl3_get_cipher(u));
 	}
 
 /* This function needs to check if the ciphers required are actually
  * available */
 const SSL_CIPHER *ssl23_get_cipher_by_char(const unsigned char *p)
 	{
-	const SSL_CIPHER *cp;
-
-	cp=ssl3_get_cipher_by_char(p);
-#ifndef OPENSSL_NO_SSL2
-	if (cp == NULL)
-		cp=ssl2_get_cipher_by_char(p);
-#endif
-	return(cp);
+	return(ssl3_get_cipher_by_char(p));
 	}
 
 int ssl23_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p)
 	{
 	long l;
 
-	/* We can write SSLv2 and SSLv3 ciphers */
+	/* We can write SSLv3 ciphers */
 	/* but no ECC ciphers */
 	if (c->algorithm_mkey == SSL_kECDHr ||
 		c->algorithm_mkey == SSL_kECDHe ||

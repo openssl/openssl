@@ -109,10 +109,10 @@ Attempts to use the file B<value> as the set of temporary DH parameters for
 the appropriate context. This option is only supported if certificate
 operations are permitted.
 
-=item B<-no_ssl2>, B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>
+=item B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>
 
-Disables protocol support for SSLv2, SSLv3, TLS 1.0, TLS 1.1 or TLS 1.2 
-by setting the corresponding options B<SSL_OP_NO_SSL2>, B<SSL_OP_NO_SSL3>,
+Disables protocol support for SSLv3, TLS 1.0, TLS 1.1 or TLS 1.2 
+by setting the corresponding options B<SSL_OP_NO_SSL3>,
 B<SSL_OP_NO_TLS1>, B<SSL_OP_NO_TLS1_1> and B<SSL_OP_NO_TLS1_2> respectively.
 
 =item B<-bugs>
@@ -259,7 +259,7 @@ The supported versions of the SSL or TLS protocol.
 The B<value> argument is a comma separated list of supported protocols to
 enable or disable. If an protocol is preceded by B<-> that version is disabled.
 All versions are enabled by default, though applications may choose to
-explicitly disable some. Currently supported protocol values are B<SSLv2>,
+explicitly disable some. Currently supported protocol values are 
 B<SSLv3>, B<TLSv1>, B<TLSv1.1> and B<TLSv1.2>. The special value B<ALL> refers
 to all supported versions.
 
@@ -434,5 +434,8 @@ L<SSL_CONF_cmd_argv(3)|SSL_CONF_cmd_argv(3)>
 =head1 HISTORY
 
 SSL_CONF_cmd() was first added to OpenSSL 1.0.2
+
+B<SSL_OP_NO_SSL2> doesn't have effect anymore since 1.1.0 but the define is kept
+for backward compatibility.
 
 =cut

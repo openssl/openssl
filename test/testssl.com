@@ -49,25 +49,6 @@ $	endif
 $
 $!###########################################################################
 $
-$	write sys$output "test sslv2"
-$	'ssltest' -ssl2
-$	if $severity .ne. 1 then goto exit3
-$
-$	write sys$output "test sslv2 with server authentication"
-$	'ssltest' -ssl2 -server_auth 'CA'
-$	if $severity .ne. 1 then goto exit3
-$
-$	if .not. dsa_cert
-$	then
-$	    write sys$output "test sslv2 with client authentication"
-$	    'ssltest' -ssl2 -client_auth 'CA'
-$	    if $severity .ne. 1 then goto exit3
-$
-$	    write sys$output "test sslv2 with both client and server authentication"
-$	    'ssltest' -ssl2 -server_auth -client_auth 'CA'
-$	    if $severity .ne. 1 then goto exit3
-$	endif
-$
 $	write sys$output "test sslv3"
 $	'ssltest' -ssl3
 $	if $severity .ne. 1 then goto exit3
@@ -99,25 +80,6 @@ $
 $	write sys$output "test sslv2/sslv3 with both client and server authentication"
 $	'ssltest' -server_auth -client_auth 'CA'
 $	if $severity .ne. 1 then goto exit3
-$
-$	write sys$output "test sslv2 via BIO pair"
-$	'ssltest' -bio_pair -ssl2 
-$	if $severity .ne. 1 then goto exit3
-$
-$	write sys$output "test sslv2 with server authentication via BIO pair"
-$	'ssltest' -bio_pair -ssl2 -server_auth 'CA' 
-$	if $severity .ne. 1 then goto exit3
-$
-$	if .not. dsa_cert
-$	then
-$	    write sys$output "test sslv2 with client authentication via BIO pair"
-$	    'ssltest' -bio_pair -ssl2 -client_auth 'CA' 
-$	    if $severity .ne. 1 then goto exit3
-$
-$	    write sys$output "test sslv2 with both client and server authentication via BIO pair"
-$	    'ssltest' -bio_pair -ssl2 -server_auth -client_auth 'CA' 
-$	    if $severity .ne. 1 then goto exit3
-$	endif
 $
 $	write sys$output "test sslv3 via BIO pair"
 $	'ssltest' -bio_pair -ssl3 

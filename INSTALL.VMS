@@ -134,7 +134,7 @@ Currently, the logical names supported are:
                         will not be implemented.  Supported algorithms to
                         do this with are: RSA, DSA, DH, MD2, MD4, MD5, RIPEMD,
                         SHA, DES, MDC2, CR2, RC4, RC5, IDEA, BF, CAST, HMAC,
-                        SSL2.  So, for example, having the logical name
+                        SSL3.  So, for example, having the logical name
                         OPENSSL_NO_RSA with the value YES means that the
                         LIBCRYPTO.OLB library will not contain an RSA
                         implementation.

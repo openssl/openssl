@@ -98,7 +98,6 @@ typedef struct ssl_session_asn1_st
 	ASN1_OCTET_STRING master_key;
 	ASN1_OCTET_STRING session_id;
 	ASN1_OCTET_STRING session_id_context;
-	ASN1_OCTET_STRING key_arg;
 #ifndef OPENSSL_NO_KRB5
         ASN1_OCTET_STRING krb5_princ;
 #endif /* OPENSSL_NO_KRB5 */
@@ -165,19 +164,10 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 		l=in->cipher_id;
 	else
 		l=in->cipher->id;
-	if (in->ssl_version == SSL2_VERSION)
-		{
-		a.cipher.length=3;
-		buf[0]=((unsigned char)(l>>16L))&0xff;
-		buf[1]=((unsigned char)(l>> 8L))&0xff;
-		buf[2]=((unsigned char)(l     ))&0xff;
-		}
-	else
-		{
-		a.cipher.length=2;
-		buf[0]=((unsigned char)(l>>8L))&0xff;
-		buf[1]=((unsigned char)(l    ))&0xff;
-		}
+	a.cipher.length=2;
+	buf[0]=((unsigned char)(l>>8L))&0xff;
+	buf[1]=((unsigned char)(l    ))&0xff;
+
 
 #ifndef OPENSSL_NO_COMP
 	if (in->compress_meth)
@@ -200,10 +190,6 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	a.session_id_context.length=in->sid_ctx_length;
 	a.session_id_context.type=V_ASN1_OCTET_STRING;
 	a.session_id_context.data=in->sid_ctx;
-
-	a.key_arg.length=in->key_arg_length;
-	a.key_arg.type=V_ASN1_OCTET_STRING;
-	a.key_arg.data=in->key_arg;
 
 #ifndef OPENSSL_NO_KRB5
 	if (in->krb5_client_princ_len)
@@ -291,8 +277,6 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	if (in->krb5_client_princ_len)
         	M_ASN1_I2D_len(&(a.krb5_princ),	i2d_ASN1_OCTET_STRING);
 #endif /* OPENSSL_NO_KRB5 */
-	if (in->key_arg_length > 0)
-		M_ASN1_I2D_len_IMP_opt(&(a.key_arg),i2d_ASN1_OCTET_STRING);
 	if (in->time != 0L)
 		M_ASN1_I2D_len_EXP_opt(&(a.time),i2d_ASN1_INTEGER,1,v1);
 	if (in->timeout != 0L)
@@ -337,8 +321,6 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	if (in->krb5_client_princ_len)
         	M_ASN1_I2D_put(&(a.krb5_princ),	i2d_ASN1_OCTET_STRING);
 #endif /* OPENSSL_NO_KRB5 */
-	if (in->key_arg_length > 0)
-		M_ASN1_I2D_put_IMP_opt(&(a.key_arg),i2d_ASN1_OCTET_STRING,0);
 	if (in->time != 0L)
 		M_ASN1_I2D_put_EXP_opt(&(a.time),i2d_ASN1_INTEGER,1,v1);
 	if (in->timeout != 0L)
@@ -403,20 +385,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 
 	os.data=NULL; os.length=0;
 	M_ASN1_D2I_get_x(ASN1_OCTET_STRING,osp,d2i_ASN1_OCTET_STRING);
-	if (ssl_version == SSL2_VERSION)
-		{
-		if (os.length != 3)
-			{
-			c.error=SSL_R_CIPHER_CODE_WRONG_LENGTH;
-			c.line=__LINE__;
-			goto err;
-			}
-		id=0x02000000L|
-			((unsigned long)os.data[0]<<16L)|
-			((unsigned long)os.data[1]<< 8L)|
-			 (unsigned long)os.data[2];
-		}
-	else if ((ssl_version>>8) >= SSL3_VERSION_MAJOR)
+	if ((ssl_version>>8) >= SSL3_VERSION_MAJOR)
 		{
 		if (os.length != 2)
 			{
@@ -439,10 +408,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 	ret->cipher_id=id;
 
 	M_ASN1_D2I_get_x(ASN1_OCTET_STRING,osp,d2i_ASN1_OCTET_STRING);
-	if ((ssl_version>>8) >= SSL3_VERSION_MAJOR)
-		i=SSL3_MAX_SSL_SESSION_ID_LENGTH;
-	else /* if (ssl_version>>8 == SSL2_VERSION_MAJOR) */
-		i=SSL2_MAX_SSL_SESSION_ID_LENGTH;
+	i=SSL3_MAX_SSL_SESSION_ID_LENGTH;
 
 	if (os.length > i)
 		os.length = i;
@@ -481,11 +447,6 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 #endif /* OPENSSL_NO_KRB5 */
 
 	M_ASN1_D2I_get_IMP_opt(osp,d2i_ASN1_OCTET_STRING,0,V_ASN1_OCTET_STRING);
-	if (os.length > SSL_MAX_KEY_ARG_LENGTH)
-		ret->key_arg_length=SSL_MAX_KEY_ARG_LENGTH;
-	else
-		ret->key_arg_length=os.length;
-	memcpy(ret->key_arg,os.data,ret->key_arg_length);
 	if (os.data != NULL) OPENSSL_free(os.data);
 
 	ai.length=0;
