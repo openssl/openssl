@@ -32,9 +32,8 @@ of the parent context of B<ssl>.
 
 When a new session is established between client and server, the server
 generates a session id. The session id is an arbitrary sequence of bytes.
-The length of the session id is 16 bytes for SSLv2 sessions and between
-1 and 32 bytes for SSLv3/TLSv1. The session id is not security critical
-but must be unique for the server. Additionally, the session id is
+The length of the session id is between 1 and 32 bytes.  The session id is not
+security critical but must be unique for the server. Additionally, the session id is
 transmitted in the clear when reusing the session so it must not contain
 sensitive information.
 
@@ -51,21 +50,14 @@ The callback is only allowed to generate a shorter id and reduce B<id_len>;
 the callback B<must never> increase B<id_len> or write to the location
 B<id> exceeding the given limit.
 
-If a SSLv2 session id is generated and B<id_len> is reduced, it will be
-restored after the callback has finished and the session id will be padded
-with 0x00. It is not recommended to change the B<id_len> for SSLv2 sessions.
-The callback can use the L<SSL_get_version(3)|SSL_get_version(3)> function
-to check, whether the session is of type SSLv2.
-
 The location B<id> is filled with 0x00 before the callback is called, so the
 callback may only fill part of the possible length and leave B<id_len>
 untouched while maintaining reproducibility.
 
 Since the sessions must be distinguished, session ids must be unique.
 Without the callback a random number is used, so that the probability
-of generating the same session id is extremely small (2^128 possible ids
-for an SSLv2 session, 2^256 for SSLv3/TLSv1). In order to assure the
-uniqueness of the generated session id, the callback must call
+of generating the same session id is extremely small (2^256 for SSLv3/TLSv1).
+In order to assure the uniqueness of the generated session id, the callback must call
 SSL_has_matching_session_id() and generate another id if a conflict occurs.
 If an id conflict is not resolved, the handshake will fail.
 If the application codes e.g. a unique host id, a unique process number, and
@@ -85,10 +77,6 @@ Collisions can also occur when using an external session cache, since
 the external cache is not tested with SSL_has_matching_session_id()
 and the same race condition applies.
 
-When calling SSL_has_matching_session_id() for an SSLv2 session with
-reduced B<id_len>, the match operation will be performed using the
-fixed length required and with a 0x00 padded id.
-
 The callback must return 0 if it cannot generate a session id for whatever
 reason and return 1 on success.
 
@@ -104,12 +92,6 @@ server id given, and will fill the rest with pseudo random bytes:
                               unsigned int *id_len)
       {
       unsigned int count = 0;
-      const char *version;
-
-      version = SSL_get_version(ssl);
-      if (!strcmp(version, "SSLv2"))
-	  /* we must not change id_len */;
-
       do      {
               RAND_pseudo_bytes(id, *id_len);
               /* Prefix the session_id with the required prefix. NB: If our

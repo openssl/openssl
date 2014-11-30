@@ -136,7 +136,7 @@ and [options] can be one of
 	no-rc2 no-rc4 no-rc5 no-idea no-des     - Skip this symetric cipher
 	no-bf no-cast no-aes no-camellia no-seed
 	no-rsa no-dsa no-dh			- Skip this public key cipher
-	no-ssl2 no-ssl3				- Skip this version of SSL
+	no-ssl3					- Skip this version of SSL
 	just-ssl				- remove all non-ssl keys/digest
 	no-asm 					- No x86 asm
 	no-krb5					- No KRB5
@@ -179,9 +179,6 @@ $no_mdc2=1 if ($no_des);
 
 $no_ssl3=1 if ($no_md5 || $no_sha);
 $no_ssl3=1 if ($no_rsa && $no_dh);
-
-$no_ssl2=1 if ($no_md5);
-$no_ssl2=1 if ($no_rsa);
 
 $out_def="out";
 $inc_def="outinc";
@@ -296,7 +293,6 @@ $cflags.=" -DOPENSSL_NO_DSA"  if $no_dsa;
 $cflags.=" -DOPENSSL_NO_DH"   if $no_dh;
 $cflags.=" -DOPENSSL_NO_WHIRLPOOL"   if $no_whirlpool;
 $cflags.=" -DOPENSSL_NO_SOCK" if $no_sock;
-$cflags.=" -DOPENSSL_NO_SSL2" if $no_ssl2;
 $cflags.=" -DOPENSSL_NO_SSL3" if $no_ssl3;
 $cflags.=" -DOPENSSL_NO_TLSEXT" if $no_tlsext;
 $cflags.=" -DOPENSSL_NO_SRP" if $no_srp;
@@ -1107,7 +1103,6 @@ sub var_add
 	@a=grep(!/^e_camellia$/,@a) if $no_camellia;
 	@a=grep(!/^e_seed$/,@a) if $no_seed;
 
-	#@a=grep(!/(^s2_)|(^s23_)/,@a) if $no_ssl2;
 	#@a=grep(!/(^s3_)|(^s23_)/,@a) if $no_ssl3;
 
 	@a=grep(!/(_sock$)|(_acpt$)|(_conn$)|(^pxy_)/,@a) if $no_sock;
@@ -1430,7 +1425,6 @@ sub read_options
 		"nw-nasm" => \$nw_nasm,
 		"nw-mwasm" => \$nw_mwasm,
 		"gaswin" => \$gaswin,
-		"no-ssl2" => \$no_ssl2,
 		"no-ssl3" => \$no_ssl3,
 		"no-ssl3-method" => 0,
 		"no-tlsext" => \$no_tlsext,
@@ -1451,7 +1445,7 @@ sub read_options
 		"just-ssl" =>
 			[\$no_rc2, \$no_idea, \$no_des, \$no_bf, \$no_cast,
 			  \$no_md2, \$no_sha, \$no_mdc2, \$no_dsa, \$no_dh,
-			  \$no_ssl2, \$no_err, \$no_ripemd, \$no_rc5,
+			  \$no_err, \$no_ripemd, \$no_rc5,
 			  \$no_aes, \$no_camellia, \$no_seed, \$no_srp],
 		"rsaref" => 0,
 		"gcc" => \$gcc,

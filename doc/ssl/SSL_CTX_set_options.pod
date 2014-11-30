@@ -63,18 +63,11 @@ The following B<bug workaround> options are available:
 
 =item SSL_OP_MICROSOFT_SESS_ID_BUG
 
-www.microsoft.com - when talking SSLv2, if session-id reuse is
-performed, the session-id passed back in the server-finished message
-is different from the one decided upon.
+As of OpenSSL 1.0.0 this option has no effect.
 
 =item SSL_OP_NETSCAPE_CHALLENGE_BUG
 
-Netscape-Commerce/1.12, when talking SSLv2, accepts a 32 byte
-challenge but then appears to only use 16 bytes when generating the
-encryption keys.  Using 16 bytes is ok but it should be ok to use 32.
-According to the SSLv3 spec, one should use 32 bytes for the challenge
-when operating in SSLv2/v3 compatibility mode, but as mentioned above,
-this breaks this server so 16 bytes is the way to go.
+As of OpenSSL 1.0.0 this option has no effect.
 
 =item SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG
 

@@ -60,9 +60,7 @@ SSL_get_shutdown() (see also L<SSL_set_shutdown(3)|SSL_set_shutdown(3)> call.
 
 It is therefore recommended, to check the return value of SSL_shutdown()
 and call SSL_shutdown() again, if the bidirectional shutdown is not yet
-complete (return value of the first call is 0). As the shutdown is not
-specially handled in the SSLv2 protocol, SSL_shutdown() will succeed on
-the first call.
+complete (return value of the first call is 0).
 
 The behaviour of SSL_shutdown() additionally depends on the underlying BIO. 
 

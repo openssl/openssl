@@ -94,7 +94,6 @@ sub var_add
 	@a=grep(!/^e_.*_c$/,@a) if $no_cast;
 	@a=grep(!/^e_rc4$/,@a) if $no_rc4;
 
-	@a=grep(!/(^s2_)|(^s23_)/,@a) if $no_ssl2;
 	@a=grep(!/(^s3_)|(^s23_)/,@a) if $no_ssl3;
 
 	@a=grep(!/(_sock$)|(_acpt$)|(_conn$)|(^pxy_)/,@a) if $no_sock;

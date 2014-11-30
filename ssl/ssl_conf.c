@@ -198,7 +198,6 @@ static int ctrl_str_option(SSL_CONF_CTX *cctx, const char *cmd)
 	{
 	static const ssl_flag_tbl ssl_option_single[] =
 		{
-		SSL_FLAG_TBL("no_ssl2", SSL_OP_NO_SSLv2),
 		SSL_FLAG_TBL("no_ssl3", SSL_OP_NO_SSLv3),
 		SSL_FLAG_TBL("no_tls1", SSL_OP_NO_TLSv1),
 		SSL_FLAG_TBL("no_tls1_1", SSL_OP_NO_TLSv1_1),
@@ -334,7 +333,6 @@ static int cmd_Protocol(SSL_CONF_CTX *cctx, const char *value)
 	static const ssl_flag_tbl ssl_protocol_list[] =
 		{
 		SSL_FLAG_TBL_INV("ALL", SSL_OP_NO_SSL_MASK),
-		SSL_FLAG_TBL_INV("SSLv2", SSL_OP_NO_SSLv2),
 		SSL_FLAG_TBL_INV("SSLv3", SSL_OP_NO_SSLv3),
 		SSL_FLAG_TBL_INV("TLSv1", SSL_OP_NO_TLSv1),
 		SSL_FLAG_TBL_INV("TLSv1.1", SSL_OP_NO_TLSv1_1),

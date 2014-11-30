@@ -111,9 +111,7 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 
 	if (x == NULL) goto err;
 	if (BIO_puts(bp,"SSL-Session:\n") <= 0) goto err;
-	if (x->ssl_version == SSL2_VERSION)
-		s="SSLv2";
-	else if (x->ssl_version == SSL3_VERSION)
+	if (x->ssl_version == SSL3_VERSION)
 		s="SSLv3";
 	else if (x->ssl_version == TLS1_2_VERSION)
 		s="TLSv1.2";
@@ -165,16 +163,6 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 		{
 		if (BIO_printf(bp,"%02X",x->master_key[i]) <= 0) goto err;
 		}
-	if (BIO_puts(bp,"\n    Key-Arg   : ") <= 0) goto err;
-	if (x->key_arg_length == 0)
-		{
-		if (BIO_puts(bp,"None") <= 0) goto err;
-		}
-	else
-		for (i=0; i<x->key_arg_length; i++)
-			{
-			if (BIO_printf(bp,"%02X",x->key_arg[i]) <= 0) goto err;
-			}
 #ifndef OPENSSL_NO_KRB5
        if (BIO_puts(bp,"\n    Krb5 Principal: ") <= 0) goto err;
             if (x->krb5_client_princ_len == 0)

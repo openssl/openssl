@@ -348,7 +348,6 @@
 #define SSL_AEAD		0x00000040L
 
 /* Bits for algorithm_ssl (protocol version) */
-#define SSL_SSLV2		0x00000001L
 #define SSL_SSLV3		0x00000002L
 #define SSL_TLSV1		SSL_SSLV3	/* for now */
 #define SSL_TLSV1_2		0x00000004L
@@ -673,7 +672,7 @@ typedef struct cert_st
 
 typedef struct sess_cert_st
 	{
-	STACK_OF(X509) *cert_chain; /* as received from peer (not for SSL2) */
+	STACK_OF(X509) *cert_chain; /* as received from peer */
 
 	/* The 'peer_...' members are used only by clients. */
 	int peer_cert_type;
@@ -803,7 +802,6 @@ typedef struct ssl3_buf_freelist_entry_st
 #endif
 
 extern SSL3_ENC_METHOD ssl3_undef_enc_method;
-OPENSSL_EXTERN const SSL_CIPHER ssl2_ciphers[];
 OPENSSL_EXTERN const SSL_CIPHER ssl3_ciphers[];
 
 
@@ -928,43 +926,6 @@ const SSL_METHOD *func_name(void)  \
 	return &func_name##_data; \
 	}
 
-#define IMPLEMENT_ssl2_meth_func(func_name, s_accept, s_connect, s_get_meth) \
-const SSL_METHOD *func_name(void)  \
-	{ \
-	static const SSL_METHOD func_name##_data= { \
-		SSL2_VERSION, \
-		ssl2_new,	/* local */ \
-		ssl2_clear,	/* local */ \
-		ssl2_free,	/* local */ \
-		s_accept, \
-		s_connect, \
-		ssl2_read, \
-		ssl2_peek, \
-		ssl2_write, \
-		ssl2_shutdown, \
-		ssl_ok,	/* NULL - renegotiate */ \
-		ssl_ok,	/* NULL - check renegotiate */ \
-		NULL, /* NULL - ssl_get_message */ \
-		NULL, /* NULL - ssl_get_record */ \
-		NULL, /* NULL - ssl_write_bytes */ \
-		NULL, /* NULL - dispatch_alert */ \
-		ssl2_ctrl,	/* local */ \
-		ssl2_ctx_ctrl,	/* local */ \
-		ssl2_get_cipher_by_char, \
-		ssl2_put_cipher_by_char, \
-		ssl2_pending, \
-		ssl2_num_ciphers, \
-		ssl2_get_cipher, \
-		s_get_meth, \
-		ssl2_default_timeout, \
-		&ssl3_undef_enc_method, \
-		ssl_undefined_void_function, \
-		ssl2_callback_ctrl,	/* local */ \
-		ssl2_ctx_callback_ctrl,	/* local */ \
-	}; \
-	return &func_name##_data; \
-	}
-
 #define IMPLEMENT_dtls1_meth_func(version, func_name, s_accept, s_connect, \
 					s_get_meth, enc_data) \
 const SSL_METHOD *func_name(void)  \
@@ -1077,35 +1038,6 @@ STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s);
 int ssl_verify_alarm_type(long type);
 void ssl_load_ciphers(void);
 int ssl_fill_hello_random(SSL *s, int server, unsigned char *field, int len);
-
-int ssl2_enc_init(SSL *s, int client);
-int ssl2_generate_key_material(SSL *s);
-int ssl2_enc(SSL *s,int send_data);
-void ssl2_mac(SSL *s,unsigned char *mac,int send_data);
-const SSL_CIPHER *ssl2_get_cipher_by_char(const unsigned char *p);
-int ssl2_put_cipher_by_char(const SSL_CIPHER *c,unsigned char *p);
-int ssl2_part_read(SSL *s, unsigned long f, int i);
-int ssl2_do_write(SSL *s);
-int ssl2_set_certificate(SSL *s, int type, int len, const unsigned char *data);
-void ssl2_return_error(SSL *s,int reason);
-void ssl2_write_error(SSL *s);
-int ssl2_num_ciphers(void);
-const SSL_CIPHER *ssl2_get_cipher(unsigned int u);
-int	ssl2_new(SSL *s);
-void	ssl2_free(SSL *s);
-int	ssl2_accept(SSL *s);
-int	ssl2_connect(SSL *s);
-int	ssl2_read(SSL *s, void *buf, int len);
-int	ssl2_peek(SSL *s, void *buf, int len);
-int	ssl2_write(SSL *s, const void *buf, int len);
-int	ssl2_shutdown(SSL *s);
-void	ssl2_clear(SSL *s);
-long	ssl2_ctrl(SSL *s,int cmd, long larg, void *parg);
-long	ssl2_ctx_ctrl(SSL_CTX *s,int cmd, long larg, void *parg);
-long	ssl2_callback_ctrl(SSL *s,int cmd, void (*fp)(void));
-long	ssl2_ctx_callback_ctrl(SSL_CTX *s,int cmd, void (*fp)(void));
-int	ssl2_pending(const SSL *s);
-long	ssl2_default_timeout(void );
 
 const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p);
 int ssl3_put_cipher_by_char(const SSL_CIPHER *c,unsigned char *p);

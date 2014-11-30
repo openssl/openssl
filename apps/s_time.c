@@ -186,7 +186,6 @@ static void s_time_usage(void)
 	printf("-connect host:port - host:port to connect to (default is %s)\n",SSL_CONNECT_NAME);
 #ifdef FIONBIO
 	printf("-nbio         - Run with non-blocking IO\n");
-	printf("-ssl2         - Just use SSLv2\n");
 	printf("-ssl3         - Just use SSLv3\n");
 	printf("-bugs         - Turn on SSL bug compatibility\n");
 	printf("-new          - Just time new connections\n");
@@ -282,10 +281,6 @@ static int parseArgs(int argc, char **argv)
 		}
 	else if(strcmp(*argv,"-bugs") == 0)
 	    st_bugs=1;
-#ifndef OPENSSL_NO_SSL2
-	else if(strcmp(*argv,"-ssl2") == 0)
-	    s_time_meth=SSLv2_client_method();
-#endif
 #ifndef OPENSSL_NO_SSL3
 	else if(strcmp(*argv,"-ssl3") == 0)
 	    s_time_meth=SSLv3_client_method();
@@ -430,8 +425,6 @@ int MAIN(int argc, char **argv)
 				ver='t';
 			else if (ver == SSL3_VERSION)
 				ver='3';
-			else if (ver == SSL2_VERSION)
-				ver='2';
 			else
 				ver='*';
 			}
@@ -523,8 +516,6 @@ next:
 				ver='t';
 			else if (ver == SSL3_VERSION)
 				ver='3';
-			else if (ver == SSL2_VERSION)
-				ver='2';
 			else
 				ver='*';
 			}

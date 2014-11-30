@@ -228,10 +228,7 @@ int main ( int argc, char **argv )
 	SSL_load_error_strings();
 	OpenSSL_add_all_algorithms();
 
-/* DRM, this was the original, but there is no such thing as SSLv2()
-	s_ctx=SSL_CTX_new(SSLv2());
-*/
-	s_ctx=SSL_CTX_new(SSLv2_server_method());
+	s_ctx=SSL_CTX_new(SSLv23_server_method());
 
 	if (s_ctx == NULL) goto end;
 

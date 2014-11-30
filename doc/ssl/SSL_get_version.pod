@@ -21,10 +21,6 @@ The following strings can be returned:
 
 =over 4
 
-=item SSLv2
-
-The connection uses the SSLv2 protocol.
-
 =item SSLv3
 
 The connection uses the SSLv3 protocol.

@@ -100,46 +100,6 @@ case SSL_ST_BEFORE|SSL_ST_CONNECT: str="before/connect initialization"; break;
 case SSL_ST_OK|SSL_ST_CONNECT: str="ok/connect SSL initialization"; break;
 case SSL_ST_BEFORE|SSL_ST_ACCEPT: str="before/accept initialization"; break;
 case SSL_ST_OK|SSL_ST_ACCEPT: str="ok/accept SSL initialization"; break;
-#ifndef OPENSSL_NO_SSL2
-case SSL2_ST_CLIENT_START_ENCRYPTION: str="SSLv2 client start encryption"; break;
-case SSL2_ST_SERVER_START_ENCRYPTION: str="SSLv2 server start encryption"; break;
-case SSL2_ST_SEND_CLIENT_HELLO_A: str="SSLv2 write client hello A"; break;
-case SSL2_ST_SEND_CLIENT_HELLO_B: str="SSLv2 write client hello B"; break;
-case SSL2_ST_GET_SERVER_HELLO_A: str="SSLv2 read server hello A"; break;
-case SSL2_ST_GET_SERVER_HELLO_B: str="SSLv2 read server hello B"; break;
-case SSL2_ST_SEND_CLIENT_MASTER_KEY_A: str="SSLv2 write client master key A"; break;
-case SSL2_ST_SEND_CLIENT_MASTER_KEY_B: str="SSLv2 write client master key B"; break;
-case SSL2_ST_SEND_CLIENT_FINISHED_A: str="SSLv2 write client finished A"; break;
-case SSL2_ST_SEND_CLIENT_FINISHED_B: str="SSLv2 write client finished B"; break;
-case SSL2_ST_SEND_CLIENT_CERTIFICATE_A: str="SSLv2 write client certificate A"; break;
-case SSL2_ST_SEND_CLIENT_CERTIFICATE_B: str="SSLv2 write client certificate B"; break;
-case SSL2_ST_SEND_CLIENT_CERTIFICATE_C: str="SSLv2 write client certificate C"; break;
-case SSL2_ST_SEND_CLIENT_CERTIFICATE_D: str="SSLv2 write client certificate D"; break;
-case SSL2_ST_GET_SERVER_VERIFY_A: str="SSLv2 read server verify A"; break;
-case SSL2_ST_GET_SERVER_VERIFY_B: str="SSLv2 read server verify B"; break;
-case SSL2_ST_GET_SERVER_FINISHED_A: str="SSLv2 read server finished A"; break;
-case SSL2_ST_GET_SERVER_FINISHED_B: str="SSLv2 read server finished B"; break;
-case SSL2_ST_GET_CLIENT_HELLO_A: str="SSLv2 read client hello A"; break;
-case SSL2_ST_GET_CLIENT_HELLO_B: str="SSLv2 read client hello B"; break;
-case SSL2_ST_GET_CLIENT_HELLO_C: str="SSLv2 read client hello C"; break;
-case SSL2_ST_SEND_SERVER_HELLO_A: str="SSLv2 write server hello A"; break;
-case SSL2_ST_SEND_SERVER_HELLO_B: str="SSLv2 write server hello B"; break;
-case SSL2_ST_GET_CLIENT_MASTER_KEY_A: str="SSLv2 read client master key A"; break;
-case SSL2_ST_GET_CLIENT_MASTER_KEY_B: str="SSLv2 read client master key B"; break;
-case SSL2_ST_SEND_SERVER_VERIFY_A: str="SSLv2 write server verify A"; break;
-case SSL2_ST_SEND_SERVER_VERIFY_B: str="SSLv2 write server verify B"; break;
-case SSL2_ST_SEND_SERVER_VERIFY_C: str="SSLv2 write server verify C"; break;
-case SSL2_ST_GET_CLIENT_FINISHED_A: str="SSLv2 read client finished A"; break;
-case SSL2_ST_GET_CLIENT_FINISHED_B: str="SSLv2 read client finished B"; break;
-case SSL2_ST_SEND_SERVER_FINISHED_A: str="SSLv2 write server finished A"; break;
-case SSL2_ST_SEND_SERVER_FINISHED_B: str="SSLv2 write server finished B"; break;
-case SSL2_ST_SEND_REQUEST_CERTIFICATE_A: str="SSLv2 write request certificate A"; break;
-case SSL2_ST_SEND_REQUEST_CERTIFICATE_B: str="SSLv2 write request certificate B"; break;
-case SSL2_ST_SEND_REQUEST_CERTIFICATE_C: str="SSLv2 write request certificate C"; break;
-case SSL2_ST_SEND_REQUEST_CERTIFICATE_D: str="SSLv2 write request certificate D"; break;
-case SSL2_ST_X509_GET_SERVER_CERTIFICATE: str="SSLv2 X509 read server certificate"; break;
-case SSL2_ST_X509_GET_CLIENT_CERTIFICATE: str="SSLv2 X509 read client certificate"; break;
-#endif
 
 #ifndef OPENSSL_NO_SSL3
 /* SSLv3 additions */
@@ -257,46 +217,6 @@ case SSL_ST_BEFORE:				str="PINIT "; break;
 case SSL_ST_ACCEPT:				str="AINIT "; break;
 case SSL_ST_CONNECT:				str="CINIT "; break;
 case SSL_ST_OK:			 		str="SSLOK "; break;
-#ifndef OPENSSL_NO_SSL2
-case SSL2_ST_CLIENT_START_ENCRYPTION:		str="2CSENC"; break;
-case SSL2_ST_SERVER_START_ENCRYPTION:		str="2SSENC"; break;
-case SSL2_ST_SEND_CLIENT_HELLO_A:		str="2SCH_A"; break;
-case SSL2_ST_SEND_CLIENT_HELLO_B:		str="2SCH_B"; break;
-case SSL2_ST_GET_SERVER_HELLO_A:		str="2GSH_A"; break;
-case SSL2_ST_GET_SERVER_HELLO_B:		str="2GSH_B"; break;
-case SSL2_ST_SEND_CLIENT_MASTER_KEY_A:		str="2SCMKA"; break;
-case SSL2_ST_SEND_CLIENT_MASTER_KEY_B:		str="2SCMKB"; break;
-case SSL2_ST_SEND_CLIENT_FINISHED_A:		str="2SCF_A"; break;
-case SSL2_ST_SEND_CLIENT_FINISHED_B:		str="2SCF_B"; break;
-case SSL2_ST_SEND_CLIENT_CERTIFICATE_A:		str="2SCC_A"; break;
-case SSL2_ST_SEND_CLIENT_CERTIFICATE_B:		str="2SCC_B"; break;
-case SSL2_ST_SEND_CLIENT_CERTIFICATE_C:		str="2SCC_C"; break;
-case SSL2_ST_SEND_CLIENT_CERTIFICATE_D:		str="2SCC_D"; break;
-case SSL2_ST_GET_SERVER_VERIFY_A:		str="2GSV_A"; break;
-case SSL2_ST_GET_SERVER_VERIFY_B:		str="2GSV_B"; break;
-case SSL2_ST_GET_SERVER_FINISHED_A:		str="2GSF_A"; break;
-case SSL2_ST_GET_SERVER_FINISHED_B:		str="2GSF_B"; break;
-case SSL2_ST_GET_CLIENT_HELLO_A:		str="2GCH_A"; break;
-case SSL2_ST_GET_CLIENT_HELLO_B:		str="2GCH_B"; break;
-case SSL2_ST_GET_CLIENT_HELLO_C:		str="2GCH_C"; break;
-case SSL2_ST_SEND_SERVER_HELLO_A:		str="2SSH_A"; break;
-case SSL2_ST_SEND_SERVER_HELLO_B:		str="2SSH_B"; break;
-case SSL2_ST_GET_CLIENT_MASTER_KEY_A:		str="2GCMKA"; break;
-case SSL2_ST_GET_CLIENT_MASTER_KEY_B:		str="2GCMKA"; break;
-case SSL2_ST_SEND_SERVER_VERIFY_A:		str="2SSV_A"; break;
-case SSL2_ST_SEND_SERVER_VERIFY_B:		str="2SSV_B"; break;
-case SSL2_ST_SEND_SERVER_VERIFY_C:		str="2SSV_C"; break;
-case SSL2_ST_GET_CLIENT_FINISHED_A:		str="2GCF_A"; break;
-case SSL2_ST_GET_CLIENT_FINISHED_B:		str="2GCF_B"; break;
-case SSL2_ST_SEND_SERVER_FINISHED_A:		str="2SSF_A"; break;
-case SSL2_ST_SEND_SERVER_FINISHED_B:		str="2SSF_B"; break;
-case SSL2_ST_SEND_REQUEST_CERTIFICATE_A:	str="2SRC_A"; break;
-case SSL2_ST_SEND_REQUEST_CERTIFICATE_B:	str="2SRC_B"; break;
-case SSL2_ST_SEND_REQUEST_CERTIFICATE_C:	str="2SRC_C"; break;
-case SSL2_ST_SEND_REQUEST_CERTIFICATE_D:	str="2SRC_D"; break;
-case SSL2_ST_X509_GET_SERVER_CERTIFICATE:	str="2X9GSC"; break;
-case SSL2_ST_X509_GET_CLIENT_CERTIFICATE:	str="2X9GCC"; break;
-#endif
 
 #ifndef OPENSSL_NO_SSL3
 /* SSLv3 additions */

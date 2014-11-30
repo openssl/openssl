@@ -300,7 +300,6 @@ $ CONFIG_LOGICALS := AES,-
 		     SHA512,-
 		     SOCK,-
 		     SRP,-
-		     SSL2,-
 		     SSL_INTERN,-
 		     STACK,-
 		     STATIC_ENGINE,-
@@ -330,10 +329,8 @@ $! algos part.
 $ CONFIG_DISABLE_RULES := RIJNDAEL/AES;-
 			  DES/MDC2;-
 			  EC/ECDSA,ECDH;-
-			  MD5/SSL2,SSL3,TLS1;-
+			  MD5/SSL3,TLS1;-
 			  SHA/SSL3,TLS1;-
-			  RSA/SSL2;-
-			  RSA,DSA/SSL2;-
 			  DH/SSL3,TLS1;-
 			  TLS1/TLSEXT;-
 			  EC/GOST;-

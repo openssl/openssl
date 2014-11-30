@@ -58,10 +58,8 @@ B<openssl> B<s_client>
 [B<-ign_eof>]
 [B<-no_ign_eof>]
 [B<-quiet>]
-[B<-ssl2>]
 [B<-ssl3>]
 [B<-tls1>]
-[B<-no_ssl2>]
 [B<-no_ssl3>]
 [B<-no_tls1>]
 [B<-no_tls1_1>]
@@ -248,11 +246,11 @@ Use the PSK key B<key> when using a PSK cipher suite. The key is
 given as a hexadecimal number without leading 0x, for example -psk
 1a2b3c4d.
 
-=item B<-ssl2>, B<-ssl3>, B<-tls1>, B<-no_ssl2>, B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>
+=item B<-ssl3>, B<-tls1>, B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>
 
 these options disable the use of certain SSL or TLS protocols. By default
 the initial handshake uses a method which should be compatible with all
-servers and permit them to use SSL v3, SSL v2 or TLS as appropriate.
+servers and permit them to use SSL v3 or TLS as appropriate.
 
 Unfortunately there are still ancient and broken servers in use which
 cannot handle this technique and will fail to connect. Some servers only
@@ -278,10 +276,6 @@ this allows the cipher list sent by the client to be modified. Although
 the server determines which cipher suite is used it should take the first
 supported cipher in the list sent by the client. See the B<ciphers>
 command for more information.
-
-=item B<-serverpref>
-
-use the server's cipher preferences; only used for SSLV2.
 
 =item B<-starttls protocol>
 
@@ -373,8 +367,8 @@ would typically be used (https uses port 443). If the connection succeeds
 then an HTTP command can be given such as "GET /" to retrieve a web page.
 
 If the handshake fails then there are several possible causes, if it is
-nothing obvious like no client certificate then the B<-bugs>, B<-ssl2>,
-B<-ssl3>, B<-tls1>, B<-no_ssl2>, B<-no_ssl3>, B<-no_tls1> options can be tried
+nothing obvious like no client certificate then the B<-bugs>,
+B<-ssl3>, B<-tls1>, B<-no_ssl3>, B<-no_tls1> options can be tried
 in case it is a buggy server. In particular you should play with these
 options B<before> submitting a bug report to an OpenSSL mailing list.
 
@@ -395,10 +389,6 @@ on the command line is no guarantee that the certificate works.
 
 If there are problems verifying a server certificate then the
 B<-showcerts> option can be used to show the whole chain.
-
-Since the SSLv23 client hello cannot include compression methods or extensions
-these will only be supported if its use is disabled, for example by using the
-B<-no_sslv2> option.
 
 The B<s_client> utility is a test tool and is designed to continue the
 handshake after any certificate verification errors. As a result it will

@@ -3946,8 +3946,6 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 				return s->version == TLS1_VERSION;
 			if (!(s->options & SSL_OP_NO_SSLv3))
 				return s->version == SSL3_VERSION;
-			if (!(s->options & SSL_OP_NO_SSLv2))
-				return s->version == SSL2_VERSION;
 			}
 		return 0; /* Unexpected state; fail closed. */
 

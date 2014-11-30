@@ -123,22 +123,6 @@ cecopy ssltest.exe CE:\OpenSSL
 cecopy ..\apps\server.pem CE:\OpenSSL
 cecopy ..\apps\client.pem CE:\OpenSSL
 
-echo test sslv2
-cerun CE:\OpenSSL\ssltest -ssl2
-if errorlevel 1 goto done
-
-echo test sslv2 with server authentication
-cerun CE:\OpenSSL\ssltest -ssl2 -server_auth -CAfile \OpenSSL\cert.tmp
-if errorlevel 1 goto done
-
-echo test sslv2 with client authentication
-cerun CE:\OpenSSL\ssltest -ssl2 -client_auth -CAfile \OpenSSL\cert.tmp
-if errorlevel 1 goto done
-
-echo test sslv2 with both client and server authentication
-cerun CE:\OpenSSL\ssltest -ssl2 -server_auth -client_auth -CAfile \OpenSSL\cert.tmp
-if errorlevel 1 goto done
-
 echo test sslv3
 cerun CE:\OpenSSL\ssltest -ssl3
 if errorlevel 1 goto done
@@ -171,24 +155,8 @@ echo test sslv2/sslv3 with both client and server authentication
 cerun CE:\OpenSSL\ssltest -server_auth -client_auth -CAfile \OpenSSL\cert.tmp
 if errorlevel 1 goto done
 
-echo test sslv2 via BIO pair
-cerun CE:\OpenSSL\ssltest -bio_pair -ssl2
-if errorlevel 1 goto done
-
 echo test sslv2/sslv3 with 1024 bit DHE via BIO pair
 cerun CE:\OpenSSL\ssltest -bio_pair -dhe1024dsa -v
-if errorlevel 1 goto done
-
-echo test sslv2 with server authentication via BIO pair
-cerun CE:\OpenSSL\ssltest -bio_pair -ssl2 -server_auth -CAfile \OpenSSL\cert.tmp
-if errorlevel 1 goto done
-
-echo test sslv2 with client authentication via BIO pair
-cerun CE:\OpenSSL\ssltest -bio_pair -ssl2 -client_auth -CAfile \OpenSSL\cert.tmp
-if errorlevel 1 goto done
-
-echo test sslv2 with both client and server authentication via BIO pair
-cerun CE:\OpenSSL\ssltest -bio_pair -ssl2 -server_auth -client_auth -CAfile \OpenSSL\cert.tmp
 if errorlevel 1 goto done
 
 echo test sslv3 via BIO pair

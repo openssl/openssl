@@ -335,7 +335,6 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -srp_moregroups   - Tolerate other than the known g N values.\n");
 	BIO_printf(bio_err," -srp_strength int - minimal mength in bits for N (default %d).\n",SRP_MINIMAL_N);
 #endif
-	BIO_printf(bio_err," -ssl2         - just use SSLv2\n");
 #ifndef OPENSSL_NO_SSL3_METHOD
 	BIO_printf(bio_err," -ssl3         - just use SSLv3\n");
 #endif
@@ -345,9 +344,8 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -dtls1        - just use DTLSv1\n");    
 	BIO_printf(bio_err," -fallback_scsv - send TLS_FALLBACK_SCSV\n");
 	BIO_printf(bio_err," -mtu          - set the link layer MTU\n");
-	BIO_printf(bio_err," -no_tls1_2/-no_tls1_1/-no_tls1/-no_ssl3/-no_ssl2 - turn off that protocol\n");
+	BIO_printf(bio_err," -no_tls1_2/-no_tls1_1/-no_tls1/-no_ssl3 - turn off that protocol\n");
 	BIO_printf(bio_err," -bugs         - Switch on all SSL implementation bug workarounds\n");
-	BIO_printf(bio_err," -serverpref   - Use server's cipher preferences (only SSLv2)\n");
 	BIO_printf(bio_err," -cipher       - preferred cipher to use, use the 'openssl ciphers'\n");
 	BIO_printf(bio_err,"                 command to see what is available\n");
 	BIO_printf(bio_err," -starttls prot - use the STARTTLS command before starting TLS\n");
@@ -911,10 +909,6 @@ static char *jpake_secret = NULL;
 			srp_arg.amp=1;
 			meth=TLSv1_client_method();
 			}
-#endif
-#ifndef OPENSSL_NO_SSL2
-		else if	(strcmp(*argv,"-ssl2") == 0)
-			meth=SSLv2_client_method();
 #endif
 #ifndef OPENSSL_NO_SSL3_METHOD
 		else if	(strcmp(*argv,"-ssl3") == 0)
@@ -2198,14 +2192,12 @@ end:
 static void print_stuff(BIO *bio, SSL *s, int full)
 	{
 	X509 *peer=NULL;
-	char *p;
-	static const char *space="                ";
 	char buf[BUFSIZ];
 	STACK_OF(X509) *sk;
 	STACK_OF(X509_NAME) *sk2;
 	const SSL_CIPHER *c;
 	X509_NAME *xn;
-	int j,i;
+	int i;
 #ifndef OPENSSL_NO_COMP
 	const COMP_METHOD *comp, *expansion;
 #endif
@@ -2266,34 +2258,6 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 		else
 			{
 			BIO_printf(bio,"---\nNo client certificate CA names sent\n");
-			}
-		p=SSL_get_shared_ciphers(s,buf,sizeof buf);
-		if (p != NULL)
-			{
-			/* This works only for SSL 2.  In later protocol
-			 * versions, the client does not know what other
-			 * ciphers (in addition to the one to be used
-			 * in the current connection) the server supports. */
-
-			BIO_printf(bio,"---\nCiphers common between both SSL endpoints:\n");
-			j=i=0;
-			while (*p)
-				{
-				if (*p == ':')
-					{
-					BIO_write(bio,space,15-j%25);
-					i++;
-					j=0;
-					BIO_write(bio,((i%3)?" ":"\n"),1);
-					}
-				else
-					{
-					BIO_write(bio,p,1);
-					j++;
-					}
-				p++;
-				}
-			BIO_write(bio,"\n",1);
 			}
 
 		ssl_print_sigalgs(bio, s);
