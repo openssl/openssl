@@ -787,6 +787,10 @@ struct ssl_session_st
         SSL_ctrl((ssl),SSL_CTRL_MODE,0,NULL)
 #define SSL_set_mtu(ssl, mtu) \
         SSL_ctrl((ssl),SSL_CTRL_SET_MTU,(mtu),NULL)
+#define DTLS_set_link_mtu(ssl, mtu) \
+        SSL_ctrl((ssl),DTLS_CTRL_SET_LINK_MTU,(mtu),NULL)
+#define DTLS_get_link_min_mtu(ssl) \
+        SSL_ctrl((ssl),DTLS_CTRL_GET_LINK_MIN_MTU,0,NULL)
 
 #define SSL_get_secure_renegotiation_support(ssl) \
 	SSL_ctrl((ssl), SSL_CTRL_GET_RI_SUPPORT, 0, NULL)
@@ -1836,6 +1840,8 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_SET_CURRENT_CERT		117
 
 #define SSL_CTRL_CHECK_PROTO_VERSION		119
+#define DTLS_CTRL_SET_LINK_MTU			120
+#define DTLS_CTRL_GET_LINK_MIN_MTU		121
 
 
 #define SSL_CERT_SET_FIRST			1
