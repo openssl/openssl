@@ -384,44 +384,69 @@ int tls1_ec_nid2curve_id(int nid)
 		return 0;
 		}
 	}
-/* Get curves list, if "sess" is set return client curves otherwise
- * preferred list
+/*
+ * Get curves list, if "sess" is set return client curves otherwise
+ * preferred list.
+ * Sets |num_curves| to the number of curves in the list, i.e.,
+ * the length of |pcurves| is 2 * num_curves.
+ * Returns 1 on success and 0 if the client curves list has invalid format.
+ * The latter indicates an internal error: we should not be accepting such
+ * lists in the first place.
+ * TODO(emilia): we should really be storing the curves list in explicitly
+ * parsed form instead. (However, this would affect binary compatibility
+ * so cannot happen in the 1.0.x series.)
  */
-static void tls1_get_curvelist(SSL *s, int sess,
+static int tls1_get_curvelist(SSL *s, int sess,
 					const unsigned char **pcurves,
-					size_t *pcurveslen)
+					size_t *num_curves)
 	{
+	size_t pcurveslen = 0;
 	if (sess)
 		{
 		*pcurves = s->session->tlsext_ellipticcurvelist;
-		*pcurveslen = s->session->tlsext_ellipticcurvelist_length;
-		return;
+		pcurveslen = s->session->tlsext_ellipticcurvelist_length;
 		}
-	/* For Suite B mode only include P-256, P-384 */
-	switch (tls1_suiteb(s))
+	else
 		{
-	case SSL_CERT_FLAG_SUITEB_128_LOS:
-		*pcurves = suiteb_curves;
-		*pcurveslen = sizeof(suiteb_curves);
-		break;
+		/* For Suite B mode only include P-256, P-384 */
+		switch (tls1_suiteb(s))
+			{
+		case SSL_CERT_FLAG_SUITEB_128_LOS:
+			*pcurves = suiteb_curves;
+			pcurveslen = sizeof(suiteb_curves);
+			break;
 
-	case SSL_CERT_FLAG_SUITEB_128_LOS_ONLY:
-		*pcurves = suiteb_curves;
-		*pcurveslen = 2;
-		break;
+		case SSL_CERT_FLAG_SUITEB_128_LOS_ONLY:
+			*pcurves = suiteb_curves;
+			pcurveslen = 2;
+			break;
 
-	case SSL_CERT_FLAG_SUITEB_192_LOS:
-		*pcurves = suiteb_curves + 2;
-		*pcurveslen = 2;
-		break;
-	default:
-		*pcurves = s->tlsext_ellipticcurvelist;
-		*pcurveslen = s->tlsext_ellipticcurvelist_length;
+		case SSL_CERT_FLAG_SUITEB_192_LOS:
+			*pcurves = suiteb_curves + 2;
+			pcurveslen = 2;
+			break;
+		default:
+			*pcurves = s->tlsext_ellipticcurvelist;
+			pcurveslen = s->tlsext_ellipticcurvelist_length;
+			}
+		if (!*pcurves)
+			{
+			*pcurves = eccurves_default;
+			pcurveslen = sizeof(eccurves_default);
+			}
 		}
-	if (!*pcurves)
+
+	/* We do not allow odd length arrays to enter the system. */
+	if (pcurveslen & 1)
 		{
-		*pcurves = eccurves_default;
-		*pcurveslen = sizeof(eccurves_default);
+		SSLerr(SSL_F_TLS1_GET_CURVELIST, ERR_R_INTERNAL_ERROR);
+		*num_curves = 0;
+		return 0;
+		}
+	else
+		{
+		*num_curves = pcurveslen / 2;
+		return 1;
 		}
 	}
 
@@ -446,7 +471,7 @@ static int tls_curve_allowed(SSL *s, const unsigned char *curve, int op)
 int tls1_check_curve(SSL *s, const unsigned char *p, size_t len)
 	{
 	const unsigned char *curves;
-	size_t curveslen, i;
+	size_t num_curves, i;
 	unsigned int suiteb_flags = tls1_suiteb(s);
 	if (len != 3 || p[0] != NAMED_CURVE_TYPE)
 		return 0;
@@ -469,8 +494,9 @@ int tls1_check_curve(SSL *s, const unsigned char *p, size_t len)
 		else	/* Should never happen */
 			return 0;
 		}
-	tls1_get_curvelist(s, 0, &curves, &curveslen);
-	for (i = 0; i < curveslen; i += 2, curves += 2)
+	if (!tls1_get_curvelist(s, 0, &curves, &num_curves))
+		return 0;
+	for (i = 0; i < num_curves; i++, curves += 2)
 		{
 		if (p[1] == curves[0] && p[2] == curves[1])
 			return tls_curve_allowed(s, p + 1, SSL_SECOP_CURVE_CHECK);
@@ -486,7 +512,7 @@ int tls1_check_curve(SSL *s, const unsigned char *p, size_t len)
 int tls1_shared_curve(SSL *s, int nmatch)
 	{
 	const unsigned char *pref, *supp;
-	size_t preflen, supplen, i, j;
+	size_t num_pref, num_supp, i, j;
 	int k;
 	/* Can't do anything on client side */
 	if (s->server == 0)
@@ -510,17 +536,21 @@ int tls1_shared_curve(SSL *s, int nmatch)
 		/* If not Suite B just return first preference shared curve */
 		nmatch = 0;
 		}
-	tls1_get_curvelist(s, !!(s->options & SSL_OP_CIPHER_SERVER_PREFERENCE),
-				&supp, &supplen);
-	tls1_get_curvelist(s, !(s->options & SSL_OP_CIPHER_SERVER_PREFERENCE),
-				&pref, &preflen);
-	preflen /= 2;
-	supplen /= 2;
+	/*
+	 * Avoid truncation. tls1_get_curvelist takes an int
+	 * but s->options is a long...
+	 */
+	if (!tls1_get_curvelist(s, (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE) != 0,
+			&supp, &num_supp))
+		return 0;
+	if(!tls1_get_curvelist(s, !(s->options & SSL_OP_CIPHER_SERVER_PREFERENCE),
+			&pref, &num_pref))
+		return 0;
 	k = 0;
-	for (i = 0; i < preflen; i++, pref+=2)
+	for (i = 0; i < num_pref; i++, pref+=2)
 		{
 		const unsigned char *tsupp = supp;
-		for (j = 0; j < supplen; j++, tsupp+=2)
+		for (j = 0; j < num_supp; j++, tsupp+=2)
 			{
 			if (pref[0] == tsupp[0] && pref[1] == tsupp[1])
 				{
@@ -675,22 +705,22 @@ static int tls1_set_ec_id(unsigned char *curve_id, unsigned char *comp_id,
 static int tls1_check_ec_key(SSL *s,
 			unsigned char *curve_id, unsigned char *comp_id)
 	{
-	const unsigned char *p;
-	size_t plen, i;
+	const unsigned char *pformats, *pcurves;
+	size_t num_formats, num_curves, i;
 	int j;
 	/* If point formats extension present check it, otherwise everything
 	 * is supported (see RFC4492).
 	 */
 	if (comp_id && s->session->tlsext_ecpointformatlist)
 		{
-		p = s->session->tlsext_ecpointformatlist;
-		plen = s->session->tlsext_ecpointformatlist_length;
-		for (i = 0; i < plen; i++, p++)
+		pformats = s->session->tlsext_ecpointformatlist;
+		num_formats = s->session->tlsext_ecpointformatlist_length;
+		for (i = 0; i < num_formats; i++, pformats++)
 			{
-			if (*comp_id == *p)
+			if (*comp_id == *pformats)
 				break;
 			}
-		if (i == plen)
+		if (i == num_formats)
 			return 0;
 		}
 	if (!curve_id)
@@ -698,13 +728,15 @@ static int tls1_check_ec_key(SSL *s,
 	/* Check curve is consistent with client and server preferences */
 	for (j = 0; j <= 1; j++)
 		{
-		tls1_get_curvelist(s, j, &p, &plen);
-		for (i = 0; i < plen; i+=2, p+=2)
+		if (!tls1_get_curvelist(s, j, &pcurves, &num_curves))
+			return 0;
+		for (i = 0; i < num_curves; i++, pcurves += 2)
 			{
-			if (p[0] == curve_id[0] && p[1] == curve_id[1])
+			if (pcurves[0] == curve_id[0] &&
+			    pcurves[1] == curve_id[1])
 				break;
 			}
-		if (i == plen)
+		if (i == num_curves)
 			return 0;
 		/* For clients can only check sent curve list */
 		if (!s->server)
@@ -714,23 +746,23 @@ static int tls1_check_ec_key(SSL *s,
 	}
 
 static void tls1_get_formatlist(SSL *s, const unsigned char **pformats,
-					size_t *pformatslen)
+					size_t *num_formats)
 	{
 	/* If we have a custom point format list use it otherwise
 	 * use default */
 	if (s->tlsext_ecpointformatlist)
 		{
 		*pformats = s->tlsext_ecpointformatlist;
-		*pformatslen = s->tlsext_ecpointformatlist_length;
+		*num_formats = s->tlsext_ecpointformatlist_length;
 		}
 	else
 		{
 		*pformats = ecformats_default;
 		/* For Suite B we don't support char2 fields */
 		if (tls1_suiteb(s))
-			*pformatslen = sizeof(ecformats_default) - 1;
+			*num_formats = sizeof(ecformats_default) - 1;
 		else
-			*pformatslen = sizeof(ecformats_default);
+			*num_formats = sizeof(ecformats_default);
 		}
 	}
 
@@ -1244,34 +1276,36 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf, unsigned c
 		{
 		/* Add TLS extension ECPointFormats to the ClientHello message */
 		long lenmax; 
-		const unsigned char *plist;
-		size_t plistlen;
+		const unsigned char *pcurves, *pformats;
+		size_t num_curves, num_formats, curves_list_len;
 		size_t i;
 		unsigned char *etmp;
 
-		tls1_get_formatlist(s, &plist, &plistlen);
+		tls1_get_formatlist(s, &pformats, &num_formats);
 
 		if ((lenmax = limit - ret - 5) < 0) return NULL; 
-		if (plistlen > (size_t)lenmax) return NULL;
-		if (plistlen > 255)
+		if (num_formats > (size_t)lenmax) return NULL;
+		if (num_formats > 255)
 			{
 			SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
 			return NULL;
 			}
 		
 		s2n(TLSEXT_TYPE_ec_point_formats,ret);
-		s2n(plistlen + 1,ret);
-		*(ret++) = (unsigned char)plistlen ;
-		memcpy(ret, plist, plistlen);
-		ret+=plistlen;
+		/* The point format list has 1-byte length. */
+		s2n(num_formats + 1,ret);
+		*(ret++) = (unsigned char)num_formats ;
+		memcpy(ret, pformats, num_formats);
+		ret+=num_formats;
 
 		/* Add TLS extension EllipticCurves to the ClientHello message */
-		plist = s->tlsext_ellipticcurvelist;
-		tls1_get_curvelist(s, 0, &plist, &plistlen);
+		pcurves = s->tlsext_ellipticcurvelist;
+		if (!tls1_get_curvelist(s, 0, &pcurves, &num_curves))
+			return NULL;
 
 		if ((lenmax = limit - ret - 6) < 0) return NULL; 
-		if (plistlen > (size_t)lenmax) return NULL;
-		if (plistlen > 65532)
+		if (num_curves > (size_t)lenmax / 2) return NULL;
+		if (num_curves > 65532 / 2)
 			{
 			SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
 			return NULL;
@@ -1281,20 +1315,20 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf, unsigned c
 		s2n(TLSEXT_TYPE_elliptic_curves,ret);
 		etmp = ret + 4;
 		/* Copy curve ID if supported */
-		for (i = 0; i < plistlen; i += 2, plist += 2)
+		for (i = 0; i < num_curves; i++, pcurves += 2)
 			{
-			if (tls_curve_allowed(s, plist, SSL_SECOP_CURVE_SUPPORTED))
+			if (tls_curve_allowed(s, pcurves, SSL_SECOP_CURVE_SUPPORTED))
 				{
-				*etmp++ = plist[0];
-				*etmp++ = plist[1];
+				*etmp++ = pcurves[0];
+				*etmp++ = pcurves[1];
 				}
 			}
 
-		plistlen = etmp - ret - 4;
+		curves_list_len = etmp - ret - 4;
 
-		s2n(plistlen + 2, ret);
-		s2n(plistlen, ret);
-		ret+=plistlen;
+		s2n(curves_list_len + 2, ret);
+		s2n(curves_list_len, ret);
+		ret += curves_list_len;
 		}
 #endif /* OPENSSL_NO_EC */
 
