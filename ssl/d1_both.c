@@ -329,12 +329,18 @@ int dtls1_do_write(SSL *s, int type)
 					len = s->init_num;
 				}
 
+			if ( len < DTLS1_HM_HEADER_LENGTH )
+				{
+				/*
+				 * len is so small that we really can't do anything sensible
+				 * so fail
+				 */
+				return -1;
+				}
 			dtls1_fix_message_header(s, frag_off, 
 				len - DTLS1_HM_HEADER_LENGTH);
 
 			dtls1_write_message_header(s, (unsigned char *)&s->init_buf->data[s->init_off]);
-
-			OPENSSL_assert(len >= DTLS1_HM_HEADER_LENGTH);
 			}
 
 		ret=dtls1_write_bytes(s,type,&s->init_buf->data[s->init_off],
