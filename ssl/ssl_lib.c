@@ -1053,19 +1053,6 @@ long SSL_ctrl(SSL *s,int cmd,long larg,void *parg)
 		l=s->max_cert_list;
 		s->max_cert_list=larg;
 		return(l);
-	case SSL_CTRL_SET_MTU:
-#ifndef OPENSSL_NO_DTLS1
-		if (larg < (long)dtls1_min_mtu())
-			return 0;
-#endif
-
-		if (SSL_version(s) == DTLS1_VERSION ||
-		    SSL_version(s) == DTLS1_BAD_VER)
-			{
-			s->d1->mtu = larg;
-			return larg;
-			}
-		return 0;
 	case SSL_CTRL_SET_MAX_SEND_FRAGMENT:
 		if (larg < 512 || larg > SSL3_RT_MAX_PLAIN_LENGTH)
 			return 0;
