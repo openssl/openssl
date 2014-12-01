@@ -176,6 +176,8 @@ extern "C" {
                                               * adjust socket timeouts */
 #define BIO_CTRL_DGRAM_SET_DONT_FRAG      48
 
+#define BIO_CTRL_DGRAM_GET_MTU_OVERHEAD   49
+
 #ifndef OPENSSL_NO_SCTP
 /* SCTP stuff */
 #define BIO_CTRL_DGRAM_SCTP_SET_IN_HANDSHAKE	50
@@ -608,6 +610,8 @@ int BIO_ctrl_reset_read_request(BIO *b);
          (int)BIO_ctrl(b, BIO_CTRL_DGRAM_GET_PEER, 0, (char *)peer)
 #define BIO_dgram_set_peer(b,peer) \
          (int)BIO_ctrl(b, BIO_CTRL_DGRAM_SET_PEER, 0, (char *)peer)
+#define BIO_dgram_get_mtu_overhead(b) \
+         (unsigned int)BIO_ctrl((b), BIO_CTRL_DGRAM_GET_MTU_OVERHEAD, 0, NULL)
 
 /* These two aren't currently implemented */
 /* int BIO_get_ex_num(BIO *bio); */
