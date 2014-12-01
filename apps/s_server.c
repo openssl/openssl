@@ -1856,10 +1856,24 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 			BIO_ctrl(sbio, BIO_CTRL_DGRAM_SET_SEND_TIMEOUT, 0, &timeout);
 			}
 
-		if (socket_mtu > 28)
+		if (socket_mtu)
 			{
+			if(socket_mtu < DTLS_get_link_min_mtu(con))
+				{
+				BIO_printf(bio_err,"MTU too small. Must be at least %ld\n",
+					DTLS_get_link_min_mtu(con));
+				ret = -1;
+				BIO_free(sbio);
+				goto err;
+				}
 			SSL_set_options(con, SSL_OP_NO_QUERY_MTU);
-			SSL_set_mtu(con, socket_mtu - 28);
+			if(!DTLS_set_link_mtu(con, socket_mtu))
+				{
+				BIO_printf(bio_err, "Failed to set MTU\n");
+				ret = -1;
+				BIO_free(sbio);
+				goto err;
+				}
 			}
 		else
 			/* want to do MTU discovery */
