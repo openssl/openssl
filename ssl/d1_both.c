@@ -156,9 +156,9 @@ static unsigned char bitmask_start_values[] = {0xff, 0xfe, 0xfc, 0xf8, 0xf0, 0xe
 static unsigned char bitmask_end_values[]   = {0xff, 0x01, 0x03, 0x07, 0x0f, 0x1f, 0x3f, 0x7f};
 
 /* XDTLS:  figure out the right values */
-static const unsigned int g_probable_mtu[] = {1500 - 28, 512 - 28, 256 - 28};
+static const unsigned int g_probable_mtu[] = {1500, 512, 256};
 
-static unsigned int dtls1_guess_mtu(unsigned int curr_mtu);
+static void dtls1_guess_mtu(SSL *s);
 static void dtls1_fix_message_header(SSL *s, unsigned long frag_off, 
 	unsigned long frag_len);
 static unsigned char *dtls1_write_message_header(SSL *s,
@@ -226,18 +226,24 @@ void dtls1_hm_fragment_free(hm_fragment *frag)
 
 static void dtls1_query_mtu(SSL *s)
 {
+	if(s->d1->link_mtu)
+		{
+		s->d1->mtu = s->d1->link_mtu-BIO_dgram_get_mtu_overhead(SSL_get_wbio(s));
+		s->d1->link_mtu = 0;
+		}
+
 	/* AHA!  Figure out the MTU, and stick to the right size */
-	if (s->d1->mtu < dtls1_min_mtu() && !(SSL_get_options(s) & SSL_OP_NO_QUERY_MTU))
+	if (s->d1->mtu < dtls1_min_mtu(s) && !(SSL_get_options(s) & SSL_OP_NO_QUERY_MTU))
 		{
 		s->d1->mtu = 
 			BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_QUERY_MTU, 0, NULL);
 
 		/* I've seen the kernel return bogus numbers when it doesn't know
 		 * (initial write), so just make sure we have a reasonable number */
-		if (s->d1->mtu < dtls1_min_mtu())
+		if (s->d1->mtu < dtls1_min_mtu(s))
 			{
 			s->d1->mtu = 0;
-			s->d1->mtu = dtls1_guess_mtu(s->d1->mtu);
+			dtls1_guess_mtu(s);
 			BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SET_MTU, 
 				s->d1->mtu, NULL);
 			}
@@ -275,7 +281,7 @@ int dtls1_do_write(SSL *s, int type)
 		}
 #endif
 
-	OPENSSL_assert(s->d1->mtu >= dtls1_min_mtu());  /* should have something reasonable now */
+	OPENSSL_assert(s->d1->mtu >= dtls1_min_mtu(s));  /* should have something reasonable now */
 
 	if ( s->init_off == 0  && type == SSL3_RT_HANDSHAKE)
 		OPENSSL_assert(s->init_num == 
@@ -1299,26 +1305,40 @@ dtls1_write_message_header(SSL *s, unsigned char *p)
 	return p;
 	}
 
-unsigned int 
-dtls1_min_mtu(void)
+unsigned int
+dtls1_link_min_mtu(void)
 	{
 	return (g_probable_mtu[(sizeof(g_probable_mtu) / 
 		sizeof(g_probable_mtu[0])) - 1]);
 	}
 
-static unsigned int 
-dtls1_guess_mtu(unsigned int curr_mtu)
+unsigned int
+dtls1_min_mtu(SSL *s)
 	{
+	return dtls1_link_min_mtu()-BIO_dgram_get_mtu_overhead(SSL_get_wbio(s));
+	}
+
+static void 
+dtls1_guess_mtu(SSL *s)
+	{
+	unsigned int curr_mtu;
 	unsigned int i;
+	unsigned int mtu_ovr;
+
+	curr_mtu = s->d1->mtu;
+	mtu_ovr = BIO_dgram_get_mtu_overhead(SSL_get_wbio(s));
 
 	if ( curr_mtu == 0 )
-		return g_probable_mtu[0] ;
-
-	for ( i = 0; i < sizeof(g_probable_mtu)/sizeof(g_probable_mtu[0]); i++)
-		if ( curr_mtu > g_probable_mtu[i])
-			return g_probable_mtu[i];
-
-	return curr_mtu;
+		{
+		curr_mtu = g_probable_mtu[0] - mtu_ovr;
+		}
+	else
+		{
+		for ( i = 0; i < sizeof(g_probable_mtu)/sizeof(g_probable_mtu[0]); i++)
+			if ( curr_mtu > g_probable_mtu[i] - mtu_ovr)
+				return g_probable_mtu[i] - mtu_ovr;
+		}
+	s->d1->mtu = curr_mtu;
 	}
 
 void
