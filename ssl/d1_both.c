@@ -260,6 +260,7 @@ int dtls1_do_write(SSL *s, int type)
 	{
 	int ret;
 	int curr_mtu;
+	int retry = 1;
 	unsigned int len, frag_off, mac_size, blocksize;
 
 	if(!dtls1_query_mtu(s))
@@ -370,13 +371,15 @@ int dtls1_do_write(SSL *s, int type)
 			 * is fine and wait for an alert to handle the
 			 * retransmit 
 			 */
-			if ( BIO_ctrl(SSL_get_wbio(s),
+			if ( retry && BIO_ctrl(SSL_get_wbio(s),
 				BIO_CTRL_DGRAM_MTU_EXCEEDED, 0, NULL) > 0 )
 				{
 				if(!(SSL_get_options(s) & SSL_OP_NO_QUERY_MTU))
 					{
 					if(!dtls1_query_mtu(s))
 						return -1;
+					/* Have one more go */
+					retry = 0;
 					}
 				else
 					return -1;
