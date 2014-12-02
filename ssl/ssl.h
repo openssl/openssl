@@ -1137,6 +1137,9 @@ struct ssl_ctx_st
 	size_t tlsext_ellipticcurvelist_length;
 	unsigned char *tlsext_ellipticcurvelist;
 # endif /* OPENSSL_NO_EC */
+
+	/* ext status type used for CSR extension (OCSP Stapling) */
+	int tlsext_status_type; 
 	};
 
 #endif
