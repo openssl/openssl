@@ -693,7 +693,7 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->tlsext_debug_cb = 0;
     s->tlsext_debug_arg = NULL;
     s->tlsext_ticket_expected = 0;
-    s->tlsext_status_type = -1;
+    s->tlsext_status_type = ctx->tlsext_status_type;
     s->tlsext_status_expected = 0;
     s->tlsext_ocsp_ids = NULL;
     s->tlsext_ocsp_exts = NULL;
@@ -2501,6 +2501,8 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
      * or by using the SSL_CONF library.
      */
     ret->options |= SSL_OP_NO_COMPRESSION;
+
+    ret->tlsext_status_type = -1;
 
     return ret;
  err:
