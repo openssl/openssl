@@ -265,28 +265,6 @@ int dtls1_do_write(SSL *s, int type)
 
 	if(!dtls1_query_mtu(s))
 		return -1;
-#if 0 
-	mtu = s->d1->mtu;
-
-	fprintf(stderr, "using MTU = %d\n", mtu);
-
-	mtu -= (DTLS1_HM_HEADER_LENGTH + DTLS1_RT_HEADER_LENGTH);
-
-	curr_mtu = mtu - BIO_wpending(SSL_get_wbio(s));
-
-	if ( curr_mtu > 0)
-		mtu = curr_mtu;
-	else if ( ( ret = BIO_flush(SSL_get_wbio(s))) <= 0)
-		return ret;
-
-	if ( BIO_wpending(SSL_get_wbio(s)) + s->init_num >= mtu)
-		{
-		ret = BIO_flush(SSL_get_wbio(s));
-		if ( ret <= 0)
-			return ret;
-		mtu = s->d1->mtu - (DTLS1_HM_HEADER_LENGTH + DTLS1_RT_HEADER_LENGTH);
-		}
-#endif
 
 	OPENSSL_assert(s->d1->mtu >= dtls1_min_mtu(s));  /* should have something reasonable now */
 
