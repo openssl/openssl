@@ -106,7 +106,7 @@ DSA_SIG *gost2001_do_sign(const unsigned char *dgst,int dlen, EC_KEY *eckey)
 	newsig=DSA_SIG_new();
 	if (!newsig) 
 		{
-		GOSTerr(GOST_F_GOST2001_DO_SIGN,GOST_R_NO_MEMORY);
+		GOSTerr(GOST_F_GOST2001_DO_SIGN,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}	
 	group = EC_KEY_get0_group(eckey);

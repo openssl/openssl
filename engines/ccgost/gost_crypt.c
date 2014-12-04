@@ -426,13 +426,13 @@ int gost89_set_asn1_parameters(EVP_CIPHER_CTX *ctx,ASN1_TYPE *params)
 	ASN1_OCTET_STRING *os = NULL;
 	if (!gcp)
 		{
-		GOSTerr(GOST_F_GOST89_SET_ASN1_PARAMETERS, GOST_R_NO_MEMORY);
+		GOSTerr(GOST_F_GOST89_SET_ASN1_PARAMETERS, ERR_R_MALLOC_FAILURE);
 		return 0;
 		}
 	if (!ASN1_OCTET_STRING_set(gcp->iv, ctx->iv, ctx->cipher->iv_len))
 		{
 		GOST_CIPHER_PARAMS_free(gcp);
-		GOSTerr(GOST_F_GOST89_SET_ASN1_PARAMETERS, GOST_R_NO_MEMORY);
+		GOSTerr(GOST_F_GOST89_SET_ASN1_PARAMETERS, ERR_R_MALLOC_FAILURE);
 		return 0;
 		}
 	ASN1_OBJECT_free(gcp->enc_param_set);
@@ -443,7 +443,7 @@ int gost89_set_asn1_parameters(EVP_CIPHER_CTX *ctx,ASN1_TYPE *params)
 	if (!buf)
 		{
 		GOST_CIPHER_PARAMS_free(gcp);
-		GOSTerr(GOST_F_GOST89_SET_ASN1_PARAMETERS, GOST_R_NO_MEMORY);
+		GOSTerr(GOST_F_GOST89_SET_ASN1_PARAMETERS, ERR_R_MALLOC_FAILURE);
 		return 0;
 		}
 	i2d_GOST_CIPHER_PARAMS(gcp, &p);
@@ -454,7 +454,7 @@ int gost89_set_asn1_parameters(EVP_CIPHER_CTX *ctx,ASN1_TYPE *params)
 	if(!os || !ASN1_OCTET_STRING_set(os, buf, len))
 		{
 		OPENSSL_free(buf);
-		GOSTerr(GOST_F_GOST89_SET_ASN1_PARAMETERS, GOST_R_NO_MEMORY);
+		GOSTerr(GOST_F_GOST89_SET_ASN1_PARAMETERS, ERR_R_MALLOC_FAILURE);
 		return 0;
 		}
 	OPENSSL_free(buf);

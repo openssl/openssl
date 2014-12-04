@@ -136,8 +136,6 @@ void ERR_GOST_error(int function, int reason, char *file, int line);
 #define GOST_R_KEY_IS_NOT_INITIALIZED			 114
 #define GOST_R_KEY_PARAMETERS_MISSING			 115
 #define GOST_R_MAC_KEY_NOT_SET				 116
-#define GOST_R_MALLOC_FAILURE				 117
-#define GOST_R_NO_MEMORY				 118
 #define GOST_R_NO_PARAMETERS_SET			 119
 #define GOST_R_NO_PEER_KEY				 120
 #define GOST_R_NO_PRIVATE_PART_OF_NON_EPHEMERAL_KEYPAIR	 121
