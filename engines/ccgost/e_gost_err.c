@@ -137,8 +137,6 @@ static ERR_STRING_DATA GOST_str_reasons[]=
 {ERR_REASON(GOST_R_KEY_IS_NOT_INITIALIZED),"key is not initialized"},
 {ERR_REASON(GOST_R_KEY_PARAMETERS_MISSING),"key parameters missing"},
 {ERR_REASON(GOST_R_MAC_KEY_NOT_SET)      ,"mac key not set"},
-{ERR_REASON(GOST_R_MALLOC_FAILURE)       ,"malloc failure"},
-{ERR_REASON(GOST_R_NO_MEMORY)            ,"no memory"},
 {ERR_REASON(GOST_R_NO_PARAMETERS_SET)    ,"no parameters set"},
 {ERR_REASON(GOST_R_NO_PEER_KEY)          ,"no peer key"},
 {ERR_REASON(GOST_R_NO_PRIVATE_PART_OF_NON_EPHEMERAL_KEYPAIR),"no private part of non ephemeral keypair"},
