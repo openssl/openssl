@@ -1148,15 +1148,16 @@ static int capi_get_provname(CAPI_CTX *ctx, LPSTR *pname, DWORD *ptype, DWORD id
 		capi_adderror(err);
 		return 0;
 		}
-	if (sizeof(TCHAR) != sizeof(char))
-		name = alloca(len);
-	else
-		name = OPENSSL_malloc(len);
+	name = OPENSSL_malloc(len);
+	if (name == NULL)
+		{
+		CAPIerr(CAPI_F_CAPI_GET_PROVNAME, ERR_R_MALLOC_FAILURE);
+		return 0;
+		}
 	if (!CryptEnumProviders(idx, NULL, 0, ptype, name, &len))
 		{
 		err = GetLastError();
-		if (sizeof(TCHAR) == sizeof(char))
-			OPENSSL_free(name);
+		OPENSSL_free(name);
 		if (err == ERROR_NO_MORE_ITEMS)
 			return 2;
 		CAPIerr(CAPI_F_CAPI_GET_PROVNAME, CAPI_R_CRYPTENUMPROVIDERS_ERROR);
@@ -1164,7 +1165,12 @@ static int capi_get_provname(CAPI_CTX *ctx, LPSTR *pname, DWORD *ptype, DWORD id
 		return 0;
 		}
 	if (sizeof(TCHAR) != sizeof(char))
+		{
 		*pname = wide_to_asc((WCHAR *)name);
+		OPENSSL_free(name);
+		if (*pname == NULL)
+			return 0;
+		}
 	else
 		*pname = (char *)name;
 	CAPI_trace(ctx, "capi_get_provname, returned name=%s, type=%d\n", *pname, *ptype);
