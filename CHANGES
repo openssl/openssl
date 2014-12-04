@@ -4,6 +4,10 @@
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
 
+  *) SSLv2 support has been removed.  It still supports receiving a SSLv2
+     compatible client hello.
+     [Kurt Roeckx]
+
   *) Increased the minimal RSA keysize from 256 to 512 bits [Rich Salz],
      done while fixing the error code for the key-too-small case.
      [Annie Yousar <a.yousar@informatik.hu-berlin.de>]
