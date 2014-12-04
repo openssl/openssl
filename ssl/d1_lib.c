@@ -279,10 +279,6 @@ long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg)
 		/* Just one protocol version is supported so far;
 		 * fail closed if the version is not as expected. */
 		return s->version == DTLS_MAX_VERSION;
-
-		/* Just one protocol version is supported so far;
-		 * fail closed if the version is not as expected. */
-		return s->version == DTLS_MAX_VERSION;
 	case DTLS_CTRL_SET_LINK_MTU:
 		if (larg < (long)dtls1_link_min_mtu())
 			return 0;
