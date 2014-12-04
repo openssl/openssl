@@ -540,11 +540,12 @@ int tls1_check_curve(SSL *s, const unsigned char *p, size_t len)
 	return 0;
 	}
 
-/* Return nth shared curve. If nmatch == -1 return number of
- * matches. For nmatch == -2 return the NID of the curve to use for
- * an EC tmp key.
+/*
+ * Return |nmatch|th shared curve or NID_undef if there is no match.
+ * For nmatch == -1, return number of  matches
+ * For nmatch == -2, return the NID of the curve to use for
+ * an EC tmp key, or NID_undef if there is no match.
  */
-
 int tls1_shared_curve(SSL *s, int nmatch)
 	{
 	const unsigned char *pref, *supp;
@@ -578,10 +579,11 @@ int tls1_shared_curve(SSL *s, int nmatch)
 	 */
 	if (!tls1_get_curvelist(s, (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE) != 0,
 			&supp, &num_supp))
-		return 0;
+		/* In practice, NID_undef == 0 but let's be precise. */
+		return nmatch == -1 ? 0 : NID_undef;
 	if(!tls1_get_curvelist(s, !(s->options & SSL_OP_CIPHER_SERVER_PREFERENCE),
 			&pref, &num_pref))
-		return 0;
+		return nmatch == -1 ? 0 : NID_undef;
 	k = 0;
 	for (i = 0; i < num_pref; i++, pref+=2)
 		{
@@ -601,7 +603,8 @@ int tls1_shared_curve(SSL *s, int nmatch)
 		}
 	if (nmatch == -1)
 		return k;
-	return 0;
+	/* Out of range (nmatch > k). */
+	return NID_undef;
 	}
 
 int tls1_set_curves(unsigned char **pext, size_t *pextlen,
