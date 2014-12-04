@@ -416,13 +416,7 @@ SSL *SSL_new(SSL_CTX *ctx)
 	return(s);
 err:
 	if (s != NULL)
-		{
-		if (s->cert != NULL)
-			ssl_cert_free(s->cert);
-		if (s->ctx != NULL)
-			SSL_CTX_free(s->ctx); /* decrement reference count */
-		OPENSSL_free(s);
-		}
+		SSL_free(s);
 	SSLerr(SSL_F_SSL_NEW,ERR_R_MALLOC_FAILURE);
 	return(NULL);
 	}
