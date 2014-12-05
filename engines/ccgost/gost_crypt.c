@@ -8,6 +8,7 @@
  **********************************************************************/
 #include <string.h>
 #include "gost89.h"
+#include <openssl/err.h>
 #include <openssl/rand.h>
 #include "e_gost_err.h"
 #include "gost_lcl.h"
@@ -631,4 +632,3 @@ int gost_imit_cleanup(EVP_MD_CTX *ctx)
 	memset(ctx->md_data,0,sizeof(struct ossl_gost_imit_ctx));
 	return 1;
 	}
-

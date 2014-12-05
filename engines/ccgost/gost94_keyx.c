@@ -11,6 +11,7 @@
 #include <string.h>
 #include <openssl/dh.h>
 #include <openssl/rand.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
@@ -288,4 +289,3 @@ err:
 	GOST_KEY_TRANSPORT_free(gkt);
 	return -1;
 	}	
-
