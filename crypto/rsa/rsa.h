@@ -339,6 +339,11 @@ void	RSA_free (RSA *r);
 /* "up" the RSA object's reference count */
 int	RSA_up_ref(RSA *r);
 
+int	RSA_public_digest(RSA *rsa, const EVP_MD *mdtype,
+		unsigned char *md, unsigned int *mdlen);
+int	RSA_private_digest(RSA *rsa, const EVP_MD *mdtype,
+		unsigned char *md, unsigned int *mdlen);
+
 int	RSA_flags(const RSA *r);
 
 void RSA_set_default_method(const RSA_METHOD *meth);

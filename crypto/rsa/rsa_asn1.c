@@ -127,3 +127,15 @@ RSA *RSAPrivateKey_dup(RSA *rsa)
 	{
 	return ASN1_item_dup(ASN1_ITEM_rptr(RSAPrivateKey), rsa);
 	}
+
+int RSA_public_digest(RSA *rsa, const EVP_MD *mdtype, unsigned char *md,
+					unsigned int *mdlen)
+{
+	return ASN1_item_digest(ASN1_ITEM_rptr(RSAPublicKey), mdtype, rsa, md, mdlen);
+}
+
+int RSA_private_digest(RSA *rsa, const EVP_MD *mdtype, unsigned char *md,
+					unsigned int *mdlen)
+{
+	return ASN1_item_digest(ASN1_ITEM_rptr(RSAPrivateKey), mdtype, rsa, md, mdlen);
+}
