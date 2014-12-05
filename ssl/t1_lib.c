@@ -1996,6 +1996,16 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 	s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC;
 #endif
 
+#ifndef OPENSSL_NO_SRP
+	if (s->srp_ctx.login != NULL)
+		{
+		OPENSSL_free(s->srp_ctx.login);
+		s->srp_ctx.login = NULL;
+		}
+#endif
+
+	s->srtp_profile = NULL;
+
 	if (data >= (d+n-2))
 		goto ri_check;
 	n2s(data,len);
