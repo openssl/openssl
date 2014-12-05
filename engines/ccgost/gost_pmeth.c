@@ -10,6 +10,7 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/ec.h>
+#include <openssl/err.h>
 #include <openssl/x509v3.h> /*For string_to_hex */
 #include <stdlib.h>
 #include <string.h>
@@ -640,4 +641,3 @@ int register_pmeth_gost(int id, EVP_PKEY_METHOD **pmeth,int flags)
 	
 	return 1;
 	}
-

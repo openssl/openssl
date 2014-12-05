@@ -11,6 +11,7 @@
 #include <openssl/rand.h>
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 
 #include "gost_params.h"
