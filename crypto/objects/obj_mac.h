@@ -2745,6 +2745,18 @@
 #define LN_aes_256_ctr		"aes-256-ctr"
 #define NID_aes_256_ctr		906
 
+#define SN_aes_128_ocb		"AES-128-OCB"
+#define LN_aes_128_ocb		"aes-128-ocb"
+#define NID_aes_128_ocb		958
+
+#define SN_aes_192_ocb		"AES-192-OCB"
+#define LN_aes_192_ocb		"aes-192-ocb"
+#define NID_aes_192_ocb		959
+
+#define SN_aes_256_ocb		"AES-256-OCB"
+#define LN_aes_256_ocb		"aes-256-ocb"
+#define NID_aes_256_ocb		960
+
 #define SN_aes_128_xts		"AES-128-XTS"
 #define LN_aes_128_xts		"aes-128-xts"
 #define NID_aes_128_xts		913

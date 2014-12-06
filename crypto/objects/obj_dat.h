@@ -62,9 +62,9 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 958
-#define NUM_SN 951
-#define NUM_LN 951
+#define NUM_NID 961
+#define NUM_SN 954
+#define NUM_LN 954
 #define NUM_OBJ 890
 
 static const unsigned char lvalues[6255]={
@@ -2514,6 +2514,9 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 	NID_jurisdictionStateOrProvinceName,11,&(lvalues[6232]),0},
 {"jurisdictionC","jurisdictionCountryName",
 	NID_jurisdictionCountryName,11,&(lvalues[6243]),0},
+{"AES-128-OCB","aes-128-ocb",NID_aes_128_ocb,0,NULL,0},
+{"AES-192-OCB","aes-192-ocb",NID_aes_192_ocb,0,NULL,0},
+{"AES-256-OCB","aes-256-ocb",NID_aes_256_ocb,0,NULL,0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -2526,6 +2529,7 @@ static const unsigned int sn_objs[NUM_SN]={
 653,	/* "AES-128-CFB8" */
 904,	/* "AES-128-CTR" */
 418,	/* "AES-128-ECB" */
+958,	/* "AES-128-OCB" */
 420,	/* "AES-128-OFB" */
 913,	/* "AES-128-XTS" */
 423,	/* "AES-192-CBC" */
@@ -2536,6 +2540,7 @@ static const unsigned int sn_objs[NUM_SN]={
 654,	/* "AES-192-CFB8" */
 905,	/* "AES-192-CTR" */
 422,	/* "AES-192-ECB" */
+959,	/* "AES-192-OCB" */
 424,	/* "AES-192-OFB" */
 427,	/* "AES-256-CBC" */
 918,	/* "AES-256-CBC-HMAC-SHA1" */
@@ -2545,6 +2550,7 @@ static const unsigned int sn_objs[NUM_SN]={
 655,	/* "AES-256-CFB8" */
 906,	/* "AES-256-CTR" */
 426,	/* "AES-256-ECB" */
+960,	/* "AES-256-OCB" */
 428,	/* "AES-256-OFB" */
 914,	/* "AES-256-XTS" */
 91,	/* "BF-CBC" */
@@ -3629,6 +3635,7 @@ static const unsigned int ln_objs[NUM_LN]={
 904,	/* "aes-128-ctr" */
 418,	/* "aes-128-ecb" */
 895,	/* "aes-128-gcm" */
+958,	/* "aes-128-ocb" */
 420,	/* "aes-128-ofb" */
 913,	/* "aes-128-xts" */
 423,	/* "aes-192-cbc" */
@@ -3641,6 +3648,7 @@ static const unsigned int ln_objs[NUM_LN]={
 905,	/* "aes-192-ctr" */
 422,	/* "aes-192-ecb" */
 898,	/* "aes-192-gcm" */
+959,	/* "aes-192-ocb" */
 424,	/* "aes-192-ofb" */
 427,	/* "aes-256-cbc" */
 918,	/* "aes-256-cbc-hmac-sha1" */
@@ -3652,6 +3660,7 @@ static const unsigned int ln_objs[NUM_LN]={
 906,	/* "aes-256-ctr" */
 426,	/* "aes-256-ecb" */
 901,	/* "aes-256-gcm" */
+960,	/* "aes-256-ocb" */
 428,	/* "aes-256-ofb" */
 914,	/* "aes-256-xts" */
 376,	/* "algorithm" */

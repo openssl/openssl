@@ -955,3 +955,6 @@ ct_cert_scts		954
 jurisdictionLocalityName		955
 jurisdictionStateOrProvinceName		956
 jurisdictionCountryName		957
+aes_128_ocb		958
+aes_192_ocb		959
+aes_256_ocb		960

@@ -4514,3 +4514,15 @@ i2s_ASN1_IA5STRING                      4874	EXIST::FUNCTION:
 s2i_ASN1_IA5STRING                      4875	EXIST::FUNCTION:
 FIPS_dsa_sign_ctx                       4876	EXIST:OPENSSL_FIPS:FUNCTION:DSA
 FIPS_ecdsa_sign                         4877	EXIST:OPENSSL_FIPS:FUNCTION:ECDSA
+CRYPTO_ocb128_release                   4878	EXIST::FUNCTION:
+CRYPTO_ocb128_new                       4879	EXIST::FUNCTION:
+CRYPTO_ocb128_finish                    4880	EXIST::FUNCTION:
+EVP_aes_256_ocb                         4881	EXIST::FUNCTION:AES
+CRYPTO_ocb128_setiv                     4882	EXIST::FUNCTION:
+CRYPTO_ocb128_aad                       4883	EXIST::FUNCTION:
+CRYPTO_ocb128_decrypt                   4884	EXIST::FUNCTION:
+CRYPTO_ocb128_tag                       4885	EXIST::FUNCTION:
+EVP_aes_192_ocb                         4886	EXIST::FUNCTION:AES
+EVP_aes_128_ocb                         4887	EXIST::FUNCTION:AES
+CRYPTO_ocb128_init                      4888	EXIST::FUNCTION:
+CRYPTO_ocb128_encrypt                   4889	EXIST::FUNCTION:
