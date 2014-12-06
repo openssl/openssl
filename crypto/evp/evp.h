@@ -340,6 +340,7 @@ struct evp_cipher_st
 #define		EVP_CIPH_CCM_MODE		0x7
 #define		EVP_CIPH_XTS_MODE		0x10001
 #define		EVP_CIPH_WRAP_MODE		0x10002
+#define		EVP_CIPH_OCB_MODE		0x10003
 #define 	EVP_CIPH_MODE			0xF0007
 /* Set if variable length cipher */
 #define 	EVP_CIPH_VARIABLE_LENGTH	0x8
@@ -421,6 +422,12 @@ typedef struct {
 	size_t len;
 	unsigned int interleave;
 } EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM;
+
+#define		EVP_CTRL_SET_IVLEN			EVP_CTRL_GCM_SET_IVLEN
+#define		EVP_CTRL_GET_TAG			EVP_CTRL_GCM_GET_TAG
+#define		EVP_CTRL_SET_TAG			EVP_CTRL_GCM_SET_TAG
+#define		EVP_CTRL_OCB_SET_TAGLEN		0x1c
+
 
 /* GCM TLS constants */
 /* Length of fixed part of IV derived from PRF */
@@ -850,6 +857,7 @@ const EVP_CIPHER *EVP_aes_128_gcm(void);
 const EVP_CIPHER *EVP_aes_128_xts(void);
 const EVP_CIPHER *EVP_aes_128_wrap(void);
 const EVP_CIPHER *EVP_aes_128_wrap_pad(void);
+const EVP_CIPHER *EVP_aes_128_ocb(void);
 const EVP_CIPHER *EVP_aes_192_ecb(void);
 const EVP_CIPHER *EVP_aes_192_cbc(void);
 const EVP_CIPHER *EVP_aes_192_cfb1(void);
@@ -862,6 +870,7 @@ const EVP_CIPHER *EVP_aes_192_ccm(void);
 const EVP_CIPHER *EVP_aes_192_gcm(void);
 const EVP_CIPHER *EVP_aes_192_wrap(void);
 const EVP_CIPHER *EVP_aes_192_wrap_pad(void);
+const EVP_CIPHER *EVP_aes_192_ocb(void);
 const EVP_CIPHER *EVP_aes_256_ecb(void);
 const EVP_CIPHER *EVP_aes_256_cbc(void);
 const EVP_CIPHER *EVP_aes_256_cfb1(void);
@@ -875,6 +884,7 @@ const EVP_CIPHER *EVP_aes_256_gcm(void);
 const EVP_CIPHER *EVP_aes_256_xts(void);
 const EVP_CIPHER *EVP_aes_256_wrap(void);
 const EVP_CIPHER *EVP_aes_256_wrap_pad(void);
+const EVP_CIPHER *EVP_aes_256_ocb(void);
 # if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA1)
 const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha1(void);
 const EVP_CIPHER *EVP_aes_256_cbc_hmac_sha1(void);

@@ -894,6 +894,9 @@ aes 48			: id-aes256-wrap-pad
 			: AES-128-CTR		: aes-128-ctr
 			: AES-192-CTR		: aes-192-ctr
 			: AES-256-CTR		: aes-256-ctr
+			: AES-128-OCB		: aes-128-ocb
+			: AES-192-OCB		: aes-192-ocb
+			: AES-256-OCB		: aes-256-ocb
 			: AES-128-XTS		: aes-128-xts
 			: AES-256-XTS		: aes-256-xts
 			: DES-CFB1		: des-cfb1
