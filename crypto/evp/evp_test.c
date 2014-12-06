@@ -178,7 +178,7 @@ static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
     EVP_CIPHER_CTX_set_flags(ctx,EVP_CIPHER_CTX_FLAG_WRAP_ALLOW);
     if (encdec != 0)
         {
-	if (mode == EVP_CIPH_GCM_MODE)
+	if ((mode == EVP_CIPH_GCM_MODE) || (mode == EVP_CIPH_OCB_MODE))
 	    {
 	    if(!EVP_EncryptInit_ex(ctx,c,NULL,NULL,NULL))
 	        {
@@ -186,11 +186,18 @@ static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
 		ERR_print_errors_fp(stderr);
 		test1_exit(10);
 		}
-	    if(!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, in, NULL))
+	    if(!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_IVLEN, in, NULL))
 	        {
 		fprintf(stderr,"IV length set failed\n");
 		ERR_print_errors_fp(stderr);
 		test1_exit(11);
+		}
+	    if((mode == EVP_CIPH_OCB_MODE) &&
+		!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_OCB_SET_TAGLEN, tn, NULL))
+		{
+		fprintf(stderr,"Tag length set failed\n");
+		ERR_print_errors_fp(stderr);
+		test1_exit(15);
 		}
 	    if(!EVP_EncryptInit_ex(ctx,NULL,NULL,key,iv))
 	        {
@@ -290,13 +297,12 @@ static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
 	    hexdump(stderr,"Expected",ciphertext,cn);
 	    test1_exit(9);
 	    }
-	if (mode == EVP_CIPH_GCM_MODE || mode == EVP_CIPH_CCM_MODE)
+	if ((mode == EVP_CIPH_GCM_MODE) || (mode == EVP_CIPH_OCB_MODE)
+			|| (mode == EVP_CIPH_CCM_MODE))
 	    {
 	    unsigned char rtag[16];
-	    /* Note: EVP_CTRL_CCM_GET_TAG has same value as 
-	     * EVP_CTRL_GCM_GET_TAG
-	     */
-	    if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, tn, rtag))
+
+	    if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GET_TAG, tn, rtag))
 	        {
 		fprintf(stderr,"Get tag failed\n");
 		ERR_print_errors_fp(stderr);
@@ -314,19 +320,26 @@ static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
 
     if (encdec <= 0)
         {
-	if (mode == EVP_CIPH_GCM_MODE)
+	if ((mode == EVP_CIPH_GCM_MODE) || (mode == EVP_CIPH_OCB_MODE))
 	    {
 	    if(!EVP_DecryptInit_ex(ctx,c,NULL,NULL,NULL))
 	        {
-		fprintf(stderr,"EncryptInit failed\n");
+		fprintf(stderr,"DecryptInit failed\n");
 		ERR_print_errors_fp(stderr);
 		test1_exit(10);
 		}
-	    if(!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, in, NULL))
+	    if(!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_IVLEN, in, NULL))
 	        {
 		fprintf(stderr,"IV length set failed\n");
 		ERR_print_errors_fp(stderr);
 		test1_exit(11);
+		}
+	    if((mode == EVP_CIPH_OCB_MODE) &&
+		!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_OCB_SET_TAGLEN, tn, NULL))
+		{
+		fprintf(stderr,"Tag length set failed\n");
+		ERR_print_errors_fp(stderr);
+		test1_exit(15);
 		}
 	    if(!EVP_DecryptInit_ex(ctx,NULL,NULL,key,iv))
 	        {
@@ -334,7 +347,7 @@ static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
 		ERR_print_errors_fp(stderr);
 		test1_exit(12);
 		}
-	    if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, tn, (void *)tag))
+	    if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_TAG, tn, (void *)tag))
 	        {
 		fprintf(stderr,"Set tag failed\n");
 		ERR_print_errors_fp(stderr);
