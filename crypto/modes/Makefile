@@ -22,9 +22,9 @@ APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC= cbc128.c ctr128.c cts128.c cfb128.c ofb128.c gcm128.c \
-	ccm128.c xts128.c wrap128.c
+	ccm128.c xts128.c wrap128.c ocb128.c
 LIBOBJ= cbc128.o ctr128.o cts128.o cfb128.o ofb128.o gcm128.o \
-	ccm128.o xts128.o wrap128.o $(MODES_ASM_OBJ)
+	ccm128.o xts128.o wrap128.o ocb128.o $(MODES_ASM_OBJ)
 
 SRC= $(LIBSRC)
 
@@ -138,6 +138,11 @@ gcm128.o: ../../include/openssl/modes.h ../../include/openssl/opensslconf.h
 gcm128.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 gcm128.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 gcm128.o: ../../include/openssl/symhacks.h gcm128.c modes_lcl.h
+ocb128.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+ocb128.o: ../../include/openssl/modes.h ../../include/openssl/opensslconf.h
+ocb128.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+ocb128.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+ocb128.o: ../../include/openssl/symhacks.h modes_lcl.h ocb128.c
 ofb128.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 ofb128.o: ../../include/openssl/modes.h ../../include/openssl/opensslconf.h
 ofb128.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h

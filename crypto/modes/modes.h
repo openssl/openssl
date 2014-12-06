@@ -137,6 +137,7 @@ typedef struct xts128_context XTS128_CONTEXT;
 int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char iv[16],
 	const unsigned char *inp, unsigned char *out, size_t len, int enc);
 
+
 size_t CRYPTO_128_wrap(void *key, const unsigned char *iv,
 		unsigned char *out,
 		const unsigned char *in, size_t inlen, block128_f block);
@@ -150,6 +151,28 @@ size_t CRYPTO_128_wrap_pad(void *key, const unsigned char *icv,
 size_t CRYPTO_128_unwrap_pad(void *key, const unsigned char *icv,
 		unsigned char *out,
 		const unsigned char *in, size_t inlen, block128_f block);
+
+typedef struct ocb128_context OCB128_CONTEXT;
+
+OCB128_CONTEXT *CRYPTO_ocb128_new(void *keyenc, void *keydec, block128_f encrypt, block128_f decrypt);
+int CRYPTO_ocb128_init(OCB128_CONTEXT *ctx,void *keyenc, void *keydec,block128_f encrypt,block128_f decrypt);
+int CRYPTO_ocb128_copy_ctx(OCB128_CONTEXT *dest, OCB128_CONTEXT *src,
+	void *keyenc, void *keydec);
+int CRYPTO_ocb128_setiv(OCB128_CONTEXT *ctx, const unsigned char *iv,
+			size_t len, size_t taglen);
+int CRYPTO_ocb128_aad(OCB128_CONTEXT *ctx, const unsigned char *aad,
+			size_t len);
+int CRYPTO_ocb128_encrypt(OCB128_CONTEXT *ctx,
+			const unsigned char *in, unsigned char *out,
+			size_t len);
+int CRYPTO_ocb128_decrypt(OCB128_CONTEXT *ctx,
+			const unsigned char *in, unsigned char *out,
+			size_t len);
+int CRYPTO_ocb128_finish(OCB128_CONTEXT *ctx,const unsigned char *tag,
+			size_t len);
+int CRYPTO_ocb128_tag(OCB128_CONTEXT *ctx, unsigned char *tag, size_t len);
+void CRYPTO_ocb128_cleanup(OCB128_CONTEXT *ctx);
+
 #ifdef  __cplusplus
 }
 #endif
