@@ -136,3 +136,42 @@ struct ccm128_context {
 	void *key;
 };
 
+#ifdef STRICT_ALIGNMENT
+typedef struct {
+    unsigned char a[16];
+} OCB_BLOCK;
+# define ocb_block16_xor(in1,in2,out) \
+    ocb_block_xor((in1)->a,(in2)->a,16,(out)->a)
+#else
+typedef struct {
+    u64 a;
+    u64 b;
+} OCB_BLOCK;
+# define ocb_block16_xor(in1,in2,out) \
+    (out)->a=(in1)->a^(in2)->a; (out)->b=(in1)->b^(in2)->b;
+#endif
+
+struct ocb128_context {
+	/* Need both encrypt and decrypt key schedules for decryption */
+	block128_f encrypt;
+	block128_f decrypt;
+	void *keyenc;
+	void *keydec;
+
+	/* Key dependent variables. Can be reused if key remains the same */
+	size_t l_index;
+	size_t max_l_index;
+	OCB_BLOCK l_star;
+	OCB_BLOCK l_dollar;
+	OCB_BLOCK *l;
+
+	/* Must be reset for each session */
+	u64 blocks_hashed;
+	u64 blocks_processed;
+	OCB_BLOCK tag;
+	OCB_BLOCK offset_aad;
+	OCB_BLOCK sum;
+	OCB_BLOCK offset;
+	OCB_BLOCK checksum;
+
+};
