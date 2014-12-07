@@ -152,6 +152,7 @@ size_t CRYPTO_128_unwrap_pad(void *key, const unsigned char *icv,
 		unsigned char *out,
 		const unsigned char *in, size_t inlen, block128_f block);
 
+#ifndef OPENSSL_NO_OCB
 typedef struct ocb128_context OCB128_CONTEXT;
 
 OCB128_CONTEXT *CRYPTO_ocb128_new(void *keyenc, void *keydec, block128_f encrypt, block128_f decrypt);
@@ -172,6 +173,7 @@ int CRYPTO_ocb128_finish(OCB128_CONTEXT *ctx,const unsigned char *tag,
 			size_t len);
 int CRYPTO_ocb128_tag(OCB128_CONTEXT *ctx, unsigned char *tag, size_t len);
 void CRYPTO_ocb128_cleanup(OCB128_CONTEXT *ctx);
+#endif /* OPENSSL_NO_ECB */
 
 #ifdef  __cplusplus
 }

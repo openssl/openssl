@@ -462,6 +462,10 @@ static int test_cipher(const char *cipher,const unsigned char *key,int kn,
     {
     const EVP_CIPHER *c;
 
+#ifdef OPENSSL_NO_OCB
+    if(strstr(cipher, "ocb") != NULL)
+	return 1;
+#endif
     c=EVP_get_cipherbyname(cipher);
     if(!c)
 	return 0;

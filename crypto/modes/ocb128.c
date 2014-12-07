@@ -51,6 +51,8 @@
 #include <openssl/crypto.h>
 #include "modes_lcl.h"
 
+#ifndef OPENSSL_NO_OCB
+
 union ublock {
     unsigned char *chrblk;
     OCB_BLOCK *ocbblk;
@@ -585,3 +587,5 @@ void CRYPTO_ocb128_cleanup(OCB128_CONTEXT * ctx)
         OPENSSL_cleanse(ctx, sizeof(*ctx));
     }
 }
+
+#endif /* OPENSSL_NO_OCB */

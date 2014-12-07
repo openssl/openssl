@@ -107,7 +107,7 @@ typedef struct
 	ccm128_f str;
 	} EVP_AES_CCM_CTX;
 
-
+#ifndef OPENSSL_NO_OCB
 typedef struct
 	{
 	AES_KEY ksenc;		/* AES key schedule to use for encryption */
@@ -124,6 +124,7 @@ typedef struct
 	int ivlen;		/* IV length */
 	int taglen;
 	} EVP_AES_OCB_CTX;
+#endif
 
 #define MAXBITCHUNK	((size_t)1<<(sizeof(size_t)*8-4))
 
@@ -469,6 +470,7 @@ static int aesni_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 static int aesni_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		const unsigned char *in, size_t len);
 
+#ifndef OPENSSL_NO_OCB
 static int aesni_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                         const unsigned char *iv, int enc)
 	{
@@ -519,7 +521,7 @@ static int aesni_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 #define aesni_ocb_cipher aes_ocb_cipher
 static int aesni_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		const unsigned char *in, size_t len);
-
+#endif /* OPENSSL_NO_OCB */
 
 #define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,nmode,mode,MODE,flags) \
 static const EVP_CIPHER aesni_##keylen##_##mode = { \
@@ -907,7 +909,7 @@ static int aes_t4_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 static int aes_t4_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		const unsigned char *in, size_t len);
 
-
+#ifndef OPENSSL_NO_OCB
 static int aes_t4_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                         const unsigned char *iv, int enc)
 	{
@@ -958,7 +960,7 @@ static int aes_t4_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 #define aes_t4_ocb_cipher aes_ocb_cipher
 static int aes_t4_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		const unsigned char *in, size_t len);
-
+#endif /* OPENSSL_NO_OCB */
 
 #define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,nmode,mode,MODE,flags) \
 static const EVP_CIPHER aes_t4_##keylen##_##mode = { \
@@ -2361,6 +2363,7 @@ const EVP_CIPHER *EVP_aes_256_wrap_pad(void)
 	return &aes_256_wrap_pad;
 	}
 
+#ifndef OPENSSL_NO_OCB
 static int aes_ocb_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 	{
 	EVP_AES_OCB_CTX *octx = c->cipher_data;
@@ -2645,5 +2648,6 @@ static int aes_ocb_cleanup(EVP_CIPHER_CTX *c)
 BLOCK_CIPHER_custom(NID_aes,128,16,12,ocb,OCB,CUSTOM_FLAGS)
 BLOCK_CIPHER_custom(NID_aes,192,16,12,ocb,OCB,CUSTOM_FLAGS)
 BLOCK_CIPHER_custom(NID_aes,256,16,12,ocb,OCB,CUSTOM_FLAGS)
+#endif /* OPENSSL_NO_OCB */
 
 #endif
