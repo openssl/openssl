@@ -136,20 +136,22 @@ struct ccm128_context {
 	void *key;
 };
 
+#ifndef OPENSSL_NO_OCB
+
 #ifdef STRICT_ALIGNMENT
 typedef struct {
     unsigned char a[16];
 } OCB_BLOCK;
 # define ocb_block16_xor(in1,in2,out) \
     ocb_block_xor((in1)->a,(in2)->a,16,(out)->a)
-#else
+#else /* STRICT_ALIGNMENT */
 typedef struct {
     u64 a;
     u64 b;
 } OCB_BLOCK;
 # define ocb_block16_xor(in1,in2,out) \
     (out)->a=(in1)->a^(in2)->a; (out)->b=(in1)->b^(in2)->b;
-#endif
+#endif /* STRICT_ALIGNMENT */
 
 struct ocb128_context {
 	/* Need both encrypt and decrypt key schedules for decryption */
@@ -175,3 +177,4 @@ struct ocb128_context {
 	OCB_BLOCK checksum;
 
 };
+#endif /* OPENSSL_NO_OCB */
