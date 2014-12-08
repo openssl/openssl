@@ -1457,6 +1457,7 @@ sub read_options
 		"no-ssl-trace" => 0,
 		"no-unit-test" => 0,
 		"no-deprecated" => 0,
+		"no-ocb" => 0,
 		"fips" => \$fips,
 		"fipscanisterbuild" => [\$fips, \$fipscanisterbuild],
 		"fipscanisteronly" => [\$fips, \$fipscanisterbuild, \$fipscanisteronly],
