@@ -4,6 +4,11 @@
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
 
+  *) Added support for OCB mode. OpenSSL has been granted a patent license
+     compatible with the OpenSSL license for use of OCB. Details are available
+     at https://www.openssl.org/docs/misc/OCB-patent-grant-OpenSSL.pdf. Support
+     for OCB can be removed by calling config with no-ocb.
+
   *) SSLv2 support has been removed.  It still supports receiving a SSLv2
      compatible client hello.
      [Kurt Roeckx]
