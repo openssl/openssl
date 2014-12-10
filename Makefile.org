@@ -716,7 +716,6 @@ install_docs:
 		$(INSTALL_PREFIX)$(MANDIR)/man3 \
 		$(INSTALL_PREFIX)$(MANDIR)/man5 \
 		$(INSTALL_PREFIX)$(MANDIR)/man7
-	@pod2man="`cd ./util; ./pod2mantest $(PERL)`"; \
 	here="`pwd`"; \
 	filecase=; \
 	case "$(PLATFORM)" in DJGPP|Cygwin*|mingw*|darwin*-*-cc) \
@@ -727,9 +726,9 @@ install_docs:
 		sec=`$(PERL) util/extract-section.pl 1 < $$i`; \
 		echo "installing man$$sec/$$fn.$${sec}$(MANSUFFIX)"; \
 		(cd `$(PERL) util/dirname.pl $$i`; \
-		sh -c "$$pod2man \
+		pod2man \
 			--section=$$sec --center=OpenSSL \
-			--release=$(VERSION) `basename $$i`") \
+			--release=$(VERSION) `basename $$i`) \
 			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/$$fn.$${sec}$(MANSUFFIX); \
 		$(PERL) util/extract-names.pl < $$i | \
 			(grep -v $$filecase "^$$fn\$$"; true) | \
@@ -744,9 +743,9 @@ install_docs:
 		sec=`$(PERL) util/extract-section.pl 3 < $$i`; \
 		echo "installing man$$sec/$$fn.$${sec}$(MANSUFFIX)"; \
 		(cd `$(PERL) util/dirname.pl $$i`; \
-		sh -c "$$pod2man \
+		pod2man \
 			--section=$$sec --center=OpenSSL \
-			--release=$(VERSION) `basename $$i`") \
+			--release=$(VERSION) `basename $$i`) \
 			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/$$fn.$${sec}$(MANSUFFIX); \
 		$(PERL) util/extract-names.pl < $$i | \
 			(grep -v $$filecase "^$$fn\$$"; true) | \
