@@ -222,10 +222,10 @@ o_init.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 o_init.o: ../include/openssl/symhacks.h o_init.c
 o_str.o: ../e_os.h ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
 o_str.o: o_str.c o_str.h
-o_time.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
-o_time.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-o_time.o: ../include/openssl/safestack.h ../include/openssl/stack.h
-o_time.o: ../include/openssl/symhacks.h crypto.h o_time.c
+o_time.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
+o_time.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+o_time.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
+o_time.o: ../include/openssl/stack.h ../include/openssl/symhacks.h o_time.c
 thr_id.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h
 thr_id.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 thr_id.o: ../include/openssl/err.h ../include/openssl/lhash.h

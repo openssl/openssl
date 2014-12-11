@@ -146,8 +146,9 @@ ts_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ts_lib.o: ../../include/openssl/pkcs7.h ../../include/openssl/rsa.h
 ts_lib.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 ts_lib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-ts_lib.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-ts_lib.o: ../../include/openssl/x509v3.h ../cryptlib.h ts.h ts_lib.c
+ts_lib.o: ../../include/openssl/ts.h ../../include/openssl/x509.h
+ts_lib.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
+ts_lib.o: ../cryptlib.h ts_lib.c
 ts_req_print.o: ../../e_os.h ../../include/openssl/asn1.h
 ts_req_print.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 ts_req_print.o: ../../include/openssl/buffer.h ../../include/openssl/conf.h
@@ -196,9 +197,9 @@ ts_rsp_print.o: ../../include/openssl/opensslv.h
 ts_rsp_print.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
 ts_rsp_print.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 ts_rsp_print.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-ts_rsp_print.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-ts_rsp_print.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-ts_rsp_print.o: ../cryptlib.h ts.h ts_rsp_print.c
+ts_rsp_print.o: ../../include/openssl/symhacks.h ../../include/openssl/ts.h
+ts_rsp_print.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+ts_rsp_print.o: ../../include/openssl/x509v3.h ../cryptlib.h ts_rsp_print.c
 ts_rsp_sign.o: ../../e_os.h ../../include/openssl/asn1.h
 ts_rsp_sign.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 ts_rsp_sign.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h

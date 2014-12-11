@@ -212,11 +212,11 @@ bn_blind.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 bn_blind.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 bn_blind.o: ../../include/openssl/symhacks.h ../cryptlib.h
 bn_blind.o: ../include/internal/bn_int.h bn_blind.c bn_lcl.h
-bn_const.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-bn_const.o: ../../include/openssl/opensslconf.h
+bn_const.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+bn_const.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 bn_const.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 bn_const.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bn_const.o: ../../include/openssl/symhacks.h bn.h bn_const.c
+bn_const.o: ../../include/openssl/symhacks.h bn_const.c
 bn_ctx.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
 bn_ctx.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 bn_ctx.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h

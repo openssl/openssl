@@ -88,8 +88,8 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-camellia.o: ../../include/openssl/opensslconf.h camellia.c camellia.h
-camellia.o: cmll_locl.h
+camellia.o: ../../include/openssl/camellia.h
+camellia.o: ../../include/openssl/opensslconf.h camellia.c cmll_locl.h
 cmll_cbc.o: ../../include/openssl/camellia.h ../../include/openssl/modes.h
 cmll_cbc.o: ../../include/openssl/opensslconf.h cmll_cbc.c
 cmll_cfb.o: ../../include/openssl/camellia.h ../../include/openssl/modes.h
