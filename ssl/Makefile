@@ -242,7 +242,7 @@ d1_srtp.o: ../include/openssl/ssl2.h ../include/openssl/ssl23.h
 d1_srtp.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 d1_srtp.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 d1_srtp.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h d1_srtp.c
-d1_srtp.o: srtp.h ssl_locl.h
+d1_srtp.o: ssl_locl.h
 d1_srvr.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 d1_srvr.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 d1_srvr.o: ../include/openssl/comp.h ../include/openssl/crypto.h
