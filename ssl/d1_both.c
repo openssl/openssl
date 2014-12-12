@@ -259,9 +259,9 @@ static int dtls1_query_mtu(SSL *s)
 int dtls1_do_write(SSL *s, int type)
 	{
 	int ret;
-	int curr_mtu;
+	unsigned int curr_mtu;
 	int retry = 1;
-	unsigned int len, frag_off, mac_size, blocksize;
+	unsigned int len, frag_off, mac_size, blocksize, used_len;
 
 	if(!dtls1_query_mtu(s))
 		return -1;
@@ -289,10 +289,15 @@ int dtls1_do_write(SSL *s, int type)
 		blocksize = 0;
 
 	frag_off = 0;
-	while( s->init_num)
+	/* s->init_num shouldn't ever be < 0...but just in case */
+	while( s->init_num > 0)
 		{
-		curr_mtu = s->d1->mtu - BIO_wpending(SSL_get_wbio(s)) - 
-			DTLS1_RT_HEADER_LENGTH - mac_size - blocksize;
+		used_len = BIO_wpending(SSL_get_wbio(s)) +  DTLS1_RT_HEADER_LENGTH
+			+ mac_size + blocksize;
+		if(s->d1->mtu > used_len)
+			curr_mtu = s->d1->mtu - used_len;
+		else
+			curr_mtu = 0;
 
 		if ( curr_mtu <= DTLS1_HM_HEADER_LENGTH)
 			{
@@ -300,15 +305,23 @@ int dtls1_do_write(SSL *s, int type)
 			ret = BIO_flush(SSL_get_wbio(s));
 			if ( ret <= 0)
 				return ret;
-			curr_mtu = s->d1->mtu - DTLS1_RT_HEADER_LENGTH -
-				mac_size - blocksize;
+			used_len = DTLS1_RT_HEADER_LENGTH + mac_size + blocksize;
+			if(s->d1->mtu > used_len + DTLS1_HM_HEADER_LENGTH)
+				curr_mtu = s->d1->mtu - used_len;
+			else
+				/* Shouldn't happen */
+				return -1;
 			}
 
-		if ( s->init_num > curr_mtu)
+		/* We just checked that s->init_num > 0 so this cast should be safe */
+		if (((unsigned int)s->init_num) > curr_mtu)
 			len = curr_mtu;
 		else
 			len = s->init_num;
 
+		/* Shouldn't ever happen */
+		if(len > INT_MAX)
+			len = INT_MAX;
 
 		/* XDTLS: this function is too long.  split out the CCS part */
 		if ( type == SSL3_RT_HANDSHAKE)
@@ -319,11 +332,16 @@ int dtls1_do_write(SSL *s, int type)
 				s->init_off -= DTLS1_HM_HEADER_LENGTH;
 				s->init_num += DTLS1_HM_HEADER_LENGTH;
 
-				if ( s->init_num > curr_mtu)
+				/* We just checked that s->init_num > 0 so this cast should be safe */
+				if (((unsigned int)s->init_num) > curr_mtu)
 					len = curr_mtu;
 				else
 					len = s->init_num;
 				}
+
+			/* Shouldn't ever happen */
+			if(len > INT_MAX)
+				len = INT_MAX;
 
 			if ( len < DTLS1_HM_HEADER_LENGTH )
 				{
