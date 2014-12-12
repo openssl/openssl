@@ -192,6 +192,7 @@ int ssl23_accept(SSL *s)
 					}
 				if (!BUF_MEM_grow(buf,SSL3_RT_MAX_PLAIN_LENGTH))
 					{
+					BUF_MEM_free(buf);
 					ret= -1;
 					goto end;
 					}
