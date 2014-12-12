@@ -61,15 +61,27 @@ static int gost_engine_finish(ENGINE *e)
 	return 1;
 	}
 
+static int refs = 0;
 static int gost_engine_destroy(ENGINE *e)
 	{ 
+	refs -= 1;
+	if ( refs > 0)
+		return 1;
 	gost_param_free();
 
+
+	EVP_PKEY_meth_free(pmeth_GostR3410_94);
 	pmeth_GostR3410_94 = NULL;
+	EVP_PKEY_meth_free(pmeth_GostR3410_2001);
 	pmeth_GostR3410_2001 = NULL;
+	EVP_PKEY_meth_free(pmeth_Gost28147_MAC);
 	pmeth_Gost28147_MAC = NULL;
+
+	EVP_PKEY_asn1_free(ameth_GostR3410_94);
 	ameth_GostR3410_94 = NULL;
+	EVP_PKEY_asn1_free(ameth_GostR3410_2001);
 	ameth_GostR3410_2001 = NULL;
+	EVP_PKEY_asn1_free(ameth_Gost28147_MAC);
 	ameth_Gost28147_MAC = NULL;
 	return 1;
 	}
@@ -89,6 +101,11 @@ static int bind_gost (ENGINE *e,const char *id)
 		printf("ENGINE_set_name failed\n");
 		goto end;
 		}	
+	if (!ENGINE_set_flags(e, ENGINE_FLAGS_NO_PKEY_METH_FREE|ENGINE_FLAGS_NO_PKEY_ASN1_METH_FREE))
+		{
+		printf("ENGINE_set_name failed\n");
+		goto end;
+		}
 	if (!ENGINE_set_digests(e, gost_digests)) 
 		{
 		printf("ENGINE_set_digests failed\n");
@@ -124,6 +141,13 @@ static int bind_gost (ENGINE *e,const char *id)
 		|| ! ENGINE_set_init_function(e,gost_engine_init)
 		|| ! ENGINE_set_finish_function(e,gost_engine_finish))
 		{
+		goto end;
+		}
+
+	refs +=1;
+	if (refs > 1)
+		{ /* we are initialized already */
+		ret = 1;
 		goto end;
 		}
 

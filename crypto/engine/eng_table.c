@@ -174,9 +174,10 @@ int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
 						ENGINE_R_INIT_FAILED);
 				goto end;
 				}
-			if(fnd->funct)
-				engine_unlocked_finish(fnd->funct, 0);
+			ENGINE *old = fnd->funct;
 			fnd->funct = e;
+			if(old)
+				engine_unlocked_finish(old, 0);
 			fnd->uptodate = 1;
 			}
 		nids++;
