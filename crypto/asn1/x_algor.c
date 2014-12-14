@@ -128,3 +128,13 @@ void X509_ALGOR_get0(ASN1_OBJECT **paobj, int *pptype, void **ppval,
 		}
 	}
 
+int X509_ALGOR_cmp(const X509_ALGOR *a, const X509_ALGOR *b)
+	{
+	int rv;
+	rv = OBJ_cmp(a->algorithm, b->algorithm);
+	if (rv)
+		return rv;
+	if (!a->parameter && !b->parameter)
+		return 0;
+	return ASN1_TYPE_cmp(a->parameter, b->parameter);
+	}
