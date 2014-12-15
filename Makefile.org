@@ -478,7 +478,7 @@ libclean:
 
 clean:	libclean
 	rm -f shlib/*.o *.o core a.out fluff rehash.time testlog make.log cctest cctest.c
-	rm -rf *.bak include/openssl certs/.0
+	rm -rf *.bak certs/.0
 	@set -e; target=clean; $(RECURSIVE_BUILD_CMD)
 	rm -f $(LIBS) tags TAGS
 	rm -f openssl.pc libssl.pc libcrypto.pc
