@@ -52,7 +52,6 @@ dclean:
 
 clean:
 	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-	rm -f c_rehash
 
 errors:
 
