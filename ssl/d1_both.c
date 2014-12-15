@@ -290,7 +290,7 @@ int dtls1_do_write(SSL *s, int type)
 
 	frag_off = 0;
 	/* s->init_num shouldn't ever be < 0...but just in case */
-	while( s->init_num > 0)
+	while(s->init_num > 0)
 		{
 		used_len = BIO_wpending(SSL_get_wbio(s)) +  DTLS1_RT_HEADER_LENGTH
 			+ mac_size + blocksize;
@@ -307,10 +307,14 @@ int dtls1_do_write(SSL *s, int type)
 				return ret;
 			used_len = DTLS1_RT_HEADER_LENGTH + mac_size + blocksize;
 			if(s->d1->mtu > used_len + DTLS1_HM_HEADER_LENGTH)
+				{
 				curr_mtu = s->d1->mtu - used_len;
+				}
 			else
+				{
 				/* Shouldn't happen */
 				return -1;
+				}
 			}
 
 		/* We just checked that s->init_num > 0 so this cast should be safe */
