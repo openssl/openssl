@@ -141,7 +141,6 @@ depend:
 
 clean:
 	rm -f buildinf.h *.s *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-	rm -f opensslconf.h
 	@target=clean; $(RECURSIVE_MAKE)
 
 dclean:
