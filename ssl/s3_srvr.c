@@ -1190,14 +1190,15 @@ int ssl3_get_client_hello(SSL *s)
 		id=s->session->cipher->id;
 
 #ifdef CIPHER_DEBUG
-		printf("client sent %d ciphers\n",sk_num(ciphers));
+		fprintf(stderr,"client sent %d ciphers\n",sk_SSL_CIPHER_num(ciphers));
 #endif
 		for (i=0; i<sk_SSL_CIPHER_num(ciphers); i++)
 			{
 			c=sk_SSL_CIPHER_value(ciphers,i);
 #ifdef CIPHER_DEBUG
-			printf("client [%2d of %2d]:%s\n",
-				i,sk_num(ciphers),SSL_CIPHER_get_name(c));
+			fprintf(stderr,"client [%2d of %2d]:%s\n",
+				i,sk_SSL_CIPHER_num(ciphers),
+				SSL_CIPHER_get_name(c));
 #endif
 			if (c->id == id)
 				{
