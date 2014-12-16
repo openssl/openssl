@@ -1,6 +1,6 @@
 /* crypto/asn1/asn1_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2012 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2014 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -300,6 +300,7 @@ static ERR_STRING_DATA ASN1_str_reasons[]=
 {ERR_REASON(ASN1_R_TIME_NOT_ASCII_FORMAT),"time not ascii format"},
 {ERR_REASON(ASN1_R_TOO_LONG)             ,"too long"},
 {ERR_REASON(ASN1_R_TYPE_NOT_CONSTRUCTED) ,"type not constructed"},
+{ERR_REASON(ASN1_R_TYPE_NOT_PRIMITIVE)   ,"type not primitive"},
 {ERR_REASON(ASN1_R_UNABLE_TO_DECODE_RSA_KEY),"unable to decode rsa key"},
 {ERR_REASON(ASN1_R_UNABLE_TO_DECODE_RSA_PRIVATE_KEY),"unable to decode rsa private key"},
 {ERR_REASON(ASN1_R_UNEXPECTED_EOC)       ,"unexpected eoc"},
@@ -310,7 +311,6 @@ static ERR_STRING_DATA ASN1_str_reasons[]=
 {ERR_REASON(ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE),"unknown public key type"},
 {ERR_REASON(ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM),"unknown signature algorithm"},
 {ERR_REASON(ASN1_R_UNKNOWN_TAG)          ,"unknown tag"},
-{ERR_REASON(ASN1_R_UNKNOWN_FORMAT)       ,"unknown format"},
 {ERR_REASON(ASN1_R_UNSUPPORTED_ANY_DEFINED_BY_TYPE),"unsupported any defined by type"},
 {ERR_REASON(ASN1_R_UNSUPPORTED_CIPHER)   ,"unsupported cipher"},
 {ERR_REASON(ASN1_R_UNSUPPORTED_ENCRYPTION_ALGORITHM),"unsupported encryption algorithm"},
