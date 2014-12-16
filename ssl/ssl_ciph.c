@@ -954,7 +954,7 @@ static void ssl_cipher_apply_rule(unsigned long cipher_id,
 	int reverse = 0;
 
 #ifdef CIPHER_DEBUG
-	printf("Applying rule %d with %08lx/%08lx/%08lx/%08lx/%08lx %08lx (%d)\n",
+	fprintf(stderr, "Applying rule %d with %08lx/%08lx/%08lx/%08lx/%08lx %08lx (%d)\n",
 		rule, alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl, algo_strength, strength_bits);
 #endif
 
@@ -1000,7 +1000,7 @@ static void ssl_cipher_apply_rule(unsigned long cipher_id,
 		else
 			{
 #ifdef CIPHER_DEBUG
-			printf("\nName: %s:\nAlgo = %08lx/%08lx/%08lx/%08lx/%08lx Algo_strength = %08lx\n", cp->name, cp->algorithm_mkey, cp->algorithm_auth, cp->algorithm_enc, cp->algorithm_mac, cp->algorithm_ssl, cp->algo_strength);
+			fprintf(stderr, "\nName: %s:\nAlgo = %08lx/%08lx/%08lx/%08lx/%08lx Algo_strength = %08lx\n", cp->name, cp->algorithm_mkey, cp->algorithm_auth, cp->algorithm_enc, cp->algorithm_mac, cp->algorithm_ssl, cp->algo_strength);
 #endif
 #ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
 			if (cipher_id && cipher_id != cp->id)
@@ -1023,7 +1023,7 @@ static void ssl_cipher_apply_rule(unsigned long cipher_id,
 			}
 
 #ifdef CIPHER_DEBUG
-		printf("Action = %d\n", rule);
+		fprintf(stderr, "Action = %d\n", rule);
 #endif
 
 		/* add the cipher if it has not been added yet. */
@@ -1609,7 +1609,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 			{
 			sk_SSL_CIPHER_push(cipherstack, curr->cipher);
 #ifdef CIPHER_DEBUG
-			printf("<%s>\n",curr->cipher->name);
+			fprintf(stderr, "<%s>\n",curr->cipher->name);
 #endif
 			}
 		}
