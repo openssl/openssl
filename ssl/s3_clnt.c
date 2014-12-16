@@ -1275,9 +1275,9 @@ int ssl3_get_server_certificate(SSL *s)
 	            ? 0 : 1;
 
 #ifdef KSSL_DEBUG
-	printf("pkey,x = %p, %p\n", pkey,x);
-	printf("ssl_cert_type(x,pkey) = %d\n", ssl_cert_type(x,pkey));
-	printf("cipher, alg, nc = %s, %lx, %lx, %d\n", s->s3->tmp.new_cipher->name,
+	fprintf(stderr,"pkey,x = %p, %p\n", pkey,x);
+	fprintf(stderr,"ssl_cert_type(x,pkey) = %d\n", ssl_cert_type(x,pkey));
+	fprintf(stderr,"cipher, alg, nc = %s, %lx, %lx, %d\n", s->s3->tmp.new_cipher->name,
 		s->s3->tmp.new_cipher->algorithm_mkey, s->s3->tmp.new_cipher->algorithm_auth, need_cert);
 #endif    /* KSSL_DEBUG */
 
@@ -2562,7 +2562,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 			EVP_CIPHER_CTX_init(&ciph_ctx);
 
 #ifdef KSSL_DEBUG
-			printf("ssl3_send_client_key_exchange(%lx & %lx)\n",
+			fprintf(stderr,"ssl3_send_client_key_exchange(%lx & %lx)\n",
 				alg_k, SSL_kKRB5);
 #endif	/* KSSL_DEBUG */
 
@@ -2578,9 +2578,9 @@ int ssl3_send_client_key_exchange(SSL *s)
 			    goto err;
 #ifdef KSSL_DEBUG
 			{
-			printf("kssl_cget_tkt rtn %d\n", krb5rc);
+			fprintf(stderr,"kssl_cget_tkt rtn %d\n", krb5rc);
 			if (krb5rc && kssl_err.text)
-			  printf("kssl_cget_tkt kssl_err=%s\n", kssl_err.text);
+			  fprintf(stderr,"kssl_cget_tkt kssl_err=%s\n", kssl_err.text);
 			}
 #endif	/* KSSL_DEBUG */
 

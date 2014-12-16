@@ -2560,10 +2560,10 @@ int ssl3_get_client_key_exchange(SSL *s)
 					&kssl_err)) != 0)
 			{
 #ifdef KSSL_DEBUG
-			printf("kssl_sget_tkt rtn %d [%d]\n",
+			fprintf(stderr,"kssl_sget_tkt rtn %d [%d]\n",
 				krb5rc, kssl_err.reason);
 			if (kssl_err.text)
-				printf("kssl_err text= %s\n", kssl_err.text);
+				fprintf(stderr,"kssl_err text= %s\n", kssl_err.text);
 #endif	/* KSSL_DEBUG */
 			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
 				kssl_err.reason);
@@ -2577,10 +2577,10 @@ int ssl3_get_client_key_exchange(SSL *s)
 					&authtime, &kssl_err)) != 0)
 			{
 #ifdef KSSL_DEBUG
-			printf("kssl_check_authent rtn %d [%d]\n",
+			fprintf(stderr,"kssl_check_authent rtn %d [%d]\n",
 				krb5rc, kssl_err.reason);
 			if (kssl_err.text)
-				printf("kssl_err text= %s\n", kssl_err.text);
+				fprintf(stderr,"kssl_err text= %s\n", kssl_err.text);
 #endif	/* KSSL_DEBUG */
 			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
 				kssl_err.reason);

@@ -837,7 +837,7 @@ static void ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method,
 			co_list[co_list_num].active = 0;
 			co_list_num++;
 #ifdef KSSL_DEBUG
-			printf("\t%d: %s %lx %lx %lx\n",i,c->name,c->id,c->algorithm_mkey,c->algorithm_auth);
+			fprintf(stderr,"\t%d: %s %lx %lx %lx\n",i,c->name,c->id,c->algorithm_mkey,c->algorithm_auth);
 #endif	/* KSSL_DEBUG */
 			/*
 			if (!sk_push(ca_list,(char *)c)) goto err;
@@ -1497,7 +1497,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	 */
 	num_of_ciphers = ssl_method->num_ciphers();
 #ifdef KSSL_DEBUG
-	printf("ssl_create_cipher_list() for %d ciphers\n", num_of_ciphers);
+	fprintf(stderr,"ssl_create_cipher_list() for %d ciphers\n", num_of_ciphers);
 #endif    /* KSSL_DEBUG */
 	co_list = (CIPHER_ORDER *)OPENSSL_malloc(sizeof(CIPHER_ORDER) * num_of_ciphers);
 	if (co_list == NULL)
