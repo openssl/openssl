@@ -1048,10 +1048,10 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 	if (!stream_mac)
 		EVP_MD_CTX_cleanup(&hmac);
 #ifdef TLS_DEBUG
-printf("seq=");
-{int z; for (z=0; z<8; z++) printf("%02X ",seq[z]); printf("\n"); }
-printf("rec=");
-{unsigned int z; for (z=0; z<rec->length; z++) printf("%02X ",rec->data[z]); printf("\n"); }
+fprintf(stderr,"seq=");
+{int z; for (z=0; z<8; z++) fprintf(stderr,"%02X ",seq[z]); fprintf(stderr,"\n"); }
+fprintf(stderr,"rec=");
+{unsigned int z; for (z=0; z<rec->length; z++) fprintf(stderr,"%02X ",rec->data[z]); fprintf(stderr,"\n"); }
 #endif
 
 	if (ssl->version != DTLS1_VERSION && ssl->version != DTLS1_BAD_VER)
@@ -1064,7 +1064,7 @@ printf("rec=");
 		}
 
 #ifdef TLS_DEBUG
-{unsigned int z; for (z=0; z<md_size; z++) printf("%02X ",md[z]); printf("\n"); }
+{unsigned int z; for (z=0; z<md_size; z++) fprintf(stderr,"%02X ",md[z]); fprintf(stderr,"\n"); }
 #endif
 	return(md_size);
 	}
