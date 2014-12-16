@@ -225,7 +225,7 @@
 
 #undef BUFSIZE
 #define BUFSIZE	((long)1024*8+1)
-int run=0;
+static volatile int run=0;
 
 static int mr=0;
 static int usertime=1;
