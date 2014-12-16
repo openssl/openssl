@@ -209,7 +209,7 @@
 #define BUFSIZE	(1024*8+1)
 #define MAX_MISALIGNMENT 63
 
-int run=0;
+static volatile int run=0;
 
 static int mr=0;
 static int usertime=1;
