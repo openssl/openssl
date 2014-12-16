@@ -2283,7 +2283,7 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 	
 
 #ifdef CIPHER_DEBUG
-	printf("rt=%d rte=%d dht=%d ecdht=%d re=%d ree=%d rs=%d ds=%d dhr=%d dhd=%d\n",
+	fprintf(stderr,"rt=%d rte=%d dht=%d ecdht=%d re=%d ree=%d rs=%d ds=%d dhr=%d dhd=%d\n",
 	        rsa_tmp,rsa_tmp_export,dh_tmp,have_ecdh_tmp,
 		rsa_enc,rsa_enc_export,rsa_sign,dsa_sign,dh_rsa,dh_dsa);
 #endif
