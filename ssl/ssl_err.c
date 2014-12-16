@@ -385,6 +385,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {ERR_REASON(SSL_R_ECC_CERT_NOT_FOR_SIGNING),"ecc cert not for signing"},
 {ERR_REASON(SSL_R_ECC_CERT_SHOULD_HAVE_RSA_SIGNATURE),"ecc cert should have rsa signature"},
 {ERR_REASON(SSL_R_ECC_CERT_SHOULD_HAVE_SHA1_SIGNATURE),"ecc cert should have sha1 signature"},
+{ERR_REASON(SSL_R_ECDH_REQUIRED_FOR_SUITEB_MODE),"ecdh required for suiteb mode"},
 {ERR_REASON(SSL_R_ECGROUP_TOO_LARGE_FOR_CIPHER),"ecgroup too large for cipher"},
 {ERR_REASON(SSL_R_EMPTY_SRTP_PROTECTION_PROFILE_LIST),"empty srtp protection profile list"},
 {ERR_REASON(SSL_R_ENCRYPTED_LENGTH_TOO_LONG),"encrypted length too long"},
