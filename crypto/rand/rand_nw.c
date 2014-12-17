@@ -154,7 +154,13 @@ int RAND_poll(void)
 
    for( i=2; i<ENTROPY_NEEDED; i++)
    {
-#if defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
+#ifdef __MWERKS__
+      asm
+      {
+         rdtsc
+         mov tsc, eax
+      }
+#elif defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
       asm volatile("rdtsc":"=a"(tsc)::"edx");
 #endif
 
