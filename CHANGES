@@ -4,10 +4,19 @@
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
 
+  *) config has been changed so that by default OPENSSL_NO_DEPRECATED is used.
+     Access to deprecated functions can be re-enabled by running config with
+     "enable-deprecated". In addition applications wishing to use deprecated
+     functions must define OPENSSL_USE_DEPRECATED. Note that this new behaviour
+     will, by default, disable some transitive includes that previously existed
+     in the header files (e.g. ec.h will no longer, by default, include bn.h)
+     [Matt Caswell]
+
   *) Added support for OCB mode. OpenSSL has been granted a patent license
      compatible with the OpenSSL license for use of OCB. Details are available
      at https://www.openssl.org/docs/misc/OCB-patent-grant-OpenSSL.pdf. Support
      for OCB can be removed by calling config with no-ocb.
+     [Matt Caswell]
 
   *) SSLv2 support has been removed.  It still supports receiving a SSLv2
      compatible client hello.
