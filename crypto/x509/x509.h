@@ -703,6 +703,8 @@ DSA *d2i_DSA_PUBKEY_fp(FILE *fp, DSA **dsa);
 int i2d_DSA_PUBKEY_fp(FILE *fp, DSA *dsa);
 DSA *d2i_DSAPrivateKey_fp(FILE *fp, DSA **dsa);
 int i2d_DSAPrivateKey_fp(FILE *fp, DSA *dsa);
+DSA *d2i_DSAPublicKey_fp(FILE *fp, DSA **dsa);
+int i2d_DSAPublicKey_fp(FILE *fp, DSA *dsa);
 #endif
 #ifndef OPENSSL_NO_EC
 EC_KEY *d2i_EC_PUBKEY_fp(FILE *fp, EC_KEY **eckey);
