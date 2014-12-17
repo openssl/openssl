@@ -1,5 +1,22 @@
 /* crypto/opensslconf.h.in */
 
+/*
+ * Applications should use -DOPENSSL_USE_DEPRECATED to enable access to
+ * deprecated functions. But if the library has been built to disable
+ * deprecated functions then this will not work
+ */
+#if defined(OPENSSL_NO_DEPRECATED) && defined(OPENSSL_USE_DEPRECATED)
+#undef OPENSSL_USE_DEPRECATED
+#endif
+
+/* Test for support for deprecated attribute */
+#if __GNUC__ > 3 || \
+  (__GNUC__ == 3 && __GNUC_MINOR__ > 0)
+#define DECLARE_DEPRECATED(f)    f __attribute__ ((deprecated))
+#else
+#define DECLARE_DEPRECATED(f)    f
+#endif
+
 /* Generate 80386 code? */
 #undef I386_ONLY
 

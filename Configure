@@ -740,6 +740,7 @@ my $fips=0;
 # All of the following is disabled by default (RC5 was enabled before 0.9.8):
 
 my %disabled = ( # "what"         => "comment" [or special keyword "experimental"]
+		 "deprecated" => "default",
 		 "ec_nistp_64_gcc_128" => "default",
 		 "gmp"		  => "default",
 		 "jpake"          => "experimental",
@@ -758,7 +759,7 @@ my @experimental = ();
 
 # This is what $depflags will look like with the above defaults
 # (we need this to see if we should advise the user to run "make depend"):
-my $default_depflags = " -DOPENSSL_NO_EC_NISTP_64_GCC_128 -DOPENSSL_NO_GMP -DOPENSSL_NO_JPAKE -DOPENSSL_NO_MD2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_RFC3779 -DOPENSSL_NO_SCTP -DOPENSSL_NO_SSL_TRACE -DOPENSSL_NO_STORE -DOPENSSL_NO_UNIT_TEST";
+my $default_depflags = " -DOPENSSL_NO_DEPRECATED -DOPENSSL_NO_EC_NISTP_64_GCC_128 -DOPENSSL_NO_GMP -DOPENSSL_NO_JPAKE -DOPENSSL_NO_MD2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_RFC3779 -DOPENSSL_NO_SCTP -DOPENSSL_NO_SSL_TRACE -DOPENSSL_NO_STORE -DOPENSSL_NO_UNIT_TEST";
 
 # Explicit "no-..." options will be collected in %disabled along with the defaults.
 # To remove something from %disabled, use "enable-foo" (unless it's experimental).
@@ -1417,6 +1418,9 @@ if ($zlib)
 		$cflags = "-DZLIB_SHARED $cflags";
 		}
 	}
+
+#Always build the library with OPENSSL_USE_DEPRECATED. This is overridden by OPENSSL_NO_DEPRECATED
+$cflags = "-DOPENSSL_USE_DEPRECATED $cflags";
 
 # You will find shlib_mark1 and shlib_mark2 explained in Makefile.org
 my $shared_mark = "";
