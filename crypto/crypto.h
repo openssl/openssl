@@ -442,10 +442,14 @@ void CRYPTO_THREADID_current(CRYPTO_THREADID *id);
 int CRYPTO_THREADID_cmp(const CRYPTO_THREADID *a, const CRYPTO_THREADID *b);
 void CRYPTO_THREADID_cpy(CRYPTO_THREADID *dest, const CRYPTO_THREADID *src);
 unsigned long CRYPTO_THREADID_hash(const CRYPTO_THREADID *id);
-#ifndef OPENSSL_NO_DEPRECATED
-void CRYPTO_set_id_callback(unsigned long (*func)(void));
+#ifdef OPENSSL_USE_DEPRECATED
+DECLARE_DEPRECATED(void CRYPTO_set_id_callback(unsigned long (*func)(void)));
+/*
+ * mkdef.pl cannot handle this next one so not inside DECLARE_DEPRECATED,
+ * but still inside OPENSSL_USE_DEPRECATED
+ */
 unsigned long (*CRYPTO_get_id_callback(void))(void);
-unsigned long CRYPTO_thread_id(void);
+DECLARE_DEPRECATED(unsigned long CRYPTO_thread_id(void));
 #endif
 
 const char *CRYPTO_get_lock_name(int type);

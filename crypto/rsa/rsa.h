@@ -66,7 +66,7 @@
 #endif
 #include <openssl/crypto.h>
 #include <openssl/ossl_typ.h>
-#ifndef OPENSSL_NO_DEPRECATED
+#ifdef OPENSSL_USE_DEPRECATED
 #include <openssl/bn.h>
 #endif
 
@@ -208,7 +208,7 @@ struct rsa_st
                                                 * operations and results in faster RSA 
                                                 * private key operations.
                                                 */ 
-#ifndef OPENSSL_NO_DEPRECATED
+#ifdef OPENSSL_USE_DEPRECATED
 #define RSA_FLAG_NO_EXP_CONSTTIME RSA_FLAG_NO_CONSTTIME /* deprecated name for the flag*/
                                                 /* new with 0.9.7h; the built-in RSA
                                                 * implementation now uses constant time
@@ -310,10 +310,10 @@ int	RSA_size(const RSA *rsa);
 int	RSA_security_bits(const RSA *rsa);
 
 /* Deprecated version */
-#ifndef OPENSSL_NO_DEPRECATED
-RSA *	RSA_generate_key(int bits, unsigned long e,void
-		(*callback)(int,int,void *),void *cb_arg);
-#endif /* !defined(OPENSSL_NO_DEPRECATED) */
+#ifdef OPENSSL_USE_DEPRECATED
+DECLARE_DEPRECATED(RSA *	RSA_generate_key(int bits, unsigned long e,void
+		(*callback)(int,int,void *),void *cb_arg));
+#endif /* defined(OPENSSL_USE_DEPRECATED) */
 
 /* New version */
 int	RSA_generate_key_ex(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb);

@@ -67,7 +67,7 @@
 
 #include <openssl/ec.h>
 #include <openssl/ossl_typ.h>
-#ifndef OPENSSL_NO_DEPRECATED
+#ifdef OPENSSL_USE_DEPRECATED
 #include <openssl/bn.h>
 #endif
 

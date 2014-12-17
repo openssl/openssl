@@ -70,7 +70,7 @@
 #error ENGINE is disabled.
 #endif
 
-#ifndef OPENSSL_NO_DEPRECATED
+#ifdef OPENSSL_USE_DEPRECATED
 #include <openssl/bn.h>
 #ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>

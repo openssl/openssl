@@ -263,13 +263,13 @@ extern "C" {
                                       * BN_mod_inverse() will call BN_mod_inverse_no_branch.
                                       */
 
-#ifndef OPENSSL_NO_DEPRECATED
+#ifdef OPENSSL_USE_DEPRECATED
 #define BN_FLG_EXP_CONSTTIME BN_FLG_CONSTTIME /* deprecated name for the flag */
                                       /* avoid leaking exponent information through timings
                                       * (BN_mod_exp_mont() will call BN_mod_exp_mont_consttime) */
 #endif
 
-#ifndef OPENSSL_NO_DEPRECATED
+#ifdef OPENSSL_USE_DEPRECATED
 #define BN_FLG_FREE		0x8000	/* used for debuging */
 #endif
 
@@ -342,7 +342,7 @@ int BN_is_odd(const BIGNUM *a);
 
 void BN_zero_ex(BIGNUM *a);
 
-#ifdef OPENSSL_NO_DEPRECATED
+#ifndef OPENSSL_USE_DEPRECATED
 #define BN_zero(a)	BN_zero_ex(a)
 #else
 #define BN_zero(a)	(BN_set_word((a),0))
@@ -464,17 +464,17 @@ BIGNUM *BN_mod_sqrt(BIGNUM *ret,
 void	BN_consttime_swap(BN_ULONG swap, BIGNUM *a, BIGNUM *b, int nwords);
 
 /* Deprecated versions */
-#ifndef OPENSSL_NO_DEPRECATED
-BIGNUM *BN_generate_prime(BIGNUM *ret,int bits,int safe,
+#ifdef OPENSSL_USE_DEPRECATED
+DECLARE_DEPRECATED(BIGNUM *BN_generate_prime(BIGNUM *ret,int bits,int safe,
 	const BIGNUM *add, const BIGNUM *rem,
-	void (*callback)(int,int,void *),void *cb_arg);
-int	BN_is_prime(const BIGNUM *p,int nchecks,
+	void (*callback)(int,int,void *),void *cb_arg));
+DECLARE_DEPRECATED(int	BN_is_prime(const BIGNUM *p,int nchecks,
 	void (*callback)(int,int,void *),
-	BN_CTX *ctx,void *cb_arg);
-int	BN_is_prime_fasttest(const BIGNUM *p,int nchecks,
+	BN_CTX *ctx,void *cb_arg));
+DECLARE_DEPRECATED(int	BN_is_prime_fasttest(const BIGNUM *p,int nchecks,
 	void (*callback)(int,int,void *),BN_CTX *ctx,void *cb_arg,
-	int do_trial_division);
-#endif /* !defined(OPENSSL_NO_DEPRECATED) */
+	int do_trial_division));
+#endif /* defined(OPENSSL_USE_DEPRECATED) */
 
 /* Newer versions */
 int	BN_generate_prime_ex(BIGNUM *ret,int bits,int safe, const BIGNUM *add,
@@ -517,9 +517,9 @@ int BN_BLINDING_convert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx);
 int BN_BLINDING_invert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx);
 int BN_BLINDING_convert_ex(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *);
 int BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b, BN_CTX *);
-#ifndef OPENSSL_NO_DEPRECATED
-unsigned long BN_BLINDING_get_thread_id(const BN_BLINDING *);
-void BN_BLINDING_set_thread_id(BN_BLINDING *, unsigned long);
+#ifdef OPENSSL_USE_DEPRECATED
+DECLARE_DEPRECATED(unsigned long BN_BLINDING_get_thread_id(const BN_BLINDING *));
+DECLARE_DEPRECATED(void BN_BLINDING_set_thread_id(BN_BLINDING *, unsigned long));
 #endif
 CRYPTO_THREADID *BN_BLINDING_thread_id(BN_BLINDING *);
 unsigned long BN_BLINDING_get_flags(const BN_BLINDING *);
@@ -530,9 +530,9 @@ BN_BLINDING *BN_BLINDING_create_param(BN_BLINDING *b,
 			  const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx),
 	BN_MONT_CTX *m_ctx);
 
-#ifndef OPENSSL_NO_DEPRECATED
-void BN_set_params(int mul,int high,int low,int mont);
-int BN_get_params(int which); /* 0, mul, 1 high, 2 low, 3 mont */
+#ifdef OPENSSL_USE_DEPRECATED
+DECLARE_DEPRECATED(void BN_set_params(int mul,int high,int low,int mont));
+DECLARE_DEPRECATED(int BN_get_params(int which)); /* 0, mul, 1 high, 2 low, 3 mont */
 #endif
 
 BN_RECP_CTX *BN_RECP_CTX_new(void);

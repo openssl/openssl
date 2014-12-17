@@ -84,7 +84,7 @@
 
 #include <openssl/asn1.h>
 #include <openssl/symhacks.h>
-#ifndef OPENSSL_NO_DEPRECATED
+#ifdef OPENSSL_USE_DEPRECATED
 #include <openssl/bn.h>
 #endif
 
