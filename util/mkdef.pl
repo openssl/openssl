@@ -433,6 +433,7 @@ sub do_defs
 				# is the same name as the original.
 	my $cpp;
 	my %unknown_algorithms = ();
+	my $parens = 0;
 
 	foreach $file (split(/\s+/,$symhacksfile." ".$files))
 		{
@@ -443,6 +444,7 @@ sub do_defs
 			(map { $_ => 0 } @known_platforms),
 			(map { "OPENSSL_SYS_".$_ => 0 } @known_ossl_platforms),
 			(map { "OPENSSL_NO_".$_ => 0 } @known_algorithms),
+			(map { "OPENSSL_USE_".$_ => 0 } @known_algorithms),
 			NOPROTO		=> 0,
 			PERL5		=> 0,
 			_WINDLL		=> 0,
@@ -505,6 +507,11 @@ sub do_defs
 
 		print STDERR "DEBUG: parsing ----------\n" if $debug;
 		while(<IN>) {
+			if($parens > 0) {
+				#Inside a DECLARE_DEPRECATED
+				$parens += count_parens($_);
+				next;
+			}
 			if (/\/\* Error codes for the \w+ functions\. \*\//)
 				{
 				undef @tag;
@@ -608,6 +615,8 @@ sub do_defs
 					pop(@tag);
 					if ($t =~ /^OPENSSL_NO_([A-Z0-9_]+)$/) {
 						$t=$1;
+					} elsif($t =~ /^OPENSSL_USE_([A-Z0-9_]+)$/) {
+						$t=$1;
 					} else {
 						$t="";
 					}
@@ -657,9 +666,14 @@ sub do_defs
 					   map { $tag{"OPENSSL_SYS_".$_} == 1 ? $_ :
 						     $tag{"OPENSSL_SYS_".$_} == -1 ? "!".$_  : "" }
 					   @known_ossl_platforms);
+				@current_algorithms = ();
 				@current_algorithms =
 				    grep(!/^$/,
 					 map { $tag{"OPENSSL_NO_".$_} == -1 ? $_ : "" }
+					 @known_algorithms);
+				push @current_algorithms
+				    , grep(!/^$/,
+					 map { $tag{"OPENSSL_USE_".$_} == 1 ? $_ : "" }
 					 @known_algorithms);
 				$def .=
 				    "#INFO:"
@@ -891,6 +905,10 @@ sub do_defs
 					&$make_variant("_shadow_$2","_shadow_$2",
 						      "EXPORT_VAR_AS_FUNCTION",
 						      "FUNCTION");
+				} elsif (/^\s*DECLARE_DEPRECATED\s*\(\s*(\w*(\s|\*|\w)*)/) {
+					$def .= "$1(void);";
+					$parens = count_parens($_);
+					next;
 				} elsif ($tag{'CONST_STRICT'} != 1) {
 					if (/\{|\/\*|\([^\)]*$/) {
 						$line = $_;
@@ -1547,5 +1565,15 @@ sub check_existing
 			print STDERR "\t",$sym,"\n";
 		}
 	}
+}
+
+sub count_parens
+{
+	my $line = shift(@_);
+
+	my $open = $line =~ tr/\(//;
+	my $close = $line =~ tr/\)//;
+
+	return $open - $close;
 }
 
