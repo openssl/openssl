@@ -295,12 +295,7 @@ int RAND_poll(void)
 				{
 				int try_read = 0;
 
-#if defined(OPENSSL_SYS_BEOS_R5)
-				/* select() is broken in BeOS R5, so we simply
-				 *  try to read something and snooze if we couldn't */
-				try_read = 1;
-
-#elif defined(OPENSSL_SYS_LINUX)
+#if defined(OPENSSL_SYS_LINUX)
 				/* use poll() */
 				struct pollfd pset;
 				
@@ -347,10 +342,6 @@ int RAND_poll(void)
 					r = read(fd,(unsigned char *)tmpbuf+n, ENTROPY_NEEDED-n);
 					if (r > 0)
 						n += r;
-#if defined(OPENSSL_SYS_BEOS_R5)
-					if (r == 0)
-						snooze(t.tv_usec);
-#endif
 					}
 				else
 					r = -1;
@@ -403,14 +394,6 @@ int RAND_poll(void)
 
 	l=time(NULL);
 	RAND_add(&l,sizeof(l),0.0);
-
-#if defined(OPENSSL_SYS_BEOS)
-	{
-	system_info sysInfo;
-	get_system_info(&sysInfo);
-	RAND_add(&sysInfo,sizeof(sysInfo),0);
-	}
-#endif
 
 #if defined(DEVRANDOM) || defined(DEVRANDOM_EGD)
 	return 1;

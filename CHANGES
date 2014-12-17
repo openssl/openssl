@@ -17,6 +17,9 @@
      done while fixing the error code for the key-too-small case.
      [Annie Yousar <a.yousar@informatik.hu-berlin.de>]
 
+  *) Remove BEOS and BEOS_R5 code.
+     [Rich Salz]
+
   *) Experimental support for a new, fast, unbiased prime candidate generator,
      bn_probable_prime_dh_coprime(). Not currently used by any prime generator.
      [Felix Laurie von Massenbach <felix@erbridge.co.uk>]

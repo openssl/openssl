@@ -198,17 +198,6 @@ extern "C" {
 # define OPENSSL_SYS_VXWORKS
 #endif
 
-/* --------------------------------- BeOS ---------------------------------- */
-#if defined(__BEOS__)
-# define OPENSSL_SYS_BEOS
-# include <sys/socket.h>
-# if defined(BONE_VERSION)
-#  define OPENSSL_SYS_BEOS_BONE
-# else
-#  define OPENSSL_SYS_BEOS_R5
-# endif
-#endif
-
 /**
  * That's it for OS-specific stuff
  *****************************************************************************/
