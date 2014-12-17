@@ -69,12 +69,6 @@
  *
  */
 
-/* Until the key-gen callbacks are modified to use newer prototypes, we allow
- * deprecated functions for openssl-internal code */
-#ifdef OPENSSL_NO_DEPRECATED
-#undef OPENSSL_NO_DEPRECATED
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
