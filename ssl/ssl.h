@@ -151,7 +151,7 @@
 #ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>
 #endif
-#ifndef OPENSSL_NO_DEPRECATED
+#ifdef OPENSSL_USE_DEPRECATED
 #ifndef OPENSSL_NO_X509
 #include <openssl/x509.h>
 #endif

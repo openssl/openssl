@@ -69,7 +69,7 @@
 #include <openssl/bio.h>
 #endif
 #include <openssl/ossl_typ.h>
-#ifndef OPENSSL_NO_DEPRECATED
+#ifdef OPENSSL_USE_DEPRECATED
 #include <openssl/bn.h>
 #endif
 	
@@ -204,10 +204,10 @@ int DH_set_ex_data(DH *d, int idx, void *arg);
 void *DH_get_ex_data(DH *d, int idx);
 
 /* Deprecated version */
-#ifndef OPENSSL_NO_DEPRECATED
-DH *	DH_generate_parameters(int prime_len,int generator,
-		void (*callback)(int,int,void *),void *cb_arg);
-#endif /* !defined(OPENSSL_NO_DEPRECATED) */
+#ifdef OPENSSL_USE_DEPRECATED
+DECLARE_DEPRECATED(DH *	DH_generate_parameters(int prime_len,int generator,
+		void (*callback)(int,int,void *),void *cb_arg));
+#endif /* defined(OPENSSL_USE_DEPRECATED) */
 
 /* New version */
 int	DH_generate_parameters_ex(DH *dh, int prime_len,int generator, BN_GENCB *cb);

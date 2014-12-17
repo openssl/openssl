@@ -91,7 +91,7 @@
 #include <openssl/ecdh.h>
 #endif
 
-#ifndef OPENSSL_NO_DEPRECATED
+#ifdef OPENSSL_USE_DEPRECATED
 #ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
 #endif

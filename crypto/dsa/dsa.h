@@ -77,7 +77,7 @@
 #include <openssl/crypto.h>
 #include <openssl/ossl_typ.h>
 
-#ifndef OPENSSL_NO_DEPRECATED
+#ifdef OPENSSL_USE_DEPRECATED
 #include <openssl/bn.h>
 #ifndef OPENSSL_NO_DH
 # include <openssl/dh.h>
@@ -236,12 +236,12 @@ DSA *	d2i_DSAPrivateKey(DSA **a, const unsigned char **pp, long length);
 DSA * 	d2i_DSAparams(DSA **a, const unsigned char **pp, long length);
 
 /* Deprecated version */
-#ifndef OPENSSL_NO_DEPRECATED
-DSA *	DSA_generate_parameters(int bits,
+#ifdef OPENSSL_USE_DEPRECATED
+DECLARE_DEPRECATED(DSA *	DSA_generate_parameters(int bits,
 		unsigned char *seed,int seed_len,
 		int *counter_ret, unsigned long *h_ret,void
-		(*callback)(int, int, void *),void *cb_arg);
-#endif /* !defined(OPENSSL_NO_DEPRECATED) */
+		(*callback)(int, int, void *),void *cb_arg));
+#endif /* defined(OPENSSL_USE_DEPRECATED) */
 
 /* New version */
 int	DSA_generate_parameters_ex(DSA *dsa, int bits,
