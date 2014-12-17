@@ -157,13 +157,6 @@ extern "C" {
 #define closesocket(s)		    close(s)
 #define readsocket(s,b,n)	    read((s),(b),(n))
 #define writesocket(s,b,n)	    write((s),(char *)(b),(n))
-#elif defined(OPENSSL_SYS_BEOS_R5)
-#define get_last_socket_error() errno
-#define clear_socket_error()    errno=0
-#define FIONBIO SO_NONBLOCK
-#define ioctlsocket(a,b,c)		  setsockopt((a),SOL_SOCKET,(b),(c),sizeof(*(c)))
-#define readsocket(s,b,n)       recv((s),(b),(n),0)
-#define writesocket(s,b,n)      send((s),(b),(n),0)
 #elif defined(OPENSSL_SYS_NETWARE)
 #if defined(NETWARE_BSDSOCK)
 #define get_last_socket_error() errno
@@ -568,9 +561,7 @@ static __inline unsigned int _strlen31(const char *str)
 #        include <sys/filio.h> /* Added for FIONBIO under unixware */
 #      endif
 #      include <netinet/in.h>
-#      if !defined(OPENSSL_SYS_BEOS_R5)
 #      include <arpa/inet.h>
-#    endif
 #    endif
 
 #    if defined(NeXT) || defined(_NEXT_SOURCE)
@@ -619,7 +610,7 @@ static __inline unsigned int _strlen31(const char *str)
  * versions.
  */
 #  if !defined(OPENSSL_USE_IPV6)
-#    if defined(AF_INET6) && !defined(OPENSSL_SYS_BEOS_BONE) && !defined(NETWARE_CLIB)
+#    if defined(AF_INET6) && !defined(NETWARE_CLIB)
 #      define OPENSSL_USE_IPV6 1
 #    else
 #      define OPENSSL_USE_IPV6 0
@@ -713,14 +704,6 @@ struct servent *getservbyname(const char *name, const char *proto);
 
 #endif
 /* end vxworks */
-
-/* beos */
-#if defined(OPENSSL_SYS_BEOS_R5)
-#define SO_ERROR 0
-#define NO_SYS_UN
-#define IPPROTO_IP 0
-#include <OS.h>
-#endif
 
 #if !defined(inline) && !defined(__cplusplus)
 # if defined(__STDC_VERSION__) && __STDC_VERSION__>=199901L

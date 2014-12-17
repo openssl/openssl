@@ -199,8 +199,6 @@ void CRYPTO_THREADID_current(CRYPTO_THREADID *id)
 	CRYPTO_THREADID_set_numeric(id, (unsigned long)GetCurrentTask());
 #elif defined(OPENSSL_SYS_WIN32)
 	CRYPTO_THREADID_set_numeric(id, (unsigned long)GetCurrentThreadId());
-#elif defined(OPENSSL_SYS_BEOS)
-	CRYPTO_THREADID_set_numeric(id, (unsigned long)find_thread(NULL));
 #else
 	/* For everything else, default to using the address of 'errno' */
 	CRYPTO_THREADID_set_pointer(id, (void*)&errno);
@@ -245,8 +243,6 @@ unsigned long CRYPTO_thread_id(void)
 		ret=(unsigned long)GetCurrentThreadId();
 #elif defined(GETPID_IS_MEANINGLESS)
 		ret=1L;
-#elif defined(OPENSSL_SYS_BEOS)
-		ret=(unsigned long)find_thread(NULL);
 #else
 		ret=(unsigned long)getpid();
 #endif
