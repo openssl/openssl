@@ -17,7 +17,9 @@
      done while fixing the error code for the key-too-small case.
      [Annie Yousar <a.yousar@informatik.hu-berlin.de>]
 
-  *) Remove BEOS and BEOS_R5 code.
+  *) Remove various unsupported platforms:
+	Sony NEWS4
+	Remove BEOS and BEOS_R5
      [Rich Salz]
 
   *) Experimental support for a new, fast, unbiased prime candidate generator,

@@ -165,9 +165,6 @@ extern "C" {
 # ifdef OPENSSL_SYSNAME_ULTRASPARC
 #  define OPENSSL_SYS_ULTRASPARC
 # endif
-# ifdef OPENSSL_SYSNAME_NEWS4
-#  define OPENSSL_SYS_NEWS4
-# endif
 # ifdef OPENSSL_SYSNAME_MACOSX
 #  define OPENSSL_SYS_MACOSX
 # endif
@@ -272,7 +269,7 @@ extern "C" {
 #  define ossl_ssize_t long
 #endif
 
-#if defined(NeXT) || defined(OPENSSL_SYS_NEWS4) || defined(OPENSSL_SYS_SUNOS)
+#if defined(NeXT) || defined(OPENSSL_SYS_SUNOS)
 #  define ssize_t int
 #endif
 
