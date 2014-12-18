@@ -1419,8 +1419,11 @@ if ($zlib)
 		}
 	}
 
-#Always build the library with OPENSSL_USE_DEPRECATED. This is overridden by OPENSSL_NO_DEPRECATED
-$cflags = "-DOPENSSL_USE_DEPRECATED $cflags";
+#Build the library with OPENSSL_USE_DEPRECATED if deprecation is not disabled
+if(!defined($disabled{"deprecated"}))
+	{
+	$cflags = "-DOPENSSL_USE_DEPRECATED $cflags";
+	}
 
 # You will find shlib_mark1 and shlib_mark2 explained in Makefile.org
 my $shared_mark = "";

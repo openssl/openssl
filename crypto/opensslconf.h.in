@@ -6,7 +6,7 @@
  * deprecated functions then this will not work
  */
 #if defined(OPENSSL_NO_DEPRECATED) && defined(OPENSSL_USE_DEPRECATED)
-#undef OPENSSL_USE_DEPRECATED
+#error "OPENSSL_USE_DEPRECATED has been defined, but OpenSSL has been built without support for deprecated functions"
 #endif
 
 /* Test for support for deprecated attribute */
