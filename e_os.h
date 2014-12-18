@@ -432,14 +432,10 @@ static __inline unsigned int _strlen31(const char *str)
 #    ifndef NO_SYS_TYPES_H
 #      include <sys/types.h>
 #    endif
-#    if defined(NeXT) || defined(OPENSSL_SYS_NEWS4)
+#    if defined(NeXT)
 #      define pid_t int /* pid_t is missing on NEXTSTEP/OPENSTEP
                          * (unless when compiling with -D_POSIX_SOURCE,
                          * which doesn't work for us) */
-#    endif
-#    ifdef OPENSSL_SYS_NEWS4 /* setvbuf is missing on mips-sony-bsd */
-#      define setvbuf(a, b, c, d) setbuffer((a), (b), (d))
-       typedef unsigned long clock_t;
 #    endif
 #    ifdef OPENSSL_SYS_WIN32_CYGWIN
 #      include <io.h>
