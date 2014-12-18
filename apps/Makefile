@@ -140,7 +140,7 @@ dclean:
 
 clean:
 	rm -f *.o *.obj *.dll lib tags core .pure .nfs* *.old *.bak fluff $(EXE)
-	rm -f req CA.pl
+	rm -f req
 
 $(DLIBSSL):
 	(cd ..; $(MAKE) DIRS=ssl all)
