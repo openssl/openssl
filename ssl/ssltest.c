@@ -1852,8 +1852,6 @@ bad:
 			(double)s_time/CLOCKS_PER_SEC,
 			(double)c_time/CLOCKS_PER_SEC);
 #else
-		/* "`CLOCKS_PER_SEC' undeclared (first use this function)"
-		 *                            -- cc on NeXTstep/OpenStep */
 		BIO_printf(bio_stdout,
 			"Approximate total server time: %6.2f units\n"
 			"Approximate total client time: %6.2f units\n",

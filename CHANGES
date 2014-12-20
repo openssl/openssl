@@ -28,7 +28,8 @@
 
   *) Remove various unsupported platforms:
 	Sony NEWS4
-	Remove BEOS and BEOS_R5
+	BEOS and BEOS_R5
+	NeXT
      [Rich Salz]
 
   *) Experimental support for a new, fast, unbiased prime candidate generator,

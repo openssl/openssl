@@ -164,8 +164,6 @@ static void timings(EC_GROUP *group, int type, BN_CTX *ctx)
 	 *                                       -- ISO/IEC 9899 */
 #	define UNIT "s"
 #else
-	/* "`CLOCKS_PER_SEC' undeclared (first use this function)"
-	 *                            -- cc on NeXTstep/OpenStep */
 #	define UNIT "units"
 #	define CLOCKS_PER_SEC 1
 #endif

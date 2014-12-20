@@ -432,11 +432,6 @@ static __inline unsigned int _strlen31(const char *str)
 #    ifndef NO_SYS_TYPES_H
 #      include <sys/types.h>
 #    endif
-#    if defined(NeXT)
-#      define pid_t int /* pid_t is missing on NEXTSTEP/OPENSTEP
-                         * (unless when compiling with -D_POSIX_SOURCE,
-                         * which doesn't work for us) */
-#    endif
 #    ifdef OPENSSL_SYS_WIN32_CYGWIN
 #      include <io.h>
 #      include <fcntl.h>
@@ -558,11 +553,6 @@ static __inline unsigned int _strlen31(const char *str)
 #      endif
 #      include <netinet/in.h>
 #      include <arpa/inet.h>
-#    endif
-
-#    if defined(NeXT) || defined(_NEXT_SOURCE)
-#      include <sys/fcntl.h>
-#      include <sys/types.h>
 #    endif
 
 #    ifdef OPENSSL_SYS_AIX
