@@ -659,6 +659,43 @@
 
  Changes between 1.0.1j and 1.0.1k [xx XXX xxxx]
 
+  *) Fix various certificate fingerprint issues.
+
+     By using non-DER or invalid encodings outside the signed portion of a
+     certificate the fingerprint can be changed without breaking the signature.
+     Although no details of the signed portion of the certificate can be changed
+     this can cause problems with some applications: e.g. those using the
+     certificate fingerprint for blacklists.
+
+     1. Reject signatures with non zero unused bits.
+
+     If the BIT STRING containing the signature has non zero unused bits reject
+     the signature. All current signature algorithms require zero unused bits.
+
+     2. Check certificate algorithm consistency.
+
+     Check the AlgorithmIdentifier inside TBS matches the one in the
+     certificate signature. NB: this will result in signature failure
+     errors for some broken certificates.
+
+     Thanks to Konrad Kraszewski from Google for reporting this issue.
+
+     3. Check DSA/ECDSA signatures use DER.
+
+     Reencode DSA/ECDSA signatures and compare with the original received
+     signature. Return an error if there is a mismatch.
+
+     This will reject various cases including garbage after signature
+     (thanks to Antti Karjalainen and Tuomo Untinen from the Codenomicon CROSS
+     program for discovering this case) and use of BER or invalid ASN.1 INTEGERs
+     (negative or with leading zeroes).
+
+     Further analysis was conducted and fixes were developed by Stephen Henson
+     of the OpenSSL core team.
+
+     (CVE-2014-8275)
+     [Steve Henson]
+
    *) Do not resume sessions on the server if the negotiated protocol
       version does not match the session's version. Resuming with a different
       version, while not strictly forbidden by the RFC, is of questionable
