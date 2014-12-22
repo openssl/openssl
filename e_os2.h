@@ -168,9 +168,6 @@ extern "C" {
 # ifdef OPENSSL_SYSNAME_MACOSX
 #  define OPENSSL_SYS_MACOSX
 # endif
-# ifdef OPENSSL_SYSNAME_SUNOS
-#  define OPENSSL_SYS_SUNOS
-#endif
 # if defined(_CRAY) || defined(OPENSSL_SYSNAME_CRAY)
 #  define OPENSSL_SYS_CRAY
 # endif
@@ -267,10 +264,6 @@ extern "C" {
 
 #ifdef OPENSSL_SYS_MSDOS
 #  define ossl_ssize_t long
-#endif
-
-#if defined(OPENSSL_SYS_SUNOS)
-#  define ssize_t int
 #endif
 
 #if defined(__ultrix) && !defined(ssize_t)

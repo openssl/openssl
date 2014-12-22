@@ -65,9 +65,6 @@
 #include <openssl/ocsp.h>
 #include <openssl/err.h>
 #include <openssl/buffer.h>
-#ifdef OPENSSL_SYS_SUNOS
-#define strtoul (unsigned long)strtol
-#endif /* OPENSSL_SYS_SUNOS */
 
 /* Stateful OCSP request code, supporting non-blocking I/O */
 

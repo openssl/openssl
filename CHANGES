@@ -30,6 +30,7 @@
 	Sony NEWS4
 	BEOS and BEOS_R5
 	NeXT
+	SUNOS
      [Rich Salz]
 
   *) Experimental support for a new, fast, unbiased prime candidate generator,
