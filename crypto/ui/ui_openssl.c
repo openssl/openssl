@@ -244,7 +244,7 @@
 # define TTY_set(tty,data)	ioctl(tty,TIOCSETP,data)
 #endif
 
-#if !defined(_LIBC) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_VMS) && !defined(OPENSSL_SYS_SUNOS)
+#if !defined(_LIBC) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_VMS)
 # include <sys/ioctl.h>
 #endif
 
@@ -262,10 +262,6 @@ struct IOSB {
 	short iosb$w_count;
 	long  iosb$l_info;
 	};
-#endif
-
-#ifdef OPENSSL_SYS_SUNOS
-	typedef int sig_atomic_t;
 #endif
 
 #if defined(MAC_OS_GUSI_SOURCE) || defined(OPENSSL_SYS_NETWARE)
