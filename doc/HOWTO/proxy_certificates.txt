@@ -114,7 +114,7 @@ recognised:
 The 'policy' setting can be split up in multiple lines like this:
 
   0.policy=This is
-  1.polisy= a multi-
+  1.policy= a multi-
   2.policy=line policy.
 
 NOTE: the proxy policy value is the part which determines the rights granted to
