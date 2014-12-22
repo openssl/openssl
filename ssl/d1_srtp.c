@@ -115,12 +115,12 @@
   Copyright (C) 2011, RTFM, Inc.
 */
 
-#ifndef OPENSSL_NO_SRTP
 
 #include <stdio.h>
 #include <openssl/objects.h>
 #include "ssl_locl.h"
 
+#ifndef OPENSSL_NO_SRTP
 
 static SRTP_PROTECTION_PROFILE srtp_known_profiles[]=
     {
