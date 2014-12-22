@@ -368,7 +368,9 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -alpn arg         - enable ALPN extension, considering named protocols supported (comma-separated list)\n");
 #endif
 	BIO_printf(bio_err," -legacy_renegotiation - enable use of legacy renegotiation (dangerous)\n");
+#ifndef OPENSSL_NO_SRTP
 	BIO_printf(bio_err," -use_srtp profiles - Offer SRTP key management with a colon-separated profile list\n");
+#endif
  	BIO_printf(bio_err," -keymatexport label   - Export keying material using label\n");
  	BIO_printf(bio_err," -keymatexportlen len  - Export len bytes of keying material (default 20)\n");
 	}
@@ -508,7 +510,9 @@ static char * MS_CALLBACK ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
 	}
 
 #endif
+#ifndef OPENSSL_NO_SRTP
 	char *srtp_profiles = NULL;
+#endif
 
 # ifndef OPENSSL_NO_NEXTPROTONEG
 /* This the context that we pass to next_proto_cb */
@@ -1089,11 +1093,13 @@ static char *jpake_secret = NULL;
 			jpake_secret = *++argv;
 			}
 #endif
+#ifndef OPENSSL_NO_SRTP
 		else if (strcmp(*argv,"-use_srtp") == 0)
 			{
 			if (--argc < 1) goto bad;
 			srtp_profiles = *(++argv);
 			}
+#endif
 		else if (strcmp(*argv,"-keymatexport") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -1323,6 +1329,8 @@ bad:
 			BIO_printf(bio_c_out, "PSK key given or JPAKE in use, setting client callback\n");
 		SSL_CTX_set_psk_client_callback(ctx, psk_client_cb);
 		}
+#endif
+#ifndef OPENSSL_NO_SRTP
 	if (srtp_profiles != NULL)
 		SSL_CTX_set_tlsext_use_srtp(ctx, srtp_profiles);
 #endif
@@ -2300,6 +2308,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 	}
 #endif
 
+#ifndef OPENSSL_NO_SRTP
  	{
  	SRTP_PROTECTION_PROFILE *srtp_profile=SSL_get_selected_srtp_profile(s);
  
@@ -2307,6 +2316,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 		BIO_printf(bio,"SRTP Extension negotiated, profile=%s\n",
 			   srtp_profile->name);
 	}
+#endif
  
 	SSL_SESSION_print(bio,SSL_get_session(s));
 	if (keymatexportlabel != NULL)
