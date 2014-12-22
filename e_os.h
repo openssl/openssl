@@ -421,9 +421,6 @@ static __inline unsigned int _strlen31(const char *str)
 
 #  else
      /* !defined VMS */
-#    ifdef OPENSSL_SYS_MPE
-#      define NO_SYS_PARAM_H
-#    endif
 #    ifdef OPENSSL_UNISTD
 #      include OPENSSL_UNISTD
 #    else
@@ -527,8 +524,6 @@ static __inline unsigned int _strlen31(const char *str)
 #    endif
 #    ifdef OPENSSL_SYS_VXWORKS
 #      include <time.h> 
-#    elif !defined(OPENSSL_SYS_MPE)
-#      include <sys/time.h> /* Needed under linux for FD_XXX */
 #    endif
 
 #    include <netdb.h>

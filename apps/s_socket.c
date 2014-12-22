@@ -269,7 +269,7 @@ static int init_client_ip(int *sock, const unsigned char ip[4], int port,
 			
 	if (s == INVALID_SOCKET) { perror("socket"); return(0); }
 
-#if defined(SO_KEEPALIVE) && !defined(OPENSSL_SYS_MPE)
+#if defined(SO_KEEPALIVE)
 	if (type == SOCK_STREAM)
 		{
 		i=0;

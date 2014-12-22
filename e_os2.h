@@ -156,9 +156,6 @@ extern "C" {
 # if defined(linux) || defined(__linux__) || defined(OPENSSL_SYSNAME_LINUX)
 #  define OPENSSL_SYS_LINUX
 # endif
-# ifdef OPENSSL_SYSNAME_MPE
-#  define OPENSSL_SYS_MPE
-# endif
 # ifdef OPENSSL_SYSNAME_SNI
 #  define OPENSSL_SYS_SNI
 # endif
