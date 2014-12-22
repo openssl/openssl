@@ -1552,6 +1552,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf, unsigned c
 		ret += s->alpn_client_proto_list_len;
 		}
 
+#ifndef OPENSSL_NO_SRTP
         if(SSL_IS_DTLS(s) && SSL_get_srtp_profiles(s))
                 {
                 int el;
@@ -1570,6 +1571,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf, unsigned c
 			}
                 ret += el;
                 }
+#endif
 	custom_ext_init(&s->cert->cli_ext);
 	/* Add custom TLS Extensions to ClientHello */
 	if (!custom_ext_add(s, 0, &ret, limit, al))
@@ -1726,6 +1728,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf, unsigned c
 		}
 #endif
 
+#ifndef OPENSSL_NO_SRTP
         if(SSL_IS_DTLS(s) && s->srtp_profile)
                 {
                 int el;
@@ -1744,6 +1747,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf, unsigned c
 			}
                 ret+=el;
                 }
+#endif
 
 	if (((s->s3->tmp.new_cipher->id & 0xFFFF)==0x80 || (s->s3->tmp.new_cipher->id & 0xFFFF)==0x81) 
 		&& (SSL_get_options(s) & SSL_OP_CRYPTOPRO_TLSEXT_BUG))
@@ -2484,6 +2488,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 			}
 
 		/* session ticket processed earlier */
+#ifndef OPENSSL_NO_SRTP
 		else if (SSL_IS_DTLS(s) && SSL_get_srtp_profiles(s)
 				&& type == TLSEXT_TYPE_use_srtp)
                         {
@@ -2491,6 +2496,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 							      al))
 				return 0;
                         }
+#endif
 
 		data+=size;
 		}
@@ -2854,12 +2860,14 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 				}
 			}
 #endif
+#ifndef OPENSSL_NO_SRTP
 		else if (SSL_IS_DTLS(s) && type == TLSEXT_TYPE_use_srtp)
                         {
                         if(ssl_parse_serverhello_use_srtp_ext(s, data, size,
 							      al))
                                 return 0;
                         }
+#endif
 		/* If this extension type was not otherwise handled, but 
 		 * matches a custom_cli_ext_record, then send it to the c
 		 * callback */

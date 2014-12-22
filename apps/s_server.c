@@ -583,7 +583,9 @@ static void sv_usage(void)
 # ifndef OPENSSL_NO_NEXTPROTONEG
 	BIO_printf(bio_err," -nextprotoneg arg - set the advertised protocols for the NPN extension (comma-separated list)\n");
 # endif
+# ifndef OPENSSL_NO_SRTP
         BIO_printf(bio_err," -use_srtp profiles - Offer SRTP key management with a colon-separated profile list\n");
+# endif
 	BIO_printf(bio_err," -alpn arg  - set the advertised protocols for the ALPN extension (comma-separated list)\n");
 #endif
 	BIO_printf(bio_err," -keymatexport label   - Export keying material using label\n");
@@ -997,7 +999,9 @@ static char *jpake_secret = NULL;
 #ifndef OPENSSL_NO_SRP
 	static srpsrvparm srp_callback_parm;
 #endif
+#ifndef OPENSSL_NO_SRTP
 static char *srtp_profiles = NULL;
+#endif
 
 int MAIN(int argc, char *argv[])
 	{
@@ -1498,11 +1502,13 @@ int MAIN(int argc, char *argv[])
 			jpake_secret = *(++argv);
 			}
 #endif
+#ifndef OPENSSL_NO_SRTP
 		else if (strcmp(*argv,"-use_srtp") == 0)
 			{
 			if (--argc < 1) goto bad;
 			srtp_profiles = *(++argv);
 			}
+#endif
 		else if (strcmp(*argv,"-keymatexport") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -1780,8 +1786,10 @@ bad:
 	else
 		SSL_CTX_sess_set_cache_size(ctx,128);
 
+#ifndef OPENSSL_NO_SRTP
 	if (srtp_profiles != NULL)
 		SSL_CTX_set_tlsext_use_srtp(ctx, srtp_profiles);
+#endif
 
 #if 0
 	if (cipher == NULL) cipher=getenv("SSL_CIPHER");
@@ -2713,6 +2721,7 @@ static int init_ssl_connection(SSL *con)
 		BIO_printf(bio_s_out, "\n");
 		}
 #endif
+#ifndef OPENSSL_NO_SRTP
 	{
 	SRTP_PROTECTION_PROFILE *srtp_profile
 	  = SSL_get_selected_srtp_profile(con);
@@ -2721,6 +2730,7 @@ static int init_ssl_connection(SSL *con)
 		BIO_printf(bio_s_out,"SRTP Extension negotiated, profile=%s\n",
 			   srtp_profile->name);
 	}
+#endif
 	if (SSL_cache_hit(con)) BIO_printf(bio_s_out,"Reused session-id\n");
 	if (SSL_ctrl(con,SSL_CTRL_GET_FLAGS,0,NULL) &
 		TLS1_FLAGS_TLS_PADDING_BUG)
