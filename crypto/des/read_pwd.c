@@ -289,9 +289,7 @@ int des_read_pw(char *buf, char *buff, int size, const char *prompt,
 #elif defined(OPENSSL_SYS_VXWORKS)
 	tty=stdin;
 #else
-#ifndef OPENSSL_SYS_MPE
 	if ((tty=fopen("/dev/tty","r")) == NULL)
-#endif
 		tty=stdin;
 #endif
 
@@ -332,11 +330,7 @@ int des_read_pw(char *buf, char *buff, int size, const char *prompt,
 
 #if defined(TTY_set) && !defined(OPENSSL_SYS_VMS)
 	if (is_a_tty && (TTY_set(fileno(tty),&tty_new) == -1))
-#ifdef OPENSSL_SYS_MPE 
-		; /* MPE lies -- echo really has been disabled */
-#else
 		return(-1);
-#endif
 #endif
 #ifdef OPENSSL_SYS_VMS
 	tty_new[0] = tty_orig[0];
