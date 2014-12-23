@@ -423,7 +423,11 @@ int check_time(long offset)
 				tm1.tm_hour, tm1.tm_min, tm1.tm_sec);
 		return 0;
 		}
-	OPENSSL_gmtime_diff(&o1, &tm1, &off_day, &off_sec);
+	if (!OPENSSL_gmtime_diff(&o1, &tm1, &off_day, &off_sec))
+		{
+			fprintf(stderr, "OPENSSL_gmtime_diff() returned zero\n");
+			return 0;
+		}
 	toffset = (long)off_day * SECS_PER_DAY + off_sec;
 	if (offset != toffset)
 		{
