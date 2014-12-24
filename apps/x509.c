@@ -128,6 +128,8 @@ static const char *x509_usage[]={
 " -addreject arg  - reject certificate for a given purpose\n",
 " -setalias arg   - set certificate alias\n",
 " -days arg       - How long till expiry of a signed certificate - def 30 days\n",
+" -xstartdate arg - set notBefore field when sign certificate\n",
+" -xenddate arg   - set notAfter field when sign certificate\n",
 " -checkend arg   - check whether the cert expires in the next arg seconds\n",
 "                   exit 1 if so, 0 if not\n",
 " -signkey arg    - self sign cert with arg\n",
@@ -158,12 +160,13 @@ NULL
 
 static int MS_CALLBACK callb(int ok, X509_STORE_CTX *ctx);
 static int sign (X509 *x, EVP_PKEY *pkey,int days,int clrext, const EVP_MD *digest,
-						CONF *conf, char *section);
+						CONF *conf, char *section, char *xstartdate, char *xenddate);
 static int x509_certify (X509_STORE *ctx,char *CAfile,const EVP_MD *digest,
 			 X509 *x,X509 *xca,EVP_PKEY *pkey,
 			 STACK_OF(OPENSSL_STRING) *sigopts,
 			 char *serial, int create ,int days, int clrext,
-			 CONF *conf, char *section, ASN1_INTEGER *sno);
+			 CONF *conf, char *section, ASN1_INTEGER *sno,
+			 char *xstartdate , char *xenddate);
 static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt);
 static int reqfile=0;
 #ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
@@ -211,6 +214,7 @@ int MAIN(int argc, char **argv)
 	const EVP_MD *md_alg,*digest=NULL;
 	CONF *extconf = NULL;
 	char *extsect = NULL, *extfile = NULL, *passin = NULL, *passargin = NULL;
+	char *xstartdate = NULL , *xenddate = NULL;
 	int need_rand = 0;
 	int checkend=0,checkoffset=0;
 	unsigned long nmflag = 0, certflag = 0;
@@ -308,6 +312,16 @@ int MAIN(int argc, char **argv)
 				BIO_printf(bio_err,"bad number of days\n");
 				goto bad;
 				}
+			}
+		else if (strcmp(*argv,"-xstartdate") == 0)
+			{
+			if (--argc < 1) goto bad;
+			xstartdate= *(++argv);
+			}
+		else if (strcmp(*argv,"-xenddate") == 0)
+			{
+			if (--argc < 1) goto bad;
+			xenddate= *(++argv);
 			}
 		else if (strcmp(*argv,"-passin") == 0)
 			{
@@ -1015,7 +1029,7 @@ bad:
 
 				assert(need_rand);
 				if (!sign(x,Upkey,days,clrext,digest,
-						 extconf, extsect)) goto end;
+						 extconf, extsect, xstartdate, xenddate)) goto end;
 				}
 			else if (CA_flag == i)
 				{
@@ -1033,7 +1047,7 @@ bad:
 				if (!x509_certify(ctx,CAfile,digest,x,xca,
 					CApkey, sigopts,
 					CAserial,CA_createserial,days, clrext,
-					extconf, extsect, sno))
+					extconf, extsect, sno, xstartdate, xenddate))
 					goto end;
 				}
 			else if (x509req == i)
@@ -1205,7 +1219,7 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
 			STACK_OF(OPENSSL_STRING) *sigopts,
 	  		char *serialfile, int create,
 	     		int days, int clrext, CONF *conf, char *section,
-			ASN1_INTEGER *sno)
+			ASN1_INTEGER *sno, char *xstartdate , char *xenddate)
 	{
 	int ret=0;
 	ASN1_INTEGER *bs=NULL;
@@ -1249,7 +1263,13 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
 	/* hardwired expired */
 	if (X509_time_adj_ex(X509_get_notAfter(x),days, 0, NULL) == NULL)
 		goto end;
-
+	if ((xstartdate != NULL) && (xenddate != NULL))
+		{
+		if (! ASN1_TIME_set_string(X509_get_notBefore(x),xstartdate))
+			goto end;
+		if (! ASN1_TIME_set_string(X509_get_notAfter(x),xenddate))
+			goto end;
+		}
 	if (clrext)
 		{
 		while (X509_get_ext_count(x) > 0) X509_delete_ext(x, 0);
@@ -1312,7 +1332,7 @@ static int MS_CALLBACK callb(int ok, X509_STORE_CTX *ctx)
 
 /* self sign */
 static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext, const EVP_MD *digest, 
-						CONF *conf, char *section)
+						CONF *conf, char *section, char *xstartdate, char *xenddate)
 	{
 
 	EVP_PKEY *pktmp;
@@ -1331,7 +1351,13 @@ static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext, const EVP_MD *dig
 
 	if (X509_gmtime_adj(X509_get_notAfter(x),(long)60*60*24*days) == NULL)
 		goto err;
-
+	if ((xstartdate != NULL) && (xenddate != NULL))
+		{
+		if ( ! ASN1_TIME_set_string(X509_get_notBefore(x),xstartdate) )
+			goto err;
+		if ( ! ASN1_TIME_set_string(X509_get_notAfter(x),xenddate) )
+			goto err;
+		}
 	if (!X509_set_pubkey(x,pkey)) goto err;
 	if (clrext)
 		{
