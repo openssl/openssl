@@ -71,6 +71,8 @@
 #define PROG smime_main
 static int save_certs(char *signerfile, STACK_OF(X509) *signers);
 static int smime_cb(int ok, X509_STORE_CTX *ctx);
+static int PKCS7_finalTime(PKCS7 *p7, BIO *data, int flags, char *signtime);
+int PKCS7_dataFinalTime(PKCS7 *p7, BIO *bio, char *signtime);
 
 #define SMIME_OP	0x10
 #define SMIME_IP	0x20
@@ -107,6 +109,7 @@ int MAIN(int argc, char **argv)
 	char *to = NULL, *from = NULL, *subject = NULL;
 	char *CAfile = NULL, *CApath = NULL;
 	char *passargin = NULL, *passin = NULL;
+	char *signtime = NULL;
 	char *inrand = NULL;
 	int need_rand = 0;
 	int indef = 0;
@@ -250,6 +253,12 @@ int MAIN(int argc, char **argv)
 			if (!args[1])
 				goto argerr;
 			subject = *++args;
+			}
+		else if (!strcmp (*args, "-signtime"))
+			{
+			if (!args[1])
+				goto argerr;
+			signtime = *++args;
 			}
 		else if (!strcmp (*args, "-signer"))
 			{
@@ -465,6 +474,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-binary        don't translate message to text\n");
 		BIO_printf (bio_err, "-certfile file other certificates file\n");
 		BIO_printf (bio_err, "-signer file   signer certificate file\n");
+		BIO_printf (bio_err, "-signtime arg  set signtime attribute\n");
 		BIO_printf (bio_err, "-recip  file   recipient certificate file for decryption\n");
 		BIO_printf (bio_err, "-in file       input file\n");
 		BIO_printf (bio_err, "-inform arg    input format SMIME (default), PEM or DER\n");
@@ -739,8 +749,16 @@ int MAIN(int argc, char **argv)
 		/* If not streaming or resigning finalize structure */
 		if ((operation == SMIME_SIGN) && !(flags & PKCS7_STREAM))
 			{
-			if (!PKCS7_final(p7, in, flags))
-				goto end;
+			if (signtime==NULL)
+				{
+					if (!PKCS7_final(p7, in, flags))
+						goto end;
+				}
+			else
+				{
+					if (!PKCS7_finalTime(p7, in, flags, signtime))
+						goto end;
+				}
 			}
 		}
 
@@ -862,5 +880,35 @@ static int smime_cb(int ok, X509_STORE_CTX *ctx)
 	policies_print(NULL, ctx);
 
 	return ok;
+
+	}
+
+static int PKCS7_finalTime(PKCS7 *p7, BIO *data, int flags, char *signtime)
+	{
+	BIO *p7bio;
+	int ret = 0;
+	if (!(p7bio = PKCS7_dataInit(p7, NULL)))
+		{
+		PKCS7err(PKCS7_F_PKCS7_FINAL,ERR_R_MALLOC_FAILURE);
+		return 0;
+		}
+
+	SMIME_crlf_copy(data, p7bio, flags);
+
+	(void)BIO_flush(p7bio);
+
+
+        if (!PKCS7_dataFinalTime(p7,p7bio,signtime))
+			{
+			PKCS7err(PKCS7_F_PKCS7_FINAL,PKCS7_R_PKCS7_DATASIGN);
+			goto err;
+			}
+
+	ret = 1;
+
+	err:
+	BIO_free_all(p7bio);
+
+	return ret;
 
 	}
