@@ -31,10 +31,19 @@ the new pseudo-random bytes unless disabled at compile time (see FAQ).
 =head1 RETURN VALUES
 
 RAND_bytes() returns 1 on success, 0 otherwise. The error code can be
-obtained by L<ERR_get_error(3)|ERR_get_error(3)>. RAND_pseudo_bytes() returns 1 if the
-bytes generated are cryptographically strong, 0 otherwise. Both
-functions return -1 if they are not supported by the current RAND
-method.
+obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
+
+RAND_pseudo_bytes() returns 1 if the bytes generated are cryptographically
+strong, 0 otherwise.  0 is also returned on error conditions, in which
+case the buffer may be untouched or only partially filled.  Therefore,
+return values other than 1 from this function must be treated as errors.
+-1 will be returned if this function is not supported by the current
+RAND method.
+
+=head1 BUGS
+
+RAND_pseudo_bytes() does not have well-defined error semantics;
+calls to it should be replace with calls to RAND_bytes().
 
 =head1 SEE ALSO
 
@@ -47,4 +56,7 @@ RAND_bytes() is available in all versions of SSLeay and OpenSSL.  It
 has a return value since OpenSSL 0.9.5. RAND_pseudo_bytes() was added
 in OpenSSL 0.9.5.
 
+RAND_bytes() previously returned -1 if the current RAND method did
+not support it.  This behaviour was superseded with returning 0
+as for other errors, and reporting B<RAND_R_FUNC_NOT_IMPLEMENTED>.
 =cut

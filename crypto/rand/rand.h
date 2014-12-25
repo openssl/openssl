@@ -133,10 +133,12 @@ void ERR_load_RAND_strings(void);
 #define RAND_F_FIPS_SET_PRNG_SEED			 104
 #define RAND_F_FIPS_SET_TEST_MODE			 105
 #define RAND_F_FIPS_X931_SET_DT				 106
+#define RAND_F_RAND_BYTES				 107
 #define RAND_F_RAND_GET_RAND_METHOD			 101
 #define RAND_F_SSLEAY_RAND_BYTES			 100
 
 /* Reason codes. */
+#define RAND_R_FUNC_NOT_IMPLEMENTED			 107
 #define RAND_R_NOT_IN_TEST_MODE				 101
 #define RAND_R_NO_KEY_SET				 102
 #define RAND_R_PRNG_ERROR				 103

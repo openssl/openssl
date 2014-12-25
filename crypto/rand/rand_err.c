@@ -1,6 +1,6 @@
 /* crypto/rand/rand_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2010 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2013 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -75,6 +75,7 @@ static ERR_STRING_DATA RAND_str_functs[]=
 {ERR_FUNC(RAND_F_FIPS_SET_PRNG_SEED),	"FIPS_SET_PRNG_SEED"},
 {ERR_FUNC(RAND_F_FIPS_SET_TEST_MODE),	"FIPS_SET_TEST_MODE"},
 {ERR_FUNC(RAND_F_FIPS_X931_SET_DT),	"FIPS_x931_set_dt"},
+{ERR_FUNC(RAND_F_RAND_BYTES),	"RAND_bytes"},
 {ERR_FUNC(RAND_F_RAND_GET_RAND_METHOD),	"RAND_get_rand_method"},
 {ERR_FUNC(RAND_F_SSLEAY_RAND_BYTES),	"SSLEAY_RAND_BYTES"},
 {0,NULL}
@@ -82,6 +83,7 @@ static ERR_STRING_DATA RAND_str_functs[]=
 
 static ERR_STRING_DATA RAND_str_reasons[]=
 	{
+{ERR_REASON(RAND_R_FUNC_NOT_IMPLEMENTED) ,"func not implemented"},
 {ERR_REASON(RAND_R_NOT_IN_TEST_MODE)     ,"not in test mode"},
 {ERR_REASON(RAND_R_NO_KEY_SET)           ,"no key set"},
 {ERR_REASON(RAND_R_PRNG_ERROR)           ,"prng error"},
