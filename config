@@ -320,10 +320,6 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "${MACHINE}-unknown-ultrix"; exit 0
 	;;
 
-    SINIX*|ReliantUNIX*)
-	echo "${MACHINE}-siemens-sysv4"; exit 0
-	;;
-
     POSIX-BC*)
 	echo "${MACHINE}-siemens-sysv4"; exit 0   # Here, $MACHINE == "BS2000"
 	;;
@@ -784,8 +780,6 @@ case "$GUESSOS" in
 	EXE=".pm"
 	OUT="vos-$CC" ;;
   BS2000-siemens-sysv4) OUT="BS2000-OSD" ;;
-  RM*-siemens-sysv4) OUT="ReliantUNIX" ;;
-  *-siemens-sysv4) OUT="SINIX" ;;
   *-hpux1*)
 	if [ $CC = "gcc" -a $GCC_BITS = "64" ]; then
 	    OUT="hpux64-parisc2-gcc"

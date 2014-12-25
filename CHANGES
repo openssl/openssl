@@ -32,6 +32,7 @@
 	NeXT
 	SUNOS
 	MPE/iX
+	Sinix/ReliantUNIX RM400
      [Rich Salz]
 
   *) Experimental support for a new, fast, unbiased prime candidate generator,

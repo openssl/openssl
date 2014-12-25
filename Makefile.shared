@@ -555,28 +555,10 @@ link_app.aix:
 	LDFLAGS="$(CFLAGS) -Wl,-brtl,-blibpath:$(LIBRPATH):$${LIBPATH:-/usr/lib:/lib}"; \
 	$(LINK_APP)
 
-link_o.reliantunix:
-	@ $(CALC_VERSIONS); \
-	SHLIB=lib$(LIBNAME).so; \
-	SHLIB_SUFFIX=; \
-	ALLSYMSFLAGS=; \
-	NOALLSYMSFLAGS=''; \
-	SHAREDFLAGS='$(CFLAGS) -G'; \
-	$(LINK_SO_O)
-link_a.reliantunix:
-	@ $(CALC_VERSIONS); \
-	SHLIB=lib$(LIBNAME).so; \
-	SHLIB_SUFFIX=; \
-	ALLSYMSFLAGS=; \
-	NOALLSYMSFLAGS=''; \
-	SHAREDFLAGS='$(CFLAGS) -G'; \
-	$(LINK_SO_A_UNPACKED)
-link_app.reliantunix:
-	$(LINK_APP)
 
 # Targets to build symbolic links when needed
 symlink.gnu symlink.solaris symlink.svr3 symlink.svr5 symlink.irix \
-symlink.aix symlink.reliantunix:
+symlink.aix:
 	@ $(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).so; \
 	$(SYMLINK_SO)
@@ -645,11 +627,3 @@ link_o.aix-shared: link_o.aix
 link_a.aix-shared: link_a.aix
 link_app.aix-shared: link_app.aix
 symlink.aix-shared: symlink.aix
-link_o.reliantunix-shared: link_o.reliantunix
-link_a.reliantunix-shared: link_a.reliantunix
-link_app.reliantunix-shared: link_app.reliantunix
-symlink.reliantunix-shared: symlink.reliantunix
-link_o.beos-shared: link_o.beos
-link_a.beos-shared: link_a.beos
-link_app.beos-shared: link_app.gnu
-symlink.beos-shared: symlink.beos
