@@ -242,6 +242,7 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_kDHd,0,    SSL_kDHd,  0,0,0,0,0,0,0,0}, /* no such ciphersuites supported! */
 	{0,SSL_TXT_kDH,0,     SSL_kDHr|SSL_kDHd,0,0,0,0,0,0,0,0}, /* no such ciphersuites supported! */
 	{0,SSL_TXT_kEDH,0,    SSL_kEDH,  0,0,0,0,0,0,0,0},
+	{0,SSL_TXT_kDHE,0,    SSL_kEDH,  0,0,0,0,0,0,0,0},
 	{0,SSL_TXT_DH,0,      SSL_kDHr|SSL_kDHd|SSL_kEDH,0,0,0,0,0,0,0,0},
 
 	{0,SSL_TXT_kKRB5,0,   SSL_kKRB5, 0,0,0,0,0,0,0,0},
@@ -250,6 +251,7 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_kECDHe,0,  SSL_kECDHe,0,0,0,0,0,0,0,0},
 	{0,SSL_TXT_kECDH,0,   SSL_kECDHr|SSL_kECDHe,0,0,0,0,0,0,0,0},
 	{0,SSL_TXT_kEECDH,0,  SSL_kEECDH,0,0,0,0,0,0,0,0},
+	{0,SSL_TXT_kECDHE,0,  SSL_kEECDH,0,0,0,0,0,0,0,0},
 	{0,SSL_TXT_ECDH,0,    SSL_kECDHr|SSL_kECDHe|SSL_kEECDH,0,0,0,0,0,0,0,0},
 
         {0,SSL_TXT_kPSK,0,    SSL_kPSK,  0,0,0,0,0,0,0,0},
@@ -274,7 +276,9 @@ static const SSL_CIPHER cipher_aliases[]={
 
 	/* aliases combining key exchange and server authentication */
 	{0,SSL_TXT_EDH,0,     SSL_kEDH,~SSL_aNULL,0,0,0,0,0,0,0},
+	{0,SSL_TXT_DHE,0,     SSL_kEDH,~SSL_aNULL,0,0,0,0,0,0,0},
 	{0,SSL_TXT_EECDH,0,   SSL_kEECDH,~SSL_aNULL,0,0,0,0,0,0,0},
+	{0,SSL_TXT_ECDHE,0,   SSL_kEECDH,~SSL_aNULL,0,0,0,0,0,0,0},
 	{0,SSL_TXT_NULL,0,    0,0,SSL_eNULL, 0,0,0,0,0,0},
 	{0,SSL_TXT_KRB5,0,    SSL_kKRB5,SSL_aKRB5,0,0,0,0,0,0,0},
 	{0,SSL_TXT_RSA,0,     SSL_kRSA,SSL_aRSA,0,0,0,0,0,0,0},
@@ -327,6 +331,19 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_HIGH,0,    0,0,0,0,0,SSL_HIGH,  0,0,0},
 	/* FIPS 140-2 approved ciphersuite */
 	{0,SSL_TXT_FIPS,0,    0,0,~SSL_eNULL,0,0,SSL_FIPS,  0,0,0},
+       /* "DHE-" aliases to "EDH-" labels (for forward compatibility) */
+	{0,SSL3_TXT_DHE_DSS_DES_40_CBC_SHA,0,
+         SSL_kDHE,SSL_aDSS,SSL_DES,SSL_SHA1,SSL_SSLV3,SSL_EXPORT|SSL_EXP40,0,0,0,},
+	{0,SSL3_TXT_DHE_DSS_DES_64_CBC_SHA,0,
+         SSL_kDHE,SSL_aDSS,SSL_DES,SSL_SHA1,SSL_SSLV3,SSL_NOT_EXP|SSL_LOW,0,0,0,},
+	{0,SSL3_TXT_DHE_DSS_DES_192_CBC3_SHA,0,
+         SSL_kDHE,SSL_aDSS,SSL_3DES,SSL_SHA1,SSL_SSLV3,SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,0,0,0,},
+	{0,SSL3_TXT_DHE_RSA_DES_40_CBC_SHA,0,
+         SSL_kDHE,SSL_aRSA,SSL_DES,SSL_SHA1,SSL_SSLV3,SSL_EXPORT|SSL_EXP40,0,0,0,},
+	{0,SSL3_TXT_DHE_RSA_DES_64_CBC_SHA,0,
+         SSL_kDHE,SSL_aRSA,SSL_DES,SSL_SHA1,SSL_SSLV3,SSL_NOT_EXP|SSL_LOW,0,0,0,},
+	{0,SSL3_TXT_DHE_RSA_DES_192_CBC3_SHA,0,
+         SSL_kDHE,SSL_aRSA,SSL_3DES,SSL_SHA1,SSL_SSLV3,SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,0,0,0,},
 	};
 /* Search for public key algorithm with given name and 
  * return its pkey_id if it is available. Otherwise return 0
