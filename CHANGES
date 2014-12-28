@@ -33,6 +33,7 @@
 	SUNOS
 	MPE/iX
 	Sinix/ReliantUNIX RM400
+	DGUX
      [Rich Salz]
 
   *) Experimental support for a new, fast, unbiased prime candidate generator,

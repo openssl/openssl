@@ -102,10 +102,6 @@ fi
 # Now we simply scan though... In most cases, the SYSTEM info is enough
 #
 case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
-    MPE/iX:*)
-	MACHINE=`echo "$MACHINE" | sed -e 's/-/_/g'`
-	echo "parisc-hp-MPE/iX"; exit 0
-	;;
     A/UX:*)
 	echo "m68k-apple-aux3"; exit 0
 	;;
@@ -120,18 +116,6 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 
     AIX:*)
 	echo "${MACHINE}-ibm-aix3"; exit 0
-	;;
-
-    BeOS:*:BePC)
-    if [ -e /boot/develop/headers/be/bone ]; then
-		echo "beos-x86-bone"; exit 0
-	else
-		echo "beos-x86-r5"; exit 0
-	fi
-	;;
-
-    dgux:*)
-	echo "${MACHINE}-dg-dgux"; exit 0
 	;;
 
     HI-UX:*)
@@ -334,10 +318,6 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 
     ConvexOS:*:11.0:*)
 	echo "${MACHINE}-v11-${SYSTEM}"; exit 0;
-	;;
-
-    NEWS-OS:4.*)
-	echo "mips-sony-newsos4"; exit 0;
 	;;
 
     MINGW*)
@@ -845,14 +825,11 @@ case "$GUESSOS" in
 	fi
 	;;
   # these are all covered by the catchall below
-  # *-dgux) OUT="dgux" ;;
-  mips-sony-newsos4) OUT="newsos4-gcc" ;;
   *-*-cygwin_pre1.3) OUT="Cygwin-pre1.3" ;;
   *-*-cygwin) OUT="Cygwin" ;;
   t3e-cray-unicosmk) OUT="cray-t3e" ;;
   j90-cray-unicos) OUT="cray-j90" ;;
   nsr-tandem-nsk) OUT="tandem-c89" ;;
-  beos-*) OUT="$GUESSOS" ;;
   x86pc-*-qnx6) OUT="QNX6-i386" ;;
   *-*-qnx6) OUT="QNX6" ;;
   x86-*-android|i?86-*-android) OUT="android-x86" ;;
