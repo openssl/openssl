@@ -68,14 +68,16 @@
  * supported by TLS.) */
 #define MAX_HASH_BLOCK_SIZE 128
 
-/* ssl3_cbc_remove_padding removes padding from the decrypted, SSLv3, CBC
+/*-
+ * ssl3_cbc_remove_padding removes padding from the decrypted, SSLv3, CBC
  * record in |rec| by updating |rec->length| in constant time.
  *
  * block_size: the block size of the cipher used to encrypt the record.
  * returns:
  *   0: (in non-constant time) if the record is publicly invalid.
  *   1: if the padding was valid
- *  -1: otherwise. */
+ *  -1: otherwise. 
+ */
 int ssl3_cbc_remove_padding(const SSL* s,
 			    SSL3_RECORD *rec,
 			    unsigned block_size,
@@ -99,7 +101,8 @@ int ssl3_cbc_remove_padding(const SSL* s,
 	return constant_time_select_int(good, 1, -1);
 	}
 
-/* tls1_cbc_remove_padding removes the CBC padding from the decrypted, TLS, CBC
+/*- 
+ * tls1_cbc_remove_padding removes the CBC padding from the decrypted, TLS, CBC
  * record in |rec| in constant time and returns 1 if the padding is valid and
  * -1 otherwise. It also removes any explicit IV from the start of the record
  * without leaking any timing about whether there was enough space after the
@@ -109,7 +112,8 @@ int ssl3_cbc_remove_padding(const SSL* s,
  * returns:
  *   0: (in non-constant time) if the record is publicly invalid.
  *   1: if the padding was valid
- *  -1: otherwise. */
+ *  -1: otherwise. 
+ */
 int tls1_cbc_remove_padding(const SSL* s,
 			    SSL3_RECORD *rec,
 			    unsigned block_size,
@@ -189,7 +193,8 @@ int tls1_cbc_remove_padding(const SSL* s,
 	return constant_time_select_int(good, 1, -1);
 	}
 
-/* ssl3_cbc_copy_mac copies |md_size| bytes from the end of |rec| to |out| in
+/*-
+ * ssl3_cbc_copy_mac copies |md_size| bytes from the end of |rec| to |out| in
  * constant time (independent of the concrete value of rec->length, which may
  * vary within a 256-byte window).
  *
@@ -371,7 +376,8 @@ char ssl3_cbc_record_digest_supported(const EVP_MD *digest)
 		}
 	}
 
-/* ssl3_cbc_digest_record computes the MAC of a decrypted, padded SSLv3/TLS
+/*-
+ * ssl3_cbc_digest_record computes the MAC of a decrypted, padded SSLv3/TLS
  * record.
  *
  *   ctx: the EVP_MD_CTX from which we take the hash function.
@@ -389,7 +395,8 @@ char ssl3_cbc_record_digest_supported(const EVP_MD *digest)
  * On entry: by virtue of having been through one of the remove_padding
  * functions, above, we know that data_plus_mac_size is large enough to contain
  * a padding byte and MAC. (If the padding was invalid, it might contain the
- * padding too. ) */
+ * padding too. ) 
+ */
 void ssl3_cbc_digest_record(
 	const EVP_MD *digest,
 	unsigned char* md_out,

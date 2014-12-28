@@ -94,7 +94,7 @@ int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type, unsigned char **ek
 	return(npubk);
 	}
 
-/* MACRO
+/*- MACRO
 void EVP_SealUpdate(ctx,out,outl,in,inl)
 EVP_CIPHER_CTX *ctx;
 unsigned char *out;

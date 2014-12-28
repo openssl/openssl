@@ -71,7 +71,8 @@ const char BN_version[]="Big Number" OPENSSL_VERSION_PTEXT;
 
 /* This stuff appears to be completely unused, so is deprecated */
 #ifndef OPENSSL_NO_DEPRECATED
-/* For a 32 bit machine
+/*-
+ * For a 32 bit machine
  * 2 -   4 ==  128
  * 3 -   8 ==  256
  * 4 -  16 ==  512

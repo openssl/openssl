@@ -94,7 +94,7 @@
  * on all source code distributions.
  */
 
-/*
+/*-
  * This code contains numerious changes and enhancements which were
  * made by lots of contributors over the last years to Patrick Powell's
  * original code:

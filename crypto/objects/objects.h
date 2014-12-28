@@ -639,7 +639,8 @@
 #define NID_ripemd160WithRSA		119
 #define OBJ_ripemd160WithRSA		1L,3L,36L,3L,3L,1L,2L
 
-/* Taken from rfc2040
+/*-
+ * Taken from rfc2040
  *  RC5_CBC_Parameters ::= SEQUENCE {
  *	version           INTEGER (v1_0(16)),
  *	rounds            INTEGER (8..127),

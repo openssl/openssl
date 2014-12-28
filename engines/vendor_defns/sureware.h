@@ -1,22 +1,21 @@
-/*
-* Written by Corinne Dive-Reclus(cdive@baltimore.com)
-*
-* Copyright@2001 Baltimore Technologies Ltd.
-*																								*	
-*		THIS FILE IS PROVIDED BY BALTIMORE TECHNOLOGIES ``AS IS'' AND																			*
-*		ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE					* 
-*		IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE				*
-*		ARE DISCLAIMED.  IN NO EVENT SHALL BALTIMORE TECHNOLOGIES BE LIABLE						*
-*		FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL				*
-*		DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS					*
-*		OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)					*
-*		HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT				*
-*		LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY				*
-*		OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF					*
-*		SUCH DAMAGE.																			*
-*
-* 
-*/
+/*-
+ * Written by Corinne Dive-Reclus(cdive@baltimore.com)
+ *
+ * Copyright@2001 Baltimore Technologies Ltd.
+ *
+ * THIS FILE IS PROVIDED BY BALTIMORE TECHNOLOGIES ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL BALTIMORE TECHNOLOGIES BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
 #ifdef WIN32
 #define SW_EXPORT	__declspec ( dllexport )
 #else
@@ -31,29 +30,29 @@
 #define SUREWAREHOOK_ERROR_UNIT_FAILURE -3
 #define SUREWAREHOOK_ERROR_DATA_SIZE -4
 #define SUREWAREHOOK_ERROR_INVALID_PAD -5
-/*
+/*-
 * -----------------WARNING-----------------------------------
 * In all the following functions:
 * msg is a string with at least 24 bytes free.
 * A 24 bytes string will be concatenated to the existing content of msg. 
 */
-/*
+/*-
 *	SureWare Initialisation function
 *	in param threadsafe, if !=0, thread safe enabled
 *	return SureWareHOOK_ERROR_UNIT_FAILURE if failure, 1 if success
 */
 typedef int SureWareHook_Init_t(char*const msg,int threadsafe);
 extern SW_EXPORT SureWareHook_Init_t SureWareHook_Init;
-/*
+/*-
 *	SureWare Finish function
 */
 typedef void SureWareHook_Finish_t(void);
 extern SW_EXPORT SureWareHook_Finish_t SureWareHook_Finish;
-/*
+/*-
 *	 PRE_CONDITION:
 *		DO NOT CALL ANY OF THE FOLLOWING FUNCTIONS IN CASE OF INIT FAILURE
 */
-/*
+/*-
 *	SureWare RAND Bytes function
 *	In case of failure, the content of buf is unpredictable.
 *	return 1 if success
@@ -68,7 +67,7 @@ extern SW_EXPORT SureWareHook_Finish_t SureWareHook_Finish;
 typedef int SureWareHook_Rand_Bytes_t(char*const msg,unsigned char *buf, int num);
 extern SW_EXPORT SureWareHook_Rand_Bytes_t SureWareHook_Rand_Bytes;
 
-/*
+/*-
 *	SureWare RAND Seed function
 *	Adds some seed to the Hardware Random Number Generator
 *	return 1 if success
@@ -83,7 +82,7 @@ extern SW_EXPORT SureWareHook_Rand_Bytes_t SureWareHook_Rand_Bytes;
 typedef int SureWareHook_Rand_Seed_t(char*const msg,const void *buf, int num);
 extern SW_EXPORT SureWareHook_Rand_Seed_t SureWareHook_Rand_Seed;
 
-/*
+/*-
 *	SureWare Load Private Key function
 *	return 1 if success
 *			SureWareHOOK_ERROR_FAILED if error while processing
@@ -98,7 +97,7 @@ extern SW_EXPORT SureWareHook_Rand_Seed_t SureWareHook_Rand_Seed;
 typedef int SureWareHook_Load_Privkey_t(char*const msg,const char *key_id,char **hptr,unsigned long *num,char *keytype);
 extern SW_EXPORT SureWareHook_Load_Privkey_t SureWareHook_Load_Privkey;
 
-/*
+/*-
 *	SureWare Info Public Key function
 *	return 1 if success
 *			SureWareHOOK_ERROR_FAILED if error while processing
@@ -114,7 +113,7 @@ typedef int SureWareHook_Info_Pubkey_t(char*const msg,const char *key_id,unsigne
 										char *keytype);
 extern SW_EXPORT SureWareHook_Info_Pubkey_t SureWareHook_Info_Pubkey;
 
-/*
+/*-
 *	SureWare Load Public Key function
 *	return 1 if success
 *			SureWareHOOK_ERROR_FAILED if error while processing
@@ -130,7 +129,7 @@ typedef int SureWareHook_Load_Rsa_Pubkey_t(char*const msg,const char *key_id,uns
 										unsigned long *n, unsigned long *e);
 extern SW_EXPORT SureWareHook_Load_Rsa_Pubkey_t SureWareHook_Load_Rsa_Pubkey;
 
-/*
+/*-
 *	SureWare Load DSA Public Key function
 *	return 1 if success
 *			SureWareHOOK_ERROR_FAILED if error while processing
@@ -149,7 +148,7 @@ typedef int SureWareHook_Load_Dsa_Pubkey_t(char*const msg,const char *key_id,uns
 										unsigned long *g);
 extern SW_EXPORT SureWareHook_Load_Dsa_Pubkey_t SureWareHook_Load_Dsa_Pubkey;
 
-/*
+/*-
 *	SureWare Free function
 *	Destroy the key into the hardware if destroy==1
 */
@@ -159,7 +158,7 @@ extern SW_EXPORT SureWareHook_Free_t SureWareHook_Free;
 #define SUREWARE_PKCS1_PAD 1
 #define SUREWARE_ISO9796_PAD 2
 #define SUREWARE_NO_PAD 0
-/*
+/*-
 * SureWare RSA Private Decryption
 * return 1 if success
 *			SureWareHOOK_ERROR_FAILED if error while processing
@@ -180,7 +179,7 @@ typedef int SureWareHook_Rsa_Priv_Dec_t(char*const msg,int flen,unsigned char *f
 										int *tlen,unsigned char *to,
 										char *prsa,int padding);
 extern SW_EXPORT SureWareHook_Rsa_Priv_Dec_t SureWareHook_Rsa_Priv_Dec;
-/*
+/*-
 * SureWare RSA Signature
 * return 1 if success
 *			SureWareHOOK_ERROR_FAILED if error while processing
@@ -201,7 +200,7 @@ typedef int SureWareHook_Rsa_Sign_t(char*const msg,int flen,unsigned char *from,
 										int *tlen,unsigned char *to,
 										char *prsa,int padding);
 extern SW_EXPORT SureWareHook_Rsa_Sign_t SureWareHook_Rsa_Sign;
-/*
+/*-
 * SureWare DSA Signature
 * return 1 if success
 *			SureWareHOOK_ERROR_FAILED if error while processing
@@ -219,7 +218,7 @@ typedef int SureWareHook_Dsa_Sign_t(char*const msg,int flen,const unsigned char 
 extern SW_EXPORT SureWareHook_Dsa_Sign_t SureWareHook_Dsa_Sign;
 
 
-/*
+/*-
 * SureWare Mod Exp
 * return 1 if success
 *			SureWareHOOK_ERROR_FAILED if error while processing

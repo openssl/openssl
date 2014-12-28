@@ -1,4 +1,4 @@
-/*
+/*-
  * ModExp / RSA (with/without KM) plugin API
  *
  * The application will load a dynamic library which
@@ -84,7 +84,8 @@
 
 #if HWCRYPTOHOOK_DECLARE_APPTYPES
 
-/* These structs are defined by the application and opaque to the
+/*-
+ * These structs are defined by the application and opaque to the
  * crypto plugin.  The application may define these as it sees fit.
  * Default declarations are provided here, but the application may
  *  #define HWCRYPTOHOOK_DECLARE_APPTYPES 0
@@ -100,7 +101,8 @@ typedef struct HWCryptoHook_CallerContextValue HWCryptoHook_CallerContext;
 
 #endif /* HWCRYPTOHOOK_DECLARE_APPTYPES */
 
-/* These next two structs are opaque to the application.  The crypto
+/*- 
+ * These next two structs are opaque to the application.  The crypto
  * plugin will return pointers to them; the caller simply manipulates
  * the pointers.
  */
@@ -111,7 +113,8 @@ typedef struct {
   char *buf;
   size_t size;
 } HWCryptoHook_ErrMsgBuf;
-/* Used for error reporting.  When a HWCryptoHook function fails it
+/*-
+ * Used for error reporting.  When a HWCryptoHook function fails it
  * will return a sentinel value (0 for pointer-valued functions, or a
  * negative number, usually HWCRYPTOHOOK_ERROR_FAILED, for
  * integer-valued ones).  It will, if an ErrMsgBuf is passed, also put
@@ -130,7 +133,8 @@ typedef struct HWCryptoHook_MPIStruct {
   unsigned char *buf;
   size_t size;
 } HWCryptoHook_MPI;
-/* When one of these is returned, a pointer is passed to the function.
+/*-
+ * When one of these is returned, a pointer is passed to the function.
  * At call, size is the space available.  Afterwards it is updated to
  * be set to the actual length (which may be more than the space available,
  * if there was not enough room and the result was truncated).
@@ -143,7 +147,8 @@ typedef struct HWCryptoHook_MPIStruct {
 
 #define HWCryptoHook_InitFlags_FallbackModExp    0x0002UL
 #define HWCryptoHook_InitFlags_FallbackRSAImmed  0x0004UL
-/* Enable requesting fallback to software in case of problems with the
+/*- 
+ * Enable requesting fallback to software in case of problems with the
  * hardware support.  This indicates to the crypto provider that the
  * application is prepared to fall back to software operation if the
  * ModExp* or RSAImmed* functions return HWCRYPTOHOOK_ERROR_FALLBACK.
@@ -154,7 +159,8 @@ typedef struct HWCryptoHook_MPIStruct {
  */
 
 #define HWCryptoHook_InitFlags_SimpleForkCheck   0x0010UL
-/* Without _SimpleForkCheck the library is allowed to assume that the
+/*-
+ * Without _SimpleForkCheck the library is allowed to assume that the
  * application will not fork and call the library in the child(ren).
  *
  * When it is specified, this is allowed.  However, after a fork
@@ -174,7 +180,8 @@ typedef struct {
   int mslimbfirst; /* 0 or 1 */
   int msbytefirst; /* 0 or 1; -1 = native */
 
-  /* All the callback functions should return 0 on success, or a
+  /*-
+   * All the callback functions should return 0 on success, or a
    * nonzero integer (whose value will be visible in the error message
    * put in the buffer passed to the call).
    *
@@ -183,7 +190,8 @@ typedef struct {
    * The callbacks may not call down again into the crypto plugin.
    */
   
-  /* For thread-safety.  Set everything to 0 if you promise only to be
+  /*-
+   * For thread-safety.  Set everything to 0 if you promise only to be
    * singlethreaded.  maxsimultaneous is the number of calls to
    * ModExp[Crt]/RSAImmed{Priv,Pub}/RSA.  If you don't know what to
    * put there then say 0 and the hook library will use a default.
@@ -207,7 +215,8 @@ typedef struct {
   void (*mutex_release)(HWCryptoHook_Mutex*);
   void (*mutex_destroy)(HWCryptoHook_Mutex*);
 
-  /* For greater efficiency, can use condition vars internally for
+  /*-
+   * For greater efficiency, can use condition vars internally for
    * synchronisation.  In this case maxsimultaneous is ignored, but
    * the other mutex stuff must be available.  In singlethreaded
    * programs, set everything to 0.
@@ -219,7 +228,8 @@ typedef struct {
   void (*condvar_broadcast)(HWCryptoHook_CondVar*);
   void (*condvar_destroy)(HWCryptoHook_CondVar*);
   
-  /* The semantics of acquiring and releasing mutexes and broadcasting
+  /*-
+   * The semantics of acquiring and releasing mutexes and broadcasting
    * and waiting on condition variables are expected to be those from
    * POSIX threads (pthreads).  The mutexes may be (in pthread-speak)
    * fast mutexes, recursive mutexes, or nonrecursive ones.
@@ -234,7 +244,8 @@ typedef struct {
                        int *len_io, char *buf,
                        HWCryptoHook_PassphraseContext *ppctx,
                        HWCryptoHook_CallerContext *cactx);
-  /* Passphrases and the prompt_info, if they contain high-bit-set
+  /*-
+   * Passphrases and the prompt_info, if they contain high-bit-set
    * characters, are UTF-8.  The prompt_info may be a null pointer if
    * no prompt information is available (it should not be an empty
    * string).  It will not contain text like `enter passphrase';
@@ -251,7 +262,8 @@ typedef struct {
                       const char *wrong_info,
                       HWCryptoHook_PassphraseContext *ppctx,
                       HWCryptoHook_CallerContext *cactx);
-  /* Requests that the human user physically insert a different
+  /*-
+   * Requests that the human user physically insert a different
    * smartcard, DataKey, etc.  The plugin should check whether the
    * currently inserted token(s) are appropriate, and if they are it
    * should not make this call.
@@ -263,7 +275,8 @@ typedef struct {
    * syntactically similar to that of prompt_info. 
    */
   
-  /* Note that a single LoadKey operation might cause several calls to
+  /*-
+   * Note that a single LoadKey operation might cause several calls to
    * getpassphrase and/or requestphystoken.  If requestphystoken is
    * not provided (ie, a null pointer is passed) then the plugin may
    * not support loading keys for which authorisation by several cards
@@ -285,7 +298,8 @@ typedef struct {
    */
 
   void (*logmessage)(void *logstream, const char *message);
-  /* A log message will be generated at least every time something goes
+  /*-
+   * A log message will be generated at least every time something goes
    * wrong and an ErrMsgBuf is filled in (or would be if one was
    * provided).  Other diagnostic information may be written there too,
    * including more detailed reasons for errors which are reported in an
@@ -325,7 +339,8 @@ HWCryptoHook_ContextHandle HWCryptoHook_Init_t(const HWCryptoHook_InitInfo *init
                                                HWCryptoHook_CallerContext *cactx);
 extern HWCryptoHook_Init_t HWCryptoHook_Init;
 
-/* Caller should set initinfosize to the size of the HWCryptoHook struct,
+/*-
+ * Caller should set initinfosize to the size of the HWCryptoHook struct,
  * so it can be extended later.
  *
  * On success, a message for display or logging by the server,
@@ -334,7 +349,8 @@ extern HWCryptoHook_Init_t HWCryptoHook_Init;
  * usual.
  */
 
-/* All these functions return 0 on success, HWCRYPTOHOOK_ERROR_FAILED
+/*-
+ * All these functions return 0 on success, HWCRYPTOHOOK_ERROR_FAILED
  * on most failures.  HWCRYPTOHOOK_ERROR_MPISIZE means at least one of
  * the output MPI buffer(s) was too small; the sizes of all have been
  * set to the desired size (and for those where the buffer was large
@@ -345,7 +361,8 @@ extern HWCryptoHook_Init_t HWCryptoHook_Init;
  * _NoStderr at init time then messages may be reported to stderr.
  */
 
-/* The RSAImmed* functions (and key managed RSA) only work with
+/*-
+ * The RSAImmed* functions (and key managed RSA) only work with
  * modules which have an RSA patent licence - currently that means KM
  * units; the ModExp* ones work with all modules, so you need a patent
  * licence in the software in the US.  They are otherwise identical.
@@ -404,7 +421,8 @@ int HWCryptoHook_RSAImmedPriv_t(HWCryptoHook_ContextHandle hwctx,
                                 const HWCryptoHook_ErrMsgBuf *errors);
 extern HWCryptoHook_RSAImmedPriv_t HWCryptoHook_RSAImmedPriv;
 
-/* The RSAImmed* and ModExp* functions may return E_FAILED or
+/*-
+ * The RSAImmed* and ModExp* functions may return E_FAILED or
  * E_FALLBACK for failure.
  *
  * E_FAILED means the failure is permanent and definite and there
@@ -426,7 +444,8 @@ int HWCryptoHook_RSALoadKey_t(HWCryptoHook_ContextHandle hwctx,
                               const HWCryptoHook_ErrMsgBuf *errors,
                               HWCryptoHook_PassphraseContext *ppctx);
 extern HWCryptoHook_RSALoadKey_t HWCryptoHook_RSALoadKey;
-/* The key_ident is a null-terminated string configured by the
+/*-
+ * The key_ident is a null-terminated string configured by the
  * user via the application's usual configuration mechanisms.
  * It is provided to the user by the crypto provider's key management
  * system.  The user must be able to enter at least any string of between
@@ -449,7 +468,8 @@ int HWCryptoHook_RSAGetPublicKey_t(HWCryptoHook_RSAKeyHandle k,
                                    HWCryptoHook_MPI *e,
                                    const HWCryptoHook_ErrMsgBuf *errors);
 extern HWCryptoHook_RSAGetPublicKey_t HWCryptoHook_RSAGetPublicKey;
-/* The crypto plugin will not store certificates.
+/*-
+ * The crypto plugin will not store certificates.
  *
  * Although this function for acquiring the public key value is
  * provided, it is not the purpose of this API to deal fully with the

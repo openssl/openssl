@@ -269,7 +269,8 @@ static int bio_read(BIO *bio, char *buf, int size_)
 	return size;
 	}
 
-/* non-copying interface: provide pointer to available data in buffer
+/*-
+ * non-copying interface: provide pointer to available data in buffer
  *    bio_nread0:  return number of available bytes
  *    bio_nread:   also advance index
  * (example usage:  bio_nread0(), read from buffer, bio_nread()
@@ -422,7 +423,8 @@ static int bio_write(BIO *bio, const char *buf, int num_)
 	return num;
 	}
 
-/* non-copying interface: provide pointer to region to write to
+/*-
+ * non-copying interface: provide pointer to region to write to
  *   bio_nwrite0:  check how much space is available
  *   bio_nwrite:   also increase length
  * (example usage:  bio_nwrite0(), write to buffer, bio_nwrite()

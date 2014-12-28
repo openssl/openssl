@@ -529,7 +529,8 @@ static int dtls1_preprocess_fragment(SSL *s,struct hm_header_st *msg_hdr,int max
 static int
 dtls1_retrieve_buffered_fragment(SSL *s, long max, int *ok)
 	{
-	/* (0) check whether the desired fragment is available
+	/*-
+	 * (0) check whether the desired fragment is available
 	 * if so:
 	 * (1) copy over the fragment to s->init_buf->data[]
 	 * (2) update s->init_num
@@ -986,7 +987,8 @@ int dtls1_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 	return(dtls1_do_write(s,SSL3_RT_HANDSHAKE));
 	}
 
-/* for these 2 messages, we need to
+/*-
+ * for these 2 messages, we need to
  * ssl->enc_read_ctx			re-init
  * ssl->s3->read_sequence		zero
  * ssl->s3->read_mac_secret		re-init
@@ -1262,7 +1264,7 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
 	struct dtls1_retransmit_state saved_state;
 	unsigned char save_write_sequence[8];
 
-	/*
+	/*-
 	  OPENSSL_assert(s->init_num == 0);
 	  OPENSSL_assert(s->init_off == 0);
 	 */

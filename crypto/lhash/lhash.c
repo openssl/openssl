@@ -56,7 +56,8 @@
  * [including the GNU Public Licence.]
  */
 
-/* Code for dynamic hash table routines
+/*-
+ * Code for dynamic hash table routines
  * Author - Eric Young v 2.0
  *
  * 2.2 eay - added #include "crypto.h" so the memory leak checking code is

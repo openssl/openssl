@@ -670,7 +670,8 @@ BIGNUM *bn_expand2(BIGNUM *a, int words);
 BIGNUM *bn_dup_expand(const BIGNUM *a, int words); /* unused */
 #endif
 
-/* Bignum consistency macros
+/*-
+ * Bignum consistency macros
  * There is one "API" macro, bn_fix_top(), for stripping leading zeroes from
  * bignum data after direct manipulations on the data. There is also an
  * "internal" macro, bn_check_top(), for verifying that there are no leading

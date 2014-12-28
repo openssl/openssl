@@ -385,7 +385,7 @@ static long enc_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
 	return(ret);
 	}
 
-/*
+/*-
 void BIO_set_cipher_ctx(b,c)
 BIO *b;
 EVP_CIPHER_ctx *c;

@@ -157,14 +157,16 @@ X509_NAME_ENTRY *X509_NAME_delete_entry(X509_NAME *name, int loc)
 		set_prev=ret->set-1;
 	set_next=sk_X509_NAME_ENTRY_value(sk,loc)->set;
 
-	/* set_prev is the previous set
+	/*-
+	 * set_prev is the previous set
 	 * set is the current set
 	 * set_next is the following
 	 * prev  1 1	1 1	1 1	1 1
 	 * set   1	1	2	2
 	 * next  1 1	2 2	2 2	3 2
 	 * so basically only if prev and next differ by 2, then
-	 * re-number down by 1 */
+	 * re-number down by 1 
+	 */
 	if (set_prev+1 < set_next)
 		for (i=loc; i<n; i++)
 			sk_X509_NAME_ENTRY_value(sk,i)->set--;

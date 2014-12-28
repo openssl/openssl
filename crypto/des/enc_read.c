@@ -66,7 +66,7 @@
 OPENSSL_IMPLEMENT_GLOBAL(int,DES_rw_mode)=DES_PCBC_MODE;
 
 
-/*
+/*-
  * WARNINGS:
  *
  *  -  The data format used by DES_enc_write() and DES_enc_read()

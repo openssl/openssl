@@ -2,7 +2,7 @@
 #ifdef __SUNPRO_C
 # include "../bn_asm.c"	/* kind of dirty hack for Sun Studio */
 #else
-/*
+/*-
  * x86_64 BIGNUM accelerator version 0.1, December 2002.
  *
  * Implemented by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
@@ -61,7 +61,7 @@
 #undef mul_add
 #undef sqr
 
-/*
+/*-
  * "m"(a), "+m"(r)	is the way to favor DirectPath µ-code;
  * "g"(0)		let the compiler to decide where does it
  *			want to keep the value of zero;

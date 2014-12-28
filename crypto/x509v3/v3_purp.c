@@ -436,7 +436,8 @@ static void x509v3_cache_extensions(X509 *x)
 	x->ex_flags |= EXFLAG_SET;
 }
 
-/* CA checks common to all purposes
+/*-
+ * CA checks common to all purposes
  * return codes:
  * 0 not a CA
  * 1 is a CA
@@ -599,7 +600,8 @@ static int no_check(const X509_PURPOSE *xp, const X509 *x, int ca)
 	return 1;
 }
 
-/* Various checks to see if one certificate issued the second.
+/*-
+ * Various checks to see if one certificate issued the second.
  * This can be used to prune a set of possible issuer certificates
  * which have been looked up using some simple method such as by
  * subject name.

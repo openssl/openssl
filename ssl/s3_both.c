@@ -272,7 +272,8 @@ f_err:
 	return(0);
 	}
 
-/* for these 2 messages, we need to
+/*-
+ * for these 2 messages, we need to
  * ssl->enc_read_ctx			re-init
  * ssl->s3->read_sequence		zero
  * ssl->s3->read_mac_secret		re-init

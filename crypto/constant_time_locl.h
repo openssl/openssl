@@ -1,5 +1,5 @@
 /* crypto/constant_time_locl.h */
-/*
+/*-
  * Utilities for constant-time cryptography.
  *
  * Author: Emilia Kasper (emilia@openssl.org)
@@ -53,7 +53,7 @@
 extern "C" {
 #endif
 
-/*
+/*-
  * The boolean methods return a bitmask of all ones (0xff...f) for true
  * and 0 for false. This is useful for choosing a value based on the result
  * of a conditional in constant time. For example,
@@ -112,7 +112,7 @@ static inline unsigned int constant_time_eq_int(int a, int b);
 static inline unsigned char constant_time_eq_int_8(int a, int b);
 
 
-/*
+/*-
  * Returns (mask & a) | (~mask & b).
  *
  * When |mask| is all 1s or all 0s (as returned by the methods above),

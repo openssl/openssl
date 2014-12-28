@@ -609,7 +609,8 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
 					}
 				e++;
 				}
-			/* So at this point we have
+			/*-
+			 * So at this point we have
 			 * np which is the start of the name string which is
 			 *   '\0' terminated. 
 			 * cp which is the start of the section string which is

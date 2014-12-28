@@ -82,7 +82,7 @@ int RSA_verify_PKCS1_PSS(RSA *rsa, const unsigned char *mHash,
 	unsigned char H_[EVP_MAX_MD_SIZE];
 
 	hLen = M_EVP_MD_size(Hash);
-	/*
+	/*-
 	 * Negative sLen has special meanings:
 	 *	-1	sLen == hLen
 	 *	-2	salt length is autorecovered from signature
@@ -177,7 +177,7 @@ int RSA_padding_add_PKCS1_PSS(RSA *rsa, unsigned char *EM,
 	EVP_MD_CTX ctx;
 
 	hLen = M_EVP_MD_size(Hash);
-	/*
+	/*-
 	 * Negative sLen has special meanings:
 	 *	-1	sLen == hLen
 	 *	-2	salt length is maximized

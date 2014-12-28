@@ -583,7 +583,8 @@ void X509_policy_tree_free(X509_POLICY_TREE *tree)
 
 	}
 
-/* Application policy checking function.
+/*-
+ * Application policy checking function.
  * Return codes:
  *  0 	Internal Error.
  *  1   Successful.

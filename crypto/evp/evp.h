@@ -79,7 +79,7 @@
 #include <openssl/fips.h>
 #endif
 
-/*
+/*-
 #define EVP_RC2_KEY_SIZE		16
 #define EVP_RC4_KEY_SIZE		16
 #define EVP_BLOWFISH_KEY_SIZE		16

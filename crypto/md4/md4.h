@@ -70,7 +70,7 @@ extern "C" {
 #error MD4 is disabled.
 #endif
 
-/*
+/*-
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  * ! MD4_LONG has to be at least 32 bits wide. If it's wider, then !
  * ! MD4_LONG_LOG2 has to be defined along.			   !

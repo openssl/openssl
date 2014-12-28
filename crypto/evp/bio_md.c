@@ -253,7 +253,7 @@ static int md_gets(BIO *bp, char *buf, int size)
 	return((int)ret);
 	}
 
-/*
+/*-
 static int md_puts(bp,str)
 BIO *bp;
 char *str;
