@@ -284,7 +284,8 @@ typedef EVP_PKEY * (*ENGINE_LOAD_KEY_PTR)(ENGINE *, const char *,
 typedef int (*ENGINE_SSL_CLIENT_CERT_PTR)(ENGINE *, SSL *ssl,
 	STACK_OF(X509_NAME) *ca_dn, X509 **pcert, EVP_PKEY **pkey,
 	STACK_OF(X509) **pother, UI_METHOD *ui_method, void *callback_data);
-/* These callback types are for an ENGINE's handler for cipher and digest logic.
+/*-
+ * These callback types are for an ENGINE's handler for cipher and digest logic.
  * These handlers have these prototypes;
  *   int foo(ENGINE *e, const EVP_CIPHER **cipher, const int **nids, int nid);
  *   int foo(ENGINE *e, const EVP_MD **digest, const int **nids, int nid);
@@ -351,13 +352,14 @@ void ENGINE_load_builtin_engines(void);
 unsigned int ENGINE_get_table_flags(void);
 void ENGINE_set_table_flags(unsigned int flags);
 
-/* Manage registration of ENGINEs per "table". For each type, there are 3
+/*- Manage registration of ENGINEs per "table". For each type, there are 3
  * functions;
  *   ENGINE_register_***(e) - registers the implementation from 'e' (if it has one)
  *   ENGINE_unregister_***(e) - unregister the implementation from 'e'
  *   ENGINE_register_all_***() - call ENGINE_register_***() for each 'e' in the list
  * Cleanup is automatically registered from each table when required, so
- * ENGINE_cleanup() will reverse any "register" operations. */
+ * ENGINE_cleanup() will reverse any "register" operations. 
+ */
 
 int ENGINE_register_RSA(ENGINE *e);
 void ENGINE_unregister_RSA(ENGINE *e);

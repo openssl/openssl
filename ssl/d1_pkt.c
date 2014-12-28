@@ -517,7 +517,8 @@ printf("\n");
 		}
 
 	rr->off=0;
-	/* So at this point the following is true
+	/*-
+	 * So at this point the following is true
 	 * ssl->s3->rrec.type 	is the type of record
 	 * ssl->s3->rrec.length	== number of bytes in record
 	 * ssl->s3->rrec.off	== offset to first valid byte
@@ -536,7 +537,8 @@ err:
 }
 
 
-/* Call this to get a new input record.
+/*-
+ * Call this to get a new input record.
  * It will return <= 0 if more data is needed, normally due to an error
  * or non-blocking IO.
  * When it finishes, one packet has been decoded and can be found in
@@ -710,7 +712,8 @@ again:
 
 	}
 
-/* Return up to 'len' payload bytes received in 'type' records.
+/*-
+ * Return up to 'len' payload bytes received in 'type' records.
  * 'type' is one of the following:
  *
  *   -  SSL3_RT_HANDSHAKE (when ssl3_get_message calls us)
@@ -778,10 +781,12 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 start:
 	s->rwstate=SSL_NOTHING;
 
-	/* s->s3->rrec.type	    - is the type of record
+	/*-
+	 * s->s3->rrec.type	    - is the type of record
 	 * s->s3->rrec.data,    - data
 	 * s->s3->rrec.off,     - offset into 'data' for next read
-	 * s->s3->rrec.length,  - number of bytes. */
+	 * s->s3->rrec.length,  - number of bytes. 
+	 */
 	rr = &(s->s3->rrec);
 
 	/* We are not handshaking and have no data yet,

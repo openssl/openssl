@@ -97,7 +97,8 @@ STACK_OF(type) \
 #define IMPLEMENT_STACK_OF(type) /* nada (obsolete in new safestack approach)*/
 
 
-/* Strings are special: normally an lhash entry will point to a single
+/*-
+ * Strings are special: normally an lhash entry will point to a single
  * (somewhat) mutable object. In the case of strings:
  *
  * a) Instead of a single char, there is an array of chars, NUL-terminated.
@@ -106,7 +107,7 @@ STACK_OF(type) \
  * So, they need their own declarations. Especially important for
  * type-checking tools, such as Deputy.
  *
-o * In practice, however, it appears to be hard to have a const
+ * In practice, however, it appears to be hard to have a const
  * string. For now, I'm settling for dealing with the fact it is a
  * string at all.
  */

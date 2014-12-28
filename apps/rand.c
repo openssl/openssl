@@ -66,7 +66,8 @@
 #undef PROG
 #define PROG rand_main
 
-/* -out file         - write to file
+/*-
+ * -out file         - write to file
  * -rand file:file   - PRNG seed files
  * -base64           - base64 encode output
  * -hex              - hex encode output

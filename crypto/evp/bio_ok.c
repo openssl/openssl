@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-/*
+/*-
 	From: Arne Ansper <arne@cyber.ee>
 
 	Why BIO_f_reliable?

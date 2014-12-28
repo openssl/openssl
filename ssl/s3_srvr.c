@@ -1269,7 +1269,8 @@ int ssl3_get_client_hello(SSL *s)
 		goto f_err;
 		}
 	
-	/* we now have the following setup. 
+	/*-
+	 * we now have the following setup. 
 	 * client_random
 	 * cipher_list 		- our prefered list of ciphers
 	 * ciphers 		- the clients prefered list of ciphers
@@ -2385,11 +2386,11 @@ int ssl3_get_client_key_exchange(SSL *s)
 			}
 
 
-		/*  Was doing kssl_ctx_free() here,
-		**  but it caused problems for apache.
-		**  kssl_ctx = kssl_ctx_free(kssl_ctx);
-		**  if (s->kssl_ctx)  s->kssl_ctx = NULL;
-		*/
+		/*- Was doing kssl_ctx_free() here,
+		 *  but it caused problems for apache.
+		 *  kssl_ctx = kssl_ctx_free(kssl_ctx);
+		 *  if (s->kssl_ctx)  s->kssl_ctx = NULL;
+		 */
 		}
 	else
 #endif	/* OPENSSL_NO_KRB5 */
@@ -3129,7 +3130,8 @@ int ssl3_send_newsession_ticket(SSL *s)
  		 */
 		if (slen > 0xFF00)
 			return -1;
-		/* Grow buffer if need be: the length calculation is as
+		/*-
+		 * Grow buffer if need be: the length calculation is as
  		 * follows 1 (size of message name) + 3 (message length
  		 * bytes) + 4 (ticket lifetime hint) + 2 (ticket length) +
  		 * 16 (key name) + max_iv_len (iv length) +
@@ -3221,7 +3223,8 @@ int ssl3_send_cert_status(SSL *s)
 	if (s->state == SSL3_ST_SW_CERT_STATUS_A)
 		{
 		unsigned char *p;
-		/* Grow buffer if need be: the length calculation is as
+		/*-
+		 * Grow buffer if need be: the length calculation is as
  		 * follows 1 (message type) + 3 (message length) +
  		 * 1 (ocsp response type) + 3 (ocsp response length)
  		 * + (ocsp response)

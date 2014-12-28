@@ -619,7 +619,8 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	if (!(tmp = EC_POINT_new(group)))
 		goto err;
 
-	/* prepare precomputed values:
+	/*-
+	 * prepare precomputed values:
 	 *    val_sub[i][0] :=     points[i]
 	 *    val_sub[i][1] := 3 * points[i]
 	 *    val_sub[i][2] := 5 * points[i]
@@ -744,7 +745,8 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	}
 
 
-/* ec_wNAF_precompute_mult()
+/*-
+ * ec_wNAF_precompute_mult()
  * creates an EC_PRE_COMP object with preprecomputed multiples of the generator
  * for use with wNAF splitting as implemented in ec_wNAF_mul().
  * 

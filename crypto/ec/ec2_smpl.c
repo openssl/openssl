@@ -901,7 +901,8 @@ int ec_GF2m_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_
 	lh = BN_CTX_get(ctx);
 	if (lh == NULL) goto err;
 
-	/* We have a curve defined by a Weierstrass equation
+	/*-
+	 * We have a curve defined by a Weierstrass equation
 	 *      y^2 + x*y = x^3 + a*x^2 + b.
 	 *  <=> x^3 + a*x^2 + x*y + b + y^2 = 0
 	 *  <=> ((x + a) * x + y ) * x + b + y^2 = 0
@@ -921,7 +922,8 @@ int ec_GF2m_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_
 	}
 
 
-/* Indicates whether two points are equal.
+/*-
+ * Indicates whether two points are equal.
  * Return values:
  *  -1   error
  *   0   equal (in affine coordinates)

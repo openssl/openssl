@@ -169,7 +169,8 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
 #endif /* OPENSSL_NO_ASM */
 
 
-/* BN_div[_no_branch] computes  dv := num / divisor,  rounding towards
+/*-
+ * BN_div[_no_branch] computes  dv := num / divisor,  rounding towards
  * zero, and sets up rm  such that  dv*divisor + rm = num  holds.
  * Thus:
  *     dv->neg == num->neg ^ divisor->neg  (unless the result is zero)

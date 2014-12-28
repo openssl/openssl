@@ -360,7 +360,8 @@
 #endif
 #endif
 
-	/* IP and FP
+	/*-
+	 * IP and FP
 	 * The problem is more of a geometric problem that random bit fiddling.
 	 0  1  2  3  4  5  6  7      62 54 46 38 30 22 14  6
 	 8  9 10 11 12 13 14 15      60 52 44 36 28 20 12  4

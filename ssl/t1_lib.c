@@ -290,13 +290,14 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		unsigned long size_str;
 		long lenmax; 
 
-		/* check for enough space.
-		   4 for the servername type and entension length
-		   2 for servernamelist length
-		   1 for the hostname type
-		   2 for hostname length
-		   + hostname length 
-		*/
+		/*-
+		 * check for enough space.
+		 * 4 for the servername type and entension length
+		 * 2 for servernamelist length
+		 * 1 for the hostname type
+		 * 2 for hostname length
+		 * + hostname length 
+		 */
 		   
 		if ((lenmax = limit - ret - 9) < 0 
 		    || (size_str = strlen(s->tlsext_hostname)) > (unsigned long)lenmax) 
@@ -623,7 +624,8 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 	}
 
 #ifndef OPENSSL_NO_EC
-/* ssl_check_for_safari attempts to fingerprint Safari using OS X
+/*-
+ * ssl_check_for_safari attempts to fingerprint Safari using OS X
  * SecureTransport using the TLS extension block in |d|, of length |n|.
  * Safari, since 10.6, sends exactly these extensions, in this order:
  *   SNI,
@@ -741,28 +743,30 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 		if (s->tlsext_debug_cb)
 			s->tlsext_debug_cb(s, 0, type, data, size,
 						s->tlsext_debug_arg);
-/* The servername extension is treated as follows:
-
-   - Only the hostname type is supported with a maximum length of 255.
-   - The servername is rejected if too long or if it contains zeros,
-     in which case an fatal alert is generated.
-   - The servername field is maintained together with the session cache.
-   - When a session is resumed, the servername call back invoked in order
-     to allow the application to position itself to the right context. 
-   - The servername is acknowledged if it is new for a session or when 
-     it is identical to a previously used for the same session. 
-     Applications can control the behaviour.  They can at any time
-     set a 'desirable' servername for a new SSL object. This can be the
-     case for example with HTTPS when a Host: header field is received and
-     a renegotiation is requested. In this case, a possible servername
-     presented in the new client hello is only acknowledged if it matches
-     the value of the Host: field. 
-   - Applications must  use SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
-     if they provide for changing an explicit servername context for the session,
-     i.e. when the session has been established with a servername extension. 
-   - On session reconnect, the servername extension may be absent. 
-
-*/      
+/*-
+ * The servername extension is treated as follows:
+ *
+ * - Only the hostname type is supported with a maximum length of 255.
+ * - The servername is rejected if too long or if it contains zeros,
+ *   in which case an fatal alert is generated.
+ * - The servername field is maintained together with the session cache.
+ * - When a session is resumed, the servername call back invoked in order
+ *   to allow the application to position itself to the right context. 
+ * - The servername is acknowledged if it is new for a session or when 
+ *   it is identical to a previously used for the same session. 
+ *   Applications can control the behaviour.  They can at any time
+ *   set a 'desirable' servername for a new SSL object. This can be the
+ *   case for example with HTTPS when a Host: header field is received and
+ *   a renegotiation is requested. In this case, a possible servername
+ *   presented in the new client hello is only acknowledged if it matches
+ *   the value of the Host: field. 
+ * - Applications must  use SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
+ *   if they provide for changing an explicit servername context for the 
+ *   session, i.e. when the session has been established with a servername 
+ *   extension. 
+ * - On session reconnect, the servername extension may be absent. 
+ *
+ */      
 
 		if (type == TLSEXT_TYPE_server_name)
 			{

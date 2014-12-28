@@ -234,7 +234,8 @@ int main(int Argc, char *ARGV[])
 	long errline;
 
 #if defined( OPENSSL_SYS_VMS) && (__INITIAL_POINTER_SIZE == 64)
-	/* 2011-03-22 SMS.
+	/*- 
+	 * 2011-03-22 SMS.
 	 * If we have 32-bit pointers everywhere, then we're safe, and
 	 * we bypass this mess, as on non-VMS systems.  (See ARGV,
 	 * above.)

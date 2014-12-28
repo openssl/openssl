@@ -1,7 +1,8 @@
 #ifndef HEADER_OPENSSLV_H
 #define HEADER_OPENSSLV_H
 
-/* Numeric release version identifier:
+/*-
+ * Numeric release version identifier:
  * MNNFFPPS: major minor fix patch status
  * The status nibble has one of the values 0 for development, 1 to e for betas
  * 1 to 14, and f for release.  The patch level is exactly that.
@@ -34,7 +35,8 @@
 #define OPENSSL_VERSION_PTEXT	" part of " OPENSSL_VERSION_TEXT
 
 
-/* The macros below are to be used for shared library (.so, .dll, ...)
+/*-
+ * The macros below are to be used for shared library (.so, .dll, ...)
  * versioning.  That kind of versioning works a bit differently between
  * operating systems.  The most usual scheme is to set a major and a minor
  * number, and have the runtime loader check that the major number is equal

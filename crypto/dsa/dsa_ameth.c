@@ -213,7 +213,8 @@ static int dsa_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
 			goto decerr;
 		if (sk_ASN1_TYPE_num(ndsa) != 2)
 			goto decerr;
-		/* Handle Two broken types:
+		/*-
+		 * Handle Two broken types:
 	    	 * SEQUENCE {parameters, priv_key}
 		 * SEQUENCE {pub_key, priv_key}
 		 */

@@ -62,7 +62,8 @@
  * otherwise paths must be specified - eg. try configuring with
  * "enable-gmp -I<includepath> -L<libpath> -lgmp". YMMV. */
 
-/* As for what this does - it's a largely unoptimised implementation of an
+/*-
+ * As for what this does - it's a largely unoptimised implementation of an
  * ENGINE that uses the GMP library to perform RSA private key operations. To
  * obtain more information about what "unoptimised" means, see my original mail
  * on the subject (though ignore the build instructions which have since

@@ -105,7 +105,8 @@ int DES_check_key_parity(const_DES_cblock *key)
 	return(1);
 	}
 
-/* Weak and semi week keys as take from
+/*-
+ * Weak and semi week keys as take from
  * %A D.W. Davies
  * %A W.L. Price
  * %T Security for Computer Networks
@@ -398,7 +399,7 @@ int DES_key_sched(const_DES_cblock *key, DES_key_schedule *schedule)
 	{
 	return(DES_set_key(key,schedule));
 	}
-/*
+/*-
 #undef des_fixup_key_parity
 void des_fixup_key_parity(des_cblock *key)
 	{

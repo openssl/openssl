@@ -63,7 +63,7 @@
 #include "des_locl.h"
 #include <openssl/rand.h>
 
-/*
+/*-
  * WARNINGS:
  *
  *  -  The data format used by DES_enc_write() and DES_enc_read()

@@ -2237,24 +2237,25 @@ int ssl3_send_client_key_exchange(SSL *s)
 				goto err;
 				}
 
-			/*  20010406 VRS - Earlier versions used KRB5 AP_REQ
-			**  in place of RFC 2712 KerberosWrapper, as in:
-			**
-			**  Send ticket (copy to *p, set n = length)
-			**  n = krb5_ap_req.length;
-			**  memcpy(p, krb5_ap_req.data, krb5_ap_req.length);
-			**  if (krb5_ap_req.data)  
-			**    kssl_krb5_free_data_contents(NULL,&krb5_ap_req);
-			**
-			**  Now using real RFC 2712 KerberosWrapper
-			**  (Thanks to Simon Wilkinson <sxw@sxw.org.uk>)
-			**  Note: 2712 "opaque" types are here replaced
-			**  with a 2-byte length followed by the value.
-			**  Example:
-			**  KerberosWrapper= xx xx asn1ticket 0 0 xx xx encpms
-			**  Where "xx xx" = length bytes.  Shown here with
-			**  optional authenticator omitted.
-			*/
+			/*-
+			 * 20010406 VRS - Earlier versions used KRB5 AP_REQ
+			 * in place of RFC 2712 KerberosWrapper, as in:
+			 *
+			 * Send ticket (copy to *p, set n = length)
+			 * n = krb5_ap_req.length;
+			 * memcpy(p, krb5_ap_req.data, krb5_ap_req.length);
+			 * if (krb5_ap_req.data)  
+			 *   kssl_krb5_free_data_contents(NULL,&krb5_ap_req);
+			 *
+			 * Now using real RFC 2712 KerberosWrapper
+			 * (Thanks to Simon Wilkinson <sxw@sxw.org.uk>)
+			 * Note: 2712 "opaque" types are here replaced
+			 * with a 2-byte length followed by the value.
+			 * Example:
+			 * KerberosWrapper= xx xx asn1ticket 0 0 xx xx encpms
+			 * Where "xx xx" = length bytes.  Shown here with
+			 * optional authenticator omitted.
+			 */
 
 			/*  KerberosWrapper.Ticket		*/
 			s2n(enc_ticket->length,p);
@@ -2285,12 +2286,13 @@ int ssl3_send_client_key_exchange(SSL *s)
 			    if (RAND_bytes(&(tmp_buf[2]),sizeof tmp_buf-2) <= 0)
 				goto err;
 
-			/*  20010420 VRS.  Tried it this way; failed.
-			**	EVP_EncryptInit_ex(&ciph_ctx,enc, NULL,NULL);
-			**	EVP_CIPHER_CTX_set_key_length(&ciph_ctx,
-			**				kssl_ctx->length);
-			**	EVP_EncryptInit_ex(&ciph_ctx,NULL, key,iv);
-			*/
+			/*-
+			 * 20010420 VRS.  Tried it this way; failed.
+			 *	EVP_EncryptInit_ex(&ciph_ctx,enc, NULL,NULL);
+			 *	EVP_CIPHER_CTX_set_key_length(&ciph_ctx,
+			 *				kssl_ctx->length);
+			 *	EVP_EncryptInit_ex(&ciph_ctx,NULL, key,iv);
+			 */
 
 			memset(iv, 0, sizeof iv);  /* per RFC 1510 */
 			EVP_EncryptInit_ex(&ciph_ctx,enc, NULL,
@@ -2409,7 +2411,8 @@ int ssl3_send_client_key_exchange(SSL *s)
 			 */
 			if ((alg_k & (SSL_kECDHr|SSL_kECDHe)) && (s->cert != NULL)) 
 				{
-				/* XXX: For now, we do not support client
+				/*-
+				 * XXX: For now, we do not support client
 				 * authentication using ECDH certificates.
 				 * To add such support, one needs to add
 				 * code that checks for appropriate 

@@ -140,7 +140,7 @@ void WHIRLPOOL_BitUpdate(WHIRLPOOL_CTX *c,const void *_inp,size_t bits)
 	else				/* bit-oriented loop */
 #endif
 		{
-		/*
+		/*-
 			   inp
 			   |
 			   +-------+-------+-------

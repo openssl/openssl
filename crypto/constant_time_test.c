@@ -1,5 +1,5 @@
 /* crypto/constant_time_test.c */
-/*
+/*-
  * Utilities for constant-time cryptography.
  *
  * Author: Emilia Kasper (emilia@openssl.org)

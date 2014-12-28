@@ -362,7 +362,8 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 
 TYPEDEF_D2I2D_OF(void);
 
-/* The following macros and typedefs allow an ASN1_ITEM
+/*-
+ * The following macros and typedefs allow an ASN1_ITEM
  * to be embedded in a structure and referenced. Since
  * the ASN1_ITEM pointers need to be globally accessible
  * (possibly from shared libraries) they may exist in

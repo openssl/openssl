@@ -61,7 +61,8 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 
-/* X509_REQ_INFO is handled in an unusual way to get round
+/*-
+ * X509_REQ_INFO is handled in an unusual way to get round
  * invalid encodings. Some broken certificate requests don't
  * encode the attributes field if it is empty. This is in
  * violation of PKCS#10 but we need to tolerate it. We do

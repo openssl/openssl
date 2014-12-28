@@ -436,7 +436,7 @@ static long acpt_ctrl(BIO *b, int cmd, long num, void *ptr)
 		ret=(long)data->bind_mode;
 		break;
 	case BIO_CTRL_DUP:
-/*		dbio=(BIO *)ptr;
+/*-		dbio=(BIO *)ptr;
 		if (data->param_port) EAY EAY
 			BIO_set_port(dbio,data->param_port);
 		if (data->param_hostname)

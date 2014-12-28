@@ -119,7 +119,7 @@ extern "C" {
 #endif
 
 
-/*
+/*-
  * BN_window_bits_for_exponent_size -- macro for sliding window mod_exp functions
  *
  *

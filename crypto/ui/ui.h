@@ -84,7 +84,8 @@ UI *UI_new(void);
 UI *UI_new_method(const UI_METHOD *method);
 void UI_free(UI *ui);
 
-/* The following functions are used to add strings to be printed and prompt
+/*-
+   The following functions are used to add strings to be printed and prompt
    strings to prompt for data.  The names are UI_{add,dup}_<function>_string
    and UI_{add,dup}_input_boolean.
 
@@ -243,7 +244,8 @@ UI_METHOD *UI_OpenSSL(void);
 
 
 /* ---------- For method writers ---------- */
-/* A method contains a number of functions that implement the low level
+/*-
+   A method contains a number of functions that implement the low level
    of the User Interface.  The functions are:
 
 	an opener	This function starts a session, maybe by opening

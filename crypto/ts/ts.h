@@ -101,7 +101,7 @@ extern "C" {
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
-/*
+/*-
 MessageImprint ::= SEQUENCE  {
      hashAlgorithm                AlgorithmIdentifier,
      hashedMessage                OCTET STRING  }
@@ -113,7 +113,7 @@ typedef struct TS_msg_imprint_st
 	ASN1_OCTET_STRING *hashed_msg;
 	} TS_MSG_IMPRINT;
 
-/*
+/*-
 TimeStampReq ::= SEQUENCE  {
    version                  INTEGER  { v1(1) },
    messageImprint           MessageImprint,
@@ -135,7 +135,7 @@ typedef struct TS_req_st
 	STACK_OF(X509_EXTENSION) *extensions;	/* [0] OPTIONAL */
 	} TS_REQ;
 
-/*
+/*-
 Accuracy ::= SEQUENCE {
                 seconds        INTEGER           OPTIONAL,
                 millis     [0] INTEGER  (1..999) OPTIONAL,
@@ -149,7 +149,7 @@ typedef struct TS_accuracy_st
 	ASN1_INTEGER *micros;
 	} TS_ACCURACY;
 
-/*
+/*-
 TSTInfo ::= SEQUENCE  {
     version                      INTEGER  { v1(1) },
     policy                       TSAPolicyId,
@@ -183,7 +183,7 @@ typedef struct TS_tst_info_st
 	STACK_OF(X509_EXTENSION) *extensions;
 	} TS_TST_INFO;	
 
-/*
+/*-
 PKIStatusInfo ::= SEQUENCE {
     status        PKIStatus,
     statusString  PKIFreeText     OPTIONAL,
@@ -226,7 +226,7 @@ typedef struct TS_status_info_st
 DECLARE_STACK_OF(ASN1_UTF8STRING)
 DECLARE_ASN1_SET_OF(ASN1_UTF8STRING)
 
-/*
+/*-
 TimeStampResp ::= SEQUENCE  {
      status                  PKIStatusInfo,
      timeStampToken          TimeStampToken     OPTIONAL }
@@ -241,7 +241,7 @@ typedef struct TS_resp_st
 
 /* The structure below would belong to the ESS component. */
 
-/*
+/*-
 IssuerSerial ::= SEQUENCE {
 	issuer                   GeneralNames,
 	serialNumber             CertificateSerialNumber
@@ -254,7 +254,7 @@ typedef struct ESS_issuer_serial
 	ASN1_INTEGER		*serial;
 	} ESS_ISSUER_SERIAL;
 
-/*
+/*-
 ESSCertID ::=  SEQUENCE {
         certHash                 Hash,
         issuerSerial             IssuerSerial OPTIONAL
@@ -270,7 +270,7 @@ typedef struct ESS_cert_id
 DECLARE_STACK_OF(ESS_CERT_ID)
 DECLARE_ASN1_SET_OF(ESS_CERT_ID)
 
-/*
+/*-
 SigningCertificate ::=  SEQUENCE {
        certs        SEQUENCE OF ESSCertID,
        policies     SEQUENCE OF PolicyInformation OPTIONAL
@@ -694,7 +694,7 @@ void TS_VERIFY_CTX_init(TS_VERIFY_CTX *ctx);
 void TS_VERIFY_CTX_free(TS_VERIFY_CTX *ctx);
 void TS_VERIFY_CTX_cleanup(TS_VERIFY_CTX *ctx);
 
-/* 
+/*-
  * If ctx is NULL, it allocates and returns a new object, otherwise
  * it returns ctx. It initialises all the members as follows:
  * flags = TS_VFY_ALL_IMPRINT & ~(TS_VFY_TSA_NAME | TS_VFY_SIGNATURE)

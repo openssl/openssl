@@ -79,7 +79,7 @@ void RC4(RC4_KEY *key, size_t len, const unsigned char *indata,
         d=key->data; 
 
 #if defined(RC4_CHUNK)
-	/*
+	/*-
 	 * The original reason for implementing this(*) was the fact that
 	 * pre-21164a Alpha CPUs don't have byte load/store instructions
 	 * and e.g. a byte store has to be done with 64-bit load, shift,
@@ -126,7 +126,7 @@ void RC4(RC4_KEY *key, size_t len, const unsigned char *indata,
 		RC4_CHUNK ichunk,otp;
 		const union { long one; char little; } is_endian = {1};
 
-		/*
+		/*-
 		 * I reckon we can afford to implement both endian
 		 * cases and to decide which way to take at run-time
 		 * because the machine code appears to be very compact
