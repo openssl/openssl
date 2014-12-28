@@ -121,13 +121,14 @@ const EC_METHOD *EC_GFp_simple_method(void)
 	}
 
 
-/* Most method functions in this file are designed to work with
+/*
+ * Most method functions in this file are designed to work with
  * non-trivial representations of field elements if necessary
  * (see ecp_mont.c): while standard modular addition and subtraction
  * are used, the field_mul and field_sqr methods will be used for
  * multiplication, and field_encode and field_decode (if defined)
  * will be used for converting between representations.
-
+ *
  * Functions ec_GFp_simple_points_make_affine() and
  * ec_GFp_simple_point_get_affine_coordinates() specifically assume
  * that if a non-trivial representation is used, it is a Montgomery
@@ -320,9 +321,11 @@ int ec_GFp_simple_group_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
 		if (!BN_copy(b, &group->b)) goto err;
 		}
 	
-	/* check the discriminant:
+	/*-
+	 * check the discriminant:
 	 * y^2 = x^3 + a*x + b is an elliptic curve <=> 4*a^3 + 27*b^2 != 0 (mod p) 
-         * 0 =< a, b < p */
+         * 0 =< a, b < p 
+	 */
 	if (BN_is_zero(a))
 		{
 		if (BN_is_zero(b)) goto err;
@@ -968,7 +971,8 @@ int ec_GFp_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_C
 	Z6 = BN_CTX_get(ctx);
 	if (Z6 == NULL) goto err;
 
-	/* We have a curve defined by a Weierstrass equation
+	/*-
+	 * We have a curve defined by a Weierstrass equation
 	 *      y^2 = x^3 + a*x + b.
 	 * The point to consider is given in Jacobian projective coordinates
 	 * where  (X, Y, Z)  represents  (x, y) = (X/Z^2, Y/Z^3).
@@ -1074,7 +1078,8 @@ int ec_GFp_simple_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *
 	Zb23 = BN_CTX_get(ctx);
 	if (Zb23 == NULL) goto end;
 
-	/* We have to decide whether
+	/*-
+	 * We have to decide whether
 	 *     (X_a/Z_a^2, Y_a/Z_a^3) = (X_b/Z_b^2, Y_b/Z_b^3),
 	 * or equivalently, whether
 	 *     (X_a*Z_b^2, Y_a*Z_b^3) = (X_b*Z_a^2, Y_b*Z_a^3).

@@ -335,7 +335,7 @@ int ssl_get_new_session(SSL *s, int session)
 			return(0);
 			}
 #ifndef OPENSSL_NO_TLSEXT
-		/*
+		/*-
 		 * If RFC5077 ticket, use empty session ID (as server).
 		 * Note that:
 		 * (a) ssl_get_prev_session() does lookahead into the
@@ -455,7 +455,8 @@ int ssl_get_new_session(SSL *s, int session)
 	return(1);
 	}
 
-/* ssl_get_prev attempts to find an SSL_SESSION to be used to resume this
+/*-
+ * ssl_get_prev attempts to find an SSL_SESSION to be used to resume this
  * connection. It is only called by servers.
  *
  *   session_id: points at the session ID in the ClientHello. This code will

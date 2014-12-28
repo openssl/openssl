@@ -56,7 +56,8 @@
  * [including the GNU Public Licence.]
  */
 
-/* Written by David L. Jones <jonesd@kcgl1.eng.ohio-state.edu>
+/*-
+ * Written by David L. Jones <jonesd@kcgl1.eng.ohio-state.edu>
  * Date:   22-JUL-1996
  * Revised: 25-SEP-1997		Update for 0.8.1, BIO_CTRL_SET -> BIO_C_SET_FD
  */

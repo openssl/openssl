@@ -74,7 +74,8 @@
 #ifndef OPENSSL_NO_EC2M
 
 
-/* Compute the x-coordinate x/z for the point 2*(x/z) in Montgomery projective 
+/*-
+ * Compute the x-coordinate x/z for the point 2*(x/z) in Montgomery projective 
  * coordinates.
  * Uses algorithm Mdouble in appendix of 
  *     Lopez, J. and Dahab, R.  "Fast multiplication on elliptic curves over 
@@ -106,7 +107,8 @@ static int gf2m_Mdouble(const EC_GROUP *group, BIGNUM *x, BIGNUM *z, BN_CTX *ctx
 	return ret;
 	}
 
-/* Compute the x-coordinate x1/z1 for the point (x1/z1)+(x2/x2) in Montgomery 
+/*-
+ * Compute the x-coordinate x1/z1 for the point (x1/z1)+(x2/x2) in Montgomery 
  * projective coordinates.
  * Uses algorithm Madd in appendix of 
  *     Lopez, J. and Dahab, R.  "Fast multiplication on elliptic curves over 
@@ -140,7 +142,8 @@ static int gf2m_Madd(const EC_GROUP *group, const BIGNUM *x, BIGNUM *x1, BIGNUM 
 	return ret;
 	}
 
-/* Compute the x, y affine coordinates from the point (x1, z1) (x2, z2) 
+/*-
+ * Compute the x, y affine coordinates from the point (x1, z1) (x2, z2) 
  * using Montgomery point multiplication algorithm Mxy() in appendix of 
  *     Lopez, J. and Dahab, R.  "Fast multiplication on elliptic curves over 
  *     GF(2^m) without precomputation" (CHES '99, LNCS 1717).
@@ -209,7 +212,8 @@ static int gf2m_Mxy(const EC_GROUP *group, const BIGNUM *x, const BIGNUM *y, BIG
 	}
 
 
-/* Computes scalar*point and stores the result in r.
+/*-
+ * Computes scalar*point and stores the result in r.
  * point can not equal r.
  * Uses a modified algorithm 2P of
  *     Lopez, J. and Dahab, R.  "Fast multiplication on elliptic curves over 
@@ -315,7 +319,8 @@ static int ec_GF2m_montgomery_point_multiply(const EC_GROUP *group, EC_POINT *r,
 	}
 
 
-/* Computes the sum
+/*-
+ * Computes the sum
  *     scalar*group->generator + scalars[0]*points[0] + ... + scalars[num-1]*points[num-1]
  * gracefully ignoring NULL scalar values.
  */

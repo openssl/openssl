@@ -85,9 +85,9 @@ extern "C" {
 #endif
 
 /*
-**	Depending on which KRB5 implementation used, some types from
-**	the other may be missing.  Resolve that here and now
-*/
+ *	Depending on which KRB5 implementation used, some types from
+ *	the other may be missing.  Resolve that here and now
+ */
 #ifdef KRB5_HEIMDAL
 typedef unsigned char krb5_octet;
 #define FAR
@@ -100,10 +100,10 @@ typedef unsigned char krb5_octet;
 #endif
 
 /*	Uncomment this to debug kssl problems or
-**	to trace usage of the Kerberos session key
-**
-**	#define		KSSL_DEBUG
-*/
+ *	to trace usage of the Kerberos session key
+ *
+ *	#define		KSSL_DEBUG
+ */
 
 #ifndef	KRB5SVC
 #define KRB5SVC	"host"
@@ -132,10 +132,10 @@ typedef struct kssl_err_st  {
 	} KSSL_ERR;
 
 
-/*	Context for passing
-**		(1) Kerberos session key to SSL, and
-**		(2)	Config data between application and SSL lib
-*/
+/*-	Context for passing
+ *		(1) Kerberos session key to SSL, and
+ *		(2)	Config data between application and SSL lib
+ */
 typedef struct kssl_ctx_st
         {
                                 /*	used by:    disposition:            */

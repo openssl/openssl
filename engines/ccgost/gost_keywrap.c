@@ -11,7 +11,8 @@
 #include "gost89.h"
 #include "gost_keywrap.h"
 
-/* Diversifies key using random UserKey Material
+/*-
+ * Diversifies key using random UserKey Material
  * Implements RFC 4357 p 6.5 key diversification algorithm 
  * 
  * inputKey - 32byte key to be diversified
@@ -58,7 +59,7 @@ void keyDiversifyCryptoPro(gost_ctx *ctx,const unsigned char *inputKey, const un
 	}	
 	
 
-/*
+/*-
  * Wraps key using RFC 4357 6.3
  * ctx - gost encryption context, initialized with some S-boxes 
  * keyExchangeKey (KEK) 32-byte (256-bit) shared key
@@ -78,7 +79,7 @@ int keyWrapCryptoPro(gost_ctx *ctx,const unsigned char *keyExchangeKey, const un
 	gost_mac_iv(ctx,32,ukm,sessionKey,32,wrappedKey+40);
 	return 1;
 	}
-/*
+/*-
  * Unwraps key using RFC 4357 6.4
  * ctx - gost encryption context, initialized with some S-boxes 
  * keyExchangeKey 32-byte shared key

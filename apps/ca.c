@@ -649,7 +649,7 @@ bad:
 			oid_bio=BIO_new_file(p,"r");
 			if (oid_bio == NULL) 
 				{
-				/*
+				/*-
 				BIO_printf(bio_err,"problems opening %s for extra oid's\n",p);
 				ERR_print_errors(bio_err);
 				*/
@@ -2806,7 +2806,8 @@ char *make_revocation_str(int rev_type, char *rev_arg)
 	return str;
 	}
 
-/* Convert revocation field to X509_REVOKED entry 
+/*-
+ * Convert revocation field to X509_REVOKED entry 
  * return code:
  * 0 error
  * 1 OK

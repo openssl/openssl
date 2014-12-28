@@ -176,7 +176,8 @@ void *X509V3_EXT_d2i(X509_EXTENSION *ext)
 	return method->d2i(NULL, &p, ext->value->length);
 }
 
-/* Get critical flag and decoded version of extension from a NID.
+/*-
+ * Get critical flag and decoded version of extension from a NID.
  * The "idx" variable returns the last found extension and can
  * be used to retrieve multiple extensions of the same NID.
  * However multiple extensions with the same NID is usually

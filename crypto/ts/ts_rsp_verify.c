@@ -393,7 +393,7 @@ int TS_RESP_verify_token(TS_VERIFY_CTX *ctx, PKCS7 *token)
 	return ret;
 	}
 
-/*
+/*-
  * Verifies whether the 'token' contains a valid time stamp token 
  * with regards to the settings of the context. Only those checks are
  * carried out that are specified in the context:

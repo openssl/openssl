@@ -54,7 +54,8 @@
  */
 
 
-/* This is an implementation of the ASN1 Time structure which is:
+/*-
+ * This is an implementation of the ASN1 Time structure which is:
  *    Time ::= CHOICE {
  *      utcTime        UTCTime,
  *      generalTime    GeneralizedTime }

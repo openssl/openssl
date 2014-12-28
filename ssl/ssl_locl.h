@@ -414,7 +414,7 @@
 
 /* we have used 000001ff - 23 bits left to go */
 
-/*
+/*-
  * Macros to check the export status and cipher strength for export ciphers.
  * Even though the macros for EXPORT and EXPORT40/56 have similar names,
  * their meaning is different:
@@ -455,7 +455,8 @@
 #define SSL_PKEY_GOST01		7
 #define SSL_PKEY_NUM		8
 
-/* SSL_kRSA <- RSA_ENC | (RSA_TMP & RSA_SIGN) |
+/*-
+ * SSL_kRSA <- RSA_ENC | (RSA_TMP & RSA_SIGN) |
  * 	    <- (EXPORT & (RSA_ENC | RSA_TMP) & RSA_SIGN)
  * SSL_kDH  <- DH_ENC & (RSA_ENC | RSA_SIGN | DSA_SIGN)
  * SSL_kEDH <- RSA_ENC | RSA_SIGN | DSA_SIGN

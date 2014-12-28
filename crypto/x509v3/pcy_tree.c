@@ -131,8 +131,9 @@ static void tree_print(char *str, X509_POLICY_TREE *tree,
 
 #endif
 
-/* Initialize policy tree. Return values:
- *  0 Some internal error occured.
+/*-
+ * Initialize policy tree. Return values:
+ *  0 Some internal error occurred.
  * -1 Inconsistent or invalid extensions in certificates.
  *  1 Tree initialized OK.
  *  2 Policy tree is empty.
@@ -756,7 +757,8 @@ void X509_policy_tree_free(X509_POLICY_TREE *tree)
 
 	}
 
-/* Application policy checking function.
+/*-
+ * Application policy checking function.
  * Return codes:
  *  0 	Internal Error.
  *  1   Successful.

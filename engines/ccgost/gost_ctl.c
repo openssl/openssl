@@ -18,7 +18,7 @@ static char *gost_params[GOST_PARAM_MAX+1]={NULL};
 static const char *gost_envnames[]={"CRYPT_PARAMS"};
 const ENGINE_CMD_DEFN gost_cmds[]=
 	{
-/*	{ GOST_CTRL_RNG,
+/*-	{ GOST_CTRL_RNG,
 	"RNG",
 	"Type of random number generator to use",
 	ENGINE_CMD_FLAG_STRING

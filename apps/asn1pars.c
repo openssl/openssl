@@ -69,7 +69,8 @@
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 
-/* -inform arg	- input format - default PEM (DER or PEM)
+/*-
+ * -inform arg	- input format - default PEM (DER or PEM)
  * -in arg	- input file - default stdin
  * -i		- indent the details by depth
  * -offset	- where in the file to start

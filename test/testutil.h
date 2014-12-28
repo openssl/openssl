@@ -1,5 +1,5 @@
 /* test/testutil.h */
-/*
+/*-
  * Utilities for writing OpenSSL unit tests.
  *
  * More information:
@@ -59,7 +59,8 @@
 #ifndef HEADER_TESTUTIL_H
 #define HEADER_TESTUTIL_H
 
-/* SETUP_TEST_FIXTURE and EXECUTE_TEST macros for test case functions.
+/*-
+ * SETUP_TEST_FIXTURE and EXECUTE_TEST macros for test case functions.
  *
  * SETUP_TEST_FIXTURE will call set_up() to create a new TEST_FIXTURE_TYPE
  * object called "fixture". It will also allocate the "result" variable used

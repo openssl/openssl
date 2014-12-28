@@ -90,7 +90,7 @@ extern "C" {
 #define OCSP_RESPID_KEY			0x400
 #define OCSP_NOTIME			0x800
 
-/*   CertID ::= SEQUENCE {
+/*-  CertID ::= SEQUENCE {
  *       hashAlgorithm            AlgorithmIdentifier,
  *       issuerNameHash     OCTET STRING, -- Hash of Issuer's DN
  *       issuerKeyHash      OCTET STRING, -- Hash of Issuers public key (excluding the tag & length fields)
@@ -106,7 +106,7 @@ typedef struct ocsp_cert_id_st
 
 DECLARE_STACK_OF(OCSP_CERTID)
 
-/*   Request ::=     SEQUENCE {
+/*-  Request ::=     SEQUENCE {
  *       reqCert                    CertID,
  *       singleRequestExtensions    [0] EXPLICIT Extensions OPTIONAL }
  */
@@ -120,7 +120,7 @@ DECLARE_STACK_OF(OCSP_ONEREQ)
 DECLARE_ASN1_SET_OF(OCSP_ONEREQ)
 
 
-/*   TBSRequest      ::=     SEQUENCE {
+/*-  TBSRequest      ::=     SEQUENCE {
  *       version             [0] EXPLICIT Version DEFAULT v1,
  *       requestorName       [1] EXPLICIT GeneralName OPTIONAL,
  *       requestList             SEQUENCE OF Request,
@@ -134,7 +134,7 @@ typedef struct ocsp_req_info_st
 	STACK_OF(X509_EXTENSION) *requestExtensions;
 	} OCSP_REQINFO;
 
-/*   Signature       ::=     SEQUENCE {
+/*-  Signature       ::=     SEQUENCE {
  *       signatureAlgorithm   AlgorithmIdentifier,
  *       signature            BIT STRING,
  *       certs                [0] EXPLICIT SEQUENCE OF Certificate OPTIONAL }
@@ -146,7 +146,7 @@ typedef struct ocsp_signature_st
 	STACK_OF(X509) *certs;
 	} OCSP_SIGNATURE;
 
-/*   OCSPRequest     ::=     SEQUENCE {
+/*-  OCSPRequest     ::=     SEQUENCE {
  *       tbsRequest                  TBSRequest,
  *       optionalSignature   [0]     EXPLICIT Signature OPTIONAL }
  */
@@ -156,7 +156,7 @@ typedef struct ocsp_request_st
 	OCSP_SIGNATURE *optionalSignature; /* OPTIONAL */
 	} OCSP_REQUEST;
 
-/*   OCSPResponseStatus ::= ENUMERATED {
+/*-  OCSPResponseStatus ::= ENUMERATED {
  *       successful            (0),      --Response has valid confirmations
  *       malformedRequest      (1),      --Illegal confirmation request
  *       internalError         (2),      --Internal error in issuer
@@ -173,7 +173,7 @@ typedef struct ocsp_request_st
 #define OCSP_RESPONSE_STATUS_SIGREQUIRED          5
 #define OCSP_RESPONSE_STATUS_UNAUTHORIZED         6
 
-/*   ResponseBytes ::=       SEQUENCE {
+/*-  ResponseBytes ::=       SEQUENCE {
  *       responseType   OBJECT IDENTIFIER,
  *       response       OCTET STRING }
  */
@@ -183,7 +183,7 @@ typedef struct ocsp_resp_bytes_st
 	ASN1_OCTET_STRING *response;
 	} OCSP_RESPBYTES;
 
-/*   OCSPResponse ::= SEQUENCE {
+/*-  OCSPResponse ::= SEQUENCE {
  *      responseStatus         OCSPResponseStatus,
  *      responseBytes          [0] EXPLICIT ResponseBytes OPTIONAL }
  */
@@ -193,7 +193,7 @@ struct ocsp_response_st
 	OCSP_RESPBYTES  *responseBytes;
 	};
 
-/*   ResponderID ::= CHOICE {
+/*-  ResponderID ::= CHOICE {
  *      byName   [1] Name,
  *      byKey    [2] KeyHash }
  */
@@ -211,11 +211,11 @@ struct ocsp_responder_id_st
 DECLARE_STACK_OF(OCSP_RESPID)
 DECLARE_ASN1_FUNCTIONS(OCSP_RESPID)
 
-/*   KeyHash ::= OCTET STRING --SHA-1 hash of responder's public key
+/*-  KeyHash ::= OCTET STRING --SHA-1 hash of responder's public key
  *                            --(excluding the tag and length fields)
  */
 
-/*   RevokedInfo ::= SEQUENCE {
+/*-  RevokedInfo ::= SEQUENCE {
  *       revocationTime              GeneralizedTime,
  *       revocationReason    [0]     EXPLICIT CRLReason OPTIONAL }
  */
@@ -225,7 +225,7 @@ typedef struct ocsp_revoked_info_st
 	ASN1_ENUMERATED *revocationReason;
 	} OCSP_REVOKEDINFO;
 
-/*   CertStatus ::= CHOICE {
+/*-  CertStatus ::= CHOICE {
  *       good                [0]     IMPLICIT NULL,
  *       revoked             [1]     IMPLICIT RevokedInfo,
  *       unknown             [2]     IMPLICIT UnknownInfo }
@@ -243,7 +243,7 @@ typedef struct ocsp_cert_status_st
 		} value;
 	} OCSP_CERTSTATUS;
 
-/*   SingleResponse ::= SEQUENCE {
+/*-  SingleResponse ::= SEQUENCE {
  *      certID                       CertID,
  *      certStatus                   CertStatus,
  *      thisUpdate                   GeneralizedTime,
@@ -262,7 +262,7 @@ typedef struct ocsp_single_response_st
 DECLARE_STACK_OF(OCSP_SINGLERESP)
 DECLARE_ASN1_SET_OF(OCSP_SINGLERESP)
 
-/*   ResponseData ::= SEQUENCE {
+/*-  ResponseData ::= SEQUENCE {
  *      version              [0] EXPLICIT Version DEFAULT v1,
  *      responderID              ResponderID,
  *      producedAt               GeneralizedTime,
@@ -278,7 +278,7 @@ typedef struct ocsp_response_data_st
 	STACK_OF(X509_EXTENSION) *responseExtensions;
 	} OCSP_RESPDATA;
 
-/*   BasicOCSPResponse       ::= SEQUENCE {
+/*-  BasicOCSPResponse       ::= SEQUENCE {
  *      tbsResponseData      ResponseData,
  *      signatureAlgorithm   AlgorithmIdentifier,
  *      signature            BIT STRING,
@@ -308,7 +308,7 @@ typedef struct ocsp_basic_response_st
 	STACK_OF(X509) *certs;
 	} OCSP_BASICRESP;
 
-/*
+/*-
  *   CRLReason ::= ENUMERATED {
  *        unspecified             (0),
  *        keyCompromise           (1),
@@ -329,7 +329,8 @@ typedef struct ocsp_basic_response_st
 #define OCSP_REVOKED_STATUS_CERTIFICATEHOLD         6
 #define OCSP_REVOKED_STATUS_REMOVEFROMCRL           8
 
-/* CrlID ::= SEQUENCE {
+/*-
+ * CrlID ::= SEQUENCE {
  *     crlUrl               [0]     EXPLICIT IA5String OPTIONAL,
  *     crlNum               [1]     EXPLICIT INTEGER OPTIONAL,
  *     crlTime              [2]     EXPLICIT GeneralizedTime OPTIONAL }
@@ -341,7 +342,8 @@ typedef struct ocsp_crl_id_st
 	ASN1_GENERALIZEDTIME *crlTime;
         } OCSP_CRLID;
 
-/* ServiceLocator ::= SEQUENCE {
+/*-
+ * ServiceLocator ::= SEQUENCE {
  *      issuer    Name,
  *      locator   AuthorityInfoAccessSyntax OPTIONAL }
  */

@@ -254,7 +254,8 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
 						signature);
 		if (rv == 1)
 			outl = signature->length;
-		/* Return value meanings:
+		/*-
+		 * Return value meanings:
 		 * <=0: error.
 		 *   1: method does everything.
 		 *   2: carry on as normal.

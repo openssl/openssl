@@ -92,7 +92,8 @@ int DH_generate_parameters_ex(DH *ret, int prime_len, int generator, BN_GENCB *c
 	return dh_builtin_genparams(ret, prime_len, generator, cb);
 	}
 
-/* We generate DH parameters as follows
+/*-
+ * We generate DH parameters as follows
  * find a prime q which is prime_len/2 bits long.
  * p=(2*q)+1 or (p-1)/2 = q
  * For this case, g is a generator if

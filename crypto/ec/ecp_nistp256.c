@@ -84,7 +84,8 @@ static const felem_bytearray nistp256_curve_params[5] = {
 	 0xcb, 0xb6, 0x40, 0x68, 0x37, 0xbf, 0x51, 0xf5}
 };
 
-/* The representation of field elements.
+/*-
+ * The representation of field elements.
  * ------------------------------------
  *
  * We represent field elements with either four 128-bit values, eight 128-bit
@@ -179,8 +180,10 @@ static BIGNUM *smallfelem_to_BN(BIGNUM *out, const smallfelem in)
 	}
 
 
-/* Field operations
- * ---------------- */
+/*-
+ * Field operations
+ * ----------------
+ */
 
 static void smallfelem_one(smallfelem out)
 	{
@@ -253,7 +256,8 @@ static void longfelem_scalar(longfelem out, const u64 scalar)
 /* zero105 is 0 mod p */
 static const felem zero105 = { two105m41m9, two105, two105m41p9, two105m41p9 };
 
-/* smallfelem_neg sets |out| to |-small|
+/*-
+ * smallfelem_neg sets |out| to |-small|
  * On exit:
  *   out[i] < out[i] + 2^105
  */
@@ -266,7 +270,8 @@ static void smallfelem_neg(felem out, const smallfelem small)
 	out[3] = zero105[3] - small[3];
 	}
 
-/* felem_diff subtracts |in| from |out|
+/*-
+ * felem_diff subtracts |in| from |out|
  * On entry:
  *   in[i] < 2^104
  * On exit:
@@ -293,7 +298,8 @@ static void felem_diff(felem out, const felem in)
 /* zero107 is 0 mod p */
 static const felem zero107 = { two107m43m11, two107, two107m43p11, two107m43p11 };
 
-/* An alternative felem_diff for larger inputs |in|
+/*-
+ * An alternative felem_diff for larger inputs |in|
  * felem_diff_zero107 subtracts |in| from |out|
  * On entry:
  *   in[i] < 2^106
@@ -314,7 +320,8 @@ static void felem_diff_zero107(felem out, const felem in)
 	out[3] -= in[3];
 	}
 
-/* longfelem_diff subtracts |in| from |out|
+/*-
+ * longfelem_diff subtracts |in| from |out|
  * On entry:
  *   in[i] < 7*2^67
  * On exit:
@@ -357,7 +364,8 @@ static void longfelem_diff(longfelem out, const longfelem in)
 /* zero110 is 0 mod p */
 static const felem zero110 = { two64m0, two110p32m0, two64m46, two64m32 };
 
-/* felem_shrink converts an felem into a smallfelem. The result isn't quite
+/*-
+ * felem_shrink converts an felem into a smallfelem. The result isn't quite
  * minimal as the value may be greater than p.
  *
  * On entry:
@@ -409,12 +417,14 @@ static void felem_shrink(smallfelem out, const felem in)
 	/* As tmp[3] < 2^65, high is either 1 or 0 */
 	high <<= 63;
 	high >>= 63;
-	/* high is:
+	/*-
+	 * high is:
 	 *   all ones   if the high word of tmp[3] is 1
 	 *   all zeros  if the high word of tmp[3] if 0 */
 	low = tmp[3];
 	mask = low >> 63;
-	/* mask is:
+	/*-
+	 * mask is:
 	 *   all ones   if the MSB of low is 1
 	 *   all zeros  if the MSB of low if 0 */
 	low &= bottom63bits;
@@ -422,7 +432,8 @@ static void felem_shrink(smallfelem out, const felem in)
 	/* if low was greater than kPrime3Test then the MSB is zero */
 	low = ~low;
 	low >>= 63;
-	/* low is:
+	/*-
+	 * low is:
 	 *   all ones   if low was > kPrime3Test
 	 *   all zeros  if low was <= kPrime3Test */
 	mask = (mask & low) | high;
@@ -452,7 +463,8 @@ static void smallfelem_expand(felem out, const smallfelem in)
 	out[3] = in[3];
 	}
 
-/* smallfelem_square sets |out| = |small|^2
+/*- 
+ * smallfelem_square sets |out| = |small|^2
  * On entry:
  *   small[i] < 2^64
  * On exit:
@@ -530,7 +542,8 @@ static void smallfelem_square(longfelem out, const smallfelem small)
 	out[7] = high;
 	}
 
-/* felem_square sets |out| = |in|^2
+/*-
+ * felem_square sets |out| = |in|^2
  * On entry:
  *   in[i] < 2^109
  * On exit:
@@ -543,7 +556,8 @@ static void felem_square(longfelem out, const felem in)
 	smallfelem_square(out, small);
 	}
 
-/* smallfelem_mul sets |out| = |small1| * |small2|
+/*-
+ * smallfelem_mul sets |out| = |small1| * |small2|
  * On entry:
  *   small1[i] < 2^64
  *   small2[i] < 2^64
@@ -658,7 +672,8 @@ static void smallfelem_mul(longfelem out, const smallfelem small1, const smallfe
 	out[7] = high;
 	}
 
-/* felem_mul sets |out| = |in1| * |in2|
+/*-
+ * felem_mul sets |out| = |in1| * |in2|
  * On entry:
  *   in1[i] < 2^109
  *   in2[i] < 2^109
@@ -673,7 +688,8 @@ static void felem_mul(longfelem out, const felem in1, const felem in2)
 	smallfelem_mul(out, small1, small2);
 	}
 
-/* felem_small_mul sets |out| = |small1| * |in2|
+/*-
+ * felem_small_mul sets |out| = |small1| * |in2|
  * On entry:
  *   small1[i] < 2^64
  *   in2[i] < 2^109
@@ -693,7 +709,8 @@ static void felem_small_mul(longfelem out, const smallfelem small1, const felem 
 /* zero100 is 0 mod p */
 static const felem zero100 = { two100m36m4, two100, two100m36p4, two100m36p4 };
 
-/* Internal function for the different flavours of felem_reduce.
+/*-
+ * Internal function for the different flavours of felem_reduce.
  * felem_reduce_ reduces the higher coefficients in[4]-in[7].
  * On entry:
  *   out[0] >= in[6] + 2^32*in[6] + in[7] + 2^32*in[7] 
@@ -740,7 +757,8 @@ static void felem_reduce_(felem out, const longfelem in)
 	out[3] += (in[7] * 3);
 	}
 
-/* felem_reduce converts a longfelem into an felem.
+/*-
+ * felem_reduce converts a longfelem into an felem.
  * To be called directly after felem_square or felem_mul.
  * On entry:
  *   in[0] < 2^64, in[1] < 3*2^64, in[2] < 5*2^64, in[3] < 7*2^64
@@ -757,7 +775,8 @@ static void felem_reduce(felem out, const longfelem in)
 
 	felem_reduce_(out, in);
 
-	/* out[0] > 2^100 - 2^36 - 2^4 - 3*2^64 - 3*2^96 - 2^64 - 2^96 > 0
+	/*-
+	 * out[0] > 2^100 - 2^36 - 2^4 - 3*2^64 - 3*2^96 - 2^64 - 2^96 > 0
 	 * out[1] > 2^100 - 2^64 - 7*2^96 > 0
 	 * out[2] > 2^100 - 2^36 + 2^4 - 5*2^64 - 5*2^96 > 0
 	 * out[3] > 2^100 - 2^36 + 2^4 - 7*2^64 - 5*2^96 - 3*2^96 > 0
@@ -769,7 +788,8 @@ static void felem_reduce(felem out, const longfelem in)
 	 */
 	}
 
-/* felem_reduce_zero105 converts a larger longfelem into an felem.
+/*-
+ * felem_reduce_zero105 converts a larger longfelem into an felem.
  * On entry:
  *   in[0] < 2^71
  * On exit:
@@ -784,7 +804,8 @@ static void felem_reduce_zero105(felem out, const longfelem in)
 
 	felem_reduce_(out, in);
 
-	/* out[0] > 2^105 - 2^41 - 2^9 - 2^71 - 2^103 - 2^71 - 2^103 > 0
+	/*-
+	 * out[0] > 2^105 - 2^41 - 2^9 - 2^71 - 2^103 - 2^71 - 2^103 > 0
 	 * out[1] > 2^105 - 2^71 - 2^103 > 0
 	 * out[2] > 2^105 - 2^41 + 2^9 - 2^71 - 2^103 > 0
 	 * out[3] > 2^105 - 2^41 + 2^9 - 2^71 - 2^103 - 2^103 > 0
@@ -886,7 +907,8 @@ static void smallfelem_mul_contract(smallfelem out, const smallfelem in1, const 
 	felem_contract(out, tmp);
 	}
 
-/* felem_is_zero returns a limb with all bits set if |in| == 0 (mod p) and 0
+/*-
+ * felem_is_zero returns a limb with all bits set if |in| == 0 (mod p) and 0
  * otherwise.
  * On entry:
  *   small[i] < 2^64
@@ -931,7 +953,8 @@ static int smallfelem_is_zero_int(const smallfelem small)
 	return (int) (smallfelem_is_zero(small) & ((limb)1));
 	}
 
-/* felem_inv calculates |out| = |in|^{-1}
+/*-
+ * felem_inv calculates |out| = |in|^{-1}
  *
  * Based on Fermat's Little Theorem:
  *   a^p = a (mod p)
@@ -1010,14 +1033,16 @@ static void smallfelem_inv_contract(smallfelem out, const smallfelem in)
 	felem_contract(out, tmp);
 	}
 
-/* Group operations
+/*-
+ * Group operations
  * ----------------
  *
  * Building on top of the field operations we have the operations on the
  * elliptic curve group itself. Points on the curve are represented in Jacobian
  * coordinates */
 
-/* point_double calculates 2*(x_in, y_in, z_in)
+/*-
+ * point_double calculates 2*(x_in, y_in, z_in)
  *
  * The method is taken from:
  *   http://hyperelliptic.org/EFD/g1p/auto-shortw-jacobian-3.html#doubling-dbl-2001-b
@@ -1145,7 +1170,8 @@ copy_small_conditional(felem out, const smallfelem in, limb mask)
 		}
 	}
 
-/* point_add calcuates (x1, y1, z1) + (x2, y2, z2)
+/*-
+ * point_add calcuates (x1, y1, z1) + (x2, y2, z2)
  *
  * The method is taken from:
  *   http://hyperelliptic.org/EFD/g1p/auto-shortw-jacobian-3.html#addition-add-2007-bl,
@@ -1334,7 +1360,8 @@ static void point_add_small(smallfelem x3, smallfelem y3, smallfelem z3,
 	felem_shrink(z3, felem_z3);
 	}
 
-/* Base point pre computation
+/*-
+ * Base point pre computation
  * --------------------------
  *
  * Two different sorts of precomputed tables are used in the following code.

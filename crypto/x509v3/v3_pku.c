@@ -97,7 +97,7 @@ static int i2r_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method,
 	return 1;
 }
 
-/*
+/*-
 static PKEY_USAGE_PERIOD *v2i_PKEY_USAGE_PERIOD(method, ctx, values)
 X509V3_EXT_METHOD *method;
 X509V3_CTX *ctx;

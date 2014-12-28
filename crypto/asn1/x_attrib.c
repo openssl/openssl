@@ -62,7 +62,8 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 
-/* X509_ATTRIBUTE: this has the following form:
+/*-
+ * X509_ATTRIBUTE: this has the following form:
  *
  * typedef struct x509_attributes_st
  *	{

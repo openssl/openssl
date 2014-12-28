@@ -51,7 +51,8 @@ typedef int64_t s64;
 
 
 /******************************************************************************/
-/*		    INTERNAL REPRESENTATION OF FIELD ELEMENTS
+/*-
+ * INTERNAL REPRESENTATION OF FIELD ELEMENTS
  *
  * Field elements are represented as a_0 + 2^56*a_1 + 2^112*a_2 + 2^168*a_3
  * using 64-bit coefficients called 'limbs',
@@ -99,7 +100,8 @@ static const felem_bytearray nistp224_curve_params[5] = {
 	 0x44,0xd5,0x81,0x99,0x85,0x00,0x7e,0x34}
 };
 
-/* Precomputed multiples of the standard generator
+/*-
+ * Precomputed multiples of the standard generator
  * Points are given in coordinates (X, Y, Z) where Z normally is 1
  * (0 for the point at infinity).
  * For each field element, slice a_0 is word 0, etc.
@@ -344,7 +346,8 @@ static BIGNUM *felem_to_BN(BIGNUM *out, const felem in)
 	}
 
 /******************************************************************************/
-/*				FIELD OPERATIONS
+/*-
+ *				FIELD OPERATIONS
  *
  * Field operations, using the internal representation of field elements.
  * NB! These operations are specific to our point multiplication and cannot be
@@ -519,7 +522,8 @@ static void felem_mul(widefelem out, const felem in1, const felem in2)
 	out[6] = ((widelimb) in1[3]) * in2[3];
 	}
 
-/* Reduce seven 128-bit coefficients to four 64-bit coefficients.
+/*-
+ * Reduce seven 128-bit coefficients to four 64-bit coefficients.
  * Requires in[i] < 2^126,
  * ensures out[0] < 2^56, out[1] < 2^56, out[2] < 2^56, out[3] <= 2^56 + 2^16 */
 static void felem_reduce(felem out, const widefelem in)
@@ -578,9 +582,11 @@ static void felem_reduce(felem out, const widefelem in)
 	/* output[3] <= 2^56 + 2^16 */
 	out[2] = output[2] & 0x00ffffffffffffff;
 
-	/* out[0] < 2^56, out[1] < 2^56, out[2] < 2^56,
+	/*-
+	 * out[0] < 2^56, out[1] < 2^56, out[2] < 2^56,
 	 * out[3] <= 2^56 + 2^16 (due to final carry),
-	 * so out < 2*p */
+	 * so out < 2*p 
+	 */
 	out[3] = output[3];
 	}
 
@@ -749,7 +755,8 @@ copy_conditional(felem out, const felem in, limb icopy)
 	}
 
 /******************************************************************************/
-/*			 ELLIPTIC CURVE POINT OPERATIONS
+/*-
+ *			 ELLIPTIC CURVE POINT OPERATIONS
  *
  * Points are represented in Jacobian projective coordinates:
  * (X, Y, Z) corresponds to the affine point (X/Z^2, Y/Z^3),
@@ -757,13 +764,15 @@ copy_conditional(felem out, const felem in, limb icopy)
  *
  */
 
-/* Double an elliptic curve point:
+/*-
+ * Double an elliptic curve point:
  * (X', Y', Z') = 2 * (X, Y, Z), where
  * X' = (3 * (X - Z^2) * (X + Z^2))^2 - 8 * X * Y^2
  * Y' = 3 * (X - Z^2) * (X + Z^2) * (4 * X * Y^2 - X') - 8 * Y^2
  * Z' = (Y + Z)^2 - Y^2 - Z^2 = 2 * Y * Z
  * Outputs can equal corresponding inputs, i.e., x_out == x_in is allowed,
- * while x_out == y_in is not (maybe this works, but it's not tested). */
+ * while x_out == y_in is not (maybe this works, but it's not tested). 
+ */
 static void
 point_double(felem x_out, felem y_out, felem z_out,
              const felem x_in, const felem y_in, const felem z_in)
@@ -835,7 +844,8 @@ point_double(felem x_out, felem y_out, felem z_out,
 	felem_reduce(y_out, tmp);
 	}
 
-/* Add two elliptic curve points:
+/*-
+ * Add two elliptic curve points:
  * (X_1, Y_1, Z_1) + (X_2, Y_2, Z_2) = (X_3, Y_3, Z_3), where
  * X_3 = (Z_1^3 * Y_2 - Z_2^3 * Y_1)^2 - (Z_1^2 * X_2 - Z_2^2 * X_1)^3 -
  * 2 * Z_2^2 * X_1 * (Z_1^2 * X_2 - Z_2^2 * X_1)^2
@@ -973,8 +983,10 @@ static void point_add(felem x3, felem y3, felem z3,
 	felem_scalar(ftmp5, 2);
 	/* ftmp5[i] < 2 * 2^57 = 2^58 */
 
-	/* x_out = (z1^3*y2 - z2^3*y1)^2 - (z1^2*x2 - z2^2*x1)^3 -
-	   2*z2^2*x1*(z1^2*x2 - z2^2*x1)^2 */
+	/*-
+	 * x_out = (z1^3*y2 - z2^3*y1)^2 - (z1^2*x2 - z2^2*x1)^3 -
+	 *  2*z2^2*x1*(z1^2*x2 - z2^2*x1)^2 
+	 */
 	felem_diff_128_64(tmp2, ftmp5);
 	/* tmp2[i] < 2^117 + 2^64 + 8 < 2^118 */
 	felem_reduce(x_out, tmp2);
@@ -987,8 +999,10 @@ static void point_add(felem x3, felem y3, felem z3,
 	felem_mul(tmp2, ftmp3, ftmp2);
 	/* tmp2[i] < 4 * 2^57 * 2^59 = 2^118 */
 
-	/* y_out = (z1^3*y2 - z2^3*y1)*(z2^2*x1*(z1^2*x2 - z2^2*x1)^2 - x_out) -
-	   z2^3*y1*(z1^2*x2 - z2^2*x1)^3 */
+	/*-
+	 * y_out = (z1^3*y2 - z2^3*y1)*(z2^2*x1*(z1^2*x2 - z2^2*x1)^2 - x_out) -
+	 *  z2^3*y1*(z1^2*x2 - z2^2*x1)^3 
+	 */
 	widefelem_diff(tmp2, tmp);
 	/* tmp2[i] < 2^118 + 2^120 < 2^121 */
 	felem_reduce(y_out, tmp2);

@@ -105,7 +105,8 @@
 #undef PROG
 #define PROG	req_main
 
-/* -inform arg	- input format - default PEM (DER or PEM)
+/*-
+ * -inform arg	- input format - default PEM (DER or PEM)
  * -outform arg - output format - default PEM
  * -in arg	- input file - default stdin
  * -out arg	- output file - default stdout
@@ -511,7 +512,7 @@ bad:
 			oid_bio=BIO_new_file(p,"r");
 			if (oid_bio == NULL) 
 				{
-				/*
+				/*-
 				BIO_printf(bio_err,"problems opening %s for extra oid's\n",p);
 				ERR_print_errors(bio_err);
 				*/

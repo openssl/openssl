@@ -1,6 +1,7 @@
 /* crypto/des/des_old.c -*- mode:C; c-file-style: "eay" -*- */
 
-/* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+/*-
+ * WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
  *
  * The function names in here are deprecated and are only present to
  * provide an interface compatible with libdes.  OpenSSL now provides

@@ -1226,7 +1226,8 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
 
 	do
 		{
-		/* c_ssl_bio:          SSL filter BIO
+		/*-
+		 * c_ssl_bio:          SSL filter BIO
 		 *
 		 * client:             pseudo-I/O for SSL library
 		 *
@@ -1651,7 +1652,8 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 			if (SSL_in_init(s_ssl))
 				printf("server waiting in SSL_accept - %s\n",
 					SSL_state_string_long(s_ssl));
-/*			else if (s_write)
+/*-
+			else if (s_write)
 				printf("server:SSL_write()\n");
 			else
 				printf("server:SSL_read()\n"); */
@@ -1662,7 +1664,8 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 			if (SSL_in_init(c_ssl))
 				printf("client waiting in SSL_connect - %s\n",
 					SSL_state_string_long(c_ssl));
-/*			else if (c_write)
+/*-
+			else if (c_write)
 				printf("client:SSL_write()\n");
 			else
 				printf("client:SSL_read()\n"); */
@@ -2048,11 +2051,12 @@ static void process_proxy_debug(int indent, const char *format, ...)
 	vfprintf(stderr, my_format, args);
 	va_end(args);
 	}
-/* Priority levels:
-   0	[!]var, ()
-   1	& ^
-   2	|
-*/
+/*-
+ * Priority levels:
+ *  0	[!]var, ()
+ *  1	& ^
+ *  2	|
+ */
 static int process_proxy_cond_adders(unsigned int letters[26],
 	const char *cond, const char **cond_end, int *pos, int indent);
 static int process_proxy_cond_val(unsigned int letters[26],
@@ -2404,7 +2408,8 @@ static void free_tmp_rsa(void)
 #endif
 
 #ifndef OPENSSL_NO_DH
-/* These DH parameters have been generated as follows:
+/*-
+ * These DH parameters have been generated as follows:
  *    $ openssl dhparam -C -noout 512
  *    $ openssl dhparam -C -noout 1024
  *    $ openssl dhparam -C -noout -dsaparam 1024

@@ -301,7 +301,8 @@ f_err:
 	return(0);
 	}
 
-/* for these 2 messages, we need to
+/*-
+ * for these 2 messages, we need to
  * ssl->enc_read_ctx			re-init
  * ssl->s3->read_sequence		zero
  * ssl->s3->read_mac_secret		re-init
@@ -667,7 +668,8 @@ int ssl_verify_alarm_type(long type)
 	}
 
 #ifndef OPENSSL_NO_BUF_FREELISTS
-/* On some platforms, malloc() performance is bad enough that you can't just
+/*-
+ * On some platforms, malloc() performance is bad enough that you can't just
  * free() and malloc() buffers all the time, so we need to use freelists from
  * unused buffers.  Currently, each freelist holds memory chunks of only a
  * given size (list->chunklen); other sized chunks are freed and malloced.

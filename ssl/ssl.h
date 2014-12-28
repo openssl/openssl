@@ -312,7 +312,7 @@ extern "C" {
 
 #define SSL_TXT_ALL		"ALL"
 
-/*
+/*-
  * COMPLEMENTOF* definitions. These identifiers are used to (de-select)
  * ciphers normally not being used.
  * Example: "RC4" will activate all ciphers using RC4 including ciphers
@@ -442,7 +442,8 @@ struct ssl_method_st
 	long (*ssl_ctx_callback_ctrl)(SSL_CTX *s, int cb_id, void (*fp)(void));
 	};
 
-/* Lets make this into an ASN.1 type structure as follows
+/*-
+ * Lets make this into an ASN.1 type structure as follows
  * SSL_SESSION_ID ::= SEQUENCE {
  *	version 		INTEGER,	-- structure version number
  *	SSLversion 		INTEGER,	-- SSL version number

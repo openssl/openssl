@@ -420,7 +420,7 @@ redoit:
 		return(0);
 		}
 
-/*
+/*-
 	ling.l_onoff=1;
 	ling.l_linger=0;
 	i=setsockopt(ret,SOL_SOCKET,SO_LINGER,(char *)&ling,sizeof(ling));
