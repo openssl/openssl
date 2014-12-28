@@ -135,7 +135,8 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 
 	if (e == 1)
 		{
-		/* The easy case:  (|p|-1)/2  is odd, so 2 has an inverse
+		/*-
+		 * The easy case:  (|p|-1)/2  is odd, so 2 has an inverse
 		 * modulo  (|p|-1)/2,  and square roots can be computed
 		 * directly by modular exponentiation.
 		 * We have
@@ -152,7 +153,8 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	
 	if (e == 2)
 		{
-		/* |p| == 5  (mod 8)
+		/*-
+		 * |p| == 5  (mod 8)
 		 *
 		 * In this case  2  is always a non-square since
 		 * Legendre(2,p) = (-1)^((p^2-1)/8)  for any odd prime.
@@ -262,7 +264,8 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		goto end;
 		}
 
-	/* Now we know that (if  p  is indeed prime) there is an integer
+	/*-
+	 * Now we know that (if  p  is indeed prime) there is an integer
 	 * k,  0 <= k < 2^e,  such that
 	 *
 	 *      a^q * y^k == 1   (mod p).
@@ -318,7 +321,8 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 
 	while (1)
 		{
-		/* Now  b  is  a^q * y^k  for some even  k  (0 <= k < 2^E
+		/*- 
+		 * Now  b  is  a^q * y^k  for some even  k  (0 <= k < 2^E
 		 * where  E  refers to the original value of  e,  which we
 		 * don't keep in a variable),  and  x  is  a^((q+1)/2) * y^(k/2).
 		 *

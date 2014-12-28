@@ -107,7 +107,7 @@ void ec_GFp_nistp_points_make_affine_internal(size_t num, void *point_array,
 		}
 	}
 
-/*
+/*-
  * This function looks at 5+1 scalar bits (5 current, 1 adjacent less
  * significant bit), and recodes them into a signed digit for use in fast point
  * multiplication: the use of signed rather than unsigned digits means that

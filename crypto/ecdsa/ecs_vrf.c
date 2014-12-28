@@ -61,7 +61,8 @@
 #include <openssl/engine.h>
 #endif
 
-/* returns
+/*-
+ * returns
  *      1: correct signature
  *      0: incorrect signature
  *     -1: error
@@ -75,7 +76,8 @@ int ECDSA_do_verify(const unsigned char *dgst, int dgst_len,
 	return ecdsa->meth->ecdsa_do_verify(dgst, dgst_len, sig, eckey);
 	}
 
-/* returns
+/*-
+ * returns
  *      1: correct signature
  *      0: incorrect signature
  *     -1: error

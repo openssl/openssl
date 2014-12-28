@@ -70,7 +70,7 @@ extern "C" {
 #error SHA is disabled.
 #endif
 
-/*
+/*-
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  * ! SHA_LONG has to be at least 32 bits wide. If it's wider, then !
  * ! SHA_LONG_LOG2 has to be defined along.                        !

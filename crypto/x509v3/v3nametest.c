@@ -91,7 +91,7 @@ static int set_cn(X509 *crt, ...)
 	return ret;
 	}
 
-/*
+/*-
 int		X509_add_ext(X509 *x, X509_EXTENSION *ex, int loc);
 X509_EXTENSION *X509_EXTENSION_create_by_NID(X509_EXTENSION **ex,
 			int nid, int crit, ASN1_OCTET_STRING *data);

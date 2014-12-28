@@ -413,7 +413,7 @@
 
 /* we have used 000001ff - 23 bits left to go */
 
-/*
+/*-
  * Macros to check the export status and cipher strength for export ciphers.
  * Even though the macros for EXPORT and EXPORT40/56 have similar names,
  * their meaning is different:
@@ -479,7 +479,8 @@
 #define SSL_PKEY_GOST01		7
 #define SSL_PKEY_NUM		8
 
-/* SSL_kRSA <- RSA_ENC | (RSA_TMP & RSA_SIGN) |
+/*-
+ * SSL_kRSA <- RSA_ENC | (RSA_TMP & RSA_SIGN) |
  * 	    <- (EXPORT & (RSA_ENC | RSA_TMP) & RSA_SIGN)
  * SSL_kDH  <- DH_ENC & (RSA_ENC | RSA_SIGN | DSA_SIGN)
  * SSL_kDHE <- RSA_ENC | RSA_SIGN | DSA_SIGN
@@ -511,11 +512,13 @@ typedef struct cert_pkey_st
 	/* Chain for this certificate */
 	STACK_OF(X509) *chain;
 #ifndef OPENSSL_NO_TLSEXT
-	/* serverinfo data for this certificate.  The data is in TLS Extension
+	/*-
+	 * serverinfo data for this certificate.  The data is in TLS Extension
 	 * wire format, specifically it's a series of records like:
 	 *   uint16_t extension_type; // (RFC 5246, 7.4.1.4, Extension)
 	 *   uint16_t length;
-	 *   uint8_t data[length]; */
+	 *   uint8_t data[length]; 
+	 */
 	unsigned char *serverinfo;
 	size_t serverinfo_length;
 #endif

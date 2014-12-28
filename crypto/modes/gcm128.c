@@ -82,7 +82,7 @@
 	} \
 } while(0)
 
-/*
+/*-
  * Even though permitted values for TABLE_BITS are 8, 4 and 1, it should
  * never be set to 8. 8 is effectively reserved for testing purposes.
  * TABLE_BITS>1 are lookup-table-driven implementations referred to as

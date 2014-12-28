@@ -1,4 +1,4 @@
-/*
+/*-
 	tlhelp32.h - Include file for Tool help functions.
 
 	Written by Mumit Khan <khan@nanotech.wisc.edu>

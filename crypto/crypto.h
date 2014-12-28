@@ -525,7 +525,8 @@ int CRYPTO_remove_all_info(void);
 void CRYPTO_dbg_malloc(void *addr,int num,const char *file,int line,int before_p);
 void CRYPTO_dbg_realloc(void *addr1,void *addr2,int num,const char *file,int line,int before_p);
 void CRYPTO_dbg_free(void *addr,int before_p);
-/* Tell the debugging code about options.  By default, the following values
+/*-
+ * Tell the debugging code about options.  By default, the following values
  * apply:
  *
  * 0:                           Clear all options.

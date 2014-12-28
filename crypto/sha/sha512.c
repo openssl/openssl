@@ -6,7 +6,7 @@
  */
 #include <openssl/opensslconf.h>
 #if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA512)
-/*
+/*-
  * IMPLEMENTATION NOTES.
  *
  * As you might have noticed 32-bit hash algorithms:

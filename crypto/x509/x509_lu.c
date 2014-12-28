@@ -624,7 +624,8 @@ X509_OBJECT *X509_OBJECT_retrieve_match(STACK_OF(X509_OBJECT) *h, X509_OBJECT *x
 	}
 
 
-/* Try to get issuer certificate from store. Due to limitations
+/*-
+ * Try to get issuer certificate from store. Due to limitations
  * of the API this can only retrieve a single certificate matching
  * a given subject name. However it will fill the cache with all
  * matching certificates, so we can examine the cache for all

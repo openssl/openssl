@@ -129,7 +129,8 @@ extern "C" {
 
 /* This is a ASN1 type which just embeds a template */
  
-/* This pair helps declare a SEQUENCE. We can do:
+/*- 
+ * This pair helps declare a SEQUENCE. We can do:
  *
  * 	ASN1_SEQUENCE(stname) = {
  * 		... SEQUENCE components ...
@@ -231,7 +232,8 @@ extern "C" {
 	ASN1_ITEM_end(tname)
 
 
-/* This pair helps declare a CHOICE type. We can do:
+/*-
+ * This pair helps declare a CHOICE type. We can do:
  *
  * 	ASN1_CHOICE(chname) = {
  * 		... CHOICE options ...

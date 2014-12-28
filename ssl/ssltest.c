@@ -545,7 +545,8 @@ static int verify_serverinfo()
 	return 0;
 	}
 
-/* Four test cases for custom extensions:
+/*-
+ * Four test cases for custom extensions:
  * 0 - no ClientHello extension or ServerHello response
  * 1 - ClientHello with "abc", no response
  * 2 - ClientHello with "abc", empty response
@@ -1924,7 +1925,8 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
 
 	do
 		{
-		/* c_ssl_bio:          SSL filter BIO
+		/*-
+		 * c_ssl_bio:          SSL filter BIO
 		 *
 		 * client:             pseudo-I/O for SSL library
 		 *
@@ -2796,11 +2798,12 @@ static void process_proxy_debug(int indent, const char *format, ...)
 	vfprintf(stderr, my_format, args);
 	va_end(args);
 	}
-/* Priority levels:
-   0	[!]var, ()
-   1	& ^
-   2	|
-*/
+/*-
+ * Priority levels:
+ *  0	[!]var, ()
+ *  1	& ^
+ *  2	|
+ */
 static int process_proxy_cond_adders(unsigned int letters[26],
 	const char *cond, const char **cond_end, int *pos, int indent);
 static int process_proxy_cond_val(unsigned int letters[26],
@@ -3152,7 +3155,8 @@ static void free_tmp_rsa(void)
 #endif
 
 #ifndef OPENSSL_NO_DH
-/* These DH parameters have been generated as follows:
+/*-
+ * These DH parameters have been generated as follows:
  *    $ openssl dhparam -C -noout 512
  *    $ openssl dhparam -C -noout 1024
  *    $ openssl dhparam -C -noout -dsaparam 1024

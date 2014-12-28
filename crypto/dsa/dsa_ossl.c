@@ -93,7 +93,8 @@ NULL,
 NULL
 };
 
-/* These macro wrappers replace attempts to use the dsa_mod_exp() and
+/*-
+ * These macro wrappers replace attempts to use the dsa_mod_exp() and
  * bn_mod_exp() handlers in the DSA_METHOD structure. We avoid the problem of
  * having a the macro work as an expression by bundling an "err_instr". So;
  * 

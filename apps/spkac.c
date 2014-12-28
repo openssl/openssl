@@ -73,7 +73,8 @@
 #undef PROG
 #define PROG	spkac_main
 
-/* -in arg	- input file - default stdin
+/*-
+ * -in arg	- input file - default stdin
  * -out arg	- output file - default stdout
  */
 

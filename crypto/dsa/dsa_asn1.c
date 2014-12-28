@@ -167,7 +167,8 @@ int DSA_sign(int type, const unsigned char *dgst, int dlen, unsigned char *sig,
 	}
 
 /* data has already been hashed (probably with SHA or SHA-1). */
-/* returns
+/*-
+ * returns
  *      1: correct signature
  *      0: incorrect signature
  *     -1: error

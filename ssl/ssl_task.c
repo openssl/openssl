@@ -57,7 +57,7 @@
  */
 
 /* VMS */
-/*
+/*-
  * DECnet object for servicing SSL.  We accept the inbound and speak a
  * simple protocol for multiplexing the 2 data streams (application and
  * ssl data) over this logical link.
@@ -270,7 +270,7 @@ int doit(io_channel chan, SSL_CTX *s_ctx )
 	c_to_s=BIO_new(BIO_s_rtcp());
 	s_to_c=BIO_new(BIO_s_rtcp());
 	if ((s_to_c == NULL) || (c_to_s == NULL)) goto err;
-/* original, DRM 24-SEP-1997
+/*- original, DRM 24-SEP-1997
 	BIO_set_fd ( c_to_s, "", chan );
 	BIO_set_fd ( s_to_c, "", chan );
 */

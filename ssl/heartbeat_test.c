@@ -1,5 +1,5 @@
 /* test/heartbeat_test.c */
-/*
+/*-
  * Unit test for TLS heartbeats.
  *
  * Acts as a regression test against the Heartbleed bug (CVE-2014-0160).

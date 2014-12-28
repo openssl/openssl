@@ -97,7 +97,7 @@ typedef struct x509_file_st
 	} X509_CERT_FILE_CTX;
 
 /*******************************/
-/*
+/*-
 SSL_CTX -> X509_STORE    
 		-> X509_LOOKUP
 			->X509_LOOKUP_METHOD

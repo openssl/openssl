@@ -305,7 +305,7 @@ extern "C" {
 
 #define SSL_TXT_ALL		"ALL"
 
-/*
+/*-
  * COMPLEMENTOF* definitions. These identifiers are used to (de-select)
  * ciphers normally not being used.
  * Example: "RC4" will activate all ciphers using RC4 including ciphers
@@ -453,7 +453,8 @@ struct ssl_method_st
 	long (*ssl_ctx_callback_ctrl)(SSL_CTX *s, int cb_id, void (*fp)(void));
 	};
 
-/* Lets make this into an ASN.1 type structure as follows
+/*-
+ * Lets make this into an ASN.1 type structure as follows
  * SSL_SESSION_ID ::= SEQUENCE {
  *	version 		INTEGER,	-- structure version number
  *	SSLversion 		INTEGER,	-- SSL version number
@@ -1086,14 +1087,16 @@ struct ssl_ctx_st
 	/* ALPN information
 	 * (we are in the process of transitioning from NPN to ALPN.) */
 
-	/* For a server, this contains a callback function that allows the
+	/*-
+	 * For a server, this contains a callback function that allows the
 	 * server to select the protocol for the connection.
 	 *   out: on successful return, this must point to the raw protocol
 	 *        name (without the length prefix).
 	 *   outlen: on successful return, this contains the length of |*out|.
 	 *   in: points to the client's list of supported protocols in
 	 *       wire-format.
-	 *   inlen: the length of |in|. */
+	 *   inlen: the length of |in|. 
+	 */
 	int (*alpn_select_cb)(SSL *s,
 			      const unsigned char **out,
 			      unsigned char *outlen,
