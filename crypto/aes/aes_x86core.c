@@ -105,7 +105,7 @@ typedef unsigned long long u64;
 			})
 # endif
 #endif
-/*
+/*-
 Te [x] = S [x].[02, 01, 01, 03, 02, 01, 01, 03];
 Te0[x] = S [x].[02, 01, 01, 03];
 Te1[x] = S [x].[03, 02, 01, 01];
@@ -116,7 +116,7 @@ Te3[x] = S [x].[01, 01, 03, 02];
 #define Te1 (u32)((u64*)((u8*)Te+3))
 #define Te2 (u32)((u64*)((u8*)Te+2))
 #define Te3 (u32)((u64*)((u8*)Te+1))
-/*
+/*-
 Td [x] = Si[x].[0e, 09, 0d, 0b, 0e, 09, 0d, 0b];
 Td0[x] = Si[x].[0e, 09, 0d, 0b];
 Td1[x] = Si[x].[0b, 0e, 09, 0d];

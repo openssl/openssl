@@ -58,7 +58,7 @@
 #include <openssl/rand.h>
 #include <openssl/buffer.h>
 
-/*
+/*-
  * Query the EGD <URL: http://www.lothar.com/tech/crypto/>.
  *
  * This module supplies three routines:

@@ -218,7 +218,8 @@ extern "C" {
 #define BIO_GHBN_CTRL_FLUSH		5
 
 /* Mostly used in the SSL BIO */
-/* Not used anymore
+/*-
+ * Not used anymore
  * #define BIO_FLAGS_PROTOCOL_DELAYED_READ 0x10
  * #define BIO_FLAGS_PROTOCOL_DELAYED_WRITE 0x20
  * #define BIO_FLAGS_PROTOCOL_STARTUP	0x40
@@ -336,7 +337,8 @@ DECLARE_STACK_OF(BIO)
 
 typedef struct bio_f_buffer_ctx_struct
 	{
-	/* Buffers are setup like this:
+	/*-
+	 * Buffers are setup like this:
 	 *
 	 * <---------------------- size ----------------------->
 	 * +---------------------------------------------------+
@@ -715,7 +717,8 @@ int BIO_hex_string(BIO *out, int indent, int width, unsigned char *data,
 		   int datalen);
 
 struct hostent *BIO_gethostbyname(const char *name);
-/* We might want a thread-safe interface too:
+/*-
+ * We might want a thread-safe interface too:
  * struct hostent *BIO_gethostbyname_r(const char *name,
  *     struct hostent *result, void *buffer, size_t buflen);
  * or something similar (caller allocates a struct hostent,

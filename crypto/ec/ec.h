@@ -118,7 +118,7 @@ typedef enum {
 typedef struct ec_method_st EC_METHOD;
 
 typedef struct ec_group_st
-	/*
+	/*-
 	 EC_METHOD *meth;
 	 -- field definition
 	 -- curve coefficients

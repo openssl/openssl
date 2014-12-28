@@ -72,7 +72,7 @@ extern "C" {
 #define BF_ENCRYPT	1
 #define BF_DECRYPT	0
 
-/*
+/*-
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  * ! BF_LONG has to be at least 32 bits wide. If it's wider, then !
  * ! BF_LONG_LOG2 has to be defined along.                        !

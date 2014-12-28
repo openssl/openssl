@@ -540,7 +540,7 @@ int tls1_check_curve(SSL *s, const unsigned char *p, size_t len)
 	return 0;
 	}
 
-/*
+/*-
  * Return |nmatch|th shared curve or NID_undef if there is no match.
  * For nmatch == -1, return number of  matches
  * For nmatch == -2, return the NID of the curve to use for
@@ -1271,13 +1271,14 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf, unsigned c
 		unsigned long size_str;
 		long lenmax; 
 
-		/* check for enough space.
-		   4 for the servername type and entension length
-		   2 for servernamelist length
-		   1 for the hostname type
-		   2 for hostname length
-		   + hostname length 
-		*/
+		/*-
+		 * check for enough space.
+		 * 4 for the servername type and entension length
+		 * 2 for servernamelist length
+		 * 1 for the hostname type
+		 * 2 for hostname length
+		 * + hostname length 
+		 */
 		   
 		if ((lenmax = limit - ret - 9) < 0 
 		    || (size_str = strlen(s->tlsext_hostname)) > (unsigned long)lenmax) 
@@ -1334,11 +1335,12 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf, unsigned c
 			return NULL;
 			} 
 
-		/* check for enough space.
-		   4 for the srp type type and entension length
-		   1 for the srp user identity
-		   + srp user identity length 
-		*/
+		/*-
+		 * check for enough space.
+		 * 4 for the srp type type and entension length
+		 * 1 for the srp user identity
+		 * + srp user identity length 
+		 */
 		if ((limit - ret - 5 - login_len) < 0) return NULL; 
 
 		/* fill in the extension */
@@ -1518,7 +1520,8 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf, unsigned c
 		return NULL;
 	s2n(TLSEXT_TYPE_heartbeat,ret);
 	s2n(1,ret);
-	/* Set mode:
+	/*-
+	 * Set mode:
 	 * 1: peer may send requests
 	 * 2: peer not allowed to send requests
 	 */
@@ -1772,7 +1775,8 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf, unsigned c
 			return NULL;
 		s2n(TLSEXT_TYPE_heartbeat,ret);
 		s2n(1,ret);
-		/* Set mode:
+		/*-
+		 * Set mode:
 		 * 1: peer may send requests
 		 * 2: peer not allowed to send requests
 		 */
@@ -1831,7 +1835,8 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf, unsigned c
 	}
 
 #ifndef OPENSSL_NO_EC
-/* ssl_check_for_safari attempts to fingerprint Safari using OS X
+/*-
+ * ssl_check_for_safari attempts to fingerprint Safari using OS X
  * SecureTransport using the TLS extension block in |d|, of length |n|.
  * Safari, since 10.6, sends exactly these extensions, in this order:
  *   SNI,
@@ -2050,28 +2055,30 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 		if (s->tlsext_debug_cb)
 			s->tlsext_debug_cb(s, 0, type, data, size,
 						s->tlsext_debug_arg);
-/* The servername extension is treated as follows:
-
-   - Only the hostname type is supported with a maximum length of 255.
-   - The servername is rejected if too long or if it contains zeros,
-     in which case an fatal alert is generated.
-   - The servername field is maintained together with the session cache.
-   - When a session is resumed, the servername call back invoked in order
-     to allow the application to position itself to the right context. 
-   - The servername is acknowledged if it is new for a session or when 
-     it is identical to a previously used for the same session. 
-     Applications can control the behaviour.  They can at any time
-     set a 'desirable' servername for a new SSL object. This can be the
-     case for example with HTTPS when a Host: header field is received and
-     a renegotiation is requested. In this case, a possible servername
-     presented in the new client hello is only acknowledged if it matches
-     the value of the Host: field. 
-   - Applications must  use SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
-     if they provide for changing an explicit servername context for the session,
-     i.e. when the session has been established with a servername extension. 
-   - On session reconnect, the servername extension may be absent. 
-
-*/      
+/*-
+ * The servername extension is treated as follows:
+ *
+ * - Only the hostname type is supported with a maximum length of 255.
+ * - The servername is rejected if too long or if it contains zeros,
+ *   in which case an fatal alert is generated.
+ * - The servername field is maintained together with the session cache.
+ * - When a session is resumed, the servername call back invoked in order
+ *   to allow the application to position itself to the right context. 
+ * - The servername is acknowledged if it is new for a session or when 
+ *   it is identical to a previously used for the same session. 
+ *   Applications can control the behaviour.  They can at any time
+ *   set a 'desirable' servername for a new SSL object. This can be the
+ *   case for example with HTTPS when a Host: header field is received and
+ *   a renegotiation is requested. In this case, a possible servername
+ *   presented in the new client hello is only acknowledged if it matches
+ *   the value of the Host: field. 
+ * - Applications must  use SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
+ *   if they provide for changing an explicit servername context for the 
+ *   session, i.e. when the session has been established with a servername 
+ *   extension. 
+ * - On session reconnect, the servername extension may be absent. 
+ *
+ */      
 
 		if (type == TLSEXT_TYPE_server_name)
 			{
@@ -2456,7 +2463,8 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 			 s->s3->tmp.finish_md_len == 0 &&
 			 s->s3->alpn_selected == NULL)
 			{
-			/* We shouldn't accept this extension on a
+			/*-
+			 * We shouldn't accept this extension on a
 			 * renegotiation.
 			 *
 			 * s->new_session will be set on renegotiation, but we
@@ -2465,12 +2473,13 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 			 * there's some other reason to disallow resuming an
 			 * earlier session -- the current code won't be doing
 			 * anything like that, but this might change).
-
+			 *
 			 * A valid sign that there's been a previous handshake
 			 * in this connection is if s->s3->tmp.finish_md_len >
 			 * 0.  (We are talking about a check that will happen
 			 * in the Hello protocol round, well before a new
-			 * Finished message could have been computed.) */
+			 * Finished message could have been computed.) 
+			 */
 			s->s3->next_proto_neg_seen = 1;
 			}
 #endif
@@ -2807,10 +2816,12 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char 
 				*al = TLS1_AD_DECODE_ERROR;
 				return 0;
 				}
-			/* The extension data consists of:
+			/*- 
+			 * The extension data consists of:
 			 *   uint16 list_length
 			 *   uint8 proto_length;
-			 *   uint8 proto[proto_length]; */
+			 *   uint8 proto[proto_length]; 
+			 */
 			len = data[0];
 			len <<= 8;
 			len |= data[1];
@@ -3309,7 +3320,8 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 	return 1;
 }
 
-/* Since the server cache lookup is done early on in the processing of the
+/*-
+ * Since the server cache lookup is done early on in the processing of the
  * ClientHello, and other operations depend on the result, we need to handle
  * any TLS session ticket extension at the same time.
  *
@@ -3429,7 +3441,8 @@ int tls1_process_ticket(SSL *s, unsigned char *session_id, int len,
 	return 0;
 	}
 
-/* tls_decrypt_ticket attempts to decrypt a session ticket.
+/*-
+ * tls_decrypt_ticket attempts to decrypt a session ticket.
  *
  *   etick: points to the body of the session ticket extension.
  *   eticklen: the length of the session tickets extenion.
@@ -4048,7 +4061,8 @@ tls1_heartbeat(SSL *s)
 	 */
 	OPENSSL_assert(payload + padding <= 16381);
 
-	/* Create HeartBeat message, we just use a sequence number
+	/*-
+	 * Create HeartBeat message, we just use a sequence number
 	 * as payload to distuingish different messages and add
 	 * some random stuff.
 	 *  - Message Type, 1 byte

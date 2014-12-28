@@ -574,7 +574,8 @@ static int dtls1_preprocess_fragment(SSL *s,struct hm_header_st *msg_hdr,int max
 static int
 dtls1_retrieve_buffered_fragment(SSL *s, long max, int *ok)
 	{
-	/* (0) check whether the desired fragment is available
+	/*-
+	 * (0) check whether the desired fragment is available
 	 * if so:
 	 * (1) copy over the fragment to s->init_buf->data[]
 	 * (2) update s->init_num
@@ -964,7 +965,8 @@ f_err:
 	return(-1);
 	}
 
-/* for these 2 messages, we need to
+/*-
+ * for these 2 messages, we need to
  * ssl->enc_read_ctx			re-init
  * ssl->s3->read_sequence		zero
  * ssl->s3->read_mac_secret		re-init
@@ -1165,7 +1167,7 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
 	struct dtls1_retransmit_state saved_state;
 	unsigned char save_write_sequence[8];
 
-	/*
+	/*-
 	  OPENSSL_assert(s->init_num == 0);
 	  OPENSSL_assert(s->init_off == 0);
 	 */
@@ -1491,7 +1493,8 @@ dtls1_heartbeat(SSL *s)
 	 */
 	OPENSSL_assert(payload + padding <= 16381);
 
-	/* Create HeartBeat message, we just use a sequence number
+	/*-
+	 * Create HeartBeat message, we just use a sequence number
 	 * as payload to distuingish different messages and add
 	 * some random stuff.
 	 *  - Message Type, 1 byte

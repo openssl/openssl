@@ -199,7 +199,8 @@ int BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	bn_check_top(p);
 	bn_check_top(m);
 
-	/* For even modulus  m = 2^k*m_odd,  it might make sense to compute
+	/*-
+	 * For even modulus  m = 2^k*m_odd,  it might make sense to compute
 	 * a^p mod m_odd  and  a^p mod 2^k  separately (with Montgomery
 	 * exponentiation for the odd part), using appropriate exponent
 	 * reductions, and combine the results using the CRT.

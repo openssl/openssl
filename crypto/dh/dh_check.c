@@ -61,7 +61,8 @@
 #include <openssl/bn.h>
 #include <openssl/dh.h>
 
-/* Check that p is a safe prime and
+/*-
+ * Check that p is a safe prime and
  * if g is 2, 3 or 5, check that it is a suitable generator
  * where
  * for 2, p mod 24 == 11

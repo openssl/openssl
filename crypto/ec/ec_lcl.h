@@ -117,7 +117,8 @@ struct ec_method_st {
 	void (*point_clear_finish)(EC_POINT *);
 	int (*point_copy)(EC_POINT *, const EC_POINT *);
 
-	/* used by EC_POINT_set_to_infinity,
+	/*-
+	 * used by EC_POINT_set_to_infinity,
 	 * EC_POINT_set_Jprojective_coordinates_GFp,
 	 * EC_POINT_get_Jprojective_coordinates_GFp,
 	 * EC_POINT_set_affine_coordinates_GFp,     ..._GF2m,

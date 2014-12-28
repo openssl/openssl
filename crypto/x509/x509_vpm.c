@@ -193,7 +193,8 @@ void X509_VERIFY_PARAM_free(X509_VERIFY_PARAM *param)
 	OPENSSL_free(param);
 	}
 
-/* This function determines how parameters are "inherited" from one structure
+/*-
+ * This function determines how parameters are "inherited" from one structure
  * to another. There are several different ways this can happen.
  *
  * 1. If a child structure needs to have its values initialized from a parent

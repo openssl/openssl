@@ -9,7 +9,8 @@
  **********************************************************************/ 
 #include <string.h>
 #include "gost89.h"
-/* Substitution blocks from RFC 4357 
+/*-
+   Substitution blocks from RFC 4357 
    
    Note: our implementation of gost 28147-89 algorithm 
    uses S-box matrix rotated 90 degrees counterclockwise, relative to 

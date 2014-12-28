@@ -76,7 +76,7 @@ extern "C" {
 #undef PKCS7_SIGNER_INFO
 #endif
 
-/*
+/*-
 Encryption_ID		DES-CBC
 Digest_ID		MD5
 Digest_Encryption_ID	rsaEncryption

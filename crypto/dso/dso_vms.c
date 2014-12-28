@@ -174,7 +174,8 @@ static int vms_load(DSO *dso)
 		goto err;
 		}
 
-	/* A file specification may look like this:
+	/*-
+	 * A file specification may look like this:
 	 *
 	 *	node::dev:[dir-spec]name.type;ver
 	 *

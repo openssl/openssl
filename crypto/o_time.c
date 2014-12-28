@@ -148,7 +148,8 @@ struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result)
 		/* Since there was no gmtime_r() to do this stuff for us,
 		   we have to do it the hard way. */
 		{
-		/* The VMS epoch is the astronomical Smithsonian date,
+		/*-
+		 * The VMS epoch is the astronomical Smithsonian date,
 		   if I remember correctly, which is November 17, 1858.
 		   Furthermore, time is measure in thenths of microseconds
 		   and stored in quadwords (64 bit integers).  unix_epoch

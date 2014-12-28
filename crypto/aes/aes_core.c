@@ -40,7 +40,7 @@
 #include "aes_locl.h"
 
 #ifndef AES_ASM
-/*
+/*-
 Te0[x] = S [x].[02, 01, 01, 03];
 Te1[x] = S [x].[03, 02, 01, 01];
 Te2[x] = S [x].[01, 03, 02, 01];
