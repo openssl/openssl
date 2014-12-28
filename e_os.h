@@ -625,8 +625,6 @@ extern char *sys_errlist[]; extern int sys_nerr;
 
 /***********************************************/
 
-#define DG_GCC_BUG	/* gcc < 2.6.3 on DGUX */
-
 #ifdef sgi
 #define IRIX_CC_BUG	/* all version of IRIX I've tested (4.* 5.*) */
 #endif

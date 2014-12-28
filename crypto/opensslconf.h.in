@@ -154,8 +154,6 @@ YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED!!!!!
   /* Unknown */
 #elif defined( __aux )		/* 68K */
   /* Unknown */
-#elif defined( __dgux )		/* 88K (but P6 in latest boxes) */
-#  define DES_UNROLL
 #elif defined( __sgi )		/* Newer MIPS */
 #  define DES_PTR
 #  define DES_RISC2
