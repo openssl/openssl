@@ -1953,12 +1953,14 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
         if (cm == NULL || cm->type == NID_undef)
                 return 1;
 
-	/* According to draft-ietf-tls-compression-04.txt, the
-	   compression number ranges should be the following:
-
-	   0 to 63:    methods defined by the IETF
-	   64 to 192:  external party methods assigned by IANA
-	   193 to 255: reserved for private use */
+	/*-
+	 * According to draft-ietf-tls-compression-04.txt, the
+	 * compression number ranges should be the following:
+         *
+         *   0 to  63:  methods defined by the IETF
+	 *  64 to 192:  external party methods assigned by IANA
+	 * 193 to 255:  reserved for private use 
+	 */
 	if (id < 193 || id > 255)
 		{
 		SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD,SSL_R_COMPRESSION_ID_NOT_WITHIN_PRIVATE_RANGE);

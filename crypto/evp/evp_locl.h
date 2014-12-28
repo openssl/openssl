@@ -185,7 +185,7 @@ BLOCK_CIPHER_def_ecb(cname, kstruct, nid, block_size, key_len, flags, \
 		     init_key, cleanup, set_asn1, get_asn1, ctrl)
 
 
-/*
+/*-
 #define BLOCK_CIPHER_defs(cname, kstruct, \
 				nid, block_size, key_len, iv_len, flags,\
 				 init_key, cleanup, set_asn1, get_asn1, ctrl)\

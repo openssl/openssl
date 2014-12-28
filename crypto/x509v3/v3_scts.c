@@ -226,7 +226,8 @@ static STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
 		sct->version = *p2++;
 		if (sct->version == 0)		/* SCT v1 */
 			{
-			/* Fixed-length header:
+			/*- 
+			 * Fixed-length header:
 			 *		struct {
 			 * (1 byte)	  Version sct_version;
 			 * (32 bytes)	  LogID id;
@@ -251,7 +252,8 @@ static STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
 			p2 += fieldlen;
 			sctlen -= fieldlen;
 
-			/* digitally-signed struct header:
+			/*-
+			 * digitally-signed struct header:
 			 * (1 byte)       Hash algorithm
 			 * (1 byte)       Signature algorithm
 			 * (2 bytes + ?)  Signature

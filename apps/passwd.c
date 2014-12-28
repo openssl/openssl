@@ -43,7 +43,8 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
 	char *passwd, BIO *out, int quiet, int table, int reverse,
 	size_t pw_maxlen, int usecrypt, int use1, int useapr1);
 
-/* -crypt        - standard Unix password algorithm (default)
+/*-
+ * -crypt        - standard Unix password algorithm (default)
  * -1            - MD5-based password algorithm
  * -apr1         - MD5-based password algorithm, Apache variant
  * -salt string  - salt

@@ -74,7 +74,8 @@
 #undef PROG
 #define PROG	dsa_main
 
-/* -inform arg	- input format - default PEM (one of DER, NET or PEM)
+/*-
+ * -inform arg	- input format - default PEM (one of DER, NET or PEM)
  * -outform arg - output format - default PEM
  * -in arg	- input file - default stdin
  * -out arg	- output file - default stdout

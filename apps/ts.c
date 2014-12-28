@@ -1130,7 +1130,7 @@ static X509_STORE *create_cert_store(char *ca_path, char *ca_file)
 
 static int MS_CALLBACK verify_cb(int ok, X509_STORE_CTX *ctx)
 	{
-	/*
+	/*-
 	char buf[256];
 
 	if (!ok)

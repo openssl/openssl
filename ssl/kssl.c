@@ -56,15 +56,16 @@
  */
 
 
-/*  ssl/kssl.c  --  Routines to support (& debug) Kerberos5 auth for openssl
-**
-**  19990701	VRS 	Started.
-**  200011??	Jeffrey Altman, Richard Levitte
-**          		Generalized for Heimdal, Newer MIT, & Win32.
-**          		Integrated into main OpenSSL 0.9.7 snapshots.
-**  20010413	Simon Wilkinson, VRS
-**          		Real RFC2712 KerberosWrapper replaces AP_REQ.
-*/
+/*-
+ * ssl/kssl.c  --  Routines to support (& debug) Kerberos5 auth for openssl
+ *
+ *  19990701	VRS 	Started.
+ *  200011??	Jeffrey Altman, Richard Levitte
+ *          		Generalized for Heimdal, Newer MIT, & Win32.
+ *          		Integrated into main OpenSSL 0.9.7 snapshots.
+ *  20010413	Simon Wilkinson, VRS
+ *          		Real RFC2712 KerberosWrapper replaces AP_REQ.
+ */
 
 #include <openssl/opensslconf.h>
 
@@ -808,10 +809,10 @@ char
         }
 
 /*	Given KRB5 enctype (basically DES or 3DES),
-**	return closest match openssl EVP_ encryption algorithm.
-**	Return NULL for unknown or problematic (krb5_dk_encrypt) enctypes.
-**	Assume ENCTYPE_*_RAW (krb5_raw_encrypt) are OK.
-*/
+ *	return closest match openssl EVP_ encryption algorithm.
+ *	Return NULL for unknown or problematic (krb5_dk_encrypt) enctypes.
+ *	Assume ENCTYPE_*_RAW (krb5_raw_encrypt) are OK.
+ */
 const EVP_CIPHER *
 kssl_map_enc(krb5_enctype enctype)
         {
@@ -836,10 +837,10 @@ kssl_map_enc(krb5_enctype enctype)
 
 
 /*	Return true:1 if p "looks like" the start of the real authenticator
-**	described in kssl_skip_confound() below.  The ASN.1 pattern is
-**	"62 xx 30 yy" (APPLICATION-2, SEQUENCE), where xx-yy =~ 2, and
-**	xx and yy are possibly multi-byte length fields.
-*/
+ *	described in kssl_skip_confound() below.  The ASN.1 pattern is
+ *	"62 xx 30 yy" (APPLICATION-2, SEQUENCE), where xx-yy =~ 2, and
+ *	xx and yy are possibly multi-byte length fields.
+ */
 static int 	kssl_test_confound(unsigned char *p)
 	{
 	int 	len = 2;
@@ -866,15 +867,15 @@ static int 	kssl_test_confound(unsigned char *p)
 	}
 
 /*	Allocate, fill, and return cksumlens array of checksum lengths.
-**	This array holds just the unique elements from the krb5_cksumarray[].
-**	array[n] == 0 signals end of data.
-**
-**      The krb5_cksumarray[] was an internal variable that has since been
-**      replaced by a more general method for storing the data.  It should
-**      not be used.  Instead we use real API calls and make a guess for 
-**      what the highest assigned CKSUMTYPE_ constant is.  As of 1.2.2
-**      it is 0x000c (CKSUMTYPE_HMAC_SHA1_DES3).  So we will use 0x0010.
-*/
+ *	This array holds just the unique elements from the krb5_cksumarray[].
+ *	array[n] == 0 signals end of data.
+ *
+ *      The krb5_cksumarray[] was an internal variable that has since been
+ *      replaced by a more general method for storing the data.  It should
+ *      not be used.  Instead we use real API calls and make a guess for 
+ *      what the highest assigned CKSUMTYPE_ constant is.  As of 1.2.2
+ *      it is 0x000c (CKSUMTYPE_HMAC_SHA1_DES3).  So we will use 0x0010.
+ */
 static size_t  *populate_cksumlens(void)
 	{
 	int 		i, j, n;
@@ -907,12 +908,12 @@ static size_t  *populate_cksumlens(void)
 	}
 
 /*	Return pointer to start of real authenticator within authenticator, or
-**	return NULL on error.
-**	Decrypted authenticator looks like this:
-**		[0 or 8 byte confounder] [4-24 byte checksum] [real authent'r]
-**	This hackery wouldn't be necessary if MIT KRB5 1.0.6 had the
-**	krb5_auth_con_getcksumtype() function advertised in its krb5.h.
-*/
+ *	return NULL on error.
+ *	Decrypted authenticator looks like this:
+ *		[0 or 8 byte confounder] [4-24 byte checksum] [real authent'r]
+ *	This hackery wouldn't be necessary if MIT KRB5 1.0.6 had the
+ *	krb5_auth_con_getcksumtype() function advertised in its krb5.h.
+ */
 unsigned char	*kssl_skip_confound(krb5_enctype etype, unsigned char *a)
 	{
 	int 		i, conlen;
@@ -934,8 +935,8 @@ unsigned char	*kssl_skip_confound(krb5_enctype etype, unsigned char *a)
 
 
 /*	Set kssl_err error info when reason text is a simple string
-**		kssl_err = struct { int reason; char text[KSSL_ERR_MAX+1]; }
-*/
+ *		kssl_err = struct { int reason; char text[KSSL_ERR_MAX+1]; }
+ */
 void
 kssl_err_set(KSSL_ERR *kssl_err, int reason, char *text)
         {
@@ -1024,8 +1025,8 @@ print_krb5_keyblock(char *label, krb5_keyblock *keyblk)
 
 
 /*	Display contents of krb5_principal_data struct, for debugging
-**	(krb5_principal is typedef'd == krb5_principal_data *)
-*/
+ *	(krb5_principal is typedef'd == krb5_principal_data *)
+ */
 static void
 print_krb5_princ(char *label, krb5_principal_data *princ)
         {
@@ -1047,16 +1048,16 @@ print_krb5_princ(char *label, krb5_principal_data *princ)
         }
 
 
-/*	Given krb5 service (typically "kssl") and hostname in kssl_ctx,
-**	Return encrypted Kerberos ticket for service @ hostname.
-**	If authenp is non-NULL, also return encrypted authenticator,
-**	whose data should be freed by caller.
-**	(Originally was: Create Kerberos AP_REQ message for SSL Client.)
-**
-**	19990628	VRS 	Started; Returns Kerberos AP_REQ message.
-**	20010409	VRS 	Modified for RFC2712; Returns enc tkt.
-**	20010606	VRS 	May also return optional authenticator.
-*/
+/*-	Given krb5 service (typically "kssl") and hostname in kssl_ctx,
+ *	Return encrypted Kerberos ticket for service @ hostname.
+ *	If authenp is non-NULL, also return encrypted authenticator,
+ *	whose data should be freed by caller.
+ *	(Originally was: Create Kerberos AP_REQ message for SSL Client.)
+ *
+ *	19990628	VRS 	Started; Returns Kerberos AP_REQ message.
+ *	20010409	VRS 	Modified for RFC2712; Returns enc tkt.
+ *	20010606	VRS 	May also return optional authenticator.
+ */
 krb5_error_code
 kssl_cget_tkt(	/* UPDATE */	KSSL_CTX *kssl_ctx,
                 /* OUT    */	krb5_data **enc_ticketp,
@@ -1141,8 +1142,8 @@ kssl_cget_tkt(	/* UPDATE */	KSSL_CTX *kssl_ctx,
 	krb5rc = KRB5KRB_ERR_GENERIC;
 	/*	caller should free data of krb5_app_req  */
 	/*  20010406 VRS deleted for real KerberosWrapper
-	**  20010605 VRS reinstated to offer Authenticator to KerberosWrapper
-	*/
+	 *  20010605 VRS reinstated to offer Authenticator to KerberosWrapper
+	 */
 	krb5_app_req.length = 0;
 	if (authenp)
                 {
@@ -1214,17 +1215,18 @@ kssl_cget_tkt(	/* UPDATE */	KSSL_CTX *kssl_ctx,
 	}
 
 
-/*  Given d2i_-decoded asn1ticket, allocate and return a new krb5_ticket.
-**  Return Kerberos error code and kssl_err struct on error.
-**  Allocates krb5_ticket and krb5_principal; caller should free these.
-**
-**	20010410	VRS	Implemented krb5_decode_ticket() as
-**				old_krb5_decode_ticket(). Missing from MIT1.0.6.
-**	20010615	VRS 	Re-cast as openssl/asn1 d2i_*() functions.
-**				Re-used some of the old krb5_decode_ticket()
-**				code here.  This tkt should alloc/free just
-**				like the real thing.
-*/
+/*-
+ *  Given d2i_-decoded asn1ticket, allocate and return a new krb5_ticket.
+ *  Return Kerberos error code and kssl_err struct on error.
+ *  Allocates krb5_ticket and krb5_principal; caller should free these.
+ *
+ *	20010410	VRS	Implemented krb5_decode_ticket() as
+ *				old_krb5_decode_ticket(). Missing from MIT1.0.6.
+ *	20010615	VRS 	Re-cast as openssl/asn1 d2i_*() functions.
+ *				Re-used some of the old krb5_decode_ticket()
+ *				code here.  This tkt should alloc/free just
+ *				like the real thing.
+ */
 static krb5_error_code
 kssl_TKT2tkt(	/* IN     */	krb5_context	krb5context,
 		/* IN     */	KRB5_TKTBODY	*asn1ticket,
@@ -1299,12 +1301,12 @@ kssl_TKT2tkt(	/* IN     */	krb5_context	krb5context,
 
 
 /*	Given krb5 service name in KSSL_CTX *kssl_ctx (typically "kssl"),
-**		and krb5 AP_REQ message & message length,
-**	Return Kerberos session key and client principle
-**		to SSL Server in KSSL_CTX *kssl_ctx.
-**
-**	19990702	VRS 	Started.
-*/
+ *		and krb5 AP_REQ message & message length,
+ *	Return Kerberos session key and client principle
+ *		to SSL Server in KSSL_CTX *kssl_ctx.
+ *
+ *	19990702	VRS 	Started.
+ */
 krb5_error_code
 kssl_sget_tkt(	/* UPDATE */	KSSL_CTX		*kssl_ctx,
 		/* IN     */	krb5_data		*indata,
@@ -1419,19 +1421,20 @@ kssl_sget_tkt(	/* UPDATE */	KSSL_CTX		*kssl_ctx,
 			}
 		}
 
-	/*	Actual Kerberos5 krb5_recvauth() has initial conversation here
-	**	o	check KRB5_SENDAUTH_BADAUTHVERS
-	**		unless KRB5_RECVAUTH_SKIP_VERSION
-	**	o	check KRB5_SENDAUTH_BADAPPLVERS
-	**	o	send "0" msg if all OK
-	*/
+	/*-	Actual Kerberos5 krb5_recvauth() has initial conversation here
+	 *	o	check KRB5_SENDAUTH_BADAUTHVERS
+	 *		unless KRB5_RECVAUTH_SKIP_VERSION
+	 *	o	check KRB5_SENDAUTH_BADAPPLVERS
+	 *	o	send "0" msg if all OK
+	 */
 
-	/*  20010411 was using AP_REQ instead of true KerberosWrapper
-	**
-	**  if ((krb5rc = krb5_rd_req(krb5context, &krb5auth_context,
-	**			&krb5in_data, krb5server, krb5keytab,
-	**			&ap_option, &krb5ticket)) != 0)  { Error }
-	*/
+	/*- 
+	 * 20010411 was using AP_REQ instead of true KerberosWrapper
+	 *
+	 *  if ((krb5rc = krb5_rd_req(krb5context, &krb5auth_context,
+	 *			&krb5in_data, krb5server, krb5keytab,
+	 *			&ap_option, &krb5ticket)) != 0)  { Error }
+	 */
 
 	p = (unsigned char *)indata->data;
 	if ((asn1ticket = (KRB5_TKTBODY *) d2i_KRB5_TICKET(NULL, &p,
@@ -1568,8 +1571,8 @@ kssl_ctx_new(void)
 
 
 /*	Frees a kssl_ctx struct and any allocated memory it holds.
-**	Returns NULL.
-*/
+ *	Returns NULL.
+ */
 KSSL_CTX	*
 kssl_ctx_free(KSSL_CTX *kssl_ctx)
         {
@@ -1589,9 +1592,9 @@ kssl_ctx_free(KSSL_CTX *kssl_ctx)
 
 
 /*	Given an array of (krb5_data *) entity (and optional realm),
-**	set the plain (char *) client_princ or service_host member
-**	of the kssl_ctx struct.
-*/
+ *	set the plain (char *) client_princ or service_host member
+ *	of the kssl_ctx struct.
+ */
 krb5_error_code
 kssl_ctx_setprinc(KSSL_CTX *kssl_ctx, int which,
         krb5_data *realm, krb5_data *entity, int nentities)
@@ -1644,11 +1647,11 @@ kssl_ctx_setprinc(KSSL_CTX *kssl_ctx, int which,
         }
 
 
-/*	Set one of the plain (char *) string members of the kssl_ctx struct.
-**	Default values should be:
-**		which == KSSL_SERVICE	=>	"khost" (KRB5SVC)
-**		which == KSSL_KEYTAB	=>	"/etc/krb5.keytab" (KRB5KEYTAB)
-*/
+/*-	Set one of the plain (char *) string members of the kssl_ctx struct.
+ *	Default values should be:
+ *		which == KSSL_SERVICE	=>	"khost" (KRB5SVC)
+ *		which == KSSL_KEYTAB	=>	"/etc/krb5.keytab" (KRB5KEYTAB)
+ */
 krb5_error_code
 kssl_ctx_setstring(KSSL_CTX *kssl_ctx, int which, char *text)
         {
@@ -1682,8 +1685,8 @@ kssl_ctx_setstring(KSSL_CTX *kssl_ctx, int which, char *text)
 
 
 /*	Copy the Kerberos session key from a (krb5_keyblock *) to a kssl_ctx
-**	struct.  Clear kssl_ctx->key if Kerberos session key is NULL.
-*/
+ *	struct.  Clear kssl_ctx->key if Kerberos session key is NULL.
+ */
 krb5_error_code
 kssl_ctx_setkey(KSSL_CTX *kssl_ctx, krb5_keyblock *session)
         {
@@ -1897,12 +1900,12 @@ void kssl_krb5_free_data_contents(krb5_context context, krb5_data *data)
 
 
 /*  Given pointers to KerberosTime and struct tm structs, convert the
-**  KerberosTime string to struct tm.  Note that KerberosTime is a
-**  ASN1_GENERALIZEDTIME value, constrained to GMT with no fractional
-**  seconds as defined in RFC 1510.
-**  Return pointer to the (partially) filled in struct tm on success,
-**  return NULL on failure.
-*/
+ *  KerberosTime string to struct tm.  Note that KerberosTime is a
+ *  ASN1_GENERALIZEDTIME value, constrained to GMT with no fractional
+ *  seconds as defined in RFC 1510.
+ *  Return pointer to the (partially) filled in struct tm on success,
+ *  return NULL on failure.
+ */
 static struct tm *k_gmtime(ASN1_GENERALIZEDTIME *gtime, struct tm *k_tm)
 	{
 	char 		c, *p;
@@ -1925,10 +1928,10 @@ static struct tm *k_gmtime(ASN1_GENERALIZEDTIME *gtime, struct tm *k_tm)
 
 
 /*  Helper function for kssl_validate_times().
-**  We need context->clockskew, but krb5_context is an opaque struct.
-**  So we try to sneek the clockskew out through the replay cache.
-**	If that fails just return a likely default (300 seconds).
-*/
+ *  We need context->clockskew, but krb5_context is an opaque struct.
+ *  So we try to sneek the clockskew out through the replay cache.
+ *	If that fails just return a likely default (300 seconds).
+ */
 static krb5_deltat get_rc_clockskew(krb5_context context)
 	{
 	krb5_rcache 	rc;
@@ -1945,15 +1948,15 @@ static krb5_deltat get_rc_clockskew(krb5_context context)
 
 
 /*  kssl_validate_times() combines (and more importantly exposes)
-**  the MIT KRB5 internal function krb5_validate_times() and the
-**  in_clock_skew() macro.  The authenticator client time is checked
-**  to be within clockskew secs of the current time and the current
-**  time is checked to be within the ticket start and expire times.
-**  Either check may be omitted by supplying a NULL value.
-**  Returns 0 for valid times, SSL_R_KRB5* error codes otherwise.
-**  See Also: (Kerberos source)/krb5/lib/krb5/krb/valid_times.c
-**  20010420 VRS
-*/
+ *  the MIT KRB5 internal function krb5_validate_times() and the
+ *  in_clock_skew() macro.  The authenticator client time is checked
+ *  to be within clockskew secs of the current time and the current
+ *  time is checked to be within the ticket start and expire times.
+ *  Either check may be omitted by supplying a NULL value.
+ *  Returns 0 for valid times, SSL_R_KRB5* error codes otherwise.
+ *  See Also: (Kerberos source)/krb5/lib/krb5/krb/valid_times.c
+ *  20010420 VRS
+ */
 krb5_error_code  kssl_validate_times(	krb5_timestamp atime,
 					krb5_ticket_times *ttimes)
 	{
@@ -1985,12 +1988,12 @@ krb5_error_code  kssl_validate_times(	krb5_timestamp atime,
 
 
 /*  Decode and decrypt given DER-encoded authenticator, then pass
-**  authenticator ctime back in *atimep (or 0 if time unavailable).
-**  Returns krb5_error_code and kssl_err on error.  A NULL 
-**  authenticator (authentp->length == 0) is not considered an error.
-**  Note that kssl_check_authent() makes use of the KRB5 session key;
-**  you must call kssl_sget_tkt() to get the key before calling this routine.
-*/
+ *  authenticator ctime back in *atimep (or 0 if time unavailable).
+ *  Returns krb5_error_code and kssl_err on error.  A NULL 
+ *  authenticator (authentp->length == 0) is not considered an error.
+ *  Note that kssl_check_authent() makes use of the KRB5 session key;
+ *  you must call kssl_sget_tkt() to get the key before calling this routine.
+ */
 krb5_error_code  kssl_check_authent(
 			/* IN     */	KSSL_CTX	*kssl_ctx,
                         /* IN     */   	krb5_data	*authentp,
@@ -2069,9 +2072,9 @@ krb5_error_code  kssl_check_authent(
 	if (enc == NULL)
 		{
 		/*  Disable kssl_check_authent for ENCTYPE_DES3_CBC_SHA1.
-		**  This enctype indicates the authenticator was encrypted
-		**  using key-usage derived keys which openssl cannot decrypt.
-		*/
+		 *  This enctype indicates the authenticator was encrypted
+		 *  using key-usage derived keys which openssl cannot decrypt.
+		 */
 		goto err;
 		}
 
@@ -2148,10 +2151,10 @@ krb5_error_code  kssl_check_authent(
 
 
 /*  Replaces krb5_build_principal_ext(), with varargs length == 2 (svc, host),
-**  because I don't know how to stub varargs.
-**  Returns krb5_error_code == ENOMEM on alloc error, otherwise
-**  passes back newly constructed principal, which should be freed by caller.
-*/
+ *  because I don't know how to stub varargs.
+ *  Returns krb5_error_code == ENOMEM on alloc error, otherwise
+ *  passes back newly constructed principal, which should be freed by caller.
+ */
 krb5_error_code  kssl_build_principal_2(
 			/* UPDATE */	krb5_context	context,
 			/* OUT    */	krb5_principal	*princ,

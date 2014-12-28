@@ -76,7 +76,8 @@
 #ifndef OPENSSL_NO_HW
 #ifndef OPENSSL_NO_HW_CHIL
 
-/* Attribution notice: nCipher have said several times that it's OK for
+/*-
+ * Attribution notice: nCipher have said several times that it's OK for
  * us to implement a general interface to their boxes, and recently declared
  * their HWCryptoHook to be public, and therefore available for us to use.
  * Thanks, nCipher.

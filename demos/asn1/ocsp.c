@@ -62,7 +62,8 @@
 
 
 
-/* Example of new ASN1 code, OCSP request
+/*- 
+   Example of new ASN1 code, OCSP request
 
 	OCSPRequest     ::=     SEQUENCE {
 	    tbsRequest                  TBSRequest,

@@ -371,7 +371,8 @@ static __inline unsigned int _strlen31(const char *str)
 #    define NUL_DEV		"NLA0:"
   /* We don't have any well-defined random devices on VMS, yet... */
 #    undef DEVRANDOM
-  /* We need to do this since VMS has the following coding on status codes:
+  /*-
+     We need to do this since VMS has the following coding on status codes:
 
      Bits 0-2: status type: 0 = warning, 1 = success, 2 = error, 3 = info ...
                The important thing to know is that odd numbers are considered

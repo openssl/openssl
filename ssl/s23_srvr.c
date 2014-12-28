@@ -440,7 +440,8 @@ int ssl23_get_client_hello(SSL *s)
 		v[0] = p[3]; /* == SSL3_VERSION_MAJOR */
 		v[1] = p[4];
 
-		/* An SSLv3/TLSv1 backwards-compatible CLIENT-HELLO in an SSLv2
+		/*-
+		 * An SSLv3/TLSv1 backwards-compatible CLIENT-HELLO in an SSLv2
 		 * header is sent directly on the wire, not wrapped as a TLS
 		 * record. It's format is:
 		 * Byte  Content

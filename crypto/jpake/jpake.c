@@ -370,7 +370,7 @@ int JPAKE_STEP2_generate(JPAKE_STEP2 *send, JPAKE_CTX *ctx)
     BIGNUM *t1 = BN_new();
     BIGNUM *t2 = BN_new();
 
-   /*
+   /*-
     * X = g^{(xa + xc + xd) * xb * s}
     * t1 = g^xa
     */
@@ -382,7 +382,7 @@ int JPAKE_STEP2_generate(JPAKE_STEP2 *send, JPAKE_CTX *ctx)
    /* t2 = xb * s */
     BN_mod_mul(t2, ctx->xb, ctx->secret, ctx->p.q, ctx->ctx);
 
-   /*
+   /*-
     * ZKP(xb * s)
     * XXX: this is kinda funky, because we're using
     *
@@ -407,7 +407,7 @@ static int compute_key(JPAKE_CTX *ctx, const BIGNUM *gx)
     BIGNUM *t2 = BN_new();
     BIGNUM *t3 = BN_new();
 
-   /*
+   /*-
     * K = (gx/g^{xb * xd * s})^{xb}
     *   = (g^{(xc + xa + xb) * xd * s - xb * xd *s})^{xb}
     *   = (g^{(xa + xc) * xd * s})^{xb}
@@ -440,7 +440,7 @@ int JPAKE_STEP2_process(JPAKE_CTX *ctx, const JPAKE_STEP2 *received)
     BIGNUM *t2 = BN_new();
     int ret = 0;
 
-   /*
+   /*-
     * g' = g^{xc + xa + xb} [from our POV]
     * t1 = xa + xb
     */

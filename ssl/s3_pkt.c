@@ -293,7 +293,8 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
  * ssl3_get_record to loop forever. */
 #define MAX_EMPTY_RECORDS 32
 
-/* Call this to get a new input record.
+/*-
+ * Call this to get a new input record.
  * It will return <= 0 if more data is needed, normally due to an error
  * or non-blocking IO.
  * When it finishes, one packet has been decoded and can be found in
@@ -449,10 +450,12 @@ fprintf(stderr, "Record type=%d, Length=%d\n", rr->type, rr->length);
 		}
 
 	enc_err = s->method->ssl3_enc->enc(s,0);
-	/* enc_err is:
+	/*-
+	 * enc_err is:
 	 *    0: (in non-constant time) if the record is publically invalid.
 	 *    1: if the padding is valid
-	 *    -1: if the padding is invalid */
+	 *    -1: if the padding is invalid 
+	 */
 	if (enc_err == 0)
 		{
 		al=SSL_AD_DECRYPTION_FAILED;
@@ -556,7 +559,8 @@ printf("\n");
 		}
 
 	rr->off=0;
-	/* So at this point the following is true
+	/*-
+	 * So at this point the following is true
 	 * ssl->s3->rrec.type 	is the type of record
 	 * ssl->s3->rrec.length	== number of bytes in record
 	 * ssl->s3->rrec.off	== offset to first valid byte
@@ -1215,7 +1219,8 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
 		}
 	}
 
-/* Return up to 'len' payload bytes received in 'type' records.
+/*-
+ * Return up to 'len' payload bytes received in 'type' records.
  * 'type' is one of the following:
  *
  *   -  SSL3_RT_HANDSHAKE (when ssl3_get_message calls us)
@@ -1297,10 +1302,12 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 start:
 	s->rwstate=SSL_NOTHING;
 
-	/* s->s3->rrec.type	    - is the type of record
+	/*-
+	 * s->s3->rrec.type	    - is the type of record
 	 * s->s3->rrec.data,    - data
 	 * s->s3->rrec.off,     - offset into 'data' for next read
-	 * s->s3->rrec.length,  - number of bytes. */
+	 * s->s3->rrec.length,  - number of bytes. 
+	 */
 	rr = &(s->s3->rrec);
 
 	/* get new packet if necessary */
@@ -1422,9 +1429,11 @@ start:
 			}
 		}
 
-	/* s->s3->handshake_fragment_len == 4  iff  rr->type == SSL3_RT_HANDSHAKE;
+	/*-
+	 * s->s3->handshake_fragment_len == 4  iff  rr->type == SSL3_RT_HANDSHAKE;
 	 * s->s3->alert_fragment_len == 2      iff  rr->type == SSL3_RT_ALERT.
-	 * (Possibly rr is 'empty' now, i.e. rr->length may be 0.) */
+	 * (Possibly rr is 'empty' now, i.e. rr->length may be 0.) 
+	 */
 
 	/* If we are a client, check for an incoming 'Hello Request': */
 	if ((!s->server) &&

@@ -225,7 +225,8 @@ static int print_nc_ipadd(BIO *bp, ASN1_OCTET_STRING *ip)
 	return 1;
 	}
 
-/* Check a certificate conforms to a specified set of constraints.
+/*-
+ * Check a certificate conforms to a specified set of constraints.
  * Return values:
  *  X509_V_OK: All constraints obeyed.
  *  X509_V_ERR_PERMITTED_VIOLATION: Permitted subtree violation.
@@ -234,7 +235,6 @@ static int print_nc_ipadd(BIO *bp, ASN1_OCTET_STRING *ip)
  *  X509_V_ERR_UNSUPPORTED_CONSTRAINT_TYPE:  Unsupported constraint type.
  *  X509_V_ERR_UNSUPPORTED_CONSTRAINT_SYNTAX: bad unsupported constraint syntax.
  *  X509_V_ERR_UNSUPPORTED_NAME_SYNTAX: bad or unsupported syntax of name
-
  */
 
 int NAME_CONSTRAINTS_check(X509 *x, NAME_CONSTRAINTS *nc)

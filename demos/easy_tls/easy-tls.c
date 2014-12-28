@@ -3,7 +3,7 @@
  * easy-tls.c -- generic TLS proxy.
  * $Id: easy-tls.c,v 1.4 2002/03/05 09:07:16 bodo Exp $
  */
-/*
+/*-
  (c) Copyright 1999 Bodo Moeller.  All rights reserved.
 
  This is free software; you can redistributed and/or modify it
@@ -14,7 +14,7 @@
  or
    -  the following license:
 */
-/*
+/*-
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that each of the following
  * conditions is met:
@@ -185,7 +185,8 @@ tls_start_proxy_defaultargs(void)
     return ret;
 }
 
-/* Slice in TLS proxy process at fd.
+/*- 
+ * Slice in TLS proxy process at fd.
  * Return value:
  *   0    ok  (*pid is set to child's PID if pid != NULL),
  *   < 0  look at errno

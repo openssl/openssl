@@ -74,7 +74,8 @@
 #define conv_ascii2bin(a)	(data_ascii2bin[os_toascii[a]&0x7f])
 #endif
 
-/* 64 char lines
+/*-
+ * 64 char lines
  * pad input with 0
  * left over chars are set to =
  * 1 byte  => xx==
@@ -88,7 +89,8 @@
 static const unsigned char data_bin2ascii[65]="ABCDEFGHIJKLMNOPQRSTUVWXYZ\
 abcdefghijklmnopqrstuvwxyz0123456789+/";
 
-/* 0xF0 is a EOLN
+/*-
+ * 0xF0 is a EOLN
  * 0xF1 is ignore but next needs to be 0xF0 (for \r\n processing).
  * 0xF2 is EOF
  * 0xE0 is ignore at start of line.
@@ -228,7 +230,8 @@ void EVP_DecodeInit(EVP_ENCODE_CTX *ctx)
 	ctx->expect_nl=0;
 	}
 
-/* -1 for error
+/*-
+ * -1 for error
  *  0 for last line
  *  1 for full line
  */
