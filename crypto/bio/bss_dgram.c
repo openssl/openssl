@@ -66,6 +66,9 @@
 #include <openssl/bio.h>
 #ifndef OPENSSL_NO_DGRAM
 
+#if !(defined(_WIN32) || defined(OPENSSL_SYS_VMS))
+# include <sys/time.h>
+#endif
 #if defined(OPENSSL_SYS_VMS)
 #include <sys/timeb.h>
 #endif
