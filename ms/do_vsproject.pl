@@ -213,7 +213,7 @@ sub processBatch{
         my $var = (split('=',$words[1]))[0];
         my $val = substr($line, $ind+1);
         $env{$var}=$val;
-        $function.=tab()."//set $var=$env{$var}\n";
+        $function.=tab()."//set $var=\"$env{$var}\"\n";
         next;
       }
 
@@ -257,7 +257,7 @@ sub processBatch{
       my $var = (split('=',$line))[0];
       my $val = substr($line, $ind+1);
       $env{$var}=$val;
-      $function.=tab()."//$var=$env{$var}\n";
+      $function.=tab()."//$var=\"$env{$var}\"\n";
       next;
     }
     if(index($line,":")!=-1)
