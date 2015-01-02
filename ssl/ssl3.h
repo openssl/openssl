@@ -439,16 +439,6 @@ typedef struct ssl3_buffer_st
  */
 #define SSL3_FLAGS_CCS_OK			0x0080
 
-/* SSL3_FLAGS_SGC_RESTART_DONE is set when we
- * restart a handshake because of MS SGC and so prevents us
- * from restarting the handshake in a loop. It's reset on a
- * renegotiation, so effectively limits the client to one restart
- * per negotiation. This limits the possibility of a DDoS
- * attack where the client handshakes in a loop using SGC to
- * restart. Servers which permit renegotiation can still be
- * effected, but we can't prevent that.
- */
-#define SSL3_FLAGS_SGC_RESTART_DONE		0x0040
 /* Set if we encrypt then mac instead of usual mac then encrypt */
 #define TLS1_FLAGS_ENCRYPT_THEN_MAC		0x0100
 
