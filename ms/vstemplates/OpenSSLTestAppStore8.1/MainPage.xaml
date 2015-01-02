@@ -16,7 +16,7 @@
         <StackPanel x:Name="MainPanel" Grid.Row="0" Margin="12,17,0,28">
             <TextBlock Text="OpenSSL Test App" Margin="12,0"/>
             <TextBlock x:Name="Title" Text="" Margin="9,-7,0,0" FontSize="35"/>
-            <Button Click="Button_Click" >Run Tests</Button>
+            <Button x:Name="RunTests" Click="Button_Click" >Run Tests</Button>
         </StackPanel>
 
         <!--ContentPanel - place additional content here-->
