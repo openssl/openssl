@@ -663,7 +663,8 @@ again:
 	 * would be dropped unnecessarily.
 	 */
 	if (!(s->d1->listen && rr->type == SSL3_RT_HANDSHAKE &&
-		*p == SSL3_MT_CLIENT_HELLO) &&
+		s->packet_length > DTLS1_RT_HEADER_LENGTH &&
+		s->packet[DTLS1_RT_HEADER_LENGTH] == SSL3_MT_CLIENT_HELLO) &&
 		!dtls1_record_replay_check(s, bitmap))
 		{
 		rr->length = 0;
