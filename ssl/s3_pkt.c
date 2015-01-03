@@ -182,6 +182,8 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 	 * at once (as long as it fits into the buffer). */
 	if (SSL_version(s) == DTLS1_VERSION || SSL_version(s) == DTLS1_BAD_VER)
 		{
+		if (left == 0 && extend)
+			return 0;
 		if (left > 0 && n > left)
 			n = left;
 		}
