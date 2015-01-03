@@ -642,8 +642,6 @@ again:
 		/* now s->packet_length == DTLS1_RT_HEADER_LENGTH */
 		i=rr->length;
 		n=ssl3_read_n(s,i,i,1);
-		if (n <= 0) return(n); /* error or non-blocking io */
-
 		/* this packet contained a partial record, dump it */
 		if ( n != i)
 			{
