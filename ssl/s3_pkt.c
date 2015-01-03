@@ -147,6 +147,8 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 	 * at once (as long as it fits into the buffer). */
 	if (SSL_version(s) == DTLS1_VERSION)
 		{
+		if (s->s3->rbuf.left == 0 && extend)
+			return 0;
 		if ( s->s3->rbuf.left > 0 && n > s->s3->rbuf.left)
 			n = s->s3->rbuf.left;
 		}
