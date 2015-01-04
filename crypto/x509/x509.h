@@ -305,6 +305,9 @@ struct x509_st
 #ifndef OPENSSL_NO_SHA
 	unsigned char sha1_hash[SHA_DIGEST_LENGTH];
 #endif
+#ifndef OPENSSL_NO_SHA256
+        unsigned char sha256_hash[SHA256_DIGEST_LENGTH];
+#endif
 	X509_CERT_AUX *aux;
 	} /* X509 */;
 
@@ -478,6 +481,9 @@ struct X509_crl_st
 	ASN1_INTEGER *base_crl_number;
 #ifndef OPENSSL_NO_SHA
 	unsigned char sha1_hash[SHA_DIGEST_LENGTH];
+#endif
+#ifndef OPENSSL_NO_SHA256
+        unsigned char sha256_hash[SHA256_DIGEST_LENGTH];
 #endif
 	STACK_OF(GENERAL_NAMES) *issuers;
 	const X509_CRL_METHOD *meth;
