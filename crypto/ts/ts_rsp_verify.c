@@ -299,6 +299,9 @@ static ESS_SIGNING_CERT *ESS_get_signing_cert(PKCS7_SIGNER_INFO *si)
 	const unsigned char *p;
 	attr = PKCS7_get_signed_attribute(si, 
 					  NID_id_smime_aa_signingCertificate);
+	if (!attr)
+	attr = PKCS7_get_signed_attribute(si, 
+					  NID_id_smime_aa_signingCertificateV2);
 	if (!attr) return NULL;
 	p = attr->value.sequence->data;
 	return d2i_ESS_SIGNING_CERT(NULL, &p, attr->value.sequence->length);
@@ -323,6 +326,23 @@ static int TS_find_cert(STACK_OF(ESS_CERT_ID) *cert_ids, X509 *cert)
 		if (cid->hash->length == sizeof(cert->sha1_hash)
 		    && !memcmp(cid->hash->data, cert->sha1_hash,
 			       sizeof(cert->sha1_hash)))
+			{
+			/* Check the issuer/serial as well if specified. */
+			ESS_ISSUER_SERIAL *is = cid->issuer_serial;
+			if (!is || !TS_issuer_serial_cmp(is, cert->cert_info))
+				return i;
+			}
+		}
+
+	/* Look for cert in the cert_ids vector (Try with SHA256). */
+	for (i = 0; i < sk_ESS_CERT_ID_num(cert_ids); ++i)
+		{
+		ESS_CERT_ID *cid = sk_ESS_CERT_ID_value(cert_ids, i);
+
+		/* Check the SHA-256 hash first. */
+		if (cid->hash->length == sizeof(cert->sha256_hash)
+		    && !memcmp(cid->hash->data, cert->sha256_hash,
+			       sizeof(cert->sha256_hash)))
 			{
 			/* Check the issuer/serial as well if specified. */
 			ESS_ISSUER_SERIAL *is = cid->issuer_serial;
