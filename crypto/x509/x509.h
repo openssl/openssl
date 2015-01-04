@@ -308,6 +308,12 @@ struct x509_st
 #ifndef OPENSSL_NO_SHA256
         unsigned char sha256_hash[SHA256_DIGEST_LENGTH];
 #endif
+#ifndef OPENSSL_NO_SHA512
+        unsigned char sha512_hash[SHA512_DIGEST_LENGTH];
+#endif
+#ifndef OPENSSL_NO_WHIRLPOOL
+        unsigned char whirlpool_hash[64];
+#endif
 	X509_CERT_AUX *aux;
 	} /* X509 */;
 
@@ -484,6 +490,12 @@ struct X509_crl_st
 #endif
 #ifndef OPENSSL_NO_SHA256
         unsigned char sha256_hash[SHA256_DIGEST_LENGTH];
+#endif
+#ifndef OPENSSL_NO_SHA512
+        unsigned char sha512_hash[SHA512_DIGEST_LENGTH];
+#endif
+#ifndef OPENSSL_NO_WHIRLPOOL
+        unsigned char whirlpool_hash[64];
 #endif
 	STACK_OF(GENERAL_NAMES) *issuers;
 	const X509_CRL_METHOD *meth;

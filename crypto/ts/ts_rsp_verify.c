@@ -325,10 +325,23 @@ static int TS_find_cert(STACK_OF(ESS_CERT_ID) *cert_ids, X509 *cert)
 		/* Check the SHA-1 or SHA-256 hash first. */
 		if ((cid->hash->length == sizeof(cert->sha1_hash)
 		    && !memcmp(cid->hash->data, cert->sha1_hash,
-			       sizeof(cert->sha1_hash))) ||
-		    (cid->hash->length == sizeof(cert->sha256_hash)
+			       sizeof(cert->sha1_hash))) 
+		#ifndef OPENSSL_NO_SHA256
+		|| (cid->hash->length == sizeof(cert->sha256_hash)
 		    && !memcmp(cid->hash->data, cert->sha256_hash,
-			       sizeof(cert->sha256_hash))))
+			       sizeof(cert->sha256_hash))) 
+		#endif
+		#ifndef OPENSSL_NO_SHA512
+		|| (cid->hash->length == sizeof(cert->sha512_hash)
+		    && !memcmp(cid->hash->data, cert->sha512_hash,
+			       sizeof(cert->sha512_hash)))
+		#endif
+		#ifndef OPENSSL_NO_WHIRLPOOL
+		|| (cid->hash->length == sizeof(cert->whirlpool_hash)
+		    && !memcmp(cid->hash->data, cert->whirlpool_hash,
+			       sizeof(cert->whirlpool_hash)))
+		#endif
+		)
 			{
 			/* Check the issuer/serial as well if specified. */
 			ESS_ISSUER_SERIAL *is = cid->issuer_serial;
