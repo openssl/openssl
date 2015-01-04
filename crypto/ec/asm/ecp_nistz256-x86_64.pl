@@ -31,15 +31,16 @@
 # Further optimization by <appro@openssl.org>:
 #
 #		this/original
-# Opteron	+8-33%
-# Bulldozer	+10-30%
-# P4		+14-38%
-# Westmere	+8-23%
-# Sandy Bridge	+8-24%
-# Ivy Bridge	+7-25%
-# Haswell	+5-25%
-# Atom		+10-32%
-# VIA Nano	+37-130%
+# Opteron	+12-49%
+# Bulldozer	+14-45%
+# P4		+18-46%
+# Westmere	+12-34%
+# Sandy Bridge	+9-35%
+# Ivy Bridge	+9-35%
+# Haswell	+8-37%
+# Broadwell	+18-58%
+# Atom		+15-50%
+# VIA Nano	+43-160%
 #
 # Ranges denote minimum and maximum improvement coefficients depending
 # on benchmark.
@@ -549,28 +550,20 @@ __ecp_nistz256_mul_montq:
 	# and add the result to the acc.
 	# Due to the special form of p256 we do some optimizations
 	#
-	# acc[0] x p256[0] = acc[0] x 2^64 - acc[0]
-	# then we add acc[0] and get acc[0] x 2^64
+	# acc[0] x p256[0..1] = acc[0] x 2^96 - acc[0]
+	# then we add acc[0] and get acc[0] x 2^96
 
-	mulq	$poly1
-	xor	$t0, $t0
-	add	$acc0, $acc1		# +=acc[0]*2^64
-	adc	\$0, %rdx
-	add	%rax, $acc1
-	mov	$acc0, %rax
-
-	# acc[0] x p256[2] = 0
-	adc	%rdx, $acc2
-	adc	\$0, $t0
-
+	mov	$acc0, $t1
+	shl	\$32, $acc0
 	mulq	$poly3
-	xor	$acc0, $acc0
-	add	$t0, $acc3
-	adc	\$0, %rdx
-	add	%rax, $acc3
+	shr	\$32, $t1
+	add	$acc0, $acc1		# +=acc[0]<<96
+	adc	$t1, $acc2
+	adc	%rax, $acc3
 	 mov	8*1($b_ptr), %rax
 	adc	%rdx, $acc4
 	adc	\$0, $acc5
+	xor	$acc0, $acc0
 
 	########################################################################
 	# Multiply by b[1]
@@ -607,23 +600,17 @@ __ecp_nistz256_mul_montq:
 
 	########################################################################
 	# Second reduction step	
-	mulq	$poly1
-	xor	$t0, $t0
-	add	$acc1, $acc2
-	adc	\$0, %rdx
-	add	%rax, $acc2
-	mov	$acc1, %rax
-	adc	%rdx, $acc3
-	adc	\$0, $t0
-
+	mov	$acc1, $t1
+	shl	\$32, $acc1
 	mulq	$poly3
-	xor	$acc1, $acc1
-	add	$t0, $acc4
-	adc	\$0, %rdx
-	add	%rax, $acc4
+	shr	\$32, $t1
+	add	$acc1, $acc2
+	adc	$t1, $acc3
+	adc	%rax, $acc4
 	 mov	8*2($b_ptr), %rax
 	adc	%rdx, $acc5
 	adc	\$0, $acc0
+	xor	$acc1, $acc1
 
 	########################################################################
 	# Multiply by b[2]
@@ -660,23 +647,17 @@ __ecp_nistz256_mul_montq:
 
 	########################################################################
 	# Third reduction step	
-	mulq	$poly1
-	xor	$t0, $t0
-	add	$acc2, $acc3
-	adc	\$0, %rdx
-	add	%rax, $acc3
-	mov	$acc2, %rax
-	adc	%rdx, $acc4
-	adc	\$0, $t0
-
+	mov	$acc2, $t1
+	shl	\$32, $acc2
 	mulq	$poly3
-	xor	$acc2, $acc2
-	add	$t0, $acc5
-	adc	\$0, %rdx
-	add	%rax, $acc5
+	shr	\$32, $t1
+	add	$acc2, $acc3
+	adc	$t1, $acc4
+	adc	%rax, $acc5
 	 mov	8*3($b_ptr), %rax
 	adc	%rdx, $acc0
 	adc	\$0, $acc1
+	xor	$acc2, $acc2
 
 	########################################################################
 	# Multiply by b[3]
@@ -713,20 +694,14 @@ __ecp_nistz256_mul_montq:
 
 	########################################################################
 	# Final reduction step	
-	mulq	$poly1
-	#xor	$t0, $t0
-	add	$acc3, $acc4
-	adc	\$0, %rdx
-	add	%rax, $acc4
-	mov	$acc3, %rax
-	adc	%rdx, $acc5
-	#adc	\$0, $t0		# doesn't overflow
-
+	mov	$acc3, $t1
+	shl	\$32, $acc3
 	mulq	$poly3
-	#add	$t0, $acc0
-	#adc	\$0, %rdx
+	shr	\$32, $t1
+	add	$acc3, $acc4
+	adc	$t1, $acc5
 	 mov	$acc4, $t0
-	add	%rax, $acc0
+	adc	%rax, $acc0
 	adc	%rdx, $acc1
 	 mov	$acc5, $t1
 	adc	\$0, $acc2
@@ -739,14 +714,14 @@ __ecp_nistz256_mul_montq:
 	sbb	\$0, $acc0		# .Lpoly[2]
 	 mov	$acc1, $t3
 	sbb	$poly3, $acc1		# .Lpoly[3]
-	neg	$acc2
+	sbb	\$0, $acc2
 
-	cmovnc	$t0, $acc4
-	cmovnc	$t1, $acc5
+	cmovc	$t0, $acc4
+	cmovc	$t1, $acc5
 	mov	$acc4, 8*0($r_ptr)
-	cmovnc	$t2, $acc0
+	cmovc	$t2, $acc0
 	mov	$acc5, 8*1($r_ptr)
-	cmovnc	$t3, $acc1
+	cmovc	$t3, $acc1
 	mov	$acc0, 8*2($r_ptr)
 	mov	$acc1, 8*3($r_ptr)
 
@@ -896,89 +871,62 @@ __ecp_nistz256_sqr_montq:
 	##########################################
 	# Now the reduction
 	# First iteration
-	mulq	$a_ptr
-	#xor	$t0, $t0
-	add	$acc0, $acc1
-	adc	\$0, %rdx
-	add	%rax, $acc1
-	mov	$acc0, %rax
-	adc	%rdx, $acc2	# doesn't overflow
-	#adc	\$0, $t0
-
+	mov	$acc0, $t0
+	shl	\$32, $acc0
 	mulq	$t1
-	xor	$acc0, $acc0
-	#add	$t0, $acc3
-	#adc	\$0, %rdx
-	add	%rax, $acc3
+	shr	\$32, $t0
+	add	$acc0, $acc1		# +=acc[0]<<96
+	adc	$t0, $acc2
+	adc	%rax, $acc3
 	 mov	$acc1, %rax
-	adc	%rdx, $acc4
-	adc	\$0, $acc0
+	adc	\$0, %rdx
 
 	##########################################
 	# Second iteration
-	mulq	$a_ptr
-	#xor	$t0, $t0
-	add	$acc1, $acc2
-	adc	\$0, %rdx
-	add	%rax, $acc2
-	mov	$acc1, %rax
-	adc	%rdx, $acc3	# doesn't overflow
-	#adc	\$0, $t0
-
+	mov	$acc1, $t0
+	shl	\$32, $acc1
+	mov	%rdx, $acc0
 	mulq	$t1
-	xor	$acc1, $acc1
-	#add	$t0, $acc4
-	#adc	\$0, %rdx
-	add	%rax, $acc4
+	shr	\$32, $t0
+	add	$acc1, $acc2
+	adc	$t0, $acc3
+	adc	%rax, $acc0
 	 mov	$acc2, %rax
-	adc	%rdx, $acc0
-	adc	\$0, $acc1
+	adc	\$0, %rdx
 
 	##########################################
 	# Third iteration
-	mulq	$a_ptr
-	#xor	$t0, $t0
-	add	$acc2, $acc3
-	adc	\$0, %rdx
-	add	%rax, $acc3
-	mov	$acc2, %rax
-	adc	%rdx, $acc4	# doesn't overflow
-	#adc	\$0, $t0
-
+	mov	$acc2, $t0
+	shl	\$32, $acc2
+	mov	%rdx, $acc1
 	mulq	$t1
-	xor	$acc2, $acc2
-	#add	$t0, $acc0
-	#adc	\$0, %rdx
-	add	%rax, $acc0
+	shr	\$32, $t0
+	add	$acc2, $acc3
+	adc	$t0, $acc0
+	adc	%rax, $acc1
 	 mov	$acc3, %rax
-	adc	%rdx, $acc1
-	adc	\$0, $acc2
+	adc	\$0, %rdx
 
 	###########################################
 	# Last iteration
-	mulq	$a_ptr
-	#xor	$t0, $t0
-	add	$acc3, $acc4
-	adc	\$0, %rdx
-	add	%rax, $acc4
-	mov	$acc3, %rax
-	adc	%rdx, $acc0	# doesn't overflow
-	#adc	\$0, $t0
-
+	mov	$acc3, $t0
+	shl	\$32, $acc3
+	mov	%rdx, $acc2
 	mulq	$t1
+	shr	\$32, $t0
+	add	$acc3, $acc0
+	adc	$t0, $acc1
+	adc	%rax, $acc2
+	adc	\$0, %rdx
 	xor	$acc3, $acc3
-	#add	$t0, $acc1
-	#adc	\$0, %rdx
-	add	%rax, $acc1
-	adc	%rdx, $acc2
-	adc	\$0, $acc3
 
 	############################################
 	# Add the rest of the acc
-	add	$acc0, $acc5
+	add	$acc0, $acc4
+	adc	$acc1, $acc5
 	 mov	$acc4, $acc0
-	adc	$acc1, $acc6
-	adc	$acc2, $acc7
+	adc	$acc2, $acc6
+	adc	%rdx, $acc7
 	 mov	$acc5, $acc1
 	adc	\$0, $acc3
 
@@ -988,14 +936,14 @@ __ecp_nistz256_sqr_montq:
 	sbb	\$0, $acc6		# .Lpoly[2]
 	 mov	$acc7, $t0
 	sbb	$t1, $acc7		# .Lpoly[3]
-	neg	$acc3
+	sbb	\$0, $acc3
 
-	cmovnc	$acc0, $acc4
-	cmovnc	$acc1, $acc5
+	cmovc	$acc0, $acc4
+	cmovc	$acc1, $acc5
 	mov	$acc4, 8*0($r_ptr)
-	cmovnc	$acc2, $acc6
+	cmovc	$acc2, $acc6
 	mov	$acc5, 8*1($r_ptr)
-	cmovnc	$t0, $acc7
+	cmovc	$t0, $acc7
 	mov	$acc6, 8*2($r_ptr)
 	mov	$acc7, 8*3($r_ptr)
 
@@ -1027,18 +975,15 @@ __ecp_nistz256_mul_montx:
 
 	########################################################################
 	# First reduction step
-	xor	$acc0, $acc0		# $acc0=0,cf=0,of=0
-	adox	$t1, $acc1
-	adox	$t0, $acc2
+	add	$t1, $acc1
+	adc	$t0, $acc2
 
 	mulx	$poly3, $t0, $t1
 	 mov	8*1($b_ptr), %rdx
-	adox	$t0, $acc3
-	adcx	$t1, $acc4
-
-	adox	$acc0, $acc4
-	adcx	$acc0, $acc5		# cf=0
-	adox	$acc0, $acc5		# of=0
+	adc	$t0, $acc3
+	adc	$t1, $acc4
+	adc	\$0, $acc5
+	xor	$acc0, $acc0		# $acc0=0,cf=0,of=0
 
 	########################################################################
 	# Multiply by b[1]
@@ -1067,18 +1012,15 @@ __ecp_nistz256_mul_montx:
 
 	########################################################################
 	# Second reduction step
-	xor	$acc1 ,$acc1		# $acc1=0,cf=0,of=0
-	adox	$t0, $acc2
-	adox	$t1, $acc3
+	add	$t0, $acc2
+	adc	$t1, $acc3
 
 	mulx	$poly3, $t0, $t1
 	 mov	8*2($b_ptr), %rdx
-	adox	$t0, $acc4
-	adcx	$t1, $acc5
-
-	adox	$acc1, $acc5
-	adcx	$acc1, $acc0		# cf=0
-	adox	$acc1, $acc0		# of=0
+	adc	$t0, $acc4
+	adc	$t1, $acc5
+	adc	\$0, $acc0
+	xor	$acc1 ,$acc1		# $acc1=0,cf=0,of=0
 
 	########################################################################
 	# Multiply by b[2]
@@ -1107,18 +1049,15 @@ __ecp_nistz256_mul_montx:
 
 	########################################################################
 	# Third reduction step
-	xor	$acc2, $acc2		# $acc2=0,cf=0,of=0
-	adox	$t0, $acc3
-	adox	$t1, $acc4
+	add	$t0, $acc3
+	adc	$t1, $acc4
 
 	mulx	$poly3, $t0, $t1
 	 mov	8*3($b_ptr), %rdx
-	adox	$t0, $acc5
-	adcx	$t1, $acc0
-
-	adox	$acc2, $acc0
-	adcx	$acc2, $acc1		# cf=0
-	adox	$acc2, $acc1		# of=0
+	adc	$t0, $acc5
+	adc	$t1, $acc0
+	adc	\$0, $acc1
+	xor	$acc2, $acc2		# $acc2=0,cf=0,of=0
 
 	########################################################################
 	# Multiply by b[3]
@@ -1147,38 +1086,34 @@ __ecp_nistz256_mul_montx:
 
 	########################################################################
 	# Fourth reduction step
-	xor	$acc3, $acc3		# $acc3=0,cf=0,of=0
-	adox	$t0, $acc4
-	adox	$t1, $acc5
+	add	$t0, $acc4
+	adc	$t1, $acc5
 
 	mulx	$poly3, $t0, $t1
 	 mov	$acc4, $t2
 	mov	.Lpoly+8*1(%rip), $poly1
-	adcx	$t0, $acc0
-	adox	$t1, $acc1
+	adc	$t0, $acc0
 	 mov	$acc5, $t3
-
-	adcx	$acc3, $acc1
-	adox	$acc3, $acc2
+	adc	$t1, $acc1
 	adc	\$0, $acc2
-	 mov	$acc0, $t0
 
 	########################################################################
 	# Branch-less conditional subtraction of P
 	xor	%eax, %eax
+	 mov	$acc0, $t0
 	sbb	\$-1, $acc4		# .Lpoly[0]
 	sbb	$poly1, $acc5		# .Lpoly[1]
 	sbb	\$0, $acc0		# .Lpoly[2]
 	 mov	$acc1, $t1
 	sbb	$poly3, $acc1		# .Lpoly[3]
+	sbb	\$0, $acc2
 
-	bt	\$0,$acc2
-	cmovnc	$t2, $acc4
-	cmovnc	$t3, $acc5
+	cmovc	$t2, $acc4
+	cmovc	$t3, $acc5
 	mov	$acc4, 8*0($r_ptr)
-	cmovnc	$t0, $acc0
+	cmovc	$t0, $acc0
 	mov	$acc5, 8*1($r_ptr)
-	cmovnc	$t1, $acc1
+	cmovc	$t1, $acc1
 	mov	$acc0, 8*2($r_ptr)
 	mov	$acc1, 8*3($r_ptr)
 
@@ -1246,52 +1181,44 @@ __ecp_nistz256_sqr_montx:
 	 mov	.Lpoly+8*3(%rip), $t1
 
 	# reduction step 1
-	xor	$acc0, $acc0
-	adcx	$t0, $acc1
-	adcx	$t4, $acc2
+	add	$t0, $acc1
+	adc	$t4, $acc2
 
-	mulx	$t1, $t0, $t4
+	mulx	$t1, $t0, $acc0
 	 mov	$acc1, %rdx
-	adcx	$t0, $acc3
+	adc	$t0, $acc3
 	 shlx	$a_ptr, $acc1, $t0
-	adox	$t4, $acc0
-	 shrx	$a_ptr, $acc1, $t4
 	adc	\$0, $acc0
+	 shrx	$a_ptr, $acc1, $t4
 
 	# reduction step 2
-	xor	$acc1, $acc1
-	adcx	$t0, $acc2
-	adcx	$t4, $acc3
+	add	$t0, $acc2
+	adc	$t4, $acc3
 
-	mulx	$t1, $t0, $t4
+	mulx	$t1, $t0, $acc1
 	 mov	$acc2, %rdx
-	adcx	$t0, $acc0
+	adc	$t0, $acc0
 	 shlx	$a_ptr, $acc2, $t0
-	adox	$t4, $acc1
-	 shrx	$a_ptr, $acc2, $t4
 	adc	\$0, $acc1
+	 shrx	$a_ptr, $acc2, $t4
 
 	# reduction step 3
-	xor	$acc2, $acc2
-	adcx	$t0, $acc3
-	adcx	$t4, $acc0
+	add	$t0, $acc3
+	adc	$t4, $acc0
 
-	mulx	$t1, $t0, $t4
+	mulx	$t1, $t0, $acc2
 	 mov	$acc3, %rdx
-	adcx	$t0, $acc1
+	adc	$t0, $acc1
 	 shlx	$a_ptr, $acc3, $t0
-	adox	$t4, $acc2
-	 shrx	$a_ptr, $acc3, $t4
 	adc	\$0, $acc2
+	 shrx	$a_ptr, $acc3, $t4
 
 	# reduction step 4
-	xor	$acc3, $acc3
-	adcx	$t0, $acc0
-	adcx	$t4, $acc1
+	add	$t0, $acc0
+	adc	$t4, $acc1
 
-	mulx	$t1, $t0, $t4
-	adcx	$t0, $acc2
-	adox	$t4, $acc3
+	mulx	$t1, $t0, $acc3
+	adc	$t0, $acc2
 	adc	\$0, $acc3
 
 	xor	$t3, $t3		# cf=0
@@ -1311,14 +1238,14 @@ __ecp_nistz256_sqr_montx:
 	sbb	\$0, $acc6		# .Lpoly[2]
 	 mov	$acc7, $acc3
 	sbb	$t1, $acc7		# .Lpoly[3]
+	sbb	\$0, $t3
 
-	bt	\$0,$t3
-	cmovnc	$acc0, $acc4
-	cmovnc	$acc1, $acc5
+	cmovc	$acc0, $acc4
+	cmovc	$acc1, $acc5
 	mov	$acc4, 8*0($r_ptr)
-	cmovnc	$acc2, $acc6
+	cmovc	$acc2, $acc6
 	mov	$acc5, 8*1($r_ptr)
-	cmovnc	$acc3, $acc7
+	cmovc	$acc3, $acc7
 	mov	$acc6, 8*2($r_ptr)
 	mov	$acc7, 8*3($r_ptr)
 
@@ -1329,8 +1256,8 @@ ___
 }
 {
 my ($r_ptr,$in_ptr)=("%rdi","%rsi");
-my ($acc0,$acc1,$acc2,$acc3,$acc4)=map("%r$_",(8..12));
-my ($t0,$t1)=("%rcx","%rsi");
+my ($acc0,$acc1,$acc2,$acc3)=map("%r$_",(8..11));
+my ($t0,$t1,$t2)=("%rcx","%r12","%r13");
 
 $code.=<<___;
 ################################################################################
@@ -1347,109 +1274,83 @@ ecp_nistz256_from_mont:
 	push	%r13
 
 	mov	8*0($in_ptr), %rax
+	mov	.Lpoly+8*3(%rip), $t2
 	mov	8*1($in_ptr), $acc1
 	mov	8*2($in_ptr), $acc2
 	mov	8*3($in_ptr), $acc3
-	lea	.Lpoly(%rip), $in_ptr
-	xor	$acc4, $acc4
 	mov	%rax, $acc0
+	mov	.Lpoly+8*1(%rip), $t1
 
 	#########################################
 	# First iteration
-	mulq	1*8($in_ptr)
-	xor	$t0, $t0
+	mov	%rax, $t0
+	shl	\$32, $acc0
+	mulq	$t2
+	shr	\$32, $t0
 	add	$acc0, $acc1
-	adc	\$0, %rdx
-	add	%rax, $acc1
-	mov	$acc0, %rax
-	adc	%rdx, $acc2
-	adc	\$0, $t0
-
-	mulq	3*8($in_ptr)
-	xor	$acc0, $acc0
-	add	$t0, $acc3
-	adc	\$0, %rdx
-	add	%rax, $acc3
+	adc	$t0, $acc2
+	adc	%rax, $acc3
 	 mov	$acc1, %rax
-	adc	%rdx, $acc4
-	adc	\$0, $acc0
+	adc	\$0, %rdx
 
 	#########################################
 	# Second iteration
-	mulq	1*8($in_ptr)
-	xor	$t0, $t0
+	mov	$acc1, $t0
+	shl	\$32, $acc1
+	mov	%rdx, $acc0
+	mulq	$t2
+	shr	\$32, $t0
 	add	$acc1, $acc2
-	adc	\$0, %rdx
-	add	%rax, $acc2
-	mov	$acc1, %rax
-	adc	%rdx, $acc3
-	adc	\$0, $t0
-
-	mulq	3*8($in_ptr)
-	xor	$acc1, $acc1
-	add	$t0, $acc4
-	adc	\$0, %rdx
-	add	%rax, $acc4
+	adc	$t0, $acc3
+	adc	%rax, $acc0
 	 mov	$acc2, %rax
-	adc	%rdx, $acc0
-	adc	\$0, $acc1
+	adc	\$0, %rdx
 
 	##########################################
 	# Third iteration
-	mulq	1*8($in_ptr)
-	xor	$t0, $t0
+	mov	$acc2, $t0
+	shl	\$32, $acc2
+	mov	%rdx, $acc1
+	mulq	$t2
+	shr	\$32, $t0
 	add	$acc2, $acc3
-	adc	\$0, %rdx
-	add	%rax, $acc3
-	mov	$acc2, %rax
-	adc	%rdx, $acc4
-	adc	\$0, $t0
-
-	mulq	3*8($in_ptr)
-	xor	$acc2, $acc2
-	add	$t0, $acc0
-	adc	\$0, %rdx
-	add	%rax, $acc0
+	adc	$t0, $acc0
+	adc	%rax, $acc1
 	 mov	$acc3, %rax
-	adc	%rdx, $acc1
-	adc	\$0, $acc2
+	adc	\$0, %rdx
 
 	###########################################
 	# Last iteration
-	mulq	1*8($in_ptr)
-	xor	$t0, $t0
-	add	$acc3, $acc4
+	mov	$acc3, $t0
+	shl	\$32, $acc3
+	mov	%rdx, $acc2
+	mulq	$t2
+	shr	\$32, $t0
+	add	$acc3, $acc0
+	adc	$t0, $acc1
+	 mov	$acc0, $t0
+	adc	%rax, $acc2
+	 mov	$acc1, $in_ptr
 	adc	\$0, %rdx
-	add	%rax, $acc4
-	mov	$acc3, %rax
-	adc	%rdx, $acc0
-	adc	\$0, $t0
 
-	mulq	3*8($in_ptr)
-	add	$t0, $acc1
-	adc	\$0, %rdx
-	add	%rax, $acc1
-	adc	%rdx, $acc2
-	sbb	$acc3, $acc3
+	###########################################
+	# Branch-less conditional subtraction
+	sub	\$-1, $acc0
+	 mov	$acc2, %rax
+	sbb	$t1, $acc1
+	sbb	\$0, $acc2
+	 mov	%rdx, $acc3
+	sbb	$t2, %rdx
+	sbb	$t2, $t2
 
-	mov	0*8($in_ptr), %rax
-	mov	1*8($in_ptr), %rdx
-	mov	2*8($in_ptr), $t0
-	mov	3*8($in_ptr), $t1
-
-	and	$acc3, %rax
-	and	$acc3, %rdx
-	and	$acc3, $t0
-	and	$acc3, $t1
-
-	sub	%rax, $acc4
-	sbb	%rdx, $acc0
-	mov	$acc4, 8*0($r_ptr)
-	sbb	$t0, $acc1
-	mov	$acc0, 8*1($r_ptr)
-	sbb	$t1, $acc2
-	mov	$acc1, 8*2($r_ptr)
-	mov	$acc2, 8*3($r_ptr)
+	cmovnz	$t0, $acc0
+	cmovnz	$in_ptr, $acc1
+	mov	$acc0, 8*0($r_ptr)
+	cmovnz	%rax, $acc2
+	mov	$acc1, 8*1($r_ptr)
+	cmovz	%rdx, $acc3
+	mov	$acc2, 8*2($r_ptr)
+	mov	$acc3, 8*3($r_ptr)
 
 	pop	%r13
 	pop	%r12
