@@ -291,6 +291,7 @@ id-smime-aa 26		: id-smime-aa-ets-certCRLTimestamp
 id-smime-aa 27		: id-smime-aa-ets-archiveTimeStamp
 id-smime-aa 28		: id-smime-aa-signatureType
 id-smime-aa 29		: id-smime-aa-dvcs-dvc
+id-smime-aa 47		: id-smime-aa-signingCertificateV2
 
 # S/MIME Algorithm Identifiers
 # obsolete
