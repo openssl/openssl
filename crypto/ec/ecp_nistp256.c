@@ -432,25 +432,25 @@ static void felem_shrink(smallfelem out, const felem in)
     /* As tmp[3] < 2^65, high is either 1 or 0 */
     high <<= 63;
     high >>= 63;
-        /*-
-         * high is:
-         *   all ones   if the high word of tmp[3] is 1
-         *   all zeros  if the high word of tmp[3] if 0 */
+	/*-
+	 * high is:
+	 *   all ones   if the high word of tmp[3] is 1
+	 *   all zeros  if the high word of tmp[3] if 0 */
     low = tmp[3];
     mask = low >> 63;
-        /*-
-         * mask is:
-         *   all ones   if the MSB of low is 1
-         *   all zeros  if the MSB of low if 0 */
+	/*-
+	 * mask is:
+	 *   all ones   if the MSB of low is 1
+	 *   all zeros  if the MSB of low if 0 */
     low &= bottom63bits;
     low -= kPrime3Test;
     /* if low was greater than kPrime3Test then the MSB is zero */
     low = ~low;
     low >>= 63;
-        /*-
-         * low is:
-         *   all ones   if low was > kPrime3Test
-         *   all zeros  if low was <= kPrime3Test */
+	/*-
+	 * low is:
+	 *   all ones   if low was > kPrime3Test
+	 *   all zeros  if low was <= kPrime3Test */
     mask = (mask & low) | high;
     tmp[0] -= mask & kPrime[0];
     tmp[1] -= mask & kPrime[1];
@@ -790,17 +790,17 @@ static void felem_reduce(felem out, const longfelem in)
 
     felem_reduce_(out, in);
 
-        /*-
-         * out[0] > 2^100 - 2^36 - 2^4 - 3*2^64 - 3*2^96 - 2^64 - 2^96 > 0
-         * out[1] > 2^100 - 2^64 - 7*2^96 > 0
-         * out[2] > 2^100 - 2^36 + 2^4 - 5*2^64 - 5*2^96 > 0
-         * out[3] > 2^100 - 2^36 + 2^4 - 7*2^64 - 5*2^96 - 3*2^96 > 0
-         *
-         * out[0] < 2^100 + 2^64 + 7*2^64 + 5*2^96 < 2^101
-         * out[1] < 2^100 + 3*2^64 + 5*2^64 + 3*2^97 < 2^101
-         * out[2] < 2^100 + 5*2^64 + 2^64 + 3*2^65 + 2^97 < 2^101
-         * out[3] < 2^100 + 7*2^64 + 7*2^96 + 3*2^64 < 2^101
-         */
+	/*-
+	 * out[0] > 2^100 - 2^36 - 2^4 - 3*2^64 - 3*2^96 - 2^64 - 2^96 > 0
+	 * out[1] > 2^100 - 2^64 - 7*2^96 > 0
+	 * out[2] > 2^100 - 2^36 + 2^4 - 5*2^64 - 5*2^96 > 0
+	 * out[3] > 2^100 - 2^36 + 2^4 - 7*2^64 - 5*2^96 - 3*2^96 > 0
+	 *
+	 * out[0] < 2^100 + 2^64 + 7*2^64 + 5*2^96 < 2^101
+	 * out[1] < 2^100 + 3*2^64 + 5*2^64 + 3*2^97 < 2^101
+	 * out[2] < 2^100 + 5*2^64 + 2^64 + 3*2^65 + 2^97 < 2^101
+	 * out[3] < 2^100 + 7*2^64 + 7*2^96 + 3*2^64 < 2^101
+	 */
 }
 
 /*-
@@ -819,17 +819,17 @@ static void felem_reduce_zero105(felem out, const longfelem in)
 
     felem_reduce_(out, in);
 
-        /*-
-         * out[0] > 2^105 - 2^41 - 2^9 - 2^71 - 2^103 - 2^71 - 2^103 > 0
-         * out[1] > 2^105 - 2^71 - 2^103 > 0
-         * out[2] > 2^105 - 2^41 + 2^9 - 2^71 - 2^103 > 0
-         * out[3] > 2^105 - 2^41 + 2^9 - 2^71 - 2^103 - 2^103 > 0
-         *
-         * out[0] < 2^105 + 2^71 + 2^71 + 2^103 < 2^106
-         * out[1] < 2^105 + 2^71 + 2^71 + 2^103 < 2^106
-         * out[2] < 2^105 + 2^71 + 2^71 + 2^71 + 2^103 < 2^106
-         * out[3] < 2^105 + 2^71 + 2^103 + 2^71 < 2^106
-         */
+	/*-
+	 * out[0] > 2^105 - 2^41 - 2^9 - 2^71 - 2^103 - 2^71 - 2^103 > 0
+	 * out[1] > 2^105 - 2^71 - 2^103 > 0
+	 * out[2] > 2^105 - 2^41 + 2^9 - 2^71 - 2^103 > 0
+	 * out[3] > 2^105 - 2^41 + 2^9 - 2^71 - 2^103 - 2^103 > 0
+	 *
+	 * out[0] < 2^105 + 2^71 + 2^71 + 2^103 < 2^106
+	 * out[1] < 2^105 + 2^71 + 2^71 + 2^103 < 2^106
+	 * out[2] < 2^105 + 2^71 + 2^71 + 2^71 + 2^103 < 2^106
+	 * out[3] < 2^105 + 2^71 + 2^103 + 2^71 < 2^106
+	 */
 }
 
 /*

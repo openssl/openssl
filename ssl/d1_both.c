@@ -573,12 +573,12 @@ static int dtls1_preprocess_fragment(SSL *s, struct hm_header_st *msg_hdr,
 
 static int dtls1_retrieve_buffered_fragment(SSL *s, long max, int *ok)
 {
-        /*-
-         * (0) check whether the desired fragment is available
-         * if so:
-         * (1) copy over the fragment to s->init_buf->data[]
-         * (2) update s->init_num
-         */
+    /*-
+     * (0) check whether the desired fragment is available
+     * if so:
+     * (1) copy over the fragment to s->init_buf->data[]
+     * (2) update s->init_num
+     */
     pitem *item;
     hm_fragment *frag;
     int al;
@@ -1167,10 +1167,10 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
     struct dtls1_retransmit_state saved_state;
     unsigned char save_write_sequence[8];
 
-        /*-
-          OPENSSL_assert(s->init_num == 0);
-          OPENSSL_assert(s->init_off == 0);
-         */
+    /*-
+      OPENSSL_assert(s->init_num == 0);
+      OPENSSL_assert(s->init_off == 0);
+     */
 
     /* XDTLS:  the requested message ought to be found, otherwise error */
     memset(seq64be, 0, sizeof(seq64be));
@@ -1483,16 +1483,16 @@ int dtls1_heartbeat(SSL *s)
      */
     OPENSSL_assert(payload + padding <= 16381);
 
-        /*-
-         * Create HeartBeat message, we just use a sequence number
-         * as payload to distuingish different messages and add
-         * some random stuff.
-         *  - Message Type, 1 byte
-         *  - Payload Length, 2 bytes (unsigned int)
-         *  - Payload, the sequence number (2 bytes uint)
-         *  - Payload, random bytes (16 bytes uint)
-         *  - Padding
-         */
+    /*-
+     * Create HeartBeat message, we just use a sequence number
+     * as payload to distuingish different messages and add
+     * some random stuff.
+     *  - Message Type, 1 byte
+     *  - Payload Length, 2 bytes (unsigned int)
+     *  - Payload, the sequence number (2 bytes uint)
+     *  - Payload, random bytes (16 bytes uint)
+     *  - Padding
+     */
     buf = OPENSSL_malloc(1 + 2 + payload + padding);
     if (buf == NULL) {
         SSLerr(SSL_F_DTLS1_HEARTBEAT, ERR_R_MALLOC_FAILURE);

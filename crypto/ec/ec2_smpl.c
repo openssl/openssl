@@ -639,12 +639,12 @@ int ec_GF2m_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point,
     if (lh == NULL)
         goto err;
 
-        /*-
-         * We have a curve defined by a Weierstrass equation
-         *      y^2 + x*y = x^3 + a*x^2 + b.
-         *  <=> x^3 + a*x^2 + x*y + b + y^2 = 0
-         *  <=> ((x + a) * x + y ) * x + b + y^2 = 0
-         */
+    /*-
+     * We have a curve defined by a Weierstrass equation
+     *      y^2 + x*y = x^3 + a*x^2 + b.
+     *  <=> x^3 + a*x^2 + x*y + b + y^2 = 0
+     *  <=> ((x + a) * x + y ) * x + b + y^2 = 0
+     */
     if (!BN_GF2m_add(lh, point->X, group->a))
         goto err;
     if (!field_mul(group, lh, lh, point->X, ctx))

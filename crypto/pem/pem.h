@@ -183,9 +183,9 @@ typedef struct pem_ctx_st {
     int num_recipient;
     PEM_USER **recipient;
 
-        /*-
-            XXX(ben): don#t think this is used!
-                STACK *x509_chain;      / * certificate chain */
+/*-
+    XXX(ben): don#t think this is used!
+        STACK *x509_chain;      / * certificate chain */
     EVP_MD *md;                 /* signature type */
 
     int md_enc;                 /* is the md encrypted or not? */
@@ -195,9 +195,9 @@ typedef struct pem_ctx_st {
     EVP_CIPHER *dec;            /* date encryption cipher */
     int key_len;                /* key length */
     unsigned char *key;         /* key */
-        /*-
-            unused, and wrong size
-           unsigned char iv[8]; */
+	/*-
+		unused, and wrong size
+	   unsigned char iv[8]; */
 
     int data_enc;               /* is the data encrypted */
     int data_len;

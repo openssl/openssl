@@ -320,11 +320,11 @@ int ec_GFp_simple_group_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
             goto err;
     }
 
-        /*-
-         * check the discriminant:
-         * y^2 = x^3 + a*x + b is an elliptic curve <=> 4*a^3 + 27*b^2 != 0 (mod p)
-         * 0 =< a, b < p
-         */
+    /*-
+     * check the discriminant:
+     * y^2 = x^3 + a*x + b is an elliptic curve <=> 4*a^3 + 27*b^2 != 0 (mod p)
+     * 0 =< a, b < p
+     */
     if (BN_is_zero(a)) {
         if (BN_is_zero(b))
             goto err;
@@ -1033,15 +1033,15 @@ int ec_GFp_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point,
     if (Z6 == NULL)
         goto err;
 
-        /*-
-         * We have a curve defined by a Weierstrass equation
-         *      y^2 = x^3 + a*x + b.
-         * The point to consider is given in Jacobian projective coordinates
-         * where  (X, Y, Z)  represents  (x, y) = (X/Z^2, Y/Z^3).
-         * Substituting this and multiplying by  Z^6  transforms the above equation into
-         *      Y^2 = X^3 + a*X*Z^4 + b*Z^6.
-         * To test this, we add up the right-hand side in 'rh'.
-         */
+	/*-
+	 * We have a curve defined by a Weierstrass equation
+	 *      y^2 = x^3 + a*x + b.
+	 * The point to consider is given in Jacobian projective coordinates
+	 * where  (X, Y, Z)  represents  (x, y) = (X/Z^2, Y/Z^3).
+	 * Substituting this and multiplying by  Z^6  transforms the above equation into
+	 *      Y^2 = X^3 + a*X*Z^4 + b*Z^6.
+	 * To test this, we add up the right-hand side in 'rh'.
+	 */
 
     /* rh := X^2 */
     if (!field_sqr(group, rh, point->X, ctx))
@@ -1151,12 +1151,12 @@ int ec_GFp_simple_cmp(const EC_GROUP *group, const EC_POINT *a,
     if (Zb23 == NULL)
         goto end;
 
-        /*-
-         * We have to decide whether
-         *     (X_a/Z_a^2, Y_a/Z_a^3) = (X_b/Z_b^2, Y_b/Z_b^3),
-         * or equivalently, whether
-         *     (X_a*Z_b^2, Y_a*Z_b^3) = (X_b*Z_a^2, Y_b*Z_a^3).
-         */
+	/*-
+	 * We have to decide whether
+	 *     (X_a/Z_a^2, Y_a/Z_a^3) = (X_b/Z_b^2, Y_b/Z_b^3),
+	 * or equivalently, whether
+	 *     (X_a*Z_b^2, Y_a*Z_b^3) = (X_b*Z_a^2, Y_b*Z_a^3).
+	 */
 
     if (!b->Z_is_one) {
         if (!field_sqr(group, Zb23, b->Z, ctx))
