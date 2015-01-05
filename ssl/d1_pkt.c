@@ -536,14 +536,14 @@ static int dtls1_process_record(SSL *s)
     }
 
     rr->off = 0;
-        /*-
-         * So at this point the following is true
-         * ssl->s3->rrec.type   is the type of record
-         * ssl->s3->rrec.length == number of bytes in record
-         * ssl->s3->rrec.off    == offset to first valid byte
-         * ssl->s3->rrec.data   == where to take bytes from, increment
-         *                         after use :-).
-         */
+    /*-
+     * So at this point the following is true
+     * ssl->s3->rrec.type   is the type of record
+     * ssl->s3->rrec.length == number of bytes in record
+     * ssl->s3->rrec.off    == offset to first valid byte
+     * ssl->s3->rrec.data   == where to take bytes from, increment
+     *                         after use :-).
+     */
 
     /* we have pulled in a full packet so zero things */
     s->packet_length = 0;
@@ -819,12 +819,12 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
  start:
     s->rwstate = SSL_NOTHING;
 
-        /*-
-         * s->s3->rrec.type         - is the type of record
-         * s->s3->rrec.data,    - data
-         * s->s3->rrec.off,     - offset into 'data' for next read
-         * s->s3->rrec.length,  - number of bytes.
-         */
+    /*-
+     * s->s3->rrec.type         - is the type of record
+     * s->s3->rrec.data,    - data
+     * s->s3->rrec.off,     - offset into 'data' for next read
+     * s->s3->rrec.length,  - number of bytes.
+     */
     rr = &(s->s3->rrec);
 
     /*

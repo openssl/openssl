@@ -798,12 +798,12 @@ void solaris_locking_callback(int mode, int type, char *file, int line)
             (type & CRYPTO_READ) ? "r" : "w", file, line);
 # endif
 
-        /*-
-        if (CRYPTO_LOCK_SSL_CERT == type)
-        fprintf(stderr,"(t,m,f,l) %ld %d %s %d\n",
-                CRYPTO_thread_id(),
-                mode,file,line);
-        */
+	/*-
+	if (CRYPTO_LOCK_SSL_CERT == type)
+	fprintf(stderr,"(t,m,f,l) %ld %d %s %d\n",
+			CRYPTO_thread_id(),
+			mode,file,line);
+	*/
     if (mode & CRYPTO_LOCK) {
         /*-
                 if (mode & CRYPTO_READ)

@@ -132,14 +132,14 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
     /* we'll set  q  later (if needed) */
 
     if (e == 1) {
-                /*-
-                 * The easy case:  (|p|-1)/2  is odd, so 2 has an inverse
-                 * modulo  (|p|-1)/2,  and square roots can be computed
-                 * directly by modular exponentiation.
-                 * We have
-                 *     2 * (|p|+1)/4 == 1   (mod (|p|-1)/2),
-                 * so we can use exponent  (|p|+1)/4,  i.e.  (|p|-3)/4 + 1.
-                 */
+        /*-
+         * The easy case:  (|p|-1)/2  is odd, so 2 has an inverse
+         * modulo  (|p|-1)/2,  and square roots can be computed
+         * directly by modular exponentiation.
+         * We have
+         *     2 * (|p|+1)/4 == 1   (mod (|p|-1)/2),
+         * so we can use exponent  (|p|+1)/4,  i.e.  (|p|-3)/4 + 1.
+         */
         if (!BN_rshift(q, p, 2))
             goto end;
         q->neg = 0;
@@ -277,24 +277,24 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
         goto end;
     }
 
-        /*-
-         * Now we know that (if  p  is indeed prime) there is an integer
-         * k,  0 <= k < 2^e,  such that
-         *
-         *      a^q * y^k == 1   (mod p).
-         *
-         * As  a^q  is a square and  y  is not,  k  must be even.
-         * q+1  is even, too, so there is an element
-         *
-         *     X := a^((q+1)/2) * y^(k/2),
-         *
-         * and it satisfies
-         *
-         *     X^2 = a^q * a     * y^k
-         *         = a,
-         *
-         * so it is the square root that we are looking for.
-         */
+    /*-
+     * Now we know that (if  p  is indeed prime) there is an integer
+     * k,  0 <= k < 2^e,  such that
+     *
+     *      a^q * y^k == 1   (mod p).
+     *
+     * As  a^q  is a square and  y  is not,  k  must be even.
+     * q+1  is even, too, so there is an element
+     *
+     *     X := a^((q+1)/2) * y^(k/2),
+     *
+     * and it satisfies
+     *
+     *     X^2 = a^q * a     * y^k
+     *         = a,
+     *
+     * so it is the square root that we are looking for.
+     */
 
     /* t := (q-1)/2  (note that  q  is odd) */
     if (!BN_rshift1(t, q))
@@ -333,15 +333,15 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
         goto end;
 
     while (1) {
-                /*-
-                 * Now  b  is  a^q * y^k  for some even  k  (0 <= k < 2^E
-                 * where  E  refers to the original value of  e,  which we
-                 * don't keep in a variable),  and  x  is  a^((q+1)/2) * y^(k/2).
-                 *
-                 * We have  a*b = x^2,
-                 *    y^2^(e-1) = -1,
-                 *    b^2^(e-1) = 1.
-                 */
+        /*-
+         * Now  b  is  a^q * y^k  for some even  k  (0 <= k < 2^E
+         * where  E  refers to the original value of  e,  which we
+         * don't keep in a variable),  and  x  is  a^((q+1)/2) * y^(k/2).
+         *
+         * We have  a*b = x^2,
+         *    y^2^(e-1) = -1,
+         *    b^2^(e-1) = 1.
+         */
 
         if (BN_is_one(b)) {
             if (!BN_copy(ret, x))

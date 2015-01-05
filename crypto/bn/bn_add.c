@@ -68,12 +68,12 @@ int BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
     bn_check_top(a);
     bn_check_top(b);
 
-        /*-
-         *  a +  b      a+b
-         *  a + -b      a-b
-         * -a +  b      b-a
-         * -a + -b      -(a+b)
-         */
+    /*-
+     *  a +  b      a+b
+     *  a + -b      a-b
+     * -a +  b      b-a
+     * -a + -b      -(a+b)
+     */
     if (a_neg ^ b->neg) {
         /* only one is negative */
         if (a_neg) {
@@ -260,12 +260,12 @@ int BN_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
     bn_check_top(a);
     bn_check_top(b);
 
-        /*-
-         *  a -  b      a-b
-         *  a - -b      a+b
-         * -a -  b      -(a+b)
-         * -a - -b      b-a
-         */
+    /*-
+     *  a -  b      a-b
+     *  a - -b      a+b
+     * -a -  b      -(a+b)
+     * -a - -b      b-a
+     */
     if (a->neg) {
         if (b->neg) {
             tmp = a;

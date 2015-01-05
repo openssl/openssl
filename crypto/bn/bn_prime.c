@@ -527,17 +527,17 @@ static int probable_prime(BIGNUM *rnd, int bits)
     if (is_single_word) {
         BN_ULONG rnd_word = BN_get_word(rnd);
 
-                /*-
-                 * In the case that the candidate prime is a single word then
-                 * we check that:
-                 *   1) It's greater than primes[i] because we shouldn't reject
-                 *      3 as being a prime number because it's a multiple of
-                 *      three.
-                 *   2) That it's not a multiple of a known prime. We don't
-                 *      check that rnd-1 is also coprime to all the known
-                 *      primes because there aren't many small primes where
-                 *      that's true.
-                 */
+        /*-
+         * In the case that the candidate prime is a single word then
+         * we check that:
+         *   1) It's greater than primes[i] because we shouldn't reject
+         *      3 as being a prime number because it's a multiple of
+         *      three.
+         *   2) That it's not a multiple of a known prime. We don't
+         *      check that rnd-1 is also coprime to all the known
+         *      primes because there aren't many small primes where
+         *      that's true.
+         */
         for (i = 1; i < NUMPRIMES && primes[i] < rnd_word; i++) {
             if ((mods[i] + delta) % primes[i] == 0) {
                 delta += 2;

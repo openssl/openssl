@@ -725,36 +725,36 @@ int ssl3_client_hello(SSL *s)
         /* Do the message type and length last */
         d = p = ssl_handshake_start(s);
 
-                /*-
-                 * version indicates the negotiated version: for example from
-                 * an SSLv2/v3 compatible client hello). The client_version
-                 * field is the maximum version we permit and it is also
-                 * used in RSA encrypted premaster secrets. Some servers can
-                 * choke if we initially report a higher version then
-                 * renegotiate to a lower one in the premaster secret. This
-                 * didn't happen with TLS 1.0 as most servers supported it
-                 * but it can with TLS 1.1 or later if the server only supports
-                 * 1.0.
-                 *
-                 * Possible scenario with previous logic:
-                 *      1. Client hello indicates TLS 1.2
-                 *      2. Server hello says TLS 1.0
-                 *      3. RSA encrypted premaster secret uses 1.2.
-                 *      4. Handhaked proceeds using TLS 1.0.
-                 *      5. Server sends hello request to renegotiate.
-                 *      6. Client hello indicates TLS v1.0 as we now
-                 *         know that is maximum server supports.
-                 *      7. Server chokes on RSA encrypted premaster secret
-                 *         containing version 1.0.
-                 *
-                 * For interoperability it should be OK to always use the
-                 * maximum version we support in client hello and then rely
-                 * on the checking of version to ensure the servers isn't
-                 * being inconsistent: for example initially negotiating with
-                 * TLS 1.0 and renegotiating with TLS 1.2. We do this by using
-                 * client_version in client hello and not resetting it to
-                 * the negotiated version.
-                 */
+		/*-
+		 * version indicates the negotiated version: for example from
+		 * an SSLv2/v3 compatible client hello). The client_version
+		 * field is the maximum version we permit and it is also
+		 * used in RSA encrypted premaster secrets. Some servers can
+		 * choke if we initially report a higher version then
+		 * renegotiate to a lower one in the premaster secret. This
+		 * didn't happen with TLS 1.0 as most servers supported it
+		 * but it can with TLS 1.1 or later if the server only supports
+		 * 1.0.
+		 *
+		 * Possible scenario with previous logic:
+		 *      1. Client hello indicates TLS 1.2
+		 *      2. Server hello says TLS 1.0
+		 *      3. RSA encrypted premaster secret uses 1.2.
+		 *      4. Handhaked proceeds using TLS 1.0.
+		 *      5. Server sends hello request to renegotiate.
+		 *      6. Client hello indicates TLS v1.0 as we now
+		 *         know that is maximum server supports.
+		 *      7. Server chokes on RSA encrypted premaster secret
+		 *         containing version 1.0.
+		 *
+		 * For interoperability it should be OK to always use the
+		 * maximum version we support in client hello and then rely
+		 * on the checking of version to ensure the servers isn't
+		 * being inconsistent: for example initially negotiating with
+		 * TLS 1.0 and renegotiating with TLS 1.2. We do this by using
+		 * client_version in client hello and not resetting it to
+		 * the negotiated version.
+		 */
 #if 0
         *(p++) = s->version >> 8;
         *(p++) = s->version & 0xff;
@@ -2468,25 +2468,25 @@ int ssl3_send_client_key_exchange(SSL *s)
                 goto err;
             }
 
-                        /*-
-                         * 20010406 VRS - Earlier versions used KRB5 AP_REQ
-                         * in place of RFC 2712 KerberosWrapper, as in:
-                         *
-                         * Send ticket (copy to *p, set n = length)
-                         * n = krb5_ap_req.length;
-                         * memcpy(p, krb5_ap_req.data, krb5_ap_req.length);
-                         * if (krb5_ap_req.data)
-                         *   kssl_krb5_free_data_contents(NULL,&krb5_ap_req);
-                         *
-                         * Now using real RFC 2712 KerberosWrapper
-                         * (Thanks to Simon Wilkinson <sxw@sxw.org.uk>)
-                         * Note: 2712 "opaque" types are here replaced
-                         * with a 2-byte length followed by the value.
-                         * Example:
-                         * KerberosWrapper= xx xx asn1ticket 0 0 xx xx encpms
-                         * Where "xx xx" = length bytes.  Shown here with
-                         * optional authenticator omitted.
-                         */
+            /*-
+             * 20010406 VRS - Earlier versions used KRB5 AP_REQ
+             * in place of RFC 2712 KerberosWrapper, as in:
+             *
+             * Send ticket (copy to *p, set n = length)
+             * n = krb5_ap_req.length;
+             * memcpy(p, krb5_ap_req.data, krb5_ap_req.length);
+             * if (krb5_ap_req.data)
+             *   kssl_krb5_free_data_contents(NULL,&krb5_ap_req);
+             *
+             * Now using real RFC 2712 KerberosWrapper
+             * (Thanks to Simon Wilkinson <sxw@sxw.org.uk>)
+             * Note: 2712 "opaque" types are here replaced
+             * with a 2-byte length followed by the value.
+             * Example:
+             * KerberosWrapper= xx xx asn1ticket 0 0 xx xx encpms
+             * Where "xx xx" = length bytes.  Shown here with
+             * optional authenticator omitted.
+             */
 
             /*  KerberosWrapper.Ticket              */
             s2n(enc_ticket->length, p);
@@ -2514,13 +2514,13 @@ int ssl3_send_client_key_exchange(SSL *s)
             if (RAND_bytes(&(tmp_buf[2]), sizeof tmp_buf - 2) <= 0)
                 goto err;
 
-                        /*-
-                         * 20010420 VRS.  Tried it this way; failed.
-                         *      EVP_EncryptInit_ex(&ciph_ctx,enc, NULL,NULL);
-                         *      EVP_CIPHER_CTX_set_key_length(&ciph_ctx,
-                         *                              kssl_ctx->length);
-                         *      EVP_EncryptInit_ex(&ciph_ctx,NULL, key,iv);
-                         */
+			/*-
+			 * 20010420 VRS.  Tried it this way; failed.
+			 *      EVP_EncryptInit_ex(&ciph_ctx,enc, NULL,NULL);
+			 *      EVP_CIPHER_CTX_set_key_length(&ciph_ctx,
+			 *                              kssl_ctx->length);
+			 *      EVP_EncryptInit_ex(&ciph_ctx,NULL, key,iv);
+			 */
 
             memset(iv, 0, sizeof iv); /* per RFC 1510 */
             EVP_EncryptInit_ex(&ciph_ctx, enc, NULL, kssl_ctx->key, iv);
@@ -2667,26 +2667,26 @@ int ssl3_send_client_key_exchange(SSL *s)
              * ecdh_clnt_cert to 1.
              */
             if ((alg_k & (SSL_kECDHr | SSL_kECDHe)) && (s->cert != NULL)) {
-                                /*-
-                                 * XXX: For now, we do not support client
-                                 * authentication using ECDH certificates.
-                                 * To add such support, one needs to add
-                                 * code that checks for appropriate
-                                 * conditions and sets ecdh_clnt_cert to 1.
-                                 * For example, the cert have an ECC
-                                 * key on the same curve as the server's
-                                 * and the key should be authorized for
-                                 * key agreement.
-                                 *
-                                 * One also needs to add code in ssl3_connect
-                                 * to skip sending the certificate verify
-                                 * message.
-                                 *
-                                 * if ((s->cert->key->privatekey != NULL) &&
-                                 *     (s->cert->key->privatekey->type ==
-                                 *      EVP_PKEY_EC) && ...)
-                                 * ecdh_clnt_cert = 1;
-                                 */
+                /*-
+                 * XXX: For now, we do not support client
+                 * authentication using ECDH certificates.
+                 * To add such support, one needs to add
+                 * code that checks for appropriate
+                 * conditions and sets ecdh_clnt_cert to 1.
+                 * For example, the cert have an ECC
+                 * key on the same curve as the server's
+                 * and the key should be authorized for
+                 * key agreement.
+                 *
+                 * One also needs to add code in ssl3_connect
+                 * to skip sending the certificate verify
+                 * message.
+                 *
+                 * if ((s->cert->key->privatekey != NULL) &&
+                 *     (s->cert->key->privatekey->type ==
+                 *      EVP_PKEY_EC) && ...)
+                 * ecdh_clnt_cert = 1;
+                 */
             }
 
             if (s->session->sess_cert->peer_ecdh_tmp != NULL) {
