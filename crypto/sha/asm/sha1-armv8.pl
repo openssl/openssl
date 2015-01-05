@@ -20,7 +20,15 @@
 # (*)	Software results are presented mostly for reference purposes.
 
 $flavour = shift;
-open STDOUT,">".shift;
+$output  = shift;
+
+$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+( $xlate="${dir}arm-xlate.pl" and -f $xlate ) or
+( $xlate="${dir}../../perlasm/arm-xlate.pl" and -f $xlate) or
+die "can't locate arm-xlate.pl";
+
+open OUT,"| \"$^X\" $xlate $flavour $output";
+*STDOUT=*OUT;
 
 ($ctx,$inp,$num)=("x0","x1","x2");
 @Xw=map("w$_",(3..17,19));
@@ -154,6 +162,7 @@ $code.=<<___;
 
 .text
 
+.extern	OPENSSL_armcap_P
 .globl	sha1_block_data_order
 .type	sha1_block_data_order,%function
 .align	6
