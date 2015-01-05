@@ -3198,6 +3198,21 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX* ctx)
 	if (ssl->ctx != NULL)
 		SSL_CTX_free(ssl->ctx); /* decrement reference count */
 	ssl->ctx = ctx;
+
+	/*
+	 * Inherit the session ID context as it is typically set from the
+	 * parent SSL_CTX, and can vary with the CTX.
+	 * Note that per-SSL SSL_set_session_id_context() will not persist
+	 * if called before SSL_set_SSL_CTX.
+	 */
+	ssl->sid_ctx_length = ctx->sid_ctx_length;
+	/*
+	 * Program invariant: |sid_ctx| has fixed size (SSL_MAX_SID_CTX_LENGTH),
+	 * so setter APIs must prevent invalid lengths from entering the system.
+	 */
+	OPENSSL_assert(ssl->sid_ctx_length <= sizeof ssl->sid_ctx);
+	memcpy(&ssl->sid_ctx, &ctx->sid_ctx, sizeof(ssl->sid_ctx));
+
 	return(ssl->ctx);
 	}
 
