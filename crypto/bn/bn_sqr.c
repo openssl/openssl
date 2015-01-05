@@ -249,23 +249,23 @@ void bn_sqr_recursive(BN_ULONG *r, const BN_ULONG *a, int n2, BN_ULONG *t)
     bn_sqr_recursive(r, a, n, p);
     bn_sqr_recursive(&(r[n2]), &(a[n]), n, p);
 
-        /*-
-         * t[32] holds (a[0]-a[1])*(a[1]-a[0]), it is negative or zero
-         * r[10] holds (a[0]*b[0])
-         * r[32] holds (b[1]*b[1])
-         */
+    /*-
+     * t[32] holds (a[0]-a[1])*(a[1]-a[0]), it is negative or zero
+     * r[10] holds (a[0]*b[0])
+     * r[32] holds (b[1]*b[1])
+     */
 
     c1 = (int)(bn_add_words(t, r, &(r[n2]), n2));
 
     /* t[32] is negative */
     c1 -= (int)(bn_sub_words(&(t[n2]), t, &(t[n2]), n2));
 
-        /*-
-         * t[32] holds (a[0]-a[1])*(a[1]-a[0])+(a[0]*a[0])+(a[1]*a[1])
-         * r[10] holds (a[0]*a[0])
-         * r[32] holds (a[1]*a[1])
-         * c1 holds the carry bits
-         */
+    /*-
+     * t[32] holds (a[0]-a[1])*(a[1]-a[0])+(a[0]*a[0])+(a[1]*a[1])
+     * r[10] holds (a[0]*a[0])
+     * r[32] holds (a[1]*a[1])
+     * c1 holds the carry bits
+     */
     c1 += (int)(bn_add_words(&(r[n]), &(r[n]), &(t[n2]), n2));
     if (c1) {
         p = &(r[n + n2]);

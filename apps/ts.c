@@ -1101,19 +1101,19 @@ static X509_STORE *create_cert_store(char *ca_path, char *ca_file)
 
 static int MS_CALLBACK verify_cb(int ok, X509_STORE_CTX *ctx)
 {
-        /*-
-        char buf[256];
+    /*-
+    char buf[256];
 
-        if (!ok)
-                {
-                X509_NAME_oneline(X509_get_subject_name(ctx->current_cert),
-                                  buf, sizeof(buf));
-                printf("%s\n", buf);
-                printf("error %d at %d depth lookup: %s\n",
-                       ctx->error, ctx->error_depth,
-                        X509_verify_cert_error_string(ctx->error));
-                }
-        */
+    if (!ok)
+            {
+            X509_NAME_oneline(X509_get_subject_name(ctx->current_cert),
+                              buf, sizeof(buf));
+            printf("%s\n", buf);
+            printf("error %d at %d depth lookup: %s\n",
+                   ctx->error, ctx->error_depth,
+                    X509_verify_cert_error_string(ctx->error));
+            }
+    */
 
     return ok;
 }

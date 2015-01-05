@@ -316,15 +316,15 @@ struct bio_st {
 DECLARE_STACK_OF(BIO)
 
 typedef struct bio_f_buffer_ctx_struct {
-        /*-
-         * Buffers are setup like this:
-         *
-         * <---------------------- size ----------------------->
-         * +---------------------------------------------------+
-         * | consumed | remaining          | free space        |
-         * +---------------------------------------------------+
-         * <-- off --><------- len ------->
-         */
+    /*-
+     * Buffers are setup like this:
+     *
+     * <---------------------- size ----------------------->
+     * +---------------------------------------------------+
+     * | consumed | remaining          | free space        |
+     * +---------------------------------------------------+
+     * <-- off --><------- len ------->
+     */
     /*- BIO *bio; *//*
      * this is now in the BIO struct
      */

@@ -86,13 +86,13 @@ char *argv[];
     METH_arg(tmp2, METH_TYPE_DIR, "/usr/local/ssl/certs");
     METH_push(top, METH_X509_CA_BY_SUBJECT, tmp2);
 
-/*-     tmp=METH_new(x509_by_issuer_dir);
-        METH_arg(tmp,METH_TYPE_DIR,"/home/eay/.mycerts");
-        METH_push(top,METH_X509_BY_ISSUER,tmp);
+/*- tmp=METH_new(x509_by_issuer_dir);
+    METH_arg(tmp,METH_TYPE_DIR,"/home/eay/.mycerts");
+    METH_push(top,METH_X509_BY_ISSUER,tmp);
 
-        tmp=METH_new(x509_by_issuer_primary);
-        METH_arg(tmp,METH_TYPE_FILE,"/home/eay/.mycerts/primary.pem");
-        METH_push(top,METH_X509_BY_ISSUER,tmp);
+    tmp=METH_new(x509_by_issuer_primary);
+    METH_arg(tmp,METH_TYPE_FILE,"/home/eay/.mycerts/primary.pem");
+    METH_push(top,METH_X509_BY_ISSUER,tmp);
 */
 
     METH_init(top);

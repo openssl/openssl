@@ -527,11 +527,11 @@ void bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
         bn_mul_recursive(&(r[n2]), &(a[n]), &(b[n]), n, dna, dnb, p);
     }
 
-        /*-
-         * t[32] holds (a[0]-a[1])*(b[1]-b[0]), c1 is the sign
-         * r[10] holds (a[0]*b[0])
-         * r[32] holds (b[1]*b[1])
-         */
+    /*-
+     * t[32] holds (a[0]-a[1])*(b[1]-b[0]), c1 is the sign
+     * r[10] holds (a[0]*b[0])
+     * r[32] holds (b[1]*b[1])
+     */
 
     c1 = (int)(bn_add_words(t, r, &(r[n2]), n2));
 
@@ -542,12 +542,12 @@ void bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
         c1 += (int)(bn_add_words(&(t[n2]), &(t[n2]), t, n2));
     }
 
-        /*-
-         * t[32] holds (a[0]-a[1])*(b[1]-b[0])+(a[0]*b[0])+(a[1]*b[1])
-         * r[10] holds (a[0]*b[0])
-         * r[32] holds (b[1]*b[1])
-         * c1 holds the carry bits
-         */
+    /*-
+     * t[32] holds (a[0]-a[1])*(b[1]-b[0])+(a[0]*b[0])+(a[1]*b[1])
+     * r[10] holds (a[0]*b[0])
+     * r[32] holds (b[1]*b[1])
+     * c1 holds the carry bits
+     */
     c1 += (int)(bn_add_words(&(r[n]), &(r[n]), &(t[n2]), n2));
     if (c1) {
         p = &(r[n + n2]);
@@ -689,11 +689,11 @@ void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n,
         }
     }
 
-        /*-
-         * t[32] holds (a[0]-a[1])*(b[1]-b[0]), c1 is the sign
-         * r[10] holds (a[0]*b[0])
-         * r[32] holds (b[1]*b[1])
-         */
+    /*-
+     * t[32] holds (a[0]-a[1])*(b[1]-b[0]), c1 is the sign
+     * r[10] holds (a[0]*b[0])
+     * r[32] holds (b[1]*b[1])
+     */
 
     c1 = (int)(bn_add_words(t, r, &(r[n2]), n2));
 
@@ -704,12 +704,12 @@ void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n,
         c1 += (int)(bn_add_words(&(t[n2]), &(t[n2]), t, n2));
     }
 
-        /*-
-         * t[32] holds (a[0]-a[1])*(b[1]-b[0])+(a[0]*b[0])+(a[1]*b[1])
-         * r[10] holds (a[0]*b[0])
-         * r[32] holds (b[1]*b[1])
-         * c1 holds the carry bits
-         */
+    /*-
+     * t[32] holds (a[0]-a[1])*(b[1]-b[0])+(a[0]*b[0])+(a[1]*b[1])
+     * r[10] holds (a[0]*b[0])
+     * r[32] holds (b[1]*b[1])
+     * c1 holds the carry bits
+     */
     c1 += (int)(bn_add_words(&(r[n]), &(r[n]), &(t[n2]), n2));
     if (c1) {
         p = &(r[n + n2]);
@@ -828,13 +828,13 @@ void bn_mul_high(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, BN_ULONG *l, int n2,
         bn_mul_recursive(r, &(a[n]), &(b[n]), n, 0, 0, &(t[n2]));
     }
 
-        /*-
-         * s0 == low(al*bl)
-         * s1 == low(ah*bh)+low((al-ah)*(bh-bl))+low(al*bl)+high(al*bl)
-         * We know s0 and s1 so the only unknown is high(al*bl)
-         * high(al*bl) == s1 - low(ah*bh+s0+(al-ah)*(bh-bl))
-         * high(al*bl) == s1 - (r[0]+l[0]+t[0])
-         */
+    /*-
+     * s0 == low(al*bl)
+     * s1 == low(ah*bh)+low((al-ah)*(bh-bl))+low(al*bl)+high(al*bl)
+     * We know s0 and s1 so the only unknown is high(al*bl)
+     * high(al*bl) == s1 - low(ah*bh+s0+(al-ah)*(bh-bl))
+     * high(al*bl) == s1 - (r[0]+l[0]+t[0])
+     */
     if (l != NULL) {
         lp = &(t[n2 + n]);
         c1 = (int)(bn_add_words(lp, &(r[0]), &(l[0]), n));
@@ -859,22 +859,22 @@ void bn_mul_high(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, BN_ULONG *l, int n2,
             lp[i] = ((~mp[i]) + 1) & BN_MASK2;
     }
 
-        /*-
-         * s[0] = low(al*bl)
-         * t[3] = high(al*bl)
-         * t[10] = (a[0]-a[1])*(b[1]-b[0]) neg is the sign
-         * r[10] = (a[1]*b[1])
-         */
-        /*-
-         * R[10] = al*bl
-         * R[21] = al*bl + ah*bh + (a[0]-a[1])*(b[1]-b[0])
-         * R[32] = ah*bh
-         */
-        /*-
-         * R[1]=t[3]+l[0]+r[0](+-)t[0] (have carry/borrow)
-         * R[2]=r[0]+t[3]+r[1](+-)t[1] (have carry/borrow)
-         * R[3]=r[1]+(carry/borrow)
-         */
+    /*-
+     * s[0] = low(al*bl)
+     * t[3] = high(al*bl)
+     * t[10] = (a[0]-a[1])*(b[1]-b[0]) neg is the sign
+     * r[10] = (a[1]*b[1])
+     */
+    /*-
+     * R[10] = al*bl
+     * R[21] = al*bl + ah*bh + (a[0]-a[1])*(b[1]-b[0])
+     * R[32] = ah*bh
+     */
+    /*-
+     * R[1]=t[3]+l[0]+r[0](+-)t[0] (have carry/borrow)
+     * R[2]=r[0]+t[3]+r[1](+-)t[1] (have carry/borrow)
+     * R[3]=r[1]+(carry/borrow)
+     */
     if (l != NULL) {
         lp = &(t[n2]);
         c1 = (int)(bn_add_words(lp, &(t[n2 + n]), &(l[0]), n));
