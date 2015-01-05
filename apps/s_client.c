@@ -1559,8 +1559,8 @@ int MAIN(int argc, char **argv)
                     openssl_fdset(SSL_get_fd(con), &writefds);
             }
 #endif
-/*-                     printf("mode tty(%d %d%d) ssl(%d%d)\n",
-                                tty_on,read_tty,write_tty,read_ssl,write_ssl);*/
+/*-         printf("mode tty(%d %d%d) ssl(%d%d)\n",
+                    tty_on,read_tty,write_tty,read_ssl,write_ssl);*/
 
             /*
              * Note: under VMS with SOCKETSHR the second parameter is

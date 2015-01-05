@@ -421,19 +421,19 @@ int ssl23_get_client_hello(SSL *s)
         v[0] = p[3];            /* == SSL3_VERSION_MAJOR */
         v[1] = p[4];
 
-                /*-
-                 * An SSLv3/TLSv1 backwards-compatible CLIENT-HELLO in an SSLv2
-                 * header is sent directly on the wire, not wrapped as a TLS
-                 * record. It's format is:
-                 * Byte  Content
-                 * 0-1   msg_length
-                 * 2     msg_type
-                 * 3-4   version
-                 * 5-6   cipher_spec_length
-                 * 7-8   session_id_length
-                 * 9-10  challenge_length
-                 * ...   ...
-                 */
+        /*-
+         * An SSLv3/TLSv1 backwards-compatible CLIENT-HELLO in an SSLv2
+         * header is sent directly on the wire, not wrapped as a TLS
+         * record. It's format is:
+         * Byte  Content
+         * 0-1   msg_length
+         * 2     msg_type
+         * 3-4   version
+         * 5-6   cipher_spec_length
+         * 7-8   session_id_length
+         * 9-10  challenge_length
+         * ...   ...
+         */
         n = ((p[0] & 0x7f) << 8) | p[1];
         if (n > (1024 * 4)) {
             SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO, SSL_R_RECORD_TOO_LARGE);

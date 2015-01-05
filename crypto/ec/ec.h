@@ -116,14 +116,14 @@ typedef enum {
 typedef struct ec_method_st EC_METHOD;
 
 typedef struct ec_group_st
-        /*-
-         EC_METHOD *meth;
-         -- field definition
-         -- curve coefficients
-         -- optional generator with associated information (order, cofactor)
-         -- optional extra data (precomputed table for fast computation of multiples of generator)
-         -- ASN1 stuff
-        */
+    /*-
+     EC_METHOD *meth;
+     -- field definition
+     -- curve coefficients
+     -- optional generator with associated information (order, cofactor)
+     -- optional extra data (precomputed table for fast computation of multiples of generator)
+     -- ASN1 stuff
+    */
     EC_GROUP;
 
 typedef struct ec_point_st EC_POINT;

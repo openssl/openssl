@@ -178,23 +178,23 @@ static int vms_load(DSO *dso)
         goto err;
     }
 
-        /*-
-         * A file specification may look like this:
-         *
-         *      node::dev:[dir-spec]name.type;ver
-         *
-         * or (for compatibility with TOPS-20):
-         *
-         *      node::dev:<dir-spec>name.type;ver
-         *
-         * and the dir-spec uses '.' as separator.  Also, a dir-spec
-         * may consist of several parts, with mixed use of [] and <>:
-         *
-         *      [dir1.]<dir2>
-         *
-         * We need to split the file specification into the name and
-         * the rest (both before and after the name itself).
-         */
+    /*-
+     * A file specification may look like this:
+     *
+     *      node::dev:[dir-spec]name.type;ver
+     *
+     * or (for compatibility with TOPS-20):
+     *
+     *      node::dev:<dir-spec>name.type;ver
+     *
+     * and the dir-spec uses '.' as separator.  Also, a dir-spec
+     * may consist of several parts, with mixed use of [] and <>:
+     *
+     *      [dir1.]<dir2>
+     *
+     * We need to split the file specification into the name and
+     * the rest (both before and after the name itself).
+     */
     /*
      * Start with trying to find the end of a dir-spec, and save the position
      * of the byte after in sp1

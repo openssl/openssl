@@ -415,12 +415,12 @@ static int ssl3_get_record(SSL *s)
     rr->data = rr->input;
 
     enc_err = s->method->ssl3_enc->enc(s, 0);
-        /*-
-         * enc_err is:
-         *    0: (in non-constant time) if the record is publically invalid.
-         *    1: if the padding is valid
-         *    -1: if the padding is invalid
-         */
+    /*-
+     * enc_err is:
+     *    0: (in non-constant time) if the record is publically invalid.
+     *    1: if the padding is valid
+     *    -1: if the padding is invalid
+     */
     if (enc_err == 0) {
         al = SSL_AD_DECRYPTION_FAILED;
         SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_BLOCK_CIPHER_PAD_IS_WRONG);
@@ -528,14 +528,14 @@ static int ssl3_get_record(SSL *s)
     }
 
     rr->off = 0;
-        /*-
-         * So at this point the following is true
-         * ssl->s3->rrec.type   is the type of record
-         * ssl->s3->rrec.length == number of bytes in record
-         * ssl->s3->rrec.off    == offset to first valid byte
-         * ssl->s3->rrec.data   == where to take bytes from, increment
-         *                         after use :-).
-         */
+    /*-
+     * So at this point the following is true
+     * ssl->s3->rrec.type   is the type of record
+     * ssl->s3->rrec.length == number of bytes in record
+     * ssl->s3->rrec.off    == offset to first valid byte
+     * ssl->s3->rrec.data   == where to take bytes from, increment
+     *                         after use :-).
+     */
 
     /* we have pulled in a full packet so zero things */
     s->packet_length = 0;
@@ -1030,12 +1030,12 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
  start:
     s->rwstate = SSL_NOTHING;
 
-        /*-
-         * s->s3->rrec.type         - is the type of record
-         * s->s3->rrec.data,    - data
-         * s->s3->rrec.off,     - offset into 'data' for next read
-         * s->s3->rrec.length,  - number of bytes.
-         */
+    /*-
+     * s->s3->rrec.type         - is the type of record
+     * s->s3->rrec.data,    - data
+     * s->s3->rrec.off,     - offset into 'data' for next read
+     * s->s3->rrec.length,  - number of bytes.
+     */
     rr = &(s->s3->rrec);
 
     /* get new packet if necessary */
@@ -1153,11 +1153,11 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
         }
     }
 
-        /*-
-         * s->s3->handshake_fragment_len == 4  iff  rr->type == SSL3_RT_HANDSHAKE;
-         * s->s3->alert_fragment_len == 2      iff  rr->type == SSL3_RT_ALERT.
-         * (Possibly rr is 'empty' now, i.e. rr->length may be 0.)
-         */
+    /*-
+     * s->s3->handshake_fragment_len == 4  iff  rr->type == SSL3_RT_HANDSHAKE;
+     * s->s3->alert_fragment_len == 2      iff  rr->type == SSL3_RT_ALERT.
+     * (Possibly rr is 'empty' now, i.e. rr->length may be 0.)
+     */
 
     /* If we are a client, check for an incoming 'Hello Request': */
     if ((!s->server) &&

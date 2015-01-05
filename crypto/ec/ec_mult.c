@@ -602,13 +602,13 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
     if (!(tmp = EC_POINT_new(group)))
         goto err;
 
-        /*-
-         * prepare precomputed values:
-         *    val_sub[i][0] :=     points[i]
-         *    val_sub[i][1] := 3 * points[i]
-         *    val_sub[i][2] := 5 * points[i]
-         *    ...
-         */
+    /*-
+     * prepare precomputed values:
+     *    val_sub[i][0] :=     points[i]
+     *    val_sub[i][1] := 3 * points[i]
+     *    val_sub[i][2] := 5 * points[i]
+     *    ...
+     */
     for (i = 0; i < num + num_scalar; i++) {
         if (i < num) {
             if (!EC_POINT_copy(val_sub[i][0], points[i]))

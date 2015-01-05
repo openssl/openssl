@@ -434,9 +434,9 @@ unsigned long lh_strhash(const char *c)
     if ((c == NULL) || (*c == '\0'))
         return (ret);
 /*-
-        unsigned char b[16];
-        MD5(c,strlen(c),b);
-        return(b[0]|(b[1]<<8)|(b[2]<<16)|(b[3]<<24));
+    unsigned char b[16];
+    MD5(c,strlen(c),b);
+    return(b[0]|(b[1]<<8)|(b[2]<<16)|(b[3]<<24));
 */
 
     n = 0x100;

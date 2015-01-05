@@ -1094,25 +1094,25 @@ int dtls1_send_client_key_exchange(SSL *s)
                 goto err;
             }
 
-                        /*-
-                         *   20010406 VRS - Earlier versions used KRB5 AP_REQ
-                        **  in place of RFC 2712 KerberosWrapper, as in:
-                        **
-                        **  Send ticket (copy to *p, set n = length)
-                        **  n = krb5_ap_req.length;
-                        **  memcpy(p, krb5_ap_req.data, krb5_ap_req.length);
-                        **  if (krb5_ap_req.data)
-                        **    kssl_krb5_free_data_contents(NULL,&krb5_ap_req);
-                        **
-                        **  Now using real RFC 2712 KerberosWrapper
-                        **  (Thanks to Simon Wilkinson <sxw@sxw.org.uk>)
-                        **  Note: 2712 "opaque" types are here replaced
-                        **  with a 2-byte length followed by the value.
-                        **  Example:
-                        **  KerberosWrapper= xx xx asn1ticket 0 0 xx xx encpms
-                        **  Where "xx xx" = length bytes.  Shown here with
-                        **  optional authenticator omitted.
-                        */
+            /*-
+             *   20010406 VRS - Earlier versions used KRB5 AP_REQ
+            **  in place of RFC 2712 KerberosWrapper, as in:
+            **
+            **  Send ticket (copy to *p, set n = length)
+            **  n = krb5_ap_req.length;
+            **  memcpy(p, krb5_ap_req.data, krb5_ap_req.length);
+            **  if (krb5_ap_req.data)
+            **    kssl_krb5_free_data_contents(NULL,&krb5_ap_req);
+            **
+            **  Now using real RFC 2712 KerberosWrapper
+            **  (Thanks to Simon Wilkinson <sxw@sxw.org.uk>)
+            **  Note: 2712 "opaque" types are here replaced
+            **  with a 2-byte length followed by the value.
+            **  Example:
+            **  KerberosWrapper= xx xx asn1ticket 0 0 xx xx encpms
+            **  Where "xx xx" = length bytes.  Shown here with
+            **  optional authenticator omitted.
+            */
 
             /*  KerberosWrapper.Ticket              */
             s2n(enc_ticket->length, p);
@@ -1138,13 +1138,13 @@ int dtls1_send_client_key_exchange(SSL *s)
             if (RAND_bytes(tmp_buf, sizeof tmp_buf) <= 0)
                 goto err;
 
-                        /*-
-                         *  20010420 VRS.  Tried it this way; failed.
-                         *      EVP_EncryptInit_ex(&ciph_ctx,enc, NULL,NULL);
-                         *      EVP_CIPHER_CTX_set_key_length(&ciph_ctx,
-                         *                              kssl_ctx->length);
-                         *      EVP_EncryptInit_ex(&ciph_ctx,NULL, key,iv);
-                         */
+            /*-
+             *  20010420 VRS.  Tried it this way; failed.
+             *      EVP_EncryptInit_ex(&ciph_ctx,enc, NULL,NULL);
+             *      EVP_CIPHER_CTX_set_key_length(&ciph_ctx,
+             *                              kssl_ctx->length);
+             *      EVP_EncryptInit_ex(&ciph_ctx,NULL, key,iv);
+             */
 
             memset(iv, 0, sizeof iv); /* per RFC 1510 */
             EVP_EncryptInit_ex(&ciph_ctx, enc, NULL, kssl_ctx->key, iv);
@@ -1498,12 +1498,12 @@ int dtls1_send_client_key_exchange(SSL *s)
 
         d = dtls1_set_message_header(s, d,
                                      SSL3_MT_CLIENT_KEY_EXCHANGE, n, 0, n);
-                /*-
-                 *(d++)=SSL3_MT_CLIENT_KEY_EXCHANGE;
-                 l2n3(n,d);
-                 l2n(s->d1->handshake_write_seq,d);
-                 s->d1->handshake_write_seq++;
-                */
+        /*-
+         *(d++)=SSL3_MT_CLIENT_KEY_EXCHANGE;
+         l2n3(n,d);
+         l2n(s->d1->handshake_write_seq,d);
+         s->d1->handshake_write_seq++;
+        */
 
         s->state = SSL3_ST_CW_KEY_EXCH_B;
         /* number of bytes to write */
