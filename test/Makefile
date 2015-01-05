@@ -433,7 +433,7 @@ FIPS_BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(MAKE) -f $(TOP)/Makefile.shared -e \
-		CC="$${CC}" APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o" \
+		CC="$(CC)" APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
 
@@ -446,7 +446,7 @@ FIPS_CRYPTO_BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 	fi; \
 	[ "$(FIPSCANLIB)" = "libfips" ] && LIBRARIES="$$LIBRARIES -lfips"; \
 	$(MAKE) -f $(TOP)/Makefile.shared -e \
-		CC="$${CC}" APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o" \
+		CC="$(CC)" APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
 
