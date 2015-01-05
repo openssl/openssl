@@ -66,7 +66,8 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
-/* TODO list
+/*-
+ * TODO list
  *
  * 1. Check a bunch of "(words+1)" type hacks in various bignum functions and
  * check they can be safely removed.

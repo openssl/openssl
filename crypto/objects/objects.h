@@ -604,7 +604,8 @@
 #define NID_pbeWithMD5AndCast5_CBC	112
 #define OBJ_pbeWithMD5AndCast5_CBC	1L,2L,840L,113533L,7L,66L,12L
 
-/* This is one sun will soon be using :-(
+/*-
+ * This is one sun will soon be using :-(
  * id-dsa-with-sha1 ID  ::= {
  *   iso(1) member-body(2) us(840) x9-57 (10040) x9cm(4) 3 }
  */
