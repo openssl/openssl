@@ -4828,6 +4828,40 @@ $ranlib       =
 $arflags      = 
 $multilib     = 64
 
+*** linux-x86_64-clang
+$cc           = clang
+$cflags       = -m64 -DL_ENDIAN -DTERMIO -O3 -Weverything -Wno-language-extension-token -Wno-extended-offsetof -Wno-padded -Wno-shorten-64-to-32 -Wno-format-nonliteral -Wno-missing-noreturn -Wno-unused-parameter -Wno-sign-conversion -Wno-unreachable-code -Wno-conversion -Wno-documentation -Wno-missing-variable-declarations -Wno-cast-align -Wno-incompatible-pointer-types-discards-qualifiers -Wno-missing-variable-declarations -Wno-missing-field-initializers -Wno-unused-macros -Wno-disabled-macro-expansion -Wno-conditional-uninitialized -Wno-switch-enum -Qunused-arguments
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = 
+$lflags       = -ldl
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL
+$cpuid_obj    = x86_64cpuid.o
+$bn_obj       = x86_64-gcc.o x86_64-mont.o x86_64-mont5.o x86_64-gf2m.o rsaz_exp.o rsaz-x86_64.o rsaz-avx2.o
+$ec_obj       = ecp_nistz256.o ecp_nistz256-x86_64.o
+$des_obj      = 
+$aes_obj      = aes-x86_64.o vpaes-x86_64.o bsaes-x86_64.o aesni-x86_64.o aesni-sha1-x86_64.o aesni-sha256-x86_64.o aesni-mb-x86_64.o
+$bf_obj       = 
+$md5_obj      = md5-x86_64.o
+$sha1_obj     = sha1-x86_64.o sha256-x86_64.o sha512-x86_64.o sha1-mb-x86_64.o sha256-mb-x86_64.o
+$cast_obj     = 
+$rc4_obj      = rc4-x86_64.o rc4-md5-x86_64.o
+$rmd160_obj   = 
+$rc5_obj      = 
+$wp_obj       = wp-x86_64.o
+$cmll_obj     = cmll-x86_64.o cmll_misc.o
+$modes_obj    = ghash-x86_64.o aesni-gcm-x86_64.o
+$engines_obj  = 
+$perlasm_scheme = elf
+$dso_scheme   = dlfcn
+$shared_target= linux-shared
+$shared_cflag = -fPIC
+$shared_ldflag = -m64
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+$arflags      = 
+$multilib     = 64
+
 *** linux-x86_64-icc
 $cc           = icc
 $cflags       = -DL_ENDIAN -DTERMIO -O2
