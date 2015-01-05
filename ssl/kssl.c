@@ -907,7 +907,8 @@ static size_t  *populate_cksumlens(void)
 	return cklens;
 	}
 
-/*	Return pointer to start of real authenticator within authenticator, or
+/*-
+ *	Return pointer to start of real authenticator within authenticator, or
  *	return NULL on error.
  *	Decrypted authenticator looks like this:
  *		[0 or 8 byte confounder] [4-24 byte checksum] [real authent'r]

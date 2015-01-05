@@ -97,7 +97,8 @@ static unsigned long irix_thread_id(void );
 static unsigned long solaris_thread_id(void );
 static unsigned long pthreads_thread_id(void );
 
-/* usage:
+/*-
+ * usage:
  * CRYPTO_thread_setup();
  * application code
  * CRYPTO_thread_cleanup();

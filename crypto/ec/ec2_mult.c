@@ -77,7 +77,8 @@
 #ifndef OPENSSL_NO_EC2M
 
 
-/* Compute the x-coordinate x/z for the point 2*(x/z) in Montgomery projective 
+/*-
+ * Compute the x-coordinate x/z for the point 2*(x/z) in Montgomery projective 
  * coordinates.
  * Uses algorithm Mdouble in appendix of 
  *     Lopez, J. and Dahab, R.  "Fast multiplication on elliptic curves over 
@@ -109,7 +110,8 @@ static int gf2m_Mdouble(const EC_GROUP *group, BIGNUM *x, BIGNUM *z, BN_CTX *ctx
 	return ret;
 	}
 
-/* Compute the x-coordinate x1/z1 for the point (x1/z1)+(x2/x2) in Montgomery 
+/*-
+ * Compute the x-coordinate x1/z1 for the point (x1/z1)+(x2/x2) in Montgomery 
  * projective coordinates.
  * Uses algorithm Madd in appendix of 
  *     Lopez, J. and Dahab, R.  "Fast multiplication on elliptic curves over 

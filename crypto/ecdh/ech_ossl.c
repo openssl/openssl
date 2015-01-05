@@ -101,7 +101,8 @@ const ECDH_METHOD *ECDH_OpenSSL(void)
 	}
 
 
-/* This implementation is based on the following primitives in the IEEE 1363 standard:
+/*-
+ * This implementation is based on the following primitives in the IEEE 1363 standard:
  *  - ECKAS-DH1
  *  - ECSVDP-DH
  * Finally an optional KDF is applied.
