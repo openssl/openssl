@@ -4,6 +4,13 @@
 
  Changes between 1.0.1j and 1.0.1k [xx XXX xxxx]
 
+  *) Ensure that the session ID context of an SSL is updated when its
+     SSL_CTX is updated via SSL_set_SSL_CTX.
+
+     The session ID context is typically set from the parent SSL_CTX,
+     and can vary with the CTX.
+     [Adam Langley]
+
   *) Fix various certificate fingerprint issues.
 
      By using non-DER or invalid encodings outside the signed portion of a
