@@ -62,7 +62,8 @@
 
 const char RC2_version[]="RC2" OPENSSL_VERSION_PTEXT;
 
-/* RC2 as implemented frm a posting from
+/*-
+ * RC2 as implemented frm a posting from
  * Newsgroups: sci.crypt
  * Sender: pgut01@cs.auckland.ac.nz (Peter Gutmann)
  * Subject: Specification for Ron Rivests Cipher No.2

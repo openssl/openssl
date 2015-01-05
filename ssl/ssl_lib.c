@@ -1912,7 +1912,8 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 	ret->quiet_shutdown=0;
 
 /*	ret->cipher=NULL;*/
-/*	ret->s2->challenge=NULL;
+/*-
+	ret->s2->challenge=NULL;
 	ret->master_key=NULL;
 	ret->key_arg=NULL;
 	ret->s2->conn_id=NULL; */

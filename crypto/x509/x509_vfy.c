@@ -1310,7 +1310,8 @@ static int check_crl_chain(X509_STORE_CTX *ctx,
 	return 0;
 	}
 
-/* Check for match between two dist point names: three separate cases.
+/*-
+ * Check for match between two dist point names: three separate cases.
  * 1. Both are relative names and compare X509_NAME types.
  * 2. One full, one relative. Compare X509_NAME to GENERAL_NAMES.
  * 3. Both are full names and compare two GENERAL_NAMES.

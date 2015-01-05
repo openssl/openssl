@@ -97,7 +97,7 @@ void md5_block_data_order (MD5_CTX *c, const void *p,size_t num);
 
 #include "md32_common.h"
 
-/*
+/*-
 #define	F(x,y,z)	(((x) & (y))  |  ((~(x)) & (z)))
 #define	G(x,y,z)	(((x) & (z))  |  ((y) & (~(z))))
 */

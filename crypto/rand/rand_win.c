@@ -375,7 +375,8 @@ int RAND_poll(void)
 		FreeLibrary(user);
 		}
 
-	/* Toolhelp32 snapshot: enumerate processes, threads, modules and heap
+	/*-
+	 * Toolhelp32 snapshot: enumerate processes, threads, modules and heap
 	 * http://msdn.microsoft.com/library/psdk/winbase/toolhelp_5pfd.htm
 	 * (Win 9x and 2000 only, not available on NT)
 	 *

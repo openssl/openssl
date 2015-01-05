@@ -207,7 +207,8 @@ IMPLEMENT_DYNAMIC_BIND_FN(bind_fn)
 #endif /* ENGINE_DYNAMIC_SUPPORT */
 
 #ifdef TEST_ENG_OPENSSL_RC4
-/* This section of code compiles an "alternative implementation" of two modes of
+/*-
+ * This section of code compiles an "alternative implementation" of two modes of
  * RC4 into this ENGINE. The result is that EVP_CIPHER operation for "rc4"
  * should under normal circumstances go via this support rather than the default
  * EVP support. There are other symbols to tweak the testing;

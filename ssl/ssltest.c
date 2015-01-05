@@ -300,7 +300,8 @@ static const char *alpn_server;
 static const char *alpn_expected;
 static unsigned char *alpn_selected;
 
-/* next_protos_parse parses a comma separated list of strings into a string
+/*-
+ * next_protos_parse parses a comma separated list of strings into a string
  * in a format suitable for passing to SSL_CTX_set_next_protos_advertised.
  *   outlen: (output) set to the length of the resulting buffer on success.
  *   err: (maybe NULL) on failure, an error message line is written to this BIO.
@@ -2148,7 +2149,8 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 			if (SSL_in_init(s_ssl))
 				printf("server waiting in SSL_accept - %s\n",
 					SSL_state_string_long(s_ssl));
-/*			else if (s_write)
+/*-
+			else if (s_write)
 				printf("server:SSL_write()\n");
 			else
 				printf("server:SSL_read()\n"); */
@@ -2159,7 +2161,8 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 			if (SSL_in_init(c_ssl))
 				printf("client waiting in SSL_connect - %s\n",
 					SSL_state_string_long(c_ssl));
-/*			else if (c_write)
+/*-
+			else if (c_write)
 				printf("client:SSL_write()\n");
 			else
 				printf("client:SSL_read()\n"); */

@@ -434,7 +434,8 @@ int ssl_get_new_session(SSL *s, int session)
 	return(1);
 	}
 
-/* ssl_get_prev attempts to find an SSL_SESSION to be used to resume this
+/*-
+ * ssl_get_prev attempts to find an SSL_SESSION to be used to resume this
  * connection. It is only called by servers.
  *
  *   session_id: points at the session ID in the ClientHello. This code will
