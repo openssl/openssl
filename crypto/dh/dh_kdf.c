@@ -131,7 +131,7 @@ static int dh_sharedinfo_encode(unsigned char **pder, unsigned char **pctr,
 		return 0;
 	if (!skip_asn1(&p, &tlen, V_ASN1_OCTET_STRING))
 		return 0;
-	if (memcmp(p, ctr, 4))
+	if (CRYPTO_memcmp(p, ctr, 4))
 		return 0;
 	*pctr = p;
 	return derlen;
