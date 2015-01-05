@@ -341,7 +341,8 @@ static BIGNUM *felem_to_BN(BIGNUM *out, const felem in)
 	}
 
 /******************************************************************************/
-/*				FIELD OPERATIONS
+/*-
+ *				FIELD OPERATIONS
  *
  * Field operations, using the internal representation of field elements.
  * NB! These operations are specific to our point multiplication and cannot be
@@ -516,7 +517,8 @@ static void felem_mul(widefelem out, const felem in1, const felem in2)
 	out[6] = ((widelimb) in1[3]) * in2[3];
 	}
 
-/* Reduce seven 128-bit coefficients to four 64-bit coefficients.
+/*-
+ * Reduce seven 128-bit coefficients to four 64-bit coefficients.
  * Requires in[i] < 2^126,
  * ensures out[0] < 2^56, out[1] < 2^56, out[2] < 2^56, out[3] <= 2^56 + 2^16 */
 static void felem_reduce(felem out, const widefelem in)
@@ -748,7 +750,8 @@ copy_conditional(felem out, const felem in, limb icopy)
 	}
 
 /******************************************************************************/
-/*			 ELLIPTIC CURVE POINT OPERATIONS
+/*-
+ *			 ELLIPTIC CURVE POINT OPERATIONS
  *
  * Points are represented in Jacobian projective coordinates:
  * (X, Y, Z) corresponds to the affine point (X/Z^2, Y/Z^3),

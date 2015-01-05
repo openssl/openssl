@@ -2917,7 +2917,8 @@ void jpake_server_auth(BIO *out, BIO *conn, const char *secret)
 #endif
 
 #ifndef OPENSSL_NO_TLSEXT
-/* next_protos_parse parses a comma separated list of strings into a string
+/*-
+ * next_protos_parse parses a comma separated list of strings into a string
  * in a format suitable for passing to SSL_CTX_set_next_protos_advertised.
  *   outlen: (output) set to the length of the resulting buffer on success.
  *   err: (maybe NULL) on failure, an error message line is written to this BIO.

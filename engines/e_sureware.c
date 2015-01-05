@@ -1,4 +1,5 @@
-/* Written by Corinne Dive-Reclus(cdive@baltimore.com)
+/*-
+*  Written by Corinne Dive-Reclus(cdive@baltimore.com)
 * 
 *
 * Redistribution and use in source and binary forms, with or without

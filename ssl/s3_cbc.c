@@ -723,7 +723,8 @@ void tls_fips_digest_extra(
 	if (EVP_CIPHER_CTX_mode(cipher_ctx) != EVP_CIPH_CBC_MODE)
 		return;
 	block_size = EVP_MD_CTX_block_size(mac_ctx);
-	/* We are in FIPS mode if we get this far so we know we have only SHA*
+	/*-
+	 * We are in FIPS mode if we get this far so we know we have only SHA*
 	 * digests and TLS to deal with.
 	 * Minimum digest padding length is 17 for SHA384/SHA512 and 9
 	 * otherwise.

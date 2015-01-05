@@ -73,7 +73,8 @@
 
 #ifndef OPENSSL_NO_EC2M
 
-/* Calculates and sets the affine coordinates of an EC_POINT from the given
+/*-
+ * Calculates and sets the affine coordinates of an EC_POINT from the given
  * compressed coordinates.  Uses algorithm 2.3.4 of SEC 1. 
  * Note that the simple implementation only uses affine coordinates.
  *

@@ -207,8 +207,10 @@ static BIGNUM *felem_to_BN(BIGNUM *out, const felem in)
 	}
 
 
-/* Field operations
- * ---------------- */
+/*-
+ * Field operations
+ * ----------------
+ */
 
 static void felem_one(felem out)
 	{

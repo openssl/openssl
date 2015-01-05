@@ -175,8 +175,10 @@ static BIGNUM *smallfelem_to_BN(BIGNUM *out, const smallfelem in)
 	}
 
 
-/* Field operations
- * ---------------- */
+/*-
+ * Field operations
+ * ----------------
+ */
 
 static void smallfelem_one(smallfelem out)
 	{

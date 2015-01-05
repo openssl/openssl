@@ -114,13 +114,14 @@ const EC_METHOD *EC_GFp_simple_method(void)
 	}
 
 
-/* Most method functions in this file are designed to work with
+/*
+ * Most method functions in this file are designed to work with
  * non-trivial representations of field elements if necessary
  * (see ecp_mont.c): while standard modular addition and subtraction
  * are used, the field_mul and field_sqr methods will be used for
  * multiplication, and field_encode and field_decode (if defined)
  * will be used for converting between representations.
-
+ *
  * Functions ec_GFp_simple_points_make_affine() and
  * ec_GFp_simple_point_get_affine_coordinates() specifically assume
  * that if a non-trivial representation is used, it is a Montgomery
