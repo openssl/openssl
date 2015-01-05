@@ -399,13 +399,13 @@ static int nc_dns(ASN1_IA5STRING *dns, ASN1_IA5STRING *base)
 	if (!*baseptr)
 		return X509_V_OK;
 	/* Otherwise can add zero or more components on the left so
-	 * compare RHS and if dns is longer and expect '.' as preceding
-	 * character.
+	 * compare RHS and if dns is longer, expect '.' either as preceding
+	 * character in dns name or leading character in base constraint.
 	 */
 	if (dns->length > base->length)
 		{
 		dnsptr += dns->length - base->length;
-		if (dnsptr[-1] != '.')
+		if (!(dnsptr[-1] != '.' != baseptr[0] != '.'))
 			return X509_V_ERR_PERMITTED_VIOLATION;
 		}
 
