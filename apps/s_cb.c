@@ -204,7 +204,7 @@ int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
 			return(0);
 			}
 
-		/*
+		/*-
 		In theory this is no longer needed 
 		ssl=SSL_new(ctx);
 		x509=SSL_get_certificate(ssl);

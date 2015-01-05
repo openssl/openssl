@@ -360,7 +360,8 @@ int OCSP_basic_add1_nonce(OCSP_BASICRESP *resp, unsigned char *val, int len)
 	return ocsp_add1_nonce(&resp->tbsResponseData->responseExtensions, val, len);
 	}
 
-/* Check nonce validity in a request and response.
+/*-
+ * Check nonce validity in a request and response.
  * Return value reflects result:
  *  1: nonces present and equal.
  *  2: nonces both absent.

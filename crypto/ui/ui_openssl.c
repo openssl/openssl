@@ -56,7 +56,8 @@
  *
  */
 
-/* The lowest level part of this file was previously in crypto/des/read_pwd.c,
+/*-
+ * The lowest level part of this file was previously in crypto/des/read_pwd.c,
  * Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

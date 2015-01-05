@@ -62,7 +62,8 @@
 
 #include "pcy_int.h"
 
-/* Initialize policy tree. Return values:
+/*-
+ * Initialize policy tree. Return values:
  *  0 Some internal error occured.
  * -1 Inconsistent or invalid extensions in certificates.
  *  1 Tree initialized OK.

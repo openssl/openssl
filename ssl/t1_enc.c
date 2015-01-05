@@ -528,7 +528,8 @@ err:
 	return(0);
 	}
 
-/* tls1_enc encrypts/decrypts the record in |s->wrec| / |s->rrec|, respectively.
+/*-
+ * tls1_enc encrypts/decrypts the record in |s->wrec| / |s->rrec|, respectively.
  *
  * Returns:
  *   0: (in non-constant time) if the record is publically invalid (i.e. too

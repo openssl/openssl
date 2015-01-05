@@ -155,7 +155,8 @@ int DES_is_weak_key(const_DES_cblock *key)
 	return(0);
 	}
 
-/* NOW DEFINED IN des_local.h
+/*-
+ * NOW DEFINED IN des_local.h
  * See ecb_encrypt.c for a pseudo description of these macros. 
  * #define PERM_OP(a,b,t,n,m) ((t)=((((a)>>(n))^(b))&(m)),\
  * 	(b)^=(t),\
@@ -325,7 +326,8 @@ int DES_set_key(const_DES_cblock *key, DES_key_schedule *schedule)
 		}
 	}
 
-/* return 0 if key parity is odd (correct),
+/*-
+ * return 0 if key parity is odd (correct),
  * return -1 if key parity error,
  * return -2 if illegal weak key.
  */

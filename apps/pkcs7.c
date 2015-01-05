@@ -71,7 +71,8 @@
 #undef PROG
 #define PROG	pkcs7_main
 
-/* -inform arg	- input format - default PEM (DER or PEM)
+/*-
+ * -inform arg	- input format - default PEM (DER or PEM)
  * -outform arg - output format - default PEM
  * -in arg	- input file - default stdin
  * -out arg	- output file - default stdout
