@@ -574,16 +574,16 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
                 }
                 e++;
             }
-                        /*-
-                         * So at this point we have
-                         * np which is the start of the name string which is
-                         *   '\0' terminated.
-                         * cp which is the start of the section string which is
-                         *   '\0' terminated.
-                         * e is the 'next point after'.
-                         * r and rr are the chars replaced by the '\0'
-                         * rp and rrp is where 'r' and 'rr' came from.
-                         */
+            /*-
+             * So at this point we have
+             * np which is the start of the name string which is
+             *   '\0' terminated.
+             * cp which is the start of the section string which is
+             *   '\0' terminated.
+             * e is the 'next point after'.
+             * r and rr are the chars replaced by the '\0'
+             * rp and rrp is where 'r' and 'rr' came from.
+             */
             p = _CONF_get_string(conf, cp, np);
             if (rrp != NULL)
                 *rrp = rr;

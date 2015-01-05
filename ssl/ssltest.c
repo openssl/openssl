@@ -927,40 +927,40 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
     (void)BIO_set_ssl(s_ssl_bio, s_ssl, BIO_NOCLOSE);
 
     do {
-                /*-
-                 * c_ssl_bio:          SSL filter BIO
-                 *
-                 * client:             pseudo-I/O for SSL library
-                 *
-                 * client_io:          client's SSL communication; usually to be
-                 *                     relayed over some I/O facility, but in this
-                 *                     test program, we're the server, too:
-                 *
-                 * server_io:          server's SSL communication
-                 *
-                 * server:             pseudo-I/O for SSL library
-                 *
-                 * s_ssl_bio:          SSL filter BIO
-                 *
-                 * The client and the server each employ a "BIO pair":
-                 * client + client_io, server + server_io.
-                 * BIO pairs are symmetric.  A BIO pair behaves similar
-                 * to a non-blocking socketpair (but both endpoints must
-                 * be handled by the same thread).
-                 * [Here we could connect client and server to the ends
-                 * of a single BIO pair, but then this code would be less
-                 * suitable as an example for BIO pairs in general.]
-                 *
-                 * Useful functions for querying the state of BIO pair endpoints:
-                 *
-                 * BIO_ctrl_pending(bio)              number of bytes we can read now
-                 * BIO_ctrl_get_read_request(bio)     number of bytes needed to fulfil
-                 *                                      other side's read attempt
-                 * BIO_ctrl_get_write_guarantee(bio)   number of bytes we can write now
-                 *
-                 * ..._read_request is never more than ..._write_guarantee;
-                 * it depends on the application which one you should use.
-                 */
+        /*-
+         * c_ssl_bio:          SSL filter BIO
+         *
+         * client:             pseudo-I/O for SSL library
+         *
+         * client_io:          client's SSL communication; usually to be
+         *                     relayed over some I/O facility, but in this
+         *                     test program, we're the server, too:
+         *
+         * server_io:          server's SSL communication
+         *
+         * server:             pseudo-I/O for SSL library
+         *
+         * s_ssl_bio:          SSL filter BIO
+         *
+         * The client and the server each employ a "BIO pair":
+         * client + client_io, server + server_io.
+         * BIO pairs are symmetric.  A BIO pair behaves similar
+         * to a non-blocking socketpair (but both endpoints must
+         * be handled by the same thread).
+         * [Here we could connect client and server to the ends
+         * of a single BIO pair, but then this code would be less
+         * suitable as an example for BIO pairs in general.]
+         *
+         * Useful functions for querying the state of BIO pair endpoints:
+         *
+         * BIO_ctrl_pending(bio)              number of bytes we can read now
+         * BIO_ctrl_get_read_request(bio)     number of bytes needed to fulfil
+         *                                      other side's read attempt
+         * BIO_ctrl_get_write_guarantee(bio)   number of bytes we can write now
+         *
+         * ..._read_request is never more than ..._write_guarantee;
+         * it depends on the application which one you should use.
+         */
 
         /*
          * We have non-blocking behaviour throughout this test program, but
@@ -1326,10 +1326,10 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
                 printf("server waiting in SSL_accept - %s\n",
                        SSL_state_string_long(s_ssl));
 /*-
-                        else if (s_write)
-                                printf("server:SSL_write()\n");
-                        else
-                                printf("server:SSL_read()\n"); */
+            else if (s_write)
+                printf("server:SSL_write()\n");
+            else
+                printf("server:SSL_read()\n"); */
         }
 
         if (do_client && debug) {
@@ -1337,10 +1337,10 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
                 printf("client waiting in SSL_connect - %s\n",
                        SSL_state_string_long(c_ssl));
 /*-
-                        else if (c_write)
-                                printf("client:SSL_write()\n");
-                        else
-                                printf("client:SSL_read()\n"); */
+            else if (c_write)
+                printf("client:SSL_write()\n");
+            else
+                printf("client:SSL_read()\n"); */
         }
 
         if (!do_client && !do_server) {

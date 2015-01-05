@@ -532,12 +532,12 @@ static int dtls1_preprocess_fragment(SSL *s, struct hm_header_st *msg_hdr,
 
 static int dtls1_retrieve_buffered_fragment(SSL *s, long max, int *ok)
 {
-        /*-
-         * (0) check whether the desired fragment is available
-         * if so:
-         * (1) copy over the fragment to s->init_buf->data[]
-         * (2) update s->init_num
-         */
+    /*-
+     * (0) check whether the desired fragment is available
+     * if so:
+     * (1) copy over the fragment to s->init_buf->data[]
+     * (2) update s->init_num
+     */
     pitem *item;
     hm_fragment *frag;
     int al;
@@ -1252,10 +1252,10 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
     struct dtls1_retransmit_state saved_state;
     unsigned char save_write_sequence[8];
 
-        /*-
-          OPENSSL_assert(s->init_num == 0);
-          OPENSSL_assert(s->init_off == 0);
-         */
+    /*-
+      OPENSSL_assert(s->init_num == 0);
+      OPENSSL_assert(s->init_off == 0);
+     */
 
     /* XDTLS:  the requested message ought to be found, otherwise error */
     pq_64bit_init(&seq64);

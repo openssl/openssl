@@ -608,13 +608,14 @@ int ssl3_mac(SSL *ssl, unsigned char *md, int send)
          * are hashing because that gives an attacker a timing-oracle.
          */
 
-                /*-
-                 * npad is, at most, 48 bytes and that's with MD5:
-                 *   16 + 48 + 8 (sequence bytes) + 1 + 2 = 75.
-                 *
-                 * With SHA-1 (the largest hash speced for SSLv3) the hash size
-                 * goes up 4, but npad goes down by 8, resulting in a smaller
-                 * total size. */
+        /*-
+         * npad is, at most, 48 bytes and that's with MD5:
+         *   16 + 48 + 8 (sequence bytes) + 1 + 2 = 75.
+         *
+         * With SHA-1 (the largest hash speced for SSLv3) the hash size
+         * goes up 4, but npad goes down by 8, resulting in a smaller
+         * total size.
+         */
         unsigned char header[75];
         unsigned j = 0;
         memcpy(header + j, mac_sec, md_size);

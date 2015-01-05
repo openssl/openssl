@@ -106,14 +106,14 @@ extern "C" {
     /*
      * Functions for Digest (MD5, SHA1) stuff
      */
-/* output : output data buffer */
-/* input : input data buffer */
-/* algo : hash algorithm, MD5 or SHA1 */
-/*-
- * typedef int t_zencod_hash ( KEY *output, const KEY *input, int algo ) ;
- * typedef int t_zencod_sha_hash ( KEY *output, const KEY *input, int algo ) ;
- */
-/* For now separate this stuff that mad it easier to test */
+    /* output : output data buffer */
+    /* input : input data buffer */
+    /* algo : hash algorithm, MD5 or SHA1 */
+    /*-
+     * typedef int t_zencod_hash ( KEY *output, const KEY *input, int algo ) ;
+     * typedef int t_zencod_sha_hash ( KEY *output, const KEY *input, int algo ) ;
+     */
+    /* For now separate this stuff that mad it easier to test */
     typedef int t_zencod_md5_init(ZEN_MD_DATA *data);
     typedef int t_zencod_md5_update(ZEN_MD_DATA *data, const KEY * input);
     typedef int t_zencod_md5_do_final(ZEN_MD_DATA *data, KEY * output);

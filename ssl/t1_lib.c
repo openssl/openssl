@@ -150,14 +150,14 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p,
         unsigned long size_str;
         long lenmax;
 
-                /*-
-                 * check for enough space.
-                 * 4 for the servername type and entension length
-                 * 2 for servernamelist length
-                 * 1 for the hostname type
-                 * 2 for hostname length
-                 * + hostname length
-                 */
+        /*-
+         * check for enough space.
+         * 4 for the servername type and entension length
+         * 2 for servernamelist length
+         * 1 for the hostname type
+         * 2 for hostname length
+         * + hostname length
+         */
 
         if ((lenmax = limit - ret - 9) < 0
             || (size_str =

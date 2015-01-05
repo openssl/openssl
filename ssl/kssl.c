@@ -1386,20 +1386,20 @@ krb5_error_code kssl_sget_tkt( /* UPDATE */ KSSL_CTX *kssl_ctx,
         }
     }
 
-        /*-     Actual Kerberos5 krb5_recvauth() has initial conversation here
-         *      o       check KRB5_SENDAUTH_BADAUTHVERS
-         *              unless KRB5_RECVAUTH_SKIP_VERSION
-         *      o       check KRB5_SENDAUTH_BADAPPLVERS
-         *      o       send "0" msg if all OK
-         */
+    /*-     Actual Kerberos5 krb5_recvauth() has initial conversation here
+     *      o       check KRB5_SENDAUTH_BADAUTHVERS
+     *              unless KRB5_RECVAUTH_SKIP_VERSION
+     *      o       check KRB5_SENDAUTH_BADAPPLVERS
+     *      o       send "0" msg if all OK
+     */
 
-        /*-
-         * 20010411 was using AP_REQ instead of true KerberosWrapper
-         *
-         *  if ((krb5rc = krb5_rd_req(krb5context, &krb5auth_context,
-         *                      &krb5in_data, krb5server, krb5keytab,
-         *                      &ap_option, &krb5ticket)) != 0)  { Error }
-         */
+    /*-
+     * 20010411 was using AP_REQ instead of true KerberosWrapper
+     *
+     *  if ((krb5rc = krb5_rd_req(krb5context, &krb5auth_context,
+     *                      &krb5in_data, krb5server, krb5keytab,
+     *                      &ap_option, &krb5ticket)) != 0)  { Error }
+     */
 
     p = (unsigned char *)indata->data;
     if ((asn1ticket = (KRB5_TKTBODY *)d2i_KRB5_TICKET(NULL, &p,

@@ -149,30 +149,30 @@ struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result)
          * do it the hard way.
          */
         {
-                /*-
-                 * The VMS epoch is the astronomical Smithsonian date,
-                   if I remember correctly, which is November 17, 1858.
-                   Furthermore, time is measure in thenths of microseconds
-                   and stored in quadwords (64 bit integers).  unix_epoch
-                   below is January 1st 1970 expressed as a VMS time.  The
-                   following code was used to get this number:
+            /*-
+             * The VMS epoch is the astronomical Smithsonian date,
+               if I remember correctly, which is November 17, 1858.
+               Furthermore, time is measure in thenths of microseconds
+               and stored in quadwords (64 bit integers).  unix_epoch
+               below is January 1st 1970 expressed as a VMS time.  The
+               following code was used to get this number:
 
-                   #include <stdio.h>
-                   #include <stdlib.h>
-                   #include <lib$routines.h>
-                   #include <starlet.h>
+               #include <stdio.h>
+               #include <stdlib.h>
+               #include <lib$routines.h>
+               #include <starlet.h>
 
-                   main()
-                   {
-                     unsigned long systime[2];
-                     unsigned short epoch_values[7] =
-                       { 1970, 1, 1, 0, 0, 0, 0 };
+               main()
+               {
+                 unsigned long systime[2];
+                 unsigned short epoch_values[7] =
+                   { 1970, 1, 1, 0, 0, 0, 0 };
 
-                     lib$cvt_vectim(epoch_values, systime);
+                 lib$cvt_vectim(epoch_values, systime);
 
-                     printf("%u %u", systime[0], systime[1]);
-                   }
-                */
+                 printf("%u %u", systime[0], systime[1]);
+               }
+            */
             unsigned long unix_epoch[2] = { 1273708544, 8164711 };
             unsigned long deltatime[2];
             unsigned long systime[2];

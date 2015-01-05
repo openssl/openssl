@@ -1104,17 +1104,17 @@ int ssl3_get_client_hello(SSL *s)
             s->s3->tmp.new_cipher = s->session->cipher;
     }
 
-        /*-
-         * we now have the following setup.
-         * client_random
-         * cipher_list          - our prefered list of ciphers
-         * ciphers              - the clients prefered list of ciphers
-         * compression          - basically ignored right now
-         * ssl version is set   - sslv3
-         * s->session           - The ssl session has been setup.
-         * s->hit               - session reuse flag
-         * s->tmp.new_cipher    - the new cipher to use.
-         */
+    /*-
+     * we now have the following setup.
+     * client_random
+     * cipher_list          - our prefered list of ciphers
+     * ciphers              - the clients prefered list of ciphers
+     * compression          - basically ignored right now
+     * ssl version is set   - sslv3
+     * s->session           - The ssl session has been setup.
+     * s->hit               - session reuse flag
+     * s->tmp.new_cipher    - the new cipher to use.
+     */
 
 #ifndef OPENSSL_NO_TLSEXT
     /* Handles TLS extensions that we couldn't check earlier */
@@ -2125,11 +2125,11 @@ int ssl3_get_client_key_exchange(SSL *s)
             }
         }
 
-                /*- Was doing kssl_ctx_free() here,
-                 *  but it caused problems for apache.
-                 *  kssl_ctx = kssl_ctx_free(kssl_ctx);
-                 *  if (s->kssl_ctx)  s->kssl_ctx = NULL;
-                 */
+        /*- Was doing kssl_ctx_free() here,
+         *  but it caused problems for apache.
+         *  kssl_ctx = kssl_ctx_free(kssl_ctx);
+         *  if (s->kssl_ctx)  s->kssl_ctx = NULL;
+         */
     } else
 #endif                          /* OPENSSL_NO_KRB5 */
 
@@ -2679,14 +2679,14 @@ int ssl3_send_newsession_ticket(SSL *s)
          */
         if (slen > 0xFF00)
             return -1;
-                /*-
-                 * Grow buffer if need be: the length calculation is as
-                 * follows 1 (size of message name) + 3 (message length
-                 * bytes) + 4 (ticket lifetime hint) + 2 (ticket length) +
-                 * 16 (key name) + max_iv_len (iv length) +
-                 * session_length + max_enc_block_size (max encrypted session
-                 * length) + max_md_size (HMAC).
-                 */
+        /*-
+         * Grow buffer if need be: the length calculation is as
+         * follows 1 (size of message name) + 3 (message length
+         * bytes) + 4 (ticket lifetime hint) + 2 (ticket length) +
+         * 16 (key name) + max_iv_len (iv length) +
+         * session_length + max_enc_block_size (max encrypted session
+         * length) + max_md_size (HMAC).
+         */
         if (!BUF_MEM_grow(s->init_buf,
                           26 + EVP_MAX_IV_LENGTH + EVP_MAX_BLOCK_LENGTH +
                           EVP_MAX_MD_SIZE + slen))
@@ -2767,12 +2767,12 @@ int ssl3_send_cert_status(SSL *s)
 {
     if (s->state == SSL3_ST_SW_CERT_STATUS_A) {
         unsigned char *p;
-                /*-
-                 * Grow buffer if need be: the length calculation is as
-                 * follows 1 (message type) + 3 (message length) +
-                 * 1 (ocsp response type) + 3 (ocsp response length)
-                 * + (ocsp response)
-                 */
+        /*-
+         * Grow buffer if need be: the length calculation is as
+         * follows 1 (message type) + 3 (message length) +
+         * 1 (ocsp response type) + 3 (ocsp response length)
+         * + (ocsp response)
+         */
         if (!BUF_MEM_grow(s->init_buf, 8 + s->tlsext_ocsp_resplen))
             return -1;
 

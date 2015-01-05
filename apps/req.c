@@ -592,10 +592,10 @@ int MAIN(int argc, char **argv)
 
             oid_bio = BIO_new_file(p, "r");
             if (oid_bio == NULL) {
-                                /*-
-                                BIO_printf(bio_err,"problems opening %s for extra oid's\n",p);
-                                ERR_print_errors(bio_err);
-                                */
+                /*-
+                BIO_printf(bio_err,"problems opening %s for extra oid's\n",p);
+                ERR_print_errors(bio_err);
+                */
             } else {
                 OBJ_create_objects(oid_bio);
                 BIO_free(oid_bio);

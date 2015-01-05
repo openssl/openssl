@@ -178,10 +178,10 @@ int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
 int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
 {
     if (cert_file != NULL) {
-                /*-
-                SSL *ssl;
-                X509 *x509;
-                */
+        /*-
+        SSL *ssl;
+        X509 *x509;
+        */
 
         if (SSL_CTX_use_certificate_file(ctx, cert_file,
                                          SSL_FILETYPE_PEM) <= 0) {
@@ -199,20 +199,20 @@ int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
             return (0);
         }
 
-                /*-
-                In theory this is no longer needed
-                ssl=SSL_new(ctx);
-                x509=SSL_get_certificate(ssl);
+        /*-
+        In theory this is no longer needed
+        ssl=SSL_new(ctx);
+        x509=SSL_get_certificate(ssl);
 
-                if (x509 != NULL) {
-                        EVP_PKEY *pktmp;
-                        pktmp = X509_get_pubkey(x509);
-                        EVP_PKEY_copy_parameters(pktmp,
-                                                SSL_get_privatekey(ssl));
-                        EVP_PKEY_free(pktmp);
-                }
-                SSL_free(ssl);
-                */
+        if (x509 != NULL) {
+                EVP_PKEY *pktmp;
+                pktmp = X509_get_pubkey(x509);
+                EVP_PKEY_copy_parameters(pktmp,
+                                        SSL_get_privatekey(ssl));
+                EVP_PKEY_free(pktmp);
+        }
+        SSL_free(ssl);
+        */
 
         /*
          * If we are using DSA, we can copy the parameters from the private

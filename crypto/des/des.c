@@ -228,14 +228,14 @@ int main(int argc, char **argv)
     }
     if (error)
         usage();
-        /*-
-         * We either
-         * do checksum or
-         * do encrypt or
-         * do decrypt or
-         * do decrypt then ckecksum or
-         * do checksum then encrypt
-         */
+    /*-
+     * We either
+     * do checksum or
+     * do encrypt or
+     * do decrypt or
+     * do decrypt then ckecksum or
+     * do checksum then encrypt
+     */
     if (((eflag + dflag) == 1) || cflag) {
         if (eflag)
             do_encrypt = DES_ENCRYPT;
