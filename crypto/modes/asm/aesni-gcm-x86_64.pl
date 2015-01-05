@@ -22,7 +22,10 @@
 # [1] and [2], with MOVBE twist suggested by Ilya Albrekht and Max
 # Locktyukhin of Intel Corp. who verified that it reduces shuffles
 # pressure with notable relative improvement, achieving 1.0 cycle per
-# byte processed with 128-bit key on Haswell processor.
+# byte processed with 128-bit key on Haswell processor, and 0.74 -
+# on Broadwell. [Mentioned results are raw profiled measurements for
+# favourable packet size, one divisible by 96. Applications using the
+# EVP interface will observe a few percent worse performance.]
 #
 # [1] http://rt.openssl.org/Ticket/Display.html?id=2900&user=guest&pass=guest
 # [2] http://www.intel.com/content/dam/www/public/us/en/documents/software-support/enabling-high-performance-gcm.pdf
