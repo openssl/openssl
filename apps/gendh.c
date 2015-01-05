@@ -122,8 +122,8 @@ int MAIN(int argc, char **argv)
             outfile = *(++argv);
         } else if (strcmp(*argv, "-2") == 0)
             g = 2;
-        /*-     else if (strcmp(*argv,"-3") == 0)
-                        g=3; */
+/*-     else if (strcmp(*argv,"-3") == 0)
+                g=3; */
         else if (strcmp(*argv, "-5") == 0)
             g = 5;
 # ifndef OPENSSL_NO_ENGINE

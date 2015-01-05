@@ -252,13 +252,13 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
         rv = pkey->ameth->item_sign(ctx, it, asn, algor1, algor2, signature);
         if (rv == 1)
             outl = signature->length;
-                /*-
-                 * Return value meanings:
-                 * <=0: error.
-                 *   1: method does everything.
-                 *   2: carry on as normal.
-                 *   3: ASN1 method sets algorithm identifiers: just sign.
-                 */
+        /*-
+         * Return value meanings:
+         * <=0: error.
+         *   1: method does everything.
+         *   2: carry on as normal.
+         *   3: ASN1 method sets algorithm identifiers: just sign.
+         */
         if (rv <= 0)
             ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ERR_R_EVP_LIB);
         if (rv <= 1)

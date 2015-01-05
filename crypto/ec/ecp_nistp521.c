@@ -414,15 +414,16 @@ static void felem_square(largefelem out, const felem in)
     felem_scalar(inx2, in, 2);
     felem_scalar(inx4, in, 4);
 
-        /*-
-         * We have many cases were we want to do
-         *   in[x] * in[y] +
-         *   in[y] * in[x]
-         * This is obviously just
-         *   2 * in[x] * in[y]
-         * However, rather than do the doubling on the 128 bit result, we
-         * double one of the inputs to the multiplication by reading from
-         * |inx2| */
+    /*-
+     * We have many cases were we want to do
+     *   in[x] * in[y] +
+     *   in[y] * in[x]
+     * This is obviously just
+     *   2 * in[x] * in[y]
+     * However, rather than do the doubling on the 128 bit result, we
+     * double one of the inputs to the multiplication by reading from
+     * |inx2|
+     */
 
     out[0] = ((uint128_t) in[0]) * in[0];
     out[1] = ((uint128_t) in[0]) * inx2[1];
@@ -610,10 +611,10 @@ static void felem_reduce(felem out, const largefelem in)
 
     out[1] += ((limb) in[0]) >> 58;
     out[1] += (((limb) (in[0] >> 64)) & bottom52bits) << 6;
-        /*-
-         * out[1] < 2^58 + 2^6 + 2^58
-         *        = 2^59 + 2^6
-         */
+    /*-
+     * out[1] < 2^58 + 2^6 + 2^58
+     *        = 2^59 + 2^6
+     */
     out[2] += ((limb) (in[0] >> 64)) >> 52;
 
     out[2] += ((limb) in[1]) >> 58;
@@ -642,10 +643,10 @@ static void felem_reduce(felem out, const largefelem in)
 
     out[8] += ((limb) in[7]) >> 58;
     out[8] += (((limb) (in[7] >> 64)) & bottom52bits) << 6;
-        /*-
-         * out[x > 1] < 2^58 + 2^6 + 2^58 + 2^12
-         *            < 2^59 + 2^13
-         */
+    /*-
+     * out[x > 1] < 2^58 + 2^6 + 2^58 + 2^12
+     *            < 2^59 + 2^13
+     */
     overflow1 = ((limb) (in[7] >> 64)) >> 52;
 
     overflow1 += ((limb) in[8]) >> 58;
@@ -660,11 +661,11 @@ static void felem_reduce(felem out, const largefelem in)
 
     out[1] += out[0] >> 58;
     out[0] &= bottom58bits;
-        /*-
-         * out[0] < 2^58
-         * out[1] < 2^59 + 2^6 + 2^13 + 2^2
-         *        < 2^59 + 2^14
-         */
+    /*-
+     * out[0] < 2^58
+     * out[1] < 2^59 + 2^6 + 2^13 + 2^2
+     *        < 2^59 + 2^14
+     */
 }
 
 static void felem_square_reduce(felem out, const felem in)
@@ -1055,13 +1056,13 @@ point_double(felem x_out, felem y_out, felem z_out,
     felem_scalar64(ftmp2, 3);
     /* ftmp2[i] < 3*2^60 + 3*2^15 */
     felem_mul(tmp, ftmp, ftmp2);
-        /*-
-         * tmp[i] < 17(3*2^121 + 3*2^76)
-         *        = 61*2^121 + 61*2^76
-         *        < 64*2^121 + 64*2^76
-         *        = 2^127 + 2^82
-         *        < 2^128
-         */
+    /*-
+     * tmp[i] < 17(3*2^121 + 3*2^76)
+     *        = 61*2^121 + 61*2^76
+     *        < 64*2^121 + 64*2^76
+     *        = 2^127 + 2^82
+     *        < 2^128
+     */
     felem_reduce(alpha, tmp);
 
     /* x' = alpha^2 - 8*beta */
@@ -1096,30 +1097,30 @@ point_double(felem x_out, felem y_out, felem z_out,
     felem_diff64(beta, x_out);
     /* beta[i] < 2^61 + 2^60 + 2^16 */
     felem_mul(tmp, alpha, beta);
-        /*-
-         * tmp[i] < 17*((2^59 + 2^14)(2^61 + 2^60 + 2^16))
-         *        = 17*(2^120 + 2^75 + 2^119 + 2^74 + 2^75 + 2^30)
-         *        = 17*(2^120 + 2^119 + 2^76 + 2^74 + 2^30)
-         *        < 2^128
-         */
+    /*-
+     * tmp[i] < 17*((2^59 + 2^14)(2^61 + 2^60 + 2^16))
+     *        = 17*(2^120 + 2^75 + 2^119 + 2^74 + 2^75 + 2^30)
+     *        = 17*(2^120 + 2^119 + 2^76 + 2^74 + 2^30)
+     *        < 2^128
+     */
     felem_square(tmp2, gamma);
-        /*-
-         * tmp2[i] < 17*(2^59 + 2^14)^2
-         *         = 17*(2^118 + 2^74 + 2^28)
-         */
+    /*-
+     * tmp2[i] < 17*(2^59 + 2^14)^2
+     *         = 17*(2^118 + 2^74 + 2^28)
+     */
     felem_scalar128(tmp2, 8);
-        /*-
-         * tmp2[i] < 8*17*(2^118 + 2^74 + 2^28)
-         *         = 2^125 + 2^121 + 2^81 + 2^77 + 2^35 + 2^31
-         *         < 2^126
-         */
+    /*-
+     * tmp2[i] < 8*17*(2^118 + 2^74 + 2^28)
+     *         = 2^125 + 2^121 + 2^81 + 2^77 + 2^35 + 2^31
+     *         < 2^126
+     */
     felem_diff128(tmp, tmp2);
-        /*-
-         * tmp[i] < 2^127 - 2^69 + 17(2^120 + 2^119 + 2^76 + 2^74 + 2^30)
-         *        = 2^127 + 2^124 + 2^122 + 2^120 + 2^118 + 2^80 + 2^78 + 2^76 +
-         *          2^74 + 2^69 + 2^34 + 2^30
-         *        < 2^128
-         */
+    /*-
+     * tmp[i] < 2^127 - 2^69 + 17(2^120 + 2^119 + 2^76 + 2^74 + 2^30)
+     *        = 2^127 + 2^124 + 2^122 + 2^120 + 2^118 + 2^80 + 2^78 + 2^76 +
+     *          2^74 + 2^69 + 2^34 + 2^30
+     *        < 2^128
+     */
     felem_reduce(y_out, tmp);
 }
 

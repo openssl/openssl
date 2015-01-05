@@ -320,11 +320,11 @@ int ec_GFp_simple_group_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
             goto err;
     }
 
-        /*-
-         * check the discriminant:
-         * y^2 = x^3 + a*x + b is an elliptic curve <=> 4*a^3 + 27*b^2 != 0 (mod p)
-         * 0 =< a, b < p
-         */
+    /*-
+     * check the discriminant:
+     * y^2 = x^3 + a*x + b is an elliptic curve <=> 4*a^3 + 27*b^2 != 0 (mod p)
+     * 0 =< a, b < p
+     */
     if (BN_is_zero(a)) {
         if (BN_is_zero(b))
             goto err;
@@ -900,10 +900,10 @@ int ec_GFp_simple_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
             goto err;
         if (!BN_mod_add_quick(n1, n0, n1, p))
             goto err;
-                /*-
-                 * n1 = 3 * (X_a + Z_a^2) * (X_a - Z_a^2)
-                 *    = 3 * X_a^2 - 3 * Z_a^4
-                 */
+        /*-
+         * n1 = 3 * (X_a + Z_a^2) * (X_a - Z_a^2)
+         *    = 3 * X_a^2 - 3 * Z_a^4
+         */
     } else {
         if (!field_sqr(group, n0, &a->X, ctx))
             goto err;
@@ -1024,15 +1024,15 @@ int ec_GFp_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point,
     if (Z6 == NULL)
         goto err;
 
-        /*-
-         * We have a curve defined by a Weierstrass equation
-         *      y^2 = x^3 + a*x + b.
-         * The point to consider is given in Jacobian projective coordinates
-         * where  (X, Y, Z)  represents  (x, y) = (X/Z^2, Y/Z^3).
-         * Substituting this and multiplying by  Z^6  transforms the above equation into
-         *      Y^2 = X^3 + a*X*Z^4 + b*Z^6.
-         * To test this, we add up the right-hand side in 'rh'.
-         */
+    /*-
+     * We have a curve defined by a Weierstrass equation
+     *      y^2 = x^3 + a*x + b.
+     * The point to consider is given in Jacobian projective coordinates
+     * where  (X, Y, Z)  represents  (x, y) = (X/Z^2, Y/Z^3).
+     * Substituting this and multiplying by  Z^6  transforms the above equation into
+     *      Y^2 = X^3 + a*X*Z^4 + b*Z^6.
+     * To test this, we add up the right-hand side in 'rh'.
+     */
 
     /* rh := X^2 */
     if (!field_sqr(group, rh, &point->X, ctx))
@@ -1099,12 +1099,12 @@ int ec_GFp_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point,
 int ec_GFp_simple_cmp(const EC_GROUP *group, const EC_POINT *a,
                       const EC_POINT *b, BN_CTX *ctx)
 {
-        /*-
-         * return values:
-         *  -1   error
-         *   0   equal (in affine coordinates)
-         *   1   not equal
-         */
+    /*-
+     * return values:
+     *  -1   error
+     *   0   equal (in affine coordinates)
+     *   1   not equal
+     */
 
     int (*field_mul) (const EC_GROUP *, BIGNUM *, const BIGNUM *,
                       const BIGNUM *, BN_CTX *);
@@ -1143,12 +1143,12 @@ int ec_GFp_simple_cmp(const EC_GROUP *group, const EC_POINT *a,
     if (Zb23 == NULL)
         goto end;
 
-        /*-
-         * We have to decide whether
-         *     (X_a/Z_a^2, Y_a/Z_a^3) = (X_b/Z_b^2, Y_b/Z_b^3),
-         * or equivalently, whether
-         *     (X_a*Z_b^2, Y_a*Z_b^3) = (X_b*Z_a^2, Y_b*Z_a^3).
-         */
+    /*-
+     * We have to decide whether
+     *     (X_a/Z_a^2, Y_a/Z_a^3) = (X_b/Z_b^2, Y_b/Z_b^3),
+     * or equivalently, whether
+     *     (X_a*Z_b^2, Y_a*Z_b^3) = (X_b*Z_a^2, Y_b*Z_a^3).
+     */
 
     if (!b->Z_is_one) {
         if (!field_sqr(group, Zb23, &b->Z, ctx))

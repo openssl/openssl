@@ -1212,14 +1212,14 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
         unsigned long size_str;
         long lenmax;
 
-                /*-
-                 * check for enough space.
-                 * 4 for the servername type and entension length
-                 * 2 for servernamelist length
-                 * 1 for the hostname type
-                 * 2 for hostname length
-                 * + hostname length
-                 */
+        /*-
+         * check for enough space.
+         * 4 for the servername type and entension length
+         * 2 for servernamelist length
+         * 1 for the hostname type
+         * 2 for hostname length
+         * + hostname length
+         */
 
         if ((lenmax = limit - ret - 9) < 0
             || (size_str =
@@ -1273,12 +1273,12 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
             return NULL;
         }
 
-                /*-
-                 * check for enough space.
-                 * 4 for the srp type type and entension length
-                 * 1 for the srp user identity
-                 * + srp user identity length
-                 */
+        /*-
+         * check for enough space.
+         * 4 for the srp type type and entension length
+         * 1 for the srp user identity
+         * + srp user identity length
+         */
         if ((limit - ret - 5 - login_len) < 0)
             return NULL;
 
@@ -1453,11 +1453,11 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
         return NULL;
     s2n(TLSEXT_TYPE_heartbeat, ret);
     s2n(1, ret);
-        /*-
-         * Set mode:
-         * 1: peer may send requests
-         * 2: peer not allowed to send requests
-         */
+    /*-
+     * Set mode:
+     * 1: peer may send requests
+     * 2: peer not allowed to send requests
+     */
     if (s->tlsext_heartbeat & SSL_TLSEXT_HB_DONT_RECV_REQUESTS)
         *(ret++) = SSL_TLSEXT_HB_DONT_SEND_REQUESTS;
     else
@@ -1709,11 +1709,11 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
             return NULL;
         s2n(TLSEXT_TYPE_heartbeat, ret);
         s2n(1, ret);
-                /*-
-                 * Set mode:
-                 * 1: peer may send requests
-                 * 2: peer not allowed to send requests
-                 */
+        /*-
+         * Set mode:
+         * 1: peer may send requests
+         * 2: peer not allowed to send requests
+         */
         if (s->tlsext_heartbeat & SSL_TLSEXT_HB_DONT_RECV_REQUESTS)
             *(ret++) = SSL_TLSEXT_HB_DONT_SEND_REQUESTS;
         else
@@ -2344,23 +2344,23 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p,
         else if (type == TLSEXT_TYPE_next_proto_neg &&
                  s->s3->tmp.finish_md_len == 0 &&
                  s->s3->alpn_selected == NULL) {
-                        /*-
-                         * We shouldn't accept this extension on a
-                         * renegotiation.
-                         *
-                         * s->new_session will be set on renegotiation, but we
-                         * probably shouldn't rely that it couldn't be set on
-                         * the initial renegotation too in certain cases (when
-                         * there's some other reason to disallow resuming an
-                         * earlier session -- the current code won't be doing
-                         * anything like that, but this might change).
-                         *
-                         * A valid sign that there's been a previous handshake
-                         * in this connection is if s->s3->tmp.finish_md_len >
-                         * 0.  (We are talking about a check that will happen
-                         * in the Hello protocol round, well before a new
-                         * Finished message could have been computed.)
-                         */
+            /*-
+             * We shouldn't accept this extension on a
+             * renegotiation.
+             *
+             * s->new_session will be set on renegotiation, but we
+             * probably shouldn't rely that it couldn't be set on
+             * the initial renegotation too in certain cases (when
+             * there's some other reason to disallow resuming an
+             * earlier session -- the current code won't be doing
+             * anything like that, but this might change).
+             *
+             * A valid sign that there's been a previous handshake
+             * in this connection is if s->s3->tmp.finish_md_len >
+             * 0.  (We are talking about a check that will happen
+             * in the Hello protocol round, well before a new
+             * Finished message could have been computed.)
+             */
             s->s3->next_proto_neg_seen = 1;
         }
 # endif
@@ -2682,12 +2682,12 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p,
                 *al = TLS1_AD_DECODE_ERROR;
                 return 0;
             }
-                        /*-
-                         * The extension data consists of:
-                         *   uint16 list_length
-                         *   uint8 proto_length;
-                         *   uint8 proto[proto_length];
-                         */
+            /*-
+             * The extension data consists of:
+             *   uint16 list_length
+             *   uint8 proto_length;
+             *   uint8 proto[proto_length];
+             */
             len = data[0];
             len <<= 8;
             len |= data[1];
@@ -3895,16 +3895,16 @@ int tls1_heartbeat(SSL *s)
      */
     OPENSSL_assert(payload + padding <= 16381);
 
-        /*-
-         * Create HeartBeat message, we just use a sequence number
-         * as payload to distuingish different messages and add
-         * some random stuff.
-         *  - Message Type, 1 byte
-         *  - Payload Length, 2 bytes (unsigned int)
-         *  - Payload, the sequence number (2 bytes uint)
-         *  - Payload, random bytes (16 bytes uint)
-         *  - Padding
-         */
+    /*-
+     * Create HeartBeat message, we just use a sequence number
+     * as payload to distuingish different messages and add
+     * some random stuff.
+     *  - Message Type, 1 byte
+     *  - Payload Length, 2 bytes (unsigned int)
+     *  - Payload, the sequence number (2 bytes uint)
+     *  - Payload, random bytes (16 bytes uint)
+     *  - Padding
+     */
     buf = OPENSSL_malloc(1 + 2 + payload + padding);
     p = buf;
     /* Message Type */

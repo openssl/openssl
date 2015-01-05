@@ -120,14 +120,14 @@ struct ec_method_st {
     void (*point_finish) (EC_POINT *);
     void (*point_clear_finish) (EC_POINT *);
     int (*point_copy) (EC_POINT *, const EC_POINT *);
-        /*-
-         * used by EC_POINT_set_to_infinity,
-         * EC_POINT_set_Jprojective_coordinates_GFp,
-         * EC_POINT_get_Jprojective_coordinates_GFp,
-         * EC_POINT_set_affine_coordinates_GFp,     ..._GF2m,
-         * EC_POINT_get_affine_coordinates_GFp,     ..._GF2m,
-         * EC_POINT_set_compressed_coordinates_GFp, ..._GF2m:
-         */
+    /*-
+     * used by EC_POINT_set_to_infinity,
+     * EC_POINT_set_Jprojective_coordinates_GFp,
+     * EC_POINT_get_Jprojective_coordinates_GFp,
+     * EC_POINT_set_affine_coordinates_GFp,     ..._GF2m,
+     * EC_POINT_get_affine_coordinates_GFp,     ..._GF2m,
+     * EC_POINT_set_compressed_coordinates_GFp, ..._GF2m:
+     */
     int (*point_set_to_infinity) (const EC_GROUP *, EC_POINT *);
     int (*point_set_Jprojective_coordinates_GFp) (const EC_GROUP *,
                                                   EC_POINT *, const BIGNUM *x,

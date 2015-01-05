@@ -1149,16 +1149,16 @@ struct ssl_ctx_st {
      * ALPN.)
      */
 
-        /*-
-         * For a server, this contains a callback function that allows the
-         * server to select the protocol for the connection.
-         *   out: on successful return, this must point to the raw protocol
-         *        name (without the length prefix).
-         *   outlen: on successful return, this contains the length of |*out|.
-         *   in: points to the client's list of supported protocols in
-         *       wire-format.
-         *   inlen: the length of |in|.
-         */
+    /*-
+     * For a server, this contains a callback function that allows the
+     * server to select the protocol for the connection.
+     *   out: on successful return, this must point to the raw protocol
+     *        name (without the length prefix).
+     *   outlen: on successful return, this contains the length of |*out|.
+     *   in: points to the client's list of supported protocols in
+     *       wire-format.
+     *   inlen: the length of |in|.
+     */
     int (*alpn_select_cb) (SSL *s,
                            const unsigned char **out,
                            unsigned char *outlen,

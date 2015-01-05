@@ -534,13 +534,13 @@ int BIO_socket_ioctl(int fd, long type, void *arg)
     i = ioctlsocket(fd, type, (char *)arg);
 #  else
 #   if defined(OPENSSL_SYS_VMS)
-        /*-
-         * 2011-02-18 SMS.
-         * VMS ioctl() can't tolerate a 64-bit "void *arg", but we
-         * observe that all the consumers pass in an "unsigned long *",
-         * so we arrange a local copy with a short pointer, and use
-         * that, instead.
-         */
+    /*-
+     * 2011-02-18 SMS.
+     * VMS ioctl() can't tolerate a 64-bit "void *arg", but we
+     * observe that all the consumers pass in an "unsigned long *",
+     * so we arrange a local copy with a short pointer, and use
+     * that, instead.
+     */
 #    if __INITIAL_POINTER_SIZE == 64
 #     define ARG arg_32p
 #     pragma pointer_size save

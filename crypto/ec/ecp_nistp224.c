@@ -618,11 +618,11 @@ static void felem_reduce(felem out, const widefelem in)
     /* output[3] <= 2^56 + 2^16 */
     out[2] = output[2] & 0x00ffffffffffffff;
 
-        /*-
-         * out[0] < 2^56, out[1] < 2^56, out[2] < 2^56,
-         * out[3] <= 2^56 + 2^16 (due to final carry),
-         * so out < 2*p
-         */
+    /*-
+     * out[0] < 2^56, out[1] < 2^56, out[2] < 2^56,
+     * out[3] <= 2^56 + 2^16 (due to final carry),
+     * so out < 2*p
+     */
     out[3] = output[3];
 }
 
@@ -1048,10 +1048,10 @@ static void point_add(felem x3, felem y3, felem z3,
     felem_scalar(ftmp5, 2);
     /* ftmp5[i] < 2 * 2^57 = 2^58 */
 
-        /*-
-         * x_out = (z1^3*y2 - z2^3*y1)^2 - (z1^2*x2 - z2^2*x1)^3 -
-         *  2*z2^2*x1*(z1^2*x2 - z2^2*x1)^2
-         */
+    /*-
+     * x_out = (z1^3*y2 - z2^3*y1)^2 - (z1^2*x2 - z2^2*x1)^3 -
+     *  2*z2^2*x1*(z1^2*x2 - z2^2*x1)^2
+     */
     felem_diff_128_64(tmp2, ftmp5);
     /* tmp2[i] < 2^117 + 2^64 + 8 < 2^118 */
     felem_reduce(x_out, tmp2);
@@ -1066,10 +1066,10 @@ static void point_add(felem x3, felem y3, felem z3,
     felem_mul(tmp2, ftmp3, ftmp2);
     /* tmp2[i] < 4 * 2^57 * 2^59 = 2^118 */
 
-        /*-
-         * y_out = (z1^3*y2 - z2^3*y1)*(z2^2*x1*(z1^2*x2 - z2^2*x1)^2 - x_out) -
-         *  z2^3*y1*(z1^2*x2 - z2^2*x1)^3
-         */
+    /*-
+     * y_out = (z1^3*y2 - z2^3*y1)*(z2^2*x1*(z1^2*x2 - z2^2*x1)^2 - x_out) -
+     *  z2^3*y1*(z1^2*x2 - z2^2*x1)^3
+     */
     widefelem_diff(tmp2, tmp);
     /* tmp2[i] < 2^118 + 2^120 < 2^121 */
     felem_reduce(y_out, tmp2);
