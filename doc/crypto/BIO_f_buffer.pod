@@ -10,11 +10,11 @@ BIO_f_buffer - buffering BIO
 
  BIO_METHOD * BIO_f_buffer(void);
 
- #define BIO_get_buffer_num_lines(b)	BIO_ctrl(b,BIO_C_GET_BUFF_NUM_LINES,0,NULL)
- #define BIO_set_read_buffer_size(b,size) BIO_int_ctrl(b,BIO_C_SET_BUFF_SIZE,size,0)
- #define BIO_set_write_buffer_size(b,size) BIO_int_ctrl(b,BIO_C_SET_BUFF_SIZE,size,1)
- #define BIO_set_buffer_size(b,size)	BIO_ctrl(b,BIO_C_SET_BUFF_SIZE,size,NULL)
- #define BIO_set_buffer_read_data(b,buf,num) BIO_ctrl(b,BIO_C_SET_BUFF_READ_DATA,num,buf)
+ #define BIO_get_buffer_num_lines(b)
+ #define BIO_set_read_buffer_size(b,size)
+ #define BIO_set_write_buffer_size(b,size)
+ #define BIO_set_buffer_size(b,size)
+ #define BIO_set_buffer_read_data(b,buf,num)
 
 =head1 DESCRIPTION
 
@@ -70,5 +70,4 @@ L<BIO(3)|BIO(3)>,
 L<BIO_reset(3)|BIO_reset(3)>,
 L<BIO_flush(3)|BIO_flush(3)>,
 L<BIO_pop(3)|BIO_pop(3)>,
-L<BIO_ctrl(3)|BIO_ctrl(3)>,
-L<BIO_int_ctrl(3)|BIO_ctrl(3)>
+L<BIO_ctrl(3)|BIO_ctrl(3)>.

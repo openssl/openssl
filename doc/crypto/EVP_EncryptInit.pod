@@ -133,7 +133,8 @@ room. The actual number of bytes written is placed in B<outl>.
 
 If padding is enabled (the default) then EVP_EncryptFinal_ex() encrypts
 the "final" data, that is any data that remains in a partial block.
-It uses L<standard block padding|/NOTES> (aka PKCS padding). The encrypted
+It uses standard block padding (aka PKCS padding) as described in
+the NOTES section, below. The encrypted
 final data is written to B<out> which should have sufficient space for
 one cipher block. The number of bytes written is placed in B<outl>. After
 this function is called the encryption operation is finished and no further
