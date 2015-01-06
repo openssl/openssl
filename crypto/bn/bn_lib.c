@@ -263,7 +263,7 @@ void BN_free(BIGNUM *a)
 		OPENSSL_free(a);
 	else
 		{
-#ifdef OPENSSL_USE_DEPRECATED
+#ifndef OPENSSL_NO_DEPRECATED
 		a->flags|=BN_FLG_FREE;
 #endif
 		a->d = NULL;
