@@ -19,7 +19,7 @@ my $ctr = 0;
 foreach my $c (split //, $cflags) {
     # Max 18 characters per line
     if  (($ctr++ % 18) == 0) {
-        if ($ctr != 0) {
+        if ($ctr != 1) {
             print "\n";
         }
         print "        ";
