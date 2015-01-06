@@ -337,6 +337,14 @@
 
  Changes between 1.0.1k and 1.0.2 [xx XXX xxxx]
 
+  *) Facilitate "universal" ARM builds targeting range of ARM ISAs, e.g.
+     ARMv5 through ARMv8, as opposite to "locking" it to single one.
+     So far those who have to target multiple plaforms would compromise
+     and argue that binary targeting say ARMv5 would still execute on
+     ARMv8. "Universal" build resolves this compromise by providing
+     near-optimal performance even on newer platforms.
+     [Andy Polyakov]
+
   *) Accelerated NIST P-256 elliptic curve implementation for x86_64
      (other platforms pending).
      [Shay Gueron & Vlad Krasnov (Intel Corp), Andy Polyakov]
