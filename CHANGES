@@ -670,7 +670,8 @@
   *) Abort handshake if server key exchange message is omitted for ephemeral
      ECDH ciphersuites.
 
-     Thanks to Karthikeyan Bhargavan for reporting this issue.
+     Thanks to Karthikeyan Bhargavan of the PROSECCO team at INRIA for
+     reporting this issue.
      (CVE-2014-3572)
      [Steve Henson]
 
@@ -678,7 +679,8 @@
      violated the TLS standard by allowing the use of temporary RSA keys in
      non-export ciphersuites and could be used by a server to effectively
      downgrade the RSA key length used to a value smaller than the server
-     certificate. Thanks for Karthikeyan Bhargavan for reporting this issue.
+     certificate. Thanks for Karthikeyan Bhargavan of the PROSECCO team at
+     INRIA or reporting this issue.
      (CVE-2015-0204)
      [Steve Henson]
 
