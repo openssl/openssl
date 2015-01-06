@@ -480,7 +480,7 @@ int dtls1_accept(SSL *s)
 
 			/* only send if a DH key exchange or
 			 * RSA but we have a sign only certificate */
-			if (
+			if (0
 			/* PSK: send ServerKeyExchange if PSK identity
 			 * hint if provided */
 #ifndef OPENSSL_NO_PSK
