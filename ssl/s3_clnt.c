@@ -1184,7 +1184,7 @@ int ssl3_get_key_exchange(SSL *s)
 		if (!SSL_C_IS_EXPORT(s->s3->tmp.new_cipher))
 			{
 			al=SSL_AD_UNEXPECTED_MESSAGE;
-			SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,SSL_R_UNEXPECTED_MESSAGE);
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_UNEXPECTED_MESSAGE);
 			goto f_err;
 			}
 		if ((rsa=RSA_new()) == NULL)
