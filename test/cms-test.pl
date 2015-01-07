@@ -106,7 +106,7 @@ else
 	die "Error checking for EC support\n";
 	}
     
-system ("$ossl_path no-ec2m >/dev/null");
+system ("$ossl_path no-ec2m > $null_path");
 if ($? == 0)
 	{
 	$no_ec2m = 1;
@@ -120,7 +120,7 @@ else
 	die "Error checking for EC2M support\n";
 	}
 
-system ("$ossl_path no-ecdh >/dev/null");
+system ("$ossl_path no-ecdh > $null_path");
 if ($? == 0)
 	{
 	$no_ecdh = 1;
