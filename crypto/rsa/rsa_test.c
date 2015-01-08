@@ -9,6 +9,7 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/bn.h>
+#include <openssl/evp.h>
 #ifdef OPENSSL_NO_RSA
 int main(int argc, char *argv[])
 {
@@ -28,9 +29,10 @@ int main(int argc, char *argv[])
   key->dmq1 = BN_bin2bn(dmq1, sizeof(dmq1)-1, key->dmq1); \
   key->iqmp = BN_bin2bn(iqmp, sizeof(iqmp)-1, key->iqmp); \
   memcpy(c, ctext_ex, sizeof(ctext_ex) - 1); \
+  memcpy(h, hash_ex, sizeof(hash_ex) - 1); \
   return (sizeof(ctext_ex) - 1);
 
-static int key1(RSA *key, unsigned char *c)
+static int key1(RSA *key, unsigned char *c, unsigned char *h)
     {
     static unsigned char n[] =
 "\x00\xAA\x36\xAB\xCE\x88\xAC\xFD\xFF\x55\x52\x3C\x7F\xC4\x52\x3F"
@@ -76,10 +78,13 @@ static int key1(RSA *key, unsigned char *c)
 "\x33\x89\x5c\x74\x95\x8d\x5d\x02\xab\x8c\x0f\xd0\x40\xeb\x58\x44"
 "\xb0\x05\xc3\x9e\xd8\x27\x4a\x9d\xbf\xa8\x06\x71\x40\x94\x39\xd2";
 
+    static unsigned char hash_ex[] =
+"\x02\xdc\xea\x68\x17\x83\xba\xa7\xa6\x60\x3e\xe8\x32\x67\x21\xaf";
+
     SetKey;
     }
 
-static int key2(RSA *key, unsigned char *c)
+static int key2(RSA *key, unsigned char *c, unsigned char *h)
     {
     static unsigned char n[] =
 "\x00\xA3\x07\x9A\x90\xDF\x0D\xFD\x72\xAC\x09\x0C\xCC\x2A\x78\xB8"
@@ -121,10 +126,13 @@ static int key2(RSA *key, unsigned char *c)
 "\x17\x53\x03\x29\xa9\x34\x90\x74\xb1\x52\x13\x54\x29\x08\x24\x52"
 "\x62\x51";
 
+    static unsigned char hash_ex[] =
+"\xf5\xf0\xa1\xbd\x88\x72\xbb\xab\x35\xb8\xae\x5f\x5f\x86\xd7\x07";
+
     SetKey;
     }
 
-static int key3(RSA *key, unsigned char *c)
+static int key3(RSA *key, unsigned char *c, unsigned char *h)
     {
     static unsigned char n[] =
 "\x00\xBB\xF8\x2F\x09\x06\x82\xCE\x9C\x23\x38\xAC\x2B\x9D\xA8\x71"
@@ -193,6 +201,9 @@ static int key3(RSA *key, unsigned char *c)
 "\x74\xb2\x6f\x7c\x48\xb4\x2e\xe6\x8e\x1f\x57\x2a\x1f\xc4\x02\x6a"
 "\xc4\x56\xb4\xf5\x9f\x7b\x62\x1e\xa1\xb9\xd8\x8f\x64\x20\x2f\xb1";
 
+    static unsigned char hash_ex[] =
+"\xa1\xc3\x79\x8c\xa8\x7a\x4c\x08\x86\x75\xf2\x72\xde\xa6\x02\xc0";
+
     SetKey;
     }
 
@@ -214,12 +225,15 @@ int main(int argc, char *argv[])
     RSA *key;
     unsigned char ptext[256];
     unsigned char ctext[256];
-    static unsigned char ptext_ex[] = "\x54\x85\x9b\x34\x2c\x49\xea\x2a";
+    static const unsigned char ptext_ex[] = "\x54\x85\x9b\x34\x2c\x49\xea\x2a";
     unsigned char ctext_ex[256];
+    unsigned char hash_ex[16];
+    unsigned char md5[16];
     int plen;
     int clen = 0;
     int num;
     int n;
+    unsigned md5len;
 
     CRYPTO_malloc_debug_init();
     CRYPTO_dbg_set_options(V_CRYPTO_MDEBUG_ALL);
@@ -234,16 +248,23 @@ int main(int argc, char *argv[])
 	key = RSA_new();
 	switch (v%3) {
     case 0:
-	clen = key1(key, ctext_ex);
+	clen = key1(key, ctext_ex, hash_ex);
 	break;
     case 1:
-	clen = key2(key, ctext_ex);
+	clen = key2(key, ctext_ex, hash_ex);
 	break;
     case 2:
-	clen = key3(key, ctext_ex);
+	clen = key3(key, ctext_ex, hash_ex);
 	break;
 	}
 	if (v/3 >= 1) key->flags |= RSA_FLAG_NO_CONSTTIME;
+
+	if (!RSA_public_digest(key, EVP_md5(), md5, &md5len)) {
+	    printf("Computing public key hash failed!\n");
+	} else {
+	    if (memcmp(md5, hash_ex, md5len))
+		printf("Computed public key hash mismatch!\n");
+	}
 
 	num = RSA_public_encrypt(plen, ptext_ex, ctext, key,
 				 RSA_PKCS1_PADDING);

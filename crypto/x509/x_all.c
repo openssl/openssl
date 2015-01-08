@@ -320,6 +320,16 @@ int i2d_DSAPrivateKey_fp(FILE *fp, DSA *dsa)
 	return ASN1_i2d_fp_of_const(DSA,i2d_DSAPrivateKey,fp,dsa);
 	}
 
+DSA *d2i_DSAPublicKey_fp(FILE *fp, DSA **dsa)
+	{
+	return ASN1_d2i_fp_of(DSA,DSA_new,d2i_DSAPublicKey,fp,dsa);
+	}
+
+int i2d_DSAPublicKey_fp(FILE *fp, DSA *dsa)
+	{
+	return ASN1_i2d_fp_of_const(DSA,i2d_DSAPublicKey,fp,dsa);
+	}
+
 DSA *d2i_DSA_PUBKEY_fp(FILE *fp, DSA **dsa)
 	{
 	return ASN1_d2i_fp_of(DSA,DSA_new,d2i_DSA_PUBKEY,fp,dsa);
@@ -333,8 +343,7 @@ int i2d_DSA_PUBKEY_fp(FILE *fp, DSA *dsa)
 
 DSA *d2i_DSAPrivateKey_bio(BIO *bp, DSA **dsa)
 	{
-	return ASN1_d2i_bio_of(DSA,DSA_new,d2i_DSAPrivateKey,bp,dsa
-);
+	return ASN1_d2i_bio_of(DSA,DSA_new,d2i_DSAPrivateKey,bp,dsa);
 	}
 
 int i2d_DSAPrivateKey_bio(BIO *bp, DSA *dsa)
