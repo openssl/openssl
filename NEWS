@@ -7,7 +7,14 @@
 
   Major changes between OpenSSL 1.0.1j and OpenSSL 1.0.1k [under development]
 
-      o
+      o Fix for CVE-2014-3571
+      o Fix for CVE-2015-0206
+      o Fix for CVE-2014-3569
+      o Fix for CVE-2014-3572
+      o Fix for CVE-2015-0204
+      o Fix for CVE-2015-0205
+      o Fix for CVE-2014-8275
+      o Fix for CVE-2014-3570
 
   Major changes between OpenSSL 1.0.1i and OpenSSL 1.0.1j [15 Oct 2014]
 
