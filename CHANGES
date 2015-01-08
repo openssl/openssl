@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.0o and 1.0.0p [xx XXX xxxx]
+ Changes between 1.0.0o and 1.0.0p [8 Jan 2015]
 
   *) Fix DTLS segmentation fault in dtls1_get_record. A carefully crafted DTLS
      message can cause a segmentation fault in OpenSSL due to a NULL pointer
