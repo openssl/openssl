@@ -4,6 +4,20 @@
 
  Changes between 0.9.8zc and 0.9.8zd [xx XXX xxxx]
 
+  *) Fix DTLS segmentation fault in dtls1_get_record. A carefully crafted DTLS
+     message can cause a segmentation fault in OpenSSL due to a NULL pointer
+     dereference. This could lead to a Denial Of Service attack. Thanks to
+     Markus Stenberg of Cisco Systems, Inc. for reporting this issue.
+     (CVE-2014-3571)
+     [Steve Henson]
+
+  *) Fix issue where no-ssl3 configuration sets method to NULL. When openssl is
+     built with the no-ssl3 option and a SSL v3 ClientHello is received the ssl
+     method would be set to NULL which could later result in a NULL pointer
+     dereference. Thanks to Frank Schmirler for reporting this issue.
+     (CVE-2014-3569)
+     [Kurt Roeckx]
+
   *) Abort handshake if server key exchange message is omitted for ephemeral
      ECDH ciphersuites.
 
@@ -57,6 +71,17 @@
 
      (CVE-2014-8275)
      [Steve Henson]
+
+   *) Correct Bignum squaring. Bignum squaring (BN_sqr) may produce incorrect
+      results on some platforms, including x86_64. This bug occurs at random
+      with a very low probability, and is not known to be exploitable in any
+      way, though its exact impact is difficult to determine. Thanks to Pieter
+      Wuille (Blockstream) who reported this issue and also suggested an initial
+      fix. Further analysis was conducted by the OpenSSL development team and
+      Adam Langley of Google. The final fix was developed by Andy Polyakov of
+      the OpenSSL core team.
+      (CVE-2014-3570)
+      [Andy Polyakov]
 
  Changes between 0.9.8zb and 0.9.8zc [15 Oct 2014]
 

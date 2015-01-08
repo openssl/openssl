@@ -7,7 +7,12 @@
 
   Major changes between OpenSSL 0.9.8zc and OpenSSL 0.9.8zd [under development]
 
-      o
+      o Fix for CVE-2014-3571
+      o Fix for CVE-2014-3569
+      o Fix for CVE-2014-3572
+      o Fix for CVE-2015-0204
+      o Fix for CVE-2014-8275
+      o Fix for CVE-2014-3570
 
   Major changes between OpenSSL 0.9.8zb and OpenSSL 0.9.8zc [15 Oct 2014]:
 
