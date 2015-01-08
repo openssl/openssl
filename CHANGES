@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.8zd and 0.9.8ze [xx XXX xxxx]
+
+  *)
+
  Changes between 0.9.8zc and 0.9.8zd [8 Jan 2015]
 
   *) Fix DTLS segmentation fault in dtls1_get_record. A carefully crafted DTLS
