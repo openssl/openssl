@@ -48,6 +48,21 @@
 *.s
 !/crypto/bn/asm/pa-risc2.s
 !/crypto/bn/asm/pa-risc2W.s
+crypto/aes/asm/a_win32.asm
+crypto/bf/asm/b_win32.asm
+crypto/bn/asm/bn_win32.asm
+crypto/bn/asm/co_win32.asm
+crypto/bn/asm/mt_win32.asm
+crypto/cast/asm/c_win32.asm
+crypto/cpu_win32.asm
+crypto/des/asm/d_win32.asm
+crypto/des/asm/y_win32.asm
+crypto/md5/asm/m5_win32.asm
+crypto/rc4/asm/r4_win32.asm
+crypto/rc5/asm/r5_win32.asm
+crypto/ripemd/asm/rm_win32.asm
+crypto/sha/asm/s1_win32.asm
+crypto/sha/asm/sha512-sse2.asm
 
 # Executables
 /apps/openssl
@@ -79,7 +94,9 @@ Makefile.save
 
 # Windows
 /tmp32dll
+/tmp32dll.dbg
 /out32dll
+/out32dll.dbg
 /inc32
 /MINFO
 ms/bcb.mak
