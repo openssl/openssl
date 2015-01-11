@@ -246,6 +246,7 @@ foreach (@ARGV, split(/ /, $options))
 	elsif (/^no-sctp$/)	{ $no_sctp=1; }
 	elsif (/^no-srtp$/)	{ $no_srtp=1; }
 	elsif (/^no-unit-test$/){ $no_unit_test=1; }
+	elsif (/^no-deprecated$/) { $no_deprecated=1; }
 	}
 
 
