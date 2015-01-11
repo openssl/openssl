@@ -701,7 +701,7 @@ bn_mul_words                            707	NOEXIST::FUNCTION:
 BN_uadd                                 708	EXIST::FUNCTION:
 BN_usub                                 709	EXIST::FUNCTION:
 bn_sqr_words                            710	NOEXIST::FUNCTION:
-_ossl_old_crypt                         711	EXIST:!NeXT,!PERL5:FUNCTION:DES
+_ossl_old_crypt                         711	EXIST:!PERL5:FUNCTION:DES
 d2i_ASN1_BIT_STRING                     712	EXIST::FUNCTION:
 d2i_ASN1_BOOLEAN                        713	EXIST::FUNCTION:
 d2i_ASN1_HEADER                         714	NOEXIST::FUNCTION:
@@ -3735,7 +3735,7 @@ EVP_PKEY_print_public                   4118	EXIST::FUNCTION:
 EVP_PKEY_CTX_new                        4119	EXIST::FUNCTION:
 i2d_TS_TST_INFO                         4120	EXIST::FUNCTION:
 EVP_PKEY_asn1_find                      4121	EXIST::FUNCTION:
-DSO_METHOD_beos                         4122	EXIST::FUNCTION:
+DSO_METHOD_beos                         4122	NOEXIST::FUNCTION:
 TS_CONF_load_cert                       4123	EXIST::FUNCTION:
 TS_REQ_get_ext                          4124	EXIST::FUNCTION:
 EVP_PKEY_sign_init                      4125	EXIST::FUNCTION:
