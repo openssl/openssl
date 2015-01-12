@@ -341,14 +341,7 @@ int main(int argc, char *argv[])
 	unsigned char cbc_out[40];
 	DES_LONG cs;
 	unsigned char cret[8];
-#ifdef _CRAY
-        struct {
-            int a:32;
-            int b:32;
-        } lqret[2];
-#else
         DES_LONG lqret[4];
-#endif
 	int num;
 	char *str;
 
@@ -738,32 +731,6 @@ plain[8+4], plain[8+5], plain[8+6], plain[8+7]);
 			(unsigned long)cs);
 		err=1;
 		}
-#ifdef _CRAY
-	if (lqret[0].a != 0x327eba8dL)
-		{
-		printf("quad_cksum error, out[0] %08lx is not %08lx\n",
-			(unsigned long)lqret[0].a,0x327eba8dUL);
-		err=1;
-		}
-	if (lqret[0].b != 0x201a49ccL)
-		{
-		printf("quad_cksum error, out[1] %08lx is not %08lx\n",
-			(unsigned long)lqret[0].b,0x201a49ccUL);
-		err=1;
-		}
-	if (lqret[1].a != 0x70d7a63aL)
-		{
-		printf("quad_cksum error, out[2] %08lx is not %08lx\n",
-			(unsigned long)lqret[1].a,0x70d7a63aUL);
-		err=1;
-		}
-	if (lqret[1].b != 0x501c2c26L)
-		{
-		printf("quad_cksum error, out[3] %08lx is not %08lx\n",
-			(unsigned long)lqret[1].b,0x501c2c26UL);
-		err=1;
-		}
-#else
 	if (lqret[0] != 0x327eba8dL)
 		{
 		printf("quad_cksum error, out[0] %08lx is not %08lx\n",
@@ -788,7 +755,6 @@ plain[8+4], plain[8+5], plain[8+6], plain[8+7]);
 			(unsigned long)lqret[3],0x501c2c26UL);
 		err=1;
 		}
-#endif
 #endif
 
 	printf("input word alignment test");
