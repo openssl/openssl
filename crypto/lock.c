@@ -117,7 +117,7 @@
 #include "cryptlib.h"
 #include <openssl/safestack.h>
 
-#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN16)
+#if defined(OPENSSL_SYS_WIN32)
 static double SSLeay_MSVC5_hack=0.0; /* and for VC1.5 */
 #endif
 
@@ -182,15 +182,15 @@ static STACK_OF(OPENSSL_STRING) *app_locks=NULL;
 static STACK_OF(CRYPTO_dynlock) *dyn_locks=NULL;
 
 
-static void (MS_FAR *locking_callback)(int mode,int type,
+static void (*locking_callback)(int mode,int type,
 	const char *file,int line)=0;
-static int (MS_FAR *add_lock_callback)(int *pointer,int amount,
+static int (*add_lock_callback)(int *pointer,int amount,
 	int type,const char *file,int line)=0;
-static struct CRYPTO_dynlock_value *(MS_FAR *dynlock_create_callback)
+static struct CRYPTO_dynlock_value *(*dynlock_create_callback)
 	(const char *file,int line)=0;
-static void (MS_FAR *dynlock_lock_callback)(int mode,
+static void (*dynlock_lock_callback)(int mode,
 	struct CRYPTO_dynlock_value *l, const char *file,int line)=0;
-static void (MS_FAR *dynlock_destroy_callback)(struct CRYPTO_dynlock_value *l,
+static void (*dynlock_destroy_callback)(struct CRYPTO_dynlock_value *l,
 	const char *file,int line)=0;
 
 int CRYPTO_get_new_lockid(char *name)
@@ -198,7 +198,7 @@ int CRYPTO_get_new_lockid(char *name)
 	char *str;
 	int i;
 
-#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN16)
+#if defined(OPENSSL_SYS_WIN32)
 	/* A hack to make Visual C++ 5.0 work correctly when linking as
 	 * a DLL using /MT. Without this, the application cannot use
 	 * any floating point printf's.

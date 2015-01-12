@@ -185,14 +185,6 @@ extern "C" {
 #define writesocket(s,b,n)	write((s),(b),(n))
 #endif
 
-#ifdef WIN16 /* never the case */
-#  define MS_CALLBACK	_far _loadds
-#  define MS_FAR	_far
-#else
-#  define MS_CALLBACK
-#  define MS_FAR
-#endif
-
 #ifdef OPENSSL_NO_STDIO
 #  undef OPENSSL_NO_FP_API
 #  define OPENSSL_NO_FP_API

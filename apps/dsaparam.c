@@ -101,7 +101,7 @@ static void timebomb_sigalarm(int foo)
 
 #endif
 
-static int MS_CALLBACK dsa_cb(int p, int n, BN_GENCB *cb);
+static int dsa_cb(int p, int n, BN_GENCB *cb);
 
 int MAIN(int, char **);
 
@@ -468,7 +468,7 @@ end:
 	OPENSSL_EXIT(ret);
 	}
 
-static int MS_CALLBACK dsa_cb(int p, int n, BN_GENCB *cb)
+static int dsa_cb(int p, int n, BN_GENCB *cb)
 	{
 	char c='*';
 

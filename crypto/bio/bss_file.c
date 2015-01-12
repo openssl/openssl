@@ -95,13 +95,13 @@
 
 #if !defined(OPENSSL_NO_STDIO)
 
-static int MS_CALLBACK file_write(BIO *h, const char *buf, int num);
-static int MS_CALLBACK file_read(BIO *h, char *buf, int size);
-static int MS_CALLBACK file_puts(BIO *h, const char *str);
-static int MS_CALLBACK file_gets(BIO *h, char *str, int size);
-static long MS_CALLBACK file_ctrl(BIO *h, int cmd, long arg1, void *arg2);
-static int MS_CALLBACK file_new(BIO *h);
-static int MS_CALLBACK file_free(BIO *data);
+static int file_write(BIO *h, const char *buf, int num);
+static int file_read(BIO *h, char *buf, int size);
+static int file_puts(BIO *h, const char *str);
+static int file_gets(BIO *h, char *str, int size);
+static long file_ctrl(BIO *h, int cmd, long arg1, void *arg2);
+static int file_new(BIO *h);
+static int file_free(BIO *data);
 static BIO_METHOD methods_filep=
 	{
 	BIO_TYPE_FILE,
@@ -202,7 +202,7 @@ BIO_METHOD *BIO_s_file(void)
 	return(&methods_filep);
 	}
 
-static int MS_CALLBACK file_new(BIO *bi)
+static int file_new(BIO *bi)
 	{
 	bi->init=0;
 	bi->num=0;
@@ -211,7 +211,7 @@ static int MS_CALLBACK file_new(BIO *bi)
 	return(1);
 	}
 
-static int MS_CALLBACK file_free(BIO *a)
+static int file_free(BIO *a)
 	{
 	if (a == NULL) return(0);
 	if (a->shutdown)
@@ -230,7 +230,7 @@ static int MS_CALLBACK file_free(BIO *a)
 	return(1);
 	}
 	
-static int MS_CALLBACK file_read(BIO *b, char *out, int outl)
+static int file_read(BIO *b, char *out, int outl)
 	{
 	int ret=0;
 
@@ -250,7 +250,7 @@ static int MS_CALLBACK file_read(BIO *b, char *out, int outl)
 	return(ret);
 	}
 
-static int MS_CALLBACK file_write(BIO *b, const char *in, int inl)
+static int file_write(BIO *b, const char *in, int inl)
 	{
 	int ret=0;
 
@@ -270,7 +270,7 @@ static int MS_CALLBACK file_write(BIO *b, const char *in, int inl)
 	return(ret);
 	}
 
-static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
+static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
 	{
 	long ret=1;
 	FILE *fp=(FILE *)b->ptr;
@@ -440,7 +440,7 @@ static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
 	return(ret);
 	}
 
-static int MS_CALLBACK file_gets(BIO *bp, char *buf, int size)
+static int file_gets(BIO *bp, char *buf, int size)
 	{
 	int ret=0;
 
@@ -461,7 +461,7 @@ static int MS_CALLBACK file_gets(BIO *bp, char *buf, int size)
 	return(ret);
 	}
 
-static int MS_CALLBACK file_puts(BIO *bp, const char *str)
+static int file_puts(BIO *bp, const char *str)
 	{
 	int n,ret;
 

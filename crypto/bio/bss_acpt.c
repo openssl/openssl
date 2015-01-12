@@ -64,12 +64,6 @@
 
 #ifndef OPENSSL_NO_SOCK
 
-#ifdef OPENSSL_SYS_WIN16
-#define SOCKET_PROTOCOL 0 /* more microsoft stupidity */
-#else
-#define SOCKET_PROTOCOL IPPROTO_TCP
-#endif
-
 #if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)
 /* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
 #undef FIONBIO

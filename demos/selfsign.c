@@ -42,15 +42,7 @@ int main()
 	return(0);
 	}
 
-#ifdef WIN16
-#  define MS_CALLBACK   _far _loadds
-#  define MS_FAR        _far
-#else
-#  define MS_CALLBACK
-#  define MS_FAR
-#endif
-
-static void MS_CALLBACK callback(p, n, arg)
+static void callback(p, n, arg)
 int p;
 int n;
 void *arg;

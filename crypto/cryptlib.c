@@ -117,7 +117,7 @@
 #include "cryptlib.h"
 #include <openssl/safestack.h>
 
-#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN16)
+#if defined(OPENSSL_SYS_WIN32)
 static double SSLeay_MSVC5_hack=0.0; /* and for VC1.5 */
 #endif
 

@@ -217,12 +217,12 @@
 #define COMP_RLE	255
 #define COMP_ZLIB	1
 
-static int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx);
+static int verify_callback(int ok, X509_STORE_CTX *ctx);
 #ifndef OPENSSL_NO_RSA
-static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export,int keylength);
+static RSA *tmp_rsa_cb(SSL *s, int is_export,int keylength);
 static void free_tmp_rsa(void);
 #endif
-static int MS_CALLBACK app_verify_callback(X509_STORE_CTX *ctx, void *arg);
+static int app_verify_callback(X509_STORE_CTX *ctx, void *arg);
 #define APP_CALLBACK_STRING "Test Callback Argument"
 struct app_verify_arg
 	{
@@ -260,7 +260,7 @@ typedef struct srp_client_arg_st
 
 #define PWD_STRLEN 1024
 
-static char * MS_CALLBACK ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
+static char * ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
 	{
 	SRP_CLIENT_ARG *srp_client_arg = (SRP_CLIENT_ARG *)arg;
 	return BUF_strdup((char *)srp_client_arg->srppassin);
@@ -274,7 +274,7 @@ typedef struct srp_server_arg_st
 	char *pass;
 	} SRP_SERVER_ARG;
 
-static int MS_CALLBACK ssl_srp_server_param_cb(SSL *s, int *ad, void *arg)
+static int ssl_srp_server_param_cb(SSL *s, int *ad, void *arg)
 	{
 	SRP_SERVER_ARG * p = (SRP_SERVER_ARG *) arg;
 
@@ -2650,7 +2650,7 @@ static int get_proxy_auth_ex_data_idx(void)
 	return idx;
 	}
 
-static int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
+static int verify_callback(int ok, X509_STORE_CTX *ctx)
 	{
 	char *s,buf[256];
 
@@ -3025,7 +3025,7 @@ static int process_proxy_cond(unsigned int letters[26],
 	return process_proxy_cond_adders(letters, cond, cond_end, &pos, 1);
 	}
 
-static int MS_CALLBACK app_verify_callback(X509_STORE_CTX *ctx, void *arg)
+static int app_verify_callback(X509_STORE_CTX *ctx, void *arg)
 	{
 	int ok=1;
 	struct app_verify_arg *cb_arg = arg;
@@ -3119,7 +3119,7 @@ static int MS_CALLBACK app_verify_callback(X509_STORE_CTX *ctx, void *arg)
 #ifndef OPENSSL_NO_RSA
 static RSA *rsa_tmp=NULL;
 
-static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength)
+static RSA *tmp_rsa_cb(SSL *s, int is_export, int keylength)
 	{
 	BIGNUM *bn = NULL;
 	if (rsa_tmp == NULL)

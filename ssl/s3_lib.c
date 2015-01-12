@@ -3441,7 +3441,7 @@ void ssl3_clear(SSL *s)
 	}
 
 #ifndef OPENSSL_NO_SRP
-static char * MS_CALLBACK srp_password_from_info_cb(SSL *s, void *arg)
+static char * srp_password_from_info_cb(SSL *s, void *arg)
 	{
 	return BUF_strdup(s->srp_ctx.info) ;
 	}

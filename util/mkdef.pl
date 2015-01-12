@@ -72,7 +72,6 @@ my $VMSVAX=0;
 my $VMSNonVAX=0;
 my $VMS=0;
 my $W32=0;
-my $W16=0;
 my $NT=0;
 my $OS2=0;
 # Set this to make typesafe STACK definitions appear in DEF
@@ -81,7 +80,7 @@ my $safe_stack_def = 0;
 my @known_platforms = ( "__FreeBSD__", "PERL5",
 			"EXPORT_VAR_AS_FUNCTION", "ZLIB",
 			"OPENSSL_FIPS", "OPENSSL_FIPSCAPABLE" );
-my @known_ossl_platforms = ( "VMS", "WIN16", "WIN32", "WINNT", "OS2" );
+my @known_ossl_platforms = ( "VMS", "WIN32", "WINNT", "OS2" );
 my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CAST", "MD2", "MD4", "MD5", "SHA", "SHA0", "SHA1",
 			 "SHA256", "SHA512", "RIPEMD",
@@ -155,7 +154,7 @@ foreach (@ARGV, split(/ /, $options))
 	{
 	$debug=1 if $_ eq "debug";
 	$W32=1 if $_ eq "32";
-	$W16=1 if $_ eq "16";
+	die "win16 not supported" if $_ eq "16";
 	if($_ eq "NT") {
 		$W32 = 1;
 		$NT = 1;
@@ -260,13 +259,8 @@ if (!$libname) {
 }
 
 # If no platform is given, assume WIN32
-if ($W32 + $W16 + $VMS + $OS2 == 0) {
+if ($W32 + $VMS + $OS2 == 0) {
 	$W32 = 1;
-}
-
-# Add extra knowledge
-if ($W16) {
-	$no_fp_api=1;
 }
 
 if (!$do_ssl && !$do_crypto)
@@ -841,10 +835,9 @@ sub do_defs
 				} elsif (/^DECLARE_PEM_rw\s*\(\s*(\w*)\s*,/ ||
 					 /^DECLARE_PEM_rw_cb\s*\(\s*(\w*)\s*,/ ||
 					 /^DECLARE_PEM_rw_const\s*\(\s*(\w*)\s*,/ ) {
-					# Things not in Win16
 					$def .=
 					    "#INFO:"
-						.join(',',"!WIN16",@current_platforms).":"
+						.join(',',@current_platforms).":"
 						    .join(',',@current_algorithms).";";
 					$def .= "int PEM_read_$1(void);";
 					$def .= "int PEM_write_$1(void);";
@@ -859,10 +852,9 @@ sub do_defs
 				} elsif (/^DECLARE_PEM_write\s*\(\s*(\w*)\s*,/ ||
 					/^DECLARE_PEM_write_const\s*\(\s*(\w*)\s*,/ ||
 					 /^DECLARE_PEM_write_cb\s*\(\s*(\w*)\s*,/ ) {
-					# Things not in Win16
 					$def .=
 					    "#INFO:"
-						.join(',',"!WIN16",@current_platforms).":"
+						.join(',',@current_platforms).":"
 						    .join(',',@current_algorithms).";";
 					$def .= "int PEM_write_$1(void);";
 					$def .=
@@ -874,10 +866,9 @@ sub do_defs
 					next;
 				} elsif (/^DECLARE_PEM_read\s*\(\s*(\w*)\s*,/ ||
 					 /^DECLARE_PEM_read_cb\s*\(\s*(\w*)\s*,/ ) {
-					# Things not in Win16
 					$def .=
 					    "#INFO:"
-						.join(',',"!WIN16",@current_platforms).":"
+						.join(',',@current_platforms).":"
 						    .join(',',@current_algorithms).";";
 					$def .= "int PEM_read_$1(void);";
 					$def .=
@@ -1014,7 +1005,7 @@ sub do_defs
 	# Prune the returned symbols
 
         delete $syms{"bn_dump1"};
-	$platform{"BIO_s_log"} .= ",!WIN32,!WIN16,!macintosh";
+	$platform{"BIO_s_log"} .= ",!WIN32,!macintosh";
 
 	$platform{"PEM_read_NS_CERT_SEQ"} = "VMS";
 	$platform{"PEM_write_NS_CERT_SEQ"} = "VMS";
@@ -1161,14 +1152,13 @@ sub is_valid
 			if ($keyword eq "VMSNonVAX" && $VMSNonVAX) { return 1; }
 			if ($keyword eq "VMS" && $VMS) { return 1; }
 			if ($keyword eq "WIN32" && $W32) { return 1; }
-			if ($keyword eq "WIN16" && $W16) { return 1; }
 			if ($keyword eq "WINNT" && $NT) { return 1; }
 			if ($keyword eq "OS2" && $OS2) { return 1; }
 			# Special platforms:
 			# EXPORT_VAR_AS_FUNCTION means that global variables
 			# will be represented as functions.  This currently
 			# only happens on VMS-VAX.
-			if ($keyword eq "EXPORT_VAR_AS_FUNCTION" && ($VMSVAX || $W32 || $W16)) {
+			if ($keyword eq "EXPORT_VAR_AS_FUNCTION" && ($VMSVAX || $W32)) {
 				return 1;
 			}
 			if ($keyword eq "OPENSSL_FIPSCAPABLE") {
@@ -1314,8 +1304,6 @@ sub print_def_file
 
 	if ($W32)
 		{ $libname.="32"; }
-	elsif ($W16)
-		{ $libname.="16"; }
 	elsif ($OS2)
 		{ # DLL names should not clash on the whole system.
 		  # However, they should not have any particular relationship
@@ -1339,19 +1327,6 @@ EOO
 LIBRARY         $libname	$liboptions
 
 EOF
-
-	if ($W16) {
-		print <<"EOF";
-CODE            PRELOAD MOVEABLE
-DATA            PRELOAD MOVEABLE SINGLE
-
-EXETYPE		WINDOWS
-
-HEAPSIZE	4096
-STACKSIZE	8192
-
-EOF
-	}
 
 	print "EXPORTS\n";
 

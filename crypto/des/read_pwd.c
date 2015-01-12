@@ -77,12 +77,6 @@
 
 /* #define SIGACTION */ /* Define this if you have sigaction() */
 
-#ifdef WIN16TTY
-#undef OPENSSL_SYS_WIN16
-#undef _WINDOWS
-#include <graph.h>
-#endif
-
 /* 06-Apr-92 Luke Brennan    Support for VMS */
 #include "des_locl.h"
 #include "cryptlib.h"
@@ -195,7 +189,7 @@ static void read_till_nl(FILE *);
 static void recsig(int);
 static void pushsig(void);
 static void popsig(void);
-#if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN16)
+#if defined(OPENSSL_SYS_MSDOS)
 static int noecho_fgets(char *buf, int size, FILE *tty);
 #endif
 #ifdef SIGACTION
@@ -225,16 +219,7 @@ int des_read_pw(char *buf, char *buff, int size, const char *prompt, int verify)
 	return(0);
 	}
 
-#elif defined(OPENSSL_SYS_WIN16)
-
-int des_read_pw(char *buf, char *buff, int size, char *prompt, int verify)
-	{ 
-	memset(buf,0,size);
-	memset(buff,0,size);
-	return(0);
-	}
-
-#else /* !OPENSSL_SYS_WINCE && !OPENSSL_SYS_WIN16 */
+#else /* !OPENSSL_SYS_WINCE */
 
 static void read_till_nl(FILE *in)
 	{
@@ -473,11 +458,7 @@ static int noecho_fgets(char *buf, int size, FILE *tty)
 			break;
 			}
 		size--;
-#ifdef WIN16TTY
-		i=_inchar();
-#else
 		i=getch();
-#endif
 		if (i == '\r') i='\n';
 		*(p++)=i;
 		if (i == '\n')
@@ -501,4 +482,4 @@ static int noecho_fgets(char *buf, int size, FILE *tty)
 	return(strlen(buf));
 	}
 #endif
-#endif /* !OPENSSL_SYS_WINCE && !WIN16 */
+#endif /* !OPENSSL_SYS_WINCE */

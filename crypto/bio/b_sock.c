@@ -150,8 +150,7 @@ int BIO_get_host_ip(const char *str, unsigned char *ip)
 		goto err;
 		}
 
-	/* cast to short because of win16 winsock definition */
-	if ((short)he->h_addrtype != AF_INET)
+	if (he->h_addrtype != AF_INET)
 		{
 		BIOerr(BIO_F_BIO_GET_HOST_IP,BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET);
 		goto err;

@@ -69,9 +69,6 @@
 
 #define USE_SOCKETS
 #include "apps.h"
-#ifdef OPENSSL_NO_STDIO
-#define APPS_WIN16
-#endif
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
 #include <openssl/pem.h>

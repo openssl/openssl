@@ -69,7 +69,7 @@
 #undef PROG
 #define PROG	verify_main
 
-static int MS_CALLBACK cb(int ok, X509_STORE_CTX *ctx);
+static int cb(int ok, X509_STORE_CTX *ctx);
 static int check(X509_STORE *ctx, char *file,
 		STACK_OF(X509) *uchain, STACK_OF(X509) *tchain,
 		STACK_OF(X509_CRL) *crls, ENGINE *e, int show_chain);
@@ -342,7 +342,7 @@ end:
 	return(ret);
 	}
 
-static int MS_CALLBACK cb(int ok, X509_STORE_CTX *ctx)
+static int cb(int ok, X509_STORE_CTX *ctx)
 	{
 	int cert_error = X509_STORE_CTX_get_error(ctx);
 	X509 *current_cert = X509_STORE_CTX_get_current_cert(ctx);

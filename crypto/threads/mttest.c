@@ -93,7 +93,6 @@
 #include <openssl/rand.h>
 
 #ifdef OPENSSL_NO_FP_API
-#define APPS_WIN16
 #include "../buffer/bss_file.c"
 #endif
 
