@@ -92,14 +92,8 @@ int main(int argc, char *argv[])
 #include <openssl/ec.h>
 #include <openssl/ecdh.h>
 
-#ifdef OPENSSL_SYS_WIN16
-#define MS_CALLBACK	_far _loadds
-#else
-#define MS_CALLBACK
-#endif
-
 #if 0
-static void MS_CALLBACK cb(int p, int n, void *arg);
+static void cb(int p, int n, void *arg);
 #endif
 
 static const char rnd_seed[] = "string to make the random number generator think it has entropy";
@@ -527,7 +521,7 @@ err:
 	}
 
 #if 0
-static void MS_CALLBACK cb(int p, int n, void *arg)
+static void cb(int p, int n, void *arg)
 	{
 	char c='*';
 

@@ -107,12 +107,6 @@ static int init_server_unix(int *sock, const char *path);
 static int do_accept_unix(int acc_sock, int *sock);
 #endif
 
-#ifdef OPENSSL_SYS_WIN16
-#define SOCKET_PROTOCOL	0 /* more microsoft stupidity */
-#else
-#define SOCKET_PROTOCOL	IPPROTO_TCP
-#endif
-
 #if defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK)
 static int wsa_init_done=0;
 #endif
@@ -121,36 +115,6 @@ static int wsa_init_done=0;
 static struct WSAData wsa_state;
 static int wsa_init_done=0;
 
-#ifdef OPENSSL_SYS_WIN16
-static HWND topWnd=0;
-static FARPROC lpTopWndProc=NULL;
-static FARPROC lpTopHookProc=NULL;
-extern HINSTANCE _hInstance;  /* nice global CRT provides */
-
-static LONG FAR PASCAL topHookProc(HWND hwnd, UINT message, WPARAM wParam,
-	     LPARAM lParam)
-	{
-	if (hwnd == topWnd)
-		{
-		switch(message)
-			{
-		case WM_DESTROY:
-		case WM_CLOSE:
-			SetWindowLong(topWnd,GWL_WNDPROC,(LONG)lpTopWndProc);
-			ssl_sock_cleanup();
-			break;
-			}
-		}
-	return CallWindowProc(lpTopWndProc,hwnd,message,wParam,lParam);
-	}
-
-static BOOL CALLBACK enumproc(HWND hwnd,LPARAM lParam)
-	{
-	topWnd=hwnd;
-	return(FALSE);
-	}
-
-#endif /* OPENSSL_SYS_WIN32 */
 #endif /* OPENSSL_SYS_WINDOWS */
 
 #ifdef OPENSSL_SYS_WINDOWS
@@ -199,14 +163,6 @@ static int ssl_sock_init(void)
 			BIO_printf(bio_err,"unable to start WINSOCK, error code=%d\n",err);
 			return(0);
 			}
-
-#ifdef OPENSSL_SYS_WIN16
-		EnumTaskWindows(GetCurrentTask(),enumproc,0L);
-		lpTopWndProc=(FARPROC)GetWindowLong(topWnd,GWL_WNDPROC);
-		lpTopHookProc=MakeProcInstance((FARPROC)topHookProc,_hInstance);
-
-		SetWindowLong(topWnd,GWL_WNDPROC,(LONG)lpTopHookProc);
-#endif /* OPENSSL_SYS_WIN16 */
 		}
 #elif defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK)
    WORD wVerReq;
@@ -263,7 +219,7 @@ static int init_client_ip(int *sock, const unsigned char ip[4], int port,
 	them.sin_addr.s_addr=htonl(addr);
 
 	if (type == SOCK_STREAM)
-		s=socket(AF_INET,SOCK_STREAM,SOCKET_PROTOCOL);
+		s=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
 	else /* ( type == SOCK_DGRAM) */
 		s=socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
 			
@@ -412,7 +368,7 @@ static int init_server_long(int *sock, int port, char *ip, int type)
 #endif
 	
 		if (type == SOCK_STREAM)
-			s=socket(AF_INET,SOCK_STREAM,SOCKET_PROTOCOL);
+			s=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
 		else /* type == SOCK_DGRAM */
 			s=socket(AF_INET, SOCK_DGRAM,IPPROTO_UDP);
 
@@ -667,8 +623,7 @@ static int host_ip(const char *str, unsigned char ip[4])
 			BIO_printf(bio_err,"gethostbyname failure\n");
 			goto err;
 			}
-		/* cast to short because of win16 winsock definition */
-		if ((short)he->h_addrtype != AF_INET)
+		if (he->h_addrtype != AF_INET)
 			{
 			BIO_printf(bio_err,"gethostbyname addr is not AF_INET\n");
 			return(0);

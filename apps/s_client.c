@@ -141,10 +141,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/e_os2.h>
-#ifdef OPENSSL_NO_STDIO
-#define APPS_WIN16
-#endif
-
 /* With IPv6, it looks like Digital has mixed up the proper order of
    recursive header file inclusion, resulting in the compiler complaining
    that u_int isn't defined, but only if _POSIX_C_SOURCE is defined, which
@@ -384,7 +380,7 @@ typedef struct tlsextctx_st {
 } tlsextctx;
 
 
-static int MS_CALLBACK ssl_servername_cb(SSL *s, int *ad, void *arg)
+static int ssl_servername_cb(SSL *s, int *ad, void *arg)
 	{
 	tlsextctx * p = (tlsextctx *) arg;
 	const char * hn= SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
@@ -454,7 +450,7 @@ static int srp_Verify_N_and_g(const BIGNUM *N, const BIGNUM *g)
    primality tests are rather cpu consuming.
 */
 
-static int MS_CALLBACK ssl_srp_verify_param_cb(SSL *s, void *arg)
+static int ssl_srp_verify_param_cb(SSL *s, void *arg)
 	{
 	SRP_ARG *srp_arg = (SRP_ARG *)arg;
 	BIGNUM *N = NULL, *g = NULL;
@@ -489,7 +485,7 @@ static int MS_CALLBACK ssl_srp_verify_param_cb(SSL *s, void *arg)
 
 #define PWD_STRLEN 1024
 
-static char * MS_CALLBACK ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
+static char * ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
 	{
 	SRP_ARG *srp_arg = (SRP_ARG *)arg;
 	char *pass = (char *)OPENSSL_malloc(PWD_STRLEN+1);

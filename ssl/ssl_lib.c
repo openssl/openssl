@@ -3602,10 +3602,6 @@ void *SSL_CTX_get0_security_ex_data(const SSL_CTX *ctx)
 	return ctx->cert->sec_ex;
 	}
 
-#if defined(_WINDLL) && defined(OPENSSL_SYS_WIN16)
-#include "../crypto/bio/bss_file.c"
-#endif
-
 IMPLEMENT_STACK_OF(SSL_CIPHER)
 IMPLEMENT_STACK_OF(SSL_COMP)
 IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER,

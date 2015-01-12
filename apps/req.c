@@ -60,9 +60,6 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
-#ifdef OPENSSL_NO_STDIO
-#define APPS_WIN16
-#endif
 #include "apps.h"
 #include <openssl/bio.h>
 #include <openssl/evp.h>

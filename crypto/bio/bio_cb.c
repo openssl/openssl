@@ -63,7 +63,7 @@
 #include <openssl/bio.h>
 #include <openssl/err.h>
 
-long MS_CALLBACK BIO_debug_callback(BIO *bio, int cmd, const char *argp,
+long BIO_debug_callback(BIO *bio, int cmd, const char *argp,
 	     int argi, long argl, long ret)
 	{
 	BIO *b;
@@ -135,7 +135,7 @@ long MS_CALLBACK BIO_debug_callback(BIO *bio, int cmd, const char *argp,
 	b=(BIO *)bio->cb_arg;
 	if (b != NULL)
 		BIO_write(b,buf,strlen(buf));
-#if !defined(OPENSSL_NO_STDIO) && !defined(OPENSSL_SYS_WIN16)
+#if !defined(OPENSSL_NO_STDIO)
 	else
 		fputs(buf,stderr);
 #endif

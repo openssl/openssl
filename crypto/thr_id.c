@@ -117,9 +117,9 @@
 #include "cryptlib.h"
 
 #ifndef OPENSSL_NO_DEPRECATED
-static unsigned long (MS_FAR *id_callback)(void)=0;
+static unsigned long (*id_callback)(void)=0;
 #endif
-static void (MS_FAR *threadid_callback)(CRYPTO_THREADID *)=0;
+static void (*threadid_callback)(CRYPTO_THREADID *)=0;
 
 /* the memset() here and in set_pointer() seem overkill, but for the sake of
  * CRYPTO_THREADID_cmp() this avoids any platform silliness that might cause two
@@ -195,9 +195,7 @@ void CRYPTO_THREADID_current(CRYPTO_THREADID *id)
 		}
 #endif
 	/* Else pick a backup */
-#ifdef OPENSSL_SYS_WIN16
-	CRYPTO_THREADID_set_numeric(id, (unsigned long)GetCurrentTask());
-#elif defined(OPENSSL_SYS_WIN32)
+#if defined(OPENSSL_SYS_WIN32)
 	CRYPTO_THREADID_set_numeric(id, (unsigned long)GetCurrentThreadId());
 #else
 	/* For everything else, default to using the address of 'errno' */
@@ -237,9 +235,7 @@ unsigned long CRYPTO_thread_id(void)
 
 	if (id_callback == NULL)
 		{
-#ifdef OPENSSL_SYS_WIN16
-		ret=(unsigned long)GetCurrentTask();
-#elif defined(OPENSSL_SYS_WIN32)
+#if defined(OPENSSL_SYS_WIN32)
 		ret=(unsigned long)GetCurrentThreadId();
 #elif defined(GETPID_IS_MEANINGLESS)
 		ret=1L;

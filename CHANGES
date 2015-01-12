@@ -37,6 +37,7 @@
 	NCR
 	Tandem
 	Cray
+	WIN16
      [Rich Salz]
 
   *) Experimental support for a new, fast, unbiased prime candidate generator,

@@ -148,9 +148,6 @@
 #include <string.h>
 
 #include <openssl/e_os2.h>
-#ifdef OPENSSL_NO_STDIO
-#define APPS_WIN16
-#endif
 
 #if !defined(OPENSSL_SYS_NETWARE)  /* conflicts with winsock2 stuff on netware */
 #include <sys/types.h>
@@ -193,7 +190,7 @@ typedef unsigned int u_int;
 #endif
 
 #ifndef OPENSSL_NO_RSA
-static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength);
+static RSA *tmp_rsa_cb(SSL *s, int is_export, int keylength);
 #endif
 static int not_resumable_sess_cb(SSL *s, int is_forward_secure);
 static int sv_body(char *hostname, int s, int stype, unsigned char *context);
@@ -367,7 +364,7 @@ typedef struct srpsrvparm_st
    (which would normally occur after a worker has finished) and we
    set the user parameters. 
 */
-static int MS_CALLBACK ssl_srp_server_param_cb(SSL *s, int *ad, void *arg)
+static int ssl_srp_server_param_cb(SSL *s, int *ad, void *arg)
 	{
 	srpsrvparm *p = (srpsrvparm *)arg;
 	if (p->login == NULL && p->user == NULL )
@@ -721,7 +718,7 @@ typedef struct tlsextctx_st {
 } tlsextctx;
 
 
-static int MS_CALLBACK ssl_servername_cb(SSL *s, int *ad, void *arg)
+static int ssl_servername_cb(SSL *s, int *ad, void *arg)
 	{
 	tlsextctx * p = (tlsextctx *) arg;
 	const char * servername = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
@@ -3411,7 +3408,7 @@ err:
 	}
 
 #ifndef OPENSSL_NO_RSA
-static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength)
+static RSA *tmp_rsa_cb(SSL *s, int is_export, int keylength)
 	{
 	BIGNUM *bn = NULL;
 	static RSA *rsa_tmp=NULL;

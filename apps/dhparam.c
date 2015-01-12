@@ -144,7 +144,7 @@
  * -C
  */
 
-static int MS_CALLBACK dh_cb(int p, int n, BN_GENCB *cb);
+static int dh_cb(int p, int n, BN_GENCB *cb);
 
 int MAIN(int, char **);
 
@@ -551,7 +551,7 @@ end:
 	}
 
 /* dh_cb is identical to dsa_cb in apps/dsaparam.c */
-static int MS_CALLBACK dh_cb(int p, int n, BN_GENCB *cb)
+static int dh_cb(int p, int n, BN_GENCB *cb)
 	{
 	char c='*';
 

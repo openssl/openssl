@@ -122,11 +122,11 @@
 #define LOG_DAEMON	OPC$M_NM_NTWORK
 #endif
 
-static int MS_CALLBACK slg_write(BIO *h, const char *buf, int num);
-static int MS_CALLBACK slg_puts(BIO *h, const char *str);
-static long MS_CALLBACK slg_ctrl(BIO *h, int cmd, long arg1, void *arg2);
-static int MS_CALLBACK slg_new(BIO *h);
-static int MS_CALLBACK slg_free(BIO *data);
+static int slg_write(BIO *h, const char *buf, int num);
+static int slg_puts(BIO *h, const char *str);
+static long slg_ctrl(BIO *h, int cmd, long arg1, void *arg2);
+static int slg_new(BIO *h);
+static int slg_free(BIO *data);
 static void xopenlog(BIO* bp, char* name, int level);
 static void xsyslog(BIO* bp, int priority, const char* string);
 static void xcloselog(BIO* bp);
@@ -149,7 +149,7 @@ BIO_METHOD *BIO_s_log(void)
 	return(&methods_slg);
 	}
 
-static int MS_CALLBACK slg_new(BIO *bi)
+static int slg_new(BIO *bi)
 	{
 	bi->init=1;
 	bi->num=0;
@@ -158,14 +158,14 @@ static int MS_CALLBACK slg_new(BIO *bi)
 	return(1);
 	}
 
-static int MS_CALLBACK slg_free(BIO *a)
+static int slg_free(BIO *a)
 	{
 	if (a == NULL) return(0);
 	xcloselog(a);
 	return(1);
 	}
 	
-static int MS_CALLBACK slg_write(BIO *b, const char *in, int inl)
+static int slg_write(BIO *b, const char *in, int inl)
 	{
 	int ret= inl;
 	char* buf;
@@ -218,7 +218,7 @@ static int MS_CALLBACK slg_write(BIO *b, const char *in, int inl)
 	return(ret);
 	}
 
-static long MS_CALLBACK slg_ctrl(BIO *b, int cmd, long num, void *ptr)
+static long slg_ctrl(BIO *b, int cmd, long num, void *ptr)
 	{
 	switch (cmd)
 		{
@@ -232,7 +232,7 @@ static long MS_CALLBACK slg_ctrl(BIO *b, int cmd, long num, void *ptr)
 	return(0);
 	}
 
-static int MS_CALLBACK slg_puts(BIO *bp, const char *str)
+static int slg_puts(BIO *bp, const char *str)
 	{
 	int n,ret;
 

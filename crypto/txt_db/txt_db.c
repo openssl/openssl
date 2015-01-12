@@ -156,7 +156,7 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
 		*(p++)='\0';
 		if ((n != num) || (*f != '\0'))
 			{
-#if !defined(OPENSSL_NO_STDIO) && !defined(OPENSSL_SYS_WIN16)	/* temporary fix :-( */
+#if !defined(OPENSSL_NO_STDIO) /* temporary fix :-( */
 			fprintf(stderr,"wrong number of fields on line %ld (looking for field %d, got %d, '%s' left)\n",ln,num,n,f);
 #endif
 			er=2;
@@ -165,7 +165,7 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
 		pp[n]=p;
 		if (!sk_OPENSSL_PSTRING_push(ret->data,pp))
 			{
-#if !defined(OPENSSL_NO_STDIO) && !defined(OPENSSL_SYS_WIN16)	/* temporary fix :-( */
+#if !defined(OPENSSL_NO_STDIO) /* temporary fix :-( */
 			fprintf(stderr,"failure in sk_push\n");
 #endif
 			er=2;
@@ -177,7 +177,7 @@ err:
 	BUF_MEM_free(buf);
 	if (er)
 		{
-#if !defined(OPENSSL_NO_STDIO) && !defined(OPENSSL_SYS_WIN16)
+#if !defined(OPENSSL_NO_STDIO)
 		if (er == 1) fprintf(stderr,"OPENSSL_malloc failure\n");
 #endif
 		if (ret != NULL)

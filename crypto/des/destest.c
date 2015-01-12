@@ -60,7 +60,7 @@
 #include <stdlib.h>
 
 #include <openssl/e_os2.h>
-#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN16) || defined(OPENSSL_SYS_WINDOWS)
+#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WINDOWS)
 #ifndef OPENSSL_SYS_MSDOS
 #define OPENSSL_SYS_MSDOS
 #endif

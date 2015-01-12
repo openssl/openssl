@@ -183,12 +183,6 @@ int ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
                         s->s3->previous_server_finished_len=i;
                         }
 
-#ifdef OPENSSL_SYS_WIN16
-		/* MSVC 1.5 does not clear the top bytes of the word unless
-		 * I do this.
-		 */
-		l&=0xffff;
-#endif
 		ssl_set_handshake_header(s, SSL3_MT_FINISHED, l);
 		s->state=b;
 		}

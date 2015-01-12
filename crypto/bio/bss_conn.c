@@ -64,12 +64,6 @@
 
 #ifndef OPENSSL_NO_SOCK
 
-#ifdef OPENSSL_SYS_WIN16
-#define SOCKET_PROTOCOL 0 /* more microsoft stupidity */
-#else
-#define SOCKET_PROTOCOL IPPROTO_TCP
-#endif
-
 #if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)
 /* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
 #undef FIONBIO
@@ -209,7 +203,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
 			c->them.sin_addr.s_addr=htonl(l);
 			c->state=BIO_CONN_S_CREATE_SOCKET;
 
-			ret=socket(AF_INET,SOCK_STREAM,SOCKET_PROTOCOL);
+			ret=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
 			if (ret == INVALID_SOCKET)
 				{
 				SYSerr(SYS_F_SOCKET,get_last_socket_error());
