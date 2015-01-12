@@ -11,7 +11,7 @@
  *
  * As you might have noticed 32-bit hash algorithms:
  *
- * - permit SHA_LONG to be wider than 32-bit (case on CRAY);
+ * - permit SHA_LONG to be wider than 32-bit
  * - optimized versions implement two transform functions: one operating
  *   on [aligned] data in host byte order and one - on data in input
  *   stream byte order;

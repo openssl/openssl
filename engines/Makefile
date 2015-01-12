@@ -111,7 +111,6 @@ install:
 				cp cyg$$l.dll $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx.new; \
 			  else \
 				case "$(CFLAGS)" in \
-				*DSO_BEOS*)	sfx=".so";;	\
 				*DSO_DLFCN*)	sfx=`expr "$(SHLIB_EXT)" : '.*\(\.[a-z][a-z]*\)' \| ".so"`;;	\
 				*DSO_DL*)	sfx=".sl";;	\
 				*DSO_WIN32*)	sfx="eay32.dll"; pfx=;;	\

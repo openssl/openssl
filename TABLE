@@ -1156,74 +1156,6 @@ $ranlib       =
 $arflags      = 
 $multilib     = 
 
-*** beos-x86-bone
-$cc           = gcc
-$cflags       = -DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer -mcpu=pentium -Wall
-$unistd       = 
-$thread_cflag = -D_REENTRANT
-$sys_id       = BEOS
-$lflags       = -lbe -lbind -lsocket
-$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
-$cpuid_obj    = x86cpuid.o
-$bn_obj       = bn-586.o co-586.o x86-mont.o x86-gf2m.o
-$ec_obj       = 
-$des_obj      = des-586.o crypt586.o
-$aes_obj      = aes-586.o vpaes-x86.o aesni-x86.o
-$bf_obj       = bf-586.o
-$md5_obj      = md5-586.o
-$sha1_obj     = sha1-586.o sha256-586.o sha512-586.o
-$cast_obj     = cast-586.o
-$rc4_obj      = rc4-586.o
-$rmd160_obj   = rmd-586.o
-$rc5_obj      = rc5-586.o
-$wp_obj       = wp_block.o wp-mmx.o
-$cmll_obj     = cmll-x86.o
-$modes_obj    = ghash-x86.o
-$engines_obj  = e_padlock-x86.o
-$perlasm_scheme = elf
-$dso_scheme   = beos
-$shared_target= beos-shared
-$shared_cflag = -fPIC
-$shared_ldflag = -shared
-$shared_extension = .so
-$ranlib       = 
-$arflags      = 
-$multilib     = 
-
-*** beos-x86-r5
-$cc           = gcc
-$cflags       = -DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer -mcpu=pentium -Wall
-$unistd       = 
-$thread_cflag = -D_REENTRANT
-$sys_id       = BEOS
-$lflags       = -lbe -lnet
-$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
-$cpuid_obj    = x86cpuid.o
-$bn_obj       = bn-586.o co-586.o x86-mont.o x86-gf2m.o
-$ec_obj       = 
-$des_obj      = des-586.o crypt586.o
-$aes_obj      = aes-586.o vpaes-x86.o aesni-x86.o
-$bf_obj       = bf-586.o
-$md5_obj      = md5-586.o
-$sha1_obj     = sha1-586.o sha256-586.o sha512-586.o
-$cast_obj     = cast-586.o
-$rc4_obj      = rc4-586.o
-$rmd160_obj   = rmd-586.o
-$rc5_obj      = rc5-586.o
-$wp_obj       = wp_block.o wp-mmx.o
-$cmll_obj     = cmll-x86.o
-$modes_obj    = ghash-x86.o
-$engines_obj  = e_padlock-x86.o
-$perlasm_scheme = elf
-$dso_scheme   = beos
-$shared_target= beos-shared
-$shared_cflag = -fPIC -DPIC
-$shared_ldflag = -shared
-$shared_extension = .so
-$ranlib       = 
-$arflags      = 
-$multilib     = 
-
 *** bsdi-elf-gcc
 $cc           = gcc
 $cflags       = -DPERL5 -DL_ENDIAN -fomit-frame-pointer -O3 -march=i486 -Wall
@@ -1266,74 +1198,6 @@ $thread_cflag = (unknown)
 $sys_id       = 
 $lflags       = 
 $bn_ops       = 
-$cpuid_obj    = 
-$bn_obj       = 
-$ec_obj       = 
-$des_obj      = 
-$aes_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-$wp_obj       = 
-$cmll_obj     = 
-$modes_obj    = 
-$engines_obj  = 
-$perlasm_scheme = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-$shared_ldflag = 
-$shared_extension = 
-$ranlib       = 
-$arflags      = 
-$multilib     = 
-
-*** cray-j90
-$cc           = cc
-$cflags       = -DBIT_FIELD_LIMITS -DTERMIOS
-$unistd       = 
-$thread_cflag = (unknown)
-$sys_id       = CRAY
-$lflags       = 
-$bn_ops       = SIXTY_FOUR_BIT_LONG DES_INT
-$cpuid_obj    = 
-$bn_obj       = 
-$ec_obj       = 
-$des_obj      = 
-$aes_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-$wp_obj       = 
-$cmll_obj     = 
-$modes_obj    = 
-$engines_obj  = 
-$perlasm_scheme = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-$shared_ldflag = 
-$shared_extension = 
-$ranlib       = 
-$arflags      = 
-$multilib     = 
-
-*** cray-t3e
-$cc           = cc
-$cflags       = -DBIT_FIELD_LIMITS -DTERMIOS
-$unistd       = 
-$thread_cflag = (unknown)
-$sys_id       = CRAY
-$lflags       = 
-$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT
 $cpuid_obj    = 
 $bn_obj       = 
 $ec_obj       = 
@@ -5134,40 +4998,6 @@ $ranlib       =
 $arflags      = 
 $multilib     = 
 
-*** ncr-scde
-$cc           = cc
-$cflags       = -O6 -Xa -Hoff=BEHAVED -686 -Hwide -Hiw
-$unistd       = 
-$thread_cflag = (unknown)
-$sys_id       = 
-$lflags       = -lsocket -lnsl -lc89
-$bn_ops       = DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
-$cpuid_obj    = 
-$bn_obj       = 
-$ec_obj       = 
-$des_obj      = 
-$aes_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-$wp_obj       = 
-$cmll_obj     = 
-$modes_obj    = 
-$engines_obj  = 
-$perlasm_scheme = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-$shared_ldflag = 
-$shared_extension = 
-$ranlib       = 
-$arflags      = 
-$multilib     = 
-
 *** netware-clib
 $cc           = mwccnlm
 $cflags       = 
@@ -6119,40 +5949,6 @@ $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 $arflags      = 
 $multilib     = /64
-
-*** tandem-c89
-$cc           = c89
-$cflags       = -Ww -D__TANDEM -D_XOPEN_SOURCE -D_XOPEN_SOURCE_EXTENDED=1 -D_TANDEM_SOURCE -DB_ENDIAN
-$unistd       = 
-$thread_cflag = (unknown)
-$sys_id       = 
-$lflags       = 
-$bn_ops       = THIRTY_TWO_BIT
-$cpuid_obj    = 
-$bn_obj       = 
-$ec_obj       = 
-$des_obj      = 
-$aes_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-$wp_obj       = 
-$cmll_obj     = 
-$modes_obj    = 
-$engines_obj  = 
-$perlasm_scheme = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-$shared_ldflag = 
-$shared_extension = 
-$ranlib       = 
-$arflags      = 
-$multilib     = 
 
 *** tru64-alpha-cc
 $cc           = cc

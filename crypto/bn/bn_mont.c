@@ -205,22 +205,7 @@ static int BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
 
 	for (carry=0, i=0; i<nl; i++, rp++)
 		{
-#ifdef __TANDEM
-                {
-                   long long t1;
-                   long long t2;
-                   long long t3;
-                   t1 = rp[0] * (n0 & 0177777);
-                   t2 = 037777600000l;
-                   t2 = n0 & t2;
-                   t3 = rp[0] & 0177777;
-                   t2 = (t3 * t2) & BN_MASK2;
-                   t1 = t1 + t2;
-                   v=bn_mul_add_words(rp,np,nl,(BN_ULONG) t1);
-                }
-#else
 		v=bn_mul_add_words(rp,np,nl,(rp[0]*n0)&BN_MASK2);
-#endif
 		v = (v+carry+rp[nl])&BN_MASK2;
 		carry |= (v != rp[nl]);
 		carry &= (v <= rp[nl]);

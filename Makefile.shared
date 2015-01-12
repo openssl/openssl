@@ -170,17 +170,6 @@ link_a.gnu:
 link_app.gnu:
 	@ $(DO_GNU_APP); $(LINK_APP)
 
-DO_BEOS_SO=	SHLIB=lib$(LIBNAME).so; \
-	SHLIB_SUFFIX=; \
-	ALLSYMSFLAGS='-Wl,--whole-archive'; \
-	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
-	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-Bsymbolic -Wl,-soname=$$SHLIB$$SHLIB_SUFFIX"
-
-link_o.beos:
-	@ $(DO_BEOS_SO); $(LINK_SO_O)
-link_a.beos:
-	@ $(DO_BEOS_SO); $(LINK_SO_A)
-
 link_o.bsd:
 	@if $(DETECT_GNU_LD); then $(DO_GNU_SO); else \
 	$(CALC_VERSIONS); \
@@ -573,7 +562,7 @@ symlink.hpux:
 	expr $(PLATFORM) : '.*ia64' > /dev/null && SHLIB=lib$(LIBNAME).so; \
 	$(SYMLINK_SO)
 # The following lines means those specific architectures do no symlinks
-symlink.cygwin symlink.alpha-osf1 symlink.tru64 symlink.tru64-rpath symlink.beos:
+symlink.cygwin symlink.alpha-osf1 symlink.tru64 symlink.tru64-rpath:
 
 # Compatibility targets
 link_o.bsd-gcc-shared link_o.linux-shared link_o.gnu-shared: link_o.gnu

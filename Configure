@@ -474,17 +474,10 @@ my %table=(
 "nextstep",	"cc:-O -Wall:<libc.h>:(unknown):::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:::",
 "nextstep3.3",	"cc:-O3 -Wall:<libc.h>:(unknown):::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:::",
 
-# NCR MP-RAS UNIX ver 02.03.01
-"ncr-scde","cc:-O6 -Xa -Hoff=BEHAVED -686 -Hwide -Hiw::(unknown)::-lsocket -lnsl -lc89:${x86_gcc_des} ${x86_gcc_opts}:::",
-
 # QNX
 "qnx4",	"cc:-DL_ENDIAN -DTERMIO::(unknown):::${x86_gcc_des} ${x86_gcc_opts}:",
 "QNX6",       "gcc:-DTERMIOS::::-lsocket::${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "QNX6-i386",  "gcc:-DL_ENDIAN -DTERMIOS -O2 -Wall::::-lsocket:${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-
-# BeOS
-"beos-x86-r5",   "gcc:-DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer -mcpu=pentium -Wall::-D_REENTRANT:BEOS:-lbe -lnet:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:beos:beos-shared:-fPIC -DPIC:-shared:.so",
-"beos-x86-bone", "gcc:-DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer -mcpu=pentium -Wall::-D_REENTRANT:BEOS:-lbe -lbind -lsocket:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:beos:beos-shared:-fPIC:-shared:.so",
 
 #### SCO/Caldera targets.
 #
@@ -514,32 +507,6 @@ my %table=(
 # at build time. $OBJECT_MODE is respected at ./config stage!
 "aix-cc",   "cc:-q32 -O -DB_ENDIAN -qmaxmem=16384 -qro -qroconst::-qthreaded -D_THREAD_SAFE:AIX::BN_LLONG RC4_CHAR:$ppc32_asm:aix32:dlfcn:aix-shared::-q32 -G:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 32",
 "aix64-cc", "cc:-q64 -O -DB_ENDIAN -qmaxmem=16384 -qro -qroconst::-qthreaded -D_THREAD_SAFE:AIX::SIXTY_FOUR_BIT_LONG RC4_CHAR:$ppc64_asm:aix64:dlfcn:aix-shared::-q64 -G:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 64",
-
-#
-# Cray T90 and similar (SDSC)
-# It's Big-endian, but the algorithms work properly when B_ENDIAN is NOT
-# defined.  The T90 ints and longs are 8 bytes long, and apparently the
-# B_ENDIAN code assumes 4 byte ints.  Fortunately, the non-B_ENDIAN and
-# non L_ENDIAN code aligns the bytes in each word correctly.
-#
-# The BIT_FIELD_LIMITS define is to avoid two fatal compiler errors:
-#'Taking the address of a bit field is not allowed. '
-#'An expression with bit field exists as the operand of "sizeof" '
-# (written by Wayne Schroeder <schroede@SDSC.EDU>)
-#
-# j90 is considered the base machine type for unicos machines,
-# so this configuration is now called "cray-j90" ...
-"cray-j90", "cc: -DBIT_FIELD_LIMITS -DTERMIOS::(unknown):CRAY::SIXTY_FOUR_BIT_LONG DES_INT:::",
-
-#
-# Cray T3E (Research Center Juelich, beckman@acl.lanl.gov)
-#
-# The BIT_FIELD_LIMITS define was written for the C90 (it seems).  I added
-# another use.  Basically, the problem is that the T3E uses some bit fields
-# for some st_addr stuff, and then sizeof and address-of fails
-# I could not use the ams/alpha.o option because the Cray assembler, 'cam'
-# did not like it.
-"cray-t3e", "cc: -DBIT_FIELD_LIMITS -DTERMIOS::(unknown):CRAY::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT:::",
 
 # SIEMENS BS2000/OSD: an EBCDIC-based mainframe
 "BS2000-OSD","c89:-O -XLLML -XLLMK -XL -DB_ENDIAN -DTERMIOS -DCHARSET_EBCDIC::(unknown)::-lsocket -lnsl:THIRTY_TWO_BIT DES_PTR DES_UNROLL MD2_CHAR RC4_INDEX RC4_CHAR BF_PTR:::",
@@ -655,9 +622,6 @@ my %table=(
 "vxworks-ppc860","ccppc:-nostdinc -msoft-float -DCPU=PPC860 -DNO_STRINGS_H -I\$(WIND_BASE)/target/h:::VXWORKS:-r:::::",
 "vxworks-simlinux","ccpentium:-B\$(WIND_BASE)/host/\$(WIND_HOST_TYPE)/lib/gcc-lib/ -D_VSB_CONFIG_FILE=\"\$(WIND_BASE)/target/lib/h/config/vsbConfig.h\" -DL_ENDIAN -DCPU=SIMLINUX -DTOOL_FAMILY=gnu -DTOOL=gnu -fno-builtin -fno-defer-pop -DNO_STRINGS_H -I\$(WIND_BASE)/target/h -I\$(WIND_BASE)/target/h/wrn/coreip -DOPENSSL_NO_HW_PADLOCK:::VXWORKS:-r::${no_asm}::::::ranlibpentium:",
 "vxworks-mips","ccmips:-mrtp -mips2 -O -G 0 -B\$(WIND_BASE)/host/\$(WIND_HOST_TYPE)/lib/gcc-lib/ -D_VSB_CONFIG_FILE=\"\$(WIND_BASE)/target/lib/h/config/vsbConfig.h\" -DCPU=MIPS32 -msoft-float -mno-branch-likely -DTOOL_FAMILY=gnu -DTOOL=gnu -fno-builtin -fno-defer-pop -DNO_STRINGS_H -I\$(WIND_BASE)/target/usr/h -I\$(WIND_BASE)/target/h/wrn/coreip::-D_REENTRANT:VXWORKS:-Wl,--defsym,__wrs_rtp_base=0xe0000000 -L \$(WIND_BASE)/target/usr/lib/mips/MIPSI32/sfcommon::${mips32_asm}:o32::::::ranlibmips:",
-
-##### Compaq Non-Stop Kernel (Tandem)
-"tandem-c89","c89:-Ww -D__TANDEM -D_XOPEN_SOURCE -D_XOPEN_SOURCE_EXTENDED=1 -D_TANDEM_SOURCE -DB_ENDIAN::(unknown):::THIRTY_TWO_BIT:::",
 
 # uClinux
 "uClinux-dist","$ENV{'CC'}:\$(CFLAGS)::-D_REENTRANT::\$(LDFLAGS) \$(LDLIBS):BN_LLONG:${no_asm}:$ENV{'LIBSSL_dlfcn'}:linux-shared:-fPIC:-shared:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):$ENV{'RANLIB'}::",

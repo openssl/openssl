@@ -165,9 +165,6 @@ extern "C" {
 # ifdef OPENSSL_SYSNAME_MACOSX
 #  define OPENSSL_SYS_MACOSX
 # endif
-# if defined(_CRAY) || defined(OPENSSL_SYSNAME_CRAY)
-#  define OPENSSL_SYS_CRAY
-# endif
 # if defined(_AIX) || defined(OPENSSL_SYSNAME_AIX)
 #  define OPENSSL_SYS_AIX
 # endif
