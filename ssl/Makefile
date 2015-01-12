@@ -79,6 +79,8 @@ install:
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
+uninstall:
+
 tags:
 	ctags $(SRC)
 

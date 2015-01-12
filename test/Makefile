@@ -135,6 +135,8 @@ errors:
 
 install:
 
+uninstall:
+
 tags:
 	ctags $(SRC)
 
