@@ -117,6 +117,19 @@ install:
 	chmod 644 $(INSTALL_PREFIX)$(OPENSSLDIR)/openssl.cnf.new; \
 	mv -f  $(INSTALL_PREFIX)$(OPENSSLDIR)/openssl.cnf.new $(INSTALL_PREFIX)$(OPENSSLDIR)/openssl.cnf
 
+uninstall:
+	@set -e; for i in $(EXE); \
+	do  \
+		echo $(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i; \
+		$(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i; \
+	done;
+	@set -e; for i in $(SCRIPTS); \
+	do  \
+		echo $(RM) $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i; \
+		$(RM) $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i; \
+	done
+	$(RM) $(INSTALL_PREFIX)$(OPENSSLDIR)/openssl.cnf
+
 tags:
 	ctags $(SRC)
 

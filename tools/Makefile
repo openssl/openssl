@@ -33,6 +33,18 @@ install:
 	mv -f $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i.new $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i ); \
 	done;
 
+uninstall:
+	@for i in $(APPS) ; \
+	do  \
+		echo $(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i; \
+		$(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i; \
+	done;
+	@for i in $(MISC_APPS) ; \
+	do  \
+		echo $(RM) $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i; \
+		$(RM) $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i; \
+	done;
+
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 

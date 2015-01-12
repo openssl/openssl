@@ -124,6 +124,8 @@ install:
 	done;
 	@target=install; $(RECURSIVE_MAKE)
 
+uninstall:
+
 lint:
 	@target=lint; $(RECURSIVE_MAKE)
 
