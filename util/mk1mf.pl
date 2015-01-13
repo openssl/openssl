@@ -729,7 +729,7 @@ L_LIBS= \$(L_SSL) \$(L_CRYPTO) $ex_l_libs
 # Don't touch anything below this point
 ######################################################
 
-INC=-I\$(INC_D) -I\$(INCL_D)
+INC=-I\$(INC_D) -I\$(INCL_D) -I\$(SRC_D)${o}crypto${o}include
 APP_CFLAGS=\$(INC) \$(CFLAG) \$(APP_CFLAG)
 LIB_CFLAGS=\$(INC) \$(CFLAG) \$(LIB_CFLAG)
 SHLIB_CFLAGS=\$(INC) \$(CFLAG) \$(LIB_CFLAG) \$(SHLIB_CFLAG)
