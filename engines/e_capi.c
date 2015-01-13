@@ -64,6 +64,7 @@
 #include <openssl/buffer.h>
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
+#include <openssl/dsa.h>
 
 #ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0400
