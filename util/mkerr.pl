@@ -250,7 +250,7 @@ while (($hdr, $lib) = each %libinc)
 
 	if ($gotfile) {
 	  while(<IN>) {
-		if(/^\#define\s+(\S+)\s+(\S+)/) {
+		if(/^\#\s*define\s+(\S+)\s+(\S+)/) {
 			$name = $1;
 			$code = $2;
 			next if $name =~ /^${lib}err/;
