@@ -1057,5 +1057,5 @@ static int surewarehk_modexp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	}
 	return ret;
 }
-#endif /* !OPENSSL_NO_HW_SureWare */
+#endif /* !OPENSSL_NO_HW_SUREWARE */
 #endif /* !OPENSSL_NO_HW */

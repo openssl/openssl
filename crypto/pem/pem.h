@@ -213,7 +213,7 @@ typedef struct pem_ctx_st
  * IMPLEMENT_PEM_rw(...) or IMPLEMENT_PEM_rw_cb(...)
  */
 
-#ifdef OPENSSL_NO_FP_API
+#ifdef OPENSSL_NO_STDIO
 
 #define IMPLEMENT_PEM_read_fp(name, type, str, asn1) /**/
 #define IMPLEMENT_PEM_write_fp(name, type, str, asn1) /**/
@@ -325,7 +325,7 @@ int PEM_write_bio_##name(BIO *bp, type *x, const EVP_CIPHER *enc, \
 
 /* These are the same except they are for the declarations */
 
-#if defined(OPENSSL_NO_FP_API)
+#if defined(OPENSSL_NO_STDIO)
 
 #define DECLARE_PEM_read_fp(name, type) /**/
 #define DECLARE_PEM_write_fp(name, type) /**/

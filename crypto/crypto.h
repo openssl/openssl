@@ -122,7 +122,7 @@
 
 #include <openssl/e_os2.h>
 
-#ifndef OPENSSL_NO_FP_API
+#ifndef OPENSSL_NO_STDIO
 #include <stdio.h>
 #endif
 
@@ -538,7 +538,7 @@ void CRYPTO_dbg_set_options(long bits);
 long CRYPTO_dbg_get_options(void);
 
 
-#ifndef OPENSSL_NO_FP_API
+#ifndef OPENSSL_NO_STDIO
 void CRYPTO_mem_leaks_fp(FILE *);
 #endif
 void CRYPTO_mem_leaks(struct bio_st *bio);

@@ -61,7 +61,7 @@
 #include <openssl/evp.h>
 #include <openssl/dsa.h>
 
-#ifndef OPENSSL_NO_FP_API
+#ifndef OPENSSL_NO_STDIO
 int DSA_print_fp(FILE *fp, const DSA *x, int off)
 	{
 	BIO *b;

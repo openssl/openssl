@@ -66,7 +66,7 @@
 extern "C" {
 #endif
 
-#ifdef OPENSSL_NO_RIPEMD
+#ifdef OPENSSL_NO_RMD160
 #error RIPEMD is disabled.
 #endif
 

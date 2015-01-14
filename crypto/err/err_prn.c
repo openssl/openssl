@@ -86,7 +86,7 @@ void ERR_print_errors_cb(int (*cb)(const char *str, size_t len, void *u),
 		}
 	}
 
-#ifndef OPENSSL_NO_FP_API
+#ifndef OPENSSL_NO_STDIO
 static int print_fp(const char *str, size_t len, void *fp)
 	{
 	BIO bio;

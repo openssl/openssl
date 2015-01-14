@@ -61,7 +61,7 @@
 
 #include <openssl/e_os2.h>
 
-#ifndef OPENSSL_NO_FP_API
+#ifndef OPENSSL_NO_STDIO
 # include <stdio.h>
 #endif
 #include <stdarg.h>
@@ -635,7 +635,7 @@ int BIO_asn1_set_suffix(BIO *b, asn1_ps_func *suffix,
 int BIO_asn1_get_suffix(BIO *b, asn1_ps_func **psuffix,
 					asn1_ps_func **psuffix_free);
 
-# ifndef OPENSSL_NO_FP_API
+# ifndef OPENSSL_NO_STDIO
 BIO_METHOD *BIO_s_file(void );
 BIO *BIO_new_file(const char *filename, const char *mode);
 BIO *BIO_new_fp(FILE *stream, int close_flag);
@@ -709,7 +709,7 @@ int BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
 		       void *u, const char *s, int len, int indent);
 int BIO_dump(BIO *b,const char *bytes,int len);
 int BIO_dump_indent(BIO *b,const char *bytes,int len,int indent);
-#ifndef OPENSSL_NO_FP_API
+#ifndef OPENSSL_NO_STDIO
 int BIO_dump_fp(FILE *fp, const char *s, int len);
 int BIO_dump_indent_fp(FILE *fp, const char *s, int len, int indent);
 #endif

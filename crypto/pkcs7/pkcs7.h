@@ -279,7 +279,7 @@ DECLARE_ASN1_FUNCTIONS(PKCS7_ISSUER_AND_SERIAL)
 
 int PKCS7_ISSUER_AND_SERIAL_digest(PKCS7_ISSUER_AND_SERIAL *data,const EVP_MD *type,
 	unsigned char *md,unsigned int *len);
-#ifndef OPENSSL_NO_FP_API
+#ifndef OPENSSL_NO_STDIO
 PKCS7 *d2i_PKCS7_fp(FILE *fp,PKCS7 **p7);
 int i2d_PKCS7_fp(FILE *fp,PKCS7 *p7);
 #endif

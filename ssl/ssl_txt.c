@@ -86,7 +86,7 @@
 #include <openssl/buffer.h>
 #include "ssl_locl.h"
 
-#ifndef OPENSSL_NO_FP_API
+#ifndef OPENSSL_NO_STDIO
 int SSL_SESSION_print_fp(FILE *fp, const SSL_SESSION *x)
 	{
 	BIO *b;

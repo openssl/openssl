@@ -257,7 +257,7 @@ int	i2d_DSAparams(const DSA *a,unsigned char **pp);
 int	DSAparams_print(BIO *bp, const DSA *x);
 int	DSA_print(BIO *bp, const DSA *x, int off);
 #endif
-#ifndef OPENSSL_NO_FP_API
+#ifndef OPENSSL_NO_STDIO
 int	DSAparams_print_fp(FILE *fp, const DSA *x);
 int	DSA_print_fp(FILE *bp, const DSA *x, int off);
 #endif

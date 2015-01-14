@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include "cryptlib.h"
 
-#ifndef OPENSSL_NO_RIPEMD
+#ifndef OPENSSL_NO_RMD160
 
 #include <openssl/ripemd.h>
 #include <openssl/evp.h>
