@@ -114,7 +114,7 @@
 
 #include <openssl/e_os2.h>
 
-#ifndef OPENSSL_NO_FP_API
+#ifndef OPENSSL_NO_STDIO
 #include <stdio.h>
 #include <stdlib.h>
 #endif
@@ -339,7 +339,7 @@ const char *ERR_func_error_string(unsigned long e);
 const char *ERR_reason_error_string(unsigned long e);
 void ERR_print_errors_cb(int (*cb)(const char *str, size_t len, void *u),
 			 void *u);
-#ifndef OPENSSL_NO_FP_API
+#ifndef OPENSSL_NO_STDIO
 void ERR_print_errors_fp(FILE *fp);
 #endif
 #ifndef OPENSSL_NO_BIO

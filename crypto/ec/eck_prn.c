@@ -67,7 +67,7 @@
 #include <openssl/ec.h>
 #include <openssl/bn.h>
 
-#ifndef OPENSSL_NO_FP_API
+#ifndef OPENSSL_NO_STDIO
 int ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off)
 	{
 	BIO *b;

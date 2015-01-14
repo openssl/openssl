@@ -62,7 +62,7 @@
 
 #include "../e_os.h"
 
-#ifdef OPENSSL_NO_RIPEMD
+#ifdef OPENSSL_NO_RMD160
 int main(int argc, char *argv[])
 {
     printf("No ripemd support\n");

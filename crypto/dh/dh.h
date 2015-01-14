@@ -221,7 +221,7 @@ DH *	d2i_DHparams(DH **a,const unsigned char **pp, long length);
 int	i2d_DHparams(const DH *a,unsigned char **pp);
 DH *	d2i_DHxparams(DH **a,const unsigned char **pp, long length);
 int	i2d_DHxparams(const DH *a,unsigned char **pp);
-#ifndef OPENSSL_NO_FP_API
+#ifndef OPENSSL_NO_STDIO
 int	DHparams_print_fp(FILE *fp, const DH *x);
 #endif
 #ifndef OPENSSL_NO_BIO

@@ -523,7 +523,7 @@ int X509_NAME_print_ex(BIO *out, X509_NAME *nm, int indent, unsigned long flags)
 	return do_name_ex(send_bio_chars, out, nm, indent, flags);
 }
 
-#ifndef OPENSSL_NO_FP_API
+#ifndef OPENSSL_NO_STDIO
 int X509_NAME_print_ex_fp(FILE *fp, X509_NAME *nm, int indent, unsigned long flags)
 {
 	if(flags == XN_FLAG_COMPAT)
@@ -545,7 +545,7 @@ int ASN1_STRING_print_ex(BIO *out, ASN1_STRING *str, unsigned long flags)
 	return do_print_ex(send_bio_chars, out, flags, str);
 }
 
-#ifndef OPENSSL_NO_FP_API
+#ifndef OPENSSL_NO_STDIO
 int ASN1_STRING_print_ex_fp(FILE *fp, ASN1_STRING *str, unsigned long flags)
 {
 	return do_print_ex(send_fp_chars, fp, flags, str);

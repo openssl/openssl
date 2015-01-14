@@ -376,7 +376,7 @@ typedef struct rsa_oaep_params_st
 
 DECLARE_ASN1_FUNCTIONS(RSA_OAEP_PARAMS)
 
-#ifndef OPENSSL_NO_FP_API
+#ifndef OPENSSL_NO_STDIO
 int	RSA_print_fp(FILE *fp, const RSA *r,int offset);
 #endif
 

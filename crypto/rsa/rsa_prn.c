@@ -61,7 +61,7 @@
 #include <openssl/rsa.h>
 #include <openssl/evp.h>
 
-#ifndef OPENSSL_NO_FP_API
+#ifndef OPENSSL_NO_STDIO
 int RSA_print_fp(FILE *fp, const RSA *x, int off)
 	{
 	BIO *b;

@@ -92,7 +92,7 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
-#ifdef OPENSSL_NO_FP_API
+#ifdef OPENSSL_NO_STDIO
 #include "../buffer/bss_file.c"
 #endif
 

@@ -84,7 +84,7 @@ int pem_check_suffix(const char *pem_str, const char *suffix);
 
 int PEM_def_callback(char *buf, int num, int w, void *key)
 	{
-#ifdef OPENSSL_NO_FP_API
+#ifdef OPENSSL_NO_STDIO
 	/* We should not ever call the default callback routine from
 	 * windows. */
 	PEMerr(PEM_F_PEM_DEF_CALLBACK,ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
@@ -163,7 +163,7 @@ void PEM_dek_info(char *buf, const char *type, int len, char *str)
 	buf[j+i*2+1]='\0';
 	}
 
-#ifndef OPENSSL_NO_FP_API
+#ifndef OPENSSL_NO_STDIO
 void *PEM_ASN1_read(d2i_of_void *d2i, const char *name, FILE *fp, void **x,
 		    pem_password_cb *cb, void *u)
 	{
@@ -313,7 +313,7 @@ err:
 	return ret;
 	}
 
-#ifndef OPENSSL_NO_FP_API
+#ifndef OPENSSL_NO_STDIO
 int PEM_ASN1_write(i2d_of_void *i2d, const char *name, FILE *fp,
 		   void *x, const EVP_CIPHER *enc, unsigned char *kstr,
 		   int klen, pem_password_cb *callback, void *u)
@@ -576,7 +576,7 @@ static int load_iv(char **fromp, unsigned char *to, int num)
 	return(1);
 	}
 
-#ifndef OPENSSL_NO_FP_API
+#ifndef OPENSSL_NO_STDIO
 int PEM_write(FILE *fp, const char *name, const char *header,
 	      const unsigned char *data, long len)
         {
@@ -656,7 +656,7 @@ err:
 	return(0);
 	}
 
-#ifndef OPENSSL_NO_FP_API
+#ifndef OPENSSL_NO_STDIO
 int PEM_read(FILE *fp, char **name, char **header, unsigned char **data,
 	     long *len)
         {

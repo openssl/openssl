@@ -185,11 +185,6 @@ extern "C" {
 #define writesocket(s,b,n)	write((s),(b),(n))
 #endif
 
-#ifdef OPENSSL_NO_STDIO
-#  undef OPENSSL_NO_FP_API
-#  define OPENSSL_NO_FP_API
-#endif
-
 #if (defined(WINDOWS) || defined(MSDOS))
 
 #  ifdef __DJGPP__

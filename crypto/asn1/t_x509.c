@@ -74,7 +74,7 @@
 #include <openssl/x509v3.h>
 #include "asn1_locl.h"
 
-#ifndef OPENSSL_NO_FP_API
+#ifndef OPENSSL_NO_STDIO
 int X509_print_fp(FILE *fp, X509 *x)
 	{
 	return X509_print_ex_fp(fp, x, XN_FLAG_COMPAT, X509_FLAG_COMPAT);

@@ -145,7 +145,7 @@
 #ifndef OPENSSL_NO_SHA
 #include <openssl/sha.h>
 #endif
-#ifndef OPENSSL_NO_RIPEMD
+#ifndef OPENSSL_NO_RMD160
 #include <openssl/ripemd.h>
 #endif
 #ifndef OPENSSL_NO_WHIRLPOOL
@@ -392,7 +392,7 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_WHIRLPOOL
 	unsigned char whirlpool[WHIRLPOOL_DIGEST_LENGTH];
 #endif
-#ifndef OPENSSL_NO_RIPEMD
+#ifndef OPENSSL_NO_RMD160
 	unsigned char rmd160[RIPEMD160_DIGEST_LENGTH];
 #endif
 #ifndef OPENSSL_NO_RC4
@@ -849,7 +849,7 @@ int MAIN(int argc, char **argv)
 			if (strcmp(*argv,"whirlpool") == 0) doit[D_WHIRLPOOL]=1;
 		else
 #endif
-#ifndef OPENSSL_NO_RIPEMD
+#ifndef OPENSSL_NO_RMD160
 			if (strcmp(*argv,"ripemd") == 0) doit[D_RMD160]=1;
 		else
 			if (strcmp(*argv,"rmd160") == 0) doit[D_RMD160]=1;
@@ -1073,12 +1073,12 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_WHIRLPOOL
 			BIO_printf(bio_err,"whirlpool");
 #endif
-#ifndef OPENSSL_NO_RIPEMD160
+#ifndef OPENSSL_NO_RMD160
 			BIO_printf(bio_err,"rmd160");
 #endif
 #if !defined(OPENSSL_NO_MD2) || !defined(OPENSSL_NO_MDC2) || \
     !defined(OPENSSL_NO_MD4) || !defined(OPENSSL_NO_MD5) || \
-    !defined(OPENSSL_NO_SHA1) || !defined(OPENSSL_NO_RIPEMD160) || \
+    !defined(OPENSSL_NO_SHA1) || !defined(OPENSSL_NO_RMD160) || \
     !defined(OPENSSL_NO_WHIRLPOOL)
 			BIO_printf(bio_err,"\n");
 #endif
@@ -1690,7 +1690,7 @@ int MAIN(int argc, char **argv)
 		}
 #endif
 
-#ifndef OPENSSL_NO_RIPEMD
+#ifndef OPENSSL_NO_RMD160
 	if (doit[D_RMD160])
 		{
 		for (j=0; j<SIZE_NUM; j++)

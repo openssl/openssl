@@ -208,7 +208,7 @@ int PEM_write_bio_Parameters(BIO *bp, EVP_PKEY *x)
 				pem_str,bp,x,NULL,NULL,0,0,NULL);
 	}
 
-#ifndef OPENSSL_NO_FP_API
+#ifndef OPENSSL_NO_STDIO
 EVP_PKEY *PEM_read_PrivateKey(FILE *fp, EVP_PKEY **x, pem_password_cb *cb, void *u)
 	{
         BIO *b;
@@ -273,7 +273,7 @@ DH *PEM_read_bio_DHparams(BIO *bp, DH **x, pem_password_cb *cb, void *u)
 	return ret;
 	}
 
-#ifndef OPENSSL_NO_FP_API
+#ifndef OPENSSL_NO_STDIO
 DH *PEM_read_DHparams(FILE *fp, DH **x, pem_password_cb *cb, void *u)
 	{
         BIO *b;

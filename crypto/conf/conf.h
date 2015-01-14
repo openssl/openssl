@@ -122,7 +122,7 @@ int CONF_set_default_method(CONF_METHOD *meth);
 void CONF_set_nconf(CONF *conf,LHASH_OF(CONF_VALUE) *hash);
 LHASH_OF(CONF_VALUE) *CONF_load(LHASH_OF(CONF_VALUE) *conf,const char *file,
 				long *eline);
-#ifndef OPENSSL_NO_FP_API
+#ifndef OPENSSL_NO_STDIO
 LHASH_OF(CONF_VALUE) *CONF_load_fp(LHASH_OF(CONF_VALUE) *conf, FILE *fp,
 				   long *eline);
 #endif
@@ -160,7 +160,7 @@ void NCONF_free(CONF *conf);
 void NCONF_free_data(CONF *conf);
 
 int NCONF_load(CONF *conf,const char *file,long *eline);
-#ifndef OPENSSL_NO_FP_API
+#ifndef OPENSSL_NO_STDIO
 int NCONF_load_fp(CONF *conf, FILE *fp,long *eline);
 #endif
 int NCONF_load_bio(CONF *conf, BIO *bp,long *eline);
