@@ -7,7 +7,7 @@
 
   Major changes between OpenSSL 1.0.1k and OpenSSL 1.0.1l [under development]
 
-      o
+      o Build fixes for the Windows and OpenVMS platforms
 
   Major changes between OpenSSL 1.0.1j and OpenSSL 1.0.1k [8 Jan 2015]
 
