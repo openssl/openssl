@@ -299,6 +299,9 @@ static ESS_SIGNING_CERT *ESS_get_signing_cert(PKCS7_SIGNER_INFO *si)
 	const unsigned char *p;
 	attr = PKCS7_get_signed_attribute(si, 
 					  NID_id_smime_aa_signingCertificate);
+	if (!attr)
+	attr = PKCS7_get_signed_attribute(si, 
+					  NID_id_smime_aa_signingCertificateV2);
 	if (!attr) return NULL;
 	p = attr->value.sequence->data;
 	return d2i_ESS_SIGNING_CERT(NULL, &p, attr->value.sequence->length);
@@ -308,6 +311,22 @@ static ESS_SIGNING_CERT *ESS_get_signing_cert(PKCS7_SIGNER_INFO *si)
 static int TS_find_cert(STACK_OF(ESS_CERT_ID) *cert_ids, X509 *cert)
 	{
 	int i;
+	#ifndef OPENSSL_NO_SHA256
+	unsigned char md_sha256[SHA256_DIGEST_LENGTH];
+	X509_digest(cert, EVP_sha256(), md_sha256, NULL);
+	#endif
+	#ifndef OPENSSL_NO_SHA384
+	unsigned char md_sha384[SHA384_DIGEST_LENGTH];
+	X509_digest(cert, EVP_sha384(), md_sha384, NULL);
+	#endif
+	#ifndef OPENSSL_NO_SHA512
+	unsigned char md_sha512[SHA512_DIGEST_LENGTH];
+	X509_digest(cert, EVP_sha512(), md_sha512, NULL);
+	#endif
+	#ifndef OPENSSL_NO_WHIRLPOOL
+	unsigned char md_whirlpool[64];
+	X509_digest(cert, EVP_whirlpool(), md_whirlpool, NULL);
+	#endif
 
 	if (!cert_ids || !cert) return -1;
 
@@ -319,10 +338,32 @@ static int TS_find_cert(STACK_OF(ESS_CERT_ID) *cert_ids, X509 *cert)
 		{
 		ESS_CERT_ID *cid = sk_ESS_CERT_ID_value(cert_ids, i);
 
-		/* Check the SHA-1 hash first. */
-		if (cid->hash->length == sizeof(cert->sha1_hash)
+		/* Check the hash first. */
+
+		if ((cid->hash->length == sizeof(cert->sha1_hash)
 		    && !memcmp(cid->hash->data, cert->sha1_hash,
-			       sizeof(cert->sha1_hash)))
+			       sizeof(cert->sha1_hash))) 
+		#ifndef OPENSSL_NO_SHA256
+		|| (cid->hash->length == sizeof(md_sha256)
+	      	    && !memcmp(cid->hash->data, md_sha256,
+				sizeof(md_sha256)))
+		#endif
+		#ifndef OPENSSL_NO_SHA384
+		|| (cid->hash->length == sizeof(md_sha384)
+	      	    && !memcmp(cid->hash->data, md_sha384,
+				sizeof(md_sha384)))
+		#endif
+		#ifndef OPENSSL_NO_SHA512
+		|| (cid->hash->length == sizeof(md_sha512)
+	      	    && !memcmp(cid->hash->data, md_sha512,
+				sizeof(md_sha512)))
+		#endif
+		#ifndef OPENSSL_NO_WHIRLPOOL
+		|| (cid->hash->length == sizeof(md_whirlpool)
+	      	    && !memcmp(cid->hash->data, md_whirlpool,
+				sizeof(md_whirlpool)))
+		#endif
+		)
 			{
 			/* Check the issuer/serial as well if specified. */
 			ESS_ISSUER_SERIAL *is = cid->issuer_serial;
@@ -330,7 +371,7 @@ static int TS_find_cert(STACK_OF(ESS_CERT_ID) *cert_ids, X509 *cert)
 				return i;
 			}
 		}
-	
+
 	return -1;
 	}
 
