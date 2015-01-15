@@ -4,7 +4,8 @@
 
  Changes between 0.9.8zd and 0.9.8ze [xx XXX xxxx]
 
-  *)
+  *) Build fixes for the Windows and OpenVMS platforms
+     [Matt Caswell and Richard Levitte]
 
  Changes between 0.9.8zc and 0.9.8zd [8 Jan 2015]
 

@@ -7,7 +7,7 @@
 
   Major changes between OpenSSL 0.9.8zd and OpenSSL 0.9.8ze [under development]
 
-      o
+      o Build fixes for the Windows and OpenVMS platforms
 
   Major changes between OpenSSL 0.9.8zc and OpenSSL 0.9.8zd [8 Jan 2015]
 
