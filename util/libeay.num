@@ -4313,3 +4313,15 @@ BIO_dgram_sctp_wait_for_dry             4679	EXIST::FUNCTION:SCTP
 BIO_s_datagram_sctp                     4680	EXIST::FUNCTION:DGRAM,SCTP
 BIO_dgram_is_sctp                       4681	EXIST::FUNCTION:SCTP
 BIO_dgram_sctp_notification_cb          4682	EXIST::FUNCTION:SCTP
+SHA512_256_Final                        4683	EXIST::FUNCTION:SHA,SHA512
+EVP_sha512_256                          4684	EXIST::FUNCTION:SHA,SHA512
+SHA512_224_Final                        4685	EXIST::FUNCTION:SHA,SHA512
+SHA512_224_Update                       4686	EXIST::FUNCTION:SHA,SHA512
+private_SHA512_256_Init                 4687	EXIST:OPENSSL_FIPS:FUNCTION:SHA,SHA512
+SHA512_256_Init                         4688	EXIST::FUNCTION:SHA,SHA512
+SHA512_256_Update                       4689	EXIST::FUNCTION:SHA,SHA512
+SHA512_256                              4690	EXIST::FUNCTION:SHA,SHA512
+SHA512_224                              4691	EXIST::FUNCTION:SHA,SHA512
+SHA512_224_Init                         4692	EXIST::FUNCTION:SHA,SHA512
+private_SHA512_224_Init                 4693	EXIST:OPENSSL_FIPS:FUNCTION:SHA,SHA512
+EVP_sha512_224                          4694	EXIST::FUNCTION:SHA,SHA512

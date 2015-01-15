@@ -105,6 +105,8 @@ const EVP_MD *EVP_sha224(void)  { return FIPS_evp_sha224(); }
 const EVP_MD *EVP_sha256(void)  { return FIPS_evp_sha256(); }
 const EVP_MD *EVP_sha384(void)  { return FIPS_evp_sha384(); }
 const EVP_MD *EVP_sha512(void)  { return FIPS_evp_sha512(); }
+const EVP_MD *EVP_sha512_224(void)  { return FIPS_evp_sha512_224(); }
+const EVP_MD *EVP_sha512_256(void)  { return FIPS_evp_sha512_256(); }
 
 const EVP_MD *EVP_dss(void)  { return FIPS_evp_dss(); }
 const EVP_MD *EVP_dss1(void)  { return FIPS_evp_dss1(); }
