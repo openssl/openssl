@@ -5,6 +5,10 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.8ze and OpenSSL 0.9.8zf [under development]
+
+      o
+
   Major changes between OpenSSL 0.9.8zd and OpenSSL 0.9.8ze [15 Jan 2015]
 
       o Build fixes for the Windows and OpenVMS platforms
