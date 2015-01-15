@@ -73,6 +73,7 @@ B<openssl> B<s_client>
 [B<-engine id>]
 [B<-tlsextdebug>]
 [B<-no_ticket>]
+[B<-no_tlsext>]
 [B<-sess_out filename>]
 [B<-sess_in filename>]
 [B<-rand file(s)>]
@@ -297,6 +298,13 @@ print out a hex dump of any TLS extensions received from the server.
 =item B<-no_ticket>
 
 disable RFC4507bis session ticket support. 
+
+=item B<-no_tlsext>
+
+disable sending any and all TLS extensions in Client Hello message.
+
+Not that this will break other options like B<-servername>, B<-nextprotoneg>
+or B<-alpn>.
 
 =item B<-sess_out filename>
 
