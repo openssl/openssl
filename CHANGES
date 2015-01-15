@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.0p and 1.0.0q [xx XXX xxxx]
+ Changes between 1.0.0p and 1.0.0q [15 Jan 2015]
 
   *) Build fixes for the Windows and OpenVMS platforms
      [Matt Caswell and Richard Levitte]

@@ -5,7 +5,7 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Major changes between OpenSSL 1.0.0p and OpenSSL 1.0.0q [under development]
+  Major changes between OpenSSL 1.0.0p and OpenSSL 1.0.0q [15 Jan 2015]
 
       o Build fixes for the Windows and OpenVMS platforms
 
