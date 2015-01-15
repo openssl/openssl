@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8zd and 0.9.8ze [xx XXX xxxx]
+ Changes between 0.9.8zd and 0.9.8ze [15 Jan 2015]
 
   *) Build fixes for the Windows and OpenVMS platforms
      [Matt Caswell and Richard Levitte]
