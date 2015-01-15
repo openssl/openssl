@@ -78,10 +78,10 @@ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
 	else
 		md=ctx->md;
 
+	j=M_EVP_MD_block_size(md);
 	if (key != NULL)
 		{
 		reset=1;
-		j=M_EVP_MD_block_size(md);
 		OPENSSL_assert(j <= (int)sizeof(ctx->key));
 		if (j < len)
 			{
@@ -99,25 +99,25 @@ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
 			memcpy(ctx->key,key,len);
 			ctx->key_length=len;
 			}
-		if(ctx->key_length != HMAC_MAX_MD_CBLOCK)
+		if(ctx->key_length != j)
 			memset(&ctx->key[ctx->key_length], 0,
-				HMAC_MAX_MD_CBLOCK - ctx->key_length);
+				j - ctx->key_length);
 		}
 
 	if (reset)	
 		{
-		for (i=0; i<HMAC_MAX_MD_CBLOCK; i++)
+		for (i=0; i<j; i++)
 			pad[i]=0x36^ctx->key[i];
 		if (!EVP_DigestInit_ex(&ctx->i_ctx,md, impl))
 			goto err;
-		if (!EVP_DigestUpdate(&ctx->i_ctx,pad,M_EVP_MD_block_size(md)))
+		if (!EVP_DigestUpdate(&ctx->i_ctx,pad,j))
 			goto err;
 
-		for (i=0; i<HMAC_MAX_MD_CBLOCK; i++)
+		for (i=0; i<j; i++)
 			pad[i]=0x5c^ctx->key[i];
 		if (!EVP_DigestInit_ex(&ctx->o_ctx,md, impl))
 			goto err;
-		if (!EVP_DigestUpdate(&ctx->o_ctx,pad,M_EVP_MD_block_size(md)))
+		if (!EVP_DigestUpdate(&ctx->o_ctx,pad,j))
 			goto err;
 		}
 	if (!EVP_MD_CTX_copy_ex(&ctx->md_ctx,&ctx->i_ctx))
