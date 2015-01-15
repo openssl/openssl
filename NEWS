@@ -7,7 +7,7 @@
 
   Major changes between OpenSSL 1.0.0p and OpenSSL 1.0.0q [under development]
 
-      o
+      o Build fixes for the Windows and OpenVMS platforms
 
   Major changes between OpenSSL 1.0.0o and OpenSSL 1.0.0p [8 Jan 2015]
 
