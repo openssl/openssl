@@ -57,7 +57,7 @@
  */
 
 /* We need to define this to get macros like S_IFBLK and S_IFCHR */
-#if !defined(OPENSSL_SYS_VXWORKS)
+#if (!defined(OPENSSL_SYS_VXWORKS) && !defined(_XOPEN_SOURCE))
 #define _XOPEN_SOURCE 500
 #endif
 

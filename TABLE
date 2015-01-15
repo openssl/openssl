@@ -200,7 +200,7 @@ $multilib     =
 
 *** BSD-sparcv8
 $cc           = gcc
-$cflags       = -DB_ENDIAN -DTERMIOS -O3 -mv8 -Wall
+$cflags       = -DB_ENDIAN -DTERMIOS -O3 -Wall
 $unistd       = 
 $thread_cflag = -pthread -D_THREAD_SAFE -D_REENTRANT
 $sys_id       = 
@@ -2642,7 +2642,7 @@ $multilib     =
 
 *** debug-solaris-sparcv8-gcc
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -O -g -mv8 -Wall -DB_ENDIAN
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -O -g -Wall -DB_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4325,7 +4325,7 @@ $multilib     = 64
 
 *** linux-sparcv8
 $cc           = gcc
-$cflags       = -mv8 -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall -DBN_DIV2W
+$cflags       = -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall -DBN_DIV2W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -5315,7 +5315,7 @@ $multilib     =
 
 *** solaris-sparcv8-gcc
 $cc           = gcc
-$cflags       = -mv8 -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W
+$cflags       = -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -5612,7 +5612,7 @@ $multilib     = /64
 
 *** sunos-gcc
 $cc           = gcc
-$cflags       = -O3 -mv8 -Dssize_t=int
+$cflags       = -O3 -Dssize_t=int
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = SUNOS
