@@ -56,7 +56,8 @@
  * [including the GNU Public Licence.]
  */
 
-/* set_key.c v 1.4 eay 24/9/91
+/*-
+ * set_key.c v 1.4 eay 24/9/91
  * 1.4 Speed up by 400% :-)
  * 1.3 added register declarations.
  * 1.2 unrolled make_key_sched a bit more

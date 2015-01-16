@@ -66,7 +66,8 @@ int BN_kronecker(const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 	int ret = -2; /* avoid 'uninitialized' warning */
 	int err = 0;
 	BIGNUM *A, *B, *tmp;
-	/* In 'tab', only odd-indexed entries are relevant:
+	/*-
+	 * In 'tab', only odd-indexed entries are relevant:
 	 * For any odd BIGNUM n,
 	 *     tab[BN_lsw(n) & 7]
 	 * is $(-1)^{(n^2-1)/8}$ (using TeX notation).

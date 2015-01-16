@@ -258,7 +258,8 @@ int	BN_GF2m_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 	}
 
 
-/* Some functions allow for representation of the irreducible polynomials
+/*-
+ * Some functions allow for representation of the irreducible polynomials
  * as an int[], say p.  The irreducible f(t) is then of the form:
  *     t^p[0] + t^p[1] + ... + t^p[k]
  * where m = p[0] > p[1] > ... > p[k] = 0.
