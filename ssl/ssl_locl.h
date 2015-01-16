@@ -488,7 +488,7 @@
  * SSL_aDSS <- DSA_SIGN
  */
 
-/*
+/*-
 #define CERT_INVALID		0
 #define CERT_PUBLIC_KEY		1
 #define CERT_PRIVATE_KEY	2
