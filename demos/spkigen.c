@@ -1,5 +1,6 @@
 /* NOCW */
-/* demos/spkigen.c
+/*-
+ * demos/spkigen.c
  * 18-Mar-1997 - eay - A quick hack :-) 
  * 		version 1.1, it would probably help to save or load the
  *		private key :-)
