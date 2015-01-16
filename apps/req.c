@@ -1411,20 +1411,20 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
 
 		}
 
-		if (!X509_NAME_entry_count(subj))
+	if (!X509_NAME_entry_count(subj))
+		{
+		BIO_printf(bio_err,"error, no objects specified in config file\n");
+		return 0;
+		}
+	if (attribs)
+		{
+		for (i = 0; i < sk_CONF_VALUE_num(attr_sk); i++)
 			{
-			BIO_printf(bio_err,"error, no objects specified in config file\n");
-			return 0;
+			v=sk_CONF_VALUE_value(attr_sk,i);
+			if(!X509_REQ_add1_attr_by_txt(req, v->name, chtype,
+				(unsigned char *)v->value, -1)) return 0;
 			}
-		if (attribs)
-			{
-			for (i = 0; i < sk_CONF_VALUE_num(attr_sk); i++)
-				{
-				v=sk_CONF_VALUE_value(attr_sk,i);
-				if(!X509_REQ_add1_attr_by_txt(req, v->name, chtype,
-					(unsigned char *)v->value, -1)) return 0;
-				}
-			}
+		}
 	return 1;
 	}
 
