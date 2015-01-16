@@ -293,7 +293,7 @@ struct padlock_cipher_data
 static volatile struct padlock_cipher_data *padlock_saved_context;
 #endif
 
-/*
+/*-
  * =======================================================
  * Inline assembler section(s).
  * =======================================================
@@ -854,7 +854,7 @@ padlock_aes_init_key (EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	return 1;
 }
 
-/* 
+/*- 
  * Simplified version of padlock_aes_cipher() used when
  * 1) both input and output buffers are at aligned addresses.
  * or when

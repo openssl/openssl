@@ -438,20 +438,21 @@ static int srp_Verify_N_and_g(BIGNUM *N, BIGNUM *g)
 	return ret;
 	}
 
-/* This callback is used here for two purposes:
-   - extended debugging
-   - making some primality tests for unknown groups
-   The callback is only called for a non default group.
-
-   An application does not need the call back at all if
-   only the stanard groups are used.  In real life situations, 
-   client and server already share well known groups, 
-   thus there is no need to verify them. 
-   Furthermore, in case that a server actually proposes a group that
-   is not one of those defined in RFC 5054, it is more appropriate 
-   to add the group to a static list and then compare since 
-   primality tests are rather cpu consuming.
-*/
+/*-
+ * This callback is used here for two purposes:
+ * - extended debugging
+ * - making some primality tests for unknown groups
+ * The callback is only called for a non default group.
+ *
+ * An application does not need the call back at all if
+ * only the stanard groups are used.  In real life situations, 
+ * client and server already share well known groups, 
+ * thus there is no need to verify them. 
+ * Furthermore, in case that a server actually proposes a group that
+ * is not one of those defined in RFC 5054, it is more appropriate 
+ * to add the group to a static list and then compare since 
+ * primality tests are rather cpu consuming.
+ */
 
 static int MS_CALLBACK ssl_srp_verify_param_cb(SSL *s, void *arg)
 	{
@@ -1606,7 +1607,7 @@ SSL_set_tlsext_status_ids(con, ids);
 					openssl_fdset(SSL_get_fd(con),&writefds);
 			}
 #endif
-/*			printf("mode tty(%d %d%d) ssl(%d%d)\n",
+/*-			printf("mode tty(%d %d%d) ssl(%d%d)\n",
 				tty_on,read_tty,write_tty,read_ssl,write_ssl);*/
 
 			/* Note: under VMS with SOCKETSHR the second parameter

@@ -77,7 +77,8 @@ const char *RC4_options(void)
 #endif
 	}
 
-/* RC4 as implemented from a posting from
+/*-
+ * RC4 as implemented from a posting from
  * Newsgroups: sci.crypt
  * From: sterndark@netcom.com (David Sterndark)
  * Subject: RC4 Algorithm revealed.

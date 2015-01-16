@@ -124,7 +124,8 @@ static char const rcsid[] =
 # include TLS_APP
 #endif
 
-/* Applications can define:
+/*-
+ * Applications can define:
  *   TLS_APP_PROCESS_INIT -- void ...(int fd, int client_p, void *apparg)
  *   TLS_CUMULATE_ERRORS 
  *   TLS_ERROR_BUFSIZ

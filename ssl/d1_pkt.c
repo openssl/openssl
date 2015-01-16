@@ -418,10 +418,12 @@ dtls1_process_record(SSL *s)
 	rr->data=rr->input;
 
 	enc_err = s->method->ssl3_enc->enc(s,0);
-	/* enc_err is:
+	/*-
+	 * enc_err is:
 	 *    0: (in non-constant time) if the record is publically invalid.
 	 *    1: if the padding is valid
-	 *    -1: if the padding is invalid */
+	 *   -1: if the padding is invalid
+	 */
 	if (enc_err == 0)
 		{
 		/* For DTLS we simply ignore bad packets. */

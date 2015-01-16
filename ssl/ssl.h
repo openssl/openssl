@@ -171,7 +171,8 @@ extern "C" {
 #endif
 
 /* SSLeay version number for ASN.1 encoding of the session information */
-/* Version 0 - initial version
+/*-
+ * Version 0 - initial version
  * Version 1 - added the optional peer certificate
  */
 #define SSL_SESSION_ASN1_VERSION 0x0001
@@ -1447,10 +1448,12 @@ extern "C" {
 #define SSL_ST_READ_BODY			0xF1
 #define SSL_ST_READ_DONE			0xF2
 
-/* Obtain latest Finished message
+/*-
+ * Obtain latest Finished message
  *   -- that we sent (SSL_get_finished)
  *   -- that we expected from peer (SSL_get_peer_finished).
- * Returns length (0 == no Finished so far), copies up to 'count' bytes. */
+ * Returns length (0 == no Finished so far), copies up to 'count' bytes.
+ */
 size_t SSL_get_finished(const SSL *s, void *buf, size_t count);
 size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 

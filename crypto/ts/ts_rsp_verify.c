@@ -125,7 +125,7 @@ static struct
 
 /* Functions for verifying a signed TS_TST_INFO structure. */
 
-/*
+/*-
  * This function carries out the following tasks:
  *	- Checks if there is one and only one signer.
  *	- Search for the signing certificate in 'certs' and in the response.
@@ -353,7 +353,7 @@ static int TS_issuer_serial_cmp(ESS_ISSUER_SERIAL *is, X509_CINF *cinfo)
 	return 0;
 	}
 
-/*
+/*-
  * Verifies whether 'response' contains a valid response with regards 
  * to the settings of the context:
  *	- Gives an error message if the TS_TST_INFO is not present.

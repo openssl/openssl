@@ -93,7 +93,8 @@ int ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *po
 	y = BN_CTX_get(ctx);
 	if (y == NULL) goto err;
 
-	/* Recover y.  We have a Weierstrass equation
+	/*-
+	 * Recover y.  We have a Weierstrass equation
 	 *     y^2 = x^3 + a*x + b,
 	 * so  y  is one of the square roots of  x^3 + a*x + b.
 	 */

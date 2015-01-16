@@ -350,7 +350,7 @@ end:
 			fprintf(stderr,"-----\n");
 			lh_stats(SSL_CTX_sessions(s_ctx),stderr);
 			fprintf(stderr,"-----\n");
-		/*	lh_node_stats(SSL_CTX_sessions(s_ctx),stderr);
+		/*-	lh_node_stats(SSL_CTX_sessions(s_ctx),stderr);
 			fprintf(stderr,"-----\n"); */
 			lh_node_usage_stats(SSL_CTX_sessions(s_ctx),stderr);
 			fprintf(stderr,"-----\n");
@@ -390,7 +390,7 @@ int ndoit(SSL_CTX *ssl_ctx[2])
 	fprintf(stdout,"started thread %lu\n",CRYPTO_thread_id());
 	for (i=0; i<number_of_loops; i++)
 		{
-/*		fprintf(stderr,"%4d %2d ctx->ref (%3d,%3d)\n",
+/*-		fprintf(stderr,"%4d %2d ctx->ref (%3d,%3d)\n",
 			CRYPTO_thread_id(),i,
 			ssl_ctx[0]->references,
 			ssl_ctx[1]->references); */

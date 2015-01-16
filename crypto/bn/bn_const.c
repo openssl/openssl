@@ -3,7 +3,8 @@
 
 #include "bn.h"
 
-/* "First Oakley Default Group" from RFC2409, section 6.1.
+/*-
+ * "First Oakley Default Group" from RFC2409, section 6.1.
  *
  * The prime is: 2^768 - 2 ^704 - 1 + 2^64 * { [2^638 pi] + 149686 }
  *
@@ -26,7 +27,8 @@ BIGNUM *get_rfc2409_prime_768(BIGNUM *bn)
 	return BN_bin2bn(RFC2409_PRIME_768,sizeof(RFC2409_PRIME_768),bn);
 	}
 
-/* "Second Oakley Default Group" from RFC2409, section 6.2.
+/*-
+ * "Second Oakley Default Group" from RFC2409, section 6.2.
  *
  * The prime is: 2^1024 - 2^960 - 1 + 2^64 * { [2^894 pi] + 129093 }.
  *
@@ -52,7 +54,8 @@ BIGNUM *get_rfc2409_prime_1024(BIGNUM *bn)
 	return BN_bin2bn(RFC2409_PRIME_1024,sizeof(RFC2409_PRIME_1024),bn);
 	}
 
-/* "1536-bit MODP Group" from RFC3526, Section 2.
+/*-
+ * "1536-bit MODP Group" from RFC3526, Section 2.
  *
  * The prime is: 2^1536 - 2^1472 - 1 + 2^64 * { [2^1406 pi] + 741804 }
  *
@@ -83,7 +86,8 @@ BIGNUM *get_rfc3526_prime_1536(BIGNUM *bn)
 	return BN_bin2bn(RFC3526_PRIME_1536,sizeof(RFC3526_PRIME_1536),bn);
 	}
 
-/* "2048-bit MODP Group" from RFC3526, Section 3.
+/*-
+ * "2048-bit MODP Group" from RFC3526, Section 3.
  *
  * The prime is: 2^2048 - 2^1984 - 1 + 2^64 * { [2^1918 pi] + 124476 }
  *
@@ -119,7 +123,8 @@ BIGNUM *get_rfc3526_prime_2048(BIGNUM *bn)
 	return BN_bin2bn(RFC3526_PRIME_2048,sizeof(RFC3526_PRIME_2048),bn);
 	}
 
-/* "3072-bit MODP Group" from RFC3526, Section 4.
+/*-
+ * "3072-bit MODP Group" from RFC3526, Section 4.
  *
  * The prime is: 2^3072 - 2^3008 - 1 + 2^64 * { [2^2942 pi] + 1690314 }
  *
@@ -165,7 +170,8 @@ BIGNUM *get_rfc3526_prime_3072(BIGNUM *bn)
 	return BN_bin2bn(RFC3526_PRIME_3072,sizeof(RFC3526_PRIME_3072),bn);
 	}
 
-/* "4096-bit MODP Group" from RFC3526, Section 5.
+/*-
+ * "4096-bit MODP Group" from RFC3526, Section 5.
  *
  * The prime is: 2^4096 - 2^4032 - 1 + 2^64 * { [2^3966 pi] + 240904 }
  *
@@ -222,7 +228,8 @@ BIGNUM *get_rfc3526_prime_4096(BIGNUM *bn)
 	return BN_bin2bn(RFC3526_PRIME_4096,sizeof(RFC3526_PRIME_4096),bn);
 	}
 
-/* "6144-bit MODP Group" from RFC3526, Section 6.
+/*-
+ * "6144-bit MODP Group" from RFC3526, Section 6.
  *
  * The prime is: 2^6144 - 2^6080 - 1 + 2^64 * { [2^6014 pi] + 929484 }
  *
@@ -300,7 +307,8 @@ BIGNUM *get_rfc3526_prime_6144(BIGNUM *bn)
 	return BN_bin2bn(RFC3526_PRIME_6144,sizeof(RFC3526_PRIME_6144),bn);
 	}
 
-/* "8192-bit MODP Group" from RFC3526, Section 7.
+/*-
+ * "8192-bit MODP Group" from RFC3526, Section 7.
  *
  * The prime is: 2^8192 - 2^8128 - 1 + 2^64 * { [2^8062 pi] + 4743158 }
  *
