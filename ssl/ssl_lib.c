@@ -349,7 +349,7 @@ SSL *SSL_new(SSL_CTX *ctx)
 	s->tlsext_debug_cb = 0;
 	s->tlsext_debug_arg = NULL;
 	s->tlsext_ticket_expected = 0;
-	s->tlsext_status_type = -1;
+	s->tlsext_status_type = ctx->tlsext_status_type;
 	s->tlsext_status_expected = 0;
 	s->tlsext_ocsp_ids = NULL;
 	s->tlsext_ocsp_exts = NULL;
@@ -2006,6 +2006,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 
 	ret->tlsext_status_cb = 0;
 	ret->tlsext_status_arg = NULL;
+	ret->tlsext_status_type = -1;
 
 # ifndef OPENSSL_NO_NEXTPROTONEG
 	ret->next_protos_advertised_cb = 0;
