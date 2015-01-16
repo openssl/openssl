@@ -1045,9 +1045,11 @@ start:
 			}
 		}
 
-	/* s->d1->handshake_fragment_len == 12  iff  rr->type == SSL3_RT_HANDSHAKE;
+	/*-
+	 * s->d1->handshake_fragment_len == 12  iff  rr->type == SSL3_RT_HANDSHAKE;
 	 * s->d1->alert_fragment_len == 7      iff  rr->type == SSL3_RT_ALERT.
-	 * (Possibly rr is 'empty' now, i.e. rr->length may be 0.) */
+	 * (Possibly rr is 'empty' now, i.e. rr->length may be 0.)
+	 */
 
 	/* If we are a client, check for an incoming 'Hello Request': */
 	if ((!s->server) &&
