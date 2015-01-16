@@ -374,7 +374,7 @@ static int get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 			/* If we were going to up the reference count,
 			 * we would need to do it on a perl 'type'
 			 * basis */
-	/*		CRYPTO_add(&tmp->data.x509->references,1,
+	/*-		CRYPTO_add(&tmp->data.x509->references,1,
 				CRYPTO_LOCK_X509);*/
 			goto finish;
 			}

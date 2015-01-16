@@ -126,14 +126,16 @@
 #include <openssl/des.h>
 #endif
 
-/* dtls1_enc encrypts/decrypts the record in |s->wrec| / |s->rrec|, respectively.
+/*-
+ * dtls1_enc encrypts/decrypts the record in |s->wrec| / |s->rrec|, respectively.
  *
  * Returns:
  *   0: (in non-constant time) if the record is publically invalid (i.e. too
  *       short etc).
  *   1: if the record's padding is valid / the encryption was successful.
  *   -1: if the record's padding/AEAD-authenticator is invalid or, if sending,
- *       an internal error occured. */
+ *       an internal error occured.
+ */
 int dtls1_enc(SSL *s, int send)
 	{
 	SSL3_RECORD *rec;

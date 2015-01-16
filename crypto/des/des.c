@@ -233,7 +233,8 @@ int main(int argc, char **argv)
 			}
 		}
 	if (error) usage();
-	/* We either
+	/*-
+	 * We either
 	 * do checksum or
 	 * do encrypt or
 	 * do decrypt or

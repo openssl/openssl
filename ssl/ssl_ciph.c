@@ -885,7 +885,8 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 			if (!found)
 				break;	/* ignore this entry */
 
-			/* New algorithms:
+			/*-
+			 * New algorithms:
 			 *  1 - any old restrictions apply outside new mask
 			 *  2 - any new restrictions apply outside old mask
 			 *  3 - enforce old & new where masks intersect

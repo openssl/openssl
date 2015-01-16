@@ -1300,7 +1300,8 @@ kssl_TKT2tkt(	/* IN     */	krb5_context	krb5context,
 	}
 
 
-/*	Given krb5 service name in KSSL_CTX *kssl_ctx (typically "kssl"),
+/*-
+ *	Given krb5 service name in KSSL_CTX *kssl_ctx (typically "kssl"),
  *		and krb5 AP_REQ message & message length,
  *	Return Kerberos session key and client principle
  *		to SSL Server in KSSL_CTX *kssl_ctx.

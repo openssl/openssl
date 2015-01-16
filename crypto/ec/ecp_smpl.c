@@ -663,7 +663,8 @@ int ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *po
 	y = BN_CTX_get(ctx);
 	if (y == NULL) goto err;
 
-	/* Recover y.  We have a Weierstrass equation
+	/*-
+	 * Recover y.  We have a Weierstrass equation
 	 *     y^2 = x^3 + a*x + b,
 	 * so  y  is one of the square roots of  x^3 + a*x + b.
 	 */
@@ -1222,8 +1223,10 @@ int ec_GFp_simple_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, BN_
 		if (!field_mul(group, n1, n0, n2, ctx)) goto err;
 		if (!BN_mod_lshift1_quick(n0, n1, p)) goto err;
 		if (!BN_mod_add_quick(n1, n0, n1, p)) goto err;
-		/* n1 = 3 * (X_a + Z_a^2) * (X_a - Z_a^2)
-		 *    = 3 * X_a^2 - 3 * Z_a^4 */
+		/*-
+		 * n1 = 3 * (X_a + Z_a^2) * (X_a - Z_a^2)
+		 *    = 3 * X_a^2 - 3 * Z_a^4
+		 */
 		}
 	else
 		{
@@ -1393,7 +1396,8 @@ int ec_GFp_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_C
 
 int ec_GFp_simple_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx)
 	{
-	/* return values:
+	/*-
+	 * return values:
 	 *  -1   error
 	 *   0   equal (in affine coordinates)
 	 *   1   not equal

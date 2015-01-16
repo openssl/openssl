@@ -418,7 +418,8 @@ IMPLEMENT_PEM_rw_const(DHparams, DH, PEM_STRING_DHPARAMS, DHparams)
 #endif
 
 
-/* The PrivateKey case is not that straightforward.
+/*-
+ * The PrivateKey case is not that straightforward.
  *   IMPLEMENT_PEM_rw_cb(PrivateKey, EVP_PKEY, PEM_STRING_EVP_PKEY, PrivateKey)
  * does not work, RSA and DSA keys have specific strings.
  * (When reading, parameter PEM_STRING_EVP_PKEY is a wildcard for anything

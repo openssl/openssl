@@ -86,7 +86,8 @@ static LHASH *mh=NULL; /* hash-table of memory requests (address as key);
 
 
 typedef struct app_mem_info_st
-/* For application-defined information (static C-string `info')
+/*-
+ * For application-defined information (static C-string `info')
  * to be displayed in memory leak list.
  * Each thread has its own stack.  For applications, there is
  *   CRYPTO_push_info("...")     to push an entry,

@@ -14,7 +14,8 @@
  * copies of the valiable, one in a register and one being an address
  * that is passed. */
 
-/* compare the out put from
+/*-
+ * compare the out put from
  * gcc dggccbug.c; ./a.out
  * and
  * gcc -O dggccbug.c; ./a.out

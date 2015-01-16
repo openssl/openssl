@@ -5,7 +5,8 @@
 /* For callbacks generating output, here are their file-descriptors. */
 static FILE *fp_cb_ssl_info = NULL;
 static FILE *fp_cb_ssl_verify = NULL;
-/* Output level:
+/*-
+ * Output level:
  *     0 = nothing,
  *     1 = minimal, just errors,
  *     2 = minimal, all steps,

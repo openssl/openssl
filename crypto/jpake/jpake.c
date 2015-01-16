@@ -191,7 +191,7 @@ static void generate_zkp(JPAKE_STEP_PART *p, const BIGNUM *x,
     BIGNUM *h = BN_new();
     BIGNUM *t = BN_new();
 
-   /*
+   /*-
     * r in [0,q)
     * XXX: Java chooses r in [0, 2^160) - i.e. distribution not uniform
     */

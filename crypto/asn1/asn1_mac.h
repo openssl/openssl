@@ -354,7 +354,7 @@ err:\
 	if (((arg)=func()) == NULL) return(NULL)
 
 #define M_ASN1_New_Error(a) \
-/*	err:	ASN1_MAC_H_err((a),ERR_R_NESTED_ASN1_ERROR,c.line); \
+/*-	err:	ASN1_MAC_H_err((a),ERR_R_NESTED_ASN1_ERROR,c.line); \
 		return(NULL);*/ \
 	err2:	ASN1_MAC_H_err((a),ERR_R_MALLOC_FAILURE,c.line); \
 		return(NULL)

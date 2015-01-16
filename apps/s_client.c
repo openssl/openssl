@@ -1122,7 +1122,7 @@ SSL_set_tlsext_status_ids(con, ids);
 					FD_SET(SSL_get_fd(con),&writefds);
 			}
 #endif
-/*			printf("mode tty(%d %d%d) ssl(%d%d)\n",
+/*-			printf("mode tty(%d %d%d) ssl(%d%d)\n",
 				tty_on,read_tty,write_tty,read_ssl,write_ssl);*/
 
 			/* Note: under VMS with SOCKETSHR the second parameter

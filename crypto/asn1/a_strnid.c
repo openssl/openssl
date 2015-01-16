@@ -87,7 +87,8 @@ unsigned long ASN1_STRING_get_default_mask(void)
 	return global_mask;
 }
 
-/* This function sets the default to various "flavours" of configuration.
+/*-
+ * This function sets the default to various "flavours" of configuration.
  * based on an ASCII string. Currently this is:
  * MASK:XXXX : a numerical mask value.
  * nobmp : Don't use BMPStrings (just Printable, T61).

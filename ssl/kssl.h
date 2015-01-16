@@ -90,7 +90,8 @@ typedef unsigned char krb5_octet;
 
 #endif
 
-/*	Uncomment this to debug kssl problems or
+/*-
+ *	Uncomment this to debug kssl problems or
  *	to trace usage of the Kerberos session key
  *
  *	#define		KSSL_DEBUG

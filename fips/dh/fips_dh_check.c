@@ -62,7 +62,8 @@
 #include <openssl/err.h>
 #include <openssl/fips.h>
 
-/* Check that p is a safe prime and
+/*-
+ * Check that p is a safe prime and
  * if g is 2, 3 or 5, check that is is a suitable generator
  * where
  * for 2, p mod 24 == 11

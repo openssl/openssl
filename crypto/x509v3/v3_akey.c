@@ -100,7 +100,8 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
 	return extlist;
 }
 
-/* Currently two options:
+/*-
+ * Currently two options:
  * keyid: use the issuers subject keyid, the value 'always' means its is
  * an error if the issuer certificate doesn't have a key id.
  * issuer: use the issuers cert issuer and serial number. The default is

@@ -190,7 +190,8 @@ int DSA_size(const DSA *r)
 	return(ret);
 	}
 
-/* data has already been hashed (probably with SHA or SHA-1). */
+/*-
+ * data has already been hashed (probably with SHA or SHA-1). */
 /* returns
  *      1: correct signature
  *      0: incorrect signature

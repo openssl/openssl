@@ -802,7 +802,8 @@ int ec_GF2m_simple_is_at_infinity(const EC_GROUP *group, const EC_POINT *point)
 	}
 
 
-/* Determines whether the given EC_POINT is an actual point on the curve defined
+/*-
+ * Determines whether the given EC_POINT is an actual point on the curve defined
  * in the EC_GROUP.  A point is valid if it satisfies the Weierstrass equation:
  *      y^2 + x*y = x^3 + a*x^2 + b.
  */

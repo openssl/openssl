@@ -182,7 +182,8 @@ static void ec_pre_comp_clear_free(void *pre_)
 
 
 
-/* Determine the modified width-(w+1) Non-Adjacent Form (wNAF) of 'scalar'.
+/*-
+ * Determine the modified width-(w+1) Non-Adjacent Form (wNAF) of 'scalar'.
  * This is an array  r[]  of values that are either zero or odd with an
  * absolute value less than  2^w  satisfying
  *     scalar = \sum_j r[j]*2^j
@@ -337,7 +338,8 @@ static signed char *compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
 		  (b) >=   20 ? 2 : \
 		  1))
 
-/* Compute
+/*-
+ * Compute
  *      \sum scalars[i]*points[i],
  * also including
  *      scalar*generator
