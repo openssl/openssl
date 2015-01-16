@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-/*
+/*-
  * 03-Dec-1997	rdenny@dc3.com  Fix bug preventing use of stdin/stdout
  *		with binary data (e.g. asn1parse -inform DER < xxx) under
  *		Windows

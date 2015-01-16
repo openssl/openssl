@@ -517,7 +517,8 @@ int CRYPTO_remove_all_info(void);
 
 /* Default debugging functions (enabled by CRYPTO_malloc_debug_init() macro;
  * used as default in CRYPTO_MDEBUG compilations): */
-/* The last argument has the following significance:
+/*-
+ * The last argument has the following significance:
  *
  * 0:	called before the actual memory allocation has taken place
  * 1:	called after the actual memory allocation has taken place
