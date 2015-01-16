@@ -63,6 +63,8 @@
 #define USE_SOCKETS
 #include "cryptlib.h"
 
+#ifndef OPENSSL_NO_SOCK
+
 #include <openssl/bio.h>
 #ifndef OPENSSL_NO_DGRAM
 
@@ -2016,4 +2018,5 @@ static void get_current_time(struct timeval *t)
 #endif
 	}
 
+#endif
 #endif

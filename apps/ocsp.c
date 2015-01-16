@@ -1333,6 +1333,8 @@ static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp)
 	return 1;
 	}
 
+#ifndef OPENSSL_NO_SOCK
+
 static OCSP_RESPONSE *query_responder(BIO *err, BIO *cbio, const char *path,
 				      const STACK_OF(CONF_VALUE) *headers,
 				      OCSP_REQUEST *req, int req_timeout)
@@ -1470,4 +1472,5 @@ OCSP_RESPONSE *process_responder(BIO *err, OCSP_REQUEST *req,
 	return resp;
 	}
 
+#endif
 #endif
