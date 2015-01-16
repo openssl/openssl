@@ -572,16 +572,20 @@ static int n_do_ssl_write(SSL *s, const unsigned char *buf, unsigned int len)
 			}
 		else if ((bs <= 1) && (!s->s2->escape))
 			{
-			/* j <= SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER, thus
-			 * j < SSL2_MAX_RECORD_LENGTH_2_BYTE_HEADER */
+			/*-
+			 * j <= SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER, thus
+			 * j < SSL2_MAX_RECORD_LENGTH_2_BYTE_HEADER
+			 */
 			s->s2->three_byte_header=0;
 			p=0;
 			}
 		else /* we may have to use a 3 byte header */
 			{
-			/* If s->s2->escape is not set, then
+			/*-
+			 * If s->s2->escape is not set, then
 			 * j <= SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER, and thus
-			 * j < SSL2_MAX_RECORD_LENGTH_2_BYTE_HEADER. */
+			 * j < SSL2_MAX_RECORD_LENGTH_2_BYTE_HEADER.
+			 */
 			p=(j%bs);
 			p=(p == 0)?0:(bs-p);
 			if (s->s2->escape)
@@ -595,7 +599,8 @@ static int n_do_ssl_write(SSL *s, const unsigned char *buf, unsigned int len)
 			}
 		}
 
-	/* Now
+	/*-
+	 * Now
 	 *      j <= SSL2_MAX_RECORD_LENGTH_2_BYTE_HEADER
 	 * holds, and if s->s2->three_byte_header is set, then even
 	 *      j <= SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER.

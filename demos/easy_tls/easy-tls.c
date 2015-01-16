@@ -1,5 +1,5 @@
 /* -*- Mode: C; c-file-style: "bsd" -*- */
-/*
+/*-
  * easy-tls.c -- generic TLS proxy.
  * $Id: easy-tls.c,v 1.4 2002/03/05 09:07:16 bodo Exp $
  */
@@ -62,7 +62,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
+/*-
  * Attribution for OpenSSL library:
  *
  * This product includes cryptographic software written by Eric Young

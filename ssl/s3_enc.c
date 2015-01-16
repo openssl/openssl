@@ -466,7 +466,8 @@ void ssl3_cleanup_key_block(SSL *s)
 	s->s3->tmp.key_block_length=0;
 	}
 
-/* ssl3_enc encrypts/decrypts the record in |s->wrec| / |s->rrec|, respectively.
+/*-
+ * ssl3_enc encrypts/decrypts the record in |s->wrec| / |s->rrec|, respectively.
  *
  * Returns:
  *   0: (in non-constant time) if the record is publically invalid (i.e. too
@@ -756,7 +757,8 @@ int n_ssl3_mac(SSL *ssl, unsigned char *md, int send)
 		 * data we are hashing because that gives an attacker a
 		 * timing-oracle. */
 
-		/* npad is, at most, 48 bytes and that's with MD5:
+		/*-
+		 * npad is, at most, 48 bytes and that's with MD5:
 		 *   16 + 48 + 8 (sequence bytes) + 1 + 2 = 75.
 		 *
 		 * With SHA-1 (the largest hash speced for SSLv3) the hash size

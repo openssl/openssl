@@ -401,7 +401,7 @@ static char *dlfcn_name_converter(DSO *dso, const char *filename)
 	}
 
 #ifdef __sgi
-/*
+/*-
 This is a quote from IRIX manual for dladdr(3c):
 
      <dlfcn.h> does not contain a prototype for dladdr or definition of

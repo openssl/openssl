@@ -1093,7 +1093,8 @@ int dtls1_send_client_key_exchange(SSL *s)
                                 goto err;
                                 }
 
-			/*  20010406 VRS - Earlier versions used KRB5 AP_REQ
+			/*-
+			 *   20010406 VRS - Earlier versions used KRB5 AP_REQ
 			**  in place of RFC 2712 KerberosWrapper, as in:
 			**
                         **  Send ticket (copy to *p, set n = length)
@@ -1139,12 +1140,13 @@ int dtls1_send_client_key_exchange(SSL *s)
 			if (RAND_bytes(tmp_buf,sizeof tmp_buf) <= 0)
 			    goto err;
 
-			/*  20010420 VRS.  Tried it this way; failed.
-			**	EVP_EncryptInit_ex(&ciph_ctx,enc, NULL,NULL);
-			**	EVP_CIPHER_CTX_set_key_length(&ciph_ctx,
-			**				kssl_ctx->length);
-			**	EVP_EncryptInit_ex(&ciph_ctx,NULL, key,iv);
-			*/
+			/*-
+			 *  20010420 VRS.  Tried it this way; failed.
+			 *	EVP_EncryptInit_ex(&ciph_ctx,enc, NULL,NULL);
+			 *	EVP_CIPHER_CTX_set_key_length(&ciph_ctx,
+			 *				kssl_ctx->length);
+			 *	EVP_EncryptInit_ex(&ciph_ctx,NULL, key,iv);
+			 */
 
 			memset(iv, 0, sizeof iv);  /* per RFC 1510 */
 			EVP_EncryptInit_ex(&ciph_ctx,enc, NULL,
@@ -1522,7 +1524,7 @@ int dtls1_send_client_key_exchange(SSL *s)
 		
 		d = dtls1_set_message_header(s, d,
 		SSL3_MT_CLIENT_KEY_EXCHANGE, n, 0, n);
-		/*
+		/*-
 		 *(d++)=SSL3_MT_CLIENT_KEY_EXCHANGE;
 		 l2n3(n,d);
 		 l2n(s->d1->handshake_write_seq,d);
