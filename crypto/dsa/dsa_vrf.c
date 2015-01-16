@@ -68,7 +68,8 @@ int DSA_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 	}
 
 /* data has already been hashed (probably with SHA or SHA-1). */
-/* returns
+/*-
+ * returns
  *      1: correct signature
  *      0: incorrect signature
  *     -1: error

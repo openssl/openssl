@@ -60,7 +60,8 @@
  * something to watch out for.  This was fine on linux/NT/Solaris but not
  * Alpha */
 
-/* it is basically an example of
+/*-
+ * it is basically an example of
  * func(*(a++),*(a++))
  * which parameter is evaluated first?  It is not defined in ASN1 C.
  */

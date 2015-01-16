@@ -1,7 +1,8 @@
 /* NOCW */
 /* demos/bio/saccept.c */
 
-/* A minimal program to server an SSL connection.
+/*-
+ * A minimal program to server an SSL connection.
  * It uses blocking.
  * saccept host:port
  * host is the interface IP to use.  If any interface, use *:port

@@ -53,7 +53,8 @@
  *
  */
 
-/* Usage: winrand [filename]
+/*-
+ * Usage: winrand [filename]
  *
  * Collects entropy from mouse movements and other events and writes
  * random data to filename or .rnd

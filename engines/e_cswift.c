@@ -1065,9 +1065,11 @@ static int cswift_rand_bytes(unsigned char *buf, int num)
 	{
 		largenum.value = buf;
 		largenum.nbytes = sizeof(buf32);
-		/* tell CryptoSwift how many bytes we want and where we want it.
+		/*-
+		 * tell CryptoSwift how many bytes we want and where we want it.
 		 * Note: - CryptoSwift cannot do more than 4096 bytes at a time.
-		 *       - CryptoSwift can only do multiple of 32-bits. */
+		 *       - CryptoSwift can only do multiple of 32-bits.
+		 */
 		swrc = p_CSwift_SimpleRequest(hac, SW_CMD_RAND, NULL, 0, &largenum, 1);
 		if (swrc != SW_OK)
 		{

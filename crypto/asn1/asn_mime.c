@@ -915,7 +915,8 @@ static void mime_param_free(MIME_PARAM *param)
 	OPENSSL_free(param);
 }
 
-/* Check for a multipart boundary. Returns:
+/*-
+ * Check for a multipart boundary. Returns:
  * 0 : no boundary
  * 1 : part boundary
  * 2 : final boundary

@@ -131,7 +131,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
     && !defined(PEDANTIC) && !defined(BN_DIV3W)
 # if defined(__GNUC__) && __GNUC__>=2
 #  if defined(__i386) || defined (__i386__)
-   /*
+   /*-
     * There were two reasons for implementing this template:
     * - GNU C generates a call to a function (__udivdi3 to be exact)
     *   in reply to ((((BN_ULLONG)n0)<<BN_BITS2)|n1)/d0 (I fail to

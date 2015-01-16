@@ -406,7 +406,8 @@ int ec_GF2m_simple_point_get_affine_coordinates(const EC_GROUP *group, const EC_
 	}
 
 
-/* Calculates and sets the affine coordinates of an EC_POINT from the given
+/*-
+ * Calculates and sets the affine coordinates of an EC_POINT from the given
  * compressed coordinates.  Uses algorithm 2.3.4 of SEC 1. 
  * Note that the simple implementation only uses affine coordinates.
  *
@@ -868,7 +869,8 @@ int ec_GF2m_simple_is_at_infinity(const EC_GROUP *group, const EC_POINT *point)
 	}
 
 
-/* Determines whether the given EC_POINT is an actual point on the curve defined
+/*-
+ * Determines whether the given EC_POINT is an actual point on the curve defined
  * in the EC_GROUP.  A point is valid if it satisfies the Weierstrass equation:
  *      y^2 + x*y = x^3 + a*x^2 + b.
  */

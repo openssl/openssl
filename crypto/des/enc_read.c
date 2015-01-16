@@ -205,7 +205,8 @@ int DES_enc_read(int fd, void *buf, int len, DES_key_schedule *sched,
 		}
 	else
 		{
-		/* >output is a multiple of 8 byes, if len < rnum
+		/*-
+		 * >output is a multiple of 8 byes, if len < rnum
 		 * >we must be careful.  The user must be aware that this
 		 * >routine will write more bytes than he asked for.
 		 * >The length of the buffer must be correct.

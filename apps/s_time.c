@@ -556,7 +556,7 @@ end:
 	OPENSSL_EXIT(ret);
 	}
 
-/***********************************************************************
+/*-
  * doConnection - make a connection
  * Args:
  *		scon	= earlier ssl connection for session id, or NULL

@@ -579,7 +579,8 @@ const char *sname;		/* Structure name */
 #endif
 };
 
-/* These are values for the itype field and
+/*-
+ * These are values for the itype field and
  * determine how the type is interpreted.
  *
  * For PRIMITIVE types the underlying type

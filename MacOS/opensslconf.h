@@ -23,7 +23,7 @@
 #if !defined(RC4_INT)
 /* using int types make the structure larger but make the code faster
  * on most boxes I have tested - up to %20 faster. */
-/*
+/*-
  * I don't know what does "most" mean, but declaring "int" is a must on:
  * - Intel P6 because partial register stalls are very expensive;
  * - elder Alpha because it lacks byte load/store instructions;

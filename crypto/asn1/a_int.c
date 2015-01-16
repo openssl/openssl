@@ -86,7 +86,7 @@ int ASN1_INTEGER_cmp(const ASN1_INTEGER *x, const ASN1_INTEGER *y)
 	}
 	
 
-/* 
+/*- 
  * This converts an ASN1 INTEGER into its content encoding.
  * The internal representation is an ASN1_STRING whose data is a big endian
  * representation of the value, ignoring the sign. The sign is determined by
