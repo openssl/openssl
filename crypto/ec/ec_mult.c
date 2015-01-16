@@ -182,11 +182,6 @@ static void ec_pre_comp_clear_free(void *pre_)
 	}
 
 
-
-
-
-
-
 /* TODO: table should be optimised for the wNAF-based implementation,
  *       sometimes smaller windows will give better performance
  *       (thus the boundaries should be increased)
@@ -200,7 +195,8 @@ static void ec_pre_comp_clear_free(void *pre_)
 		  (b) >=   20 ? 2 : \
 		  1))
 
-/* Compute
+/*-
+ * Compute
  *      \sum scalars[i]*points[i],
  * also including
  *      scalar*generator

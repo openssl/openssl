@@ -11,7 +11,8 @@
  * Gage <agage@forgetmenot.Mines.EDU>
  */
  
-/* Compare the output from
+/*-
+ * Compare the output from
  * cc sgiccbug.c; ./a.out
  * and
  * cc -O sgiccbug.c; ./a.out

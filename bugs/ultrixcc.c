@@ -1,6 +1,7 @@
 #include <stdio.h>
 
-/* This is a cc optimiser bug for ultrix 4.3, mips CPU.
+/*-
+ * This is a cc optimiser bug for ultrix 4.3, mips CPU.
  * What happens is that the compiler, due to the (a)&7,
  * does
  * i=a&7;
