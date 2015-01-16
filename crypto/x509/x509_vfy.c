@@ -529,14 +529,15 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
 	int allow_proxy_certs;
 	cb=ctx->verify_cb;
 
-	/* must_be_ca can have 1 of 3 values:
-	   -1: we accept both CA and non-CA certificates, to allow direct
-	       use of self-signed certificates (which are marked as CA).
-	   0:  we only accept non-CA certificates.  This is currently not
-	       used, but the possibility is present for future extensions.
-	   1:  we only accept CA certificates.  This is currently used for
-	       all certificates in the chain except the leaf certificate.
-	*/
+	/*-
+	 *  must_be_ca can have 1 of 3 values:
+	 * -1: we accept both CA and non-CA certificates, to allow direct
+	 *     use of self-signed certificates (which are marked as CA).
+	 * 0:  we only accept non-CA certificates.  This is currently not
+	 *     used, but the possibility is present for future extensions.
+	 * 1:  we only accept CA certificates.  This is currently used for
+	 *     all certificates in the chain except the leaf certificate.
+	 */
 	must_be_ca = -1;
 
 	/* CRL path validation */

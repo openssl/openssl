@@ -333,7 +333,7 @@ int X509_STORE_get_by_subject(X509_STORE_CTX *vs, int type, X509_NAME *name,
 			return 0;
 		}
 
-/*	if (ret->data.ptr != NULL)
+/*-	if (ret->data.ptr != NULL)
 		X509_OBJECT_free_contents(ret); */
 
 	ret->type=tmp->type;

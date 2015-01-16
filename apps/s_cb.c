@@ -205,7 +205,7 @@ int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
 	{
 	if (cert_file != NULL)
 		{
-		/*
+		/*-
 		SSL *ssl;
 		X509 *x509;
 		*/

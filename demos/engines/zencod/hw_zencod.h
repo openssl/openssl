@@ -114,7 +114,8 @@ typedef struct ZEN_data_st
 /* output : output data buffer */
 /* input : input data buffer */
 /* algo : hash algorithm, MD5 or SHA1 */
-/* typedef int t_zencod_hash ( KEY *output, const KEY *input, int algo ) ;
+/*-
+ * typedef int t_zencod_hash ( KEY *output, const KEY *input, int algo ) ;
  * typedef int t_zencod_sha_hash ( KEY *output, const KEY *input, int algo ) ;
  */
 /* For now separate this stuff that mad it easier to test */

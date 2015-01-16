@@ -1,5 +1,5 @@
 /* -*- Mode: C; c-file-style: "bsd" -*- */
-/*
+/*-
  * easy-tls.c -- generic TLS proxy.
  * $Id: easy-tls.c,v 1.4 2002/03/05 09:07:16 bodo Exp $
  */
@@ -62,7 +62,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
+/*-
  * Attribution for OpenSSL library:
  *
  * This product includes cryptographic software written by Eric Young
@@ -124,7 +124,8 @@ static char const rcsid[] =
 # include TLS_APP
 #endif
 
-/* Applications can define:
+/*-
+ * Applications can define:
  *   TLS_APP_PROCESS_INIT -- void ...(int fd, int client_p, void *apparg)
  *   TLS_CUMULATE_ERRORS 
  *   TLS_ERROR_BUFSIZ
