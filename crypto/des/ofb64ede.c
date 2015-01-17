@@ -102,8 +102,8 @@ void DES_ede3_ofb64_encrypt(register const unsigned char *in,
         n = (n + 1) & 0x07;
     }
     if (save) {
-/*-             v0=ti[0];
-                v1=ti[1];*/
+/*-     v0=ti[0];
+        v1=ti[1];*/
         iv = &(*ivec)[0];
         l2c(v0, iv);
         l2c(v1, iv);

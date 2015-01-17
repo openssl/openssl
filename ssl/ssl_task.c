@@ -288,8 +288,8 @@ int doit(io_channel chan, SSL_CTX *s_ctx)
     if ((s_to_c == NULL) || (c_to_s == NULL))
         goto err;
 /*- original, DRM 24-SEP-1997
-        BIO_set_fd ( c_to_s, "", chan );
-        BIO_set_fd ( s_to_c, "", chan );
+    BIO_set_fd ( c_to_s, "", chan );
+    BIO_set_fd ( s_to_c, "", chan );
 */
     BIO_set_fd(c_to_s, 0, chan);
     BIO_set_fd(s_to_c, 0, chan);

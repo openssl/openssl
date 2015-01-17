@@ -433,12 +433,12 @@ static int dtls1_process_record(SSL *s)
     rr->orig_len = rr->length;
 
     enc_err = s->method->ssl3_enc->enc(s, 0);
-        /*-
-         * enc_err is:
-         *    0: (in non-constant time) if the record is publically invalid.
-         *    1: if the padding is valid
-         *   -1: if the padding is invalid
-         */
+    /*-
+     * enc_err is:
+     *    0: (in non-constant time) if the record is publically invalid.
+     *    1: if the padding is valid
+     *   -1: if the padding is invalid
+     */
     if (enc_err == 0) {
         /* For DTLS we simply ignore bad packets. */
         rr->length = 0;
@@ -1046,11 +1046,11 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
         }
     }
 
-        /*-
-         * s->d1->handshake_fragment_len == 12  iff  rr->type == SSL3_RT_HANDSHAKE;
-         * s->d1->alert_fragment_len == 7      iff  rr->type == SSL3_RT_ALERT.
-         * (Possibly rr is 'empty' now, i.e. rr->length may be 0.)
-         */
+    /*-
+     * s->d1->handshake_fragment_len == 12  iff  rr->type == SSL3_RT_HANDSHAKE;
+     * s->d1->alert_fragment_len == 7      iff  rr->type == SSL3_RT_ALERT.
+     * (Possibly rr is 'empty' now, i.e. rr->length may be 0.)
+     */
 
     /* If we are a client, check for an incoming 'Hello Request': */
     if ((!s->server) &&
