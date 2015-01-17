@@ -414,15 +414,16 @@ static void felem_square(largefelem out, const felem in)
     felem_scalar(inx2, in, 2);
     felem_scalar(inx4, in, 4);
 
-	/*-
-	 * We have many cases were we want to do
-	 *   in[x] * in[y] +
-	 *   in[y] * in[x]
-	 * This is obviously just
-	 *   2 * in[x] * in[y]
-	 * However, rather than do the doubling on the 128 bit result, we
-	 * double one of the inputs to the multiplication by reading from
-	 * |inx2| */
+    /*-
+     * We have many cases were we want to do
+     *   in[x] * in[y] +
+     *   in[y] * in[x]
+     * This is obviously just
+     *   2 * in[x] * in[y]
+     * However, rather than do the doubling on the 128 bit result, we
+     * double one of the inputs to the multiplication by reading from
+     * |inx2|
+     */
 
     out[0] = ((uint128_t) in[0]) * in[0];
     out[1] = ((uint128_t) in[0]) * inx2[1];
@@ -610,10 +611,10 @@ static void felem_reduce(felem out, const largefelem in)
 
     out[1] += ((limb) in[0]) >> 58;
     out[1] += (((limb) (in[0] >> 64)) & bottom52bits) << 6;
-        /*-
-         * out[1] < 2^58 + 2^6 + 2^58
-         *        = 2^59 + 2^6
-         */
+    /*-
+     * out[1] < 2^58 + 2^6 + 2^58
+     *        = 2^59 + 2^6
+     */
     out[2] += ((limb) (in[0] >> 64)) >> 52;
 
     out[2] += ((limb) in[1]) >> 58;
@@ -642,10 +643,10 @@ static void felem_reduce(felem out, const largefelem in)
 
     out[8] += ((limb) in[7]) >> 58;
     out[8] += (((limb) (in[7] >> 64)) & bottom52bits) << 6;
-        /*-
-         * out[x > 1] < 2^58 + 2^6 + 2^58 + 2^12
-         *            < 2^59 + 2^13
-         */
+    /*-
+     * out[x > 1] < 2^58 + 2^6 + 2^58 + 2^12
+     *            < 2^59 + 2^13
+     */
     overflow1 = ((limb) (in[7] >> 64)) >> 52;
 
     overflow1 += ((limb) in[8]) >> 58;
@@ -660,11 +661,11 @@ static void felem_reduce(felem out, const largefelem in)
 
     out[1] += out[0] >> 58;
     out[0] &= bottom58bits;
-        /*-
-         * out[0] < 2^58
-         * out[1] < 2^59 + 2^6 + 2^13 + 2^2
-         *        < 2^59 + 2^14
-         */
+    /*-
+     * out[0] < 2^58
+     * out[1] < 2^59 + 2^6 + 2^13 + 2^2
+     *        < 2^59 + 2^14
+     */
 }
 
 static void felem_square_reduce(felem out, const felem in)

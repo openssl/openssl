@@ -397,7 +397,7 @@ int main(int argc, char *argv[])
                           DES_ENCRYPT);
     DES_ede3_cbcm_encrypt(&cbc_data[16], &cbc_out[16], i - 16, &ks, &ks2,
                           &ks3, &iv3, &iv2, DES_ENCRYPT);
-/*-     if (memcmp(cbc_out,cbc3_ok,
+/*- if (memcmp(cbc_out,cbc3_ok,
         (unsigned int)(strlen((char *)cbc_data)+1+7)/8*8) != 0)
         {
         printf("des_ede3_cbc_encrypt encrypt error\n");

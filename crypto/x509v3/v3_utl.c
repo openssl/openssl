@@ -808,11 +808,11 @@ static const unsigned char *valid_star(const unsigned char *p, size_t len,
         if (p[i] == '*') {
             int atstart = (state & LABEL_START);
             int atend = (i == len - 1 || p[i + i] == '.');
-                        /*-
-                         * At most one wildcard per pattern.
-                         * No wildcards in IDNA labels.
-                         * No wildcards after the first label.
-                         */
+            /*-
+             * At most one wildcard per pattern.
+             * No wildcards in IDNA labels.
+             * No wildcards after the first label.
+             */
             if (star != NULL || (state & LABEL_IDNA) != 0 || dots)
                 return NULL;
             /* Only full-label '*.example.com' wildcards? */

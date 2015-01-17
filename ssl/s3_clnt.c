@@ -725,36 +725,36 @@ int ssl3_client_hello(SSL *s)
         /* Do the message type and length last */
         d = p = ssl_handshake_start(s);
 
-		/*-
-		 * version indicates the negotiated version: for example from
-		 * an SSLv2/v3 compatible client hello). The client_version
-		 * field is the maximum version we permit and it is also
-		 * used in RSA encrypted premaster secrets. Some servers can
-		 * choke if we initially report a higher version then
-		 * renegotiate to a lower one in the premaster secret. This
-		 * didn't happen with TLS 1.0 as most servers supported it
-		 * but it can with TLS 1.1 or later if the server only supports
-		 * 1.0.
-		 *
-		 * Possible scenario with previous logic:
-		 *      1. Client hello indicates TLS 1.2
-		 *      2. Server hello says TLS 1.0
-		 *      3. RSA encrypted premaster secret uses 1.2.
-		 *      4. Handhaked proceeds using TLS 1.0.
-		 *      5. Server sends hello request to renegotiate.
-		 *      6. Client hello indicates TLS v1.0 as we now
-		 *         know that is maximum server supports.
-		 *      7. Server chokes on RSA encrypted premaster secret
-		 *         containing version 1.0.
-		 *
-		 * For interoperability it should be OK to always use the
-		 * maximum version we support in client hello and then rely
-		 * on the checking of version to ensure the servers isn't
-		 * being inconsistent: for example initially negotiating with
-		 * TLS 1.0 and renegotiating with TLS 1.2. We do this by using
-		 * client_version in client hello and not resetting it to
-		 * the negotiated version.
-		 */
+        /*-
+         * version indicates the negotiated version: for example from
+         * an SSLv2/v3 compatible client hello). The client_version
+         * field is the maximum version we permit and it is also
+         * used in RSA encrypted premaster secrets. Some servers can
+         * choke if we initially report a higher version then
+         * renegotiate to a lower one in the premaster secret. This
+         * didn't happen with TLS 1.0 as most servers supported it
+         * but it can with TLS 1.1 or later if the server only supports
+         * 1.0.
+         *
+         * Possible scenario with previous logic:
+         *      1. Client hello indicates TLS 1.2
+         *      2. Server hello says TLS 1.0
+         *      3. RSA encrypted premaster secret uses 1.2.
+         *      4. Handhaked proceeds using TLS 1.0.
+         *      5. Server sends hello request to renegotiate.
+         *      6. Client hello indicates TLS v1.0 as we now
+         *         know that is maximum server supports.
+         *      7. Server chokes on RSA encrypted premaster secret
+         *         containing version 1.0.
+         *
+         * For interoperability it should be OK to always use the
+         * maximum version we support in client hello and then rely
+         * on the checking of version to ensure the servers isn't
+         * being inconsistent: for example initially negotiating with
+         * TLS 1.0 and renegotiating with TLS 1.2. We do this by using
+         * client_version in client hello and not resetting it to
+         * the negotiated version.
+         */
 #if 0
         *(p++) = s->version >> 8;
         *(p++) = s->version & 0xff;
@@ -2514,13 +2514,13 @@ int ssl3_send_client_key_exchange(SSL *s)
             if (RAND_bytes(&(tmp_buf[2]), sizeof tmp_buf - 2) <= 0)
                 goto err;
 
-			/*-
-			 * 20010420 VRS.  Tried it this way; failed.
-			 *      EVP_EncryptInit_ex(&ciph_ctx,enc, NULL,NULL);
-			 *      EVP_CIPHER_CTX_set_key_length(&ciph_ctx,
-			 *                              kssl_ctx->length);
-			 *      EVP_EncryptInit_ex(&ciph_ctx,NULL, key,iv);
-			 */
+            /*-
+             * 20010420 VRS.  Tried it this way; failed.
+             *      EVP_EncryptInit_ex(&ciph_ctx,enc, NULL,NULL);
+             *      EVP_CIPHER_CTX_set_key_length(&ciph_ctx,
+             *                              kssl_ctx->length);
+             *      EVP_EncryptInit_ex(&ciph_ctx,NULL, key,iv);
+             */
 
             memset(iv, 0, sizeof iv); /* per RFC 1510 */
             EVP_EncryptInit_ex(&ciph_ctx, enc, NULL, kssl_ctx->key, iv);

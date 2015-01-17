@@ -432,25 +432,25 @@ static void felem_shrink(smallfelem out, const felem in)
     /* As tmp[3] < 2^65, high is either 1 or 0 */
     high <<= 63;
     high >>= 63;
-	/*-
-	 * high is:
-	 *   all ones   if the high word of tmp[3] is 1
-	 *   all zeros  if the high word of tmp[3] if 0 */
+    /*-
+     * high is:
+     *   all ones   if the high word of tmp[3] is 1
+     *   all zeros  if the high word of tmp[3] if 0 */
     low = tmp[3];
     mask = low >> 63;
-	/*-
-	 * mask is:
-	 *   all ones   if the MSB of low is 1
-	 *   all zeros  if the MSB of low if 0 */
+    /*-
+     * mask is:
+     *   all ones   if the MSB of low is 1
+     *   all zeros  if the MSB of low if 0 */
     low &= bottom63bits;
     low -= kPrime3Test;
     /* if low was greater than kPrime3Test then the MSB is zero */
     low = ~low;
     low >>= 63;
-	/*-
-	 * low is:
-	 *   all ones   if low was > kPrime3Test
-	 *   all zeros  if low was <= kPrime3Test */
+    /*-
+     * low is:
+     *   all ones   if low was > kPrime3Test
+     *   all zeros  if low was <= kPrime3Test */
     mask = (mask & low) | high;
     tmp[0] -= mask & kPrime[0];
     tmp[1] -= mask & kPrime[1];
@@ -790,17 +790,17 @@ static void felem_reduce(felem out, const longfelem in)
 
     felem_reduce_(out, in);
 
-	/*-
-	 * out[0] > 2^100 - 2^36 - 2^4 - 3*2^64 - 3*2^96 - 2^64 - 2^96 > 0
-	 * out[1] > 2^100 - 2^64 - 7*2^96 > 0
-	 * out[2] > 2^100 - 2^36 + 2^4 - 5*2^64 - 5*2^96 > 0
-	 * out[3] > 2^100 - 2^36 + 2^4 - 7*2^64 - 5*2^96 - 3*2^96 > 0
-	 *
-	 * out[0] < 2^100 + 2^64 + 7*2^64 + 5*2^96 < 2^101
-	 * out[1] < 2^100 + 3*2^64 + 5*2^64 + 3*2^97 < 2^101
-	 * out[2] < 2^100 + 5*2^64 + 2^64 + 3*2^65 + 2^97 < 2^101
-	 * out[3] < 2^100 + 7*2^64 + 7*2^96 + 3*2^64 < 2^101
-	 */
+    /*-
+     * out[0] > 2^100 - 2^36 - 2^4 - 3*2^64 - 3*2^96 - 2^64 - 2^96 > 0
+     * out[1] > 2^100 - 2^64 - 7*2^96 > 0
+     * out[2] > 2^100 - 2^36 + 2^4 - 5*2^64 - 5*2^96 > 0
+     * out[3] > 2^100 - 2^36 + 2^4 - 7*2^64 - 5*2^96 - 3*2^96 > 0
+     *
+     * out[0] < 2^100 + 2^64 + 7*2^64 + 5*2^96 < 2^101
+     * out[1] < 2^100 + 3*2^64 + 5*2^64 + 3*2^97 < 2^101
+     * out[2] < 2^100 + 5*2^64 + 2^64 + 3*2^65 + 2^97 < 2^101
+     * out[3] < 2^100 + 7*2^64 + 7*2^96 + 3*2^64 < 2^101
+     */
 }
 
 /*-
@@ -819,17 +819,17 @@ static void felem_reduce_zero105(felem out, const longfelem in)
 
     felem_reduce_(out, in);
 
-	/*-
-	 * out[0] > 2^105 - 2^41 - 2^9 - 2^71 - 2^103 - 2^71 - 2^103 > 0
-	 * out[1] > 2^105 - 2^71 - 2^103 > 0
-	 * out[2] > 2^105 - 2^41 + 2^9 - 2^71 - 2^103 > 0
-	 * out[3] > 2^105 - 2^41 + 2^9 - 2^71 - 2^103 - 2^103 > 0
-	 *
-	 * out[0] < 2^105 + 2^71 + 2^71 + 2^103 < 2^106
-	 * out[1] < 2^105 + 2^71 + 2^71 + 2^103 < 2^106
-	 * out[2] < 2^105 + 2^71 + 2^71 + 2^71 + 2^103 < 2^106
-	 * out[3] < 2^105 + 2^71 + 2^103 + 2^71 < 2^106
-	 */
+    /*-
+     * out[0] > 2^105 - 2^41 - 2^9 - 2^71 - 2^103 - 2^71 - 2^103 > 0
+     * out[1] > 2^105 - 2^71 - 2^103 > 0
+     * out[2] > 2^105 - 2^41 + 2^9 - 2^71 - 2^103 > 0
+     * out[3] > 2^105 - 2^41 + 2^9 - 2^71 - 2^103 - 2^103 > 0
+     *
+     * out[0] < 2^105 + 2^71 + 2^71 + 2^103 < 2^106
+     * out[1] < 2^105 + 2^71 + 2^71 + 2^103 < 2^106
+     * out[2] < 2^105 + 2^71 + 2^71 + 2^71 + 2^103 < 2^106
+     * out[3] < 2^105 + 2^71 + 2^103 + 2^71 < 2^106
+     */
 }
 
 /*
@@ -1094,7 +1094,8 @@ static void smallfelem_inv_contract(smallfelem out, const smallfelem in)
  *
  * Building on top of the field operations we have the operations on the
  * elliptic curve group itself. Points on the curve are represented in Jacobian
- * coordinates */
+ * coordinates
+ */
 
 /*-
  * point_double calculates 2*(x_in, y_in, z_in)
@@ -1103,7 +1104,8 @@ static void smallfelem_inv_contract(smallfelem out, const smallfelem in)
  *   http://hyperelliptic.org/EFD/g1p/auto-shortw-jacobian-3.html#doubling-dbl-2001-b
  *
  * Outputs can equal corresponding inputs, i.e., x_out == x_in is allowed.
- * while x_out == y_in is not (maybe this works, but it's not tested). */
+ * while x_out == y_in is not (maybe this works, but it's not tested).
+ */
 static void
 point_double(felem x_out, felem y_out, felem z_out,
              const felem x_in, const felem y_in, const felem z_in)
@@ -1234,7 +1236,8 @@ static void copy_small_conditional(felem out, const smallfelem in, limb mask)
  * This function includes a branch for checking whether the two input points
  * are equal, (while not equal to the point at infinity). This case never
  * happens during single point multiplication, so there is no timing leak for
- * ECDH or ECDSA signing. */
+ * ECDH or ECDSA signing.
+ */
 static void point_add(felem x3, felem y3, felem z3,
                       const felem x1, const felem y1, const felem z1,
                       const int mixed, const smallfelem x2,

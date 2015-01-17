@@ -798,23 +798,23 @@ void solaris_locking_callback(int mode, int type, char *file, int line)
             (type & CRYPTO_READ) ? "r" : "w", file, line);
 # endif
 
-	/*-
-	if (CRYPTO_LOCK_SSL_CERT == type)
-	fprintf(stderr,"(t,m,f,l) %ld %d %s %d\n",
-			CRYPTO_thread_id(),
-			mode,file,line);
-	*/
+    /*-
+    if (CRYPTO_LOCK_SSL_CERT == type)
+    fprintf(stderr,"(t,m,f,l) %ld %d %s %d\n",
+            CRYPTO_thread_id(),
+            mode,file,line);
+    */
     if (mode & CRYPTO_LOCK) {
         /*-
-                if (mode & CRYPTO_READ)
-                        rw_rdlock(&(lock_cs[type]));
-                else
-                        rw_wrlock(&(lock_cs[type])); */
+        if (mode & CRYPTO_READ)
+                rw_rdlock(&(lock_cs[type]));
+        else
+                rw_wrlock(&(lock_cs[type])); */
 
         mutex_lock(&(lock_cs[type]));
         lock_count[type]++;
     } else {
-/*              rw_unlock(&(lock_cs[type]));  */
+/*      rw_unlock(&(lock_cs[type]));  */
         mutex_unlock(&(lock_cs[type]));
     }
 }
@@ -984,10 +984,10 @@ void pthreads_locking_callback(int mode, int type, char *file, int line)
             (type & CRYPTO_READ) ? "r" : "w", file, line);
 # endif
 /*-
-        if (CRYPTO_LOCK_SSL_CERT == type)
-                fprintf(stderr,"(t,m,f,l) %ld %d %s %d\n",
-                CRYPTO_thread_id(),
-                mode,file,line);
+    if (CRYPTO_LOCK_SSL_CERT == type)
+            fprintf(stderr,"(t,m,f,l) %ld %d %s %d\n",
+            CRYPTO_thread_id(),
+            mode,file,line);
 */
     if (mode & CRYPTO_LOCK) {
         pthread_mutex_lock(&(lock_cs[type]));
