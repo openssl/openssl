@@ -364,19 +364,31 @@ OPENSSL_instrument_bus2:
 ___
 }
 
+{
+my $buf="%rdx";
+my $num="%rcx";
+my $redzone=win64?8:-8;
+
 print<<___;
 .globl	OPENSSL_ia32_rdrand
 .type	OPENSSL_ia32_rdrand,\@abi-omnipotent
 .align	16
 OPENSSL_ia32_rdrand:
-	mov	\$8,%ecx
-.Loop_rdrand:
+	mov	$arg1,$buf				# buffer to be filled
+	mov	$arg2,$num				# num, will be decreased
+	mov	$arg2,$redzone(%rsp)	# num, to compute total
+
+	jecxz	.Ldone_rand_filling	# nothing to do if $num == 0
+.align	16
+.Loop_rand_fill_buffer:
 	rdrand	%rax
-	jc	.Lbreak_rdrand
-	loop	.Loop_rdrand
-.Lbreak_rdrand:
-	cmp	\$0,%rax
-	cmove	%rcx,%rax
+	jnc	.Ldone_rand_filling		# bail out on first failure
+	mov	%rax,($buf)				# indirect store into buffer pos
+	add	\$8,$buf				# move to next size_t in buffer
+	loop	.Loop_rand_fill_buffer	# --$num (num is "remaining")
+.Ldone_rand_filling:
+	mov	$redzone(%rsp),%rax
+	sub	$num,%rax				# filled = num - remaining
 	ret
 .size	OPENSSL_ia32_rdrand,.-OPENSSL_ia32_rdrand
 
@@ -384,16 +396,24 @@ OPENSSL_ia32_rdrand:
 .type	OPENSSL_ia32_rdseed,\@abi-omnipotent
 .align	16
 OPENSSL_ia32_rdseed:
-	mov	\$8,%ecx
-.Loop_rdseed:
+	mov	$arg1,$buf
+	mov	$arg2,$num
+	mov	$arg2,$redzone(%rsp)
+
+	jecxz	.Ldone_rdseed_filling
+.align	16
+.Loop_rdseed_fill_buffer:
 	rdseed	%rax
-	jc	.Lbreak_rdseed
-	loop	.Loop_rdseed
-.Lbreak_rdseed:
-	cmp	\$0,%rax
-	cmove	%rcx,%rax
+	jnc	.Ldone_rdseed_filling
+	mov	%rax,($buf)
+	add	\$8,$buf
+	loop	.Loop_rdseed_fill_buffer
+.Ldone_rdseed_filling:
+	mov	$redzone(%rsp),%rax
+	sub	$num,%rax
 	ret
 .size	OPENSSL_ia32_rdseed,.-OPENSSL_ia32_rdseed
 ___
+}
 
 close STDOUT;	# flush

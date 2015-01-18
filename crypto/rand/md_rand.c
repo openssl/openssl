@@ -680,9 +680,9 @@ static int ssleay_rand_status(void)
      defined(__x86_64) || defined(__x86_64__) || \
      defined(_M_AMD64) || defined (_M_X64)) && defined(OPENSSL_CPUID_OBJ)
 
-#define RDRAND_CALLS	4
+#define RDRAND_QWORDS	4
 
-size_t OPENSSL_ia32_rdrand(void);
+size_t OPENSSL_ia32_rdrand(size_t* buf, size_t num);
 extern unsigned int OPENSSL_ia32cap_P[];
 
 static void rand_hw_seed(EVP_MD_CTX *ctx)
@@ -690,14 +690,13 @@ static void rand_hw_seed(EVP_MD_CTX *ctx)
 	int i;
 	if (!(OPENSSL_ia32cap_P[1] & (1<<(62-32))))
 		return;
-	for (i = 0; i < RDRAND_CALLS; i++)
-		{
-		size_t rnd;
-		rnd = OPENSSL_ia32_rdrand();
-		if (rnd == 0)
-			return;
-		MD_Update(ctx, (unsigned char *)&rnd, sizeof(size_t));
-		}
+	// if sizeof(size_t) != 8, then adjust buffer size proportionally
+	size_t buf[RDRAND_QWORDS * (8/sizeof(size_t))];
+	#define WANTED_SIZET_ELEMS (sizeof(buf)/sizeof(buf[0]))
+	if (OPENSSL_ia32_rdrand(buf, WANTED_SIZET_ELEMS) < WANTED_SIZET_ELEMS)
+		return;
+	#undef WANTED_SIZET_ELEMS
+	MD_Update(ctx, (unsigned char *)&buf, sizeof(buf));
 	}
 
 /* XOR an existing buffer with random data */
@@ -709,8 +708,7 @@ void rand_hw_xor(unsigned char *buf, size_t num)
 		return;
 	while (num >= sizeof(size_t))
 		{
-		rnd = OPENSSL_ia32_rdrand();
-		if (rnd == 0)
+		if (OPENSSL_ia32_rdrand(&rnd, 1) == 0)
 			return;
 		*((size_t *)buf) ^= rnd;
 		buf += sizeof(size_t);
@@ -718,8 +716,7 @@ void rand_hw_xor(unsigned char *buf, size_t num)
 		}
 	if (num)
 		{
-		rnd = OPENSSL_ia32_rdrand();
-		if (rnd == 0)
+		if (OPENSSL_ia32_rdrand(&rnd, 1) == 0)
 			return;
 		while(num)
 			{

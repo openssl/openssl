@@ -457,29 +457,45 @@ my $max = "ebp";
 &function_end("OPENSSL_instrument_bus2");
 }
 
+{
+my $buf="%edi";
+my $num="%ecx";
+my $redzone=win64?8:-8;
+
 &function_begin_B("OPENSSL_ia32_rdrand");
-	&mov	("ecx",8);
-&set_label("loop");
+	&mov	($buf,&wparam(0));	# buffer to be filled
+	&mov	($num,&wparam(1));
+
+	&jecxz	(&label("done_rand_filling"))	# nothing to do if $num == 0
+&set_label("rand_fill_buffer", 16);
 	&rdrand	("eax");
-	&jc	(&label("break"));
-	&loop	(&label("loop"));
-&set_label("break");
-	&cmp	("eax",0);
-	&cmove	("eax","ecx");
+	&jnc	(&label("done_rand_filling"));	# bail out on first failure
+	&mov	(&DWP(0,$buf),"eax");		# indirect store into buffer pos
+	&add	($buf,4)					# move to next site_t in buffer
+	&loop	(&label("rand_fill_buffer"));	# --$num (cnt is "remaining")
+&set_label("done_rand_filling");
+	&mov	("eax",&wparam(1));
+	&sub	("eax",$num);				# filled = num - remaining
 	&ret	();
 &function_end_B("OPENSSL_ia32_rdrand");
 
 &function_begin_B("OPENSSL_ia32_rdseed");
-	&mov	("ecx",8);
-&set_label("loop");
+	&mov	($buf,&wparam(0));	# buffer to be filled
+	&mov	($num,&wparam(1));
+
+	&jecxz	(&label("done_rdseed_filling"))
+&set_label("rdseed_fill_buffer", 16);
 	&rdseed	("eax");
-	&jc	(&label("break"));
-	&loop	(&label("loop"));
-&set_label("break");
-	&cmp	("eax",0);
-	&cmove	("eax","ecx");
+	&jnc	(&label("done_rdseed_filling"));
+	&mov	(&DWP(0,$buf),"eax");
+	&add	($buf,4)
+	&loop	(&label("rdseed_fill_buffer"));
+&set_label("done_rdseed_filling");
+	&mov	("eax",&wparam(1));
+	&sub	("eax",$num);
 	&ret	();
 &function_end_B("OPENSSL_ia32_rdseed");
+}
 
 &initseg("OPENSSL_cpuid_setup");
 
