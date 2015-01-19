@@ -159,7 +159,8 @@ typedef unsigned int u_int;
 /*#define SSL_HOST_NAME	"193.118.187.102" */
 #define SSL_HOST_NAME	"localhost"
 
-/*#define TEST_CERT "client.pem" */ /* no default cert. */
+/* no default cert. */
+/*#define TEST_CERT "client.pem" */
 
 #undef BUFSIZZ
 #define BUFSIZZ 1024*8

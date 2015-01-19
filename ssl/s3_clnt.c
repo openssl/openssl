@@ -712,7 +712,7 @@ int ssl3_get_server_hello(SSL *s)
 		SSL3_ST_CR_SRVR_HELLO_A,
 		SSL3_ST_CR_SRVR_HELLO_B,
 		-1,
-		20000, /* ?? */
+		20000,
 		&ok);
 
 	if (!ok) return((int)n);
@@ -1932,11 +1932,12 @@ int ssl3_get_server_done(SSL *s)
 	int ok,ret=0;
 	long n;
 
+	/* Second to last param should be very small, like 0 :-) */
 	n=s->method->ssl_get_message(s,
 		SSL3_ST_CR_SRVR_DONE_A,
 		SSL3_ST_CR_SRVR_DONE_B,
 		SSL3_MT_SERVER_DONE,
-		30, /* should be very small, like 0 :-) */
+		30,
 		&ok);
 
 	if (!ok) return((int)n);
@@ -2680,7 +2681,8 @@ int ssl3_check_cert_and_algorithm(SSL *s)
 		{
 		if (check_srvr_ecc_cert_and_alg(sc->peer_pkeys[idx].x509,
 		    s->s3->tmp.new_cipher) == 0) 
-			{ /* check failed */
+			{
+			/* check failed */
 			SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_BAD_ECC_CERT);
 			goto f_err;			
 			}

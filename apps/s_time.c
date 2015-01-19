@@ -141,7 +141,8 @@
 
 #define SSL_CONNECT_NAME	"localhost:4433"
 
-/*#define TEST_CERT "client.pem" */ /* no default cert. */
+/* no default cert. */
+/*#define TEST_CERT "client.pem" */
 
 #undef BUFSIZZ
 #define BUFSIZZ 1024*10
