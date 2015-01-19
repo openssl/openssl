@@ -1045,6 +1045,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 		 * timing-side channel information about how many blocks of
 		 * data we are hashing because that gives an attacker a
 		 * timing-oracle. */
+		 /* Final param == not SSLv3 */
 		ssl3_cbc_digest_record(
 			mac_ctx,
 			md, &md_size,
@@ -1052,7 +1053,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 			rec->length + md_size, orig_len,
 			ssl->s3->read_mac_secret,
 			ssl->s3->read_mac_secret_size,
-			0 /* not SSLv3 */);
+			0);
 		}
 	else
 		{

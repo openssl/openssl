@@ -473,7 +473,8 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 		try_session_cache = 0;
 
 #ifndef OPENSSL_NO_TLSEXT
-	r = tls1_process_ticket(s, session_id, len, limit, &ret); /* sets s->tlsext_ticket_expected */
+	/* sets s->tlsext_ticket_expected */
+	r = tls1_process_ticket(s, session_id, len, limit, &ret);
 	switch (r)
 		{
 	case -1: /* Error during processing */
