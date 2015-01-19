@@ -734,7 +734,7 @@ doapr_outch(
     assert(*sbuffer != NULL || buffer != NULL);
 
     if (buffer) {
-	while (*currlen >= *maxlen) {
+	while (*currlen >= *maxlen - 1 ) {
 	    if (*buffer == NULL) {
 		if (*maxlen == 0)
 		    *maxlen = 1024;
