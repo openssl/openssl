@@ -940,7 +940,7 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 
 #if 0 && !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
 	if (type==SSL3_RT_APPLICATION_DATA && s->compress==NULL &&
-	    !SSL_USE_ETM(s) && SSL_USE_EXPLICIT_IV(s) && /*!SSL_IS_DTLS(s) &&*/
+	    !SSL_USE_ETM(s) && SSL_USE_EXPLICIT_IV(s) &&
 	    EVP_CIPHER_flags(s->enc_write_ctx->cipher)&EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)
 		do {
 		unsigned char aad[13];
