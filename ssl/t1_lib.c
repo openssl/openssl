@@ -944,8 +944,10 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 
 			if (s->s3->client_opaque_prf_input != NULL) /* shouldn't really happen */
 				OPENSSL_free(s->s3->client_opaque_prf_input);
+				
+			/* dummy byte just to get non-NULL */
 			if (s->s3->client_opaque_prf_input_len == 0)
-				s->s3->client_opaque_prf_input = OPENSSL_malloc(1); /* dummy byte just to get non-NULL */
+				s->s3->client_opaque_prf_input = OPENSSL_malloc(1);
 			else
 				s->s3->client_opaque_prf_input = BUF_memdup(sdata, s->s3->client_opaque_prf_input_len);
 			if (s->s3->client_opaque_prf_input == NULL)
