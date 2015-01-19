@@ -776,13 +776,14 @@ int n_ssl3_mac(SSL *ssl, unsigned char *md, int send)
 		header[j++] = rec->length >> 8;
 		header[j++] = rec->length & 0xff;
 
+		/* Final param == is SSLv3 */
 		ssl3_cbc_digest_record(
 			hash,
 			md, &md_size,
 			header, rec->input,
 			rec->length + md_size, orig_len,
 			mac_sec, md_size,
-			1 /* is SSLv3 */);
+			1);
 		}
 	else
 		{

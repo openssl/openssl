@@ -334,10 +334,11 @@ int ssl23_get_client_hello(SSL *s)
 
 				}
 			}
+		/* p[4] < 5 ... silly record length? */
 		else if ((p[0] == SSL3_RT_HANDSHAKE) &&
 			 (p[1] == SSL3_VERSION_MAJOR) &&
 			 (p[5] == SSL3_MT_CLIENT_HELLO) &&
-			 ((p[3] == 0 && p[4] < 5 /* silly record length? */)
+			 ((p[3] == 0 && p[4] < 5)
 				|| (p[9] >= p[1])))
 			{
 			/*
@@ -478,8 +479,10 @@ int ssl23_get_client_hello(SSL *s)
 		if (j <= 0) return(j);
 
 		ssl3_finish_mac(s, s->packet+2, s->packet_length-2);
+
+		/* CLIENT-HELLO */
 		if (s->msg_callback)
-			s->msg_callback(0, SSL2_VERSION, 0, s->packet+2, s->packet_length-2, s, s->msg_callback_arg); /* CLIENT-HELLO */
+			s->msg_callback(0, SSL2_VERSION, 0, s->packet+2, s->packet_length-2, s, s->msg_callback_arg);
 
 		p=s->packet;
 		p+=5;

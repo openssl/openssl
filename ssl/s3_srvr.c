@@ -1103,8 +1103,9 @@ int ssl3_get_client_hello(SSL *s)
 					}
 				/* else cookie verification succeeded */
 				}
+			/* default verification */
 			else if ( memcmp(s->d1->rcvd_cookie, s->d1->cookie, 
-						  s->d1->cookie_len) != 0) /* default verification */
+						  s->d1->cookie_len) != 0)
 				{
 					al=SSL_AD_HANDSHAKE_FAILURE;
 					SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, 
@@ -2195,7 +2196,7 @@ int ssl3_get_client_key_exchange(SSL *s)
 		SSL3_ST_SR_KEY_EXCH_A,
 		SSL3_ST_SR_KEY_EXCH_B,
 		SSL3_MT_CLIENT_KEY_EXCHANGE,
-		2048, /* ??? */
+		2048,
 		&ok);
 
 	if (!ok) return((int)n);
@@ -3627,11 +3628,12 @@ int ssl3_get_next_proto(SSL *s)
 		return -1;
 		}
 
+	/* See the payload format below */
 	n=s->method->ssl_get_message(s,
 		SSL3_ST_SR_NEXT_PROTO_A,
 		SSL3_ST_SR_NEXT_PROTO_B,
 		SSL3_MT_NEXT_PROTO,
-		514,  /* See the payload format below */
+		514,
 		&ok);
 
 	if (!ok)
