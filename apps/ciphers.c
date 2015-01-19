@@ -203,9 +203,15 @@ int MAIN(int argc, char **argv)
 				int id3 = (int)(id & 0xffL);
 				
 				if ((id & 0xff000000L) == 0x03000000L)
-					BIO_printf(STDout, "          0x%02X,0x%02X - ", id2, id3); /* SSL3 cipher */
+					{
+					/* SSL3 cipher */
+					BIO_printf(STDout, "          0x%02X,0x%02X - ", id2, id3);
+					}
 				else
-					BIO_printf(STDout, "0x%02X,0x%02X,0x%02X,0x%02X - ", id0, id1, id2, id3); /* whatever */
+					{
+					/* whatever */
+					BIO_printf(STDout, "0x%02X,0x%02X,0x%02X,0x%02X - ", id0, id1, id2, id3);
+					}
 				}
 #ifndef OPENSSL_NO_SSL_TRACE
 			if (stdname)

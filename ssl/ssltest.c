@@ -2788,9 +2788,10 @@ static int verify_callback(int ok, X509_STORE_CTX *ctx)
 
 static void process_proxy_debug(int indent, const char *format, ...)
 	{
+	/* That's 80 > */
 	static const char indentation[] =
 		">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-		">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"; /* That's 80 > */
+		">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>";
 	char my_format[256];
 	va_list args;
 

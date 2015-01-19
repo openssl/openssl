@@ -809,8 +809,9 @@ max(int a, int b)
     return a > b ? a : b;
 }
 
+/* timeout, -1 means no timeout */
 static void
-tls_sockets_select(int read_select_1, int read_select_2, int write_select_1, int write_select_2, int seconds /* timeout, -1 means no timeout */)
+tls_sockets_select(int read_select_1, int read_select_2, int write_select_1, int write_select_2, int seconds)
 {
     int maxfd, n;
     fd_set reads, writes;
