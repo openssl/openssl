@@ -35,7 +35,7 @@ COMMENTS=false
 # our own indent profile, which is at a well known location
 INDENT_PROFILE="$HERE/indent.pro"
 export INDENT_PROFILE
-if [ -f "$INDENT_PROFILE" ]; then
+if [ ! -f "$INDENT_PROFILE" ]; then
   echo "$0: unable to locate the openssl indent.pro file" >&2
   exit 1
 fi
