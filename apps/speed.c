@@ -423,27 +423,27 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_CAST
 	CAST_KEY cast_ks;
 #endif
-	static const unsigned char key16[16]=
-		{0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,
+	static const unsigned char key16[16]= {
+		0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,
 		 0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12};
 #ifndef OPENSSL_NO_AES
-	static const unsigned char key24[24]=
-		{0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,
+	static const unsigned char key24[24]= {
+		 0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,
 		 0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,
 		 0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34};
-	static const unsigned char key32[32]=
-		{0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,
+	static const unsigned char key32[32]= {
+		 0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,
 		 0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,
 		 0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34,
 		 0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34,0x56};
 #endif
 #ifndef OPENSSL_NO_CAMELLIA
-	static const unsigned char ckey24[24]=
-		{0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,
+	static const unsigned char ckey24[24]= {
+		 0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,
 		 0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,
 		 0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34};
-	static const unsigned char ckey32[32]=
-		{0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,
+	static const unsigned char ckey32[32]= {
+		 0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,
 		 0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,
 		 0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34,
 		 0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34,0x56};
@@ -456,9 +456,9 @@ int MAIN(int argc, char **argv)
 	unsigned char DES_iv[8];
 	unsigned char iv[2*MAX_BLOCK_SIZE/8];
 #ifndef OPENSSL_NO_DES
-	static DES_cblock key ={0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0};
-	static DES_cblock key2={0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12};
-	static DES_cblock key3={0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34};
+	static DES_cblock key = { 0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0 };
+	static DES_cblock key2= { 0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12 };
+	static DES_cblock key3= { 0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34 };
 	DES_key_schedule sch;
 	DES_key_schedule sch2;
 	DES_key_schedule sch3;
@@ -529,9 +529,10 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_RSA
 	RSA *rsa_key[RSA_NUM];
 	long rsa_c[RSA_NUM][2];
-	static unsigned int rsa_bits[RSA_NUM]={512,1024,2048,4096};
-	static unsigned char *rsa_data[RSA_NUM]=
-		{test512,test1024,test2048,test4096};
+	static unsigned int rsa_bits[RSA_NUM]={
+		512,1024,2048,4096};
+	static unsigned char *rsa_data[RSA_NUM]={
+		test512,test1024,test2048,test4096};
 	static int rsa_data_length[RSA_NUM]={
 		sizeof(test512),sizeof(test1024),
 		sizeof(test2048),sizeof(test4096)};
@@ -1096,13 +1097,15 @@ int MAIN(int argc, char **argv)
 			BIO_printf(bio_err,"dsa512   dsa1024  dsa2048\n");
 #endif
 #ifndef OPENSSL_NO_ECDSA
-			BIO_printf(bio_err,"ecdsap160 ecdsap192 ecdsap224 ecdsap256 ecdsap384 ecdsap521\n");
+			BIO_printf(bio_err,"ecdsap160 ecdsap192 ecdsap224 "
+				"ecdsap256 ecdsap384 ecdsap521\n");
 			BIO_printf(bio_err,"ecdsak163 ecdsak233 ecdsak283 ecdsak409 ecdsak571\n");
 			BIO_printf(bio_err,"ecdsab163 ecdsab233 ecdsab283 ecdsab409 ecdsab571\n");
 			BIO_printf(bio_err,"ecdsa\n");
 #endif
 #ifndef OPENSSL_NO_ECDH
-			BIO_printf(bio_err,"ecdhp160  ecdhp192  ecdhp224  ecdhp256  ecdhp384  ecdhp521\n");
+			BIO_printf(bio_err,"ecdhp160  ecdhp192  ecdhp224 "
+				"ecdhp256  ecdhp384  ecdhp521\n");
 			BIO_printf(bio_err,"ecdhk163  ecdhk233  ecdhk283  ecdhk409  ecdhk571\n");
 			BIO_printf(bio_err,"ecdhb163  ecdhb233  ecdhb283  ecdhb409  ecdhb571\n");
 			BIO_printf(bio_err,"ecdh\n");
@@ -1142,16 +1145,27 @@ int MAIN(int argc, char **argv)
 			BIO_printf(bio_err,"\n");
 			BIO_printf(bio_err,"Available options:\n");
 #if defined(TIMES) || defined(USE_TOD)
-			BIO_printf(bio_err,"-elapsed        measure time in real time instead of CPU user time.\n");
+			BIO_printf(bio_err,"-elapsed        "
+				"measure time in real time instead of CPU user time.\n");
 #endif
 #ifndef OPENSSL_NO_ENGINE
-			BIO_printf(bio_err,"-engine e       use engine e, possibly a hardware device.\n");
+			BIO_printf(bio_err,
+				"-engine e       "
+				"use engine e, possibly a hardware device.\n");
 #endif
-			BIO_printf(bio_err,"-evp e          use EVP e.\n");
-			BIO_printf(bio_err,"-decrypt        time decryption instead of encryption (only EVP).\n");
-			BIO_printf(bio_err,"-mr             produce machine readable output.\n");
+			BIO_printf(bio_err,
+				"-evp e          "
+				"use EVP e.\n");
+			BIO_printf(bio_err,
+				"-decrypt        "
+				"time decryption instead of encryption (only EVP).\n");
+			BIO_printf(bio_err,
+				"-mr             "
+				"produce machine readable output.\n");
 #ifndef NO_FORK
-			BIO_printf(bio_err,"-multi n        run n benchmarks in parallel.\n");
+			BIO_printf(bio_err,
+				"-multi n        "
+				"run n benchmarks in parallel.\n");
 #endif
 			goto end;
 			}
@@ -1189,7 +1203,9 @@ int MAIN(int argc, char **argv)
 		if (doit[i]) pr_header++;
 
 	if (usertime == 0 && !mr)
-		BIO_printf(bio_err,"You have chosen to measure elapsed time instead of user CPU time.\n");
+		BIO_printf(bio_err,
+			"You have chosen to measure elapsed time "
+			"instead of user CPU time.\n");
 
 #ifndef OPENSSL_NO_RSA
 	for (i=0; i<RSA_NUM; i++)
@@ -1206,7 +1222,8 @@ int MAIN(int argc, char **argv)
 #if 0
 		else
 			{
-			BIO_printf(bio_err,mr ? "+RK:%d:"
+			BIO_printf(bio_err,
+				   mr ? "+RK:%d:"
 				   : "Loaded RSA key, %d bit modulus and e= 0x",
 				   BN_num_bits(rsa_key[i]->n));
 			BN_print(bio_err,rsa_key[i]->e);
@@ -2038,7 +2055,7 @@ int MAIN(int argc, char **argv)
 			pkey_print_message("private","rsa",
 				rsa_c[j][0],rsa_bits[j],
 				RSA_SECONDS);
-/*			RSA_blinding_on(rsa_key[j],NULL); */
+			/* RSA_blinding_on(rsa_key[j],NULL); */
 			Time_F(START);
 			for (count=0,run=1; COND(rsa_c[j][0]); count++)
 				{
@@ -2054,7 +2071,8 @@ int MAIN(int argc, char **argv)
 					}
 				}
 			d=Time_F(STOP);
-			BIO_printf(bio_err,mr ? "+R1:%ld:%d:%.2f\n"
+			BIO_printf(bio_err,
+				   mr ? "+R1:%ld:%d:%.2f\n"
 				   : "%ld %d bit private RSA's in %.2fs\n",
 				   count,rsa_bits[j],d);
 			rsa_results[j][0]=d/(double)count;
@@ -2089,7 +2107,8 @@ int MAIN(int argc, char **argv)
 					}
 				}
 			d=Time_F(STOP);
-			BIO_printf(bio_err,mr ? "+R2:%ld:%d:%.2f\n"
+			BIO_printf(bio_err,
+				   mr ? "+R2:%ld:%d:%.2f\n"
 				   : "%ld %d bit public RSA's in %.2fs\n",
 				   count,rsa_bits[j],d);
 			rsa_results[j][1]=d/(double)count;
@@ -2118,8 +2137,9 @@ int MAIN(int argc, char **argv)
 		int ret;
 
 		if (!dsa_doit[j]) continue;
-/*		DSA_generate_key(dsa_key[j]); */
-/*		DSA_sign_setup(dsa_key[j],NULL); */
+
+		/* DSA_generate_key(dsa_key[j]); */
+		/* DSA_sign_setup(dsa_key[j],NULL); */
 		ret=DSA_sign(EVP_PKEY_DSA,buf,20,buf2,
 			&kk,dsa_key[j]);
 		if (ret == 0)
@@ -2148,7 +2168,8 @@ int MAIN(int argc, char **argv)
 					}
 				}
 			d=Time_F(STOP);
-			BIO_printf(bio_err,mr ? "+R3:%ld:%d:%.2f\n"
+			BIO_printf(bio_err,
+				   mr ? "+R3:%ld:%d:%.2f\n"
 				   : "%ld %d bit DSA signs in %.2fs\n",
 				   count,dsa_bits[j],d);
 			dsa_results[j][0]=d/(double)count;
@@ -2183,7 +2204,8 @@ int MAIN(int argc, char **argv)
 					}
 				}
 			d=Time_F(STOP);
-			BIO_printf(bio_err,mr ? "+R4:%ld:%d:%.2f\n"
+			BIO_printf(bio_err,
+				   mr ? "+R4:%ld:%d:%.2f\n"
 				   : "%ld %d bit DSA verify in %.2fs\n",
 				   count,dsa_bits[j],d);
 			dsa_results[j][1]=d/(double)count;
@@ -2256,7 +2278,8 @@ int MAIN(int argc, char **argv)
 					}
 				d=Time_F(STOP);
 
-				BIO_printf(bio_err, mr ? "+R5:%ld:%d:%.2f\n" :
+				BIO_printf(bio_err,
+					mr ? "+R5:%ld:%d:%.2f\n" :
 					"%ld %d bit ECDSA signs in %.2fs \n", 
 					count, test_curves_bits[j], d);
 				ecdsa_results[j][0]=d/(double)count;
@@ -2291,7 +2314,8 @@ int MAIN(int argc, char **argv)
 						}
 					}
 				d=Time_F(STOP);
-				BIO_printf(bio_err, mr? "+R6:%ld:%d:%.2f\n"
+				BIO_printf(bio_err,
+						mr ? "+R6:%ld:%d:%.2f\n"
 						: "%ld %d bit ECDSA verify in %.2fs\n",
 				count, test_curves_bits[j], d);
 				ecdsa_results[j][1]=d/(double)count;
@@ -2337,8 +2361,10 @@ int MAIN(int argc, char **argv)
 				}
 			else
 				{
-				/* If field size is not more than 24 octets, then use SHA-1 hash of result;
-				 * otherwise, use result (see section 4.8 of draft-ietf-tls-ecc-03.txt).
+				/* If field size is not more than 24 octets,
+				 * then use SHA-1 hash of result; otherwise,
+				 * use result (see section 4.8 of
+				 * draft-ietf-tls-ecc-03.txt).
 				 */
 				int field_size, outlen;
 				void *(*kdf)(const void *in, size_t inlen, void *out, size_t *xoutlen);
@@ -2353,10 +2379,12 @@ int MAIN(int argc, char **argv)
 					outlen = (field_size+7)/8;
 					kdf = NULL;
 					}
-				secret_size_a = ECDH_compute_key(secret_a, outlen,
+				secret_size_a =
+					ECDH_compute_key(secret_a, outlen,
 					EC_KEY_get0_public_key(ecdh_b[j]),
 					ecdh_a[j], kdf);
-				secret_size_b = ECDH_compute_key(secret_b, outlen,
+				secret_size_b =
+					ECDH_compute_key(secret_b, outlen,
 					EC_KEY_get0_public_key(ecdh_a[j]),
 					ecdh_b[j], kdf);
 				if (secret_size_a != secret_size_b) 
@@ -2392,7 +2420,8 @@ int MAIN(int argc, char **argv)
 					ecdh_a[j], kdf);
 					}
 				d=Time_F(STOP);
-				BIO_printf(bio_err, mr ? "+R7:%ld:%d:%.2f\n" :"%ld %d-bit ECDH ops in %.2fs\n",
+				BIO_printf(bio_err,
+					mr ? "+R7:%ld:%d:%.2f\n" :"%ld %d-bit ECDH ops in %.2fs\n",
 				count, test_curves_bits[j], d);
 				ecdh_results[j][0]=d/(double)count;
 				rsa_count=count;
@@ -2596,12 +2625,14 @@ end:
 static void print_message(const char *s, long num, int length)
 	{
 #ifdef SIGALRM
-	BIO_printf(bio_err,mr ? "+DT:%s:%d:%d\n"
+	BIO_printf(bio_err,
+		   mr ? "+DT:%s:%d:%d\n"
 		   : "Doing %s for %ds on %d size blocks: ",s,SECONDS,length);
 	(void)BIO_flush(bio_err);
 	alarm(SECONDS);
 #else
-	BIO_printf(bio_err,mr ? "+DN:%s:%ld:%d\n"
+	BIO_printf(bio_err,
+		   mr ? "+DN:%s:%ld:%d\n"
 		   : "Doing %s %ld times on %d size blocks: ",s,num,length);
 	(void)BIO_flush(bio_err);
 #endif
@@ -2614,12 +2645,14 @@ static void pkey_print_message(const char *str, const char *str2, long num,
 	int bits, int tm)
 	{
 #ifdef SIGALRM
-	BIO_printf(bio_err,mr ? "+DTP:%d:%s:%s:%d\n"
+	BIO_printf(bio_err,
+			   mr ? "+DTP:%d:%s:%s:%d\n"
 			   : "Doing %d bit %s %s's for %ds: ",bits,str,str2,tm);
 	(void)BIO_flush(bio_err);
 	alarm(tm);
 #else
-	BIO_printf(bio_err,mr ? "+DNP:%ld:%d:%s:%s\n"
+	BIO_printf(bio_err,
+			   mr ? "+DNP:%ld:%d:%s:%s\n"
 			   : "Doing %ld %d bit %s %s's: ",num,bits,str,str2);
 	(void)BIO_flush(bio_err);
 #endif
@@ -2630,7 +2663,8 @@ static void pkey_print_message(const char *str, const char *str2, long num,
 
 static void print_result(int alg,int run_no,int count,double time_used)
 	{
-	BIO_printf(bio_err,mr ? "+R:%d:%s:%f\n"
+	BIO_printf(bio_err,
+		   mr ? "+R:%d:%s:%f\n"
 		   : "%d %s's in %.2fs\n",count,names[alg],time_used);
 	results[alg][run_no]=((double)count)/time_used*lengths[run_no];
 	}
@@ -2905,7 +2939,8 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher)
 				}
 			}
 		d=Time_F(STOP);
-		BIO_printf(bio_err,mr ? "+R:%d:%s:%f\n"
+		BIO_printf(bio_err,
+			mr ? "+R:%d:%s:%f\n"
 			: "%d %s's in %.2fs\n",count,"evp",d);
 		results[D_EVP][j]=((double)count)/d*mblengths[j];
 		}
