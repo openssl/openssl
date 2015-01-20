@@ -499,7 +499,7 @@ X509_OBJECT *X509_OBJECT_retrieve_by_subject(STACK_OF(X509_OBJECT) *h, int type,
 	return sk_X509_OBJECT_value(h, idx);
 	}
 
-STACK_OF(X509)* X509_STORE_get1_certs(X509_STORE_CTX *ctx, X509_NAME *nm)
+STACK_OF(X509) *X509_STORE_get1_certs(X509_STORE_CTX *ctx, X509_NAME *nm)
 	{
 	int i, idx, cnt;
 	STACK_OF(X509) *sk;
@@ -548,7 +548,7 @@ STACK_OF(X509)* X509_STORE_get1_certs(X509_STORE_CTX *ctx, X509_NAME *nm)
 
 	}
 
-STACK_OF(X509_CRL)* X509_STORE_get1_crls(X509_STORE_CTX *ctx, X509_NAME *nm)
+STACK_OF(X509_CRL) *X509_STORE_get1_crls(X509_STORE_CTX *ctx, X509_NAME *nm)
 	{
 	int i, idx, cnt;
 	STACK_OF(X509_CRL) *sk;
