@@ -4787,7 +4787,19 @@ int ssl3_write(SSL *s, const void *buf, int len)
 		{
 		ret=s->method->ssl_write_bytes(s,SSL3_RT_APPLICATION_DATA,
 			buf,len);
-		if (ret <= 0) return(ret);
+		if (ret <= 0)
+			{
+			if (s->s3->in_read_app_data == 2)
+				{
+				s->in_handshake++;
+				ret=s->method->ssl_write_bytes(s,
+					SSL3_RT_APPLICATION_DATA,buf,len);
+				s->in_handshake--;
+				if (ret <= 0) return(ret);
+				}
+			else
+				return(ret);
+			}
 		}
 
 	return(ret);

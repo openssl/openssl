@@ -1704,35 +1704,8 @@ start:
 		SSLerr(SSL_F_SSL3_READ_BYTES,ERR_R_INTERNAL_ERROR);
 		goto f_err;
 	case SSL3_RT_APPLICATION_DATA:
-		/* At this point, we were expecting handshake data,
-		 * but have application data.  If the library was
-		 * running inside ssl3_read() (i.e. in_read_app_data
-		 * is set) and it makes sense to read application data
-		 * at this point (session renegotiation not yet started),
-		 * we will indulge it.
-		 */
-		if (s->s3->in_read_app_data &&
-			(s->s3->total_renegotiations != 0) &&
-			((
-				(s->state & SSL_ST_CONNECT) &&
-				(s->state >= SSL3_ST_CW_CLNT_HELLO_A) &&
-				(s->state <= SSL3_ST_CR_SRVR_HELLO_A)
-				) || (
-					(s->state & SSL_ST_ACCEPT) &&
-					(s->state <= SSL3_ST_SW_HELLO_REQ_A) &&
-					(s->state >= SSL3_ST_SR_CLNT_HELLO_A)
-					)
-				))
-			{
-			s->s3->in_read_app_data=2;
-			return(-1);
-			}
-		else
-			{
-			al=SSL_AD_UNEXPECTED_MESSAGE;
-			SSLerr(SSL_F_SSL3_READ_BYTES,SSL_R_UNEXPECTED_RECORD);
-			goto f_err;
-			}
+		s->s3->in_read_app_data=2;
+		return(-1);
 		}
 	/* not reached */
 
