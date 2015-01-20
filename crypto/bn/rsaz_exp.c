@@ -63,10 +63,14 @@ void rsaz_1024_red2norm_avx2(void *norm,const void *red);
 # define ALIGN64	/* not fatal, might hurt performance a little */
 #endif
 
-ALIGN64 static const BN_ULONG one[40] =
-	{1,0,0,    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-ALIGN64 static const BN_ULONG two80[40] =
-	{0,0,1<<22,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+ALIGN64 static const BN_ULONG one[40] = {
+	1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+};
+ALIGN64 static const BN_ULONG two80[40] = {
+	0,0,1<<22,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+};
 
 void RSAZ_1024_mod_exp_avx2(BN_ULONG result_norm[16],
 	const BN_ULONG base_norm[16], const BN_ULONG exponent[16],
@@ -74,9 +78,9 @@ void RSAZ_1024_mod_exp_avx2(BN_ULONG result_norm[16],
 {
 	unsigned char	 storage[320*3+32*9*16+64];	/* 5.5KB */
 	unsigned char	*p_str = storage + (64-((size_t)storage%64));
-	unsigned char	*a_inv, *m, *result,
-			*table_s = p_str+320*3,
-			*R2      = table_s;	/* borrow */
+	unsigned char	*a_inv, *m, *result;
+	unsigned char	*table_s = p_str+320*3;
+	unsigned char	*R2      = table_s;	/* borrow */
 	int index;
 	int wvalue;
 
@@ -270,8 +274,8 @@ void RSAZ_512_mod_exp(BN_ULONG result[8],
 {
 	unsigned char	 storage[16*8*8+64*2+64];	/* 1.2KB */
 	unsigned char	*table = storage + (64-((size_t)storage%64));
-	BN_ULONG	*a_inv = (BN_ULONG *)(table+16*8*8),
-			*temp  = (BN_ULONG *)(table+16*8*8+8*8);
+	BN_ULONG	*a_inv = (BN_ULONG *)(table+16*8*8);
+	BN_ULONG	*temp  = (BN_ULONG *)(table+16*8*8+8*8);
 	unsigned char	*p_str = (unsigned char*)exponent;
 	int index;
 	unsigned int wvalue;
