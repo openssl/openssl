@@ -302,11 +302,11 @@ int main(int argc, char *argv[])
 	BN_CTX_free(ctx);
 	BIO_free(out);
 
-/**/
 	EXIT(0);
 err:
 	BIO_puts(out,"1\n"); /* make sure the Perl script fed by bc notices
-	                      * the failure, see test_bn in test/Makefile.ssl*/
+	                      * the failure, see test_bn in test/Makefile.ssl
+			      */
 	(void)BIO_flush(out);
 	ERR_load_crypto_strings();
 	ERR_print_errors_fp(stderr);
@@ -716,7 +716,8 @@ int test_sqr(BIO *bp, BN_CTX *ctx)
 
 	/* Regression test for a BN_sqr overflow bug. */
 	BN_hex2bn(&a,
-		"80000000000000008000000000000001FFFFFFFFFFFFFFFE0000000000000000");
+		"80000000000000008000000000000001"
+		"FFFFFFFFFFFFFFFE0000000000000000");
 	BN_sqr(c, a, ctx);
 	if (bp != NULL)
 		{
@@ -740,7 +741,8 @@ int test_sqr(BIO *bp, BN_CTX *ctx)
 
 	/* Regression test for a BN_sqr overflow bug. */
 	BN_hex2bn(&a,
-		"80000000000000000000000080000001FFFFFFFE000000000000000000000000");
+		"80000000000000000000000080000001"
+		"FFFFFFFE000000000000000000000000");
 	BN_sqr(c, a, ctx);
 	if (bp != NULL)
 		{
@@ -789,8 +791,8 @@ int test_mont(BIO *bp, BN_CTX *ctx)
 	if (mont == NULL)
 		return 0;
 
-	BN_bntest_rand(&a,100,0,0); /**/
-	BN_bntest_rand(&b,100,0,0); /**/
+	BN_bntest_rand(&a,100,0,0);
+	BN_bntest_rand(&b,100,0,0);
 	for (i=0; i<num2; i++)
 		{
 		int bits = (200*(i+1))/num2;
@@ -806,8 +808,8 @@ int test_mont(BIO *bp, BN_CTX *ctx)
 		BN_to_montgomery(&A,&a,mont,ctx);
 		BN_to_montgomery(&B,&b,mont,ctx);
 
-		BN_mod_mul_montgomery(&c,&A,&B,mont,ctx);/**/
-		BN_from_montgomery(&A,&c,mont,ctx);/**/
+		BN_mod_mul_montgomery(&c,&A,&B,mont,ctx);
+		BN_from_montgomery(&A,&c,mont,ctx);
 		if (bp != NULL)
 			{
 			if (!results)
@@ -858,13 +860,13 @@ int test_mod(BIO *bp, BN_CTX *ctx)
 	d=BN_new();
 	e=BN_new();
 
-	BN_bntest_rand(a,1024,0,0); /**/
+	BN_bntest_rand(a,1024,0,0);
 	for (i=0; i<num0; i++)
 		{
-		BN_bntest_rand(b,450+i*10,0,0); /**/
+		BN_bntest_rand(b,450+i*10,0,0);
 		a->neg=rand_neg();
 		b->neg=rand_neg();
-		BN_mod(c,a,b,ctx);/**/
+		BN_mod(c,a,b,ctx);
 		if (bp != NULL)
 			{
 			if (!results)
@@ -905,11 +907,11 @@ int test_mod_mul(BIO *bp, BN_CTX *ctx)
 	e=BN_new();
 
 	for (j=0; j<3; j++) {
-	BN_bntest_rand(c,1024,0,0); /**/
+	BN_bntest_rand(c,1024,0,0);
 	for (i=0; i<num0; i++)
 		{
-		BN_bntest_rand(a,475+i*10,0,0); /**/
-		BN_bntest_rand(b,425+i*11,0,0); /**/
+		BN_bntest_rand(a,475+i*10,0,0);
+		BN_bntest_rand(b,425+i*11,0,0);
 		a->neg=rand_neg();
 		b->neg=rand_neg();
 		if (!BN_mod_mul(e,a,b,c,ctx))
@@ -978,8 +980,8 @@ int test_mod_exp(BIO *bp, BN_CTX *ctx)
 	BN_bntest_rand(c,30,0,1); /* must be odd for montgomery */
 	for (i=0; i<num2; i++)
 		{
-		BN_bntest_rand(a,20+i*5,0,0); /**/
-		BN_bntest_rand(b,2+i,0,0); /**/
+		BN_bntest_rand(a,20+i*5,0,0);
+		BN_bntest_rand(b,2+i,0,0);
 
 		if (!BN_mod_exp(d,a,b,c,ctx))
 			return(0);
@@ -1029,8 +1031,8 @@ int test_mod_exp_mont_consttime(BIO *bp, BN_CTX *ctx)
 	BN_bntest_rand(c,30,0,1); /* must be odd for montgomery */
 	for (i=0; i<num2; i++)
 		{
-		BN_bntest_rand(a,20+i*5,0,0); /**/
-		BN_bntest_rand(b,2+i,0,0); /**/
+		BN_bntest_rand(a,20+i*5,0,0);
+		BN_bntest_rand(b,2+i,0,0);
 
 		if (!BN_mod_exp_mont_consttime(d,a,b,c,ctx,NULL))
 			return(00);
@@ -1080,8 +1082,8 @@ int test_exp(BIO *bp, BN_CTX *ctx)
 
 	for (i=0; i<num2; i++)
 		{
-		BN_bntest_rand(a,20+i*5,0,0); /**/
-		BN_bntest_rand(b,2+i,0,0); /**/
+		BN_bntest_rand(a,20+i*5,0,0);
+		BN_bntest_rand(b,2+i,0,0);
 
 		if (BN_exp(d,a,b,ctx) <= 0)
 			return(0);
@@ -1888,7 +1890,7 @@ int test_lshift(BIO *bp,BN_CTX *ctx,BIGNUM *a_)
 	else
 	    {
 	    a=BN_new();
-	    BN_bntest_rand(a,200,0,0); /**/
+	    BN_bntest_rand(a,200,0,0);
 	    a->neg=rand_neg();
 	    }
 	for (i=0; i<num0; i++)
@@ -1940,7 +1942,7 @@ int test_lshift1(BIO *bp)
 	b=BN_new();
 	c=BN_new();
 
-	BN_bntest_rand(a,200,0,0); /**/
+	BN_bntest_rand(a,200,0,0);
 	a->neg=rand_neg();
 	for (i=0; i<num0; i++)
 		{
@@ -1984,7 +1986,7 @@ int test_rshift(BIO *bp,BN_CTX *ctx)
 	e=BN_new();
 	BN_one(c);
 
-	BN_bntest_rand(a,200,0,0); /**/
+	BN_bntest_rand(a,200,0,0);
 	a->neg=rand_neg();
 	for (i=0; i<num0; i++)
 		{
@@ -2027,7 +2029,7 @@ int test_rshift1(BIO *bp)
 	b=BN_new();
 	c=BN_new();
 
-	BN_bntest_rand(a,200,0,0); /**/
+	BN_bntest_rand(a,200,0,0);
 	a->neg=rand_neg();
 	for (i=0; i<num0; i++)
 		{
