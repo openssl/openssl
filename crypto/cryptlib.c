@@ -663,7 +663,8 @@ const char *CRYPTO_get_lock_name(int type)
 
 #if	defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
 	defined(__INTEL__) || \
-	defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
+	defined(__x86_64) || defined(__x86_64__) || \
+	defined(_M_AMD64) || defined(_M_X64)
 
 extern unsigned int  OPENSSL_ia32cap_P[4];
 unsigned long *OPENSSL_ia32cap_loc(void)
@@ -857,7 +858,8 @@ void OPENSSL_showfatal (const char *fmta,...)
 
     if ((h=GetStdHandle(STD_ERROR_HANDLE)) != NULL &&
 	GetFileType(h)!=FILE_TYPE_UNKNOWN)
-    {	/* must be console application */
+    {
+	/* must be console application */
 	int   len;
 	DWORD out;
 
