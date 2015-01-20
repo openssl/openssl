@@ -30,33 +30,12 @@ DONT=false
 STOPARGS=false
 COMMENTS=false
 
-# locate the indent configuration file to use which generally will be 
-# in the current directory but might be elsewhere and we want consistent
-# use of the file so we set the env var to point directly to the file in
-# our priority order
-if [ -z "$INDENT_PROFILE" ]; then
-  for i in . ../openssl $HOME
-  do
-    if [ -f "$i/.indent.pro" ]; then
-      INDENT_PROFILE="$i/.indent.pro"
-      export INDENT_PROFILE
-      break
-    fi
-  done
-fi
-
-if [ -z "$INDENT_PROFILE" ]; then
-  # If at the top of the source tree, try the file in util
-  if [ -f "e_os.h" ]; then 
-    f=`/bin/pwd`/util/indent.pro
-    if [ -f $f ]; then
-      INDENT_PROFILE=$f
-      export INDENT_PROFILE
-    fi
-  fi
-fi
-if [ -z "$INDENT_PROFILE" ]; then
-  echo "$0: unable to locate .indent.pro file " >&2
+# for this exercise, we want to force the openssl style, so we roll
+# our own indent profile, which is at a well known location
+INDENT_PROFILE="`dirname $0`/indent.pro"
+export INDENT_PROFILE
+if [ -f "$INDENT_PROFILE" ]; then
+  echo "$0: unable to locate the openssl indent.pro file" >&2
   exit 1
 fi
 
