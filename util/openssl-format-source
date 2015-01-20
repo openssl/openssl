@@ -30,6 +30,7 @@ VERBOSE=false
 DONT=false
 STOPARGS=false
 COMMENTS=false
+DEBUG=""
 
 # for this exercise, we want to force the openssl style, so we roll
 # our own indent profile, which is at a well known location
@@ -55,6 +56,8 @@ do
       	  INDENT_ARGS="-fc1 -fca -cdb -sc"; 
 	  continue;;
       -nc) COMMENTS="true";
+	  continue;;
+      -d) DEBUG='eval tee "$j.pre" |'
 	  continue;;
     esac
   fi
@@ -120,7 +123,7 @@ do
 	      -e '/ASN1_(ITEM_ref|ITEM_ptr|ITEM_rptr|PCTX)/ || s/^((ASN1|ADB)_[^\*]*[){=,]+[ \t]*)$/\/**INDENT-OFF**\/\n$1/;' \
 	      -e 's/^(} (ASN1|ADB)_[^\*]*[\){=,;]+)$/$1\n\/**INDENT-ON**\//;' \
 	      | \
-	      indent $INDENT_ARGS | \
+	      $DEBUG indent $INDENT_ARGS | \
 	      perl -np \
 		-e 's/^([ \t]*)\/\*-(.*)\*\/[ \t]*$/$1\/*$2*\//;' \
 		-e 's/^\/\*-((Copyright|=|----).*)$/\/* $1/;' \
