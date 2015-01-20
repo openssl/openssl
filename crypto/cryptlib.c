@@ -270,7 +270,8 @@ int CRYPTO_add_lock(int *pointer, int amount, int type, const char *file,
 
 #if	defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
 	defined(__INTEL__) || \
-	defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
+	defined(__x86_64) || defined(__x86_64__) || \
+	defined(_M_AMD64) || defined(_M_X64)
 
 unsigned long  OPENSSL_ia32cap_P=0;
 unsigned long *OPENSSL_ia32cap_loc(void) { return &OPENSSL_ia32cap_P; }
@@ -460,7 +461,8 @@ void OPENSSL_showfatal (const char *fmta,...)
 
     if ((h=GetStdHandle(STD_ERROR_HANDLE)) != NULL &&
 	GetFileType(h)!=FILE_TYPE_UNKNOWN)
-    {	/* must be console application */
+    {
+	/* must be console application */
 	va_start (ap,fmta);
 	vfprintf (stderr,fmta,ap);
 	va_end (ap);
