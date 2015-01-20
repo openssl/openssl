@@ -17,6 +17,7 @@
 
 PATH=/usr/local/bin:/bin:/usr/bin:$PATH
 export PATH
+HERE="`dirname $0`"
 
 set -e
 
@@ -32,7 +33,7 @@ COMMENTS=false
 
 # for this exercise, we want to force the openssl style, so we roll
 # our own indent profile, which is at a well known location
-INDENT_PROFILE="`dirname $0`/indent.pro"
+INDENT_PROFILE="$HERE/indent.pro"
 export INDENT_PROFILE
 if [ -f "$INDENT_PROFILE" ]; then
   echo "$0: unable to locate the openssl indent.pro file" >&2
@@ -124,7 +125,7 @@ do
 	      | perl -np \
 	        -e 's/(STACK_OF|LHASH_OF)_([^ \t,]+)_( |\/)/$1($2)$3/g;' \
 	        -e 's/(STACK_OF|LHASH_OF)_([^ \t,]+)_$/$1($2)/g;' \
-	      | perl util/su-filter.pl \
+	      | perl "$HERE"/su-filter.pl \
 	      > "$tmp"
 	  else
 	    expand "$j" | indent $INDENT_ARGS > "$tmp"
