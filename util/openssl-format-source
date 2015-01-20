@@ -100,7 +100,7 @@ do
 	    cat "$j" | \
 	    expand | \
 	    perl -0 -np \
-	      -e 's/(\n#[ \t]*ifdef[ \t]+__cplusplus\n[^\n]*\n#[ \t]*endif\n)/\n\n\/**INDENT-OFF**\/$1\/**INDENT-ON**\/\n/g;' \
+	      -e 's/(\n#[ \t]*ifdef[ \t]+__cplusplus\n[^\n]*\n#[ \t]*endif\n)/\n\/**INDENT-OFF**\/$1\/**INDENT-ON**\/\n/g;' \
 	      -e 's/(\n\/\*\!)/\n\/**/g;' \
 	      -e 's/(STACK_OF|LHASH_OF)\(([^ \t,\)]+)\) /$1_$2_ /g;' \
 	      | \
@@ -111,7 +111,7 @@ do
 	      -e 's/^([ \t]*(make_dh|make_dh_bn|make_rfc5114_td)\(.*\)[ \t,]*)$/\/**INDENT-OFF**\/\n$1\n\/**INDENT-ON**\//;' \
 	      -e 's/^(ASN1_ADB_TEMPLATE\(.*)$/\/**INDENT-OFF**\/\n$1\n\/**INDENT-ON**\//;' \
 	      -e 's/^((ASN1|ADB)_.*_END\(.*[\){=,;]+[ \t]*)$/$1\n\/**INDENT-ON**\//;' \
-	      -e '/ASN1_ITEM_(ref|ptr|rptr)/ || s/^((ASN1|ADB)_[^\*]*[){=,]+[ \t]*)$/\/**INDENT-OFF**\/\n$1/;' \
+	      -e '/ASN1_(ITEM_ref|ITEM_ptr|ITEM_rptr|PCTX)/ || s/^((ASN1|ADB)_[^\*]*[){=,]+[ \t]*)$/\/**INDENT-OFF**\/\n$1/;' \
 	      -e 's/^(} (ASN1|ADB)_[^\*]*[\){=,;]+)$/$1\n\/**INDENT-ON**\//;' \
 	      | \
 	      indent $INDENT_ARGS | \
