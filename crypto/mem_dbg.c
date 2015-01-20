@@ -170,15 +170,16 @@ int CRYPTO_mem_ctrl(int mode)
 		break;
 	case CRYPTO_MEM_CHECK_OFF: /* aka MemCheck_stop() */
 		mh_mode = 0;
-		num_disable = 0; /* should be true *before* MemCheck_stop is used,
-		                    or there'll be a lot of confusion */
+		num_disable = 0; /* should be true *before* MemCheck_stop is
+				    used, or there'll be a lot of confusion */
 		break;
 
 	/* switch off temporarily (for library-internal use): */
 	case CRYPTO_MEM_CHECK_DISABLE: /* aka MemCheck_off() */
 		if (mh_mode & CRYPTO_MEM_CHECK_ON)
 			{
-			if (!num_disable || (disabling_thread != CRYPTO_thread_id())) /* otherwise we already have the MALLOC2 lock */
+			/* otherwise we already have the MALLOC2 lock */
+			if (!num_disable || (disabling_thread != CRYPTO_thread_id()))
 				{
 				/* Long-time lock CRYPTO_LOCK_MALLOC2 must not be claimed while
 				 * we're holding CRYPTO_LOCK_MALLOC, or we'll deadlock if
