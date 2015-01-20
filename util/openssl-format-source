@@ -54,6 +54,8 @@ do
       -c) COMMENTS="true"; 
       	  INDENT_ARGS="-fc1 -fca -cdb -sc"; 
 	  continue;;
+      -nc) COMMENTS="true";
+	  continue;;
     esac
   fi
 
