@@ -97,11 +97,13 @@ do
 	    # into the right possition within the code as indent leaves marked 
 	    # comments entirely untouched - we appear to have no way to avoid 
 	    # the double processing and get the desired output
+	    cat "$j" | \
+	    expand | \
 	    perl -0 -np \
 	      -e 's/(\n#[ \t]*ifdef[ \t]+__cplusplus\n[^\n]*\n#[ \t]*endif\n)/\n\n\/**INDENT-OFF**\/$1\/**INDENT-ON**\/\n/g;' \
 	      -e 's/(\n\/\*\!)/\n\/**/g;' \
 	      -e 's/(STACK_OF|LHASH_OF)\(([^ \t,\)]+)\) /$1_$2_ /g;' \
-	      < "$j" | \
+	      | \
 	    perl -np \
 	      -e 's/^([ \t]*)\/\*([ \t]+.*)\*\/[ \t]*$/if (length("$1$2")<75) {$c="-"}else{$c=""}; "$1\/*$c$2*\/"/e;' \
 	      -e 's/^\/\* ((Copyright|=|----).*)$/\/*-$1/;' \
@@ -112,7 +114,7 @@ do
 	      -e '/ASN1_ITEM_(ref|ptr|rptr)/ || s/^((ASN1|ADB)_[^\*]*[){=,]+[ \t]*)$/\/**INDENT-OFF**\/\n$1/;' \
 	      -e 's/^(} (ASN1|ADB)_[^\*]*[\){=,;]+)$/$1\n\/**INDENT-ON**\//;' \
 	      | \
-	      expand | indent $INDENT_ARGS | \
+	      indent $INDENT_ARGS | \
 	      perl -np \
 		-e 's/^([ \t]*)\/\*-(.*)\*\/[ \t]*$/$1\/*$2*\//;' \
 		-e 's/^\/\*-((Copyright|=|----).*)$/\/* $1/;' \
