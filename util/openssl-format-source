@@ -88,7 +88,7 @@ do
       case `basename $j` in 
 	# the list of files that indent is unable to handle correctly
 	# that we simply leave alone for manual formatting now
-	obj_dat.h|aes_core.c)
+	obj_dat.h|aes_core.c|aes_x86core.c)
 	  echo "skipping $j"
 	  ;;
 	*)
