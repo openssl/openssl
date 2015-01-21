@@ -232,9 +232,12 @@ static const SSL_CIPHER cipher_aliases[]={
 	 * e.g. kEDH combines DHE_DSS and DHE_RSA) */
 	{0,SSL_TXT_kRSA,0,    SSL_kRSA,  0,0,0,0,0,0,0,0},
 
-	{0,SSL_TXT_kDHr,0,    SSL_kDHr,  0,0,0,0,0,0,0,0}, /* no such ciphersuites supported! */
-	{0,SSL_TXT_kDHd,0,    SSL_kDHd,  0,0,0,0,0,0,0,0}, /* no such ciphersuites supported! */
-	{0,SSL_TXT_kDH,0,     SSL_kDHr|SSL_kDHd,0,0,0,0,0,0,0,0}, /* no such ciphersuites supported! */
+	/* no such ciphersuites supported! */
+	{0,SSL_TXT_kDHr,0,    SSL_kDHr,  0,0,0,0,0,0,0,0},
+	/* no such ciphersuites supported! */
+	{0,SSL_TXT_kDHd,0,    SSL_kDHd,  0,0,0,0,0,0,0,0},
+	/* no such ciphersuites supported! */
+	{0,SSL_TXT_kDH,0,     SSL_kDHr|SSL_kDHd,0,0,0,0,0,0,0,0},
 	{0,SSL_TXT_kEDH,0,    SSL_kEDH,  0,0,0,0,0,0,0,0},
 	{0,SSL_TXT_DH,0,      SSL_kDHr|SSL_kDHd|SSL_kEDH,0,0,0,0,0,0,0,0},
 
@@ -255,7 +258,8 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_DSS,0,     0,SSL_aDSS,   0,0,0,0,0,0,0},
 	{0,SSL_TXT_aKRB5,0,   0,SSL_aKRB5, 0,0,0,0,0,0,0},
 	{0,SSL_TXT_aNULL,0,   0,SSL_aNULL, 0,0,0,0,0,0,0},
-	{0,SSL_TXT_aDH,0,     0,SSL_aDH,   0,0,0,0,0,0,0}, /* no such ciphersuites supported! */
+	/* no such ciphersuites supported! */
+	{0,SSL_TXT_aDH,0,     0,SSL_aDH,   0,0,0,0,0,0,0},
 	{0,SSL_TXT_aECDH,0,   0,SSL_aECDH, 0,0,0,0,0,0,0},
 	{0,SSL_TXT_aECDSA,0,  0,SSL_aECDSA,0,0,0,0,0,0,0},
 	{0,SSL_TXT_ECDSA,0,   0,SSL_aECDSA, 0,0,0,0,0,0,0},
