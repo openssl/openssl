@@ -993,7 +993,8 @@ struct ssl_ctx_st
 
 	/* Default values used when no per-SSL value is defined follow */
 
-	void (*info_callback)(const SSL *ssl,int type,int val); /* used if SSL's info_callback is NULL */
+	/* used if SSL's info_callback is NULL */
+	void (*info_callback)(const SSL *ssl,int type,int val);
 
 	/* what we put in client cert requests */
 	STACK_OF(X509_NAME) *client_CA;
