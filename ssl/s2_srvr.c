@@ -967,9 +967,13 @@ static int request_certificate(SSL *s)
 	if (s->state == SSL2_ST_SEND_REQUEST_CERTIFICATE_C)
 		{
 		p=(unsigned char *)s->init_buf->data;
-		i=ssl2_read(s,(char *)&(p[s->init_num]),6-s->init_num); /* try to read 6 octets ... */
-		if (i < 3-s->init_num) /* ... but don't call ssl2_part_read now if we got at least 3
-		                        * (probably NO-CERTIFICATE-ERROR) */
+		/* try to read 6 octets ... */
+		i=ssl2_read(s,(char *)&(p[s->init_num]),6-s->init_num);
+		/*
+		 * ... but don't call ssl2_part_read now if we got at least 3
+		 * (probably NO-CERTIFICATE-ERROR)
+		 */
+		if (i < 3-s->init_num) 
 			{
 			ret=ssl2_part_read(s,SSL_F_REQUEST_CERTIFICATE,i);
 			goto end;

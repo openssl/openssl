@@ -170,11 +170,14 @@ typedef struct cipher_order_st
 static const SSL_CIPHER cipher_aliases[]={
 	/* Don't include eNULL unless specifically enabled. */
 	/* Don't include ECC in ALL because these ciphers are not yet official. */
-	{0,SSL_TXT_ALL, 0,SSL_ALL & ~SSL_eNULL & ~SSL_kECDH & ~SSL_kECDHE, SSL_ALL ,0,0,0,SSL_ALL,SSL_ALL}, /* must be first */
+    /* must be first */
+	{0,SSL_TXT_ALL, 0,SSL_ALL & ~SSL_eNULL & ~SSL_kECDH & ~SSL_kECDHE, SSL_ALL ,0,0,0,SSL_ALL,SSL_ALL},
 	/* TODO: COMPLEMENT OF ALL and COMPLEMENT OF DEFAULT do not have ECC cipher suites handled properly. */
-	{0,SSL_TXT_CMPALL,0,SSL_eNULL,0,0,0,0,SSL_ENC_MASK,0},  /* COMPLEMENT OF ALL */
+    /* COMPLEMENT OF ALL */
+	{0,SSL_TXT_CMPALL,0,SSL_eNULL,0,0,0,0,SSL_ENC_MASK,0},
 	{0,SSL_TXT_CMPDEF,0,SSL_ADH, 0,0,0,0,SSL_AUTH_MASK,0},
-	{0,SSL_TXT_kKRB5,0,SSL_kKRB5,0,0,0,0,SSL_MKEY_MASK,0},  /* VRS Kerberos5 */
+    /* VRS Kerberos5 */
+	{0,SSL_TXT_kKRB5,0,SSL_kKRB5,0,0,0,0,SSL_MKEY_MASK,0},
 	{0,SSL_TXT_kRSA,0,SSL_kRSA,  0,0,0,0,SSL_MKEY_MASK,0},
 	{0,SSL_TXT_kDHr,0,SSL_kDHr,  0,0,0,0,SSL_MKEY_MASK,0},
 	{0,SSL_TXT_kDHd,0,SSL_kDHd,  0,0,0,0,SSL_MKEY_MASK,0},
@@ -183,7 +186,8 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_DH,	0,SSL_DH,    0,0,0,0,SSL_MKEY_MASK,0},
 	{0,SSL_TXT_ECC,	0,(SSL_kECDH|SSL_kECDHE), 0,0,0,0,SSL_MKEY_MASK,0},
 	{0,SSL_TXT_EDH,	0,SSL_EDH,   0,0,0,0,SSL_MKEY_MASK|SSL_AUTH_MASK,0},
-	{0,SSL_TXT_aKRB5,0,SSL_aKRB5,0,0,0,0,SSL_AUTH_MASK,0},  /* VRS Kerberos5 */
+    /* VRS Kerberos5 */
+	{0,SSL_TXT_aKRB5,0,SSL_aKRB5,0,0,0,0,SSL_AUTH_MASK,0},
 	{0,SSL_TXT_aRSA,0,SSL_aRSA,  0,0,0,0,SSL_AUTH_MASK,0},
 	{0,SSL_TXT_aDSS,0,SSL_aDSS,  0,0,0,0,SSL_AUTH_MASK,0},
 	{0,SSL_TXT_aFZA,0,SSL_aFZA,  0,0,0,0,SSL_AUTH_MASK,0},
