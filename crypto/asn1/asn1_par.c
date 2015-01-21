@@ -425,14 +425,22 @@ end:
 const char *ASN1_tag2str(int tag)
 {
 	static const char *tag2str[] = {
-	 "EOC", "BOOLEAN", "INTEGER", "BIT STRING", "OCTET STRING", /* 0-4 */
-	 "NULL", "OBJECT", "OBJECT DESCRIPTOR", "EXTERNAL", "REAL", /* 5-9 */
-	 "ENUMERATED", "<ASN1 11>", "UTF8STRING", "<ASN1 13>", 	    /* 10-13 */
-	"<ASN1 14>", "<ASN1 15>", "SEQUENCE", "SET", 		    /* 15-17 */
-	"NUMERICSTRING", "PRINTABLESTRING", "T61STRING",	    /* 18-20 */
-	"VIDEOTEXSTRING", "IA5STRING", "UTCTIME","GENERALIZEDTIME", /* 21-24 */
-	"GRAPHICSTRING", "VISIBLESTRING", "GENERALSTRING",	    /* 25-27 */
-	"UNIVERSALSTRING", "<ASN1 29>", "BMPSTRING"		    /* 28-30 */
+        /* 0-4 */
+	 "EOC", "BOOLEAN", "INTEGER", "BIT STRING", "OCTET STRING",
+        /* 5-9 */ 
+	 "NULL", "OBJECT", "OBJECT DESCRIPTOR", "EXTERNAL", "REAL",
+        /* 10-13 */
+	 "ENUMERATED", "<ASN1 11>", "UTF8STRING", "<ASN1 13>",
+        /* 15-17 */ 
+	"<ASN1 14>", "<ASN1 15>", "SEQUENCE", "SET",
+        /* 18-20 */ 
+	"NUMERICSTRING", "PRINTABLESTRING", "T61STRING",
+        /* 21-24 */
+	"VIDEOTEXSTRING", "IA5STRING", "UTCTIME","GENERALIZEDTIME",
+       /* 25-27 */
+	"GRAPHICSTRING", "VISIBLESTRING", "GENERALSTRING",
+        /* 28-30 */
+	"UNIVERSALSTRING", "<ASN1 29>", "BMPSTRING"
 	};
 
 	if((tag == V_ASN1_NEG_INTEGER) || (tag == V_ASN1_NEG_ENUMERATED))
