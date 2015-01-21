@@ -66,7 +66,7 @@
  * "g"(0)		let the compiler to decide where does it
  *			want to keep the value of zero;
  */
-#define mul_add(r,a,word,carry) do {	\
+# define mul_add(r,a,word,carry) do {	\
 	register BN_ULONG high,low;	\
 	asm ("mulq %3"			\
 		: "=a"(low),"=d"(high)	\
@@ -83,7 +83,7 @@
 	carry=high;			\
 	} while (0)
 
-#define mul(r,a,word,carry) do {	\
+# define mul(r,a,word,carry) do {	\
 	register BN_ULONG high,low;	\
 	asm ("mulq %3"			\
 		: "=a"(low),"=d"(high)	\
