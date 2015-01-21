@@ -210,7 +210,7 @@ int BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	 * the top bit being set.  It was caused by an error in BN_div
 	 * with negatives.  There was also another problem when for a^b%m
 	 * a >= m.  eay 07-May-97 */
-/*	if ((m->d[m->top-1]&BN_TBIT) && BN_is_odd(m)) */
+	/* if ((m->d[m->top-1]&BN_TBIT) && BN_is_odd(m)) */
 
 	if (BN_is_odd(m))
 		{
