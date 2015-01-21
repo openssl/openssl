@@ -212,7 +212,8 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA1 *key,
 	u64		seqnum;
 #endif
 
-	if (RAND_bytes((IVs=blocks[0].c),16*x4)<=0)	/* ask for IVs in bulk */
+	/* ask for IVs in bulk */
+	if (RAND_bytes((IVs=blocks[0].c),16*x4)<=0)
 		return 0;
 
 	ctx = (SHA1_MB_CTX *)(storage+32-((size_t)storage%32));	/* align */
@@ -229,7 +230,8 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA1 *key,
 	/* populate descriptors with pointers and IVs */
 	hash_d[0].ptr = inp;
 	ciph_d[0].inp = inp;
-	ciph_d[0].out = out+5+16;	/* 5+16 is place for header and explicit IV */
+	/* 5+16 is place for header and explicit IV */
+	ciph_d[0].out = out+5+16;
 	memcpy(ciph_d[0].out-16,IVs,16);
 	memcpy(ciph_d[0].iv,IVs,16);	IVs += 16;
 

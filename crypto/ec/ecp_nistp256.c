@@ -1563,9 +1563,10 @@ static void batch_mul(felem x_out, felem y_out, felem z_out,
 
 			if (!skip)
 				{
+				/* Arg 1 below is for "mixed" */
 				point_add(nq[0], nq[1], nq[2],
 					nq[0], nq[1], nq[2],
-					1 /* mixed */, tmp[0], tmp[1], tmp[2]);
+					1, tmp[0], tmp[1], tmp[2]);
 				}
 			else
 				{
@@ -1582,9 +1583,10 @@ static void batch_mul(felem x_out, felem y_out, felem z_out,
 			bits |= get_bit(g_scalar, i);
 			/* select the point to add, in constant time */
 			select_point(bits, 16, g_pre_comp[0], tmp);
+			/* Arg 1 below is for "mixed" */
 			point_add(nq[0], nq[1], nq[2],
 				nq[0], nq[1], nq[2],
-				1 /* mixed */, tmp[0], tmp[1], tmp[2]);
+				1, tmp[0], tmp[1], tmp[2]);
 			}
 
 		/* do other additions every 5 doublings */

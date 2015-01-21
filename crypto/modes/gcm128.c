@@ -2089,7 +2089,8 @@ static const u8	T19[]= {
 /* Test Case 20 */
 #define K20 K1
 #define A20 A1
-static const u8 IV20[64]={0xff,0xff,0xff,0xff};	/* this results in 0xff in counter LSB */
+/* this results in 0xff in counter LSB */
+static const u8 IV20[64]={0xff,0xff,0xff,0xff};
 static const u8	P20[288];
 static const u8	C20[]= {
 			0x56,0xb3,0x37,0x3c,0xa9,0xef,0x6e,0x4a,

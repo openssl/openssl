@@ -571,7 +571,8 @@ X509_ALGOR *encryption;
 } PBE2PARAM;
 
 typedef struct PBKDF2PARAM_st {
-ASN1_TYPE *salt;	/* Usually OCTET STRING but could be anything */
+/* Usually OCTET STRING but could be anything */
+ASN1_TYPE *salt;
 ASN1_INTEGER *iter;
 ASN1_INTEGER *keylength;
 X509_ALGOR *prf;
@@ -582,7 +583,8 @@ X509_ALGOR *prf;
 
 struct pkcs8_priv_key_info_st
         {
-        int broken;     /* Flag for various broken formats */
+        /* Flag for various broken formats */
+        int broken;
 #define PKCS8_OK		0
 #define PKCS8_NO_OCTET		1
 #define PKCS8_EMBEDDED_PARAM	2
@@ -590,7 +592,8 @@ struct pkcs8_priv_key_info_st
 #define PKCS8_NEG_PRIVKEY	4
         ASN1_INTEGER *version;
         X509_ALGOR *pkeyalg;
-        ASN1_TYPE *pkey; /* Should be OCTET STRING but some are broken */
+        /* Should be OCTET STRING but some are broken */
+        ASN1_TYPE *pkey;
         STACK_OF(X509_ATTRIBUTE) *attributes;
         };
 

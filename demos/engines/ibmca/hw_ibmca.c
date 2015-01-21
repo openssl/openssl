@@ -764,10 +764,12 @@ they could cause potential side affects on either the card or the result */
         BN_bn2bin(dmq1, pkey);  /* Copy over dmq1 */
 
         pkey += qSize;     /* move pointer */
-	pkey += pSize - BN_num_bytes(p);  /* set up for zero padding of next field */
+	/* set up for zero padding of next field */
+	pkey += pSize - BN_num_bytes(p);
 
         BN_bn2bin(p, pkey);
-        pkey += BN_num_bytes(p);  /* increment pointer by number of bytes moved  */
+	/* increment pointer by number of bytes moved  */
+        pkey += BN_num_bytes(p);
 
         BN_bn2bin(q, pkey);
         pkey += qSize ;  /* move the pointer */
