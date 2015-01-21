@@ -210,8 +210,8 @@ static int des_ede3_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	DES_ede3_cfb_encrypt(c,d,1,1,
 			     &data(ctx)->ks1,&data(ctx)->ks2,&data(ctx)->ks3,
 			     (DES_cblock *)ctx->iv,ctx->encrypt);
-	out[n/8]=(out[n/8]&~(0x80 >> (unsigned int)(n%8))) |
-		 ((d[0]&0x80) >> (unsigned int)(n%8));
+	out[n/8]=(out[n/8]&~(0x80 >> (unsigned int)(n%8)))
+		| ((d[0]&0x80) >> (unsigned int)(n%8));
 	}
 
     return 1;

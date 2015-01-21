@@ -208,10 +208,12 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA256 *key,
 	u64		seqnum;
 #endif
 
-	if (RAND_bytes((IVs=blocks[0].c),16*x4)<=0)	/* ask for IVs in bulk */
+	/* ask for IVs in bulk */
+	if (RAND_bytes((IVs=blocks[0].c),16*x4)<=0)
 		return 0;
 
-	ctx = (SHA256_MB_CTX *)(storage+32-((size_t)storage%32));	/* align */
+	/* align */
+	ctx = (SHA256_MB_CTX *)(storage+32-((size_t)storage%32));
 
 	frag = (unsigned int)inp_len>>(1+n4x);
 	last = (unsigned int)inp_len+frag-(frag<<(1+n4x));
