@@ -320,7 +320,8 @@
 #define SSL_aDSS 		0x00000002L
 /* no auth (i.e. use ADH or AECDH) */
 #define SSL_aNULL 		0x00000004L
-/* Fixed DH auth (kDHd or kDHr) */ /* no such ciphersuites supported! */
+/* Fixed DH auth (kDHd or kDHr) */
+/* no such ciphersuites supported! */
 #define SSL_aDH 		0x00000008L
 /* Fixed ECDH auth (kECDHe or kECDHr) */
 #define SSL_aECDH 		0x00000010L
