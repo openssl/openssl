@@ -286,7 +286,8 @@ typedef struct bio_st BIO_dummy;
 struct crypto_ex_data_st
 	{
 	STACK_OF(void) *sk;
-	int dummy; /* gcc is screwing up this data structure :-( */
+	/* gcc is screwing up this data structure :-( */
+	int dummy;
 	};
 DECLARE_STACK_OF(void)
 

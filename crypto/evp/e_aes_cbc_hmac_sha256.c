@@ -227,7 +227,8 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA256 *key,
 	/* populate descriptors with pointers and IVs */
 	hash_d[0].ptr = inp;
 	ciph_d[0].inp = inp;
-	ciph_d[0].out = out+5+16;	/* 5+16 is place for header and explicit IV */
+	/* 5+16 is place for header and explicit IV */
+	ciph_d[0].out = out+5+16;
 	memcpy(ciph_d[0].out-16,IVs,16);
 	memcpy(ciph_d[0].iv,IVs,16);	IVs += 16;
 

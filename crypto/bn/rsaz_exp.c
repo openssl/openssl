@@ -60,7 +60,8 @@ void rsaz_1024_red2norm_avx2(void *norm,const void *red);
 # define ALIGN64
 # pragma align 64(one,two80)
 #else
-# define ALIGN64	/* not fatal, might hurt performance a little */
+/* not fatal, might hurt performance a little */
+# define ALIGN64
 #endif
 
 ALIGN64 static const BN_ULONG one[40] = {

@@ -158,7 +158,8 @@ static unsigned int crypto_lock_rand = 0; /* may be set only when a thread
                                            * holds CRYPTO_LOCK_RAND
                                            * (to prevent double locking) */
 /* access to lockin_thread is synchronized by CRYPTO_LOCK_RAND2 */
-static CRYPTO_THREADID locking_threadid; /* valid iff crypto_lock_rand is set */
+/* valid iff crypto_lock_rand is set */
+static CRYPTO_THREADID locking_threadid;
 
 
 #ifdef PREDICT
@@ -571,7 +572,8 @@ static int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo)
 
 		for (i=0; i<MD_DIGEST_LENGTH/2; i++)
 			{
-			state[st_idx++]^=local_md[i]; /* may compete with other threads */
+			/* may compete with other threads */
+			state[st_idx++]^=local_md[i];
 			if (st_idx >= st_num)
 				st_idx=0;
 			if (i < j)
