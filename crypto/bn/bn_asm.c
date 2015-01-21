@@ -460,7 +460,7 @@ BN_ULONG bn_sub_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n)
 	c0=(c0+t1)&BN_MASK2; if ((c0) < t1) t2++; \
 	c1=(c1+t2)&BN_MASK2; if ((c1) < t2) c2++;
 
-#define sqr_add_c2(a,i,j,c0,c1,c2) \
+# define sqr_add_c2(a,i,j,c0,c1,c2) \
 	mul_add_c2((a)[i],(a)[j],c0,c1,c2)
 
 #elif defined(BN_UMULT_LOHI)
@@ -488,7 +488,7 @@ BN_ULONG bn_sub_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n)
 	c1 += t2; c2 += (c1<t2)?1:0;	\
 	}
 
-#define sqr_add_c2(a,i,j,c0,c1,c2)	\
+#  define sqr_add_c2(a,i,j,c0,c1,c2)	\
 	mul_add_c2((a)[i],(a)[j],c0,c1,c2)
 
 #elif defined(BN_UMULT_HIGH)
@@ -547,7 +547,7 @@ BN_ULONG bn_sub_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n)
 	c0=(c0+t1)&BN_MASK2; if ((c0) < t1) t2++; \
 	c1=(c1+t2)&BN_MASK2; if ((c1) < t2) c2++;
 
-#define sqr_add_c2(a,i,j,c0,c1,c2) \
+#  define sqr_add_c2(a,i,j,c0,c1,c2) \
 	mul_add_c2((a)[i],(a)[j],c0,c1,c2)
 #endif /* !BN_LLONG */
 
