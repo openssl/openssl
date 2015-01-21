@@ -3403,10 +3403,10 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 	case SSL_CTRL_CHAIN:
 		if (larg)
 			return ssl_cert_set1_chain(s->cert,
-						(STACK_OF (X509) *)parg);
+						(STACK_OF(X509) *)parg);
 		else
 			return ssl_cert_set0_chain(s->cert,
-						(STACK_OF (X509) *)parg);
+						(STACK_OF(X509) *)parg);
 
 	case SSL_CTRL_CHAIN_CERT:
 		if (larg)
@@ -3961,10 +3961,10 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 	case SSL_CTRL_CHAIN:
 		if (larg)
 			return ssl_cert_set1_chain(ctx->cert,
-						(STACK_OF (X509) *)parg);
+						(STACK_OF(X509) *)parg);
 		else
 			return ssl_cert_set0_chain(ctx->cert,
-						(STACK_OF (X509) *)parg);
+						(STACK_OF(X509) *)parg);
 
 	case SSL_CTRL_CHAIN_CERT:
 		if (larg)
