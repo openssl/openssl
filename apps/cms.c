@@ -104,7 +104,7 @@ typedef struct cms_key_param_st cms_key_param;
 struct cms_key_param_st
 	{
 	int idx;
-	STACK_OF(OPENSSL_STRING)*param;
+	STACK_OF(OPENSSL_STRING) *param;
 	cms_key_param *next;
 	};
 

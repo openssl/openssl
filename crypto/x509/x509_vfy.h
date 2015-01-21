@@ -449,7 +449,7 @@ void X509_STORE_set_verify_cb(X509_STORE *ctx,
 				  int (*verify_cb)(int, X509_STORE_CTX *));
 
 void X509_STORE_set_lookup_crls_cb(X509_STORE *ctx,
-		STACK_OF(X509_CRL)* (*cb)(X509_STORE_CTX *ctx, X509_NAME *nm));
+		STACK_OF(X509_CRL) *(*cb)(X509_STORE_CTX *ctx, X509_NAME *nm));
 
 X509_STORE_CTX *X509_STORE_CTX_new(void);
 
