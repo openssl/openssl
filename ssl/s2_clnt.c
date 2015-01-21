@@ -388,7 +388,10 @@ static int get_server_hello(SSL *s)
 	i = ssl2_read(s,(char *)&(buf[s->init_num]),j);
 	if (i != j) return(ssl2_part_read(s,SSL_F_GET_SERVER_HELLO,i));
 	if (s->msg_callback)
-		s->msg_callback(0, s->version, 0, buf, (size_t)len, s, s->msg_callback_arg); /* SERVER-HELLO */
+		{
+		/* SERVER-HELLO */
+		s->msg_callback(0, s->version, 0, buf, (size_t)len, s, s->msg_callback_arg);
+		}
 
 	/* things are looking good */
 
@@ -767,7 +770,10 @@ static int client_certificate(SSL *s)
 			return(ssl2_part_read(s,SSL_F_CLIENT_CERTIFICATE,i));
 		s->init_num += i;
 		if (s->msg_callback)
-			s->msg_callback(0, s->version, 0, buf, (size_t)s->init_num, s, s->msg_callback_arg); /* REQUEST-CERTIFICATE */
+			{
+			/* REQUEST-CERTIFICATE */
+			s->msg_callback(0, s->version, 0, buf, (size_t)s->init_num, s, s->msg_callback_arg);
+			}
 
 		/* type=buf[0]; */
 		/* type eq x509 */
@@ -936,7 +942,10 @@ static int get_server_verify(SSL *s)
 	if (i < n)
 		return(ssl2_part_read(s,SSL_F_GET_SERVER_VERIFY,i));
 	if (s->msg_callback)
-		s->msg_callback(0, s->version, 0, p, len, s, s->msg_callback_arg); /* SERVER-VERIFY */
+		{
+		/* SERVER-VERIFY */
+		s->msg_callback(0, s->version, 0, p, len, s, s->msg_callback_arg);
+		}
 	p += 1;
 
 	if (CRYPTO_memcmp(p,s->s2->challenge,s->s2->challenge_length) != 0)
@@ -990,11 +999,20 @@ static int get_server_finished(SSL *s)
 	len = 1 + SSL2_SSL_SESSION_ID_LENGTH;
 	n = len - s->init_num;
 	i = ssl2_read(s,(char *)&(buf[s->init_num]), n);
-	if (i < n) /* XXX could be shorter than SSL2_SSL_SESSION_ID_LENGTH, that's the maximum */
+	if (i < n)
+		{
+		/*
+		 * XXX could be shorter than SSL2_SSL_SESSION_ID_LENGTH,
+		 * that's the maximum
+		 */
 		return(ssl2_part_read(s,SSL_F_GET_SERVER_FINISHED,i));
+		}
 	s->init_num += i;
 	if (s->msg_callback)
-		s->msg_callback(0, s->version, 0, buf, (size_t)s->init_num, s, s->msg_callback_arg); /* SERVER-FINISHED */
+		{
+		/* SERVER-FINISHED */
+		s->msg_callback(0, s->version, 0, buf, (size_t)s->init_num, s, s->msg_callback_arg);
+		}
 
 	if (!s->hit) /* new session */
 		{

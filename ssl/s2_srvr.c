@@ -442,7 +442,10 @@ static int get_client_master_key(SSL *s)
 	i = ssl2_read(s,(char *)&(p[s->init_num]),n);
 	if (i != n) return(ssl2_part_read(s,SSL_F_GET_CLIENT_MASTER_KEY,i));
 	if (s->msg_callback)
-		s->msg_callback(0, s->version, 0, p, (size_t)len, s, s->msg_callback_arg); /* CLIENT-MASTER-KEY */
+		{
+		/* CLIENT-MASTER-KEY */
+		s->msg_callback(0, s->version, 0, p, (size_t)len, s, s->msg_callback_arg);
+		}
 	p += 10;
 
 	memcpy(s->session->key_arg,&(p[s->s2->tmp.clear+s->s2->tmp.enc]),
@@ -591,7 +594,10 @@ static int get_client_hello(SSL *s)
 	i = ssl2_read(s,(char *)&(p[s->init_num]),n);
 	if (i != n) return(ssl2_part_read(s,SSL_F_GET_CLIENT_HELLO,i));
 	if (s->msg_callback)
-		s->msg_callback(0, s->version, 0, p, (size_t)len, s, s->msg_callback_arg); /* CLIENT-HELLO */
+		{
+		/* CLIENT-HELLO */
+		s->msg_callback(0, s->version, 0, p, (size_t)len, s, s->msg_callback_arg);
+		}
 	p += 9;
 
 	/* get session-id before cipher stuff so we can get out session
@@ -864,7 +870,10 @@ static int get_client_finished(SSL *s)
 		return(ssl2_part_read(s,SSL_F_GET_CLIENT_FINISHED,i));
 		}
 	if (s->msg_callback)
-		s->msg_callback(0, s->version, 0, p, len, s, s->msg_callback_arg); /* CLIENT-FINISHED */
+		{
+		/* CLIENT-FINISHED */
+		s->msg_callback(0, s->version, 0, p, len, s, s->msg_callback_arg);
+		}
 	p += 1;
 	if (memcmp(p,s->s2->conn_id,s->s2->conn_id_length) != 0)
 		{
@@ -987,7 +996,10 @@ static int request_certificate(SSL *s)
 				}
 
 			if (s->msg_callback)
-				s->msg_callback(0, s->version, 0, p, 3, s, s->msg_callback_arg); /* ERROR */
+				{
+				/* ERROR */
+				s->msg_callback(0, s->version, 0, p, 3, s, s->msg_callback_arg);
+				}
 
 			/* this is the one place where we can recover from an SSL 2.0 error */
 
@@ -1042,7 +1054,10 @@ static int request_certificate(SSL *s)
 		goto end;
 		}
 	if (s->msg_callback)
-		s->msg_callback(0, s->version, 0, p, len, s, s->msg_callback_arg); /* CLIENT-CERTIFICATE */
+		{
+		/* CLIENT-CERTIFICATE */
+		s->msg_callback(0, s->version, 0, p, len, s, s->msg_callback_arg);
+		}
 	p += 6;
 
 	cp = p;
