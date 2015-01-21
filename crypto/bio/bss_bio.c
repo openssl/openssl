@@ -151,7 +151,8 @@ static int bio_new(BIO *bio)
 		return 0;
 
 	b->peer = NULL;
-	b->size = 17*1024; /* enough for one TLS record (just a default) */
+	/* enough for one TLS record (just a default) */
+	b->size = 17*1024;
 	b->buf = NULL;
 
 	bio->ptr = b;

@@ -67,5 +67,7 @@
 #define DES_version OSSL_DES_version
 #define libdes_version OSSL_libdes_version
 
-OPENSSL_EXTERN const char OSSL_DES_version[];	/* SSLeay version string */
-OPENSSL_EXTERN const char OSSL_libdes_version[];	/* old libdes version string */
+/* SSLeay version string */
+OPENSSL_EXTERN const char OSSL_DES_version[];
+/* old libdes version string */
+OPENSSL_EXTERN const char OSSL_libdes_version[];

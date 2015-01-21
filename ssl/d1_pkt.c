@@ -714,7 +714,8 @@ again:
 			{
 			if(dtls1_buffer_record(s, &(s->d1->unprocessed_rcds), rr->seq_num)<0)
 				return -1;
-			dtls1_record_bitmap_update(s, bitmap);/* Mark receipt of record. */
+			/* Mark receipt of record. */
+			dtls1_record_bitmap_update(s, bitmap);
 			}
 		rr->length = 0;
 		s->packet_length = 0;
