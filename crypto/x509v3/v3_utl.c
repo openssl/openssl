@@ -824,7 +824,7 @@ static int ipv6_hex(unsigned char *out, const char *in, int inlen)
 	}
 
 
-int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE)*dn_sk,
+int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE) *dn_sk,
 						unsigned long chtype)
 	{
 	CONF_VALUE *v;
