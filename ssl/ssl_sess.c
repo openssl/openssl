@@ -505,8 +505,7 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 
     if (try_session_cache &&
         ret == NULL &&
-        !(s->
-          session_ctx->session_cache_mode &
+        !(s->session_ctx->session_cache_mode &
           SSL_SESS_CACHE_NO_INTERNAL_LOOKUP)) {
         SSL_SESSION data;
         data.ssl_version = s->version;
@@ -547,8 +546,7 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
              * well if and only if we are supposed to.
              */
             if (!
-                (s->
-                 session_ctx->session_cache_mode &
+                (s->session_ctx->session_cache_mode &
                  SSL_SESS_CACHE_NO_INTERNAL_STORE))
                 /*
                  * The following should not return 1, otherwise, things are
