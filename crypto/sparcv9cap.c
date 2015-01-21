@@ -67,7 +67,8 @@ static int walk_nodename(di_node_t node, di_node_name_t di_node_name)
 
 	/* This is expected to catch all UltraSPARC flavors prior T1 */
 	if (!strcmp (name,"SUNW,UltraSPARC") ||
-	    !strncmp(name,"SUNW,UltraSPARC-I",17))  /* covers II,III,IV */
+		/* covers II,III,IV */
+	    !strncmp(name,"SUNW,UltraSPARC-I",17))
 		{
 		OPENSSL_sparcv9cap_P |= SPARCV9_PREFER_FPU|SPARCV9_VIS1;
 

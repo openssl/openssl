@@ -1098,9 +1098,10 @@ static void batch_mul(felem x_out, felem y_out, felem z_out,
 
 			if (!skip)
 				{
+				/* value 1 below is argument for "mixed" */
 				point_add(nq[0], nq[1], nq[2],
 					nq[0], nq[1], nq[2],
-					1 /* mixed */, tmp[0], tmp[1], tmp[2]);
+					1, tmp[0], tmp[1], tmp[2]);
 				}
 			else
 				{

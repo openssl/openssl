@@ -399,7 +399,8 @@ int ASN1_GENERALIZEDTIME_print(BIO *bp, const ASN1_GENERALIZEDTIME *tm)
 	if (v[i-1] == 'Z') gmt=1;
 	for (i=0; i<12; i++)
 		if ((v[i] > '9') || (v[i] < '0')) goto err;
-	y= (v[0]-'0')*1000+(v[1]-'0')*100 + (v[2]-'0')*10+(v[3]-'0');
+	y= (v[0]-'0')*1000+(v[1]-'0')*100
+		+ (v[2]-'0')*10+(v[3]-'0');
 	M= (v[4]-'0')*10+(v[5]-'0');
 	if ((M > 12) || (M < 1)) goto err;
 	d= (v[6]-'0')*10+(v[7]-'0');
