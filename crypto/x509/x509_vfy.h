@@ -195,14 +195,22 @@ struct x509_store_st
 	X509_VERIFY_PARAM *param;
 
 	/* Callbacks for various operations */
-	int (*verify)(X509_STORE_CTX *ctx);	/* called to verify a certificate */
-	int (*verify_cb)(int ok,X509_STORE_CTX *ctx);	/* error callback */
-	int (*get_issuer)(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);	/* get issuers cert from ctx */
-	int (*check_issued)(X509_STORE_CTX *ctx, X509 *x, X509 *issuer); /* check issued */
-	int (*check_revocation)(X509_STORE_CTX *ctx); /* Check revocation status of chain */
-	int (*get_crl)(X509_STORE_CTX *ctx, X509_CRL **crl, X509 *x); /* retrieve CRL */
-	int (*check_crl)(X509_STORE_CTX *ctx, X509_CRL *crl); /* Check CRL validity */
-	int (*cert_crl)(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x); /* Check certificate against CRL */
+	/* called to verify a certificate */
+	int (*verify)(X509_STORE_CTX *ctx);
+	/* error callback */
+	int (*verify_cb)(int ok,X509_STORE_CTX *ctx);
+	/* get issuers cert from ctx */
+	int (*get_issuer)(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);
+	/* check issued */
+	int (*check_issued)(X509_STORE_CTX *ctx, X509 *x, X509 *issuer);
+	/* Check revocation status of chain */
+	int (*check_revocation)(X509_STORE_CTX *ctx);
+	/* retrieve CRL */
+	int (*get_crl)(X509_STORE_CTX *ctx, X509_CRL **crl, X509 *x);
+	/* Check CRL validity */
+	int (*check_crl)(X509_STORE_CTX *ctx, X509_CRL *crl);
+	/* Check certificate against CRL */
+	int (*cert_crl)(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x);
 	STACK_OF(X509) * (*lookup_certs)(X509_STORE_CTX *ctx, X509_NAME *nm);
 	STACK_OF(X509_CRL) * (*lookup_crls)(X509_STORE_CTX *ctx, X509_NAME *nm);
 	int (*cleanup)(X509_STORE_CTX *ctx);
@@ -233,49 +241,72 @@ struct x509_lookup_st
 struct x509_store_ctx_st      /* X509_STORE_CTX */
 	{
 	X509_STORE *ctx;
-	int current_method;	/* used when looking up certs */
+	/* used when looking up certs */
+	int current_method;
 
 	/* The following are set by the caller */
-	X509 *cert;		/* The cert to check */
-	STACK_OF(X509) *untrusted;	/* chain of X509s - untrusted - passed in */
-	STACK_OF(X509_CRL) *crls;	/* set of CRLs passed in */
+	/* The cert to check */
+	X509 *cert;
+	/* chain of X509s - untrusted - passed in */
+	STACK_OF(X509) *untrusted;
+	/* set of CRLs passed in */
+	STACK_OF(X509_CRL) *crls;
 
 	X509_VERIFY_PARAM *param;
-	void *other_ctx;	/* Other info for use with get_issuer() */
+	/* Other info for use with get_issuer() */
+	void *other_ctx;
 
 	/* Callbacks for various operations */
-	int (*verify)(X509_STORE_CTX *ctx);	/* called to verify a certificate */
-	int (*verify_cb)(int ok,X509_STORE_CTX *ctx);		/* error callback */
-	int (*get_issuer)(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);	/* get issuers cert from ctx */
-	int (*check_issued)(X509_STORE_CTX *ctx, X509 *x, X509 *issuer); /* check issued */
-	int (*check_revocation)(X509_STORE_CTX *ctx); /* Check revocation status of chain */
-	int (*get_crl)(X509_STORE_CTX *ctx, X509_CRL **crl, X509 *x); /* retrieve CRL */
-	int (*check_crl)(X509_STORE_CTX *ctx, X509_CRL *crl); /* Check CRL validity */
-	int (*cert_crl)(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x); /* Check certificate against CRL */
+	/* called to verify a certificate */
+	int (*verify)(X509_STORE_CTX *ctx);
+	/* error callback */
+	int (*verify_cb)(int ok,X509_STORE_CTX *ctx);
+	/* get issuers cert from ctx */
+	int (*get_issuer)(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);
+	/* check issued */
+	int (*check_issued)(X509_STORE_CTX *ctx, X509 *x, X509 *issuer);
+	/* Check revocation status of chain */
+	int (*check_revocation)(X509_STORE_CTX *ctx);
+	/* retrieve CRL */
+	int (*get_crl)(X509_STORE_CTX *ctx, X509_CRL **crl, X509 *x);
+	/* Check CRL validity */
+	int (*check_crl)(X509_STORE_CTX *ctx, X509_CRL *crl);
+	/* Check certificate against CRL */
+	int (*cert_crl)(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x);
 	int (*check_policy)(X509_STORE_CTX *ctx);
 	STACK_OF(X509) * (*lookup_certs)(X509_STORE_CTX *ctx, X509_NAME *nm);
 	STACK_OF(X509_CRL) * (*lookup_crls)(X509_STORE_CTX *ctx, X509_NAME *nm);
 	int (*cleanup)(X509_STORE_CTX *ctx);
 
 	/* The following is built up */
-	int valid;		/* if 0, rebuild chain */
-	int last_untrusted;	/* index of last untrusted cert */
-	STACK_OF(X509) *chain; 		/* chain of X509s - built up and trusted */
-	X509_POLICY_TREE *tree;	/* Valid policy tree */
+	/* if 0, rebuild chain */
+	int valid;
+	/* index of last untrusted cert */
+	int last_untrusted;
+	/* chain of X509s - built up and trusted */
+	STACK_OF(X509) *chain;
+	/* Valid policy tree */
+	X509_POLICY_TREE *tree;
 
-	int explicit_policy;	/* Require explicit policy value */
+	/* Require explicit policy value */
+	int explicit_policy;
 
 	/* When something goes wrong, this is why */
 	int error_depth;
 	int error;
 	X509 *current_cert;
-	X509 *current_issuer;	/* cert currently being tested as valid issuer */
-	X509_CRL *current_crl;	/* current CRL */
+	/* cert currently being tested as valid issuer */
+	X509 *current_issuer;
+	/* current CRL */
+	X509_CRL *current_crl;
 
-	int current_crl_score;  /* score of current CRL */
-	unsigned int current_reasons;  /* Reason mask */
+	/* score of current CRL */
+	int current_crl_score;
+	/* Reason mask */
+	unsigned int current_reasons;
 
-	X509_STORE_CTX *parent; /* For CRL path validation: parent context */
+	/* For CRL path validation: parent context */
+	X509_STORE_CTX *parent;
 
 	CRYPTO_EX_DATA ex_data;
 	} /* X509_STORE_CTX */;

@@ -343,8 +343,8 @@ dtls1_get_buffered_record(SSL *s)
 		(((PQ_64BIT)s->d1->handshake_read_seq) << 32) | 
 		((PQ_64BIT)s->d1->r_msg_hdr.frag_off);
 	
-	if ( ! SSL_in_init(s))  /* if we're not (re)negotiating, 
-							   nothing buffered */
+    /* if we're not (re)negotiating, nothing buffered */
+	if ( ! SSL_in_init(s))
 		return 0;
 
 

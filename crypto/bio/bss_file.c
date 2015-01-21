@@ -153,9 +153,14 @@ BIO *BIO_new_file(const char *filename, const char *mode)
 			    		wmode,sizeof(wmode)/sizeof(wmode[0])) &&
 		    (file=_wfopen(wfilename,wmode))==NULL &&
 		    (errno==ENOENT || errno==EBADF)
-		   )	/* UTF-8 decode succeeded, but no file, filename
-			 * could still have been locale-ized... */
+		   )
+			{
+			/*
+			 * UTF-8 decode succeeded, but no file, filename
+			 * could still have been locale-ized...
+			 */
 			file = fopen(filename,mode);
+			}
 		}
 	else if (GetLastError()==ERROR_NO_UNICODE_TRANSLATION)
 		{

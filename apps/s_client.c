@@ -2217,7 +2217,9 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 		if (peer != NULL)
 			{
 			BIO_printf(bio,"Server certificate\n");
-			if (!(c_showcerts && got_a_chain)) /* Redundant if we showed the whole chain */
+
+			/* Redundant if we showed the whole chain */
+			if (!(c_showcerts && got_a_chain))
 				PEM_write_bio_X509(bio,peer);
 			X509_NAME_oneline(X509_get_subject_name(peer),
 				buf,sizeof buf);

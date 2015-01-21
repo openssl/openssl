@@ -1015,7 +1015,8 @@ struct ssl_ctx_st
 	int verify_mode;
 	unsigned int sid_ctx_length;
 	unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
-	int (*default_verify_callback)(int ok,X509_STORE_CTX *ctx); /* called 'verify_callback' in the SSL */
+	/* called 'verify_callback' in the SSL */
+	int (*default_verify_callback)(int ok,X509_STORE_CTX *ctx);
 
 	/* Default generate session ID callback. */
 	GEN_SESSION_CB generate_session_id;
@@ -1306,22 +1307,28 @@ struct ssl_st
 	 * (one of SSL2_VERSION, SSL3_VERSION, TLS1_VERSION, DTLS1_VERSION)
 	 */
 	int version;
-	int type; /* SSL_ST_CONNECT or SSL_ST_ACCEPT */
+	/* SSL_ST_CONNECT or SSL_ST_ACCEPT */
+	int type;
 
-	const SSL_METHOD *method; /* SSLv3 */
+	/* SSLv3 */
+	const SSL_METHOD *method;
 
 	/* There are 2 BIO's even though they are normally both the
 	 * same.  This is so data can be read and written to different
 	 * handlers */
 
 #ifndef OPENSSL_NO_BIO
-	BIO *rbio; /* used by SSL_read */
-	BIO *wbio; /* used by SSL_write */
-	BIO *bbio; /* used during session-id reuse to concatenate
-		    * messages */
+	/* used by SSL_read */
+	BIO *rbio;
+	/* used by SSL_write */
+	BIO *wbio;
+	/* used during session-id reuse to concatenate messages */
+	BIO *bbio;
 #else
-	char *rbio; /* used by SSL_read */
-	char *wbio; /* used by SSL_write */
+	/* used by SSL_read */
+	char *rbio;
+	/* used by SSL_write */
+	char *wbio;
 	char *bbio;
 #endif
 	/* This holds a variable that indicates what we were doing
@@ -1342,17 +1349,24 @@ struct ssl_st
 	 * test instead of an "init" member.
 	 */
 
-	int server;	/* are we the server side? - mostly used by SSL_clear*/
+	/* are we the server side? - mostly used by SSL_clear*/
+	int server;
 
-	int new_session;/* Generate a new session or reuse an old one.
-	                 * NB: For servers, the 'new' session may actually be a previously
-	                 * cached session or even the previous session unless
-	                 * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION is set */
-	int quiet_shutdown;/* don't send shutdown packets */
-	int shutdown;	/* we have shut things down, 0x01 sent, 0x02
-			 * for received */
-	int state;	/* where we are */
-	int rstate;	/* where we are when reading */
+	/*
+	 * Generate a new session or reuse an old one.
+	 * NB: For servers, the 'new' session may actually be a previously
+	 * cached session or even the previous session unless
+	 * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION is set
+	 */
+	int new_session;
+	/* don't send shutdown packets */
+	int quiet_shutdown;
+	/* we have shut things down, 0x01 sent, 0x02 for received */
+	int shutdown;
+	/* where we are */
+	int state;
+	/* where we are when reading */
+	int rstate;
 
 	BUF_MEM *init_buf;	/* buffer used during init */
 	void *init_msg;   	/* pointer to handshake message body, set by ssl3_get_message() */
@@ -1424,17 +1438,25 @@ struct ssl_st
 	GEN_SESSION_CB generate_session_id;
 
 	/* Used in SSL2 and SSL3 */
-	int verify_mode;	/* 0 don't care about verify failure.
-				 * 1 fail if verify fails */
-	int (*verify_callback)(int ok,X509_STORE_CTX *ctx); /* fail if callback returns 0 */
+	/*
+	 * 0 don't care about verify failure.
+	 * 1 fail if verify fails
+	 */
+	int verify_mode;
+	/* fail if callback returns 0 */
+	int (*verify_callback)(int ok,X509_STORE_CTX *ctx);
 
-	void (*info_callback)(const SSL *ssl,int type,int val); /* optional informational callback */
+	/* optional informational callback */
+	void (*info_callback)(const SSL *ssl,int type,int val);
 
-	int error;		/* error bytes to be written */
-	int error_code;		/* actual code */
+	/* error bytes to be written */
+	int error;
+	/* actual code */
+	int error_code;
 
 #ifndef OPENSSL_NO_KRB5
-	KSSL_CTX *kssl_ctx;     /* Kerberos 5 context */
+	/* Kerberos 5 context */
+	KSSL_CTX *kssl_ctx;
 #endif	/* OPENSSL_NO_KRB5 */
 
 #ifndef OPENSSL_NO_PSK
@@ -1458,12 +1480,14 @@ struct ssl_st
 	STACK_OF(X509_NAME) *client_CA;
 
 	int references;
-	unsigned long options; /* protocol behaviour */
-	unsigned long mode; /* API behaviour */
+	/* protocol behaviour */
+	unsigned long options;
+	/* API behaviour */
+	unsigned long mode;
 	long max_cert_list;
 	int first_packet;
-	int client_version;	/* what was passed, used for
-				 * SSLv3/TLS rollback check */
+	/* what was passed, used for SSLv3/TLS rollback check */
+	int client_version;
 	unsigned int max_send_fragment;
 #ifndef OPENSSL_NO_TLSEXT
 	/* TLS extension debug callback */
@@ -1472,11 +1496,13 @@ struct ssl_st
 					void *arg);
 	void *tlsext_debug_arg;
 	char *tlsext_hostname;
-	int servername_done;   /* no further mod of servername 
-	                          0 : call the servername extension callback.
-	                          1 : prepare 2, allow last ack just after in server callback.
-	                          2 : don't call servername callback, no ack in server hello
-	                       */
+    /*-
+     * no further mod of servername 
+     * 0 : call the servername extension callback.
+     * 1 : prepare 2, allow last ack just after in server callback.
+     * 2 : don't call servername callback, no ack in server hello
+     */
+	int servername_done;
 	/* certificate status request info */
 	/* Status type or -1 if no status type */
 	int tlsext_status_type;
@@ -1493,9 +1519,11 @@ struct ssl_st
 	int tlsext_ticket_expected;
 #ifndef OPENSSL_NO_EC
 	size_t tlsext_ecpointformatlist_length;
-	unsigned char *tlsext_ecpointformatlist; /* our list */
+	/* our list */
+	unsigned char *tlsext_ecpointformatlist;
 	size_t tlsext_ellipticcurvelist_length;
-	unsigned char *tlsext_ellipticcurvelist; /* our list */
+	/* our list */
+	unsigned char *tlsext_ellipticcurvelist;
 #endif /* OPENSSL_NO_EC */
 
 	/* draft-rescorla-tls-opaque-prf-input-00.txt information to be used for handshakes */
@@ -1529,26 +1557,36 @@ struct ssl_st
 
 #define session_ctx initial_ctx
 
-	STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;  /* What we'll do */
-	SRTP_PROTECTION_PROFILE *srtp_profile;            /* What's been chosen */
+	/* What we'll do */
+	STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;
+	/* What's been chosen */
+	SRTP_PROTECTION_PROFILE *srtp_profile;
 
-	unsigned int tlsext_heartbeat;  /* Is use of the Heartbeat extension negotiated?
-	                                   0: disabled
-	                                   1: enabled
-	                                   2: enabled, but not allowed to send Requests
-	                                 */
-	unsigned int tlsext_hb_pending; /* Indicates if a HeartbeatRequest is in flight */
-	unsigned int tlsext_hb_seq;     /* HeartbeatRequest sequence number */
+	/*-
+	 * Is use of the Heartbeat extension negotiated?
+	 * 0: disabled
+	 * 1: enabled
+	 * 2: enabled, but not allowed to send Requests
+	 */
+	unsigned int tlsext_heartbeat;
+	/* Indicates if a HeartbeatRequest is in flight */
+	unsigned int tlsext_hb_pending;
+	/* HeartbeatRequest sequence number */
+	unsigned int tlsext_hb_seq;
 #else
 #define session_ctx ctx
 #endif /* OPENSSL_NO_TLSEXT */
 
-	int renegotiate;/* 1 if we are renegotiating.
-	                 * 2 if we are a server and are inside a handshake
-	                 * (i.e. not just sending a HelloRequest) */
+    /*-
+     * 1 if we are renegotiating.
+     * 2 if we are a server and are inside a handshake
+     * (i.e. not just sending a HelloRequest)
+     */
+	int renegotiate;
 
 #ifndef OPENSSL_NO_SRP
-	SRP_CTX srp_ctx; /* ctx for SRP authentication */
+	/* ctx for SRP authentication */
+	SRP_CTX srp_ctx;
 #endif
 #ifndef OPENSSL_NO_TLSEXT
 	/* For a client, this contains the list of supported protocols in wire

@@ -190,13 +190,16 @@ typedef int evp_verify_method(int type,const unsigned char *m,
 			    unsigned int m_length,const unsigned char *sigbuf,
 			    unsigned int siglen, void *key);
 
-#define EVP_MD_FLAG_ONESHOT	0x0001 /* digest can only handle a single
-					* block */
+/* digest can only handle a single block */
+#define EVP_MD_FLAG_ONESHOT	0x0001
 
-#define EVP_MD_FLAG_PKEY_DIGEST	0x0002 /* digest is a "clone" digest used
-					* which is a copy of an existing
-					* one for a specific public key type.
-					* EVP_dss1() etc */
+/*
+ * digest is a "clone" digest used
+ * which is a copy of an existing
+ * one for a specific public key type.
+ * EVP_dss1() etc
+ */
+#define EVP_MD_FLAG_PKEY_DIGEST	0x0002
 
 /* Digest uses EVP_PKEY_METHOD for signing instead of MD specific signing */
 
@@ -218,7 +221,8 @@ typedef int evp_verify_method(int type,const unsigned char *m,
 
 #define EVP_MD_FLAG_DIGALGID_CUSTOM		0x0018
 
-#define EVP_MD_FLAG_FIPS	0x0400 /* Note if suitable for use in FIPS mode */
+/* Note if suitable for use in FIPS mode */
+#define EVP_MD_FLAG_FIPS	0x0400
 
 /* Digest ctrls */
 
@@ -305,19 +309,39 @@ struct evp_cipher_st
 	{
 	int nid;
 	int block_size;
-	int key_len;		/* Default value for variable length ciphers */
+
+	/* Default value for variable length ciphers */
+	int key_len;
 	int iv_len;
-	unsigned long flags;	/* Various flags */
+
+	/* Various flags */
+	unsigned long flags;
+	
+	/* init key */
 	int (*init)(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-		    const unsigned char *iv, int enc);	/* init key */
+		    const unsigned char *iv, int enc);
+		    
+	/* encrypt/decrypt data */
 	int (*do_cipher)(EVP_CIPHER_CTX *ctx, unsigned char *out,
-			 const unsigned char *in, size_t inl);/* encrypt/decrypt data */
-	int (*cleanup)(EVP_CIPHER_CTX *); /* cleanup ctx */
-	int ctx_size;		/* how big ctx->cipher_data needs to be */
-	int (*set_asn1_parameters)(EVP_CIPHER_CTX *, ASN1_TYPE *); /* Populate a ASN1_TYPE with parameters */
-	int (*get_asn1_parameters)(EVP_CIPHER_CTX *, ASN1_TYPE *); /* Get parameters from a ASN1_TYPE */
-	int (*ctrl)(EVP_CIPHER_CTX *, int type, int arg, void *ptr); /* Miscellaneous operations */
-	void *app_data;		/* Application data */
+			 const unsigned char *in, size_t inl);
+
+	/* cleanup ctx */
+	int (*cleanup)(EVP_CIPHER_CTX *);
+
+	/* how big ctx->cipher_data needs to be */
+	int ctx_size;
+
+	/* Populate a ASN1_TYPE with parameters */
+	int (*set_asn1_parameters)(EVP_CIPHER_CTX *, ASN1_TYPE *);
+
+	/* Get parameters from a ASN1_TYPE */
+	int (*get_asn1_parameters)(EVP_CIPHER_CTX *, ASN1_TYPE *);
+
+	/* Miscellaneous operations */
+	int (*ctrl)(EVP_CIPHER_CTX *, int type, int arg, void *ptr);
+
+	/* Application data */
+	void *app_data;
 	} /* EVP_CIPHER */;
 
 /* Values for cipher flags */
@@ -453,14 +477,22 @@ struct evp_cipher_ctx_st
 
 typedef struct evp_Encode_Ctx_st
 	{
-	int num;	/* number saved in a partial encode/decode */
-	int length;	/* The length is either the output line length
-			 * (in input bytes) or the shortest input line
-			 * length that is ok.  Once decoding begins,
-			 * the length is adjusted up each time a longer
-			 * line is decoded */
-	unsigned char enc_data[80];	/* data to encode */
-	int line_num;	/* number read on current line */
+	/* number saved in a partial encode/decode */
+	int num;
+
+	/* The length is either the output line length
+	 * (in input bytes) or the shortest input line
+	 * length that is ok.  Once decoding begins,
+	 * the length is adjusted up each time a longer
+	 * line is decoded
+	 */
+	int length;
+
+	/* data to encode */
+	unsigned char enc_data[80];
+
+	/* number read on current line */
+	int line_num;
 	int expect_nl;
 	} EVP_ENCODE_CTX;
 
