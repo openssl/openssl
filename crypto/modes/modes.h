@@ -144,6 +144,7 @@ size_t CRYPTO_128_wrap(void *key, const unsigned char *iv,
 size_t CRYPTO_128_unwrap(void *key, const unsigned char *iv,
 		unsigned char *out,
 		const unsigned char *in, size_t inlen, block128_f block);
+
 #ifdef  __cplusplus
 }
 #endif
