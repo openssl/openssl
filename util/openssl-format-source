@@ -106,12 +106,12 @@ do
 	    perl -0 -np \
 	      -e 's/(\n#[ \t]*ifdef[ \t]+__cplusplus\n[^\n]*\n#[ \t]*endif\n)/\n\/**INDENT-OFF**\/$1\/**INDENT-ON**\/\n/g;' \
 	      -e 's/(\n\/\*\!)/\n\/**/g;' \
-	      -e 's/(STACK_OF|LHASH_OF)\(([^ \t,\)]+)\) /$1_$2_ /g;' \
+	      -e 's/(STACK_OF|LHASH_OF)\(([^ \t,\)]+)\)( |\n)/$1_$2_$3/g;' \
 	      | \
 	    perl -np \
 	      -e 's/^([ \t]*)\/\*([ \t]+.*)\*\/[ \t]*$/if (length("$1$2")<75) {$c="-"}else{$c=""}; "$1\/*$c$2*\/"/e;' \
 	      -e 's/^\/\* ((Copyright|=|----).*)$/\/*-$1/;' \
-	      -e 's/^((DECLARE|IMPLEMENT)_(EXTERN_ASN1|ASN1|ADB|STACK_OF).*)$/\/**INDENT-OFF**\/\n$1\n\/**INDENT-ON**\//;' \
+	      -e 's/^((DECLARE|IMPLEMENT)_(EXTERN_ASN1|ASN1|ADB|STACK_OF|PKCS12_STACK_OF).*)$/\/**INDENT-OFF**\/\n$1\n\/**INDENT-ON**\//;' \
 	      -e 's/^([ \t]*(make_dh|make_dh_bn|make_rfc5114_td)\(.*\)[ \t,]*)$/\/**INDENT-OFF**\/\n$1\n\/**INDENT-ON**\//;' \
 	      -e 's/^(ASN1_ADB_TEMPLATE\(.*)$/\/**INDENT-OFF**\/\n$1\n\/**INDENT-ON**\//;' \
 	      -e 's/^((ASN1|ADB)_.*_END\(.*[\){=,;]+[ \t]*)$/$1\n\/**INDENT-ON**\//;' \
