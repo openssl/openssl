@@ -135,7 +135,8 @@ void CRYPTO_ctr128_encrypt(const unsigned char *in, unsigned char *out,
 	n = *num;
 
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
-	if (16%sizeof(size_t) == 0) do { /* always true actually */
+	if (16%sizeof(size_t) == 0) { /* always true actually */
+	    do {
 		while (n && len) {
 			*(out++) = *(in++) ^ ecount_buf[n];
 			--len;
@@ -167,7 +168,8 @@ void CRYPTO_ctr128_encrypt(const unsigned char *in, unsigned char *out,
 		}
 		*num = n;
 		return;
-	} while(0);
+	    } while(0);
+	}
 	/* the rest would be commonly eliminated by x86* compiler */
 #endif
 	while (l<len) {
