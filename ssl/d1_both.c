@@ -436,10 +436,15 @@ long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 again:
 	i = dtls1_get_message_fragment(s, st1, stn, max, ok);
 	if ( i == DTLS1_HM_BAD_FRAGMENT ||
-		i == DTLS1_HM_FRAGMENT_RETRY)  /* bad fragment received */
+		i == DTLS1_HM_FRAGMENT_RETRY)
+		{
+		/* bad fragment received */
 		goto again;
+		}
 	else if ( i <= 0 && !*ok)
+		{
 		return i;
+		}
 
 	p = (unsigned char *)s->init_buf->data;
 	msg_len = msg_hdr->msg_len;
@@ -1121,7 +1126,8 @@ int dtls1_read_failed(SSL *s, int code)
 		return code;
 		}
 
-	if ( ! SSL_in_init(s))  /* done, no need to send a retransmit */
+	/* done, no need to send a retransmit */
+	if ( ! SSL_in_init(s))
 		{
 		BIO_set_flags(SSL_get_rbio(s), BIO_FLAGS_READ);
 		return code;

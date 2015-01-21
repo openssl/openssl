@@ -295,8 +295,11 @@ static void xsyslog(BIO *bp, int priority, const char *string)
 	case LOG_DEBUG:
 		evtype = EVENTLOG_INFORMATION_TYPE;
 		break;
-	default:		/* Should never happen, but set it
-				   as error anyway. */
+	default:
+		/*
+		 * Should never happen, but set it
+		 * as error anyway.
+		 */
 		evtype = EVENTLOG_ERROR_TYPE;
 		break;
 		}

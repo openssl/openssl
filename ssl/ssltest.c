@@ -114,8 +114,8 @@
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
 
-#define _BSD_SOURCE 1		/* Or gethostname won't be declared properly
-				   on Linux and GNU platforms. */
+/* Or gethostname won't be declared properly on Linux and GNU platforms. */
+#define _BSD_SOURCE 1
 
 #include <assert.h>
 #include <errno.h>
@@ -128,8 +128,8 @@
 #define USE_SOCKETS
 #include "e_os.h"
 
-#define _XOPEN_SOURCE 500	/* Or isascii won't be declared properly on
-				   VMS (at least with DECompHP C).  */
+/* Or isascii won't be declared properly on VMS (at least with DECompHP C).  */
+#define _XOPEN_SOURCE 500
 #include <ctype.h>
 
 #include <openssl/bio.h>
@@ -154,11 +154,13 @@
 #endif
 #include <openssl/bn.h>
 
-#define _XOPEN_SOURCE_EXTENDED	1 /* Or gethostname won't be declared properly
-				     on Compaq platforms (at least with DEC C).
-				     Do not try to put it earlier, or IPv6 includes
-				     get screwed...
-				  */
+/*
+ * Or gethostname won't be declared properly
+ * on Compaq platforms (at least with DEC C).
+ * Do not try to put it earlier, or IPv6 includes
+ * get screwed...
+*/
+#define _XOPEN_SOURCE_EXTENDED	1 
 
 #ifdef OPENSSL_SYS_WINDOWS
 #include <winsock.h>

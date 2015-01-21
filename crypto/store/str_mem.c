@@ -85,21 +85,34 @@ struct mem_object_data_st
 
 struct mem_data_st
 	{
-	STACK *data;		/* A stack of mem_object_data_st,
-				   sorted with STORE_ATTR_INFO_compare(). */
-	unsigned int compute_components : 1; /* Currently unused, but can
-						be used to add attributes
-						from parts of the data. */
+	/*
+	 * A stack of mem_object_data_st,
+	 * sorted with STORE_ATTR_INFO_compare().
+	 */
+	STACK *data;
+	/* Currently unused, but can
+	 * be used to add attributes
+	 * from parts of the data.
+	 */
+	unsigned int compute_components : 1;
 	};
 
 struct mem_ctx_st
 	{
-	int type;		/* The type we're searching for */
-	STACK *search_attributes; /* Sets of attributes to search for.
-				     Each element is a STORE_ATTR_INFO. */
-	int search_index;	/* which of the search attributes we found a match
-				   for, -1 when we still haven't found any */
-	int index;		/* -1 as long as we're searching for the first */
+	/* The type we're searching for */
+	int type;
+	/*
+	 * Sets of attributes to search for.
+	 * Each element is a STORE_ATTR_INFO.
+	 */
+	STACK *search_attributes;
+	/*
+	 *  which of the search attributes we found a match
+	 * for, -1 when we still haven't found any
+	 */
+	int search_index;
+	/* -1 as long as we're searching for the first */
+	int index;
 	};
 
 static int mem_init(STORE *s);

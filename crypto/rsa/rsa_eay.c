@@ -283,11 +283,12 @@ static BN_BLINDING *rsa_get_blinding(RSA *rsa, int *local, BN_CTX *ctx)
 		{
 		/* resort to rsa->mt_blinding instead */
 
-		*local = 0; /* instructs rsa_blinding_convert(), rsa_blinding_invert()
-		             * that the BN_BLINDING is shared, meaning that accesses
-		             * require locks, and that the blinding factor must be
-		             * stored outside the BN_BLINDING
-		             */
+		/* instructs rsa_blinding_convert(), rsa_blinding_invert()
+		 * that the BN_BLINDING is shared, meaning that accesses
+		 * require locks, and that the blinding factor must be
+		 * stored outside the BN_BLINDING
+		 */
+		*local = 0;
 
 		if (rsa->mt_blinding == NULL)
 			{

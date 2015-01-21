@@ -200,34 +200,41 @@ struct ec_group_st {
 	/* The following members are handled by the method functions,
 	 * even if they appear generic */
 	
-	BIGNUM field; /* Field specification.
-	               * For curves over GF(p), this is the modulus;
-	               * for curves over GF(2^m), this is the 
-	               * irreducible polynomial defining the field.
-	               */
+	/* Field specification.
+	 * For curves over GF(p), this is the modulus;
+	 * for curves over GF(2^m), this is the 
+	 * irreducible polynomial defining the field.
+	 */
+	BIGNUM field;
 
-	unsigned int poly[5]; /* Field specification for curves over GF(2^m).
-	                       * The irreducible f(t) is then of the form:
-	                       *     t^poly[0] + t^poly[1] + ... + t^poly[k]
-	                       * where m = poly[0] > poly[1] > ... > poly[k] = 0.
-	                       */
+	/* Field specification for curves over GF(2^m).
+	 * The irreducible f(t) is then of the form:
+	 *     t^poly[0] + t^poly[1] + ... + t^poly[k]
+	 * where m = poly[0] > poly[1] > ... > poly[k] = 0.
+	 */
+	unsigned int poly[5];
 
-	BIGNUM a, b; /* Curve coefficients.
-	              * (Here the assumption is that BIGNUMs can be used
-	              * or abused for all kinds of fields, not just GF(p).)
-	              * For characteristic  > 3,  the curve is defined
-	              * by a Weierstrass equation of the form
-	              *     y^2 = x^3 + a*x + b.
-	              * For characteristic  2,  the curve is defined by
-	              * an equation of the form
-	              *     y^2 + x*y = x^3 + a*x^2 + b.
-	              */
+	/* Curve coefficients.
+	 * (Here the assumption is that BIGNUMs can be used
+	 * or abused for all kinds of fields, not just GF(p).)
+	 * For characteristic  > 3,  the curve is defined
+	 * by a Weierstrass equation of the form
+	 *     y^2 = x^3 + a*x + b.
+	 * For characteristic  2,  the curve is defined by
+	 * an equation of the form
+	 *     y^2 + x*y = x^3 + a*x^2 + b.
+	 */
+	BIGNUM a, b;
 
-	int a_is_minus3; /* enable optimized point arithmetics for special case */
+	/* enable optimized point arithmetics for special case */
+	int a_is_minus3;
 
-	void *field_data1; /* method-specific (e.g., Montgomery structure) */
-	void *field_data2; /* method-specific */
-	int (*field_mod_func)(BIGNUM *, const BIGNUM *, const BIGNUM *,	BN_CTX *); /* method-specific */
+	/* method-specific (e.g., Montgomery structure) */
+	void *field_data1;
+	/* method-specific */
+	void *field_data2;
+	/* method-specific */
+	int (*field_mod_func)(BIGNUM *, const BIGNUM *, const BIGNUM *,	BN_CTX *);
 } /* EC_GROUP */;
 
 struct ec_key_st {

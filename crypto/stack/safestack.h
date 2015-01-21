@@ -80,7 +80,8 @@ STACK_OF(type) \
     STACK stack; \
     };
 
-#define IMPLEMENT_STACK_OF(type) /* nada (obsolete in new safestack approach)*/
+/* nada (obsolete in new safestack approach)*/
+#define IMPLEMENT_STACK_OF(type)
 
 /* SKM_sk_... stack macros are internal to safestack.h:
  * never use them directly, use sk_<type>_... instead */
