@@ -77,7 +77,8 @@ void CRYPTO_cfb128_encrypt(const unsigned char *in, unsigned char *out,
 
     if (enc) {
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
-	if (16%sizeof(size_t) == 0) do {	/* always true actually */
+	if (16%sizeof(size_t) == 0) {	/* always true actually */
+	    do {
 		while (n && len) {
 			*(out++) = ivec[n] ^= *(in++);
 			--len;
@@ -107,7 +108,8 @@ void CRYPTO_cfb128_encrypt(const unsigned char *in, unsigned char *out,
 		}
 		*num = n;
 		return;
-	} while (0);
+	    } while (0);
+	}
 	/* the rest would be commonly eliminated by x86* compiler */
 #endif
 	while (l<len) {
@@ -121,7 +123,8 @@ void CRYPTO_cfb128_encrypt(const unsigned char *in, unsigned char *out,
 	*num = n;
     } else {
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
-	if (16%sizeof(size_t) == 0) do {	/* always true actually */
+	if (16%sizeof(size_t) == 0) {	/* always true actually */
+	    do {
 		while (n && len) {
 			unsigned char c;
 			*(out++) = ivec[n] ^ (c = *(in++)); ivec[n] = c;
@@ -154,7 +157,8 @@ void CRYPTO_cfb128_encrypt(const unsigned char *in, unsigned char *out,
  		}
 		*num = n;
 		return;
-	} while (0);
+	    } while (0);
+	}
 	/* the rest would be commonly eliminated by x86* compiler */
 #endif
 	while (l<len) {
