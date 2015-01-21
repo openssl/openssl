@@ -708,7 +708,9 @@ tls_create_ctx(struct tls_create_ctx_args a, void *apparg)
 	    SSL_CTX_set_verify_depth(ret, a.verify_depth);
 	
 	if (a.ca_file != NULL) {
-	    r = SSL_CTX_load_verify_locations(ret, a.ca_file, NULL /* no CA-directory */); /* does not report failure if file does not exist ... */
+	    /* does not report failure if file does not exist ... */
+	    /* NULL argument means no CA-directory */
+	    r = SSL_CTX_load_verify_locations(ret, a.ca_file, NULL); 
 	    if (!r) {
 		err_pref_1 = " while processing certificate file ";
 		err_pref_2 = a.ca_file;

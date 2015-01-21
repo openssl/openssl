@@ -64,8 +64,11 @@ typedef unsigned long long	u64;
 #  define SMALL_REGISTER_BANK
 #  if defined(WHIRLPOOL_ASM)
 #    ifndef OPENSSL_SMALL_FOOTPRINT
-#      define OPENSSL_SMALL_FOOTPRINT	/* it appears that for elder non-MMX
-					   CPUs this is actually faster! */
+/*
+ * it appears that for elder non-MMX
+ * CPUs this is actually faster!
+ */
+#      define OPENSSL_SMALL_FOOTPRINT
 #    endif
 #    define GO_FOR_MMX(ctx,inp,num)	do {			\
 	extern unsigned long OPENSSL_ia32cap_P[];		\
