@@ -374,9 +374,12 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
 		case 3:	A[2]=B[2];
 		case 2:	A[1]=B[1];
 		case 1:	A[0]=B[0];
-		case 0: /* workaround for ultrix cc: without 'case 0', the optimizer does
-		         * the switch table by doing a=top&3; a--; goto jump_table[a];
-		         * which fails for top== 0 */
+		case 0:
+			/*
+			 * workaround for ultrix cc: without 'case 0', the optimizer does
+			 * the switch table by doing a=top&3; a--; goto jump_table[a];
+			 * which fails for top== 0
+			 */
 			;
 			}
 		}

@@ -94,7 +94,8 @@ STACK_OF(type) \
     _STACK stack; \
     };
 
-#define IMPLEMENT_STACK_OF(type) /* nada (obsolete in new safestack approach)*/
+/* nada (obsolete in new safestack approach)*/
+#define IMPLEMENT_STACK_OF(type)
 
 
 /*-

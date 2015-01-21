@@ -198,10 +198,15 @@ int SSL_clear(SSL *s)
 	s->hit=0;
 	s->shutdown=0;
 
-#if 0 /* Disabled since version 1.10 of this file (early return not
-       * needed because SSL_clear is not called when doing renegotiation) */
-	/* This is set if we are doing dynamic renegotiation so keep
-	 * the old cipher.  It is sort of a SSL_clear_lite :-) */
+#if 0
+	/*
+	 * Disabled since version 1.10 of this file (early return not
+     * needed because SSL_clear is not called when doing renegotiation)
+     */
+	/*
+	 * This is set if we are doing dynamic renegotiation so keep
+	 * the old cipher.  It is sort of a SSL_clear_lite :-)
+	 */
 	if (s->new_session) return(1);
 #else
 	if (s->new_session)

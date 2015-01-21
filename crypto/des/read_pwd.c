@@ -75,7 +75,8 @@
 #endif
 #endif
 
-/* #define SIGACTION */ /* Define this if you have sigaction() */
+/* Define this if you have sigaction() */
+/* #define SIGACTION */
 
 #ifdef WIN16TTY
 #undef OPENSSL_SYS_WIN16
