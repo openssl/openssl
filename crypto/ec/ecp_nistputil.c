@@ -79,7 +79,8 @@ void ec_GFp_nistp_points_make_affine_internal(size_t num, void *point_array,
 			/* tmp_felem(i-1) is the product of Z(0) .. Z(i-1),
 			 * tmp_felem(i) is the inverse of the product of Z(0) .. Z(i)
 			 */
-			felem_mul(tmp_felem(num), tmp_felem(i-1), tmp_felem(i)); /* 1/Z(i) */
+			 /* 1/Z(i) */
+			felem_mul(tmp_felem(num), tmp_felem(i-1), tmp_felem(i));
 		else
 			felem_assign(tmp_felem(num), tmp_felem(0)); /* 1/Z(0) */
 

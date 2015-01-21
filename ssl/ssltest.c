@@ -1011,8 +1011,10 @@ bad:
 #ifdef TLSEXT_TYPE_opaque_prf_input
 	SSL_CTX_set_tlsext_opaque_prf_input_callback(c_ctx, opaque_prf_input_cb);
 	SSL_CTX_set_tlsext_opaque_prf_input_callback(s_ctx, opaque_prf_input_cb);
-	SSL_CTX_set_tlsext_opaque_prf_input_callback_arg(c_ctx, &co1); /* or &co2 or NULL */
-	SSL_CTX_set_tlsext_opaque_prf_input_callback_arg(s_ctx, &so1); /* or &so2 or NULL */
+	/* or &co2 or NULL */
+	SSL_CTX_set_tlsext_opaque_prf_input_callback_arg(c_ctx, &co1);
+	/* or &so2 or NULL */
+	SSL_CTX_set_tlsext_opaque_prf_input_callback_arg(s_ctx, &so1);
 #endif
 
 	if (!SSL_CTX_use_certificate_file(s_ctx,server_cert,SSL_FILETYPE_PEM))

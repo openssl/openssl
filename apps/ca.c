@@ -1491,7 +1491,8 @@ bad:
 			}
 
 		
-		if (crlnumberfile != NULL)	/* we have a CRL number that need updating */
+		/* we have a CRL number that need updating */
+		if (crlnumberfile != NULL)
 			if (!save_serial(crlnumberfile,"new",crlnumber,NULL)) goto err;
 
 		if (crlnumber)

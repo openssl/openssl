@@ -89,7 +89,8 @@
 #error SEED is disabled.
 #endif
 
-#ifdef AES_LONG /* look whether we need 'long' to get 32 bits */
+/* look whether we need 'long' to get 32 bits */
+#ifdef AES_LONG
 # ifndef SEED_LONG
 #  define SEED_LONG 1
 # endif
