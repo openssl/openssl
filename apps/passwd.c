@@ -310,7 +310,8 @@ err:
  */
 static char *md5crypt(const char *passwd, const char *magic, const char *salt)
 	{
-	static char out_buf[6 + 9 + 24 + 2]; /* "$apr1$..salt..$.......md5hash..........\0" */
+	/* "$apr1$..salt..$.......md5hash..........\0" */
+	static char out_buf[6 + 9 + 24 + 2];
 	unsigned char buf[MD5_DIGEST_LENGTH];
 	char *salt_out;
 	int n;

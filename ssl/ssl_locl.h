@@ -288,28 +288,51 @@
  */
 
 /* Bits for algorithm_mkey (key exchange algorithm) */
-#define SSL_kRSA		0x00000001L /* RSA key exchange */
-#define SSL_kDHr		0x00000002L /* DH cert, RSA CA cert */ /* no such ciphersuites supported! */
-#define SSL_kDHd		0x00000004L /* DH cert, DSA CA cert */ /* no such ciphersuite supported! */
-#define SSL_kEDH		0x00000008L /* tmp DH key no DH cert */
-#define SSL_kKRB5		0x00000010L /* Kerberos5 key exchange */
-#define SSL_kECDHr		0x00000020L /* ECDH cert, RSA CA cert */
-#define SSL_kECDHe		0x00000040L /* ECDH cert, ECDSA CA cert */
-#define SSL_kEECDH		0x00000080L /* ephemeral ECDH */
-#define SSL_kPSK		0x00000100L /* PSK */
-#define SSL_kGOST       0x00000200L /* GOST key exchange */
+/* RSA key exchange */
+#define SSL_kRSA		0x00000001L
+/* DH cert, RSA CA cert */
+/* no such ciphersuites supported! */
+#define SSL_kDHr		0x00000002L
+/* DH cert, DSA CA cert */
+/* no such ciphersuite supported! */
+#define SSL_kDHd		0x00000004L
+/* tmp DH key no DH cert */
+#define SSL_kEDH		0x00000008L
+/* Kerberos5 key exchange */
+#define SSL_kKRB5		0x00000010L
+/* ECDH cert, RSA CA cert */
+#define SSL_kECDHr		0x00000020L
+/* ECDH cert, ECDSA CA cert */
+#define SSL_kECDHe		0x00000040L
+/* ephemeral ECDH */
+#define SSL_kEECDH		0x00000080L
+/* PSK */
+#define SSL_kPSK		0x00000100L
+/* GOST key exchange */
+#define SSL_kGOST       0x00000200L
 
 /* Bits for algorithm_auth (server authentication) */
-#define SSL_aRSA		0x00000001L /* RSA auth */
-#define SSL_aDSS 		0x00000002L /* DSS auth */
-#define SSL_aNULL 		0x00000004L /* no auth (i.e. use ADH or AECDH) */
-#define SSL_aDH 		0x00000008L /* Fixed DH auth (kDHd or kDHr) */ /* no such ciphersuites supported! */
-#define SSL_aECDH 		0x00000010L /* Fixed ECDH auth (kECDHe or kECDHr) */
-#define SSL_aKRB5               0x00000020L /* KRB5 auth */
-#define SSL_aECDSA              0x00000040L /* ECDSA auth*/
-#define SSL_aPSK                0x00000080L /* PSK auth */
-#define SSL_aGOST94				0x00000100L /* GOST R 34.10-94 signature auth */
-#define SSL_aGOST01 			0x00000200L /* GOST R 34.10-2001 signature auth */
+/* RSA auth */
+#define SSL_aRSA		0x00000001L
+/* DSS auth */
+#define SSL_aDSS 		0x00000002L
+/* no auth (i.e. use ADH or AECDH) */
+#define SSL_aNULL 		0x00000004L
+/* Fixed DH auth (kDHd or kDHr) */
+/* no such ciphersuites supported! */
+#define SSL_aDH 		0x00000008L
+/* Fixed ECDH auth (kECDHe or kECDHr) */
+#define SSL_aECDH 		0x00000010L
+/* KRB5 auth */
+#define SSL_aKRB5               0x00000020L
+/* ECDSA auth*/
+#define SSL_aECDSA              0x00000040L
+/* PSK auth */
+#define SSL_aPSK                0x00000080L
+/* GOST R 34.10-94 signature auth */
+#define SSL_aGOST94				0x00000100L
+/* GOST R 34.10-2001 signature auth */
+#define SSL_aGOST01 			0x00000200L
 
 
 /* Bits for algorithm_enc (symmetric encryption) */
