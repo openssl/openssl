@@ -240,7 +240,7 @@ int BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	 * the top bit being set.  It was caused by an error in BN_div
 	 * with negatives.  There was also another problem when for a^b%m
 	 * a >= m.  eay 07-May-97 */
-/*	if ((m->d[m->top-1]&BN_TBIT) && BN_is_odd(m)) */
+	/* if ((m->d[m->top-1]&BN_TBIT) && BN_is_odd(m)) */
 
 	if (BN_is_odd(m))
 		{
@@ -904,14 +904,14 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
     else
 #endif
 #if defined(OPENSSL_BN_ASM_MONT5)
-    /* This optimization uses ideas from http://eprint.iacr.org/2011/239,
-     * specifically optimization of cache-timing attack countermeasures
-     * and pre-computation optimization. */
-
-    /* Dedicated window==4 case improves 512-bit RSA sign by ~15%, but as
-     * 512-bit RSA is hardly relevant, we omit it to spare size... */ 
     if (window==5 && top>1)
 	{
+	/* This optimization uses ideas from http://eprint.iacr.org/2011/239,
+	 * specifically optimization of cache-timing attack countermeasures
+	 * and pre-computation optimization. */
+
+	/* Dedicated window==4 case improves 512-bit RSA sign by ~15%, but as
+	 * 512-bit RSA is hardly relevant, we omit it to spare size... */ 
 	void bn_mul_mont_gather5(BN_ULONG *rp,const BN_ULONG *ap,
 			const void *table,const BN_ULONG *np,
 			const BN_ULONG *n0,int num,int power);
