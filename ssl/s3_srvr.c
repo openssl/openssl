@@ -1008,7 +1008,8 @@ int ssl3_get_client_hello(SSL *s)
 	s->s3->tmp.new_compression=NULL;
 #ifndef OPENSSL_NO_COMP
 	if (s->ctx->comp_methods != NULL)
-		{ /* See if we have a match */
+		{
+        /* See if we have a match */
 		int m,nn,o,v,done=0;
 
 		nn=sk_SSL_COMP_num(s->ctx->comp_methods);

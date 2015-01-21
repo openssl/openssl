@@ -144,7 +144,8 @@ void buffer_to_BIO(buffer_t *buf, BIO *bio);
 
 /* Callbacks */
 void cb_ssl_info(const SSL *s, int where, int ret);
-void cb_ssl_info_set_output(FILE *fp); /* Called if output should be sent too */
+/* Called if output should be sent too */
+void cb_ssl_info_set_output(FILE *fp);
 int cb_ssl_verify(int ok, X509_STORE_CTX *ctx);
 void cb_ssl_verify_set_output(FILE *fp);
 void cb_ssl_verify_set_depth(unsigned int verify_depth);
