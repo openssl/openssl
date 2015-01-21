@@ -4,8 +4,8 @@
  *         This file is distributed under the same license as OpenSSL *
  *                                                                    *
  *     Implements generation and parsing of GOST_KEY_TRANSPORT for    *
- *     			GOST R 34.10-94 algorithms                            *
- *																	  *
+ *              GOST R 34.10-94 algorithms                            *
+ *                                                                    *
  *          Requires OpenSSL 0.9.9 for compilation                    *
  **********************************************************************/
 #include <string.h>

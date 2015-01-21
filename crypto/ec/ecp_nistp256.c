@@ -1392,8 +1392,8 @@ static void point_add_small(smallfelem x3, smallfelem y3, smallfelem z3,
  * Tables for other points have table[i] = iG for i in 0 .. 16. */
 
 /* gmul is the table of precomputed base points */
-static const smallfelem gmul[2][16][3] =
-{{{{0, 0, 0, 0},
+static const smallfelem gmul[2][16][3] = {
+ {{{0, 0, 0, 0},
    {0, 0, 0, 0},
    {0, 0, 0, 0}},
   {{0xf4a13945d898c296, 0x77037d812deb33a0, 0xf8bce6e563a440f2, 0x6b17d1f2e12c4247},
@@ -1827,7 +1827,8 @@ int ec_GFp_nistp256_point_get_affine_coordinates(const EC_GROUP *group,
 	return 1;
 	}
 
-static void make_points_affine(size_t num, smallfelem points[/* num */][3], smallfelem tmp_smallfelems[/* num+1 */])
+/* points below is of size |num|, and tmp_smallfelems is of size |num+1| */
+static void make_points_affine(size_t num, smallfelem points[][3], smallfelem tmp_smallfelems[])
 	{
 	/* Runs in constant time, unless an input is the point at infinity
 	 * (which normally shouldn't happen). */
@@ -1842,7 +1843,8 @@ static void make_points_affine(size_t num, smallfelem points[/* num */][3], smal
 		(void (*)(void *, const void *)) smallfelem_square_contract,
 		(void (*)(void *, const void *, const void *)) smallfelem_mul_contract,
 		(void (*)(void *, const void *)) smallfelem_inv_contract,
-		(void (*)(void *, const void *)) smallfelem_assign /* nothing to contract */);
+		/* nothing to contract */
+		(void (*)(void *, const void *)) smallfelem_assign);
 	}
 
 /* Computes scalar*generator + \sum scalars[i]*points[i], ignoring NULL values

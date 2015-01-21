@@ -1387,7 +1387,8 @@ static const felem gmul[16][3] =
 
 /* select_point selects the |idx|th point from a precomputation table and
  * copies it to out. */
-static void select_point(const limb idx, unsigned int size, const felem pre_comp[/* size */][3],
+ /* pre_comp below is of the size provided in |size| */
+static void select_point(const limb idx, unsigned int size, const felem pre_comp[][3],
 			 felem out[3])
 	{
 	unsigned i, j;
@@ -1707,7 +1708,8 @@ int ec_GFp_nistp521_point_get_affine_coordinates(const EC_GROUP *group,
 	return 1;
 	}
 
-static void make_points_affine(size_t num, felem points[/* num */][3], felem tmp_felems[/* num+1 */])
+/* points below is of size |num|, and tmp_felems is of size |num+1/ */
+static void make_points_affine(size_t num, felem points[][3], felem tmp_felems[])
 	{
 	/* Runs in constant time, unless an input is the point at infinity
 	 * (which normally shouldn't happen). */
