@@ -76,11 +76,16 @@ typedef unsigned short io_channel;
 /*************************************************************************/
 struct io_status { short status, count; long flags; };
 
-struct rpc_msg {		/* Should have member alignment inhibited */
-   char channel;		/* 'A'-app data. 'R'-remote client 'G'-global */
-   char function;		/* 'G'-get, 'P'-put, 'C'-confirm, 'X'-close */
-   unsigned short int length;	/* Amount of data returned or max to return */
-   char data[4092];		/* variable data */
+/* Should have member alignment inhibited */
+struct rpc_msg {
+   /* 'A'-app data. 'R'-remote client 'G'-global */
+   char channel;
+   /* 'G'-get, 'P'-put, 'C'-confirm, 'X'-close */
+   char function;
+   /* Amount of data returned or max to return */
+   unsigned short int length;
+   /* variable data */
+   char data[4092];
 };
 #define RPC_HDR_SIZE (sizeof(struct rpc_msg) - 4092)
 

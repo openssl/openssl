@@ -261,25 +261,38 @@
  * ONLY ONE BIT PER MASK CAN BE SET AT A TIME.
  */
 #define SSL_MKEY_MASK		0x000000FFL
-#define SSL_kRSA		0x00000001L /* RSA key exchange */
-#define SSL_kDHr		0x00000002L /* DH cert RSA CA cert */
-#define SSL_kDHd		0x00000004L /* DH cert DSA CA cert */
+/* RSA key exchange */
+#define SSL_kRSA		0x00000001L
+/* DH cert RSA CA cert */
+#define SSL_kDHr		0x00000002L
+/* DH cert DSA CA cert */
+#define SSL_kDHd		0x00000004L
 #define SSL_kFZA		0x00000008L
-#define SSL_kEDH		0x00000010L /* tmp DH key no DH cert */
-#define SSL_kKRB5		0x00000020L /* Kerberos5 key exchange */
-#define SSL_kECDH               0x00000040L /* ECDH w/ long-term keys */
-#define SSL_kECDHE              0x00000080L /* ephemeral ECDH */
+/* tmp DH key no DH cert */
+#define SSL_kEDH		0x00000010L
+/* Kerberos5 key exchange */
+#define SSL_kKRB5		0x00000020L
+/* ECDH w/ long-term keys */
+#define SSL_kECDH               0x00000040L
+/* ephemeral ECDH */
+#define SSL_kECDHE              0x00000080L
 #define SSL_EDH			(SSL_kEDH|(SSL_AUTH_MASK^SSL_aNULL))
 
 #define SSL_AUTH_MASK		0x00007F00L
-#define SSL_aRSA		0x00000100L /* Authenticate with RSA */
-#define SSL_aDSS 		0x00000200L /* Authenticate with DSS */
+/* Authenticate with RSA */
+#define SSL_aRSA		0x00000100L
+/* Authenticate with DSS */
+#define SSL_aDSS 		0x00000200L
 #define SSL_DSS 		SSL_aDSS
 #define SSL_aFZA 		0x00000400L
-#define SSL_aNULL 		0x00000800L /* no Authenticate, ADH */
-#define SSL_aDH 		0x00001000L /* no Authenticate, ADH */
-#define SSL_aKRB5               0x00002000L /* Authenticate with KRB5 */
-#define SSL_aECDSA              0x00004000L /* Authenticate with ECDSA */
+/* no Authenticate, ADH */
+#define SSL_aNULL 		0x00000800L
+/* no Authenticate, ADH */
+#define SSL_aDH 		0x00001000L
+/* Authenticate with KRB5 */
+#define SSL_aKRB5               0x00002000L
+/* Authenticate with ECDSA */
+#define SSL_aECDSA              0x00004000L
 
 #define SSL_NULL		(SSL_eNULL)
 #define SSL_ADH			(SSL_kEDH|SSL_aNULL)

@@ -1812,8 +1812,10 @@ kssl_ctx_show(KSSL_CTX *kssl_ctx)
 
     krb5rc = krb5_kt_get_entry(krb5context, krb5keytab, 
                                 princ,
-                                0 /* IGNORE_VNO */,
-                                0 /* IGNORE_ENCTYPE */,
+                                /* IGNORE_VNO */
+                                0,
+                                /* IGNORE_ENCTYPE */
+                                0,
                                 &entry);
     if ( krb5rc == KRB5_KT_NOTFOUND ) {
         rc = 1;
@@ -1897,7 +1899,8 @@ void kssl_krb5_free_data_contents(krb5_context context, krb5_data *data)
 	krb5_free_data_contents(NULL, data);
 #endif
 	}
-#endif /* !OPENSSL_SYS_WINDOWS && !OPENSSL_SYS_WIN32 */
+#endif
+/* !OPENSSL_SYS_WINDOWS && !OPENSSL_SYS_WIN32 */
 
 
 /*  Given pointers to KerberosTime and struct tm structs, convert the

@@ -337,10 +337,12 @@ void ENGINE_load_sureware(void)
  * implicitly. */
 static DSO *surewarehk_dso = NULL;
 #ifndef OPENSSL_NO_RSA
-static int rsaHndidx = -1;	/* Index for KM handle.  Not really used yet. */
+/* Index for KM handle.  Not really used yet. */
+static int rsaHndidx = -1;
 #endif
 #ifndef OPENSSL_NO_DSA
-static int dsaHndidx = -1;	/* Index for KM handle.  Not really used yet. */
+/* Index for KM handle.  Not really used yet. */
+static int dsaHndidx = -1;
 #endif
 
 /* These are the function pointers that are (un)set when the library has

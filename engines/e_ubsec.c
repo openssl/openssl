@@ -781,9 +781,13 @@ static DSA_SIG *ubsec_dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 		goto err;
 	}
 
-	if (p_UBSEC_dsa_sign_ioctl(fd, 0, /* compute hash before signing */
+	if (p_UBSEC_dsa_sign_ioctl(fd,
+		/* compute hash before signing */
+		0,
 		(unsigned char *)dgst, d_len,
-		NULL, 0,  /* compute random value */
+		NULL,
+		/* compute random value */
+		0,
 		(unsigned char *)dsa->p->d, BN_num_bits(dsa->p), 
 		(unsigned char *)dsa->q->d, BN_num_bits(dsa->q),
 		(unsigned char *)dsa->g->d, BN_num_bits(dsa->g),

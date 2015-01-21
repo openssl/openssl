@@ -420,7 +420,8 @@ void ENGINE_load_chil(void)
 static DSO *hwcrhk_dso = NULL;
 static HWCryptoHook_ContextHandle hwcrhk_context = 0;
 #ifndef OPENSSL_NO_RSA
-static int hndidx_rsa = -1;    /* Index for KM handle.  Not really used yet. */
+/* Index for KM handle.  Not really used yet. */
+static int hndidx_rsa = -1;
 #endif
 
 /* These are the function pointers that are (un)set when the library has
