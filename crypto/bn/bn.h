@@ -275,16 +275,22 @@ extern "C" {
 
 #define BN_FLG_MALLOCED		0x01
 #define BN_FLG_STATIC_DATA	0x02
-#define BN_FLG_CONSTTIME	0x04 /* avoid leaking exponent information through timing,
-                                      * BN_mod_exp_mont() will call BN_mod_exp_mont_consttime,
-                                      * BN_div() will call BN_div_no_branch,
-                                      * BN_mod_inverse() will call BN_mod_inverse_no_branch.
-                                      */
 
-#ifndef OPENSSL_NO_DEPRECATED
-#define BN_FLG_EXP_CONSTTIME BN_FLG_CONSTTIME /* deprecated name for the flag */
-                                      /* avoid leaking exponent information through timings
-                                      * (BN_mod_exp_mont() will call BN_mod_exp_mont_consttime) */
+/*
+ * avoid leaking exponent information through timing,
+ * BN_mod_exp_mont() will call BN_mod_exp_mont_consttime,
+ * BN_div() will call BN_div_no_branch,
+ * BN_mod_inverse() will call BN_mod_inverse_no_branch.
+ */
+#define BN_FLG_CONSTTIME	0x04 
+
+#ifdef OPENSSL_NO_DEPRECATED
+/* deprecated name for the flag */
+#define BN_FLG_EXP_CONSTTIME BN_FLG_CONSTTIME 
+/*
+ * avoid leaking exponent information through timings
+ * (BN_mod_exp_mont() will call BN_mod_exp_mont_consttime)
+ */
 #endif
 
 #ifndef OPENSSL_NO_DEPRECATED

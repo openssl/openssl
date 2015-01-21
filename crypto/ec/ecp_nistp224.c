@@ -1022,9 +1022,12 @@ static void point_add(felem x3, felem y3, felem z3,
 	felem_assign(z3, z_out);
 	}
 
-/* select_point selects the |idx|th point from a precomputation table and
- * copies it to out. */
-static void select_point(const u64 idx, unsigned int size, const felem pre_comp[/*size*/][3], felem out[3])
+/*
+ * select_point selects the |idx|th point from a precomputation table and
+ * copies it to out.
+ * The pre_comp array argument should be size of |size| argument
+ */
+static void select_point(const u64 idx, unsigned int size, const felem pre_comp[][3], felem out[3])
 	{
 	unsigned i, j;
 	limb *outlimbs = &out[0][0];

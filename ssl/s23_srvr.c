@@ -240,19 +240,21 @@ end:
 
 int ssl23_get_client_hello(SSL *s)
 	{
-	char buf_space[11]; /* Request this many bytes in initial read.
-	                     * We can detect SSL 3.0/TLS 1.0 Client Hellos
-	                     * ('type == 3') correctly only when the following
-	                     * is in a single record, which is not guaranteed by
-	                     * the protocol specification:
-	                     * Byte  Content
-	                     *  0     type            \
-	                     *  1/2   version          > record header
-	                     *  3/4   length          /
-	                     *  5     msg_type        \
-	                     *  6-8   length           > Client Hello message
-	                     *  9/10  client_version  /
-	                     */
+    /*-
+     * Request this many bytes in initial read.
+     * We can detect SSL 3.0/TLS 1.0 Client Hellos
+     * ('type == 3') correctly only when the following
+     * is in a single record, which is not guaranteed by
+     * the protocol specification:
+     * Byte  Content
+     *  0     type            \
+     *  1/2   version          > record header
+     *  3/4   length          /
+     *  5     msg_type        \
+     *  6-8   length           > Client Hello message
+     *  9/10  client_version  /
+     */
+	char buf_space[11]; 
 	char *buf= &(buf_space[0]);
 	unsigned char *p,*d,*d_len,*dd;
 	unsigned int i;
