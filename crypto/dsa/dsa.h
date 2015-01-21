@@ -146,9 +146,10 @@ struct dsa_method
 	int (*dsa_mod_exp)(DSA *dsa, BIGNUM *rr, BIGNUM *a1, BIGNUM *p1,
 			BIGNUM *a2, BIGNUM *p2, BIGNUM *m, BN_CTX *ctx,
 			BN_MONT_CTX *in_mont);
+	/* Can be null */
 	int (*bn_mod_exp)(DSA *dsa, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 				const BIGNUM *m, BN_CTX *ctx,
-				BN_MONT_CTX *m_ctx); /* Can be null */
+				BN_MONT_CTX *m_ctx);
 	int (*init)(DSA *dsa);
 	int (*finish)(DSA *dsa);
 	int flags;

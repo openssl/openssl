@@ -88,10 +88,12 @@ typedef struct hmac_ctx_st
 void HMAC_CTX_init(HMAC_CTX *ctx);
 void HMAC_CTX_cleanup(HMAC_CTX *ctx);
 
-#define HMAC_cleanup(ctx) HMAC_CTX_cleanup(ctx) /* deprecated */
+/* deprecated */
+#define HMAC_cleanup(ctx) HMAC_CTX_cleanup(ctx)
 
+/* deprecated */
 __owur int HMAC_Init(HMAC_CTX *ctx, const void *key, int len,
-	       const EVP_MD *md); /* deprecated */
+	       const EVP_MD *md);
 /*__owur*/ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
 		  const EVP_MD *md, ENGINE *impl);
 /*__owur*/ int HMAC_Update(HMAC_CTX *ctx, const unsigned char *data, size_t len);
