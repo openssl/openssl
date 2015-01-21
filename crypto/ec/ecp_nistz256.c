@@ -71,9 +71,11 @@ typedef P256_POINT_AFFINE PRECOMP256_ROW[64];
 typedef struct ec_pre_comp_st {
     const EC_GROUP *group;      /* Parent EC_GROUP object */
     size_t w;                   /* Window size */
-    /* Constant time access to the X and Y coordinates of the pre-computed,
+    /*
+     * Constant time access to the X and Y coordinates of the pre-computed,
      * generator multiplies, in the Montgomery domain. Pre-calculated
-     * multiplies are stored in affine form. */
+     * multiplies are stored in affine form.
+     */
     PRECOMP256_ROW *precomp;
     void *precomp_storage;
     int references;
@@ -89,15 +91,15 @@ void ecp_nistz256_div_by_2(BN_ULONG res[P256_LIMBS],
 /* Modular mul by 3: res = 3*a mod P */
 void ecp_nistz256_mul_by_3(BN_ULONG res[P256_LIMBS],
                            const BN_ULONG a[P256_LIMBS]);
-/* Modular add: res = a+b mod P	  */
+/* Modular add: res = a+b mod P   */
 void ecp_nistz256_add(BN_ULONG res[P256_LIMBS],
                       const BN_ULONG a[P256_LIMBS],
                       const BN_ULONG b[P256_LIMBS]);
-/* Modular sub: res = a-b mod P	  */
+/* Modular sub: res = a-b mod P   */
 void ecp_nistz256_sub(BN_ULONG res[P256_LIMBS],
                       const BN_ULONG a[P256_LIMBS],
                       const BN_ULONG b[P256_LIMBS]);
-/* Modular neg: res = -a mod P	  */
+/* Modular neg: res = -a mod P    */
 void ecp_nistz256_neg(BN_ULONG res[P256_LIMBS], const BN_ULONG a[P256_LIMBS]);
 /* Montgomery mul: res = a*b*2^-256 mod P */
 void ecp_nistz256_mul_mont(BN_ULONG res[P256_LIMBS],
@@ -275,8 +277,8 @@ static void ecp_nistz256_point_double(P256_POINT *r, const P256_POINT *a)
 }
 
 /* Point addition: r = a+b */
-static void ecp_nistz256_point_add(P256_POINT * r,
-                                   const P256_POINT * a, const P256_POINT * b)
+static void ecp_nistz256_point_add(P256_POINT *r,
+                                   const P256_POINT *a, const P256_POINT *b)
 {
     BN_ULONG U2[P256_LIMBS], S2[P256_LIMBS];
     BN_ULONG U1[P256_LIMBS], S1[P256_LIMBS];
@@ -332,8 +334,9 @@ static void ecp_nistz256_point_add(P256_POINT * r,
     ecp_nistz256_mul_mont(U2, in2_x, Z1sqr);    /* U2 = X2*Z1^2 */
     ecp_nistz256_sub(H, U2, U1);                /* H = U2 - U1 */
 
-    /* This should not happen during sign/ecdh,
-     * so no constant time violation */
+    /*
+     * This should not happen during sign/ecdh, so no constant time violation
+     */
     if (is_equal(U1, U2) && !in1infty && !in2infty) {
         if (is_equal(S1, S2)) {
             ecp_nistz256_point_double(r, a);
@@ -400,8 +403,10 @@ static void ecp_nistz256_point_add_affine(P256_POINT *r,
     const BN_ULONG *in2_x = b->X;
     const BN_ULONG *in2_y = b->Y;
 
-    /* In affine representation we encode infty as (0,0),
-     * which is not on the curve, so it is OK */
+    /*
+     * In affine representation we encode infty as (0,0), which is not on the
+     * curve, so it is OK
+     */
     in1infty = (in1_x[0] | in1_x[1] | in1_x[2] | in1_x[3] |
                 in1_y[0] | in1_y[1] | in1_y[2] | in1_y[3]);
     if (P256_LIMBS == 8)
@@ -463,8 +468,10 @@ static void ecp_nistz256_point_add_affine(P256_POINT *r,
 static void ecp_nistz256_mod_inverse(BN_ULONG r[P256_LIMBS],
                                      const BN_ULONG in[P256_LIMBS])
 {
-    /* The poly is ffffffff 00000001 00000000 00000000 00000000 ffffffff ffffffff ffffffff
-       We use FLT and used poly-2 as exponent */
+    /*
+     * The poly is ffffffff 00000001 00000000 00000000 00000000 ffffffff
+     * ffffffff ffffffff We use FLT and used poly-2 as exponent
+     */
     BN_ULONG p2[P256_LIMBS];
     BN_ULONG p4[P256_LIMBS];
     BN_ULONG p8[P256_LIMBS];
@@ -534,10 +541,12 @@ static void ecp_nistz256_mod_inverse(BN_ULONG r[P256_LIMBS],
     memcpy(r, res, sizeof(res));
 }
 
-/* ecp_nistz256_bignum_to_field_elem copies the contents of |in| to |out| and
- * returns one if it fits. Otherwise it returns zero. */
+/*
+ * ecp_nistz256_bignum_to_field_elem copies the contents of |in| to |out| and
+ * returns one if it fits. Otherwise it returns zero.
+ */
 static int ecp_nistz256_bignum_to_field_elem(BN_ULONG out[P256_LIMBS],
-                                             const BIGNUM * in)
+                                             const BIGNUM *in)
 {
     if (in->top > P256_LIMBS)
         return 0;
@@ -563,7 +572,7 @@ static void ecp_nistz256_windowed_mul(const EC_GROUP *group,
     BN_ULONG tmp[P256_LIMBS];
     ALIGN32 P256_POINT h;
     const BIGNUM **scalars = NULL;
-    P256_POINT(*table)[16] = NULL;
+    P256_POINT (*table)[16] = NULL;
     void *table_storage = NULL;
 
     if ((table_storage =
@@ -708,8 +717,10 @@ const static BN_ULONG def_yG[P256_LIMBS] = {
     TOBN(0xd2e88688, 0xdd21f325), TOBN(0x8571ff18, 0x25885d85)
 };
 
-/* ecp_nistz256_is_affine_G returns one if |generator| is the standard,
- * P-256 generator. */
+/*
+ * ecp_nistz256_is_affine_G returns one if |generator| is the standard, P-256
+ * generator.
+ */
 static int ecp_nistz256_is_affine_G(const EC_POINT *generator)
 {
     return (generator->X.top == P256_LIMBS) &&
@@ -721,10 +732,12 @@ static int ecp_nistz256_is_affine_G(const EC_POINT *generator)
 
 static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
 {
-    /* We precompute a table for a Booth encoded exponent (wNAF) based
+    /*
+     * We precompute a table for a Booth encoded exponent (wNAF) based
      * computation. Each table holds 64 values for safe access, with an
-     * implicit value of infinity at index zero. We use window of size 7,
-     * and therefore require ceil(256/7) = 37 tables. */
+     * implicit value of infinity at index zero. We use window of size 7, and
+     * therefore require ceil(256/7) = 37 tables.
+     */
     BIGNUM *order;
     EC_POINT *P = NULL, *T = NULL;
     const EC_POINT *generator;
@@ -747,8 +760,10 @@ static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
     }
 
     if (ecp_nistz256_is_affine_G(generator)) {
-        /* No need to calculate tables for the standard generator
-         * because we have them statically. */
+        /*
+         * No need to calculate tables for the standard generator because we
+         * have them statically.
+         */
         return 1;
     }
 
@@ -788,16 +803,20 @@ static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
     P = EC_POINT_new(group);
     T = EC_POINT_new(group);
 
-    /* The zero entry is implicitly infinity, and we skip it,
-     * storing other values with -1 offset. */
+    /*
+     * The zero entry is implicitly infinity, and we skip it, storing other
+     * values with -1 offset.
+     */
     EC_POINT_copy(T, generator);
 
     for (k = 0; k < 64; k++) {
         EC_POINT_copy(P, T);
         for (j = 0; j < 37; j++) {
-            /* It would be faster to use
+            /*
+             * It would be faster to use
              * ec_GFp_simple_points_make_affine and make multiple
-             * points affine at the same time. */
+             * points affine at the same time.
+             */
             ec_GFp_simple_make_affine(group, P, ctx);
             ecp_nistz256_bignum_to_field_elem(preComputedTable[j]
                                               [k].X, &P->X);
@@ -886,9 +905,11 @@ static void booth_recode_w7(unsigned char *sign,
     *digit = d;
 }
 
-/* ecp_nistz256_avx2_mul_g performs multiplication by G, using only the
+/*
+ * ecp_nistz256_avx2_mul_g performs multiplication by G, using only the
  * precomputed table. It does 4 affine point additions in parallel,
- * significantly speeding up point multiplication for a fixed value. */
+ * significantly speeding up point multiplication for a fixed value.
+ */
 static void ecp_nistz256_avx2_mul_g(P256_POINT *r,
                                     unsigned char p_str[33],
                                     const P256_POINT_AFFINE(*preComputedTable)[64])
@@ -1126,9 +1147,10 @@ static int ecp_nistz256_points_mul(const EC_GROUP *group,
                                 ecp_nistz256_pre_comp_clear_free);
 
         if (pre_comp) {
-            /* If there is a precomputed table for the generator,
-             * check that it was generated with the same
-             * generator. */
+            /*
+             * If there is a precomputed table for the generator, check that
+             * it was generated with the same generator.
+             */
             EC_POINT *pre_comp_generator = EC_POINT_new(group);
             if (pre_comp_generator == NULL)
                 goto err;
@@ -1144,10 +1166,12 @@ static int ecp_nistz256_points_mul(const EC_GROUP *group,
         }
 
         if (preComputedTable == NULL && ecp_nistz256_is_affine_G(generator)) {
-            /* If there is no precomputed data, but the generator
+            /*
+             * If there is no precomputed data, but the generator
              * is the default, a hardcoded table of precomputed
              * data is used. This is because applications, such as
-             * Apache, do not use EC_KEY_precompute_mult. */
+             * Apache, do not use EC_KEY_precompute_mult.
+             */
             preComputedTable = (const PRECOMP256_ROW *)ecp_nistz256_precomputed;
         }
 
@@ -1227,8 +1251,10 @@ static int ecp_nistz256_points_mul(const EC_GROUP *group,
         p_is_infinity = 1;
 
     if (no_precomp_for_generator) {
-        /* Without a precomputed table for the generator, it has to be
-         * handled like a normal point. */
+        /*
+         * Without a precomputed table for the generator, it has to be
+         * handled like a normal point.
+         */
         const BIGNUM **new_scalars;
         const EC_POINT **new_points;
 
