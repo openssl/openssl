@@ -85,9 +85,12 @@ do
       tmp=$(mktemp /tmp/indent.XXXXXX)
       trap 'rm -f "$tmp"' HUP INT TERM EXIT
 
-      case $j in 
+      case `basename $j` in 
 	# the list of files that indent is unable to handle correctly
 	# that we simply leave alone for manual formatting now
+	obj_dat.h)
+	  echo "skipping $j"
+	  ;;
 	*)
 	  if [ "$COMMENTS" = "true" ]; then
 	    # we have to mark single line comments as /*- ...*/ to stop indent
@@ -129,10 +132,10 @@ do
 	      > "$tmp"
 	  else
 	    expand "$j" | indent $INDENT_ARGS > "$tmp"
-	  fi
+	  fi;
+	  mv "$tmp" "$j"
 	  ;;
       esac
-      mv "$tmp" "$j"
     fi
   done
 done
