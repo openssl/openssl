@@ -170,7 +170,9 @@ struct rsa_st
 # define OPENSSL_RSA_SMALL_MODULUS_BITS	3072
 #endif
 #ifndef OPENSSL_RSA_MAX_PUBEXP_BITS
-# define OPENSSL_RSA_MAX_PUBEXP_BITS	64 /* exponent limit enforced for "large" modulus only */
+
+/* exponent limit enforced for "large" modulus only */
+# define OPENSSL_RSA_MAX_PUBEXP_BITS	64
 #endif
 
 #define RSA_3	0x3L
@@ -193,30 +195,36 @@ struct rsa_st
  */
 #define RSA_FLAG_SIGN_VER		0x0040
 
-#define RSA_FLAG_NO_BLINDING		0x0080 /* new with 0.9.6j and 0.9.7b; the built-in
-                                                * RSA implementation now uses blinding by
-                                                * default (ignoring RSA_FLAG_BLINDING),
-                                                * but other engines might not need it
-                                                */
-#define RSA_FLAG_NO_CONSTTIME		0x0100 /* new with 0.9.8f; the built-in RSA
-						* implementation now uses constant time
-						* operations by default in private key operations,
-						* e.g., constant time modular exponentiation, 
-                                                * modular inverse without leaking branches, 
-                                                * division without leaking branches. This 
-                                                * flag disables these constant time 
-                                                * operations and results in faster RSA 
-                                                * private key operations.
-                                                */ 
+/*
+ * new with 0.9.6j and 0.9.7b; the built-in
+ * RSA implementation now uses blinding by
+ * default (ignoring RSA_FLAG_BLINDING),
+ * but other engines might not need it
+ */
+#define RSA_FLAG_NO_BLINDING		0x0080
+/*
+ * new with 0.9.8f; the built-in RSA
+ * implementation now uses constant time
+ * operations by default in private key operations,
+ * e.g., constant time modular exponentiation, 
+ * modular inverse without leaking branches, 
+ * division without leaking branches. This 
+ * flag disables these constant time 
+ * operations and results in faster RSA 
+ * private key operations.
+ */ 
+#define RSA_FLAG_NO_CONSTTIME		0x0100
 #ifdef OPENSSL_USE_DEPRECATED
-#define RSA_FLAG_NO_EXP_CONSTTIME RSA_FLAG_NO_CONSTTIME /* deprecated name for the flag*/
-                                                /* new with 0.9.7h; the built-in RSA
-                                                * implementation now uses constant time
-                                                * modular exponentiation for secret exponents
-                                                * by default. This flag causes the
-                                                * faster variable sliding window method to
-                                                * be used for all exponents.
-                                                */
+/* deprecated name for the flag*/
+/*
+ * new with 0.9.7h; the built-in RSA
+ * implementation now uses constant time
+ * modular exponentiation for secret exponents
+ * by default. This flag causes the
+ * faster variable sliding window method to
+ * be used for all exponents.
+ */
+#define RSA_FLAG_NO_EXP_CONSTTIME RSA_FLAG_NO_CONSTTIME 
 #endif
 
 

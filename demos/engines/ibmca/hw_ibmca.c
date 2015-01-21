@@ -776,8 +776,8 @@ they could cause potential side affects on either the card or the result */
 
         /* Prepare the argument and response */
 
-	outLen = CORRECT_ENDIANNESS(privKey->qLength) * 2;  /* Correct endianess is used 
-						because the fields were converted above */
+	/* Correct endianess is used because the fields were converted above */
+	outLen = CORRECT_ENDIANNESS(privKey->qLength) * 2;
 
         if (outLen > 256) {
 		IBMCAerr(IBMCA_F_IBMCA_MOD_EXP_CRT,IBMCA_R_OUTLEN_TO_LARGE);

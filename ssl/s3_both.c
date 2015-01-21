@@ -230,11 +230,12 @@ int ssl3_get_finished(SSL *s, int a, int b)
 	 */ 
 #endif
 
+	/* 64 argument should actually be 36+4 :-) */
 	n=s->method->ssl_get_message(s,
 		a,
 		b,
 		SSL3_MT_FINISHED,
-		64, /* should actually be 36+4 :-) */
+		64,
 		&ok);
 
 	if (!ok) return((int)n);

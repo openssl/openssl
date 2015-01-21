@@ -46,9 +46,12 @@ extern "C" {
 __declspec(dllexport)
 void **
 #if defined(__BORLANDC__)
-__stdcall	/* __stdcall appears to be the only way to get the name
-		 * decoration right with Borland C. Otherwise it works
-		 * purely incidentally, as we pass no parameters. */
+/*
+ * __stdcall appears to be the only way to get the name
+ * decoration right with Borland C. Otherwise it works
+ * purely incidentally, as we pass no parameters.
+ */
+__stdcall
 #else
 __cdecl
 #endif
