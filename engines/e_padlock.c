@@ -451,10 +451,14 @@ static inline void *name(size_t cnt,		\
 }
 
 /* Generate all functions with appropriate opcodes */
-PADLOCK_XCRYPT_ASM(padlock_xcrypt_ecb, ".byte 0xf3,0x0f,0xa7,0xc8")	/* rep xcryptecb */
-PADLOCK_XCRYPT_ASM(padlock_xcrypt_cbc, ".byte 0xf3,0x0f,0xa7,0xd0")	/* rep xcryptcbc */
-PADLOCK_XCRYPT_ASM(padlock_xcrypt_cfb, ".byte 0xf3,0x0f,0xa7,0xe0")	/* rep xcryptcfb */
-PADLOCK_XCRYPT_ASM(padlock_xcrypt_ofb, ".byte 0xf3,0x0f,0xa7,0xe8")	/* rep xcryptofb */
+/* rep xcryptecb */
+PADLOCK_XCRYPT_ASM(padlock_xcrypt_ecb, ".byte 0xf3,0x0f,0xa7,0xc8")
+/* rep xcryptcbc */
+PADLOCK_XCRYPT_ASM(padlock_xcrypt_cbc, ".byte 0xf3,0x0f,0xa7,0xd0")
+/* rep xcryptcfb */
+PADLOCK_XCRYPT_ASM(padlock_xcrypt_cfb, ".byte 0xf3,0x0f,0xa7,0xe0")
+/* rep xcryptofb */
+PADLOCK_XCRYPT_ASM(padlock_xcrypt_ofb, ".byte 0xf3,0x0f,0xa7,0xe8")
 #endif
 
 /* The RNG call itself */

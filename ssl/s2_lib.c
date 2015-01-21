@@ -540,7 +540,10 @@ void ssl2_write_error(SSL *s)
 
 		if (s->error == 0)
 			if (s->msg_callback)
-				s->msg_callback(1, s->version, 0, buf, 3, s, s->msg_callback_arg); /* ERROR */
+				{
+				/* ERROR */
+				s->msg_callback(1, s->version, 0, buf, 3, s, s->msg_callback_arg);
+				}
 		}
 	}
 
