@@ -264,7 +264,8 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_DSS,0,     0,SSL_aDSS,   0,0,0,0,0,0,0},
 	{0,SSL_TXT_aKRB5,0,   0,SSL_aKRB5, 0,0,0,0,0,0,0},
 	{0,SSL_TXT_aNULL,0,   0,SSL_aNULL, 0,0,0,0,0,0,0},
-	{0,SSL_TXT_aDH,0,     0,SSL_aDH,   0,0,0,0,0,0,0}, /* no such ciphersuites supported! */
+	/* no such ciphersuites supported! */
+	{0,SSL_TXT_aDH,0,     0,SSL_aDH,   0,0,0,0,0,0,0},
 	{0,SSL_TXT_aECDH,0,   0,SSL_aECDH, 0,0,0,0,0,0,0},
 	{0,SSL_TXT_aECDSA,0,  0,SSL_aECDSA,0,0,0,0,0,0,0},
 	{0,SSL_TXT_ECDSA,0,   0,SSL_aECDSA, 0,0,0,0,0,0,0},
