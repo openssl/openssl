@@ -21,7 +21,7 @@ while(<>) {
     if($in_su == 1) {
         if(/}(.*);/) {
             $out .= $_;
-            print $out;
+            do_output($out);
             $in_su = 0;
         } elsif(/^ *\} [^\s]+(\[\d*\])* = \{/) {
            $tststr = $1;
@@ -44,7 +44,7 @@ while(<>) {
             my @strucdata = structureData($data);
             $out .= displayData($indent, 0, \@strucdata);
             $out .= "\n$indent};\n";
-            print $out;
+            do_output($out);
             $in_su = 0;
         }
     } elsif($incomm <= 0 && /( *)(static )?(const )?(union|struct) ([^\s]+ )?\{/) {
@@ -53,7 +53,7 @@ while(<>) {
         $out = $_;
         next;
     } else {
-        print $_;
+        do_output($_);
     }
 }
 
@@ -250,4 +250,11 @@ sub displayData {
         }
     }
     return $out;
+}
+
+sub do_output {
+    my $out = shift;
+    # Strip any trailing whitespace
+    $out =~ s/\s+\n/\n/g;
+    print $out;
 }
