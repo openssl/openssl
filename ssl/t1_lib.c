@@ -470,7 +470,7 @@ static int tls1_get_curvelist(SSL *s, int sess,
 # ifdef OPENSSL_FIPS
             if (FIPS_mode()) {
                 *pcurves = fips_curves_default;
-                *pcurveslen = sizeof(fips_curves_default);
+                pcurveslen = sizeof(fips_curves_default);
             } else
 # endif
             {
