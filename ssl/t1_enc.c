@@ -214,7 +214,8 @@ static int tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
 				goto err;
 			out+=j;
 			olen-=j;
-			if (!HMAC_Final(&ctx_tmp,A1,&A1_len)) /* calc the next A1 value */
+			/* calc the next A1 value */
+			if (!HMAC_Final(&ctx_tmp,A1,&A1_len))
 				goto err;
 			}
 		else	/* last one */
