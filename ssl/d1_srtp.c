@@ -207,11 +207,15 @@ static int ssl_ctx_make_profiles(const char *profiles_string,
 
 int SSL_CTX_set_tlsext_use_srtp(SSL_CTX *ctx, const char *profiles)
 {
+    if (ctx->srtp_profiles)
+        sk_SRTP_PROTECTION_PROFILE_free(ctx->srtp_profiles);
     return ssl_ctx_make_profiles(profiles, &ctx->srtp_profiles);
 }
 
 int SSL_set_tlsext_use_srtp(SSL *s, const char *profiles)
 {
+    if (s->srtp_profiles)
+        sk_SRTP_PROTECTION_PROFILE_free(s->srtp_profiles);
     return ssl_ctx_make_profiles(profiles, &s->srtp_profiles);
 }
 
