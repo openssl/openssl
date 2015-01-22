@@ -452,7 +452,8 @@ void PEM_dek_info(char *buf, const char *type, int len, char *str);
 DECLARE_PEM_rw(X509, X509)
 DECLARE_PEM_rw(X509_AUX, X509)
 DECLARE_PEM_rw(X509_CERT_PAIR, X509_CERT_PAIR)
-DECLARE_PEM_rw(X509_REQ, X509_REQ) DECLARE_PEM_write(X509_REQ_NEW, X509_REQ)
+DECLARE_PEM_rw(X509_REQ, X509_REQ)
+DECLARE_PEM_write(X509_REQ_NEW, X509_REQ)
 DECLARE_PEM_rw(X509_CRL, X509_CRL)
 DECLARE_PEM_rw(PKCS7, PKCS7)
 DECLARE_PEM_rw(NETSCAPE_CERT_SEQUENCE, NETSCAPE_CERT_SEQUENCE)
@@ -460,20 +461,25 @@ DECLARE_PEM_rw(PKCS8, X509_SIG)
 DECLARE_PEM_rw(PKCS8_PRIV_KEY_INFO, PKCS8_PRIV_KEY_INFO)
 # ifndef OPENSSL_NO_RSA
 DECLARE_PEM_rw_cb(RSAPrivateKey, RSA)
-DECLARE_PEM_rw_const(RSAPublicKey, RSA) DECLARE_PEM_rw(RSA_PUBKEY, RSA)
+DECLARE_PEM_rw_const(RSAPublicKey, RSA)
+DECLARE_PEM_rw(RSA_PUBKEY, RSA)
 # endif
 # ifndef OPENSSL_NO_DSA
 DECLARE_PEM_rw_cb(DSAPrivateKey, DSA)
-DECLARE_PEM_rw(DSA_PUBKEY, DSA) DECLARE_PEM_rw_const(DSAparams, DSA)
+DECLARE_PEM_rw(DSA_PUBKEY, DSA)
+DECLARE_PEM_rw_const(DSAparams, DSA)
 # endif
 # ifndef OPENSSL_NO_EC
 DECLARE_PEM_rw_const(ECPKParameters, EC_GROUP)
-DECLARE_PEM_rw_cb(ECPrivateKey, EC_KEY) DECLARE_PEM_rw(EC_PUBKEY, EC_KEY)
+DECLARE_PEM_rw_cb(ECPrivateKey, EC_KEY)
+DECLARE_PEM_rw(EC_PUBKEY, EC_KEY)
 # endif
 # ifndef OPENSSL_NO_DH
-DECLARE_PEM_rw_const(DHparams, DH) DECLARE_PEM_write_const(DHxparams, DH)
+DECLARE_PEM_rw_const(DHparams, DH)
+DECLARE_PEM_write_const(DHxparams, DH)
 # endif
-DECLARE_PEM_rw_cb(PrivateKey, EVP_PKEY) DECLARE_PEM_rw(PUBKEY, EVP_PKEY)
+DECLARE_PEM_rw_cb(PrivateKey, EVP_PKEY)
+DECLARE_PEM_rw(PUBKEY, EVP_PKEY)
 
 int PEM_write_bio_PKCS8PrivateKey_nid(BIO *bp, EVP_PKEY *x, int nid,
                                       char *kstr, int klen,
