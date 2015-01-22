@@ -2666,7 +2666,6 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_BLOCK, void)
 # define lh_SSL_SESSION_stats_bio(lh,out) \
   LHM_lh_stats_bio(SSL_SESSION,lh,out)
 # define lh_SSL_SESSION_free(lh) LHM_lh_free(SSL_SESSION,lh)
-/* End of util/mkstack.pl block, you may now edit :-) */
 #ifdef  __cplusplus
 }
 #endif
