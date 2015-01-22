@@ -850,9 +850,8 @@ static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
         goto err;
 
     if (rsa->e && rsa->n) {
-        if (!rsa->
-            meth->bn_mod_exp(vrfy, r0, rsa->e, rsa->n, ctx,
-                             rsa->_method_mod_n))
+        if (!rsa->meth->bn_mod_exp(vrfy, r0, rsa->e, rsa->n, ctx,
+                                   rsa->_method_mod_n))
             goto err;
         /*
          * If 'I' was greater than (or equal to) rsa->n, the operation will

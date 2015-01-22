@@ -318,8 +318,7 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
     } else if (r == 0 || (!ret && !len))
         goto err;
     else if (!ret
-             && !(s->
-                  session_ctx->session_cache_mode &
+             && !(s->session_ctx->session_cache_mode &
                   SSL_SESS_CACHE_NO_INTERNAL_LOOKUP))
 #else
     if (len == 0)

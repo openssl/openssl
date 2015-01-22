@@ -195,8 +195,7 @@ static int MS_CALLBACK file_read(BIO *b, char *out, int outl)
         else
             ret = fread(out, 1, (int)outl, (FILE *)b->ptr);
         if (ret == 0
-            && (b->
-                flags & BIO_FLAGS_UPLINK) ? UP_ferror((FILE *)b->ptr) :
+            && (b->flags & BIO_FLAGS_UPLINK) ? UP_ferror((FILE *)b->ptr) :
             ferror((FILE *)b->ptr)) {
             SYSerr(SYS_F_FREAD, get_last_sys_error());
             BIOerr(BIO_F_FILE_READ, ERR_R_SYS_LIB);

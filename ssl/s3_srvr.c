@@ -365,8 +365,7 @@ int ssl3_accept(SSL *s)
                 || ((l & SSL_kRSA)
                     && (s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL
                         || (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher)
-                            && EVP_PKEY_size(s->cert->
-                                             pkeys
+                            && EVP_PKEY_size(s->cert->pkeys
                                              [SSL_PKEY_RSA_ENC].privatekey) *
                             8 > SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher)
                         )

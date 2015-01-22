@@ -573,7 +573,9 @@ pushfd cld mov esi, ecx mov edi, ecx mov ecx, 60 up:lodsd
 #    if defined(NID_aes_256_ofb128) && ! defined (NID_aes_256_ofb)
 #     define NID_aes_256_ofb NID_aes_256_ofb128
 #    endif
-/* List of supported ciphers. */ static int padlock_cipher_nids[] = {
+/*
+ * List of supported ciphers.
+ */ static int padlock_cipher_nids[] = {
     NID_aes_128_ecb,
     NID_aes_128_cbc,
     NID_aes_128_cfb,
