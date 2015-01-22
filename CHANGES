@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.1k and 1.0.2 [xx XXX xxxx]
+ Changes between 1.0.1l and 1.0.2 [xx XXX xxxx]
 
   *) SRTP Memory Leak.
 
@@ -371,7 +371,12 @@
      X509_CINF_set_modified, X509_CINF_get_issuer, X509_CINF_get_extensions and
      X509_CINF_get_signature were reverted post internal team review.
 
- Changes between 1.0.1j and 1.0.1k [xx XXX xxxx]
+ Changes between 1.0.1k and 1.0.1l [15 Jan 2015]
+
+  *) Build fixes for the Windows and OpenVMS platforms
+     [Matt Caswell and Richard Levitte]
+
+ Changes between 1.0.1j and 1.0.1k [8 Jan 2015]
 
   *) Abort handshake if server key exchange message is omitted for ephemeral
      ECDH ciphersuites.
