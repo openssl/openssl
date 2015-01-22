@@ -1,6 +1,7 @@
 /* v3_genn.c */
-/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
- * project 1999.
+/*
+ * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
+ * 1999.
  */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
@@ -10,7 +11,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -56,7 +57,6 @@
  *
  */
 
-
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/asn1t.h>
@@ -64,38 +64,38 @@
 #include <openssl/x509v3.h>
 
 ASN1_SEQUENCE(OTHERNAME) = {
-	ASN1_SIMPLE(OTHERNAME, type_id, ASN1_OBJECT),
-	/* Maybe have a true ANY DEFINED BY later */
-	ASN1_EXP(OTHERNAME, value, ASN1_ANY, 0)
+        ASN1_SIMPLE(OTHERNAME, type_id, ASN1_OBJECT),
+        /* Maybe have a true ANY DEFINED BY later */
+        ASN1_EXP(OTHERNAME, value, ASN1_ANY, 0)
 } ASN1_SEQUENCE_END(OTHERNAME)
 
 IMPLEMENT_ASN1_FUNCTIONS(OTHERNAME)
 
 ASN1_SEQUENCE(EDIPARTYNAME) = {
-	ASN1_IMP_OPT(EDIPARTYNAME, nameAssigner, DIRECTORYSTRING, 0),
-	ASN1_IMP_OPT(EDIPARTYNAME, partyName, DIRECTORYSTRING, 1)
+        ASN1_IMP_OPT(EDIPARTYNAME, nameAssigner, DIRECTORYSTRING, 0),
+        ASN1_IMP_OPT(EDIPARTYNAME, partyName, DIRECTORYSTRING, 1)
 } ASN1_SEQUENCE_END(EDIPARTYNAME)
 
 IMPLEMENT_ASN1_FUNCTIONS(EDIPARTYNAME)
 
 ASN1_CHOICE(GENERAL_NAME) = {
-	ASN1_IMP(GENERAL_NAME, d.otherName, OTHERNAME, GEN_OTHERNAME),
-	ASN1_IMP(GENERAL_NAME, d.rfc822Name, ASN1_IA5STRING, GEN_EMAIL),
-	ASN1_IMP(GENERAL_NAME, d.dNSName, ASN1_IA5STRING, GEN_DNS),
-	/* Don't decode this */
-	ASN1_IMP(GENERAL_NAME, d.x400Address, ASN1_SEQUENCE, GEN_X400),
-	/* X509_NAME is a CHOICE type so use EXPLICIT */
-	ASN1_EXP(GENERAL_NAME, d.directoryName, X509_NAME, GEN_DIRNAME),
-	ASN1_IMP(GENERAL_NAME, d.ediPartyName, EDIPARTYNAME, GEN_EDIPARTY),
-	ASN1_IMP(GENERAL_NAME, d.uniformResourceIdentifier, ASN1_IA5STRING, GEN_URI),
-	ASN1_IMP(GENERAL_NAME, d.iPAddress, ASN1_OCTET_STRING, GEN_IPADD),
-	ASN1_IMP(GENERAL_NAME, d.registeredID, ASN1_OBJECT, GEN_RID)
+        ASN1_IMP(GENERAL_NAME, d.otherName, OTHERNAME, GEN_OTHERNAME),
+        ASN1_IMP(GENERAL_NAME, d.rfc822Name, ASN1_IA5STRING, GEN_EMAIL),
+        ASN1_IMP(GENERAL_NAME, d.dNSName, ASN1_IA5STRING, GEN_DNS),
+        /* Don't decode this */
+        ASN1_IMP(GENERAL_NAME, d.x400Address, ASN1_SEQUENCE, GEN_X400),
+        /* X509_NAME is a CHOICE type so use EXPLICIT */
+        ASN1_EXP(GENERAL_NAME, d.directoryName, X509_NAME, GEN_DIRNAME),
+        ASN1_IMP(GENERAL_NAME, d.ediPartyName, EDIPARTYNAME, GEN_EDIPARTY),
+        ASN1_IMP(GENERAL_NAME, d.uniformResourceIdentifier, ASN1_IA5STRING, GEN_URI),
+        ASN1_IMP(GENERAL_NAME, d.iPAddress, ASN1_OCTET_STRING, GEN_IPADD),
+        ASN1_IMP(GENERAL_NAME, d.registeredID, ASN1_OBJECT, GEN_RID)
 } ASN1_CHOICE_END(GENERAL_NAME)
 
 IMPLEMENT_ASN1_FUNCTIONS(GENERAL_NAME)
 
-ASN1_ITEM_TEMPLATE(GENERAL_NAMES) = 
-	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, GeneralNames, GENERAL_NAME)
+ASN1_ITEM_TEMPLATE(GENERAL_NAMES) =
+        ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, GeneralNames, GENERAL_NAME)
 ASN1_ITEM_TEMPLATE_END(GENERAL_NAMES)
 
 IMPLEMENT_ASN1_FUNCTIONS(GENERAL_NAMES)

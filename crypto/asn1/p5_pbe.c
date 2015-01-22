@@ -1,6 +1,7 @@
 /* p5_pbe.c */
-/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
- * project 1999.
+/*
+ * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
+ * 1999.
  */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
@@ -10,7 +11,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -65,67 +66,71 @@
 /* PKCS#5 password based encryption structure */
 
 ASN1_SEQUENCE(PBEPARAM) = {
-	ASN1_SIMPLE(PBEPARAM, salt, ASN1_OCTET_STRING),
-	ASN1_SIMPLE(PBEPARAM, iter, ASN1_INTEGER)
+        ASN1_SIMPLE(PBEPARAM, salt, ASN1_OCTET_STRING),
+        ASN1_SIMPLE(PBEPARAM, iter, ASN1_INTEGER)
 } ASN1_SEQUENCE_END(PBEPARAM)
 
 IMPLEMENT_ASN1_FUNCTIONS(PBEPARAM)
 
 /* Return an algorithm identifier for a PKCS#5 PBE algorithm */
 
-X509_ALGOR *PKCS5_pbe_set(int alg, int iter, unsigned char *salt,
-	     int saltlen)
+X509_ALGOR *PKCS5_pbe_set(int alg, int iter, unsigned char *salt, int saltlen)
 {
-	PBEPARAM *pbe=NULL;
-	ASN1_OBJECT *al;
-	X509_ALGOR *algor;
-	ASN1_TYPE *astype=NULL;
+    PBEPARAM *pbe = NULL;
+    ASN1_OBJECT *al;
+    X509_ALGOR *algor;
+    ASN1_TYPE *astype = NULL;
 
-	if (!(pbe = PBEPARAM_new ())) {
-		ASN1err(ASN1_F_PKCS5_PBE_SET,ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-	if(iter <= 0) iter = PKCS5_DEFAULT_ITER;
-	if (!ASN1_INTEGER_set(pbe->iter, iter)) {
-		ASN1err(ASN1_F_PKCS5_PBE_SET,ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-	if (!saltlen) saltlen = PKCS5_SALT_LEN;
-	if (!(pbe->salt->data = OPENSSL_malloc (saltlen))) {
-		ASN1err(ASN1_F_PKCS5_PBE_SET,ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-	pbe->salt->length = saltlen;
-	if (salt) memcpy (pbe->salt->data, salt, saltlen);
-	else if (RAND_pseudo_bytes (pbe->salt->data, saltlen) < 0)
-		goto err;
+    if (!(pbe = PBEPARAM_new())) {
+        ASN1err(ASN1_F_PKCS5_PBE_SET, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+    if (iter <= 0)
+        iter = PKCS5_DEFAULT_ITER;
+    if (!ASN1_INTEGER_set(pbe->iter, iter)) {
+        ASN1err(ASN1_F_PKCS5_PBE_SET, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+    if (!saltlen)
+        saltlen = PKCS5_SALT_LEN;
+    if (!(pbe->salt->data = OPENSSL_malloc(saltlen))) {
+        ASN1err(ASN1_F_PKCS5_PBE_SET, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+    pbe->salt->length = saltlen;
+    if (salt)
+        memcpy(pbe->salt->data, salt, saltlen);
+    else if (RAND_pseudo_bytes(pbe->salt->data, saltlen) < 0)
+        goto err;
 
-	if (!(astype = ASN1_TYPE_new())) {
-		ASN1err(ASN1_F_PKCS5_PBE_SET,ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
+    if (!(astype = ASN1_TYPE_new())) {
+        ASN1err(ASN1_F_PKCS5_PBE_SET, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
 
-	astype->type = V_ASN1_SEQUENCE;
-	if(!ASN1_pack_string_of(PBEPARAM, pbe, i2d_PBEPARAM,
-				&astype->value.sequence)) {
-		ASN1err(ASN1_F_PKCS5_PBE_SET,ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-	PBEPARAM_free (pbe);
-	pbe = NULL;
-	
-	al = OBJ_nid2obj(alg); /* never need to free al */
-	if (!(algor = X509_ALGOR_new())) {
-		ASN1err(ASN1_F_PKCS5_PBE_SET,ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-	ASN1_OBJECT_free(algor->algorithm);
-	algor->algorithm = al;
-	algor->parameter = astype;
+    astype->type = V_ASN1_SEQUENCE;
+    if (!ASN1_pack_string_of(PBEPARAM, pbe, i2d_PBEPARAM,
+                             &astype->value.sequence)) {
+        ASN1err(ASN1_F_PKCS5_PBE_SET, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+    PBEPARAM_free(pbe);
+    pbe = NULL;
 
-	return (algor);
-err:
-	if (pbe != NULL) PBEPARAM_free(pbe);
-	if (astype != NULL) ASN1_TYPE_free(astype);
-	return NULL;
+    al = OBJ_nid2obj(alg);      /* never need to free al */
+    if (!(algor = X509_ALGOR_new())) {
+        ASN1err(ASN1_F_PKCS5_PBE_SET, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+    ASN1_OBJECT_free(algor->algorithm);
+    algor->algorithm = al;
+    algor->parameter = astype;
+
+    return (algor);
+ err:
+    if (pbe != NULL)
+        PBEPARAM_free(pbe);
+    if (astype != NULL)
+        ASN1_TYPE_free(astype);
+    return NULL;
 }

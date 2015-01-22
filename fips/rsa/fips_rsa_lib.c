@@ -1,6 +1,7 @@
 /* fips_rsa_sign.c */
-/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
- * project 2007.
+/*
+ * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
+ * 2007.
  */
 /* ====================================================================
  * Copyright (c) 2007 The OpenSSL Project.  All rights reserved.
@@ -10,7 +11,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -62,40 +63,51 @@
 #include <openssl/bn.h>
 #include <openssl/err.h>
 
-/* Minimal FIPS versions of FIPS_rsa_new() and FIPS_rsa_free: to
- * reduce external dependencies. 
+/*
+ * Minimal FIPS versions of FIPS_rsa_new() and FIPS_rsa_free: to reduce
+ * external dependencies.
  */
 
 RSA *FIPS_rsa_new(void)
-	{
-	RSA *ret;
-	ret = OPENSSL_malloc(sizeof(RSA));
-	if (!ret)
-		return NULL;
-	memset(ret, 0, sizeof(RSA));
-	ret->meth = RSA_PKCS1_SSLeay();
-	if (ret->meth->init)
-		ret->meth->init(ret);
-	return ret;
-	}
+{
+    RSA *ret;
+    ret = OPENSSL_malloc(sizeof(RSA));
+    if (!ret)
+        return NULL;
+    memset(ret, 0, sizeof(RSA));
+    ret->meth = RSA_PKCS1_SSLeay();
+    if (ret->meth->init)
+        ret->meth->init(ret);
+    return ret;
+}
 
 void FIPS_rsa_free(RSA *r)
-	{
-	if (!r)
-		return;
-	if (r->meth->finish)
-		r->meth->finish(r);
-	if (r->n != NULL) BN_clear_free(r->n);
-	if (r->e != NULL) BN_clear_free(r->e);
-	if (r->d != NULL) BN_clear_free(r->d);
-	if (r->p != NULL) BN_clear_free(r->p);
-	if (r->q != NULL) BN_clear_free(r->q);
-	if (r->dmp1 != NULL) BN_clear_free(r->dmp1);
-	if (r->dmq1 != NULL) BN_clear_free(r->dmq1);
-	if (r->iqmp != NULL) BN_clear_free(r->iqmp);
-	if (r->blinding != NULL) BN_BLINDING_free(r->blinding);
-	if (r->mt_blinding != NULL) BN_BLINDING_free(r->mt_blinding);
-	if (r->bignum_data != NULL) OPENSSL_free_locked(r->bignum_data);
-	OPENSSL_free(r);
-	}
-
+{
+    if (!r)
+        return;
+    if (r->meth->finish)
+        r->meth->finish(r);
+    if (r->n != NULL)
+        BN_clear_free(r->n);
+    if (r->e != NULL)
+        BN_clear_free(r->e);
+    if (r->d != NULL)
+        BN_clear_free(r->d);
+    if (r->p != NULL)
+        BN_clear_free(r->p);
+    if (r->q != NULL)
+        BN_clear_free(r->q);
+    if (r->dmp1 != NULL)
+        BN_clear_free(r->dmp1);
+    if (r->dmq1 != NULL)
+        BN_clear_free(r->dmq1);
+    if (r->iqmp != NULL)
+        BN_clear_free(r->iqmp);
+    if (r->blinding != NULL)
+        BN_BLINDING_free(r->blinding);
+    if (r->mt_blinding != NULL)
+        BN_BLINDING_free(r->mt_blinding);
+    if (r->bignum_data != NULL)
+        OPENSSL_free_locked(r->bignum_data);
+    OPENSSL_free(r);
+}

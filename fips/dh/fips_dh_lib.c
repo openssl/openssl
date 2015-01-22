@@ -1,6 +1,7 @@
 /* fips_dh_lib.c */
-/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
- * project 2007.
+/*
+ * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
+ * 2007.
  */
 /* ====================================================================
  * Copyright (c) 2007 The OpenSSL Project.  All rights reserved.
@@ -10,7 +11,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -60,36 +61,45 @@
 #include <openssl/bn.h>
 #include <openssl/dh.h>
 
-/* Minimal FIPS versions of FIPS_dh_new() and FIPS_dh_free(): to
- * reduce external dependencies. 
+/*
+ * Minimal FIPS versions of FIPS_dh_new() and FIPS_dh_free(): to reduce
+ * external dependencies.
  */
 
 DH *FIPS_dh_new(void)
-	{
-	DH *ret;
-	ret = OPENSSL_malloc(sizeof(DH));
-	if (!ret)
-		return NULL;
-	memset(ret, 0, sizeof(DH));
-	ret->meth = DH_OpenSSL();
-	if (ret->meth->init)
-		ret->meth->init(ret);
-	return ret;
-	}
+{
+    DH *ret;
+    ret = OPENSSL_malloc(sizeof(DH));
+    if (!ret)
+        return NULL;
+    memset(ret, 0, sizeof(DH));
+    ret->meth = DH_OpenSSL();
+    if (ret->meth->init)
+        ret->meth->init(ret);
+    return ret;
+}
 
 void FIPS_dh_free(DH *r)
-	{
-	if (!r)
-		return;
-	if (r->meth->finish)
-		r->meth->finish(r);
-	if (r->p != NULL) BN_clear_free(r->p);
-	if (r->g != NULL) BN_clear_free(r->g);
-	if (r->q != NULL) BN_clear_free(r->q);
-	if (r->j != NULL) BN_clear_free(r->j);
-	if (r->seed) OPENSSL_free(r->seed);
-	if (r->counter != NULL) BN_clear_free(r->counter);
-	if (r->pub_key != NULL) BN_clear_free(r->pub_key);
-	if (r->priv_key != NULL) BN_clear_free(r->priv_key);
-	OPENSSL_free(r);
-	}
+{
+    if (!r)
+        return;
+    if (r->meth->finish)
+        r->meth->finish(r);
+    if (r->p != NULL)
+        BN_clear_free(r->p);
+    if (r->g != NULL)
+        BN_clear_free(r->g);
+    if (r->q != NULL)
+        BN_clear_free(r->q);
+    if (r->j != NULL)
+        BN_clear_free(r->j);
+    if (r->seed)
+        OPENSSL_free(r->seed);
+    if (r->counter != NULL)
+        BN_clear_free(r->counter);
+    if (r->pub_key != NULL)
+        BN_clear_free(r->pub_key);
+    if (r->priv_key != NULL)
+        BN_clear_free(r->priv_key);
+    OPENSSL_free(r);
+}

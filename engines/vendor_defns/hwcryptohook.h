@@ -69,20 +69,20 @@
  */
 
 #ifndef HWCRYPTOHOOK_H
-#define HWCRYPTOHOOK_H
+# define HWCRYPTOHOOK_H
 
-#include <sys/types.h>
-#include <stdio.h>
+# include <sys/types.h>
+# include <stdio.h>
 
-#ifndef HWCRYPTOHOOK_DECLARE_APPTYPES
-#define HWCRYPTOHOOK_DECLARE_APPTYPES 1
-#endif
+# ifndef HWCRYPTOHOOK_DECLARE_APPTYPES
+#  define HWCRYPTOHOOK_DECLARE_APPTYPES 1
+# endif
 
-#define HWCRYPTOHOOK_ERROR_FAILED   -1
-#define HWCRYPTOHOOK_ERROR_FALLBACK -2
-#define HWCRYPTOHOOK_ERROR_MPISIZE  -3
+# define HWCRYPTOHOOK_ERROR_FAILED   -1
+# define HWCRYPTOHOOK_ERROR_FALLBACK -2
+# define HWCRYPTOHOOK_ERROR_MPISIZE  -3
 
-#if HWCRYPTOHOOK_DECLARE_APPTYPES
+# if HWCRYPTOHOOK_DECLARE_APPTYPES
 
 /*-
  * These structs are defined by the application and opaque to the
@@ -96,12 +96,13 @@
  */
 typedef struct HWCryptoHook_MutexValue HWCryptoHook_Mutex;
 typedef struct HWCryptoHook_CondVarValue HWCryptoHook_CondVar;
-typedef struct HWCryptoHook_PassphraseContextValue HWCryptoHook_PassphraseContext;
+typedef struct HWCryptoHook_PassphraseContextValue
+ HWCryptoHook_PassphraseContext;
 typedef struct HWCryptoHook_CallerContextValue HWCryptoHook_CallerContext;
 
-#endif /* HWCRYPTOHOOK_DECLARE_APPTYPES */
+# endif                         /* HWCRYPTOHOOK_DECLARE_APPTYPES */
 
-/*- 
+/*-
  * These next two structs are opaque to the application.  The crypto
  * plugin will return pointers to them; the caller simply manipulates
  * the pointers.
@@ -110,8 +111,8 @@ typedef struct HWCryptoHook_Context *HWCryptoHook_ContextHandle;
 typedef struct HWCryptoHook_RSAKey *HWCryptoHook_RSAKeyHandle;
 
 typedef struct {
-  char *buf;
-  size_t size;
+    char *buf;
+    size_t size;
 } HWCryptoHook_ErrMsgBuf;
 /*-
  * Used for error reporting.  When a HWCryptoHook function fails it
@@ -119,7 +120,7 @@ typedef struct {
  * negative number, usually HWCRYPTOHOOK_ERROR_FAILED, for
  * integer-valued ones).  It will, if an ErrMsgBuf is passed, also put
  * an error message there.
- * 
+ *
  * size is the size of the buffer, and will not be modified.  If you
  * pass 0 for size you must pass 0 for buf, and nothing will be
  * recorded (just as if you passed 0 for the struct pointer).
@@ -130,8 +131,8 @@ typedef struct {
  */
 
 typedef struct HWCryptoHook_MPIStruct {
-  unsigned char *buf;
-  size_t size;
+    unsigned char *buf;
+    size_t size;
 } HWCryptoHook_MPI;
 /*-
  * When one of these is returned, a pointer is passed to the function.
@@ -145,9 +146,9 @@ typedef struct HWCryptoHook_MPIStruct {
  * permitted.
  */
 
-#define HWCryptoHook_InitFlags_FallbackModExp    0x0002UL
-#define HWCryptoHook_InitFlags_FallbackRSAImmed  0x0004UL
-/*- 
+# define HWCryptoHook_InitFlags_FallbackModExp    0x0002UL
+# define HWCryptoHook_InitFlags_FallbackRSAImmed  0x0004UL
+/*-
  * Enable requesting fallback to software in case of problems with the
  * hardware support.  This indicates to the crypto provider that the
  * application is prepared to fall back to software operation if the
@@ -158,7 +159,7 @@ typedef struct HWCryptoHook_MPIStruct {
  * within a short interval, if appropriate.
  */
 
-#define HWCryptoHook_InitFlags_SimpleForkCheck   0x0010UL
+# define HWCryptoHook_InitFlags_SimpleForkCheck   0x0010UL
 /*-
  * Without _SimpleForkCheck the library is allowed to assume that the
  * application will not fork and call the library in the child(ren).
@@ -173,13 +174,12 @@ typedef struct HWCryptoHook_MPIStruct {
  */
 
 typedef struct {
-  unsigned long flags;
-  void *logstream; /* usually a FILE*.  See below. */
-
-  size_t limbsize; /* bignum format - size of radix type, must be power of 2 */
-  int mslimbfirst; /* 0 or 1 */
-  int msbytefirst; /* 0 or 1; -1 = native */
-
+    unsigned long flags;
+    void *logstream;            /* usually a FILE*.  See below. */
+    size_t limbsize;            /* bignum format - size of radix type, must
+                                 * be power of 2 */
+    int mslimbfirst;            /* 0 or 1 */
+    int msbytefirst;            /* 0 or 1; -1 = native */
   /*-
    * All the callback functions should return 0 on success, or a
    * nonzero integer (whose value will be visible in the error message
@@ -189,7 +189,6 @@ typedef struct {
    *
    * The callbacks may not call down again into the crypto plugin.
    */
-  
   /*-
    * For thread-safety.  Set everything to 0 if you promise only to be
    * singlethreaded.  maxsimultaneous is the number of calls to
@@ -207,43 +206,42 @@ typedef struct {
    * single-threaded operation, should be indicated by the setting
    * mutex_init et al to 0.
    */
-  int maxmutexes;
-  int maxsimultaneous;
-  size_t mutexsize;
-  int (*mutex_init)(HWCryptoHook_Mutex*, HWCryptoHook_CallerContext *cactx);
-  int (*mutex_acquire)(HWCryptoHook_Mutex*);
-  void (*mutex_release)(HWCryptoHook_Mutex*);
-  void (*mutex_destroy)(HWCryptoHook_Mutex*);
-
+    int maxmutexes;
+    int maxsimultaneous;
+    size_t mutexsize;
+    int (*mutex_init) (HWCryptoHook_Mutex *,
+                       HWCryptoHook_CallerContext * cactx);
+    int (*mutex_acquire) (HWCryptoHook_Mutex *);
+    void (*mutex_release) (HWCryptoHook_Mutex *);
+    void (*mutex_destroy) (HWCryptoHook_Mutex *);
   /*-
    * For greater efficiency, can use condition vars internally for
    * synchronisation.  In this case maxsimultaneous is ignored, but
    * the other mutex stuff must be available.  In singlethreaded
    * programs, set everything to 0.
    */
-  size_t condvarsize;
-  int (*condvar_init)(HWCryptoHook_CondVar*, HWCryptoHook_CallerContext *cactx);
-  int (*condvar_wait)(HWCryptoHook_CondVar*, HWCryptoHook_Mutex*);
-  void (*condvar_signal)(HWCryptoHook_CondVar*);
-  void (*condvar_broadcast)(HWCryptoHook_CondVar*);
-  void (*condvar_destroy)(HWCryptoHook_CondVar*);
-  
+    size_t condvarsize;
+    int (*condvar_init) (HWCryptoHook_CondVar *,
+                         HWCryptoHook_CallerContext * cactx);
+    int (*condvar_wait) (HWCryptoHook_CondVar *, HWCryptoHook_Mutex *);
+    void (*condvar_signal) (HWCryptoHook_CondVar *);
+    void (*condvar_broadcast) (HWCryptoHook_CondVar *);
+    void (*condvar_destroy) (HWCryptoHook_CondVar *);
   /*-
    * The semantics of acquiring and releasing mutexes and broadcasting
    * and waiting on condition variables are expected to be those from
    * POSIX threads (pthreads).  The mutexes may be (in pthread-speak)
    * fast mutexes, recursive mutexes, or nonrecursive ones.
-   * 
+   *
    * The _release/_signal/_broadcast and _destroy functions must
    * always succeed when given a valid argument; if they are given an
    * invalid argument then the program (crypto plugin + application)
    * has an internal error, and they should abort the program.
    */
-
-  int (*getpassphrase)(const char *prompt_info,
-                       int *len_io, char *buf,
-                       HWCryptoHook_PassphraseContext *ppctx,
-                       HWCryptoHook_CallerContext *cactx);
+    int (*getpassphrase) (const char *prompt_info,
+                          int *len_io, char *buf,
+                          HWCryptoHook_PassphraseContext * ppctx,
+                          HWCryptoHook_CallerContext * cactx);
   /*-
    * Passphrases and the prompt_info, if they contain high-bit-set
    * characters, are UTF-8.  The prompt_info may be a null pointer if
@@ -257,11 +255,10 @@ typedef struct {
    * by the callback.  The returned passphrase should not be
    * null-terminated by the callback.
    */
-  
-  int (*getphystoken)(const char *prompt_info,
-                      const char *wrong_info,
-                      HWCryptoHook_PassphraseContext *ppctx,
-                      HWCryptoHook_CallerContext *cactx);
+    int (*getphystoken) (const char *prompt_info,
+                         const char *wrong_info,
+                         HWCryptoHook_PassphraseContext * ppctx,
+                         HWCryptoHook_CallerContext * cactx);
   /*-
    * Requests that the human user physically insert a different
    * smartcard, DataKey, etc.  The plugin should check whether the
@@ -272,9 +269,8 @@ typedef struct {
    * currently inserted token(s) so that the user is told what
    * something is.  wrong_info, like prompt_info, may be null, but
    * should not be an empty string.  Its contents should be
-   * syntactically similar to that of prompt_info. 
+   * syntactically similar to that of prompt_info.
    */
-  
   /*-
    * Note that a single LoadKey operation might cause several calls to
    * getpassphrase and/or requestphystoken.  If requestphystoken is
@@ -296,8 +292,7 @@ typedef struct {
    * have the appropriate token; this should cause the callback to
    * return nonzero indicating error.
    */
-
-  void (*logmessage)(void *logstream, const char *message);
+    void (*logmessage) (void *logstream, const char *message);
   /*-
    * A log message will be generated at least every time something goes
    * wrong and an ErrMsgBuf is filled in (or would be if one was
@@ -329,14 +324,15 @@ typedef struct {
    * of the log messages; any such facilities will be configured by
    * external means.
    */
-
 } HWCryptoHook_InitInfo;
 
 typedef
-HWCryptoHook_ContextHandle HWCryptoHook_Init_t(const HWCryptoHook_InitInfo *initinfo,
-                                               size_t initinfosize,
-                                               const HWCryptoHook_ErrMsgBuf *errors,
-                                               HWCryptoHook_CallerContext *cactx);
+HWCryptoHook_ContextHandle HWCryptoHook_Init_t(const HWCryptoHook_InitInfo *
+                                               initinfo, size_t initinfosize,
+                                               const HWCryptoHook_ErrMsgBuf *
+                                               errors,
+                                               HWCryptoHook_CallerContext *
+                                               cactx);
 extern HWCryptoHook_Init_t HWCryptoHook_Init;
 
 /*-
@@ -376,7 +372,7 @@ extern HWCryptoHook_Finish_t HWCryptoHook_Finish;
 typedef
 int HWCryptoHook_RandomBytes_t(HWCryptoHook_ContextHandle hwctx,
                                unsigned char *buf, size_t len,
-                               const HWCryptoHook_ErrMsgBuf *errors);
+                               const HWCryptoHook_ErrMsgBuf * errors);
 extern HWCryptoHook_RandomBytes_t HWCryptoHook_RandomBytes;
 
 typedef
@@ -384,8 +380,8 @@ int HWCryptoHook_ModExp_t(HWCryptoHook_ContextHandle hwctx,
                           HWCryptoHook_MPI a,
                           HWCryptoHook_MPI p,
                           HWCryptoHook_MPI n,
-                          HWCryptoHook_MPI *r,
-                          const HWCryptoHook_ErrMsgBuf *errors);
+                          HWCryptoHook_MPI * r,
+                          const HWCryptoHook_ErrMsgBuf * errors);
 extern HWCryptoHook_ModExp_t HWCryptoHook_ModExp;
 
 typedef
@@ -393,8 +389,8 @@ int HWCryptoHook_RSAImmedPub_t(HWCryptoHook_ContextHandle hwctx,
                                HWCryptoHook_MPI m,
                                HWCryptoHook_MPI e,
                                HWCryptoHook_MPI n,
-                               HWCryptoHook_MPI *r,
-                               const HWCryptoHook_ErrMsgBuf *errors);
+                               HWCryptoHook_MPI * r,
+                               const HWCryptoHook_ErrMsgBuf * errors);
 extern HWCryptoHook_RSAImmedPub_t HWCryptoHook_RSAImmedPub;
 
 typedef
@@ -405,8 +401,8 @@ int HWCryptoHook_ModExpCRT_t(HWCryptoHook_ContextHandle hwctx,
                              HWCryptoHook_MPI dmp1,
                              HWCryptoHook_MPI dmq1,
                              HWCryptoHook_MPI iqmp,
-                             HWCryptoHook_MPI *r,
-                             const HWCryptoHook_ErrMsgBuf *errors);
+                             HWCryptoHook_MPI * r,
+                             const HWCryptoHook_ErrMsgBuf * errors);
 extern HWCryptoHook_ModExpCRT_t HWCryptoHook_ModExpCRT;
 
 typedef
@@ -417,8 +413,8 @@ int HWCryptoHook_RSAImmedPriv_t(HWCryptoHook_ContextHandle hwctx,
                                 HWCryptoHook_MPI dmp1,
                                 HWCryptoHook_MPI dmq1,
                                 HWCryptoHook_MPI iqmp,
-                                HWCryptoHook_MPI *r,
-                                const HWCryptoHook_ErrMsgBuf *errors);
+                                HWCryptoHook_MPI * r,
+                                const HWCryptoHook_ErrMsgBuf * errors);
 extern HWCryptoHook_RSAImmedPriv_t HWCryptoHook_RSAImmedPriv;
 
 /*-
@@ -440,9 +436,9 @@ extern HWCryptoHook_RSAImmedPriv_t HWCryptoHook_RSAImmedPriv;
 typedef
 int HWCryptoHook_RSALoadKey_t(HWCryptoHook_ContextHandle hwctx,
                               const char *key_ident,
-                              HWCryptoHook_RSAKeyHandle *keyhandle_r,
-                              const HWCryptoHook_ErrMsgBuf *errors,
-                              HWCryptoHook_PassphraseContext *ppctx);
+                              HWCryptoHook_RSAKeyHandle * keyhandle_r,
+                              const HWCryptoHook_ErrMsgBuf * errors,
+                              HWCryptoHook_PassphraseContext * ppctx);
 extern HWCryptoHook_RSALoadKey_t HWCryptoHook_RSALoadKey;
 /*-
  * The key_ident is a null-terminated string configured by the
@@ -464,9 +460,9 @@ extern HWCryptoHook_RSALoadKey_t HWCryptoHook_RSALoadKey;
 
 typedef
 int HWCryptoHook_RSAGetPublicKey_t(HWCryptoHook_RSAKeyHandle k,
-                                   HWCryptoHook_MPI *n,
-                                   HWCryptoHook_MPI *e,
-                                   const HWCryptoHook_ErrMsgBuf *errors);
+                                   HWCryptoHook_MPI * n,
+                                   HWCryptoHook_MPI * e,
+                                   const HWCryptoHook_ErrMsgBuf * errors);
 extern HWCryptoHook_RSAGetPublicKey_t HWCryptoHook_RSAGetPublicKey;
 /*-
  * The crypto plugin will not store certificates.
@@ -491,16 +487,16 @@ extern HWCryptoHook_RSAGetPublicKey_t HWCryptoHook_RSAGetPublicKey;
 
 typedef
 int HWCryptoHook_RSAUnloadKey_t(HWCryptoHook_RSAKeyHandle k,
-                                const HWCryptoHook_ErrMsgBuf *errors);
+                                const HWCryptoHook_ErrMsgBuf * errors);
 extern HWCryptoHook_RSAUnloadKey_t HWCryptoHook_RSAUnloadKey;
 /* Might fail due to locking problems, or other serious internal problems. */
 
 typedef
 int HWCryptoHook_RSA_t(HWCryptoHook_MPI m,
                        HWCryptoHook_RSAKeyHandle k,
-                       HWCryptoHook_MPI *r,
-                       const HWCryptoHook_ErrMsgBuf *errors);
+                       HWCryptoHook_MPI * r,
+                       const HWCryptoHook_ErrMsgBuf * errors);
 extern HWCryptoHook_RSA_t HWCryptoHook_RSA;
 /* RSA private key operation (sign or decrypt) - raw, unpadded. */
 
-#endif /*HWCRYPTOHOOK_H*/
+#endif                          /* HWCRYPTOHOOK_H */

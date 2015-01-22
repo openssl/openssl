@@ -1,6 +1,7 @@
 /* v3_enum.c */
-/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
- * project 1999.
+/*
+ * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
+ * 1999.
  */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
@@ -10,7 +11,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -61,34 +62,34 @@
 #include <openssl/x509v3.h>
 
 static ENUMERATED_NAMES crl_reasons[] = {
-{0, "Unspecified", "unspecified"},
-{1, "Key Compromise", "keyCompromise"},
-{2, "CA Compromise", "CACompromise"},
-{3, "Affiliation Changed", "affiliationChanged"},
-{4, "Superseded", "superseded"},
-{5, "Cessation Of Operation", "cessationOfOperation"},
-{6, "Certificate Hold", "certificateHold"},
-{8, "Remove From CRL", "removeFromCRL"},
-{-1, NULL, NULL}
+    {0, "Unspecified", "unspecified"},
+    {1, "Key Compromise", "keyCompromise"},
+    {2, "CA Compromise", "CACompromise"},
+    {3, "Affiliation Changed", "affiliationChanged"},
+    {4, "Superseded", "superseded"},
+    {5, "Cessation Of Operation", "cessationOfOperation"},
+    {6, "Certificate Hold", "certificateHold"},
+    {8, "Remove From CRL", "removeFromCRL"},
+    {-1, NULL, NULL}
 };
 
-const X509V3_EXT_METHOD v3_crl_reason = { 
-NID_crl_reason, 0, ASN1_ITEM_ref(ASN1_ENUMERATED),
-0,0,0,0,
-(X509V3_EXT_I2S)i2s_ASN1_ENUMERATED_TABLE,
-0,
-0,0,0,0,
-crl_reasons};
+const X509V3_EXT_METHOD v3_crl_reason = {
+    NID_crl_reason, 0, ASN1_ITEM_ref(ASN1_ENUMERATED),
+    0, 0, 0, 0,
+    (X509V3_EXT_I2S)i2s_ASN1_ENUMERATED_TABLE,
+    0,
+    0, 0, 0, 0,
+    crl_reasons
+};
 
-
-char *i2s_ASN1_ENUMERATED_TABLE(X509V3_EXT_METHOD *method,
-	     ASN1_ENUMERATED *e)
+char *i2s_ASN1_ENUMERATED_TABLE(X509V3_EXT_METHOD *method, ASN1_ENUMERATED *e)
 {
-	ENUMERATED_NAMES *enam;
-	long strval;
-	strval = ASN1_ENUMERATED_get(e);
-	for(enam = method->usr_data; enam->lname; enam++) {
-		if(strval == enam->bitnum) return BUF_strdup(enam->lname);
-	}
-	return i2s_ASN1_ENUMERATED(method, e);
+    ENUMERATED_NAMES *enam;
+    long strval;
+    strval = ASN1_ENUMERATED_get(e);
+    for (enam = method->usr_data; enam->lname; enam++) {
+        if (strval == enam->bitnum)
+            return BUF_strdup(enam->lname);
+    }
+    return i2s_ASN1_ENUMERATED(method, e);
 }

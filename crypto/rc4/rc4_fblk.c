@@ -1,5 +1,6 @@
 /* crypto/rc4/rc4_fblk.c */
-/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
+/*
+ * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
 /* ====================================================================
@@ -10,7 +11,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -51,25 +52,24 @@
  * ====================================================================
  */
 
-
 #include <openssl/rc4.h>
 #include "rc4_locl.h"
 #include <openssl/opensslv.h>
 #include <openssl/crypto.h>
 #ifdef OPENSSL_FIPS
-#include <openssl/fips.h>
+# include <openssl/fips.h>
 #endif
 
-/* FIPS mode blocking for RC4 has to be done separately since RC4_set_key
- * may be implemented in an assembly language file.
+/*
+ * FIPS mode blocking for RC4 has to be done separately since RC4_set_key may
+ * be implemented in an assembly language file.
  */
 
 #ifdef OPENSSL_FIPS
 void RC4_set_key(RC4_KEY *key, int len, const unsigned char *data)
-	{
-	if (FIPS_mode())
-		FIPS_BAD_ABORT(RC4)
-	private_RC4_set_key(key, len, data);
-	}
+{
+    if (FIPS_mode())
+        FIPS_BAD_ABORT(RC4)
+            private_RC4_set_key(key, len, data);
+}
 #endif
-

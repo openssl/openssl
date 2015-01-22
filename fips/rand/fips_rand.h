@@ -6,7 +6,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -48,11 +48,11 @@
  */
 
 #ifndef HEADER_FIPS_RAND_H
-#define HEADER_FIPS_RAND_H
+# define HEADER_FIPS_RAND_H
 
-#include "des.h"
+# include "des.h"
 
-#ifdef OPENSSL_FIPS
+# ifdef OPENSSL_FIPS
 
 #ifdef  __cplusplus
 extern "C" {
@@ -73,5 +73,5 @@ const RAND_METHOD *FIPS_rand_method(void);
 #ifdef  __cplusplus
 }
 #endif
-#endif
+# endif
 #endif

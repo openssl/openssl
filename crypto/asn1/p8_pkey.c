@@ -1,6 +1,7 @@
 /* p8_pkey.c */
-/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
- * project 1999.
+/*
+ * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
+ * 1999.
  */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
@@ -10,7 +11,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -64,21 +65,21 @@
 /* Minor tweak to operation: zero private key data */
 static int pkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
-	/* Since the structure must still be valid use ASN1_OP_FREE_PRE */
-	if(operation == ASN1_OP_FREE_PRE) {
-		PKCS8_PRIV_KEY_INFO *key = (PKCS8_PRIV_KEY_INFO *)*pval;
-		if (key->pkey->value.octet_string)
-		OPENSSL_cleanse(key->pkey->value.octet_string->data,
-			key->pkey->value.octet_string->length);
-	}
-	return 1;
+    /* Since the structure must still be valid use ASN1_OP_FREE_PRE */
+    if (operation == ASN1_OP_FREE_PRE) {
+        PKCS8_PRIV_KEY_INFO *key = (PKCS8_PRIV_KEY_INFO *)*pval;
+        if (key->pkey->value.octet_string)
+            OPENSSL_cleanse(key->pkey->value.octet_string->data,
+                            key->pkey->value.octet_string->length);
+    }
+    return 1;
 }
 
 ASN1_SEQUENCE_cb(PKCS8_PRIV_KEY_INFO, pkey_cb) = {
-	ASN1_SIMPLE(PKCS8_PRIV_KEY_INFO, version, ASN1_INTEGER),
-	ASN1_SIMPLE(PKCS8_PRIV_KEY_INFO, pkeyalg, X509_ALGOR),
-	ASN1_SIMPLE(PKCS8_PRIV_KEY_INFO, pkey, ASN1_ANY),
-	ASN1_IMP_SET_OF_OPT(PKCS8_PRIV_KEY_INFO, attributes, X509_ATTRIBUTE, 0)
+        ASN1_SIMPLE(PKCS8_PRIV_KEY_INFO, version, ASN1_INTEGER),
+        ASN1_SIMPLE(PKCS8_PRIV_KEY_INFO, pkeyalg, X509_ALGOR),
+        ASN1_SIMPLE(PKCS8_PRIV_KEY_INFO, pkey, ASN1_ANY),
+        ASN1_IMP_SET_OF_OPT(PKCS8_PRIV_KEY_INFO, attributes, X509_ATTRIBUTE, 0)
 } ASN1_SEQUENCE_END_cb(PKCS8_PRIV_KEY_INFO, PKCS8_PRIV_KEY_INFO)
 
 IMPLEMENT_ASN1_FUNCTIONS(PKCS8_PRIV_KEY_INFO)

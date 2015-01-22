@@ -1,6 +1,7 @@
 /* v3_crld.c */
-/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
- * project 1999.
+/*
+ * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
+ * 1999.
  */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
@@ -10,7 +11,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -64,99 +65,113 @@
 #include <openssl/x509v3.h>
 
 static STACK_OF(CONF_VALUE) *i2v_crld(X509V3_EXT_METHOD *method,
-		STACK_OF(DIST_POINT) *crld, STACK_OF(CONF_VALUE) *extlist);
+                                      STACK_OF(DIST_POINT) *crld,
+                                      STACK_OF(CONF_VALUE) *extlist);
 static STACK_OF(DIST_POINT) *v2i_crld(X509V3_EXT_METHOD *method,
-				X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
+                                      X509V3_CTX *ctx,
+                                      STACK_OF(CONF_VALUE) *nval);
 
 const X509V3_EXT_METHOD v3_crld = {
-NID_crl_distribution_points, X509V3_EXT_MULTILINE, ASN1_ITEM_ref(CRL_DIST_POINTS),
-0,0,0,0,
-0,0,
-(X509V3_EXT_I2V)i2v_crld,
-(X509V3_EXT_V2I)v2i_crld,
-0,0,
-NULL
+    NID_crl_distribution_points, X509V3_EXT_MULTILINE,
+    ASN1_ITEM_ref(CRL_DIST_POINTS),
+    0, 0, 0, 0,
+    0, 0,
+    (X509V3_EXT_I2V) i2v_crld,
+    (X509V3_EXT_V2I)v2i_crld,
+    0, 0,
+    NULL
 };
 
 static STACK_OF(CONF_VALUE) *i2v_crld(X509V3_EXT_METHOD *method,
-			STACK_OF(DIST_POINT) *crld, STACK_OF(CONF_VALUE) *exts)
+                                      STACK_OF(DIST_POINT) *crld,
+                                      STACK_OF(CONF_VALUE) *exts)
 {
-	DIST_POINT *point;
-	int i;
-	for(i = 0; i < sk_DIST_POINT_num(crld); i++) {
-		point = sk_DIST_POINT_value(crld, i);
-		if(point->distpoint) {
-			if(point->distpoint->type == 0)
-				exts = i2v_GENERAL_NAMES(NULL,
-					 point->distpoint->name.fullname, exts);
-		        else X509V3_add_value("RelativeName","<UNSUPPORTED>", &exts);
-		}
-		if(point->reasons) 
-			X509V3_add_value("reasons","<UNSUPPORTED>", &exts);
-		if(point->CRLissuer)
-			X509V3_add_value("CRLissuer","<UNSUPPORTED>", &exts);
-	}
-	return exts;
+    DIST_POINT *point;
+    int i;
+    for (i = 0; i < sk_DIST_POINT_num(crld); i++) {
+        point = sk_DIST_POINT_value(crld, i);
+        if (point->distpoint) {
+            if (point->distpoint->type == 0)
+                exts = i2v_GENERAL_NAMES(NULL,
+                                         point->distpoint->name.fullname,
+                                         exts);
+            else
+                X509V3_add_value("RelativeName", "<UNSUPPORTED>", &exts);
+        }
+        if (point->reasons)
+            X509V3_add_value("reasons", "<UNSUPPORTED>", &exts);
+        if (point->CRLissuer)
+            X509V3_add_value("CRLissuer", "<UNSUPPORTED>", &exts);
+    }
+    return exts;
 }
 
 static STACK_OF(DIST_POINT) *v2i_crld(X509V3_EXT_METHOD *method,
-				X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
+                                      X509V3_CTX *ctx,
+                                      STACK_OF(CONF_VALUE) *nval)
 {
-	STACK_OF(DIST_POINT) *crld = NULL;
-	GENERAL_NAMES *gens = NULL;
-	GENERAL_NAME *gen = NULL;
-	CONF_VALUE *cnf;
-	int i;
-	if(!(crld = sk_DIST_POINT_new_null())) goto merr;
-	for(i = 0; i < sk_CONF_VALUE_num(nval); i++) {
-		DIST_POINT *point;
-		cnf = sk_CONF_VALUE_value(nval, i);
-		if(!(gen = v2i_GENERAL_NAME(method, ctx, cnf))) goto err; 
-		if(!(gens = GENERAL_NAMES_new())) goto merr;
-		if(!sk_GENERAL_NAME_push(gens, gen)) goto merr;
-		gen = NULL;
-		if(!(point = DIST_POINT_new())) goto merr;
-		if(!sk_DIST_POINT_push(crld, point)) {
-			DIST_POINT_free(point);
-			goto merr;
-		}
-		if(!(point->distpoint = DIST_POINT_NAME_new())) goto merr;
-		point->distpoint->name.fullname = gens;
-		point->distpoint->type = 0;
-		gens = NULL;
-	}
-	return crld;
+    STACK_OF(DIST_POINT) *crld = NULL;
+    GENERAL_NAMES *gens = NULL;
+    GENERAL_NAME *gen = NULL;
+    CONF_VALUE *cnf;
+    int i;
+    if (!(crld = sk_DIST_POINT_new_null()))
+        goto merr;
+    for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
+        DIST_POINT *point;
+        cnf = sk_CONF_VALUE_value(nval, i);
+        if (!(gen = v2i_GENERAL_NAME(method, ctx, cnf)))
+            goto err;
+        if (!(gens = GENERAL_NAMES_new()))
+            goto merr;
+        if (!sk_GENERAL_NAME_push(gens, gen))
+            goto merr;
+        gen = NULL;
+        if (!(point = DIST_POINT_new()))
+            goto merr;
+        if (!sk_DIST_POINT_push(crld, point)) {
+            DIST_POINT_free(point);
+            goto merr;
+        }
+        if (!(point->distpoint = DIST_POINT_NAME_new()))
+            goto merr;
+        point->distpoint->name.fullname = gens;
+        point->distpoint->type = 0;
+        gens = NULL;
+    }
+    return crld;
 
-	merr:
-	X509V3err(X509V3_F_V2I_CRLD,ERR_R_MALLOC_FAILURE);
-	err:
-	GENERAL_NAME_free(gen);
-	GENERAL_NAMES_free(gens);
-	sk_DIST_POINT_pop_free(crld, DIST_POINT_free);
-	return NULL;
+ merr:
+    X509V3err(X509V3_F_V2I_CRLD, ERR_R_MALLOC_FAILURE);
+ err:
+    GENERAL_NAME_free(gen);
+    GENERAL_NAMES_free(gens);
+    sk_DIST_POINT_pop_free(crld, DIST_POINT_free);
+    return NULL;
 }
 
 IMPLEMENT_STACK_OF(DIST_POINT)
+
 IMPLEMENT_ASN1_SET_OF(DIST_POINT)
 
 
 ASN1_CHOICE(DIST_POINT_NAME) = {
-	ASN1_IMP_SEQUENCE_OF(DIST_POINT_NAME, name.fullname, GENERAL_NAME, 0),
-	ASN1_IMP_SET_OF(DIST_POINT_NAME, name.relativename, X509_NAME_ENTRY, 1)
+        ASN1_IMP_SEQUENCE_OF(DIST_POINT_NAME, name.fullname, GENERAL_NAME, 0),
+        ASN1_IMP_SET_OF(DIST_POINT_NAME, name.relativename, X509_NAME_ENTRY, 1)
 } ASN1_CHOICE_END(DIST_POINT_NAME)
 
 IMPLEMENT_ASN1_FUNCTIONS(DIST_POINT_NAME)
 
 ASN1_SEQUENCE(DIST_POINT) = {
-	ASN1_EXP_OPT(DIST_POINT, distpoint, DIST_POINT_NAME, 0),
-	ASN1_IMP_OPT(DIST_POINT, reasons, ASN1_BIT_STRING, 1),
-	ASN1_IMP_SEQUENCE_OF_OPT(DIST_POINT, CRLissuer, GENERAL_NAME, 2)
+        ASN1_EXP_OPT(DIST_POINT, distpoint, DIST_POINT_NAME, 0),
+        ASN1_IMP_OPT(DIST_POINT, reasons, ASN1_BIT_STRING, 1),
+        ASN1_IMP_SEQUENCE_OF_OPT(DIST_POINT, CRLissuer, GENERAL_NAME, 2)
 } ASN1_SEQUENCE_END(DIST_POINT)
 
 IMPLEMENT_ASN1_FUNCTIONS(DIST_POINT)
 
-ASN1_ITEM_TEMPLATE(CRL_DIST_POINTS) = 
-	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, CRLDistributionPoints, DIST_POINT)
+ASN1_ITEM_TEMPLATE(CRL_DIST_POINTS) =
+        ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, CRLDistributionPoints, DIST_POINT)
 ASN1_ITEM_TEMPLATE_END(CRL_DIST_POINTS)
 
 IMPLEMENT_ASN1_FUNCTIONS(CRL_DIST_POINTS)

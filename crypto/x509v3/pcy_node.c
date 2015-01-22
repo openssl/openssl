@@ -1,6 +1,7 @@
 /* pcy_node.c */
-/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
- * project 2004.
+/*
+ * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
+ * 2004.
  */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
@@ -10,7 +11,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -62,97 +63,90 @@
 
 #include "pcy_int.h"
 
-static int node_cmp(const X509_POLICY_NODE * const *a,
-			const X509_POLICY_NODE * const *b)
-	{
-	return OBJ_cmp((*a)->data->valid_policy, (*b)->data->valid_policy);
-	}
+static int node_cmp(const X509_POLICY_NODE *const *a,
+                    const X509_POLICY_NODE *const *b)
+{
+    return OBJ_cmp((*a)->data->valid_policy, (*b)->data->valid_policy);
+}
 
 STACK_OF(X509_POLICY_NODE) *policy_node_cmp_new(void)
-	{
-	return sk_X509_POLICY_NODE_new(node_cmp);
-	}
+{
+    return sk_X509_POLICY_NODE_new(node_cmp);
+}
 
 X509_POLICY_NODE *tree_find_sk(STACK_OF(X509_POLICY_NODE) *nodes,
-					const ASN1_OBJECT *id)
-	{
-	X509_POLICY_DATA n;
-	X509_POLICY_NODE l;
-	int idx;
+                               const ASN1_OBJECT *id)
+{
+    X509_POLICY_DATA n;
+    X509_POLICY_NODE l;
+    int idx;
 
-	n.valid_policy = (ASN1_OBJECT *)id;
-	l.data = &n;
+    n.valid_policy = (ASN1_OBJECT *)id;
+    l.data = &n;
 
-	idx = sk_X509_POLICY_NODE_find(nodes, &l);
-	if (idx == -1)
-		return NULL;
+    idx = sk_X509_POLICY_NODE_find(nodes, &l);
+    if (idx == -1)
+        return NULL;
 
-	return sk_X509_POLICY_NODE_value(nodes, idx);
+    return sk_X509_POLICY_NODE_value(nodes, idx);
 
-	}
+}
 
 X509_POLICY_NODE *level_find_node(const X509_POLICY_LEVEL *level,
-					const ASN1_OBJECT *id)
-	{
-	return tree_find_sk(level->nodes, id);
-	}
+                                  const ASN1_OBJECT *id)
+{
+    return tree_find_sk(level->nodes, id);
+}
 
 X509_POLICY_NODE *level_add_node(X509_POLICY_LEVEL *level,
-			X509_POLICY_DATA *data,
-			X509_POLICY_NODE *parent,
-			X509_POLICY_TREE *tree)
-	{
-	X509_POLICY_NODE *node;
-	node = OPENSSL_malloc(sizeof(X509_POLICY_NODE));
-	if (!node)
-		return NULL;
-	node->data = data;
-	node->parent = parent;
-	node->nchild = 0;
-	if (level)
-		{
-		if (OBJ_obj2nid(data->valid_policy) == NID_any_policy)
-			{
-			if (level->anyPolicy)
-				goto node_error;
-			level->anyPolicy = node;
-			}
-		else
-			{
+                                 X509_POLICY_DATA *data,
+                                 X509_POLICY_NODE *parent,
+                                 X509_POLICY_TREE *tree)
+{
+    X509_POLICY_NODE *node;
+    node = OPENSSL_malloc(sizeof(X509_POLICY_NODE));
+    if (!node)
+        return NULL;
+    node->data = data;
+    node->parent = parent;
+    node->nchild = 0;
+    if (level) {
+        if (OBJ_obj2nid(data->valid_policy) == NID_any_policy) {
+            if (level->anyPolicy)
+                goto node_error;
+            level->anyPolicy = node;
+        } else {
 
-			if (!level->nodes)
-				level->nodes = policy_node_cmp_new();
-			if (!level->nodes)
-				goto node_error;
-			if (!sk_X509_POLICY_NODE_push(level->nodes, node))
-				goto node_error;
-			}
-		}
+            if (!level->nodes)
+                level->nodes = policy_node_cmp_new();
+            if (!level->nodes)
+                goto node_error;
+            if (!sk_X509_POLICY_NODE_push(level->nodes, node))
+                goto node_error;
+        }
+    }
 
-	if (tree)
-		{
-		if (!tree->extra_data)
-			 tree->extra_data = sk_X509_POLICY_DATA_new_null();
-		if (!tree->extra_data)
-			goto node_error;
-		if (!sk_X509_POLICY_DATA_push(tree->extra_data, data))
-			goto node_error;
-		}
+    if (tree) {
+        if (!tree->extra_data)
+            tree->extra_data = sk_X509_POLICY_DATA_new_null();
+        if (!tree->extra_data)
+            goto node_error;
+        if (!sk_X509_POLICY_DATA_push(tree->extra_data, data))
+            goto node_error;
+    }
 
-	if (parent)
-		parent->nchild++;
+    if (parent)
+        parent->nchild++;
 
-	return node;
+    return node;
 
-	node_error:
-	policy_node_free(node);
-	return 0;
+ node_error:
+    policy_node_free(node);
+    return 0;
 
-	}
+}
 
 void policy_node_free(X509_POLICY_NODE *node)
-	{
-	OPENSSL_free(node);
-	}
-
-
+{
+    OPENSSL_free(node);
+}

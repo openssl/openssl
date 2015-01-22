@@ -1,5 +1,6 @@
 /* crypto/cms/cms_io.c */
-/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
+/*
+ * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
 /* ====================================================================
@@ -10,7 +11,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -59,82 +60,79 @@
 #include "cms_lcl.h"
 
 CMS_ContentInfo *d2i_CMS_bio(BIO *bp, CMS_ContentInfo **cms)
-	{
-	return ASN1_item_d2i_bio(ASN1_ITEM_rptr(CMS_ContentInfo), bp, cms);
-	}
+{
+    return ASN1_item_d2i_bio(ASN1_ITEM_rptr(CMS_ContentInfo), bp, cms);
+}
 
 int i2d_CMS_bio(BIO *bp, CMS_ContentInfo *cms)
-	{
-	return ASN1_item_i2d_bio(ASN1_ITEM_rptr(CMS_ContentInfo), bp, cms);
-	}
+{
+    return ASN1_item_i2d_bio(ASN1_ITEM_rptr(CMS_ContentInfo), bp, cms);
+}
 
 IMPLEMENT_PEM_rw_const(CMS, CMS_ContentInfo, PEM_STRING_CMS, CMS_ContentInfo)
 
 /* Callback for int_smime_write_ASN1 */
-
 static int cms_output_data(BIO *out, BIO *data, ASN1_VALUE *val, int flags,
-					const ASN1_ITEM *it)
-	{
-	CMS_ContentInfo *cms = (CMS_ContentInfo *)val;
-	BIO *tmpbio, *cmsbio;
-	int r = 0;
+                           const ASN1_ITEM *it)
+{
+    CMS_ContentInfo *cms = (CMS_ContentInfo *)val;
+    BIO *tmpbio, *cmsbio;
+    int r = 0;
 
-	if (!(flags & SMIME_DETACHED))
-		{
-		SMIME_crlf_copy(data, out, flags);
-		return 1;
-		}
+    if (!(flags & SMIME_DETACHED)) {
+        SMIME_crlf_copy(data, out, flags);
+        return 1;
+    }
 
-	/* Let CMS code prepend any needed BIOs */
+    /* Let CMS code prepend any needed BIOs */
 
-	cmsbio = CMS_dataInit(cms, out);
+    cmsbio = CMS_dataInit(cms, out);
 
-	if (!cmsbio)
-		return 0;
+    if (!cmsbio)
+        return 0;
 
-	/* Copy data across, passing through filter BIOs for processing */
-	SMIME_crlf_copy(data, cmsbio, flags);
+    /* Copy data across, passing through filter BIOs for processing */
+    SMIME_crlf_copy(data, cmsbio, flags);
 
-	/* Finalize structure */
-	if (CMS_dataFinal(cms, cmsbio) <= 0)
-		goto err;
+    /* Finalize structure */
+    if (CMS_dataFinal(cms, cmsbio) <= 0)
+        goto err;
 
-	r = 1;
+    r = 1;
 
-	err:
+ err:
 
-	/* Now remove any digests prepended to the BIO */
+    /* Now remove any digests prepended to the BIO */
 
-	while (cmsbio != out)
-		{
-		tmpbio = BIO_pop(cmsbio);
-		BIO_free(cmsbio);
-		cmsbio = tmpbio;
-		}
+    while (cmsbio != out) {
+        tmpbio = BIO_pop(cmsbio);
+        BIO_free(cmsbio);
+        cmsbio = tmpbio;
+    }
 
-	return r;
+    return r;
 
-	}
-
+}
 
 int SMIME_write_CMS(BIO *bio, CMS_ContentInfo *cms, BIO *data, int flags)
-	{
-	STACK_OF(X509_ALGOR) *mdalgs;
-	int ctype_nid = OBJ_obj2nid(cms->contentType);
-	int econt_nid = OBJ_obj2nid(CMS_get0_eContentType(cms));
-	if (ctype_nid == NID_pkcs7_signed)
-		mdalgs = cms->d.signedData->digestAlgorithms;
-	else
-		mdalgs = NULL;
+{
+    STACK_OF(X509_ALGOR) *mdalgs;
+    int ctype_nid = OBJ_obj2nid(cms->contentType);
+    int econt_nid = OBJ_obj2nid(CMS_get0_eContentType(cms));
+    if (ctype_nid == NID_pkcs7_signed)
+        mdalgs = cms->d.signedData->digestAlgorithms;
+    else
+        mdalgs = NULL;
 
-	return int_smime_write_ASN1(bio, (ASN1_VALUE *)cms, data, flags,
-					ctype_nid, econt_nid, mdalgs,
-					cms_output_data,
-					ASN1_ITEM_rptr(CMS_ContentInfo));	
-	}
+    return int_smime_write_ASN1(bio, (ASN1_VALUE *)cms, data, flags,
+                                ctype_nid, econt_nid, mdalgs,
+                                cms_output_data,
+                                ASN1_ITEM_rptr(CMS_ContentInfo));
+}
 
 CMS_ContentInfo *SMIME_read_CMS(BIO *bio, BIO **bcont)
-	{
-	return (CMS_ContentInfo *)SMIME_read_ASN1(bio, bcont,
-					ASN1_ITEM_rptr(CMS_ContentInfo));
-	}
+{
+    return (CMS_ContentInfo *)SMIME_read_ASN1(bio, bcont,
+                                              ASN1_ITEM_rptr
+                                              (CMS_ContentInfo));
+}

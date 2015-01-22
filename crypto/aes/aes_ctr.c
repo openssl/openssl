@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -59,81 +59,87 @@
 #include <openssl/aes.h>
 #include "aes_locl.h"
 
-/* NOTE: the IV/counter CTR mode is big-endian.  The rest of the AES code
- * is endian-neutral. */
+/*
+ * NOTE: the IV/counter CTR mode is big-endian.  The rest of the AES code is
+ * endian-neutral.
+ */
 
 /* increment counter (128-bit int) by 1 */
-static void AES_ctr128_inc(unsigned char *counter) {
-	unsigned long c;
+static void AES_ctr128_inc(unsigned char *counter)
+{
+    unsigned long c;
 
-	/* Grab bottom dword of counter and increment */
-	c = GETU32(counter + 12);
-	c++;	c &= 0xFFFFFFFF;
-	PUTU32(counter + 12, c);
+    /* Grab bottom dword of counter and increment */
+    c = GETU32(counter + 12);
+    c++;
+    c &= 0xFFFFFFFF;
+    PUTU32(counter + 12, c);
 
-	/* if no overflow, we're done */
-	if (c)
-		return;
+    /* if no overflow, we're done */
+    if (c)
+        return;
 
-	/* Grab 1st dword of counter and increment */
-	c = GETU32(counter +  8);
-	c++;	c &= 0xFFFFFFFF;
-	PUTU32(counter +  8, c);
+    /* Grab 1st dword of counter and increment */
+    c = GETU32(counter + 8);
+    c++;
+    c &= 0xFFFFFFFF;
+    PUTU32(counter + 8, c);
 
-	/* if no overflow, we're done */
-	if (c)
-		return;
+    /* if no overflow, we're done */
+    if (c)
+        return;
 
-	/* Grab 2nd dword of counter and increment */
-	c = GETU32(counter +  4);
-	c++;	c &= 0xFFFFFFFF;
-	PUTU32(counter +  4, c);
+    /* Grab 2nd dword of counter and increment */
+    c = GETU32(counter + 4);
+    c++;
+    c &= 0xFFFFFFFF;
+    PUTU32(counter + 4, c);
 
-	/* if no overflow, we're done */
-	if (c)
-		return;
+    /* if no overflow, we're done */
+    if (c)
+        return;
 
-	/* Grab top dword of counter and increment */
-	c = GETU32(counter +  0);
-	c++;	c &= 0xFFFFFFFF;
-	PUTU32(counter +  0, c);
+    /* Grab top dword of counter and increment */
+    c = GETU32(counter + 0);
+    c++;
+    c &= 0xFFFFFFFF;
+    PUTU32(counter + 0, c);
 }
 
-/* The input encrypted as though 128bit counter mode is being
- * used.  The extra state information to record how much of the
- * 128bit block we have used is contained in *num, and the
- * encrypted counter is kept in ecount_buf.  Both *num and
- * ecount_buf must be initialised with zeros before the first
- * call to AES_ctr128_encrypt().
- *
- * This algorithm assumes that the counter is in the x lower bits
- * of the IV (ivec), and that the application has full control over
- * overflow and the rest of the IV.  This implementation takes NO
- * responsability for checking that the counter doesn't overflow
- * into the rest of the IV when incremented.
+/*
+ * The input encrypted as though 128bit counter mode is being used.  The
+ * extra state information to record how much of the 128bit block we have
+ * used is contained in *num, and the encrypted counter is kept in
+ * ecount_buf.  Both *num and ecount_buf must be initialised with zeros
+ * before the first call to AES_ctr128_encrypt(). This algorithm assumes
+ * that the counter is in the x lower bits of the IV (ivec), and that the
+ * application has full control over overflow and the rest of the IV.  This
+ * implementation takes NO responsability for checking that the counter
+ * doesn't overflow into the rest of the IV when incremented.
  */
 void AES_ctr128_encrypt(const unsigned char *in, unsigned char *out,
-	const unsigned long length, const AES_KEY *key,
-	unsigned char ivec[AES_BLOCK_SIZE],
-	unsigned char ecount_buf[AES_BLOCK_SIZE],
-	unsigned int *num) {
+                        const unsigned long length, const AES_KEY *key,
+                        unsigned char ivec[AES_BLOCK_SIZE],
+                        unsigned char ecount_buf[AES_BLOCK_SIZE],
+                        unsigned int *num)
+{
 
-	unsigned int n;
-	unsigned long l=length;
+    unsigned int n;
+    unsigned long l = length;
 
-	assert(in && out && key && counter && num);
-	assert(*num < AES_BLOCK_SIZE);
+    assert(in && out && key && counter && num);
+    assert(*num < AES_BLOCK_SIZE);
 
-	n = *num;
+    n = *num;
 
-	while (l--) {
-		if (n == 0) {
-			AES_encrypt(ivec, ecount_buf, key);
- 			AES_ctr128_inc(ivec);
-		}
-		*(out++) = *(in++) ^ ecount_buf[n];
-		n = (n+1) % AES_BLOCK_SIZE;
-	}
+    while (l--) {
+        if (n == 0) {
+            AES_encrypt(ivec, ecount_buf, key);
+            AES_ctr128_inc(ivec);
+        }
+        *(out++) = *(in++) ^ ecount_buf[n];
+        n = (n + 1) % AES_BLOCK_SIZE;
+    }
 
-	*num=n;
+    *num = n;
 }
