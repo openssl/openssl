@@ -164,7 +164,7 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
     }
 
     if (!(cflag & X509_FLAG_NO_SIGNAME)) {
-        if (X509_signature_print(bp, x->sig_alg, NULL) <= 0)
+        if (X509_signature_print(bp, ci->signature, NULL) <= 0)
             goto err;
 #if 0
         if (BIO_printf(bp, "%8sSignature Algorithm: ", "") <= 0)
