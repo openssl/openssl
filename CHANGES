@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.1l and 1.0.2 [xx XXX xxxx]
+ Changes between 1.0.1l and 1.0.2 [22 Jan 2015]
 
   *) SRTP Memory Leak.
 
