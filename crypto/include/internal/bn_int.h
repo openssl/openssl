@@ -6,7 +6,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -53,29 +53,28 @@
  */
 
 #ifndef HEADER_BN_INT_H
-#define HEADER_BN_INT_H
+# define HEADER_BN_INT_H
 
-
-#include <openssl/bn.h>
+# include <openssl/bn.h>
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
-#define bn_expand(a,bits) ((((((bits+BN_BITS2-1))/BN_BITS2)) <= (a)->dmax)?\
-	(a):bn_expand2((a),(bits+BN_BITS2-1)/BN_BITS2))
+# define bn_expand(a,bits) ((((((bits+BN_BITS2-1))/BN_BITS2)) <= (a)->dmax)?\
+        (a):bn_expand2((a),(bits+BN_BITS2-1)/BN_BITS2))
 BIGNUM *bn_wexpand(BIGNUM *a, int words);
 BIGNUM *bn_expand2(BIGNUM *a, int words);
 
 void bn_correct_top(BIGNUM *a);
 
-/* Determine the modified width-(w+1) Non-Adjacent Form (wNAF) of 'scalar'.
- * This is an array  r[]  of values that are either zero or odd with an
- * absolute value less than  2^w  satisfying
- *     scalar = \sum_j r[j]*2^j
- * where at most one of any  w+1  consecutive digits is non-zero
- * with the exception that the most significant digit may be only
- * w-1 zeros away from that next non-zero digit.
+/*
+ * Determine the modified width-(w+1) Non-Adjacent Form (wNAF) of 'scalar'.
+ * This is an array r[] of values that are either zero or odd with an
+ * absolute value less than 2^w satisfying scalar = \sum_j r[j]*2^j where at
+ * most one of any w+1 consecutive digits is non-zero with the exception that
+ * the most significant digit may be only w-1 zeros away from that next
+ * non-zero digit.
  */
 signed char *bn_compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len);
 
@@ -122,4 +121,3 @@ BIGNUM *bn_array_el(BIGNUM *base, int el);
 #endif
 
 #endif
-
