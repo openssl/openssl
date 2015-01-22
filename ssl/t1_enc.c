@@ -156,7 +156,8 @@ static void tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
 			HMAC_Final(&ctx,out,&j);
 			out+=j;
 			olen-=j;
-			HMAC_Final(&ctx_tmp,A1,&A1_len); /* calc the next A1 value */
+			/* calc the next A1 value */
+			HMAC_Final(&ctx_tmp,A1,&A1_len);
 			}
 		else	/* last one */
 			{
