@@ -93,8 +93,9 @@ EVP_PKEY *d2i_PrivateKey(int type, EVP_PKEY **a, const unsigned char **pp,
 		{
 #ifndef OPENSSL_NO_RSA
 	case EVP_PKEY_RSA:
+		/* TMP UGLY CAST */
 		if ((ret->pkey.rsa=d2i_RSAPrivateKey(NULL,
-			(const unsigned char **)pp,length)) == NULL) /* TMP UGLY CAST */
+			(const unsigned char **)pp,length)) == NULL)
 			{
 			ASN1err(ASN1_F_D2I_PRIVATEKEY,ERR_R_ASN1_LIB);
 			goto err;
@@ -103,8 +104,9 @@ EVP_PKEY *d2i_PrivateKey(int type, EVP_PKEY **a, const unsigned char **pp,
 #endif
 #ifndef OPENSSL_NO_DSA
 	case EVP_PKEY_DSA:
+		/* TMP UGLY CAST */
 		if ((ret->pkey.dsa=d2i_DSAPrivateKey(NULL,
-			(const unsigned char **)pp,length)) == NULL) /* TMP UGLY CAST */
+			(const unsigned char **)pp,length)) == NULL)
 			{
 			ASN1err(ASN1_F_D2I_PRIVATEKEY,ERR_R_ASN1_LIB);
 			goto err;

@@ -84,7 +84,8 @@ static void *instruction_pointer(void)
     __asm __volatile (	"move	%1,$31\n\t"	/* save ra */
 			"bal	.+8; nop\n\t"
 			"move	%0,$31\n\t"
-			"move	$31,%1"		/* restore ra */
+			/* restore ra */
+			"move	$31,%1"		
 			: "=r"(ret),"=r"(scratch) );
 # elif	defined(__ppc__) || defined(__powerpc) || defined(__powerpc__) || \
 	defined(__POWERPC__) || defined(_POWER) || defined(__PPC__) || \

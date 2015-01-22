@@ -91,8 +91,9 @@ int main(int argc, char *argv[])
 
 static int AESTest(EVP_CIPHER_CTX *ctx,
 	    char *amode, int akeysz, unsigned char *aKey, 
-	    unsigned char *iVec, 
-	    int dir,  /* 0 = decrypt, 1 = encrypt */
+	    unsigned char *iVec,
+	    /* 0 = decrypt, 1 = encrypt */ 
+	    int dir,
 	    unsigned char *plaintext, unsigned char *ciphertext, int len)
     {
     const EVP_CIPHER *cipher = NULL;
@@ -296,8 +297,9 @@ static int do_mct(char *amode,
 	    case ECB:
 		if (j == 0)
 		    { /* set up encryption */
-		    ret = AESTest(&ctx, amode, akeysz, key[i], NULL, 
-				  dir,  /* 0 = decrypt, 1 = encrypt */
+		    ret = AESTest(&ctx, amode, akeysz, key[i], NULL,
+				/* 0 = decrypt, 1 = encrypt */
+				  dir,
 				  ptext[j], ctext[j], len);
 		    if (dir == XENCRYPT)
 			memcpy(ptext[j+1], ctext[j], len);
@@ -324,8 +326,9 @@ static int do_mct(char *amode,
 	    case CFB128:
 		if (j == 0)
 		    {
-		    ret = AESTest(&ctx, amode, akeysz, key[i], iv[i], 
-				  dir,  /* 0 = decrypt, 1 = encrypt */
+		    ret = AESTest(&ctx, amode, akeysz, key[i], iv[i],
+				/* 0 = decrypt, 1 = encrypt */
+				  dir,  
 				  ptext[j], ctext[j], len);
 		    if (dir == XENCRYPT)
 			memcpy(ptext[j+1], iv[i], len);
@@ -351,7 +354,8 @@ static int do_mct(char *amode,
 		if (j == 0)
 		    {
 		    ret = AESTest(&ctx, amode, akeysz, key[i], iv[i], 
-				  dir,  /* 0 = decrypt, 1 = encrypt */
+				/* 0 = decrypt, 1 = encrypt */
+				  dir,  
 				  ptext[j], ctext[j], len);
 		    }
 		else
@@ -423,7 +427,8 @@ static int do_mct(char *amode,
 	if (dir == XENCRYPT)
 	    {
 	    if (imode == CFB8)
-		{ /* ct = CT[j-15] || CT[j-14] || ... || CT[j] */
+		{
+		/* ct = CT[j-15] || CT[j-14] || ... || CT[j] */
 		for (n1 = 0, n2 = nkeysz-1; n1 < nkeysz; ++n1, --n2)
 		    ciphertext[n1] = ctext[j-n2][0];
 		}
@@ -451,7 +456,8 @@ static int do_mct(char *amode,
 	else
 	    {
 	    if (imode == CFB8)
-		{ /* ct = CT[j-15] || CT[j-14] || ... || CT[j] */
+		{
+		/* ct = CT[j-15] || CT[j-14] || ... || CT[j] */
 		for (n1 = 0, n2 = nkeysz-1; n1 < nkeysz; ++n1, --n2)
 		    ciphertext[n1] = ptext[j-n2][0];
 		}
@@ -782,7 +788,8 @@ static int proc_file(char *rqfile, char *rspfile)
 		else
 		    {
 		    ret = AESTest(&ctx, amode, akeysz, aKey, iVec, 
-				  dir,  /* 0 = decrypt, 1 = encrypt */
+				/* 0 = decrypt, 1 = encrypt */
+				  dir,  
 				  plaintext, ciphertext, len);
 		    OutputValue("CIPHERTEXT",ciphertext,len,rfp,
 				!strcmp(amode,"CFB1"));
@@ -820,7 +827,8 @@ static int proc_file(char *rqfile, char *rspfile)
 		else
 		    {
 		    ret = AESTest(&ctx, amode, akeysz, aKey, iVec, 
-				  dir,  /* 0 = decrypt, 1 = encrypt */
+				/* 0 = decrypt, 1 = encrypt */
+				  dir,  
 				  plaintext, ciphertext, len);
 		    OutputValue("PLAINTEXT",(unsigned char *)plaintext,len,rfp,
 				!strcmp(amode,"CFB1"));

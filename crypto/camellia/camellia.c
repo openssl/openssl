@@ -703,76 +703,94 @@ void camellia_setup128(const u8 *key, u32 *subkey)
 	CamelliaSubkeyR(24) = subr(24) ^ subr(23);
 
 	/* apply the inverse of the last half of P-function */
+	/* round 1 */
 	dw = CamelliaSubkeyL(2) ^ CamelliaSubkeyR(2),
-		dw = CAMELLIA_RL8(dw);/* round 1 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(2) = CamelliaSubkeyL(2) ^ dw,
 		CamelliaSubkeyL(2) = dw;
+	/* round 2 */
 	dw = CamelliaSubkeyL(3) ^ CamelliaSubkeyR(3),
-		dw = CAMELLIA_RL8(dw);/* round 2 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(3) = CamelliaSubkeyL(3) ^ dw,
 		CamelliaSubkeyL(3) = dw;
+	/* round 3 */
 	dw = CamelliaSubkeyL(4) ^ CamelliaSubkeyR(4),
-		dw = CAMELLIA_RL8(dw);/* round 3 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(4) = CamelliaSubkeyL(4) ^ dw,
 		CamelliaSubkeyL(4) = dw;
+	/* round 4 */
 	dw = CamelliaSubkeyL(5) ^ CamelliaSubkeyR(5),
-		dw = CAMELLIA_RL8(dw);/* round 4 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(5) = CamelliaSubkeyL(5) ^ dw,
 		CamelliaSubkeyL(5) = dw;
+	/* round 5 */
 	dw = CamelliaSubkeyL(6) ^ CamelliaSubkeyR(6),
-		dw = CAMELLIA_RL8(dw);/* round 5 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(6) = CamelliaSubkeyL(6) ^ dw,
 		CamelliaSubkeyL(6) = dw;
+	/* round 6 */
 	dw = CamelliaSubkeyL(7) ^ CamelliaSubkeyR(7),
-		dw = CAMELLIA_RL8(dw);/* round 6 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(7) = CamelliaSubkeyL(7) ^ dw,
 		CamelliaSubkeyL(7) = dw;
+	/* round 7 */
 	dw = CamelliaSubkeyL(10) ^ CamelliaSubkeyR(10),
-		dw = CAMELLIA_RL8(dw);/* round 7 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(10) = CamelliaSubkeyL(10) ^ dw,
 		CamelliaSubkeyL(10) = dw;
+	/* round 8 */
 	dw = CamelliaSubkeyL(11) ^ CamelliaSubkeyR(11),
-		dw = CAMELLIA_RL8(dw);/* round 8 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(11) = CamelliaSubkeyL(11) ^ dw,
 		CamelliaSubkeyL(11) = dw;
+	/* round 9 */
 	dw = CamelliaSubkeyL(12) ^ CamelliaSubkeyR(12),
-		dw = CAMELLIA_RL8(dw);/* round 9 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(12) = CamelliaSubkeyL(12) ^ dw,
 		CamelliaSubkeyL(12) = dw;
+	/* round 10 */
 	dw = CamelliaSubkeyL(13) ^ CamelliaSubkeyR(13),
-		dw = CAMELLIA_RL8(dw);/* round 10 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(13) = CamelliaSubkeyL(13) ^ dw,
 		CamelliaSubkeyL(13) = dw;
+	/* round 11 */
 	dw = CamelliaSubkeyL(14) ^ CamelliaSubkeyR(14),
-		dw = CAMELLIA_RL8(dw);/* round 11 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(14) = CamelliaSubkeyL(14) ^ dw,
 		CamelliaSubkeyL(14) = dw;
+	/* round 12 */
 	dw = CamelliaSubkeyL(15) ^ CamelliaSubkeyR(15),
-		dw = CAMELLIA_RL8(dw);/* round 12 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(15) = CamelliaSubkeyL(15) ^ dw,
 		CamelliaSubkeyL(15) = dw;
+	/* round 13 */
 	dw = CamelliaSubkeyL(18) ^ CamelliaSubkeyR(18),
-		dw = CAMELLIA_RL8(dw);/* round 13 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(18) = CamelliaSubkeyL(18) ^ dw,
 		CamelliaSubkeyL(18) = dw;
+	/* round 14 */
 	dw = CamelliaSubkeyL(19) ^ CamelliaSubkeyR(19),
-		dw = CAMELLIA_RL8(dw);/* round 14 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(19) = CamelliaSubkeyL(19) ^ dw,
 		CamelliaSubkeyL(19) = dw;
+	/* round 15 */
 	dw = CamelliaSubkeyL(20) ^ CamelliaSubkeyR(20),
-		dw = CAMELLIA_RL8(dw);/* round 15 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(20) = CamelliaSubkeyL(20) ^ dw,
 		CamelliaSubkeyL(20) = dw;
+	/* round 16 */
 	dw = CamelliaSubkeyL(21) ^ CamelliaSubkeyR(21),
-		dw = CAMELLIA_RL8(dw);/* round 16 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(21) = CamelliaSubkeyL(21) ^ dw,
 		CamelliaSubkeyL(21) = dw;
+	/* round 17 */
 	dw = CamelliaSubkeyL(22) ^ CamelliaSubkeyR(22),
-		dw = CAMELLIA_RL8(dw);/* round 17 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(22) = CamelliaSubkeyL(22) ^ dw,
 		CamelliaSubkeyL(22) = dw;
+	/* round 18 */
 	dw = CamelliaSubkeyL(23) ^ CamelliaSubkeyR(23),
-		dw = CAMELLIA_RL8(dw);/* round 18 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(23) = CamelliaSubkeyL(23) ^ dw,
 		CamelliaSubkeyL(23) = dw;
 
@@ -1090,100 +1108,124 @@ void camellia_setup256(const u8 *key, u32 *subkey)
 	CamelliaSubkeyR(32) = subr(32) ^ subr(31);
 
 	/* apply the inverse of the last half of P-function */
+	/* round 1 */
 	dw = CamelliaSubkeyL(2) ^ CamelliaSubkeyR(2),
-		dw = CAMELLIA_RL8(dw);/* round 1 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(2) = CamelliaSubkeyL(2) ^ dw,
 		CamelliaSubkeyL(2) = dw;
+	/* round 2 */
 	dw = CamelliaSubkeyL(3) ^ CamelliaSubkeyR(3),
-		dw = CAMELLIA_RL8(dw);/* round 2 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(3) = CamelliaSubkeyL(3) ^ dw,
 		CamelliaSubkeyL(3) = dw;
+	/* round 3 */
 	dw = CamelliaSubkeyL(4) ^ CamelliaSubkeyR(4),
-		dw = CAMELLIA_RL8(dw);/* round 3 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(4) = CamelliaSubkeyL(4) ^ dw,
 		CamelliaSubkeyL(4) = dw;
+	/* round 4 */
 	dw = CamelliaSubkeyL(5) ^ CamelliaSubkeyR(5),
-		dw = CAMELLIA_RL8(dw);/* round 4 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(5) = CamelliaSubkeyL(5) ^ dw,
 		CamelliaSubkeyL(5) = dw;
+	/* round 5 */
 	dw = CamelliaSubkeyL(6) ^ CamelliaSubkeyR(6),
-		dw = CAMELLIA_RL8(dw);/* round 5 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(6) = CamelliaSubkeyL(6) ^ dw,
 		CamelliaSubkeyL(6) = dw;
+	/* round 6 */
 	dw = CamelliaSubkeyL(7) ^ CamelliaSubkeyR(7),
-		dw = CAMELLIA_RL8(dw);/* round 6 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(7) = CamelliaSubkeyL(7) ^ dw,
 		CamelliaSubkeyL(7) = dw;
+	/* round 7 */
 	dw = CamelliaSubkeyL(10) ^ CamelliaSubkeyR(10),
-		dw = CAMELLIA_RL8(dw);/* round 7 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(10) = CamelliaSubkeyL(10) ^ dw,
 		CamelliaSubkeyL(10) = dw;
+	/* round 8 */
 	dw = CamelliaSubkeyL(11) ^ CamelliaSubkeyR(11),
-		dw = CAMELLIA_RL8(dw);/* round 8 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(11) = CamelliaSubkeyL(11) ^ dw,
 		CamelliaSubkeyL(11) = dw;
+	/* round 9 */
 	dw = CamelliaSubkeyL(12) ^ CamelliaSubkeyR(12),
-		dw = CAMELLIA_RL8(dw);/* round 9 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(12) = CamelliaSubkeyL(12) ^ dw,
 		CamelliaSubkeyL(12) = dw;
+	/* round 10 */
 	dw = CamelliaSubkeyL(13) ^ CamelliaSubkeyR(13),
-		dw = CAMELLIA_RL8(dw);/* round 10 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(13) = CamelliaSubkeyL(13) ^ dw,
 		CamelliaSubkeyL(13) = dw;
+	/* round 11 */
 	dw = CamelliaSubkeyL(14) ^ CamelliaSubkeyR(14),
-		dw = CAMELLIA_RL8(dw);/* round 11 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(14) = CamelliaSubkeyL(14) ^ dw,
 		CamelliaSubkeyL(14) = dw;
+	/* round 12 */
 	dw = CamelliaSubkeyL(15) ^ CamelliaSubkeyR(15),
-		dw = CAMELLIA_RL8(dw);/* round 12 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(15) = CamelliaSubkeyL(15) ^ dw,
 		CamelliaSubkeyL(15) = dw;
+	/* round 13 */
 	dw = CamelliaSubkeyL(18) ^ CamelliaSubkeyR(18),
-		dw = CAMELLIA_RL8(dw);/* round 13 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(18) = CamelliaSubkeyL(18) ^ dw,
 		CamelliaSubkeyL(18) = dw;
+	/* round 14 */
 	dw = CamelliaSubkeyL(19) ^ CamelliaSubkeyR(19),
-		dw = CAMELLIA_RL8(dw);/* round 14 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(19) = CamelliaSubkeyL(19) ^ dw,
 		CamelliaSubkeyL(19) = dw;
+	/* round 15 */
 	dw = CamelliaSubkeyL(20) ^ CamelliaSubkeyR(20),
-		dw = CAMELLIA_RL8(dw);/* round 15 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(20) = CamelliaSubkeyL(20) ^ dw,
 		CamelliaSubkeyL(20) = dw;
+	/* round 16 */
 	dw = CamelliaSubkeyL(21) ^ CamelliaSubkeyR(21),
-		dw = CAMELLIA_RL8(dw);/* round 16 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(21) = CamelliaSubkeyL(21) ^ dw,
 		CamelliaSubkeyL(21) = dw;
+	/* round 17 */
 	dw = CamelliaSubkeyL(22) ^ CamelliaSubkeyR(22),
-		dw = CAMELLIA_RL8(dw);/* round 17 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(22) = CamelliaSubkeyL(22) ^ dw,
 		CamelliaSubkeyL(22) = dw;
+	/* round 18 */
 	dw = CamelliaSubkeyL(23) ^ CamelliaSubkeyR(23),
-		dw = CAMELLIA_RL8(dw);/* round 18 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(23) = CamelliaSubkeyL(23) ^ dw,
 		CamelliaSubkeyL(23) = dw;
+	/* round 19 */
 	dw = CamelliaSubkeyL(26) ^ CamelliaSubkeyR(26),
-		dw = CAMELLIA_RL8(dw);/* round 19 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(26) = CamelliaSubkeyL(26) ^ dw,
 		CamelliaSubkeyL(26) = dw;
+	/* round 20 */
 	dw = CamelliaSubkeyL(27) ^ CamelliaSubkeyR(27),
-		dw = CAMELLIA_RL8(dw);/* round 20 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(27) = CamelliaSubkeyL(27) ^ dw,
 		CamelliaSubkeyL(27) = dw;
+	/* round 21 */
 	dw = CamelliaSubkeyL(28) ^ CamelliaSubkeyR(28),
-		dw = CAMELLIA_RL8(dw);/* round 21 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(28) = CamelliaSubkeyL(28) ^ dw,
 		CamelliaSubkeyL(28) = dw;
+	/* round 22 */
 	dw = CamelliaSubkeyL(29) ^ CamelliaSubkeyR(29),
-		dw = CAMELLIA_RL8(dw);/* round 22 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(29) = CamelliaSubkeyL(29) ^ dw,
 		CamelliaSubkeyL(29) = dw;
+	/* round 23 */
 	dw = CamelliaSubkeyL(30) ^ CamelliaSubkeyR(30),
-		dw = CAMELLIA_RL8(dw);/* round 23 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(30) = CamelliaSubkeyL(30) ^ dw,
 		CamelliaSubkeyL(30) = dw;
+	/* round 24 */
 	dw = CamelliaSubkeyL(31) ^ CamelliaSubkeyR(31),
-		dw = CAMELLIA_RL8(dw);/* round 24 */
+		dw = CAMELLIA_RL8(dw);
 	CamelliaSubkeyR(31) = CamelliaSubkeyL(31) ^ dw,
 		CamelliaSubkeyL(31) = dw;
 

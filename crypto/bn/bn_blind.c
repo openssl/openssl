@@ -131,7 +131,7 @@ struct bn_blinding_st
 			  BN_MONT_CTX *m_ctx);
 	};
 
-BN_BLINDING *BN_BLINDING_new(const BIGNUM *A, const BIGNUM *Ai, /* const */ BIGNUM *mod)
+BN_BLINDING *BN_BLINDING_new(const BIGNUM *A, const BIGNUM *Ai, BIGNUM *mod)
 	{
 	BN_BLINDING *ret=NULL;
 
@@ -293,7 +293,7 @@ void BN_BLINDING_set_flags(BN_BLINDING *b, unsigned long flags)
 	}
 
 BN_BLINDING *BN_BLINDING_create_param(BN_BLINDING *b,
-	const BIGNUM *e, /* const */ BIGNUM *m, BN_CTX *ctx,
+	const BIGNUM *e, BIGNUM *m, BN_CTX *ctx,
 	int (*bn_mod_exp)(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 			  const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx),
 	BN_MONT_CTX *m_ctx)

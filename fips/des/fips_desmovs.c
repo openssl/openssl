@@ -90,8 +90,9 @@ int main(int argc, char *argv[])
 
 static int DESTest(EVP_CIPHER_CTX *ctx,
 	    char *amode, int akeysz, unsigned char *aKey, 
-	    unsigned char *iVec, 
-	    int dir,  /* 0 = decrypt, 1 = encrypt */
+	    unsigned char *iVec,
+	    /* 0 = decrypt, 1 = encrypt */
+	    int dir,
 	    unsigned char *out, unsigned char *in, int len)
     {
     const EVP_CIPHER *cipher = NULL;
@@ -544,8 +545,9 @@ static int proc_file(char *rqfile, char *rspfile)
 		else
 		    {
 		    assert(dir == 1);
-		    ret = DESTest(&ctx, amode, akeysz, aKey, iVec, 
-				  dir,  /* 0 = decrypt, 1 = encrypt */
+		    ret = DESTest(&ctx, amode, akeysz, aKey, iVec,
+				/* 0 = decrypt, 1 = encrypt */
+				  dir,
 				  ciphertext, plaintext, len);
 		    OutputValue("CIPHERTEXT",ciphertext,len,rfp,
 				!strcmp(amode,"CFB1"));
@@ -584,7 +586,8 @@ static int proc_file(char *rqfile, char *rspfile)
 		    {
 		    assert(dir == 0);
 		    ret = DESTest(&ctx, amode, akeysz, aKey, iVec, 
-				  dir,  /* 0 = decrypt, 1 = encrypt */
+				/* 0 = decrypt, 1 = encrypt */
+				  dir,  
 				  plaintext, ciphertext, len);
 		    OutputValue("PLAINTEXT",(unsigned char *)plaintext,len,rfp,
 				!strcmp(amode,"CFB1"));
