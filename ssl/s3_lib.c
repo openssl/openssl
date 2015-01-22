@@ -3034,9 +3034,8 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
                          j++) {
                         if ((s->session->tlsext_ellipticcurvelist[2 * j] ==
                              ec_search1)
-                            && (s->
-                                session->tlsext_ellipticcurvelist[2 * j +
-                                                                  1] ==
+                            && (s->session->tlsext_ellipticcurvelist[2 * j +
+                                                                     1] ==
                                 ec_search2)) {
                             ec_ok = 1;
                             break;
@@ -3089,9 +3088,8 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
                          j++) {
                         if ((s->session->tlsext_ellipticcurvelist[2 * j] ==
                              ec_search1)
-                            && (s->
-                                session->tlsext_ellipticcurvelist[2 * j +
-                                                                  1] ==
+                            && (s->session->tlsext_ellipticcurvelist[2 * j +
+                                                                     1] ==
                                 ec_search2)) {
                             ec_ok = 1;
                             break;

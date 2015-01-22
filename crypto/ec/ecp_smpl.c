@@ -1650,9 +1650,8 @@ int ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num,
 
     for (i = 1; i < num; i++) {
         if (!BN_is_zero(&points[i]->Z)) {
-            if (!group->
-                meth->field_mul(group, prod_Z[i], prod_Z[i - 1],
-                                &points[i]->Z, ctx))
+            if (!group->meth->field_mul(group, prod_Z[i], prod_Z[i - 1],
+                                        &points[i]->Z, ctx))
                 goto err;
         } else {
             if (!BN_copy(prod_Z[i], prod_Z[i - 1]))
