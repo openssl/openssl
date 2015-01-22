@@ -648,6 +648,7 @@ ___
 {{	# Optimized CBC decrypt procedure				#
 my $key_="r11";
 my ($x00,$x10,$x20,$x30,$x40,$x50,$x60,$x70)=map("r$_",(0,8,26..31));
+    $x00=0 if ($flavour =~ /osx/);
 my ($in0, $in1, $in2, $in3, $in4, $in5, $in6, $in7 )=map("v$_",(0..3,10..13));
 my ($out0,$out1,$out2,$out3,$out4,$out5,$out6,$out7)=map("v$_",(14..21));
 my $rndkey0="v23";	# v24-v25 rotating buffer for first found keys
@@ -1227,7 +1228,7 @@ Lcbc_dec8x_done:
 	addi		$sp,$sp,`$FRAME+21*16+6*$SIZE_T`
 	blr
 	.long		0
-	.byte		0,12,0x14,0,0x80,6,6,0
+	.byte		0,12,0x04,0,0x80,6,6,0
 	.long		0
 .size	.${prefix}_cbc_encrypt,.-.${prefix}_cbc_encrypt
 ___
@@ -1353,6 +1354,7 @@ ___
 {{	# Optimized CTR procedure					#
 my $key_="r11";
 my ($x00,$x10,$x20,$x30,$x40,$x50,$x60,$x70)=map("r$_",(0,8,26..31));
+    $x00=0 if ($flavour =~ /osx/);
 my ($in0, $in1, $in2, $in3, $in4, $in5, $in6, $in7 )=map("v$_",(0..3,10,12..14));
 my ($out0,$out1,$out2,$out3,$out4,$out5,$out6,$out7)=map("v$_",(15..22));
 my $rndkey0="v23";	# v24-v25 rotating buffer for first found keys
@@ -1879,7 +1881,7 @@ Lctr32_enc8x_done:
 	addi		$sp,$sp,`$FRAME+21*16+6*$SIZE_T`
 	blr
 	.long		0
-	.byte		0,12,0x14,0,0x80,6,6,0
+	.byte		0,12,0x04,0,0x80,6,6,0
 	.long		0
 .size	.${prefix}_ctr32_encrypt_blocks,.-.${prefix}_ctr32_encrypt_blocks
 ___
