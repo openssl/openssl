@@ -84,13 +84,14 @@ signed char *bn_compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
         return r;
     }
 
-    if (w <= 0 || w > 7) { /* 'signed char' can represent integers with absolute values less than 2^7 */
+    if (w <= 0 || w > 7) {      /* 'signed char' can represent integers with
+                                 * absolute values less than 2^7 */
         BNerr(BN_F_BN_COMPUTE_WNAF, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    bit = 1 << w; /* at most 128 */
-    next_bit = bit << 1; /* at most 256 */
-    mask = next_bit - 1; /* at most 255 */
+    bit = 1 << w;               /* at most 128 */
+    next_bit = bit << 1;        /* at most 256 */
+    mask = next_bit - 1;        /* at most 255 */
 
     if (BN_is_negative(scalar)) {
         sign = -1;
@@ -113,7 +114,9 @@ signed char *bn_compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
     }
     window_val = scalar->d[0] & mask;
     j = 0;
-    while ((window_val != 0) || (j + w + 1 < len)) { /* if j+w+1 >= len, window_val will not increase */
+    while ((window_val != 0) || (j + w + 1 < len)) { /* if j+w+1 >= len,
+                                                      * window_val will not
+                                                      * increase */
         int digit = 0;
 
         /* 0 <= window_val <= 2^(w+1) */
@@ -124,7 +127,7 @@ signed char *bn_compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
             if (window_val & bit) {
                 digit = window_val - next_bit; /* -2^w < digit < 0 */
 
-#if 1 /* modified wNAF */
+#if 1                           /* modified wNAF */
                 if (j + w + 1 >= len) {
                     /*
                      * Special case for generating modified wNAFs:
@@ -147,10 +150,12 @@ signed char *bn_compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
 
             window_val -= digit;
 
-            /* now window_val is 0 or 2^(w+1) in standard wNAF generation;
+            /*
+             * now window_val is 0 or 2^(w+1) in standard wNAF generation;
              * for modified window NAFs, it may also be 2^w
              */
-            if (window_val != 0 && window_val != next_bit && window_val != bit) {
+            if (window_val != 0 && window_val != next_bit
+                && window_val != bit) {
                 BNerr(BN_F_BN_COMPUTE_WNAF, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
@@ -203,7 +208,8 @@ void bn_set_all_zero(BIGNUM *a)
 {
     int i;
 
-    for (i = a->top; i < a->dmax; i++) a->d[i] = 0;
+    for (i = a->top; i < a->dmax; i++)
+        a->d[i] = 0;
 }
 
 int bn_copy_words(BN_ULONG *out, const BIGNUM *in, int size)
@@ -243,6 +249,3 @@ BIGNUM *bn_array_el(BIGNUM *base, int el)
 {
     return &base[el];
 }
-
-
-

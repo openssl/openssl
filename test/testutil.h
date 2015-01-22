@@ -57,7 +57,7 @@
  */
 
 #ifndef HEADER_TESTUTIL_H
-#define HEADER_TESTUTIL_H
+# define HEADER_TESTUTIL_H
 
 /*-
  * SETUP_TEST_FIXTURE and EXECUTE_TEST macros for test case functions.
@@ -84,42 +84,44 @@
  * Then test case functions can take the form:
  *
  * static int test_foobar_feature()
- * 	{
- * 	SETUP_FOOBAR_TEST_FIXTURE();
- *	[...set individual members of fixture...]
- * 	EXECUTE_FOOBAR_TEST();
- * 	}
+ *      {
+ *      SETUP_FOOBAR_TEST_FIXTURE();
+ *      [...set individual members of fixture...]
+ *      EXECUTE_FOOBAR_TEST();
+ *      }
  */
-#define SETUP_TEST_FIXTURE(TEST_FIXTURE_TYPE, set_up)\
-	TEST_FIXTURE_TYPE fixture = set_up(TEST_CASE_NAME);\
-	int result = 0
+# define SETUP_TEST_FIXTURE(TEST_FIXTURE_TYPE, set_up)\
+        TEST_FIXTURE_TYPE fixture = set_up(TEST_CASE_NAME);\
+        int result = 0
 
-#define EXECUTE_TEST(execute_func, tear_down)\
-	if (execute_func(fixture) != 0) result = 1;\
-	tear_down(fixture);\
-	return result
+# define EXECUTE_TEST(execute_func, tear_down)\
+        if (execute_func(fixture) != 0) result = 1;\
+        tear_down(fixture);\
+        return result
 
-/* TEST_CASE_NAME is defined as the name of the test case function where
+/*
+ * TEST_CASE_NAME is defined as the name of the test case function where
  * possible; otherwise we get by with the file name and line number.
  */
-#if __STDC_VERSION__ < 199901L
-#if defined(_MSC_VER)
-#define TEST_CASE_NAME __FUNCTION__
-#else
-#define testutil_stringify_helper(s) #s
-#define testutil_stringify(s) testutil_stringify_helper(s)
-#define TEST_CASE_NAME __FILE__ ":" testutil_stringify(__LINE__)
-#endif /* _MSC_VER */
-#else
-#define TEST_CASE_NAME __func__
-#endif /* __STDC_VERSION__ */
+# if __STDC_VERSION__ < 199901L
+#  if defined(_MSC_VER)
+#   define TEST_CASE_NAME __FUNCTION__
+#  else
+#   define testutil_stringify_helper(s) #s
+#   define testutil_stringify(s) testutil_stringify_helper(s)
+#   define TEST_CASE_NAME __FILE__ ":" testutil_stringify(__LINE__)
+#  endif                        /* _MSC_VER */
+# else
+#  define TEST_CASE_NAME __func__
+# endif                         /* __STDC_VERSION__ */
 
-/* In main(), call ADD_TEST to register each test case function, then call
+/*
+ * In main(), call ADD_TEST to register each test case function, then call
  * run_tests() to execute all tests and report the results. The result
  * returned from run_tests() should be used as the return value for main().
  */
-#define ADD_TEST(test_function) add_test(#test_function, test_function)
-void add_test(const char* test_case_name, int (*test_fn)());
-int run_tests(const char* test_prog_name);
+# define ADD_TEST(test_function) add_test(#test_function, test_function)
+void add_test(const char *test_case_name, int (*test_fn) ());
+int run_tests(const char *test_prog_name);
 
-#endif /* HEADER_TESTUTIL_H */
+#endif                          /* HEADER_TESTUTIL_H */

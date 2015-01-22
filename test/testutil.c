@@ -62,48 +62,45 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-/* Declares the structures needed to register each test case function.
+/*
+ * Declares the structures needed to register each test case function.
  */
-typedef struct test_info
-	{
-	const char* test_case_name;
-	int (*test_fn)();
-	} TEST_INFO;
+typedef struct test_info {
+    const char *test_case_name;
+    int (*test_fn) ();
+} TEST_INFO;
 
 static TEST_INFO all_tests[1024];
 static int num_tests = 0;
 
-void add_test(const char* test_case_name, int (*test_fn)())
-	{
-	assert(num_tests != (sizeof(all_tests) / sizeof(all_tests)[0]));
-	all_tests[num_tests].test_case_name = test_case_name;
-	all_tests[num_tests].test_fn = test_fn;
-	++num_tests;
-	}
+void add_test(const char *test_case_name, int (*test_fn) ())
+{
+    assert(num_tests != (sizeof(all_tests) / sizeof(all_tests)[0]));
+    all_tests[num_tests].test_case_name = test_case_name;
+    all_tests[num_tests].test_fn = test_fn;
+    ++num_tests;
+}
 
-int run_tests(const char* test_prog_name)
-	{
-	int num_failed = 0;
-	int i = 0;
+int run_tests(const char *test_prog_name)
+{
+    int num_failed = 0;
+    int i = 0;
 
-	printf("%s: %d test case%s\n", test_prog_name, num_tests,
-		num_tests == 1 ? "" : "s");
-	for (i = 0; i != num_tests; ++i)
-		{
-		if (all_tests[i].test_fn())
-			{
-			printf("** %s failed **\n--------\n",
-				all_tests[i].test_case_name);
-			++num_failed;
-			}
-		}
+    printf("%s: %d test case%s\n", test_prog_name, num_tests,
+           num_tests == 1 ? "" : "s");
+    for (i = 0; i != num_tests; ++i) {
+        if (all_tests[i].test_fn()) {
+            printf("** %s failed **\n--------\n",
+                   all_tests[i].test_case_name);
+            ++num_failed;
+        }
+    }
 
-	if (num_failed != 0)
-		{
-		printf("%s: %d test%s failed (out of %d)\n", test_prog_name,
-			num_failed, num_failed != 1 ? "s" : "", num_tests);
-		return EXIT_FAILURE;
-		}
-	printf("  All tests passed.\n");
-	return EXIT_SUCCESS;
-	}
+    if (num_failed != 0) {
+        printf("%s: %d test%s failed (out of %d)\n", test_prog_name,
+               num_failed, num_failed != 1 ? "s" : "", num_tests);
+        return EXIT_FAILURE;
+    }
+    printf("  All tests passed.\n");
+    return EXIT_SUCCESS;
+}

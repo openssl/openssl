@@ -1,6 +1,7 @@
 /* tasn_scn.c */
-/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
- * project 2010.
+/*
+ * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
+ * 2010.
  */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
@@ -10,7 +11,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -56,7 +57,6 @@
  *
  */
 
-
 #include <stddef.h>
 #include "cryptlib.h"
 #include <openssl/asn1.h>
@@ -67,49 +67,49 @@
 #include <openssl/x509v3.h>
 #include "asn1_locl.h"
 
-/* General ASN1 structure recursive scanner: iterate through all
- * fields passing details to a callback.
+/*
+ * General ASN1 structure recursive scanner: iterate through all fields
+ * passing details to a callback.
  */
 
-ASN1_SCTX *ASN1_SCTX_new(int (*scan_cb)(ASN1_SCTX *ctx))
-	{
-	ASN1_SCTX *ret;
-	ret = OPENSSL_malloc(sizeof(ASN1_SCTX));
-	if (ret == NULL)
-		{
-		ASN1err(ASN1_F_ASN1_SCTX_NEW, ERR_R_MALLOC_FAILURE);
-		return NULL;
-		}
-	ret->scan_cb = scan_cb;
-	return ret;
-	}
+ASN1_SCTX *ASN1_SCTX_new(int (*scan_cb) (ASN1_SCTX *ctx))
+{
+    ASN1_SCTX *ret;
+    ret = OPENSSL_malloc(sizeof(ASN1_SCTX));
+    if (ret == NULL) {
+        ASN1err(ASN1_F_ASN1_SCTX_NEW, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+    ret->scan_cb = scan_cb;
+    return ret;
+}
 
 void ASN1_SCTX_free(ASN1_SCTX *p)
-	{
-	OPENSSL_free(p);
-	}
+{
+    OPENSSL_free(p);
+}
 
 const ASN1_ITEM *ASN1_SCTX_get_item(ASN1_SCTX *p)
-	{
-	return p->it;
-	}
+{
+    return p->it;
+}
 
-const ASN1_TEMPLATE * ASN1_SCTX_get_template(ASN1_SCTX *p)
-	{
-	return p->tt;
-	}
+const ASN1_TEMPLATE *ASN1_SCTX_get_template(ASN1_SCTX *p)
+{
+    return p->tt;
+}
 
 unsigned long ASN1_SCTX_get_flags(ASN1_SCTX *p)
-	{
-	return p->flags;
-	}
+{
+    return p->flags;
+}
 
 void ASN1_SCTX_set_app_data(ASN1_SCTX *p, void *data)
-	{
-	p->app_data = data;
-	}
+{
+    p->app_data = data;
+}
 
 void *ASN1_SCTX_get_app_data(ASN1_SCTX *p)
-	{
-	return p->app_data;
-	}
+{
+    return p->app_data;
+}
