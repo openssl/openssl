@@ -160,9 +160,7 @@ int RAND_load_file(const char *file, long bytes)
          * because we will waste system entropy.
          */
         bytes = (bytes == -1) ? 2048 : bytes; /* ok, is 2048 enough? */
-# ifndef OPENSSL_NO_SETVBUF_IONBF
-        setvbuf(in, NULL, _IONBF, 0); /* don't do buffered reads */
-# endif                         /* ndef OPENSSL_NO_SETVBUF_IONBF */
+        setbuf(stdin, NULL); /* don't do buffered reads */
     }
 #endif
     for (;;) {

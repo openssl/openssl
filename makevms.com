@@ -493,14 +493,6 @@ $   GOTO CONFIG_LOG_LOOP2
 $ CONFIG_LOG_LOOP2_END:
 $!
 $ WRITE H_FILE ""
-$ WRITE H_FILE "/* 2011-02-23 SMS."
-$ WRITE H_FILE " * On VMS (V8.3), setvbuf() doesn't support a 64-bit"
-$ WRITE H_FILE " * ""in"" pointer, and the help says:"
-$ WRITE H_FILE " *       Please note that the previously documented"
-$ WRITE H_FILE " *       value _IONBF is not supported."
-$ WRITE H_FILE " * So, skip it on VMS."
-$ WRITE H_FILE " */"
-$ WRITE H_FILE "#define OPENSSL_NO_SETVBUF_IONBF"
 $ WRITE H_FILE "/* STCP support comes with TCPIP 5.7 ECO 2 "
 $ WRITE H_FILE " * enable on newer systems / 2012-02-24 arpadffy */"
 $ WRITE H_FILE "#define OPENSSL_NO_SCTP"
