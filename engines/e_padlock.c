@@ -517,42 +517,104 @@ static void * __fastcall                \
         REP_XCRYPT(code)                \
 }
 
-PADLOCK_XCRYPT_ASM(padlock_xcrypt_ecb, 0xc8)
-    PADLOCK_XCRYPT_ASM(padlock_xcrypt_cbc, 0xd0)
-    PADLOCK_XCRYPT_ASM(padlock_xcrypt_cfb, 0xe0)
-    PADLOCK_XCRYPT_ASM(padlock_xcrypt_ofb, 0xe8)
+PADLOCK_XCRYPT_ASM(padlock_xcrypt_ecb,0xc8)
+PADLOCK_XCRYPT_ASM(padlock_xcrypt_cbc,0xd0)
+PADLOCK_XCRYPT_ASM(padlock_xcrypt_cfb,0xe0)
+PADLOCK_XCRYPT_ASM(padlock_xcrypt_ofb,0xe8)
 
 static int __fastcall padlock_xstore(void *outp, unsigned int code)
 {
-_asm mov edi, ecx
-        _asm _emit 0x0f _asm _emit 0xa7 _asm _emit 0xc0}
-    static void __fastcall padlock_reload_key(void)
+    _asm    mov edi,ecx
+    _asm _emit 0x0f _asm _emit 0xa7 _asm _emit 0xc0
+}
+
+static void __fastcall padlock_reload_key(void)
 {
-_asm pushfd _asm popfd}
-    static void __fastcall padlock_verify_context(void *cdata)
+    _asm pushfd
+    _asm popfd
+}
+
+static void __fastcall padlock_verify_context(void *cdata)
 {
-    _asm {
-pushfd bt DWORD PTR[esp], 30 jnc skip cmp ecx,
-            padlock_saved_context je skip popfd sub esp,
-            4 skip:add esp, 4 mov padlock_saved_context,
-            ecx}} static int padlock_available(void)
+    _asm    {
+        pushfd
+        bt  DWORD PTR[esp],30
+        jnc skip
+        cmp ecx,padlock_saved_context
+        je  skip
+        popfd
+        sub esp,4
+    skip:   add esp,4
+        mov padlock_saved_context,ecx
+    }
+}
+
+static int
+padlock_available(void)
 {
-    _asm {
-pushfd pop eax mov ecx, eax xor eax,
-            1 << 21 push eax popfd pushfd pop eax xor eax, ecx bt eax,
-            21 jnc noluck mov eax, 0 cpuid xor eax, eax cmp ebx,
-            'tneC' jne noluck cmp edx, 'Hrua' jne noluck cmp ecx,
-            'slua' jne noluck mov eax, 0xC0000000 cpuid mov edx,
-            eax xor eax, eax cmp edx, 0xC0000001 jb noluck mov eax,
-            0xC0000001 cpuid xor eax, eax bt edx, 6 jnc skip_a bt edx,
-            7 jnc skip_a mov padlock_use_ace, 1 inc eax skip_a:bt edx,
-            2 jnc skip_r bt edx, 3 jnc skip_r mov padlock_use_rng,
-            1 inc eax skip_r:noluck:}} static void __fastcall
-padlock_bswapl(void *key)
+    _asm    {
+        pushfd
+        pop eax
+        mov ecx,eax
+        xor eax,1<<21
+        push    eax
+        popfd
+        pushfd
+        pop eax
+        xor eax,ecx
+        bt  eax,21
+        jnc noluck
+        mov eax,0
+        cpuid
+        xor eax,eax
+        cmp ebx,'tneC'
+        jne noluck
+        cmp edx,'Hrua'
+        jne noluck
+        cmp ecx,'slua'
+        jne noluck
+        mov eax,0xC0000000
+        cpuid
+        mov edx,eax
+        xor eax,eax
+        cmp edx,0xC0000001
+        jb  noluck
+        mov eax,0xC0000001
+        cpuid
+        xor eax,eax
+        bt  edx,6
+        jnc skip_a
+        bt  edx,7
+        jnc skip_a
+        mov padlock_use_ace,1
+        inc eax
+    skip_a: bt  edx,2
+        jnc skip_r
+        bt  edx,3
+        jnc skip_r
+        mov padlock_use_rng,1
+        inc eax
+    skip_r:
+    noluck:
+    }
+}
+
+static void __fastcall padlock_bswapl(void *key)
 {
-    _asm {
-pushfd cld mov esi, ecx mov edi, ecx mov ecx, 60 up:lodsd
-            bswap eax stosd loop up popfd}}
+    _asm    {
+        pushfd
+        cld
+        mov esi,ecx
+        mov edi,ecx
+        mov ecx,60
+    up: lodsd
+        bswap   eax
+        stosd
+        loop    up
+        popfd
+    }
+}
+
 /*
  * MS actually specifies status of Direction Flag and compiler even manages
  * to compile following as 'rep movsd' all by itself...
