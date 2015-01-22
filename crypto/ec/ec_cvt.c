@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -58,7 +58,7 @@
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
- * Portions of the attached software ("Contribution") are developed by 
+ * Portions of the attached software ("Contribution") are developed by
  * SUN MICROSYSTEMS, INC., and are contributed to the OpenSSL project.
  *
  * The Contribution is licensed pursuant to the OpenSSL open source
@@ -72,73 +72,70 @@
 #include <openssl/err.h>
 #include "ec_lcl.h"
 
+EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a,
+                                 const BIGNUM *b, BN_CTX *ctx)
+{
+    const EC_METHOD *meth;
+    EC_GROUP *ret;
 
-EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
-	{
-	const EC_METHOD *meth;
-	EC_GROUP *ret;
+    meth = EC_GFp_nist_method();
 
-	meth = EC_GFp_nist_method();
-	
-	ret = EC_GROUP_new(meth);
-	if (ret == NULL)
-		return NULL;
+    ret = EC_GROUP_new(meth);
+    if (ret == NULL)
+        return NULL;
 
-	if (!EC_GROUP_set_curve_GFp(ret, p, a, b, ctx))
-		{
-		unsigned long err;
-		  
-		err = ERR_peek_last_error();
+    if (!EC_GROUP_set_curve_GFp(ret, p, a, b, ctx)) {
+        unsigned long err;
 
-		if (!(ERR_GET_LIB(err) == ERR_LIB_EC &&
-			((ERR_GET_REASON(err) == EC_R_NOT_A_NIST_PRIME) ||
-			 (ERR_GET_REASON(err) == EC_R_NOT_A_SUPPORTED_NIST_PRIME))))
-			{
-			/* real error */
-			
-			EC_GROUP_clear_free(ret);
-			return NULL;
-			}
-			
-		
-		/* not an actual error, we just cannot use EC_GFp_nist_method */
+        err = ERR_peek_last_error();
 
-		ERR_clear_error();
+        if (!(ERR_GET_LIB(err) == ERR_LIB_EC &&
+              ((ERR_GET_REASON(err) == EC_R_NOT_A_NIST_PRIME) ||
+               (ERR_GET_REASON(err) == EC_R_NOT_A_SUPPORTED_NIST_PRIME)))) {
+            /* real error */
 
-		EC_GROUP_clear_free(ret);
-		meth = EC_GFp_mont_method();
+            EC_GROUP_clear_free(ret);
+            return NULL;
+        }
 
-		ret = EC_GROUP_new(meth);
-		if (ret == NULL)
-			return NULL;
+        /*
+         * not an actual error, we just cannot use EC_GFp_nist_method
+         */
 
-		if (!EC_GROUP_set_curve_GFp(ret, p, a, b, ctx))
-			{
-			EC_GROUP_clear_free(ret);
-			return NULL;
-			}
-		}
+        ERR_clear_error();
 
-	return ret;
-	}
+        EC_GROUP_clear_free(ret);
+        meth = EC_GFp_mont_method();
 
+        ret = EC_GROUP_new(meth);
+        if (ret == NULL)
+            return NULL;
 
-EC_GROUP *EC_GROUP_new_curve_GF2m(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
-	{
-	const EC_METHOD *meth;
-	EC_GROUP *ret;
-	
-	meth = EC_GF2m_simple_method();
-	
-	ret = EC_GROUP_new(meth);
-	if (ret == NULL)
-		return NULL;
+        if (!EC_GROUP_set_curve_GFp(ret, p, a, b, ctx)) {
+            EC_GROUP_clear_free(ret);
+            return NULL;
+        }
+    }
 
-	if (!EC_GROUP_set_curve_GF2m(ret, p, a, b, ctx))
-		{
-		EC_GROUP_clear_free(ret);
-		return NULL;
-		}
+    return ret;
+}
 
-	return ret;
-	}
+EC_GROUP *EC_GROUP_new_curve_GF2m(const BIGNUM *p, const BIGNUM *a,
+                                  const BIGNUM *b, BN_CTX *ctx)
+{
+    const EC_METHOD *meth;
+    EC_GROUP *ret;
+
+    meth = EC_GF2m_simple_method();
+
+    ret = EC_GROUP_new(meth);
+    if (ret == NULL)
+        return NULL;
+
+    if (!EC_GROUP_set_curve_GF2m(ret, p, a, b, ctx)) {
+        EC_GROUP_clear_free(ret);
+        return NULL;
+    }
+
+    return ret;
+}

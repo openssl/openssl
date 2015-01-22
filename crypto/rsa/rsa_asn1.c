@@ -1,6 +1,7 @@
 /* rsa_asn1.c */
-/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
- * project 2000.
+/*
+ * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
+ * 2000.
  */
 /* ====================================================================
  * Copyright (c) 2000-2005 The OpenSSL Project.  All rights reserved.
@@ -10,7 +11,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -64,36 +65,37 @@
 
 /* Override the default free and new methods */
 static int rsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-								void *exarg)
+                  void *exarg)
 {
-	if(operation == ASN1_OP_NEW_PRE) {
-		*pval = (ASN1_VALUE *)RSA_new();
-		if(*pval) return 2;
-		return 0;
-	} else if(operation == ASN1_OP_FREE_PRE) {
-		RSA_free((RSA *)*pval);
-		*pval = NULL;
-		return 2;
-	}
-	return 1;
+    if (operation == ASN1_OP_NEW_PRE) {
+        *pval = (ASN1_VALUE *)RSA_new();
+        if (*pval)
+            return 2;
+        return 0;
+    } else if (operation == ASN1_OP_FREE_PRE) {
+        RSA_free((RSA *)*pval);
+        *pval = NULL;
+        return 2;
+    }
+    return 1;
 }
 
 ASN1_SEQUENCE_cb(RSAPrivateKey, rsa_cb) = {
-	ASN1_SIMPLE(RSA, version, LONG),
-	ASN1_SIMPLE(RSA, n, BIGNUM),
-	ASN1_SIMPLE(RSA, e, BIGNUM),
-	ASN1_SIMPLE(RSA, d, BIGNUM),
-	ASN1_SIMPLE(RSA, p, BIGNUM),
-	ASN1_SIMPLE(RSA, q, BIGNUM),
-	ASN1_SIMPLE(RSA, dmp1, BIGNUM),
-	ASN1_SIMPLE(RSA, dmq1, BIGNUM),
-	ASN1_SIMPLE(RSA, iqmp, BIGNUM)
+        ASN1_SIMPLE(RSA, version, LONG),
+        ASN1_SIMPLE(RSA, n, BIGNUM),
+        ASN1_SIMPLE(RSA, e, BIGNUM),
+        ASN1_SIMPLE(RSA, d, BIGNUM),
+        ASN1_SIMPLE(RSA, p, BIGNUM),
+        ASN1_SIMPLE(RSA, q, BIGNUM),
+        ASN1_SIMPLE(RSA, dmp1, BIGNUM),
+        ASN1_SIMPLE(RSA, dmq1, BIGNUM),
+        ASN1_SIMPLE(RSA, iqmp, BIGNUM)
 } ASN1_SEQUENCE_END_cb(RSA, RSAPrivateKey)
 
 
 ASN1_SEQUENCE_cb(RSAPublicKey, rsa_cb) = {
-	ASN1_SIMPLE(RSA, n, BIGNUM),
-	ASN1_SIMPLE(RSA, e, BIGNUM),
+        ASN1_SIMPLE(RSA, n, BIGNUM),
+        ASN1_SIMPLE(RSA, e, BIGNUM),
 } ASN1_SEQUENCE_END_cb(RSA, RSAPublicKey)
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(RSA, RSAPrivateKey, RSAPrivateKey)
@@ -101,11 +103,11 @@ IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(RSA, RSAPrivateKey, RSAPrivateKey)
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(RSA, RSAPublicKey, RSAPublicKey)
 
 RSA *RSAPublicKey_dup(RSA *rsa)
-	{
-	return ASN1_item_dup(ASN1_ITEM_rptr(RSAPublicKey), rsa);
-	}
+{
+    return ASN1_item_dup(ASN1_ITEM_rptr(RSAPublicKey), rsa);
+}
 
 RSA *RSAPrivateKey_dup(RSA *rsa)
-	{
-	return ASN1_item_dup(ASN1_ITEM_rptr(RSAPrivateKey), rsa);
-	}
+{
+    return ASN1_item_dup(ASN1_ITEM_rptr(RSAPrivateKey), rsa);
+}

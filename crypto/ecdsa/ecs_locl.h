@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -57,39 +57,39 @@
  */
 
 #ifndef HEADER_ECS_LOCL_H
-#define HEADER_ECS_LOCL_H
+# define HEADER_ECS_LOCL_H
 
-#include <openssl/ecdsa.h>
+# include <openssl/ecdsa.h>
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
-struct ecdsa_method 
-	{
-	const char *name;
-	ECDSA_SIG *(*ecdsa_do_sign)(const unsigned char *dgst, int dgst_len, 
-			const BIGNUM *inv, const BIGNUM *rp, EC_KEY *eckey);
-	int (*ecdsa_sign_setup)(EC_KEY *eckey, BN_CTX *ctx, BIGNUM **kinv, 
-			BIGNUM **r);
-	int (*ecdsa_do_verify)(const unsigned char *dgst, int dgst_len, 
-			const ECDSA_SIG *sig, EC_KEY *eckey);
-#if 0
-	int (*init)(EC_KEY *eckey);
-	int (*finish)(EC_KEY *eckey);
-#endif
-	int flags;
-	char *app_data;
-	};
+struct ecdsa_method {
+    const char *name;
+    ECDSA_SIG *(*ecdsa_do_sign) (const unsigned char *dgst, int dgst_len,
+                                 const BIGNUM *inv, const BIGNUM *rp,
+                                 EC_KEY *eckey);
+    int (*ecdsa_sign_setup) (EC_KEY *eckey, BN_CTX *ctx, BIGNUM **kinv,
+                             BIGNUM **r);
+    int (*ecdsa_do_verify) (const unsigned char *dgst, int dgst_len,
+                            const ECDSA_SIG *sig, EC_KEY *eckey);
+# if 0
+    int (*init) (EC_KEY *eckey);
+    int (*finish) (EC_KEY *eckey);
+# endif
+    int flags;
+    char *app_data;
+};
 
 typedef struct ecdsa_data_st {
-	/* EC_KEY_METH_DATA part */
-	int (*init)(EC_KEY *);
-	/* method (ECDSA) specific part */
-	ENGINE	*engine;
-	int	flags;
-	const ECDSA_METHOD *meth;
-	CRYPTO_EX_DATA ex_data;
+    /* EC_KEY_METH_DATA part */
+    int (*init) (EC_KEY *);
+    /* method (ECDSA) specific part */
+    ENGINE *engine;
+    int flags;
+    const ECDSA_METHOD *meth;
+    CRYPTO_EX_DATA ex_data;
 } ECDSA_DATA;
 
 /** ecdsa_check
@@ -104,4 +104,4 @@ ECDSA_DATA *ecdsa_check(EC_KEY *eckey);
 }
 #endif
 
-#endif /* HEADER_ECS_LOCL_H */
+#endif                          /* HEADER_ECS_LOCL_H */

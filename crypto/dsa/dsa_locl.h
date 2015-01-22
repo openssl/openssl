@@ -6,7 +6,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -55,5 +55,6 @@
 #include <openssl/dsa.h>
 
 int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
-	const EVP_MD *evpmd, const unsigned char *seed_in, size_t seed_len,
-	int *counter_ret, unsigned long *h_ret, BN_GENCB *cb);
+                         const EVP_MD *evpmd, const unsigned char *seed_in,
+                         size_t seed_len, int *counter_ret,
+                         unsigned long *h_ret, BN_GENCB *cb);

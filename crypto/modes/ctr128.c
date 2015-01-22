@@ -6,7 +6,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -62,125 +62,136 @@ typedef unsigned int u32;
 typedef unsigned char u8;
 
 #define STRICT_ALIGNMENT
-#if defined(__i386)	|| defined(__i386__)	|| \
-    defined(__x86_64)	|| defined(__x86_64__)	|| \
-    defined(_M_IX86)	|| defined(_M_AMD64)	|| defined(_M_X64) || \
-    defined(__s390__)	|| defined(__s390x__)
-#  undef STRICT_ALIGNMENT
+#if defined(__i386)     || defined(__i386__)    || \
+    defined(__x86_64)   || defined(__x86_64__)  || \
+    defined(_M_IX86)    || defined(_M_AMD64)    || defined(_M_X64) || \
+    defined(__s390__)   || defined(__s390x__)
+# undef STRICT_ALIGNMENT
 #endif
 
-/* NOTE: the IV/counter CTR mode is big-endian.  The code itself
- * is endian-neutral. */
+/*
+ * NOTE: the IV/counter CTR mode is big-endian.  The code itself is
+ * endian-neutral.
+ */
 
 /* increment counter (128-bit int) by 1 */
-static void ctr128_inc(unsigned char *counter) {
-	u32 n=16;
-	u8  c;
+static void ctr128_inc(unsigned char *counter)
+{
+    u32 n = 16;
+    u8 c;
 
-	do {
-		--n;
-		c = counter[n];
-		++c;
-		counter[n] = c;
-		if (c) return;
-	} while (n);
+    do {
+        --n;
+        c = counter[n];
+        ++c;
+        counter[n] = c;
+        if (c)
+            return;
+    } while (n);
 }
 
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
-static void ctr128_inc_aligned(unsigned char *counter) {
-	size_t *data,c,n;
-	const union { long one; char little; } is_endian = {1};
+static void ctr128_inc_aligned(unsigned char *counter)
+{
+    size_t *data, c, n;
+    const union {
+        long one;
+        char little;
+    } is_endian = {
+        1
+    };
 
-	if (is_endian.little) {
-		ctr128_inc(counter);
-		return;
-	}
+    if (is_endian.little) {
+        ctr128_inc(counter);
+        return;
+    }
 
-	data = (size_t *)counter;
-	n = 16/sizeof(size_t);
-	do {
-		--n;
-		c = data[n];
-		++c;
-		data[n] = c;
-		if (c) return;
-	} while (n);
+    data = (size_t *)counter;
+    n = 16 / sizeof(size_t);
+    do {
+        --n;
+        c = data[n];
+        ++c;
+        data[n] = c;
+        if (c)
+            return;
+    } while (n);
 }
 #endif
 
-/* The input encrypted as though 128bit counter mode is being
- * used.  The extra state information to record how much of the
- * 128bit block we have used is contained in *num, and the
- * encrypted counter is kept in ecount_buf.  Both *num and
- * ecount_buf must be initialised with zeros before the first
- * call to CRYPTO_ctr128_encrypt().
- *
- * This algorithm assumes that the counter is in the x lower bits
- * of the IV (ivec), and that the application has full control over
- * overflow and the rest of the IV.  This implementation takes NO
- * responsability for checking that the counter doesn't overflow
- * into the rest of the IV when incremented.
+/*
+ * The input encrypted as though 128bit counter mode is being used.  The
+ * extra state information to record how much of the 128bit block we have
+ * used is contained in *num, and the encrypted counter is kept in
+ * ecount_buf.  Both *num and ecount_buf must be initialised with zeros
+ * before the first call to CRYPTO_ctr128_encrypt(). This algorithm assumes
+ * that the counter is in the x lower bits of the IV (ivec), and that the
+ * application has full control over overflow and the rest of the IV.  This
+ * implementation takes NO responsability for checking that the counter
+ * doesn't overflow into the rest of the IV when incremented.
  */
 void CRYPTO_ctr128_encrypt(const unsigned char *in, unsigned char *out,
-			size_t len, const void *key,
-			unsigned char ivec[16], unsigned char ecount_buf[16],
-			unsigned int *num, block128_f block)
+                           size_t len, const void *key,
+                           unsigned char ivec[16],
+                           unsigned char ecount_buf[16], unsigned int *num,
+                           block128_f block)
 {
-	unsigned int n;
-	size_t l=0;
+    unsigned int n;
+    size_t l = 0;
 
-	assert(in && out && key && ecount_buf && num);
-	assert(*num < 16);
+    assert(in && out && key && ecount_buf && num);
+    assert(*num < 16);
 
-	n = *num;
+    n = *num;
 
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
-	if (16%sizeof(size_t) == 0) { /* always true actually */
-	    do {
-		while (n && len) {
-			*(out++) = *(in++) ^ ecount_buf[n];
-			--len;
-			n = (n+1) % 16;
-		}
+    if (16 % sizeof(size_t) == 0) { /* always true actually */
+        do {
+            while (n && len) {
+                *(out++) = *(in++) ^ ecount_buf[n];
+                --len;
+                n = (n + 1) % 16;
+            }
 
-#if defined(STRICT_ALIGNMENT)
-		if (((size_t)in|(size_t)out|(size_t)ivec)%sizeof(size_t) != 0)
-			break;
+# if defined(STRICT_ALIGNMENT)
+            if (((size_t)in | (size_t)out | (size_t)ivec) % sizeof(size_t) !=
+                0)
+                break;
+# endif
+            while (len >= 16) {
+                (*block) (ivec, ecount_buf, key);
+                ctr128_inc_aligned(ivec);
+                for (; n < 16; n += sizeof(size_t))
+                    *(size_t *)(out + n) =
+                        *(size_t *)(in + n) ^ *(size_t *)(ecount_buf + n);
+                len -= 16;
+                out += 16;
+                in += 16;
+                n = 0;
+            }
+            if (len) {
+                (*block) (ivec, ecount_buf, key);
+                ctr128_inc_aligned(ivec);
+                while (len--) {
+                    out[n] = in[n] ^ ecount_buf[n];
+                    ++n;
+                }
+            }
+            *num = n;
+            return;
+        } while (0);
+    }
+    /* the rest would be commonly eliminated by x86* compiler */
 #endif
-		while (len>=16) {
-			(*block)(ivec, ecount_buf, key);
-			ctr128_inc_aligned(ivec);
-			for (; n<16; n+=sizeof(size_t))
-				*(size_t *)(out+n) =
-				*(size_t *)(in+n) ^ *(size_t *)(ecount_buf+n);
-			len -= 16;
-			out += 16;
-			in  += 16;
-			n = 0;
-		}
-		if (len) {
-			(*block)(ivec, ecount_buf, key);
- 			ctr128_inc_aligned(ivec);
-			while (len--) {
-				out[n] = in[n] ^ ecount_buf[n];
-				++n;
-			}
-		}
-		*num = n;
-		return;
-	    } while(0);
-	}
-	/* the rest would be commonly eliminated by x86* compiler */
-#endif
-	while (l<len) {
-		if (n==0) {
-			(*block)(ivec, ecount_buf, key);
- 			ctr128_inc(ivec);
-		}
-		out[l] = in[l] ^ ecount_buf[n];
-		++l;
-		n = (n+1) % 16;
-	}
+    while (l < len) {
+        if (n == 0) {
+            (*block) (ivec, ecount_buf, key);
+            ctr128_inc(ivec);
+        }
+        out[l] = in[l] ^ ecount_buf[n];
+        ++l;
+        n = (n + 1) % 16;
+    }
 
-	*num=n;
+    *num = n;
 }
