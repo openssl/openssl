@@ -190,6 +190,7 @@ RSA *PEM_read_RSAPrivateKey(FILE *fp, RSA **rsa, pem_password_cb *cb, void *u)
 IMPLEMENT_PEM_write_cb_const(RSAPrivateKey, RSA, PEM_STRING_RSA,
                              RSAPrivateKey)
 
+
 IMPLEMENT_PEM_rw_const(RSAPublicKey, RSA, PEM_STRING_RSA_PUBLIC,
                        RSAPublicKey) IMPLEMENT_PEM_rw(RSA_PUBKEY, RSA,
                                                       PEM_STRING_PUBLIC,
