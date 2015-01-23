@@ -722,7 +722,7 @@ const void *OBJ_bsearch_ex_(const void *key, const void *base_, int num,
 
 int OBJ_create_objects(BIO *in)
 {
-    MS_STATIC char buf[512];
+    char buf[512];
     int i, num = 0;
     char *o, *s, *l = NULL;
 

@@ -682,7 +682,7 @@ $multilib     =
 
 *** VC-WIN32
 $cc           = cl
-$cflags       = -W3 -Gs0 -GF -Gy -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -D_CRT_SECURE_NO_DEPRECATE
+$cflags       = -W3 -Gs0 -GF -Gy -nologo -DOPENSSL_SYS_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -D_CRT_SECURE_NO_DEPRECATE
 $unistd       = 
 $thread_cflag = 
 $sys_id       = WIN32
@@ -716,7 +716,7 @@ $multilib     =
 
 *** VC-WIN64A
 $cc           = cl
-$cflags       = -W3 -Gs0 -Gy -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE
+$cflags       = -W3 -Gs0 -Gy -nologo -DOPENSSL_SYS_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE
 $unistd       = 
 $thread_cflag = 
 $sys_id       = WIN64A
@@ -750,7 +750,7 @@ $multilib     =
 
 *** VC-WIN64I
 $cc           = cl
-$cflags       = -W3 -Gs0 -Gy -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE
+$cflags       = -W3 -Gs0 -Gy -nologo -DOPENSSL_SYS_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE
 $unistd       = 
 $thread_cflag = 
 $sys_id       = WIN64I
@@ -1430,7 +1430,7 @@ $multilib     =
 
 *** debug-VC-WIN32
 $cc           = cl
-$cflags       = -W3 -Gs0 -GF -Gy -Zi -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -D_CRT_SECURE_NO_DEPRECATE
+$cflags       = -W3 -Gs0 -GF -Gy -Zi -nologo -DOPENSSL_SYS_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -D_CRT_SECURE_NO_DEPRECATE
 $unistd       = 
 $thread_cflag = 
 $sys_id       = WIN32
@@ -1464,7 +1464,7 @@ $multilib     =
 
 *** debug-VC-WIN64A
 $cc           = cl
-$cflags       = -W3 -Gs0 -Gy -Zi -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE
+$cflags       = -W3 -Gs0 -Gy -Zi -nologo -DOPENSSL_SYS_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE
 $unistd       = 
 $thread_cflag = 
 $sys_id       = WIN64A
@@ -1498,7 +1498,7 @@ $multilib     =
 
 *** debug-VC-WIN64I
 $cc           = cl
-$cflags       = -W3 -Gs0 -Gy -Zi -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE
+$cflags       = -W3 -Gs0 -Gy -Zi -nologo -DOPENSSL_SYS_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE
 $unistd       = 
 $thread_cflag = 
 $sys_id       = WIN64I
@@ -2858,7 +2858,7 @@ $multilib     =
 
 *** debug-vos-gcc
 $cc           = gcc
-$cflags       = -O0 -g -Wall -DOPENSSL_SYSNAME_VOS -D_POSIX_C_SOURCE=200112L -D_BSD -D_VOS_EXTENDED_NAMES -DB_ENDIAN -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG
+$cflags       = -O0 -g -Wall -DOPENSSL_SYS_VOS -D_POSIX_C_SOURCE=200112L -D_BSD -D_VOS_EXTENDED_NAMES -DB_ENDIAN -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = VOS
@@ -4898,7 +4898,7 @@ $multilib     =
 
 *** netware-clib-bsdsock-gcc
 $cc           = i586-netware-gcc
-$cflags       = -nostdinc -I/ndk/nwsdk/include/nlm -DNETWARE_BSDSOCK -DNETDB_USE_INTERNET -DL_ENDIAN -DNETWARE_CLIB -DOPENSSL_SYSNAME_NETWARE -O2 -Wall
+$cflags       = -nostdinc -I/ndk/nwsdk/include/nlm -DNETWARE_BSDSOCK -DNETDB_USE_INTERNET -DL_ENDIAN -DNETWARE_CLIB -DOPENSSL_SYS_NETWARE -O2 -Wall
 $unistd       = 
 $thread_cflag = 
 $sys_id       = 
@@ -4932,7 +4932,7 @@ $multilib     =
 
 *** netware-clib-gcc
 $cc           = i586-netware-gcc
-$cflags       = -nostdinc -I/ndk/nwsdk/include/nlm -I/ndk/ws295sdk/include -DL_ENDIAN -DNETWARE_CLIB -DOPENSSL_SYSNAME_NETWARE -O2 -Wall
+$cflags       = -nostdinc -I/ndk/nwsdk/include/nlm -I/ndk/ws295sdk/include -DL_ENDIAN -DNETWARE_CLIB -DOPENSSL_SYS_NETWARE -O2 -Wall
 $unistd       = 
 $thread_cflag = 
 $sys_id       = 
@@ -5034,7 +5034,7 @@ $multilib     =
 
 *** netware-libc-bsdsock-gcc
 $cc           = i586-netware-gcc
-$cflags       = -nostdinc -I/ndk/libc/include -DNETWARE_BSDSOCK -DL_ENDIAN -DNETWARE_LIBC -DOPENSSL_SYSNAME_NETWARE -DTERMIO -O2 -Wall
+$cflags       = -nostdinc -I/ndk/libc/include -DNETWARE_BSDSOCK -DL_ENDIAN -DNETWARE_LIBC -DOPENSSL_SYS_NETWARE -DTERMIO -O2 -Wall
 $unistd       = 
 $thread_cflag = 
 $sys_id       = 
@@ -5068,7 +5068,7 @@ $multilib     =
 
 *** netware-libc-gcc
 $cc           = i586-netware-gcc
-$cflags       = -nostdinc -I/ndk/libc/include -I/ndk/libc/include/winsock -DL_ENDIAN -DNETWARE_LIBC -DOPENSSL_SYSNAME_NETWARE -DTERMIO -O2 -Wall
+$cflags       = -nostdinc -I/ndk/libc/include -I/ndk/libc/include/winsock -DL_ENDIAN -DNETWARE_LIBC -DOPENSSL_SYS_NETWARE -DTERMIO -O2 -Wall
 $unistd       = 
 $thread_cflag = 
 $sys_id       = 
@@ -6088,7 +6088,7 @@ $multilib     =
 
 *** vos-gcc
 $cc           = gcc
-$cflags       = -O3 -Wall -DOPENSSL_SYSNAME_VOS -D_POSIX_C_SOURCE=200112L -D_BSD -D_VOS_EXTENDED_NAMES -DB_ENDIAN
+$cflags       = -O3 -Wall -DOPENSSL_SYS_VOS -D_POSIX_C_SOURCE=200112L -D_BSD -D_VOS_EXTENDED_NAMES -DB_ENDIAN
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = VOS

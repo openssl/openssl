@@ -67,7 +67,7 @@ long BIO_debug_callback(BIO *bio, int cmd, const char *argp,
                         int argi, long argl, long ret)
 {
     BIO *b;
-    MS_STATIC char buf[256];
+    char buf[256];
     char *p;
     long r = 1;
     size_t p_maxlen;

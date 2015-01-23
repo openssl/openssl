@@ -212,8 +212,8 @@ my %table=(
 "cc",		"cc:-O::(unknown)::::::",
 
 ####VOS Configurations
-"vos-gcc","gcc:-O3 -Wall -DOPENSSL_SYSNAME_VOS -D_POSIX_C_SOURCE=200112L -D_BSD -D_VOS_EXTENDED_NAMES -DB_ENDIAN::(unknown):VOS:-Wl,-map:BN_LLONG:${no_asm}:::::.so:",
-"debug-vos-gcc","gcc:-O0 -g -Wall -DOPENSSL_SYSNAME_VOS -D_POSIX_C_SOURCE=200112L -D_BSD -D_VOS_EXTENDED_NAMES -DB_ENDIAN -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG::(unknown):VOS:-Wl,-map:BN_LLONG:${no_asm}:::::.so:",
+"vos-gcc","gcc:-O3 -Wall -DOPENSSL_SYS_VOS -D_POSIX_C_SOURCE=200112L -D_BSD -D_VOS_EXTENDED_NAMES -DB_ENDIAN::(unknown):VOS:-Wl,-map:BN_LLONG:${no_asm}:::::.so:",
+"debug-vos-gcc","gcc:-O0 -g -Wall -DOPENSSL_SYS_VOS -D_POSIX_C_SOURCE=200112L -D_BSD -D_VOS_EXTENDED_NAMES -DB_ENDIAN -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG::(unknown):VOS:-Wl,-map:BN_LLONG:${no_asm}:::::.so:",
 
 #### Solaris x86 with GNU C setups
 # -DOPENSSL_NO_INLINE_ASM switches off inline assembler. We have to do it
@@ -519,15 +519,15 @@ my %table=(
 # Visual C targets
 #
 # Win64 targets, WIN64I denotes IA-64 and WIN64A - AMD64
-"VC-WIN64I","cl:-W3 -Gs0 -Gy -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE:::WIN64I::SIXTY_FOUR_BIT RC4_CHUNK_LL DES_INT EXPORT_VAR_AS_FN:ia64cpuid.o:ia64.o ia64-mont.o:::aes_core.o aes_cbc.o aes-ia64.o::md5-ia64.o:sha1-ia64.o sha256-ia64.o sha512-ia64.o:::::::ghash-ia64.o::ias:win32",
-"VC-WIN64A","cl:-W3 -Gs0 -Gy -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE:::WIN64A::SIXTY_FOUR_BIT RC4_CHUNK_LL DES_INT EXPORT_VAR_AS_FN:".eval{my $asm=$x86_64_asm;$asm=~s/x86_64-gcc\.o/bn_asm.o/;$asm}.":auto:win32",
-"debug-VC-WIN64I","cl:-W3 -Gs0 -Gy -Zi -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE:::WIN64I::SIXTY_FOUR_BIT RC4_CHUNK_LL DES_INT EXPORT_VAR_AS_FN:ia64cpuid.o:ia64.o:::aes_core.o aes_cbc.o aes-ia64.o::md5-ia64.o:sha1-ia64.o sha256-ia64.o sha512-ia64.o:::::::ghash-ia64.o::ias:win32",
-"debug-VC-WIN64A","cl:-W3 -Gs0 -Gy -Zi -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE:::WIN64A::SIXTY_FOUR_BIT RC4_CHUNK_LL DES_INT EXPORT_VAR_AS_FN:".eval{my $asm=$x86_64_asm;$asm=~s/x86_64-gcc\.o/bn_asm.o/;$asm}.":auto:win32",
+"VC-WIN64I","cl:-W3 -Gs0 -Gy -nologo -DOPENSSL_SYS_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE:::WIN64I::SIXTY_FOUR_BIT RC4_CHUNK_LL DES_INT EXPORT_VAR_AS_FN:ia64cpuid.o:ia64.o ia64-mont.o:::aes_core.o aes_cbc.o aes-ia64.o::md5-ia64.o:sha1-ia64.o sha256-ia64.o sha512-ia64.o:::::::ghash-ia64.o::ias:win32",
+"VC-WIN64A","cl:-W3 -Gs0 -Gy -nologo -DOPENSSL_SYS_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE:::WIN64A::SIXTY_FOUR_BIT RC4_CHUNK_LL DES_INT EXPORT_VAR_AS_FN:".eval{my $asm=$x86_64_asm;$asm=~s/x86_64-gcc\.o/bn_asm.o/;$asm}.":auto:win32",
+"debug-VC-WIN64I","cl:-W3 -Gs0 -Gy -Zi -nologo -DOPENSSL_SYS_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE:::WIN64I::SIXTY_FOUR_BIT RC4_CHUNK_LL DES_INT EXPORT_VAR_AS_FN:ia64cpuid.o:ia64.o:::aes_core.o aes_cbc.o aes-ia64.o::md5-ia64.o:sha1-ia64.o sha256-ia64.o sha512-ia64.o:::::::ghash-ia64.o::ias:win32",
+"debug-VC-WIN64A","cl:-W3 -Gs0 -Gy -Zi -nologo -DOPENSSL_SYS_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE:::WIN64A::SIXTY_FOUR_BIT RC4_CHUNK_LL DES_INT EXPORT_VAR_AS_FN:".eval{my $asm=$x86_64_asm;$asm=~s/x86_64-gcc\.o/bn_asm.o/;$asm}.":auto:win32",
 # x86 Win32 target defaults to ANSI API, if you want UNICODE, complement
 # 'perl Configure VC-WIN32' with '-DUNICODE -D_UNICODE'
-"VC-WIN32","cl:-W3 -Gs0 -GF -Gy -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -D_CRT_SECURE_NO_DEPRECATE:::WIN32::BN_LLONG RC4_INDEX EXPORT_VAR_AS_FN ${x86_gcc_opts}:${x86_asm}:win32n:win32",
+"VC-WIN32","cl:-W3 -Gs0 -GF -Gy -nologo -DOPENSSL_SYS_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -D_CRT_SECURE_NO_DEPRECATE:::WIN32::BN_LLONG RC4_INDEX EXPORT_VAR_AS_FN ${x86_gcc_opts}:${x86_asm}:win32n:win32",
 # Unified CE target
-"debug-VC-WIN32","cl:-W3 -Gs0 -GF -Gy -Zi -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -D_CRT_SECURE_NO_DEPRECATE:::WIN32::BN_LLONG RC4_INDEX EXPORT_VAR_AS_FN ${x86_gcc_opts}:${x86_asm}:win32n:win32",
+"debug-VC-WIN32","cl:-W3 -Gs0 -GF -Gy -Zi -nologo -DOPENSSL_SYS_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -D_CRT_SECURE_NO_DEPRECATE:::WIN32::BN_LLONG RC4_INDEX EXPORT_VAR_AS_FN ${x86_gcc_opts}:${x86_asm}:win32n:win32",
 "VC-CE","cl::::WINCE::BN_LLONG RC4_INDEX EXPORT_VAR_AS_FN ${x86_gcc_opts}:${no_asm}:win32",
 
 # Borland C++ 4.5
@@ -558,13 +558,13 @@ my %table=(
 # netware-clib => legacy CLib c-runtime support
 "netware-clib", "mwccnlm::::::${x86_gcc_opts}::",
 "netware-clib-bsdsock", "mwccnlm::::::${x86_gcc_opts}::",
-"netware-clib-gcc", "i586-netware-gcc:-nostdinc -I/ndk/nwsdk/include/nlm -I/ndk/ws295sdk/include -DL_ENDIAN -DNETWARE_CLIB -DOPENSSL_SYSNAME_NETWARE -O2 -Wall:::::${x86_gcc_opts}::",
-"netware-clib-bsdsock-gcc", "i586-netware-gcc:-nostdinc -I/ndk/nwsdk/include/nlm -DNETWARE_BSDSOCK -DNETDB_USE_INTERNET -DL_ENDIAN -DNETWARE_CLIB -DOPENSSL_SYSNAME_NETWARE -O2 -Wall:::::${x86_gcc_opts}::",
+"netware-clib-gcc", "i586-netware-gcc:-nostdinc -I/ndk/nwsdk/include/nlm -I/ndk/ws295sdk/include -DL_ENDIAN -DNETWARE_CLIB -DOPENSSL_SYS_NETWARE -O2 -Wall:::::${x86_gcc_opts}::",
+"netware-clib-bsdsock-gcc", "i586-netware-gcc:-nostdinc -I/ndk/nwsdk/include/nlm -DNETWARE_BSDSOCK -DNETDB_USE_INTERNET -DL_ENDIAN -DNETWARE_CLIB -DOPENSSL_SYS_NETWARE -O2 -Wall:::::${x86_gcc_opts}::",
 # netware-libc => LibC/NKS support
 "netware-libc", "mwccnlm::::::BN_LLONG ${x86_gcc_opts}::",
 "netware-libc-bsdsock", "mwccnlm::::::BN_LLONG ${x86_gcc_opts}::",
-"netware-libc-gcc", "i586-netware-gcc:-nostdinc -I/ndk/libc/include -I/ndk/libc/include/winsock -DL_ENDIAN -DNETWARE_LIBC -DOPENSSL_SYSNAME_NETWARE -DTERMIO -O2 -Wall:::::BN_LLONG ${x86_gcc_opts}::",
-"netware-libc-bsdsock-gcc", "i586-netware-gcc:-nostdinc -I/ndk/libc/include -DNETWARE_BSDSOCK -DL_ENDIAN -DNETWARE_LIBC -DOPENSSL_SYSNAME_NETWARE -DTERMIO -O2 -Wall:::::BN_LLONG ${x86_gcc_opts}::",
+"netware-libc-gcc", "i586-netware-gcc:-nostdinc -I/ndk/libc/include -I/ndk/libc/include/winsock -DL_ENDIAN -DNETWARE_LIBC -DOPENSSL_SYS_NETWARE -DTERMIO -O2 -Wall:::::BN_LLONG ${x86_gcc_opts}::",
+"netware-libc-bsdsock-gcc", "i586-netware-gcc:-nostdinc -I/ndk/libc/include -DNETWARE_BSDSOCK -DL_ENDIAN -DNETWARE_LIBC -DOPENSSL_SYS_NETWARE -DTERMIO -O2 -Wall:::::BN_LLONG ${x86_gcc_opts}::",
 
 # DJGPP
 "DJGPP", "gcc:-I/dev/env/WATT_ROOT/inc -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -Wall:::MSDOS:-L/dev/env/WATT_ROOT/lib -lwatt:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_asm}:a.out:",
@@ -1482,8 +1482,8 @@ if ($target =~ /^BSD\-/)
 
 if ($sys_id ne "")
 	{
-	#$cflags="-DOPENSSL_SYSNAME_$sys_id $cflags";
-	$openssl_sys_defines="#define OPENSSL_SYSNAME_$sys_id\n";
+	#$cflags="-DOPENSSL_SYS_$sys_id $cflags";
+	$openssl_sys_defines="#define OPENSSL_SYS_$sys_id\n";
 	}
 
 if ($ranlib eq "")

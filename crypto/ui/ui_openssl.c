@@ -124,7 +124,7 @@
  * sigaction and fileno included. -pedantic would be more appropriate for the
  * intended purposes, but we can't prevent users from adding -ansi.
  */
-#if defined(OPENSSL_SYSNAME_VXWORKS)
+#if defined(OPENSSL_SYS_VXWORKS)
 # include <sys/types.h>
 #endif
 

@@ -121,7 +121,7 @@
 
 #include "e_os.h"
 
-#if !(defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYSNAME_DSPBIOS))
+#if !(defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_DSPBIOS))
 # include <sys/time.h>
 #endif
 #if defined(OPENSSL_SYS_VXWORKS)
@@ -383,7 +383,7 @@ static int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo)
 #elif defined(OPENSSL_SYS_VXWORKS)
     struct timespec tv;
     clock_gettime(CLOCK_REALTIME, &ts);
-#elif defined(OPENSSL_SYSNAME_DSPBIOS)
+#elif defined(OPENSSL_SYS_DSPBIOS)
     unsigned long long tv, OPENSSL_rdtsc();
     tv = OPENSSL_rdtsc();
 #else

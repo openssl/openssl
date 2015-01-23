@@ -67,8 +67,8 @@
 # define	STPTR	stx
 # define	ARG0	128
 # define	ARGSZ	8
-# ifndef OPENSSL_SYSNAME_ULTRASPARC
-# define OPENSSL_SYSNAME_ULTRASPARC
+# ifndef OPENSSL_SYS_ULTRASPARC
+# define OPENSSL_SYS_ULTRASPARC
 # endif
 #else
 # define	FRAME	-96
@@ -429,7 +429,7 @@ $4:
 	xor	$2, local1, $2            ! 1 finished
 
 	xor	$2, local2, $2            ! 3 finished
-#ifdef OPENSSL_SYSNAME_ULTRASPARC
+#ifdef OPENSSL_SYS_ULTRASPARC
 	bne,pt	%icc, $4
 #else
 	bne	$4
@@ -791,7 +791,7 @@ define(load_little_endian, {
 
 	! first in memory to rightmost in register
 
-#ifdef OPENSSL_SYSNAME_ULTRASPARC
+#ifdef OPENSSL_SYS_ULTRASPARC
 	andcc	$1, 3, global0
 	bne,pn	%icc, $5
 	nop
@@ -854,7 +854,7 @@ define(load_little_endian_inc, {
 
 	! first in memory to rightmost in register
 
-#ifdef OPENSSL_SYSNAME_ULTRASPARC
+#ifdef OPENSSL_SYS_ULTRASPARC
 	andcc	$1, 3, global0
 	bne,pn	%icc, $5
 	nop
@@ -989,7 +989,7 @@ define(store_little_endian, {
 
 	! rightmost in register to first in memory
 
-#ifdef OPENSSL_SYSNAME_ULTRASPARC
+#ifdef OPENSSL_SYS_ULTRASPARC
 	andcc	$1, 3, global0
 	bne,pn	%icc, $5
 	nop
@@ -1195,7 +1195,7 @@ DES_encrypt1:
 	ld	[in0], in5                ! left
 	cmp	in2, 0                    ! enc
 
-#ifdef OPENSSL_SYSNAME_ULTRASPARC
+#ifdef OPENSSL_SYS_ULTRASPARC
 	be,pn	%icc, .encrypt.dec        ! enc/dec
 #else
 	be	.encrypt.dec
@@ -1287,7 +1287,7 @@ DES_encrypt2:
 
 	! we use our own stackframe
 
-#ifdef OPENSSL_SYSNAME_ULTRASPARC
+#ifdef OPENSSL_SYS_ULTRASPARC
 	be,pn	%icc, .encrypt2.dec       ! decryption
 #else
 	be	.encrypt2.dec
@@ -1467,7 +1467,7 @@ DES_ncbc_encrypt:
 
 	cmp	in5, 0                    ! enc   
 
-#ifdef OPENSSL_SYSNAME_ULTRASPARC
+#ifdef OPENSSL_SYS_ULTRASPARC
 	be,pn	%icc, .ncbc.dec
 #else
 	be	.ncbc.dec
@@ -1479,7 +1479,7 @@ DES_ncbc_encrypt:
 
 	addcc	in2, -8, in2              ! bytes missing when first block done
 
-#ifdef OPENSSL_SYSNAME_ULTRASPARC
+#ifdef OPENSSL_SYS_ULTRASPARC
 	bl,pn	%icc, .ncbc.enc.seven.or.less
 #else
 	bl	.ncbc.enc.seven.or.less
@@ -1507,7 +1507,7 @@ DES_ncbc_encrypt:
 
 	rounds_macro(in5, out5, 1, .ncbc.enc.1, in3, in4) ! include encryption  ks in3
 
-#ifdef OPENSSL_SYSNAME_ULTRASPARC
+#ifdef OPENSSL_SYS_ULTRASPARC
 	bl,pn	%icc, .ncbc.enc.next.block_fp
 #else
 	bl	.ncbc.enc.next.block_fp
@@ -1552,7 +1552,7 @@ DES_ncbc_encrypt:
 
 	addcc   in2, -8, in2              ! bytes missing when next block done
 
-#ifdef OPENSSL_SYSNAME_ULTRASPARC
+#ifdef OPENSSL_SYS_ULTRASPARC
 	bpos,pt	%icc, .ncbc.enc.next.block  ! also jumps if 0
 #else
 	bpos	.ncbc.enc.next.block
@@ -1563,7 +1563,7 @@ DES_ncbc_encrypt:
 
 	cmp	in2, -8
 
-#ifdef OPENSSL_SYSNAME_ULTRASPARC
+#ifdef OPENSSL_SYS_ULTRASPARC
 	ble,pt	%icc, .ncbc.enc.finish
 #else
 	ble	.ncbc.enc.finish
@@ -1594,7 +1594,7 @@ DES_ncbc_encrypt:
 	add	in3, 120, in3
 
 	LDPTR	IVEC, local7              ! ivec
-#ifdef OPENSSL_SYSNAME_ULTRASPARC
+#ifdef OPENSSL_SYS_ULTRASPARC
 	ble,pn	%icc, .ncbc.dec.finish
 #else
 	ble	.ncbc.dec.finish
@@ -1622,7 +1622,7 @@ DES_ncbc_encrypt:
 	! in2 is compared to 8 in the rounds
 
 	xor	out5, in0, out4           ! iv xor
-#ifdef OPENSSL_SYSNAME_ULTRASPARC
+#ifdef OPENSSL_SYS_ULTRASPARC
 	bl,pn	%icc, .ncbc.dec.seven.or.less
 #else
 	bl	.ncbc.dec.seven.or.less
@@ -1639,7 +1639,7 @@ DES_ncbc_encrypt:
 	add	local7, 8, local7
 	addcc   in2, -8, in2
 
-#ifdef OPENSSL_SYSNAME_ULTRASPARC
+#ifdef OPENSSL_SYS_ULTRASPARC
 	bg,pt	%icc, .ncbc.dec.next.block
 #else
 	bg	.ncbc.dec.next.block
@@ -1694,7 +1694,7 @@ DES_ede3_cbc_encrypt:
 	LDPTR	[%fp+BIAS+ARG0+6*ARGSZ], local4          ! ivec
 	cmp	local3, 0                 ! enc
 
-#ifdef OPENSSL_SYSNAME_ULTRASPARC
+#ifdef OPENSSL_SYS_ULTRASPARC
 	be,pn	%icc, .ede3.dec
 #else
 	be	.ede3.dec
@@ -1707,7 +1707,7 @@ DES_ede3_cbc_encrypt:
 
 	addcc	in2, -8, in2              ! bytes missing after next block
 
-#ifdef OPENSSL_SYSNAME_ULTRASPARC
+#ifdef OPENSSL_SYS_ULTRASPARC
 	bl,pn	%icc,  .ede3.enc.seven.or.less
 #else
 	bl	.ede3.enc.seven.or.less
@@ -1741,7 +1741,7 @@ DES_ede3_cbc_encrypt:
 	call .des_enc                     ! ks3 in3  compares in2 to 8
 	nop
 
-#ifdef OPENSSL_SYSNAME_ULTRASPARC
+#ifdef OPENSSL_SYS_ULTRASPARC
 	bl,pn	%icc, .ede3.enc.next.block_fp
 #else
 	bl	.ede3.enc.next.block_fp
@@ -1787,7 +1787,7 @@ DES_ede3_cbc_encrypt:
 
 	addcc   in2, -8, in2              ! bytes missing when next block done
 
-#ifdef OPENSSL_SYSNAME_ULTRASPARC
+#ifdef OPENSSL_SYS_ULTRASPARC
 	bpos,pt	%icc, .ede3.enc.next.block
 #else
 	bpos	.ede3.enc.next.block
@@ -1798,7 +1798,7 @@ DES_ede3_cbc_encrypt:
 
 	cmp	in2, -8
 
-#ifdef OPENSSL_SYSNAME_ULTRASPARC
+#ifdef OPENSSL_SYS_ULTRASPARC
 	ble,pt	%icc, .ede3.enc.finish
 #else
 	ble	.ede3.enc.finish
@@ -1830,7 +1830,7 @@ DES_ede3_cbc_encrypt:
 	STPTR	in3, KS1
 	cmp	in2, 0
 
-#ifdef OPENSSL_SYSNAME_ULTRASPARC
+#ifdef OPENSSL_SYS_ULTRASPARC
 	ble	%icc, .ede3.dec.finish
 #else
 	ble	.ede3.dec.finish
@@ -1863,7 +1863,7 @@ DES_ede3_cbc_encrypt:
 	! in2 is compared to 8 in the rounds
 
 	xor	out5, in0, out4
-#ifdef OPENSSL_SYSNAME_ULTRASPARC
+#ifdef OPENSSL_SYS_ULTRASPARC
 	bl,pn	%icc, .ede3.dec.seven.or.less
 #else
 	bl	.ede3.dec.seven.or.less
@@ -1878,7 +1878,7 @@ DES_ede3_cbc_encrypt:
 	addcc   in2, -8, in2
 	add	local7, 8, local7
 
-#ifdef OPENSSL_SYSNAME_ULTRASPARC
+#ifdef OPENSSL_SYS_ULTRASPARC
 	bg,pt	%icc, .ede3.dec.next.block
 #else
 	bg	.ede3.dec.next.block

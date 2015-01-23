@@ -122,7 +122,7 @@ elsif ($FLAVOR =~ /CE/)
     }
 
     $cc=($ENV{CC} or "cl");
-    $base_cflags=' /W3 /WX /GF /Gy /nologo -DUNICODE -D_UNICODE -DOPENSSL_SYSNAME_WINCE -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32 -DNO_CHMOD -DOPENSSL_SMALL_FOOTPRINT';
+    $base_cflags=' /W3 /WX /GF /Gy /nologo -DUNICODE -D_UNICODE -DOPENSSL_SYS_WINCE -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32 -DNO_CHMOD -DOPENSSL_SMALL_FOOTPRINT';
     $base_cflags.=" $wcecdefs";
     $base_cflags.=' -I$(WCECOMPAT)/include'		if (defined($ENV{'WCECOMPAT'}));
     $base_cflags.=' -I$(PORTSDK_LIBPATH)/../../include'	if (defined($ENV{'PORTSDK_LIBPATH'}));

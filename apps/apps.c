@@ -119,7 +119,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#if !defined(OPENSSL_SYSNAME_WIN32) && !defined(OPENSSL_SYSNAME_WINCE) && !defined(NETWARE_CLIB)
+#if !defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_SYS_WINCE) && !defined(NETWARE_CLIB)
 # include <strings.h>
 #endif
 #include <sys/types.h>
@@ -1631,7 +1631,7 @@ BIGNUM *load_serial(char *serialfile, int create, ASN1_INTEGER **retai)
 {
     BIO *in = NULL;
     BIGNUM *ret = NULL;
-    MS_STATIC char buf[1024];
+    char buf[1024];
     ASN1_INTEGER *ai = NULL;
 
     ai = ASN1_INTEGER_new();
