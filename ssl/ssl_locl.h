@@ -2411,6 +2411,8 @@ int ssl_add_serverhello_use_srtp_ext(SSL *s, unsigned char *p, int *len,
 int ssl_parse_serverhello_use_srtp_ext(SSL *s, unsigned char *d, int len,
                                        int *al);
 
+int ssl_handshake_hash(SSL *s, unsigned char *out, int outlen);
+
 /* s3_cbc.c */
 void ssl3_cbc_copy_mac(unsigned char *out,
                        const SSL3_RECORD *rec, unsigned md_size);
