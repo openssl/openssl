@@ -340,7 +340,7 @@ int MAIN(int argc, char **argv)
     SSL *scon = NULL;
     long finishtime = 0;
     int ret = 1, i;
-    MS_STATIC char buf[1024 * 8];
+    char buf[1024 * 8];
     int ver;
 
     apps_startup();

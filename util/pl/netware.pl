@@ -222,7 +222,7 @@ else
 }
 
 # common defines
-$cflags.=" -DL_ENDIAN -DOPENSSL_SYSNAME_NETWARE -U_WIN32";
+$cflags.=" -DL_ENDIAN -DOPENSSL_SYS_NETWARE -U_WIN32";
 
 # If LibC build add in NKS_LIBC define and set the entry/exit
 # routines - The default entry/exit routines are for CLib and don't exist

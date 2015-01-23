@@ -221,8 +221,8 @@ int main(int Argc, char *ARGV[])
 #define PROG_NAME_SIZE  39
     char pname[PROG_NAME_SIZE + 1];
     FUNCTION f, *fp;
-    MS_STATIC const char *prompt;
-    MS_STATIC char buf[1024];
+    const char *prompt;
+    char buf[1024];
     char *to_free = NULL;
     int n, i, ret = 0;
     int argc;

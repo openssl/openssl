@@ -205,7 +205,7 @@ extern BIO *bio_err;
 #  endif
 # endif
 
-# if defined(OPENSSL_SYSNAME_WIN32) || defined(OPENSSL_SYSNAME_WINCE)
+# if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WINCE)
 #  define openssl_fdset(a,b) FD_SET((unsigned int)a, b)
 # else
 #  define openssl_fdset(a,b) FD_SET(a, b)

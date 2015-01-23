@@ -323,7 +323,7 @@ int MAIN(int argc, char **argv)
     STACK_OF(OPENSSL_STRING) *sigopts = NULL;
 #undef BSIZE
 #define BSIZE 256
-    MS_STATIC char buf[3][BSIZE];
+    char buf[3][BSIZE];
     char *randfile = NULL;
 #ifndef OPENSSL_NO_ENGINE
     char *engine = NULL;

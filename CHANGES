@@ -44,6 +44,8 @@
 	OPENSSL_NO_RIPEMD160, OPENSSL_NO_RIPEMD merged into OPENSSL_NO_RMD160
 	OPENSSL_NO_FP_API merged into OPENSSL_NO_STDIO
 	Use setbuf() and remove OPENSSL_NO_SETVBUF_IONBF
+        Rename OPENSSL_SYSNAME_xxx to OPENSSL_SYS_xxx
+        Remove MS_STATIC; it's a relic from platforms <32 bits.
      [Rich Salz]
 
   *) Experimental support for a new, fast, unbiased prime candidate generator,
