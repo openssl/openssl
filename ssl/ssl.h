@@ -656,6 +656,9 @@ void SSL_set_msg_callback(SSL *ssl,
 # define SSL_CTX_set_msg_callback_arg(ctx, arg) SSL_CTX_ctrl((ctx), SSL_CTRL_SET_MSG_CALLBACK_ARG, 0, (arg))
 # define SSL_set_msg_callback_arg(ssl, arg) SSL_ctrl((ssl), SSL_CTRL_SET_MSG_CALLBACK_ARG, 0, (arg))
 
+# define SSL_get_extms_support(s) \
+        SSL_ctrl((s),SSL_CTRL_GET_EXTMS_SUPPORT,0,NULL)
+
 # ifndef OPENSSL_NO_SRP
 
 /* see tls_srp.c */
@@ -1212,6 +1215,7 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_CTRL_CHECK_PROTO_VERSION            119
 # define DTLS_CTRL_SET_LINK_MTU                  120
 # define DTLS_CTRL_GET_LINK_MIN_MTU              121
+# define SSL_CTRL_GET_EXTMS_SUPPORT              122
 # define SSL_CERT_SET_FIRST                      1
 # define SSL_CERT_SET_NEXT                       2
 # define SSL_CERT_SET_SERVER                     3
