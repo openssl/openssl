@@ -597,6 +597,7 @@ struct ssl_method_st {
  *      Ticket [10]             EXPLICIT OCTET STRING, -- session ticket (clients only)
  *      Compression_meth [11]   EXPLICIT OCTET STRING, -- optional compression method
  *      SRP_username [ 12 ] EXPLICIT OCTET STRING -- optional SRP username
+ *      flags [ 13 ] EXPLICIT INTEGER -- optional flags
  *      }
  * Look in ssl/ssl_asn1.c for more details
  * I'm using EXPLICIT tags so I can read the damn things using asn1parse :-).
@@ -674,7 +675,11 @@ struct ssl_session_st {
 # ifndef OPENSSL_NO_SRP
     char *srp_username;
 # endif
+    long flags;
 };
+
+/* Extended master secret support */
+#  define SSL_SESS_FLAG_EXTMS             0x1
 
 
 # ifndef OPENSSL_NO_SRP

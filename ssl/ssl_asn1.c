@@ -115,6 +115,7 @@ typedef struct ssl_session_asn1_st {
 #ifndef OPENSSL_NO_SRP
     ASN1_OCTET_STRING srp_username;
 #endif                          /* OPENSSL_NO_SRP */
+    ASN1_INTEGER flags;
 } SSL_SESSION_ASN1;
 
 int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
@@ -134,6 +135,8 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 #ifndef OPENSSL_NO_SRP
     int v12 = 0;
 #endif
+    unsigned char fbuf[LSIZE2];
+    int v13 = 0;
     long l;
     SSL_SESSION_ASN1 a;
     M_ASN1_I2D_vars(in);
@@ -256,6 +259,13 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
     }
 #endif                          /* OPENSSL_NO_SRP */
 
+    if (in->flags) {
+        a.flags.length = LSIZE2;
+        a.flags.type = V_ASN1_INTEGER;
+        a.flags.data = fbuf;
+        ASN1_INTEGER_set(&a.flags, in->flags);
+    }
+
     M_ASN1_I2D_len(&(a.version), i2d_ASN1_INTEGER);
     M_ASN1_I2D_len(&(a.ssl_version), i2d_ASN1_INTEGER);
     M_ASN1_I2D_len(&(a.cipher), i2d_ASN1_OCTET_STRING);
@@ -304,6 +314,8 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
         M_ASN1_I2D_len_EXP_opt(&(a.srp_username), i2d_ASN1_OCTET_STRING, 12,
                                v12);
 #endif                          /* OPENSSL_NO_SRP */
+    if (in->flags)
+        M_ASN1_I2D_len_EXP_opt(&(a.flags), i2d_ASN1_INTEGER, 13, v13);
 
     M_ASN1_I2D_seq_total();
 
@@ -356,6 +368,8 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
         M_ASN1_I2D_put_EXP_opt(&(a.srp_username), i2d_ASN1_OCTET_STRING, 12,
                                v12);
 #endif                          /* OPENSSL_NO_SRP */
+    if (in->flags)
+        M_ASN1_I2D_put_EXP_opt(&a.flags, i2d_ASN1_INTEGER, 13, v13);
     M_ASN1_I2D_finish();
 }
 
@@ -593,6 +607,15 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
     } else
         ret->srp_username = NULL;
 #endif                          /* OPENSSL_NO_SRP */
+    ai.length = 0;
+    M_ASN1_D2I_get_EXP_opt(aip, d2i_ASN1_INTEGER, 13);
+    if (ai.data != NULL) {
+        ret->flags = ASN1_INTEGER_get(aip);
+        OPENSSL_free(ai.data);
+        ai.data = NULL;
+        ai.length = 0;
+    } else
+        ret->flags = 0;
 
     M_ASN1_D2I_Finish(a, SSL_SESSION_free, SSL_F_D2I_SSL_SESSION);
 }
