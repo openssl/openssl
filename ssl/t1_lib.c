@@ -1445,6 +1445,8 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
     s2n(TLSEXT_TYPE_encrypt_then_mac, ret);
     s2n(0, ret);
 # endif
+    s2n(TLSEXT_TYPE_extended_master_secret, ret);
+    s2n(0, ret);
 
     /*
      * Add padding to workaround bugs in F5 terminators. See
@@ -1682,6 +1684,10 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
         }
     }
 # endif
+    if (!s->hit && s->session->flags & SSL_SESS_FLAG_EXTMS) {
+        s2n(TLSEXT_TYPE_extended_master_secret, ret);
+        s2n(0, ret);
+    }
 
     if (s->s3->alpn_selected) {
         const unsigned char *selected = s->s3->alpn_selected;
@@ -2300,6 +2306,10 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p,
         else if (type == TLSEXT_TYPE_encrypt_then_mac)
             s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
 # endif
+        else if (type == TLSEXT_TYPE_extended_master_secret) {
+            if (!s->hit)
+                s->session->flags |= SSL_SESS_FLAG_EXTMS;
+        }
         /*
          * If this ClientHello extension was unhandled and this is a
          * nonresumed connection, check whether the extension is a custom
@@ -2594,6 +2604,10 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p,
                 s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
         }
 # endif
+        else if (type == TLSEXT_TYPE_extended_master_secret) {
+            if (!s->hit)
+                s->session->flags |= SSL_SESS_FLAG_EXTMS;
+        }
         /*
          * If this extension type was not otherwise handled, but matches a
          * custom_cli_ext_record, then send it to the c callback

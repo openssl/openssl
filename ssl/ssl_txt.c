@@ -244,6 +244,10 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
                    X509_verify_cert_error_string(x->verify_result)) <= 0)
         goto err;
 
+    if (BIO_printf(bp, "    Extended master secret: %s\n",
+                   x->flags & SSL_SESS_FLAG_EXTMS ? "yes" : "no") <= 0)
+        goto err;
+
     return (1);
  err:
     return (0);

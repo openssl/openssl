@@ -250,6 +250,12 @@ extern "C" {
  * http://www.ietf.org/id/draft-ietf-tls-encrypt-then-mac-02.txt
  */
 # define TLSEXT_TYPE_encrypt_then_mac    22
+/*
+ * Extended master secret extension.
+ * http://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml
+ * https://tools.ietf.org/id/draft-ietf-tls-session-hash-03.txt
+ */
+# define TLSEXT_TYPE_extended_master_secret      23
 
 /* ExtensionType value from RFC4507 */
 # define TLSEXT_TYPE_session_ticket              35
