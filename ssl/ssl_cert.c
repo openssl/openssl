@@ -476,6 +476,11 @@ void ssl_cert_free(CERT *c)
     custom_exts_free(&c->cli_ext);
     custom_exts_free(&c->srv_ext);
 #endif
+    if (c->pms) {
+        OPENSSL_cleanse(c->pms, c->pmslen);
+        OPENSSL_free(c->pms);
+        c->pms = NULL;
+    }
     OPENSSL_free(c);
 }
 

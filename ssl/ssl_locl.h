@@ -1679,6 +1679,9 @@ typedef struct cert_st {
      */
     unsigned char *ctypes;
     size_t ctype_num;
+    /* Temporary storage for premaster secret */
+    unsigned char *pms;
+    size_t pmslen;
     /*
      * signature algorithms peer reports: e.g. supported signature algorithms
      * extension for server or as part of a certificate request for client.
