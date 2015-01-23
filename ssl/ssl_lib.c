@@ -3479,6 +3479,35 @@ void ssl_clear_hash_ctx(EVP_MD_CTX **hash)
     *hash = NULL;
 }
 
+/* Retrieve handshake hashes */
+int ssl_handshake_hash(SSL *s, unsigned char *out, int outlen)
+{
+    unsigned char *p = out;
+    int idx, ret = 0;
+    long mask;
+    EVP_MD_CTX ctx;
+    const EVP_MD *md;
+    EVP_MD_CTX_init(&ctx);
+    for (idx = 0; ssl_get_handshake_digest(idx, &mask, &md); idx++) {
+        if (mask & ssl_get_algorithm2(s)) {
+            int hashsize = EVP_MD_size(md);
+            EVP_MD_CTX *hdgst = s->s3->handshake_dgst[idx];
+            if (!hdgst || hashsize < 0 || hashsize > outlen)
+                goto err;
+            if (!EVP_MD_CTX_copy_ex(&ctx, hdgst))
+                goto err;
+            if (!EVP_DigestFinal_ex(&ctx, p, NULL))
+                goto err;
+            p += hashsize;
+            outlen -= hashsize;
+        }
+    }
+    ret = p - out;
+ err:
+    EVP_MD_CTX_cleanup(&ctx);
+    return ret;
+}
+
 void SSL_set_debug(SSL *s, int debug)
 {
     s->debug = debug;
