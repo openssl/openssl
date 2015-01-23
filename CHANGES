@@ -37,7 +37,7 @@
 	NCR
 	Tandem
 	Cray
-	WIN16
+	16-bit platforms such as WIN16
      [Rich Salz]
 
   *) Start cleaning up OPENSSL_NO_xxx #define's

@@ -70,14 +70,7 @@ extern "C" {
 #  error RIPEMD is disabled.
 # endif
 
-# if defined(__LP32__)
-#  define RIPEMD160_LONG unsigned long
-# elif defined(__ILP64__)
-#  define RIPEMD160_LONG unsigned long
-#  define RIPEMD160_LONG_LOG2 3
-# else
-#  define RIPEMD160_LONG unsigned int
-# endif
+# define RIPEMD160_LONG unsigned int
 
 # define RIPEMD160_CBLOCK        64
 # define RIPEMD160_LBLOCK        (RIPEMD160_CBLOCK/4)

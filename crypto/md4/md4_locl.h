@@ -61,10 +61,6 @@
 #include <openssl/opensslconf.h>
 #include <openssl/md4.h>
 
-#ifndef MD4_LONG_LOG2
-# define MD4_LONG_LOG2 2        /* default to 32 bits */
-#endif
-
 void md4_block_data_order(MD4_CTX *c, const void *p, size_t num);
 
 #define DATA_ORDER_IS_LITTLE_ENDIAN
