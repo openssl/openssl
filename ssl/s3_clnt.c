@@ -3150,7 +3150,15 @@ int ssl3_send_client_verify(SSL *s)
             }
             s2n(u, p);
             n = u + 4;
-            if (!ssl3_digest_cached_records(s))
+            /*
+             * For extended master secret we've already digested cached
+             * records.
+             */
+            if (s->session->flags & SSL_SESS_FLAG_EXTMS) {
+                BIO_free(s->s3->handshake_buffer);
+                s->s3->handshake_buffer = NULL;
+                s->s3->flags &= ~TLS1_FLAGS_KEEP_HANDSHAKE;
+            } else if (!ssl3_digest_cached_records(s))
                 goto err;
         } else
 #ifndef OPENSSL_NO_RSA
