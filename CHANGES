@@ -3,6 +3,12 @@
  _______________
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
+
+  *) Added support for TLS extended master secret from
+     draft-ietf-tls-session-hash-03.txt. Thanks for Alfredo Pironti for an
+     initial patch which was a great help during development.
+     [Steve Henson]
+
   *) All libssl internal structures have been removed from the public header
      files, and the OPENSSL_NO_SSL_INTERN option has been removed (since it is
      now redundant). Users should not attempt to access internal structures
