@@ -74,19 +74,10 @@ extern "C" {
 
 /*-
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- * ! BF_LONG has to be at least 32 bits wide. If it's wider, then !
- * ! BF_LONG_LOG2 has to be defined along.                        !
+ * ! BF_LONG has to be at least 32 bits wide.                     !
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  */
-
-# if defined(__LP32__)
-#  define BF_LONG unsigned long
-# elif defined(__ILP64__)
-#  define BF_LONG unsigned long
-#  define BF_LONG_LOG2 3
-# else
-#  define BF_LONG unsigned int
-# endif
+# define BF_LONG unsigned int
 
 # define BF_ROUNDS       16
 # define BF_BLOCK        8

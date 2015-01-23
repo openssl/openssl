@@ -72,19 +72,10 @@ extern "C" {
 
 /*-
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- * ! MD4_LONG has to be at least 32 bits wide. If it's wider, then !
- * ! MD4_LONG_LOG2 has to be defined along.                        !
+ * ! MD4_LONG has to be at least 32 bits wide.                     !
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  */
-
-# if defined(__LP32__)
-#  define MD4_LONG unsigned long
-# elif defined(__ILP64__)
-#  define MD4_LONG unsigned long
-#  define MD4_LONG_LOG2 3
-# else
-#  define MD4_LONG unsigned int
-# endif
+# define MD4_LONG unsigned int
 
 # define MD4_CBLOCK      64
 # define MD4_LBLOCK      (MD4_CBLOCK/4)

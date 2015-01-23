@@ -72,19 +72,10 @@ extern "C" {
 
 /*
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- * ! MD5_LONG has to be at least 32 bits wide. If it's wider, then !
- * ! MD5_LONG_LOG2 has to be defined along.                        !
+ * ! MD5_LONG has to be at least 32 bits wide.                     !
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  */
-
-# if defined(__LP32__)
-#  define MD5_LONG unsigned long
-# elif defined(__ILP64__)
-#  define MD5_LONG unsigned long
-#  define MD5_LONG_LOG2 3
-# else
-#  define MD5_LONG unsigned int
-# endif
+# define MD5_LONG unsigned int
 
 # define MD5_CBLOCK      64
 # define MD5_LBLOCK      (MD5_CBLOCK/4)
