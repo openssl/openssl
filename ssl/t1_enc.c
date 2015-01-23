@@ -1070,13 +1070,41 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
             len);
 #endif                          /* KSSL_DEBUG */
 
-
-    tls1_PRF(ssl_get_algorithm2(s),
-             TLS_MD_MASTER_SECRET_CONST, TLS_MD_MASTER_SECRET_CONST_SIZE,
-             s->s3->client_random, SSL3_RANDOM_SIZE,
-             co, col,
-             s->s3->server_random, SSL3_RANDOM_SIZE,
-             so, sol, p, len, s->session->master_key, buff, sizeof buff);
+    if (s->session->flags & SSL_SESS_FLAG_EXTMS) {
+        unsigned char hash[EVP_MAX_MD_SIZE * 2];
+        int hashlen;
+        /* If we don't have any digests cache records */
+        if (s->s3->handshake_buffer) {
+            /*
+             * keep record buffer: this wont affect client auth because we're
+             * freezing the buffer at the same point (after client key
+             * exchange and before certificate verify)
+             */
+            s->s3->flags |= TLS1_FLAGS_KEEP_HANDSHAKE;
+            ssl3_digest_cached_records(s);
+        }
+        hashlen = ssl_handshake_hash(s, hash, sizeof(hash));
+#ifdef SSL_DEBUG
+        fprintf(stderr, "Handshake hashes:\n");
+        BIO_dump_fp(stderr, (char *)hash, hashlen);
+#endif
+        tls1_PRF(ssl_get_algorithm2(s),
+                 TLS_MD_EXTENDED_MASTER_SECRET_CONST,
+                 TLS_MD_EXTENDED_MASTER_SECRET_CONST_SIZE,
+                 hash, hashlen,
+                 co, col,
+                 NULL, 0,
+                 so, sol, p, len, s->session->master_key, buff, sizeof buff);
+        OPENSSL_cleanse(hash, hashlen);
+    } else {
+        tls1_PRF(ssl_get_algorithm2(s),
+                 TLS_MD_MASTER_SECRET_CONST,
+                 TLS_MD_MASTER_SECRET_CONST_SIZE,
+                 s->s3->client_random, SSL3_RANDOM_SIZE,
+                 co, col,
+                 s->s3->server_random, SSL3_RANDOM_SIZE,
+                 so, sol, p, len, s->session->master_key, buff, sizeof buff);
+    }
 #ifdef SSL_DEBUG
     fprintf(stderr, "Premaster Secret:\n");
     BIO_dump_fp(stderr, (char *)p, len);
@@ -1174,6 +1202,9 @@ int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
         goto err1;
     if (memcmp(val, TLS_MD_MASTER_SECRET_CONST,
                TLS_MD_MASTER_SECRET_CONST_SIZE) == 0)
+        goto err1;
+    if (memcmp(val, TLS_MD_EXTENDED_MASTER_SECRET_CONST,
+               TLS_MD_EXTENDED_MASTER_SECRET_CONST_SIZE) == 0)
         goto err1;
     if (memcmp(val, TLS_MD_KEY_EXPANSION_CONST,
                TLS_MD_KEY_EXPANSION_CONST_SIZE) == 0)

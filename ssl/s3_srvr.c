@@ -620,17 +620,19 @@ int ssl3_accept(SSL *s)
                 s->init_num = 0;
                 if (!s->session->peer)
                     break;
-                /*
-                 * For sigalgs freeze the handshake buffer at this point and
-                 * digest cached records.
-                 */
                 if (!s->s3->handshake_buffer) {
                     SSLerr(SSL_F_SSL3_ACCEPT, ERR_R_INTERNAL_ERROR);
                     return -1;
                 }
-                s->s3->flags |= TLS1_FLAGS_KEEP_HANDSHAKE;
-                if (!ssl3_digest_cached_records(s))
-                    return -1;
+                /*
+                 * For sigalgs freeze the handshake buffer. If we support
+                 * extms we've done this already.
+                 */
+                if (!(s->s3->flags & SSL_SESS_FLAG_EXTMS)) {
+                    s->s3->flags |= TLS1_FLAGS_KEEP_HANDSHAKE;
+                    if (!ssl3_digest_cached_records(s))
+                        return -1;
+                }
             } else {
                 int offset = 0;
                 int dgst_num;
