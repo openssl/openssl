@@ -59,7 +59,6 @@ $bf_enc_src="";
 	  'x86_64-mont' => 'crypto/bn',
 	  'x86_64-mont5' => 'crypto/bn',
 	  'x86_64-gf2m' => 'crypto/bn',
-	  'modexp512-x86_64' => 'crypto/bn',
 	  'aes-x86_64' => 'crypto/aes',
 	  'vpaes-x86_64' => 'crypto/aes',
 	  'bsaes-x86_64' => 'crypto/aes',
