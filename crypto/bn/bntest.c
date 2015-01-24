@@ -812,11 +812,6 @@ int test_mont(BIO *bp, BN_CTX *ctx)
         BN_from_montgomery(A, c, mont, ctx);
         if (bp != NULL) {
             if (!results) {
-#ifdef undef
-                fprintf(stderr, "%d * %d %% %d\n",
-                        BN_num_bits(a),
-                        BN_num_bits(b), BN_num_bits(&mont->N));
-#endif
                 BN_print(bp, a);
                 BIO_puts(bp, " * ");
                 BN_print(bp, b);

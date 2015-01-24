@@ -75,26 +75,6 @@ int _des_crypt(char *buf, int len, struct desparams *desp)
     else {
         DES_ncbc_encrypt(desp->UDES.UDES_buf, desp->UDES.UDES_buf,
                          len, &ks, &desp->des_ivec, enc);
-#ifdef undef
-        /*
-         * len will always be %8 if called from common_crypt in secure_rpc.
-         * Libdes's cbc encrypt does not copy back the iv, so we have to do
-         * it here.
-         */
-        /* It does now :-) eay 20/09/95 */
-
-        a = (char *)&(desp->UDES.UDES_buf[len - 8]);
-        b = (char *)&(desp->des_ivec[0]);
-
-        *(a++) = *(b++);
-        *(a++) = *(b++);
-        *(a++) = *(b++);
-        *(a++) = *(b++);
-        *(a++) = *(b++);
-        *(a++) = *(b++);
-        *(a++) = *(b++);
-        *(a++) = *(b++);
-#endif
     }
     return (1);
 }

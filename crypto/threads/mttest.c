@@ -529,11 +529,6 @@ int doit(char *ctx[4])
                     return (1);
                 } else {
                     done |= C_DONE;
-#ifdef undef
-                    fprintf(stdout, "CLIENT:from server:");
-                    fwrite(cbuf, 1, i, stdout);
-                    fflush(stdout);
-#endif
                 }
             }
         }
@@ -560,11 +555,6 @@ int doit(char *ctx[4])
                 } else {
                     s_write = 1;
                     s_w = 1;
-#ifdef undef
-                    fprintf(stdout, "SERVER:from client:");
-                    fwrite(sbuf, 1, i, stdout);
-                    fflush(stdout);
-#endif
                 }
             } else {
                 i = BIO_write(s_bio, "hello from server\n", 18);
@@ -602,9 +592,6 @@ int doit(char *ctx[4])
     SSL_set_shutdown(c_ssl, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
     SSL_set_shutdown(s_ssl, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
 
-#ifdef undef
-    fprintf(stdout, "DONE\n");
-#endif
  err:
     /*
      * We have to set the BIO's to NULL otherwise they will be free()ed
@@ -791,30 +778,10 @@ void thread_cleanup(void)
 
 void solaris_locking_callback(int mode, int type, char *file, int line)
 {
-# ifdef undef
-    fprintf(stderr, "thread=%4d mode=%s lock=%s %s:%d\n",
-            CRYPTO_thread_id(),
-            (mode & CRYPTO_LOCK) ? "l" : "u",
-            (type & CRYPTO_READ) ? "r" : "w", file, line);
-# endif
-
-    /*-
-    if (CRYPTO_LOCK_SSL_CERT == type)
-    fprintf(stderr,"(t,m,f,l) %ld %d %s %d\n",
-            CRYPTO_thread_id(),
-            mode,file,line);
-    */
     if (mode & CRYPTO_LOCK) {
-        /*-
-        if (mode & CRYPTO_READ)
-                rw_rdlock(&(lock_cs[type]));
-        else
-                rw_wrlock(&(lock_cs[type])); */
-
         mutex_lock(&(lock_cs[type]));
         lock_count[type]++;
     } else {
-/*      rw_unlock(&(lock_cs[type]));  */
         mutex_unlock(&(lock_cs[type]));
     }
 }
@@ -977,18 +944,6 @@ void thread_cleanup(void)
 
 void pthreads_locking_callback(int mode, int type, char *file, int line)
 {
-# ifdef undef
-    fprintf(stderr, "thread=%4d mode=%s lock=%s %s:%d\n",
-            CRYPTO_thread_id(),
-            (mode & CRYPTO_LOCK) ? "l" : "u",
-            (type & CRYPTO_READ) ? "r" : "w", file, line);
-# endif
-/*-
-    if (CRYPTO_LOCK_SSL_CERT == type)
-            fprintf(stderr,"(t,m,f,l) %ld %d %s %d\n",
-            CRYPTO_thread_id(),
-            mode,file,line);
-*/
     if (mode & CRYPTO_LOCK) {
         pthread_mutex_lock(&(lock_cs[type]));
         lock_count[type]++;

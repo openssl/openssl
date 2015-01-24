@@ -48,6 +48,10 @@
         Remove MS_STATIC; it's a relic from platforms <32 bits.
      [Rich Salz]
 
+  *) Start cleaning up dead code
+        Remove all but one '#ifdef undef' which is to be looked at.
+     [Rich Salz]
+
   *) Experimental support for a new, fast, unbiased prime candidate generator,
      bn_probable_prime_dh_coprime(). Not currently used by any prime generator.
      [Felix Laurie von Massenbach <felix@erbridge.co.uk>]

@@ -62,18 +62,6 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-#ifdef undef
-void EVP_SignInit(EVP_MD_CTX *ctx, EVP_MD *type)
-{
-    EVP_DigestInit_ex(ctx, type);
-}
-
-void EVP_SignUpdate(EVP_MD_CTX *ctx, unsigned char *data, unsigned int count)
-{
-    EVP_DigestUpdate(ctx, data, count);
-}
-#endif
-
 int EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
                   unsigned int *siglen, EVP_PKEY *pkey)
 {
