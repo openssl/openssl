@@ -152,15 +152,6 @@ int MAIN(int argc, char **argv)
     argv++;
     num = 0;
     while (argc >= 1) {
-#ifdef undef
-        if (strcmp(*argv, "-p") == 0) {
-            if (--argc < 1)
-                goto bad;
-            if (!args_from_file(++argv, Nargc, Nargv)) {
-                goto end;
-            }
-        */}
-#endif
         if (strcmp(*argv, "-inform") == 0) {
             if (--argc < 1)
                 goto bad;

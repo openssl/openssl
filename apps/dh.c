@@ -233,15 +233,6 @@ int MAIN(int argc, char **argv)
 
     if (text) {
         DHparams_print(out, dh);
-# ifdef undef
-        printf("p=");
-        BN_print(stdout, dh->p);
-        printf("\ng=");
-        BN_print(stdout, dh->g);
-        printf("\n");
-        if (dh->length != 0)
-            printf("recommended private length=%ld\n", dh->length);
-# endif
     }
 
     if (check) {

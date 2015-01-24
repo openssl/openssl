@@ -168,26 +168,6 @@ int MAIN(int argc, char **argv)
         }
         SSL_SESSION_set1_id_context(x, (unsigned char *)context, ctx_len);
     }
-#ifdef undef
-    /* just testing for memory leaks :-) */
-    {
-        SSL_SESSION *s;
-        char buf[1024 * 10], *p;
-        int i;
-
-        s = SSL_SESSION_new();
-
-        p = &buf;
-        i = i2d_SSL_SESSION(x, &p);
-        p = &buf;
-        d2i_SSL_SESSION(&s, &p, (long)i);
-        p = &buf;
-        d2i_SSL_SESSION(&s, &p, (long)i);
-        p = &buf;
-        d2i_SSL_SESSION(&s, &p, (long)i);
-        SSL_SESSION_free(s);
-    }
-#endif
 
     if (!noout || text) {
         out = BIO_new(BIO_s_file());

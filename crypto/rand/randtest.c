@@ -133,16 +133,6 @@ int main(int argc, char **argv)
     printf("test 1 done\n");
 
     /* test 2 */
-#ifdef undef
-    d = 0;
-    for (i = 0; i < 16; i++)
-        d += n2[i] * n2[i];
-    d = d * 16.0 / 5000.0 - 5000.0;
-    if (!((1.03 < d) && (d < 57.4))) {
-        printf("test 2 failed, X=%.2f\n", d);
-        err++;
-    }
-#endif
     d = 0;
     for (i = 0; i < 16; i++)
         d += n2[i] * n2[i];
