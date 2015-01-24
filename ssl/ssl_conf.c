@@ -167,6 +167,8 @@ static int ssl_set_option_list(const char *elem, int len, void *usr)
      * len == -1 indicates not being called in list context, just for single
      * command line switches, so don't allow +, -.
      */
+    if (elem == NULL)
+        return 0;
     if (len != -1) {
         if (*elem == '+') {
             elem++;
