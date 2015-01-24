@@ -279,6 +279,9 @@ static int asn1_cb(const char *elem, int len, void *bitstr)
 
     int tmp_tag, tmp_class;
 
+    if (elem == NULL)
+        return 0;
+
     for (i = 0, p = elem; i < len; p++, i++) {
         /* Look for the ':' in name value pairs */
         if (*p == ':') {
@@ -805,6 +808,8 @@ static int mask_cb(const char *elem, int len, void *arg)
 {
     unsigned long *pmask = arg, tmpmask;
     int tag;
+    if (elem == NULL)
+        return 0;
     if (len == 3 && !strncmp(elem, "DIR", 3)) {
         *pmask |= B_ASN1_DIRECTORYSTRING;
         return 1;
