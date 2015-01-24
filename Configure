@@ -1083,6 +1083,8 @@ foreach (sort (keys %disabled))
 			}
 		else
 			{
+			($ALGO,$algo) = ("RMD160","rmd160") if ($algo eq "ripemd");
+
 			$openssl_algorithm_defines .= "#define OPENSSL_NO_$ALGO\n";
 			print " OPENSSL_NO_$ALGO";
 
@@ -1093,6 +1095,8 @@ foreach (sort (keys %disabled))
 				push @skip, $algo;
 				# fix-up crypto/directory name(s)
 				@skip[$#skip]="whrlpool" if $algo eq "whirlpool";
+				@skip[$#skip]="ripemd" if $algo eq "rmd160";
+
 				print " (skip dir)";
 
 				$depflags .= " -DOPENSSL_NO_$ALGO";
