@@ -1135,7 +1135,9 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
         } else
             return ssl_put_cipher_by_char(s, NULL, NULL);
     case SSL_CTRL_GET_EXTMS_SUPPORT:
-        if (s->session && s->session->flags & SSL_SESS_FLAG_EXTMS)
+        if (!s->session || SSL_in_init(s) || s->in_handshake)
+		return -1;
+	if (s->session->flags & SSL_SESS_FLAG_EXTMS)
             return 1;
         else
             return 0;
