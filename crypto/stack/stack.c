@@ -55,17 +55,6 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
-
-/*-
- * Code for stacks
- * Author - Eric Young v 1.0
- * 1.2 eay 12-Mar-97 -  Modified sk_find so that it _DOES_ return the
- *                      lowest index for the searched item.
- *
- * 1.1 eay - Take from netdb and added to SSLeay
- *
- * 1.0 eay - First version 29/07/92
- */
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/stack.h>
@@ -193,18 +182,8 @@ int sk_insert(_STACK *st, void *data, int loc)
     if ((loc >= (int)st->num) || (loc < 0))
         st->data[st->num] = data;
     else {
-        int i;
-        char **f, **t;
-
-        f = st->data;
-        t = &(st->data[1]);
-        for (i = st->num; i >= loc; i--)
-            t[i] = f[i];
-
-#ifdef undef                    /* no memmove on sunos :-( */
         memmove(&(st->data[loc + 1]),
                 &(st->data[loc]), sizeof(char *) * (st->num - loc));
-#endif
         st->data[loc] = data;
     }
     st->num++;
