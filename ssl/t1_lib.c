@@ -651,6 +651,8 @@ static int nid_cb(const char *elem, int len, void *arg)
     size_t i;
     int nid;
     char etmp[20];
+    if (elem == NULL)
+        return 0;
     if (narg->nidcnt == MAX_CURVELIST)
         return 0;
     if (len > (int)(sizeof(etmp) - 1))
@@ -3948,6 +3950,8 @@ static int sig_cb(const char *elem, int len, void *arg)
     size_t i;
     char etmp[20], *p;
     int sig_alg, hash_alg;
+    if (elem == NULL)
+        return 0;
     if (sarg->sigalgcnt == MAX_SIGALGLEN)
         return 0;
     if (len > (int)(sizeof(etmp) - 1))
