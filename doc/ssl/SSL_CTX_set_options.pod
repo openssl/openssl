@@ -191,6 +191,14 @@ Do not use the SSLv3 protocol.
 
 Do not use the TLSv1 protocol.
 
+=item SSL_OP_NO_TLSEXT
+
+Don't send any TLS extensions in client hello, even if it will break other
+options like SRP, ALPN, NPN, server name indication, etc.
+
+Required for interoperability with particularly broken servers that don't
+tolerate any extensions in Client Hello.
+
 =item SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
 
 When performing renegotiation as a server, always start a new session

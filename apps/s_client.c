@@ -427,6 +427,9 @@ static void sc_usage(void)
                " -keymatexport label   - Export keying material using label\n");
     BIO_printf(bio_err,
                " -keymatexportlen len  - Export len bytes of keying material (default 20)\n");
+    BIO_printf(bio_err,
+               " -no_tlsext        - Don't send any TLS extensions (breaks servername, NPN and ALPN among others)\n");
+
 }
 
 #ifndef OPENSSL_NO_TLSEXT
