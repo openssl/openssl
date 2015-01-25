@@ -850,7 +850,11 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx, void *key, block128_f block)
     {
         gcm_init_4bit(ctx->Htable, ctx->H.u);
         ctx->gmult = gcm_gmult_4bit;
+#  if defined(GHASH)
         ctx->ghash = gcm_ghash_4bit;
+#  else
+        ctx->ghash = NULL;
+#  endif
     }
 # elif  defined(GHASH_ASM_SPARC)
     if (OPENSSL_sparcv9cap_P[0] & SPARCV9_VIS3) {
@@ -870,7 +874,11 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx, void *key, block128_f block)
     } else {
         gcm_init_4bit(ctx->Htable, ctx->H.u);
         ctx->gmult = gcm_gmult_4bit;
+#  if defined(GHASH)
         ctx->ghash = gcm_ghash_4bit;
+#  else
+        ctx->ghash = NULL;
+#  endif
     }
 # else
     gcm_init_4bit(ctx->Htable, ctx->H.u);
