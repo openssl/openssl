@@ -128,7 +128,7 @@ my $x86_asm="x86cpuid.o:bn-586.o co-586.o x86-mont.o x86-gf2m.o:des-586.o crypt5
 
 my $x86_elf_asm="$x86_asm:elf";
 
-my $x86_64_asm="x86_64cpuid.o:x86_64-gcc.o x86_64-mont.o x86_64-mont5.o x86_64-gf2m.o modexp512-x86_64.o::aes-x86_64.o vpaes-x86_64.o bsaes-x86_64.o aesni-x86_64.o aesni-sha1-x86_64.o::md5-x86_64.o:sha1-x86_64.o sha256-x86_64.o sha512-x86_64.o::rc4-x86_64.o rc4-md5-x86_64.o:::wp-x86_64.o:cmll-x86_64.o cmll_misc.o:ghash-x86_64.o:";
+my $x86_64_asm="x86_64cpuid.o:x86_64-gcc.o x86_64-mont.o x86_64-mont5.o x86_64-gf2m.o::aes-x86_64.o vpaes-x86_64.o bsaes-x86_64.o aesni-x86_64.o aesni-sha1-x86_64.o::md5-x86_64.o:sha1-x86_64.o sha256-x86_64.o sha512-x86_64.o::rc4-x86_64.o rc4-md5-x86_64.o:::wp-x86_64.o:cmll-x86_64.o cmll_misc.o:ghash-x86_64.o:";
 my $ia64_asm="ia64cpuid.o:bn-ia64.o ia64-mont.o::aes_core.o aes_cbc.o aes-ia64.o::md5-ia64.o:sha1-ia64.o sha256-ia64.o sha512-ia64.o::rc4-ia64.o rc4_skey.o:::::ghash-ia64.o::void";
 my $sparcv9_asm="sparcv9cap.o sparccpuid.o:bn-sparcv9.o sparcv9-mont.o sparcv9a-mont.o:des_enc-sparc.o fcrypt_b.o:aes_core.o aes_cbc.o aes-sparcv9.o:::sha1-sparcv9.o sha256-sparcv9.o sha512-sparcv9.o:::::::ghash-sparcv9.o::void";
 my $sparcv8_asm=":sparcv8.o:des_enc-sparc.o fcrypt_b.o:::::::::::::void";
