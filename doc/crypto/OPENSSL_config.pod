@@ -17,8 +17,7 @@ OPENSSL_config() configures OpenSSL using the standard B<openssl.cnf>
 configuration file name using B<config_name>. If B<config_name> is NULL then
 the file specified in the environment variable B<OPENSSL_CONF> will be used,
 and if that is not set then a system default location is used.
-In case of error, a message is printed to B<stderr> and the routine
-exit's.
+Errors are silently ignored.
 Multiple calls have no effect.
 
 OPENSSL_no_config() disables configuration. If called before OPENSSL_config()
@@ -37,10 +36,9 @@ The OPENSSL_config() function is designed to be a very simple "call it and
 forget it" function.
 It is however B<much> better than nothing. Applications which need finer
 control over their configuration functionality should use the configuration
-functions such as CONF_modules_load() directly.
-
-It is B<strongly> recommended that B<all> new applications call
-CONF_modules_load() during
+functions such as CONF_modules_load() directly. This function is deprecated
+and its use should be avoided.
+Applications should instead call CONF_modules_load() during
 initialization (that is before starting any threads).
 
 There are several reasons why calling the OpenSSL configuration routines is
