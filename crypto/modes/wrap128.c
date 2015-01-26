@@ -230,8 +230,13 @@ size_t CRYPTO_128_wrap_pad(void *key, const unsigned char *icv,
                            const unsigned char *in, size_t inlen,
                            block128_f block)
 {
-    /* n: number of 64-bit blocks in the padded key data */
-    const size_t blocks_padded = (inlen + 8) / 8;
+    /* n: number of 64-bit blocks in the padded key data
+     *
+     * If length of plain text is not a multiple of 8, pad the plain text octet
+     * string on the right with octets of zeros, where final length is the
+     * smallest multiple of 8 that is greater than length of plain text.
+     * If length of plain text is a multiple of 8, then there is no padding. */
+    const size_t blocks_padded = (inlen + 7) / 8; /* CEILING(m/8) */
     const size_t padded_len = blocks_padded * 8;
     const size_t padding_len = padded_len - inlen;
     /* RFC 5649 section 3: Alternative Initial Value */
