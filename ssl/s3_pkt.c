@@ -231,7 +231,8 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
         return -1;
     }
 
-    if (!s->read_ahead)
+    /* We always act like read_ahead is set for DTLS */
+    if (!s->read_ahead && !SSL_IS_DTLS(s))
         /* ignore max parameter */
         max = n;
     else {
