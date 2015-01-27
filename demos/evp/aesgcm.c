@@ -50,7 +50,7 @@ void aes_gcm_encrypt(void)
     /* Set cipher type and mode */
     EVP_EncryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, NULL, NULL);
     /* Set IV length if default 96 bits is not appropriate */
-    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, sizeof(gcm_iv), NULL);
+    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, sizeof(gcm_iv), NULL);
     /* Initialise key and IV */
     EVP_EncryptInit_ex(ctx, NULL, NULL, gcm_key, gcm_iv);
     /* Zero or more calls to specify any AAD */
@@ -63,7 +63,7 @@ void aes_gcm_encrypt(void)
     /* Finalise: note get no output for GCM */
     EVP_EncryptFinal_ex(ctx, outbuf, &outlen);
     /* Get tag */
-    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, 16, outbuf);
+    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, 16, outbuf);
     /* Output tag */
     printf("Tag:\n");
     BIO_dump_fp(stdout, outbuf, 16);
@@ -82,7 +82,7 @@ void aes_gcm_decrypt(void)
     /* Select cipher */
     EVP_DecryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, NULL, NULL);
     /* Set IV length, omit for 96 bits */
-    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, sizeof(gcm_iv), NULL);
+    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, sizeof(gcm_iv), NULL);
     /* Specify key and IV */
     EVP_DecryptInit_ex(ctx, NULL, NULL, gcm_key, gcm_iv);
 #if 0
@@ -90,7 +90,7 @@ void aes_gcm_decrypt(void)
      * Set expected tag value. A restriction in OpenSSL 1.0.1c and earlier
      * required the tag before any AAD or ciphertext
      */
-    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, sizeof(gcm_tag), gcm_tag);
+    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, sizeof(gcm_tag), gcm_tag);
 #endif
     /* Zero or more calls to specify any AAD */
     EVP_DecryptUpdate(ctx, NULL, &outlen, gcm_aad, sizeof(gcm_aad));
@@ -99,8 +99,11 @@ void aes_gcm_decrypt(void)
     /* Output decrypted block */
     printf("Plaintext:\n");
     BIO_dump_fp(stdout, outbuf, outlen);
-    /* Set expected tag value. Works in OpenSSL 1.0.1d and later */
-    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, sizeof(gcm_tag), gcm_tag);
+    /*
+     * Set expected tag value. Works in OpenSSL 1.0.1d and later
+     * In versions prior to OpenSSL 1.1.0 you should use EVP_CTRL_GCM_SET_TAG
+     */
+    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, sizeof(gcm_tag), gcm_tag);
     /* Finalise: note get no output for GCM */
     rv = EVP_DecryptFinal_ex(ctx, outbuf, &outlen);
     /*

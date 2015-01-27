@@ -179,13 +179,13 @@ static void test1(const EVP_CIPHER *c, const unsigned char *key, int kn,
                 ERR_print_errors_fp(stderr);
                 test1_exit(10);
             }
-            if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_IVLEN, in, NULL)) {
+            if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, in, NULL)) {
                 fprintf(stderr, "IV length set failed\n");
                 ERR_print_errors_fp(stderr);
                 test1_exit(11);
             }
             if ((mode == EVP_CIPH_OCB_MODE) &&
-                !EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_TAG, tn, NULL)) {
+                !EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, tn, NULL)) {
                 fprintf(stderr, "Tag length set failed\n");
                 ERR_print_errors_fp(stderr);
                 test1_exit(15);
@@ -206,12 +206,12 @@ static void test1(const EVP_CIPHER *c, const unsigned char *key, int kn,
                 ERR_print_errors_fp(stderr);
                 test1_exit(10);
             }
-            if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_CCM_SET_IVLEN, in, NULL)) {
+            if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_IVLEN, in, NULL)) {
                 fprintf(stderr, "IV length set failed\n");
                 ERR_print_errors_fp(stderr);
                 test1_exit(11);
             }
-            if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_CCM_SET_TAG, tn, NULL)) {
+            if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_TAG, tn, NULL)) {
                 fprintf(stderr, "Tag length set failed\n");
                 ERR_print_errors_fp(stderr);
                 test1_exit(11);
@@ -273,7 +273,7 @@ static void test1(const EVP_CIPHER *c, const unsigned char *key, int kn,
             || (mode == EVP_CIPH_CCM_MODE)) {
             unsigned char rtag[16];
 
-            if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GET_TAG, tn, rtag)) {
+            if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, tn, rtag)) {
                 fprintf(stderr, "Get tag failed\n");
                 ERR_print_errors_fp(stderr);
                 test1_exit(14);
@@ -294,13 +294,13 @@ static void test1(const EVP_CIPHER *c, const unsigned char *key, int kn,
                 ERR_print_errors_fp(stderr);
                 test1_exit(10);
             }
-            if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_IVLEN, in, NULL)) {
+            if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, in, NULL)) {
                 fprintf(stderr, "IV length set failed\n");
                 ERR_print_errors_fp(stderr);
                 test1_exit(11);
             }
             if ((mode == EVP_CIPH_OCB_MODE) &&
-                !EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_TAG, tn, NULL)) {
+                !EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, tn, NULL)) {
                 fprintf(stderr, "Tag length set failed\n");
                 ERR_print_errors_fp(stderr);
                 test1_exit(15);
@@ -310,7 +310,8 @@ static void test1(const EVP_CIPHER *c, const unsigned char *key, int kn,
                 ERR_print_errors_fp(stderr);
                 test1_exit(12);
             }
-            if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_TAG, tn, (void *)tag)) {
+            if (!EVP_CIPHER_CTX_ctrl
+                (ctx, EVP_CTRL_AEAD_SET_TAG, tn, (void *)tag)) {
                 fprintf(stderr, "Set tag failed\n");
                 ERR_print_errors_fp(stderr);
                 test1_exit(14);
@@ -326,13 +327,13 @@ static void test1(const EVP_CIPHER *c, const unsigned char *key, int kn,
                 ERR_print_errors_fp(stderr);
                 test1_exit(10);
             }
-            if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_CCM_SET_IVLEN, in, NULL)) {
+            if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, in, NULL)) {
                 fprintf(stderr, "IV length set failed\n");
                 ERR_print_errors_fp(stderr);
                 test1_exit(11);
             }
             if (!EVP_CIPHER_CTX_ctrl
-                (ctx, EVP_CTRL_CCM_SET_TAG, tn, (void *)tag)) {
+                (ctx, EVP_CTRL_AEAD_SET_TAG, tn, (void *)tag)) {
                 fprintf(stderr, "Tag length set failed\n");
                 ERR_print_errors_fp(stderr);
                 test1_exit(11);
