@@ -729,9 +729,7 @@ int i2d_ECPKParameters(const EC_GROUP *, unsigned char **out);
 # define i2d_ECPKParameters_fp(fp,x) ASN1_i2d_fp(i2d_ECPKParameters,(fp), \
                 (unsigned char *)(x))
 
-# ifndef OPENSSL_NO_BIO
 int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off);
-# endif
 # ifndef OPENSSL_NO_STDIO
 int ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off);
 # endif
@@ -951,7 +949,6 @@ EC_KEY *o2i_ECPublicKey(EC_KEY **key, const unsigned char **in, long len);
  */
 int i2o_ECPublicKey(EC_KEY *key, unsigned char **out);
 
-# ifndef OPENSSL_NO_BIO
 /** Prints out the ec parameters on human readable form.
  *  \param  bp   BIO object to which the information is printed
  *  \param  key  EC_KEY object
@@ -967,7 +964,6 @@ int ECParameters_print(BIO *bp, const EC_KEY *key);
  */
 int EC_KEY_print(BIO *bp, const EC_KEY *key, int off);
 
-# endif
 # ifndef OPENSSL_NO_STDIO
 /** Prints out the ec parameters on human readable form.
  *  \param  fp   file descriptor to which the information is printed

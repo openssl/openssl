@@ -61,9 +61,7 @@
 
 # include <openssl/asn1.h>
 
-# ifndef OPENSSL_NO_BIO
-#  include <openssl/bio.h>
-# endif
+# include <openssl/bio.h>
 # include <openssl/crypto.h>
 # include <openssl/ossl_typ.h>
 # ifdef OPENSSL_USE_DEPRECATED
@@ -395,9 +393,7 @@ DECLARE_ASN1_FUNCTIONS(RSA_OAEP_PARAMS)
 int RSA_print_fp(FILE *fp, const RSA *r, int offset);
 # endif
 
-# ifndef OPENSSL_NO_BIO
 int RSA_print(BIO *bp, const RSA *r, int offset);
-# endif
 
 # ifndef OPENSSL_NO_RC4
 int i2d_RSA_NET(const RSA *a, unsigned char **pp,

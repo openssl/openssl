@@ -68,9 +68,7 @@
 #  include <stdio.h>
 # endif
 
-# ifndef OPENSSL_NO_BIO
-#  include <openssl/bio.h>
-# endif
+# include <openssl/bio.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -79,9 +77,7 @@ extern "C" {
 typedef struct lhash_node_st {
     void *data;
     struct lhash_node_st *next;
-# ifndef OPENSSL_NO_HASH_COMP
     unsigned long hash;
-# endif
 } LHASH_NODE;
 
 typedef int (*LHASH_COMP_FN_TYPE) (const void *, const void *);
@@ -182,17 +178,9 @@ void lh_doall_arg(_LHASH *lh, LHASH_DOALL_ARG_FN_TYPE func, void *arg);
 unsigned long lh_strhash(const char *c);
 unsigned long lh_num_items(const _LHASH *lh);
 
-# ifndef OPENSSL_NO_STDIO
-void lh_stats(const _LHASH *lh, FILE *out);
-void lh_node_stats(const _LHASH *lh, FILE *out);
-void lh_node_usage_stats(const _LHASH *lh, FILE *out);
-# endif
-
-# ifndef OPENSSL_NO_BIO
 void lh_stats_bio(const _LHASH *lh, BIO *out);
 void lh_node_stats_bio(const _LHASH *lh, BIO *out);
 void lh_node_usage_stats_bio(const _LHASH *lh, BIO *out);
-# endif
 
 /* Type checking... */
 

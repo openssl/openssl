@@ -60,12 +60,8 @@
 # define HEADER_PEM_H
 
 # include <openssl/e_os2.h>
-# ifndef OPENSSL_NO_BIO
-#  include <openssl/bio.h>
-# endif
-# ifndef OPENSSL_NO_STACK
-#  include <openssl/stack.h>
-# endif
+# include <openssl/bio.h>
+# include <openssl/stack.h>
 # include <openssl/evp.h>
 # include <openssl/x509.h>
 # include <openssl/pem2.h>
@@ -343,7 +339,6 @@ int PEM_write_bio_##name(BIO *bp, type *x, const EVP_CIPHER *enc, \
 
 # endif
 
-# ifndef OPENSSL_NO_BIO
 #  define DECLARE_PEM_read_bio(name, type) \
         type *PEM_read_bio_##name(BIO *bp, type **x, pem_password_cb *cb, void *u);
 
@@ -357,13 +352,6 @@ int PEM_write_bio_##name(BIO *bp, type *x, const EVP_CIPHER *enc, \
         int PEM_write_bio_##name(BIO *bp, type *x, const EVP_CIPHER *enc, \
              unsigned char *kstr, int klen, pem_password_cb *cb, void *u);
 
-# else
-
-#  define DECLARE_PEM_read_bio(name, type) /**/
-#  define DECLARE_PEM_write_bio(name, type) /**/
-#  define DECLARE_PEM_write_bio_const(name, type) /**/
-#  define DECLARE_PEM_write_cb_bio(name, type) /**/
-# endif
 # define DECLARE_PEM_write(name, type) \
         DECLARE_PEM_write_bio(name, type) \
         DECLARE_PEM_write_fp(name, type)
@@ -385,19 +373,12 @@ int PEM_write_bio_##name(BIO *bp, type *x, const EVP_CIPHER *enc, \
 # define DECLARE_PEM_rw_cb(name, type) \
         DECLARE_PEM_read(name, type) \
         DECLARE_PEM_write_cb(name, type)
-# if 1
-/* "userdata": new with OpenSSL 0.9.4 */
 typedef int pem_password_cb (char *buf, int size, int rwflag, void *userdata);
-# else
-/* OpenSSL 0.9.3, 0.9.3a */
-typedef int pem_password_cb (char *buf, int size, int rwflag);
-# endif
 
 int PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher);
 int PEM_do_header(EVP_CIPHER_INFO *cipher, unsigned char *data, long *len,
                   pem_password_cb *callback, void *u);
 
-# ifndef OPENSSL_NO_BIO
 int PEM_read_bio(BIO *bp, char **name, char **header,
                  unsigned char **data, long *len);
 int PEM_write_bio(BIO *bp, const char *name, const char *hdr,
@@ -416,7 +397,6 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk,
 int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
                             unsigned char *kstr, int klen,
                             pem_password_cb *cd, void *u);
-# endif
 
 int PEM_read(FILE *fp, char **name, char **header,
              unsigned char **data, long *len);

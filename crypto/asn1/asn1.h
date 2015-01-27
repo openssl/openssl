@@ -61,9 +61,7 @@
 
 # include <time.h>
 # include <openssl/e_os2.h>
-# ifndef OPENSSL_NO_BIO
-#  include <openssl/bio.h>
-# endif
+# include <openssl/bio.h>
 # include <openssl/stack.h>
 # include <openssl/safestack.h>
 
@@ -827,10 +825,8 @@ int ASN1_BIT_STRING_get_bit(const ASN1_BIT_STRING *a, int n);
 int ASN1_BIT_STRING_check(const ASN1_BIT_STRING *a,
                           const unsigned char *flags, int flags_len);
 
-# ifndef OPENSSL_NO_BIO
 int ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,
                                BIT_STRING_BITNAME *tbl, int indent);
-# endif
 int ASN1_BIT_STRING_num_asc(char *name, BIT_STRING_BITNAME *tbl);
 int ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING *bs, char *name, int value,
                             BIT_STRING_BITNAME *tbl);
@@ -915,7 +911,6 @@ STACK_OF(OPENSSL_BLOCK) *d2i_ASN1_SET(STACK_OF(OPENSSL_BLOCK) **a,
                                       void (*free_func) (OPENSSL_BLOCK),
                                       int ex_tag, int ex_class);
 
-# ifndef OPENSSL_NO_BIO
 int i2a_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *a);
 int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size);
 int i2a_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *a);
@@ -923,7 +918,6 @@ int a2i_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *bs, char *buf, int size);
 int i2a_ASN1_OBJECT(BIO *bp, ASN1_OBJECT *a);
 int a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size);
 int i2a_ASN1_STRING(BIO *bp, ASN1_STRING *a, int type);
-# endif
 int i2t_ASN1_OBJECT(char *buf, int buf_len, ASN1_OBJECT *a);
 
 int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num);
@@ -1015,7 +1009,6 @@ int ASN1_STRING_print_ex_fp(FILE *fp, ASN1_STRING *str, unsigned long flags);
 
 int ASN1_STRING_to_UTF8(unsigned char **out, ASN1_STRING *in);
 
-# ifndef OPENSSL_NO_BIO
 void *ASN1_d2i_bio(void *(*xnew) (void), d2i_of_void *d2i, BIO *in, void **x);
 
 #  define ASN1_d2i_bio_of(type,xnew,d2i,in,x) \
@@ -1048,7 +1041,6 @@ int ASN1_bn_print(BIO *bp, const char *number, const BIGNUM *num,
 int ASN1_parse(BIO *bp, const unsigned char *pp, long len, int indent);
 int ASN1_parse_dump(BIO *bp, const unsigned char *pp, long len, int indent,
                     int dump);
-# endif
 const char *ASN1_tag2str(int tag);
 
 /* Used to load and write netscape format cert */

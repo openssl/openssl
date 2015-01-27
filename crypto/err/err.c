@@ -109,8 +109,6 @@
  *
  */
 
-#define OPENSSL_NO_FIPS_ERR
-
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>

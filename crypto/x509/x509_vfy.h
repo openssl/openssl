@@ -68,9 +68,7 @@
 # define HEADER_X509_VFY_H
 
 # include <openssl/opensslconf.h>
-# ifndef OPENSSL_NO_LHASH
-#  include <openssl/lhash.h>
-# endif
+# include <openssl/lhash.h>
 # include <openssl/bio.h>
 # include <openssl/crypto.h>
 # include <openssl/symhacks.h>

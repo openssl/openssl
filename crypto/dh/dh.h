@@ -65,9 +65,7 @@
 #  error DH is disabled.
 # endif
 
-# ifndef OPENSSL_NO_BIO
-#  include <openssl/bio.h>
-# endif
+# include <openssl/bio.h>
 # include <openssl/ossl_typ.h>
 # ifdef OPENSSL_USE_DEPRECATED
 #  include <openssl/bn.h>
@@ -233,11 +231,7 @@ int i2d_DHxparams(const DH *a, unsigned char **pp);
 # ifndef OPENSSL_NO_STDIO
 int DHparams_print_fp(FILE *fp, const DH *x);
 # endif
-# ifndef OPENSSL_NO_BIO
 int DHparams_print(BIO *bp, const DH *x);
-# else
-int DHparams_print(char *bp, const DH *x);
-# endif
 
 /* RFC 5114 parameters */
 DH *DH_get_1024_160(void);
