@@ -151,10 +151,10 @@ static void ocb_block_xor(const unsigned char *in1,
  * Lookup L_index in our lookup table. If we haven't already got it we need to
  * calculate it
  */
-static OCB_BLOCK *ocb_lookup_l(OCB128_CONTEXT *ctx, size_t index)
+static OCB_BLOCK *ocb_lookup_l(OCB128_CONTEXT *ctx, size_t idx)
 {
-    if (index <= ctx->l_index) {
-        return ctx->l + index;
+    if (idx <= ctx->l_index) {
+        return ctx->l + idx;
     }
 
     /* We don't have it - so calculate it */
@@ -166,9 +166,9 @@ static OCB_BLOCK *ocb_lookup_l(OCB128_CONTEXT *ctx, size_t index)
         if (!ctx->l)
             return NULL;
     }
-    ocb_double(ctx->l + (index - 1), ctx->l + index);
+    ocb_double(ctx->l + (idx - 1), ctx->l + idx);
 
-    return ctx->l + index;
+    return ctx->l + idx;
 }
 
 /*
