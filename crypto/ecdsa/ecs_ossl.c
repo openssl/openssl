@@ -140,7 +140,6 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
     do {
         /* get random k */
         do
-#ifndef OPENSSL_NO_SHA512
             if (dgst != NULL) {
                 if (!BN_generate_dsa_nonce
                     (k, order, EC_KEY_get0_private_key(eckey), dgst, dlen,
@@ -149,9 +148,7 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
                              ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED);
                     goto err;
                 }
-            } else
-#endif
-            {
+            } else {
                 if (!BN_rand_range(k, order)) {
                     ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP,
                              ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED);

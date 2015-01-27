@@ -946,13 +946,11 @@ static int surewarehk_rsa_priv_dec(int flen, const unsigned char *from,
         }
         memcpy(buf, to, tlen);  /* transfert to into buf */
         switch (padding) {      /* check padding in software */
-#   ifndef OPENSSL_NO_SHA
         case RSA_PKCS1_OAEP_PADDING:
             ret =
                 RSA_padding_check_PKCS1_OAEP(to, tlen, (unsigned char *)buf,
                                              tlen, tlen, NULL, 0);
             break;
-#   endif
         case RSA_SSLV23_PADDING:
             ret =
                 RSA_padding_check_SSLv23(to, tlen, (unsigned char *)buf, flen,

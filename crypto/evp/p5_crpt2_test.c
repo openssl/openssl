@@ -60,14 +60,6 @@
 #include <openssl/err.h>
 #include <openssl/conf.h>
 
-#ifdef OPENSSL_NO_SHA
-int main(int argc, char *argv[])
-{
-    printf("No SHA support\n");
-    return (0);
-}
-#else
-
 typedef struct {
     const char *pass;
     int passlen;
@@ -200,15 +192,9 @@ int main(int argc, char **argv)
 
     printf("PKCS5_PBKDF2_HMAC() tests ");
     for (i = 0; test->pass != NULL; i++, test++) {
-# ifndef OPENSSL_NO_SHA0
         test_p5_pbkdf2(i, "sha1", test, sha1_results[i]);
-# endif
-# ifndef OPENSSL_NO_SHA256
         test_p5_pbkdf2(i, "sha256", test, sha256_results[i]);
-# endif
-# ifndef OPENSSL_NO_SHA512
         test_p5_pbkdf2(i, "sha512", test, sha512_results[i]);
-# endif
         printf(".");
     }
     printf(" done\n");
@@ -223,4 +209,3 @@ int main(int argc, char **argv)
     CRYPTO_mem_leaks_fp(stderr);
     return 0;
 }
-#endif                          /* OPENSSL_NO_SHA */

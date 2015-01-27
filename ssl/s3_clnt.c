@@ -2225,11 +2225,7 @@ int ssl3_get_new_session_ticket(SSL *s)
      */
     EVP_Digest(p, ticklen,
                s->session->session_id, &s->session->session_id_length,
-# ifndef OPENSSL_NO_SHA256
                EVP_sha256(), NULL);
-# else
-               EVP_sha1(), NULL);
-# endif
     ret = 1;
     return (ret);
  f_err:

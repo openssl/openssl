@@ -3385,7 +3385,7 @@ int ssl3_send_newsession_ticket(SSL *s)
             EVP_EncryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
                                tctx->tlsext_tick_aes_key, iv);
             HMAC_Init_ex(&hctx, tctx->tlsext_tick_hmac_key, 16,
-                         tlsext_tick_md(), NULL);
+                         EVP_sha256(), NULL);
             memcpy(key_name, tctx->tlsext_tick_key_name, 16);
         }
 

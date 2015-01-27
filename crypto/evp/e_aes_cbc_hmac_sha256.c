@@ -52,7 +52,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#if !defined(OPENSSL_NO_AES) && !defined(OPENSSL_NO_SHA256)
+#if !defined(OPENSSL_NO_AES)
 
 # include <openssl/evp.h>
 # include <openssl/objects.h>

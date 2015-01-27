@@ -214,14 +214,10 @@ void OpenSSL_add_all_ciphers(void)
     EVP_add_cipher(EVP_aes_256_wrap_pad());
     EVP_add_cipher_alias(SN_aes_256_cbc, "AES256");
     EVP_add_cipher_alias(SN_aes_256_cbc, "aes256");
-# if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA1)
     EVP_add_cipher(EVP_aes_128_cbc_hmac_sha1());
     EVP_add_cipher(EVP_aes_256_cbc_hmac_sha1());
-# endif
-# if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA256)
     EVP_add_cipher(EVP_aes_128_cbc_hmac_sha256());
     EVP_add_cipher(EVP_aes_256_cbc_hmac_sha256());
-# endif
 #endif
 
 #ifndef OPENSSL_NO_CAMELLIA

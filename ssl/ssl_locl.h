@@ -1329,11 +1329,6 @@ int tls1_process_heartbeat(SSL *s);
 int dtls1_process_heartbeat(SSL *s);
 #   endif
 
-#   ifdef OPENSSL_NO_SHA256
-#    define tlsext_tick_md  EVP_sha1
-#   else
-#    define tlsext_tick_md  EVP_sha256
-#   endif
 int tls1_process_ticket(SSL *s, unsigned char *session_id, int len,
                         const unsigned char *limit, SSL_SESSION **ret);
 

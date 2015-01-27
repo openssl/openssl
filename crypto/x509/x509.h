@@ -97,9 +97,7 @@
 #  endif
 # endif
 
-# ifndef OPENSSL_NO_SHA
-#  include <openssl/sha.h>
-# endif
+# include <openssl/sha.h>
 # include <openssl/ossl_typ.h>
 
 #ifdef  __cplusplus
@@ -280,9 +278,7 @@ struct x509_st {
     NAME_CONSTRAINTS *nc;
     STACK_OF(IPAddressFamily) *rfc3779_addr;
     struct ASIdentifiers_st *rfc3779_asid;
-# ifndef OPENSSL_NO_SHA
     unsigned char sha1_hash[SHA_DIGEST_LENGTH];
-# endif
     X509_CERT_AUX *aux;
 } /* X509 */ ;
 
@@ -453,9 +449,7 @@ struct X509_crl_st {
     /* CRL and base CRL numbers for delta processing */
     ASN1_INTEGER *crl_number;
     ASN1_INTEGER *base_crl_number;
-# ifndef OPENSSL_NO_SHA
     unsigned char sha1_hash[SHA_DIGEST_LENGTH];
-# endif
     STACK_OF(GENERAL_NAMES) *issuers;
     const X509_CRL_METHOD *meth;
     void *meth_data;

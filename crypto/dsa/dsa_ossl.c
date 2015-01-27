@@ -258,7 +258,6 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
 
     /* Get random k */
     do {
-#ifndef OPENSSL_NO_SHA512
         if (dgst != NULL) {
             /*
              * We calculate k from SHA512(private_key + H(message) + random).
@@ -267,9 +266,7 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
             if (!BN_generate_dsa_nonce(k, dsa->q, dsa->priv_key, dgst,
                                        dlen, ctx))
                 goto err;
-        } else
-#endif
-        if (!BN_rand_range(k, dsa->q))
+        } else if (!BN_rand_range(k, dsa->q))
             goto err;
     } while (BN_is_zero(k));
 

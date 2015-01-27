@@ -58,7 +58,7 @@
  */
 
 #include <openssl/opensslconf.h>
-#if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_SHA1)
+#if !defined(OPENSSL_NO_DES)
 
 # include <stdio.h>
 # include <stdlib.h>

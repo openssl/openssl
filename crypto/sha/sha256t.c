@@ -10,14 +10,6 @@
 #include <openssl/sha.h>
 #include <openssl/evp.h>
 
-#if defined(OPENSSL_NO_SHA) || defined(OPENSSL_NO_SHA256)
-int main(int argc, char *argv[])
-{
-    printf("No SHA256 support\n");
-    return (0);
-}
-#else
-
 unsigned char app_b1[SHA256_DIGEST_LENGTH] = {
     0xba, 0x78, 0x16, 0xbf, 0x8f, 0x01, 0xcf, 0xea,
     0x41, 0x41, 0x40, 0xde, 0x5d, 0xae, 0x22, 0x23,
@@ -159,4 +151,3 @@ int main(int argc, char **argv)
 
     return 0;
 }
-#endif

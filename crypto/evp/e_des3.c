@@ -374,9 +374,8 @@ const EVP_CIPHER *EVP_des_ede3(void)
     return &des_ede3_ecb;
 }
 
-# ifndef OPENSSL_NO_SHA
 
-#  include <openssl/sha.h>
+# include <openssl/sha.h>
 
 static const unsigned char wrap_iv[8] =
     { 0x4a, 0xdd, 0xa2, 0x2c, 0x79, 0xe8, 0x21, 0x05 };
@@ -482,5 +481,4 @@ const EVP_CIPHER *EVP_des_ede3_wrap(void)
     return &des3_wrap;
 }
 
-# endif
 #endif

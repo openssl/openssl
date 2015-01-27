@@ -128,7 +128,7 @@ FUNCTION functions[] = {
     {FUNC_TYPE_GENERAL, "ciphers", ciphers_main},
 #endif
     {FUNC_TYPE_GENERAL, "nseq", nseq_main},
-#if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_SHA1)
+#if !defined(OPENSSL_NO_DES)
     {FUNC_TYPE_GENERAL, "pkcs12", pkcs12_main},
 #endif
     {FUNC_TYPE_GENERAL, "pkcs8", pkcs8_main},
@@ -158,30 +158,18 @@ FUNCTION functions[] = {
 #ifndef OPENSSL_NO_MD5
     {FUNC_TYPE_MD, "md5", dgst_main},
 #endif
-#ifndef OPENSSL_NO_SHA
     {FUNC_TYPE_MD, "sha", dgst_main},
-#endif
-#ifndef OPENSSL_NO_SHA1
     {FUNC_TYPE_MD, "sha1", dgst_main},
-#endif
 #ifndef OPENSSL_NO_MDC2
     {FUNC_TYPE_MD, "mdc2", dgst_main},
 #endif
 #ifndef OPENSSL_NO_RMD160
     {FUNC_TYPE_MD, "rmd160", dgst_main},
 #endif
-#ifndef OPENSSL_NO_SHA224
     {FUNC_TYPE_MD, "sha224", dgst_main},
-#endif
-#ifndef OPENSSL_NO_SHA256
     {FUNC_TYPE_MD, "sha256", dgst_main},
-#endif
-#ifndef OPENSSL_NO_SHA384
     {FUNC_TYPE_MD, "sha384", dgst_main},
-#endif
-#ifndef OPENSSL_NO_SHA512
     {FUNC_TYPE_MD, "sha512", dgst_main},
-#endif
 #ifndef OPENSSL_NO_AES
     {FUNC_TYPE_CIPHER, "aes-128-cbc", enc_main},
 #endif

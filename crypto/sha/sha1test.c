@@ -61,23 +61,12 @@
 #include <stdlib.h>
 
 #include "../e_os.h"
+#include <openssl/evp.h>
+#include <openssl/sha.h>
 
-#ifdef OPENSSL_NO_SHA
-int main(int argc, char *argv[])
-{
-    printf("No SHA support\n");
-    return (0);
-}
-#else
-# include <openssl/evp.h>
-# include <openssl/sha.h>
-
-# ifdef CHARSET_EBCDIC
-#  include <openssl/ebcdic.h>
-# endif
-
-# undef SHA_0                   /* FIPS 180 */
-# define  SHA_1                 /* FIPS 180-1 */
+#ifdef CHARSET_EBCDIC
+# include <openssl/ebcdic.h>
+#endif
 
 static char *test[] = {
     "abc",
@@ -85,22 +74,12 @@ static char *test[] = {
     NULL,
 };
 
-# ifdef SHA_0
-static char *ret[] = {
-    "0164b8a914cd2a5e74c4f7ff082c4d97f1edf880",
-    "d2516ee1acfa5baf33dfc1c471e438449ef134c8",
-};
-
-static char *bigret = "3232affa48628a26653b5aaa44541fd90d690603";
-# endif
-# ifdef SHA_1
 static char *ret[] = {
     "a9993e364706816aba3e25717850c26c9cd0d89d",
     "84983e441c3bd26ebaae4aa1f95129e5e54670f1",
 };
 
 static char *bigret = "34aa973cd4c4daa4f61eeb2bdbad27316534016f";
-# endif
 
 static char *pt(unsigned char *md);
 int main(int argc, char *argv[])
@@ -112,10 +91,10 @@ int main(int argc, char *argv[])
     EVP_MD_CTX c;
     unsigned char md[SHA_DIGEST_LENGTH];
 
-# ifdef CHARSET_EBCDIC
+#ifdef CHARSET_EBCDIC
     ebcdic2ascii(test[0], test[0], strlen(test[0]));
     ebcdic2ascii(test[1], test[1], strlen(test[1]));
-# endif
+#endif
 
     EVP_MD_CTX_init(&c);
     P = test;
@@ -136,9 +115,9 @@ int main(int argc, char *argv[])
     }
 
     memset(buf, 'a', 1000);
-# ifdef CHARSET_EBCDIC
+#ifdef CHARSET_EBCDIC
     ebcdic2ascii(buf, buf, 1000);
-# endif                         /* CHARSET_EBCDIC */
+#endif                         /* CHARSET_EBCDIC */
     EVP_DigestInit_ex(&c, EVP_sha1(), NULL);
     for (i = 0; i < 1000; i++)
         EVP_DigestUpdate(&c, buf, 1000);
@@ -153,10 +132,10 @@ int main(int argc, char *argv[])
     } else
         printf("test 3 ok\n");
 
-# ifdef OPENSSL_SYS_NETWARE
+#ifdef OPENSSL_SYS_NETWARE
     if (err)
         printf("ERROR: %d\n", err);
-# endif
+#endif
     EXIT(err);
     EVP_MD_CTX_cleanup(&c);
     return (0);
@@ -171,4 +150,3 @@ static char *pt(unsigned char *md)
         sprintf(&(buf[i * 2]), "%02x", md[i]);
     return (buf);
 }
-#endif

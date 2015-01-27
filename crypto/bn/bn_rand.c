@@ -289,7 +289,6 @@ int BN_pseudo_rand_range(BIGNUM *r, const BIGNUM *range)
     return bn_rand_range(1, r, range);
 }
 
-#ifndef OPENSSL_NO_SHA512
 /*
  * BN_generate_dsa_nonce generates a random number 0 <= out < range. Unlike
  * BN_rand_range, it also includes the contents of |priv| and |message| in
@@ -362,4 +361,3 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
         OPENSSL_free(k_bytes);
     return ret;
 }
-#endif                          /* OPENSSL_NO_SHA512 */

@@ -566,12 +566,6 @@ $   WRITE H_FILE "#undef SIXTEEN_BIT"
 $   WRITE H_FILE "#undef EIGHT_BIT"
 $   WRITE H_FILE "#endif"
 $!
-$! Oddly enough, the following symbol is tested in crypto/sha/sha512.c
-$! before sha.h gets included (and HEADER_SHA_H defined), so we will not
-$! protect this one...
-$   WRITE H_FILE "#undef OPENSSL_NO_SHA512"
-$   WRITE H_FILE "#define OPENSSL_NO_SHA512"
-$!
 $   WRITE H_FILE "#undef OPENSSL_EXPORT_VAR_AS_FUNCTION"
 $   WRITE H_FILE "#define OPENSSL_EXPORT_VAR_AS_FUNCTION"
 $!

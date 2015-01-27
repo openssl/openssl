@@ -759,21 +759,13 @@ const EVP_MD *EVP_md4(void);
 # ifndef OPENSSL_NO_MD5
 const EVP_MD *EVP_md5(void);
 # endif
-# ifndef OPENSSL_NO_SHA
-const EVP_MD *EVP_sha(void);
 const EVP_MD *EVP_sha1(void);
-const EVP_MD *EVP_dss(void);
 const EVP_MD *EVP_dss1(void);
 const EVP_MD *EVP_ecdsa(void);
-# endif
-# ifndef OPENSSL_NO_SHA256
 const EVP_MD *EVP_sha224(void);
 const EVP_MD *EVP_sha256(void);
-# endif
-# ifndef OPENSSL_NO_SHA512
 const EVP_MD *EVP_sha384(void);
 const EVP_MD *EVP_sha512(void);
-# endif
 # ifndef OPENSSL_NO_MDC2
 const EVP_MD *EVP_mdc2(void);
 # endif
@@ -917,14 +909,10 @@ const EVP_CIPHER *EVP_aes_256_wrap_pad(void);
 #  ifndef OPENSSL_NO_OCB
 const EVP_CIPHER *EVP_aes_256_ocb(void);
 #  endif
-#  if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA1)
 const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha1(void);
 const EVP_CIPHER *EVP_aes_256_cbc_hmac_sha1(void);
-#  endif
-#  ifndef OPENSSL_NO_SHA256
 const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha256(void);
 const EVP_CIPHER *EVP_aes_256_cbc_hmac_sha256(void);
-#  endif
 # endif
 # ifndef OPENSSL_NO_CAMELLIA
 const EVP_CIPHER *EVP_camellia_128_ecb(void);

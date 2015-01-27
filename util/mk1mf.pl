@@ -177,7 +177,7 @@ $no_static_engine = 0 if (!$shlib);
 
 $no_mdc2=1 if ($no_des);
 
-$no_ssl3=1 if ($no_md5 || $no_sha);
+$no_ssl3=1 if ($no_md5);
 $no_ssl3=1 if ($no_rsa && $no_dh);
 
 $out_def="out";
@@ -281,8 +281,6 @@ $cflags.=" -DOPENSSL_NO_RC5"  if $no_rc5;
 $cflags.=" -DOPENSSL_NO_MD2"  if $no_md2;
 $cflags.=" -DOPENSSL_NO_MD4"  if $no_md4;
 $cflags.=" -DOPENSSL_NO_MD5"  if $no_md5;
-$cflags.=" -DOPENSSL_NO_SHA"  if $no_sha;
-$cflags.=" -DOPENSSL_NO_SHA1" if $no_sha1;
 $cflags.=" -DOPENSSL_NO_RMD160" if $no_ripemd;
 $cflags.=" -DOPENSSL_NO_MDC2" if $no_mdc2;
 $cflags.=" -DOPENSSL_NO_BF"  if $no_bf;
@@ -1123,8 +1121,6 @@ sub var_add
 
 	@a=grep(!/_dhp$/,@a) if $no_dh;
 
-	@a=grep(!/(^sha[^1])|(_sha$)|(m_dss$)/,@a) if $no_sha;
-	@a=grep(!/(^sha1)|(_sha1$)|(m_dss1$)/,@a) if $no_sha1;
 	@a=grep(!/_mdc2$/,@a) if $no_mdc2;
 
 	@a=grep(!/(srp)/,@a) if $no_srp;
@@ -1133,10 +1129,7 @@ sub var_add
 	@a=grep(!/^hw$/,@a) if $no_hw;
 	@a=grep(!/(^rsa$)|(^genrsa$)/,@a) if $no_rsa;
 	@a=grep(!/(^dsa$)|(^gendsa$)|(^dsaparam$)/,@a) if $no_dsa;
-	@a=grep(!/^gendsa$/,@a) if $no_sha1;
 	@a=grep(!/(^dh$)|(^gendh$)/,@a) if $no_dh;
-
-	@a=grep(!/(^dh)|(_sha1$)|(m_dss1$)/,@a) if $no_sha1;
 
 	grep($_="$dir/$_",@a);
 	@a=grep(!/(^|\/)s_/,@a) if $no_sock;
@@ -1409,8 +1402,6 @@ sub read_options
 		"no-md2" => \$no_md2,
 		"no-md4" => \$no_md4,
 		"no-md5" => \$no_md5,
-		"no-sha" => \$no_sha,
-		"no-sha1" => \$no_sha1,
 		"no-ripemd" => \$no_ripemd,
 		"no-mdc2" => \$no_mdc2,
 		"no-whirlpool" => \$no_whirlpool,
@@ -1444,7 +1435,7 @@ sub read_options
 		"no-hw" => \$no_hw,
 		"just-ssl" =>
 			[\$no_rc2, \$no_idea, \$no_des, \$no_bf, \$no_cast,
-			  \$no_md2, \$no_sha, \$no_mdc2, \$no_dsa, \$no_dh,
+			  \$no_md2, \$no_mdc2, \$no_dsa, \$no_dh,
 			  \$no_err, \$no_ripemd, \$no_rc5,
 			  \$no_aes, \$no_camellia, \$no_seed, \$no_srp],
 		"rsaref" => 0,

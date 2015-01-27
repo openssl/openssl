@@ -115,8 +115,6 @@
 #include <openssl/objects.h>
 #include <openssl/sha.h>
 
-#ifndef OPENSSL_NO_SHA
-
 static int init(EVP_MD_CTX *ctx)
 {
     return SHA1_Init(ctx->md_data);
@@ -151,4 +149,3 @@ const EVP_MD *EVP_ecdsa(void)
 {
     return (&ecdsa_md);
 }
-#endif

@@ -65,7 +65,6 @@
 # include <openssl/dsa.h>
 #endif
 
-#ifndef OPENSSL_NO_SHA
 
 static int init(EVP_MD_CTX *ctx)
 {
@@ -101,4 +100,3 @@ const EVP_MD *EVP_dss(void)
 {
     return (&dsa_md);
 }
-#endif
