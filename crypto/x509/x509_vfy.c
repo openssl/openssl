@@ -302,10 +302,12 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 
         /*
          * If we haven't got a least one certificate from our store then check
-         * if there is an alternative chain that could be used.
+         * if there is an alternative chain that could be used.  We only do this
+         * if the user hasn't switched off alternate chain checking
          */
         retry = 0;
-        if (j == ctx->last_untrusted) {
+        if (j == ctx->last_untrusted &&
+            !(ctx->param->flags & X509_V_FLAG_NO_ALT_CHAINS)) {
             while (j-- > 1) {
                 xtmp2 = sk_X509_value(ctx->chain, j - 1);
                 ok = ctx->get_issuer(&xtmp, ctx, xtmp2);
