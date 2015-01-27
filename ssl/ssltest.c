@@ -791,9 +791,7 @@ static void sv_usage(void)
 #ifndef OPENSSL_NO_SSL3_METHOD
     fprintf(stderr, " -ssl3         - use SSLv3\n");
 #endif
-#ifndef OPENSSL_NO_TLS1
     fprintf(stderr, " -tls1         - use TLSv1\n");
-#endif
     fprintf(stderr, " -CApath arg   - PEM format directory of CA's\n");
     fprintf(stderr, " -CAfile arg   - PEM format file of CA's\n");
     fprintf(stderr, " -cert arg     - Server certificate file\n");
@@ -1160,9 +1158,7 @@ int main(int argc, char *argv[])
         }
 #endif
         else if (strcmp(*argv, "-tls1") == 0) {
-#ifdef OPENSSL_NO_TLS1
             no_protocol = 1;
-#endif
             tls1 = 1;
         } else if (strcmp(*argv, "-ssl3") == 0) {
 #ifdef OPENSSL_NO_SSL3_METHOD
@@ -1436,11 +1432,9 @@ int main(int argc, char *argv[])
         meth = SSLv3_method();
     else
 #endif
-#ifndef OPENSSL_NO_TLS1
     if (tls1)
         meth = TLSv1_method();
     else
-#endif
         meth = SSLv23_method();
 
     c_ctx = SSL_CTX_new(meth);
@@ -3204,7 +3198,6 @@ static int do_test_cipherlist(void)
     }
     fprintf(stderr, "ok\n");
 #endif
-#ifndef OPENSSL_NO_TLS1
     fprintf(stderr, "testing TLSv1 cipher list order: ");
     meth = TLSv1_method();
     tci = NULL;
@@ -3217,7 +3210,6 @@ static int do_test_cipherlist(void)
         tci = ci;
     }
     fprintf(stderr, "ok\n");
-#endif
 
     return 1;
 }
