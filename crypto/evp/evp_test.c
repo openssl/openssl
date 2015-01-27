@@ -173,7 +173,8 @@ static void test1(const EVP_CIPHER *c, const unsigned char *key, int kn,
     ctx = EVP_CIPHER_CTX_new();
     EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPHER_CTX_FLAG_WRAP_ALLOW);
     if (encdec != 0) {
-        if ((mode == EVP_CIPH_GCM_MODE) || (mode == EVP_CIPH_OCB_MODE)) {
+        if ((mode == EVP_CIPH_GCM_MODE) || (mode == EVP_CIPH_OCB_MODE)
+            || (mode == EVP_CIPH_CCM_MODE)) {
             if (!EVP_EncryptInit_ex(ctx, c, NULL, NULL, NULL)) {
                 fprintf(stderr, "EncryptInit failed\n");
                 ERR_print_errors_fp(stderr);
@@ -184,7 +185,7 @@ static void test1(const EVP_CIPHER *c, const unsigned char *key, int kn,
                 ERR_print_errors_fp(stderr);
                 test1_exit(11);
             }
-            if ((mode == EVP_CIPH_OCB_MODE) &&
+            if ((mode != EVP_CIPH_GCM_MODE) &&
                 !EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, tn, NULL)) {
                 fprintf(stderr, "Tag length set failed\n");
                 ERR_print_errors_fp(stderr);
@@ -195,33 +196,8 @@ static void test1(const EVP_CIPHER *c, const unsigned char *key, int kn,
                 ERR_print_errors_fp(stderr);
                 test1_exit(12);
             }
-            if (an && !EVP_EncryptUpdate(ctx, NULL, &outl, aad, an)) {
-                fprintf(stderr, "AAD set failed\n");
-                ERR_print_errors_fp(stderr);
-                test1_exit(13);
-            }
-        } else if (mode == EVP_CIPH_CCM_MODE) {
-            if (!EVP_EncryptInit_ex(ctx, c, NULL, NULL, NULL)) {
-                fprintf(stderr, "EncryptInit failed\n");
-                ERR_print_errors_fp(stderr);
-                test1_exit(10);
-            }
-            if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_IVLEN, in, NULL)) {
-                fprintf(stderr, "IV length set failed\n");
-                ERR_print_errors_fp(stderr);
-                test1_exit(11);
-            }
-            if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_TAG, tn, NULL)) {
-                fprintf(stderr, "Tag length set failed\n");
-                ERR_print_errors_fp(stderr);
-                test1_exit(11);
-            }
-            if (!EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv)) {
-                fprintf(stderr, "Key/IV set failed\n");
-                ERR_print_errors_fp(stderr);
-                test1_exit(12);
-            }
-            if (!EVP_EncryptUpdate(ctx, NULL, &outl, NULL, pn)) {
+            if ((mode == EVP_CIPH_CCM_MODE) &&
+                !EVP_EncryptUpdate(ctx, NULL, &outl, NULL, pn)) {
                 fprintf(stderr, "Plaintext length set failed\n");
                 ERR_print_errors_fp(stderr);
                 test1_exit(12);
