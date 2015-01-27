@@ -509,6 +509,8 @@ static void sv_usage(void)
     BIO_printf(bio_err,
                " -trusted_first - Use locally trusted CA's first when building trust chain\n");
     BIO_printf(bio_err,
+               " -no_alt_chains - only ever use the first certificate chain found\n");
+    BIO_printf(bio_err,
                " -nocert       - Don't use any certificates (Anon-DH)\n");
     BIO_printf(bio_err,
                " -cipher arg   - play with 'openssl ciphers' to see what goes here\n");

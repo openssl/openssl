@@ -236,7 +236,7 @@ int MAIN(int argc, char **argv)
  end:
     if (ret == 1) {
         BIO_printf(bio_err,
-                   "usage: verify [-verbose] [-CApath path] [-CAfile file] [-trusted_first] [-purpose purpose] [-crl_check]");
+                   "usage: verify [-verbose] [-CApath path] [-CAfile file] [-trusted_first] [-purpose purpose] [-crl_check] [-no_alt_chains]");
 #ifndef OPENSSL_NO_ENGINE
         BIO_printf(bio_err, " [-engine e]");
 #endif
