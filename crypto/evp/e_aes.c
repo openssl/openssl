@@ -1271,7 +1271,7 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         gctx->tls_aad_len = -1;
         return 1;
 
-    case EVP_CTRL_GCM_SET_IVLEN:
+    case EVP_CTRL_AEAD_SET_IVLEN:
         if (arg <= 0)
             return 0;
         /* Allocate memory for IV if needed */
@@ -1285,14 +1285,14 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         gctx->ivlen = arg;
         return 1;
 
-    case EVP_CTRL_GCM_SET_TAG:
+    case EVP_CTRL_AEAD_SET_TAG:
         if (arg <= 0 || arg > 16 || c->encrypt)
             return 0;
         memcpy(c->buf, ptr, arg);
         gctx->taglen = arg;
         return 1;
 
-    case EVP_CTRL_GCM_GET_TAG:
+    case EVP_CTRL_AEAD_GET_TAG:
         if (arg <= 0 || arg > 16 || !c->encrypt || gctx->taglen < 0)
             return 0;
         memcpy(ptr, c->buf, arg);
@@ -1870,7 +1870,7 @@ static int aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         cctx->len_set = 0;
         return 1;
 
-    case EVP_CTRL_CCM_SET_IVLEN:
+    case EVP_CTRL_AEAD_SET_IVLEN:
         arg = 15 - arg;
     case EVP_CTRL_CCM_SET_L:
         if (arg < 2 || arg > 8)
@@ -1878,7 +1878,7 @@ static int aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         cctx->L = arg;
         return 1;
 
-    case EVP_CTRL_CCM_SET_TAG:
+    case EVP_CTRL_AEAD_SET_TAG:
         if ((arg & 1) || arg < 4 || arg > 16)
             return 0;
         if ((c->encrypt && ptr) || (!c->encrypt && !ptr))
@@ -1890,7 +1890,7 @@ static int aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         cctx->M = arg;
         return 1;
 
-    case EVP_CTRL_CCM_GET_TAG:
+    case EVP_CTRL_AEAD_GET_TAG:
         if (!c->encrypt || !cctx->tag_set)
             return 0;
         if (!CRYPTO_ccm128_tag(&cctx->ccm, ptr, (size_t)arg))
@@ -2217,7 +2217,7 @@ static int aes_ocb_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         octx->aad_buf_len = 0;
         return 1;
 
-    case EVP_CTRL_SET_IVLEN:
+    case EVP_CTRL_AEAD_SET_IVLEN:
         /* IV len must be 1 to 15 */
         if (arg <= 0 || arg > 15)
             return 0;
@@ -2225,7 +2225,7 @@ static int aes_ocb_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         octx->ivlen = arg;
         return 1;
 
-    case EVP_CTRL_SET_TAG:
+    case EVP_CTRL_AEAD_SET_TAG:
         if (!ptr) {
             /* Tag len must be 0 to 16 */
             if (arg < 0 || arg > 16)
@@ -2239,7 +2239,7 @@ static int aes_ocb_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         memcpy(octx->tag, ptr, arg);
         return 1;
 
-    case EVP_CTRL_GET_TAG:
+    case EVP_CTRL_AEAD_GET_TAG:
         if (arg != octx->taglen || !c->encrypt)
             return 0;
 

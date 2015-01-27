@@ -50,9 +50,10 @@ void aes_ccm_encrypt(void)
     /* Set cipher type and mode */
     EVP_EncryptInit_ex(ctx, EVP_aes_192_ccm(), NULL, NULL, NULL);
     /* Set nonce length if default 96 bits is not appropriate */
-    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_CCM_SET_IVLEN, sizeof(ccm_nonce), NULL);
+    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, sizeof(ccm_nonce),
+                        NULL);
     /* Set tag length */
-    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_CCM_SET_TAG, sizeof(ccm_tag), NULL);
+    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, sizeof(ccm_tag), NULL);
     /* Initialise key and IV */
     EVP_EncryptInit_ex(ctx, NULL, NULL, ccm_key, ccm_nonce);
     /* Set plaintext length: only needed if AAD is used */
@@ -67,7 +68,7 @@ void aes_ccm_encrypt(void)
     /* Finalise: note get no output for CCM */
     EVP_EncryptFinal_ex(ctx, outbuf, &outlen);
     /* Get tag */
-    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_CCM_GET_TAG, 16, outbuf);
+    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, 16, outbuf);
     /* Output tag */
     printf("Tag:\n");
     BIO_dump_fp(stdout, outbuf, 16);
@@ -86,9 +87,10 @@ void aes_ccm_decrypt(void)
     /* Select cipher */
     EVP_DecryptInit_ex(ctx, EVP_aes_192_ccm(), NULL, NULL, NULL);
     /* Set nonce length, omit for 96 bits */
-    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_CCM_SET_IVLEN, sizeof(ccm_nonce), NULL);
+    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, sizeof(ccm_nonce),
+                        NULL);
     /* Set expected tag value */
-    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_CCM_SET_TAG,
+    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
                         sizeof(ccm_tag), (void *)ccm_tag);
     /* Specify key and IV */
     EVP_DecryptInit_ex(ctx, NULL, NULL, ccm_key, ccm_nonce);

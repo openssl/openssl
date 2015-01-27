@@ -399,41 +399,38 @@ indicates if the operation was successful. If it does not indicate success
 the authentication operation has failed and any output data B<MUST NOT>
 be used as it is corrupted.
 
-The following ctrl is supported in OCB mode only:
-
- EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_OCB_SET_TAGLEN, taglen, NULL);
-
-Sets the tag length: this call can only be made before specifying an IV. If
-not called a default tag length is used. For OCB AES the default is 16 (i.e. 128
-bits). This is also the maximum tag length.
-
 The following ctrls are supported in both GCM and OCB modes:
 
- EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_IVLEN, ivlen, NULL);
+ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL);
 
 Sets the IV length: this call can only be made before specifying an IV. If
 not called a default IV length is used. For GCM AES and OCB AES the default is
 12 (i.e. 96 bits). For OCB mode the maximum is 15.
 
- EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GET_TAG, taglen, tag);
+ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen, tag);
 
 Writes B<taglen> bytes of the tag value to the buffer indicated by B<tag>.
 This call can only be made when encrypting data and B<after> all data has been
 processed (e.g. after an EVP_EncryptFinal() call). For OCB mode the taglen must
 either be 16 or the value previously set via EVP_CTRL_OCB_SET_TAGLEN.
 
- EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_TAG, taglen, tag);
+ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen, tag);
 
 Sets the expected tag to B<taglen> bytes from B<tag>. This call is only legal
 when decrypting data and must be made B<before> any data is processed (e.g.
 before any EVP_DecryptUpdate() call). For OCB mode the taglen must
-either be 16 or the value previously set via EVP_CTRL_OCB_SET_TAGLEN.
+either be 16 or the value previously set via EVP_CTRL_AEAD_SET_TAG.
+
+In OCB mode calling this with B<tag> set to NULL sets the tag length. The tag
+length can only be set before specifying an IV. If not called a default tag
+length is used. For OCB AES the default is 16 (i.e. 128 bits). This is also the
+maximum tag length for OCB.
 
 See L<EXAMPLES> below for an example of the use of GCM mode.
 
 =head1 CCM Mode
 
-The behaviour of CCM mode ciphers is similar to CCM mode but with a few
+The behaviour of CCM mode ciphers is similar to GCM mode but with a few
 additional requirements and different ctrl values.
 
 Like GCM and OCB modes any additional authenticated data (AAD) is passed by calling
@@ -445,7 +442,7 @@ set to B<NULL> and the length passed in the B<inl> parameter.
 
 The following ctrls are supported in CCM mode:
 
- EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_CCM_SET_TAG, taglen, tag);
+ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen, tag);
 
 This call is made to set the expected B<CCM> tag value when decrypting or
 the length of the tag (with the B<tag> parameter set to NULL) when encrypting.
@@ -456,7 +453,7 @@ used (12 for AES).
 
 Sets the CCM B<L> value. If not set a default is used (8 for AES).
 
- EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_CCM_SET_IVLEN, ivlen, NULL);
+ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL);
 
 Sets the CCM nonce (IV) length: this call can only be made before specifying
 an nonce value. The nonce length is given by B<15 - L> so it is 7 by default

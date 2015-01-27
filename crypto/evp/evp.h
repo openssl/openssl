@@ -397,14 +397,17 @@ struct evp_cipher_st {
 # define         EVP_CTRL_RAND_KEY               0x6
 # define         EVP_CTRL_PBE_PRF_NID            0x7
 # define         EVP_CTRL_COPY                   0x8
-# define         EVP_CTRL_GCM_SET_IVLEN          0x9
-# define         EVP_CTRL_GCM_GET_TAG            0x10
-# define         EVP_CTRL_GCM_SET_TAG            0x11
+# define         EVP_CTRL_AEAD_SET_IVLEN         0x9
+# define         EVP_CTRL_AEAD_GET_TAG           0x10
+# define         EVP_CTRL_AEAD_SET_TAG           0x11
+# define         EVP_CTRL_GCM_SET_IVLEN          EVP_CTRL_AEAD_SET_IVLEN
+# define         EVP_CTRL_GCM_GET_TAG            EVP_CTRL_AEAD_GET_TAG
+# define         EVP_CTRL_GCM_SET_TAG            EVP_CTRL_AEAD_SET_TAG
 # define         EVP_CTRL_GCM_SET_IV_FIXED       0x12
 # define         EVP_CTRL_GCM_IV_GEN             0x13
-# define         EVP_CTRL_CCM_SET_IVLEN          EVP_CTRL_GCM_SET_IVLEN
-# define         EVP_CTRL_CCM_GET_TAG            EVP_CTRL_GCM_GET_TAG
-# define         EVP_CTRL_CCM_SET_TAG            EVP_CTRL_GCM_SET_TAG
+# define         EVP_CTRL_CCM_SET_IVLEN          EVP_CTRL_AEAD_SET_IVLEN
+# define         EVP_CTRL_CCM_GET_TAG            EVP_CTRL_AEAD_GET_TAG
+# define         EVP_CTRL_CCM_SET_TAG            EVP_CTRL_AEAD_SET_TAG
 # define         EVP_CTRL_CCM_SET_L              0x14
 # define         EVP_CTRL_CCM_SET_MSGLEN         0x15
 /*
@@ -429,10 +432,6 @@ typedef struct {
     size_t len;
     unsigned int interleave;
 } EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM;
-
-# define         EVP_CTRL_SET_IVLEN                      EVP_CTRL_GCM_SET_IVLEN
-# define         EVP_CTRL_GET_TAG                        EVP_CTRL_GCM_GET_TAG
-# define         EVP_CTRL_SET_TAG                        EVP_CTRL_GCM_SET_TAG
 
 /* GCM TLS constants */
 /* Length of fixed part of IV derived from PRF */
