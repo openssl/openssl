@@ -36,6 +36,7 @@ B<openssl> B<smime>
 [B<-suiteB_128_only>]
 [B<-suiteB_192>]
 [B<-trusted_first>]
+[B<-no_alt_chains>]
 [B<-use_deltas>]
 [B<-verify_depth num>]
 [B<-verify_email email>]
@@ -291,9 +292,9 @@ address matches that specified in the From: address.
 B<explicit_policy>, B<-extended_crl>, B<-ignore_critical>, B<-inhibit_any>,
 B<-inhibit_map>, B<-issuer_checks>, B<-partial_chain>, B<-policy>,
 B<-policy_check>, B<-policy_print>, B<-purpose>, B<-suiteB_128>,
-B<-suiteB_128_only>, B<-suiteB_192>, B<-trusted_first>, B<-use_deltas>,
-B<-verify_depth>, B<-verify_email>, B<-verify_hostname>, B<-verify_ip>,
-B<-verify_name>, B<-x509_strict>
+B<-suiteB_128_only>, B<-suiteB_192>, B<-trusted_first>, B<-no_alt_chains>,
+B<-use_deltas>, B<-verify_depth>, B<-verify_email>, B<-verify_hostname>,
+B<-verify_ip>, B<-verify_name>, B<-x509_strict>
 
 Set various options of certificate chain verification. See
 L<B<verify>|verify(1)> manual page for details.
@@ -475,5 +476,6 @@ structures may cause parsing errors.
 The use of multiple B<-signer> options and the B<-resign> command were first
 added in OpenSSL 1.0.0
 
+The -no_alt_chains options was first added to OpenSSL 1.1.0.
 
 =cut

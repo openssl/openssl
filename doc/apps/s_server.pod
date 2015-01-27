@@ -51,6 +51,7 @@ B<openssl> B<s_server>
 [B<-suiteB_128_only>]
 [B<-suiteB_192>]
 [B<-trusted_first>]
+[B<-no_alt_chains>]
 [B<-use_deltas>]
 [B<-verify_depth num>]
 [B<-verify_return_error>]
@@ -218,8 +219,8 @@ anonymous ciphersuite or PSK) this option has no effect.
 B<-ignore_critical>, B<-inhibit_any>, B<-inhibit_map>, B<-issuer_checks>,
 B<-partial_chain>, B<-policy>, B<-policy_check>, B<-policy_print>, B<-purpose>,
 B<-suiteB_128>, B<-suiteB_128_only>, B<-suiteB_192>, B<-trusted_first>,
-B<-use_deltas>, B<-verify_depth>, B<-verify_email>, B<-verify_hostname>,
-B<-verify_ip>, B<-verify_name>, B<-x509_strict>
+B<-no_alt_chains>, B<-use_deltas>, B<-verify_depth>, B<-verify_email>,
+B<-verify_hostname>, B<-verify_ip>, B<-verify_name>, B<-x509_strict>
 
 Set different peer certificate verification options.
 See the L<B<verify>|verify(1)> manual page for details.
@@ -480,5 +481,9 @@ unknown cipher suites a client says it supports.
 =head1 SEE ALSO
 
 L<sess_id(1)|sess_id(1)>, L<s_client(1)|s_client(1)>, L<ciphers(1)|ciphers(1)>
+
+=head1 HISTORY
+
+The -no_alt_chains options was first added to OpenSSL 1.1.0.
 
 =cut
