@@ -362,11 +362,13 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
         /*
          * If it's not explicitly trusted then check if there is an alternative
          * chain that could be used. We only do this if we haven't already
-         * checked via TRUSTED_FIRST
+         * checked via TRUSTED_FIRST and the user hasn't switched off alternate
+         * chain checking
          */
         retry = 0;
         if (i != X509_TRUST_TRUSTED
-            && !(ctx->param->flags & X509_V_FLAG_TRUSTED_FIRST)) {
+            && !(ctx->param->flags & X509_V_FLAG_TRUSTED_FIRST)
+            && !(ctx->param->flags & X509_V_FLAG_NO_ALT_CHAINS)) {
             while (j-- > 1) {
                 xtmp2 = sk_X509_value(ctx->chain, j - 1);
                 ok = ctx->get_issuer(&xtmp, ctx, xtmp2);
