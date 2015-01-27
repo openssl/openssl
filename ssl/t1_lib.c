@@ -906,17 +906,11 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int set_ee_md)
                 tlsext_sigalg_ecdsa(md)
 
 static const unsigned char tls12_sigalgs[] = {
-# ifndef OPENSSL_NO_SHA512
     tlsext_sigalg(TLSEXT_hash_sha512)
         tlsext_sigalg(TLSEXT_hash_sha384)
-# endif
-# ifndef OPENSSL_NO_SHA256
         tlsext_sigalg(TLSEXT_hash_sha256)
         tlsext_sigalg(TLSEXT_hash_sha224)
-# endif
-# ifndef OPENSSL_NO_SHA
         tlsext_sigalg(TLSEXT_hash_sha1)
-# endif
 };
 
 # ifndef OPENSSL_NO_ECDSA
@@ -3318,7 +3312,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
         if (memcmp(etick, tctx->tlsext_tick_key_name, 16))
             return 2;
         HMAC_Init_ex(&hctx, tctx->tlsext_tick_hmac_key, 16,
-                     tlsext_tick_md(), NULL);
+                     EVP_sha256(), NULL);
         EVP_DecryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
                            tctx->tlsext_tick_aes_key, etick + 16);
     }
@@ -3462,25 +3456,11 @@ static const tls12_hash_info tls12_md_info[] = {
 # else
     {NID_md5, 64, EVP_md5},
 # endif
-# ifdef OPENSSL_NO_SHA
-    {NID_sha1, 80, 0},
-# else
     {NID_sha1, 80, EVP_sha1},
-# endif
-# ifdef OPENSSL_NO_SHA256
-    {NID_sha224, 112, 0},
-    {NID_sha256, 128, 0},
-# else
     {NID_sha224, 112, EVP_sha224},
     {NID_sha256, 128, EVP_sha256},
-# endif
-# ifdef OPENSSL_NO_SHA512
-    {NID_sha384, 192, 0},
-    {NID_sha512, 256, 0}
-# else
     {NID_sha384, 192, EVP_sha384},
     {NID_sha512, 256, EVP_sha512}
-# endif
 };
 
 static const tls12_hash_info *tls12_get_hash_info(unsigned char hash_alg)

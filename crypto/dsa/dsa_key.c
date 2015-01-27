@@ -59,10 +59,9 @@
 #include <stdio.h>
 #include <time.h>
 #include "cryptlib.h"
-#ifndef OPENSSL_NO_SHA
-# include <openssl/bn.h>
-# include <openssl/dsa.h>
-# include <openssl/rand.h>
+#include <openssl/bn.h>
+#include <openssl/dsa.h>
+#include <openssl/rand.h>
 
 static int dsa_builtin_keygen(DSA *dsa);
 
@@ -133,4 +132,3 @@ static int dsa_builtin_keygen(DSA *dsa)
         BN_CTX_free(ctx);
     return (ok);
 }
-#endif

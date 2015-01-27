@@ -122,12 +122,10 @@ int X509_CRL_cmp(const X509_CRL *a, const X509_CRL *b)
     return (X509_NAME_cmp(a->crl->issuer, b->crl->issuer));
 }
 
-#ifndef OPENSSL_NO_SHA
 int X509_CRL_match(const X509_CRL *a, const X509_CRL *b)
 {
     return memcmp(a->sha1_hash, b->sha1_hash, 20);
 }
-#endif
 
 X509_NAME *X509_get_issuer_name(X509 *a)
 {
@@ -168,7 +166,6 @@ unsigned long X509_subject_name_hash_old(X509 *x)
 }
 #endif
 
-#ifndef OPENSSL_NO_SHA
 /*
  * Compare two certificates: they must be identical for this to work. NB:
  * Although "cmp" operations are generally prototyped to take "const"
@@ -197,7 +194,6 @@ int X509_cmp(const X509 *a, const X509 *b)
     }
     return rv;
 }
-#endif
 
 int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b)
 {

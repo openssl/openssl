@@ -19,14 +19,13 @@
 
 #include "constant_time_locl.h"
 
-#if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA1)
-# include <stdio.h>
-# include "cryptlib.h"
-# include <openssl/bn.h>
-# include <openssl/rsa.h>
-# include <openssl/evp.h>
-# include <openssl/rand.h>
-# include <openssl/sha.h>
+#include <stdio.h>
+#include "cryptlib.h"
+#include <openssl/bn.h>
+#include <openssl/rsa.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
+#include <openssl/sha.h>
 
 int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
                                const unsigned char *from, int flen,
@@ -76,11 +75,11 @@ int RSA_padding_add_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
     memcpy(db + emlen - flen - mdlen, from, (unsigned int)flen);
     if (RAND_bytes(seed, mdlen) <= 0)
         return 0;
-# ifdef PKCS_TESTVECT
+#ifdef PKCS_TESTVECT
     memcpy(seed,
            "\xaa\xfd\x12\xf6\x59\xca\xe6\x34\x89\xb4\x79\xe5\x07\x6d\xde\xc2\xf0\x6c\xb5\x8f",
            20);
-# endif
+#endif
 
     dbmask = OPENSSL_malloc(emlen - mdlen);
     if (dbmask == NULL) {
@@ -279,5 +278,3 @@ int PKCS1_MGF1(unsigned char *mask, long len,
     EVP_MD_CTX_cleanup(&c);
     return rv;
 }
-
-#endif

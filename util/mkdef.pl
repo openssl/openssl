@@ -972,7 +972,6 @@ sub do_defs
 			$a .= ",RC4" if($s =~ /EVP_rc4/);
 			$a .= ",RC5" if($s =~ /EVP_rc5/);
 			$a .= ",RIPEMD" if($s =~ /EVP_ripemd/);
-			$a .= ",SHA" if($s =~ /EVP_sha/);
 			$a .= ",RSA" if($s =~ /EVP_(Open|Seal)(Final|Init)/);
 			$a .= ",RSA" if($s =~ /PEM_Seal(Final|Init|Update)/);
 			$a .= ",RSA" if($s =~ /RSAPrivateKey/);

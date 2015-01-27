@@ -137,9 +137,7 @@
 # include <openssl/hmac.h>
 #endif
 #include <openssl/evp.h>
-#ifndef OPENSSL_NO_SHA
 # include <openssl/sha.h>
-#endif
 #ifndef OPENSSL_NO_RMD160
 # include <openssl/ripemd.h>
 #endif
@@ -339,15 +337,10 @@ static const int KDF1_SHA1_len = 20;
 static void *KDF1_SHA1(const void *in, size_t inlen, void *out,
                        size_t *outlen)
 {
-# ifndef OPENSSL_NO_SHA
     if (*outlen < SHA_DIGEST_LENGTH)
         return NULL;
-    else
-        *outlen = SHA_DIGEST_LENGTH;
+    *outlen = SHA_DIGEST_LENGTH;
     return SHA1(in, inlen, out);
-# else
-    return NULL;
-# endif                        /* OPENSSL_NO_SHA */
 }
 #endif                         /* OPENSSL_NO_ECDH */
 
@@ -382,15 +375,9 @@ int MAIN(int argc, char **argv)
     unsigned char md5[MD5_DIGEST_LENGTH];
     unsigned char hmac[MD5_DIGEST_LENGTH];
 #endif
-#ifndef OPENSSL_NO_SHA
     unsigned char sha[SHA_DIGEST_LENGTH];
-# ifndef OPENSSL_NO_SHA256
     unsigned char sha256[SHA256_DIGEST_LENGTH];
-# endif
-# ifndef OPENSSL_NO_SHA512
     unsigned char sha512[SHA512_DIGEST_LENGTH];
-# endif
-#endif
 #ifndef OPENSSL_NO_WHIRLPOOL
     unsigned char whirlpool[WHIRLPOOL_DIGEST_LENGTH];
 #endif
@@ -827,23 +814,15 @@ int MAIN(int argc, char **argv)
             doit[D_HMAC] = 1;
         else
 #endif
-#ifndef OPENSSL_NO_SHA
         if (strcmp(*argv, "sha1") == 0)
             doit[D_SHA1] = 1;
         else if (strcmp(*argv, "sha") == 0)
             doit[D_SHA1] = 1, doit[D_SHA256] = 1, doit[D_SHA512] = 1;
-        else
-# ifndef OPENSSL_NO_SHA256
-        if (strcmp(*argv, "sha256") == 0)
+        else if (strcmp(*argv, "sha256") == 0)
             doit[D_SHA256] = 1;
-        else
-# endif
-# ifndef OPENSSL_NO_SHA512
-        if (strcmp(*argv, "sha512") == 0)
+        else if (strcmp(*argv, "sha512") == 0)
             doit[D_SHA512] = 1;
         else
-# endif
-#endif
 #ifndef OPENSSL_NO_WHIRLPOOL
         if (strcmp(*argv, "whirlpool") == 0)
             doit[D_WHIRLPOOL] = 1;
@@ -1110,27 +1089,16 @@ int MAIN(int argc, char **argv)
             BIO_printf(bio_err, "hmac     ");
 # endif
 #endif
-#ifndef OPENSSL_NO_SHA1
             BIO_printf(bio_err, "sha1     ");
-#endif
-#ifndef OPENSSL_NO_SHA256
             BIO_printf(bio_err, "sha256   ");
-#endif
-#ifndef OPENSSL_NO_SHA512
             BIO_printf(bio_err, "sha512   ");
-#endif
 #ifndef OPENSSL_NO_WHIRLPOOL
             BIO_printf(bio_err, "whirlpool");
 #endif
 #ifndef OPENSSL_NO_RMD160
             BIO_printf(bio_err, "rmd160");
 #endif
-#if !defined(OPENSSL_NO_MD2) || !defined(OPENSSL_NO_MDC2) || \
-    !defined(OPENSSL_NO_MD4) || !defined(OPENSSL_NO_MD5) || \
-    !defined(OPENSSL_NO_SHA1) || !defined(OPENSSL_NO_RMD160) || \
-    !defined(OPENSSL_NO_WHIRLPOOL)
             BIO_printf(bio_err, "\n");
-#endif
 
 #ifndef OPENSSL_NO_IDEA
             BIO_printf(bio_err, "idea-cbc ");
@@ -1660,23 +1628,16 @@ int MAIN(int argc, char **argv)
         HMAC_CTX_cleanup(&hctx);
     }
 #endif
-#ifndef OPENSSL_NO_SHA
     if (doit[D_SHA1]) {
         for (j = 0; j < SIZE_NUM; j++) {
             print_message(names[D_SHA1], c[D_SHA1][j], lengths[j]);
             Time_F(START);
             for (count = 0, run = 1; COND(c[D_SHA1][j]); count++)
-# if 0
-                EVP_Digest(buf, (unsigned long)lengths[j], &(sha[0]), NULL,
-                           EVP_sha1(), NULL);
-# else
                 SHA1(buf, lengths[j], sha);
-# endif
             d = Time_F(STOP);
             print_result(D_SHA1, j, count, d);
         }
     }
-# ifndef OPENSSL_NO_SHA256
     if (doit[D_SHA256]) {
         for (j = 0; j < SIZE_NUM; j++) {
             print_message(names[D_SHA256], c[D_SHA256][j], lengths[j]);
@@ -1687,9 +1648,6 @@ int MAIN(int argc, char **argv)
             print_result(D_SHA256, j, count, d);
         }
     }
-# endif
-
-# ifndef OPENSSL_NO_SHA512
     if (doit[D_SHA512]) {
         for (j = 0; j < SIZE_NUM; j++) {
             print_message(names[D_SHA512], c[D_SHA512][j], lengths[j]);
@@ -1700,8 +1658,6 @@ int MAIN(int argc, char **argv)
             print_result(D_SHA512, j, count, d);
         }
     }
-# endif
-#endif
 
 #ifndef OPENSSL_NO_WHIRLPOOL
     if (doit[D_WHIRLPOOL]) {

@@ -59,14 +59,12 @@
 #include <stdio.h>
 #include "cryptlib.h"
 
-#ifndef OPENSSL_NO_SHA
-
-# include <openssl/evp.h>
-# include <openssl/objects.h>
-# include <openssl/sha.h>
-# ifndef OPENSSL_NO_DSA
-#  include <openssl/dsa.h>
-# endif
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/sha.h>
+#ifndef OPENSSL_NO_DSA
+# include <openssl/dsa.h>
+#endif
 
 static int init(EVP_MD_CTX *ctx)
 {
@@ -102,4 +100,3 @@ const EVP_MD *EVP_dss1(void)
 {
     return (&dss1_md);
 }
-#endif
