@@ -365,12 +365,9 @@ void OPENSSL_showfatal(const char *fmta, ...)
                 fmt = (const TCHAR *)L"no stack?";
                 break;
             }
-# ifndef OPENSSL_NO_MULTIBYTE
             if (!MultiByteToWideChar(CP_ACP, 0, fmta, len_0, fmtw, len_0))
-# endif
                 for (i = 0; i < len_0; i++)
                     fmtw[i] = (WCHAR)fmta[i];
-
             for (i = 0; i < len_0; i++) {
                 if (fmtw[i] == L'%')
                     do {
