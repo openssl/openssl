@@ -292,17 +292,6 @@ int BN_get_flags(const BIGNUM *b, int n);
  */
 void BN_with_flags(BIGNUM *dest, const BIGNUM *b, int n);
 
-/* Already declared in ossl_typ.h */
-# if 0
-typedef struct bignum_st BIGNUM;
-/* Used for temp variables (declaration hidden in bn_lcl.h) */
-typedef struct bignum_ctx BN_CTX;
-typedef struct bn_blinding_st BN_BLINDING;
-typedef struct bn_mont_ctx_st BN_MONT_CTX;
-typedef struct bn_recp_ctx_st BN_RECP_CTX;
-typedef struct bn_gencb_st BN_GENCB;
-# endif
-
 /* Wrapper function to make using BN_GENCB easier,  */
 int BN_GENCB_call(BN_GENCB *cb, int a, int b);
 

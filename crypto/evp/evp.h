@@ -788,10 +788,6 @@ const EVP_CIPHER *EVP_des_cfb1(void);
 const EVP_CIPHER *EVP_des_cfb8(void);
 const EVP_CIPHER *EVP_des_ede_cfb64(void);
 #  define EVP_des_ede_cfb EVP_des_ede_cfb64
-#  if 0
-const EVP_CIPHER *EVP_des_ede_cfb1(void);
-const EVP_CIPHER *EVP_des_ede_cfb8(void);
-#  endif
 const EVP_CIPHER *EVP_des_ede3_cfb64(void);
 #  define EVP_des_ede3_cfb EVP_des_ede3_cfb64
 const EVP_CIPHER *EVP_des_ede3_cfb1(void);
@@ -809,13 +805,6 @@ const EVP_CIPHER *EVP_des_ede3_wrap(void);
  * are rc4 and md5 declarations made here inside a "NO_DES" precompiler
  * branch?
  */
-#  if 0
-#   ifdef OPENSSL_OPENBSD_DEV_CRYPTO
-const EVP_CIPHER *EVP_dev_crypto_des_ede3_cbc(void);
-const EVP_CIPHER *EVP_dev_crypto_rc4(void);
-const EVP_MD *EVP_dev_crypto_md5(void);
-#   endif
-#  endif
 # endif
 # ifndef OPENSSL_NO_RC4
 const EVP_CIPHER *EVP_rc4(void);

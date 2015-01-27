@@ -77,16 +77,6 @@
 extern "C" {
 #endif
 
-# if 0
-/* Outer object */
-typedef struct x509_hash_dir_st {
-    int num_dirs;
-    char **dirs;
-    int *dirs_type;
-    int num_dirs_alloced;
-} X509_HASH_DIR_CTX;
-# endif
-
 typedef struct x509_file_st {
     int num_paths;              /* number of paths to files or directories */
     int num_alloced;

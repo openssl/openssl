@@ -81,33 +81,6 @@
 #  undef ASN1_STRING_set_default_mask_asc
 #  define ASN1_STRING_set_default_mask_asc        ASN1_STRING_set_def_mask_asc
 
-#  if 0                         /* No longer needed, since safestack macro
-                                 * magic does the job */
-/* Hack the names created with DECLARE_ASN1_SET_OF(PKCS7_SIGNER_INFO) */
-#   undef i2d_ASN1_SET_OF_PKCS7_SIGNER_INFO
-#   define i2d_ASN1_SET_OF_PKCS7_SIGNER_INFO       i2d_ASN1_SET_OF_PKCS7_SIGINF
-#   undef d2i_ASN1_SET_OF_PKCS7_SIGNER_INFO
-#   define d2i_ASN1_SET_OF_PKCS7_SIGNER_INFO       d2i_ASN1_SET_OF_PKCS7_SIGINF
-#  endif
-
-#  if 0                         /* No longer needed, since safestack macro
-                                 * magic does the job */
-/* Hack the names created with DECLARE_ASN1_SET_OF(PKCS7_RECIP_INFO) */
-#   undef i2d_ASN1_SET_OF_PKCS7_RECIP_INFO
-#   define i2d_ASN1_SET_OF_PKCS7_RECIP_INFO        i2d_ASN1_SET_OF_PKCS7_RECINF
-#   undef d2i_ASN1_SET_OF_PKCS7_RECIP_INFO
-#   define d2i_ASN1_SET_OF_PKCS7_RECIP_INFO        d2i_ASN1_SET_OF_PKCS7_RECINF
-#  endif
-
-#  if 0                         /* No longer needed, since safestack macro
-                                 * magic does the job */
-/* Hack the names created with DECLARE_ASN1_SET_OF(ACCESS_DESCRIPTION) */
-#   undef i2d_ASN1_SET_OF_ACCESS_DESCRIPTION
-#   define i2d_ASN1_SET_OF_ACCESS_DESCRIPTION      i2d_ASN1_SET_OF_ACC_DESC
-#   undef d2i_ASN1_SET_OF_ACCESS_DESCRIPTION
-#   define d2i_ASN1_SET_OF_ACCESS_DESCRIPTION      d2i_ASN1_SET_OF_ACC_DESC
-#  endif
-
 /* Hack the names created with DECLARE_PEM_rw(NETSCAPE_CERT_SEQUENCE) */
 #  undef PEM_read_NETSCAPE_CERT_SEQUENCE
 #  define PEM_read_NETSCAPE_CERT_SEQUENCE         PEM_read_NS_CERT_SEQ
