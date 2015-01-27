@@ -1404,7 +1404,6 @@ int MAIN(int argc, char *argv[])
             meth = SSLv3_server_method();
         }
 #endif
-#ifndef OPENSSL_NO_TLS1
         else if (strcmp(*argv, "-tls1") == 0) {
             meth = TLSv1_server_method();
         } else if (strcmp(*argv, "-tls1_1") == 0) {
@@ -1412,7 +1411,6 @@ int MAIN(int argc, char *argv[])
         } else if (strcmp(*argv, "-tls1_2") == 0) {
             meth = TLSv1_2_server_method();
         }
-#endif
 #ifndef OPENSSL_NO_DTLS1
         else if (strcmp(*argv, "-dtls") == 0) {
             meth = DTLS_server_method();

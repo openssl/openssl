@@ -931,14 +931,12 @@ int MAIN(int argc, char **argv)
         else if (strcmp(*argv, "-ssl3") == 0)
             meth = SSLv3_client_method();
 #endif
-#ifndef OPENSSL_NO_TLS1
         else if (strcmp(*argv, "-tls1_2") == 0)
             meth = TLSv1_2_client_method();
         else if (strcmp(*argv, "-tls1_1") == 0)
             meth = TLSv1_1_client_method();
         else if (strcmp(*argv, "-tls1") == 0)
             meth = TLSv1_client_method();
-#endif
 #ifndef OPENSSL_NO_DTLS1
         else if (strcmp(*argv, "-dtls") == 0) {
             meth = DTLS_client_method();
