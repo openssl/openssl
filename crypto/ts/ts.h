@@ -62,15 +62,9 @@
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
-# ifndef OPENSSL_NO_BUFFER
-#  include <openssl/buffer.h>
-# endif
-# ifndef OPENSSL_NO_EVP
-#  include <openssl/evp.h>
-# endif
-# ifndef OPENSSL_NO_BIO
-#  include <openssl/bio.h>
-# endif
+# include <openssl/buffer.h>
+# include <openssl/evp.h>
+# include <openssl/bio.h>
 # include <openssl/stack.h>
 # include <openssl/asn1.h>
 # include <openssl/safestack.h>

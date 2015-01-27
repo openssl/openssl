@@ -148,13 +148,9 @@
 # ifndef OPENSSL_NO_COMP
 #  include <openssl/comp.h>
 # endif
-# ifndef OPENSSL_NO_BIO
-#  include <openssl/bio.h>
-# endif
+# include <openssl/bio.h>
 # ifdef OPENSSL_USE_DEPRECATED
-#  ifndef OPENSSL_NO_X509
-#   include <openssl/x509.h>
-#  endif
+#  include <openssl/x509.h>
 #  include <openssl/crypto.h>
 #  include <openssl/lhash.h>
 #  include <openssl/buffer.h>
@@ -1417,20 +1413,12 @@ struct ssl_st {
      * There are 2 BIO's even though they are normally both the same.  This
      * is so data can be read and written to different handlers
      */
-#  ifndef OPENSSL_NO_BIO
     /* used by SSL_read */
     BIO *rbio;
     /* used by SSL_write */
     BIO *wbio;
     /* used during session-id reuse to concatenate messages */
     BIO *bbio;
-#  else
-    /* used by SSL_read */
-    char *rbio;
-    /* used by SSL_write */
-    char *wbio;
-    char *bbio;
-#  endif
     /*
      * This holds a variable that indicates what we were doing when a 0 or -1
      * is returned.  This is needed for non-blocking IO so we know what
@@ -2108,15 +2096,13 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
         SSL_ctrl(s,SSL_CTRL_GET_RAW_CIPHERLIST,0,plst)
 # define SSL_get0_ec_point_formats(s, plst) \
         SSL_ctrl(s,SSL_CTRL_GET_EC_POINT_FORMATS,0,plst)
-# ifndef OPENSSL_NO_BIO
+
 BIO_METHOD *BIO_f_ssl(void);
 BIO *BIO_new_ssl(SSL_CTX *ctx, int client);
 BIO *BIO_new_ssl_connect(SSL_CTX *ctx);
 BIO *BIO_new_buffer_ssl_connect(SSL_CTX *ctx);
 int BIO_ssl_copy_session_id(BIO *to, BIO *from);
 void BIO_ssl_shutdown(BIO *ssl_bio);
-
-# endif
 
 int SSL_CTX_set_cipher_list(SSL_CTX *, const char *str);
 SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth);
@@ -2148,11 +2134,9 @@ int SSL_set_fd(SSL *s, int fd);
 int SSL_set_rfd(SSL *s, int fd);
 int SSL_set_wfd(SSL *s, int fd);
 # endif
-# ifndef OPENSSL_NO_BIO
 void SSL_set_bio(SSL *s, BIO *rbio, BIO *wbio);
 BIO *SSL_get_rbio(const SSL *s);
 BIO *SSL_get_wbio(const SSL *s);
-# endif
 int SSL_set_cipher_list(SSL *s, const char *str);
 void SSL_set_read_ahead(SSL *s, int yes);
 int SSL_get_verify_mode(const SSL *s);
@@ -2222,10 +2206,8 @@ unsigned int SSL_SESSION_get_compress_id(const SSL_SESSION *s);
 # ifndef OPENSSL_NO_STDIO
 int SSL_SESSION_print_fp(FILE *fp, const SSL_SESSION *ses);
 # endif
-# ifndef OPENSSL_NO_BIO
 int SSL_SESSION_print(BIO *fp, const SSL_SESSION *ses);
 int SSL_SESSION_print_keylog(BIO *bp, const SSL_SESSION *x);
-# endif
 void SSL_SESSION_free(SSL_SESSION *ses);
 int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp);
 int SSL_set_session(SSL *to, SSL_SESSION *session);

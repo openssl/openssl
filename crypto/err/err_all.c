@@ -56,8 +56,6 @@
  * [including the GNU Public Licence.]
  */
 
-#define OPENSSL_NO_FIPS_ERR
-
 #include <stdio.h>
 #include <openssl/asn1.h>
 #include <openssl/bn.h>

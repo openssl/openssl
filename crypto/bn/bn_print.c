@@ -322,7 +322,6 @@ int BN_asc2bn(BIGNUM **bn, const char *a)
     return 1;
 }
 
-#ifndef OPENSSL_NO_BIO
 # ifndef OPENSSL_NO_STDIO
 int BN_print_fp(FILE *fp, const BIGNUM *a)
 {
@@ -362,7 +361,6 @@ int BN_print(BIO *bp, const BIGNUM *a)
  end:
     return (ret);
 }
-#endif
 
 char *BN_options(void)
 {

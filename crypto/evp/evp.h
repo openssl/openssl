@@ -71,17 +71,8 @@
 
 # include <openssl/symhacks.h>
 
-# ifndef OPENSSL_NO_BIO
-#  include <openssl/bio.h>
-# endif
+# include <openssl/bio.h>
 
-/*-
-#define EVP_RC2_KEY_SIZE                16
-#define EVP_RC4_KEY_SIZE                16
-#define EVP_BLOWFISH_KEY_SIZE           16
-#define EVP_CAST5_KEY_SIZE              16
-#define EVP_RC5_32_12_16_KEY_SIZE       16
-*/
 # define EVP_MAX_MD_SIZE                 64/* longest known is SHA512 */
 # define EVP_MAX_KEY_LENGTH              64
 # define EVP_MAX_IV_LENGTH               16
@@ -751,14 +742,12 @@ int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *c, int pad);
 int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr);
 int EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key);
 
-# ifndef OPENSSL_NO_BIO
 BIO_METHOD *BIO_f_md(void);
 BIO_METHOD *BIO_f_base64(void);
 BIO_METHOD *BIO_f_cipher(void);
 BIO_METHOD *BIO_f_reliable(void);
 __owur int BIO_set_cipher(BIO *b, const EVP_CIPHER *c, const unsigned char *k,
                           const unsigned char *i, int enc);
-# endif
 
 const EVP_MD *EVP_md_null(void);
 # ifndef OPENSSL_NO_MD2

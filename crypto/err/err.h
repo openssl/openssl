@@ -120,12 +120,8 @@
 # endif
 
 # include <openssl/ossl_typ.h>
-# ifndef OPENSSL_NO_BIO
-#  include <openssl/bio.h>
-# endif
-# ifndef OPENSSL_NO_LHASH
-#  include <openssl/lhash.h>
-# endif
+# include <openssl/bio.h>
+# include <openssl/lhash.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -341,9 +337,7 @@ void ERR_print_errors_cb(int (*cb) (const char *str, size_t len, void *u),
 # ifndef OPENSSL_NO_STDIO
 void ERR_print_errors_fp(FILE *fp);
 # endif
-# ifndef OPENSSL_NO_BIO
 void ERR_print_errors(BIO *bp);
-# endif
 void ERR_add_error_data(int num, ...);
 void ERR_add_error_vdata(int num, va_list args);
 void ERR_load_strings(int lib, ERR_STRING_DATA str[]);
@@ -359,11 +353,9 @@ DECLARE_DEPRECATED(void ERR_remove_state(unsigned long pid)); /* if zero we
 # endif
 ERR_STATE *ERR_get_state(void);
 
-# ifndef OPENSSL_NO_LHASH
 LHASH_OF(ERR_STRING_DATA) *ERR_get_string_table(void);
 LHASH_OF(ERR_STATE) *ERR_get_err_state_table(void);
 void ERR_release_err_state_table(LHASH_OF(ERR_STATE) **hash);
-# endif
 
 int ERR_get_next_error_library(void);
 

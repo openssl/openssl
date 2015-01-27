@@ -740,7 +740,6 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
         i = s->ctx->app_verify_callback(&ctx); /* should pass app_verify_arg */
 #endif
     else {
-#ifndef OPENSSL_NO_X509_VERIFY
         i = X509_verify_cert(&ctx);
 # if 0
         /* Dummy error calls so mkerr generates them */
@@ -750,11 +749,6 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
 # endif
         if (i > 0)
             i = ssl_security_cert_chain(s, ctx.chain, NULL, 1);
-#else
-        i = 0;
-        ctx.error = X509_V_ERR_APPLICATION_VERIFICATION;
-        SSLerr(SSL_F_SSL_VERIFY_CERT_CHAIN, SSL_R_NO_VERIFY_CALLBACK);
-#endif
     }
 
     s->verify_result = ctx.error;

@@ -66,20 +66,7 @@
 #include <openssl/bn.h>
 
 /* obj_dat.h is generated from objects.h by obj_dat.pl */
-#ifndef OPENSSL_NO_OBJECT
-# include "obj_dat.h"
-#else
-/* You will have to load all the objects needed manually in the application */
-# define NUM_NID 0
-# define NUM_SN 0
-# define NUM_LN 0
-# define NUM_OBJ 0
-static const unsigned char lvalues[1];
-static const ASN1_OBJECT nid_objs[1];
-static const unsigned int sn_objs[1];
-static const unsigned int ln_objs[1];
-static const unsigned int obj_objs[1];
-#endif
+#include "obj_dat.h"
 
 DECLARE_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, sn);
 DECLARE_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, ln);
