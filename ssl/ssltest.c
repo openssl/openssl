@@ -188,6 +188,8 @@
 #endif
 #include <openssl/bn.h>
 
+#include "../ssl/ssl_locl.h"
+
 /*
  * Or gethostname won't be declared properly
  * on Compaq platforms (at least with DEC C).
