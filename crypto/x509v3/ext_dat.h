@@ -103,10 +103,8 @@ static const X509V3_EXT_METHOD *standard_exts[] = {
 #endif
     &v3_sxnet,
     &v3_info,
-#ifndef OPENSSL_NO_RFC3779
     &v3_addr,
     &v3_asid,
-#endif
 #ifndef OPENSSL_NO_OCSP
     &v3_ocsp_nonce,
     &v3_ocsp_crlid,

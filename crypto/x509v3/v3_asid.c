@@ -69,7 +69,6 @@
 #include <openssl/x509.h>
 #include <openssl/bn.h>
 
-#ifndef OPENSSL_NO_RFC3779
 
 /*
  * OpenSSL ASN.1 template translation of RFC 3779 3.2.3.
@@ -736,7 +735,7 @@ int v3_asid_subset(ASIdentifiers *a, ASIdentifiers *b)
 /*
  * Validation error handling via callback.
  */
-# define validation_err(_err_)           \
+#define validation_err(_err_)           \
   do {                                  \
     if (ctx != NULL) {                  \
       ctx->error = _err_;               \
@@ -869,7 +868,7 @@ static int v3_asid_validate_path_internal(X509_STORE_CTX *ctx,
     return ret;
 }
 
-# undef validation_err
+#undef validation_err
 
 /*
  * RFC 3779 3.3 path validation -- called from X509_verify_cert().
@@ -894,5 +893,3 @@ int v3_asid_validate_resource_set(STACK_OF(X509) *chain,
         return 0;
     return v3_asid_validate_path_internal(NULL, chain, ext);
 }
-
-#endif                          /* OPENSSL_NO_RFC3779 */

@@ -69,7 +69,6 @@
 #include <openssl/buffer.h>
 #include <openssl/x509v3.h>
 
-#ifndef OPENSSL_NO_RFC3779
 
 /*
  * OpenSSL ASN.1 template translation of RFC 3779 2.2.3.
@@ -108,7 +107,7 @@ IMPLEMENT_ASN1_FUNCTIONS(IPAddressFamily)
 /*
  * How much buffer space do we need for a raw address?
  */
-# define ADDR_RAW_BUF_LEN        16
+#define ADDR_RAW_BUF_LEN        16
 
 /*
  * What's the address length associated with this AFI?
@@ -163,7 +162,7 @@ static int addr_expand(unsigned char *addr,
 /*
  * Extract the prefix length from a bitstring.
  */
-# define addr_prefixlen(bs) ((int) ((bs)->length * 8 - ((bs)->flags & 7)))
+#define addr_prefixlen(bs) ((int) ((bs)->length * 8 - ((bs)->flags & 7)))
 
 /*
  * i2r handler for one address bitstring.
@@ -1195,7 +1194,7 @@ int v3_addr_subset(IPAddrBlocks *a, IPAddrBlocks *b)
 /*
  * Validation error handling via callback.
  */
-# define validation_err(_err_)           \
+#define validation_err(_err_)           \
   do {                                  \
     if (ctx != NULL) {                  \
       ctx->error = _err_;               \
@@ -1315,7 +1314,7 @@ static int v3_addr_validate_path_internal(X509_STORE_CTX *ctx,
     return ret;
 }
 
-# undef validation_err
+#undef validation_err
 
 /*
  * RFC 3779 2.3 path validation -- called from X509_verify_cert().
@@ -1340,5 +1339,3 @@ int v3_addr_validate_resource_set(STACK_OF(X509) *chain,
         return 0;
     return v3_addr_validate_path_internal(NULL, chain, ext);
 }
-
-#endif                          /* OPENSSL_NO_RFC3779 */

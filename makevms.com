@@ -250,9 +250,6 @@ $! For that reason, the list will also always end up in alphabetical order
 $ CONFIG_LOGICALS := AES,-
 		     ASM,INLINE_ASM,-
 		     BF,-
-		     BIO,-
-		     BUFFER,-
-		     BUF_FREELISTS,-
 		     CAMELLIA,-
 		     CAST,-
 		     CMS,-
@@ -289,7 +286,6 @@ $ CONFIG_LOGICALS := AES,-
 		     RC2,-
 		     RC4,-
 		     RC5,-
-		     RFC3779,-
 		     RIPEMD,-
 		     RSA,-
 		     SEED,-
@@ -306,8 +302,7 @@ $ CONFIG_LOGICALS := AES,-
 		     STDIO,-
 		     STORE,-
 		     TLSEXT,-
-		     WHIRLPOOL,-
-		     X509
+		     WHIRLPOOL
 $! Add a few that we know about
 $ CONFIG_LOGICALS := 'CONFIG_LOGICALS',-
 		     THREADS
