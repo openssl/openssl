@@ -177,18 +177,6 @@ extern "C" {
 # define SSL3_CK_ADH_DES_64_CBC_SHA              0x0300001A
 # define SSL3_CK_ADH_DES_192_CBC_SHA             0x0300001B
 
-# if 0
-#  define SSL3_CK_FZA_DMS_NULL_SHA                0x0300001C
-#  define SSL3_CK_FZA_DMS_FZA_SHA                 0x0300001D
-#  if 0                         /* Because it clashes with KRB5, is never
-                                 * used any more, and is safe to remove
-                                 * according to David Hopwood
-                                 * <david.hopwood@zetnet.co.uk> of the
-                                 * ietf-tls list */
-#   define SSL3_CK_FZA_DMS_RC4_SHA                 0x0300001E
-#  endif
-# endif
-
 /*
  * VRS Additional Kerberos5 entries
  */
@@ -250,12 +238,6 @@ extern "C" {
 # define SSL3_TXT_ADH_DES_40_CBC_SHA             "EXP-ADH-DES-CBC-SHA"
 # define SSL3_TXT_ADH_DES_64_CBC_SHA             "ADH-DES-CBC-SHA"
 # define SSL3_TXT_ADH_DES_192_CBC_SHA            "ADH-DES-CBC3-SHA"
-
-# if 0
-#  define SSL3_TXT_FZA_DMS_NULL_SHA               "FZA-NULL-SHA"
-#  define SSL3_TXT_FZA_DMS_FZA_SHA                "FZA-FZA-CBC-SHA"
-#  define SSL3_TXT_FZA_DMS_RC4_SHA                "FZA-RC4-SHA"
-# endif
 
 # define SSL3_TXT_KRB5_DES_64_CBC_SHA            "KRB5-DES-CBC-SHA"
 # define SSL3_TXT_KRB5_DES_192_CBC3_SHA          "KRB5-DES-CBC3-SHA"

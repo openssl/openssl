@@ -92,11 +92,6 @@ extern "C" {
 /* Special value for method supporting multiple versions */
 # define DTLS_ANY_VERSION                0x1FFFF
 
-# if 0
-/* this alert description is not specified anywhere... */
-#  define DTLS1_AD_MISSING_HANDSHAKE_MESSAGE    110
-# endif
-
 /* lengths of messages */
 # define DTLS1_COOKIE_LENGTH                     256
 

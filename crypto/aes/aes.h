@@ -114,13 +114,6 @@ void AES_cfb8_encrypt(const unsigned char *in, unsigned char *out,
 void AES_ofb128_encrypt(const unsigned char *in, unsigned char *out,
                         size_t length, const AES_KEY *key,
                         unsigned char *ivec, int *num);
-# if 0
-void AES_ctr128_encrypt(const unsigned char *in, unsigned char *out,
-                        size_t length, const AES_KEY *key,
-                        unsigned char ivec[AES_BLOCK_SIZE],
-                        unsigned char ecount_buf[AES_BLOCK_SIZE],
-                        unsigned int *num);
-# endif
 /* NB: the IV is _two_ blocks long */
 void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
                      size_t length, const AES_KEY *key,

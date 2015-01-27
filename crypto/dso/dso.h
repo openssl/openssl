@@ -157,13 +157,6 @@ typedef struct dso_meth_st {
      * libraries at all, let alone a DSO_METHOD implemented for them.
      */
     DSO_FUNC_TYPE (*dso_bind_func) (DSO *dso, const char *symname);
-/* I don't think this would actually be used in any circumstances. */
-# if 0
-    /* Unbinds a variable */
-    int (*dso_unbind_var) (DSO *dso, char *symname, void *symptr);
-    /* Unbinds a function */
-    int (*dso_unbind_func) (DSO *dso, char *symname, DSO_FUNC_TYPE symptr);
-# endif
     /*
      * The generic (yuck) "ctrl()" function. NB: Negative return values
      * (rather than zero) indicate errors.
