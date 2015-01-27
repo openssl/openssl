@@ -758,14 +758,12 @@ int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE) *dn_sk,
 void X509_POLICY_NODE_print(BIO *out, X509_POLICY_NODE *node, int indent);
 DECLARE_STACK_OF(X509_POLICY_NODE)
 
-# ifndef OPENSSL_NO_RFC3779
-
 typedef struct ASRange_st {
     ASN1_INTEGER *min, *max;
 } ASRange;
 
-#  define ASIdOrRange_id          0
-#  define ASIdOrRange_range       1
+# define ASIdOrRange_id          0
+# define ASIdOrRange_range       1
 
 typedef struct ASIdOrRange_st {
     int type;
@@ -778,8 +776,8 @@ typedef struct ASIdOrRange_st {
 typedef STACK_OF(ASIdOrRange) ASIdOrRanges;
 DECLARE_STACK_OF(ASIdOrRange)
 
-#  define ASIdentifierChoice_inherit              0
-#  define ASIdentifierChoice_asIdsOrRanges        1
+# define ASIdentifierChoice_inherit              0
+# define ASIdentifierChoice_asIdsOrRanges        1
 
 typedef struct ASIdentifierChoice_st {
     int type;
@@ -802,8 +800,8 @@ typedef struct IPAddressRange_st {
     ASN1_BIT_STRING *min, *max;
 } IPAddressRange;
 
-#  define IPAddressOrRange_addressPrefix  0
-#  define IPAddressOrRange_addressRange   1
+# define IPAddressOrRange_addressPrefix  0
+# define IPAddressOrRange_addressRange   1
 
 typedef struct IPAddressOrRange_st {
     int type;
@@ -816,8 +814,8 @@ typedef struct IPAddressOrRange_st {
 typedef STACK_OF(IPAddressOrRange) IPAddressOrRanges;
 DECLARE_STACK_OF(IPAddressOrRange)
 
-#  define IPAddressChoice_inherit                 0
-#  define IPAddressChoice_addressesOrRanges       1
+# define IPAddressChoice_inherit                 0
+# define IPAddressChoice_addressesOrRanges       1
 
 typedef struct IPAddressChoice_st {
     int type;
@@ -843,8 +841,8 @@ DECLARE_ASN1_FUNCTIONS(IPAddressFamily)
 /*
  * API tag for elements of the ASIdentifer SEQUENCE.
  */
-#  define V3_ASID_ASNUM   0
-#  define V3_ASID_RDI     1
+# define V3_ASID_ASNUM   0
+# define V3_ASID_RDI     1
 
 /*
  * AFI values, assigned by IANA.  It'd be nice to make the AFI
@@ -852,8 +850,8 @@ DECLARE_ASN1_FUNCTIONS(IPAddressFamily)
  * that would need to be defined for other address families for it to
  * be worth the trouble.
  */
-#  define IANA_AFI_IPV4   1
-#  define IANA_AFI_IPV6   2
+# define IANA_AFI_IPV4   1
+# define IANA_AFI_IPV6   2
 
 /*
  * Utilities to construct and extract values from RFC3779 extensions,
@@ -901,8 +899,6 @@ int v3_asid_validate_resource_set(STACK_OF(X509) *chain,
                                   ASIdentifiers *ext, int allow_inheritance);
 int v3_addr_validate_resource_set(STACK_OF(X509) *chain,
                                   IPAddrBlocks *ext, int allow_inheritance);
-
-# endif                         /* OPENSSL_NO_RFC3779 */
 
 /* BEGIN ERROR CODES */
 /*

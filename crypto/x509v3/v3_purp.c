@@ -322,10 +322,8 @@ int X509_supported_extension(X509_EXTENSION *ex)
         NID_basic_constraints,  /* 87 */
         NID_certificate_policies, /* 89 */
         NID_ext_key_usage,      /* 126 */
-#ifndef OPENSSL_NO_RFC3779
         NID_sbgp_ipAddrBlock,   /* 290 */
         NID_sbgp_autonomousSysNum, /* 291 */
-#endif
         NID_policy_constraints, /* 401 */
         NID_proxyCertInfo,      /* 663 */
         NID_name_constraints,   /* 666 */
@@ -508,11 +506,9 @@ static void x509v3_cache_extensions(X509 *x)
         x->ex_flags |= EXFLAG_INVALID;
     setup_crldp(x);
 
-#ifndef OPENSSL_NO_RFC3779
     x->rfc3779_addr = X509_get_ext_d2i(x, NID_sbgp_ipAddrBlock, NULL, NULL);
     x->rfc3779_asid = X509_get_ext_d2i(x, NID_sbgp_autonomousSysNum,
                                        NULL, NULL);
-#endif
     for (i = 0; i < X509_get_ext_count(x); i++) {
         ex = X509_get_ext(x, i);
         if (OBJ_obj2nid(X509_EXTENSION_get_object(ex))
