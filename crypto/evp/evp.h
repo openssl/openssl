@@ -433,7 +433,6 @@ typedef struct {
 # define         EVP_CTRL_SET_IVLEN                      EVP_CTRL_GCM_SET_IVLEN
 # define         EVP_CTRL_GET_TAG                        EVP_CTRL_GCM_GET_TAG
 # define         EVP_CTRL_SET_TAG                        EVP_CTRL_GCM_SET_TAG
-# define         EVP_CTRL_OCB_SET_TAGLEN         0x1c
 
 /* GCM TLS constants */
 /* Length of fixed part of IV derived from PRF */

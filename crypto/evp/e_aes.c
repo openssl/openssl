@@ -2225,15 +2225,15 @@ static int aes_ocb_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         octx->ivlen = arg;
         return 1;
 
-    case EVP_CTRL_OCB_SET_TAGLEN:
-        /* Tag len must be 0 to 16 */
-        if (arg < 0 || arg > 16)
-            return 0;
-
-        octx->taglen = arg;
-        return 1;
-
     case EVP_CTRL_SET_TAG:
+        if (!ptr) {
+            /* Tag len must be 0 to 16 */
+            if (arg < 0 || arg > 16)
+                return 0;
+
+            octx->taglen = arg;
+            return 1;
+        }
         if (arg != octx->taglen || c->encrypt)
             return 0;
         memcpy(octx->tag, ptr, arg);
