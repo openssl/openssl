@@ -19,7 +19,6 @@ B<openssl> B<s_client>
 [B<-pass arg>]
 [B<-CApath directory>]
 [B<-CAfile filename>]
-[B<-trusted_first>]
 [B<-attime timestamp>]
 [B<-check_ss_sig>]
 [B<-crl_check>]
@@ -39,6 +38,7 @@ B<openssl> B<s_client>
 [B<-suiteB_128_only>]
 [B<-suiteB_192>]
 [B<-trusted_first>]
+[B<-no_alt_chains>]
 [B<-use_deltas>]
 [B<-verify_depth num>]
 [B<-verify_email email>]
@@ -155,11 +155,11 @@ and to use when attempting to build the client certificate chain.
 B<explicit_policy>, B<-extended_crl>, B<-ignore_critical>, B<-inhibit_any>,
 B<-inhibit_map>, B<-issuer_checks>, B<-partial_chain>, B<-policy>,
 B<-policy_check>, B<-policy_print>, B<-purpose>, B<-suiteB_128>,
-B<-suiteB_128_only>, B<-suiteB_192>, B<-trusted_first>, B<-use_deltas>,
-B<-verify_depth>, B<-verify_email>, B<-verify_hostname>, B<-verify_ip>,
-B<-verify_name>, B<-x509_strict>
+B<-suiteB_128_only>, B<-suiteB_192>, B<-trusted_first>, B<-no_alt_chains>,
+B<-use_deltas>, B<-verify_depth>, B<-verify_email>, B<-verify_hostname>,
+B<-verify_ip>, B<-verify_name>, B<-x509_strict>
 
-Set various certificate chain valiadition options. See the
+Set various certificate chain validation options. See the
 L<B<verify>|verify(1)> manual page for details.
 
 =item B<-reconnect>
@@ -410,5 +410,9 @@ information whenever a session is renegotiated.
 =head1 SEE ALSO
 
 L<sess_id(1)|sess_id(1)>, L<s_server(1)|s_server(1)>, L<ciphers(1)|ciphers(1)>
+
+=head1 HISTORY
+
+The -no_alt_chains options was first added to OpenSSL 1.1.0.
 
 =cut
