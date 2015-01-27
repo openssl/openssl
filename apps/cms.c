@@ -646,6 +646,8 @@ int MAIN(int argc, char **argv)
         BIO_printf(bio_err,
                    "-trusted_first use locally trusted certificates first when building trust chain\n");
         BIO_printf(bio_err,
+                   "-no_alt_chains only ever use the first certificate chain found\n");
+        BIO_printf(bio_err,
                    "-crl_check     check revocation status of signer's certificate using CRLs\n");
         BIO_printf(bio_err,
                    "-crl_check_all check revocation status of signer's certificate chain using CRLs\n");
