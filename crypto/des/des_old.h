@@ -141,8 +141,6 @@ typedef struct _ossl_old_des_ks_struct {
         DES_ecb3_encrypt((i),(o),&(k1),&(k2),&(k3),(e))
 #  define des_ede3_cbc_encrypt(i,o,l,k1,k2,k3,iv,e)\
         DES_ede3_cbc_encrypt((i),(o),(l),&(k1),&(k2),&(k3),(iv),(e))
-#  define des_ede3_cbcm_encrypt(i,o,l,k1,k2,k3,iv1,iv2,e)\
-        DES_ede3_cbcm_encrypt((i),(o),(l),&(k1),&(k2),&(k3),(iv1),(iv2),(e))
 #  define des_ede3_cfb64_encrypt(i,o,l,k1,k2,k3,iv,n,e)\
         DES_ede3_cfb64_encrypt((i),(o),(l),&(k1),&(k2),&(k3),(iv),(n),(e))
 #  define des_ede3_ofb64_encrypt(i,o,l,k1,k2,k3,iv,n)\

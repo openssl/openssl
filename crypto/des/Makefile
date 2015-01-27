@@ -28,7 +28,7 @@ LIBSRC=	cbc_cksm.c cbc_enc.c  cfb64enc.c cfb_enc.c  \
 	qud_cksm.c rand_key.c rpc_enc.c  set_key.c  \
 	des_enc.c fcrypt_b.c \
 	xcbc_enc.c \
-	str2key.c  cfb64ede.c ofb64ede.c ede_cbcm_enc.c des_old.c des_old2.c \
+	str2key.c  cfb64ede.c ofb64ede.c des_old.c des_old2.c \
 	read2pwd.c
 
 LIBOBJ= set_key.o  ecb_enc.o  cbc_enc.o \
@@ -37,7 +37,7 @@ LIBOBJ= set_key.o  ecb_enc.o  cbc_enc.o \
 	ofb_enc.o  str2key.o  pcbc_enc.o qud_cksm.o rand_key.o \
 	${DES_ENC} \
 	fcrypt.o xcbc_enc.o rpc_enc.o  cbc_cksm.o \
-	ede_cbcm_enc.o des_old.o des_old2.o read2pwd.o
+	des_old.o des_old2.o read2pwd.o
 
 SRC= $(LIBSRC)
 
@@ -169,13 +169,6 @@ ecb_enc.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ecb_enc.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 ecb_enc.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
 ecb_enc.o: ../../include/openssl/ui_compat.h des_locl.h des_ver.h ecb_enc.c
-ede_cbcm_enc.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
-ede_cbcm_enc.o: ../../include/openssl/e_os2.h
-ede_cbcm_enc.o: ../../include/openssl/opensslconf.h
-ede_cbcm_enc.o: ../../include/openssl/ossl_typ.h
-ede_cbcm_enc.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-ede_cbcm_enc.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-ede_cbcm_enc.o: ../../include/openssl/ui_compat.h des_locl.h ede_cbcm_enc.c
 enc_read.o: ../../e_os.h ../../include/openssl/bio.h
 enc_read.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 enc_read.o: ../../include/openssl/des.h ../../include/openssl/des_old.h

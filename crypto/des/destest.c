@@ -362,7 +362,7 @@ int main(int argc, char *argv[])
 {
     int j, err = 0;
     unsigned int i;
-    des_cblock in, out, outin, iv3, iv2;
+    des_cblock in, out, outin, iv3;
     des_key_schedule ks, ks2, ks3;
     unsigned char cbc_in[40];
     unsigned char cbc_out[40];
@@ -371,56 +371,6 @@ int main(int argc, char *argv[])
     DES_LONG lqret[4];
     int num;
     char *str;
-
-# ifndef OPENSSL_NO_DESCBCM
-    printf("Doing cbcm\n");
-    if ((j = DES_set_key_checked(&cbc_key, &ks)) != 0) {
-        printf("Key error %d\n", j);
-        err = 1;
-    }
-    if ((j = DES_set_key_checked(&cbc2_key, &ks2)) != 0) {
-        printf("Key error %d\n", j);
-        err = 1;
-    }
-    if ((j = DES_set_key_checked(&cbc3_key, &ks3)) != 0) {
-        printf("Key error %d\n", j);
-        err = 1;
-    }
-    memset(cbc_out, 0, 40);
-    memset(cbc_in, 0, 40);
-    i = strlen((char *)cbc_data) + 1;
-    /* i=((i+7)/8)*8; */
-    memcpy(iv3, cbc_iv, sizeof(cbc_iv));
-    memset(iv2, '\0', sizeof iv2);
-
-    DES_ede3_cbcm_encrypt(cbc_data, cbc_out, 16L, &ks, &ks2, &ks3, &iv3, &iv2,
-                          DES_ENCRYPT);
-    DES_ede3_cbcm_encrypt(&cbc_data[16], &cbc_out[16], i - 16, &ks, &ks2,
-                          &ks3, &iv3, &iv2, DES_ENCRYPT);
-/*- if (memcmp(cbc_out,cbc3_ok,
-        (unsigned int)(strlen((char *)cbc_data)+1+7)/8*8) != 0)
-        {
-        printf("des_ede3_cbc_encrypt encrypt error\n");
-        err=1;
-        }
-*/
-    memcpy(iv3, cbc_iv, sizeof(cbc_iv));
-    memset(iv2, '\0', sizeof iv2);
-    DES_ede3_cbcm_encrypt(cbc_out, cbc_in, i, &ks, &ks2, &ks3, &iv3, &iv2,
-                          DES_DECRYPT);
-    if (memcmp(cbc_in, cbc_data, strlen((char *)cbc_data) + 1) != 0) {
-        unsigned int n;
-
-        printf("des_ede3_cbcm_encrypt decrypt error\n");
-        for (n = 0; n < i; ++n)
-            printf(" %02x", cbc_data[n]);
-        printf("\n");
-        for (n = 0; n < i; ++n)
-            printf(" %02x", cbc_in[n]);
-        printf("\n");
-        err = 1;
-    }
-# endif
 
     printf("Doing ecb\n");
     for (i = 0; i < NUM_TESTS; i++) {
