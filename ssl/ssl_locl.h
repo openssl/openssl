@@ -833,18 +833,6 @@ typedef struct ssl3_comp_st {
 } SSL3_COMP;
 # endif
 
-# ifndef OPENSSL_NO_BUF_FREELISTS
-typedef struct ssl3_buf_freelist_st {
-    size_t chunklen;
-    unsigned int len;
-    struct ssl3_buf_freelist_entry_st *head;
-} SSL3_BUF_FREELIST;
-
-typedef struct ssl3_buf_freelist_entry_st {
-    struct ssl3_buf_freelist_entry_st *next;
-} SSL3_BUF_FREELIST_ENTRY;
-# endif
-
 extern SSL3_ENC_METHOD ssl3_undef_enc_method;
 OPENSSL_EXTERN const SSL_CIPHER ssl3_ciphers[];
 

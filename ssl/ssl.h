@@ -1083,12 +1083,6 @@ struct ssl_ctx_st {
                                          unsigned int max_psk_len);
 #  endif
 
-#  ifndef OPENSSL_NO_BUF_FREELISTS
-#   define SSL_MAX_BUF_FREELIST_LEN_DEFAULT 32
-    unsigned int freelist_max_len;
-    struct ssl3_buf_freelist_st *wbuf_freelist;
-    struct ssl3_buf_freelist_st *rbuf_freelist;
-#  endif
 #  ifndef OPENSSL_NO_SRP
     SRP_CTX srp_ctx;            /* ctx for SRP authentication */
 #  endif
