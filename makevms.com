@@ -306,7 +306,6 @@ $ CONFIG_LOGICALS := AES,-
 		     SRP,-
 		     SRTP,-
 		     SSL3_METHOD,-
-		     SSL_INTERN,-
 		     SSL_TRACE,-
 		     STATIC_ENGINE,-
 		     STDIO,-
