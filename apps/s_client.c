@@ -1409,12 +1409,6 @@ int MAIN(int argc, char **argv)
         kssl_ctx_setstring(kctx, KSSL_SERVER, host);
     }
 #endif                          /* OPENSSL_NO_KRB5 */
-/*      SSL_set_cipher_list(con,"RC4-MD5"); */
-#if 0
-# ifdef TLSEXT_TYPE_opaque_prf_input
-    SSL_set_tlsext_opaque_prf_input(con, "Test client", 11);
-# endif
-#endif
 
  re_start:
 #ifdef NO_SYS_UN_H

@@ -530,15 +530,6 @@ typedef struct ssl3_state_st {
     int total_renegotiations;
     int num_renegotiations;
     int in_read_app_data;
-    /*
-     * Opaque PRF input as used for the current handshake. These fields are
-     * used only if TLSEXT_TYPE_opaque_prf_input is defined (otherwise, they
-     * are merely present to improve binary compatibility)
-     */
-    void *client_opaque_prf_input;
-    size_t client_opaque_prf_input_len;
-    void *server_opaque_prf_input;
-    size_t server_opaque_prf_input_len;
     struct {
         /* actually only needs to be 16+20 */
         unsigned char cert_verify_md[EVP_MAX_MD_SIZE * 2];

@@ -1054,11 +1054,6 @@ struct ssl_ctx_st {
     /* Callback for status request */
     int (*tlsext_status_cb) (SSL *ssl, void *arg);
     void *tlsext_status_arg;
-
-    /* draft-rescorla-tls-opaque-prf-input-00.txt information */
-    int (*tlsext_opaque_prf_input_callback) (SSL *, void *peerinput,
-                                             size_t len, void *arg);
-    void *tlsext_opaque_prf_input_callback_arg;
 #  endif
 
 #  ifndef OPENSSL_NO_PSK
@@ -1573,12 +1568,6 @@ struct ssl_st {
     /* our list */
     unsigned char *tlsext_ellipticcurvelist;
 #   endif                       /* OPENSSL_NO_EC */
-    /*
-     * draft-rescorla-tls-opaque-prf-input-00.txt information to be used for
-     * handshakes
-     */
-    void *tlsext_opaque_prf_input;
-    size_t tlsext_opaque_prf_input_len;
     /* TLS Session Ticket extension override */
     TLS_SESSION_TICKET_EXT *tlsext_session_ticket;
     /* TLS Session Ticket extension callback */
@@ -1861,9 +1850,9 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #  define SSL_CTRL_SET_TLSEXT_DEBUG_ARG           57
 #  define SSL_CTRL_GET_TLSEXT_TICKET_KEYS         58
 #  define SSL_CTRL_SET_TLSEXT_TICKET_KEYS         59
-#  define SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT    60
-#  define SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT_CB 61
-#  define SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT_CB_ARG 62
+/*#  define SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT    60 */
+/*#  define SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT_CB 61 */
+/*#  define SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT_CB_ARG 62 */
 #  define SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB       63
 #  define SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG   64
 #  define SSL_CTRL_SET_TLSEXT_STATUS_REQ_TYPE     65

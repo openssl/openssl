@@ -361,9 +361,6 @@ static ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_use_srtp, "use_srtp"},
     {TLSEXT_TYPE_heartbeat, "heartbeat"},
     {TLSEXT_TYPE_session_ticket, "session_ticket"},
-# ifdef TLSEXT_TYPE_opaque_prf_input
-    {TLSEXT_TYPE_opaque_prf_input, "opaque_prf_input"},
-# endif
     {TLSEXT_TYPE_renegotiate, "renegotiate"},
     {TLSEXT_TYPE_next_proto_neg, "next_proto_neg"},
     {TLSEXT_TYPE_padding, "padding"}

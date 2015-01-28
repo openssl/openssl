@@ -610,8 +610,6 @@ void SSL_free(SSL *s)
     if (s->tlsext_ellipticcurvelist)
         OPENSSL_free(s->tlsext_ellipticcurvelist);
 # endif                         /* OPENSSL_NO_EC */
-    if (s->tlsext_opaque_prf_input)
-        OPENSSL_free(s->tlsext_opaque_prf_input);
     if (s->tlsext_ocsp_exts)
         sk_X509_EXTENSION_pop_free(s->tlsext_ocsp_exts, X509_EXTENSION_free);
     if (s->tlsext_ocsp_ids)

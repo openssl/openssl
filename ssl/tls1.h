@@ -254,16 +254,6 @@ extern "C" {
 /* ExtensionType value from RFC4507 */
 # define TLSEXT_TYPE_session_ticket              35
 
-/* ExtensionType value from draft-rescorla-tls-opaque-prf-input-00.txt */
-# if 0
-/*
- * will have to be provided externally for now ,
- * i.e. build with -DTLSEXT_TYPE_opaque_prf_input=38183
- * using whatever extension number you'd like to try
- */
-#  define TLSEXT_TYPE_opaque_prf_input           ??
-# endif
-
 /* Temporary extension type */
 # define TLSEXT_TYPE_renegotiate                 0xff01
 
@@ -393,13 +383,6 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB,(void (*)(void))cb)
 
 #  define SSL_CTX_set_tlsext_status_arg(ssl, arg) \
 SSL_CTX_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG,0, (void *)arg)
-
-#  define SSL_set_tlsext_opaque_prf_input(s, src, len) \
-SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT, len, src)
-#  define SSL_CTX_set_tlsext_opaque_prf_input_callback(ctx, cb) \
-SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT_CB, (void (*)(void))cb)
-#  define SSL_CTX_set_tlsext_opaque_prf_input_callback_arg(ctx, arg) \
-SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT_CB_ARG, 0, arg)
 
 #  define SSL_CTX_set_tlsext_ticket_key_cb(ssl, cb) \
 SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
