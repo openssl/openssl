@@ -601,57 +601,6 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      168,
      },
 
-/* Fortezza ciphersuite from SSL 3.0 spec */
-#if 0
-/* Cipher 1C */
-    {
-     0,
-     SSL3_TXT_FZA_DMS_NULL_SHA,
-     SSL3_CK_FZA_DMS_NULL_SHA,
-     SSL_kFZA,
-     SSL_aFZA,
-     SSL_eNULL,
-     SSL_SHA1,
-     SSL_SSLV3,
-     SSL_NOT_EXP | SSL_STRONG_NONE,
-     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     0,
-     0,
-     },
-
-/* Cipher 1D */
-    {
-     0,
-     SSL3_TXT_FZA_DMS_FZA_SHA,
-     SSL3_CK_FZA_DMS_FZA_SHA,
-     SSL_kFZA,
-     SSL_aFZA,
-     SSL_eFZA,
-     SSL_SHA1,
-     SSL_SSLV3,
-     SSL_NOT_EXP | SSL_STRONG_NONE,
-     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     0,
-     0,
-     },
-
-/* Cipher 1E */
-    {
-     0,
-     SSL3_TXT_FZA_DMS_RC4_SHA,
-     SSL3_CK_FZA_DMS_RC4_SHA,
-     SSL_kFZA,
-     SSL_aFZA,
-     SSL_RC4,
-     SSL_SHA1,
-     SSL_SSLV3,
-     SSL_NOT_EXP | SSL_MEDIUM,
-     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     128,
-     128,
-     },
-#endif
-
 #ifndef OPENSSL_NO_KRB5
 /* The Kerberos ciphers*/
 /* Cipher 1E */
