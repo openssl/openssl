@@ -116,13 +116,13 @@ void ecp_nistz256_to_mont(BN_ULONG res[P256_LIMBS],
                           const BN_ULONG in[P256_LIMBS]);
 /* Functions that perform constant time access to the precomputed tables */
 void ecp_nistz256_scatter_w5(P256_POINT *val,
-                             const P256_POINT *in_t, int index);
+                             const P256_POINT *in_t, int idx);
 void ecp_nistz256_gather_w5(P256_POINT *val,
-                            const P256_POINT *in_t, int index);
+                            const P256_POINT *in_t, int idx);
 void ecp_nistz256_scatter_w7(P256_POINT_AFFINE *val,
-                             const P256_POINT_AFFINE *in_t, int index);
+                             const P256_POINT_AFFINE *in_t, int idx);
 void ecp_nistz256_gather_w7(P256_POINT_AFFINE *val,
-                            const P256_POINT_AFFINE *in_t, int index);
+                            const P256_POINT_AFFINE *in_t, int idx);
 
 /* One converted into the Montgomery domain */
 static const BN_ULONG ONE[P256_LIMBS] = {
@@ -563,7 +563,7 @@ static void ecp_nistz256_windowed_mul(const EC_GROUP *group,
                                       int num, BN_CTX *ctx)
 {
     int i, j;
-    unsigned int index;
+    unsigned int idx;
     unsigned char (*p_str)[33] = NULL;
     const unsigned int window_size = 5;
     const unsigned int mask = (1 << (window_size + 1)) - 1;
@@ -666,10 +666,10 @@ static void ecp_nistz256_windowed_mul(const EC_GROUP *group,
         ecp_nistz256_scatter_w5  (row, &temp[1], 16);
     }
 
-    index = 255;
+    idx = 255;
 
-    wvalue = p_str[0][(index - 1) / 8];
-    wvalue = (wvalue >> ((index - 1) % 8)) & mask;
+    wvalue = p_str[0][(idx - 1) / 8];
+    wvalue = (wvalue >> ((idx - 1) % 8)) & mask;
 
     /*
      * We gather to temp[0], because we know it's position relative
@@ -678,12 +678,12 @@ static void ecp_nistz256_windowed_mul(const EC_GROUP *group,
     ecp_nistz256_gather_w5(&temp[0], table[0], _booth_recode_w5(wvalue) >> 1);
     memcpy(r, &temp[0], sizeof(temp[0]));
 
-    while (index >= 5) {
-        for (i = (index == 255 ? 1 : 0); i < num; i++) {
-            unsigned int off = (index - 1) / 8;
+    while (idx >= 5) {
+        for (i = (idx == 255 ? 1 : 0); i < num; i++) {
+            unsigned int off = (idx - 1) / 8;
 
             wvalue = p_str[i][off] | p_str[i][off + 1] << 8;
-            wvalue = (wvalue >> ((index - 1) % 8)) & mask;
+            wvalue = (wvalue >> ((idx - 1) % 8)) & mask;
 
             wvalue = _booth_recode_w5(wvalue);
 
@@ -695,7 +695,7 @@ static void ecp_nistz256_windowed_mul(const EC_GROUP *group,
             ecp_nistz256_point_add(r, r, &temp[0]);
         }
 
-        index -= window_size;
+        idx -= window_size;
 
         ecp_nistz256_point_double(r, r);
         ecp_nistz256_point_double(r, r);
@@ -943,7 +943,7 @@ static void ecp_nistz256_avx2_mul_g(P256_POINT *r,
     unsigned char sign1, digit1;
     unsigned char sign2, digit2;
     unsigned char sign3, digit3;
-    unsigned int index = 0;
+    unsigned int idx = 0;
     BN_ULONG tmp[P256_LIMBS];
     int i;
 
@@ -955,19 +955,19 @@ static void ecp_nistz256_avx2_mul_g(P256_POINT *r,
     /* Initial four windows */
     wvalue = *((u16 *) & p_str[0]);
     wvalue = (wvalue << 1) & mask;
-    index += window_size;
+    idx += window_size;
     booth_recode_w7(&sign0, &digit0, wvalue);
-    wvalue = *((u16 *) & p_str[(index - 1) / 8]);
-    wvalue = (wvalue >> ((index - 1) % 8)) & mask;
-    index += window_size;
+    wvalue = *((u16 *) & p_str[(idx - 1) / 8]);
+    wvalue = (wvalue >> ((idx - 1) % 8)) & mask;
+    idx += window_size;
     booth_recode_w7(&sign1, &digit1, wvalue);
-    wvalue = *((u16 *) & p_str[(index - 1) / 8]);
-    wvalue = (wvalue >> ((index - 1) % 8)) & mask;
-    index += window_size;
+    wvalue = *((u16 *) & p_str[(idx - 1) / 8]);
+    wvalue = (wvalue >> ((idx - 1) % 8)) & mask;
+    idx += window_size;
     booth_recode_w7(&sign2, &digit2, wvalue);
-    wvalue = *((u16 *) & p_str[(index - 1) / 8]);
-    wvalue = (wvalue >> ((index - 1) % 8)) & mask;
-    index += window_size;
+    wvalue = *((u16 *) & p_str[(idx - 1) / 8]);
+    wvalue = (wvalue >> ((idx - 1) % 8)) & mask;
+    idx += window_size;
     booth_recode_w7(&sign3, &digit3, wvalue);
 
     ecp_nistz256_avx2_multi_gather_w7(point_arr, preComputedTable[0],
@@ -987,21 +987,21 @@ static void ecp_nistz256_avx2_mul_g(P256_POINT *r,
     ecp_nistz256_avx2_to_mont(&aX4[4 * 9], &aX4[4 * 9]);
     ecp_nistz256_avx2_set1(&aX4[4 * 9 * 2]);
 
-    wvalue = *((u16 *) & p_str[(index - 1) / 8]);
-    wvalue = (wvalue >> ((index - 1) % 8)) & mask;
-    index += window_size;
+    wvalue = *((u16 *) & p_str[(idx - 1) / 8]);
+    wvalue = (wvalue >> ((idx - 1) % 8)) & mask;
+    idx += window_size;
     booth_recode_w7(&sign0, &digit0, wvalue);
-    wvalue = *((u16 *) & p_str[(index - 1) / 8]);
-    wvalue = (wvalue >> ((index - 1) % 8)) & mask;
-    index += window_size;
+    wvalue = *((u16 *) & p_str[(idx - 1) / 8]);
+    wvalue = (wvalue >> ((idx - 1) % 8)) & mask;
+    idx += window_size;
     booth_recode_w7(&sign1, &digit1, wvalue);
-    wvalue = *((u16 *) & p_str[(index - 1) / 8]);
-    wvalue = (wvalue >> ((index - 1) % 8)) & mask;
-    index += window_size;
+    wvalue = *((u16 *) & p_str[(idx - 1) / 8]);
+    wvalue = (wvalue >> ((idx - 1) % 8)) & mask;
+    idx += window_size;
     booth_recode_w7(&sign2, &digit2, wvalue);
-    wvalue = *((u16 *) & p_str[(index - 1) / 8]);
-    wvalue = (wvalue >> ((index - 1) % 8)) & mask;
-    index += window_size;
+    wvalue = *((u16 *) & p_str[(idx - 1) / 8]);
+    wvalue = (wvalue >> ((idx - 1) % 8)) & mask;
+    idx += window_size;
     booth_recode_w7(&sign3, &digit3, wvalue);
 
     ecp_nistz256_avx2_multi_gather_w7(point_arr, preComputedTable[4 * 1],
@@ -1023,21 +1023,21 @@ static void ecp_nistz256_avx2_mul_g(P256_POINT *r,
     ecp_nistz256_avx2_point_add_affines_x4(aX4, aX4, bX4);
 
     for (i = 2; i < 9; i++) {
-        wvalue = *((u16 *) & p_str[(index - 1) / 8]);
-        wvalue = (wvalue >> ((index - 1) % 8)) & mask;
-        index += window_size;
+        wvalue = *((u16 *) & p_str[(idx - 1) / 8]);
+        wvalue = (wvalue >> ((idx - 1) % 8)) & mask;
+        idx += window_size;
         booth_recode_w7(&sign0, &digit0, wvalue);
-        wvalue = *((u16 *) & p_str[(index - 1) / 8]);
-        wvalue = (wvalue >> ((index - 1) % 8)) & mask;
-        index += window_size;
+        wvalue = *((u16 *) & p_str[(idx - 1) / 8]);
+        wvalue = (wvalue >> ((idx - 1) % 8)) & mask;
+        idx += window_size;
         booth_recode_w7(&sign1, &digit1, wvalue);
-        wvalue = *((u16 *) & p_str[(index - 1) / 8]);
-        wvalue = (wvalue >> ((index - 1) % 8)) & mask;
-        index += window_size;
+        wvalue = *((u16 *) & p_str[(idx - 1) / 8]);
+        wvalue = (wvalue >> ((idx - 1) % 8)) & mask;
+        idx += window_size;
         booth_recode_w7(&sign2, &digit2, wvalue);
-        wvalue = *((u16 *) & p_str[(index - 1) / 8]);
-        wvalue = (wvalue >> ((index - 1) % 8)) & mask;
-        index += window_size;
+        wvalue = *((u16 *) & p_str[(idx - 1) / 8]);
+        wvalue = (wvalue >> ((idx - 1) % 8)) & mask;
+        idx += window_size;
         booth_recode_w7(&sign3, &digit3, wvalue);
 
         ecp_nistz256_avx2_multi_gather_w7(point_arr,
@@ -1066,8 +1066,8 @@ static void ecp_nistz256_avx2_mul_g(P256_POINT *r,
 
     ecp_nistz256_avx2_convert_transpose_back(res_point_arr, aX4);
     /* Last window is performed serially */
-    wvalue = *((u16 *) & p_str[(index - 1) / 8]);
-    wvalue = (wvalue >> ((index - 1) % 8)) & mask;
+    wvalue = *((u16 *) & p_str[(idx - 1) / 8]);
+    wvalue = (wvalue >> ((idx - 1) % 8)) & mask;
     booth_recode_w7(&sign0, &digit0, wvalue);
     ecp_nistz256_gather_w7((P256_POINT_AFFINE *)r,
                            preComputedTable[36], digit0);
@@ -1129,7 +1129,7 @@ static int ecp_nistz256_points_mul(const EC_GROUP *group,
     const PRECOMP256_ROW *preComputedTable = NULL;
     const EC_PRE_COMP *pre_comp = NULL;
     const EC_POINT *generator = NULL;
-    unsigned int index = 0;
+    unsigned int idx = 0;
     const unsigned int window_size = 7;
     const unsigned int mask = (1 << (window_size + 1)) - 1;
     unsigned int wvalue;
@@ -1249,7 +1249,7 @@ static int ecp_nistz256_points_mul(const EC_GROUP *group,
             {
                 /* First window */
                 wvalue = (p_str[0] << 1) & mask;
-                index += window_size;
+                idx += window_size;
 
                 wvalue = _booth_recode_w7(wvalue);
 
@@ -1262,10 +1262,10 @@ static int ecp_nistz256_points_mul(const EC_GROUP *group,
                 memcpy(p.p.Z, ONE, sizeof(ONE));
 
                 for (i = 1; i < 37; i++) {
-                    unsigned int off = (index - 1) / 8;
+                    unsigned int off = (idx - 1) / 8;
                     wvalue = p_str[off] | p_str[off + 1] << 8;
-                    wvalue = (wvalue >> ((index - 1) % 8)) & mask;
-                    index += window_size;
+                    wvalue = (wvalue >> ((idx - 1) % 8)) & mask;
+                    idx += window_size;
 
                     wvalue = _booth_recode_w7(wvalue);
 
