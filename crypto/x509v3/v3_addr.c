@@ -527,7 +527,7 @@ static IPAddressFamily *make_IPAddressFamily(IPAddrBlocks *addr,
 {
     IPAddressFamily *f;
     unsigned char key[3];
-    unsigned keylen;
+    int keylen;
     int i;
 
     key[0] = (afi >> 8) & 0xFF;
