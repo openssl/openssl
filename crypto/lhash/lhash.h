@@ -181,6 +181,7 @@ unsigned long lh_num_items(const _LHASH *lh);
 # ifndef OPENSSL_NO_STDIO
 void lh_stats(const _LHASH *lh, FILE *fp);
 void lh_node_stats(const _LHASH *lh, FILE *fp);
+void lh_node_usage_stats(const _LHASH *lh, FILE *fp);
 # endif
 void lh_stats_bio(const _LHASH *lh, BIO *out);
 void lh_node_stats_bio(const _LHASH *lh, BIO *out);
