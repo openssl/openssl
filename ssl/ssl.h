@@ -218,11 +218,6 @@ extern "C" {
 # define SSL_TXT_HIGH            "HIGH"
 # define SSL_TXT_FIPS            "FIPS"
 
-# define SSL_TXT_kFZA            "kFZA"/* unused! */
-# define SSL_TXT_aFZA            "aFZA"/* unused! */
-# define SSL_TXT_eFZA            "eFZA"/* unused! */
-# define SSL_TXT_FZA             "FZA"/* unused! */
-
 # define SSL_TXT_aNULL           "aNULL"
 # define SSL_TXT_eNULL           "eNULL"
 # define SSL_TXT_NULL            "NULL"

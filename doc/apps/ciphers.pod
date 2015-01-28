@@ -246,11 +246,6 @@ carry ECDH keys.
 cipher suites using ECDSA authentication, i.e. the certificates carry ECDSA
 keys.
 
-=item B<kFZA>, B<aFZA>, B<eFZA>, B<FZA>
-
-ciphers suites using FORTEZZA key exchange, authentication, encryption or all
-FORTEZZA algorithms. Not implemented.
-
 =item B<TLSv1.2>, B<TLSv1>, B<SSLv3>
 
 TLS v1.2, TLS v1.0 or SSL v3.0 cipher suites respectively. Note:
