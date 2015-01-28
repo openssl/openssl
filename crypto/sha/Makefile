@@ -18,7 +18,7 @@ ASFLAGS= $(INCLUDES) $(ASFLAG)
 AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
-TEST=shatest.c sha1test.c sha256t.c sha512t.c
+TEST=sha1test.c sha256t.c sha512t.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
