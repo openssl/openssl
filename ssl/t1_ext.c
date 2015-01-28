@@ -284,9 +284,6 @@ int SSL_extension_supported(unsigned int ext_type)
     case TLSEXT_TYPE_srp:
     case TLSEXT_TYPE_status_request:
     case TLSEXT_TYPE_use_srtp:
-# ifdef TLSEXT_TYPE_opaque_prf_input
-    case TLSEXT_TYPE_opaque_prf_input:
-# endif
 # ifdef TLSEXT_TYPE_encrypt_then_mac
     case TLSEXT_TYPE_encrypt_then_mac:
 # endif

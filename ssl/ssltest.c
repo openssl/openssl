@@ -956,30 +956,6 @@ static void lock_dbg_cb(int mode, int type, const char *file, int line)
     }
 }
 
-#ifdef TLSEXT_TYPE_opaque_prf_input
-struct cb_info_st {
-    void *input;
-    size_t len;
-    int ret;
-};
-struct cb_info_st co1 = { "C", 1, 1 }; /* try to negotiate oqaque PRF input */
-struct cb_info_st co2 = { "C", 1, 2 }; /* insist on oqaque PRF input */
-struct cb_info_st so1 = { "S", 1, 1 }; /* try to negotiate oqaque PRF input */
-struct cb_info_st so2 = { "S", 1, 2 }; /* insist on oqaque PRF input */
-
-int opaque_prf_input_cb(SSL *ssl, void *peerinput, size_t len, void *arg_)
-{
-    struct cb_info_st *arg = arg_;
-
-    if (arg == NULL)
-        return 1;
-
-    if (!SSL_set_tlsext_opaque_prf_input(ssl, arg->input, arg->len))
-        return 0;
-    return arg->ret;
-}
-#endif
-
 int main(int argc, char *argv[])
 {
     char *CApath = NULL, *CAfile = NULL;
@@ -1532,15 +1508,6 @@ int main(int argc, char *argv[])
 
 #ifndef OPENSSL_NO_RSA
     SSL_CTX_set_tmp_rsa_callback(s_ctx, tmp_rsa_cb);
-#endif
-
-#ifdef TLSEXT_TYPE_opaque_prf_input
-    SSL_CTX_set_tlsext_opaque_prf_input_callback(c_ctx, opaque_prf_input_cb);
-    SSL_CTX_set_tlsext_opaque_prf_input_callback(s_ctx, opaque_prf_input_cb);
-    /* or &co2 or NULL */
-    SSL_CTX_set_tlsext_opaque_prf_input_callback_arg(c_ctx, &co1);
-    /* or &so2 or NULL */
-    SSL_CTX_set_tlsext_opaque_prf_input_callback_arg(s_ctx, &so1);
 #endif
 
     if (!SSL_CTX_use_certificate_file(s_ctx, server_cert, SSL_FILETYPE_PEM)) {

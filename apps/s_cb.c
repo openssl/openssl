@@ -907,11 +907,6 @@ void tlsext_cb(SSL *s, int client_server, int type,
         extname = "renegotiation info";
         break;
 
-#ifdef TLSEXT_TYPE_opaque_prf_input
-    case TLSEXT_TYPE_opaque_prf_input:
-        extname = "opaque PRF input";
-        break;
-#endif
 #ifdef TLSEXT_TYPE_next_proto_neg
     case TLSEXT_TYPE_next_proto_neg:
         extname = "next protocol";
