@@ -111,8 +111,6 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "NEXTPROTONEG",
 			 # Deprecated functions
 			 "DEPRECATED",
-			 # Hide SSL internals
-			 "SSL_INTERN",
 			 # SCTP
 		 	 "SCTP",
 			 # SRTP
