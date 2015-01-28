@@ -23,7 +23,7 @@ LIBSRC= encode.c digest.c evp_enc.c evp_key.c evp_acnf.c evp_cnf.c \
 	e_rc4.c e_aes.c names.c e_seed.c \
 	e_xcbc_d.c e_rc2.c e_cast.c e_rc5.c \
 	m_null.c m_md2.c m_md4.c m_md5.c m_sha1.c m_wp.c \
-	m_dss.c m_dss1.c m_mdc2.c m_ripemd.c m_ecdsa.c\
+	m_dss1.c m_mdc2.c m_ripemd.c m_ecdsa.c\
 	p_open.c p_seal.c p_sign.c p_verify.c p_lib.c p_enc.c p_dec.c \
 	bio_md.c bio_b64.c bio_enc.c evp_err.c e_null.c \
 	c_all.c c_allc.c c_alld.c evp_lib.c bio_ok.c \
@@ -36,7 +36,7 @@ LIBOBJ=	encode.o digest.o evp_enc.o evp_key.o evp_acnf.o evp_cnf.o \
 	e_rc4.o e_aes.o names.o e_seed.o \
 	e_xcbc_d.o e_rc2.o e_cast.o e_rc5.o \
 	m_null.o m_md2.o m_md4.o m_md5.o m_sha1.o m_wp.o \
-	m_dss.o m_dss1.o m_mdc2.o m_ripemd.o m_ecdsa.o\
+	m_dss1.o m_mdc2.o m_ripemd.o m_ecdsa.o\
 	p_open.o p_seal.o p_sign.o p_verify.o p_lib.o p_enc.o p_dec.o \
 	bio_md.o bio_b64.o bio_enc.o evp_err.o e_null.o \
 	c_all.o c_allc.o c_alld.o evp_lib.o bio_ok.o \
@@ -464,16 +464,6 @@ evp_pkey.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 evp_pkey.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 evp_pkey.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 evp_pkey.o: ../asn1/asn1_locl.h ../cryptlib.h evp_pkey.c
-m_dss.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
-m_dss.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-m_dss.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
-m_dss.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-m_dss.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-m_dss.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-m_dss.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-m_dss.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-m_dss.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-m_dss.o: ../cryptlib.h m_dss.c
 m_dss1.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 m_dss1.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 m_dss1.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
