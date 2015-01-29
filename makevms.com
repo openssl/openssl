@@ -243,9 +243,23 @@ $ WRITE H_FILE "#ifndef OPENSSL_SYS_VMS"
 $ WRITE H_FILE "# define OPENSSL_SYS_VMS"
 $ WRITE H_FILE "#endif"
 $
+$!
+$! Defined the full SDIRS here.  It will be pruned depending on configuration.
+$! This is an exact copy of what's found in Makefile.org, with spaces replaced
+$! with commas.
+$!
+$ SDIRS := -
+        objects,-
+        md2,md4,md5,sha,mdc2,hmac,ripemd,whrlpool,-
+        des,aes,rc2,rc4,rc5,idea,bf,cast,camellia,seed,modes,-
+        bn,ec,rsa,dsa,ecdsa,dh,ecdh,dso,engine,-
+        buffer,bio,stack,lhash,rand,err,-
+        evp,asn1,pem,x509,x509v3,conf,txt_db,pkcs7,pkcs12,comp,ocsp,ui,krb5,-
+        cms,pqueue,ts,jpake,srp,store,cmac
+$
 $! One of the best way to figure out what the list should be is to do
 $! the following on a Unix system:
-$!   grep OPENSSL_NO_ crypto/*/*.h ssl/*.h engines/*.h engines/*/*.h|grep ':# *if'|sed -e 's/^.*def //'|sort|uniq
+$!   grep OPENSSL_NO_ crypto/include/internal/*.h crypto/*/*.h ssl/*.h engines/*.h engines/*/*.h|grep ':# *if'|sed -e 's/^.*def //'|sort|uniq
 $! For that reason, the list will also always end up in alphabetical order
 $ CONFIG_LOGICALS := AES,-
 		     ASM,INLINE_ASM,-
@@ -266,46 +280,42 @@ $ CONFIG_LOGICALS := AES,-
 		     EC_NISTP_64_GCC_128,-
 		     ENGINE,-
 		     ERR,-
-		     EVP,-
-		     FP_API,-
 		     GMP,-
 		     GOST,-
-		     HASH_COMP,-
+		     HEARTBEATS,-
 		     HMAC,-
 		     IDEA,-
 		     JPAKE,-
 		     KRB5,-
-		     LHASH,-
 		     MD2,-
 		     MD4,-
 		     MD5,-
 		     MDC2,-
 		     NEXTPROTONEG,-
+		     OCB,-
 		     OCSP,-
 		     PSK,-
 		     RC2,-
 		     RC4,-
 		     RC5,-
-		     RIPEMD,-
+		     RMD160,-
 		     RSA,-
+		     SCTP,-
 		     SEED,-
-		     SHA,-
-		     SHA0,-
-		     SHA1,-
-		     SHA256,-
-		     SHA512,-
 		     SOCK,-
 		     SRP,-
+		     SRTP,-
+		     SSL3_METHOD,-
 		     SSL_INTERN,-
-		     STACK,-
+		     SSL_TRACE,-
 		     STATIC_ENGINE,-
 		     STDIO,-
 		     STORE,-
 		     TLSEXT,-
+		     UNIT_TEST,-
 		     WHIRLPOOL
-$! Add a few that we know about
-$ CONFIG_LOGICALS := 'CONFIG_LOGICALS',-
-		     THREADS
+$ CONFIG_EXPERIMENTAL := JPAKE,-
+			 STORE
 $! The following rules, which dictate how some algorithm choices affect
 $! others, are picked from Configure.
 $! Quick syntax:
@@ -322,18 +332,29 @@ $! affect all following rules that depend on that algorithm being disabled.
 $! To force something to be enabled or disabled, have no algorithms in the
 $! algos part.
 $ CONFIG_DISABLE_RULES := RIJNDAEL/AES;-
+			  RMD160/RIPEMD;-
 			  DES/MDC2;-
 			  EC/ECDSA,ECDH;-
 			  MD5/SSL3,TLS1;-
 			  SHA/SSL3,TLS1;-
+			  RSA,DSA/SSL3,TLS1;-
 			  DH/SSL3,TLS1;-
 			  TLS1/TLSEXT;-
 			  EC/GOST;-
 			  DSA/GOST;-
 			  DH/GOST;-
+			  TLSEXT/SRP,HEARTBEAT;-
 			  /STATIC_ENGINE;-
 			  /KRB5;-
-			  /EC_NISTP_64_GCC_128
+			  /DEPRECATED;-
+			  /EC_NISTP_64_GCC_128;-
+			  /GMP;-
+			  /MD2;-
+			  /RC5;-
+			  /RFC3779;-
+			  /SCTP;-
+			  /SSL_TRACE;-
+			  /UNIT_TEST
 $ CONFIG_ENABLE_RULES := ZLIB_DYNAMIC/ZLIB;-
 			 /THREADS
 $
@@ -346,25 +367,59 @@ $   CONFIG_DISABLE_RULES = CONFIG_DISABLE_RULES + -
 			   ";/WHIRLPOOL"
 $ ENDIF
 $
+$! Keep track of things to remove from SDIRS, have the items surrounded
+$! with commas
+$ SKIP_SDIRS = ","
+$
 $ CONFIG_LOG_I = 0
-$ CONFIG_LOG_LOOP1:
+$ CONFIG_LOG_LOOP11:
 $   CONFIG_LOG_E = F$EDIT(F$ELEMENT(CONFIG_LOG_I,",",CONFIG_LOGICALS),"TRIM")
 $   CONFIG_LOG_I = CONFIG_LOG_I + 1
-$   IF CONFIG_LOG_E .EQS. "" THEN GOTO CONFIG_LOG_LOOP1
-$   IF CONFIG_LOG_E .EQS. "," THEN GOTO CONFIG_LOG_LOOP1_END
+$   IF CONFIG_LOG_E .EQS. "" THEN GOTO CONFIG_LOG_LOOP11
+$   IF CONFIG_LOG_E .EQS. "," THEN GOTO CONFIG_LOG_LOOP11_END
 $   IF F$TRNLNM("OPENSSL_NO_"+CONFIG_LOG_E)
 $   THEN
 $       CONFIG_DISABLED_'CONFIG_LOG_E' := YES
 $       CONFIG_ENABLED_'CONFIG_LOG_E' := NO
 $	CONFIG_CHANGED_'CONFIG_LOG_E' := YES
+$	IF (SKIP_SDIRS - (","+CONFIG_LOG_E+",")) .EQS. SKIP_SDIRS THEN -
+	    SKIP_SDIRS = SKIP_SDIRS + CONFIG_LOG_E + ","
 $   ELSE
 $       CONFIG_DISABLED_'CONFIG_LOG_E' := NO
 $       CONFIG_ENABLED_'CONFIG_LOG_E' := YES
-$	! Because all algorithms are assumed enabled by default
+$	! Because all non-experimental algorithms are assumed
+$	! enabled by default
 $	CONFIG_CHANGED_'CONFIG_LOG_E' := NO
+$	IF (SKIP_SDIRS - (","+CONFIG_LOG_E+",")) .NES. SKIP_SDIRS THEN -
+	    SKIP_SDIRS = SKIP_SDIRS - (CONFIG_LOG_E + ",")
 $   ENDIF
-$   GOTO CONFIG_LOG_LOOP1
-$ CONFIG_LOG_LOOP1_END:
+$   GOTO CONFIG_LOG_LOOP11
+$ CONFIG_LOG_LOOP11_END:
+$
+$ CONFIG_LOG_I = 0
+$ CONFIG_LOG_LOOP12:
+$   CONFIG_LOG_E = F$EDIT(F$ELEMENT(CONFIG_LOG_I,",",CONFIG_EXPERIMENTAL),"TRIM")
+$   CONFIG_LOG_I = CONFIG_LOG_I + 1
+$   IF CONFIG_LOG_E .EQS. "" THEN GOTO CONFIG_LOG_LOOP12
+$   IF CONFIG_LOG_E .EQS. "," THEN GOTO CONFIG_LOG_LOOP12_END
+$   IF F$TRNLNM("OPENSSL_EXPERIMENTAL_"+CONFIG_LOG_E)
+$   THEN
+$	CONFIG_DISABLED_'CONFIG_LOG_E' := NO
+$	CONFIG_ENABLED_'CONFIG_LOG_E' := YES
+$	CONFIG_CHANGED_'CONFIG_LOG_E' := YES
+$	IF (SKIP_SDIRS - (","+CONFIG_LOG_E+",")) .NES. SKIP_SDIRS THEN -
+	    SKIP_SDIRS = SKIP_SDIRS - (CONFIG_LOG_E + ",")
+$   ELSE
+$	CONFIG_DISABLED_'CONFIG_LOG_E' := YES
+$	CONFIG_ENABLED_'CONFIG_LOG_E' := NO
+$	! Because all experimental algorithms are assumed
+$	! disabled by default
+$	CONFIG_CHANGED_'CONFIG_LOG_E' := NO
+$	IF (SKIP_SDIRS - (","+CONFIG_LOG_E+",")) .EQS. SKIP_SDIRS THEN -
+	    SKIP_SDIRS = SKIP_SDIRS + CONFIG_LOG_E + ","
+$   ENDIF
+$   GOTO CONFIG_LOG_LOOP12
+$ CONFIG_LOG_LOOP12_END:
 $
 $! Apply cascading disable rules
 $ CONFIG_DISABLE_I = 0
@@ -407,6 +462,8 @@ $       CONFIG_DISABLED_'CONFIG_DEPENDENT_E' := YES
 $       CONFIG_ENABLED_'CONFIG_DEPENDENT_E' := NO
 $	! Better not to assume defaults at this point...
 $	CONFIG_CHANGED_'CONFIG_DEPENDENT_E' := YES
+$	IF (SKIP_SDIRS - (","+CONFIG_DEPENDENT_E+",")) .EQS. SKIP_SDIRS THEN -
+	    SKIP_SDIRS = SKIP_SDIRS + CONFIG_DEPENDENT_E + ","
 $	WRITE SYS$ERROR -
          "''CONFIG_DEPENDENT_E' disabled by rule ''CONFIG_DISABLE_E'"
 $	GOTO CONFIG_DISABLE_LOOP2
@@ -456,6 +513,8 @@ $       CONFIG_DISABLED_'CONFIG_DEPENDENT_E' := NO
 $       CONFIG_ENABLED_'CONFIG_DEPENDENT_E' := YES
 $	! Better not to assume defaults at this point...
 $	CONFIG_CHANGED_'CONFIG_DEPENDENT_E' := YES
+$	IF (SKIP_SDIRS - (","+CONFIG_DEPENDENT_E+",")) .NES. SKIP_SDIRS THEN -
+	    SKIP_SDIRS = SKIP_SDIRS - (CONFIG_DEPENDENT_E + ",")
 $	WRITE SYS$ERROR -
          "''CONFIG_DEPENDENT_E' enabled by rule ''CONFIG_ENABLE_E'"
 $	GOTO CONFIG_ENABLE_LOOP2
@@ -464,6 +523,19 @@ $   ENDIF
 $   GOTO CONFIG_ENABLE_LOOP0
 $ CONFIG_ENABLE_LOOP0_END:
 $
+$! Fix SDIRS
+$ SDIRS = ","+F$EDIT(SDIRS,"COLLAPSE")+","
+$ CONFIG_SKIP_I = 0
+$ CONFIG_SDIRS_LOOP1:
+$   CONFIG_SKIP_E = F$EDIT(F$ELEMENT(CONFIG_SKIP_I,",",SKIP_SDIRS),"TRIM")
+$   CONFIG_SKIP_I = CONFIG_SKIP_I + 1
+$   IF CONFIG_SKIP_E .EQS. "" THEN GOTO CONFIG_SDIRS_LOOP1
+$   IF CONFIG_SKIP_E .EQS. "," THEN GOTO CONFIG_SDIRS_LOOP1_END
+$   IF (SDIRS - (","+CONFIG_SKIP_E+",")) .NES. SDIRS THEN -
+       SDIRS = SDIRS - (CONFIG_SKIP_E+",")
+$   GOTO CONFIG_SDIRS_LOOP1
+$ CONFIG_SDIRS_LOOP1_END: 
+$ 
 $! Write to the configuration
 $ CONFIG_LOG_I = 0
 $ CONFIG_LOG_LOOP2:
@@ -471,21 +543,32 @@ $   CONFIG_LOG_E = F$EDIT(F$ELEMENT(CONFIG_LOG_I,",",CONFIG_LOGICALS),"TRIM")
 $   CONFIG_LOG_I = CONFIG_LOG_I + 1
 $   IF CONFIG_LOG_E .EQS. "" THEN GOTO CONFIG_LOG_LOOP2
 $   IF CONFIG_LOG_E .EQS. "," THEN GOTO CONFIG_LOG_LOOP2_END
-$   IF CONFIG_CHANGED_'CONFIG_LOG_E'
+$   IF CONFIG_DISABLED_'CONFIG_LOG_E'
 $   THEN
-$     IF CONFIG_DISABLED_'CONFIG_LOG_E'
+$     WRITE H_FILE "#ifndef OPENSSL_NO_",CONFIG_LOG_E
+$     WRITE H_FILE "# define OPENSSL_NO_",CONFIG_LOG_E
+$     WRITE H_FILE "#endif"
+$   ELSE
+$     IF CONFIG_CHANGED_'CONFIG_LOG_E'
 $     THEN
-$	WRITE H_FILE "#ifndef OPENSSL_NO_",CONFIG_LOG_E
-$	WRITE H_FILE "# define OPENSSL_NO_",CONFIG_LOG_E
+$	WRITE H_FILE "#ifndef OPENSSL_EXPERIMENTAL_",CONFIG_LOG_E
+$	WRITE H_FILE "# ifndef OPENSSL_NO_",CONFIG_LOG_E
+$	WRITE H_FILE "#  define OPENSSL_NO_",CONFIG_LOG_E
+$	WRITE H_FILE "# endif"
 $	WRITE H_FILE "#endif"
-$     ELSE
-$	WRITE H_FILE "#ifndef OPENSSL_",CONFIG_LOG_E
-$	WRITE H_FILE "# define OPENSSL_",CONFIG_LOG_E
-$	WRITE H_FILE "#endif"
+$
+$	IF F$TYPE(USER_CCDEFS) .NES. ""
+$	THEN
+$	  USER_CCDEFS = USER_CCDEFS + ",OPENSSL_EXPERIMENTAL_" + CONFIG_LOG_E
+$       ELSE
+$	  USER_CCDEFS = "OPENSSL_EXPERIMENTAL_" + CONFIG_LOG_E
+$       ENDIF
 $     ENDIF
 $   ENDIF
 $   GOTO CONFIG_LOG_LOOP2
 $ CONFIG_LOG_LOOP2_END:
+$
+$ WRITE/SYMBOL SYS$ERROR "SDIRS = """,SDIRS,""""
 $!
 $ WRITE H_FILE ""
 $ WRITE H_FILE "/* STCP support comes with TCPIP 5.7 ECO 2 "
@@ -689,7 +772,7 @@ $ copy 'exheader' sys$disk:[.include.openssl]
 $!
 $! Copy All The ".H" Files From The [.CRYPTO] Directory Tree.
 $!
-$ SDIRS := , -
+$ HEADER_SDIRS := , -
    'ARCHD', -
    OBJECTS, -
    MD2, MD4, MD5, SHA, MDC2, HMAC, RIPEMD, WHRLPOOL, -
@@ -760,20 +843,20 @@ $ EXHEADER_STORE := store.h
 $ EXHEADER_CMAC := cmac.h
 $!
 $ i = 0
-$ loop_sdirs:
-$   sdir = f$edit( f$element( i, ",", sdirs), "trim")
+$ loop_header_sdirs:
+$   sdir = f$edit( f$element( i, ",", header_sdirs), "trim")
 $   i = i + 1
-$   if (sdir .eqs. ",") then goto loop_sdirs_end
+$   if (sdir .eqs. ",") then goto loop_header_sdirs_end
 $   hdr_list = exheader_'sdir'
 $   if (sdir .nes. "") then sdir = "."+ sdir
 $   copy [.crypto'sdir']'hdr_list' sys$disk:[.include.openssl]
-$ goto loop_sdirs
-$ loop_sdirs_end:
+$ goto loop_header_sdirs
+$ loop_header_sdirs_end:
 $!
 $! Copy All The ".H" Files From The [.SSL] Directory.
 $!
 $! (keep these in the same order as ssl/Makefile)
-$ EXHEADER := ssl.h, ssl2.h, ssl3.h, ssl23.h, tls1.h, dtls1.h, kssl.h
+$ EXHEADER := ssl.h, ssl2.h, ssl3.h, ssl23.h, tls1.h, dtls1.h, kssl.h, srtp.h
 $ copy sys$disk:[.ssl]'exheader' sys$disk:[.include.openssl]
 $!
 $! Purge the [.include.openssl] header files.
@@ -801,11 +884,6 @@ $!
 $! Build The [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library.
 $!  
 $ @CRYPTO-LIB LIBRARY 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" -
-   "''ISSEVEN'" "''BUILDPART'" "''POINTER_SIZE'" "''ZLIB'"
-$!
-$! Build The [.xxx.EXE.CRYPTO]*.EXE Test Applications.
-$!  
-$ @CRYPTO-LIB APPS 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" -
    "''ISSEVEN'" "''BUILDPART'" "''POINTER_SIZE'" "''ZLIB'"
 $!
 $! Go Back To The Main Directory.
