@@ -83,7 +83,6 @@ e_padlock-x86_64.s:	asm/e_padlock-x86_64.pl
 	$(PERL) asm/e_padlock-x86_64.pl $(PERLASM_SCHEME) > $@
 
 subdirs:
-	echo $(EDIRS)
 	@target=all; $(RECURSIVE_MAKE)
 
 files:
