@@ -236,6 +236,5 @@ int main(int argc, char *argv[])
 # endif
 
     EXIT(err);
-    return (err);
 }
 #endif

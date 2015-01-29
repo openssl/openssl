@@ -147,7 +147,6 @@ int ASN1_item_ex_i2d(ASN1_VALUE **pval, unsigned char **out,
             return asn1_template_ex_i2d(pval, out, it->templates,
                                         tag, aclass);
         return asn1_i2d_ex_primitive(pval, out, it, tag, aclass);
-        break;
 
     case ASN1_ITYPE_MSTRING:
         return asn1_i2d_ex_primitive(pval, out, it, -1, aclass);
@@ -608,7 +607,6 @@ int asn1_ex_i2c(ASN1_VALUE **pval, unsigned char *cout, int *putype,
     case V_ASN1_BIT_STRING:
         return i2c_ASN1_BIT_STRING((ASN1_BIT_STRING *)*pval,
                                    cout ? &cout : NULL);
-        break;
 
     case V_ASN1_INTEGER:
     case V_ASN1_NEG_INTEGER:
@@ -618,7 +616,6 @@ int asn1_ex_i2c(ASN1_VALUE **pval, unsigned char *cout, int *putype,
          * These are all have the same content format as ASN1_INTEGER
          */
         return i2c_ASN1_INTEGER((ASN1_INTEGER *)*pval, cout ? &cout : NULL);
-        break;
 
     case V_ASN1_OCTET_STRING:
     case V_ASN1_NUMERICSTRING:

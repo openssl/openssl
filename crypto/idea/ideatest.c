@@ -173,7 +173,6 @@ int main(int argc, char *argv[])
         printf("ERROR: %d\n", err);
 # endif
     EXIT(err);
-    return (err);
 }
 
 static int cfb64_test(unsigned char *cfb_cipher)

@@ -353,7 +353,6 @@ int main(int argc, char *argv[])
     ERR_load_crypto_strings();
     ERR_print_errors_fp(stderr);
     EXIT(1);
-    return (1);
 }
 
 int test_add(BIO *bp)

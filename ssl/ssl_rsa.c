@@ -798,7 +798,7 @@ static int serverinfo_find_extension(const unsigned char *serverinfo,
         serverinfo += len;
         serverinfo_length -= len;
     }
-    return 0;                   /* Error */
+    /* Unreachable */
 }
 
 static int serverinfo_srv_parse_cb(SSL *s, unsigned int ext_type,

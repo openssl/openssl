@@ -246,7 +246,6 @@ static int asn1_write_micalg(BIO *out, STACK_OF(X509_ALGOR) *mdalgs)
         case NID_id_GostR3411_94:
             BIO_puts(out, "gostr3411-94");
             goto err;
-            break;
 
         default:
             if (have_unknown)

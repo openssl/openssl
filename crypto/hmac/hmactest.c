@@ -150,7 +150,6 @@ int main(int argc, char *argv[])
     }
 # endif                         /* OPENSSL_NO_MD5 */
     EXIT(err);
-    return (0);
 }
 
 # ifndef OPENSSL_NO_MD5

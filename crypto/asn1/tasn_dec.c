@@ -206,7 +206,6 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
         }
         return asn1_d2i_ex_primitive(pval, in, len, it,
                                      tag, aclass, opt, ctx);
-        break;
 
     case ASN1_ITYPE_MSTRING:
         p = *in;

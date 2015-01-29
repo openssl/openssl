@@ -419,7 +419,6 @@ static int parse_tagging(const char *vstart, int vlen, int *ptag, int *pclass)
             ASN1err(ASN1_F_PARSE_TAGGING, ASN1_R_INVALID_MODIFIER);
             ERR_add_error_data(2, "Char=", erch);
             return 0;
-            break;
 
         }
     } else
@@ -769,7 +768,6 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
     default:
         ASN1err(ASN1_F_ASN1_STR2TYPE, ASN1_R_UNSUPPORTED_TYPE);
         goto bad_str;
-        break;
     }
 
     atmp->type = utype;

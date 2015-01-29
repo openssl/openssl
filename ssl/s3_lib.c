@@ -3434,7 +3434,6 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             SSLerr(SSL_F_SSL3_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
             return (ret);
         }
-        break;
 #endif
 #ifndef OPENSSL_NO_DH
     case SSL_CTRL_SET_TMP_DH:
@@ -3471,7 +3470,6 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             SSLerr(SSL_F_SSL3_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
             return (ret);
         }
-        break;
     case SSL_CTRL_SET_DH_AUTO:
         s->cert->dh_tmp_auto = larg;
         return 1;
@@ -3508,7 +3506,6 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             SSLerr(SSL_F_SSL3_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
             return (ret);
         }
-        break;
 #endif                          /* !OPENSSL_NO_ECDH */
 #ifndef OPENSSL_NO_TLSEXT
     case SSL_CTRL_SET_TLSEXT_HOSTNAME:
@@ -3927,7 +3924,6 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
             SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
             return (0);
         }
-        break;
 #endif
 #ifndef OPENSSL_NO_DH
     case SSL_CTRL_SET_TMP_DH:
@@ -3964,7 +3960,6 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
             SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
             return (0);
         }
-        break;
     case SSL_CTRL_SET_DH_AUTO:
         ctx->cert->dh_tmp_auto = larg;
         return 1;
@@ -4003,7 +3998,6 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
             SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
             return (0);
         }
-        break;
 #endif                          /* !OPENSSL_NO_ECDH */
 #ifndef OPENSSL_NO_TLSEXT
     case SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG:
@@ -4034,7 +4028,6 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
     case SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG:
         ctx->tlsext_status_arg = parg;
         return 1;
-        break;
 
 # ifndef OPENSSL_NO_SRP
     case SSL_CTRL_SET_TLS_EXT_SRP_USERNAME:

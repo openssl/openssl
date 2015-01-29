@@ -211,7 +211,6 @@ int main(int argc, char *argv[])
         printf("ERROR: %d\n", ret);
 # endif
     EXIT(ret);
-    return (ret);
 }
 
 static int cb(int p, int n, BN_GENCB *arg)

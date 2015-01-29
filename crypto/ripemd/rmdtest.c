@@ -128,7 +128,6 @@ int main(int argc, char *argv[])
         P++;
     }
     EXIT(err);
-    return (0);
 }
 
 static char *pt(unsigned char *md)

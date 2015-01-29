@@ -86,7 +86,6 @@ static int pkey_gost_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             pctx->md = (EVP_MD *)p2;
             return 1;
         }
-        break;
 
     case EVP_PKEY_CTRL_GET_MD:
         *(const EVP_MD **)p2 = pctx->md;
@@ -150,7 +149,6 @@ static int pkey_gost_ctrl94_str(EVP_PKEY_CTX *ctx,
                 break;
             default:
                 return 0;
-                break;
             }
         } else if ((strlen(value) == 2)
                    && (toupper((unsigned char)value[0]) == 'X')) {
@@ -166,7 +164,6 @@ static int pkey_gost_ctrl94_str(EVP_PKEY_CTX *ctx,
                 break;
             default:
                 return 0;
-                break;
             }
         } else {
             R3410_params *p = R3410_paramset;
@@ -214,7 +211,6 @@ static int pkey_gost_ctrl01_str(EVP_PKEY_CTX *ctx,
                 break;
             default:
                 return 0;
-                break;
             }
         } else if ((strlen(value) == 2)
                    && (toupper((unsigned char)value[0]) == 'X')) {
@@ -227,7 +223,6 @@ static int pkey_gost_ctrl01_str(EVP_PKEY_CTX *ctx,
                 break;
             default:
                 return 0;
-                break;
             }
         } else {
             R3410_2001_params *p = R3410_2001_paramset;
@@ -454,7 +449,6 @@ static int pkey_gost_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             data->md = (EVP_MD *)p2;
             return 1;
         }
-        break;
 
     case EVP_PKEY_CTRL_GET_MD:
         *(const EVP_MD **)p2 = data->md;
