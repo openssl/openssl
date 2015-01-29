@@ -19,7 +19,6 @@ $!  Specify the following as P1 to build just that part or ALL to just
 $!  build everything.
 $!
 $!    	LIBRARY    To just compile the [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library.
-$!    	APPS       To just compile the [.xxx.EXE.CRYPTO]*.EXE
 $!	ALL	   To do both LIBRARY and APPS
 $!
 $!  Specify DEBUG or NODEBUG as P2 to compile with or without debugger
@@ -102,22 +101,35 @@ $ LIB32 = "32"
 $ OPT_FILE = ""
 $ POINTER_SIZE = ""
 $!
-$! Define The Different Encryption Types.
-$! NOTE: Some might think this list ugly.  However, it's made this way to
-$! reflect the SDIRS variable in [-]Makefile.org as closely as possible,
-$! thereby making it fairly easy to verify that the lists are the same.
+$! Check if there's a SDIRS variable defined
 $!
-$ ET_WHIRLPOOL = "WHRLPOOL"
-$ IF ARCH .EQS. "VAX" THEN ET_WHIRLPOOL = ""
-$ ENCRYPT_TYPES = "Basic,"+ -
-		  "OBJECTS,"+ -
-		  "MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,"+ET_WHIRLPOOL+","+ -
-		  "DES,AES,RC2,RC4,RC5,IDEA,BF,CAST,CAMELLIA,SEED,MODES,"+ -
-		  "BN,EC,RSA,DSA,ECDSA,DH,ECDH,DSO,ENGINE,"+ -
-		  "BUFFER,BIO,STACK,LHASH,RAND,ERR,"+ -
-		  "EVP,EVP_2,EVP_3,ASN1,ASN1_2,PEM,X509,X509V3,"+ -
-		  "CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,KRB5,"+ -
-		  "CMS,PQUEUE,TS,JPAKE,SRP,STORE,CMAC"
+$ IF "''SDIRS'" .NES. ""
+$ THEN
+$!
+$!   If SDIRS was defined, define ENCRYPT_TYPES from it
+$!
+$     ENCRYPT_TYPES = "Basic,''SDIRS'"
+$!
+$! Otherwise
+$!
+$ ELSE
+$!
+$!   Define The Different Encryption Types.
+$!   NOTE: Some might think this list ugly.  However, it's made this way to
+$!   reflect the SDIRS variable in [-]Makefile.org as closely as possible,
+$!   thereby making it fairly easy to verify that the lists are the same.
+$!
+$   ET_WHIRLPOOL = "WHRLPOOL"
+$   IF ARCH .EQS. "VAX" THEN ET_WHIRLPOOL = ""
+$   ENCRYPT_TYPES = "Basic,"+ -
+		    "OBJECTS,"+ -
+		    "MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,"+ET_WHIRLPOOL+","+ -
+		    "DES,AES,RC2,RC4,RC5,IDEA,BF,CAST,CAMELLIA,SEED,MODES,"+ -
+		    "BN,EC,RSA,DSA,ECDSA,DH,ECDH,DSO,ENGINE,"+ -
+		    "BUFFER,BIO,STACK,LHASH,RAND,ERR,"+ -
+		    "EVP,ASN1,PEM,X509,X509V3,CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,KRB5,"+ -
+		    "CMS,PQUEUE,TS,JPAKE,SRP,STORE,CMAC"
+$ ENDIF
 $!
 $! Check To Make Sure We Have Valid Command Line Parameters.
 $!
@@ -204,16 +216,14 @@ $ GOSUB CHECK_OPT_FILE
 $!
 $! Define The Different Encryption "library" Strings.
 $!
-$ APPS_DES = "DES/DES,CBC3_ENC"
-$ APPS_PKCS7 = "ENC/ENC;DEC/DEC;SIGN/SIGN;VERIFY/VERIFY,EXAMPLE"
-$
 $ LIB_ = "cryptlib,mem,mem_clr,mem_dbg,cversion,ex_data,cpt_err,"+ -
 	"ebcdic,uid,o_time,o_str,o_dir,thr_id,lock,fips_ers,"+ -
 	"o_init,o_fips"
+$ LIB_OBJECTS = "o_names,obj_dat,obj_lib,obj_err,obj_xref"
 $ LIB_MD2 = "md2_dgst,md2_one"
 $ LIB_MD4 = "md4_dgst,md4_one"
 $ LIB_MD5 = "md5_dgst,md5_one"
-$ LIB_SHA = "sha_dgst,sha1dgst,sha_one,sha1_one,sha256,sha512"
+$ LIB_SHA = "sha1dgst,sha1_one,sha256,sha512"
 $ LIB_MDC2 = "mdc2dgst,mdc2_one"
 $ LIB_HMAC = "hmac,hm_ameth,hm_pmeth"
 $ LIB_RIPEMD = "rmd_dgst,rmd_one"
@@ -224,18 +234,19 @@ $ LIB_DES = "set_key,ecb_enc,cbc_enc,"+ -
 	"ofb_enc,str2key,pcbc_enc,qud_cksm,rand_key,"+ -
 	"des_enc,fcrypt_b,"+ -
 	"fcrypt,xcbc_enc,rpc_enc,cbc_cksm,"+ -
-	"ede_cbcm_enc,des_old,des_old2,read2pwd"
+	"des_old,des_old2,read2pwd"
+$ LIB_AES = "aes_misc,aes_ecb,aes_cfb,aes_ofb,aes_ige,aes_wrap,"+ -
+	"aes_core,aes_cbc"
 $ LIB_RC2 = "rc2_ecb,rc2_skey,rc2_cbc,rc2cfb64,rc2ofb64"
-$ LIB_RC4 = "rc4_skey,rc4_enc"
+$ LIB_RC4 = "rc4_enc,rc4_skey"
 $ LIB_RC5 = "rc5_skey,rc5_ecb,rc5_enc,rc5cfb64,rc5ofb64"
 $ LIB_IDEA = "i_cbc,i_cfb64,i_ofb64,i_ecb,i_skey"
 $ LIB_BF = "bf_skey,bf_ecb,bf_enc,bf_cfb64,bf_ofb64"
 $ LIB_CAST = "c_skey,c_ecb,c_enc,c_cfb64,c_ofb64"
-$ LIB_CAMELLIA = "camellia,cmll_misc,cmll_ecb,cmll_cbc,cmll_ofb,"+ -
-		 "cmll_cfb,cmll_ctr"
+$ LIB_CAMELLIA = "cmll_ecb,cmll_ofb,cmll_cfb,cmll_ctr,camellia,cmll_misc,cmll_cbc"
 $ LIB_SEED = "seed,seed_ecb,seed_cbc,seed_cfb,seed_ofb"
 $ LIB_MODES = "cbc128,ctr128,cts128,cfb128,ofb128,gcm128,"+ -
-	"ccm128,xts128"
+	"ccm128,xts128,wrap128,ocb128"
 $ LIB_BN_ASM = "[.asm]vms.mar,vms-helper"
 $ IF F$TRNLNM("OPENSSL_NO_ASM") .OR. ARCH .NES. "VAX" THEN -
      LIB_BN_ASM = "bn_asm"
@@ -243,7 +254,7 @@ $ LIB_BN = "bn_add,bn_div,bn_exp,bn_lib,bn_ctx,bn_mul,bn_mod,"+ -
 	"bn_print,bn_rand,bn_shift,bn_word,bn_blind,"+ -
 	"bn_kron,bn_sqrt,bn_gcd,bn_prime,bn_err,bn_sqr,"+LIB_BN_ASM+","+ -
 	"bn_recp,bn_mont,bn_mpi,bn_exp2,bn_gf2m,bn_nist,"+ -
-	"bn_depr,bn_const,bn_x931p"
+	"bn_depr,bn_const,bn_x931p,bn_intern,bn_dh,bn_srp"
 $ LIB_EC = "ec_lib,ecp_smpl,ecp_mont,ecp_nist,ec_cvt,ec_mult,"+ -
 	"ec_err,ec_curve,ec_check,ec_print,ec_asn1,ec_key,"+ -
 	"ec2_smpl,ec2_mult,ec_ameth,ec_pmeth,eck_prn,"+ -
@@ -257,45 +268,42 @@ $ LIB_DSA = "dsa_gen,dsa_key,dsa_lib,dsa_asn1,dsa_vrf,dsa_sign,"+ -
 	"dsa_err,dsa_ossl,dsa_depr,dsa_ameth,dsa_pmeth,dsa_prn"
 $ LIB_ECDSA = "ecs_lib,ecs_asn1,ecs_ossl,ecs_sign,ecs_vrf,ecs_err"
 $ LIB_DH = "dh_asn1,dh_gen,dh_key,dh_lib,dh_check,dh_err,dh_depr,"+ -
-	"dh_ameth,dh_pmeth,dh_prn,dh_rfc5114"
-$ LIB_ECDH = "ech_lib,ech_ossl,ech_key,ech_err"
+	"dh_ameth,dh_pmeth,dh_prn,dh_rfc5114,dh_kdf"
+$ LIB_ECDH = "ech_lib,ech_ossl,ech_key,ech_err,ech_kdf"
 $ LIB_DSO = "dso_dl,dso_dlfcn,dso_err,dso_lib,dso_null,"+ -
-	"dso_openssl,dso_win32,dso_vms,dso_beos"
+	"dso_openssl,dso_win32,dso_vms"
 $ LIB_ENGINE = "eng_err,eng_lib,eng_list,eng_init,eng_ctrl,"+ -
 	"eng_table,eng_pkey,eng_fat,eng_all,"+ -
 	"tb_rsa,tb_dsa,tb_ecdsa,tb_dh,tb_ecdh,tb_rand,tb_store,"+ -
 	"tb_cipher,tb_digest,tb_pkmeth,tb_asnmth,"+ -
-	"eng_openssl,eng_dyn,eng_cnf,eng_cryptodev,"+ -
-	"eng_rsax,eng_rdrand"
-$ LIB_AES = "aes_core,aes_misc,aes_ecb,aes_cbc,aes_cfb,aes_ofb,"+ -
-	"aes_ige,aes_wrap"
+	"eng_openssl,eng_cnf,eng_dyn,eng_cryptodev,"+ -
+	"eng_rdrand"
 $ LIB_BUFFER = "buffer,buf_str,buf_err"
 $ LIB_BIO = "bio_lib,bio_cb,bio_err,"+ -
 	"bss_mem,bss_null,bss_fd,"+ -
 	"bss_file,bss_sock,bss_conn,"+ -
 	"bf_null,bf_buff,b_print,b_dump,"+ -
-	"b_sock,bss_acpt,bf_nbio,bss_rtcp,bss_bio,bss_log,"+ -
+	"b_sock,bss_acpt,bf_nbio,bss_log,bss_bio,"+ -
 	"bss_dgram,"+ -
-	"bf_lbuf"
+	"bf_lbuf,bss_rtcp"	! The last two are VMS specific
 $ LIB_STACK = "stack"
 $ LIB_LHASH = "lhash,lh_stats"
 $ LIB_RAND = "md_rand,randfile,rand_lib,rand_err,rand_egd,"+ -
-	"rand_vms"
+	"rand_win,rand_unix,rand_vms,rand_os2,rand_nw"
 $ LIB_ERR = "err,err_all,err_prn"
-$ LIB_OBJECTS = "o_names,obj_dat,obj_lib,obj_err,obj_xref"
-$ LIB_EVP = "encode,digest,evp_enc,evp_key,evp_acnf,evp_cnf,"+ -
+$ LIB_EVP_1 = "encode,digest,evp_enc,evp_key,evp_acnf,evp_cnf,"+ -
 	"e_des,e_bf,e_idea,e_des3,e_camellia,"+ -
 	"e_rc4,e_aes,names,e_seed,"+ -
 	"e_xcbc_d,e_rc2,e_cast,e_rc5"
-$ LIB_EVP_2 = "m_null,m_md2,m_md4,m_md5,m_sha,m_sha1,m_wp," + -
-	"m_dss,m_dss1,m_mdc2,m_ripemd,m_ecdsa,"+ -
+$ LIB_EVP_2 = "m_null,m_md2,m_md4,m_md5,m_sha1,m_wp," + -
+	"m_dss1,m_mdc2,m_ripemd,m_ecdsa,"+ -
 	"p_open,p_seal,p_sign,p_verify,p_lib,p_enc,p_dec,"+ -
 	"bio_md,bio_b64,bio_enc,evp_err,e_null,"+ -
 	"c_all,c_allc,c_alld,evp_lib,bio_ok,"+-
 	"evp_pkey,evp_pbe,p5_crpt,p5_crpt2"
 $ LIB_EVP_3 = "e_old,pmeth_lib,pmeth_fn,pmeth_gn,m_sigver,"+ -
-	"e_aes_cbc_hmac_sha1,e_rc4_hmac_md5"
-$ LIB_ASN1 = "a_object,a_bitstr,a_utctm,a_gentm,a_time,a_int,a_octet,"+ -
+	"e_aes_cbc_hmac_sha1,e_aes_cbc_hmac_sha256,e_rc4_hmac_md5"
+$ LIB_ASN1_1 = "a_object,a_bitstr,a_utctm,a_gentm,a_time,a_int,a_octet,"+ -
 	"a_print,a_type,a_set,a_dup,a_d2i_fp,a_i2d_fp,"+ -
 	"a_enum,a_utf8,a_sign,a_digest,a_verify,a_mbstr,a_strex,"+ -
 	"x_algor,x_val,x_pubkey,x_sig,x_req,x_attrib,x_bignum,"+ -
@@ -307,7 +315,8 @@ $ LIB_ASN1_2 = "t_req,t_x509,t_x509a,t_crl,t_pkey,t_spki,t_bitst,"+ -
 	"f_int,f_string,n_pkey,"+ -
 	"f_enum,x_pkey,a_bool,x_exten,bio_asn1,bio_ndef,asn_mime,"+ -
 	"asn1_gen,asn1_par,asn1_lib,asn1_err,a_bytes,a_strnid,"+ -
-	"evp_asn1,asn_pack,p5_pbe,p5_pbev2,p8_pkey,asn_moid"
+	"evp_asn1,asn_pack,p5_pbe,p5_pbev2,p8_pkey,asn_moid,"+ -
+	"asn_mstbl"
 $ LIB_PEM = "pem_sign,pem_seal,pem_info,pem_lib,pem_all,pem_err,"+ -
 	"pem_x509,pem_xaux,pem_oth,pem_pk8,pem_pkey,pvkfmt"
 $ LIB_X509 = "x509_def,x509_d2,x509_r2x,x509_cmp,"+ -
@@ -338,7 +347,7 @@ $ LIB_UI = "ui_err,ui_lib,ui_openssl,ui_util"+LIB_UI_COMPAT
 $ LIB_KRB5 = "krb5_asn"
 $ LIB_CMS = "cms_lib,cms_asn1,cms_att,cms_io,cms_smime,cms_err,"+ -
 	"cms_sd,cms_dd,cms_cd,cms_env,cms_enc,cms_ess,"+ -
-	"cms_pwri"
+	"cms_pwri,cms_kari"
 $ LIB_PQUEUE = "pqueue"
 $ LIB_TS = "ts_err,ts_req_utils,ts_req_print,ts_rsp_utils,ts_rsp_print,"+ -
 	"ts_rsp_sign,ts_rsp_verify,ts_verify_ctx,ts_lib,ts_conf,"+ -
@@ -383,8 +392,6 @@ $!
 $! Extract The Module Name From The Encryption List.
 $!
 $ MODULE_NAME = F$ELEMENT(MODULE_COUNTER,",",ENCRYPT_TYPES)
-$ IF MODULE_NAME.EQS."Basic" THEN MODULE_NAME = ""
-$ MODULE_NAME1 = MODULE_NAME
 $!
 $! Check To See If We Are At The End Of The Module List.
 $!
@@ -402,121 +409,71 @@ $!
 $! Increment The Moudle Counter.
 $!
 $ MODULE_COUNTER = MODULE_COUNTER + 1
-$!
-$! Create The Library and Apps Module Names.
-$!
-$ LIB_MODULE = "LIB_" + MODULE_NAME
-$ APPS_MODULE = "APPS_" + MODULE_NAME
-$ IF (F$EXTRACT(0,5,MODULE_NAME).EQS."ASN1_")
-$ THEN
-$   MODULE_NAME = "ASN1"
-$ ENDIF
-$ IF (F$EXTRACT(0,4,MODULE_NAME).EQS."EVP_")
-$ THEN
-$   MODULE_NAME = "EVP"
-$ ENDIF
-$!
-$! Set state (can be LIB and APPS)
-$!
-$ STATE = "LIB"
-$ IF BUILDALL .EQS. "APPS" THEN STATE = "APPS"
+$
+$ IF MODULE_NAME.EQS."" THEN GOTO MODULE_NEXT
+$ MODULE_NAME1 = MODULE_NAME
+$ IF MODULE_NAME.EQS."Basic" THEN MODULE_NAME = ""
 $!
 $! Check if the library module name actually is defined
 $!
-$ IF F$TYPE('LIB_MODULE') .EQS. ""
+$ PART_COUNTER = -1
+$ IF F$TYPE(LIB_'MODULE_NAME'_1) .NES. ""
 $ THEN
-$   WRITE SYS$ERROR ""
-$   WRITE SYS$ERROR "The module ",MODULE_NAME1," does not exist.  Continuing..."
-$   WRITE SYS$ERROR ""
-$   GOTO MODULE_NEXT
+$   PART_COUNTER = 1
+$ ELSE
+$   IF F$TYPE(LIB_'MODULE_NAME') .EQS. ""
+$   THEN
+$     WRITE SYS$ERROR ""
+$     WRITE SYS$ERROR "The module ",MODULE_NAME1," does not exist.  Continuing..."
+$     WRITE SYS$ERROR ""
+$     GOTO MODULE_NEXT
+$   ENDIF
 $ ENDIF
-$!
-$! Top Of The Module Loop.
-$!
-$ MODULE_AGAIN:
 $!
 $! Tell The User What Module We Are Building.
 $!
-$ IF (MODULE_NAME1.NES."") 
+$ WRITE SYS$OUTPUT "Compiling The ",MODULE_NAME1," Library Files. (",BUILDALL,")"
+$!
+$! Create The Library Module Names.
+$!
+$ PART_NEXT:
+$ IF PART_COUNTER .EQ. 0 THEN GOTO MODULE_NEXT
+$
+$ IF PART_COUNTER .LT. 0
 $ THEN
-$   IF STATE .EQS. "LIB"
-$   THEN
-$     WRITE SYS$OUTPUT "Compiling The ",MODULE_NAME1," Library Files. (",BUILDALL,",",STATE,")"
-$   ELSE IF F$TYPE('APPS_MODULE') .NES. ""
-$     THEN
-$       WRITE SYS$OUTPUT "Compiling The ",MODULE_NAME1," Applications. (",BUILDALL,",",STATE,")"
-$     ENDIF
-$   ENDIF
+$   LIB_MODULE = "LIB_" + MODULE_NAME
+$ ELSE
+$   LIB_MODULE = "LIB_" + MODULE_NAME + "_''PART_COUNTER'"
 $ ENDIF
+$!
+$! If there are no more parts, go to the next module
+$!
+$ IF F$TYPE('LIB_MODULE') .EQS. "" THEN GOTO MODULE_NEXT
+$!
+$! Increment The Counter.
+$!
+$ PART_COUNTER = PART_COUNTER + 1
 $!
 $!  Define A File Counter And Set It To "0".
 $!
 $ FILE_COUNTER = 0
-$ APPLICATION = ""
-$ APPLICATION_COUNTER = 0
 $!
 $! Top Of The File Loop.
 $!
 $ NEXT_FILE:
 $!
-$! Look in the LIB_MODULE is we're in state LIB
+$! Extract The File Name From The File List.
 $!
-$ IF STATE .EQS. "LIB"
-$ THEN
-$!
-$!   O.K, Extract The File Name From The File List.
-$!
-$   FILE_NAME = F$ELEMENT(FILE_COUNTER,",",'LIB_MODULE')
-$!
-$!   else
-$!
-$ ELSE
-$   FILE_NAME = ","
-$!
-$   IF F$TYPE('APPS_MODULE') .NES. ""
-$   THEN
-$!
-$!     Extract The File Name From The File List.
-$!     This part is a bit more complicated.
-$!
-$     IF APPLICATION .EQS. ""
-$     THEN
-$       APPLICATION = F$ELEMENT(APPLICATION_COUNTER,";",'APPS_MODULE')
-$       APPLICATION_COUNTER = APPLICATION_COUNTER + 1
-$       APPLICATION_OBJECTS = F$ELEMENT(1,"/",APPLICATION)
-$       APPLICATION = F$ELEMENT(0,"/",APPLICATION)
-$       FILE_COUNTER = 0
-$     ENDIF
-$
-$!     WRITE SYS$OUTPUT "DEBUG: SHOW SYMBOL APPLICATION*"
-$!     SHOW SYMBOL APPLICATION*
-$!
-$     IF APPLICATION .NES. ";"
-$     THEN
-$       FILE_NAME = F$ELEMENT(FILE_COUNTER,",",APPLICATION_OBJECTS)
-$       IF FILE_NAME .EQS. ","
-$       THEN
-$         APPLICATION = ""
-$         GOTO NEXT_FILE
-$       ENDIF
-$     ENDIF
-$   ENDIF
-$ ENDIF
+$ FILE_NAME = F$ELEMENT(FILE_COUNTER,",",'LIB_MODULE')
 $!
 $! Check To See If We Are At The End Of The File List.
 $!
 $ IF (FILE_NAME.EQS.",") 
 $ THEN 
 $!
-$!  We Are At The End Of The File List, Change State Or Goto FILE_DONE.
+$!  We Are At The End Of The File List, Goto FILE_DONE.
 $!
-$   IF STATE .EQS. "LIB" .AND. BUILDALL .NES. "LIBRARY"
-$   THEN
-$     STATE = "APPS"
-$     GOTO MODULE_AGAIN
-$   ELSE
-$     GOTO FILE_DONE
-$   ENDIF
+$   GOTO FILE_DONE
 $!
 $! End The File List Check.
 $!
@@ -566,14 +523,7 @@ $ ENDIF
 $!
 $! Tell The User We Are Compiling The File.
 $!
-$ IF (MODULE_NAME.EQS."")
-$ THEN
-$   WRITE SYS$OUTPUT "Compiling The ",FILE_NAME," File.  (",BUILDALL,",",STATE,")"
-$ ENDIF
-$ IF (MODULE_NAME.NES."")
-$ THEN 
-$   WRITE SYS$OUTPUT "        ",FILE_NAME,""
-$ ENDIF
+$ WRITE SYS$OUTPUT "        ",FILE_NAME,""
 $!
 $! Compile The File.
 $!
@@ -634,17 +584,14 @@ $       ENDIF
 $     ENDIF
 $   ENDIF
 $ ENDIF
-$ IF STATE .EQS. "LIB"
-$ THEN 
 $!
-$!   Add It To The Library.
+$! Add It To The Library.
 $!
-$   LIBRARY/REPLACE 'LIB_NAME' 'OBJECT_FILE'
+$ LIBRARY/REPLACE 'LIB_NAME' 'OBJECT_FILE'
 $!
-$!   Time To Clean Up The Object File.
+$! Time To Clean Up The Object File.
 $!
-$   DELETE 'OBJECT_FILE';*
-$ ENDIF
+$ DELETE 'OBJECT_FILE';*
 $!
 $! Go Back And Do It Again.
 $!
@@ -654,47 +601,9 @@ $! All Done With This Library Part.
 $!
 $ FILE_DONE:
 $!
-$! Time To Build Some Applications
+$! Go Back And Get The Next Part.
 $!
-$ IF F$TYPE('APPS_MODULE') .NES. "" .AND. BUILDALL .NES. "LIBRARY"
-$ THEN
-$   APPLICATION_COUNTER = 0
-$ NEXT_APPLICATION:
-$   APPLICATION = F$ELEMENT(APPLICATION_COUNTER,";",'APPS_MODULE')
-$   IF APPLICATION .EQS. ";" THEN GOTO APPLICATION_DONE
-$
-$   APPLICATION_COUNTER = APPLICATION_COUNTER + 1
-$   APPLICATION_OBJECTS = F$ELEMENT(1,"/",APPLICATION)
-$   APPLICATION = F$ELEMENT(0,"/",APPLICATION)
-$
-$!   WRITE SYS$OUTPUT "DEBUG: SHOW SYMBOL APPLICATION*"
-$!   SHOW SYMBOL APPLICATION*
-$!
-$! Tell the user what happens
-$!
-$   WRITE SYS$OUTPUT "        ",APPLICATION,".exe"
-$!
-$! Link The Program.
-$!
-$   ON ERROR THEN GOTO NEXT_APPLICATION
-$!
-$!  Link With A TCP/IP Library.
-$!
-$   LINK /'DEBUGGER' /'LINKMAP' /'TRACEBACK' -
-     /EXE='EXE_DIR''APPLICATION'.EXE -
-     'OBJ_DIR''APPLICATION_OBJECTS', -
-     'CRYPTO_LIB'/LIBRARY -
-     'TCPIP_LIB' -
-     'ZLIB_LIB' -
-     ,'OPT_FILE' /OPTIONS
-$!
-$   GOTO NEXT_APPLICATION
-$  APPLICATION_DONE:
-$ ENDIF
-$!
-$! Go Back And Get The Next Module.
-$!
-$ GOTO MODULE_NEXT
+$ GOTO PART_NEXT
 $!
 $! All Done With This Module.
 $!
@@ -851,7 +760,7 @@ $ ELSE
 $!
 $!  Else, Check To See If P1 Has A Valid Argument.
 $!
-$   IF (P1.EQS."LIBRARY").OR.(P1.EQS."APPS")
+$   IF (P1.EQS."LIBRARY")
 $   THEN
 $!
 $!    A Valid Argument.
@@ -869,7 +778,6 @@ $     WRITE SYS$OUTPUT "The Option ",P1," Is Invalid.  The Valid Options Are:"
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT "    ALL      :  Just Build Everything."
 $     WRITE SYS$OUTPUT "    LIBRARY  :  To Compile Just The [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library."
-$     WRITE SYS$OUTPUT "    APPS     :  To Compile Just The [.xxx.EXE.CRYPTO]*.EXE Programs."
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT " Where 'xxx' Stands For:"
 $     WRITE SYS$OUTPUT ""
@@ -1493,10 +1401,12 @@ $ __HERE = F$PARSE(F$PARSE("A.;",F$ENVIRONMENT("PROCEDURE"))-"A.;","[]A.;") - "A
 $ __HERE = F$EDIT(__HERE,"UPCASE")
 $ __TOP = __HERE - "CRYPTO]"
 $ __INCLUDE = __TOP + "INCLUDE.OPENSSL]"
+$ __INTERNAL = __TOP + "CRYPTO.INCLUDE.INTERNAL]"
 $!
 $! Set up the logical name OPENSSL to point at the include directory
 $!
 $ DEFINE OPENSSL/NOLOG '__INCLUDE'
+$ DEFINE INTERNAL/NOLOG '__INTERNAL'
 $!
 $! Done
 $!
@@ -1509,6 +1419,7 @@ $!
 $ IF __SAVE_OPENSSL .EQS. ""
 $ THEN
 $   DEASSIGN OPENSSL
+$   DEASSIGN INTERNAL
 $ ELSE
 $   DEFINE/NOLOG OPENSSL '__SAVE_OPENSSL'
 $ ENDIF
