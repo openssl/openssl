@@ -131,8 +131,8 @@ int LIB$INIT_TIMER(), LIB$SHOW_TIMER();
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-int MS_CALLBACK verify_callback(int ok, X509 *xs, X509 *xi, int depth,
-                                int error);
+int verify_callback(int ok, X509 *xs, X509 *xi, int depth,
+		    int error);
 BIO *bio_err = NULL;
 BIO *bio_stdout = NULL;
 BIO_METHOD *BIO_s_rtcp();

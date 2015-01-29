@@ -385,6 +385,7 @@ extern FILE *_imp___iob;
                                      __VMS_EXIT |= 0x10000000; \
                                      exit(__VMS_EXIT); } while(0)
 #   define NO_SYS_PARAM_H
+#   define NO_SYS_UN_H
 
 #  elif defined(OPENSSL_SYS_NETWARE)
 #   include <fcntl.h>

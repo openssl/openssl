@@ -189,6 +189,14 @@
                                                 SSL_CTX_set_not_resumbl_sess_cb
 #  undef SSL_set_not_resumable_session_callback
 #  define SSL_set_not_resumable_session_callback  SSL_set_not_resumbl_sess_cb
+#  undef ssl_check_clienthello_tlsext_late
+#  define ssl_check_clienthello_tlsext_late       ssl_chk_clienthello_tlsext_late
+#  undef ssl3_cbc_record_digest_supported
+#  define ssl3_cbc_record_digest_supported        ssl3_cbc_rcd_digest_supported
+#  undef SSL_COMP_set0_compression_methods
+#  define SSL_COMP_set0_compression_methods       SSL_COMP_set0_compr_methods
+#  undef SSL_COMP_free_compression_methods
+#  define SSL_COMP_free_compression_methods       SSL_COMP_free_compr_methods
 
 /* Hack some long ENGINE names */
 #  undef ENGINE_get_default_BN_mod_exp_crt
@@ -399,6 +407,18 @@
 #  define CMS_OriginatorIdentifierOrKey_it        CMS_OriginatorIdOrKey_it
 #  undef cms_SignerIdentifier_get0_signer_id
 #  define cms_SignerIdentifier_get0_signer_id     cms_SignerId_get0_signer_id
+#  undef CMS_RecipientInfo_kari_get0_orig_id
+#  define CMS_RecipientInfo_kari_get0_orig_id     CMS_RecipInfo_kari_get0_orig_id
+#  undef CMS_RecipientInfo_kari_get0_reks
+#  define CMS_RecipientInfo_kari_get0_reks        CMS_RecipInfo_kari_get0_reks
+#  undef CMS_RecipientInfo_kari_set0_pkey
+#  define CMS_RecipientInfo_kari_set0_pkey        CMS_RecipInfo_kari_set0_pkey
+#  undef CMS_RecipientInfo_kari_orig_id_cmp
+#  define CMS_RecipientInfo_kari_orig_id_cmp      CMS_RecipInfo_kari_orig_id_cmp
+#  undef CMS_RecipientEncryptedKey_cert_cmp
+#  define CMS_RecipientEncryptedKey_cert_cmp      CMS_RecipEncryptedKey_cert_cmp
+#  undef CMS_RecipientEncryptedKey_get0_id
+#  define CMS_RecipientEncryptedKey_get0_id       CMS_RecipEncryptedKey_get0_id
 
 /* Hack some long DTLS1 names */
 #  undef dtls1_retransmit_buffered_messages
@@ -415,6 +435,10 @@
 #  define UI_method_get_prompt_constructor        UI_method_get_prompt_constructr
 #  undef UI_method_set_prompt_constructor
 #  define UI_method_set_prompt_constructor        UI_method_set_prompt_constructr
+
+/* Hack some long RSA names */
+#  undef RSA_padding_check_PKCS1_OAEP_mgf1
+#  define RSA_padding_check_PKCS1_OAEP_mgf1       RSA_padding_chk_PKCS1_OAEP_mgf1
 
 # endif                         /* defined OPENSSL_SYS_VMS */
 
