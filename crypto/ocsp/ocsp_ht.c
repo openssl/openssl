@@ -508,8 +508,6 @@ int OCSP_REQ_CTX_nbio(OCSP_REQ_CTX *rctx)
         rctx->state = OHS_DONE;
         return 1;
 
-        break;
-
     case OHS_DONE:
         return 1;
 

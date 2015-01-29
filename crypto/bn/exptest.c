@@ -254,5 +254,4 @@ int main(int argc, char *argv[])
     printf("ERROR\n");
 #endif
     EXIT(1);
-    return (1);
 }

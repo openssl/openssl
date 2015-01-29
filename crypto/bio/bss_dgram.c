@@ -686,7 +686,6 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     case BIO_CTRL_DGRAM_GET_MTU:
         return data->mtu;
-        break;
     case BIO_CTRL_DGRAM_SET_MTU:
         data->mtu = num;
         ret = num;

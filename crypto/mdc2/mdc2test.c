@@ -141,6 +141,5 @@ int main(int argc, char *argv[])
         printf("ERROR: %d\n", ret);
 # endif
     EXIT(ret);
-    return (ret);
 }
 #endif

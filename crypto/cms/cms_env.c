@@ -832,11 +832,9 @@ int CMS_RecipientInfo_encrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 
     case CMS_RECIPINFO_KEK:
         return cms_RecipientInfo_kekri_encrypt(cms, ri);
-        break;
 
     case CMS_RECIPINFO_PASS:
         return cms_RecipientInfo_pwri_crypt(cms, ri, 1);
-        break;
 
     default:
         CMSerr(CMS_F_CMS_RECIPIENTINFO_ENCRYPT,

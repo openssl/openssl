@@ -195,5 +195,4 @@ int main(int argc, char **argv)
         printf("ERROR: %d\n", err);
 #endif
     EXIT(err);
-    return (err);
 }

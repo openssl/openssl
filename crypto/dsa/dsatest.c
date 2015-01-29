@@ -228,7 +228,6 @@ int main(int argc, char **argv)
         printf("ERROR\n");
 # endif
     EXIT(!ret);
-    return (0);
 }
 
 static int dsa_cb(int p, int n, BN_GENCB *arg)

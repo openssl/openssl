@@ -422,7 +422,6 @@ static long asn1_bio_ctrl(BIO *b, int cmd, long arg1, void *arg2)
             BIO_clear_retry_flags(b);
             return 0;
         }
-        break;
 
     default:
         if (!b->next_bio)

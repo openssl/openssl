@@ -287,11 +287,9 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
 
     case NID_safeContentsBag:
         return parse_bags(bag->value.safes, pass, passlen, pkey, ocerts);
-        break;
 
     default:
         return 1;
-        break;
     }
     return 1;
 }

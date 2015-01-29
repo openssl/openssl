@@ -530,7 +530,7 @@ static int tree_prune(X509_POLICY_TREE *tree, X509_POLICY_LEVEL *curr)
         }
     }
 
-    return 1;
+    /* Unreachable */
 
 }
 

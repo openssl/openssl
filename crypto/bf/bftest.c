@@ -294,7 +294,6 @@ int main(int argc, char *argv[])
         printf("ERROR: %d\n", ret);
 # endif
     EXIT(ret);
-    return (0);
 }
 
 static int print_test_data(void)

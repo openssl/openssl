@@ -543,7 +543,6 @@ int main(int argc, char *argv[])
     ERR_remove_thread_state(NULL);
     CRYPTO_mem_leaks_fp(stderr);
     EXIT(ret);
-    return (ret);
 }
 
 # if 0

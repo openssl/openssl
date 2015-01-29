@@ -152,13 +152,11 @@ PKCS8_PRIV_KEY_INFO *PKCS8_set_broken(PKCS8_PRIV_KEY_INFO *p8, int broken)
     case PKCS8_OK:
         p8->broken = PKCS8_OK;
         return p8;
-        break;
 
     case PKCS8_NO_OCTET:
         p8->broken = PKCS8_NO_OCTET;
         p8->pkey->type = V_ASN1_SEQUENCE;
         return p8;
-        break;
 
     default:
         EVPerr(EVP_F_PKCS8_SET_BROKEN, EVP_R_PKCS8_UNKNOWN_BROKEN_TYPE);

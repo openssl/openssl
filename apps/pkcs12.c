@@ -892,7 +892,6 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
         i2a_ASN1_OBJECT(bio_err, bag->type);
         BIO_printf(bio_err, "\n");
         return 1;
-        break;
     }
     return 1;
 }

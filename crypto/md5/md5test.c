@@ -123,7 +123,6 @@ int main(int argc, char *argv[])
         printf("ERROR: %d\n", err);
 # endif
     EXIT(err);
-    return (0);
 }
 
 static char *pt(unsigned char *md)

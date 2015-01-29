@@ -189,7 +189,6 @@ BIGNUM *gost_get0_priv_key(const EVP_PKEY *pkey)
             if (!dsa->priv_key)
                 return NULL;
             return dsa->priv_key;
-            break;
         }
     case NID_id_GostR3410_2001:
         {
@@ -201,7 +200,6 @@ BIGNUM *gost_get0_priv_key(const EVP_PKEY *pkey)
             if (!(priv = EC_KEY_get0_private_key(ec)))
                 return NULL;
             return (BIGNUM *)priv;
-            break;
         }
     }
     return NULL;
