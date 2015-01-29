@@ -142,47 +142,56 @@ $!
 $ TEST_FILES = "BNTEST,ECTEST,ECDSATEST,ECDHTEST,IDEATEST,"+ -
 	       "MD2TEST,MD4TEST,MD5TEST,HMACTEST,WP_TEST,"+ -
 	       "RC2TEST,RC4TEST,RC5TEST,"+ -
-	       "DESTEST,SHATEST,SHA1TEST,SHA256T,SHA512T,"+ -
+	       "DESTEST,SHA1TEST,SHA256T,SHA512T,"+ -
 	       "MDC2TEST,RMDTEST,"+ -
 	       "RANDTEST,DHTEST,ENGINETEST,"+ -
-	       "BFTEST,CASTTEST,SSLTEST,EXPTEST,DSATEST,RSA_TEST,"+ -
-	       "EVP_TEST,IGETEST,JPAKETEST,SRPTEST"
+	       "GOST2814789TEST,"+ -
+	       "BFTEST,CASTTEST,SSLTEST,"+ -
+	       "EXPTEST,DSATEST,RSA_TEST,"+ -
+	       "EVP_TEST,IGETEST,JPAKETEST,SRPTEST,"+ -
+	       "V3NAMETEST,HEARTBEAT_TEST,P5_CRPT2_TEST,"+ -
+	       "CONSTANT_TIME_TEST"
 $! Should we add MTTEST,PQ_TEST,LH_TEST,DIVTEST,TABTEST as well?
 $!
 $! Additional directory information.
-$ T_D_BNTEST     := [-.crypto.bn]
-$ T_D_ECTEST     := [-.crypto.ec]
-$ T_D_ECDSATEST  := [-.crypto.ecdsa]
-$ T_D_ECDHTEST   := [-.crypto.ecdh]
-$ T_D_IDEATEST   := [-.crypto.idea]
-$ T_D_MD2TEST    := [-.crypto.md2]
-$ T_D_MD4TEST    := [-.crypto.md4]
-$ T_D_MD5TEST    := [-.crypto.md5]
-$ T_D_HMACTEST   := [-.crypto.hmac]
-$ T_D_WP_TEST    := [-.crypto.whrlpool]
-$ T_D_RC2TEST    := [-.crypto.rc2]
-$ T_D_RC4TEST    := [-.crypto.rc4]
-$ T_D_RC5TEST    := [-.crypto.rc5]
-$ T_D_DESTEST    := [-.crypto.des]
-$ T_D_SHATEST    := [-.crypto.sha]
-$ T_D_SHA1TEST   := [-.crypto.sha]
-$ T_D_SHA256T    := [-.crypto.sha]
-$ T_D_SHA512T    := [-.crypto.sha]
-$ T_D_MDC2TEST   := [-.crypto.mdc2]
-$ T_D_RMDTEST    := [-.crypto.ripemd]
-$ T_D_RANDTEST   := [-.crypto.rand]
-$ T_D_DHTEST     := [-.crypto.dh]
-$ T_D_ENGINETEST := [-.crypto.engine]
-$ T_D_BFTEST     := [-.crypto.bf]
-$ T_D_CASTTEST   := [-.crypto.cast]
-$ T_D_SSLTEST    := [-.ssl]
-$ T_D_EXPTEST    := [-.crypto.bn]
-$ T_D_DSATEST    := [-.crypto.dsa]
-$ T_D_RSA_TEST   := [-.crypto.rsa]
-$ T_D_EVP_TEST   := [-.crypto.evp]
-$ T_D_IGETEST    := [-.test]
-$ T_D_JPAKETEST  := [-.crypto.jpake]
-$ T_D_SRPTEST    := [-.crypto.srp]
+$ T_D_BNTEST             := [-.crypto.bn]
+$ T_D_ECTEST             := [-.crypto.ec]
+$ T_D_ECDSATEST          := [-.crypto.ecdsa]
+$ T_D_ECDHTEST           := [-.crypto.ecdh]
+$ T_D_IDEATEST           := [-.crypto.idea]
+$ T_D_MD2TEST            := [-.crypto.md2]
+$ T_D_MD4TEST            := [-.crypto.md4]
+$ T_D_MD5TEST            := [-.crypto.md5]
+$ T_D_HMACTEST           := [-.crypto.hmac]
+$ T_D_WP_TEST            := [-.crypto.whrlpool]
+$ T_D_RC2TEST            := [-.crypto.rc2]
+$ T_D_RC4TEST            := [-.crypto.rc4]
+$ T_D_RC5TEST            := [-.crypto.rc5]
+$ T_D_DESTEST            := [-.crypto.des]
+$ T_D_SHATEST            := [-.crypto.sha]
+$ T_D_SHA1TEST           := [-.crypto.sha]
+$ T_D_SHA256T            := [-.crypto.sha]
+$ T_D_SHA512T            := [-.crypto.sha]
+$ T_D_MDC2TEST           := [-.crypto.mdc2]
+$ T_D_RMDTEST            := [-.crypto.ripemd]
+$ T_D_RANDTEST           := [-.crypto.rand]
+$ T_D_DHTEST             := [-.crypto.dh]
+$ T_D_ENGINETEST         := [-.crypto.engine]
+$ T_D_GOST2814789TEST    := [-.engines.ccgost]
+$ T_D_BFTEST             := [-.crypto.bf]
+$ T_D_CASTTEST           := [-.crypto.cast]
+$ T_D_SSLTEST            := [-.ssl]
+$ T_D_EXPTEST            := [-.crypto.bn]
+$ T_D_DSATEST            := [-.crypto.dsa]
+$ T_D_RSA_TEST           := [-.crypto.rsa]
+$ T_D_EVP_TEST           := [-.crypto.evp]
+$ T_D_IGETEST            := [-.test]
+$ T_D_JPAKETEST          := [-.crypto.jpake]
+$ T_D_SRPTEST            := [-.crypto.srp]
+$ T_D_V3NAMETEST         := [-.crypto.x509v3]
+$ T_D_HEARTBEAT_TEST     := [-.ssl]
+$ T_D_P5_CRPT2_TEST      := [-.crypto.evp]
+$ T_D_CONSTANT_TIME_TEST := [-.crypto]
 $!
 $ TCPIP_PROGRAMS = ",,"
 $ IF COMPILER .EQS. "VAXC" THEN -
@@ -468,7 +477,7 @@ $ CHECK_OPTIONS:
 $!
 $! Set basic C compiler /INCLUDE directories.
 $!
-$ CC_INCLUDES = "SYS$DISK:[-],SYS$DISK:[-.CRYPTO]"
+$ CC_INCLUDES = "SYS$DISK:[],SYS$DISK:[-],SYS$DISK:[-.CRYPTO]"
 $!
 $! Check To See If P1 Is Blank.
 $!
@@ -1060,10 +1069,12 @@ $ __HERE = F$PARSE(F$PARSE("A.;",F$ENVIRONMENT("PROCEDURE"))-"A.;","[]A.;") - "A
 $ __HERE = F$EDIT(__HERE,"UPCASE")
 $ __TOP = __HERE - "TEST]"
 $ __INCLUDE = __TOP + "INCLUDE.OPENSSL]"
+$ __INTERNAL = __TOP + "CRYPTO.INCLUDE.INTERNAL]"
 $!
 $! Set up the logical name OPENSSL to point at the include directory
 $!
 $ DEFINE OPENSSL /NOLOG '__INCLUDE'
+$ DEFINE INTERNAL /NOLOG '__INTERNAL'
 $!
 $! Done
 $!
@@ -1076,6 +1087,7 @@ $!
 $ IF __SAVE_OPENSSL .EQS. ""
 $ THEN
 $   DEASSIGN OPENSSL
+$   DEASSIGN INTERNAL
 $ ELSE
 $   DEFINE /NOLOG OPENSSL '__SAVE_OPENSSL'
 $ ENDIF

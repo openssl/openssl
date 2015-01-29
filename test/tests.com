@@ -27,6 +27,7 @@ $	endif
 $!
 $	texe_dir := sys$disk:[-.'__archd'.exe.test]
 $	exe_dir := sys$disk:[-.'__archd'.exe.apps]
+$	engines_dir := sys$disk:[-.'__archd'.exe.engines]
 $
 $	set default '__here'
 $
@@ -51,47 +52,55 @@ $! if there's a difference that needs to be taken care of.
 $	    tests := -
 	test_des,test_idea,test_sha,test_md4,test_md5,test_hmac,-
 	test_md2,test_mdc2,test_wp,-
-	test_rmd,test_rc2,test_rc4,test_rc5,test_bf,test_cast,test_aes,-
+	test_rmd,test_rc2,test_rc4,test_rc5,test_bf,test_cast,-
 	test_rand,test_bn,test_ec,test_ecdsa,test_ecdh,-
 	test_enc,test_x509,test_rsa,test_crl,test_sid,-
 	test_gen,test_req,test_pkcs7,test_verify,test_dh,test_dsa,-
 	test_ss,test_ca,test_engine,test_evp,test_ssl,test_tsa,test_ige,-
-	test_jpake,test_srp,test_cms
+	test_jpake,test_srp,test_cms,test_v3name,test_ocsp,-
+	test_gost2814789,test_heartbeat,test_p5_crpt2,-
+	test_constant_time
 $	endif
 $	tests = f$edit(tests,"COLLAPSE")
 $
-$	BNTEST :=	bntest
-$	ECTEST :=	ectest
-$	ECDSATEST :=	ecdsatest
-$	ECDHTEST :=	ecdhtest
-$	EXPTEST :=	exptest
-$	IDEATEST :=	ideatest
-$	SHATEST :=	shatest
-$	SHA1TEST :=	sha1test
-$	MDC2TEST :=	mdc2test
-$	RMDTEST :=	rmdtest
-$	MD2TEST :=	md2test
-$	MD4TEST :=	md4test
-$	MD5TEST :=	md5test
-$	HMACTEST :=	hmactest
-$	WPTEST :=	wp_test
-$	RC2TEST :=	rc2test
-$	RC4TEST :=	rc4test
-$	RC5TEST :=	rc5test
-$	BFTEST :=	bftest
-$	CASTTEST :=	casttest
-$	DESTEST :=	destest
-$	RANDTEST :=	randtest
-$	DHTEST :=	dhtest
-$	DSATEST :=	dsatest
-$	METHTEST :=	methtest
-$	SSLTEST :=	ssltest
-$	RSATEST :=	rsa_test
-$	ENGINETEST :=	enginetest
-$	EVPTEST :=	evp_test
-$	IGETEST :=	igetest
-$	JPAKETEST :=	jpaketest
-$	SRPTEST :=	srptest
+$	BNTEST :=		bntest
+$	ECTEST :=		ectest
+$	ECDSATEST :=		ecdsatest
+$	ECDHTEST :=		ecdhtest
+$	EXPTEST :=		exptest
+$	IDEATEST :=		ideatest
+$	SHA1TEST :=		sha1test
+$	SHA256TEST :=		sha256t
+$	SHA512TEST :=		sha512t
+$	MDC2TEST :=		mdc2test
+$	RMDTEST :=		rmdtest
+$	MD2TEST :=		md2test
+$	MD4TEST :=		md4test
+$	MD5TEST :=		md5test
+$	HMACTEST :=		hmactest
+$	WPTEST :=		wp_test
+$	RC2TEST :=		rc2test
+$	RC4TEST :=		rc4test
+$	RC5TEST :=		rc5test
+$	BFTEST :=		bftest
+$	CASTTEST :=		casttest
+$	DESTEST :=		destest
+$	RANDTEST :=		randtest
+$	DHTEST :=		dhtest
+$	DSATEST :=		dsatest
+$	METHTEST :=		methtest
+$	SSLTEST :=		ssltest
+$	RSATEST :=		rsa_test
+$	ENGINETEST :=		enginetest
+$	GOST2814789TEST :=	gost2814789test
+$	EVPTEST :=		evp_test
+$	P5_CRPT2_TEST :=	p5_crpt2_test
+$	IGETEST :=		igetest
+$	JPAKETEST :=		jpaketest
+$	SRPTEST :=		srptest
+$	V3NAMETEST :=		v3nametest
+$	HEARTBEATTEST :=	heartbeat_test
+$	CONSTTIMETEST :=	constant_time_test
 $!
 $	tests_i = 0
 $ loop_tests:
@@ -105,6 +114,9 @@ $
 $ test_evp:
 $	mcr 'texe_dir''evptest' 'ROOT'.CRYPTO.EVP]evptests.txt
 $	return
+$ test_p5_crpt2:
+$	mcr 'texe_dir''p5_crpt2_test'
+$	return
 $ test_des:
 $	mcr 'texe_dir''destest'
 $	return
@@ -112,8 +124,9 @@ $ test_idea:
 $	mcr 'texe_dir''ideatest'
 $	return
 $ test_sha:
-$	mcr 'texe_dir''shatest'
 $	mcr 'texe_dir''sha1test'
+$	mcr 'texe_dir''sha256test'
+$	mcr 'texe_dir''sha512test'
 $	return
 $ test_mdc2:
 $	mcr 'texe_dir''mdc2test'
@@ -153,6 +166,10 @@ $	mcr 'texe_dir''rc5test'
 $	return
 $ test_rand:
 $	mcr 'texe_dir''randtest'
+$	return
+$ test_gost2814789:
+$	define/user OPENSSL_ENGINES 'engines_dir'
+$	mcr 'texe_dir''gost2814789test'
 $	return
 $ test_enc:
 $	@testenc.com 'pointer_size'
@@ -361,7 +378,21 @@ $ test_srp:
 $	write sys$output "Test SRP"
 $	mcr 'texe_dir''srptest'
 $	return
-$
+$ test_v3name:
+$	write sys$output "Test X509v3_check_*"
+$	mcr 'texe_dir''v3nametest'
+$	return
+$ test_ocsp:
+$	write sys$output "Test OCSP"
+$	@tocsp.com
+$	return
+$ test_heartbeat:
+$	mcr 'texe_dir''heartbeattest'
+$	return
+$ test_constant_time:
+$	write sys$output "Test constant time utilites"
+$	mcr 'texe_dir''consttimetest'
+$	return
 $
 $ exit:
 $	mcr 'exe_dir'openssl version -a

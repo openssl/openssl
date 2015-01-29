@@ -213,16 +213,15 @@ $ ENDIF
 $!
 $! Define The Different SSL "library" Files.
 $!
-$ LIB_SSL = "s2_meth,s2_srvr,s2_clnt,s2_lib,s2_enc,s2_pkt,"+ -
-	    "s3_meth,s3_srvr,s3_clnt,s3_lib,s3_enc,s3_pkt,s3_both,"+ -
-	    "s23_meth,s23_srvr,s23_clnt,s23_lib,s23_pkt,"+ -
-	    "t1_meth,t1_srvr,t1_clnt,t1_lib,t1_enc,"+ -
-	    "d1_meth,d1_srvr,d1_clnt,d1_lib,d1_pkt,"+ -
-	    "d1_both,d1_enc,d1_srtp,"+ -
+$ LIB_SSL = "s3_meth,  s3_srvr, s3_clnt, s3_lib, s3_enc,s3_pkt,s3_both,s3_cbc,"+ -
+	    "s23_meth,s23_srvr,s23_clnt,s23_lib,       s23_pkt,"+ -
+	    "t1_meth,  t1_srvr, t1_clnt, t1_lib, t1_enc,       t1_ext,"+ -
+	    "d1_meth,  d1_srvr, d1_clnt, d1_lib,        d1_pkt,"+ -
+	    "d1_both,d1_srtp,"+ -
 	    "ssl_lib,ssl_err2,ssl_cert,ssl_sess,"+ -
 	    "ssl_ciph,ssl_stat,ssl_rsa,"+ -
-	    "ssl_asn1,ssl_txt,ssl_algs,"+ -
-	    "bio_ssl,ssl_err,kssl,t1_reneg,tls_srp,t1_trce"
+	    "ssl_asn1,ssl_txt,ssl_algs,ssl_conf,"+ -
+	    "bio_ssl,ssl_err,kssl,t1_reneg,tls_srp,t1_trce,ssl_utst"
 $!
 $ COMPILEWITH_CC5 = ""
 $!
@@ -240,7 +239,7 @@ $ NEXT_FILE:
 $!
 $! O.K, Extract The File Name From The File List.
 $!
-$ FILE_NAME = F$ELEMENT(FILE_COUNTER,",",LIB_SSL)
+$ FILE_NAME = F$EDIT(F$ELEMENT(FILE_COUNTER,",",LIB_SSL),"TRIM")
 $!
 $! Check To See If We Are At The End Of The File List.
 $!
