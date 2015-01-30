@@ -30,6 +30,7 @@
 #include <openssl/engine.h>
 #include <openssl/evp.h>
 #include <openssl/bn.h>
+#include "../bn/bn_lcl.h"
 
 #if (defined(__unix__) || defined(unix)) && !defined(USG) && \
         (defined(OpenBSD) || defined(__FreeBSD__))
