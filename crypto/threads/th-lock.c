@@ -200,18 +200,6 @@ void CRYPTO_thread_cleanup(void)
 
 void solaris_locking_callback(int mode, int type, char *file, int line)
 {
-# if 0
-    fprintf(stderr, "thread=%4d mode=%s lock=%s %s:%d\n",
-            CRYPTO_thread_id(),
-            (mode & CRYPTO_LOCK) ? "l" : "u",
-            (type & CRYPTO_READ) ? "r" : "w", file, line);
-# endif
-
-# if 0
-    if (CRYPTO_LOCK_SSL_CERT == type)
-        fprintf(stderr, "(t,m,f,l) %ld %d %s %d\n",
-                CRYPTO_thread_id(), mode, file, line);
-# endif
     if (mode & CRYPTO_LOCK) {
 # ifdef USE_MUTEX
         mutex_lock(&(lock_cs[type]));
@@ -338,17 +326,6 @@ void thread_cleanup(void)
 
 void pthreads_locking_callback(int mode, int type, char *file, int line)
 {
-# if 0
-    fprintf(stderr, "thread=%4d mode=%s lock=%s %s:%d\n",
-            CRYPTO_thread_id(),
-            (mode & CRYPTO_LOCK) ? "l" : "u",
-            (type & CRYPTO_READ) ? "r" : "w", file, line);
-# endif
-# if 0
-    if (CRYPTO_LOCK_SSL_CERT == type)
-        fprintf(stderr, "(t,m,f,l) %ld %d %s %d\n",
-                CRYPTO_thread_id(), mode, file, line);
-# endif
     if (mode & CRYPTO_LOCK) {
         pthread_mutex_lock(&(lock_cs[type]));
         lock_count[type]++;

@@ -95,13 +95,6 @@ static int vms_load(DSO *dso);
 static int vms_unload(DSO *dso);
 static void *vms_bind_var(DSO *dso, const char *symname);
 static DSO_FUNC_TYPE vms_bind_func(DSO *dso, const char *symname);
-# if 0
-static int vms_unbind_var(DSO *dso, char *symname, void *symptr);
-static int vms_unbind_func(DSO *dso, char *symname, DSO_FUNC_TYPE symptr);
-static int vms_init(DSO *dso);
-static int vms_finish(DSO *dso);
-static long vms_ctrl(DSO *dso, int cmd, long larg, void *parg);
-# endif
 static char *vms_name_converter(DSO *dso, const char *filename);
 static char *vms_merger(DSO *dso, const char *filespec1,
                         const char *filespec2);
@@ -112,11 +105,6 @@ static DSO_METHOD dso_meth_vms = {
     NULL,                       /* unload */
     vms_bind_var,
     vms_bind_func,
-/* For now, "unbind" doesn't exist */
-# if 0
-    NULL,                       /* unbind_var */
-    NULL,                       /* unbind_func */
-# endif
     NULL,                       /* ctrl */
     vms_name_converter,
     vms_merger,

@@ -179,13 +179,6 @@ pitem *pqueue_find(pqueue_s *pq, unsigned char *prio64be)
     if (!found)
         return NULL;
 
-#if 0                           /* find works in peek mode */
-    if (prev == NULL)
-        pq->items = next->next;
-    else
-        prev->next = next->next;
-#endif
-
     return found;
 }
 

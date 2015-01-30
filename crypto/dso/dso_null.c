@@ -72,11 +72,6 @@ static DSO_METHOD dso_meth_null = {
     NULL,                       /* unload */
     NULL,                       /* bind_var */
     NULL,                       /* bind_func */
-/* For now, "unbind" doesn't exist */
-#if 0
-    NULL,                       /* unbind_var */
-    NULL,                       /* unbind_func */
-#endif
     NULL,                       /* ctrl */
     NULL,                       /* dso_name_converter */
     NULL,                       /* dso_merger */
