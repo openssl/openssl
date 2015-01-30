@@ -301,12 +301,7 @@ int main(int Argc, char *ARGV[])
     }
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
-#if 0
-    if (getenv("OPENSSL_DEBUG_LOCKING") != NULL)
-#endif
-    {
-        CRYPTO_set_locking_callback(lock_dbg_cb);
-    }
+    CRYPTO_set_locking_callback(lock_dbg_cb);
 
     if (getenv("OPENSSL_FIPS")) {
 #ifdef OPENSSL_FIPS

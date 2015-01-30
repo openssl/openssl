@@ -812,10 +812,6 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
 
         BIO_printf(bio, "   ");
         num = len;
-#if 0
-        if (num > 16)
-            num = 16;
-#endif
         for (i = 0; i < num; i++) {
             if (i % 16 == 0 && i > 0)
                 BIO_printf(bio, "\n   ");

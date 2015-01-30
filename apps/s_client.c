@@ -1326,10 +1326,6 @@ int MAIN(int argc, char **argv)
 
     if (state)
         SSL_CTX_set_info_callback(ctx, apps_ssl_info_callback);
-#if 0
-    else
-        SSL_CTX_set_cipher_list(ctx, getenv("SSL_CIPHER"));
-#endif
 
     SSL_CTX_set_verify(ctx, verify, verify_callback);
 
@@ -1508,17 +1504,6 @@ int MAIN(int argc, char **argv)
         SSL_set_tlsext_status_type(con, TLSEXT_STATUSTYPE_ocsp);
         SSL_CTX_set_tlsext_status_cb(ctx, ocsp_resp_cb);
         SSL_CTX_set_tlsext_status_arg(ctx, bio_c_out);
-# if 0
-        {
-            STACK_OF(OCSP_RESPID) *ids = sk_OCSP_RESPID_new_null();
-            OCSP_RESPID *id = OCSP_RESPID_new();
-            id->value.byKey = ASN1_OCTET_STRING_new();
-            id->type = V_OCSP_RESPID_KEY;
-            ASN1_STRING_set(id->value.byKey, "Hello World", -1);
-            sk_OCSP_RESPID_push(ids, id);
-            SSL_set_tlsext_status_ids(con, ids);
-        }
-# endif
     }
 #endif
 #ifndef OPENSSL_NO_JPAKE
@@ -1667,16 +1652,6 @@ int MAIN(int argc, char **argv)
             tty_on = 1;
             if (in_init) {
                 in_init = 0;
-#if 0                           /* This test doesn't really work as intended
-                                 * (needs to be fixed) */
-# ifndef OPENSSL_NO_TLSEXT
-                if (servername != NULL && !SSL_session_reused(con)) {
-                    BIO_printf(bio_c_out,
-                               "Server did %sacknowledge servername extension.\n",
-                               tlsextcbp.ack ? "" : "not ");
-                }
-# endif
-#endif
                 if (sess_out) {
                     BIO *stmp = BIO_new_file(sess_out, "w");
                     if (stmp) {

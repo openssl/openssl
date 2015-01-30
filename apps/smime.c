@@ -511,11 +511,6 @@ int MAIN(int argc, char **argv)
         while (*args) {
             if (!(cert = load_cert(bio_err, *args, FORMAT_PEM,
                                    NULL, e, "recipient certificate file"))) {
-#if 0                           /* An appropriate message is already printed */
-                BIO_printf(bio_err,
-                           "Can't read recipient certificate file %s\n",
-                           *args);
-#endif
                 goto end;
             }
             sk_X509_push(encerts, cert);
