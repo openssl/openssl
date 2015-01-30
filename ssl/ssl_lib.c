@@ -303,6 +303,7 @@ SSL *SSL_new(SSL_CTX *ctx)
     memset(s, 0, sizeof(SSL));
 
     RECORD_LAYER_set_ssl(&s->rlayer, s);
+    SSL3_RECORD_clear(RECORD_LAYER_get_rrec(&s->rlayer));
 
 #ifndef OPENSSL_NO_KRB5
     s->kssl_ctx = kssl_ctx_new();
@@ -625,6 +626,7 @@ void SSL_free(SSL *s)
         ssl3_release_read_buffer(s);
     if (SSL3_BUFFER_is_initialised(RECORD_LAYER_get_wbuf(&s->rlayer)))
         ssl3_release_write_buffer(s);
+    SSL3_RECORD_release(RECORD_LAYER_get_rrec(&s->rlayer));
 
     if (s->ctx)
         SSL_CTX_free(s->ctx);
