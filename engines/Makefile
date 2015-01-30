@@ -26,6 +26,7 @@ EX_LIBS=
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 ASFLAGS= $(INCLUDES) $(ASFLAG)
+AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile engines.com install.com engine_vector.mar
 TEST=
