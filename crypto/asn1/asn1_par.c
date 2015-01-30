@@ -123,11 +123,7 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
     /* ASN1_BMPSTRING *bmp=NULL; */
     int dump_indent;
 
-#if 0
-    dump_indent = indent;
-#else
     dump_indent = 6;            /* Because we know BIO_dump_indent() */
-#endif
     p = *pp;
     tot = p + length;
     op = p - 1;

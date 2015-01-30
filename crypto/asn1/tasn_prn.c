@@ -245,10 +245,6 @@ static int asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
         break;
 
     case ASN1_ITYPE_CHOICE:
-#if 0
-        if (!nohdr && !asn1_print_fsname(out, indent, fname, sname, pctx))
-            return 0;
-#endif
         /* CHOICE type, get selector */
         i = asn1_get_choice_selector(fld, it);
         /* This should never happen... */
@@ -375,11 +371,6 @@ static int asn1_print_fsname(BIO *out, int indent,
 {
     static const char spaces[] = "                    ";
     static const int nspaces = sizeof(spaces) - 1;
-
-#if 0
-    if (!sname && !fname)
-        return 1;
-#endif
 
     while (indent > nspaces) {
         if (BIO_write(out, spaces, nspaces) != nspaces)

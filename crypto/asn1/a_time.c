@@ -71,33 +71,6 @@ IMPLEMENT_ASN1_MSTRING(ASN1_TIME, B_ASN1_TIME)
 
 IMPLEMENT_ASN1_FUNCTIONS(ASN1_TIME)
 
-#if 0
-int i2d_ASN1_TIME(ASN1_TIME *a, unsigned char **pp)
-{
-# ifdef CHARSET_EBCDIC
-    /* KLUDGE! We convert to ascii before writing DER */
-    char tmp[24];
-    ASN1_STRING tmpstr;
-
-    if (a->type == V_ASN1_UTCTIME || a->type == V_ASN1_GENERALIZEDTIME) {
-        int len;
-
-        tmpstr = *(ASN1_STRING *)a;
-        len = tmpstr.length;
-        ebcdic2ascii(tmp, tmpstr.data,
-                     (len >= sizeof tmp) ? sizeof tmp : len);
-        tmpstr.data = tmp;
-        a = (ASN1_GENERALIZEDTIME *)&tmpstr;
-    }
-# endif
-    if (a->type == V_ASN1_UTCTIME || a->type == V_ASN1_GENERALIZEDTIME)
-        return (i2d_ASN1_bytes((ASN1_STRING *)a, pp,
-                               a->type, V_ASN1_UNIVERSAL));
-    ASN1err(ASN1_F_I2D_ASN1_TIME, ASN1_R_EXPECTING_A_TIME);
-    return -1;
-}
-#endif
-
 ASN1_TIME *ASN1_TIME_set(ASN1_TIME *s, time_t t)
 {
     return ASN1_TIME_adj(s, t, 0, 0);
