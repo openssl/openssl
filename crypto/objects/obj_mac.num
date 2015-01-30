@@ -970,3 +970,4 @@ camellia_256_gcm		969
 camellia_256_ccm		970
 camellia_256_ctr		971
 camellia_256_cmac		972
+id_scrypt		973
