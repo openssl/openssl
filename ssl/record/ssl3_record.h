@@ -1,4 +1,4 @@
-/* ssl/record/rec_layer.h */
+/* ssl/record/ssl3_record.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2015 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -109,25 +109,54 @@
  *
  */
 
-#include "../ssl_locl.h"
-
-typedef struct record_layer_st {
-    /* The parent SSL structure */
-    SSL *s;
+typedef struct ssl3_record_st {
+    /* type of record */
     /*
-     * Read as many input bytes as possible (for
-     * non-blocking reads)
+     * r
+     */ int type;
+    /* How many bytes available */
+    /*
+     * rw
+     */ unsigned int length;
+    /*
+     * How many bytes were available before padding was removed? This is used
+     * to implement the MAC check in constant time for CBC records.
      */
-    int read_ahead;
-    /* read IO goes into here */
-    SSL3_BUFFER rbuf;
-    /* write IO goes into here */
-    SSL3_BUFFER wbuf;
-} RECORD_LAYER;
+    /*
+     * rw
+     */ unsigned int orig_len;
+    /* read/write offset into 'buf' */
+    /*
+     * r
+     */ unsigned int off;
+    /* pointer to the record data */
+    /*
+     * rw
+     */ unsigned char *data;
+    /* where the decode bytes are */
+    /*
+     * rw
+     */ unsigned char *input;
+    /* only used with decompression - malloc()ed */
+    /*
+     * r
+     */ unsigned char *comp;
+    /* epoch number, needed by DTLS1 */
+    /*
+     * r
+     */ unsigned long epoch;
+    /* sequence number, needed by DTLS1 */
+    /*
+     * r
+     */ unsigned char seq_num[8];
+} SSL3_RECORD;
 
-#define RECORD_LAYER_set_ssl(rl, s)             ((rl)->s = (s))
-#define RECORD_LAYER_set_read_ahead(rl, ra)     ((rl)->read_ahead = (ra))
-#define RECORD_LAYER_get_read_ahead(rl)         ((rl)->read_ahead)
-#define RECORD_LAYER_get_rbuf(rl)               (&(rl)->rbuf)
-#define RECORD_LAYER_get_wbuf(rl)               (&(rl)->wbuf)
-#define RECORD_LAYER_get_rrec(rl)               (&(rl)->s->s3->rrec)
+#define SSL3_RECORD_get_type(r)                 ((r)->type)
+#define SSL3_RECORD_get_length(r)               ((r)->length)
+#define SSL3_RECORD_get_data(r)                 ((r)->data)
+#define SSL3_RECORD_get_seq_num(r)              ((r)->seq_num)
+
+void SSL3_RECORD_clear(SSL3_RECORD *r);
+void SSL3_RECORD_release(SSL3_RECORD *r);
+int SSL3_RECORD_setup(SSL3_RECORD *r, size_t len);
+void SSL3_RECORD_set_seq_num(SSL3_RECORD *r, const unsigned char *seq_num);

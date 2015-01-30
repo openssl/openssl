@@ -396,10 +396,8 @@ int tls1_change_cipher_state(SSL *s, int which)
                        SSL_R_COMPRESSION_LIBRARY_ERROR);
                 goto err2;
             }
-            if (s->s3->rrec.comp == NULL)
-                s->s3->rrec.comp = (unsigned char *)
-                    OPENSSL_malloc(SSL3_RT_MAX_ENCRYPTED_LENGTH);
-            if (s->s3->rrec.comp == NULL)
+            if (SSL3_RECORD_setup(RECORD_LAYER_get_rrec(&s->rlayer),
+                SSL3_RT_MAX_ENCRYPTED_LENGTH))
                 goto err;
         }
 #endif
@@ -782,7 +780,7 @@ int tls1_enc(SSL *s, int send)
             OPENSSL_assert(n >= 0);
         }
         ds = s->enc_read_ctx;
-        rec = &(s->s3->rrec);
+        rec = RECORD_LAYER_get_rrec(&s->rlayer);
         if (s->enc_read_ctx == NULL)
             enc = NULL;
         else
@@ -977,7 +975,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
         seq = &(ssl->s3->write_sequence[0]);
         hash = ssl->write_hash;
     } else {
-        rec = &(ssl->s3->rrec);
+        rec = RECORD_LAYER_get_rrec(&ssl->rlayer);
         seq = &(ssl->s3->read_sequence[0]);
         hash = ssl->read_hash;
     }

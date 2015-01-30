@@ -316,7 +316,7 @@ static int ssl3_get_record(SSL *s)
     size_t extra;
     unsigned empty_record_count = 0;
 
-    rr = &(s->s3->rrec);
+    rr = RECORD_LAYER_get_rrec(&s->rlayer);
     sess = s->session;
 
     if (s->options & SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER)
@@ -600,7 +600,7 @@ int ssl3_do_uncompress(SSL *ssl)
     int i;
     SSL3_RECORD *rr;
 
-    rr = &(ssl->s3->rrec);
+    rr = RECORD_LAYER_get_rrec(&ssl->rlayer);
     i = COMP_expand_block(ssl->expand, rr->comp,
                           SSL3_RT_MAX_PLAIN_LENGTH, rr->data,
                           (int)rr->length);
@@ -1235,7 +1235,7 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
      * s->s3->rrec.off,     - offset into 'data' for next read
      * s->s3->rrec.length,  - number of bytes.
      */
-    rr = &(s->s3->rrec);
+    rr = RECORD_LAYER_get_rrec(&s->rlayer);
 
     /* get new packet if necessary */
     if ((rr->length == 0) || (s->rstate == SSL_ST_READ_BODY)) {

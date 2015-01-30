@@ -3083,8 +3083,9 @@ int ssl3_pending(const SSL *s)
     if (s->rstate == SSL_ST_READ_BODY)
         return 0;
 
-    return (s->s3->rrec.type ==
-            SSL3_RT_APPLICATION_DATA) ? s->s3->rrec.length : 0;
+    return (SSL3_RECORD_get_type(RECORD_LAYER_get_rrec(&s->rlayer))
+           == SSL3_RT_APPLICATION_DATA)
+           ? SSL3_RECORD_get_length(RECORD_LAYER_get_rrec(&s->rlayer)) : 0;
 }
 
 int ssl3_set_handshake_header(SSL *s, int htype, unsigned long len)
@@ -3110,11 +3111,10 @@ int ssl3_new(SSL *s)
     if ((s3 = OPENSSL_malloc(sizeof *s3)) == NULL)
         goto err;
     memset(s3, 0, sizeof *s3);
-    memset(s3->rrec.seq_num, 0, sizeof(s3->rrec.seq_num));
-    memset(s3->wrec.seq_num, 0, sizeof(s3->wrec.seq_num));
-
     s->s3 = s3;
-
+    SSL3_RECORD_clear(RECORD_LAYER_get_rrec(&s->rlayer));
+    memset(s3->wrec.seq_num, 0, sizeof(s3->wrec.seq_num));
+    
 #ifndef OPENSSL_NO_SRP
     if(!SSL_SRP_CTX_init(s))
           goto err;
@@ -3131,8 +3131,7 @@ void ssl3_free(SSL *s)
         return;
 
     ssl3_cleanup_key_block(s);
-    if (s->s3->rrec.comp != NULL)
-        OPENSSL_free(s->s3->rrec.comp);
+    SSL3_RECORD_release(RECORD_LAYER_get_rrec(&s->rlayer));
 #ifndef OPENSSL_NO_DH
     DH_free(s->s3->tmp.dh);
 #endif
@@ -3166,10 +3165,7 @@ void ssl3_clear(SSL *s)
     if (s->s3->tmp.ca_names != NULL)
         sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
 
-    if (s->s3->rrec.comp != NULL) {
-        OPENSSL_free(s->s3->rrec.comp);
-        s->s3->rrec.comp = NULL;
-    }
+    SSL3_RECORD_release(RECORD_LAYER_get_rrec(&s->rlayer));
 #ifndef OPENSSL_NO_DH
     DH_free(s->s3->tmp.dh);
     s->s3->tmp.dh = NULL;

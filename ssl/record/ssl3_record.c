@@ -1,4 +1,4 @@
-/* ssl/record/rec_layer.h */
+/* ssl/record/ssl3_record.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2015 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -111,23 +111,28 @@
 
 #include "../ssl_locl.h"
 
-typedef struct record_layer_st {
-    /* The parent SSL structure */
-    SSL *s;
-    /*
-     * Read as many input bytes as possible (for
-     * non-blocking reads)
-     */
-    int read_ahead;
-    /* read IO goes into here */
-    SSL3_BUFFER rbuf;
-    /* write IO goes into here */
-    SSL3_BUFFER wbuf;
-} RECORD_LAYER;
+void SSL3_RECORD_clear(SSL3_RECORD *r)
+{
+    memset(r->seq_num, 0, sizeof(r->seq_num));
+}
 
-#define RECORD_LAYER_set_ssl(rl, s)             ((rl)->s = (s))
-#define RECORD_LAYER_set_read_ahead(rl, ra)     ((rl)->read_ahead = (ra))
-#define RECORD_LAYER_get_read_ahead(rl)         ((rl)->read_ahead)
-#define RECORD_LAYER_get_rbuf(rl)               (&(rl)->rbuf)
-#define RECORD_LAYER_get_wbuf(rl)               (&(rl)->wbuf)
-#define RECORD_LAYER_get_rrec(rl)               (&(rl)->s->s3->rrec)
+void SSL3_RECORD_release(SSL3_RECORD *r)
+{
+    if (r->comp != NULL)
+        OPENSSL_free(r->comp);
+    r->comp = NULL;
+}
+
+int SSL3_RECORD_setup(SSL3_RECORD *r, size_t len)
+{
+    if (r->comp == NULL)
+        r->comp = (unsigned char *) OPENSSL_malloc(len);
+    if (r->comp == NULL)
+        return 0;
+    return 1;
+}
+
+void SSL3_RECORD_set_seq_num(SSL3_RECORD *r, const unsigned char *seq_num)
+{
+    memcpy(r->seq_num, seq_num, 8);
+}
