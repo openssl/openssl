@@ -449,13 +449,6 @@ static int dgram_write(BIO *b, const char *in, int inl)
         if (BIO_dgram_should_retry(ret)) {
             BIO_set_retry_write(b);
             data->_errno = get_last_socket_error();
-
-# if 0                          /* higher layers are responsible for querying
-                                 * MTU, if necessary */
-            if (data->_errno == EMSGSIZE)
-                /* retrieve the new MTU */
-                BIO_ctrl(b, BIO_CTRL_DGRAM_QUERY_MTU, 0, NULL);
-# endif
         }
     }
     return (ret);
@@ -559,28 +552,19 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     case BIO_CTRL_DGRAM_CONNECT:
         to = (struct sockaddr *)ptr;
-# if 0
-        if (connect(b->num, to, sizeof(struct sockaddr)) < 0) {
-            perror("connect");
-            ret = 0;
-        } else {
-# endif
-            switch (to->sa_family) {
-            case AF_INET:
-                memcpy(&data->peer, to, sizeof(data->peer.sa_in));
-                break;
+        switch (to->sa_family) {
+        case AF_INET:
+            memcpy(&data->peer, to, sizeof(data->peer.sa_in));
+            break;
 # if OPENSSL_USE_IPV6
-            case AF_INET6:
-                memcpy(&data->peer, to, sizeof(data->peer.sa_in6));
-                break;
+        case AF_INET6:
+            memcpy(&data->peer, to, sizeof(data->peer.sa_in6));
+            break;
 # endif
-            default:
-                memcpy(&data->peer, to, sizeof(data->peer.sa));
-                break;
-            }
-# if 0
+        default:
+            memcpy(&data->peer, to, sizeof(data->peer.sa));
+            break;
         }
-# endif
         break;
         /* (Linux)kernel sets DF bit on outgoing IP packets */
     case BIO_CTRL_DGRAM_MTU_DISCOVER:
@@ -1991,12 +1975,6 @@ int BIO_dgram_non_fatal_error(int err)
 # if defined(OPENSSL_SYS_WINDOWS)
 #  if defined(WSAEWOULDBLOCK)
     case WSAEWOULDBLOCK:
-#  endif
-
-#  if 0                         /* This appears to always be an error */
-#   if defined(WSAENOTCONN)
-    case WSAENOTCONN:
-#   endif
 #  endif
 # endif
 

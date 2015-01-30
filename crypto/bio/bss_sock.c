@@ -233,12 +233,6 @@ int BIO_sock_non_fatal_error(int err)
 #  if defined(WSAEWOULDBLOCK)
     case WSAEWOULDBLOCK:
 #  endif
-
-#  if 0                         /* This appears to always be an error */
-#   if defined(WSAENOTCONN)
-    case WSAENOTCONN:
-#   endif
-#  endif
 # endif
 
 # ifdef EWOULDBLOCK
