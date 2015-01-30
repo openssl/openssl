@@ -127,3 +127,4 @@ typedef struct record_layer_st {
 #define RECORD_LAYER_set_read_ahead(rl, ra)     ((rl)->read_ahead = (ra))
 #define RECORD_LAYER_get_read_ahead(rl)         ((rl)->read_ahead)
 #define RECORD_LAYER_get_rbuf(rl)               (&(rl)->rbuf)
+#define RECORD_LAYER_get_wbuf(rl)               (&(rl)->s->s3->wbuf)

@@ -619,6 +619,9 @@ int ssl3_setup_write_buffer(SSL *s)
 {
     unsigned char *p;
     size_t len, align = 0, headerlen;
+    SSL3_BUFFER *wb;
+
+    wb = RECORD_LAYER_get_wbuf(&s->rlayer);
 
     if (SSL_version(s) == DTLS1_VERSION || SSL_version(s) == DTLS1_BAD_VER)
         headerlen = DTLS1_RT_HEADER_LENGTH + 1;
@@ -629,7 +632,7 @@ int ssl3_setup_write_buffer(SSL *s)
     align = (-SSL3_RT_HEADER_LENGTH) & (SSL3_ALIGN_PAYLOAD - 1);
 #endif
 
-    if (s->s3->wbuf.buf == NULL) {
+    if (wb->buf == NULL) {
         len = s->max_send_fragment
             + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
 #ifndef OPENSSL_NO_COMP
@@ -641,8 +644,8 @@ int ssl3_setup_write_buffer(SSL *s)
 
         if ((p = OPENSSL_malloc(len)) == NULL)
             goto err;
-        s->s3->wbuf.buf = p;
-        s->s3->wbuf.len = len;
+        wb->buf = p;
+        wb->len = len;
     }
 
     return 1;
@@ -663,9 +666,13 @@ int ssl3_setup_buffers(SSL *s)
 
 int ssl3_release_write_buffer(SSL *s)
 {
-    if (s->s3->wbuf.buf != NULL) {
-        OPENSSL_free(s->s3->wbuf.buf);
-        s->s3->wbuf.buf = NULL;
+    SSL3_BUFFER *wb;
+
+    wb = RECORD_LAYER_get_wbuf(&s->rlayer);
+
+    if (wb->buf != NULL) {
+        OPENSSL_free(wb->buf);
+        wb->buf = NULL;
     }
     return 1;
 }

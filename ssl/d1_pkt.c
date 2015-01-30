@@ -1444,11 +1444,13 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
     SSL3_BUFFER *wb;
     SSL_SESSION *sess;
 
+    wb = RECORD_LAYER_get_wbuf(&s->rlayer);
+
     /*
      * first check if there is a SSL3_BUFFER still being written out.  This
      * will happen with non blocking IO
      */
-    if (s->s3->wbuf.left != 0) {
+    if (SSL3_BUFFER_get_left(wb) != 0) {
         OPENSSL_assert(0);      /* XDTLS: want to see if we ever get here */
         return (ssl3_write_pending(s, type, buf, len));
     }
@@ -1465,7 +1467,6 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
         return 0;
 
     wr = &(s->s3->wrec);
-    wb = &(s->s3->wbuf);
     sess = s->session;
 
     if ((sess == NULL) ||
