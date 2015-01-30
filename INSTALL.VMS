@@ -130,15 +130,23 @@ Currently, the logical names supported are:
       OPENSSL_NO_ASM    with value YES, the assembler parts of OpenSSL will
                         not be used.  Instead, plain C implementations are
                         used.  This is good to try if something doesn't work.
-      OPENSSL_NO_'alg'  with value YES, the corresponding crypto algorithm
-                        will not be implemented.  Supported algorithms to
-                        do this with are: RSA, DSA, DH, MD2, MD4, MD5, RIPEMD,
-                        SHA, DES, MDC2, CR2, RC4, RC5, IDEA, BF, CAST, HMAC,
-                        SSL3.  So, for example, having the logical name
-                        OPENSSL_NO_RSA with the value YES means that the
-                        LIBCRYPTO.OLB library will not contain an RSA
-                        implementation.
-
+      OPENSSL_NO_'alg'  with value YES, the corresponding crypto algorithm,
+                        protocol or other routine will not be implemented if
+                        disabling it is supported.  Supported algorithms to
+                        do this with are: AES, BF, CAMELLIA, CAST, CMS, COMP,
+                        DES, DGRAM, DH, DSA, EC, EC2M, ECDH, ECDSA, ENGINE,
+                        ERR, GOST, HEARTBEATS, HMAC, IDEA, KRB5, MD2, MD4,
+                        MD5, OCB, OCSP, PSK, RC2, RC4, RC5, RMD160, RSA, SCTP,
+                        SEED, SOCK, SRP, SRTP, TLSEXT, WHIRLPOOL.  So, for
+                        example, having the logical name OPENSSL_NO_RSA with
+                        the value YES means that the LIBCRYPTO.OLB library
+                        will not contain an RSA implementation.
+      OPENSSL_EXPERIMENTAL_'alg'
+                        with value YES, the corresponding experimental
+                        algorithm is enabled.  Note that is also requires
+                        the application using this to define the C macro
+                        OPENSSL_EXPERIMENTAL_'alg'.  Supported algorithms
+                        to do this with are: JPAKE, STORE.
 
 Test:
 =====
