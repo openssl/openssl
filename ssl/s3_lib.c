@@ -3112,7 +3112,6 @@ int ssl3_new(SSL *s)
         goto err;
     memset(s3, 0, sizeof *s3);
     s->s3 = s3;
-    SSL3_RECORD_clear(RECORD_LAYER_get_rrec(&s->rlayer));
     memset(s3->wrec.seq_num, 0, sizeof(s3->wrec.seq_num));
     
 #ifndef OPENSSL_NO_SRP
@@ -3131,7 +3130,6 @@ void ssl3_free(SSL *s)
         return;
 
     ssl3_cleanup_key_block(s);
-    SSL3_RECORD_release(RECORD_LAYER_get_rrec(&s->rlayer));
 #ifndef OPENSSL_NO_DH
     DH_free(s->s3->tmp.dh);
 #endif

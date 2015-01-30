@@ -123,6 +123,8 @@ typedef struct record_layer_st {
     SSL3_BUFFER rbuf;
     /* write IO goes into here */
     SSL3_BUFFER wbuf;
+    /* each decoded record goes in here */
+    SSL3_RECORD rrec;
 } RECORD_LAYER;
 
 #define RECORD_LAYER_set_ssl(rl, s)             ((rl)->s = (s))
@@ -130,4 +132,4 @@ typedef struct record_layer_st {
 #define RECORD_LAYER_get_read_ahead(rl)         ((rl)->read_ahead)
 #define RECORD_LAYER_get_rbuf(rl)               (&(rl)->rbuf)
 #define RECORD_LAYER_get_wbuf(rl)               (&(rl)->wbuf)
-#define RECORD_LAYER_get_rrec(rl)               (&(rl)->s->s3->rrec)
+#define RECORD_LAYER_get_rrec(rl)               (&(rl)->rrec)
