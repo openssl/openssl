@@ -257,6 +257,7 @@ int SSL_clear(SSL *s)
      * that right?
      */
     RECORD_LAYER_set_read_ahead(&s->rlayer, read_ahead);
+    RECORD_LAYER_set_ssl(&s->rlayer, s);
 
     return (1);
 }

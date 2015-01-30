@@ -645,7 +645,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 #if !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
     unsigned int max_send_fragment;
 #endif
-    SSL3_BUFFER *wb = &(s->s3->wbuf);
+    SSL3_BUFFER *wb = RECORD_LAYER_get_wbuf(&s->rlayer);
     int i;
     unsigned int u_len = (unsigned int)len;
 
@@ -875,7 +875,7 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     int eivlen;
     long align = 0;
     SSL3_RECORD *wr;
-    SSL3_BUFFER *wb = &(s->s3->wbuf);
+    SSL3_BUFFER *wb = RECORD_LAYER_get_wbuf(&s->rlayer);
     SSL_SESSION *sess;
 
     /*
@@ -1100,7 +1100,7 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
                        unsigned int len)
 {
     int i;
-    SSL3_BUFFER *wb = &(s->s3->wbuf);
+    SSL3_BUFFER *wb = RECORD_LAYER_get_wbuf(&s->rlayer);
 
 /* XXXX */
     if ((s->s3->wpend_tot > (int)len)
@@ -1715,8 +1715,10 @@ int ssl3_send_alert(SSL *s, int level, int desc)
     s->s3->alert_dispatch = 1;
     s->s3->send_alert[0] = level;
     s->s3->send_alert[1] = desc;
-    if (s->s3->wbuf.left == 0)  /* data still being written out? */
+    if (SSL3_BUFFER_get_left(RECORD_LAYER_get_wbuf(&s->rlayer)) == 0) {
+        /* data still being written out? */
         return s->method->ssl_dispatch_alert(s);
+    }
     /*
      * else data is still being written out, we will get written some time in
      * the future
