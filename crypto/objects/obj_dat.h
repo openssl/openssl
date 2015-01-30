@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 973
-#define NUM_SN 966
-#define NUM_LN 966
-#define NUM_OBJ 902
+#define NUM_NID 974
+#define NUM_SN 967
+#define NUM_LN 967
+#define NUM_OBJ 903
 
-static const unsigned char lvalues[6355]={
+static const unsigned char lvalues[6364]={
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  0] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  6] OBJ_pkcs */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,     /* [ 13] OBJ_md2 */
@@ -964,6 +964,7 @@ static const unsigned char lvalues[6355]={
 0x03,0xA2,0x31,0x05,0x03,0x01,0x09,0x2F,     /* [6330] OBJ_camellia_256_ccm */
 0x03,0xA2,0x31,0x05,0x03,0x01,0x09,0x31,     /* [6338] OBJ_camellia_256_ctr */
 0x03,0xA2,0x31,0x05,0x03,0x01,0x09,0x32,     /* [6346] OBJ_camellia_256_cmac */
+0x2B,0x06,0x01,0x04,0x01,0xDA,0x47,0x04,0x0B,/* [6354] OBJ_id_scrypt */
 };
 
 static const ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2553,6 +2554,7 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 	&(lvalues[6338]),0},
 {"CAMELLIA-256-CMAC","camellia-256-cmac",NID_camellia_256_cmac,8,
 	&(lvalues[6346]),0},
+{"id-scrypt","id-scrypt",NID_id_scrypt,9,&(lvalues[6354]),0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -3098,6 +3100,7 @@ static const unsigned int sn_objs[NUM_SN]={
 314,	/* "id-regInfo" */
 322,	/* "id-regInfo-certReq" */
 321,	/* "id-regInfo-utf8Pairs" */
+973,	/* "id-scrypt" */
 512,	/* "id-set" */
 191,	/* "id-smime-aa" */
 215,	/* "id-smime-aa-contentHint" */
@@ -4053,6 +4056,7 @@ static const unsigned int ln_objs[NUM_LN]={
 314,	/* "id-regInfo" */
 322,	/* "id-regInfo-certReq" */
 321,	/* "id-regInfo-utf8Pairs" */
+973,	/* "id-scrypt" */
 191,	/* "id-smime-aa" */
 215,	/* "id-smime-aa-contentHint" */
 218,	/* "id-smime-aa-contentIdentifier" */
@@ -5148,6 +5152,7 @@ static const unsigned int obj_objs[NUM_OBJ]={
 856,	/* OBJ_LocalKeySet                  1 3 6 1 4 1 311 17 2 */
 390,	/* OBJ_dcObject                     1 3 6 1 4 1 1466 344 */
 91,	/* OBJ_bf_cbc                       1 3 6 1 4 1 3029 1 2 */
+973,	/* OBJ_id_scrypt                    1 3 6 1 4 1 11591 4 11 */
 315,	/* OBJ_id_regCtrl_regToken          1 3 6 1 5 5 7 5 1 1 */
 316,	/* OBJ_id_regCtrl_authenticator     1 3 6 1 5 5 7 5 1 2 */
 317,	/* OBJ_id_regCtrl_pkiPublicationInfo 1 3 6 1 5 5 7 5 1 3 */
