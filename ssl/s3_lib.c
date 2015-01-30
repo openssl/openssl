@@ -3131,8 +3131,6 @@ void ssl3_free(SSL *s)
         return;
 
     ssl3_cleanup_key_block(s);
-    if (SSL3_BUFFER_is_initialised(RECORD_LAYER_get_rbuf(&s->rlayer)))
-        ssl3_release_read_buffer(s);
     if (s->s3->wbuf.buf != NULL)
         ssl3_release_write_buffer(s);
     if (s->s3->rrec.comp != NULL)
@@ -3164,8 +3162,8 @@ void ssl3_free(SSL *s)
 
 void ssl3_clear(SSL *s)
 {
-    unsigned char *rp, *wp;
-    size_t rlen, wlen;
+    unsigned char *wp;
+    size_t wlen;
     int init_extra;
 
     ssl3_cleanup_key_block(s);
@@ -3190,9 +3188,7 @@ void ssl3_clear(SSL *s)
 # endif                         /* !OPENSSL_NO_EC */
 #endif                          /* !OPENSSL_NO_TLSEXT */
 
-    rp = SSL3_BUFFER_get_buf(RECORD_LAYER_get_rbuf(&s->rlayer));
     wp = s->s3->wbuf.buf;
-    rlen = SSL3_BUFFER_get_len(RECORD_LAYER_get_rbuf(&s->rlayer));
     wlen = s->s3->wbuf.len;
     init_extra = s->s3->init_extra;
     BIO_free(s->s3->handshake_buffer);
@@ -3207,9 +3203,7 @@ void ssl3_clear(SSL *s)
     }
 #endif
     memset(s->s3, 0, sizeof *s->s3);
-    SSL3_BUFFER_set_buf(RECORD_LAYER_get_rbuf(&s->rlayer), rp);
     s->s3->wbuf.buf = wp;
-    SSL3_BUFFER_set_len(RECORD_LAYER_get_rbuf(&s->rlayer), rlen);
     s->s3->wbuf.len = wlen;
     s->s3->init_extra = init_extra;
 

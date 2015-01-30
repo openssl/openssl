@@ -109,6 +109,8 @@
  *
  */
 
+#include "../ssl_locl.h"
+
 typedef struct record_layer_st {
     /* The parent SSL structure */
     SSL *s;
@@ -117,9 +119,11 @@ typedef struct record_layer_st {
      * non-blocking reads)
      */
     int read_ahead;
+    /* read IO goes into here */
+    SSL3_BUFFER rbuf;
 } RECORD_LAYER;
 
 #define RECORD_LAYER_set_ssl(rl, s)             ((rl)->s = (s))
 #define RECORD_LAYER_set_read_ahead(rl, ra)     ((rl)->read_ahead = (ra))
 #define RECORD_LAYER_get_read_ahead(rl)         ((rl)->read_ahead)
-#define RECORD_LAYER_get_rbuf(rl)               (&(rl)->s->s3->rbuf)
+#define RECORD_LAYER_get_rbuf(rl)               (&(rl)->rbuf)
