@@ -244,8 +244,8 @@ int ssl23_get_client_hello(SSL *s)
      *  6-8   length           > Client Hello message
      *  9/10  client_version  /
      */
-    char buf_space[11];
-    char *buf = &(buf_space[0]);
+    unsigned char buf_space[11];
+    unsigned char *buf = &(buf_space[0]);
     unsigned char *p, *d, *d_len, *dd;
     unsigned int i;
     unsigned int csl, sil, cl;
@@ -558,18 +558,15 @@ int ssl23_get_client_hello(SSL *s)
              */
             s->rstate = SSL_ST_READ_HEADER;
             s->packet_length = n;
-            if (s->s3->rbuf.buf == NULL)
+            if (!SSL3_BUFFER_is_initialised(RECORD_LAYER_get_rbuf(&s->rlayer)))
                 if (!ssl3_setup_read_buffer(s))
                     goto err;
 
-            s->packet = &(s->s3->rbuf.buf[0]);
-            memcpy(s->packet, buf, n);
-            s->s3->rbuf.left = n;
-            s->s3->rbuf.offset = 0;
+            s->packet = SSL3_BUFFER_get_buf(RECORD_LAYER_get_rbuf(&s->rlayer));
+            SSL3_BUFFER_set_data(RECORD_LAYER_get_rbuf(&s->rlayer), buf, n);
         } else {
             s->packet_length = 0;
-            s->s3->rbuf.left = 0;
-            s->s3->rbuf.offset = 0;
+            SSL3_BUFFER_set_data(RECORD_LAYER_get_rbuf(&s->rlayer), NULL, 0);
         }
         s->handshake_func = s->method->ssl_accept;
     } else {

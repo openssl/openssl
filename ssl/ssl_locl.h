@@ -166,6 +166,7 @@
 # include <openssl/symhacks.h>
 
 #include "record/rec_layer.h"
+#include "record/ssl3_buffer.h"
 
 # ifdef OPENSSL_BUILD_SHLIBSSL
 #  undef OPENSSL_EXTERN
@@ -979,8 +980,6 @@ struct ssl_st {
     int type;
     /* SSLv3 */
     const SSL_METHOD *method;
-
-    RECORD_LAYER rlayer;
     /*
      * There are 2 BIO's even though they are normally both the same.  This
      * is so data can be read and written to different handlers
@@ -1220,6 +1219,8 @@ struct ssl_st {
      * basis, depending on the chosen cipher.
      */
     int (*not_resumable_session_cb) (SSL *ssl, int is_forward_secure);
+    
+    RECORD_LAYER rlayer;
 };
 
 typedef struct ssl3_record_st {
@@ -1263,17 +1264,6 @@ typedef struct ssl3_record_st {
      * r
      */ unsigned char seq_num[8];
 } SSL3_RECORD;
-
-typedef struct ssl3_buffer_st {
-    /* at least SSL3_RT_MAX_PACKET_SIZE bytes, see ssl3_setup_buffers() */
-    unsigned char *buf;
-    /* buffer size */
-    size_t len;
-    /* where to 'copy from' */
-    int offset;
-    /* how many bytes left */
-    int left;
-} SSL3_BUFFER;
 
 typedef struct ssl3_state_st {
     long flags;

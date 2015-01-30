@@ -481,7 +481,7 @@ static int ssl23_client_hello(SSL *s)
 
 static int ssl23_get_server_hello(SSL *s)
 {
-    char buf[8];
+    unsigned char buf[8];
     unsigned char *p;
     int i;
     int n;
@@ -575,13 +575,11 @@ static int ssl23_get_server_hello(SSL *s)
          */
         s->rstate = SSL_ST_READ_HEADER;
         s->packet_length = n;
-        if (s->s3->rbuf.buf == NULL)
+        if (!SSL3_BUFFER_is_initialised(RECORD_LAYER_get_rbuf(&s->rlayer)))
             if (!ssl3_setup_read_buffer(s))
                 goto err;
-        s->packet = &(s->s3->rbuf.buf[0]);
-        memcpy(s->packet, buf, n);
-        s->s3->rbuf.left = n;
-        s->s3->rbuf.offset = 0;
+        s->packet = SSL3_BUFFER_get_buf(RECORD_LAYER_get_rbuf(&s->rlayer));
+        SSL3_BUFFER_set_data(RECORD_LAYER_get_rbuf(&s->rlayer), buf, n);
 
         s->handshake_func = s->method->ssl_connect;
     } else {
