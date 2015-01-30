@@ -874,12 +874,6 @@ int MAIN(int argc, char **argv)
         else
 #endif
 #ifndef OPENSSL_NO_RSA
-# if 0                         /* was: #ifdef RSAref */
-        if (strcmp(*argv, "rsaref") == 0) {
-            RSA_set_default_openssl_method(RSA_PKCS1_RSAref());
-            j--;
-        } else
-# endif
 # ifndef RSA_NULL
         if (strcmp(*argv, "openssl") == 0) {
             RSA_set_default_method(RSA_PKCS1_SSLeay());
@@ -1273,16 +1267,6 @@ int MAIN(int argc, char **argv)
                        i);
             goto end;
         }
-# if 0
-        else {
-            BIO_printf(bio_err,
-                       mr ? "+RK:%d:"
-                       : "Loaded RSA key, %d bit modulus and e= 0x",
-                       BN_num_bits(rsa_key[i]->n));
-            BN_print(bio_err, rsa_key[i]->e);
-            BIO_printf(bio_err, "\n");
-        }
-# endif
     }
 #endif
 

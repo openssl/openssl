@@ -838,12 +838,6 @@ static int cert_status_cb(SSL *s, void *arg)
     STACK_OF(X509_EXTENSION) *exts;
     int ret = SSL_TLSEXT_ERR_NOACK;
     int i;
-# if 0
-    STACK_OF(OCSP_RESPID) *ids;
-    SSL_get_tlsext_status_ids(s, &ids);
-    BIO_printf(err, "cert_status: received %d ids\n",
-               sk_OCSP_RESPID_num(ids));
-# endif
     if (srctx->verbose)
         BIO_puts(err, "cert_status: callback called\n");
     /* Build up OCSP query from server certificate */
@@ -1733,19 +1727,6 @@ int MAIN(int argc, char *argv[])
 #ifndef OPENSSL_NO_SRTP
     if (srtp_profiles != NULL)
         SSL_CTX_set_tlsext_use_srtp(ctx, srtp_profiles);
-#endif
-
-#if 0
-    if (cipher == NULL)
-        cipher = getenv("SSL_CIPHER");
-#endif
-
-#if 0
-    if (s_cert_file == NULL) {
-        BIO_printf(bio_err,
-                   "You must specify a certificate file for the server to use\n");
-        goto end;
-    }
 #endif
 
     if ((!SSL_CTX_load_verify_locations(ctx, CAfile, CApath)) ||
@@ -2691,27 +2672,6 @@ static DH *load_dh_param(const char *dhfile)
 }
 #endif
 
-#if 0
-static int load_CA(SSL_CTX *ctx, char *file)
-{
-    FILE *in;
-    X509 *x = NULL;
-
-    if ((in = fopen(file, "r")) == NULL)
-        return (0);
-
-    for (;;) {
-        if (PEM_read_X509(in, &x, NULL) == NULL)
-            break;
-        SSL_CTX_add_client_CA(ctx, x);
-    }
-    if (x != NULL)
-        X509_free(x);
-    fclose(in);
-    return (1);
-}
-#endif
-
 static int www_body(char *hostname, int s, int stype, unsigned char *context)
 {
     char *buf = NULL;
@@ -3010,21 +2970,12 @@ static int www_body(char *hostname, int s, int stype, unsigned char *context)
                 BIO_printf(io, "'%s' is an invalid path\r\n", p);
                 break;
             }
-#if 0
-            /* append if a directory lookup */
-            if (e[-1] == '/')
-                strcat(p, "index.html");
-#endif
 
             /* if a directory, do the index thang */
             if (app_isdir(p) > 0) {
-#if 0                           /* must check buffer size */
-                strcat(p, "/index.html");
-#else
                 BIO_puts(io, text);
                 BIO_printf(io, "'%s' is a directory\r\n", p);
                 break;
-#endif
             }
 
             if ((file = BIO_new_file(p, "r")) == NULL) {
