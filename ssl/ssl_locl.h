@@ -165,6 +165,8 @@
 # include <openssl/ssl.h>
 # include <openssl/symhacks.h>
 
+#include "record/rec_layer.h"
+
 # ifdef OPENSSL_BUILD_SHLIBSSL
 #  undef OPENSSL_EXTERN
 #  define OPENSSL_EXTERN OPENSSL_EXPORT
@@ -977,6 +979,8 @@ struct ssl_st {
     int type;
     /* SSLv3 */
     const SSL_METHOD *method;
+
+    RECORD_LAYER rlayer;
     /*
      * There are 2 BIO's even though they are normally both the same.  This
      * is so data can be read and written to different handlers
@@ -1030,8 +1034,7 @@ struct ssl_st {
     unsigned int packet_length;
     struct ssl3_state_st *s3;   /* SSLv3 variables */
     struct dtls1_state_st *d1;  /* DTLSv1 variables */
-    int read_ahead;             /* Read as many input bytes as possible (for
-                                 * non-blocking reads) */
+
     /* callback that allows applications to peek at protocol messages */
     void (*msg_callback) (int write_p, int version, int content_type,
                           const void *buf, size_t len, SSL *ssl, void *arg);

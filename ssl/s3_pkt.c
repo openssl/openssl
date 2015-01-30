@@ -142,7 +142,7 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
      * If extend == 0, obtain new n-byte packet; if extend == 1, increase
      * packet by another n bytes. The packet will be in the sub-array of
      * s->s3->rbuf.buf specified by s->packet and s->packet_length. (If
-     * s->read_ahead is set, 'max' bytes may be stored in rbuf [plus
+     * s->rlayer.read_ahead is set, 'max' bytes may be stored in rbuf [plus
      * s->packet_length bytes if extend == 1].)
      */
     int i, len, left;
@@ -232,7 +232,7 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
     }
 
     /* We always act like read_ahead is set for DTLS */
-    if (!s->read_ahead && !SSL_IS_DTLS(s))
+    if (!RECORD_LAYER_get_read_ahead(&s->rlayer) && !SSL_IS_DTLS(s))
         /* ignore max parameter */
         max = n;
     else {
