@@ -198,12 +198,12 @@ static int dtls1_copy_record(SSL *s, pitem *item)
 
     rdata = (DTLS1_RECORD_DATA *)item->data;
 
-    if (s->s3->rbuf.buf != NULL)
-        OPENSSL_free(s->s3->rbuf.buf);
+    SSL3_BUFFER_release(RECORD_LAYER_get_rbuf(&s->rlayer));
 
     s->packet = rdata->packet;
     s->packet_length = rdata->packet_length;
-    memcpy(&(s->s3->rbuf), &(rdata->rbuf), sizeof(SSL3_BUFFER));
+    memcpy(RECORD_LAYER_get_rbuf(&s->rlayer), &(rdata->rbuf),
+        sizeof(SSL3_BUFFER));
     memcpy(&(s->s3->rrec), &(rdata->rrec), sizeof(SSL3_RECORD));
 
     /* Set proper sequence number for mac calculation */
@@ -236,7 +236,8 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
 
     rdata->packet = s->packet;
     rdata->packet_length = s->packet_length;
-    memcpy(&(rdata->rbuf), &(s->s3->rbuf), sizeof(SSL3_BUFFER));
+    memcpy(&(rdata->rbuf), RECORD_LAYER_get_rbuf(&s->rlayer),
+        sizeof(SSL3_BUFFER));
     memcpy(&(rdata->rrec), &(s->s3->rrec), sizeof(SSL3_RECORD));
 
     item->data = rdata;
@@ -253,7 +254,7 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
 
     s->packet = NULL;
     s->packet_length = 0;
-    memset(&(s->s3->rbuf), 0, sizeof(SSL3_BUFFER));
+    memset(RECORD_LAYER_get_rbuf(&s->rlayer), 0, sizeof(SSL3_BUFFER));
     memset(&(s->s3->rrec), 0, sizeof(SSL3_RECORD));
 
     if (!ssl3_setup_buffers(s)) {
@@ -544,7 +545,8 @@ int dtls1_get_record(SSL *s)
     /* check if we have the header */
     if ((s->rstate != SSL_ST_READ_BODY) ||
         (s->packet_length < DTLS1_RT_HEADER_LENGTH)) {
-        n = ssl3_read_n(s, DTLS1_RT_HEADER_LENGTH, s->s3->rbuf.len, 0);
+        n = ssl3_read_n(s, DTLS1_RT_HEADER_LENGTH,
+            SSL3_BUFFER_get_len(RECORD_LAYER_get_rbuf(&s->rlayer)), 0);
         /* read timeout is handled by dtls1_read_bytes */
         if (n <= 0)
             return (n);         /* error or non-blocking */
@@ -722,9 +724,11 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
     SSL3_RECORD *rr;
     void (*cb) (const SSL *ssl, int type2, int val) = NULL;
 
-    if (s->s3->rbuf.buf == NULL) /* Not initialized yet */
+    if (!SSL3_BUFFER_is_initialised(RECORD_LAYER_get_rbuf(&s->rlayer))) {
+        /* Not initialized yet */
         if (!ssl3_setup_buffers(s))
             return (-1);
+    }
 
     if ((type && (type != SSL3_RT_APPLICATION_DATA) &&
          (type != SSL3_RT_HANDSHAKE)) ||
@@ -1047,7 +1051,9 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
                 }
 
                 if (!(s->mode & SSL_MODE_AUTO_RETRY)) {
-                    if (s->s3->rbuf.left == 0) { /* no read-ahead left? */
+                    if (SSL3_BUFFER_get_left(
+                        RECORD_LAYER_get_rbuf(&s->rlayer)) == 0) {
+                        /* no read-ahead left? */
                         BIO *bio;
                         /*
                          * In the case where we try to read application data,
@@ -1269,7 +1275,9 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
         }
 
         if (!(s->mode & SSL_MODE_AUTO_RETRY)) {
-            if (s->s3->rbuf.left == 0) { /* no read-ahead left? */
+            if (SSL3_BUFFER_get_left(
+                RECORD_LAYER_get_rbuf(&s->rlayer)) == 0) {
+                /* no read-ahead left? */
                 BIO *bio;
                 /*
                  * In the case where we try to read application data, but we

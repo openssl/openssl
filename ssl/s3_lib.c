@@ -3131,7 +3131,7 @@ void ssl3_free(SSL *s)
         return;
 
     ssl3_cleanup_key_block(s);
-    if (s->s3->rbuf.buf != NULL)
+    if (SSL3_BUFFER_is_initialised(RECORD_LAYER_get_rbuf(&s->rlayer)))
         ssl3_release_read_buffer(s);
     if (s->s3->wbuf.buf != NULL)
         ssl3_release_write_buffer(s);
@@ -3190,9 +3190,9 @@ void ssl3_clear(SSL *s)
 # endif                         /* !OPENSSL_NO_EC */
 #endif                          /* !OPENSSL_NO_TLSEXT */
 
-    rp = s->s3->rbuf.buf;
+    rp = SSL3_BUFFER_get_buf(RECORD_LAYER_get_rbuf(&s->rlayer));
     wp = s->s3->wbuf.buf;
-    rlen = s->s3->rbuf.len;
+    rlen = SSL3_BUFFER_get_len(RECORD_LAYER_get_rbuf(&s->rlayer));
     wlen = s->s3->wbuf.len;
     init_extra = s->s3->init_extra;
     BIO_free(s->s3->handshake_buffer);
@@ -3207,9 +3207,9 @@ void ssl3_clear(SSL *s)
     }
 #endif
     memset(s->s3, 0, sizeof *s->s3);
-    s->s3->rbuf.buf = rp;
+    SSL3_BUFFER_set_buf(RECORD_LAYER_get_rbuf(&s->rlayer), rp);
     s->s3->wbuf.buf = wp;
-    s->s3->rbuf.len = rlen;
+    SSL3_BUFFER_set_len(RECORD_LAYER_get_rbuf(&s->rlayer), rlen);
     s->s3->wbuf.len = wlen;
     s->s3->init_extra = init_extra;
 
@@ -4494,7 +4494,7 @@ int ssl3_renegotiate_check(SSL *s)
     int ret = 0;
 
     if (s->s3->renegotiate) {
-        if ((s->s3->rbuf.left == 0) &&
+        if ((SSL3_BUFFER_get_left(RECORD_LAYER_get_rbuf(&s->rlayer)) == 0) &&
             (s->s3->wbuf.left == 0) && !SSL_in_init(s)) {
             /*
              * if we are the server, and we have sent a 'RENEGOTIATE'

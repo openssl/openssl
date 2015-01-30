@@ -153,7 +153,7 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
     if (n <= 0)
         return n;
 
-    rb = &(s->s3->rbuf);
+    rb = RECORD_LAYER_get_rbuf(&s->rlayer);
     if (rb->buf == NULL)
         if (!ssl3_setup_read_buffer(s))
             return -1;
@@ -336,7 +336,8 @@ static int ssl3_get_record(SSL *s)
     /* check if we have the header */
     if ((s->rstate != SSL_ST_READ_BODY) ||
         (s->packet_length < SSL3_RT_HEADER_LENGTH)) {
-        n = ssl3_read_n(s, SSL3_RT_HEADER_LENGTH, s->s3->rbuf.len, 0);
+        n = ssl3_read_n(s, SSL3_RT_HEADER_LENGTH,
+            SSL3_BUFFER_get_len(RECORD_LAYER_get_rbuf(&s->rlayer)), 0);
         if (n <= 0)
             return (n);         /* error or non-blocking */
         s->rstate = SSL_ST_READ_BODY;
@@ -373,7 +374,9 @@ static int ssl3_get_record(SSL *s)
             goto err;
         }
 
-        if (rr->length > s->s3->rbuf.len - SSL3_RT_HEADER_LENGTH) {
+        if (rr->length >
+                SSL3_BUFFER_get_len(RECORD_LAYER_get_rbuf(&s->rlayer))
+                - SSL3_RT_HEADER_LENGTH) {
             al = SSL_AD_RECORD_OVERFLOW;
             SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_PACKET_LENGTH_TOO_LONG);
             goto f_err;
@@ -1174,9 +1177,11 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
     SSL3_RECORD *rr;
     void (*cb) (const SSL *ssl, int type2, int val) = NULL;
 
-    if (s->s3->rbuf.buf == NULL) /* Not initialized yet */
+    if (!SSL3_BUFFER_is_initialised(RECORD_LAYER_get_rbuf(&s->rlayer))) {
+        /* Not initialized yet */
         if (!ssl3_setup_read_buffer(s))
             return (-1);
+    }
 
     if ((type && (type != SSL3_RT_APPLICATION_DATA)
          && (type != SSL3_RT_HANDSHAKE)) || (peek
@@ -1288,7 +1293,8 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
                 s->rstate = SSL_ST_READ_HEADER;
                 rr->off = 0;
                 if (s->mode & SSL_MODE_RELEASE_BUFFERS
-                    && s->s3->rbuf.left == 0)
+                    && SSL3_BUFFER_get_left(
+                        RECORD_LAYER_get_rbuf(&s->rlayer)) == 0)
                     ssl3_release_read_buffer(s);
             }
         }
@@ -1391,7 +1397,9 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
                 }
 
                 if (!(s->mode & SSL_MODE_AUTO_RETRY)) {
-                    if (s->s3->rbuf.left == 0) { /* no read-ahead left? */
+                    if (SSL3_BUFFER_get_left(
+                        RECORD_LAYER_get_rbuf(&s->rlayer)) == 0) {
+                        /* no read-ahead left? */
                         BIO *bio;
                         /*
                          * In the case where we try to read application data,
@@ -1563,7 +1571,8 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
         }
 
         if (!(s->mode & SSL_MODE_AUTO_RETRY)) {
-            if (s->s3->rbuf.left == 0) { /* no read-ahead left? */
+            if (SSL3_BUFFER_get_left(RECORD_LAYER_get_rbuf(&s->rlayer)) == 0) {
+                /* no read-ahead left? */
                 BIO *bio;
                 /*
                  * In the case where we try to read application data, but we

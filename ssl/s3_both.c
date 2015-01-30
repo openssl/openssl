@@ -577,6 +577,9 @@ int ssl3_setup_read_buffer(SSL *s)
 {
     unsigned char *p;
     size_t len, align = 0, headerlen;
+    SSL3_BUFFER *b;
+    
+    b = RECORD_LAYER_get_rbuf(&s->rlayer);
 
     if (SSL_version(s) == DTLS1_VERSION || SSL_version(s) == DTLS1_BAD_VER)
         headerlen = DTLS1_RT_HEADER_LENGTH;
@@ -587,7 +590,7 @@ int ssl3_setup_read_buffer(SSL *s)
     align = (-SSL3_RT_HEADER_LENGTH) & (SSL3_ALIGN_PAYLOAD - 1);
 #endif
 
-    if (s->s3->rbuf.buf == NULL) {
+    if (b->buf == NULL) {
         len = SSL3_RT_MAX_PLAIN_LENGTH
             + SSL3_RT_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
         if (s->options & SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER) {
@@ -600,11 +603,11 @@ int ssl3_setup_read_buffer(SSL *s)
 #endif
         if ((p = OPENSSL_malloc(len)) == NULL)
             goto err;
-        s->s3->rbuf.buf = p;
-        s->s3->rbuf.len = len;
+        b->buf = p;
+        b->len = len;
     }
 
-    s->packet = &(s->s3->rbuf.buf[0]);
+    s->packet = &(b->buf[0]);
     return 1;
 
  err:
@@ -669,9 +672,12 @@ int ssl3_release_write_buffer(SSL *s)
 
 int ssl3_release_read_buffer(SSL *s)
 {
-    if (s->s3->rbuf.buf != NULL) {
-        OPENSSL_free(s->s3->rbuf.buf);
-        s->s3->rbuf.buf = NULL;
+    SSL3_BUFFER *b;
+
+    b = RECORD_LAYER_get_rbuf(&s->rlayer);
+    if (b->buf != NULL) {
+        OPENSSL_free(b->buf);
+        b->buf = NULL;
     }
     return 1;
 }

@@ -1,4 +1,4 @@
-/* ssl/record/rec_layer.h */
+/* ssl/record/ssl3_buffer.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -109,17 +109,24 @@
  *
  */
 
-typedef struct record_layer_st {
-    /* The parent SSL structure */
-    SSL *s;
-    /*
-     * Read as many input bytes as possible (for
-     * non-blocking reads)
-     */
-    int read_ahead;
-} RECORD_LAYER;
+typedef struct ssl3_buffer_st {
+    /* at least SSL3_RT_MAX_PACKET_SIZE bytes, see ssl3_setup_buffers() */
+    unsigned char *buf;
+    /* buffer size */
+    size_t len;
+    /* where to 'copy from' */
+    int offset;
+    /* how many bytes left */
+    int left;
+} SSL3_BUFFER;
 
-#define RECORD_LAYER_set_ssl(rl, s)             ((rl)->s = (s))
-#define RECORD_LAYER_set_read_ahead(rl, ra)     ((rl)->read_ahead = (ra))
-#define RECORD_LAYER_get_read_ahead(rl)         ((rl)->read_ahead)
-#define RECORD_LAYER_get_rbuf(rl)               (&(rl)->s->s3->rbuf)
+#define SSL3_BUFFER_get_buf(b)              ((b)->buf)
+#define SSL3_BUFFER_set_buf(b, n)           ((b)->buf = (n))
+#define SSL3_BUFFER_get_len(b)              ((b)->len)
+#define SSL3_BUFFER_set_len(b, l)           ((b)->len = (l))
+#define SSL3_BUFFER_get_left(b)             ((b)->left)
+#define SSL3_BUFFER_is_initialised(b)       ((b)->buf != NULL)
+
+void SSL3_BUFFER_set_data(SSL3_BUFFER *b, unsigned char *d, int n);
+void SSL3_BUFFER_release(SSL3_BUFFER *b);
+

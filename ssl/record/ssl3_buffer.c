@@ -1,4 +1,4 @@
-/* ssl/record/rec_layer.h */
+/* ssl/record/ssl3_buffer.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -109,17 +109,19 @@
  *
  */
 
-typedef struct record_layer_st {
-    /* The parent SSL structure */
-    SSL *s;
-    /*
-     * Read as many input bytes as possible (for
-     * non-blocking reads)
-     */
-    int read_ahead;
-} RECORD_LAYER;
+#include "../ssl_locl.h"
 
-#define RECORD_LAYER_set_ssl(rl, s)             ((rl)->s = (s))
-#define RECORD_LAYER_set_read_ahead(rl, ra)     ((rl)->read_ahead = (ra))
-#define RECORD_LAYER_get_read_ahead(rl)         ((rl)->read_ahead)
-#define RECORD_LAYER_get_rbuf(rl)               (&(rl)->s->s3->rbuf)
+void SSL3_BUFFER_set_data(SSL3_BUFFER *b, unsigned char *d, int n)
+{
+    if(d != NULL)
+        memcpy(b->buf, d, n);
+    b->left = n;
+    b->offset = 0;
+}
+
+void SSL3_BUFFER_release(SSL3_BUFFER *b)
+{
+    if (b->buf != NULL)
+        OPENSSL_free(b->buf);
+    b->buf = NULL;
+}
