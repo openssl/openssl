@@ -67,7 +67,7 @@ if ( $^O eq "VMS" && -f "OSSLX:openssl.exe" ) {
 # Make MSYS work
 elsif ( $^O eq "MSWin32" && -f "../apps/openssl.exe" ) {
     $ossl_path = "cmd /c ..\\apps\\openssl";
-    $null_path = "/dev/null";
+    $null_path = "NUL";
     $failure_code = 256;
 }
 elsif ( -f "../apps/openssl$ENV{EXE_EXT}" ) {
@@ -77,12 +77,12 @@ elsif ( -f "../apps/openssl$ENV{EXE_EXT}" ) {
 }
 elsif ( -f "..\\out32dll\\openssl.exe" ) {
     $ossl_path = "..\\out32dll\\openssl.exe";
-    $null_path = "/dev/null";
+    $null_path = "NUL";
     $failure_code = 256;
 }
 elsif ( -f "..\\out32\\openssl.exe" ) {
     $ossl_path = "..\\out32\\openssl.exe";
-    $null_path = "/dev/null";
+    $null_path = "NUL";
     $failure_code = 256;
 }
 else {
