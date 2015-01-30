@@ -1281,7 +1281,6 @@ typedef struct ssl3_state_st {
     int empty_fragment_done;
     /* The value of 'extra' when the buffers were initialized */
     int init_extra;
-    SSL3_BUFFER wbuf;           /* write IO goes into here */
     SSL3_RECORD rrec;           /* each decoded record goes in here */
     SSL3_RECORD wrec;           /* goes out from here */
     /*
