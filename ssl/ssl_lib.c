@@ -301,7 +301,7 @@ SSL *SSL_new(SSL_CTX *ctx)
     if (s->cert == NULL)
         goto err;
 
-    s->read_ahead = ctx->read_ahead;
+    RECORD_LAYER_set_read_ahead(&s->rlayer, ctx->read_ahead);
     s->msg_callback = ctx->msg_callback;
     s->msg_callback_arg = ctx->msg_callback_arg;
     s->verify_mode = ctx->verify_mode;
@@ -821,12 +821,12 @@ void SSL_set_verify_depth(SSL *s, int depth)
 
 void SSL_set_read_ahead(SSL *s, int yes)
 {
-    s->read_ahead = yes;
+    RECORD_LAYER_set_read_ahead(&s->rlayer, yes);
 }
 
 int SSL_get_read_ahead(const SSL *s)
 {
-    return (s->read_ahead);
+    return RECORD_LAYER_get_read_ahead(&s->rlayer);
 }
 
 int SSL_pending(const SSL *s)
@@ -1063,10 +1063,10 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
 
     switch (cmd) {
     case SSL_CTRL_GET_READ_AHEAD:
-        return (s->read_ahead);
+        return (RECORD_LAYER_get_read_ahead(&s->rlayer));
     case SSL_CTRL_SET_READ_AHEAD:
-        l = s->read_ahead;
-        s->read_ahead = larg;
+        l = RECORD_LAYER_get_read_ahead(&s->rlayer);
+        RECORD_LAYER_set_read_ahead(&s->rlayer, larg);
         return (l);
 
     case SSL_CTRL_SET_MSG_CALLBACK_ARG:
