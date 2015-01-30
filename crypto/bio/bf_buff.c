@@ -414,10 +414,6 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
             if (ctx->obuf_len > 0) {
                 r = BIO_write(b->next_bio,
                               &(ctx->obuf[ctx->obuf_off]), ctx->obuf_len);
-#if 0
-                fprintf(stderr, "FLUSH [%3d] %3d -> %3d\n", ctx->obuf_off,
-                        ctx->obuf_len, r);
-#endif
                 BIO_copy_next_retry(b);
                 if (r <= 0)
                     return ((long)r);
