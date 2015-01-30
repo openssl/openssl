@@ -270,10 +270,8 @@ int ssl3_change_cipher_state(SSL *s, int which)
                        SSL_R_COMPRESSION_LIBRARY_ERROR);
                 goto err2;
             }
-            if (s->s3->rrec.comp == NULL)
-                s->s3->rrec.comp = (unsigned char *)
-                    OPENSSL_malloc(SSL3_RT_MAX_PLAIN_LENGTH);
-            if (s->s3->rrec.comp == NULL)
+            if(!SSL3_RECORD_setup(RECORD_LAYER_get_rrec(&s->rlayer),
+                SSL3_RT_MAX_PLAIN_LENGTH))
                 goto err;
         }
 #endif
@@ -509,7 +507,7 @@ int ssl3_enc(SSL *s, int send)
             enc = EVP_CIPHER_CTX_cipher(s->enc_write_ctx);
     } else {
         ds = s->enc_read_ctx;
-        rec = &(s->s3->rrec);
+        rec = RECORD_LAYER_get_rrec(&s->rlayer);
         if (s->enc_read_ctx == NULL)
             enc = NULL;
         else
@@ -732,7 +730,7 @@ int n_ssl3_mac(SSL *ssl, unsigned char *md, int send)
         seq = &(ssl->s3->write_sequence[0]);
         hash = ssl->write_hash;
     } else {
-        rec = &(ssl->s3->rrec);
+        rec = RECORD_LAYER_get_rrec(&ssl->rlayer);
         mac_sec = &(ssl->s3->read_mac_secret[0]);
         seq = &(ssl->s3->read_sequence[0]);
         hash = ssl->read_hash;

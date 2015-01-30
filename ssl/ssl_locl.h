@@ -166,6 +166,7 @@
 # include <openssl/symhacks.h>
 
 #include "record/ssl3_buffer.h"
+#include "record/ssl3_record.h"
 #include "record/rec_layer.h"
 
 # ifdef OPENSSL_BUILD_SHLIBSSL
@@ -1223,47 +1224,6 @@ struct ssl_st {
     RECORD_LAYER rlayer;
 };
 
-typedef struct ssl3_record_st {
-    /* type of record */
-    /*
-     * r
-     */ int type;
-    /* How many bytes available */
-    /*
-     * rw
-     */ unsigned int length;
-    /*
-     * How many bytes were available before padding was removed? This is used
-     * to implement the MAC check in constant time for CBC records.
-     */
-    /*
-     * rw
-     */ unsigned int orig_len;
-    /* read/write offset into 'buf' */
-    /*
-     * r
-     */ unsigned int off;
-    /* pointer to the record data */
-    /*
-     * rw
-     */ unsigned char *data;
-    /* where the decode bytes are */
-    /*
-     * rw
-     */ unsigned char *input;
-    /* only used with decompression - malloc()ed */
-    /*
-     * r
-     */ unsigned char *comp;
-    /* epoch number, needed by DTLS1 */
-    /*
-     * r
-     */ unsigned long epoch;
-    /* sequence number, needed by DTLS1 */
-    /*
-     * r
-     */ unsigned char seq_num[8];
-} SSL3_RECORD;
 
 typedef struct ssl3_state_st {
     long flags;
@@ -1281,7 +1241,7 @@ typedef struct ssl3_state_st {
     int empty_fragment_done;
     /* The value of 'extra' when the buffers were initialized */
     int init_extra;
-    SSL3_RECORD rrec;           /* each decoded record goes in here */
+    SSL3_RECORD rrec;            /* each decoded record goes in here */
     SSL3_RECORD wrec;           /* goes out from here */
     /*
      * storage for Alert/Handshake protocol data received but not yet

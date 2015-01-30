@@ -204,7 +204,8 @@ static int dtls1_copy_record(SSL *s, pitem *item)
     s->packet_length = rdata->packet_length;
     memcpy(RECORD_LAYER_get_rbuf(&s->rlayer), &(rdata->rbuf),
         sizeof(SSL3_BUFFER));
-    memcpy(&(s->s3->rrec), &(rdata->rrec), sizeof(SSL3_RECORD));
+    memcpy(RECORD_LAYER_get_rrec(&s->rlayer), &(rdata->rrec),
+        sizeof(SSL3_RECORD));
 
     /* Set proper sequence number for mac calculation */
     memcpy(&(s->s3->read_sequence[2]), &(rdata->packet[5]), 6);
@@ -238,7 +239,8 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
     rdata->packet_length = s->packet_length;
     memcpy(&(rdata->rbuf), RECORD_LAYER_get_rbuf(&s->rlayer),
         sizeof(SSL3_BUFFER));
-    memcpy(&(rdata->rrec), &(s->s3->rrec), sizeof(SSL3_RECORD));
+    memcpy(&(rdata->rrec), RECORD_LAYER_get_rrec(&s->rlayer),
+        sizeof(SSL3_RECORD));
 
     item->data = rdata;
 
@@ -255,7 +257,7 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
     s->packet = NULL;
     s->packet_length = 0;
     memset(RECORD_LAYER_get_rbuf(&s->rlayer), 0, sizeof(SSL3_BUFFER));
-    memset(&(s->s3->rrec), 0, sizeof(SSL3_RECORD));
+    memset(RECORD_LAYER_get_rrec(&s->rlayer), 0, sizeof(SSL3_RECORD));
 
     if (!ssl3_setup_buffers(s)) {
         SSLerr(SSL_F_DTLS1_BUFFER_RECORD, ERR_R_INTERNAL_ERROR);
@@ -328,7 +330,7 @@ static int dtls1_process_buffered_records(SSL *s)
             if (!dtls1_process_record(s))
                 return (0);
             if (dtls1_buffer_record(s, &(s->d1->processed_rcds),
-                                    s->s3->rrec.seq_num) < 0)
+                SSL3_RECORD_get_seq_num(RECORD_LAYER_get_rrec(&s->rlayer))) < 0)
                 return -1;
         }
     }
@@ -352,7 +354,7 @@ static int dtls1_process_record(SSL *s)
     unsigned int mac_size;
     unsigned char md[EVP_MAX_MD_SIZE];
 
-    rr = &(s->s3->rrec);
+    rr = RECORD_LAYER_get_rrec(&s->rlayer);
     sess = s->session;
 
     /*
@@ -527,7 +529,7 @@ int dtls1_get_record(SSL *s)
     DTLS1_BITMAP *bitmap;
     unsigned int is_next_epoch;
 
-    rr = &(s->s3->rrec);
+    rr = RECORD_LAYER_get_rrec(&s->rlayer);
 
     /*
      * The epoch may have changed.  If so, process all the pending records.
@@ -780,7 +782,7 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
      * s->s3->rrec.off,     - offset into 'data' for next read
      * s->s3->rrec.length,  - number of bytes.
      */
-    rr = &(s->s3->rrec);
+    rr = RECORD_LAYER_get_rrec(&s->rlayer);
 
     /*
      * We are not handshaking and have no data yet, so process data buffered
@@ -1629,7 +1631,7 @@ static int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap)
 
     cmp = satsub64be(seq, bitmap->max_seq_num);
     if (cmp > 0) {
-        memcpy(s->s3->rrec.seq_num, seq, 8);
+        SSL3_RECORD_set_seq_num(RECORD_LAYER_get_rrec(&s->rlayer), seq);
         return 1;               /* this record in new */
     }
     shift = -cmp;
@@ -1638,7 +1640,7 @@ static int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap)
     else if (bitmap->map & (1UL << shift))
         return 0;               /* record previously received */
 
-    memcpy(s->s3->rrec.seq_num, seq, 8);
+    SSL3_RECORD_set_seq_num(RECORD_LAYER_get_rrec(&s->rlayer), seq);
     return 1;
 }
 
