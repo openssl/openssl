@@ -99,12 +99,6 @@ static int dlfcn_load(DSO *dso);
 static int dlfcn_unload(DSO *dso);
 static void *dlfcn_bind_var(DSO *dso, const char *symname);
 static DSO_FUNC_TYPE dlfcn_bind_func(DSO *dso, const char *symname);
-# if 0
-static int dlfcn_unbind(DSO *dso, char *symname, void *symptr);
-static int dlfcn_init(DSO *dso);
-static int dlfcn_finish(DSO *dso);
-static long dlfcn_ctrl(DSO *dso, int cmd, long larg, void *parg);
-# endif
 static char *dlfcn_name_converter(DSO *dso, const char *filename);
 static char *dlfcn_merger(DSO *dso, const char *filespec1,
                           const char *filespec2);
@@ -117,11 +111,6 @@ static DSO_METHOD dso_meth_dlfcn = {
     dlfcn_unload,
     dlfcn_bind_var,
     dlfcn_bind_func,
-/* For now, "unbind" doesn't exist */
-# if 0
-    NULL,                       /* unbind_var */
-    NULL,                       /* unbind_func */
-# endif
     NULL,                       /* ctrl */
     dlfcn_name_converter,
     dlfcn_merger,

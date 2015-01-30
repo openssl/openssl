@@ -77,13 +77,6 @@ static int dl_load(DSO *dso);
 static int dl_unload(DSO *dso);
 static void *dl_bind_var(DSO *dso, const char *symname);
 static DSO_FUNC_TYPE dl_bind_func(DSO *dso, const char *symname);
-# if 0
-static int dl_unbind_var(DSO *dso, char *symname, void *symptr);
-static int dl_unbind_func(DSO *dso, char *symname, DSO_FUNC_TYPE symptr);
-static int dl_init(DSO *dso);
-static int dl_finish(DSO *dso);
-static int dl_ctrl(DSO *dso, int cmd, long larg, void *parg);
-# endif
 static char *dl_name_converter(DSO *dso, const char *filename);
 static char *dl_merger(DSO *dso, const char *filespec1,
                        const char *filespec2);
@@ -96,11 +89,6 @@ static DSO_METHOD dso_meth_dl = {
     dl_unload,
     dl_bind_var,
     dl_bind_func,
-/* For now, "unbind" doesn't exist */
-# if 0
-    NULL,                       /* unbind_var */
-    NULL,                       /* unbind_func */
-# endif
     NULL,                       /* ctrl */
     dl_name_converter,
     dl_merger,
