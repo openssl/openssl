@@ -117,12 +117,6 @@ static int e_gmp_rsa_finish(RSA *r);
 /* The definitions for control commands specific to this engine */
 /* #define E_GMP_CMD_SO_PATH            ENGINE_CMD_BASE */
 static const ENGINE_CMD_DEFN e_gmp_cmd_defns[] = {
-#  if 0
-    {E_GMP_CMD_SO_PATH,
-     "SO_PATH",
-     "Specifies the path to the 'e_gmp' shared library",
-     ENGINE_CMD_FLAG_STRING},
-#  endif
     {0, NULL, NULL, 0}
 };
 
@@ -247,10 +241,6 @@ static int e_gmp_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
     int to_return = 1;
 
     switch (cmd) {
-#  if 0
-    case E_GMP_CMD_SO_PATH:
-        /* ... */
-#  endif
         /* The command isn't understood by this engine */
     default:
         GMPerr(GMP_F_E_GMP_CTRL, GMP_R_CTRL_COMMAND_NOT_IMPLEMENTED);

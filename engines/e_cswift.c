@@ -748,11 +748,7 @@ static int cswift_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa,
 #   ifdef RSA_NULL
         def_rsa_method = RSA_null_method();
 #   else
-#    if 0
-        def_rsa_method = RSA_PKCS1_RSAref();
-#    else
         def_rsa_method = RSA_PKCS1_SSLeay();
-#    endif
 #   endif
         if (def_rsa_method)
             return def_rsa_method->rsa_mod_exp(r0, I, rsa, ctx);
@@ -777,11 +773,7 @@ static int cswift_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 #   ifdef RSA_NULL
         def_rsa_method = RSA_null_method();
 #   else
-#    if 0
-        def_rsa_method = RSA_PKCS1_RSAref();
-#    else
         def_rsa_method = RSA_PKCS1_SSLeay();
-#    endif
 #   endif
         if (def_rsa_method)
             return def_rsa_method->bn_mod_exp(r, a, p, m, ctx, m_ctx);

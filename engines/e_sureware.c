@@ -111,10 +111,6 @@ static EVP_PKEY *surewarehk_load_pubkey(ENGINE *e, const char *key_id,
                                         void *callback_data);
 static void surewarehk_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
                                int idx, long argl, void *argp);
-#  if 0
-static void surewarehk_dh_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
-                                  int idx, long argl, void *argp);
-#  endif
 
 #  ifndef OPENSSL_NO_RSA
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
@@ -880,23 +876,6 @@ static void surewarehk_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
     } else
         p_surewarehk_Free((char *)item, 0);
 }
-
-#  if 0
-/* not currently used (bug?) */
-/*
- * This cleans up an DH KM key (destroys the key into hardware), called when
- * ex_data is freed
- */
-static void surewarehk_dh_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
-                                  int idx, long argl, void *argp)
-{
-    if (!p_surewarehk_Free) {
-        SUREWAREerr(SUREWARE_F_SUREWAREHK_DH_EX_FREE,
-                    ENGINE_R_NOT_INITIALISED);
-    } else
-        p_surewarehk_Free((char *)item, 1);
-}
-#  endif
 
 /*
  * return number of decrypted bytes
