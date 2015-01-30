@@ -189,6 +189,9 @@ SSL3_ENC_METHOD ssl3_undef_enc_method = {
 
 int SSL_clear(SSL *s)
 {
+    unsigned char *rp;
+    size_t rlen;
+    int read_ahead;
 
     if (s->method == NULL) {
         SSLerr(SSL_F_SSL_CLEAR, SSL_R_NO_METHOD_SPECIFIED);
@@ -241,6 +244,20 @@ int SSL_clear(SSL *s)
             return (0);
     } else
         s->method->ssl_clear(s);
+
+    read_ahead = RECORD_LAYER_get_read_ahead(&s->rlayer);
+    rp = SSL3_BUFFER_get_buf(RECORD_LAYER_get_rbuf(&s->rlayer));
+    rlen = SSL3_BUFFER_get_len(RECORD_LAYER_get_rbuf(&s->rlayer));
+    memset(&s->rlayer, 0, sizeof s->rlayer);
+    SSL3_BUFFER_set_buf(RECORD_LAYER_get_rbuf(&s->rlayer), rp);
+    SSL3_BUFFER_set_len(RECORD_LAYER_get_rbuf(&s->rlayer), rlen);
+
+    /* Do I need to do this? As far as I can tell read_ahead did not
+     * previously get reset by SSL_clear...so I'll keep it that way..but is
+     * that right?
+     */
+    RECORD_LAYER_set_read_ahead(&s->rlayer, read_ahead);
+
     return (1);
 }
 
@@ -598,6 +615,9 @@ void SSL_free(SSL *s)
 
     if (s->method != NULL)
         s->method->ssl_free(s);
+
+    if (SSL3_BUFFER_is_initialised(RECORD_LAYER_get_rbuf(&s->rlayer)))
+        ssl3_release_read_buffer(s);
 
     if (s->ctx)
         SSL_CTX_free(s->ctx);
