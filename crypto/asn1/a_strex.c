@@ -83,18 +83,6 @@
  * Three IO functions for sending data to memory, a BIO and and a FILE
  * pointer.
  */
-#if 0                           /* never used */
-static int send_mem_chars(void *arg, const void *buf, int len)
-{
-    unsigned char **out = arg;
-    if (!out)
-        return 1;
-    memcpy(*out, buf, len);
-    *out += len;
-    return 1;
-}
-#endif
-
 static int send_bio_chars(void *arg, const void *buf, int len)
 {
     if (!arg)

@@ -62,53 +62,6 @@
 #include <openssl/asn1.h>
 #include "asn1_locl.h"
 
-#if 0
-int i2d_ASN1_UTCTIME(ASN1_UTCTIME *a, unsigned char **pp)
-{
-# ifndef CHARSET_EBCDIC
-    return (i2d_ASN1_bytes((ASN1_STRING *)a, pp,
-                           V_ASN1_UTCTIME, V_ASN1_UNIVERSAL));
-# else
-    /* KLUDGE! We convert to ascii before writing DER */
-    int len;
-    char tmp[24];
-    ASN1_STRING x = *(ASN1_STRING *)a;
-
-    len = x.length;
-    ebcdic2ascii(tmp, x.data, (len >= sizeof tmp) ? sizeof tmp : len);
-    x.data = tmp;
-    return i2d_ASN1_bytes(&x, pp, V_ASN1_UTCTIME, V_ASN1_UNIVERSAL);
-# endif
-}
-
-ASN1_UTCTIME *d2i_ASN1_UTCTIME(ASN1_UTCTIME **a, unsigned char **pp,
-                               long length)
-{
-    ASN1_UTCTIME *ret = NULL;
-
-    ret = (ASN1_UTCTIME *)d2i_ASN1_bytes((ASN1_STRING **)a, pp, length,
-                                         V_ASN1_UTCTIME, V_ASN1_UNIVERSAL);
-    if (ret == NULL) {
-        ASN1err(ASN1_F_D2I_ASN1_UTCTIME, ERR_R_NESTED_ASN1_ERROR);
-        return (NULL);
-    }
-# ifdef CHARSET_EBCDIC
-    ascii2ebcdic(ret->data, ret->data, ret->length);
-# endif
-    if (!ASN1_UTCTIME_check(ret)) {
-        ASN1err(ASN1_F_D2I_ASN1_UTCTIME, ASN1_R_INVALID_TIME_FORMAT);
-        goto err;
-    }
-
-    return (ret);
- err:
-    if ((ret != NULL) && ((a == NULL) || (*a != ret)))
-        M_ASN1_UTCTIME_free(ret);
-    return (NULL);
-}
-
-#endif
-
 int asn1_utctime_to_tm(struct tm *tm, const ASN1_UTCTIME *d)
 {
     static const int min[8] = { 0, 1, 1, 0, 0, 0, 0, 0 };
@@ -309,43 +262,3 @@ int ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t)
         return -1;
     return 0;
 }
-
-#if 0
-time_t ASN1_UTCTIME_get(const ASN1_UTCTIME *s)
-{
-    struct tm tm;
-    int offset;
-
-    memset(&tm, '\0', sizeof tm);
-
-# define g2(p) (((p)[0]-'0')*10+(p)[1]-'0')
-    tm.tm_year = g2(s->data);
-    if (tm.tm_year < 50)
-        tm.tm_year += 100;
-    tm.tm_mon = g2(s->data + 2) - 1;
-    tm.tm_mday = g2(s->data + 4);
-    tm.tm_hour = g2(s->data + 6);
-    tm.tm_min = g2(s->data + 8);
-    tm.tm_sec = g2(s->data + 10);
-    if (s->data[12] == 'Z')
-        offset = 0;
-    else {
-        offset = g2(s->data + 13) * 60 + g2(s->data + 15);
-        if (s->data[12] == '-')
-            offset = -offset;
-    }
-# undef g2
-
-    /*
-     * FIXME: mktime assumes the current timezone
-     * instead of UTC, and unless we rewrite OpenSSL
-     * in Lisp we cannot locally change the timezone
-     * without possibly interfering with other parts
-     * of the program. timegm, which uses UTC, is
-     * non-standard.
-     * Also time_t is inappropriate for general
-     * UTC times because it may a 32 bit type.
-     */
-    return mktime(&tm) - offset * 60;
-}
-#endif
