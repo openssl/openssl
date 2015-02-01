@@ -2101,11 +2101,6 @@ void ssl3_free_digest_list(SSL *s);
 __owur unsigned long ssl3_output_cert_chain(SSL *s, CERT_PKEY *cpk);
 __owur SSL_CIPHER *ssl3_choose_cipher(SSL *ssl, STACK_OF(SSL_CIPHER) *clnt,
                                STACK_OF(SSL_CIPHER) *srvr);
-__owur int ssl3_setup_buffers(SSL *s);
-__owur int ssl3_setup_read_buffer(SSL *s);
-__owur int ssl3_setup_write_buffer(SSL *s);
-int ssl3_release_read_buffer(SSL *s);
-int ssl3_release_write_buffer(SSL *s);
 __owur int ssl3_digest_cached_records(SSL *s);
 __owur int ssl3_new(SSL *s);
 void ssl3_free(SSL *s);
