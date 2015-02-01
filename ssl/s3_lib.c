@@ -3112,7 +3112,6 @@ int ssl3_new(SSL *s)
         goto err;
     memset(s3, 0, sizeof *s3);
     s->s3 = s3;
-    SSL3_RECORD_clear(RECORD_LAYER_get_wrec(&s->rlayer));
     
 #ifndef OPENSSL_NO_SRP
     if(!SSL_SRP_CTX_init(s))
