@@ -163,6 +163,17 @@ void SSL3_RECORD_set_seq_num(SSL3_RECORD *r, const unsigned char *seq_num);
 int ssl3_get_record(SSL *s);
 __owur int ssl3_do_compress(SSL *ssl);
 __owur int ssl3_do_uncompress(SSL *ssl);
+__owur int ssl3_enc(SSL *s, int send_data);
+__owur int n_ssl3_mac(SSL *ssl, unsigned char *md, int send_data);
+__owur int tls1_enc(SSL *s, int snd);
+__owur int tls1_mac(SSL *ssl, unsigned char *md, int snd);
+void ssl3_cbc_copy_mac(unsigned char *out,
+                       const SSL3_RECORD *rec, unsigned md_size);
+__owur int ssl3_cbc_remove_padding(const SSL *s,
+                            SSL3_RECORD *rec,
+                            unsigned block_size, unsigned mac_size);
+__owur int tls1_cbc_remove_padding(const SSL *s,
+                            SSL3_RECORD *rec,
+                            unsigned block_size, unsigned mac_size);
 int dtls1_process_record(SSL *s);
-int dtls1_get_record(SSL *s);
-
+__owur int dtls1_get_record(SSL *s);

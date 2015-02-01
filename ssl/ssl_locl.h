@@ -2095,8 +2095,6 @@ __owur int ssl3_final_finish_mac(SSL *s, const char *sender, int slen,
                           unsigned char *p);
 __owur int ssl3_cert_verify_mac(SSL *s, int md_nid, unsigned char *p);
 void ssl3_finish_mac(SSL *s, const unsigned char *buf, int len);
-__owur int ssl3_enc(SSL *s, int send_data);
-__owur int n_ssl3_mac(SSL *ssl, unsigned char *md, int send_data);
 void ssl3_free_digest_list(SSL *s);
 __owur unsigned long ssl3_output_cert_chain(SSL *s, CERT_PKEY *cpk);
 __owur SSL_CIPHER *ssl3_choose_cipher(SSL *ssl, STACK_OF(SSL_CIPHER) *clnt,
@@ -2240,14 +2238,8 @@ void dtls1_clear(SSL *s);
 long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg);
 __owur int dtls1_shutdown(SSL *s);
 
-<<<<<<< HEAD
 __owur long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok);
-__owur int dtls1_get_record(SSL *s);
 __owur int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
-=======
-long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok);
-int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
->>>>>>> Move SSL3_RECORD oriented functions into ssl3_record.c
                    unsigned int len, int create_empty_fragement);
 __owur int dtls1_dispatch_alert(SSL *s);
 
@@ -2256,11 +2248,9 @@ void ssl_free_wbio_buffer(SSL *s);
 
 __owur int tls1_change_cipher_state(SSL *s, int which);
 __owur int tls1_setup_key_block(SSL *s);
-__owur int tls1_enc(SSL *s, int snd);
 __owur int tls1_final_finish_mac(SSL *s,
                           const char *str, int slen, unsigned char *p);
 __owur int tls1_cert_verify_mac(SSL *s, int md_nid, unsigned char *p);
-__owur int tls1_mac(SSL *ssl, unsigned char *md, int snd);
 __owur int tls1_generate_master_secret(SSL *s, unsigned char *out,
                                 unsigned char *p, int len);
 __owur int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
@@ -2369,14 +2359,6 @@ __owur int ssl_parse_serverhello_use_srtp_ext(SSL *s, unsigned char *d, int len,
 __owur int ssl_handshake_hash(SSL *s, unsigned char *out, int outlen);
 
 /* s3_cbc.c */
-void ssl3_cbc_copy_mac(unsigned char *out,
-                       const SSL3_RECORD *rec, unsigned md_size);
-__owur int ssl3_cbc_remove_padding(const SSL *s,
-                            SSL3_RECORD *rec,
-                            unsigned block_size, unsigned mac_size);
-__owur int tls1_cbc_remove_padding(const SSL *s,
-                            SSL3_RECORD *rec,
-                            unsigned block_size, unsigned mac_size);
 __owur char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx);
 void ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
                             unsigned char *md_out,

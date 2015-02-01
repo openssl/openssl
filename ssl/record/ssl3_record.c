@@ -110,6 +110,26 @@
  */
 
 #include "../ssl_locl.h"
+#include "../../crypto/constant_time_locl.h"
+#include <openssl/rand.h>
+
+static const unsigned char ssl3_pad_1[48] = {
+    0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+    0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+    0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+    0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+    0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+    0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36
+};
+
+static const unsigned char ssl3_pad_2[48] = {
+    0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
+    0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
+    0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
+    0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
+    0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
+    0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c
+};
 
 void SSL3_RECORD_clear(SSL3_RECORD *r)
 {
@@ -483,6 +503,689 @@ int ssl3_do_compress(SSL *ssl)
     wr->input = wr->data;
 #endif
     return (1);
+}
+
+/*-
+ * ssl3_enc encrypts/decrypts the record in |s->wrec| / |s->rrec|, respectively.
+ *
+ * Returns:
+ *   0: (in non-constant time) if the record is publically invalid (i.e. too
+ *       short etc).
+ *   1: if the record's padding is valid / the encryption was successful.
+ *   -1: if the record's padding is invalid or, if sending, an internal error
+ *       occurred.
+ */
+int ssl3_enc(SSL *s, int send)
+{
+    SSL3_RECORD *rec;
+    EVP_CIPHER_CTX *ds;
+    unsigned long l;
+    int bs, i, mac_size = 0;
+    const EVP_CIPHER *enc;
+
+    if (send) {
+        ds = s->enc_write_ctx;
+        rec = RECORD_LAYER_get_wrec(&s->rlayer);
+        if (s->enc_write_ctx == NULL)
+            enc = NULL;
+        else
+            enc = EVP_CIPHER_CTX_cipher(s->enc_write_ctx);
+    } else {
+        ds = s->enc_read_ctx;
+        rec = RECORD_LAYER_get_rrec(&s->rlayer);
+        if (s->enc_read_ctx == NULL)
+            enc = NULL;
+        else
+            enc = EVP_CIPHER_CTX_cipher(s->enc_read_ctx);
+    }
+
+    if ((s->session == NULL) || (ds == NULL) || (enc == NULL)) {
+        memmove(rec->data, rec->input, rec->length);
+        rec->input = rec->data;
+    } else {
+        l = rec->length;
+        bs = EVP_CIPHER_block_size(ds->cipher);
+
+        /* COMPRESS */
+
+        if ((bs != 1) && send) {
+            i = bs - ((int)l % bs);
+
+            /* we need to add 'i-1' padding bytes */
+            l += i;
+            /*
+             * the last of these zero bytes will be overwritten with the
+             * padding length.
+             */
+            memset(&rec->input[rec->length], 0, i);
+            rec->length += i;
+            rec->input[l - 1] = (i - 1);
+        }
+
+        if (!send) {
+            if (l == 0 || l % bs != 0)
+                return 0;
+            /* otherwise, rec->length >= bs */
+        }
+
+        if (EVP_Cipher(ds, rec->data, rec->input, l) < 1)
+            return -1;
+
+        if (EVP_MD_CTX_md(s->read_hash) != NULL)
+            mac_size = EVP_MD_CTX_size(s->read_hash);
+        if ((bs != 1) && !send)
+            return ssl3_cbc_remove_padding(s, rec, bs, mac_size);
+    }
+    return (1);
+}
+
+/*-
+ * tls1_enc encrypts/decrypts the record in |s->wrec| / |s->rrec|, respectively.
+ *
+ * Returns:
+ *   0: (in non-constant time) if the record is publically invalid (i.e. too
+ *       short etc).
+ *   1: if the record's padding is valid / the encryption was successful.
+ *   -1: if the record's padding/AEAD-authenticator is invalid or, if sending,
+ *       an internal error occurred.
+ */
+int tls1_enc(SSL *s, int send)
+{
+    SSL3_RECORD *rec;
+    EVP_CIPHER_CTX *ds;
+    unsigned long l;
+    int bs, i, j, k, pad = 0, ret, mac_size = 0;
+    const EVP_CIPHER *enc;
+
+    if (send) {
+        if (EVP_MD_CTX_md(s->write_hash)) {
+            int n = EVP_MD_CTX_size(s->write_hash);
+            OPENSSL_assert(n >= 0);
+        }
+        ds = s->enc_write_ctx;
+        rec = RECORD_LAYER_get_wrec(&s->rlayer);
+        if (s->enc_write_ctx == NULL)
+            enc = NULL;
+        else {
+            int ivlen;
+            enc = EVP_CIPHER_CTX_cipher(s->enc_write_ctx);
+            /* For TLSv1.1 and later explicit IV */
+            if (SSL_USE_EXPLICIT_IV(s)
+                && EVP_CIPHER_mode(enc) == EVP_CIPH_CBC_MODE)
+                ivlen = EVP_CIPHER_iv_length(enc);
+            else
+                ivlen = 0;
+            if (ivlen > 1) {
+                if (rec->data != rec->input)
+                    /*
+                     * we can't write into the input stream: Can this ever
+                     * happen?? (steve)
+                     */
+                    fprintf(stderr,
+                            "%s:%d: rec->data != rec->input\n",
+                            __FILE__, __LINE__);
+                else if (RAND_bytes(rec->input, ivlen) <= 0)
+                    return -1;
+            }
+        }
+    } else {
+        if (EVP_MD_CTX_md(s->read_hash)) {
+            int n = EVP_MD_CTX_size(s->read_hash);
+            OPENSSL_assert(n >= 0);
+        }
+        ds = s->enc_read_ctx;
+        rec = RECORD_LAYER_get_rrec(&s->rlayer);
+        if (s->enc_read_ctx == NULL)
+            enc = NULL;
+        else
+            enc = EVP_CIPHER_CTX_cipher(s->enc_read_ctx);
+    }
+
+#ifdef KSSL_DEBUG
+    fprintf(stderr, "tls1_enc(%d)\n", send);
+#endif                          /* KSSL_DEBUG */
+
+    if ((s->session == NULL) || (ds == NULL) || (enc == NULL)) {
+        memmove(rec->data, rec->input, rec->length);
+        rec->input = rec->data;
+        ret = 1;
+    } else {
+        l = rec->length;
+        bs = EVP_CIPHER_block_size(ds->cipher);
+
+        if (EVP_CIPHER_flags(ds->cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
+            unsigned char buf[13], *seq;
+
+            seq = send ? s->s3->write_sequence : s->s3->read_sequence;
+
+            if (SSL_IS_DTLS(s)) {
+                unsigned char dtlsseq[9], *p = dtlsseq;
+
+                s2n(send ? s->d1->w_epoch : s->d1->r_epoch, p);
+                memcpy(p, &seq[2], 6);
+                memcpy(buf, dtlsseq, 8);
+            } else {
+                memcpy(buf, seq, 8);
+                for (i = 7; i >= 0; i--) { /* increment */
+                    ++seq[i];
+                    if (seq[i] != 0)
+                        break;
+                }
+            }
+
+            buf[8] = rec->type;
+            buf[9] = (unsigned char)(s->version >> 8);
+            buf[10] = (unsigned char)(s->version);
+            buf[11] = rec->length >> 8;
+            buf[12] = rec->length & 0xff;
+            pad = EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_AEAD_TLS1_AAD, 13, buf);
+            if (send) {
+                l += pad;
+                rec->length += pad;
+            }
+        } else if ((bs != 1) && send) {
+            i = bs - ((int)l % bs);
+
+            /* Add weird padding of upto 256 bytes */
+
+            /* we need to add 'i' padding bytes of value j */
+            j = i - 1;
+            if (s->options & SSL_OP_TLS_BLOCK_PADDING_BUG) {
+                if (s->s3->flags & TLS1_FLAGS_TLS_PADDING_BUG)
+                    j++;
+            }
+            for (k = (int)l; k < (int)(l + i); k++)
+                rec->input[k] = j;
+            l += i;
+            rec->length += i;
+        }
+#ifdef KSSL_DEBUG
+        {
+            unsigned long ui;
+            fprintf(stderr,
+                    "EVP_Cipher(ds=%p,rec->data=%p,rec->input=%p,l=%ld) ==>\n",
+                    ds, rec->data, rec->input, l);
+            fprintf(stderr,
+                    "\tEVP_CIPHER_CTX: %d buf_len, %d key_len [%lu %lu], %d iv_len\n",
+                    ds->buf_len, ds->cipher->key_len, DES_KEY_SZ,
+                    DES_SCHEDULE_SZ, ds->cipher->iv_len);
+            fprintf(stderr, "\t\tIV: ");
+            for (i = 0; i < ds->cipher->iv_len; i++)
+                fprintf(stderr, "%02X", ds->iv[i]);
+            fprintf(stderr, "\n");
+            fprintf(stderr, "\trec->input=");
+            for (ui = 0; ui < l; ui++)
+                fprintf(stderr, " %02x", rec->input[ui]);
+            fprintf(stderr, "\n");
+        }
+#endif                          /* KSSL_DEBUG */
+
+        if (!send) {
+            if (l == 0 || l % bs != 0)
+                return 0;
+        }
+
+        i = EVP_Cipher(ds, rec->data, rec->input, l);
+        if ((EVP_CIPHER_flags(ds->cipher) & EVP_CIPH_FLAG_CUSTOM_CIPHER)
+            ? (i < 0)
+            : (i == 0))
+            return -1;          /* AEAD can fail to verify MAC */
+        if (EVP_CIPHER_mode(enc) == EVP_CIPH_GCM_MODE && !send) {
+            rec->data += EVP_GCM_TLS_EXPLICIT_IV_LEN;
+            rec->input += EVP_GCM_TLS_EXPLICIT_IV_LEN;
+            rec->length -= EVP_GCM_TLS_EXPLICIT_IV_LEN;
+        }
+#ifdef KSSL_DEBUG
+        {
+            unsigned long i;
+            fprintf(stderr, "\trec->data=");
+            for (i = 0; i < l; i++)
+                fprintf(stderr, " %02x", rec->data[i]);
+            fprintf(stderr, "\n");
+        }
+#endif                          /* KSSL_DEBUG */
+
+        ret = 1;
+        if (!SSL_USE_ETM(s) && EVP_MD_CTX_md(s->read_hash) != NULL)
+            mac_size = EVP_MD_CTX_size(s->read_hash);
+        if ((bs != 1) && !send)
+            ret = tls1_cbc_remove_padding(s, rec, bs, mac_size);
+        if (pad && !send)
+            rec->length -= pad;
+    }
+    return ret;
+}
+
+int n_ssl3_mac(SSL *ssl, unsigned char *md, int send)
+{
+    SSL3_RECORD *rec;
+    unsigned char *mac_sec, *seq;
+    EVP_MD_CTX md_ctx;
+    const EVP_MD_CTX *hash;
+    unsigned char *p, rec_char;
+    size_t md_size;
+    int npad;
+    int t;
+
+    if (send) {
+        rec = RECORD_LAYER_get_wrec(&ssl->rlayer);
+        mac_sec = &(ssl->s3->write_mac_secret[0]);
+        seq = &(ssl->s3->write_sequence[0]);
+        hash = ssl->write_hash;
+    } else {
+        rec = RECORD_LAYER_get_rrec(&ssl->rlayer);
+        mac_sec = &(ssl->s3->read_mac_secret[0]);
+        seq = &(ssl->s3->read_sequence[0]);
+        hash = ssl->read_hash;
+    }
+
+    t = EVP_MD_CTX_size(hash);
+    if (t < 0)
+        return -1;
+    md_size = t;
+    npad = (48 / md_size) * md_size;
+
+    if (!send &&
+        EVP_CIPHER_CTX_mode(ssl->enc_read_ctx) == EVP_CIPH_CBC_MODE &&
+        ssl3_cbc_record_digest_supported(hash)) {
+        /*
+         * This is a CBC-encrypted record. We must avoid leaking any
+         * timing-side channel information about how many blocks of data we
+         * are hashing because that gives an attacker a timing-oracle.
+         */
+
+        /*-
+         * npad is, at most, 48 bytes and that's with MD5:
+         *   16 + 48 + 8 (sequence bytes) + 1 + 2 = 75.
+         *
+         * With SHA-1 (the largest hash speced for SSLv3) the hash size
+         * goes up 4, but npad goes down by 8, resulting in a smaller
+         * total size.
+         */
+        unsigned char header[75];
+        unsigned j = 0;
+        memcpy(header + j, mac_sec, md_size);
+        j += md_size;
+        memcpy(header + j, ssl3_pad_1, npad);
+        j += npad;
+        memcpy(header + j, seq, 8);
+        j += 8;
+        header[j++] = rec->type;
+        header[j++] = rec->length >> 8;
+        header[j++] = rec->length & 0xff;
+
+        /* Final param == is SSLv3 */
+        ssl3_cbc_digest_record(hash,
+                               md, &md_size,
+                               header, rec->input,
+                               rec->length + md_size, rec->orig_len,
+                               mac_sec, md_size, 1);
+    } else {
+        unsigned int md_size_u;
+        /* Chop the digest off the end :-) */
+        EVP_MD_CTX_init(&md_ctx);
+
+        EVP_MD_CTX_copy_ex(&md_ctx, hash);
+        EVP_DigestUpdate(&md_ctx, mac_sec, md_size);
+        EVP_DigestUpdate(&md_ctx, ssl3_pad_1, npad);
+        EVP_DigestUpdate(&md_ctx, seq, 8);
+        rec_char = rec->type;
+        EVP_DigestUpdate(&md_ctx, &rec_char, 1);
+        p = md;
+        s2n(rec->length, p);
+        EVP_DigestUpdate(&md_ctx, md, 2);
+        EVP_DigestUpdate(&md_ctx, rec->input, rec->length);
+        EVP_DigestFinal_ex(&md_ctx, md, NULL);
+
+        EVP_MD_CTX_copy_ex(&md_ctx, hash);
+        EVP_DigestUpdate(&md_ctx, mac_sec, md_size);
+        EVP_DigestUpdate(&md_ctx, ssl3_pad_2, npad);
+        EVP_DigestUpdate(&md_ctx, md, md_size);
+        EVP_DigestFinal_ex(&md_ctx, md, &md_size_u);
+        md_size = md_size_u;
+
+        EVP_MD_CTX_cleanup(&md_ctx);
+    }
+
+    ssl3_record_sequence_update(seq);
+    return (md_size);
+}
+
+int tls1_mac(SSL *ssl, unsigned char *md, int send)
+{
+    SSL3_RECORD *rec;
+    unsigned char *seq;
+    EVP_MD_CTX *hash;
+    size_t md_size;
+    int i;
+    EVP_MD_CTX hmac, *mac_ctx;
+    unsigned char header[13];
+    int stream_mac = (send ? (ssl->mac_flags & SSL_MAC_FLAG_WRITE_MAC_STREAM)
+                      : (ssl->mac_flags & SSL_MAC_FLAG_READ_MAC_STREAM));
+    int t;
+
+    if (send) {
+        rec = RECORD_LAYER_get_wrec(&ssl->rlayer);
+        seq = &(ssl->s3->write_sequence[0]);
+        hash = ssl->write_hash;
+    } else {
+        rec = RECORD_LAYER_get_rrec(&ssl->rlayer);
+        seq = &(ssl->s3->read_sequence[0]);
+        hash = ssl->read_hash;
+    }
+
+    t = EVP_MD_CTX_size(hash);
+    OPENSSL_assert(t >= 0);
+    md_size = t;
+
+    /* I should fix this up TLS TLS TLS TLS TLS XXXXXXXX */
+    if (stream_mac) {
+        mac_ctx = hash;
+    } else {
+        if (!EVP_MD_CTX_copy(&hmac, hash))
+            return -1;
+        mac_ctx = &hmac;
+    }
+
+    if (SSL_IS_DTLS(ssl)) {
+        unsigned char dtlsseq[8], *p = dtlsseq;
+
+        s2n(send ? ssl->d1->w_epoch : ssl->d1->r_epoch, p);
+        memcpy(p, &seq[2], 6);
+
+        memcpy(header, dtlsseq, 8);
+    } else
+        memcpy(header, seq, 8);
+
+    header[8] = rec->type;
+    header[9] = (unsigned char)(ssl->version >> 8);
+    header[10] = (unsigned char)(ssl->version);
+    header[11] = (rec->length) >> 8;
+    header[12] = (rec->length) & 0xff;
+
+    if (!send && !SSL_USE_ETM(ssl) &&
+        EVP_CIPHER_CTX_mode(ssl->enc_read_ctx) == EVP_CIPH_CBC_MODE &&
+        ssl3_cbc_record_digest_supported(mac_ctx)) {
+        /*
+         * This is a CBC-encrypted record. We must avoid leaking any
+         * timing-side channel information about how many blocks of data we
+         * are hashing because that gives an attacker a timing-oracle.
+         */
+        /* Final param == not SSLv3 */
+        ssl3_cbc_digest_record(mac_ctx,
+                               md, &md_size,
+                               header, rec->input,
+                               rec->length + md_size, rec->orig_len,
+                               ssl->s3->read_mac_secret,
+                               ssl->s3->read_mac_secret_size, 0);
+    } else {
+        EVP_DigestSignUpdate(mac_ctx, header, sizeof(header));
+        EVP_DigestSignUpdate(mac_ctx, rec->input, rec->length);
+        t = EVP_DigestSignFinal(mac_ctx, md, &md_size);
+        OPENSSL_assert(t > 0);
+        if (!send && !SSL_USE_ETM(ssl) && FIPS_mode())
+            tls_fips_digest_extra(ssl->enc_read_ctx,
+                                  mac_ctx, rec->input,
+                                  rec->length, rec->orig_len);
+    }
+
+    if (!stream_mac)
+        EVP_MD_CTX_cleanup(&hmac);
+#ifdef TLS_DEBUG
+    fprintf(stderr, "seq=");
+    {
+        int z;
+        for (z = 0; z < 8; z++)
+            fprintf(stderr, "%02X ", seq[z]);
+        fprintf(stderr, "\n");
+    }
+    fprintf(stderr, "rec=");
+    {
+        unsigned int z;
+        for (z = 0; z < rec->length; z++)
+            fprintf(stderr, "%02X ", rec->data[z]);
+        fprintf(stderr, "\n");
+    }
+#endif
+
+    if (!SSL_IS_DTLS(ssl)) {
+        for (i = 7; i >= 0; i--) {
+            ++seq[i];
+            if (seq[i] != 0)
+                break;
+        }
+    }
+#ifdef TLS_DEBUG
+    {
+        unsigned int z;
+        for (z = 0; z < md_size; z++)
+            fprintf(stderr, "%02X ", md[z]);
+        fprintf(stderr, "\n");
+    }
+#endif
+    return (md_size);
+}
+
+/*-
+ * ssl3_cbc_remove_padding removes padding from the decrypted, SSLv3, CBC
+ * record in |rec| by updating |rec->length| in constant time.
+ *
+ * block_size: the block size of the cipher used to encrypt the record.
+ * returns:
+ *   0: (in non-constant time) if the record is publicly invalid.
+ *   1: if the padding was valid
+ *  -1: otherwise.
+ */
+int ssl3_cbc_remove_padding(const SSL *s,
+                            SSL3_RECORD *rec,
+                            unsigned block_size, unsigned mac_size)
+{
+    unsigned padding_length, good;
+    const unsigned overhead = 1 /* padding length byte */  + mac_size;
+
+    /*
+     * These lengths are all public so we can test them in non-constant time.
+     */
+    if (overhead > rec->length)
+        return 0;
+
+    padding_length = rec->data[rec->length - 1];
+    good = constant_time_ge(rec->length, padding_length + overhead);
+    /* SSLv3 requires that the padding is minimal. */
+    good &= constant_time_ge(block_size, padding_length + 1);
+    rec->length -= good & (padding_length + 1);
+    return constant_time_select_int(good, 1, -1);
+}
+
+/*-
+ * tls1_cbc_remove_padding removes the CBC padding from the decrypted, TLS, CBC
+ * record in |rec| in constant time and returns 1 if the padding is valid and
+ * -1 otherwise. It also removes any explicit IV from the start of the record
+ * without leaking any timing about whether there was enough space after the
+ * padding was removed.
+ *
+ * block_size: the block size of the cipher used to encrypt the record.
+ * returns:
+ *   0: (in non-constant time) if the record is publicly invalid.
+ *   1: if the padding was valid
+ *  -1: otherwise.
+ */
+int tls1_cbc_remove_padding(const SSL *s,
+                            SSL3_RECORD *rec,
+                            unsigned block_size, unsigned mac_size)
+{
+    unsigned padding_length, good, to_check, i;
+    const unsigned overhead = 1 /* padding length byte */  + mac_size;
+    /* Check if version requires explicit IV */
+    if (SSL_USE_EXPLICIT_IV(s)) {
+        /*
+         * These lengths are all public so we can test them in non-constant
+         * time.
+         */
+        if (overhead + block_size > rec->length)
+            return 0;
+        /* We can now safely skip explicit IV */
+        rec->data += block_size;
+        rec->input += block_size;
+        rec->length -= block_size;
+        rec->orig_len -= block_size;
+    } else if (overhead > rec->length)
+        return 0;
+
+    padding_length = rec->data[rec->length - 1];
+
+    /*
+     * NB: if compression is in operation the first packet may not be of even
+     * length so the padding bug check cannot be performed. This bug
+     * workaround has been around since SSLeay so hopefully it is either
+     * fixed now or no buggy implementation supports compression [steve]
+     */
+    if ((s->options & SSL_OP_TLS_BLOCK_PADDING_BUG) && !s->expand) {
+        /* First packet is even in size, so check */
+        if ((memcmp(s->s3->read_sequence, "\0\0\0\0\0\0\0\0", 8) == 0) &&
+            !(padding_length & 1)) {
+            s->s3->flags |= TLS1_FLAGS_TLS_PADDING_BUG;
+        }
+        if ((s->s3->flags & TLS1_FLAGS_TLS_PADDING_BUG) && padding_length > 0) {
+            padding_length--;
+        }
+    }
+
+    if (EVP_CIPHER_flags(s->enc_read_ctx->cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
+        /* padding is already verified */
+        rec->length -= padding_length + 1;
+        return 1;
+    }
+
+    good = constant_time_ge(rec->length, overhead + padding_length);
+    /*
+     * The padding consists of a length byte at the end of the record and
+     * then that many bytes of padding, all with the same value as the length
+     * byte. Thus, with the length byte included, there are i+1 bytes of
+     * padding. We can't check just |padding_length+1| bytes because that
+     * leaks decrypted information. Therefore we always have to check the
+     * maximum amount of padding possible. (Again, the length of the record
+     * is public information so we can use it.)
+     */
+    to_check = 255;             /* maximum amount of padding. */
+    if (to_check > rec->length - 1)
+        to_check = rec->length - 1;
+
+    for (i = 0; i < to_check; i++) {
+        unsigned char mask = constant_time_ge_8(padding_length, i);
+        unsigned char b = rec->data[rec->length - 1 - i];
+        /*
+         * The final |padding_length+1| bytes should all have the value
+         * |padding_length|. Therefore the XOR should be zero.
+         */
+        good &= ~(mask & (padding_length ^ b));
+    }
+
+    /*
+     * If any of the final |padding_length+1| bytes had the wrong value, one
+     * or more of the lower eight bits of |good| will be cleared.
+     */
+    good = constant_time_eq(0xff, good & 0xff);
+    rec->length -= good & (padding_length + 1);
+
+    return constant_time_select_int(good, 1, -1);
+}
+
+/*-
+ * ssl3_cbc_copy_mac copies |md_size| bytes from the end of |rec| to |out| in
+ * constant time (independent of the concrete value of rec->length, which may
+ * vary within a 256-byte window).
+ *
+ * ssl3_cbc_remove_padding or tls1_cbc_remove_padding must be called prior to
+ * this function.
+ *
+ * On entry:
+ *   rec->orig_len >= md_size
+ *   md_size <= EVP_MAX_MD_SIZE
+ *
+ * If CBC_MAC_ROTATE_IN_PLACE is defined then the rotation is performed with
+ * variable accesses in a 64-byte-aligned buffer. Assuming that this fits into
+ * a single or pair of cache-lines, then the variable memory accesses don't
+ * actually affect the timing. CPUs with smaller cache-lines [if any] are
+ * not multi-core and are not considered vulnerable to cache-timing attacks.
+ */
+#define CBC_MAC_ROTATE_IN_PLACE
+
+void ssl3_cbc_copy_mac(unsigned char *out,
+                       const SSL3_RECORD *rec, unsigned md_size)
+{
+#if defined(CBC_MAC_ROTATE_IN_PLACE)
+    unsigned char rotated_mac_buf[64 + EVP_MAX_MD_SIZE];
+    unsigned char *rotated_mac;
+#else
+    unsigned char rotated_mac[EVP_MAX_MD_SIZE];
+#endif
+
+    /*
+     * mac_end is the index of |rec->data| just after the end of the MAC.
+     */
+    unsigned mac_end = rec->length;
+    unsigned mac_start = mac_end - md_size;
+    /*
+     * scan_start contains the number of bytes that we can ignore because the
+     * MAC's position can only vary by 255 bytes.
+     */
+    unsigned scan_start = 0;
+    unsigned i, j;
+    unsigned div_spoiler;
+    unsigned rotate_offset;
+
+    OPENSSL_assert(rec->orig_len >= md_size);
+    OPENSSL_assert(md_size <= EVP_MAX_MD_SIZE);
+
+#if defined(CBC_MAC_ROTATE_IN_PLACE)
+    rotated_mac = rotated_mac_buf + ((0 - (size_t)rotated_mac_buf) & 63);
+#endif
+
+    /* This information is public so it's safe to branch based on it. */
+    if (rec->orig_len > md_size + 255 + 1)
+        scan_start = rec->orig_len - (md_size + 255 + 1);
+    /*
+     * div_spoiler contains a multiple of md_size that is used to cause the
+     * modulo operation to be constant time. Without this, the time varies
+     * based on the amount of padding when running on Intel chips at least.
+     * The aim of right-shifting md_size is so that the compiler doesn't
+     * figure out that it can remove div_spoiler as that would require it to
+     * prove that md_size is always even, which I hope is beyond it.
+     */
+    div_spoiler = md_size >> 1;
+    div_spoiler <<= (sizeof(div_spoiler) - 1) * 8;
+    rotate_offset = (div_spoiler + mac_start - scan_start) % md_size;
+
+    memset(rotated_mac, 0, md_size);
+    for (i = scan_start, j = 0; i < rec->orig_len; i++) {
+        unsigned char mac_started = constant_time_ge_8(i, mac_start);
+        unsigned char mac_ended = constant_time_ge_8(i, mac_end);
+        unsigned char b = rec->data[i];
+        rotated_mac[j++] |= b & mac_started & ~mac_ended;
+        j &= constant_time_lt(j, md_size);
+    }
+
+    /* Now rotate the MAC */
+#if defined(CBC_MAC_ROTATE_IN_PLACE)
+    j = 0;
+    for (i = 0; i < md_size; i++) {
+        /* in case cache-line is 32 bytes, touch second line */
+        ((volatile unsigned char *)rotated_mac)[rotate_offset ^ 32];
+        out[j++] = rotated_mac[rotate_offset++];
+        rotate_offset &= constant_time_lt(rotate_offset, md_size);
+    }
+#else
+    memset(out, 0, md_size);
+    rotate_offset = md_size - rotate_offset;
+    rotate_offset &= constant_time_lt(rotate_offset, md_size);
+    for (i = 0; i < md_size; i++) {
+        for (j = 0; j < md_size; j++)
+            out[j] |= rotated_mac[i] & constant_time_eq_8(j, rotate_offset);
+        rotate_offset++;
+        rotate_offset &= constant_time_lt(rotate_offset, md_size);
+    }
+#endif
 }
 
 int dtls1_process_record(SSL *s)
