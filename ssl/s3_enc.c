@@ -500,7 +500,7 @@ int ssl3_enc(SSL *s, int send)
 
     if (send) {
         ds = s->enc_write_ctx;
-        rec = &(s->s3->wrec);
+        rec = RECORD_LAYER_get_wrec(&s->rlayer);
         if (s->enc_write_ctx == NULL)
             enc = NULL;
         else
@@ -725,7 +725,7 @@ int n_ssl3_mac(SSL *ssl, unsigned char *md, int send)
     int t;
 
     if (send) {
-        rec = &(ssl->s3->wrec);
+        rec = RECORD_LAYER_get_wrec(&ssl->rlayer);
         mac_sec = &(ssl->s3->write_mac_secret[0]);
         seq = &(ssl->s3->write_sequence[0]);
         hash = ssl->write_hash;

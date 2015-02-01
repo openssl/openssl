@@ -133,3 +133,4 @@ typedef struct record_layer_st {
 #define RECORD_LAYER_get_rbuf(rl)               (&(rl)->rbuf)
 #define RECORD_LAYER_get_wbuf(rl)               (&(rl)->wbuf)
 #define RECORD_LAYER_get_rrec(rl)               (&(rl)->rrec)
+#define RECORD_LAYER_get_wrec(rl)               (&(rl)->s->s3->wrec)

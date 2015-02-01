@@ -619,7 +619,7 @@ int ssl3_do_compress(SSL *ssl)
     int i;
     SSL3_RECORD *wr;
 
-    wr = &(ssl->s3->wrec);
+    wr = RECORD_LAYER_get_wrec(&ssl->rlayer);
     i = COMP_compress_block(ssl->compress, wr->data,
                             SSL3_RT_MAX_COMPRESSED_LENGTH,
                             wr->input, (int)wr->length);
@@ -900,7 +900,7 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     if (len == 0 && !create_empty_fragment)
         return 0;
 
-    wr = &(s->s3->wrec);
+    wr = RECORD_LAYER_get_wrec(&s->rlayer);
     sess = s->session;
 
     if ((sess == NULL) ||
