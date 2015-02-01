@@ -585,7 +585,7 @@ Note: these ciphers can also be used in SSL v3.
  TLS_ECDH_RSA_WITH_CAMELLIA_128_CBC_SHA256    ECDH-RSA-CAMELLIA128-SHA256
  TLS_ECDH_RSA_WITH_CAMELLIA_256_CBC_SHA384    ECDH-RSA-CAMELLIA256-SHA384
 
-=head2 Pre shared keying (PSK) cipheruites
+=head2 Pre shared keying (PSK) ciphersuites
 
  TLS_PSK_WITH_RC4_128_SHA                  PSK-RC4-SHA
  TLS_PSK_WITH_3DES_EDE_CBC_SHA             PSK-3DES-EDE-CBC-SHA
