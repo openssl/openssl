@@ -1241,7 +1241,6 @@ typedef struct ssl3_state_st {
     int empty_fragment_done;
     /* The value of 'extra' when the buffers were initialized */
     int init_extra;
-    SSL3_RECORD wrec;           /* goes out from here */
     /*
      * storage for Alert/Handshake protocol data received but not yet
      * processed by ssl3_read_bytes:
