@@ -2139,8 +2139,6 @@ __owur long tls1_default_timeout(void);
 __owur int dtls1_do_write(SSL *s, int type);
 __owur int ssl3_read_n(SSL *s, int n, int max, int extend);
 __owur int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
-__owur int ssl3_do_compress(SSL *ssl);
-__owur int ssl3_do_uncompress(SSL *ssl);
 __owur int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
                        unsigned int len);
 void dtls1_set_message_header(SSL *s,
@@ -2178,6 +2176,14 @@ __owur int dtls1_send_newsession_ticket(SSL *s);
 __owur unsigned int dtls1_min_mtu(SSL *s);
 __owur unsigned int dtls1_link_min_mtu(void);
 void dtls1_hm_fragment_free(hm_fragment *frag);
+int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap);
+void dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap);
+DTLS1_BITMAP *dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr,
+                                      unsigned int *is_next_epoch);
+int dtls1_process_buffered_records(SSL *s);
+int dtls1_retrieve_buffered_record(SSL *s, record_pqueue *queue);
+int dtls1_buffer_record(SSL *s, record_pqueue *q,
+                               unsigned char *priority);
 
 /* some client-only functions */
 __owur int ssl3_client_hello(SSL *s);
@@ -2234,9 +2240,14 @@ void dtls1_clear(SSL *s);
 long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg);
 __owur int dtls1_shutdown(SSL *s);
 
+<<<<<<< HEAD
 __owur long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok);
 __owur int dtls1_get_record(SSL *s);
 __owur int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
+=======
+long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok);
+int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
+>>>>>>> Move SSL3_RECORD oriented functions into ssl3_record.c
                    unsigned int len, int create_empty_fragement);
 __owur int dtls1_dispatch_alert(SSL *s);
 

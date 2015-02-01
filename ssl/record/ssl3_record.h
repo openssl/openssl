@@ -160,3 +160,9 @@ void SSL3_RECORD_clear(SSL3_RECORD *r);
 void SSL3_RECORD_release(SSL3_RECORD *r);
 int SSL3_RECORD_setup(SSL3_RECORD *r, size_t len);
 void SSL3_RECORD_set_seq_num(SSL3_RECORD *r, const unsigned char *seq_num);
+int ssl3_get_record(SSL *s);
+__owur int ssl3_do_compress(SSL *ssl);
+__owur int ssl3_do_uncompress(SSL *ssl);
+int dtls1_process_record(SSL *s);
+int dtls1_get_record(SSL *s);
+
