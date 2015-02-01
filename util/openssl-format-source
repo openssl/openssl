@@ -30,6 +30,7 @@ VERBOSE=false
 DONT=false
 STOPARGS=false
 COMMENTS=false
+CHANGED=false
 DEBUG=""
 
 # for this exercise, we want to force the openssl style, so we roll
@@ -80,10 +81,6 @@ do
       if [ -h "$j" ]; then
 	continue;
       fi
-    fi
-
-    if [ "$VERBOSE" = "true" ]; then
-      echo "$j"
     fi
 
     if [ "$DONT" = "false" ]; then
@@ -138,7 +135,18 @@ do
 	  else
 	    expand "$j" | indent $INDENT_ARGS > "$tmp"
 	  fi;
-	  mv "$tmp" "$j"
+	  if cmp -s "$tmp" "$j"; then
+	    if [ "$VERBOSE" = "true" ]; then
+	      echo "$j unchanged"
+	    fi
+	    rm "$tmp"
+	  else
+	    if [ "$VERBOSE" = "true" ]; then
+	      echo "$j changed"
+	    fi
+	    CHANGED=true
+	    mv "$tmp" "$j"
+	  fi
 	  ;;
       esac
     fi
@@ -146,3 +154,11 @@ do
 done
 
 
+if [ "$VERBOSE" = "true" ]; then
+  echo
+  if [ "$CHANGED" = "true" ]; then
+    echo "SOURCE WAS MODIFIED"
+  else
+    echo "SOURCE WAS NOT MODIFIED"
+  fi
+fi
