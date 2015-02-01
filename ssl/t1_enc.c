@@ -749,7 +749,7 @@ int tls1_enc(SSL *s, int send)
             OPENSSL_assert(n >= 0);
         }
         ds = s->enc_write_ctx;
-        rec = &(s->s3->wrec);
+        rec = RECORD_LAYER_get_wrec(&s->rlayer);
         if (s->enc_write_ctx == NULL)
             enc = NULL;
         else {
@@ -971,7 +971,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
     int t;
 
     if (send) {
-        rec = &(ssl->s3->wrec);
+        rec = RECORD_LAYER_get_wrec(&ssl->rlayer);
         seq = &(ssl->s3->write_sequence[0]);
         hash = ssl->write_hash;
     } else {

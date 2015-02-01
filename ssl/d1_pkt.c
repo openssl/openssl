@@ -1468,7 +1468,7 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
     if (len == 0 && !create_empty_fragment)
         return 0;
 
-    wr = &(s->s3->wrec);
+    wr = RECORD_LAYER_get_wrec(&s->rlayer);
     sess = s->session;
 
     if ((sess == NULL) ||
