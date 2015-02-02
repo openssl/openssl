@@ -1376,13 +1376,6 @@ typedef struct ssl3_state_st {
 /* Max MTU overhead we know about so far is 40 for IPv6 + 8 for UDP */
 #  define DTLS1_MAX_MTU_OVERHEAD                   48
 
-typedef struct dtls1_bitmap_st {
-    unsigned long map;          /* track 32 packets on 32-bit systems and 64
-                                 * - on 64-bit systems */
-    unsigned char max_seq_num[8]; /* max record number seen so far, 64-bit
-                                   * value in big-endian encoding */
-} DTLS1_BITMAP;
-
 struct dtls1_retransmit_state {
     EVP_CIPHER_CTX *enc_write_ctx; /* cryptographic state */
     EVP_MD_CTX *write_hash;     /* used for mac generation */
@@ -1418,11 +1411,6 @@ struct dtls1_timeout_st {
     /* Number of alerts received so far */
     unsigned int num_alerts;
 };
-
-typedef struct record_pqueue_st {
-    unsigned short epoch;
-    pqueue q;
-} record_pqueue;
 
 typedef struct hm_fragment_st {
     struct hm_header_st msg_header;
@@ -2089,8 +2077,6 @@ __owur const SSL_CIPHER *ssl3_get_cipher(unsigned int u);
 int ssl3_renegotiate(SSL *ssl);
 int ssl3_renegotiate_check(SSL *ssl);
 __owur int ssl3_dispatch_alert(SSL *s);
-__owur int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
-__owur int ssl3_write_bytes(SSL *s, int type, const void *buf, int len);
 __owur int ssl3_final_finish_mac(SSL *s, const char *sender, int slen,
                           unsigned char *p);
 __owur int ssl3_cert_verify_mac(SSL *s, int md_nid, unsigned char *p);
@@ -2135,12 +2121,6 @@ __owur int ssl_allow_compression(SSL *s);
 
 __owur long tls1_default_timeout(void);
 __owur int dtls1_do_write(SSL *s, int type);
-__owur int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
-                         unsigned int len, int create_empty_fragment);
-__owur int ssl3_read_n(SSL *s, int n, int max, int extend);
-__owur int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
-__owur int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
-                       unsigned int len);
 void dtls1_set_message_header(SSL *s,
                               unsigned char *p, unsigned char mt,
                               unsigned long len,
@@ -2162,7 +2142,6 @@ void dtls1_clear_record_buffer(SSL *s);
 void dtls1_get_message_header(unsigned char *data,
                               struct hm_header_st *msg_hdr);
 void dtls1_get_ccs_header(unsigned char *data, struct ccs_header_st *ccs_hdr);
-void dtls1_reset_seq_numbers(SSL *s, int rw);
 __owur long dtls1_default_timeout(void);
 __owur struct timeval *dtls1_get_timeout(SSL *s, struct timeval *timeleft);
 __owur int dtls1_check_timeout_num(SSL *s);
@@ -2176,14 +2155,6 @@ __owur int dtls1_send_newsession_ticket(SSL *s);
 __owur unsigned int dtls1_min_mtu(SSL *s);
 __owur unsigned int dtls1_link_min_mtu(void);
 void dtls1_hm_fragment_free(hm_fragment *frag);
-int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap);
-void dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap);
-DTLS1_BITMAP *dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr,
-                                      unsigned int *is_next_epoch);
-int dtls1_process_buffered_records(SSL *s);
-int dtls1_retrieve_buffered_record(SSL *s, record_pqueue *queue);
-int dtls1_buffer_record(SSL *s, record_pqueue *q,
-                               unsigned char *priority);
 
 /* some client-only functions */
 __owur int ssl3_client_hello(SSL *s);
@@ -2223,8 +2194,6 @@ __owur int ssl3_get_next_proto(SSL *s);
 
 __owur int ssl23_accept(SSL *s);
 __owur int ssl23_connect(SSL *s);
-__owur int ssl23_read_bytes(SSL *s, int n);
-__owur int ssl23_write_bytes(SSL *s);
 
 __owur int tls1_new(SSL *s);
 void tls1_free(SSL *s);
@@ -2241,8 +2210,6 @@ long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg);
 __owur int dtls1_shutdown(SSL *s);
 
 __owur long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok);
-__owur int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
-                   unsigned int len, int create_empty_fragement);
 __owur int dtls1_dispatch_alert(SSL *s);
 
 __owur int ssl_init_wbio_buffer(SSL *s, int push);

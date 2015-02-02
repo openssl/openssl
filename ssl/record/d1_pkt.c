@@ -116,7 +116,7 @@
 #include <stdio.h>
 #include <errno.h>
 #define USE_SOCKETS
-#include "ssl_locl.h"
+#include "../ssl_locl.h"
 #include <openssl/evp.h>
 #include <openssl/buffer.h>
 #include <openssl/pqueue.h>
