@@ -132,6 +132,33 @@
 # define EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK 0
 #endif
 
+void RECORD_LAYER_clear(RECORD_LAYER *rl)
+{
+    unsigned char *rp, *wp;
+    size_t rlen, wlen;
+    int read_ahead;
+    SSL *s;
+
+    s = rl->s;
+    read_ahead = rl->read_ahead;
+    rp = SSL3_BUFFER_get_buf(&rl->rbuf);
+    rlen = SSL3_BUFFER_get_len(&rl->rbuf);
+    wp = SSL3_BUFFER_get_buf(&rl->wbuf);
+    wlen = SSL3_BUFFER_get_len(&rl->wbuf);
+    memset(rl, 0, sizeof (RECORD_LAYER));
+    SSL3_BUFFER_set_buf(&rl->rbuf, rp);
+    SSL3_BUFFER_set_len(&rl->rbuf, rlen);
+    SSL3_BUFFER_set_buf(&rl->wbuf, wp);
+    SSL3_BUFFER_set_len(&rl->wbuf, wlen);
+
+    /* Do I need to do this? As far as I can tell read_ahead did not
+     * previously get reset by SSL_clear...so I'll keep it that way..but is
+     * that right?
+     */
+    rl->read_ahead = read_ahead;
+    rl->s = s;
+}
+
 int ssl3_read_n(SSL *s, int n, int max, int extend)
 {
     /*
