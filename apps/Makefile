@@ -593,7 +593,7 @@ openssl.o: openssl.c progs.h s_apps.h
 passwd.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 passwd.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 passwd.o: ../include/openssl/crypto.h ../include/openssl/des.h
-passwd.o: ../include/openssl/des_old.h ../include/openssl/e_os2.h
+passwd.o: ../include/openssl/e_os2.h
 passwd.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
 passwd.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
 passwd.o: ../include/openssl/err.h ../include/openssl/evp.h
@@ -936,7 +936,7 @@ speed.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
 speed.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 speed.o: ../include/openssl/camellia.h ../include/openssl/cast.h
 speed.o: ../include/openssl/conf.h ../include/openssl/crypto.h
-speed.o: ../include/openssl/des.h ../include/openssl/des_old.h
+speed.o: ../include/openssl/des.h
 speed.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
 speed.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
 speed.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
@@ -1026,7 +1026,7 @@ version.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 version.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
 version.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 version.o: ../include/openssl/crypto.h ../include/openssl/des.h
-version.o: ../include/openssl/des_old.h ../include/openssl/e_os2.h
+version.o: ../include/openssl/e_os2.h
 version.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
 version.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
 version.o: ../include/openssl/evp.h ../include/openssl/idea.h

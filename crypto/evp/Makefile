@@ -263,7 +263,7 @@ e_cast.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 e_cast.o: ../../include/openssl/symhacks.h ../cryptlib.h e_cast.c evp_locl.h
 e_des.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 e_des.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-e_des.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
+e_des.o: ../../include/openssl/des.h
 e_des.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 e_des.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 e_des.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
@@ -274,7 +274,7 @@ e_des.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
 e_des.o: ../../include/openssl/ui_compat.h ../cryptlib.h e_des.c evp_locl.h
 e_des3.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 e_des3.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-e_des3.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
+e_des3.o: ../../include/openssl/des.h
 e_des3.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 e_des3.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 e_des3.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
@@ -351,7 +351,7 @@ e_seed.o: e_seed.c evp_locl.h
 e_xcbc_d.o: ../../e_os.h ../../include/openssl/asn1.h
 e_xcbc_d.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 e_xcbc_d.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
-e_xcbc_d.o: ../../include/openssl/des_old.h ../../include/openssl/e_os2.h
+e_xcbc_d.o: ../../include/openssl/e_os2.h
 e_xcbc_d.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 e_xcbc_d.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 e_xcbc_d.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
@@ -519,7 +519,7 @@ m_md5.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 m_md5.o: ../../include/openssl/x509_vfy.h ../cryptlib.h m_md5.c
 m_mdc2.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 m_mdc2.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-m_mdc2.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
+m_mdc2.o: ../../include/openssl/des.h
 m_mdc2.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
 m_mdc2.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 m_mdc2.o: ../../include/openssl/err.h ../../include/openssl/evp.h
