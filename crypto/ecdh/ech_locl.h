@@ -68,10 +68,6 @@ struct ecdh_method {
                         EC_KEY *ecdh, void *(*KDF) (const void *in,
                                                     size_t inlen, void *out,
                                                     size_t *outlen));
-# if 0
-    int (*init) (EC_KEY *eckey);
-    int (*finish) (EC_KEY *eckey);
-# endif
     int flags;
     char *app_data;
 };

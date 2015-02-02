@@ -74,10 +74,6 @@ struct ecdsa_method {
                              BIGNUM **r);
     int (*ecdsa_do_verify) (const unsigned char *dgst, int dgst_len,
                             const ECDSA_SIG *sig, EC_KEY *eckey);
-# if 0
-    int (*init) (EC_KEY *eckey);
-    int (*finish) (EC_KEY *eckey);
-# endif
     int flags;
     void *app_data;
 };
