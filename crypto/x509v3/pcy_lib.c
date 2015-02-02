@@ -140,15 +140,6 @@ const ASN1_OBJECT *X509_policy_node_get0_policy(const X509_POLICY_NODE *node)
     return node->data->valid_policy;
 }
 
-#if 0
-int X509_policy_node_get_critical(const X509_POLICY_NODE *node)
-{
-    if (node_critical(node))
-        return 1;
-    return 0;
-}
-#endif
-
 STACK_OF(POLICYQUALINFO) *X509_policy_node_get0_qualifiers(const
                                                            X509_POLICY_NODE
                                                            *node)

@@ -36,9 +36,6 @@ static const char *engine_rsaref_name = "RSAref engine support";
 static int rsaref_destroy(ENGINE *e);
 static int rsaref_init(ENGINE *e);
 static int rsaref_finish(ENGINE *e);
-#if 0
-static int rsaref_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) ());
-#endif
 
 /*****************************************************************************
  * Engine commands

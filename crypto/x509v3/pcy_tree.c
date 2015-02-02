@@ -156,13 +156,9 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
     int explicit_policy;
     int any_skip;
     int map_skip;
+
     *ptree = NULL;
     n = sk_X509_num(certs);
-
-#if 0
-    /* Disable policy mapping for now... */
-    flags |= X509_V_FLAG_INHIBIT_MAP;
-#endif
 
     if (flags & X509_V_FLAG_EXPLICIT_POLICY)
         explicit_policy = 0;
@@ -340,19 +336,6 @@ static int tree_link_nodes(X509_POLICY_LEVEL *curr,
 
     for (i = 0; i < sk_X509_POLICY_DATA_num(cache->data); i++) {
         data = sk_X509_POLICY_DATA_value(cache->data, i);
-        /*
-         * If a node is mapped any it doesn't have a corresponding
-         * CertificatePolicies entry. However such an identical node would
-         * be created if anyPolicy matching is enabled because there would be
-         * no match with the parent valid_policy_set. So we create link
-         * because then it will have the mapping flags right and we can prune
-         * it later.
-         */
-#if 0
-        if ((data->flags & POLICY_DATA_FLAG_MAPPED_ANY)
-            && !(curr->flags & X509_V_FLAG_INHIBIT_ANY))
-            continue;
-#endif
         /* Look for matching nodes in previous level */
         if (!tree_link_matching_nodes(curr, data))
             return 0;
@@ -432,9 +415,6 @@ static int tree_link_any(X509_POLICY_LEVEL *curr,
                          X509_POLICY_TREE *tree)
 {
     int i;
-    /*
-     * X509_POLICY_DATA *data;
-     */
     X509_POLICY_NODE *node;
     X509_POLICY_LEVEL *last = curr - 1;
 
@@ -443,35 +423,6 @@ static int tree_link_any(X509_POLICY_LEVEL *curr,
 
         if (!tree_link_unmatched(curr, cache, node, tree))
             return 0;
-
-#if 0
-
-        /*
-         * Skip any node with any children: we only want unmathced nodes.
-         * Note: need something better for policy mapping because each node
-         * may have multiple children
-         */
-        if (node->nchild)
-            continue;
-
-        /*
-         * Create a new node with qualifiers from anyPolicy and id from
-         * unmatched node.
-         */
-        data = policy_data_new(NULL, node->data->valid_policy,
-                               node_critical(node));
-
-        if (data == NULL)
-            return 0;
-        /* Curr may not have anyPolicy */
-        data->qualifier_set = cache->anyPolicy->qualifier_set;
-        data->flags |= POLICY_DATA_FLAG_SHARED_QUALIFIERS;
-        if (!level_add_node(curr, data, node, tree)) {
-            policy_data_free(data);
-            return 0;
-        }
-#endif
-
     }
     /* Finally add link to anyPolicy */
     if (last->anyPolicy) {

@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
         ERR_print_errors_fp(stderr);
         goto err;
     }
-#if 0
+#ifdef ITERATE_CERTS
     /*
      * Demo of how to iterate over all certificates in an SSL_CTX structure.
      */
