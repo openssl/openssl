@@ -4473,8 +4473,8 @@ int ssl3_renegotiate_check(SSL *s)
     int ret = 0;
 
     if (s->s3->renegotiate) {
-        if ((SSL3_BUFFER_get_left(RECORD_LAYER_get_rbuf(&s->rlayer)) == 0)
-            && (SSL3_BUFFER_get_left(RECORD_LAYER_get_wbuf(&s->rlayer)) == 0)
+        if (!RECORD_LAYER_read_pending(&s->rlayer)
+            && !RECORD_LAYER_write_pending(&s->rlayer)
             && !SSL_in_init(s)) {
             /*
              * if we are the server, and we have sent a 'RENEGOTIATE'

@@ -159,6 +159,25 @@ void RECORD_LAYER_clear(RECORD_LAYER *rl)
     rl->s = s;
 }
 
+void RECORD_LAYER_release(RECORD_LAYER *rl)
+{
+    if (SSL3_BUFFER_is_initialised(&rl->rbuf))
+        ssl3_release_read_buffer(rl->s);
+    if (SSL3_BUFFER_is_initialised(&rl->wbuf))
+        ssl3_release_write_buffer(rl->s);
+    SSL3_RECORD_release(&rl->rrec);
+}
+
+int RECORD_LAYER_read_pending(RECORD_LAYER *rl)
+{
+    return SSL3_BUFFER_get_left(&rl->rbuf) != 0;
+}
+
+int RECORD_LAYER_write_pending(RECORD_LAYER *rl)
+{
+    return SSL3_BUFFER_get_left(&rl->wbuf) != 0;
+}
+
 int ssl3_read_n(SSL *s, int n, int max, int extend)
 {
     /*
