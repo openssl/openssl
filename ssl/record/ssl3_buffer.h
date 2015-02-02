@@ -127,7 +127,7 @@ typedef struct ssl3_buffer_st {
 #define SSL3_BUFFER_get_left(b)             ((b)->left)
 #define SSL3_BUFFER_is_initialised(b)       ((b)->buf != NULL)
 
-void SSL3_BUFFER_set_data(SSL3_BUFFER *b, unsigned char *d, int n);
+void SSL3_BUFFER_set_data(SSL3_BUFFER *b, const unsigned char *d, int n);
 void SSL3_BUFFER_release(SSL3_BUFFER *b);
 __owur int ssl3_setup_buffers(SSL *s);
 __owur int ssl3_setup_read_buffer(SSL *s);
