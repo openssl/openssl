@@ -189,10 +189,6 @@ SSL3_ENC_METHOD ssl3_undef_enc_method = {
 
 int SSL_clear(SSL *s)
 {
-    unsigned char *rp, *wp;
-    size_t rlen, wlen;
-    int read_ahead;
-
     if (s->method == NULL) {
         SSLerr(SSL_F_SSL_CLEAR, SSL_R_NO_METHOD_SPECIFIED);
         return (0);
@@ -245,23 +241,7 @@ int SSL_clear(SSL *s)
     } else
         s->method->ssl_clear(s);
 
-    read_ahead = RECORD_LAYER_get_read_ahead(&s->rlayer);
-    rp = SSL3_BUFFER_get_buf(RECORD_LAYER_get_rbuf(&s->rlayer));
-    rlen = SSL3_BUFFER_get_len(RECORD_LAYER_get_rbuf(&s->rlayer));
-    wp = SSL3_BUFFER_get_buf(RECORD_LAYER_get_wbuf(&s->rlayer));
-    wlen = SSL3_BUFFER_get_len(RECORD_LAYER_get_wbuf(&s->rlayer));
-    memset(&s->rlayer, 0, sizeof s->rlayer);
-    SSL3_BUFFER_set_buf(RECORD_LAYER_get_rbuf(&s->rlayer), rp);
-    SSL3_BUFFER_set_len(RECORD_LAYER_get_rbuf(&s->rlayer), rlen);
-    SSL3_BUFFER_set_buf(RECORD_LAYER_get_wbuf(&s->rlayer), wp);
-    SSL3_BUFFER_set_len(RECORD_LAYER_get_wbuf(&s->rlayer), wlen);
-
-    /* Do I need to do this? As far as I can tell read_ahead did not
-     * previously get reset by SSL_clear...so I'll keep it that way..but is
-     * that right?
-     */
-    RECORD_LAYER_set_read_ahead(&s->rlayer, read_ahead);
-    RECORD_LAYER_set_ssl(&s->rlayer, s);
+    RECORD_LAYER_clear(&s->rlayer);
 
     return (1);
 }

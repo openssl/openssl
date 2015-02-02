@@ -166,6 +166,7 @@ typedef struct record_layer_st {
 #define RECORD_LAYER_get_rrec(rl)               (&(rl)->rrec)
 #define RECORD_LAYER_get_wrec(rl)               (&(rl)->wrec)
 
+void RECORD_LAYER_clear(RECORD_LAYER *rl);
 __owur int ssl23_read_bytes(SSL *s, int n);
 __owur int ssl23_write_bytes(SSL *s);
 __owur int ssl3_write_bytes(SSL *s, int type, const void *buf, int len);
