@@ -2135,6 +2135,8 @@ __owur int ssl_allow_compression(SSL *s);
 
 __owur long tls1_default_timeout(void);
 __owur int dtls1_do_write(SSL *s, int type);
+__owur int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
+                         unsigned int len, int create_empty_fragment);
 __owur int ssl3_read_n(SSL *s, int n, int max, int extend);
 __owur int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
 __owur int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
