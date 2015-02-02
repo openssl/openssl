@@ -1029,9 +1029,7 @@ struct ssl_st {
                                  * ssl3_get_message() */
     int init_num;               /* amount read/written */
     int init_off;               /* amount read/written */
-    /* used internally to point at a raw packet */
-    unsigned char *packet;
-    unsigned int packet_length;
+
     struct ssl3_state_st *s3;   /* SSLv3 variables */
     struct dtls1_state_st *d1;  /* DTLSv1 variables */
 

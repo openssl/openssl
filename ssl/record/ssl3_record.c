@@ -208,14 +208,14 @@ int ssl3_get_record(SSL *s)
  again:
     /* check if we have the header */
     if ((s->rstate != SSL_ST_READ_BODY) ||
-        (s->packet_length < SSL3_RT_HEADER_LENGTH)) {
+        (RECORD_LAYER_get_packet_length(&s->rlayer) < SSL3_RT_HEADER_LENGTH)) {
         n = ssl3_read_n(s, SSL3_RT_HEADER_LENGTH,
             SSL3_BUFFER_get_len(&s->rlayer.rbuf), 0);
         if (n <= 0)
             return (n);         /* error or non-blocking */
         s->rstate = SSL_ST_READ_BODY;
 
-        p = s->packet;
+        p = RECORD_LAYER_get_packet(&s->rlayer);
         if (s->msg_callback)
             s->msg_callback(0, 0, SSL3_RT_HEADER, p, 5, s,
                             s->msg_callback_arg);
@@ -260,7 +260,8 @@ int ssl3_get_record(SSL *s)
 
     /* s->rstate == SSL_ST_READ_BODY, get and decode the data */
 
-    if (rr->length > s->packet_length - SSL3_RT_HEADER_LENGTH) {
+    if (rr->length >
+        RECORD_LAYER_get_packet_length(&s->rlayer) - SSL3_RT_HEADER_LENGTH) {
         /* now s->packet_length == SSL3_RT_HEADER_LENGTH */
         i = rr->length;
         n = ssl3_read_n(s, i, i, 1);
@@ -278,7 +279,7 @@ int ssl3_get_record(SSL *s)
      * At this point, s->packet_length == SSL3_RT_HEADER_LNGTH + rr->length,
      * and we have that many bytes in s->packet
      */
-    rr->input = &(s->packet[SSL3_RT_HEADER_LENGTH]);
+    rr->input = &(RECORD_LAYER_get_packet(&s->rlayer)[SSL3_RT_HEADER_LENGTH]);
 
     /*
      * ok, we can now read from 's->packet' data into 'rr' rr->input points
@@ -446,7 +447,7 @@ int ssl3_get_record(SSL *s)
      */
 
     /* we have pulled in a full packet so zero things */
-    s->packet_length = 0;
+    RECORD_LAYER_reset_packet_length(&s->rlayer);
 
     /* just read a 0 length packet */
     if (rr->length == 0) {
@@ -1205,7 +1206,7 @@ int dtls1_process_record(SSL *s)
      * At this point, s->packet_length == SSL3_RT_HEADER_LNGTH + rr->length,
      * and we have that many bytes in s->packet
      */
-    rr->input = &(s->packet[DTLS1_RT_HEADER_LENGTH]);
+    rr->input = &(RECORD_LAYER_get_packet(&s->rlayer)[DTLS1_RT_HEADER_LENGTH]);
 
     /*
      * ok, we can now read from 's->packet' data into 'rr' rr->input points
@@ -1240,7 +1241,7 @@ int dtls1_process_record(SSL *s)
     if (enc_err == 0) {
         /* For DTLS we simply ignore bad packets. */
         rr->length = 0;
-        s->packet_length = 0;
+        RECORD_LAYER_reset_packet_length(&s->rlayer);
         goto err;
     }
 #ifdef TLS_DEBUG
@@ -1308,7 +1309,7 @@ int dtls1_process_record(SSL *s)
     if (enc_err < 0) {
         /* decryption failed, silently discard message */
         rr->length = 0;
-        s->packet_length = 0;
+        RECORD_LAYER_reset_packet_length(&s->rlayer);
         goto err;
     }
 
@@ -1344,7 +1345,7 @@ int dtls1_process_record(SSL *s)
      */
 
     /* we have pulled in a full packet so zero things */
-    s->packet_length = 0;
+    RECORD_LAYER_reset_packet_length(&s->rlayer);
     return (1);
 
  f_err:
@@ -1399,7 +1400,7 @@ int dtls1_get_record(SSL *s)
  again:
     /* check if we have the header */
     if ((s->rstate != SSL_ST_READ_BODY) ||
-        (s->packet_length < DTLS1_RT_HEADER_LENGTH)) {
+        (RECORD_LAYER_get_packet_length(&s->rlayer) < DTLS1_RT_HEADER_LENGTH)) {
         n = ssl3_read_n(s, DTLS1_RT_HEADER_LENGTH,
             SSL3_BUFFER_get_len(&s->rlayer.rbuf), 0);
         /* read timeout is handled by dtls1_read_bytes */
@@ -1407,14 +1408,14 @@ int dtls1_get_record(SSL *s)
             return (n);         /* error or non-blocking */
 
         /* this packet contained a partial record, dump it */
-        if (s->packet_length != DTLS1_RT_HEADER_LENGTH) {
-            s->packet_length = 0;
+        if (RECORD_LAYER_get_packet_length(&s->rlayer) != DTLS1_RT_HEADER_LENGTH) {
+            RECORD_LAYER_reset_packet_length(&s->rlayer);
             goto again;
         }
 
         s->rstate = SSL_ST_READ_BODY;
 
-        p = s->packet;
+        p = RECORD_LAYER_get_packet(&s->rlayer);
 
         if (s->msg_callback)
             s->msg_callback(0, 0, SSL3_RT_HEADER, p, DTLS1_RT_HEADER_LENGTH,
@@ -1439,7 +1440,7 @@ int dtls1_get_record(SSL *s)
             if (version != s->version) {
                 /* unexpected version, silently discard */
                 rr->length = 0;
-                s->packet_length = 0;
+                RECORD_LAYER_reset_packet_length(&s->rlayer);
                 goto again;
             }
         }
@@ -1447,14 +1448,14 @@ int dtls1_get_record(SSL *s)
         if ((version & 0xff00) != (s->version & 0xff00)) {
             /* wrong version, silently discard record */
             rr->length = 0;
-            s->packet_length = 0;
+            RECORD_LAYER_reset_packet_length(&s->rlayer);
             goto again;
         }
 
         if (rr->length > SSL3_RT_MAX_ENCRYPTED_LENGTH) {
             /* record too long, silently discard it */
             rr->length = 0;
-            s->packet_length = 0;
+            RECORD_LAYER_reset_packet_length(&s->rlayer);
             goto again;
         }
 
@@ -1463,14 +1464,15 @@ int dtls1_get_record(SSL *s)
 
     /* s->rstate == SSL_ST_READ_BODY, get and decode the data */
 
-    if (rr->length > s->packet_length - DTLS1_RT_HEADER_LENGTH) {
+    if (rr->length >
+        RECORD_LAYER_get_packet_length(&s->rlayer) - DTLS1_RT_HEADER_LENGTH) {
         /* now s->packet_length == DTLS1_RT_HEADER_LENGTH */
         i = rr->length;
         n = ssl3_read_n(s, i, i, 1);
         /* this packet contained a partial record, dump it */
         if (n != i) {
             rr->length = 0;
-            s->packet_length = 0;
+            RECORD_LAYER_reset_packet_length(&s->rlayer);
             goto again;
         }
 
@@ -1485,7 +1487,7 @@ int dtls1_get_record(SSL *s)
     bitmap = dtls1_get_bitmap(s, rr, &is_next_epoch);
     if (bitmap == NULL) {
         rr->length = 0;
-        s->packet_length = 0;   /* dump this record */
+        RECORD_LAYER_reset_packet_length(&s->rlayer);   /* dump this record */
         goto again;             /* get another record */
     }
 #ifndef OPENSSL_NO_SCTP
@@ -1499,11 +1501,13 @@ int dtls1_get_record(SSL *s)
          * connections and would be dropped unnecessarily.
          */
         if (!(s->d1->listen && rr->type == SSL3_RT_HANDSHAKE &&
-              s->packet_length > DTLS1_RT_HEADER_LENGTH &&
-              s->packet[DTLS1_RT_HEADER_LENGTH] == SSL3_MT_CLIENT_HELLO) &&
+              RECORD_LAYER_get_packet_length(&s->rlayer)
+                  > DTLS1_RT_HEADER_LENGTH &&
+              RECORD_LAYER_get_packet(&s->rlayer)[DTLS1_RT_HEADER_LENGTH]
+                  == SSL3_MT_CLIENT_HELLO) &&
             !dtls1_record_replay_check(s, bitmap)) {
             rr->length = 0;
-            s->packet_length = 0; /* dump this record */
+            RECORD_LAYER_reset_packet_length(&s->rlayer); /* dump this record */
             goto again;         /* get another record */
         }
 #ifndef OPENSSL_NO_SCTP
@@ -1529,13 +1533,13 @@ int dtls1_get_record(SSL *s)
             dtls1_record_bitmap_update(s, bitmap);
         }
         rr->length = 0;
-        s->packet_length = 0;
+        RECORD_LAYER_reset_packet_length(&s->rlayer);
         goto again;
     }
 
     if (!dtls1_process_record(s)) {
         rr->length = 0;
-        s->packet_length = 0;   /* dump this record */
+        RECORD_LAYER_reset_packet_length(&s->rlayer);   /* dump this record */
         goto again;             /* get another record */
     }
     dtls1_record_bitmap_update(s, bitmap); /* Mark receipt of record. */

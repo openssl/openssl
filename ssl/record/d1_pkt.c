@@ -193,8 +193,8 @@ static int dtls1_copy_record(SSL *s, pitem *item)
 
     SSL3_BUFFER_release(&s->rlayer.rbuf);
 
-    s->packet = rdata->packet;
-    s->packet_length = rdata->packet_length;
+    s->rlayer.packet = rdata->packet;
+    s->rlayer.packet_length = rdata->packet_length;
     memcpy(&s->rlayer.rbuf, &(rdata->rbuf), sizeof(SSL3_BUFFER));
     memcpy(&s->rlayer.rrec, &(rdata->rrec), sizeof(SSL3_RECORD));
 
@@ -226,8 +226,8 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
         return -1;
     }
 
-    rdata->packet = s->packet;
-    rdata->packet_length = s->packet_length;
+    rdata->packet = s->rlayer.packet;
+    rdata->packet_length = s->rlayer.packet_length;
     memcpy(&(rdata->rbuf), &s->rlayer.rbuf, sizeof(SSL3_BUFFER));
     memcpy(&(rdata->rrec), &s->rlayer.rrec, sizeof(SSL3_RECORD));
 
@@ -243,8 +243,8 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
     }
 #endif
 
-    s->packet = NULL;
-    s->packet_length = 0;
+    s->rlayer.packet = NULL;
+    s->rlayer.packet_length = 0;
     memset(&s->rlayer.rbuf, 0, sizeof(SSL3_BUFFER));
     memset(&s->rlayer.rrec, 0, sizeof(SSL3_RECORD));
 

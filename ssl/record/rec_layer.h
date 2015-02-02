@@ -148,6 +148,11 @@ typedef struct record_layer_st {
     SSL3_RECORD rrec;
     /* goes out from here */
     SSL3_RECORD wrec;
+
+    /* used internally to point at a raw packet */
+    unsigned char *packet;
+    unsigned int packet_length;
+
 } RECORD_LAYER;
 
 
@@ -161,6 +166,9 @@ typedef struct record_layer_st {
 #define RECORD_LAYER_set_read_ahead(rl, ra)     ((rl)->read_ahead = (ra))
 #define RECORD_LAYER_get_read_ahead(rl)         ((rl)->read_ahead)
 #define RECORD_LAYER_setup_comp_buffer(rl)      (SSL3_RECORD_setup(&(rl)->rrec))
+#define RECORD_LAYER_get_packet(rl)             ((rl)->packet)
+#define RECORD_LAYER_get_packet_length(rl)      ((rl)->packet_length)
+#define RECORD_LAYER_add_packet_length(rl, inc) ((rl)->packet_length += (inc))
 
 void RECORD_LAYER_init(RECORD_LAYER *rl, SSL *s);
 void RECORD_LAYER_clear(RECORD_LAYER *rl);
@@ -193,6 +201,8 @@ void dtls1_reset_seq_numbers(SSL *s, int rw);
 #define RECORD_LAYER_get_wbuf(rl)               (&(rl)->wbuf)
 #define RECORD_LAYER_get_rrec(rl)               (&(rl)->rrec)
 #define RECORD_LAYER_get_wrec(rl)               (&(rl)->wrec)
+#define RECORD_LAYER_set_packet(rl, p)          ((rl)->packet = (p))
+#define RECORD_LAYER_reset_packet_length(rl)    ((rl)->packet_length = 0)
 
 __owur int ssl3_read_n(SSL *s, int n, int max, int extend);
 __owur int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,

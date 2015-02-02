@@ -490,7 +490,7 @@ static int ssl23_get_server_hello(SSL *s)
 
     if (n != 7)
         return (n);
-    p = s->packet;
+    p = RECORD_LAYER_get_packet(&s->rlayer);
 
     memcpy(buf, p, n);
 
