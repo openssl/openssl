@@ -396,8 +396,7 @@ int tls1_change_cipher_state(SSL *s, int which)
                        SSL_R_COMPRESSION_LIBRARY_ERROR);
                 goto err2;
             }
-            if (SSL3_RECORD_setup(RECORD_LAYER_get_rrec(&s->rlayer),
-                SSL3_RT_MAX_ENCRYPTED_LENGTH))
+            if (!RECORD_LAYER_setup_comp_buffer(&s->rlayer))
                 goto err;
         }
 #endif

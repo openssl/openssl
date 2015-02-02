@@ -164,6 +164,7 @@ typedef struct record_layer_st {
 #define RECORD_LAYER_get_wbuf(rl)               (&(rl)->wbuf)
 #define RECORD_LAYER_get_rrec(rl)               (&(rl)->rrec)
 #define RECORD_LAYER_get_wrec(rl)               (&(rl)->wrec)
+#define RECORD_LAYER_setup_comp_buffer(rl)      (SSL3_RECORD_setup(&(rl)->rrec))
 
 void RECORD_LAYER_init(RECORD_LAYER *rl, SSL *s);
 void RECORD_LAYER_clear(RECORD_LAYER *rl);

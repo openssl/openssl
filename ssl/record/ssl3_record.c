@@ -143,10 +143,11 @@ void SSL3_RECORD_release(SSL3_RECORD *r)
     r->comp = NULL;
 }
 
-int SSL3_RECORD_setup(SSL3_RECORD *r, size_t len)
+int SSL3_RECORD_setup(SSL3_RECORD *r)
 {
     if (r->comp == NULL)
-        r->comp = (unsigned char *) OPENSSL_malloc(len);
+        r->comp = (unsigned char *)
+            OPENSSL_malloc(SSL3_RT_MAX_ENCRYPTED_LENGTH);
     if (r->comp == NULL)
         return 0;
     return 1;
