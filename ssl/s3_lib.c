@@ -3152,7 +3152,6 @@ void ssl3_clear(SSL *s)
     if (s->s3->tmp.ca_names != NULL)
         sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
 
-    SSL3_RECORD_release(RECORD_LAYER_get_rrec(&s->rlayer));
 #ifndef OPENSSL_NO_DH
     DH_free(s->s3->tmp.dh);
     s->s3->tmp.dh = NULL;
