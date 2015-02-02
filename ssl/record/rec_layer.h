@@ -111,6 +111,19 @@
 
 #include "../ssl_locl.h"
 
+typedef struct dtls1_bitmap_st {
+    unsigned long map;          /* track 32 packets on 32-bit systems and 64
+                                 * - on 64-bit systems */
+    unsigned char max_seq_num[8]; /* max record number seen so far, 64-bit
+                                   * value in big-endian encoding */
+} DTLS1_BITMAP;
+
+
+typedef struct record_pqueue_st {
+    unsigned short epoch;
+    pqueue q;
+} record_pqueue;
+
 typedef struct record_layer_st {
     /* The parent SSL structure */
     SSL *s;
@@ -136,3 +149,27 @@ typedef struct record_layer_st {
 #define RECORD_LAYER_get_wbuf(rl)               (&(rl)->wbuf)
 #define RECORD_LAYER_get_rrec(rl)               (&(rl)->rrec)
 #define RECORD_LAYER_get_wrec(rl)               (&(rl)->wrec)
+
+__owur int ssl23_read_bytes(SSL *s, int n);
+__owur int ssl23_write_bytes(SSL *s);
+__owur int ssl3_read_n(SSL *s, int n, int max, int extend);
+__owur int ssl3_write_bytes(SSL *s, int type, const void *buf, int len);
+__owur int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
+                         unsigned int len, int create_empty_fragment);
+__owur int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
+                       unsigned int len);
+__owur int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
+__owur int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
+int dtls1_write_bytes(SSL *s, int type, const void *buf, int len);
+__owur int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
+                   unsigned int len, int create_empty_fragement);
+int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap);
+void dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap);
+DTLS1_BITMAP *dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr,
+                                      unsigned int *is_next_epoch);
+int dtls1_process_buffered_records(SSL *s);
+int dtls1_retrieve_buffered_record(SSL *s, record_pqueue *queue);
+int dtls1_buffer_record(SSL *s, record_pqueue *q,
+                               unsigned char *priority);
+void dtls1_reset_seq_numbers(SSL *s, int rw);
+
