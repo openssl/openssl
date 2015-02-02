@@ -82,7 +82,7 @@
 
 #  define ZEN_LIBRARY     "zenbridge"
 
-#  if 0
+#  ifdef ZENCOD_TRACING
 #   define PERROR(s)     perror(s)
 #   define CHEESE()      fputs("## [ZenEngine] ## " __FUNCTION__ "\n", stderr)
 #  else

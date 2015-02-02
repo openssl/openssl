@@ -85,13 +85,6 @@ void aes_gcm_decrypt(void)
     EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, sizeof(gcm_iv), NULL);
     /* Specify key and IV */
     EVP_DecryptInit_ex(ctx, NULL, NULL, gcm_key, gcm_iv);
-#if 0
-    /*
-     * Set expected tag value. A restriction in OpenSSL 1.0.1c and earlier
-     * required the tag before any AAD or ciphertext
-     */
-    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, sizeof(gcm_tag), gcm_tag);
-#endif
     /* Zero or more calls to specify any AAD */
     EVP_DecryptUpdate(ctx, NULL, &outlen, gcm_aad, sizeof(gcm_aad));
     /* Decrypt plaintext */
@@ -99,10 +92,7 @@ void aes_gcm_decrypt(void)
     /* Output decrypted block */
     printf("Plaintext:\n");
     BIO_dump_fp(stdout, outbuf, outlen);
-    /*
-     * Set expected tag value. Works in OpenSSL 1.0.1d and later
-     * In versions prior to OpenSSL 1.1.0 you should use EVP_CTRL_GCM_SET_TAG
-     */
+    /* Set expected tag value. */
     EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, sizeof(gcm_tag), gcm_tag);
     /* Finalise: note get no output for GCM */
     rv = EVP_DecryptFinal_ex(ctx, outbuf, &outlen);

@@ -307,9 +307,6 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
                 *p = 0;
                 ntmp = strip_spaces(q);
                 q = p + 1;
-#if 0
-                printf("%s\n", ntmp);
-#endif
                 if (!ntmp) {
                     X509V3err(X509V3_F_X509V3_PARSE_LIST,
                               X509V3_R_INVALID_NULL_NAME);
@@ -324,9 +321,6 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
                 state = HDR_NAME;
                 *p = 0;
                 vtmp = strip_spaces(q);
-#if 0
-                printf("%s\n", ntmp);
-#endif
                 if (!vtmp) {
                     X509V3err(X509V3_F_X509V3_PARSE_LIST,
                               X509V3_R_INVALID_NULL_VALUE);
@@ -342,9 +336,6 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
 
     if (state == HDR_VALUE) {
         vtmp = strip_spaces(q);
-#if 0
-        printf("%s=%s\n", ntmp, vtmp);
-#endif
         if (!vtmp) {
             X509V3err(X509V3_F_X509V3_PARSE_LIST,
                       X509V3_R_INVALID_NULL_VALUE);
@@ -353,9 +344,6 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
         X509V3_add_value(ntmp, vtmp, &values);
     } else {
         ntmp = strip_spaces(q);
-#if 0
-        printf("%s\n", ntmp);
-#endif
         if (!ntmp) {
             X509V3err(X509V3_F_X509V3_PARSE_LIST, X509V3_R_INVALID_NULL_NAME);
             goto err;

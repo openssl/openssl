@@ -136,7 +136,7 @@ int days;
     X509_add_ext(x, ex, -1);
     X509_EXTENSION_free(ex);
 
-#if 0
+#ifdef ADD_CA_CONSTRAINT
     /* might want something like this too.... */
     ex = X509V3_EXT_conf_nid(NULL, NULL, NID_basic_constraints,
                              "critical,CA:TRUE");
@@ -145,7 +145,7 @@ int days;
     X509_EXTENSION_free(ex);
 #endif
 
-#ifdef CUSTOM_EXT
+#ifdef ADD_A_CUSTOM_EXTENSION
     /* Maybe even add our own extension based on existing */
     {
         int nid;
