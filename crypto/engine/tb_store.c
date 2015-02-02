@@ -91,30 +91,6 @@ void ENGINE_register_all_STORE()
         ENGINE_register_STORE(e);
 }
 
-/* The following two functions are removed because they're useless. */
-#if 0
-int ENGINE_set_default_STORE(ENGINE *e)
-{
-    if (e->store_meth)
-        return engine_table_register(&store_table,
-                                     engine_unregister_all_STORE, e,
-                                     &dummy_nid, 1, 1);
-    return 1;
-}
-#endif
-
-#if 0
-/*
- * Exposed API function to get a functional reference from the implementation
- * table (ie. try to get a functional reference from the tabled structural
- * references).
- */
-ENGINE *ENGINE_get_default_STORE(void)
-{
-    return engine_table_select(&store_table, dummy_nid);
-}
-#endif
-
 /* Obtains an STORE implementation from an ENGINE functional reference */
 const STORE_METHOD *ENGINE_get_STORE(const ENGINE *e)
 {

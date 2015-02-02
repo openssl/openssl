@@ -353,14 +353,6 @@ ENGINE *ENGINE_by_id(const char *id)
         }
     }
     CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
-#if 0
-    if (iterator == NULL) {
-        ENGINEerr(ENGINE_F_ENGINE_BY_ID, ENGINE_R_NO_SUCH_ENGINE);
-        ERR_add_error_data(2, "id=", id);
-    }
-    return iterator;
-#else
-    /* EEK! Experimental code starts */
     if (iterator)
         return iterator;
     /*
@@ -390,7 +382,6 @@ ENGINE *ENGINE_by_id(const char *id)
     ERR_add_error_data(2, "id=", id);
     return NULL;
     /* EEK! Experimental code ends */
-#endif
 }
 
 int ENGINE_up_ref(ENGINE *e)
