@@ -298,11 +298,7 @@ static int b64_read(BIO *b, char *out, int outl)
         if (BIO_get_flags(b) & BIO_FLAGS_BASE64_NO_NL) {
             int z, jj;
 
-#if 0
-            jj = (i >> 2) << 2;
-#else
             jj = i & ~3;        /* process per 4 */
-#endif
             z = EVP_DecodeBlock((unsigned char *)ctx->buf,
                                 (unsigned char *)ctx->tmp, jj);
             if (jj > 2) {

@@ -778,11 +778,6 @@ static int aes_t4_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
             case 128:
                 xctx->stream = aes128_t4_xts_encrypt;
                 break;
-#  if 0                         /* not yet */
-            case 192:
-                xctx->stream = aes192_t4_xts_encrypt;
-                break;
-#  endif
             case 256:
                 xctx->stream = aes256_t4_xts_encrypt;
                 break;
@@ -796,11 +791,6 @@ static int aes_t4_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
             case 128:
                 xctx->stream = aes128_t4_xts_decrypt;
                 break;
-#  if 0                         /* not yet */
-            case 192:
-                xctx->stream = aes192_t4_xts_decrypt;
-                break;
-#  endif
             case 256:
                 xctx->stream = aes256_t4_xts_decrypt;
                 break;
@@ -839,24 +829,6 @@ static int aes_t4_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
         aes_t4_set_encrypt_key(key, bits, &cctx->ks.ks);
         CRYPTO_ccm128_init(&cctx->ccm, cctx->M, cctx->L,
                            &cctx->ks, (block128_f) aes_t4_encrypt);
-#  if 0                         /* not yet */
-        switch (bits) {
-        case 128:
-            cctx->str = enc ? (ccm128_f) aes128_t4_ccm64_encrypt :
-                (ccm128_f) ae128_t4_ccm64_decrypt;
-            break;
-        case 192:
-            cctx->str = enc ? (ccm128_f) aes192_t4_ccm64_encrypt :
-                (ccm128_f) ae192_t4_ccm64_decrypt;
-            break;
-        case 256:
-            cctx->str = enc ? (ccm128_f) aes256_t4_ccm64_encrypt :
-                (ccm128_f) ae256_t4_ccm64_decrypt;
-            break;
-        default:
-            return 0;
-        }
-#  endif
         cctx->key_set = 1;
     }
     if (iv) {
