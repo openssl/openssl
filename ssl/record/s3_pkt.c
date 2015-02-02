@@ -187,7 +187,7 @@ int RECORD_LAYER_write_pending(RECORD_LAYER *rl)
 
 int RECORD_LAYER_set_data(RECORD_LAYER *rl, const unsigned char *buf, int len)
 {
-    rl->s->packet_length = len;
+    rl->packet_length = len;
     if(len != 0) {
         rl->s->rstate = SSL_ST_READ_HEADER;
         if (!SSL3_BUFFER_is_initialised(&rl->rbuf))
@@ -195,7 +195,7 @@ int RECORD_LAYER_set_data(RECORD_LAYER *rl, const unsigned char *buf, int len)
                 return 0;
     }
 
-    rl->s->packet = SSL3_BUFFER_get_buf(&rl->rbuf);
+    rl->packet = SSL3_BUFFER_get_buf(&rl->rbuf);
     SSL3_BUFFER_set_data(&rl->rbuf, buf, len);
 
     return 1;
@@ -261,8 +261,8 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
                 rb->offset = align;
             }
         }
-        s->packet = rb->buf + rb->offset;
-        s->packet_length = 0;
+        s->rlayer.packet = rb->buf + rb->offset;
+        s->rlayer.packet_length = 0;
         /* ... now we can act as if 'extend' was set */
     }
 
@@ -280,7 +280,7 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 
     /* if there is enough in the buffer from a previous read, take some */
     if (left >= n) {
-        s->packet_length += n;
+        s->rlayer.packet_length += n;
         rb->left = left - n;
         rb->offset += n;
         return (n);
@@ -288,15 +288,15 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 
     /* else we need to read more data */
 
-    len = s->packet_length;
+    len = s->rlayer.packet_length;
     pkt = rb->buf + align;
     /*
      * Move any available bytes to front of buffer: 'len' bytes already
      * pointed to by 'packet', 'left' extra ones at the end
      */
-    if (s->packet != pkt) {     /* len > 0 */
-        memmove(pkt, s->packet, len + left);
-        s->packet = pkt;
+    if (s->rlayer.packet != pkt) {     /* len > 0 */
+        memmove(pkt, s->rlayer.packet, len + left);
+        s->rlayer.packet = pkt;
         rb->offset = len + align;
     }
 
@@ -354,7 +354,7 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
     /* done reading, now the book-keeping */
     rb->offset += n;
     rb->left = left - n;
-    s->packet_length += n;
+    s->rlayer.packet_length += n;
     s->rwstate = SSL_NOTHING;
     return (n);
 }

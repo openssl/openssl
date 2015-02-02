@@ -264,7 +264,7 @@ int ssl23_get_client_hello(SSL *s)
         if (n != sizeof buf_space)
             return (n);         /* n == -1 || n == 0 */
 
-        p = s->packet;
+        p = RECORD_LAYER_get_packet(&s->rlayer);
 
         memcpy(buf, p, n);
 
@@ -415,7 +415,7 @@ int ssl23_get_client_hello(SSL *s)
          */
 
         type = 2;
-        p = s->packet;
+        p = RECORD_LAYER_get_packet(&s->rlayer);
         v[0] = p[3];            /* == SSL3_VERSION_MAJOR */
         v[1] = p[4];
 
@@ -451,27 +451,32 @@ int ssl23_get_client_hello(SSL *s)
         if (j <= 0)
             return (j);
 
-        ssl3_finish_mac(s, s->packet + 2, s->packet_length - 2);
+        ssl3_finish_mac(s, RECORD_LAYER_get_packet(&s->rlayer) + 2,
+                        RECORD_LAYER_get_packet_length(&s->rlayer) - 2);
 
         /* CLIENT-HELLO */
         if (s->msg_callback)
-            s->msg_callback(0, SSL2_VERSION, 0, s->packet + 2,
-                            s->packet_length - 2, s, s->msg_callback_arg);
+            s->msg_callback(0, SSL2_VERSION, 0,
+                            RECORD_LAYER_get_packet(&s->rlayer) + 2,
+                            RECORD_LAYER_get_packet_length(&s->rlayer) - 2, s,
+                            s->msg_callback_arg);
 
-        p = s->packet;
+        p = RECORD_LAYER_get_packet(&s->rlayer);
         p += 5;
         n2s(p, csl);
         n2s(p, sil);
         n2s(p, cl);
         d = (unsigned char *)s->init_buf->data;
-        if ((csl + sil + cl + 11) != s->packet_length) { /* We can't have TLS
-                                                          * extensions in SSL
-                                                          * 2.0 format *
-                                                          * Client Hello, can
-                                                          * we? Error
-                                                          * condition should
-                                                          * be * '>'
-                                                          * otherweise */
+        if ((csl + sil + cl + 11)
+                != RECORD_LAYER_get_packet_length(&s->rlayer)) {
+            /* We can't have TLS
+             * extensions in SSL
+             * 2.0 format *
+             * Client Hello, can
+             * we? Error
+             * condition should
+             * be * '>'
+             * otherweise */
             SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,
                    SSL_R_RECORD_LENGTH_MISMATCH);
             goto err;

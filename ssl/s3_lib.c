@@ -3183,7 +3183,6 @@ void ssl3_clear(SSL *s)
 
     ssl_free_wbio_buffer(s);
 
-    s->packet_length = 0;
     s->s3->renegotiate = 0;
     s->s3->total_renegotiations = 0;
     s->s3->num_renegotiations = 0;
