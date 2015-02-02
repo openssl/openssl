@@ -306,7 +306,7 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
     }
 
     /* We always act like read_ahead is set for DTLS */
-    if (!RECORD_LAYER_get_read_ahead(&s->rlayer) && !SSL_IS_DTLS(s))
+    if (&s->rlayer.read_ahead && !SSL_IS_DTLS(s))
         /* ignore max parameter */
         max = n;
     else {
