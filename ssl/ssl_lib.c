@@ -603,11 +603,7 @@ void SSL_free(SSL *s)
     if (s->method != NULL)
         s->method->ssl_free(s);
 
-    if (SSL3_BUFFER_is_initialised(RECORD_LAYER_get_rbuf(&s->rlayer)))
-        ssl3_release_read_buffer(s);
-    if (SSL3_BUFFER_is_initialised(RECORD_LAYER_get_wbuf(&s->rlayer)))
-        ssl3_release_write_buffer(s);
-    SSL3_RECORD_release(RECORD_LAYER_get_rrec(&s->rlayer));
+    RECORD_LAYER_release(&s->rlayer);
 
     if (s->ctx)
         SSL_CTX_free(s->ctx);

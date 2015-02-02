@@ -179,7 +179,7 @@ int ssl3_send_alert(SSL *s, int level, int desc)
     s->s3->alert_dispatch = 1;
     s->s3->send_alert[0] = level;
     s->s3->send_alert[1] = desc;
-    if (SSL3_BUFFER_get_left(RECORD_LAYER_get_wbuf(&s->rlayer)) == 0) {
+    if (!RECORD_LAYER_write_pending(&s->rlayer)) {
         /* data still being written out? */
         return s->method->ssl_dispatch_alert(s);
     }
