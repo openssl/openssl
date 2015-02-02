@@ -1054,7 +1054,8 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 #ifndef OPENSSL_NO_HEARTBEATS
         else if (rr->type == TLS1_RT_HEARTBEAT) {
             /* We can ignore 0 return values */
-            if(tls1_process_heartbeat(s) < 0) {
+            if(tls1_process_heartbeat(s, SSL3_RECORD_get_data(&s->rlayer.rrec),
+                    SSL3_RECORD_get_length(&s->rlayer.rrec)) < 0) {
                 return -1;
             }
 

@@ -60,7 +60,7 @@ typedef struct heartbeat_test_fixture {
     SSL_CTX *ctx;
     SSL *s;
     const char *test_case_name;
-    int (*process_heartbeat) (SSL *s);
+    int (*process_heartbeat) (SSL *s, unsigned char *p, unsigned int length);
     unsigned char *payload;
     int sent_payload_len;
     int expected_return_value;
@@ -112,7 +112,7 @@ static HEARTBEAT_TEST_FIXTURE set_up(const char *const test_case_name,
      * zeroed in opt mode and will cause spurious test failures that will
      * change with each execution.
      */
-    memset(fixture.s->s3->wbuf.buf, 0, fixture.s->s3->wbuf.len);
+    memset(fixture.s->rlayer.wbuf.buf, 0, fixture.s->rlayer.wbuf.len);
 
  fail:
     if (!setup_ok) {
@@ -202,8 +202,8 @@ static int execute_heartbeat(HEARTBEAT_TEST_FIXTURE fixture)
     unsigned const char *p;
     int actual_payload_len;
 
-    s->s3->rrec.data = payload;
-    s->s3->rrec.length = strlen((const char *)payload);
+    s->rlayer.rrec.data = payload;
+    s->rlayer.rrec.length = strlen((const char *)payload);
     *payload++ = TLS1_HB_REQUEST;
     s2n(fixture.sent_payload_len, payload);
 
@@ -213,7 +213,8 @@ static int execute_heartbeat(HEARTBEAT_TEST_FIXTURE fixture)
      */
     memcpy((char *)sent_buf, (const char *)payload, sizeof(sent_buf));
 
-    return_value = fixture.process_heartbeat(s);
+    return_value = fixture.process_heartbeat(s, s->rlayer.rrec.data,
+        s->rlayer.rrec.length);
 
     if (return_value != fixture.expected_return_value) {
         printf("%s failed: expected return value %d, received %d\n",
@@ -225,8 +226,8 @@ static int execute_heartbeat(HEARTBEAT_TEST_FIXTURE fixture)
     /*
      * If there is any byte alignment, it will be stored in wbuf.offset.
      */
-    p = &(s->s3->
-          wbuf.buf[fixture.return_payload_offset + s->s3->wbuf.offset]);
+    p = &(s->rlayer.
+          wbuf.buf[fixture.return_payload_offset + s->rlayer.wbuf.offset]);
     actual_payload_len = 0;
     n2s(p, actual_payload_len);
 
