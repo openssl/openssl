@@ -160,10 +160,6 @@ typedef struct record_layer_st {
 
 #define RECORD_LAYER_set_read_ahead(rl, ra)     ((rl)->read_ahead = (ra))
 #define RECORD_LAYER_get_read_ahead(rl)         ((rl)->read_ahead)
-#define RECORD_LAYER_get_rbuf(rl)               (&(rl)->rbuf)
-#define RECORD_LAYER_get_wbuf(rl)               (&(rl)->wbuf)
-#define RECORD_LAYER_get_rrec(rl)               (&(rl)->rrec)
-#define RECORD_LAYER_get_wrec(rl)               (&(rl)->wrec)
 #define RECORD_LAYER_setup_comp_buffer(rl)      (SSL3_RECORD_setup(&(rl)->rrec))
 
 void RECORD_LAYER_init(RECORD_LAYER *rl, SSL *s);
@@ -188,10 +184,15 @@ void dtls1_reset_seq_numbers(SSL *s, int rw);
 
 /*****************************************************************************
  *                                                                           *
- * The following functions are private to the record layer. They should not  *
- * be used outside of the record layer.                                      *
+ * The following macros/functions are private to the record layer. They      *
+ * should not be used outside of the record layer.                           *
  *                                                                           *
  *****************************************************************************/
+
+#define RECORD_LAYER_get_rbuf(rl)               (&(rl)->rbuf)
+#define RECORD_LAYER_get_wbuf(rl)               (&(rl)->wbuf)
+#define RECORD_LAYER_get_rrec(rl)               (&(rl)->rrec)
+#define RECORD_LAYER_get_wrec(rl)               (&(rl)->wrec)
 
 __owur int ssl3_read_n(SSL *s, int n, int max, int extend);
 __owur int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,

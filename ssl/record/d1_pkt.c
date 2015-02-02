@@ -191,14 +191,12 @@ static int dtls1_copy_record(SSL *s, pitem *item)
 
     rdata = (DTLS1_RECORD_DATA *)item->data;
 
-    SSL3_BUFFER_release(RECORD_LAYER_get_rbuf(&s->rlayer));
+    SSL3_BUFFER_release(&s->rlayer.rbuf);
 
     s->packet = rdata->packet;
     s->packet_length = rdata->packet_length;
-    memcpy(RECORD_LAYER_get_rbuf(&s->rlayer), &(rdata->rbuf),
-        sizeof(SSL3_BUFFER));
-    memcpy(RECORD_LAYER_get_rrec(&s->rlayer), &(rdata->rrec),
-        sizeof(SSL3_RECORD));
+    memcpy(&s->rlayer.rbuf, &(rdata->rbuf), sizeof(SSL3_BUFFER));
+    memcpy(&s->rlayer.rrec, &(rdata->rrec), sizeof(SSL3_RECORD));
 
     /* Set proper sequence number for mac calculation */
     memcpy(&(s->s3->read_sequence[2]), &(rdata->packet[5]), 6);
@@ -230,10 +228,8 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
 
     rdata->packet = s->packet;
     rdata->packet_length = s->packet_length;
-    memcpy(&(rdata->rbuf), RECORD_LAYER_get_rbuf(&s->rlayer),
-        sizeof(SSL3_BUFFER));
-    memcpy(&(rdata->rrec), RECORD_LAYER_get_rrec(&s->rlayer),
-        sizeof(SSL3_RECORD));
+    memcpy(&(rdata->rbuf), &s->rlayer.rbuf, sizeof(SSL3_BUFFER));
+    memcpy(&(rdata->rrec), &s->rlayer.rrec, sizeof(SSL3_RECORD));
 
     item->data = rdata;
 
@@ -249,8 +245,8 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
 
     s->packet = NULL;
     s->packet_length = 0;
-    memset(RECORD_LAYER_get_rbuf(&s->rlayer), 0, sizeof(SSL3_BUFFER));
-    memset(RECORD_LAYER_get_rrec(&s->rlayer), 0, sizeof(SSL3_RECORD));
+    memset(&s->rlayer.rbuf, 0, sizeof(SSL3_BUFFER));
+    memset(&s->rlayer.rrec, 0, sizeof(SSL3_RECORD));
 
     if (!ssl3_setup_buffers(s)) {
         SSLerr(SSL_F_DTLS1_BUFFER_RECORD, ERR_R_INTERNAL_ERROR);
@@ -316,7 +312,7 @@ int dtls1_process_buffered_records(SSL *s)
             if (!dtls1_process_record(s))
                 return (0);
             if (dtls1_buffer_record(s, &(s->d1->processed_rcds),
-                SSL3_RECORD_get_seq_num(RECORD_LAYER_get_rrec(&s->rlayer))) < 0)
+                SSL3_RECORD_get_seq_num(&s->rlayer.rrec)) < 0)
                 return -1;
         }
     }
@@ -367,7 +363,7 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
     SSL3_RECORD *rr;
     void (*cb) (const SSL *ssl, int type2, int val) = NULL;
 
-    if (!SSL3_BUFFER_is_initialised(RECORD_LAYER_get_rbuf(&s->rlayer))) {
+    if (!SSL3_BUFFER_is_initialised(&s->rlayer.rbuf)) {
         /* Not initialized yet */
         if (!ssl3_setup_buffers(s))
             return (-1);
@@ -423,7 +419,7 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
      * s->s3->rrec.off,     - offset into 'data' for next read
      * s->s3->rrec.length,  - number of bytes.
      */
-    rr = RECORD_LAYER_get_rrec(&s->rlayer);
+    rr = &s->rlayer.rrec;
 
     /*
      * We are not handshaking and have no data yet, so process data buffered
@@ -694,8 +690,7 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
                 }
 
                 if (!(s->mode & SSL_MODE_AUTO_RETRY)) {
-                    if (SSL3_BUFFER_get_left(
-                        RECORD_LAYER_get_rbuf(&s->rlayer)) == 0) {
+                    if (SSL3_BUFFER_get_left(&s->rlayer.rbuf) == 0) {
                         /* no read-ahead left? */
                         BIO *bio;
                         /*
@@ -918,8 +913,7 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
         }
 
         if (!(s->mode & SSL_MODE_AUTO_RETRY)) {
-            if (SSL3_BUFFER_get_left(
-                RECORD_LAYER_get_rbuf(&s->rlayer)) == 0) {
+            if (SSL3_BUFFER_get_left(&s->rlayer.rbuf) == 0) {
                 /* no read-ahead left? */
                 BIO *bio;
                 /*
@@ -1052,7 +1046,7 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
     SSL3_BUFFER *wb;
     SSL_SESSION *sess;
 
-    wb = RECORD_LAYER_get_wbuf(&s->rlayer);
+    wb = &s->rlayer.wbuf;
 
     /*
      * first check if there is a SSL3_BUFFER still being written out.  This
@@ -1074,7 +1068,7 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
     if (len == 0 && !create_empty_fragment)
         return 0;
 
-    wr = RECORD_LAYER_get_wrec(&s->rlayer);
+    wr = &s->rlayer.wrec;
     sess = s->session;
 
     if ((sess == NULL) ||
@@ -1237,7 +1231,7 @@ int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap)
 
     cmp = satsub64be(seq, bitmap->max_seq_num);
     if (cmp > 0) {
-        SSL3_RECORD_set_seq_num(RECORD_LAYER_get_rrec(&s->rlayer), seq);
+        SSL3_RECORD_set_seq_num(&s->rlayer.rrec, seq);
         return 1;               /* this record in new */
     }
     shift = -cmp;
@@ -1246,7 +1240,7 @@ int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap)
     else if (bitmap->map & (1UL << shift))
         return 0;               /* record previously received */
 
-    SSL3_RECORD_set_seq_num(RECORD_LAYER_get_rrec(&s->rlayer), seq);
+    SSL3_RECORD_set_seq_num(&s->rlayer.rrec, seq);
     return 1;
 }
 

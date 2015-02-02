@@ -227,7 +227,7 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
     if (n <= 0)
         return n;
 
-    rb = RECORD_LAYER_get_rbuf(&s->rlayer);
+    rb = &s->rlayer.rbuf;
     if (rb->buf == NULL)
         if (!ssl3_setup_read_buffer(s))
             return -1;
@@ -372,7 +372,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 #if !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
     unsigned int max_send_fragment;
 #endif
-    SSL3_BUFFER *wb = RECORD_LAYER_get_wbuf(&s->rlayer);
+    SSL3_BUFFER *wb = &s->rlayer.wbuf;
     int i;
     unsigned int u_len = (unsigned int)len;
 
@@ -602,7 +602,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     int eivlen;
     long align = 0;
     SSL3_RECORD *wr;
-    SSL3_BUFFER *wb = RECORD_LAYER_get_wbuf(&s->rlayer);
+    SSL3_BUFFER *wb = &s->rlayer.wbuf;
     SSL_SESSION *sess;
 
     /*
@@ -627,7 +627,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     if (len == 0 && !create_empty_fragment)
         return 0;
 
-    wr = RECORD_LAYER_get_wrec(&s->rlayer);
+    wr = &s->rlayer.wrec;
     sess = s->session;
 
     if ((sess == NULL) ||
@@ -827,7 +827,7 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
                        unsigned int len)
 {
     int i;
-    SSL3_BUFFER *wb = RECORD_LAYER_get_wbuf(&s->rlayer);
+    SSL3_BUFFER *wb = &s->rlayer.wbuf;
 
 /* XXXX */
     if ((s->s3->wpend_tot > (int)len)
@@ -904,7 +904,7 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
     SSL3_RECORD *rr;
     void (*cb) (const SSL *ssl, int type2, int val) = NULL;
 
-    if (!SSL3_BUFFER_is_initialised(RECORD_LAYER_get_rbuf(&s->rlayer))) {
+    if (!SSL3_BUFFER_is_initialised(&s->rlayer.rbuf)) {
         /* Not initialized yet */
         if (!ssl3_setup_read_buffer(s))
             return (-1);
@@ -962,7 +962,7 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
      * s->s3->rrec.off,     - offset into 'data' for next read
      * s->s3->rrec.length,  - number of bytes.
      */
-    rr = RECORD_LAYER_get_rrec(&s->rlayer);
+    rr = &s->rlayer.rrec;
 
     /* get new packet if necessary */
     if ((rr->length == 0) || (s->rstate == SSL_ST_READ_BODY)) {
@@ -1020,8 +1020,7 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
                 s->rstate = SSL_ST_READ_HEADER;
                 rr->off = 0;
                 if (s->mode & SSL_MODE_RELEASE_BUFFERS
-                    && SSL3_BUFFER_get_left(
-                        RECORD_LAYER_get_rbuf(&s->rlayer)) == 0)
+                    && SSL3_BUFFER_get_left(&s->rlayer.rbuf) == 0)
                     ssl3_release_read_buffer(s);
             }
         }
@@ -1125,8 +1124,7 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
                 }
 
                 if (!(s->mode & SSL_MODE_AUTO_RETRY)) {
-                    if (SSL3_BUFFER_get_left(
-                        RECORD_LAYER_get_rbuf(&s->rlayer)) == 0) {
+                    if (SSL3_BUFFER_get_left(&s->rlayer.rbuf) == 0) {
                         /* no read-ahead left? */
                         BIO *bio;
                         /*
@@ -1299,7 +1297,7 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
         }
 
         if (!(s->mode & SSL_MODE_AUTO_RETRY)) {
-            if (SSL3_BUFFER_get_left(RECORD_LAYER_get_rbuf(&s->rlayer)) == 0) {
+            if (SSL3_BUFFER_get_left(&s->rlayer.rbuf) == 0) {
                 /* no read-ahead left? */
                 BIO *bio;
                 /*
