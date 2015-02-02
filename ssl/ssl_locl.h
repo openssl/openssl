@@ -2099,7 +2099,6 @@ __owur long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg);
 __owur long ssl3_ctx_ctrl(SSL_CTX *s, int cmd, long larg, void *parg);
 __owur long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void));
 __owur long ssl3_ctx_callback_ctrl(SSL_CTX *s, int cmd, void (*fp) (void));
-__owur int ssl3_pending(const SSL *s);
 
 void ssl3_record_sequence_update(unsigned char *seq);
 __owur int ssl3_do_change_cipher_spec(SSL *ssl);
