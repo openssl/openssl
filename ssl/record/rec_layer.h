@@ -111,6 +111,14 @@
 
 #include "../ssl_locl.h"
 
+/*****************************************************************************
+ *                                                                           *
+ * These structures should be considered "opaque" to anything outside of the *
+ * record layer. No non-record layer code should be accessing the members of *
+ * these structures.                                                         *
+ *                                                                           *
+ *****************************************************************************/
+
 typedef struct dtls1_bitmap_st {
     unsigned long map;          /* track 32 packets on 32-bit systems and 64
                                  * - on 64-bit systems */
@@ -142,6 +150,14 @@ typedef struct record_layer_st {
     SSL3_RECORD wrec;
 } RECORD_LAYER;
 
+
+/*****************************************************************************
+ *                                                                           *
+ * The following macros/functions represent the libssl internal API to the   *
+ * record layer.                                                             *
+ *                                                                           *
+ *****************************************************************************/
+
 #define RECORD_LAYER_set_ssl(rl, s)             ((rl)->s = (s))
 #define RECORD_LAYER_set_read_ahead(rl, ra)     ((rl)->read_ahead = (ra))
 #define RECORD_LAYER_get_read_ahead(rl)         ((rl)->read_ahead)
@@ -152,17 +168,27 @@ typedef struct record_layer_st {
 
 __owur int ssl23_read_bytes(SSL *s, int n);
 __owur int ssl23_write_bytes(SSL *s);
-__owur int ssl3_read_n(SSL *s, int n, int max, int extend);
 __owur int ssl3_write_bytes(SSL *s, int type, const void *buf, int len);
 __owur int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
                          unsigned int len, int create_empty_fragment);
-__owur int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
-                       unsigned int len);
 __owur int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
 __owur int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
 int dtls1_write_bytes(SSL *s, int type, const void *buf, int len);
 __owur int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
                    unsigned int len, int create_empty_fragement);
+void dtls1_reset_seq_numbers(SSL *s, int rw);
+
+
+/*****************************************************************************
+ *                                                                           *
+ * The following functions are private to the record layer. They should not  *
+ * be used outside of the record layer.                                      *
+ *                                                                           *
+ *****************************************************************************/
+
+__owur int ssl3_read_n(SSL *s, int n, int max, int extend);
+__owur int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
+                       unsigned int len);
 int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap);
 void dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap);
 DTLS1_BITMAP *dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr,
@@ -171,5 +197,4 @@ int dtls1_process_buffered_records(SSL *s);
 int dtls1_retrieve_buffered_record(SSL *s, record_pqueue *queue);
 int dtls1_buffer_record(SSL *s, record_pqueue *q,
                                unsigned char *priority);
-void dtls1_reset_seq_numbers(SSL *s, int rw);
 
