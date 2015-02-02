@@ -92,10 +92,6 @@ int main(int argc, char *argv[])
 # include <openssl/ec.h>
 # include <openssl/ecdh.h>
 
-# if 0
-static void cb(int p, int n, void *arg);
-# endif
-
 static const char rnd_seed[] =
     "string to make the random number generator think it has entropy";
 
@@ -544,22 +540,4 @@ int main(int argc, char *argv[])
     CRYPTO_mem_leaks_fp(stderr);
     EXIT(ret);
 }
-
-# if 0
-static void cb(int p, int n, void *arg)
-{
-    char c = '*';
-
-    if (p == 0)
-        c = '.';
-    if (p == 1)
-        c = '+';
-    if (p == 2)
-        c = '*';
-    if (p == 3)
-        c = '\n';
-    BIO_write((BIO *)arg, &c, 1);
-    (void)BIO_flush((BIO *)arg);
-}
-# endif
 #endif

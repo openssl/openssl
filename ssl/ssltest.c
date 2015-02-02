@@ -740,13 +740,6 @@ static int custom_ext_3_srv_add_cb(SSL *s, unsigned int ext_type,
 static char *cipher = NULL;
 static int verbose = 0;
 static int debug = 0;
-#if 0
-/* Not used yet. */
-# ifdef FIONBIO
-static int s_nbio = 0;
-# endif
-#endif
-
 static const char rnd_seed[] =
     "string to make the random number generator think it has entropy";
 
@@ -754,6 +747,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long bytes, clock_t *s_time,
                  clock_t *c_time);
 int doit(SSL *s_ssl, SSL *c_ssl, long bytes);
 static int do_test_cipherlist(void);
+
 static void sv_usage(void)
 {
     fprintf(stderr, "usage: ssltest [args ...]\n");
@@ -2487,10 +2481,6 @@ static int verify_callback(int ok, X509_STORE_CTX *ctx)
 
     if (ok == 1) {
         X509 *xs = ctx->current_cert;
-#if 0
-        X509 *xi = ctx->current_issuer;
-#endif
-
         if (xs->ex_flags & EXFLAG_PROXY) {
             unsigned int *letters = X509_STORE_CTX_get_ex_data(ctx,
                                                                get_proxy_auth_ex_data_idx

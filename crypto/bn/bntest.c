@@ -1174,19 +1174,6 @@ int test_gf2m_add(BIO *bp)
         a->neg = rand_neg();
         b->neg = rand_neg();
         BN_GF2m_add(c, a, b);
-# if 0                          /* make test uses ouput in bc but bc can't
-                                 * handle GF(2^m) arithmetic */
-        if (bp != NULL) {
-            if (!results) {
-                BN_print(bp, a);
-                BIO_puts(bp, " ^ ");
-                BN_print(bp, b);
-                BIO_puts(bp, " = ");
-            }
-            BN_print(bp, c);
-            BIO_puts(bp, "\n");
-        }
-# endif
         /* Test that two added values have the correct parity. */
         if ((BN_is_odd(a) && BN_is_odd(c))
             || (!BN_is_odd(a) && !BN_is_odd(c))) {
@@ -1229,19 +1216,6 @@ int test_gf2m_mod(BIO *bp)
         BN_bntest_rand(a, 1024, 0, 0);
         for (j = 0; j < 2; j++) {
             BN_GF2m_mod(c, a, b[j]);
-# if 0                          /* make test uses ouput in bc but bc can't
-                                 * handle GF(2^m) arithmetic */
-            if (bp != NULL) {
-                if (!results) {
-                    BN_print(bp, a);
-                    BIO_puts(bp, " % ");
-                    BN_print(bp, b[j]);
-                    BIO_puts(bp, " - ");
-                    BN_print(bp, c);
-                    BIO_puts(bp, "\n");
-                }
-            }
-# endif
             BN_GF2m_add(d, a, c);
             BN_GF2m_mod(e, d, b[j]);
             /* Test that a + (a mod p) mod p == 0. */
@@ -1288,21 +1262,6 @@ int test_gf2m_mod_mul(BIO *bp, BN_CTX *ctx)
         BN_bntest_rand(d, 1024, 0, 0);
         for (j = 0; j < 2; j++) {
             BN_GF2m_mod_mul(e, a, c, b[j], ctx);
-# if 0                          /* make test uses ouput in bc but bc can't
-                                 * handle GF(2^m) arithmetic */
-            if (bp != NULL) {
-                if (!results) {
-                    BN_print(bp, a);
-                    BIO_puts(bp, " * ");
-                    BN_print(bp, c);
-                    BIO_puts(bp, " % ");
-                    BN_print(bp, b[j]);
-                    BIO_puts(bp, " - ");
-                    BN_print(bp, e);
-                    BIO_puts(bp, "\n");
-                }
-            }
-# endif
             BN_GF2m_add(f, a, d);
             BN_GF2m_mod_mul(g, f, c, b[j], ctx);
             BN_GF2m_mod_mul(h, d, c, b[j], ctx);
@@ -1352,21 +1311,6 @@ int test_gf2m_mod_sqr(BIO *bp, BN_CTX *ctx)
             BN_GF2m_mod_sqr(c, a, b[j], ctx);
             BN_copy(d, a);
             BN_GF2m_mod_mul(d, a, d, b[j], ctx);
-# if 0                          /* make test uses ouput in bc but bc can't
-                                 * handle GF(2^m) arithmetic */
-            if (bp != NULL) {
-                if (!results) {
-                    BN_print(bp, a);
-                    BIO_puts(bp, " ^ 2 % ");
-                    BN_print(bp, b[j]);
-                    BIO_puts(bp, " = ");
-                    BN_print(bp, c);
-                    BIO_puts(bp, "; a * a = ");
-                    BN_print(bp, d);
-                    BIO_puts(bp, "\n");
-                }
-            }
-# endif
             BN_GF2m_add(d, c, d);
             /* Test that a*a = a^2. */
             if (!BN_is_zero(d)) {
@@ -1406,19 +1350,6 @@ int test_gf2m_mod_inv(BIO *bp, BN_CTX *ctx)
         for (j = 0; j < 2; j++) {
             BN_GF2m_mod_inv(c, a, b[j], ctx);
             BN_GF2m_mod_mul(d, a, c, b[j], ctx);
-# if 0                          /* make test uses ouput in bc but bc can't
-                                 * handle GF(2^m) arithmetic */
-            if (bp != NULL) {
-                if (!results) {
-                    BN_print(bp, a);
-                    BIO_puts(bp, " * ");
-                    BN_print(bp, c);
-                    BIO_puts(bp, " - 1 % ");
-                    BN_print(bp, b[j]);
-                    BIO_puts(bp, "\n");
-                }
-            }
-# endif
             /* Test that ((1/a)*a) = 1. */
             if (!BN_is_one(d)) {
                 fprintf(stderr, "GF(2^m) modular inversion test failed!\n");
@@ -1461,21 +1392,6 @@ int test_gf2m_mod_div(BIO *bp, BN_CTX *ctx)
             BN_GF2m_mod_div(d, a, c, b[j], ctx);
             BN_GF2m_mod_mul(e, d, c, b[j], ctx);
             BN_GF2m_mod_div(f, a, e, b[j], ctx);
-# if 0                          /* make test uses ouput in bc but bc can't
-                                 * handle GF(2^m) arithmetic */
-            if (bp != NULL) {
-                if (!results) {
-                    BN_print(bp, a);
-                    BIO_puts(bp, " = ");
-                    BN_print(bp, c);
-                    BIO_puts(bp, " * ");
-                    BN_print(bp, d);
-                    BIO_puts(bp, " % ");
-                    BN_print(bp, b[j]);
-                    BIO_puts(bp, "\n");
-                }
-            }
-# endif
             /* Test that ((a/c)*c)/a = 1. */
             if (!BN_is_one(f)) {
                 fprintf(stderr, "GF(2^m) modular division test failed!\n");
@@ -1523,25 +1439,6 @@ int test_gf2m_mod_exp(BIO *bp, BN_CTX *ctx)
             BN_GF2m_mod_mul(e, e, f, b[j], ctx);
             BN_add(f, c, d);
             BN_GF2m_mod_exp(f, a, f, b[j], ctx);
-# if 0                          /* make test uses ouput in bc but bc can't
-                                 * handle GF(2^m) arithmetic */
-            if (bp != NULL) {
-                if (!results) {
-                    BN_print(bp, a);
-                    BIO_puts(bp, " ^ (");
-                    BN_print(bp, c);
-                    BIO_puts(bp, " + ");
-                    BN_print(bp, d);
-                    BIO_puts(bp, ") = ");
-                    BN_print(bp, e);
-                    BIO_puts(bp, "; - ");
-                    BN_print(bp, f);
-                    BIO_puts(bp, " % ");
-                    BN_print(bp, b[j]);
-                    BIO_puts(bp, "\n");
-                }
-            }
-# endif
             BN_GF2m_add(f, e, f);
             /* Test that a^(c+d)=a^c*a^d. */
             if (!BN_is_zero(f)) {
@@ -1587,17 +1484,6 @@ int test_gf2m_mod_sqrt(BIO *bp, BN_CTX *ctx)
             BN_GF2m_mod(c, a, b[j]);
             BN_GF2m_mod_sqrt(d, a, b[j], ctx);
             BN_GF2m_mod_sqr(e, d, b[j], ctx);
-# if 0                          /* make test uses ouput in bc but bc can't
-                                 * handle GF(2^m) arithmetic */
-            if (bp != NULL) {
-                if (!results) {
-                    BN_print(bp, d);
-                    BIO_puts(bp, " ^ 2 - ");
-                    BN_print(bp, a);
-                    BIO_puts(bp, "\n");
-                }
-            }
-# endif
             BN_GF2m_add(f, c, e);
             /* Test that d^2 = a, where d = sqrt(a). */
             if (!BN_is_zero(f)) {
@@ -1644,19 +1530,6 @@ int test_gf2m_mod_solve_quad(BIO *bp, BN_CTX *ctx)
                 BN_GF2m_mod_sqr(d, c, b[j], ctx);
                 BN_GF2m_add(d, c, d);
                 BN_GF2m_mod(e, a, b[j]);
-# if 0                          /* make test uses ouput in bc but bc can't
-                                 * handle GF(2^m) arithmetic */
-                if (bp != NULL) {
-                    if (!results) {
-                        BN_print(bp, c);
-                        BIO_puts(bp, " is root of z^2 + z = ");
-                        BN_print(bp, a);
-                        BIO_puts(bp, " % ");
-                        BN_print(bp, b[j]);
-                        BIO_puts(bp, "\n");
-                    }
-                }
-# endif
                 BN_GF2m_add(e, e, d);
                 /*
                  * Test that solution of quadratic c satisfies c^2 + c = a.
@@ -1667,19 +1540,6 @@ int test_gf2m_mod_solve_quad(BIO *bp, BN_CTX *ctx)
                     goto err;
                 }
 
-            } else {
-# if 0                          /* make test uses ouput in bc but bc can't
-                                 * handle GF(2^m) arithmetic */
-                if (bp != NULL) {
-                    if (!results) {
-                        BIO_puts(bp, "There are no roots of z^2 + z = ");
-                        BN_print(bp, a);
-                        BIO_puts(bp, " % ");
-                        BN_print(bp, b[j]);
-                        BIO_puts(bp, "\n");
-                    }
-                }
-# endif
             }
         }
     }
