@@ -210,7 +210,7 @@ int ssl3_get_record(SSL *s)
     if ((s->rstate != SSL_ST_READ_BODY) ||
         (s->packet_length < SSL3_RT_HEADER_LENGTH)) {
         n = ssl3_read_n(s, SSL3_RT_HEADER_LENGTH,
-            SSL3_BUFFER_get_len(RECORD_LAYER_get_rbuf(&s->rlayer)), 0);
+            SSL3_BUFFER_get_len(&s->rlayer.rbuf), 0);
         if (n <= 0)
             return (n);         /* error or non-blocking */
         s->rstate = SSL_ST_READ_BODY;
@@ -248,7 +248,7 @@ int ssl3_get_record(SSL *s)
         }
 
         if (rr->length >
-                SSL3_BUFFER_get_len(RECORD_LAYER_get_rbuf(&s->rlayer))
+                SSL3_BUFFER_get_len(&s->rlayer.rbuf)
                 - SSL3_RT_HEADER_LENGTH) {
             al = SSL_AD_RECORD_OVERFLOW;
             SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_PACKET_LENGTH_TOO_LONG);
@@ -1401,7 +1401,7 @@ int dtls1_get_record(SSL *s)
     if ((s->rstate != SSL_ST_READ_BODY) ||
         (s->packet_length < DTLS1_RT_HEADER_LENGTH)) {
         n = ssl3_read_n(s, DTLS1_RT_HEADER_LENGTH,
-            SSL3_BUFFER_get_len(RECORD_LAYER_get_rbuf(&s->rlayer)), 0);
+            SSL3_BUFFER_get_len(&s->rlayer.rbuf), 0);
         /* read timeout is handled by dtls1_read_bytes */
         if (n <= 0)
             return (n);         /* error or non-blocking */
