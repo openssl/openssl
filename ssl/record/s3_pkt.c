@@ -132,6 +132,13 @@
 # define EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK 0
 #endif
 
+void RECORD_LAYER_init(RECORD_LAYER *rl, SSL *s)
+{
+    rl->s = s;
+    SSL3_RECORD_clear(&rl->rrec);
+    SSL3_RECORD_clear(&rl->wrec);
+}
+
 void RECORD_LAYER_clear(RECORD_LAYER *rl)
 {
     unsigned char *rp, *wp;
