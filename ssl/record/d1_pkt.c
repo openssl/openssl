@@ -585,10 +585,10 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 #ifndef OPENSSL_NO_HEARTBEATS
         else if (rr->type == TLS1_RT_HEARTBEAT) {
             /* We allow a 0 return */
-            if(dtls1_process_heartbeat(s) < 0) {
+            if(dtls1_process_heartbeat(s, SSL3_RECORD_get_data(&s->rlayer.rrec),
+                    SSL3_RECORD_get_length(&s->rlayer.rrec)) < 0) {
                 return -1;
             }
-
             /* Exit and notify application to read again */
             rr->length = 0;
             s->rwstate = SSL_READING;

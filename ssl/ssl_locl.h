@@ -1979,8 +1979,10 @@ const SSL_METHOD *func_name(void)  \
 struct openssl_ssl_test_functions {
     int (*p_ssl_init_wbio_buffer) (SSL *s, int push);
     int (*p_ssl3_setup_buffers) (SSL *s);
-    int (*p_tls1_process_heartbeat) (SSL *s);
-    int (*p_dtls1_process_heartbeat) (SSL *s);
+    int (*p_tls1_process_heartbeat) (SSL *s,
+        unsigned char *p, unsigned int length);
+    int (*p_dtls1_process_heartbeat) (SSL *s,
+        unsigned char *p, unsigned int length);
 };
 
 # ifndef OPENSSL_UNIT_TEST
@@ -2267,8 +2269,8 @@ __owur int ssl_prepare_serverhello_tlsext(SSL *s);
 #   ifndef OPENSSL_NO_HEARTBEATS
 __owur int tls1_heartbeat(SSL *s);
 __owur int dtls1_heartbeat(SSL *s);
-__owur int tls1_process_heartbeat(SSL *s);
-__owur int dtls1_process_heartbeat(SSL *s);
+__owur int tls1_process_heartbeat(SSL *s, unsigned char *p, unsigned int length);
+__owur int dtls1_process_heartbeat(SSL *s, unsigned char *p, unsigned int length);
 #   endif
 
 __owur int tls1_process_ticket(SSL *s, unsigned char *session_id, int len,

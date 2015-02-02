@@ -1347,16 +1347,12 @@ int dtls1_shutdown(SSL *s)
 }
 
 #ifndef OPENSSL_NO_HEARTBEATS
-int dtls1_process_heartbeat(SSL *s)
+int dtls1_process_heartbeat(SSL *s, unsigned char *p, unsigned int length)
 {
-    unsigned char *p, *pl;
+    unsigned char *pl;
     unsigned short hbtype;
     unsigned int payload;
     unsigned int padding = 16;  /* Use minimum padding */
-    unsigned int length;
-
-    p = SSL3_RECORD_get_data(RECORD_LAYER_get_rrec(&s->rlayer));
-    length = SSL3_RECORD_get_length(RECORD_LAYER_get_rrec(&s->rlayer));
 
     if (s->msg_callback)
         s->msg_callback(0, s->version, TLS1_RT_HEARTBEAT,
