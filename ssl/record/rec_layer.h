@@ -158,7 +158,6 @@ typedef struct record_layer_st {
  *                                                                           *
  *****************************************************************************/
 
-#define RECORD_LAYER_set_ssl(rl, s)             ((rl)->s = (s))
 #define RECORD_LAYER_set_read_ahead(rl, ra)     ((rl)->read_ahead = (ra))
 #define RECORD_LAYER_get_read_ahead(rl)         ((rl)->read_ahead)
 #define RECORD_LAYER_get_rbuf(rl)               (&(rl)->rbuf)
@@ -166,6 +165,7 @@ typedef struct record_layer_st {
 #define RECORD_LAYER_get_rrec(rl)               (&(rl)->rrec)
 #define RECORD_LAYER_get_wrec(rl)               (&(rl)->wrec)
 
+void RECORD_LAYER_init(RECORD_LAYER *rl, SSL *s);
 void RECORD_LAYER_clear(RECORD_LAYER *rl);
 void RECORD_LAYER_release(RECORD_LAYER *rl);
 int RECORD_LAYER_read_pending(RECORD_LAYER *rl);

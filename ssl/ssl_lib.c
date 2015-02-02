@@ -282,9 +282,7 @@ SSL *SSL_new(SSL_CTX *ctx)
         goto err;
     memset(s, 0, sizeof(SSL));
 
-    RECORD_LAYER_set_ssl(&s->rlayer, s);
-    SSL3_RECORD_clear(RECORD_LAYER_get_rrec(&s->rlayer));
-    SSL3_RECORD_clear(RECORD_LAYER_get_wrec(&s->rlayer));
+    RECORD_LAYER_init(&s->rlayer, s);
 
 #ifndef OPENSSL_NO_KRB5
     s->kssl_ctx = kssl_ctx_new();
