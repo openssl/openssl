@@ -31,6 +31,9 @@
      done while fixing the error code for the key-too-small case.
      [Annie Yousar <a.yousar@informatik.hu-berlin.de>]
 
+  *) Removed old DES API.
+     [Rich Salz]
+
   *) Remove various unsupported platforms:
 	Sony NEWS4
 	BEOS and BEOS_R5

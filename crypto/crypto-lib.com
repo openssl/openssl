@@ -234,7 +234,7 @@ $ LIB_DES = "set_key,ecb_enc,cbc_enc,"+ -
 	"ofb_enc,str2key,pcbc_enc,qud_cksm,rand_key,"+ -
 	"des_enc,fcrypt_b,"+ -
 	"fcrypt,xcbc_enc,rpc_enc,cbc_cksm,"+ -
-	"des_old,des_old2,read2pwd"
+	"read2pwd"
 $ LIB_AES = "aes_misc,aes_ecb,aes_cfb,aes_ofb,aes_ige,aes_wrap,"+ -
 	"aes_core,aes_cbc"
 $ LIB_RC2 = "rc2_ecb,rc2_skey,rc2_cbc,rc2cfb64,rc2ofb64"

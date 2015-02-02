@@ -123,7 +123,7 @@ pem_info.o: ../cryptlib.h pem_info.c
 pem_lib.o: ../../e_os.h ../../include/openssl/asn1.h
 pem_lib.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 pem_lib.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
-pem_lib.o: ../../include/openssl/des_old.h ../../include/openssl/e_os2.h
+pem_lib.o: ../../include/openssl/e_os2.h
 pem_lib.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
 pem_lib.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
 pem_lib.o: ../../include/openssl/err.h ../../include/openssl/evp.h

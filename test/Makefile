@@ -570,7 +570,7 @@ casttest.o: ../include/openssl/opensslconf.h casttest.c
 constant_time_test.o: ../crypto/constant_time_locl.h ../e_os.h
 constant_time_test.o: ../include/openssl/e_os2.h
 constant_time_test.o: ../include/openssl/opensslconf.h constant_time_test.c
-destest.o: ../include/openssl/des.h ../include/openssl/des_old.h
+destest.o: ../include/openssl/des.h
 destest.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
 destest.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
 destest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
@@ -736,7 +736,7 @@ md5test.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
 md5test.o: ../include/openssl/stack.h ../include/openssl/symhacks.h md5test.c
 mdc2test.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 mdc2test.o: ../include/openssl/crypto.h ../include/openssl/des.h
-mdc2test.o: ../include/openssl/des_old.h ../include/openssl/e_os2.h
+mdc2test.o: ../include/openssl/e_os2.h
 mdc2test.o: ../include/openssl/evp.h ../include/openssl/mdc2.h
 mdc2test.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
 mdc2test.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
