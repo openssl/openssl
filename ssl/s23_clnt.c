@@ -573,13 +573,8 @@ static int ssl23_get_server_hello(SSL *s)
         /*
          * put the 7 bytes we have read into the input buffer for SSLv3
          */
-        s->rstate = SSL_ST_READ_HEADER;
-        s->packet_length = n;
-        if (!SSL3_BUFFER_is_initialised(RECORD_LAYER_get_rbuf(&s->rlayer)))
-            if (!ssl3_setup_read_buffer(s))
-                goto err;
-        s->packet = SSL3_BUFFER_get_buf(RECORD_LAYER_get_rbuf(&s->rlayer));
-        SSL3_BUFFER_set_data(RECORD_LAYER_get_rbuf(&s->rlayer), buf, n);
+        if(!RECORD_LAYER_set_data(&s->rlayer, buf, n))
+            goto err;
 
         s->handshake_func = s->method->ssl_connect;
     } else {
