@@ -77,10 +77,6 @@ static ECDSA_METHOD openssl_ecdsa_meth = {
     ecdsa_do_sign,
     ecdsa_sign_setup_no_digest,
     ecdsa_do_verify,
-#if 0
-    NULL,                       /* init */
-    NULL,                       /* finish */
-#endif
     ECDSA_FLAG_FIPS_METHOD,     /* flags */
     NULL                        /* app_data */
 };
