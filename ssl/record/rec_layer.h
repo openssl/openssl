@@ -171,6 +171,7 @@ void RECORD_LAYER_release(RECORD_LAYER *rl);
 int RECORD_LAYER_read_pending(RECORD_LAYER *rl);
 int RECORD_LAYER_write_pending(RECORD_LAYER *rl);
 int RECORD_LAYER_set_data(RECORD_LAYER *rl, const unsigned char *buf, int len);
+__owur int ssl3_pending(const SSL *s);
 __owur int ssl23_read_bytes(SSL *s, int n);
 __owur int ssl23_write_bytes(SSL *s);
 __owur int ssl3_write_bytes(SSL *s, int type, const void *buf, int len);

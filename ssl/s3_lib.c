@@ -3078,16 +3078,6 @@ const SSL_CIPHER *ssl3_get_cipher(unsigned int u)
         return (NULL);
 }
 
-int ssl3_pending(const SSL *s)
-{
-    if (s->rstate == SSL_ST_READ_BODY)
-        return 0;
-
-    return (SSL3_RECORD_get_type(RECORD_LAYER_get_rrec(&s->rlayer))
-           == SSL3_RT_APPLICATION_DATA)
-           ? SSL3_RECORD_get_length(RECORD_LAYER_get_rrec(&s->rlayer)) : 0;
-}
-
 int ssl3_set_handshake_header(SSL *s, int htype, unsigned long len)
 {
     unsigned char *p = (unsigned char *)s->init_buf->data;

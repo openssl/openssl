@@ -201,6 +201,15 @@ int RECORD_LAYER_set_data(RECORD_LAYER *rl, const unsigned char *buf, int len)
     return 1;
 }
 
+int ssl3_pending(const SSL *s)
+{
+    if (s->rstate == SSL_ST_READ_BODY)
+        return 0;
+
+    return (SSL3_RECORD_get_type(&s->rlayer.rrec) == SSL3_RT_APPLICATION_DATA)
+           ? SSL3_RECORD_get_length(&s->rlayer.rrec) : 0;
+}
+
 int ssl3_read_n(SSL *s, int n, int max, int extend)
 {
     /*
