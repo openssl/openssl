@@ -124,6 +124,10 @@ int dtls1_new(SSL *s)
 {
     DTLS1_STATE *d1;
 
+    if(!DTLS_RECORD_LAYER_new(&s->rlayer)) {
+        return 0;
+    }
+    
     if (!ssl3_new(s))
         return (0);
     if ((d1 = OPENSSL_malloc(sizeof *d1)) == NULL) {
@@ -131,12 +135,6 @@ int dtls1_new(SSL *s)
         return (0);
     }
     memset(d1, 0, sizeof *d1);
-    
-    if(!DTLS_RECORD_LAYER_new(&s->rlayer)) {
-        OPENSSL_free(d1);
-        ssl3_free(s);
-        return 0;
-    }
 
     d1->buffered_messages = pqueue_new();
     d1->sent_messages = pqueue_new();

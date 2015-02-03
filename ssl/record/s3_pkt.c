@@ -145,8 +145,10 @@ void RECORD_LAYER_clear(RECORD_LAYER *rl)
     size_t rlen, wlen;
     int read_ahead;
     SSL *s;
+    DTLS_RECORD_LAYER *d;
 
     s = rl->s;
+    d = rl->d;
     read_ahead = rl->read_ahead;
     rp = SSL3_BUFFER_get_buf(&rl->rbuf);
     rlen = SSL3_BUFFER_get_len(&rl->rbuf);
@@ -165,6 +167,10 @@ void RECORD_LAYER_clear(RECORD_LAYER *rl)
     rl->read_ahead = read_ahead;
     rl->rstate = SSL_ST_READ_HEADER;
     rl->s = s;
+    rl->d = d;
+    
+    if(d)
+        DTLS_RECORD_LAYER_clear(rl);
 }
 
 void RECORD_LAYER_release(RECORD_LAYER *rl)
