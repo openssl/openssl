@@ -143,8 +143,13 @@ typedef struct dtls1_record_data_st {
 } DTLS1_RECORD_DATA;
 
 typedef struct dtls_record_layer_st {
-    /* Temporary member to be removed by subsequent commits */
-    int dummy;
+    /*
+     * The current data and handshake epoch.  This is initially
+     * undefined, and starts at zero once the initial handshake is
+     * completed
+     */
+    unsigned short r_epoch;
+    unsigned short w_epoch;
 } DTLS_RECORD_LAYER;
 
 typedef struct record_layer_st {
@@ -212,6 +217,8 @@ typedef struct record_layer_st {
 #define RECORD_LAYER_add_packet_length(rl, inc) ((rl)->packet_length += (inc))
 #define RECORD_LAYER_get_read_sequence(rl)      ((rl)->read_sequence)
 #define RECORD_LAYER_get_write_sequence(rl)     ((rl)->write_sequence)
+#define DTLS_RECORD_LAYER_get_w_epoch(rl)       ((rl)->d->w_epoch)
+#define DTLS_RECORD_LAYER_set_w_epoch(rl, e)    ((rl)->d->w_epoch = (e))
 
 void RECORD_LAYER_init(RECORD_LAYER *rl, SSL *s);
 void RECORD_LAYER_clear(RECORD_LAYER *rl);
@@ -255,6 +262,7 @@ void dtls1_reset_seq_numbers(SSL *s, int rw);
 #define RECORD_LAYER_reset_packet_length(rl)    ((rl)->packet_length = 0)
 #define RECORD_LAYER_get_rstate(rl)             ((rl)->rstate)
 #define RECORD_LAYER_set_rstate(rl, st)         ((rl)->rstate = (st))
+#define DTLS_RECORD_LAYER_get_r_epoch(rl)       ((rl)->d->r_epoch)
 
 __owur int ssl3_read_n(SSL *s, int n, int max, int extend);
 __owur int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,

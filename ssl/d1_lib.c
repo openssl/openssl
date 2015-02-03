@@ -138,8 +138,6 @@ int dtls1_new(SSL *s)
         return 0;
     }
 
-    /* d1->handshake_epoch=0; */
-
     d1->unprocessed_rcds.q = pqueue_new();
     d1->processed_rcds.q = pqueue_new();
     d1->buffered_messages = pqueue_new();

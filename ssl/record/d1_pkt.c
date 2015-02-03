@@ -332,7 +332,7 @@ int dtls1_process_buffered_records(SSL *s)
     item = pqueue_peek(s->d1->unprocessed_rcds.q);
     if (item) {
         /* Check if epoch is current. */
-        if (s->d1->unprocessed_rcds.epoch != s->d1->r_epoch)
+        if (s->d1->unprocessed_rcds.epoch != s->rlayer.d->r_epoch)
             return (1);         /* Nothing to do. */
 
         /* Process all the records. */
@@ -350,8 +350,8 @@ int dtls1_process_buffered_records(SSL *s)
      * sync epoch numbers once all the unprocessed records have been
      * processed
      */
-    s->d1->processed_rcds.epoch = s->d1->r_epoch;
-    s->d1->unprocessed_rcds.epoch = s->d1->r_epoch + 1;
+    s->d1->processed_rcds.epoch = s->rlayer.d->r_epoch;
+    s->d1->unprocessed_rcds.epoch = s->rlayer.d->r_epoch + 1;
 
     return (1);
 }
@@ -909,7 +909,7 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 
         /* this may just be a stale retransmit */
         dtls1_get_message_header(rr->data, &msg_hdr);
-        if (rr->epoch != s->d1->r_epoch) {
+        if (rr->epoch != s->rlayer.d->r_epoch) {
             rr->length = 0;
             goto start;
         }
@@ -1201,7 +1201,7 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
 
     /* there's only one epoch between handshake and app data */
 
-    s2n(s->d1->w_epoch, pseq);
+    s2n(s->rlayer.d->w_epoch, pseq);
 
     /* XDTLS: ?? */
     /*
@@ -1301,12 +1301,12 @@ DTLS1_BITMAP *dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr,
     *is_next_epoch = 0;
 
     /* In current epoch, accept HM, CCS, DATA, & ALERT */
-    if (rr->epoch == s->d1->r_epoch)
+    if (rr->epoch == s->rlayer.d->r_epoch)
         return &s->d1->bitmap;
 
     /* Only HM and ALERT messages can be from the next epoch */
-    else if (rr->epoch == (unsigned long)(s->d1->r_epoch + 1) &&
-             (rr->type == SSL3_RT_HANDSHAKE || rr->type == SSL3_RT_ALERT)) {
+    else if (rr->epoch == (unsigned long)(s->rlayer.d->r_epoch + 1) &&
+            (rr->type == SSL3_RT_HANDSHAKE || rr->type == SSL3_RT_ALERT)) {
         *is_next_epoch = 1;
         return &s->d1->next_bitmap;
     }
@@ -1321,14 +1321,14 @@ void dtls1_reset_seq_numbers(SSL *s, int rw)
 
     if (rw & SSL3_CC_READ) {
         seq = s->rlayer.read_sequence;
-        s->d1->r_epoch++;
+        s->rlayer.d->r_epoch++;
         memcpy(&(s->d1->bitmap), &(s->d1->next_bitmap), sizeof(DTLS1_BITMAP));
         memset(&(s->d1->next_bitmap), 0x00, sizeof(DTLS1_BITMAP));
     } else {
         seq = s->rlayer.write_sequence;
         memcpy(s->d1->last_write_sequence, seq,
                sizeof(s->rlayer.write_sequence));
-        s->d1->w_epoch++;
+        s->rlayer.d->w_epoch++;
     }
 
     memset(seq, 0x00, seq_bytes);

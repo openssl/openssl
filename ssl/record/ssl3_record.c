@@ -665,7 +665,8 @@ int tls1_enc(SSL *s, int send)
             if (SSL_IS_DTLS(s)) {
                 unsigned char dtlsseq[9], *p = dtlsseq;
 
-                s2n(send ? s->d1->w_epoch : s->d1->r_epoch, p);
+                s2n(send ? DTLS_RECORD_LAYER_get_w_epoch(&s->rlayer) :
+                    DTLS_RECORD_LAYER_get_r_epoch(&s->rlayer), p);
                 memcpy(p, &seq[2], 6);
                 memcpy(buf, dtlsseq, 8);
             } else {
@@ -894,7 +895,8 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
     if (SSL_IS_DTLS(ssl)) {
         unsigned char dtlsseq[8], *p = dtlsseq;
 
-        s2n(send ? ssl->d1->w_epoch : ssl->d1->r_epoch, p);
+        s2n(send ? DTLS_RECORD_LAYER_get_w_epoch(&ssl->rlayer) :
+            DTLS_RECORD_LAYER_get_r_epoch(&ssl->rlayer), p);
         memcpy(p, &seq[2], 6);
 
         memcpy(header, dtlsseq, 8);
