@@ -12,7 +12,7 @@ PERL=		perl
 # KRB5 stuff
 KRB5_INCLUDES=
 LIBKRB5=
-TEST=		fips_algvs.c igetest.c
+TEST=		igetest.c
 
 PEX_LIBS=
 EX_LIBS= #-lnsl -lsocket

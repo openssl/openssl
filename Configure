@@ -1124,34 +1124,13 @@ my $IsMK1MF=scalar grep /^$target$/,@MK1MF_Builds;
 $exe_ext=".exe" if ($target eq "Cygwin" || $target eq "DJGPP" || $target =~ /^mingw/);
 $exe_ext=".nlm" if ($target =~ /netware/);
 $exe_ext=".pm"  if ($target =~ /vos/);
-if ($openssldir eq "" and $prefix eq "")
-	{
-	if ($fips)
-		{
-		if (exists $ENV{FIPSDIR})
-			{
-			$openssldir="$ENV{FIPSDIR}";
-			}
-		else
-			{
-			$openssldir="/usr/local/ssl/fips-2.0";
-			}
-		}
-	else
-		{
-		$openssldir="/usr/local/ssl";
-		}
-	}
+$openssldir="/usr/local/ssl" if ($openssldir eq "" and $prefix eq "");
 $prefix=$openssldir if $prefix eq "";
 
 $default_ranlib= &which("ranlib") or $default_ranlib="true";
 $perl=$ENV{'PERL'} or $perl=&which("perl5") or $perl=&which("perl")
   or $perl="perl";
 my $make = $ENV{'MAKE'} || "make";
-
-my $fips_auth_key = $ENV{'FIPS_AUTH_KEY'};
-my $fips_auth_officer = $ENV{'FIPS_AUTH_OFFICER'};
-my $fips_auth_user = $ENV{'FIPS_AUTH_USER'};
 
 $cross_compile_prefix=$ENV{'CROSS_COMPILE'} if $cross_compile_prefix eq "";
 
@@ -2027,16 +2006,9 @@ BEGIN
     BEGIN
 	BLOCK "040904b0"
 	BEGIN
-#if defined(FIPS)
-	    VALUE "Comments", "WARNING: TEST VERSION ONLY ***NOT*** FIPS 140-2 VALIDATED.\\0"
-#endif
 	    // Required:
 	    VALUE "CompanyName", "The OpenSSL Project, http://www.openssl.org/\\0"
-#if defined(FIPS)
-	    VALUE "FileDescription", "TEST UNVALIDATED FIPS140-2 DLL\\0"
-#else
 	    VALUE "FileDescription", "OpenSSL Shared Library\\0"
-#endif
 	    VALUE "FileVersion", "$version\\0"
 #if defined(CRYPTO)
 	    VALUE "InternalName", "libeay32\\0"
@@ -2044,10 +2016,6 @@ BEGIN
 #elif defined(SSL)
 	    VALUE "InternalName", "ssleay32\\0"
 	    VALUE "OriginalFilename", "ssleay32.dll\\0"
-#elif defined(FIPS)
-	    VALUE "InternalName", "libosslfips\\0"
-	    VALUE "OriginalFilename", "libosslfips.dll\\0"
-#endif
 	    VALUE "ProductName", "The OpenSSL Toolkit\\0"
 	    VALUE "ProductVersion", "$version\\0"
 	    // Optional:
