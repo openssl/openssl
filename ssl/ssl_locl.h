@@ -1237,14 +1237,6 @@ typedef struct ssl3_state_st {
     int empty_fragment_done;
     /* The value of 'extra' when the buffers were initialized */
     int init_extra;
-    /*
-     * storage for Alert/Handshake protocol data received but not yet
-     * processed by ssl3_read_bytes:
-     */
-    unsigned char alert_fragment[2];
-    unsigned int alert_fragment_len;
-    unsigned char handshake_fragment[4];
-    unsigned int handshake_fragment_len;
     /* partial write - check the numbers match */
     int wpend_tot;              /* number bytes written */
     int wpend_type;
