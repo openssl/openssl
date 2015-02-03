@@ -138,8 +138,6 @@ int dtls1_new(SSL *s)
         return 0;
     }
 
-    d1->unprocessed_rcds.q = pqueue_new();
-    d1->processed_rcds.q = pqueue_new();
     d1->buffered_messages = pqueue_new();
     d1->sent_messages = pqueue_new();
     d1->buffered_app_data.q = pqueue_new();
@@ -151,13 +149,8 @@ int dtls1_new(SSL *s)
     d1->link_mtu = 0;
     d1->mtu = 0;
 
-    if (!d1->unprocessed_rcds.q || !d1->processed_rcds.q
-        || !d1->buffered_messages || !d1->sent_messages
+    if (!d1->buffered_messages || !d1->sent_messages
         || !d1->buffered_app_data.q) {
-        if (d1->unprocessed_rcds.q)
-            pqueue_free(d1->unprocessed_rcds.q);
-        if (d1->processed_rcds.q)
-            pqueue_free(d1->processed_rcds.q);
         if (d1->buffered_messages)
             pqueue_free(d1->buffered_messages);
         if (d1->sent_messages)
@@ -179,24 +172,6 @@ static void dtls1_clear_queues(SSL *s)
     pitem *item = NULL;
     hm_fragment *frag = NULL;
     DTLS1_RECORD_DATA *rdata;
-
-    while ((item = pqueue_pop(s->d1->unprocessed_rcds.q)) != NULL) {
-        rdata = (DTLS1_RECORD_DATA *)item->data;
-        if (rdata->rbuf.buf) {
-            OPENSSL_free(rdata->rbuf.buf);
-        }
-        OPENSSL_free(item->data);
-        pitem_free(item);
-    }
-
-    while ((item = pqueue_pop(s->d1->processed_rcds.q)) != NULL) {
-        rdata = (DTLS1_RECORD_DATA *)item->data;
-        if (rdata->rbuf.buf) {
-            OPENSSL_free(rdata->rbuf.buf);
-        }
-        OPENSSL_free(item->data);
-        pitem_free(item);
-    }
 
     while ((item = pqueue_pop(s->d1->buffered_messages)) != NULL) {
         frag = (hm_fragment *)item->data;
@@ -228,8 +203,6 @@ void dtls1_free(SSL *s)
 
     dtls1_clear_queues(s);
 
-    pqueue_free(s->d1->unprocessed_rcds.q);
-    pqueue_free(s->d1->processed_rcds.q);
     pqueue_free(s->d1->buffered_messages);
     pqueue_free(s->d1->sent_messages);
     pqueue_free(s->d1->buffered_app_data.q);
@@ -240,8 +213,6 @@ void dtls1_free(SSL *s)
 
 void dtls1_clear(SSL *s)
 {
-    pqueue unprocessed_rcds;
-    pqueue processed_rcds;
     pqueue buffered_messages;
     pqueue sent_messages;
     pqueue buffered_app_data;
@@ -251,8 +222,6 @@ void dtls1_clear(SSL *s)
     DTLS_RECORD_LAYER_clear(&s->rlayer);
 
     if (s->d1) {
-        unprocessed_rcds = s->d1->unprocessed_rcds.q;
-        processed_rcds = s->d1->processed_rcds.q;
         buffered_messages = s->d1->buffered_messages;
         sent_messages = s->d1->sent_messages;
         buffered_app_data = s->d1->buffered_app_data.q;
@@ -272,8 +241,6 @@ void dtls1_clear(SSL *s)
             s->d1->link_mtu = link_mtu;
         }
 
-        s->d1->unprocessed_rcds.q = unprocessed_rcds;
-        s->d1->processed_rcds.q = processed_rcds;
         s->d1->buffered_messages = buffered_messages;
         s->d1->sent_messages = sent_messages;
         s->d1->buffered_app_data.q = buffered_app_data;
