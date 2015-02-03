@@ -312,37 +312,6 @@ functions directly.
 Single-key DES is insecure due to its short key size.  ECB mode is
 not suitable for most applications; see L<des_modes(7)|des_modes(7)>.
 
-=head1 HISTORY
-
-In OpenSSL 0.9.7, all des_ functions were renamed to DES_ to avoid
-clashes with older versions of libdes.  Compatibility des_ functions
-are provided for a short while, as well as crypt().
-Declarations for these are in <openssl/des_old.h>. There is no DES_
-variant for des_random_seed().
-This will happen to other functions
-as well if they are deemed redundant (des_random_seed() just calls
-RAND_seed() and is present for backward compatibility only), buggy or
-already scheduled for removal.
-
-des_cbc_cksum(), des_cbc_encrypt(), des_ecb_encrypt(),
-des_is_weak_key(), des_key_sched(), des_pcbc_encrypt(),
-des_quad_cksum(), des_random_key() and des_string_to_key()
-are available in the MIT Kerberos library;
-des_check_key_parity(), des_fixup_key_parity() and des_is_weak_key()
-are available in newer versions of that library.
-
-des_set_key_checked() and des_set_key_unchecked() were added in
-OpenSSL 0.9.5.
-
-des_generate_random_block(), des_init_random_number_generator(),
-des_new_random_key(), des_set_random_generator_seed() and
-des_set_sequence_number() and des_rand_data() are used in newer
-versions of Kerberos but are not implemented here.
-
-des_random_key() generated cryptographically weak random data in
-SSLeay and in OpenSSL prior version 0.9.5, as well as in the original
-MIT library.
-
 =head1 AUTHOR
 
 Eric Young (eay@cryptsoft.com). Modified for the OpenSSL project
