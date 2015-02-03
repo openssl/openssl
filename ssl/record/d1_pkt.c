@@ -1212,10 +1212,10 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
      * memorize arguments so that ssl3_write_pending can detect bad write
      * retries later
      */
-    s->s3->wpend_tot = len;
-    s->s3->wpend_buf = buf;
-    s->s3->wpend_type = type;
-    s->s3->wpend_ret = len;
+    s->rlayer.wpend_tot = len;
+    s->rlayer.wpend_buf = buf;
+    s->rlayer.wpend_type = type;
+    s->rlayer.wpend_ret = len;
 
     /* we now just need to write the buffer */
     return ssl3_write_pending(s, type, buf, len);

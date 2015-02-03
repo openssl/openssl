@@ -166,6 +166,14 @@ typedef struct record_layer_st {
     unsigned int alert_fragment_len;
     unsigned char handshake_fragment[4];
     unsigned int handshake_fragment_len;
+
+    /* partial write - check the numbers match */
+    /* number bytes written */
+    int wpend_tot;
+    int wpend_type;
+    /* number of bytes submitted */
+    int wpend_ret;
+    const unsigned char *wpend_buf;
 } RECORD_LAYER;
 
 

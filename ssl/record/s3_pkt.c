@@ -467,7 +467,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
      * will happen with non blocking IO
      */
     if (wb->left != 0) {
-        i = ssl3_write_pending(s, type, &buf[tot], s->s3->wpend_tot);
+        i = ssl3_write_pending(s, type, &buf[tot], s->rlayer.wpend_tot);
         if (i <= 0) {
             /* XXX should we ssl3_release_write_buffer if i<0? */
             s->rlayer.wnum = tot;
@@ -579,10 +579,10 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
             wb->offset = 0;
             wb->left = packlen;
 
-            s->s3->wpend_tot = nw;
-            s->s3->wpend_buf = &buf[tot];
-            s->s3->wpend_type = type;
-            s->s3->wpend_ret = nw;
+            s->rlayer.wpend_tot = nw;
+            s->rlayer.wpend_buf = &buf[tot];
+            s->rlayer.wpend_type = type;
+            s->rlayer.wpend_ret = nw;
 
             i = ssl3_write_pending(s, type, &buf[tot], nw);
             if (i <= 0) {
@@ -863,10 +863,10 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
      * memorize arguments so that ssl3_write_pending can detect bad write
      * retries later
      */
-    s->s3->wpend_tot = len;
-    s->s3->wpend_buf = buf;
-    s->s3->wpend_type = type;
-    s->s3->wpend_ret = len;
+    s->rlayer.wpend_tot = len;
+    s->rlayer.wpend_buf = buf;
+    s->rlayer.wpend_type = type;
+    s->rlayer.wpend_ret = len;
 
     /* we now just need to write the buffer */
     return ssl3_write_pending(s, type, buf, len);
@@ -882,10 +882,10 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
     SSL3_BUFFER *wb = &s->rlayer.wbuf;
 
 /* XXXX */
-    if ((s->s3->wpend_tot > (int)len)
-        || ((s->s3->wpend_buf != buf) &&
+    if ((s->rlayer.wpend_tot > (int)len)
+        || ((s->rlayer.wpend_buf != buf) &&
             !(s->mode & SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER))
-        || (s->s3->wpend_type != type)) {
+        || (s->rlayer.wpend_type != type)) {
         SSLerr(SSL_F_SSL3_WRITE_PENDING, SSL_R_BAD_WRITE_RETRY);
         return (-1);
     }
@@ -905,7 +905,7 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
             wb->left = 0;
             wb->offset += i;
             s->rwstate = SSL_NOTHING;
-            return (s->s3->wpend_ret);
+            return (s->rlayer.wpend_ret);
         } else if (i <= 0) {
             if (s->version == DTLS1_VERSION || s->version == DTLS1_BAD_VER) {
                 /*
