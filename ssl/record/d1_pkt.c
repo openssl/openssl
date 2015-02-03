@@ -151,65 +151,6 @@ void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl)
     memset(d, 0, sizeof *d);
 }
 
-/* mod 128 saturating subtract of two 64-bit values in big-endian order */
-static int satsub64be(const unsigned char *v1, const unsigned char *v2)
-{
-    int ret, sat, brw, i;
-
-    if (sizeof(long) == 8)
-        do {
-            const union {
-                long one;
-                char little;
-            } is_endian = {
-                1
-            };
-            long l;
-
-            if (is_endian.little)
-                break;
-            /* not reached on little-endians */
-            /*
-             * following test is redundant, because input is always aligned,
-             * but I take no chances...
-             */
-            if (((size_t)v1 | (size_t)v2) & 0x7)
-                break;
-
-            l = *((long *)v1);
-            l -= *((long *)v2);
-            if (l > 128)
-                return 128;
-            else if (l < -128)
-                return -128;
-            else
-                return (int)l;
-        } while (0);
-
-    ret = (int)v1[7] - (int)v2[7];
-    sat = 0;
-    brw = ret >> 8;             /* brw is either 0 or -1 */
-    if (ret & 0x80) {
-        for (i = 6; i >= 0; i--) {
-            brw += (int)v1[i] - (int)v2[i];
-            sat |= ~brw;
-            brw >>= 8;
-        }
-    } else {
-        for (i = 6; i >= 0; i--) {
-            brw += (int)v1[i] - (int)v2[i];
-            sat |= brw;
-            brw >>= 8;
-        }
-    }
-    brw <<= 8;                  /* brw is either 0 or -256 */
-
-    if (sat & 0xff)
-        return brw | 0x80;
-    else
-        return brw + (ret & 0xFF);
-}
-
 static int have_handshake_fragment(SSL *s, int type, unsigned char *buf,
                                    int len, int peek);
 
@@ -1252,48 +1193,6 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
     return -1;
 }
 
-int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap)
-{
-    int cmp;
-    unsigned int shift;
-    const unsigned char *seq = s->rlayer.read_sequence;
-
-    cmp = satsub64be(seq, bitmap->max_seq_num);
-    if (cmp > 0) {
-        SSL3_RECORD_set_seq_num(&s->rlayer.rrec, seq);
-        return 1;               /* this record in new */
-    }
-    shift = -cmp;
-    if (shift >= sizeof(bitmap->map) * 8)
-        return 0;               /* stale, outside the window */
-    else if (bitmap->map & (1UL << shift))
-        return 0;               /* record previously received */
-
-    SSL3_RECORD_set_seq_num(&s->rlayer.rrec, seq);
-    return 1;
-}
-
-void dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap)
-{
-    int cmp;
-    unsigned int shift;
-    const unsigned char *seq = s->rlayer.read_sequence;
-
-    cmp = satsub64be(seq, bitmap->max_seq_num);
-    if (cmp > 0) {
-        shift = cmp;
-        if (shift < sizeof(bitmap->map) * 8)
-            bitmap->map <<= shift, bitmap->map |= 1UL;
-        else
-            bitmap->map = 1UL;
-        memcpy(bitmap->max_seq_num, seq, 8);
-    } else {
-        shift = -cmp;
-        if (shift < sizeof(bitmap->map) * 8)
-            bitmap->map |= 1UL << shift;
-    }
-}
-
 DTLS1_BITMAP *dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr,
                                       unsigned int *is_next_epoch)
 {
@@ -1302,13 +1201,13 @@ DTLS1_BITMAP *dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr,
 
     /* In current epoch, accept HM, CCS, DATA, & ALERT */
     if (rr->epoch == s->rlayer.d->r_epoch)
-        return &s->d1->bitmap;
+        return &s->rlayer.d->bitmap;
 
     /* Only HM and ALERT messages can be from the next epoch */
     else if (rr->epoch == (unsigned long)(s->rlayer.d->r_epoch + 1) &&
             (rr->type == SSL3_RT_HANDSHAKE || rr->type == SSL3_RT_ALERT)) {
         *is_next_epoch = 1;
-        return &s->d1->next_bitmap;
+        return &s->rlayer.d->next_bitmap;
     }
 
     return NULL;
@@ -1322,8 +1221,8 @@ void dtls1_reset_seq_numbers(SSL *s, int rw)
     if (rw & SSL3_CC_READ) {
         seq = s->rlayer.read_sequence;
         s->rlayer.d->r_epoch++;
-        memcpy(&(s->d1->bitmap), &(s->d1->next_bitmap), sizeof(DTLS1_BITMAP));
-        memset(&(s->d1->next_bitmap), 0x00, sizeof(DTLS1_BITMAP));
+        memcpy(&(s->rlayer.d->bitmap), &(s->rlayer.d->next_bitmap), sizeof(DTLS1_BITMAP));
+        memset(&(s->rlayer.d->next_bitmap), 0x00, sizeof(DTLS1_BITMAP));
     } else {
         seq = s->rlayer.write_sequence;
         memcpy(s->d1->last_write_sequence, seq,

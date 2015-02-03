@@ -31,7 +31,7 @@ LIBSRC=	\
 	ssl_ciph.c ssl_stat.c ssl_rsa.c \
 	ssl_asn1.c ssl_txt.c ssl_algs.c ssl_conf.c \
 	bio_ssl.c ssl_err.c kssl.c t1_reneg.c tls_srp.c t1_trce.c ssl_utst.c \
-	record/ssl3_buffer.c record/ssl3_record.c
+	record/ssl3_buffer.c record/ssl3_record.c record/dtls1_bitmap.c
 LIBOBJ= \
 	s3_meth.o  s3_srvr.o  s3_clnt.o  s3_lib.o  s3_enc.o record/s3_pkt.o s3_both.o s3_cbc.o \
 	s3_msg.o \
@@ -43,7 +43,7 @@ LIBOBJ= \
 	ssl_ciph.o ssl_stat.o ssl_rsa.o \
 	ssl_asn1.o ssl_txt.o ssl_algs.o ssl_conf.o \
 	bio_ssl.o ssl_err.o kssl.o t1_reneg.o tls_srp.o t1_trce.o ssl_utst.o \
-	record/ssl3_buffer.o record/ssl3_record.o
+	record/ssl3_buffer.o record/ssl3_record.o record/dtls1_bitmap.o
 
 SRC= $(LIBSRC)
 
