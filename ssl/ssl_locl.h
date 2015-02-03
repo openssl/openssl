@@ -165,6 +165,7 @@
 # include <openssl/ssl.h>
 # include <openssl/symhacks.h>
 
+#include "record/dtls1_bitmap.h"
 #include "record/ssl3_buffer.h"
 #include "record/ssl3_record.h"
 #include "record/rec_layer.h"
@@ -1404,10 +1405,6 @@ typedef struct dtls1_state_st {
     unsigned char rcvd_cookie[DTLS1_COOKIE_LENGTH];
     unsigned int cookie_len;
 
-    /* records being received in the current epoch */
-    DTLS1_BITMAP bitmap;
-    /* renegotiation starts a new set of sequence numbers */
-    DTLS1_BITMAP next_bitmap;
     /* handshake message numbers */
     unsigned short handshake_write_seq;
     unsigned short next_handshake_write_seq;
