@@ -1062,8 +1062,6 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
                                 int len)
 {
     unsigned char buff[SSL_MAX_MASTER_KEY_LENGTH];
-    const void *co = NULL, *so = NULL;
-    int col = 0, sol = 0;
 
 #ifdef KSSL_DEBUG
     fprintf(stderr, "tls1_generate_master_secret(%p,%p, %p, %d)\n", s, out, p,
@@ -1092,18 +1090,18 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
                  TLS_MD_EXTENDED_MASTER_SECRET_CONST,
                  TLS_MD_EXTENDED_MASTER_SECRET_CONST_SIZE,
                  hash, hashlen,
-                 co, col,
                  NULL, 0,
-                 so, sol, p, len, s->session->master_key, buff, sizeof buff);
+                 NULL, 0,
+                 NULL, 0, p, len, s->session->master_key, buff, sizeof buff);
         OPENSSL_cleanse(hash, hashlen);
     } else {
         tls1_PRF(ssl_get_algorithm2(s),
                  TLS_MD_MASTER_SECRET_CONST,
                  TLS_MD_MASTER_SECRET_CONST_SIZE,
                  s->s3->client_random, SSL3_RANDOM_SIZE,
-                 co, col,
+                 NULL, 0,
                  s->s3->server_random, SSL3_RANDOM_SIZE,
-                 so, sol, p, len, s->session->master_key, buff, sizeof buff);
+                 NULL, 0, p, len, s->session->master_key, buff, sizeof buff);
     }
 #ifdef SSL_DEBUG
     fprintf(stderr, "Premaster Secret:\n");
