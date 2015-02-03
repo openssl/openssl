@@ -199,7 +199,7 @@ static int dtls1_copy_record(SSL *s, pitem *item)
     memcpy(&s->rlayer.rrec, &(rdata->rrec), sizeof(SSL3_RECORD));
 
     /* Set proper sequence number for mac calculation */
-    memcpy(&(s->s3->read_sequence[2]), &(rdata->packet[5]), 6);
+    memcpy(&(s->rlayer.read_sequence[2]), &(rdata->packet[5]), 6);
 
     return (1);
 }
@@ -1179,7 +1179,7 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
      * else s2n(s->d1->handshake_epoch, pseq);
      */
 
-    memcpy(pseq, &(s->s3->write_sequence[2]), 6);
+    memcpy(pseq, &(s->rlayer.write_sequence[2]), 6);
     pseq += 6;
     s2n(wr->length, pseq);
 
@@ -1194,7 +1194,7 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
     wr->type = type;            /* not needed but helps for debugging */
     wr->length += DTLS1_RT_HEADER_LENGTH;
 
-    ssl3_record_sequence_update(&(s->s3->write_sequence[0]));
+    ssl3_record_sequence_update(&(s->rlayer.write_sequence[0]));
 
     if (create_empty_fragment) {
         /*
@@ -1227,7 +1227,7 @@ int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap)
 {
     int cmp;
     unsigned int shift;
-    const unsigned char *seq = s->s3->read_sequence;
+    const unsigned char *seq = s->rlayer.read_sequence;
 
     cmp = satsub64be(seq, bitmap->max_seq_num);
     if (cmp > 0) {
@@ -1248,7 +1248,7 @@ void dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap)
 {
     int cmp;
     unsigned int shift;
-    const unsigned char *seq = s->s3->read_sequence;
+    const unsigned char *seq = s->rlayer.read_sequence;
 
     cmp = satsub64be(seq, bitmap->max_seq_num);
     if (cmp > 0) {
@@ -1288,17 +1288,17 @@ DTLS1_BITMAP *dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr,
 void dtls1_reset_seq_numbers(SSL *s, int rw)
 {
     unsigned char *seq;
-    unsigned int seq_bytes = sizeof(s->s3->read_sequence);
+    unsigned int seq_bytes = sizeof(s->rlayer.read_sequence);
 
     if (rw & SSL3_CC_READ) {
-        seq = s->s3->read_sequence;
+        seq = s->rlayer.read_sequence;
         s->d1->r_epoch++;
         memcpy(&(s->d1->bitmap), &(s->d1->next_bitmap), sizeof(DTLS1_BITMAP));
         memset(&(s->d1->next_bitmap), 0x00, sizeof(DTLS1_BITMAP));
     } else {
-        seq = s->s3->write_sequence;
+        seq = s->rlayer.write_sequence;
         memcpy(s->d1->last_write_sequence, seq,
-               sizeof(s->s3->write_sequence));
+               sizeof(s->rlayer.write_sequence));
         s->d1->w_epoch++;
     }
 

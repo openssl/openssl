@@ -211,6 +211,21 @@ void RECORD_LAYER_dup(RECORD_LAYER *dst, RECORD_LAYER *src)
     dst->rstate = src->rstate;
 }
 
+void RECORD_LAYER_reset_read_sequence(RECORD_LAYER *rl)
+{
+    memset(rl->read_sequence, 0, 8);
+}
+
+void RECORD_LAYER_reset_write_sequence(RECORD_LAYER *rl)
+{
+    memset(rl->write_sequence, 0, 8);
+}
+
+void RECORD_LAYER_set_write_sequence(RECORD_LAYER *rl, const unsigned char *ws)
+{
+    memcpy(rl->write_sequence, ws, sizeof(rl->write_sequence));
+}
+
 int ssl3_pending(const SSL *s)
 {
     if (s->rlayer.rstate == SSL_ST_READ_BODY)
@@ -541,7 +556,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
             else
                 nw = max_send_fragment * (mb_param.interleave = 4);
 
-            memcpy(aad, s->s3->write_sequence, 8);
+            memcpy(aad, s->rlayer.write_sequence, 8);
             aad[8] = type;
             aad[9] = (unsigned char)(s->version >> 8);
             aad[10] = (unsigned char)(s->version);
@@ -570,10 +585,10 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
                                     sizeof(mb_param), &mb_param) <= 0)
                 return -1;
 
-            s->s3->write_sequence[7] += mb_param.interleave;
-            if (s->s3->write_sequence[7] < mb_param.interleave) {
+            s->rlayer.write_sequence[7] += mb_param.interleave;
+            if (s->rlayer.write_sequence[7] < mb_param.interleave) {
                 int j = 6;
-                while (j >= 0 && (++s->s3->write_sequence[j--]) == 0) ;
+                while (j >= 0 && (++s->rlayer.write_sequence[j--]) == 0) ;
             }
 
             wb->offset = 0;

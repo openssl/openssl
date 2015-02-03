@@ -174,6 +174,9 @@ typedef struct record_layer_st {
     /* number of bytes submitted */
     int wpend_ret;
     const unsigned char *wpend_buf;
+
+    unsigned char read_sequence[8];
+    unsigned char write_sequence[8];
 } RECORD_LAYER;
 
 
@@ -190,6 +193,8 @@ typedef struct record_layer_st {
 #define RECORD_LAYER_get_packet(rl)             ((rl)->packet)
 #define RECORD_LAYER_get_packet_length(rl)      ((rl)->packet_length)
 #define RECORD_LAYER_add_packet_length(rl, inc) ((rl)->packet_length += (inc))
+#define RECORD_LAYER_get_read_sequence(rl)      ((rl)->read_sequence)
+#define RECORD_LAYER_get_write_sequence(rl)     ((rl)->write_sequence)
 
 void RECORD_LAYER_init(RECORD_LAYER *rl, SSL *s);
 void RECORD_LAYER_clear(RECORD_LAYER *rl);
@@ -198,6 +203,9 @@ int RECORD_LAYER_read_pending(RECORD_LAYER *rl);
 int RECORD_LAYER_write_pending(RECORD_LAYER *rl);
 int RECORD_LAYER_set_data(RECORD_LAYER *rl, const unsigned char *buf, int len);
 void RECORD_LAYER_dup(RECORD_LAYER *dst, RECORD_LAYER *src);
+void RECORD_LAYER_reset_read_sequence(RECORD_LAYER *rl);
+void RECORD_LAYER_reset_write_sequence(RECORD_LAYER *rl);
+void RECORD_LAYER_set_write_sequence(RECORD_LAYER *rl, const unsigned char *ws);
 __owur int ssl3_pending(const SSL *s);
 __owur int ssl23_read_bytes(SSL *s, int n);
 __owur int ssl23_write_bytes(SSL *s);

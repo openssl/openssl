@@ -404,7 +404,7 @@ int tls1_change_cipher_state(SSL *s, int which)
          * this is done by dtls1_reset_seq_numbers for DTLS
          */
         if (!SSL_IS_DTLS(s))
-            memset(&(s->s3->read_sequence[0]), 0, 8);
+            RECORD_LAYER_reset_read_sequence(&s->rlayer);
         mac_secret = &(s->s3->read_mac_secret[0]);
         mac_secret_size = &(s->s3->read_mac_secret_size);
     } else {
@@ -442,7 +442,7 @@ int tls1_change_cipher_state(SSL *s, int which)
          * this is done by dtls1_reset_seq_numbers for DTLS
          */
         if (!SSL_IS_DTLS(s))
-            memset(&(s->s3->write_sequence[0]), 0, 8);
+            RECORD_LAYER_reset_write_sequence(&s->rlayer);
         mac_secret = &(s->s3->write_mac_secret[0]);
         mac_secret_size = &(s->s3->write_mac_secret_size);
     }
