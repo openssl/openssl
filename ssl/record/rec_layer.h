@@ -147,6 +147,10 @@ typedef struct dtls_record_layer_st {
     DTLS1_BITMAP bitmap;
     /* renegotiation starts a new set of sequence numbers */
     DTLS1_BITMAP next_bitmap;
+
+    /* Received handshake records (processed and unprocessed) */
+    record_pqueue unprocessed_rcds;
+    record_pqueue processed_rcds;
 } DTLS_RECORD_LAYER;
 
 typedef struct record_layer_st {
@@ -216,6 +220,10 @@ typedef struct record_layer_st {
 #define RECORD_LAYER_get_write_sequence(rl)     ((rl)->write_sequence)
 #define DTLS_RECORD_LAYER_get_w_epoch(rl)       ((rl)->d->w_epoch)
 #define DTLS_RECORD_LAYER_set_w_epoch(rl, e)    ((rl)->d->w_epoch = (e))
+#define DTLS_RECORD_LAYER_get_processed_rcds(rl) \
+                                                ((rl)->d->processed_rcds)
+#define DTLS_RECORD_LAYER_get_unprocessed_rcds(rl) \
+                                                ((rl)->d->unprocessed_rcds)
 
 void RECORD_LAYER_init(RECORD_LAYER *rl, SSL *s);
 void RECORD_LAYER_clear(RECORD_LAYER *rl);

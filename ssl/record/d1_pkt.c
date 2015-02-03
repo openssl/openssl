@@ -131,14 +131,31 @@ int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)
         return (0);
     }
 
+
     rl->d = d;
     DTLS_RECORD_LAYER_clear(rl);
+    
+    d->unprocessed_rcds.q = pqueue_new();
+    d->processed_rcds.q = pqueue_new();
+
+    if (!d->unprocessed_rcds.q || !d->processed_rcds.q) {
+        if (d->unprocessed_rcds.q)
+            pqueue_free(d->unprocessed_rcds.q);
+        if (d->processed_rcds.q)
+            pqueue_free(d->processed_rcds.q);
+        OPENSSL_free(d);
+        rl->d = NULL;
+        return (0);
+    }
 
     return 1;
 }
 
 void DTLS_RECORD_LAYER_free(RECORD_LAYER *rl)
 {
+    DTLS_RECORD_LAYER_clear(rl);
+    pqueue_free(rl->d->unprocessed_rcds.q);
+    pqueue_free(rl->d->processed_rcds.q);
     OPENSSL_free(rl->d);
     rl->d = NULL;
 }
@@ -146,9 +163,36 @@ void DTLS_RECORD_LAYER_free(RECORD_LAYER *rl)
 void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl)
 {
     DTLS_RECORD_LAYER *d;
-    
+    pitem *item = NULL;
+    DTLS1_RECORD_DATA *rdata;
+    pqueue unprocessed_rcds;
+    pqueue processed_rcds;
+
     d = rl->d;
+    
+    while ((item = pqueue_pop(d->unprocessed_rcds.q)) != NULL) {
+        rdata = (DTLS1_RECORD_DATA *)item->data;
+        if (rdata->rbuf.buf) {
+            OPENSSL_free(rdata->rbuf.buf);
+        }
+        OPENSSL_free(item->data);
+        pitem_free(item);
+    }
+
+    while ((item = pqueue_pop(d->processed_rcds.q)) != NULL) {
+        rdata = (DTLS1_RECORD_DATA *)item->data;
+        if (rdata->rbuf.buf) {
+            OPENSSL_free(rdata->rbuf.buf);
+        }
+        OPENSSL_free(item->data);
+        pitem_free(item);
+    }
+
+    unprocessed_rcds = d->unprocessed_rcds.q;
+    processed_rcds = d->processed_rcds.q;
     memset(d, 0, sizeof *d);
+    d->unprocessed_rcds.q = unprocessed_rcds;
+    d->processed_rcds.q = processed_rcds;
 }
 
 static int have_handshake_fragment(SSL *s, int type, unsigned char *buf,
@@ -263,25 +307,25 @@ int dtls1_retrieve_buffered_record(SSL *s, record_pqueue *queue)
  */
 #define dtls1_get_unprocessed_record(s) \
                    dtls1_retrieve_buffered_record((s), \
-                   &((s)->d1->unprocessed_rcds))
+                   &((s)->rlayer.d->unprocessed_rcds))
 
 
 int dtls1_process_buffered_records(SSL *s)
 {
     pitem *item;
 
-    item = pqueue_peek(s->d1->unprocessed_rcds.q);
+    item = pqueue_peek(s->rlayer.d->unprocessed_rcds.q);
     if (item) {
         /* Check if epoch is current. */
-        if (s->d1->unprocessed_rcds.epoch != s->rlayer.d->r_epoch)
+        if (s->rlayer.d->unprocessed_rcds.epoch != s->rlayer.d->r_epoch)
             return (1);         /* Nothing to do. */
 
         /* Process all the records. */
-        while (pqueue_peek(s->d1->unprocessed_rcds.q)) {
+        while (pqueue_peek(s->rlayer.d->unprocessed_rcds.q)) {
             dtls1_get_unprocessed_record(s);
             if (!dtls1_process_record(s))
                 return (0);
-            if (dtls1_buffer_record(s, &(s->d1->processed_rcds),
+            if (dtls1_buffer_record(s, &(s->rlayer.d->processed_rcds),
                 SSL3_RECORD_get_seq_num(&s->rlayer.rrec)) < 0)
                 return -1;
         }
@@ -291,8 +335,8 @@ int dtls1_process_buffered_records(SSL *s)
      * sync epoch numbers once all the unprocessed records have been
      * processed
      */
-    s->d1->processed_rcds.epoch = s->rlayer.d->r_epoch;
-    s->d1->unprocessed_rcds.epoch = s->rlayer.d->r_epoch + 1;
+    s->rlayer.d->processed_rcds.epoch = s->rlayer.d->r_epoch;
+    s->rlayer.d->unprocessed_rcds.epoch = s->rlayer.d->r_epoch + 1;
 
     return (1);
 }

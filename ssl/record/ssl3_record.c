@@ -1366,7 +1366,7 @@ int dtls1_process_record(SSL *s)
  */
 #define dtls1_get_processed_record(s) \
                    dtls1_retrieve_buffered_record((s), \
-                   &((s)->d1->processed_rcds))
+                   &(DTLS_RECORD_LAYER_get_processed_rcds(&s->rlayer)))
 
 /*-
  * Call this to get a new input record.
@@ -1533,7 +1533,8 @@ int dtls1_get_record(SSL *s)
     if (is_next_epoch) {
         if ((SSL_in_init(s) || s->in_handshake) && !s->d1->listen) {
             if (dtls1_buffer_record
-                (s, &(s->d1->unprocessed_rcds), rr->seq_num) < 0)
+                (s, &(DTLS_RECORD_LAYER_get_unprocessed_rcds(&s->rlayer)),
+                rr->seq_num) < 0)
                 return -1;
             /* Mark receipt of record. */
             dtls1_record_bitmap_update(s, bitmap);
