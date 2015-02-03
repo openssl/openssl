@@ -1403,13 +1403,7 @@ typedef struct dtls1_state_st {
     unsigned char cookie[DTLS1_COOKIE_LENGTH];
     unsigned char rcvd_cookie[DTLS1_COOKIE_LENGTH];
     unsigned int cookie_len;
-    /*
-     * The current data and handshake epoch.  This is initially
-     * undefined, and starts at zero once the initial handshake is
-     * completed
-     */
-    unsigned short r_epoch;
-    unsigned short w_epoch;
+
     /* records being received in the current epoch */
     DTLS1_BITMAP bitmap;
     /* renegotiation starts a new set of sequence numbers */

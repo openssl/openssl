@@ -1110,7 +1110,8 @@ int dtls1_buffer_message(SSL *s, int is_ccs)
     frag->msg_header.saved_retransmit_state.write_hash = s->write_hash;
     frag->msg_header.saved_retransmit_state.compress = s->compress;
     frag->msg_header.saved_retransmit_state.session = s->session;
-    frag->msg_header.saved_retransmit_state.epoch = s->d1->w_epoch;
+    frag->msg_header.saved_retransmit_state.epoch =
+        DTLS_RECORD_LAYER_get_w_epoch(&s->rlayer);
 
     memset(seq64be, 0, sizeof(seq64be));
     seq64be[6] =
@@ -1184,8 +1185,7 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
     saved_state.write_hash = s->write_hash;
     saved_state.compress = s->compress;
     saved_state.session = s->session;
-    saved_state.epoch = s->d1->w_epoch;
-    saved_state.epoch = s->d1->w_epoch;
+    saved_state.epoch = DTLS_RECORD_LAYER_get_w_epoch(&s->rlayer);
 
     s->d1->retransmitting = 1;
 
@@ -1194,7 +1194,8 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
     s->write_hash = frag->msg_header.saved_retransmit_state.write_hash;
     s->compress = frag->msg_header.saved_retransmit_state.compress;
     s->session = frag->msg_header.saved_retransmit_state.session;
-    s->d1->w_epoch = frag->msg_header.saved_retransmit_state.epoch;
+    DTLS_RECORD_LAYER_set_w_epoch(&s->rlayer,
+        frag->msg_header.saved_retransmit_state.epoch);
 
     if (frag->msg_header.saved_retransmit_state.epoch ==
         saved_state.epoch - 1) {
@@ -1212,7 +1213,7 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
     s->write_hash = saved_state.write_hash;
     s->compress = saved_state.compress;
     s->session = saved_state.session;
-    s->d1->w_epoch = saved_state.epoch;
+    DTLS_RECORD_LAYER_set_w_epoch(&s->rlayer, saved_state.epoch);
 
     if (frag->msg_header.saved_retransmit_state.epoch ==
         saved_state.epoch - 1) {
