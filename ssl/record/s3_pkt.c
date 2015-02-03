@@ -970,29 +970,29 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
         return -1;
     }
 
-    if ((type == SSL3_RT_HANDSHAKE) && (s->s3->handshake_fragment_len > 0))
+    if ((type == SSL3_RT_HANDSHAKE) && (s->rlayer.handshake_fragment_len > 0))
         /* (partially) satisfy request from storage */
     {
-        unsigned char *src = s->s3->handshake_fragment;
+        unsigned char *src = s->rlayer.handshake_fragment;
         unsigned char *dst = buf;
         unsigned int k;
 
         /* peek == 0 */
         n = 0;
-        while ((len > 0) && (s->s3->handshake_fragment_len > 0)) {
+        while ((len > 0) && (s->rlayer.handshake_fragment_len > 0)) {
             *dst++ = *src++;
             len--;
-            s->s3->handshake_fragment_len--;
+            s->rlayer.handshake_fragment_len--;
             n++;
         }
         /* move any remaining fragment bytes: */
-        for (k = 0; k < s->s3->handshake_fragment_len; k++)
-            s->s3->handshake_fragment[k] = *src++;
+        for (k = 0; k < s->rlayer.handshake_fragment_len; k++)
+            s->rlayer.handshake_fragment[k] = *src++;
         return n;
     }
 
     /*
-     * Now s->s3->handshake_fragment_len == 0 if type == SSL3_RT_HANDSHAKE.
+     * Now s->rlayer.handshake_fragment_len == 0 if type == SSL3_RT_HANDSHAKE.
      */
 
     if (!s->in_handshake && SSL_in_init(s)) {
@@ -1094,13 +1094,13 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
         unsigned int *dest_len = NULL;
 
         if (rr->type == SSL3_RT_HANDSHAKE) {
-            dest_maxlen = sizeof s->s3->handshake_fragment;
-            dest = s->s3->handshake_fragment;
-            dest_len = &s->s3->handshake_fragment_len;
+            dest_maxlen = sizeof s->rlayer.handshake_fragment;
+            dest = s->rlayer.handshake_fragment;
+            dest_len = &s->rlayer.handshake_fragment_len;
         } else if (rr->type == SSL3_RT_ALERT) {
-            dest_maxlen = sizeof s->s3->alert_fragment;
-            dest = s->s3->alert_fragment;
-            dest_len = &s->s3->alert_fragment_len;
+            dest_maxlen = sizeof s->rlayer.alert_fragment;
+            dest = s->rlayer.alert_fragment;
+            dest_len = &s->rlayer.alert_fragment_len;
         }
 #ifndef OPENSSL_NO_HEARTBEATS
         else if (rr->type == TLS1_RT_HEARTBEAT) {
@@ -1136,21 +1136,21 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
     }
 
     /*-
-     * s->s3->handshake_fragment_len == 4  iff  rr->type == SSL3_RT_HANDSHAKE;
-     * s->s3->alert_fragment_len == 2      iff  rr->type == SSL3_RT_ALERT.
+     * s->rlayer.handshake_fragment_len == 4  iff  rr->type == SSL3_RT_HANDSHAKE;
+     * s->rlayer.alert_fragment_len == 2      iff  rr->type == SSL3_RT_ALERT.
      * (Possibly rr is 'empty' now, i.e. rr->length may be 0.)
      */
 
     /* If we are a client, check for an incoming 'Hello Request': */
     if ((!s->server) &&
-        (s->s3->handshake_fragment_len >= 4) &&
-        (s->s3->handshake_fragment[0] == SSL3_MT_HELLO_REQUEST) &&
+        (s->rlayer.handshake_fragment_len >= 4) &&
+        (s->rlayer.handshake_fragment[0] == SSL3_MT_HELLO_REQUEST) &&
         (s->session != NULL) && (s->session->cipher != NULL)) {
-        s->s3->handshake_fragment_len = 0;
+        s->rlayer.handshake_fragment_len = 0;
 
-        if ((s->s3->handshake_fragment[1] != 0) ||
-            (s->s3->handshake_fragment[2] != 0) ||
-            (s->s3->handshake_fragment[3] != 0)) {
+        if ((s->rlayer.handshake_fragment[1] != 0) ||
+            (s->rlayer.handshake_fragment[2] != 0) ||
+            (s->rlayer.handshake_fragment[3] != 0)) {
             al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_BAD_HELLO_REQUEST);
             goto f_err;
@@ -1158,7 +1158,7 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 
         if (s->msg_callback)
             s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE,
-                            s->s3->handshake_fragment, 4, s,
+                            s->rlayer.handshake_fragment, 4, s,
                             s->msg_callback_arg);
 
         if (SSL_is_init_finished(s) &&
@@ -1209,26 +1209,24 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
         SSL_is_init_finished(s) &&
         !s->s3->send_connection_binding &&
         (s->version > SSL3_VERSION) &&
-        (s->s3->handshake_fragment_len >= 4) &&
-        (s->s3->handshake_fragment[0] == SSL3_MT_CLIENT_HELLO) &&
+        (s->rlayer.handshake_fragment_len >= 4) &&
+        (s->rlayer.handshake_fragment[0] == SSL3_MT_CLIENT_HELLO) &&
         (s->session != NULL) && (s->session->cipher != NULL) &&
         !(s->ctx->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION)) {
-        /*
-         * s->s3->handshake_fragment_len = 0;
-         */
         rr->length = 0;
         ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_NO_RENEGOTIATION);
         goto start;
     }
-    if (s->s3->alert_fragment_len >= 2) {
-        int alert_level = s->s3->alert_fragment[0];
-        int alert_descr = s->s3->alert_fragment[1];
+    if (s->rlayer.alert_fragment_len >= 2) {
+        int alert_level = s->rlayer.alert_fragment[0];
+        int alert_descr = s->rlayer.alert_fragment[1];
 
-        s->s3->alert_fragment_len = 0;
+        s->rlayer.alert_fragment_len = 0;
 
         if (s->msg_callback)
             s->msg_callback(0, s->version, SSL3_RT_ALERT,
-                            s->s3->alert_fragment, 2, s, s->msg_callback_arg);
+                            s->rlayer.alert_fragment, 2, s,
+                            s->msg_callback_arg);
 
         if (s->info_callback != NULL)
             cb = s->info_callback;
@@ -1333,7 +1331,7 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
     /*
      * Unexpected handshake message (Client Hello, or protocol violation)
      */
-    if ((s->s3->handshake_fragment_len >= 4) && !s->in_handshake) {
+    if ((s->rlayer.handshake_fragment_len >= 4) && !s->in_handshake) {
         if (((s->state & SSL_ST_MASK) == SSL_ST_OK) &&
             !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)) {
             s->state = s->server ? SSL_ST_ACCEPT : SSL_ST_CONNECT;
