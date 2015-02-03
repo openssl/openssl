@@ -1237,11 +1237,6 @@ typedef struct ssl3_state_st {
     int empty_fragment_done;
     /* The value of 'extra' when the buffers were initialized */
     int init_extra;
-    /* partial write - check the numbers match */
-    int wpend_tot;              /* number bytes written */
-    int wpend_type;
-    int wpend_ret;              /* number of bytes submitted */
-    const unsigned char *wpend_buf;
     /* used during startup, digest all incoming/outgoing packets */
     BIO *handshake_buffer;
     /*
