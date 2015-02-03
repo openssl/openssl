@@ -207,13 +207,13 @@ int ssl3_get_record(SSL *s)
 
  again:
     /* check if we have the header */
-    if ((s->rstate != SSL_ST_READ_BODY) ||
+    if ((RECORD_LAYER_get_rstate(&s->rlayer) != SSL_ST_READ_BODY) ||
         (RECORD_LAYER_get_packet_length(&s->rlayer) < SSL3_RT_HEADER_LENGTH)) {
         n = ssl3_read_n(s, SSL3_RT_HEADER_LENGTH,
             SSL3_BUFFER_get_len(&s->rlayer.rbuf), 0);
         if (n <= 0)
             return (n);         /* error or non-blocking */
-        s->rstate = SSL_ST_READ_BODY;
+        RECORD_LAYER_set_rstate(&s->rlayer, SSL_ST_READ_BODY);
 
         p = RECORD_LAYER_get_packet(&s->rlayer);
         if (s->msg_callback)
@@ -255,10 +255,10 @@ int ssl3_get_record(SSL *s)
             goto f_err;
         }
 
-        /* now s->rstate == SSL_ST_READ_BODY */
+        /* now s->rlayer.rstate == SSL_ST_READ_BODY */
     }
 
-    /* s->rstate == SSL_ST_READ_BODY, get and decode the data */
+    /* s->rlayer.rstate == SSL_ST_READ_BODY, get and decode the data */
 
     if (rr->length >
         RECORD_LAYER_get_packet_length(&s->rlayer) - SSL3_RT_HEADER_LENGTH) {
@@ -273,7 +273,8 @@ int ssl3_get_record(SSL *s)
          */
     }
 
-    s->rstate = SSL_ST_READ_HEADER; /* set state for later operations */
+    /* set state for later operations */
+    RECORD_LAYER_set_rstate(&s->rlayer, SSL_ST_READ_HEADER);
 
     /*
      * At this point, s->packet_length == SSL3_RT_HEADER_LNGTH + rr->length,
@@ -1399,7 +1400,7 @@ int dtls1_get_record(SSL *s)
     /* get something from the wire */
  again:
     /* check if we have the header */
-    if ((s->rstate != SSL_ST_READ_BODY) ||
+    if ((RECORD_LAYER_get_rstate(&s->rlayer) != SSL_ST_READ_BODY) ||
         (RECORD_LAYER_get_packet_length(&s->rlayer) < DTLS1_RT_HEADER_LENGTH)) {
         n = ssl3_read_n(s, DTLS1_RT_HEADER_LENGTH,
             SSL3_BUFFER_get_len(&s->rlayer.rbuf), 0);
@@ -1413,7 +1414,7 @@ int dtls1_get_record(SSL *s)
             goto again;
         }
 
-        s->rstate = SSL_ST_READ_BODY;
+        RECORD_LAYER_set_rstate(&s->rlayer, SSL_ST_READ_BODY);
 
         p = RECORD_LAYER_get_packet(&s->rlayer);
 
@@ -1459,10 +1460,10 @@ int dtls1_get_record(SSL *s)
             goto again;
         }
 
-        /* now s->rstate == SSL_ST_READ_BODY */
+        /* now s->rlayer.rstate == SSL_ST_READ_BODY */
     }
 
-    /* s->rstate == SSL_ST_READ_BODY, get and decode the data */
+    /* s->rlayer.rstate == SSL_ST_READ_BODY, get and decode the data */
 
     if (rr->length >
         RECORD_LAYER_get_packet_length(&s->rlayer) - DTLS1_RT_HEADER_LENGTH) {
@@ -1481,7 +1482,8 @@ int dtls1_get_record(SSL *s)
          * DTLS1_RT_HEADER_LENGTH + rr->length
          */
     }
-    s->rstate = SSL_ST_READ_HEADER; /* set state for later operations */
+    /* set state for later operations */
+    RECORD_LAYER_set_rstate(&s->rlayer, SSL_ST_READ_HEADER);
 
     /* match epochs.  NULL means the packet is dropped on the floor */
     bitmap = dtls1_get_bitmap(s, rr, &is_next_epoch);

@@ -140,6 +140,8 @@ typedef struct record_layer_st {
      * non-blocking reads)
      */
     int read_ahead;
+    /* where we are when reading */
+    int rstate;
     /* read IO goes into here */
     SSL3_BUFFER rbuf;
     /* write IO goes into here */
@@ -176,6 +178,7 @@ void RECORD_LAYER_release(RECORD_LAYER *rl);
 int RECORD_LAYER_read_pending(RECORD_LAYER *rl);
 int RECORD_LAYER_write_pending(RECORD_LAYER *rl);
 int RECORD_LAYER_set_data(RECORD_LAYER *rl, const unsigned char *buf, int len);
+void RECORD_LAYER_dup(RECORD_LAYER *dst, RECORD_LAYER *src);
 __owur int ssl3_pending(const SSL *s);
 __owur int ssl23_read_bytes(SSL *s, int n);
 __owur int ssl23_write_bytes(SSL *s);
@@ -203,6 +206,8 @@ void dtls1_reset_seq_numbers(SSL *s, int rw);
 #define RECORD_LAYER_get_wrec(rl)               (&(rl)->wrec)
 #define RECORD_LAYER_set_packet(rl, p)          ((rl)->packet = (p))
 #define RECORD_LAYER_reset_packet_length(rl)    ((rl)->packet_length = 0)
+#define RECORD_LAYER_get_rstate(rl)             ((rl)->rstate)
+#define RECORD_LAYER_set_rstate(rl, st)         ((rl)->rstate = (st))
 
 __owur int ssl3_read_n(SSL *s, int n, int max, int extend);
 __owur int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,

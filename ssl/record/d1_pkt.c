@@ -450,7 +450,7 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
         goto start;
 
     /* get new packet if necessary */
-    if ((rr->length == 0) || (s->rstate == SSL_ST_READ_BODY)) {
+    if ((rr->length == 0) || (s->rlayer.rstate == SSL_ST_READ_BODY)) {
         ret = dtls1_get_record(s);
         if (ret <= 0) {
             ret = dtls1_read_failed(s, ret);
@@ -522,7 +522,7 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
             rr->length -= n;
             rr->off += n;
             if (rr->length == 0) {
-                s->rstate = SSL_ST_READ_HEADER;
+                s->rlayer.rstate = SSL_ST_READ_HEADER;
                 rr->off = 0;
             }
         }
@@ -629,7 +629,7 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
                  */
                 FIX ME
 #endif
-                 s->rstate = SSL_ST_READ_HEADER;
+                 s->rlayer.rstate = SSL_ST_READ_HEADER;
                 rr->length = 0;
                 goto start;
             }

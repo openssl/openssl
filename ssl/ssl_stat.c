@@ -342,26 +342,6 @@ const char *SSL_state_string_long(const SSL *s)
     return (str);
 }
 
-const char *SSL_rstate_string_long(const SSL *s)
-{
-    const char *str;
-
-    switch (s->rstate) {
-    case SSL_ST_READ_HEADER:
-        str = "read header";
-        break;
-    case SSL_ST_READ_BODY:
-        str = "read body";
-        break;
-    case SSL_ST_READ_DONE:
-        str = "read done";
-        break;
-    default:
-        str = "unknown";
-        break;
-    }
-    return (str);
-}
 
 const char *SSL_state_string(const SSL *s)
 {
@@ -810,27 +790,6 @@ const char *SSL_alert_desc_string_long(int value)
         break;
     case TLS1_AD_UNKNOWN_PSK_IDENTITY:
         str = "unknown PSK identity";
-        break;
-    default:
-        str = "unknown";
-        break;
-    }
-    return (str);
-}
-
-const char *SSL_rstate_string(const SSL *s)
-{
-    const char *str;
-
-    switch (s->rstate) {
-    case SSL_ST_READ_HEADER:
-        str = "RH";
-        break;
-    case SSL_ST_READ_BODY:
-        str = "RB";
-        break;
-    case SSL_ST_READ_DONE:
-        str = "RD";
         break;
     default:
         str = "unknown";
