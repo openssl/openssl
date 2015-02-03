@@ -292,7 +292,7 @@ int ssl3_get_finished(SSL *s, int a, int b)
 /*-
  * for these 2 messages, we need to
  * ssl->enc_read_ctx                    re-init
- * ssl->s3->read_sequence               zero
+ * ssl->rlayer.read_sequence            zero
  * ssl->s3->read_mac_secret             re-init
  * ssl->session->read_sym_enc           assign
  * ssl->session->read_compression       assign

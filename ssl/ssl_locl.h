@@ -1224,10 +1224,8 @@ struct ssl_st {
 typedef struct ssl3_state_st {
     long flags;
     int delay_buf_pop_ret;
-    unsigned char read_sequence[8];
     int read_mac_secret_size;
     unsigned char read_mac_secret[EVP_MAX_MD_SIZE];
-    unsigned char write_sequence[8];
     int write_mac_secret_size;
     unsigned char write_mac_secret[EVP_MAX_MD_SIZE];
     unsigned char server_random[SSL3_RANDOM_SIZE];

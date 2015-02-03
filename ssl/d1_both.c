@@ -961,7 +961,7 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
 /*-
  * for these 2 messages, we need to
  * ssl->enc_read_ctx                    re-init
- * ssl->s3->read_sequence               zero
+ * ssl->rlayer.read_sequence            zero
  * ssl->s3->read_mac_secret             re-init
  * ssl->session->read_sym_enc           assign
  * ssl->session->read_compression       assign
@@ -1198,10 +1198,10 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
 
     if (frag->msg_header.saved_retransmit_state.epoch ==
         saved_state.epoch - 1) {
-        memcpy(save_write_sequence, s->s3->write_sequence,
-               sizeof(s->s3->write_sequence));
-        memcpy(s->s3->write_sequence, s->d1->last_write_sequence,
-               sizeof(s->s3->write_sequence));
+
+        memcpy(save_write_sequence, RECORD_LAYER_get_write_sequence(&s->rlayer),
+               sizeof(save_write_sequence));
+        RECORD_LAYER_set_write_sequence(&s->rlayer, s->d1->last_write_sequence);
     }
 
     ret = dtls1_do_write(s, frag->msg_header.is_ccs ?
@@ -1216,10 +1216,10 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
 
     if (frag->msg_header.saved_retransmit_state.epoch ==
         saved_state.epoch - 1) {
-        memcpy(s->d1->last_write_sequence, s->s3->write_sequence,
-               sizeof(s->s3->write_sequence));
-        memcpy(s->s3->write_sequence, save_write_sequence,
-               sizeof(s->s3->write_sequence));
+        memcpy(s->d1->last_write_sequence,
+            RECORD_LAYER_get_write_sequence(&s->rlayer),
+            sizeof(s->d1->last_write_sequence));
+        RECORD_LAYER_set_write_sequence(&s->rlayer, save_write_sequence);
     }
 
     s->d1->retransmitting = 0;

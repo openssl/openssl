@@ -659,7 +659,8 @@ int tls1_enc(SSL *s, int send)
         if (EVP_CIPHER_flags(ds->cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
             unsigned char buf[13], *seq;
 
-            seq = send ? s->s3->write_sequence : s->s3->read_sequence;
+            seq = send ? RECORD_LAYER_get_write_sequence(&s->rlayer)
+                : RECORD_LAYER_get_read_sequence(&s->rlayer);
 
             if (SSL_IS_DTLS(s)) {
                 unsigned char dtlsseq[9], *p = dtlsseq;
@@ -773,12 +774,12 @@ int n_ssl3_mac(SSL *ssl, unsigned char *md, int send)
     if (send) {
         rec = RECORD_LAYER_get_wrec(&ssl->rlayer);
         mac_sec = &(ssl->s3->write_mac_secret[0]);
-        seq = &(ssl->s3->write_sequence[0]);
+        seq = RECORD_LAYER_get_write_sequence(&ssl->rlayer);
         hash = ssl->write_hash;
     } else {
         rec = RECORD_LAYER_get_rrec(&ssl->rlayer);
         mac_sec = &(ssl->s3->read_mac_secret[0]);
-        seq = &(ssl->s3->read_sequence[0]);
+        seq = RECORD_LAYER_get_read_sequence(&ssl->rlayer);
         hash = ssl->read_hash;
     }
 
@@ -869,11 +870,11 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 
     if (send) {
         rec = RECORD_LAYER_get_wrec(&ssl->rlayer);
-        seq = &(ssl->s3->write_sequence[0]);
+        seq = RECORD_LAYER_get_write_sequence(&ssl->rlayer);
         hash = ssl->write_hash;
     } else {
         rec = RECORD_LAYER_get_rrec(&ssl->rlayer);
-        seq = &(ssl->s3->read_sequence[0]);
+        seq = RECORD_LAYER_get_read_sequence(&ssl->rlayer);
         hash = ssl->read_hash;
     }
 
@@ -1045,7 +1046,8 @@ int tls1_cbc_remove_padding(const SSL *s,
      */
     if ((s->options & SSL_OP_TLS_BLOCK_PADDING_BUG) && !s->expand) {
         /* First packet is even in size, so check */
-        if ((memcmp(s->s3->read_sequence, "\0\0\0\0\0\0\0\0", 8) == 0) &&
+        if ((memcmp(RECORD_LAYER_get_read_sequence(&s->rlayer),
+                "\0\0\0\0\0\0\0\0", 8) == 0) &&
             !(padding_length & 1)) {
             s->s3->flags |= TLS1_FLAGS_TLS_PADDING_BUG;
         }
@@ -1431,7 +1433,7 @@ int dtls1_get_record(SSL *s)
         /* sequence number is 64 bits, with top 2 bytes = epoch */
         n2s(p, rr->epoch);
 
-        memcpy(&(s->s3->read_sequence[2]), p, 6);
+        memcpy(&(RECORD_LAYER_get_read_sequence(&s->rlayer)[2]), p, 6);
         p += 6;
 
         n2s(p, rr->length);
