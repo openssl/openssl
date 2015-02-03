@@ -59,7 +59,7 @@
  */
 #ifndef OPENSSL_NO_SRP
 # include "cryptlib.h"
-# include "srp_lcl.h"
+# include <openssl/sha.h>
 # include <openssl/srp.h>
 # include <openssl/evp.h>
 # include <openssl/buffer.h>
@@ -607,9 +607,6 @@ int SRP_create_verifier_BN(const char *user, const char *pass, BIGNUM **salt,
         (verifier == NULL) || (N == NULL) || (g == NULL) || (bn_ctx == NULL))
         goto err;
 
-    srp_bn_print(N);
-    srp_bn_print(g);
-
     if (*salt == NULL) {
         RAND_pseudo_bytes(tmp2, SRP_RANDOM_SALT_LEN);
 
@@ -626,8 +623,6 @@ int SRP_create_verifier_BN(const char *user, const char *pass, BIGNUM **salt,
         BN_clear_free(*verifier);
         goto err;
     }
-
-    srp_bn_print(*verifier);
 
     result = 1;
 

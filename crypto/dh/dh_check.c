@@ -116,15 +116,7 @@ int DH_check(const DH *dh, int *ret)
         l = BN_mod_word(dh->p, 24);
         if (l != 11)
             *ret |= DH_NOT_SUITABLE_GENERATOR;
-    }
-#if 0
-    else if (BN_is_word(dh->g, DH_GENERATOR_3)) {
-        l = BN_mod_word(dh->p, 12);
-        if (l != 5)
-            *ret |= DH_NOT_SUITABLE_GENERATOR;
-    }
-#endif
-    else if (BN_is_word(dh->g, DH_GENERATOR_5)) {
+    } else if (BN_is_word(dh->g, DH_GENERATOR_5)) {
         l = BN_mod_word(dh->p, 10);
         if ((l != 3) && (l != 7))
             *ret |= DH_NOT_SUITABLE_GENERATOR;

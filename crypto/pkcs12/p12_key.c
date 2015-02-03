@@ -118,13 +118,6 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
     int tmpn = n;
 #endif
 
-#if 0
-    if (!pass) {
-        PKCS12err(PKCS12_F_PKCS12_KEY_GEN_UNI, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
-#endif
-
     EVP_MD_CTX_init(&ctx);
 #ifdef  DEBUG_KEYGEN
     fprintf(stderr, "KEYGEN DEBUG\n");
