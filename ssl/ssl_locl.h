@@ -1246,7 +1246,6 @@ typedef struct ssl3_state_st {
     unsigned char handshake_fragment[4];
     unsigned int handshake_fragment_len;
     /* partial write - check the numbers match */
-    unsigned int wnum;          /* number of bytes sent so far */
     int wpend_tot;              /* number bytes written */
     int wpend_type;
     int wpend_ret;              /* number of bytes submitted */

@@ -434,9 +434,9 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
     }
 
     s->rwstate = SSL_NOTHING;
-    OPENSSL_assert(s->s3->wnum <= INT_MAX);
-    tot = s->s3->wnum;
-    s->s3->wnum = 0;
+    OPENSSL_assert(s->rlayer.wnum <= INT_MAX);
+    tot = s->rlayer.wnum;
+    s->rlayer.wnum = 0;
 
     if (SSL_in_init(s) && !s->in_handshake) {
         i = s->handshake_func(s);
@@ -470,7 +470,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
         i = ssl3_write_pending(s, type, &buf[tot], s->s3->wpend_tot);
         if (i <= 0) {
             /* XXX should we ssl3_release_write_buffer if i<0? */
-            s->s3->wnum = tot;
+            s->rlayer.wnum = tot;
             return i;
         }
         tot += i;               /* this might be last fragment */
@@ -531,7 +531,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
             if (s->s3->alert_dispatch) {
                 i = s->method->ssl_dispatch_alert(s);
                 if (i <= 0) {
-                    s->s3->wnum = tot;
+                    s->rlayer.wnum = tot;
                     return i;
                 }
             }
@@ -590,7 +590,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
                     OPENSSL_free(wb->buf);
                     wb->buf = NULL;
                 }
-                s->s3->wnum = tot;
+                s->rlayer.wnum = tot;
                 return i;
             }
             if (i == (int)n) {
@@ -620,7 +620,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
         i = do_ssl3_write(s, type, &(buf[tot]), nw, 0);
         if (i <= 0) {
             /* XXX should we ssl3_release_write_buffer if i<0? */
-            s->s3->wnum = tot;
+            s->rlayer.wnum = tot;
             return i;
         }
 
