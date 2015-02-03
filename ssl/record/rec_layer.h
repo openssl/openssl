@@ -142,6 +142,11 @@ typedef struct dtls1_record_data_st {
 #  endif
 } DTLS1_RECORD_DATA;
 
+typedef struct dtls_record_layer_st {
+    /* Temporary member to be removed by subsequent commits */
+    int dummy;
+} DTLS_RECORD_LAYER;
+
 typedef struct record_layer_st {
     /* The parent SSL structure */
     SSL *s;
@@ -187,6 +192,8 @@ typedef struct record_layer_st {
 
     unsigned char read_sequence[8];
     unsigned char write_sequence[8];
+    
+    DTLS_RECORD_LAYER *d;
 } RECORD_LAYER;
 
 
@@ -223,6 +230,9 @@ __owur int ssl3_write_bytes(SSL *s, int type, const void *buf, int len);
 __owur int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
                          unsigned int len, int create_empty_fragment);
 __owur int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
+int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl);
+void DTLS_RECORD_LAYER_free(RECORD_LAYER *rl);
+void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl);
 __owur int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
 int dtls1_write_bytes(SSL *s, int type, const void *buf, int len);
 __owur int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
