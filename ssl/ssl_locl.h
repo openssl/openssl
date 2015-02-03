@@ -1467,15 +1467,6 @@ typedef struct dtls1_state_st {
 #  endif
 } DTLS1_STATE;
 
-typedef struct dtls1_record_data_st {
-    unsigned char *packet;
-    unsigned int packet_length;
-    SSL3_BUFFER rbuf;
-    SSL3_RECORD rrec;
-#  ifndef OPENSSL_NO_SCTP
-    struct bio_dgram_sctp_rcvinfo recordinfo;
-#  endif
-} DTLS1_RECORD_DATA;
 
 
 # ifndef OPENSSL_NO_EC
