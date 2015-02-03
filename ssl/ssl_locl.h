@@ -1022,8 +1022,6 @@ struct ssl_st {
     int shutdown;
     /* where we are */
     int state;
-    /* where we are when reading */
-    int rstate;
     BUF_MEM *init_buf;          /* buffer used during init */
     void *init_msg;             /* pointer to handshake message body, set by
                                  * ssl3_get_message() */

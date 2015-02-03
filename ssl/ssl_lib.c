@@ -215,7 +215,6 @@ int SSL_clear(SSL *s)
     s->version = s->method->version;
     s->client_version = s->version;
     s->rwstate = SSL_NOTHING;
-    s->rstate = SSL_ST_READ_HEADER;
 
     if (s->init_buf != NULL) {
         BUF_MEM_free(s->init_buf);
@@ -2830,7 +2829,7 @@ SSL *SSL_dup(SSL *s)
     ret->shutdown = s->shutdown;
     ret->state = s->state;      /* SSL_dup does not really work at any state,
                                  * though */
-    ret->rstate = s->rstate;
+    RECORD_LAYER_dup(&ret->rlayer, &s->rlayer);
     ret->init_num = 0;          /* would have to copy ret->init_buf,
                                  * ret->init_msg, ret->init_num,
                                  * ret->init_off */

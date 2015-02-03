@@ -163,6 +163,7 @@ void RECORD_LAYER_clear(RECORD_LAYER *rl)
      * that right?
      */
     rl->read_ahead = read_ahead;
+    rl->rstate = SSL_ST_READ_HEADER;
     rl->s = s;
 }
 
@@ -189,7 +190,7 @@ int RECORD_LAYER_set_data(RECORD_LAYER *rl, const unsigned char *buf, int len)
 {
     rl->packet_length = len;
     if(len != 0) {
-        rl->s->rstate = SSL_ST_READ_HEADER;
+        rl->rstate = SSL_ST_READ_HEADER;
         if (!SSL3_BUFFER_is_initialised(&rl->rbuf))
             if (!ssl3_setup_read_buffer(rl->s))
                 return 0;
@@ -201,13 +202,64 @@ int RECORD_LAYER_set_data(RECORD_LAYER *rl, const unsigned char *buf, int len)
     return 1;
 }
 
+void RECORD_LAYER_dup(RECORD_LAYER *dst, RECORD_LAYER *src)
+{
+    /*
+     * Currently only called from SSL_dup...which only seems to expect the
+     * rstate to be duplicated and nothing else from the RECORD_LAYER???
+     */
+    dst->rstate = src->rstate;
+}
+
 int ssl3_pending(const SSL *s)
 {
-    if (s->rstate == SSL_ST_READ_BODY)
+    if (s->rlayer.rstate == SSL_ST_READ_BODY)
         return 0;
 
     return (SSL3_RECORD_get_type(&s->rlayer.rrec) == SSL3_RT_APPLICATION_DATA)
            ? SSL3_RECORD_get_length(&s->rlayer.rrec) : 0;
+}
+
+const char *SSL_rstate_string_long(const SSL *s)
+{
+    const char *str;
+
+    switch (s->rlayer.rstate) {
+    case SSL_ST_READ_HEADER:
+        str = "read header";
+        break;
+    case SSL_ST_READ_BODY:
+        str = "read body";
+        break;
+    case SSL_ST_READ_DONE:
+        str = "read done";
+        break;
+    default:
+        str = "unknown";
+        break;
+    }
+    return (str);
+}
+
+const char *SSL_rstate_string(const SSL *s)
+{
+    const char *str;
+
+    switch (s->rlayer.rstate) {
+    case SSL_ST_READ_HEADER:
+        str = "RH";
+        break;
+    case SSL_ST_READ_BODY:
+        str = "RB";
+        break;
+    case SSL_ST_READ_DONE:
+        str = "RD";
+        break;
+    default:
+        str = "unknown";
+        break;
+    }
+    return (str);
 }
 
 int ssl3_read_n(SSL *s, int n, int max, int extend)
@@ -965,7 +1017,7 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
     rr = &s->rlayer.rrec;
 
     /* get new packet if necessary */
-    if ((rr->length == 0) || (s->rstate == SSL_ST_READ_BODY)) {
+    if ((rr->length == 0) || (s->rlayer.rstate == SSL_ST_READ_BODY)) {
         ret = ssl3_get_record(s);
         if (ret <= 0)
             return (ret);
@@ -1017,7 +1069,7 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
             rr->length -= n;
             rr->off += n;
             if (rr->length == 0) {
-                s->rstate = SSL_ST_READ_HEADER;
+                s->rlayer.rstate = SSL_ST_READ_HEADER;
                 rr->off = 0;
                 if (s->mode & SSL_MODE_RELEASE_BUFFERS
                     && SSL3_BUFFER_get_left(&s->rlayer.rbuf) == 0)

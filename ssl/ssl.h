@@ -999,8 +999,8 @@ extern "C" {
 # define SSL_in_accept_init(a)           (SSL_state(a)&SSL_ST_ACCEPT)
 
 /*
- * The following 2 states are kept in ssl->rstate when reads fail, you should
- * not need these
+ * The following 3 states are kept in ssl->rlayer.rstate when reads fail, you
+ * should not need these
  */
 # define SSL_ST_READ_HEADER                      0xF0
 # define SSL_ST_READ_BODY                        0xF1
