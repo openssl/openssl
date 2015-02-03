@@ -155,6 +155,8 @@ typedef struct record_layer_st {
     unsigned char *packet;
     unsigned int packet_length;
 
+    /* number of bytes sent so far */
+    unsigned int wnum;
 } RECORD_LAYER;
 
 
