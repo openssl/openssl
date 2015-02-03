@@ -133,8 +133,7 @@ int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)
 
 
     rl->d = d;
-    DTLS_RECORD_LAYER_clear(rl);
-    
+
     d->unprocessed_rcds.q = pqueue_new();
     d->processed_rcds.q = pqueue_new();
 
