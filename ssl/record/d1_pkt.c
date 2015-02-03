@@ -122,6 +122,35 @@
 #include <openssl/pqueue.h>
 #include <openssl/rand.h>
 
+
+int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)
+{
+    DTLS_RECORD_LAYER *d;
+    
+    if ((d = OPENSSL_malloc(sizeof *d)) == NULL) {
+        return (0);
+    }
+
+    rl->d = d;
+    DTLS_RECORD_LAYER_clear(rl);
+
+    return 1;
+}
+
+void DTLS_RECORD_LAYER_free(RECORD_LAYER *rl)
+{
+    OPENSSL_free(rl->d);
+    rl->d = NULL;
+}
+
+void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl)
+{
+    DTLS_RECORD_LAYER *d;
+    
+    d = rl->d;
+    memset(d, 0, sizeof *d);
+}
+
 /* mod 128 saturating subtract of two 64-bit values in big-endian order */
 static int satsub64be(const unsigned char *v1, const unsigned char *v2)
 {

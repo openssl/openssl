@@ -131,6 +131,12 @@ int dtls1_new(SSL *s)
         return (0);
     }
     memset(d1, 0, sizeof *d1);
+    
+    if(!DTLS_RECORD_LAYER_new(&s->rlayer)) {
+        OPENSSL_free(d1);
+        ssl3_free(s);
+        return 0;
+    }
 
     /* d1->handshake_epoch=0; */
 
@@ -218,6 +224,8 @@ static void dtls1_clear_queues(SSL *s)
 
 void dtls1_free(SSL *s)
 {
+    DTLS_RECORD_LAYER_free(&s->rlayer);
+
     ssl3_free(s);
 
     dtls1_clear_queues(s);
@@ -241,6 +249,8 @@ void dtls1_clear(SSL *s)
     pqueue buffered_app_data;
     unsigned int mtu;
     unsigned int link_mtu;
+
+    DTLS_RECORD_LAYER_clear(&s->rlayer);
 
     if (s->d1) {
         unprocessed_rcds = s->d1->unprocessed_rcds.q;
