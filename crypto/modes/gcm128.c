@@ -1036,9 +1036,6 @@ int CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 # endif
 #endif
 
-#if 0
-    n = (unsigned int)mlen % 16; /* alternative to ctx->mres */
-#endif
     mlen += len;
     if (mlen > ((U64(1) << 36) - 32) || (sizeof(len) == 8 && mlen < len))
         return -1;

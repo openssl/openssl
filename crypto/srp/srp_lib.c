@@ -59,7 +59,7 @@
  */
 #ifndef OPENSSL_NO_SRP
 # include "cryptlib.h"
-# include "srp_lcl.h"
+# include <openssl/sha.h>
 # include <openssl/srp.h>
 # include <openssl/evp.h>
 # include "internal/bn_srp.h"
@@ -316,9 +316,6 @@ char *SRP_check_known_gN_param(BIGNUM *g, BIGNUM *N)
     size_t i;
     if ((g == NULL) || (N == NULL))
         return 0;
-
-    srp_bn_print(g);
-    srp_bn_print(N);
 
     for (i = 0; i < KNOWN_GN_NUMBER; i++) {
         if (BN_cmp(knowngN[i].g, g) == 0 && BN_cmp(knowngN[i].N, N) == 0)

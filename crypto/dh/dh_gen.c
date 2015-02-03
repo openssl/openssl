@@ -136,17 +136,7 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
         if (!BN_set_word(t2, 11))
             goto err;
         g = 2;
-    }
-#if 0                           /* does not work for safe primes */
-    else if (generator == DH_GENERATOR_3) {
-        if (!BN_set_word(t1, 12))
-            goto err;
-        if (!BN_set_word(t2, 5))
-            goto err;
-        g = 3;
-    }
-#endif
-    else if (generator == DH_GENERATOR_5) {
+    } else if (generator == DH_GENERATOR_5) {
         if (!BN_set_word(t1, 10))
             goto err;
         if (!BN_set_word(t2, 3))
