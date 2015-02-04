@@ -83,7 +83,7 @@ my @known_platforms = ( "__FreeBSD__", "PERL5",
 my @known_ossl_platforms = ( "VMS", "WIN32", "WINNT", "OS2" );
 my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CAST", "MD2", "MD4", "MD5", "SHA", "SHA0", "SHA1",
-			 "SHA256", "SHA512", "RIPEMD",
+			 "SHA256", "SHA512", "RMD160",
 			 "MDC2", "WHIRLPOOL", "RSA", "DSA", "DH", "EC", "ECDH", "ECDSA", "EC2M",
 			 "HMAC", "AES", "CAMELLIA", "SEED", "GOST",
 			 # EC_NISTP_64_GCC_128
@@ -972,7 +972,7 @@ sub do_defs
 			$a .= ",RC2" if($s =~ /EVP_rc2/);
 			$a .= ",RC4" if($s =~ /EVP_rc4/);
 			$a .= ",RC5" if($s =~ /EVP_rc5/);
-			$a .= ",RIPEMD" if($s =~ /EVP_ripemd/);
+			$a .= ",RMD160" if($s =~ /EVP_ripemd/);
 			$a .= ",RSA" if($s =~ /EVP_(Open|Seal)(Final|Init)/);
 			$a .= ",RSA" if($s =~ /PEM_Seal(Final|Init|Update)/);
 			$a .= ",RSA" if($s =~ /RSAPrivateKey/);
@@ -1179,7 +1179,7 @@ sub is_valid
 			if ($keyword eq "MD4" && $no_md4) { return 0; }
 			if ($keyword eq "MD5" && $no_md5) { return 0; }
 			if ($keyword eq "SHA" && $no_sha) { return 0; }
-			if ($keyword eq "RIPEMD" && $no_ripemd) { return 0; }
+			if ($keyword eq "RMD160" && $no_ripemd) { return 0; }
 			if ($keyword eq "MDC2" && $no_mdc2) { return 0; }
 			if ($keyword eq "WHIRLPOOL" && $no_whirlpool) { return 0; }
 			if ($keyword eq "RSA" && $no_rsa) { return 0; }
