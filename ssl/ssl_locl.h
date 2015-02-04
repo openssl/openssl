@@ -2049,7 +2049,6 @@ __owur long ssl3_ctx_ctrl(SSL_CTX *s, int cmd, long larg, void *parg);
 __owur long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void));
 __owur long ssl3_ctx_callback_ctrl(SSL_CTX *s, int cmd, void (*fp) (void));
 
-void ssl3_record_sequence_update(unsigned char *seq);
 __owur int ssl3_do_change_cipher_spec(SSL *ssl);
 __owur long ssl3_default_timeout(void);
 
@@ -2076,7 +2075,6 @@ void dtls1_set_message_header(SSL *s,
                               unsigned long frag_len);
 
 __owur int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf, int len);
-__owur int dtls1_write_bytes(SSL *s, int type, const void *buf, int len);
 
 __owur int dtls1_send_change_cipher_spec(SSL *s, int a, int b);
 __owur int dtls1_send_finished(SSL *s, int a, int b, const char *sender, int slen);
