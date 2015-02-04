@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2015 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -109,15 +109,73 @@
  *
  */
 
-#include "../ssl_locl.h"
-
 /*****************************************************************************
  *                                                                           *
- * These structures should be considered "opaque" to anything outside of the *
- * record layer. No non-record layer code should be accessing the members of *
- * these structures.                                                         *
+ * These structures should be considered PRIVATE to the record layer. No     *
+ * non-record layer code should be using these structures in any way.        *
  *                                                                           *
  *****************************************************************************/
+
+typedef struct ssl3_buffer_st {
+    /* at least SSL3_RT_MAX_PACKET_SIZE bytes, see ssl3_setup_buffers() */
+    unsigned char *buf;
+    /* buffer size */
+    size_t len;
+    /* where to 'copy from' */
+    int offset;
+    /* how many bytes left */
+    int left;
+} SSL3_BUFFER;
+
+typedef struct ssl3_record_st {
+    /* type of record */
+    /*
+     * r
+     */ int type;
+    /* How many bytes available */
+    /*
+     * rw
+     */ unsigned int length;
+    /*
+     * How many bytes were available before padding was removed? This is used
+     * to implement the MAC check in constant time for CBC records.
+     */
+    /*
+     * rw
+     */ unsigned int orig_len;
+    /* read/write offset into 'buf' */
+    /*
+     * r
+     */ unsigned int off;
+    /* pointer to the record data */
+    /*
+     * rw
+     */ unsigned char *data;
+    /* where the decode bytes are */
+    /*
+     * rw
+     */ unsigned char *input;
+    /* only used with decompression - malloc()ed */
+    /*
+     * r
+     */ unsigned char *comp;
+    /* epoch number, needed by DTLS1 */
+    /*
+     * r
+     */ unsigned long epoch;
+    /* sequence number, needed by DTLS1 */
+    /*
+     * r
+     */ unsigned char seq_num[8];
+} SSL3_RECORD;
+
+typedef struct dtls1_bitmap_st {
+    unsigned long map;          /* track 32 packets on 32-bit systems and 64
+                                 * - on 64-bit systems */
+
+    unsigned char max_seq_num[8]; /* max record number seen so far, 64-bit
+                                   * value in big-endian encoding */
+} DTLS1_BITMAP;
 
 typedef struct record_pqueue_st {
     unsigned short epoch;
@@ -133,6 +191,7 @@ typedef struct dtls1_record_data_st {
     struct bio_dgram_sctp_rcvinfo recordinfo;
 #  endif
 } DTLS1_RECORD_DATA;
+
 
 typedef struct dtls_record_layer_st {
     /*
@@ -170,6 +229,14 @@ typedef struct dtls_record_layer_st {
     unsigned char last_write_sequence[8];
     unsigned char curr_write_sequence[8];
 } DTLS_RECORD_LAYER;
+
+/*****************************************************************************
+ *                                                                           *
+ * This structure should be considered "opaque" to anything outside of the   *
+ * record layer. No non-record layer code should be accessing the members of *
+ * this structure.                                                           *
+ *                                                                           *
+ *****************************************************************************/
 
 typedef struct record_layer_st {
     /* The parent SSL structure */
@@ -224,13 +291,12 @@ typedef struct record_layer_st {
 /*****************************************************************************
  *                                                                           *
  * The following macros/functions represent the libssl internal API to the   *
- * record layer.                                                             *
+ * record layer. Any libssl code may call these functions/macros             *
  *                                                                           *
  *****************************************************************************/
 
 #define RECORD_LAYER_set_read_ahead(rl, ra)     ((rl)->read_ahead = (ra))
 #define RECORD_LAYER_get_read_ahead(rl)         ((rl)->read_ahead)
-#define RECORD_LAYER_setup_comp_buffer(rl)      (SSL3_RECORD_setup(&(rl)->rrec))
 #define RECORD_LAYER_get_packet(rl)             ((rl)->packet)
 #define RECORD_LAYER_get_packet_length(rl)      ((rl)->packet_length)
 #define RECORD_LAYER_add_packet_length(rl, inc) ((rl)->packet_length += (inc))
@@ -239,8 +305,6 @@ typedef struct record_layer_st {
                                                 ((rl)->d->processed_rcds)
 #define DTLS_RECORD_LAYER_get_unprocessed_rcds(rl) \
                                                 ((rl)->d->unprocessed_rcds)
-#define DTLS_RECORD_LAYER_resync_write(rl) \
-            RECORD_LAYER_set_write_sequence((rl), (rl)->read_sequence)
 
 void RECORD_LAYER_init(RECORD_LAYER *rl, SSL *s);
 void RECORD_LAYER_clear(RECORD_LAYER *rl);
@@ -251,6 +315,7 @@ int RECORD_LAYER_set_data(RECORD_LAYER *rl, const unsigned char *buf, int len);
 void RECORD_LAYER_dup(RECORD_LAYER *dst, RECORD_LAYER *src);
 void RECORD_LAYER_reset_read_sequence(RECORD_LAYER *rl);
 void RECORD_LAYER_reset_write_sequence(RECORD_LAYER *rl);
+int RECORD_LAYER_setup_comp_buffer(RECORD_LAYER *rl);
 __owur int ssl3_pending(const SSL *s);
 __owur int ssl23_read_bytes(SSL *s, int n);
 __owur int ssl23_write_bytes(SSL *s);
@@ -258,44 +323,22 @@ __owur int ssl3_write_bytes(SSL *s, int type, const void *buf, int len);
 __owur int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
                          unsigned int len, int create_empty_fragment);
 __owur int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
+__owur int ssl3_setup_buffers(SSL *s);
+__owur int ssl3_enc(SSL *s, int send_data);
+__owur int n_ssl3_mac(SSL *ssl, unsigned char *md, int send_data);
+__owur int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
+                       unsigned int len);
+__owur int tls1_enc(SSL *s, int snd);
+__owur int tls1_mac(SSL *ssl, unsigned char *md, int snd);
 int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_free(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_set_saved_w_epoch(RECORD_LAYER *rl, unsigned short e);
+void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl);
+void DTLS_RECORD_LAYER_resync_write(RECORD_LAYER *rl);
 __owur int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
 __owur int dtls1_write_bytes(SSL *s, int type, const void *buf, int len);
 __owur int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
                    unsigned int len, int create_empty_fragement);
 void dtls1_reset_seq_numbers(SSL *s, int rw);
 
-
-/*****************************************************************************
- *                                                                           *
- * The following macros/functions are private to the record layer. They      *
- * should not be used outside of the record layer.                           *
- *                                                                           *
- *****************************************************************************/
-
-#define RECORD_LAYER_get_rbuf(rl)               (&(rl)->rbuf)
-#define RECORD_LAYER_get_wbuf(rl)               (&(rl)->wbuf)
-#define RECORD_LAYER_get_rrec(rl)               (&(rl)->rrec)
-#define RECORD_LAYER_get_wrec(rl)               (&(rl)->wrec)
-#define RECORD_LAYER_set_packet(rl, p)          ((rl)->packet = (p))
-#define RECORD_LAYER_reset_packet_length(rl)    ((rl)->packet_length = 0)
-#define RECORD_LAYER_get_rstate(rl)             ((rl)->rstate)
-#define RECORD_LAYER_set_rstate(rl, st)         ((rl)->rstate = (st))
-#define RECORD_LAYER_get_read_sequence(rl)      ((rl)->read_sequence)
-#define RECORD_LAYER_get_write_sequence(rl)     ((rl)->write_sequence)
-#define DTLS_RECORD_LAYER_get_r_epoch(rl)       ((rl)->d->r_epoch)
-
-__owur int ssl3_read_n(SSL *s, int n, int max, int extend);
-__owur int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
-                       unsigned int len);
-void RECORD_LAYER_set_write_sequence(RECORD_LAYER *rl, const unsigned char *ws);
-DTLS1_BITMAP *dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr,
-                                      unsigned int *is_next_epoch);
-int dtls1_process_buffered_records(SSL *s);
-int dtls1_retrieve_buffered_record(SSL *s, record_pqueue *queue);
-int dtls1_buffer_record(SSL *s, record_pqueue *q,
-                               unsigned char *priority);
-void ssl3_record_sequence_update(unsigned char *seq);
