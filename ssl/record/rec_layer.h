@@ -260,7 +260,7 @@ int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_free(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl);
 __owur int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
-int dtls1_write_bytes(SSL *s, int type, const void *buf, int len);
+__owur int dtls1_write_bytes(SSL *s, int type, const void *buf, int len);
 __owur int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
                    unsigned int len, int create_empty_fragement);
 void dtls1_reset_seq_numbers(SSL *s, int rw);
@@ -292,4 +292,4 @@ int dtls1_process_buffered_records(SSL *s);
 int dtls1_retrieve_buffered_record(SSL *s, record_pqueue *queue);
 int dtls1_buffer_record(SSL *s, record_pqueue *q,
                                unsigned char *priority);
-
+void ssl3_record_sequence_update(unsigned char *seq);

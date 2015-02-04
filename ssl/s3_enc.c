@@ -638,17 +638,6 @@ static int ssl3_handshake_mac(SSL *s, int md_nid,
     return ((int)ret);
 }
 
-void ssl3_record_sequence_update(unsigned char *seq)
-{
-    int i;
-
-    for (i = 7; i >= 0; i--) {
-        ++seq[i];
-        if (seq[i] != 0)
-            break;
-    }
-}
-
 int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
                                 int len)
 {
