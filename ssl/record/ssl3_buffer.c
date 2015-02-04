@@ -110,6 +110,7 @@
  */
 
 #include "../ssl_locl.h"
+#include "record_locl.h"
 
 void SSL3_BUFFER_set_data(SSL3_BUFFER *b, const unsigned char *d, int n)
 {

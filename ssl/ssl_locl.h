@@ -165,7 +165,7 @@
 # include <openssl/ssl.h>
 # include <openssl/symhacks.h>
 
-#include "record/rec_layer.h"
+#include "record/record.h"
 
 # ifdef OPENSSL_BUILD_SHLIBSSL
 #  undef OPENSSL_EXTERN

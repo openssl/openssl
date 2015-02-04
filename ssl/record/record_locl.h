@@ -1,4 +1,4 @@
-/* ssl/record/rec_layer_locl.h */
+/* ssl/record/record_locl.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
