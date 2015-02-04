@@ -396,7 +396,8 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
         return ret;
 
     /*
-     * Now s->d1->handshake_fragment_len == 0 if type == SSL3_RT_HANDSHAKE.
+     * Now s->rlayer.d->handshake_fragment_len == 0 if
+     * type == SSL3_RT_HANDSHAKE.
      */
 
 #ifndef OPENSSL_NO_SCTP
@@ -583,13 +584,13 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
         unsigned int *dest_len = NULL;
 
         if (rr->type == SSL3_RT_HANDSHAKE) {
-            dest_maxlen = sizeof s->d1->handshake_fragment;
-            dest = s->d1->handshake_fragment;
-            dest_len = &s->d1->handshake_fragment_len;
+            dest_maxlen = sizeof s->rlayer.d->handshake_fragment;
+            dest = s->rlayer.d->handshake_fragment;
+            dest_len = &s->rlayer.d->handshake_fragment_len;
         } else if (rr->type == SSL3_RT_ALERT) {
-            dest_maxlen = sizeof(s->d1->alert_fragment);
-            dest = s->d1->alert_fragment;
-            dest_len = &s->d1->alert_fragment_len;
+            dest_maxlen = sizeof(s->rlayer.d->alert_fragment);
+            dest = s->rlayer.d->alert_fragment;
+            dest_len = &s->rlayer.d->alert_fragment_len;
         }
 #ifndef OPENSSL_NO_HEARTBEATS
         else if (rr->type == TLS1_RT_HEARTBEAT) {
@@ -657,21 +658,21 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
     }
 
     /*-
-     * s->d1->handshake_fragment_len == 12  iff  rr->type == SSL3_RT_HANDSHAKE;
-     * s->d1->alert_fragment_len == 7      iff  rr->type == SSL3_RT_ALERT.
+     * s->rlayer.d->handshake_fragment_len == 12  iff  rr->type == SSL3_RT_HANDSHAKE;
+     * s->rlayer.d->alert_fragment_len == 7      iff  rr->type == SSL3_RT_ALERT.
      * (Possibly rr is 'empty' now, i.e. rr->length may be 0.)
      */
 
     /* If we are a client, check for an incoming 'Hello Request': */
     if ((!s->server) &&
-        (s->d1->handshake_fragment_len >= DTLS1_HM_HEADER_LENGTH) &&
-        (s->d1->handshake_fragment[0] == SSL3_MT_HELLO_REQUEST) &&
+        (s->rlayer.d->handshake_fragment_len >= DTLS1_HM_HEADER_LENGTH) &&
+        (s->rlayer.d->handshake_fragment[0] == SSL3_MT_HELLO_REQUEST) &&
         (s->session != NULL) && (s->session->cipher != NULL)) {
-        s->d1->handshake_fragment_len = 0;
+        s->rlayer.d->handshake_fragment_len = 0;
 
-        if ((s->d1->handshake_fragment[1] != 0) ||
-            (s->d1->handshake_fragment[2] != 0) ||
-            (s->d1->handshake_fragment[3] != 0)) {
+        if ((s->rlayer.d->handshake_fragment[1] != 0) ||
+            (s->rlayer.d->handshake_fragment[2] != 0) ||
+            (s->rlayer.d->handshake_fragment[3] != 0)) {
             al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_DTLS1_READ_BYTES, SSL_R_BAD_HELLO_REQUEST);
             goto err;
@@ -683,7 +684,7 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 
         if (s->msg_callback)
             s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE,
-                            s->d1->handshake_fragment, 4, s,
+                            s->rlayer.d->handshake_fragment, 4, s,
                             s->msg_callback_arg);
 
         if (SSL_is_init_finished(s) &&
@@ -728,15 +729,16 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
         goto start;
     }
 
-    if (s->d1->alert_fragment_len >= DTLS1_AL_HEADER_LENGTH) {
-        int alert_level = s->d1->alert_fragment[0];
-        int alert_descr = s->d1->alert_fragment[1];
+    if (s->rlayer.d->alert_fragment_len >= DTLS1_AL_HEADER_LENGTH) {
+        int alert_level = s->rlayer.d->alert_fragment[0];
+        int alert_descr = s->rlayer.d->alert_fragment[1];
 
-        s->d1->alert_fragment_len = 0;
+        s->rlayer.d->alert_fragment_len = 0;
 
         if (s->msg_callback)
             s->msg_callback(0, s->version, SSL3_RT_ALERT,
-                            s->d1->alert_fragment, 2, s, s->msg_callback_arg);
+                            s->rlayer.d->alert_fragment, 2, s,
+                            s->msg_callback_arg);
 
         if (s->info_callback != NULL)
             cb = s->info_callback;
@@ -775,7 +777,7 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
             if (alert_descr == DTLS1_AD_MISSING_HANDSHAKE_MESSAGE) {
                 unsigned short seq;
                 unsigned int frag_off;
-                unsigned char *p = &(s->d1->alert_fragment[2]);
+                unsigned char *p = &(s->rlayer.d->alert_fragment[2]);
 
                 n2s(p, seq);
                 n2l3(p, frag_off);
@@ -887,7 +889,7 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
     /*
      * Unexpected handshake message (Client Hello, or protocol violation)
      */
-    if ((s->d1->handshake_fragment_len >= DTLS1_HM_HEADER_LENGTH) &&
+    if ((s->rlayer.d->handshake_fragment_len >= DTLS1_HM_HEADER_LENGTH) &&
         !s->in_handshake) {
         struct hm_header_st msg_hdr;
 
@@ -1010,24 +1012,25 @@ have_handshake_fragment(SSL *s, int type, unsigned char *buf,
                         int len, int peek)
 {
 
-    if ((type == SSL3_RT_HANDSHAKE) && (s->d1->handshake_fragment_len > 0))
+    if ((type == SSL3_RT_HANDSHAKE)
+            && (s->rlayer.d->handshake_fragment_len > 0))
         /* (partially) satisfy request from storage */
     {
-        unsigned char *src = s->d1->handshake_fragment;
+        unsigned char *src = s->rlayer.d->handshake_fragment;
         unsigned char *dst = buf;
         unsigned int k, n;
 
         /* peek == 0 */
         n = 0;
-        while ((len > 0) && (s->d1->handshake_fragment_len > 0)) {
+        while ((len > 0) && (s->rlayer.d->handshake_fragment_len > 0)) {
             *dst++ = *src++;
             len--;
-            s->d1->handshake_fragment_len--;
+            s->rlayer.d->handshake_fragment_len--;
             n++;
         }
         /* move any remaining fragment bytes: */
-        for (k = 0; k < s->d1->handshake_fragment_len; k++)
-            s->d1->handshake_fragment[k] = *src++;
+        for (k = 0; k < s->rlayer.d->handshake_fragment_len; k++)
+            s->rlayer.d->handshake_fragment[k] = *src++;
         return n;
     }
 
@@ -1264,7 +1267,8 @@ void dtls1_reset_seq_numbers(SSL *s, int rw)
     if (rw & SSL3_CC_READ) {
         seq = s->rlayer.read_sequence;
         s->rlayer.d->r_epoch++;
-        memcpy(&(s->rlayer.d->bitmap), &(s->rlayer.d->next_bitmap), sizeof(DTLS1_BITMAP));
+        memcpy(&(s->rlayer.d->bitmap), &(s->rlayer.d->next_bitmap),
+            sizeof(DTLS1_BITMAP));
         memset(&(s->rlayer.d->next_bitmap), 0x00, sizeof(DTLS1_BITMAP));
     } else {
         seq = s->rlayer.write_sequence;

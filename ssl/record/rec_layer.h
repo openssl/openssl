@@ -151,6 +151,15 @@ typedef struct dtls_record_layer_st {
     /* Received handshake records (processed and unprocessed) */
     record_pqueue unprocessed_rcds;
     record_pqueue processed_rcds;
+
+    /*
+     * storage for Alert/Handshake protocol data received but not yet
+     * processed by ssl3_read_bytes:
+     */
+    unsigned char alert_fragment[DTLS1_AL_HEADER_LENGTH];
+    unsigned int alert_fragment_len;
+    unsigned char handshake_fragment[DTLS1_HM_HEADER_LENGTH];
+    unsigned int handshake_fragment_len;
 } DTLS_RECORD_LAYER;
 
 typedef struct record_layer_st {
