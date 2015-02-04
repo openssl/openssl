@@ -165,6 +165,10 @@ typedef struct dtls_record_layer_st {
     unsigned int alert_fragment_len;
     unsigned char handshake_fragment[DTLS1_HM_HEADER_LENGTH];
     unsigned int handshake_fragment_len;
+
+    /* save last and current sequence numbers for retransmissions */
+    unsigned char last_write_sequence[8];
+    unsigned char curr_write_sequence[8];
 } DTLS_RECORD_LAYER;
 
 typedef struct record_layer_st {
@@ -231,9 +235,7 @@ typedef struct record_layer_st {
 #define RECORD_LAYER_get_packet_length(rl)      ((rl)->packet_length)
 #define RECORD_LAYER_add_packet_length(rl, inc) ((rl)->packet_length += (inc))
 #define RECORD_LAYER_get_read_sequence(rl)      ((rl)->read_sequence)
-#define RECORD_LAYER_get_write_sequence(rl)     ((rl)->write_sequence)
 #define DTLS_RECORD_LAYER_get_w_epoch(rl)       ((rl)->d->w_epoch)
-#define DTLS_RECORD_LAYER_set_w_epoch(rl, e)    ((rl)->d->w_epoch = (e))
 #define DTLS_RECORD_LAYER_get_processed_rcds(rl) \
                                                 ((rl)->d->processed_rcds)
 #define DTLS_RECORD_LAYER_get_unprocessed_rcds(rl) \
@@ -259,6 +261,7 @@ __owur int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int pe
 int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_free(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl);
+void DTLS_RECORD_LAYER_set_saved_w_epoch(RECORD_LAYER *rl, unsigned short e);
 __owur int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
 __owur int dtls1_write_bytes(SSL *s, int type, const void *buf, int len);
 __owur int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
@@ -281,6 +284,7 @@ void dtls1_reset_seq_numbers(SSL *s, int rw);
 #define RECORD_LAYER_reset_packet_length(rl)    ((rl)->packet_length = 0)
 #define RECORD_LAYER_get_rstate(rl)             ((rl)->rstate)
 #define RECORD_LAYER_set_rstate(rl, st)         ((rl)->rstate = (st))
+#define RECORD_LAYER_get_write_sequence(rl)     ((rl)->write_sequence)
 #define DTLS_RECORD_LAYER_get_r_epoch(rl)       ((rl)->d->r_epoch)
 
 __owur int ssl3_read_n(SSL *s, int n, int max, int extend);

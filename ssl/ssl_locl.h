@@ -1409,8 +1409,7 @@ typedef struct dtls1_state_st {
     unsigned short handshake_write_seq;
     unsigned short next_handshake_write_seq;
     unsigned short handshake_read_seq;
-    /* save last sequence number for retransmissions */
-    unsigned char last_write_sequence[8];
+
     /* Buffered handshake messages */
     pqueue buffered_messages;
     /* Buffered (sent) handshake records */
