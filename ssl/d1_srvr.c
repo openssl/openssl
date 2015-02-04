@@ -330,8 +330,7 @@ int dtls1_accept(SSL *s)
              * listening
              */
             if (listen) {
-                RECORD_LAYER_set_write_sequence(&s->rlayer,
-                    RECORD_LAYER_get_read_sequence(&s->rlayer));
+                DTLS_RECORD_LAYER_resync_write(&s->rlayer);
             }
 
             /* If we're just listening, stop here */
