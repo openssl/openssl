@@ -1144,7 +1144,6 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
     unsigned long header_length;
     unsigned char seq64be[8];
     struct dtls1_retransmit_state saved_state;
-    unsigned char save_write_sequence[8];
 
     /*-
       OPENSSL_assert(s->init_num == 0);
@@ -1194,16 +1193,8 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
     s->write_hash = frag->msg_header.saved_retransmit_state.write_hash;
     s->compress = frag->msg_header.saved_retransmit_state.compress;
     s->session = frag->msg_header.saved_retransmit_state.session;
-    DTLS_RECORD_LAYER_set_w_epoch(&s->rlayer,
+    DTLS_RECORD_LAYER_set_saved_w_epoch(&s->rlayer,
         frag->msg_header.saved_retransmit_state.epoch);
-
-    if (frag->msg_header.saved_retransmit_state.epoch ==
-        saved_state.epoch - 1) {
-
-        memcpy(save_write_sequence, RECORD_LAYER_get_write_sequence(&s->rlayer),
-               sizeof(save_write_sequence));
-        RECORD_LAYER_set_write_sequence(&s->rlayer, s->d1->last_write_sequence);
-    }
 
     ret = dtls1_do_write(s, frag->msg_header.is_ccs ?
                          SSL3_RT_CHANGE_CIPHER_SPEC : SSL3_RT_HANDSHAKE);
@@ -1213,15 +1204,7 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
     s->write_hash = saved_state.write_hash;
     s->compress = saved_state.compress;
     s->session = saved_state.session;
-    DTLS_RECORD_LAYER_set_w_epoch(&s->rlayer, saved_state.epoch);
-
-    if (frag->msg_header.saved_retransmit_state.epoch ==
-        saved_state.epoch - 1) {
-        memcpy(s->d1->last_write_sequence,
-            RECORD_LAYER_get_write_sequence(&s->rlayer),
-            sizeof(s->d1->last_write_sequence));
-        RECORD_LAYER_set_write_sequence(&s->rlayer, save_write_sequence);
-    }
+    DTLS_RECORD_LAYER_set_saved_w_epoch(&s->rlayer, saved_state.epoch);
 
     s->d1->retransmitting = 0;
 

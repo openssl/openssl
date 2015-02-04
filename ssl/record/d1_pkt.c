@@ -211,6 +211,26 @@ void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl)
     d->buffered_app_data.q = buffered_app_data;
 }
 
+void DTLS_RECORD_LAYER_set_saved_w_epoch(RECORD_LAYER *rl, unsigned short e)
+{
+    if (e == rl->d->w_epoch - 1) {
+        memcpy(rl->d->curr_write_sequence,
+               rl->write_sequence,
+               sizeof(rl->write_sequence));
+        memcpy(rl->write_sequence,
+               rl->d->last_write_sequence,
+               sizeof(rl->write_sequence));
+    } else if (e == rl->d->w_epoch + 1) {
+        memcpy(rl->d->last_write_sequence,
+               rl->write_sequence,
+               sizeof(unsigned char[8]));
+        memcpy(rl->write_sequence,
+               rl->d->curr_write_sequence,
+               sizeof(rl->write_sequence));
+    }
+    rl->d->w_epoch = e;
+}
+
 static int have_handshake_fragment(SSL *s, int type, unsigned char *buf,
                                    int len, int peek);
 
@@ -1289,7 +1309,7 @@ void dtls1_reset_seq_numbers(SSL *s, int rw)
         memset(&(s->rlayer.d->next_bitmap), 0x00, sizeof(DTLS1_BITMAP));
     } else {
         seq = s->rlayer.write_sequence;
-        memcpy(s->d1->last_write_sequence, seq,
+        memcpy(s->rlayer.d->last_write_sequence, seq,
                sizeof(s->rlayer.write_sequence));
         s->rlayer.d->w_epoch++;
     }
