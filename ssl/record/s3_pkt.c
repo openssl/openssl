@@ -117,7 +117,7 @@
 #include <openssl/evp.h>
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
-#include "rec_layer_locl.h"
+#include "record_locl.h"
 
 #ifndef  EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
 # define EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK 0
