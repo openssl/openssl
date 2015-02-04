@@ -136,12 +136,16 @@ int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)
 
     d->unprocessed_rcds.q = pqueue_new();
     d->processed_rcds.q = pqueue_new();
+    d->buffered_app_data.q = pqueue_new();
 
-    if (!d->unprocessed_rcds.q || !d->processed_rcds.q) {
+    if (!d->unprocessed_rcds.q || !d->processed_rcds.q
+        || !d->buffered_app_data.q) {
         if (d->unprocessed_rcds.q)
             pqueue_free(d->unprocessed_rcds.q);
         if (d->processed_rcds.q)
             pqueue_free(d->processed_rcds.q);
+        if (d->buffered_app_data.q)
+            pqueue_free(d->buffered_app_data.q);
         OPENSSL_free(d);
         rl->d = NULL;
         return (0);
@@ -155,6 +159,7 @@ void DTLS_RECORD_LAYER_free(RECORD_LAYER *rl)
     DTLS_RECORD_LAYER_clear(rl);
     pqueue_free(rl->d->unprocessed_rcds.q);
     pqueue_free(rl->d->processed_rcds.q);
+    pqueue_free(rl->d->buffered_app_data.q);
     OPENSSL_free(rl->d);
     rl->d = NULL;
 }
@@ -166,6 +171,7 @@ void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl)
     DTLS1_RECORD_DATA *rdata;
     pqueue unprocessed_rcds;
     pqueue processed_rcds;
+    pqueue buffered_app_data;
 
     d = rl->d;
     
@@ -187,11 +193,22 @@ void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl)
         pitem_free(item);
     }
 
+    while ((item = pqueue_pop(d->buffered_app_data.q)) != NULL) {
+        rdata = (DTLS1_RECORD_DATA *)item->data;
+        if (rdata->rbuf.buf) {
+            OPENSSL_free(rdata->rbuf.buf);
+        }
+        OPENSSL_free(item->data);
+        pitem_free(item);
+    }
+
     unprocessed_rcds = d->unprocessed_rcds.q;
     processed_rcds = d->processed_rcds.q;
+    buffered_app_data = d->buffered_app_data.q;
     memset(d, 0, sizeof *d);
     d->unprocessed_rcds.q = unprocessed_rcds;
     d->processed_rcds.q = processed_rcds;
+    d->buffered_app_data.q = buffered_app_data;
 }
 
 static int have_handshake_fragment(SSL *s, int type, unsigned char *buf,
@@ -441,7 +458,7 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
      */
     if (s->state == SSL_ST_OK && rr->length == 0) {
         pitem *item;
-        item = pqueue_pop(s->d1->buffered_app_data.q);
+        item = pqueue_pop(s->rlayer.d->buffered_app_data.q);
         if (item) {
 #ifndef OPENSSL_NO_SCTP
             /* Restore bio_dgram_sctp_rcvinfo struct */
@@ -491,8 +508,8 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
          * the packets were reordered on their way, so buffer the application
          * data for later processing rather than dropping the connection.
          */
-        if (dtls1_buffer_record(s, &(s->d1->buffered_app_data), rr->seq_num) <
-            0) {
+        if (dtls1_buffer_record(s, &(s->rlayer.d->buffered_app_data),
+            rr->seq_num) < 0) {
             SSLerr(SSL_F_DTLS1_READ_BYTES, ERR_R_INTERNAL_ERROR);
             return -1;
         }

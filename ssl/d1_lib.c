@@ -138,7 +138,6 @@ int dtls1_new(SSL *s)
 
     d1->buffered_messages = pqueue_new();
     d1->sent_messages = pqueue_new();
-    d1->buffered_app_data.q = pqueue_new();
 
     if (s->server) {
         d1->cookie_len = sizeof(s->d1->cookie);
@@ -147,14 +146,11 @@ int dtls1_new(SSL *s)
     d1->link_mtu = 0;
     d1->mtu = 0;
 
-    if (!d1->buffered_messages || !d1->sent_messages
-        || !d1->buffered_app_data.q) {
+    if (!d1->buffered_messages || !d1->sent_messages) {
         if (d1->buffered_messages)
             pqueue_free(d1->buffered_messages);
         if (d1->sent_messages)
             pqueue_free(d1->sent_messages);
-        if (d1->buffered_app_data.q)
-            pqueue_free(d1->buffered_app_data.q);
         OPENSSL_free(d1);
         ssl3_free(s);
         return (0);
@@ -169,7 +165,6 @@ static void dtls1_clear_queues(SSL *s)
 {
     pitem *item = NULL;
     hm_fragment *frag = NULL;
-    DTLS1_RECORD_DATA *rdata;
 
     while ((item = pqueue_pop(s->d1->buffered_messages)) != NULL) {
         frag = (hm_fragment *)item->data;
@@ -180,15 +175,6 @@ static void dtls1_clear_queues(SSL *s)
     while ((item = pqueue_pop(s->d1->sent_messages)) != NULL) {
         frag = (hm_fragment *)item->data;
         dtls1_hm_fragment_free(frag);
-        pitem_free(item);
-    }
-
-    while ((item = pqueue_pop(s->d1->buffered_app_data.q)) != NULL) {
-        rdata = (DTLS1_RECORD_DATA *)item->data;
-        if (rdata->rbuf.buf) {
-            OPENSSL_free(rdata->rbuf.buf);
-        }
-        OPENSSL_free(item->data);
         pitem_free(item);
     }
 }
@@ -203,7 +189,6 @@ void dtls1_free(SSL *s)
 
     pqueue_free(s->d1->buffered_messages);
     pqueue_free(s->d1->sent_messages);
-    pqueue_free(s->d1->buffered_app_data.q);
 
     OPENSSL_free(s->d1);
     s->d1 = NULL;
@@ -213,7 +198,6 @@ void dtls1_clear(SSL *s)
 {
     pqueue buffered_messages;
     pqueue sent_messages;
-    pqueue buffered_app_data;
     unsigned int mtu;
     unsigned int link_mtu;
 
@@ -222,7 +206,6 @@ void dtls1_clear(SSL *s)
     if (s->d1) {
         buffered_messages = s->d1->buffered_messages;
         sent_messages = s->d1->sent_messages;
-        buffered_app_data = s->d1->buffered_app_data.q;
         mtu = s->d1->mtu;
         link_mtu = s->d1->link_mtu;
 
@@ -241,7 +224,6 @@ void dtls1_clear(SSL *s)
 
         s->d1->buffered_messages = buffered_messages;
         s->d1->sent_messages = sent_messages;
-        s->d1->buffered_app_data.q = buffered_app_data;
     }
 
     ssl3_clear(s);
