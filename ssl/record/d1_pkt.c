@@ -121,7 +121,7 @@
 #include <openssl/buffer.h>
 #include <openssl/pqueue.h>
 #include <openssl/rand.h>
-
+#include "rec_layer_locl.h"
 
 int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)
 {
@@ -229,6 +229,11 @@ void DTLS_RECORD_LAYER_set_saved_w_epoch(RECORD_LAYER *rl, unsigned short e)
                sizeof(rl->write_sequence));
     }
     rl->d->w_epoch = e;
+}
+
+void DTLS_RECORD_LAYER_resync_write(RECORD_LAYER *rl)
+{
+    memcpy(rl->write_sequence, rl->read_sequence, sizeof(rl->write_sequence));
 }
 
 static int have_handshake_fragment(SSL *s, int type, unsigned char *buf,

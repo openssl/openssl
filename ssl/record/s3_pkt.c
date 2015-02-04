@@ -117,6 +117,7 @@
 #include <openssl/evp.h>
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
+#include "rec_layer_locl.h"
 
 #ifndef  EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
 # define EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK 0
@@ -227,9 +228,9 @@ void RECORD_LAYER_reset_write_sequence(RECORD_LAYER *rl)
     memset(rl->write_sequence, 0, 8);
 }
 
-void RECORD_LAYER_set_write_sequence(RECORD_LAYER *rl, const unsigned char *ws)
+int RECORD_LAYER_setup_comp_buffer(RECORD_LAYER *rl)
 {
-    memcpy(rl->write_sequence, ws, sizeof(rl->write_sequence));
+    return SSL3_RECORD_setup(&(rl)->rrec);
 }
 
 int ssl3_pending(const SSL *s)

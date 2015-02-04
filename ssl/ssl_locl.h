@@ -165,9 +165,6 @@
 # include <openssl/ssl.h>
 # include <openssl/symhacks.h>
 
-#include "record/dtls1_bitmap.h"
-#include "record/ssl3_buffer.h"
-#include "record/ssl3_record.h"
 #include "record/rec_layer.h"
 
 # ifdef OPENSSL_BUILD_SHLIBSSL
