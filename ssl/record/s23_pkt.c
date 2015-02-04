@@ -94,20 +94,20 @@ int ssl23_read_bytes(SSL *s, int n)
     unsigned char *p;
     int j;
 
-    if (RECORD_LAYER_get_packet_length(&s->rlayer) < (unsigned int)n) {
-        p = RECORD_LAYER_get_packet(&s->rlayer);
+    if (s->rlayer.packet_length < (unsigned int)n) {
+        p = s->rlayer.packet;
 
         for (;;) {
             s->rwstate = SSL_READING;
             j = BIO_read(s->rbio,
-                (char *)&(p[RECORD_LAYER_get_packet_length(&s->rlayer)]),
-                n - RECORD_LAYER_get_packet_length(&s->rlayer));
+                (char *)&(p[s->rlayer.packet_length]),
+                n - s->rlayer.packet_length);
             if (j <= 0)
                 return (j);
             s->rwstate = SSL_NOTHING;
-            RECORD_LAYER_add_packet_length(&s->rlayer, j);
-            if (RECORD_LAYER_get_packet_length(&s->rlayer) >= (unsigned int)n)
-                return (RECORD_LAYER_get_packet_length(&s->rlayer));
+            s->rlayer.packet_length += j;
+            if (s->rlayer.packet_length >= (unsigned int)n)
+                return (s->rlayer.packet_length);
         }
     }
     return (n);
