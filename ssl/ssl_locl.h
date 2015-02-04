@@ -1415,12 +1415,7 @@ typedef struct dtls1_state_st {
     pqueue buffered_messages;
     /* Buffered (sent) handshake records */
     pqueue sent_messages;
-    /*
-     * Buffered application records. Only for records between CCS and
-     * Finished to prevent either protocol violation or unnecessary message
-     * loss.
-     */
-    record_pqueue buffered_app_data;
+
     /* Is set when listening for new connections with dtls1_listen() */
     unsigned int listen;
     unsigned int link_mtu;      /* max on-the-wire DTLS packet size */

@@ -151,7 +151,12 @@ typedef struct dtls_record_layer_st {
     /* Received handshake records (processed and unprocessed) */
     record_pqueue unprocessed_rcds;
     record_pqueue processed_rcds;
-
+    /*
+     * Buffered application records. Only for records between CCS and
+     * Finished to prevent either protocol violation or unnecessary message
+     * loss.
+     */
+    record_pqueue buffered_app_data;
     /*
      * storage for Alert/Handshake protocol data received but not yet
      * processed by ssl3_read_bytes:
