@@ -234,12 +234,13 @@ typedef struct record_layer_st {
 #define RECORD_LAYER_get_packet(rl)             ((rl)->packet)
 #define RECORD_LAYER_get_packet_length(rl)      ((rl)->packet_length)
 #define RECORD_LAYER_add_packet_length(rl, inc) ((rl)->packet_length += (inc))
-#define RECORD_LAYER_get_read_sequence(rl)      ((rl)->read_sequence)
 #define DTLS_RECORD_LAYER_get_w_epoch(rl)       ((rl)->d->w_epoch)
 #define DTLS_RECORD_LAYER_get_processed_rcds(rl) \
                                                 ((rl)->d->processed_rcds)
 #define DTLS_RECORD_LAYER_get_unprocessed_rcds(rl) \
                                                 ((rl)->d->unprocessed_rcds)
+#define DTLS_RECORD_LAYER_resync_write(rl) \
+            RECORD_LAYER_set_write_sequence((rl), (rl)->read_sequence)
 
 void RECORD_LAYER_init(RECORD_LAYER *rl, SSL *s);
 void RECORD_LAYER_clear(RECORD_LAYER *rl);
@@ -250,7 +251,6 @@ int RECORD_LAYER_set_data(RECORD_LAYER *rl, const unsigned char *buf, int len);
 void RECORD_LAYER_dup(RECORD_LAYER *dst, RECORD_LAYER *src);
 void RECORD_LAYER_reset_read_sequence(RECORD_LAYER *rl);
 void RECORD_LAYER_reset_write_sequence(RECORD_LAYER *rl);
-void RECORD_LAYER_set_write_sequence(RECORD_LAYER *rl, const unsigned char *ws);
 __owur int ssl3_pending(const SSL *s);
 __owur int ssl23_read_bytes(SSL *s, int n);
 __owur int ssl23_write_bytes(SSL *s);
@@ -284,12 +284,14 @@ void dtls1_reset_seq_numbers(SSL *s, int rw);
 #define RECORD_LAYER_reset_packet_length(rl)    ((rl)->packet_length = 0)
 #define RECORD_LAYER_get_rstate(rl)             ((rl)->rstate)
 #define RECORD_LAYER_set_rstate(rl, st)         ((rl)->rstate = (st))
+#define RECORD_LAYER_get_read_sequence(rl)      ((rl)->read_sequence)
 #define RECORD_LAYER_get_write_sequence(rl)     ((rl)->write_sequence)
 #define DTLS_RECORD_LAYER_get_r_epoch(rl)       ((rl)->d->r_epoch)
 
 __owur int ssl3_read_n(SSL *s, int n, int max, int extend);
 __owur int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
                        unsigned int len);
+void RECORD_LAYER_set_write_sequence(RECORD_LAYER *rl, const unsigned char *ws);
 DTLS1_BITMAP *dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr,
                                       unsigned int *is_next_epoch);
 int dtls1_process_buffered_records(SSL *s);
