@@ -21,11 +21,11 @@ APPS=
 LIB=$(TOP)/libssl.a
 SHARED_LIB= libssl$(SHLIB_EXT)
 LIBSRC=	\
-	s3_meth.c   s3_srvr.c s3_clnt.c  s3_lib.c  s3_enc.c record/s3_pkt.c s3_both.c s3_cbc.c \
-	s3_msg.c \
-	s23_meth.c s23_srvr.c s23_clnt.c s23_lib.c record/s23_pkt.c \
+	s3_meth.c   s3_srvr.c s3_clnt.c  s3_lib.c  s3_enc.c record/rec_layer_s3.c \
+	s3_both.c s3_cbc.c s3_msg.c \
+	s23_meth.c s23_srvr.c s23_clnt.c s23_lib.c record/rec_layer_s23.c \
 	t1_meth.c   t1_srvr.c t1_clnt.c  t1_lib.c  t1_enc.c t1_ext.c \
-	d1_meth.c   d1_srvr.c d1_clnt.c  d1_lib.c  record/d1_pkt.c d1_msg.c \
+	d1_meth.c   d1_srvr.c d1_clnt.c  d1_lib.c  record/rec_layer_d1.c d1_msg.c \
 	d1_both.c d1_srtp.c \
 	ssl_lib.c ssl_err2.c ssl_cert.c ssl_sess.c \
 	ssl_ciph.c ssl_stat.c ssl_rsa.c \
@@ -33,11 +33,11 @@ LIBSRC=	\
 	bio_ssl.c ssl_err.c kssl.c t1_reneg.c tls_srp.c t1_trce.c ssl_utst.c \
 	record/ssl3_buffer.c record/ssl3_record.c record/dtls1_bitmap.c
 LIBOBJ= \
-	s3_meth.o  s3_srvr.o  s3_clnt.o  s3_lib.o  s3_enc.o record/s3_pkt.o s3_both.o s3_cbc.o \
-	s3_msg.o \
-	s23_meth.o s23_srvr.o s23_clnt.o s23_lib.o record/s23_pkt.o \
+	s3_meth.o  s3_srvr.o  s3_clnt.o  s3_lib.o  s3_enc.o record/rec_layer_s3.o \
+	s3_both.o s3_cbc.o s3_msg.o \
+	s23_meth.o s23_srvr.o s23_clnt.o s23_lib.o record/rec_layer_s23.o \
 	t1_meth.o   t1_srvr.o t1_clnt.o  t1_lib.o  t1_enc.o t1_ext.o \
-	d1_meth.o   d1_srvr.o d1_clnt.o  d1_lib.o  record/d1_pkt.o d1_msg.o \
+	d1_meth.o   d1_srvr.o d1_clnt.o  d1_lib.o  record/rec_layer_d1.o d1_msg.o \
 	d1_both.o d1_srtp.o\
 	ssl_lib.o ssl_err2.o ssl_cert.o ssl_sess.o \
 	ssl_ciph.o ssl_stat.o ssl_rsa.o \

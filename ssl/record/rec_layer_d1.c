@@ -1,4 +1,4 @@
-/* ssl/d1_pkt.c */
+/* ssl/record/rec_layer_d1.c */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -121,7 +121,7 @@
 #include <openssl/buffer.h>
 #include <openssl/pqueue.h>
 #include <openssl/rand.h>
-#include "rec_layer_locl.h"
+#include "record_locl.h"
 
 int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)
 {
