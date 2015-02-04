@@ -1434,14 +1434,7 @@ typedef struct dtls1_state_st {
     struct timeval next_timeout;
     /* Timeout duration */
     unsigned short timeout_duration;
-    /*
-     * storage for Alert/Handshake protocol data received but not yet
-     * processed by ssl3_read_bytes:
-     */
-    unsigned char alert_fragment[DTLS1_AL_HEADER_LENGTH];
-    unsigned int alert_fragment_len;
-    unsigned char handshake_fragment[DTLS1_HM_HEADER_LENGTH];
-    unsigned int handshake_fragment_len;
+
     unsigned int retransmitting;
     /*
      * Set when the handshake is ready to process peer's ChangeCipherSpec message.
