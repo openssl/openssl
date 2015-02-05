@@ -196,12 +196,7 @@ static int BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
     rp = r->d;
 
     /* clear the top words of T */
-# if 1
-    for (i = r->top; i < max; i++) /* memset? XXX */
-        rp[i] = 0;
-# else
     memset(&(rp[r->top]), 0, (max - r->top) * sizeof(BN_ULONG));
-# endif
 
     r->top = max;
     n0 = mont->n0[0];
