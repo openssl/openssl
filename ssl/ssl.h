@@ -478,7 +478,8 @@ typedef int (*custom_ext_parse_cb) (SSL *s, unsigned int ext_type,
 # define SSL_OP_PKCS1_CHECK_1                            0x0
 # define SSL_OP_PKCS1_CHECK_2                            0x0
 
-# define SSL_OP_NETSCAPE_CA_DN_BUG                       0x20000000L
+/* Removed as of OpenSSL 1.1.0 */
+# define SSL_OP_NETSCAPE_CA_DN_BUG                       0x0
 # define SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG          0x40000000L
 /*
  * Make server add server-hello extension from early version of cryptopro
