@@ -1589,7 +1589,7 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
         if (!do_client && !do_server) {
             fprintf(stdout, "ERROR IN STARTUP\n");
             ERR_print_errors(bio_err);
-            break;
+            goto err;
         }
         if (do_client && !(done & C_DONE)) {
             if (c_write) {
