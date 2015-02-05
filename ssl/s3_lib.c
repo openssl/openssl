@@ -4518,9 +4518,7 @@ int ssl3_shutdown(SSL *s)
 
     if (!(s->shutdown & SSL_SENT_SHUTDOWN)) {
         s->shutdown |= SSL_SENT_SHUTDOWN;
-#if 1
         ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_CLOSE_NOTIFY);
-#endif
         /*
          * our shutdown alert has been sent now, and if it still needs to be
          * written, s->s3->alert_dispatch will be true
@@ -4529,7 +4527,6 @@ int ssl3_shutdown(SSL *s)
             return (-1);        /* return WANT_WRITE */
     } else if (s->s3->alert_dispatch) {
         /* resend it if not sent */
-#if 1
         ret = s->method->ssl_dispatch_alert(s);
         if (ret == -1) {
             /*
@@ -4539,7 +4536,6 @@ int ssl3_shutdown(SSL *s)
              */
             return (ret);
         }
-#endif
     } else if (!(s->shutdown & SSL_RECEIVED_SHUTDOWN)) {
         /*
          * If we are waiting for a close from our peer, we are closed
