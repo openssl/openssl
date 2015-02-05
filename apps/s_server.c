@@ -266,7 +266,6 @@ static int s_brief = 0;
 static char *keymatexportlabel = NULL;
 static int keymatexportlen = 20;
 
-static int hack = 0;
 #ifndef OPENSSL_NO_ENGINE
 static char *engine_id = NULL;
 #endif
@@ -423,7 +422,6 @@ static void s_server_init(void)
     s_msg = 0;
     s_quiet = 0;
     s_brief = 0;
-    hack = 0;
 # ifndef OPENSSL_NO_ENGINE
     engine_id = NULL;
 # endif
@@ -553,8 +551,6 @@ static void sv_usage(void)
     BIO_printf(bio_err,
                "-no_resume_ephemeral - Disable caching and tickets if ephemeral (EC)DH is used\n");
     BIO_printf(bio_err, " -bugs         - Turn on SSL bug compatibility\n");
-    BIO_printf(bio_err,
-               " -hack         - workaround for early Netscape code\n");
     BIO_printf(bio_err,
                " -www          - Respond to a 'GET /' with a status page\n");
     BIO_printf(bio_err,
@@ -1333,8 +1329,6 @@ int MAIN(int argc, char *argv[])
             sdebug = 1;
         } else if (strcmp(*argv, "-security_debug_verbose") == 0) {
             sdebug = 2;
-        } else if (strcmp(*argv, "-hack") == 0) {
-            hack = 1;
         } else if (strcmp(*argv, "-state") == 0) {
             state = 1;
         } else if (strcmp(*argv, "-crlf") == 0) {
@@ -1712,8 +1706,6 @@ int MAIN(int argc, char *argv[])
         BIO_printf(bio_err, "id_prefix '%s' set.\n", session_id_prefix);
     }
     SSL_CTX_set_quiet_shutdown(ctx, 1);
-    if (hack)
-        SSL_CTX_set_options(ctx, SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG);
     if (exc)
         ssl_ctx_set_excert(ctx, exc);
 
@@ -1777,8 +1769,6 @@ int MAIN(int argc, char *argv[])
             BIO_printf(bio_err, "id_prefix '%s' set.\n", session_id_prefix);
         }
         SSL_CTX_set_quiet_shutdown(ctx2, 1);
-        if (hack)
-            SSL_CTX_set_options(ctx2, SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG);
         if (exc)
             ssl_ctx_set_excert(ctx2, exc);
 
@@ -2729,43 +2719,6 @@ static int www_body(char *hostname, int s, int stype, unsigned char *context)
     }
 
     for (;;) {
-        if (hack) {
-            i = SSL_accept(con);
-#ifndef OPENSSL_NO_SRP
-            while (i <= 0
-                   && SSL_get_error(con, i) == SSL_ERROR_WANT_X509_LOOKUP) {
-                BIO_printf(bio_s_out, "LOOKUP during accept %s\n",
-                           srp_callback_parm.login);
-                srp_callback_parm.user =
-                    SRP_VBASE_get_by_user(srp_callback_parm.vb,
-                                          srp_callback_parm.login);
-                if (srp_callback_parm.user)
-                    BIO_printf(bio_s_out, "LOOKUP done %s\n",
-                               srp_callback_parm.user->info);
-                else
-                    BIO_printf(bio_s_out, "LOOKUP not successful\n");
-                i = SSL_accept(con);
-            }
-#endif
-            switch (SSL_get_error(con, i)) {
-            case SSL_ERROR_NONE:
-                break;
-            case SSL_ERROR_WANT_WRITE:
-            case SSL_ERROR_WANT_READ:
-            case SSL_ERROR_WANT_X509_LOOKUP:
-                continue;
-            case SSL_ERROR_SYSCALL:
-            case SSL_ERROR_SSL:
-            case SSL_ERROR_ZERO_RETURN:
-                ret = 1;
-                goto err;
-                /* break; */
-            }
-
-            SSL_renegotiate(con);
-            SSL_write(con, NULL, 0);
-        }
-
         i = BIO_gets(io, buf, bufsize - 1);
         if (i < 0) {            /* error */
             if (!BIO_should_retry(io)) {

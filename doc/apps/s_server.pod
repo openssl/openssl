@@ -73,7 +73,6 @@ B<openssl> B<s_server>
 [B<-no_ecdhe>]
 [B<-bugs>]
 [B<-brief>]
-[B<-hack>]
 [B<-www>]
 [B<-WWW>]
 [B<-HTTP>]
@@ -293,11 +292,6 @@ option enables various workarounds.
 
 only provide a brief summary of connection parameters instead of the
 normal verbose output.
-
-=item B<-hack>
-
-this option enables a further workaround for some some early Netscape
-SSL code (?).
 
 =item B<-cipher cipherlist>
 

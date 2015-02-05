@@ -148,7 +148,6 @@
  * OTHERWISE.
  */
 
-#define REUSE_CIPHER_BUG
 #define NETSCAPE_HANG_BUG
 
 #include <stdio.h>
@@ -1384,29 +1383,7 @@ int ssl3_get_client_hello(SSL *s)
             s->tlsext_ticket_expected = 0;
     } else {
         /* Session-id reuse */
-#ifdef REUSE_CIPHER_BUG
-        STACK_OF(SSL_CIPHER) *sk;
-        SSL_CIPHER *nc = NULL;
-        SSL_CIPHER *ec = NULL;
-
-        if (s->options & SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG) {
-            sk = s->session->ciphers;
-            for (i = 0; i < sk_SSL_CIPHER_num(sk); i++) {
-                c = sk_SSL_CIPHER_value(sk, i);
-                if (c->algorithm_enc & SSL_eNULL)
-                    nc = c;
-                if (SSL_C_IS_EXPORT(c))
-                    ec = c;
-            }
-            if (nc != NULL)
-                s->s3->tmp.new_cipher = nc;
-            else if (ec != NULL)
-                s->s3->tmp.new_cipher = ec;
-            else
-                s->s3->tmp.new_cipher = s->session->cipher;
-        } else
-#endif
-            s->s3->tmp.new_cipher = s->session->cipher;
+        s->s3->tmp.new_cipher = s->session->cipher;
     }
 
     if (!SSL_USE_SIGALGS(s) || !(s->verify_mode & SSL_VERIFY_PEER)) {
