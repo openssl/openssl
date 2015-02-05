@@ -901,8 +901,13 @@ static int do_check_string(ASN1_STRING *a, int cmp_type, equal_fn equal,
         int astrlen;
         unsigned char *astr;
         astrlen = ASN1_STRING_to_UTF8(&astr, a);
-        if (astrlen < 0)
+        if (astrlen < 0) {
+            /*
+             * -1 could be an internal malloc failure or a decoding error from
+             * malformed input; we can't distinguish.
+             */
             return -1;
+        }
         rv = equal(astr, astrlen, (unsigned char *)b, blen, flags);
         if (rv > 0 && peername)
             *peername = BUF_strndup((char *)astr, astrlen);
