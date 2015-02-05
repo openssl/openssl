@@ -3391,10 +3391,10 @@ int ssl3_send_newsession_ticket(SSL *s)
         /* Now write out lengths: p points to end of data written */
         /* Total length */
         len = p - ssl_handshake_start(s);
-        ssl_set_handshake_header(s, SSL3_MT_NEWSESSION_TICKET, len);
         /* Skip ticket lifetime hint */
         p = ssl_handshake_start(s) + 4;
         s2n(len - 6, p);
+        ssl_set_handshake_header(s, SSL3_MT_NEWSESSION_TICKET, len);
         s->state = SSL3_ST_SW_SESSION_TICKET_B;
         OPENSSL_free(senc);
     }
