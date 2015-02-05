@@ -245,7 +245,6 @@ int SSL_clear(SSL *s)
 
     s->first_packet = 0;
 
-#if 1
     /*
      * Check to see if we were changed into a different method, if so, revert
      * back if we are not doing session-id reuse.
@@ -257,7 +256,6 @@ int SSL_clear(SSL *s)
         if (!s->method->ssl_new(s))
             return (0);
     } else
-#endif
         s->method->ssl_clear(s);
     return (1);
 }
