@@ -2109,8 +2109,6 @@ int ssl3_get_certificate_request(SSL *s)
     for (nc = 0; nc < llen;) {
         n2s(p, l);
         if ((l + nc + 2) > llen) {
-            if ((s->options & SSL_OP_NETSCAPE_CA_DN_BUG))
-                goto cont;      /* netscape bugs */
             ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
             SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST, SSL_R_CA_DN_TOO_LONG);
             goto err;
@@ -2119,14 +2117,9 @@ int ssl3_get_certificate_request(SSL *s)
         q = p;
 
         if ((xn = d2i_X509_NAME(NULL, &q, l)) == NULL) {
-            /* If netscape tolerance is on, ignore errors */
-            if (s->options & SSL_OP_NETSCAPE_CA_DN_BUG)
-                goto cont;
-            else {
-                ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
-                SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST, ERR_R_ASN1_LIB);
-                goto err;
-            }
+            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
+            SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST, ERR_R_ASN1_LIB);
+            goto err;
         }
 
         if (q != (p + l)) {
@@ -2142,11 +2135,6 @@ int ssl3_get_certificate_request(SSL *s)
 
         p += l;
         nc += l + 2;
-    }
-
-    if (0) {
- cont:
-        ERR_clear_error();
     }
 
     /* we should setup a certificate to return.... */
