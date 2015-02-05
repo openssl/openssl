@@ -170,9 +170,6 @@ will send its list of preferences to the client and the client chooses.
 ...
 
 
-=item SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG
-
-...
 
 =item SSL_OP_NO_SSLv2
 

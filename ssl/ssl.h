@@ -480,7 +480,8 @@ typedef int (*custom_ext_parse_cb) (SSL *s, unsigned int ext_type,
 
 /* Removed as of OpenSSL 1.1.0 */
 # define SSL_OP_NETSCAPE_CA_DN_BUG                       0x0
-# define SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG          0x40000000L
+/* Removed as of OpenSSL 1.1.0 */
+# define SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG          0x0L
 /*
  * Make server add server-hello extension from early version of cryptopro
  * draft, when GOST ciphersuite is negotiated. Required for interoperability
