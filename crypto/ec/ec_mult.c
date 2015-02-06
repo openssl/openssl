@@ -496,11 +496,8 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
         }
     }
 
-#if 1                           /* optional; EC_window_bits_for_scalar_size
-                                 * assumes we do this step */
     if (!EC_POINTs_make_affine(group, num_val, val, ctx))
         goto err;
-#endif
 
     r_is_at_infinity = 1;
 

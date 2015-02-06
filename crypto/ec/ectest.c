@@ -239,11 +239,9 @@ static void prime_field_tests(void)
     size_t i, len;
     int k;
 
-# if 1                          /* optional */
     ctx = BN_CTX_new();
     if (!ctx)
         ABORT;
-# endif
 
     p = BN_new();
     a = BN_new();
@@ -945,11 +943,9 @@ static void char2_field_tests(void)
     size_t i, len;
     int k;
 
-#  if 1                         /* optional */
     ctx = BN_CTX_new();
     if (!ctx)
         ABORT;
-#  endif
 
     p = BN_new();
     a = BN_new();

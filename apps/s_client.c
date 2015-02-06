@@ -1872,17 +1872,7 @@ int MAIN(int argc, char **argv)
                 }
             }
 #endif
-#if 1
             k = SSL_read(con, sbuf, 1024 /* BUFSIZZ */ );
-#else
-/* Demo for pending and peek :-) */
-            k = SSL_read(con, sbuf, 16);
-            {
-                char zbuf[10240];
-                printf("read=%d pending=%d peek=%d\n", k, SSL_pending(con),
-                       SSL_peek(con, zbuf, 10240));
-            }
-#endif
 
             switch (SSL_get_error(con, k)) {
             case SSL_ERROR_NONE:

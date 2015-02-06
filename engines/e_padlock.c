@@ -159,10 +159,11 @@ static int padlock_bind_helper(ENGINE *e)
     /* Check available features */
     padlock_available();
 
-#   if 1                        /* disable RNG for now, see commentary in
-                                 * vicinity of RNG code */
+    /*
+     * RNG is currently disabled for reasons discussed in commentary just
+     * before padlock_rand_bytes function.
+     */
     padlock_use_rng = 0;
-#   endif
 
     /* Generate a nice engine name with available features */
     BIO_snprintf(padlock_name, sizeof(padlock_name),
