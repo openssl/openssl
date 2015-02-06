@@ -109,7 +109,6 @@ typedef struct asn1_sctx_st ASN1_SCTX;
 # ifdef OPENSSL_SYS_WIN32
 #  undef X509_NAME
 #  undef X509_EXTENSIONS
-#  undef X509_CERT_PAIR
 #  undef PKCS7_ISSUER_AND_SERIAL
 #  undef OCSP_REQUEST
 #  undef OCSP_RESPONSE
