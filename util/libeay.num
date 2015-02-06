@@ -795,8 +795,8 @@ DES_random_key                          802	EXIST::FUNCTION:DES
 _ossl_old_des_random_seed               803	NOEXIST::FUNCTION:
 _ossl_old_des_read_2passwords           804	NOEXIST::FUNCTION:
 _ossl_old_des_read_password             805	NOEXIST::FUNCTION:
-_ossl_old_des_read_pw                   806	EXIST::FUNCTION:
-_ossl_old_des_read_pw_string            807	EXIST::FUNCTION:
+_ossl_old_des_read_pw                   806	NOEXIST::FUNCTION:
+_ossl_old_des_read_pw_string            807	NOEXIST::FUNCTION:
 DES_set_key                             808	EXIST::FUNCTION:DES
 DES_set_odd_parity                      809	EXIST::FUNCTION:DES
 DES_string_to_2keys                     810	EXIST::FUNCTION:DES
