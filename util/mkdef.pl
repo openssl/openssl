@@ -135,7 +135,7 @@ close(IN);
 my $no_rc2; my $no_rc4; my $no_rc5; my $no_idea; my $no_des; my $no_bf;
 my $no_cast; my $no_whirlpool; my $no_camellia; my $no_seed;
 my $no_md2; my $no_md4; my $no_md5; my $no_sha; my $no_ripemd; my $no_mdc2;
-my $no_rsa; my $no_dsa; my $no_dh; my $no_hmac=0; my $no_aes; my $no_krb5;
+my $no_rsa; my $no_dsa; my $no_dh; my $no_aes; my $no_krb5;
 my $no_ec; my $no_ecdsa; my $no_ecdh; my $no_engine; my $no_hw;
 my $no_fp_api; my $no_static_engine=1; my $no_gmp; my $no_deprecated;
 my $no_psk; my $no_tlsext; my $no_cms; my $no_capieng;
@@ -212,7 +212,6 @@ foreach (@ARGV, split(/ /, $options))
 	elsif (/^no-ec$/)       { $no_ec=1; }
 	elsif (/^no-ecdsa$/)	{ $no_ecdsa=1; }
 	elsif (/^no-ecdh$/) 	{ $no_ecdh=1; }
-	elsif (/^no-hmac$/)	{ $no_hmac=1; }
 	elsif (/^no-aes$/)	{ $no_aes=1; }
 	elsif (/^no-camellia$/)	{ $no_camellia=1; }
 	elsif (/^no-seed$/)     { $no_seed=1; }
@@ -1188,7 +1187,6 @@ sub is_valid
 			if ($keyword eq "EC" && $no_ec) { return 0; }
 			if ($keyword eq "ECDSA" && $no_ecdsa) { return 0; }
 			if ($keyword eq "ECDH" && $no_ecdh) { return 0; }
-			if ($keyword eq "HMAC" && $no_hmac) { return 0; }
 			if ($keyword eq "AES" && $no_aes) { return 0; }
 			if ($keyword eq "CAMELLIA" && $no_camellia) { return 0; }
 			if ($keyword eq "SEED" && $no_seed) { return 0; }

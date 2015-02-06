@@ -60,10 +60,6 @@
 
 # include <openssl/opensslconf.h>
 
-# ifdef OPENSSL_NO_HMAC
-#  error HMAC is disabled.
-# endif
-
 # include <openssl/evp.h>
 
 # define HMAC_MAX_MD_CBLOCK      128/* largest known is SHA512 */

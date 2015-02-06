@@ -59,7 +59,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "cryptlib.h"
-#if !defined(OPENSSL_NO_HMAC)
 # include <openssl/x509.h>
 # include <openssl/evp.h>
 # include <openssl/hmac.h>
@@ -331,4 +330,3 @@ static void h__dump(const unsigned char *p, int len)
     fprintf(stderr, "\n");
 }
 # endif
-#endif

@@ -942,10 +942,10 @@ X509_load_crl_file                      958	EXIST::FUNCTION:STDIO
 EVP_rc2_40_cbc                          959	EXIST::FUNCTION:RC2
 EVP_rc4_40                              960	EXIST::FUNCTION:RC4
 EVP_CIPHER_CTX_init                     961	EXIST::FUNCTION:
-HMAC                                    962	EXIST::FUNCTION:HMAC
-HMAC_Init                               963	EXIST::FUNCTION:HMAC
-HMAC_Update                             964	EXIST::FUNCTION:HMAC
-HMAC_Final                              965	EXIST::FUNCTION:HMAC
+HMAC                                    962	EXIST::FUNCTION:
+HMAC_Init                               963	EXIST::FUNCTION:
+HMAC_Update                             964	EXIST::FUNCTION:
+HMAC_Final                              965	EXIST::FUNCTION:
 ERR_get_next_error_library              966	EXIST::FUNCTION:
 EVP_PKEY_cmp_parameters                 967	EXIST::FUNCTION:
 HMAC_cleanup                            968	NOEXIST::FUNCTION:
@@ -1998,7 +1998,7 @@ EC_GROUP_method_of                      2568	EXIST::FUNCTION:EC
 i2d_KRB5_APREQ                          2569	EXIST::FUNCTION:
 _ossl_old_des_encrypt                   2570	NOEXIST::FUNCTION:
 ASN1_PRINTABLE_new                      2571	EXIST::FUNCTION:
-HMAC_Init_ex                            2572	EXIST::FUNCTION:HMAC
+HMAC_Init_ex                            2572	EXIST::FUNCTION:
 d2i_KRB5_AUTHENT                        2573	EXIST::FUNCTION:
 OCSP_archive_cutoff_new                 2574	EXIST::FUNCTION:
 EC_POINT_set_Jprojective_coordinates_GFp 2575	EXIST:!VMS:FUNCTION:EC
@@ -2206,7 +2206,7 @@ OBJ_NAME_do_all_sorted                  2743	EXIST::FUNCTION:
 i2d_OCSP_BASICRESP                      2744	EXIST::FUNCTION:
 i2d_OCSP_RESPBYTES                      2745	EXIST::FUNCTION:
 PKCS12_unpack_p7encdata                 2746	EXIST::FUNCTION:
-HMAC_CTX_init                           2747	EXIST::FUNCTION:HMAC
+HMAC_CTX_init                           2747	EXIST::FUNCTION:
 ENGINE_get_digest                       2748	EXIST::FUNCTION:ENGINE
 OCSP_RESPONSE_print                     2749	EXIST::FUNCTION:
 KRB5_TKTBODY_it                         2750	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
@@ -2255,7 +2255,7 @@ CRYPTO_get_locked_mem_ex_functions      2781	EXIST:!VMS:FUNCTION:
 CRYPTO_get_locked_mem_ex_funcs          2781	EXIST:VMS:FUNCTION:
 ASN1_TIME_check                         2782	EXIST::FUNCTION:
 UI_get0_user_data                       2783	EXIST::FUNCTION:
-HMAC_CTX_cleanup                        2784	EXIST::FUNCTION:HMAC
+HMAC_CTX_cleanup                        2784	EXIST::FUNCTION:
 DSA_up_ref                              2785	EXIST::FUNCTION:DSA
 _ossl_odes_ede3_cfb64_encrypt           2786	NOEXIST::FUNCTION:
 _ossl_old_des_ede3_cfb64_encrypt        2786	NOEXIST::FUNCTION:
@@ -2844,7 +2844,7 @@ FIPS_selftest_failed                    3284	NOEXIST::FUNCTION:
 sk_is_sorted                            3285	EXIST::FUNCTION:
 X509_check_ca                           3286	EXIST::FUNCTION:
 private_idea_set_encrypt_key            3287	NOEXIST::FUNCTION:
-HMAC_CTX_set_flags                      3288	EXIST::FUNCTION:HMAC
+HMAC_CTX_set_flags                      3288	EXIST::FUNCTION:
 private_SHA_Init                        3289	NOEXIST::FUNCTION:
 private_CAST_set_key                    3290	NOEXIST::FUNCTION:
 private_RIPEMD160_Init                  3291	NOEXIST::FUNCTION:
@@ -3958,7 +3958,7 @@ d2i_TS_TST_INFO_bio                     4336	EXIST::FUNCTION:
 TS_TST_INFO_get_ordering                4337	EXIST::FUNCTION:
 TS_RESP_print_bio                       4338	EXIST::FUNCTION:
 TS_TST_INFO_get_exts                    4339	EXIST::FUNCTION:
-HMAC_CTX_copy                           4340	EXIST::FUNCTION:HMAC
+HMAC_CTX_copy                           4340	EXIST::FUNCTION:
 PKCS5_pbe2_set_iv                       4341	EXIST::FUNCTION:
 ENGINE_get_pkey_asn1_meths              4342	EXIST::FUNCTION:ENGINE
 b2i_PrivateKey                          4343	EXIST::FUNCTION:
