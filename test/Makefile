@@ -574,7 +574,7 @@ destest.o: ../include/openssl/des.h
 destest.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
 destest.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
 destest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-destest.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h destest.c
+destest.o: ../include/openssl/ui.h destest.c
 dhtest.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/bn.h
 dhtest.o: ../include/openssl/crypto.h ../include/openssl/dh.h
 dhtest.o: ../include/openssl/e_os2.h ../include/openssl/err.h
@@ -742,7 +742,7 @@ mdc2test.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
 mdc2test.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 mdc2test.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
 mdc2test.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-mdc2test.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h mdc2test.c
+mdc2test.o: ../include/openssl/ui.h mdc2test.c
 p5_crpt2_test.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 p5_crpt2_test.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 p5_crpt2_test.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
