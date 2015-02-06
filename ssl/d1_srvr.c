@@ -842,11 +842,6 @@ int dtls1_accept(SSL *s)
             /* clean a few things up */
             ssl3_cleanup_key_block(s);
 
-#if 0
-            BUF_MEM_free(s->init_buf);
-            s->init_buf = NULL;
-#endif
-
             /* remove buffering on output */
             ssl_free_wbio_buffer(s);
 

@@ -1213,41 +1213,6 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
 #endif                          /* OPENSSL_NO_CAMELLIA */
 
 #if TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES
-    /* New TLS Export CipherSuites from expired ID */
-# if 0
-    /* Cipher 60 */
-    {
-     1,
-     TLS1_TXT_RSA_EXPORT1024_WITH_RC4_56_MD5,
-     TLS1_CK_RSA_EXPORT1024_WITH_RC4_56_MD5,
-     SSL_kRSA,
-     SSL_aRSA,
-     SSL_RC4,
-     SSL_MD5,
-     SSL_TLSV1,
-     SSL_EXPORT | SSL_EXP56,
-     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     56,
-     128,
-     },
-
-    /* Cipher 61 */
-    {
-     1,
-     TLS1_TXT_RSA_EXPORT1024_WITH_RC2_CBC_56_MD5,
-     TLS1_CK_RSA_EXPORT1024_WITH_RC2_CBC_56_MD5,
-     SSL_kRSA,
-     SSL_aRSA,
-     SSL_RC2,
-     SSL_MD5,
-     SSL_TLSV1,
-     SSL_EXPORT | SSL_EXP56,
-     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     56,
-     128,
-     },
-# endif
-
     /* Cipher 62 */
     {
      1,

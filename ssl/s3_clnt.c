@@ -755,14 +755,8 @@ int ssl3_client_hello(SSL *s)
          * client_version in client hello and not resetting it to
          * the negotiated version.
          */
-#if 0
-        *(p++) = s->version >> 8;
-        *(p++) = s->version & 0xff;
-        s->client_version = s->version;
-#else
         *(p++) = s->client_version >> 8;
         *(p++) = s->client_version & 0xff;
-#endif
 
         /* Random stuff */
         memcpy(p, s->s3->client_random, SSL3_RANDOM_SIZE);
@@ -1036,16 +1030,10 @@ int ssl3_get_server_hello(SSL *s)
     if (s->session->cipher)
         s->session->cipher_id = s->session->cipher->id;
     if (s->hit && (s->session->cipher_id != c->id)) {
-/* Workaround is now obsolete */
-#if 0
-        if (!(s->options & SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG))
-#endif
-        {
-            al = SSL_AD_ILLEGAL_PARAMETER;
-            SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,
-                   SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED);
-            goto f_err;
-        }
+        al = SSL_AD_ILLEGAL_PARAMETER;
+        SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,
+               SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED);
+        goto f_err;
     }
     s->s3->tmp.new_cipher = c;
     /*
@@ -2091,14 +2079,6 @@ int ssl3_get_certificate_request(SSL *s)
 
     /* get the CA RDNs */
     n2s(p, llen);
-#if 0
-    {
-        FILE *out;
-        out = fopen("/tmp/vsign.der", "w");
-        fwrite(p, 1, llen, out);
-        fclose(out);
-    }
-#endif
 
     if ((unsigned long)(p - d + llen) != n) {
         ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);

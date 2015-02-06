@@ -144,14 +144,6 @@
                         if (is_complete) for (ii = (((msg_len) - 1) >> 3) - 1; ii >= 0 ; ii--) \
                                 if (bitmask[ii] != 0xff) { is_complete = 0; break; } }
 
-#if 0
-# define RSMBLY_BITMASK_PRINT(bitmask, msg_len) { \
-                        long ii; \
-                        printf("bitmask: "); for (ii = 0; ii < (msg_len); ii++) \
-                        printf("%d ", (bitmask[ii >> 3] & (1 << (ii & 7))) >> (ii & 7)); \
-                        printf("\n"); }
-#endif
-
 static unsigned char bitmask_start_values[] =
     { 0xff, 0xfe, 0xfc, 0xf8, 0xf0, 0xe0, 0xc0, 0x80 };
 static unsigned char bitmask_end_values[] =
@@ -1031,20 +1023,6 @@ int dtls1_read_failed(SSL *s, int code)
         BIO_set_flags(SSL_get_rbio(s), BIO_FLAGS_READ);
         return code;
     }
-#if 0                           /* for now, each alert contains only one
-                                 * record number */
-    item = pqueue_peek(state->rcvd_records);
-    if (item) {
-        /* send an alert immediately for all the missing records */
-    } else
-#endif
-
-#if 0                           /* no more alert sending, just retransmit the
-                                 * last set of messages */
-    if (state->timeout.read_timeouts >= DTLS1_TMO_READ_COUNT)
-        ssl3_send_alert(s, SSL3_AL_WARNING,
-                        DTLS1_AD_MISSING_HANDSHAKE_MESSAGE);
-#endif
 
     return dtls1_handle_timeout(s);
 }
@@ -1144,11 +1122,6 @@ int dtls1_buffer_message(SSL *s, int is_ccs)
         dtls1_hm_fragment_free(frag);
         return 0;
     }
-#if 0
-    fprintf(stderr, "buffered messge: \ttype = %xx\n", msg_buf->type);
-    fprintf(stderr, "\t\t\t\t\tlen = %d\n", msg_buf->len);
-    fprintf(stderr, "\t\t\t\t\tseq_num = %d\n", msg_buf->seq_num);
-#endif
 
     pqueue_insert(s->d1->sent_messages, item);
     return 1;

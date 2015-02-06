@@ -324,13 +324,6 @@ static int ssl23_client_hello(SSL *s)
 
     buf = (unsigned char *)s->init_buf->data;
     if (s->state == SSL23_ST_CW_CLNT_HELLO_A) {
-#if 0
-        /* don't reuse session-id's */
-        if (!ssl_get_new_session(s, 0)) {
-            return (-1);
-        }
-#endif
-
         p = s->s3->client_random;
         if (ssl_fill_hello_random(s, 0, p, SSL3_RANDOM_SIZE) <= 0)
             return -1;
