@@ -1073,6 +1073,8 @@ int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
 # define EVP_PBE_TYPE_OUTER      0x0
 /* Is an PRF type OID */
 # define EVP_PBE_TYPE_PRF        0x1
+/* Is a PKCS#5 v2.0 KDF */
+# define EVP_PBE_TYPE_KDF        0x2
 
 int EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid,
                          int md_nid, EVP_PBE_KEYGEN *keygen);

@@ -194,6 +194,7 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
     int plen;
     PBE2PARAM *pbe2 = NULL;
     const EVP_CIPHER *cipher;
+    EVP_PBE_KEYGEN *kdf;
 
     int rv = 0;
 
@@ -211,8 +212,8 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
     }
 
     /* See if we recognise the key derivation function */
-
-    if (OBJ_obj2nid(pbe2->keyfunc->algorithm) != NID_id_pbkdf2) {
+    if (!EVP_PBE_find(EVP_PBE_TYPE_KDF, OBJ_obj2nid(pbe2->keyfunc->algorithm),
+			NULL, NULL, &kdf)) {
         EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN,
                EVP_R_UNSUPPORTED_KEY_DERIVATION_FUNCTION);
         goto err;
@@ -236,8 +237,7 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
         EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN, EVP_R_CIPHER_PARAMETER_ERROR);
         goto err;
     }
-    rv = PKCS5_v2_PBKDF2_keyivgen(ctx, pass, passlen,
-                                  pbe2->keyfunc->parameter, c, md, en_de);
+    rv = kdf(ctx, pass, passlen, pbe2->keyfunc->parameter, NULL, NULL, en_de);
  err:
     PBE2PARAM_free(pbe2);
     return rv;
