@@ -342,8 +342,7 @@ $ LIB_COMP = "comp_lib,comp_err,"+ -
 	"c_rle,c_zlib"
 $ LIB_OCSP = "ocsp_asn,ocsp_ext,ocsp_ht,ocsp_lib,ocsp_cl,"+ -
 	"ocsp_srv,ocsp_prn,ocsp_vfy,ocsp_err"
-$ LIB_UI_COMPAT = ",ui_compat"
-$ LIB_UI = "ui_err,ui_lib,ui_openssl,ui_util"+LIB_UI_COMPAT
+$ LIB_UI = "ui_err,ui_lib,ui_openssl,ui_util"
 $ LIB_KRB5 = "krb5_asn"
 $ LIB_CMS = "cms_lib,cms_asn1,cms_att,cms_io,cms_smime,cms_err,"+ -
 	"cms_sd,cms_dd,cms_cd,cms_env,cms_enc,cms_ess,"+ -
