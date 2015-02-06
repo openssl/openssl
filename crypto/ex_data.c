@@ -640,5 +640,3 @@ void *CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad, int idx)
     else
         return (sk_void_value(ad->sk, idx));
 }
-
-IMPLEMENT_STACK_OF(CRYPTO_EX_DATA_FUNCS)

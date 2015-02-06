@@ -590,5 +590,3 @@ unsigned long BIO_number_written(BIO *bio)
         return bio->num_write;
     return 0;
 }
-
-IMPLEMENT_STACK_OF(BIO)

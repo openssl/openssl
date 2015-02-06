@@ -96,8 +96,6 @@ static X509_TRUST trstandard[] = {
 
 #define X509_TRUST_COUNT        (sizeof(trstandard)/sizeof(X509_TRUST))
 
-IMPLEMENT_STACK_OF(X509_TRUST)
-
 static STACK_OF(X509_TRUST) *trtable = NULL;
 
 static int tr_cmp(const X509_TRUST *const *a, const X509_TRUST *const *b)

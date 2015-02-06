@@ -35,7 +35,6 @@ typedef struct name_funcs_st {
 } NAME_FUNCS;
 
 DECLARE_STACK_OF(NAME_FUNCS)
-IMPLEMENT_STACK_OF(NAME_FUNCS)
 
 static STACK_OF(NAME_FUNCS) *name_funcs_stack;
 

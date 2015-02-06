@@ -110,8 +110,6 @@ static X509_PURPOSE xstandard[] = {
 
 #define X509_PURPOSE_COUNT (sizeof(xstandard)/sizeof(X509_PURPOSE))
 
-IMPLEMENT_STACK_OF(X509_PURPOSE)
-
 static STACK_OF(X509_PURPOSE) *xptable = NULL;
 
 static int xp_cmp(const X509_PURPOSE *const *a, const X509_PURPOSE *const *b)

@@ -337,5 +337,3 @@ int X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value,
         X509V3err(X509V3_F_X509V3_ADD1_I2D, errcode);
     return 0;
 }
-
-IMPLEMENT_STACK_OF(X509V3_EXT_METHOD)

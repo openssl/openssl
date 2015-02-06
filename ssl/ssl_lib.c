@@ -3599,8 +3599,4 @@ void *SSL_CTX_get0_security_ex_data(const SSL_CTX *ctx)
     return ctx->cert->sec_ex;
 }
 
-IMPLEMENT_STACK_OF(SSL_CIPHER)
-
-IMPLEMENT_STACK_OF(SSL_COMP)
-
 IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER, ssl_cipher_id);

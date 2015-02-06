@@ -78,7 +78,6 @@ typedef struct {
 } MIME_PARAM;
 
 DECLARE_STACK_OF(MIME_PARAM)
-IMPLEMENT_STACK_OF(MIME_PARAM)
 
 typedef struct {
     char *name;                 /* Name of line e.g. "content-type" */
@@ -87,7 +86,6 @@ typedef struct {
 } MIME_HEADER;
 
 DECLARE_STACK_OF(MIME_HEADER)
-IMPLEMENT_STACK_OF(MIME_HEADER)
 
 static int asn1_output_data(BIO *out, BIO *data, ASN1_VALUE *val, int flags,
                             const ASN1_ITEM *it);
