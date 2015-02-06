@@ -62,13 +62,6 @@
 
 #include "../e_os.h"
 
-#ifdef OPENSSL_NO_HMAC
-int main(int argc, char *argv[])
-{
-    printf("No HMAC support\n");
-    return (0);
-}
-#else
 # include <openssl/hmac.h>
 # ifndef OPENSSL_NO_MD5
 #  include <openssl/md5.h>
@@ -163,4 +156,3 @@ static char *pt(unsigned char *md)
     return (buf);
 }
 # endif
-#endif

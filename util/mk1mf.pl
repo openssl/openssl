@@ -1410,7 +1410,6 @@ sub read_options
 		"no-rsa" => \$no_rsa,
 		"no-dsa" => \$no_dsa,
 		"no-dh" => \$no_dh,
-		"no-hmac" => \$no_hmac,
 		"no-asm" => \$no_asm,
 		"nasm" => \$nasm,
 		"nw-nasm" => \$nw_nasm,

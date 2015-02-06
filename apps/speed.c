@@ -133,9 +133,7 @@
 #ifndef OPENSSL_NO_MD5
 # include <openssl/md5.h>
 #endif
-#ifndef OPENSSL_NO_HMAC
 # include <openssl/hmac.h>
-#endif
 #include <openssl/evp.h>
 # include <openssl/sha.h>
 #ifndef OPENSSL_NO_RMD160
@@ -1079,9 +1077,7 @@ int MAIN(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_MD5
             BIO_printf(bio_err, "md5      ");
-# ifndef OPENSSL_NO_HMAC
             BIO_printf(bio_err, "hmac     ");
-# endif
 #endif
             BIO_printf(bio_err, "sha1     ");
             BIO_printf(bio_err, "sha256   ");
@@ -1590,7 +1586,7 @@ int MAIN(int argc, char **argv)
     }
 #endif
 
-#if !defined(OPENSSL_NO_MD5) && !defined(OPENSSL_NO_HMAC)
+#if !defined(OPENSSL_NO_MD5)
     if (doit[D_HMAC]) {
         HMAC_CTX hctx;
 
