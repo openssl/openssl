@@ -469,13 +469,6 @@ int MAIN(int argc, char **argv)
             CA_createserial = ++num;
         else if (strcmp(*argv, "-clrext") == 0)
             clrext = 1;
-#if 1                           /* stay backwards-compatible with 0.9.5; this
-                                 * should go away soon */
-        else if (strcmp(*argv, "-crlext") == 0) {
-            BIO_printf(bio_err, "use -clrext instead of -crlext\n");
-            clrext = 1;
-        }
-#endif
         else if (strcmp(*argv, "-ocspid") == 0)
             ocspid = ++num;
         else if (strcmp(*argv, "-badsig") == 0)

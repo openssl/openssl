@@ -384,25 +384,10 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                 }
             } else
                 tv = sv;
-#if 1
             if (_CONF_add_string(conf, tv, v) == 0) {
                 CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
-#else
-            v->section = tv->section;
-            if (!sk_CONF_VALUE_push(ts, v)) {
-                CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_MALLOC_FAILURE);
-                goto err;
-            }
-            vv = (CONF_VALUE *)lh_insert(conf->data, v);
-            if (vv != NULL) {
-                sk_CONF_VALUE_delete_ptr(ts, vv);
-                OPENSSL_free(vv->name);
-                OPENSSL_free(vv->value);
-                OPENSSL_free(vv);
-            }
-#endif
             v = NULL;
         }
     }

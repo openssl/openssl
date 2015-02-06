@@ -182,7 +182,6 @@ typedef BOOL(WINAPI *MODULE32) (HANDLE, LPMODULEENTRY32);
 
 #  include <lmcons.h>
 #  include <lmstats.h>
-#  if 1
 /*
  * The NET API is Unicode only.  It requires the use of the UNICODE macro.
  * When UNICODE is defined LPTSTR becomes LPWSTR.  LMSTR was was added to the
@@ -193,7 +192,6 @@ typedef BOOL(WINAPI *MODULE32) (HANDLE, LPMODULEENTRY32);
 typedef NET_API_STATUS(NET_API_FUNCTION *NETSTATGET)
  (LPWSTR, LPWSTR, DWORD, DWORD, LPBYTE *);
 typedef NET_API_STATUS(NET_API_FUNCTION *NETFREE) (LPBYTE);
-#  endif                        /* 1 */
 # endif                         /* !OPENSSL_SYS_WINCE */
 
 int RAND_poll(void)

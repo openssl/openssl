@@ -1878,7 +1878,6 @@ int MAIN(int argc, char *argv[])
             goto end;
     }
 #ifndef OPENSSL_NO_RSA
-# if 1
     if (!no_tmp_rsa) {
         SSL_CTX_set_tmp_rsa_callback(ctx, tmp_rsa_cb);
 #  ifndef OPENSSL_NO_TLSEXT
@@ -1886,31 +1885,6 @@ int MAIN(int argc, char *argv[])
             SSL_CTX_set_tmp_rsa_callback(ctx2, tmp_rsa_cb);
 #  endif
     }
-# else
-    if (!no_tmp_rsa && SSL_CTX_need_tmp_RSA(ctx)) {
-        RSA *rsa;
-
-        BIO_printf(bio_s_out, "Generating temp (512 bit) RSA key...");
-        BIO_flush(bio_s_out);
-
-        rsa = RSA_generate_key(512, RSA_F4, NULL);
-
-        if (!SSL_CTX_set_tmp_rsa(ctx, rsa)) {
-            ERR_print_errors(bio_err);
-            goto end;
-        }
-#  ifndef OPENSSL_NO_TLSEXT
-        if (ctx2) {
-            if (!SSL_CTX_set_tmp_rsa(ctx2, rsa)) {
-                ERR_print_errors(bio_err);
-                goto end;
-            }
-        }
-#  endif
-        RSA_free(rsa);
-        BIO_printf(bio_s_out, "\n");
-    }
-# endif
 #endif
 
     if (no_resume_ephemeral) {
@@ -2488,11 +2462,7 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
  err:
     if (con != NULL) {
         BIO_printf(bio_s_out, "shutting down SSL\n");
-#if 1
         SSL_set_shutdown(con, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
-#else
-        SSL_shutdown(con);
-#endif
         SSL_free(con);
     }
     BIO_printf(bio_s_out, "CONNECTION CLOSED\n");
@@ -3051,16 +3021,8 @@ static int www_body(char *hostname, int s, int stype, unsigned char *context)
             break;
     }
  end:
-#if 1
     /* make sure we re-use sessions */
     SSL_set_shutdown(con, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
-#else
-    /* This kills performance */
-    /*
-     * SSL_shutdown(con); A shutdown gets sent in the BIO_free_all(io)
-     * procession
-     */
-#endif
 
  err:
 
