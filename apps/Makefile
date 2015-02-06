@@ -605,7 +605,7 @@ passwd.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
 passwd.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 passwd.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 passwd.o: ../include/openssl/txt_db.h ../include/openssl/ui.h
-passwd.o: ../include/openssl/ui_compat.h ../include/openssl/x509.h
+passwd.o: ../include/openssl/x509.h
 passwd.o: ../include/openssl/x509_vfy.h ../include/openssl/x509v3.h apps.h
 passwd.o: passwd.c
 pkcs12.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
@@ -954,7 +954,7 @@ speed.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 speed.o: ../include/openssl/seed.h ../include/openssl/sha.h
 speed.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 speed.o: ../include/openssl/txt_db.h ../include/openssl/ui.h
-speed.o: ../include/openssl/ui_compat.h ../include/openssl/whrlpool.h
+speed.o: ../include/openssl/whrlpool.h
 speed.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 speed.o: ../include/openssl/x509v3.h apps.h speed.c testdsa.h testrsa.h
 spkac.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
@@ -1037,7 +1037,7 @@ version.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
 version.o: ../include/openssl/rc4.h ../include/openssl/safestack.h
 version.o: ../include/openssl/sha.h ../include/openssl/stack.h
 version.o: ../include/openssl/symhacks.h ../include/openssl/txt_db.h
-version.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h
+version.o: ../include/openssl/ui.h
 version.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 version.o: ../include/openssl/x509v3.h apps.h version.c
 x509.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h

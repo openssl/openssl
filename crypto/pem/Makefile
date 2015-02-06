@@ -135,7 +135,7 @@ pem_lib.o: ../../include/openssl/pkcs12.h ../../include/openssl/pkcs7.h
 pem_lib.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
 pem_lib.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 pem_lib.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-pem_lib.o: ../../include/openssl/ui_compat.h ../../include/openssl/x509.h
+pem_lib.o: ../../include/openssl/x509.h
 pem_lib.o: ../../include/openssl/x509_vfy.h ../asn1/asn1_locl.h ../cryptlib.h
 pem_lib.o: pem_lib.c
 pem_oth.o: ../../e_os.h ../../include/openssl/asn1.h
