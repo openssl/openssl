@@ -65,8 +65,6 @@
 #include <openssl/err.h>
 #include "ui_locl.h"
 
-IMPLEMENT_STACK_OF(UI_STRING_ST)
-
 static const UI_METHOD *default_UI_meth = NULL;
 
 UI *UI_new(void)

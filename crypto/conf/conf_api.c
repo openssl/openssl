@@ -279,5 +279,3 @@ CONF_VALUE *_CONF_new_section(CONF *conf, const char *section)
     }
     return (v);
 }
-
-IMPLEMENT_STACK_OF(CONF_VALUE)

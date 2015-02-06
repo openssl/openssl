@@ -113,5 +113,3 @@ void X509_INFO_free(X509_INFO *x)
         OPENSSL_free(x->enc_data);
     OPENSSL_free(x);
 }
-
-IMPLEMENT_STACK_OF(X509_INFO)

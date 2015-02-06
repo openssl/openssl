@@ -400,6 +400,4 @@ ASN1_OBJECT *ASN1_OBJECT_create(int nid, unsigned char *data, int len,
     return (OBJ_dup(&o));
 }
 
-IMPLEMENT_STACK_OF(ASN1_OBJECT)
-
 IMPLEMENT_ASN1_SET_OF(ASN1_OBJECT)
