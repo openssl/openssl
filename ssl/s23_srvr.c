@@ -569,9 +569,6 @@ int ssl23_get_client_hello(SSL *s)
             s->s3->rbuf.left = 0;
             s->s3->rbuf.offset = 0;
         }
-#if 0                           /* ssl3_get_client_hello does this */
-        s->client_version = (v[0] << 8) | v[1];
-#endif
         s->handshake_func = s->method->ssl_accept;
     } else {
         /* bad, very bad */

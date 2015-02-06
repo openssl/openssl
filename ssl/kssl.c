@@ -962,17 +962,6 @@ void print_krb5_authdata(char *label, krb5_authdata **adata)
         return;
     }
     fprintf(stderr, "%s [%p]\n", label, (void *)adata);
-# if 0
-    {
-        int i;
-        fprintf(stderr, "%s[at%d:%d] ", label, adata->ad_type, adata->length);
-        for (i = 0; i < adata->length; i++) {
-            fprintf(stderr, (isprint(adata->contents[i])) ? "%c " : "%02x",
-                    adata->contents[i]);
-        }
-        fprintf(stderr, "\n");
-    }
-# endif
 }
 
 /*

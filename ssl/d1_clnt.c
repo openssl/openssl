@@ -714,13 +714,6 @@ int dtls1_connect(SSL *s)
             /* clean a few things up */
             ssl3_cleanup_key_block(s);
 
-#if 0
-            if (s->init_buf != NULL) {
-                BUF_MEM_free(s->init_buf);
-                s->init_buf = NULL;
-            }
-#endif
-
             /*
              * If we are not 'joining' the last two packets, remove the
              * buffering now
@@ -816,16 +809,6 @@ static int dtls1_get_hello_verify(SSL *s)
     }
 
     data = (unsigned char *)s->init_msg;
-#if 0
-    if (s->method->version != DTLS_ANY_VERSION &&
-        ((data[0] != (s->version >> 8)) || (data[1] != (s->version & 0xff))))
-    {
-        SSLerr(SSL_F_DTLS1_GET_HELLO_VERIFY, SSL_R_WRONG_SSL_VERSION);
-        s->version = (s->version & 0xff00) | data[1];
-        al = SSL_AD_PROTOCOL_VERSION;
-        goto f_err;
-    }
-#endif
     data += 2;
 
     cookie_len = *(data++);

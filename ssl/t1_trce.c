@@ -1214,14 +1214,6 @@ void SSL_trace(int write_p, int version, int content_type,
                            (msg[3] << 8 | msg[4]),
                            (msg[5] << 8 | msg[6]),
                            (msg[7] << 8 | msg[8]), (msg[9] << 8 | msg[10]));
-# if 0
-                /*
-                 * Just print handshake type so we can see what is going on
-                 * during fragmentation.
-                 */
-                BIO_printf(bio, "(%s)\n",
-                           ssl_trace_str(msg[msglen], ssl_handshake_tbl));
-# endif
             }
 
             BIO_printf(bio, "  Content Type = %s (%d)\n  Length = %d",

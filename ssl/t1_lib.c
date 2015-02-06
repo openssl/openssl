@@ -1923,9 +1923,6 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p,
 
         if (data + size > (d + n))
             goto ri_check;
-# if 0
-        fprintf(stderr, "Received extension type %d size %d\n", type, size);
-# endif
         if (s->tlsext_debug_cb)
             s->tlsext_debug_cb(s, 0, type, data, size, s->tlsext_debug_arg);
         if (type == TLSEXT_TYPE_renegotiate) {
@@ -2080,15 +2077,6 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p,
                 memcpy(s->session->tlsext_ecpointformatlist, sdata,
                        ecpointformatlist_length);
             }
-#  if 0
-            fprintf(stderr,
-                    "ssl_parse_clienthello_tlsext s->session->tlsext_ecpointformatlist (length=%i) ",
-                    s->session->tlsext_ecpointformatlist_length);
-            sdata = s->session->tlsext_ecpointformatlist;
-            for (i = 0; i < s->session->tlsext_ecpointformatlist_length; i++)
-                fprintf(stderr, "%i ", *(sdata++));
-            fprintf(stderr, "\n");
-#  endif
         } else if (type == TLSEXT_TYPE_elliptic_curves) {
             unsigned char *sdata = data;
             int ellipticcurvelist_length = (*(sdata++) << 8);
@@ -2117,15 +2105,6 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p,
                 memcpy(s->session->tlsext_ellipticcurvelist, sdata,
                        ellipticcurvelist_length);
             }
-#  if 0
-            fprintf(stderr,
-                    "ssl_parse_clienthello_tlsext s->session->tlsext_ellipticcurvelist (length=%i) ",
-                    s->session->tlsext_ellipticcurvelist_length);
-            sdata = s->session->tlsext_ellipticcurvelist;
-            for (i = 0; i < s->session->tlsext_ellipticcurvelist_length; i++)
-                fprintf(stderr, "%i ", *(sdata++));
-            fprintf(stderr, "\n");
-#  endif
         }
 # endif                         /* OPENSSL_NO_EC */
         else if (type == TLSEXT_TYPE_session_ticket) {
@@ -2462,14 +2441,6 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p,
                 memcpy(s->session->tlsext_ecpointformatlist, sdata,
                        ecpointformatlist_length);
             }
-#  if 0
-            fprintf(stderr,
-                    "ssl_parse_serverhello_tlsext s->session->tlsext_ecpointformatlist ");
-            sdata = s->session->tlsext_ecpointformatlist;
-            for (i = 0; i < s->session->tlsext_ecpointformatlist_length; i++)
-                fprintf(stderr, "%i ", *(sdata++));
-            fprintf(stderr, "\n");
-#  endif
         }
 # endif                         /* OPENSSL_NO_EC */
 

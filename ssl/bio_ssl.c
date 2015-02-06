@@ -150,18 +150,6 @@ static int ssl_read(BIO *b, char *out, int outl)
 
     BIO_clear_retry_flags(b);
 
-#if 0
-    if (!SSL_is_init_finished(ssl)) {
-/*              ret=SSL_do_handshake(ssl); */
-        if (ret > 0) {
-
-            outflags = (BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY);
-            ret = -1;
-            goto end;
-        }
-    }
-#endif
-/*      if (ret > 0) */
     ret = SSL_read(ssl, out, outl);
 
     switch (SSL_get_error(ssl, ret)) {
