@@ -107,7 +107,6 @@ extern "C" {
 # ifdef OPENSSL_SYS_WIN32
 /* Under Win32 these are defined in wincrypt.h */
 #  undef X509_NAME
-#  undef X509_CERT_PAIR
 #  undef X509_EXTENSIONS
 # endif
 
@@ -297,11 +296,6 @@ typedef struct x509_trust_st {
 } X509_TRUST;
 
 DECLARE_STACK_OF(X509_TRUST)
-
-typedef struct x509_cert_pair_st {
-    X509 *forward;
-    X509 *reverse;
-} X509_CERT_PAIR;
 
 /* standard trust ids */
 
@@ -798,8 +792,6 @@ DECLARE_ASN1_FUNCTIONS(X509_CINF)
 
 DECLARE_ASN1_FUNCTIONS(X509)
 DECLARE_ASN1_FUNCTIONS(X509_CERT_AUX)
-
-DECLARE_ASN1_FUNCTIONS(X509_CERT_PAIR)
 
 int X509_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
                           CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);

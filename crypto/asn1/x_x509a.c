@@ -192,10 +192,3 @@ void X509_reject_clear(X509 *x)
         x->aux->reject = NULL;
     }
 }
-
-ASN1_SEQUENCE(X509_CERT_PAIR) = {
-        ASN1_EXP_OPT(X509_CERT_PAIR, forward, X509, 0),
-        ASN1_EXP_OPT(X509_CERT_PAIR, reverse, X509, 1)
-} ASN1_SEQUENCE_END(X509_CERT_PAIR)
-
-IMPLEMENT_ASN1_FUNCTIONS(X509_CERT_PAIR)
