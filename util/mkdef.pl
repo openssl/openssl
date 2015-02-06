@@ -5,25 +5,8 @@
 # It does this by parsing the header files and looking for the
 # prototyped functions: it then prunes the output.
 #
-# Intermediary files are created, call libeay.num and ssleay.num,...
-# Previously, they had the following format:
-#
-#	routine-name	nnnn
-#
-# But that isn't enough for a number of reasons, the first on being that
-# this format is (needlessly) very Win32-centric, and even then...
-# One of the biggest problems is that there's no information about what
-# routines should actually be used, which varies with what crypto algorithms
-# are disabled.  Also, some operating systems (for example VMS with VAX C)
-# need to keep track of the global variables as well as the functions.
-#
-# So, a remake of this script is done so as to include information on the
-# kind of symbol it is (function or variable) and what algorithms they're
-# part of.  This will allow easy translating to .def files or the corresponding
-# file in other operating systems (a .opt file for VMS, possibly with a .mar
-# file).
-#
-# The format now becomes:
+# Intermediary files are created, call libeay.num and ssleay.num,
+# The format of these files is:
 #
 #	routine-name	nnnn	info
 #
@@ -120,7 +103,10 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 # Unit testing
 		 	 "UNIT_TEST",
 			 # OCB mode
-			 "OCB");
+			 "OCB",
+                         # APPLINK (win build feature?)
+                         "APPLINK"
+                     );
 
 my $options="";
 open(IN,"<Makefile") || die "unable to open Makefile!\n";
