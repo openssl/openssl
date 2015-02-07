@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_set_bio - connect the SSL object with a BIO
+SSL_set_bio, SSL_set_rbio, SSL_set_wbio - connect the SSL object with a BIO
 
 =head1 SYNOPSIS
 
@@ -21,14 +21,23 @@ If a BIO is non-blocking, the B<ssl> will also have non-blocking behaviour.
 If there was already a BIO connected to B<ssl>, BIO_free() will be called
 (for both the reading and writing side, if different).
 
+SSL_set_rbio() does the same job as SSL_set_bio() except that it enables you
+to only connect the read bio, without touching the write bio. Similarly
+SSL_set_wbio() enables you to connect the write bio without touching the read
+bio.
+
 =head1 RETURN VALUES
 
-SSL_set_bio() cannot fail.
+SSL_set_bio(), SSL_set_rbio() and SSL_set_wbio() cannot fail.
 
 =head1 SEE ALSO
 
 L<SSL_get_rbio(3)|SSL_get_rbio(3)>,
 L<SSL_connect(3)|SSL_connect(3)>, L<SSL_accept(3)|SSL_accept(3)>,
 L<SSL_shutdown(3)|SSL_shutdown(3)>, L<ssl(3)|ssl(3)>, L<bio(3)|bio(3)>
+
+=head1 HISTORY
+
+SSL_set_rbio() and SSL_set_wbio() were added in OpenSSL 1.1.0.
 
 =cut

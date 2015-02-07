@@ -1398,6 +1398,8 @@ int SSL_set_fd(SSL *s, int fd);
 int SSL_set_rfd(SSL *s, int fd);
 int SSL_set_wfd(SSL *s, int fd);
 # endif
+void SSL_set_rbio(SSL *s, BIO *rbio);
+void SSL_set_wbio(SSL *s, BIO *wbio);
 void SSL_set_bio(SSL *s, BIO *rbio, BIO *wbio);
 BIO *SSL_get_rbio(const SSL *s);
 BIO *SSL_get_wbio(const SSL *s);

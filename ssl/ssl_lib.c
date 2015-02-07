@@ -622,7 +622,14 @@ void SSL_free(SSL *s)
     OPENSSL_free(s);
 }
 
-void SSL_set_bio(SSL *s, BIO *rbio, BIO *wbio)
+void SSL_set_rbio(SSL *s, BIO *rbio)
+{
+    if ((s->rbio != NULL) && (s->rbio != rbio))
+        BIO_free_all(s->rbio);
+    s->rbio = rbio;
+}
+
+void SSL_set_wbio(SSL *s, BIO *wbio)
 {
     /*
      * If the output buffering BIO is still in place, remove it
@@ -633,12 +640,15 @@ void SSL_set_bio(SSL *s, BIO *rbio, BIO *wbio)
             s->bbio->next_bio = NULL;
         }
     }
-    if ((s->rbio != NULL) && (s->rbio != rbio))
-        BIO_free_all(s->rbio);
     if ((s->wbio != NULL) && (s->wbio != wbio) && (s->rbio != s->wbio))
         BIO_free_all(s->wbio);
-    s->rbio = rbio;
     s->wbio = wbio;
+}
+
+void SSL_set_bio(SSL *s, BIO *rbio, BIO *wbio)
+{
+    SSL_set_wbio(s, wbio);
+    SSL_set_rbio(s, rbio);
 }
 
 BIO *SSL_get_rbio(const SSL *s)
