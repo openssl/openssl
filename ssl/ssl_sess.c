@@ -858,6 +858,14 @@ unsigned long SSL_SESSION_get_ticket_lifetime_hint(const SSL_SESSION *s)
     return s->tlsext_tick_lifetime_hint;
 }
 
+void SSL_SESSION_get0_ticket(const SSL_SESSION *s, unsigned char **tick,
+                            size_t *len)
+{
+    *len = s->tlsext_ticklen;
+    if(tick != NULL)
+        *tick = s->tlsext_tick;
+}
+
 X509 *SSL_SESSION_get0_peer(SSL_SESSION *s)
 {
     return s->peer;
