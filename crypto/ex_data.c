@@ -500,6 +500,8 @@ static void int_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
     EX_CLASS_ITEM *item;
     void *ptr;
     CRYPTO_EX_DATA_FUNCS **storage = NULL;
+    if (ex_data == NULL)
+        return;
     if ((item = def_get_class(class_index)) == NULL)
         return;
     CRYPTO_r_lock(CRYPTO_LOCK_EX_DATA);
