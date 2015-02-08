@@ -24,8 +24,6 @@ master secret, 0 if it did not and -1 if a handshake is currently in
 progress i.e. it is not possible to determine if extended master secret
 was used.
 
-=back
-
 =head1 SEE ALSO
 
 L<ssl(3)|ssl(3)>
