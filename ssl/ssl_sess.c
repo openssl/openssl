@@ -848,6 +848,16 @@ long SSL_SESSION_set_time(SSL_SESSION *s, long t)
     return (t);
 }
 
+int SSL_SESSION_has_ticket(const SSL_SESSION *s)
+{
+    return (s->tlsext_ticklen > 0) ? 1 : 0;
+}
+
+unsigned long SSL_SESSION_get_ticket_lifetime_hint(const SSL_SESSION *s)
+{
+    return s->tlsext_tick_lifetime_hint;
+}
+
 X509 *SSL_SESSION_get0_peer(SSL_SESSION *s)
 {
     return s->peer;

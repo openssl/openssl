@@ -1460,6 +1460,8 @@ long SSL_SESSION_get_time(const SSL_SESSION *s);
 long SSL_SESSION_set_time(SSL_SESSION *s, long t);
 long SSL_SESSION_get_timeout(const SSL_SESSION *s);
 long SSL_SESSION_set_timeout(SSL_SESSION *s, long t);
+int SSL_SESSION_has_ticket(const SSL_SESSION *s);
+unsigned long SSL_SESSION_get_ticket_lifetime_hint(const SSL_SESSION *s);
 void SSL_copy_session_id(SSL *to, const SSL *from);
 X509 *SSL_SESSION_get0_peer(SSL_SESSION *s);
 int SSL_SESSION_set1_id_context(SSL_SESSION *s, const unsigned char *sid_ctx,

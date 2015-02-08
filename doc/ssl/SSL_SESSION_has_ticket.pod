@@ -1,0 +1,34 @@
+=pod
+
+=head1 NAME
+
+SSL_SESSION_has_ticket, SSL_SESSION_get_ticket_lifetime_hint - check whether a session has an associated ticket, and get its lifetime hint.
+
+=head1 SYNOPSIS
+
+ #include <openssl/ssl.h>
+
+ int SSL_SESSION_has_ticket(const SSL_SESSION *s);
+ unsigned long SSL_SESSION_get_ticket_lifetime_hint(const SSL_SESSION *s);
+
+=head1 DESCRIPTION
+
+SSL_SESSION_has_ticket() returns 1 if there is a Session Ticket associated with
+this session, and 0 otherwise.
+
+SSL_SESSION_get_ticket_lifetime_hint returns the lifetime hint in seconds
+associated with the session ticket.
+
+=head1 SEE ALSO
+
+L<ssl(3)|ssl(3)>,
+L<d2i_SSL_SESSION(3)|d2i_SSL_SESSION(3)>,
+L<SSL_SESSION_get_time(3)|SSL_SESSION_get_time(3)>,
+L<SSL_SESSION_free(3)|SSL_SESSION_free(3)>
+
+=head1 HISTORY
+
+SSL_SESSION_has_ticket and SSL_SESSION_get_ticket_lifetime_hint were added in
+OpenSSL 1.1.0.
+
+=cut
