@@ -145,12 +145,6 @@ static int null_callback(int ok, X509_STORE_CTX *e)
     return ok;
 }
 
-#if 0
-static int x509_subject_cmp(X509 **a, X509 **b)
-{
-    return X509_subject_name_cmp(*a, *b);
-}
-#endif
 /* Return 1 is a certificate is self signed */
 static int cert_self_signed(X509 *x)
 {
