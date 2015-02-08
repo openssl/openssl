@@ -428,10 +428,6 @@ int main(int Argc, char *ARGV[])
     if (arg.data != NULL)
         OPENSSL_free(arg.data);
 
-    if (bio_err != NULL) {
-        BIO_free(bio_err);
-        bio_err = NULL;
-    }
 #if defined( OPENSSL_SYS_VMS) && (__INITIAL_POINTER_SIZE == 64)
     /* Free any duplicate Argv[] storage. */
     if (free_Argv) {
@@ -440,6 +436,10 @@ int main(int Argc, char *ARGV[])
 #endif
     apps_shutdown();
     CRYPTO_mem_leaks(bio_err);
+    if (bio_err != NULL) {
+        BIO_free(bio_err);
+        bio_err = NULL;
+    }
 
     OPENSSL_EXIT(ret);
 }
