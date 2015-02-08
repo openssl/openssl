@@ -116,14 +116,6 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
-#if 0                           /* now just a #define */
-int BN_mod(BIGNUM *rem, const BIGNUM *m, const BIGNUM *d, BN_CTX *ctx)
-{
-    return (BN_div(NULL, rem, m, d, ctx));
-    /* note that  rem->neg == m->neg  (unless the remainder is zero) */
-}
-#endif
-
 int BN_nnmod(BIGNUM *r, const BIGNUM *m, const BIGNUM *d, BN_CTX *ctx)
 {
     /*
