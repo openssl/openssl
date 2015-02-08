@@ -670,7 +670,7 @@ struct ssl_session_st {
     /* RFC4507 info */
     unsigned char *tlsext_tick; /* Session ticket */
     size_t tlsext_ticklen;      /* Session ticket length */
-    long tlsext_tick_lifetime_hint; /* Session lifetime hint in seconds */
+    unsigned long tlsext_tick_lifetime_hint; /* Session lifetime hint in seconds */
 # endif
 # ifndef OPENSSL_NO_SRP
     char *srp_username;
