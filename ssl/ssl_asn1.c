@@ -569,9 +569,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
         OPENSSL_free(ai.data);
         ai.data = NULL;
         ai.length = 0;
-    } else if (ret->tlsext_ticklen && ret->session_id_length)
-        ret->tlsext_tick_lifetime_hint = -1;
-    else
+    } else
         ret->tlsext_tick_lifetime_hint = 0;
     os.length = 0;
     os.data = NULL;
