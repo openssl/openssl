@@ -222,7 +222,7 @@ int BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
                 break;
         }
     }
-    memcpy(rp, ap, sizeof(*rp) * (max - i));
+    memcpy(rp, ap, sizeof(*rp) * dif);
 
     r->top = max;
     r->neg = 0;
