@@ -115,8 +115,14 @@ typedef struct {
 
 # ifndef OPENSSL_NO_OCB
 typedef struct {
-    AES_KEY ksenc;              /* AES key schedule to use for encryption */
-    AES_KEY ksdec;              /* AES key schedule to use for decryption */
+    union {
+        double align;
+        AES_KEY ks;
+    } ksenc;                    /* AES key schedule to use for encryption */
+    union {
+        double align;
+        AES_KEY ks;
+    } ksdec;                    /* AES key schedule to use for decryption */
     int key_set;                /* Set if key initialised */
     int iv_set;                 /* Set if an iv is set */
     OCB128_CONTEXT ocb;
@@ -466,9 +472,10 @@ static int aesni_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
              * needs both. We could possibly optimise to remove setting the
              * decrypt for an encryption operation.
              */
-            aesni_set_encrypt_key(key, ctx->key_len * 8, &octx->ksenc);
-            aesni_set_decrypt_key(key, ctx->key_len * 8, &octx->ksdec);
-            if (!CRYPTO_ocb128_init(&octx->ocb, &octx->ksenc, &octx->ksdec,
+            aesni_set_encrypt_key(key, ctx->key_len * 8, &octx->ksenc.ks);
+            aesni_set_decrypt_key(key, ctx->key_len * 8, &octx->ksdec.ks);
+            if (!CRYPTO_ocb128_init(&octx->ocb,
+                                    &octx->ksenc.ks, &octx->ksdec.ks,
                                     (block128_f) aesni_encrypt,
                                     (block128_f) aesni_decrypt))
                 return 0;
@@ -829,6 +836,7 @@ static int aes_t4_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
         aes_t4_set_encrypt_key(key, bits, &cctx->ks.ks);
         CRYPTO_ccm128_init(&cctx->ccm, cctx->M, cctx->L,
                            &cctx->ks, (block128_f) aes_t4_encrypt);
+        cctx->str = NULL;
         cctx->key_set = 1;
     }
     if (iv) {
@@ -856,9 +864,10 @@ static int aes_t4_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
              * needs both. We could possibly optimise to remove setting the
              * decrypt for an encryption operation.
              */
-            aes_t4_set_encrypt_key(key, ctx->key_len * 8, &octx->ksenc);
-            aes_t4_set_decrypt_key(key, ctx->key_len * 8, &octx->ksdec);
-            if (!CRYPTO_ocb128_init(&octx->ocb, &octx->ksenc, &octx->ksdec,
+            aes_t4_set_encrypt_key(key, ctx->key_len * 8, &octx->ksenc.ks);
+            aes_t4_set_decrypt_key(key, ctx->key_len * 8, &octx->ksdec.ks);
+            if (!CRYPTO_ocb128_init(&octx->ocb,
+                                    &octx->ksenc.ks, &octx->ksdec.ks,
                                     (block128_f) aes_t4_encrypt,
                                     (block128_f) aes_t4_decrypt))
                 return 0;
@@ -2222,7 +2231,8 @@ static int aes_ocb_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         newc = (EVP_CIPHER_CTX *)ptr;
         new_octx = newc->cipher_data;
         return CRYPTO_ocb128_copy_ctx(&new_octx->ocb, &octx->ocb,
-                                      &new_octx->ksenc, &new_octx->ksdec);
+                                      &new_octx->ksenc.ks,
+                                      &new_octx->ksdec.ks);
 
     default:
         return -1;
@@ -2245,18 +2255,20 @@ static int aes_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
              */
 #  ifdef VPAES_CAPABLE
             if (VPAES_CAPABLE) {
-                vpaes_set_encrypt_key(key, ctx->key_len * 8, &octx->ksenc);
-                vpaes_set_decrypt_key(key, ctx->key_len * 8, &octx->ksdec);
-                if (!CRYPTO_ocb128_init
-                    (&octx->ocb, &octx->ksenc, &octx->ksdec,
-                     (block128_f) vpaes_encrypt, (block128_f) vpaes_decrypt))
+                vpaes_set_encrypt_key(key, ctx->key_len * 8, &octx->ksenc.ks);
+                vpaes_set_decrypt_key(key, ctx->key_len * 8, &octx->ksdec.ks);
+                if (!CRYPTO_ocb128_init(&octx->ocb,
+                                        &octx->ksenc.ks, &octx->ksdec.ks,
+                                        (block128_f) vpaes_encrypt,
+                                        (block128_f) vpaes_decrypt))
                     return 0;
                 break;
             }
 #  endif
-            AES_set_encrypt_key(key, ctx->key_len * 8, &octx->ksenc);
-            AES_set_decrypt_key(key, ctx->key_len * 8, &octx->ksdec);
-            if (!CRYPTO_ocb128_init(&octx->ocb, &octx->ksenc, &octx->ksdec,
+            AES_set_encrypt_key(key, ctx->key_len * 8, &octx->ksenc.ks);
+            AES_set_decrypt_key(key, ctx->key_len * 8, &octx->ksdec.ks);
+            if (!CRYPTO_ocb128_init(&octx->ocb,
+                                    &octx->ksenc.ks, &octx->ksdec.ks,
                                     (block128_f) AES_encrypt,
                                     (block128_f) AES_decrypt))
                 return 0;
