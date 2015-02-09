@@ -597,10 +597,6 @@ struct ASN1_ITEM_st {
  * The 'funcs' field is used for application
  * specific functions.
  *
- * For COMPAT types the funcs field gives a
- * set of functions that handle this type, this
- * supports the old d2i, i2d convention.
- *
  * The EXTERN type uses a new style d2i/i2d.
  * The new style should be used where possible
  * because it avoids things like the d2i IMPLICIT
@@ -624,8 +620,6 @@ struct ASN1_ITEM_st {
 # define ASN1_ITYPE_SEQUENCE             0x1
 
 # define ASN1_ITYPE_CHOICE               0x2
-
-# define ASN1_ITYPE_COMPAT               0x3
 
 # define ASN1_ITYPE_EXTERN               0x4
 
@@ -676,13 +670,6 @@ typedef int ASN1_primitive_c2i(ASN1_VALUE **pval, const unsigned char *cont,
 typedef int ASN1_primitive_print(BIO *out, ASN1_VALUE **pval,
                                  const ASN1_ITEM *it, int indent,
                                  const ASN1_PCTX *pctx);
-
-typedef struct ASN1_COMPAT_FUNCS_st {
-    ASN1_new_func *asn1_new;
-    ASN1_free_func *asn1_free;
-    ASN1_d2i_func *asn1_d2i;
-    ASN1_i2d_func *asn1_i2d;
-} ASN1_COMPAT_FUNCS;
 
 typedef struct ASN1_EXTERN_FUNCS_st {
     void *app_data;
@@ -785,27 +772,6 @@ typedef struct ASN1_STREAM_ARG_st {
                                 ASN1_ITEM_start(itname) \
                                         ASN1_ITYPE_MSTRING, mask, NULL, 0, NULL, sizeof(ASN1_STRING), #itname \
                                 ASN1_ITEM_end(itname)
-
-/* Macro to implement an ASN1_ITEM in terms of old style funcs */
-
-# define IMPLEMENT_COMPAT_ASN1(sname) IMPLEMENT_COMPAT_ASN1_type(sname, V_ASN1_SEQUENCE)
-
-# define IMPLEMENT_COMPAT_ASN1_type(sname, tag) \
-        static const ASN1_COMPAT_FUNCS sname##_ff = { \
-                (ASN1_new_func *)sname##_new, \
-                (ASN1_free_func *)sname##_free, \
-                (ASN1_d2i_func *)d2i_##sname, \
-                (ASN1_i2d_func *)i2d_##sname, \
-        }; \
-        ASN1_ITEM_start(sname) \
-                ASN1_ITYPE_COMPAT, \
-                tag, \
-                NULL, \
-                0, \
-                &sname##_ff, \
-                0, \
-                #sname \
-        ASN1_ITEM_end(sname)
 
 # define IMPLEMENT_EXTERN_ASN1(sname, tag, fptrs) \
         ASN1_ITEM_start(sname) \
