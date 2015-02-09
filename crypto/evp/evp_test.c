@@ -161,6 +161,10 @@ struct evp_test {
     int ntests;
     /* Error count */
     int errors;
+    /* If output mismatch expected and got value */
+    unsigned char *out_got;
+    unsigned char *out_expected;
+    size_t out_len;
     /* test specific data */
     void *data;
 };
@@ -197,6 +201,27 @@ static const struct evp_test_method *evp_find_test(const char *name)
     return NULL;
 }
 
+static void hex_print(const char *name, const unsigned char *buf, size_t len)
+{
+    size_t i;
+    fprintf(stderr, "%s ", name);
+    for (i = 0; i < len; i++)
+        fprintf(stderr, "%02X", buf[i]);
+    fputs("\n", stderr);
+}
+
+static void print_expected(struct evp_test *t)
+{
+    if (t->out_expected == NULL)
+        return;
+    hex_print("Expected:", t->out_expected, t->out_len);
+    hex_print("Got:     ", t->out_got, t->out_len);
+    OPENSSL_free(t->out_expected);
+    OPENSSL_free(t->out_got);
+    t->out_expected = NULL;
+    t->out_got = NULL;
+}
+
 static int check_test_error(struct evp_test *t)
 {
     if (!t->err && !t->expected_err)
@@ -204,6 +229,7 @@ static int check_test_error(struct evp_test *t)
     if (t->err && !t->expected_err) {
         fprintf(stderr, "Test line %d: unexpected error %s\n",
                 t->start_line, t->err);
+        print_expected(t);
         return 0;
     }
     if (!t->err && t->expected_err) {
@@ -299,11 +325,31 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
     return 1;
 }
 
+static int check_output(struct evp_test *t, const unsigned char *expected,
+                        const unsigned char *got, size_t len)
+{
+    if (!memcmp(expected, got, len))
+        return 0;
+    t->out_expected = BUF_memdup(expected, len);
+    t->out_got = BUF_memdup(got, len);
+    t->out_len = len;
+    if (t->out_expected == NULL || t->out_got == NULL) {
+        fprintf(stderr, "Memory allocation error!\n");
+        exit(1);
+    }
+    return 1;
+}
+
 int main(int argc, char **argv)
 {
     FILE *in = NULL;
     char buf[10240];
     struct evp_test t;
+
+    if (argc != 2) {
+        fprintf(stderr, "usage: evp_test testfile.txt\n");
+        return 1;
+    }
 
     ERR_load_crypto_strings();
     OpenSSL_add_all_algorithms();
@@ -313,6 +359,9 @@ int main(int argc, char **argv)
     t.start_line = -1;
     t.errors = 0;
     t.ntests = 0;
+    t.out_expected = NULL;
+    t.out_got = NULL;
+    t.out_len = 0;
     in = fopen(argv[1], "r");
     while (fgets(buf, sizeof(buf), in)) {
         t.line++;
@@ -403,14 +452,14 @@ static int digest_test_run(struct evp_test *t)
     if (md_len != mdata->output_len)
         goto err;
     err = "DIGEST_MISMATCH";
-    if (memcmp(mdata->output, md, md_len))
+    if (check_output(t, mdata->output, md, md_len))
         goto err;
     err = NULL;
  err:
     if (mctx)
         EVP_MD_CTX_destroy(mctx);
     t->err = err;
-    return err ? 0 : 1;
+    return 1;
 }
 
 static const struct evp_test_method digest_test_method = {
@@ -611,7 +660,7 @@ static int cipher_test_enc(struct evp_test *t, int enc)
     if (out_len != (size_t)(tmplen + tmpflen))
         goto err;
     err = "VALUE_MISMATCH";
-    if (memcmp(out, tmp, out_len))
+    if (check_output(t, out, tmp, out_len))
         goto err;
     if (enc && cdat->aead) {
         unsigned char rtag[16];
@@ -625,7 +674,7 @@ static int cipher_test_enc(struct evp_test *t, int enc)
             err = "TAG_RETRIEVE_ERROR";
             goto err;
         }
-        if (memcmp(cdat->tag, rtag, cdat->tag_len)) {
+        if (check_output(t, cdat->tag, rtag, cdat->tag_len)) {
             err = "TAG_VALUE_MISMATCH";
             goto err;
         }
