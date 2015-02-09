@@ -1610,6 +1610,7 @@ DES_ede3_cbc_encrypt:
 	LDPTR	[%fp+BIAS+ARG0+6*ARGSZ], local4          ! ivec
 	cmp	local3, 0                 ! enc
 
+	be	.ede3.dec
 	STPTR	in4, KS2
 
 	STPTR	in5, KS3
