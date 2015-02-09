@@ -160,7 +160,6 @@ extern "C" {
 DECLARE_STACK_OF(X509_ALGOR)
 
 # define DECLARE_ASN1_SET_OF(type)/* filled in by mkstack.pl */
-# define IMPLEMENT_ASN1_SET_OF(type)/* nothing, no longer needed */
 
 /*
  * We MUST make sure that, except for constness, asn1_ctx_st and
