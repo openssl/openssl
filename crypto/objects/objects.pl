@@ -184,7 +184,6 @@ print OUT <<'EOF';
 #define LN_undef                        "undefined"
 #define NID_undef                       0
 #define OBJ_undef                       0L
-
 EOF
 
 sub expand
@@ -199,11 +198,11 @@ sub expand
 foreach (sort { $a <=> $b } keys %ordern)
 	{
 	$Cname=$ordern{$_};
+	print OUT "\n";
 	print OUT expand("#define SN_$Cname\t\t\"$sn{$Cname}\"\n") if $sn{$Cname} ne "";
 	print OUT expand("#define LN_$Cname\t\t\"$ln{$Cname}\"\n") if $ln{$Cname} ne "";
 	print OUT expand("#define NID_$Cname\t\t$nid{$Cname}\n") if $nid{$Cname} ne "";
 	print OUT expand("#define OBJ_$Cname\t\t$obj{$Cname}\n") if $obj{$Cname} ne "";
-	print OUT "\n";
 	}
 
 close OUT;
