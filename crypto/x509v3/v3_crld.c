@@ -341,8 +341,6 @@ static void *v2i_crld(const X509V3_EXT_METHOD *method,
     return NULL;
 }
 
-IMPLEMENT_ASN1_SET_OF(DIST_POINT)
-
 static int dpn_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                   void *exarg)
 {
