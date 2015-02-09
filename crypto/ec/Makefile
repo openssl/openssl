@@ -48,6 +48,9 @@ lib:	$(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
+ecp_nistz256-x86.s:	asm/ecp_nistz256-x86.pl
+	$(PERL) asm/ecp_nistz256-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+
 ecp_nistz256-x86_64.s: asm/ecp_nistz256-x86_64.pl
 	$(PERL) asm/ecp_nistz256-x86_64.pl $(PERLASM_SCHEME) > $@
 
