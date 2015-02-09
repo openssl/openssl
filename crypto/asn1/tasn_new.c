@@ -89,7 +89,6 @@ static int asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
                                     int combine)
 {
     const ASN1_TEMPLATE *tt = NULL;
-    const ASN1_COMPAT_FUNCS *cf;
     const ASN1_EXTERN_FUNCS *ef;
     const ASN1_AUX *aux = it->funcs;
     ASN1_aux_cb *asn1_cb;
@@ -114,15 +113,6 @@ static int asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
         ef = it->funcs;
         if (ef && ef->asn1_ex_new) {
             if (!ef->asn1_ex_new(pval, it))
-                goto memerr;
-        }
-        break;
-
-    case ASN1_ITYPE_COMPAT:
-        cf = it->funcs;
-        if (cf && cf->asn1_new) {
-            *pval = cf->asn1_new();
-            if (!*pval)
                 goto memerr;
         }
         break;
@@ -245,7 +235,6 @@ static void asn1_item_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)
         asn1_primitive_clear(pval, it);
         break;
 
-    case ASN1_ITYPE_COMPAT:
     case ASN1_ITYPE_CHOICE:
     case ASN1_ITYPE_SEQUENCE:
     case ASN1_ITYPE_NDEF_SEQUENCE:

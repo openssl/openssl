@@ -82,7 +82,6 @@ static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it,
 {
     const ASN1_TEMPLATE *tt = NULL, *seqtt;
     const ASN1_EXTERN_FUNCS *ef;
-    const ASN1_COMPAT_FUNCS *cf;
     const ASN1_AUX *aux = it->funcs;
     ASN1_aux_cb *asn1_cb;
     int i;
@@ -127,12 +126,6 @@ static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it,
             OPENSSL_free(*pval);
             *pval = NULL;
         }
-        break;
-
-    case ASN1_ITYPE_COMPAT:
-        cf = it->funcs;
-        if (cf && cf->asn1_free)
-            cf->asn1_free(*pval);
         break;
 
     case ASN1_ITYPE_EXTERN:
