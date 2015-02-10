@@ -682,7 +682,7 @@ $multilib     =
 
 *** VC-WIN32
 $cc           = cl
-$cflags       = -W3 -Gs0 -GF -Gy -nologo -DOPENSSL_SYS_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -D_CRT_SECURE_NO_DEPRECATE
+$cflags       = -W3 -wd4090 -Gs0 -GF -Gy -nologo -DOPENSSL_SYS_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -D_CRT_SECURE_NO_DEPRECATE
 $unistd       = 
 $thread_cflag = 
 $sys_id       = WIN32
@@ -716,7 +716,7 @@ $multilib     =
 
 *** VC-WIN64A
 $cc           = cl
-$cflags       = -W3 -Gs0 -Gy -nologo -DOPENSSL_SYS_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE
+$cflags       = -W3 -wd4090 -Gs0 -Gy -nologo -DOPENSSL_SYS_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE
 $unistd       = 
 $thread_cflag = 
 $sys_id       = WIN64A
@@ -750,7 +750,7 @@ $multilib     =
 
 *** VC-WIN64I
 $cc           = cl
-$cflags       = -W3 -Gs0 -Gy -nologo -DOPENSSL_SYS_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE
+$cflags       = -W3 -wd4090 -Gs0 -Gy -nologo -DOPENSSL_SYS_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE
 $unistd       = 
 $thread_cflag = 
 $sys_id       = WIN64I
@@ -1430,7 +1430,7 @@ $multilib     =
 
 *** debug-VC-WIN32
 $cc           = cl
-$cflags       = -W3 -Gs0 -GF -Gy -Zi -nologo -DOPENSSL_SYS_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -D_CRT_SECURE_NO_DEPRECATE
+$cflags       = -W3 -wd4090 -Gs0 -GF -Gy -Zi -nologo -DOPENSSL_SYS_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -D_CRT_SECURE_NO_DEPRECATE
 $unistd       = 
 $thread_cflag = 
 $sys_id       = WIN32
@@ -1464,7 +1464,7 @@ $multilib     =
 
 *** debug-VC-WIN64A
 $cc           = cl
-$cflags       = -W3 -Gs0 -Gy -Zi -nologo -DOPENSSL_SYS_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE
+$cflags       = -W3 -wd4090 -Gs0 -Gy -Zi -nologo -DOPENSSL_SYS_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE
 $unistd       = 
 $thread_cflag = 
 $sys_id       = WIN64A
@@ -1498,7 +1498,7 @@ $multilib     =
 
 *** debug-VC-WIN64I
 $cc           = cl
-$cflags       = -W3 -Gs0 -Gy -Zi -nologo -DOPENSSL_SYS_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE
+$cflags       = -W3 -wd4090 -Gs0 -Gy -Zi -nologo -DOPENSSL_SYS_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE
 $unistd       = 
 $thread_cflag = 
 $sys_id       = WIN64I
