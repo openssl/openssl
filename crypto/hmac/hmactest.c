@@ -206,6 +206,11 @@ test5:
         err++;
         goto test6;
     }
+    if(HMAC_Init_ex(&ctx, test[4].key, -1, EVP_sha1(), NULL)) {
+        printf("Should fail to initialise HMAC with invalid key len(test 5)\n");
+        err++;
+        goto test6;
+    }
     if(!HMAC_Init_ex(&ctx, test[4].key, test[4].key_len, EVP_sha1(), NULL)) {
         printf("Failed to initialise HMAC (test 5)\n");
         err++;
