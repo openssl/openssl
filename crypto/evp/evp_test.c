@@ -374,6 +374,8 @@ int main(int argc, char **argv)
     fprintf(stderr, "%d tests completed with %d errors\n",
             t.ntests, t.errors);
     fclose(in);
+    if (t.errors)
+        return 1;
     return 0;
 }
 
