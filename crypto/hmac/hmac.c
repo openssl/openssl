@@ -93,7 +93,8 @@ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
                                     &ctx->key_length))
                 goto err;
         } else {
-            OPENSSL_assert(len >= 0 && len <= (int)sizeof(ctx->key));
+            if(len < 0 || len > (int)sizeof(ctx->key))
+                return 0;
             memcpy(ctx->key, key, len);
             ctx->key_length = len;
         }
