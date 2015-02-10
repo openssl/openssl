@@ -28,11 +28,8 @@
 
 #include <string.h>
 
-#include "internal/bn_int.h"
-#include <openssl/err.h>
-#include <openssl/ec.h>
 #include "cryptlib.h"
-
+#include "internal/bn_int.h"
 #include "ec_lcl.h"
 
 #if BN_BITS2 != 64
@@ -166,7 +163,7 @@ static unsigned int _booth_recode_w7(unsigned int in)
 static void copy_conditional(BN_ULONG dst[P256_LIMBS],
                              const BN_ULONG src[P256_LIMBS], BN_ULONG move)
 {
-    BN_ULONG mask1 = -move;
+    BN_ULONG mask1 = 0-move;
     BN_ULONG mask2 = ~mask1;
 
     dst[0] = (src[0] & mask1) ^ (dst[0] & mask2);
@@ -560,9 +557,10 @@ static void ecp_nistz256_windowed_mul(const EC_GROUP *group,
                                       P256_POINT *r,
                                       const BIGNUM **scalar,
                                       const EC_POINT **point,
-                                      int num, BN_CTX *ctx)
+                                      size_t num, BN_CTX *ctx)
 {
-    int i, j;
+    size_t i;
+    int j;
     unsigned int idx;
     unsigned char (*p_str)[33] = NULL;
     const unsigned int window_size = 5;
@@ -573,8 +571,9 @@ static void ecp_nistz256_windowed_mul(const EC_GROUP *group,
     P256_POINT (*table)[16] = NULL;
     void *table_storage = NULL;
 
-    if ((table_storage =
-         OPENSSL_malloc((num * 16 + 5) * sizeof(P256_POINT) + 64)) == NULL
+    if ((num * 16 + 6) > OPENSSL_MALLOC_MAX_NELEMS(P256_POINT)
+        || (table_storage =
+            OPENSSL_malloc((num * 16 + 5) * sizeof(P256_POINT) + 64)) == NULL
         || (p_str =
             OPENSSL_malloc(num * 33 * sizeof(unsigned char))) == NULL
         || (scalars = OPENSSL_malloc(num * sizeof(BIGNUM *))) == NULL) {
@@ -604,16 +603,16 @@ static void ecp_nistz256_windowed_mul(const EC_GROUP *group,
         for (j = 0; j < bn_get_top(scalars[i]) * BN_BYTES; j += BN_BYTES) {
             BN_ULONG d = bn_get_words(scalars[i])[j / BN_BYTES];
 
-            p_str[i][j + 0] = d & 0xff;
-            p_str[i][j + 1] = (d >> 8) & 0xff;
-            p_str[i][j + 2] = (d >> 16) & 0xff;
-            p_str[i][j + 3] = (d >>= 24) & 0xff;
+            p_str[i][j + 0] = (unsigned char)d;
+            p_str[i][j + 1] = (unsigned char)(d >> 8);
+            p_str[i][j + 2] = (unsigned char)(d >> 16);
+            p_str[i][j + 3] = (unsigned char)(d >>= 24);
             if (BN_BYTES == 8) {
                 d >>= 8;
-                p_str[i][j + 4] = d & 0xff;
-                p_str[i][j + 5] = (d >> 8) & 0xff;
-                p_str[i][j + 6] = (d >> 16) & 0xff;
-                p_str[i][j + 7] = (d >> 24) & 0xff;
+                p_str[i][j + 4] = (unsigned char)d;
+                p_str[i][j + 5] = (unsigned char)(d >> 8);
+                p_str[i][j + 6] = (unsigned char)(d >> 16);
+                p_str[i][j + 7] = (unsigned char)(d >> 24);
             }
         }
         for (; j < 33; j++)
@@ -1225,16 +1224,16 @@ static int ecp_nistz256_points_mul(const EC_GROUP *group,
             for (i = 0; i < bn_get_top(scalar) * BN_BYTES; i += BN_BYTES) {
                 BN_ULONG d = bn_get_words(scalar)[i / BN_BYTES];
 
-                p_str[i + 0] = d & 0xff;
-                p_str[i + 1] = (d >> 8) & 0xff;
-                p_str[i + 2] = (d >> 16) & 0xff;
-                p_str[i + 3] = (d >>= 24) & 0xff;
+                p_str[i + 0] = (unsigned char)d;
+                p_str[i + 1] = (unsigned char)(d >> 8);
+                p_str[i + 2] = (unsigned char)(d >> 16);
+                p_str[i + 3] = (unsigned char)(d >>= 24);
                 if (BN_BYTES == 8) {
                     d >>= 8;
-                    p_str[i + 4] = d & 0xff;
-                    p_str[i + 5] = (d >> 8) & 0xff;
-                    p_str[i + 6] = (d >> 16) & 0xff;
-                    p_str[i + 7] = (d >> 24) & 0xff;
+                    p_str[i + 4] = (unsigned char)d;
+                    p_str[i + 5] = (unsigned char)(d >> 8);
+                    p_str[i + 6] = (unsigned char)(d >> 16);
+                    p_str[i + 7] = (unsigned char)(d >> 24);
                 }
             }
 
