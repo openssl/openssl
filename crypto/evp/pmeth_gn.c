@@ -202,9 +202,7 @@ EVP_PKEY *EVP_PKEY_new_mac_key(int type, ENGINE *e,
         return NULL;
     if (EVP_PKEY_keygen_init(mac_ctx) <= 0)
         goto merr;
-    if (EVP_PKEY_CTX_ctrl(mac_ctx, -1, EVP_PKEY_OP_KEYGEN,
-                          EVP_PKEY_CTRL_SET_MAC_KEY,
-                          keylen, (void *)key) <= 0)
+    if (EVP_PKEY_CTX_set_mac_key(mac_ctx, key, keylen) <= 0)
         goto merr;
     if (EVP_PKEY_keygen(mac_ctx, &mac_key) <= 0)
         goto merr;

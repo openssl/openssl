@@ -1198,6 +1198,10 @@ void EVP_PKEY_asn1_set_security_bits(EVP_PKEY_ASN1_METHOD *ameth,
                 EVP_PKEY_CTX_ctrl(ctx, -1, EVP_PKEY_OP_TYPE_SIG,  \
                                         EVP_PKEY_CTRL_GET_MD, 0, (void *)pmd)
 
+# define  EVP_PKEY_CTX_set_mac_key(ctx, key, len)        \
+                EVP_PKEY_CTX_ctrl(ctx, -1, EVP_PKEY_OP_KEYGEN,  \
+                                  EVP_PKEY_CTRL_SET_MAC_KEY, len, (void *)key)
+
 # define EVP_PKEY_CTRL_MD                1
 # define EVP_PKEY_CTRL_PEER_KEY          2
 
