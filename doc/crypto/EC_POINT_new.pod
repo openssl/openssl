@@ -81,8 +81,13 @@ on the curve there will only ever be two possible values for y. Therefore a poin
 and EC_POINT_set_compressed_coordinates_GF2m functions where B<x> is the x co-ordinate and B<y_bit> is a value 0 or 1 to identify which of
 the two possible values for y should be used.
 
-In addition EC_POINTs can be converted to and from various external representations. Supported representations are octet strings, BIGNUMs and hexadecimal. The format of the external representation is described by the point_conversion_form. See L<EC_GROUP_copy(3)|EC_GROUP_copy(3)> for
-a description of point_conversion_form. Octet strings are stored in a buffer along with an associated buffer length. A point held in a BIGNUM is calculated by converting the point to an octet string and then converting that octet string into a BIGNUM integer. Points in hexadecimal format are stored in a NULL terminated character string where each character is one of the printable values 0-9 or A-F (or a-f).
+In addition EC_POINTs can be converted to and from various external
+representations. Supported representations are octet strings, BIGNUMs and
+hexadecimal. Octet strings are stored in a buffer along with an associated
+buffer length. A point held in a BIGNUM is calculated by converting the point to
+an octet string and then converting that octet string into a BIGNUM integer.
+Points in hexadecimal format are stored in a NULL terminated character string
+where each character is one of the printable values 0-9 or A-F (or a-f).
 
 The functions EC_POINT_point2oct, EC_POINT_oct2point, EC_POINT_point2bn, EC_POINT_bn2point, EC_POINT_point2hex and EC_POINT_hex2point convert
 from and to EC_POINTs for the formats: octet string, BIGNUM and hexadecimal respectively.
