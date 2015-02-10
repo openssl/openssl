@@ -622,7 +622,7 @@ for(1..37) {
 	&movdqa	(&QWP(0x10,"esp"),"xmm2");
 	 &pand	("xmm5","xmm6");		# lower 32 bits of a[0]*b[i]
 
-	&movdqa	("xmm2",&DWP(0x60,"ebx"));
+	&movdqa	("xmm2",&QWP(0x60,"ebx"));
 	&pmuludq("xmm1","xmm7");		# a[5]*b[i]
 	 &paddq	("xmm3","xmm5");		# a[3]*b[i]+lw(a[0]*b[i]), reduction step
 	&paddq	("xmm0",&QWP(0x40,"esp"));
@@ -679,7 +679,7 @@ for(1..37) {
 	&movdqa	(&QWP(0x10,"esp"),"xmm2");
 	 &pand	("xmm5","xmm6");		# lower 32 bits of a[0]*b[i]
 
-	&movdqa	("xmm2",&DWP(0x60,"ebx"));
+	&movdqa	("xmm2",&QWP(0x60,"ebx"));
 	&pmuludq("xmm1","xmm7");		# a[5]*b[7]
 	 &paddq	("xmm3","xmm5");		# reduction step
 	&paddq	("xmm0",&QWP(0x40,"esp"));
