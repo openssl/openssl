@@ -103,9 +103,6 @@ typedef struct bignum_pool {
 } BN_POOL;
 static void BN_POOL_init(BN_POOL *);
 static void BN_POOL_finish(BN_POOL *);
-#ifndef OPENSSL_NO_DEPRECATED
-static void BN_POOL_reset(BN_POOL *);
-#endif
 static BIGNUM *BN_POOL_get(BN_POOL *);
 static void BN_POOL_release(BN_POOL *, unsigned int);
 
@@ -122,9 +119,6 @@ typedef struct bignum_ctx_stack {
 } BN_STACK;
 static void BN_STACK_init(BN_STACK *);
 static void BN_STACK_finish(BN_STACK *);
-#ifndef OPENSSL_NO_DEPRECATED
-static void BN_STACK_reset(BN_STACK *);
-#endif
 static int BN_STACK_push(BN_STACK *, unsigned int);
 static unsigned int BN_STACK_pop(BN_STACK *);
 
@@ -189,26 +183,6 @@ static void ctxdbg(BN_CTX *ctx)
 # define CTXDBG_RET(ctx,ret)
 #endif
 
-/*
- * This function is an evil legacy and should not be used. This
- * implementation is WYSIWYG, though I've done my best.
- */
-#ifndef OPENSSL_NO_DEPRECATED
-void BN_CTX_init(BN_CTX *ctx)
-{
-    /*
-     * Assume the caller obtained the context via BN_CTX_new() and so is
-     * trying to reset it for use. Nothing else makes sense, least of all
-     * binary compatibility from a time when they could declare a static
-     * variable.
-     */
-    BN_POOL_reset(&ctx->pool);
-    BN_STACK_reset(&ctx->stack);
-    ctx->used = 0;
-    ctx->err_stack = 0;
-    ctx->too_many = 0;
-}
-#endif
 
 BN_CTX *BN_CTX_new(void)
 {
@@ -319,12 +293,6 @@ static void BN_STACK_finish(BN_STACK *st)
         OPENSSL_free(st->indexes);
 }
 
-#ifndef OPENSSL_NO_DEPRECATED
-static void BN_STACK_reset(BN_STACK *st)
-{
-    st->depth = 0;
-}
-#endif
 
 static int BN_STACK_push(BN_STACK *st, unsigned int idx)
 {
@@ -379,24 +347,6 @@ static void BN_POOL_finish(BN_POOL *p)
     }
 }
 
-#ifndef OPENSSL_NO_DEPRECATED
-static void BN_POOL_reset(BN_POOL *p)
-{
-    BN_POOL_ITEM *item = p->head;
-    while (item) {
-        unsigned int loop = 0;
-        BIGNUM *bn = item->vals;
-        while (loop++ < BN_CTX_POOL_SIZE) {
-            if (bn->d)
-                BN_clear(bn);
-            bn++;
-        }
-        item = item->next;
-    }
-    p->current = p->head;
-    p->used = 0;
-}
-#endif
 
 static BIGNUM *BN_POOL_get(BN_POOL *p)
 {
