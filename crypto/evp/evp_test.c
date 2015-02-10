@@ -134,6 +134,18 @@ static int test_bin(const char *value, unsigned char **buf, size_t *buflen)
         *buflen = 0;
         return 1;
     }
+    /* Check for string literal */
+    if (value[0] == '"') {
+        size_t vlen;
+        value++;
+        vlen = strlen(value);
+        if (value[vlen - 1] != '"')
+            return 0;
+        vlen--;
+        *buf = BUF_memdup(value, vlen);
+        *buflen = vlen;
+        return 1;
+    }
     *buf = string_to_hex(value, &len);
     if (!*buf) {
         fprintf(stderr, "Value=%s\n", value);
@@ -183,12 +195,13 @@ struct evp_test_method {
 };
 
 static const struct evp_test_method digest_test_method, cipher_test_method;
-static const struct evp_test_method aead_test_method;
+static const struct evp_test_method aead_test_method, mac_test_method;
 
 static const struct evp_test_method *evp_test_list[] = {
     &digest_test_method,
     &cipher_test_method,
-    NULL,
+    &mac_test_method,
+    NULL
 };
 
 static const struct evp_test_method *evp_find_test(const char *name)
@@ -736,4 +749,155 @@ static const struct evp_test_method cipher_test_method = {
     cipher_test_cleanup,
     cipher_test_parse,
     cipher_test_run
+};
+
+struct mac_data {
+    /* MAC type */
+    int type;
+    /* Algorithm string for this MAC */
+    char *alg;
+    /* MAC key */
+    unsigned char *key;
+    size_t key_len;
+    /* Input to MAC */
+    unsigned char *input;
+    size_t input_len;
+    /* Expected output */
+    unsigned char *output;
+    size_t output_len;
+};
+
+static int mac_test_init(struct evp_test *t, const char *alg)
+{
+    int type;
+    struct mac_data *mdat;
+    if (!strcmp(alg, "HMAC"))
+        type = EVP_PKEY_HMAC;
+    else if (!strcmp(alg, "CMAC"))
+        type = EVP_PKEY_CMAC;
+    else
+        return 0;
+
+    mdat = OPENSSL_malloc(sizeof(struct mac_data));
+    mdat->type = type;
+    mdat->alg = NULL;
+    mdat->key = NULL;
+    mdat->input = NULL;
+    mdat->output = NULL;
+    t->data = mdat;
+    return 1;
+}
+
+static void mac_test_cleanup(struct evp_test *t)
+{
+    struct mac_data *mdat = t->data;
+    test_free(mdat->alg);
+    test_free(mdat->key);
+    test_free(mdat->input);
+    test_free(mdat->output);
+}
+
+static int mac_test_parse(struct evp_test *t,
+                          const char *keyword, const char *value)
+{
+    struct mac_data *mdata = t->data;
+    if (!strcmp(keyword, "Key"))
+        return test_bin(value, &mdata->key, &mdata->key_len);
+    if (!strcmp(keyword, "Algorithm")) {
+        mdata->alg = BUF_strdup(value);
+        if (!mdata->alg)
+            return 0;
+        return 1;
+    }
+    if (!strcmp(keyword, "Input"))
+        return test_bin(value, &mdata->input, &mdata->input_len);
+    if (!strcmp(keyword, "Output"))
+        return test_bin(value, &mdata->output, &mdata->output_len);
+    return 0;
+}
+
+static int mac_test_run(struct evp_test *t)
+{
+    struct mac_data *mdata = t->data;
+    const char *err = "INTERNAL_ERROR";
+    EVP_MD_CTX *mctx = NULL;
+    EVP_PKEY_CTX *pctx = NULL, *genctx = NULL;
+    EVP_PKEY *key = NULL;
+    const EVP_MD *md = NULL;
+    unsigned char *mac = NULL;
+    size_t mac_len;
+
+    err = "MAC_PKEY_CTX_ERROR";
+    genctx = EVP_PKEY_CTX_new_id(mdata->type, NULL);
+    if (!genctx)
+        goto err;
+
+    err = "MAC_KEYGEN_INIT_ERROR";
+    if (EVP_PKEY_keygen_init(genctx) <= 0)
+        goto err;
+    if (mdata->type == EVP_PKEY_CMAC) {
+        err = "MAC_ALGORITHM_SET_ERROR";
+        if (EVP_PKEY_CTX_ctrl_str(genctx, "cipher", mdata->alg) <= 0)
+            goto err;
+    }
+
+    err = "MAC_KEY_SET_ERROR";
+    if (EVP_PKEY_CTX_set_mac_key(genctx, mdata->key, mdata->key_len) <= 0)
+        goto err;
+
+    err = "MAC_KEY_GENERATE_ERROR";
+    if (EVP_PKEY_keygen(genctx, &key) <= 0)
+        goto err;
+    if (mdata->type == EVP_PKEY_HMAC) {
+        err = "MAC_ALGORITHM_SET_ERROR";
+        md = EVP_get_digestbyname(mdata->alg);
+        if (!md)
+            goto err;
+    }
+    mctx = EVP_MD_CTX_create();
+    if (!mctx)
+        goto err;
+    err = "DIGESTSIGNINIT_ERROR";
+    if (!EVP_DigestSignInit(mctx, &pctx, md, NULL, key))
+        goto err;
+
+    err = "DIGESTSIGNUPDATE_ERROR";
+    if (!EVP_DigestSignUpdate(mctx, mdata->input, mdata->input_len))
+        goto err;
+    err = "DIGESTSIGNFINAL_LENGTH_ERROR";
+    if (!EVP_DigestSignFinal(mctx, NULL, &mac_len))
+        goto err;
+    mac = OPENSSL_malloc(mac_len);
+    if (!mac) {
+        fprintf(stderr, "Error allocating mac buffer!\n");
+        exit(1);
+    }
+    if (!EVP_DigestSignFinal(mctx, mac, &mac_len))
+        goto err;
+    err = "MAC_LENGTH_MISMATCH";
+    if (mac_len != mdata->output_len)
+        goto err;
+    err = "MAC_MISMATCH";
+    if (check_output(t, mdata->output, mac, mac_len))
+        goto err;
+    err = NULL;
+ err:
+    if (mctx)
+        EVP_MD_CTX_destroy(mctx);
+    if (mac)
+        OPENSSL_free(mac);
+    if (genctx)
+        EVP_PKEY_CTX_free(genctx);
+    if (key)
+        EVP_PKEY_free(key);
+    t->err = err;
+    return 1;
+}
+
+static const struct evp_test_method mac_test_method = {
+    "MAC",
+    mac_test_init,
+    mac_test_cleanup,
+    mac_test_parse,
+    mac_test_run
 };
