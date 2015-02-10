@@ -118,12 +118,14 @@ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
     return 0;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED
 int HMAC_Init(HMAC_CTX *ctx, const void *key, int len, const EVP_MD *md)
 {
     if (key && md)
         HMAC_CTX_init(ctx);
     return HMAC_Init_ex(ctx, key, len, md, NULL);
 }
+#endif
 
 int HMAC_Update(HMAC_CTX *ctx, const unsigned char *data, size_t len)
 {
@@ -190,7 +192,7 @@ unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
     if (md == NULL)
         md = m;
     HMAC_CTX_init(&c);
-    if (!HMAC_Init(&c, key, key_len, evp_md))
+    if (!HMAC_Init_ex(&c, key, key_len, evp_md, NULL))
         goto err;
     if (!HMAC_Update(&c, d, n))
         goto err;
