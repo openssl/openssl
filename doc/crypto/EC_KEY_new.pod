@@ -24,8 +24,6 @@ EC_KEY_new, EC_KEY_get_flags, EC_KEY_set_flags, EC_KEY_clear_flags, EC_KEY_new_b
  int EC_KEY_set_private_key(EC_KEY *key, const BIGNUM *prv);
  const EC_POINT *EC_KEY_get0_public_key(const EC_KEY *key);
  int EC_KEY_set_public_key(EC_KEY *key, const EC_POINT *pub);
- unsigned int EC_KEY_get_enc_flags(const EC_KEY *key);
- void EC_KEY_set_enc_flags(EC_KEY *eckey, unsigned int flags);
  point_conversion_form_t EC_KEY_get_conv_form(const EC_KEY *key);
  void EC_KEY_set_conv_form(EC_KEY *eckey, point_conversion_form_t cform);
  void *EC_KEY_get_key_method_data(EC_KEY *key, 
@@ -69,16 +67,6 @@ on the key to confirm that it is valid.
 
 The functions EC_KEY_get0_group, EC_KEY_set_group, EC_KEY_get0_private_key, EC_KEY_set_private_key, EC_KEY_get0_public_key, and EC_KEY_set_public_key get and set the EC_GROUP object, the private key and the EC_POINT public key for the B<key> respectively.
 
-The functions EC_KEY_get_enc_flags and EC_KEY_set_enc_flags get and set the value of the encoding flags for the B<key>. There are two encoding
-flags currently defined - EC_PKEY_NO_PARAMETERS and EC_PKEY_NO_PUBKEY.  These flags define the behaviour of how the  B<key> is
-converted into ASN1 in a call to i2d_ECPrivateKey. If EC_PKEY_NO_PARAMETERS is set then the public parameters for the curve are not encoded
-along with the private key. If EC_PKEY_NO_PUBKEY is set then the public key is not encoded along with the private key.
-
-When reading a private key encoded with EC_PKEY_NO_PUBKEY,
-d2i_ECPrivateKey generates the missing public key
-automatically. Private keys encoded with EC_PKEY_NO_PARAMETERS cannot
-be loaded using d2i_ECPrivateKey.
-
 The functions EC_KEY_get_conv_form and EC_KEY_set_conv_form get and set the point_conversion_form for the B<key>. For a description
 of point_conversion_forms please refer to L<EC_POINT_new(3)|EC_POINT_new(3)>.
 
@@ -106,15 +94,15 @@ EC_KEY_get0_group returns the EC_GROUP associated with the EC_KEY.
 
 EC_KEY_get0_private_key returns the private key associated with the EC_KEY.
 
-EC_KEY_get_enc_flags returns the value of the current encoding flags for the EC_KEY.
-
 EC_KEY_get_conv_form return the point_conversion_form for the EC_KEY.
 
 
 =head1 SEE ALSO
 
-L<crypto(3)|crypto(3)>, L<ec(3)|ec(3)>, L<EC_GROUP_new(3)|EC_GROUP_new(3)>, L<EC_GROUP_copy(3)|EC_GROUP_copy(3)>,
-L<EC_POINT_new(3)|EC_POINT_new(3)>, L<EC_POINT_add(3)|EC_POINT_add(3)>,
-L<EC_GFp_simple_method(3)|EC_GFp_simple_method(3)>, L<d2i_ECPKParameters(3)|d2i_ECPKParameters(3)>
+L<crypto(3)|crypto(3)>, L<ec(3)|ec(3)>, L<EC_GROUP_new(3)|EC_GROUP_new(3)>,
+L<EC_GROUP_copy(3)|EC_GROUP_copy(3)>, L<EC_POINT_new(3)|EC_POINT_new(3)>,
+L<EC_POINT_add(3)|EC_POINT_add(3)>,
+L<EC_GFp_simple_method(3)|EC_GFp_simple_method(3)>,
+L<d2i_ECPKParameters(3)|d2i_ECPKParameters(3)>
 
 =cut
