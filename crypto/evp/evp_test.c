@@ -57,6 +57,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <openssl/evp.h>
+#include <openssl/pem.h>
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
 
@@ -159,6 +160,11 @@ static int test_bin(const char *value, unsigned char **buf, size_t *buflen)
 
 /* Structure holding test information */
 struct evp_test {
+    /* file being read */
+    FILE *in;
+    /* List of public and private keys */
+    struct key_list *private;
+    struct key_list *public;
     /* method for this test */
     const struct evp_test_method *meth;
     /* current line being processed */
@@ -180,6 +186,13 @@ struct evp_test {
     /* test specific data */
     void *data;
 };
+
+struct key_list {
+    char *name;
+    EVP_PKEY *key;
+    struct key_list *next;
+};
+
 /* Test method structure */
 struct evp_test_method {
     /* Name of test as it appears in file */
@@ -196,11 +209,18 @@ struct evp_test_method {
 
 static const struct evp_test_method digest_test_method, cipher_test_method;
 static const struct evp_test_method aead_test_method, mac_test_method;
+static const struct evp_test_method psign_test_method, pverify_test_method;
+static const struct evp_test_method pdecrypt_test_method;
+static const struct evp_test_method pverify_recover_test_method;
 
 static const struct evp_test_method *evp_test_list[] = {
     &digest_test_method,
     &cipher_test_method,
     &mac_test_method,
+    &psign_test_method,
+    &pverify_test_method,
+    &pdecrypt_test_method,
+    &pverify_recover_test_method,
     NULL
 };
 
@@ -292,15 +312,80 @@ static int setup_test(struct evp_test *t, const struct evp_test_method *tmeth)
     return 1;
 }
 
+static EVP_PKEY *find_key(const char *name, struct key_list *lst)
+{
+    for (; lst; lst = lst->next) {
+        if (!strcmp(lst->name, name))
+            return lst->key;
+    }
+    return NULL;
+}
+
+static void free_key_list(struct key_list *lst)
+{
+    for (; lst; lst = lst->next) {
+        EVP_PKEY_free(lst->key);
+        OPENSSL_free(lst->name);
+    }
+}
+
 static int process_test(struct evp_test *t, char *buf, int verbose)
 {
     char *keyword, *value;
     int rv = 0;
+    long save_pos;
+    struct key_list **lst, *key;
+    EVP_PKEY *pk = NULL;
     const struct evp_test_method *tmeth;
     if (verbose)
         fputs(buf, stdout);
     if (!parse_line(&keyword, &value, buf))
         return 1;
+    if (!strcmp(keyword, "PrivateKey")) {
+        save_pos = ftell(t->in);
+        pk = PEM_read_PrivateKey(t->in, NULL, 0, NULL);
+        if (pk == NULL) {
+            fprintf(stderr, "Error reading private key %s\n", value);
+            ERR_print_errors_fp(stderr);
+            return 0;
+        }
+        lst = &t->private;
+    }
+    if (!strcmp(keyword, "PublicKey")) {
+        save_pos = ftell(t->in);
+        pk = PEM_read_PUBKEY(t->in, NULL, 0, NULL);
+        if (pk == NULL) {
+            fprintf(stderr, "Error reading public key %s\n", value);
+            ERR_print_errors_fp(stderr);
+            return 0;
+        }
+        lst = &t->public;
+    }
+    /* If we have a key add to list */
+    if (pk) {
+        char tmpbuf[80];
+        if (find_key(value, *lst)) {
+            fprintf(stderr, "Duplicate key %s\n", value);
+            return 0;
+        }
+        key = OPENSSL_malloc(sizeof(struct key_list));
+        if (!key)
+            return 0;
+        key->name = BUF_strdup(value);
+        key->key = pk;
+        key->next = *lst;
+        *lst = key;
+        /* Rewind input, read to end and update line numbers */
+        fseek(t->in, save_pos, SEEK_SET);
+        while (fgets(tmpbuf, sizeof(tmpbuf), t->in)) {
+            t->line++;
+            if (!strncmp(tmpbuf, "-----END", 8))
+                return 1;
+        }
+        fprintf(stderr, "Can't find key end\n");
+        return 0;
+    }
+
     /* See if keyword corresponds to a test start */
     tmeth = evp_find_test(keyword);
     if (tmeth) {
@@ -367,6 +452,8 @@ int main(int argc, char **argv)
     ERR_load_crypto_strings();
     OpenSSL_add_all_algorithms();
     t.meth = NULL;
+    t.public = NULL;
+    t.private = NULL;
     t.err = NULL;
     t.line = 0;
     t.start_line = -1;
@@ -376,6 +463,7 @@ int main(int argc, char **argv)
     t.out_got = NULL;
     t.out_len = 0;
     in = fopen(argv[1], "r");
+    t.in = in;
     while (fgets(buf, sizeof(buf), in)) {
         t.line++;
         if (!process_test(&t, buf, 0))
@@ -386,6 +474,8 @@ int main(int argc, char **argv)
         exit(1);
     fprintf(stderr, "%d tests completed with %d errors\n",
             t.ntests, t.errors);
+    free_key_list(t.public);
+    free_key_list(t.private);
     fclose(in);
     if (t.errors)
         return 1;
@@ -900,4 +990,186 @@ static const struct evp_test_method mac_test_method = {
     mac_test_cleanup,
     mac_test_parse,
     mac_test_run
+};
+
+/*
+ * Public key operations. These are all very similar and can share
+ * a lot of common code.
+ */
+
+struct pkey_data {
+    /* Context for this operation */
+    EVP_PKEY_CTX *ctx;
+    /* Key operation to perform */
+    int (*keyop) (EVP_PKEY_CTX *ctx,
+                  unsigned char *sig, size_t *siglen,
+                  const unsigned char *tbs, size_t tbslen);
+    /* Input to MAC */
+    unsigned char *input;
+    size_t input_len;
+    /* Expected output */
+    unsigned char *output;
+    size_t output_len;
+};
+
+/*
+ * Perform public key operation setup: lookup key, allocated ctx and call
+ * the appropriate initialisation function
+ */
+static int pkey_test_init(struct evp_test *t, const char *name,
+                          int use_public,
+                          int (*keyopinit) (EVP_PKEY_CTX *ctx),
+                          int (*keyop) (EVP_PKEY_CTX *ctx,
+                                        unsigned char *sig, size_t *siglen,
+                                        const unsigned char *tbs,
+                                        size_t tbslen)
+    )
+{
+    struct pkey_data *kdata;
+    EVP_PKEY *pkey = NULL;
+    kdata = OPENSSL_malloc(sizeof(struct pkey_data));
+    if (!kdata)
+        return 0;
+    kdata->ctx = NULL;
+    kdata->input = NULL;
+    kdata->output = NULL;
+    kdata->keyop = keyop;
+    t->data = kdata;
+    if (use_public)
+        pkey = find_key(name, t->public);
+    if (!pkey)
+        pkey = find_key(name, t->private);
+    if (!pkey)
+        return 0;
+    kdata->ctx = EVP_PKEY_CTX_new(pkey, NULL);
+    if (!kdata->ctx)
+        return 0;
+    if (keyopinit(kdata->ctx) <= 0)
+        return 0;
+    return 1;
+}
+
+static void pkey_test_cleanup(struct evp_test *t)
+{
+    struct pkey_data *kdata = t->data;
+    if (kdata->input)
+        OPENSSL_free(kdata->input);
+    if (kdata->output)
+        OPENSSL_free(kdata->output);
+    if (kdata->ctx)
+        EVP_PKEY_CTX_free(kdata->ctx);
+}
+
+static int pkey_test_parse(struct evp_test *t,
+                           const char *keyword, const char *value)
+{
+    struct pkey_data *kdata = t->data;
+    if (!strcmp(keyword, "Input"))
+        return test_bin(value, &kdata->input, &kdata->input_len);
+    if (!strcmp(keyword, "Output"))
+        return test_bin(value, &kdata->output, &kdata->output_len);
+    if (!strcmp(keyword, "Ctrl")) {
+        char *p = strchr(value, ':');
+        if (p)
+            *p++ = 0;
+        if (EVP_PKEY_CTX_ctrl_str(kdata->ctx, value, p) <= 0)
+            return 0;
+        return 1;
+    }
+    return 0;
+}
+
+static int pkey_test_run(struct evp_test *t)
+{
+    struct pkey_data *kdata = t->data;
+    unsigned char *out = NULL;
+    size_t out_len;
+    const char *err = "KEYOP_LENGTH_ERROR";
+    if (kdata->keyop(kdata->ctx, NULL, &out_len, kdata->input,
+                     kdata->input_len) <= 0)
+        goto err;
+    out = OPENSSL_malloc(out_len);
+    if (!out) {
+        fprintf(stderr, "Error allocating output buffer!\n");
+        exit(1);
+    }
+    err = "KEYOP_ERROR";
+    if (kdata->keyop
+        (kdata->ctx, out, &out_len, kdata->input, kdata->input_len) <= 0)
+        goto err;
+    err = "KEYOP_LENGTH_MISMATCH";
+    if (out_len != kdata->output_len)
+        goto err;
+    err = "KEYOP_MISMATCH";
+    if (check_output(t, kdata->output, out, out_len))
+        goto err;
+    err = NULL;
+ err:
+    if (out)
+        OPENSSL_free(out);
+    t->err = err;
+    return 1;
+}
+
+static int sign_test_init(struct evp_test *t, const char *name)
+{
+    return pkey_test_init(t, name, 0, EVP_PKEY_sign_init, EVP_PKEY_sign);
+}
+
+static const struct evp_test_method psign_test_method = {
+    "Sign",
+    sign_test_init,
+    pkey_test_cleanup,
+    pkey_test_parse,
+    pkey_test_run
+};
+
+static int verify_recover_test_init(struct evp_test *t, const char *name)
+{
+    return pkey_test_init(t, name, 1, EVP_PKEY_verify_recover_init,
+                          EVP_PKEY_verify_recover);
+}
+
+static const struct evp_test_method pverify_recover_test_method = {
+    "VerifyRecover",
+    verify_recover_test_init,
+    pkey_test_cleanup,
+    pkey_test_parse,
+    pkey_test_run
+};
+
+static int decrypt_test_init(struct evp_test *t, const char *name)
+{
+    return pkey_test_init(t, name, 0, EVP_PKEY_decrypt_init,
+                          EVP_PKEY_decrypt);
+}
+
+static const struct evp_test_method pdecrypt_test_method = {
+    "Decrypt",
+    decrypt_test_init,
+    pkey_test_cleanup,
+    pkey_test_parse,
+    pkey_test_run
+};
+
+static int verify_test_init(struct evp_test *t, const char *name)
+{
+    return pkey_test_init(t, name, 1, EVP_PKEY_verify_init, 0);
+}
+
+static int verify_test_run(struct evp_test *t)
+{
+    struct pkey_data *kdata = t->data;
+    if (EVP_PKEY_verify(kdata->ctx, kdata->output, kdata->output_len,
+                        kdata->input, kdata->input_len) <= 0)
+        t->err = "VERIFY_ERROR";
+    return 1;
+}
+
+static const struct evp_test_method pverify_test_method = {
+    "Verify",
+    verify_test_init,
+    pkey_test_cleanup,
+    pkey_test_parse,
+    verify_test_run
 };
