@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 961
-#define NUM_SN 954
-#define NUM_LN 954
-#define NUM_OBJ 890
+#define NUM_NID 973
+#define NUM_SN 966
+#define NUM_LN 966
+#define NUM_OBJ 902
 
-static const unsigned char lvalues[6255]={
+static const unsigned char lvalues[6351]={
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  0] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  6] OBJ_pkcs */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,     /* [ 13] OBJ_md2 */
@@ -952,6 +952,18 @@ static const unsigned char lvalues[6255]={
 0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x3C,0x02,0x01,0x01,/* [6221] OBJ_jurisdictionLocalityName */
 0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x3C,0x02,0x01,0x02,/* [6232] OBJ_jurisdictionStateOrProvinceName */
 0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x3C,0x02,0x01,0x03,/* [6243] OBJ_jurisdictionCountryName */
+0x03,0xA2,0x31,0x05,0x03,0x01,0x09,0x06,     /* [6254] OBJ_camellia_128_gcm */
+0x03,0xA2,0x31,0x05,0x03,0x01,0x09,0x07,     /* [6262] OBJ_camellia_128_ccm */
+0x03,0xA2,0x31,0x05,0x03,0x01,0x09,0x09,     /* [6270] OBJ_camellia_128_ctr */
+0x03,0xA2,0x31,0x05,0x03,0x01,0x09,0x0A,     /* [6278] OBJ_camellia_128_cmac */
+0x03,0xA2,0x31,0x05,0x03,0x01,0x09,0x1A,     /* [6286] OBJ_camellia_192_gcm */
+0x03,0xA2,0x31,0x05,0x03,0x01,0x09,0x1B,     /* [6294] OBJ_camellia_192_ccm */
+0x03,0xA2,0x31,0x05,0x03,0x01,0x09,0x1D,     /* [6302] OBJ_camellia_192_ctr */
+0x03,0xA2,0x31,0x05,0x03,0x01,0x09,0x1E,     /* [6310] OBJ_camellia_192_cmac */
+0x03,0xA2,0x31,0x05,0x03,0x01,0x09,0x2E,     /* [6318] OBJ_camellia_256_gcm */
+0x03,0xA2,0x31,0x05,0x03,0x01,0x09,0x2F,     /* [6326] OBJ_camellia_256_ccm */
+0x03,0xA2,0x31,0x05,0x03,0x01,0x09,0x31,     /* [6334] OBJ_camellia_256_ctr */
+0x03,0xA2,0x31,0x05,0x03,0x01,0x09,0x32,     /* [6342] OBJ_camellia_256_cmac */
 };
 
 static const ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2517,6 +2529,30 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 {"AES-128-OCB","aes-128-ocb",NID_aes_128_ocb,0,NULL,0},
 {"AES-192-OCB","aes-192-ocb",NID_aes_192_ocb,0,NULL,0},
 {"AES-256-OCB","aes-256-ocb",NID_aes_256_ocb,0,NULL,0},
+{"CAMELLIA-128-GCM","camellia-128-gcm",NID_camellia_128_gcm,8,
+	&(lvalues[6254]),0},
+{"CAMELLIA-128-CCM","camellia-128-ccm",NID_camellia_128_ccm,8,
+	&(lvalues[6262]),0},
+{"CAMELLIA-128-CTR","camellia-128-ctr",NID_camellia_128_ctr,8,
+	&(lvalues[6270]),0},
+{"CAMELLIA-128-CMAC","camellia-128-cmac",NID_camellia_128_cmac,8,
+	&(lvalues[6278]),0},
+{"CAMELLIA-192-GCM","camellia-192-gcm",NID_camellia_192_gcm,8,
+	&(lvalues[6286]),0},
+{"CAMELLIA-192-CCM","camellia-192-ccm",NID_camellia_192_ccm,8,
+	&(lvalues[6294]),0},
+{"CAMELLIA-192-CTR","camellia-192-ctr",NID_camellia_192_ctr,8,
+	&(lvalues[6302]),0},
+{"CAMELLIA-192-CMAC","camellia-192-cmac",NID_camellia_192_cmac,8,
+	&(lvalues[6310]),0},
+{"CAMELLIA-256-GCM","camellia-256-gcm",NID_camellia_256_gcm,8,
+	&(lvalues[6318]),0},
+{"CAMELLIA-256-CCM","camellia-256-ccm",NID_camellia_256_ccm,8,
+	&(lvalues[6326]),0},
+{"CAMELLIA-256-CTR","camellia-256-ctr",NID_camellia_256_ctr,8,
+	&(lvalues[6334]),0},
+{"CAMELLIA-256-CMAC","camellia-256-cmac",NID_camellia_256_cmac,8,
+	&(lvalues[6342]),0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -2559,22 +2595,34 @@ static const unsigned int sn_objs[NUM_SN]={
 94,	/* "BF-OFB" */
 14,	/* "C" */
 751,	/* "CAMELLIA-128-CBC" */
+962,	/* "CAMELLIA-128-CCM" */
 757,	/* "CAMELLIA-128-CFB" */
 760,	/* "CAMELLIA-128-CFB1" */
 763,	/* "CAMELLIA-128-CFB8" */
+964,	/* "CAMELLIA-128-CMAC" */
+963,	/* "CAMELLIA-128-CTR" */
 754,	/* "CAMELLIA-128-ECB" */
+961,	/* "CAMELLIA-128-GCM" */
 766,	/* "CAMELLIA-128-OFB" */
 752,	/* "CAMELLIA-192-CBC" */
+966,	/* "CAMELLIA-192-CCM" */
 758,	/* "CAMELLIA-192-CFB" */
 761,	/* "CAMELLIA-192-CFB1" */
 764,	/* "CAMELLIA-192-CFB8" */
+968,	/* "CAMELLIA-192-CMAC" */
+967,	/* "CAMELLIA-192-CTR" */
 755,	/* "CAMELLIA-192-ECB" */
+965,	/* "CAMELLIA-192-GCM" */
 767,	/* "CAMELLIA-192-OFB" */
 753,	/* "CAMELLIA-256-CBC" */
+970,	/* "CAMELLIA-256-CCM" */
 759,	/* "CAMELLIA-256-CFB" */
 762,	/* "CAMELLIA-256-CFB1" */
 765,	/* "CAMELLIA-256-CFB8" */
+972,	/* "CAMELLIA-256-CMAC" */
+971,	/* "CAMELLIA-256-CTR" */
 756,	/* "CAMELLIA-256-ECB" */
+969,	/* "CAMELLIA-256-GCM" */
 768,	/* "CAMELLIA-256-OFB" */
 108,	/* "CAST5-CBC" */
 110,	/* "CAST5-CFB" */
@@ -3711,22 +3759,34 @@ static const unsigned int ln_objs[NUM_LN]={
 881,	/* "cACertificate" */
 483,	/* "cNAMERecord" */
 751,	/* "camellia-128-cbc" */
+962,	/* "camellia-128-ccm" */
 757,	/* "camellia-128-cfb" */
 760,	/* "camellia-128-cfb1" */
 763,	/* "camellia-128-cfb8" */
+964,	/* "camellia-128-cmac" */
+963,	/* "camellia-128-ctr" */
 754,	/* "camellia-128-ecb" */
+961,	/* "camellia-128-gcm" */
 766,	/* "camellia-128-ofb" */
 752,	/* "camellia-192-cbc" */
+966,	/* "camellia-192-ccm" */
 758,	/* "camellia-192-cfb" */
 761,	/* "camellia-192-cfb1" */
 764,	/* "camellia-192-cfb8" */
+968,	/* "camellia-192-cmac" */
+967,	/* "camellia-192-ctr" */
 755,	/* "camellia-192-ecb" */
+965,	/* "camellia-192-gcm" */
 767,	/* "camellia-192-ofb" */
 753,	/* "camellia-256-cbc" */
+970,	/* "camellia-256-ccm" */
 759,	/* "camellia-256-cfb" */
 762,	/* "camellia-256-cfb1" */
 765,	/* "camellia-256-cfb8" */
+972,	/* "camellia-256-cmac" */
+971,	/* "camellia-256-ctr" */
 756,	/* "camellia-256-ecb" */
+969,	/* "camellia-256-gcm" */
 768,	/* "camellia-256-ofb" */
 443,	/* "caseIgnoreIA5StringSyntax" */
 108,	/* "cast5-cbc" */
@@ -4838,12 +4898,24 @@ static const unsigned int obj_objs[NUM_OBJ]={
 754,	/* OBJ_camellia_128_ecb             0 3 4401 5 3 1 9 1 */
 766,	/* OBJ_camellia_128_ofb128          0 3 4401 5 3 1 9 3 */
 757,	/* OBJ_camellia_128_cfb128          0 3 4401 5 3 1 9 4 */
+961,	/* OBJ_camellia_128_gcm             0 3 4401 5 3 1 9 6 */
+962,	/* OBJ_camellia_128_ccm             0 3 4401 5 3 1 9 7 */
+963,	/* OBJ_camellia_128_ctr             0 3 4401 5 3 1 9 9 */
+964,	/* OBJ_camellia_128_cmac            0 3 4401 5 3 1 9 10 */
 755,	/* OBJ_camellia_192_ecb             0 3 4401 5 3 1 9 21 */
 767,	/* OBJ_camellia_192_ofb128          0 3 4401 5 3 1 9 23 */
 758,	/* OBJ_camellia_192_cfb128          0 3 4401 5 3 1 9 24 */
+965,	/* OBJ_camellia_192_gcm             0 3 4401 5 3 1 9 26 */
+966,	/* OBJ_camellia_192_ccm             0 3 4401 5 3 1 9 27 */
+967,	/* OBJ_camellia_192_ctr             0 3 4401 5 3 1 9 29 */
+968,	/* OBJ_camellia_192_cmac            0 3 4401 5 3 1 9 30 */
 756,	/* OBJ_camellia_256_ecb             0 3 4401 5 3 1 9 41 */
 768,	/* OBJ_camellia_256_ofb128          0 3 4401 5 3 1 9 43 */
 759,	/* OBJ_camellia_256_cfb128          0 3 4401 5 3 1 9 44 */
+969,	/* OBJ_camellia_256_gcm             0 3 4401 5 3 1 9 46 */
+970,	/* OBJ_camellia_256_ccm             0 3 4401 5 3 1 9 47 */
+971,	/* OBJ_camellia_256_ctr             0 3 4401 5 3 1 9 49 */
+972,	/* OBJ_camellia_256_cmac            0 3 4401 5 3 1 9 50 */
 437,	/* OBJ_pilot                        0 9 2342 19200300 100 */
 776,	/* OBJ_seed_ecb                     1 2 410 200004 1 3 */
 777,	/* OBJ_seed_cbc                     1 2 410 200004 1 4 */
