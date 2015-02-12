@@ -3075,6 +3075,11 @@
 #define NID_friendlyCountryName         490
 #define OBJ_friendlyCountryName         OBJ_pilotAttributeType,43L
 
+#define SN_uniqueIdentifier             "uid"
+#define LN_uniqueIdentifier             "uniqueIdentifier"
+#define NID_uniqueIdentifier            102
+#define OBJ_uniqueIdentifier            OBJ_pilotAttributeType,44L
+
 #define LN_organizationalStatus         "organizationalStatus"
 #define NID_organizationalStatus                491
 #define OBJ_organizationalStatus                OBJ_pilotAttributeType,45L
