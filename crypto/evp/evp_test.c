@@ -298,11 +298,8 @@ static int setup_test(struct evp_test *t, const struct evp_test_method *tmeth)
         }
         ERR_clear_error();
         t->meth->cleanup(t);
-        /* If new test type free old data */
-        if (tmeth != t->meth && t->data) {
-            OPENSSL_free(t->data);
-            t->data = NULL;
-        }
+        OPENSSL_free(t->data);
+        t->data = NULL;
         if (t->expected_err) {
             OPENSSL_free(t->expected_err);
             t->expected_err = NULL;
@@ -323,9 +320,13 @@ static EVP_PKEY *find_key(const char *name, struct key_list *lst)
 
 static void free_key_list(struct key_list *lst)
 {
-    for (; lst; lst = lst->next) {
+    while (lst != NULL) {
+	struct key_list *ltmp;
         EVP_PKEY_free(lst->key);
         OPENSSL_free(lst->name);
+	ltmp = lst->next;
+	OPENSSL_free(lst);
+	lst = ltmp;
     }
 }
 
@@ -449,6 +450,8 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+
     ERR_load_crypto_strings();
     OpenSSL_add_all_algorithms();
     t.meth = NULL;
@@ -477,6 +480,11 @@ int main(int argc, char **argv)
     free_key_list(t.public);
     free_key_list(t.private);
     fclose(in);
+    EVP_cleanup();
+    CRYPTO_cleanup_all_ex_data();
+    ERR_remove_thread_state(NULL);
+    ERR_free_strings();
+    CRYPTO_mem_leaks_fp(stderr);
     if (t.errors)
         return 1;
     return 0;
