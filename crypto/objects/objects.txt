@@ -988,8 +988,7 @@ pilotAttributeType 40	:			: personalTitle
 pilotAttributeType 41	:			: mobileTelephoneNumber
 pilotAttributeType 42	:			: pagerTelephoneNumber
 pilotAttributeType 43	:			: friendlyCountryName
-# The following clashes with 2.5.4.45, so commented away
-#pilotAttributeType 44	: uid			: uniqueIdentifier
+pilotAttributeType 44	: uid			: uniqueIdentifier
 pilotAttributeType 45	:			: organizationalStatus
 pilotAttributeType 46	:			: janetMailbox
 pilotAttributeType 47	:			: mailPreferenceOption
