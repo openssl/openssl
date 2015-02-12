@@ -113,6 +113,7 @@ int RAND_egd_bytes(const char *path, int bytes)
 #else
 # include <openssl/opensslconf.h>
 # include OPENSSL_UNISTD
+# include <stddef.h>
 # include <sys/types.h>
 # include <sys/socket.h>
 # ifndef NO_SYS_UN_H
@@ -129,10 +130,6 @@ struct sockaddr_un {
 # endif                         /* NO_SYS_UN_H */
 # include <string.h>
 # include <errno.h>
-
-# ifndef offsetof
-#  define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
-# endif
 
 int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
 {
