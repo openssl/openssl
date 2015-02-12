@@ -185,43 +185,37 @@
 
 /*
  * There are 5 types of terminal interface supported, TERMIO, TERMIOS, VMS,
- * MSDOS and SGTTY
+ * MSDOS and SGTTY.
+ *
+ * If someone defines one of the macros TERMIO, TERMIOS or SGTTY, it will
+ * remain respected.  Otherwise, we default to TERMIOS except for a few
+ * systems that require something different.
+ *
+ * Note: we do not use SGTTY unless it's defined by the configuration.  We
+ * may eventually opt to remove it's use entirely.
  */
 
-#if defined(__sgi) && !defined(TERMIOS)
-# define TERMIOS
-# undef  TERMIO
-# undef  SGTTY
-#endif
+#if !defined(TERMIOS) && !defined(TERMIO) && !defined(SGTTY)
 
-#if defined(linux) && !defined(TERMIO)
-# undef  TERMIOS
-# define TERMIO
-# undef  SGTTY
-#endif
+# if defined(_LIBC)
+#  undef  TERMIOS
+#  define TERMIO
+#  undef  SGTTY
+/*
+ * We know that VMS, MSDOS, VXWORKS, NETWARE use entirely other mechanisms.
+ * MAC_OS_GUSI_SOURCE should probably go away, but that needs to be confirmed.
+ */
+# elif !defined(OPENSSL_SYS_VMS) \
+	&& !defined(OPENSSL_SYS_MSDOS) \
+	&& !defined(OPENSSL_SYS_MACINTOSH_CLASSIC) \
+	&& !defined(MAC_OS_GUSI_SOURCE)	\
+	&& !defined(OPENSSL_SYS_VXWORKS) \
+	&& !defined(OPENSSL_SYS_NETWARE)
+#  define TERMIOS
+#  undef  TERMIO
+#  undef  SGTTY
+# endif
 
-#ifdef _LIBC
-# undef  TERMIOS
-# define TERMIO
-# undef  SGTTY
-#endif
-
-#if !defined(TERMIO) && !defined(TERMIOS) && !defined(OPENSSL_SYS_VMS) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_MACINTOSH_CLASSIC) && !defined(MAC_OS_GUSI_SOURCE)
-# undef  TERMIOS
-# undef  TERMIO
-# define SGTTY
-#endif
-
-#if defined(OPENSSL_SYS_VXWORKS)
-# undef TERMIOS
-# undef TERMIO
-# undef SGTTY
-#endif
-
-#if defined(OPENSSL_SYS_NETWARE)
-# undef TERMIOS
-# undef TERMIO
-# undef SGTTY
 #endif
 
 #ifdef TERMIOS
