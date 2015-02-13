@@ -208,7 +208,7 @@ struct evp_test_method {
 };
 
 static const struct evp_test_method digest_test_method, cipher_test_method;
-static const struct evp_test_method aead_test_method, mac_test_method;
+static const struct evp_test_method mac_test_method;
 static const struct evp_test_method psign_test_method, pverify_test_method;
 static const struct evp_test_method pdecrypt_test_method;
 static const struct evp_test_method pverify_recover_test_method;
