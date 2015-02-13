@@ -4649,3 +4649,4 @@ X509_get0_uids                          5008	EXIST::FUNCTION:
 X509_aux_print                          5009	EXIST::FUNCTION:STDIO
 TS_RESP_CTX_set_signer_digest           5010	EXIST::FUNCTION:
 TS_CONF_set_signer_digest               5011	EXIST::FUNCTION:
+ENGINE_load_dasync                      5012	EXIST::FUNCTION:ENGINE,STATIC_ENGINE
