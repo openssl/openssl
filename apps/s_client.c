@@ -182,6 +182,7 @@ extern int verify_error;
 extern int verify_return_error;
 extern int verify_quiet;
 
+static int async = 0;
 static int c_nbio = 0;
 static int c_tlsextdebug = 0;
 static int c_status_req = 0;
@@ -472,6 +473,7 @@ typedef enum OPTION_choice {
     OPT_CHAINCAFILE, OPT_VERIFYCAFILE, OPT_NEXTPROTONEG, OPT_ALPN,
     OPT_SERVERINFO, OPT_STARTTLS, OPT_SERVERNAME, OPT_JPAKE,
     OPT_USE_SRTP, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN, OPT_SMTPHOST,
+    OPT_ASYNC,
     OPT_V_ENUM,
     OPT_X_ENUM,
     OPT_S_ENUM,
@@ -557,6 +559,7 @@ OPTIONS s_client_options[] = {
      "types  Send empty ClientHello extensions (comma-separated numbers)"},
     {"alpn", OPT_ALPN, 's',
      "Enable ALPN extension, considering named protocols supported (comma-separated list)"},
+    {"async", OPT_ASYNC, '-', "Support asynchronous operation"},
     OPT_S_OPTIONS,
     OPT_V_OPTIONS,
     OPT_X_OPTIONS,
@@ -1061,6 +1064,9 @@ int s_client_main(int argc, char **argv)
         case OPT_KEYMATEXPORTLEN:
             keymatexportlen = atoi(opt_arg());
             break;
+        case OPT_ASYNC:
+            async = 1;
+            break;
         }
     }
     argc = opt_num_rest();
@@ -1198,6 +1204,9 @@ int s_client_main(int argc, char **argv)
         ERR_print_errors(bio_err);
         goto end;
     }
+
+    if (async)
+        SSL_CTX_set_mode(ctx, SSL_MODE_ASYNC);
 
     if (!config_ctx(cctx, ssl_args, ctx, 1, jpake_secret == NULL))
         goto end;
@@ -1883,6 +1892,11 @@ int s_client_main(int argc, char **argv)
                 write_ssl = 1;
                 read_tty = 0;
                 break;
+            case SSL_ERROR_WANT_ASYNC:
+                BIO_printf(bio_c_out, "write A BLOCK\n");
+                write_ssl = 1;
+                read_tty = 0;
+                break;
             case SSL_ERROR_WANT_READ:
                 BIO_printf(bio_c_out, "write R BLOCK\n");
                 write_tty = 0;
@@ -1964,6 +1978,13 @@ int s_client_main(int argc, char **argv)
 
                 read_ssl = 0;
                 write_tty = 1;
+                break;
+            case SSL_ERROR_WANT_ASYNC:
+                BIO_printf(bio_c_out, "read A BLOCK\n");
+                write_tty = 0;
+                read_ssl = 1;
+                if ((read_tty == 0) && (write_ssl == 0))
+                    write_ssl = 1;
                 break;
             case SSL_ERROR_WANT_WRITE:
                 BIO_printf(bio_c_out, "read W BLOCK\n");
