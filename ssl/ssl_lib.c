@@ -158,6 +158,7 @@
 #ifndef OPENSSL_NO_ENGINE
 # include <openssl/engine.h>
 #endif
+#include <openssl/async.h>
 
 const char SSL_version_str[] = OPENSSL_VERSION_TEXT;
 
@@ -184,6 +185,12 @@ SSL3_ENC_METHOD ssl3_undef_enc_method = {
     (int (*)(SSL *, unsigned char *, size_t, const char *,
              size_t, const unsigned char *, size_t,
              int use_context))ssl_undefined_function,
+};
+
+struct ssl_async_args {
+    SSL *s;
+    void *buf;
+    int num;
 };
 
 static void clear_ciphers(SSL *s)
@@ -385,6 +392,8 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->psk_client_callback = ctx->psk_client_callback;
     s->psk_server_callback = ctx->psk_server_callback;
 #endif
+
+    s->job = NULL;
 
     return (s);
  err:
@@ -914,13 +923,55 @@ int SSL_check_private_key(const SSL *ssl)
                                    ssl->cert->key->privatekey));
 }
 
+int SSL_waiting_for_async(SSL *s)
+{
+    if(s->job) {
+        return ASYNC_job_is_waiting(s->job);
+    }
+    return 0;
+}
+
+static int ssl_accept_intern(void *vargs)
+{
+    struct ssl_async_args *args;
+    SSL *s;
+
+    args = (struct ssl_async_args *)vargs;
+    s = args->s;
+
+    return s->method->ssl_accept(s);
+}
+
 int SSL_accept(SSL *s)
 {
+    int ret;
+    struct ssl_async_args args;
+
     if (s->handshake_func == 0)
         /* Not properly initialized yet */
         SSL_set_accept_state(s);
 
-    return (s->method->ssl_accept(s));
+    args.s = s;
+
+    if((s->mode & SSL_MODE_ASYNC) && !ASYNC_in_job()) {
+        switch(ASYNC_start_job(&s->job, &ret, ssl_accept_intern, &args,
+            sizeof(struct ssl_async_args))) {
+        case ASYNC_ERR:
+            SSLerr(SSL_F_SSL_ACCEPT, SSL_R_FAILED_TO_INIT_ASYNC);
+            return -1;
+        case ASYNC_PAUSE:
+            return -1;
+        case ASYNC_FINISH:
+            s->job = NULL;
+            return ret;
+        default:
+            SSLerr(SSL_F_SSL_ACCEPT, ERR_R_INTERNAL_ERROR);
+            /* Shouldn't happen */
+            return -1;
+        }
+    } else {
+        return s->method->ssl_accept(s);
+    }
 }
 
 int SSL_connect(SSL *s)
@@ -937,8 +988,27 @@ long SSL_get_default_timeout(const SSL *s)
     return (s->method->get_timeout());
 }
 
+
+static int ssl_read_intern(void *vargs)
+{
+    struct ssl_async_args *args;
+    SSL *s;
+    void *buf;
+    int num;
+
+    args = (struct ssl_async_args *)vargs;
+    s = args->s;
+    buf = args->buf;
+    num = args->num;
+
+    return s->method->ssl_read(s, buf, num);
+}
+
 int SSL_read(SSL *s, void *buf, int num)
 {
+    int ret;
+    struct ssl_async_args args;
+
     if (s->handshake_func == 0) {
         SSLerr(SSL_F_SSL_READ, SSL_R_UNINITIALIZED);
         return -1;
@@ -948,7 +1018,33 @@ int SSL_read(SSL *s, void *buf, int num)
         s->rwstate = SSL_NOTHING;
         return (0);
     }
-    return (s->method->ssl_read(s, buf, num));
+
+    args.s = s;
+    args.buf = buf;
+    args.num = num;
+
+    if((s->mode & SSL_MODE_ASYNC) && !ASYNC_in_job()) {
+        switch(ASYNC_start_job(&s->job, &ret, ssl_read_intern, &args,
+            sizeof(struct ssl_async_args))) {
+        case ASYNC_ERR:
+            s->rwstate = SSL_NOTHING;
+            SSLerr(SSL_F_SSL_READ, SSL_R_FAILED_TO_INIT_ASYNC);
+            return -1;
+        case ASYNC_PAUSE:
+            s->rwstate = SSL_ASYNC_PAUSED;
+            return -1;
+        case ASYNC_FINISH:
+            s->job = NULL;
+            return ret;
+        default:
+            s->rwstate = SSL_NOTHING;
+            SSLerr(SSL_F_SSL_READ, ERR_R_INTERNAL_ERROR);
+            /* Shouldn't happen */
+            return -1;
+        }
+    } else {
+        return s->method->ssl_read(s, buf, num);
+    }
 }
 
 int SSL_peek(SSL *s, void *buf, int num)
@@ -964,8 +1060,27 @@ int SSL_peek(SSL *s, void *buf, int num)
     return (s->method->ssl_peek(s, buf, num));
 }
 
+static int ssl_write_intern(void *vargs)
+{
+    struct ssl_async_args *args;
+    SSL *s;
+    const void *buf;
+    int num;
+
+    args = (struct ssl_async_args *)vargs;
+    s = args->s;
+    buf = args->buf;
+    num = args->num;
+
+    return s->method->ssl_write(s, buf, num);
+}
+
+
 int SSL_write(SSL *s, const void *buf, int num)
 {
+    int ret;
+    struct ssl_async_args args;
+
     if (s->handshake_func == 0) {
         SSLerr(SSL_F_SSL_WRITE, SSL_R_UNINITIALIZED);
         return -1;
@@ -976,7 +1091,33 @@ int SSL_write(SSL *s, const void *buf, int num)
         SSLerr(SSL_F_SSL_WRITE, SSL_R_PROTOCOL_IS_SHUTDOWN);
         return (-1);
     }
-    return (s->method->ssl_write(s, buf, num));
+
+    args.s = s;
+    args.buf = (void *) buf;
+    args.num = num;
+
+    if((s->mode & SSL_MODE_ASYNC) && !ASYNC_in_job()) {
+        switch(ASYNC_start_job(&s->job, &ret, ssl_write_intern, &args,
+            sizeof(struct ssl_async_args))) {
+        case ASYNC_ERR:
+            s->rwstate = SSL_NOTHING;
+            SSLerr(SSL_F_SSL_WRITE, SSL_R_FAILED_TO_INIT_ASYNC);
+            return -1;
+        case ASYNC_PAUSE:
+            s->rwstate = SSL_ASYNC_PAUSED;
+            return -1;
+        case ASYNC_FINISH:
+            s->job = NULL;
+            return ret;
+        default:
+            s->rwstate = SSL_NOTHING;
+            SSLerr(SSL_F_SSL_WRITE, ERR_R_INTERNAL_ERROR);
+            /* Shouldn't happen */
+            return -1;
+        }
+    } else {
+        return s->method->ssl_write(s, buf, num);
+    }
 }
 
 int SSL_shutdown(SSL *s)
@@ -2373,6 +2514,9 @@ int SSL_get_error(const SSL *s, int i)
     if ((i < 0) && SSL_want_x509_lookup(s)) {
         return (SSL_ERROR_WANT_X509_LOOKUP);
     }
+    if ((i < 0) && SSL_want_async(s)) {
+        return SSL_ERROR_WANT_ASYNC;
+    }
 
     if (i == 0) {
         if ((s->shutdown & SSL_RECEIVED_SHUTDOWN) &&
@@ -2432,8 +2576,6 @@ int ssl_undefined_void_function(void)
 
 int ssl_undefined_const_function(const SSL *s)
 {
-    SSLerr(SSL_F_SSL_UNDEFINED_CONST_FUNCTION,
-           ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
     return (0);
 }
 
