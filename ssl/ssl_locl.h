@@ -163,6 +163,7 @@
 # endif
 # include <openssl/err.h>
 # include <openssl/ssl.h>
+# include <openssl/async.h>
 # include <openssl/symhacks.h>
 
 #include "record/record.h"
@@ -1199,6 +1200,9 @@ struct ssl_st {
 
     /* Default password callback user data. */
     void *default_passwd_callback_userdata;
+
+    /* Async Job info */
+    ASYNC_JOB *job;
 };
 
 

@@ -490,6 +490,10 @@ typedef int (*custom_ext_parse_cb) (SSL *s, unsigned int ext_type,
  * draft-ietf-tls-downgrade-scsv-00.
  */
 # define SSL_MODE_SEND_FALLBACK_SCSV 0x00000080U
+/*
+ * Support Asynchronous operation
+ */
+# define SSL_MODE_ASYNC 0x00000100U
 
 /* Cert related flags */
 /*
@@ -874,16 +878,18 @@ __owur int SSL_CTX_add_server_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
 
 __owur int SSL_extension_supported(unsigned int ext_type);
 
-# define SSL_NOTHING     1
-# define SSL_WRITING     2
-# define SSL_READING     3
-# define SSL_X509_LOOKUP 4
+# define SSL_NOTHING            1
+# define SSL_WRITING            2
+# define SSL_READING            3
+# define SSL_X509_LOOKUP        4
+# define SSL_ASYNC_PAUSED       5
 
 /* These will only be used when doing non-blocking IO */
 # define SSL_want_nothing(s)     (SSL_want(s) == SSL_NOTHING)
 # define SSL_want_read(s)        (SSL_want(s) == SSL_READING)
 # define SSL_want_write(s)       (SSL_want(s) == SSL_WRITING)
 # define SSL_want_x509_lookup(s) (SSL_want(s) == SSL_X509_LOOKUP)
+# define SSL_want_async(s)       (SSL_want(s) == SSL_ASYNC_PAUSED)
 
 # define SSL_MAC_FLAG_READ_MAC_STREAM 1
 # define SSL_MAC_FLAG_WRITE_MAC_STREAM 2
@@ -1102,6 +1108,7 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_ERROR_ZERO_RETURN           6
 # define SSL_ERROR_WANT_CONNECT          7
 # define SSL_ERROR_WANT_ACCEPT           8
+# define SSL_ERROR_WANT_ASYNC            9
 # define SSL_CTRL_NEED_TMP_RSA                   1
 # define SSL_CTRL_SET_TMP_RSA                    2
 # define SSL_CTRL_SET_TMP_DH                     3
@@ -1564,6 +1571,7 @@ __owur char *SSL_get_srp_userinfo(SSL *s);
 
 void SSL_certs_clear(SSL *s);
 void SSL_free(SSL *ssl);
+__owur int SSL_waiting_for_async(SSL *s);
 __owur int SSL_accept(SSL *ssl);
 __owur int SSL_connect(SSL *ssl);
 __owur int SSL_read(SSL *ssl, void *buf, int num);
@@ -2023,6 +2031,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL3_SETUP_WRITE_BUFFER                    291
 # define SSL_F_SSL3_WRITE_BYTES                           158
 # define SSL_F_SSL3_WRITE_PENDING                         159
+# define SSL_F_SSL_ACCEPT                                 351
 # define SSL_F_SSL_ADD_CERT_CHAIN                         316
 # define SSL_F_SSL_ADD_CERT_TO_BUF                        319
 # define SSL_F_SSL_ADD_CLIENTHELLO_RENEGOTIATE_EXT        298
@@ -2265,6 +2274,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST              151
 # define SSL_R_EXCESSIVE_MESSAGE_SIZE                     152
 # define SSL_R_EXTRA_DATA_IN_MESSAGE                      153
+# define SSL_R_FAILED_TO_INIT_ASYNC                       405
 # define SSL_R_FRAGMENTED_CLIENT_HELLO                    401
 # define SSL_R_GOT_A_FIN_BEFORE_A_CCS                     154
 # define SSL_R_GOT_NEXT_PROTO_BEFORE_A_CCS                355
