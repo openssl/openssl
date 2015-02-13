@@ -187,7 +187,7 @@ static int mem_write(BIO *b, const char *in, int inl)
 
     BIO_clear_retry_flags(b);
     blen = bm->length;
-    if (BUF_MEM_grow_clean(bm, blen + inl) != (blen + inl))
+    if (BUF_MEM_grow_clean(bm, blen + inl) == 0)
         goto end;
     memcpy(&(bm->data[blen]), in, inl);
     ret = inl;
