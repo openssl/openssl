@@ -4647,3 +4647,4 @@ X509_get0_extensions                    5006	EXIST::FUNCTION:
 X509_get0_trust_objects                 5007	EXIST::FUNCTION:
 X509_get0_uids                          5008	EXIST::FUNCTION:
 X509_aux_print                          5009	EXIST::FUNCTION:STDIO
+ENGINE_load_dasync                      5010	EXIST::FUNCTION:ENGINE,STATIC_ENGINE
