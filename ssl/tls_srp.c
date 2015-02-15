@@ -195,6 +195,7 @@ int SSL_SRP_CTX_init(struct ssl_st *s)
     return (1);
  err:
     OPENSSL_free(s->srp_ctx.login);
+    OPENSSL_free(s->srp_ctx.info);
     BN_free(s->srp_ctx.N);
     BN_free(s->srp_ctx.g);
     BN_free(s->srp_ctx.s);
