@@ -71,6 +71,7 @@ int SSL_CTX_SRP_CTX_free(struct ssl_ctx_st *ctx)
     if (ctx == NULL)
         return 0;
     OPENSSL_free(ctx->srp_ctx.login);
+    OPENSSL_free(ctx->srp_ctx.info);
     BN_free(ctx->srp_ctx.N);
     BN_free(ctx->srp_ctx.g);
     BN_free(ctx->srp_ctx.s);
@@ -103,6 +104,7 @@ int SSL_SRP_CTX_free(struct ssl_st *s)
     if (s == NULL)
         return 0;
     OPENSSL_free(s->srp_ctx.login);
+    OPENSSL_free(s->srp_ctx.info);
     BN_free(s->srp_ctx.N);
     BN_free(s->srp_ctx.g);
     BN_free(s->srp_ctx.s);
@@ -156,7 +158,6 @@ int SSL_SRP_CTX_init(struct ssl_st *s)
     s->srp_ctx.b = NULL;
     s->srp_ctx.v = NULL;
     s->srp_ctx.login = NULL;
-    s->srp_ctx.info = ctx->srp_ctx.info;
     s->srp_ctx.strength = ctx->srp_ctx.strength;
 
     if (((ctx->srp_ctx.N != NULL) &&
@@ -183,6 +184,12 @@ int SSL_SRP_CTX_init(struct ssl_st *s)
         SSLerr(SSL_F_SSL_SRP_CTX_INIT, ERR_R_INTERNAL_ERROR);
         goto err;
     }
+    if ((ctx->srp_ctx.info != NULL) &&
+        ((s->srp_ctx.info = BUF_strdup(ctx->srp_ctx.info)) == NULL)) {
+        SSLerr(SSL_F_SSL_SRP_CTX_INIT, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
     s->srp_ctx.srp_Mask = ctx->srp_ctx.srp_Mask;
 
     return (1);
@@ -289,7 +296,7 @@ int SSL_set_srp_server_param_pw(SSL *s, const char *user, const char *pass,
 }
 
 int SSL_set_srp_server_param(SSL *s, const BIGNUM *N, const BIGNUM *g,
-                             BIGNUM *sa, BIGNUM *v, char *info)
+                             BIGNUM *sa, BIGNUM *v, const char *info)
 {
     if (N != NULL) {
         if (s->srp_ctx.N != NULL) {
@@ -327,7 +334,12 @@ int SSL_set_srp_server_param(SSL *s, const BIGNUM *N, const BIGNUM *g,
         } else
             s->srp_ctx.v = BN_dup(v);
     }
-    s->srp_ctx.info = info;
+    if(info!=NULL) {
+        if(s->srp_ctx.info != NULL )
+            OPENSSL_free(s->srp_ctx.info);
+        if((s->srp_ctx.info = BUF_strdup(info)) == NULL)
+            return -1;
+    }
 
     if (!(s->srp_ctx.N) ||
         !(s->srp_ctx.g) || !(s->srp_ctx.s) || !(s->srp_ctx.v))
@@ -499,14 +511,16 @@ char *SSL_get_srp_userinfo(SSL *s)
 # define tls1_ctx_ctrl ssl3_ctx_ctrl
 # define tls1_ctx_callback_ctrl ssl3_ctx_callback_ctrl
 
-int SSL_CTX_set_srp_username(SSL_CTX *ctx, char *name)
+int SSL_CTX_set_srp_username(SSL_CTX *ctx, const char *name)
 {
-    return tls1_ctx_ctrl(ctx, SSL_CTRL_SET_TLS_EXT_SRP_USERNAME, 0, name);
+    char* name_tmp = BUF_strdup(name);
+    return tls1_ctx_ctrl(ctx, SSL_CTRL_SET_TLS_EXT_SRP_USERNAME, 0, name_tmp);
 }
 
-int SSL_CTX_set_srp_password(SSL_CTX *ctx, char *password)
+int SSL_CTX_set_srp_password(SSL_CTX *ctx, const char *password)
 {
-    return tls1_ctx_ctrl(ctx, SSL_CTRL_SET_TLS_EXT_SRP_PASSWORD, 0, password);
+    char* pass_tmp = BUF_strdup(password);
+    return tls1_ctx_ctrl(ctx, SSL_CTRL_SET_TLS_EXT_SRP_PASSWORD, 0, pass_tmp);
 }
 
 int SSL_CTX_set_srp_strength(SSL_CTX *ctx, int strength)

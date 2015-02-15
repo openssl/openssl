@@ -4007,7 +4007,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
             SSLerr(SSL_F_SSL3_CTX_CTRL, SSL_R_INVALID_SRP_USERNAME);
             return 0;
         }
-        if ((ctx->srp_ctx.login = BUF_strdup((char *)parg)) == NULL) {
+        if ((ctx->srp_ctx.login = (char *)parg) == NULL) {
             SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -4015,6 +4015,8 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
     case SSL_CTRL_SET_TLS_EXT_SRP_PASSWORD:
         ctx->srp_ctx.SRP_give_srp_client_pwd_callback =
             srp_password_from_info_cb;
+        if(ctx->srp_ctx.info != NULL)
+          OPENSSL_free(ctx->srp_ctx.info);
         ctx->srp_ctx.info = parg;
         break;
     case SSL_CTRL_SET_SRP_ARG:
