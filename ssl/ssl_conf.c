@@ -119,6 +119,8 @@ struct ssl_conf_ctx_st {
     SSL *ssl;
     /* Pointer to SSL or SSL_CTX options field or NULL if none */
     unsigned long *poptions;
+    /* Certificate filenames for each type */
+    char *cert_filename[SSL_PKEY_NUM];
     /* Pointer to SSL or SSL_CTX cert_flags or NULL if none */
     unsigned int *pcert_flags;
     /* Current flag table being worked on */
@@ -364,12 +366,26 @@ static int cmd_Options(SSL_CONF_CTX *cctx, const char *value)
 static int cmd_Certificate(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv = 1;
+    CERT *c = NULL;
     if (!(cctx->flags & SSL_CONF_FLAG_CERTIFICATE))
         return -2;
-    if (cctx->ctx)
+    if (cctx->ctx) {
         rv = SSL_CTX_use_certificate_chain_file(cctx->ctx, value);
-    if (cctx->ssl)
+        c = cctx->ctx->cert;
+    }
+    if (cctx->ssl) {
         rv = SSL_use_certificate_file(cctx->ssl, value, SSL_FILETYPE_PEM);
+        c = cctx->ssl->cert;
+    }
+    if (rv > 0 && c && cctx->flags & SSL_CONF_FLAG_REQUIRE_PRIVATE) {
+        char **pfilename = &cctx->cert_filename[c->key - c->pkeys];
+        if (*pfilename)
+            OPENSSL_free(*pfilename);
+        *pfilename = BUF_strdup(value);
+        if (!*pfilename)
+            rv = 0;
+    }
+
     return rv > 0;
 }
 
@@ -595,6 +611,7 @@ int SSL_CONF_cmd_value_type(SSL_CONF_CTX *cctx, const char *cmd)
 SSL_CONF_CTX *SSL_CONF_CTX_new(void)
 {
     SSL_CONF_CTX *ret;
+    size_t i;
     ret = OPENSSL_malloc(sizeof(SSL_CONF_CTX));
     if (ret) {
         ret->flags = 0;
@@ -606,18 +623,44 @@ SSL_CONF_CTX *SSL_CONF_CTX_new(void)
         ret->pcert_flags = NULL;
         ret->tbl = NULL;
         ret->ntbl = 0;
+        for (i = 0; i < SSL_PKEY_NUM; i++)
+            ret->cert_filename[i] = NULL;
     }
     return ret;
 }
 
 int SSL_CONF_CTX_finish(SSL_CONF_CTX *cctx)
 {
+    /* See if any certificates are missing private keys */
+    size_t i;
+    CERT *c = NULL;
+    if (cctx->ctx)
+        c = cctx->ctx->cert;
+    else if (cctx->ssl)
+        c = cctx->ssl->cert;
+    if (c && cctx->flags & SSL_CONF_FLAG_REQUIRE_PRIVATE) {
+        for (i = 0; i < SSL_PKEY_NUM; i++) {
+            const char *p = cctx->cert_filename[i];
+            /*
+             * If missing private key try to load one from certificate file
+             */
+            if (p && !c->pkeys[i].privatekey) {
+                if (!cmd_PrivateKey(cctx, p))
+                    return 0;
+            }
+        }
+    }
     return 1;
 }
 
 void SSL_CONF_CTX_free(SSL_CONF_CTX *cctx)
 {
     if (cctx) {
+        size_t i;
+        for (i = 0; i < SSL_PKEY_NUM; i++) {
+            if (cctx->cert_filename[i])
+                OPENSSL_free(cctx->cert_filename[i]);
+        }
         if (cctx->prefix)
             OPENSSL_free(cctx->prefix);
         OPENSSL_free(cctx);

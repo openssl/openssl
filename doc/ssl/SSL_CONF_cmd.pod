@@ -101,7 +101,7 @@ are permitted.
 Attempts to use the file B<value> as the private key for the appropriate
 context. This option is only supported if certificate operations
 are permitted. Note: if no B<-key> option is set then a private key is
-not loaded: it does not currently use the B<-cert> file.
+not loaded unless the flag B<SSL_CONF_FLAG_REQUIRE_PRIVATE> is set.
 
 =item B<-dhparam>
 
@@ -192,8 +192,8 @@ are permitted.
 
 Attempts to use the file B<value> as the private key for the appropriate
 context. This option is only supported if certificate operations
-are permitted. Note: if no B<-key> option is set then a private key is
-not loaded: it does not currently use the B<Certificate> file.
+are permitted. Note: if no B<PrivateKey> option is set then a private key is
+not loaded unless the B<SSL_CONF_FLAG_REQUIRE_PRIVATE> is set.
 
 =item B<ServerInfoFile>
 
