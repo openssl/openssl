@@ -73,7 +73,8 @@ static ASYNC_CTX *ASYNC_CTX_new(void)
 
     ASYNC_FIBRE_init_dispatcher(&nctx->dispatcher);
     nctx->currjob = NULL;
-    ASYNC_set_ctx(nctx);
+    if(!ASYNC_set_ctx(nctx))
+        goto err;
 
     return nctx;
 err:
@@ -90,7 +91,8 @@ static int ASYNC_CTX_free(void)
         OPENSSL_free(ASYNC_get_ctx());
     }
 
-    ASYNC_set_ctx(NULL);
+    if(!ASYNC_set_ctx(NULL))
+        return 0;
 
     return 1;
 }
