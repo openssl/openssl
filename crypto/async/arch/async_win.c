@@ -1,4 +1,4 @@
-/* include/openssl/async.h */
+/* crypto/async/arch/async_win.c */
 /*
  * Written by Matt Caswell (matt@openssl.org) for the OpenSSL project.
  */
@@ -51,29 +51,34 @@
  * ====================================================================
  */
 
-#ifndef HEADER_ASYNC_H
-# define HEADER_ASYNC_H
+#include "async_win.h"
 
-#include <stdlib.h>
+#ifdef ASYNC_WIN
 
-# ifdef  __cplusplus
-extern "C" {
-# endif
+# include <windows.h>
+# include "cryptlib.h"
 
-typedef struct async_job_st ASYNC_JOB;
+void ASYNC_start_func(void);
 
-#define ASYNC_ERR      0
-#define ASYNC_PAUSE    1
-#define ASYNC_FINISH   2
+int ASYNC_FIBRE_init_dispatcher(ASYNC_FIBRE *fibre)
+{
+    LPVOID dispatcher;
 
-int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
-                         void *args, size_t size);
-int ASYNC_pause_job(void);
-int ASYNC_in_job(void);
-int ASYNC_job_is_waiting(ASYNC_JOB *job);
-
-# ifdef  __cplusplus
+    dispatcher =
+        (LPVOID) CRYPTO_get_thread_local(CRYPTO_THREAD_LOCAL_ASYNC_DISPATCH);
+    if (!dispatcher) {
+        fibre->fibre = ConvertThreadToFiber(NULL);
+        CRYPTO_set_thread_local(CRYPTO_THREAD_LOCAL_ASYNC_DISPATCH,
+                                (void *)fibre->fibre);
+    } else {
+        fibre->fibre = dispatcher;
+    }
+    return 1;
 }
-# endif
+
+VOID CALLBACK ASYNC_start_func_win(PVOID unused)
+{
+    ASYNC_start_func();
+}
 
 #endif
