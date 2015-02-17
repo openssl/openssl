@@ -1,4 +1,4 @@
-/* include/openssl/async.h */
+/* crypto/async/arch/async_posix.h */
 /*
  * Written by Matt Caswell (matt@openssl.org) for the OpenSSL project.
  */
@@ -50,30 +50,40 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
  */
+#include <openssl/e_os2.h>
 
-#ifndef HEADER_ASYNC_H
-# define HEADER_ASYNC_H
+#ifdef OPENSSL_SYS_UNIX
 
-#include <stdlib.h>
+# include <unistd.h>
 
-# ifdef  __cplusplus
-extern "C" {
+# if _POSIX_VERSION >= 200112L
+
+#  define ASYNC_SYSV
+#  define ASYNC_ARCH
+
+#  include <ucontext.h>
+
+extern __thread ASYNC_CTX *sysvctx;
+
+typedef struct async_fibre_st {
+    ucontext_t fibre;
+} ASYNC_FIBRE;
+
+#  define ASYNC_set_ctx(nctx)             (sysvctx = (nctx))
+#  define ASYNC_get_ctx()                 (sysvctx)
+#  define ASYNC_FIBRE_swapcontext(o,n,r) \
+            ((r)? \
+                !swapcontext(&(o)->fibre, &(n)->fibre) \
+            : \
+                !setcontext(&(n)->fibre))
+#  define ASYNC_FIBRE_makecontext(c) \
+            (ASYNC_FIBRE_init(c) \
+            && !getcontext(&(c)->fibre) \
+            && (makecontext(&(c)->fibre, ASYNC_start_func, 0), 1))
+#  define ASYNC_FIBRE_init_dispatcher(d)
+
+int ASYNC_FIBRE_init(ASYNC_FIBRE *fibre);
+void ASYNC_FIBRE_free(ASYNC_FIBRE *fibre);
+
 # endif
-
-typedef struct async_job_st ASYNC_JOB;
-
-#define ASYNC_ERR      0
-#define ASYNC_PAUSE    1
-#define ASYNC_FINISH   2
-
-int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
-                         void *args, size_t size);
-int ASYNC_pause_job(void);
-int ASYNC_in_job(void);
-int ASYNC_job_is_waiting(ASYNC_JOB *job);
-
-# ifdef  __cplusplus
-}
-# endif
-
 #endif

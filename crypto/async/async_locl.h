@@ -1,4 +1,4 @@
-/* include/openssl/async.h */
+/* crypto/async/async_locl.h */
 /*
  * Written by Matt Caswell (matt@openssl.org) for the OpenSSL project.
  */
@@ -51,29 +51,28 @@
  * ====================================================================
  */
 
-#ifndef HEADER_ASYNC_H
-# define HEADER_ASYNC_H
+#include <openssl/async.h>
 
-#include <stdlib.h>
+typedef struct async_ctx_st ASYNC_CTX;
 
-# ifdef  __cplusplus
-extern "C" {
-# endif
+#include "arch/async_win.h"
+#include "arch/async_posix.h"
 
-typedef struct async_job_st ASYNC_JOB;
-
-#define ASYNC_ERR      0
-#define ASYNC_PAUSE    1
-#define ASYNC_FINISH   2
-
-int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
-                         void *args, size_t size);
-int ASYNC_pause_job(void);
-int ASYNC_in_job(void);
-int ASYNC_job_is_waiting(ASYNC_JOB *job);
-
-# ifdef  __cplusplus
-}
-# endif
-
+#ifndef ASYNC_ARCH
+# error Failed to detect async arch
 #endif
+
+struct async_ctx_st {
+    ASYNC_FIBRE dispatcher;
+    ASYNC_JOB *currjob;
+};
+
+struct async_job_st {
+    ASYNC_FIBRE fibrectx;
+    int (*func) (void *);
+    void *funcargs;
+    int ret;
+    int status;
+};
+
+void ASYNC_start_func(void);

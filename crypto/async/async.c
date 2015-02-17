@@ -53,29 +53,13 @@
 
 #include <openssl/crypto.h>
 #include <openssl/async.h>
-#include <ucontext.h>
 #include <string.h>
+#include "async_locl.h"
 
 #define ASYNC_JOB_RUNNING   0
 #define ASYNC_JOB_PAUSING   1
 #define ASYNC_JOB_PAUSED    2
 #define ASYNC_JOB_STOPPING  3
-
-
-typedef struct async_ctx_st {
-    ucontext_t dispatcher;
-    ASYNC_JOB *currjob;
-} ASYNC_CTX;
-
-__thread ASYNC_CTX *ctx;
-
-struct async_job_st {
-    ucontext_t fibrectx;
-    int (*func)(void *);
-    void *funcargs;
-    int ret;
-    int status;
-};
 
 
 static ASYNC_CTX *ASYNC_CTX_new(void)
@@ -87,8 +71,9 @@ static ASYNC_CTX *ASYNC_CTX_new(void)
         goto err;
     }
 
+    ASYNC_FIBRE_init_dispatcher(&nctx->dispatcher);
     nctx->currjob = NULL;
-    ctx = nctx;
+    ASYNC_set_ctx(nctx);
 
     return nctx;
 err:
@@ -101,11 +86,11 @@ err:
 
 static int ASYNC_CTX_free(void)
 {
-    if(ctx) {
-        OPENSSL_free(ctx);
+    if(ASYNC_get_ctx()) {
+        OPENSSL_free(ASYNC_get_ctx());
     }
 
-    ctx = NULL;
+    ASYNC_set_ctx(NULL);
 
     return 1;
 }
@@ -113,31 +98,15 @@ static int ASYNC_CTX_free(void)
 static ASYNC_JOB *ASYNC_JOB_new(void)
 {
     ASYNC_JOB *job = NULL;
-    void *stack = NULL;
 
     if(!(job = OPENSSL_malloc(sizeof (ASYNC_JOB)))) {
-        goto err;
+        return NULL;
     }
 
-    if(!(stack = OPENSSL_malloc(SIGSTKSZ))) {
-        goto err;
-    }
-    if(getcontext(&job->fibrectx))
-        goto err;
-    job->fibrectx.uc_stack.ss_sp = stack;
-    job->fibrectx.uc_stack.ss_size = SIGSTKSZ;
-    job->fibrectx.uc_link = NULL;
     job->status = ASYNC_JOB_RUNNING;
     job->funcargs = NULL;
 
     return job;
-err:
-    if(job) {
-        if(stack)
-            OPENSSL_free(stack);
-        OPENSSL_free(job);
-    }
-    return NULL;
 }
 
 static void ASYNC_JOB_free(ASYNC_JOB *job)
@@ -145,99 +114,103 @@ static void ASYNC_JOB_free(ASYNC_JOB *job)
     if(job) {
         if(job->funcargs)
             OPENSSL_free(job->funcargs);
-        if(job->fibrectx.uc_stack.ss_sp)
-            OPENSSL_free(job->fibrectx.uc_stack.ss_sp);
+        ASYNC_FIBRE_free(&job->fibrectx);
         OPENSSL_free(job);
     }
 }
 
-static void ASYNC_start_func(void)
+void ASYNC_start_func(void)
 {
     ASYNC_JOB *job;
 
     /* Run the job */
-    job = ctx->currjob;
+    job = ASYNC_get_ctx()->currjob;
     job->ret = job->func(job->funcargs);
 
     /* Stop the job */
     job->status = ASYNC_JOB_STOPPING;
-    setcontext(&ctx->dispatcher);
-
-    /*
-     * Should not happen. Getting here will close the thread...can't do much
-     * about it
-     */
+    if(!ASYNC_FIBRE_swapcontext(&job->fibrectx,
+                                &ASYNC_get_ctx()->dispatcher, 0)) {
+        /*
+         * Should not happen. Getting here will close the thread...can't do much
+         * about it
+         */
+    }
 }
 
 int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
                          void *args, size_t size)
 {
-    if(ctx || !ASYNC_CTX_new()) {
+    if(ASYNC_get_ctx() || !ASYNC_CTX_new()) {
         return ASYNC_ERR;
     }
 
     if(*job) {
-        ctx->currjob = *job;
+        ASYNC_get_ctx()->currjob = *job;
     }
 
-    getcontext(&ctx->dispatcher);
+    for (;;) {
+        if(ASYNC_get_ctx()->currjob) {
+            if(ASYNC_get_ctx()->currjob->status == ASYNC_JOB_STOPPING) {
+                *ret = ASYNC_get_ctx()->currjob->ret;
+                ASYNC_JOB_free(ASYNC_get_ctx()->currjob);
+                ASYNC_get_ctx()->currjob = NULL;
+                ASYNC_CTX_free();
+                return ASYNC_FINISH;
+            }
 
-    if(ctx->currjob) {
-        if(ctx->currjob->status == ASYNC_JOB_STOPPING) {
-            *ret = ctx->currjob->ret;
-            ASYNC_JOB_free(ctx->currjob);
-            ctx->currjob = NULL;
-            ASYNC_CTX_free();
-            return ASYNC_FINISH;
-        }
+            if(ASYNC_get_ctx()->currjob->status == ASYNC_JOB_PAUSING) {
+                *job = ASYNC_get_ctx()->currjob;
+                ASYNC_get_ctx()->currjob->status = ASYNC_JOB_PAUSED;
+                ASYNC_CTX_free();
+                return ASYNC_PAUSE;
+            }
 
-        if(ctx->currjob->status == ASYNC_JOB_PAUSING) {
-            *job = ctx->currjob;
-            ctx->currjob->status = ASYNC_JOB_PAUSED;
-            ASYNC_CTX_free();
-            return ASYNC_PAUSE;
-        }
+            if(ASYNC_get_ctx()->currjob->status == ASYNC_JOB_PAUSED) {
+                ASYNC_get_ctx()->currjob = *job;
+                /* Resume previous job */
+                if(!ASYNC_FIBRE_swapcontext(&ASYNC_get_ctx()->dispatcher,
+                    &ASYNC_get_ctx()->currjob->fibrectx, 1))
+                    goto err;
+                continue;
+            }
 
-        if(ctx->currjob->status == ASYNC_JOB_PAUSED) {
-            ctx->currjob = *job;
-            /* Resume previous job */
-            setcontext(&ctx->currjob->fibrectx);
-            /* Does not return */
-        }
-
-        /* Should not happen */
-        ASYNC_JOB_free(ctx->currjob);
-        ctx->currjob = NULL;
-        ASYNC_CTX_free();
-        return ASYNC_ERR;
-    }
-
-    /* Start a new job */
-    if(!(ctx->currjob = ASYNC_JOB_new())) {
-        ASYNC_CTX_free();
-        return ASYNC_ERR;
-    }
-
-    if(args != NULL) {
-        ctx->currjob->funcargs = OPENSSL_malloc(size);
-        if(!ctx->currjob->funcargs) {
-            ASYNC_JOB_free(ctx->currjob);
-            ctx->currjob = NULL;
+            /* Should not happen */
+            ASYNC_JOB_free(ASYNC_get_ctx()->currjob);
+            ASYNC_get_ctx()->currjob = NULL;
             ASYNC_CTX_free();
             return ASYNC_ERR;
         }
-        memcpy(ctx->currjob->funcargs, args, size);
-    } else {
-        ctx->currjob->funcargs = NULL;
+
+        /* Start a new job */
+        if(!(ASYNC_get_ctx()->currjob = ASYNC_JOB_new())) {
+            ASYNC_CTX_free();
+            return ASYNC_ERR;
+        }
+
+        if(args != NULL) {
+            ASYNC_get_ctx()->currjob->funcargs = OPENSSL_malloc(size);
+            if(!ASYNC_get_ctx()->currjob->funcargs) {
+                ASYNC_JOB_free(ASYNC_get_ctx()->currjob);
+                ASYNC_get_ctx()->currjob = NULL;
+                ASYNC_CTX_free();
+                return ASYNC_ERR;
+            }
+            memcpy(ASYNC_get_ctx()->currjob->funcargs, args, size);
+        } else {
+            ASYNC_get_ctx()->currjob->funcargs = NULL;
+        }
+
+        ASYNC_get_ctx()->currjob->func = func;
+        ASYNC_FIBRE_makecontext(&ASYNC_get_ctx()->currjob->fibrectx);
+        if(!ASYNC_FIBRE_swapcontext(&ASYNC_get_ctx()->dispatcher,
+            &ASYNC_get_ctx()->currjob->fibrectx, 1))
+            goto err;
     }
 
-    ctx->currjob->func = func;
-    makecontext(&ctx->currjob->fibrectx, ASYNC_start_func, 0);
-    setcontext(&ctx->currjob->fibrectx);
-
-    /* Does not return except in error */
-    ASYNC_JOB_free(ctx->currjob);
-    ctx->currjob = NULL;
+err:
+    ASYNC_JOB_free(ASYNC_get_ctx()->currjob);
+    ASYNC_get_ctx()->currjob = NULL;
     ASYNC_CTX_free();
     return ASYNC_ERR;
 }
@@ -247,13 +220,14 @@ int ASYNC_pause_job(void)
 {
     ASYNC_JOB *job;
 
-    if(!ctx || !ctx->currjob)
+    if(!ASYNC_get_ctx() || !ASYNC_get_ctx()->currjob)
         return 0;
 
-    job = ctx->currjob;
+    job = ASYNC_get_ctx()->currjob;
     job->status = ASYNC_JOB_PAUSING;
 
-    if(swapcontext(&job->fibrectx, &ctx->dispatcher)) {
+    if(!ASYNC_FIBRE_swapcontext(&job->fibrectx,
+                               &ASYNC_get_ctx()->dispatcher, 1)) {
         /* Error */
         return 0;
     }
@@ -263,7 +237,7 @@ int ASYNC_pause_job(void)
 
 int ASYNC_in_job(void)
 {
-    if(ctx)
+    if(ASYNC_get_ctx())
         return 1;
 
     return 0;

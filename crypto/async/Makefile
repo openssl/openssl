@@ -17,13 +17,13 @@ TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=async.c
-LIBOBJ=async.o
+LIBSRC=async.c arch/async_posix.c arch/async_win.c
+LIBOBJ=async.o arch/async_posix.o arch/async_win.o
 
 SRC= $(LIBSRC)
 
 EXHEADER= async.h
-HEADER=	$(EXHEADER)
+HEADER=	$(EXHEADER) async_locl.h arch/async_posix.h arch/async_win.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -73,11 +73,26 @@ dclean:
 
 clean:
 	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f arch/*.o arch/*.obj arch/lib arch/tags arch/core arch/.pure arch/.nfs* arch/*.old arch/*.bak arch/fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
+arch/async_posix.o: ../../include/openssl/async.h
+arch/async_posix.o: ../../include/openssl/crypto.h
+arch/async_posix.o: ../../include/openssl/e_os2.h
+arch/async_posix.o: ../../include/openssl/opensslconf.h
+arch/async_posix.o: ../../include/openssl/opensslv.h
+arch/async_posix.o: ../../include/openssl/ossl_typ.h
+arch/async_posix.o: ../../include/openssl/safestack.h
+arch/async_posix.o: ../../include/openssl/stack.h
+arch/async_posix.o: ../../include/openssl/symhacks.h arch/../arch/async_posix.h
+arch/async_posix.o: arch/../arch/async_win.h arch/../async_locl.h
+arch/async_posix.o: arch/async_posix.c
+arch/async_win.o: ../../include/openssl/async.h arch/async_win.c
+arch/async_win.o: arch/async_win.h
 async.o: ../../include/openssl/async.h ../../include/openssl/crypto.h
 async.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 async.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 async.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-async.o: ../../include/openssl/symhacks.h async.c
+async.o: ../../include/openssl/symhacks.h arch/async_posix.h arch/async_win.h
+async.o: async.c async_locl.h
