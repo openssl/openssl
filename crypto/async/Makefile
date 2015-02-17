@@ -85,14 +85,14 @@ arch/async_posix.o: ../../include/openssl/opensslv.h
 arch/async_posix.o: ../../include/openssl/ossl_typ.h
 arch/async_posix.o: ../../include/openssl/safestack.h
 arch/async_posix.o: ../../include/openssl/stack.h
-arch/async_posix.o: ../../include/openssl/symhacks.h arch/../arch/async_posix.h
-arch/async_posix.o: arch/../arch/async_win.h arch/../async_locl.h
-arch/async_posix.o: arch/async_posix.c
+arch/async_posix.o: ../../include/openssl/symhacks.h arch/../arch/async_null.h
+arch/async_posix.o: arch/../arch/async_posix.h arch/../arch/async_win.h
+arch/async_posix.o: arch/../async_locl.h arch/async_posix.c
 arch/async_win.o: ../../include/openssl/async.h arch/async_win.c
 arch/async_win.o: arch/async_win.h
 async.o: ../../include/openssl/async.h ../../include/openssl/crypto.h
 async.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 async.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 async.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-async.o: ../../include/openssl/symhacks.h arch/async_posix.h arch/async_win.h
-async.o: async.c async_locl.h
+async.o: ../../include/openssl/symhacks.h arch/async_null.h arch/async_posix.h
+async.o: arch/async_win.h async.c async_locl.h
