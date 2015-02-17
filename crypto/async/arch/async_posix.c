@@ -1,4 +1,4 @@
-/* include/openssl/async.h */
+/* crypto/async/arch/async_posix.c */
 /*
  * Written by Matt Caswell (matt@openssl.org) for the OpenSSL project.
  */
@@ -51,29 +51,35 @@
  * ====================================================================
  */
 
-#ifndef HEADER_ASYNC_H
-# define HEADER_ASYNC_H
+#include "../async_locl.h"
+#include <openssl/async.h>
 
-#include <stdlib.h>
+#ifdef ASYNC_SYSV
+# include <stddef.h>
+# include <ucontext.h>
+# include <openssl/crypto.h>
+# include <openssl/async.h>
 
-# ifdef  __cplusplus
-extern "C" {
-# endif
+__thread ASYNC_CTX *sysvctx;
 
-typedef struct async_job_st ASYNC_JOB;
+int ASYNC_FIBRE_init(ASYNC_FIBRE *fibre)
+{
+    void *stack = NULL;
 
-#define ASYNC_ERR      0
-#define ASYNC_PAUSE    1
-#define ASYNC_FINISH   2
+    if (!(stack = OPENSSL_malloc(SIGSTKSZ))) {
+        return 0;
+    }
 
-int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
-                         void *args, size_t size);
-int ASYNC_pause_job(void);
-int ASYNC_in_job(void);
-int ASYNC_job_is_waiting(ASYNC_JOB *job);
+    fibre->fibre.uc_stack.ss_sp = stack;
+    fibre->fibre.uc_stack.ss_size = SIGSTKSZ;
+    fibre->fibre.uc_link = NULL;
 
-# ifdef  __cplusplus
+    return 1;
 }
-# endif
 
+void ASYNC_FIBRE_free(ASYNC_FIBRE *fibre)
+{
+    if (fibre->fibre.uc_stack.ss_sp)
+        OPENSSL_free(fibre->fibre.uc_stack.ss_sp);
+}
 #endif

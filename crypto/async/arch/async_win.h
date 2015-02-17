@@ -1,4 +1,4 @@
-/* include/openssl/async.h */
+/* crypto/async/arch/async_win.h */
 /*
  * Written by Matt Caswell (matt@openssl.org) for the OpenSSL project.
  */
@@ -51,29 +51,34 @@
  * ====================================================================
  */
 
-#ifndef HEADER_ASYNC_H
-# define HEADER_ASYNC_H
+#include <openssl/async.h>
 
-#include <stdlib.h>
+/*
+ * This is the same detection used in cryptlib to set up the thread local
+ * storage that we depend on, so just copy that
+ */
+#if defined(_WIN32) || defined(__CYGWIN__)
+# define ASYNC_WIN
+# define ASYNC_ARCH
 
-# ifdef  __cplusplus
-extern "C" {
-# endif
+# include <windows.h>
+# include "cryptlib.h"
 
-typedef struct async_job_st ASYNC_JOB;
+typedef struct async_fibre_st {
+    LPVOID fibre;
+} ASYNC_FIBRE;
 
-#define ASYNC_ERR      0
-#define ASYNC_PAUSE    1
-#define ASYNC_FINISH   2
+# define ASYNC_set_ctx(nctx) \
+        (CRYPTO_set_thread_local(CRYPTO_THREAD_LOCAL_ASYNC_CTX, (void *)(nctx)))
+# define ASYNC_get_ctx() \
+        ((ASYNC_CTX *)CRYPTO_get_thread_local(CRYPTO_THREAD_LOCAL_ASYNC_CTX))
+# define ASYNC_FIBRE_swapcontext(o,n,r) \
+        (SwitchToFiber((n)->fibre), 1)
+# define ASYNC_FIBRE_makecontext(c) \
+        ((c)->fibre = CreateFiber(0, ASYNC_start_func_win, 0))
+# define ASYNC_FIBRE_free(f)             (DeleteFiber((f)->fibre))
 
-int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
-                         void *args, size_t size);
-int ASYNC_pause_job(void);
-int ASYNC_in_job(void);
-int ASYNC_job_is_waiting(ASYNC_JOB *job);
-
-# ifdef  __cplusplus
-}
-# endif
+int ASYNC_FIBRE_init_dispatcher(ASYNC_FIBRE *fibre);
+VOID CALLBACK ASYNC_start_func_win(PVOID unused);
 
 #endif
