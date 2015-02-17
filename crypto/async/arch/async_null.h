@@ -1,4 +1,4 @@
-/* crypto/async/async_locl.h */
+/* crypto/async/arch/async_null.h */
 /*
  * Written by Matt Caswell (matt@openssl.org) for the OpenSSL project.
  */
@@ -53,23 +53,24 @@
 
 #include <openssl/async.h>
 
-typedef struct async_ctx_st ASYNC_CTX;
+/*
+ * If we haven't managed to detect any other async architecture then we default
+ * to NULL.
+ */
+#ifndef ASYNC_ARCH
+# define ASYNC_NULL
+# define ASYNC_ARCH
 
-#include "arch/async_win.h"
-#include "arch/async_posix.h"
-#include "arch/async_null.h"
+typedef struct async_fibre_st {
+    int dummy;
+} ASYNC_FIBRE;
 
-struct async_ctx_st {
-    ASYNC_FIBRE dispatcher;
-    ASYNC_JOB *currjob;
-};
 
-struct async_job_st {
-    ASYNC_FIBRE fibrectx;
-    int (*func) (void *);
-    void *funcargs;
-    int ret;
-    int status;
-};
 
-void ASYNC_start_func(void);
+# define ASYNC_set_ctx(nctx)                    0
+# define ASYNC_get_ctx()                        ((ASYNC_CTX *)NULL)
+# define ASYNC_FIBRE_swapcontext(o,n,r)         0
+# define ASYNC_FIBRE_makecontext(c)
+# define ASYNC_FIBRE_free(f)
+# define ASYNC_FIBRE_init_dispatcher(f)
+#endif
