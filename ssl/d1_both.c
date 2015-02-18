@@ -1072,6 +1072,7 @@ int dtls1_buffer_message(SSL *s, int is_ccs)
     pitem *item;
     hm_fragment *frag;
     unsigned char seq64be[8];
+    unsigned int expected_hdr_len;
 
     /*
      * this function is called immediately after a message has been
@@ -1085,13 +1086,15 @@ int dtls1_buffer_message(SSL *s, int is_ccs)
 
     memcpy(frag->fragment, s->init_buf->data, s->init_num);
 
-    if (is_ccs) {
-        OPENSSL_assert(s->d1->w_msg_hdr.msg_len +
-                       DTLS1_CCS_HEADER_LENGTH == (unsigned int)s->init_num);
-    } else {
-        OPENSSL_assert(s->d1->w_msg_hdr.msg_len +
-                       DTLS1_HM_HEADER_LENGTH == (unsigned int)s->init_num);
-    }
+    if (!is_ccs)
+        expected_hdr_len = DTLS1_HM_HEADER_LENGTH;
+    else if (s->version == DTLS1_BAD_VER)
+        expected_hdr_len = 3;
+    else
+        expected_hdr_len = DTLS1_CCS_HEADER_LENGTH;
+
+    OPENSSL_assert(s->d1->w_msg_hdr.msg_len +
+                   expected_hdr_len == (unsigned int)s->init_num);
 
     frag->msg_header.msg_len = s->d1->w_msg_hdr.msg_len;
     frag->msg_header.seq = s->d1->w_msg_hdr.seq;
