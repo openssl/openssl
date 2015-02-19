@@ -29,7 +29,7 @@ The B<genpkey> command generates a private key.
 =item B<-out filename>
 
 the output filename. If this argument is not specified then standard output is
-used.  
+used.
 
 =item B<-outform DER|PEM>
 
@@ -141,11 +141,21 @@ and 2048 bit group with 256 bit subgroup as mentioned in RFC5114 sections
 
 =head1 EC PARAMETER GENERATION OPTIONS
 
+In OpenSSL 1.0.2 and later the EC parameter generation options below can also
+be supplied as EC key generation options. This can (for example) generate a
+key from a named curve without the need to use an explicit parameter file.
+
 =over 4
 
 =item B<ec_paramgen_curve:curve>
 
-the EC curve to use.
+the EC curve to use. OpenSSL 1.0.2 and later supports NIST curve names
+such as "P-256".
+
+=item B<ec_param_enc:encoding>
+
+the encoding to use for parameters. The "encoding" paramater must be either
+"named_curve" or "explicit".
 
 =back
 
@@ -190,7 +200,7 @@ can be used.
 
 Generate an RSA private key using default parameters:
 
- openssl genpkey -algorithm RSA -out key.pem 
+ openssl genpkey -algorithm RSA -out key.pem
 
 Encrypt output private key using 128 bit AES and the passphrase "hello":
 
@@ -208,7 +218,7 @@ Generate 1024 bit DSA parameters:
 
 Generate DSA key from parameters:
 
- openssl genpkey -paramfile dsap.pem -out dsakey.pem 
+ openssl genpkey -paramfile dsap.pem -out dsakey.pem
 
 Generate 1024 bit DH parameters:
 
@@ -221,8 +231,23 @@ Output RFC5114 2048 bit DH parameters with 224 bit subgroup:
 
 Generate DH key from parameters:
 
- openssl genpkey -paramfile dhp.pem -out dhkey.pem 
+ openssl genpkey -paramfile dhp.pem -out dhkey.pem
 
+Generate EC parameters:
+
+ openssl genpkey -genparam -algorithm EC -out ecp.pem \
+	-pkeyopt ec_paramgen_curve:secp384r1 \
+	-pkeyopt ec_param_enc:named_curve
+
+Generate EC key from parameters:
+
+ openssl genpkey -paramfile ecp.pem -out eckey.pem
+
+Generate EC key directly (OpenSSL 1.0.2+ only):
+
+ openssl genpkey -algorithm EC -out eckey.pem \
+	-pkeyopt ec_paramgen_curve:P-384 \
+	-pkeyopt ec_param_enc:named_curve
 
 =cut
 
