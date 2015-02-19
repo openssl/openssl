@@ -106,7 +106,7 @@ EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
         goto err;
 
     ret->curve_name = 0;
-    ret->asn1_flag = 0;
+    ret->asn1_flag = OPENSSL_EC_NAMED_CURVE;
     ret->asn1_form = POINT_CONVERSION_UNCOMPRESSED;
 
     ret->seed = NULL;
