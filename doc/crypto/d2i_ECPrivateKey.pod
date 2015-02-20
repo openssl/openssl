@@ -31,8 +31,8 @@ for a description of point_conversion_form.
 When reading a private key encoded without an associated public key (e.g. if
 EC_PKEY_NO_PUBKEY has been used - see below), then d2i_ECPrivateKey generates
 the missing public key automatically. Private keys encoded without parameters
-(e.g. if EC_PKEY_NO_PARAMETERS has been used - see below) then the key cannot be
-loaded using d2i_ECPrivateKey.
+(e.g. if EC_PKEY_NO_PARAMETERS has been used - see below) cannot be loaded using
+d2i_ECPrivateKey.
 
 The functions EC_KEY_get_enc_flags and EC_KEY_set_enc_flags get and set the
 value of the encoding flags for the B<key>. There are two encoding flags
