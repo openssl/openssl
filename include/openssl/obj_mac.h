@@ -711,6 +711,7 @@
 #define NID_pkcs9               47
 #define OBJ_pkcs9               OBJ_pkcs,9L
 
+#define SN_pkcs9_emailAddress           "Email"
 #define LN_pkcs9_emailAddress           "emailAddress"
 #define NID_pkcs9_emailAddress          48
 #define OBJ_pkcs9_emailAddress          OBJ_pkcs9,1L

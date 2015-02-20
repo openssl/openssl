@@ -229,7 +229,7 @@ pkcs7 6			:			: pkcs7-encryptedData
 
 pkcs 9			: pkcs9
 !module pkcs9
-pkcs9 1			: 			: emailAddress
+pkcs9 1			: Email                 : emailAddress
 pkcs9 2			:			: unstructuredName
 pkcs9 3			:			: contentType
 pkcs9 4			:			: messageDigest
