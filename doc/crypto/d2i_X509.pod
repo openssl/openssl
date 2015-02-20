@@ -82,8 +82,7 @@ can trap the unwary. See the B<WARNINGS> section for some common
 errors.
 
 The reason for the auto increment behaviour is to reflect a typical
-usage of ASN1 functions: after one structure is encoded or decoded    if (a != NULL)
-        (*a) = ret;
+usage of ASN1 functions: after one structure is encoded or decoded
 another will processed after it.
 
 =head1 EXAMPLES
@@ -205,8 +204,7 @@ of this "reuse" behaviour is strongly discouraged.
 
 i2d_X509() will not return an error in many versions of OpenSSL,
 if mandatory fields are not initialized due to a programming error
-then the encoded structure may contain invalid data or omit the    if (a != NULL)
-        (*a) = ret;
+then the encoded structure may contain invalid data or omit the
 fields entirely and will not be parsed by d2i_X509(). This may be
 fixed in future so code should not assume that i2d_X509() will
 always succeed.
