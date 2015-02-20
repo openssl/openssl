@@ -33,12 +33,14 @@
 
 static int callb(int ok, X509_STORE_CTX *ctx);
 static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext,
-                const EVP_MD *digest, CONF *conf, const char *section);
+                const EVP_MD *digest, CONF *conf, const char *section,
+                int preserve_dates);
 static int x509_certify(X509_STORE *ctx, const char *CAfile, const EVP_MD *digest,
                         X509 *x, X509 *xca, EVP_PKEY *pkey,
                         STACK_OF(OPENSSL_STRING) *sigopts, const char *serialfile,
                         int create, int days, int clrext, CONF *conf,
-                        const char *section, ASN1_INTEGER *sno, int reqfile);
+                        const char *section, ASN1_INTEGER *sno, int reqfile,
+                        int preserve_dates);
 static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt);
 
 typedef enum OPTION_choice {
@@ -56,7 +58,7 @@ typedef enum OPTION_choice {
     OPT_CLRREJECT, OPT_ALIAS, OPT_CACREATESERIAL, OPT_CLREXT, OPT_OCSPID,
     OPT_SUBJECT_HASH_OLD,
     OPT_ISSUER_HASH_OLD,
-    OPT_BADSIG, OPT_MD, OPT_ENGINE, OPT_NOCERT
+    OPT_BADSIG, OPT_MD, OPT_ENGINE, OPT_NOCERT, OPT_PRESERVE_DATES
 } OPTION_CHOICE;
 
 const OPTIONS x509_options[] = {
@@ -140,6 +142,7 @@ const OPTIONS x509_options[] = {
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
+    {"preserve_dates", OPT_PRESERVE_DATES, '-', "preserve existing dates when signing"},
     {NULL}
 };
 
@@ -173,6 +176,7 @@ int x509_main(int argc, char **argv)
     int enddate = 0;
     time_t checkoffset = 0;
     unsigned long certflag = 0;
+    int preserve_dates = 0;
     OPTION_CHOICE o;
     ENGINE *e = NULL;
 #ifndef OPENSSL_NO_MD5
@@ -233,6 +237,8 @@ int x509_main(int argc, char **argv)
                 goto opthelp;
             break;
         case OPT_DAYS:
+            if (preserve_dates)
+                goto opthelp;
             days = atoi(opt_arg());
             break;
         case OPT_PASSIN:
@@ -432,6 +438,11 @@ int x509_main(int argc, char **argv)
             break;
         case OPT_CHECKIP:
             checkip = opt_arg();
+            break;
+        case OPT_PRESERVE_DATES:
+            if (days != DEF_DAYS)
+                goto opthelp;
+            preserve_dates = 1;
             break;
         case OPT_MD:
             if (!opt_md(opt_unknown(), &digest))
@@ -783,7 +794,7 @@ int x509_main(int argc, char **argv)
                 }
 
                 assert(need_rand);
-                if (!sign(x, Upkey, days, clrext, digest, extconf, extsect))
+                if (!sign(x, Upkey, days, clrext, digest, extconf, extsect, preserve_dates))
                     goto end;
             } else if (CA_flag == i) {
                 BIO_printf(bio_err, "Getting CA Private Key\n");
@@ -798,7 +809,7 @@ int x509_main(int argc, char **argv)
                 if (!x509_certify(ctx, CAfile, digest, x, xca,
                                   CApkey, sigopts,
                                   CAserial, CA_createserial, days, clrext,
-                                  extconf, extsect, sno, reqfile))
+                                  extconf, extsect, sno, reqfile, preserve_dates))
                     goto end;
             } else if (x509req == i) {
                 EVP_PKEY *pk;
@@ -933,7 +944,7 @@ static int x509_certify(X509_STORE *ctx, const char *CAfile, const EVP_MD *diges
                         STACK_OF(OPENSSL_STRING) *sigopts,
                         const char *serialfile, int create,
                         int days, int clrext, CONF *conf, const char *section,
-                        ASN1_INTEGER *sno, int reqfile)
+                        ASN1_INTEGER *sno, int reqfile, int preserve_dates)
 {
     int ret = 0;
     ASN1_INTEGER *bs = NULL;
@@ -977,7 +988,7 @@ static int x509_certify(X509_STORE *ctx, const char *CAfile, const EVP_MD *diges
     if (!X509_set_serialNumber(x, bs))
         goto end;
 
-    if (!set_cert_times(x, NULL, NULL, days))
+    if (!preserve_dates && !set_cert_times(x, NULL, NULL, days))
         goto end;
 
     if (clrext) {
@@ -1041,12 +1052,13 @@ static int callb(int ok, X509_STORE_CTX *ctx)
 
 /* self sign */
 static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext,
-                const EVP_MD *digest, CONF *conf, const char *section)
+                const EVP_MD *digest, CONF *conf, const char *section,
+                int preserve_dates)
 {
 
     if (!X509_set_issuer_name(x, X509_get_subject_name(x)))
         goto err;
-    if (!set_cert_times(x, NULL, NULL, days))
+    if (!preserve_dates && !set_cert_times(x, NULL, NULL, days))
         goto err;
     if (!X509_set_pubkey(x, pkey))
         goto err;
