@@ -967,10 +967,10 @@ static int ubsec_dh_generate_key(DH *dh)
 
     if (dh->pub_key == NULL) {
         pub_key = BN_new();
+        if (pub_key == NULL)
+            goto err;
         pub_key_len = BN_num_bits(dh->p);
         if (bn_wexpand(pub_key, dh->p->top) == NULL)
-            goto err;
-        if (pub_key == NULL)
             goto err;
     } else {
         pub_key = dh->pub_key;
