@@ -369,6 +369,7 @@ my %table=(
 	template	=> 1,
 	cpuid_obj       => "sparcv9cap.o sparccpuid.o",
 	bn_obj          => "bn-sparcv9.o sparcv9-mont.o sparcv9a-mont.o vis3-mont.o sparct4-mont.o sparcv9-gf2m.o",
+        ec_obj          => "ecp_nistz256.o ecp_nistz256-sparcv9.o",
 	des_obj         => "des_enc-sparc.o fcrypt_b.o dest4-sparcv9.o",
 	aes_obj         => "aes_core.o aes_cbc.o aes-sparcv9.o aest4-sparcv9.o",
 	md5_obj         => "md5-sparcv9.o",
