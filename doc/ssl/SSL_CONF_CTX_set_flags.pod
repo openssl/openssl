@@ -36,7 +36,7 @@ least one of these flags must be set.
 recognise options intended for use in SSL/TLS clients or servers. One or
 both of these flags must be set.
 
-=item SSL_CONF_CERTIFICATE
+=item SSL_CONF_FLAG_CERTIFICATE
 
 recognise certificate and private key options.
 
