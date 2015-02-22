@@ -454,6 +454,8 @@ int main(int argc, char **argv)
 
     ERR_load_crypto_strings();
     OpenSSL_add_all_algorithms();
+
+    memset(&t,0,sizeof(t));
     t.meth = NULL;
     t.public = NULL;
     t.private = NULL;
