@@ -54,6 +54,9 @@ ecp_nistz256-x86_64.s: asm/ecp_nistz256-x86_64.pl
 ecp_nistz256-avx2.s:   asm/ecp_nistz256-avx2.pl
 	$(PERL) asm/ecp_nistz256-avx2.pl $(PERLASM_SCHEME) > $@
 
+ecp_nistz256-sparcv9.S:	asm/ecp_nistz256-sparcv9.pl
+	$(PERL) asm/ecp_nistz256-sparcv9.pl $(CFLAGS) > $@
+
 ecp_nistz256-%.S:	asm/ecp_nistz256-%.pl;  $(PERL) $< $(PERLASM_SCHEME) $@
 ecp_nistz256-armv4.o:	ecp_nistz256-armv4.S
 ecp_nistz256-armv8.o:	ecp_nistz256-armv8.S
