@@ -199,6 +199,12 @@ B<*px> is valid is broken and some parts of the reused structure may
 persist if they are not present in the new one. As a result the use
 of this "reuse" behaviour is strongly discouraged.
 
+Current versions of OpenSSL will not modify B<*px> if an error occurs.
+If parsing succeeds then B<*px> is freed (if it is not NULL) and then
+set to the value of the newly decoded structure. As a result B<*px>
+B<must not> be allocated on the stack or an attempt will be made to
+free an invalid pointer.
+
 i2d_X509() will not return an error in many versions of OpenSSL,
 if mandatory fields are not initialized due to a programming error
 then the encoded structure may contain invalid data or omit the
@@ -210,7 +216,9 @@ always succeed.
 
 d2i_X509(), d2i_X509_bio() and d2i_X509_fp() return a valid B<X509> structure
 or B<NULL> if an error occurs. The error code that can be obtained by
-L<ERR_get_error(3)|ERR_get_error(3)>. 
+L<ERR_get_error(3)|ERR_get_error(3)>. If the "reuse" capability has been used
+with a valid X509 structure being passed in via B<px> then the object is not
+modified in the event of error.
 
 i2d_X509() returns the number of bytes successfully encoded or a negative
 value if an error occurs. The error code can be obtained by
