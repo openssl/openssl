@@ -1130,7 +1130,6 @@ int main(int argc, char *argv[])
         }
 #endif
         else if (strcmp(*argv, "-tls1") == 0) {
-            no_protocol = 1;
             tls1 = 1;
         } else if (strcmp(*argv, "-ssl3") == 0) {
 #ifdef OPENSSL_NO_SSL3_METHOD
