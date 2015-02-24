@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-d2i_ECPKParameters, i2d_ECPKParameters, d2i_ECPKParameters_bio, i2d_ECPKParameters_bio, d2i_ECPKParameters_fp, i2d_ECPKParameters_fp(fp,x), ECPKParameters_print, ECPKParameters_print_fp - Functions for decoding and encoding ASN1 representations of elliptic curve entities
+d2i_ECPKParameters, i2d_ECPKParameters, d2i_ECPKParameters_bio, i2d_ECPKParameters_bio, d2i_ECPKParameters_fp, i2d_ECPKParameters_fp, ECPKParameters_print, ECPKParameters_print_fp - Functions for decoding and encoding ASN1 representations of elliptic curve entities
 
 =head1 SYNOPSIS
 
