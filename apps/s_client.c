@@ -1352,13 +1352,12 @@ int MAIN(int argc, char **argv)
 
     SSL_CTX_set_verify(ctx, verify, verify_callback);
 
-    if ((!SSL_CTX_load_verify_locations(ctx, CAfile, CApath)) ||
-        (!SSL_CTX_set_default_verify_paths(ctx))) {
-        /*
-         * BIO_printf(bio_err,"error setting default verify locations\n");
-         */
+    if ((CAfile || CApath)
+        && !SSL_CTX_load_verify_locations(ctx, CAfile, CApath)) {
         ERR_print_errors(bio_err);
-        /* goto end; */
+    }
+    if (!SSL_CTX_set_default_verify_paths(ctx)) {
+        ERR_print_errors(bio_err);
     }
 
     ssl_ctx_add_crls(ctx, crls, crl_download);
