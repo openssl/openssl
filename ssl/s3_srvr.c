@@ -148,7 +148,6 @@
  * OTHERWISE.
  */
 
-#define NETSCAPE_HANG_BUG
 
 #include <stdio.h>
 #include "ssl_locl.h"
@@ -541,12 +540,7 @@ int ssl3_accept(SSL *s)
                 ret = ssl3_send_certificate_request(s);
                 if (ret <= 0)
                     goto end;
-#ifndef NETSCAPE_HANG_BUG
                 s->state = SSL3_ST_SW_SRVR_DONE_A;
-#else
-                s->state = SSL3_ST_SW_FLUSH;
-                s->s3->tmp.next_state = SSL3_ST_SR_CERT_A;
-#endif
                 s->init_num = 0;
             }
             break;
@@ -2044,22 +2038,6 @@ int ssl3_send_certificate_request(SSL *s)
         s2n(nl, p);
 
         ssl_set_handshake_header(s, SSL3_MT_CERTIFICATE_REQUEST, n);
-
-#ifdef NETSCAPE_HANG_BUG
-        if (!SSL_IS_DTLS(s)) {
-            if (!BUF_MEM_grow_clean(buf, s->init_num + 4)) {
-                SSLerr(SSL_F_SSL3_SEND_CERTIFICATE_REQUEST, ERR_R_BUF_LIB);
-                goto err;
-            }
-            p = (unsigned char *)s->init_buf->data + s->init_num;
-            /* do the header */
-            *(p++) = SSL3_MT_SERVER_DONE;
-            *(p++) = 0;
-            *(p++) = 0;
-            *(p++) = 0;
-            s->init_num += 4;
-        }
-#endif
 
         s->state = SSL3_ST_SW_CERT_REQ_B;
     }
