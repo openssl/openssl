@@ -556,7 +556,6 @@ int dtls1_accept(SSL *s)
                 ret = ssl3_send_certificate_request(s);
                 if (ret <= 0)
                     goto end;
-#ifndef NETSCAPE_HANG_BUG
                 s->state = SSL3_ST_SW_SRVR_DONE_A;
 # ifndef OPENSSL_NO_SCTP
                 if (BIO_dgram_is_sctp(SSL_get_wbio(s))) {
@@ -564,16 +563,6 @@ int dtls1_accept(SSL *s)
                     s->state = DTLS1_SCTP_ST_SW_WRITE_SOCK;
                 }
 # endif
-#else
-                s->state = SSL3_ST_SW_FLUSH;
-                s->s3->tmp.next_state = SSL3_ST_SR_CERT_A;
-# ifndef OPENSSL_NO_SCTP
-                if (BIO_dgram_is_sctp(SSL_get_wbio(s))) {
-                    s->d1->next_state = s->s3->tmp.next_state;
-                    s->s3->tmp.next_state = DTLS1_SCTP_ST_SW_WRITE_SOCK;
-                }
-# endif
-#endif
                 s->init_num = 0;
             }
             break;
