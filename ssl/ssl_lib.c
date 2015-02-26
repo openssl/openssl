@@ -2044,14 +2044,17 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
     int rsa_enc_export, dh_rsa_export, dh_dsa_export;
     int rsa_tmp_export, dh_tmp_export, kl;
     unsigned long mask_k, mask_a, emask_k, emask_a;
-    int have_ecc_cert, ecdh_ok, ecdsa_ok, ecc_pkey_size;
-#ifndef OPENSSL_NO_ECDH
-    int have_ecdh_tmp;
+#ifndef OPENSSL_NO_ECDSA
+    int have_ecc_cert, ecdsa_ok, ecc_pkey_size;
 #endif
+#ifndef OPENSSL_NO_ECDH
+    int have_ecdh_tmp, ecdh_ok;
+#endif
+#ifndef OPENSSL_NO_EC
     X509 *x = NULL;
     EVP_PKEY *ecc_pkey = NULL;
     int signature_nid = 0, pk_nid = 0, md_nid = 0;
-
+#endif
     if (c == NULL)
         return;
 
@@ -2090,7 +2093,9 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
     dh_dsa = (cpk->x509 != NULL && cpk->privatekey != NULL);
     dh_dsa_export = (dh_dsa && EVP_PKEY_size(cpk->privatekey) * 8 <= kl);
     cpk = &(c->pkeys[SSL_PKEY_ECC]);
+#ifndef OPENSSL_NO_EC
     have_ecc_cert = (cpk->x509 != NULL && cpk->privatekey != NULL);
+#endif
     mask_k = 0;
     mask_a = 0;
     emask_k = 0;
@@ -2168,6 +2173,7 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
      * An ECC certificate may be usable for ECDH and/or ECDSA cipher suites
      * depending on the key usage extension.
      */
+#ifndef OPENSSL_NO_EC
     if (have_ecc_cert) {
         /* This call populates extension flags (ex_flags) */
         x = (c->pkeys[SSL_PKEY_ECC]).x509;
@@ -2212,6 +2218,7 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
         }
 #endif
     }
+#endif
 #ifndef OPENSSL_NO_ECDH
     if (have_ecdh_tmp) {
         mask_k |= SSL_kEECDH;
