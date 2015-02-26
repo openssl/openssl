@@ -290,6 +290,7 @@ static int setup_test(struct evp_test *t, const struct evp_test_method *tmeth)
     if (t->meth) {
         t->ntests++;
         if (t->skip) {
+            t->meth = tmeth;
             t->nskip++;
             return 1;
         }
@@ -543,8 +544,14 @@ static int digest_test_init(struct evp_test *t, const char *alg)
     const EVP_MD *digest;
     struct digest_data *mdat = t->data;
     digest = EVP_get_digestbyname(alg);
-    if (!digest)
+    if (!digest) {
+        /* If alg has an OID assume disabled algorithm */
+        if (OBJ_sn2nid(alg) != NID_undef || OBJ_ln2nid(alg) != NID_undef) {
+            t->skip = 1;
+            return 1;
+        }
         return 0;
+    }
     mdat = OPENSSL_malloc(sizeof(struct digest_data));
     mdat->digest = digest;
     mdat->input = NULL;
