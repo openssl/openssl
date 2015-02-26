@@ -179,12 +179,16 @@ struct evp_test {
     int ntests;
     /* Error count */
     int errors;
+    /* Number of tests skipped */
+    int nskip;
     /* If output mismatch expected and got value */
     unsigned char *out_got;
     unsigned char *out_expected;
     size_t out_len;
     /* test specific data */
     void *data;
+    /* Current test should be skipped */
+    int skip;
 };
 
 struct key_list {
@@ -285,6 +289,10 @@ static int setup_test(struct evp_test *t, const struct evp_test_method *tmeth)
     /* If we already have a test set up run it */
     if (t->meth) {
         t->ntests++;
+        if (t->skip) {
+            t->nskip++;
+            return 1;
+        }
         t->err = NULL;
         if (t->meth->run_test(t) != 1) {
             fprintf(stderr, "%s test error line %d\n",
@@ -309,13 +317,16 @@ static int setup_test(struct evp_test *t, const struct evp_test_method *tmeth)
     return 1;
 }
 
-static EVP_PKEY *find_key(const char *name, struct key_list *lst)
+static int find_key(EVP_PKEY **ppk, const char *name, struct key_list *lst)
 {
     for (; lst; lst = lst->next) {
-        if (!strcmp(lst->name, name))
-            return lst->key;
+        if (!strcmp(lst->name, name)) {
+            if (ppk)
+                *ppk = lst->key;
+            return 1;
+        }
     }
-    return NULL;
+    return 0;
 }
 
 static void free_key_list(struct key_list *lst)
@@ -330,10 +341,21 @@ static void free_key_list(struct key_list *lst)
     }
 }
 
+static int check_unsupported()
+{
+    long err = ERR_peek_error();
+    if (ERR_GET_LIB(err) == ERR_LIB_EVP
+         && ERR_GET_REASON(err) == EVP_R_UNSUPPORTED_ALGORITHM) {
+        ERR_clear_error();
+        return 1;
+    }
+    return 0;
+}
+
 static int process_test(struct evp_test *t, char *buf, int verbose)
 {
     char *keyword, *value;
-    int rv = 0;
+    int rv = 0, add_key = 0;
     long save_pos;
     struct key_list **lst, *key;
     EVP_PKEY *pk = NULL;
@@ -345,27 +367,29 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
     if (!strcmp(keyword, "PrivateKey")) {
         save_pos = ftell(t->in);
         pk = PEM_read_PrivateKey(t->in, NULL, 0, NULL);
-        if (pk == NULL) {
+        if (pk == NULL && !check_unsupported()) {
             fprintf(stderr, "Error reading private key %s\n", value);
             ERR_print_errors_fp(stderr);
             return 0;
         }
         lst = &t->private;
+        add_key = 1;
     }
     if (!strcmp(keyword, "PublicKey")) {
         save_pos = ftell(t->in);
         pk = PEM_read_PUBKEY(t->in, NULL, 0, NULL);
-        if (pk == NULL) {
+        if (pk == NULL && !check_unsupported()) {
             fprintf(stderr, "Error reading public key %s\n", value);
             ERR_print_errors_fp(stderr);
             return 0;
         }
         lst = &t->public;
+        add_key = 1;
     }
     /* If we have a key add to list */
-    if (pk) {
+    if (add_key) {
         char tmpbuf[80];
-        if (find_key(value, *lst)) {
+        if (find_key(NULL, value, *lst)) {
             fprintf(stderr, "Duplicate key %s\n", value);
             return 0;
         }
@@ -393,10 +417,13 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
         if (!setup_test(t, tmeth))
             return 0;
         t->start_line = t->line;
+        t->skip = 0;
         if (!tmeth->init(t, value)) {
             fprintf(stderr, "Unknown %s: %s\n", keyword, value);
             return 0;
         }
+        return 1;
+    } else if (t->skip) {
         return 1;
     } else if (!strcmp(keyword, "Result")) {
         if (t->expected_err) {
@@ -477,8 +504,8 @@ int main(int argc, char **argv)
     /* Run any final test we have */
     if (!setup_test(&t, NULL))
         exit(1);
-    fprintf(stderr, "%d tests completed with %d errors\n",
-            t.ntests, t.errors);
+    fprintf(stderr, "%d tests completed with %d errors, %d skipped\n",
+            t.ntests, t.errors, t.nskip);
     free_key_list(t.public);
     free_key_list(t.private);
     fclose(in);
@@ -1037,20 +1064,28 @@ static int pkey_test_init(struct evp_test *t, const char *name,
 {
     struct pkey_data *kdata;
     EVP_PKEY *pkey = NULL;
-    kdata = OPENSSL_malloc(sizeof(struct pkey_data));
-    if (!kdata)
+    int rv = 0;
+    if (use_public)
+        rv = find_key(&pkey, name, t->public);
+    if (!rv)
+        rv = find_key(&pkey, name, t->private);
+    if (!rv)
         return 0;
+    if (!pkey) {
+        t->skip = 1;
+        return 1;
+    }
+
+    kdata = OPENSSL_malloc(sizeof(struct pkey_data));
+    if (!kdata) {
+        EVP_PKEY_free(pkey);
+        return 0;
+    }
     kdata->ctx = NULL;
     kdata->input = NULL;
     kdata->output = NULL;
     kdata->keyop = keyop;
     t->data = kdata;
-    if (use_public)
-        pkey = find_key(name, t->public);
-    if (!pkey)
-        pkey = find_key(name, t->private);
-    if (!pkey)
-        return 0;
     kdata->ctx = EVP_PKEY_CTX_new(pkey, NULL);
     if (!kdata->ctx)
         return 0;
