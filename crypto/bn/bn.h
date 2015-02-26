@@ -797,6 +797,7 @@ int RAND_pseudo_bytes(unsigned char *buf, int num);
                          * wouldn't be constructed with top!=dmax. */ \
                         BN_ULONG *_not_const; \
                         memcpy(&_not_const, &_bnum1->d, sizeof(BN_ULONG*)); \
+                        /* Debug only - safe to ignore error return */ \
                         RAND_pseudo_bytes(&_tmp_char, 1); \
                         memset((unsigned char *)(_not_const + _bnum1->top), _tmp_char, \
                                 (_bnum1->dmax - _bnum1->top) * sizeof(BN_ULONG)); \
