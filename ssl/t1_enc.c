@@ -551,15 +551,24 @@ int tls1_change_cipher_state(SSL *s, int which)
 #endif                          /* KSSL_DEBUG */
 
     if (EVP_CIPHER_mode(c) == EVP_CIPH_GCM_MODE) {
-        EVP_CipherInit_ex(dd, c, NULL, key, NULL, (which & SSL3_CC_WRITE));
-        EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_GCM_SET_IV_FIXED, k, iv);
-    } else
-        EVP_CipherInit_ex(dd, c, NULL, key, iv, (which & SSL3_CC_WRITE));
-
+        if (!EVP_CipherInit_ex(dd, c, NULL, key, NULL, (which & SSL3_CC_WRITE))
+            || !EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_GCM_SET_IV_FIXED, k, iv)) {
+            SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
+            goto err2;
+        }
+    } else {
+        if (!EVP_CipherInit_ex(dd, c, NULL, key, iv, (which & SSL3_CC_WRITE))) {
+            SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
+            goto err2;
+        }
+    }
     /* Needed for "composite" AEADs, such as RC4-HMAC-MD5 */
-    if ((EVP_CIPHER_flags(c) & EVP_CIPH_FLAG_AEAD_CIPHER) && *mac_secret_size)
-        EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_AEAD_SET_MAC_KEY,
-                            *mac_secret_size, mac_secret);
+    if ((EVP_CIPHER_flags(c) & EVP_CIPH_FLAG_AEAD_CIPHER) && *mac_secret_size
+        && !EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_AEAD_SET_MAC_KEY,
+                                *mac_secret_size, mac_secret)) {
+        SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
+        goto err2;
+    }
 
 #ifdef TLS_DEBUG
     printf("which = %04X\nkey=", which);
