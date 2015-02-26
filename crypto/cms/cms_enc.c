@@ -119,7 +119,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
         /* Generate a random IV if we need one */
         ivlen = EVP_CIPHER_CTX_iv_length(ctx);
         if (ivlen > 0) {
-            if (RAND_pseudo_bytes(iv, ivlen) <= 0)
+            if (RAND_bytes(iv, ivlen) <= 0)
                 goto err;
             piv = iv;
         }

@@ -77,8 +77,8 @@ int main(int argc, char **argv)
      */
     long d;
 
-    i = RAND_pseudo_bytes(buf, 2500);
-    if (i < 0) {
+    i = RAND_bytes(buf, 2500);
+    if (i <= 0) {
         printf("init failed, the rand method is not properly installed\n");
         err++;
         goto err;

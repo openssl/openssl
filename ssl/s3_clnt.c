@@ -2810,7 +2810,12 @@ int ssl3_send_client_key_exchange(SSL *s)
 
             EVP_PKEY_encrypt_init(pkey_ctx);
             /* Generate session key */
-            RAND_bytes(pms, pmslen);
+            if (RAND_bytes(pms, pmslen) <= 0) {
+                EVP_PKEY_CTX_free(pkey_ctx);
+                SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+                       ERR_R_INTERNAL_ERROR);
+                goto err;
+            };
             /*
              * If we have client certificate, use its secret as peer key
              */
