@@ -157,7 +157,8 @@ static int bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
         unsigned char c;
 
         for (i = 0; i < bytes; i++) {
-            RAND_pseudo_bytes(&c, 1);
+            if(RAND_pseudo_bytes(&c, 1) < 0)
+                goto err;
             if (c >= 128 && i > 0)
                 buf[i] = buf[i - 1];
             else if (c < 42)
