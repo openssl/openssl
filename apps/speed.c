@@ -1967,7 +1967,7 @@ int MAIN(int argc, char **argv)
     }
 #ifndef OPENSSL_SYS_WIN32
 #endif
-    RAND_pseudo_bytes(buf, 36);
+    RAND_bytes(buf, 36);
 #ifndef OPENSSL_NO_RSA
     for (j = 0; j < RSA_NUM; j++) {
         int ret;
@@ -2039,7 +2039,7 @@ int MAIN(int argc, char **argv)
     }
 #endif
 
-    RAND_pseudo_bytes(buf, 20);
+    RAND_bytes(buf, 20);
 #ifndef OPENSSL_NO_DSA
     if (RAND_status() != 1) {
         RAND_seed(rnd_seed, sizeof rnd_seed);

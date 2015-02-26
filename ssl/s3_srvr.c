@@ -2168,10 +2168,7 @@ int ssl3_get_client_key_exchange(SSL *s)
          * fails. See https://tools.ietf.org/html/rfc5246#section-7.4.7.1
          */
 
-        /*
-         * should be RAND_bytes, but we cannot work around a failure.
-         */
-        if (RAND_pseudo_bytes(rand_premaster_secret,
+        if (RAND_bytes(rand_premaster_secret,
                               sizeof(rand_premaster_secret)) <= 0)
             goto err;
         decrypt_len =

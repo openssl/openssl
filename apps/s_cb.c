@@ -949,7 +949,7 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
 
     /* Initialize a random secret */
     if (!cookie_initialized) {
-        if (!RAND_bytes(cookie_secret, COOKIE_SECRET_LENGTH)) {
+        if (RAND_bytes(cookie_secret, COOKIE_SECRET_LENGTH) <= 0) {
             BIO_printf(bio_err, "error setting random cookie secret\n");
             return 0;
         }
