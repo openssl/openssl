@@ -209,6 +209,7 @@ static const unsigned char kExampleRSAKeyPKCS8[] = {
     0x08, 0xf1, 0x2d, 0x86, 0x9d, 0xa5, 0x20, 0x1b, 0xe5, 0xdf,
 };
 
+#ifndef OPENSSL_NO_EC
 /*
  * kExampleECKeyDER is a sample EC private key encoded as an ECPrivateKey
  * structure.
@@ -242,6 +243,7 @@ static const unsigned char kExampleBadECKeyDER[] = {
     0xFF, 0xFF, 0xFF, 0xFF, 0xBC, 0xE6, 0xFA, 0xAD, 0xA7, 0x17, 0x9E, 0x84,
     0xF3, 0xB9, 0xCA, 0xC2, 0xFC, 0x63, 0x25, 0x51
 };
+#endif
 
 static EVP_PKEY *load_example_rsa_key(void)
 {
@@ -393,6 +395,7 @@ static int test_d2i_AutoPrivateKey(const unsigned char *input,
     return ret;
 }
 
+#ifndef OPENSSL_NO_EC
 /* Tests loading a bad key in PKCS8 format */
 static int test_EVP_PKCS82PKEY(void)
 {
@@ -427,6 +430,7 @@ static int test_EVP_PKCS82PKEY(void)
 
     return ret;
 }
+#endif
 
 int main(void)
 {
@@ -461,6 +465,7 @@ int main(void)
         return 1;
     }
 
+#ifndef OPENSSL_NO_EC
     if (!test_d2i_AutoPrivateKey(kExampleECKeyDER, sizeof(kExampleECKeyDER),
                                  EVP_PKEY_EC)) {
         fprintf(stderr, "d2i_AutoPrivateKey(kExampleECKeyDER) failed\n");
@@ -471,6 +476,7 @@ int main(void)
         fprintf(stderr, "test_EVP_PKCS82PKEY failed\n");
         return 1;
     }
+#endif
 
     EVP_cleanup();
     CRYPTO_cleanup_all_ex_data();
