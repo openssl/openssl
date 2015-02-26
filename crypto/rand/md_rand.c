@@ -173,7 +173,9 @@ static int ssleay_rand_seed(const void *buf, int num);
 static int ssleay_rand_add(const void *buf, int num, double add_entropy);
 static int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo);
 static int ssleay_rand_nopseudo_bytes(unsigned char *buf, int num);
+#ifndef OPENSSL_NO_DEPRECATED
 static int ssleay_rand_pseudo_bytes(unsigned char *buf, int num);
+#endif
 static int ssleay_rand_status(void);
 
 static RAND_METHOD rand_ssleay_meth = {
@@ -181,7 +183,11 @@ static RAND_METHOD rand_ssleay_meth = {
     ssleay_rand_nopseudo_bytes,
     ssleay_rand_cleanup,
     ssleay_rand_add,
+#ifndef OPENSSL_NO_DEPRECATED
     ssleay_rand_pseudo_bytes,
+#else
+    NULL,
+#endif
     ssleay_rand_status
 };
 
@@ -601,6 +607,7 @@ static int ssleay_rand_nopseudo_bytes(unsigned char *buf, int num)
     return ssleay_rand_bytes(buf, num, 0);
 }
 
+#ifndef OPENSSL_NO_DEPRECATED
 /*
  * pseudo-random bytes that are guaranteed to be unique but not unpredictable
  */
@@ -608,6 +615,7 @@ static int ssleay_rand_pseudo_bytes(unsigned char *buf, int num)
 {
     return ssleay_rand_bytes(buf, num, 1);
 }
+#endif
 
 static int ssleay_rand_status(void)
 {
