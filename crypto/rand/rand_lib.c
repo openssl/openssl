@@ -159,6 +159,7 @@ int RAND_bytes(unsigned char *buf, int num)
     return (-1);
 }
 
+#ifndef OPENSSL_NO_DEPRECATED
 int RAND_pseudo_bytes(unsigned char *buf, int num)
 {
     const RAND_METHOD *meth = RAND_get_rand_method();
@@ -166,6 +167,7 @@ int RAND_pseudo_bytes(unsigned char *buf, int num)
         return meth->pseudorand(buf, num);
     return (-1);
 }
+#endif
 
 int RAND_status(void)
 {

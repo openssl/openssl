@@ -4,6 +4,8 @@
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
 
+  *) RAND_pseudo_bytes has been deprecated. Users should use RAND bytes instead.
+
   *) Added support for TLS extended master secret from
      draft-ietf-tls-session-hash-03.txt. Thanks for Alfredo Pironti for an
      initial patch which was a great help during development.

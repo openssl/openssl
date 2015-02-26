@@ -95,7 +95,9 @@ int RAND_set_rand_engine(ENGINE *engine);
 RAND_METHOD *RAND_SSLeay(void);
 void RAND_cleanup(void);
 int RAND_bytes(unsigned char *buf, int num);
-int RAND_pseudo_bytes(unsigned char *buf, int num);
+#ifdef OPENSSL_USE_DEPRECATED
+DECLARE_DEPRECATED(int RAND_pseudo_bytes(unsigned char *buf, int num));
+#endif
 void RAND_seed(const void *buf, int num);
 void RAND_add(const void *buf, int num, double entropy);
 int RAND_load_file(const char *file, long max_bytes);
