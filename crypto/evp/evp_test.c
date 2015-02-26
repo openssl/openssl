@@ -638,8 +638,14 @@ static int cipher_test_init(struct evp_test *t, const char *alg)
     const EVP_CIPHER *cipher;
     struct cipher_data *cdat = t->data;
     cipher = EVP_get_cipherbyname(alg);
-    if (!cipher)
+    if (!cipher) {
+        /* If alg has an OID assume disabled algorithm */
+        if (OBJ_sn2nid(alg) != NID_undef || OBJ_ln2nid(alg) != NID_undef) {
+            t->skip = 1;
+            return 1;
+        }
         return 0;
+    }
     cdat = OPENSSL_malloc(sizeof(struct cipher_data));
     cdat->cipher = cipher;
     cdat->enc = -1;
