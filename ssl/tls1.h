@@ -162,8 +162,6 @@ extern "C" {
 #  define OPENSSL_TLS_SECURITY_LEVEL 1
 # endif
 
-# define TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES    0
-
 # define TLS1_VERSION                    0x0301
 # define TLS1_1_VERSION                  0x0302
 # define TLS1_2_VERSION                  0x0303
@@ -410,23 +408,6 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
 # define TLS1_CK_PSK_WITH_3DES_EDE_CBC_SHA               0x0300008B
 # define TLS1_CK_PSK_WITH_AES_128_CBC_SHA                0x0300008C
 # define TLS1_CK_PSK_WITH_AES_256_CBC_SHA                0x0300008D
-
-/*
- * Additional TLS ciphersuites from expired Internet Draft
- * draft-ietf-tls-56-bit-ciphersuites-01.txt (available if
- * TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES is defined, see s3_lib.c).  We
- * actually treat them like SSL 3.0 ciphers, which we probably shouldn't.
- * Note that the first two are actually not in the IDs.
- */
-# define TLS1_CK_RSA_EXPORT1024_WITH_RC4_56_MD5          0x03000060/* not in
-                                                                    * ID */
-# define TLS1_CK_RSA_EXPORT1024_WITH_RC2_CBC_56_MD5      0x03000061/* not in
-                                                                    * ID */
-# define TLS1_CK_RSA_EXPORT1024_WITH_DES_CBC_SHA         0x03000062
-# define TLS1_CK_DHE_DSS_EXPORT1024_WITH_DES_CBC_SHA     0x03000063
-# define TLS1_CK_RSA_EXPORT1024_WITH_RC4_56_SHA          0x03000064
-# define TLS1_CK_DHE_DSS_EXPORT1024_WITH_RC4_56_SHA      0x03000065
-# define TLS1_CK_DHE_DSS_WITH_RC4_128_SHA                0x03000066
 
 /* AES ciphersuites from RFC3268 */
 
