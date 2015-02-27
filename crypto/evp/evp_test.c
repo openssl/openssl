@@ -623,7 +623,7 @@ static const struct evp_test_method digest_test_method = {
 struct cipher_data {
     const EVP_CIPHER *cipher;
     int enc;
-    /* Set to EVP_CIPH_GCM_MODE or EVP_CIPH_CCM_MODE if AEAD */
+    /* EVP_CIPH_GCM_MODE, EVP_CIPH_CCM_MODE or EVP_CIPH_OCB_MODE if AEAD */
     int aead;
     unsigned char *key;
     size_t key_len;
@@ -664,6 +664,7 @@ static int cipher_test_init(struct evp_test *t, const char *alg)
     cdat->tag = NULL;
     t->data = cdat;
     if (EVP_CIPHER_mode(cipher) == EVP_CIPH_GCM_MODE
+        || EVP_CIPHER_mode(cipher) == EVP_CIPH_OCB_MODE
         || EVP_CIPHER_mode(cipher) == EVP_CIPH_CCM_MODE)
         cdat->aead = EVP_CIPHER_mode(cipher);
     else
@@ -746,12 +747,8 @@ static int cipher_test_enc(struct evp_test *t, int enc)
         goto err;
     err = "INVALID_IV_LENGTH";
     if (cdat->iv) {
-        if (cdat->aead == EVP_CIPH_GCM_MODE) {
-            if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN,
-                                     cdat->iv_len, 0))
-                goto err;
-        } else if (cdat->aead == EVP_CIPH_CCM_MODE) {
-            if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_CCM_SET_IVLEN,
+        if (cdat->aead) {
+            if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN,
                                      cdat->iv_len, 0))
                 goto err;
         } else if (cdat->iv_len != (size_t)EVP_CIPHER_CTX_iv_length(ctx))
@@ -760,23 +757,19 @@ static int cipher_test_enc(struct evp_test *t, int enc)
     if (cdat->aead) {
         unsigned char *tag;
         /*
-         * If encrypting just set tag length. If decrypting set
-         * tag length and value.
+         * If encrypting or OCB just set tag length initially, otherwise
+         * set tag length and value.
          */
-        if (enc) {
+        if (enc || cdat->aead == EVP_CIPH_OCB_MODE) {
             err = "TAG_LENGTH_SET_ERROR";
             tag = NULL;
         } else {
             err = "TAG_SET_ERROR";
             tag = cdat->tag;
         }
-        if (cdat->aead == EVP_CIPH_GCM_MODE && tag) {
-            if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG,
-                                     cdat->tag_len, tag))
-                goto err;
-        } else if (cdat->aead == EVP_CIPH_CCM_MODE) {
-            if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_CCM_SET_TAG,
-                                     cdat->tag_len, tag))
+        if (tag || cdat->aead != EVP_CIPH_GCM_MODE) {
+            if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+                                        cdat->tag_len, tag))
                 goto err;
         }
     }
@@ -787,6 +780,14 @@ static int cipher_test_enc(struct evp_test *t, int enc)
     err = "KEY_SET_ERROR";
     if (!EVP_CipherInit_ex(ctx, NULL, NULL, cdat->key, cdat->iv, -1))
         goto err;
+
+    if (!enc && cdat->aead == EVP_CIPH_OCB_MODE) {
+        if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+                                 cdat->tag_len, cdat->tag)) {
+                err = "TAG_SET_ERROR";
+                goto err;
+        }
+    }
 
     if (cdat->aead == EVP_CIPH_CCM_MODE) {
         if (!EVP_CipherUpdate(ctx, NULL, &tmplen, NULL, out_len)) {
@@ -823,8 +824,7 @@ static int cipher_test_enc(struct evp_test *t, int enc)
             err = "TAG_LENGTH_INTERNAL_ERROR";
             goto err;
         }
-        /* EVP_CTRL_CCM_GET_TAG and EVP_CTRL_GCM_GET_TAG are equal. */
-        if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG,
+        if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG,
                                  cdat->tag_len, rtag)) {
             err = "TAG_RETRIEVE_ERROR";
             goto err;
