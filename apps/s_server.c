@@ -992,7 +992,10 @@ int MAIN(int argc, char *argv[])
     int badop = 0, bugs = 0;
     int ret = 1;
     int off = 0;
-    int no_tmp_rsa = 0, no_dhe = 0, no_ecdhe = 0, nocert = 0;
+    int no_tmp_rsa = 0, no_dhe = 0, nocert = 0;
+#ifndef OPENSSL_NO_ECDH
+    int no_ecdhe;
+#endif
     int state = 0;
     const SSL_METHOD *meth = NULL;
     int socket_type = SOCK_STREAM;
@@ -1207,9 +1210,12 @@ int MAIN(int argc, char *argv[])
             no_tmp_rsa = 1;
         } else if (strcmp(*argv, "-no_dhe") == 0) {
             no_dhe = 1;
-        } else if (strcmp(*argv, "-no_ecdhe") == 0) {
+        }
+#ifndef OPENSSL_NO_ECDH
+        else if (strcmp(*argv, "-no_ecdhe") == 0) {
             no_ecdhe = 1;
         }
+#endif
 #ifndef OPENSSL_NO_PSK
         else if (strcmp(*argv, "-psk_hint") == 0) {
             if (--argc < 1)
