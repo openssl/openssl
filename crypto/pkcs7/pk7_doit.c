@@ -147,6 +147,25 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
     EVP_PKEY *pkey;
     ASN1_OCTET_STRING *os = NULL;
 
+    if (p7 == NULL) {
+        PKCS7err(PKCS7_F_PKCS7_DATAINIT, PKCS7_R_INVALID_NULL_POINTER);
+        return NULL;
+    }
+    /*
+     * The content field in the PKCS7 ContentInfo is optional, but that really
+     * only applies to inner content (precisely, detached signatures).
+     *
+     * When reading content, missing outer content is therefore treated as an
+     * error.
+     *
+     * When creating content, PKCS7_content_new() must be called before
+     * calling this method, so a NULL p7->d is always an error.
+     */
+    if (p7->d.ptr == NULL) {
+        PKCS7err(PKCS7_F_PKCS7_DATAINIT, PKCS7_R_NO_CONTENT);
+        return NULL;
+    }
+
     i = OBJ_obj2nid(p7->type);
     p7->state = PKCS7_S_HEADER;
 
@@ -324,6 +343,16 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
     STACK_OF(X509_ALGOR) *md_sk = NULL;
     STACK_OF(PKCS7_RECIP_INFO) *rsk = NULL;
     PKCS7_RECIP_INFO *ri = NULL;
+
+    if (p7 == NULL) {
+        PKCS7err(PKCS7_F_PKCS7_DATADECODE, PKCS7_R_INVALID_NULL_POINTER);
+        return NULL;
+    }
+
+    if (p7->d.ptr == NULL) {
+        PKCS7err(PKCS7_F_PKCS7_DATADECODE, PKCS7_R_NO_CONTENT);
+        return NULL;
+    }
 
     i = OBJ_obj2nid(p7->type);
     p7->state = PKCS7_S_HEADER;
@@ -607,6 +636,16 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
     STACK_OF(PKCS7_SIGNER_INFO) *si_sk = NULL;
     ASN1_OCTET_STRING *os = NULL;
 
+    if (p7 == NULL) {
+        PKCS7err(PKCS7_F_PKCS7_DATAFINAL, PKCS7_R_INVALID_NULL_POINTER);
+        return 0;
+    }
+
+    if (p7->d.ptr == NULL) {
+        PKCS7err(PKCS7_F_PKCS7_DATAFINAL, PKCS7_R_NO_CONTENT);
+        return 0;
+    }
+
     EVP_MD_CTX_init(&ctx_tmp);
     i = OBJ_obj2nid(p7->type);
     p7->state = PKCS7_S_HEADER;
@@ -635,6 +674,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
         /* If detached data then the content is excluded */
         if (PKCS7_type_is_data(p7->d.sign->contents) && p7->detached) {
             M_ASN1_OCTET_STRING_free(os);
+            os = NULL;
             p7->d.sign->contents->d.data = NULL;
         }
         break;
@@ -644,6 +684,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
         /* If detached data then the content is excluded */
         if (PKCS7_type_is_data(p7->d.digest->contents) && p7->detached) {
             M_ASN1_OCTET_STRING_free(os);
+            os = NULL;
             p7->d.digest->contents->d.data = NULL;
         }
         break;
@@ -767,6 +808,12 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
     }
 
     if (!PKCS7_is_detached(p7)) {
+        /*
+         * NOTE(emilia): I think we only reach os == NULL here because detached
+         * digested data support is broken.
+         */
+        if (os == NULL)
+            goto err;
         btmp = BIO_find_type(bio, BIO_TYPE_MEM);
         if (btmp == NULL) {
             PKCS7err(PKCS7_F_PKCS7_DATAFINAL, PKCS7_R_UNABLE_TO_FIND_MEM_BIO);
@@ -802,6 +849,16 @@ int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
     int ret = 0, i;
     STACK_OF(X509) *cert;
     X509 *x509;
+
+    if (p7 == NULL) {
+        PKCS7err(PKCS7_F_PKCS7_DATAVERIFY, PKCS7_R_INVALID_NULL_POINTER);
+        return 0;
+    }
+
+    if (p7->d.ptr == NULL) {
+        PKCS7err(PKCS7_F_PKCS7_DATAVERIFY, PKCS7_R_NO_CONTENT);
+        return 0;
+    }
 
     if (PKCS7_type_is_signed(p7)) {
         cert = p7->d.sign->cert;
