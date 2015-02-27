@@ -333,12 +333,12 @@ static int find_key(EVP_PKEY **ppk, const char *name, struct key_list *lst)
 static void free_key_list(struct key_list *lst)
 {
     while (lst != NULL) {
-	struct key_list *ltmp;
+        struct key_list *ltmp;
         EVP_PKEY_free(lst->key);
         OPENSSL_free(lst->name);
-	ltmp = lst->next;
-	OPENSSL_free(lst);
-	lst = ltmp;
+        ltmp = lst->next;
+        OPENSSL_free(lst);
+        lst = ltmp;
     }
 }
 
@@ -346,7 +346,7 @@ static int check_unsupported()
 {
     long err = ERR_peek_error();
     if (ERR_GET_LIB(err) == ERR_LIB_EVP
-         && ERR_GET_REASON(err) == EVP_R_UNSUPPORTED_ALGORITHM) {
+        && ERR_GET_REASON(err) == EVP_R_UNSUPPORTED_ALGORITHM) {
         ERR_clear_error();
         return 1;
     }
@@ -483,7 +483,7 @@ int main(int argc, char **argv)
     ERR_load_crypto_strings();
     OpenSSL_add_all_algorithms();
 
-    memset(&t,0,sizeof(t));
+    memset(&t, 0, sizeof(t));
     t.meth = NULL;
     t.public = NULL;
     t.private = NULL;
@@ -769,7 +769,7 @@ static int cipher_test_enc(struct evp_test *t, int enc)
         }
         if (tag || cdat->aead != EVP_CIPH_GCM_MODE) {
             if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
-                                        cdat->tag_len, tag))
+                                     cdat->tag_len, tag))
                 goto err;
         }
     }
@@ -784,8 +784,8 @@ static int cipher_test_enc(struct evp_test *t, int enc)
     if (!enc && cdat->aead == EVP_CIPH_OCB_MODE) {
         if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
                                  cdat->tag_len, cdat->tag)) {
-                err = "TAG_SET_ERROR";
-                goto err;
+            err = "TAG_SET_ERROR";
+            goto err;
         }
     }
 
