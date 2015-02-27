@@ -410,7 +410,9 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
     os.data = NULL;
     os.length = 0;
     M_ASN1_D2I_get_x(ASN1_OCTET_STRING, osp, d2i_ASN1_OCTET_STRING);
-    if ((ssl_version >> 8) >= SSL3_VERSION_MAJOR) {
+    if ((ssl_version >> 8) == SSL3_VERSION_MAJOR
+        || (ssl_version >> 8) == DTLS1_VERSION_MAJOR
+        || ssl_version == DTLS1_BAD_VER) {
         if (os.length != 2) {
             c.error = SSL_R_CIPHER_CODE_WRONG_LENGTH;
             c.line = __LINE__;
