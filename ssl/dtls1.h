@@ -85,6 +85,7 @@ extern "C" {
 
 # define DTLS1_VERSION                   0xFEFF
 # define DTLS_MAX_VERSION                DTLS1_VERSION
+# define DTLS1_VERSION_MAJOR             0xFE
 
 # define DTLS1_BAD_VER                   0x0100
 
