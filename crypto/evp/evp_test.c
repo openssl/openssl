@@ -534,6 +534,8 @@ struct digest_data {
     /* Input to digest */
     unsigned char *input;
     size_t input_len;
+    /* Repeat count for input */
+    size_t nrpt;
     /* Expected output */
     unsigned char *output;
     size_t output_len;
@@ -556,6 +558,7 @@ static int digest_test_init(struct evp_test *t, const char *alg)
     mdat->digest = digest;
     mdat->input = NULL;
     mdat->output = NULL;
+    mdat->nrpt = 1;
     t->data = mdat;
     return 1;
 }
@@ -575,12 +578,20 @@ static int digest_test_parse(struct evp_test *t,
         return test_bin(value, &mdata->input, &mdata->input_len);
     if (!strcmp(keyword, "Output"))
         return test_bin(value, &mdata->output, &mdata->output_len);
+    if (!strcmp(keyword, "Count")) {
+        long nrpt = atoi(value);
+        if (nrpt <= 0)
+            return 0;
+        mdata->nrpt = (size_t)nrpt;
+        return 1;
+    }
     return 0;
 }
 
 static int digest_test_run(struct evp_test *t)
 {
     struct digest_data *mdata = t->data;
+    size_t i;
     const char *err = "INTERNAL_ERROR";
     EVP_MD_CTX *mctx;
     unsigned char md[EVP_MAX_MD_SIZE];
@@ -592,8 +603,10 @@ static int digest_test_run(struct evp_test *t)
     if (!EVP_DigestInit_ex(mctx, mdata->digest, NULL))
         goto err;
     err = "DIGESTUPDATE_ERROR";
-    if (!EVP_DigestUpdate(mctx, mdata->input, mdata->input_len))
-        goto err;
+    for (i = 0; i < mdata->nrpt; i++) {
+        if (!EVP_DigestUpdate(mctx, mdata->input, mdata->input_len))
+            goto err;
+    }
     err = "DIGESTFINAL_ERROR";
     if (!EVP_DigestFinal(mctx, md, &md_len))
         goto err;
