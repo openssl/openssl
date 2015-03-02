@@ -1108,8 +1108,10 @@ int dtls1_buffer_message(SSL *s, int is_ccs)
     memcpy(frag->fragment, s->init_buf->data, s->init_num);
 
     if (is_ccs) {
+        /* For DTLS1_BAD_VER the header length is non-standard */
         OPENSSL_assert(s->d1->w_msg_hdr.msg_len +
-                       DTLS1_CCS_HEADER_LENGTH == (unsigned int)s->init_num);
+                       ((s->version==DTLS1_BAD_VER)?3:DTLS1_CCS_HEADER_LENGTH)
+                       == (unsigned int)s->init_num);
     } else {
         OPENSSL_assert(s->d1->w_msg_hdr.msg_len +
                        DTLS1_HM_HEADER_LENGTH == (unsigned int)s->init_num);
