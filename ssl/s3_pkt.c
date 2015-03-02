@@ -785,7 +785,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 
             i = ssl3_write_pending(s, type, &buf[tot], nw);
             if (i <= 0) {
-                if (i < 0) {
+                if (i < 0 && (!s->wbio || !BIO_should_retry(s->wbio))) {
                     OPENSSL_free(wb->buf);
                     wb->buf = NULL;
                 }
