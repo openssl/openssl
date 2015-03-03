@@ -2735,6 +2735,12 @@ const char *SSL_get_version(const SSL *s)
         return ("TLSv1");
     else if (s->version == SSL3_VERSION)
         return ("SSLv3");
+    else if (s->version == DTLS1_BAD_VER)
+        return ("DTLSv0.9");
+    else if (s->version == DTLS1_VERSION)
+        return ("DTLSv1");
+    else if (s->version == DTLS1_2_VERSION)
+        return ("DTLSv1.2");
     else
         return ("unknown");
 }
