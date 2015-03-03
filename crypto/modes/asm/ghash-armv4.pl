@@ -42,8 +42,8 @@
 # below and combine it with reduction algorithm from x86 module.
 # Performance improvement over previous version varies from 65% on
 # Snapdragon S4 to 110% on Cortex A9. In absolute terms Cortex A8
-# processes one byte in 8.45 cycles, A9 - in 10.2, Snapdragon S4 -
-# in 9.33.
+# processes one byte in 8.45 cycles, A9 - in 10.2, A15 - in 7.63,
+# Snapdragon S4 - in 9.33.
 #
 # Câmara, D.; Gouvêa, C. P. L.; López, J. & Dahab, R.: Fast Software
 # Polynomial Multiplication on ARM Processors using the NEON Engine.

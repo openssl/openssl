@@ -60,7 +60,9 @@
 # is ~2.5x larger and there are some redundant instructions executed
 # when processing last block, improvement is not as big for smallest
 # blocks, only ~30%. Snapdragon S4 is a tad faster, 6.4 cycles per
-# byte, which is also >80% faster than integer-only code.
+# byte, which is also >80% faster than integer-only code. Cortex-A15
+# is even faster spending 5.6 cycles per byte outperforming integer-
+# only code by factor of 2.
 
 # May 2014.
 #

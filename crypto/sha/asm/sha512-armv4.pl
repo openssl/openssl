@@ -34,16 +34,9 @@
 # terms it's 22.6 cycles per byte, which is disappointing result.
 # Technical writers asserted that 3-way S4 pipeline can sustain
 # multiple NEON instructions per cycle, but dual NEON issue could
-# not be observed, and for NEON-only sequences IPC(*) was found to
-# be limited by 1:-( 0.33 and 0.66 were measured for sequences with
-# ILPs(*) of 1 and 2 respectively. This in turn means that you can
-# even find yourself striving, as I did here, for achieving IPC
-# adequate to one delivered by Cortex A8 [for reference, it's
-# 0.5 for ILP of 1, and 1 for higher ILPs].
-#
-# (*) ILP, instruction-level parallelism, how many instructions
-#     *can* execute at the same time. IPC, instructions per cycle,
-#     indicates how many instructions actually execute.
+# not be observed, see http://www.openssl.org/~appro/Snapdragon-S4.html
+# for further details. On side note Cortex-A15 processes one byte in
+# 16 cycles.
 
 # Byte order [in]dependence. =========================================
 #
