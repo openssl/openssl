@@ -101,6 +101,30 @@ $ssltest -bio_pair -ssl3 -server_auth -client_auth $CA $extra || exit 1
 echo test sslv2/sslv3 via BIO pair
 $ssltest $extra || exit 1
 
+echo test dtlsv1
+$ssltest -dtls1 $extra || exit 1
+
+echo test dtlsv1 with server authentication
+$ssltest -dtls1 -server_auth $CA $extra || exit 1
+
+echo test dtlsv1 with client authentication
+$ssltest -dtls1 -client_auth $CA $extra || exit 1
+
+echo test dtlsv1 with both client and server authentication
+$ssltest -dtls1 -server_auth -client_auth $CA $extra || exit 1
+
+echo test dtlsv1.2
+$ssltest -dtls12 $extra || exit 1
+
+echo test dtlsv1.2 with server authentication
+$ssltest -dtls12 -server_auth $CA $extra || exit 1
+
+echo test dtlsv1.2 with client authentication
+$ssltest -dtls12 -client_auth $CA $extra || exit 1
+
+echo test dtlsv1.2 with both client and server authentication
+$ssltest -dtls12 -server_auth -client_auth $CA $extra || exit 1
+
 if [ $dsa_cert = NO ]; then
   echo 'test sslv2/sslv3 w/o (EC)DHE via BIO pair'
   $ssltest -bio_pair -no_dhe -no_ecdhe $extra || exit 1
