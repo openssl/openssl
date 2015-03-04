@@ -268,6 +268,11 @@ int MAIN(int argc, char **argv)
 
     rsa_in = OPENSSL_malloc(keysize * 2);
     rsa_out = OPENSSL_malloc(keysize);
+    if (!rsa_in || !rsa_out) {
+        BIO_printf(bio_err, "Out of memory\n");
+        ERR_print_errors(bio_err);
+        goto end;
+    }
 
     /* Read the input data */
     rsa_inlen = BIO_read(in, rsa_in, keysize * 2);

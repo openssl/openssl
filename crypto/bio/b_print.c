@@ -713,6 +713,10 @@ doapr_outch(char **sbuffer,
                 if (*maxlen == 0)
                     *maxlen = 1024;
                 *buffer = OPENSSL_malloc(*maxlen);
+                if(!*buffer) {
+                    /* Panic! Can't really do anything sensible. Just return */
+                    return;
+                }
                 if (*currlen > 0) {
                     assert(*sbuffer != NULL);
                     memcpy(*buffer, *sbuffer, *currlen);
@@ -721,6 +725,10 @@ doapr_outch(char **sbuffer,
             } else {
                 *maxlen += 1024;
                 *buffer = OPENSSL_realloc(*buffer, *maxlen);
+                if(!*buffer) {
+                    /* Panic! Can't really do anything sensible. Just return */
+                    return;
+                }
             }
         }
         /* What to do if *buffer is NULL? */

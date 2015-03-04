@@ -649,6 +649,8 @@ static int ebcdic_new(BIO *bi)
     EBCDIC_OUTBUFF *wbuf;
 
     wbuf = (EBCDIC_OUTBUFF *) OPENSSL_malloc(sizeof(EBCDIC_OUTBUFF) + 1024);
+    if (!wbuf)
+        return 0;
     wbuf->alloced = 1024;
     wbuf->buff[0] = '\0';
 
@@ -703,9 +705,11 @@ static int ebcdic_write(BIO *b, const char *in, int inl)
         num = num + num;        /* double the size */
         if (num < inl)
             num = inl;
-        OPENSSL_free(wbuf);
         wbuf =
             (EBCDIC_OUTBUFF *) OPENSSL_malloc(sizeof(EBCDIC_OUTBUFF) + num);
+        if(!wbuf)
+            return 0;
+        OPENSSL_free(b->ptr);
 
         wbuf->alloced = num;
         wbuf->buff[0] = '\0';
@@ -3204,6 +3208,10 @@ static int add_session(SSL *ssl, SSL_SESSION *session)
     unsigned char *p;
 
     sess = OPENSSL_malloc(sizeof(simple_ssl_session));
+    if(!sess) {
+        BIO_printf(bio_err, "Out of memory adding session to external cache\n");
+        return 0;
+    }
 
     SSL_SESSION_get_id(session, &sess->idlen);
     sess->derlen = i2d_SSL_SESSION(session, NULL);
@@ -3211,6 +3219,16 @@ static int add_session(SSL *ssl, SSL_SESSION *session)
     sess->id = BUF_memdup(SSL_SESSION_get_id(session, NULL), sess->idlen);
 
     sess->der = OPENSSL_malloc(sess->derlen);
+    if(!sess->id || !sess->der) {
+        BIO_printf(bio_err, "Out of memory adding session to external cache\n");
+
+        if(sess->id)
+            OPENSSL_free(sess->id);
+        if(sess->der)
+            OPENSSL_free(sess->der);
+        OPENSSL_free(sess);
+        return 0;
+    }
     p = sess->der;
     i2d_SSL_SESSION(session, &p);
 
