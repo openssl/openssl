@@ -236,7 +236,7 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
             pitem_free(item);
 
         SSLerr(SSL_F_DTLS1_BUFFER_RECORD, ERR_R_INTERNAL_ERROR);
-        return (0);
+        return -1;
     }
 
     rdata->packet = s->packet;
