@@ -493,7 +493,7 @@ int ssl2_generate_key_material(SSL *s)
 
         OPENSSL_assert(s->session->master_key_length >= 0
                        && s->session->master_key_length
-                       < (int)sizeof(s->session->master_key));
+                       <= (int)sizeof(s->session->master_key));
         EVP_DigestUpdate(&ctx, s->session->master_key,
                          s->session->master_key_length);
         EVP_DigestUpdate(&ctx, &c, 1);
