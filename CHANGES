@@ -4,7 +4,8 @@
 
  Changes between 1.0.0q and 1.0.0r [xx XXX xxxx]
 
-  *)
+  *) Removed the export ciphers from the DEFAULT ciphers
+     [Kurt Roeckx]
 
  Changes between 1.0.0p and 1.0.0q [15 Jan 2015]
 
