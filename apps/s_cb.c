@@ -456,7 +456,12 @@ int ssl_print_curves(BIO *out, SSL *s, int noshared)
     if (ncurves <= 0)
         return 1;
     curves = OPENSSL_malloc(ncurves * sizeof(int));
+    if(!curves) {
+        BIO_puts(out, "Malloc error getting supported curves\n");
+        return 0;
+    }
     SSL_get1_curves(s, curves);
+
 
     BIO_puts(out, "Supported Elliptic Curves: ");
     for (i = 0; i < ncurves; i++) {

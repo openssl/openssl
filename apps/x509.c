@@ -829,6 +829,11 @@ int MAIN(int argc, char **argv)
 
                 z = i2d_X509(x, NULL);
                 m = OPENSSL_malloc(z);
+                if (!m) {
+                    BIO_printf(bio_err, "Out of memory\n");
+                    ERR_print_errors(bio_err);
+                    goto end;
+                }
 
                 d = (unsigned char *)m;
                 z = i2d_X509_NAME(X509_get_subject_name(x), &d);

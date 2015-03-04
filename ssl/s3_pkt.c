@@ -708,6 +708,10 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
                 packlen *= 4;
 
             wb->buf = OPENSSL_malloc(packlen);
+            if(!wb->buf) {
+                SSLerr(SSL_F_SSL3_WRITE_BYTES, ERR_R_MALLOC_FAILURE);
+                return -1;
+            }
             wb->len = packlen;
         } else if (tot == len) { /* done? */
             OPENSSL_free(wb->buf); /* free jumbo buffer */
