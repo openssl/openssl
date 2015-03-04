@@ -162,6 +162,9 @@ static int ndef_prefix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 
     derlen = ASN1_item_ndef_i2d(ndef_aux->val, NULL, ndef_aux->it);
     p = OPENSSL_malloc(derlen);
+    if(!p)
+        return 0;
+
     ndef_aux->derbuf = p;
     *pbuf = p;
     derlen = ASN1_item_ndef_i2d(ndef_aux->val, &p, ndef_aux->it);
@@ -229,6 +232,9 @@ static int ndef_suffix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 
     derlen = ASN1_item_ndef_i2d(ndef_aux->val, NULL, ndef_aux->it);
     p = OPENSSL_malloc(derlen);
+    if(!p)
+        return 0;
+
     ndef_aux->derbuf = p;
     *pbuf = p;
     derlen = ASN1_item_ndef_i2d(ndef_aux->val, &p, ndef_aux->it);

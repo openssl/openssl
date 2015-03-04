@@ -460,6 +460,11 @@ int MAIN(int argc, char **argv)
             ERR_print_errors(bio_err);
             goto end;
         }
+        if (!sigbuf) {
+            BIO_printf(bio_err, "Out of memory\n");
+            ERR_print_errors(bio_err);
+            goto end;
+        }
         siglen = BIO_read(sigbio, sigbuf, siglen);
         BIO_free(sigbio);
         if (siglen <= 0) {

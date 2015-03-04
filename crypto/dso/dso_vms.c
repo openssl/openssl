@@ -527,7 +527,8 @@ static char *vms_name_converter(DSO *dso, const char *filename)
 {
     int len = strlen(filename);
     char *not_translated = OPENSSL_malloc(len + 1);
-    strcpy(not_translated, filename);
+    if(not_translated)
+        strcpy(not_translated, filename);
     return (not_translated);
 }
 

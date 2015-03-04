@@ -149,6 +149,9 @@ int RAND_poll(void)
     if (DosQuerySysState) {
         char *buffer = OPENSSL_malloc(256 * 1024);
 
+        if(!buffer)
+            return 0;
+
         if (DosQuerySysState(0x1F, 0, 0, 0, buffer, 256 * 1024) == 0) {
             /*
              * First 4 bytes in buffer is a pointer to the thread count there
