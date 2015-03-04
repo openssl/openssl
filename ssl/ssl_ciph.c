@@ -235,8 +235,8 @@ static const SSL_CIPHER cipher_aliases[] = {
      * "COMPLEMENTOFDEFAULT" (does *not* include ciphersuites not found in
      * ALL!)
      */
-    {0, SSL_TXT_CMPDEF, 0, SSL_kEDH | SSL_kEECDH, SSL_aNULL, ~SSL_eNULL, 0, 0,
-     0, 0, 0, 0},
+    {0, SSL_TXT_CMPDEF, 0, 0, SSL_aNULL, ~SSL_eNULL, 0, ~SSL_SSLV2,
+     SSL_EXP_MASK, 0, 0, 0},
 
     /*
      * key exchange aliases (some of those using only a single bit here
@@ -1027,6 +1027,10 @@ static void ssl_cipher_apply_rule(unsigned long cipher_id,
             if (cipher_id && cipher_id != cp->id)
                 continue;
 #endif
+            if (algo_strength == SSL_EXP_MASK && SSL_C_IS_EXPORT(cp))
+                goto ok;
+            if (alg_ssl == ~SSL_SSLV2 && cp->algorithm_ssl == SSL_SSLV2)
+                goto ok;
             if (alg_mkey && !(alg_mkey & cp->algorithm_mkey))
                 continue;
             if (alg_auth && !(alg_auth & cp->algorithm_auth))
@@ -1044,6 +1048,8 @@ static void ssl_cipher_apply_rule(unsigned long cipher_id,
                 && !(algo_strength & SSL_STRONG_MASK & cp->algo_strength))
                 continue;
         }
+
+    ok:
 
 #ifdef CIPHER_DEBUG
         fprintf(stderr, "Action = %d\n", rule);
