@@ -547,6 +547,11 @@ static char *MS_CALLBACK ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
     PW_CB_DATA cb_tmp;
     int l;
 
+    if(!pass) {
+        BIO_printf(bio_err, "Malloc failure\n");
+        return NULL;
+    }
+
     cb_tmp.password = (char *)srp_arg->srppassin;
     cb_tmp.prompt_info = "SRP user";
     if ((l = password_callback(pass, PWD_STRLEN, 0, &cb_tmp)) < 0) {

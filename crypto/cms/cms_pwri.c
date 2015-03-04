@@ -231,6 +231,8 @@ static int kek_unwrap_key(unsigned char *out, size_t *outlen,
         return 0;
     }
     tmp = OPENSSL_malloc(inlen);
+    if(!tmp)
+        return 0;
     /* setup IV by decrypting last two blocks */
     EVP_DecryptUpdate(ctx, tmp + inlen - 2 * blocklen, &outl,
                       in + inlen - 2 * blocklen, blocklen * 2);

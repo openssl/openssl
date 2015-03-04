@@ -662,6 +662,8 @@ static int ebcdic_new(BIO *bi)
     EBCDIC_OUTBUFF *wbuf;
 
     wbuf = (EBCDIC_OUTBUFF *) OPENSSL_malloc(sizeof(EBCDIC_OUTBUFF) + 1024);
+    if (!wbuf)
+        return 0;
     wbuf->alloced = 1024;
     wbuf->buff[0] = '\0';
 
@@ -716,9 +718,11 @@ static int ebcdic_write(BIO *b, const char *in, int inl)
         num = num + num;        /* double the size */
         if (num < inl)
             num = inl;
-        OPENSSL_free(wbuf);
         wbuf =
             (EBCDIC_OUTBUFF *) OPENSSL_malloc(sizeof(EBCDIC_OUTBUFF) + num);
+        if(!wbuf)
+            return 0;
+        OPENSSL_free(b->ptr);
 
         wbuf->alloced = num;
         wbuf->buff[0] = '\0';

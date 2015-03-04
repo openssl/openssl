@@ -117,6 +117,10 @@ void CRYPTO_thread_setup(void)
     int i;
 
     lock_cs = OPENSSL_malloc(CRYPTO_num_locks() * sizeof(HANDLE));
+    if(!lock_cs) {
+        /* Nothing we can do about this...void function! */
+        return;
+    }
     for (i = 0; i < CRYPTO_num_locks(); i++) {
         lock_cs[i] = CreateMutex(NULL, FALSE, NULL);
     }
@@ -168,6 +172,10 @@ void CRYPTO_thread_setup(void)
 # else
     lock_cs = OPENSSL_malloc(CRYPTO_num_locks() * sizeof(rwlock_t));
 # endif
+    if(!lock_cs) {
+        /* Nothing we can do about this...void function! */
+        return;
+    }
     lock_count = OPENSSL_malloc(CRYPTO_num_locks() * sizeof(long));
     for (i = 0; i < CRYPTO_num_locks(); i++) {
         lock_count[i] = 0;
@@ -251,6 +259,12 @@ void CRYPTO_thread_setup(void)
     int i;
     char filename[20];
 
+    lock_cs = OPENSSL_malloc(CRYPTO_num_locks() * sizeof(usema_t *));
+    if(!lock_cs) {
+        /* Nothing we can do about this...void function! */
+        return;
+    }
+
     strcpy(filename, "/tmp/mttest.XXXXXX");
     mktemp(filename);
 
@@ -261,7 +275,6 @@ void CRYPTO_thread_setup(void)
     arena = usinit(filename);
     unlink(filename);
 
-    lock_cs = OPENSSL_malloc(CRYPTO_num_locks() * sizeof(usema_t *));
     for (i = 0; i < CRYPTO_num_locks(); i++) {
         lock_cs[i] = usnewsema(arena, 1);
     }
@@ -315,6 +328,14 @@ void CRYPTO_thread_setup(void)
 
     lock_cs = OPENSSL_malloc(CRYPTO_num_locks() * sizeof(pthread_mutex_t));
     lock_count = OPENSSL_malloc(CRYPTO_num_locks() * sizeof(long));
+    if(!lock_cs || !lock_count) {
+        /* Nothing we can do about this...void function! */
+        if(lock_cs)
+            OPENSSL_free(lock_cs);
+        if(lock_count)
+            OPENSSL_free(lock_count);
+        return;
+    }
     for (i = 0; i < CRYPTO_num_locks(); i++) {
         lock_count[i] = 0;
         pthread_mutex_init(&(lock_cs[i]), NULL);
