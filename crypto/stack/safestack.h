@@ -88,16 +88,8 @@ extern "C" {
 # define STACK_OF(type) struct stack_st_##type
 # define PREDECLARE_STACK_OF(type) STACK_OF(type);
 
-# define DECLARE_STACK_OF(type) \
-STACK_OF(type) \
-    { \
-    _STACK stack; \
-    };
-# define DECLARE_SPECIAL_STACK_OF(type, type2) \
-STACK_OF(type) \
-    { \
-    _STACK stack; \
-    };
+# define DECLARE_STACK_OF(type) STACK_OF(type);
+# define DECLARE_SPECIAL_STACK_OF(type, type2) STACK_OF(type);
 
 /*-
  * Strings are special: normally an lhash entry will point to a single
