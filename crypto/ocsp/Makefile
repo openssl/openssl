@@ -18,15 +18,15 @@ APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC= ocsp_asn.c ocsp_ext.c ocsp_ht.c ocsp_lib.c ocsp_cl.c \
-	ocsp_srv.c ocsp_prn.c ocsp_vfy.c ocsp_err.c
+	ocsp_srv.c ocsp_prn.c ocsp_vfy.c ocsp_err.c v3_ocsp.c
 
 LIBOBJ= ocsp_asn.o ocsp_ext.o ocsp_ht.o ocsp_lib.o ocsp_cl.o \
-	ocsp_srv.o ocsp_prn.o ocsp_vfy.o ocsp_err.o
+	ocsp_srv.o ocsp_prn.o ocsp_vfy.o ocsp_err.o v3_ocsp.o
 
 SRC= $(LIBSRC)
 
 EXHEADER= ocsp.h
-HEADER=	$(EXHEADER)
+HEADER=	ocsp_lcl.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 

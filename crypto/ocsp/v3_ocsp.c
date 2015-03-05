@@ -57,13 +57,12 @@
  *
  */
 
-#ifndef OPENSSL_NO_OCSP
-
 # include <stdio.h>
 # include "cryptlib.h"
 # include <openssl/conf.h>
 # include <openssl/asn1.h>
 # include <openssl/ocsp.h>
+# include "ocsp_lcl.h"
 # include <openssl/x509v3.h>
 
 /*
@@ -309,4 +308,3 @@ static int i2r_ocsp_serviceloc(const X509V3_EXT_METHOD *method, void *in,
  err:
     return 0;
 }
-#endif

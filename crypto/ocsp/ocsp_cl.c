@@ -73,6 +73,7 @@
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
 #include <openssl/ocsp.h>
+#include "ocsp_lcl.h"
 
 /*
  * Utility functions related to sending OCSP requests and extracting relevant
@@ -214,6 +215,11 @@ OCSP_BASICRESP *OCSP_response_get1_basic(OCSP_RESPONSE *resp)
     }
 
     return ASN1_item_unpack(rb->response, ASN1_ITEM_rptr(OCSP_BASICRESP));
+}
+
+ASN1_OCTET_STRING *OCSP_resp_get0_signature(OCSP_BASICRESP *bs)
+{
+    return bs->signature;
 }
 
 /*
