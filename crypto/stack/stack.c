@@ -60,6 +60,14 @@
 #include <openssl/stack.h>
 #include <openssl/objects.h>
 
+struct stack_st {
+    int num;
+    char **data;
+    int sorted;
+    int num_alloc;
+    int (*comp) (const void *, const void *);
+};
+
 #undef MIN_NODES
 #define MIN_NODES       4
 
