@@ -58,6 +58,7 @@
  */
 
 #include <openssl/ocsp.h>
+#include "ocsp_lcl.h"
 #include <openssl/err.h>
 #include <string.h>
 
