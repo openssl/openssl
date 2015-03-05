@@ -582,6 +582,8 @@ void SSL_free(SSL *s)
 # ifndef OPENSSL_NO_EC
     if (s->tlsext_ecpointformatlist)
         OPENSSL_free(s->tlsext_ecpointformatlist);
+    if (s->tlsext_ecpointformatlist_length)
+        OPENSSL_free(s->tlsext_ecpointformatlist_length);
     if (s->tlsext_ellipticcurvelist)
         OPENSSL_free(s->tlsext_ellipticcurvelist);
 # endif                         /* OPENSSL_NO_EC */
