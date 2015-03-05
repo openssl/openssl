@@ -56,8 +56,8 @@ $	    tests := -
 	test_rand,test_bn,test_ec,test_ecdsa,test_ecdh,-
 	test_enc,test_x509,test_rsa,test_crl,test_sid,-
 	test_gen,test_req,test_pkcs7,test_verify,test_dh,test_dsa,-
-	test_ss,test_ca,test_engine,test_evp,test_ssl,test_tsa,test_ige,-
-	test_jpake,test_srp,test_cms,test_v3name,test_ocsp,-
+	test_ss,test_ca,test_engine,test_evp,test_evp_extra,test_ssl,test_tsa,-
+	test_ige,test_jpake,test_srp,test_cms,test_v3name,test_ocsp,-
 	test_gost2814789,test_heartbeat,test_p5_crpt2,-
 	test_constant_time
 $	endif
@@ -94,6 +94,7 @@ $	RSATEST :=		rsa_test
 $	ENGINETEST :=		enginetest
 $	GOST2814789TEST :=	gost2814789test
 $	EVPTEST :=		evp_test
+$	EVPEXTRATEST :=		evp_extra_test
 $	P5_CRPT2_TEST :=	p5_crpt2_test
 $	IGETEST :=		igetest
 $	JPAKETEST :=		jpaketest
@@ -113,6 +114,9 @@ $	goto loop_tests
 $
 $ test_evp:
 $	mcr 'texe_dir''evptest' 'ROOT'.CRYPTO.EVP]evptests.txt
+$	return
+$ test_evp_extra:
+$	mcr 'texe_dir''evpextratest'
 $	return
 $ test_p5_crpt2:
 $	mcr 'texe_dir''p5_crpt2_test'
