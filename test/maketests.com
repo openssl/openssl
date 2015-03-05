@@ -148,8 +148,9 @@ $ TEST_FILES = "BNTEST,ECTEST,ECDSATEST,ECDHTEST,IDEATEST,"+ -
 	       "GOST2814789TEST,"+ -
 	       "BFTEST,CASTTEST,SSLTEST,"+ -
 	       "EXPTEST,DSATEST,RSA_TEST,"+ -
-	       "EVP_TEST,IGETEST,JPAKETEST,SRPTEST,"+ -
-	       "V3NAMETEST,HEARTBEAT_TEST,P5_CRPT2_TEST,"+ -
+	       "EVP_TEST,EVP_EXTRA_TEST,IGETEST,"+ -
+	       "JPAKETEST,SRPTEST,V3NAMETEST,"+ -
+	       "HEARTBEAT_TEST,P5_CRPT2_TEST,"+ -
 	       "CONSTANT_TIME_TEST"
 $! Should we add MTTEST,PQ_TEST,LH_TEST,DIVTEST,TABTEST as well?
 $!
@@ -185,6 +186,7 @@ $ T_D_EXPTEST            := [-.crypto.bn]
 $ T_D_DSATEST            := [-.crypto.dsa]
 $ T_D_RSA_TEST           := [-.crypto.rsa]
 $ T_D_EVP_TEST           := [-.crypto.evp]
+$ T_D_EVP_EXTRA_TEST     := [-.crypto.evp]
 $ T_D_IGETEST            := [-.test]
 $ T_D_JPAKETEST          := [-.crypto.jpake]
 $ T_D_SRPTEST            := [-.crypto.srp]
