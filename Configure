@@ -256,8 +256,230 @@ my $BSDthreads="-pthread -D_THREAD_SAFE -D_REENTRANT";
 # The configuration reader will do what it can to translate everything into
 # new style config hash tables, including merging $target and debug-$target
 # if they are similar enough.
+#
+# The configuration hashes can refer to templates in two different manners:
+#
+# - as part of the hash, one can have a key called 'base_templates' that
+#   indicate what other configuration hashes to inherit data from.
+#   These are resolved recursively.
+#
+#   Example:
+#
+#	"bar" => {
+#		haha => "haha"
+#	},
+#	"foo" => {
+#		base_templates => [ "bar" ],
+#		hoho => "hoho"
+#	}
+#
+#	The entry for "foo" will become as follows after processing:
+#
+#	"foo" => {
+#		haha => "haha",
+#		hoho => "hoho"
+#	}
+#
+#   Note 1: any entry from the table can be used as a template.
+#   Note 2: pure templates have the attribute 'template => 1' and cannot
+#           be used as targets
+#
+# - as part of any string, one can have a template reference wrapped in
+#   double braces, and when processing templates, this will be replaced
+#   with the corresponding string from the template.
+#
+#   Example:
+#
+#	"bar" => {
+#		haha => "haha"
+#	},
+#	"foo" => {
+#		haha => "{{bar}} !!!!"
+#	}
+#
+#	The entry for "foo" will become as follows after processing:
+#
+#	"foo" => {
+#		haha => "haha !!!!"
+#	}
+#
 
 my %table=(
+
+    # All these templates are merely a translation of the corresponding
+    # variables further up.
+    #
+    # Note: as long as someone might use old style configuration strings,
+    # or we bother supporting that, those variables need to stay
+
+    # Filler used for when there are no asm files.
+    no_asm_filler => {
+	template	=> 1,
+	cpuid_obj	=> "",
+	bn_obj		=> "",
+	ec_obj		=> "",
+	des_obj		=> "",
+	aes_obj		=> "",
+	bf_obj		=> "",
+	md5_obj		=> "",
+	sha1_obj	=> "",
+	cast_obj	=> "",
+	rc4_obj		=> "",
+	rmd160_obj	=> "",
+	rc5_obj		=> "",
+	wp_obj		=> "",
+	cmll_obj	=> "",
+	modes_obj	=> "",
+	engines_obj	=> "",
+	perlasm_scheme	=> "void"
+    },
+
+    x86_asm => {
+	template	=> 1,
+	cpuid_obj	=> "x86cpuid.o",
+	bn_obj		=> "bn-586.o co-586.o x86-mont.o x86-gf2m.o",
+	ec_obj		=> "ecp_nistz256.o ecp_nistz256-x86.o",
+	des_obj		=> "des-586.o crypt586.o",
+	aes_obj		=> "aes-586.o vpaes-x86.o aesni-x86.o",
+	bf_obj		=> "bf-586.o",
+	md5_obj		=> "md5-586.o",
+	sha1_obj	=> "sha1-586.o sha256-586.o sha512-586.o",
+	cast_obj	=> "cast-586.o",
+	rc4_obj		=> "rc4-586.o",
+	rmd160_obj	=> "rmd-586.o",
+	rc5_obj		=> "rc5-586.o",
+	wp_obj		=> "wp_block.o wp-mmx.o",
+	cmll_obj	=> "cmll-x86.o",
+	modes_obj	=> "ghash-x86.o",
+	engines_obj	=> "e_padlock-x86.o"
+    },
+    x86_elf_asm => {
+	template	=> 1,
+	base_templates	=> [ "x86_asm" ],
+	perlasm_scheme	=> "elf"
+    },
+
+    x86_64_asm => {
+	template	=> 1,
+	cpuid_obj       => "x86_64cpuid.o",
+	bn_obj          => "x86_64-gcc.o x86_64-mont.o x86_64-mont5.o x86_64-gf2m.o rsaz_exp.o rsaz-x86_64.o rsaz-avx2.o",
+	ec_obj          => "ecp_nistz256.o ecp_nistz256-x86_64.o",
+	aes_obj         => "aes-x86_64.o vpaes-x86_64.o bsaes-x86_64.o aesni-x86_64.o aesni-sha1-x86_64.o aesni-sha256-x86_64.o aesni-mb-x86_64.o",
+	md5_obj         => "md5-x86_64.o",
+	sha1_obj        => "sha1-x86_64.o sha256-x86_64.o sha512-x86_64.o sha1-mb-x86_64.o sha256-mb-x86_64.o",
+	rc4_obj         => "rc4-x86_64.o rc4-md5-x86_64.o",
+	wp_obj          => "wp-x86_64.o",
+	cmll_obj        => "cmll-x86_64.o cmll_misc.o",
+	modes_obj       => "ghash-x86_64.o aesni-gcm-x86_64.o",
+	engines_obj     => "e_padlock-x86_64.o"
+    },
+    ia64_asm => {
+	template	=> 1,
+	cpuid_obj       => "ia64cpuid.o",
+	bn_obj          => "bn-ia64.o ia64-mont.o",
+	aes_obj         => "aes_core.o aes_cbc.o aes-ia64.o",
+	md5_obj         => "md5-ia64.o",
+	sha1_obj        => "sha1-ia64.o sha256-ia64.o sha512-ia64.o",
+	rc4_obj         => "rc4-ia64.o rc4_skey.o",
+	modes_obj       => "ghash-ia64.o",
+	perlasm_scheme	=> "void"
+    },
+    sparcv9_asm => {
+	template	=> 1,
+	cpuid_obj       => "sparcv9cap.o sparccpuid.o",
+	bn_obj          => "bn-sparcv9.o sparcv9-mont.o sparcv9a-mont.o vis3-mont.o sparct4-mont.o sparcv9-gf2m.o",
+	des_obj         => "des_enc-sparc.o fcrypt_b.o dest4-sparcv9.o",
+	aes_obj         => "aes_core.o aes_cbc.o aes-sparcv9.o aest4-sparcv9.o",
+	md5_obj         => "md5-sparcv9.o",
+	sha1_obj        => "sha1-sparcv9.o sha256-sparcv9.o sha512-sparcv9.o",
+	cmll_obj        => "camellia.o cmll_misc.o cmll_cbc.o cmllt4-sparcv9.o",
+	modes_obj       => "ghash-sparcv9.o",
+	perlasm_scheme	=> "void"
+    },
+    sparcv8_asm => {
+	template	=> 1,
+	cpuid_obj       => "",
+	bn_obj          => "sparcv8.o",
+	des_obj         => "des_enc-sparc.o fcrypt_b.o",
+	perlasm_scheme	=> "void"
+    },
+    alpha_asm => {
+	template	=> 1,
+	cpuid_obj       => "alphacpuid.o",
+	bn_obj          => "bn_asm.o alpha-mont.o",
+	sha1_obj        => "sha1-alpha.o",
+	modes_obj       => "ghash-alpha.o",
+	perlasm_scheme	=> "void"
+    },
+    mips32_asm => {
+	template	=> 1,
+	bn_obj          => "bn-mips.o mips-mont.o",
+	aes_obj         => "aes_cbc.o aes-mips.o",
+	sha1_obj        => "sha1-mips.o sha256-mips.o",
+    },
+    mips64_asm => {
+	base_templates	=> [ "mips32_asm" ],
+	template	=> 1,
+	sha1_obj        => "{{mips32_asm}} sha512-mips.o",
+    },
+    s390x_asm => {
+	template	=> 1,
+	cpuid_obj       => "s390xcap.o s390xcpuid.o",
+	bn_obj          => "bn-s390x.o s390x-mont.o s390x-gf2m.o",
+	aes_obj         => "aes-s390x.o aes-ctr.o aes-xts.o",
+	sha1_obj        => "sha1-s390x.o sha256-s390x.o sha512-s390x.o",
+	rc4_obj         => "rc4-s390x.o",
+	modes_obj       => "ghash-s390x.o",
+    },
+    armv4_asm => {
+	template	=> 1,
+	cpuid_obj       => "armcap.o armv4cpuid.o",
+	bn_obj          => "bn_asm.o armv4-mont.o armv4-gf2m.o",
+	ec_obj          => "ecp_nistz256.o ecp_nistz256-armv4.o",
+	aes_obj         => "aes_cbc.o aes-armv4.o bsaes-armv7.o aesv8-armx.o",
+	sha1_obj        => "sha1-armv4-large.o sha256-armv4.o sha512-armv4.o",
+	modes_obj       => "ghash-armv4.o ghashv8-armx.o",
+	perlasm_scheme	=> "void"
+    },
+    aarch64_asm => {
+	template	=> 1,
+	cpuid_obj       => "armcap.o arm64cpuid.o mem_clr.o",
+	aes_obj         => "aes_core.o aes_cbc.o aesv8-armx.o",
+	sha1_obj        => "sha1-armv8.o sha256-armv8.o sha512-armv8.o",
+	modes_obj       => "ghashv8-armx.o",
+    },
+    parisc11_asm => {
+	template	=> 1,
+	cpuid_obj       => "pariscid.o",
+	bn_obj          => "bn_asm.o parisc-mont.o",
+	aes_obj         => "aes_core.o aes_cbc.o aes-parisc.o",
+	sha1_obj        => "sha1-parisc.o sha256-parisc.o sha512-parisc.o",
+	rc4_obj         => "rc4-parisc.o",
+	modes_obj       => "ghash-parisc.o",
+	perlasm_scheme	=> "32"
+    },
+    parisc20_asm => {
+	template	=> 1,
+	cpuid_obj       => "pariscid.o",
+	bn_obj          => "pa-risc2W.o parisc-mont.o",
+	aes_obj         => "aes_core.o aes_cbc.o aes-parisc.o",
+	sha1_obj        => "sha1-parisc.o sha256-parisc.o sha512-parisc.o",
+	rc4_obj         => "rc4-parisc.o",
+	modes_obj       => "ghash-parisc.o",
+	perlasm_scheme	=> "64"
+    },
+    ppc64_asm => {
+	template	=> 1,
+	cpuid_obj       => "ppccpuid.o ppccap.o",
+	bn_obj          => "bn-ppc.o ppc-mont.o ppc64-mont.o",
+	aes_obj         => "aes_core.o aes_cbc.o aes-ppc.o vpaes-ppc.o aesp8-ppc.o",
+	sha1_obj        => "sha1-ppc.o sha256-ppc.o sha512-ppc.o sha256p8-ppc.o sha512p8-ppc.o",
+	modes_obj       => "ghashp8-ppc.o",
+    },
+    ppc32_asm => {
+	base_templates	=> [ "ppc64_asm" ],
+	template	=> 1
+    },
 );
 
 sub stringtohash {
@@ -473,7 +695,55 @@ sub read_config {
 
 	# Go through all new targets and resolve template references.
 	foreach (keys %targets) {
+	    # Start with resolving the base templates
+	    my @breadcrumbs = ();
+	    while (my @base_templates =
+		   $table{$_}->{base_templates} ?
+		   @{$table{$_}->{base_templates}} : ()) {
+		my %new_template_data = ();
+		my %new_base_templates = ();
+		foreach my $base_template (@base_templates) {
+		    if (grep { $_ eq $base_template } @breadcrumbs) {
+			die "Base template loop!  target backtrace:\n  "
+			    ,$base_template,"\n  "
+			    ,join("\n  ",
+				  map { "[ ".join(", ", @{$_})." ]" } @breadcrumbs)
+			    ,"\n";
+		    }
+
+		    if ($table{$base_template}) {
+			%new_base_templates =
+			    (
+			     %new_base_templates,
+			     map { $_ => 1 } @{$table{$base_template}->{base_templates}}
+			    );
+			%new_template_data =
+			    (
+			     %new_template_data,
+			     %{$table{$base_template}}
+			    );
+			delete $new_template_data{template};
+		    } else {
+			# There are unresolved base templates.  That's no good
+			warn "Target $_ has unresolved base templates.  Removing...";
+			delete $table{$_};
+			goto NEXT;
+		    }
+		}
+
+		@breadcrumbs = ( [ @base_templates ], @breadcrumbs );
+		# Now, we rebuild the target, using the newly fetched template
+		# data, overlaying that with the target's original data, and
+		# overlaying the new base template list on top of that
+		$table{$_} = {
+		    %new_template_data,
+		    %{$table{$_}},
+		    base_templates => [ keys %new_base_templates ]
+		}
+	    }
+
 	    lookup_templates(\%table, $_);
+	  NEXT:
 	}
 }
 
@@ -885,7 +1155,7 @@ if ($d) {
     }
 }
 
-&usage if (!defined($table{$target}));
+&usage if (!defined($table{$target}) || $table{$target}->{template});
 
 if ($fips)
 	{
@@ -1985,6 +2255,9 @@ sub print_table_entry
 	my $nodebug_cflags = "nodebug-cflags";
 	my $debug_lflags = "debug-lflags";
 	my $nodebug_lflags = "nodebug-lflags";
+
+	# Don't print the templates
+	return if $table{$target}->{template};
 
 	if ($type eq "TABLE") {
 	    print <<EOF
