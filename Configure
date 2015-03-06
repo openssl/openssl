@@ -161,11 +161,149 @@ my $ppc32_asm=$ppc64_asm;
 # seems to be sufficient?
 my $BSDthreads="-pthread -D_THREAD_SAFE -D_REENTRANT";
 
-#config-string	$cc : $cflags : $unistd : $thread_cflag : $sys_id : $lflags : $bn_ops : $cpuid_obj : $bn_obj : $ec_obj : $des_obj : $aes_obj : $bf_obj : $md5_obj : $sha1_obj : $cast_obj : $rc4_obj : $rmd160_obj : $rc5_obj : $wp_obj : $cmll_obj : $modes_obj : $engines_obj : $dso_scheme : $shared_target : $shared_cflag : $shared_ldflag : $shared_extension : $ranlib : $arflags : $multilib
 
 # table of known configurations, read in from files
+#
+# The content of each entry can take one of two forms:
+#
+# - old style config-string, colon seperated fields with exactly the
+#   following structure.:
+#
+#	$cc : $cflags : $unistd : $thread_cflag : $sys_id : $lflags : $bn_ops : $cpuid_obj : $bn_obj : $ec_obj : $des_obj : $aes_obj : $bf_obj : $md5_obj : $sha1_obj : $cast_obj : $rc4_obj : $rmd160_obj : $rc5_obj : $wp_obj : $cmll_obj : $modes_obj : $engines_obj : $perlasm_scheme : $dso_scheme : $shared_target : $shared_cflag : $shared_ldflag : $shared_extension : $ranlib : $arflags : $multilib
+#
+#   We use the stringtohash function - defined below - to combine with the
+#   fields and form a proper hash table from the string.
+#
+# - direct transfer of old style config string to hash table, using the names
+#   of the fields as keys:
+#
+#	{
+#	  cc => $cc,
+#	  cflags => $cflags,
+#	  unistd => $unistd,
+#	  thread_cflag => $thread_cflag,
+#	  sys_id => $sys_id,
+#	  lflags => $lflags,
+#	  bn_ops => $bn_ops,
+#	  cpuid_obj => $cpuid_obj,
+#	  bn_obj => $bn_obj,
+#	  ec_obj => $ec_obj,
+#	  des_obj => $des_obj,
+#	  aes_obj => $aes_obj,
+#	  bf_obj => $bf_obj,
+#	  md5_obj => $md5_obj,
+#	  sha1_obj => $sha1_obj,
+#	  cast_obj => $cast_obj,
+#	  rc4_obj => $rc4_obj,
+#	  rmd160_obj => $rmd160_obj,
+#	  rc5_obj => $rc5_obj,
+#	  wp_obj => $wp_obj,
+#	  cmll_obj => $cmll_obj,
+#	  modes_obj => $modes_obj,
+#	  engines_obj => $engines_obj,
+#	  perlasm_scheme => $perlasm_scheme,
+#	  dso_scheme => $dso_scheme,
+#	  shared_target => $shared_target,
+#	  shared_cflag => $shared_cflag,
+#	  shared_ldflag => $shared_ldflag,
+#	  shared_extension => $shared_extension,
+#	  ranlib => $ranlib,
+#	  arflags => $arflags,
+#	  multilib => $multilib
+#	}
+#
+# - new style config hash table, which has additional attributes for debug
+#   and non-debug flags to be added to the common flags, for cflags and lflags:
+#
+#	{
+#	  cc => $cc,
+#	  cflags => $cflags,
+#	  "debug-cflags" => $debug_cflags,
+#	  "nodebug-cflags" => $nodebug_cflags,
+#	  unistd => $unistd,
+#	  thread_cflag => $thread_cflag,
+#	  sys_id => $sys_id,
+#	  lflags => $lflags,
+#	  "debug-lflags" => $debug_lflags,
+#	  "nodebug-lflags" => $nodebug_lflags,
+#	  bn_ops => $bn_ops,
+#	  cpuid_obj => $cpuid_obj,
+#	  bn_obj => $bn_obj,
+#	  ec_obj => $ec_obj,
+#	  des_obj => $des_obj,
+#	  aes_obj => $aes_obj,
+#	  bf_obj => $bf_obj,
+#	  md5_obj => $md5_obj,
+#	  sha1_obj => $sha1_obj,
+#	  cast_obj => $cast_obj,
+#	  rc4_obj => $rc4_obj,
+#	  rmd160_obj => $rmd160_obj,
+#	  rc5_obj => $rc5_obj,
+#	  wp_obj => $wp_obj,
+#	  cmll_obj => $cmll_obj,
+#	  modes_obj => $modes_obj,
+#	  engines_obj => $engines_obj,
+#	  dso_scheme => $dso_scheme,
+#	  shared_target => $shared_target,
+#	  shared_cflag => $shared_cflag,
+#	  shared_ldflag => $shared_ldflag,
+#	  shared_extension => $shared_extension,
+#	  ranlib => $ranlib,
+#	  arflags => $arflags,
+#	  multilib => $multilib
+#	}
+#
+# The configuration reader will do what it can to translate everything into
+# new style config hash tables, including merging $target and debug-$target
+# if they are similar enough.
+
 my %table=(
 );
+
+sub stringtohash {
+    my $in = shift @_;
+    if (ref($in) eq "HASH") {
+	return $in;
+    }
+    my @stringsequence = (
+	"cc",
+	"cflags",
+	"unistd",
+	"thread_cflag",
+	"sys_id",
+	"lflags",
+	"bn_ops",
+	"cpuid_obj",
+	"bn_obj",
+	"ec_obj",
+	"des_obj",
+	"aes_obj",
+	"bf_obj",
+	"md5_obj",
+	"sha1_obj",
+	"cast_obj",
+	"rc4_obj",
+	"rmd160_obj",
+	"rc5_obj",
+	"wp_obj",
+	"cmll_obj",
+	"modes_obj",
+	"engines_obj",
+	"perlasm_scheme",
+	"dso_scheme",
+	"shared_target",
+	"shared_cflag",
+	"shared_ldflag",
+	"shared_extension",
+	"ranlib",
+	"arflags",
+	"multilib",
+	);
+
+    # return a ref to a hash, that's what the outer braces are for.
+    return { map { shift @stringsequence => $_ } split /:/, $in };
+};
+
 
 # Read configuration target stanzas from a file, so that people can have
 # local files with their own definitions
@@ -180,6 +318,132 @@ sub read_config {
 	close(CONFFILE);
 	my %targets = ();
 	eval $content;
+
+	# Make sure we have debug- targets first
+	my @keys =
+	    sort {
+		my $a_nd = $a =~ m/^debug-/ ? $' :$a;
+		my $b_nd = $b =~ m/^debug-/ ? $' :$b;
+		my $res = 0;
+
+		if (($a_nd == $a) == ($b_nd == $b)) {
+		    # they are both debug- or not, compare them as they are
+		    $res = $a cmp $b;
+		} elsif ($a_nd != $a) {
+		    # $a is debug-, make it lesser
+		    $res = -1;
+		} else {
+		    # $b is debug-, make $a greater
+		    $res = 1;
+		}
+		$res;
+	    } keys %targets;
+
+	foreach (@keys) {
+	    if (ref($targets{$_}) ne "HASH") {
+		# Value is assumed to be a string.  Split it up to
+		# become a hash table of parameters.  Also, try to
+		# merge debug- variants with the non-debug target.
+
+		# Start with converting the value from a string to a
+		# standardised hash of fields.  Using $tohash is safe,
+		# if the input is already a hash ref, it's just returned
+		# back.
+		$targets{$_} = stringtohash($targets{$_});
+
+		# If the current target is a debug target, there might
+		# be a corresponding non-debug target that we can merge
+		# with.  If it isn't a debug- target, we've already done
+		# as much merging as we can and do not need to bother
+		# with that any more.
+		if ($_ =~ m/^debug-/) {
+		    my $debugkey = $_;
+		    my $nondebugkey = $';
+		    my $debug = $targets{$debugkey};
+		    my $nondebug;
+
+		    if ($targets{$nondebugkey}) {
+			$nondebug = stringtohash($targets{$nondebugkey});
+		    }
+
+		    if ($nondebug) {
+			# There's both a debug and non-debug variant of
+			# this target, so we should try to merge them
+			# together.
+
+			# First, check that the non-debug variant isn't
+			# already built up with all it should have.
+			if ($nondebug->{debug_cflags}
+			    || $nondebug->{nodebug_cflags}
+			    || $nondebug->{debug_lflags}
+			    || $nondebug->{nodebug_lflags}) {
+			    warn "there's a debug target $debugkey to be merged with a target $nondebugkey, but the latter seems to already have both nodebug and debug information.  This requires human intervention.  Skipping $debugkey...";
+			    next;
+			}
+
+			# Now, check similarity.
+			# For keys they have in common, support that
+			# cflags and lflags can differ, otherwise they
+			# must have exactly the same values for them
+			# to be merged into one.
+			my $similarenough = 1;
+			for (keys %{$debug}) {
+			    if ($nondebug->{$_} ne $debug->{$_}
+				&& $_ !~ m/^[cl]flags$/) {
+				$similarenough = 0;
+				last;
+			    }
+			}
+
+			if ($similarenough) {
+			    # Here's where the magic happens, split the
+			    # options in the debug and non-debug variants
+			    # cflags and ldflags into three strings each,
+			    # one with common flags, one with extra debug
+			    # flags and one with extra non-debug flags.
+
+			    # The result ends up in %h_nondebug, which
+			    # becomes the merged variant when we're done.
+			    # for each of cflags and lflags, they are
+			    # replaced with cflags, debug_cflags,
+			    # nodebug_cflags and similar for lflags.
+			    #
+			    # The purpose is that 'cflags' should be
+			    # used together with 'debug_cflags' or
+			    # 'nodebug_cflags' depending on what the
+			    # user asks for.
+			    foreach (("cflags", "lflags")) {
+				my @list_d = split /\s+/, $debug->{$_};
+				my @list_nd = split /\s+/, $nondebug->{$_};
+				my %presence = (); # bitmap
+						   # 1: present in @list_d
+						   # 2: present in @list_nd
+						   # 3: present in both
+				map { $presence{$_} += 1; } @list_d;
+				map { $presence{$_} += 2; } @list_nd;
+
+				delete $nondebug->{$_};
+				# Note: we build from the original lists to
+				# preserve order, it might be important
+				$nondebug->{"debug-".$_} =
+				    join(" ",
+					 grep { $presence{$_} == 1 } @list_d);
+				$nondebug->{"nodebug-".$_} =
+				    join(" ",
+					 grep { $presence{$_} == 2 } @list_nd);
+				$nondebug->{$_} =
+				    join(" ",
+					 grep { $presence{$_} == 3 } @list_d);
+			    }
+
+			    $targets{$nondebugkey} = $nondebug;
+			    delete $targets{$debugkey};
+			}
+		    }
+		}
+	    }
+	}
+
 	%table = (%table, %targets);
 }
 
@@ -195,40 +459,6 @@ my @MK1MF_Builds=qw(VC-WIN64I VC-WIN64A
 		    BC-32
 		    netware-clib netware-clib-bsdsock
 		    netware-libc netware-libc-bsdsock);
-
-my $idx = 0;
-my $idx_cc = $idx++;
-my $idx_cflags = $idx++;
-my $idx_unistd = $idx++;
-my $idx_thread_cflag = $idx++;
-my $idx_sys_id = $idx++;
-my $idx_lflags = $idx++;
-my $idx_bn_ops = $idx++;
-my $idx_cpuid_obj = $idx++;
-my $idx_bn_obj = $idx++;
-my $idx_ec_obj = $idx++;
-my $idx_des_obj = $idx++;
-my $idx_aes_obj = $idx++;
-my $idx_bf_obj = $idx++;
-my $idx_md5_obj = $idx++;
-my $idx_sha1_obj = $idx++;
-my $idx_cast_obj = $idx++;
-my $idx_rc4_obj = $idx++;
-my $idx_rmd160_obj = $idx++;
-my $idx_rc5_obj = $idx++;
-my $idx_wp_obj = $idx++;
-my $idx_cmll_obj = $idx++;
-my $idx_modes_obj = $idx++;
-my $idx_engines_obj = $idx++;
-my $idx_perlasm_scheme = $idx++;
-my $idx_dso_scheme = $idx++;
-my $idx_shared_target = $idx++;
-my $idx_shared_cflag = $idx++;
-my $idx_shared_ldflag = $idx++;
-my $idx_shared_extension = $idx++;
-my $idx_ranlib = $idx++;
-my $idx_arflags = $idx++;
-my $idx_multilib = $idx++;
 
 my $prefix="";
 my $libdir="";
@@ -584,7 +814,7 @@ if (defined($disabled{"tlsext"}))
 
 if ($target eq "TABLE") {
 	foreach $target (sort keys %table) {
-		print_table_entry($target);
+		print_table_entry($target, "TABLE");
 	}
 	exit 0;
 }
@@ -597,11 +827,33 @@ if ($target eq "LIST") {
 	exit 0;
 }
 
+if ($target eq "HASH") {
+	print "%table = (\n";
+	foreach (sort keys %table) {
+		print_table_entry($_, "HASH");
+	}
+	exit 0;
+}
+
 if ($target =~ m/^CygWin32(-.*)$/) {
 	$target = "Cygwin".$1;
 }
 
 print "Configuring for $target\n";
+
+my ($d, $t) = $target =~ m/^(debug-)?(.*)$/;
+my $debug_prefix = "nodebug-";
+if ($d) {
+    $debug_prefix = "debug-";
+
+    # If we do not find debug-foo in the table, the target is set to foo,
+    # but only if the foo target has a noon-empty debug-cflags or debug-lflags
+    # attribute.
+    if (!$table{$target} && ($table{$t}->{"debug-cflags"}
+			     || $table{$t}->{"debug-lflags"})) {
+	$target = $t;
+    }
+}
 
 &usage if (!defined($table{$target}));
 
@@ -707,44 +959,48 @@ $openssldir=$prefix . "/" . $openssldir if $openssldir !~ /(^\/|^[a-zA-Z]:[\\\/]
 
 print "IsMK1MF=$IsMK1MF\n";
 
-my @fields = split(/\s*:\s*/,$table{$target} . ":" x 30 , -1);
-my $cc = $fields[$idx_cc];
 # Allow environment CC to override compiler...
-if($ENV{CC}) {
-    $cc = $ENV{CC};
-}
-my $cflags = $fields[$idx_cflags];
-my $unistd = $fields[$idx_unistd];
-my $thread_cflag = $fields[$idx_thread_cflag];
-my $sys_id = $fields[$idx_sys_id];
-my $lflags = $fields[$idx_lflags];
-my $bn_ops = $fields[$idx_bn_ops];
-my $cpuid_obj = $fields[$idx_cpuid_obj];
-my $bn_obj = $fields[$idx_bn_obj];
-my $ec_obj = $fields[$idx_ec_obj];
-my $des_obj = $fields[$idx_des_obj];
-my $aes_obj = $fields[$idx_aes_obj];
-my $bf_obj = $fields[$idx_bf_obj];
-my $md5_obj = $fields[$idx_md5_obj];
-my $sha1_obj = $fields[$idx_sha1_obj];
-my $cast_obj = $fields[$idx_cast_obj];
-my $rc4_obj = $fields[$idx_rc4_obj];
-my $rmd160_obj = $fields[$idx_rmd160_obj];
-my $rc5_obj = $fields[$idx_rc5_obj];
-my $wp_obj = $fields[$idx_wp_obj];
-my $cmll_obj = $fields[$idx_cmll_obj];
-my $modes_obj = $fields[$idx_modes_obj];
-my $engines_obj = $fields[$idx_engines_obj];
-my $perlasm_scheme = $fields[$idx_perlasm_scheme];
-my $dso_scheme = $fields[$idx_dso_scheme];
-my $shared_target = $fields[$idx_shared_target];
-my $shared_cflag = $fields[$idx_shared_cflag];
-my $shared_ldflag = $fields[$idx_shared_ldflag];
-my $shared_extension = $fields[$idx_shared_extension];
-my $ranlib = $ENV{'RANLIB'} || $fields[$idx_ranlib];
+my $cc = $ENV{CC} || $table{$t}->{cc};
+
+# For cflags and lflags, add the debug- or nodebug- attributes
+# Do it in such a way that no spurious space is appended (hence the grep).
+my $cflags = join(" ",
+		  grep { $_ } ($table{$t}->{cflags},
+			       $table{$t}->{$debug_prefix."cflags"}));
+my $lflags = join(" ",
+		  grep { $_ } ($table{$t}->{lflags},
+			       $table{$t}->{$debug_prefix."lflags"}));
+
+my $unistd = $table{$t}->{unistd};
+my $thread_cflag = $table{$t}->{thread_cflag};
+my $sys_id = $table{$t}->{sys_id};
+my $bn_ops = $table{$t}->{bn_ops};
+my $cpuid_obj = $table{$t}->{cpuid_obj};
+my $bn_obj = $table{$t}->{bn_obj};
+my $ec_obj = $table{$t}->{ec_obj};
+my $des_obj = $table{$t}->{des_obj};
+my $aes_obj = $table{$t}->{aes_obj};
+my $bf_obj = $table{$t}->{bf_obj};
+my $md5_obj = $table{$t}->{md5_obj};
+my $sha1_obj = $table{$t}->{sha1_obj};
+my $cast_obj = $table{$t}->{cast_obj};
+my $rc4_obj = $table{$t}->{rc4_obj};
+my $rmd160_obj = $table{$t}->{rmd160_obj};
+my $rc5_obj = $table{$t}->{rc5_obj};
+my $wp_obj = $table{$t}->{wp_obj};
+my $cmll_obj = $table{$t}->{cmll_obj};
+my $modes_obj = $table{$t}->{modes_obj};
+my $engines_obj = $table{$t}->{engines_obj};
+my $perlasm_scheme = $table{$t}->{perlasm_scheme};
+my $dso_scheme = $table{$t}->{dso_scheme};
+my $shared_target = $table{$t}->{shared_target};
+my $shared_cflag = $table{$t}->{shared_cflag};
+my $shared_ldflag = $table{$t}->{shared_ldflag};
+my $shared_extension = $table{$t}->{shared_extension};
+my $ranlib = $ENV{'RANLIB'} || $table{$t}->{ranlib};
 my $ar = $ENV{'AR'} || "ar";
-my $arflags = $fields[$idx_arflags];
-my $multilib = $fields[$idx_multilib];
+my $arflags = $table{$t}->{arflags};
+my $multilib = $table{$t}->{multilib};
 
 # if $prefix/lib$multilib is not an existing directory, then
 # assume that it's not searched by linker automatically, in
@@ -1585,7 +1841,7 @@ BEGIN
 	    VALUE "ProductVersion", "$version\\0"
 	    // Optional:
 	    //VALUE "Comments", "\\0"
-	    VALUE "LegalCopyright", "Copyright © 1998-2005 The OpenSSL Project. Copyright © 1995-1998 Eric A. Young, Tim J. Hudson. All rights reserved.\\0"
+	    VALUE "LegalCopyright", "Copyright Â© 1998-2005 The OpenSSL Project. Copyright Â© 1995-1998 Eric A. Young, Tim J. Hudson. All rights reserved.\\0"
 	    //VALUE "LegalTrademarks", "\\0"
 	    //VALUE "PrivateBuild", "\\0"
 	    //VALUE "SpecialBuild", "\\0"
@@ -1693,51 +1949,103 @@ sub dofile
 sub print_table_entry
 	{
 	my $target = shift;
+	my $type = shift;
 
-	my ($cc, $cflags, $unistd, $thread_cflag, $sys_id, $lflags,
-	    $bn_ops, $cpuid_obj, $bn_obj, $ec_obj, $des_obj, $aes_obj, $bf_obj,
-	    $md5_obj, $sha1_obj, $cast_obj, $rc4_obj, $rmd160_obj,
-	    $rc5_obj, $wp_obj, $cmll_obj, $modes_obj, $engines_obj,
-	    $perlasm_scheme, $dso_scheme, $shared_target, $shared_cflag,
-	    $shared_ldflag, $shared_extension, $ranlib, $arflags, $multilib)=
-	split(/\s*:\s*/,$table{$target} . ":" x 30 , -1);
+	my $debug_cflags = "debug-cflags";
+	my $nodebug_cflags = "nodebug-cflags";
+	my $debug_lflags = "debug-lflags";
+	my $nodebug_lflags = "nodebug-lflags";
 
-	print <<EOF
+	if ($type eq "TABLE") {
+	    print <<EOF
 
 *** $target
-\$cc           = $cc
-\$cflags       = $cflags
-\$unistd       = $unistd
-\$thread_cflag = $thread_cflag
-\$sys_id       = $sys_id
-\$lflags       = $lflags
-\$bn_ops       = $bn_ops
-\$cpuid_obj    = $cpuid_obj
-\$bn_obj       = $bn_obj
-\$ec_obj       = $ec_obj
-\$des_obj      = $des_obj
-\$aes_obj      = $aes_obj
-\$bf_obj       = $bf_obj
-\$md5_obj      = $md5_obj
-\$sha1_obj     = $sha1_obj
-\$cast_obj     = $cast_obj
-\$rc4_obj      = $rc4_obj
-\$rmd160_obj   = $rmd160_obj
-\$rc5_obj      = $rc5_obj
-\$wp_obj       = $wp_obj
-\$cmll_obj     = $cmll_obj
-\$modes_obj    = $modes_obj
-\$engines_obj  = $engines_obj
-\$perlasm_scheme = $perlasm_scheme
-\$dso_scheme   = $dso_scheme
-\$shared_target= $shared_target
-\$shared_cflag = $shared_cflag
-\$shared_ldflag = $shared_ldflag
-\$shared_extension = $shared_extension
-\$ranlib       = $ranlib
-\$arflags      = $arflags
-\$multilib     = $multilib
+\$cc           = $table{$target}->{cc}
+\$cflags       = $table{$target}->{cflags}
+\$debug_cflags   = $table{$target}->{$debug_cflags}
+\$nodebug_cflags = $table{$target}->{$nodebug_cflags}
+\$unistd       = $table{$target}->{unistd}
+\$thread_cflag = $table{$target}->{thread_cflag}
+\$sys_id       = $table{$target}->{sys_id}
+\$lflags       = $table{$target}->{lflags}
+\$debug_lflags   = $table{$target}->{$debug_lflags}
+\$nodebug_lflags = $table{$target}->{$nodebug_lflags}
+\$bn_ops       = $table{$target}->{bn_ops}
+\$cpuid_obj    = $table{$target}->{cpuid_obj}
+\$bn_obj       = $table{$target}->{bn_obj}
+\$ec_obj       = $table{$target}->{ec_obj}
+\$des_obj      = $table{$target}->{des_obj}
+\$aes_obj      = $table{$target}->{aes_obj}
+\$bf_obj       = $table{$target}->{bf_obj}
+\$md5_obj      = $table{$target}->{md5_obj}
+\$sha1_obj     = $table{$target}->{sha1_obj}
+\$cast_obj     = $table{$target}->{cast_obj}
+\$rc4_obj      = $table{$target}->{rc4_obj}
+\$rmd160_obj   = $table{$target}->{rmd160_obj}
+\$rc5_obj      = $table{$target}->{rc5_obj}
+\$wp_obj       = $table{$target}->{wp_obj}
+\$cmll_obj     = $table{$target}->{cmll_obj}
+\$modes_obj    = $table{$target}->{modes_obj}
+\$engines_obj  = $table{$target}->{engines_obj}
+\$perlasm_scheme = $table{$target}->{perlasm_scheme}
+\$dso_scheme   = $table{$target}->{dso_scheme}
+\$shared_target= $table{$target}->{shared_target}
+\$shared_cflag = $table{$target}->{shared_cflag}
+\$shared_ldflag = $table{$target}->{shared_ldflag}
+\$shared_extension = $table{$target}->{shared_extension}
+\$ranlib       = $table{$target}->{ranlib}
+\$arflags      = $table{$target}->{arflags}
+\$multilib     = $table{$target}->{multilib}
 EOF
+	} elsif ($type eq "HASH") {
+	    my @sequence = (
+		"cc",
+		"cflags",
+		"debug-cflags",
+		"nodebug-cflags",
+		"unistd",
+		"thread_cflag",
+		"sys_id",
+		"lflags",
+		"debug-lflags",
+		"nodebug-lflags",
+		"bn_ops",
+		"cpuid_obj",
+		"bn_obj",
+		"ec_obj",
+		"des_obj",
+		"aes_obj",
+		"bf_obj",
+		"md5_obj",
+		"sha1_obj",
+		"cast_obj",
+		"rc4_obj",
+		"rmd160_obj",
+		"rc5_obj",
+		"wp_obj",
+		"cmll_obj",
+		"modes_obj",
+		"engines_obj",
+		"perlasm_scheme",
+		"dso_scheme",
+		"shared_target",
+		"shared_cflag",
+		"shared_ldflag",
+		"shared_extension",
+		"ranlib",
+		"arflags",
+		"multilib",
+		);
+	    my $largest =
+		length((sort { length($a) <=> length($b) } @sequence)[-1]);
+	    print "    '$target' => {\n";
+	    foreach (@sequence) {
+		if ($table{$target}->{$_}) {
+		    print "      '",$_,"'"," " x ($largest - length($_))," => '",$table{$target}->{$_},"',\n";
+		}
+	    }
+	    print "    },\n";
+	}
 	}
 
 sub test_sanity
@@ -1751,24 +2059,27 @@ sub test_sanity
 
 	foreach $target (sort keys %table)
 		{
-		@fields = split(/\s*:\s*/,$table{$target} . ":" x 30 , -1);
+		my $pre_dso_scheme = "perlasm_scheme";
+		my $dso_scheme = "dso_scheme";
+		my $post_dso_scheme = "shared_target";
 
-		if ($fields[$idx_dso_scheme-1] =~ /^(beos|dl|dlfcn|win32|vms)$/)
+
+		if ($table{$target}->{$pre_dso_scheme} =~ /^(beos|dl|dlfcn|win32|vms)$/)
 			{
 			$errorcnt++;
-			print STDERR "SANITY ERROR: '$target' has the dso_scheme [$idx_dso_scheme] values\n";
+			print STDERR "SANITY ERROR: '$target' has the dso_scheme values\n";
 			print STDERR "              in the previous field\n";
 			}
-		elsif ($fields[$idx_dso_scheme+1] =~ /^(beos|dl|dlfcn|win32|vms)$/)
+		elsif ($table{$target}->{$post_dso_scheme} =~ /^(beos|dl|dlfcn|win32|vms)$/)
 			{
 			$errorcnt++;
-			print STDERR "SANITY ERROR: '$target' has the dso_scheme [$idx_dso_scheme] values\n";
+			print STDERR "SANITY ERROR: '$target' has the dso_scheme values\n";
 			print STDERR "              in the following field\n";
 			}
-		elsif ($fields[$idx_dso_scheme] !~ /^(beos|dl|dlfcn|win32|vms|)$/)
+		elsif ($table{$target}->{$dso_scheme} !~ /^(beos|dl|dlfcn|win32|vms|)$/)
 			{
 			$errorcnt++;
-			print STDERR "SANITY ERROR: '$target' has the dso_scheme [$idx_dso_scheme] field = ",$fields[$idx_dso_scheme],"\n";
+			print STDERR "SANITY ERROR: '$target' has the dso_scheme field = ",$table{$target}->{$dso_scheme},"\n";
 			print STDERR "              valid values are 'beos', 'dl', 'dlfcn', 'win32' and 'vms'\n";
 			}
 		}
