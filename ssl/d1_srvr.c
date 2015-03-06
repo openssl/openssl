@@ -184,8 +184,10 @@ int dtls1_accept(SSL *s)
 
     /* init things to blank */
     s->in_handshake++;
-    if (!SSL_in_init(s) || SSL_in_before(s))
-        SSL_clear(s);
+    if (!SSL_in_init(s) || SSL_in_before(s)) {
+        if(!SSL_clear(s))
+            return -1;
+    }
 
     s->d1->listen = listen;
 #ifndef OPENSSL_NO_SCTP

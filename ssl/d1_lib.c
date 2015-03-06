@@ -567,7 +567,11 @@ static void dtls1_set_handshake_header(SSL *s, int htype, unsigned long len)
     s->init_num = (int)len + DTLS1_HM_HEADER_LENGTH;
     s->init_off = 0;
     /* Buffer the message to handle re-xmits */
-    dtls1_buffer_message(s, 0);
+    /*
+     * Deliberately swallow error return. We really should do something with
+     * this - but its a void function that can't (easily) be changed
+     */
+    if(!dtls1_buffer_message(s, 0));
 }
 
 static int dtls1_handshake_write(SSL *s)

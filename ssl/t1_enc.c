@@ -1095,7 +1095,8 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
              * exchange and before certificate verify)
              */
             s->s3->flags |= TLS1_FLAGS_KEEP_HANDSHAKE;
-            ssl3_digest_cached_records(s);
+            if(!ssl3_digest_cached_records(s))
+                return -1;
         }
         hashlen = ssl_handshake_hash(s, hash, sizeof(hash));
 #ifdef SSL_DEBUG

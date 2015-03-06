@@ -157,8 +157,10 @@ int ssl23_connect(SSL *s)
         cb = s->ctx->info_callback;
 
     s->in_handshake++;
-    if (!SSL_in_init(s) || SSL_in_before(s))
-        SSL_clear(s);
+    if (!SSL_in_init(s) || SSL_in_before(s)) {
+        if(!SSL_clear(s))
+            return -1;
+    }
 
     for (;;) {
         state = s->state;

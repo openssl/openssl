@@ -1431,7 +1431,11 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
     if (SSL_IS_DTLS(s) && SSL_get_srtp_profiles(s)) {
         int el;
 
-        ssl_add_clienthello_use_srtp_ext(s, 0, &el, 0);
+        /* Returns 0 on success!! */
+        if (ssl_add_clienthello_use_srtp_ext(s, 0, &el, 0)) {
+            SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+            return NULL;
+        }
 
         if ((limit - ret - 4 - el) < 0)
             return NULL;
@@ -1601,8 +1605,11 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
     if (SSL_IS_DTLS(s) && s->srtp_profile) {
         int el;
 
-        ssl_add_serverhello_use_srtp_ext(s, 0, &el, 0);
-
+        /* Returns 0 on success!! */
+        if(ssl_add_serverhello_use_srtp_ext(s, 0, &el, 0)) {
+            SSLerr(SSL_F_SSL_ADD_SERVERHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+            return NULL;
+        }
         if ((limit - ret - 4 - el) < 0)
             return NULL;
 
@@ -4141,12 +4148,13 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
 /* Set validity of certificates in an SSL structure */
 void tls1_set_cert_validity(SSL *s)
 {
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA_ENC);
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA_SIGN);
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DSA_SIGN);
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DH_RSA);
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DH_DSA);
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_ECC);
+    /* Deliberately ignore all return values */
+    if(tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA_ENC)
+       || tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA_SIGN)
+       || tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DSA_SIGN)
+       || tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DH_RSA)
+       || tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DH_DSA)
+       || tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_ECC));
 }
 
 /* User level utiity function to check a chain is suitable */

@@ -292,7 +292,10 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
         else if (ssl->handshake_func == ssl->method->ssl_accept)
             SSL_set_accept_state(ssl);
 
-        SSL_clear(ssl);
+        if(!SSL_clear(ssl)) {
+            ret = 0;
+            break;
+        }
 
         if (b->next_bio != NULL)
             ret = BIO_ctrl(b->next_bio, cmd, num, ptr);

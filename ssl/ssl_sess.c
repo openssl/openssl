@@ -510,12 +510,14 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
              */
             if (!
                 (s->session_ctx->session_cache_mode &
-                 SSL_SESS_CACHE_NO_INTERNAL_STORE))
+                 SSL_SESS_CACHE_NO_INTERNAL_STORE)) {
                 /*
                  * The following should not return 1, otherwise, things are
                  * very strange
                  */
-                SSL_CTX_add_session(s->session_ctx, ret);
+                if(SSL_CTX_add_session(s->session_ctx, ret))
+                    goto err;
+            }
         }
     }
 

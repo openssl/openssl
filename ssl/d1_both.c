@@ -989,7 +989,10 @@ int dtls1_send_change_cipher_spec(SSL *s, int a, int b)
                                      s->d1->handshake_write_seq, 0, 0);
 
         /* buffer the message to handle re-xmits */
-        dtls1_buffer_message(s, 1);
+        if(!dtls1_buffer_message(s, 1)) {
+            SSLerr(SSL_F_DTLS1_SEND_CHANGE_CIPHER_SPEC, ERR_R_INTERNAL_ERROR);
+            return -1;
+        }
 
         s->state = b;
     }
@@ -1237,7 +1240,7 @@ void dtls1_clear_record_buffer(SSL *s)
     }
 }
 
-unsigned char *dtls1_set_message_header(SSL *s, unsigned char *p,
+void dtls1_set_message_header(SSL *s, unsigned char *p,
                                         unsigned char mt, unsigned long len,
                                         unsigned long frag_off,
                                         unsigned long frag_len)
@@ -1250,8 +1253,6 @@ unsigned char *dtls1_set_message_header(SSL *s, unsigned char *p,
 
     dtls1_set_message_header_int(s, mt, len, s->d1->handshake_write_seq,
                                  frag_off, frag_len);
-
-    return p += DTLS1_HM_HEADER_LENGTH;
 }
 
 /* don't actually do the writing, wait till the MTU has been retrieved */

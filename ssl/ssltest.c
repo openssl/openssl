@@ -1443,8 +1443,11 @@ int main(int argc, char *argv[])
     SSL_CTX_set_security_level(s_ctx, 0);
 
     if (cipher != NULL) {
-        SSL_CTX_set_cipher_list(c_ctx, cipher);
-        SSL_CTX_set_cipher_list(s_ctx, cipher);
+        if(!SSL_CTX_set_cipher_list(c_ctx, cipher)
+           || !SSL_CTX_set_cipher_list(s_ctx, cipher)) {
+            ERR_print_errors(bio_err);
+            goto end;
+        }
     }
 
     /* Process SSL_CONF arguments */
@@ -1537,10 +1540,13 @@ int main(int argc, char *argv[])
     }
 
     if (client_auth) {
-        SSL_CTX_use_certificate_file(c_ctx, client_cert, SSL_FILETYPE_PEM);
-        SSL_CTX_use_PrivateKey_file(c_ctx,
+        if(!SSL_CTX_use_certificate_file(c_ctx, client_cert, SSL_FILETYPE_PEM)
+           || !SSL_CTX_use_PrivateKey_file(c_ctx,
                                     (client_key ? client_key : client_cert),
-                                    SSL_FILETYPE_PEM);
+                                    SSL_FILETYPE_PEM)) {
+            ERR_print_errors(bio_err);
+            goto end;
+        }
     }
 
     if ((!SSL_CTX_load_verify_locations(s_ctx, CAfile, CApath)) ||
@@ -1569,8 +1575,11 @@ int main(int argc, char *argv[])
 
     {
         int session_id_context = 0;
-        SSL_CTX_set_session_id_context(s_ctx, (void *)&session_id_context,
-                                       sizeof session_id_context);
+        if(!SSL_CTX_set_session_id_context(s_ctx, (void *)&session_id_context,
+                                       sizeof session_id_context)) {
+            ERR_print_errors(bio_err);
+            goto end;
+        }
     }
 
     /* Use PSK only if PSK key is given */
@@ -1637,15 +1646,22 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    if (serverinfo_sct)
-        SSL_CTX_add_client_custom_ext(c_ctx, SCT_EXT_TYPE,
+    if (serverinfo_sct) {
+        if(!SSL_CTX_add_client_custom_ext(c_ctx, SCT_EXT_TYPE,
                                       NULL, NULL, NULL,
-                                      serverinfo_cli_parse_cb, NULL);
-    if (serverinfo_tack)
-        SSL_CTX_add_client_custom_ext(c_ctx, TACK_EXT_TYPE,
+                                      serverinfo_cli_parse_cb, NULL)) {
+            BIO_printf(bio_err, "Error adding SCT extension\n");
+            goto end;
+        }
+    }
+    if (serverinfo_tack) {
+        if(!SSL_CTX_add_client_custom_ext(c_ctx, TACK_EXT_TYPE,
                                       NULL, NULL, NULL,
-                                      serverinfo_cli_parse_cb, NULL);
-
+                                      serverinfo_cli_parse_cb, NULL)) {
+            BIO_printf(bio_err, "Error adding TACK extension\n");
+            goto end;
+        }
+    }
     if (serverinfo_file)
         if (!SSL_CTX_use_serverinfo_file(s_ctx, serverinfo_file)) {
             BIO_printf(bio_err, "missing serverinfo file\n");
@@ -1653,39 +1669,41 @@ int main(int argc, char *argv[])
         }
 
     if (custom_ext) {
-        SSL_CTX_add_client_custom_ext(c_ctx, CUSTOM_EXT_TYPE_0,
+        if(!SSL_CTX_add_client_custom_ext(c_ctx, CUSTOM_EXT_TYPE_0,
                                       custom_ext_0_cli_add_cb,
                                       NULL, NULL,
-                                      custom_ext_0_cli_parse_cb, NULL);
-        SSL_CTX_add_client_custom_ext(c_ctx, CUSTOM_EXT_TYPE_1,
+                                      custom_ext_0_cli_parse_cb, NULL)
+           || !SSL_CTX_add_client_custom_ext(c_ctx, CUSTOM_EXT_TYPE_1,
                                       custom_ext_1_cli_add_cb,
                                       NULL, NULL,
-                                      custom_ext_1_cli_parse_cb, NULL);
-        SSL_CTX_add_client_custom_ext(c_ctx, CUSTOM_EXT_TYPE_2,
+                                      custom_ext_1_cli_parse_cb, NULL)
+           || !SSL_CTX_add_client_custom_ext(c_ctx, CUSTOM_EXT_TYPE_2,
                                       custom_ext_2_cli_add_cb,
                                       NULL, NULL,
-                                      custom_ext_2_cli_parse_cb, NULL);
-        SSL_CTX_add_client_custom_ext(c_ctx, CUSTOM_EXT_TYPE_3,
+                                      custom_ext_2_cli_parse_cb, NULL)
+           || !SSL_CTX_add_client_custom_ext(c_ctx, CUSTOM_EXT_TYPE_3,
                                       custom_ext_3_cli_add_cb,
                                       NULL, NULL,
-                                      custom_ext_3_cli_parse_cb, NULL);
-
-        SSL_CTX_add_server_custom_ext(s_ctx, CUSTOM_EXT_TYPE_0,
+                                      custom_ext_3_cli_parse_cb, NULL)
+           || !SSL_CTX_add_server_custom_ext(s_ctx, CUSTOM_EXT_TYPE_0,
                                       custom_ext_0_srv_add_cb,
                                       NULL, NULL,
-                                      custom_ext_0_srv_parse_cb, NULL);
-        SSL_CTX_add_server_custom_ext(s_ctx, CUSTOM_EXT_TYPE_1,
+                                      custom_ext_0_srv_parse_cb, NULL)
+           || !SSL_CTX_add_server_custom_ext(s_ctx, CUSTOM_EXT_TYPE_1,
                                       custom_ext_1_srv_add_cb,
                                       NULL, NULL,
-                                      custom_ext_1_srv_parse_cb, NULL);
-        SSL_CTX_add_server_custom_ext(s_ctx, CUSTOM_EXT_TYPE_2,
+                                      custom_ext_1_srv_parse_cb, NULL)
+           || !SSL_CTX_add_server_custom_ext(s_ctx, CUSTOM_EXT_TYPE_2,
                                       custom_ext_2_srv_add_cb,
                                       NULL, NULL,
-                                      custom_ext_2_srv_parse_cb, NULL);
-        SSL_CTX_add_server_custom_ext(s_ctx, CUSTOM_EXT_TYPE_3,
+                                      custom_ext_2_srv_parse_cb, NULL)
+           || !SSL_CTX_add_server_custom_ext(s_ctx, CUSTOM_EXT_TYPE_3,
                                       custom_ext_3_srv_add_cb,
                                       NULL, NULL,
-                                      custom_ext_3_srv_parse_cb, NULL);
+                                      custom_ext_3_srv_parse_cb, NULL)) {
+            BIO_printf(bio_err, "Error setting custom extensions\n");
+            goto end;
+        }
     }
 
     if (alpn_server)
@@ -1699,7 +1717,12 @@ int main(int argc, char *argv[])
             BIO_printf(bio_err, "Error parsing -alpn_client argument\n");
             goto end;
         }
-        SSL_CTX_set_alpn_protos(c_ctx, alpn, alpn_len);
+        /* Returns 0 on success!! */
+        if(SSL_CTX_set_alpn_protos(c_ctx, alpn, alpn_len)) {
+            BIO_printf(bio_err, "Error setting ALPN\n");
+            OPENSSL_free(alpn);
+            goto end;
+        }
         OPENSSL_free(alpn);
     }
 
@@ -1722,8 +1745,12 @@ int main(int argc, char *argv[])
 #endif                          /* OPENSSL_NO_KRB5 */
 
     for (i = 0; i < number; i++) {
-        if (!reuse)
-            SSL_set_session(c_ssl, NULL);
+        if (!reuse) {
+            if(!SSL_set_session(c_ssl, NULL)) {
+                BIO_printf(bio_err, "Failed to set session\n");
+                goto end;
+            }
+        }
         if (bio_pair)
             ret = doit_biopair(s_ssl, c_ssl, bytes, &s_time, &c_time);
         else
