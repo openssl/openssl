@@ -226,8 +226,10 @@ int ssl3_accept(SSL *s)
 
     /* init things to blank */
     s->in_handshake++;
-    if (!SSL_in_init(s) || SSL_in_before(s))
-        SSL_clear(s);
+    if (!SSL_in_init(s) || SSL_in_before(s)) {
+        if(!SSL_clear(s))
+            return -1;
+    }
 
     if (s->cert == NULL) {
         SSLerr(SSL_F_SSL3_ACCEPT, SSL_R_NO_CERTIFICATE_SET);
@@ -2227,6 +2229,11 @@ int ssl3_get_client_key_exchange(SSL *s)
                                                         sizeof
                                                         (rand_premaster_secret));
         OPENSSL_cleanse(p, sizeof(rand_premaster_secret));
+        if(s->session->master_key_length < 0) {
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+            goto f_err;
+        }
     } else
 #endif
 #ifndef OPENSSL_NO_DH
@@ -2319,6 +2326,11 @@ int ssl3_get_client_key_exchange(SSL *s)
                                                         session->master_key,
                                                         p, i);
         OPENSSL_cleanse(p, i);
+        if(s->session->master_key_length < 0) {
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+            goto f_err;
+        }
         if (dh_clnt)
             return 2;
     } else
@@ -2484,6 +2496,11 @@ int ssl3_get_client_key_exchange(SSL *s)
                                                         s->
                                                         session->master_key,
                                                         pms, outl);
+        if(s->session->master_key_length < 0) {
+            al = SSL_INTERNAL_ERROR;
+            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+            goto f_err;
+        }
 
         if (kssl_ctx->client_princ) {
             size_t len = strlen(kssl_ctx->client_princ);
@@ -2632,6 +2649,11 @@ int ssl3_get_client_key_exchange(SSL *s)
                                                         p, i);
 
         OPENSSL_cleanse(p, i);
+        if(s->session->master_key_length < 0) {
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+            goto f_err;
+        }
         return (ret);
     } else
 #endif
@@ -2716,6 +2738,11 @@ int ssl3_get_client_key_exchange(SSL *s)
                                                         session->master_key,
                                                         psk_or_pre_ms,
                                                         pre_ms_len);
+        if(s->session->master_key_length < 0) {
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+            goto psk_err;
+        }
         psk_err = 0;
  psk_err:
         OPENSSL_cleanse(psk_or_pre_ms, sizeof(psk_or_pre_ms));
@@ -2817,6 +2844,11 @@ int ssl3_get_client_key_exchange(SSL *s)
                                                         s->
                                                         session->master_key,
                                                         premaster_secret, 32);
+        if(s->session->master_key_length < 0) {
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+            goto f_err;
+        }
         /* Check if pubkey from client certificate was used */
         if (EVP_PKEY_CTX_ctrl
             (pkey_ctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY, 2, NULL) > 0)

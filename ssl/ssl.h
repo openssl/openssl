@@ -1773,7 +1773,7 @@ void SSL_set_tmp_ecdh_callback(SSL *ssl,
 __owur const COMP_METHOD *SSL_get_current_compression(SSL *s);
 __owur const COMP_METHOD *SSL_get_current_expansion(SSL *s);
 __owur const char *SSL_COMP_get_name(const COMP_METHOD *comp);
-__owur STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
+STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
 __owur STACK_OF(SSL_COMP) *SSL_COMP_set0_compression_methods(STACK_OF(SSL_COMP)
                                                       *meths);
 void SSL_COMP_free_compression_methods(void);
@@ -1782,7 +1782,7 @@ __owur int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm);
 __owur const void *SSL_get_current_compression(SSL *s);
 __owur const void *SSL_get_current_expansion(SSL *s);
 __owur const char *SSL_COMP_get_name(const void *comp);
-__owur void *SSL_COMP_get_compression_methods(void);
+void *SSL_COMP_get_compression_methods(void);
 __owur int SSL_COMP_add_compression_method(int id, void *cm);
 # endif
 
@@ -1956,6 +1956,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_DTLS1_READ_BYTES                           258
 # define SSL_F_DTLS1_READ_FAILED                          259
 # define SSL_F_DTLS1_SEND_CERTIFICATE_REQUEST             260
+# define SSL_F_DTLS1_SEND_CHANGE_CIPHER_SPEC              342
 # define SSL_F_DTLS1_SEND_CLIENT_CERTIFICATE              261
 # define SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE             262
 # define SSL_F_DTLS1_SEND_CLIENT_VERIFY                   263

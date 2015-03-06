@@ -693,7 +693,10 @@ int SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx, const char *file)
         int r;
         unsigned long err;
 
-        SSL_CTX_clear_chain_certs(ctx);
+        if(!SSL_CTX_clear_chain_certs(ctx)) {
+            ret = 0;
+            goto end;
+        }
 
         while ((ca = PEM_read_bio_X509(in, NULL,
                                        ctx->default_passwd_callback,

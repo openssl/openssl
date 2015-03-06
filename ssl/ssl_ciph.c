@@ -532,10 +532,13 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
             else
                 *comp = NULL;
         }
+        /* If were only interested in comp then return success */
+        if((enc == NULL) && (md == NULL))
+            return 1;
     }
 
     if ((enc == NULL) || (md == NULL))
-        return (0);
+        return 0;
 
     switch (c->algorithm_enc) {
     case SSL_DES:

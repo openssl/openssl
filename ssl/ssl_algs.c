@@ -130,7 +130,7 @@ int SSL_library_init(void)
      * This will initialise the built-in compression algorithms. The value
      * returned is a STACK_OF(SSL_COMP), but that can be discarded safely
      */
-    (void)SSL_COMP_get_compression_methods();
+    SSL_COMP_get_compression_methods();
 #endif
     /* initialize cipher/digest methods table */
     ssl_load_ciphers();

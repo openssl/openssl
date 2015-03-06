@@ -937,7 +937,10 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
         }
 #ifndef OPENSSL_NO_HEARTBEATS
         else if (rr->type == TLS1_RT_HEARTBEAT) {
-            dtls1_process_heartbeat(s);
+            /* We allow a 0 return */
+            if(dtls1_process_heartbeat(s) < 0) {
+                return -1;
+            }
 
             /* Exit and notify application to read again */
             rr->length = 0;
@@ -1246,7 +1249,8 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
             if (dtls1_check_timeout_num(s) < 0)
                 return -1;
 
-            dtls1_retransmit_buffered_messages(s);
+            /* Ignore retransmit failures - swallow return code */
+            if(dtls1_retransmit_buffered_messages(s));
             rr->length = 0;
             goto start;
         }
