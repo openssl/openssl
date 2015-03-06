@@ -356,7 +356,8 @@ int MAIN(int argc, char **argv)
 
     if (st_bugs)
         SSL_CTX_set_options(tm_ctx, SSL_OP_ALL);
-    SSL_CTX_set_cipher_list(tm_ctx, tm_cipher);
+    if(!SSL_CTX_set_cipher_list(tm_ctx, tm_cipher))
+        goto end;
     if (!set_cert_stuff(tm_ctx, t_cert_file, t_key_file))
         goto end;
 
@@ -405,7 +406,8 @@ int MAIN(int argc, char **argv)
         if (s_www_path != NULL) {
             BIO_snprintf(buf, sizeof buf, "GET %s HTTP/1.0\r\n\r\n",
                          s_www_path);
-            SSL_write(scon, buf, strlen(buf));
+            if(SSL_write(scon, buf, strlen(buf)) <= 0)
+                goto end;
             while ((i = SSL_read(scon, buf, sizeof(buf))) > 0)
                 bytes_read += i;
         }
@@ -461,7 +463,8 @@ int MAIN(int argc, char **argv)
 
     if (s_www_path != NULL) {
         BIO_snprintf(buf, sizeof buf, "GET %s HTTP/1.0\r\n\r\n", s_www_path);
-        SSL_write(scon, buf, strlen(buf));
+        if(SSL_write(scon, buf, strlen(buf)) <= 0)
+            goto end;
         while (SSL_read(scon, buf, sizeof(buf)) > 0) ;
     }
 #ifdef NO_SHUTDOWN
@@ -498,7 +501,8 @@ int MAIN(int argc, char **argv)
         if (s_www_path) {
             BIO_snprintf(buf, sizeof buf, "GET %s HTTP/1.0\r\n\r\n",
                          s_www_path);
-            SSL_write(scon, buf, strlen(buf));
+            if(SSL_write(scon, buf, strlen(buf)) <= 0)
+                goto end;
             while ((i = SSL_read(scon, buf, sizeof(buf))) > 0)
                 bytes_read += i;
         }

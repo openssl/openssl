@@ -1259,8 +1259,11 @@ int MAIN(int argc, char **argv)
     if (sdebug)
         ssl_ctx_security_debug(ctx, bio_err, sdebug);
 
-    if (vpm)
-        SSL_CTX_set1_param(ctx, vpm);
+    if (vpm && !SSL_CTX_set1_param(ctx, vpm)) {
+        BIO_printf(bio_err, "Error setting verify params\n");
+        ERR_print_errors(bio_err);
+        goto end;
+    }
 
     if (!args_ssl_call(ctx, bio_err, cctx, ssl_args, 1, no_jpake)) {
         ERR_print_errors(bio_err);
@@ -1299,8 +1302,14 @@ int MAIN(int argc, char **argv)
     }
 #endif
 #ifndef OPENSSL_NO_SRTP
-    if (srtp_profiles != NULL)
-        SSL_CTX_set_tlsext_use_srtp(ctx, srtp_profiles);
+    if (srtp_profiles != NULL) {
+        /* Returns 0 on success!! */
+        if(SSL_CTX_set_tlsext_use_srtp(ctx, srtp_profiles)) {
+            BIO_printf(bio_err, "Error setting SRTP profile\n");
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+    }
 #endif
     if (exc)
         ssl_ctx_set_excert(ctx, exc);
@@ -1318,16 +1327,23 @@ int MAIN(int argc, char **argv)
             BIO_printf(bio_err, "Error parsing -alpn argument\n");
             goto end;
         }
-        SSL_CTX_set_alpn_protos(ctx, alpn, alpn_len);
+        /* Returns 0 on success!! */
+        if(SSL_CTX_set_alpn_protos(ctx, alpn, alpn_len)) {
+            BIO_printf(bio_err, "Error setting ALPN\n");
+            goto end;
+        }
         OPENSSL_free(alpn);
     }
 #endif
 #ifndef OPENSSL_NO_TLSEXT
     for (i = 0; i < serverinfo_types_count; i++) {
-        SSL_CTX_add_client_custom_ext(ctx,
+        if(!SSL_CTX_add_client_custom_ext(ctx,
                                       serverinfo_types[i],
                                       NULL, NULL, NULL,
-                                      serverinfo_cli_parse_cb, NULL);
+                                      serverinfo_cli_parse_cb, NULL)) {
+            BIO_printf(bio_err, "Warning: Unable to add custom extension %u. "
+                       "Skipping\n", serverinfo_types[i]);
+        }
     }
 #endif
 
@@ -1390,7 +1406,11 @@ int MAIN(int argc, char **argv)
             ERR_print_errors(bio_err);
             goto end;
         }
-        SSL_set_session(con, sess);
+        if(!SSL_set_session(con, sess)) {
+            BIO_printf(bio_err, "Can't set session\n");
+            ERR_print_errors(bio_err);
+            goto end;
+        }
         SSL_SESSION_free(sess);
     }
 

@@ -1723,8 +1723,14 @@ int MAIN(int argc, char *argv[])
         SSL_CTX_sess_set_cache_size(ctx, 128);
 
 #ifndef OPENSSL_NO_SRTP
-    if (srtp_profiles != NULL)
-        SSL_CTX_set_tlsext_use_srtp(ctx, srtp_profiles);
+    if (srtp_profiles != NULL) {
+        /* Returns 0 on success!! */
+        if(SSL_CTX_set_tlsext_use_srtp(ctx, srtp_profiles)) {
+            BIO_printf(bio_err, "Error setting SRTP profile\n");
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+    }
 #endif
 
     if ((!SSL_CTX_load_verify_locations(ctx, CAfile, CApath)) ||
@@ -1733,8 +1739,11 @@ int MAIN(int argc, char *argv[])
         ERR_print_errors(bio_err);
         /* goto end; */
     }
-    if (vpm)
-        SSL_CTX_set1_param(ctx, vpm);
+    if (vpm && !SSL_CTX_set1_param(ctx, vpm)) {
+        BIO_printf(bio_err, "Error setting X509 params\n");
+        ERR_print_errors(bio_err);
+        goto end;
+    }
 
     ssl_ctx_add_crls(ctx, crls, 0);
     if (!args_ssl_call(ctx, bio_err, cctx, ssl_args, no_ecdhe, no_jpake))
@@ -1790,8 +1799,11 @@ int MAIN(int argc, char *argv[])
             (!SSL_CTX_set_default_verify_paths(ctx2))) {
             ERR_print_errors(bio_err);
         }
-        if (vpm)
-            SSL_CTX_set1_param(ctx2, vpm);
+        if (vpm && !SSL_CTX_set1_param(ctx2, vpm))  {
+            BIO_printf(bio_err, "Error setting X509 params\n");
+            ERR_print_errors(bio_err);
+            goto end;
+        }
 
         ssl_ctx_add_crls(ctx2, crls, 0);
         if (!args_ssl_call(ctx2, bio_err, cctx, ssl_args, no_ecdhe, no_jpake))
@@ -1913,8 +1925,13 @@ int MAIN(int argc, char *argv[])
 #endif
 
     SSL_CTX_set_verify(ctx, s_server_verify, verify_callback);
-    SSL_CTX_set_session_id_context(ctx, (void *)&s_server_session_id_context,
-                                   sizeof s_server_session_id_context);
+    if(!SSL_CTX_set_session_id_context(ctx,
+        (void *)&s_server_session_id_context,
+        sizeof s_server_session_id_context)) {
+        BIO_printf(bio_err, "error setting session id context\n");
+        ERR_print_errors(bio_err);
+        goto end;
+    }
 
     /* Set DTLS cookie generation and verification callbacks */
     SSL_CTX_set_cookie_generate_cb(ctx, generate_cookie_callback);
@@ -1923,9 +1940,13 @@ int MAIN(int argc, char *argv[])
 #ifndef OPENSSL_NO_TLSEXT
     if (ctx2) {
         SSL_CTX_set_verify(ctx2, s_server_verify, verify_callback);
-        SSL_CTX_set_session_id_context(ctx2,
+        if(!SSL_CTX_set_session_id_context(ctx2,
                                        (void *)&s_server_session_id_context,
-                                       sizeof s_server_session_id_context);
+                                       sizeof s_server_session_id_context)) {
+            BIO_printf(bio_err, "error setting session id context\n");
+            ERR_print_errors(bio_err);
+            goto end;
+        }
 
         tlsextcbp.biodebug = bio_s_out;
         SSL_CTX_set_tlsext_servername_callback(ctx2, ssl_servername_cb);
@@ -2130,10 +2151,18 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
             kssl_ctx_setstring(kctx, KSSL_KEYTAB, KRB5KEYTAB);
         }
 #endif                          /* OPENSSL_NO_KRB5 */
-        if (context)
-            SSL_set_session_id_context(con, context, strlen((char *)context));
+        if (context && !SSL_set_session_id_context(con, context,
+                                                   strlen((char *)context))) {
+            BIO_printf(bio_err, "Error setting session id context\n");
+            ret = -1;
+            goto err;
+        }
     }
-    SSL_clear(con);
+    if(!SSL_clear(con)) {
+        BIO_printf(bio_err, "Error clearing SSL connection\n");
+        ret = -1;
+        goto err;
+    }
 
     if (stype == SOCK_DGRAM) {
 
@@ -2687,8 +2716,10 @@ static int www_body(char *hostname, int s, int stype, unsigned char *context)
         kssl_ctx_setstring(kctx, KSSL_KEYTAB, KRB5KEYTAB);
     }
 #endif                          /* OPENSSL_NO_KRB5 */
-    if (context)
-        SSL_set_session_id_context(con, context, strlen((char *)context));
+    if (context && !SSL_set_session_id_context(con, context,
+                                               strlen((char *)context))) {
+        goto err;
+    }
 
     sbio = BIO_new_socket(s, BIO_NOCLOSE);
     if (s_nbio_test) {
@@ -3033,8 +3064,11 @@ static int rev_body(char *hostname, int s, int stype, unsigned char *context)
         kssl_ctx_setstring(kctx, KSSL_KEYTAB, KRB5KEYTAB);
     }
 #endif                          /* OPENSSL_NO_KRB5 */
-    if (context)
-        SSL_set_session_id_context(con, context, strlen((char *)context));
+    if (context && !SSL_set_session_id_context(con, context,
+                                               strlen((char *)context))) {
+        ERR_print_errors(bio_err);
+        goto err;
+    }
 
     sbio = BIO_new_socket(s, BIO_NOCLOSE);
     SSL_set_bio(con, sbio, sbio);
@@ -3230,7 +3264,10 @@ static int add_session(SSL *ssl, SSL_SESSION *session)
         return 0;
     }
     p = sess->der;
-    i2d_SSL_SESSION(session, &p);
+    if(i2d_SSL_SESSION(session, &p) < 0) {
+        BIO_printf(bio_err, "Error encoding session\n");
+        return 0;
+    }
 
     sess->next = first;
     first = sess;

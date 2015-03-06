@@ -166,7 +166,10 @@ int MAIN(int argc, char **argv)
             BIO_printf(bio_err, "Context too long\n");
             goto end;
         }
-        SSL_SESSION_set1_id_context(x, (unsigned char *)context, ctx_len);
+        if(!SSL_SESSION_set1_id_context(x, (unsigned char *)context, ctx_len)) {
+            BIO_printf(bio_err, "Error setting id context\n");
+            goto end;
+        }
     }
 
     if (!noout || text) {

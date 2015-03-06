@@ -1181,8 +1181,10 @@ static int set_cert_cb(SSL *ssl, void *arg)
 
         print_chain_flags(bio_err, ssl, rv);
         if (rv & CERT_PKEY_VALID) {
-            SSL_use_certificate(ssl, exc->cert);
-            SSL_use_PrivateKey(ssl, exc->key);
+            if(!SSL_use_certificate(ssl, exc->cert)
+               || !SSL_use_PrivateKey(ssl, exc->key)) {
+                return 0;
+            }
             /*
              * NB: we wouldn't normally do this as it is not efficient
              * building chains on each connection better to cache the chain
