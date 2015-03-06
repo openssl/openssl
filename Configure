@@ -304,6 +304,31 @@ sub stringtohash {
     return { map { shift @stringsequence => $_ } split /:/, $in };
 };
 
+# Support function to look for and resolve template references.
+# It uses breadcrumbs to check for circular template references.
+#
+# Note: Any configuration value is also a template.
+sub lookup_templates {
+    my $tableref = shift;
+    my $target = shift;
+    my @breadcrumbs = @_;
+
+    if (grep { $_ eq $target } @breadcrumbs) {
+	die "Template loop!  target backtrace:\n  ",join("\n  ",
+							 $target,
+							 @breadcrumbs),"\n";
+    }
+
+    foreach my $key (keys %{$tableref->{$target}}) {
+	my $value = $tableref->{$target}->{$key};
+	while ($value =~ /{{([-\w]+)}}/) {
+	    lookup_templates($tableref, $1, $target, @breadcrumbs);
+	    $value = $`.$tableref->{$1}->{$key}.$';
+	}
+	$tableref->{$target}->{$key} = $value;
+    }
+};
+
 
 # Read configuration target stanzas from a file, so that people can have
 # local files with their own definitions
@@ -445,6 +470,11 @@ sub read_config {
 	}
 
 	%table = (%table, %targets);
+
+	# Go through all new targets and resolve template references.
+	foreach (keys %targets) {
+	    lookup_templates(\%table, $_);
+	}
 }
 
 my ($vol, $dir, $dummy) = File::Spec->splitpath($0);
