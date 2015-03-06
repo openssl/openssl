@@ -1612,6 +1612,11 @@ const SSL_METHOD *TLSv1_2_method(void); /* TLSv1.2 */
 const SSL_METHOD *TLSv1_2_server_method(void); /* TLSv1.2 */
 const SSL_METHOD *TLSv1_2_client_method(void); /* TLSv1.2 */
 
+/* For reasons not entirely clear to anyone, Cisco still uses this
+ * in their AnyConnect VPN and haven't managed to update even to
+ * DTLS v1.0. So we still need to support it for compatibility */
+const SSL_METHOD *DTLSv0_9_client_method(void); /* pre-OpenSSL 0.9.8f */
+
 const SSL_METHOD *DTLSv1_method(void); /* DTLSv1.0 */
 const SSL_METHOD *DTLSv1_server_method(void); /* DTLSv1.0 */
 const SSL_METHOD *DTLSv1_client_method(void); /* DTLSv1.0 */
