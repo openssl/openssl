@@ -36,7 +36,7 @@ $multilib     =
 
 *** BS2000-OSD
 $cc           = c89
-$cflags       = -O -XLLML -XLLMK -XL -DB_ENDIAN -DTERMIOS -DCHARSET_EBCDIC
+$cflags       = -O -XLLML -XLLMK -XL -DB_ENDIAN -DCHARSET_EBCDIC
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = 
@@ -70,7 +70,7 @@ $multilib     =
 
 *** BSD-generic32
 $cc           = gcc
-$cflags       = -DTERMIOS -O3 -fomit-frame-pointer -Wall
+$cflags       = -O3 -fomit-frame-pointer -Wall
 $unistd       = 
 $thread_cflag = -pthread -D_THREAD_SAFE -D_REENTRANT
 $sys_id       = 
@@ -104,7 +104,7 @@ $multilib     =
 
 *** BSD-generic64
 $cc           = gcc
-$cflags       = -DTERMIOS -O3 -Wall
+$cflags       = -O3 -Wall
 $unistd       = 
 $thread_cflag = -pthread -D_THREAD_SAFE -D_REENTRANT
 $sys_id       = 
@@ -138,7 +138,7 @@ $multilib     =
 
 *** BSD-ia64
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DTERMIOS -O3 -Wall
+$cflags       = -DL_ENDIAN -O3 -Wall
 $unistd       = 
 $thread_cflag = -pthread -D_THREAD_SAFE -D_REENTRANT
 $sys_id       = 
@@ -172,7 +172,7 @@ $multilib     =
 
 *** BSD-sparc64
 $cc           = gcc
-$cflags       = -DB_ENDIAN -DTERMIOS -O3 -DMD32_REG_T=int -Wall
+$cflags       = -DB_ENDIAN -O3 -DMD32_REG_T=int -Wall
 $unistd       = 
 $thread_cflag = -pthread -D_THREAD_SAFE -D_REENTRANT
 $sys_id       = 
@@ -206,7 +206,7 @@ $multilib     =
 
 *** BSD-sparcv8
 $cc           = gcc
-$cflags       = -DB_ENDIAN -DTERMIOS -O3 -mv8 -Wall
+$cflags       = -DB_ENDIAN -O3 -mv8 -Wall
 $unistd       = 
 $thread_cflag = -pthread -D_THREAD_SAFE -D_REENTRANT
 $sys_id       = 
@@ -240,7 +240,7 @@ $multilib     =
 
 *** BSD-x86
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer -Wall
+$cflags       = -DL_ENDIAN -O3 -fomit-frame-pointer -Wall
 $unistd       = 
 $thread_cflag = -pthread -D_THREAD_SAFE -D_REENTRANT
 $sys_id       = 
@@ -274,7 +274,7 @@ $multilib     =
 
 *** BSD-x86-elf
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer -Wall
+$cflags       = -DL_ENDIAN -O3 -fomit-frame-pointer -Wall
 $unistd       = 
 $thread_cflag = -pthread -D_THREAD_SAFE -D_REENTRANT
 $sys_id       = 
@@ -308,7 +308,7 @@ $multilib     =
 
 *** BSD-x86_64
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DTERMIOS -O3 -Wall
+$cflags       = -DL_ENDIAN -O3 -Wall
 $unistd       = 
 $thread_cflag = -pthread -D_THREAD_SAFE -D_REENTRANT
 $sys_id       = 
@@ -410,7 +410,7 @@ $multilib     =
 
 *** DJGPP
 $cc           = gcc
-$cflags       = -I/dev/env/WATT_ROOT/inc -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -Wall
+$cflags       = -I/dev/env/WATT_ROOT/inc -DTERMIO -DL_ENDIAN -fomit-frame-pointer -O2 -Wall
 $unistd       = 
 $thread_cflag = 
 $sys_id       = MSDOS
@@ -546,7 +546,7 @@ $multilib     =
 
 *** QNX6
 $cc           = gcc
-$cflags       = -DTERMIOS
+$cflags       = 
 $unistd       = 
 $thread_cflag = 
 $sys_id       = 
@@ -580,7 +580,7 @@ $multilib     =
 
 *** QNX6-i386
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DTERMIOS -O2 -Wall
+$cflags       = -DL_ENDIAN -O2 -Wall
 $unistd       = 
 $thread_cflag = 
 $sys_id       = 
@@ -1260,7 +1260,7 @@ $multilib     =
 
 *** darwin64-debug-test-64-clang
 $cc           = clang
-$cflags       = -arch x86_64 -DL_ENDIAN -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -Wno-error=overlength-strings -Wno-error=extended-offsetof -Wno-error=language-extension-token -Wno-error=unused-const-variable -Wstrict-overflow -Qunused-arguments -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DDEBUG_UNUSED -g3 -O3 -pipe
+$cflags       = -arch x86_64 -DL_ENDIAN -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -Wno-error=overlength-strings -Wno-error=extended-offsetof -Wno-error=language-extension-token -Wno-error=unused-const-variable -Wstrict-overflow -Qunused-arguments -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DDEBUG_UNUSED -g3 -O3 -pipe
 $unistd       = 
 $thread_cflag = -pthread -D_THREAD_SAFE -D_REENTRANT
 $sys_id       = MACOSX
@@ -1396,7 +1396,7 @@ $multilib     =
 
 *** debug-BSD-x86-elf
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DTERMIOS -O3 -Wall -g
+$cflags       = -DL_ENDIAN -O3 -Wall -g
 $unistd       = 
 $thread_cflag = -pthread -D_THREAD_SAFE -D_REENTRANT
 $sys_id       = 
@@ -1532,7 +1532,7 @@ $multilib     =
 
 *** debug-ben
 $cc           = gcc
-$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DDEBUG_SAFESTACK -O2 -pipe
+$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DDEBUG_SAFESTACK -O2 -pipe
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = 
@@ -1566,7 +1566,7 @@ $multilib     =
 
 *** debug-ben-darwin64
 $cc           = cc
-$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -Wno-language-extension-token -Wno-extended-offsetof -arch x86_64 -O3 -DL_ENDIAN -DMD32_REG_T=int -Wall
+$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -Wno-language-extension-token -Wno-extended-offsetof -arch x86_64 -O3 -DL_ENDIAN -DMD32_REG_T=int -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = MACOSX
@@ -1600,7 +1600,7 @@ $multilib     =
 
 *** debug-ben-debug
 $cc           = gcc
-$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DOPENSSL_NO_HW_PADLOCK -g3 -O2 -pipe
+$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DOPENSSL_NO_HW_PADLOCK -g3 -O2 -pipe
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = 
@@ -1634,7 +1634,7 @@ $multilib     =
 
 *** debug-ben-debug-64
 $cc           = gcc
-$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -Wno-error=overlength-strings -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DDEBUG_UNUSED -g3 -O3 -pipe
+$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -Wno-error=overlength-strings -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DDEBUG_UNUSED -g3 -O3 -pipe
 $unistd       = 
 $thread_cflag = -pthread -D_THREAD_SAFE -D_REENTRANT
 $sys_id       = 
@@ -1668,7 +1668,7 @@ $multilib     =
 
 *** debug-ben-debug-64-clang
 $cc           = clang
-$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -Wno-error=overlength-strings -Wno-error=extended-offsetof -Wno-error=language-extension-token -Wstrict-overflow -Qunused-arguments -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DDEBUG_UNUSED -g3 -O3 -pipe
+$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -Wno-error=overlength-strings -Wno-error=extended-offsetof -Wno-error=language-extension-token -Wstrict-overflow -Qunused-arguments -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DDEBUG_UNUSED -g3 -O3 -pipe
 $unistd       = 
 $thread_cflag = -pthread -D_THREAD_SAFE -D_REENTRANT
 $sys_id       = 
@@ -1702,7 +1702,7 @@ $multilib     =
 
 *** debug-ben-debug-64-noopt
 $cc           = gcc
-$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -Wno-error=overlength-strings -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DDEBUG_UNUSED -g3 -pipe
+$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -Wno-error=overlength-strings -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DDEBUG_UNUSED -g3 -pipe
 $unistd       = 
 $thread_cflag = -pthread -D_THREAD_SAFE -D_REENTRANT
 $sys_id       = 
@@ -1736,7 +1736,7 @@ $multilib     =
 
 *** debug-ben-macos
 $cc           = cc
-$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -DOPENSSL_NO_ASM -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DDEBUG_UNUSED -DOPENSSL_THREADS -D_REENTRANT -DDSO_DLFCN -DHAVE_DLFCN_H -arch i386 -O3 -DL_ENDIAN -g3 -pipe
+$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_ASM -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DDEBUG_UNUSED -DOPENSSL_THREADS -D_REENTRANT -DDSO_DLFCN -DHAVE_DLFCN_H -arch i386 -O3 -DL_ENDIAN -g3 -pipe
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = 
@@ -1770,7 +1770,7 @@ $multilib     =
 
 *** debug-ben-no-opt
 $cc           = gcc
-$cflags       = -Wall -Wmissing-prototypes -Wstrict-prototypes -Wmissing-declarations -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG -Werror -DL_ENDIAN -DTERMIOS -Wall -g3
+$cflags       = -Wall -Wmissing-prototypes -Wstrict-prototypes -Wmissing-declarations -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG -Werror -DL_ENDIAN -Wall -g3
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = 
@@ -1906,7 +1906,7 @@ $multilib     =
 
 *** debug-bodo
 $cc           = gcc
-$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -Wno-error=overlength-strings -DBN_DEBUG -DBN_DEBUG_RAND -DCONF_DEBUG -DBIO_PAIR_DEBUG -m64 -DL_ENDIAN -DTERMIO -g -DMD32_REG_T=int
+$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -Wno-error=overlength-strings -DBN_DEBUG -DBN_DEBUG_RAND -DCONF_DEBUG -DBIO_PAIR_DEBUG -m64 -DL_ENDIAN -DTERMIO -g -DMD32_REG_T=int
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2042,7 +2042,7 @@ $multilib     =
 
 *** debug-erbridge
 $cc           = gcc
-$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -DBN_DEBUG -DCONF_DEBUG -DCRYPTO_MDEBUG -m64 -DL_ENDIAN -DTERMIO -g
+$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DBN_DEBUG -DCONF_DEBUG -DCRYPTO_MDEBUG -m64 -DL_ENDIAN -DTERMIO -g
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2178,7 +2178,7 @@ $multilib     =
 
 *** debug-levitte-linux-elf-extreme
 $cc           = gcc
-$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DL_ENDIAN -DTERMIO -DPEDANTIC -ggdb -g3 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wno-long-long -Wundef -Wconversion -pipe
+$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DL_ENDIAN -DPEDANTIC -ggdb -g3 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wno-long-long -Wundef -Wconversion -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2246,7 +2246,7 @@ $multilib     =
 
 *** debug-levitte-linux-noasm-extreme
 $cc           = gcc
-$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DOPENSSL_NO_ASM -DL_ENDIAN -DTERMIO -DPEDANTIC -ggdb -g3 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wno-long-long -Wundef -Wconversion -pipe
+$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DOPENSSL_NO_ASM -DL_ENDIAN -DPEDANTIC -ggdb -g3 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wno-long-long -Wundef -Wconversion -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2280,7 +2280,7 @@ $multilib     =
 
 *** debug-linux-elf
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -march=i486 -Wall
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -g -march=i486 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2314,7 +2314,7 @@ $multilib     =
 
 *** debug-linux-elf-noefence
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -march=i486 -Wall
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -g -march=i486 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2348,7 +2348,7 @@ $multilib     =
 
 *** debug-linux-generic32
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -DTERMIO -g -Wall
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -g -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2382,7 +2382,7 @@ $multilib     =
 
 *** debug-linux-generic64
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -DTERMIO -g -Wall
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -g -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2416,7 +2416,7 @@ $multilib     =
 
 *** debug-linux-ia32-aes
 $cc           = gcc
-$cflags       = -DAES_EXPERIMENTAL -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
+$cflags       = -DAES_EXPERIMENTAL -DL_ENDIAN -O3 -fomit-frame-pointer -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2450,7 +2450,7 @@ $multilib     =
 
 *** debug-linux-pentium
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -mcpu=pentium -Wall
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -g -mcpu=pentium -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2484,7 +2484,7 @@ $multilib     =
 
 *** debug-linux-ppro
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -mcpu=pentiumpro -Wall
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -g -mcpu=pentiumpro -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2518,7 +2518,7 @@ $multilib     =
 
 *** debug-linux-x86_64
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -m64 -DL_ENDIAN -DTERMIO -g -Wall
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -m64 -DL_ENDIAN -g -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2552,7 +2552,7 @@ $multilib     = 64
 
 *** debug-rse
 $cc           = cc
-$cflags       = -DTERMIOS -DL_ENDIAN -pipe -O -g -ggdb3 -Wall
+$cflags       = -DL_ENDIAN -pipe -O -g -ggdb3 -Wall
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = 
@@ -2722,7 +2722,7 @@ $multilib     =
 
 *** debug-steve-opt
 $cc           = gcc
-$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -m64 -O3 -DL_ENDIAN -DTERMIO -DCONF_DEBUG -DDEBUG_SAFESTACK -Wno-overlength-strings -g
+$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -m64 -O3 -DL_ENDIAN -DTERMIO -DCONF_DEBUG -DDEBUG_SAFESTACK -Wno-overlength-strings -g
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2756,7 +2756,7 @@ $multilib     =
 
 *** debug-steve32
 $cc           = gcc
-$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -m32 -DL_ENDIAN -DCONF_DEBUG -DDEBUG_SAFESTACK -Wno-overlength-strings -g -pipe
+$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -m32 -DL_ENDIAN -DCONF_DEBUG -DDEBUG_SAFESTACK -Wno-overlength-strings -g -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2790,7 +2790,7 @@ $multilib     =
 
 *** debug-steve64
 $cc           = gcc
-$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -m64 -DL_ENDIAN -DTERMIO -DCONF_DEBUG -DDEBUG_SAFESTACK -Wno-overlength-strings -g
+$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -m64 -DL_ENDIAN -DTERMIO -DCONF_DEBUG -DDEBUG_SAFESTACK -Wno-overlength-strings -g
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2824,7 +2824,7 @@ $multilib     =
 
 *** debug-test-64-clang
 $cc           = clang
-$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -Wno-error=overlength-strings -Wno-error=extended-offsetof -Wno-error=language-extension-token -Wno-error=unused-const-variable -Wstrict-overflow -Qunused-arguments -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DDEBUG_UNUSED -g3 -O3 -pipe
+$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -Wno-error=overlength-strings -Wno-error=extended-offsetof -Wno-error=language-extension-token -Wno-error=unused-const-variable -Wstrict-overflow -Qunused-arguments -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DDEBUG_UNUSED -g3 -O3 -pipe
 $unistd       = 
 $thread_cflag = -pthread -D_THREAD_SAFE -D_REENTRANT
 $sys_id       = 
@@ -3470,7 +3470,7 @@ $multilib     = /pa20_64
 
 *** hurd-x86
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer -march=i486 -Wall
+$cflags       = -DL_ENDIAN -O3 -fomit-frame-pointer -march=i486 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -3572,7 +3572,7 @@ $multilib     =
 
 *** irix-cc
 $cc           = cc
-$cflags       = -O2 -use_readonly_const -DTERMIOS -DB_ENDIAN
+$cflags       = -O2 -use_readonly_const -DB_ENDIAN
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = 
@@ -3606,7 +3606,7 @@ $multilib     =
 
 *** irix-gcc
 $cc           = gcc
-$cflags       = -O3 -DTERMIOS -DB_ENDIAN
+$cflags       = -O3 -DB_ENDIAN
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = 
@@ -3640,7 +3640,7 @@ $multilib     =
 
 *** irix-mips3-cc
 $cc           = cc
-$cflags       = -n32 -mips3 -O2 -use_readonly_const -G0 -rdata_shared -DTERMIOS -DB_ENDIAN -DBN_DIV3W
+$cflags       = -n32 -mips3 -O2 -use_readonly_const -G0 -rdata_shared -DB_ENDIAN -DBN_DIV3W
 $unistd       = 
 $thread_cflag = -D_SGI_MP_SOURCE
 $sys_id       = 
@@ -3674,7 +3674,7 @@ $multilib     = 32
 
 *** irix-mips3-gcc
 $cc           = gcc
-$cflags       = -mabi=n32 -O3 -DTERMIOS -DB_ENDIAN -DBN_DIV3W
+$cflags       = -mabi=n32 -O3 -DB_ENDIAN -DBN_DIV3W
 $unistd       = 
 $thread_cflag = -D_SGI_MP_SOURCE
 $sys_id       = 
@@ -3708,7 +3708,7 @@ $multilib     = 32
 
 *** irix64-mips4-cc
 $cc           = cc
-$cflags       = -64 -mips4 -O2 -use_readonly_const -G0 -rdata_shared -DTERMIOS -DB_ENDIAN -DBN_DIV3W
+$cflags       = -64 -mips4 -O2 -use_readonly_const -G0 -rdata_shared -DB_ENDIAN -DBN_DIV3W
 $unistd       = 
 $thread_cflag = -D_SGI_MP_SOURCE
 $sys_id       = 
@@ -3742,7 +3742,7 @@ $multilib     = 64
 
 *** irix64-mips4-gcc
 $cc           = gcc
-$cflags       = -mabi=64 -mips4 -O3 -DTERMIOS -DB_ENDIAN -DBN_DIV3W
+$cflags       = -mabi=64 -mips4 -O3 -DB_ENDIAN -DBN_DIV3W
 $unistd       = 
 $thread_cflag = -D_SGI_MP_SOURCE
 $sys_id       = 
@@ -3776,7 +3776,7 @@ $multilib     = 64
 
 *** linux-aarch64
 $cc           = gcc
-$cflags       = -DTERMIO -O3 -Wall
+$cflags       = -O3 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -3810,7 +3810,7 @@ $multilib     =
 
 *** linux-alpha+bwx-ccc
 $cc           = ccc
-$cflags       = -fast -readonly_strings -DL_ENDIAN -DTERMIO
+$cflags       = -fast -readonly_strings -DL_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -3844,7 +3844,7 @@ $multilib     =
 
 *** linux-alpha+bwx-gcc
 $cc           = gcc
-$cflags       = -O3 -DL_ENDIAN -DTERMIO
+$cflags       = -O3 -DL_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -3878,7 +3878,7 @@ $multilib     =
 
 *** linux-alpha-ccc
 $cc           = ccc
-$cflags       = -fast -readonly_strings -DL_ENDIAN -DTERMIO
+$cflags       = -fast -readonly_strings -DL_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -3912,7 +3912,7 @@ $multilib     =
 
 *** linux-alpha-gcc
 $cc           = gcc
-$cflags       = -O3 -DL_ENDIAN -DTERMIO
+$cflags       = -O3 -DL_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -3946,7 +3946,7 @@ $multilib     =
 
 *** linux-aout
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -march=i486 -Wall
+$cflags       = -DL_ENDIAN -O3 -fomit-frame-pointer -march=i486 -Wall
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = 
@@ -3980,7 +3980,7 @@ $multilib     =
 
 *** linux-armv4
 $cc           = gcc
-$cflags       = -DTERMIO -O3 -Wall
+$cflags       = -O3 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4048,7 +4048,7 @@ $multilib     =
 
 *** linux-elf
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
+$cflags       = -DL_ENDIAN -O3 -fomit-frame-pointer -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4082,7 +4082,7 @@ $multilib     =
 
 *** linux-generic32
 $cc           = gcc
-$cflags       = -DTERMIO -O3 -fomit-frame-pointer -Wall
+$cflags       = -O3 -fomit-frame-pointer -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4116,7 +4116,7 @@ $multilib     =
 
 *** linux-generic64
 $cc           = gcc
-$cflags       = -DTERMIO -O3 -Wall
+$cflags       = -O3 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4150,7 +4150,7 @@ $multilib     =
 
 *** linux-ia32-icc
 $cc           = icc
-$cflags       = -DL_ENDIAN -DTERMIO -O2
+$cflags       = -DL_ENDIAN -O2
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4184,7 +4184,7 @@ $multilib     =
 
 *** linux-ia64
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DTERMIO -O3 -Wall
+$cflags       = -DL_ENDIAN -O3 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4218,7 +4218,7 @@ $multilib     =
 
 *** linux-ia64-icc
 $cc           = icc
-$cflags       = -DL_ENDIAN -DTERMIO -O2 -Wall
+$cflags       = -DL_ENDIAN -O2 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4252,7 +4252,7 @@ $multilib     =
 
 *** linux-mips32
 $cc           = gcc
-$cflags       = -mabi=32 -DTERMIO -O3 -Wall -DBN_DIV3W
+$cflags       = -mabi=32 -O3 -Wall -DBN_DIV3W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4286,7 +4286,7 @@ $multilib     =
 
 *** linux-mips64
 $cc           = gcc
-$cflags       = -mabi=n32 -DTERMIO -O3 -Wall -DBN_DIV3W
+$cflags       = -mabi=n32 -O3 -Wall -DBN_DIV3W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4320,7 +4320,7 @@ $multilib     = 32
 
 *** linux-ppc
 $cc           = gcc
-$cflags       = -DB_ENDIAN -DTERMIO -O3 -Wall
+$cflags       = -DB_ENDIAN -O3 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4354,7 +4354,7 @@ $multilib     =
 
 *** linux-ppc64
 $cc           = gcc
-$cflags       = -m64 -DB_ENDIAN -DTERMIO -O3 -Wall
+$cflags       = -m64 -DB_ENDIAN -O3 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4388,7 +4388,7 @@ $multilib     = 64
 
 *** linux-ppc64le
 $cc           = gcc
-$cflags       = -m64 -DL_ENDIAN -DTERMIO -O3 -Wall
+$cflags       = -m64 -DL_ENDIAN -O3 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4422,7 +4422,7 @@ $multilib     =
 
 *** linux-sparcv8
 $cc           = gcc
-$cflags       = -mv8 -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall -DBN_DIV2W
+$cflags       = -mv8 -DB_ENDIAN -O3 -fomit-frame-pointer -Wall -DBN_DIV2W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4456,7 +4456,7 @@ $multilib     =
 
 *** linux-sparcv9
 $cc           = gcc
-$cflags       = -m32 -mcpu=ultrasparc -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall -Wa,-Av8plus -DBN_DIV2W
+$cflags       = -m32 -mcpu=ultrasparc -DB_ENDIAN -O3 -fomit-frame-pointer -Wall -Wa,-Av8plus -DBN_DIV2W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = ULTRASPARC
@@ -4490,7 +4490,7 @@ $multilib     =
 
 *** linux-x32
 $cc           = gcc
-$cflags       = -mx32 -DL_ENDIAN -DTERMIO -O3 -Wall
+$cflags       = -mx32 -DL_ENDIAN -O3 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4524,7 +4524,7 @@ $multilib     = x32
 
 *** linux-x86_64
 $cc           = gcc
-$cflags       = -m64 -DL_ENDIAN -DTERMIO -O3 -Wall
+$cflags       = -m64 -DL_ENDIAN -O3 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4558,7 +4558,7 @@ $multilib     = 64
 
 *** linux-x86_64-clang
 $cc           = clang
-$cflags       = -m64 -DL_ENDIAN -DTERMIO -O3 -Weverything -Wno-language-extension-token -Wno-extended-offsetof -Wno-padded -Wno-shorten-64-to-32 -Wno-format-nonliteral -Wno-missing-noreturn -Wno-unused-parameter -Wno-sign-conversion -Wno-unreachable-code -Wno-conversion -Wno-documentation -Wno-missing-variable-declarations -Wno-cast-align -Wno-incompatible-pointer-types-discards-qualifiers -Wno-missing-variable-declarations -Wno-missing-field-initializers -Wno-unused-macros -Wno-disabled-macro-expansion -Wno-conditional-uninitialized -Wno-switch-enum -Qunused-arguments
+$cflags       = -m64 -DL_ENDIAN -O3 -Weverything -Wno-language-extension-token -Wno-extended-offsetof -Wno-padded -Wno-shorten-64-to-32 -Wno-format-nonliteral -Wno-missing-noreturn -Wno-unused-parameter -Wno-sign-conversion -Wno-unreachable-code -Wno-conversion -Wno-documentation -Wno-missing-variable-declarations -Wno-cast-align -Wno-incompatible-pointer-types-discards-qualifiers -Wno-missing-variable-declarations -Wno-missing-field-initializers -Wno-unused-macros -Wno-disabled-macro-expansion -Wno-conditional-uninitialized -Wno-switch-enum -Qunused-arguments
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4592,7 +4592,7 @@ $multilib     = 64
 
 *** linux-x86_64-icc
 $cc           = icc
-$cflags       = -DL_ENDIAN -DTERMIO -O2
+$cflags       = -DL_ENDIAN -O2
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4626,7 +4626,7 @@ $multilib     = 64
 
 *** linux32-s390x
 $cc           = gcc
-$cflags       = -m31 -Wa,-mzarch -DB_ENDIAN -DTERMIO -O3 -Wall
+$cflags       = -m31 -Wa,-mzarch -DB_ENDIAN -O3 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4660,7 +4660,7 @@ $multilib     = /highgprs
 
 *** linux64-mips64
 $cc           = gcc
-$cflags       = -mabi=64 -DTERMIO -O3 -Wall -DBN_DIV3W
+$cflags       = -mabi=64 -O3 -Wall -DBN_DIV3W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4694,7 +4694,7 @@ $multilib     = 64
 
 *** linux64-s390x
 $cc           = gcc
-$cflags       = -m64 -DB_ENDIAN -DTERMIO -O3 -Wall
+$cflags       = -m64 -DB_ENDIAN -O3 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4728,7 +4728,7 @@ $multilib     = 64
 
 *** linux64-sparcv9
 $cc           = gcc
-$cflags       = -m64 -mcpu=ultrasparc -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
+$cflags       = -m64 -mcpu=ultrasparc -DB_ENDIAN -O3 -fomit-frame-pointer -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = ULTRASPARC
