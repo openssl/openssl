@@ -4,9 +4,9 @@ Standards related to OpenSSL
 This is a work in progress.  These are documents that describe things that
 are implemented (in whole or at least great parts) in OpenSSL.
 
-To search for RFCs, you can start at http://www.ietf.org/rfc.html
+To search for RFCs, you can start at https://www.ietf.org/rfc.html
 
-To search for internet-drafts, you can start at http://www.ietf.org/id-info/
+To search for internet-drafts, you can start at https://www.ietf.org/id-info/
 
 Many PKCS standards are now RFC's; PKCS#11 is now at Oasis and can be
 found at https://www.oasis-open.org/committees/tc_home.php?wg_abbrev=pkcs11
