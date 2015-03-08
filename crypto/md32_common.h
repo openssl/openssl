@@ -225,15 +225,13 @@
 #  define HOST_c2l(c,l)   (l =(((unsigned long)(*((c)++)))<<24),          \
                          l|=(((unsigned long)(*((c)++)))<<16),          \
                          l|=(((unsigned long)(*((c)++)))<< 8),          \
-                         l|=(((unsigned long)(*((c)++)))    ),          \
-                         l)
+                         l|=(((unsigned long)(*((c)++)))    )   )
 # endif
 # ifndef HOST_l2c
 #  define HOST_l2c(l,c)   (*((c)++)=(unsigned char)(((l)>>24)&0xff),      \
                          *((c)++)=(unsigned char)(((l)>>16)&0xff),      \
                          *((c)++)=(unsigned char)(((l)>> 8)&0xff),      \
-                         *((c)++)=(unsigned char)(((l)    )&0xff),      \
-                         l)
+                         *((c)++)=(unsigned char)(((l)    )&0xff)   )
 # endif
 
 #elif defined(DATA_ORDER_IS_LITTLE_ENDIAN)
@@ -253,8 +251,8 @@
 # if defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__)
 #  ifndef B_ENDIAN
    /* See comment in DATA_ORDER_IS_BIG_ENDIAN section. */
-#   define HOST_c2l(c,l) ((l)=*((const unsigned int *)(c)), (c)+=4, l)
-#   define HOST_l2c(l,c) (*((unsigned int *)(c))=(l), (c)+=4, l)
+#   define HOST_c2l(c,l) ((l)=*((const unsigned int *)(c)), (c)+=4)
+#   define HOST_l2c(l,c) (*((unsigned int *)(c))=(l), (c)+=4)
 #  endif
 # endif
 
