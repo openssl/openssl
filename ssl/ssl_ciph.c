@@ -174,12 +174,11 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, SSL_TXT_ALL, 0, SSL_ALL & ~SSL_eNULL & ~SSL_kECDH & ~SSL_kECDHE,
      SSL_ALL, 0, 0, 0, SSL_ALL, SSL_ALL},
     /*
-     * TODO: COMPLEMENT OF ALL and COMPLEMENT OF DEFAULT do not have ECC
-     * cipher suites handled properly.
+     * TODO: COMPLEMENT OF ALL do not have ECC cipher suites handled properly.
      */
     /* COMPLEMENT OF ALL */
     {0, SSL_TXT_CMPALL, 0, SSL_eNULL, 0, 0, 0, 0, SSL_ENC_MASK, 0},
-    {0, SSL_TXT_CMPDEF, 0, SSL_ADH, 0, 0, 0, 0, SSL_AUTH_MASK, 0},
+    {0, SSL_TXT_CMPDEF, 0, SSL_ADH, SSL_EXP_MASK, 0, 0, 0, SSL_AUTH_MASK, 0},
     /* VRS Kerberos5 */
     {0, SSL_TXT_kKRB5, 0, SSL_kKRB5, 0, 0, 0, 0, SSL_MKEY_MASK, 0},
     {0, SSL_TXT_kRSA, 0, SSL_kRSA, 0, 0, 0, 0, SSL_MKEY_MASK, 0},
@@ -636,6 +635,15 @@ static void ssl_cipher_apply_rule(unsigned long cipher_id,
         curr2 = curr->next;
 
         cp = curr->cipher;
+        /* Special case: only satisfied by COMPLEMENTOFDEFAULT */
+        if (algo_strength == SSL_EXP_MASK) {
+            if ((SSL_C_IS_EXPORT(cp) || cp->algorithms & SSL_SSLV2
+                || cp->algorithms & SSL_aNULL)
+                && !(cp->algorithms & (SSL_kECDHE|SSL_kECDH)))
+                goto ok;
+            else
+                continue;
+        }
 
         /*
          * If explicit cipher suite, match only that one for its own protocol
@@ -674,6 +682,8 @@ static void ssl_cipher_apply_rule(unsigned long cipher_id,
                 continue;       /* does not apply */
         } else if (strength_bits != cp->strength_bits)
             continue;           /* does not apply */
+
+        ok:
 
 #ifdef CIPHER_DEBUG
         printf("Action = %d\n", rule);

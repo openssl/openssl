@@ -4,7 +4,8 @@
 
  Changes between 0.9.8ze and 0.9.8zf [xx XXX xxxx]
 
-  *)
+  *) Removed the export and SSLv2 ciphers from the DEFAULT ciphers
+     [Kurt Roeckx]
 
  Changes between 0.9.8zd and 0.9.8ze [15 Jan 2015]
 
