@@ -358,8 +358,8 @@
 # define SSL_GOST89MAC   0x00000008L
 
 /* Bits for algorithm_ssl (protocol version) */
-# define SSL_SSLV2               0x00000001L
-# define SSL_SSLV3               0x00000002L
+# define SSL_SSLV2               0x00000001UL
+# define SSL_SSLV3               0x00000002UL
 # define SSL_TLSV1               SSL_SSLV3/* for now */
 
 /* Bits for algorithm2 (handshake digests and other extra flags) */
