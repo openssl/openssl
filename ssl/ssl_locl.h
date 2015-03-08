@@ -370,10 +370,10 @@
 # define SSL_AEAD                0x00000040L
 
 /* Bits for algorithm_ssl (protocol version) */
-# define SSL_SSLV2               0x00000001L
-# define SSL_SSLV3               0x00000002L
+# define SSL_SSLV2               0x00000001UL
+# define SSL_SSLV3               0x00000002UL
 # define SSL_TLSV1               SSL_SSLV3/* for now */
-# define SSL_TLSV1_2             0x00000004L
+# define SSL_TLSV1_2             0x00000004UL
 
 /* Bits for algorithm2 (handshake digests and other extra flags) */
 
