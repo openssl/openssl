@@ -949,6 +949,8 @@ int tls1_final_finish_mac(SSL *s, const char *str, int slen,
                   s->session->master_key, s->session->master_key_length,
                   out, buf2, sizeof buf2))
         return 0;
+    OPENSSL_cleanse(hash, hashlen);
+    OPENSSL_cleanse(buf2, sizeof(buf2));
     return sizeof buf2;
 }
 
@@ -1112,6 +1114,7 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
                  s->s3->server_random, SSL3_RANDOM_SIZE,
                  NULL, 0, p, len, s->session->master_key, buff, sizeof buff);
     }
+    OPENSSL_cleanse(buff, sizeof buff);
 #ifdef SSL_DEBUG
     fprintf(stderr, "Premaster Secret:\n");
     BIO_dump_fp(stderr, (char *)p, len);
@@ -1225,6 +1228,8 @@ int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
                   NULL, 0,
                   s->session->master_key, s->session->master_key_length,
                   out, buff, olen);
+    OPENSSL_cleanse(val, vallen);
+    OPENSSL_cleanse(buff, olen);
 
 #ifdef KSSL_DEBUG
     fprintf(stderr, "tls1_export_keying_material() complete\n");
