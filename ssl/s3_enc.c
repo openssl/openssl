@@ -871,6 +871,7 @@ int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
                         s, s->msg_callback_arg);
     }
 #endif
+    OPENSSL_cleanse(buf, sizeof buf);
     return (ret);
 }
 
