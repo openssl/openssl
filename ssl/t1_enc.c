@@ -860,6 +860,8 @@ int tls1_final_finish_mac(SSL *s,
         err = 1;
     EVP_MD_CTX_cleanup(&ctx);
 
+    OPENSSL_cleanse(buf, (int)(q - buf));
+    OPENSSL_cleanse(buf2, sizeof(buf2));
     if (err)
         return 0;
     else
@@ -1017,6 +1019,7 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
              co, col,
              s->s3->server_random, SSL3_RANDOM_SIZE,
              so, sol, p, len, s->session->master_key, buff, sizeof buff);
+    OPENSSL_cleanse(buff, sizeof buff);
 
 #ifdef KSSL_DEBUG
     printf("tls1_generate_master_secret() complete\n");
