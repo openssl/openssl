@@ -886,7 +886,10 @@ int ssl3_send_hello_request(SSL *s)
 {
 
     if (s->state == SSL3_ST_SW_HELLO_REQ_A) {
-        ssl_set_handshake_header(s, SSL3_MT_HELLO_REQUEST, 0);
+        if(!ssl_set_handshake_header(s, SSL3_MT_HELLO_REQUEST, 0)) {
+            SSLerr(SSL_F_SSL3_SEND_HELLO_REQUEST, ERR_R_INTERNAL_ERROR);
+            return -1;
+        }
         s->state = SSL3_ST_SW_HELLO_REQ_B;
     }
 
@@ -1502,7 +1505,10 @@ int ssl3_send_server_hello(SSL *s)
 #endif
         /* do the header */
         l = (p - d);
-        ssl_set_handshake_header(s, SSL3_MT_SERVER_HELLO, l);
+        if(!ssl_set_handshake_header(s, SSL3_MT_SERVER_HELLO, l)) {
+            SSLerr(SSL_F_SSL3_SEND_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
+            return -1;
+        }
         s->state = SSL3_ST_SW_SRVR_HELLO_B;
     }
 
@@ -1514,7 +1520,10 @@ int ssl3_send_server_done(SSL *s)
 {
 
     if (s->state == SSL3_ST_SW_SRVR_DONE_A) {
-        ssl_set_handshake_header(s, SSL3_MT_SERVER_DONE, 0);
+        if(!ssl_set_handshake_header(s, SSL3_MT_SERVER_DONE, 0)) {
+            SSLerr(SSL_F_SSL3_SEND_SERVER_DONE, ERR_R_INTERNAL_ERROR);
+            return -1;
+        }
         s->state = SSL3_ST_SW_SRVR_DONE_B;
     }
 
@@ -1961,7 +1970,11 @@ int ssl3_send_server_key_exchange(SSL *s)
             }
         }
 
-        ssl_set_handshake_header(s, SSL3_MT_SERVER_KEY_EXCHANGE, n);
+        if(!ssl_set_handshake_header(s, SSL3_MT_SERVER_KEY_EXCHANGE, n)) {
+            al = SSL_AD_HANDSHAKE_FAILURE;
+            SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+            goto f_err;
+        }
     }
 
     s->state = SSL3_ST_SW_KEY_EXCH_B;
@@ -2039,7 +2052,10 @@ int ssl3_send_certificate_request(SSL *s)
         p = ssl_handshake_start(s) + off;
         s2n(nl, p);
 
-        ssl_set_handshake_header(s, SSL3_MT_CERTIFICATE_REQUEST, n);
+        if(!ssl_set_handshake_header(s, SSL3_MT_CERTIFICATE_REQUEST, n)) {
+            SSLerr(SSL_F_SSL3_SEND_CERTIFICATE_REQUEST, ERR_R_INTERNAL_ERROR);
+            return -1;
+        }
 
         s->state = SSL3_ST_SW_CERT_REQ_B;
     }
@@ -3419,7 +3435,8 @@ int ssl3_send_newsession_ticket(SSL *s)
         /* Now write out lengths: p points to end of data written */
         /* Total length */
         len = p - ssl_handshake_start(s);
-        ssl_set_handshake_header(s, SSL3_MT_NEWSESSION_TICKET, len);
+        if(!ssl_set_handshake_header(s, SSL3_MT_NEWSESSION_TICKET, len))
+            goto err;
         /* Skip ticket lifetime hint */
         p = ssl_handshake_start(s) + 4;
         s2n(len - 6, p);

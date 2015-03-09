@@ -187,7 +187,10 @@ int ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
             s->s3->previous_server_finished_len = i;
         }
 
-        ssl_set_handshake_header(s, SSL3_MT_FINISHED, l);
+        if(!ssl_set_handshake_header(s, SSL3_MT_FINISHED, l)) {
+            SSLerr(SSL_F_SSL3_SEND_FINISHED, ERR_R_INTERNAL_ERROR);
+            return -1;
+        }
         s->state = b;
     }
 
@@ -324,7 +327,11 @@ unsigned long ssl3_output_cert_chain(SSL *s, CERT_PKEY *cpk)
     p = ssl_handshake_start(s);
     l2n3(l, p);
     l += 3;
-    ssl_set_handshake_header(s, SSL3_MT_CERTIFICATE, l);
+
+    if(!ssl_set_handshake_header(s, SSL3_MT_CERTIFICATE, l)) {
+        SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
     return l + SSL_HM_HEADER_LENGTH(s);
 }
 

@@ -67,7 +67,7 @@
 #endif
 
 static void get_current_time(struct timeval *t);
-static void dtls1_set_handshake_header(SSL *s, int type, unsigned long len);
+static int dtls1_set_handshake_header(SSL *s, int type, unsigned long len);
 static int dtls1_handshake_write(SSL *s);
 const char dtls1_version_str[] = "DTLSv1" OPENSSL_VERSION_PTEXT;
 int dtls1_listen(SSL *s, struct sockaddr *client);
@@ -560,18 +560,18 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
     return 1;
 }
 
-static void dtls1_set_handshake_header(SSL *s, int htype, unsigned long len)
+static int dtls1_set_handshake_header(SSL *s, int htype, unsigned long len)
 {
     unsigned char *p = (unsigned char *)s->init_buf->data;
     dtls1_set_message_header(s, p, htype, len, 0, len);
     s->init_num = (int)len + DTLS1_HM_HEADER_LENGTH;
     s->init_off = 0;
     /* Buffer the message to handle re-xmits */
-    /*
-     * Deliberately swallow error return. We really should do something with
-     * this - but its a void function that can't (easily) be changed
-     */
-    if(!dtls1_buffer_message(s, 0));
+
+    if(!dtls1_buffer_message(s, 0))
+        return 0;
+
+    return 1;
 }
 
 static int dtls1_handshake_write(SSL *s)

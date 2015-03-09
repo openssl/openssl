@@ -1839,7 +1839,7 @@ typedef struct ssl3_enc_method {
     /* Handshake header length */
     unsigned int hhlen;
     /* Set the handshake header */
-    void (*set_handshake_header) (SSL *s, int type, unsigned long len);
+    int (*set_handshake_header) (SSL *s, int type, unsigned long len);
     /* Write out handshake message */
     int (*do_write) (SSL *s);
 } SSL3_ENC_METHOD;
@@ -2177,7 +2177,7 @@ void ssl3_record_sequence_update(unsigned char *seq);
 __owur int ssl3_do_change_cipher_spec(SSL *ssl);
 __owur long ssl3_default_timeout(void);
 
-void ssl3_set_handshake_header(SSL *s, int htype, unsigned long len);
+__owur int ssl3_set_handshake_header(SSL *s, int htype, unsigned long len);
 __owur int ssl3_handshake_write(SSL *s);
 
 __owur int ssl23_num_ciphers(void);

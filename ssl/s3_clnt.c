@@ -843,7 +843,11 @@ int ssl3_client_hello(SSL *s)
 #endif
 
         l = p - d;
-        ssl_set_handshake_header(s, SSL3_MT_CLIENT_HELLO, l);
+        if(!ssl_set_handshake_header(s, SSL3_MT_CLIENT_HELLO, l)) {
+            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
+            SSLerr(SSL_F_SSL3_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
         s->state = SSL3_ST_CW_CLNT_HELLO_B;
     }
 
@@ -2998,7 +3002,12 @@ int ssl3_send_client_key_exchange(SSL *s)
             goto err;
         }
 
-        ssl_set_handshake_header(s, SSL3_MT_CLIENT_KEY_EXCHANGE, n);
+        if(!ssl_set_handshake_header(s, SSL3_MT_CLIENT_KEY_EXCHANGE, n)) {
+            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
+            SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+
         s->state = SSL3_ST_CW_KEY_EXCH_B;
     }
 
@@ -3197,7 +3206,10 @@ int ssl3_send_client_verify(SSL *s)
             SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
             goto err;
         }
-        ssl_set_handshake_header(s, SSL3_MT_CERTIFICATE_VERIFY, n);
+        if(!ssl_set_handshake_header(s, SSL3_MT_CERTIFICATE_VERIFY, n)) {
+            SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
         s->state = SSL3_ST_CW_CERT_VRFY_B;
     }
     EVP_MD_CTX_cleanup(&mctx);
