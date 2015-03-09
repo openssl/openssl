@@ -2012,7 +2012,10 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL3_SEND_CLIENT_CERTIFICATE               151
 # define SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE              152
 # define SSL_F_SSL3_SEND_CLIENT_VERIFY                    153
+# define SSL_F_SSL3_SEND_FINISHED                         343
+# define SSL_F_SSL3_SEND_HELLO_REQUEST                    344
 # define SSL_F_SSL3_SEND_SERVER_CERTIFICATE               154
+# define SSL_F_SSL3_SEND_SERVER_DONE                      345
 # define SSL_F_SSL3_SEND_SERVER_HELLO                     242
 # define SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE              155
 # define SSL_F_SSL3_SETUP_KEY_BLOCK                       157
