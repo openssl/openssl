@@ -707,6 +707,8 @@ int tls1_final_finish_mac(SSL *s, EVP_MD_CTX *in1_ctx, EVP_MD_CTX *in2_ctx,
              out, buf2, sizeof buf2);
     EVP_MD_CTX_cleanup(&ctx);
 
+    OPENSSL_cleanse(buf, (int)(q - buf));
+    OPENSSL_cleanse(buf2, sizeof(buf2));
     return sizeof buf2;
 }
 
@@ -850,6 +852,8 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
     tls1_PRF(s->ctx->md5, s->ctx->sha1,
              buf, TLS_MD_MASTER_SECRET_CONST_SIZE + SSL3_RANDOM_SIZE * 2, p,
              len, s->session->master_key, buff, sizeof buff);
+    OPENSSL_cleanse(buf, sizeof buf);
+    OPENSSL_cleanse(buff, sizeof buff);
 #ifdef KSSL_DEBUG
     printf("tls1_generate_master_secret() complete\n");
 #endif                          /* KSSL_DEBUG */

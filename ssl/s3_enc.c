@@ -712,6 +712,7 @@ int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
         ret += n;
     }
     EVP_MD_CTX_cleanup(&ctx);
+    OPENSSL_cleanse(buf, sizeof buf);
     return (ret);
 }
 
