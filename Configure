@@ -134,10 +134,13 @@ my $bits1="THIRTY_TWO_BIT ";
 my $bits2="SIXTY_FOUR_BIT ";
 
 my $x86_asm="x86cpuid.o:bn-586.o co-586.o x86-mont.o x86-gf2m.o:ecp_nistz256.o ecp_nistz256-x86.o:des-586.o crypt586.o:aes-586.o vpaes-x86.o aesni-x86.o:bf-586.o:md5-586.o:sha1-586.o sha256-586.o sha512-586.o:cast-586.o:rc4-586.o:rmd-586.o:rc5-586.o:wp_block.o wp-mmx.o:cmll-x86.o:ghash-x86.o:e_padlock-x86.o";
+my $x86_asm_nocast=$x86_asm;$x86_asm_nocast=~s/cast\-586\.o//;
 
 my $x86_elf_asm="$x86_asm:elf";
+my $android_x86_elf_asm="$x86_asm:android";
 
 my $x86_64_asm="x86_64cpuid.o:x86_64-gcc.o x86_64-mont.o x86_64-mont5.o x86_64-gf2m.o rsaz_exp.o rsaz-x86_64.o rsaz-avx2.o:ecp_nistz256.o ecp_nistz256-x86_64.o::aes-x86_64.o vpaes-x86_64.o bsaes-x86_64.o aesni-x86_64.o aesni-sha1-x86_64.o aesni-sha256-x86_64.o aesni-mb-x86_64.o::md5-x86_64.o:sha1-x86_64.o sha256-x86_64.o sha512-x86_64.o sha1-mb-x86_64.o sha256-mb-x86_64.o::rc4-x86_64.o rc4-md5-x86_64.o:::wp-x86_64.o:cmll-x86_64.o cmll_misc.o:ghash-x86_64.o aesni-gcm-x86_64.o:e_padlock-x86_64.o";
+my $win_x86_64_asm=$x86_asm;$win_x86_64_asm=~s/x86_64-gcc\.o/bn_asm.o/;
 my $ia64_asm="ia64cpuid.o:bn-ia64.o ia64-mont.o:::aes_core.o aes_cbc.o aes-ia64.o::md5-ia64.o:sha1-ia64.o sha256-ia64.o sha512-ia64.o::rc4-ia64.o rc4_skey.o:::::ghash-ia64.o::void";
 my $sparcv9_asm="sparcv9cap.o sparccpuid.o:bn-sparcv9.o sparcv9-mont.o sparcv9a-mont.o vis3-mont.o sparct4-mont.o sparcv9-gf2m.o::des_enc-sparc.o fcrypt_b.o dest4-sparcv9.o:aes_core.o aes_cbc.o aes-sparcv9.o aest4-sparcv9.o::md5-sparcv9.o:sha1-sparcv9.o sha256-sparcv9.o sha512-sparcv9.o::::::camellia.o cmll_misc.o cmll_cbc.o cmllt4-sparcv9.o:ghash-sparcv9.o::void";
 my $sparcv8_asm=":sparcv8.o::des_enc-sparc.o fcrypt_b.o:::::::::::::void";
@@ -145,10 +148,12 @@ my $alpha_asm="alphacpuid.o:bn_asm.o alpha-mont.o::::::sha1-alpha.o:::::::ghash-
 my $mips64_asm=":bn-mips.o mips-mont.o:::aes_cbc.o aes-mips.o:::sha1-mips.o sha256-mips.o sha512-mips.o::::::::";
 my $mips32_asm=$mips64_asm; $mips32_asm =~ s/\s*sha512\-mips\.o//;
 my $s390x_asm="s390xcap.o s390xcpuid.o:bn-s390x.o s390x-mont.o s390x-gf2m.o:::aes-s390x.o aes-ctr.o aes-xts.o:::sha1-s390x.o sha256-s390x.o sha512-s390x.o::rc4-s390x.o:::::ghash-s390x.o:";
+my $s390x_32_asm=$s390x_asm;$s390x_32_asm=~s/bn\-s390x\.o/bn_asm.o/;
 my $armv4_asm="armcap.o armv4cpuid.o:bn_asm.o armv4-mont.o armv4-gf2m.o:ecp_nistz256.o ecp_nistz256-armv4.o::aes_cbc.o aes-armv4.o bsaes-armv7.o aesv8-armx.o:::sha1-armv4-large.o sha256-armv4.o sha512-armv4.o:::::::ghash-armv4.o ghashv8-armx.o::void";
 my $aarch64_asm="armcap.o arm64cpuid.o mem_clr.o::::aes_core.o aes_cbc.o aesv8-armx.o:::sha1-armv8.o sha256-armv8.o sha512-armv8.o:::::::ghashv8-armx.o:";
 my $parisc11_asm="pariscid.o:bn_asm.o parisc-mont.o:::aes_core.o aes_cbc.o aes-parisc.o:::sha1-parisc.o sha256-parisc.o sha512-parisc.o::rc4-parisc.o:::::ghash-parisc.o::32";
-my $parisc20_asm="pariscid.o:pa-risc2W.o parisc-mont.o:::aes_core.o aes_cbc.o aes-parisc.o:::sha1-parisc.o sha256-parisc.o sha512-parisc.o::rc4-parisc.o:::::ghash-parisc.o::64";
+my $parisc20_64_asm="pariscid.o:pa-risc2W.o parisc-mont.o:::aes_core.o aes_cbc.o aes-parisc.o:::sha1-parisc.o sha256-parisc.o sha512-parisc.o::rc4-parisc.o:::::ghash-parisc.o::64";
+my $parisc20_32_asm=$parisc20_64_asm;$parisc20_32_asm=~s/2W\./2\./;$parisc20_32_asm=~s/:64/:32/;
 my $ppc64_asm="ppccpuid.o ppccap.o:bn-ppc.o ppc-mont.o ppc64-mont.o:::aes_core.o aes_cbc.o aes-ppc.o vpaes-ppc.o aesp8-ppc.o:::sha1-ppc.o sha256-ppc.o sha512-ppc.o sha256p8-ppc.o sha512p8-ppc.o:::::::ghashp8-ppc.o:";
 my $ppc32_asm=$ppc64_asm;
 
@@ -366,7 +371,7 @@ my %table=(
 	perlasm_scheme	=> "void"
     },
 
-    x86_asm => {
+    x86_asm_nocast => {
 	template	=> 1,
 	cpuid_obj	=> "x86cpuid.o",
 	bn_obj		=> "bn-586.o co-586.o x86-mont.o x86-gf2m.o",
@@ -376,7 +381,6 @@ my %table=(
 	bf_obj		=> "bf-586.o",
 	md5_obj		=> "md5-586.o",
 	sha1_obj	=> "sha1-586.o sha256-586.o sha512-586.o",
-	cast_obj	=> "cast-586.o",
 	rc4_obj		=> "rc4-586.o",
 	rmd160_obj	=> "rmd-586.o",
 	rc5_obj		=> "rc5-586.o",
@@ -385,16 +389,26 @@ my %table=(
 	modes_obj	=> "ghash-x86.o",
 	engines_obj	=> "e_padlock-x86.o"
     },
+    x86_asm => {
+	template	=> 1,
+	inherit_from	=> [ "x86_asm_nocast" ],
+	cast_obj	=> "cast-586.o",
+    },
     x86_elf_asm => {
 	template	=> 1,
 	inherit_from	=> [ "x86_asm" ],
 	perlasm_scheme	=> "elf"
     },
+    android_x86_elf_asm => {
+	template	=> 1,
+	inherit_from	=> [ "x86_asm" ],
+	perlasm_scheme	=> "android"
+    },
 
-    x86_64_asm => {
+    _x86_64_asm => {
 	template	=> 1,
 	cpuid_obj       => "x86_64cpuid.o",
-	bn_obj          => "x86_64-gcc.o x86_64-mont.o x86_64-mont5.o x86_64-gf2m.o rsaz_exp.o rsaz-x86_64.o rsaz-avx2.o",
+	bn_obj          => "x86_64-mont.o x86_64-mont5.o x86_64-gf2m.o rsaz_exp.o rsaz-x86_64.o rsaz-avx2.o",
 	ec_obj          => "ecp_nistz256.o ecp_nistz256-x86_64.o",
 	aes_obj         => "aes-x86_64.o vpaes-x86_64.o bsaes-x86_64.o aesni-x86_64.o aesni-sha1-x86_64.o aesni-sha256-x86_64.o aesni-mb-x86_64.o",
 	md5_obj         => "md5-x86_64.o",
@@ -404,6 +418,16 @@ my %table=(
 	cmll_obj        => "cmll-x86_64.o cmll_misc.o",
 	modes_obj       => "ghash-x86_64.o aesni-gcm-x86_64.o",
 	engines_obj     => "e_padlock-x86_64.o"
+    },
+    x86_64_asm => {
+	inherit_from	=> [ "_x86_64_asm" ],
+	template	=> 1,
+	bn_obj          => sub { join(" ","x86_64-gcc.o",@_) }
+    },
+    win_x86_64_asm => {
+	inherit_from	=> [ "_x86_64_asm" ],
+	template	=> 1,
+	bn_obj          => sub { join(" ","bn_asm.o",@_) }
     },
     ia64_asm => {
 	template	=> 1,
@@ -454,14 +478,24 @@ my %table=(
 	template	=> 1,
 	sha1_obj        => sub { join(" ", @_, "sha512-mips.o") }
     },
-    s390x_asm => {
+    _s390x_asm => {
 	template	=> 1,
 	cpuid_obj       => "s390xcap.o s390xcpuid.o",
-	bn_obj          => "bn-s390x.o s390x-mont.o s390x-gf2m.o",
+	bn_obj          => "s390x-mont.o s390x-gf2m.o",
 	aes_obj         => "aes-s390x.o aes-ctr.o aes-xts.o",
 	sha1_obj        => "sha1-s390x.o sha256-s390x.o sha512-s390x.o",
 	rc4_obj         => "rc4-s390x.o",
 	modes_obj       => "ghash-s390x.o",
+    },
+    s390x_asm => {
+	template	=> 1,
+	inherit_from	=> [ "_s390x_asm" ],
+	bn_obj          => sub { join(" ", "bn-s390x.o", @_) }
+    },
+    s390x_32_asm => {
+	template	=> 1,
+	inherit_from	=> [ "_s390x_asm" ],
+	bn_obj          => sub { join(" ", "bn_asm.o", @_) }
     },
     armv4_asm => {
 	template	=> 1,
@@ -490,15 +524,27 @@ my %table=(
 	modes_obj       => "ghash-parisc.o",
 	perlasm_scheme	=> "32"
     },
-    parisc20_asm => {
+    _parisc20_asm => {
 	template	=> 1,
 	cpuid_obj       => "pariscid.o",
-	bn_obj          => "pa-risc2W.o parisc-mont.o",
+	bn_obj          => "parisc-mont.o",
 	aes_obj         => "aes_core.o aes_cbc.o aes-parisc.o",
 	sha1_obj        => "sha1-parisc.o sha256-parisc.o sha512-parisc.o",
 	rc4_obj         => "rc4-parisc.o",
 	modes_obj       => "ghash-parisc.o",
 	perlasm_scheme	=> "64"
+    },
+    parisc20_32_asm => {
+	template	=> 1,
+	inherit_from	=> [ "_parisc20_asm" ],
+	bn_obj          => sub { join(" ", "pa-risc2.o", @_) },
+	perlasm_scheme	=> "32",
+    },
+    parisc20_64_asm => {
+	template	=> 1,
+	inherit_from	=> [ "_parisc20_asm" ],
+	bn_obj          => sub { join(" ", "pa-risc2W.o", @_) },
+	perlasm_scheme	=> "64",
     },
     ppc64_asm => {
 	template	=> 1,
