@@ -353,6 +353,10 @@ static int asn1_cb(const char *elem, int len, void *bitstr)
         break;
 
     case ASN1_GEN_FLAG_FORMAT:
+        if(!vstart) {
+            ASN1err(ASN1_F_ASN1_CB, ASN1_R_UNKNOWN_FORMAT);
+            return -1;
+        }
         if (!strncmp(vstart, "ASCII", 5))
             arg->format = ASN1_GEN_FORMAT_ASCII;
         else if (!strncmp(vstart, "UTF8", 4))
