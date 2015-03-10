@@ -218,14 +218,14 @@ my $BSDthreads="-pthread -D_THREAD_SAFE -D_REENTRANT";
 #	{
 #	  cc => $cc,
 #	  cflags => $cflags,
-#	  "debug-cflags" => $debug_cflags,
-#	  "nodebug-cflags" => $nodebug_cflags,
+#	  debug_cflags => $debug_cflags,
+#	  release_cflags => $release_cflags,
 #	  unistd => $unistd,
 #	  thread_cflag => $thread_cflag,
 #	  sys_id => $sys_id,
 #	  lflags => $lflags,
-#	  "debug-lflags" => $debug_lflags,
-#	  "nodebug-lflags" => $nodebug_lflags,
+#	  debug_lflags => $debug_lflags,
+#	  release_lflags => $release_lflags,
 #	  bn_ops => $bn_ops,
 #	  cpuid_obj => $cpuid_obj,
 #	  bn_obj => $bn_obj,
@@ -259,48 +259,80 @@ my $BSDthreads="-pthread -D_THREAD_SAFE -D_REENTRANT";
 #
 # The configuration hashes can refer to templates in two different manners:
 #
-# - as part of the hash, one can have a key called 'base_templates' that
+# - as part of the hash, one can have a key called 'inherit_from' that
 #   indicate what other configuration hashes to inherit data from.
 #   These are resolved recursively.
 #
+#   Inheritance works as a set of default values that can be overriden
+#   by corresponding attribute values in the inheriting configuration.
+#
+#   If several configurations are given in the 'inherit_from' array, the
+#   values of same attribute are concatenated with space separation.
+#   With this, it's possible to have several smaller templates for
+#   different configuration aspects that can be combined into a complete
+#   configuration.
+#
 #   Example:
 #
-#	"bar" => {
-#		haha => "haha"
-#	},
 #	"foo" => {
-#		base_templates => [ "bar" ],
-#		hoho => "hoho"
+#		template => 1,
+#		haha => "haha",
+#		hoho => "ho"
+#	},
+#	"bar" => {
+#		template => 1,
+#		hoho => "ho",
+#		hehe => "hehe"
+#	},
+#	"laughter" => {
+#		inherit_from => [ "foo", "bar" ],
 #	}
 #
 #	The entry for "foo" will become as follows after processing:
 #
-#	"foo" => {
+#	"laughter" => {
 #		haha => "haha",
-#		hoho => "hoho"
+#		hoho => "ho ho",
+#		hehe => "hehe"
 #	}
 #
 #   Note 1: any entry from the table can be used as a template.
 #   Note 2: pure templates have the attribute 'template => 1' and cannot
-#           be used as targets
+#           be used as targets.
 #
-# - as part of any string, one can have a template reference wrapped in
-#   double braces, and when processing templates, this will be replaced
-#   with the corresponding string from the template.
+# - instead of a string, one can have a code block of the form
+#   'sub { /* your code here */ }', where the arguments are the list of
+#   inherited values for that key.  In fact, the concatenation of strings
+#   is really done by using 'sub { join(" ",@_) }' on the list of inherited
+#   values.
 #
 #   Example:
 #
-#	"bar" => {
-#		haha => "haha"
-#	},
 #	"foo" => {
-#		haha => "{{bar}} !!!!"
+#		template => 1,
+#		haha => "ha ha",
+#		hoho => "ho",
+#		ignored => "This should not appear in the end result",
+#	},
+#	"bar" => {
+#		template => 1,
+#		haha => "ah",
+#		hoho => "haho",
+#		hehe => "hehe"
+#	},
+#	"laughter" => {
+#		inherit_from => [ "foo", "bar" ],
+#		hehe => sub { join(" ",(@_,"!!!")) },
+#		ignored => "",
 #	}
 #
 #	The entry for "foo" will become as follows after processing:
 #
-#	"foo" => {
-#		haha => "haha !!!!"
+#	"laughter" => {
+#		haha => "ha ha ah",
+#		hoho => "ho haho",
+#		hehe => "hehe !!!",
+#		ignored => ""
 #	}
 #
 
@@ -355,7 +387,7 @@ my %table=(
     },
     x86_elf_asm => {
 	template	=> 1,
-	base_templates	=> [ "x86_asm" ],
+	inherit_from	=> [ "x86_asm" ],
 	perlasm_scheme	=> "elf"
     },
 
@@ -418,9 +450,9 @@ my %table=(
 	sha1_obj        => "sha1-mips.o sha256-mips.o",
     },
     mips64_asm => {
-	base_templates	=> [ "mips32_asm" ],
+	inherit_from	=> [ "mips32_asm" ],
 	template	=> 1,
-	sha1_obj        => "{{mips32_asm}} sha512-mips.o",
+	sha1_obj        => sub { join(" ", @_, "sha512-mips.o") }
     },
     s390x_asm => {
 	template	=> 1,
@@ -477,7 +509,7 @@ my %table=(
 	modes_obj       => "ghashp8-ppc.o",
     },
     ppc32_asm => {
-	base_templates	=> [ "ppc64_asm" ],
+	inherit_from	=> [ "ppc64_asm" ],
 	template	=> 1
     },
 );
@@ -525,32 +557,6 @@ sub stringtohash {
     # return a ref to a hash, that's what the outer braces are for.
     return { map { shift @stringsequence => $_ } split /:/, $in };
 };
-
-# Support function to look for and resolve template references.
-# It uses breadcrumbs to check for circular template references.
-#
-# Note: Any configuration value is also a template.
-sub lookup_templates {
-    my $tableref = shift;
-    my $target = shift;
-    my @breadcrumbs = @_;
-
-    if (grep { $_ eq $target } @breadcrumbs) {
-	die "Template loop!  target backtrace:\n  ",join("\n  ",
-							 $target,
-							 @breadcrumbs),"\n";
-    }
-
-    foreach my $key (keys %{$tableref->{$target}}) {
-	my $value = $tableref->{$target}->{$key};
-	while ($value =~ /{{([-\w]+)}}/) {
-	    lookup_templates($tableref, $1, $target, @breadcrumbs);
-	    $value = $`.$tableref->{$1}->{$key}.$';
-	}
-	$tableref->{$target}->{$key} = $value;
-    }
-};
-
 
 # Read configuration target stanzas from a file, so that people can have
 # local files with their own definitions
@@ -621,9 +627,9 @@ sub read_config {
 			# First, check that the non-debug variant isn't
 			# already built up with all it should have.
 			if ($nondebug->{debug_cflags}
-			    || $nondebug->{nodebug_cflags}
+			    || $nondebug->{release_cflags}
 			    || $nondebug->{debug_lflags}
-			    || $nondebug->{nodebug_lflags}) {
+			    || $nondebug->{release_lflags}) {
 			    warn "there's a debug target $debugkey to be merged with a target $nondebugkey, but the latter seems to already have both nodebug and debug information.  This requires human intervention.  Skipping $debugkey...";
 			    next;
 			}
@@ -653,11 +659,11 @@ sub read_config {
 			    # becomes the merged variant when we're done.
 			    # for each of cflags and lflags, they are
 			    # replaced with cflags, debug_cflags,
-			    # nodebug_cflags and similar for lflags.
+			    # release_cflags and similar for lflags.
 			    #
 			    # The purpose is that 'cflags' should be
 			    # used together with 'debug_cflags' or
-			    # 'nodebug_cflags' depending on what the
+			    # 'release_cflags' depending on what the
 			    # user asks for.
 			    foreach (("cflags", "lflags")) {
 				my @list_d = split /\s+/, $debug->{$_};
@@ -693,57 +699,98 @@ sub read_config {
 
 	%table = (%table, %targets);
 
-	# Go through all new targets and resolve template references.
-	foreach (keys %targets) {
-	    # Start with resolving the base templates
-	    my @breadcrumbs = ();
-	    while (my @base_templates =
-		   $table{$_}->{base_templates} ?
-		   @{$table{$_}->{base_templates}} : ()) {
-		my %new_template_data = ();
-		my %new_base_templates = ();
-		foreach my $base_template (@base_templates) {
-		    if (grep { $_ eq $base_template } @breadcrumbs) {
-			die "Base template loop!  target backtrace:\n  "
-			    ,$base_template,"\n  "
-			    ,join("\n  ",
-				  map { "[ ".join(", ", @{$_})." ]" } @breadcrumbs)
-			    ,"\n";
+	# Local function to resolve inheritance
+	my $resolve_inheritance;
+	$resolve_inheritance =
+	    sub {
+		my $target = shift;
+		my @breadcrumbs = @_;
+
+		if (grep { $_ eq $target } @breadcrumbs) {
+		    die "inherit_from loop!  target backtrace:\n  "
+			,$target,"\n  ",join("\n  ", @breadcrumbs),"\n";
+		}
+
+		# Recurse through all inheritances.  They will be resolved on
+		# the fly, so when this operation is done, they will all just
+		# be a bunch of attributes with string values.
+		# What we get here, though, are keys with references to lists
+		# of the combined values of them all.  We will deal with lists
+		# after this stage is done.
+		my %combined_inheritance = ();
+		if ($table{$target}->{inherit_from}) {
+		    foreach (@{$table{$target}->{inherit_from}}) {
+			my %inherited_config =
+			    $resolve_inheritance->($_, $target, @breadcrumbs);
+
+			# 'template' is a marker that's considered private to
+			# the config that had it.
+			delete $inherited_config{template};
+
+			map {
+			    if (!$combined_inheritance{$_}) {
+				$combined_inheritance{$_} = [];
+			    }
+			    push @{$combined_inheritance{$_}}, $inherited_config{$_};
+			} keys %inherited_config;
+		    }
+		}
+
+		# We won't need inherit_from in this target any more, since
+		# we've resolved all the inheritances that lead to this
+		delete $table{$target}->{inherit_from};
+
+		# Now is the time to deal with those lists.  Here's the place
+		# to decide what shall be done with those lists, all based on
+		# the values of the target we're currently dealing with.
+		# - If a value is a coderef, it will be executed with the list
+		#   of inherited values as arguments.
+		# - If the corresponding key doesn't have a value at all or is
+		#   the emoty string, the inherited value list will be run
+		#   through the default combiner (below), and the result
+		#   becomes this target's value.
+		# - Otherwise, this target's value is assumed to be a string
+		#   that will simply override the inherited list of values.
+		my $default_combiner = sub { join(' ',@_) };
+
+		my %all_keys =
+		    map { $_ => 1 } (keys %combined_inheritance,
+				     keys %{$table{$target}});
+		foreach (sort keys %all_keys) {
+
+		    # Current target doesn't have a value for the current key?
+		    # Assign it the default combiner, the rest of this loop
+		    # body will handle it just like any other coderef.
+		    if (!exists $table{$target}->{$_}) {
+			$table{$target}->{$_} = $default_combiner;
 		    }
 
-		    if ($table{$base_template}) {
-			%new_base_templates =
-			    (
-			     %new_base_templates,
-			     map { $_ => 1 } @{$table{$base_template}->{base_templates}}
-			    );
-			%new_template_data =
-			    (
-			     %new_template_data,
-			     %{$table{$base_template}}
-			    );
-			delete $new_template_data{template};
+		    my $valuetype = ref($table{$target}->{$_});
+		    if ($valuetype eq "CODE") {
+			# CODE reference, execute it with the inherited values
+			# as arguments.
+			$table{$target}->{$_} =
+			    $table{$target}->{$_}->(@{$combined_inheritance{$_}});
+		    } elsif ($valuetype eq "") {
+			# Scalar, just leave it as is.
 		    } else {
-			# There are unresolved base templates.  That's no good
-			warn "Target $_ has unresolved base templates.  Removing...";
-			delete $table{$_};
-			goto NEXT;
+			# Some other type of reference that we don't handle.
+			# Better to abort at this point.
+			die "cannot handle reference type $valuetype,"
+			    ," found in target $target -> $_\n";
 		    }
 		}
 
-		@breadcrumbs = ( [ @base_templates ], @breadcrumbs );
-		# Now, we rebuild the target, using the newly fetched template
-		# data, overlaying that with the target's original data, and
-		# overlaying the new base template list on top of that
-		$table{$_} = {
-		    %new_template_data,
-		    %{$table{$_}},
-		    base_templates => [ keys %new_base_templates ]
-		}
-	    }
+		# Finally done, return the result.
+		%{$table{$target}};
+	};
 
-	    lookup_templates(\%table, $_);
-	  NEXT:
+	# Go through all new targets and resolve inheritance and template
+	# references.
+	foreach (keys %targets) {
+	    # We're ignoring the returned values here, they are only valuable
+	    # to the inner recursion of this function.
+	    $resolve_inheritance->($_);
 	}
 }
 
@@ -1142,15 +1189,15 @@ if ($target =~ m/^CygWin32(-.*)$/) {
 print "Configuring for $target\n";
 
 my ($d, $t) = $target =~ m/^(debug-)?(.*)$/;
-my $debug_prefix = "nodebug-";
+my $debug_prefix = "release_";
 if ($d) {
-    $debug_prefix = "debug-";
+    $debug_prefix = "debug_";
 
     # If we do not find debug-foo in the table, the target is set to foo,
-    # but only if the foo target has a noon-empty debug-cflags or debug-lflags
+    # but only if the foo target has a noon-empty debug_cflags or debug_lflags
     # attribute.
-    if (!$table{$target} && ($table{$t}->{"debug-cflags"}
-			     || $table{$t}->{"debug-lflags"})) {
+    if (!$table{$target} && ($table{$t}->{debug_cflags}
+			     || $table{$t}->{debug_lflags})) {
 	$target = $t;
     }
 }
@@ -1262,7 +1309,7 @@ print "IsMK1MF=$IsMK1MF\n";
 # Allow environment CC to override compiler...
 my $cc = $ENV{CC} || $table{$t}->{cc};
 
-# For cflags and lflags, add the debug- or nodebug- attributes
+# For cflags and lflags, add the debug_ or release_ attributes
 # Do it in such a way that no spurious space is appended (hence the grep).
 my $cflags = join(" ",
 		  grep { $_ } ($table{$t}->{cflags},
@@ -2251,11 +2298,6 @@ sub print_table_entry
 	my $target = shift;
 	my $type = shift;
 
-	my $debug_cflags = "debug-cflags";
-	my $nodebug_cflags = "nodebug-cflags";
-	my $debug_lflags = "debug-lflags";
-	my $nodebug_lflags = "nodebug-lflags";
-
 	# Don't print the templates
 	return if $table{$target}->{template};
 
@@ -2265,14 +2307,14 @@ sub print_table_entry
 *** $target
 \$cc           = $table{$target}->{cc}
 \$cflags       = $table{$target}->{cflags}
-\$debug_cflags   = $table{$target}->{$debug_cflags}
-\$nodebug_cflags = $table{$target}->{$nodebug_cflags}
+\$debug_cflags   = $table{$target}->{debug_cflags}
+\$release_cflags = $table{$target}->{release_cflags}
 \$unistd       = $table{$target}->{unistd}
 \$thread_cflag = $table{$target}->{thread_cflag}
 \$sys_id       = $table{$target}->{sys_id}
 \$lflags       = $table{$target}->{lflags}
-\$debug_lflags   = $table{$target}->{$debug_lflags}
-\$nodebug_lflags = $table{$target}->{$nodebug_lflags}
+\$debug_lflags   = $table{$target}->{debug_lflags}
+\$release_lflags = $table{$target}->{release_lflags}
 \$bn_ops       = $table{$target}->{bn_ops}
 \$cpuid_obj    = $table{$target}->{cpuid_obj}
 \$bn_obj       = $table{$target}->{bn_obj}
@@ -2304,14 +2346,14 @@ EOF
 	    my @sequence = (
 		"cc",
 		"cflags",
-		"debug-cflags",
-		"nodebug-cflags",
+		"debug_cflags",
+		"release_cflags",
 		"unistd",
 		"thread_cflag",
 		"sys_id",
 		"lflags",
-		"debug-lflags",
-		"nodebug-lflags",
+		"debug_lflags",
+		"release_lflags",
 		"bn_ops",
 		"cpuid_obj",
 		"bn_obj",
