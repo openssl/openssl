@@ -257,7 +257,7 @@ static int cmd_Curves(SSL_CONF_CTX *cctx, const char *value)
     return rv > 0;
 }
 
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
 /* ECDH temporary parameters */
 static int cmd_ECDHParameters(SSL_CONF_CTX *cctx, const char *value)
 {
@@ -447,7 +447,7 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD_STRING(SignatureAlgorithms, "sigalgs"),
     SSL_CONF_CMD_STRING(ClientSignatureAlgorithms, "client_sigalgs"),
     SSL_CONF_CMD_STRING(Curves, "curves"),
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     SSL_CONF_CMD_STRING(ECDHParameters, "named_curve"),
 #endif
     SSL_CONF_CMD_STRING(CipherString, "cipher"),

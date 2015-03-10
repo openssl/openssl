@@ -71,7 +71,7 @@
 
 # include <openssl/opensslconf.h>
 
-# ifdef OPENSSL_NO_ECDH
+# ifdef OPENSSL_NO_EC
 #  error ECDH is disabled.
 # endif
 

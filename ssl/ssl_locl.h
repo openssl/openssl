@@ -1350,7 +1350,7 @@ typedef struct ssl3_state_st {
 #  ifndef OPENSSL_NO_DH
         DH *dh;
 #  endif
-#  ifndef OPENSSL_NO_ECDH
+#  ifndef OPENSSL_NO_EC
         EC_KEY *ecdh;           /* holds short lived ECDH key */
 #  endif
         /* used when SSL_ST_FLUSH_DATA is entered */
@@ -1662,7 +1662,7 @@ typedef struct cert_st {
     DH *(*dh_tmp_cb) (SSL *ssl, int is_export, int keysize);
     int dh_tmp_auto;
 # endif
-# ifndef OPENSSL_NO_ECDH
+# ifndef OPENSSL_NO_EC
     EC_KEY *ecdh_tmp;
     /* Callback for generating ephemeral ECDH keys */
     EC_KEY *(*ecdh_tmp_cb) (SSL *ssl, int is_export, int keysize);
@@ -1760,7 +1760,7 @@ typedef struct sess_cert_st {
 # ifndef OPENSSL_NO_DH
     DH *peer_dh_tmp;            /* not used for SSL 2 */
 # endif
-# ifndef OPENSSL_NO_ECDH
+# ifndef OPENSSL_NO_EC
     EC_KEY *peer_ecdh_tmp;
 # endif
     int references;             /* actually always 1 at the moment */
@@ -2317,7 +2317,7 @@ int tls1_alert_code(int code);
 int ssl3_alert_code(int code);
 int ssl_ok(SSL *s);
 
-#  ifndef OPENSSL_NO_ECDH
+#  ifndef OPENSSL_NO_EC
 int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s);
 #  endif
 
@@ -2332,9 +2332,7 @@ int tls1_set_curves(unsigned char **pext, size_t *pextlen,
                     int *curves, size_t ncurves);
 int tls1_set_curves_list(unsigned char **pext, size_t *pextlen,
                          const char *str);
-#   ifndef OPENSSL_NO_ECDH
 int tls1_check_ec_tmp_key(SSL *s, unsigned long id);
-#   endif                       /* OPENSSL_NO_ECDH */
 #  endif                        /* OPENSSL_NO_EC */
 
 #  ifndef OPENSSL_NO_TLSEXT

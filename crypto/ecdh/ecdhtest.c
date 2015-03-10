@@ -73,7 +73,7 @@
 
 #include "../e_os.h"
 
-#include <openssl/opensslconf.h> /* for OPENSSL_NO_ECDH */
+#include <openssl/opensslconf.h> /* for OPENSSL_NO_EC */
 #include <openssl/crypto.h>
 #include <openssl/bio.h>
 #include <openssl/bn.h>
@@ -82,7 +82,7 @@
 #include <openssl/sha.h>
 #include <openssl/err.h>
 
-#ifdef OPENSSL_NO_ECDH
+#ifdef OPENSSL_NO_EC
 int main(int argc, char *argv[])
 {
     printf("No ECDH support\n");

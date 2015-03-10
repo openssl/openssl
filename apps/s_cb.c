@@ -521,7 +521,7 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
     case EVP_PKEY_DH:
         BIO_printf(out, "DH, %d bits\n", EVP_PKEY_bits(key));
         break;
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     case EVP_PKEY_EC:
         {
             EC_KEY *ec = EVP_PKEY_get1_EC_KEY(key);

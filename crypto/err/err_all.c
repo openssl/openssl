@@ -76,10 +76,8 @@
 #ifndef OPENSSL_NO_DSA
 # include <openssl/dsa.h>
 #endif
-#ifndef OPENSSL_NO_ECDSA
+#ifndef OPENSSL_NO_EC
 # include <openssl/ecdsa.h>
-#endif
-#ifndef OPENSSL_NO_ECDH
 # include <openssl/ecdh.h>
 #endif
 #include <openssl/evp.h>
@@ -138,11 +136,7 @@ void ERR_load_crypto_strings(void)
 # endif
 # ifndef OPENSSL_NO_EC
     ERR_load_EC_strings();
-# endif
-# ifndef OPENSSL_NO_ECDSA
     ERR_load_ECDSA_strings();
-# endif
-# ifndef OPENSSL_NO_ECDH
     ERR_load_ECDH_strings();
 # endif
     /* skip ERR_load_SSL_strings() because it is not in this library */

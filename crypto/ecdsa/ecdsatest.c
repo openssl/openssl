@@ -73,9 +73,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/opensslconf.h> /* To see if OPENSSL_NO_ECDSA is defined */
+#include <openssl/opensslconf.h> /* To see if OPENSSL_NO_EC is defined */
 
-#ifdef OPENSSL_NO_ECDSA
+#ifdef OPENSSL_NO_EC
 int main(int argc, char *argv[])
 {
     puts("Elliptic curves are disabled.");

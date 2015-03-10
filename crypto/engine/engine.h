@@ -82,10 +82,8 @@
 #  ifndef OPENSSL_NO_DH
 #   include <openssl/dh.h>
 #  endif
-#  ifndef OPENSSL_NO_ECDH
+#  ifndef OPENSSL_NO_EC
 #   include <openssl/ecdh.h>
-#  endif
-#  ifndef OPENSSL_NO_ECDSA
 #   include <openssl/ecdsa.h>
 #  endif
 #  include <openssl/rand.h>

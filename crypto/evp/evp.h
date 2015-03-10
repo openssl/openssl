@@ -234,7 +234,7 @@ typedef int evp_verify_method(int type, const unsigned char *m,
 #   define EVP_PKEY_DSA_method     EVP_PKEY_NULL_method
 #  endif
 
-#  ifndef OPENSSL_NO_ECDSA
+#  ifndef OPENSSL_NO_EC
 #   define EVP_PKEY_ECDSA_method   (evp_sign_method *)ECDSA_sign, \
                                 (evp_verify_method *)ECDSA_verify, \
                                  {EVP_PKEY_EC,0,0,0}

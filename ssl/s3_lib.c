@@ -2051,7 +2051,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      },
 #endif
 
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     /* Cipher C001 */
     {
      1,
@@ -2451,7 +2451,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
-#endif                          /* OPENSSL_NO_ECDH */
+#endif                          /* OPENSSL_NO_EC */
 
 #ifndef OPENSSL_NO_SRP
     /* Cipher C01A */
@@ -2598,7 +2598,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      256,
      },
 #endif                          /* OPENSSL_NO_SRP */
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
 
     /* HMAC based TLS v1.2 ciphersuites from RFC5289 */
 
@@ -2973,7 +2973,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      256,
      256},
 # endif                         /* OPENSSL_NO_CAMELLIA */
-#endif                          /* OPENSSL_NO_ECDH */
+#endif                          /* OPENSSL_NO_EC */
 
 #ifdef TEMP_GOST_TLS
 /* Cipher FF00 */
@@ -3138,7 +3138,7 @@ void ssl3_free(SSL *s)
     if (s->s3->tmp.dh != NULL)
         DH_free(s->s3->tmp.dh);
 #endif
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     if (s->s3->tmp.ecdh != NULL)
         EC_KEY_free(s->s3->tmp.ecdh);
 #endif
@@ -3183,7 +3183,7 @@ void ssl3_clear(SSL *s)
         s->s3->tmp.dh = NULL;
     }
 #endif
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     if (s->s3->tmp.ecdh != NULL) {
         EC_KEY_free(s->s3->tmp.ecdh);
         s->s3->tmp.ecdh = NULL;
@@ -3357,7 +3357,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         s->cert->dh_tmp_auto = larg;
         return 1;
 #endif
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     case SSL_CTRL_SET_TMP_ECDH:
         {
             EC_KEY *ecdh = NULL;
@@ -3389,7 +3389,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             SSLerr(SSL_F_SSL3_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
             return (ret);
         }
-#endif                          /* !OPENSSL_NO_ECDH */
+#endif                          /* !OPENSSL_NO_EC */
 #ifndef OPENSSL_NO_TLSEXT
     case SSL_CTRL_SET_TLSEXT_HOSTNAME:
         if (larg == TLSEXT_NAMETYPE_host_name) {
@@ -3558,7 +3558,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
     case SSL_CTRL_GET_SHARED_CURVE:
         return tls1_shared_curve(s, larg);
 
-# ifndef OPENSSL_NO_ECDH
+# ifndef OPENSSL_NO_EC
     case SSL_CTRL_SET_ECDH_AUTO:
         s->cert->ecdh_tmp_auto = larg;
         return 1;
@@ -3629,7 +3629,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             EVP_PKEY *ptmp;
             int rv = 0;
             sc = s->session->sess_cert;
-#if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_ECDH)
+#if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_EC)
             if (!sc->peer_rsa_tmp && !sc->peer_dh_tmp && !sc->peer_ecdh_tmp)
                 return 0;
 #endif
@@ -3645,7 +3645,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             else if (sc->peer_dh_tmp)
                 rv = EVP_PKEY_set1_DH(ptmp, sc->peer_dh_tmp);
 #endif
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
             else if (sc->peer_ecdh_tmp)
                 rv = EVP_PKEY_set1_EC_KEY(ptmp, sc->peer_ecdh_tmp);
 #endif
@@ -3736,7 +3736,7 @@ long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
         }
         break;
 #endif
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     case SSL_CTRL_SET_TMP_ECDH_CB:
         {
             s->cert->ecdh_tmp_cb = (EC_KEY *(*)(SSL *, int, int))fp;
@@ -3847,7 +3847,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         ctx->cert->dh_tmp_auto = larg;
         return 1;
 #endif
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     case SSL_CTRL_SET_TMP_ECDH:
         {
             EC_KEY *ecdh = NULL;
@@ -3881,7 +3881,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
             SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
             return (0);
         }
-#endif                          /* !OPENSSL_NO_ECDH */
+#endif                          /* !OPENSSL_NO_EC */
 #ifndef OPENSSL_NO_TLSEXT
     case SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG:
         ctx->tlsext_servername_arg = parg;
@@ -3955,7 +3955,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         return tls1_set_curves_list(&ctx->tlsext_ellipticcurvelist,
                                     &ctx->tlsext_ellipticcurvelist_length,
                                     parg);
-#  ifndef OPENSSL_NO_ECDH
+#  ifndef OPENSSL_NO_EC
     case SSL_CTRL_SET_ECDH_AUTO:
         ctx->cert->ecdh_tmp_auto = larg;
         return 1;
@@ -4059,7 +4059,7 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
         }
         break;
 #endif
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     case SSL_CTRL_SET_TMP_ECDH_CB:
         {
             cert->ecdh_tmp_cb = (EC_KEY *(*)(SSL *, int, int))fp;
@@ -4251,14 +4251,12 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 
 #ifndef OPENSSL_NO_TLSEXT
 # ifndef OPENSSL_NO_EC
-#  ifndef OPENSSL_NO_ECDH
         /*
          * if we are considering an ECC cipher suite that uses an ephemeral
          * EC key check it
          */
         if (alg_k & SSL_kECDHE)
             ok = ok && tls1_check_ec_tmp_key(s, c->id);
-#  endif                        /* OPENSSL_NO_ECDH */
 # endif                         /* OPENSSL_NO_EC */
 #endif                          /* OPENSSL_NO_TLSEXT */
 
@@ -4346,16 +4344,13 @@ int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
     if (!(alg_a & SSL_aDSS))
         p[ret++] = SSL3_CT_DSS_SIGN;
 #endif
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     if ((alg_k & (SSL_kECDHr | SSL_kECDHe)) && (s->version >= TLS1_VERSION)) {
         if (nostrict || !(alg_a & SSL_aRSA))
             p[ret++] = TLS_CT_RSA_FIXED_ECDH;
         if (nostrict || !(alg_a & SSL_aECDSA))
             p[ret++] = TLS_CT_ECDSA_FIXED_ECDH;
     }
-#endif
-
-#ifndef OPENSSL_NO_ECDSA
     /*
      * ECDSA certs can be used with RSA cipher suites as well so we don't
      * need to check for SSL_kECDH or SSL_kECDHE
