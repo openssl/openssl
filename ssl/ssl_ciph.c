@@ -748,12 +748,9 @@ static void ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth,
     *mkey |= SSL_kKRB5;
     *auth |= SSL_aKRB5;
 #endif
-#ifdef OPENSSL_NO_ECDSA
-    *auth |= SSL_aECDSA;
-#endif
-#ifdef OPENSSL_NO_ECDH
+#ifdef OPENSSL_NO_EC
     *mkey |= SSL_kECDHe | SSL_kECDHr;
-    *auth |= SSL_aECDH;
+    *auth |= SSL_aECDSA | SSL_aECDH;
 #endif
 #ifdef OPENSSL_NO_PSK
     *mkey |= SSL_kPSK;
@@ -1437,7 +1434,7 @@ static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
                    SSL_R_ONLY_TLS_1_2_ALLOWED_IN_SUITEB_MODE);
         return 0;
     }
-# ifndef OPENSSL_NO_ECDH
+# ifndef OPENSSL_NO_EC
     switch (suiteb_flags) {
     case SSL_CERT_FLAG_SUITEB_128_LOS:
         if (suiteb_comb2)

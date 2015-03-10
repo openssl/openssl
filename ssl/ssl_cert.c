@@ -175,7 +175,7 @@ void ssl_cert_set_default_md(CERT *cert)
     cert->pkeys[SSL_PKEY_RSA_SIGN].digest = EVP_sha1();
     cert->pkeys[SSL_PKEY_RSA_ENC].digest = EVP_sha1();
 #endif
-#ifndef OPENSSL_NO_ECDSA
+#ifndef OPENSSL_NO_EC
     cert->pkeys[SSL_PKEY_ECC].digest = EVP_sha1();
 #endif
 }
@@ -261,7 +261,7 @@ CERT *ssl_cert_dup(CERT *cert)
     ret->dh_tmp_auto = cert->dh_tmp_auto;
 #endif
 
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     if (cert->ecdh_tmp) {
         ret->ecdh_tmp = EC_KEY_dup(cert->ecdh_tmp);
         if (ret->ecdh_tmp == NULL) {
@@ -450,7 +450,7 @@ void ssl_cert_free(CERT *c)
     if (c->dh_tmp)
         DH_free(c->dh_tmp);
 #endif
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     if (c->ecdh_tmp)
         EC_KEY_free(c->ecdh_tmp);
 #endif
@@ -683,7 +683,7 @@ void ssl_sess_cert_free(SESS_CERT *sc)
     if (sc->peer_dh_tmp != NULL)
         DH_free(sc->peer_dh_tmp);
 #endif
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     if (sc->peer_ecdh_tmp != NULL)
         EC_KEY_free(sc->peer_ecdh_tmp);
 #endif

@@ -774,7 +774,7 @@ static void sv_usage(void)
             " -dhe1024dsa   - use 1024 bit key (with 160-bit subprime) for DHE\n");
     fprintf(stderr, " -no_dhe       - disable DHE\n");
 #endif
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     fprintf(stderr, " -no_ecdhe     - disable ECDHE\n");
 #endif
 #ifndef OPENSSL_NO_PSK
@@ -803,7 +803,7 @@ static void sv_usage(void)
             " -time         - measure processor time used by client and server\n");
     fprintf(stderr, " -zlib         - use zlib compression\n");
     fprintf(stderr, " -rle          - use rle compression\n");
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     fprintf(stderr,
             " -named_curve arg  - Elliptic curve name to use for ephemeral ECDH keys.\n"
             "                 Use \"openssl ecparam -list_curves\" for all names\n"
@@ -967,7 +967,7 @@ int main(int argc, char *argv[])
     char *server_key = NULL;
     char *client_cert = TEST_CLIENT_CERT;
     char *client_key = NULL;
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     char *named_curve = NULL;
 #endif
     SSL_CTX *s_ctx = NULL;
@@ -980,7 +980,7 @@ int main(int argc, char *argv[])
     DH *dh;
     int dhe1024 = 0, dhe1024dsa = 0;
 #endif
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     EC_KEY *ecdh = NULL;
 #endif
 #ifndef OPENSSL_NO_SRP
@@ -1206,7 +1206,7 @@ int main(int argc, char *argv[])
         else if (strcmp(*argv, "-named_curve") == 0) {
             if (--argc < 1)
                 goto bad;
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
             named_curve = *(++argv);
 #else
             fprintf(stderr,
@@ -1470,7 +1470,7 @@ int main(int argc, char *argv[])
     (void)no_dhe;
 #endif
 
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     if (!no_ecdhe) {
         int nid;
 

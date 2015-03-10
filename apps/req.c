@@ -398,7 +398,7 @@ int MAIN(int argc, char **argv)
                    " -newkey rsa:bits generate a new RSA key of 'bits' in size\n");
         BIO_printf(bio_err,
                    " -newkey dsa:file generate a new DSA key, parameters taken from CA in 'file'\n");
-#ifndef OPENSSL_NO_ECDSA
+#ifndef OPENSSL_NO_EC
         BIO_printf(bio_err,
                    " -newkey ec:file generate a new EC key, parameters taken from CA in 'file'\n");
 #endif

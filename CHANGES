@@ -41,28 +41,33 @@
      [Rich Salz]
 
   *) Remove various unsupported platforms:
-	Sony NEWS4
-	BEOS and BEOS_R5
-	NeXT
-	SUNOS
-	MPE/iX
-	Sinix/ReliantUNIX RM400
-	DGUX
-	NCR
-	Tandem
-	Cray
-	16-bit platforms such as WIN16
+        Sony NEWS4
+        BEOS and BEOS_R5
+        NeXT
+        SUNOS
+        MPE/iX
+        Sinix/ReliantUNIX RM400
+        DGUX
+        NCR
+        Tandem
+        Cray
+        16-bit platforms such as WIN16
      [Rich Salz]
 
-  *) Start cleaning up OPENSSL_NO_xxx #define's
-	OPENSSL_NO_RIPEMD160, OPENSSL_NO_RIPEMD merged into OPENSSL_NO_RMD160
-	OPENSSL_NO_FP_API merged into OPENSSL_NO_STDIO
-	Use setbuf() and remove OPENSSL_NO_SETVBUF_IONBF
+  *) Clean up OPENSSL_NO_xxx #define's
+        Use setbuf() and remove OPENSSL_NO_SETVBUF_IONBF
         Rename OPENSSL_SYSNAME_xxx to OPENSSL_SYS_xxx
+        OPENSSL_NO_EC{DH,DSA} merged into OPENSSL_NO_EC
+        OPENSSL_NO_RIPEMD160, OPENSSL_NO_RIPEMD merged into OPENSSL_NO_RMD160
+        OPENSSL_NO_FP_API merged into OPENSSL_NO_STDIO
+        Remove OPENSSL_NO_BIO OPENSSL_NO_BUFFER OPENSSL_NO_CHAIN_VERIFY
+        OPENSSL_NO_EVP OPENSSL_NO_FIPS_ERR OPENSSL_NO_HASH_COMP
+        OPENSSL_NO_LHASH OPENSSL_NO_OBJECT OPENSSL_NO_SPEED OPENSSL_NO_STACK
+        OPENSSL_NO_X509 OPENSSL_NO_X509_VERIFY
         Remove MS_STATIC; it's a relic from platforms <32 bits.
      [Rich Salz]
 
-  *) Start cleaning up dead code
+  *) Cleaned up dead code
         Remove all but one '#ifdef undef' which is to be looked at.
      [Rich Salz]
 

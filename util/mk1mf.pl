@@ -142,8 +142,6 @@ and [options] can be one of
 	no-krb5					- No KRB5
 	no-srp					- No SRP
 	no-ec					- No EC
-	no-ecdsa				- No ECDSA
-	no-ecdh					- No ECDH
 	no-engine				- No engine
 	no-hw					- No hw
 	nasm 					- Use NASM for x86 asm
@@ -298,8 +296,6 @@ $cflags.=" -DOPENSSL_NO_CMS" if $no_cms;
 $cflags.=" -DOPENSSL_NO_ERR"  if $no_err;
 $cflags.=" -DOPENSSL_NO_KRB5" if $no_krb5;
 $cflags.=" -DOPENSSL_NO_EC"   if $no_ec;
-$cflags.=" -DOPENSSL_NO_ECDSA" if $no_ecdsa;
-$cflags.=" -DOPENSSL_NO_ECDH" if $no_ecdh;
 $cflags.=" -DOPENSSL_NO_GOST" if $no_gost;
 $cflags.=" -DOPENSSL_NO_ENGINE"   if $no_engine;
 $cflags.=" -DOPENSSL_NO_HW"   if $no_hw;
@@ -1427,8 +1423,6 @@ sub read_options
 		"no-sock" => \$no_sock,
 		"no-krb5" => \$no_krb5,
 		"no-ec" => \$no_ec,
-		"no-ecdsa" => \$no_ecdsa,
-		"no-ecdh" => \$no_ecdh,
 		"no-gost" => \$no_gost,
 		"no-engine" => \$no_engine,
 		"no-hw" => \$no_hw,

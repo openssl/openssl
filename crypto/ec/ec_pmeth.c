@@ -203,7 +203,7 @@ static int pkey_ec_verify(EVP_PKEY_CTX *ctx,
     return ret;
 }
 
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
 static int pkey_ec_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
                           size_t *keylen)
 {
@@ -302,7 +302,7 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         EC_GROUP_set_asn1_flag(dctx->gen_group, p1);
         return 1;
 
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     case EVP_PKEY_CTRL_EC_ECDH_COFACTOR:
         if (p1 == -2) {
             if (dctx->cofactor_mode != -1)
@@ -519,12 +519,11 @@ const EVP_PKEY_METHOD ec_pkey_meth = {
     0, 0,
 
     0,
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     pkey_ec_kdf_derive,
 #else
     0,
 #endif
-
     pkey_ec_ctrl,
     pkey_ec_ctrl_str
 };

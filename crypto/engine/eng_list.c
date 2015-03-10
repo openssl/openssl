@@ -300,10 +300,8 @@ static void engine_cpy(ENGINE *dest, const ENGINE *src)
 #ifndef OPENSSL_NO_DH
     dest->dh_meth = src->dh_meth;
 #endif
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     dest->ecdh_meth = src->ecdh_meth;
-#endif
-#ifndef OPENSSL_NO_ECDSA
     dest->ecdsa_meth = src->ecdsa_meth;
 #endif
     dest->rand_meth = src->rand_meth;

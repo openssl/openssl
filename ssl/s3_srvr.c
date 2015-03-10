@@ -1532,7 +1532,7 @@ int ssl3_send_server_key_exchange(SSL *s)
 #ifndef OPENSSL_NO_DH
     DH *dh = NULL, *dhp;
 #endif
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     EC_KEY *ecdh = NULL, *ecdhp;
     unsigned char *encodedPoint = NULL;
     int encodedlen = 0;
@@ -1654,7 +1654,7 @@ int ssl3_send_server_key_exchange(SSL *s)
             r[2] = dh->pub_key;
         } else
 #endif
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
         if (type & SSL_kECDHE) {
             const EC_GROUP *group;
 
@@ -1782,7 +1782,7 @@ int ssl3_send_server_key_exchange(SSL *s)
             r[2] = NULL;
             r[3] = NULL;
         } else
-#endif                          /* !OPENSSL_NO_ECDH */
+#endif                          /* !OPENSSL_NO_EC */
 #ifndef OPENSSL_NO_PSK
         if (type & SSL_kPSK) {
             /*
@@ -1853,7 +1853,7 @@ int ssl3_send_server_key_exchange(SSL *s)
             p += nr[i];
         }
 
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
         if (type & SSL_kECDHE) {
             /*
              * XXX: For now, we only support named (not generic) curves. In
@@ -3001,7 +3001,7 @@ int ssl3_get_cert_verify(SSL *s)
         }
     } else
 #endif
-#ifndef OPENSSL_NO_ECDSA
+#ifndef OPENSSL_NO_EC
     if (pkey->type == EVP_PKEY_EC) {
         j = ECDSA_verify(pkey->save_type,
                          &(s->s3->tmp.cert_verify_md[MD5_DIGEST_LENGTH]),

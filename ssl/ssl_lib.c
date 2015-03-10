@@ -2153,13 +2153,9 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
     int rsa_enc_export, dh_rsa_export, dh_dsa_export;
     int rsa_tmp_export, dh_tmp_export, kl;
     unsigned long mask_k, mask_a, emask_k, emask_a;
-#ifndef OPENSSL_NO_ECDSA
-    int have_ecc_cert, ecdsa_ok, ecc_pkey_size;
-#endif
-#ifndef OPENSSL_NO_ECDH
-    int have_ecdh_tmp, ecdh_ok;
-#endif
 #ifndef OPENSSL_NO_EC
+    int have_ecc_cert, ecdsa_ok, ecc_pkey_size;
+    int have_ecdh_tmp, ecdh_ok;
     X509 *x = NULL;
     EVP_PKEY *ecc_pkey = NULL;
     int signature_nid = 0, pk_nid = 0, md_nid = 0;
@@ -2185,7 +2181,7 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
     dh_tmp = dh_tmp_export = 0;
 #endif
 
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     have_ecdh_tmp = (c->ecdh_tmp || c->ecdh_tmp_cb || c->ecdh_tmp_auto);
 #endif
     cpk = &(c->pkeys[SSL_PKEY_RSA_ENC]);
@@ -2283,10 +2279,8 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
         x = cpk->x509;
         /* This call populates extension flags (ex_flags) */
         X509_check_purpose(x, -1, 0);
-# ifndef OPENSSL_NO_ECDH
         ecdh_ok = (x->ex_flags & EXFLAG_KUSAGE) ?
             (x->ex_kusage & X509v3_KU_KEY_AGREEMENT) : 1;
-# endif
         ecdsa_ok = (x->ex_flags & EXFLAG_KUSAGE) ?
             (x->ex_kusage & X509v3_KU_DIGITAL_SIGNATURE) : 1;
         if (!(cpk->valid_flags & CERT_PKEY_SIGN))
@@ -2298,7 +2292,6 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
             signature_nid = OBJ_obj2nid(x->sig_alg->algorithm);
             OBJ_find_sigid_algs(signature_nid, &md_nid, &pk_nid);
         }
-# ifndef OPENSSL_NO_ECDH
         if (ecdh_ok) {
 
             if (pk_nid == NID_rsaEncryption || pk_nid == NID_rsa) {
@@ -2319,17 +2312,14 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
                 }
             }
         }
-# endif
-# ifndef OPENSSL_NO_ECDSA
         if (ecdsa_ok) {
             mask_a |= SSL_aECDSA;
             emask_a |= SSL_aECDSA;
         }
-# endif
     }
 #endif
 
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     if (have_ecdh_tmp) {
         mask_k |= SSL_kECDHE;
         emask_k |= SSL_kECDHE;
@@ -3267,7 +3257,7 @@ void SSL_set_tmp_dh_callback(SSL *ssl, DH *(*dh) (SSL *ssl, int is_export,
 }
 #endif
 
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
 void SSL_CTX_set_tmp_ecdh_callback(SSL_CTX *ctx,
                                    EC_KEY *(*ecdh) (SSL *ssl, int is_export,
                                                     int keylength))

@@ -61,7 +61,7 @@
 
 # include <openssl/opensslconf.h>
 
-# ifdef OPENSSL_NO_ECDSA
+# ifdef OPENSSL_NO_EC
 #  error ECDSA is disabled.
 # endif
 

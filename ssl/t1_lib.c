@@ -798,7 +798,7 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int set_ee_md)
     return rv;
 }
 
-# ifndef OPENSSL_NO_ECDH
+# ifndef OPENSSL_NO_EC
 /* Check EC temporary key is compatible with client extensions */
 int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
 {
@@ -863,7 +863,7 @@ int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
     return tls1_check_ec_key(s, curve_id, NULL);
 #  endif
 }
-# endif                         /* OPENSSL_NO_ECDH */
+# endif                         /* OPENSSL_NO_EC */
 
 #else
 
@@ -893,9 +893,8 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int set_ee_md)
 #  define tlsext_sigalg_dsa(md) md, TLSEXT_signature_dsa,
 # endif
 
-# ifdef OPENSSL_NO_ECDSA
-#  define tlsext_sigalg_ecdsa(md)
-                                /* */
+# ifdef OPENSSL_NO_EC
+#  define tlsext_sigalg_ecdsa(md) /* */
 # else
 #  define tlsext_sigalg_ecdsa(md) md, TLSEXT_signature_ecdsa,
 # endif
@@ -913,7 +912,7 @@ static const unsigned char tls12_sigalgs[] = {
         tlsext_sigalg(TLSEXT_hash_sha1)
 };
 
-# ifndef OPENSSL_NO_ECDSA
+# ifndef OPENSSL_NO_EC
 static const unsigned char suiteb_sigalgs[] = {
     tlsext_sigalg_ecdsa(TLSEXT_hash_sha256)
         tlsext_sigalg_ecdsa(TLSEXT_hash_sha384)
@@ -3246,7 +3245,7 @@ static int tls12_get_pkey_idx(unsigned char sig_alg)
     case TLSEXT_signature_dsa:
         return SSL_PKEY_DSA_SIGN;
 # endif
-# ifndef OPENSSL_NO_ECDSA
+# ifndef OPENSSL_NO_EC
     case TLSEXT_signature_ecdsa:
         return SSL_PKEY_ECC;
 # endif
@@ -3326,7 +3325,7 @@ void ssl_set_sig_mask(unsigned long *pmask_a, SSL *s, int op)
                 have_dsa = 1;
             break;
 # endif
-# ifndef OPENSSL_NO_ECDSA
+# ifndef OPENSSL_NO_EC
         case TLSEXT_signature_ecdsa:
             if (!have_ecdsa && tls12_sigalg_allowed(s, op, sigalgs))
                 have_ecdsa = 1;
@@ -3521,7 +3520,7 @@ int tls1_process_sigalgs(SSL *s)
             c->pkeys[SSL_PKEY_RSA_ENC].digest = EVP_sha1();
         }
 # endif
-# ifndef OPENSSL_NO_ECDSA
+# ifndef OPENSSL_NO_EC
         if (!c->pkeys[SSL_PKEY_ECC].digest)
             c->pkeys[SSL_PKEY_ECC].digest = EVP_sha1();
 # endif

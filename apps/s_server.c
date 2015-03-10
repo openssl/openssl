@@ -486,7 +486,7 @@ static void sv_usage(void)
                " -dhparam arg  - DH parameter file to use, in cert file if not specified\n");
     BIO_printf(bio_err,
                "                 or a default set of parameters is used\n");
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     BIO_printf(bio_err,
                " -named_curve arg  - Elliptic curve name to use for ephemeral ECDH keys.\n"
                "                 Use \"openssl ecparam -list_curves\" for all names\n"
@@ -545,7 +545,7 @@ static void sv_usage(void)
 #ifndef OPENSSL_NO_DH
     BIO_printf(bio_err, " -no_dhe       - Disable ephemeral DH\n");
 #endif
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     BIO_printf(bio_err, " -no_ecdhe     - Disable ephemeral ECDH\n");
 #endif
     BIO_printf(bio_err,
@@ -1677,7 +1677,7 @@ int MAIN(int argc, char *argv[])
                 bio_s_out = BIO_new_fp(stdout, BIO_NOCLOSE);
         }
     }
-#if !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_ECDSA)
+#if !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_EC)
     if (nocert)
 #endif
     {

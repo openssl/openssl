@@ -1760,7 +1760,7 @@ void SSL_set_tmp_dh_callback(SSL *ssl,
                              DH *(*dh) (SSL *ssl, int is_export,
                                         int keylength));
 # endif
-# ifndef OPENSSL_NO_ECDH
+# ifndef OPENSSL_NO_EC
 void SSL_CTX_set_tmp_ecdh_callback(SSL_CTX *ctx,
                                    EC_KEY *(*ecdh) (SSL *ssl, int is_export,
                                                     int keylength));

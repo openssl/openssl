@@ -172,10 +172,8 @@
 # include <openssl/dsa.h>
 # include "./testdsa.h"
 #endif
-#ifndef OPENSSL_NO_ECDSA
+#ifndef OPENSSL_NO_EC
 # include <openssl/ecdsa.h>
-#endif
-#ifndef OPENSSL_NO_ECDH
 # include <openssl/ecdh.h>
 #endif
 #include <openssl/modes.h>
@@ -242,14 +240,12 @@ static double rsa_results[RSA_NUM][2];
 #ifndef OPENSSL_NO_DSA
 static double dsa_results[DSA_NUM][2];
 #endif
-#ifndef OPENSSL_NO_ECDSA
+#ifndef OPENSSL_NO_EC
 static double ecdsa_results[EC_NUM][2];
-#endif
-#ifndef OPENSSL_NO_ECDH
 static double ecdh_results[EC_NUM][1];
 #endif
 
-#if defined(OPENSSL_NO_DSA) && !(defined(OPENSSL_NO_ECDSA) && defined(OPENSSL_NO_ECDH))
+#if defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_EC)
 static const char rnd_seed[] =
     "string to make the random number generator think it has entropy";
 static int rnd_fake = 0;
@@ -330,7 +326,7 @@ static double Time_F(int s)
 }
 #endif
 
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
 static const int KDF1_SHA1_len = 20;
 static void *KDF1_SHA1(const void *in, size_t inlen, void *out,
                        size_t *outlen)
@@ -340,7 +336,7 @@ static void *KDF1_SHA1(const void *in, size_t inlen, void *out,
     *outlen = SHA_DIGEST_LENGTH;
     return SHA1(in, inlen, out);
 }
-#endif                         /* OPENSSL_NO_ECDH */
+#endif                         /* OPENSSL_NO_EC */
 
 static void multiblock_speed(const EVP_CIPHER *evp_cipher);
 
@@ -595,30 +591,23 @@ int MAIN(int argc, char **argv)
 
 #endif
 
-#ifndef OPENSSL_NO_ECDSA
+#ifndef OPENSSL_NO_EC
     unsigned char ecdsasig[256];
     unsigned int ecdsasiglen;
     EC_KEY *ecdsa[EC_NUM];
     long ecdsa_c[EC_NUM][2];
-#endif
-
-#ifndef OPENSSL_NO_ECDH
     EC_KEY *ecdh_a[EC_NUM], *ecdh_b[EC_NUM];
     unsigned char secret_a[MAX_ECDH_SIZE], secret_b[MAX_ECDH_SIZE];
     int secret_size_a, secret_size_b;
     int ecdh_checks = 0;
     int secret_idx = 0;
     long ecdh_c[EC_NUM][2];
+    int ecdsa_doit[EC_NUM];
+    int ecdh_doit[EC_NUM];
 #endif
 
     int rsa_doit[RSA_NUM];
     int dsa_doit[DSA_NUM];
-#ifndef OPENSSL_NO_ECDSA
-    int ecdsa_doit[EC_NUM];
-#endif
-#ifndef OPENSSL_NO_ECDH
-    int ecdh_doit[EC_NUM];
-#endif
     int doit[ALGOR_NUM];
     int pr_header = 0;
     const EVP_CIPHER *evp_cipher = NULL;
@@ -639,11 +628,9 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_DSA
     memset(dsa_key, 0, sizeof(dsa_key));
 #endif
-#ifndef OPENSSL_NO_ECDSA
+#ifndef OPENSSL_NO_EC
     for (i = 0; i < EC_NUM; i++)
         ecdsa[i] = NULL;
-#endif
-#ifndef OPENSSL_NO_ECDH
     for (i = 0; i < EC_NUM; i++) {
         ecdh_a[i] = NULL;
         ecdh_b[i] = NULL;
@@ -689,11 +676,9 @@ int MAIN(int argc, char **argv)
         rsa_doit[i] = 0;
     for (i = 0; i < DSA_NUM; i++)
         dsa_doit[i] = 0;
-#ifndef OPENSSL_NO_ECDSA
+#ifndef OPENSSL_NO_EC
     for (i = 0; i < EC_NUM; i++)
         ecdsa_doit[i] = 0;
-#endif
-#ifndef OPENSSL_NO_ECDH
     for (i = 0; i < EC_NUM; i++)
         ecdh_doit[i] = 0;
 #endif
@@ -986,7 +971,7 @@ int MAIN(int argc, char **argv)
             dsa_doit[R_DSA_2048] = 1;
         } else
 #endif
-#ifndef OPENSSL_NO_ECDSA
+#ifndef OPENSSL_NO_EC
         if (strcmp(*argv, "ecdsap160") == 0)
             ecdsa_doit[R_EC_P160] = 2;
         else if (strcmp(*argv, "ecdsap192") == 0)
@@ -1022,10 +1007,7 @@ int MAIN(int argc, char **argv)
         else if (strcmp(*argv, "ecdsa") == 0) {
             for (i = 0; i < EC_NUM; i++)
                 ecdsa_doit[i] = 1;
-        } else
-#endif
-#ifndef OPENSSL_NO_ECDH
-        if (strcmp(*argv, "ecdhp160") == 0)
+        } else if (strcmp(*argv, "ecdhp160") == 0)
             ecdh_doit[R_EC_P160] = 2;
         else if (strcmp(*argv, "ecdhp192") == 0)
             ecdh_doit[R_EC_P192] = 2;
@@ -1135,7 +1117,7 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_DSA
             BIO_printf(bio_err, "dsa512   dsa1024  dsa2048\n");
 #endif
-#ifndef OPENSSL_NO_ECDSA
+#ifndef OPENSSL_NO_EC
             BIO_printf(bio_err, "ecdsap160 ecdsap192 ecdsap224 "
                        "ecdsap256 ecdsap384 ecdsap521\n");
             BIO_printf(bio_err,
@@ -1143,8 +1125,6 @@ int MAIN(int argc, char **argv)
             BIO_printf(bio_err,
                        "ecdsab163 ecdsab233 ecdsab283 ecdsab409 ecdsab571\n");
             BIO_printf(bio_err, "ecdsa\n");
-#endif
-#ifndef OPENSSL_NO_ECDH
             BIO_printf(bio_err, "ecdhp160  ecdhp192  ecdhp224 "
                        "ecdhp256  ecdhp384  ecdhp521\n");
             BIO_printf(bio_err,
@@ -1234,11 +1214,9 @@ int MAIN(int argc, char **argv)
             rsa_doit[i] = 1;
         for (i = 0; i < DSA_NUM; i++)
             dsa_doit[i] = 1;
-#ifndef OPENSSL_NO_ECDSA
+#ifndef OPENSSL_NO_EC
         for (i = 0; i < EC_NUM; i++)
             ecdsa_doit[i] = 1;
-#endif
-#ifndef OPENSSL_NO_ECDH
         for (i = 0; i < EC_NUM; i++)
             ecdh_doit[i] = 1;
 #endif
@@ -1428,7 +1406,7 @@ int MAIN(int argc, char **argv)
     }
 #  endif
 
-#  ifndef OPENSSL_NO_ECDSA
+#  ifndef OPENSSL_NO_EC
     ecdsa_c[R_EC_P160][0] = count / 1000;
     ecdsa_c[R_EC_P160][1] = count / 1000 / 2;
     for (i = R_EC_P192; i <= R_EC_P521; i++) {
@@ -1471,9 +1449,6 @@ int MAIN(int argc, char **argv)
             }
         }
     }
-#  endif
-
-#  ifndef OPENSSL_NO_ECDH
     ecdh_c[R_EC_P160][0] = count / 1000;
     ecdh_c[R_EC_P160][1] = count / 1000;
     for (i = R_EC_P192; i <= R_EC_P521; i++) {
@@ -2144,7 +2119,7 @@ int MAIN(int argc, char **argv)
         RAND_cleanup();
 #endif
 
-#ifndef OPENSSL_NO_ECDSA
+#ifndef OPENSSL_NO_EC
     if (RAND_status() != 1) {
         RAND_seed(rnd_seed, sizeof rnd_seed);
         rnd_fake = 1;
@@ -2236,9 +2211,6 @@ int MAIN(int argc, char **argv)
     }
     if (rnd_fake)
         RAND_cleanup();
-#endif
-
-#ifndef OPENSSL_NO_ECDH
     if (RAND_status() != 1) {
         RAND_seed(rnd_seed, sizeof rnd_seed);
         rnd_fake = 1;
@@ -2423,7 +2395,7 @@ int MAIN(int argc, char **argv)
                     1.0 / dsa_results[k][0], 1.0 / dsa_results[k][1]);
     }
 #endif
-#ifndef OPENSSL_NO_ECDSA
+#ifndef OPENSSL_NO_EC
     j = 1;
     for (k = 0; k < EC_NUM; k++) {
         if (!ecdsa_doit[k])
@@ -2445,9 +2417,6 @@ int MAIN(int argc, char **argv)
                     ecdsa_results[k][0], ecdsa_results[k][1],
                     1.0 / ecdsa_results[k][0], 1.0 / ecdsa_results[k][1]);
     }
-#endif
-
-#ifndef OPENSSL_NO_ECDH
     j = 1;
     for (k = 0; k < EC_NUM; k++) {
         if (!ecdh_doit[k])
@@ -2488,12 +2457,10 @@ int MAIN(int argc, char **argv)
             DSA_free(dsa_key[i]);
 #endif
 
-#ifndef OPENSSL_NO_ECDSA
+#ifndef OPENSSL_NO_EC
     for (i = 0; i < EC_NUM; i++)
         if (ecdsa[i] != NULL)
             EC_KEY_free(ecdsa[i]);
-#endif
-#ifndef OPENSSL_NO_ECDH
     for (i = 0; i < EC_NUM; i++) {
         if (ecdh_a[i] != NULL)
             EC_KEY_free(ecdh_a[i]);
@@ -2697,7 +2664,7 @@ static int do_multi(int multi)
                     dsa_results[k][1] = d;
             }
 # endif
-# ifndef OPENSSL_NO_ECDSA
+# ifndef OPENSSL_NO_EC
             else if (!strncmp(buf, "+F4:", 4)) {
                 int k;
                 double d;
@@ -2720,9 +2687,6 @@ static int do_multi(int multi)
                 else
                     ecdsa_results[k][1] = d;
             }
-# endif
-
-# ifndef OPENSSL_NO_ECDH
             else if (!strncmp(buf, "+F5:", 4)) {
                 int k;
                 double d;
