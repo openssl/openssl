@@ -2233,10 +2233,17 @@ int ssl3_get_client_key_exchange(SSL *s)
     if (alg_k & (SSL_kDHE | SSL_kDHr | SSL_kDHd)) {
         int idx = -1;
         EVP_PKEY *skey = NULL;
-        if (n)
+        if (n > 1) {
             n2s(p, i);
-        else
+        } else {
+            if (alg_k & SSL_kDHE) {
+                al = SSL_AD_HANDSHAKE_FAILURE;
+                SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+                       SSL_R_DH_PUBLIC_VALUE_LENGTH_IS_WRONG);
+                goto f_err;
+            }
             i = 0;
+        }
         if (n && n != i + 2) {
             if (!(s->options & SSL_OP_SSLEAY_080_CLIENT_DH_BUG)) {
                 SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
