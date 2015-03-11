@@ -315,13 +315,16 @@ int ASN1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
     ASN1_STRING *str;
     int utype;
 
-    if (it && it->funcs) {
+    if (!it)
+        return 0;
+
+    if (it->funcs) {
         const ASN1_PRIMITIVE_FUNCS *pf = it->funcs;
         if (pf->prim_new)
             return pf->prim_new(pval, it);
     }
 
-    if (!it || (it->itype == ASN1_ITYPE_MSTRING))
+    if (it->itype == ASN1_ITYPE_MSTRING)
         utype = -1;
     else
         utype = it->utype;
