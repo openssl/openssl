@@ -4126,10 +4126,10 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
 # endif
     } else {
         if (!x || !pk)
-            goto end;
+            return 0;
         idx = ssl_cert_type(x, pk);
         if (idx == -1)
-            goto end;
+            return 0;
         cpk = c->pkeys + idx;
         if (c->cert_flags & SSL_CERT_FLAGS_CHECK_TLS_STRICT)
             check_flags = CERT_PKEY_STRICT_FLAGS;
