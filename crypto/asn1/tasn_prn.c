@@ -220,6 +220,7 @@ static int asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
             if (!asn1_template_print_ctx(out, fld, indent,
                                          it->templates, pctx))
                 return 0;
+            break;
         }
         /* fall thru */
     case ASN1_ITYPE_MSTRING:
