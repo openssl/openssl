@@ -500,7 +500,7 @@ crypto/bn/bn_prime.h: crypto/bn/bn_prime.pl
 	$(PERL) crypto/bn/bn_prime.pl >crypto/bn/bn_prime.h
 
 
-TABLE: Configure Configurations Configurations.team
+TABLE: Configure Configurations/*.conf
 	(echo 'Output of `Configure TABLE'"':"; \
 	$(PERL) Configure TABLE) > TABLE
 

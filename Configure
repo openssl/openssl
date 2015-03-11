@@ -184,8 +184,8 @@ sub read_config {
 }
 
 my ($vol, $dir, $dummy) = File::Spec->splitpath($0);
-my $pattern = File::Spec->catpath($vol, $dir, "Configurations*");
-foreach ( glob($pattern) ) {
+my $pattern = File::Spec->catpath($vol, $dir, "Configurations/*.conf");
+foreach (sort glob($pattern) ) {
     &read_config($_);
 }
 
