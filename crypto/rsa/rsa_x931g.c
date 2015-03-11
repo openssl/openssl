@@ -72,14 +72,15 @@ int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1,
 {
     BIGNUM *r0 = NULL, *r1 = NULL, *r2 = NULL, *r3 = NULL;
     BN_CTX *ctx = NULL, *ctx2 = NULL;
+    int ret = 0;
 
     if (!rsa)
         goto err;
 
     ctx = BN_CTX_new();
-    BN_CTX_start(ctx);
     if (!ctx)
         goto err;
+    BN_CTX_start(ctx);
 
     r0 = BN_CTX_get(ctx);
     r1 = BN_CTX_get(ctx);
@@ -176,6 +177,7 @@ int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1,
     /* calculate inverse of q mod p */
     rsa->iqmp = BN_mod_inverse(NULL, rsa->q, rsa->p, ctx2);
 
+    ret = 1;
  err:
     if (ctx) {
         BN_CTX_end(ctx);
@@ -183,11 +185,8 @@ int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1,
     }
     if (ctx2)
         BN_CTX_free(ctx2);
-    /* If this is set all calls successful */
-    if (rsa->iqmp != NULL)
-        return 1;
 
-    return 0;
+    return ret;
 
 }
 
