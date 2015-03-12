@@ -592,7 +592,6 @@ fmtfp(char **sbuffer,
     int fplace = 0;
     int padlen = 0;
     int zpadlen = 0;
-    int caps = 0;
     long intpart;
     long fracpart;
     long max10;
@@ -630,8 +629,7 @@ fmtfp(char **sbuffer,
 
     /* convert integer part */
     do {
-        iconvert[iplace++] =
-            (caps ? "0123456789ABCDEF" : "0123456789abcdef")[intpart % 10];
+        iconvert[iplace++] = "0123456789"[intpart % 10];
         intpart = (intpart / 10);
     } while (intpart && (iplace < (int)sizeof(iconvert)));
     if (iplace == sizeof iconvert)
@@ -640,8 +638,7 @@ fmtfp(char **sbuffer,
 
     /* convert fractional part */
     do {
-        fconvert[fplace++] =
-            (caps ? "0123456789ABCDEF" : "0123456789abcdef")[fracpart % 10];
+        fconvert[fplace++] = "0123456789"[fracpart % 10];
         fracpart = (fracpart / 10);
     } while (fplace < max);
     if (fplace == sizeof fconvert)
