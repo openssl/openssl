@@ -260,6 +260,11 @@ static int tls1_PRF(long digest_mask,
         if ((m << TLS1_PRF_DGST_SHIFT) & digest_mask)
             count++;
     }
+    if(!count) {
+        /* Should never happen */
+        SSLerr(SSL_F_TLS1_PRF, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     len = slen / count;
     if (count == 1)
         slen = 0;
