@@ -1707,13 +1707,14 @@ int main(int argc, char *argv[])
             ret = doit_biopair(s_ssl, c_ssl, bytes, &s_time, &c_time);
         else
             ret = doit(s_ssl, c_ssl, bytes);
+	if (ret)  break;
     }
 
     if (!verbose) {
         print_details(c_ssl, "");
     }
-    if ((number > 1) || (bytes > 1L))
-        BIO_printf(bio_stdout, "%d handshakes of %ld bytes done\n", number,
+    if ((i > 1) || (bytes > 1L))
+        BIO_printf(bio_stdout, "%d handshakes of %ld bytes done\n", i,
                    bytes);
     if (print_time) {
 #ifdef CLOCKS_PER_SEC

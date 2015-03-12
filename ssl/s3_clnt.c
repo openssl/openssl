@@ -2580,6 +2580,7 @@ int ssl3_send_client_key_exchange(SSL *s)
                 DH_free(dh_clnt);
                 goto err;
             }
+            pmslen = n;
 
             if (s->s3->flags & TLS1_FLAGS_SKIP_CERT_VERIFY)
                 n = 0;
