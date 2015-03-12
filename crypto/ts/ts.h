@@ -213,7 +213,6 @@ typedef struct TS_status_info_st {
 } TS_STATUS_INFO;
 
 DECLARE_STACK_OF(ASN1_UTF8STRING)
-DECLARE_ASN1_SET_OF(ASN1_UTF8STRING)
 
 /*-
 TimeStampResp ::= SEQUENCE  {
@@ -254,7 +253,6 @@ typedef struct ESS_cert_id {
 } ESS_CERT_ID;
 
 DECLARE_STACK_OF(ESS_CERT_ID)
-DECLARE_ASN1_SET_OF(ESS_CERT_ID)
 
 /*-
 SigningCertificate ::=  SEQUENCE {
@@ -516,7 +514,6 @@ typedef struct TS_resp_ctx {
 } TS_RESP_CTX;
 
 DECLARE_STACK_OF(EVP_MD)
-DECLARE_ASN1_SET_OF(EVP_MD)
 
 /* Creates a response context that can be used for generating responses. */
 TS_RESP_CTX *TS_RESP_CTX_new(void);

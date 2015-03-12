@@ -101,7 +101,6 @@ typedef struct pkcs7_signer_info_st {
 } PKCS7_SIGNER_INFO;
 
 DECLARE_STACK_OF(PKCS7_SIGNER_INFO)
-DECLARE_ASN1_SET_OF(PKCS7_SIGNER_INFO)
 
 typedef struct pkcs7_recip_info_st {
     ASN1_INTEGER *version;      /* version 0 */
@@ -112,7 +111,6 @@ typedef struct pkcs7_recip_info_st {
 } PKCS7_RECIP_INFO;
 
 DECLARE_STACK_OF(PKCS7_RECIP_INFO)
-DECLARE_ASN1_SET_OF(PKCS7_RECIP_INFO)
 
 typedef struct pkcs7_signed_st {
     ASN1_INTEGER *version;      /* version 1 */
@@ -200,8 +198,6 @@ typedef struct pkcs7_st {
 } PKCS7;
 
 DECLARE_STACK_OF(PKCS7)
-DECLARE_ASN1_SET_OF(PKCS7)
-DECLARE_PKCS12_STACK_OF(PKCS7)
 
 # define PKCS7_OP_SET_DETACHED_SIGNATURE 1
 # define PKCS7_OP_GET_DETACHED_SIGNATURE 2

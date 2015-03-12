@@ -159,8 +159,6 @@ extern "C" {
     struct X509_algor_st;
 DECLARE_STACK_OF(X509_ALGOR)
 
-# define DECLARE_ASN1_SET_OF(type)/* filled in by mkstack.pl */
-
 /*
  * We MUST make sure that, except for constness, asn1_ctx_st and
  * asn1_const_ctx are exactly the same.  Fortunately, as soon as the old ASN1
@@ -521,7 +519,6 @@ typedef const ASN1_ITEM *ASN1_ITEM_EXP (void);
                                 ASN1_STRFLGS_DUMP_DER)
 
 DECLARE_STACK_OF(ASN1_INTEGER)
-DECLARE_ASN1_SET_OF(ASN1_INTEGER)
 
 DECLARE_STACK_OF(ASN1_GENERALSTRING)
 
@@ -557,7 +554,6 @@ typedef struct asn1_type_st {
 } ASN1_TYPE;
 
 DECLARE_STACK_OF(ASN1_TYPE)
-DECLARE_ASN1_SET_OF(ASN1_TYPE)
 
 typedef STACK_OF(ASN1_TYPE) ASN1_SEQUENCE_ANY;
 
@@ -795,7 +791,6 @@ ASN1_OBJECT *d2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
 DECLARE_ASN1_ITEM(ASN1_OBJECT)
 
 DECLARE_STACK_OF(ASN1_OBJECT)
-DECLARE_ASN1_SET_OF(ASN1_OBJECT)
 
 ASN1_STRING *ASN1_STRING_new(void);
 void ASN1_STRING_free(ASN1_STRING *a);

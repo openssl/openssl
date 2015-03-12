@@ -30,12 +30,6 @@ foreach $file (@source) {
         elsif (/^DECLARE_SPECIAL_STACK_OF\(([^,\s]+)\s*,\s*([^>\s]+)\)/) {
             push @sstacklst, [$1, $2];
         }
-        elsif (/^DECLARE_ASN1_SET_OF\(([^)]+)\)/) {
-            push @asn1setlst, $1;
-        }
-        elsif (/^DECLARE_PKCS12_STACK_OF\(([^)]+)\)/) {
-            push @p12stklst, $1;
-        }
         elsif (/^DECLARE_LHASH_OF\(([^)]+)\)/) {
             push @lhashlst, $1;
         }
@@ -318,28 +312,6 @@ foreach $type_thing (sort @sstacklst) {
 # define sk_${t1}_pop(st) ($t2 *)sk_pop(CHECKED_STACK_OF($t1, st))
 # define sk_${t1}_sort(st) SKM_sk_sort($t1, (st))
 # define sk_${t1}_is_sorted(st) SKM_sk_is_sorted($t1, (st))
-EOF
-}
-
-foreach $type_thing (sort @asn1setlst) {
-    $new_stackfile .= <<EOF;
-
-# define d2i_ASN1_SET_OF_${type_thing}(st, pp, length, d2i_func, free_func, ex_tag, ex_class) \\
-        SKM_ASN1_SET_OF_d2i($type_thing, (st), (pp), (length), (d2i_func), (free_func), (ex_tag), (ex_class))
-# define i2d_ASN1_SET_OF_${type_thing}(st, pp, i2d_func, ex_tag, ex_class, is_set) \\
-        SKM_ASN1_SET_OF_i2d($type_thing, (st), (pp), (i2d_func), (ex_tag), (ex_class), (is_set))
-# define ASN1_seq_pack_${type_thing}(st, i2d_func, buf, len) \\
-        SKM_ASN1_seq_pack($type_thing, (st), (i2d_func), (buf), (len))
-# define ASN1_seq_unpack_${type_thing}(buf, len, d2i_func, free_func) \\
-        SKM_ASN1_seq_unpack($type_thing, (buf), (len), (d2i_func), (free_func))
-EOF
-}
-
-foreach $type_thing (sort @p12stklst) {
-    $new_stackfile .= <<EOF;
-
-# define PKCS12_decrypt_d2i_${type_thing}(algor, d2i_func, free_func, pass, passlen, oct, seq) \\
-        SKM_PKCS12_decrypt_d2i($type_thing, (algor), (d2i_func), (free_func), (pass), (passlen), (oct), (seq))
 EOF
 }
 
