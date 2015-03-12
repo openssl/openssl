@@ -189,11 +189,11 @@ int MAIN(int argc, char **argv)
     if (infile == NULL)
         BIO_set_fp(in, stdin, BIO_NOCLOSE);
     else {
-        if (BIO_read_filename(in, infile) <= 0)
-            if (in == NULL) {
-                perror(infile);
-                goto end;
-            }
+        if (BIO_read_filename(in, infile) <= 0) {
+            BIO_printf(bio_err, "unable to load input file\n");
+            ERR_print_errors(bio_err);
+            goto end;
+        }
     }
 
     if (informat == FORMAT_ASN1)
