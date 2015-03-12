@@ -350,7 +350,10 @@ size_t CRYPTO_128_unwrap_pad(void *key, const unsigned char *icv,
      * LSB(32,AIV).
      */
 
-    ptext_len = (aiv[4] << 24) | (aiv[5] << 16) | (aiv[6] << 8) | aiv[7];
+    ptext_len =   ((unsigned int)aiv[4] << 24)
+                | ((unsigned int)aiv[5] << 16)
+                | ((unsigned int)aiv[6] <<  8)
+                |  (unsigned int)aiv[7];
     if (8 * (n - 1) >= ptext_len || ptext_len > 8 * n) {
         OPENSSL_cleanse(out, inlen);
         return 0;
