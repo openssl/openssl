@@ -188,10 +188,6 @@ typedef struct DIST_POINT_st DIST_POINT;
 typedef struct ISSUING_DIST_POINT_st ISSUING_DIST_POINT;
 typedef struct NAME_CONSTRAINTS_st NAME_CONSTRAINTS;
 
-  /* If placed in pkcs12.h, we end up with a circular depency with pkcs7.h */
-# define DECLARE_PKCS12_STACK_OF(type)/* Nothing */
-# define IMPLEMENT_PKCS12_STACK_OF(type)/* Nothing */
-
 typedef struct crypto_ex_data_st CRYPTO_EX_DATA;
 /* Callback types for crypto.h */
 typedef int CRYPTO_EX_new (void *parent, void *ptr, CRYPTO_EX_DATA *ad,
