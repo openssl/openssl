@@ -314,7 +314,7 @@ static char *dlfcn_merger(DSO *dso, const char *filespec1,
             return (NULL);
         }
         strcpy(merged, filespec2);
-    } else
+    } else {
         /*
          * This part isn't as trivial as it looks.  It assumes that the
          * second file specification really is a directory, and makes no
@@ -322,13 +322,12 @@ static char *dlfcn_merger(DSO *dso, const char *filespec1,
          * concatenation of filespec2 followed by a slash followed by
          * filespec1.
          */
-    {
         int spec2len, len;
 
         spec2len = strlen(filespec2);
-        len = spec2len + (filespec1 ? strlen(filespec1) : 0);
+        len = spec2len + strlen(filespec1);
 
-        if (filespec2 && filespec2[spec2len - 1] == '/') {
+        if (spec2len && filespec2[spec2len - 1] == '/') {
             spec2len--;
             len--;
         }
