@@ -430,19 +430,19 @@ static void felem_square(largefelem out, const felem in)
     out[2] = ((uint128_t) in[0]) * inx2[2] + ((uint128_t) in[1]) * in[1];
     out[3] = ((uint128_t) in[0]) * inx2[3] + ((uint128_t) in[1]) * inx2[2];
     out[4] = ((uint128_t) in[0]) * inx2[4] +
-        ((uint128_t) in[1]) * inx2[3] + ((uint128_t) in[2]) * in[2];
+             ((uint128_t) in[1]) * inx2[3] + ((uint128_t) in[2]) * in[2];
     out[5] = ((uint128_t) in[0]) * inx2[5] +
-        ((uint128_t) in[1]) * inx2[4] + ((uint128_t) in[2]) * inx2[3];
+             ((uint128_t) in[1]) * inx2[4] + ((uint128_t) in[2]) * inx2[3];
     out[6] = ((uint128_t) in[0]) * inx2[6] +
-        ((uint128_t) in[1]) * inx2[5] +
-        ((uint128_t) in[2]) * inx2[4] + ((uint128_t) in[3]) * in[3];
+             ((uint128_t) in[1]) * inx2[5] +
+             ((uint128_t) in[2]) * inx2[4] + ((uint128_t) in[3]) * in[3];
     out[7] = ((uint128_t) in[0]) * inx2[7] +
-        ((uint128_t) in[1]) * inx2[6] +
-        ((uint128_t) in[2]) * inx2[5] + ((uint128_t) in[3]) * inx2[4];
+             ((uint128_t) in[1]) * inx2[6] +
+             ((uint128_t) in[2]) * inx2[5] + ((uint128_t) in[3]) * inx2[4];
     out[8] = ((uint128_t) in[0]) * inx2[8] +
-        ((uint128_t) in[1]) * inx2[7] +
-        ((uint128_t) in[2]) * inx2[6] +
-        ((uint128_t) in[3]) * inx2[5] + ((uint128_t) in[4]) * in[4];
+             ((uint128_t) in[1]) * inx2[7] +
+             ((uint128_t) in[2]) * inx2[6] +
+             ((uint128_t) in[3]) * inx2[5] + ((uint128_t) in[4]) * in[4];
 
     /*
      * The remaining limbs fall above 2^521, with the first falling at 2^522.
@@ -455,21 +455,21 @@ static void felem_square(largefelem out, const felem in)
 
     /* 9 */
     out[0] += ((uint128_t) in[1]) * inx4[8] +
-        ((uint128_t) in[2]) * inx4[7] +
-        ((uint128_t) in[3]) * inx4[6] + ((uint128_t) in[4]) * inx4[5];
+              ((uint128_t) in[2]) * inx4[7] +
+              ((uint128_t) in[3]) * inx4[6] + ((uint128_t) in[4]) * inx4[5];
 
     /* 10 */
     out[1] += ((uint128_t) in[2]) * inx4[8] +
-        ((uint128_t) in[3]) * inx4[7] +
-        ((uint128_t) in[4]) * inx4[6] + ((uint128_t) in[5]) * inx2[5];
+              ((uint128_t) in[3]) * inx4[7] +
+              ((uint128_t) in[4]) * inx4[6] + ((uint128_t) in[5]) * inx2[5];
 
     /* 11 */
     out[2] += ((uint128_t) in[3]) * inx4[8] +
-        ((uint128_t) in[4]) * inx4[7] + ((uint128_t) in[5]) * inx4[6];
+              ((uint128_t) in[4]) * inx4[7] + ((uint128_t) in[5]) * inx4[6];
 
     /* 12 */
     out[3] += ((uint128_t) in[4]) * inx4[8] +
-        ((uint128_t) in[5]) * inx4[7] + ((uint128_t) in[6]) * inx2[6];
+              ((uint128_t) in[5]) * inx4[7] + ((uint128_t) in[6]) * inx2[6];
 
     /* 13 */
     out[4] += ((uint128_t) in[5]) * inx4[8] + ((uint128_t) in[6]) * inx4[7];
@@ -499,87 +499,101 @@ static void felem_mul(largefelem out, const felem in1, const felem in2)
 
     out[0] = ((uint128_t) in1[0]) * in2[0];
 
-    out[1] = ((uint128_t) in1[0]) * in2[1] + ((uint128_t) in1[1]) * in2[0];
+    out[1] = ((uint128_t) in1[0]) * in2[1] +
+             ((uint128_t) in1[1]) * in2[0];
 
     out[2] = ((uint128_t) in1[0]) * in2[2] +
-        ((uint128_t) in1[1]) * in2[1] + ((uint128_t) in1[2]) * in2[0];
+             ((uint128_t) in1[1]) * in2[1] +
+             ((uint128_t) in1[2]) * in2[0];
 
     out[3] = ((uint128_t) in1[0]) * in2[3] +
-        ((uint128_t) in1[1]) * in2[2] +
-        ((uint128_t) in1[2]) * in2[1] + ((uint128_t) in1[3]) * in2[0];
+             ((uint128_t) in1[1]) * in2[2] +
+             ((uint128_t) in1[2]) * in2[1] +
+             ((uint128_t) in1[3]) * in2[0];
 
     out[4] = ((uint128_t) in1[0]) * in2[4] +
-        ((uint128_t) in1[1]) * in2[3] +
-        ((uint128_t) in1[2]) * in2[2] +
-        ((uint128_t) in1[3]) * in2[1] + ((uint128_t) in1[4]) * in2[0];
+             ((uint128_t) in1[1]) * in2[3] +
+             ((uint128_t) in1[2]) * in2[2] +
+             ((uint128_t) in1[3]) * in2[1] +
+             ((uint128_t) in1[4]) * in2[0];
 
     out[5] = ((uint128_t) in1[0]) * in2[5] +
-        ((uint128_t) in1[1]) * in2[4] +
-        ((uint128_t) in1[2]) * in2[3] +
-        ((uint128_t) in1[3]) * in2[2] +
-        ((uint128_t) in1[4]) * in2[1] + ((uint128_t) in1[5]) * in2[0];
+             ((uint128_t) in1[1]) * in2[4] +
+             ((uint128_t) in1[2]) * in2[3] +
+             ((uint128_t) in1[3]) * in2[2] +
+             ((uint128_t) in1[4]) * in2[1] +
+             ((uint128_t) in1[5]) * in2[0];
 
     out[6] = ((uint128_t) in1[0]) * in2[6] +
-        ((uint128_t) in1[1]) * in2[5] +
-        ((uint128_t) in1[2]) * in2[4] +
-        ((uint128_t) in1[3]) * in2[3] +
-        ((uint128_t) in1[4]) * in2[2] +
-        ((uint128_t) in1[5]) * in2[1] + ((uint128_t) in1[6]) * in2[0];
+             ((uint128_t) in1[1]) * in2[5] +
+             ((uint128_t) in1[2]) * in2[4] +
+             ((uint128_t) in1[3]) * in2[3] +
+             ((uint128_t) in1[4]) * in2[2] +
+             ((uint128_t) in1[5]) * in2[1] +
+             ((uint128_t) in1[6]) * in2[0];
 
     out[7] = ((uint128_t) in1[0]) * in2[7] +
-        ((uint128_t) in1[1]) * in2[6] +
-        ((uint128_t) in1[2]) * in2[5] +
-        ((uint128_t) in1[3]) * in2[4] +
-        ((uint128_t) in1[4]) * in2[3] +
-        ((uint128_t) in1[5]) * in2[2] +
-        ((uint128_t) in1[6]) * in2[1] + ((uint128_t) in1[7]) * in2[0];
+             ((uint128_t) in1[1]) * in2[6] +
+             ((uint128_t) in1[2]) * in2[5] +
+             ((uint128_t) in1[3]) * in2[4] +
+             ((uint128_t) in1[4]) * in2[3] +
+             ((uint128_t) in1[5]) * in2[2] +
+             ((uint128_t) in1[6]) * in2[1] +
+             ((uint128_t) in1[7]) * in2[0];
 
     out[8] = ((uint128_t) in1[0]) * in2[8] +
-        ((uint128_t) in1[1]) * in2[7] +
-        ((uint128_t) in1[2]) * in2[6] +
-        ((uint128_t) in1[3]) * in2[5] +
-        ((uint128_t) in1[4]) * in2[4] +
-        ((uint128_t) in1[5]) * in2[3] +
-        ((uint128_t) in1[6]) * in2[2] +
-        ((uint128_t) in1[7]) * in2[1] + ((uint128_t) in1[8]) * in2[0];
+             ((uint128_t) in1[1]) * in2[7] +
+             ((uint128_t) in1[2]) * in2[6] +
+             ((uint128_t) in1[3]) * in2[5] +
+             ((uint128_t) in1[4]) * in2[4] +
+             ((uint128_t) in1[5]) * in2[3] +
+             ((uint128_t) in1[6]) * in2[2] +
+             ((uint128_t) in1[7]) * in2[1] +
+             ((uint128_t) in1[8]) * in2[0];
 
     /* See comment in felem_square about the use of in2x2 here */
 
     out[0] += ((uint128_t) in1[1]) * in2x2[8] +
-        ((uint128_t) in1[2]) * in2x2[7] +
-        ((uint128_t) in1[3]) * in2x2[6] +
-        ((uint128_t) in1[4]) * in2x2[5] +
-        ((uint128_t) in1[5]) * in2x2[4] +
-        ((uint128_t) in1[6]) * in2x2[3] +
-        ((uint128_t) in1[7]) * in2x2[2] + ((uint128_t) in1[8]) * in2x2[1];
+              ((uint128_t) in1[2]) * in2x2[7] +
+              ((uint128_t) in1[3]) * in2x2[6] +
+              ((uint128_t) in1[4]) * in2x2[5] +
+              ((uint128_t) in1[5]) * in2x2[4] +
+              ((uint128_t) in1[6]) * in2x2[3] +
+              ((uint128_t) in1[7]) * in2x2[2] +
+              ((uint128_t) in1[8]) * in2x2[1];
 
     out[1] += ((uint128_t) in1[2]) * in2x2[8] +
-        ((uint128_t) in1[3]) * in2x2[7] +
-        ((uint128_t) in1[4]) * in2x2[6] +
-        ((uint128_t) in1[5]) * in2x2[5] +
-        ((uint128_t) in1[6]) * in2x2[4] +
-        ((uint128_t) in1[7]) * in2x2[3] + ((uint128_t) in1[8]) * in2x2[2];
+              ((uint128_t) in1[3]) * in2x2[7] +
+              ((uint128_t) in1[4]) * in2x2[6] +
+              ((uint128_t) in1[5]) * in2x2[5] +
+              ((uint128_t) in1[6]) * in2x2[4] +
+              ((uint128_t) in1[7]) * in2x2[3] +
+              ((uint128_t) in1[8]) * in2x2[2];
 
     out[2] += ((uint128_t) in1[3]) * in2x2[8] +
-        ((uint128_t) in1[4]) * in2x2[7] +
-        ((uint128_t) in1[5]) * in2x2[6] +
-        ((uint128_t) in1[6]) * in2x2[5] +
-        ((uint128_t) in1[7]) * in2x2[4] + ((uint128_t) in1[8]) * in2x2[3];
+              ((uint128_t) in1[4]) * in2x2[7] +
+              ((uint128_t) in1[5]) * in2x2[6] +
+              ((uint128_t) in1[6]) * in2x2[5] +
+              ((uint128_t) in1[7]) * in2x2[4] +
+              ((uint128_t) in1[8]) * in2x2[3];
 
     out[3] += ((uint128_t) in1[4]) * in2x2[8] +
-        ((uint128_t) in1[5]) * in2x2[7] +
-        ((uint128_t) in1[6]) * in2x2[6] +
-        ((uint128_t) in1[7]) * in2x2[5] + ((uint128_t) in1[8]) * in2x2[4];
+              ((uint128_t) in1[5]) * in2x2[7] +
+              ((uint128_t) in1[6]) * in2x2[6] +
+              ((uint128_t) in1[7]) * in2x2[5] +
+              ((uint128_t) in1[8]) * in2x2[4];
 
     out[4] += ((uint128_t) in1[5]) * in2x2[8] +
-        ((uint128_t) in1[6]) * in2x2[7] +
-        ((uint128_t) in1[7]) * in2x2[6] + ((uint128_t) in1[8]) * in2x2[5];
+              ((uint128_t) in1[6]) * in2x2[7] +
+              ((uint128_t) in1[7]) * in2x2[6] +
+              ((uint128_t) in1[8]) * in2x2[5];
 
     out[5] += ((uint128_t) in1[6]) * in2x2[8] +
-        ((uint128_t) in1[7]) * in2x2[7] + ((uint128_t) in1[8]) * in2x2[6];
+              ((uint128_t) in1[7]) * in2x2[7] +
+              ((uint128_t) in1[8]) * in2x2[6];
 
     out[6] += ((uint128_t) in1[7]) * in2x2[8] +
-        ((uint128_t) in1[8]) * in2x2[7];
+              ((uint128_t) in1[8]) * in2x2[7];
 
     out[7] += ((uint128_t) in1[8]) * in2x2[8];
 }
@@ -1335,9 +1349,10 @@ static void point_add(felem x3, felem y3, felem z3,
  * Tables for other points have table[i] = iG for i in 0 .. 16. */
 
 /* gmul is the table of precomputed base points */
-static const felem gmul[16][3] = { {{0, 0, 0, 0, 0, 0, 0, 0, 0},
-                                    {0, 0, 0, 0, 0, 0, 0, 0, 0},
-                                    {0, 0, 0, 0, 0, 0, 0, 0, 0}},
+static const felem gmul[16][3] = {
+{{0, 0, 0, 0, 0, 0, 0, 0, 0},
+ {0, 0, 0, 0, 0, 0, 0, 0, 0},
+ {0, 0, 0, 0, 0, 0, 0, 0, 0}},
 {{0x017e7e31c2e5bd66, 0x022cf0615a90a6fe, 0x00127a2ffa8de334,
   0x01dfbf9d64a3f877, 0x006b4d3dbaa14b5e, 0x014fed487e0a2bd8,
   0x015b4429c6481390, 0x03a73678fb2d988e, 0x00c6858e06b70404},
