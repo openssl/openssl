@@ -1930,8 +1930,8 @@ int ec_GFp_nistp256_point_get_affine_coordinates(const EC_GROUP *group,
               EC_R_POINT_AT_INFINITY);
         return 0;
     }
-    if ((!BN_to_felem(x_in, &point->X)) || (!BN_to_felem(y_in, &point->Y)) ||
-        (!BN_to_felem(z1, &point->Z)))
+    if ((!BN_to_felem(x_in, point->X)) || (!BN_to_felem(y_in, point->Y)) ||
+        (!BN_to_felem(z1, point->Z)))
         return 0;
     felem_inv(z2, z1);
     felem_square(tmp, z2);
@@ -2114,7 +2114,7 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
                      * this is an unusual input, and we don't guarantee
                      * constant-timeness
                      */
-                    if (!BN_nnmod(tmp_scalar, p_scalar, &group->order, ctx)) {
+                    if (!BN_nnmod(tmp_scalar, p_scalar, group->order, ctx)) {
                         ECerr(EC_F_EC_GFP_NISTP256_POINTS_MUL, ERR_R_BN_LIB);
                         goto err;
                     }
@@ -2123,9 +2123,9 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
                     num_bytes = BN_bn2bin(p_scalar, tmp);
                 flip_endian(secrets[i], tmp, num_bytes);
                 /* precompute multiples */
-                if ((!BN_to_felem(x_out, &p->X)) ||
-                    (!BN_to_felem(y_out, &p->Y)) ||
-                    (!BN_to_felem(z_out, &p->Z)))
+                if ((!BN_to_felem(x_out, p->X)) ||
+                    (!BN_to_felem(y_out, p->Y)) ||
+                    (!BN_to_felem(z_out, p->Z)))
                     goto err;
                 felem_shrink(pre_comp[i][1][0], x_out);
                 felem_shrink(pre_comp[i][1][1], y_out);
@@ -2162,7 +2162,7 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
              * this is an unusual input, and we don't guarantee
              * constant-timeness
              */
-            if (!BN_nnmod(tmp_scalar, scalar, &group->order, ctx)) {
+            if (!BN_nnmod(tmp_scalar, scalar, group->order, ctx)) {
                 ECerr(EC_F_EC_GFP_NISTP256_POINTS_MUL, ERR_R_BN_LIB);
                 goto err;
             }
@@ -2246,9 +2246,9 @@ int ec_GFp_nistp256_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
         ret = 1;
         goto err;
     }
-    if ((!BN_to_felem(x_tmp, &group->generator->X)) ||
-        (!BN_to_felem(y_tmp, &group->generator->Y)) ||
-        (!BN_to_felem(z_tmp, &group->generator->Z)))
+    if ((!BN_to_felem(x_tmp, group->generator->X)) ||
+        (!BN_to_felem(y_tmp, group->generator->Y)) ||
+        (!BN_to_felem(z_tmp, group->generator->Z)))
         goto err;
     felem_shrink(pre->g_pre_comp[0][1][0], x_tmp);
     felem_shrink(pre->g_pre_comp[0][1][1], y_tmp);
