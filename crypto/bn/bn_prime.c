@@ -518,7 +518,17 @@ static int probable_prime(BIGNUM *rnd, int bits)
      * additionally don't want to exceed that many bits.
      */
     if (is_single_word) {
-        BN_ULONG size_limit = (((BN_ULONG)1) << bits) - BN_get_word(rnd) - 1;
+        BN_ULONG size_limit;
+        
+        if (bits == BN_BITS2) {
+            /*
+             * Shifting by this much has undefined behaviour so we do it a
+             * different way
+             */
+            size_limit = ~((BN_ULONG)0) - BN_get_word(rnd);
+        } else {
+            size_limit = (((BN_ULONG)1) << bits) - BN_get_word(rnd) - 1;
+        }
         if (size_limit < maxdelta)
             maxdelta = size_limit;
     }
