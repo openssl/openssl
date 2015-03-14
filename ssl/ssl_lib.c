@@ -288,22 +288,18 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->mode = ctx->mode;
     s->max_cert_list = ctx->max_cert_list;
 
-    if (ctx->cert != NULL) {
-        /*
-         * Earlier library versions used to copy the pointer to the CERT, not
-         * its contents; only when setting new parameters for the per-SSL
-         * copy, ssl_cert_new would be called (and the direct reference to
-         * the per-SSL_CTX settings would be lost, but those still were
-         * indirectly accessed for various purposes, and for that reason they
-         * used to be known as s->ctx->default_cert). Now we don't look at the
-         * SSL_CTX's CERT after having duplicated it once.
-         */
-
-        s->cert = ssl_cert_dup(ctx->cert);
-        if (s->cert == NULL)
-            goto err;
-    } else
-        s->cert = NULL;         /* Cannot really happen (see SSL_CTX_new) */
+    /*
+     * Earlier library versions used to copy the pointer to the CERT, not
+     * its contents; only when setting new parameters for the per-SSL
+     * copy, ssl_cert_new would be called (and the direct reference to
+     * the per-SSL_CTX settings would be lost, but those still were
+     * indirectly accessed for various purposes, and for that reason they
+     * used to be known as s->ctx->default_cert). Now we don't look at the
+     * SSL_CTX's CERT after having duplicated it once.
+     */
+    s->cert = ssl_cert_dup(ctx->cert);
+    if (s->cert == NULL)
+        goto err;
 
     s->read_ahead = ctx->read_ahead;
     s->msg_callback = ctx->msg_callback;
