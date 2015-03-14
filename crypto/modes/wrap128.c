@@ -201,16 +201,16 @@ size_t CRYPTO_128_unwrap(void *key, const unsigned char *iv,
     unsigned char got_iv[8];
 
     ret = crypto_128_unwrap_raw(key, got_iv, out, in, inlen, block);
-    if (ret != inlen)
-        return ret;
+    if (ret == 0)
+        return 0;
 
     if (!iv)
         iv = default_iv;
-    if (CRYPTO_memcmp(out, iv, 8)) {
-        OPENSSL_cleanse(out, inlen);
+    if (CRYPTO_memcmp(got_iv, iv, 8)) {
+        OPENSSL_cleanse(out, ret);
         return 0;
     }
-    return inlen;
+    return ret;
 }
 
 /** Wrapping according to RFC 5649 section 4.1.
