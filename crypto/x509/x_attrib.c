@@ -61,6 +61,7 @@
 #include <openssl/objects.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
+#include "x509_lcl.h"
 
 /*-
  * X509_ATTRIBUTE: this has the following form:

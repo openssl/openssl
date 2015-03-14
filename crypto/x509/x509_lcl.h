@@ -70,3 +70,19 @@ struct X509_VERIFY_PARAM_ID_st {
 };
 
 int x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int quiet);
+
+/* a sequence of these are used */
+struct x509_attributes_st {
+    ASN1_OBJECT *object;
+    int single;                 /* 0 for a set, 1 for a single item (which is
+                                 * wrong) */
+    union {
+        char *ptr;
+        /*
+         * 0
+         */ STACK_OF(ASN1_TYPE) *set;
+        /*
+         * 1
+         */ ASN1_TYPE *single;
+    } value;
+};

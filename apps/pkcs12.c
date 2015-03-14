@@ -993,17 +993,19 @@ int print_attribs(BIO *out, STACK_OF(X509_ATTRIBUTE) *attrlst,
     }
     BIO_printf(out, "%s\n", name);
     for (i = 0; i < sk_X509_ATTRIBUTE_num(attrlst); i++) {
+        ASN1_OBJECT *attr_obj;
         attr = sk_X509_ATTRIBUTE_value(attrlst, i);
-        attr_nid = OBJ_obj2nid(attr->object);
+        attr_obj = X509_ATTRIBUTE_get0_object(attr);
+        attr_nid = OBJ_obj2nid(attr_obj);
         BIO_printf(out, "    ");
         if (attr_nid == NID_undef) {
-            i2a_ASN1_OBJECT(out, attr->object);
+            i2a_ASN1_OBJECT(out, attr_obj);
             BIO_printf(out, ": ");
         } else
             BIO_printf(out, "%s: ", OBJ_nid2ln(attr_nid));
 
-        if (sk_ASN1_TYPE_num(attr->value.set)) {
-            av = sk_ASN1_TYPE_value(attr->value.set, 0);
+        if (X509_ATTRIBUTE_count(attr)) {
+            av = X509_ATTRIBUTE_get0_type(attr, 0);
             switch (av->type) {
             case V_ASN1_BMPSTRING:
                 value = OPENSSL_uni2asc(av->value.bmpstring->data,
