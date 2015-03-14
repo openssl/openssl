@@ -3252,22 +3252,6 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 {
     int ret = 0;
 
-#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_RSA)
-    if (
-# ifndef OPENSSL_NO_RSA
-           cmd == SSL_CTRL_SET_TMP_RSA || cmd == SSL_CTRL_SET_TMP_RSA_CB ||
-# endif
-# ifndef OPENSSL_NO_DSA
-           cmd == SSL_CTRL_SET_TMP_DH || cmd == SSL_CTRL_SET_TMP_DH_CB ||
-# endif
-           0) {
-        if (!ssl_cert_inst(&s->cert)) {
-            SSLerr(SSL_F_SSL3_CTRL, ERR_R_MALLOC_FAILURE);
-            return (0);
-        }
-    }
-#endif
-
     switch (cmd) {
     case SSL_CTRL_GET_SESSION_REUSED:
         ret = s->hit;
@@ -3704,22 +3688,6 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
 {
     int ret = 0;
-
-#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_RSA)
-    if (
-# ifndef OPENSSL_NO_RSA
-           cmd == SSL_CTRL_SET_TMP_RSA_CB ||
-# endif
-# ifndef OPENSSL_NO_DSA
-           cmd == SSL_CTRL_SET_TMP_DH_CB ||
-# endif
-           0) {
-        if (!ssl_cert_inst(&s->cert)) {
-            SSLerr(SSL_F_SSL3_CALLBACK_CTRL, ERR_R_MALLOC_FAILURE);
-            return (0);
-        }
-    }
-#endif
 
     switch (cmd) {
 #ifndef OPENSSL_NO_RSA

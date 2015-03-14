@@ -2053,7 +2053,6 @@ int ssl_clear_bad_session(SSL *s);
 CERT *ssl_cert_new(void);
 CERT *ssl_cert_dup(CERT *cert);
 void ssl_cert_set_default_md(CERT *cert);
-int ssl_cert_inst(CERT **o);
 void ssl_cert_clear_certs(CERT *c);
 void ssl_cert_free(CERT *c);
 SESS_CERT *ssl_sess_cert_new(void);
