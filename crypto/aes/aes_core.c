@@ -1130,31 +1130,31 @@ void AES_decrypt(const unsigned char *in, unsigned char *out,
      * map cipher state to byte array block:
      */
     s0 =
-        (Td4[(t0 >> 24)       ] << 24) ^
-        (Td4[(t3 >> 16) & 0xff] << 16) ^
-        (Td4[(t2 >>  8) & 0xff] <<  8) ^
-        (Td4[(t1      ) & 0xff])       ^
+        ((u32)Td4[(t0 >> 24)       ] << 24) ^
+        ((u32)Td4[(t3 >> 16) & 0xff] << 16) ^
+        ((u32)Td4[(t2 >>  8) & 0xff] <<  8) ^
+        ((u32)Td4[(t1      ) & 0xff])       ^
         rk[0];
     PUTU32(out     , s0);
     s1 =
-        (Td4[(t1 >> 24)       ] << 24) ^
-        (Td4[(t0 >> 16) & 0xff] << 16) ^
-        (Td4[(t3 >>  8) & 0xff] <<  8) ^
-        (Td4[(t2      ) & 0xff])       ^
+        ((u32)Td4[(t1 >> 24)       ] << 24) ^
+        ((u32)Td4[(t0 >> 16) & 0xff] << 16) ^
+        ((u32)Td4[(t3 >>  8) & 0xff] <<  8) ^
+        ((u32)Td4[(t2      ) & 0xff])       ^
         rk[1];
     PUTU32(out +  4, s1);
     s2 =
-        (Td4[(t2 >> 24)       ] << 24) ^
-        (Td4[(t1 >> 16) & 0xff] << 16) ^
-        (Td4[(t0 >>  8) & 0xff] <<  8) ^
-        (Td4[(t3      ) & 0xff])       ^
+        ((u32)Td4[(t2 >> 24)       ] << 24) ^
+        ((u32)Td4[(t1 >> 16) & 0xff] << 16) ^
+        ((u32)Td4[(t0 >>  8) & 0xff] <<  8) ^
+        ((u32)Td4[(t3      ) & 0xff])       ^
         rk[2];
     PUTU32(out +  8, s2);
     s3 =
-        (Td4[(t3 >> 24)       ] << 24) ^
-        (Td4[(t2 >> 16) & 0xff] << 16) ^
-        (Td4[(t1 >>  8) & 0xff] <<  8) ^
-        (Td4[(t0      ) & 0xff])       ^
+        ((u32)Td4[(t3 >> 24)       ] << 24) ^
+        ((u32)Td4[(t2 >> 16) & 0xff] << 16) ^
+        ((u32)Td4[(t1 >>  8) & 0xff] <<  8) ^
+        ((u32)Td4[(t0      ) & 0xff])       ^
         rk[3];
     PUTU32(out + 12, s3);
 }
@@ -1233,10 +1233,10 @@ int private_AES_set_encrypt_key(const unsigned char *userKey, const int bits,
         while (1) {
             temp  = rk[3];
             rk[4] = rk[0] ^
-                (Te4[(temp >> 16) & 0xff] << 24) ^
-                (Te4[(temp >>  8) & 0xff] << 16) ^
-                (Te4[(temp      ) & 0xff] << 8) ^
-                (Te4[(temp >> 24)       ]) ^
+                ((u32)Te4[(temp >> 16) & 0xff] << 24) ^
+                ((u32)Te4[(temp >>  8) & 0xff] << 16) ^
+                ((u32)Te4[(temp      ) & 0xff] << 8) ^
+                ((u32)Te4[(temp >> 24)       ]) ^
                 rcon[i];
             rk[5] = rk[1] ^ rk[4];
             rk[6] = rk[2] ^ rk[5];
@@ -1253,10 +1253,10 @@ int private_AES_set_encrypt_key(const unsigned char *userKey, const int bits,
         while (1) {
             temp = rk[ 5];
             rk[ 6] = rk[ 0] ^
-                (Te4[(temp >> 16) & 0xff] << 24) ^
-                (Te4[(temp >>  8) & 0xff] << 16) ^
-                (Te4[(temp      ) & 0xff] << 8) ^
-                (Te4[(temp >> 24)       ]) ^
+                ((u32)Te4[(temp >> 16) & 0xff] << 24) ^
+                ((u32)Te4[(temp >>  8) & 0xff] << 16) ^
+                ((u32)Te4[(temp      ) & 0xff] << 8) ^
+                ((u32)Te4[(temp >> 24)       ]) ^
                 rcon[i];
             rk[ 7] = rk[ 1] ^ rk[ 6];
             rk[ 8] = rk[ 2] ^ rk[ 7];
@@ -1275,10 +1275,10 @@ int private_AES_set_encrypt_key(const unsigned char *userKey, const int bits,
         while (1) {
             temp = rk[ 7];
             rk[ 8] = rk[ 0] ^
-                (Te4[(temp >> 16) & 0xff] << 24) ^
-                (Te4[(temp >>  8) & 0xff] << 16) ^
-                (Te4[(temp      ) & 0xff] << 8) ^
-                (Te4[(temp >> 24)       ]) ^
+                ((u32)Te4[(temp >> 16) & 0xff] << 24) ^
+                ((u32)Te4[(temp >>  8) & 0xff] << 16) ^
+                ((u32)Te4[(temp      ) & 0xff] << 8) ^
+                ((u32)Te4[(temp >> 24)       ]) ^
                 rcon[i];
             rk[ 9] = rk[ 1] ^ rk[ 8];
             rk[10] = rk[ 2] ^ rk[ 9];
@@ -1288,10 +1288,10 @@ int private_AES_set_encrypt_key(const unsigned char *userKey, const int bits,
             }
             temp = rk[11];
             rk[12] = rk[ 4] ^
-                (Te4[(temp >> 24)       ] << 24) ^
-                (Te4[(temp >> 16) & 0xff] << 16) ^
-                (Te4[(temp >>  8) & 0xff] << 8) ^
-                (Te4[(temp      ) & 0xff]);
+                ((u32)Te4[(temp >> 24)       ] << 24) ^
+                ((u32)Te4[(temp >> 16) & 0xff] << 16) ^
+                ((u32)Te4[(temp >>  8) & 0xff] << 8) ^
+                ((u32)Te4[(temp      ) & 0xff]);
             rk[13] = rk[ 5] ^ rk[12];
             rk[14] = rk[ 6] ^ rk[13];
             rk[15] = rk[ 7] ^ rk[14];
