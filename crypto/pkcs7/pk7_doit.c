@@ -409,7 +409,7 @@ static int pkcs7_cmp_ri(PKCS7_RECIP_INFO *ri, X509 *pcert)
                         pcert->cert_info->issuer);
     if (ret)
         return ret;
-    return M_ASN1_INTEGER_cmp(pcert->cert_info->serialNumber,
+    return ASN1_INTEGER_cmp(pcert->cert_info->serialNumber,
                               ri->issuer_and_serial->serial);
 }
 
@@ -735,7 +735,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
         si_sk = p7->d.signed_and_enveloped->signer_info;
         os = p7->d.signed_and_enveloped->enc_data->enc_data;
         if (!os) {
-            os = M_ASN1_OCTET_STRING_new();
+            os = ASN1_OCTET_STRING_new();
             if (!os) {
                 PKCS7err(PKCS7_F_PKCS7_DATAFINAL, ERR_R_MALLOC_FAILURE);
                 goto err;
@@ -747,7 +747,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
         /* XXXXXXXXXXXXXXXX */
         os = p7->d.enveloped->enc_data->enc_data;
         if (!os) {
-            os = M_ASN1_OCTET_STRING_new();
+            os = ASN1_OCTET_STRING_new();
             if (!os) {
                 PKCS7err(PKCS7_F_PKCS7_DATAFINAL, ERR_R_MALLOC_FAILURE);
                 goto err;
@@ -760,7 +760,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
         os = PKCS7_get_octet_string(p7->d.sign->contents);
         /* If detached data then the content is excluded */
         if (PKCS7_type_is_data(p7->d.sign->contents) && p7->detached) {
-            M_ASN1_OCTET_STRING_free(os);
+            ASN1_OCTET_STRING_free(os);
             os = NULL;
             p7->d.sign->contents->d.data = NULL;
         }
@@ -770,7 +770,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
         os = PKCS7_get_octet_string(p7->d.digest->contents);
         /* If detached data then the content is excluded */
         if (PKCS7_type_is_data(p7->d.digest->contents) && p7->detached) {
-            M_ASN1_OCTET_STRING_free(os);
+            ASN1_OCTET_STRING_free(os);
             os = NULL;
             p7->d.digest->contents->d.data = NULL;
         }
@@ -834,7 +834,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
             goto err;
         if (!EVP_DigestFinal_ex(mdc, md_data, &md_len))
             goto err;
-        M_ASN1_OCTET_STRING_set(p7->d.digest->digest, md_data, md_len);
+        ASN1_OCTET_STRING_set(p7->d.digest->digest, md_data, md_len);
     }
 
     if (!PKCS7_is_detached(p7)) {

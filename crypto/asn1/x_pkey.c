@@ -109,7 +109,7 @@ X509_PKEY *X509_PKEY_new(void)
     M_ASN1_New_Malloc(ret, X509_PKEY);
     ret->version = 0;
     M_ASN1_New(ret->enc_algor, X509_ALGOR_new);
-    M_ASN1_New(ret->enc_pkey, M_ASN1_OCTET_STRING_new);
+    M_ASN1_New(ret->enc_pkey, ASN1_OCTET_STRING_new);
     ret->dec_pkey = NULL;
     ret->key_length = 0;
     ret->key_data = NULL;
@@ -144,7 +144,7 @@ void X509_PKEY_free(X509_PKEY *x)
     if (x->enc_algor != NULL)
         X509_ALGOR_free(x->enc_algor);
     if (x->enc_pkey != NULL)
-        M_ASN1_OCTET_STRING_free(x->enc_pkey);
+        ASN1_OCTET_STRING_free(x->enc_pkey);
     if (x->dec_pkey != NULL)
         EVP_PKEY_free(x->dec_pkey);
     if ((x->key_data != NULL) && (x->key_free))

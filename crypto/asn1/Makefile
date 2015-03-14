@@ -18,7 +18,7 @@ APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=	a_object.c a_bitstr.c a_utctm.c a_gentm.c a_time.c a_int.c a_octet.c \
-	a_print.c a_type.c a_set.c a_dup.c a_d2i_fp.c a_i2d_fp.c \
+	a_print.c a_type.c a_dup.c a_d2i_fp.c a_i2d_fp.c \
 	a_enum.c a_utf8.c a_sign.c a_digest.c a_verify.c a_mbstr.c a_strex.c \
 	x_algor.c x_val.c x_pubkey.c x_sig.c x_req.c x_bignum.c \
 	x_long.c x_name.c x_x509.c x_x509a.c x_crl.c x_info.c x_spki.c nsseq.c \
@@ -28,11 +28,11 @@ LIBSRC=	a_object.c a_bitstr.c a_utctm.c a_gentm.c a_time.c a_int.c a_octet.c \
 	tasn_prn.c tasn_scn.c ameth_lib.c \
 	f_int.c f_string.c n_pkey.c \
 	f_enum.c x_pkey.c a_bool.c x_exten.c bio_asn1.c bio_ndef.c asn_mime.c \
-	asn1_gen.c asn1_par.c asn1_lib.c asn1_err.c a_bytes.c a_strnid.c \
+	asn1_gen.c asn1_par.c asn1_lib.c asn1_err.c a_strnid.c \
 	evp_asn1.c asn_pack.c p5_pbe.c p5_pbev2.c p8_pkey.c asn_moid.c \
 	asn_mstbl.c
 LIBOBJ= a_object.o a_bitstr.o a_utctm.o a_gentm.o a_time.o a_int.o a_octet.o \
-	a_print.o a_type.o a_set.o a_dup.o a_d2i_fp.o a_i2d_fp.o \
+	a_print.o a_type.o a_dup.o a_d2i_fp.o a_i2d_fp.o \
 	a_enum.o a_utf8.o a_sign.o a_digest.o a_verify.o a_mbstr.o a_strex.o \
 	x_algor.o x_val.o x_pubkey.o x_sig.o x_req.o x_bignum.o \
 	x_long.o x_name.o x_x509.o x_x509a.o x_crl.o x_info.o x_spki.o nsseq.o \
@@ -42,7 +42,7 @@ LIBOBJ= a_object.o a_bitstr.o a_utctm.o a_gentm.o a_time.o a_int.o a_octet.o \
 	tasn_prn.o tasn_scn.o ameth_lib.o \
 	f_int.o f_string.o n_pkey.o \
 	f_enum.o x_pkey.o a_bool.o x_exten.o bio_asn1.o bio_ndef.o asn_mime.o \
-	asn1_gen.o asn1_par.o asn1_lib.o asn1_err.o a_bytes.o a_strnid.o \
+	asn1_gen.o asn1_par.o asn1_lib.o asn1_err.o a_strnid.o \
 	evp_asn1.o asn_pack.o p5_pbe.o p5_pbev2.o p8_pkey.o asn_moid.o \
 	asn_mstbl.o
 
@@ -125,14 +125,6 @@ a_bool.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 a_bool.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 a_bool.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 a_bool.o: ../../include/openssl/symhacks.h ../cryptlib.h a_bool.c
-a_bytes.o: ../../e_os.h ../../include/openssl/asn1.h
-a_bytes.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-a_bytes.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-a_bytes.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
-a_bytes.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-a_bytes.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-a_bytes.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-a_bytes.o: ../cryptlib.h a_bytes.c
 a_d2i_fp.o: ../../e_os.h ../../include/openssl/asn1.h
 a_d2i_fp.o: ../../include/openssl/asn1_mac.h ../../include/openssl/bio.h
 a_d2i_fp.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -226,14 +218,6 @@ a_print.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 a_print.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 a_print.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 a_print.o: ../cryptlib.h a_print.c
-a_set.o: ../../e_os.h ../../include/openssl/asn1.h
-a_set.o: ../../include/openssl/asn1_mac.h ../../include/openssl/bio.h
-a_set.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-a_set.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-a_set.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-a_set.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-a_set.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-a_set.o: ../../include/openssl/symhacks.h ../cryptlib.h a_set.c
 a_sign.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 a_sign.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 a_sign.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h

@@ -139,7 +139,7 @@ ASN1_ENUMERATED *BN_to_ASN1_ENUMERATED(BIGNUM *bn, ASN1_ENUMERATED *ai)
     int len, j;
 
     if (ai == NULL)
-        ret = M_ASN1_ENUMERATED_new();
+        ret = ASN1_ENUMERATED_new();
     else
         ret = ai;
     if (ret == NULL) {
@@ -165,7 +165,7 @@ ASN1_ENUMERATED *BN_to_ASN1_ENUMERATED(BIGNUM *bn, ASN1_ENUMERATED *ai)
     return (ret);
  err:
     if (ret != ai)
-        M_ASN1_ENUMERATED_free(ret);
+        ASN1_ENUMERATED_free(ret);
     return (NULL);
 }
 

@@ -210,7 +210,7 @@ X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
 
     if (!(kdf = PBKDF2PARAM_new()))
         goto merr;
-    if (!(osalt = M_ASN1_OCTET_STRING_new()))
+    if (!(osalt = ASN1_OCTET_STRING_new()))
         goto merr;
 
     kdf->salt->value.octet_string = osalt;
@@ -237,7 +237,7 @@ X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
     /* If have a key len set it up */
 
     if (keylen > 0) {
-        if (!(kdf->keylength = M_ASN1_INTEGER_new()))
+        if (!(kdf->keylength = ASN1_INTEGER_new()))
             goto merr;
         if (!ASN1_INTEGER_set(kdf->keylength, keylen))
             goto merr;

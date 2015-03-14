@@ -146,7 +146,7 @@ int PKCS12_set_mac(PKCS12 *p12, const char *pass, int passlen,
         PKCS12err(PKCS12_F_PKCS12_SET_MAC, PKCS12_R_MAC_GENERATION_ERROR);
         return 0;
     }
-    if (!(M_ASN1_OCTET_STRING_set(p12->mac->dinfo->digest, mac, maclen))) {
+    if (!(ASN1_OCTET_STRING_set(p12->mac->dinfo->digest, mac, maclen))) {
         PKCS12err(PKCS12_F_PKCS12_SET_MAC, PKCS12_R_MAC_STRING_SET_ERROR);
         return 0;
     }
@@ -160,7 +160,7 @@ int PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt, int saltlen,
     if (!(p12->mac = PKCS12_MAC_DATA_new()))
         return PKCS12_ERROR;
     if (iter > 1) {
-        if (!(p12->mac->iter = M_ASN1_INTEGER_new())) {
+        if (!(p12->mac->iter = ASN1_INTEGER_new())) {
             PKCS12err(PKCS12_F_PKCS12_SETUP_MAC, ERR_R_MALLOC_FAILURE);
             return 0;
         }

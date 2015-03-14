@@ -80,7 +80,7 @@ X509 *X509_REQ_to_X509(X509_REQ *r, int days, EVP_PKEY *pkey)
     xi = ret->cert_info;
 
     if (sk_X509_ATTRIBUTE_num(r->req_info->attributes) != 0) {
-        if ((xi->version = M_ASN1_INTEGER_new()) == NULL)
+        if ((xi->version = ASN1_INTEGER_new()) == NULL)
             goto err;
         if (!ASN1_INTEGER_set(xi->version, 2))
             goto err;

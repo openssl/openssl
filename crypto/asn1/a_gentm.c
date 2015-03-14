@@ -223,7 +223,7 @@ ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_adj(ASN1_GENERALIZEDTIME *s,
     size_t len = 20;
 
     if (s == NULL)
-        s = M_ASN1_GENERALIZEDTIME_new();
+        s = ASN1_GENERALIZEDTIME_new();
     if (s == NULL)
         return (NULL);
 
