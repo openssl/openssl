@@ -460,21 +460,20 @@ void asn1_add_error(const unsigned char *address, int offset)
 
 int ASN1_STRING_length(const ASN1_STRING *x)
 {
-    return M_ASN1_STRING_length(x);
+    return x->length;
 }
 
 void ASN1_STRING_length_set(ASN1_STRING *x, int len)
 {
-    M_ASN1_STRING_length_set(x, len);
-    return;
+    x->length = len;
 }
 
 int ASN1_STRING_type(ASN1_STRING *x)
 {
-    return M_ASN1_STRING_type(x);
+    return x->type;
 }
 
 unsigned char *ASN1_STRING_data(ASN1_STRING *x)
 {
-    return M_ASN1_STRING_data(x);
+    return x->data;
 }

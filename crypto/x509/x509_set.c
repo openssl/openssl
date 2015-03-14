@@ -68,12 +68,12 @@ int X509_set_version(X509 *x, long version)
     if (x == NULL)
         return (0);
     if (version == 0) {
-        M_ASN1_INTEGER_free(x->cert_info->version);
+        ASN1_INTEGER_free(x->cert_info->version);
         x->cert_info->version = NULL;
         return (1);
     }
     if (x->cert_info->version == NULL) {
-        if ((x->cert_info->version = M_ASN1_INTEGER_new()) == NULL)
+        if ((x->cert_info->version = ASN1_INTEGER_new()) == NULL)
             return (0);
     }
     return (ASN1_INTEGER_set(x->cert_info->version, version));
@@ -87,9 +87,9 @@ int X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial)
         return (0);
     in = x->cert_info->serialNumber;
     if (in != serial) {
-        in = M_ASN1_INTEGER_dup(serial);
+        in = ASN1_INTEGER_dup(serial);
         if (in != NULL) {
-            M_ASN1_INTEGER_free(x->cert_info->serialNumber);
+            ASN1_INTEGER_free(x->cert_info->serialNumber);
             x->cert_info->serialNumber = in;
         }
     }
@@ -118,9 +118,9 @@ int X509_set_notBefore(X509 *x, const ASN1_TIME *tm)
         return (0);
     in = x->cert_info->validity->notBefore;
     if (in != tm) {
-        in = M_ASN1_TIME_dup(tm);
+        in = ASN1_STRING_dup(tm);
         if (in != NULL) {
-            M_ASN1_TIME_free(x->cert_info->validity->notBefore);
+            ASN1_TIME_free(x->cert_info->validity->notBefore);
             x->cert_info->validity->notBefore = in;
         }
     }
@@ -135,9 +135,9 @@ int X509_set_notAfter(X509 *x, const ASN1_TIME *tm)
         return (0);
     in = x->cert_info->validity->notAfter;
     if (in != tm) {
-        in = M_ASN1_TIME_dup(tm);
+        in = ASN1_STRING_dup(tm);
         if (in != NULL) {
-            M_ASN1_TIME_free(x->cert_info->validity->notAfter);
+            ASN1_TIME_free(x->cert_info->validity->notAfter);
             x->cert_info->validity->notAfter = in;
         }
     }

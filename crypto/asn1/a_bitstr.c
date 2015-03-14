@@ -62,7 +62,7 @@
 
 int ASN1_BIT_STRING_set(ASN1_BIT_STRING *x, unsigned char *d, int len)
 {
-    return M_ASN1_BIT_STRING_set(x, d, len);
+    return ASN1_STRING_set(x, d, len);
 }
 
 int i2c_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **pp)
@@ -136,7 +136,7 @@ ASN1_BIT_STRING *c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,
     }
 
     if ((a == NULL) || ((*a) == NULL)) {
-        if ((ret = M_ASN1_BIT_STRING_new()) == NULL)
+        if ((ret = ASN1_BIT_STRING_new()) == NULL)
             return (NULL);
     } else
         ret = (*a);
@@ -178,7 +178,7 @@ ASN1_BIT_STRING *c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,
  err:
     ASN1err(ASN1_F_C2I_ASN1_BIT_STRING, i);
     if ((ret != NULL) && ((a == NULL) || (*a != ret)))
-        M_ASN1_BIT_STRING_free(ret);
+        ASN1_BIT_STRING_free(ret);
     return (NULL);
 }
 

@@ -1006,7 +1006,7 @@ static ASN1_GENERALIZEDTIME
     *p++ = '\0';
 
     /* Now call OpenSSL to check and set our genTime value */
-    if (!asn1_time && !(asn1_time = M_ASN1_GENERALIZEDTIME_new()))
+    if (!asn1_time && !(asn1_time = ASN1_GENERALIZEDTIME_new()))
         goto err;
     if (!ASN1_GENERALIZEDTIME_set_string(asn1_time, genTime_str)) {
         ASN1_GENERALIZEDTIME_free(asn1_time);

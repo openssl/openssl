@@ -88,7 +88,7 @@ X509_SIG *PKCS8_encrypt(int pbe_nid, const EVP_CIPHER *cipher,
     }
     X509_ALGOR_free(p8->algor);
     p8->algor = pbe;
-    M_ASN1_OCTET_STRING_free(p8->digest);
+    ASN1_OCTET_STRING_free(p8->digest);
     p8->digest =
         PKCS12_item_i2d_encrypt(pbe, ASN1_ITEM_rptr(PKCS8_PRIV_KEY_INFO),
                                 pass, passlen, p8inf, 1);

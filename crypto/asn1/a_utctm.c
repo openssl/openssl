@@ -194,7 +194,7 @@ ASN1_UTCTIME *ASN1_UTCTIME_adj(ASN1_UTCTIME *s, time_t t,
 
     if (s == NULL) {
         free_s = 1;
-        s = M_ASN1_UTCTIME_new();
+        s = ASN1_UTCTIME_new();
     }
     if (s == NULL)
         goto err;
@@ -234,7 +234,7 @@ ASN1_UTCTIME *ASN1_UTCTIME_adj(ASN1_UTCTIME *s, time_t t,
     return (s);
  err:
     if (free_s && s)
-        M_ASN1_UTCTIME_free(s);
+        ASN1_UTCTIME_free(s);
     return NULL;
 }
 

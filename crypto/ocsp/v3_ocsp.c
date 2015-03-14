@@ -248,14 +248,14 @@ static void *d2i_ocsp_nonce(void *a, const unsigned char **pp, long length)
 
  err:
     if (os && (!pos || (*pos != os)))
-        M_ASN1_OCTET_STRING_free(os);
+        ASN1_OCTET_STRING_free(os);
     OCSPerr(OCSP_F_D2I_OCSP_NONCE, ERR_R_MALLOC_FAILURE);
     return NULL;
 }
 
 static void ocsp_nonce_free(void *a)
 {
-    M_ASN1_OCTET_STRING_free(a);
+    ASN1_OCTET_STRING_free(a);
 }
 
 static int i2r_ocsp_nonce(const X509V3_EXT_METHOD *method, void *nonce,

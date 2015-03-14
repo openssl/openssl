@@ -74,7 +74,7 @@ PKCS12 *PKCS12_init(int mode)
     pkcs12->authsafes->type = OBJ_nid2obj(mode);
     switch (mode) {
     case NID_pkcs7_data:
-        if (!(pkcs12->authsafes->d.data = M_ASN1_OCTET_STRING_new())) {
+        if (!(pkcs12->authsafes->d.data = ASN1_OCTET_STRING_new())) {
             PKCS12err(PKCS12_F_PKCS12_INIT, ERR_R_MALLOC_FAILURE);
             goto err;
         }

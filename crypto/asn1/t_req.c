@@ -216,7 +216,7 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
                     goto err;
                 if (!X509V3_EXT_print(bp, ex, cflag, 16)) {
                     BIO_printf(bp, "%16s", "");
-                    M_ASN1_OCTET_STRING_print(bp, ex->value);
+                    ASN1_STRING_print(bp, ex->value);
                 }
                 if (BIO_write(bp, "\n", 1) <= 0)
                     goto err;

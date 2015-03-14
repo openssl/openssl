@@ -186,7 +186,7 @@ int TS_TST_INFO_set_time(TS_TST_INFO *a, const ASN1_GENERALIZEDTIME *gtime)
 
     if (a->time == gtime)
         return 1;
-    new_time = M_ASN1_GENERALIZEDTIME_dup(gtime);
+    new_time = ASN1_STRING_dup(gtime);
     if (new_time == NULL) {
         TSerr(TS_F_TS_TST_INFO_SET_TIME, ERR_R_MALLOC_FAILURE);
         return 0;
