@@ -215,15 +215,11 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
                         goto end;
                 }
             } else if (tag == V_ASN1_BOOLEAN) {
-                int ii;
-
-                opp = op;
-                ii = d2i_ASN1_BOOLEAN(NULL, &opp, len + hl);
-                if (ii < 0) {
+                if (len != 1) {
                     if (BIO_write(bp, "Bad boolean\n", 12) <= 0)
                         goto end;
                 }
-                BIO_printf(bp, ":%d", ii);
+                BIO_printf(bp, ":%u", p[0]);
             } else if (tag == V_ASN1_BMPSTRING) {
                 /* do the BMP thang */
             } else if (tag == V_ASN1_OCTET_STRING) {
