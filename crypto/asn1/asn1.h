@@ -654,9 +654,6 @@ int ASN1_BIT_STRING_num_asc(char *name, BIT_STRING_BITNAME *tbl);
 int ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING *bs, char *name, int value,
                             BIT_STRING_BITNAME *tbl);
 
-int i2d_ASN1_BOOLEAN(int a, unsigned char **pp);
-int d2i_ASN1_BOOLEAN(int *a, const unsigned char **pp, long length);
-
 DECLARE_ASN1_FUNCTIONS(ASN1_INTEGER)
 int i2c_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp);
 ASN1_INTEGER *c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp,
