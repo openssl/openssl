@@ -1722,11 +1722,6 @@ int ssl3_get_key_exchange(SSL *s)
 
         s->session->sess_cert->peer_dh_tmp = dh;
         dh = NULL;
-    } else if ((alg_k & SSL_kDHr) || (alg_k & SSL_kDHd)) {
-        al = SSL_AD_ILLEGAL_PARAMETER;
-        SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-               SSL_R_TRIED_TO_USE_UNSUPPORTED_CIPHER);
-        goto f_err;
     }
 #endif                          /* !OPENSSL_NO_DH */
 
