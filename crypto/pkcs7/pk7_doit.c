@@ -1067,23 +1067,11 @@ ASN1_TYPE *PKCS7_get_attribute(PKCS7_SIGNER_INFO *si, int nid)
 
 static ASN1_TYPE *get_attribute(STACK_OF(X509_ATTRIBUTE) *sk, int nid)
 {
-    int i;
+    int idx;
     X509_ATTRIBUTE *xa;
-    ASN1_OBJECT *o;
-
-    o = OBJ_nid2obj(nid);
-    if (!o || !sk)
-        return (NULL);
-    for (i = 0; i < sk_X509_ATTRIBUTE_num(sk); i++) {
-        xa = sk_X509_ATTRIBUTE_value(sk, i);
-        if (OBJ_cmp(xa->object, o) == 0) {
-            if (!xa->single && sk_ASN1_TYPE_num(xa->value.set))
-                return (sk_ASN1_TYPE_value(xa->value.set, 0));
-            else
-                return (NULL);
-        }
-    }
-    return (NULL);
+    idx = X509at_get_attr_by_NID(sk, nid, -1);
+    xa = X509at_get_attr(sk, idx);
+    return X509_ATTRIBUTE_get0_type(xa, 0);
 }
 
 ASN1_OCTET_STRING *PKCS7_digest_from_attributes(STACK_OF(X509_ATTRIBUTE) *sk)
@@ -1167,7 +1155,7 @@ static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
 
         for (i = 0; i < sk_X509_ATTRIBUTE_num(*sk); i++) {
             attr = sk_X509_ATTRIBUTE_value(*sk, i);
-            if (OBJ_obj2nid(attr->object) == nid) {
+            if (OBJ_obj2nid(X509_ATTRIBUTE_get0_object(attr)) == nid) {
                 X509_ATTRIBUTE_free(attr);
                 attr = X509_ATTRIBUTE_create(nid, atrtype, value);
                 if (attr == NULL)

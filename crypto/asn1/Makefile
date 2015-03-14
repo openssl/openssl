@@ -20,7 +20,7 @@ LIB=$(TOP)/libcrypto.a
 LIBSRC=	a_object.c a_bitstr.c a_utctm.c a_gentm.c a_time.c a_int.c a_octet.c \
 	a_print.c a_type.c a_set.c a_dup.c a_d2i_fp.c a_i2d_fp.c \
 	a_enum.c a_utf8.c a_sign.c a_digest.c a_verify.c a_mbstr.c a_strex.c \
-	x_algor.c x_val.c x_pubkey.c x_sig.c x_req.c x_attrib.c x_bignum.c \
+	x_algor.c x_val.c x_pubkey.c x_sig.c x_req.c x_bignum.c \
 	x_long.c x_name.c x_x509.c x_x509a.c x_crl.c x_info.c x_spki.c nsseq.c \
 	x_nx509.c d2i_pu.c d2i_pr.c i2d_pu.c i2d_pr.c\
 	t_req.c t_x509.c t_x509a.c t_crl.c t_pkey.c t_spki.c t_bitst.c \
@@ -34,7 +34,7 @@ LIBSRC=	a_object.c a_bitstr.c a_utctm.c a_gentm.c a_time.c a_int.c a_octet.c \
 LIBOBJ= a_object.o a_bitstr.o a_utctm.o a_gentm.o a_time.o a_int.o a_octet.o \
 	a_print.o a_type.o a_set.o a_dup.o a_d2i_fp.o a_i2d_fp.o \
 	a_enum.o a_utf8.o a_sign.o a_digest.o a_verify.o a_mbstr.o a_strex.o \
-	x_algor.o x_val.o x_pubkey.o x_sig.o x_req.o x_attrib.o x_bignum.o \
+	x_algor.o x_val.o x_pubkey.o x_sig.o x_req.o x_bignum.o \
 	x_long.o x_name.o x_x509.o x_x509a.o x_crl.o x_info.o x_spki.o nsseq.o \
 	x_nx509.o d2i_pu.o d2i_pr.o i2d_pu.o i2d_pr.o \
 	t_req.o t_x509.o t_x509a.o t_crl.o t_pkey.o t_spki.o t_bitst.o \
@@ -759,19 +759,6 @@ x_algor.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 x_algor.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 x_algor.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 x_algor.o: ../../include/openssl/x509_vfy.h x_algor.c
-x_attrib.o: ../../e_os.h ../../include/openssl/asn1.h
-x_attrib.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
-x_attrib.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-x_attrib.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-x_attrib.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
-x_attrib.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-x_attrib.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-x_attrib.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-x_attrib.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-x_attrib.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
-x_attrib.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-x_attrib.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-x_attrib.o: ../../include/openssl/x509_vfy.h ../cryptlib.h x_attrib.c
 x_bignum.o: ../../e_os.h ../../include/openssl/asn1.h
 x_bignum.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 x_bignum.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h

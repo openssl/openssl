@@ -201,10 +201,7 @@ STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(X509_REQ *req)
         if (idx == -1)
             continue;
         attr = X509_REQ_get_attr(req, idx);
-        if (attr->single)
-            ext = attr->value.single;
-        else if (sk_ASN1_TYPE_num(attr->value.set))
-            ext = sk_ASN1_TYPE_value(attr->value.set, 0);
+        ext = X509_ATTRIBUTE_get0_type(attr, 0);
         break;
     }
     if (!ext || (ext->type != V_ASN1_SEQUENCE))
@@ -223,37 +220,17 @@ STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(X509_REQ *req)
 int X509_REQ_add_extensions_nid(X509_REQ *req, STACK_OF(X509_EXTENSION) *exts,
                                 int nid)
 {
-    ASN1_TYPE *at = NULL;
-    X509_ATTRIBUTE *attr = NULL;
-    if (!(at = ASN1_TYPE_new()) || !(at->value.sequence = ASN1_STRING_new()))
-        goto err;
-
-    at->type = V_ASN1_SEQUENCE;
+    int extlen;
+    int rv = 0;
+    unsigned char *ext = NULL;
     /* Generate encoding of extensions */
-    at->value.sequence->length =
-        ASN1_item_i2d((ASN1_VALUE *)exts,
-                      &at->value.sequence->data,
-                      ASN1_ITEM_rptr(X509_EXTENSIONS));
-    if (!(attr = X509_ATTRIBUTE_new()))
-        goto err;
-    if (!(attr->value.set = sk_ASN1_TYPE_new_null()))
-        goto err;
-    if (!sk_ASN1_TYPE_push(attr->value.set, at))
-        goto err;
-    at = NULL;
-    attr->single = 0;
-    attr->object = OBJ_nid2obj(nid);
-    if (!req->req_info->attributes) {
-        if (!(req->req_info->attributes = sk_X509_ATTRIBUTE_new_null()))
-            goto err;
-    }
-    if (!sk_X509_ATTRIBUTE_push(req->req_info->attributes, attr))
-        goto err;
-    return 1;
- err:
-    X509_ATTRIBUTE_free(attr);
-    ASN1_TYPE_free(at);
-    return 0;
+    extlen = ASN1_item_i2d((ASN1_VALUE *)exts, &ext,
+                           ASN1_ITEM_rptr(X509_EXTENSIONS));
+    if (extlen <= 0)
+        return 0;
+    rv = X509_REQ_add1_attr_by_NID(req, nid, V_ASN1_SEQUENCE, ext, extlen);
+    OPENSSL_free(ext);
+    return rv;
 }
 
 /* This is the normal usage: use the "official" OID */

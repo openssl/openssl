@@ -161,27 +161,22 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
                 ASN1_TYPE *at;
                 X509_ATTRIBUTE *a;
                 ASN1_BIT_STRING *bs = NULL;
-                ASN1_TYPE *t;
+                ASN1_OBJECT *aobj;
                 int j, type = 0, count = 1, ii = 0;
 
                 a = sk_X509_ATTRIBUTE_value(sk, i);
-                if (X509_REQ_extension_nid(OBJ_obj2nid(a->object)))
+                aobj = X509_ATTRIBUTE_get0_object(a);
+                if (X509_REQ_extension_nid(OBJ_obj2nid(aobj)))
                     continue;
                 if (BIO_printf(bp, "%12s", "") <= 0)
                     goto err;
-                if ((j = i2a_ASN1_OBJECT(bp, a->object)) > 0) {
-                    if (a->single) {
-                        t = a->value.single;
-                        type = t->type;
-                        bs = t->value.bit_string;
-                    } else {
-                        ii = 0;
-                        count = sk_ASN1_TYPE_num(a->value.set);
+                if ((j = i2a_ASN1_OBJECT(bp, aobj)) > 0) {
+                    ii = 0;
+                    count = X509_ATTRIBUTE_count(a);
  get_next:
-                        at = sk_ASN1_TYPE_value(a->value.set, ii);
-                        type = at->type;
-                        bs = at->value.asn1_string;
-                    }
+                    at = X509_ATTRIBUTE_get0_type(a, ii);
+                    type = at->type;
+                    bs = at->value.asn1_string;
                 }
                 for (j = 25 - j; j > 0; j--)
                     if (BIO_write(bp, " ", 1) != 1)
