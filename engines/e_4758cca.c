@@ -641,7 +641,7 @@ static int cca_rsa_verify(int type, const unsigned char *m,
             return 0;
         }
 
-        if (!algorithm.algorithm->length) {
+        if (!OBJ_length(algorithm.algorithm)) {
             CCA4758err(CCA4758_F_CCA_RSA_VERIFY,
                        CCA4758_R_ASN1_OID_UNKNOWN_FOR_MD);
             return 0;
@@ -754,7 +754,7 @@ static int cca_rsa_sign(int type, const unsigned char *m, unsigned int m_len,
             return 0;
         }
 
-        if (!algorithm.algorithm->length) {
+        if (!OBJ_length(algorithm.algorithm)) {
             CCA4758err(CCA4758_F_CCA_RSA_SIGN,
                        CCA4758_R_ASN1_OID_UNKNOWN_FOR_MD);
             return 0;

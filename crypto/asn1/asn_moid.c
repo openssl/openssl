@@ -64,6 +64,7 @@
 #include <openssl/conf.h>
 #include <openssl/dso.h>
 #include <openssl/x509.h>
+#include "internal/asn1_int.h"
 
 /* Simple ASN1 OID module: add all objects in a given section */
 

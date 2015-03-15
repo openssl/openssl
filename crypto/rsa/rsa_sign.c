@@ -95,7 +95,7 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
             RSAerr(RSA_F_RSA_SIGN, RSA_R_UNKNOWN_ALGORITHM_TYPE);
             return (0);
         }
-        if (sig.algor->algorithm->length == 0) {
+        if (OBJ_length(sig.algor->algorithm) == 0) {
             RSAerr(RSA_F_RSA_SIGN,
                    RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD);
             return (0);
