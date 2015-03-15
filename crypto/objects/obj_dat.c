@@ -64,6 +64,7 @@
 #include <openssl/asn1.h>
 #include <openssl/objects.h>
 #include <openssl/bn.h>
+#include "internal/asn1_int.h"
 
 /* obj_dat.h is generated from objects.h by obj_dat.pl */
 #include "obj_dat.h"
@@ -780,4 +781,18 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
     ASN1_OBJECT_free(op);
     OPENSSL_free(buf);
     return (ok);
+}
+
+size_t OBJ_length(const ASN1_OBJECT *obj)
+{
+    if (obj == NULL)
+        return 0;
+    return obj->length;
+}
+
+const unsigned char *OBJ_get0_data(const ASN1_OBJECT *obj)
+{
+    if (obj == NULL)
+        return NULL;
+    return obj->data;
 }

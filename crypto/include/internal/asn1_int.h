@@ -103,3 +103,19 @@ struct evp_pkey_asn1_method_st {
                       X509_ALGOR *alg1, X509_ALGOR *alg2,
                       ASN1_BIT_STRING *sig);
 } /* EVP_PKEY_ASN1_METHOD */ ;
+
+/*
+ * These are used internally in the ASN1_OBJECT to keep track of whether the
+ * names and data need to be free()ed
+ */
+# define ASN1_OBJECT_FLAG_DYNAMIC         0x01/* internal use */
+# define ASN1_OBJECT_FLAG_CRITICAL        0x02/* critical x509v3 object id */
+# define ASN1_OBJECT_FLAG_DYNAMIC_STRINGS 0x04/* internal use */
+# define ASN1_OBJECT_FLAG_DYNAMIC_DATA    0x08/* internal use */
+struct asn1_object_st {
+    const char *sn, *ln;
+    int nid;
+    int length;
+    const unsigned char *data;  /* data remains const after init */
+    int flags;                  /* Should we free this one */
+};

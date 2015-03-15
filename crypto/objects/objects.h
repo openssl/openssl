@@ -1107,6 +1107,9 @@ int OBJ_create(const char *oid, const char *sn, const char *ln);
 void OBJ_cleanup(void);
 int OBJ_create_objects(BIO *in);
 
+size_t OBJ_length(const ASN1_OBJECT *obj);
+const unsigned char *OBJ_get0_data(const ASN1_OBJECT *obj);
+
 int OBJ_find_sigid_algs(int signid, int *pdig_nid, int *ppkey_nid);
 int OBJ_find_sigid_by_algs(int *psignid, int dig_nid, int pkey_nid);
 int OBJ_add_sigid(int signid, int dig_id, int pkey_id);
