@@ -117,7 +117,7 @@ const X509V3_EXT_METHOD *X509V3_EXT_get_nid(int nid)
 const X509V3_EXT_METHOD *X509V3_EXT_get(X509_EXTENSION *ext)
 {
     int nid;
-    if ((nid = OBJ_obj2nid(ext->object)) == NID_undef)
+    if ((nid = OBJ_obj2nid(X509_EXTENSION_get_object(ext))) == NID_undef)
         return NULL;
     return X509V3_EXT_get_nid(nid);
 }
@@ -180,14 +180,17 @@ void *X509V3_EXT_d2i(X509_EXTENSION *ext)
 {
     const X509V3_EXT_METHOD *method;
     const unsigned char *p;
+    ASN1_STRING *extvalue;
+    int extlen;
 
     if (!(method = X509V3_EXT_get(ext)))
         return NULL;
-    p = ext->value->data;
+    extvalue = X509_EXTENSION_get_data(ext);
+    p = ASN1_STRING_data(extvalue);
+    extlen = ASN1_STRING_length(extvalue);
     if (method->it)
-        return ASN1_item_d2i(NULL, &p, ext->value->length,
-                             ASN1_ITEM_ptr(method->it));
-    return method->d2i(NULL, &p, ext->value->length);
+        return ASN1_item_d2i(NULL, &p, extlen, ASN1_ITEM_ptr(method->it));
+    return method->d2i(NULL, &p, extlen);
 }
 
 /*-
@@ -226,7 +229,7 @@ void *X509V3_get_d2i(STACK_OF(X509_EXTENSION) *x, int nid, int *crit,
         lastpos = 0;
     for (i = lastpos; i < sk_X509_EXTENSION_num(x); i++) {
         ex = sk_X509_EXTENSION_value(x, i);
-        if (OBJ_obj2nid(ex->object) == nid) {
+        if (OBJ_obj2nid(X509_EXTENSION_get_object(ex)) == nid) {
             if (idx) {
                 *idx = i;
                 found_ex = ex;

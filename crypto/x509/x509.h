@@ -171,11 +171,7 @@ DECLARE_STACK_OF(X509_NAME)
 
 # define X509_EX_V_NETSCAPE_HACK         0x8000
 # define X509_EX_V_INIT                  0x0001
-typedef struct X509_extension_st {
-    ASN1_OBJECT *object;
-    ASN1_BOOLEAN critical;
-    ASN1_OCTET_STRING *value;
-} X509_EXTENSION;
+typedef struct X509_extension_st X509_EXTENSION;
 
 typedef STACK_OF(X509_EXTENSION) X509_EXTENSIONS;
 
