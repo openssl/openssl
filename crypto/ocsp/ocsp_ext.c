@@ -388,7 +388,8 @@ int OCSP_check_nonce(OCSP_REQUEST *req, OCSP_BASICRESP *bs)
      */
     req_ext = OCSP_REQUEST_get_ext(req, req_idx);
     resp_ext = OCSP_BASICRESP_get_ext(bs, resp_idx);
-    if (ASN1_OCTET_STRING_cmp(req_ext->value, resp_ext->value))
+    if (ASN1_OCTET_STRING_cmp(X509_EXTENSION_get_data(req_ext),
+                              X509_EXTENSION_get_data(resp_ext)))
         return 0;
     return 1;
 }

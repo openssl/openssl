@@ -179,8 +179,8 @@ static int crl_set_issuers(X509_CRL *crl)
 
         for (j = 0; j < sk_X509_EXTENSION_num(exts); j++) {
             ext = sk_X509_EXTENSION_value(exts, j);
-            if (ext->critical > 0) {
-                if (OBJ_obj2nid(ext->object) == NID_certificate_issuer)
+            if (X509_EXTENSION_get_critical(ext)) {
+                if (OBJ_obj2nid(X509_EXTENSION_get_object(ext)) == NID_certificate_issuer)
                     continue;
                 crl->flags |= EXFLAG_CRITICAL;
                 break;
@@ -253,10 +253,10 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         for (idx = 0; idx < sk_X509_EXTENSION_num(exts); idx++) {
             int nid;
             ext = sk_X509_EXTENSION_value(exts, idx);
-            nid = OBJ_obj2nid(ext->object);
+            nid = OBJ_obj2nid(X509_EXTENSION_get_object(ext));
             if (nid == NID_freshest_crl)
                 crl->flags |= EXFLAG_FRESHEST;
-            if (ext->critical > 0) {
+            if (X509_EXTENSION_get_critical(ext)) {
                 /* We handle IDP and deltas */
                 if ((nid == NID_issuing_distribution_point)
                     || (nid == NID_authority_key_identifier)

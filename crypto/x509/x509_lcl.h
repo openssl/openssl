@@ -86,3 +86,9 @@ struct x509_attributes_st {
          */ ASN1_TYPE *single;
     } value;
 };
+
+struct X509_extension_st {
+    ASN1_OBJECT *object;
+    ASN1_BOOLEAN critical;
+    ASN1_OCTET_STRING *value;
+};
