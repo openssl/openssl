@@ -1968,7 +1968,7 @@ int ssl3_send_server_key_exchange(SSL *s)
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     if (encodedPoint != NULL)
         OPENSSL_free(encodedPoint);
     BN_CTX_free(bn_ctx);
@@ -2066,7 +2066,7 @@ int ssl3_get_client_key_exchange(SSL *s)
     KSSL_ERR kssl_err;
 #endif                          /* OPENSSL_NO_KRB5 */
 
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     EC_KEY *srvr_ecdh = NULL;
     EVP_PKEY *clnt_pub_pkey = NULL;
     EC_POINT *clnt_ecpoint = NULL;
@@ -2495,7 +2495,7 @@ int ssl3_get_client_key_exchange(SSL *s)
     } else
 #endif                          /* OPENSSL_NO_KRB5 */
 
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     if (alg_k & (SSL_kECDHE | SSL_kECDHr | SSL_kECDHe)) {
         int ret = 1;
         int field_size = 0;
@@ -2832,10 +2832,10 @@ int ssl3_get_client_key_exchange(SSL *s)
     return (1);
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
-#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_ECDH) || defined(OPENSSL_NO_SRP)
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_SRP)
  err:
 #endif
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     EVP_PKEY_free(clnt_pub_pkey);
     EC_POINT_free(clnt_ecpoint);
     if (srvr_ecdh != NULL)
