@@ -501,7 +501,7 @@ static int do_name_ex(char_io *io_ch, void *arg, X509_NAME *n,
         else
             ent = X509_NAME_get_entry(n, i);
         if (prev != -1) {
-            if (prev == ent->set) {
+            if (prev == X509_NAME_ENTRY_set(ent)) {
                 if (!io_ch(arg, sep_mv, sep_mv_len))
                     return -1;
                 outlen += sep_mv_len;
@@ -514,7 +514,7 @@ static int do_name_ex(char_io *io_ch, void *arg, X509_NAME *n,
                 outlen += indent;
             }
         }
-        prev = ent->set;
+        prev = X509_NAME_ENTRY_set(ent);
         fn = X509_NAME_ENTRY_get_object(ent);
         val = X509_NAME_ENTRY_get_data(ent);
         fn_nid = OBJ_obj2nid(fn);

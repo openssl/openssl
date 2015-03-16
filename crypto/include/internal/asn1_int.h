@@ -119,3 +119,13 @@ struct asn1_object_st {
     const unsigned char *data;  /* data remains const after init */
     int flags;                  /* Should we free this one */
 };
+
+/* ASN1 print context structure */
+
+struct asn1_pctx_st {
+    unsigned long flags;
+    unsigned long nm_flags;
+    unsigned long cert_flags;
+    unsigned long oid_flags;
+    unsigned long str_flags;
+} /* ASN1_PCTX */ ;

@@ -65,7 +65,7 @@
 #include <openssl/buffer.h>
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
-#include "asn1_locl.h"
+#include "internal/asn1_int.h"
 
 /*
  * Print routines.
