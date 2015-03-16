@@ -12,6 +12,7 @@
 /Makefile.bak
 /Makefile
 /MINFO
+/TABLE
 /*.a
 /include
 /*.pc
