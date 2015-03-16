@@ -1,10 +1,10 @@
-/* asn1t.h */
+/* x509_int.h */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
- * 2006.
+ * 2015.
  */
 /* ====================================================================
- * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2015 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -57,50 +57,21 @@
  *
  */
 
-/* Internal ASN1 structures and functions: not for application use */
+/* Internal X509 structures and functions: not for application use */
 
-int asn1_utctime_to_tm(struct tm *tm, const ASN1_UTCTIME *d);
-int asn1_generalizedtime_to_tm(struct tm *tm, const ASN1_GENERALIZEDTIME *d);
-
-/* ASN1 scan context structure */
-
-struct asn1_sctx_st {
-    /* The ASN1_ITEM associated with this field */
-    const ASN1_ITEM *it;
-    /* If ASN1_TEMPLATE associated with this field */
-    const ASN1_TEMPLATE *tt;
-    /* Various flags associated with field and context */
-    unsigned long flags;
-    /* If SEQUENCE OF or SET OF, field index */
-    int skidx;
-    /* ASN1 depth of field */
-    int depth;
-    /* Structure and field name */
-    const char *sname, *fname;
-    /* If a primitive type the type of underlying field */
-    int prim_type;
-    /* The field value itself */
-    ASN1_VALUE **field;
-    /* Callback to pass information to */
-    int (*scan_cb) (ASN1_SCTX *ctx);
-    /* Context specific application data */
-    void *app_data;
-} /* ASN1_SCTX */ ;
-
-/*
- * Method to handle CRL access. In general a CRL could be very large (several
- * Mb) and can consume large amounts of resources if stored in memory by
- * multiple processes. This method allows general CRL operations to be
- * redirected to more efficient callbacks: for example a CRL entry database.
- */
-
-#define X509_CRL_METHOD_DYNAMIC         1
-
-struct x509_crl_method_st {
-    int flags;
-    int (*crl_init) (X509_CRL *crl);
-    int (*crl_free) (X509_CRL *crl);
-    int (*crl_lookup) (X509_CRL *crl, X509_REVOKED **ret,
-                       ASN1_INTEGER *ser, X509_NAME *issuer);
-    int (*crl_verify) (X509_CRL *crl, EVP_PKEY *pk);
+struct X509_name_entry_st {
+    ASN1_OBJECT *object;
+    ASN1_STRING *value;
+    int set;
+    int size;                   /* temp variable */
 };
+
+/* we always keep X509_NAMEs in 2 forms. */
+struct X509_name_st {
+    STACK_OF(X509_NAME_ENTRY) *entries;
+    int modified;               /* true if 'bytes' needs to be built */
+    BUF_MEM *bytes;
+/*      unsigned long hash; Keep the hash around for lookups */
+    unsigned char *canon_enc;
+    int canon_enclen;
+} /* X509_NAME */ ;
