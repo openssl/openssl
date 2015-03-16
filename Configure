@@ -166,7 +166,6 @@ my $ppc32_asm=$ppc64_asm;
 # seems to be sufficient?
 my $BSDthreads="-pthread -D_THREAD_SAFE -D_REENTRANT";
 
-
 # table of known configurations, read in from files
 #
 # The content of each entry can take one of two forms:
@@ -349,29 +348,7 @@ my %table=(
     # Note: as long as someone might use old style configuration strings,
     # or we bother supporting that, those variables need to stay
 
-    # Filler used for when there are no asm files.
-    no_asm_filler => {
-	template	=> 1,
-	cpuid_obj	=> "",
-	bn_obj		=> "",
-	ec_obj		=> "",
-	des_obj		=> "",
-	aes_obj		=> "",
-	bf_obj		=> "",
-	md5_obj		=> "",
-	sha1_obj	=> "",
-	cast_obj	=> "",
-	rc4_obj		=> "",
-	rmd160_obj	=> "",
-	rc5_obj		=> "",
-	wp_obj		=> "",
-	cmll_obj	=> "",
-	modes_obj	=> "",
-	engines_obj	=> "",
-	perlasm_scheme	=> "void"
-    },
-
-    x86_asm_nocast => {
+    x86_asm => {
 	template	=> 1,
 	cpuid_obj	=> "x86cpuid.o",
 	bn_obj		=> "bn-586.o co-586.o x86-mont.o x86-gf2m.o",
@@ -389,26 +366,15 @@ my %table=(
 	modes_obj	=> "ghash-x86.o",
 	engines_obj	=> "e_padlock-x86.o"
     },
-    x86_asm => {
-	template	=> 1,
-	inherit_from	=> [ "x86_asm_nocast" ],
-	cast_obj	=> "cast-586.o",
-    },
     x86_elf_asm => {
 	template	=> 1,
 	inherit_from	=> [ "x86_asm" ],
 	perlasm_scheme	=> "elf"
     },
-    android_x86_elf_asm => {
-	template	=> 1,
-	inherit_from	=> [ "x86_asm" ],
-	perlasm_scheme	=> "android"
-    },
-
-    _x86_64_asm => {
+    x86_64_asm => {
 	template	=> 1,
 	cpuid_obj       => "x86_64cpuid.o",
-	bn_obj          => "x86_64-mont.o x86_64-mont5.o x86_64-gf2m.o rsaz_exp.o rsaz-x86_64.o rsaz-avx2.o",
+	bn_obj          => "x86_64-gcc.o x86_64-mont.o x86_64-mont5.o x86_64-gf2m.o rsaz_exp.o rsaz-x86_64.o rsaz-avx2.o",
 	ec_obj          => "ecp_nistz256.o ecp_nistz256-x86_64.o",
 	aes_obj         => "aes-x86_64.o vpaes-x86_64.o bsaes-x86_64.o aesni-x86_64.o aesni-sha1-x86_64.o aesni-sha256-x86_64.o aesni-mb-x86_64.o",
 	md5_obj         => "md5-x86_64.o",
@@ -418,16 +384,6 @@ my %table=(
 	cmll_obj        => "cmll-x86_64.o cmll_misc.o",
 	modes_obj       => "ghash-x86_64.o aesni-gcm-x86_64.o",
 	engines_obj     => "e_padlock-x86_64.o"
-    },
-    x86_64_asm => {
-	inherit_from	=> [ "_x86_64_asm" ],
-	template	=> 1,
-	bn_obj          => sub { join(" ","x86_64-gcc.o",@_) }
-    },
-    win_x86_64_asm => {
-	inherit_from	=> [ "_x86_64_asm" ],
-	template	=> 1,
-	bn_obj          => sub { join(" ","bn_asm.o",@_) }
     },
     ia64_asm => {
 	template	=> 1,
@@ -478,24 +434,14 @@ my %table=(
 	template	=> 1,
 	sha1_obj        => sub { join(" ", @_, "sha512-mips.o") }
     },
-    _s390x_asm => {
+    s390x_asm => {
 	template	=> 1,
 	cpuid_obj       => "s390xcap.o s390xcpuid.o",
-	bn_obj          => "s390x-mont.o s390x-gf2m.o",
+	bn_obj          => "bn-s390x.o s390x-mont.o s390x-gf2m.o",
 	aes_obj         => "aes-s390x.o aes-ctr.o aes-xts.o",
 	sha1_obj        => "sha1-s390x.o sha256-s390x.o sha512-s390x.o",
 	rc4_obj         => "rc4-s390x.o",
 	modes_obj       => "ghash-s390x.o",
-    },
-    s390x_asm => {
-	template	=> 1,
-	inherit_from	=> [ "_s390x_asm" ],
-	bn_obj          => sub { join(" ", "bn-s390x.o", @_) }
-    },
-    s390x_32_asm => {
-	template	=> 1,
-	inherit_from	=> [ "_s390x_asm" ],
-	bn_obj          => sub { join(" ", "bn_asm.o", @_) }
     },
     armv4_asm => {
 	template	=> 1,
@@ -524,26 +470,10 @@ my %table=(
 	modes_obj       => "ghash-parisc.o",
 	perlasm_scheme	=> "32"
     },
-    _parisc20_asm => {
-	template	=> 1,
-	cpuid_obj       => "pariscid.o",
-	bn_obj          => "parisc-mont.o",
-	aes_obj         => "aes_core.o aes_cbc.o aes-parisc.o",
-	sha1_obj        => "sha1-parisc.o sha256-parisc.o sha512-parisc.o",
-	rc4_obj         => "rc4-parisc.o",
-	modes_obj       => "ghash-parisc.o",
-	perlasm_scheme	=> "64"
-    },
-    parisc20_32_asm => {
-	template	=> 1,
-	inherit_from	=> [ "_parisc20_asm" ],
-	bn_obj          => sub { join(" ", "pa-risc2.o", @_) },
-	perlasm_scheme	=> "32",
-    },
     parisc20_64_asm => {
 	template	=> 1,
-	inherit_from	=> [ "_parisc20_asm" ],
-	bn_obj          => sub { join(" ", "pa-risc2W.o", @_) },
+	inherit_from	=> [ "parisc11_asm" ],
+	bn_obj          => sub { my $r=join(" ",@_); $r=~s/bn_asm/pa-risc2W/; $r; },
 	perlasm_scheme	=> "64",
     },
     ppc64_asm => {
@@ -559,6 +489,12 @@ my %table=(
 	template	=> 1
     },
 );
+
+{   my $no_asm_templates=0;
+    foreach (@ARGV) { $no_asm_templates=1 if (/^\-?no\-asm$/); }
+    sub asm { $no_asm_templates?():@_; }
+}
+
 
 sub stringtohash {
     my $in = shift @_;
