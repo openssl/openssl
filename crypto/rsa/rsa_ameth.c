@@ -68,10 +68,12 @@
 #endif
 #include "asn1_locl.h"
 
+#ifndef OPENSSL_NO_CMS
 static int rsa_cms_sign(CMS_SignerInfo *si);
 static int rsa_cms_verify(CMS_SignerInfo *si);
 static int rsa_cms_decrypt(CMS_RecipientInfo *ri);
 static int rsa_cms_encrypt(CMS_RecipientInfo *ri);
+#endif
 
 static int rsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 {
@@ -670,45 +672,7 @@ static int rsa_pss_to_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pkctx,
     return rv;
 }
 
-static int rsa_cms_verify(CMS_SignerInfo *si)
-{
-    int nid, nid2;
-    X509_ALGOR *alg;
-    EVP_PKEY_CTX *pkctx = CMS_SignerInfo_get0_pkey_ctx(si);
-    CMS_SignerInfo_get0_algs(si, NULL, NULL, NULL, &alg);
-    nid = OBJ_obj2nid(alg->algorithm);
-    if (nid == NID_rsaEncryption)
-        return 1;
-    if (nid == NID_rsassaPss)
-        return rsa_pss_to_ctx(NULL, pkctx, alg, NULL);
-    /* Workaround for some implementation that use a signature OID */
-    if (OBJ_find_sigid_algs(nid, NULL, &nid2)) {
-        if (nid2 == NID_rsaEncryption)
-            return 1;
-    }
-    return 0;
-}
-
-/*
- * Customised RSA item verification routine. This is called when a signature
- * is encountered requiring special handling. We currently only handle PSS.
- */
-
-static int rsa_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
-                           X509_ALGOR *sigalg, ASN1_BIT_STRING *sig,
-                           EVP_PKEY *pkey)
-{
-    /* Sanity check: make sure it is PSS */
-    if (OBJ_obj2nid(sigalg->algorithm) != NID_rsassaPss) {
-        RSAerr(RSA_F_RSA_ITEM_VERIFY, RSA_R_UNSUPPORTED_SIGNATURE_TYPE);
-        return -1;
-    }
-    if (rsa_pss_to_ctx(ctx, NULL, sigalg, pkey))
-        /* Carry on */
-        return 2;
-    return -1;
-}
-
+#ifndef OPENSSL_NO_CMS
 static int rsa_cms_sign(CMS_SignerInfo *si)
 {
     int pad_mode = RSA_PKCS1_PADDING;
@@ -734,59 +698,23 @@ static int rsa_cms_sign(CMS_SignerInfo *si)
     return 1;
 }
 
-static int rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
-                         X509_ALGOR *alg1, X509_ALGOR *alg2,
-                         ASN1_BIT_STRING *sig)
+static int rsa_cms_verify(CMS_SignerInfo *si)
 {
-    int pad_mode;
-    EVP_PKEY_CTX *pkctx = ctx->pctx;
-    if (EVP_PKEY_CTX_get_rsa_padding(pkctx, &pad_mode) <= 0)
-        return 0;
-    if (pad_mode == RSA_PKCS1_PADDING)
-        return 2;
-    if (pad_mode == RSA_PKCS1_PSS_PADDING) {
-        ASN1_STRING *os1 = NULL;
-        os1 = rsa_ctx_to_pss(pkctx);
-        if (!os1)
-            return 0;
-        /* Duplicate parameters if we have to */
-        if (alg2) {
-            ASN1_STRING *os2 = ASN1_STRING_dup(os1);
-            if (!os2) {
-                ASN1_STRING_free(os1);
-                return 0;
-            }
-            X509_ALGOR_set0(alg2, OBJ_nid2obj(NID_rsassaPss),
-                            V_ASN1_SEQUENCE, os2);
-        }
-        X509_ALGOR_set0(alg1, OBJ_nid2obj(NID_rsassaPss),
-                        V_ASN1_SEQUENCE, os1);
-        return 3;
+    int nid, nid2;
+    X509_ALGOR *alg;
+    EVP_PKEY_CTX *pkctx = CMS_SignerInfo_get0_pkey_ctx(si);
+    CMS_SignerInfo_get0_algs(si, NULL, NULL, NULL, &alg);
+    nid = OBJ_obj2nid(alg->algorithm);
+    if (nid == NID_rsaEncryption)
+        return 1;
+    if (nid == NID_rsassaPss)
+        return rsa_pss_to_ctx(NULL, pkctx, alg, NULL);
+    /* Workaround for some implementation that use a signature OID */
+    if (OBJ_find_sigid_algs(nid, NULL, &nid2)) {
+        if (nid2 == NID_rsaEncryption)
+            return 1;
     }
-    return 2;
-}
-
-static RSA_OAEP_PARAMS *rsa_oaep_decode(const X509_ALGOR *alg,
-                                        X509_ALGOR **pmaskHash)
-{
-    const unsigned char *p;
-    int plen;
-    RSA_OAEP_PARAMS *pss;
-
-    *pmaskHash = NULL;
-
-    if (!alg->parameter || alg->parameter->type != V_ASN1_SEQUENCE)
-        return NULL;
-    p = alg->parameter->value.sequence->data;
-    plen = alg->parameter->value.sequence->length;
-    pss = d2i_RSA_OAEP_PARAMS(NULL, &p, plen);
-
-    if (!pss)
-        return NULL;
-
-    *pmaskHash = rsa_mgf1_decode(pss->maskGenFunc);
-
-    return pss;
+    return 0;
 }
 
 static int rsa_cms_decrypt(CMS_RecipientInfo *ri)
@@ -923,6 +851,82 @@ static int rsa_cms_encrypt(CMS_RecipientInfo *ri)
     if (os)
         ASN1_STRING_free(os);
     return rv;
+}
+#endif
+
+/*
+ * Customised RSA item verification routine. This is called when a signature
+ * is encountered requiring special handling. We currently only handle PSS.
+ */
+
+static int rsa_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
+                           X509_ALGOR *sigalg, ASN1_BIT_STRING *sig,
+                           EVP_PKEY *pkey)
+{
+    /* Sanity check: make sure it is PSS */
+    if (OBJ_obj2nid(sigalg->algorithm) != NID_rsassaPss) {
+        RSAerr(RSA_F_RSA_ITEM_VERIFY, RSA_R_UNSUPPORTED_SIGNATURE_TYPE);
+        return -1;
+    }
+    if (rsa_pss_to_ctx(ctx, NULL, sigalg, pkey))
+        /* Carry on */
+        return 2;
+    return -1;
+}
+
+static int rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
+                         X509_ALGOR *alg1, X509_ALGOR *alg2,
+                         ASN1_BIT_STRING *sig)
+{
+    int pad_mode;
+    EVP_PKEY_CTX *pkctx = ctx->pctx;
+    if (EVP_PKEY_CTX_get_rsa_padding(pkctx, &pad_mode) <= 0)
+        return 0;
+    if (pad_mode == RSA_PKCS1_PADDING)
+        return 2;
+    if (pad_mode == RSA_PKCS1_PSS_PADDING) {
+        ASN1_STRING *os1 = NULL;
+        os1 = rsa_ctx_to_pss(pkctx);
+        if (!os1)
+            return 0;
+        /* Duplicate parameters if we have to */
+        if (alg2) {
+            ASN1_STRING *os2 = ASN1_STRING_dup(os1);
+            if (!os2) {
+                ASN1_STRING_free(os1);
+                return 0;
+            }
+            X509_ALGOR_set0(alg2, OBJ_nid2obj(NID_rsassaPss),
+                            V_ASN1_SEQUENCE, os2);
+        }
+        X509_ALGOR_set0(alg1, OBJ_nid2obj(NID_rsassaPss),
+                        V_ASN1_SEQUENCE, os1);
+        return 3;
+    }
+    return 2;
+}
+
+static RSA_OAEP_PARAMS *rsa_oaep_decode(const X509_ALGOR *alg,
+                                        X509_ALGOR **pmaskHash)
+{
+    const unsigned char *p;
+    int plen;
+    RSA_OAEP_PARAMS *pss;
+
+    *pmaskHash = NULL;
+
+    if (!alg->parameter || alg->parameter->type != V_ASN1_SEQUENCE)
+        return NULL;
+    p = alg->parameter->value.sequence->data;
+    plen = alg->parameter->value.sequence->length;
+    pss = d2i_RSA_OAEP_PARAMS(NULL, &p, plen);
+
+    if (!pss)
+        return NULL;
+
+    *pmaskHash = rsa_mgf1_decode(pss->maskGenFunc);
+
+    return pss;
 }
 
 const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[] = {

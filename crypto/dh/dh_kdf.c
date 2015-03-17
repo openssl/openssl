@@ -55,7 +55,9 @@
 #include <openssl/dh.h>
 #include <openssl/evp.h>
 #include <openssl/asn1.h>
-#include <openssl/cms.h>
+#ifndef OPENSSL_NO_CMS
+# include <openssl/cms.h>
+#endif
 
 /* Key derivation from X9.42/RFC2631 */
 
@@ -89,8 +91,9 @@ static int dh_sharedinfo_encode(unsigned char **pder, unsigned char **pctr,
                                 ASN1_OBJECT *key_oid, size_t outlen,
                                 const unsigned char *ukm, size_t ukmlen)
 {
+    int derlen = 0;
+#ifndef OPENSSL_NO_CMS
     unsigned char *p;
-    int derlen;
     long tlen;
     /* "magic" value to check offset is sane */
     static unsigned char ctr[4] = { 0xF3, 0x17, 0x22, 0x53 };
@@ -131,6 +134,7 @@ static int dh_sharedinfo_encode(unsigned char **pder, unsigned char **pctr,
     if (CRYPTO_memcmp(p, ctr, 4))
         return 0;
     *pctr = p;
+#endif
     return derlen;
 }
 
