@@ -4,6 +4,164 @@
 
  Changes between 1.0.2 and 1.0.2a [xx XXX xxxx]
 
+  *) ClientHello sigalgs DoS fix
+
+     If a client connects to an OpenSSL 1.0.2 server and renegotiates with an
+     invalid signature algorithms extension a NULL pointer dereference will
+     occur. This can be exploited in a DoS attack against the server.
+
+     This issue was was reported to OpenSSL by David Ramos of Stanford
+     University.
+     (CVE-2015-0291)
+     [Stephen Henson and Matt Caswell]
+
+  *) Multiblock corrupted pointer fix
+
+     OpenSSL 1.0.2 introduced the "multiblock" performance improvement. This
+     feature only applies on 64 bit x86 architecture platforms that support AES
+     NI instructions. A defect in the implementation of "multiblock" can cause
+     OpenSSL's internal write buffer to become incorrectly set to NULL when
+     using non-blocking IO. Typically, when the user application is using a
+     socket BIO for writing, this will only result in a failed connection.
+     However if some other BIO is used then it is likely that a segmentation
+     fault will be triggered, thus enabling a potential DoS attack.
+
+     This issue was reported to OpenSSL by Daniel Danner and Rainer Mueller.
+     (CVE-2015-0290)
+     [Matt Caswell]
+
+  *) Segmentation fault in DTLSv1_listen fix
+
+     The DTLSv1_listen function is intended to be stateless and processes the
+     initial ClientHello from many peers. It is common for user code to loop
+     over the call to DTLSv1_listen until a valid ClientHello is received with
+     an associated cookie. A defect in the implementation of DTLSv1_listen means
+     that state is preserved in the SSL object from one invocation to the next
+     that can lead to a segmentation fault. Errors processing the initial
+     ClientHello can trigger this scenario. An example of such an error could be
+     that a DTLS1.0 only client is attempting to connect to a DTLS1.2 only
+     server.
+
+     This issue was reported to OpenSSL by Per Allansson.
+     (CVE-2015-0207)
+     [Matt Caswell]
+
+  *) Segmentation fault in ASN1_TYPE_cmp fix
+
+     The function ASN1_TYPE_cmp will crash with an invalid read if an attempt is
+     made to compare ASN.1 boolean types. Since ASN1_TYPE_cmp is used to check
+     certificate signature algorithm consistency this can be used to crash any
+     certificate verification operation and exploited in a DoS attack. Any
+     application which performs certificate verification is vulnerable including
+     OpenSSL clients and servers which enable client authentication.
+     (CVE-2015-0286)
+     [Stephen Henson]
+
+  *) Segmentation fault for invalid PSS parameters fix
+
+     The signature verification routines will crash with a NULL pointer
+     dereference if presented with an ASN.1 signature using the RSA PSS
+     algorithm and invalid parameters. Since these routines are used to verify
+     certificate signature algorithms this can be used to crash any
+     certificate verification operation and exploited in a DoS attack. Any
+     application which performs certificate verification is vulnerable including
+     OpenSSL clients and servers which enable client authentication.
+
+     This issue was was reported to OpenSSL by Brian Carpenter.
+     (CVE-2015-0208)
+     [Stephen Henson]
+
+  *) ASN.1 structure reuse memory corruption fix
+
+     Reusing a structure in ASN.1 parsing may allow an attacker to cause
+     memory corruption via an invalid write. Such reuse is and has been
+     strongly discouraged and is believed to be rare.
+
+     Applications that parse structures containing CHOICE or ANY DEFINED BY
+     components may be affected. Certificate parsing (d2i_X509 and related
+     functions) are however not affected. OpenSSL clients and servers are
+     not affected.
+     (CVE-2015-0287)
+     [Stephen Henson]
+
+  *) PKCS7 NULL pointer dereferences fix
+
+     The PKCS#7 parsing code does not handle missing outer ContentInfo
+     correctly. An attacker can craft malformed ASN.1-encoded PKCS#7 blobs with
+     missing content and trigger a NULL pointer dereference on parsing.
+
+     Applications that verify PKCS#7 signatures, decrypt PKCS#7 data or
+     otherwise parse PKCS#7 structures from untrusted sources are
+     affected. OpenSSL clients and servers are not affected.
+
+     This issue was reported to OpenSSL by Michal Zalewski (Google).
+     (CVE-2015-0289)
+     [Emilia Käsper]
+
+  *) DoS via reachable assert in SSLv2 servers fix
+
+     A malicious client can trigger an OPENSSL_assert (i.e., an abort) in
+     servers that both support SSLv2 and enable export cipher suites by sending
+     a specially crafted SSLv2 CLIENT-MASTER-KEY message.
+
+     This issue was discovered by Sean Burford (Google) and Emilia Käsper
+     (OpenSSL development team).
+     (CVE-2015-0293)
+     [Emilia Käsper]
+
+  *) Empty CKE with client auth and DHE fix
+
+     If client auth is used then a server can seg fault in the event of a DHE
+     ciphersuite being selected and a zero length ClientKeyExchange message
+     being sent by the client. This could be exploited in a DoS attack.
+     (CVE-2015-1787)
+     [Matt Caswell]
+
+  *) Handshake with unseeded PRNG fix
+
+     Under certain conditions an OpenSSL 1.0.2 client can complete a handshake
+     with an unseeded PRNG. The conditions are:
+     - The client is on a platform where the PRNG has not been seeded
+     automatically, and the user has not seeded manually
+     - A protocol specific client method version has been used (i.e. not
+     SSL_client_methodv23)
+     - A ciphersuite is used that does not require additional random data from
+     the PRNG beyond the initial ClientHello client random (e.g. PSK-RC4-SHA).
+
+     If the handshake succeeds then the client random that has been used will
+     have been generated from a PRNG with insufficient entropy and therefore the
+     output may be predictable.
+
+     For example using the following command with an unseeded openssl will
+     succeed on an unpatched platform:
+
+     openssl s_client -psk 1a2b3c4d -tls1_2 -cipher PSK-RC4-SHA
+     (CVE-2015-0285)
+     [Matt Caswell]
+
+  *) Use After Free following d2i_ECPrivatekey error fix
+
+     A malformed EC private key file consumed via the d2i_ECPrivateKey function
+     could cause a use after free condition. This, in turn, could cause a double
+     free in several private key parsing functions (such as d2i_PrivateKey
+     or EVP_PKCS82PKEY) and could lead to a DoS attack or memory corruption
+     for applications that receive EC private keys from untrusted
+     sources. This scenario is considered rare.
+
+     This issue was discovered by the BoringSSL project and fixed in their
+     commit 517073cd4b.
+     (CVE-2015-0209)
+     [Matt Caswell]
+
+  *) X509_to_X509_REQ NULL pointer deref fix
+
+     The function X509_to_X509_REQ will crash with a NULL pointer dereference if
+     the certificate key is invalid. This function is rarely used in practice.
+
+     This issue was discovered by Brian Carpenter.
+     (CVE-2015-0288)
+     [Stephen Henson]
+
   *) Removed the export ciphers from the DEFAULT ciphers
      [Kurt Roeckx]
 
