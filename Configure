@@ -946,6 +946,7 @@ my $options;
 my $symlink;
 my $make_depend=0;
 my %withargs=();
+my $build_prefix = "release_";
 
 my @argvcopy=@ARGV;
 my $argvstring="";
@@ -1020,9 +1021,17 @@ PROCESS_ARGS:
 			{
 			exit(&test_sanity());
 			}
-		elsif (/^--strict-warnings/)
+		elsif (/^--strict-warnings$/)
 			{
 			$strict_warnings = 1;
+			}
+		elsif (/^--debug$/)
+			{
+			$build_prefix = "debug_";
+			}
+		elsif (/^--release$/)
+			{
+			$build_prefix = "release_";
 			}
 		elsif (/^reconfigure/ || /^reconf/)
 			{
@@ -1234,10 +1243,10 @@ if ($target =~ m/^CygWin32(-.*)$/) {
 
 print "Configuring for $target\n";
 
+# Support for legacy targets having a name starting with 'debug-'
 my ($d, $t) = $target =~ m/^(debug-)?(.*)$/;
-my $debug_prefix = "release_";
 if ($d) {
-    $debug_prefix = "debug_";
+    $build_prefix = "debug_";
 
     # If we do not find debug-foo in the table, the target is set to foo,
     # but only if the foo target has a noon-empty debug_cflags or debug_lflags
@@ -1248,7 +1257,11 @@ if ($d) {
     }
 }
 
-&usage if (!defined($table{$target}) || $table{$target}->{template});
+&usage if (!defined($table{$target})
+	   || $table{$target}->{template}
+	   || ($build_prefix eq "debug_"
+	       && !($table{$target}->{debug_cflags}
+		    || $table{$target}->{debug_lflags})));
 
 if ($fips)
 	{
@@ -1359,10 +1372,10 @@ my $cc = $ENV{CC} || $table{$t}->{cc};
 # Do it in such a way that no spurious space is appended (hence the grep).
 my $cflags = join(" ",
 		  grep { $_ } ($table{$t}->{cflags},
-			       $table{$t}->{$debug_prefix."cflags"}));
+			       $table{$t}->{$build_prefix."cflags"}));
 my $lflags = join(" ",
 		  grep { $_ } ($table{$t}->{lflags},
-			       $table{$t}->{$debug_prefix."lflags"}));
+			       $table{$t}->{$build_prefix."lflags"}));
 
 my $unistd = $table{$t}->{unistd};
 my $thread_cflag = $table{$t}->{thread_cflag};
