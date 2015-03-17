@@ -91,6 +91,9 @@ aes-mips.S:	asm/aes-mips.pl
 aesv8-armx.S:	asm/aesv8-armx.pl
 	$(PERL) asm/aesv8-armx.pl $(PERLASM_SCHEME) $@
 aesv8-armx.o:	aesv8-armx.S
+vpaes-armv8.S:	asm/vpaes-armv8.pl
+	$(PERL) asm/vpaes-armv8.pl $(PERLASM_SCHEME) $@
+vpaes-armv8.o:	vpaes-armv8.S
 
 # GNU make "catch all"
 aes-%.S:	asm/aes-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
