@@ -231,10 +231,6 @@ int ssl3_accept(SSL *s)
             return -1;
     }
 
-    if (s->cert == NULL) {
-        SSLerr(SSL_F_SSL3_ACCEPT, SSL_R_NO_CERTIFICATE_SET);
-        return (-1);
-    }
 #ifndef OPENSSL_NO_HEARTBEATS
     /*
      * If we're awaiting a HeartbeatResponse, pretend we already got and
