@@ -980,6 +980,9 @@ const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
 #   if defined(BSAES_ASM)
 #    define BSAES_CAPABLE (OPENSSL_armcap_P & ARMV7_NEON)
 #   endif
+#   if defined(VPAES_ASM)
+#    define VPAES_CAPABLE (OPENSSL_armcap_P & ARMV7_NEON)
+#   endif
 #   define HWAES_CAPABLE (OPENSSL_armcap_P & ARMV8_AES)
 #   define HWAES_set_encrypt_key aes_v8_set_encrypt_key
 #   define HWAES_set_decrypt_key aes_v8_set_decrypt_key
