@@ -883,8 +883,6 @@ STACK_OF(X509) *SSL_get_peer_cert_chain(const SSL *s)
  */
 void SSL_copy_session_id(SSL *t, const SSL *f)
 {
-    CERT *tmp;
-
     /* Do we need to to SSL locking? */
     if(!SSL_set_session(t, SSL_get_session(f))) {
         /* How do we handle this!! void function */
@@ -900,14 +898,9 @@ void SSL_copy_session_id(SSL *t, const SSL *f)
         t->method->ssl_new(t);  /* setup new */
     }
 
-    tmp = t->cert;
-    if (f->cert != NULL) {
-        CRYPTO_add(&f->cert->references, 1, CRYPTO_LOCK_SSL_CERT);
-        t->cert = f->cert;
-    } else
-        t->cert = NULL;
-    if (tmp != NULL)
-        ssl_cert_free(tmp);
+    CRYPTO_add(&f->cert->references, 1, CRYPTO_LOCK_SSL_CERT);
+    ssl_cert_free(t->cert);
+    t->cert = f->cert;
     if(!SSL_set_session_id_context(t, f->sid_ctx, f->sid_ctx_length)) {
         /* Really should do something about this..but void function - ignore */
         ;
@@ -918,7 +911,7 @@ void SSL_copy_session_id(SSL *t, const SSL *f)
 int SSL_CTX_check_private_key(const SSL_CTX *ctx)
 {
     if ((ctx == NULL) ||
-        (ctx->cert == NULL) || (ctx->cert->key->x509 == NULL)) {
+        (ctx->cert->key->x509 == NULL)) {
         SSLerr(SSL_F_SSL_CTX_CHECK_PRIVATE_KEY,
                SSL_R_NO_CERTIFICATE_ASSIGNED);
         return (0);
@@ -938,10 +931,6 @@ int SSL_check_private_key(const SSL *ssl)
     if (ssl == NULL) {
         SSLerr(SSL_F_SSL_CHECK_PRIVATE_KEY, ERR_R_PASSED_NULL_PARAMETER);
         return (0);
-    }
-    if (ssl->cert == NULL) {
-        SSLerr(SSL_F_SSL_CHECK_PRIVATE_KEY, SSL_R_NO_CERTIFICATE_ASSIGNED);
-        return 0;
     }
     if (ssl->cert->key->x509 == NULL) {
         SSLerr(SSL_F_SSL_CHECK_PRIVATE_KEY, SSL_R_NO_CERTIFICATE_ASSIGNED);
@@ -3055,26 +3044,28 @@ SSL_CTX *SSL_get_SSL_CTX(const SSL *ssl)
 
 SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
 {
-    CERT *ocert = ssl->cert;
+    CERT *new_cert;
     if (ssl->ctx == ctx)
         return ssl->ctx;
 #ifndef OPENSSL_NO_TLSEXT
     if (ctx == NULL)
         ctx = ssl->initial_ctx;
 #endif
-    ssl->cert = ssl_cert_dup(ctx->cert);
-    if (ocert) {
-        /* Preserve any already negotiated parameters */
-        if (ssl->server) {
-            ssl->cert->peer_sigalgs = ocert->peer_sigalgs;
-            ssl->cert->peer_sigalgslen = ocert->peer_sigalgslen;
-            ocert->peer_sigalgs = NULL;
-            ssl->cert->ciphers_raw = ocert->ciphers_raw;
-            ssl->cert->ciphers_rawlen = ocert->ciphers_rawlen;
-            ocert->ciphers_raw = NULL;
-        }
-        ssl_cert_free(ocert);
+    new_cert = ssl_cert_dup(ctx->cert);
+    if (new_cert == NULL) {
+        return NULL;
     }
+    /* Preserve any already negotiated parameters */
+    if (ssl->server) {
+        new_cert->peer_sigalgs = ssl->cert->peer_sigalgs;
+        new_cert->peer_sigalgslen = ssl->cert->peer_sigalgslen;
+        ssl->cert->peer_sigalgs = NULL;
+        new_cert->ciphers_raw = ssl->cert->ciphers_raw;
+        new_cert->ciphers_rawlen = ssl->cert->ciphers_rawlen;
+        ssl->cert->ciphers_raw = NULL;
+    }
+    ssl_cert_free(ssl->cert);
+    ssl->cert = new_cert;
 
     /*
      * Program invariant: |sid_ctx| has fixed size (SSL_MAX_SID_CTX_LENGTH),

@@ -199,10 +199,6 @@ int dtls1_accept(SSL *s)
              s->in_handshake, NULL);
 #endif
 
-    if (s->cert == NULL) {
-        SSLerr(SSL_F_DTLS1_ACCEPT, SSL_R_NO_CERTIFICATE_SET);
-        return (-1);
-    }
 #ifndef OPENSSL_NO_HEARTBEATS
     /*
      * If we're awaiting a HeartbeatResponse, pretend we already got and
