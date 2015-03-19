@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8ze and 0.9.8zf [xx XXX xxxx]
+ Changes between 0.9.8ze and 0.9.8zf [19 Mar 2015]
 
   *) Segmentation fault in ASN1_TYPE_cmp fix
 
