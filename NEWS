@@ -5,7 +5,7 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Major changes between OpenSSL 1.0.1l and OpenSSL 1.0.1m [under development]
+  Major changes between OpenSSL 1.0.1l and OpenSSL 1.0.1m [19 Mar 2015]
 
       o Segmentation fault in ASN1_TYPE_cmp fix (CVE-2015-0286)
       o ASN.1 structure reuse memory corruption fix (CVE-2015-0287)
