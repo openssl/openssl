@@ -1196,15 +1196,18 @@ EC_KEY *d2i_ECParameters(EC_KEY **a, const unsigned char **in, long len)
             ECerr(EC_F_D2I_ECPARAMETERS, ERR_R_MALLOC_FAILURE);
             return NULL;
         }
-        if (a)
-            *a = ret;
     } else
         ret = *a;
 
     if (!d2i_ECPKParameters(&ret->group, in, len)) {
         ECerr(EC_F_D2I_ECPARAMETERS, ERR_R_EC_LIB);
+        if (a == NULL || *a != ret)
+             EC_KEY_free(ret);
         return NULL;
     }
+
+    if (a)
+        *a = ret;
 
     return ret;
 }
