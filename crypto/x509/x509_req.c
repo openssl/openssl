@@ -122,6 +122,8 @@ int X509_REQ_check_private_key(X509_REQ *x, EVP_PKEY *k)
     int ok = 0;
 
     xk = X509_REQ_get_pubkey(x);
+    if (xk == NULL)
+        return (ok);
     switch (EVP_PKEY_cmp(xk, k)) {
     case 1:
         ok = 1;
