@@ -1988,6 +1988,5 @@ STACK_OF(type) \
 
 # define PKCS12_decrypt_d2i_PKCS7(algor, d2i_func, free_func, pass, passlen, oct, seq) \
         SKM_PKCS12_decrypt_d2i(PKCS7, (algor), (d2i_func), (free_func), (pass), (passlen), (oct), (seq))
-/* End of util/mkstack.pl block, you may now edit :-) */
 
 #endif                          /* !defined HEADER_SAFESTACK_H */
