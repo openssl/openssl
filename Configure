@@ -1196,6 +1196,7 @@ if ($d) {
 &usage if (!defined($table{$target})
 	   || $table{$target}->{template}
 	   || ($build_prefix eq "debug_"
+	       && $target !~ /^debug-/
 	       && !($table{$target}->{debug_cflags}
 		    || $table{$target}->{debug_lflags})));
 
