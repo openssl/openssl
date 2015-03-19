@@ -371,7 +371,8 @@ int ssl2_accept(SSL *s)
 
 static int get_client_master_key(SSL *s)
 {
-    int is_export, i, n, keya, ek;
+    int is_export, i, n, keya;
+    unsigned int ek;
     unsigned long len;
     unsigned char *p;
     const SSL_CIPHER *cp;
@@ -488,7 +489,7 @@ static int get_client_master_key(SSL *s)
      * must be zero).
      */
     if ((!is_export && s->s2->tmp.clear != 0) ||
-        (is_export && s->s2->tmp.clear + ek != EVP_CIPHER_key_length(c))) {
+        (is_export && s->s2->tmp.clear + ek != (unsigned int)EVP_CIPHER_key_length(c))) {
         ssl2_return_error(s, SSL2_PE_UNDEFINED_ERROR);
         SSLerr(SSL_F_GET_CLIENT_MASTER_KEY,SSL_R_BAD_LENGTH);
         return -1;
@@ -499,7 +500,7 @@ static int get_client_master_key(SSL *s)
      * bytes to fit the key in the buffer, stop now.
      */
     if ((is_export && s->s2->tmp.enc < ek) ||
-        (!is_export && s->s2->tmp.enc < EVP_CIPHER_key_length(c))) {
+        (!is_export && s->s2->tmp.enc < (unsigned int)EVP_CIPHER_key_length(c))) {
         ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);
         SSLerr(SSL_F_GET_CLIENT_MASTER_KEY,SSL_R_LENGTH_TOO_SHORT);
         return -1;
@@ -518,7 +519,7 @@ static int get_client_master_key(SSL *s)
      * secret (Bleichenbacher attack)
      */
     if ((i < 0) || ((!is_export && i != EVP_CIPHER_key_length(c))
-                    || (is_export && i != ek))) {
+                    || (is_export && i != (int)ek))) {
         ERR_clear_error();
         if (is_export)
             i = ek;
