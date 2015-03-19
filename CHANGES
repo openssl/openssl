@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 1.0.1m and 1.0.1n [xx XXX xxxx]
+
+  *)
+
  Changes between 1.0.1l and 1.0.1m [19 Mar 2015]
 
   *) Segmentation fault in ASN1_TYPE_cmp fix
