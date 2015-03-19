@@ -5,6 +5,10 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 1.0.0r and OpenSSL 1.0.0s [under development]
+
+      o
+
   Major changes between OpenSSL 1.0.0q and OpenSSL 1.0.0r [19 Mar 2015]
 
       o Segmentation fault in ASN1_TYPE_cmp fix (CVE-2015-0286)
