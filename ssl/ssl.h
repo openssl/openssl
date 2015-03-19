@@ -406,6 +406,10 @@ typedef int (*custom_ext_parse_cb) (SSL *s, unsigned int ext_type,
 # define SSL_OP_MICROSOFT_SESS_ID_BUG                    0x0
 # define SSL_OP_NETSCAPE_CHALLENGE_BUG                   0x0
 
+/* Disables sending any TLS extensions in client hello, even if required
+ * by used protocol version, ciphers or other options */
+# define SSL_OP_NO_TLSEXT                                0x00000400L
+
 /*
  * Disable SSL 3.0/TLS 1.0 CBC vulnerability workaround that was added in
  * OpenSSL 0.9.6d.  Usually (depending on the application protocol) the

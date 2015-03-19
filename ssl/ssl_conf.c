@@ -94,6 +94,8 @@ typedef struct {
         {str, (int)(sizeof(str) - 1), SSL_TFLAG_SERVER, flag}
 #define SSL_FLAG_TBL_CLI(str, flag) \
         {str, (int)(sizeof(str) - 1), SSL_TFLAG_CLIENT, flag}
+#define SSL_FLAG_TBL_CLI_INV(str, flag) \
+	{str, (int)(sizeof(str) - 1), SSL_TFLAG_INV|SSL_TFLAG_CLIENT, flag}
 #define SSL_FLAG_TBL_INV(str, flag) \
         {str, (int)(sizeof(str) - 1), SSL_TFLAG_INV|SSL_TFLAG_BOTH, flag}
 #define SSL_FLAG_TBL_SRV_INV(str, flag) \
@@ -215,6 +217,7 @@ static int ctrl_str_option(SSL_CONF_CTX *cctx, const char *cmd)
         SSL_FLAG_TBL_CERT("debug_broken_protocol",
                           SSL_CERT_FLAG_BROKEN_PROTOCOL),
 #endif
+		SSL_FLAG_TBL_CLI("no_tlsext", SSL_OP_NO_TLSEXT),
     };
     cctx->tbl = ssl_option_single;
     cctx->ntbl = sizeof(ssl_option_single) / sizeof(ssl_flag_tbl);
@@ -351,6 +354,7 @@ static int cmd_Options(SSL_CONF_CTX *cctx, const char *value)
         SSL_FLAG_TBL_SRV("ECDHSingle", SSL_OP_SINGLE_ECDH_USE),
         SSL_FLAG_TBL("UnsafeLegacyRenegotiation",
                      SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION),
+        SSL_FLAG_TBL_CLI_INV("TLSExtensions", SSL_OP_NO_TLSEXT),
     };
     if (!(cctx->flags & SSL_CONF_FLAG_FILE))
         return -2;
