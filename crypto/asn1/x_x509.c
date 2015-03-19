@@ -172,8 +172,14 @@ X509 *d2i_X509_AUX(X509 **a, const unsigned char **pp, long length)
 {
     const unsigned char *q;
     X509 *ret;
+    int freeret = 0;
+
     /* Save start position */
     q = *pp;
+
+    if(!a || *a == NULL) {
+        freeret = 1;
+    }
     ret = d2i_X509(a, pp, length);
     /* If certificate unreadable then forget it */
     if (!ret)
@@ -186,7 +192,11 @@ X509 *d2i_X509_AUX(X509 **a, const unsigned char **pp, long length)
         goto err;
     return ret;
  err:
-    X509_free(ret);
+    if(freeret) {
+        X509_free(ret);
+        if (a)
+            *a = NULL;
+    }
     return NULL;
 }
 
