@@ -247,16 +247,27 @@ static void hex_print(const char *name, const unsigned char *buf, size_t len)
     fputs("\n", stderr);
 }
 
+static void free_expected(struct evp_test *t)
+{
+    if (t->expected_err) {
+        OPENSSL_free(t->expected_err);
+        t->expected_err = NULL;
+    }
+    if (t->out_expected) {
+        OPENSSL_free(t->out_expected);
+        OPENSSL_free(t->out_got);
+        t->out_expected = NULL;
+        t->out_got = NULL;
+    }
+}
+
 static void print_expected(struct evp_test *t)
 {
     if (t->out_expected == NULL)
         return;
     hex_print("Expected:", t->out_expected, t->out_len);
     hex_print("Got:     ", t->out_got, t->out_len);
-    OPENSSL_free(t->out_expected);
-    OPENSSL_free(t->out_got);
-    t->out_expected = NULL;
-    t->out_got = NULL;
+    free_expected(t);
 }
 
 static int check_test_error(struct evp_test *t)
@@ -313,6 +324,7 @@ static int setup_test(struct evp_test *t, const struct evp_test_method *tmeth)
             OPENSSL_free(t->expected_err);
             t->expected_err = NULL;
         }
+        free_expected(t);
     }
     t->meth = tmeth;
     return 1;
