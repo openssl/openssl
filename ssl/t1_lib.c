@@ -706,6 +706,16 @@ static int tls1_check_ec_key(SSL *s,
     for (j = 0; j <= 1; j++) {
         if (!tls1_get_curvelist(s, j, &pcurves, &num_curves))
             return 0;
+        if (j == 1 && num_curves == 0) {
+            /*
+             * If we've not received any curves then skip this check.
+             * RFC 4492 does not require the supported elliptic curves extension
+             * so if it is not sent we can just choose any curve.
+             * It is invalid to send an empty list in the elliptic curves
+             * extension, so num_curves == 0 always means no extension.
+             */
+            break;
+        }
         for (i = 0; i < num_curves; i++, pcurves += 2) {
             if (pcurves[0] == curve_id[0] && pcurves[1] == curve_id[1])
                 break;
