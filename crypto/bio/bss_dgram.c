@@ -1338,7 +1338,7 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
                 (socklen_t) (sizeof(sctp_assoc_t) + 256 * sizeof(uint8_t));
             authchunks = OPENSSL_malloc(optlen);
             if (!authchunks) {
-                BIOerr(BIO_F_DGRAM_SCTP_READ, ERR_R_MALLOC_ERROR);
+                BIOerr(BIO_F_DGRAM_SCTP_READ, ERR_R_MALLOC_FAILURE);
                 return -1;
             }
             memset(authchunks, 0, optlen);
@@ -1410,7 +1410,7 @@ static int dgram_sctp_write(BIO *b, const char *in, int inl)
         char *tmp;
         data->saved_message.bio = b;
         if(!(tmp = OPENSSL_malloc(inl))) {
-            BIOerr(BIO_F_DGRAM_SCTP_WRITE, ERR_R_MALLOC_ERROR);
+            BIOerr(BIO_F_DGRAM_SCTP_WRITE, ERR_R_MALLOC_FAILURE);
             return -1;
         }
         if (data->saved_message.data)
