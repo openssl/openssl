@@ -1303,47 +1303,47 @@ $openssldir=$prefix . "/" . $openssldir if $openssldir !~ /(^\/|^[a-zA-Z]:[\\\/]
 print "IsMK1MF=$IsMK1MF\n";
 
 # Allow environment CC to override compiler...
-my $cc = $ENV{CC} || $table{$t}->{cc};
+my $cc = $ENV{CC} || $table{$target}->{cc};
 
 # For cflags and lflags, add the debug_ or release_ attributes
 # Do it in such a way that no spurious space is appended (hence the grep).
 my $cflags = join(" ",
-		  grep { $_ } ($table{$t}->{cflags},
-			       $table{$t}->{$build_prefix."cflags"}));
+		  grep { $_ } ($table{$target}->{cflags},
+			       $table{$target}->{$build_prefix."cflags"}));
 my $lflags = join(" ",
-		  grep { $_ } ($table{$t}->{lflags},
-			       $table{$t}->{$build_prefix."lflags"}));
+		  grep { $_ } ($table{$target}->{lflags},
+			       $table{$target}->{$build_prefix."lflags"}));
 
-my $unistd = $table{$t}->{unistd};
-my $thread_cflag = $table{$t}->{thread_cflag};
-my $sys_id = $table{$t}->{sys_id};
-my $bn_ops = $table{$t}->{bn_ops};
-my $cpuid_obj = $table{$t}->{cpuid_obj};
-my $bn_obj = $table{$t}->{bn_obj};
-my $ec_obj = $table{$t}->{ec_obj};
-my $des_obj = $table{$t}->{des_obj};
-my $aes_obj = $table{$t}->{aes_obj};
-my $bf_obj = $table{$t}->{bf_obj};
-my $md5_obj = $table{$t}->{md5_obj};
-my $sha1_obj = $table{$t}->{sha1_obj};
-my $cast_obj = $table{$t}->{cast_obj};
-my $rc4_obj = $table{$t}->{rc4_obj};
-my $rmd160_obj = $table{$t}->{rmd160_obj};
-my $rc5_obj = $table{$t}->{rc5_obj};
-my $wp_obj = $table{$t}->{wp_obj};
-my $cmll_obj = $table{$t}->{cmll_obj};
-my $modes_obj = $table{$t}->{modes_obj};
-my $engines_obj = $table{$t}->{engines_obj};
-my $perlasm_scheme = $table{$t}->{perlasm_scheme};
-my $dso_scheme = $table{$t}->{dso_scheme};
-my $shared_target = $table{$t}->{shared_target};
-my $shared_cflag = $table{$t}->{shared_cflag};
-my $shared_ldflag = $table{$t}->{shared_ldflag};
-my $shared_extension = $table{$t}->{shared_extension};
-my $ranlib = $ENV{'RANLIB'} || $table{$t}->{ranlib};
+my $unistd = $table{$target}->{unistd};
+my $thread_cflag = $table{$target}->{thread_cflag};
+my $sys_id = $table{$target}->{sys_id};
+my $bn_ops = $table{$target}->{bn_ops};
+my $cpuid_obj = $table{$target}->{cpuid_obj};
+my $bn_obj = $table{$target}->{bn_obj};
+my $ec_obj = $table{$target}->{ec_obj};
+my $des_obj = $table{$target}->{des_obj};
+my $aes_obj = $table{$target}->{aes_obj};
+my $bf_obj = $table{$target}->{bf_obj};
+my $md5_obj = $table{$target}->{md5_obj};
+my $sha1_obj = $table{$target}->{sha1_obj};
+my $cast_obj = $table{$target}->{cast_obj};
+my $rc4_obj = $table{$target}->{rc4_obj};
+my $rmd160_obj = $table{$target}->{rmd160_obj};
+my $rc5_obj = $table{$target}->{rc5_obj};
+my $wp_obj = $table{$target}->{wp_obj};
+my $cmll_obj = $table{$target}->{cmll_obj};
+my $modes_obj = $table{$target}->{modes_obj};
+my $engines_obj = $table{$target}->{engines_obj};
+my $perlasm_scheme = $table{$target}->{perlasm_scheme};
+my $dso_scheme = $table{$target}->{dso_scheme};
+my $shared_target = $table{$target}->{shared_target};
+my $shared_cflag = $table{$target}->{shared_cflag};
+my $shared_ldflag = $table{$target}->{shared_ldflag};
+my $shared_extension = $table{$target}->{shared_extension};
+my $ranlib = $ENV{'RANLIB'} || $table{$target}->{ranlib};
 my $ar = $ENV{'AR'} || "ar";
-my $arflags = $table{$t}->{arflags};
-my $multilib = $table{$t}->{multilib};
+my $arflags = $table{$target}->{arflags};
+my $multilib = $table{$target}->{multilib};
 
 # if $prefix/lib$multilib is not an existing directory, then
 # assume that it's not searched by linker automatically, in
