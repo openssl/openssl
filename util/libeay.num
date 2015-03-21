@@ -1951,7 +1951,6 @@ ENGINE_unregister_ciphers               2528	1_1_0	EXIST::FUNCTION:ENGINE
 ENGINE_get_ciphers                      2529	1_1_0	EXIST::FUNCTION:ENGINE
 d2i_OCSP_BASICRESP                      2530	1_1_0	EXIST::FUNCTION:
 KRB5_CHECKSUM_it                        2531	1_1_0	NOEXIST::FUNCTION:
-KRB5_CHECKSUM_it                        2531	1_1_0	NOEXIST::FUNCTION:
 EC_POINT_add                            2532	1_1_0	EXIST::FUNCTION:EC
 ASN1_item_ex_i2d                        2533	1_1_0	EXIST::FUNCTION:
 OCSP_CERTID_it                          2534	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
@@ -1982,7 +1981,6 @@ OCSP_SIGNATURE_it                       2554	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:
 X509_CRL_it                             2555	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 X509_CRL_it                             2555	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 OCSP_BASICRESP_add_ext                  2556	1_1_0	EXIST::FUNCTION:
-KRB5_ENCKEY_it                          2557	1_1_0	NOEXIST::FUNCTION:
 KRB5_ENCKEY_it                          2557	1_1_0	NOEXIST::FUNCTION:
 UI_method_set_closer                    2558	1_1_0	EXIST::FUNCTION:
 X509_STORE_set_purpose                  2559	1_1_0	EXIST::FUNCTION:
@@ -2193,7 +2191,6 @@ X509_ATTRIBUTE_it                       2732	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:
 OCSP_ONEREQ_get_ext_by_NID              2733	1_1_0	EXIST::FUNCTION:
 PKCS12_decrypt_skey                     2734	1_1_0	EXIST::FUNCTION:
 KRB5_AUTHENT_it                         2735	1_1_0	NOEXIST::FUNCTION:
-KRB5_AUTHENT_it                         2735	1_1_0	NOEXIST::FUNCTION:
 UI_dup_error_string                     2736	1_1_0	EXIST::FUNCTION:
 RSAPublicKey_it                         2737	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:RSA
 RSAPublicKey_it                         2737	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:RSA
@@ -2210,7 +2207,6 @@ PKCS12_unpack_p7encdata                 2746	1_1_0	EXIST::FUNCTION:
 HMAC_CTX_reset                          2747	1_1_0	EXIST::FUNCTION:
 ENGINE_get_digest                       2748	1_1_0	EXIST::FUNCTION:ENGINE
 OCSP_RESPONSE_print                     2749	1_1_0	EXIST::FUNCTION:
-KRB5_TKTBODY_it                         2750	1_1_0	NOEXIST::FUNCTION:
 KRB5_TKTBODY_it                         2750	1_1_0	NOEXIST::FUNCTION:
 ACCESS_DESCRIPTION_it                   2751	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 ACCESS_DESCRIPTION_it                   2751	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
@@ -2265,7 +2261,6 @@ ASN1_BMPSTRING_it                       2787	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:
 ASN1_tag2bit                            2788	1_1_0	EXIST::FUNCTION:
 UI_method_set_flusher                   2789	1_1_0	EXIST::FUNCTION:
 X509_ocspid_print                       2790	1_1_0	EXIST::FUNCTION:
-KRB5_ENCDATA_it                         2791	1_1_0	NOEXIST::FUNCTION:
 KRB5_ENCDATA_it                         2791	1_1_0	NOEXIST::FUNCTION:
 ENGINE_get_load_pubkey_function         2792	1_1_0	EXIST::FUNCTION:ENGINE
 UI_add_user_data                        2793	1_1_0	EXIST::FUNCTION:
@@ -2485,7 +2480,6 @@ OCSP_url_svcloc_new                     2973	1_1_0	EXIST::FUNCTION:
 ASN1_template_free                      2974	1_1_0	NOEXIST::FUNCTION:
 OCSP_SINGLERESP_add_ext                 2975	1_1_0	EXIST::FUNCTION:
 KRB5_AUTHENTBODY_it                     2976	1_1_0	NOEXIST::FUNCTION:
-KRB5_AUTHENTBODY_it                     2976	1_1_0	NOEXIST::FUNCTION:
 X509_supported_extension                2977	1_1_0	EXIST::FUNCTION:
 i2d_KRB5_AUTHDATA                       2978	1_1_0	NOEXIST::FUNCTION:
 UI_method_get_opener                    2979	1_1_0	EXIST::FUNCTION:
@@ -2587,12 +2581,10 @@ asn1_do_lock                            3059	1_1_0	NOEXIST::FUNCTION:
 PKCS7_ATTR_VERIFY_it                    3060	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 PKCS7_ATTR_VERIFY_it                    3060	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 KRB5_APREQBODY_it                       3061	1_1_0	NOEXIST::FUNCTION:
-KRB5_APREQBODY_it                       3061	1_1_0	NOEXIST::FUNCTION:
 i2d_OCSP_SINGLERESP                     3062	1_1_0	EXIST::FUNCTION:
 ASN1_item_ex_new                        3063	1_1_0	EXIST::FUNCTION:
 UI_add_verify_string                    3064	1_1_0	EXIST::FUNCTION:
 _ossl_old_des_set_key                   3065	1_1_0	NOEXIST::FUNCTION:
-KRB5_PRINCNAME_it                       3066	1_1_0	NOEXIST::FUNCTION:
 KRB5_PRINCNAME_it                       3066	1_1_0	NOEXIST::FUNCTION:
 EVP_DecryptInit_ex                      3067	1_1_0	EXIST::FUNCTION:
 i2d_OCSP_CERTID                         3068	1_1_0	EXIST::FUNCTION:
@@ -2606,7 +2598,6 @@ ENGINE_load_chil                        3075	1_1_0	EXIST::FUNCTION:ENGINE,STATIC
 OCSP_id_cmp                             3076	1_1_0	EXIST::FUNCTION:
 OCSP_BASICRESP_new                      3077	1_1_0	EXIST::FUNCTION:
 OCSP_REQUEST_get_ext_by_NID             3078	1_1_0	EXIST::FUNCTION:
-KRB5_APREQ_it                           3079	1_1_0	NOEXIST::FUNCTION:
 KRB5_APREQ_it                           3079	1_1_0	NOEXIST::FUNCTION:
 ENGINE_get_destroy_function             3080	1_1_0	EXIST::FUNCTION:ENGINE
 CONF_set_nconf                          3081	1_1_0	EXIST::FUNCTION:
@@ -2659,7 +2650,6 @@ UI_get0_output_string                   3118	1_1_0	EXIST::FUNCTION:
 UI_dup_verify_string                    3119	1_1_0	EXIST::FUNCTION:
 BN_mod_lshift                           3120	1_1_0	EXIST::FUNCTION:
 KRB5_AUTHDATA_it                        3121	1_1_0	NOEXIST::FUNCTION:
-KRB5_AUTHDATA_it                        3121	1_1_0	NOEXIST::FUNCTION:
 asn1_set_choice_selector                3122	1_1_0	NOEXIST::FUNCTION:
 OCSP_basic_add1_status                  3123	1_1_0	EXIST::FUNCTION:
 OCSP_RESPID_free                        3124	1_1_0	EXIST::FUNCTION:
@@ -2700,7 +2690,6 @@ ASN1_NULL_it                            3150	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:
 BN_mod_lshift1                          3151	1_1_0	EXIST::FUNCTION:
 d2i_OCSP_ONEREQ                         3152	1_1_0	EXIST::FUNCTION:
 OCSP_ONEREQ_new                         3153	1_1_0	EXIST::FUNCTION:
-KRB5_TICKET_it                          3154	1_1_0	NOEXIST::FUNCTION:
 KRB5_TICKET_it                          3154	1_1_0	NOEXIST::FUNCTION:
 EVP_aes_192_cbc                         3155	1_1_0	EXIST::FUNCTION:AES
 KRB5_TICKET_free                        3156	1_1_0	NOEXIST::FUNCTION:
@@ -3111,7 +3100,6 @@ STORE_method_set_modify_function        3530	1_1_0	NOEXIST::FUNCTION:
 STORE_parse_attrs_next                  3531	1_1_0	NOEXIST::FUNCTION:
 ENGINE_load_padlock                     3532	1_1_0	EXIST::FUNCTION:ENGINE,STATIC_ENGINE
 EC_GROUP_set_curve_name                 3533	1_1_0	EXIST::FUNCTION:EC
-X509_CERT_PAIR_it                       3534	1_1_0	NOEXIST::FUNCTION:
 X509_CERT_PAIR_it                       3534	1_1_0	NOEXIST::FUNCTION:
 STORE_meth_get_revoke_fn                3535	1_1_0	NOEXIST::FUNCTION:
 STORE_method_get_revoke_function        3535	1_1_0	NOEXIST::FUNCTION:
@@ -3994,7 +3982,6 @@ WHIRLPOOL_Final                         4370	1_1_0	EXIST::FUNCTION:WHIRLPOOL
 X509_CRL_METHOD_new                     4371	1_1_0	EXIST::FUNCTION:
 EVP_DigestSignFinal                     4372	1_1_0	EXIST::FUNCTION:
 TS_RESP_CTX_set_def_policy              4373	1_1_0	EXIST::FUNCTION:
-NETSCAPE_X509_it                        4374	1_1_0	NOEXIST::FUNCTION:
 NETSCAPE_X509_it                        4374	1_1_0	NOEXIST::FUNCTION:
 TS_RESP_create_response                 4375	1_1_0	EXIST::FUNCTION:
 PKCS7_SIGNER_INFO_get0_algs             4376	1_1_0	EXIST::FUNCTION:
