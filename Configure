@@ -425,6 +425,7 @@ my %table=(
     aarch64_asm => {
 	template	=> 1,
 	cpuid_obj       => "armcap.o arm64cpuid.o mem_clr.o",
+	bn_obj          => "bn_asm.o armv8-mont.o",
 	aes_obj         => "aes_core.o aes_cbc.o aesv8-armx.o vpaes-armv8.o",
 	sha1_obj        => "sha1-armv8.o sha256-armv8.o sha512-armv8.o",
 	modes_obj       => "ghashv8-armx.o",
