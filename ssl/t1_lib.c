@@ -113,8 +113,10 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
+#ifndef OPENSSL_NO_EC
 #ifdef OPENSSL_NO_EC2M
 # include <openssl/ec.h>
+#endif
 #endif
 #include <openssl/ocsp.h>
 #include <openssl/rand.h>
