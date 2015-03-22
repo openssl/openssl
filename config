@@ -20,7 +20,6 @@
 # Be as similar to the output of config.guess/config.sub
 # as possible.
 
-PREFIX=""
 SUFFIX=""
 TEST="false"
 EXE=""
@@ -931,7 +930,7 @@ if [ $? = "0" ]; then
   OUT="$OUT-$CC"
 fi
 
-OUT="$PREFIX$OUT"
+OUT="$OUT"
 
 $PERL ./Configure LIST | grep "$OUT" > /dev/null
 if [ $? = "0" ]; then
