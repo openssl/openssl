@@ -60,7 +60,7 @@
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include "cms_lcl.h"
-#include "asn1_locl.h"
+#include "internal/asn1_int.h"
 
 /* CMS SignedData Utilities */
 

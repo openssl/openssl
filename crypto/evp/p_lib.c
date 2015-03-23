@@ -78,7 +78,7 @@
 # include <openssl/engine.h>
 #endif
 
-#include "asn1_locl.h"
+#include "internal/asn1_int.h"
 
 static void EVP_PKEY_free_it(EVP_PKEY *x);
 

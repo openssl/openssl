@@ -60,7 +60,7 @@
 #include "cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
-#include "asn1_locl.h"
+#include "internal/asn1_int.h"
 #ifndef OPENSSL_NO_RSA
 # include <openssl/rsa.h>
 #endif

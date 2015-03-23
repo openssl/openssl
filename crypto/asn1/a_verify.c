@@ -70,7 +70,7 @@
 #include <openssl/objects.h>
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
-#include "asn1_locl.h"
+#include "internal/asn1_int.h"
 
 #ifndef NO_ASN1_OLD
 

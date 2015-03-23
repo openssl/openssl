@@ -62,7 +62,7 @@
 #include "cryptlib.h"
 #include <openssl/x509.h>
 #include <openssl/rand.h>
-#include "asn1_locl.h"
+#include "internal/asn1_int.h"
 
 /* Extract a private key from a PKCS8 structure */
 

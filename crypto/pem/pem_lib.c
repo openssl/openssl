@@ -66,7 +66,7 @@
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #include <openssl/pkcs12.h>
-#include "asn1_locl.h"
+#include "internal/asn1_int.h"
 #ifndef OPENSSL_NO_DES
 # include <openssl/des.h>
 #endif
