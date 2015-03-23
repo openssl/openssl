@@ -547,7 +547,8 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
     int ret;
 
     /* Ensure there is no state left over from a previous invocation */
-    SSL_clear(s);
+    if(!SSL_clear(s))
+        return -1;
 
     SSL_set_options(s, SSL_OP_COOKIE_EXCHANGE);
     s->d1->listen = 1;
