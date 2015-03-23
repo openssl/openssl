@@ -27,7 +27,7 @@ LIBSRC=	a_object.c a_bitstr.c a_utctm.c a_gentm.c a_time.c a_int.c a_octet.c \
 	tasn_new.c tasn_fre.c tasn_enc.c tasn_dec.c tasn_utl.c tasn_typ.c \
 	tasn_prn.c tasn_scn.c ameth_lib.c \
 	f_int.c f_string.c n_pkey.c \
-	f_enum.c x_pkey.c x_exten.c bio_asn1.c bio_ndef.c asn_mime.c \
+	f_enum.c x_pkey.c bio_asn1.c bio_ndef.c asn_mime.c \
 	asn1_gen.c asn1_par.c asn1_lib.c asn1_err.c a_strnid.c \
 	evp_asn1.c asn_pack.c p5_pbe.c p5_pbev2.c p8_pkey.c asn_moid.c \
 	asn_mstbl.c
@@ -41,7 +41,7 @@ LIBOBJ= a_object.o a_bitstr.o a_utctm.o a_gentm.o a_time.o a_int.o a_octet.o \
 	tasn_new.o tasn_fre.o tasn_enc.o tasn_dec.o tasn_utl.o tasn_typ.o \
 	tasn_prn.o tasn_scn.o ameth_lib.o \
 	f_int.o f_string.o n_pkey.o \
-	f_enum.o x_pkey.o x_exten.o bio_asn1.o bio_ndef.o asn_mime.o \
+	f_enum.o x_pkey.o bio_asn1.o bio_ndef.o asn_mime.o \
 	asn1_gen.o asn1_par.o asn1_lib.o asn1_err.o a_strnid.o \
 	evp_asn1.o asn_pack.o p5_pbe.o p5_pbev2.o p8_pkey.o asn_moid.o \
 	asn_mstbl.o
@@ -766,18 +766,6 @@ x_crl.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 x_crl.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 x_crl.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 x_crl.o: ../../include/openssl/x509v3.h ../cryptlib.h asn1_locl.h x_crl.c
-x_exten.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
-x_exten.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-x_exten.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-x_exten.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-x_exten.o: ../../include/openssl/ecdsa.h ../../include/openssl/evp.h
-x_exten.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-x_exten.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-x_exten.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-x_exten.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
-x_exten.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-x_exten.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-x_exten.o: ../../include/openssl/x509_vfy.h x_exten.c
 x_info.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 x_info.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 x_info.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
