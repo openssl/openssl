@@ -68,7 +68,7 @@
 #ifndef OPENSSL_NO_CMS
 # include <openssl/cms.h>
 #endif
-#include "evp_locl.h"
+#include "internal/evp_int.h"
 #include "rsa_locl.h"
 
 /* RSA pkey context structure */

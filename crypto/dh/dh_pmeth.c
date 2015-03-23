@@ -67,7 +67,7 @@
 # include <openssl/dsa.h>
 #endif
 #include <openssl/objects.h>
-#include "evp_locl.h"
+#include "internal/evp_int.h"
 
 /* DH pkey context structure */
 

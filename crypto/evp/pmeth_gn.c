@@ -63,7 +63,7 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include "internal/bn_int.h"
-#include "evp_locl.h"
+#include "internal/evp_int.h"
 
 int EVP_PKEY_paramgen_init(EVP_PKEY_CTX *ctx)
 {
