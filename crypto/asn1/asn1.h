@@ -747,14 +747,7 @@ BIGNUM *ASN1_ENUMERATED_to_BN(ASN1_ENUMERATED *ai, BIGNUM *bn);
 /* given a string, return the correct type, max is the maximum length */
 int ASN1_PRINTABLE_type(const unsigned char *s, int max);
 
-int i2d_ASN1_bytes(ASN1_STRING *a, unsigned char **pp, int tag, int xclass);
-ASN1_STRING *d2i_ASN1_bytes(ASN1_STRING **a, const unsigned char **pp,
-                            long length, int Ptag, int Pclass);
 unsigned long ASN1_tag2bit(int tag);
-/* type is one or more of the B_ASN1_ values. */
-ASN1_STRING *d2i_ASN1_type_bytes(ASN1_STRING **a, const unsigned char **pp,
-                                 long length, int type);
-
 /* PARSING */
 int asn1_Finish(ASN1_CTX *c);
 int asn1_const_Finish(ASN1_const_CTX *c);
@@ -865,20 +858,7 @@ int ASN1_TYPE_set_int_octetstring(ASN1_TYPE *a, long num,
 int ASN1_TYPE_get_int_octetstring(ASN1_TYPE *a, long *num,
                                   unsigned char *data, int max_len);
 
-STACK_OF(OPENSSL_BLOCK) *ASN1_seq_unpack(const unsigned char *buf, int len,
-                                         d2i_of_void *d2i,
-                                         void (*free_func) (OPENSSL_BLOCK));
-unsigned char *ASN1_seq_pack(STACK_OF(OPENSSL_BLOCK) *safes, i2d_of_void *i2d,
-                             unsigned char **buf, int *len);
-void *ASN1_unpack_string(ASN1_STRING *oct, d2i_of_void *d2i);
 void *ASN1_item_unpack(ASN1_STRING *oct, const ASN1_ITEM *it);
-ASN1_STRING *ASN1_pack_string(void *obj, i2d_of_void *i2d,
-                              ASN1_OCTET_STRING **oct);
-
-# define ASN1_pack_string_of(type,obj,i2d,oct) \
-    (ASN1_pack_string(CHECKED_PTR_OF(type, obj), \
-                      CHECKED_I2D_OF(type, i2d), \
-                      oct))
 
 ASN1_STRING *ASN1_item_pack(void *obj, const ASN1_ITEM *it,
                             ASN1_OCTET_STRING **oct);
