@@ -61,7 +61,7 @@
 #include <openssl/rand.h>
 #include <openssl/aes.h>
 #include "cms_lcl.h"
-#include "asn1_locl.h"
+#include "internal/asn1_int.h"
 
 DECLARE_ASN1_ITEM(CMS_KeyAgreeRecipientInfo)
 DECLARE_ASN1_ITEM(CMS_RecipientEncryptedKey)

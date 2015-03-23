@@ -1,9 +1,10 @@
+/* asn1_int.h */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
- * 2007.
+ * 2015.
  */
 /* ====================================================================
- * Copyright (c) 2007 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2015 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,109 +57,49 @@
  *
  */
 
-#include <stdio.h>
-#include "cryptlib.h"
-#include <openssl/evp.h>
-#include "internal/asn1_int.h"
+/* Internal ASN1 structures and functions: not for application use */
 
-#define HMAC_TEST_PRIVATE_KEY_FORMAT
+/* ASN1 public key method structure */
 
-/*
- * HMAC "ASN1" method. This is just here to indicate the maximum HMAC output
- * length and to free up an HMAC key.
- */
-
-static int hmac_size(const EVP_PKEY *pkey)
-{
-    return EVP_MAX_MD_SIZE;
-}
-
-static void hmac_key_free(EVP_PKEY *pkey)
-{
-    ASN1_OCTET_STRING *os = (ASN1_OCTET_STRING *)pkey->pkey.ptr;
-    if (os) {
-        if (os->data)
-            OPENSSL_cleanse(os->data, os->length);
-        ASN1_OCTET_STRING_free(os);
-    }
-}
-
-static int hmac_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
-{
-    switch (op) {
-    case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
-        *(int *)arg2 = NID_sha256;
-        return 1;
-
-    default:
-        return -2;
-    }
-}
-
-#ifdef HMAC_TEST_PRIVATE_KEY_FORMAT
-/*
- * A bogus private key format for test purposes. This is simply the HMAC key
- * with "HMAC PRIVATE KEY" in the headers. When enabled the genpkey utility
- * can be used to "generate" HMAC keys.
- */
-
-static int old_hmac_decode(EVP_PKEY *pkey,
-                           const unsigned char **pder, int derlen)
-{
-    ASN1_OCTET_STRING *os;
-    os = ASN1_OCTET_STRING_new();
-    if (!os || !ASN1_OCTET_STRING_set(os, *pder, derlen))
-        return 0;
-    EVP_PKEY_assign(pkey, EVP_PKEY_HMAC, os);
-    return 1;
-}
-
-static int old_hmac_encode(const EVP_PKEY *pkey, unsigned char **pder)
-{
-    int inc;
-    ASN1_OCTET_STRING *os = (ASN1_OCTET_STRING *)pkey->pkey.ptr;
-    if (pder) {
-        if (!*pder) {
-            *pder = OPENSSL_malloc(os->length);
-            if (*pder == NULL)
-                return -1;
-            inc = 0;
-        } else
-            inc = 1;
-
-        memcpy(*pder, os->data, os->length);
-
-        if (inc)
-            *pder += os->length;
-    }
-
-    return os->length;
-}
-
-#endif
-
-const EVP_PKEY_ASN1_METHOD hmac_asn1_meth = {
-    EVP_PKEY_HMAC,
-    EVP_PKEY_HMAC,
-    0,
-
-    "HMAC",
-    "OpenSSL HMAC method",
-
-    0, 0, 0, 0,
-
-    0, 0, 0,
-
-    hmac_size,
-    0, 0,
-    0, 0, 0, 0, 0, 0, 0,
-
-    hmac_key_free,
-    hmac_pkey_ctrl,
-#ifdef HMAC_TEST_PRIVATE_KEY_FORMAT
-    old_hmac_decode,
-    old_hmac_encode
-#else
-    0, 0
-#endif
-};
+struct evp_pkey_asn1_method_st {
+    int pkey_id;
+    int pkey_base_id;
+    unsigned long pkey_flags;
+    char *pem_str;
+    char *info;
+    int (*pub_decode) (EVP_PKEY *pk, X509_PUBKEY *pub);
+    int (*pub_encode) (X509_PUBKEY *pub, const EVP_PKEY *pk);
+    int (*pub_cmp) (const EVP_PKEY *a, const EVP_PKEY *b);
+    int (*pub_print) (BIO *out, const EVP_PKEY *pkey, int indent,
+                      ASN1_PCTX *pctx);
+    int (*priv_decode) (EVP_PKEY *pk, PKCS8_PRIV_KEY_INFO *p8inf);
+    int (*priv_encode) (PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pk);
+    int (*priv_print) (BIO *out, const EVP_PKEY *pkey, int indent,
+                       ASN1_PCTX *pctx);
+    int (*pkey_size) (const EVP_PKEY *pk);
+    int (*pkey_bits) (const EVP_PKEY *pk);
+    int (*pkey_security_bits) (const EVP_PKEY *pk);
+    int (*param_decode) (EVP_PKEY *pkey,
+                         const unsigned char **pder, int derlen);
+    int (*param_encode) (const EVP_PKEY *pkey, unsigned char **pder);
+    int (*param_missing) (const EVP_PKEY *pk);
+    int (*param_copy) (EVP_PKEY *to, const EVP_PKEY *from);
+    int (*param_cmp) (const EVP_PKEY *a, const EVP_PKEY *b);
+    int (*param_print) (BIO *out, const EVP_PKEY *pkey, int indent,
+                        ASN1_PCTX *pctx);
+    int (*sig_print) (BIO *out,
+                      const X509_ALGOR *sigalg, const ASN1_STRING *sig,
+                      int indent, ASN1_PCTX *pctx);
+    void (*pkey_free) (EVP_PKEY *pkey);
+    int (*pkey_ctrl) (EVP_PKEY *pkey, int op, long arg1, void *arg2);
+    /* Legacy functions for old PEM */
+    int (*old_priv_decode) (EVP_PKEY *pkey,
+                            const unsigned char **pder, int derlen);
+    int (*old_priv_encode) (const EVP_PKEY *pkey, unsigned char **pder);
+    /* Custom ASN1 signature verification */
+    int (*item_verify) (EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
+                        X509_ALGOR *a, ASN1_BIT_STRING *sig, EVP_PKEY *pkey);
+    int (*item_sign) (EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
+                      X509_ALGOR *alg1, X509_ALGOR *alg2,
+                      ASN1_BIT_STRING *sig);
+} /* EVP_PKEY_ASN1_METHOD */ ;

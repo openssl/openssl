@@ -59,7 +59,7 @@
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include "cms_lcl.h"
-#include "asn1_locl.h"
+#include "internal/asn1_int.h"
 
 static BIO *cms_get_text_bio(BIO *out, unsigned int flags)
 {
