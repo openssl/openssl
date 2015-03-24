@@ -370,8 +370,16 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
             && !(ctx->param->flags & X509_V_FLAG_TRUSTED_FIRST)
             && !(ctx->param->flags & X509_V_FLAG_NO_ALT_CHAINS)) {
             while (j-- > 1) {
+                STACK_OF(X509) *chtmp = ctx->chain;
                 xtmp2 = sk_X509_value(ctx->chain, j - 1);
+                /*
+                 * Temporarily set chain to NULL so we don't discount
+                 * duplicates: the same certificate could be an untrusted
+                 * CA found in the trusted store.
+                 */
+                ctx->chain = NULL;
                 ok = ctx->get_issuer(&xtmp, ctx, xtmp2);
+                ctx->chain = chtmp;
                 if (ok < 0)
                     goto end;
                 /* Check if we found an alternate chain */
