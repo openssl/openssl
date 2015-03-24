@@ -801,12 +801,10 @@ static EVP_PKEY *sureware_load_public(ENGINE *e, const char *key_id,
     return res;
  err:
 #  ifndef OPENSSL_NO_RSA
-    if (rsatmp)
-        RSA_free(rsatmp);
+    RSA_free(rsatmp);
 #  endif
 #  ifndef OPENSSL_NO_DSA
-    if (dsatmp)
-        DSA_free(dsatmp);
+    DSA_free(dsatmp);
 #  endif
     return NULL;
 }

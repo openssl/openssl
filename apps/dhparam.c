@@ -319,8 +319,7 @@ int MAIN(int argc, char **argv)
             if (!dsa
                 || !DSA_generate_parameters_ex(dsa, num, NULL, 0, NULL, NULL,
                                                cb)) {
-                if (dsa)
-                    DSA_free(dsa);
+                DSA_free(dsa);
                 BN_GENCB_free(cb);
                 ERR_print_errors(bio_err);
                 goto end;
@@ -520,8 +519,7 @@ int MAIN(int argc, char **argv)
         BIO_free(in);
     if (out != NULL)
         BIO_free_all(out);
-    if (dh != NULL)
-        DH_free(dh);
+    DH_free(dh);
     apps_shutdown();
     OPENSSL_EXIT(ret);
 }

@@ -19,6 +19,7 @@ calling DSA_new_method(NULL).
 
 DSA_free() frees the B<DSA> structure and its components. The values are
 erased before the memory is returned to the system.
+If B<dsa> is NULL nothing is done.
 
 =head1 RETURN VALUES
 

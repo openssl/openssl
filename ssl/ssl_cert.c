@@ -443,12 +443,10 @@ void ssl_cert_free(CERT *c)
 #endif
 
 #ifndef OPENSSL_NO_RSA
-    if (c->rsa_tmp)
-        RSA_free(c->rsa_tmp);
+    RSA_free(c->rsa_tmp);
 #endif
 #ifndef OPENSSL_NO_DH
-    if (c->dh_tmp)
-        DH_free(c->dh_tmp);
+    DH_free(c->dh_tmp);
 #endif
 #ifndef OPENSSL_NO_EC
     if (c->ecdh_tmp)
@@ -651,12 +649,10 @@ void ssl_sess_cert_free(SESS_CERT *sc)
     }
 
 #ifndef OPENSSL_NO_RSA
-    if (sc->peer_rsa_tmp != NULL)
-        RSA_free(sc->peer_rsa_tmp);
+    RSA_free(sc->peer_rsa_tmp);
 #endif
 #ifndef OPENSSL_NO_DH
-    if (sc->peer_dh_tmp != NULL)
-        DH_free(sc->peer_dh_tmp);
+    DH_free(sc->peer_dh_tmp);
 #endif
 #ifndef OPENSSL_NO_EC
     if (sc->peer_ecdh_tmp != NULL)

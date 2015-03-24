@@ -18,6 +18,7 @@ DH_new() allocates and initializes a B<DH> structure.
 
 DH_free() frees the B<DH> structure and its components. The values are
 erased before the memory is returned to the system.
+If B<dh> is NULL nothing is done.
 
 =head1 RETURN VALUES
 

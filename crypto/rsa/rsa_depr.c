@@ -101,8 +101,7 @@ RSA *RSA_generate_key(int bits, unsigned long e_value,
  err:
     if (e)
         BN_free(e);
-    if (rsa)
-        RSA_free(rsa);
+    RSA_free(rsa);
     if (cb)
         BN_GENCB_free(cb);
     return 0;

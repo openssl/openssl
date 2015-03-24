@@ -212,8 +212,7 @@ int MAIN(int argc, char **argv)
         ERR_print_errors(bio_err);
     if (out != NULL)
         BIO_free_all(out);
-    if (dh != NULL)
-        DH_free(dh);
+    DH_free(dh);
     if (cb != NULL)
         BN_GENCB_free(cb);
     apps_shutdown();

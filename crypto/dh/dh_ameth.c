@@ -142,8 +142,7 @@ static int dh_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
  err:
     if (public_key)
         ASN1_INTEGER_free(public_key);
-    if (dh)
-        DH_free(dh);
+    DH_free(dh);
     return 0;
 
 }
@@ -711,8 +710,7 @@ static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
         ASN1_INTEGER_free(public_key);
     if (pkpeer)
         EVP_PKEY_free(pkpeer);
-    if (dhpeer)
-        DH_free(dhpeer);
+    DH_free(dhpeer);
     return rv;
 }
 
