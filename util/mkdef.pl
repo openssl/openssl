@@ -487,7 +487,14 @@ sub do_defs
 		while(<IN>) {
 			if($parens > 0) {
 				#Inside a DECLARE_DEPRECATED
-				$parens += count_parens($_);
+				$stored_multiline .= $_;
+				chomp $stored_multiline;
+				print STDERR "DEBUG: Continuing multiline DEPRECATED: $stored_multiline\n" if $debug;
+				$parens = count_parens($stored_multiline);
+				if ($parens == 0) {
+					$stored_multiline =~ /^\s*DECLARE_DEPRECATED\s*\(\s*(\w*(\s|\*|\w)*)/;
+					$def .= "$1(void);";
+				}
 				next;
 			}
 			if (/\/\* Error codes for the \w+ functions\. \*\//)
@@ -881,9 +888,15 @@ sub do_defs
 						      "EXPORT_VAR_AS_FUNCTION",
 						      "FUNCTION");
 				} elsif (/^\s*DECLARE_DEPRECATED\s*\(\s*(\w*(\s|\*|\w)*)/) {
-					$def .= "$1(void);";
 					$parens = count_parens($_);
-					next;
+					if ($parens == 0) {
+						$def .= "$1(void);";
+					} else {
+						$stored_multiline = $_;
+						chomp $stored_multiline;
+						print STDERR "DEBUG: Found multiline DEPRECATED starting with: $stored_multiline\n" if $debug;
+						next;
+					}
 				} elsif ($tag{'CONST_STRICT'} != 1) {
 					if (/\{|\/\*|\([^\)]*$/) {
 						$line = $_;
