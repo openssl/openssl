@@ -2215,7 +2215,7 @@ __owur int dtls1_buffer_message(SSL *s, int ccs);
 __owur int dtls1_retransmit_message(SSL *s, unsigned short seq,
                              unsigned long frag_off, int *found);
 __owur int dtls1_get_queue_priority(unsigned short seq, int is_ccs);
-__owur int dtls1_retransmit_buffered_messages(SSL *s);
+int dtls1_retransmit_buffered_messages(SSL *s);
 void dtls1_clear_record_buffer(SSL *s);
 void dtls1_get_message_header(unsigned char *data,
                               struct hm_header_st *msg_hdr);
@@ -2369,7 +2369,7 @@ void ssl_set_sig_mask(unsigned long *pmask_a, SSL *s, int op);
 
 __owur int tls1_set_sigalgs_list(CERT *c, const char *str, int client);
 __owur int tls1_set_sigalgs(CERT *c, const int *salg, size_t salglen, int client);
-__owur int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
+int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
                      int idx);
 void tls1_set_cert_validity(SSL *s);
 

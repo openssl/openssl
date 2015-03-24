@@ -556,7 +556,8 @@ int BIO_ssl_copy_session_id(BIO *t, BIO *f)
     if ((((BIO_SSL *)t->ptr)->ssl == NULL) ||
         (((BIO_SSL *)f->ptr)->ssl == NULL))
         return (0);
-    SSL_copy_session_id(((BIO_SSL *)t->ptr)->ssl, ((BIO_SSL *)f->ptr)->ssl);
+    if(!SSL_copy_session_id(((BIO_SSL *)t->ptr)->ssl, ((BIO_SSL *)f->ptr)->ssl))
+        return 0;
     return (1);
 }
 

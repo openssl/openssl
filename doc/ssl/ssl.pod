@@ -453,7 +453,10 @@ connection defined in the B<SSL> structure.
 
 =item int B<SSL_connect>(SSL *ssl);
 
-=item void B<SSL_copy_session_id>(SSL *t, const SSL *f);
+=item int B<SSL_copy_session_id>(SSL *t, const SSL *f);
+
+Sets the session details for B<t> to be the same as in B<f>. Returns 1 on
+success or 0 on failure.
 
 =item long B<SSL_ctrl>(SSL *ssl, int cmd, long larg, char *parg);
 
@@ -755,6 +758,9 @@ The L<ssl(3)|ssl(3)> document appeared in OpenSSL 0.9.2
 
 B<SSLv2_client_method>, B<SSLv2_server_method> and B<SSLv2_method> where removed
 in OpenSSL 1.1.0.
+
+The return type of B<SSL_copy_session_id> was changed from void to int in
+OpenSSL 1.1.0.
 
 =cut
 
