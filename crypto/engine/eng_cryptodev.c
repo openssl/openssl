@@ -30,7 +30,6 @@
 #include <openssl/engine.h>
 #include <openssl/evp.h>
 #include <openssl/bn.h>
-#include "../bn/bn_lcl.h"
 
 #if (defined(__unix__) || defined(unix)) && !defined(USG) && \
         (defined(OpenBSD) || defined(__FreeBSD__))
@@ -1014,7 +1013,6 @@ cryptodev_engine_digests(ENGINE *e, const EVP_MD **digest,
  */
 static int bn2crparam(const BIGNUM *a, struct crparam *crp)
 {
-    int i, j, k;
     ssize_t bytes, bits;
     u_char *b;
 
@@ -1022,24 +1020,16 @@ static int bn2crparam(const BIGNUM *a, struct crparam *crp)
     crp->crp_nbits = 0;
 
     bits = BN_num_bits(a);
-    bytes = (bits + 7) / 8;
+    bytes = BN_num_bytes(a);
 
-    b = malloc(bytes);
+    b = calloc(bytes,1);
     if (b == NULL)
         return (1);
-    memset(b, 0, bytes);
 
     crp->crp_p = (caddr_t) b;
     crp->crp_nbits = bits;
 
-    for (i = 0, j = 0; i < a->top; i++) {
-        for (k = 0; k < BN_BITS2 / 8; k++) {
-            if ((j + k) >= bytes)
-                return (0);
-            b[j + k] = a->d[i] >> (k * 8);
-        }
-        j += BN_BITS2 / 8;
-    }
+    BN_bn2bin(a, b);
     return (0);
 }
 
@@ -1239,10 +1229,10 @@ cryptodev_dsa_dsa_mod_exp(DSA *dsa, BIGNUM *t1, BIGNUM *g,
                           BIGNUM *u1, BIGNUM *pub_key, BIGNUM *u2, BIGNUM *p,
                           BN_CTX *ctx, BN_MONT_CTX *mont)
 {
-    BIGNUM t2;
+    BIGNUM *t2;
     int ret = 0;
 
-    BN_init(&t2);
+    t2 = BN_new();
 
     /* v = ( g^u1 * y^u2 mod p ) mod q */
     /* let t1 = g ^ u1 mod p */
@@ -1252,17 +1242,17 @@ cryptodev_dsa_dsa_mod_exp(DSA *dsa, BIGNUM *t1, BIGNUM *g,
         goto err;
 
     /* let t2 = y ^ u2 mod p */
-    if (!dsa->meth->bn_mod_exp(dsa, &t2, dsa->pub_key, u2, dsa->p, ctx, mont))
+    if (!dsa->meth->bn_mod_exp(dsa, t2, dsa->pub_key, u2, dsa->p, ctx, mont))
         goto err;
     /* let u1 = t1 * t2 mod p */
-    if (!BN_mod_mul(u1, t1, &t2, dsa->p, ctx))
+    if (!BN_mod_mul(u1, t1, t2, dsa->p, ctx))
         goto err;
 
     BN_copy(t1, u1);
 
     ret = 1;
  err:
-    BN_free(&t2);
+    BN_free(t2);
     return (ret);
 }
 
