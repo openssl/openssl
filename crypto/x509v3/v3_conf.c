@@ -212,8 +212,7 @@ static X509_EXTENSION *do_ext_i2d(const X509V3_EXT_METHOD *method,
     X509V3err(X509V3_F_DO_EXT_I2D, ERR_R_MALLOC_FAILURE);
     if (ext_der != NULL)
         OPENSSL_free(ext_der);
-    if (ext_oct != NULL)
-        ASN1_OCTET_STRING_free(ext_oct);
+    ASN1_OCTET_STRING_free(ext_oct);
     return NULL;
 
 }

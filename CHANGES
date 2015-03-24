@@ -71,6 +71,11 @@
         Remove all but one '#ifdef undef' which is to be looked at.
      [Rich Salz]
 
+  *) Clean up calling of xxx_free routines.
+        Just like free(), fix most of the xxx_free routines to accept
+        NULL.  Remove the non-null checks from callers.  Save much code.
+     [Rich Salz]
+
   *) Experimental support for a new, fast, unbiased prime candidate generator,
      bn_probable_prime_dh_coprime(). Not currently used by any prime generator.
      [Felix Laurie von Massenbach <felix@erbridge.co.uk>]

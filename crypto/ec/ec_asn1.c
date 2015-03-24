@@ -317,8 +317,7 @@ static int ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
         return 0;
 
     /* clear the old values (if necessary) */
-    if (field->fieldType != NULL)
-        ASN1_OBJECT_free(field->fieldType);
+    ASN1_OBJECT_free(field->fieldType);
     if (field->p.other != NULL)
         ASN1_TYPE_free(field->p.other);
 
@@ -654,7 +653,7 @@ ECPKPARAMETERS *ec_asn1_group2pkparameters(const EC_GROUP *group,
             return NULL;
         }
     } else {
-        if (ret->type == 0 && ret->value.named_curve)
+        if (ret->type == 0)
             ASN1_OBJECT_free(ret->value.named_curve);
         else if (ret->type == 1 && ret->value.parameters)
             ECPARAMETERS_free(ret->value.parameters);

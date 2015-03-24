@@ -102,8 +102,7 @@ X509_POLICY_DATA *policy_data_new(POLICYINFO *policy,
     ret->expected_policy_set = sk_ASN1_OBJECT_new_null();
     if (!ret->expected_policy_set) {
         OPENSSL_free(ret);
-        if (id)
-            ASN1_OBJECT_free(id);
+        ASN1_OBJECT_free(id);
         return NULL;
     }
 

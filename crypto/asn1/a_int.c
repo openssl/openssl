@@ -265,7 +265,7 @@ ASN1_INTEGER *c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp,
     return (ret);
  err:
     ASN1err(ASN1_F_C2I_ASN1_INTEGER, i);
-    if ((ret != NULL) && ((a == NULL) || (*a != ret)))
+    if ((a == NULL) || (*a != ret))
         ASN1_INTEGER_free(ret);
     return (NULL);
 }
@@ -334,7 +334,7 @@ ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp,
     return (ret);
  err:
     ASN1err(ASN1_F_D2I_ASN1_UINTEGER, i);
-    if ((ret != NULL) && ((a == NULL) || (*a != ret)))
+    if ((a == NULL) || (*a != ret))
         ASN1_INTEGER_free(ret);
     return (NULL);
 }

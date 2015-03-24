@@ -159,8 +159,7 @@ int X509_add1_trust_object(X509 *x, ASN1_OBJECT *obj)
     if (!objtmp || sk_ASN1_OBJECT_push(aux->trust, objtmp))
         return 1;
  err:
-    if (objtmp)
-        ASN1_OBJECT_free(objtmp);
+    ASN1_OBJECT_free(objtmp);
     return 0;
 }
 

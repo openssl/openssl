@@ -86,8 +86,7 @@ int X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype, void *pval)
             return 0;
     }
     if (alg) {
-        if (alg->algorithm)
-            ASN1_OBJECT_free(alg->algorithm);
+        ASN1_OBJECT_free(alg->algorithm);
         alg->algorithm = aobj;
     }
     if (ptype == 0)

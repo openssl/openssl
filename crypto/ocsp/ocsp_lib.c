@@ -110,8 +110,7 @@ OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
         goto err;
 
     alg = cid->hashAlgorithm;
-    if (alg->algorithm != NULL)
-        ASN1_OBJECT_free(alg->algorithm);
+    ASN1_OBJECT_free(alg->algorithm);
     if ((nid = EVP_MD_type(dgst)) == NID_undef) {
         OCSPerr(OCSP_F_OCSP_CERT_ID_NEW, OCSP_R_UNKNOWN_NID);
         goto err;
