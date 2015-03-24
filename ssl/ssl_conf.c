@@ -421,8 +421,7 @@ static int cmd_DHParameters(SSL_CONF_CTX *cctx, const char *value)
     if (cctx->ssl)
         rv = SSL_set_tmp_dh(cctx->ssl, dh);
  end:
-    if (dh)
-        DH_free(dh);
+    DH_free(dh);
     if (in)
         BIO_free(in);
     return rv > 0;

@@ -424,8 +424,7 @@ int MAIN(int argc, char **argv)
  end:
     if (out != NULL)
         BIO_free_all(out);
-    if (rsa != NULL)
-        RSA_free(rsa);
+    RSA_free(rsa);
     if (passin)
         OPENSSL_free(passin);
     if (passout)

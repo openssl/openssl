@@ -271,8 +271,7 @@ int MAIN(int argc, char **argv)
         BIO_free(in);
     if (out != NULL)
         BIO_free_all(out);
-    if (dsa != NULL)
-        DSA_free(dsa);
+    DSA_free(dsa);
     if (passout)
         OPENSSL_free(passout);
     apps_shutdown();

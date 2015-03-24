@@ -311,8 +311,7 @@ int MAIN(int argc, char **argv)
         BN_free(bn);
     if (cb)
         BN_GENCB_free(cb);
-    if (rsa)
-        RSA_free(rsa);
+    RSA_free(rsa);
     if (out)
         BIO_free_all(out);
     if (passout)

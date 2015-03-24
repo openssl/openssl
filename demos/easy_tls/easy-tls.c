@@ -637,8 +637,7 @@ void tls_set_dhe1024(int i, void *apparg)
         tls_openssl_errors("", "", NULL, apparg);
         return;
     }
-    if (tls_dhe1024 != NULL)
-        DH_free(tls_dhe1024);
+    DH_free(tls_dhe1024);
     tls_dhe1024 = dhparams;
 }
 

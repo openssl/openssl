@@ -268,9 +268,7 @@ static EVP_PKEY *load_example_rsa_key(void)
     if (pkey) {
         EVP_PKEY_free(pkey);
     }
-    if (rsa) {
-        RSA_free(rsa);
-    }
+    RSA_free(rsa);
 
     return ret;
 }

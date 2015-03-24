@@ -199,10 +199,8 @@ int main(int argc, char *argv[])
         OPENSSL_free(abuf);
     if (bbuf != NULL)
         OPENSSL_free(bbuf);
-    if (b != NULL)
-        DH_free(b);
-    if (a != NULL)
-        DH_free(a);
+    DH_free(b);
+    DH_free(a);
     if (_cb)
         BN_GENCB_free(_cb);
     BIO_free(out);

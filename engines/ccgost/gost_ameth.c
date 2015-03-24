@@ -276,9 +276,7 @@ static int pkey_ctrl_gost(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 /* --------------------- free functions * ------------------------------*/
 static void pkey_free_gost94(EVP_PKEY *key)
 {
-    if (key->pkey.dsa) {
-        DSA_free(key->pkey.dsa);
-    }
+    DSA_free(key->pkey.dsa);
 }
 
 static void pkey_free_gost01(EVP_PKEY *key)

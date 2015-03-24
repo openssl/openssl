@@ -315,8 +315,7 @@ DH *DSA_dup_DH(const DSA *r)
     return ret;
 
  err:
-    if (ret != NULL)
-        DH_free(ret);
+    DH_free(ret);
     return NULL;
 }
 #endif

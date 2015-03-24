@@ -142,8 +142,7 @@ DH *d2i_DHxparams(DH **a, const unsigned char **pp, long length)
     }
 
     if (a) {
-        if (*a)
-            DH_free(*a);
+        DH_free(*a);
         *a = dh;
     }
 

@@ -211,8 +211,7 @@ int main(int argc, char **argv)
  end:
     if (!ret)
         ERR_print_errors(bio_err);
-    if (dsa != NULL)
-        DSA_free(dsa);
+    DSA_free(dsa);
     if (cb != NULL)
         BN_GENCB_free(cb);
     CRYPTO_cleanup_all_ex_data();

@@ -335,8 +335,7 @@ static EVP_PKEY *b2i_dss(const unsigned char **in, unsigned int length,
 
  memerr:
     PEMerr(PEM_F_B2I_DSS, ERR_R_MALLOC_FAILURE);
-    if (dsa)
-        DSA_free(dsa);
+    DSA_free(dsa);
     if (ret)
         EVP_PKEY_free(ret);
     if (ctx)
@@ -385,8 +384,7 @@ static EVP_PKEY *b2i_rsa(const unsigned char **in, unsigned int length,
     return ret;
  memerr:
     PEMerr(PEM_F_B2I_RSA, ERR_R_MALLOC_FAILURE);
-    if (rsa)
-        RSA_free(rsa);
+    RSA_free(rsa);
     if (ret)
         EVP_PKEY_free(ret);
     return NULL;

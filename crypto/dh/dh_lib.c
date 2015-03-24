@@ -170,6 +170,7 @@ DH *DH_new_method(ENGINE *engine)
 void DH_free(DH *r)
 {
     int i;
+
     if (r == NULL)
         return;
     i = CRYPTO_add(&r->references, -1, CRYPTO_LOCK_DH);

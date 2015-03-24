@@ -1380,16 +1380,12 @@ int ssl3_get_key_exchange(SSL *s)
     param = p = (unsigned char *)s->init_msg;
     if (s->session->sess_cert != NULL) {
 #ifndef OPENSSL_NO_RSA
-        if (s->session->sess_cert->peer_rsa_tmp != NULL) {
-            RSA_free(s->session->sess_cert->peer_rsa_tmp);
-            s->session->sess_cert->peer_rsa_tmp = NULL;
-        }
+        RSA_free(s->session->sess_cert->peer_rsa_tmp);
+        s->session->sess_cert->peer_rsa_tmp = NULL;
 #endif
 #ifndef OPENSSL_NO_DH
-        if (s->session->sess_cert->peer_dh_tmp) {
-            DH_free(s->session->sess_cert->peer_dh_tmp);
-            s->session->sess_cert->peer_dh_tmp = NULL;
-        }
+        DH_free(s->session->sess_cert->peer_dh_tmp);
+        s->session->sess_cert->peer_dh_tmp = NULL;
 #endif
 #ifndef OPENSSL_NO_EC
         if (s->session->sess_cert->peer_ecdh_tmp) {
@@ -1955,12 +1951,10 @@ int ssl3_get_key_exchange(SSL *s)
  err:
     EVP_PKEY_free(pkey);
 #ifndef OPENSSL_NO_RSA
-    if (rsa != NULL)
-        RSA_free(rsa);
+    RSA_free(rsa);
 #endif
 #ifndef OPENSSL_NO_DH
-    if (dh != NULL)
-        DH_free(dh);
+    DH_free(dh);
 #endif
 #ifndef OPENSSL_NO_EC
     BN_CTX_free(bn_ctx);

@@ -2448,13 +2448,11 @@ int MAIN(int argc, char **argv)
         OPENSSL_free(buf2_malloc);
 #ifndef OPENSSL_NO_RSA
     for (i = 0; i < RSA_NUM; i++)
-        if (rsa_key[i] != NULL)
-            RSA_free(rsa_key[i]);
+        RSA_free(rsa_key[i]);
 #endif
 #ifndef OPENSSL_NO_DSA
     for (i = 0; i < DSA_NUM; i++)
-        if (dsa_key[i] != NULL)
-            DSA_free(dsa_key[i]);
+        DSA_free(dsa_key[i]);
 #endif
 
 #ifndef OPENSSL_NO_EC

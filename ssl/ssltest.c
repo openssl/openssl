@@ -2968,10 +2968,8 @@ static RSA *tmp_rsa_cb(SSL *s, int is_export, int keylength)
 
 static void free_tmp_rsa(void)
 {
-    if (rsa_tmp != NULL) {
-        RSA_free(rsa_tmp);
-        rsa_tmp = NULL;
-    }
+    RSA_free(rsa_tmp);
+    rsa_tmp = NULL;
 }
 #endif
 

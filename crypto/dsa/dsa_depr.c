@@ -89,10 +89,8 @@ DSA *DSA_generate_parameters(int bits,
     if ((ret = DSA_new()) == NULL)
         return NULL;
     cb = BN_GENCB_new();
-    if (!cb) {
-        DSA_free(ret);
-        return NULL;
-    }
+    if (!cb)
+        goto err;
 
     BN_GENCB_set_old(cb, callback, cb_arg);
 
@@ -102,6 +100,7 @@ DSA *DSA_generate_parameters(int bits,
         return ret;
     }
     BN_GENCB_free(cb);
+err:
     DSA_free(ret);
     return NULL;
 }

@@ -3180,8 +3180,7 @@ static RSA *tmp_rsa_cb(SSL *s, int is_export, int keylength)
         }
         if (!BN_set_word(bn, RSA_F4) || ((rsa_tmp = RSA_new()) == NULL) ||
             !RSA_generate_key_ex(rsa_tmp, keylength, bn, NULL)) {
-            if (rsa_tmp)
-                RSA_free(rsa_tmp);
+            RSA_free(rsa_tmp);
             rsa_tmp = NULL;
         }
         if (!s_quiet) {
