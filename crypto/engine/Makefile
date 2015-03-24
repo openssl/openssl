@@ -295,8 +295,8 @@ tb_asnmth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 tb_asnmth.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 tb_asnmth.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 tb_asnmth.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-tb_asnmth.o: ../../include/openssl/x509_vfy.h ../asn1/asn1_locl.h ../cryptlib.h
-tb_asnmth.o: eng_int.h tb_asnmth.c
+tb_asnmth.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
+tb_asnmth.o: ../include/internal/asn1_int.h eng_int.h tb_asnmth.c
 tb_cipher.o: ../../e_os.h ../../include/openssl/asn1.h
 tb_cipher.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 tb_cipher.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h

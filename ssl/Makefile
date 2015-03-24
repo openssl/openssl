@@ -105,24 +105,26 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-bio_ssl.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+bio_ssl.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 bio_ssl.o: ../include/openssl/buffer.h ../include/openssl/comp.h
-bio_ssl.o: ../include/openssl/crypto.h ../include/openssl/dtls1.h
-bio_ssl.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-bio_ssl.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
-bio_ssl.o: ../include/openssl/err.h ../include/openssl/evp.h
-bio_ssl.o: ../include/openssl/hmac.h ../include/openssl/kssl.h
-bio_ssl.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
-bio_ssl.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-bio_ssl.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-bio_ssl.o: ../include/openssl/pem.h ../include/openssl/pem2.h
-bio_ssl.o: ../include/openssl/pkcs7.h ../include/openssl/pqueue.h
+bio_ssl.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
+bio_ssl.o: ../include/openssl/dtls1.h ../include/openssl/e_os2.h
+bio_ssl.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
+bio_ssl.o: ../include/openssl/ecdsa.h ../include/openssl/err.h
+bio_ssl.o: ../include/openssl/evp.h ../include/openssl/hmac.h
+bio_ssl.o: ../include/openssl/kssl.h ../include/openssl/lhash.h
+bio_ssl.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+bio_ssl.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+bio_ssl.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
+bio_ssl.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
+bio_ssl.o: ../include/openssl/pqueue.h ../include/openssl/rsa.h
 bio_ssl.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 bio_ssl.o: ../include/openssl/srtp.h ../include/openssl/ssl.h
 bio_ssl.o: ../include/openssl/ssl2.h ../include/openssl/ssl23.h
 bio_ssl.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 bio_ssl.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 bio_ssl.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h bio_ssl.c
+bio_ssl.o: ssl_locl.h
 d1_both.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 d1_both.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 d1_both.o: ../include/openssl/crypto.h ../include/openssl/dsa.h

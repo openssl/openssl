@@ -174,7 +174,7 @@ cms_env.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
 cms_env.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 cms_env.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 cms_env.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-cms_env.o: ../asn1/asn1_locl.h ../cryptlib.h cms_env.c cms_lcl.h
+cms_env.o: ../cryptlib.h ../include/internal/asn1_int.h cms_env.c cms_lcl.h
 cms_err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 cms_err.o: ../../include/openssl/buffer.h ../../include/openssl/cms.h
 cms_err.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
@@ -234,8 +234,8 @@ cms_kari.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
 cms_kari.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 cms_kari.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 cms_kari.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-cms_kari.o: ../../include/openssl/x509v3.h ../asn1/asn1_locl.h ../cryptlib.h
-cms_kari.o: cms_kari.c cms_lcl.h
+cms_kari.o: ../../include/openssl/x509v3.h ../cryptlib.h
+cms_kari.o: ../include/internal/asn1_int.h cms_kari.c cms_lcl.h
 cms_lib.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 cms_lib.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 cms_lib.o: ../../include/openssl/cms.h ../../include/openssl/conf.h
@@ -267,8 +267,8 @@ cms_pwri.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
 cms_pwri.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 cms_pwri.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 cms_pwri.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-cms_pwri.o: ../../include/openssl/x509v3.h ../asn1/asn1_locl.h ../cryptlib.h
-cms_pwri.o: cms_lcl.h cms_pwri.c
+cms_pwri.o: ../../include/openssl/x509v3.h ../cryptlib.h
+cms_pwri.o: ../include/internal/asn1_int.h cms_lcl.h cms_pwri.c
 cms_sd.o: ../../e_os.h ../../include/openssl/asn1.h
 cms_sd.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 cms_sd.o: ../../include/openssl/buffer.h ../../include/openssl/cms.h
@@ -284,7 +284,7 @@ cms_sd.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 cms_sd.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 cms_sd.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 cms_sd.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-cms_sd.o: ../asn1/asn1_locl.h ../cryptlib.h cms_lcl.h cms_sd.c
+cms_sd.o: ../cryptlib.h ../include/internal/asn1_int.h cms_lcl.h cms_sd.c
 cms_smime.o: ../../e_os.h ../../include/openssl/asn1.h
 cms_smime.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 cms_smime.o: ../../include/openssl/buffer.h ../../include/openssl/cms.h
@@ -300,4 +300,4 @@ cms_smime.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 cms_smime.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 cms_smime.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 cms_smime.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-cms_smime.o: ../asn1/asn1_locl.h ../cryptlib.h cms_lcl.h cms_smime.c
+cms_smime.o: ../cryptlib.h ../include/internal/asn1_int.h cms_lcl.h cms_smime.c
