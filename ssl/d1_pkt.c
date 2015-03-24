@@ -1249,8 +1249,7 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
             if (dtls1_check_timeout_num(s) < 0)
                 return -1;
 
-            /* Ignore retransmit failures - swallow return code */
-            if(dtls1_retransmit_buffered_messages(s));
+            dtls1_retransmit_buffered_messages(s);
             rr->length = 0;
             goto start;
         }

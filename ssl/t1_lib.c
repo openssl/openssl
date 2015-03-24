@@ -4157,13 +4157,12 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
 /* Set validity of certificates in an SSL structure */
 void tls1_set_cert_validity(SSL *s)
 {
-    /* Deliberately ignore all return values */
-    if(tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA_ENC)
-       || tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA_SIGN)
-       || tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DSA_SIGN)
-       || tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DH_RSA)
-       || tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DH_DSA)
-       || tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_ECC));
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA_ENC);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA_SIGN);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DSA_SIGN);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DH_RSA);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DH_DSA);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_ECC);
 }
 
 /* User level utiity function to check a chain is suitable */

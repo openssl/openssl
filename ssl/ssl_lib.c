@@ -880,12 +880,11 @@ STACK_OF(X509) *SSL_get_peer_cert_chain(const SSL *s)
  * Now in theory, since the calling process own 't' it should be safe to
  * modify.  We need to be able to read f without being hassled
  */
-void SSL_copy_session_id(SSL *t, const SSL *f)
+int SSL_copy_session_id(SSL *t, const SSL *f)
 {
     /* Do we need to to SSL locking? */
     if(!SSL_set_session(t, SSL_get_session(f))) {
-        /* How do we handle this!! void function */
-        return;
+        return 0;
     }
 
     /*
@@ -901,9 +900,10 @@ void SSL_copy_session_id(SSL *t, const SSL *f)
     ssl_cert_free(t->cert);
     t->cert = f->cert;
     if(!SSL_set_session_id_context(t, f->sid_ctx, f->sid_ctx_length)) {
-        /* Really should do something about this..but void function - ignore */
-        ;
+        return 0;
     }
+
+    return 1;
 }
 
 /* Fix this so it checks all the valid key/cert options */
@@ -2757,7 +2757,8 @@ SSL *SSL_dup(SSL *s)
 
     if (s->session != NULL) {
         /* This copies session-id, SSL_METHOD, sid_ctx, and 'cert' */
-        SSL_copy_session_id(ret, s);
+        if(!SSL_copy_session_id(ret, s))
+            goto err;
     } else {
         /*
          * No session has been established yet, so we have to expect that
