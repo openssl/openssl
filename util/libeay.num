@@ -4550,3 +4550,5 @@ EVP_camellia_128_ctr                    4908	EXIST::FUNCTION:CAMELLIA
 EVP_camellia_256_ctr                    4909	EXIST::FUNCTION:CAMELLIA
 EVP_camellia_192_ctr                    4910	EXIST::FUNCTION:CAMELLIA
 OCSP_resp_get0_signature                4911	EXIST::FUNCTION:
+OBJ_length                              4912	EXIST::FUNCTION:
+OBJ_get0_data                           4913	EXIST::FUNCTION:
