@@ -126,7 +126,7 @@ BN_gcd                                  131	EXIST::FUNCTION:
 BN_generate_prime                       132	EXIST::FUNCTION:DEPRECATED
 BN_get_word                             133	EXIST::FUNCTION:
 BN_is_bit_set                           134	EXIST::FUNCTION:
-BN_is_prime                             135	NOEXIST::FUNCTION:
+BN_is_prime                             135	EXIST::FUNCTION:DEPRECATED
 BN_lshift                               136	EXIST::FUNCTION:
 BN_lshift1                              137	EXIST::FUNCTION:
 BN_mask_bits                            138	EXIST::FUNCTION:
@@ -1744,7 +1744,7 @@ X509_REQ_add1_attr_by_txt               2217	EXIST::FUNCTION:
 X509_ATTRIBUTE_create_by_txt            2218	EXIST::FUNCTION:
 X509at_add1_attr_by_txt                 2219	EXIST::FUNCTION:
 BN_pseudo_rand                          2239	EXIST::FUNCTION:
-BN_is_prime_fasttest                    2240	NOEXIST::FUNCTION:
+BN_is_prime_fasttest                    2240	EXIST::FUNCTION:DEPRECATED
 BN_CTX_end                              2241	EXIST::FUNCTION:
 BN_CTX_start                            2242	EXIST::FUNCTION:
 BN_CTX_get                              2243	EXIST::FUNCTION:
@@ -2900,7 +2900,7 @@ STORE_method_set_list_start_function    3336	NOEXIST::FUNCTION:
 BN_BLINDING_invert_ex                   3337	EXIST::FUNCTION:
 NAME_CONSTRAINTS_free                   3338	EXIST::FUNCTION:
 STORE_ATTR_INFO_set_number              3339	NOEXIST::FUNCTION:
-BN_BLINDING_get_thread_id               3340	NOEXIST::FUNCTION:
+BN_BLINDING_get_thread_id               3340	EXIST::FUNCTION:DEPRECATED
 X509_STORE_CTX_set0_param               3341	EXIST::FUNCTION:
 POLICY_MAPPING_it                       3342	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 POLICY_MAPPING_it                       3342	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
@@ -3368,7 +3368,7 @@ pqueue_insert                           3766	EXIST::FUNCTION:
 pitem_free                              3767	EXIST::FUNCTION:
 BN_GF2m_mod_inv_arr                     3768	EXIST::FUNCTION:EC2M
 ENGINE_unregister_ECDSA                 3769	EXIST::FUNCTION:ENGINE
-BN_BLINDING_set_thread_id               3770	NOEXIST::FUNCTION:
+BN_BLINDING_set_thread_id               3770	EXIST::FUNCTION:DEPRECATED
 get_rfc3526_prime_8192                  3771	EXIST::FUNCTION:
 X509_VERIFY_PARAM_clear_flags           3772	EXIST::FUNCTION:
 get_rfc2409_prime_1024                  3773	EXIST::FUNCTION:
