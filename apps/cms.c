@@ -1152,8 +1152,7 @@ int MAIN(int argc, char **argv)
         OPENSSL_free(secret_keyid);
     if (pwri_tmp)
         OPENSSL_free(pwri_tmp);
-    if (econtent_type)
-        ASN1_OBJECT_free(econtent_type);
+    ASN1_OBJECT_free(econtent_type);
     if (rr)
         CMS_ReceiptRequest_free(rr);
     if (rr_to)

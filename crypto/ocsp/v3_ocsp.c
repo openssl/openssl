@@ -247,7 +247,7 @@ static void *d2i_ocsp_nonce(void *a, const unsigned char **pp, long length)
     return os;
 
  err:
-    if (os && (!pos || (*pos != os)))
+    if ((pos == NULL) || (*pos != os))
         ASN1_OCTET_STRING_free(os);
     OCSPerr(OCSP_F_D2I_OCSP_NONCE, ERR_R_MALLOC_FAILURE);
     return NULL;

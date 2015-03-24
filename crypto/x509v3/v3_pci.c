@@ -305,10 +305,7 @@ static PROXY_CERT_INFO_EXTENSION *r2i_pci(X509V3_EXT_METHOD *method,
     pathlen = NULL;
     goto end;
  err:
-    if (language) {
-        ASN1_OBJECT_free(language);
-        language = NULL;
-    }
+    ASN1_OBJECT_free(language);
     if (pathlen) {
         ASN1_INTEGER_free(pathlen);
         pathlen = NULL;

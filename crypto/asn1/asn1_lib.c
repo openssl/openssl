@@ -429,7 +429,9 @@ void ASN1_STRING_free(ASN1_STRING *a)
 
 void ASN1_STRING_clear_free(ASN1_STRING *a)
 {
-    if (a && a->data && !(a->flags & ASN1_STRING_FLAG_NDEF))
+    if (a == NULL)
+        return;
+    if (a->data && !(a->flags & ASN1_STRING_FLAG_NDEF))
         OPENSSL_cleanse(a->data, a->length);
     ASN1_STRING_free(a);
 }

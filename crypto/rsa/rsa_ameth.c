@@ -484,8 +484,7 @@ static int rsa_md_to_mgf1(X509_ALGOR **palg, const EVP_MD *mgf1md)
     X509_ALGOR_set0(*palg, OBJ_nid2obj(NID_mgf1), V_ASN1_SEQUENCE, stmp);
     stmp = NULL;
  err:
-    if (stmp)
-        ASN1_STRING_free(stmp);
+    ASN1_STRING_free(stmp);
     if (algtmp)
         X509_ALGOR_free(algtmp);
     if (*palg)
@@ -576,8 +575,7 @@ static ASN1_STRING *rsa_ctx_to_pss(EVP_PKEY_CTX *pkctx)
         RSA_PSS_PARAMS_free(pss);
     if (rv)
         return os;
-    if (os)
-        ASN1_STRING_free(os);
+    ASN1_STRING_free(os);
     return NULL;
 }
 
@@ -921,8 +919,7 @@ static int rsa_cms_encrypt(CMS_RecipientInfo *ri)
  err:
     if (oaep)
         RSA_OAEP_PARAMS_free(oaep);
-    if (os)
-        ASN1_STRING_free(os);
+    ASN1_STRING_free(os);
     return rv;
 }
 
