@@ -60,7 +60,7 @@
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 #include <openssl/x509v3.h>
-#include "../ssl/ssl_locl.h"
+#include "../../ssl/ssl_locl.h"
 
 #if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)
 # define SCT_TIMESTAMP unsigned __int64
