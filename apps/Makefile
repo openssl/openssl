@@ -593,21 +593,19 @@ openssl.o: openssl.c progs.h s_apps.h
 passwd.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 passwd.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 passwd.o: ../include/openssl/crypto.h ../include/openssl/des.h
-passwd.o: ../include/openssl/e_os2.h
-passwd.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-passwd.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
-passwd.o: ../include/openssl/err.h ../include/openssl/evp.h
-passwd.o: ../include/openssl/lhash.h ../include/openssl/md5.h
-passwd.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-passwd.o: ../include/openssl/ocsp.h ../include/openssl/opensslconf.h
-passwd.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-passwd.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
-passwd.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-passwd.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-passwd.o: ../include/openssl/txt_db.h ../include/openssl/ui.h
-passwd.o: ../include/openssl/x509.h
-passwd.o: ../include/openssl/x509_vfy.h ../include/openssl/x509v3.h apps.h
-passwd.o: passwd.c
+passwd.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+passwd.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+passwd.o: ../include/openssl/engine.h ../include/openssl/err.h
+passwd.o: ../include/openssl/evp.h ../include/openssl/lhash.h
+passwd.o: ../include/openssl/md5.h ../include/openssl/obj_mac.h
+passwd.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
+passwd.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+passwd.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
+passwd.o: ../include/openssl/rand.h ../include/openssl/safestack.h
+passwd.o: ../include/openssl/sha.h ../include/openssl/stack.h
+passwd.o: ../include/openssl/symhacks.h ../include/openssl/txt_db.h
+passwd.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
+passwd.o: ../include/openssl/x509v3.h apps.h passwd.c
 pkcs12.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 pkcs12.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 pkcs12.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
@@ -936,27 +934,26 @@ speed.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
 speed.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 speed.o: ../include/openssl/camellia.h ../include/openssl/cast.h
 speed.o: ../include/openssl/conf.h ../include/openssl/crypto.h
-speed.o: ../include/openssl/des.h
-speed.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
-speed.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-speed.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
-speed.o: ../include/openssl/err.h ../include/openssl/evp.h
-speed.o: ../include/openssl/hmac.h ../include/openssl/idea.h
-speed.o: ../include/openssl/lhash.h ../include/openssl/md4.h
-speed.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
-speed.o: ../include/openssl/modes.h ../include/openssl/obj_mac.h
-speed.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
-speed.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-speed.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
-speed.o: ../include/openssl/rand.h ../include/openssl/rc2.h
-speed.o: ../include/openssl/rc4.h ../include/openssl/ripemd.h
-speed.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-speed.o: ../include/openssl/seed.h ../include/openssl/sha.h
-speed.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-speed.o: ../include/openssl/txt_db.h ../include/openssl/ui.h
-speed.o: ../include/openssl/whrlpool.h
-speed.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
-speed.o: ../include/openssl/x509v3.h apps.h speed.c testdsa.h testrsa.h
+speed.o: ../include/openssl/des.h ../include/openssl/dsa.h
+speed.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+speed.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+speed.o: ../include/openssl/engine.h ../include/openssl/err.h
+speed.o: ../include/openssl/evp.h ../include/openssl/hmac.h
+speed.o: ../include/openssl/idea.h ../include/openssl/lhash.h
+speed.o: ../include/openssl/md4.h ../include/openssl/md5.h
+speed.o: ../include/openssl/mdc2.h ../include/openssl/modes.h
+speed.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+speed.o: ../include/openssl/ocsp.h ../include/openssl/opensslconf.h
+speed.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+speed.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
+speed.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
+speed.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
+speed.o: ../include/openssl/safestack.h ../include/openssl/seed.h
+speed.o: ../include/openssl/sha.h ../include/openssl/stack.h
+speed.o: ../include/openssl/symhacks.h ../include/openssl/txt_db.h
+speed.o: ../include/openssl/whrlpool.h ../include/openssl/x509.h
+speed.o: ../include/openssl/x509_vfy.h ../include/openssl/x509v3.h apps.h
+speed.o: speed.c testdsa.h testrsa.h
 spkac.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 spkac.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 spkac.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
@@ -1026,20 +1023,19 @@ version.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 version.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
 version.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 version.o: ../include/openssl/crypto.h ../include/openssl/des.h
-version.o: ../include/openssl/e_os2.h
-version.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-version.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
-version.o: ../include/openssl/evp.h ../include/openssl/idea.h
-version.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
-version.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
-version.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-version.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
-version.o: ../include/openssl/rc4.h ../include/openssl/safestack.h
-version.o: ../include/openssl/sha.h ../include/openssl/stack.h
-version.o: ../include/openssl/symhacks.h ../include/openssl/txt_db.h
-version.o: ../include/openssl/ui.h
-version.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
-version.o: ../include/openssl/x509v3.h apps.h version.c
+version.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+version.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+version.o: ../include/openssl/engine.h ../include/openssl/evp.h
+version.o: ../include/openssl/idea.h ../include/openssl/lhash.h
+version.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+version.o: ../include/openssl/ocsp.h ../include/openssl/opensslconf.h
+version.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+version.o: ../include/openssl/pkcs7.h ../include/openssl/rc4.h
+version.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+version.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+version.o: ../include/openssl/txt_db.h ../include/openssl/x509.h
+version.o: ../include/openssl/x509_vfy.h ../include/openssl/x509v3.h apps.h
+version.o: version.c
 x509.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 x509.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 x509.o: ../include/openssl/conf.h ../include/openssl/crypto.h

@@ -95,7 +95,7 @@ rsa_ameth.o: ../../include/openssl/pkcs7.h ../../include/openssl/rsa.h
 rsa_ameth.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 rsa_ameth.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 rsa_ameth.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-rsa_ameth.o: ../asn1/asn1_locl.h ../cryptlib.h rsa_ameth.c
+rsa_ameth.o: ../cryptlib.h ../include/internal/asn1_int.h rsa_ameth.c
 rsa_asn1.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_asn1.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 rsa_asn1.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
@@ -234,8 +234,8 @@ rsa_pmeth.o: ../../include/openssl/pkcs7.h ../../include/openssl/rsa.h
 rsa_pmeth.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 rsa_pmeth.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 rsa_pmeth.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-rsa_pmeth.o: ../../include/openssl/x509v3.h ../cryptlib.h ../evp/evp_locl.h
-rsa_pmeth.o: rsa_locl.h rsa_pmeth.c
+rsa_pmeth.o: ../../include/openssl/x509v3.h ../cryptlib.h
+rsa_pmeth.o: ../include/internal/evp_int.h rsa_locl.h rsa_pmeth.c
 rsa_prn.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_prn.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 rsa_prn.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
