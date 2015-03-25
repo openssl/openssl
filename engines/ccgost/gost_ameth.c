@@ -284,9 +284,7 @@ static void pkey_free_gost94(EVP_PKEY *key)
 
 static void pkey_free_gost01(EVP_PKEY *key)
 {
-    if (key->pkey.ec) {
-        EC_KEY_free(key->pkey.ec);
-    }
+    EC_KEY_free(key->pkey.ec);
 }
 
 /* ------------------ private key functions  -----------------------------*/

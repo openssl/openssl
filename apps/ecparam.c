@@ -623,8 +623,7 @@ int MAIN(int argc, char **argv)
         OPENSSL_free(buffer);
     BIO_free(in);
     BIO_free_all(out);
-    if (group != NULL)
-        EC_GROUP_free(group);
+    EC_GROUP_free(group);
     apps_shutdown();
     OPENSSL_EXIT(ret);
 }

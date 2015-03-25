@@ -176,8 +176,7 @@ static EC_KEY *eckey_type2param(int ptype, void *pval)
     return eckey;
 
  ecerr:
-    if (eckey)
-        EC_KEY_free(eckey);
+    EC_KEY_free(eckey);
     return NULL;
 }
 
@@ -210,8 +209,7 @@ static int eckey_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
     return 1;
 
  ecerr:
-    if (eckey)
-        EC_KEY_free(eckey);
+    EC_KEY_free(eckey);
     return 0;
 }
 
@@ -292,8 +290,7 @@ static int eckey_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
  ecliberr:
     ECerr(EC_F_ECKEY_PRIV_DECODE, ERR_R_EC_LIB);
  ecerr:
-    if (eckey)
-        EC_KEY_free(eckey);
+    EC_KEY_free(eckey);
     return 0;
 }
 
@@ -706,8 +703,7 @@ static int ecdh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
     if (EVP_PKEY_derive_set_peer(pctx, pkpeer) > 0)
         rv = 1;
  err:
-    if (ecpeer)
-        EC_KEY_free(ecpeer);
+    EC_KEY_free(ecpeer);
     if (pkpeer)
         EVP_PKEY_free(pkpeer);
     return rv;

@@ -1388,10 +1388,8 @@ int ssl3_get_key_exchange(SSL *s)
         s->session->sess_cert->peer_dh_tmp = NULL;
 #endif
 #ifndef OPENSSL_NO_EC
-        if (s->session->sess_cert->peer_ecdh_tmp) {
-            EC_KEY_free(s->session->sess_cert->peer_ecdh_tmp);
-            s->session->sess_cert->peer_ecdh_tmp = NULL;
-        }
+        EC_KEY_free(s->session->sess_cert->peer_ecdh_tmp);
+        s->session->sess_cert->peer_ecdh_tmp = NULL;
 #endif
     } else {
         s->session->sess_cert = ssl_sess_cert_new();
@@ -1959,8 +1957,7 @@ int ssl3_get_key_exchange(SSL *s)
 #ifndef OPENSSL_NO_EC
     BN_CTX_free(bn_ctx);
     EC_POINT_free(srvr_ecpoint);
-    if (ecdh != NULL)
-        EC_KEY_free(ecdh);
+    EC_KEY_free(ecdh);
 #endif
     EVP_MD_CTX_cleanup(&md_ctx);
     return (-1);
@@ -2760,8 +2757,7 @@ int ssl3_send_client_key_exchange(SSL *s)
             BN_CTX_free(bn_ctx);
             if (encodedPoint != NULL)
                 OPENSSL_free(encodedPoint);
-            if (clnt_ecdh != NULL)
-                EC_KEY_free(clnt_ecdh);
+            EC_KEY_free(clnt_ecdh);
             EVP_PKEY_free(srvr_pub_pkey);
         }
 #endif                          /* !OPENSSL_NO_EC */
@@ -3069,8 +3065,7 @@ int ssl3_send_client_key_exchange(SSL *s)
     BN_CTX_free(bn_ctx);
     if (encodedPoint != NULL)
         OPENSSL_free(encodedPoint);
-    if (clnt_ecdh != NULL)
-        EC_KEY_free(clnt_ecdh);
+    EC_KEY_free(clnt_ecdh);
     EVP_PKEY_free(srvr_pub_pkey);
 #endif
     return (-1);

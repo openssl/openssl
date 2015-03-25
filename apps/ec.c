@@ -345,8 +345,7 @@ int MAIN(int argc, char **argv)
  end:
     BIO_free(in);
     BIO_free_all(out);
-    if (eckey)
-        EC_KEY_free(eckey);
+    EC_KEY_free(eckey);
     if (passin)
         OPENSSL_free(passin);
     if (passout)

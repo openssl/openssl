@@ -146,10 +146,8 @@ static void pkey_ec_cleanup(EVP_PKEY_CTX *ctx)
 {
     EC_PKEY_CTX *dctx = ctx->data;
     if (dctx) {
-        if (dctx->gen_group)
-            EC_GROUP_free(dctx->gen_group);
-        if (dctx->co_key)
-            EC_KEY_free(dctx->co_key);
+        EC_GROUP_free(dctx->gen_group);
+        EC_KEY_free(dctx->co_key);
         if (dctx->kdf_ukm)
             OPENSSL_free(dctx->kdf_ukm);
         OPENSSL_free(dctx);
@@ -289,8 +287,7 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             ECerr(EC_F_PKEY_EC_CTRL, EC_R_INVALID_CURVE);
             return 0;
         }
-        if (dctx->gen_group)
-            EC_GROUP_free(dctx->gen_group);
+        EC_GROUP_free(dctx->gen_group);
         dctx->gen_group = group;
         return 1;
 
@@ -331,7 +328,7 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                 EC_KEY_set_flags(dctx->co_key, EC_FLAG_COFACTOR_ECDH);
             else
                 EC_KEY_clear_flags(dctx->co_key, EC_FLAG_COFACTOR_ECDH);
-        } else if (dctx->co_key) {
+        } else {
             EC_KEY_free(dctx->co_key);
             dctx->co_key = NULL;
         }

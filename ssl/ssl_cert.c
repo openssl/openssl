@@ -449,8 +449,7 @@ void ssl_cert_free(CERT *c)
     DH_free(c->dh_tmp);
 #endif
 #ifndef OPENSSL_NO_EC
-    if (c->ecdh_tmp)
-        EC_KEY_free(c->ecdh_tmp);
+    EC_KEY_free(c->ecdh_tmp);
 #endif
 
     ssl_cert_clear_certs(c);
@@ -655,8 +654,7 @@ void ssl_sess_cert_free(SESS_CERT *sc)
     DH_free(sc->peer_dh_tmp);
 #endif
 #ifndef OPENSSL_NO_EC
-    if (sc->peer_ecdh_tmp != NULL)
-        EC_KEY_free(sc->peer_ecdh_tmp);
+    EC_KEY_free(sc->peer_ecdh_tmp);
 #endif
 
     OPENSSL_free(sc);

@@ -47,6 +47,7 @@ EC_GROUP_new_by_curve_name.
 
 Calling EC_KEY_free decrements the reference count for the EC_KEY object, and if it has dropped to zero then frees the memory associated
 with it.
+If B<key> is NULL nothing is done.
 
 EC_KEY_copy copies the contents of the EC_KEY in B<src> into B<dest>.
 
