@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl
 
 use Fcntl;
-
+use File::Glob ':glob';
 
 # copy.pl
 
@@ -19,7 +19,7 @@ foreach $arg (@ARGV) {
 		next;
 		}
 	$arg =~ s|\\|/|g;	# compensate for bug/feature in cygwin glob...
-	foreach (glob $arg)
+	foreach (bsd_glob $arg)
 		{
 		push @filelist, $_;
 		}
@@ -34,7 +34,7 @@ if ($fnum <= 1)
 
 $dest = pop @filelist;
 	
-if ($fnum > 2 && ! -d $dest)
+if ($fnum > 2 && ! -d "$dest")
 	{
 	die "Destination must be a directory";
 	}
