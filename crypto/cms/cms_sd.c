@@ -806,8 +806,7 @@ BIO *cms_SignedData_init_bio(CMS_ContentInfo *cms)
     }
     return chain;
  err:
-    if (chain)
-        BIO_free_all(chain);
+    BIO_free_all(chain);
     return NULL;
 }
 

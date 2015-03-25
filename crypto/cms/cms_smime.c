@@ -114,7 +114,7 @@ static int cms_copy_content(BIO *out, BIO *in, unsigned int flags)
     r = 1;
 
  err:
-    if (tmpout && (tmpout != out))
+    if (tmpout != out)
         BIO_free(tmpout);
     return r;
 
@@ -446,14 +446,13 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
         if (tmpin != dcont)
             BIO_free(tmpin);
     } else {
-
         if (dcont && (tmpin == dcont))
             do_free_upto(cmsbio, dcont);
         else
             BIO_free_all(cmsbio);
     }
 
-    if (tmpout && out != tmpout)
+    if (out != tmpout)
         BIO_free_all(tmpout);
 
     if (cms_certs)
@@ -580,8 +579,7 @@ CMS_ContentInfo *CMS_sign_receipt(CMS_SignerInfo *si,
     r = 1;
 
  err:
-    if (rct_cont)
-        BIO_free(rct_cont);
+    BIO_free(rct_cont);
     if (r)
         return cms;
     CMS_ContentInfo_free(cms);

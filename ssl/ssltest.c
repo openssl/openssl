@@ -1798,8 +1798,7 @@ int main(int argc, char *argv[])
         SSL_CONF_CTX_free(c_cctx);
     sk_OPENSSL_STRING_free(conf_args);
 
-    if (bio_stdout != NULL)
-        BIO_free(bio_stdout);
+    BIO_free(bio_stdout);
 
 #ifndef OPENSSL_NO_RSA
     free_tmp_rsa();
@@ -1812,8 +1811,7 @@ int main(int argc, char *argv[])
     ERR_remove_thread_state(NULL);
     EVP_cleanup();
     CRYPTO_mem_leaks(bio_err);
-    if (bio_err != NULL)
-        BIO_free(bio_err);
+    BIO_free(bio_err);
     EXIT(ret);
 }
 
@@ -2173,18 +2171,12 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
  err:
     ERR_print_errors(bio_err);
 
-    if (server)
-        BIO_free(server);
-    if (server_io)
-        BIO_free(server_io);
-    if (client)
-        BIO_free(client);
-    if (client_io)
-        BIO_free(client_io);
-    if (s_ssl_bio)
-        BIO_free(s_ssl_bio);
-    if (c_ssl_bio)
-        BIO_free(c_ssl_bio);
+    BIO_free(server);
+    BIO_free(server_io);
+    BIO_free(client);
+    BIO_free(client_io);
+    BIO_free(s_ssl_bio);
+    BIO_free(c_ssl_bio);
 
     return ret;
 }
@@ -2468,14 +2460,10 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
         c_ssl->wbio = NULL;
     }
 
-    if (c_to_s != NULL)
-        BIO_free(c_to_s);
-    if (s_to_c != NULL)
-        BIO_free(s_to_c);
-    if (c_bio != NULL)
-        BIO_free_all(c_bio);
-    if (s_bio != NULL)
-        BIO_free_all(s_bio);
+    BIO_free(c_to_s);
+    BIO_free(s_to_c);
+    BIO_free_all(c_bio);
+    BIO_free_all(s_bio);
 
     if (cbuf)
         OPENSSL_free(cbuf);

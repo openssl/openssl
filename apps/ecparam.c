@@ -621,10 +621,8 @@ int MAIN(int argc, char **argv)
         BN_free(ec_cofactor);
     if (buffer)
         OPENSSL_free(buffer);
-    if (in != NULL)
-        BIO_free(in);
-    if (out != NULL)
-        BIO_free_all(out);
+    BIO_free(in);
+    BIO_free_all(out);
     if (group != NULL)
         EC_GROUP_free(group);
     apps_shutdown();

@@ -563,8 +563,7 @@ int main(void)
     ERR_remove_thread_state(NULL);
     ERR_free_strings();
     CRYPTO_mem_leaks(out);
-    if (out != NULL)
-        BIO_free(out);
+    BIO_free(out);
     return ret;
 }
 #endif

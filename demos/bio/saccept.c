@@ -22,8 +22,7 @@ BIO *in = NULL;
 
 void close_up()
 {
-    if (in != NULL)
-        BIO_free(in);
+    BIO_free(in);
 }
 
 int main(int argc, char *argv[])
@@ -101,8 +100,7 @@ int main(int argc, char *argv[])
     if (ret) {
         ERR_print_errors_fp(stderr);
     }
-    if (in != NULL)
-        BIO_free(in);
+    BIO_free(in);
     exit(ret);
     return (!ret);
 }

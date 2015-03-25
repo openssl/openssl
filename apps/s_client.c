@@ -2059,14 +2059,10 @@ int MAIN(int argc, char **argv)
         OPENSSL_cleanse(mbuf, BUFSIZZ);
         OPENSSL_free(mbuf);
     }
-    if (bio_c_out != NULL) {
-        BIO_free(bio_c_out);
-        bio_c_out = NULL;
-    }
-    if (bio_c_msg != NULL) {
-        BIO_free(bio_c_msg);
-        bio_c_msg = NULL;
-    }
+    BIO_free(bio_c_out);
+    bio_c_out = NULL;
+    BIO_free(bio_c_msg);
+    bio_c_msg = NULL;
     apps_shutdown();
     OPENSSL_EXIT(ret);
 }

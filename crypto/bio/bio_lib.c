@@ -549,8 +549,7 @@ BIO *BIO_dup_chain(BIO *in)
     }
     return (ret);
  err:
-    if (ret != NULL)
-        BIO_free(ret);
+    BIO_free(ret);
     return (NULL);
 }
 

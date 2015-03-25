@@ -142,8 +142,7 @@ BIO *BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
     return sarg.ndef_bio;
 
  err:
-    if (asn_bio)
-        BIO_free(asn_bio);
+    BIO_free(asn_bio);
     if (ndef_aux)
         OPENSSL_free(ndef_aux);
     return NULL;

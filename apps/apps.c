@@ -1114,8 +1114,7 @@ EVP_PKEY *load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
         goto end;
     }
  end:
-    if (key != NULL)
-        BIO_free(key);
+    BIO_free(key);
     if (pkey == NULL)
         BIO_printf(err, "unable to load %s\n", key_descrip);
     return (pkey);
@@ -1682,8 +1681,7 @@ BIGNUM *load_serial(char *serialfile, int create, ASN1_INTEGER **retai)
         ai = NULL;
     }
  err:
-    if (in != NULL)
-        BIO_free(in);
+    BIO_free(in);
     if (ai != NULL)
         ASN1_INTEGER_free(ai);
     return (ret);
@@ -1741,8 +1739,7 @@ int save_serial(char *serialfile, char *suffix, BIGNUM *serial,
         ai = NULL;
     }
  err:
-    if (out != NULL)
-        BIO_free_all(out);
+    BIO_free_all(out);
     if (ai != NULL)
         ASN1_INTEGER_free(ai);
     return (ret);
@@ -1896,8 +1893,7 @@ CA_DB *load_index(char *dbfile, DB_ATTR *db_attr)
         NCONF_free(dbattr_conf);
     if (tmpdb)
         TXT_DB_free(tmpdb);
-    if (in)
-        BIO_free_all(in);
+    BIO_free_all(in);
     return retdb;
 }
 

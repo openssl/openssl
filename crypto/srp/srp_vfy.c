@@ -460,8 +460,7 @@ int SRP_VBASE_init(SRP_VBASE *vb, char *verifier_file)
 
     if (tmpdb)
         TXT_DB_free(tmpdb);
-    if (in)
-        BIO_free_all(in);
+    BIO_free_all(in);
 
     sk_SRP_gN_free(SRP_gN_tab);
 

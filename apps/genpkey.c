@@ -272,8 +272,7 @@ int MAIN(int argc, char **argv)
         EVP_PKEY_free(pkey);
     if (ctx)
         EVP_PKEY_CTX_free(ctx);
-    if (out)
-        BIO_free_all(out);
+    BIO_free_all(out);
     BIO_free(in);
     if (pass)
         OPENSSL_free(pass);

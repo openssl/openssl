@@ -237,8 +237,7 @@ int MAIN(int argc, char **argv)
     }
     ret = 0;
  end:
-    if (out != NULL)
-        BIO_free_all(out);
+    BIO_free_all(out);
     if (x != NULL)
         SSL_SESSION_free(x);
     apps_shutdown();
@@ -279,7 +278,6 @@ static SSL_SESSION *load_sess_id(char *infile, int format)
     }
 
  end:
-    if (in != NULL)
-        BIO_free(in);
+    BIO_free(in);
     return (x);
 }

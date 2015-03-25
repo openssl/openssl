@@ -75,14 +75,10 @@ int main(int argc, char **argv)
     if (rkey)
         EVP_PKEY_free(rkey);
 
-    if (in)
-        BIO_free(in);
-    if (out)
-        BIO_free(out);
-    if (tbio)
-        BIO_free(tbio);
-    if (dcont)
-        BIO_free(dcont);
+    BIO_free(in);
+    BIO_free(out);
+    BIO_free(tbio);
+    BIO_free(dcont);
 
     return ret;
 

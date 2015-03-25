@@ -312,8 +312,7 @@ int MAIN(int argc, char **argv)
     if (cb)
         BN_GENCB_free(cb);
     RSA_free(rsa);
-    if (out)
-        BIO_free_all(out);
+    BIO_free_all(out);
     if (passout)
         OPENSSL_free(passout);
     if (ret != 0)

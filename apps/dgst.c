@@ -518,8 +518,7 @@ int MAIN(int argc, char **argv)
         OPENSSL_cleanse(buf, BUFSIZE);
         OPENSSL_free(buf);
     }
-    if (in != NULL)
-        BIO_free(in);
+    BIO_free(in);
     if (passin)
         OPENSSL_free(passin);
     BIO_free_all(out);
@@ -530,8 +529,7 @@ int MAIN(int argc, char **argv)
         sk_OPENSSL_STRING_free(macopts);
     if (sigbuf)
         OPENSSL_free(sigbuf);
-    if (bmd != NULL)
-        BIO_free(bmd);
+    BIO_free(bmd);
     apps_shutdown();
     OPENSSL_EXIT(err);
 }

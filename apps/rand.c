@@ -222,8 +222,7 @@ int MAIN(int argc, char **argv)
 
  err:
     ERR_print_errors(bio_err);
-    if (out)
-        BIO_free_all(out);
+    BIO_free_all(out);
     apps_shutdown();
     OPENSSL_EXIT(ret);
 }

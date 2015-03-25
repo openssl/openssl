@@ -543,9 +543,8 @@ void SSL_free(SSL *s)
         BIO_free(s->bbio);
         s->bbio = NULL;
     }
-    if (s->rbio != NULL)
-        BIO_free_all(s->rbio);
-    if ((s->wbio != NULL) && (s->wbio != s->rbio))
+    BIO_free_all(s->rbio);
+    if (s->wbio != s->rbio)
         BIO_free_all(s->wbio);
 
     if (s->init_buf != NULL)
@@ -621,7 +620,7 @@ void SSL_free(SSL *s)
 
 void SSL_set_rbio(SSL *s, BIO *rbio)
 {
-    if ((s->rbio != NULL) && (s->rbio != rbio))
+    if (s->rbio != rbio)
         BIO_free_all(s->rbio);
     s->rbio = rbio;
 }
@@ -637,7 +636,7 @@ void SSL_set_wbio(SSL *s, BIO *wbio)
             s->bbio->next_bio = NULL;
         }
     }
-    if ((s->wbio != NULL) && (s->wbio != wbio) && (s->rbio != s->wbio))
+    if (s->wbio != wbio && s->rbio != s->wbio)
         BIO_free_all(s->wbio);
     s->wbio = wbio;
 }

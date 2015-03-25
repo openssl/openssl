@@ -431,10 +431,8 @@ int main(int Argc, char *ARGV[])
 #endif
     apps_shutdown();
     CRYPTO_mem_leaks(bio_err);
-    if (bio_err != NULL) {
-        BIO_free(bio_err);
-        bio_err = NULL;
-    }
+    BIO_free(bio_err);
+    bio_err = NULL;
 
     OPENSSL_EXIT(ret);
 }

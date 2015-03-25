@@ -1566,8 +1566,7 @@ static int certify(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
  err:
     if (req != NULL)
         X509_REQ_free(req);
-    if (in != NULL)
-        BIO_free(in);
+    BIO_free(in);
     return (ok);
 }
 

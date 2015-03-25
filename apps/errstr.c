@@ -100,8 +100,7 @@ int MAIN(int argc, char **argv)
             lh_ERR_STRING_DATA_node_usage_stats_bio(ERR_get_string_table(),
                                                     out);
         }
-        if (out != NULL)
-            BIO_free_all(out);
+        BIO_free_all(out);
         argc--;
         argv++;
     }

@@ -404,10 +404,8 @@ static int surewarehk_ctrl(ENGINE *e, int cmd, long i, void *p,
         {
             BIO *bio = (BIO *)p;
             CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
-            if (logstream) {
-                BIO_free(logstream);
-                logstream = NULL;
-            }
+            BIO_free(logstream);
+            logstream = NULL;
             if (CRYPTO_add(&bio->references, 1, CRYPTO_LOCK_BIO) > 1)
                 logstream = bio;
             else
@@ -596,8 +594,7 @@ static int surewarehk_finish(ENGINE *e)
         goto err;
     }
  err:
-    if (logstream)
-        BIO_free(logstream);
+    BIO_free(logstream);
     surewarehk_dso = NULL;
     p_surewarehk_Init = NULL;
     p_surewarehk_Finish = NULL;

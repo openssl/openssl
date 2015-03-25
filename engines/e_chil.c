@@ -656,8 +656,7 @@ static int hwcrhk_finish(ENGINE *e)
         goto err;
     }
  err:
-    if (logstream)
-        BIO_free(logstream);
+    BIO_free(logstream);
     hwcrhk_dso = NULL;
     p_hwcrhk_Init = NULL;
     p_hwcrhk_Finish = NULL;
@@ -693,10 +692,8 @@ static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
             BIO *bio = (BIO *)p;
 
             CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
-            if (logstream) {
-                BIO_free(logstream);
-                logstream = NULL;
-            }
+            BIO_free(logstream);
+            logstream = NULL;
             if (CRYPTO_add(&bio->references, 1, CRYPTO_LOCK_BIO) > 1)
                 logstream = bio;
             else

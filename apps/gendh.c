@@ -210,8 +210,7 @@ int MAIN(int argc, char **argv)
  end:
     if (ret != 0)
         ERR_print_errors(bio_err);
-    if (out != NULL)
-        BIO_free_all(out);
+    BIO_free_all(out);
     DH_free(dh);
     if (cb != NULL)
         BN_GENCB_free(cb);

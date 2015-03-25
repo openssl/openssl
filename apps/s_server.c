@@ -2039,8 +2039,7 @@ int MAIN(int argc, char *argv[])
         X509_free(s_cert2);
     if (s_key2)
         EVP_PKEY_free(s_key2);
-    if (serverinfo_in != NULL)
-        BIO_free(serverinfo_in);
+    BIO_free(serverinfo_in);
 # ifndef OPENSSL_NO_NEXTPROTONEG
     if (next_proto.data)
         OPENSSL_free(next_proto.data);
@@ -2057,14 +2056,10 @@ int MAIN(int argc, char *argv[])
     if (jpake_secret && psk_key)
         OPENSSL_free(psk_key);
 #endif
-    if (bio_s_out != NULL) {
-        BIO_free(bio_s_out);
-        bio_s_out = NULL;
-    }
-    if (bio_s_msg != NULL) {
-        BIO_free(bio_s_msg);
-        bio_s_msg = NULL;
-    }
+    BIO_free(bio_s_out);
+    bio_s_out = NULL;
+    BIO_free(bio_s_msg);
+    bio_s_msg = NULL;
     apps_shutdown();
     OPENSSL_EXIT(ret);
 }
@@ -2661,8 +2656,7 @@ static DH *load_dh_param(const char *dhfile)
         goto err;
     ret = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
  err:
-    if (bio != NULL)
-        BIO_free(bio);
+    BIO_free(bio);
     return (ret);
 }
 #endif
@@ -3021,9 +3015,7 @@ static int www_body(char *hostname, int s, int stype, unsigned char *context)
 
     if (buf != NULL)
         OPENSSL_free(buf);
-    if (io != NULL)
-        BIO_free_all(io);
-/*      if (ssl_bio != NULL) BIO_free(ssl_bio);*/
+    BIO_free_all(io);
     return (ret);
 }
 
@@ -3159,8 +3151,7 @@ static int rev_body(char *hostname, int s, int stype, unsigned char *context)
 
     if (buf != NULL)
         OPENSSL_free(buf);
-    if (io != NULL)
-        BIO_free_all(io);
+    BIO_free_all(io);
     return (ret);
 }
 
