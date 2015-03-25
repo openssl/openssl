@@ -1837,14 +1837,14 @@ CRYPTO_get_dynlock_destroy_cb           2418	EXIST:VMS:FUNCTION:
 CRYPTO_get_dynlock_value                2419	EXIST::FUNCTION:
 CRYPTO_get_dynlock_create_callback      2420	EXIST:!VMS:FUNCTION:
 CRYPTO_get_dynlock_create_cb            2420	EXIST:VMS:FUNCTION:
-c2i_ASN1_BIT_STRING                     2421	EXIST::FUNCTION:
-i2c_ASN1_BIT_STRING                     2422	EXIST::FUNCTION:
+c2i_ASN1_BIT_STRING                     2421	NOEXIST::FUNCTION:
+i2c_ASN1_BIT_STRING                     2422	NOEXIST::FUNCTION:
 RAND_poll                               2423	EXIST::FUNCTION:
-c2i_ASN1_INTEGER                        2424	EXIST::FUNCTION:
-i2c_ASN1_INTEGER                        2425	EXIST::FUNCTION:
+c2i_ASN1_INTEGER                        2424	NOEXIST::FUNCTION:
+i2c_ASN1_INTEGER                        2425	NOEXIST::FUNCTION:
 BIO_dump_indent                         2426	EXIST::FUNCTION:
 ASN1_parse_dump                         2427	EXIST::FUNCTION:
-c2i_ASN1_OBJECT                         2428	EXIST::FUNCTION:
+c2i_ASN1_OBJECT                         2428	NOEXIST::FUNCTION:
 X509_NAME_print_ex_fp                   2429	EXIST::FUNCTION:STDIO
 ASN1_STRING_print_ex_fp                 2430	EXIST::FUNCTION:STDIO
 X509_NAME_print_ex                      2431	EXIST::FUNCTION:
@@ -2012,7 +2012,7 @@ UI_ctrl                                 2580	EXIST::FUNCTION:
 _shadow_DES_rw_mode                     2581	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:DES
 _shadow_DES_rw_mode                     2581	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:DES
 asn1_do_adb                             2582	NOEXIST::FUNCTION:
-ASN1_template_i2d                       2583	EXIST::FUNCTION:
+ASN1_template_i2d                       2583	NOEXIST::FUNCTION:
 ENGINE_register_DH                      2584	EXIST::FUNCTION:ENGINE
 UI_construct_prompt                     2585	EXIST::FUNCTION:
 X509_STORE_set_trust                    2586	EXIST::FUNCTION:
@@ -2349,7 +2349,7 @@ ENGINE_get_ex_data                      2856	EXIST::FUNCTION:ENGINE
 UI_destroy_method                       2857	EXIST::FUNCTION:
 ASN1_item_i2d_bio                       2858	EXIST::FUNCTION:
 OCSP_ONEREQ_get_ext_by_OBJ              2859	EXIST::FUNCTION:
-ASN1_primitive_new                      2860	EXIST::FUNCTION:
+ASN1_primitive_new                      2860	NOEXIST::FUNCTION:
 ASN1_PRINTABLE_it                       2861	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 ASN1_PRINTABLE_it                       2861	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 EVP_aes_192_ecb                         2862	EXIST::FUNCTION:AES
@@ -2482,7 +2482,7 @@ OCSP_check_validity                     2971	EXIST::FUNCTION:
 PKCS12_BAGS_it                          2972	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 PKCS12_BAGS_it                          2972	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 OCSP_url_svcloc_new                     2973	EXIST::FUNCTION:
-ASN1_template_free                      2974	EXIST::FUNCTION:
+ASN1_template_free                      2974	NOEXIST::FUNCTION:
 OCSP_SINGLERESP_add_ext                 2975	EXIST::FUNCTION:
 KRB5_AUTHENTBODY_it                     2976	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 KRB5_AUTHENTBODY_it                     2976	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
@@ -2497,7 +2497,7 @@ KRB5_TICKET_new                         2983	EXIST::FUNCTION:
 KRB5_APREQ_new                          2984	EXIST::FUNCTION:
 EC_GROUP_get_curve_GFp                  2985	EXIST::FUNCTION:EC
 KRB5_ENCKEY_new                         2986	EXIST::FUNCTION:
-ASN1_template_d2i                       2987	EXIST::FUNCTION:
+ASN1_template_d2i                       2987	NOEXIST::FUNCTION:
 _ossl_old_des_quad_cksum                2988	NOEXIST::FUNCTION:
 OCSP_single_get0_status                 2989	EXIST::FUNCTION:
 BN_swap                                 2990	EXIST::FUNCTION:
@@ -2574,7 +2574,7 @@ OCSP_request_onereq_count               3047	EXIST::FUNCTION:
 OCSP_basic_verify                       3048	EXIST::FUNCTION:
 KRB5_AUTHENTBODY_free                   3049	EXIST::FUNCTION:
 ASN1_item_d2i                           3050	EXIST::FUNCTION:
-ASN1_primitive_free                     3051	EXIST::FUNCTION:
+ASN1_primitive_free                     3051	NOEXIST::FUNCTION:
 i2d_EXTENDED_KEY_USAGE                  3052	EXIST::FUNCTION:
 i2d_OCSP_SIGNATURE                      3053	EXIST::FUNCTION:
 asn1_enc_save                           3054	NOEXIST::FUNCTION:
@@ -2623,7 +2623,7 @@ ASN1_OCTET_STRING_it                    3090	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIA
 ASN1_OCTET_STRING_it                    3090	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 ERR_load_UI_strings                     3091	EXIST::FUNCTION:
 i2d_KRB5_ENCKEY                         3092	EXIST::FUNCTION:
-ASN1_template_new                       3093	EXIST::FUNCTION:
+ASN1_template_new                       3093	NOEXIST::FUNCTION:
 OCSP_SIGNATURE_free                     3094	EXIST::FUNCTION:
 ASN1_item_i2d_fp                        3095	EXIST::FUNCTION:STDIO
 KRB5_PRINCNAME_free                     3096	EXIST::FUNCTION:
