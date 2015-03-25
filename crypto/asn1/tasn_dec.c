@@ -149,15 +149,6 @@ ASN1_VALUE *ASN1_item_d2i(ASN1_VALUE **pval,
     return NULL;
 }
 
-int ASN1_template_d2i(ASN1_VALUE **pval,
-                      const unsigned char **in, long len,
-                      const ASN1_TEMPLATE *tt)
-{
-    ASN1_TLC c;
-    asn1_tlc_clear_nc(&c);
-    return asn1_template_ex_d2i(pval, in, len, tt, 0, &c);
-}
-
 /*
  * Decode an item, taking care of IMPLICIT tagging, if any. If 'opt' set and
  * tag mismatch return -1 to handle OPTIONAL
@@ -248,7 +239,7 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
             if ((i >= 0) && (i < it->tcount)) {
                 tt = it->templates + i;
                 pchptr = asn1_get_field_ptr(pval, tt);
-                ASN1_template_free(pchptr, tt);
+                asn1_template_free(pchptr, tt);
                 asn1_set_choice_selector(pval, -1, it);
             }
         } else if (!ASN1_item_ex_new(pval, it)) {
@@ -338,7 +329,7 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
                 ASN1_VALUE **pseqval;
                 seqtt = asn1_do_adb(pval, tt, 1);
                 pseqval = asn1_get_field_ptr(pval, seqtt);
-                ASN1_template_free(pseqval, seqtt);
+                asn1_template_free(pseqval, seqtt);
             }
         }
 
@@ -386,7 +377,7 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
                 /*
                  * OPTIONAL component absent. Free and zero the field.
                  */
-                ASN1_template_free(pseqval, seqtt);
+                asn1_template_free(pseqval, seqtt);
                 continue;
             }
             /* Update length */
@@ -417,7 +408,7 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
             if (seqtt->flags & ASN1_TFLG_OPTIONAL) {
                 ASN1_VALUE **pseqval;
                 pseqval = asn1_get_field_ptr(pval, seqtt);
-                ASN1_template_free(pseqval, seqtt);
+                asn1_template_free(pseqval, seqtt);
             } else {
                 errtt = seqtt;
                 ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ASN1_R_FIELD_MISSING);
@@ -520,7 +511,7 @@ static int asn1_template_ex_d2i(ASN1_VALUE **val,
     return 1;
 
  err:
-    ASN1_template_free(val, tt);
+    asn1_template_free(val, tt);
     return 0;
 }
 
@@ -639,7 +630,7 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val,
     return 1;
 
  err:
-    ASN1_template_free(val, tt);
+    asn1_template_free(val, tt);
     return 0;
 }
 
