@@ -227,8 +227,7 @@ int MAIN(int argc, char **argv)
         SSL_CTX_free(ctx);
     if (ssl != NULL)
         SSL_free(ssl);
-    if (STDout != NULL)
-        BIO_free_all(STDout);
+    BIO_free_all(STDout);
     apps_shutdown();
     OPENSSL_EXIT(ret);
 }

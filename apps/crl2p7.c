@@ -268,10 +268,8 @@ int MAIN(int argc, char **argv)
     }
     ret = 0;
  end:
-    if (in != NULL)
-        BIO_free(in);
-    if (out != NULL)
-        BIO_free_all(out);
+    BIO_free(in);
+    BIO_free_all(out);
     if (p7 != NULL)
         PKCS7_free(p7);
     if (crl != NULL)
@@ -326,8 +324,7 @@ static int add_certs_from_file(STACK_OF(X509) *stack, char *certfile)
     ret = count;
  end:
     /* never need to OPENSSL_free x */
-    if (in != NULL)
-        BIO_free(in);
+    BIO_free(in);
     if (sk != NULL)
         sk_X509_INFO_free(sk);
     return (ret);

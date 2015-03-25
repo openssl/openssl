@@ -343,10 +343,8 @@ int MAIN(int argc, char **argv)
     } else
         ret = 0;
  end:
-    if (in)
-        BIO_free(in);
-    if (out)
-        BIO_free_all(out);
+    BIO_free(in);
+    BIO_free_all(out);
     if (eckey)
         EC_KEY_free(eckey);
     if (passin)

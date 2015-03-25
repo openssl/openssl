@@ -370,12 +370,9 @@ int MAIN(int argc, char **argv)
     ret = 0;
  end:
     BIO_free(derout);
-    if (in != NULL)
-        BIO_free(in);
-    if (out != NULL)
-        BIO_free_all(out);
-    if (b64 != NULL)
-        BIO_free(b64);
+    BIO_free(in);
+    BIO_free_all(out);
+    BIO_free(b64);
     if (ret != 0)
         ERR_print_errors(bio_err);
     if (buf != NULL)

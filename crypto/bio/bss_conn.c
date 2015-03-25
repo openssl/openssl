@@ -588,10 +588,8 @@ BIO *BIO_new_connect(const char *str)
         return (NULL);
     if (BIO_set_conn_hostname(ret, str))
         return (ret);
-    else {
-        BIO_free(ret);
-        return (NULL);
-    }
+    BIO_free(ret);
+    return (NULL);
 }
 
 #endif

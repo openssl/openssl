@@ -788,14 +788,10 @@ int BIO_new_bio_pair(BIO **bio1_p, size_t writebuf1,
 
  err:
     if (ret == 0) {
-        if (bio1) {
-            BIO_free(bio1);
-            bio1 = NULL;
-        }
-        if (bio2) {
-            BIO_free(bio2);
-            bio2 = NULL;
-        }
+        BIO_free(bio1);
+        bio1 = NULL;
+        BIO_free(bio2);
+        bio2 = NULL;
     }
 
     *bio1_p = bio1;

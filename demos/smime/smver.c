@@ -73,12 +73,9 @@ int main(int argc, char **argv)
     if (cacert)
         X509_free(cacert);
 
-    if (in)
-        BIO_free(in);
-    if (out)
-        BIO_free(out);
-    if (tbio)
-        BIO_free(tbio);
+    BIO_free(in);
+    BIO_free(out);
+    BIO_free(tbio);
 
     return ret;
 

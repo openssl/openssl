@@ -218,10 +218,8 @@ int main(int argc, char **argv)
     ERR_remove_thread_state(NULL);
     ERR_free_strings();
     CRYPTO_mem_leaks(bio_err);
-    if (bio_err != NULL) {
-        BIO_free(bio_err);
-        bio_err = NULL;
-    }
+    BIO_free(bio_err);
+    bio_err = NULL;
 # ifdef OPENSSL_SYS_NETWARE
     if (!ret)
         printf("ERROR\n");

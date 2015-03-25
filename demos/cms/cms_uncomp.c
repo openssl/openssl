@@ -45,10 +45,8 @@ int main(int argc, char **argv)
     if (cms)
         CMS_ContentInfo_free(cms);
 
-    if (in)
-        BIO_free(in);
-    if (out)
-        BIO_free(out);
+    BIO_free(in);
+    BIO_free(out);
 
     return ret;
 

@@ -354,8 +354,7 @@ BIO *cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm)
     }
     return mdbio;
  err:
-    if (mdbio)
-        BIO_free(mdbio);
+    BIO_free(mdbio);
     return NULL;
 }
 

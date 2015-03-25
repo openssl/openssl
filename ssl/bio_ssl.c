@@ -503,10 +503,8 @@ BIO *BIO_new_buffer_ssl_connect(SSL_CTX *ctx)
         goto err;
     return (ret);
  err:
-    if (buf != NULL)
-        BIO_free(buf);
-    if (ssl != NULL)
-        BIO_free(ssl);
+    BIO_free(buf);
+    BIO_free(ssl);
 #endif
     return (NULL);
 }
@@ -524,8 +522,7 @@ BIO *BIO_new_ssl_connect(SSL_CTX *ctx)
         goto err;
     return (ret);
  err:
-    if (con != NULL)
-        BIO_free(con);
+    BIO_free(con);
 #endif
     return (NULL);
 }

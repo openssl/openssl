@@ -650,8 +650,7 @@ static int multi_split(BIO *bio, char *bound, STACK_OF(BIO) **ret)
                 BIO_write(bpart, linebuf, len);
         }
     }
-    if (bpart != NULL)
-        BIO_free(bpart);
+    BIO_free(bpart);
     return 0;
 }
 

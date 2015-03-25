@@ -121,8 +121,7 @@ int SSL_use_certificate_file(SSL *ssl, const char *file, int type)
  end:
     if (x != NULL)
         X509_free(x);
-    if (in != NULL)
-        BIO_free(in);
+    BIO_free(in);
     return (ret);
 }
 #endif
@@ -262,8 +261,7 @@ int SSL_use_RSAPrivateKey_file(SSL *ssl, const char *file, int type)
     ret = SSL_use_RSAPrivateKey(ssl, rsa);
     RSA_free(rsa);
  end:
-    if (in != NULL)
-        BIO_free(in);
+    BIO_free(in);
     return (ret);
 }
 # endif
@@ -335,8 +333,7 @@ int SSL_use_PrivateKey_file(SSL *ssl, const char *file, int type)
     ret = SSL_use_PrivateKey(ssl, pkey);
     EVP_PKEY_free(pkey);
  end:
-    if (in != NULL)
-        BIO_free(in);
+    BIO_free(in);
     return (ret);
 }
 #endif
@@ -470,8 +467,7 @@ int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type)
  end:
     if (x != NULL)
         X509_free(x);
-    if (in != NULL)
-        BIO_free(in);
+    BIO_free(in);
     return (ret);
 }
 #endif
@@ -552,8 +548,7 @@ int SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx, const char *file, int type)
     ret = SSL_CTX_use_RSAPrivateKey(ctx, rsa);
     RSA_free(rsa);
  end:
-    if (in != NULL)
-        BIO_free(in);
+    BIO_free(in);
     return (ret);
 }
 # endif
@@ -622,8 +617,7 @@ int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type)
     ret = SSL_CTX_use_PrivateKey(ctx, pkey);
     EVP_PKEY_free(pkey);
  end:
-    if (in != NULL)
-        BIO_free(in);
+    BIO_free(in);
     return (ret);
 }
 #endif
@@ -726,8 +720,7 @@ int SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx, const char *file)
  end:
     if (x != NULL)
         X509_free(x);
-    if (in != NULL)
-        BIO_free(in);
+    BIO_free(in);
     return (ret);
 }
 #endif
@@ -991,8 +984,7 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
     OPENSSL_free(header);
     OPENSSL_free(extension);
     OPENSSL_free(serverinfo);
-    if (bin != NULL)
-        BIO_free(bin);
+    BIO_free(bin);
     return ret;
 }
 # endif                         /* OPENSSL_NO_STDIO */

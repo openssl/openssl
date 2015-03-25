@@ -273,10 +273,8 @@ int MAIN(int argc, char **argv)
         OPENSSL_free(salt_malloc);
     if (passwd_malloc)
         OPENSSL_free(passwd_malloc);
-    if (in)
-        BIO_free(in);
-    if (out)
-        BIO_free_all(out);
+    BIO_free(in);
+    BIO_free_all(out);
     apps_shutdown();
     OPENSSL_EXIT(ret);
 }

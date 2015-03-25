@@ -497,8 +497,7 @@ int MAIN(int argc, char **argv)
     sk_OPENSSL_STRING_pop_free(engines, identity);
     sk_OPENSSL_STRING_pop_free(pre_cmds, identity);
     sk_OPENSSL_STRING_pop_free(post_cmds, identity);
-    if (bio_out != NULL)
-        BIO_free_all(bio_out);
+    BIO_free_all(bio_out);
     apps_shutdown();
     OPENSSL_EXIT(ret);
 }

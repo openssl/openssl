@@ -267,10 +267,8 @@ int MAIN(int argc, char **argv)
  end:
     if (ret != 0)
         ERR_print_errors(bio_err);
-    if (in != NULL)
-        BIO_free(in);
-    if (out != NULL)
-        BIO_free_all(out);
+    BIO_free(in);
+    BIO_free_all(out);
     DSA_free(dsa);
     if (passout)
         OPENSSL_free(passout);

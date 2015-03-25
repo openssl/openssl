@@ -657,17 +657,12 @@ int MAIN(int argc, char **argv)
         OPENSSL_free(strbuf);
     if (buff != NULL)
         OPENSSL_free(buff);
-    if (in != NULL)
-        BIO_free(in);
-    if (out != NULL)
-        BIO_free_all(out);
-    if (benc != NULL)
-        BIO_free(benc);
-    if (b64 != NULL)
-        BIO_free(b64);
+    BIO_free(in);
+    BIO_free_all(out);
+    BIO_free(benc);
+    BIO_free(b64);
 #ifdef ZLIB
-    if (bzl != NULL)
-        BIO_free(bzl);
+    BIO_free(bzl);
 #endif
     if (pass)
         OPENSSL_free(pass);

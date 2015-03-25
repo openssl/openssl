@@ -310,10 +310,8 @@ int MAIN(int argc, char **argv)
     }
     ret = 0;
  end:
-    if (in != NULL)
-        BIO_free(in);
-    if (out != NULL)
-        BIO_free_all(out);
+    BIO_free(in);
+    BIO_free_all(out);
     DH_free(dh);
     apps_shutdown();
     OPENSSL_EXIT(ret);

@@ -3147,9 +3147,7 @@ void ssl3_free(SSL *s)
 
     if (s->s3->tmp.ca_names != NULL)
         sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
-    if (s->s3->handshake_buffer) {
-        BIO_free(s->s3->handshake_buffer);
-    }
+    BIO_free(s->s3->handshake_buffer);
     if (s->s3->handshake_dgst)
         ssl3_free_digest_list(s);
 #ifndef OPENSSL_NO_TLSEXT
@@ -3200,10 +3198,8 @@ void ssl3_clear(SSL *s)
     rlen = s->s3->rbuf.len;
     wlen = s->s3->wbuf.len;
     init_extra = s->s3->init_extra;
-    if (s->s3->handshake_buffer) {
-        BIO_free(s->s3->handshake_buffer);
-        s->s3->handshake_buffer = NULL;
-    }
+    BIO_free(s->s3->handshake_buffer);
+    s->s3->handshake_buffer = NULL;
     if (s->s3->handshake_dgst) {
         ssl3_free_digest_list(s);
     }

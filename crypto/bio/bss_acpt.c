@@ -155,8 +155,7 @@ static void BIO_ACCEPT_free(BIO_ACCEPT *a)
         OPENSSL_free(a->param_addr);
     if (a->addr != NULL)
         OPENSSL_free(a->addr);
-    if (a->bio_chain != NULL)
-        BIO_free(a->bio_chain);
+    BIO_free(a->bio_chain);
     OPENSSL_free(a);
 }
 
@@ -360,8 +359,7 @@ static long acpt_ctrl(BIO *b, int cmd, long num, void *ptr)
             } else if (num == 1) {
                 data->accept_nbio = (ptr != NULL);
             } else if (num == 2) {
-                if (data->bio_chain != NULL)
-                    BIO_free(data->bio_chain);
+                BIO_free(data->bio_chain);
                 data->bio_chain = (BIO *)ptr;
             }
         }
@@ -448,10 +446,8 @@ BIO *BIO_new_accept(const char *str)
         return (NULL);
     if (BIO_set_accept_port(ret, str))
         return (ret);
-    else {
-        BIO_free(ret);
-        return (NULL);
-    }
+    BIO_free(ret);
+    return (NULL);
 }
 
 #endif

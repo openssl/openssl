@@ -381,13 +381,9 @@ int doit(io_channel chan, SSL_CTX *s_ctx)
     s_ssl->rbio = NULL;
     s_ssl->wbio = NULL;
 
-    if (c_to_s != NULL)
-        BIO_free(c_to_s);
-    if (s_to_c != NULL)
-        BIO_free(s_to_c);
-    if (c_bio != NULL)
-        BIO_free(c_bio);
-    if (s_bio != NULL)
-        BIO_free(s_bio);
+    BIO_free(c_to_s);
+    BIO_free(s_to_c);
+    BIO_free(c_bio);
+    BIO_free(s_bio);
     return (0);
 }

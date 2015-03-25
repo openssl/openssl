@@ -162,8 +162,8 @@ int MAIN(int argc, char **argv)
     apps_startup();
 
     if (bio_err == NULL && (bio_err = BIO_new(BIO_s_file())) != NULL) {
-        free_bio_err = 1;
         BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
+        free_bio_err = 1;
     }
 
     if (!load_config(bio_err, NULL))

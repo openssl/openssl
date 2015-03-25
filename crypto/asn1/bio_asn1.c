@@ -179,8 +179,8 @@ static int asn1_bio_init(BIO_ASN1_BUF_CTX *ctx, int size)
 
 static int asn1_bio_free(BIO *b)
 {
-    BIO_ASN1_BUF_CTX *ctx;
-    ctx = (BIO_ASN1_BUF_CTX *)b->ptr;
+    BIO_ASN1_BUF_CTX *ctx = (BIO_ASN1_BUF_CTX *)b->ptr;
+
     if (ctx == NULL)
         return 0;
     if (ctx->buf)

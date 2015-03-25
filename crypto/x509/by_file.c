@@ -176,8 +176,7 @@ int X509_load_cert_file(X509_LOOKUP *ctx, const char *file, int type)
  err:
     if (x != NULL)
         X509_free(x);
-    if (in != NULL)
-        BIO_free(in);
+    BIO_free(in);
     return (ret);
 }
 
@@ -235,8 +234,7 @@ int X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type)
  err:
     if (x != NULL)
         X509_CRL_free(x);
-    if (in != NULL)
-        BIO_free(in);
+    BIO_free(in);
     return (ret);
 }
 

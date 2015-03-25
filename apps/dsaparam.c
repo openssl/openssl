@@ -434,10 +434,8 @@ int MAIN(int argc, char **argv)
  end:
     if (cb != NULL)
         BN_GENCB_free(cb);
-    if (in != NULL)
-        BIO_free(in);
-    if (out != NULL)
-        BIO_free_all(out);
+    BIO_free(in);
+    BIO_free_all(out);
     DSA_free(dsa);
     apps_shutdown();
     OPENSSL_EXIT(ret);
