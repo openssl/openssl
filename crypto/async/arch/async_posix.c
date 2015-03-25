@@ -62,16 +62,18 @@
 
 __thread ASYNC_CTX *sysvctx;
 
+#define STACKSIZE       32768
+
 int ASYNC_FIBRE_init(ASYNC_FIBRE *fibre)
 {
     void *stack = NULL;
 
-    if (!(stack = OPENSSL_malloc(SIGSTKSZ))) {
+    if (!(stack = OPENSSL_malloc(STACKSIZE))) {
         return 0;
     }
 
     fibre->fibre.uc_stack.ss_sp = stack;
-    fibre->fibre.uc_stack.ss_size = SIGSTKSZ;
+    fibre->fibre.uc_stack.ss_size = STACKSIZE;
     fibre->fibre.uc_link = NULL;
 
     return 1;
