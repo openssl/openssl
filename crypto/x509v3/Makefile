@@ -310,7 +310,8 @@ v3_crld.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
 v3_crld.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 v3_crld.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 v3_crld.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-v3_crld.o: ../../include/openssl/x509v3.h ../cryptlib.h v3_crld.c
+v3_crld.o: ../../include/openssl/x509v3.h ../cryptlib.h
+v3_crld.o: ../include/internal/x509_int.h v3_crld.c
 v3_enum.o: ../../e_os.h ../../include/openssl/asn1.h
 v3_enum.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 v3_enum.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
@@ -421,7 +422,7 @@ v3_ncons.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 v3_ncons.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 v3_ncons.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 v3_ncons.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-v3_ncons.o: ../cryptlib.h v3_ncons.c
+v3_ncons.o: ../cryptlib.h ../include/internal/x509_int.h v3_ncons.c
 v3_pci.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 v3_pci.o: ../../include/openssl/buffer.h ../../include/openssl/conf.h
 v3_pci.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
