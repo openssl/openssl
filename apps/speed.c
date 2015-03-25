@@ -2457,13 +2457,10 @@ int MAIN(int argc, char **argv)
 
 #ifndef OPENSSL_NO_EC
     for (i = 0; i < EC_NUM; i++)
-        if (ecdsa[i] != NULL)
-            EC_KEY_free(ecdsa[i]);
+        EC_KEY_free(ecdsa[i]);
     for (i = 0; i < EC_NUM; i++) {
-        if (ecdh_a[i] != NULL)
-            EC_KEY_free(ecdh_a[i]);
-        if (ecdh_b[i] != NULL)
-            EC_KEY_free(ecdh_b[i]);
+        EC_KEY_free(ecdh_a[i]);
+        EC_KEY_free(ecdh_b[i]);
     }
 #endif
 

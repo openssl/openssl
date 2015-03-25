@@ -874,10 +874,8 @@ static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
         ecp_nistz256_pre_comp_free(pre_comp);
     if (precomp_storage)
         OPENSSL_free(precomp_storage);
-    if (P)
-        EC_POINT_free(P);
-    if (T)
-        EC_POINT_free(T);
+    EC_POINT_free(P);
+    EC_POINT_free(T);
     return ret;
 }
 

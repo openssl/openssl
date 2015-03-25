@@ -240,8 +240,7 @@ int x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
  x962_int_err:
     if (!ret)
         BIO_printf(out, " failed\n");
-    if (key)
-        EC_KEY_free(key);
+    EC_KEY_free(key);
     if (signature)
         ECDSA_SIG_free(signature);
     if (r)
@@ -354,9 +353,8 @@ int test_builtin(BIO *out)
             goto builtin_err;
         EC_GROUP_free(group);
         degree = EC_GROUP_get_degree(EC_KEY_get0_group(eckey));
-        if (degree < 160)
+        if (degree < 160) {
             /* drop the curve */
-        {
             EC_KEY_free(eckey);
             eckey = NULL;
             continue;
@@ -506,10 +504,8 @@ int test_builtin(BIO *out)
 
     ret = 1;
  builtin_err:
-    if (eckey)
-        EC_KEY_free(eckey);
-    if (wrong_eckey)
-        EC_KEY_free(wrong_eckey);
+    EC_KEY_free(eckey);
+    EC_KEY_free(wrong_eckey);
     if (ecdsa_sig)
         ECDSA_SIG_free(ecdsa_sig);
     if (signature)

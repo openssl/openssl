@@ -910,9 +910,9 @@ static EC_GROUP *ec_asn1_parameters2group(const ECPARAMETERS *params)
 
     ok = 1;
 
- err:if (!ok) {
-        if (ret)
-            EC_GROUP_clear_free(ret);
+ err:
+    if (!ok) {
+        EC_GROUP_clear_free(ret);
         ret = NULL;
     }
 
@@ -922,8 +922,7 @@ static EC_GROUP *ec_asn1_parameters2group(const ECPARAMETERS *params)
         BN_free(a);
     if (b)
         BN_free(b);
-    if (point)
-        EC_POINT_free(point);
+    EC_POINT_free(point);
     return (ret);
 }
 
@@ -982,10 +981,10 @@ EC_GROUP *d2i_ECPKParameters(EC_GROUP **a, const unsigned char **in, long len)
         return NULL;
     }
 
-    if (a && *a)
+    if (a) {
         EC_GROUP_clear_free(*a);
-    if (a)
         *a = group;
+    }
 
     ECPKPARAMETERS_free(params);
     return (group);
@@ -1030,8 +1029,7 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
         ret = *a;
 
     if (priv_key->parameters) {
-        if (ret->group)
-            EC_GROUP_clear_free(ret->group);
+        EC_GROUP_clear_free(ret->group);
         ret->group = ec_asn1_pkparameters2group(priv_key->parameters);
     }
 
@@ -1055,8 +1053,7 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
         goto err;
     }
 
-    if (ret->pub_key)
-        EC_POINT_clear_free(ret->pub_key);
+    EC_POINT_clear_free(ret->pub_key);
     ret->pub_key = EC_POINT_new(ret->group);
     if (ret->pub_key == NULL) {
         ECerr(EC_F_D2I_ECPRIVATEKEY, ERR_R_EC_LIB);
@@ -1098,7 +1095,7 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
     ok = 1;
  err:
     if (!ok) {
-        if (ret && (a == NULL || *a != ret))
+        if (a == NULL || *a != ret)
             EC_KEY_free(ret);
         ret = NULL;
     }

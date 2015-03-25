@@ -3141,8 +3141,7 @@ void ssl3_free(SSL *s)
     DH_free(s->s3->tmp.dh);
 #endif
 #ifndef OPENSSL_NO_EC
-    if (s->s3->tmp.ecdh != NULL)
-        EC_KEY_free(s->s3->tmp.ecdh);
+    EC_KEY_free(s->s3->tmp.ecdh);
 #endif
 
     if (s->s3->tmp.ca_names != NULL)
@@ -3182,10 +3181,8 @@ void ssl3_clear(SSL *s)
     s->s3->tmp.dh = NULL;
 #endif
 #ifndef OPENSSL_NO_EC
-    if (s->s3->tmp.ecdh != NULL) {
-        EC_KEY_free(s->s3->tmp.ecdh);
-        s->s3->tmp.ecdh = NULL;
-    }
+    EC_KEY_free(s->s3->tmp.ecdh);
+    s->s3->tmp.ecdh = NULL;
 #endif
 #ifndef OPENSSL_NO_TLSEXT
 # ifndef OPENSSL_NO_EC
@@ -3356,8 +3353,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
                     return (ret);
                 }
             }
-            if (s->cert->ecdh_tmp != NULL)
-                EC_KEY_free(s->cert->ecdh_tmp);
+            EC_KEY_free(s->cert->ecdh_tmp);
             s->cert->ecdh_tmp = ecdh;
             ret = 1;
         }
@@ -3829,9 +3825,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
                 }
             }
 
-            if (cert->ecdh_tmp != NULL) {
-                EC_KEY_free(cert->ecdh_tmp);
-            }
+            EC_KEY_free(cert->ecdh_tmp);
             cert->ecdh_tmp = ecdh;
             return 1;
         }

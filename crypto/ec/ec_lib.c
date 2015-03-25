@@ -138,8 +138,7 @@ void EC_GROUP_free(EC_GROUP *group)
     if (group->mont_data)
         BN_MONT_CTX_free(group->mont_data);
 
-    if (group->generator != NULL)
-        EC_POINT_free(group->generator);
+    EC_POINT_free(group->generator);
     BN_free(group->order);
     BN_free(group->cofactor);
 
@@ -164,8 +163,7 @@ void EC_GROUP_clear_free(EC_GROUP *group)
     if (group->mont_data)
         BN_MONT_CTX_free(group->mont_data);
 
-    if (group->generator != NULL)
-        EC_POINT_clear_free(group->generator);
+    EC_POINT_clear_free(group->generator);
     BN_clear_free(group->order);
     BN_clear_free(group->cofactor);
 
@@ -232,10 +230,8 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
             return 0;
     } else {
         /* src->generator == NULL */
-        if (dest->generator != NULL) {
-            EC_POINT_clear_free(dest->generator);
-            dest->generator = NULL;
-        }
+        EC_POINT_clear_free(dest->generator);
+        dest->generator = NULL;
     }
 
     if (!BN_copy(dest->order, src->order))
@@ -283,10 +279,9 @@ EC_GROUP *EC_GROUP_dup(const EC_GROUP *a)
 
  err:
     if (!ok) {
-        if (t)
-            EC_GROUP_free(t);
+        EC_GROUP_free(t);
         return NULL;
-    } else
+    }
         return t;
 }
 
@@ -790,8 +785,8 @@ EC_POINT *EC_POINT_dup(const EC_POINT *a, const EC_GROUP *group)
     if (!r) {
         EC_POINT_free(t);
         return NULL;
-    } else
-        return t;
+    }
+    return t;
 }
 
 const EC_METHOD *EC_POINT_method_of(const EC_POINT *point)

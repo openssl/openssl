@@ -3114,8 +3114,7 @@ static EC_GROUP *ec_group_new_from_data(const ec_list_element curve)
         EC_GROUP_free(group);
         group = NULL;
     }
-    if (P)
-        EC_POINT_free(P);
+    EC_POINT_free(P);
     if (ctx)
         BN_CTX_free(ctx);
     if (p)

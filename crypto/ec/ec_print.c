@@ -110,7 +110,7 @@ EC_POINT *EC_POINT_bn2point(const EC_GROUP *group,
         ret = point;
 
     if (!EC_POINT_oct2point(group, ret, buf, buf_len, ctx)) {
-        if (point == NULL)
+        if (ret != point)
             EC_POINT_clear_free(ret);
         OPENSSL_free(buf);
         return NULL;

@@ -75,8 +75,10 @@ In order to construct a builtin curve use the function EC_GROUP_new_by_curve_nam
 be constructed.
 
 EC_GROUP_free frees the memory associated with the EC_GROUP.
+If B<group> is NULL nothing is done.
 
 EC_GROUP_clear_free destroys any sensitive data held within the EC_GROUP and then frees its memory.
+If B<group> is NULL nothing is done.
 
 =head1 RETURN VALUES
 

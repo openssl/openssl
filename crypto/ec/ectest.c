@@ -864,18 +864,12 @@ static void prime_field_tests(void)
     BN_free(y);
     BN_free(z);
 
-    if (P_160)
-        EC_GROUP_free(P_160);
-    if (P_192)
-        EC_GROUP_free(P_192);
-    if (P_224)
-        EC_GROUP_free(P_224);
-    if (P_256)
-        EC_GROUP_free(P_256);
-    if (P_384)
-        EC_GROUP_free(P_384);
-    if (P_521)
-        EC_GROUP_free(P_521);
+    EC_GROUP_free(P_160);
+    EC_GROUP_free(P_192);
+    EC_GROUP_free(P_224);
+    EC_GROUP_free(P_256);
+    EC_GROUP_free(P_384);
+    EC_GROUP_free(P_521);
 
 }
 
@@ -1346,26 +1340,16 @@ static void char2_field_tests(void)
     BN_free(z);
     BN_free(cof);
 
-    if (C2_K163)
-        EC_GROUP_free(C2_K163);
-    if (C2_B163)
-        EC_GROUP_free(C2_B163);
-    if (C2_K233)
-        EC_GROUP_free(C2_K233);
-    if (C2_B233)
-        EC_GROUP_free(C2_B233);
-    if (C2_K283)
-        EC_GROUP_free(C2_K283);
-    if (C2_B283)
-        EC_GROUP_free(C2_B283);
-    if (C2_K409)
-        EC_GROUP_free(C2_K409);
-    if (C2_B409)
-        EC_GROUP_free(C2_B409);
-    if (C2_K571)
-        EC_GROUP_free(C2_K571);
-    if (C2_B571)
-        EC_GROUP_free(C2_B571);
+    EC_GROUP_free(C2_K163);
+    EC_GROUP_free(C2_B163);
+    EC_GROUP_free(C2_K233);
+    EC_GROUP_free(C2_B233);
+    EC_GROUP_free(C2_K283);
+    EC_GROUP_free(C2_B283);
+    EC_GROUP_free(C2_K409);
+    EC_GROUP_free(C2_B409);
+    EC_GROUP_free(C2_K571);
+    EC_GROUP_free(C2_B571);
 
 }
 # endif

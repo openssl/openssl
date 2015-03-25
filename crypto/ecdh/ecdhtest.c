@@ -290,10 +290,8 @@ static int test_ecdh_curve(int nid, const char *text, BN_CTX *ctx, BIO *out)
         BN_free(x_b);
     if (y_b)
         BN_free(y_b);
-    if (b)
-        EC_KEY_free(b);
-    if (a)
-        EC_KEY_free(a);
+    EC_KEY_free(b);
+    EC_KEY_free(a);
     return (ret);
 }
 
@@ -394,12 +392,10 @@ static EC_KEY *mk_eckey(int nid, const unsigned char *p, size_t plen)
  err:
     if (priv)
         BN_clear_free(priv);
-    if (pub)
-        EC_POINT_free(pub);
+    EC_POINT_free(pub);
     if (ok)
         return k;
-    else if (k)
-        EC_KEY_free(k);
+    EC_KEY_free(k);
     return NULL;
 }
 
@@ -440,10 +436,8 @@ static int ecdh_kat(BIO *out, const char *cname, int nid,
         goto err;
     rv = 1;
  err:
-    if (key1)
-        EC_KEY_free(key1);
-    if (key2)
-        EC_KEY_free(key2);
+    EC_KEY_free(key1);
+    EC_KEY_free(key2);
     if (Ztmp)
         OPENSSL_free(Ztmp);
     if (rv)
