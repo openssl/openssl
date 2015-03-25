@@ -64,6 +64,7 @@
 #include <openssl/objects.h>
 #include <openssl/bn.h>
 #include "internal/asn1_int.h"
+#include "asn1_locl.h"
 
 int i2d_ASN1_OBJECT(ASN1_OBJECT *a, unsigned char **pp)
 {

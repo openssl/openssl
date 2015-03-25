@@ -894,21 +894,13 @@ DECLARE_STACK_OF(ASN1_VALUE)
 
 int ASN1_item_ex_new(ASN1_VALUE **pval, const ASN1_ITEM *it);
 void ASN1_item_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it);
-int ASN1_template_new(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt);
-int ASN1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it);
 
-void ASN1_template_free(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt);
-int ASN1_template_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
-                      const ASN1_TEMPLATE *tt);
 int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
                      const ASN1_ITEM *it, int tag, int aclass, char opt,
                      ASN1_TLC *ctx);
 
 int ASN1_item_ex_i2d(ASN1_VALUE **pval, unsigned char **out,
                      const ASN1_ITEM *it, int tag, int aclass);
-int ASN1_template_i2d(ASN1_VALUE **pval, unsigned char **out,
-                      const ASN1_TEMPLATE *tt);
-void ASN1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it);
 
 #ifdef  __cplusplus
 }

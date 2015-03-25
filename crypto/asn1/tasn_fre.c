@@ -100,13 +100,13 @@ static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it,
 
     case ASN1_ITYPE_PRIMITIVE:
         if (it->templates)
-            ASN1_template_free(pval, it->templates);
+            asn1_template_free(pval, it->templates);
         else
-            ASN1_primitive_free(pval, it);
+            asn1_primitive_free(pval, it);
         break;
 
     case ASN1_ITYPE_MSTRING:
-        ASN1_primitive_free(pval, it);
+        asn1_primitive_free(pval, it);
         break;
 
     case ASN1_ITYPE_CHOICE:
@@ -121,7 +121,7 @@ static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it,
 
             tt = it->templates + i;
             pchval = asn1_get_field_ptr(pval, tt);
-            ASN1_template_free(pchval, tt);
+            asn1_template_free(pchval, tt);
         }
         if (asn1_cb)
             asn1_cb(ASN1_OP_FREE_POST, pval, it, NULL);
@@ -159,7 +159,7 @@ static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it,
             if (!seqtt)
                 continue;
             pseqval = asn1_get_field_ptr(pval, seqtt);
-            ASN1_template_free(pseqval, seqtt);
+            asn1_template_free(pseqval, seqtt);
         }
         if (asn1_cb)
             asn1_cb(ASN1_OP_FREE_POST, pval, it, NULL);
@@ -171,7 +171,7 @@ static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it,
     }
 }
 
-void ASN1_template_free(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
+void asn1_template_free(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
 {
     if (tt->flags & ASN1_TFLG_SK_MASK) {
         STACK_OF(ASN1_VALUE) *sk = (STACK_OF(ASN1_VALUE) *)*pval;
@@ -190,7 +190,7 @@ void ASN1_template_free(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
     }
 }
 
-void ASN1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
+void asn1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
     int utype;
 
@@ -238,7 +238,7 @@ void ASN1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
         break;
 
     case V_ASN1_ANY:
-        ASN1_primitive_free(pval, NULL);
+        asn1_primitive_free(pval, NULL);
         OPENSSL_free(*pval);
         break;
 
