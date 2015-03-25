@@ -166,7 +166,7 @@ int gost_do_verify(const unsigned char *dgst, int dgst_len,
     BIGNUM *q2 = NULL;
     BIGNUM *u = NULL, *v = NULL, *z1 = NULL, *z2 = NULL;
     BIGNUM *tmp2 = NULL, *tmp3 = NULL;
-    int ok;
+    int ok = 0;
     BN_CTX *ctx = BN_CTX_new();
     if(!ctx) {
         GOSTerr(GOST_F_GOST_DO_VERIFY, ERR_R_MALLOC_FAILURE);
@@ -207,9 +207,9 @@ int gost_do_verify(const unsigned char *dgst, int dgst_len,
     BN_mod_exp(tmp2, dsa->pub_key, z2, dsa->p, ctx);
     BN_mod_mul(tmp3, tmp, tmp2, dsa->p, ctx);
     BN_mod(u, tmp3, dsa->q, ctx);
-    ok = BN_cmp(u, sig->r);
+    ok = (BN_cmp(u, sig->r) == 0);
 
-    if (ok != 0) {
+    if (!ok) {
         GOSTerr(GOST_F_GOST_DO_VERIFY, GOST_R_SIGNATURE_MISMATCH);
     }
 err:
@@ -218,7 +218,7 @@ err:
         BN_CTX_end(ctx);
         BN_CTX_free(ctx);
     }
-    return (ok == 0);
+    return ok;
 }
 
 /*
