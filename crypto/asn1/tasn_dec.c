@@ -64,6 +64,7 @@
 #include <openssl/objects.h>
 #include <openssl/buffer.h>
 #include <openssl/err.h>
+#include "asn1_locl.h"
 
 static int asn1_check_eoc(const unsigned char **in, long len);
 static int asn1_find_end(const unsigned char **in, long len, char inf);
