@@ -1729,7 +1729,7 @@ BIO_number_written                      2202	EXIST::FUNCTION:
 BIO_number_read                         2203	EXIST::FUNCTION:
 X509_STORE_CTX_get1_chain               2204	EXIST::FUNCTION:
 ERR_load_RAND_strings                   2205	EXIST::FUNCTION:
-RAND_pseudo_bytes                       2206	EXIST::FUNCTION:
+RAND_pseudo_bytes                       2206	EXIST::FUNCTION:DEPRECATED
 X509_REQ_get_attr_by_NID                2207	EXIST::FUNCTION:
 X509_REQ_get_attr                       2208	EXIST::FUNCTION:
 X509_REQ_add1_attr_by_NID               2209	EXIST::FUNCTION:
@@ -2011,7 +2011,7 @@ OCSP_SINGLERESP_get_ext_count           2579	EXIST::FUNCTION:
 UI_ctrl                                 2580	EXIST::FUNCTION:
 _shadow_DES_rw_mode                     2581	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:DES
 _shadow_DES_rw_mode                     2581	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:DES
-asn1_do_adb                             2582	EXIST::FUNCTION:
+asn1_do_adb                             2582	NOEXIST::FUNCTION:
 ASN1_template_i2d                       2583	EXIST::FUNCTION:
 ENGINE_register_DH                      2584	EXIST::FUNCTION:ENGINE
 UI_construct_prompt                     2585	EXIST::FUNCTION:
@@ -2107,7 +2107,7 @@ ENGINE_set_load_privkey_fn              2659	EXIST:VMS:FUNCTION:ENGINE
 EVP_EncryptFinal_ex                     2660	EXIST::FUNCTION:
 ENGINE_set_default_digests              2661	EXIST::FUNCTION:ENGINE
 X509_get0_pubkey_bitstr                 2662	EXIST::FUNCTION:
-asn1_ex_i2c                             2663	EXIST::FUNCTION:
+asn1_ex_i2c                             2663	NOEXIST::FUNCTION:
 ENGINE_register_RSA                     2664	EXIST::FUNCTION:ENGINE
 ENGINE_unregister_DSA                   2665	EXIST::FUNCTION:ENGINE
 _ossl_old_des_key_sched                 2666	NOEXIST::FUNCTION:
@@ -2385,10 +2385,10 @@ OCSP_REQINFO_free                       2884	EXIST::FUNCTION:
 EC_GROUP_new_curve_GFp                  2885	EXIST::FUNCTION:EC
 OCSP_REQUEST_get1_ext_d2i               2886	EXIST::FUNCTION:
 PKCS12_item_pack_safebag                2887	EXIST::FUNCTION:
-asn1_ex_c2i                             2888	EXIST::FUNCTION:
+asn1_ex_c2i                             2888	NOEXIST::FUNCTION:
 ENGINE_register_digests                 2889	EXIST::FUNCTION:ENGINE
 i2d_OCSP_REVOKEDINFO                    2890	EXIST::FUNCTION:
-asn1_enc_restore                        2891	EXIST::FUNCTION:
+asn1_enc_restore                        2891	NOEXIST::FUNCTION:
 UI_free                                 2892	EXIST::FUNCTION:
 UI_new_method                           2893	EXIST::FUNCTION:
 EVP_EncryptInit_ex                      2894	EXIST::FUNCTION:
@@ -2504,7 +2504,7 @@ BN_swap                                 2990	EXIST::FUNCTION:
 POLICYINFO_it                           2991	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 POLICYINFO_it                           2991	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 ENGINE_set_destroy_function             2992	EXIST::FUNCTION:ENGINE
-asn1_enc_free                           2993	EXIST::FUNCTION:
+asn1_enc_free                           2993	NOEXIST::FUNCTION:
 OCSP_RESPID_it                          2994	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 OCSP_RESPID_it                          2994	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 EC_GROUP_new                            2995	EXIST::FUNCTION:EC
@@ -2564,7 +2564,7 @@ _ossl_old_des_ncbc_encrypt              3037	NOEXIST::FUNCTION:
 i2d_KRB5_TKTBODY                        3038	EXIST::FUNCTION:
 EC_POINT_clear_free                     3039	EXIST::FUNCTION:EC
 AES_decrypt                             3040	EXIST::FUNCTION:AES
-asn1_enc_init                           3041	EXIST::FUNCTION:
+asn1_enc_init                           3041	NOEXIST::FUNCTION:
 UI_get_result_maxsize                   3042	EXIST::FUNCTION:
 OCSP_CERTID_new                         3043	EXIST::FUNCTION:
 ENGINE_unregister_RAND                  3044	EXIST::FUNCTION:ENGINE
@@ -2577,13 +2577,13 @@ ASN1_item_d2i                           3050	EXIST::FUNCTION:
 ASN1_primitive_free                     3051	EXIST::FUNCTION:
 i2d_EXTENDED_KEY_USAGE                  3052	EXIST::FUNCTION:
 i2d_OCSP_SIGNATURE                      3053	EXIST::FUNCTION:
-asn1_enc_save                           3054	EXIST::FUNCTION:
+asn1_enc_save                           3054	NOEXIST::FUNCTION:
 ENGINE_load_nuron                       3055	EXIST::FUNCTION:ENGINE,STATIC_ENGINE
 _ossl_old_des_pcbc_encrypt              3056	NOEXIST::FUNCTION:
 PKCS12_MAC_DATA_it                      3057	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 PKCS12_MAC_DATA_it                      3057	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 OCSP_accept_responses_new               3058	EXIST::FUNCTION:
-asn1_do_lock                            3059	EXIST::FUNCTION:
+asn1_do_lock                            3059	NOEXIST::FUNCTION:
 PKCS7_ATTR_VERIFY_it                    3060	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 PKCS7_ATTR_VERIFY_it                    3060	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 KRB5_APREQBODY_it                       3061	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
@@ -2598,7 +2598,7 @@ EVP_DecryptInit_ex                      3067	EXIST::FUNCTION:
 i2d_OCSP_CERTID                         3068	EXIST::FUNCTION:
 ASN1_item_d2i_bio                       3069	EXIST::FUNCTION:
 EC_POINT_dbl                            3070	EXIST::FUNCTION:EC
-asn1_get_choice_selector                3071	EXIST::FUNCTION:
+asn1_get_choice_selector                3071	NOEXIST::FUNCTION:
 i2d_KRB5_CHECKSUM                       3072	EXIST::FUNCTION:
 ENGINE_set_table_flags                  3073	EXIST::FUNCTION:ENGINE
 AES_options                             3074	EXIST::FUNCTION:AES
@@ -2660,10 +2660,10 @@ UI_dup_verify_string                    3119	EXIST::FUNCTION:
 BN_mod_lshift                           3120	EXIST::FUNCTION:
 KRB5_AUTHDATA_it                        3121	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 KRB5_AUTHDATA_it                        3121	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
-asn1_set_choice_selector                3122	EXIST::FUNCTION:
+asn1_set_choice_selector                3122	NOEXIST::FUNCTION:
 OCSP_basic_add1_status                  3123	EXIST::FUNCTION:
 OCSP_RESPID_free                        3124	EXIST::FUNCTION:
-asn1_get_field_ptr                      3125	EXIST::FUNCTION:
+asn1_get_field_ptr                      3125	NOEXIST::FUNCTION:
 UI_add_input_string                     3126	EXIST::FUNCTION:
 OCSP_CRLID_it                           3127	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 OCSP_CRLID_it                           3127	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
@@ -4552,3 +4552,4 @@ EVP_camellia_192_ctr                    4910	EXIST::FUNCTION:CAMELLIA
 OCSP_resp_get0_signature                4911	EXIST::FUNCTION:
 OBJ_length                              4912	EXIST::FUNCTION:
 OBJ_get0_data                           4913	EXIST::FUNCTION:
+X509_NAME_ENTRY_set                     4914	EXIST::FUNCTION:
