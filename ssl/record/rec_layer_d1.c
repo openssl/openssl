@@ -259,8 +259,7 @@ static int dtls1_copy_record(SSL *s, pitem *item)
     return (1);
 }
 
-int
-dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
+int dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
 {
     DTLS1_RECORD_DATA *rdata;
     pitem *item;
@@ -1049,9 +1048,8 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
          * this only happens when a client hello is received and a handshake
          * is started.
          */
-static int
-have_handshake_fragment(SSL *s, int type, unsigned char *buf,
-                        int len, int peek)
+static int have_handshake_fragment(SSL *s, int type, unsigned char *buf,
+                                   int len, int peek)
 {
 
     if ((type == SSL3_RT_HANDSHAKE)
