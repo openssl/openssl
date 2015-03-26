@@ -131,44 +131,43 @@ typedef struct ssl3_buffer_st {
 
 typedef struct ssl3_record_st {
     /* type of record */
-    /*
-     * r
-     */ int type;
+    /* r */
+    int type;
+
     /* How many bytes available */
-    /*
-     * rw
-     */ unsigned int length;
+    /* rw */
+    unsigned int length;
+
     /*
      * How many bytes were available before padding was removed? This is used
      * to implement the MAC check in constant time for CBC records.
      */
-    /*
-     * rw
-     */ unsigned int orig_len;
+    /* rw */
+    unsigned int orig_len;
+
     /* read/write offset into 'buf' */
-    /*
-     * r
-     */ unsigned int off;
+    /* r */
+    unsigned int off;
+
     /* pointer to the record data */
-    /*
-     * rw
-     */ unsigned char *data;
+    /* rw */
+    unsigned char *data;
+
     /* where the decode bytes are */
-    /*
-     * rw
-     */ unsigned char *input;
+    /* rw */
+    unsigned char *input;
+
     /* only used with decompression - malloc()ed */
-    /*
-     * r
-     */ unsigned char *comp;
+    /* r */
+    unsigned char *comp;
+
     /* epoch number, needed by DTLS1 */
-    /*
-     * r
-     */ unsigned long epoch;
+    /* r */
+    unsigned long epoch;
+
     /* sequence number, needed by DTLS1 */
-    /*
-     * r
-     */ unsigned char seq_num[SEQ_NUM_SIZE];
+    /* r */
+    unsigned char seq_num[SEQ_NUM_SIZE];
 } SSL3_RECORD;
 
 typedef struct dtls1_bitmap_st {
