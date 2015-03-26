@@ -157,6 +157,7 @@ int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
                 *ret = ASYNC_get_ctx()->currjob->ret;
                 ASYNC_JOB_free(ASYNC_get_ctx()->currjob);
                 ASYNC_get_ctx()->currjob = NULL;
+                *job = NULL;
                 ASYNC_CTX_free();
                 return ASYNC_FINISH;
             }
@@ -180,6 +181,7 @@ int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
             /* Should not happen */
             ASYNC_JOB_free(ASYNC_get_ctx()->currjob);
             ASYNC_get_ctx()->currjob = NULL;
+            *job = NULL;
             ASYNC_CTX_free();
             return ASYNC_ERR;
         }
@@ -213,6 +215,7 @@ int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
 err:
     ASYNC_JOB_free(ASYNC_get_ctx()->currjob);
     ASYNC_get_ctx()->currjob = NULL;
+    *job = NULL;
     ASYNC_CTX_free();
     return ASYNC_ERR;
 }
@@ -243,9 +246,4 @@ int ASYNC_in_job(void)
         return 1;
 
     return 0;
-}
-
-int ASYNC_job_is_waiting(ASYNC_JOB *job)
-{
-    return job->status == ASYNC_JOB_PAUSED;
 }
