@@ -3,7 +3,7 @@
 # Search out "DECLARE_STACK_OF()" # declarations in .h and .c files,
 # and create corresponding macro declarations for crypto/stack/safestack.h.
 
-my $safestack = "crypto/stack/safestack.h";
+my $safestack = "include/openssl/safestack.h";
 my $do_write = 0;
 
 foreach ( @ARGV ) {
@@ -15,7 +15,7 @@ my @sstacklst;
 my @asn1setlst;
 my @p12stklst;
 my @lhashlst;
-my @source = (<crypto/*.[ch]>, <crypto/*/*.[ch]>, <ssl/*.[ch]>, <apps/*.[ch]>);
+my @source = (<include/openssl/*.h>, <crypto/*.[ch]>, <crypto/*/*.[ch]>, <ssl/*.[ch]>, <apps/*.[ch]>);
 foreach $file (@source) {
     next if -l $file;
 

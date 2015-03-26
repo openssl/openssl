@@ -14,24 +14,12 @@
 /MINFO
 /TABLE
 /*.a
-/include
 /*.pc
 /rehash.time
 /inc.*
 /makefile.*
 /out.*
 /tmp.*
-
-# Most *.c files under test/ are symlinks
-/test/*.c
-# Apart from these
-!/test/asn1test.c
-!/test/methtest.c
-!/test/dummytest.c
-!/test/igetest.c
-!/test/r160test.c
-!/test/fips_algvs.c
-!/test/testutil.c
 
 /test/*.ss
 /test/*.srl
@@ -94,8 +82,8 @@ crypto/sha/asm/sha512-sse2.asm
 !/crypto/des/times/486-50.sol
 
 # Misc auto generated files
+include/openssl/opensslconf.h
 /tools/c_rehash
-/test/evptests.txt
 lib
 Makefile.save
 *.bak

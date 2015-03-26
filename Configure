@@ -779,13 +779,13 @@ my $no_gmp=0;
 my @skip=();
 my $Makefile="Makefile";
 my $des_locl="crypto/des/des_locl.h";
-my $des	="crypto/des/des.h";
-my $bn	="crypto/bn/bn.h";
-my $md2	="crypto/md2/md2.h";
-my $rc4	="crypto/rc4/rc4.h";
+my $des	="include/openssl/des.h";
+my $bn	="include/openssl/bn.h";
+my $md2	="include/openssl/md2.h";
+my $rc4	="include/openssl/rc4.h";
 my $rc4_locl="crypto/rc4/rc4_locl.h";
-my $idea	="crypto/idea/idea.h";
-my $rc2	="crypto/rc2/rc2.h";
+my $idea	="include/openssl/idea.h";
+my $rc2	="include/openssl/rc2.h";
 my $bf	="crypto/bf/bf_locl.h";
 my $bn_asm	="bn_asm.o";
 my $des_enc="des_enc.o fcrypt_b.o";
@@ -848,7 +848,6 @@ my $libs;
 my $libkrb5="";
 my $target;
 my $options;
-my $symlink;
 my $make_depend=0;
 my %withargs=();
 my $build_prefix = "release_";
@@ -869,7 +868,6 @@ while($argv_unprocessed)
 	$libs="";
 	$target="";
 	$options="";
-	$symlink=1;
 
 	$argv_unprocessed=0;
 	$argvstring=join(' ',@argvcopy);
@@ -1192,8 +1190,6 @@ foreach (sort (keys %disabled))
 		{ }
 	elsif (/^zlib-dynamic$/)
 		{ }
-	elsif (/^symlinks$/)
-		{ $symlink = 0; }
 	elsif (/^sse2$/)
 		{ $no_sse2 = 1; }
 	else
@@ -1702,7 +1698,7 @@ my $shlib_version_history = "unknown";
 my $shlib_major = "unknown";
 my $shlib_minor = "unknown";
 
-open(IN,'<crypto/opensslv.h') || die "unable to read opensslv.h:$!\n";
+open(IN,'<include/openssl/opensslv.h') || die "unable to read opensslv.h:$!\n";
 while (<IN>)
 	{
 	$version=$1 if /OPENSSL.VERSION.TEXT.*OpenSSL (\S+) /;
@@ -1923,8 +1919,8 @@ foreach (sort split(/\s+/,$bn_ops))
 	}
 
 open(IN,'<crypto/opensslconf.h.in') || die "unable to read crypto/opensslconf.h.in:$!\n";
-unlink("crypto/opensslconf.h.new") || die "unable to remove old crypto/opensslconf.h.new:$!\n" if -e "crypto/opensslconf.h.new";
-open(OUT,'>crypto/opensslconf.h.new') || die "unable to create crypto/opensslconf.h.new:$!\n";
+unlink("include/openssl/opensslconf.h.new") || die "unable to remove old include/openssl/opensslconf.h.new:$!\n" if -e "include/openssl/opensslconf.h.new";
+open(OUT,'>include/openssl/opensslconf.h.new') || die "unable to create include/openssl/opensslconf.h.new:$!\n";
 print OUT "/* opensslconf.h */\n";
 print OUT "/* WARNING: Generated automatically from opensslconf.h.in by Configure. */\n\n";
 
@@ -2039,8 +2035,8 @@ print OUT "#ifdef  __cplusplus\n";
 print OUT "}\n";
 print OUT "#endif\n";
 close(OUT);
-rename("crypto/opensslconf.h","crypto/opensslconf.h.bak") || die "unable to rename crypto/opensslconf.h\n" if -e "crypto/opensslconf.h";
-rename("crypto/opensslconf.h.new","crypto/opensslconf.h") || die "unable to rename crypto/opensslconf.h.new\n";
+rename("include/openssl/opensslconf.h","include/openssl/opensslconf.h.bak") || die "unable to rename include/openssl/opensslconf.h\n" if -e "include/openssl/opensslconf.h";
+rename("include/openssl/opensslconf.h.new","include/openssl/opensslconf.h") || die "unable to rename include/openssl/opensslconf.h.new\n";
 
 
 # Fix the date
@@ -2082,9 +2078,7 @@ EOF
 } else {
 	my $make_command = "$make PERL=\'$perl\'";
 	my $make_targets = "";
-	$make_targets .= " links" if $symlink;
 	$make_targets .= " depend" if $depflags ne $default_depflags && $make_depend;
-	$make_targets .= " gentests" if $symlink;
 	(system $make_command.$make_targets) == 0 or die "make $make_targets failed"
 		if $make_targets ne "";
 	if ( $perl =~ m@^/@) {

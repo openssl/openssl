@@ -137,6 +137,7 @@ BASEADDR=
 DIRS=   crypto ssl engines apps test tools
 ENGDIRS= ccgost
 SHLIBDIRS= crypto ssl
+INSTALL_SUBS= engines apps tools
 
 # dirs in crypto to build
 SDIRS=  \
@@ -426,11 +427,6 @@ files:
 	$(PERL) $(TOP)/util/files.pl Makefile > $(TOP)/MINFO
 	@set -e; target=files; $(RECURSIVE_BUILD_CMD)
 
-links:
-	@$(PERL) $(TOP)/util/mkdir-p.pl include/openssl
-	@$(PERL) $(TOP)/util/mklink.pl include/openssl $(EXHEADER)
-	@set -e; target=links; $(RECURSIVE_BUILD_CMD)
-
 gentests:
 	@(cd test && echo "generating dummy tests (if needed)..." && \
 	$(CLEARENV) && $(MAKE) -e $(BUILDENV) TESTS='$(TESTS)' OPENSSL_DEBUG_MEMORY=on generate );
@@ -486,10 +482,10 @@ util/libeay.num::
 util/ssleay.num::
 	$(PERL) util/mkdef.pl ssl update
 
-crypto/objects/obj_dat.h: crypto/objects/obj_dat.pl crypto/objects/obj_mac.h
-	$(PERL) crypto/objects/obj_dat.pl crypto/objects/obj_mac.h crypto/objects/obj_dat.h
-crypto/objects/obj_mac.h: crypto/objects/objects.pl crypto/objects/objects.txt crypto/objects/obj_mac.num
-	$(PERL) crypto/objects/objects.pl crypto/objects/objects.txt crypto/objects/obj_mac.num crypto/objects/obj_mac.h
+crypto/objects/obj_dat.h: crypto/objects/obj_dat.pl include/openssl/obj_mac.h
+	$(PERL) crypto/objects/obj_dat.pl include/openssl/obj_mac.h crypto/objects/obj_dat.h
+include/openssl/obj_mac.h: crypto/objects/objects.pl crypto/objects/objects.txt crypto/objects/obj_mac.num
+	$(PERL) crypto/objects/objects.pl crypto/objects/objects.txt crypto/objects/obj_mac.num include/openssl/obj_mac.h
 crypto/objects/obj_xref.h: crypto/objects/objxref.pl crypto/objects/obj_xref.txt crypto/objects/obj_mac.num
 	$(PERL) crypto/objects/objxref.pl crypto/objects/obj_mac.num crypto/objects/obj_xref.txt >crypto/objects/obj_xref.h
 
@@ -547,12 +543,11 @@ uninstall: uninstall_sw uninstall_docs
 
 install_sw:
 	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALLDIRS)
-	@set -e; headerlist="$(EXHEADER)"; for i in $$headerlist;\
-	do \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
+	@set -e; for i in include/openssl/*.h; do \
+	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/$$i; \
+	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/$$i ); \
 	done;
-	@set -e; target=install; $(RECURSIVE_BUILD_CMD)
+	@set -e; target=install; for dir in $(INSTALL_SUBS); do $(BUILD_CMD); done
 	@set -e; liblist="$(LIBS)"; for i in $$liblist ;\
 	do \
 		if [ -f "$$i" ]; then \
