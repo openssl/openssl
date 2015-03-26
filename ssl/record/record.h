@@ -127,6 +127,8 @@ typedef struct ssl3_buffer_st {
     int left;
 } SSL3_BUFFER;
 
+#define SEQ_NUM_SIZE                            8
+
 typedef struct ssl3_record_st {
     /* type of record */
     /*
@@ -166,15 +168,15 @@ typedef struct ssl3_record_st {
     /* sequence number, needed by DTLS1 */
     /*
      * r
-     */ unsigned char seq_num[8];
+     */ unsigned char seq_num[SEQ_NUM_SIZE];
 } SSL3_RECORD;
 
 typedef struct dtls1_bitmap_st {
-    unsigned long map;          /* track 32 packets on 32-bit systems and 64
-                                 * - on 64-bit systems */
+    /* Track 32 packets on 32-bit systems and 64 - on 64-bit systems */
+    unsigned long map;
 
-    unsigned char max_seq_num[8]; /* max record number seen so far, 64-bit
-                                   * value in big-endian encoding */
+    /* Max record number seen so far, 64-bit value in big-endian encoding */
+    unsigned char max_seq_num[SEQ_NUM_SIZE];
 } DTLS1_BITMAP;
 
 typedef struct record_pqueue_st {

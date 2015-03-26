@@ -209,7 +209,7 @@ void dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap)
             bitmap->map <<= shift, bitmap->map |= 1UL;
         else
             bitmap->map = 1UL;
-        memcpy(bitmap->max_seq_num, seq, 8);
+        memcpy(bitmap->max_seq_num, seq, SEQ_NUM_SIZE);
     } else {
         shift = -cmp;
         if (shift < sizeof(bitmap->map) * 8)
