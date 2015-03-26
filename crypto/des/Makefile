@@ -18,8 +18,6 @@ ASFLAGS= $(INCLUDES) $(ASFLAG)
 AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
-TEST=destest.c
-APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=	cbc_cksm.c cbc_enc.c  cfb64enc.c cfb_enc.c  \
@@ -41,8 +39,7 @@ LIBOBJ= set_key.o  ecb_enc.o  cbc_enc.o \
 
 SRC= $(LIBSRC)
 
-EXHEADER= des.h
-HEADER=	des_locl.h rpc_des.h spr.h des_ver.h $(EXHEADER)
+HEADER=	des_locl.h rpc_des.h spr.h des_ver.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -68,22 +65,6 @@ crypt586.s:	asm/crypt586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
-
-# We need to use force because 'install' matches 'INSTALL' on case
-# insensitive systems
-FRC.install:
-install: FRC.install
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
 
 tags:
 	ctags $(SRC)

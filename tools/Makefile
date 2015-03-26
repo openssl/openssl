@@ -12,7 +12,6 @@ MAKEFILE=	Makefile
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
-TEST=
 APPS= c_rehash
 MISC_APPS= c_hash c_info c_issuer c_name
 
@@ -47,8 +46,6 @@ uninstall:
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-links:
 
 lint:
 

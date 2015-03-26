@@ -13,8 +13,6 @@ AR=		ar r
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile README
-TEST=
-APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=	x509_def.c x509_d2.c x509_r2x.c x509_cmp.c \
@@ -34,8 +32,7 @@ LIBOBJ= x509_def.o x509_d2.o x509_r2x.o x509_cmp.o \
 
 SRC= $(LIBSRC)
 
-EXHEADER= x509.h x509_vfy.h
-HEADER=	$(EXHEADER) x509_lcl.h
+HEADER=	x509_lcl.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -51,19 +48,6 @@ lib:	$(LIBOBJ)
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
 
 tags:
 	ctags $(SRC)

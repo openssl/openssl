@@ -14,8 +14,6 @@ PERL=		perl
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile README
-TEST=
-APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=	o_names.c obj_dat.c obj_lib.c obj_err.c obj_xref.c
@@ -23,8 +21,7 @@ LIBOBJ= o_names.o obj_dat.o obj_lib.o obj_err.o obj_xref.o
 
 SRC= $(LIBSRC)
 
-EXHEADER= objects.h obj_mac.h
-HEADER=	$(EXHEADER) obj_dat.h obj_xref.h
+HEADER=	obj_dat.h obj_xref.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -52,19 +49,6 @@ obj_xref.h: objxref.pl obj_xref.txt obj_mac.num
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
 
 tags:
 	ctags $(SRC)

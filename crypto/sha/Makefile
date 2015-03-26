@@ -18,8 +18,6 @@ ASFLAGS= $(INCLUDES) $(ASFLAG)
 AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
-TEST=sha1test.c sha256t.c sha512t.c
-APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=sha1dgst.c sha1_one.c sha256.c sha512.c
@@ -27,8 +25,7 @@ LIBOBJ=sha1dgst.o sha1_one.o sha256.o sha512.o $(SHA1_ASM_OBJ)
 
 SRC= $(LIBSRC)
 
-EXHEADER= sha.h
-HEADER= sha_locl.h $(EXHEADER)
+HEADER= sha_locl.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -102,19 +99,6 @@ sha512-armv8.o:		sha512-armv8.S
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
 
 tags:
 	ctags $(SRC)

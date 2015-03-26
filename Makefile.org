@@ -181,7 +181,6 @@ BASENAME=       openssl
 NAME=           $(BASENAME)-$(VERSION)
 TARFILE=        $(NAME).tar
 WTARFILE=       $(NAME)-win.tar
-EXHEADER=       e_os2.h
 HEADER=         e_os.h
 
 # Directories created on install if they don't exist.
@@ -206,7 +205,7 @@ CLEARENV=	TOP= && unset TOP $${LIB+LIB} $${LIBS+LIBS}	\
 		$${INCLUDE+INCLUDE} $${INCLUDES+INCLUDES}	\
 		$${DIR+DIR} $${DIRS+DIRS} $${SRC+SRC}		\
 		$${LIBSRC+LIBSRC} $${LIBOBJ+LIBOBJ} $${ALL+ALL}	\
-		$${EXHEADER+EXHEADER} $${HEADER+HEADER}		\
+		$${HEADER+HEADER}				\
 		$${GENERAL+GENERAL} $${CFLAGS+CFLAGS}		\
 		$${ASFLAGS+ASFLAGS} $${AFLAGS+AFLAGS}		\
 		$${LDCMD+LDCMD} $${LDFLAGS+LDFLAGS} $${SCRIPTS+SCRIPTS}	\

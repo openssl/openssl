@@ -31,7 +31,6 @@ CPUID_OBJ=mem_clr.o
 LIBS=
 
 GENERAL=Makefile README crypto-lib.com install.com
-TEST=constant_time_test.c
 
 LIB= $(TOP)/libcrypto.a
 SHARED_LIB= libcrypto$(SHLIB_EXT)
@@ -44,12 +43,10 @@ LIBOBJ= cryptlib.o mem.o mem_dbg.o cversion.o ex_data.o cpt_err.o \
 
 SRC= $(LIBSRC)
 
-EXHEADER= crypto.h opensslv.h opensslconf.h ebcdic.h symhacks.h \
-	ossl_typ.h
 HEADER=	cryptlib.h buildinf.h md32_common.h o_str.h o_dir.h \
-	constant_time_locl.h $(EXHEADER)
+	constant_time_locl.h
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL=	$(GENERAL) $(SRC) $(HEADER)
 
 top:
 	@(cd ..; $(MAKE) DIRS=$(DIR) all)
@@ -95,12 +92,6 @@ files:
 	$(PERL) $(TOP)/util/files.pl "CPUID_OBJ=$(CPUID_OBJ)" Makefile >> $(TOP)/MINFO
 	@target=files; $(RECURSIVE_MAKE)
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../apps $(APPS)
-	@target=links; $(RECURSIVE_MAKE)
-
 # lib: $(LIB): are splitted to avoid end-less loop
 lib:	$(LIB)
 	@touch lib
@@ -115,17 +106,6 @@ shared: buildinf.h lib subdirs
 
 libs:
 	@target=lib; $(RECURSIVE_MAKE)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ;\
-	do \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
-	@target=install; $(RECURSIVE_MAKE)
-
-uninstall:
 
 lint:
 	@target=lint; $(RECURSIVE_MAKE)

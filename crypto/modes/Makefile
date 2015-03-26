@@ -17,8 +17,6 @@ ASFLAGS= $(INCLUDES) $(ASFLAG)
 AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
-TEST=
-APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC= cbc128.c ctr128.c cts128.c cfb128.c ofb128.c gcm128.c \
@@ -28,9 +26,7 @@ LIBOBJ= cbc128.o ctr128.o cts128.o cfb128.o ofb128.o gcm128.o \
 
 SRC= $(LIBSRC)
 
-#EXHEADER= store.h str_compat.h
-EXHEADER= modes.h
-HEADER=	modes_lcl.h $(EXHEADER)
+HEADER=	modes_lcl.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -73,19 +69,6 @@ ghashv8-armx.o:	ghashv8-armx.S
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
 
 tags:
 	ctags $(SRC)

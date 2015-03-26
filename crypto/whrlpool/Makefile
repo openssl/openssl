@@ -18,8 +18,6 @@ ASFLAGS= $(INCLUDES) $(ASFLAG)
 AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
-TEST=wp_test.c
-APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=wp_dgst.c wp_block.c
@@ -27,8 +25,7 @@ LIBOBJ=wp_dgst.o $(WP_ASM_OBJ)
 
 SRC= $(LIBSRC)
 
-EXHEADER= whrlpool.h
-HEADER= wp_locl.h $(EXHEADER)
+HEADER= wp_locl.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -52,19 +49,6 @@ $(LIBOBJ): $(LIBSRC)
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
 
 tags:
 	ctags $(SRC)

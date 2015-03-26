@@ -18,8 +18,6 @@ ASFLAGS= $(INCLUDES) $(ASFLAG)
 AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
-TEST=rmdtest.c
-APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=rmd_dgst.c rmd_one.c
@@ -27,8 +25,7 @@ LIBOBJ=rmd_dgst.o rmd_one.o $(RMD160_ASM_OBJ)
 
 SRC= $(LIBSRC)
 
-EXHEADER= ripemd.h
-HEADER= rmd_locl.h rmdconst.h $(EXHEADER)
+HEADER= rmd_locl.h rmdconst.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -47,19 +44,6 @@ rmd-586.s:	asm/rmd-586.pl ../perlasm/x86asm.pl
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
 
 tags:
 	ctags $(SRC)
