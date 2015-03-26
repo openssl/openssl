@@ -231,8 +231,9 @@ test_x509: ../apps/openssl$(EXE_EXT) tx509 testx509.pem v3-cert1.pem v3-cert2.pe
 	echo test second x509v3 certificate
 	sh ./tx509 v3-cert2.pem 2>/dev/null
 
-test_rsa: $(RSATEST)$(EXE_EXT) ../apps/openssl$(EXE_EXT) trsa testrsa.pem
-	@sh ./trsa 2>/dev/null
+test_rsa: $(RSATEST)$(EXE_EXT) ../apps/openssl$(EXE_EXT) tkey testrsa.pem
+	@sh ./tkey testrsa.pem rsa private 2>/dev/null
+	@sh ./tkey testrsapub.pem rsa public 2>/dev/null
 	../util/shlib_wrap.sh ./$(RSATEST)
 
 test_crl: ../apps/openssl$(EXE_EXT) tcrl testcrl.pem
@@ -258,9 +259,11 @@ test_bn: $(BNTEST)$(EXE_EXT) $(EXPTEST)$(EXE_EXT) bctest
 	@echo 'test a^b%c implementations'
 	../util/shlib_wrap.sh ./$(EXPTEST)
 
-test_ec: $(ECTEST)$(EXE_EXT)
+test_ec: $(ECTEST)$(EXE_EXT) tkey testec-p256.pem
 	@echo 'test elliptic curves'
 	../util/shlib_wrap.sh ./$(ECTEST)
+	@sh ./tkey testec-p256.pem ec private 2>/dev/null
+	@sh ./tkey testecpub-p256.pem ec public 2>/dev/null
 
 test_ecdsa: $(ECDSATEST)$(EXE_EXT)
 	@echo 'test ecdsa'
@@ -279,10 +282,12 @@ test_dh: $(DHTEST)$(EXE_EXT)
 	@echo "Generate a set of DH parameters"
 	../util/shlib_wrap.sh ./$(DHTEST)
 
-test_dsa: $(DSATEST)$(EXE_EXT)
+test_dsa: $(DSATEST)$(EXE_EXT) tkey testdsa.pem
 	@echo "Generate a set of DSA parameters"
 	../util/shlib_wrap.sh ./$(DSATEST)
 	../util/shlib_wrap.sh ./$(DSATEST) -app2_1
+	@sh ./tkey testdsa.pem dsa private 2>/dev/null
+	@sh ./tkey testdsapub.pem dsa public 2>/dev/null
 
 test_gen testreq.pem: ../apps/openssl$(EXE_EXT) testgen test.cnf
 	@echo "Generate and verify a certificate request"
