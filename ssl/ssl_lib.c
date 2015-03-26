@@ -925,9 +925,9 @@ int SSL_check_private_key(const SSL *ssl)
 
 int SSL_waiting_for_async(SSL *s)
 {
-    if(s->job) {
-        return ASYNC_job_is_waiting(s->job);
-    }
+    if(s->job)
+        return 1;
+
     return 0;
 }
 

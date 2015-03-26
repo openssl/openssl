@@ -70,7 +70,6 @@ int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
                          void *args, size_t size);
 int ASYNC_pause_job(void);
 int ASYNC_in_job(void);
-int ASYNC_job_is_waiting(ASYNC_JOB *job);
 
 # ifdef  __cplusplus
 }
