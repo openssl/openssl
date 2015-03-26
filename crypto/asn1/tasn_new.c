@@ -65,8 +65,6 @@
 #include <string.h>
 #include "asn1_locl.h"
 
-static int asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
-                                    int combine);
 static int asn1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it);
 static void asn1_item_clear(ASN1_VALUE **pval, const ASN1_ITEM *it);
 static int asn1_template_new(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt);
@@ -85,12 +83,6 @@ ASN1_VALUE *ASN1_item_new(const ASN1_ITEM *it)
 
 int ASN1_item_ex_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
-    return asn1_item_ex_combine_new(pval, it, 0);
-}
-
-static int asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
-                                    int combine)
-{
     const ASN1_TEMPLATE *tt = NULL;
     const ASN1_EXTERN_FUNCS *ef;
     const ASN1_AUX *aux = it->funcs;
@@ -102,8 +94,7 @@ static int asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
     else
         asn1_cb = 0;
 
-    if (!combine)
-        *pval = NULL;
+    *pval = NULL;
 
 #ifdef CRYPTO_MDEBUG
     if (it->sname)
@@ -146,12 +137,10 @@ static int asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
                 return 1;
             }
         }
-        if (!combine) {
-            *pval = OPENSSL_malloc(it->size);
-            if (!*pval)
-                goto memerr;
-            memset(*pval, 0, it->size);
-        }
+        *pval = OPENSSL_malloc(it->size);
+        if (!*pval)
+            goto memerr;
+        memset(*pval, 0, it->size);
         asn1_set_choice_selector(pval, -1, it);
         if (asn1_cb && !asn1_cb(ASN1_OP_NEW_POST, pval, it, NULL))
             goto auxerr;
@@ -171,14 +160,12 @@ static int asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
                 return 1;
             }
         }
-        if (!combine) {
-            *pval = OPENSSL_malloc(it->size);
-            if (!*pval)
-                goto memerr;
-            memset(*pval, 0, it->size);
-            asn1_do_lock(pval, 0, it);
-            asn1_enc_init(pval, it);
-        }
+        *pval = OPENSSL_malloc(it->size);
+        if (!*pval)
+            goto memerr;
+        memset(*pval, 0, it->size);
+        asn1_do_lock(pval, 0, it);
+        asn1_enc_init(pval, it);
         for (i = 0, tt = it->templates; i < it->tcount; tt++, i++) {
             pseqval = asn1_get_field_ptr(pval, tt);
             if (!asn1_template_new(pseqval, tt))
@@ -195,7 +182,7 @@ static int asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
     return 1;
 
  memerr:
-    ASN1err(ASN1_F_ASN1_ITEM_EX_COMBINE_NEW, ERR_R_MALLOC_FAILURE);
+    ASN1err(ASN1_F_ASN1_ITEM_EX_NEW, ERR_R_MALLOC_FAILURE);
 #ifdef CRYPTO_MDEBUG
     if (it->sname)
         CRYPTO_pop_info();
@@ -203,7 +190,7 @@ static int asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
     return 0;
 
  auxerr:
-    ASN1err(ASN1_F_ASN1_ITEM_EX_COMBINE_NEW, ASN1_R_AUX_ERROR);
+    ASN1err(ASN1_F_ASN1_ITEM_EX_NEW, ASN1_R_AUX_ERROR);
     ASN1_item_ex_free(pval, it);
 #ifdef CRYPTO_MDEBUG
     if (it->sname)
@@ -278,7 +265,7 @@ static int asn1_template_new(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
         goto done;
     }
     /* Otherwise pass it back to the item routine */
-    ret = asn1_item_ex_combine_new(pval, it, tt->flags & ASN1_TFLG_COMBINE);
+    ret = ASN1_item_ex_new(pval, it);
  done:
 #ifdef CRYPTO_MDEBUG
     if (it->sname)

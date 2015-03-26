@@ -973,7 +973,7 @@ void ERR_load_ASN1_strings(void);
 # define ASN1_F_ASN1_INTEGER_TO_BN                        119
 # define ASN1_F_ASN1_ITEM_D2I_FP                          206
 # define ASN1_F_ASN1_ITEM_DUP                             191
-# define ASN1_F_ASN1_ITEM_EX_COMBINE_NEW                  121
+# define ASN1_F_ASN1_ITEM_EX_NEW                          121
 # define ASN1_F_ASN1_ITEM_EX_D2I                          120
 # define ASN1_F_ASN1_ITEM_I2D_BIO                         192
 # define ASN1_F_ASN1_ITEM_I2D_FP                          193
