@@ -132,17 +132,12 @@ IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA, DSAparams, DSAparams)
  * key as an INTEGER or the parameters and public key in a SEQUENCE
  */
 
-ASN1_SEQUENCE(dsa_pub_internal) = {
+ASN1_SEQUENCE(DSAPublicKey) = {
         ASN1_SIMPLE(DSA, pub_key, BIGNUM),
         ASN1_SIMPLE(DSA, p, BIGNUM),
         ASN1_SIMPLE(DSA, q, BIGNUM),
         ASN1_SIMPLE(DSA, g, BIGNUM)
-} ASN1_SEQUENCE_END_name(DSA, dsa_pub_internal)
-
-ASN1_CHOICE_cb(DSAPublicKey, dsa_cb) = {
-        ASN1_SIMPLE(DSA, pub_key, BIGNUM),
-        ASN1_EX_COMBINE(0, 0, dsa_pub_internal)
-} ASN1_CHOICE_END_cb(DSA, DSAPublicKey, write_params)
+} ASN1_SEQUENCE_END_name(DSA, DSAPublicKey)
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA, DSAPublicKey, DSAPublicKey)
 

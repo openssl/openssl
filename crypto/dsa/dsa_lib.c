@@ -146,7 +146,6 @@ DSA *DSA_new_method(ENGINE *engine)
 
     ret->pad = 0;
     ret->version = 0;
-    ret->write_params = 1;
     ret->p = NULL;
     ret->q = NULL;
     ret->g = NULL;
