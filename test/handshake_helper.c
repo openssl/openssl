@@ -1453,8 +1453,7 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     configure_handshake_ssl(server.ssl, client.ssl, extra);
     if (session_in != NULL) {
         /* In case we're testing resumption without tickets. */
-        if (!TEST_true(SSL_CTX_add_session(server_ctx, session_in))
-                || !TEST_true(SSL_set_session(client.ssl, session_in)))
+        if (!TEST_true(SSL_set_session(client.ssl, session_in)))
             goto err;
     }
 

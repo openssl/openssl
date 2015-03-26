@@ -918,9 +918,9 @@ int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
     r.session_id_length = id_len;
     memcpy(r.session_id, id, id_len);
 
-    CRYPTO_THREAD_read_lock(ssl->session_ctx->lock);
-    p = lh_SSL_SESSION_retrieve(ssl->session_ctx->sessions, &r);
-    CRYPTO_THREAD_unlock(ssl->session_ctx->lock);
+    p = SSL_SESSION_CACHE_get1_session(ssl->session_ctx->session_cache, &r);
+    /* Drop the newly acquired reference. */
+    SSL_SESSION_free(p);
     return (p != NULL);
 }
 
@@ -2254,13 +2254,18 @@ long SSL_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
 
 LHASH_OF(SSL_SESSION) *SSL_CTX_sessions(SSL_CTX *ctx)
 {
-    return ctx->sessions;
+    /*
+     * There is no safe locking model with which to access the shared session
+     * list, so we must return failure instead.
+     */
+    return NULL;
 }
 
 long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 {
     long l;
     int i;
+
     /* For some cases with ctx == NULL perform syntax checks */
     if (ctx == NULL) {
         switch (cmd) {
@@ -2298,22 +2303,17 @@ long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         return l;
 
     case SSL_CTRL_SET_SESS_CACHE_SIZE:
-        if (larg < 0)
-            return 0;
-        l = (long)ctx->session_cache_size;
-        ctx->session_cache_size = (size_t)larg;
-        return l;
+        return SSL_SESSION_CACHE_set_size(ctx->session_cache, larg);
     case SSL_CTRL_GET_SESS_CACHE_SIZE:
-        return (long)ctx->session_cache_size;
+        return SSL_SESSION_CACHE_get_size(ctx->session_cache);
+
     case SSL_CTRL_SET_SESS_CACHE_MODE:
-        l = ctx->session_cache_mode;
-        ctx->session_cache_mode = larg;
-        return l;
+        return SSL_SESSION_CACHE_set_mode(ctx->session_cache, larg);
     case SSL_CTRL_GET_SESS_CACHE_MODE:
-        return ctx->session_cache_mode;
+        return SSL_SESSION_CACHE_get_mode(ctx->session_cache);
 
     case SSL_CTRL_SESS_NUMBER:
-        return lh_SSL_SESSION_num_items(ctx->sessions);
+        return SSL_SESSION_CACHE_number(ctx->session_cache);
     case SSL_CTRL_SESS_CONNECT:
         return CRYPTO_atomic_read(&ctx->stats.sess_connect, &i, ctx->lock)
                 ? i : 0;
@@ -2830,7 +2830,7 @@ int SSL_export_keying_material_early(SSL *s, unsigned char *out, size_t olen,
                                               context, contextlen);
 }
 
-static unsigned long ssl_session_hash(const SSL_SESSION *a)
+unsigned long ssl_session_hash(const SSL_SESSION *a)
 {
     const unsigned char *session_id = a->session_id;
     unsigned long l;
@@ -2857,7 +2857,7 @@ static unsigned long ssl_session_hash(const SSL_SESSION *a)
  * being able to construct an SSL_SESSION that will collide with any existing
  * session with a matching session ID.
  */
-static int ssl_session_cmp(const SSL_SESSION *a, const SSL_SESSION *b)
+int ssl_session_cmp(const SSL_SESSION *a, const SSL_SESSION *b)
 {
     if (a->ssl_version != b->ssl_version)
         return 1;
@@ -2872,6 +2872,21 @@ static int ssl_session_cmp(const SSL_SESSION *a, const SSL_SESSION *b)
  * variable. The reason is that the functions aren't static, they're exposed
  * via ssl.h.
  */
+
+SSL_CTX *SSL_CTX_new_ex(const SSL_METHOD *meth, SSL_SESSION_CACHE *session_cache)
+{
+    SSL_CTX *ctx = SSL_CTX_new(meth);
+
+    if (ctx != NULL && session_cache != NULL) {
+        if (!SSL_SESSION_CACHE_up_ref(session_cache)) {
+            SSL_CTX_free(ctx);
+            return NULL;
+        }
+        SSL_SESSION_CACHE_free(ctx->session_cache, ctx);
+        ctx->session_cache = session_cache;
+    }
+    return ctx;
+}
 
 SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 {
@@ -2893,29 +2908,27 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     if (ret == NULL)
         goto err;
 
+    ret->session_cache = SSL_SESSION_CACHE_new(ssl_session_hash, ssl_session_cmp);
+    if (ret->session_cache == NULL)
+        goto err;
+
     ret->method = meth;
     ret->min_proto_version = 0;
     ret->max_proto_version = 0;
     ret->mode = SSL_MODE_AUTO_RETRY;
-    ret->session_cache_mode = SSL_SESS_CACHE_SERVER;
-    ret->session_cache_size = SSL_SESSION_CACHE_MAX_SIZE_DEFAULT;
     /* We take the system default. */
-    ret->session_timeout = meth->get_timeout();
+    ret->session_cache->timeout = meth->get_timeout();
     ret->references = 1;
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
         SSLerr(SSL_F_SSL_CTX_NEW, ERR_R_MALLOC_FAILURE);
-        OPENSSL_free(ret);
-        return NULL;
+        goto err;
     }
     ret->max_cert_list = SSL_MAX_CERT_LIST_DEFAULT;
     ret->verify_mode = SSL_VERIFY_NONE;
     if ((ret->cert = ssl_cert_new()) == NULL)
         goto err;
 
-    ret->sessions = lh_SSL_SESSION_new(ssl_session_hash, ssl_session_cmp);
-    if (ret->sessions == NULL)
-        goto err;
     ret->cert_store = X509_STORE_new();
     if (ret->cert_store == NULL)
         goto err;
@@ -3086,11 +3099,9 @@ void SSL_CTX_free(SSL_CTX *a)
      * free ex_data, then finally free the cache.
      * (See ticket [openssl.org #212].)
      */
-    if (a->sessions != NULL)
-        SSL_CTX_flush_sessions(a, 0);
-
+    SSL_CTX_flush_sessions(a, 0);
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL_CTX, a, &a->ex_data);
-    lh_SSL_SESSION_free(a->sessions);
+    SSL_SESSION_CACHE_free(a->session_cache, a);
     X509_STORE_free(a->cert_store);
 #ifndef OPENSSL_NO_CT
     CTLOG_STORE_free(a->ctlog_store);
@@ -3364,7 +3375,7 @@ void ssl_update_cache(SSL *s, int mode)
             && (s->verify_mode & SSL_VERIFY_PEER) != 0)
         return;
 
-    i = s->session_ctx->session_cache_mode;
+    i = s->session_ctx->session_cache->mode;
     if ((i & mode) != 0
         && (!s->hit || SSL_IS_TLS13(s))) {
         /*
@@ -3380,7 +3391,7 @@ void ssl_update_cache(SSL *s, int mode)
                 && (!SSL_IS_TLS13(s)
                     || !s->server
                     || s->max_early_data > 0
-                    || s->session_ctx->remove_session_cb != NULL))
+                    || s->session_ctx->session_cache->remove_session_cb != NULL))
             SSL_CTX_add_session(s->session_ctx, s->session);
 
         /*
@@ -3388,9 +3399,9 @@ void ssl_update_cache(SSL *s, int mode)
          * TLSv1.3 without early data because some applications just want to
          * know about the creation of a session and aren't doing a full cache.
          */
-        if (s->session_ctx->new_session_cb != NULL) {
+        if (s->session_ctx->session_cache->new_session_cb != NULL) {
             SSL_SESSION_up_ref(s->session);
-            if (!s->session_ctx->new_session_cb(s, s->session))
+            if (!s->session_ctx->session_cache->new_session_cb(s, s->session))
                 SSL_SESSION_free(s->session);
         }
     }

@@ -2,22 +2,27 @@
 
 =head1 NAME
 
-SSL_CTX_sess_set_cache_size, SSL_CTX_sess_get_cache_size - manipulate session cache size
+SSL_CTX_sess_set_cache_size, SSL_CTX_sess_get_cache_size,
+SSL_SESSION_CACHE_set_size, SSL_SESSION_CACHE_get_size - manipulate session cache size
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
- long SSL_CTX_sess_set_cache_size(SSL_CTX *ctx, long t);
+ long SSL_CTX_sess_set_cache_size(SSL_CTX *ctx, long size);
  long SSL_CTX_sess_get_cache_size(SSL_CTX *ctx);
+ long SSL_SESSION_CACHE_set_size(SSL_SESSION_CACHE *cache, long size);
+ long SSL_SESSION_CACHE_get_size(const SSL_SESSION_CACHE *cache);
 
 =head1 DESCRIPTION
 
 SSL_CTX_sess_set_cache_size() sets the size of the internal session cache
-of context B<ctx> to B<t>.
+of context B<ctx> to B<size>. SSL_SESSION_CACHE_set_size() sets the size of
+the internal session cache of B<cache> to B<size>.
 This value is a hint and not an absolute; see the notes below.
 
-SSL_CTX_sess_get_cache_size() returns the currently valid session cache size.
+SSL_CTX_sess_get_cache_size() and SSL_SESSION_CACHE_get_size() return the
+currently valid session cache size.
 
 =head1 NOTES
 
@@ -39,9 +44,16 @@ expiration of sessions.
 
 =head1 RETURN VALUES
 
-SSL_CTX_sess_set_cache_size() returns the previously valid size.
+SSL_CTX_sess_set_cache_size() and SSL_SESSION_CACHE_set_size() return the
+previously valid size.
 
-SSL_CTX_sess_get_cache_size() returns the currently valid size.
+SSL_CTX_sess_get_cache_size() and SSL_SESSION_CACHE_get_size() return the
+currently valid size.
+
+=head1 HISTORY
+
+The SSL_SESSION_CACHE_set_size() and SSL__SESSION_CACHE_get_size()
+functions were introduced in OpenSSL 1.1.1.
 
 =head1 SEE ALSO
 

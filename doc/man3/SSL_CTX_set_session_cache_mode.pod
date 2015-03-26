@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-SSL_CTX_set_session_cache_mode, SSL_CTX_get_session_cache_mode - enable/disable session caching
+SSL_CTX_set_session_cache_mode, SSL_CTX_get_session_cache_mode,
+SSL_SESSION_CACHE_set_mode, SSL_SESSION_CACHE_get_mode - enable/disable session caching
 
 =head1 SYNOPSIS
 
@@ -10,13 +11,19 @@ SSL_CTX_set_session_cache_mode, SSL_CTX_get_session_cache_mode - enable/disable 
 
  long SSL_CTX_set_session_cache_mode(SSL_CTX ctx, long mode);
  long SSL_CTX_get_session_cache_mode(SSL_CTX ctx);
+ long SSL_SESSION_CACHE_set_mode(SSL_SESSION_CACHE *c, long mode);
+ long SSL_SESSION_CACHE_get_mode(const SSL_SESSION_CACHE *c);
 
 =head1 DESCRIPTION
 
 SSL_CTX_set_session_cache_mode() enables/disables session caching
-by setting the operational mode for B<ctx> to <mode>.
+by setting the operational mode for B<ctx> to B<mode>.
 
-SSL_CTX_get_session_cache_mode() returns the currently used cache mode.
+SSL_SESSION_CACHE_set_mode() enables/disables session caching
+by setting the operational mode for B<cache> to B<mode>.
+
+SSL_CTX_get_session_cache_mode() and SSL_SESSION_CACHE_get_mode() return
+the currently used cache mode.
 
 =head1 NOTES
 
@@ -112,10 +119,16 @@ The default mode is SSL_SESS_CACHE_SERVER.
 
 =head1 RETURN VALUES
 
-SSL_CTX_set_session_cache_mode() returns the previously set cache mode.
+SSL_CTX_set_session_cache_mode() and SSL_SESSION_CACHE_set_mode() return
+the previously set cache mode.
 
-SSL_CTX_get_session_cache_mode() returns the currently set cache mode.
+SSL_CTX_get_session_cache_mode() and SSL_SESION_CACHE_get_mode() return
+the currently set cache mode.
 
+=head1 HISTORY
+
+The SSL_SESSION_CACHE_set_mode() and SSL__SESSION_CACHE_get_mode()
+functions were introduced in OpenSSL 1.1.1.
 
 =head1 SEE ALSO
 

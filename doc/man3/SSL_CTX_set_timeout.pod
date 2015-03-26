@@ -2,7 +2,9 @@
 
 =head1 NAME
 
-SSL_CTX_set_timeout, SSL_CTX_get_timeout - manipulate timeout values for session caching
+SSL_CTX_set_timeout, SSL_CTX_get_timeout,
+SSL_SESSION_CACHE_set_timeout,
+SSL_SESSION_CACHE_get_timeout - manipulate timeout values for session caching
 
 =head1 SYNOPSIS
 
@@ -10,13 +12,20 @@ SSL_CTX_set_timeout, SSL_CTX_get_timeout - manipulate timeout values for session
 
  long SSL_CTX_set_timeout(SSL_CTX *ctx, long t);
  long SSL_CTX_get_timeout(SSL_CTX *ctx);
+ long SSL_SESSION_CACHE_set_timeout(SSL_SESSION_CACHE *cache, long t);
+ long SSL_SESSION_CACHE_get_timeout(const SSL_SESSION_CACHE *cache);
 
 =head1 DESCRIPTION
 
 SSL_CTX_set_timeout() sets the timeout for newly created sessions for
-B<ctx> to B<t>. The timeout value B<t> must be given in seconds.
+B<ctx> to B<t>. SSL_SESSION_CACHE_set_timeout() sets the timeout for
+newly created sessions for B<cache> to B<t>.
+The timeout value B<t> must be given in seconds.
 
 SSL_CTX_get_timeout() returns the currently set timeout value for B<ctx>.
+
+SSL_SESSION_CACHE_get_timeout() returns the currently set timeout value for
+B<cache>.
 
 =head1 NOTES
 
@@ -44,9 +53,16 @@ of 300 seconds.
 
 =head1 RETURN VALUES
 
-SSL_CTX_set_timeout() returns the previously set timeout value.
+SSL_CTX_set_timeout() and SSL_SESSION_CACHE_set_timeout() return the
+previously set timeout value.
 
-SSL_CTX_get_timeout() returns the currently set timeout value.
+SSL_CTX_get_timeout() and SSL_SESSION_CACHE_get_timeout() return the
+currently set timeout value.
+
+=head1 HISTORY
+
+The SSL_SESSION_CACHE_set_timeout() and SSL__SESSION_CACHE_get_timeout()
+functions were introduced in OpenSSL 1.1.1.
 
 =head1 SEE ALSO
 

@@ -744,40 +744,9 @@ struct ssl_ctx_st {
     /* TLSv1.3 specific ciphersuites */
     STACK_OF(SSL_CIPHER) *tls13_ciphersuites;
     struct x509_store_st /* X509_STORE */ *cert_store;
-    LHASH_OF(SSL_SESSION) *sessions;
-    /*
-     * Most session-ids that will be cached, default is
-     * SSL_SESSION_CACHE_MAX_SIZE_DEFAULT. 0 is unlimited.
-     */
-    size_t session_cache_size;
-    struct ssl_session_st *session_cache_head;
-    struct ssl_session_st *session_cache_tail;
-    /*
-     * This can have one of 2 values, ored together, SSL_SESS_CACHE_CLIENT,
-     * SSL_SESS_CACHE_SERVER, Default is SSL_SESSION_CACHE_SERVER, which
-     * means only SSL_accept will cache SSL_SESSIONS.
-     */
-    uint32_t session_cache_mode;
-    /*
-     * If timeout is not 0, it is the default timeout value set when
-     * SSL_new() is called.  This has been put in to make life easier to set
-     * things up
-     */
-    long session_timeout;
-    /*
-     * If this callback is not null, it will be called each time a session id
-     * is added to the cache.  If this function returns 1, it means that the
-     * callback will do a SSL_SESSION_free() when it has finished using it.
-     * Otherwise, on 0, it means the callback has finished with it. If
-     * remove_session_cb is not null, it will be called when a session-id is
-     * removed from the cache.  After the call, OpenSSL will
-     * SSL_SESSION_free() it.
-     */
-    int (*new_session_cb) (struct ssl_st *ssl, SSL_SESSION *sess);
-    void (*remove_session_cb) (struct ssl_ctx_st *ctx, SSL_SESSION *sess);
-    SSL_SESSION *(*get_session_cb) (struct ssl_st *ssl,
-                                    const unsigned char *data, int len,
-                                    int *copy);
+
+    SSL_SESSION_CACHE *session_cache;
+
     struct {
         int sess_connect;       /* SSL new conn - started */
         int sess_connect_renegotiate; /* SSL reneg - requested */
@@ -1425,6 +1394,54 @@ struct ssl_st {
     /* The next nonce value to use when we send a ticket on this connection */
     uint64_t next_ticket_nonce;
 };
+
+struct ssl_session_cache_st
+{
+    /*
+     * The head element of the list has s->prev as a sentinel that's the
+     * address of the session_cache_head field; likewise, the tail has
+     * s->next as a sentinel that's the address of the session_cache_tail field
+     * These head and tail pointers themselves are either NULL or point to
+     * the corresponding valid SSL_SESSION object.
+     */
+    struct ssl_session_st *head;
+    struct ssl_session_st *tail;
+    LHASH_OF(SSL_SESSION) *sessions;
+    /*
+     * Most session-ids that will be cached, default is
+     * SSL_SESSION_CACHE_MAX_SIZE_DEFAULT. 0 is unlimited.
+     */
+    size_t size;
+    /*
+     * This can have one of 2 values, ored together, SSL_SESS_CACHE_CLIENT,
+     * SSL_SESS_CACHE_SERVER, Default is SSL_SESSION_CACHE_SERVER, which
+     * means only SSL_accept which cache SSL_SESSIONS.
+     */
+    uint32_t mode;
+    /*
+     * If timeout is not 0, it is the default timeout value set when
+     * SSL_CTX_new[_ex]() is called.  This has been put in to make life easier to set
+     * things up
+     */
+    long timeout;
+    /*
+     * If this callback is not null, it will be called each time a session id
+     * is added to the cache.  If this function returns 1, it means that the
+     * callback will do a SSL_SESSION_free() when it has finished using it.
+     * Otherwise, on 0, it means the callback has finished with it. If
+     * remove_session_cb is not null, it will be called when a session-id is
+     * removed from the cache.  After the call, OpenSSL will
+     * SSL_SESSION_free() it.
+     */
+    int (*new_session_cb) (struct ssl_st *ssl, SSL_SESSION *sess);
+    void (*remove_session_cb) (struct ssl_ctx_st *ctx, SSL_SESSION *sess);
+    SSL_SESSION *(*get_session_cb) (struct ssl_st *ssl,
+                                    const unsigned char *data, int len,
+                                    int *copy);
+    int references; /* number of SSL_CTX's holding a reference */
+    CRYPTO_RWLOCK *lock;
+};
+
 
 /*
  * Structure containing table entry of values associated with the signature
@@ -2609,6 +2626,10 @@ void ssl_comp_free_compression_methods_int(void);
 
 /* ssl_mcnf.c */
 void ssl_ctx_system_config(SSL_CTX *ctx);
+
+/* ssl_lib.c */
+unsigned long ssl_session_hash(const SSL_SESSION *a);
+int ssl_session_cmp(const SSL_SESSION *a, const SSL_SESSION *b);
 
 # else /* OPENSSL_UNIT_TEST */
 

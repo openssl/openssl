@@ -2,18 +2,23 @@
 
 =head1 NAME
 
-SSL_CTX_flush_sessions - remove expired sessions
+SSL_CTX_flush_sessions,
+SSL_SESSION_CACHE_flush - remove expired sessions
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
  void SSL_CTX_flush_sessions(SSL_CTX *ctx, long tm);
+ void SSL_SESSION_CACHE_flush(SSL_SESSION_CACHE *cache, long tm);
 
 =head1 DESCRIPTION
 
 SSL_CTX_flush_sessions() causes a run through the session cache of
 B<ctx> to remove sessions expired at time B<tm>.
+
+SSL_SESSION_CACHE_flush() causes a run through the B<cache> to
+remove sessions expired at time B<tm>.
 
 =head1 NOTES
 
@@ -29,10 +34,16 @@ The parameter B<tm> specifies the time which should be used for the
 expiration test, in most cases the actual time given by time(0)
 will be used.
 
-SSL_CTX_flush_sessions() will only check sessions stored in the internal
+These functions will only check sessions stored in the internal
 cache. When a session is found and removed, the remove_session_cb is however
 called to synchronize with the external cache (see
-L<SSL_CTX_sess_set_get_cb(3)>).
+L<SSL_CTX_sess_set_get_cb(3)>). The B<SSL_CTX> will be NULL when
+SSL_SESSION_CACHE_flush() is used.
+
+=head1 HISTORY
+
+The SSL_SESSION_CACHE_flush() function was introduced in OpenSSL
+1.1.1.
 
 =head1 RETURN VALUES
 

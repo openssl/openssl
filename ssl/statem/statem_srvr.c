@@ -2340,7 +2340,7 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
      * to send back.
      */
     if (s->session->not_resumable ||
-        (!(s->ctx->session_cache_mode & SSL_SESS_CACHE_SERVER)
+        (!(s->ctx->session_cache->mode & SSL_SESS_CACHE_SERVER)
          && !s->hit))
         s->session->session_id_length = 0;
 
@@ -3649,7 +3649,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
      */
 
     if (s->post_handshake_auth == SSL_PHA_REQUESTED) {
-        int m = s->session_ctx->session_cache_mode;
+        int m = s->session_ctx->session_cache->mode;
 
         if ((new_sess = ssl_session_dup(s->session, 0)) == 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,

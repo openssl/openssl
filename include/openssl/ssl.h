@@ -214,6 +214,7 @@ typedef struct ssl_session_st SSL_SESSION;
 typedef struct tls_sigalgs_st TLS_SIGALGS;
 typedef struct ssl_conf_ctx_st SSL_CONF_CTX;
 typedef struct ssl_comp_st SSL_COMP;
+typedef struct ssl_session_cache_st SSL_SESSION_CACHE;
 
 STACK_OF(SSL_CIPHER);
 STACK_OF(SSL_COMP);
@@ -687,26 +688,19 @@ LHASH_OF(SSL_SESSION) *SSL_CTX_sessions(SSL_CTX *ctx);
 # define SSL_CTX_sess_cache_full(ctx) \
         SSL_CTX_ctrl(ctx,SSL_CTRL_SESS_CACHE_FULL,0,NULL)
 
-void SSL_CTX_sess_set_new_cb(SSL_CTX *ctx,
-                             int (*new_session_cb) (struct ssl_st *ssl,
-                                                    SSL_SESSION *sess));
-int (*SSL_CTX_sess_get_new_cb(SSL_CTX *ctx)) (struct ssl_st *ssl,
-                                              SSL_SESSION *sess);
-void SSL_CTX_sess_set_remove_cb(SSL_CTX *ctx,
-                                void (*remove_session_cb) (struct ssl_ctx_st
-                                                           *ctx,
-                                                           SSL_SESSION *sess));
-void (*SSL_CTX_sess_get_remove_cb(SSL_CTX *ctx)) (struct ssl_ctx_st *ctx,
-                                                  SSL_SESSION *sess);
-void SSL_CTX_sess_set_get_cb(SSL_CTX *ctx,
-                             SSL_SESSION *(*get_session_cb) (struct ssl_st
-                                                             *ssl,
-                                                             const unsigned char
-                                                             *data, int len,
-                                                             int *copy));
-SSL_SESSION *(*SSL_CTX_sess_get_get_cb(SSL_CTX *ctx)) (struct ssl_st *ssl,
-                                                       const unsigned char *data,
-                                                       int len, int *copy);
+typedef int (*SSL_new_session_fn)(SSL *ssl, SSL_SESSION *sess);
+typedef void (*SSL_remove_session_fn)(SSL_CTX *ctx, SSL_SESSION *sess);
+typedef SSL_SESSION *(*SSL_get_session_fn)(SSL *ssl, const unsigned char *data,
+                                           int len, int *copy);
+
+void SSL_CTX_sess_set_new_cb(SSL_CTX *ctx, SSL_new_session_fn cb);
+SSL_new_session_fn SSL_CTX_sess_get_new_cb(SSL_CTX *ctx);
+void SSL_CTX_sess_set_remove_cb(SSL_CTX *ctx, SSL_remove_session_fn cb);
+SSL_remove_session_fn SSL_CTX_sess_get_remove_cb(SSL_CTX *ctx);
+void SSL_CTX_sess_set_get_cb(SSL_CTX *ctx, SSL_get_session_fn cb);
+SSL_get_session_fn SSL_CTX_sess_get_get_cb(SSL_CTX *ctx);
+
+
 void SSL_CTX_set_info_callback(SSL_CTX *ctx,
                                void (*cb) (const SSL *ssl, int type, int val));
 void (*SSL_CTX_get_info_callback(SSL_CTX *ctx)) (const SSL *ssl, int type,
@@ -1466,6 +1460,8 @@ void BIO_ssl_shutdown(BIO *ssl_bio);
 
 __owur int SSL_CTX_set_cipher_list(SSL_CTX *, const char *str);
 __owur SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth);
+__owur SSL_CTX *SSL_CTX_new_ex(const SSL_METHOD *meth,
+                               SSL_SESSION_CACHE *session_cache);
 int SSL_CTX_up_ref(SSL_CTX *ctx);
 void SSL_CTX_free(SSL_CTX *);
 __owur long SSL_CTX_set_timeout(SSL_CTX *ctx, long t);
@@ -1684,6 +1680,33 @@ __owur int SSL_check_private_key(const SSL *ctx);
 __owur int SSL_CTX_set_session_id_context(SSL_CTX *ctx,
                                           const unsigned char *sid_ctx,
                                           unsigned int sid_ctx_len);
+
+SSL_SESSION_CACHE *SSL_SESSION_CACHE_new(
+    unsigned long (*hash)(const SSL_SESSION *),
+    int (*cmp)(const SSL_SESSION *, const SSL_SESSION *));
+int SSL_SESSION_CACHE_up_ref(SSL_SESSION_CACHE *l);
+/* returns number of references, so 0 = freed */
+int SSL_SESSION_CACHE_free(SSL_SESSION_CACHE *c, SSL_CTX *ctx);
+SSL_SESSION_CACHE *SSL_CTX_get1_session_cache(SSL_CTX *ctx);
+SSL_SESSION *SSL_SESSION_CACHE_get1_session(SSL_SESSION_CACHE *cache,
+                                            SSL_SESSION *key);
+long SSL_SESSION_CACHE_set_timeout(SSL_SESSION_CACHE *cache, long t);
+long SSL_SESSION_CACHE_get_timeout(const SSL_SESSION_CACHE *cache);
+long SSL_SESSION_CACHE_set_size(SSL_SESSION_CACHE *cache, long size);
+long SSL_SESSION_CACHE_get_size(const SSL_SESSION_CACHE *cache);
+long SSL_SESSION_CACHE_set_mode(SSL_SESSION_CACHE *cache, long mode);
+long SSL_SESSION_CACHE_get_mode(const SSL_SESSION_CACHE *cache);
+long SSL_SESSION_CACHE_number(SSL_SESSION_CACHE *cache);
+int SSL_SESSION_CACHE_add_session(SSL_SESSION_CACHE *cache, SSL_SESSION *c);
+int SSL_SESSION_CACHE_remove_session(SSL_SESSION_CACHE *cache, SSL_SESSION *c);
+void SSL_SESSION_CACHE_flush(SSL_SESSION_CACHE *cache, long tm);
+
+void SSL_SESSION_CACHE_set_new_cb(SSL_SESSION_CACHE *cache, SSL_new_session_fn cb);
+SSL_new_session_fn SSL_SESSION_CACHE_get_new_cb(SSL_SESSION_CACHE *cache);
+void SSL_SESSION_CACHE_set_remove_cb(SSL_SESSION_CACHE *cache, SSL_remove_session_fn cb);
+SSL_remove_session_fn SSL_SESSION_CACHE_get_remove_cb(SSL_SESSION_CACHE *cache);
+void SSL_SESSION_CACHE_set_get_cb(SSL_SESSION_CACHE *cache, SSL_get_session_fn cb);
+SSL_get_session_fn SSL_SESSION_CACHE_get_get_cb(SSL_SESSION_CACHE *cache);
 
 SSL *SSL_new(SSL_CTX *ctx);
 int SSL_up_ref(SSL *s);
