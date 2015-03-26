@@ -160,7 +160,6 @@ struct dsa_st {
      */
     int pad;
     long version;
-    int write_params;
     BIGNUM *p;
     BIGNUM *q;                  /* == 20 */
     BIGNUM *g;
