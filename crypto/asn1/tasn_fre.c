@@ -63,23 +63,14 @@
 #include <openssl/objects.h>
 #include "asn1_locl.h"
 
-static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it,
-                                   int combine);
-
 /* Free up an ASN1 structure */
 
 void ASN1_item_free(ASN1_VALUE *val, const ASN1_ITEM *it)
 {
-    asn1_item_combine_free(&val, it, 0);
+    ASN1_item_ex_free(&val, it);
 }
 
 void ASN1_item_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
-{
-    asn1_item_combine_free(pval, it, 0);
-}
-
-static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it,
-                                   int combine)
 {
     const ASN1_TEMPLATE *tt = NULL, *seqtt;
     const ASN1_EXTERN_FUNCS *ef;
@@ -125,10 +116,8 @@ static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it,
         }
         if (asn1_cb)
             asn1_cb(ASN1_OP_FREE_POST, pval, it, NULL);
-        if (!combine) {
-            OPENSSL_free(*pval);
-            *pval = NULL;
-        }
+        OPENSSL_free(*pval);
+        *pval = NULL;
         break;
 
     case ASN1_ITYPE_EXTERN:
@@ -163,10 +152,8 @@ static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it,
         }
         if (asn1_cb)
             asn1_cb(ASN1_OP_FREE_POST, pval, it, NULL);
-        if (!combine) {
-            OPENSSL_free(*pval);
-            *pval = NULL;
-        }
+        OPENSSL_free(*pval);
+        *pval = NULL;
         break;
     }
 }
@@ -180,13 +167,12 @@ void asn1_template_free(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
         for (i = 0; i < sk_ASN1_VALUE_num(sk); i++) {
             ASN1_VALUE *vtmp = sk_ASN1_VALUE_value(sk, i);
 
-            asn1_item_combine_free(&vtmp, ASN1_ITEM_ptr(tt->item), 0);
+            ASN1_item_ex_free(&vtmp, ASN1_ITEM_ptr(tt->item));
         }
         sk_ASN1_VALUE_free(sk);
         *pval = NULL;
     } else {
-        asn1_item_combine_free(pval, ASN1_ITEM_ptr(tt->item),
-                               tt->flags & ASN1_TFLG_COMBINE);
+        ASN1_item_ex_free(pval, ASN1_ITEM_ptr(tt->item));
     }
 }
 

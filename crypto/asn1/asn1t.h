@@ -299,11 +299,6 @@ extern "C" {
         (flags), (tag), offsetof(stname, field),\
         #field, ASN1_ITEM_ref(type) }
 
-/* used when the structure is combined with the parent */
-
-# define ASN1_EX_COMBINE(flags, tag, type) { \
-        (flags)|ASN1_TFLG_COMBINE, (tag), 0, NULL, ASN1_ITEM_ref(type) }
-
 /* implicit and explicit helper macros */
 
 # define ASN1_IMP_EX(stname, field, type, tag, ex) \
@@ -541,15 +536,6 @@ struct ASN1_ADB_TABLE_st {
 # define ASN1_TFLG_ADB_OID       (0x1<<8)
 
 # define ASN1_TFLG_ADB_INT       (0x1<<9)
-
-/*
- * This flag means a parent structure is passed instead of the field: this is
- * useful is a SEQUENCE is being combined with a CHOICE for example. Since
- * this means the structure and item name will differ we need to use the
- * ASN1_CHOICE_END_name() macro for example.
- */
-
-# define ASN1_TFLG_COMBINE       (0x1<<10)
 
 /*
  * This flag when present in a SEQUENCE OF, SET OF or EXPLICIT causes
