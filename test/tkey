@@ -1,0 +1,99 @@
+#!/bin/sh
+
+t=$1
+ktype=$2
+ptype=$3
+
+if ../util/shlib_wrap.sh ../apps/openssl no-$ktype; then
+  echo skipping $ktype $ptype conversion test
+  exit 0
+fi
+
+if [ $ptype = "public" ]; then
+    cmd="../util/shlib_wrap.sh ../apps/openssl $ktype -pubin -pubout"
+else
+    cmd="../util/shlib_wrap.sh ../apps/openssl $ktype"
+fi
+
+echo testing $ktype $ptype conversions
+cp $t $ktype-fff.p
+
+echo "p -> d"
+$cmd -in $ktype-fff.p -inform p -outform d >$ktype-f.d
+if [ $? != 0 ]; then exit 1; fi
+echo "p -> p"
+$cmd -in $ktype-fff.p -inform p -outform p >$ktype-f.p
+if [ $? != 0 ]; then exit 1; fi
+
+echo "d -> d"
+$cmd -in $ktype-f.d -inform d -outform d >$ktype-ff.d1
+if [ $? != 0 ]; then exit 1; fi
+echo "p -> d"
+$cmd -in $ktype-f.p -inform p -outform d >$ktype-ff.d3
+if [ $? != 0 ]; then exit 1; fi
+
+echo "d -> p"
+$cmd -in $ktype-f.d -inform d -outform p >$ktype-ff.p1
+if [ $? != 0 ]; then exit 1; fi
+echo "p -> p"
+$cmd -in $ktype-f.p -inform p -outform p >$ktype-ff.p3
+if [ $? != 0 ]; then exit 1; fi
+
+cmp $ktype-fff.p $ktype-f.p
+if [ $? != 0 ]; then exit 1; fi
+cmp $ktype-fff.p $ktype-ff.p1
+if [ $? != 0 ]; then exit 1; fi
+cmp $ktype-fff.p $ktype-ff.p3
+if [ $? != 0 ]; then exit 1; fi
+
+cmp $ktype-f.p $ktype-ff.p1
+if [ $? != 0 ]; then exit 1; fi
+cmp $ktype-f.p $ktype-ff.p3
+if [ $? != 0 ]; then exit 1; fi
+
+/bin/rm -f $ktype-f.* $ktype-ff.* $ktype-fff.*
+
+if [ $ptype = "public" ]; then
+    exit 0
+fi
+
+cmd="../util/shlib_wrap.sh ../apps/openssl pkey"
+
+echo testing $ktype PKCS#8 conversions
+
+$cmd -in $t -out $ktype-fff.p
+
+echo "p -> d"
+$cmd -in $ktype-fff.p -inform p -outform d >$ktype-f.d
+if [ $? != 0 ]; then exit 1; fi
+echo "p -> p"
+$cmd -in $ktype-fff.p -inform p -outform p >$ktype-f.p
+if [ $? != 0 ]; then exit 1; fi
+
+echo "d -> d"
+$cmd -in $ktype-f.d -inform d -outform d >$ktype-ff.d1
+if [ $? != 0 ]; then exit 1; fi
+echo "p -> d"
+$cmd -in $ktype-f.p -inform p -outform d >$ktype-ff.d3
+if [ $? != 0 ]; then exit 1; fi
+
+echo "d -> p"
+$cmd -in $ktype-f.d -inform d -outform p >$ktype-ff.p1
+if [ $? != 0 ]; then exit 1; fi
+echo "p -> p"
+$cmd -in $ktype-f.p -inform p -outform p >$ktype-ff.p3
+if [ $? != 0 ]; then exit 1; fi
+
+cmp $ktype-fff.p $ktype-f.p
+if [ $? != 0 ]; then exit 1; fi
+cmp $ktype-fff.p $ktype-ff.p1
+if [ $? != 0 ]; then exit 1; fi
+cmp $ktype-fff.p $ktype-ff.p3
+if [ $? != 0 ]; then exit 1; fi
+
+cmp $ktype-f.p $ktype-ff.p1
+if [ $? != 0 ]; then exit 1; fi
+cmp $ktype-f.p $ktype-ff.p3
+if [ $? != 0 ]; then exit 1; fi
+
+/bin/rm -f $ktype-f.* $ktype-ff.* $ktype-fff.*
