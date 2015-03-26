@@ -15,8 +15,6 @@ KRB5_INCLUDES=
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile README ssl-lib.com install.com
-TEST=ssltest.c heartbeat_test.c
-APPS=
 
 LIB=$(TOP)/libssl.a
 SHARED_LIB= libssl$(SHLIB_EXT)
@@ -47,10 +45,9 @@ LIBOBJ= \
 
 SRC= $(LIBSRC)
 
-EXHEADER= ssl.h ssl2.h ssl3.h ssl23.h tls1.h dtls1.h kssl.h srtp.h
-HEADER=	$(EXHEADER) ssl_locl.h kssl_lcl.h  record/record_locl.h record/record.h
+HEADER=	ssl_locl.h kssl_lcl.h  record/record_locl.h record/record.h
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL=	$(GENERAL) $(SRC) $(HEADER)
 
 top:
 	(cd ..; $(MAKE) DIRS=$(DIR) all)
@@ -69,21 +66,6 @@ shared: lib
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../apps $(APPS)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
-
-uninstall:
 
 tags:
 	ctags $(SRC)

@@ -18,8 +18,6 @@ ASFLAGS= $(INCLUDES) $(ASFLAG)
 AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
-TEST=bntest.c exptest.c
-APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=	bn_add.c bn_div.c bn_exp.c bn_lib.c bn_ctx.c bn_mul.c bn_mod.c \
@@ -36,8 +34,7 @@ LIBOBJ=	bn_add.o bn_div.o bn_exp.o bn_lib.o bn_ctx.o bn_mul.o bn_mod.o \
 
 SRC= $(LIBSRC)
 
-EXHEADER= bn.h
-HEADER=	bn_lcl.h bn_prime.h $(EXHEADER)
+HEADER=	bn_lcl.h bn_prime.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -147,19 +144,6 @@ armv4-gf2m.o:	armv4-gf2m.S
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
 
 div:
 	rm -f a.out

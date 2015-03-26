@@ -29,8 +29,6 @@ ASFLAGS= $(INCLUDES) $(ASFLAG)
 AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile engines.com install.com engine_vector.mar
-TEST=
-APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBNAMES= 4758cca gmp padlock capi
@@ -47,7 +45,6 @@ LIBOBJ= e_4758cca.o \
 
 SRC= $(LIBSRC)
 
-EXHEADER= 
 HEADER=	e_4758cca_err.c e_4758cca_err.h \
 	e_gmp_err.c e_gmp_err.h \
 	e_chil_err.c e_chil_err.h \
@@ -56,7 +53,7 @@ HEADER=	e_4758cca_err.c e_4758cca_err.h \
 	e_ubsec_err.c e_ubsec_err.h \
 	e_capi_err.c e_capi_err.h
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL=	$(GENERAL) $(SRC) $(HEADER)
 
 top:
 	(cd ..; $(MAKE) DIRS=$(DIR) all)
@@ -89,9 +86,6 @@ subdirs:
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 	@target=files; $(RECURSIVE_MAKE)
-
-links:
-	@target=links; $(RECURSIVE_MAKE)
 
 # XXXXX This currently only works on systems that use .so as suffix
 # for shared libraries as well as for Cygwin which uses the

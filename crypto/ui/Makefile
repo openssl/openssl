@@ -13,9 +13,6 @@ AR=		ar r
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
-#TEST= uitest.c
-TEST=
-APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC= ui_err.c ui_lib.c ui_openssl.c ui_util.c
@@ -23,8 +20,7 @@ LIBOBJ= ui_err.o ui_lib.o ui_openssl.o ui_util.o
 
 SRC= $(LIBSRC)
 
-EXHEADER= ui.h
-HEADER=	$(EXHEADER) ui_locl.h
+HEADER=	ui_locl.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -40,19 +36,6 @@ lib:	$(LIBOBJ)
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
 
 tags:
 	ctags $(SRC)

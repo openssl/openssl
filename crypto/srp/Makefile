@@ -14,8 +14,6 @@ AR=		ar r
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
-TEST=srptest.c
-APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=srp_lib.c srp_vfy.c
@@ -23,8 +21,7 @@ LIBOBJ=srp_lib.o srp_vfy.o
 
 SRC= $(LIBSRC)
 
-EXHEADER= srp.h
-HEADER=	$(EXHEADER)
+HEADER=	
 
 top:
 	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
@@ -38,19 +35,6 @@ lib:	$(LIBOBJ)
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
 
 tags:
 	ctags $(SRC)

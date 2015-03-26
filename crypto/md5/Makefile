@@ -18,8 +18,6 @@ ASFLAGS= $(INCLUDES) $(ASFLAG)
 AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
-TEST=md5test.c
-APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=md5_dgst.c md5_one.c
@@ -27,8 +25,7 @@ LIBOBJ=md5_dgst.o md5_one.o $(MD5_ASM_OBJ)
 
 SRC= $(LIBSRC)
 
-EXHEADER= md5.h
-HEADER= md5_locl.h $(EXHEADER)
+HEADER= md5_locl.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -57,19 +54,6 @@ md5-sparcv9.S:	asm/md5-sparcv9.pl
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
 
 tags:
 	ctags $(SRC)

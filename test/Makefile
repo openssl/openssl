@@ -12,7 +12,6 @@ PERL=		perl
 # KRB5 stuff
 KRB5_INCLUDES=
 LIBKRB5=
-TEST=		igetest.c
 
 PEX_LIBS=
 EX_LIBS= #-lnsl -lsocket
@@ -56,7 +55,6 @@ GOST2814789TEST=gost2814789test
 RANDTEST=	randtest
 DHTEST=		dhtest
 DSATEST=	dsatest
-METHTEST=	methtest
 SSLTEST=	ssltest
 RSATEST=	rsa_test
 ENGINETEST=	enginetest
@@ -111,10 +109,9 @@ SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(GOST2814789TEST).c $(HEARTBEATTEST).c $(P5_CRPT2_TEST).c \
 	$(CONSTTIMETEST).c testutil.c
 
-EXHEADER= 
-HEADER=	testutil.h $(EXHEADER)
+HEADER=	testutil.h
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL=	$(GENERAL) $(SRC) $(HEADER)
 
 top:
 	(cd ..; $(MAKE) DIRS=$(DIR) TESTS=$(TESTS) all)
@@ -126,17 +123,11 @@ exe:	$(EXE) dummytest$(EXE_EXT)
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 
-links:
-
 generate: $(SRC)
 $(SRC):
 	@sh $(TOP)/util/point.sh dummytest.c $@
 
 errors:
-
-install:
-
-uninstall:
 
 tags:
 	ctags $(SRC)

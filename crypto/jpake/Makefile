@@ -3,13 +3,16 @@ TOP=../..
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
+GENERAL= Makefile
+
 LIB=$(TOP)/libcrypto.a
 LIBOBJ=jpake.o jpake_err.o
 LIBSRC=jpake.c jpake_err.c
 SRC= $(LIBSRC)
 
-EXHEADER=jpake.h
-TEST=jpaketest.c
+HEADER=
+
+ALL= $(GENERAL) $(SRC) $(HEADER)
 
 top:
 	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
@@ -23,18 +26,6 @@ lib:	$(LIBOBJ)
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
 
 depend:
 	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...

@@ -68,12 +68,10 @@ E_SRC=	verify.c asn1pars.c req.c dgst.c dh.c enc.c passwd.c gendh.c errstr.c ca.
 
 SRC=$(E_SRC)
 
-EXHEADER=
 HEADER=	apps.h progs.h s_apps.h \
-	testdsa.h testrsa.h \
-	$(EXHEADER)
+	testdsa.h testrsa.h
 
-ALL=    $(GENERAL) $(SRC) $(HEADER)
+ALL=	$(GENERAL) $(SRC) $(HEADER)
 
 top:
 	@(cd ..; $(MAKE) DIRS=$(DIR) all)
@@ -134,8 +132,6 @@ tags:
 	ctags $(SRC)
 
 tests:
-
-links:
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
