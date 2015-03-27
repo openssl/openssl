@@ -37,9 +37,6 @@ for (;;)
 		$lib =~ s/^.*\/([^\/]+)$/$1/;
 		}
 
-	if ($key eq "EXHEADER")
-		{ $exheader.=&var_add($dir,$val); }
-
 	if ($key eq "HEADER")
 		{ $header.=&var_add($dir,$val); }
 

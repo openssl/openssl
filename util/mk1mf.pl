@@ -396,7 +396,7 @@ for (;;)
 	if ($key eq "EX_LIBS")
 		{ $ex_libs .= " $val" if $val ne "";}
 
-	if ($key eq "TEST" && (!$fipscanisteronly || $dir =~ /^fips/ ))
+	if ($key =~ /^[A-Z0-9_]*TEST$/ && (!$fipscanisteronly || $dir =~ /^fips/ ))
 		{ $test.=&var_add($dir,$val, 0); }
 
 	if (($key eq "PROGS") || ($key eq "E_OBJ"))
@@ -413,9 +413,6 @@ for (;;)
 		$lib =~ s/^.*\/([^\/]+)$/$1/;
 		$otherlibs .= " $lib";
 		}
-
-	if ($key eq "EXHEADER")
-		{ $exheader.=&var_add($dir,$val, 1); }
 
 	if ($key eq "HEADER")
 		{ $header.=&var_add($dir,$val, 1); }
@@ -454,7 +451,6 @@ if ($orig_platform eq 'copy')
 	{
 	# Remove opensslconf.h so it doesn't get updated if we configure a
 	# different branch.
-	$exheader =~ s/[^ ]+\/opensslconf.h//;
 	$header =~ s/[^ ]+\/opensslconf.h//;
 	}
 
@@ -568,7 +564,7 @@ if ($fipscanisteronly)
 $cp2 = $cp unless defined $cp2;
 
 $extra_install= <<"EOF";
-	\$(CP) \"\$(INCO_D)${o}*.\[ch\]\" \"\$(INSTALLTOP)${o}include${o}openssl\"
+	\$(CP) \"include${o}openssl${o}*.\[ch\]\" \"\$(INSTALLTOP)${o}include${o}openssl\"
 	\$(CP) \"\$(BIN_D)$o\$(E_EXE)$exep \$(INSTALLTOP)${o}bin\"
 	\$(MKDIR) \"\$(OPENSSLDIR)\"
 	\$(CP) apps${o}openssl.cnf \"\$(OPENSSLDIR)\"
@@ -581,8 +577,8 @@ if ($fipscanisteronly)
 	\$(CP) \"\$(O_FIPSCANISTER).sha1\" \"\$(INSTALLTOP)${o}lib\"
 	\$(CP2) \"fips${o}fips_premain.c\" \"\$(INSTALLTOP)${o}lib\"
 	\$(CP) \"fips${o}fips_premain.c.sha1\" \"\$(INSTALLTOP)${o}lib\"
-	\$(CP) \"\$(INCO_D)${o}fips.h\" \"\$(INSTALLTOP)${o}include${o}openssl\"
-	\$(CP) \"\$(INCO_D)${o}fips_rand.h\" \"\$(INSTALLTOP)${o}include${o}openssl\"
+	\$(CP) \"include${o}openssl${o}fips.h\" \"\$(INSTALLTOP)${o}include${o}openssl\"
+	\$(CP) \"include${o}openssl${o}fips_rand.h\" \"\$(INSTALLTOP)${o}include${o}openssl\"
 	\$(CP) "\$(BIN_D)${o}fips_standalone_sha1$exep" \"\$(INSTALLTOP)${o}bin\"
 	\$(CP) \"util${o}fipslink.pl\" \"\$(INSTALLTOP)${o}bin\"
 EOF
@@ -662,9 +658,6 @@ FIPSLINK=\$(PERL) util${o}fipslink.pl
 OUT_D=$out_dir
 # The output directory for all the temporary muck
 TMP_D=$tmp_dir
-# The output directory for the header files
-INC_D=$inc_dir
-INCO_D=$inc_dir${o}openssl
 
 PERL=$perl
 PERLASM_SCHEME=$mf_perlasm_scheme
@@ -726,7 +719,7 @@ L_LIBS= \$(L_SSL) \$(L_CRYPTO) $ex_l_libs
 # Don't touch anything below this point
 ######################################################
 
-INC=-I\$(INC_D) -I\$(INCL_D) -I\$(SRC_D)${o}crypto${o}include
+INC=-I\$(SRC_D)${o}include -I\$(INCL_D) -I\$(SRC_D)${o}crypto${o}include
 APP_CFLAGS=\$(INC) \$(CFLAG) \$(APP_CFLAG)
 LIB_CFLAGS=\$(INC) \$(CFLAG) \$(LIB_CFLAG)
 SHLIB_CFLAGS=\$(INC) \$(CFLAG) \$(LIB_CFLAG) \$(SHLIB_CFLAG)
@@ -736,7 +729,7 @@ LIBS_DEP=$libs_dep
 EOF
 
 $rules=<<"EOF";
-all: banner \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) \$(INCO_D) headers \$(FIPS_SHA1_EXE) $build_targets
+all: banner \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) headers \$(FIPS_SHA1_EXE) $build_targets
 
 banner:
 $banner
@@ -753,18 +746,11 @@ $banner
 \$(LIB_D):
 	\$(MKDIR) \"\$(LIB_D)\"
 
-\$(INCO_D): \$(INC_D)
-	\$(MKDIR) \"\$(INCO_D)\"
-
-\$(INC_D):
-	\$(MKDIR) \"\$(INC_D)\"
-
 # This needs to be invoked once, when the makefile is first constructed, or
 # after cleaning.
-init: \$(TMP_D) \$(LIB_D) \$(INC_D) \$(INCO_D) \$(BIN_D) \$(TEST_D) headers
-	\$(PERL) \$(SRC_D)/util/copy-if-different.pl "\$(SRC_D)/crypto/opensslconf.h" "\$(INCO_D)/opensslconf.h"
+init: \$(TMP_D) \$(LIB_D) \$(BIN_D) \$(TEST_D) headers
 
-headers: \$(HEADER) \$(EXHEADER)
+headers: \$(HEADER)
 
 lib: \$(LIBS_DEP) \$(E_SHLIB)
 
@@ -790,7 +776,6 @@ reallyclean:
 	\$(RM) -rf \$(BIN_D)
 	\$(RM) -rf \$(TEST_D)
 	\$(RM) -rf \$(LIB_D)
-	\$(RM) -rf \$(INC_D)
 
 EOF
 
@@ -844,19 +829,10 @@ close(OUT);
 foreach (keys %lib_obj) { $lib_obj{$_}=&clean_up_ws($lib_obj{$_}); }
 $test=&clean_up_ws($test);
 $e_exe=&clean_up_ws($e_exe);
-$exheader=&clean_up_ws($exheader);
 $header=&clean_up_ws($header);
-
-# First we strip the exheaders from the headers list
-foreach (split(/\s+/,$exheader)){ $h{$_}=1; }
-foreach (split(/\s+/,$header))	{ $h.=$_." " unless $h{$_}; }
-chop($h); $header=$h;
 
 $defs.=&do_defs("HEADER",$header,"\$(INCL_D)","");
 $rules.=&do_copy_rule("\$(INCL_D)",$header,"");
-
-$defs.=&do_defs("EXHEADER",$exheader,"\$(INCO_D)","");
-$rules.=&do_copy_rule("\$(INCO_D)",$exheader,"");
 
 $defs.=&do_defs("T_OBJ",$test,"\$(OBJ_D)",$obj);
 $rules.=&do_compile_rule("\$(OBJ_D)",$test,"\$(APP_CFLAGS)");
