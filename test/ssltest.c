@@ -1417,7 +1417,7 @@ int main(int argc, char *argv[])
     if (tls1)
         meth = TLSv1_method();
     else
-        meth = SSLv23_method();
+        meth = TLS_method();
 
     c_ctx = SSL_CTX_new(meth);
     s_ctx = SSL_CTX_new(meth);

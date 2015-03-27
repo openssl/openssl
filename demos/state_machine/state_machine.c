@@ -119,7 +119,7 @@ SSLStateMachine *SSLStateMachine_new(const char *szCertificateFile,
 
     die_unless(pMachine);
 
-    pMachine->pCtx = SSL_CTX_new(SSLv23_server_method());
+    pMachine->pCtx = SSL_CTX_new(TLS_server_method());
     die_unless(pMachine->pCtx);
 
     n = SSL_CTX_use_certificate_file(pMachine->pCtx, szCertificateFile,

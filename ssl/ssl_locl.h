@@ -1921,7 +1921,8 @@ __owur int ssl_cipher_ptr_id_cmp(const SSL_CIPHER *const *ap,
                           const SSL_CIPHER *const *bp);
 __owur STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s, unsigned char *p,
                                                int num,
-                                               STACK_OF(SSL_CIPHER) **skp);
+                                               STACK_OF(SSL_CIPHER) **skp,
+                                               int sslv2format);
 __owur int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk,
                              unsigned char *p,
                              int (*put_cb) (const SSL_CIPHER *,

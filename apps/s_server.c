@@ -987,7 +987,7 @@ int s_server_main(int argc, char *argv[])
     ENGINE *e = NULL;
     EVP_PKEY *s_key = NULL, *s_dkey = NULL;
     SSL_CONF_CTX *cctx = NULL;
-    const SSL_METHOD *meth = SSLv23_server_method();
+    const SSL_METHOD *meth = TLS_server_method();
     SSL_EXCERT *exc = NULL;
     STACK_OF(OPENSSL_STRING) *ssl_args = NULL;
     STACK_OF(X509) *s_chain = NULL, *s_dchain = NULL;

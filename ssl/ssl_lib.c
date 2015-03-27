@@ -1456,9 +1456,12 @@ int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk,
     return (p - q);
 }
 
+#define SSLV2_CIPHER_LEN    3
+
 STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s, unsigned char *p,
                                                int num,
-                                               STACK_OF(SSL_CIPHER) **skp)
+                                               STACK_OF(SSL_CIPHER) **skp,
+                                               int sslv2format)
 {
     const SSL_CIPHER *c;
     STACK_OF(SSL_CIPHER) *sk;
@@ -1467,7 +1470,11 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s, unsigned char *p,
     if (s->s3)
         s->s3->send_connection_binding = 0;
 
-    n = ssl_put_cipher_by_char(s, NULL, NULL);
+    if(sslv2format) {
+        n = SSLV2_CIPHER_LEN;
+    } else {
+        n = ssl_put_cipher_by_char(s, NULL, NULL);
+    }
     if (n == 0 || (num % n) != 0) {
         SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST,
                SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
@@ -1533,7 +1540,20 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s, unsigned char *p,
             continue;
         }
 
-        c = ssl_get_cipher_by_char(s, p);
+        if(sslv2format) {
+            /*
+             * We only support SSLv2 format ciphers in SSLv3+ using a
+             * SSLv2 backward compatible ClientHello. In this case the first
+             * byte is always 0 for SSLv3 compatible ciphers. Anything else
+             * is an SSLv2 cipher and we ignore it
+             */
+            if(p[0] == 0)
+                c = ssl_get_cipher_by_char(s, &p[1]);
+            else
+                c = NULL;
+        } else {
+            c = ssl_get_cipher_by_char(s, p);
+        }
         p += n;
         if (c != NULL) {
             if (!sk_SSL_CIPHER_push(sk, c)) {

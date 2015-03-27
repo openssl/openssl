@@ -194,7 +194,7 @@ int main(int argc, char *argv[])
     SSL_CTX *c_ctx = NULL;
     char *scert = TEST_SERVER_CERT;
     char *ccert = TEST_CLIENT_CERT;
-    SSL_METHOD *ssl_method = SSLv23_method();
+    SSL_METHOD *ssl_method = TLS_method();
 
     RAND_seed(rnd_seed, sizeof rnd_seed);
 
