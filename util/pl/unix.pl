@@ -230,8 +230,8 @@ sub fixrules
   my ($str) = @_;
 
   # Compatible with -j...
-  $str =~ s/^(\s+@?)/$1cd \$(TEST_D) && /;
-  return $str;
+#  $str =~ s/^(\s+@?)/$1cd \$(TEST_D) && /;
+#  return $str;
 
   # Compatible with not -j.
   my @t = split("\n", $str);
@@ -243,11 +243,11 @@ sub fixrules
     if (!$prev)
       {
       if ($t =~ /^@/)
-	{
+        {
         $t =~ s/^@/\@cd \$(TEST_D) && /;
         }
-      elsif ($t !~ /^\s*#/)
-	{
+      elsif ($t !~ /^\s*#/ && $t !~ /^echo/)
+        {
         $t = 'cd $(TEST_D) && ' . $t;
         }
       }

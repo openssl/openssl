@@ -393,6 +393,9 @@ for (;;)
 	if ($key eq "LIBKRB5")
 		{ $ex_libs .= " $val" if $val ne "";}
 
+	if ($key eq "EX_LIBS")
+		{ $ex_libs .= " $val" if $val ne "";}
+
 	if ($key eq "TEST" && (!$fipscanisteronly || $dir =~ /^fips/ ))
 		{ $test.=&var_add($dir,$val, 0); }
 
