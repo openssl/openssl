@@ -186,6 +186,8 @@ int ssl3_release_write_buffer(SSL *s);
 #define SSL3_RECORD_set_off(r, o)               ((r)->off = (o))
 #define SSL3_RECORD_add_off(r, o)               ((r)->off += (o))
 #define SSL3_RECORD_get_epoch(r)                ((r)->epoch)
+#define SSL3_RECORD_is_sslv2_record(r) \
+            ((r)->rec_version == SSL2_VERSION)
 
 void SSL3_RECORD_clear(SSL3_RECORD *r);
 void SSL3_RECORD_release(SSL3_RECORD *r);

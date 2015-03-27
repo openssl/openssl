@@ -356,7 +356,7 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
         }
         *ok = 1;
         s->state = stn;
-        s->init_msg = s->init_buf->data + 4;
+        s->init_msg = s->init_buf->data + SSL3_HM_HEADER_LENGTH;
         s->init_num = (int)s->s3->tmp.message_size;
         return s->init_num;
     }
@@ -367,10 +367,9 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
         int skip_message;
 
         do {
-            while (s->init_num < 4) {
+            while (s->init_num < SSL3_HM_HEADER_LENGTH) {
                 i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
-                                              &p[s->init_num],
-                                              4 - s->init_num, 0);
+                    &p[s->init_num], SSL3_HM_HEADER_LENGTH - s->init_num, 0);
                 if (i <= 0) {
                     s->rwstate = SSL_READING;
                     *ok = 0;
@@ -409,26 +408,49 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 
         s->s3->tmp.message_type = *(p++);
 
-        n2l3(p, l);
-        if (l > (unsigned long)max) {
-            al = SSL_AD_ILLEGAL_PARAMETER;
-            SSLerr(SSL_F_SSL3_GET_MESSAGE, SSL_R_EXCESSIVE_MESSAGE_SIZE);
-            goto f_err;
-        }
-        if (l > (INT_MAX - 4)) { /* BUF_MEM_grow takes an 'int' parameter */
-            al = SSL_AD_ILLEGAL_PARAMETER;
-            SSLerr(SSL_F_SSL3_GET_MESSAGE, SSL_R_EXCESSIVE_MESSAGE_SIZE);
-            goto f_err;
-        }
-        if (l && !BUF_MEM_grow_clean(s->init_buf, (int)l + 4)) {
-            SSLerr(SSL_F_SSL3_GET_MESSAGE, ERR_R_BUF_LIB);
-            goto err;
-        }
-        s->s3->tmp.message_size = l;
-        s->state = stn;
+        if(RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
+            /*
+             * Only happens with SSLv3+ in an SSLv2 backward compatible
+             * ClientHello
+             */
+             /*
+              * Total message size is the remaining record bytes to read
+              * plus the SSL3_HM_HEADER_LENGTH bytes that we already read
+              */
+            l = RECORD_LAYER_get_rrec_length(&s->rlayer)
+                + SSL3_HM_HEADER_LENGTH;
+            if (l && !BUF_MEM_grow_clean(s->init_buf, (int)l)) {
+                SSLerr(SSL_F_SSL3_GET_MESSAGE, ERR_R_BUF_LIB);
+                goto err;
+            }
+            s->s3->tmp.message_size = l;
+            s->state = stn;
 
-        s->init_msg = s->init_buf->data + 4;
-        s->init_num = 0;
+            s->init_msg = s->init_buf->data;
+            s->init_num = SSL3_HM_HEADER_LENGTH;
+        } else {
+            n2l3(p, l);
+            if (l > (unsigned long)max) {
+                al = SSL_AD_ILLEGAL_PARAMETER;
+                SSLerr(SSL_F_SSL3_GET_MESSAGE, SSL_R_EXCESSIVE_MESSAGE_SIZE);
+                goto f_err;
+            }
+            /* BUF_MEM_grow takes an 'int' parameter */
+            if (l > (INT_MAX - SSL3_HM_HEADER_LENGTH)) {
+                al = SSL_AD_ILLEGAL_PARAMETER;
+                SSLerr(SSL_F_SSL3_GET_MESSAGE, SSL_R_EXCESSIVE_MESSAGE_SIZE);
+                goto f_err;
+            }
+            if (l && !BUF_MEM_grow_clean(s->init_buf, (int)l + 4)) {
+                SSLerr(SSL_F_SSL3_GET_MESSAGE, ERR_R_BUF_LIB);
+                goto err;
+            }
+            s->s3->tmp.message_size = l;
+            s->state = stn;
+
+            s->init_msg = s->init_buf->data + SSL3_HM_HEADER_LENGTH;
+            s->init_num = 0;
+        }
     }
 
     /* next state (stn) */
@@ -456,10 +478,26 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 #endif
 
     /* Feed this message into MAC computation. */
-    ssl3_finish_mac(s, (unsigned char *)s->init_buf->data, s->init_num + 4);
-    if (s->msg_callback)
-        s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE, s->init_buf->data,
-                        (size_t)s->init_num + 4, s, s->msg_callback_arg);
+    if(RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
+        ssl3_finish_mac(s, (unsigned char *)s->init_buf->data, s->init_num);
+        /*
+         * In previous versions we would have rewritten the SSLv2 record into
+         * something that looked like a SSLv3+ record and passed that to the
+         * callback. As we're not doing the rewriting anymore it's not clear
+         * what we should do here.
+         */
+        if (s->msg_callback)
+            s->msg_callback(0, SSL2_VERSION, 0,  s->init_buf->data,
+                            (size_t)s->init_num, s, s->msg_callback_arg);
+    } else {
+        ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
+            s->init_num + SSL3_HM_HEADER_LENGTH);
+        if (s->msg_callback)
+            s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE, s->init_buf->data,
+                            (size_t)s->init_num + SSL3_HM_HEADER_LENGTH, s,
+                            s->msg_callback_arg);
+    }
+
     *ok = 1;
     return s->init_num;
  f_err:

@@ -55,7 +55,7 @@ void main ()
 
   SSL_load_error_strings();
   SSLeay_add_ssl_algorithms();
-  meth = SSLv23_server_method();
+  meth = TLS_server_method();
   ctx = SSL_CTX_new (meth);
   if (!ctx) {
     ERR_print_errors_fp(stderr);

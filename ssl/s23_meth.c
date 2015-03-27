@@ -60,6 +60,7 @@
 #include <openssl/objects.h>
 #include "ssl_locl.h"
 
+/*
 static const SSL_METHOD *ssl23_get_method(int ver);
 static const SSL_METHOD *ssl23_get_method(int ver)
 {
@@ -76,7 +77,5 @@ static const SSL_METHOD *ssl23_get_method(int ver)
         return (TLSv1_2_method());
     else
         return (NULL);
-}
+}*/
 
-IMPLEMENT_ssl23_meth_func(SSLv23_method,
-                          ssl23_accept, ssl23_connect, ssl23_get_method)

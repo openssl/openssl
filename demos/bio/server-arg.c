@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
     /* Add ciphers and message digests */
     OpenSSL_add_ssl_algorithms();
 
-    ctx = SSL_CTX_new(SSLv23_server_method());
+    ctx = SSL_CTX_new(TLS_server_method());
 
     cctx = SSL_CONF_CTX_new();
     SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_SERVER);

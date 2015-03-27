@@ -167,6 +167,9 @@ extern "C" {
 # define TLS1_2_VERSION                  0x0303
 # define TLS_MAX_VERSION                 TLS1_2_VERSION
 
+/* Special value for method supporting multiple versions */
+# define TLS_ANY_VERSION                 0x10000
+
 # define TLS1_VERSION_MAJOR              0x03
 # define TLS1_VERSION_MINOR              0x01
 

@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
     /* Add ciphers and message digests */
     OpenSSL_add_ssl_algorithms();
 
-    ctx = SSL_CTX_new(SSLv23_server_method());
+    ctx = SSL_CTX_new(TLS_server_method());
     if (!SSL_CTX_use_certificate_file(ctx, CERT_FILE, SSL_FILETYPE_PEM))
         goto err;
     if (!SSL_CTX_use_PrivateKey_file(ctx, CERT_FILE, SSL_FILETYPE_PEM))

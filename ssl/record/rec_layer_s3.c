@@ -1110,6 +1110,21 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
      */
 
     /*
+     * Lets just double check that we've not got an SSLv2 record
+     */
+    if (rr->rec_version == SSL2_VERSION) {
+        /*
+         * Should never happen. ssl3_get_record() should only give us an SSLv2
+         * record back if this is the first packet and we are looking for an
+         * initial ClientHello. Therefore |type| should always be equal to
+         * |rr->type|. If not then something has gone horribly wrong
+         */
+        al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_SSL3_READ_BYTES, ERR_R_INTERNAL_ERROR);
+        goto f_err;
+    }
+
+    /*
      * In case of record types for which we have 'fragment' storage, fill
      * that so that we can process the data at a fixed place.
      */
@@ -1464,4 +1479,12 @@ void ssl3_record_sequence_update(unsigned char *seq)
     }
 }
 
+int RECORD_LAYER_is_sslv2_record(RECORD_LAYER *rl)
+{
+    return SSL3_RECORD_is_sslv2_record(&rl->rrec);
+}
 
+int RECORD_LAYER_get_rrec_length(RECORD_LAYER *rl)
+{
+    return SSL3_RECORD_get_length(&rl->rrec);
+}

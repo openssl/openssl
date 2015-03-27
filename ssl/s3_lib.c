@@ -3386,9 +3386,9 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
          * Apparently we're using a version-flexible SSL_METHOD (not at its
          * highest protocol version).
          */
-        if (s->ctx->method->version == SSLv23_method()->version) {
+        if (s->ctx->method->version == TLS_method()->version) {
 #if TLS_MAX_VERSION != TLS1_2_VERSION
-# error Code needs update for SSLv23_method() support beyond TLS1_2_VERSION.
+# error Code needs update for TLS_method() support beyond TLS1_2_VERSION.
 #endif
             if (!(s->options & SSL_OP_NO_TLSv1_2))
                 return s->version == TLS1_2_VERSION;

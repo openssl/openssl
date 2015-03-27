@@ -94,7 +94,7 @@ int ciphers_main(int argc, char **argv)
     SSL_CTX *ctx = NULL;
     SSL *ssl = NULL;
     STACK_OF(SSL_CIPHER) *sk = NULL;
-    const SSL_METHOD *meth = SSLv23_server_method();
+    const SSL_METHOD *meth = TLS_server_method();
     int ret = 1, i, verbose = 0, Verbose = 0, use_supported = 0;
 #ifndef OPENSSL_NO_SSL_TRACE
     int stdname = 0;
