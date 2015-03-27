@@ -409,7 +409,8 @@ sub get_tests
 		 'serverinfo.pem',
 	       );
   my $copies = copy_scripts(1, 'test', @copies);
-  $copies .= copy_scripts(0, 'test', ('smcont.txt'));
+  $copies .= copy_scripts(0, 'test', ('smcont.txt', 'evptests.txt'));
+
 
   my @utils = ( 'shlib_wrap.sh',
 		'opensslwrap.sh',
@@ -421,8 +422,6 @@ sub get_tests
 	       'server2.pem',
 	     );
   $copies .= copy_scripts(1, 'apps', @apps);
-
-  $copies .= copy_scripts(1, 'crypto/evp', ('evptests.txt'));
 
   $scripts = "test_scripts: \$(TEST_D)/CA.sh \$(TEST_D)/opensslwrap.sh \$(TEST_D)/openssl.cnf \$(TEST_D)/shlib_wrap.sh ocsp smime\n";
   $scripts .= "\nocsp:\n\tcp -R test/ocsp-tests \$(TEST_D)\n";
