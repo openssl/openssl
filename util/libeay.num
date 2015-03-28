@@ -755,7 +755,7 @@ d2i_X509_CRL_fp                         761	EXIST::FUNCTION:STDIO
 d2i_X509_EXTENSION                      762	EXIST::FUNCTION:
 d2i_X509_NAME                           763	EXIST::FUNCTION:
 d2i_X509_NAME_ENTRY                     764	EXIST::FUNCTION:
-d2i_X509_PKEY                           765	EXIST::FUNCTION:
+d2i_X509_PKEY                           765	NOEXIST::FUNCTION:
 d2i_X509_PUBKEY                         766	EXIST::FUNCTION:
 d2i_X509_REQ                            767	EXIST::FUNCTION:
 d2i_X509_REQ_INFO                       768	EXIST::FUNCTION:
@@ -857,7 +857,7 @@ i2d_X509_CRL_fp                         864	EXIST::FUNCTION:STDIO
 i2d_X509_EXTENSION                      865	EXIST::FUNCTION:
 i2d_X509_NAME                           866	EXIST::FUNCTION:
 i2d_X509_NAME_ENTRY                     867	EXIST::FUNCTION:
-i2d_X509_PKEY                           868	EXIST::FUNCTION:
+i2d_X509_PKEY                           868	NOEXIST::FUNCTION:
 i2d_X509_PUBKEY                         869	EXIST::FUNCTION:
 i2d_X509_REQ                            870	EXIST::FUNCTION:
 i2d_X509_REQ_INFO                       871	EXIST::FUNCTION:

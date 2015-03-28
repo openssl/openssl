@@ -782,9 +782,6 @@ int X509_CRL_get0_by_cert(X509_CRL *crl, X509_REVOKED **ret, X509 *x);
 
 X509_PKEY *X509_PKEY_new(void);
 void X509_PKEY_free(X509_PKEY *a);
-int i2d_X509_PKEY(X509_PKEY *a, unsigned char **pp);
-X509_PKEY *d2i_X509_PKEY(X509_PKEY **a, const unsigned char **pp,
-                         long length);
 
 DECLARE_ASN1_FUNCTIONS(NETSCAPE_SPKI)
 DECLARE_ASN1_FUNCTIONS(NETSCAPE_SPKAC)
