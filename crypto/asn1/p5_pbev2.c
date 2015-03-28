@@ -165,17 +165,14 @@ X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
 
     if (!(ret = X509_ALGOR_new()))
         goto merr;
-    if (!(ret->parameter = ASN1_TYPE_new()))
-        goto merr;
 
     ret->algorithm = OBJ_nid2obj(NID_pbes2);
 
     /* Encode PBE2PARAM into parameter */
 
-    if (!ASN1_item_pack(pbe2, ASN1_ITEM_rptr(PBE2PARAM),
-                        &ret->parameter->value.sequence))
+    if (!ASN1_TYPE_pack_sequence(ASN1_ITEM_rptr(PBE2PARAM), pbe2,
+                                 &ret->parameter))
          goto merr;
-    ret->parameter->type = V_ASN1_SEQUENCE;
 
     PBE2PARAM_free(pbe2);
     pbe2 = NULL;
@@ -261,13 +258,9 @@ X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
 
     /* Encode PBKDF2PARAM into parameter of pbe2 */
 
-    if (!(keyfunc->parameter = ASN1_TYPE_new()))
-        goto merr;
-
-    if (!ASN1_item_pack(kdf, ASN1_ITEM_rptr(PBKDF2PARAM),
-                        &keyfunc->parameter->value.sequence))
+    if (!ASN1_TYPE_pack_sequence(ASN1_ITEM_rptr(PBKDF2PARAM), kdf,
+                                 &keyfunc->parameter))
          goto merr;
-    keyfunc->parameter->type = V_ASN1_SEQUENCE;
 
     PBKDF2PARAM_free(kdf);
     return keyfunc;

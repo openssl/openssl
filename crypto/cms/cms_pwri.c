@@ -320,8 +320,6 @@ int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
 {
     CMS_EncryptedContentInfo *ec;
     CMS_PasswordRecipientInfo *pwri;
-    const unsigned char *p = NULL;
-    int plen;
     int r = 0;
     X509_ALGOR *algtmp, *kekalg = NULL;
     EVP_CIPHER_CTX kekctx;
@@ -346,11 +344,9 @@ int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
         return 0;
     }
 
-    if (algtmp->parameter->type == V_ASN1_SEQUENCE) {
-        p = algtmp->parameter->value.sequence->data;
-        plen = algtmp->parameter->value.sequence->length;
-        kekalg = d2i_X509_ALGOR(NULL, &p, plen);
-    }
+    kekalg = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(X509_ALGOR),
+                                       algtmp->parameter);
+
     if (kekalg == NULL) {
         CMSerr(CMS_F_CMS_RECIPIENTINFO_PWRI_CRYPT,
                CMS_R_INVALID_KEY_ENCRYPTION_PARAMETER);

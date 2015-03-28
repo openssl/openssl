@@ -82,7 +82,6 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
     PBEPARAM *pbe;
     int saltlen, iter;
     unsigned char *salt;
-    const unsigned char *pbuf;
     int mdsize;
     int rv = 0;
     EVP_MD_CTX_init(&ctx);
@@ -94,8 +93,8 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
         return 0;
     }
 
-    pbuf = param->value.sequence->data;
-    if (!(pbe = d2i_PBEPARAM(NULL, &pbuf, param->value.sequence->length))) {
+    pbe = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(PBEPARAM), param);
+    if (pbe == NULL) {
         EVPerr(EVP_F_PKCS5_PBE_KEYIVGEN, EVP_R_DECODE_ERROR);
         return 0;
     }
