@@ -105,7 +105,9 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f $(LIBOBJ) *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f record/*.obj record/lib record/retags record/core \
+	record/.pure record/.nfs* record/*.old record/*.bak record/fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
