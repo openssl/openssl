@@ -82,13 +82,11 @@ int main(int argc, char **argv)
 
     if (scert)
         X509_free(scert);
-    if (skey)
-        EVP_PKEY_free(skey);
+    EVP_PKEY_free(skey);
 
     if (scert2)
         X509_free(scert2);
-    if (skey)
-        EVP_PKEY_free(skey2);
+    EVP_PKEY_free(skey2);
 
     BIO_free(in);
     BIO_free(out);

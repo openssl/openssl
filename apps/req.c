@@ -874,9 +874,9 @@ int MAIN(int argc, char **argv)
 
         if (pkey == NULL) {
             pkey = X509_REQ_get_pubkey(req);
-            tmp = 1;
             if (pkey == NULL)
                 goto end;
+            tmp = 1;
         }
 
         i = X509_REQ_verify(req, pkey);
@@ -1013,8 +1013,7 @@ int MAIN(int argc, char **argv)
     BIO_free(in);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
-    if (genctx)
-        EVP_PKEY_CTX_free(genctx);
+    EVP_PKEY_CTX_free(genctx);
     if (pkeyopts)
         sk_OPENSSL_STRING_free(pkeyopts);
     if (sigopts)

@@ -2011,10 +2011,8 @@ int MAIN(int argc, char *argv[])
         sk_X509_CRL_pop_free(crls, X509_CRL_free);
     if (s_dcert)
         X509_free(s_dcert);
-    if (s_key)
-        EVP_PKEY_free(s_key);
-    if (s_dkey)
-        EVP_PKEY_free(s_dkey);
+    EVP_PKEY_free(s_key);
+    EVP_PKEY_free(s_dkey);
     if (s_chain)
         sk_X509_pop_free(s_chain, X509_free);
     if (s_dchain)
@@ -2037,8 +2035,7 @@ int MAIN(int argc, char *argv[])
         SSL_CTX_free(ctx2);
     if (s_cert2)
         X509_free(s_cert2);
-    if (s_key2)
-        EVP_PKEY_free(s_key2);
+    EVP_PKEY_free(s_key2);
     BIO_free(serverinfo_in);
 # ifndef OPENSSL_NO_NEXTPROTONEG
     if (next_proto.data)

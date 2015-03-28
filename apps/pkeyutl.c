@@ -332,8 +332,7 @@ int MAIN(int argc, char **argv)
         BIO_write(out, buf_out, buf_outlen);
 
  end:
-    if (ctx)
-        EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_CTX_free(ctx);
     BIO_free(in);
     BIO_free_all(out);
     if (buf_in)

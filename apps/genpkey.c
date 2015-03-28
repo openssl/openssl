@@ -268,10 +268,8 @@ int MAIN(int argc, char **argv)
     ret = 0;
 
  end:
-    if (pkey)
-        EVP_PKEY_free(pkey);
-    if (ctx)
-        EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
     BIO_free_all(out);
     BIO_free(in);
     if (pass)
@@ -317,10 +315,8 @@ static int init_keygen_file(BIO *err, EVP_PKEY_CTX **pctx,
  err:
     BIO_puts(err, "Error initializing context\n");
     ERR_print_errors(err);
-    if (ctx)
-        EVP_PKEY_CTX_free(ctx);
-    if (pkey)
-        EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(pkey);
     return 0;
 
 }
@@ -375,8 +371,7 @@ int init_gen_str(BIO *err, EVP_PKEY_CTX **pctx,
  err:
     BIO_printf(err, "Error initializing %s context\n", algname);
     ERR_print_errors(err);
-    if (ctx)
-        EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_CTX_free(ctx);
     return 0;
 
 }

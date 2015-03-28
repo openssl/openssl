@@ -672,8 +672,7 @@ int MAIN(int argc, char **argv)
         CRYPTO_push_info("process -export_cert: freeing");
 # endif
 
-        if (key)
-            EVP_PKEY_free(key);
+        EVP_PKEY_free(key);
         if (certs)
             sk_X509_pop_free(certs, X509_free);
         if (ucert)

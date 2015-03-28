@@ -218,8 +218,7 @@ int CMS_RecipientInfo_kari_set0_pkey(CMS_RecipientInfo *ri, EVP_PKEY *pk)
     kari->pctx = pctx;
     return 1;
  err:
-    if (pctx)
-        EVP_PKEY_CTX_free(pctx);
+    EVP_PKEY_CTX_free(pctx);
     return 0;
 }
 
@@ -331,10 +330,9 @@ static int cms_kari_create_ephemeral_key(CMS_KeyAgreeRecipientInfo *kari,
     kari->pctx = pctx;
     rv = 1;
  err:
-    if (!rv && pctx)
+    if (!rv)
         EVP_PKEY_CTX_free(pctx);
-    if (ekey)
-        EVP_PKEY_free(ekey);
+    EVP_PKEY_free(ekey);
     return rv;
 }
 

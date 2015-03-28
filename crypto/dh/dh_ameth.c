@@ -708,8 +708,7 @@ static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
  err:
     if (public_key)
         ASN1_INTEGER_free(public_key);
-    if (pkpeer)
-        EVP_PKEY_free(pkpeer);
+    EVP_PKEY_free(pkpeer);
     DH_free(dhpeer);
     return rv;
 }
@@ -849,8 +848,7 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
     X509_ALGOR_get0(&aoid, NULL, NULL, talg);
     /* Is everything uninitialised? */
     if (aoid == OBJ_nid2obj(NID_undef)) {
-        ASN1_INTEGER *pubk;
-        pubk = BN_to_ASN1_INTEGER(pkey->pkey.dh->pub_key, NULL);
+        ASN1_INTEGER *pubk = BN_to_ASN1_INTEGER(pkey->pkey.dh->pub_key, NULL);
         if (!pubk)
             goto err;
         /* Set the key */

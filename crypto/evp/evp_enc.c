@@ -522,14 +522,15 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 
 void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx)
 {
-    if (ctx) {
-        EVP_CIPHER_CTX_cleanup(ctx);
+    EVP_CIPHER_CTX_cleanup(ctx);
+    if (ctx)
         OPENSSL_free(ctx);
-    }
 }
 
 int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
 {
+    if (!c)
+        return 0;
     if (c->cipher != NULL) {
         if (c->cipher->cleanup && !c->cipher->cleanup(c))
             return 0;

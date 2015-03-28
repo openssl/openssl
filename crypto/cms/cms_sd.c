@@ -487,8 +487,7 @@ void CMS_SignerInfo_set1_signer_cert(CMS_SignerInfo *si, X509 *signer)
 {
     if (signer) {
         CRYPTO_add(&signer->references, 1, CRYPTO_LOCK_X509);
-        if (si->pkey)
-            EVP_PKEY_free(si->pkey);
+        EVP_PKEY_free(si->pkey);
         si->pkey = X509_get_pubkey(signer);
     }
     if (si->signer)
@@ -651,8 +650,7 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
 
  err:
     EVP_MD_CTX_cleanup(&mctx);
-    if (pctx)
-        EVP_PKEY_CTX_free(pctx);
+    EVP_PKEY_CTX_free(pctx);
     return r;
 
 }
@@ -875,8 +873,7 @@ int CMS_SignerInfo_verify_content(CMS_SignerInfo *si, BIO *chain)
     }
 
  err:
-    if (pkctx)
-        EVP_PKEY_CTX_free(pkctx);
+    EVP_PKEY_CTX_free(pkctx);
     EVP_MD_CTX_cleanup(&mctx);
     return r;
 

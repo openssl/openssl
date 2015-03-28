@@ -342,8 +342,7 @@ int X509_check_private_key(X509 *x, EVP_PKEY *k)
     case -2:
         X509err(X509_F_X509_CHECK_PRIVATE_KEY, X509_R_UNKNOWN_KEY_TYPE);
     }
-    if (xk)
-        EVP_PKEY_free(xk);
+    EVP_PKEY_free(xk);
     if (ret > 0)
         return 1;
     return 0;
@@ -436,8 +435,7 @@ int X509_chain_check_suiteb(int *perror_depth, X509 *x, STACK_OF(X509) *chain,
     /* Final check: root CA signature */
     rv = check_suite_b(pk, X509_get_signature_nid(x), &tflags);
  end:
-    if (pk)
-        EVP_PKEY_free(pk);
+    EVP_PKEY_free(pk);
     if (rv != X509_V_OK) {
         /* Invalid signature or LOS errors are for previous cert */
         if ((rv == X509_V_ERR_SUITE_B_INVALID_SIGNATURE_ALGORITHM

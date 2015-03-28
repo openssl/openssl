@@ -1933,10 +1933,8 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
         }
         if (!EVP_PKEY_missing_parameters(ktmp))
             break;
-        else {
-            EVP_PKEY_free(ktmp);
-            ktmp = NULL;
-        }
+        EVP_PKEY_free(ktmp);
+        ktmp = NULL;
     }
     if (ktmp == NULL) {
         X509err(X509_F_X509_GET_PUBKEY_PARAMETERS,

@@ -384,8 +384,7 @@ int MAIN(int argc, char **argv)
         }
         r = 1;
  mac_end:
-        if (mac_ctx)
-            EVP_PKEY_CTX_free(mac_ctx);
+        EVP_PKEY_CTX_free(mac_ctx);
         if (r == 0)
             goto end;
     }

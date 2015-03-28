@@ -1051,10 +1051,8 @@ static int mac_test_run(struct evp_test *t)
         EVP_MD_CTX_destroy(mctx);
     if (mac)
         OPENSSL_free(mac);
-    if (genctx)
-        EVP_PKEY_CTX_free(genctx);
-    if (key)
-        EVP_PKEY_free(key);
+    EVP_PKEY_CTX_free(genctx);
+    EVP_PKEY_free(key);
     t->err = err;
     return 1;
 }
@@ -1139,8 +1137,7 @@ static void pkey_test_cleanup(struct evp_test *t)
         OPENSSL_free(kdata->input);
     if (kdata->output)
         OPENSSL_free(kdata->output);
-    if (kdata->ctx)
-        EVP_PKEY_CTX_free(kdata->ctx);
+    EVP_PKEY_CTX_free(kdata->ctx);
 }
 
 static int pkey_test_parse(struct evp_test *t,

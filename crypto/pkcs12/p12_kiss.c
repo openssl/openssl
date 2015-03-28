@@ -161,7 +161,7 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 
  err:
 
-    if (pkey && *pkey)
+    if (pkey)
         EVP_PKEY_free(*pkey);
     if (cert && *cert)
         X509_free(*cert);

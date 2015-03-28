@@ -887,8 +887,7 @@ static EVP_PKEY *hwcrhk_load_pubkey(ENGINE *eng, const char *key_id,
 
     return res;
  err:
-    if (res)
-        EVP_PKEY_free(res);
+    EVP_PKEY_free(res);
     return NULL;
 }
 

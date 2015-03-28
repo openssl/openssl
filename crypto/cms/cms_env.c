@@ -279,8 +279,7 @@ CMS_RecipientInfo *CMS_add1_recipient_cert(CMS_ContentInfo *cms,
  err:
     if (ri)
         M_ASN1_free_of(ri, CMS_RecipientInfo);
-    if (pk)
-        EVP_PKEY_free(pk);
+    EVP_PKEY_free(pk);
     return NULL;
 
 }
@@ -476,10 +475,8 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
     ec->keylen = eklen;
 
  err:
-    if (ktri->pctx) {
-        EVP_PKEY_CTX_free(ktri->pctx);
-        ktri->pctx = NULL;
-    }
+    EVP_PKEY_CTX_free(ktri->pctx);
+    ktri->pctx = NULL;
     if (!ret && ek)
         OPENSSL_free(ek);
 
