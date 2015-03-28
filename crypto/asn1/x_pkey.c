@@ -60,18 +60,22 @@
 #include "cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/objects.h>
-#include <openssl/asn1_mac.h>
 #include <openssl/x509.h>
 
 X509_PKEY *X509_PKEY_new(void)
 {
     X509_PKEY *ret = NULL;
-    ASN1_CTX c;
 
-    M_ASN1_New_Malloc(ret, X509_PKEY);
+    ret = OPENSSL_malloc(sizeof(X509_PKEY));
+    if (!ret)
+        goto err;
+    memset(ret, 0, sizeof(X509_PKEY));
+
     ret->version = 0;
-    M_ASN1_New(ret->enc_algor, X509_ALGOR_new);
-    M_ASN1_New(ret->enc_pkey, ASN1_OCTET_STRING_new);
+    ret->enc_algor = X509_ALGOR_new();
+    ret->enc_pkey = ASN1_OCTET_STRING_new();
+    if (!ret->enc_algor || !ret->enc_pkey)
+        goto err;
     ret->dec_pkey = NULL;
     ret->key_length = 0;
     ret->key_data = NULL;
@@ -79,8 +83,11 @@ X509_PKEY *X509_PKEY_new(void)
     ret->cipher.cipher = NULL;
     memset(ret->cipher.iv, 0, EVP_MAX_IV_LENGTH);
     ret->references = 1;
-    return (ret);
-    M_ASN1_New_Error(ASN1_F_X509_PKEY_NEW);
+    return ret;
+err:
+    X509_PKEY_free(ret);
+    ASN1err(ASN1_F_X509_PKEY_NEW, ERR_R_MALLOC_FAILURE);
+    return NULL;
 }
 
 void X509_PKEY_free(X509_PKEY *x)
