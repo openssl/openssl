@@ -92,6 +92,8 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval,
                                  const ASN1_ITEM *it,
                                  int tag, int aclass, char opt,
                                  ASN1_TLC *ctx);
+static int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
+                       int utype, char *free_cont, const ASN1_ITEM *it);
 
 /* Table to convert tags to bit values, used for MSTRING type */
 static const unsigned long tag2bit[32] = {
@@ -770,8 +772,8 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval,
 
 /* Translate ASN1 content octets into a structure */
 
-int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
-                int utype, char *free_cont, const ASN1_ITEM *it)
+static int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
+                       int utype, char *free_cont, const ASN1_ITEM *it)
 {
     ASN1_VALUE **opval = NULL;
     ASN1_STRING *stmp;

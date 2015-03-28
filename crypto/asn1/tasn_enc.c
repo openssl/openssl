@@ -75,6 +75,8 @@ static int asn1_template_ex_i2d(ASN1_VALUE **pval, unsigned char **out,
                                 const ASN1_TEMPLATE *tt, int tag, int aclass);
 static int asn1_item_flags_i2d(ASN1_VALUE *val, unsigned char **out,
                                const ASN1_ITEM *it, int flags);
+static int asn1_ex_i2c(ASN1_VALUE **pval, unsigned char *cout, int *putype,
+                       const ASN1_ITEM *it);
 
 /*
  * Top level i2d equivalents: the 'ndef' variant instructs the encoder to use
@@ -517,8 +519,8 @@ static int asn1_i2d_ex_primitive(ASN1_VALUE **pval, unsigned char **out,
 
 /* Produce content octets from a structure */
 
-int asn1_ex_i2c(ASN1_VALUE **pval, unsigned char *cout, int *putype,
-                const ASN1_ITEM *it)
+static int asn1_ex_i2c(ASN1_VALUE **pval, unsigned char *cout, int *putype,
+                       const ASN1_ITEM *it)
 {
     ASN1_BOOLEAN *tbool = NULL;
     ASN1_STRING *strtmp;
