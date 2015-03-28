@@ -105,11 +105,6 @@ struct x509_crl_method_st {
     int (*crl_verify) (X509_CRL *crl, EVP_PKEY *pk);
 };
 
-int asn1_ex_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
-                const ASN1_ITEM *it);
-int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
-                int utype, char *free_cont, const ASN1_ITEM *it);
-
 int asn1_get_choice_selector(ASN1_VALUE **pval, const ASN1_ITEM *it);
 int asn1_set_choice_selector(ASN1_VALUE **pval, int value,
                              const ASN1_ITEM *it);
