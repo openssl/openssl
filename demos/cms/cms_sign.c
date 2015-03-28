@@ -73,8 +73,7 @@ int main(int argc, char **argv)
         CMS_ContentInfo_free(cms);
     if (scert)
         X509_free(scert);
-    if (skey)
-        EVP_PKEY_free(skey);
+    EVP_PKEY_free(skey);
 
     BIO_free(in);
     BIO_free(out);

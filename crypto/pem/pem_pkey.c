@@ -96,8 +96,7 @@ EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
             goto p8err;
         ret = EVP_PKCS82PKEY(p8inf);
         if (x) {
-            if (*x)
-                EVP_PKEY_free((EVP_PKEY *)*x);
+            EVP_PKEY_free((EVP_PKEY *)*x);
             *x = ret;
         }
         PKCS8_PRIV_KEY_INFO_free(p8inf);
@@ -124,8 +123,7 @@ EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
             goto p8err;
         ret = EVP_PKCS82PKEY(p8inf);
         if (x) {
-            if (*x)
-                EVP_PKEY_free((EVP_PKEY *)*x);
+            EVP_PKEY_free((EVP_PKEY *)*x);
             *x = ret;
         }
         PKCS8_PRIV_KEY_INFO_free(p8inf);
@@ -186,8 +184,7 @@ EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x)
             goto err;
         }
         if (x) {
-            if (*x)
-                EVP_PKEY_free((EVP_PKEY *)*x);
+            EVP_PKEY_free((EVP_PKEY *)*x);
             *x = ret;
         }
     }

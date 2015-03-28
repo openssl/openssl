@@ -1242,8 +1242,7 @@ void ssl_excert_free(SSL_EXCERT *exc)
     while (exc) {
         if (exc->cert)
             X509_free(exc->cert);
-        if (exc->key)
-            EVP_PKEY_free(exc->key);
+        EVP_PKEY_free(exc->key);
         if (exc->chain)
             sk_X509_pop_free(exc->chain, X509_free);
         curr = exc;

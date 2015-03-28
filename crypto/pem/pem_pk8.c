@@ -183,8 +183,7 @@ EVP_PKEY *d2i_PKCS8PrivateKey_bio(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
     if (!ret)
         return NULL;
     if (x) {
-        if (*x)
-            EVP_PKEY_free(*x);
+        EVP_PKEY_free(*x);
         *x = ret;
     }
     return ret;

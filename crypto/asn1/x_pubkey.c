@@ -174,8 +174,7 @@ EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
     return ret;
 
  error:
-    if (ret != NULL)
-        EVP_PKEY_free(ret);
+    EVP_PKEY_free(ret);
     return (NULL);
 }
 

@@ -207,7 +207,6 @@ EVP_PKEY *EVP_PKEY_new_mac_key(int type, ENGINE *e,
     if (EVP_PKEY_keygen(mac_ctx, &mac_key) <= 0)
         goto merr;
  merr:
-    if (mac_ctx)
-        EVP_PKEY_CTX_free(mac_ctx);
+    EVP_PKEY_CTX_free(mac_ctx);
     return mac_key;
 }

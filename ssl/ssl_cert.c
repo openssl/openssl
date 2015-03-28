@@ -402,10 +402,8 @@ void ssl_cert_clear_certs(CERT *c)
             X509_free(cpk->x509);
             cpk->x509 = NULL;
         }
-        if (cpk->privatekey) {
-            EVP_PKEY_free(cpk->privatekey);
-            cpk->privatekey = NULL;
-        }
+        EVP_PKEY_free(cpk->privatekey);
+        cpk->privatekey = NULL;
         if (cpk->chain) {
             sk_X509_pop_free(cpk->chain, X509_free);
             cpk->chain = NULL;

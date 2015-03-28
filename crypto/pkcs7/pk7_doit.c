@@ -179,10 +179,8 @@ static int pkcs7_encode_rinfo(PKCS7_RECIP_INFO *ri,
     ret = 1;
 
  err:
-    if (pkey)
-        EVP_PKEY_free(pkey);
-    if (pctx)
-        EVP_PKEY_CTX_free(pctx);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(pctx);
     if (ek)
         OPENSSL_free(ek);
     return ret;
@@ -240,8 +238,7 @@ static int pkcs7_decrypt_rinfo(unsigned char **pek, int *peklen,
     *peklen = eklen;
 
  err:
-    if (pctx)
-        EVP_PKEY_CTX_free(pctx);
+    EVP_PKEY_CTX_free(pctx);
     if (!ret && ek)
         OPENSSL_free(ek);
 
@@ -1077,8 +1074,8 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
         PKCS7err(PKCS7_F_PKCS7_SIGNATUREVERIFY, PKCS7_R_SIGNATURE_FAILURE);
         ret = -1;
         goto err;
-    } else
-        ret = 1;
+    }
+    ret = 1;
  err:
     EVP_MD_CTX_cleanup(&mdc_tmp);
     return (ret);

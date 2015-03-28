@@ -556,8 +556,7 @@ int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509)
     return 1;
 
  err:
-    if (pkey)
-        EVP_PKEY_free(pkey);
+    EVP_PKEY_free(pkey);
     return 0;
 }
 

@@ -265,9 +265,7 @@ static EVP_PKEY *load_example_rsa_key(void)
     pkey = NULL;
 
  out:
-    if (pkey) {
-        EVP_PKEY_free(pkey);
-    }
+    EVP_PKEY_free(pkey);
     RSA_free(rsa);
 
     return ret;
@@ -321,9 +319,7 @@ static int test_EVP_DigestSignInit(void)
 
     EVP_MD_CTX_cleanup(&md_ctx);
     EVP_MD_CTX_cleanup(&md_ctx_verify);
-    if (pkey) {
-        EVP_PKEY_free(pkey);
-    }
+    EVP_PKEY_free(pkey);
     if (sig) {
         OPENSSL_free(sig);
     }
@@ -354,9 +350,7 @@ static int test_EVP_DigestVerifyInit(void)
     }
 
     EVP_MD_CTX_cleanup(&md_ctx);
-    if (pkey) {
-        EVP_PKEY_free(pkey);
-    }
+    EVP_PKEY_free(pkey);
 
     return ret;
 }
@@ -387,9 +381,7 @@ static int test_d2i_AutoPrivateKey(const unsigned char *input,
         ERR_print_errors_fp(stderr);
     }
 
-    if (pkey != NULL) {
-        EVP_PKEY_free(pkey);
-    }
+    EVP_PKEY_free(pkey);
     return ret;
 }
 
@@ -422,9 +414,7 @@ static int test_EVP_PKCS82PKEY(void)
         PKCS8_PRIV_KEY_INFO_free(p8inf);
     }
 
-    if (pkey != NULL) {
-        EVP_PKEY_free(pkey);
-    }
+    EVP_PKEY_free(pkey);
 
     return ret;
 }

@@ -2869,8 +2869,7 @@ int ssl3_get_client_key_exchange(SSL *s)
         EVP_PKEY_CTX_free(pkey_ctx);
         if (ret)
             return ret;
-        else
-            goto err;
+        goto err;
     } else {
         al = SSL_AD_HANDSHAKE_FAILURE;
         SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, SSL_R_UNKNOWN_CIPHER_TYPE);

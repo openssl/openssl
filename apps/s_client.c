@@ -2030,8 +2030,7 @@ int MAIN(int argc, char **argv)
         X509_free(cert);
     if (crls)
         sk_X509_CRL_pop_free(crls, X509_CRL_free);
-    if (key)
-        EVP_PKEY_free(key);
+    EVP_PKEY_free(key);
     if (chain)
         sk_X509_pop_free(chain, X509_free);
     if (pass)

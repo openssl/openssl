@@ -189,7 +189,7 @@ int pkey_GOST01cp_encrypt(EVP_PKEY_CTX *pctx, unsigned char *out,
     }
     ASN1_OBJECT_free(gkt->key_agreement_info->cipher);
     gkt->key_agreement_info->cipher = OBJ_nid2obj(param->nid);
-    if (key_is_ephemeral && sec_key)
+    if (key_is_ephemeral)
         EVP_PKEY_free(sec_key);
     if (!key_is_ephemeral) {
         /* Set control "public key from client certificate used" */
@@ -204,7 +204,7 @@ int pkey_GOST01cp_encrypt(EVP_PKEY_CTX *pctx, unsigned char *out,
     GOST_KEY_TRANSPORT_free(gkt);
     return ret;
  err:
-    if (key_is_ephemeral && sec_key)
+    if (key_is_ephemeral)
         EVP_PKEY_free(sec_key);
     GOST_KEY_TRANSPORT_free(gkt);
     return -1;
@@ -284,8 +284,7 @@ int pkey_GOST01cp_decrypt(EVP_PKEY_CTX *pctx, unsigned char *key,
 
     ret = 1;
  err:
-    if (eph_key)
-        EVP_PKEY_free(eph_key);
+    EVP_PKEY_free(eph_key);
     if (gkt)
         GOST_KEY_TRANSPORT_free(gkt);
     return ret;
