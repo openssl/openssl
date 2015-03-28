@@ -152,3 +152,34 @@ int ASN1_TYPE_cmp(const ASN1_TYPE *a, const ASN1_TYPE *b)
 
     return result;
 }
+
+ASN1_TYPE *ASN1_TYPE_pack_sequence(const ASN1_ITEM *it, void *s, ASN1_TYPE **t)
+{
+    ASN1_OCTET_STRING *oct;
+    ASN1_TYPE *rt;
+
+    oct = ASN1_item_pack(s, it, NULL);
+    if (oct == NULL)
+        return NULL;
+
+    if (t && *t) {
+        rt = *t;
+    } else {
+        rt = ASN1_TYPE_new();
+        if (rt == NULL) {
+            ASN1_OCTET_STRING_free(oct);
+            return NULL;
+        }
+        if (t)
+            *t = rt;
+    }
+    ASN1_TYPE_set(rt, V_ASN1_SEQUENCE, oct);
+    return rt;
+}
+
+void *ASN1_TYPE_unpack_sequence(const ASN1_ITEM *it, const ASN1_TYPE *t)
+{
+    if (t->type != V_ASN1_SEQUENCE || t->value.sequence == NULL)
+        return NULL;
+    return ASN1_item_unpack(t->value.sequence, it);
+}
