@@ -4553,3 +4553,5 @@ OCSP_resp_get0_signature                4911	EXIST::FUNCTION:
 OBJ_length                              4912	EXIST::FUNCTION:
 OBJ_get0_data                           4913	EXIST::FUNCTION:
 X509_NAME_ENTRY_set                     4914	EXIST::FUNCTION:
+ASN1_TYPE_pack_sequence                 4915	EXIST::FUNCTION:
+ASN1_TYPE_unpack_sequence               4916	EXIST::FUNCTION:
