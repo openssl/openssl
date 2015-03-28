@@ -155,6 +155,11 @@ void dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap);
 #define SSL3_BUFFER_get_len(b)              ((b)->len)
 #define SSL3_BUFFER_set_len(b, l)           ((b)->len = (l))
 #define SSL3_BUFFER_get_left(b)             ((b)->left)
+#define SSL3_BUFFER_set_left(b, l)          ((b)->left = (l))
+#define SSL3_BUFFER_add_left(b, l)          ((b)->left += (l))
+#define SSL3_BUFFER_get_offset(b)           ((b)->offset)
+#define SSL3_BUFFER_set_offset(b, o)        ((b)->offset = (o))
+#define SSL3_BUFFER_add_offset(b, o)        ((b)->offset += (o))
 #define SSL3_BUFFER_is_initialised(b)       ((b)->buf != NULL)
 
 void SSL3_BUFFER_set_data(SSL3_BUFFER *b, const unsigned char *d, int n);
@@ -167,9 +172,20 @@ int ssl3_release_write_buffer(SSL *s);
 /* Macros/functions provided by the SSL3_RECORD component */
 
 #define SSL3_RECORD_get_type(r)                 ((r)->type)
+#define SSL3_RECORD_set_type(r, t)              ((r)->type = (t))
 #define SSL3_RECORD_get_length(r)               ((r)->length)
+#define SSL3_RECORD_set_length(r, l)            ((r)->length = (l))
+#define SSL3_RECORD_add_length(r, l)            ((r)->length += (l))
 #define SSL3_RECORD_get_data(r)                 ((r)->data)
+#define SSL3_RECORD_set_data(r, d)              ((r)->data = (d))
+#define SSL3_RECORD_get_input(r)                ((r)->input)
+#define SSL3_RECORD_set_input(r, i)             ((r)->input = (i))
+#define SSL3_RECORD_reset_input(r)              ((r)->input = (r)->data)
 #define SSL3_RECORD_get_seq_num(r)              ((r)->seq_num)
+#define SSL3_RECORD_get_off(r)                  ((r)->off)
+#define SSL3_RECORD_set_off(r, o)               ((r)->off = (o))
+#define SSL3_RECORD_add_off(r, o)               ((r)->off += (o))
+#define SSL3_RECORD_get_epoch(r)                ((r)->epoch)
 
 void SSL3_RECORD_clear(SSL3_RECORD *r);
 void SSL3_RECORD_release(SSL3_RECORD *r);
