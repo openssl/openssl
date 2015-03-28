@@ -221,10 +221,7 @@ static int newpass_bag(PKCS12_SAFEBAG *bag, char *oldpass, char *newpass)
 static int alg_get(X509_ALGOR *alg, int *pnid, int *piter, int *psaltlen)
 {
     PBEPARAM *pbe;
-    const unsigned char *p;
-
-    p = alg->parameter->value.sequence->data;
-    pbe = d2i_PBEPARAM(NULL, &p, alg->parameter->value.sequence->length);
+    pbe = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(PBEPARAM), alg->parameter);
     if (!pbe)
         return 0;
     *pnid = OBJ_obj2nid(alg->algorithm);

@@ -271,34 +271,23 @@ static int rsa_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent,
 /* Given an MGF1 Algorithm ID decode to an Algorithm Identifier */
 static X509_ALGOR *rsa_mgf1_decode(X509_ALGOR *alg)
 {
-    const unsigned char *p;
-    int plen;
     if (alg == NULL)
         return NULL;
     if (OBJ_obj2nid(alg->algorithm) != NID_mgf1)
         return NULL;
-    if (alg->parameter->type != V_ASN1_SEQUENCE)
-        return NULL;
-
-    p = alg->parameter->value.sequence->data;
-    plen = alg->parameter->value.sequence->length;
-    return d2i_X509_ALGOR(NULL, &p, plen);
+    return ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(X509_ALGOR),
+                                     alg->parameter);
 }
 
 static RSA_PSS_PARAMS *rsa_pss_decode(const X509_ALGOR *alg,
                                       X509_ALGOR **pmaskHash)
 {
-    const unsigned char *p;
-    int plen;
     RSA_PSS_PARAMS *pss;
 
     *pmaskHash = NULL;
 
-    if (!alg->parameter || alg->parameter->type != V_ASN1_SEQUENCE)
-        return NULL;
-    p = alg->parameter->value.sequence->data;
-    plen = alg->parameter->value.sequence->length;
-    pss = d2i_RSA_PSS_PARAMS(NULL, &p, plen);
+    pss = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(RSA_PSS_PARAMS),
+                                    alg->parameter);
 
     if (!pss)
         return NULL;
@@ -768,17 +757,12 @@ static int rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
 static RSA_OAEP_PARAMS *rsa_oaep_decode(const X509_ALGOR *alg,
                                         X509_ALGOR **pmaskHash)
 {
-    const unsigned char *p;
-    int plen;
     RSA_OAEP_PARAMS *pss;
 
     *pmaskHash = NULL;
 
-    if (!alg->parameter || alg->parameter->type != V_ASN1_SEQUENCE)
-        return NULL;
-    p = alg->parameter->value.sequence->data;
-    plen = alg->parameter->value.sequence->length;
-    pss = d2i_RSA_OAEP_PARAMS(NULL, &p, plen);
+    pss = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(RSA_OAEP_PARAMS),
+                                    alg->parameter);
 
     if (!pss)
         return NULL;
