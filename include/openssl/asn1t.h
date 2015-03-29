@@ -825,6 +825,19 @@ typedef struct ASN1_STREAM_ARG_st {
                 return ASN1_item_ndef_i2d((ASN1_VALUE *)a, out, ASN1_ITEM_rptr(stname));\
         }
 
+# define IMPLEMENT_STATIC_ASN1_ENCODE_FUNCTIONS(stname) \
+        static stname *d2i_##stname(stname **a, \
+                                   const unsigned char **in, long len) \
+        { \
+                return (stname *)ASN1_item_d2i((ASN1_VALUE **)a, in, len, \
+                                               ASN1_ITEM_rptr(stname)); \
+        } \
+        static int i2d_##stname(stname *a, unsigned char **out) \
+        { \
+                return ASN1_item_i2d((ASN1_VALUE *)a, out, \
+                                     ASN1_ITEM_rptr(stname)); \
+        }
+
 /*
  * This includes evil casts to remove const: they will go away when full ASN1
  * constification is done.
