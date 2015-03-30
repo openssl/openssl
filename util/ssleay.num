@@ -95,7 +95,7 @@ SSL_use_certificate_ASN1                106	EXIST::FUNCTION:
 SSL_use_certificate_file                107	EXIST::FUNCTION:STDIO
 SSL_write                               108	EXIST::FUNCTION:
 SSLeay_add_ssl_algorithms               109	NOEXIST::FUNCTION:
-SSLv23_client_method                    110	EXIST::FUNCTION:RSA
+SSLv23_client_method                    110	NOEXIST::FUNCTION:
 SSLv23_method                           111	NOEXIST::FUNCTION:
 SSLv23_server_method                    112	NOEXIST::FUNCTION:
 SSLv2_client_method                     113	NOEXIST::FUNCTION:
@@ -398,3 +398,4 @@ SSL_CIPHER_get_cipher_nid               432	EXIST::FUNCTION:
 SSL_use_certificate_chain_file          433	EXIST::FUNCTION:STDIO
 TLS_server_method                       434	EXIST::FUNCTION:
 TLS_method                              435	EXIST::FUNCTION:
+TLS_client_method                       436	EXIST::FUNCTION:

@@ -1261,7 +1261,7 @@ OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
         BIO_set_conn_port(cbio, port);
     if (use_ssl == 1) {
         BIO *sbio;
-        ctx = SSL_CTX_new(SSLv23_client_method());
+        ctx = SSL_CTX_new(TLS_client_method());
         if (ctx == NULL) {
             BIO_printf(bio_err, "Error creating SSL context.\n");
             goto end;

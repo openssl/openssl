@@ -43,7 +43,7 @@ char *argv[];
 
     /* Setup all the global SSL stuff */
     OpenSSL_add_ssl_algorithms();
-    ssl_ctx = SSL_CTX_new(SSLv23_client_method());
+    ssl_ctx = SSL_CTX_new(TLS_client_method());
 
     /* Lets make a SSL structure */
     ssl = SSL_new(ssl_ctx);

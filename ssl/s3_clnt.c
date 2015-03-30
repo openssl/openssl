@@ -234,7 +234,8 @@ int ssl3_connect(SSL *s)
             if (cb != NULL)
                 cb(s, SSL_CB_HANDSHAKE_START, 1);
 
-            if ((s->version & 0xff00) != 0x0300) {
+            if ((s->version >> 8) != SSL3_VERSION_MAJOR
+                    && s->version != TLS_ANY_VERSION) {
                 SSLerr(SSL_F_SSL3_CONNECT, ERR_R_INTERNAL_ERROR);
                 s->state = SSL_ST_ERR;
                 ret = -1;
@@ -679,27 +680,46 @@ int ssl3_client_hello(SSL *s)
     int j;
     SSL_COMP *comp;
 #endif
+    unsigned long mask, options = s->options;
 
     buf = (unsigned char *)s->init_buf->data;
     if (s->state == SSL3_ST_CW_CLNT_HELLO_A) {
         SSL_SESSION *sess = s->session;
-        if ((sess == NULL) || (sess->ssl_version != s->version) ||
-#ifdef OPENSSL_NO_TLSEXT
-            !sess->session_id_length ||
-#else
+
+        if (s->method->version == TLS_ANY_VERSION ) {
             /*
-             * In the case of EAP-FAST, we can have a pre-shared
-             * "ticket" without a session ID.
+             * SSL_OP_NO_X disables all protocols above X *if* there are
+             * some protocols below X enabled. This is required in order
+             * to maintain "version capability" vector contiguous. So
+             * that if application wants to disable TLS1.0 in favour of
+             * TLS1>=1, it would be insufficient to pass SSL_NO_TLSv1, the
+             * answer is SSL_OP_NO_TLSv1|SSL_OP_NO_SSLv3.
              */
-            (!sess->session_id_length && !sess->tlsext_tick) ||
+            mask = SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1
+#if !defined(OPENSSL_NO_SSL3)
+                | SSL_OP_NO_SSLv3
 #endif
-            (sess->not_resumable)) {
-            if (!ssl_get_new_session(s, 0))
-                goto err;
-        }
-        if (s->method->version == DTLS_ANY_VERSION) {
+                ;
+#if !defined(OPENSSL_NO_TLS1_2_CLIENT)
+            s->version = TLS1_2_VERSION;
+
+            if ((options & SSL_OP_NO_TLSv1_2) && (options & mask) != mask)
+                s->version = TLS1_1_VERSION;
+#else
+            s->version = TLS1_1_VERSION;
+#endif
+            mask &= ~SSL_OP_NO_TLSv1_1;
+            if ((options & SSL_OP_NO_TLSv1_1) && (options & mask) != mask)
+                s->version = TLS1_VERSION;
+            mask &= ~SSL_OP_NO_TLSv1;
+#if !defined(OPENSSL_NO_SSL3)
+            if ((options & SSL_OP_NO_TLSv1) && (options & mask) != mask)
+                s->version = SSL3_VERSION;
+            mask &= ~SSL_OP_NO_SSLv3;
+#endif
+            s->client_version = s->version;
+        } else if (s->method->version == DTLS_ANY_VERSION) {
             /* Determine which DTLS version to use */
-            int options = s->options;
             /* If DTLS 1.2 disabled correct the version number */
             if (options & SSL_OP_NO_DTLSv1_2) {
                 if (tls1_suiteb(s)) {
@@ -728,6 +748,21 @@ int ssl3_client_hello(SSL *s)
                 s->version = DTLS1_2_VERSION;
             }
             s->client_version = s->version;
+        }
+
+        if ((sess == NULL) || (sess->ssl_version != s->version) ||
+#ifdef OPENSSL_NO_TLSEXT
+            !sess->session_id_length ||
+#else
+            /*
+             * In the case of EAP-FAST, we can have a pre-shared
+             * "ticket" without a session ID.
+             */
+            (!sess->session_id_length && !sess->tlsext_tick) ||
+#endif
+            (sess->not_resumable)) {
+            if (!ssl_get_new_session(s, 0))
+                goto err;
         }
         /* else use the pre-loaded session */
 
@@ -934,7 +969,42 @@ int ssl3_get_server_hello(SSL *s)
     }
 
     d = p = (unsigned char *)s->init_msg;
-    if (s->method->version == DTLS_ANY_VERSION) {
+
+    if (s->method->version == TLS_ANY_VERSION) {
+        int sversion = (p[0] << 8) | p[1];
+
+#if TLS_MAX_VERSION != TLS1_2_VERSION
+#error Code needs updating for new TLS version
+#endif
+#ifndef OPENSSL_NO_SSL3
+        if ((sversion == SSL3_VERSION) && !(s->options & SSL_OP_NO_SSLv3)) {
+            if (FIPS_mode()) {
+                SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,
+                       SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE);
+                goto err;
+            }
+            s->method = SSLv3_client_method();
+        } else
+#endif
+        if ((sversion == TLS1_VERSION) && !(s->options & SSL_OP_NO_TLSv1)) {
+            s->method = TLSv1_client_method();
+        } else if ((sversion == TLS1_1_VERSION) &&
+                   !(s->options & SSL_OP_NO_TLSv1_1)) {
+            s->method = TLSv1_1_client_method();
+        } else if ((sversion == TLS1_2_VERSION) &&
+                   !(s->options & SSL_OP_NO_TLSv1_2)) {
+            s->method = TLSv1_2_client_method();
+        } else {
+            SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_UNSUPPORTED_PROTOCOL);
+            goto err;
+        }
+        s->session->ssl_version = s->version = s->method->version;
+
+        if (!ssl_security(s, SSL_SECOP_VERSION, 0, s->version, NULL)) {
+            SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_VERSION_TOO_LOW);
+            goto err;
+        }
+    } else if (s->method->version == DTLS_ANY_VERSION) {
         /* Work out correct protocol version to use */
         int hversion = (p[0] << 8) | p[1];
         int options = s->options;
@@ -955,9 +1025,7 @@ int ssl3_get_server_hello(SSL *s)
             goto f_err;
         }
         s->version = s->method->version;
-    }
-
-    if ((p[0] != (s->version >> 8)) || (p[1] != (s->version & 0xff))) {
+    } else if ((p[0] != (s->version >> 8)) || (p[1] != (s->version & 0xff))) {
         SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_WRONG_SSL_VERSION);
         s->version = (s->version & 0xff00) | p[1];
         al = SSL_AD_PROTOCOL_VERSION;
