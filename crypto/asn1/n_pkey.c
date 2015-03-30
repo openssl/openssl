@@ -62,7 +62,6 @@
 # include <openssl/rsa.h>
 # include <openssl/objects.h>
 # include <openssl/asn1t.h>
-# include <openssl/asn1_mac.h>
 # include <openssl/evp.h>
 # include <openssl/x509.h>
 
