@@ -309,7 +309,6 @@ $crypto.=" include/openssl/pem.h";
 #$crypto.=" include/openssl/meth.h";
 $crypto.=" include/openssl/asn1.h";
 $crypto.=" include/openssl/asn1t.h";
-$crypto.=" include/openssl/asn1_mac.h";
 $crypto.=" include/openssl/err.h" ; # unless $no_err;
 $crypto.=" include/openssl/pkcs7.h";
 $crypto.=" include/openssl/pkcs12.h";
