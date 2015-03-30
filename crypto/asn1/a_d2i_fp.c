@@ -60,7 +60,7 @@
 #include <limits.h>
 #include "cryptlib.h"
 #include <openssl/buffer.h>
-#include <openssl/asn1_mac.h>
+#include <openssl/asn1.h>
 
 static int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb);
 
