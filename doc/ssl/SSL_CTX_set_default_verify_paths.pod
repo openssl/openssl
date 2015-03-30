@@ -1,0 +1,48 @@
+=pod
+
+=head1 NAME
+
+SSL_CTX_set_default_verify_paths - set system default locations for trusted CA
+certificates
+
+=head1 SYNOPSIS
+
+ #include <openssl/ssl.h>
+
+int SSL_CTX_set_default_verify_paths(SSL_CTX *ctx);
+
+=head1 DESCRIPTION
+
+SSL_CTX_set_default_verify_paths() loads the system default locations for
+B<ctx>, at which CA certificates for verification purposes are located. The
+default locations are built into the openssl library at compile time.
+
+=head1 RETURN VALUES
+
+The function does not report errors if if the built in locations
+cannot be loaded. It may fail e.g. in out of memory situations
+though. The following return values can occur:
+
+=over 4
+
+=item Z<>0
+
+The operation failed.
+
+=item Z<>1
+
+The operation succeeded.
+
+=back
+
+=head1 SEE ALSO
+
+L<ssl(3)|ssl(3)>,
+L<SSL_CTX_set_client_CA_list(3)|SSL_CTX_set_client_CA_list(3)>,
+L<SSL_get_client_CA_list(3)|SSL_get_client_CA_list(3)>,
+L<SSL_CTX_use_certificate(3)|SSL_CTX_use_certificate(3)>,
+L<SSL_CTX_add_extra_chain_cert(3)|SSL_CTX_add_extra_chain_cert(3)>,
+L<SSL_CTX_set_cert_store(3)|SSL_CTX_set_cert_store(3)>
+L<SSL_CTX_load_verify_locations(3)|SSL_CTX_load_verify_locations(3)>
+
+=cut
