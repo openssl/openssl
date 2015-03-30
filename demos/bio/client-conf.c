@@ -37,7 +37,7 @@ int main(int argc, char **argv)
         goto end;
     }
 
-    ctx = SSL_CTX_new(SSLv23_client_method());
+    ctx = SSL_CTX_new(TLS_client_method());
     cctx = SSL_CONF_CTX_new();
     SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_CLIENT);
     SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_FILE);

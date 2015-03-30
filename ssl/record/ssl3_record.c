@@ -263,7 +263,8 @@ int ssl3_get_record(SSL *s)
 
             /* Lets check version */
             if (!s->first_packet) {
-                if (version != s->version) {
+                if (version != s->version
+                        && s->method->version != TLS_ANY_VERSION) {
                     SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_WRONG_VERSION_NUMBER);
                     if ((s->version & 0xFF00) == (version & 0xFF00)
                         && !s->enc_write_ctx && !s->write_hash)

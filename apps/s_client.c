@@ -636,7 +636,7 @@ int s_client_main(int argc, char **argv)
     SSL_CONF_CTX *cctx = NULL;
     STACK_OF(OPENSSL_STRING) *ssl_args = NULL;
     STACK_OF(X509_CRL) *crls = NULL;
-    const SSL_METHOD *meth = SSLv23_client_method();
+    const SSL_METHOD *meth = TLS_client_method();
     char *CApath = NULL, *CAfile = NULL, *cbuf = NULL, *sbuf = NULL, *mbuf =
         NULL;
     char *cert_file = NULL, *key_file = NULL, *chain_file = NULL, *prog;

@@ -1124,6 +1124,20 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
         goto f_err;
     }
 
+    if(s->version == TLS_ANY_VERSION
+            && (s->server || rr->type != SSL3_RT_ALERT)) {
+        /*
+         * If we've got this far and still haven't decided on what version
+         * we're using then this must be a client side alert we're dealing with
+         * (we don't allow heartbeats yet). We shouldn't be receiving anything
+         * other than a ClientHello if we are a server.
+         */
+        s->version = rr->rec_version;
+        al = SSL_AD_UNEXPECTED_MESSAGE;
+        SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_UNEXPECTED_MESSAGE);
+        goto f_err;
+    }
+
     /*
      * In case of record types for which we have 'fragment' storage, fill
      * that so that we can process the data at a fixed place.

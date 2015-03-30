@@ -167,7 +167,7 @@ int s_time_main(int argc, char **argv)
     int exitNow = 0;            /* Set when it's time to exit main */
 #endif
 
-    meth = SSLv23_client_method();
+    meth = TLS_client_method();
     verify_depth = 0;
     verify_error = X509_V_OK;
 

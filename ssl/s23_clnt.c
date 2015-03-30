@@ -116,9 +116,11 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 
-static const SSL_METHOD *ssl23_get_client_method(int ver);
+/*static const SSL_METHOD *ssl23_get_client_method(int ver);*/
 static int ssl23_client_hello(SSL *s);
 static int ssl23_get_server_hello(SSL *s);
+
+/*
 static const SSL_METHOD *ssl23_get_client_method(int ver)
 {
 #ifndef OPENSSL_NO_SSL3
@@ -134,10 +136,7 @@ static const SSL_METHOD *ssl23_get_client_method(int ver)
     else
         return (NULL);
 }
-
-IMPLEMENT_ssl23_meth_func(SSLv23_client_method,
-                          ssl_undefined_function,
-                          ssl23_connect, ssl23_get_client_method)
+*/
 
 int ssl23_connect(SSL *s)
 {
