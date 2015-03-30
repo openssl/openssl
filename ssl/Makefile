@@ -674,7 +674,7 @@ ssl_algs.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 ssl_algs.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 ssl_algs.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 ssl_algs.o: record/record.h ssl_algs.c ssl_locl.h
-ssl_asn1.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/asn1_mac.h
+ssl_asn1.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/asn1t.h
 ssl_asn1.o: ../include/openssl/bio.h ../include/openssl/buffer.h
 ssl_asn1.o: ../include/openssl/comp.h ../include/openssl/crypto.h
 ssl_asn1.o: ../include/openssl/dsa.h ../include/openssl/dtls1.h
