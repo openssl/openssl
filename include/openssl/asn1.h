@@ -159,41 +159,6 @@ extern "C" {
     struct X509_algor_st;
 DECLARE_STACK_OF(X509_ALGOR)
 
-/*
- * We MUST make sure that, except for constness, asn1_ctx_st and
- * asn1_const_ctx are exactly the same.  Fortunately, as soon as the old ASN1
- * parsing macros are gone, we can throw this away as well...
- */
-typedef struct asn1_ctx_st {
-    unsigned char *p;           /* work char pointer */
-    int eos;                    /* end of sequence read for indefinite
-                                 * encoding */
-    int error;                  /* error code to use when returning an error */
-    int inf;                    /* constructed if 0x20, indefinite is 0x21 */
-    int tag;                    /* tag from last 'get object' */
-    int xclass;                 /* class from last 'get object' */
-    long slen;                  /* length of last 'get object' */
-    unsigned char *max;         /* largest value of p allowed */
-    unsigned char *q;           /* temporary variable */
-    unsigned char **pp;         /* variable */
-    int line;                   /* used in error processing */
-} ASN1_CTX;
-
-typedef struct asn1_const_ctx_st {
-    const unsigned char *p;     /* work char pointer */
-    int eos;                    /* end of sequence read for indefinite
-                                 * encoding */
-    int error;                  /* error code to use when returning an error */
-    int inf;                    /* constructed if 0x20, indefinite is 0x21 */
-    int tag;                    /* tag from last 'get object' */
-    int xclass;                 /* class from last 'get object' */
-    long slen;                  /* length of last 'get object' */
-    const unsigned char *max;   /* largest value of p allowed */
-    const unsigned char *q;     /* temporary variable */
-    const unsigned char **pp;   /* variable */
-    int line;                   /* used in error processing */
-} ASN1_const_CTX;
-
 # define ASN1_STRING_FLAG_BITS_LEFT 0x08/* Set if 0x07 has bits left value */
 /*
  * This indicates that the ASN1_STRING is not a real value but just a place
@@ -727,9 +692,6 @@ BIGNUM *ASN1_ENUMERATED_to_BN(ASN1_ENUMERATED *ai, BIGNUM *bn);
 int ASN1_PRINTABLE_type(const unsigned char *s, int max);
 
 unsigned long ASN1_tag2bit(int tag);
-/* PARSING */
-int asn1_Finish(ASN1_CTX *c);
-int asn1_const_Finish(ASN1_const_CTX *c);
 
 /* SPECIALS */
 int ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
