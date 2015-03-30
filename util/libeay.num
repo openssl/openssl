@@ -692,8 +692,8 @@ _des_crypt                              698	NOEXIST::FUNCTION:
 a2d_ASN1_OBJECT                         699	EXIST::FUNCTION:
 a2i_ASN1_INTEGER                        700	EXIST::FUNCTION:
 a2i_ASN1_STRING                         701	EXIST::FUNCTION:
-asn1_Finish                             702	EXIST::FUNCTION:
-asn1_GetSequence                        703	EXIST::FUNCTION:
+asn1_Finish                             702	NOEXIST::FUNCTION:
+asn1_GetSequence                        703	NOEXIST::FUNCTION:
 bn_div_words                            704	NOEXIST::FUNCTION:
 bn_expand2                              705	NOEXIST::FUNCTION:
 bn_mul_add_words                        706	NOEXIST::FUNCTION:
@@ -1060,7 +1060,7 @@ EVP_rc5_32_12_16_cbc                    1087	EXIST::FUNCTION:RC5
 EVP_rc5_32_12_16_cfb64                  1088	EXIST::FUNCTION:RC5
 EVP_rc5_32_12_16_ecb                    1089	EXIST::FUNCTION:RC5
 EVP_rc5_32_12_16_ofb                    1090	EXIST::FUNCTION:RC5
-asn1_add_error                          1091	EXIST::FUNCTION:
+asn1_add_error                          1091	NOEXIST::FUNCTION:
 d2i_ASN1_BMPSTRING                      1092	EXIST::FUNCTION:
 i2d_ASN1_BMPSTRING                      1093	EXIST::FUNCTION:
 BIO_f_ber                               1094	NOEXIST::FUNCTION:
@@ -3295,7 +3295,7 @@ PEM_write_X509_CERT_PAIR                3696	NOEXIST::FUNCTION:
 BIO_dump_indent_cb                      3697	EXIST::FUNCTION:
 d2i_X509_CERT_PAIR                      3698	NOEXIST::FUNCTION:
 STORE_list_private_key_endp             3699	NOEXIST::FUNCTION:
-asn1_const_Finish                       3700	EXIST::FUNCTION:
+asn1_const_Finish                       3700	NOEXIST::FUNCTION:
 i2d_EC_PUBKEY_fp                        3701	EXIST::FUNCTION:EC,STDIO
 BN_nist_mod_256                         3702	EXIST::FUNCTION:
 X509_VERIFY_PARAM_add0_table            3703	EXIST::FUNCTION:
