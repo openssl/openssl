@@ -2,13 +2,14 @@
 
 =head1 NAME
 
-SSL_CTX_set_cert_store, SSL_CTX_get_cert_store - manipulate X509 certificate verification storage
+SSL_CTX_set_cert_store, SSL_CTX_set1_cert_store, SSL_CTX_get_cert_store - manipulate X509 certificate verification storage
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
  void SSL_CTX_set_cert_store(SSL_CTX *ctx, X509_STORE *store);
+ void SSL_CTX_set1_cert_store(SSL_CTX *ctx, X509_STORE *store);
  X509_STORE *SSL_CTX_get_cert_store(const SSL_CTX *ctx);
 
 =head1 DESCRIPTION
@@ -16,6 +17,10 @@ SSL_CTX_set_cert_store, SSL_CTX_get_cert_store - manipulate X509 certificate ver
 SSL_CTX_set_cert_store() sets/replaces the certificate verification storage
 of B<ctx> to/with B<store>. If another X509_STORE object is currently
 set in B<ctx>, it will be X509_STORE_free()ed.
+
+SSL_CTX_set1_cert_store() sets/replaces the certificate verification storage
+of B<ctx> to/with B<store>. The B<store>'s reference count is incremented.
+If another X509_STORE object is currently set in B<ctx>, it will be X509_STORE_free()ed.
 
 SSL_CTX_get_cert_store() returns a pointer to the current certificate
 verification storage.
@@ -42,6 +47,15 @@ L<SSL_CTX_set_verify(3)> family of functions.
 This document must therefore be updated when documentation about the
 X509_STORE object and its handling becomes available.
 
+SSL_CTX_set_cert_store() does not increment the B<store>'s reference
+count, so it should not be used to assign an X509_STORE that is owned
+by another SSL_CTX.
+
+To share X509_STOREs between two SSL_CTXs, use SSL_CTX_get_cert_store()
+to get the X509_STORE from the first SSL_CTX, and then use
+SSL_CTX_set1_cert_store() to assign to the second SSL_CTX and
+increment the reference count fo the X509_STORE.
+
 =head1 RESTRICTIONS
 
 The X509_STORE structure used by an SSL_CTX is used for verifying peer
@@ -52,6 +66,8 @@ functions such as SSL_CTX_set1_verify_cert_store() instead.
 =head1 RETURN VALUES
 
 SSL_CTX_set_cert_store() does not return diagnostic output.
+
+SSL_CTX_set1_cert_store() does not return diagnostic output.
 
 SSL_CTX_get_cert_store() returns the current setting.
 
