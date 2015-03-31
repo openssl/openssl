@@ -21,7 +21,7 @@ The source files map to components as follows:
 dtls1_bitmap.c                                   -> DTLS1_BITMAP component
 ssl3_buffer.c                                    -> SSL3_BUFFER component
 ssl3_record.c                                    -> SSL3_RECORD component
-rec_layer_s23.c, rec_layer_s3.c, rec_layer_d1.c  -> RECORD_LAYER component
+rec_layer_s3.c, rec_layer_d1.c                   -> RECORD_LAYER component
 
 The RECORD_LAYER component is a facade pattern, i.e. it provides a simplified
 interface to the record layer for the rest of libssl. The other 3 components are
@@ -46,9 +46,6 @@ Conceptually it looks like this:
                    |                      |
                    |    RECORD_LAYER      |
                    |                      |
-                   |    rec_layer_s23.c   |
-                   |          ^           |
-                   |          |           |
                    |    rec_layer_s3.c    |
                    |          ^           |
                    | _________|__________ |
@@ -69,10 +66,9 @@ Conceptually it looks like this:
   |_______________|    |_______________|    |________________|
 
 
-The three RECORD_LAYER source files build progressively on each other, i.e.
-the simplest is rec_layer_s23.c. This provides the most basic functions used
-for version negotiation. Next rec_layer_s3.c adds the SSL/TLS layer. Finally
-rec_layer_d1.c builds off of the SSL/TLS code to provide DTLS specific
-capabilities. It uses some DTLS specific RECORD_LAYER component members which
-should only be accessed from rec_layer_d1.c. These are held in the
+The two RECORD_LAYER source files build on each other, i.e.
+the main one is rec_layer_s3.c which provides the core SSL/TLS layer. The second
+one is rec_layer_d1.c which builds off of the SSL/TLS code to provide DTLS
+specific capabilities. It uses some DTLS specific RECORD_LAYER component members
+which should only be accessed from rec_layer_d1.c. These are held in the
 DTLS1_RECORD_LAYER struct.

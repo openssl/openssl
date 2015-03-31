@@ -1458,13 +1458,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
      */
     if (s->options & SSL_OP_TLSEXT_PADDING) {
         int hlen = ret - (unsigned char *)s->init_buf->data;
-        /*
-         * The code in s23_clnt.c to build ClientHello messages includes the
-         * 5-byte record header in the buffer, while the code in s3_clnt.c
-         * does not.
-         */
-        if (s->state == SSL23_ST_CW_CLNT_HELLO_A)
-            hlen -= 5;
+
         if (hlen > 0xff && hlen < 0x200) {
             hlen = 0x200 - hlen;
             if (hlen >= 4)

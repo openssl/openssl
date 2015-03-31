@@ -208,7 +208,6 @@ $!
 $! Define The Different SSL "library" Files.
 $!
 $ LIB_SSL = "s3_meth,  s3_srvr, s3_clnt, s3_lib, s3_enc,s3_pkt,s3_both,s3_cbc,"+ -
-	    "s23_meth,s23_srvr,s23_clnt,s23_lib,       s23_pkt,"+ -
 	    "t1_meth,  t1_srvr, t1_clnt, t1_lib, t1_enc,       t1_ext,"+ -
 	    "d1_meth,  d1_srvr, d1_clnt, d1_lib,        d1_pkt,"+ -
 	    "d1_both,d1_srtp,"+ -
