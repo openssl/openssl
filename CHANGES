@@ -3,6 +3,15 @@
  _______________
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
+
+  *) Version negotiation has been rewritten. In particular SSLv23_method(),
+     SSLv23_client_method() and SSLv23_server_method() have been deprecated,
+     and turned into macros which simply call the new preferred function names
+     TLS_method(), TLS_client_method() and TLS_server_method(). All new code
+     should use the new names instead. Also as part of this change the ssl23.h
+     header file has been removed.
+     [Matt Caswell]
+
   *) Support for Kerberos ciphersuites in TLS (RFC2712) has been removed. This
      code and the associated standard is no longer considered fit-for-purpose.
      [Matt Caswell]
