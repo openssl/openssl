@@ -103,13 +103,6 @@ That's the sub header file dealing with the SSLv3 protocol only.
 I<Usually you don't have to include it explicitly because
 it's already included by ssl.h>.
 
-=item B<ssl23.h>
-
-That's the sub header file dealing with the combined use of different
-protocol version.
-I<Usually you don't have to include it explicitly because
-it's already included by ssl.h>.
-
 =item B<tls1.h>
 
 That's the sub header file dealing with the TLSv1 protocol only.

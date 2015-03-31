@@ -79,16 +79,16 @@ Each sub-library has a specific macro XXXerr() that is used to report
 errors. Its first argument is a function code B<XXX_F_...>, the second
 argument is a reason code B<XXX_R_...>. Function codes are derived
 from the function names; reason codes consist of textual error
-descriptions. For example, the function ssl23_read() reports a
+descriptions. For example, the function ssl3_read_bytes() reports a
 "handshake failure" as follows:
 
- SSLerr(SSL_F_SSL23_READ, SSL_R_SSL_HANDSHAKE_FAILURE);
+ SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_SSL_HANDSHAKE_FAILURE);
 
 Function and reason codes should consist of upper case characters,
 numbers and underscores only. The error file generation script translates
 function codes into function names by looking in the header files
 for an appropriate function name, if none is found it just uses
-the capitalized form such as "SSL23_READ" in the above example.
+the capitalized form such as "SSL3_READ_BYTES" in the above example.
 
 The trailing section of a reason code (after the "_R_") is translated
 into lower case and underscores changed to spaces.
