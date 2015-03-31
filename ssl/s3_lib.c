@@ -155,6 +155,7 @@
 #ifndef OPENSSL_NO_DH
 # include <openssl/dh.h>
 #endif
+#include <openssl/rand.h>
 
 const char ssl3_version_str[] = "SSLv3" OPENSSL_VERSION_PTEXT;
 
@@ -4237,4 +4238,27 @@ long ssl_get_algorithm2(SSL *s)
         && alg2 == (SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF))
         return SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256;
     return alg2;
+}
+
+/*
+ * Fill a ClientRandom or ServerRandom field of length len. Returns <= 0 on
+ * failure, 1 on success.
+ */
+int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, int len)
+{
+    int send_time = 0;
+
+    if (len < 4)
+        return 0;
+    if (server)
+        send_time = (s->mode & SSL_MODE_SEND_SERVERHELLO_TIME) != 0;
+    else
+        send_time = (s->mode & SSL_MODE_SEND_CLIENTHELLO_TIME) != 0;
+    if (send_time) {
+        unsigned long Time = (unsigned long)time(NULL);
+        unsigned char *p = result;
+        l2n(Time, p);
+        return RAND_bytes(p, len - 4);
+    } else
+        return RAND_bytes(result, len);
 }

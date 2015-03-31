@@ -1816,43 +1816,6 @@ const SSL_METHOD *func_name(void)  \
         return &func_name##_data; \
         }
 
-# define IMPLEMENT_ssl23_meth_func(func_name, s_accept, s_connect, s_get_meth) \
-const SSL_METHOD *func_name(void)  \
-        { \
-        static const SSL_METHOD func_name##_data= { \
-        TLS1_2_VERSION, \
-        tls1_new, \
-        tls1_clear, \
-        tls1_free, \
-        s_accept, \
-        s_connect, \
-        ssl23_read, \
-        ssl23_peek, \
-        ssl23_write, \
-        ssl_undefined_function, \
-        ssl_undefined_function, \
-        ssl_ok, \
-        ssl3_get_message, \
-        ssl3_read_bytes, \
-        ssl3_write_bytes, \
-        ssl3_dispatch_alert, \
-        ssl3_ctrl, \
-        ssl3_ctx_ctrl, \
-        ssl23_get_cipher_by_char, \
-        ssl23_put_cipher_by_char, \
-        ssl_undefined_const_function, \
-        ssl23_num_ciphers, \
-        ssl23_get_cipher, \
-        s_get_meth, \
-        ssl23_default_timeout, \
-        &TLSv1_2_enc_data, \
-        ssl_undefined_void_function, \
-        ssl3_callback_ctrl, \
-        ssl3_ctx_callback_ctrl, \
-        }; \
-        return &func_name##_data; \
-        }
-
 # define IMPLEMENT_dtls1_meth_func(version, func_name, s_accept, s_connect, \
                                         s_get_meth, enc_data) \
 const SSL_METHOD *func_name(void)  \
@@ -2024,15 +1987,6 @@ __owur long ssl3_default_timeout(void);
 __owur int ssl3_set_handshake_header(SSL *s, int htype, unsigned long len);
 __owur int ssl3_handshake_write(SSL *s);
 
-__owur int ssl23_num_ciphers(void);
-__owur const SSL_CIPHER *ssl23_get_cipher(unsigned int u);
-__owur int ssl23_read(SSL *s, void *buf, int len);
-__owur int ssl23_peek(SSL *s, void *buf, int len);
-__owur int ssl23_write(SSL *s, const void *buf, int len);
-__owur int ssl23_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p);
-__owur const SSL_CIPHER *ssl23_get_cipher_by_char(const unsigned char *p);
-__owur long ssl23_default_timeout(void);
-
 __owur int ssl_allow_compression(SSL *s);
 
 __owur long tls1_default_timeout(void);
@@ -2105,9 +2059,6 @@ __owur int ssl3_get_cert_verify(SSL *s);
 #  ifndef OPENSSL_NO_NEXTPROTONEG
 __owur int ssl3_get_next_proto(SSL *s);
 #  endif
-
-__owur int ssl23_accept(SSL *s);
-__owur int ssl23_connect(SSL *s);
 
 __owur int tls1_new(SSL *s);
 void tls1_free(SSL *s);

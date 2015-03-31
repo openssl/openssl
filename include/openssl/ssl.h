@@ -910,7 +910,6 @@ __owur int SSL_extension_supported(unsigned int ext_type);
 # include <openssl/ssl3.h>
 # include <openssl/tls1.h>      /* This is mostly sslv3 with a few tweaks */
 # include <openssl/dtls1.h>     /* Datagram TLS */
-# include <openssl/ssl23.h>
 # include <openssl/srtp.h>      /* Support for the use_srtp extension */
 
 #ifdef  __cplusplus
