@@ -285,7 +285,7 @@ $ LIB_BIO = "bio_lib,bio_cb,bio_err,"+ -
 	"bf_null,bf_buff,b_print,b_dump,"+ -
 	"b_sock,bss_acpt,bf_nbio,bss_log,bss_bio,"+ -
 	"bss_dgram,"+ -
-	"bf_lbuf,bss_rtcp"	! The last two are VMS specific
+	"bf_lbuf"	! The last one is VMS specific
 $ LIB_STACK = "stack"
 $ LIB_LHASH = "lhash,lh_stats"
 $ LIB_RAND = "md_rand,randfile,rand_lib,rand_err,rand_egd,"+ -
