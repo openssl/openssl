@@ -169,6 +169,12 @@ const char *X509_verify_cert_error_string(long n)
         return ("Certificate Transparency required, but no valid SCTs found");
     case X509_V_ERR_PROXY_SUBJECT_NAME_VIOLATION:
         return ("proxy subject name violation");
+    case X509_V_ERR_OCSP_VERIFY_NEEDED:
+        return("OCSP verification needed");
+    case X509_V_ERR_OCSP_VERIFY_FAILED:
+        return("OCSP verification failed");
+    case X509_V_ERR_OCSP_CERT_UNKNOWN:
+        return("OCSP unknown cert");
 
     default:
         /* Printing an error number into a static buffer is not thread-safe */
