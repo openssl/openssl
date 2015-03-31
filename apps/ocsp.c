@@ -64,7 +64,7 @@ static void print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
                               STACK_OF(OCSP_CERTID) *ids, long nsec,
                               long maxage);
 static void make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req,
-                              CA_DB *db, X509 *ca, X509 *rcert,
+                              CA_DB *db, STACK_OF(X509) *ca, X509 *rcert,
                               EVP_PKEY *rkey, const EVP_MD *md,
                               STACK_OF(X509) *rother, unsigned long flags,
                               int nmin, int ndays, int badsig);
@@ -192,7 +192,8 @@ int ocsp_main(int argc, char **argv)
     STACK_OF(OPENSSL_STRING) *reqnames = NULL;
     STACK_OF(X509) *sign_other = NULL, *verify_other = NULL, *rother = NULL;
     STACK_OF(X509) *issuers = NULL;
-    X509 *issuer = NULL, *cert = NULL, *rca_cert = NULL;
+    X509 *issuer = NULL, *cert = NULL;
+    STACK_OF(X509) *rca_cert = NULL;
     X509 *signer = NULL, *rsigner = NULL;
     X509_STORE *store = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
@@ -506,7 +507,9 @@ int ocsp_main(int argc, char **argv)
             BIO_printf(bio_err, "Error loading responder certificate\n");
             goto end;
         }
-        rca_cert = load_cert(rca_filename, FORMAT_PEM, "CA certificate");
+        if (!load_certs(rca_filename, &rca_cert, FORMAT_PEM,
+                        NULL, "CA certificate"))
+            goto end;
         if (rcertfile) {
             if (!load_certs(rcertfile, &rother, FORMAT_PEM, NULL,
                             "responder other certificates"))
@@ -725,7 +728,7 @@ int ocsp_main(int argc, char **argv)
     X509_free(cert);
     sk_X509_pop_free(issuers, X509_free);
     X509_free(rsigner);
-    X509_free(rca_cert);
+    sk_X509_pop_free(rca_cert, X509_free);
     free_index(rdb);
     BIO_free_all(cbio);
     BIO_free_all(acbio);
@@ -864,13 +867,13 @@ static void print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
 }
 
 static void make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req,
-                              CA_DB *db, X509 *ca, X509 *rcert,
+                              CA_DB *db, STACK_OF(X509) *ca, X509 *rcert,
                               EVP_PKEY *rkey, const EVP_MD *rmd,
                               STACK_OF(X509) *rother, unsigned long flags,
                               int nmin, int ndays, int badsig)
 {
     ASN1_TIME *thisupd = NULL, *nextupd = NULL;
-    OCSP_CERTID *cid, *ca_id = NULL;
+    OCSP_CERTID *cid;
     OCSP_BASICRESP *bs = NULL;
     int i, id_count;
 
@@ -892,6 +895,8 @@ static void make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req,
         OCSP_ONEREQ *one;
         ASN1_INTEGER *serial;
         char **inf;
+        int jj;
+        int found = 0;
         ASN1_OBJECT *cert_id_md_oid;
         const EVP_MD *cert_id_md;
         one = OCSP_request_onereq_get0(req, i);
@@ -905,11 +910,17 @@ static void make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req,
                                          NULL);
             goto end;
         }
-        OCSP_CERTID_free(ca_id);
-        ca_id = OCSP_cert_to_id(cert_id_md, NULL, ca);
+        for (jj = 0; jj < sk_X509_num(ca) && !found; jj++) {
+            X509 *ca_cert = sk_X509_value(ca, jj);
+            OCSP_CERTID *ca_id = OCSP_cert_to_id(cert_id_md, NULL, ca_cert);
 
-        /* Is this request about our CA? */
-        if (OCSP_id_issuer_cmp(ca_id, cid)) {
+            if (OCSP_id_issuer_cmp(ca_id, cid) == 0)
+                found = 1;
+
+            OCSP_CERTID_free(ca_id);
+        }
+
+        if (!found) {
             OCSP_basic_add1_status(bs, cid,
                                    V_OCSP_CERTSTATUS_UNKNOWN,
                                    0, NULL, thisupd, nextupd);
@@ -962,7 +973,6 @@ static void make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req,
  end:
     ASN1_TIME_free(thisupd);
     ASN1_TIME_free(nextupd);
-    OCSP_CERTID_free(ca_id);
     OCSP_BASICRESP_free(bs);
 }
 
