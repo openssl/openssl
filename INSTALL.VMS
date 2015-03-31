@@ -83,7 +83,6 @@ directory.  The syntax is the following:
       RSAREF    Just build the "[.xxx.EXE.RSAREF]LIBRSAGLUE.OLB" library.
       CRYPTO    Just build the "[.xxx.EXE.CRYPTO]LIBCRYPTO.OLB" library.
       SSL       Just build the "[.xxx.EXE.SSL]LIBSSL.OLB" library.
-      SSL_TASK  Just build the "[.xxx.EXE.SSL]SSL_TASK.EXE" program.
       TEST      Just build the "[.xxx.EXE.TEST]" test programs for OpenSSL.
       APPS      Just build the "[.xxx.EXE.APPS]" application programs for OpenSSL.
 

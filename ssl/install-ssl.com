@@ -61,40 +61,21 @@ $ root = root_dev + "[" + root_dir
 $!
 $ define /nolog wrk_sslroot 'root'.] /trans=conc
 $ define /nolog wrk_sslinclude wrk_sslroot:[include]
-$ define /nolog wrk_sslxexe wrk_sslroot:['archd'_exe]
 $ define /nolog wrk_sslxlib wrk_sslroot:['arch'_lib]
 $!
 $ if f$parse("wrk_sslroot:[000000]") .eqs. "" then -
    create /directory /log wrk_sslroot:[000000]
 $ if f$parse("wrk_sslinclude:") .eqs. "" then -
    create /directory /log wrk_sslinclude:
-$ if f$parse("wrk_sslxexe:") .eqs. "" then -
-   create /directory /log wrk_sslxexe:
 $ if f$parse("wrk_sslxlib:") .eqs. "" then -
    create /directory /log wrk_sslxlib:
 $!
 $ exheader := ssl.h, ssl2.h, ssl3.h, ssl23.h, tls1.h, dtls1.h, kssl.h, srtp.h
-$ e_exe := ssl_task
 $ libs := ssl_libssl
 $!
 $ xexe_dir := [-.'archd'.exe.ssl]
 $!
 $ copy /protection = w:re 'exheader' wrk_sslinclude: /log
-$!
-$ i = 0
-$ loop_exe:
-$   e = f$edit( f$element( i, ",", e_exe), "trim")
-$   i = i + 1
-$   if e .eqs. "," then goto loop_exe_end
-$   set noon
-$   file = xexe_dir+ e+ ".exe"
-$   if f$search( file) .nes. ""
-$   then
-$     copy /protection = w:re 'file' wrk_sslxexe: /log
-$   endif
-$   set on
-$ goto loop_exe
-$ loop_exe_end:
 $!
 $ i = 0
 $ loop_lib: 
@@ -122,7 +103,6 @@ $ tidy:
 $!
 $ call deass wrk_sslroot
 $ call deass wrk_sslinclude
-$ call deass wrk_sslxexe
 $ call deass wrk_sslxlib
 $!
 $ exit
