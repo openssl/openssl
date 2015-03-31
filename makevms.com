@@ -26,7 +26,6 @@ $!      CRYPTO    Just build the "[.xxx.EXE.CRYPTO]LIBCRYPTO.OLB" library.
 $!      CRYPTO/x  Just build the x part of the
 $!                "[.xxx.EXE.CRYPTO]LIBCRYPTO.OLB" library.
 $!      SSL       Just build the "[.xxx.EXE.SSL]LIBSSL.OLB" library.
-$!      SSL_TASK  Just build the "[.xxx.EXE.SSL]SSL_TASK.EXE" program.
 $!      TEST      Just build the "[.xxx.EXE.TEST]" test programs for OpenSSL.
 $!      APPS      Just build the "[.xxx.EXE.APPS]" application programs for OpenSSL.
 $!      ENGINES   Just build the "[.xxx.EXE.ENGINES]" application programs for OpenSSL.
@@ -157,10 +156,6 @@ $!
 $!  Build The [.xxx.EXE.SSL]LIBSSL.OLB Library.
 $!
 $   GOSUB SSL
-$!
-$!  Build The [.xxx.EXE.SSL]SSL_TASK.EXE DECNet SSL Engine.
-$!
-$   GOSUB SSL_TASK
 $!
 $!  Build The [.xxx.EXE.TEST] OpenSSL Test Utilities.
 $!
@@ -920,33 +915,6 @@ $! Time To Return.
 $!
 $ RETURN
 $!
-$! Build The "[.xxx.EXE.SSL]SSL_TASK.EXE" Program.
-$!
-$ SSL_TASK:
-$!
-$! Tell The User What We Are Doing.
-$!
-$ WRITE SYS$OUTPUT ""
-$ WRITE SYS$OUTPUT -
-   "Building DECNet Based SSL Engine, [.",ARCHD,".EXE.SSL]SSL_TASK.EXE"
-$!
-$! Go To The [.SSL] Directory.
-$!
-$ SET DEFAULT SYS$DISK:[.SSL]
-$!
-$! Build The [.xxx.EXE.SSL]SSL_TASK.EXE
-$!
-$ @SSL-LIB SSL_TASK 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" -
-   "''ISSEVEN'" "''POINTER_SIZE'" "''ZLIB'"
-$!
-$! Go Back To The Main Directory.
-$!
-$ SET DEFAULT [-]
-$!
-$! That's All, Time To RETURN.
-$!
-$ RETURN
-$!
 $! Build The OpenSSL Test Programs.
 $!
 $ TEST:
@@ -1057,7 +1025,7 @@ $!
 $   IF (P1.EQS."CONFIG").OR.(P1.EQS."BUILDINF").OR.(P1.EQS."SOFTLINKS") -
        .OR.(P1.EQS."BUILDALL") -
        .OR.(P1.EQS."CRYPTO").OR.(P1.EQS."SSL") -
-       .OR.(P1.EQS."SSL_TASK").OR.(P1.EQS."TEST").OR.(P1.EQS."APPS") -
+       .OR.(P1.EQS."TEST").OR.(P1.EQS."APPS") -
        .OR.(P1.EQS."ENGINES")
 $   THEN
 $!
@@ -1087,7 +1055,6 @@ $     WRITE SYS$OUTPUT "    CRYPTO   :  To Build Just The [.xxx.EXE.CRYPTO]LIBCR
 $     WRITE SYS$OUTPUT "    CRYPTO/x :  To Build Just The x Part Of The"
 $     WRITE SYS$OUTPUT "                [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library."
 $     WRITE SYS$OUTPUT "    SSL      :  To Build Just The [.xxx.EXE.SSL]LIBSSL.OLB Library."
-$     WRITE SYS$OUTPUT "    SSL_TASK :  To Build Just The [.xxx.EXE.SSL]SSL_TASK.EXE Program."
 $     WRITE SYS$OUTPUT "    TEST     :  To Build Just The OpenSSL Test Programs."
 $     WRITE SYS$OUTPUT "    APPS     :  To Build Just The OpenSSL Application Programs."
 $     WRITE SYS$OUTPUT "    ENGINES  :  To Build Just The ENGINES"
