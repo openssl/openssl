@@ -3553,6 +3553,13 @@ void SSL_CTX_set_cert_store(SSL_CTX *ctx, X509_STORE *store)
     ctx->cert_store = store;
 }
 
+void SSL_CTX_set1_cert_store(SSL_CTX *ctx, X509_STORE *store)
+{
+    if (store != NULL)
+        X509_STORE_up_ref(store);
+    SSL_CTX_set_cert_store(ctx, store);
+}
+
 int SSL_want(const SSL *s)
 {
     return (s->rwstate);
