@@ -692,6 +692,47 @@ DANE TLSA authentication is enabled, but no TLSA records matched the
 certificate chain.
 This error is only possible in L<s_client(1)>.
 
+=item B<X509_V_ERR_EE_KEY_TOO_SMALL>
+
+EE certificate key too weak.
+
+=item B<X509_ERR_CA_KEY_TOO_SMALL>
+
+CA certificate key too weak.
+
+=item B<X509_ERR_CA_MD_TOO_WEAK>
+
+CA signature digest algorithm too weak.
+
+=item B<X509_V_ERR_INVALID_CALL>
+
+nvalid certificate verification context.
+
+=item B<X509_V_ERR_STORE_LOOKUP>
+
+Issuer certificate lookup error.
+
+=item B<X509_V_ERR_NO_VALID_SCTS>
+
+Certificate Transparency required, but no valid SCTs found.
+
+=item B<X509_V_ERR_PROXY_SUBJECT_NAME_VIOLATION>
+
+Proxy subject name violation.
+
+=item B<X509_V_ERR_OCSP_VERIFY_NEEDED>
+
+Returned by the verify callback to indicate an OCSP verification is needed.
+
+=item B<X509_V_ERR_OCSP_VERIFY_FAILED>
+
+Returned by the verify callback to indicate OCSP verification failed.
+
+=item B<X509_V_ERR_OCSP_CERT_UNKNOWN>
+
+Returned by the verify callback to indicate that the certificate is not recognized
+by the OCSP responder.
+
 =back
 
 =head1 BUGS
