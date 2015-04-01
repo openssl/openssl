@@ -637,8 +637,7 @@ p_enc.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 p_enc.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 p_enc.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 p_enc.o: ../../include/openssl/x509_vfy.h ../cryptlib.h p_enc.c
-p_lib.o: ../../e_os.h ../../include/openssl/asn1.h
-p_lib.o: ../../include/openssl/asn1_mac.h ../../include/openssl/bio.h
+p_lib.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 p_lib.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 p_lib.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
 p_lib.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
