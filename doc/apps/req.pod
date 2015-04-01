@@ -30,7 +30,6 @@ B<openssl> B<req>
 [B<-keygen_engine id>]
 [B<-[digest]>]
 [B<-config filename>]
-[B<-subj arg>]
 [B<-multivalue-rdn>]
 [B<-x509>]
 [B<-days n>]
@@ -212,13 +211,6 @@ GOST R 34.11-94 (B<-md_gost94>).
 this allows an alternative configuration file to be specified,
 this overrides the compile time filename or any specified in
 the B<OPENSSL_CONF> environment variable.
-
-=item B<-subj arg>
-
-sets subject name for new request or supersedes the subject name
-when processing a request.
-The arg must be formatted as I</type0=value0/type1=value1/type2=...>,
-characters may be escaped by \ (backslash), no spaces are skipped.
 
 =item B<-multivalue-rdn>
 
