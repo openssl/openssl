@@ -506,16 +506,16 @@ Examine and verify certificate request:
 
 Create a private key and then generate a certificate request from it:
 
- openssl genrsa -out key.pem 1024
+ openssl genrsa -out key.pem 2048
  openssl req -new -key key.pem -out req.pem
 
 The same but just using req:
 
- openssl req -newkey rsa:1024 -keyout key.pem -out req.pem
+ openssl req -newkey rsa:2048 -keyout key.pem -out req.pem
 
 Generate a self signed root certificate:
 
- openssl req -x509 -newkey rsa:1024 -keyout key.pem -out req.pem
+ openssl req -x509 -newkey rsa:2048 -keyout key.pem -out req.pem
 
 Example of a file pointed to by the B<oid_file> option:
 
@@ -531,7 +531,7 @@ expansion:
 Sample configuration file prompting for field values:
 
  [ req ]
- default_bits		= 1024
+ default_bits		= 2048
  default_keyfile 	= privkey.pem
  distinguished_name	= req_distinguished_name
  attributes		= req_attributes
@@ -572,7 +572,7 @@ Sample configuration containing all field values:
  RANDFILE		= $ENV::HOME/.rnd
 
  [ req ]
- default_bits		= 1024
+ default_bits		= 2048
  default_keyfile 	= keyfile.pem
  distinguished_name	= req_distinguished_name
  attributes		= req_attributes
