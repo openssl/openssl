@@ -524,8 +524,8 @@ v3_scts.o: ../../include/openssl/ssl2.h ../../include/openssl/ssl23.h
 v3_scts.o: ../../include/openssl/ssl3.h ../../include/openssl/stack.h
 v3_scts.o: ../../include/openssl/symhacks.h ../../include/openssl/tls1.h
 v3_scts.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-v3_scts.o: ../../include/openssl/x509v3.h ../../ssl/ssl_locl.h ../cryptlib.h
-v3_scts.o: v3_scts.c
+v3_scts.o: ../../include/openssl/x509v3.h ../../ssl/record/record.h
+v3_scts.o: ../../ssl/ssl_locl.h ../cryptlib.h v3_scts.c
 v3_skey.o: ../../e_os.h ../../include/openssl/asn1.h
 v3_skey.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 v3_skey.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
