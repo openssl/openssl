@@ -50,8 +50,20 @@ $hi="HI";
 $lo="LO";
 # ====================================================================
 
-while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
-open STDOUT,">$output";
+$flavour = shift;
+if ($flavour=~/^\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
+else { while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {} }
+
+if ($flavour && $flavour ne "void") {
+    $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+    ( $xlate="${dir}arm-xlate.pl" and -f $xlate ) or
+    ( $xlate="${dir}../../perlasm/arm-xlate.pl" and -f $xlate) or
+    die "can't locate arm-xlate.pl";
+
+    open STDOUT,"| \"$^X\" $xlate $flavour $output";
+} else {
+    open STDOUT,">$output";
+}
 
 $ctx="r0";	# parameter block
 $inp="r1";
@@ -200,7 +212,7 @@ $code=<<___;
 #endif
 
 .text
-#if __ARM_ARCH__<7
+#if __ARM_ARCH__<7 || defined(__APPLE__)
 .code	32
 #else
 .syntax unified
@@ -258,7 +270,7 @@ WORD64(0x5fcb6fab,0x3ad6faec, 0x6c44198c,0x4a475817)
 .size	K512,.-K512
 #if __ARM_MAX_ARCH__>=7 && !defined(__KERNEL__)
 .LOPENSSL_armcap:
-.word	OPENSSL_armcap_P-sha512_block_data_order
+.word	OPENSSL_armcap_P-.Lsha512_block_data_order
 .skip	32-4
 #else
 .skip	32
@@ -267,6 +279,7 @@ WORD64(0x5fcb6fab,0x3ad6faec, 0x6c44198c,0x4a475817)
 .global	sha512_block_data_order
 .type	sha512_block_data_order,%function
 sha512_block_data_order:
+.Lsha512_block_data_order:
 #if __ARM_ARCH__<7
 	sub	r3,pc,#8		@ sha512_block_data_order
 #else
@@ -275,6 +288,9 @@ sha512_block_data_order:
 #if __ARM_MAX_ARCH__>=7 && !defined(__KERNEL__)
 	ldr	r12,.LOPENSSL_armcap
 	ldr	r12,[r3,r12]		@ OPENSSL_armcap_P
+#ifdef	__APPLE__
+	ldr	r12,[r12]
+#endif
 	tst	r12,#1
 	bne	.LNEON
 #endif
@@ -593,8 +609,8 @@ sha512_block_data_order_neon:
 .LNEON:
 	dmb				@ errata #451034 on early Cortex A8
 	add	$len,$inp,$len,lsl#7	@ len to point at the end of inp
+	adr	$Ktbl,K512
 	VFP_ABI_PUSH
-	adrl	$Ktbl,K512
 	vldmia	$ctx,{$A-$H}		@ load context
 .Loop_neon:
 ___

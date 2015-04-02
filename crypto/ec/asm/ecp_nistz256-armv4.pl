@@ -27,15 +27,19 @@
 # operation. Keep in mind that +200% means 3x improvement.
 
 $flavour = shift;
-while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
+if ($flavour=~/^\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
+else { while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {} }
 
-$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
-( $xlate="${dir}arm-xlate.pl" and -f $xlate ) or
-( $xlate="${dir}../../perlasm/arm-xlate.pl" and -f $xlate) or
-die "can't locate arm-xlate.pl";
+if ($flavour && $flavour ne "void") {
+    $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+    ( $xlate="${dir}arm-xlate.pl" and -f $xlate ) or
+    ( $xlate="${dir}../../perlasm/arm-xlate.pl" and -f $xlate) or
+    die "can't locate arm-xlate.pl";
 
-open OUT,"| \"$^X\" $xlate $flavour $output";
-*STDOUT=*OUT;
+    open STDOUT,"| \"$^X\" $xlate $flavour $output";
+} else {
+    open STDOUT,">$output";
+}
 
 $code.=<<___;
 #include "arm_arch.h"
@@ -129,7 +133,7 @@ ecp_nistz256_from_mont:
 .align	4
 ecp_nistz256_mul_by_2:
 	stmdb	sp!,{r4-r12,lr}
-	bl	_ecp_nistz256_mul_by_2
+	bl	__ecp_nistz256_mul_by_2
 #if __ARM_ARCH__>=5 || !defined(__thumb__)
 	ldmia	sp!,{r4-r12,pc}
 #else
@@ -138,9 +142,9 @@ ecp_nistz256_mul_by_2:
 #endif
 .size	ecp_nistz256_mul_by_2,.-ecp_nistz256_mul_by_2
 
-.type	_ecp_nistz256_mul_by_2,%function
+.type	__ecp_nistz256_mul_by_2,%function
 .align	4
-_ecp_nistz256_mul_by_2:
+__ecp_nistz256_mul_by_2:
 	ldr	$a0,[$a_ptr,#0]
 	ldr	$a1,[$a_ptr,#4]
 	ldr	$a2,[$a_ptr,#8]
@@ -161,7 +165,7 @@ _ecp_nistz256_mul_by_2:
 	movcs	$ff,#-1			@ $ff = carry ? -1 : 0
 
 	b	.Lreduce_by_sub
-.size	_ecp_nistz256_mul_by_2,.-_ecp_nistz256_mul_by_2
+.size	__ecp_nistz256_mul_by_2,.-__ecp_nistz256_mul_by_2
 
 @ void	ecp_nistz256_add(BN_ULONG r0[8],const BN_ULONG r1[8],
 @					const BN_ULONG r2[8]);
@@ -170,7 +174,7 @@ _ecp_nistz256_mul_by_2:
 .align	4
 ecp_nistz256_add:
 	stmdb	sp!,{r4-r12,lr}
-	bl	_ecp_nistz256_add
+	bl	__ecp_nistz256_add
 #if __ARM_ARCH__>=5 || !defined(__thumb__)
 	ldmia	sp!,{r4-r12,pc}
 #else
@@ -179,9 +183,9 @@ ecp_nistz256_add:
 #endif
 .size	ecp_nistz256_add,.-ecp_nistz256_add
 
-.type	_ecp_nistz256_add,%function
+.type	__ecp_nistz256_add,%function
 .align	4
-_ecp_nistz256_add:
+__ecp_nistz256_add:
 	str	lr,[sp,#-4]!		@ push lr
 
 	ldr	$a0,[$a_ptr,#0]
@@ -239,7 +243,7 @@ _ecp_nistz256_add:
 	str	$a7,[$r_ptr,#28]
 
 	mov	pc,lr
-.size	_ecp_nistz256_add,.-_ecp_nistz256_add
+.size	__ecp_nistz256_add,.-__ecp_nistz256_add
 
 @ void	ecp_nistz256_mul_by_3(BN_ULONG r0[8],const BN_ULONG r1[8]);
 .globl	ecp_nistz256_mul_by_3
@@ -247,7 +251,7 @@ _ecp_nistz256_add:
 .align	4
 ecp_nistz256_mul_by_3:
 	stmdb	sp!,{r4-r12,lr}
-	bl	_ecp_nistz256_mul_by_3
+	bl	__ecp_nistz256_mul_by_3
 #if __ARM_ARCH__>=5 || !defined(__thumb__)
 	ldmia	sp!,{r4-r12,pc}
 #else
@@ -256,13 +260,13 @@ ecp_nistz256_mul_by_3:
 #endif
 .size	ecp_nistz256_mul_by_3,.-ecp_nistz256_mul_by_3
 
-.type	_ecp_nistz256_mul_by_3,%function
+.type	__ecp_nistz256_mul_by_3,%function
 .align	4
-_ecp_nistz256_mul_by_3:
+__ecp_nistz256_mul_by_3:
 	str	lr,[sp,#-4]!		@ push lr
 
 	@ As multiplication by 3 is performed as 2*n+n, below are inline
-	@ copies of _ecp_nistz256_mul_by_2 and _ecp_nistz256_add, see
+	@ copies of __ecp_nistz256_mul_by_2 and __ecp_nistz256_add, see
 	@ corresponding subroutines for details.
 
 	ldr	$a0,[$a_ptr,#0]
@@ -326,7 +330,7 @@ _ecp_nistz256_mul_by_3:
 .align	4
 ecp_nistz256_div_by_2:
 	stmdb	sp!,{r4-r12,lr}
-	bl	_ecp_nistz256_div_by_2
+	bl	__ecp_nistz256_div_by_2
 #if __ARM_ARCH__>=5 || !defined(__thumb__)
 	ldmia	sp!,{r4-r12,pc}
 #else
@@ -335,9 +339,9 @@ ecp_nistz256_div_by_2:
 #endif
 .size	ecp_nistz256_div_by_2,.-ecp_nistz256_div_by_2
 
-.type	_ecp_nistz256_div_by_2,%function
+.type	__ecp_nistz256_div_by_2,%function
 .align	4
-_ecp_nistz256_div_by_2:
+__ecp_nistz256_div_by_2:
 	@ ret = (a is odd ? a+mod : a) >> 1
 
 	ldr	$a0,[$a_ptr,#0]
@@ -392,16 +396,16 @@ _ecp_nistz256_div_by_2:
 	str	$a7,[$r_ptr,#28]
 
 	mov	pc,lr
-.size	_ecp_nistz256_div_by_2,.-_ecp_nistz256_div_by_2
+.size	__ecp_nistz256_div_by_2,.-__ecp_nistz256_div_by_2
 
 @ void	ecp_nistz256_sub(BN_ULONG r0[8],const BN_ULONG r1[8],
-@				       const BN_ULONG r2[8]);
+@				        const BN_ULONG r2[8]);
 .globl	ecp_nistz256_sub
 .type	ecp_nistz256_sub,%function
 .align	4
 ecp_nistz256_sub:
 	stmdb	sp!,{r4-r12,lr}
-	bl	_ecp_nistz256_sub
+	bl	__ecp_nistz256_sub
 #if __ARM_ARCH__>=5 || !defined(__thumb__)
 	ldmia	sp!,{r4-r12,pc}
 #else
@@ -410,9 +414,9 @@ ecp_nistz256_sub:
 #endif
 .size	ecp_nistz256_sub,.-ecp_nistz256_sub
 
-.type	_ecp_nistz256_sub,%function
+.type	__ecp_nistz256_sub,%function
 .align	4
-_ecp_nistz256_sub:
+__ecp_nistz256_sub:
 	str	lr,[sp,#-4]!		@ push lr
 
 	ldr	$a0,[$a_ptr,#0]
@@ -469,7 +473,7 @@ _ecp_nistz256_sub:
 	str	$a7,[$r_ptr,#28]
 
 	mov	pc,lr
-.size	_ecp_nistz256_sub,.-_ecp_nistz256_sub
+.size	__ecp_nistz256_sub,.-__ecp_nistz256_sub
 
 @ void	ecp_nistz256_neg(BN_ULONG r0[8],const BN_ULONG r1[8]);
 .globl	ecp_nistz256_neg
@@ -477,7 +481,7 @@ _ecp_nistz256_sub:
 .align	4
 ecp_nistz256_neg:
 	stmdb	sp!,{r4-r12,lr}
-	bl	_ecp_nistz256_neg
+	bl	__ecp_nistz256_neg
 #if __ARM_ARCH__>=5 || !defined(__thumb__)
 	ldmia	sp!,{r4-r12,pc}
 #else
@@ -486,9 +490,9 @@ ecp_nistz256_neg:
 #endif
 .size	ecp_nistz256_neg,.-ecp_nistz256_neg
 
-.type	_ecp_nistz256_neg,%function
+.type	__ecp_nistz256_neg,%function
 .align	4
-_ecp_nistz256_neg:
+__ecp_nistz256_neg:
 	ldr	$a0,[$a_ptr,#0]
 	eor	$ff,$ff,$ff
 	ldr	$a1,[$a_ptr,#4]
@@ -509,7 +513,7 @@ _ecp_nistz256_neg:
 	sbc	$ff,$ff,$ff
 
 	b	.Lreduce_by_add
-.size	_ecp_nistz256_neg,.-_ecp_nistz256_neg
+.size	__ecp_nistz256_neg,.-__ecp_nistz256_neg
 ___
 {
 my @acc=map("r$_",(3..11));
@@ -533,7 +537,7 @@ ecp_nistz256_sqr_mont:
 ecp_nistz256_mul_mont:
 .Lecp_nistz256_mul_mont:
 	stmdb	sp!,{r4-r12,lr}
-	bl	_ecp_nistz256_mul_mont
+	bl	__ecp_nistz256_mul_mont
 #if __ARM_ARCH__>=5 || !defined(__thumb__)
 	ldmia	sp!,{r4-r12,pc}
 #else
@@ -542,9 +546,9 @@ ecp_nistz256_mul_mont:
 #endif
 .size	ecp_nistz256_mul_mont,.-ecp_nistz256_mul_mont
 
-.type	_ecp_nistz256_mul_mont,%function
+.type	__ecp_nistz256_mul_mont,%function
 .align	4
-_ecp_nistz256_mul_mont:
+__ecp_nistz256_mul_mont:
 	stmdb	sp!,{r0-r2,lr}			@ make a copy of arguments too
 
 	ldr	$bj,[$b_ptr,#0]			@ b[0]
@@ -675,14 +679,14 @@ $code.=<<___;
 	@ "other way around", namely subtract modulus from result
 	@ and if it borrowed, add modulus back.
 
-	subs	@acc[1],@acc[1],#-1		@ compare to modulus
-	sbcs	@acc[2],@acc[2],#-1
-	sbcs	@acc[3],@acc[3],#-1
+	adds	@acc[1],@acc[1],#1		@ subs	@acc[1],@acc[1],#-1
+	adcs	@acc[2],@acc[2],#0		@ sbcs	@acc[2],@acc[2],#-1
+	adcs	@acc[3],@acc[3],#0		@ sbcs	@acc[3],@acc[3],#-1
 	sbcs	@acc[4],@acc[4],#0
 	sbcs	@acc[5],@acc[5],#0
 	sbcs	@acc[6],@acc[6],#0
 	sbcs	@acc[7],@acc[7],#1
-	sbcs	@acc[8],@acc[8],#-1
+	adcs	@acc[8],@acc[8],#0		@ sbcs	@acc[8],@acc[8],#-1
 	ldr	lr,[sp,#44]			@ restore lr
 	sbc	@acc[0],@acc[0],#0		@ broadcast borrow bit
 	add	sp,sp,#48
@@ -710,7 +714,7 @@ $code.=<<___;
 	str	@acc[8],[$r_ptr,#28]
 
 	mov	pc,lr
-.size	_ecp_nistz256_mul_mont,.-_ecp_nistz256_mul_mont
+.size	__ecp_nistz256_mul_mont,.-__ecp_nistz256_mul_mont
 ___
 }
 
@@ -1064,7 +1068,7 @@ ___
 {{{
 ########################################################################
 # Below $aN assignment matches order in which 256-bit result appears in
-# register bank at return from _ecp_nistz256_mul_mont, so that we can
+# register bank at return from __ecp_nistz256_mul_mont, so that we can
 # skip over reloading it from memory. This means that below functions
 # use custom calling sequence accepting 256-bit input in registers,
 # output pointer in r0, $r_ptr, and optional pointer in r2, $b_ptr.
@@ -1164,9 +1168,9 @@ __ecp_nistz256_sub_morf:
 	mov	pc,lr
 .size	__ecp_nistz256_sub_morf,.-__ecp_nistz256_sub_morf
 
-.type	__ecp_nistz256_mul_by_2,%function
+.type	__ecp_nistz256_add_self,%function
 .align	4
-__ecp_nistz256_mul_by_2:
+__ecp_nistz256_add_self:
 	adds	$a0,$a0,$a0		@ a[0:7]+=a[0:7]
 	adcs	$a1,$a1,$a1
 	adcs	$a2,$a2,$a2
@@ -1196,7 +1200,7 @@ __ecp_nistz256_mul_by_2:
 	str	$a7,[$r_ptr,#28]
 
 	mov	pc,lr
-.size	__ecp_nistz256_mul_by_2,.-__ecp_nistz256_mul_by_2
+.size	__ecp_nistz256_add_self,.-__ecp_nistz256_add_self
 
 ___
 
@@ -1227,69 +1231,69 @@ ecp_nistz256_point_double:
 	stmia	r3,{r4-r11}
 
 	add	$r_ptr,sp,#$S
-	bl	_ecp_nistz256_mul_by_2	@ p256_mul_by_2(S, in_y);
+	bl	__ecp_nistz256_mul_by_2	@ p256_mul_by_2(S, in_y);
 
 	add	$b_ptr,$a_ptr,#32
 	add	$a_ptr,$a_ptr,#32
 	add	$r_ptr,sp,#$Zsqr
-	bl	_ecp_nistz256_mul_mont	@ p256_sqr_mont(Zsqr, in_z);
+	bl	__ecp_nistz256_mul_mont	@ p256_sqr_mont(Zsqr, in_z);
 
 	add	$a_ptr,sp,#$S
 	add	$b_ptr,sp,#$S
 	add	$r_ptr,sp,#$S
-	bl	_ecp_nistz256_mul_mont	@ p256_sqr_mont(S, S);
+	bl	__ecp_nistz256_mul_mont	@ p256_sqr_mont(S, S);
 
 	ldr	$b_ptr,[sp,#32*5+4]
 	add	$a_ptr,$b_ptr,#32
 	add	$b_ptr,$b_ptr,#64
 	add	$r_ptr,sp,#$tmp0
-	bl	_ecp_nistz256_mul_mont	@ p256_mul_mont(tmp0, in_z, in_y);
+	bl	__ecp_nistz256_mul_mont	@ p256_mul_mont(tmp0, in_z, in_y);
 
 	ldr	$r_ptr,[sp,#32*5]
 	add	$r_ptr,$r_ptr,#64
-	bl	__ecp_nistz256_mul_by_2	@ p256_mul_by_2(res_z, tmp0);
+	bl	__ecp_nistz256_add_self	@ p256_mul_by_2(res_z, tmp0);
 
 	add	$a_ptr,sp,#$in_x
 	add	$b_ptr,sp,#$Zsqr
 	add	$r_ptr,sp,#$M
-	bl	_ecp_nistz256_add	@ p256_add(M, in_x, Zsqr);
+	bl	__ecp_nistz256_add	@ p256_add(M, in_x, Zsqr);
 
 	add	$a_ptr,sp,#$in_x
 	add	$b_ptr,sp,#$Zsqr
 	add	$r_ptr,sp,#$Zsqr
-	bl	_ecp_nistz256_sub	@ p256_sub(Zsqr, in_x, Zsqr);
+	bl	__ecp_nistz256_sub	@ p256_sub(Zsqr, in_x, Zsqr);
 
 	add	$a_ptr,sp,#$S
 	add	$b_ptr,sp,#$S
 	add	$r_ptr,sp,#$tmp0
-	bl	_ecp_nistz256_mul_mont	@ p256_sqr_mont(tmp0, S);
+	bl	__ecp_nistz256_mul_mont	@ p256_sqr_mont(tmp0, S);
 
 	add	$a_ptr,sp,#$Zsqr
 	add	$b_ptr,sp,#$M
 	add	$r_ptr,sp,#$M
-	bl	_ecp_nistz256_mul_mont	@ p256_mul_mont(M, M, Zsqr);
+	bl	__ecp_nistz256_mul_mont	@ p256_mul_mont(M, M, Zsqr);
 
 	ldr	$r_ptr,[sp,#32*5]
 	add	$a_ptr,sp,#$tmp0
 	add	$r_ptr,$r_ptr,#32
-	bl	_ecp_nistz256_div_by_2	@ p256_div_by_2(res_y, tmp0);
+	bl	__ecp_nistz256_div_by_2	@ p256_div_by_2(res_y, tmp0);
 
 	add	$a_ptr,sp,#$M
 	add	$r_ptr,sp,#$M
-	bl	_ecp_nistz256_mul_by_3	@ p256_mul_by_3(M, M);
+	bl	__ecp_nistz256_mul_by_3	@ p256_mul_by_3(M, M);
 
 	add	$a_ptr,sp,#$in_x
 	add	$b_ptr,sp,#$S
 	add	$r_ptr,sp,#$S
-	bl	_ecp_nistz256_mul_mont	@ p256_mul_mont(S, S, in_x);
+	bl	__ecp_nistz256_mul_mont	@ p256_mul_mont(S, S, in_x);
 
 	add	$r_ptr,sp,#$tmp0
-	bl	__ecp_nistz256_mul_by_2	@ p256_mul_by_2(tmp0, S);
+	bl	__ecp_nistz256_add_self	@ p256_mul_by_2(tmp0, S);
 
 	ldr	$r_ptr,[sp,#32*5]
 	add	$a_ptr,sp,#$M
 	add	$b_ptr,sp,#$M
-	bl	_ecp_nistz256_mul_mont	@ p256_sqr_mont(res_x, M);
+	bl	__ecp_nistz256_mul_mont	@ p256_sqr_mont(res_x, M);
 
 	add	$b_ptr,sp,#$tmp0
 	bl	__ecp_nistz256_sub_from	@ p256_sub(res_x, res_x, tmp0);
@@ -1300,7 +1304,7 @@ ecp_nistz256_point_double:
 
 	add	$a_ptr,sp,#$M
 	add	$b_ptr,sp,#$S
-	bl	_ecp_nistz256_mul_mont	@ p256_mul_mont(S, S, M);
+	bl	__ecp_nistz256_mul_mont	@ p256_mul_mont(S, S, M);
 
 	ldr	$r_ptr,[sp,#32*5]
 	add	$b_ptr,$r_ptr,#32
@@ -1398,32 +1402,32 @@ ecp_nistz256_point_add:
 	add	$a_ptr,sp,#$in2_z
 	add	$b_ptr,sp,#$in2_z
 	add	$r_ptr,sp,#$Z2sqr
-	bl	_ecp_nistz256_mul_mont	@ p256_sqr_mont(Z2sqr, in2_z);
+	bl	__ecp_nistz256_mul_mont	@ p256_sqr_mont(Z2sqr, in2_z);
 
 	add	$a_ptr,sp,#$in1_z
 	add	$b_ptr,sp,#$in1_z
 	add	$r_ptr,sp,#$Z1sqr
-	bl	_ecp_nistz256_mul_mont	@ p256_sqr_mont(Z1sqr, in1_z);
+	bl	__ecp_nistz256_mul_mont	@ p256_sqr_mont(Z1sqr, in1_z);
 
 	add	$a_ptr,sp,#$in2_z
 	add	$b_ptr,sp,#$Z2sqr
 	add	$r_ptr,sp,#$S1
-	bl	_ecp_nistz256_mul_mont	@ p256_mul_mont(S1, Z2sqr, in2_z);
+	bl	__ecp_nistz256_mul_mont	@ p256_mul_mont(S1, Z2sqr, in2_z);
 
 	add	$a_ptr,sp,#$in1_z
 	add	$b_ptr,sp,#$Z1sqr
 	add	$r_ptr,sp,#$S2
-	bl	_ecp_nistz256_mul_mont	@ p256_mul_mont(S2, Z1sqr, in1_z);
+	bl	__ecp_nistz256_mul_mont	@ p256_mul_mont(S2, Z1sqr, in1_z);
 
 	add	$a_ptr,sp,#$in1_y
 	add	$b_ptr,sp,#$S1
 	add	$r_ptr,sp,#$S1
-	bl	_ecp_nistz256_mul_mont	@ p256_mul_mont(S1, S1, in1_y);
+	bl	__ecp_nistz256_mul_mont	@ p256_mul_mont(S1, S1, in1_y);
 
 	add	$a_ptr,sp,#$in2_y
 	add	$b_ptr,sp,#$S2
 	add	$r_ptr,sp,#$S2
-	bl	_ecp_nistz256_mul_mont	@ p256_mul_mont(S2, S2, in2_y);
+	bl	__ecp_nistz256_mul_mont	@ p256_mul_mont(S2, S2, in2_y);
 
 	add	$b_ptr,sp,#$S1
 	add	$r_ptr,sp,#$R
@@ -1441,12 +1445,12 @@ ecp_nistz256_point_add:
 	str	$a0,[sp,#32*18+12]
 
 	add	$r_ptr,sp,#$U1
-	bl	_ecp_nistz256_mul_mont	@ p256_mul_mont(U1, in1_x, Z2sqr);
+	bl	__ecp_nistz256_mul_mont	@ p256_mul_mont(U1, in1_x, Z2sqr);
 
 	add	$a_ptr,sp,#$in2_x
 	add	$b_ptr,sp,#$Z1sqr
 	add	$r_ptr,sp,#$U2
-	bl	_ecp_nistz256_mul_mont	@ p256_mul_mont(U2, in2_x, Z1sqr);
+	bl	__ecp_nistz256_mul_mont	@ p256_mul_mont(U2, in2_x, Z1sqr);
 
 	add	$b_ptr,sp,#$U1
 	add	$r_ptr,sp,#$H
@@ -1489,35 +1493,35 @@ ecp_nistz256_point_add:
 	add	$a_ptr,sp,#$R
 	add	$b_ptr,sp,#$R
 	add	$r_ptr,sp,#$Rsqr
-	bl	_ecp_nistz256_mul_mont	@ p256_sqr_mont(Rsqr, R);
+	bl	__ecp_nistz256_mul_mont	@ p256_sqr_mont(Rsqr, R);
 
 	add	$a_ptr,sp,#$H
 	add	$b_ptr,sp,#$in1_z
 	add	$r_ptr,sp,#$res_z
-	bl	_ecp_nistz256_mul_mont	@ p256_mul_mont(res_z, H, in1_z);
+	bl	__ecp_nistz256_mul_mont	@ p256_mul_mont(res_z, H, in1_z);
 
 	add	$a_ptr,sp,#$H
 	add	$b_ptr,sp,#$H
 	add	$r_ptr,sp,#$Hsqr
-	bl	_ecp_nistz256_mul_mont	@ p256_sqr_mont(Hsqr, H);
+	bl	__ecp_nistz256_mul_mont	@ p256_sqr_mont(Hsqr, H);
 
 	add	$a_ptr,sp,#$in2_z
 	add	$b_ptr,sp,#$res_z
 	add	$r_ptr,sp,#$res_z
-	bl	_ecp_nistz256_mul_mont	@ p256_mul_mont(res_z, res_z, in2_z);
+	bl	__ecp_nistz256_mul_mont	@ p256_mul_mont(res_z, res_z, in2_z);
 
 	add	$a_ptr,sp,#$H
 	add	$b_ptr,sp,#$Hsqr
 	add	$r_ptr,sp,#$Hcub
-	bl	_ecp_nistz256_mul_mont	@ p256_mul_mont(Hcub, Hsqr, H);
+	bl	__ecp_nistz256_mul_mont	@ p256_mul_mont(Hcub, Hsqr, H);
 
 	add	$a_ptr,sp,#$Hsqr
 	add	$b_ptr,sp,#$U1
 	add	$r_ptr,sp,#$U2
-	bl	_ecp_nistz256_mul_mont	@ p256_mul_mont(U2, U1, Hsqr);
+	bl	__ecp_nistz256_mul_mont	@ p256_mul_mont(U2, U1, Hsqr);
 
 	add	$r_ptr,sp,#$Hsqr
-	bl	__ecp_nistz256_mul_by_2	@ p256_mul_by_2(Hsqr, U2);
+	bl	__ecp_nistz256_add_self	@ p256_mul_by_2(Hsqr, U2);
 
 	add	$b_ptr,sp,#$Rsqr
 	add	$r_ptr,sp,#$res_x
@@ -1533,12 +1537,12 @@ ecp_nistz256_point_add:
 	add	$a_ptr,sp,#$Hcub
 	add	$b_ptr,sp,#$S1
 	add	$r_ptr,sp,#$S2
-	bl	_ecp_nistz256_mul_mont	@ p256_mul_mont(S2, S1, Hcub);
+	bl	__ecp_nistz256_mul_mont	@ p256_mul_mont(S2, S1, Hcub);
 
 	add	$a_ptr,sp,#$R
 	add	$b_ptr,sp,#$res_y
 	add	$r_ptr,sp,#$res_y
-	bl	_ecp_nistz256_mul_mont	@ p256_mul_mont(res_y, res_y, R);
+	bl	__ecp_nistz256_mul_mont	@ p256_mul_mont(res_y, res_y, R);
 
 	add	$b_ptr,sp,#$S2
 	bl	__ecp_nistz256_sub_from	@ p256_sub(res_y, res_y, S2);
@@ -1663,12 +1667,12 @@ ecp_nistz256_point_add_affine:
 	add	$a_ptr,sp,#$in1_z
 	add	$b_ptr,sp,#$in1_z
 	add	$r_ptr,sp,#$Z1sqr
-	bl	_ecp_nistz256_mul_mont	@ p256_sqr_mont(Z1sqr, in1_z);
+	bl	__ecp_nistz256_mul_mont	@ p256_sqr_mont(Z1sqr, in1_z);
 
 	add	$a_ptr,sp,#$Z1sqr
 	add	$b_ptr,sp,#$in2_x
 	add	$r_ptr,sp,#$U2
-	bl	_ecp_nistz256_mul_mont	@ p256_mul_mont(U2, Z1sqr, in2_x);
+	bl	__ecp_nistz256_mul_mont	@ p256_mul_mont(U2, Z1sqr, in2_x);
 
 	add	$b_ptr,sp,#$in1_x
 	add	$r_ptr,sp,#$H
@@ -1677,17 +1681,17 @@ ecp_nistz256_point_add_affine:
 	add	$a_ptr,sp,#$Z1sqr
 	add	$b_ptr,sp,#$in1_z
 	add	$r_ptr,sp,#$S2
-	bl	_ecp_nistz256_mul_mont	@ p256_mul_mont(S2, Z1sqr, in1_z);
+	bl	__ecp_nistz256_mul_mont	@ p256_mul_mont(S2, Z1sqr, in1_z);
 
 	add	$a_ptr,sp,#$H
 	add	$b_ptr,sp,#$in1_z
 	add	$r_ptr,sp,#$res_z
-	bl	_ecp_nistz256_mul_mont	@ p256_mul_mont(res_z, H, in1_z);
+	bl	__ecp_nistz256_mul_mont	@ p256_mul_mont(res_z, H, in1_z);
 
 	add	$a_ptr,sp,#$in2_y
 	add	$b_ptr,sp,#$S2
 	add	$r_ptr,sp,#$S2
-	bl	_ecp_nistz256_mul_mont	@ p256_mul_mont(S2, S2, in2_y);
+	bl	__ecp_nistz256_mul_mont	@ p256_mul_mont(S2, S2, in2_y);
 
 	add	$b_ptr,sp,#$in1_y
 	add	$r_ptr,sp,#$R
@@ -1696,25 +1700,25 @@ ecp_nistz256_point_add_affine:
 	add	$a_ptr,sp,#$H
 	add	$b_ptr,sp,#$H
 	add	$r_ptr,sp,#$Hsqr
-	bl	_ecp_nistz256_mul_mont	@ p256_sqr_mont(Hsqr, H);
+	bl	__ecp_nistz256_mul_mont	@ p256_sqr_mont(Hsqr, H);
 
 	add	$a_ptr,sp,#$R
 	add	$b_ptr,sp,#$R
 	add	$r_ptr,sp,#$Rsqr
-	bl	_ecp_nistz256_mul_mont	@ p256_sqr_mont(Rsqr, R);
+	bl	__ecp_nistz256_mul_mont	@ p256_sqr_mont(Rsqr, R);
 
 	add	$a_ptr,sp,#$H
 	add	$b_ptr,sp,#$Hsqr
 	add	$r_ptr,sp,#$Hcub
-	bl	_ecp_nistz256_mul_mont	@ p256_mul_mont(Hcub, Hsqr, H);
+	bl	__ecp_nistz256_mul_mont	@ p256_mul_mont(Hcub, Hsqr, H);
 
 	add	$a_ptr,sp,#$Hsqr
 	add	$b_ptr,sp,#$in1_x
 	add	$r_ptr,sp,#$U2
-	bl	_ecp_nistz256_mul_mont	@ p256_mul_mont(U2, in1_x, Hsqr);
+	bl	__ecp_nistz256_mul_mont	@ p256_mul_mont(U2, in1_x, Hsqr);
 
 	add	$r_ptr,sp,#$Hsqr
-	bl	__ecp_nistz256_mul_by_2	@ p256_mul_by_2(Hsqr, U2);
+	bl	__ecp_nistz256_add_self	@ p256_mul_by_2(Hsqr, U2);
 
 	add	$b_ptr,sp,#$Rsqr
 	add	$r_ptr,sp,#$res_x
@@ -1730,12 +1734,12 @@ ecp_nistz256_point_add_affine:
 	add	$a_ptr,sp,#$Hcub
 	add	$b_ptr,sp,#$in1_y
 	add	$r_ptr,sp,#$S2
-	bl	_ecp_nistz256_mul_mont	@ p256_mul_mont(S2, in1_y, Hcub);
+	bl	__ecp_nistz256_mul_mont	@ p256_mul_mont(S2, in1_y, Hcub);
 
 	add	$a_ptr,sp,#$R
 	add	$b_ptr,sp,#$res_y
 	add	$r_ptr,sp,#$res_y
-	bl	_ecp_nistz256_mul_mont	@ p256_mul_mont(res_y, res_y, R);
+	bl	__ecp_nistz256_mul_mont	@ p256_mul_mont(res_y, res_y, R);
 
 	add	$b_ptr,sp,#$S2
 	bl	__ecp_nistz256_sub_from	@ p256_sub(res_y, res_y, S2);

@@ -3,7 +3,7 @@
 #include <string.h>
 #include <setjmp.h>
 #include <signal.h>
-#include <crypto.h>
+#include <openssl/crypto.h>
 
 #include "arm_arch.h"
 

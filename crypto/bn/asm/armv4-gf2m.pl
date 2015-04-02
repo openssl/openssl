@@ -32,8 +32,20 @@
 # 
 # http://conradoplg.cryptoland.net/files/2010/12/mocrysen13.pdf
 
-while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
-open STDOUT,">$output";
+$flavour = shift;
+if ($flavour=~/^\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
+else { while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {} }
+
+if ($flavour && $flavour ne "void") {
+    $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+    ( $xlate="${dir}arm-xlate.pl" and -f $xlate ) or
+    ( $xlate="${dir}../../perlasm/arm-xlate.pl" and -f $xlate) or
+    die "can't locate arm-xlate.pl";
+
+    open STDOUT,"| \"$^X\" $xlate $flavour $output";
+} else {
+    open STDOUT,">$output";
+}
 
 $code=<<___;
 #include "arm_arch.h"
@@ -213,8 +225,8 @@ $code.=<<___;
 .align	5
 .LNEON:
 	ldr		r12, [sp]		@ 5th argument
-	vmov.32		$a, r2, r1
-	vmov.32		$b, r12, r3
+	vmov		$a, r2, r1
+	vmov		$b, r12, r3
 	vmov.i64	$k48, #0x0000ffffffffffff
 	vmov.i64	$k32, #0x00000000ffffffff
 	vmov.i64	$k16, #0x000000000000ffff

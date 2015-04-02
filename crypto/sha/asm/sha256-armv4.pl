@@ -37,8 +37,20 @@
 #
 # Add ARMv8 code path performing at 2.0 cpb on Apple A7.
 
-while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
-open STDOUT,">$output";
+$flavour = shift;
+if ($flavour=~/^\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
+else { while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {} }
+
+if ($flavour && $flavour ne "void") {
+    $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+    ( $xlate="${dir}arm-xlate.pl" and -f $xlate ) or
+    ( $xlate="${dir}../../perlasm/arm-xlate.pl" and -f $xlate) or
+    die "can't locate arm-xlate.pl";
+
+    open STDOUT,"| \"$^X\" $xlate $flavour $output";
+} else {
+    open STDOUT,">$output";
+}
 
 $ctx="r0";	$t0="r0";
 $inp="r1";	$t4="r1";
@@ -167,7 +179,7 @@ $code=<<___;
 .code	32
 #else
 .syntax unified
-# ifdef __thumb2__
+# if defined(__thumb2__) && !defined(__APPLE__)
 #  define adrl adr
 .thumb
 # else
@@ -198,13 +210,14 @@ K256:
 .word	0				@ terminator
 #if __ARM_MAX_ARCH__>=7 && !defined(__KERNEL__)
 .LOPENSSL_armcap:
-.word	OPENSSL_armcap_P-sha256_block_data_order
+.word	OPENSSL_armcap_P-.Lsha256_block_data_order
 #endif
 .align	5
 
 .global	sha256_block_data_order
 .type	sha256_block_data_order,%function
 sha256_block_data_order:
+.Lsha256_block_data_order:
 #if __ARM_ARCH__<7
 	sub	r3,pc,#8		@ sha256_block_data_order
 #else
@@ -213,6 +226,9 @@ sha256_block_data_order:
 #if __ARM_MAX_ARCH__>=7 && !defined(__KERNEL__)
 	ldr	r12,.LOPENSSL_armcap
 	ldr	r12,[r3,r12]		@ OPENSSL_armcap_P
+#ifdef	__APPLE__
+	ldr	r12,[r12]
+#endif
 	tst	r12,#ARMV8_SHA256
 	bne	.LARMv8
 	tst	r12,#ARMV7_NEON
@@ -463,7 +479,7 @@ sha256_block_data_order_neon:
 	stmdb	sp!,{r4-r12,lr}
 
 	sub	$H,sp,#16*4+16
-	adrl	$Ktbl,K256
+	adr	$Ktbl,K256
 	bic	$H,$H,#15		@ align for 128-bit stores
 	mov	$t2,sp
 	mov	sp,$H			@ alloca
@@ -583,7 +599,7 @@ my $Ktbl="r3";
 $code.=<<___;
 #if __ARM_MAX_ARCH__>=7 && !defined(__KERNEL__)
 
-# ifdef __thumb2__
+# if defined(__thumb2__) && !defined(__APPLE__)
 #  define INST(a,b,c,d)	.byte	c,d|0xc,a,b
 # else
 #  define INST(a,b,c,d)	.byte	a,b,c,d
@@ -594,7 +610,9 @@ $code.=<<___;
 sha256_block_data_order_armv8:
 .LARMv8:
 	vld1.32	{$ABCD,$EFGH},[$ctx]
-# ifdef __thumb2__
+# ifdef	__APPLE__
+	sub	$Ktbl,$Ktbl,#256+32
+# elif	defined(__thumb2__)
 	adr	$Ktbl,.LARMv8
 	sub	$Ktbl,$Ktbl,#.LARMv8-K256
 # else
