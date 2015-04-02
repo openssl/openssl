@@ -47,8 +47,20 @@
 #
 #					<ard.biesheuvel@linaro.org>
 
-while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
-open STDOUT,">$output";
+$flavour = shift;
+if ($flavour=~/^\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
+else { while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {} }
+
+if ($flavour && $flavour ne "void") {
+    $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+    ( $xlate="${dir}arm-xlate.pl" and -f $xlate ) or
+    ( $xlate="${dir}../../perlasm/arm-xlate.pl" and -f $xlate) or
+    die "can't locate arm-xlate.pl";
+
+    open STDOUT,"| \"$^X\" $xlate $flavour $output";
+} else {
+    open STDOUT,">$output";
+}
 
 my ($inp,$out,$len,$key)=("r0","r1","r2","r3");
 my @XMM=map("q$_",(0..15));
@@ -715,7 +727,7 @@ $code.=<<___;
 
 .text
 .syntax	unified 	@ ARMv7-capable assembler is expected to handle this
-#ifdef __thumb2__
+#if defined(__thumb2__) && !defined(__APPLE__)
 .thumb
 #else
 .code   32
@@ -726,7 +738,11 @@ $code.=<<___;
 _bsaes_decrypt8:
 	adr	$const,_bsaes_decrypt8
 	vldmia	$key!, {@XMM[9]}		@ round 0 key
+#ifdef	__APPLE__
+	adr	$const,.LM0ISR
+#else
 	add	$const,$const,#.LM0ISR-_bsaes_decrypt8
+#endif
 
 	vldmia	$const!, {@XMM[8]}		@ .LM0ISR
 	veor	@XMM[10], @XMM[0], @XMM[9]	@ xor with round0 key
@@ -821,7 +837,11 @@ _bsaes_const:
 _bsaes_encrypt8:
 	adr	$const,_bsaes_encrypt8
 	vldmia	$key!, {@XMM[9]}		@ round 0 key
+#ifdef	__APPLE__
+	adr	$const,.LM0SR
+#else
 	sub	$const,$const,#_bsaes_encrypt8-.LM0SR
+#endif
 
 	vldmia	$const!, {@XMM[8]}		@ .LM0SR
 _bsaes_encrypt8_alt:
@@ -925,7 +945,11 @@ $code.=<<___;
 _bsaes_key_convert:
 	adr	$const,_bsaes_key_convert
 	vld1.8	{@XMM[7]},  [$inp]!		@ load round 0 key
+#ifdef	__APPLE__
+	adr	$const,.LM0
+#else
 	sub	$const,$const,#_bsaes_key_convert-.LM0
+#endif
 	vld1.8	{@XMM[15]}, [$inp]!		@ load round 1 key
 
 	vmov.i8	@XMM[8],  #0x01			@ bit masks
@@ -1392,7 +1416,12 @@ bsaes_ctr32_encrypt_blocks:
 	vstmia	r12, {@XMM[7]}			@ save last round key
 
 	vld1.8	{@XMM[0]}, [$ctr]		@ load counter
+#ifdef	__APPLE__
+	mov	$ctr, #.LREVM0SR-.LM0
+	add	$ctr, $const, $ctr
+#else
 	add	$ctr, $const, #.LREVM0SR-.LM0	@ borrow $ctr
+#endif
 	vldmia	$keysched, {@XMM[4]}		@ load round0 key
 #else
 	ldr	r12, [$key, #244]
@@ -1449,7 +1478,12 @@ bsaes_ctr32_encrypt_blocks:
 	vldmia		$ctr, {@XMM[8]}			@ .LREVM0SR
 	mov		r5, $rounds			@ pass rounds
 	vstmia		$fp, {@XMM[10]}			@ save next counter
+#ifdef	__APPLE__
+	mov		$const, #.LREVM0SR-.LSR
+	sub		$const, $ctr, $const
+#else
 	sub		$const, $ctr, #.LREVM0SR-.LSR	@ pass constants
+#endif
 
 	bl		_bsaes_encrypt8_alt
 
@@ -1550,7 +1584,7 @@ bsaes_ctr32_encrypt_blocks:
 	rev	r8, r8
 #endif
 	sub	sp, sp, #0x10
-	vst1.8	{@XMM[1]}, [sp,:64]	@ copy counter value
+	vst1.8	{@XMM[1]}, [sp]		@ copy counter value
 	sub	sp, sp, #0x10
 
 .Lctr_enc_short_loop:
@@ -1561,7 +1595,7 @@ bsaes_ctr32_encrypt_blocks:
 	bl	AES_encrypt
 
 	vld1.8	{@XMM[0]}, [r4]!	@ load input
-	vld1.8	{@XMM[1]}, [sp,:64]	@ load encrypted counter
+	vld1.8	{@XMM[1]}, [sp]		@ load encrypted counter
 	add	r8, r8, #1
 #ifdef __ARMEL__
 	rev	r0, r8

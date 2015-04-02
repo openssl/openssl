@@ -84,6 +84,7 @@ alphacpuid.s:	alphacpuid.pl
 	$(PERL) alphacpuid.pl > $$preproc && \
 	$(CC) -E -P $$preproc > $@ && rm $$preproc)
 arm64cpuid.S:	arm64cpuid.pl;	$(PERL) arm64cpuid.pl $(PERLASM_SCHEME) > $@
+armv4cpuid.S:	armv4cpuid.pl;	$(PERL) armv4cpuid.pl $(PERLASM_SCHEME) > $@
 
 subdirs:
 	@target=all; $(RECURSIVE_MAKE)

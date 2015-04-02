@@ -154,7 +154,7 @@ while($line=<>) {
 		$line = &$opcode($arg);
 	} elsif ($mnemonic)         {
 		$line = $c.$mnemonic;
-		$line.= "\t$arg" if ($arg);
+		$line.= "\t$arg" if ($arg ne "");
 	}
     }
 

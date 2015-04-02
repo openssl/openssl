@@ -1,3 +1,17 @@
+#!/usr/bin/env perl
+
+$flavour = shift;
+$output  = shift;
+
+$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+( $xlate="${dir}arm-xlate.pl" and -f $xlate ) or
+( $xlate="${dir}perlasm/arm-xlate.pl" and -f $xlate) or
+die "can't locate arm-xlate.pl";
+
+open OUT,"| \"$^X\" $xlate $flavour $output";
+*STDOUT=*OUT;
+
+$code.=<<___;
 #include "arm_arch.h"
 
 .text
@@ -91,7 +105,11 @@ _armv7_neon_probe:
 .global	_armv7_tick
 .type	_armv7_tick,%function
 _armv7_tick:
+#ifdef	__APPLE__
+	mrrc	p15,0,r0,r1,c14		@ CNTPCT
+#else
 	mrrc	p15,1,r0,r1,c14		@ CNTVCT
+#endif
 	bx	lr
 .size	_armv7_tick,.-_armv7_tick
 
@@ -130,6 +148,9 @@ OPENSSL_wipe_cpu:
 	ldr	r0,.LOPENSSL_armcap
 	adr	r1,.LOPENSSL_armcap
 	ldr	r0,[r1,r0]
+#ifdef	__APPLE__
+	ldr	r0,[r0]
+#endif
 #endif
 	eor	r2,r2,r2
 	eor	r3,r3,r3
@@ -190,7 +211,7 @@ OPENSSL_instrument_bus2:
 .align	5
 #if __ARM_MAX_ARCH__>=7
 .LOPENSSL_armcap:
-.word	OPENSSL_armcap_P-.LOPENSSL_armcap
+.word	OPENSSL_armcap_P-.
 #endif
 #if __ARM_ARCH__>=6
 .align	5
@@ -207,3 +228,7 @@ atomic_add_spinlock:
 
 .comm	OPENSSL_armcap_P,4,4
 .hidden	OPENSSL_armcap_P
+___
+
+print $code;
+close STDOUT;

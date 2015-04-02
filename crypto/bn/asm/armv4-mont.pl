@@ -38,8 +38,20 @@
 # for execution on all NEON-capable processors, because gain on
 # others outweighs the marginal loss on Cortex-A9.
 
-while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
-open STDOUT,">$output";
+$flavour = shift;
+if ($flavour=~/^\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
+else { while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {} }
+
+if ($flavour && $flavour ne "void") {
+    $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+    ( $xlate="${dir}arm-xlate.pl" and -f $xlate ) or
+    ( $xlate="${dir}../../perlasm/arm-xlate.pl" and -f $xlate) or
+    die "can't locate arm-xlate.pl";
+
+    open STDOUT,"| \"$^X\" $xlate $flavour $output";
+} else {
+    open STDOUT,">$output";
+}
 
 $num="r0";	# starts as num argument, but holds &tp[num-1]
 $ap="r1";
@@ -75,7 +87,7 @@ $code=<<___;
 #if __ARM_MAX_ARCH__>=7
 .align	5
 .LOPENSSL_armcap:
-.word	OPENSSL_armcap_P-bn_mul_mont
+.word	OPENSSL_armcap_P-.Lbn_mul_mont
 #endif
 
 .global	bn_mul_mont
@@ -83,6 +95,7 @@ $code=<<___;
 
 .align	5
 bn_mul_mont:
+.Lbn_mul_mont:
 	ldr	ip,[sp,#4]		@ load num
 	stmdb	sp!,{r0,r2}		@ sp points at argument block
 #if __ARM_MAX_ARCH__>=7
@@ -91,6 +104,9 @@ bn_mul_mont:
 	adr	r0,bn_mul_mont
 	ldr	r2,.LOPENSSL_armcap
 	ldr	r0,[r0,r2]
+#ifdef	__APPLE__
+	ldr	r0,[r0]
+#endif
 	tst	r0,#1			@ NEON available?
 	ldmia	sp, {r0,r2}
 	beq	.Lialu

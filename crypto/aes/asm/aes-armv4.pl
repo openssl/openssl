@@ -32,8 +32,20 @@
 # Profiler-assisted and platform-specific optimization resulted in 16%
 # improvement on Cortex A8 core and ~21.5 cycles per byte.
 
-while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
-open STDOUT,">$output";
+$flavour = shift;
+if ($flavour=~/^\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
+else { while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {} }
+
+if ($flavour && $flavour ne "void") {
+    $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+    ( $xlate="${dir}arm-xlate.pl" and -f $xlate ) or
+    ( $xlate="${dir}../../perlasm/arm-xlate.pl" and -f $xlate) or
+    die "can't locate arm-xlate.pl";
+
+    open STDOUT,"| \"$^X\" $xlate $flavour $output";
+} else {
+    open STDOUT,">$output";
+}
 
 $s0="r0";
 $s1="r1";
@@ -62,7 +74,7 @@ $code=<<___;
 .code	32
 #else
 .syntax	unified
-# ifdef __thumb2__
+# if defined(__thumb2__) && !defined(__APPLE__)
 .thumb
 # else
 .code	32
@@ -187,9 +199,13 @@ AES_encrypt:
 	adr	r3,AES_encrypt
 #endif
 	stmdb   sp!,{r1,r4-r12,lr}
+#ifdef	__APPLE__
+	adr	$tbl,AES_Te
+#else
+	sub	$tbl,r3,#AES_encrypt-AES_Te	@ Te
+#endif
 	mov	$rounds,r0		@ inp
 	mov	$key,r2
-	sub	$tbl,r3,#AES_encrypt-AES_Te	@ Te
 #if __ARM_ARCH__<7
 	ldrb	$s0,[$rounds,#3]	@ load input data in endian-neutral
 	ldrb	$t1,[$rounds,#2]	@ manner...
@@ -457,11 +473,15 @@ _armv4_AES_set_encrypt_key:
 	bne	.Labrt
 
 .Lok:	stmdb   sp!,{r4-r12,lr}
-	sub	$tbl,r3,#_armv4_AES_set_encrypt_key-AES_Te-1024	@ Te4
-
 	mov	$rounds,r0		@ inp
 	mov	lr,r1			@ bits
 	mov	$key,r2			@ key
+
+#ifdef	__APPLE__
+	adr	$tbl,AES_Te+1024				@ Te4
+#else
+	sub	$tbl,r3,#_armv4_AES_set_encrypt_key-AES_Te-1024	@ Te4
+#endif
 
 #if __ARM_ARCH__<7
 	ldrb	$s0,[$rounds,#3]	@ load input data in endian-neutral
@@ -955,9 +975,13 @@ AES_decrypt:
 	adr	r3,AES_decrypt
 #endif
 	stmdb   sp!,{r1,r4-r12,lr}
+#ifdef	__APPLE__
+	adr	$tbl,AES_Td
+#else
+	sub	$tbl,r3,#AES_decrypt-AES_Td	@ Td
+#endif
 	mov	$rounds,r0		@ inp
 	mov	$key,r2
-	sub	$tbl,r3,#AES_decrypt-AES_Td		@ Td
 #if __ARM_ARCH__<7
 	ldrb	$s0,[$rounds,#3]	@ load input data in endian-neutral
 	ldrb	$t1,[$rounds,#2]	@ manner...
