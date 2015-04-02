@@ -1394,16 +1394,18 @@ int main(int argc, char *argv[])
         }
     }
     ssl_comp_methods = SSL_COMP_get_compression_methods();
-    fprintf(stderr, "Available compression methods:\n");
+    fprintf(stderr, "Available compression methods:");
     {
         int j, n = sk_SSL_COMP_num(ssl_comp_methods);
         if (n == 0)
             fprintf(stderr, "  NONE\n");
-        else
+        else {
             for (j = 0; j < n; j++) {
                 SSL_COMP *c = sk_SSL_COMP_value(ssl_comp_methods, j);
-                fprintf(stderr, "  %d: %s\n", c->id, c->name);
+                fprintf(stderr, "  %s:%d", c->name, c->id);
             }
+            fprintf(stderr, "\n");
+        }
     }
 #endif
 
