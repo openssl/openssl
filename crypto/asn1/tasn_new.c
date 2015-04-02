@@ -94,8 +94,6 @@ int ASN1_item_ex_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
     else
         asn1_cb = 0;
 
-    *pval = NULL;
-
 #ifdef CRYPTO_MDEBUG
     if (it->sname)
         CRYPTO_push_info(it->sname);
