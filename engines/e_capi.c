@@ -70,7 +70,9 @@
 #endif
 
 #include <windows.h>
+#if !defined(OPENSSL_WINAPP)
 #include <wincrypt.h>
+#endif
 #include <malloc.h>
 #ifndef alloca
 # define alloca _alloca

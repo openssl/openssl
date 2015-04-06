@@ -784,7 +784,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
 	}
 #endif
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#if defined(_WIN32) && !defined(__CYGWIN__) && !defined(OPENSSL_WINAPP)
 #include <tchar.h>
 #include <signal.h>
 #ifdef __WATCOMC__
@@ -939,7 +939,7 @@ void OpenSSLDie(const char *file,int line,const char *assertion)
 	abort();
 #else
 	/* Win32 abort() customarily shows a dialog, but we just did that... */
-#if !defined(_WIN32_WCE)
+#if !defined(_WIN32_WCE) && !defined(OPENSSL_WINAPP)
 	raise(SIGABRT);
 #endif
 	_exit(3);

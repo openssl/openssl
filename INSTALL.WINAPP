@@ -1,0 +1,133 @@
+
+ INSTALLATION ON THE WINDOWS PHONE, WINDOWS STORE PLATFORM
+ ----------------------------------
+
+ [Instructions for building for Windows CE can be found in INSTALL.WCE]
+ [Instructions for building for Win64 can be found in INSTALL.W64]
+ [Instructions for building for Win32 can be found in INSTALL.W32]
+
+
+ Requirments.
+ - You need Perl location for Win32 or Win64 in your PATH environmental variable.
+ - Visual Studio 2013
+
+ QUICK MULTI-PLATFORM INSTALL
+ -----------------------------------------------------------------------
+
+ Execute the following script in the source root tree.
+ > ms\do_vsprojects.bat
+
+ Open visual studio solution created
+ > vsout\openssl.sln
+
+
+ This file will generate a solution file that contains 12 projects.
+
+ 6 OpenSSL Projects
+
+ PHONE 8.0 DLL    (Win32|arm)     (Debug|Release)
+ PHONE 8.0 STATIC (Win32|arm)     (Debug|Release)
+ PHONE 8.1 DLL    (Win32|arm)     (Debug|Release)
+ PHONE 8.1 STATIC (Win32|arm)     (Debug|Release)
+ STORE 8.1 DLL    (Win32|arm|x64) (Debug|Release)
+ STORE 8.1 STATIC (Win32|arm|x64) (Debug|Release)
+
+ 6 Unit Test App Projects
+
+ Run the tests in the Visual Studio Test explorer to validate the libraries.
+
+ Libraries are built on the following location
+
+ vsout\$(ProjectConfiguration)\$(Configuration)\$(Arch)\bin
+
+ Modify ms\do_vsprojects.bat for custom builds
+
+ You can build this solution file via the command line using devenv.exe, or MSBuild.exe, or via the UI
+
+ Test projects can be run using the UI via Test Explorer, or command line using MSTest or vstest.console
+ Once all configuration are build run
+
+ > ms\do_packwinapp.bat
+
+ To pack the build output into vsout\package
+
+ SINGLE PLATFORM INSTALL
+ -----------------------------------------------------------------------
+ Firstly you should run Configure with platform VC-WINPHONE or VC-WINSTORE:
+
+ > perl Configure no-asm no-hw no-dso VC-WINPHONE
+
+ In case of targeting Windows Phone 8.0 you need to add the flag -DOPENSSL_WINAPP_NOCRYPTOGRAPHICBUFFER to the previous command.
+
+ Next you need to build the Makefiles:
+
+   > ms\do_winphone
+   or
+   > ms\do_winstore
+
+ Then from CMD.exe, the following environment variables must be set for nmake build.
+
+ INCLUDE
+ LIB
+ LIBPATH
+
+ In addition nmake.exe, link.exe and cl.exe must be available in the environmental variable %PATH%
+
+ Run ms\setVSvars.bat to set this environmental variables, and fix the path if needed, following flavours are supported, If your version is not supported by this batch you will need to manually set previous variables
+
+ ms\setVSvars wp8.0arm
+ ms\setVSvars wp8.0Win32
+ ms\setVSvars wp8.1arm
+ ms\setVSvars wp8.1Win32
+ ms\setVSvars ws8.1arm
+ ms\setVSvars ws8.1Win32
+ ms\setVSvars ws8.1x64
+
+ Start nmake compilation with.
+
+ > nmake -f ms\nt.mak init
+ > nmake -f ms\nt.mak
+
+ Alternativelly you can generate DLLs with the following command
+
+ > nmake -f ms\ntdll.mak test
+
+ If all is well it should compile and you will have libs for openssl. on the directory out32 or out32dll if DLL build.
+
+
+ Tweaks:
+
+
+ Troubleshooting
+ ---------------
+
+ Since the Win32 build is only occasionally tested it may not always compile
+ cleanly.  If you get an error about functions not having numbers assigned
+ when you run ms\do_ms then this means the Win32 ordinal files are not up to
+ date. You can do:
+
+ > perl util\mkdef.pl crypto ssl update
+
+ then ms\do_XXX should not give a warning any more. However the numbers that
+ get assigned by this technique may not match those that eventually get
+ assigned in the Git tree: so anything linked against this version of the
+ library may need to be recompiled.
+
+ If you get errors about unresolved symbols there are several possible
+ causes.
+
+ If this happens when the DLL is being linked and you have disabled some
+ ciphers then it is possible the DEF file generator hasn't removed all
+ the disabled symbols: the easiest solution is to edit the DEF files manually
+ to delete them. The DEF files are ms\libeay32.def ms\ssleay32.def.
+
+ Another cause is if you missed or ignored the errors about missing numbers
+ mentioned above.
+
+
+ Linking your application
+ ------------------------
+
+ If you link with static OpenSSL libraries [those built with ms/nt.mak],
+ then you're expected to additionally link your application with
+ WS2_32.LIB.

@@ -4,6 +4,7 @@
 
  [Instructions for building for Windows CE can be found in INSTALL.WCE]
  [Instructions for building for Win64 can be found in INSTALL.W64]
+ [Instructions for building for Windows Phone 8.0/8.1 or Windows Store 8.1 can be found in INSTALL.WINAPP]
 
  Here are a few comments about building OpenSSL for Win32 environments,
  such as Windows NT and Windows 9x. It should be noted though that

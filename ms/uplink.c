@@ -12,13 +12,18 @@
 #include <tchar.h>
 #include <stdio.h>
 #include "uplink.h"
+#include <stdlib.h>
 void OPENSSL_showfatal(const char *,...);
 
 static TCHAR msg[128];
 
 static void unimplemented (void)
 {   OPENSSL_showfatal (sizeof(TCHAR)==sizeof(char)?"%s\n":"%S\n",msg);
+#ifdef OPENSSL_WINAPP
+    exit(1);
+#else
     ExitProcess (1);
+#endif
 }
 
 void OPENSSL_Uplink (volatile void **table, int index)
