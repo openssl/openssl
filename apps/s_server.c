@@ -998,7 +998,7 @@ int MAIN(int argc, char *argv[])
     int off = 0;
     int no_tmp_rsa = 0, no_dhe = 0, nocert = 0;
 #ifndef OPENSSL_NO_ECDH
-    int no_ecdhe;
+    int no_ecdhe = 0;
 #endif
     int state = 0;
     const SSL_METHOD *meth = NULL;
