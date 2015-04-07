@@ -70,6 +70,7 @@ long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg)
     nid = OBJ_obj2nid(p7->type);
 
     switch (cmd) {
+    /* NOTE(emilia): does not support detached digested data. */
     case PKCS7_OP_SET_DETACHED_SIGNATURE:
         if (nid == NID_pkcs7_signed) {
             ret = p7->detached = (int)larg;
@@ -444,6 +445,8 @@ int PKCS7_set_digest(PKCS7 *p7, const EVP_MD *md)
 
 STACK_OF(PKCS7_SIGNER_INFO) *PKCS7_get_signer_info(PKCS7 *p7)
 {
+    if (p7 == NULL || p7->d.ptr == NULL)
+        return NULL;
     if (PKCS7_type_is_signed(p7)) {
         return (p7->d.sign->signer_info);
     } else if (PKCS7_type_is_signedAndEnveloped(p7)) {

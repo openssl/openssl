@@ -450,7 +450,7 @@ sub sha1msg2	{ sha1op38(0xca,@_); }
 	&sub	("esp",32);
 
 	&movdqu	($ABCD,&QWP(0,$ctx));
-	&movd	($E,&QWP(16,$ctx));
+	&movd	($E,&DWP(16,$ctx));
 	&and	("esp",-32);
 	&movdqa	($BSWAP,&QWP(0x50,$tmp1));	# byte-n-word swap
 

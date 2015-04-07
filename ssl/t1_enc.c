@@ -260,6 +260,11 @@ static int tls1_PRF(long digest_mask,
         if ((m << TLS1_PRF_DGST_SHIFT) & digest_mask)
             count++;
     }
+    if(!count) {
+        /* Should never happen */
+        SSLerr(SSL_F_TLS1_PRF, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     len = slen / count;
     if (count == 1)
         slen = 0;
@@ -550,16 +555,24 @@ int tls1_change_cipher_state(SSL *s, int which)
 #endif                          /* KSSL_DEBUG */
 
     if (EVP_CIPHER_mode(c) == EVP_CIPH_GCM_MODE) {
-        EVP_CipherInit_ex(dd, c, NULL, key, NULL, (which & SSL3_CC_WRITE));
-        EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_GCM_SET_IV_FIXED, k, iv);
-    } else
-        EVP_CipherInit_ex(dd, c, NULL, key, iv, (which & SSL3_CC_WRITE));
-
+        if (!EVP_CipherInit_ex(dd, c, NULL, key, NULL, (which & SSL3_CC_WRITE))
+            || !EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_GCM_SET_IV_FIXED, k, iv)) {
+            SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
+            goto err2;
+        }
+    } else {
+        if (!EVP_CipherInit_ex(dd, c, NULL, key, iv, (which & SSL3_CC_WRITE))) {
+            SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
+            goto err2;
+        }
+    }
     /* Needed for "composite" AEADs, such as RC4-HMAC-MD5 */
-    if ((EVP_CIPHER_flags(c) & EVP_CIPH_FLAG_AEAD_CIPHER) && *mac_secret_size)
-        EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_AEAD_SET_MAC_KEY,
-                            *mac_secret_size, mac_secret);
-
+    if ((EVP_CIPHER_flags(c) & EVP_CIPH_FLAG_AEAD_CIPHER) && *mac_secret_size
+        && !EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_AEAD_SET_MAC_KEY,
+                                *mac_secret_size, mac_secret)) {
+        SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
+        goto err2;
+    }
 #ifdef OPENSSL_SSL_TRACE_CRYPTO
     if (s->msg_callback) {
         int wh = which & SSL3_CC_WRITE ? TLS1_RT_CRYPTO_WRITE : 0;
@@ -650,6 +663,7 @@ int tls1_setup_key_block(SSL *s)
 
     if ((p2 = (unsigned char *)OPENSSL_malloc(num)) == NULL) {
         SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK, ERR_R_MALLOC_FAILURE);
+        OPENSSL_free(p1);
         goto err;
     }
 #ifdef TLS_DEBUG
@@ -967,6 +981,8 @@ int tls1_final_finish_mac(SSL *s,
         err = 1;
     EVP_MD_CTX_cleanup(&ctx);
 
+    OPENSSL_cleanse(buf, (int)(q - buf));
+    OPENSSL_cleanse(buf2, sizeof(buf2));
     if (err)
         return 0;
     else
@@ -1130,6 +1146,7 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
              co, col,
              s->s3->server_random, SSL3_RANDOM_SIZE,
              so, sol, p, len, s->session->master_key, buff, sizeof buff);
+    OPENSSL_cleanse(buff, sizeof buff);
 #ifdef SSL_DEBUG
     fprintf(stderr, "Premaster Secret:\n");
     BIO_dump_fp(stderr, (char *)p, len);
@@ -1240,6 +1257,8 @@ int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
                   NULL, 0,
                   s->session->master_key, s->session->master_key_length,
                   out, buff, olen);
+    OPENSSL_cleanse(val, vallen);
+    OPENSSL_cleanse(buff, olen);
 
 #ifdef KSSL_DEBUG
     fprintf(stderr, "tls1_export_keying_material() complete\n");

@@ -279,6 +279,9 @@ static int asn1_cb(const char *elem, int len, void *bitstr)
 
     int tmp_tag, tmp_class;
 
+    if (elem == NULL)
+        return 0;
+
     for (i = 0, p = elem; i < len; p++, i++) {
         /* Look for the ':' in name value pairs */
         if (*p == ':') {
@@ -350,13 +353,17 @@ static int asn1_cb(const char *elem, int len, void *bitstr)
         break;
 
     case ASN1_GEN_FLAG_FORMAT:
+        if(!vstart) {
+            ASN1err(ASN1_F_ASN1_CB, ASN1_R_UNKNOWN_FORMAT);
+            return -1;
+        }
         if (!strncmp(vstart, "ASCII", 5))
             arg->format = ASN1_GEN_FORMAT_ASCII;
         else if (!strncmp(vstart, "UTF8", 4))
             arg->format = ASN1_GEN_FORMAT_UTF8;
         else if (!strncmp(vstart, "HEX", 3))
             arg->format = ASN1_GEN_FORMAT_HEX;
-        else if (!strncmp(vstart, "BITLIST", 3))
+        else if (!strncmp(vstart, "BITLIST", 7))
             arg->format = ASN1_GEN_FORMAT_BITLIST;
         else {
             ASN1err(ASN1_F_ASN1_CB, ASN1_R_UNKOWN_FORMAT);

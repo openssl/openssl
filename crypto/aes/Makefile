@@ -72,7 +72,7 @@ aesni-mb-x86_64.s:	asm/aesni-mb-x86_64.pl
 
 aes-sparcv9.s: asm/aes-sparcv9.pl
 	$(PERL) asm/aes-sparcv9.pl $(CFLAGS) > $@
-aest4-sparcv9.s: asm/aest4-sparcv9.pl
+aest4-sparcv9.s: asm/aest4-sparcv9.pl ../perlasm/sparcv9_modes.pl
 	$(PERL) asm/aest4-sparcv9.pl $(CFLAGS) > $@
 
 aes-ppc.s:	asm/aes-ppc.pl

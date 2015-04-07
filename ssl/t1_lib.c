@@ -470,7 +470,7 @@ static int tls1_get_curvelist(SSL *s, int sess,
 # ifdef OPENSSL_FIPS
             if (FIPS_mode()) {
                 *pcurves = fips_curves_default;
-                *pcurveslen = sizeof(fips_curves_default);
+                pcurveslen = sizeof(fips_curves_default);
             } else
 # endif
             {
@@ -651,6 +651,8 @@ static int nid_cb(const char *elem, int len, void *arg)
     size_t i;
     int nid;
     char etmp[20];
+    if (elem == NULL)
+        return 0;
     if (narg->nidcnt == MAX_CURVELIST)
         return 0;
     if (len > (int)(sizeof(etmp) - 1))
@@ -2965,6 +2967,7 @@ int tls1_set_server_sigalgs(SSL *s)
     if (s->cert->shared_sigalgs) {
         OPENSSL_free(s->cert->shared_sigalgs);
         s->cert->shared_sigalgs = NULL;
+        s->cert->shared_sigalgslen = 0;
     }
     /* Clear certificate digests and validity flags */
     for (i = 0; i < SSL_PKEY_NUM; i++) {
@@ -3618,6 +3621,7 @@ static int tls1_set_shared_sigalgs(SSL *s)
     if (c->shared_sigalgs) {
         OPENSSL_free(c->shared_sigalgs);
         c->shared_sigalgs = NULL;
+        c->shared_sigalgslen = 0;
     }
     /* If client use client signature algorithms if not NULL */
     if (!s->server && c->client_sigalgs && !is_suiteb) {
@@ -3640,12 +3644,14 @@ static int tls1_set_shared_sigalgs(SSL *s)
         preflen = c->peer_sigalgslen;
     }
     nmatch = tls12_do_shared_sigalgs(NULL, pref, preflen, allow, allowlen);
-    if (!nmatch)
-        return 1;
-    salgs = OPENSSL_malloc(nmatch * sizeof(TLS_SIGALGS));
-    if (!salgs)
-        return 0;
-    nmatch = tls12_do_shared_sigalgs(salgs, pref, preflen, allow, allowlen);
+    if (nmatch) {
+        salgs = OPENSSL_malloc(nmatch * sizeof(TLS_SIGALGS));
+        if (!salgs)
+            return 0;
+        nmatch = tls12_do_shared_sigalgs(salgs, pref, preflen, allow, allowlen);
+    } else {
+        salgs = NULL;
+    }
     c->shared_sigalgs = salgs;
     c->shared_sigalgslen = nmatch;
     return 1;
@@ -3948,6 +3954,8 @@ static int sig_cb(const char *elem, int len, void *arg)
     size_t i;
     char etmp[20], *p;
     int sig_alg, hash_alg;
+    if (elem == NULL)
+        return 0;
     if (sarg->sigalgcnt == MAX_SIGALGLEN)
         return 0;
     if (len > (int)(sizeof(etmp) - 1))
@@ -4122,10 +4130,10 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
 # endif
     } else {
         if (!x || !pk)
-            goto end;
+            return 0;
         idx = ssl_cert_type(x, pk);
         if (idx == -1)
-            goto end;
+            return 0;
         cpk = c->pkeys + idx;
         if (c->cert_flags & SSL_CERT_FLAGS_CHECK_TLS_STRICT)
             check_flags = CERT_PKEY_STRICT_FLAGS;

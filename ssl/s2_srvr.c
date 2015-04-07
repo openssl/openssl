@@ -371,7 +371,8 @@ int ssl2_accept(SSL *s)
 
 static int get_client_master_key(SSL *s)
 {
-    int is_export, i, n, keya, ek;
+    int is_export, i, n, keya;
+    unsigned int ek;
     unsigned long len;
     unsigned char *p;
     const SSL_CIPHER *cp;
@@ -454,11 +455,6 @@ static int get_client_master_key(SSL *s)
         SSLerr(SSL_F_GET_CLIENT_MASTER_KEY, SSL_R_NO_PRIVATEKEY);
         return (-1);
     }
-    i = ssl_rsa_private_decrypt(s->cert, s->s2->tmp.enc,
-                                &(p[s->s2->tmp.clear]),
-                                &(p[s->s2->tmp.clear]),
-                                (s->s2->ssl2_rollback) ? RSA_SSLV23_PADDING :
-                                RSA_PKCS1_PADDING);
 
     is_export = SSL_C_IS_EXPORT(s->session->cipher);
 
@@ -475,23 +471,61 @@ static int get_client_master_key(SSL *s)
     } else
         ek = 5;
 
+    /*
+     * The format of the CLIENT-MASTER-KEY message is
+     * 1 byte message type
+     * 3 bytes cipher
+     * 2-byte clear key length (stored in s->s2->tmp.clear)
+     * 2-byte encrypted key length (stored in s->s2->tmp.enc)
+     * 2-byte key args length (IV etc)
+     * clear key
+     * encrypted key
+     * key args
+     *
+     * If the cipher is an export cipher, then the encrypted key bytes
+     * are a fixed portion of the total key (5 or 8 bytes). The size of
+     * this portion is in |ek|. If the cipher is not an export cipher,
+     * then the entire key material is encrypted (i.e., clear key length
+     * must be zero).
+     */
+    if ((!is_export && s->s2->tmp.clear != 0) ||
+        (is_export && s->s2->tmp.clear + ek != (unsigned int)EVP_CIPHER_key_length(c))) {
+        ssl2_return_error(s, SSL2_PE_UNDEFINED_ERROR);
+        SSLerr(SSL_F_GET_CLIENT_MASTER_KEY,SSL_R_BAD_LENGTH);
+        return -1;
+    }
+    /*
+     * The encrypted blob must decrypt to the encrypted portion of the key.
+     * Decryption can't be expanding, so if we don't have enough encrypted
+     * bytes to fit the key in the buffer, stop now.
+     */
+    if ((is_export && s->s2->tmp.enc < ek) ||
+        (!is_export && s->s2->tmp.enc < (unsigned int)EVP_CIPHER_key_length(c))) {
+        ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);
+        SSLerr(SSL_F_GET_CLIENT_MASTER_KEY,SSL_R_LENGTH_TOO_SHORT);
+        return -1;
+    }
+
+    i = ssl_rsa_private_decrypt(s->cert, s->s2->tmp.enc,
+                                &(p[s->s2->tmp.clear]),
+                                &(p[s->s2->tmp.clear]),
+                                (s->s2->ssl2_rollback) ? RSA_SSLV23_PADDING :
+                                RSA_PKCS1_PADDING);
+
     /* bad decrypt */
 # if 1
     /*
      * If a bad decrypt, continue with protocol but with a random master
      * secret (Bleichenbacher attack)
      */
-    if ((i < 0) || ((!is_export && (i != EVP_CIPHER_key_length(c)))
-                    || (is_export && ((i != ek)
-                                      || (s->s2->tmp.clear +
-                                          (unsigned int)i != (unsigned int)
-                                          EVP_CIPHER_key_length(c)))))) {
+    if ((i < 0) || ((!is_export && i != EVP_CIPHER_key_length(c))
+                    || (is_export && i != (int)ek))) {
         ERR_clear_error();
         if (is_export)
             i = ek;
         else
             i = EVP_CIPHER_key_length(c);
-        if (RAND_pseudo_bytes(p, i) <= 0)
+        if (RAND_pseudo_bytes(&p[s->s2->tmp.clear], i) <= 0)
             return 0;
     }
 # else
@@ -513,7 +547,7 @@ static int get_client_master_key(SSL *s)
 # endif
 
     if (is_export)
-        i += s->s2->tmp.clear;
+        i = EVP_CIPHER_key_length(c);
 
     if (i > SSL_MAX_MASTER_KEY_LENGTH) {
         ssl2_return_error(s, SSL2_PE_UNDEFINED_ERROR);

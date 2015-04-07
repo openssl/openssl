@@ -337,7 +337,7 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
                             goto end;
                     }
                 } else {
-                    if (BIO_write(bp, "BAD ENUMERATED", 11) <= 0)
+                    if (BIO_write(bp, "BAD ENUMERATED", 14) <= 0)
                         goto end;
                 }
                 M_ASN1_ENUMERATED_free(bs);

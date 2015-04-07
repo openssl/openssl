@@ -347,7 +347,7 @@ static unsigned int psk_server_cb(SSL *ssl, const char *identity,
     }
     if (s_debug)
         BIO_printf(bio_s_out, "identity_len=%d identity=%s\n",
-                   identity ? (int)strlen(identity) : 0, identity);
+                   (int)strlen(identity), identity);
 
     /* here we could lookup the given identity e.g. from a database */
     if (strcmp(identity, psk_identity) != 0) {
@@ -696,6 +696,8 @@ static int ebcdic_new(BIO *bi)
     EBCDIC_OUTBUFF *wbuf;
 
     wbuf = (EBCDIC_OUTBUFF *) OPENSSL_malloc(sizeof(EBCDIC_OUTBUFF) + 1024);
+    if (!wbuf)
+        return 0;
     wbuf->alloced = 1024;
     wbuf->buff[0] = '\0';
 
@@ -750,9 +752,11 @@ static int ebcdic_write(BIO *b, const char *in, int inl)
         num = num + num;        /* double the size */
         if (num < inl)
             num = inl;
-        OPENSSL_free(wbuf);
         wbuf =
             (EBCDIC_OUTBUFF *) OPENSSL_malloc(sizeof(EBCDIC_OUTBUFF) + num);
+        if(!wbuf)
+            return 0;
+        OPENSSL_free(b->ptr);
 
         wbuf->alloced = num;
         wbuf->buff[0] = '\0';
@@ -1736,12 +1740,6 @@ int MAIN(int argc, char *argv[])
         SSL_CTX_set_options(ctx, SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG);
     if (exc)
         ssl_ctx_set_excert(ctx, exc);
-    /*
-     * DTLS: partial reads end up discarding unread UDP bytes :-( Setting
-     * read ahead solves this problem.
-     */
-    if (socket_type == SOCK_DGRAM)
-        SSL_CTX_set_read_ahead(ctx, 1);
 
     if (state)
         SSL_CTX_set_info_callback(ctx, apps_ssl_info_callback);
@@ -1821,12 +1819,6 @@ int MAIN(int argc, char *argv[])
             SSL_CTX_set_options(ctx2, SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG);
         if (exc)
             ssl_ctx_set_excert(ctx2, exc);
-        /*
-         * DTLS: partial reads end up discarding unread UDP bytes :-(
-         * Setting read ahead solves this problem.
-         */
-        if (socket_type == SOCK_DGRAM)
-            SSL_CTX_set_read_ahead(ctx2, 1);
 
         if (state)
             SSL_CTX_set_info_callback(ctx2, apps_ssl_info_callback);
@@ -2877,7 +2869,7 @@ static int www_body(char *hostname, int s, int stype, unsigned char *context)
 
         /* else we have data */
         if (((www == 1) && (strncmp("GET ", buf, 4) == 0)) ||
-            ((www == 2) && (strncmp("GET /stats ", buf, 10) == 0))) {
+            ((www == 2) && (strncmp("GET /stats ", buf, 11) == 0))) {
             char *p;
             X509 *peer;
             STACK_OF(SSL_CIPHER) *sk;
@@ -3331,6 +3323,10 @@ static int add_session(SSL *ssl, SSL_SESSION *session)
     unsigned char *p;
 
     sess = OPENSSL_malloc(sizeof(simple_ssl_session));
+    if(!sess) {
+        BIO_printf(bio_err, "Out of memory adding session to external cache\n");
+        return 0;
+    }
 
     SSL_SESSION_get_id(session, &sess->idlen);
     sess->derlen = i2d_SSL_SESSION(session, NULL);
@@ -3338,6 +3334,16 @@ static int add_session(SSL *ssl, SSL_SESSION *session)
     sess->id = BUF_memdup(SSL_SESSION_get_id(session, NULL), sess->idlen);
 
     sess->der = OPENSSL_malloc(sess->derlen);
+    if(!sess->id || !sess->der) {
+        BIO_printf(bio_err, "Out of memory adding session to external cache\n");
+
+        if(sess->id)
+            OPENSSL_free(sess->id);
+        if(sess->der)
+            OPENSSL_free(sess->der);
+        OPENSSL_free(sess);
+        return 0;
+    }
     p = sess->der;
     i2d_SSL_SESSION(session, &p);
 

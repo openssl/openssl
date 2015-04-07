@@ -563,10 +563,18 @@ int MAIN(int argc, char **argv)
 #ifdef OPENSSL_SYS_VMS
         len = strlen(s) + sizeof(CONFIG_FILE);
         tofree = OPENSSL_malloc(len);
+        if(!tofree) {
+            BIO_printf(bio_err, "Out of memory\n");
+            goto err;
+        }
         strcpy(tofree, s);
 #else
         len = strlen(s) + sizeof(CONFIG_FILE) + 1;
         tofree = OPENSSL_malloc(len);
+        if(!tofree) {
+            BIO_printf(bio_err, "Out of memory\n");
+            goto err;
+        }
         BUF_strlcpy(tofree, s, len);
         BUF_strlcat(tofree, "/", len);
 #endif
@@ -2813,6 +2821,11 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
     ASN1_GENERALIZEDTIME *comp_time = NULL;
     tmp = BUF_strdup(str);
 
+    if(!tmp) {
+        BIO_printf(bio_err, "memory allocation failure\n");
+        goto err;
+    }
+
     p = strchr(tmp, ',');
 
     rtime_str = tmp;
@@ -2830,6 +2843,10 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
 
     if (prevtm) {
         *prevtm = ASN1_UTCTIME_new();
+        if(!*prevtm) {
+            BIO_printf(bio_err, "memory allocation failure\n");
+            goto err;
+        }
         if (!ASN1_UTCTIME_set_string(*prevtm, rtime_str)) {
             BIO_printf(bio_err, "invalid revocation date %s\n", rtime_str);
             goto err;
@@ -2870,6 +2887,10 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
                 goto err;
             }
             comp_time = ASN1_GENERALIZEDTIME_new();
+            if(!comp_time) {
+                BIO_printf(bio_err, "memory allocation failure\n");
+                goto err;
+            }
             if (!ASN1_GENERALIZEDTIME_set_string(comp_time, arg_str)) {
                 BIO_printf(bio_err, "invalid compromised time %s\n", arg_str);
                 goto err;

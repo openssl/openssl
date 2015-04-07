@@ -790,6 +790,8 @@ static int aes_t4_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
         default:
             return 0;
         }
+#  else
+        cctx->str = NULL;
 #  endif
         cctx->key_set = 1;
     }

@@ -172,6 +172,7 @@ static int vms_load(DSO *dso)
 # endif                         /* __INITIAL_POINTER_SIZE == 64 */
 
     const char *sp1, *sp2;      /* Search result */
+    const char *ext = NULL;	/* possible extension to add */
 
     if (filename == NULL) {
         DSOerr(DSO_F_VMS_LOAD, DSO_R_NO_FILENAME);
@@ -214,11 +215,19 @@ static int vms_load(DSO *dso)
     /* Now, let's see if there's a type, and save the position in sp2 */
     sp2 = strchr(sp1, '.');
     /*
+     * If there is a period and the next character is a semi-colon,
+     * we need to add an extension
+     */
+    if (sp2 != NULL && sp2[1] == ';')
+        ext = ".EXE";
+    /*
      * If we found it, that's where we'll cut.  Otherwise, look for a version
      * number and save the position in sp2
      */
-    if (sp2 == NULL)
+    if (sp2 == NULL) {
         sp2 = strchr(sp1, ';');
+        ext = ".EXE";
+    }
     /*
      * If there was still nothing to find, set sp2 to point at the end of the
      * string
@@ -244,6 +253,11 @@ static int vms_load(DSO *dso)
 
     strncpy(p->imagename, filename, sp1 - filename);
     p->imagename[sp1 - filename] = '\0';
+    if (ext) {
+        strcat(p->imagename, ext);
+        if (*sp2 == '.')
+            sp2++;
+    }
     strcat(p->imagename, sp2);
 
     p->filename_dsc.dsc$w_length = strlen(p->filename);
@@ -525,7 +539,8 @@ static char *vms_name_converter(DSO *dso, const char *filename)
 {
     int len = strlen(filename);
     char *not_translated = OPENSSL_malloc(len + 1);
-    strcpy(not_translated, filename);
+    if(not_translated)
+        strcpy(not_translated, filename);
     return (not_translated);
 }
 

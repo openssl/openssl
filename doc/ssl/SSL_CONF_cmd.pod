@@ -195,6 +195,11 @@ context. This option is only supported if certificate operations
 are permitted. Note: if no B<-key> option is set then a private key is
 not loaded: it does not currently use the B<Certificate> file.
 
+=item B<ServerInfoFile>
+
+Attempts to use the file B<value> in the "serverinfo" extension using the
+function SSL_CTX_use_serverinfo_file.
+
 =item B<DHParameters>
 
 Attempts to use the file B<value> as the set of temporary DH parameters for

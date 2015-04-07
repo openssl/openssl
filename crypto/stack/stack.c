@@ -312,7 +312,7 @@ void sk_zero(_STACK *st)
         return;
     if (st->num <= 0)
         return;
-    memset((char *)st->data, 0, sizeof(st->data) * st->num);
+    memset((char *)st->data, 0, sizeof(*st->data) * st->num);
     st->num = 0;
 }
 

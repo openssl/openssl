@@ -463,6 +463,10 @@ int MAIN(int argc, char **argv)
             if (key_param == NULL || key_param->idx != keyidx) {
                 cms_key_param *nparam;
                 nparam = OPENSSL_malloc(sizeof(cms_key_param));
+                if(!nparam) {
+                    BIO_printf(bio_err, "Out of memory\n");
+                    goto argerr;
+                }
                 nparam->idx = keyidx;
                 nparam->param = sk_OPENSSL_STRING_new_null();
                 nparam->next = NULL;

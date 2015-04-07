@@ -293,6 +293,11 @@ int MAIN(int argc, char **argv)
 
     in = BIO_new(BIO_s_file());
     bmd = BIO_new(BIO_f_md());
+    if ((in == NULL) || (bmd == NULL)) {
+        ERR_print_errors(bio_err);
+        goto end;
+    }
+
     if (debug) {
         BIO_set_callback(in, BIO_debug_callback);
         /* needed for windows 3.1 */
@@ -301,11 +306,6 @@ int MAIN(int argc, char **argv)
 
     if (!app_passwd(bio_err, passargin, NULL, &passin, NULL)) {
         BIO_printf(bio_err, "Error getting password\n");
-        goto end;
-    }
-
-    if ((in == NULL) || (bmd == NULL)) {
-        ERR_print_errors(bio_err);
         goto end;
     }
 
@@ -457,6 +457,11 @@ int MAIN(int argc, char **argv)
         sigbuf = OPENSSL_malloc(siglen);
         if (!sigbio) {
             BIO_printf(bio_err, "Error opening signature file %s\n", sigfile);
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+        if (!sigbuf) {
+            BIO_printf(bio_err, "Out of memory\n");
             ERR_print_errors(bio_err);
             goto end;
         }

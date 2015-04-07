@@ -236,7 +236,7 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
             pitem_free(item);
 
         SSLerr(SSL_F_DTLS1_BUFFER_RECORD, ERR_R_INTERNAL_ERROR);
-        return (0);
+        return -1;
     }
 
     rdata->packet = s->packet;
@@ -1142,7 +1142,7 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
             cb(s, SSL_CB_READ_ALERT, j);
         }
 
-        if (alert_level == 1) { /* warning */
+        if (alert_level == SSL3_AL_WARNING) {
             s->s3->warn_alert = alert_descr;
             if (alert_descr == SSL_AD_CLOSE_NOTIFY) {
 #ifndef OPENSSL_NO_SCTP
@@ -1191,7 +1191,7 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
                 }
             }
 #endif
-        } else if (alert_level == 2) { /* fatal */
+        } else if (alert_level == SSL3_AL_FATAL) {
             char tmp[16];
 
             s->rwstate = SSL_NOTHING;

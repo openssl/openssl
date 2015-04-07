@@ -69,7 +69,8 @@ static int pkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     /* Since the structure must still be valid use ASN1_OP_FREE_PRE */
     if (operation == ASN1_OP_FREE_PRE) {
         PKCS8_PRIV_KEY_INFO *key = (PKCS8_PRIV_KEY_INFO *)*pval;
-        if (key->pkey->value.octet_string)
+        if (key->pkey && key->pkey->type == V_ASN1_OCTET_STRING
+            && key->pkey->value.octet_string != NULL)
             OPENSSL_cleanse(key->pkey->value.octet_string->data,
                             key->pkey->value.octet_string->length);
     }

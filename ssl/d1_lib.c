@@ -270,7 +270,7 @@ void dtls1_clear(SSL *s)
 
     ssl3_clear(s);
     if (s->options & SSL_OP_CISCO_ANYCONNECT)
-        s->version = DTLS1_BAD_VER;
+        s->client_version = s->version = DTLS1_BAD_VER;
     else if (s->method->version == DTLS_ANY_VERSION)
         s->version = DTLS1_2_VERSION;
     else
@@ -542,6 +542,9 @@ static void get_current_time(struct timeval *t)
 int dtls1_listen(SSL *s, struct sockaddr *client)
 {
     int ret;
+
+    /* Ensure there is no state left over from a previous invocation */
+    SSL_clear(s);
 
     SSL_set_options(s, SSL_OP_COOKIE_EXCHANGE);
     s->d1->listen = 1;
