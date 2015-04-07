@@ -1,6 +1,7 @@
 /* vpm_int.h */
-/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
- * project 2013.
+/*
+ * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
+ * 2013.
  */
 /* ====================================================================
  * Copyright (c) 2013 The OpenSSL Project.  All rights reserved.
@@ -10,7 +11,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -58,13 +59,12 @@
 
 /* internal only structure to hold additional X509_VERIFY_PARAM data */
 
-struct X509_VERIFY_PARAM_ID_st
-	{
-	STACK_OF(OPENSSL_STRING) *hosts;	/* Set of acceptable names */
-	unsigned int hostflags;	/* Flags to control matching features */
-	char *peername;		/* Matching hostname in peer certificate */
-	char *email;		/* If not NULL email address to match */
-	size_t emaillen;
-	unsigned char *ip;	/* If not NULL IP address to match */
-	size_t iplen;		/* Length of IP address */
-	};
+struct X509_VERIFY_PARAM_ID_st {
+    STACK_OF(OPENSSL_STRING) *hosts; /* Set of acceptable names */
+    unsigned int hostflags;     /* Flags to control matching features */
+    char *peername;             /* Matching hostname in peer certificate */
+    char *email;                /* If not NULL email address to match */
+    size_t emaillen;
+    unsigned char *ip;          /* If not NULL IP address to match */
+    size_t iplen;               /* Length of IP address */
+};

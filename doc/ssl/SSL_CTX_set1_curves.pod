@@ -45,11 +45,12 @@ B<curves> array is in the form of a set of curve NIDs in preference
 order. It can return zero if the client did not send a supported curves
 extension.
 
-SSL_get1_shared_curve() returns shared curve B<n> for B<ssl>. If B<n> is
--1 then the total number of shared curves is returned, which may be
-zero. Other than for diagnostic purposes, most applications will only
-be interested in the first shared curve so B<n> is normally set to zero.
-If the value B<n> is out of range zero is returned.
+SSL_get_shared_curve() returns shared curve B<n> for a server-side
+SSL B<ssl>. If B<n> is -1 then the total number of shared curves is
+returned, which may be zero. Other than for diagnostic purposes,
+most applications will only be interested in the first shared curve
+so B<n> is normally set to zero. If the value B<n> is out of range,
+NID_undef is returned.
 
 SSL_CTX_set_ecdh_auto() and SSL_set_ecdh_auto() set automatic curve
 selection for server B<ctx> or B<ssl> to B<onoff>. If B<onoff> is 1 then 
@@ -84,8 +85,12 @@ return 1 for success and 0 for failure.
 
 SSL_get1_curves() returns the number of curves, which may be zero.
 
-SSL_get1_shared_curve() returns the NID of shared curve B<n> of zero if there
-is no shared curve B<n> or the number of shared curves if B<n> is -1.
+SSL_get_shared_curve() returns the NID of shared curve B<n> or NID_undef if there
+is no shared curve B<n>; or the total number of shared curves if B<n>
+is -1.
+
+When called on a client B<ssl>, SSL_get_shared_curve() has no meaning and
+returns -1.
 
 =head1 SEE ALSO
 

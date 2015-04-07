@@ -177,12 +177,12 @@ cipher suites using RSA key exchange.
 cipher suites using DH key agreement and DH certificates signed by CAs with RSA
 and DSS keys or either respectively.
 
-=item B<kEDH>
+=item B<kDHE>, B<kEDH>
 
 cipher suites using ephemeral DH key agreement, including anonymous cipher
 suites.
 
-=item B<EDH>
+=item B<DHE>, B<EDH>
 
 cipher suites using authenticated ephemeral DH key agreement.
 
@@ -200,12 +200,12 @@ cipher suites using DH, including anonymous DH, ephemeral DH and fixed DH.
 cipher suites using fixed ECDH key agreement signed by CAs with RSA and ECDSA
 keys or either respectively.
 
-=item B<kEECDH>
+=item B<kECDHE>, B<kEECDH>
 
 cipher suites using ephemeral ECDH key agreement, including anonymous
 cipher suites.
 
-=item B<EECDHE>
+=item B<ECDHE>, B<EECDH>
 
 cipher suites using authenticated ephemeral ECDH key agreement.
 

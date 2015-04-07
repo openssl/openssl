@@ -61,8 +61,12 @@
 #
 # rsa2048 sign/sec	OpenSSL 1.0.1	scalar(*)	this
 # 2.3GHz Haswell	621		765/+23%	1113/+79%
+# 2.3GHz Broadwell(**)	688		1200(***)/+74%	1120/+63%
 #
 # (*)	if system doesn't support AVX2, for reference purposes;
+# (**)	scaled to 2.3GHz to simplify comparison;
+# (***)	scalar AD*X code is faster than AVX2 and is preferred code
+#	path for Broadwell;
 
 $flavour = shift;
 $output  = shift;

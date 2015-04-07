@@ -218,7 +218,7 @@ $ LIB_SSL = "s2_meth, s2_srvr, s2_clnt, s2_lib, s2_enc, s2_pkt,"+ -
 	    "s23_meth,s23_srvr,s23_clnt,s23_lib,        s23_pkt,"+ -
 	    "t1_meth, t1_srvr, t1_clnt, t1_lib, t1_enc, t1_ext,"+ -
 	    "d1_meth, d1_srvr, d1_clnt, d1_lib, d1_pkt,"+ -
-	    "d1_both,d1_enc,d1_srtp,"+ -
+	    "d1_both,d1_srtp,"+ -
 	    "ssl_lib,ssl_err2,ssl_cert,ssl_sess,"+ -
 	    "ssl_ciph,ssl_stat,ssl_rsa,"+ -
 	    "ssl_asn1,ssl_txt,ssl_algs,ssl_conf,"+ -
