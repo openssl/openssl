@@ -4,6 +4,7 @@ t=$1
 ktype=$2
 ptype=$3
 
+OPENSSL_CONF=/dev/null ; export OPENSSL_CONF
 if ../util/shlib_wrap.sh ../apps/openssl no-$ktype; then
   echo skipping $ktype $ptype conversion test
   exit 0

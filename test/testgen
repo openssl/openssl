@@ -3,6 +3,7 @@
 T=testcert
 KEY=512
 CA=../certs/testca.pem
+OPENSSL_CONF=/dev/null ; export OPENSSL_CONF
 
 /bin/rm -f $T.1 $T.2 $T.key
 

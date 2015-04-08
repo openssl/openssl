@@ -5,6 +5,7 @@ reqcmd="../util/shlib_wrap.sh ../apps/openssl req"
 x509cmd="../util/shlib_wrap.sh ../apps/openssl x509 $digest"
 verifycmd="../util/shlib_wrap.sh ../apps/openssl verify"
 dummycnf="../apps/openssl.cnf"
+OPENSSL_CONF=/dev/null ; export OPENSSL_CONF
 
 CAkey="keyCA.ss"
 CAcert="certCA.ss"
@@ -40,7 +41,7 @@ else
   req_new='-new'
 fi
 
-$reqcmd -config $CAconf -out $CAreq -keyout $CAkey $req_new #>err.ss
+$reqcmd -config $CAconf -out $CAreq -keyout $CAkey $req_new
 if [ $? != 0 ]; then
 	echo "error using 'req' to generate a certificate request"
 	exit 1
@@ -158,6 +159,4 @@ echo The second generated proxy certificate is $P2cert
 echo The second generated proxy private key is $P2key
 
 /bin/rm err.ss
-#/bin/rm $P1intermediate
-#/bin/rm $P2intermediate
 exit 0
