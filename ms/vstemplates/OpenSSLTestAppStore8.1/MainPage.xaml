@@ -7,6 +7,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
+    <!--LayoutRoot is the root grid where all page content is placed-->
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -24,13 +25,18 @@
             <ListBox x:Name="Tests"  >
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <StackPanel Orientation="Horizontal" Margin="0,6">
+                        <Grid Margin="0,6" HorizontalAlignment="Stretch">
+                            <Grid.ColumnDefinitions >
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
                             <TextBlock Padding="5,0,5,0" Text="{Binding errorcode}" Foreground="{Binding color}" VerticalAlignment="Center" FontSize="25"/>
-                            <TextBlock Text="{Binding test}" Width="350" VerticalAlignment="Center" FontSize="15" TextWrapping="Wrap"/>
-                        </StackPanel>
+                            <TextBlock Grid.Column="1" Text="{Binding test}" VerticalAlignment="Center" HorizontalAlignment="Left" FontSize="15" TextWrapping="Wrap"/>
+                        </Grid>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
         </Grid>
     </Grid>
+
 </Page>
