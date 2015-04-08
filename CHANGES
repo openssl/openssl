@@ -39,6 +39,9 @@
      done while fixing the error code for the key-too-small case.
      [Annie Yousar <a.yousar@informatik.hu-berlin.de>]
 
+  *) CA.sh has been removmed; use CA.pl instead.
+     [Rich Salz]
+
   *) Removed old DES API.
      [Rich Salz]
 

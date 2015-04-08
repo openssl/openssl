@@ -417,13 +417,13 @@ sub get_tests
 	      );
   $copies .= copy_scripts(1, 'util', @utils);
 
-  my @apps = ( 'CA.sh',
+  my @apps = ( 'CA.pl',
 	       'openssl.cnf',
 	       'server2.pem',
 	     );
   $copies .= copy_scripts(1, 'apps', @apps);
 
-  $scripts = "test_scripts: \$(TEST_D)/CA.sh \$(TEST_D)/opensslwrap.sh \$(TEST_D)/openssl.cnf \$(TEST_D)/shlib_wrap.sh ocsp smime\n";
+  $scripts = "test_scripts: \$(TEST_D)/CA.pl \$(TEST_D)/opensslwrap.sh \$(TEST_D)/openssl.cnf \$(TEST_D)/shlib_wrap.sh ocsp smime\n";
   $scripts .= "\nocsp:\n\tcp -R test/ocsp-tests \$(TEST_D)\n";
   $scripts .= "\smime:\n\tcp -R test/smime-certs \$(TEST_D)\n";
 

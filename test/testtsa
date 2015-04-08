@@ -14,7 +14,7 @@ export SH PATH
 
 OPENSSL_CONF="../CAtsa.cnf"
 export OPENSSL_CONF
-# Because that's what ../apps/CA.sh really looks at
+# Because that's what ../apps/CA.pl really looks at
 SSLEAY_CONFIG="-config $OPENSSL_CONF"
 export SSLEAY_CONFIG
 
