@@ -29,6 +29,9 @@ LIBCRYPTO= -L.. -lcrypto
 LIBSSL= -L.. -lssl
 LIBFIPS= -L.. -lfips
 
+# Prefix for logline for each test
+START= @@@ START
+
 BNTEST=		bntest
 ECTEST=		ectest
 ECDSATEST=	ecdsatest
@@ -150,209 +153,247 @@ alltests: \
 	test_constant_time
 
 test_evp: $(EVPTEST)$(EXE_EXT) evptests.txt
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(EVPTEST) evptests.txt
 
 test_evp_extra: $(EVPEXTRATEST)$(EXE_EXT)
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(EVPEXTRATEST)
 
 test_p5_crpt2: $(P5_CRPT2_TEST)$(EXE_EXT)
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(P5_CRPT2_TEST)
 
 test_des: $(DESTEST)$(EXE_EXT)
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(DESTEST)
 
 test_idea: $(IDEATEST)$(EXE_EXT)
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(IDEATEST)
 
 test_sha: $(SHA1TEST)$(EXE_EXT) $(SHA256TEST)$(EXE_EXT) $(SHA512TEST)$(EXE_EXT)
+	@echo $(START) $@ -- sha1
 	../util/shlib_wrap.sh ./$(SHA1TEST)
+	@echo $(START) $@ -- sha256
 	../util/shlib_wrap.sh ./$(SHA256TEST)
+	@echo $(START) $@ -- sha512
 	../util/shlib_wrap.sh ./$(SHA512TEST)
 
 test_mdc2: $(MDC2TEST)$(EXE_EXT)
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(MDC2TEST)
 
 test_md5: $(MD5TEST)$(EXE_EXT)
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(MD5TEST)
 
 test_md4: $(MD4TEST)$(EXE_EXT)
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(MD4TEST)
 
 test_hmac: $(HMACTEST)$(EXE_EXT)
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(HMACTEST)
 
 test_wp: $(WPTEST)$(EXE_EXT)
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(WPTEST)
 
 test_md2: $(MD2TEST)$(EXE_EXT)
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(MD2TEST)
 
 test_rmd: $(RMDTEST)$(EXE_EXT)
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(RMDTEST)
 
 test_bf: $(BFTEST)$(EXE_EXT)
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(BFTEST)
 
 test_cast: $(CASTTEST)$(EXE_EXT)
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(CASTTEST)
 
 test_rc2: $(RC2TEST)$(EXE_EXT)
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(RC2TEST)
 
 test_rc4: $(RC4TEST)$(EXE_EXT)
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(RC4TEST)
 
 test_rc5: $(RC5TEST)$(EXE_EXT)
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(RC5TEST)
 
 test_rand: $(RANDTEST)$(EXE_EXT)
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(RANDTEST)
 
 test_gost2814789: $(GOST2814789TEST)$(EXE_EXT)
+	@echo $(START) $@
 	OPENSSL_ENGINES=../engines/ccgost ../util/shlib_wrap.sh ./$(GOST2814789TEST)
 
 test_enc: ../apps/openssl$(EXE_EXT) testenc
+	@echo $(START) $@
 	@sh ./testenc
 
 test_x509: ../apps/openssl$(EXE_EXT) tx509 testx509.pem v3-cert1.pem v3-cert2.pem
-	echo test normal x509v1 certificate
-	sh ./tx509 2>/dev/null
-	echo test first x509v3 certificate
-	sh ./tx509 v3-cert1.pem 2>/dev/null
-	echo test second x509v3 certificate
-	sh ./tx509 v3-cert2.pem 2>/dev/null
+	@echo $(START) $@ -- x509v1 certificate
+	sh ./tx509
+	@echo $(START) $@ -- first x509v3 certificate
+	sh ./tx509 v3-cert1.pem
+	@echo $(START) $@ -- second x509v3 certificate
+	sh ./tx509 v3-cert2.pem
 
 test_rsa: $(RSATEST)$(EXE_EXT) ../apps/openssl$(EXE_EXT) tkey testrsa.pem
-	@sh ./tkey testrsa.pem rsa private 2>/dev/null
-	@sh ./tkey testrsapub.pem rsa public 2>/dev/null
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(RSATEST)
+	@echo $(START) $@ -- private key
+	@sh ./tkey testrsa.pem rsa private
+	@echo $(START) $@ -- public public
+	@sh ./tkey testrsapub.pem rsa public
 
 test_crl: ../apps/openssl$(EXE_EXT) tcrl testcrl.pem
-	@sh ./tcrl 2>/dev/null
+	@echo $(START) $@
+	sh ./tcrl
 
 test_sid: ../apps/openssl$(EXE_EXT) tsid testsid.pem
-	@sh ./tsid 2>/dev/null
+	@echo $(START) $@
+	@sh ./tsid
 
 test_req: ../apps/openssl$(EXE_EXT) treq testreq.pem testreq2.pem
-	@sh ./treq 2>/dev/null
-	@sh ./treq testreq2.pem 2>/dev/null
+	@echo $(START) $@
+	@sh ./treq
+	@echo $(START) $@ -- testreq2
+	@sh ./treq testreq2.pem
 
 test_pkcs7: ../apps/openssl$(EXE_EXT) tpkcs7 tpkcs7d testp7.pem pkcs7-1.pem
-	@sh ./tpkcs7 2>/dev/null
-	@sh ./tpkcs7d 2>/dev/null
+	@echo $(START) $@ -- pkcs7
+	@sh ./tpkcs7
+	@echo $(START) $@ -- pkcs7d
+	@sh ./tpkcs7d
 
 test_bn: $(BNTEST)$(EXE_EXT) $(EXPTEST)$(EXE_EXT) bctest
-	@echo starting big number library test, could take a while...
+	@echo $(START) $@ -- could take  a while.
 	@../util/shlib_wrap.sh ./$(BNTEST) >tmp.bntest
 	@echo quit >>tmp.bntest
-	@echo "running bc"
+	@echo $(START) $@ -- running bc
 	@<tmp.bntest sh -c "`sh ./bctest ignore`" | $(PERL) -e '$$i=0; while (<STDIN>) {if (/^test (.*)/) {print STDERR "\nverify $$1";} elsif (!/^0\r?$$/) {die "\nFailed! bc: $$_";} else {print STDERR "."; $$i++;}} print STDERR "\n$$i tests passed\n"'
-	@echo 'test a^b%c implementations'
+	@echo $(START) $@ -- $(EXPTEST)
 	../util/shlib_wrap.sh ./$(EXPTEST)
 
 test_ec: $(ECTEST)$(EXE_EXT) tkey testec-p256.pem
-	@echo 'test elliptic curves'
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(ECTEST)
-	@sh ./tkey testec-p256.pem ec private 2>/dev/null
-	@sh ./tkey testecpub-p256.pem ec public 2>/dev/null
+	@echo $(START) $@ -- private
+	@sh ./tkey testec-p256.pem ec private
+	@echo $(START) $@ -- public
+	@sh ./tkey testecpub-p256.pem ec public
 
 test_ecdsa: $(ECDSATEST)$(EXE_EXT)
-	@echo 'test ecdsa'
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(ECDSATEST)
 
 test_ecdh: $(ECDHTEST)$(EXE_EXT)
-	@echo 'test ecdh'
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(ECDHTEST)
 
 test_verify: ../apps/openssl$(EXE_EXT)
-	@echo "The following command should have some OK's and some failures"
-	@echo "There are definitly a few expired certificates"
-	../util/shlib_wrap.sh ../apps/openssl verify -CApath ../certs/demo ../certs/demo/*.pem
+	@echo $(START) $@ -- expect some failures and expired certificates
+	OPENSSL_CONF=/dev/null ../util/shlib_wrap.sh ../apps/openssl verify -CApath ../certs/demo ../certs/demo/*.pem
 
 test_dh: $(DHTEST)$(EXE_EXT)
-	@echo "Generate a set of DH parameters"
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(DHTEST)
 
 test_dsa: $(DSATEST)$(EXE_EXT) tkey testdsa.pem
-	@echo "Generate a set of DSA parameters"
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(DSATEST)
+	@echo $(START) $@ -- app2_1
 	../util/shlib_wrap.sh ./$(DSATEST) -app2_1
-	@sh ./tkey testdsa.pem dsa private 2>/dev/null
-	@sh ./tkey testdsapub.pem dsa public 2>/dev/null
+	@echo $(START) $@ -- private
+	@sh ./tkey testdsa.pem dsa private
+	@echo $(START) $@ -- public
+	@sh ./tkey testdsapub.pem dsa public
 
 test_gen testreq.pem: ../apps/openssl$(EXE_EXT) testgen test.cnf
-	@echo "Generate and verify a certificate request"
+	@echo $(START) test_gen
 	@sh ./testgen
 
 test_ss keyU.ss certU.ss certCA.ss certP1.ss keyP1.ss certP2.ss keyP2.ss \
 		intP1.ss intP2.ss: testss CAss.cnf Uss.cnf P1ss.cnf P2ss.cnf \
                                    ../apps/openssl$(EXE_EXT)
-	@echo "Generate and certify a test certificate"
+	@echo $(START) test_ss
 	@sh ./testss
 	@cat certCA.ss certU.ss > intP1.ss
 	@cat certCA.ss certU.ss certP1.ss > intP2.ss
 
 test_engine: $(ENGINETEST)$(EXE_EXT)
-	@echo "Manipulate the ENGINE structures"
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(ENGINETEST)
 
 test_ssl: keyU.ss certU.ss certCA.ss certP1.ss keyP1.ss certP2.ss keyP2.ss \
 		intP1.ss intP2.ss $(SSLTEST)$(EXE_EXT) testssl testsslproxy \
 		../apps/server2.pem serverinfo.pem
-	@echo "test SSL protocol"
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(SSLTEST) -test_cipherlist
+	@echo $(START) $@ -- key U
 	@sh ./testssl keyU.ss certU.ss certCA.ss
+	@echo $(START) $@ -- key P1
 	@sh ./testsslproxy keyP1.ss certP1.ss intP1.ss
+	@echo $(START) $@ -- key P2
 	@sh ./testsslproxy keyP2.ss certP2.ss intP2.ss
 
 test_ca: ../apps/openssl$(EXE_EXT) testca CAss.cnf Uss.cnf
-	@if ../util/shlib_wrap.sh ../apps/openssl no-rsa; then \
-	  echo "skipping CA.sh test -- requires RSA"; \
+	@if OPENSSL_CONF=/dev/null ../util/shlib_wrap.sh ../apps/openssl no-rsa; then \
+	  echo SKIP $@ -- requires RSA; \
 	else \
-	  echo "Generate and certify a test certificate via the 'ca' program"; \
+	  echo $(START) $@; \
 	  sh ./testca; \
 	fi
 
 test_tsa: ../apps/openssl$(EXE_EXT) testtsa CAtsa.cnf ../util/shlib_wrap.sh
-	@if ../util/shlib_wrap.sh ../apps/openssl no-rsa; then \
-	  echo "skipping testtsa test -- requires RSA"; \
+	@if OPENSSL_CONF=/dev/null ../util/shlib_wrap.sh ../apps/openssl no-rsa; then \
+	    echo SKIP $@ -- requires RSA; \
 	else \
+	  echo $(START) $@; \
 	  sh ./testtsa; \
 	fi
 
 test_ige: $(IGETEST)$(EXE_EXT)
-	@echo "Test IGE mode"
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(IGETEST)
 
 test_jpake: $(JPAKETEST)$(EXE_EXT)
-	@echo "Test JPAKE"
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(JPAKETEST)
 
 test_cms: ../apps/openssl$(EXE_EXT) cms-test.pl smcont.txt
-	@echo "CMS consistency test"
-	$(PERL) cms-test.pl
+	@echo $(START) $@
+	OPENSSL_CONFIG=/dev/null $(PERL) cms-test.pl
 
 test_srp: $(SRPTEST)$(EXE_EXT)
-	@echo "Test SRP"
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./srptest
 
 test_v3name: $(V3NAMETEST)$(EXE_EXT)
-	@echo "Test X509v3_check_*"
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(V3NAMETEST)
 
 test_ocsp: ../apps/openssl$(EXE_EXT) tocsp
-	@echo "Test OCSP"
+	@echo $(START) $@
 	@sh ./tocsp
 
 test_heartbeat: $(HEARTBEATTEST)$(EXE_EXT)
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(HEARTBEATTEST)
 
 test_constant_time: $(CONSTTIMETEST)$(EXE_EXT)
-	@echo "Test constant time utilites"
+	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(CONSTTIMETEST)
-
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
 depend:
 	@if [ -z "$(THIS)" ]; then \

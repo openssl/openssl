@@ -10,6 +10,7 @@ if [ "$2" = "" ]; then
 else
   cert="$2"
 fi
+OPENSSL_CONF=/dev/null ; export OPENSSL_CONF
 ssltest="../util/shlib_wrap.sh ./ssltest -key $key -cert $cert -c_key $key -c_cert $cert"
 
 if ../util/shlib_wrap.sh ../apps/openssl x509 -in $cert -text -noout | fgrep 'DSA Public Key' >/dev/null; then
