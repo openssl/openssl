@@ -641,8 +641,8 @@ the database has to be kept in memory.
 
 The B<ca> command really needs rewriting or the required functionality
 exposed at either a command or interface level so a more friendly utility
-(perl script or GUI) can handle things properly. The scripts B<CA.sh> and
-B<CA.pl> help a little but not very much.
+(perl script or GUI) can handle things properly. The script
+B<CA.pl> helps a little but not very much.
 
 Any fields in a request that are not present in a policy are silently
 deleted. This does not happen if the B<-preserveDN> option is used. To

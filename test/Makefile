@@ -352,7 +352,7 @@ test_ca: ../apps/openssl$(EXE_EXT) testca CAss.cnf Uss.cnf
 	  echo SKIP $@ -- requires RSA; \
 	else \
 	  echo $(START) $@; \
-	  sh ./testca; \
+	  sh ./testca $(PERL); \
 	fi
 
 test_tsa: ../apps/openssl$(EXE_EXT) testtsa CAtsa.cnf ../util/shlib_wrap.sh
