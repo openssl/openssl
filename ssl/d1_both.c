@@ -530,9 +530,8 @@ long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 
     memset(msg_hdr, 0, sizeof(*msg_hdr));
 
-    /* Don't change sequence numbers while listening */
-    if (!s->d1->listen)
-        s->d1->handshake_read_seq++;
+    s->d1->handshake_read_seq++;
+
 
     s->init_msg = s->init_buf->data + DTLS1_HM_HEADER_LENGTH;
     return s->init_num;
@@ -946,8 +945,7 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, int mt, long max, int *ok)
      * While listening, we accept seq 1 (ClientHello with cookie)
      * although we're still expecting seq 0 (ClientHello)
      */
-    if (msg_hdr.seq != s->d1->handshake_read_seq
-        && !(s->d1->listen && msg_hdr.seq == 1))
+    if (msg_hdr.seq != s->d1->handshake_read_seq)
         return dtls1_process_out_of_seq_message(s, &msg_hdr, ok);
 
     if (frag_len && frag_len < len)
@@ -1300,8 +1298,7 @@ void dtls1_set_message_header(SSL *s, unsigned char *p,
                                         unsigned long frag_off,
                                         unsigned long frag_len)
 {
-    /* Don't change sequence numbers while listening */
-    if (frag_off == 0 && !s->d1->listen) {
+    if (frag_off == 0) {
         s->d1->handshake_write_seq = s->d1->next_handshake_write_seq;
         s->d1->next_handshake_write_seq++;
     }

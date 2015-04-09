@@ -511,11 +511,6 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         }
     }
 
-    if (s->d1->listen && rr->type != SSL3_RT_HANDSHAKE) {
-        SSL3_RECORD_set_length(rr, 0);
-        goto start;
-    }
-
     /* we now have a packet which can be read and processed */
 
     if (s->s3->change_cipher_spec /* set when we receive ChangeCipherSpec,

@@ -165,7 +165,6 @@ int dtls1_accept(SSL *s)
     unsigned long alg_k;
     int ret = -1;
     int new_state, state, skip = 0;
-    int listen;
 #ifndef OPENSSL_NO_SCTP
     unsigned char sctpauthkey[64];
     char labelbuffer[sizeof(DTLS1_SCTP_AUTH_LABEL)];
@@ -180,8 +179,6 @@ int dtls1_accept(SSL *s)
     else if (s->ctx->info_callback != NULL)
         cb = s->ctx->info_callback;
 
-    listen = s->d1->listen;
-
     /* init things to blank */
     s->in_handshake++;
     if (!SSL_in_init(s) || SSL_in_before(s)) {
@@ -189,7 +186,6 @@ int dtls1_accept(SSL *s)
             return -1;
     }
 
-    s->d1->listen = listen;
 #ifndef OPENSSL_NO_SCTP
     /*
      * Notify SCTP BIO socket to enter handshake mode and prevent stream
@@ -327,28 +323,6 @@ int dtls1_accept(SSL *s)
                 s->state = SSL3_ST_SW_SRVR_HELLO_A;
 
             s->init_num = 0;
-
-            /*
-             * Reflect ClientHello sequence to remain stateless while
-             * listening
-             */
-            if (listen) {
-                DTLS_RECORD_LAYER_resync_write(&s->rlayer);
-            }
-
-            /* If we're just listening, stop here */
-            if (listen && s->state == SSL3_ST_SW_SRVR_HELLO_A) {
-                ret = 2;
-                s->d1->listen = 0;
-                /*
-                 * Set expected sequence numbers to continue the handshake.
-                 */
-                s->d1->handshake_read_seq = 2;
-                s->d1->handshake_write_seq = 1;
-                s->d1->next_handshake_write_seq = 1;
-                goto end;
-            }
-
             break;
 
         case DTLS1_ST_SW_HELLO_VERIFY_REQUEST_A:
