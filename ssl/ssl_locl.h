@@ -1431,8 +1431,6 @@ typedef struct dtls1_state_st {
     /* Buffered (sent) handshake records */
     pqueue sent_messages;
 
-    /* Is set when listening for new connections with dtls1_listen() */
-    unsigned int listen;
     unsigned int link_mtu;      /* max on-the-wire DTLS packet size */
     unsigned int mtu;           /* max DTLS packet size */
     struct hm_header_st w_msg_hdr;
