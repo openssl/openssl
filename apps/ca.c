@@ -154,6 +154,8 @@ static const char *ca_usage[] = {
     " -gencrl         - Generate a new CRL\n",
     " -crldays days   - Days is when the next CRL is due\n",
     " -crlhours hours - Hours is when the next CRL is due\n",
+    " -crlstart YYMMDDHHMMSSZ  - CRL validity lastUpdate\n",
+    " -crlend YYMMDDHHMMSSZ    - CRL validity nextUpdate (overrides -crldays, -crlhours)\n",
     " -startdate YYMMDDHHMMSSZ  - certificate validity notBefore\n",
     " -enddate YYMMDDHHMMSSZ    - certificate validity notAfter (overrides -days)\n",
     " -days arg       - number of days to certify the certificate for\n",
@@ -262,6 +264,8 @@ int MAIN(int argc, char **argv)
     int req = 0;
     int verbose = 0;
     int gencrl = 0;
+    char *crlstart = 0;
+    char *crlend = 0;
     int dorevoke = 0;
     int doupdatedb = 0;
     long crldays = 0;
@@ -459,6 +463,14 @@ int MAIN(int argc, char **argv)
             if (--argc < 1)
                 goto bad;
             crlsec = atol(*(++argv));
+        } else if (strcmp(*argv,"-crlstart") == 0) {
+            if (--argc < 1)
+                goto bad;
+            crlstart = *(++argv);
+        } else if (strcmp(*argv,"-crlend") == 0) {
+            if (--argc < 1)
+                goto bad;
+            crlend = *(++argv);
         } else if (strcmp(*argv, "-infiles") == 0) {
             argc--;
             argv++;
@@ -1331,7 +1343,7 @@ int MAIN(int argc, char **argv)
                 crlhours = 0;
             ERR_clear_error();
         }
-        if ((crldays == 0) && (crlhours == 0) && (crlsec == 0)) {
+        if ((crldays == 0) && (crlhours == 0) && (crlsec == 0) && !crlend) {
             BIO_printf(bio_err,
                        "cannot lookup how long until the next CRL is issued\n");
             goto err;
@@ -1348,10 +1360,18 @@ int MAIN(int argc, char **argv)
         if (!tmptm)
             goto err;
         X509_gmtime_adj(tmptm, 0);
+        if( crlstart && !ASN1_TIME_set_string(tmptm,crlstart) ){
+            BIO_puts(bio_err, "start date is malformed\n");
+            goto err;
+        }
         X509_CRL_set_lastUpdate(crl, tmptm);
         if (!X509_time_adj_ex(tmptm, crldays, crlhours * 60 * 60 + crlsec,
                               NULL)) {
             BIO_puts(bio_err, "error setting CRL nextUpdate\n");
+            goto err;
+        }
+        if( crlend && !ASN1_TIME_set_string(tmptm,crlend) ){
+            BIO_puts(bio_err, "end date is malformed\n");
             goto err;
         }
         X509_CRL_set_nextUpdate(crl, tmptm);
