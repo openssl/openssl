@@ -109,7 +109,7 @@ typedef struct {
     long tlsext_tick_lifetime_hint;
     ASN1_OCTET_STRING *tlsext_tick;
 #endif
-#ifndef OPENSSL_NO_TLSEXT
+#ifndef OPENSSL_NO_PSK
     ASN1_OCTET_STRING *psk_identity_hint;
     ASN1_OCTET_STRING *psk_identity;
 #endif
