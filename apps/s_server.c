@@ -261,6 +261,7 @@ static int enable_timeouts = 0;
 static long socket_mtu;
 #ifndef OPENSSL_NO_DTLS1
 static int cert_chain = 0;
+static int dtlslisten = 0;
 #endif
 
 static BIO *serverinfo_in = NULL;
@@ -807,7 +808,7 @@ typedef enum OPTION_choice {
     OPT_SRPUSERSEED, OPT_REV, OPT_WWW, OPT_UPPER_WWW, OPT_HTTP,
     OPT_SSL3,
     OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
-    OPT_DTLS1_2, OPT_TIMEOUT, OPT_MTU, OPT_CHAIN,
+    OPT_DTLS1_2, OPT_TIMEOUT, OPT_MTU, OPT_CHAIN, OPT_LISTEN,
     OPT_ID_PREFIX, OPT_RAND, OPT_SERVERNAME, OPT_SERVERNAME_FATAL,
     OPT_CERT2, OPT_KEY2, OPT_NEXTPROTONEG, OPT_ALPN, OPT_JPAKE,
     OPT_SRTP_PROFILES, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN,
@@ -937,6 +938,8 @@ OPTIONS s_server_options[] = {
     {"timeout", OPT_TIMEOUT, '-', "Enable timeouts"},
     {"mtu", OPT_MTU, 'p', "Set link layer MTU"},
     {"chain", OPT_CHAIN, '-', "Read a certificate chain"},
+    {"listen", OPT_LISTEN, '-',
+     "Listen for a DTLS ClientHello with a cookie and then connect"},
 #endif
 #ifndef OPENSSL_NO_DH
     {"no_dhe", OPT_NO_DHE, '-', "Disable ephemeral DH"},
@@ -1369,6 +1372,9 @@ int s_server_main(int argc, char *argv[])
         case OPT_CHAIN:
             cert_chain = 1;
             break;
+        case OPT_LISTEN:
+            dtlslisten = 1;
+            break;
 #else
         case OPT_DTLS:
         case OPT_DTLS1:
@@ -1376,6 +1382,7 @@ int s_server_main(int argc, char *argv[])
         case OPT_TIMEOUT:
         case OPT_MTU:
         case OPT_CHAIN:
+        case OPT_LISTEN:
             break;
 #endif
         case OPT_ID_PREFIX:
@@ -1432,6 +1439,11 @@ int s_server_main(int argc, char *argv[])
 #ifndef OPENSSL_NO_DTLS1
     if (www && socket_type == SOCK_DGRAM) {
         BIO_printf(bio_err, "Can't use -HTTP, -www or -WWW with DTLS\n");
+        goto end;
+    }
+
+    if (dtlslisten && socket_type != SOCK_DGRAM) {
+        BIO_printf(bio_err, "Can only use -listen with DTLS\n");
         goto end;
     }
 #endif
@@ -2383,8 +2395,31 @@ static int init_ssl_connection(SSL *con)
     unsigned next_proto_neg_len;
 #endif
     unsigned char *exportedkeymat;
+    struct sockaddr client;
 
-    i = SSL_accept(con);
+#ifndef OPENSSL_NO_DTLS1
+    if(dtlslisten) {
+        i = DTLSv1_listen(con, &client);
+        if (i > 0) {
+            BIO *wbio;
+            int fd;
+
+            wbio = SSL_get_wbio(con);
+            if(wbio) {
+                BIO_get_fd(wbio, &fd);
+            }
+
+            if(!wbio || connect(fd, &client, sizeof(struct sockaddr))) {
+                BIO_printf(bio_err, "ERROR - unable to connect\n");
+                return 0;
+            }
+            dtlslisten = 0;
+            i = SSL_accept(con);
+        }
+    } else
+#endif
+        i = SSL_accept(con);
+
 #ifdef CERT_CB_TEST_RETRY
     {
         while (i <= 0 && SSL_get_error(con, i) == SSL_ERROR_WANT_X509_LOOKUP
@@ -2412,10 +2447,13 @@ static int init_ssl_connection(SSL *con)
 #endif
 
     if (i <= 0) {
-        if (BIO_sock_should_retry(i)) {
+#ifndef OPENSSL_NO_DTLS1
+        if ((dtlslisten && i == 0)
+                || (!dtlslisten && BIO_sock_should_retry(i))) {
             BIO_printf(bio_s_out, "DELAY\n");
             return (1);
         }
+#endif
 
         BIO_printf(bio_err, "ERROR\n");
 
