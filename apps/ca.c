@@ -136,6 +136,7 @@
 #define ENV_UNIQUE_SUBJECT      "unique_subject"
 
 #define ENV_DATABASE            "database"
+#define ENV_NEW_REVOKED         "new_revoked"
 
 /* Additional revocation information types */
 
@@ -2336,6 +2337,8 @@ static int do_revoke(X509 *x509, CA_DB *db, int type, char *value)
     char *row[DB_NUMBER], **rrow, **irow;
     char *rev_str = NULL;
     BIGNUM *bn = NULL;
+    BIO *out = NULL;
+    char *new_revoked = NULL;
     int ok = -1, i;
 
     for (i = 0; i < DB_NUMBER; i++)
@@ -2435,6 +2438,27 @@ static int do_revoke(X509 *x509, CA_DB *db, int type, char *value)
         rrow[DB_type][0] = 'R';
         rrow[DB_type][1] = '\0';
         rrow[DB_rev_date] = rev_str;
+
+        if ((new_revoked = NCONF_get_string(conf, section, ENV_NEW_REVOKED)) == NULL) {
+            lookup_fail(section, ENV_NEW_REVOKED);
+	} else {
+            BIO_printf(bio_err, "Adding revoked certificate to %s\n", new_revoked);
+            out = BIO_new(BIO_s_file());
+            if (out == NULL) {
+                ERR_print_errors(bio_err);
+            } else {
+		if (BIO_append_filename(out, new_revoked) <= 0) {
+                    perror(new_revoked);
+                } else {
+                   for (i = 0; i < DB_NUMBER; i++) {
+                       BIO_write(out, rrow[i], strlen(rrow[i]));
+                       BIO_write(out, "\t", 1);
+                   }
+                   BIO_write(out, "\n", 1);
+                }
+                BIO_free_all(out);
+            }
+	}
     }
     ok = 1;
  err:
