@@ -743,7 +743,8 @@ L<SSL_SESSION_get_time(3)>,
 L<d2i_SSL_SESSION(3)>,
 L<SSL_CTX_set_psk_client_callback(3)>,
 L<SSL_CTX_use_psk_identity_hint(3)>,
-L<SSL_get_psk_identity(3)>
+L<SSL_get_psk_identity(3)>,
+L<DTLSv1_listen(3)|DTLSv1_listen(3)>
 
 =head1 HISTORY
 
