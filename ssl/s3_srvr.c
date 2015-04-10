@@ -931,6 +931,16 @@ int ssl3_get_client_hello(SSL *s)
     d = p = (unsigned char *)s->init_msg;
 
     /*
+     * 2 bytes for client version, SSL3_RANDOM_SIZE bytes for random, 1 byte
+     * for session id length
+     */
+    if (n < 2 + SSL3_RANDOM_SIZE + 1) {
+        al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_TOO_SHORT);
+        goto f_err;
+    }
+
+    /*
      * use version from inside client hello, not from record header (may
      * differ: see RFC 2246, Appendix E, second paragraph)
      */
@@ -962,6 +972,12 @@ int ssl3_get_client_hello(SSL *s)
         unsigned int session_length, cookie_length;
 
         session_length = *(p + SSL3_RANDOM_SIZE);
+
+        if (p + SSL3_RANDOM_SIZE + session_length + 1 >= d + n) {
+            al = SSL_AD_DECODE_ERROR;
+            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_TOO_SHORT);
+            goto f_err;
+        }
         cookie_length = *(p + SSL3_RANDOM_SIZE + session_length + 1);
 
         if (cookie_length == 0)
@@ -974,6 +990,12 @@ int ssl3_get_client_hello(SSL *s)
 
     /* get the session-id */
     j = *(p++);
+
+    if (p + j > d + n) {
+        al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_TOO_SHORT);
+        goto f_err;
+    }
 
     s->hit = 0;
     /*
@@ -1019,7 +1041,18 @@ int ssl3_get_client_hello(SSL *s)
 
     if (SSL_IS_DTLS(s)) {
         /* cookie stuff */
+        if (p + 1 > d + n) {
+            al = SSL_AD_DECODE_ERROR;
+            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_TOO_SHORT);
+            goto f_err;
+        }
         cookie_len = *(p++);
+
+        if (p + cookie_len > d + n) {
+            al = SSL_AD_DECODE_ERROR;
+            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_TOO_SHORT);
+            goto f_err;
+        }
 
         /*
          * The ClientHello may contain a cookie even if the
@@ -1086,6 +1119,11 @@ int ssl3_get_client_hello(SSL *s)
         }
     }
 
+    if (p + 2 > d + n) {
+        al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_TOO_SHORT);
+        goto f_err;
+    }
     n2s(p, i);
     if ((i == 0) && (j != 0)) {
         /* we need a cipher if we are not resuming a session */
@@ -1093,7 +1131,9 @@ int ssl3_get_client_hello(SSL *s)
         SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_NO_CIPHERS_SPECIFIED);
         goto f_err;
     }
-    if ((p + i) >= (d + n)) {
+
+    /* i bytes of cipher data + 1 byte for compression length later */
+    if ((p + i + 1) > (d + n)) {
         /* not enough data */
         al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_MISMATCH);
