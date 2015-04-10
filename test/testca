@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 PERL="$1"
 
 if test "$OSTYPE" = msdosdjgpp; then
@@ -9,35 +11,19 @@ else
 fi
 export PATH
 
-SSLEAY_CONFIG="-config CAss.cnf"
-export SSLEAY_CONFIG
-
-OPENSSL="`pwd`/../util/opensslwrap.sh"
-export OPENSSL
+export SSLEAY_CONFIG="-config CAss.cnf"
+export OPENSSL="`pwd`/../util/opensslwrap.sh"
 
 /bin/rm -fr demoCA
 
-# Could do '...CA.pl -newca <<EOF || exit 1
-# EOF' but that seems too obscure to me. :)
-OPENSSL_CONFIG=/dev/null $PERL ../apps/CA.pl -newca <<EOF
-EOF
-[ $? -eq 0 ] || exit 1
+OPENSSL_CONFIG=/dev/null $PERL ../apps/CA.pl -newca </dev/null
 
-SSLEAY_CONFIG="-config Uss.cnf"
-export SSLEAY_CONFIG
-$PERL ../apps/CA.pl -newreq || exit 1
+export SSLEAY_CONFIG="-config Uss.cnf"
+$PERL ../apps/CA.pl -newreq
 
 SSLEAY_CONFIG="-config ../apps/openssl.cnf"
-export SSLEAY_CONFIG
+yes | $PERL ../apps/CA.pl -sign
 
-# Same comment here.
-$PERL ../apps/CA.pl -sign  <<EOF
-y
-y
-EOF
-[ $? -eq 0 ] || exit 1
-
-
-$PERL ../apps/CA.pl -verify newcert.pem || exit 1
+$PERL ../apps/CA.pl -verify newcert.pem
 
 /bin/rm -fr demoCA newcert.pem newreq.pem
