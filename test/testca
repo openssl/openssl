@@ -16,35 +16,28 @@ OPENSSL="`pwd`/../util/opensslwrap.sh"
 export OPENSSL
 
 /bin/rm -fr demoCA
+
+# Could do '...CA.pl -newca || exot 1 << EOF
+# EOF' but that seems too obscure to me. :)
 OPENSSL_CONFIG=/dev/null $PERL ../apps/CA.pl -newca <<EOF
 EOF
-
-if [ $? != 0 ]; then
-	exit 1;
-fi
+[ $? == 0 ] || exit 1
 
 SSLEAY_CONFIG="-config Uss.cnf"
 export SSLEAY_CONFIG
-$PERL ../apps/CA.pl -newreq
-if [ $? != 0 ]; then
-	exit 1;
-fi
-
+$PERL ../apps/CA.pl -newreq || exit 1
 
 SSLEAY_CONFIG="-config ../apps/openssl.cnf"
 export SSLEAY_CONFIG
+
+# Same comment here.
 $PERL ../apps/CA.pl -sign  <<EOF
 y
 y
 EOF
-if [ $? != 0 ]; then
-	exit 1;
-fi
+[ $? == 0 ] || exit 1
 
 
-$PERL ../apps/CA.pl -verify newcert.pem
-if [ $? != 0 ]; then
-	exit 1;
-fi
+$PERL ../apps/CA.pl -verify newcert.pem || exit 1
 
 /bin/rm -fr demoCA newcert.pem newreq.pem
