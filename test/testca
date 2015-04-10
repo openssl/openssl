@@ -17,11 +17,11 @@ export OPENSSL
 
 /bin/rm -fr demoCA
 
-# Could do '...CA.pl -newca || exot 1 << EOF
+# Could do '...CA.pl -newca <<EOF || exit 1
 # EOF' but that seems too obscure to me. :)
 OPENSSL_CONFIG=/dev/null $PERL ../apps/CA.pl -newca <<EOF
 EOF
-[ $? == 0 ] || exit 1
+[ $? -eq 0 ] || exit 1
 
 SSLEAY_CONFIG="-config Uss.cnf"
 export SSLEAY_CONFIG
@@ -35,7 +35,7 @@ $PERL ../apps/CA.pl -sign  <<EOF
 y
 y
 EOF
-[ $? == 0 ] || exit 1
+[ $? -eq 0 ] || exit 1
 
 
 $PERL ../apps/CA.pl -verify newcert.pem || exit 1
