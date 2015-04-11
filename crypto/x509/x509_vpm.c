@@ -189,6 +189,8 @@ X509_VERIFY_PARAM *X509_VERIFY_PARAM_new(void)
 
 void X509_VERIFY_PARAM_free(X509_VERIFY_PARAM *param)
 {
+    if (param == NULL)
+        return;
     x509_verify_param_zero(param);
     OPENSSL_free(param->id);
     OPENSSL_free(param);
