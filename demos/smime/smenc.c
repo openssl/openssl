@@ -67,23 +67,18 @@ int main(int argc, char **argv)
     ret = 0;
 
  err:
-
     if (ret) {
         fprintf(stderr, "Error Encrypting Data\n");
         ERR_print_errors_fp(stderr);
     }
-
-    if (p7)
-        PKCS7_free(p7);
+    PKCS7_free(p7);
     if (rcert)
         X509_free(rcert);
     if (recips)
         sk_X509_pop_free(recips, X509_free);
-
     BIO_free(in);
     BIO_free(out);
     BIO_free(tbio);
-
     return ret;
 
 }

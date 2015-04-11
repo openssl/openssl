@@ -786,8 +786,7 @@ static int load_pkcs12(BIO *err, BIO *in, const char *desc,
     }
     ret = PKCS12_parse(p12, pass, pkey, cert, ca);
  die:
-    if (p12)
-        PKCS12_free(p12);
+    PKCS12_free(p12);
     return ret;
 }
 

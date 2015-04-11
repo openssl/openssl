@@ -1791,7 +1791,6 @@ int main(int argc, char *argv[])
  end:
     SSL_CTX_free(s_ctx);
     SSL_CTX_free(c_ctx);
-
     SSL_CONF_CTX_free(s_cctx);
     SSL_CONF_CTX_free(c_cctx);
     sk_OPENSSL_STRING_free(conf_args);
