@@ -410,10 +410,7 @@ static int test_EVP_PKCS82PKEY(void)
     ret = 1;
 
  done:
-    if (p8inf != NULL) {
-        PKCS8_PRIV_KEY_INFO_free(p8inf);
-    }
-
+    PKCS8_PRIV_KEY_INFO_free(p8inf);
     EVP_PKEY_free(pkey);
 
     return ret;

@@ -71,27 +71,19 @@ int main(int argc, char **argv)
     ret = 0;
 
  err:
-
     if (ret) {
         fprintf(stderr, "Error Signing Data\n");
         ERR_print_errors_fp(stderr);
     }
-
-    if (p7)
-        PKCS7_free(p7);
-
+    PKCS7_free(p7);
     if (scert)
         X509_free(scert);
     EVP_PKEY_free(skey);
-
     if (scert2)
         X509_free(scert2);
     EVP_PKEY_free(skey2);
-
     BIO_free(in);
     BIO_free(out);
     BIO_free(tbio);
-
     return ret;
-
 }

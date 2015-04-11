@@ -297,8 +297,7 @@ int MAIN(int argc, char **argv)
     }
     ret = 0;
  end:
-    if (p7 != NULL)
-        PKCS7_free(p7);
+    PKCS7_free(p7);
     BIO_free(in);
     BIO_free_all(out);
     apps_shutdown();

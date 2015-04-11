@@ -270,8 +270,7 @@ int MAIN(int argc, char **argv)
  end:
     BIO_free(in);
     BIO_free_all(out);
-    if (p7 != NULL)
-        PKCS7_free(p7);
+    PKCS7_free(p7);
     if (crl != NULL)
         X509_CRL_free(crl);
 

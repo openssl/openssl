@@ -740,8 +740,7 @@ int MAIN(int argc, char **argv)
 # endif
     ret = 0;
  end:
-    if (p12)
-        PKCS12_free(p12);
+    PKCS12_free(p12);
     if (export_cert || inrand)
         app_RAND_write_file(NULL, bio_err);
 # ifdef CRYPTO_MDEBUG
@@ -798,9 +797,7 @@ int dump_certs_keys_p12(BIO *out, PKCS12 *p12, char *pass,
     ret = 1;
 
  err:
-
-    if (asafes)
-        sk_PKCS7_pop_free(asafes, PKCS7_free);
+    sk_PKCS7_pop_free(asafes, PKCS7_free);
     return ret;
 }
 

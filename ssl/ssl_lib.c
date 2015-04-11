@@ -568,15 +568,13 @@ void SSL_free(SSL *s)
     ssl_clear_hash_ctx(&s->read_hash);
     ssl_clear_hash_ctx(&s->write_hash);
 
-    if (s->cert != NULL)
-        ssl_cert_free(s->cert);
+    ssl_cert_free(s->cert);
     /* Free up if allocated */
 
 #ifndef OPENSSL_NO_TLSEXT
     if (s->tlsext_hostname)
         OPENSSL_free(s->tlsext_hostname);
-    if (s->initial_ctx)
-        SSL_CTX_free(s->initial_ctx);
+    SSL_CTX_free(s->initial_ctx);
 # ifndef OPENSSL_NO_EC
     if (s->tlsext_ecpointformatlist)
         OPENSSL_free(s->tlsext_ecpointformatlist);
@@ -601,8 +599,7 @@ void SSL_free(SSL *s)
 
     RECORD_LAYER_release(&s->rlayer);
 
-    if (s->ctx)
-        SSL_CTX_free(s->ctx);
+    SSL_CTX_free(s->ctx);
 
 #ifndef OPENSSL_NO_KRB5
     if (s->kssl_ctx != NULL)
@@ -2011,8 +2008,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
  err:
     SSLerr(SSL_F_SSL_CTX_NEW, ERR_R_MALLOC_FAILURE);
  err2:
-    if (ret != NULL)
-        SSL_CTX_free(ret);
+    SSL_CTX_free(ret);
     return (NULL);
 }
 
@@ -2062,8 +2058,7 @@ void SSL_CTX_free(SSL_CTX *a)
         sk_SSL_CIPHER_free(a->cipher_list);
     if (a->cipher_list_by_id != NULL)
         sk_SSL_CIPHER_free(a->cipher_list_by_id);
-    if (a->cert != NULL)
-        ssl_cert_free(a->cert);
+    ssl_cert_free(a->cert);
     if (a->client_CA != NULL)
         sk_X509_NAME_pop_free(a->client_CA, X509_NAME_free);
     if (a->extra_certs != NULL)
@@ -2776,9 +2771,7 @@ SSL *SSL_dup(SSL *s)
         ret->method->ssl_new(ret);
 
         if (s->cert != NULL) {
-            if (ret->cert != NULL) {
-                ssl_cert_free(ret->cert);
-            }
+            ssl_cert_free(ret->cert);
             ret->cert = ssl_cert_dup(s->cert);
             if (ret->cert == NULL)
                 goto err;
@@ -2862,8 +2855,7 @@ SSL *SSL_dup(SSL *s)
 
     if (0) {
  err:
-        if (ret != NULL)
-            SSL_free(ret);
+        SSL_free(ret);
         ret = NULL;
     }
     return (ret);
@@ -3092,8 +3084,7 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
     }
 
     CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
-    if (ssl->ctx != NULL)
-        SSL_CTX_free(ssl->ctx); /* decrement reference count */
+    SSL_CTX_free(ssl->ctx); /* decrement reference count */
     ssl->ctx = ctx;
 
     return (ssl->ctx);

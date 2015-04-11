@@ -121,8 +121,7 @@ int PKCS7_content_new(PKCS7 *p7, int type)
 
     return (1);
  err:
-    if (ret != NULL)
-        PKCS7_free(ret);
+    PKCS7_free(ret);
     return (0);
 }
 
@@ -133,13 +132,11 @@ int PKCS7_set_content(PKCS7 *p7, PKCS7 *p7_data)
     i = OBJ_obj2nid(p7->type);
     switch (i) {
     case NID_pkcs7_signed:
-        if (p7->d.sign->contents != NULL)
-            PKCS7_free(p7->d.sign->contents);
+        PKCS7_free(p7->d.sign->contents);
         p7->d.sign->contents = p7_data;
         break;
     case NID_pkcs7_digest:
-        if (p7->d.digest->contents != NULL)
-            PKCS7_free(p7->d.digest->contents);
+        PKCS7_free(p7->d.digest->contents);
         p7->d.digest->contents = p7_data;
         break;
     case NID_pkcs7_data:
@@ -422,8 +419,7 @@ PKCS7_SIGNER_INFO *PKCS7_add_signature(PKCS7 *p7, X509 *x509, EVP_PKEY *pkey,
         goto err;
     return (si);
  err:
-    if (si)
-        PKCS7_SIGNER_INFO_free(si);
+    PKCS7_SIGNER_INFO_free(si);
     return (NULL);
 }
 
@@ -484,8 +480,7 @@ PKCS7_RECIP_INFO *PKCS7_add_recipient(PKCS7 *p7, X509 *x509)
         goto err;
     return ri;
  err:
-    if (ri)
-        PKCS7_RECIP_INFO_free(ri);
+    PKCS7_RECIP_INFO_free(ri);
     return NULL;
 }
 

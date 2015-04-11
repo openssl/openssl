@@ -173,13 +173,9 @@ PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
     return p12;
 
  err:
-
-    if (p12)
-        PKCS12_free(p12);
-    if (safes)
-        sk_PKCS7_pop_free(safes, PKCS7_free);
-    if (bags)
-        sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
+    PKCS12_free(p12);
+    sk_PKCS7_pop_free(safes, PKCS7_free);
+    sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
     return NULL;
 
 }
@@ -216,10 +212,7 @@ PKCS12_SAFEBAG *PKCS12_add_cert(STACK_OF(PKCS12_SAFEBAG) **pbags, X509 *cert)
     return bag;
 
  err:
-
-    if (bag)
-        PKCS12_SAFEBAG_free(bag);
-
+    PKCS12_SAFEBAG_free(bag);
     return NULL;
 
 }
@@ -252,10 +245,7 @@ PKCS12_SAFEBAG *PKCS12_add_key(STACK_OF(PKCS12_SAFEBAG) **pbags,
     return bag;
 
  err:
-
-    if (bag)
-        PKCS12_SAFEBAG_free(bag);
-
+    PKCS12_SAFEBAG_free(bag);
     return NULL;
 
 }
@@ -298,10 +288,7 @@ int PKCS12_add_safe(STACK_OF(PKCS7) **psafes, STACK_OF(PKCS12_SAFEBAG) *bags,
         sk_PKCS7_free(*psafes);
         *psafes = NULL;
     }
-
-    if (p7)
-        PKCS7_free(p7);
-
+    PKCS7_free(p7);
     return 0;
 
 }

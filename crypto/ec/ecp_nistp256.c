@@ -2342,8 +2342,7 @@ int ec_GFp_nistp256_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     EC_POINT_free(generator);
     if (new_ctx != NULL)
         BN_CTX_free(new_ctx);
-    if (pre)
-        nistp256_pre_comp_free(pre);
+    nistp256_pre_comp_free(pre);
     return ret;
 }
 

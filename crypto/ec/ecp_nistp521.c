@@ -2125,8 +2125,7 @@ int ec_GFp_nistp521_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     EC_POINT_free(generator);
     if (new_ctx != NULL)
         BN_CTX_free(new_ctx);
-    if (pre)
-        nistp521_pre_comp_free(pre);
+    nistp521_pre_comp_free(pre);
     return ret;
 }
 

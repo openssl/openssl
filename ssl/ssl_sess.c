@@ -726,8 +726,7 @@ void SSL_SESSION_free(SSL_SESSION *ss)
 
     OPENSSL_cleanse(ss->master_key, sizeof ss->master_key);
     OPENSSL_cleanse(ss->session_id, sizeof ss->session_id);
-    if (ss->sess_cert != NULL)
-        ssl_sess_cert_free(ss->sess_cert);
+    ssl_sess_cert_free(ss->sess_cert);
     if (ss->peer != NULL)
         X509_free(ss->peer);
     if (ss->ciphers != NULL)
@@ -795,18 +794,14 @@ int SSL_set_session(SSL *s, SSL_SESSION *session)
 
         /* CRYPTO_w_lock(CRYPTO_LOCK_SSL); */
         CRYPTO_add(&session->references, 1, CRYPTO_LOCK_SSL_SESSION);
-        if (s->session != NULL)
-            SSL_SESSION_free(s->session);
+        SSL_SESSION_free(s->session);
         s->session = session;
         s->verify_result = s->session->verify_result;
         /* CRYPTO_w_unlock(CRYPTO_LOCK_SSL); */
         ret = 1;
     } else {
-        if (s->session != NULL) {
-            SSL_SESSION_free(s->session);
-            s->session = NULL;
-        }
-
+        SSL_SESSION_free(s->session);
+        s->session = NULL;
         meth = s->ctx->method;
         if (meth != s->method) {
             if (!SSL_set_ssl_method(s, meth))

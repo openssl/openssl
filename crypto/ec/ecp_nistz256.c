@@ -870,8 +870,7 @@ static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
  err:
     if (ctx != NULL)
         BN_CTX_end(ctx);
-    if (pre_comp)
-        ecp_nistz256_pre_comp_free(pre_comp);
+    ecp_nistz256_pre_comp_free(pre_comp);
     if (precomp_storage)
         OPENSSL_free(precomp_storage);
     EC_POINT_free(P);
