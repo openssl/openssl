@@ -133,12 +133,9 @@ int ec_GFp_simple_group_init(EC_GROUP *group)
     group->a = BN_new();
     group->b = BN_new();
     if (!group->field || !group->a || !group->b) {
-        if (!group->field)
-            BN_free(group->field);
-        if (!group->a)
-            BN_free(group->a);
-        if (!group->b)
-            BN_free(group->b);
+        BN_free(group->field);
+        BN_free(group->a);
+        BN_free(group->b);
         return 0;
     }
     group->a_is_minus3 = 0;
