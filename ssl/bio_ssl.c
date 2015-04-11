@@ -125,7 +125,7 @@ static int ssl_free(BIO *a)
     if (bs->ssl != NULL)
         SSL_shutdown(bs->ssl);
     if (a->shutdown) {
-        if (a->init && (bs->ssl != NULL))
+        if (a->init)
             SSL_free(bs->ssl);
         a->init = 0;
         a->flags = 0;
@@ -416,8 +416,7 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     case BIO_CTRL_DUP:
         dbio = (BIO *)ptr;
-        if (((BIO_SSL *)dbio->ptr)->ssl != NULL)
-            SSL_free(((BIO_SSL *)dbio->ptr)->ssl);
+        SSL_free(((BIO_SSL *)dbio->ptr)->ssl);
         ((BIO_SSL *)dbio->ptr)->ssl = SSL_dup(ssl);
         ((BIO_SSL *)dbio->ptr)->renegotiate_count =
             ((BIO_SSL *)b->ptr)->renegotiate_count;

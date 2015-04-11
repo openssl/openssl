@@ -106,8 +106,7 @@ char *argv[];
             ERR_print_errors_fp(stderr);
     }
     BIO_free_all(out);
-    if (ssl_ctx != NULL)
-        SSL_CTX_free(ssl_ctx);
+    SSL_CTX_free(ssl_ctx);
     exit(!ret);
     return (ret);
 }

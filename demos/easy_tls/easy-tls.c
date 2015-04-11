@@ -804,8 +804,7 @@ SSL_CTX *tls_create_ctx(struct tls_create_ctx_args a, void *apparg)
  err:
     tls_openssl_errors(err_pref_1, err_pref_2, NULL, apparg);
  err_return:
-    if (ret != NULL)
-        SSL_CTX_free(ret);
+    SSL_CTX_free(ret);
     return NULL;
 }
 

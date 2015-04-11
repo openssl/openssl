@@ -393,8 +393,7 @@ SSL *SSL_new(SSL_CTX *ctx)
 
     return (s);
  err:
-    if (s != NULL)
-        SSL_free(s);
+    SSL_free(s);
     SSLerr(SSL_F_SSL_NEW, ERR_R_MALLOC_FAILURE);
     return (NULL);
 }
@@ -2992,6 +2991,7 @@ int ssl_init_wbio_buffer(SSL *s, int push)
 
 void ssl_free_wbio_buffer(SSL *s)
 {
+    /* callers ensure s is never null */
     if (s->bbio == NULL)
         return;
 

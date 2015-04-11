@@ -1789,15 +1789,11 @@ int main(int argc, char *argv[])
     SSL_free(c_ssl);
 
  end:
-    if (s_ctx != NULL)
-        SSL_CTX_free(s_ctx);
-    if (c_ctx != NULL)
-        SSL_CTX_free(c_ctx);
+    SSL_CTX_free(s_ctx);
+    SSL_CTX_free(c_ctx);
 
-    if (s_cctx)
-        SSL_CONF_CTX_free(s_cctx);
-    if (c_cctx)
-        SSL_CONF_CTX_free(c_cctx);
+    SSL_CONF_CTX_free(s_cctx);
+    SSL_CONF_CTX_free(c_cctx);
     sk_OPENSSL_STRING_free(conf_args);
 
     BIO_free(bio_stdout);

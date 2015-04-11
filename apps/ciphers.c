@@ -223,10 +223,8 @@ int MAIN(int argc, char **argv)
  end:
     if (use_supported && sk)
         sk_SSL_CIPHER_free(sk);
-    if (ctx != NULL)
-        SSL_CTX_free(ctx);
-    if (ssl != NULL)
-        SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    SSL_free(ssl);
     BIO_free_all(STDout);
     apps_shutdown();
     OPENSSL_EXIT(ret);

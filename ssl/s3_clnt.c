@@ -1215,8 +1215,7 @@ int ssl3_get_server_certificate(SSL *s)
     if (sc == NULL)
         goto err;
 
-    if (s->session->sess_cert)
-        ssl_sess_cert_free(s->session->sess_cert);
+    ssl_sess_cert_free(s->session->sess_cert);
     s->session->sess_cert = sc;
 
     sc->cert_chain = sk;

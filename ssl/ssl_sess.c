@@ -292,10 +292,8 @@ int ssl_get_new_session(SSL *s, int session)
     else
         ss->timeout = s->session_ctx->session_timeout;
 
-    if (s->session != NULL) {
-        SSL_SESSION_free(s->session);
-        s->session = NULL;
-    }
+    SSL_SESSION_free(s->session);
+    s->session = NULL;
 
     if (session) {
         if (s->version == SSL3_VERSION) {
@@ -578,8 +576,7 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 
     s->session_ctx->stats.sess_hit++;
 
-    if (s->session != NULL)
-        SSL_SESSION_free(s->session);
+    SSL_SESSION_free(s->session);
     s->session = ret;
     s->verify_result = s->session->verify_result;
     return 1;

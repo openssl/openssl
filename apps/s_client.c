@@ -2024,8 +2024,7 @@ int MAIN(int argc, char **argv)
     if (next_proto.data)
         OPENSSL_free(next_proto.data);
 #endif
-    if (ctx != NULL)
-        SSL_CTX_free(ctx);
+    SSL_CTX_free(ctx);
     if (cert)
         X509_free(cert);
     if (crls)
@@ -2040,8 +2039,7 @@ int MAIN(int argc, char **argv)
     ssl_excert_free(exc);
     if (ssl_args)
         sk_OPENSSL_STRING_free(ssl_args);
-    if (cctx)
-        SSL_CONF_CTX_free(cctx);
+    SSL_CONF_CTX_free(cctx);
 #ifndef OPENSSL_NO_JPAKE
     if (jpake_secret && psk_key)
         OPENSSL_free(psk_key);
