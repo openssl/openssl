@@ -540,13 +540,10 @@ int MAIN(int argc, char **argv)
 
     ret = 0;
  end:
-    if (scon != NULL)
-        SSL_free(scon);
+    SSL_free(scon);
 
-    if (tm_ctx != NULL) {
-        SSL_CTX_free(tm_ctx);
-        tm_ctx = NULL;
-    }
+    SSL_CTX_free(tm_ctx);
+    tm_ctx = NULL;
     apps_shutdown();
     OPENSSL_EXIT(ret);
 }

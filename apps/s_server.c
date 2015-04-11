@@ -2003,8 +2003,7 @@ int MAIN(int argc, char *argv[])
     print_stats(bio_s_out, ctx);
     ret = 0;
  end:
-    if (ctx != NULL)
-        SSL_CTX_free(ctx);
+    SSL_CTX_free(ctx);
     if (s_cert)
         X509_free(s_cert);
     if (crls)
@@ -2031,8 +2030,7 @@ int MAIN(int argc, char *argv[])
         OPENSSL_free(tlscstatp.port);
     if (tlscstatp.path)
         OPENSSL_free(tlscstatp.path);
-    if (ctx2 != NULL)
-        SSL_CTX_free(ctx2);
+    SSL_CTX_free(ctx2);
     if (s_cert2)
         X509_free(s_cert2);
     EVP_PKEY_free(s_key2);
@@ -2047,8 +2045,7 @@ int MAIN(int argc, char *argv[])
     ssl_excert_free(exc);
     if (ssl_args)
         sk_OPENSSL_STRING_free(ssl_args);
-    if (cctx)
-        SSL_CONF_CTX_free(cctx);
+    SSL_CONF_CTX_free(cctx);
 #ifndef OPENSSL_NO_JPAKE
     if (jpake_secret && psk_key)
         OPENSSL_free(psk_key);

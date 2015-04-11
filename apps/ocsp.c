@@ -1363,8 +1363,7 @@ OCSP_RESPONSE *process_responder(BIO *err, OCSP_REQUEST *req,
         BIO_printf(bio_err, "Error querying OCSP responder\n");
  end:
     BIO_free_all(cbio);
-    if (ctx)
-        SSL_CTX_free(ctx);
+    SSL_CTX_free(ctx);
     return resp;
 }
 
