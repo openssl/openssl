@@ -376,7 +376,7 @@ identifier extension. Supported by B<-sign> and B<-encrypt> options.
 =item B<-receipt_request_all -receipt_request_first>
 
 for B<-sign> option include a signed receipt request. Indicate requests should
-be provided by all receipient or first tier recipients (those mailed directly
+be provided by all recipient or first tier recipients (those mailed directly
 and not from a mailing list). Ignored it B<-receipt_request_from> is included.
 
 =item B<-receipt_request_from emailaddress>
@@ -398,7 +398,7 @@ requests.
 
 specify symmetric key to use. The key must be supplied in hex format and be
 consistent with the algorithm used. Supported by the B<-EncryptedData_encrypt>
-B<-EncrryptedData_decrypt>, B<-encrypt> and B<-decrypt> options. When used
+B<-EncryptedData_decrypt>, B<-encrypt> and B<-decrypt> options. When used
 with B<-encrypt> or B<-decrypt> the supplied key is used to wrap or unwrap the
 content encryption key using an AES key in the B<KEKRecipientInfo> type.
 
