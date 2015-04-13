@@ -46,7 +46,7 @@ for the object B<o>, the long name <ln> or the short name <sn> respectively
 or NID_undef if an error occurred.
 
 OBJ_txt2nid() returns NID corresponding to text string <s>. B<s> can be
-a long name, a short name or the numerical respresentation of an object.
+a long name, a short name or the numerical representation of an object.
 
 OBJ_txt2obj() converts the text string B<s> into an ASN1_OBJECT structure.
 If B<no_name> is 0 then long names and short names will be interpreted
@@ -104,7 +104,7 @@ Objects do not need to be in the internal tables to be processed,
 the functions OBJ_txt2obj() and OBJ_obj2txt() can process the numerical
 form of an OID.
 
-Some objects are used to reprsent algorithms which do not have a
+Some objects are used to represent algorithms which do not have a
 corresponding ASN.1 OBJECT IDENTIFIER encoding (for example no OID currently
 exists for a particular algorithm). As a result they B<cannot> be encoded or
 decoded as part of ASN.1 structures. Applications can determine if there

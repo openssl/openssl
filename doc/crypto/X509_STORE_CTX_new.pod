@@ -48,7 +48,7 @@ X509_STORE_CTX_trusted_stack() sets the set of trusted certificates of B<ctx>
 to B<sk>. This is an alternative way of specifying trusted certificates 
 instead of using an B<X509_STORE>.
 
-X509_STORE_CTX_set_cert() sets the certificate to be vertified in B<ctx> to
+X509_STORE_CTX_set_cert() sets the certificate to be verified in B<ctx> to
 B<x>.
 
 X509_STORE_CTX_set_chain() sets the additional certificate chain used by B<ctx>
@@ -60,10 +60,10 @@ enabled in the associated B<X509_VERIFY_PARAM> structure. This might be
 used where additional "useful" CRLs are supplied as part of a protocol,
 for example in a PKCS#7 structure.
 
-X509_VERIFY_PARAM *X509_STORE_CTX_get0_param() retrieves an intenal pointer
+X509_VERIFY_PARAM *X509_STORE_CTX_get0_param() retrieves an internal pointer
 to the verification parameters associated with B<ctx>.
 
-X509_STORE_CTX_set0_param() sets the intenal verification parameter pointer
+X509_STORE_CTX_set0_param() sets the internal verification parameter pointer
 to B<param>. After this call B<param> should not be used.
 
 X509_STORE_CTX_set_default() looks up and sets the default verification

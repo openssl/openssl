@@ -16,7 +16,7 @@ PKCS7_verify, PKCS7_get0_signers - verify a PKCS#7 signedData structure
 
 PKCS7_verify() verifies a PKCS#7 signedData structure. B<p7> is the PKCS7
 structure to verify. B<certs> is a set of certificates in which to search for
-the signer's certificate. B<store> is a trusted certficate store (used for
+the signer's certificate. B<store> is a trusted certificate store (used for
 chain verification). B<indata> is the signed data if the content is not
 present in B<p7> (that is it is detached). The content is written to B<out>
 if it is not NULL.

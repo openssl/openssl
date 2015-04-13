@@ -1,4 +1,4 @@
-Fingerprints for Signing Relases
+Fingerprints for Signing Releases
 
 OpenSSL releases are signed with PGP/GnuPG keys.  This file contains
 the fingerprints of team members who are "authorized" to sign the

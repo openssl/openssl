@@ -74,7 +74,7 @@ EVP_MD_CTX_create() allocates, initializes and returns a digest context.
 
 EVP_DigestInit_ex() sets up digest context B<ctx> to use a digest
 B<type> from ENGINE B<impl>. B<ctx> must be initialized before calling this
-function. B<type> will typically be supplied by a functionsuch as EVP_sha1().
+function. B<type> will typically be supplied by a function such as EVP_sha1().
 If B<impl> is NULL then the default implementation of digest B<type> is used.
 
 EVP_DigestUpdate() hashes B<cnt> bytes of data at B<d> into the
