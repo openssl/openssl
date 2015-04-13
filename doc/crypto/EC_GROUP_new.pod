@@ -42,14 +42,14 @@ use a trinomial or a pentanomial for this parameter.
 
 A new curve can be constructed by calling EC_GROUP_new, using the implementation provided by B<meth> (see
 L<EC_GFp_simple_method(3)|EC_GFp_simple_method(3)>). It is then necessary to call either EC_GROUP_set_curve_GFp or
-EC_GROUP_set_curve_GF2m as appropriate to create a curve defined over Fp or over F2^m respectively. 
+EC_GROUP_set_curve_GF2m as appropriate to create a curve defined over Fp or over F2^m respectively.
 
 EC_GROUP_set_curve_GFp sets the curve parameters B<p>, B<a> and B<b> for a curve over Fp stored in B<group>.
 EC_group_get_curve_GFp obtains the previously set curve parameters.
 
 EC_GROUP_set_curve_GF2m sets the equivalent curve parameters for a curve over F2^m. In this case B<p> represents
-the irreducible polybnomial - each bit represents a term in the polynomial. Therefore there will either be three
-or five bits set dependant on whether the polynomial is a trinomial or a pentanomial.
+the irreducible polynomial - each bit represents a term in the polynomial. Therefore there will either be three
+or five bits set dependent on whether the polynomial is a trinomial or a pentanomial.
 EC_group_get_curve_GF2m obtains the previously set curve parameters.
 
 The functions EC_GROUP_new_curve_GFp and EC_GROUP_new_curve_GF2m are shortcuts for calling EC_GROUP_new and the

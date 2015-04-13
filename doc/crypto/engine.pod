@@ -576,7 +576,7 @@ for any higher-level ENGINE functions such as ENGINE_ctrl_cmd_string().
 by applications, administrations, users, etc. These can support arbitrary
 operations via ENGINE_ctrl(), including passing to and/or from the control
 commands data of any arbitrary type. These commands are supported in the
-discovery mechanisms simply to allow applications determinie if an ENGINE
+discovery mechanisms simply to allow applications to determine if an ENGINE
 supports certain specific commands it might want to use (eg. application "foo"
 might query various ENGINEs to see if they implement "FOO_GET_VENDOR_LOGO_GIF" -
 and ENGINE could therefore decide whether or not to support this "foo"-specific

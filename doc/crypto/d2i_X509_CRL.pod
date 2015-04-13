@@ -23,7 +23,7 @@ i2d_X509_CRL_bio, i2d_X509_CRL_fp - PKCS#10 certificate request functions.
 These functions decode and encode an X509 CRL (certificate revocation
 list).
 
-Othewise the functions behave in a similar way to d2i_X509() and i2d_X509()
+Otherwise the functions behave in a similar way to d2i_X509() and i2d_X509()
 described in the L<d2i_X509(3)|d2i_X509(3)> manual page.
 
 =head1 SEE ALSO

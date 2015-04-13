@@ -29,7 +29,7 @@ A typical application of this function is to derive keying material for an
 encryption algorithm from a password in the B<data> parameter.
 
 Increasing the B<count> parameter slows down the algorithm which makes it
-harder for an attacker to peform a brute force attack using a large number
+harder for an attacker to perform a brute force attack using a large number
 of candidate passwords.
 
 If the total key and IV length is less than the digest length and
@@ -46,7 +46,7 @@ enough data is available for the key and IV. D_i is defined as:
 
 	D_i = HASH^count(D_(i-1) || data || salt)
 
-where || denotes concatentaion, D_0 is empty, HASH is the digest
+where || denotes concatenation, D_0 is empty, HASH is the digest
 algorithm in use, HASH^1(data) is simply HASH(data), HASH^2(data)
 is HASH(HASH(data)) and so on.
 

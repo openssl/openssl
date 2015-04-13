@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-X509_verify_cert - discover and verify X509 certificte chain
+X509_verify_cert - discover and verify X509 certificate chain
 
 =head1 SYNOPSIS
 

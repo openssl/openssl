@@ -16,7 +16,7 @@ PKCS12_create - create a PKCS#12 structure
 PKCS12_create() creates a PKCS#12 structure.
 
 B<pass> is the passphrase to use. B<name> is the B<friendlyName> to use for
-the supplied certifictate and key. B<pkey> is the private key to include in
+the supplied certificate and key. B<pkey> is the private key to include in
 the structure and B<cert> its corresponding certificates. B<ca>, if not B<NULL>
 is an optional set of certificates to also include in the structure.
 
@@ -56,7 +56,7 @@ used for the corresponding B<friendlyName> or B<localKeyID> in the
 PKCS12 structure.
 
 Either B<pkey>, B<cert> or both can be B<NULL> to indicate that no key or
-certficate is required. In previous versions both had to be present or
+certificate is required. In previous versions both had to be present or
 a fatal error is returned.
 
 B<nid_key> or B<nid_cert> can be set to -1 indicating that no encryption
