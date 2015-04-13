@@ -46,7 +46,7 @@ err - error codes
 
 =head1 DESCRIPTION
 
-When a call to the OpenSSL library fails, this is usually signalled
+When a call to the OpenSSL library fails, this is usually signaled
 by the return value, and an error code is stored in an error queue
 associated with the current thread. The B<err> library provides
 functions to obtain these error codes and textual error messages.

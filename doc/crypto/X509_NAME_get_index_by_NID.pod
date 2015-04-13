@@ -51,7 +51,7 @@ X509_NAME_get_text_by_NID() and X509_NAME_get_text_by_OBJ() are
 legacy functions which have various limitations which make them
 of minimal use in practice. They can only find the first matching
 entry and will copy the contents of the field verbatim: this can
-be highly confusing if the target is a muticharacter string type
+be highly confusing if the target is a multicharacter string type
 like a BMPString or a UTF8String.
 
 For a more general solution X509_NAME_get_index_by_NID() or

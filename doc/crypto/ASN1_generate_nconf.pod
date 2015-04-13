@@ -19,7 +19,7 @@ in an B<ASN1_TYPE> structure.
 B<str> contains the string to encode B<nconf> or B<cnf> contains
 the optional configuration information where additional strings
 will be read from. B<nconf> will typically come from a config
-file wherease B<cnf> is obtained from an B<X509V3_CTX> structure
+file whereas B<cnf> is obtained from an B<X509V3_CTX> structure
 which will typically be used by X509 v3 certificate extension
 functions. B<cnf> or B<nconf> can be set to B<NULL> if no additional
 configuration will be used.
@@ -181,7 +181,7 @@ A BITSTRING with bits 1 and 5 set and all others zero:
  FORMAT:BITLIST,BITSTRING:1,5
 
 A more complex example using a config file to produce a
-SEQUENCE consiting of a BOOL an OID and a UTF8String:
+SEQUENCE consisting of a BOOL an OID and a UTF8String:
 
  asn1 = SEQUENCE:seq_section
 

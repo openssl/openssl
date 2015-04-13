@@ -89,7 +89,7 @@ B<PSS> block structure. If this macro is not called a salt length value of -2
 is used by default.
 
 The EVP_PKEY_CTX_set_rsa_rsa_keygen_bits() macro sets the RSA key length for
-RSA key genration to B<bits>. If not specified 1024 bits is used.
+RSA key generation to B<bits>. If not specified 1024 bits is used.
 
 The EVP_PKEY_CTX_set_rsa_keygen_pubexp() macro sets the public exponent value
 for RSA key generation to B<pubexp> currently it should be an odd integer. The

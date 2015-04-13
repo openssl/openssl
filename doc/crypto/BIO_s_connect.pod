@@ -64,8 +64,8 @@ form "hostname/any/other/path" or "hostname:port/any/other/path".
 BIO_set_conn_port() sets the port to B<port>. B<port> can be the
 numerical form or a string such as "http". A string will be looked
 up first using getservbyname() on the host platform but if that
-fails a standard table of port names will be used. Currently the
-list is http, telnet, socks, https, ssl, ftp, gopher and wais.
+fails a standard table of port names will be used. This internal
+list is http, telnet, socks, https, ssl, ftp, and gopher.
 
 BIO_set_conn_ip() sets the IP address to B<ip> using binary form,
 that is four bytes specifying the IP address in big-endian form.

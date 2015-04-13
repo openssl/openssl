@@ -49,7 +49,7 @@ encryption algorithm from a password in the B<pass>, a salt in B<salt>,
 and an iteration count.
 
 Increasing the B<iter> parameter slows down the algorithm which makes it
-harder for an attacker to peform a brute force attack using a large number
+harder for an attacker to perform a brute force attack using a large number
 of candidate passwords.
 
 =head1 RETURN VALUES
