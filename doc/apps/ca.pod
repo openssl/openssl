@@ -245,7 +245,7 @@ configuration file, must be valid UTF8 strings.
 
 =item B<-multivalue-rdn>
 
-This option causes the -subj argument to be interpretedt with full
+This option causes the -subj argument to be interpreted with full
 support for multivalued RDNs. Example:
 
 I</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>

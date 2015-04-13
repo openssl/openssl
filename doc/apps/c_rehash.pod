@@ -28,7 +28,7 @@ directories to be set up like this in order to find certificates.
 
 If any directories are named on the command line, then those are
 processed in turn. If not, then the B<SSL_CERT_DIR> environment variable
-is consulted; this shold be a colon-separated list of directories,
+is consulted; this should be a colon-separated list of directories,
 like the Unix B<PATH> variable.
 If that is not set then the default directory (installation-specific
 but often B</usr/local/ssl/certs>) is processed.
