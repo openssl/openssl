@@ -54,7 +54,7 @@ void dump_dsa_sig(const char *message, DSA_SIG *sig)
 DSA_SIG *gost_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 {
     BIGNUM *k = NULL, *tmp = NULL, *tmp2 = NULL;
-    DSA_SIG *newsig, *ret = NULL;
+    DSA_SIG *newsig = NULL, *ret = NULL;
     BIGNUM *md = hashsum2bn(dgst);
     /* check if H(M) mod q is zero */
     BN_CTX *ctx = BN_CTX_new();
