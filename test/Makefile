@@ -774,14 +774,15 @@ gost2814789test.o: ../include/openssl/sha.h ../include/openssl/stack.h
 gost2814789test.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
 gost2814789test.o: ../include/openssl/x509_vfy.h gost2814789test.c
 heartbeat_test.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
-heartbeat_test.o: ../include/openssl/buffer.h ../include/openssl/comp.h
-heartbeat_test.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
-heartbeat_test.o: ../include/openssl/dtls1.h ../include/openssl/e_os2.h
-heartbeat_test.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-heartbeat_test.o: ../include/openssl/ecdsa.h ../include/openssl/err.h
-heartbeat_test.o: ../include/openssl/evp.h ../include/openssl/hmac.h
-heartbeat_test.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
-heartbeat_test.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+heartbeat_test.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+heartbeat_test.o: ../include/openssl/comp.h ../include/openssl/crypto.h
+heartbeat_test.o: ../include/openssl/dsa.h ../include/openssl/dtls1.h
+heartbeat_test.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+heartbeat_test.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+heartbeat_test.o: ../include/openssl/err.h ../include/openssl/evp.h
+heartbeat_test.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
+heartbeat_test.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+heartbeat_test.o: ../include/openssl/opensslconf.h
 heartbeat_test.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
 heartbeat_test.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 heartbeat_test.o: ../include/openssl/pkcs7.h ../include/openssl/pqueue.h
@@ -791,8 +792,8 @@ heartbeat_test.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
 heartbeat_test.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 heartbeat_test.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 heartbeat_test.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
-heartbeat_test.o: ../ssl/record/record.h ../ssl/ssl_locl.h heartbeat_test.c
-heartbeat_test.o: testutil.h
+heartbeat_test.o: ../ssl/packet_locl.h ../ssl/record/record.h ../ssl/ssl_locl.h
+heartbeat_test.o: heartbeat_test.c testutil.h
 hmactest.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 hmactest.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 hmactest.o: ../include/openssl/evp.h ../include/openssl/hmac.h
@@ -899,8 +900,8 @@ ssltest.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
 ssltest.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 ssltest.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 ssltest.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
-ssltest.o: ../include/openssl/x509v3.h ../ssl/record/record.h ../ssl/ssl_locl.h
-ssltest.o: ssltest.c
+ssltest.o: ../include/openssl/x509v3.h ../ssl/packet_locl.h
+ssltest.o: ../ssl/record/record.h ../ssl/ssl_locl.h ssltest.c
 testutil.o: ../e_os.h ../include/openssl/e_os2.h
 testutil.o: ../include/openssl/opensslconf.h testutil.c testutil.h
 v3nametest.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
