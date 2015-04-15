@@ -152,8 +152,10 @@ ASN1_TYPE *ASN1_generate_v3(char *str, X509V3_CTX *cnf)
     asn1_tags.imp_class = -1;
     asn1_tags.format = ASN1_GEN_FORMAT_ASCII;
     asn1_tags.exp_count = 0;
-    if (CONF_parse_list(str, ',', 1, asn1_cb, &asn1_tags) != 0)
+    if (CONF_parse_list(str, ',', 1, asn1_cb, &asn1_tags) != 0) {
+        *perr = ASN1_R_UNKNOWN_TAG;
         return NULL;
+    }
 
     if ((asn1_tags.utype == V_ASN1_SEQUENCE)
         || (asn1_tags.utype == V_ASN1_SET)) {
@@ -280,7 +282,7 @@ static int asn1_cb(const char *elem, int len, void *bitstr)
     int tmp_tag, tmp_class;
 
     if (elem == NULL)
-        return 0;
+        return -1;
 
     for (i = 0, p = elem; i < len; p++, i++) {
         /* Look for the ':' in name value pairs */
