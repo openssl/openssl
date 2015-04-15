@@ -21,13 +21,16 @@ The BIO_new() function returns a new BIO using method B<type>.
 BIO_set() sets the method of an already existing BIO.
 
 BIO_free() frees up a single BIO, BIO_vfree() also frees up a single BIO
-but it does not return a value. Calling BIO_free() may also have some effect
+but it does not return a value.
+If B<a> is NULL nothing is done.
+Calling BIO_free() may also have some effect
 on the underlying I/O structure, for example it may close the file being
 referred to under certain circumstances. For more details see the individual
 BIO_METHOD descriptions.
 
 BIO_free_all() frees up an entire BIO chain, it does not halt if an error
 occurs freeing up an individual BIO in the chain.
+If B<a> is NULL nothing is done.
 
 =head1 RETURN VALUES
 

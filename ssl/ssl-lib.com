@@ -19,7 +19,6 @@ $!  Specify the following as P1 to build just that part or ALL to just
 $!  build everything.
 $!
 $!    		LIBRARY    To just compile the [.xxx.EXE.SSL]LIBSSL.OLB Library.
-$!    		SSL_TASK   To just compile the [.xxx.EXE.SSL]SSL_TASK.EXE
 $!
 $!  Specify DEBUG or NODEBUG as P2 to compile with or without debugger
 $!  information.
@@ -162,10 +161,6 @@ $! Define The CRYPTO-LIB We Are To Use.
 $!
 $ CRYPTO_LIB := SYS$DISK:[-.'ARCHD'.EXE.CRYPTO]SSL_LIBCRYPTO'LIB32'.OLB
 $!
-$! Set up exceptional compilations.
-$!
-$ CC5_SHOWN = 0
-$!
 $! Check To See What We Are To Do.
 $!
 $ IF (BUILDALL.EQS."TRUE")
@@ -174,7 +169,6 @@ $!
 $!  Since Nothing Special Was Specified, Do Everything.
 $!
 $   GOSUB LIBRARY
-$   GOSUB SSL_TASK
 $!
 $! Else...
 $!
@@ -213,18 +207,15 @@ $ ENDIF
 $!
 $! Define The Different SSL "library" Files.
 $!
-$ LIB_SSL = "s2_meth,s2_srvr,s2_clnt,s2_lib,s2_enc,s2_pkt,"+ -
-	    "s3_meth,s3_srvr,s3_clnt,s3_lib,s3_enc,s3_pkt,s3_both,"+ -
-	    "s23_meth,s23_srvr,s23_clnt,s23_lib,s23_pkt,"+ -
-	    "t1_meth,t1_srvr,t1_clnt,t1_lib,t1_enc,"+ -
-	    "d1_meth,d1_srvr,d1_clnt,d1_lib,d1_pkt,"+ -
-	    "d1_both,d1_enc,d1_srtp,"+ -
+$ LIB_SSL = "s3_meth,  s3_srvr, s3_clnt, s3_lib, s3_enc,s3_pkt,s3_both,s3_cbc,"+ -
+	    "s23_meth,s23_srvr,s23_clnt,s23_lib,       s23_pkt,"+ -
+	    "t1_meth,  t1_srvr, t1_clnt, t1_lib, t1_enc,       t1_ext,"+ -
+	    "d1_meth,  d1_srvr, d1_clnt, d1_lib,        d1_pkt,"+ -
+	    "d1_both,d1_srtp,"+ -
 	    "ssl_lib,ssl_err2,ssl_cert,ssl_sess,"+ -
 	    "ssl_ciph,ssl_stat,ssl_rsa,"+ -
-	    "ssl_asn1,ssl_txt,ssl_algs,"+ -
-	    "bio_ssl,ssl_err,kssl,t1_reneg,tls_srp,t1_trce"
-$!
-$ COMPILEWITH_CC5 = ""
+	    "ssl_asn1,ssl_txt,ssl_algs,ssl_conf,"+ -
+	    "bio_ssl,ssl_err,kssl,t1_reneg,tls_srp,t1_trce,ssl_utst"
 $!
 $! Tell The User That We Are Compiling The Library.
 $!
@@ -240,7 +231,7 @@ $ NEXT_FILE:
 $!
 $! O.K, Extract The File Name From The File List.
 $!
-$ FILE_NAME = F$ELEMENT(FILE_COUNTER,",",LIB_SSL)
+$ FILE_NAME = F$EDIT(F$ELEMENT(FILE_COUNTER,",",LIB_SSL),"TRIM")
 $!
 $! Check To See If We Are At The End Of The File List.
 $!
@@ -310,251 +301,6 @@ $!
 $! Time To RETURN.
 $!
 $ RETURN
-$ SSL_TASK:
-$!
-$! Check To See If We Have The Proper Libraries.
-$!
-$ GOSUB LIB_CHECK
-$!
-$! Check To See If We Have A Linker Option File.
-$!
-$ GOSUB CHECK_OPT_FILE
-$!
-$! Check To See If The File We Want To Compile Is Actually There.
-$!
-$ IF (F$SEARCH("SYS$DISK:[]SSL_TASK.C").EQS."")
-$ THEN
-$!
-$!  Tell The User That The File Dosen't Exist.
-$!
-$   WRITE SYS$OUTPUT ""
-$   WRITE SYS$OUTPUT "The File SSL_TASK.C Dosen't Exist."
-$   WRITE SYS$OUTPUT ""
-$!
-$!  Exit The Build.
-$!
-$   EXIT
-$!
-$! End The SSL_TASK.C File Check.
-$!
-$ ENDIF
-$!
-$ COMPILEWITH_CC5 = "" !!! ",ssl_task,"
-$!
-$! Tell The User We Are Creating The SSL_TASK.
-$!
-$! Tell The User We Are Creating The SSL_TASK.
-$!
-$ WRITE SYS$OUTPUT "Creating SSL_TASK OSU HTTP SSL Engine."	
-$!
-$!  Tell The User What File We Are Compiling.
-$!
-$ FILE_NAME = "ssl_task"
-$ WRITE SYS$OUTPUT "	",FILE_NAME,".c"
-$!
-$! Compile The File.
-$!
-$ ON ERROR THEN GOTO SSL_TASK_END
-$!
-$ FILE_NAME0 = ","+ F$ELEMENT(0,".",FILE_NAME)+ ","
-$ IF COMPILEWITH_CC5 - FILE_NAME0 .NES. COMPILEWITH_CC5
-$ THEN
-$   if (.not. CC5_SHOWN)
-$   then
-$     CC5_SHOWN = 1
-$     write sys$output "        \Using special rule (5)"
-$     x = "    "+ CC5
-$     write /symbol sys$output x
-$   endif
-$   CC5 /OBJECT='OBJ_DIR''FILE_NAME'.OBJ SYS$DISK:[]'FILE_NAME'.C
-$ ELSE
-$   CC /OBJECT='OBJ_DIR''FILE_NAME'.OBJ SYS$DISK:[]'FILE_NAME'.C
-$ ENDIF
-$!
-$! Link The Program.
-$!
-$ LINK /'DEBUGGER' /'LINKMAP' /'TRACEBACK' /EXE='EXE_DIR'SSL_TASK.EXE -
-   'OBJ_DIR'SSL_TASK.OBJ, -
-   'SSL_LIB'/LIBRARY, -
-   'CRYPTO_LIB'/LIBRARY -
-   'TCPIP_LIB' -
-   'ZLIB_LIB' -
-   ,'OPT_FILE' /OPTIONS
-$!
-$! Time To Return.
-$!
-$SSL_TASK_END:
-$ RETURN
-$!
-$! Check For The Link Option FIle.
-$!
-$ CHECK_OPT_FILE:
-$!
-$! Check To See If We Need To Make A VAX C Option File.
-$!
-$ IF (COMPILER.EQS."VAXC")
-$ THEN
-$!
-$!  Check To See If We Already Have A VAX C Linker Option File.
-$!
-$   IF (F$SEARCH(OPT_FILE).EQS."")
-$   THEN
-$!
-$!    We Need A VAX C Linker Option File.
-$!
-$     CREATE 'OPT_FILE'
-$DECK
-!
-! Default System Options File To Link Against 
-! The Sharable VAX C Runtime Library.
-!
-SYS$SHARE:VAXCRTL.EXE/SHARE
-$EOD
-$!
-$!  End The Option File Check.
-$!
-$   ENDIF
-$!
-$! End The VAXC Check.
-$!
-$ ENDIF
-$!
-$! Check To See If We Need A GNU C Option File.
-$!
-$ IF (COMPILER.EQS."GNUC")
-$ THEN
-$!
-$!  Check To See If We Already Have A GNU C Linker Option File.
-$!
-$   IF (F$SEARCH(OPT_FILE).EQS."")
-$   THEN
-$!
-$!    We Need A GNU C Linker Option File.
-$!
-$     CREATE 'OPT_FILE'
-$DECK
-!
-! Default System Options File To Link Against 
-! The Sharable C Runtime Library.
-!
-GNU_CC:[000000]GCCLIB/LIBRARY
-SYS$SHARE:VAXCRTL/SHARE
-$EOD
-$!
-$!  End The Option File Check.
-$!
-$   ENDIF
-$!
-$! End The GNU C Check.
-$!
-$ ENDIF
-$!
-$! Check To See If We Need A DEC C Option File.
-$!
-$ IF (COMPILER.EQS."DECC")
-$ THEN
-$!
-$!  Check To See If We Already Have A DEC C Linker Option File.
-$!
-$   IF (F$SEARCH(OPT_FILE).EQS."")
-$   THEN
-$!
-$!    Figure Out If We Need A non-VAX Or A VAX Linker Option File.
-$!
-$     IF (ARCH.EQS."VAX")
-$     THEN
-$!
-$!      We Need A DEC C Linker Option File For VAX.
-$!
-$       CREATE 'OPT_FILE'
-$DECK
-!
-! Default System Options File To Link Against 
-! The Sharable DEC C Runtime Library.
-!
-SYS$SHARE:DECC$SHR.EXE/SHARE
-$EOD
-$!
-$!    Else...
-$!
-$     ELSE
-$!
-$!      Create The non-VAX Linker Option File.
-$!
-$       CREATE 'OPT_FILE'
-$DECK
-!
-! Default System Options File For non-VAX To Link Against 
-! The Sharable C Runtime Library.
-!
-SYS$SHARE:CMA$OPEN_LIB_SHR/SHARE
-SYS$SHARE:CMA$OPEN_RTL/SHARE
-$EOD
-$!
-$!    End The DEC C Option File Check.
-$!
-$     ENDIF
-$!
-$!  End The Option File Search.
-$!
-$   ENDIF
-$!
-$! End The DEC C Check.
-$!
-$ ENDIF
-$!
-$!  Tell The User What Linker Option File We Are Using.
-$!
-$ WRITE SYS$OUTPUT "Using Linker Option File ",OPT_FILE,"."	
-$!
-$! Time To RETURN.
-$!
-$ RETURN
-$ LIB_CHECK:
-$!
-$! Look For The VAX Library LIBSSL.OLB.
-$!
-$ IF (F$SEARCH(SSL_LIB).EQS."")
-$ THEN
-$!
-$!  Tell The User We Can't Find The LIBSSL.OLB Library.
-$!
-$   WRITE SYS$OUTPUT ""
-$   WRITE SYS$OUTPUT "Can't Find The Library ",SSL_LIB,"."
-$   WRITE SYS$OUTPUT "We Can't Link Without It."
-$   WRITE SYS$OUTPUT ""
-$!
-$!  Since We Can't Link Without It, Exit.
-$!
-$   EXIT
-$!
-$! End The LIBSSL.OLB Library Check.
-$!
-$ ENDIF
-$!
-$! Look For The Library LIBCRYPTO.OLB.
-$!
-$ IF (F$SEARCH(CRYPTO_LIB).EQS."")
-$ THEN
-$!
-$!  Tell The User We Can't Find The LIBCRYPTO.OLB Library.
-$!
-$   WRITE SYS$OUTPUT ""
-$   WRITE SYS$OUTPUT "Can't Find The Library ",CRYPTO_LIB,"."
-$   WRITE SYS$OUTPUT "We Can't Link Without It."
-$   WRITE SYS$OUTPUT ""
-$!
-$!  Since We Can't Link Without It, Exit.
-$!
-$   EXIT
-$!
-$! End The LIBCRYPTO.OLB Library Check.
-$!
-$ ENDIF
-$!
-$! Time To Return.
-$!
-$ RETURN
 $!
 $! Check The User's Options.
 $!
@@ -575,7 +321,7 @@ $ ELSE
 $!
 $!  Else, Check To See If P1 Has A Valid Argument.
 $!
-$   IF (P1.EQS."LIBRARY").OR.(P1.EQS."SSL_TASK")
+$   IF (P1.EQS."LIBRARY")
 $   THEN
 $!
 $!    A Valid Argument.
@@ -593,7 +339,6 @@ $     WRITE SYS$OUTPUT "The Option ",P1," Is Invalid.  The Valid Options Are:"
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT "    ALL      :  Just Build Everything."
 $     WRITE SYS$OUTPUT "    LIBRARY  :  To Compile Just The [.xxx.EXE.SSL]LIBSSL.OLB Library."
-$     WRITE SYS$OUTPUT "    SSL_TASK :  To Compile Just The [.xxx.EXE.SSL]SSL_TASK.EXE Program."
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT " Where 'xxx' Stands For:"
 $     WRITE SYS$OUTPUT ""
@@ -1040,10 +785,8 @@ $   CC = CC + " /DEFINE=(" + CCDEFS + ")" + CCDISABLEWARNINGS
 $   IF COMPILER .EQS. "DECC"
 $   THEN
 $     CC4 = CC - CCDISABLEWARNINGS + CC4DISABLEWARNINGS
-$     CC5 = CC3 - CCDISABLEWARNINGS + CC4DISABLEWARNINGS
 $   ELSE
 $     CC4 = CC
-$     CC5 = CC3
 $   ENDIF
 $!
 $!  Show user the result

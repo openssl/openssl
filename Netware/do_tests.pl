@@ -270,22 +270,6 @@ sub ssl_tests
    print( OUT "\n========================================================\n");
    print( OUT "SSL TESTS:\n\n");
 
-   system("ssltest -ssl2 (CLIB_OPT)/>$outFile");
-   log_desc("Testing sslv2:");
-   log_output("ssltest -ssl2", $outFile);
-
-   system("$ssltest -ssl2 -server_auth (CLIB_OPT)/>$outFile");
-   log_desc("Testing sslv2 with server authentication:");
-   log_output("$ssltest -ssl2 -server_auth", $outFile);
-
-   system("$ssltest -ssl2 -client_auth (CLIB_OPT)/>$outFile");
-   log_desc("Testing sslv2 with client authentication:");
-   log_output("$ssltest -ssl2 -client_auth", $outFile);
-
-   system("$ssltest -ssl2 -server_auth -client_auth (CLIB_OPT)/>$outFile");
-   log_desc("Testing sslv2 with both client and server authentication:");
-   log_output("$ssltest -ssl2 -server_auth -client_auth", $outFile);
-
    system("ssltest -ssl3 (CLIB_OPT)/>$outFile");
    log_desc("Testing sslv3:");
    log_output("ssltest -ssl3", $outFile);
@@ -318,25 +302,9 @@ sub ssl_tests
    log_desc("Testing sslv2/sslv3 with both client and server authentication:");
    log_output("$ssltest -server_auth -client_auth", $outFile);
 
-   system("ssltest -bio_pair -ssl2 (CLIB_OPT)/>$outFile");
-   log_desc("Testing sslv2 via BIO pair:");
-   log_output("ssltest -bio_pair -ssl2", $outFile);
-
    system("ssltest -bio_pair -dhe1024dsa -v (CLIB_OPT)/>$outFile");
    log_desc("Testing sslv2/sslv3 with 1024 bit DHE via BIO pair:");
    log_output("ssltest -bio_pair -dhe1024dsa -v", $outFile);
-
-   system("$ssltest -bio_pair -ssl2 -server_auth (CLIB_OPT)/>$outFile");
-   log_desc("Testing sslv2 with server authentication via BIO pair:");
-   log_output("$ssltest -bio_pair -ssl2 -server_auth", $outFile);
-
-   system("$ssltest -bio_pair -ssl2 -client_auth (CLIB_OPT)/>$outFile");
-   log_desc("Testing sslv2 with client authentication via BIO pair:");
-   log_output("$ssltest -bio_pair -ssl2 -client_auth", $outFile);
-
-   system("$ssltest -bio_pair -ssl2 -server_auth -client_auth (CLIB_OPT)/>$outFile");
-   log_desc("Testing sslv2 with both client and server authentication via BIO pair:");
-   log_output("$ssltest -bio_pair -ssl2 -server_auth -client_auth", $outFile);
 
    system("ssltest -bio_pair -ssl3 (CLIB_OPT)/>$outFile");
    log_desc("Testing sslv3 via BIO pair:");

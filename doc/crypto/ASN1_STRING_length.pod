@@ -48,7 +48,7 @@ such as B<V_ASN1_OCTET_STRING>.
 ASN1_STRING_to_UTF8() converts the string B<in> to UTF8 format, the
 converted data is allocated in a buffer in B<*out>. The length of
 B<out> is returned or a negative error code. The buffer B<*out>
-should be free using OPENSSL_free().
+should be freed using OPENSSL_free().
 
 =head1 NOTES
 

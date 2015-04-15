@@ -45,8 +45,8 @@ structures:
 =item B<SSL_METHOD> (SSL Method)
 
 That's a dispatch structure describing the internal B<ssl> library
-methods/functions which implement the various protocol versions (SSLv1, SSLv2
-and TLSv1). It's needed to create an B<SSL_CTX>.
+methods/functions which implement the various protocol versions (SSLv3
+TLSv1, ...). It's needed to create an B<SSL_CTX>.
 
 =item B<SSL_CIPHER> (SSL Cipher)
 
@@ -105,8 +105,8 @@ it's already included by ssl.h>.
 
 =item B<ssl23.h>
 
-That's the sub header file dealing with the combined use of the SSLv2 and
-SSLv3 protocols.
+That's the sub header file dealing with the combined use of different
+protocol version.
 I<Usually you don't have to include it explicitly because
 it's already included by ssl.h>.
 
@@ -129,18 +129,6 @@ Here we document the various API functions which deal with the SSL/TLS
 protocol methods defined in B<SSL_METHOD> structures.
 
 =over 4
-
-=item const SSL_METHOD *B<SSLv2_client_method>(void);
-
-Constructor for the SSLv2 SSL_METHOD structure for a dedicated client.
-
-=item const SSL_METHOD *B<SSLv2_server_method>(void);
-
-Constructor for the SSLv2 SSL_METHOD structure for a dedicated server.
-
-=item const SSL_METHOD *B<SSLv2_method>(void);
-
-Constructor for the SSLv2 SSL_METHOD structure for combined client and server.
 
 =item const SSL_METHOD *B<SSLv3_client_method>(void);
 
@@ -189,7 +177,7 @@ I<alg_bits>) and the bits which are actually used (the return value).
 =item const char *B<SSL_CIPHER_get_name>(SSL_CIPHER *cipher);
 
 Return the internal name of I<cipher> as a string. These are the various
-strings defined by the I<SSL2_TXT_xxx>, I<SSL3_TXT_xxx> and I<TLS1_TXT_xxx>
+strings defined by the I<SSL3_TXT_xxx> and I<TLS1_TXT_xxx>
 definitions in the header files.
 
 =item char *B<SSL_CIPHER_get_version>(SSL_CIPHER *cipher);
@@ -229,6 +217,8 @@ protocol context defined in the B<SSL_CTX> structure.
 
 =item int (*B<SSL_CTX_get_client_cert_cb>(SSL_CTX *ctx))(SSL *ssl, X509 **x509, EVP_PKEY **pkey);
 
+=item void B<SSL_CTX_get_default_read_ahead>(SSL_CTX *ctx);
+
 =item char *B<SSL_CTX_get_ex_data>(const SSL_CTX *s, int idx);
 
 =item int B<SSL_CTX_get_ex_new_index>(long argl, char *argp, int (*new_func);(void), int (*dup_func)(void), void (*free_func)(void))
@@ -236,6 +226,8 @@ protocol context defined in the B<SSL_CTX> structure.
 =item void (*B<SSL_CTX_get_info_callback>(SSL_CTX *ctx))(SSL *ssl, int cb, int ret);
 
 =item int B<SSL_CTX_get_quiet_shutdown>(const SSL_CTX *ctx);
+
+=item void B<SSL_CTX_get_read_ahead>(SSL_CTX *ctx);
 
 =item int B<SSL_CTX_get_session_cache_mode>(SSL_CTX *ctx);
 
@@ -324,6 +316,8 @@ protocol context defined in the B<SSL_CTX> structure.
 =item void B<SSL_CTX_set_options>(SSL_CTX *ctx, unsigned long op);
 
 =item void B<SSL_CTX_set_quiet_shutdown>(SSL_CTX *ctx, int mode);
+
+=item void B<SSL_CTX_set_read_ahead>(SSL_CTX *ctx, int m);
 
 =item void B<SSL_CTX_set_session_cache_mode>(SSL_CTX *ctx, int mode);
 
@@ -459,7 +453,10 @@ connection defined in the B<SSL> structure.
 
 =item int B<SSL_connect>(SSL *ssl);
 
-=item void B<SSL_copy_session_id>(SSL *t, const SSL *f);
+=item int B<SSL_copy_session_id>(SSL *t, const SSL *f);
+
+Sets the session details for B<t> to be the same as in B<f>. Returns 1 on
+success or 0 on failure.
 
 =item long B<SSL_ctrl>(SSL *ssl, int cmd, long larg, char *parg);
 
@@ -707,6 +704,7 @@ L<SSL_CTX_set_mode(3)|SSL_CTX_set_mode(3)>,
 L<SSL_CTX_set_msg_callback(3)|SSL_CTX_set_msg_callback(3)>,
 L<SSL_CTX_set_options(3)|SSL_CTX_set_options(3)>,
 L<SSL_CTX_set_quiet_shutdown(3)|SSL_CTX_set_quiet_shutdown(3)>,
+L<SSL_CTX_set_read_ahead(3)|SSL_CTX_set_read_ahead(3)>,
 L<SSL_CTX_set_session_cache_mode(3)|SSL_CTX_set_session_cache_mode(3)>,
 L<SSL_CTX_set_session_id_context(3)|SSL_CTX_set_session_id_context(3)>,
 L<SSL_CTX_set_ssl_version(3)|SSL_CTX_set_ssl_version(3)>,
@@ -757,6 +755,12 @@ L<SSL_get_psk_identity(3)|SSL_get_psk_identity(3)>
 =head1 HISTORY
 
 The L<ssl(3)|ssl(3)> document appeared in OpenSSL 0.9.2
+
+B<SSLv2_client_method>, B<SSLv2_server_method> and B<SSLv2_method> where removed
+in OpenSSL 1.1.0.
+
+The return type of B<SSL_copy_session_id> was changed from void to int in
+OpenSSL 1.1.0.
 
 =cut
 

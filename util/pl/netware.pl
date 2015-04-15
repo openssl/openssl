@@ -212,7 +212,7 @@ else
    #        Turned off the "possible" warnings ( -w nopossible ).  Metrowerks
    #        complained a lot about various stuff.  May want to turn back
    #        on for further development.
-   $cflags.=" -nostdinc -ir crypto -ir engines -ir apps -I$include_path \\
+   $cflags.=" -nostdinc -ir crypto -ir ssl -ir engines -ir apps -I$include_path \\
          -msgstyle gcc -align 4 -processor pentium -char unsigned \\
          -w on -w nolargeargs -w nopossible -w nounusedarg -w nounusedexpr \\
          -w noimplicitconv -relax_pointers -nosyspath -maxerrors 20";
@@ -222,7 +222,7 @@ else
 }
 
 # common defines
-$cflags.=" -DL_ENDIAN -DOPENSSL_SYSNAME_NETWARE -U_WIN32";
+$cflags.=" -DL_ENDIAN -DOPENSSL_SYS_NETWARE -U_WIN32";
 
 # If LibC build add in NKS_LIBC define and set the entry/exit
 # routines - The default entry/exit routines are for CLib and don't exist

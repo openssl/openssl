@@ -13,21 +13,14 @@ AR=		ar r
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
-#TEST= uitest.c
-TEST=
-APPS=
-
-COMPATSRC= ui_compat.c
-COMPATOBJ= ui_compat.o
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC= ui_err.c ui_lib.c ui_openssl.c ui_util.c $(COMPATSRC)
-LIBOBJ= ui_err.o ui_lib.o ui_openssl.o ui_util.o $(COMPATOBJ)
+LIBSRC= ui_err.c ui_lib.c ui_openssl.c ui_util.c
+LIBOBJ= ui_err.o ui_lib.o ui_openssl.o ui_util.o
 
 SRC= $(LIBSRC)
 
-EXHEADER= ui.h ui_compat.h
-HEADER=	$(EXHEADER) ui_locl.h
+HEADER=	ui_locl.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -37,25 +30,12 @@ top:
 all:	lib
 
 lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
+	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
 
 tags:
 	ctags $(SRC)
@@ -78,10 +58,6 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-ui_compat.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
-ui_compat.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-ui_compat.o: ../../include/openssl/stack.h ../../include/openssl/ui.h
-ui_compat.o: ../../include/openssl/ui_compat.h ui_compat.c
 ui_err.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
 ui_err.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 ui_err.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h

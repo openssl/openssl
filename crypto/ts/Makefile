@@ -17,12 +17,10 @@ AR=		ar r
 
 PEX_LIBS=
 EX_LIBS=
- 
+
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL= Makefile
-TEST=
-APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=	ts_err.c ts_req_utils.c ts_req_print.c ts_rsp_utils.c ts_rsp_print.c \
@@ -34,8 +32,7 @@ LIBOBJ= ts_err.o ts_req_utils.o ts_req_print.o ts_rsp_utils.o ts_rsp_print.o \
 
 SRC= $(LIBSRC)
 
-EXHEADER= ts.h
-HEADER=	$(EXHEADER)
+HEADER=	
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -47,25 +44,12 @@ test:
 all:	lib
 
 lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
+	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
 
 tags:
 	ctags $(SRC)
@@ -146,8 +130,9 @@ ts_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ts_lib.o: ../../include/openssl/pkcs7.h ../../include/openssl/rsa.h
 ts_lib.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 ts_lib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-ts_lib.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-ts_lib.o: ../../include/openssl/x509v3.h ../cryptlib.h ts.h ts_lib.c
+ts_lib.o: ../../include/openssl/ts.h ../../include/openssl/x509.h
+ts_lib.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
+ts_lib.o: ../cryptlib.h ts_lib.c
 ts_req_print.o: ../../e_os.h ../../include/openssl/asn1.h
 ts_req_print.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 ts_req_print.o: ../../include/openssl/buffer.h ../../include/openssl/conf.h
@@ -196,9 +181,9 @@ ts_rsp_print.o: ../../include/openssl/opensslv.h
 ts_rsp_print.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
 ts_rsp_print.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 ts_rsp_print.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-ts_rsp_print.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-ts_rsp_print.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-ts_rsp_print.o: ../cryptlib.h ts.h ts_rsp_print.c
+ts_rsp_print.o: ../../include/openssl/symhacks.h ../../include/openssl/ts.h
+ts_rsp_print.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+ts_rsp_print.o: ../../include/openssl/x509v3.h ../cryptlib.h ts_rsp_print.c
 ts_rsp_sign.o: ../../e_os.h ../../include/openssl/asn1.h
 ts_rsp_sign.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 ts_rsp_sign.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h

@@ -13,8 +13,6 @@ AR=		ar r
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
-TEST=ecdhtest.c
-APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=	ech_lib.c ech_ossl.c ech_key.c ech_err.c ech_kdf.c
@@ -23,8 +21,7 @@ LIBOBJ=	ech_lib.o ech_ossl.o ech_key.o ech_err.o ech_kdf.o
 
 SRC= $(LIBSRC)
 
-EXHEADER= ecdh.h
-HEADER=	ech_locl.h $(EXHEADER)
+HEADER=	ech_locl.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -34,25 +31,12 @@ top:
 all:	lib
 
 lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
+	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
 
 tags:
 	ctags $(SRC)

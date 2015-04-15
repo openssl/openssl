@@ -19,7 +19,6 @@ B<openssl> B<s_time>
 [B<-verify depth>]
 [B<-nbio>]
 [B<-time seconds>]
-[B<-ssl2>]
 [B<-ssl3>]
 [B<-bugs>]
 [B<-cipher cipherlist>]
@@ -92,18 +91,17 @@ specified, they are both on by default and executed in sequence.
 
 turns on non-blocking I/O.
 
-=item B<-ssl2>, B<-ssl3>
+=item B<-ssl3>
 
 these options disable the use of certain SSL or TLS protocols. By default
 the initial handshake uses a method which should be compatible with all
-servers and permit them to use SSL v3, SSL v2 or TLS as appropriate.
+servers and permit them to use SSL v3 or TLS as appropriate.
 The timing program is not as rich in options to turn protocols on and off as
 the L<s_client(1)|s_client(1)> program and may not connect to all servers.
 
 Unfortunately there are a lot of ancient and broken servers in use which
 cannot handle this technique and will fail to connect. Some servers only
-work if TLS is turned off with the B<-ssl3> option; others
-will only support SSL v2 and may need the B<-ssl2> option.
+work if TLS is turned off with the B<-ssl3> option.
 
 =item B<-bugs>
 
@@ -137,7 +135,7 @@ which both client and server can agree, see the L<ciphers(1)|ciphers(1)> command
 for details.
 
 If the handshake fails then there are several possible causes, if it is
-nothing obvious like no client certificate then the B<-bugs>, B<-ssl2>,
+nothing obvious like no client certificate then the B<-bugs> and
 B<-ssl3> options can be tried
 in case it is a buggy server. In particular you should play with these
 options B<before> submitting a bug report to an OpenSSL mailing list.

@@ -13,8 +13,6 @@ AR=		ar r
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
-TEST= dhtest.c
-APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC= dh_asn1.c dh_gen.c dh_key.c dh_lib.c dh_check.c dh_err.c dh_depr.c \
@@ -24,8 +22,7 @@ LIBOBJ= dh_asn1.o dh_gen.o dh_key.o dh_lib.o dh_check.o dh_err.o dh_depr.o \
 
 SRC= $(LIBSRC)
 
-EXHEADER= dh.h
-HEADER=	$(EXHEADER)
+HEADER=	
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -35,25 +32,12 @@ top:
 all:	lib
 
 lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
+	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
 
 tags:
 	ctags $(SRC)
@@ -89,8 +73,8 @@ dh_ameth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 dh_ameth.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 dh_ameth.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 dh_ameth.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-dh_ameth.o: ../../include/openssl/x509_vfy.h ../asn1/asn1_locl.h ../cryptlib.h
-dh_ameth.o: dh_ameth.c
+dh_ameth.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
+dh_ameth.o: ../include/internal/asn1_int.h dh_ameth.c
 dh_asn1.o: ../../e_os.h ../../include/openssl/asn1.h
 dh_asn1.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 dh_asn1.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
@@ -152,7 +136,8 @@ dh_key.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 dh_key.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 dh_key.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
 dh_key.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-dh_key.o: ../../include/openssl/symhacks.h ../cryptlib.h dh_key.c
+dh_key.o: ../../include/openssl/symhacks.h ../cryptlib.h
+dh_key.o: ../include/internal/bn_int.h dh_key.c
 dh_lib.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 dh_lib.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 dh_lib.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
@@ -181,8 +166,8 @@ dh_pmeth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 dh_pmeth.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 dh_pmeth.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 dh_pmeth.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-dh_pmeth.o: ../../include/openssl/x509_vfy.h ../cryptlib.h ../evp/evp_locl.h
-dh_pmeth.o: dh_pmeth.c
+dh_pmeth.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
+dh_pmeth.o: ../include/internal/evp_int.h dh_pmeth.c
 dh_prn.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 dh_prn.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 dh_prn.o: ../../include/openssl/dh.h ../../include/openssl/e_os2.h

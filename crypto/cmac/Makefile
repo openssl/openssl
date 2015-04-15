@@ -13,8 +13,6 @@ AR=		ar r
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
-TEST=
-APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=cmac.c cm_ameth.c cm_pmeth.c
@@ -22,8 +20,7 @@ LIBOBJ=cmac.o cm_ameth.o cm_pmeth.o
 
 SRC= $(LIBSRC)
 
-EXHEADER= cmac.h
-HEADER=	$(EXHEADER)
+HEADER=	
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -33,25 +30,12 @@ top:
 all:	lib
 
 lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
+	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
 
 tags:
 	ctags $(SRC)
@@ -83,8 +67,8 @@ cm_ameth.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 cm_ameth.o: ../../include/openssl/opensslconf.h
 cm_ameth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 cm_ameth.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-cm_ameth.o: ../../include/openssl/symhacks.h ../asn1/asn1_locl.h ../cryptlib.h
-cm_ameth.o: cm_ameth.c
+cm_ameth.o: ../../include/openssl/symhacks.h ../cryptlib.h
+cm_ameth.o: ../include/internal/asn1_int.h cm_ameth.c
 cm_pmeth.o: ../../e_os.h ../../include/openssl/asn1.h
 cm_pmeth.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 cm_pmeth.o: ../../include/openssl/cmac.h ../../include/openssl/conf.h
@@ -99,7 +83,7 @@ cm_pmeth.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 cm_pmeth.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 cm_pmeth.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 cm_pmeth.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-cm_pmeth.o: ../cryptlib.h ../evp/evp_locl.h cm_pmeth.c
+cm_pmeth.o: ../cryptlib.h ../include/internal/evp_int.h cm_pmeth.c
 cmac.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 cmac.o: ../../include/openssl/buffer.h ../../include/openssl/cmac.h
 cmac.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h

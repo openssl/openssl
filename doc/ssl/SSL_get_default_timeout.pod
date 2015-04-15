@@ -24,7 +24,7 @@ L<SSL_CTX_set_timeout(3)|SSL_CTX_set_timeout(3)>, the hardcoded default
 timeout for the protocol will be used.
 
 SSL_get_default_timeout() return this hardcoded value, which is 300 seconds
-for all currently supported protocols (SSLv2, SSLv3, and TLSv1).
+for all currently supported protocols.
 
 =head1 RETURN VALUES
 

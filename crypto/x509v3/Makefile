@@ -13,27 +13,24 @@ AR=		ar r
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile README
-TEST=v3nametest.c
-APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=	v3_bcons.c v3_bitst.c v3_conf.c v3_extku.c v3_ia5.c v3_lib.c \
 v3_prn.c v3_utl.c v3err.c v3_genn.c v3_alt.c v3_skey.c v3_akey.c v3_pku.c \
 v3_int.c v3_enum.c v3_sxnet.c v3_cpols.c v3_crld.c v3_purp.c v3_info.c \
-v3_ocsp.c v3_akeya.c v3_pmaps.c v3_pcons.c v3_ncons.c v3_pcia.c v3_pci.c \
+v3_akeya.c v3_pmaps.c v3_pcons.c v3_ncons.c v3_pcia.c v3_pci.c \
 pcy_cache.c pcy_node.c pcy_data.c pcy_map.c pcy_tree.c pcy_lib.c \
 v3_asid.c v3_addr.c v3_scts.c
 LIBOBJ= v3_bcons.o v3_bitst.o v3_conf.o v3_extku.o v3_ia5.o v3_lib.o \
 v3_prn.o v3_utl.o v3err.o v3_genn.o v3_alt.o v3_skey.o v3_akey.o v3_pku.o \
 v3_int.o v3_enum.o v3_sxnet.o v3_cpols.o v3_crld.o v3_purp.o v3_info.o \
-v3_ocsp.o v3_akeya.o v3_pmaps.o v3_pcons.o v3_ncons.o v3_pcia.o v3_pci.o \
+v3_akeya.o v3_pmaps.o v3_pcons.o v3_ncons.o v3_pcia.o v3_pci.o \
 pcy_cache.o pcy_node.o pcy_data.o pcy_map.o pcy_tree.o pcy_lib.o \
 v3_asid.o v3_addr.o v3_scts.o
 
 SRC= $(LIBSRC)
 
-EXHEADER= x509v3.h
-HEADER=	$(EXHEADER) pcy_int.h
+HEADER=	pcy_int.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -43,25 +40,12 @@ top:
 all:	lib
 
 lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
+	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
 
 tags:
 	ctags $(SRC)
@@ -310,7 +294,8 @@ v3_crld.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
 v3_crld.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 v3_crld.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 v3_crld.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-v3_crld.o: ../../include/openssl/x509v3.h ../cryptlib.h v3_crld.c
+v3_crld.o: ../../include/openssl/x509v3.h ../cryptlib.h
+v3_crld.o: ../include/internal/x509_int.h v3_crld.c
 v3_enum.o: ../../e_os.h ../../include/openssl/asn1.h
 v3_enum.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 v3_enum.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
@@ -421,21 +406,7 @@ v3_ncons.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 v3_ncons.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 v3_ncons.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 v3_ncons.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-v3_ncons.o: ../cryptlib.h v3_ncons.c
-v3_ocsp.o: ../../e_os.h ../../include/openssl/asn1.h
-v3_ocsp.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-v3_ocsp.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
-v3_ocsp.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-v3_ocsp.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
-v3_ocsp.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-v3_ocsp.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-v3_ocsp.o: ../../include/openssl/objects.h ../../include/openssl/ocsp.h
-v3_ocsp.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-v3_ocsp.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
-v3_ocsp.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-v3_ocsp.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-v3_ocsp.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-v3_ocsp.o: ../../include/openssl/x509v3.h ../cryptlib.h v3_ocsp.c
+v3_ncons.o: ../cryptlib.h ../include/internal/x509_int.h v3_ncons.c
 v3_pci.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 v3_pci.o: ../../include/openssl/buffer.h ../../include/openssl/conf.h
 v3_pci.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
@@ -553,8 +524,8 @@ v3_scts.o: ../../include/openssl/ssl2.h ../../include/openssl/ssl23.h
 v3_scts.o: ../../include/openssl/ssl3.h ../../include/openssl/stack.h
 v3_scts.o: ../../include/openssl/symhacks.h ../../include/openssl/tls1.h
 v3_scts.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-v3_scts.o: ../../include/openssl/x509v3.h ../../ssl/ssl_locl.h ../cryptlib.h
-v3_scts.o: v3_scts.c
+v3_scts.o: ../../include/openssl/x509v3.h ../../ssl/record/record.h
+v3_scts.o: ../../ssl/ssl_locl.h ../cryptlib.h v3_scts.c
 v3_skey.o: ../../e_os.h ../../include/openssl/asn1.h
 v3_skey.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 v3_skey.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h

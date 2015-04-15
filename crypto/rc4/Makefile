@@ -17,8 +17,6 @@ ASFLAGS= $(INCLUDES) $(ASFLAG)
 AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
-TEST=rc4test.c
-APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=rc4_skey.c rc4_enc.c
@@ -26,8 +24,7 @@ LIBOBJ=$(RC4_ENC)
 
 SRC= $(LIBSRC)
 
-EXHEADER= rc4.h
-HEADER=	$(EXHEADER) rc4_locl.h
+HEADER=	rc4_locl.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -37,7 +34,7 @@ top:
 all:	lib
 
 lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
+	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
@@ -67,19 +64,6 @@ rc4-%.s:	asm/rc4-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
 
 tags:
 	ctags $(SRC)

@@ -14,13 +14,25 @@
 #
 #		hardware-assisted	software(*)
 # Apple A7	2.31			4.13 (+14%)
-# Cortex-A53	2.19			8.73 (+108%)
+# Cortex-A53	2.24			8.03 (+97%)
 # Cortex-A57	2.35			7.88 (+74%)
+# Denver	2.13			3.97 (+0%)(**)
+# X-Gene				8.80 (+200%)
 #
 # (*)	Software results are presented mostly for reference purposes.
+# (**)	Keep in mind that Denver relies on binary translation, which
+#	optimizes compiler output at run-time.
 
 $flavour = shift;
-open STDOUT,">".shift;
+$output  = shift;
+
+$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+( $xlate="${dir}arm-xlate.pl" and -f $xlate ) or
+( $xlate="${dir}../../perlasm/arm-xlate.pl" and -f $xlate) or
+die "can't locate arm-xlate.pl";
+
+open OUT,"| \"$^X\" $xlate $flavour $output";
+*STDOUT=*OUT;
 
 ($ctx,$inp,$num)=("x0","x1","x2");
 @Xw=map("w$_",(3..17,19));
@@ -154,6 +166,7 @@ $code.=<<___;
 
 .text
 
+.extern	OPENSSL_armcap_P
 .globl	sha1_block_data_order
 .type	sha1_block_data_order,%function
 .align	6

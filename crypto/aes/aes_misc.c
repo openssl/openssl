@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -53,12 +53,13 @@
 #include <openssl/aes.h>
 #include "aes_locl.h"
 
-const char AES_version[]="AES" OPENSSL_VERSION_PTEXT;
+const char AES_version[] = "AES" OPENSSL_VERSION_PTEXT;
 
-const char *AES_options(void) {
+const char *AES_options(void)
+{
 #ifdef FULL_UNROLL
-        return "aes(full)";
-#else   
-        return "aes(partial)";
+    return "aes(full)";
+#else
+    return "aes(partial)";
 #endif
 }

@@ -5,7 +5,7 @@
 DIR=	ec
 TOP=	../..
 CC=	cc
-INCLUDES= -I.. -I$(TOP) -I../../include
+INCLUDES= -I.. -I$(TOP) -I../include -I../../include
 CFLAG=-g
 MAKEFILE=	Makefile
 AR=		ar r
@@ -15,8 +15,6 @@ ASFLAGS= $(INCLUDES) $(ASFLAG)
 AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
-TEST=ectest.c
-APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=	ec_lib.c ecp_smpl.c ecp_mont.c ecp_nist.c ec_cvt.c ec_mult.c\
@@ -33,8 +31,7 @@ LIBOBJ=	ec_lib.o ecp_smpl.o ecp_mont.o ecp_nist.o ec_cvt.o ec_mult.o\
 
 SRC= $(LIBSRC)
 
-EXHEADER= ec.h
-HEADER=	ec_lcl.h $(EXHEADER)
+HEADER=	ec_lcl.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -44,9 +41,12 @@ top:
 all:	lib
 
 lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
+	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
+
+ecp_nistz256-x86.s:	asm/ecp_nistz256-x86.pl
+	$(PERL) asm/ecp_nistz256-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
 
 ecp_nistz256-x86_64.s: asm/ecp_nistz256-x86_64.pl
 	$(PERL) asm/ecp_nistz256-x86_64.pl $(PERLASM_SCHEME) > $@
@@ -54,21 +54,11 @@ ecp_nistz256-x86_64.s: asm/ecp_nistz256-x86_64.pl
 ecp_nistz256-avx2.s:   asm/ecp_nistz256-avx2.pl
 	$(PERL) asm/ecp_nistz256-avx2.pl $(PERLASM_SCHEME) > $@
 
+ecp_nistz256-%.S:	asm/ecp_nistz256-%.pl;  $(PERL) $< $(PERLASM_SCHEME) $@
+ecp_nistz256-armv4.o:	ecp_nistz256-armv4.S
+
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
 
 tags:
 	ctags $(SRC)
@@ -98,7 +88,8 @@ ec2_mult.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 ec2_mult.o: ../../include/openssl/obj_mac.h ../../include/openssl/opensslconf.h
 ec2_mult.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ec2_mult.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-ec2_mult.o: ../../include/openssl/symhacks.h ec2_mult.c ec_lcl.h
+ec2_mult.o: ../../include/openssl/symhacks.h ../include/internal/bn_int.h
+ec2_mult.o: ec2_mult.c ec_lcl.h
 ec2_oct.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 ec2_oct.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 ec2_oct.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
@@ -114,7 +105,8 @@ ec2_smpl.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 ec2_smpl.o: ../../include/openssl/obj_mac.h ../../include/openssl/opensslconf.h
 ec2_smpl.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ec2_smpl.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-ec2_smpl.o: ../../include/openssl/symhacks.h ec2_smpl.c ec_lcl.h
+ec2_smpl.o: ../../include/openssl/symhacks.h ../include/internal/bn_int.h
+ec2_smpl.o: ec2_smpl.c ec_lcl.h
 ec_ameth.o: ../../e_os.h ../../include/openssl/asn1.h
 ec_ameth.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 ec_ameth.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
@@ -128,8 +120,8 @@ ec_ameth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ec_ameth.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 ec_ameth.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 ec_ameth.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-ec_ameth.o: ../../include/openssl/x509_vfy.h ../asn1/asn1_locl.h ../cryptlib.h
-ec_ameth.o: ec_ameth.c
+ec_ameth.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
+ec_ameth.o: ../include/internal/asn1_int.h ec_ameth.c
 ec_asn1.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 ec_asn1.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 ec_asn1.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
@@ -193,7 +185,8 @@ ec_mult.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 ec_mult.o: ../../include/openssl/obj_mac.h ../../include/openssl/opensslconf.h
 ec_mult.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ec_mult.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-ec_mult.o: ../../include/openssl/symhacks.h ec_lcl.h ec_mult.c
+ec_mult.o: ../../include/openssl/symhacks.h ../include/internal/bn_int.h
+ec_mult.o: ec_lcl.h ec_mult.c
 ec_oct.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 ec_oct.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 ec_oct.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
@@ -215,8 +208,8 @@ ec_pmeth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ec_pmeth.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 ec_pmeth.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 ec_pmeth.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-ec_pmeth.o: ../../include/openssl/x509_vfy.h ../cryptlib.h ../evp/evp_locl.h
-ec_pmeth.o: ec_lcl.h ec_pmeth.c
+ec_pmeth.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
+ec_pmeth.o: ../include/internal/evp_int.h ec_lcl.h ec_pmeth.c
 ec_print.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 ec_print.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 ec_print.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h

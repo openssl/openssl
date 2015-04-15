@@ -18,8 +18,6 @@ ASFLAGS= $(INCLUDES) $(ASFLAG)
 AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
-#TEST=camelliatest.c
-APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=camellia.c cmll_misc.c cmll_ecb.c cmll_cbc.c cmll_ofb.c \
@@ -29,8 +27,7 @@ LIBOBJ= cmll_ecb.o cmll_ofb.o cmll_cfb.o cmll_ctr.o $(CMLL_ENC)
 
 SRC= $(LIBSRC)
 
-EXHEADER= camellia.h
-HEADER= cmll_locl.h $(EXHEADER)
+HEADER= cmll_locl.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -40,7 +37,7 @@ top:
 all:	lib
 
 lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
+	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
@@ -48,24 +45,11 @@ cmll-x86.s:	asm/cmll-x86.pl ../perlasm/x86asm.pl
 	$(PERL) asm/cmll-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
 cmll-x86_64.s:  asm/cmll-x86_64.pl
 	$(PERL) asm/cmll-x86_64.pl $(PERLASM_SCHEME) > $@
-cmllt4-sparcv9.s: asm/cmllt4-sparcv9.pl
+cmllt4-sparcv9.s: asm/cmllt4-sparcv9.pl ../perlasm/sparcv9_modes.pl
 	$(PERL) asm/cmllt4-sparcv9.pl $(CFLAGS) > $@
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
 
 tags:
 	ctags $(SRC)
@@ -88,8 +72,8 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-camellia.o: ../../include/openssl/opensslconf.h camellia.c camellia.h
-camellia.o: cmll_locl.h
+camellia.o: ../../include/openssl/camellia.h
+camellia.o: ../../include/openssl/opensslconf.h camellia.c cmll_locl.h
 cmll_cbc.o: ../../include/openssl/camellia.h ../../include/openssl/modes.h
 cmll_cbc.o: ../../include/openssl/opensslconf.h cmll_cbc.c
 cmll_cfb.o: ../../include/openssl/camellia.h ../../include/openssl/modes.h

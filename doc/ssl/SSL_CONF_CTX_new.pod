@@ -17,6 +17,7 @@ The function SSL_CONF_CTX_new() allocates and initialises an B<SSL_CONF_CTX>
 structure for use with the SSL_CONF functions.
 
 The function SSL_CONF_CTX_free() frees up the context B<cctx>.
+If B<cctx> is NULL nothing is done.
 
 =head1 RETURN VALUES
 

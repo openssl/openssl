@@ -36,9 +36,16 @@ least one of these flags must be set.
 recognise options intended for use in SSL/TLS clients or servers. One or
 both of these flags must be set.
 
-=item SSL_CONF_CERTIFICATE
+=item SSL_CONF_FLAG_CERTIFICATE
 
 recognise certificate and private key options.
+
+=item SSL_CONF_FLAG_REQUIRE_PRIVATE
+
+If this option is set then if a private key is not specified for a certificate
+it will attempt to load a private key from the certificate file when
+SSL_CONF_CTX_finish() is called. If a key cannot be loaded from the certificate
+file an error occurs.
 
 =item SSL_CONF_FLAG_SHOW_ERRORS
 

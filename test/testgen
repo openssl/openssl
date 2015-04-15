@@ -3,6 +3,7 @@
 T=testcert
 KEY=512
 CA=../certs/testca.pem
+OPENSSL_CONF=/dev/null ; export OPENSSL_CONF
 
 /bin/rm -f $T.1 $T.2 $T.key
 
@@ -17,7 +18,7 @@ echo "generating certificate request"
 
 echo "string to make the random number generator think it has entropy" >> ./.rnd
 
-if ../util/shlib_wrap.sh ../apps/openssl no-rsa; then
+if ../util/shlib_wrap.sh ../apps/openssl no-rsa >/dev/null; then
   req_new='-newkey dsa:../apps/dsa512.pem'
 else
   req_new='-new'
@@ -25,20 +26,12 @@ else
   echo "There should not be more that at most 80 per line"
 fi
 
-echo "This could take some time."
-
 rm -f testkey.pem testreq.pem
 
-../util/shlib_wrap.sh ../apps/openssl req -config test.cnf $req_new -out testreq.pem
-if [ $? != 0 ]; then
-echo problems creating request
-exit 1
-fi
+echo Generating request
+../util/shlib_wrap.sh ../apps/openssl req -config test.cnf $req_new -out testreq.pem || exit 1
 
-../util/shlib_wrap.sh ../apps/openssl req -config test.cnf -verify -in testreq.pem -noout
-if [ $? != 0 ]; then
-echo signature on req is wrong
-exit 1
-fi
+echo Verifying signature on request
+../util/shlib_wrap.sh ../apps/openssl req -config test.cnf -verify -in testreq.pem -noout || exit 1
 
 exit 0

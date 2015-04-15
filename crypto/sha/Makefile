@@ -18,17 +18,14 @@ ASFLAGS= $(INCLUDES) $(ASFLAG)
 AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
-TEST=shatest.c sha1test.c sha256t.c sha512t.c
-APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=sha_dgst.c sha1dgst.c sha_one.c sha1_one.c sha256.c sha512.c
-LIBOBJ=sha_dgst.o sha1dgst.o sha_one.o sha1_one.o sha256.o sha512.o $(SHA1_ASM_OBJ)
+LIBSRC=sha1dgst.c sha1_one.c sha256.c sha512.c
+LIBOBJ=sha1dgst.o sha1_one.o sha256.o sha512.o $(SHA1_ASM_OBJ)
 
 SRC= $(LIBSRC)
 
-EXHEADER= sha.h
-HEADER= sha_locl.h $(EXHEADER)
+HEADER= sha_locl.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -38,7 +35,7 @@ top:
 all:    lib
 
 lib:    $(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
+	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
@@ -103,19 +100,6 @@ sha512-armv8.o:		sha512-armv8.S
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
-
 tags:
 	ctags $(SRC)
 
@@ -162,14 +146,3 @@ sha512.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 sha512.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 sha512.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 sha512.o: ../cryptlib.h sha512.c
-sha_dgst.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-sha_dgst.o: ../../include/openssl/opensslconf.h
-sha_dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-sha_dgst.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-sha_dgst.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-sha_dgst.o: ../md32_common.h sha_dgst.c sha_locl.h
-sha_one.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-sha_one.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-sha_one.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-sha_one.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-sha_one.o: ../../include/openssl/symhacks.h sha_one.c

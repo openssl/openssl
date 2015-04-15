@@ -18,9 +18,6 @@ ASFLAGS= $(INCLUDES) $(ASFLAG)
 AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
-#TEST=aestest.c
-TEST=
-APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=aes_core.c aes_misc.c aes_ecb.c aes_cbc.c aes_cfb.c aes_ofb.c \
@@ -30,8 +27,7 @@ LIBOBJ=aes_misc.o aes_ecb.o aes_cfb.o aes_ofb.o aes_ige.o aes_wrap.o \
 
 SRC= $(LIBSRC)
 
-EXHEADER= aes.h
-HEADER= aes_locl.h $(EXHEADER)
+HEADER= aes_locl.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -41,7 +37,7 @@ top:
 all:	lib
 
 lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
+	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
@@ -72,7 +68,7 @@ aesni-mb-x86_64.s:	asm/aesni-mb-x86_64.pl
 
 aes-sparcv9.s: asm/aes-sparcv9.pl
 	$(PERL) asm/aes-sparcv9.pl $(CFLAGS) > $@
-aest4-sparcv9.s: asm/aest4-sparcv9.pl
+aest4-sparcv9.s: asm/aest4-sparcv9.pl ../perlasm/sparcv9_modes.pl
 	$(PERL) asm/aest4-sparcv9.pl $(CFLAGS) > $@
 
 aes-ppc.s:	asm/aes-ppc.pl
@@ -91,6 +87,9 @@ aes-mips.S:	asm/aes-mips.pl
 aesv8-armx.S:	asm/aesv8-armx.pl
 	$(PERL) asm/aesv8-armx.pl $(PERLASM_SCHEME) $@
 aesv8-armx.o:	aesv8-armx.S
+vpaes-armv8.S:	asm/vpaes-armv8.pl
+	$(PERL) asm/vpaes-armv8.pl $(PERLASM_SCHEME) $@
+vpaes-armv8.o:	vpaes-armv8.S
 
 # GNU make "catch all"
 aes-%.S:	asm/aes-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
@@ -100,19 +99,6 @@ bsaes-armv7.o:	bsaes-armv7.S
 
 files:
 	$(PERL) $(TOP)/util/files.pl "AES_ENC=$(AES_ENC)" Makefile >> $(TOP)/MINFO
-
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
 
 tags:
 	ctags $(SRC)

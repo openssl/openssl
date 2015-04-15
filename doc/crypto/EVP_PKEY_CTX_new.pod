@@ -26,6 +26,7 @@ during parameter generation of key genration for some algorithms.
 EVP_PKEY_CTX_dup() duplicates the context B<ctx>.
 
 EVP_PKEY_CTX_free() frees up the context B<ctx>.
+If B<ctx> is NULL, nothing is done.
 
 =head1 NOTES
 

@@ -12,12 +12,10 @@ AR=		ar r
 
 PEX_LIBS=
 EX_LIBS=
- 
+
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile README
-TEST=
-APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=	pk7_asn1.c pk7_lib.c pkcs7err.c pk7_doit.c pk7_smime.c pk7_attr.c \
@@ -27,8 +25,7 @@ LIBOBJ= pk7_asn1.o pk7_lib.o pkcs7err.o pk7_doit.o pk7_smime.o pk7_attr.o \
 
 SRC= $(LIBSRC)
 
-EXHEADER=  pkcs7.h
-HEADER=	$(EXHEADER)
+HEADER=	
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -40,25 +37,12 @@ test:
 all:	lib
 
 lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
+	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
 
 tags:
 	ctags $(SRC)
@@ -140,7 +124,7 @@ pk7_lib.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
 pk7_lib.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 pk7_lib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 pk7_lib.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-pk7_lib.o: ../asn1/asn1_locl.h ../cryptlib.h pk7_lib.c
+pk7_lib.o: ../cryptlib.h ../include/internal/asn1_int.h pk7_lib.c
 pk7_mime.o: ../../e_os.h ../../include/openssl/asn1.h
 pk7_mime.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 pk7_mime.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h

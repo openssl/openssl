@@ -1909,7 +1909,7 @@ ___
 }
 {
 ################################################################################
-# void ecp_nistz256_avx2_multi_select_w7(void* RESULT, void *in,
+# void ecp_nistz256_avx2_multi_gather_w7(void* RESULT, void *in,
 #			    int index0, int index1, int index2, int index3);
 ################################################################################
 
@@ -1919,10 +1919,10 @@ my ($R0a,$R0b,$R1a,$R1b,$R2a,$R2b,$R3a,$R3b)=map("%ymm$_",(4..11));
 my ($M0,$T0,$T1,$TMP0)=map("%ymm$_",(12..15));
 
 $code.=<<___;
-.globl	ecp_nistz256_avx2_multi_select_w7
-.type	ecp_nistz256_avx2_multi_select_w7,\@function,6
+.globl	ecp_nistz256_avx2_multi_gather_w7
+.type	ecp_nistz256_avx2_multi_gather_w7,\@function,6
 .align	32
-ecp_nistz256_avx2_multi_select_w7:
+ecp_nistz256_avx2_multi_gather_w7:
 	vzeroupper
 ___
 $code.=<<___	if ($win64);
@@ -2036,7 +2036,7 @@ $code.=<<___	if ($win64);
 ___
 $code.=<<___;
 	ret
-.size	ecp_nistz256_avx2_multi_select_w7,.-ecp_nistz256_avx2_multi_select_w7
+.size	ecp_nistz256_avx2_multi_gather_w7,.-ecp_nistz256_avx2_multi_gather_w7
 
 .extern	OPENSSL_ia32cap_P
 .globl	ecp_nistz_avx2_eligible
@@ -2061,8 +2061,8 @@ $code.=<<___;
 .globl	ecp_nistz256_avx2_to_mont
 .globl	ecp_nistz256_avx2_from_mont
 .globl	ecp_nistz256_avx2_set1
-.globl	ecp_nistz256_avx2_multi_select_w7
-.type	ecp_nistz256_avx2_multi_select_w7,\@abi-omnipotent
+.globl	ecp_nistz256_avx2_multi_gather_w7
+.type	ecp_nistz256_avx2_multi_gather_w7,\@abi-omnipotent
 ecp_nistz256_avx2_transpose_convert:
 ecp_nistz256_avx2_convert_transpose_back:
 ecp_nistz256_avx2_point_add_affine_x4:
@@ -2070,10 +2070,10 @@ ecp_nistz256_avx2_point_add_affines_x4:
 ecp_nistz256_avx2_to_mont:
 ecp_nistz256_avx2_from_mont:
 ecp_nistz256_avx2_set1:
-ecp_nistz256_avx2_multi_select_w7:
+ecp_nistz256_avx2_multi_gather_w7:
 	.byte	0x0f,0x0b	# ud2
 	ret
-.size	ecp_nistz256_avx2_multi_select_w7,.-ecp_nistz256_avx2_multi_select_w7
+.size	ecp_nistz256_avx2_multi_gather_w7,.-ecp_nistz256_avx2_multi_gather_w7
 
 .globl	ecp_nistz_avx2_eligible
 .type	ecp_nistz_avx2_eligible,\@abi-omnipotent

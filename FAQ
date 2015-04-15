@@ -133,7 +133,7 @@ OpenSSL.  Information on the OpenSSL mailing lists is available from
 * Where can I get a compiled version of OpenSSL?
 
 You can finder pointers to binary distributions in
-<URL: http://www.openssl.org/related/binaries.html> .
+<URL: http://www.openssl.org/about/binaries.html> .
 
 Some applications that use OpenSSL are distributed in binary form.
 When using such an application, you don't need to install OpenSSL

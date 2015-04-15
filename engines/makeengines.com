@@ -94,12 +94,12 @@ $! library that isn't necessarely ported to VMS.
 $!
 $ ENGINES = "," + P6
 $ IF ENGINES .EQS. "," THEN -
-	ENGINES = ",4758cca,aep,atalla,cswift,chil,nuron,sureware,ubsec,padlock,"
+	ENGINES = ",4758cca,padlock,capi,"
 $!
 $! GOST requires a 64-bit integer type, unavailable on VAX.
 $!
 $ IF (ARCH .NES. "VAX") THEN -
-       ENGINES = ENGINES+ ",ccgost"
+       ENGINES = ENGINES+ ",gost"
 $!
 $! Check options.
 $!
@@ -156,20 +156,14 @@ $   TV_OBJ_NAME = OBJ_DIR + F$PARSE(ENGINE_,,,"NAME","SYNTAX_ONLY") + ".OBJ"
 $   TV_OBJ = ",''TV_OBJ_NAME'"
 $ ENDIF
 $ ENGINE_4758CCA = "e_4758cca"
-$ ENGINE_aep = "e_aep"
-$ ENGINE_atalla = "e_atalla"
-$ ENGINE_cswift = "e_cswift"
-$ ENGINE_chil = "e_chil"
-$ ENGINE_nuron = "e_nuron"
-$ ENGINE_sureware = "e_sureware"
-$ ENGINE_ubsec = "e_ubsec"
 $ ENGINE_padlock = "e_padlock"
-$
-$ ENGINE_ccgost_SUBDIR = "ccgost"
-$ ENGINE_ccgost = "e_gost_err,gost2001_keyx,gost2001,gost89,gost94_keyx,"+ -
-		  "gost_ameth,gost_asn1,gost_crypt,gost_ctl,gost_eng,"+ -
-		  "gosthash,gost_keywrap,gost_md,gost_params,gost_pmeth,"+ -
-		  "gost_sign"
+$ ENGINE_capi = "e_capi"
+$ 
+$ ENGINE_gost_SUBDIR = "ccgost"
+$ ENGINE_gost = "e_gost_err,gost2001_keyx,gost2001,gost89,gost94_keyx,"+ -
+		"gost_ameth,gost_asn1,gost_crypt,gost_ctl,gost_eng,"+ -
+		"gosthash,gost_keywrap,gost_md,gost_params,gost_pmeth,"+ -
+		"gost_sign"
 $!
 $! Define which programs need to be linked with a TCP/IP library
 $!

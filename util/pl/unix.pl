@@ -59,7 +59,6 @@ $bf_enc_src="";
 	  'x86_64-mont' => 'crypto/bn',
 	  'x86_64-mont5' => 'crypto/bn',
 	  'x86_64-gf2m' => 'crypto/bn',
-	  'modexp512-x86_64' => 'crypto/bn',
 	  'aes-x86_64' => 'crypto/aes',
 	  'vpaes-x86_64' => 'crypto/aes',
 	  'bsaes-x86_64' => 'crypto/aes',
@@ -78,6 +77,8 @@ $bf_enc_src="";
 	  'sha1-mb-x86_64' => 'crypto/sha',
 	  'sha256-mb-x86_64' => 'crypto/sha',
 	  'ecp_nistz256-x86_64' => 'crypto/ec',
+	  'wp-x86_64' => 'crypto/whrlpool',
+	  'cmll-x86_64' => 'crypto/camellia',
          );
 
 # If I were feeling more clever, these could probably be extracted
@@ -229,8 +230,8 @@ sub fixrules
   my ($str) = @_;
 
   # Compatible with -j...
-  $str =~ s/^(\s+@?)/$1cd \$(TEST_D) && /;
-  return $str;
+#  $str =~ s/^(\s+@?)/$1cd \$(TEST_D) && /;
+#  return $str;
 
   # Compatible with not -j.
   my @t = split("\n", $str);
@@ -242,11 +243,11 @@ sub fixrules
     if (!$prev)
       {
       if ($t =~ /^@/)
-	{
+        {
         $t =~ s/^@/\@cd \$(TEST_D) && /;
         }
-      elsif ($t !~ /^\s*#/)
-	{
+      elsif ($t !~ /^\s*#/ && $t !~ /^echo/)
+        {
         $t = 'cd $(TEST_D) && ' . $t;
         }
       }
@@ -408,22 +409,21 @@ sub get_tests
 		 'serverinfo.pem',
 	       );
   my $copies = copy_scripts(1, 'test', @copies);
-  $copies .= copy_scripts(0, 'test', ('smcont.txt'));
+  $copies .= copy_scripts(0, 'test', ('smcont.txt', 'evptests.txt'));
+
 
   my @utils = ( 'shlib_wrap.sh',
 		'opensslwrap.sh',
 	      );
   $copies .= copy_scripts(1, 'util', @utils);
 
-  my @apps = ( 'CA.sh',
+  my @apps = ( 'CA.pl',
 	       'openssl.cnf',
 	       'server2.pem',
 	     );
   $copies .= copy_scripts(1, 'apps', @apps);
 
-  $copies .= copy_scripts(1, 'crypto/evp', ('evptests.txt'));
-
-  $scripts = "test_scripts: \$(TEST_D)/CA.sh \$(TEST_D)/opensslwrap.sh \$(TEST_D)/openssl.cnf \$(TEST_D)/shlib_wrap.sh ocsp smime\n";
+  $scripts = "test_scripts: \$(TEST_D)/CA.pl \$(TEST_D)/opensslwrap.sh \$(TEST_D)/openssl.cnf \$(TEST_D)/shlib_wrap.sh ocsp smime\n";
   $scripts .= "\nocsp:\n\tcp -R test/ocsp-tests \$(TEST_D)\n";
   $scripts .= "\smime:\n\tcp -R test/smime-certs \$(TEST_D)\n";
 

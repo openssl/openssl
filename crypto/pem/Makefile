@@ -13,8 +13,6 @@ AR=		ar r
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
-TEST=
-APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC= pem_sign.c pem_seal.c pem_info.c pem_lib.c pem_all.c pem_err.c \
@@ -25,8 +23,7 @@ LIBOBJ=	pem_sign.o pem_seal.o pem_info.o pem_lib.o pem_all.o pem_err.o \
 
 SRC= $(LIBSRC)
 
-EXHEADER= pem.h pem2.h
-HEADER=	$(EXHEADER)
+HEADER=	
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -36,25 +33,12 @@ top:
 all:	lib
 
 lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
+	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-links: $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
 
 tags:
 	ctags $(SRC)
@@ -123,21 +107,19 @@ pem_info.o: ../cryptlib.h pem_info.c
 pem_lib.o: ../../e_os.h ../../include/openssl/asn1.h
 pem_lib.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 pem_lib.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
-pem_lib.o: ../../include/openssl/des_old.h ../../include/openssl/e_os2.h
-pem_lib.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-pem_lib.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
-pem_lib.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-pem_lib.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-pem_lib.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-pem_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-pem_lib.o: ../../include/openssl/pem.h ../../include/openssl/pem2.h
-pem_lib.o: ../../include/openssl/pkcs12.h ../../include/openssl/pkcs7.h
-pem_lib.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
-pem_lib.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-pem_lib.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-pem_lib.o: ../../include/openssl/ui_compat.h ../../include/openssl/x509.h
-pem_lib.o: ../../include/openssl/x509_vfy.h ../asn1/asn1_locl.h ../cryptlib.h
-pem_lib.o: pem_lib.c
+pem_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+pem_lib.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
+pem_lib.o: ../../include/openssl/engine.h ../../include/openssl/err.h
+pem_lib.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+pem_lib.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+pem_lib.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+pem_lib.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pem.h
+pem_lib.o: ../../include/openssl/pem2.h ../../include/openssl/pkcs12.h
+pem_lib.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
+pem_lib.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+pem_lib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+pem_lib.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+pem_lib.o: ../cryptlib.h ../include/internal/asn1_int.h pem_lib.c
 pem_oth.o: ../../e_os.h ../../include/openssl/asn1.h
 pem_oth.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 pem_oth.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
@@ -182,8 +164,8 @@ pem_pkey.o: ../../include/openssl/pkcs12.h ../../include/openssl/pkcs7.h
 pem_pkey.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
 pem_pkey.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 pem_pkey.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-pem_pkey.o: ../../include/openssl/x509_vfy.h ../asn1/asn1_locl.h ../cryptlib.h
-pem_pkey.o: pem_pkey.c
+pem_pkey.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
+pem_pkey.o: ../include/internal/asn1_int.h pem_pkey.c
 pem_seal.o: ../../e_os.h ../../include/openssl/asn1.h
 pem_seal.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 pem_seal.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h

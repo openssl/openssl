@@ -51,6 +51,7 @@ B<openssl> B<s_server>
 [B<-suiteB_128_only>]
 [B<-suiteB_192>]
 [B<-trusted_first>]
+[B<-no_alt_chains>]
 [B<-use_deltas>]
 [B<-verify_depth num>]
 [B<-verify_return_error>]
@@ -64,17 +65,14 @@ B<openssl> B<s_server>
 [B<-serverpref>]
 [B<-quiet>]
 [B<-no_tmp_rsa>]
-[B<-ssl2>]
 [B<-ssl3>]
 [B<-tls1>]
-[B<-no_ssl2>]
 [B<-no_ssl3>]
 [B<-no_tls1>]
 [B<-no_dhe>]
 [B<-no_ecdhe>]
 [B<-bugs>]
 [B<-brief>]
-[B<-hack>]
 [B<-www>]
 [B<-WWW>]
 [B<-HTTP>]
@@ -220,8 +218,8 @@ anonymous ciphersuite or PSK) this option has no effect.
 B<-ignore_critical>, B<-inhibit_any>, B<-inhibit_map>, B<-issuer_checks>,
 B<-partial_chain>, B<-policy>, B<-policy_check>, B<-policy_print>, B<-purpose>,
 B<-suiteB_128>, B<-suiteB_128_only>, B<-suiteB_192>, B<-trusted_first>,
-B<-use_deltas>, B<-verify_depth>, B<-verify_email>, B<-verify_hostname>,
-B<-verify_ip>, B<-verify_name>, B<-x509_strict>
+B<-no_alt_chains>, B<-use_deltas>, B<-verify_depth>, B<-verify_email>,
+B<-verify_hostname>, B<-verify_ip>, B<-verify_name>, B<-x509_strict>
 
 Set different peer certificate verification options.
 See the L<B<verify>|verify(1)> manual page for details.
@@ -279,11 +277,11 @@ Use the PSK key B<key> when using a PSK cipher suite. The key is
 given as a hexadecimal number without leading 0x, for example -psk
 1a2b3c4d.
 
-=item B<-ssl2>, B<-ssl3>, B<-tls1>, B<-no_ssl2>, B<-no_ssl3>, B<-no_tls1>
+=item B<-ssl3>, B<-tls1>, B<-no_ssl3>, B<-no_tls1>
 
 these options disable the use of certain SSL or TLS protocols. By default
 the initial handshake uses a method which should be compatible with all
-servers and permit them to use SSL v3, SSL v2 or TLS as appropriate.
+servers and permit them to use SSL v3 or TLS as appropriate.
 
 =item B<-bugs>
 
@@ -294,11 +292,6 @@ option enables various workarounds.
 
 only provide a brief summary of connection parameters instead of the
 normal verbose output.
-
-=item B<-hack>
-
-this option enables a further workaround for some some early Netscape
-SSL code (?).
 
 =item B<-cipher cipherlist>
 
@@ -482,5 +475,9 @@ unknown cipher suites a client says it supports.
 =head1 SEE ALSO
 
 L<sess_id(1)|sess_id(1)>, L<s_client(1)|s_client(1)>, L<ciphers(1)|ciphers(1)>
+
+=head1 HISTORY
+
+The -no_alt_chains options was first added to OpenSSL 1.1.0.
 
 =cut

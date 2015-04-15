@@ -122,7 +122,7 @@ elsif ($FLAVOR =~ /CE/)
     }
 
     $cc=($ENV{CC} or "cl");
-    $base_cflags=' /W3 /WX /GF /Gy /nologo -DUNICODE -D_UNICODE -DOPENSSL_SYSNAME_WINCE -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32 -DNO_CHMOD -DOPENSSL_SMALL_FOOTPRINT';
+    $base_cflags=' /W3 /WX /GF /Gy /nologo -DUNICODE -D_UNICODE -DOPENSSL_SYS_WINCE -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32 -DNO_CHMOD -DOPENSSL_SMALL_FOOTPRINT';
     $base_cflags.=" $wcecdefs";
     $base_cflags.=' -I$(WCECOMPAT)/include'		if (defined($ENV{'WCECOMPAT'}));
     $base_cflags.=' -I$(PORTSDK_LIBPATH)/../../include'	if (defined($ENV{'PORTSDK_LIBPATH'}));
@@ -284,10 +284,6 @@ $(OBJ_D)\applink.obj:	ms\applink.c
 	$(CC) /Fo$(OBJ_D)\applink.obj $(APP_CFLAGS) -c ms\applink.c
 $(OBJ_D)\uplink.obj:	ms\uplink.c ms\applink.c
 	$(CC) /Fo$(OBJ_D)\uplink.obj $(SHLIB_CFLAGS) -c ms\uplink.c
-$(INCO_D)\applink.c:	ms\applink.c
-	$(CP) ms\applink.c $(INCO_D)\applink.c
-
-EXHEADER= $(EXHEADER) $(INCO_D)\applink.c
 
 LIBS_DEP=$(LIBS_DEP) $(OBJ_D)\applink.obj
 CRYPTOOBJ=$(OBJ_D)\uplink.obj $(CRYPTOOBJ)

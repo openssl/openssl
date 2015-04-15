@@ -894,6 +894,9 @@ aes 48			: id-aes256-wrap-pad
 			: AES-128-CTR		: aes-128-ctr
 			: AES-192-CTR		: aes-192-ctr
 			: AES-256-CTR		: aes-256-ctr
+			: AES-128-OCB		: aes-128-ocb
+			: AES-192-OCB		: aes-192-ocb
+			: AES-256-OCB		: aes-256-ocb
 			: AES-128-XTS		: aes-128-xts
 			: AES-256-XTS		: aes-256-xts
 			: DES-CFB1		: des-cfb1
@@ -985,8 +988,7 @@ pilotAttributeType 40	:			: personalTitle
 pilotAttributeType 41	:			: mobileTelephoneNumber
 pilotAttributeType 42	:			: pagerTelephoneNumber
 pilotAttributeType 43	:			: friendlyCountryName
-# The following clashes with 2.5.4.45, so commented away
-#pilotAttributeType 44	: uid			: uniqueIdentifier
+pilotAttributeType 44	: uid			: uniqueIdentifier
 pilotAttributeType 45	:			: organizationalStatus
 pilotAttributeType 46	:			: janetMailbox
 pilotAttributeType 47	:			: mailPreferenceOption
@@ -1248,18 +1250,30 @@ camellia 1		: CAMELLIA-128-ECB		: camellia-128-ecb
 camellia 3		: CAMELLIA-128-OFB		: camellia-128-ofb
 !Cname camellia-128-cfb128
 camellia 4		: CAMELLIA-128-CFB		: camellia-128-cfb
+camellia 6		: CAMELLIA-128-GCM		: camellia-128-gcm
+camellia 7		: CAMELLIA-128-CCM		: camellia-128-ccm
+camellia 9		: CAMELLIA-128-CTR		: camellia-128-ctr
+camellia 10		: CAMELLIA-128-CMAC		: camellia-128-cmac
 
 camellia 21		: CAMELLIA-192-ECB		: camellia-192-ecb
 !Cname camellia-192-ofb128
 camellia 23		: CAMELLIA-192-OFB		: camellia-192-ofb
 !Cname camellia-192-cfb128
 camellia 24		: CAMELLIA-192-CFB		: camellia-192-cfb
+camellia 26		: CAMELLIA-192-GCM		: camellia-192-gcm
+camellia 27		: CAMELLIA-192-CCM		: camellia-192-ccm
+camellia 29		: CAMELLIA-192-CTR		: camellia-192-ctr
+camellia 30		: CAMELLIA-192-CMAC		: camellia-192-cmac
 
 camellia 41		: CAMELLIA-256-ECB		: camellia-256-ecb
 !Cname camellia-256-ofb128
 camellia 43		: CAMELLIA-256-OFB		: camellia-256-ofb
 !Cname camellia-256-cfb128
 camellia 44		: CAMELLIA-256-CFB		: camellia-256-cfb
+camellia 46		: CAMELLIA-256-GCM		: camellia-256-gcm
+camellia 47		: CAMELLIA-256-CCM		: camellia-256-ccm
+camellia 49		: CAMELLIA-256-CTR		: camellia-256-ctr
+camellia 50		: CAMELLIA-256-CMAC		: camellia-256-cmac
 
 # There are no OIDs for these modes...
 
