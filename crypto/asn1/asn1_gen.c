@@ -74,6 +74,8 @@
 #define ASN1_GEN_STR(str,val)   {str, sizeof(str) - 1, val}
 
 #define ASN1_FLAG_EXP_MAX       20
+/* Maximum number of nested sequences */
+#define ASN1_GEN_SEQ_MAX_DEPTH  50
 
 /* Input formats */
 
@@ -110,13 +112,16 @@ typedef struct {
     int exp_count;
 } tag_exp_arg;
 
+static ASN1_TYPE *generate_v3(char *str, X509V3_CTX *cnf, int depth,
+                              int *perr);
 static int bitstr_cb(const char *elem, int len, void *bitstr);
 static int asn1_cb(const char *elem, int len, void *bitstr);
 static int append_exp(tag_exp_arg *arg, int exp_tag, int exp_class,
                       int exp_constructed, int exp_pad, int imp_ok);
 static int parse_tagging(const char *vstart, int vlen, int *ptag,
                          int *pclass);
-static ASN1_TYPE *asn1_multi(int utype, const char *section, X509V3_CTX *cnf);
+static ASN1_TYPE *asn1_multi(int utype, const char *section, X509V3_CTX *cnf,
+                             int depth, int *perr);
 static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype);
 static int asn1_str2tag(const char *tagstr, int len);
 
@@ -132,6 +137,16 @@ ASN1_TYPE *ASN1_generate_nconf(char *str, CONF *nconf)
 }
 
 ASN1_TYPE *ASN1_generate_v3(char *str, X509V3_CTX *cnf)
+{
+    int err = 0;
+    ASN1_TYPE *ret = generate_v3(str, cnf, 0, &err);
+    if (err)
+        ASN1err(ASN1_F_ASN1_GENERATE_V3, err);
+    return ret;
+}
+
+static ASN1_TYPE *generate_v3(char *str, X509V3_CTX *cnf, int depth,
+                              int *perr)
 {
     ASN1_TYPE *ret;
     tag_exp_arg asn1_tags;
@@ -160,11 +175,14 @@ ASN1_TYPE *ASN1_generate_v3(char *str, X509V3_CTX *cnf)
     if ((asn1_tags.utype == V_ASN1_SEQUENCE)
         || (asn1_tags.utype == V_ASN1_SET)) {
         if (!cnf) {
-            ASN1err(ASN1_F_ASN1_GENERATE_V3,
-                    ASN1_R_SEQUENCE_OR_SET_NEEDS_CONFIG);
+            *perr = ASN1_R_SEQUENCE_OR_SET_NEEDS_CONFIG;
             return NULL;
         }
-        ret = asn1_multi(asn1_tags.utype, asn1_tags.str, cnf);
+        if (depth >= ASN1_GEN_SEQ_MAX_DEPTH) {
+            *perr = ASN1_R_ILLEGAL_NESTED_TAGGING;
+            return NULL;
+        }
+        ret = asn1_multi(asn1_tags.utype, asn1_tags.str, cnf, depth, perr);
     } else
         ret = asn1_str2type(asn1_tags.str, asn1_tags.format, asn1_tags.utype);
 
@@ -433,7 +451,8 @@ static int parse_tagging(const char *vstart, int vlen, int *ptag, int *pclass)
 
 /* Handle multiple types: SET and SEQUENCE */
 
-static ASN1_TYPE *asn1_multi(int utype, const char *section, X509V3_CTX *cnf)
+static ASN1_TYPE *asn1_multi(int utype, const char *section, X509V3_CTX *cnf,
+                             int depth, int *perr)
 {
     ASN1_TYPE *ret = NULL;
     STACK_OF(ASN1_TYPE) *sk = NULL;
@@ -452,7 +471,8 @@ static ASN1_TYPE *asn1_multi(int utype, const char *section, X509V3_CTX *cnf)
             goto bad;
         for (i = 0; i < sk_CONF_VALUE_num(sect); i++) {
             ASN1_TYPE *typ =
-                ASN1_generate_v3(sk_CONF_VALUE_value(sect, i)->value, cnf);
+                generate_v3(sk_CONF_VALUE_value(sect, i)->value, cnf,
+                            depth + 1, perr);
             if (!typ)
                 goto bad;
             if (!sk_ASN1_TYPE_push(sk, typ))
