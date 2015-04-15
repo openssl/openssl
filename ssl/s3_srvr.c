@@ -1160,8 +1160,8 @@ int ssl3_get_client_hello(SSL *s)
         goto f_err;
     }
     n2s(p, i);
-    if ((i == 0) && (j != 0)) {
-        /* we need a cipher if we are not resuming a session */
+
+    if (i == 0) {
         al = SSL_AD_ILLEGAL_PARAMETER;
         SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_NO_CIPHERS_SPECIFIED);
         goto f_err;
@@ -1174,14 +1174,13 @@ int ssl3_get_client_hello(SSL *s)
         SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_MISMATCH);
         goto f_err;
     }
-    if ((i > 0) && (ssl_bytes_to_cipher_list(s, p, i, &(ciphers))
-                    == NULL)) {
+    if (ssl_bytes_to_cipher_list(s, p, i, &(ciphers)) == NULL) {
         goto err;
     }
     p += i;
 
     /* If it is a hit, check that the cipher is in the list */
-    if ((s->hit) && (i > 0)) {
+    if (s->hit) {
         j = 0;
         id = s->session->cipher->id;
 
@@ -1417,8 +1416,8 @@ int ssl3_get_client_hello(SSL *s)
             sk_SSL_CIPHER_free(s->session->ciphers);
         s->session->ciphers = ciphers;
         if (ciphers == NULL) {
-            al = SSL_AD_ILLEGAL_PARAMETER;
-            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_NO_CIPHERS_PASSED);
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
             goto f_err;
         }
         ciphers = NULL;
