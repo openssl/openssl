@@ -720,7 +720,7 @@ static int ebcdic_write(BIO *b, const char *in, int inl)
             num = inl;
         wbuf =
             (EBCDIC_OUTBUFF *) OPENSSL_malloc(sizeof(EBCDIC_OUTBUFF) + num);
-        if(!wbuf)
+        if (!wbuf)
             return 0;
         OPENSSL_free(b->ptr);
 
@@ -2916,7 +2916,7 @@ static int generate_session_id(const SSL *ssl, unsigned char *id,
 {
     unsigned int count = 0;
     do {
-        if(RAND_pseudo_bytes(id, *id_len) < 0)
+        if (RAND_pseudo_bytes(id, *id_len) < 0)
             return 0;
         /*
          * Prefix the session_id with the required prefix. NB: If our prefix
