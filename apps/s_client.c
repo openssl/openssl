@@ -550,7 +550,7 @@ static char *ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
     PW_CB_DATA cb_tmp;
     int l;
 
-    if(!pass) {
+    if (!pass) {
         BIO_printf(bio_err, "Malloc failure\n");
         return NULL;
     }
@@ -1304,7 +1304,7 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_SRTP
     if (srtp_profiles != NULL) {
         /* Returns 0 on success!! */
-        if(SSL_CTX_set_tlsext_use_srtp(ctx, srtp_profiles)) {
+        if (SSL_CTX_set_tlsext_use_srtp(ctx, srtp_profiles)) {
             BIO_printf(bio_err, "Error setting SRTP profile\n");
             ERR_print_errors(bio_err);
             goto end;
@@ -1328,7 +1328,7 @@ int MAIN(int argc, char **argv)
             goto end;
         }
         /* Returns 0 on success!! */
-        if(SSL_CTX_set_alpn_protos(ctx, alpn, alpn_len)) {
+        if (SSL_CTX_set_alpn_protos(ctx, alpn, alpn_len)) {
             BIO_printf(bio_err, "Error setting ALPN\n");
             goto end;
         }
@@ -1337,7 +1337,7 @@ int MAIN(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_TLSEXT
     for (i = 0; i < serverinfo_types_count; i++) {
-        if(!SSL_CTX_add_client_custom_ext(ctx,
+        if (!SSL_CTX_add_client_custom_ext(ctx,
                                       serverinfo_types[i],
                                       NULL, NULL, NULL,
                                       serverinfo_cli_parse_cb, NULL)) {
@@ -1405,7 +1405,7 @@ int MAIN(int argc, char **argv)
             ERR_print_errors(bio_err);
             goto end;
         }
-        if(!SSL_set_session(con, sess)) {
+        if (!SSL_set_session(con, sess)) {
             BIO_printf(bio_err, "Can't set session\n");
             ERR_print_errors(bio_err);
             goto end;

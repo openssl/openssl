@@ -227,7 +227,7 @@ int ssl3_accept(SSL *s)
     /* init things to blank */
     s->in_handshake++;
     if (!SSL_in_init(s) || SSL_in_before(s)) {
-        if(!SSL_clear(s))
+        if (!SSL_clear(s))
             return -1;
     }
 
@@ -882,7 +882,7 @@ int ssl3_send_hello_request(SSL *s)
 {
 
     if (s->state == SSL3_ST_SW_HELLO_REQ_A) {
-        if(!ssl_set_handshake_header(s, SSL3_MT_HELLO_REQUEST, 0)) {
+        if (!ssl_set_handshake_header(s, SSL3_MT_HELLO_REQUEST, 0)) {
             SSLerr(SSL_F_SSL3_SEND_HELLO_REQUEST, ERR_R_INTERNAL_ERROR);
             return -1;
         }
@@ -1541,7 +1541,7 @@ int ssl3_send_server_hello(SSL *s)
 #endif
         /* do the header */
         l = (p - d);
-        if(!ssl_set_handshake_header(s, SSL3_MT_SERVER_HELLO, l)) {
+        if (!ssl_set_handshake_header(s, SSL3_MT_SERVER_HELLO, l)) {
             SSLerr(SSL_F_SSL3_SEND_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
             return -1;
         }
@@ -1556,7 +1556,7 @@ int ssl3_send_server_done(SSL *s)
 {
 
     if (s->state == SSL3_ST_SW_SRVR_DONE_A) {
-        if(!ssl_set_handshake_header(s, SSL3_MT_SERVER_DONE, 0)) {
+        if (!ssl_set_handshake_header(s, SSL3_MT_SERVER_DONE, 0)) {
             SSLerr(SSL_F_SSL3_SEND_SERVER_DONE, ERR_R_INTERNAL_ERROR);
             return -1;
         }
@@ -2006,7 +2006,7 @@ int ssl3_send_server_key_exchange(SSL *s)
             }
         }
 
-        if(!ssl_set_handshake_header(s, SSL3_MT_SERVER_KEY_EXCHANGE, n)) {
+        if (!ssl_set_handshake_header(s, SSL3_MT_SERVER_KEY_EXCHANGE, n)) {
             al = SSL_AD_HANDSHAKE_FAILURE;
             SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             goto f_err;
@@ -2088,7 +2088,7 @@ int ssl3_send_certificate_request(SSL *s)
         p = ssl_handshake_start(s) + off;
         s2n(nl, p);
 
-        if(!ssl_set_handshake_header(s, SSL3_MT_CERTIFICATE_REQUEST, n)) {
+        if (!ssl_set_handshake_header(s, SSL3_MT_CERTIFICATE_REQUEST, n)) {
             SSLerr(SSL_F_SSL3_SEND_CERTIFICATE_REQUEST, ERR_R_INTERNAL_ERROR);
             return -1;
         }
@@ -2278,7 +2278,7 @@ int ssl3_get_client_key_exchange(SSL *s)
                                                         sizeof
                                                         (rand_premaster_secret));
         OPENSSL_cleanse(p, sizeof(rand_premaster_secret));
-        if(s->session->master_key_length < 0) {
+        if (s->session->master_key_length < 0) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             goto f_err;
@@ -2375,7 +2375,7 @@ int ssl3_get_client_key_exchange(SSL *s)
                                                         session->master_key,
                                                         p, i);
         OPENSSL_cleanse(p, i);
-        if(s->session->master_key_length < 0) {
+        if (s->session->master_key_length < 0) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             goto f_err;
@@ -2545,7 +2545,7 @@ int ssl3_get_client_key_exchange(SSL *s)
                                                         s->
                                                         session->master_key,
                                                         pms, outl);
-        if(s->session->master_key_length < 0) {
+        if (s->session->master_key_length < 0) {
             al = SSL_INTERNAL_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             goto f_err;
@@ -2698,7 +2698,7 @@ int ssl3_get_client_key_exchange(SSL *s)
                                                         p, i);
 
         OPENSSL_cleanse(p, i);
-        if(s->session->master_key_length < 0) {
+        if (s->session->master_key_length < 0) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             goto f_err;
@@ -2787,7 +2787,7 @@ int ssl3_get_client_key_exchange(SSL *s)
                                                         session->master_key,
                                                         psk_or_pre_ms,
                                                         pre_ms_len);
-        if(s->session->master_key_length < 0) {
+        if (s->session->master_key_length < 0) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             goto psk_err;
@@ -2893,7 +2893,7 @@ int ssl3_get_client_key_exchange(SSL *s)
                                                         s->
                                                         session->master_key,
                                                         premaster_secret, 32);
-        if(s->session->master_key_length < 0) {
+        if (s->session->master_key_length < 0) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             goto f_err;
@@ -3469,7 +3469,7 @@ int ssl3_send_newsession_ticket(SSL *s)
         /* Skip ticket lifetime hint */
         p = ssl_handshake_start(s) + 4;
         s2n(len - 6, p);
-        if(!ssl_set_handshake_header(s, SSL3_MT_NEWSESSION_TICKET, len))
+        if (!ssl_set_handshake_header(s, SSL3_MT_NEWSESSION_TICKET, len))
             goto err;
         s->state = SSL3_ST_SW_SESSION_TICKET_B;
         OPENSSL_free(senc);

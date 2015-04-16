@@ -460,7 +460,7 @@ int ssl_print_curves(BIO *out, SSL *s, int noshared)
     if (ncurves <= 0)
         return 1;
     curves = OPENSSL_malloc(ncurves * sizeof(int));
-    if(!curves) {
+    if (!curves) {
         BIO_puts(out, "Malloc error getting supported curves\n");
         return 0;
     }
@@ -1181,7 +1181,7 @@ static int set_cert_cb(SSL *ssl, void *arg)
 
         print_chain_flags(bio_err, ssl, rv);
         if (rv & CERT_PKEY_VALID) {
-            if(!SSL_use_certificate(ssl, exc->cert)
+            if (!SSL_use_certificate(ssl, exc->cert)
                || !SSL_use_PrivateKey(ssl, exc->key)) {
                 return 0;
             }

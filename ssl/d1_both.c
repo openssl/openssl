@@ -989,7 +989,7 @@ int dtls1_send_change_cipher_spec(SSL *s, int a, int b)
                                      s->d1->handshake_write_seq, 0, 0);
 
         /* buffer the message to handle re-xmits */
-        if(!dtls1_buffer_message(s, 1)) {
+        if (!dtls1_buffer_message(s, 1)) {
             SSLerr(SSL_F_DTLS1_SEND_CHANGE_CIPHER_SPEC, ERR_R_INTERNAL_ERROR);
             return -1;
         }

@@ -381,7 +381,7 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->references = 1;
     s->server = (ctx->method->ssl_accept == ssl_undefined_function) ? 0 : 1;
 
-    if(!SSL_clear(s))
+    if (!SSL_clear(s))
         goto err;
 
     CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL, s, &s->ex_data);
@@ -884,7 +884,7 @@ STACK_OF(X509) *SSL_get_peer_cert_chain(const SSL *s)
 int SSL_copy_session_id(SSL *t, const SSL *f)
 {
     /* Do we need to to SSL locking? */
-    if(!SSL_set_session(t, SSL_get_session(f))) {
+    if (!SSL_set_session(t, SSL_get_session(f))) {
         return 0;
     }
 
@@ -900,7 +900,7 @@ int SSL_copy_session_id(SSL *t, const SSL *f)
     CRYPTO_add(&f->cert->references, 1, CRYPTO_LOCK_SSL_CERT);
     ssl_cert_free(t->cert);
     t->cert = f->cert;
-    if(!SSL_set_session_id_context(t, f->sid_ctx, f->sid_ctx_length)) {
+    if (!SSL_set_session_id_context(t, f->sid_ctx, f->sid_ctx_length)) {
         return 0;
     }
 
@@ -1920,7 +1920,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     if (ret->cert_store == NULL)
         goto err;
 
-    if(!ssl_create_cipher_list(ret->method,
+    if (!ssl_create_cipher_list(ret->method,
                            &ret->cipher_list, &ret->cipher_list_by_id,
                            SSL_DEFAULT_CIPHER_LIST, ret->cert)
        || sk_SSL_CIPHER_num(ret->cipher_list) <= 0) {
@@ -1976,7 +1976,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     ret->psk_server_callback = NULL;
 #endif
 #ifndef OPENSSL_NO_SRP
-    if(!SSL_CTX_SRP_CTX_init(ret))
+    if (!SSL_CTX_SRP_CTX_init(ret))
         goto err;
 #endif
 #ifndef OPENSSL_NO_ENGINE
@@ -2756,7 +2756,7 @@ SSL *SSL_dup(SSL *s)
 
     if (s->session != NULL) {
         /* This copies session-id, SSL_METHOD, sid_ctx, and 'cert' */
-        if(!SSL_copy_session_id(ret, s))
+        if (!SSL_copy_session_id(ret, s))
             goto err;
     } else {
         /*
@@ -2777,7 +2777,7 @@ SSL *SSL_dup(SSL *s)
                 goto err;
         }
 
-        if(!SSL_set_session_id_context(ret, s->sid_ctx, s->sid_ctx_length))
+        if (!SSL_set_session_id_context(ret, s->sid_ctx, s->sid_ctx_length))
             goto err;
     }
 

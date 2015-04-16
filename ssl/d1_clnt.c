@@ -182,7 +182,7 @@ int dtls1_connect(SSL *s)
 
     s->in_handshake++;
     if (!SSL_in_init(s) || SSL_in_before(s)) {
-        if(!SSL_clear(s))
+        if (!SSL_clear(s))
             return -1;
     }
 

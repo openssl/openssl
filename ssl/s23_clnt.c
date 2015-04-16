@@ -158,7 +158,7 @@ int ssl23_connect(SSL *s)
 
     s->in_handshake++;
     if (!SSL_in_init(s) || SSL_in_before(s)) {
-        if(!SSL_clear(s))
+        if (!SSL_clear(s))
             return -1;
     }
 
@@ -573,7 +573,7 @@ static int ssl23_get_server_hello(SSL *s)
         /*
          * put the 7 bytes we have read into the input buffer for SSLv3
          */
-        if(!RECORD_LAYER_set_data(&s->rlayer, buf, n))
+        if (!RECORD_LAYER_set_data(&s->rlayer, buf, n))
             goto err;
 
         s->handshake_func = s->method->ssl_connect;

@@ -292,7 +292,7 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
         else if (ssl->handshake_func == ssl->method->ssl_accept)
             SSL_set_accept_state(ssl);
 
-        if(!SSL_clear(ssl)) {
+        if (!SSL_clear(ssl)) {
             ret = 0;
             break;
         }
@@ -555,7 +555,7 @@ int BIO_ssl_copy_session_id(BIO *t, BIO *f)
     if ((((BIO_SSL *)t->ptr)->ssl == NULL) ||
         (((BIO_SSL *)f->ptr)->ssl == NULL))
         return (0);
-    if(!SSL_copy_session_id(((BIO_SSL *)t->ptr)->ssl, ((BIO_SSL *)f->ptr)->ssl))
+    if (!SSL_copy_session_id(((BIO_SSL *)t->ptr)->ssl, ((BIO_SSL *)f->ptr)->ssl))
         return 0;
     return (1);
 }

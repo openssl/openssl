@@ -260,7 +260,7 @@ static int tls1_PRF(long digest_mask,
         if ((m << TLS1_PRF_DGST_SHIFT) & digest_mask)
             count++;
     }
-    if(!count) {
+    if (!count) {
         /* Should never happen */
         SSLerr(SSL_F_TLS1_PRF, ERR_R_INTERNAL_ERROR);
         goto err;
@@ -801,7 +801,7 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
              * exchange and before certificate verify)
              */
             s->s3->flags |= TLS1_FLAGS_KEEP_HANDSHAKE;
-            if(!ssl3_digest_cached_records(s))
+            if (!ssl3_digest_cached_records(s))
                 return -1;
         }
         hashlen = ssl_handshake_hash(s, hash, sizeof(hash));

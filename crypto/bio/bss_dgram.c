@@ -998,7 +998,7 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
      */
     sockopt_len = (socklen_t) (sizeof(sctp_assoc_t) + 256 * sizeof(uint8_t));
     authchunks = OPENSSL_malloc(sockopt_len);
-    if(!authchunks) {
+    if (!authchunks) {
         BIO_vfree(bio);
         return (NULL);
     }
@@ -1409,7 +1409,7 @@ static int dgram_sctp_write(BIO *b, const char *in, int inl)
     if (data->save_shutdown && !BIO_dgram_sctp_wait_for_dry(b)) {
         char *tmp;
         data->saved_message.bio = b;
-        if(!(tmp = OPENSSL_malloc(inl))) {
+        if (!(tmp = OPENSSL_malloc(inl))) {
             BIOerr(BIO_F_DGRAM_SCTP_WRITE, ERR_R_MALLOC_FAILURE);
             return -1;
         }

@@ -707,7 +707,7 @@ static int ebcdic_write(BIO *b, const char *in, int inl)
             num = inl;
         wbuf =
             (EBCDIC_OUTBUFF *) OPENSSL_malloc(sizeof(EBCDIC_OUTBUFF) + num);
-        if(!wbuf)
+        if (!wbuf)
             return 0;
         OPENSSL_free(b->ptr);
 
@@ -1725,7 +1725,7 @@ int MAIN(int argc, char *argv[])
 #ifndef OPENSSL_NO_SRTP
     if (srtp_profiles != NULL) {
         /* Returns 0 on success!! */
-        if(SSL_CTX_set_tlsext_use_srtp(ctx, srtp_profiles)) {
+        if (SSL_CTX_set_tlsext_use_srtp(ctx, srtp_profiles)) {
             BIO_printf(bio_err, "Error setting SRTP profile\n");
             ERR_print_errors(bio_err);
             goto end;
@@ -1925,7 +1925,7 @@ int MAIN(int argc, char *argv[])
 #endif
 
     SSL_CTX_set_verify(ctx, s_server_verify, verify_callback);
-    if(!SSL_CTX_set_session_id_context(ctx,
+    if (!SSL_CTX_set_session_id_context(ctx,
         (void *)&s_server_session_id_context,
         sizeof s_server_session_id_context)) {
         BIO_printf(bio_err, "error setting session id context\n");
@@ -1940,7 +1940,7 @@ int MAIN(int argc, char *argv[])
 #ifndef OPENSSL_NO_TLSEXT
     if (ctx2) {
         SSL_CTX_set_verify(ctx2, s_server_verify, verify_callback);
-        if(!SSL_CTX_set_session_id_context(ctx2,
+        if (!SSL_CTX_set_session_id_context(ctx2,
                                        (void *)&s_server_session_id_context,
                                        sizeof s_server_session_id_context)) {
             BIO_printf(bio_err, "error setting session id context\n");
@@ -2147,7 +2147,7 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
             goto err;
         }
     }
-    if(!SSL_clear(con)) {
+    if (!SSL_clear(con)) {
         BIO_printf(bio_err, "Error clearing SSL connection\n");
         ret = -1;
         goto err;
@@ -3227,7 +3227,7 @@ static int add_session(SSL *ssl, SSL_SESSION *session)
     unsigned char *p;
 
     sess = OPENSSL_malloc(sizeof(simple_ssl_session));
-    if(!sess) {
+    if (!sess) {
         BIO_printf(bio_err, "Out of memory adding session to external cache\n");
         return 0;
     }
@@ -3238,18 +3238,18 @@ static int add_session(SSL *ssl, SSL_SESSION *session)
     sess->id = BUF_memdup(SSL_SESSION_get_id(session, NULL), sess->idlen);
 
     sess->der = OPENSSL_malloc(sess->derlen);
-    if(!sess->id || !sess->der) {
+    if (!sess->id || !sess->der) {
         BIO_printf(bio_err, "Out of memory adding session to external cache\n");
 
-        if(sess->id)
+        if (sess->id)
             OPENSSL_free(sess->id);
-        if(sess->der)
+        if (sess->der)
             OPENSSL_free(sess->der);
         OPENSSL_free(sess);
         return 0;
     }
     p = sess->der;
-    if(i2d_SSL_SESSION(session, &p) < 0) {
+    if (i2d_SSL_SESSION(session, &p) < 0) {
         BIO_printf(bio_err, "Error encoding session\n");
         return 0;
     }

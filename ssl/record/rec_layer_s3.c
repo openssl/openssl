@@ -170,7 +170,7 @@ void RECORD_LAYER_clear(RECORD_LAYER *rl)
     rl->s = s;
     rl->d = d;
     
-    if(d)
+    if (d)
         DTLS_RECORD_LAYER_clear(rl);
 }
 
@@ -196,7 +196,7 @@ int RECORD_LAYER_write_pending(RECORD_LAYER *rl)
 int RECORD_LAYER_set_data(RECORD_LAYER *rl, const unsigned char *buf, int len)
 {
     rl->packet_length = len;
-    if(len != 0) {
+    if (len != 0) {
         rl->rstate = SSL_ST_READ_HEADER;
         if (!SSL3_BUFFER_is_initialised(&rl->rbuf))
             if (!ssl3_setup_read_buffer(rl->s))
@@ -531,7 +531,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
                 packlen *= 4;
 
             wb->buf = OPENSSL_malloc(packlen);
-            if(!wb->buf) {
+            if (!wb->buf) {
                 SSLerr(SSL_F_SSL3_WRITE_BYTES, ERR_R_MALLOC_FAILURE);
                 return -1;
             }
@@ -1130,7 +1130,7 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 #ifndef OPENSSL_NO_HEARTBEATS
         else if (SSL3_RECORD_get_type(rr)== TLS1_RT_HEARTBEAT) {
             /* We can ignore 0 return values */
-            if(tls1_process_heartbeat(s, SSL3_RECORD_get_data(rr),
+            if (tls1_process_heartbeat(s, SSL3_RECORD_get_data(rr),
                     SSL3_RECORD_get_length(rr)) < 0) {
                 return -1;
             }

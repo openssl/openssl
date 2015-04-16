@@ -1606,7 +1606,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
         int el;
 
         /* Returns 0 on success!! */
-        if(ssl_add_serverhello_use_srtp_ext(s, 0, &el, 0)) {
+        if (ssl_add_serverhello_use_srtp_ext(s, 0, &el, 0)) {
             SSLerr(SSL_F_SSL_ADD_SERVERHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return NULL;
         }
