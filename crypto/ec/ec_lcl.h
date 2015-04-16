@@ -196,6 +196,9 @@ struct ec_method_st {
     int (*field_decode) (const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
                          BN_CTX *);
     int (*field_set_to_one) (const EC_GROUP *, BIGNUM *r, BN_CTX *);
+
+    /* Inverse modulo order */
+    int (*field_inverse_mod_ord) (const EC_GROUP *, BIGNUM *r, const BIGNUM *x, BN_CTX *ctx);
 } /* EC_METHOD */ ;
 
 typedef struct ec_extra_data_st {

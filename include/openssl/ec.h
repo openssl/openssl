@@ -248,6 +248,17 @@ const EC_POINT *EC_GROUP_get0_generator(const EC_GROUP *group);
 */
 BN_MONT_CTX *EC_GROUP_get_mont_data(const EC_GROUP *group);
 
+/** Perfroms inversion modulo order of a EC_GROUP
+ *  \param group  EC_GROUP object
+ *  \param res    BIGNUM to which the result is copied
+ *  \param x      BIGNUM of which inverse to compute
+ *  \param ctx    BN_CTX object
+ *  \param constantTime int   if 0 - not constant time
+ *  \return 1 on success and 0 if an error occurred
+*/
+int EC_GROUP_do_inverse_ord(const EC_GROUP *group, BIGNUM *res,
+                            const BIGNUM *x, BN_CTX *ctx, int constantTime);
+
 /** Gets the order of a EC_GROUP
  *  \param  group  EC_GROUP object
  *  \param  order  BIGNUM to which the order is copied
@@ -1167,6 +1178,7 @@ void ERR_load_EC_strings(void);
 # define EC_F_EC_GROUP_SET_CURVE_GFP                      109
 # define EC_F_EC_GROUP_SET_EXTRA_DATA                     110
 # define EC_F_EC_GROUP_SET_GENERATOR                      111
+# define EC_F_EC_GROUP_ORD_INVERSE                        245
 # define EC_F_EC_KEY_CHECK_KEY                            177
 # define EC_F_EC_KEY_COPY                                 178
 # define EC_F_EC_KEY_GENERATE_KEY                         179
@@ -1212,6 +1224,7 @@ void ERR_load_EC_strings(void);
 # define EC_F_ECP_NISTZ256_WINDOWED_MUL                   242
 # define EC_F_ECP_NISTZ256_MULT_PRECOMPUTE                243
 # define EC_F_ECP_NISTZ256_PRE_COMP_NEW                   244
+# define EC_F_ECP_NISTZ256_INV_ORD                        246
 # define EC_F_O2I_ECPUBLICKEY                             152
 # define EC_F_OLD_EC_PRIV_DECODE                          222
 # define EC_F_PKEY_EC_CTRL                                197

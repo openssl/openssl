@@ -1,6 +1,13 @@
 /******************************************************************************
  *                                                                            *
- * Copyright 2014 Intel Corporation                                           *
+ * Copyright (c) 2015 Intel Corporation                                       *
+ * Copyright (c) 2015 CloudFlare, Inc.                                        *
+ * All rights reserved.                                                       *
+ *                                                                            *
+ * This software is made available to you under your choice of the            *
+ * Apache V.2.0 and/or BSD license below:                                     *
+ *                                                                            *
+ ******************************************************************************
  *                                                                            *
  * Licensed under the Apache License, Version 2.0 (the "License");            *
  * you may not use this file except in compliance with the License.           *
@@ -16,10 +23,41 @@
  *                                                                            *
  ******************************************************************************
  *                                                                            *
+ *  Redistribution and use in source and binary forms, with or without        *
+ *  modification, are permitted provided that the following conditions are    *
+ *  met:                                                                      *
+ *                                                                            *
+ *  1. Redistributions of source code must retain the above copyright         *
+ *     notice, this list of conditions and the following disclaimer.          *
+ *                                                                            *
+ *  2. Redistributions in binary form must reproduce the above copyright      *
+ *     notice, this list of conditions and the following disclaimer in the    *
+ *     documentation and/or other materials provided with the                 *
+ *     distribution.                                                          *
+ *                                                                            *
+ *  3. Neither the name of the copyright holders nor the names of its         *
+ *     contributors may be used to endorse or promote products derived from   *
+ *     this software without specific prior written permission.               *
+ *                                                                            *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS       *
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED *
+ *  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR*
+ *  PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR         *
+ *  CONTRIBUTORS  BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,    *
+ *  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,       *
+ *  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR        *
+ *  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF    *
+ *  LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING      *
+ *  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS        *
+ *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.              *
+ *                                                                            *
+ ******************************************************************************
+ *                                                                            *
  * Developers and authors:                                                    *
- * Shay Gueron (1, 2), and Vlad Krasnov (1)                                   *
+ * Shay Gueron (1, 2), and Vlad Krasnov (1, 3)                                *
  * (1) Intel Corporation, Israel Development Center                           *
  * (2) University of Haifa                                                    *
+ * (3) CloudFlare, Inc.                                                       *
  * Reference:                                                                 *
  * S.Gueron and V.Krasnov, "Fast Prime Field Elliptic Curve Cryptography with *
  *                          256 Bit Primes"                                   *
@@ -102,6 +140,13 @@ void ecp_nistz256_neg(BN_ULONG res[P256_LIMBS], const BN_ULONG a[P256_LIMBS]);
 void ecp_nistz256_mul_mont(BN_ULONG res[P256_LIMBS],
                            const BN_ULONG a[P256_LIMBS],
                            const BN_ULONG b[P256_LIMBS]);
+/* Montgomery mul modulo Order(P): res = a*b*2^-256 mod Order(P) */
+void ecp_nistz256_ord_mul_mont(BN_ULONG res[P256_LIMBS],
+                           const BN_ULONG a[P256_LIMBS],
+                           const BN_ULONG b[P256_LIMBS]);
+void ecp_nistz256_ord_sqr_mont(BN_ULONG res[P256_LIMBS],
+                           const BN_ULONG a[P256_LIMBS],
+                           int rep);
 /* Montgomery sqr: res = a*a*2^-256 mod P */
 void ecp_nistz256_sqr_mont(BN_ULONG res[P256_LIMBS],
                            const BN_ULONG a[P256_LIMBS]);
@@ -1357,9 +1402,109 @@ err:
     return ret;
 }
 
+#if defined(__x86_64) || defined(__x86_64__)
+__owur int ecp_nistz256_inv_mod_ord(const EC_GROUP *group,
+                                    BIGNUM *r,
+                                    const BIGNUM *x,
+                                    BN_CTX *ctx)
+{
+    /* RR = 2^512 mod ord(p256) */
+    static const BN_ULONG RR[P256_LIMBS] = {TOBN(0x83244c95,0xbe79eea2),
+                                            TOBN(0x4699799c,0x49bd6fa6),
+                                            TOBN(0x2845b239,0x2b6bec59),
+                                            TOBN(0x66e12d94,0xf3d95620)};
+    /* The constant 1 (unlike ONE that is one in Montgomery representation) */
+    static const BN_ULONG CONST_ONE[P256_LIMBS] = {TOBN(0,1),
+                                                   TOBN(0,0),
+                                                   TOBN(0,0),
+                                                   TOBN(0,0)};
+    /* expLo - the low 128bit of the exponent we use (ord(p256) - 2),
+       split into 4bit windows */
+    static const unsigned char expLo[32] = {0xb,0xc,0xe,0x6,
+                                            0xf,0xa,0xa,0xd,
+                                            0xa,0x7,0x1,0x7,
+                                            0x9,0xe,0x8,0x4,
+                                            0xf,0x3,0xb,0x9,
+                                            0xc,0xa,0xc,0x2,
+                                            0xf,0xc,0x6,0x3,
+                                            0x2,0x5,0x4,0xf};
+
+    BN_ULONG table[P256_LIMBS*15];
+    BN_ULONG out[P256_LIMBS], t[P256_LIMBS];
+    int i, ret = 0;
+    BIGNUM *tmp;
+
+    if ((BN_num_bits(x) > 256)
+        || BN_is_negative(x)) {
+        if ((tmp = BN_CTX_get(ctx)) == NULL) {
+            ECerr(EC_F_ECP_NISTZ256_INV_ORD, ERR_R_BN_LIB);
+            goto err;
+        }
+        if (!BN_nnmod(tmp, x, group->order, ctx)) {
+            ECerr(EC_F_ECP_NISTZ256_INV_ORD, ERR_R_BN_LIB);
+            goto err;
+        }
+        x = tmp;
+    }
+    /* We don't use entry 0 in the table, so we address with -1 offset */
+    ecp_nistz256_bignum_to_field_elem(out, x);
+    ecp_nistz256_ord_mul_mont(&table[0*P256_LIMBS], out, RR);
+    for ( i = 2; i < 16; i+=2 ) {
+        ecp_nistz256_ord_sqr_mont(&table[(i-1)*P256_LIMBS],
+                                  &table[(i/2-1)*P256_LIMBS], 1);
+        ecp_nistz256_ord_mul_mont(&table[i*P256_LIMBS],
+                                  &table[(i-1)*P256_LIMBS],
+                                  &table[0*P256_LIMBS]);
+    }
+    /* The top 128bit of the exponent are highly redundant,
+       so we perform an optimized flow */
+    /* f */
+    memcpy(out, &table[(15-1)*P256_LIMBS], sizeof(out));
+    /* f0 */
+    ecp_nistz256_ord_sqr_mont(out, out, 4);
+    /* ff */
+    ecp_nistz256_ord_mul_mont(out, out, &table[(15-1)*P256_LIMBS]);
+    memcpy(t, out, sizeof(t));
+    /* ff00 */
+    ecp_nistz256_ord_sqr_mont(out, out, 8);
+    /* ffff */
+    ecp_nistz256_ord_mul_mont(out, out, t);
+    memcpy(t, out, sizeof(t));
+    /* ffff0000 */
+    ecp_nistz256_ord_sqr_mont(out, out, 16);
+    /* ffffffff */
+    ecp_nistz256_ord_mul_mont(out, out, t);
+    memcpy(t, out, sizeof(t));
+    /* ffffffff0000000000000000 */
+    ecp_nistz256_ord_sqr_mont(out, out, 64);
+    /* ffffffff00000000ffffffff */
+    ecp_nistz256_ord_mul_mont(out, out, t);
+    /* ffffffff00000000ffffffff00000000 */
+    ecp_nistz256_ord_sqr_mont(out, out, 32);
+    /* ffffffff00000000ffffffffffffffff */
+    ecp_nistz256_ord_mul_mont(out, out, t);
+
+    /* The bottom 128 bit of the exponent are easier done with a table */
+    for( i = 0; i < 32; i++ ) {
+        ecp_nistz256_ord_sqr_mont(out, out, 4);
+        /* The exponent is public, no need in constant time access */
+        ecp_nistz256_ord_mul_mont(out, out, &table[(expLo[i]-1)*P256_LIMBS]);
+    }
+    ecp_nistz256_ord_mul_mont(out, out, CONST_ONE);
+
+    if (!bn_set_words(r, out, P256_LIMBS)) {
+        ECerr(EC_F_ECP_NISTZ256_INV_ORD, ERR_R_BN_LIB);
+        goto err;
+    }
+    ret = 1;
+err:
+    return ret;
+}
+#endif
+
 __owur static int ecp_nistz256_get_affine(const EC_GROUP *group,
-                                          const EC_POINT *point,
-                                          BIGNUM *x, BIGNUM *y, BN_CTX *ctx)
+                                   const EC_POINT *point,
+                                   BIGNUM *x, BIGNUM *y, BN_CTX *ctx)
 {
     BN_ULONG z_inv2[P256_LIMBS];
     BN_ULONG z_inv3[P256_LIMBS];
@@ -1519,7 +1664,12 @@ const EC_METHOD *EC_GFp_nistz256_method(void)
         0,                                          /* field_div */
         ec_GFp_mont_field_encode,
         ec_GFp_mont_field_decode,
-        ec_GFp_mont_field_set_to_one
+        ec_GFp_mont_field_set_to_one,
+#if defined(__x86_64) || defined(__x86_64__)
+        ecp_nistz256_inv_mod_ord
+#else
+	0
+#endif
     };
 
     return &ret;

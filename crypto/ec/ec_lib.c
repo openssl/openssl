@@ -332,6 +332,47 @@ int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx)
     return !BN_is_zero(order);
 }
 
+int EC_GROUP_do_inverse_ord(const EC_GROUP *group,
+                            BIGNUM *res,
+                            const BIGNUM *x,
+                            BN_CTX *ctx,
+                            int constantTime)
+{
+    int ret = 0;
+    BN_CTX_start(ctx);
+    if (group->meth->field_inverse_mod_ord != NULL) {
+        ret = group->meth->field_inverse_mod_ord(group, res, x, ctx);
+    } else if (constantTime) {
+        BIGNUM *tmp;
+        if ((tmp = BN_CTX_get(ctx)) == NULL) {
+            ECDSAerr(EC_F_EC_GROUP_ORD_INVERSE, ERR_R_BN_LIB);
+            goto err;
+        }
+        if (!BN_set_word(tmp, 2)) {
+            ECDSAerr(EC_F_EC_GROUP_ORD_INVERSE, ERR_R_BN_LIB);
+            goto err;
+        }
+        if (!BN_mod_sub(tmp, group->order, tmp, group->order, ctx)) {
+            ECDSAerr(EC_F_EC_GROUP_ORD_INVERSE, ERR_R_BN_LIB);
+            goto err;
+        }
+        BN_set_flags(tmp, BN_FLG_CONSTTIME);
+        if (!BN_mod_exp_mont_consttime
+            (res, x, tmp, group->order, ctx, EC_GROUP_get_mont_data(group))) {
+            ECDSAerr(EC_F_EC_GROUP_ORD_INVERSE, ERR_R_BN_LIB);
+            goto err;
+        }
+        ret = 1;
+    } else {
+        if (BN_mod_inverse(res, x, group->order, ctx)) {
+            ret = 1;
+        }
+    }
+err:
+    BN_CTX_end(ctx);
+    return ret;
+}
+
 int EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor,
                           BN_CTX *ctx)
 {
