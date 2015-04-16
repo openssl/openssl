@@ -58,7 +58,7 @@ DSA_SIG *gost_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
     BIGNUM *md = hashsum2bn(dgst);
     /* check if H(M) mod q is zero */
     BN_CTX *ctx = BN_CTX_new();
-    if(!ctx) {
+    if (!ctx) {
         GOSTerr(GOST_F_GOST_DO_SIGN, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -71,7 +71,7 @@ DSA_SIG *gost_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
     tmp = BN_CTX_get(ctx);
     k = BN_CTX_get(ctx);
     tmp2 = BN_CTX_get(ctx);
-    if(!tmp || !k || !tmp2) {
+    if (!tmp || !k || !tmp2) {
         GOSTerr(GOST_F_GOST_DO_SIGN, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -89,7 +89,7 @@ DSA_SIG *gost_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
             BN_mod_exp(tmp, dsa->g, k, dsa->p, ctx);
             if (!(newsig->r)) {
                 newsig->r = BN_new();
-                if(!newsig->r) {
+                if (!newsig->r) {
                     GOSTerr(GOST_F_GOST_DO_SIGN, ERR_R_MALLOC_FAILURE);
                     goto err;
                 }
@@ -102,7 +102,7 @@ DSA_SIG *gost_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
         BN_mod_mul(tmp2, k, md, dsa->q, ctx);
         if (!newsig->s) {
             newsig->s = BN_new();
-            if(!newsig->s) {
+            if (!newsig->s) {
                 GOSTerr(GOST_F_GOST_DO_SIGN, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
@@ -114,11 +114,11 @@ DSA_SIG *gost_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
     ret = newsig;
  err:
     BN_free(md);
-    if(ctx) {
+    if (ctx) {
         BN_CTX_end(ctx);
         BN_CTX_free(ctx);
     }
-    if(!ret && newsig) {
+    if (!ret && newsig) {
         DSA_SIG_free(newsig);
     }
     return ret;
@@ -169,7 +169,7 @@ int gost_do_verify(const unsigned char *dgst, int dgst_len,
     BIGNUM *tmp2 = NULL, *tmp3 = NULL;
     int ok = 0;
     BN_CTX *ctx = BN_CTX_new();
-    if(!ctx) {
+    if (!ctx) {
         GOSTerr(GOST_F_GOST_DO_VERIFY, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -189,7 +189,7 @@ int gost_do_verify(const unsigned char *dgst, int dgst_len,
     tmp2 = BN_CTX_get(ctx);
     tmp3 = BN_CTX_get(ctx);
     u = BN_CTX_get(ctx);
-    if(!tmp || !v || !q2 || !z1 || !z2 || !tmp2 || !tmp3 || !u) {
+    if (!tmp || !v || !q2 || !z1 || !z2 || !tmp2 || !tmp3 || !u) {
         GOSTerr(GOST_F_GOST_DO_VERIFY, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -214,8 +214,9 @@ int gost_do_verify(const unsigned char *dgst, int dgst_len,
         GOSTerr(GOST_F_GOST_DO_VERIFY, GOST_R_SIGNATURE_MISMATCH);
     }
 err:
-    if(md) BN_free(md);
-    if(ctx) {
+    if (md)
+        BN_free(md);
+    if (ctx) {
         BN_CTX_end(ctx);
         BN_CTX_free(ctx);
     }
@@ -235,13 +236,13 @@ int gost94_compute_public(DSA *dsa)
         return 0;
     }
     ctx = BN_CTX_new();
-    if(!ctx) {
+    if (!ctx) {
         GOSTerr(GOST_F_GOST94_COMPUTE_PUBLIC, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
     dsa->pub_key = BN_new();
-    if(!dsa->pub_key) {
+    if (!dsa->pub_key) {
         GOSTerr(GOST_F_GOST94_COMPUTE_PUBLIC, ERR_R_MALLOC_FAILURE);
         BN_CTX_free(ctx);
         return 0;
@@ -293,7 +294,7 @@ int fill_GOST94_params(DSA *dsa, int nid)
 int gost_sign_keygen(DSA *dsa)
 {
     dsa->priv_key = BN_new();
-    if(!dsa->priv_key) {
+    if (!dsa->priv_key) {
         GOSTerr(GOST_F_GOST_SIGN_KEYGEN, ERR_R_MALLOC_FAILURE);
         return 0;
     }

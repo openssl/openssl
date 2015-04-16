@@ -115,7 +115,7 @@ static int decode_gost_algor_params(EVP_PKEY *pkey, X509_ALGOR *palg)
     }
     param_nid = OBJ_obj2nid(gkp->key_params);
     GOST_KEY_PARAMS_free(gkp);
-    if(!EVP_PKEY_set_type(pkey, pkey_nid)) {
+    if (!EVP_PKEY_set_type(pkey, pkey_nid)) {
         GOSTerr(GOST_F_DECODE_GOST_ALGOR_PARAMS, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -549,16 +549,16 @@ static int param_copy_gost01(EVP_PKEY *to, const EVP_PKEY *from)
     }
     if (!eto) {
         eto = EC_KEY_new();
-        if(!eto) {
+        if (!eto) {
             GOSTerr(GOST_F_PARAM_COPY_GOST01, ERR_R_MALLOC_FAILURE);
             return 0;
         }
-        if(!EVP_PKEY_assign(to, EVP_PKEY_base_id(from), eto)) {
+        if (!EVP_PKEY_assign(to, EVP_PKEY_base_id(from), eto)) {
             GOSTerr(GOST_F_PARAM_COPY_GOST01, ERR_R_INTERNAL_ERROR);
             return 0;
         }
     }
-    if(!EC_KEY_set_group(eto, EC_KEY_get0_group(efrom))) {
+    if (!EC_KEY_set_group(eto, EC_KEY_get0_group(efrom))) {
         GOSTerr(GOST_F_PARAM_COPY_GOST01, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -756,14 +756,16 @@ static int pub_encode_gost01(X509_PUBKEY *pub, const EVP_PKEY *pk)
     }
     X = BN_new();
     Y = BN_new();
-    if(!X || !Y) {
+    if (!X || !Y) {
         GOSTerr(GOST_F_PUB_ENCODE_GOST01, ERR_R_MALLOC_FAILURE);
-        if(X) BN_free(X);
-        if(Y) BN_free(Y);
+        if (X)
+            BN_free(X);
+        if (Y)
+            BN_free(Y);
         BN_free(order);
         return 0;
     }
-    if(!EC_POINT_get_affine_coordinates_GFp(EC_KEY_get0_group(ec),
+    if (!EC_POINT_get_affine_coordinates_GFp(EC_KEY_get0_group(ec),
                                         pub_key, X, Y, NULL)) {
         GOSTerr(GOST_F_PUB_ENCODE_GOST01, ERR_R_INTERNAL_ERROR);
         BN_free(X);

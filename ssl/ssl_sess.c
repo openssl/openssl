@@ -518,7 +518,7 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
                  * The following should not return 1, otherwise, things are
                  * very strange
                  */
-                if(SSL_CTX_add_session(s->session_ctx, ret))
+                if (SSL_CTX_add_session(s->session_ctx, ret))
                     goto err;
             }
         }
@@ -861,7 +861,7 @@ void SSL_SESSION_get0_ticket(const SSL_SESSION *s, unsigned char **tick,
                             size_t *len)
 {
     *len = s->tlsext_ticklen;
-    if(tick != NULL)
+    if (tick != NULL)
         *tick = s->tlsext_tick;
 }
 

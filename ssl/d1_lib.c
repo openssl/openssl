@@ -124,7 +124,7 @@ int dtls1_new(SSL *s)
 {
     DTLS1_STATE *d1;
 
-    if(!DTLS_RECORD_LAYER_new(&s->rlayer)) {
+    if (!DTLS_RECORD_LAYER_new(&s->rlayer)) {
         return 0;
     }
     
@@ -502,7 +502,7 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
     int ret;
 
     /* Ensure there is no state left over from a previous invocation */
-    if(!SSL_clear(s))
+    if (!SSL_clear(s))
         return -1;
 
     SSL_set_options(s, SSL_OP_COOKIE_EXCHANGE);
@@ -524,7 +524,7 @@ static int dtls1_set_handshake_header(SSL *s, int htype, unsigned long len)
     s->init_off = 0;
     /* Buffer the message to handle re-xmits */
 
-    if(!dtls1_buffer_message(s, 0))
+    if (!dtls1_buffer_message(s, 0))
         return 0;
 
     return 1;

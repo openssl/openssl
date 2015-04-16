@@ -638,7 +638,7 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 #ifndef OPENSSL_NO_HEARTBEATS
         else if (SSL3_RECORD_get_type(rr) == TLS1_RT_HEARTBEAT) {
             /* We allow a 0 return */
-            if(dtls1_process_heartbeat(s, SSL3_RECORD_get_data(rr),
+            if (dtls1_process_heartbeat(s, SSL3_RECORD_get_data(rr),
                     SSL3_RECORD_get_length(rr)) < 0) {
                 return -1;
             }

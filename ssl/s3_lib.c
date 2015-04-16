@@ -3104,7 +3104,7 @@ int ssl3_new(SSL *s)
     s->s3 = s3;
     
 #ifndef OPENSSL_NO_SRP
-    if(!SSL_SRP_CTX_init(s))
+    if (!SSL_SRP_CTX_init(s))
           goto err;
 #endif
     s->method->ssl_clear(s);

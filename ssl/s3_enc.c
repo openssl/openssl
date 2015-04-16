@@ -253,7 +253,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
             EVP_CIPHER_CTX_init(s->enc_read_ctx);
         dd = s->enc_read_ctx;
 
-        if(!ssl_replace_hash(&s->read_hash, m)) {
+        if (!ssl_replace_hash(&s->read_hash, m)) {
                 SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
                 goto err2;
         }
@@ -270,7 +270,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
                        SSL_R_COMPRESSION_LIBRARY_ERROR);
                 goto err2;
             }
-            if(!RECORD_LAYER_setup_comp_buffer(&s->rlayer))
+            if (!RECORD_LAYER_setup_comp_buffer(&s->rlayer))
                 goto err;
         }
 #endif
@@ -288,7 +288,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
              */
             EVP_CIPHER_CTX_init(s->enc_write_ctx);
         dd = s->enc_write_ctx;
-        if(!ssl_replace_hash(&s->write_hash, m)) {
+        if (!ssl_replace_hash(&s->write_hash, m)) {
                 SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
                 goto err2;
         }

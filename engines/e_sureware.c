@@ -710,7 +710,7 @@ static EVP_PKEY *sureware_load_public(ENGINE *e, const char *key_id,
         /* set public big nums */
         rsatmp->e = BN_new();
         rsatmp->n = BN_new();
-        if(!rsatmp->e || !rsatmp->n)
+        if (!rsatmp->e || !rsatmp->n)
             goto err;
         bn_expand2(rsatmp->e, el / sizeof(BN_ULONG));
         bn_expand2(rsatmp->n, el / sizeof(BN_ULONG));
@@ -752,7 +752,7 @@ static EVP_PKEY *sureware_load_public(ENGINE *e, const char *key_id,
         dsatmp->p = BN_new();
         dsatmp->q = BN_new();
         dsatmp->g = BN_new();
-        if(!dsatmp->pub_key || !dsatmp->p || !dsatmp->q || !dsatmp->g)
+        if (!dsatmp->pub_key || !dsatmp->p || !dsatmp->q || !dsatmp->g)
             goto err;
         bn_expand2(dsatmp->pub_key, el / sizeof(BN_ULONG));
         bn_expand2(dsatmp->p, el / sizeof(BN_ULONG));
@@ -1018,7 +1018,7 @@ static DSA_SIG *surewarehk_dsa_do_sign(const unsigned char *from, int flen,
         }
         psign->r = BN_new();
         psign->s = BN_new();
-        if(!psign->r || !psign->s)
+        if (!psign->r || !psign->s)
             goto err;
         bn_expand2(psign->r, 20 / sizeof(BN_ULONG));
         bn_expand2(psign->s, 20 / sizeof(BN_ULONG));

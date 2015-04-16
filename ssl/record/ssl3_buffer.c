@@ -114,7 +114,7 @@
 
 void SSL3_BUFFER_set_data(SSL3_BUFFER *b, const unsigned char *d, int n)
 {
-    if(d != NULL)
+    if (d != NULL)
         memcpy(b->buf, d, n);
     b->left = n;
     b->offset = 0;
