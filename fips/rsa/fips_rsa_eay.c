@@ -158,7 +158,7 @@ const RSA_METHOD *RSA_PKCS1_SSLeay(void)
  * RSA_FLAG_CACHE_PRIVATE, goto err);
  */
 # define MONT_HELPER(rsa, ctx, m, pre_cond, err_instr) \
-        if((pre_cond) && ((rsa)->_method_mod_##m == NULL) && \
+        if ((pre_cond) && ((rsa)->_method_mod_##m == NULL) && \
                         !BN_MONT_CTX_set_locked(&((rsa)->_method_mod_##m), \
                                 CRYPTO_LOCK_RSA, \
                                 (rsa)->m, (ctx))) \
