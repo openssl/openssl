@@ -3849,7 +3849,7 @@ int tls1_process_heartbeat(SSL *s)
         memcpy(bp, pl, payload);
         bp += payload;
         /* Random padding */
-        if(RAND_pseudo_bytes(bp, padding) < 0) {
+        if (RAND_pseudo_bytes(bp, padding) < 0) {
             OPENSSL_free(buffer);
             return -1;
         }
@@ -3935,13 +3935,13 @@ int tls1_heartbeat(SSL *s)
     /* Sequence number */
     s2n(s->tlsext_hb_seq, p);
     /* 16 random bytes */
-    if(RAND_pseudo_bytes(p, 16) < 0) {
+    if (RAND_pseudo_bytes(p, 16) < 0) {
         SSLerr(SSL_F_TLS1_HEARTBEAT, ERR_R_INTERNAL_ERROR);
         goto err;
     }
     p += 16;
     /* Random padding */
-    if(RAND_pseudo_bytes(p, padding) < 0) {
+    if (RAND_pseudo_bytes(p, padding) < 0) {
         SSLerr(SSL_F_TLS1_HEARTBEAT, ERR_R_INTERNAL_ERROR);
         goto err;
     }

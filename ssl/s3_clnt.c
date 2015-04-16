@@ -2847,7 +2847,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 
             EVP_PKEY_encrypt_init(pkey_ctx);
             /* Generate session key */
-            if(RAND_bytes(premaster_secret, 32) <= 0) {
+            if (RAND_bytes(premaster_secret, 32) <= 0) {
                 EVP_PKEY_CTX_free(pkey_ctx);
                 goto err;
             }

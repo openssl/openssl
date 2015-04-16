@@ -248,7 +248,7 @@ int EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
 
     /* We parse the input data */
     for (i = 0; i < inl; i++) {
-        /* If the current line is > 80 characters, scream alot */
+        /* If the current line is > 80 characters, scream a lot */
         if (ln >= 80) {
             rv = -1;
             goto end;

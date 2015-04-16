@@ -447,7 +447,7 @@ static int des_ede3_wrap(EVP_CIPHER_CTX *ctx, unsigned char *out,
     memcpy(out + inl + 8, sha1tmp, 8);
     OPENSSL_cleanse(sha1tmp, SHA_DIGEST_LENGTH);
     /* Generate random IV */
-    if(RAND_bytes(ctx->iv, 8) <= 0)
+    if (RAND_bytes(ctx->iv, 8) <= 0)
         return -1;
     memcpy(out, ctx->iv, 8);
     /* Encrypt everything after IV in place */

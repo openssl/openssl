@@ -560,7 +560,7 @@ static char *MS_CALLBACK ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
     PW_CB_DATA cb_tmp;
     int l;
 
-    if(!pass) {
+    if (!pass) {
         BIO_printf(bio_err, "Malloc failure\n");
         return NULL;
     }

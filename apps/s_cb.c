@@ -456,7 +456,7 @@ int ssl_print_curves(BIO *out, SSL *s, int noshared)
     if (ncurves <= 0)
         return 1;
     curves = OPENSSL_malloc(ncurves * sizeof(int));
-    if(!curves) {
+    if (!curves) {
         BIO_puts(out, "Malloc error getting supported curves\n");
         return 0;
     }
