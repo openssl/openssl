@@ -1854,8 +1854,8 @@ __owur CERT *ssl_cert_dup(CERT *cert);
 void ssl_cert_clear_certs(CERT *c);
 void ssl_cert_free(CERT *c);
 __owur int ssl_get_new_session(SSL *s, int session);
-__owur int ssl_get_prev_session(SSL *s, unsigned char *session, int len,
-                         const unsigned char *limit);
+__owur int ssl_get_prev_session(SSL *s, PACKET *pkt, unsigned char *session,
+                                int len);
 __owur SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket);
 __owur int ssl_cipher_id_cmp(const SSL_CIPHER *a, const SSL_CIPHER *b);
 DECLARE_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER, ssl_cipher_id);
@@ -2088,8 +2088,7 @@ __owur unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
                                           unsigned char *limit, int *al);
 __owur unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
                                           unsigned char *limit, int *al);
-__owur int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **data,
-                                 unsigned char *d, int n);
+__owur int ssl_parse_clienthello_tlsext(SSL *s, PACKET *pkt);
 __owur int tls1_set_server_sigalgs(SSL *s);
 __owur int ssl_check_clienthello_tlsext_late(SSL *s);
 __owur int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **data,
@@ -2104,8 +2103,8 @@ __owur int tls1_process_heartbeat(SSL *s, unsigned char *p, unsigned int length)
 __owur int dtls1_process_heartbeat(SSL *s, unsigned char *p, unsigned int length);
 #  endif
 
-__owur int tls1_process_ticket(SSL *s, unsigned char *session_id, int len,
-                        const unsigned char *limit, SSL_SESSION **ret);
+__owur int tls1_process_ticket(SSL *s, PACKET *pkt,  unsigned char *session_id,
+                        int len, SSL_SESSION **ret);
 
 __owur int tls12_get_sigandhash(unsigned char *p, const EVP_PKEY *pk,
                          const EVP_MD *md);
@@ -2134,8 +2133,7 @@ __owur int ssl_parse_serverhello_renegotiate_ext(SSL *s, unsigned char *d, int l
                                           int *al);
 __owur int ssl_add_clienthello_renegotiate_ext(SSL *s, unsigned char *p, int *len,
                                         int maxlen);
-__owur int ssl_parse_clienthello_renegotiate_ext(SSL *s, unsigned char *d, int len,
-                                          int *al);
+__owur int ssl_parse_clienthello_renegotiate_ext(SSL *s, PACKET *pkt, int *al);
 __owur long ssl_get_algorithm2(SSL *s);
 __owur size_t tls12_copy_sigalgs(SSL *s, unsigned char *out,
                           const unsigned char *psig, size_t psiglen);
@@ -2149,8 +2147,7 @@ __owur int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c, int op);
 
 __owur int ssl_add_clienthello_use_srtp_ext(SSL *s, unsigned char *p, int *len,
                                      int maxlen);
-__owur int ssl_parse_clienthello_use_srtp_ext(SSL *s, unsigned char *d, int len,
-                                       int *al);
+__owur int ssl_parse_clienthello_use_srtp_ext(SSL *s, PACKET *pkt, int *al);
 __owur int ssl_add_serverhello_use_srtp_ext(SSL *s, unsigned char *p, int *len,
                                      int maxlen);
 __owur int ssl_parse_serverhello_use_srtp_ext(SSL *s, unsigned char *d, int len,
