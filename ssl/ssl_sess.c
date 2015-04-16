@@ -547,8 +547,8 @@ int ssl_get_new_session(SSL *s, int session)
  *   - Both for new and resumed sessions, s->tlsext_ticket_expected is set to 1
  *     if the server should issue a new session ticket (to 0 otherwise).
  */
-int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
-                         const unsigned char *limit)
+int ssl_get_prev_session(SSL *s, PACKET *pkt, unsigned char *session_id,
+                         int len)
 {
     /* This is used only by servers. */
 
@@ -560,16 +560,11 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
     if (len < 0 || len > SSL_MAX_SSL_SESSION_ID_LENGTH)
         goto err;
 
-    if (session_id + len > limit) {
-        fatal = 1;
-        goto err;
-    }
-
     if (len == 0)
         try_session_cache = 0;
 
     /* sets s->tlsext_ticket_expected */
-    r = tls1_process_ticket(s, session_id, len, limit, &ret);
+    r = tls1_process_ticket(s, pkt, session_id, len, &ret);
     switch (r) {
     case -1:                   /* Error during processing */
         fatal = 1;

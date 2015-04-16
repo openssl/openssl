@@ -266,38 +266,18 @@ int ssl_add_clienthello_use_srtp_ext(SSL *s, unsigned char *p, int *len,
     return 0;
 }
 
-int ssl_parse_clienthello_use_srtp_ext(SSL *s, unsigned char *d, int len,
-                                       int *al)
+int ssl_parse_clienthello_use_srtp_ext(SSL *s, PACKET *pkt, int *al)
 {
     SRTP_PROTECTION_PROFILE *sprof;
     STACK_OF(SRTP_PROTECTION_PROFILE) *srvr;
-    int ct;
-    int mki_len;
+    unsigned int ct, mki_len, id;
     int i, srtp_pref;
-    unsigned int id;
+    PACKET subpkt;
 
-    /* Length value + the MKI length */
-    if (len < 3) {
-        SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_USE_SRTP_EXT,
-               SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
-        *al = SSL_AD_DECODE_ERROR;
-        return 1;
-    }
-
-    /* Pull off the length of the cipher suite list */
-    n2s(d, ct);
-    len -= 2;
-
-    /* Check that it is even */
-    if (ct % 2) {
-        SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_USE_SRTP_EXT,
-               SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
-        *al = SSL_AD_DECODE_ERROR;
-        return 1;
-    }
-
-    /* Check that lengths are consistent */
-    if (len < (ct + 1)) {
+    /* Pull off the length of the cipher suite list  and check it is even */
+    if (!PACKET_get_net_2(pkt, &ct)
+            || (ct & 1) != 0
+            || !PACKET_get_sub_packet(pkt, &subpkt, ct)) {
         SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_USE_SRTP_EXT,
                SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
         *al = SSL_AD_DECODE_ERROR;
@@ -309,10 +289,13 @@ int ssl_parse_clienthello_use_srtp_ext(SSL *s, unsigned char *d, int len,
     /* Search all profiles for a match initially */
     srtp_pref = sk_SRTP_PROTECTION_PROFILE_num(srvr);
 
-    while (ct) {
-        n2s(d, id);
-        ct -= 2;
-        len -= 2;
+    while (PACKET_remaining(&subpkt)) {
+        if (!PACKET_get_net_2(&subpkt, &id)) {
+            SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_USE_SRTP_EXT,
+                   SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
+            *al = SSL_AD_DECODE_ERROR;
+            return 1;
+        }
 
         /*
          * Only look for match in profiles of higher preference than
@@ -333,11 +316,15 @@ int ssl_parse_clienthello_use_srtp_ext(SSL *s, unsigned char *d, int len,
     /*
      * Now extract the MKI value as a sanity check, but discard it for now
      */
-    mki_len = *d;
-    d++;
-    len--;
+    if (!PACKET_get_1(pkt, &mki_len)) {
+        SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_USE_SRTP_EXT,
+               SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
+        *al = SSL_AD_DECODE_ERROR;
+        return 1;
+    }
 
-    if (mki_len != len) {
+    if (!PACKET_forward(pkt, mki_len)
+            || PACKET_remaining(pkt)) {
         SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_USE_SRTP_EXT,
                SSL_R_BAD_SRTP_MKI_VALUE);
         *al = SSL_AD_DECODE_ERROR;

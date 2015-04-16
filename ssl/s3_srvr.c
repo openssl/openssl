@@ -862,11 +862,11 @@ int ssl3_send_hello_request(SSL *s)
 
 int ssl3_get_client_hello(SSL *s)
 {
-    int i, complen, j, ok, al = SSL_AD_INTERNAL_ERROR, ret = -1;
-    unsigned int cookie_len;
+    int i, ok, al = SSL_AD_INTERNAL_ERROR, ret = -1;
+    unsigned int j, cipherlen, complen;
+    unsigned int cookie_len = 0;
     long n;
     unsigned long id;
-    unsigned char *p, *d;
     SSL_CIPHER *c;
 #ifndef OPENSSL_NO_COMP
     unsigned char *q = NULL;
@@ -874,6 +874,8 @@ int ssl3_get_client_hello(SSL *s)
 #endif
     STACK_OF(SSL_CIPHER) *ciphers = NULL;
     int protverr = 1;
+    PACKET pkt;
+    unsigned char *sess, *cdata;
 
     if (s->state == SSL3_ST_SR_CLNT_HELLO_C && !s->first_packet)
         goto retry_cert;
@@ -897,10 +899,12 @@ int ssl3_get_client_hello(SSL *s)
     if (!ok)
         return ((int)n);
     s->first_packet = 0;
-    d = p = (unsigned char *)s->init_msg;
+    PACKET_buf_init(&pkt, s->init_msg, n);
 
     /* First lets get s->client_version set correctly */
     if (RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
+        unsigned int version;
+        unsigned int mt;
         /*-
          * An SSLv3/TLSv1 backwards-compatible CLIENT-HELLO in an SSLv2
          * header is sent directly on the wire, not wrapped as a TLS
@@ -916,7 +920,8 @@ int ssl3_get_client_hello(SSL *s)
          * ...   ...
          */
 
-        if (p[0] != SSL2_MT_CLIENT_HELLO) {
+        if (!PACKET_get_1(&pkt, &mt)
+                || mt != SSL2_MT_CLIENT_HELLO) {
             /*
              * Should never happen. We should have tested this in the record
              * layer in order to have determined that this is a SSLv2 record
@@ -926,13 +931,18 @@ int ssl3_get_client_hello(SSL *s)
             goto err;
         }
 
-        if ((p[1] == 0x00) && (p[2] == 0x02)) {
+        if (!PACKET_get_net_2(&pkt, &version)) {
+            /* No protocol version supplied! */
+            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_UNKNOWN_PROTOCOL);
+            goto err;
+        }
+        if (version == 0x0002) {
             /* This is real SSLv2. We don't support it. */
             SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_UNKNOWN_PROTOCOL);
             goto err;
-        } else if (p[1] == SSL3_VERSION_MAJOR) {
+        } else if ((version & 0xff00) == (SSL3_VERSION_MAJOR << 8)) {
             /* SSLv3/TLS */
-            s->client_version = (((int)p[1]) << 8) | (int)p[2];
+            s->client_version = version;
         } else {
             /* No idea what protocol this is */
             SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_UNKNOWN_PROTOCOL);
@@ -940,20 +950,14 @@ int ssl3_get_client_hello(SSL *s)
         }
     } else {
         /*
-         * 2 bytes for client version, SSL3_RANDOM_SIZE bytes for random, 1 byte
-         * for session id length
+         * use version from inside client hello, not from record header (may
+         * differ: see RFC 2246, Appendix E, second paragraph)
          */
-        if (n < 2 + SSL3_RANDOM_SIZE + 1) {
+        if(!PACKET_get_net_2(&pkt, (unsigned int *)&s->client_version)) {
             al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_TOO_SHORT);
             goto f_err;
         }
-
-        /*
-         * use version from inside client hello, not from record header (may
-         * differ: see RFC 2246, Appendix E, second paragraph)
-         */
-        s->client_version = (((int)p[0]) << 8) | (int)p[1];
     }
 
     /* Do SSL/TLS version negotiation if applicable */
@@ -1032,15 +1036,9 @@ int ssl3_get_client_hello(SSL *s)
          */
         unsigned int csl, sil, cl;
 
-        p += 3;
-        n2s(p, csl);
-        n2s(p, sil);
-        n2s(p, cl);
-
-        if (csl + sil + cl + MIN_SSL2_RECORD_LEN != (unsigned int) n) {
-            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_RECORD_LENGTH_MISMATCH);
-            al = SSL_AD_DECODE_ERROR;
-            goto f_err;
+        if (!PACKET_get_net_2(&pkt, &csl)
+                || !PACKET_get_net_2(&pkt, &sil)
+                || !PACKET_get_net_2(&pkt, &cl)) {
         }
 
         if (csl == 0) {
@@ -1050,7 +1048,13 @@ int ssl3_get_client_hello(SSL *s)
             goto f_err;
         }
 
-        if (ssl_bytes_to_cipher_list(s, p, csl, &(ciphers), 1) == NULL) {
+        if (!PACKET_get_bytes(&pkt, &cdata, csl)) {
+            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_RECORD_LENGTH_MISMATCH);
+            al = SSL_AD_DECODE_ERROR;
+            goto f_err;
+        }
+
+        if (ssl_bytes_to_cipher_list(s, cdata, csl, &(ciphers), 1) == NULL) {
             goto err;
         }
 
@@ -1058,6 +1062,11 @@ int ssl3_get_client_hello(SSL *s)
          * Ignore any session id. We don't allow resumption in a backwards
          * compatible ClientHello
          */
+        if (!PACKET_forward(&pkt, sil)) {
+            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_RECORD_LENGTH_MISMATCH);
+            al = SSL_AD_DECODE_ERROR;
+            goto f_err;
+        }
         s->hit = 0;
 
         if (!ssl_get_new_session(s, 1))
@@ -1066,17 +1075,27 @@ int ssl3_get_client_hello(SSL *s)
         /* Load the client random */
         i = (cl > SSL3_RANDOM_SIZE) ? SSL3_RANDOM_SIZE : cl;
         memset(s->s3->client_random, 0, SSL3_RANDOM_SIZE);
-        memcpy(s->s3->client_random, &(p[csl + sil]), i);
-
-        /* Set p to end of packet to ensure we don't look for extensions */
-        p = d + n;
+        if (!PACKET_peek_copy_bytes(&pkt, s->s3->client_random, i)
+                || !PACKET_forward(&pkt, cl)
+                || !PACKET_remaining(&pkt) == 0) {
+            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_RECORD_LENGTH_MISMATCH);
+            al = SSL_AD_DECODE_ERROR;
+            goto f_err;
+        }
 
         /* No compression, so set complen to 0 */
         complen = 0;
     } else {
         /* If we get here we've got SSLv3+ in an SSLv3+ record */
 
-        p += 2;
+        /* load the client random and get the session-id */
+        if (!PACKET_copy_bytes(&pkt, s->s3->client_random, SSL3_RANDOM_SIZE)
+                || !PACKET_get_1(&pkt, &j)
+                || !PACKET_get_bytes(&pkt, &sess, j)) {
+            al = SSL_AD_DECODE_ERROR;
+            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_TOO_SHORT);
+            goto f_err;
+        }
 
         /*
          * If we require cookies and this ClientHello doesn't contain one, just
@@ -1084,32 +1103,15 @@ int ssl3_get_client_hello(SSL *s)
          * cookie length...
          */
         if (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE) {
-            unsigned int session_length, cookie_length;
 
-            session_length = *(p + SSL3_RANDOM_SIZE);
-
-            if (p + SSL3_RANDOM_SIZE + session_length + 1 >= d + n) {
+            if (!PACKET_peek_1(&pkt, &cookie_len)) {
                 al = SSL_AD_DECODE_ERROR;
                 SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_TOO_SHORT);
                 goto f_err;
             }
-            cookie_length = *(p + SSL3_RANDOM_SIZE + session_length + 1);
 
-            if (cookie_length == 0)
+            if (cookie_len == 0)
                 return 1;
-        }
-
-        /* load the client random */
-        memcpy(s->s3->client_random, p, SSL3_RANDOM_SIZE);
-        p += SSL3_RANDOM_SIZE;
-
-        /* get the session-id */
-        j = *(p++);
-
-        if (p + j > d + n) {
-            al = SSL_AD_DECODE_ERROR;
-            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_TOO_SHORT);
-            goto f_err;
         }
 
         s->hit = 0;
@@ -1131,7 +1133,7 @@ int ssl3_get_client_hello(SSL *s)
             if (!ssl_get_new_session(s, 1))
                 goto err;
         } else {
-            i = ssl_get_prev_session(s, p, j, d + n);
+            i = ssl_get_prev_session(s, &pkt, sess, j);
             /*
              * Only resume if the session's version matches the negotiated
              * version.
@@ -1153,23 +1155,12 @@ int ssl3_get_client_hello(SSL *s)
             }
         }
 
-        p += j;
-
         if (SSL_IS_DTLS(s)) {
-            /* cookie stuff */
-            if (p + 1 > d + n) {
+            if (!PACKET_get_1(&pkt, &cookie_len)) {
                 al = SSL_AD_DECODE_ERROR;
                 SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_TOO_SHORT);
                 goto f_err;
             }
-            cookie_len = *(p++);
-
-            if (p + cookie_len > d + n) {
-                al = SSL_AD_DECODE_ERROR;
-                SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_TOO_SHORT);
-                goto f_err;
-            }
-
             /*
              * The ClientHello may contain a cookie even if the
              * HelloVerify message has not been sent--make sure that it
@@ -1185,7 +1176,13 @@ int ssl3_get_client_hello(SSL *s)
             /* verify the cookie if appropriate option is set. */
             if ((SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE)
                     && cookie_len > 0) {
-                memcpy(s->d1->rcvd_cookie, p, cookie_len);
+                /* Get cookie */
+                if (!PACKET_copy_bytes(&pkt, s->d1->rcvd_cookie,
+                                              cookie_len)) {
+                    al = SSL_AD_DECODE_ERROR;
+                    SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_TOO_SHORT);
+                    goto f_err;
+                }
 
                 if (s->ctx->app_verify_cookie_cb != NULL) {
                     if (s->ctx->app_verify_cookie_cb(s, s->d1->rcvd_cookie,
@@ -1206,9 +1203,15 @@ int ssl3_get_client_hello(SSL *s)
                 }
                 /* Set to -2 so if successful we return 2 */
                 ret = -2;
+            } else {
+                /* Skip over cookie */
+                if (!PACKET_forward(&pkt, cookie_len)) {
+                    al = SSL_AD_DECODE_ERROR;
+                    SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_TOO_SHORT);
+                    goto f_err;
+                }
             }
 
-            p += cookie_len;
             if (s->method->version == DTLS_ANY_VERSION) {
                 /* Select version to use */
                 if (s->client_version <= DTLS1_2_VERSION &&
@@ -1236,30 +1239,28 @@ int ssl3_get_client_hello(SSL *s)
             }
         }
 
-        if (p + 2 > d + n) {
+        if (!PACKET_get_net_2(&pkt, &cipherlen)) {
             al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_TOO_SHORT);
             goto f_err;
         }
-        n2s(p, i);
 
-        if (i == 0) {
+        if (cipherlen == 0) {
             al = SSL_AD_ILLEGAL_PARAMETER;
             SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_NO_CIPHERS_SPECIFIED);
             goto f_err;
         }
 
-        /* i bytes of cipher data + 1 byte for compression length later */
-        if ((p + i + 1) > (d + n)) {
+        if (!PACKET_get_bytes(&pkt, &cdata, cipherlen)) {
             /* not enough data */
             al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_MISMATCH);
             goto f_err;
         }
-        if (ssl_bytes_to_cipher_list(s, p, i, &(ciphers), 0) == NULL) {
+
+        if (ssl_bytes_to_cipher_list(s, cdata, cipherlen, &(ciphers), 0) == NULL) {
             goto err;
         }
-        p += i;
 
         /* If it is a hit, check that the cipher is in the list */
         if (s->hit) {
@@ -1316,22 +1317,22 @@ int ssl3_get_client_hello(SSL *s)
         }
 
         /* compression */
-        complen = *(p++);
-        if ((p + complen) > (d + n)) {
+        if (!PACKET_get_1(&pkt, &complen)
+            || !PACKET_get_bytes(&pkt, &cdata, complen)) {
             /* not enough data */
             al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_MISMATCH);
             goto f_err;
         }
+
 #ifndef OPENSSL_NO_COMP
-        q = p;
+        q = cdata;
 #endif
         for (j = 0; j < complen; j++) {
-            if (p[j] == 0)
+            if (cdata[j] == 0)
                 break;
         }
 
-        p += complen;
         if (j >= complen) {
             /* no compress */
             al = SSL_AD_DECODE_ERROR;
@@ -1342,7 +1343,7 @@ int ssl3_get_client_hello(SSL *s)
 
     /* TLS extensions */
     if (s->version >= SSL3_VERSION) {
-        if (!ssl_parse_clienthello_tlsext(s, &p, d, n)) {
+        if (!ssl_parse_clienthello_tlsext(s, &pkt)) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_PARSE_TLSEXT);
             goto err;
         }
@@ -1407,6 +1408,7 @@ int ssl3_get_client_hello(SSL *s)
     /* This only happens if we have a cache hit */
     if (s->session->compress_meth != 0) {
         int m, comp_id = s->session->compress_meth;
+        unsigned int k;
         /* Perform sanity checks on resumed compression algorithm */
         /* Can't disable compression */
         if (!ssl_allow_compression(s)) {
@@ -1428,11 +1430,11 @@ int ssl3_get_client_hello(SSL *s)
             goto f_err;
         }
         /* Look for resumed method in compression list */
-        for (m = 0; m < complen; m++) {
-            if (q[m] == comp_id)
+        for (k = 0; k < complen; k++) {
+            if (q[k] == comp_id)
                 break;
         }
-        if (m >= complen) {
+        if (k >= complen) {
             al = SSL_AD_ILLEGAL_PARAMETER;
             SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
                    SSL_R_REQUIRED_COMPRESSSION_ALGORITHM_MISSING);
@@ -1442,7 +1444,8 @@ int ssl3_get_client_hello(SSL *s)
         comp = NULL;
     else if (ssl_allow_compression(s) && s->ctx->comp_methods) {
         /* See if we have a match */
-        int m, nn, o, v, done = 0;
+        int m, nn, v, done = 0;
+        unsigned int o;
 
         nn = sk_SSL_COMP_num(s->ctx->comp_methods);
         for (m = 0; m < nn; m++) {
