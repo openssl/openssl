@@ -2040,7 +2040,6 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL_BYTES_TO_CIPHER_LIST                   161
 # define SSL_F_SSL_CERT_ADD0_CHAIN_CERT                   339
 # define SSL_F_SSL_CERT_DUP                               221
-# define SSL_F_SSL_CERT_INST                              222
 # define SSL_F_SSL_CERT_INSTANTIATE                       214
 # define SSL_F_SSL_CERT_NEW                               162
 # define SSL_F_SSL_CERT_SET0_CHAIN                        340
