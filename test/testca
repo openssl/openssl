@@ -11,14 +11,16 @@ else
 fi
 export PATH
 
-export SSLEAY_CONFIG="-config CAss.cnf"
-export OPENSSL="`pwd`/../util/opensslwrap.sh"
+export SSLEAY_CONFIG OPENSSL
 
 /bin/rm -fr demoCA
 
+SSLEAY_CONFIG="-config CAss.cnf"
+OPENSSL="`pwd`/../util/opensslwrap.sh"
+
 OPENSSL_CONFIG=/dev/null $PERL ../apps/CA.pl -newca </dev/null
 
-export SSLEAY_CONFIG="-config Uss.cnf"
+SSLEAY_CONFIG="-config Uss.cnf"
 $PERL ../apps/CA.pl -newreq
 
 SSLEAY_CONFIG="-config ../apps/openssl.cnf"
