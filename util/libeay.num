@@ -4571,3 +4571,5 @@ ASN1_INTEGER_get_uint64                 4929	EXIST::FUNCTION:
 ASN1_INTEGER_set_uint64                 4930	EXIST::FUNCTION:
 PKCS5_pbe2_set_scrypt                   4931	EXIST::FUNCTION:
 PKCS8_set0_pbe                          4932	EXIST::FUNCTION:
+DH_bits                                 4933	EXIST::FUNCTION:DH
+RSA_bits                                4934	EXIST::FUNCTION:RSA

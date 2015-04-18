@@ -26,8 +26,6 @@ rsa - RSA public key cryptosystem
  int RSA_verify(int type, unsigned char *m, unsigned int m_len,
     unsigned char *sigbuf, unsigned int siglen, RSA *rsa);
 
- int RSA_size(const RSA *rsa);
-
  RSA *RSA_generate_key(int num, unsigned long e,
     void (*callback)(int,int,void *), void *cb_arg);
 

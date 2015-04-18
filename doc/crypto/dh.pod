@@ -12,8 +12,6 @@ dh - Diffie-Hellman key agreement
  DH *	DH_new(void);
  void	DH_free(DH *dh);
 
- int	DH_size(const DH *dh);
-
  DH *	DH_generate_parameters(int prime_len, int generator,
 		void (*callback)(int, int, void *), void *cb_arg);
  int	DH_check(const DH *dh, int *codes);

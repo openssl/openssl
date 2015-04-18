@@ -237,6 +237,11 @@ void *DH_get_ex_data(DH *d, int idx)
     return (CRYPTO_get_ex_data(&d->ex_data, idx));
 }
 
+int DH_bits(const DH *dh)
+{
+    return BN_num_bits(dh->p);
+}
+
 int DH_size(const DH *dh)
 {
     return (BN_num_bytes(dh->p));

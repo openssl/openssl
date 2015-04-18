@@ -64,6 +64,11 @@
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
 
+int RSA_bits(const RSA *r)
+{
+    return (BN_num_bits(r->n));
+}
+
 int RSA_size(const RSA *r)
 {
     return (BN_num_bytes(r->n));
