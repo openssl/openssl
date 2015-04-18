@@ -341,7 +341,7 @@ int ssl3_connect(SSL *s)
             if (!
                 (s->s3->tmp.
                  new_cipher->algorithm_auth & (SSL_aNULL | SSL_aSRP))
-&& !(s->s3->tmp.new_cipher->algorithm_mkey & SSL_kPSK)) {
+                    && !(s->s3->tmp.new_cipher->algorithm_mkey & SSL_kPSK)) {
                 ret = ssl3_get_server_certificate(s);
                 if (ret <= 0)
                     goto end;
@@ -1671,6 +1671,13 @@ int ssl3_get_key_exchange(SSL *s)
             SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             goto err;
         }
+
+        if (EVP_PKEY_bits(pkey) <= SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher)) {
+            al = SSL_AD_UNEXPECTED_MESSAGE;
+            SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_UNEXPECTED_MESSAGE);
+            goto f_err;
+        }
+
         s->session->sess_cert->peer_rsa_tmp = rsa;
         rsa = NULL;
     }
