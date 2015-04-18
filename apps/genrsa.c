@@ -109,6 +109,17 @@ int MAIN(int argc, char **argv)
     if (!cb)
         goto err;
 
+    // sganis
+    BIGNUM *p_param = NULL;
+    BIGNUM *q_param = NULL;
+    //BIGNUM *e_param = NULL; // this is fixed: rsh.h: RSA_F4   0x10001L 
+    p_param = BN_new();
+    if (!p_param)
+        goto err;
+    q_param = BN_new();
+    if (!q_param)
+        goto err;
+
     apps_startup();
 
     BN_GENCB_set(cb, genrsa_cb, bio_err);
@@ -137,6 +148,22 @@ int MAIN(int argc, char **argv)
             f4 = 3;
         else if (strcmp(*argv, "-F4") == 0 || strcmp(*argv, "-f4") == 0)
             f4 = RSA_F4;
+        // sganis
+        else if (strcmp(*argv,"-p") == 0) {
+            if (--argc < 1) goto bad;
+            //strncpy(buf, *(++argv), sizeof(buf));
+            //printf("p = %s\n",buf);            
+            BN_dec2bn(&p_param, *(++argv));
+            //printf("p = %s\n",BN_bn2dec(p_param));
+        }
+        else if (strcmp(*argv,"-q") == 0) {
+            if (--argc < 1) goto bad;
+            //strncpy(buf, *(++argv), sizeof(buf));
+            //printf("p = %s\n",buf);
+            BN_dec2bn(&q_param, *(++argv));
+            //printf("q = %s\n",BN_bn2dec(q_param));
+        }
+
 # ifndef OPENSSL_NO_ENGINE
         else if (strcmp(*argv, "-engine") == 0) {
             if (--argc < 1)
@@ -231,6 +258,8 @@ int MAIN(int argc, char **argv)
         BIO_printf(bio_err,
                    "                 load the file (or the files in the directory) into\n");
         BIO_printf(bio_err, "                 the random number generator\n");
+        BIO_printf(bio_err," -p number       p prime number, generate RSA private key with p and q.\n");
+        BIO_printf(bio_err," -q number       q prime number, required if -p is used.\n");
         goto err;
     }
 
@@ -267,9 +296,25 @@ int MAIN(int argc, char **argv)
     if (inrand != NULL)
         BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
                    app_RAND_load_files(inrand));
-
-    BIO_printf(bio_err, "Generating RSA private key, %d bit long modulus\n",
+    // sganis
+    if(p_param)
+    {
+        // check n=p*q
+        BIO_printf(bio_err,"Generating RSA private key with this values:\n");
+        printf("p is %s\n",BN_bn2dec(p_param));
+        printf("q is %s\n",BN_bn2dec(q_param));
+        BN_CTX *mul_ctx = BN_CTX_new();
+        BIGNUM *mul_result = BN_new();
+        BN_mul(mul_result, p_param,q_param,mul_ctx);
+        printf("n is %s (modulus)\n",BN_bn2dec(mul_result));
+        BN_free(mul_result);        
+        BN_CTX_free(mul_ctx);
+    }
+    else
+    {
+        BIO_printf(bio_err, "Generating RSA private key, %d bit long modulus\n",
                num);
+    }
 # ifdef OPENSSL_NO_ENGINE
     rsa = RSA_new();
 # else
@@ -281,7 +326,7 @@ int MAIN(int argc, char **argv)
     if (non_fips_allow)
         rsa->flags |= RSA_FLAG_NON_FIPS_ALLOW;
 
-    if (!BN_set_word(bn, f4) || !RSA_generate_key_ex(rsa, num, bn, cb))
+    if (!BN_set_word(bn, f4) || !RSA_generate_key_ex(rsa, num, bn, cb, p_param, q_param))
         goto err;
 
     app_RAND_write_file(NULL, bio_err);

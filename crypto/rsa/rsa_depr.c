@@ -93,7 +93,7 @@ RSA *RSA_generate_key(int bits, unsigned long e_value,
 
     BN_GENCB_set_old(cb, callback, cb_arg);
 
-    if (RSA_generate_key_ex(rsa, bits, e, cb)) {
+    if (RSA_generate_key_ex(rsa, bits, e, cb, NULL, NULL)) {
         BN_free(e);
         BN_GENCB_free(cb);
         return rsa;

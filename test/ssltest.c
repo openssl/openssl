@@ -2937,7 +2937,7 @@ static RSA *tmp_rsa_cb(SSL *s, int is_export, int keylength)
         }
         BIO_printf(bio_err, "Generating temp (%d bit) RSA key...", keylength);
         (void)BIO_flush(bio_err);
-        if (!RSA_generate_key_ex(rsa_tmp, keylength, bn, NULL)) {
+        if (!RSA_generate_key_ex(rsa_tmp, keylength, bn, NULL,NULL,NULL)) {
             BIO_printf(bio_err, "Error generating key.");
             RSA_free(rsa_tmp);
             rsa_tmp = NULL;
