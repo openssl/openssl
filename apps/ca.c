@@ -1436,6 +1436,21 @@ int MAIN(int argc, char **argv)
             if (!rotate_serial(crlnumberfile, "new", "old"))
                 goto err;
 
+        char *new_revoked = NULL;
+        BIO *out = NULL;
+        if ((new_revoked = NCONF_get_string(conf, section, ENV_NEW_REVOKED)) == NULL) {
+            lookup_fail(section, ENV_NEW_REVOKED);
+	} else {
+            out = BIO_new(BIO_s_file());
+            if (out == NULL) {
+                ERR_print_errors(bio_err);
+            } else {
+		if (BIO_write_filename(out, new_revoked) <= 0) {
+                    perror(new_revoked);
+                }
+                BIO_free_all(out);
+            }
+	}
     }
         /*****************************************************************/
     if (dorevoke) {
