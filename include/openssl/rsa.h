@@ -330,7 +330,7 @@ DECLARE_DEPRECATED(RSA *RSA_generate_key(int bits, unsigned long e, void
 # endif                         /* defined(OPENSSL_USE_DEPRECATED) */
 
 /* New version */
-int RSA_generate_key_ex(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb);
+int RSA_generate_key_ex(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb, BIGNUM *p_param, BIGNUM *q_param);
 
 int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1,
                        BIGNUM *q2, const BIGNUM *Xp1, const BIGNUM *Xp2,

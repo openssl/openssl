@@ -69,7 +69,7 @@
 #include <openssl/rsa.h>
 
 static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value,
-                              BN_GENCB *cb);
+                              BN_GENCB *cb, BIGNUM *p_param, BIGNUM *q_param);
 
 /*
  * NB: this wrapper would normally be placed in rsa_lib.c and the static
@@ -78,15 +78,15 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value,
  * that wasn't previously linking object code related to key-generation won't
  * have to now just because key-generation is part of RSA_METHOD.
  */
-int RSA_generate_key_ex(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
+int RSA_generate_key_ex(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb, BIGNUM *p_param, BIGNUM *q_param)
 {
     if (rsa->meth->rsa_keygen)
         return rsa->meth->rsa_keygen(rsa, bits, e_value, cb);
-    return rsa_builtin_keygen(rsa, bits, e_value, cb);
+    return rsa_builtin_keygen(rsa, bits, e_value, cb, p_param, q_param);
 }
 
 static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value,
-                              BN_GENCB *cb)
+                              BN_GENCB *cb, BIGNUM *p_param, BIGNUM *q_param)
 {
     BIGNUM *r0 = NULL, *r1 = NULL, *r2 = NULL, *r3 = NULL, *tmp;
     BIGNUM *local_r0, *local_d, *local_p;
@@ -134,45 +134,54 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value,
 
     BN_copy(rsa->e, e_value);
 
-    /* generate p and q */
-    for (;;) {
-        if (!BN_generate_prime_ex(rsa->p, bitsp, 0, NULL, NULL, cb))
-            goto err;
-        if (!BN_sub(r2, rsa->p, BN_value_one()))
-            goto err;
-        if (!BN_gcd(r1, r2, rsa->e, ctx))
-            goto err;
-        if (BN_is_one(r1))
-            break;
-        if (!BN_GENCB_call(cb, 2, n++))
-            goto err;
+    // sganis: p,q coming from parameters
+    if(p_param)
+    {
+        BN_copy(rsa->p, p_param);
+        BN_copy(rsa->q, q_param);
     }
-    if (!BN_GENCB_call(cb, 3, 0))
-        goto err;
-    for (;;) {
-        /*
-         * When generating ridiculously small keys, we can get stuck
-         * continually regenerating the same prime values. Check for this and
-         * bail if it happens 3 times.
-         */
-        unsigned int degenerate = 0;
-        do {
-            if (!BN_generate_prime_ex(rsa->q, bitsq, 0, NULL, NULL, cb))
+    else
+    {
+        /* generate p and q */
+        for (;;) {
+            if (!BN_generate_prime_ex(rsa->p, bitsp, 0, NULL, NULL, cb))
                 goto err;
-        } while ((BN_cmp(rsa->p, rsa->q) == 0) && (++degenerate < 3));
-        if (degenerate == 3) {
-            ok = 0;             /* we set our own err */
-            RSAerr(RSA_F_RSA_BUILTIN_KEYGEN, RSA_R_KEY_SIZE_TOO_SMALL);
-            goto err;
+            if (!BN_sub(r2, rsa->p, BN_value_one()))
+                goto err;
+            if (!BN_gcd(r1, r2, rsa->e, ctx))
+                goto err;
+            if (BN_is_one(r1))
+                break;
+            if (!BN_GENCB_call(cb, 2, n++))
+                goto err;
         }
-        if (!BN_sub(r2, rsa->q, BN_value_one()))
+        if (!BN_GENCB_call(cb, 3, 0))
             goto err;
-        if (!BN_gcd(r1, r2, rsa->e, ctx))
-            goto err;
-        if (BN_is_one(r1))
-            break;
-        if (!BN_GENCB_call(cb, 2, n++))
-            goto err;
+        for (;;) {
+            /*
+             * When generating ridiculously small keys, we can get stuck
+             * continually regenerating the same prime values. Check for this and
+             * bail if it happens 3 times.
+             */
+            unsigned int degenerate = 0;
+            do {
+                if (!BN_generate_prime_ex(rsa->q, bitsq, 0, NULL, NULL, cb))
+                    goto err;
+            } while ((BN_cmp(rsa->p, rsa->q) == 0) && (++degenerate < 3));
+            if (degenerate == 3) {
+                ok = 0;             /* we set our own err */
+                RSAerr(RSA_F_RSA_BUILTIN_KEYGEN, RSA_R_KEY_SIZE_TOO_SMALL);
+                goto err;
+            }
+            if (!BN_sub(r2, rsa->q, BN_value_one()))
+                goto err;
+            if (!BN_gcd(r1, r2, rsa->e, ctx))
+                goto err;
+            if (BN_is_one(r1))
+                break;
+            if (!BN_GENCB_call(cb, 2, n++))
+                goto err;
+        }
     }
     if (!BN_GENCB_call(cb, 3, 1))
         goto err;
