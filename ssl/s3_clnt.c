@@ -3324,6 +3324,7 @@ int ssl3_check_cert_and_algorithm(SSL *s)
     int i, idx;
     long alg_k, alg_a;
     EVP_PKEY *pkey = NULL;
+    int pkey_bits;
     SESS_CERT *sc;
 #ifndef OPENSSL_NO_RSA
     RSA *rsa;
@@ -3373,6 +3374,7 @@ int ssl3_check_cert_and_algorithm(SSL *s)
     }
 #endif
     pkey = X509_get_pubkey(sc->peer_pkeys[idx].x509);
+    pkey_bits = EVP_PKEY_bits(pkey);
     i = X509_certificate_type(sc->peer_pkeys[idx].x509, pkey);
     EVP_PKEY_free(pkey);
 
@@ -3418,7 +3420,8 @@ int ssl3_check_cert_and_algorithm(SSL *s)
 # endif
 #endif
 
-    if (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher) && !has_bits(i, EVP_PKT_EXP)) {
+    if (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher) &&
+        pkey_bits > SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher)) {
 #ifndef OPENSSL_NO_RSA
         if (alg_k & SSL_kRSA) {
             if (rsa == NULL
