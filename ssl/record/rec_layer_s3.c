@@ -445,10 +445,10 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
     unsigned int n, nw;
 #if !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
     unsigned int max_send_fragment;
+    unsigned int u_len = (unsigned int)len;
 #endif
     SSL3_BUFFER *wb = &s->rlayer.wbuf;
     int i;
-    unsigned int u_len = (unsigned int)len;
 
     if (len < 0) {
         SSLerr(SSL_F_SSL3_WRITE_BYTES, SSL_R_SSL_NEGATIVE_LENGTH);
