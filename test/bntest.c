@@ -1799,8 +1799,8 @@ int test_probable_prime_coprime(BIO *bp, BN_CTX *ctx)
 
         for (j = 0; j < 5; j++) {
             if (BN_mod_word(r, primes[j]) == 0) {
-                BIO_printf(bp, "Number generated is not coprime to %ld:\n",
-                           primes[j]);
+                BIO_printf(bp, "Number generated is not coprime to "
+			   BN_DEC_FMT1 ":\n", primes[j]);
                 BN_print_fp(stdout, r);
                 BIO_printf(bp, "\n");
                 goto err;
