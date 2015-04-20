@@ -2168,7 +2168,7 @@ if ($PREFIX eq "aesni") {
 	&mov		($rounds,8);
 	&movdqa		("xmm4",&QWP(0x20,"ebx"));
 	&movdqa		("xmm2","xmm0");
-	&movdqu		(&DWP(-16,$key),"xmm0");
+	&movdqu		(&QWP(-16,$key),"xmm0");
 
 &set_label("loop_key128");
 	&pshufb		("xmm0","xmm5");
