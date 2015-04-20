@@ -27,6 +27,7 @@
 # Apple A7	0.92		5.62
 # Cortex-A53	1.01		8.39
 # Cortex-A57	1.17		7.61
+# Denver	0.71		6.02
 #
 # (*)	presented for reference/comparison purposes;
 
