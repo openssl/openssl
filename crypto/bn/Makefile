@@ -141,6 +141,7 @@ alpha-mont.s:	asm/alpha-mont.pl
 
 armv4-mont.o:	armv4-mont.S
 armv4-gf2m.o:	armv4-gf2m.S
+armv8-mont.o:	armv8-mont.S
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
