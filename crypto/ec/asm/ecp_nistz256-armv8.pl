@@ -14,19 +14,16 @@
 # Original ECP_NISTZ256 submission targeting x86_64 is detailed in
 # http://eprint.iacr.org/2013/816.
 #
-#			with/without -DECP_NISTZ256_ASM(*)
-# Apple A7		+140-590%
-# Cortex-A53		+135-720%
-# Cortex-A57		+145-570%
-# X-Gene		+120-700%
-# Denver		+150-740%
-#
-# (*)	comparison is not really "fair", because it's compared to C
-#	implementation, unlike other similar cases that is;
+#			with/without -DECP_NISTZ256_ASM
+# Apple A7		+120-360%
+# Cortex-A53		+120-400%
+# Cortex-A57		+120-350%
+# X-Gene		+200-330%
+# Denver		+140-400%
 #
 # Ranges denote minimum and maximum improvement coefficients depending
 # on benchmark. Lower coefficients are for ECDSA sign, server-side
-# operation. Keep in mind that +500% means 6x improvement.
+# operation. Keep in mind that +400% means 5x improvement.
 
 $flavour = shift;
 while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
