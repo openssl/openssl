@@ -20,11 +20,14 @@
 # Cortex-A53        21.5        18.1/20.6        [17.5/19.8         ]
 # Cortex-A57        36.0(**)    20.4/24.9(**)    [14.4/16.6         ]
 # X-Gene            45.9(**)    45.8/57.7(**)    [33.1/37.6(**)     ]
+# Denver(***)       16.6(**)    15.1/17.8(**)    [8.80/9.93         ]
+# Apple A7(***)     22.7(**)    10.9/14.3        [8.45/10.0         ]
 #
 # (*)	ECB denotes approximate result for parallelizeable modes
 #	such as CBC decrypt, CTR, etc.;
 # (**)	these results are worse than scalar compiler-generated
 #	code, but it's constant-time and therefore preferred;
+# (***)	presented for reference/comparison purposes;
 
 $flavour = shift;
 while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
@@ -206,7 +209,7 @@ _vpaes_encrypt_core:
 	eor	v3.16b, v3.16b, v2.16b		// vpxor	%xmm2,	%xmm3,	%xmm3	# 0 = 2A+B
 	tbl	v4.16b, {v3.16b}, v1.16b	// vpshufb	%xmm1,	%xmm3,	%xmm4	# 0 = 2B+C
 	eor	v0.16b, v0.16b, v3.16b		// vpxor	%xmm3,	%xmm0,	%xmm0	# 3 = 2A+B+D
-	bic	x11, x11, #1<<6			// and		\$0x30,	%r11		# ... mod 4
+	and	x11, x11, #~(1<<6)		// and		\$0x30,	%r11		# ... mod 4
 	eor	v0.16b, v0.16b, v4.16b		// vpxor	%xmm4,	%xmm0, %xmm0	# 0 = 2A+3B+C+D
 	sub	w8, w8, #1			// nr--
 
@@ -309,7 +312,7 @@ _vpaes_encrypt_2x:
 	 tbl	v12.16b, {v11.16b},v1.16b
 	eor	v0.16b,  v0.16b,  v3.16b	// vpxor	%xmm3,	%xmm0,	%xmm0	# 3 = 2A+B+D
 	 eor	v8.16b,  v8.16b,  v11.16b
-	bic	x11, x11, #1<<6			// and		\$0x30,	%r11		# ... mod 4
+	and	x11, x11, #~(1<<6)		// and		\$0x30,	%r11		# ... mod 4
 	eor	v0.16b,  v0.16b,  v4.16b	// vpxor	%xmm4,	%xmm0, %xmm0	# 0 = 2A+3B+C+D
 	 eor	v8.16b,  v8.16b,  v12.16b
 	sub	w8, w8, #1			// nr--
@@ -683,8 +686,8 @@ _vpaes_schedule_core:
 
 .Lschedule_go:
 	cmp	$bits, #192			// cmp	\$192,	%esi
-	bhi	.Lschedule_256
-	beq	.Lschedule_192
+	b.hi	.Lschedule_256
+	b.eq	.Lschedule_192
 	// 128: fall though
 
 ##
@@ -1021,7 +1024,7 @@ _vpaes_schedule_mangle:
 .Lschedule_mangle_both:
 	tbl	v3.16b, {v3.16b}, v1.16b	// vpshufb	%xmm1,	%xmm3,	%xmm3
 	add	x8, x8, #64-16			// add	\$-16,	%r8
-	bic	x8, x8, #1<<6			// and	\$0x30,	%r8
+	and	x8, x8, #~(1<<6)		// and	\$0x30,	%r8
 	st1	{v3.2d}, [$out]			// vmovdqu	%xmm3,	(%rdx)
 	ret
 .size	_vpaes_schedule_mangle,.-_vpaes_schedule_mangle
