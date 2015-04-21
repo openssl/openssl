@@ -1,12 +1,5 @@
 #! /usr/bin/perl
 
-use strict;
-use warnings;
+use OpenSSL::Test::Simple;
 
-use Test::More;
-use OpenSSL::Test;
-
-setup("test_wp");
-
-plan tests => 1;
-ok(run(test(["wp_test"])), "running wp_test");
+simple_test("test_wp", "wptest", "wp");

@@ -1,12 +1,5 @@
 #! /usr/bin/perl
 
-use strict;
-use warnings;
+use OpenSSL::Test::Simple;
 
-use Test::More;
-use OpenSSL::Test;
-
-setup("test_heartbeat");
-
-plan tests => 1;
-ok(run(test(["heartbeat_test"])), "running heartbeat_test");
+simple_test("test_heartbeat", "heartbeat_test");
