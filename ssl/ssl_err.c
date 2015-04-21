@@ -126,6 +126,7 @@ static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM),
      "ssl3_check_cert_and_algorithm"},
     {ERR_FUNC(SSL_F_SSL3_CHECK_CLIENT_HELLO), "ssl3_check_client_hello"},
+    {ERR_FUNC(SSL_F_SSL3_CHECK_FINISHED), "SSL3_CHECK_FINISHED"},
     {ERR_FUNC(SSL_F_SSL3_CLIENT_HELLO), "ssl3_client_hello"},
     {ERR_FUNC(SSL_F_SSL3_CONNECT), "ssl3_connect"},
     {ERR_FUNC(SSL_F_SSL3_CTRL), "ssl3_ctrl"},
