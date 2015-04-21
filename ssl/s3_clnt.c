@@ -168,6 +168,9 @@
 #endif
 
 static int ca_dn_cmp(const X509_NAME *const *a, const X509_NAME *const *b);
+#ifndef OPENSSL_NO_TLSEXT
+static int ssl3_check_finished(SSL *s);
+#endif
 
 #ifndef OPENSSL_NO_SSL3_METHOD
 static const SSL_METHOD *ssl3_get_client_method(int ver)
@@ -317,6 +320,18 @@ int ssl3_connect(SSL *s)
             break;
         case SSL3_ST_CR_CERT_A:
         case SSL3_ST_CR_CERT_B:
+#ifndef OPENSSL_NO_TLSEXT
+            /* Noop (ret = 0) for everything but EAP-FAST. */
+            ret = ssl3_check_finished(s);
+            if (ret < 0)
+                goto end;
+            if (ret == 1) {
+                s->hit = 1;
+                s->state = SSL3_ST_CR_FINISHED_A;
+                s->init_num = 0;
+                break;
+            }
+#endif
             /* Check if it is anon DH/ECDH, SRP auth */
             /* or PSK */
             if (!
@@ -553,7 +568,8 @@ int ssl3_connect(SSL *s)
 
         case SSL3_ST_CR_FINISHED_A:
         case SSL3_ST_CR_FINISHED_B:
-            s->s3->flags |= SSL3_FLAGS_CCS_OK;
+            if (!s->s3->change_cipher_spec)
+                s->s3->flags |= SSL3_FLAGS_CCS_OK;
             ret = ssl3_get_finished(s, SSL3_ST_CR_FINISHED_A,
                                     SSL3_ST_CR_FINISHED_B);
             if (ret <= 0)
@@ -659,9 +675,17 @@ int ssl3_client_hello(SSL *s)
     buf = (unsigned char *)s->init_buf->data;
     if (s->state == SSL3_ST_CW_CLNT_HELLO_A) {
         SSL_SESSION *sess = s->session;
-        if ((sess == NULL) ||
-            (sess->ssl_version != s->version) ||
-            !sess->session_id_length || (sess->not_resumable)) {
+        if ((sess == NULL) || (sess->ssl_version != s->version) ||
+#ifdef OPENSSL_NO_TLSEXT
+            !sess->session_id_length ||
+#else
+            /*
+             * In the case of EAP-FAST, we can have a pre-shared
+             * "ticket" without a session ID.
+             */
+            (!sess->session_id_length && !sess->tlsext_tick) ||
+#endif
+            (sess->not_resumable)) {
             if (!ssl_get_new_session(s, 0))
                 goto err;
         }
@@ -952,10 +976,19 @@ int ssl3_get_server_hello(SSL *s)
     }
 #ifndef OPENSSL_NO_TLSEXT
     /*
-     * check if we want to resume the session based on external pre-shared
-     * secret
+     * Check if we can resume the session based on external pre-shared secret.
+     * EAP-FAST (RFC 4851) supports two types of session resumption.
+     * Resumption based on server-side state works with session IDs.
+     * Resumption based on pre-shared Protected Access Credentials (PACs)
+     * works by overriding the SessionTicket extension at the application
+     * layer, and does not send a session ID. (We do not know whether EAP-FAST
+     * servers would honour the session ID.) Therefore, the session ID alone
+     * is not a reliable indicator of session resumption, so we first check if
+     * we can resume, and later peek at the next handshake message to see if the
+     * server wants to resume.
      */
-    if (s->version >= TLS1_VERSION && s->tls_session_secret_cb) {
+    if (s->version >= TLS1_VERSION && s->tls_session_secret_cb &&
+        s->session->tlsext_tick) {
         SSL_CIPHER *pref_cipher = NULL;
         s->session->master_key_length = sizeof(s->session->master_key);
         if (s->tls_session_secret_cb(s, s->session->master_key,
@@ -964,12 +997,15 @@ int ssl3_get_server_hello(SSL *s)
                                      s->tls_session_secret_cb_arg)) {
             s->session->cipher = pref_cipher ?
                 pref_cipher : ssl_get_cipher_by_char(s, p + j);
-            s->hit = 1;
+        } else {
+            SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
+            al = SSL_AD_INTERNAL_ERROR;
+            goto f_err;
         }
     }
 #endif                          /* OPENSSL_NO_TLSEXT */
 
-    if (!s->hit && j != 0 && j == s->session->session_id_length
+    if (j != 0 && j == s->session->session_id_length
         && memcmp(p, s->session->session_id, j) == 0) {
         if (s->sid_ctx_length != s->session->sid_ctx_length
             || memcmp(s->session->sid_ctx, s->sid_ctx, s->sid_ctx_length)) {
@@ -980,12 +1016,13 @@ int ssl3_get_server_hello(SSL *s)
             goto f_err;
         }
         s->hit = 1;
-    }
-    /* a miss or crap from the other end */
-    if (!s->hit) {
+    } else {
         /*
-         * If we were trying for session-id reuse, make a new SSL_SESSION so
-         * we don't stuff up other people
+         * If we were trying for session-id reuse but the server
+         * didn't echo the ID, make a new SSL_SESSION.
+         * In the case of EAP-FAST and PAC, we do not send a session ID,
+         * so the PAC-based session secret is always preserved. It'll be
+         * overwritten if the server refuses resumption.
          */
         if (s->session->session_id_length > 0) {
             if (!ssl_get_new_session(s, 0)) {
@@ -3459,7 +3496,57 @@ int ssl3_check_cert_and_algorithm(SSL *s)
     return (0);
 }
 
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
+#ifndef OPENSSL_NO_TLSEXT
+/*
+ * Normally, we can tell if the server is resuming the session from
+ * the session ID. EAP-FAST (RFC 4851), however, relies on the next server
+ * message after the ServerHello to determine if the server is resuming.
+ * Therefore, we allow EAP-FAST to peek ahead.
+ * ssl3_check_finished returns 1 if we are resuming from an external
+ * pre-shared secret, we have a "ticket" and the next server handshake message
+ * is Finished; and 0 otherwise. It returns -1 upon an error.
+ */
+static int ssl3_check_finished(SSL *s)
+{
+    int ok = 0;
+
+    if (s->version < TLS1_VERSION || !s->tls_session_secret_cb ||
+        !s->session->tlsext_tick)
+        return 0;
+
+    /* Need to permit this temporarily, in case the next message is Finished. */
+    s->s3->flags |= SSL3_FLAGS_CCS_OK;
+    /*
+     * This function is called when we might get a Certificate message instead,
+     * so permit appropriate message length.
+     * We ignore the return value as we're only interested in the message type
+     * and not its length.
+     */
+    s->method->ssl_get_message(s,
+                               SSL3_ST_CR_CERT_A,
+                               SSL3_ST_CR_CERT_B,
+                               -1, s->max_cert_list, &ok);
+    s->s3->flags &= ~SSL3_FLAGS_CCS_OK;
+
+    if (!ok)
+        return -1;
+
+    s->s3->tmp.reuse_message = 1;
+
+    if (s->s3->tmp.message_type == SSL3_MT_FINISHED)
+        return 1;
+
+    /* If we're not done, then the CCS arrived early and we should bail. */
+    if (s->s3->change_cipher_spec) {
+        SSLerr(SSL_F_SSL3_CHECK_FINISHED, SSL_R_CCS_RECEIVED_EARLY);
+        ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_UNEXPECTED_MESSAGE);
+        return -1;
+    }
+
+    return 0;
+}
+
+# ifndef OPENSSL_NO_NEXTPROTONEG
 int ssl3_send_next_proto(SSL *s)
 {
     unsigned int len, padding_len;
@@ -3482,8 +3569,8 @@ int ssl3_send_next_proto(SSL *s)
 
     return ssl3_do_write(s, SSL3_RT_HANDSHAKE);
 }
-#endif                          /* !OPENSSL_NO_TLSEXT &&
-                                 * !OPENSSL_NO_NEXTPROTONEG */
+#endif                          /* !OPENSSL_NO_NEXTPROTONEG */
+#endif                          /* !OPENSSL_NO_TLSEXT */
 
 int ssl_do_client_cert_cb(SSL *s, X509 **px509, EVP_PKEY **ppkey)
 {
