@@ -300,6 +300,29 @@ elsif ($shlib && $FLAVOR =~ /CE/)
 	$lib_cflag.=" -D_DLL" if (!$fipscanisterbuild);
 	}
 
+sub do_rehash_rule {
+    my ($target, $deps) = @_;
+    my $ret = <<"EOF";
+$target: $deps
+	set OPENSSL=\$(BIN_D)${o}openssl.exe
+	set OPENSSL_DEBUG_MEMORY=on
+	\$(PERL) tools/c_rehash certs/demo
+EOF
+    return $ret
+}
+sub do_test_rule {
+    my ($target, $deps, $test_cmd) = @_;
+    my $ret = <<"EOF";
+$target: $deps force.$target
+	set TOP=.
+	set BIN_D=\$(BIN_D)
+	set TEST_D=\$(TEST_D)
+	set PERL=\$(PERL)
+	\$(PERL) test\\$test_cmd
+force.$target:
+EOF
+}
+
 sub do_lib_rule
 	{
 	my($objs,$target,$name,$shlib,$ign,$base_addr) = @_;
