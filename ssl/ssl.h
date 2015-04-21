@@ -2303,6 +2303,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL3_CHANGE_CIPHER_STATE                   129
 # define SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM              130
 # define SSL_F_SSL3_CHECK_CLIENT_HELLO                    304
+# define SSL_F_SSL3_CHECK_FINISHED                        339
 # define SSL_F_SSL3_CLIENT_HELLO                          131
 # define SSL_F_SSL3_CONNECT                               132
 # define SSL_F_SSL3_CTRL                                  213
