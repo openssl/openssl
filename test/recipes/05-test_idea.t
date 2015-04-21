@@ -1,12 +1,5 @@
 #! /usr/bin/perl
 
-use strict;
-use warnings;
+use OpenSSL::Test::Simple;
 
-use Test::More;
-use OpenSSL::Test;
-
-setup("test_idea");
-
-plan tests => 1;
-ok(run(test(["ideatest"])), "running ideatest");
+simple_test("test_idea", "ideatest", "idea");

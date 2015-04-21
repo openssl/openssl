@@ -1,12 +1,5 @@
 #! /usr/bin/perl
 
-use strict;
-use warnings;
+use OpenSSL::Test::Simple;
 
-use Test::More;
-use OpenSSL::Test;
-
-setup("test_sha256");
-
-plan tests => 1;
-ok(run(test(["sha256t"])), "running sha256t");
+simple_test("test_sha256", "sha256t", "sha256");

@@ -1,12 +1,5 @@
 #! /usr/bin/perl
 
-use strict;
-use warnings;
+use OpenSSL::Test::Simple;
 
-use Test::More;
-use OpenSSL::Test;
-
-setup("test_ecdh");
-
-plan tests => 1;
-ok(run(test(["ecdhtest"])), "running ecdhtest");
+simple_test("test_ecdh", "ecdhtest", "ecdh");

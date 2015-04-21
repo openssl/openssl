@@ -1,12 +1,5 @@
 #! /usr/bin/perl
 
-use strict;
-use warnings;
+use OpenSSL::Test::Simple;
 
-use Test::More;
-use OpenSSL::Test;
-
-setup("test_p5_crpt2");
-
-plan tests => 1;
-ok(run(test(["p5_crpt2_test"])), "running p5_crpt2_test");
+simple_test("test_p5_crpt2", "p5_crpt2_test");

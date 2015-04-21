@@ -1,12 +1,5 @@
 #! /usr/bin/perl
 
-use strict;
-use warnings;
+use OpenSSL::Test::Simple;
 
-use Test::More;
-use OpenSSL::Test;
-
-setup("test_rc5");
-
-plan tests => 1;
-ok(run(test(["rc5test"])), "running rc5test");
+simple_test("test_rc5", "rc5test", "rc5");

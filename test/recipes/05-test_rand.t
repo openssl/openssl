@@ -1,12 +1,5 @@
 #! /usr/bin/perl
 
-use strict;
-use warnings;
+use OpenSSL::Test::Simple;
 
-use Test::More;
-use OpenSSL::Test;
-
-setup("test_rand");
-
-plan tests => 1;
-ok(run(test(["randtest"])), "running randtest");
+simple_test("test_rand", "randtest", "rand");
