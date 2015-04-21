@@ -1499,13 +1499,13 @@ ___
 
 # EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
 #		CONTEXT *context,DISPATCHER_CONTEXT *disp)
-if ($win64) {
+if ($win64 && $avx) {
 $rec="%rcx";
 $frame="%rdx";
 $context="%r8";
 $disp="%r9";
 
-$code.=<<___ if ($avx);
+$code.=<<___;
 .extern	__imp_RtlVirtualUnwind
 .type	se_handler,\@abi-omnipotent
 .align	16
@@ -1643,7 +1643,7 @@ $code.=<<___ if ($shaext);
 	.rva	.LSEH_end_${func}_shaext
 	.rva	.LSEH_info_${func}_shaext
 ___
-$code.=<<___ if ($avx);
+$code.=<<___;
 .section	.xdata
 .align	8
 .LSEH_info_${func}_xop:
