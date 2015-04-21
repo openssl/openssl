@@ -1008,6 +1008,7 @@ int main(int argc, char *argv[])
     int fips_mode = 0;
 #endif
     int no_protocol = 0;
+    int n;
 
     SSL_CONF_CTX *s_cctx = NULL, *c_cctx = NULL;
     STACK_OF(OPENSSL_STRING) *conf_args = NULL;
@@ -1394,18 +1395,15 @@ int main(int argc, char *argv[])
         }
     }
     ssl_comp_methods = SSL_COMP_get_compression_methods();
-    fprintf(stderr, "Available compression methods:");
-    {
-        int j, n = sk_SSL_COMP_num(ssl_comp_methods);
-        if (n == 0)
-            fprintf(stderr, "  NONE\n");
-        else {
-            for (j = 0; j < n; j++) {
-                SSL_COMP *c = sk_SSL_COMP_value(ssl_comp_methods, j);
-                fprintf(stderr, "  %s:%d", c->name, c->id);
-            }
-            fprintf(stderr, "\n");
+    n = sk_SSL_COMP_num(ssl_comp_methods);
+    if (n) {
+        int j;
+        printf("Available compression methods:");
+        for (j = 0; j < n; j++) {
+            SSL_COMP *c = sk_SSL_COMP_value(ssl_comp_methods, j);
+            printf("  %s:%d", c->name, c->id);
         }
+        printf("\n");
     }
 #endif
 
@@ -1561,7 +1559,7 @@ int main(int argc, char *argv[])
     }
 
     if (client_auth) {
-        BIO_printf(bio_err, "client authentication\n");
+        printf("client authentication\n");
         SSL_CTX_set_verify(s_ctx,
                            SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
                            verify_callback);
@@ -1569,7 +1567,7 @@ int main(int argc, char *argv[])
                                          &app_verify_arg);
     }
     if (server_auth) {
-        BIO_printf(bio_err, "server authentication\n");
+        printf("server authentication\n");
         SSL_CTX_set_verify(c_ctx, SSL_VERIFY_PEER, verify_callback);
         SSL_CTX_set_cert_verify_callback(c_ctx, app_verify_callback,
                                          &app_verify_arg);
@@ -1746,6 +1744,7 @@ int main(int argc, char *argv[])
     }
 #endif                          /* OPENSSL_NO_KRB5 */
 
+    BIO_printf(bio_stdout, "Doing handshakes=%d bytes=%ld\n", number, bytes);
     for (i = 0; i < number; i++) {
         if (!reuse) {
             if (!SSL_set_session(c_ssl, NULL)) {
@@ -1763,9 +1762,6 @@ int main(int argc, char *argv[])
     if (!verbose) {
         print_details(c_ssl, "");
     }
-    if ((i > 1) || (bytes > 1L))
-        BIO_printf(bio_stdout, "%d handshakes of %ld bytes done\n", i,
-                   bytes);
     if (print_time) {
 #ifdef CLOCKS_PER_SEC
         /*
@@ -2493,7 +2489,7 @@ static int verify_callback(int ok, X509_STORE_CTX *ctx)
                           sizeof buf);
     if (s != NULL) {
         if (ok)
-            fprintf(stderr, "depth=%d %s\n", ctx->error_depth, buf);
+            printf("depth=%d %s\n", ctx->error_depth, buf);
         else {
             fprintf(stderr, "depth=%d error=%d %s\n",
                     ctx->error_depth, ctx->error, buf);
@@ -2501,13 +2497,14 @@ static int verify_callback(int ok, X509_STORE_CTX *ctx)
     }
 
     if (ok == 0) {
-        fprintf(stderr, "Error string: %s\n",
-                X509_verify_cert_error_string(ctx->error));
         switch (ctx->error) {
+        default:
+            fprintf(stderr, "Error string: %s\n",
+                    X509_verify_cert_error_string(ctx->error));
+            break;
         case X509_V_ERR_CERT_NOT_YET_VALID:
         case X509_V_ERR_CERT_HAS_EXPIRED:
         case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
-            fprintf(stderr, "  ... ignored.\n");
             ok = 1;
         }
     }
@@ -2566,7 +2563,7 @@ static int verify_callback(int ok, X509_STORE_CTX *ctx)
                      * others.
                      */
 
-                    fprintf(stderr, "  Certificate proxy rights = %*.*s", i,
+                    printf("  Certificate proxy rights = %*.*s", i,
                             i, s);
                     while (i-- > 0) {
                         int c = *s++;
@@ -2584,15 +2581,15 @@ static int verify_callback(int ok, X509_STORE_CTX *ctx)
                 }
 
                 found_any = 0;
-                fprintf(stderr, ", resulting proxy rights = ");
+                printf(", resulting proxy rights = ");
                 for (i = 0; i < 26; i++)
                     if (letters[i]) {
-                        fprintf(stderr, "%c", i + 'A');
+                        printf("%c", i + 'A');
                         found_any = 1;
                     }
                 if (!found_any)
-                    fprintf(stderr, "none");
-                fprintf(stderr, "\n");
+                    printf("none");
+                printf("\n");
 
                 PROXY_CERT_INFO_EXTENSION_free(pci);
             }
@@ -2851,15 +2848,14 @@ static int app_verify_callback(X509_STORE_CTX *ctx, void *arg)
     if (cb_arg->app_verify) {
         char *s = NULL, buf[256];
 
-        fprintf(stderr, "In app_verify_callback, allowing cert. ");
-        fprintf(stderr, "Arg is: %s\n", cb_arg->string);
-        fprintf(stderr,
-                "Finished printing do we have a context? 0x%p a cert? 0x%p\n",
+        printf("In app_verify_callback, allowing cert. ");
+        printf("Arg is: %s\n", cb_arg->string);
+        printf("Finished printing do we have a context? 0x%p a cert? 0x%p\n",
                 (void *)ctx, (void *)ctx->cert);
         if (ctx->cert)
             s = X509_NAME_oneline(X509_get_subject_name(ctx->cert), buf, 256);
         if (s != NULL) {
-            fprintf(stderr, "cert depth=%d %s\n", ctx->error_depth, buf);
+            printf("cert depth=%d %s\n", ctx->error_depth, buf);
         }
         return (1);
     }
@@ -2878,15 +2874,15 @@ static int app_verify_callback(X509_STORE_CTX *ctx, void *arg)
             }
         }
 
-        fprintf(stderr, "  Initial proxy rights = ");
+        printf("  Initial proxy rights = ");
         for (i = 0; i < 26; i++)
             if (letters[i]) {
-                fprintf(stderr, "%c", i + 'A');
+                printf("%c", i + 'A');
                 found_any = 1;
             }
         if (!found_any)
-            fprintf(stderr, "none");
-        fprintf(stderr, "\n");
+            printf("none");
+        printf("\n");
 
         X509_STORE_CTX_set_ex_data(ctx,
                                    get_proxy_auth_ex_data_idx(), letters);
@@ -2911,11 +2907,10 @@ static int app_verify_callback(X509_STORE_CTX *ctx, void *arg)
             }
             if (!ok)
                 fprintf(stderr,
-                        "Proxy rights check with condition '%s' proved invalid\n",
+                        "Proxy rights check with condition '%s' invalid\n",
                         cb_arg->proxy_cond);
             else
-                fprintf(stderr,
-                        "Proxy rights check with condition '%s' proved valid\n",
+                printf("Proxy rights check with condition '%s' ok\n",
                         cb_arg->proxy_cond);
         }
     }
@@ -2935,16 +2930,14 @@ static RSA *tmp_rsa_cb(SSL *s, int is_export, int keylength)
             BIO_printf(bio_err, "Memory error...");
             goto end;
         }
-        BIO_printf(bio_err, "Generating temp (%d bit) RSA key...", keylength);
-        (void)BIO_flush(bio_err);
+        printf("Generating temp (%d bit) RSA key...", keylength);
         if (!RSA_generate_key_ex(rsa_tmp, keylength, bn, NULL)) {
             BIO_printf(bio_err, "Error generating key.");
             RSA_free(rsa_tmp);
             rsa_tmp = NULL;
         }
  end:
-        BIO_printf(bio_err, "\n");
-        (void)BIO_flush(bio_err);
+        printf("\n");
     }
     if (bn)
         BN_free(bn);
@@ -3174,31 +3167,29 @@ static int do_test_cipherlist(void)
     const SSL_CIPHER *ci, *tci = NULL;
 
 #ifndef OPENSSL_NO_SSL3
-    fprintf(stderr, "testing SSLv3 cipher list order: ");
     meth = SSLv3_method();
     tci = NULL;
     while ((ci = meth->get_cipher(i++)) != NULL) {
         if (tci != NULL)
             if (ci->id >= tci->id) {
+                fprintf(stderr, "testing SSLv3 cipher list order: ");
                 fprintf(stderr, "failed %lx vs. %lx\n", ci->id, tci->id);
                 return 0;
             }
         tci = ci;
     }
-    fprintf(stderr, "ok\n");
 #endif
-    fprintf(stderr, "testing TLSv1 cipher list order: ");
     meth = TLSv1_method();
     tci = NULL;
     while ((ci = meth->get_cipher(i++)) != NULL) {
         if (tci != NULL)
             if (ci->id >= tci->id) {
+                fprintf(stderr, "testing TLSv1 cipher list order: ");
                 fprintf(stderr, "failed %lx vs. %lx\n", ci->id, tci->id);
                 return 0;
             }
         tci = ci;
     }
-    fprintf(stderr, "ok\n");
 
     return 1;
 }
