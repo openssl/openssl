@@ -1789,6 +1789,8 @@ __owur int SSL_COMP_add_compression_method(int id, void *cm);
 # endif
 
 const SSL_CIPHER *SSL_CIPHER_find(SSL *ssl, const unsigned char *ptr);
+int SSL_CIPHER_get_cipher_nid(const SSL_CIPHER *c);
+int SSL_CIPHER_get_digest_nid(const SSL_CIPHER *c);
 
 /* TLS extensions functions */
 __owur int SSL_set_session_ticket_ext(SSL *s, void *ext_data, int ext_len);
