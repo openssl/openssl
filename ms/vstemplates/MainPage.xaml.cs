@@ -6,7 +6,7 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
-#if WINDOWS_APP
+#if WINDOWS_APP || WINDOWS_UAP
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
@@ -55,7 +55,7 @@ namespace OpenSSLTestApp
         }
     }
     public partial class MainPage
-#if WINDOWS_APP
+#if WINDOWS_APP || WINDOWS_UAP
         : Page
 #else
         : PhoneApplicationPage
@@ -72,7 +72,7 @@ namespace OpenSSLTestApp
         }
         private void updateRun(object sender, string testrun, int errorcode, double time)
         {
-#if WINDOWS_APP
+#if WINDOWS_APP || WINDOWS_UAP
             Tests.Dispatcher.RunAsync( CoreDispatcherPriority.Normal, () =>
 #else
             Tests.Dispatcher.BeginInvoke(() =>
@@ -98,7 +98,7 @@ namespace OpenSSLTestApp
             } );
             RunTests.IsEnabled = true;
             if (anyError != 0 || errorlevel !=0 )
-                Title.Text = "Errors ocurred...";
+                Title.Text = "Errors occurred...";
             else
                 Title.Text = "All tests passed!";
         }

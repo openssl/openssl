@@ -3,10 +3,18 @@ my $projectname="NT-$ARGV[0]-$ARGV[1]-$ARGV[2]-$ARGV[3]";
 my $guid = "$ARGV[4]";
 my $testguid = "$ARGV[5]";
 my $winrtguid = "$ARGV[6]";
-my $PlatformToolset="v120" ;
+my $PlatformToolset="v120";
 my $ToolsVersion="12.0";
 my $vstoolversion="";
-if($ARGV[1]=="8.1")
+my $winrt=1;
+if($ARGV[1]=="10.0")
+{
+  $ToolsVersion="14.0";
+  $PlatformToolset="v140";
+  $vstoolversion.="onecore10.0";
+  $winrt=0;
+}
+elsif($ARGV[1]=="8.1")
 {
   $ToolsVersion="12.0";
   if($ARGV[0]=~/Phone/)
@@ -34,29 +42,11 @@ else
     $vstoolversion.="ws8.0";
   }
 }
-#add makefile project and test project to solution
-open(my $solution, '>>', 'vsout\\openssl.sln') or die;
-
-print $solution 'Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "'."$projectname".'", "'."$projectname\\$projectname.vcxproj".'", "{'."$guid".'}"
-EndProject'."\r\n";
-
-print $solution 'Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "'."$projectname".'-winrtcomponent", "'."$projectname-winrtcomponent\\$projectname-winrtcomponent.vcxproj".'", "{'."$winrtguid".'}"
-'."\t".'ProjectSection(ProjectDependencies) = postProject
-'."\t\t{$guid} = {$guid}".'
-'."\t".'EndProjectSection
-EndProject'."\r\n";
-
-print $solution 'Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "'."$projectname".'-testapp", "'."$projectname-testapp\\$projectname-testapp.csproj".'", "{'."$testguid".'}"
-'."\t".'ProjectSection(ProjectDependencies) = postProject
-'."\t\t{$winrtguid} = {$winrtguid}".'
-'."\t".'EndProjectSection
-EndProject'."\r\n";
-
-close %solution;
 
 sub replaceInFile {
   my($input,$output,%hash) =@_;
-  open INPUT, $input or die "Cant Open $input";
+
+  open INPUT, $input or die "Can\'t open $input";
   my $inputFile="";
   while (<INPUT>) { $inputFile .= $_ }
   close INPUT;
@@ -106,8 +96,16 @@ sub replaceInFile {
     #$replacement{"WindowsSDK_MetadataPath"}="WindowsSDK_WindowsMetadata";
 
   }
-  replaceInFile("ms\\vstemplates\\OpenSSLTestApp$ARGV[0]$ARGV[1]\\OpenSSLTestApp.csproj","vsout\\$projectname-testapp\\$projectname-testapp.csproj", %replacement);
-  replaceInFile("ms\\vstemplates\\winrt$ARGV[0]$ARGV[1]\\winrt$ARGV[0]$ARGV[1].vcxproj","vsout\\$projectname-winrtcomponent\\$projectname-winrtcomponent.vcxproj", %replacement);
+  if ($winrt)
+  {
+    replaceInFile("ms\\vstemplates\\OpenSSLTestApp$ARGV[0]$ARGV[1]\\OpenSSLTestApp.csproj","vsout\\$projectname-testapp\\$projectname-testapp.csproj", %replacement);
+    replaceInFile("ms\\vstemplates\\winrt$ARGV[0]$ARGV[1]\\winrt$ARGV[0]$ARGV[1].vcxproj","vsout\\$projectname-winrtcomponent\\$projectname-winrtcomponent.vcxproj", %replacement);
+  }
+  else
+  {
+    replaceInFile("ms\\vstemplates\\OpenSSLTestApp$ARGV[0]$ARGV[1]\\OpenSSLTestApp.vcxproj","vsout\\$projectname-testapp\\$projectname-testapp.vcxproj", %replacement);
+    replaceInFile("ms\\vstemplates\\OpenSSLTestApp$ARGV[0]$ARGV[1]\\OpenSSLTestApp.vcxproj.filters","vsout\\$projectname-testapp\\$projectname-testapp.vcxproj.filters", %replacement);
+  }
   replaceInFile("ms\\vstemplates\\Makefile$ARGV[0]\\Makefile$ARGV[0].vcxproj", "vsout\\$projectname\\$projectname.vcxproj", %replacement);
 }
 
@@ -450,13 +448,20 @@ close $cpp;
 #generate VSProject
 sub addToProject{
   my ( $name ) = @_;
-    return"<Content Include=\"$name\" >\n<CopyToOutputDirectory>Always</CopyToOutputDirectory>\n</Content>\n";
+  if($winrt)
+  {
+    return"<Content Include=\"$name\" >\n\t<CopyToOutputDirectory>Always</CopyToOutputDirectory>\n</Content>\n";
+  }
+  else
+  {
+  return"<None Include=\"$name\">\n\t<DeploymentContent>true</DeploymentContent>\n</None>\n";
+  }
 }
 
 my @config=("Debug","Release");
 my @arch=("Win32","arm");
 my $rep="";
-push(@arch, "x64") if($ARGV[0]=~/Store/);
+push(@arch, "x64") if($ARGV[0]=~/Store|OneCore/);
 for my $_config (@config) {
    for my $_arch (@arch) {
       my $suffix=$ARGV[2]=~/Dll/?"dll":"";
@@ -492,8 +497,10 @@ $rep.=addToProject("\$(SolutionDir)\\..\\apps\\openssl.cnf");
 $rep.=addToProject("\$(SolutionDir)\\..\\apps\\server.pem");
 $rep.=addToProject("\$(SolutionDir)\\..\\apps\\client.pem");
 {
-  my $generated=<<'END_MESSAGE';
-  <Choose>
+  if($winrt)
+  {
+    my $generated=<<'END_MESSAGE';
+    <Choose>
     <When Condition=" '$(Platform)'=='x86' ">
       <PropertyGroup>
         <BuildConfiguration>Win32</BuildConfiguration>
@@ -509,15 +516,40 @@ $rep.=addToProject("\$(SolutionDir)\\..\\apps\\client.pem");
         <BuildConfiguration>arm</BuildConfiguration>
       </PropertyGroup>
     </When>
-  </Choose>
+    </Choose>
 END_MESSAGE
 
-  $generated.="<ItemGroup>$rep</ItemGroup>".
-  "<ItemGroup><ProjectReference Include=\"..\\$projectname-winrtcomponent\\$projectname-winrtcomponent.vcxproj\">\n".
+    $generated.="<ItemGroup>$rep</ItemGroup>".
+    "<ItemGroup><ProjectReference Include=\"..\\$projectname-winrtcomponent\\$projectname-winrtcomponent.vcxproj\">\n".
       "<Project>{$winrtguid}</Project>\n".
       "<Name>$projectname-winrtcomponent</Name>\n".
     "</ProjectReference></ItemGroup>";
 
-my (%replacement)=('<!--GeneratedData-->'=>$generated);
-  replaceInFile("vsout\\$projectname-testapp\\$projectname-testapp.csproj","vsout\\$projectname-testapp\\$projectname-testapp.csproj", %replacement);
+    my (%replacement)=('<!--GeneratedData-->'=>$generated);
+
+    replaceInFile("vsout\\$projectname-testapp\\$projectname-testapp.csproj","vsout\\$projectname-testapp\\$projectname-testapp.csproj", %replacement);
+  }
+  else
+  {
+    my $generated=<<'END_MESSAGE';
+    <PropertyGroup Condition="'$(Platform)'=='Win32'">
+        <BuildConfiguration>Win32</BuildConfiguration>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Platform)'=='ARM'">
+        <BuildConfiguration>ARM</BuildConfiguration>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Platform)'=='x64'">
+        <BuildConfiguration>x64</BuildConfiguration>
+    </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+END_MESSAGE
+
+    my (%replacement)=('<Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />'=>$generated);
+    replaceInFile("vsout\\$projectname-testapp\\$projectname-testapp.vcxproj","vsout\\$projectname-testapp\\$projectname-testapp.vcxproj", %replacement);
+
+    $generated="</AppxManifest>".
+        "$rep";
+    (%replacement)=('</AppxManifest>'=>$generated);
+    replaceInFile("vsout\\$projectname-testapp\\$projectname-testapp.vcxproj","vsout\\$projectname-testapp\\$projectname-testapp.vcxproj", %replacement);
+  }
 }

@@ -1,8 +1,10 @@
 /* winrt.cpp
+ * Copyright 2014 Microsoft Corporation
  * C++/CX Entropy/shims for Windows Phone/Windows Store platform
  * written by Alejandro Jimenez Martinez
  * (aljim@microsoft.com) for the OpenSSL project 2014.
  */
+
 #include <windows.h>
 #if defined(WINAPI_FAMILY)
 extern "C"
@@ -86,12 +88,14 @@ extern "C"
 		return NULL;
 		}
 #endif
+#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_ONECORE_APP)
 	void* GetModuleHandle(
 						 _In_opt_  LPCTSTR lpModuleName
 						 )
 		{
 		return NULL;
 		}
+#endif
 	//no log for phone
 	int RegisterEventSource(
 						   _In_  LPCTSTR lpUNCServerName,
@@ -142,12 +146,14 @@ extern "C"
 		return NULL;
 		}
 
+#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_ONECORE_APP)
 	BOOL WINAPI GetVersionEx(
 							_Inout_  LPOSVERSIONINFO lpVersionInfo
 							)
 		{
 		return 0;
 		}
+#endif
 	int GetObject(
 				 _In_   HGDIOBJ hgdiobj,
 				 _In_   int cbBuffer,
@@ -297,4 +303,4 @@ extern "C"
 	void *OPENSSL_UplinkTable [26]= {0};
 } //extern C
 
-#endif /*WINAPI_FAMILY_PARTITION(WINAPI_FAMIILY_PHONE_APP)*/
+#endif /*defined(OPENSSL_WINAPP)*/

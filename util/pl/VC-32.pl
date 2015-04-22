@@ -153,6 +153,15 @@ elsif ($FLAVOR =~ /STORE/)
     $dbg_cflags=$f.'d /Od -DDEBUG -D_DEBUG';
     $lflags="/nologo /APPCONTAINER";
     }
+elsif ($FLAVOR =~ /ONECORE/)
+{
+        #Windows OneCore
+    $base_cflags= " $mf_cflag";
+    my $f = ' /MD';
+    $opt_cflags=$f.' /Ox /O2 /Ob2';
+    $dbg_cflags=$f.'d /Od -DDEBUG -D_DEBUG';
+    $lflags="/nologo /APPCONTAINER";
+}
 else	# Win32
     {
     $base_cflags= " $mf_cflag";
@@ -197,7 +206,7 @@ $efile="/out:";
 $exep='.exe';
 
 #No exes allowed for Phone/Store, instead test binaries are compiled as DLLs and are tested via LoadPackagedLibrary
-if($FLAVOR =~ /PHONE|STORE/)
+if($FLAVOR =~ /PHONE|STORE|ONECORE/)
 	{
 	$exep=".dll";
 	}
@@ -223,7 +232,7 @@ if ($FLAVOR =~ /CE/)
 	$ex_libs.=' $(PORTSDK_LIBPATH)/portlib.lib'	if (defined($ENV{'PORTSDK_LIBPATH'}));
 	$ex_libs.=' /nodefaultlib coredll.lib corelibc.lib' if ($ENV{'TARGETCPU'} eq "X86");
 	}
-elsif($FLAVOR =~ /PHONE|STORE/)
+elsif($FLAVOR =~ /PHONE|STORE|ONECORE/)
 	{
 		#All Phone/Store API are unicode
 	}
@@ -245,10 +254,10 @@ $shlibp=($shlib)?".dll":".lib";
 $lfile='/out:';
 
 $shlib_ex_obj="";
-$app_ex_obj="setargv.obj" if ($FLAVOR !~ /CE/ and $FLAVOR !~/PHONE/ and $FLAVOR !~/STORE/);
+$app_ex_obj="setargv.obj" if ($FLAVOR !~ /CE/ and $FLAVOR !~/PHONE/ and $FLAVOR !~/STORE/ and $FLAVOR !~/ONECORE/);
 
 #link C++/CX object for WinPhone/Store
-if ($FLAVOR =~ /PHONE|STORE/) {
+if ($FLAVOR =~ /PHONE|STORE|ONECORE/) {
 	$shlib_ex_obj=$app_ex_obj="\$(OBJ_D)\\winrt.obj";
 }
 if ($FLAVOR =~ /WIN64A/) {
@@ -422,9 +431,9 @@ sub do_link_rule
 		$ret.="\t\$(FIPSLINK) \$(LFLAGS) /map $efile$target @<<\n";
 		$ret.="\t\$(APP_EX_OBJ) $files \$(OBJ_D)${o}fips_premain.obj $libs\n<<\n";
 		}
-	elsif ($FLAVOR =~ /PHONE|STORE/)
+	elsif ($FLAVOR =~ /PHONE|STORE|ONECORE/)
 		{
-		#compile exe as DLL for windows phone/store for testing binaries
+		#compile exe as DLL for windows phone/store/onecore for testing binaries
 		#$ret.="\t\$(MKLIB) /out:$target @<<\n";
 		#$ret.="\t$files \n<<\n";
 		$ret.="\t\$(LINK) /dll /EXPORT:winrt_main \$(LFLAGS) $efile$target @<<\n";
@@ -435,7 +444,7 @@ sub do_link_rule
 		$ret.="\t\$(LINK) \$(LFLAGS) $efile$target @<<\n";
 		$ret.="\t\$(APP_EX_OBJ) $files $libs\n<<\n";
 		}
-	$ret.="\tIF EXIST \$@.manifest mt -nologo -manifest \$@.manifest -outputresource:\$@;1\n\n" if (!($FLAVOR =~ /PHONE|STORE/));
+	$ret.="\tIF EXIST \$@.manifest mt -nologo -manifest \$@.manifest -outputresource:\$@;1\n\n" if (!($FLAVOR =~ /PHONE|STORE|ONECORE/));
 	return($ret);
 	}
 
