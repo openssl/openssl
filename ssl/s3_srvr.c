@@ -857,6 +857,7 @@ int ssl3_accept(SSL *s)
             goto end;
             /* break; */
 
+        case SSL_ST_ERR:
         default:
             SSLerr(SSL_F_SSL3_ACCEPT, SSL_R_UNKNOWN_STATE);
             ret = -1;
@@ -1489,8 +1490,10 @@ int ssl3_get_client_hello(SSL *s)
     if (0) {
  f_err:
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
-    }
  err:
+        s->state = SSL_ST_ERR;
+    }
+
     if (ciphers != NULL)
         sk_SSL_CIPHER_free(ciphers);
     return (ret);
