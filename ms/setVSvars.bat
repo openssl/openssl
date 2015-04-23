@@ -1,6 +1,38 @@
-@echo off
+REM @echo off
 call:set_%1
 exit /b
+:set_onecore10.0Win32
+	call:setVar _VS14VC VisualStudio14VC
+	call "%_VS14VC%vcvarsall" x86
+	set _VCPlatform=x86
+	set _VCLibPlat=
+	call:setEnv
+	goto :eof
+
+:set_onecore10.0x64
+	call:setVar _VS14VC VisualStudio14VC
+	call "%_VS14VC%vcvarsall" x64
+	set _VCPlatform=x64
+	set _VCLibPlat=amd64
+	call:setEnv
+	goto :eof
+
+:set_onecore10.0arm
+	call:setVar _VS14VC VisualStudio14VC
+	call "%_VS14VC%vcvarsall" x86_arm
+	set _VCPlatform=ARM
+	set _VCLibPlat=ARM
+	call:setEnv
+	goto :eof
+
+:set_onecore10.0arm64
+	call:setVar _VS14VC VisualStudio14VC
+	call "%_VS14VC%vcvarsall" x86_arm64
+	set _VCPlatform=ARM64
+	set _VCLibPlat=ARM64
+	call:setEnv
+	goto :eof
+
 :set_wp8.1arm
 	call:setVar _VS12VC VisualStudio12VC
 	call:setVar _WPKITS81 WindowsPhoneKits8.1
@@ -96,6 +128,17 @@ exit /b
 	call:setAppend VS120COMNTOOLS \..\..\VC _VS12VC
 	goto :eof
 
+:set_VS14VC
+	if not "%_VS14VC%"=="" goto :eof
+	call:setRegVar "HKEY_CURRENT_USER\Software\Microsoft\VisualStudio\14.0_Config\Setup\VC" ProductDir _VS14VC
+	if not "%_VS14VC%"=="" goto :eof
+	call:setRegVar "HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\14.0\Setup\VC" ProductDir _VS14VC
+	if not "%_VS14VC%"=="" goto :eof
+	call:setAppend VSSDK140Install \..\VC _VS14VC
+	if not "%_VS14VC%"=="" goto :eof
+	call:setAppend VS140COMNTOOLS \..\..\VC _VS14VC
+	goto :eof
+
 :set_WPKITS80
 	if not "%_WPKITS80%"=="" goto :eof
 	call:setRegVar "HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\Windows Phone\v8.0" InstallationFolder _WPKITS80
@@ -113,5 +156,30 @@ exit /b
 	call:setRegVar "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots" KitsRoot81 _WSKITS81
 	if not "%_WSKITS81%"=="" goto :eof
 	goto :eof
+
+:set_WOKITS10
+	if not "%_WOKITS10%"=="" goto :eof
+	call:setRegVar "HKLM\SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\Windows\v10.0" InstallationFolder _WOKITS10
+	if not "%_WOKITS10%"=="" goto :eof
+	goto :eof
+
+:set_WOKITS10VER
+	if not "%_WOKITS10VER%"=="" goto :eof
+	call:setRegVar "HKLM\SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\Windows\v10.0" ProductVersion _WOKITS10VER
+	set _WOKITS10VER=%_WOKITS10VER%.0
+	echo %_WOKITS10VER%
+	if not "%_WOKITS10VER%"=="" goto :eof
+	goto :eof
+
+:setEnv
+	call:setVar _VS14VC VisualStudio14VC
+	call:setVar _WOKITS10 WindowsKits10.0
+	call:setVar _WOKITS10VER WindowsKits10Version
+	set PATH=%_VS14VC\Bin%;%PATH%
+	set INCLUDE=%_VS14VC%\include;%_WOKITS10%\Include\%_WOKITS10VER%\um;%_WOKITS10%\Include\%_WOKITS10VER%\shared;%_WOKITS10%\Include\%_WOKITS10VER%\winrt;%_WOKITS10%\Include\ucrt;
+	set LIB=%_VS14VC%\lib\store\%_VCLibPlat%;%_WOKITS10%\lib\%_WOKITS10VER%\um\%_VCPlatform%;%_WOKITS10%\Lib\winv10.0\ucrt\%_VCPlatform%;
+	set LIBPATH=%_WOKITS10%\UnionMetadata;%_VS14VC%\vcpackages;
+	goto :eof
+
 :end
 

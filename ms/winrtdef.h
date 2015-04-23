@@ -13,20 +13,30 @@
 # ifdef setenv
 #  undef setenv
 # endif
-# ifdef LoadLibraryA
-#  undef LoadLibraryA
-# endif
-# ifdef GetTickCount
-#  undef GetTickCount
-# endif
+#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_ONECORE_APP)
 # ifdef FindFirstFile
 #  undef FindFirstFile
 # endif
+# define FindFirstFile(lpFileName, lpFindFileData) FindFirstFileEx(lpFileName, FindExInfoStandard, lpFindFileData, FindExSearchNameMatch, NULL, 0);
+# ifdef GetTickCount
+#  undef GetTickCount
+# endif
+# define GetTickCount winrt_GetTickCount
+# ifdef LoadLibraryA
+#  undef LoadLibraryA
+# define LoadLibraryA winrt_LoadLibraryA
+# endif
+# ifdef GetModuleHandle
+#   undef GetModuleHandle
+# define GetModuleHandle winrt_GetModuleHandle
+# endif
+# ifdef GetModuleHandle
+#   undef GetModuleHandle
+# define GetModuleHandle winrt_GetModuleHandle
+# endif
+#endif
 # define getenv winrt_getenv
 # define setenv winrt_getenv
-# define LoadLibraryA winrt_LoadLibraryA
-# define GetTickCount winrt_GetTickCount
-# define FindFirstFile(lpFileName, lpFindFileData) FindFirstFileEx(lpFileName, FindExInfoStandard, lpFindFileData, FindExSearchNameMatch, NULL, 0);
 
 int winrt_GetTickCount(void);
 
@@ -41,7 +51,7 @@ int MoveFile(
     const wchar_t* lpNewFileName
     );
 
-void* GetModuleHandle(
+void* winrt_GetModuleHandle(
     const wchar_t* lpModuleName
     );
 

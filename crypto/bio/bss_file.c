@@ -309,9 +309,25 @@ static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
 #   endif
 #   if defined(_IOB_ENTRIES)
         /* Safety net to catch purely internal BIO_set_fp calls */
+#    if defined(OPENSSL_WINUCRT)
+        /* On Windows with the new Universal CRT, we only have
+         * 3 IOB entries. They are not in an array but require a
+         * function call to look up the value. This code compares
+         * each pointer with the IOB entries to see if we need to
+         * pass it through */
+        for (int i = 0; i < _IOB_ENTRIES; i++)
+        {
+            if (ptr == __acrt_iob_func(i))
+            {
+                BIO_clear_flags(b, BIO_FLAGS_UPLINK);
+                break;
+            }
+        }
+#    else
         if ((size_t)ptr >= (size_t)stdin &&
             (size_t)ptr < (size_t)(stdin + _IOB_ENTRIES))
             BIO_clear_flags(b, BIO_FLAGS_UPLINK);
+#    endif
 #   endif
 #  endif
 #  ifdef UP_fsetmod
