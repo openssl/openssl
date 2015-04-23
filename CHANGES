@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.2 and 1.0.2a [xx XXX xxxx]
+ Changes between 1.0.2 and 1.0.2a [19 Mar 2015]
 
   *) ClientHello sigalgs DoS fix
 
