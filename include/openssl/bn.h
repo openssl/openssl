@@ -268,6 +268,7 @@ extern "C" {
  * BN_mod_inverse() will call BN_mod_inverse_no_branch.
  */
 # define BN_FLG_CONSTTIME        0x04
+# define BN_FLG_SECURE           0x08
 
 # ifdef OPENSSL_USE_DEPRECATED
 /* deprecated name for the flag */
@@ -349,6 +350,7 @@ void BN_zero_ex(BIGNUM *a);
 const BIGNUM *BN_value_one(void);
 char *BN_options(void);
 BN_CTX *BN_CTX_new(void);
+BN_CTX *BN_CTX_secure_new(void);
 void BN_CTX_free(BN_CTX *c);
 void BN_CTX_start(BN_CTX *ctx);
 BIGNUM *BN_CTX_get(BN_CTX *ctx);
@@ -361,6 +363,7 @@ int BN_num_bits(const BIGNUM *a);
 int BN_num_bits_word(BN_ULONG l);
 int BN_security_bits(int L, int N);
 BIGNUM *BN_new(void);
+BIGNUM *BN_secure_new(void);
 void BN_clear_free(BIGNUM *a);
 BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b);
 void BN_swap(BIGNUM *a, BIGNUM *b);

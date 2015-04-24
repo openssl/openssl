@@ -232,8 +232,12 @@ void BN_clear_free(BIGNUM *a)
     bn_check_top(a);
     if (a->d != NULL) {
         OPENSSL_cleanse(a->d, a->dmax * sizeof(a->d[0]));
-        if (!(BN_get_flags(a, BN_FLG_STATIC_DATA)))
-            OPENSSL_free(a->d);
+        if (!(BN_get_flags(a, BN_FLG_STATIC_DATA))) {
+            if (BN_get_flags(a,BN_FLG_SECURE))
+                OPENSSL_secure_free(a->d);
+            else
+                OPENSSL_free(a->d);
+        }
     }
     i = BN_get_flags(a, BN_FLG_MALLOCED);
     OPENSSL_cleanse(a, sizeof(BIGNUM));
@@ -247,7 +251,12 @@ void BN_free(BIGNUM *a)
         return;
     bn_check_top(a);
     if (!BN_get_flags(a, BN_FLG_STATIC_DATA))
-        OPENSSL_free(a->d);
+    if ((a->d != NULL) && !(BN_get_flags(a, BN_FLG_STATIC_DATA))) {
+        if (BN_get_flags(a, BN_FLG_SECURE))
+            OPENSSL_secure_free(a->d);
+        else
+            OPENSSL_free(a->d);
+    }
     if (a->flags & BN_FLG_MALLOCED)
         OPENSSL_free(a);
     else {
@@ -281,6 +290,14 @@ BIGNUM *BN_new(void)
     return (ret);
 }
 
+ BIGNUM *BN_secure_new(void)
+ {
+     BIGNUM *ret = BN_new();
+     if (ret)
+         ret->flags |= BN_FLG_SECURE;
+     return (ret);
+ }
+
 /* This is used both by bn_expand2() and bn_dup_expand() */
 /* The caller MUST check that words > b->dmax before calling this */
 static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
@@ -299,7 +316,10 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
         BNerr(BN_F_BN_EXPAND_INTERNAL, BN_R_EXPAND_ON_STATIC_BIGNUM_DATA);
         return (NULL);
     }
-    a = A = OPENSSL_malloc(sizeof(*a) * words);
+    if (BN_get_flags(b,BN_FLG_SECURE))
+        a = A = OPENSSL_secure_malloc(words * sizeof(*a));
+    else
+        a = A = OPENSSL_malloc(words * sizeof(*a));
     if (A == NULL) {
         BNerr(BN_F_BN_EXPAND_INTERNAL, ERR_R_MALLOC_FAILURE);
         return (NULL);
@@ -378,7 +398,12 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
         BN_ULONG *a = bn_expand_internal(b, words);
         if (!a)
             return NULL;
-        OPENSSL_free(b->d);
+        if (b->d) {
+            if (BN_get_flags(b,BN_FLG_SECURE))
+                OPENSSL_secure_free(b->d);
+            else
+                OPENSSL_free(b->d);
+        }
         b->d = a;
         b->dmax = words;
     }
@@ -395,7 +420,7 @@ BIGNUM *BN_dup(const BIGNUM *a)
         return NULL;
     bn_check_top(a);
 
-    t = BN_new();
+    t = BN_get_flags(a, BN_FLG_SECURE) ? BN_secure_new() : BN_new();
     if (t == NULL)
         return NULL;
     if (!BN_copy(t, a)) {

@@ -78,9 +78,13 @@ struct buf_mem_st {
     size_t length;              /* current number of bytes */
     char *data;
     size_t max;                 /* size of buffer */
+    unsigned long flags;
 };
 
+# define BUF_MEM_FLAG_SECURE  0x01
+
 BUF_MEM *BUF_MEM_new(void);
+BUF_MEM *BUF_MEM_new_ex(unsigned long flags);
 void BUF_MEM_free(BUF_MEM *a);
 size_t BUF_MEM_grow(BUF_MEM *str, size_t len);
 size_t BUF_MEM_grow_clean(BUF_MEM *str, size_t len);

@@ -85,12 +85,12 @@ ASN1_SEQUENCE_cb(RSAPrivateKey, rsa_cb) = {
         ASN1_SIMPLE(RSA, version, LONG),
         ASN1_SIMPLE(RSA, n, BIGNUM),
         ASN1_SIMPLE(RSA, e, BIGNUM),
-        ASN1_SIMPLE(RSA, d, BIGNUM),
-        ASN1_SIMPLE(RSA, p, BIGNUM),
-        ASN1_SIMPLE(RSA, q, BIGNUM),
-        ASN1_SIMPLE(RSA, dmp1, BIGNUM),
-        ASN1_SIMPLE(RSA, dmq1, BIGNUM),
-        ASN1_SIMPLE(RSA, iqmp, BIGNUM)
+        ASN1_SIMPLE(RSA, d, CBIGNUM),
+        ASN1_SIMPLE(RSA, p, CBIGNUM),
+        ASN1_SIMPLE(RSA, q, CBIGNUM),
+        ASN1_SIMPLE(RSA, dmp1, CBIGNUM),
+        ASN1_SIMPLE(RSA, dmq1, CBIGNUM),
+        ASN1_SIMPLE(RSA, iqmp, CBIGNUM)
 } ASN1_SEQUENCE_END_cb(RSA, RSAPrivateKey)
 
 

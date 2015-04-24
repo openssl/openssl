@@ -4573,3 +4573,17 @@ PKCS5_pbe2_set_scrypt                   4931	EXIST::FUNCTION:
 PKCS8_set0_pbe                          4932	EXIST::FUNCTION:
 DH_bits                                 4933	EXIST::FUNCTION:DH
 RSA_bits                                4934	EXIST::FUNCTION:RSA
+CRYPTO_set_secure_mem_ex_functions      4935	EXIST::FUNCTION:
+CRYPTO_secure_allocated                 4936	EXIST::FUNCTION:
+BN_CTX_secure_new                       4937	EXIST::FUNCTION:
+CRYPTO_secure_malloc                    4938	EXIST::FUNCTION:
+CRYPTO_secure_malloc_done               4939	EXIST::FUNCTION:
+BUF_MEM_new_ex                          4940	EXIST::FUNCTION:
+CRYPTO_secure_malloc_initialized        4941	EXIST::FUNCTION:
+CRYPTO_secure_malloc_init               4942	EXIST::FUNCTION:
+CRYPTO_get_secure_mem_functions         4943	EXIST::FUNCTION:
+BN_secure_new                           4944	EXIST::FUNCTION:
+CRYPTO_secure_free                      4945	EXIST::FUNCTION:
+BIO_s_secmem                            4946	EXIST::FUNCTION:
+CRYPTO_get_secure_mem_ex_functions      4947	EXIST::FUNCTION:
+CRYPTO_set_secure_mem_functions         4948	EXIST::FUNCTION:

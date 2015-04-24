@@ -14,6 +14,7 @@ bn - multiprecision integer arithmetics
  void BN_clear_free(BIGNUM *a);
 
  BN_CTX *BN_CTX_new(void);
+ BN_CTX *BN_CTX_secure_new(void);
  void BN_CTX_free(BN_CTX *c);
 
  BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b);

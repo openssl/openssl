@@ -245,7 +245,8 @@ static int dsa_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
     if ((dsa = d2i_DSAparams(NULL, &pm, pmlen)) == NULL)
         goto decerr;
     /* We have parameters now set private key */
-    if ((dsa->priv_key = ASN1_INTEGER_to_BN(privkey, NULL)) == NULL) {
+    if ((dsa->priv_key = BN_secure_new()) == NULL
+        || !ASN1_INTEGER_to_BN(privkey, dsa->priv_key)) {
         DSAerr(DSA_F_DSA_PRIV_DECODE, DSA_R_BN_ERROR);
         goto dsaerr;
     }

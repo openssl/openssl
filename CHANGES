@@ -126,6 +126,11 @@
         NULL.  Remove the non-null checks from callers.  Save much code.
      [Rich Salz]
 
+  *) Add secure heap for storage of private keys (when possible).
+     Add BIO_s_secmem(), CBIGNUM, etc.
+     Contributed by Akamai Technologies under our Corporate CLA.
+     [Rich Salz]
+
   *) Experimental support for a new, fast, unbiased prime candidate generator,
      bn_probable_prime_dh_coprime(). Not currently used by any prime generator.
      [Felix Laurie von Massenbach <felix@erbridge.co.uk>]

@@ -63,6 +63,7 @@ EVPEXTRATEST=evp_extra_test
 P5_CRPT2_TEST=	p5_crpt2_test
 IGETEST=	igetest
 JPAKETEST=	jpaketest
+SECMEMTEST=	secmemtest
 SRPTEST=	srptest
 V3NAMETEST=	v3nametest
 HEARTBEATTEST=  heartbeat_test
@@ -80,7 +81,8 @@ EXE=	$(BNTEST)$(EXE_EXT) $(ECTEST)$(EXE_EXT)  $(ECDSATEST)$(EXE_EXT) $(ECDHTEST)
 	$(BFTEST)$(EXE_EXT) $(CASTTEST)$(EXE_EXT) $(SSLTEST)$(EXE_EXT) \
 	$(EXPTEST)$(EXE_EXT) $(DSATEST)$(EXE_EXT) $(RSATEST)$(EXE_EXT) \
 	$(EVPTEST)$(EXE_EXT) $(EVPEXTRATEST)$(EXE_EXT) $(IGETEST)$(EXE_EXT) \
-	$(JPAKETEST)$(EXE_EXT) $(SRPTEST)$(EXE_EXT) $(V3NAMETEST)$(EXE_EXT) \
+	$(JPAKETEST)$(EXE_EXT) $(SECMEMTEST)$(EXE_EXT) \
+	$(SRPTEST)$(EXE_EXT) $(V3NAMETEST)$(EXE_EXT) \
 	$(HEARTBEATTEST)$(EXE_EXT) $(P5_CRPT2_TEST)$(EXE_EXT) \
 	$(CONSTTIMETEST)$(EXE_EXT)
 
@@ -145,7 +147,8 @@ alltests: \
 	test_enc test_x509 test_rsa test_crl test_sid \
 	test_gen test_req test_pkcs7 test_verify test_dh test_dsa \
 	test_ss test_ca test_engine test_evp test_evp_extra test_ssl test_tsa \
-	test_ige test_jpake test_srp test_cms test_v3name test_ocsp \
+	test_ige test_jpake test_secmem \
+	test_srp test_cms test_v3name test_ocsp \
 	test_gost2814789 test_heartbeat test_p5_crpt2 \
 	test_constant_time
 
@@ -372,6 +375,10 @@ test_cms: ../apps/openssl$(EXE_EXT) cms-test.pl smcont.txt
 	@echo $(START) $@
 	$(PERL) cms-test.pl
 
+test_secmem: $(SECMEMTEST)$(EXE_EXT)
+	@echo $(START) $@
+	../util/shlib_wrap.sh ./secmemtest
+
 test_srp: $(SRPTEST)$(EXE_EXT)
 	@echo $(START) $@
 	../util/shlib_wrap.sh ./srptest
@@ -563,6 +570,9 @@ $(IGETEST)$(EXE_EXT): $(IGETEST).o $(DLIBCRYPTO)
 
 $(JPAKETEST)$(EXE_EXT): $(JPAKETEST).o $(DLIBCRYPTO)
 	@target=$(JPAKETEST); $(BUILD_CMD)
+
+$(SECMEMTEST)$(EXE_EXT): $(SECMEMTEST).o $(DLIBCRYPTO)
+	@target=$(SECMEMTEST); $(BUILD_CMD)
 
 $(SRPTEST)$(EXE_EXT): $(SRPTEST).o $(DLIBCRYPTO)
 	@target=$(SRPTEST); $(BUILD_CMD)
