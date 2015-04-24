@@ -765,6 +765,7 @@ static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
     EC_POINT *P = NULL, *T = NULL;
     const EC_POINT *generator;
     EC_PRE_COMP *pre_comp;
+    BN_CTX *new_ctx = NULL;
     int i, j, k, ret = 0;
     size_t w;
 
@@ -794,7 +795,7 @@ static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
         return 0;
 
     if (ctx == NULL) {
-        ctx = BN_CTX_new();
+        ctx = new_ctx = BN_CTX_new();
         if (ctx == NULL)
             goto err;
     }
@@ -825,15 +826,19 @@ static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
 
     P = EC_POINT_new(group);
     T = EC_POINT_new(group);
+    if (P == NULL || T == NULL)
+        goto err;
 
     /*
      * The zero entry is implicitly infinity, and we skip it, storing other
      * values with -1 offset.
      */
-    EC_POINT_copy(T, generator);
+    if (!EC_POINT_copy(T, generator))
+        goto err;
 
     for (k = 0; k < 64; k++) {
-        EC_POINT_copy(P, T);
+        if (!EC_POINT_copy(P, T))
+            goto err;
         for (j = 0; j < 37; j++) {
             P256_POINT_AFFINE temp;
             /*
@@ -871,6 +876,8 @@ static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
  err:
     if (ctx != NULL)
         BN_CTX_end(ctx);
+    BN_CTX_free(new_ctx);
+
     ecp_nistz256_pre_comp_free(pre_comp);
     if (precomp_storage)
         OPENSSL_free(precomp_storage);
