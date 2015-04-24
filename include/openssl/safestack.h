@@ -2251,24 +2251,6 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_BLOCK, void)
   LHM_lh_stats_bio(ERR_STRING_DATA,lh,out)
 # define lh_ERR_STRING_DATA_free(lh) LHM_lh_free(ERR_STRING_DATA,lh)
 
-# define lh_EX_CLASS_ITEM_new() LHM_lh_new(EX_CLASS_ITEM,ex_class_item)
-# define lh_EX_CLASS_ITEM_insert(lh,inst) LHM_lh_insert(EX_CLASS_ITEM,lh,inst)
-# define lh_EX_CLASS_ITEM_retrieve(lh,inst) LHM_lh_retrieve(EX_CLASS_ITEM,lh,inst)
-# define lh_EX_CLASS_ITEM_delete(lh,inst) LHM_lh_delete(EX_CLASS_ITEM,lh,inst)
-# define lh_EX_CLASS_ITEM_doall(lh,fn) LHM_lh_doall(EX_CLASS_ITEM,lh,fn)
-# define lh_EX_CLASS_ITEM_doall_arg(lh,fn,arg_type,arg) \
-  LHM_lh_doall_arg(EX_CLASS_ITEM,lh,fn,arg_type,arg)
-# define lh_EX_CLASS_ITEM_error(lh) LHM_lh_error(EX_CLASS_ITEM,lh)
-# define lh_EX_CLASS_ITEM_num_items(lh) LHM_lh_num_items(EX_CLASS_ITEM,lh)
-# define lh_EX_CLASS_ITEM_down_load(lh) LHM_lh_down_load(EX_CLASS_ITEM,lh)
-# define lh_EX_CLASS_ITEM_node_stats_bio(lh,out) \
-  LHM_lh_node_stats_bio(EX_CLASS_ITEM,lh,out)
-# define lh_EX_CLASS_ITEM_node_usage_stats_bio(lh,out) \
-  LHM_lh_node_usage_stats_bio(EX_CLASS_ITEM,lh,out)
-# define lh_EX_CLASS_ITEM_stats_bio(lh,out) \
-  LHM_lh_stats_bio(EX_CLASS_ITEM,lh,out)
-# define lh_EX_CLASS_ITEM_free(lh) LHM_lh_free(EX_CLASS_ITEM,lh)
-
 # define lh_FUNCTION_new() LHM_lh_new(FUNCTION,function)
 # define lh_FUNCTION_insert(lh,inst) LHM_lh_insert(FUNCTION,lh,inst)
 # define lh_FUNCTION_retrieve(lh,inst) LHM_lh_retrieve(FUNCTION,lh,inst)
