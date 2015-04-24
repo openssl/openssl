@@ -363,7 +363,8 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 
     p = (unsigned char *)s->init_buf->data;
 
-    if (s->state == st1) {      /* s->init_num < 4 */
+    if (s->state == st1) {
+        /* s->init_num < SSL3_HM_HEADER_LENGTH */
         int skip_message;
 
         do {
@@ -393,12 +394,11 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 
                         if (s->msg_callback)
                             s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE,
-                                            p, 4, s, s->msg_callback_arg);
+                                            p, SSL3_HM_HEADER_LENGTH, s,
+                                            s->msg_callback_arg);
                     }
-        }
-        while (skip_message);
-
-        /* s->init_num == 4 */
+        } while (skip_message);
+        /* s->init_num == SSL3_HM_HEADER_LENGTH */
 
         if ((mt >= 0) && (*p != mt)) {
             al = SSL_AD_UNEXPECTED_MESSAGE;
@@ -441,7 +441,8 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
                 SSLerr(SSL_F_SSL3_GET_MESSAGE, SSL_R_EXCESSIVE_MESSAGE_SIZE);
                 goto f_err;
             }
-            if (l && !BUF_MEM_grow_clean(s->init_buf, (int)l + 4)) {
+            if (l && !BUF_MEM_grow_clean(s->init_buf,
+                                        (int)l + SSL3_HM_HEADER_LENGTH)) {
                 SSLerr(SSL_F_SSL3_GET_MESSAGE, ERR_R_BUF_LIB);
                 goto err;
             }
@@ -480,12 +481,6 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
     /* Feed this message into MAC computation. */
     if(RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
         ssl3_finish_mac(s, (unsigned char *)s->init_buf->data, s->init_num);
-        /*
-         * In previous versions we would have rewritten the SSLv2 record into
-         * something that looked like a SSLv3+ record and passed that to the
-         * callback. As we're not doing the rewriting anymore it's not clear
-         * what we should do here.
-         */
         if (s->msg_callback)
             s->msg_callback(0, SSL2_VERSION, 0,  s->init_buf->data,
                             (size_t)s->init_num, s, s->msg_callback_arg);

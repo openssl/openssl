@@ -1124,7 +1124,7 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
         goto f_err;
     }
 
-    if(s->version == TLS_ANY_VERSION
+    if(s->method->version == TLS_ANY_VERSION
             && (s->server || rr->type != SSL3_RT_ALERT)) {
         /*
          * If we've got this far and still haven't decided on what version
@@ -1493,11 +1493,18 @@ void ssl3_record_sequence_update(unsigned char *seq)
     }
 }
 
+/*
+ * Returns true if the current rrec was sent in SSLv2 backwards compatible
+ * format and false otherwise.
+ */
 int RECORD_LAYER_is_sslv2_record(RECORD_LAYER *rl)
 {
     return SSL3_RECORD_is_sslv2_record(&rl->rrec);
 }
 
+/*
+ * Returns the length in bytes of the current rrec
+ */
 int RECORD_LAYER_get_rrec_length(RECORD_LAYER *rl)
 {
     return SSL3_RECORD_get_length(&rl->rrec);

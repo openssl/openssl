@@ -163,10 +163,15 @@
 # include <openssl/engine.h>
 #endif
 
+static int ssl_set_version(SSL *s);
 static int ca_dn_cmp(const X509_NAME *const *a, const X509_NAME *const *b);
 #ifndef OPENSSL_NO_TLSEXT
 static int ssl3_check_finished(SSL *s);
 #endif
+static int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk,
+                                    unsigned char *p,
+                                    int (*put_cb) (const SSL_CIPHER *,
+                                                 unsigned char *));
 
 #ifndef OPENSSL_NO_SSL3_METHOD
 static const SSL_METHOD *ssl3_get_client_method(int ver)
@@ -242,7 +247,8 @@ int ssl3_connect(SSL *s)
                 goto end;
             }
 
-            if (!ssl_security(s, SSL_SECOP_VERSION, 0, s->version, NULL)) {
+            if (s->version != TLS_ANY_VERSION &&
+                    !ssl_security(s, SSL_SECOP_VERSION, 0, s->version, NULL)) {
                 SSLerr(SSL_F_SSL3_CONNECT, SSL_R_VERSION_TOO_LOW);
                 return -1;
             }
@@ -669,6 +675,105 @@ int ssl3_connect(SSL *s)
     return (ret);
 }
 
+/*
+ * Work out what version we should be using for the initial ClientHello if
+ * the version is currently set to (D)TLS_ANY_VERSION.
+ * Returns 1 on success
+ * Returns 0 on error
+ */
+static int ssl_set_version(SSL *s)
+{
+    unsigned long mask, options = s->options;
+
+    if (s->method->version == TLS_ANY_VERSION) {
+        /*
+         * SSL_OP_NO_X disables all protocols above X *if* there are
+         * some protocols below X enabled. This is required in order
+         * to maintain "version capability" vector contiguous. So
+         * that if application wants to disable TLS1.0 in favour of
+         * TLS1>=1, it would be insufficient to pass SSL_NO_TLSv1, the
+         * answer is SSL_OP_NO_TLSv1|SSL_OP_NO_SSLv3.
+         */
+        mask = SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1
+#if !defined(OPENSSL_NO_SSL3)
+            | SSL_OP_NO_SSLv3
+#endif
+            ;
+#if !defined(OPENSSL_NO_TLS1_2_CLIENT)
+        if (options & SSL_OP_NO_TLSv1_2) {
+            if ((options & mask) != mask) {
+                s->version = TLS1_1_VERSION;
+            } else {
+                SSLerr(SSL_F_SSL_SET_VERSION, SSL_R_NO_PROTOCOLS_AVAILABLE);
+                return 0;
+            }
+        } else {
+            s->version = TLS1_2_VERSION;
+        }
+#else
+        if ((options & mask) == mask) {
+            SSLerr(SSL_F_SSL_SET_VERSION, SSL_R_NO_PROTOCOLS_AVAILABLE);
+            return 0;
+        }
+        s->version = TLS1_1_VERSION;
+#endif
+
+        mask &= ~SSL_OP_NO_TLSv1_1;
+        if ((options & SSL_OP_NO_TLSv1_1) && (options & mask) != mask)
+            s->version = TLS1_VERSION;
+        mask &= ~SSL_OP_NO_TLSv1;
+#if !defined(OPENSSL_NO_SSL3)
+        if ((options & SSL_OP_NO_TLSv1) && (options & mask) != mask)
+            s->version = SSL3_VERSION;
+#endif
+
+        if (s->version != TLS1_2_VERSION && tls1_suiteb(s)) {
+            SSLerr(SSL_F_SSL_SET_VERSION,
+                   SSL_R_ONLY_TLS_1_2_ALLOWED_IN_SUITEB_MODE);
+            return 0;
+        }
+
+        if (s->version == SSL3_VERSION && FIPS_mode()) {
+            SSLerr(SSL_F_SSL_SET_VERSION, SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE);
+            return 0;
+        }
+
+    } else if (s->method->version == DTLS_ANY_VERSION) {
+        /* Determine which DTLS version to use */
+        /* If DTLS 1.2 disabled correct the version number */
+        if (options & SSL_OP_NO_DTLSv1_2) {
+            if (tls1_suiteb(s)) {
+                SSLerr(SSL_F_SSL_SET_VERSION,
+                       SSL_R_ONLY_DTLS_1_2_ALLOWED_IN_SUITEB_MODE);
+                return 0;
+            }
+            /*
+             * Disabling all versions is silly: return an error.
+             */
+            if (options & SSL_OP_NO_DTLSv1) {
+                SSLerr(SSL_F_SSL_SET_VERSION, SSL_R_WRONG_SSL_VERSION);
+                return 0;
+            }
+            /*
+             * Update method so we don't use any DTLS 1.2 features.
+             */
+            s->method = DTLSv1_client_method();
+            s->version = DTLS1_VERSION;
+        } else {
+            /*
+             * We only support one version: update method
+             */
+            if (options & SSL_OP_NO_DTLSv1)
+                s->method = DTLSv1_2_client_method();
+            s->version = DTLS1_2_VERSION;
+        }
+    }
+
+    s->client_version = s->version;
+
+    return 1;
+}
+
 int ssl3_client_hello(SSL *s)
 {
     unsigned char *buf;
@@ -680,75 +785,14 @@ int ssl3_client_hello(SSL *s)
     int j;
     SSL_COMP *comp;
 #endif
-    unsigned long mask, options = s->options;
 
     buf = (unsigned char *)s->init_buf->data;
     if (s->state == SSL3_ST_CW_CLNT_HELLO_A) {
         SSL_SESSION *sess = s->session;
 
-        if (s->method->version == TLS_ANY_VERSION ) {
-            /*
-             * SSL_OP_NO_X disables all protocols above X *if* there are
-             * some protocols below X enabled. This is required in order
-             * to maintain "version capability" vector contiguous. So
-             * that if application wants to disable TLS1.0 in favour of
-             * TLS1>=1, it would be insufficient to pass SSL_NO_TLSv1, the
-             * answer is SSL_OP_NO_TLSv1|SSL_OP_NO_SSLv3.
-             */
-            mask = SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1
-#if !defined(OPENSSL_NO_SSL3)
-                | SSL_OP_NO_SSLv3
-#endif
-                ;
-#if !defined(OPENSSL_NO_TLS1_2_CLIENT)
-            s->version = TLS1_2_VERSION;
-
-            if ((options & SSL_OP_NO_TLSv1_2) && (options & mask) != mask)
-                s->version = TLS1_1_VERSION;
-#else
-            s->version = TLS1_1_VERSION;
-#endif
-            mask &= ~SSL_OP_NO_TLSv1_1;
-            if ((options & SSL_OP_NO_TLSv1_1) && (options & mask) != mask)
-                s->version = TLS1_VERSION;
-            mask &= ~SSL_OP_NO_TLSv1;
-#if !defined(OPENSSL_NO_SSL3)
-            if ((options & SSL_OP_NO_TLSv1) && (options & mask) != mask)
-                s->version = SSL3_VERSION;
-            mask &= ~SSL_OP_NO_SSLv3;
-#endif
-            s->client_version = s->version;
-        } else if (s->method->version == DTLS_ANY_VERSION) {
-            /* Determine which DTLS version to use */
-            /* If DTLS 1.2 disabled correct the version number */
-            if (options & SSL_OP_NO_DTLSv1_2) {
-                if (tls1_suiteb(s)) {
-                    SSLerr(SSL_F_SSL3_CLIENT_HELLO,
-                           SSL_R_ONLY_DTLS_1_2_ALLOWED_IN_SUITEB_MODE);
-                    goto err;
-                }
-                /*
-                 * Disabling all versions is silly: return an error.
-                 */
-                if (options & SSL_OP_NO_DTLSv1) {
-                    SSLerr(SSL_F_SSL3_CLIENT_HELLO, SSL_R_WRONG_SSL_VERSION);
-                    goto err;
-                }
-                /*
-                 * Update method so we don't use any DTLS 1.2 features.
-                 */
-                s->method = DTLSv1_client_method();
-                s->version = DTLS1_VERSION;
-            } else {
-                /*
-                 * We only support one version: update method
-                 */
-                if (options & SSL_OP_NO_DTLSv1)
-                    s->method = DTLSv1_2_client_method();
-                s->version = DTLS1_2_VERSION;
-            }
-            s->client_version = s->version;
-        }
+        /* Work out what SSL/TLS/DTLS version to use */
+        if (ssl_set_version(s) == 0)
+            goto err;
 
         if ((sess == NULL) || (sess->ssl_version != s->version) ||
 #ifdef OPENSSL_NO_TLSEXT
@@ -981,7 +1025,8 @@ int ssl3_get_server_hello(SSL *s)
             if (FIPS_mode()) {
                 SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,
                        SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE);
-                goto err;
+                al = SSL_AD_PROTOCOL_VERSION;
+                goto f_err;
             }
             s->method = SSLv3_client_method();
         } else
@@ -996,13 +1041,15 @@ int ssl3_get_server_hello(SSL *s)
             s->method = TLSv1_2_client_method();
         } else {
             SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_UNSUPPORTED_PROTOCOL);
-            goto err;
+            al = SSL_AD_PROTOCOL_VERSION;
+            goto f_err;
         }
         s->session->ssl_version = s->version = s->method->version;
 
         if (!ssl_security(s, SSL_SECOP_VERSION, 0, s->version, NULL)) {
             SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_VERSION_TOO_LOW);
-            goto err;
+            al = SSL_AD_PROTOCOL_VERSION;
+            goto f_err;
         }
     } else if (s->method->version == DTLS_ANY_VERSION) {
         /* Work out correct protocol version to use */
@@ -3511,4 +3558,66 @@ int ssl_do_client_cert_cb(SSL *s, X509 **px509, EVP_PKEY **ppkey)
     if (s->ctx->client_cert_cb)
         i = s->ctx->client_cert_cb(s, px509, ppkey);
     return i;
+}
+
+int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk,
+                             unsigned char *p,
+                             int (*put_cb) (const SSL_CIPHER *,
+                                            unsigned char *))
+{
+    int i, j = 0;
+    SSL_CIPHER *c;
+    unsigned char *q;
+    int empty_reneg_info_scsv = !s->renegotiate;
+    /* Set disabled masks for this session */
+    ssl_set_client_disabled(s);
+
+    if (sk == NULL)
+        return (0);
+    q = p;
+    if (put_cb == NULL)
+        put_cb = s->method->put_cipher_by_char;
+
+    for (i = 0; i < sk_SSL_CIPHER_num(sk); i++) {
+        c = sk_SSL_CIPHER_value(sk, i);
+        /* Skip disabled ciphers */
+        if (ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED))
+            continue;
+#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
+        if (c->id == SSL3_CK_SCSV) {
+            if (!empty_reneg_info_scsv)
+                continue;
+            else
+                empty_reneg_info_scsv = 0;
+        }
+#endif
+        j = put_cb(c, p);
+        p += j;
+    }
+    /*
+     * If p == q, no ciphers; caller indicates an error. Otherwise, add
+     * applicable SCSVs.
+     */
+    if (p != q) {
+        if (empty_reneg_info_scsv) {
+            static SSL_CIPHER scsv = {
+                0, NULL, SSL3_CK_SCSV, 0, 0, 0, 0, 0, 0, 0, 0, 0
+            };
+            j = put_cb(&scsv, p);
+            p += j;
+#ifdef OPENSSL_RI_DEBUG
+            fprintf(stderr,
+                    "TLS_EMPTY_RENEGOTIATION_INFO_SCSV sent by client\n");
+#endif
+        }
+        if (s->mode & SSL_MODE_SEND_FALLBACK_SCSV) {
+            static SSL_CIPHER scsv = {
+                0, NULL, SSL3_CK_FALLBACK_SCSV, 0, 0, 0, 0, 0, 0, 0, 0, 0
+            };
+            j = put_cb(&scsv, p);
+            p += j;
+        }
+    }
+
+    return (p - q);
 }

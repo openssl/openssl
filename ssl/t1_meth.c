@@ -70,6 +70,11 @@ static const SSL_METHOD *tls1_get_method(int ver)
         return TLSv1_1_method();
     if (ver == TLS1_VERSION)
         return TLSv1_method();
+#ifndef OPENSSL_NO_SSL3
+    if (ver == SSL3_VERSION)
+        return (SSLv3_method());
+    else
+#endif
     return NULL;
 }
 

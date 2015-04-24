@@ -220,16 +220,13 @@ int ssl3_get_record(SSL *s)
 
         /*
          * Check whether this is a regular record or an SSLv2 style record. The
-         * latter is only used in an initial ClientHello for old clients.
+         * latter is only used in an initial ClientHello for old clients. We
+         * check s->read_hash and s->enc_read_ctx to ensure this does not apply
+         * during renegotiation
          */
         if (s->first_packet && s->server && !s->read_hash && !s->enc_read_ctx
                 && (p[0] & 0x80) && (p[2] == SSL2_MT_CLIENT_HELLO)) {
             /* SSLv2 style record */
-            if (s->msg_callback)
-                s->msg_callback(0, SSL2_VERSION, 0,  p + 2,
-                                RECORD_LAYER_get_packet_length(&s->rlayer) - 2,
-                                s, s->msg_callback_arg);
-
             rr->type = SSL3_RT_HANDSHAKE;
             rr->rec_version = SSL2_VERSION;
 
@@ -262,19 +259,16 @@ int ssl3_get_record(SSL *s)
             n2s(p, rr->length);
 
             /* Lets check version */
-            if (!s->first_packet) {
-                if (version != s->version
-                        && s->method->version != TLS_ANY_VERSION) {
-                    SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_WRONG_VERSION_NUMBER);
-                    if ((s->version & 0xFF00) == (version & 0xFF00)
-                        && !s->enc_write_ctx && !s->write_hash)
-                        /*
-                         * Send back error using their minor version number :-)
-                         */
-                        s->version = (unsigned short)version;
-                    al = SSL_AD_PROTOCOL_VERSION;
-                    goto f_err;
-                }
+            if (!s->first_packet && version != s->version) {
+                SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_WRONG_VERSION_NUMBER);
+                if ((s->version & 0xFF00) == (version & 0xFF00)
+                    && !s->enc_write_ctx && !s->write_hash)
+                    /*
+                     * Send back error using their minor version number :-)
+                     */
+                    s->version = (unsigned short)version;
+                al = SSL_AD_PROTOCOL_VERSION;
+                goto f_err;
             }
 
             if ((version >> 8) != SSL3_VERSION_MAJOR) {
@@ -309,15 +303,6 @@ int ssl3_get_record(SSL *s)
         n = ssl3_read_n(s, i, i, 1);
         if (n <= 0)
             return (n);         /* error or non-blocking io */
-        /*
-         * now n == rr->length, and
-         * s->packet_length == SSL3_RT_HEADER_LENGTH + rr->length
-         * or
-         * s->packet_length == SSL2_RT_HEADER_LENGTH + rr->length
-         * (if SSLv2 packet)
-         */
-    } else {
-        n = 0;
     }
 
     /* set state for later operations */
