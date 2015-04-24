@@ -164,6 +164,9 @@
 #include <openssl/bn.h>
 #include <openssl/md5.h>
 
+static STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s, unsigned char *p,
+    int num, STACK_OF(SSL_CIPHER) **skp, int sslv2format);
+
 #ifndef OPENSSL_NO_SSL3_METHOD
 static const SSL_METHOD *ssl3_get_server_method(int ver);
 
@@ -901,7 +904,7 @@ int ssl3_get_client_hello(SSL *s)
     unsigned char *p, *d;
     SSL_CIPHER *c;
 #ifndef OPENSSL_NO_COMP
-    unsigned char *q;
+    unsigned char *q = NULL;
     SSL_COMP *comp = NULL;
 #endif
     STACK_OF(SSL_CIPHER) *ciphers = NULL;
@@ -960,9 +963,8 @@ int ssl3_get_client_hello(SSL *s)
              * layer in order to have determined that this is a SSLv2 record
              * in the first place
              */
-            al = SSL_AD_HANDSHAKE_FAILURE;
             SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
-            goto f_err;
+            goto err;
         }
 
         if ((p[1] == 0x00) && (p[2] == 0x02)) {
@@ -1002,11 +1004,7 @@ int ssl3_get_client_hello(SSL *s)
                 && (((s->client_version >> 8) & 0xff) == SSL3_VERSION_MAJOR)) {
                 protverr = 0;
             }
-        } else {
-            /*
-             * We already know that this is an SSL3_VERSION_MAJOR protocol,
-             * so we're just testing the minor versions here
-             */
+        } else if (((s->client_version >> 8) & 0xff) == SSL3_VERSION_MAJOR) {
             switch(s->client_version) {
             default:
             case TLS1_2_VERSION:
@@ -3556,3 +3554,119 @@ int ssl3_get_next_proto(SSL *s)
 # endif
 
 #endif
+
+#define SSLV2_CIPHER_LEN    3
+
+STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s, unsigned char *p,
+                                               int num,
+                                               STACK_OF(SSL_CIPHER) **skp,
+                                               int sslv2format)
+{
+    const SSL_CIPHER *c;
+    STACK_OF(SSL_CIPHER) *sk;
+    int i, n;
+
+    if (s->s3)
+        s->s3->send_connection_binding = 0;
+
+    if(sslv2format) {
+        n = SSLV2_CIPHER_LEN;
+    } else {
+        n = ssl_put_cipher_by_char(s, NULL, NULL);
+    }
+    if (n == 0 || (num % n) != 0) {
+        SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST,
+               SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
+        return (NULL);
+    }
+    if ((skp == NULL) || (*skp == NULL)) {
+        sk = sk_SSL_CIPHER_new_null(); /* change perhaps later */
+        if(sk == NULL) {
+            SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST, ERR_R_MALLOC_FAILURE);
+            return NULL;
+        }
+    } else {
+        sk = *skp;
+        sk_SSL_CIPHER_zero(sk);
+    }
+
+    OPENSSL_free(s->cert->ciphers_raw);
+    s->cert->ciphers_raw = BUF_memdup(p, num);
+    if (s->cert->ciphers_raw == NULL) {
+        SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+    s->cert->ciphers_rawlen = (size_t)num;
+
+    for (i = 0; i < num; i += n) {
+        /* Check for TLS_EMPTY_RENEGOTIATION_INFO_SCSV */
+        if (s->s3 && (n != 3 || !p[0]) &&
+            (p[n - 2] == ((SSL3_CK_SCSV >> 8) & 0xff)) &&
+            (p[n - 1] == (SSL3_CK_SCSV & 0xff))) {
+            /* SCSV fatal if renegotiating */
+            if (s->renegotiate) {
+                SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST,
+                       SSL_R_SCSV_RECEIVED_WHEN_RENEGOTIATING);
+                ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
+                goto err;
+            }
+            s->s3->send_connection_binding = 1;
+            p += n;
+#ifdef OPENSSL_RI_DEBUG
+            fprintf(stderr, "SCSV received by server\n");
+#endif
+            continue;
+        }
+
+        /* Check for TLS_FALLBACK_SCSV */
+        if ((n != 3 || !p[0]) &&
+            (p[n - 2] == ((SSL3_CK_FALLBACK_SCSV >> 8) & 0xff)) &&
+            (p[n - 1] == (SSL3_CK_FALLBACK_SCSV & 0xff))) {
+            /*
+             * The SCSV indicates that the client previously tried a higher
+             * version. Fail if the current version is an unexpected
+             * downgrade.
+             */
+            if (!SSL_ctrl(s, SSL_CTRL_CHECK_PROTO_VERSION, 0, NULL)) {
+                SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST,
+                       SSL_R_INAPPROPRIATE_FALLBACK);
+                if (s->s3)
+                    ssl3_send_alert(s, SSL3_AL_FATAL,
+                                    SSL_AD_INAPPROPRIATE_FALLBACK);
+                goto err;
+            }
+            p += n;
+            continue;
+        }
+
+        if(sslv2format) {
+            /*
+             * We only support SSLv2 format ciphers in SSLv3+ using a
+             * SSLv2 backward compatible ClientHello. In this case the first
+             * byte is always 0 for SSLv3 compatible ciphers. Anything else
+             * is an SSLv2 cipher and we ignore it
+             */
+            if(p[0] == 0)
+                c = ssl_get_cipher_by_char(s, &p[1]);
+            else
+                c = NULL;
+        } else {
+            c = ssl_get_cipher_by_char(s, p);
+        }
+        p += n;
+        if (c != NULL) {
+            if (!sk_SSL_CIPHER_push(sk, c)) {
+                SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST, ERR_R_MALLOC_FAILURE);
+                goto err;
+            }
+        }
+    }
+
+    if (skp != NULL)
+        *skp = sk;
+    return (sk);
+ err:
+    if ((skp == NULL) || (*skp == NULL))
+        sk_SSL_CIPHER_free(sk);
+    return (NULL);
+}
