@@ -1,6 +1,3 @@
-/*
- * apps/s_socket.c - socket-related functions used by s_client and s_server
- */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,7 +54,56 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright (c) 199-2015 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    licensing@OpenSSL.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ */
 
+/* socket-related functions used by s_client and s_server */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -76,10 +122,8 @@ typedef unsigned int u_int;
 #endif
 
 #define USE_SOCKETS
-#define NON_MAIN
 #include "apps.h"
 #undef USE_SOCKETS
-#undef NON_MAIN
 #include "s_apps.h"
 #include <openssl/ssl.h>
 
@@ -185,7 +229,7 @@ static int ssl_sock_init(void)
             return (0);
         }
     }
-# endif                         /* OPENSSL_SYS_WINDOWS */
+# endif
     return (1);
 }
 
@@ -503,16 +547,6 @@ static int do_accept(int acc_sock, int *sock, char **host)
         return (0);
     }
 
-/*-
-    ling.l_onoff=1;
-    ling.l_linger=0;
-    i=setsockopt(ret,SOL_SOCKET,SO_LINGER,(char *)&ling,sizeof(ling));
-    if (i < 0) { perror("linger"); return(0); }
-    i=0;
-    i=setsockopt(ret,SOL_SOCKET,SO_KEEPALIVE,(char *)&i,sizeof(i));
-    if (i < 0) { perror("keepalive"); return(0); }
-*/
-
     if (host == NULL)
         goto end;
 # ifndef BIT_FIELD_LIMITS
@@ -580,7 +614,7 @@ static int do_accept_unix(int acc_sock, int *sock)
 # endif
 
 int extract_host_port(char *str, char **host_ptr, unsigned char *ip,
-                      short *port_ptr)
+                      unsigned short *port_ptr)
 {
     char *h, *p;
 
@@ -645,7 +679,7 @@ static int host_ip(const char *str, unsigned char ip[4])
     return (0);
 }
 
-int extract_port(const char *str, short *port_ptr)
+int extract_port(const char *str, unsigned short *port_ptr)
 {
     int i;
     struct servent *s;

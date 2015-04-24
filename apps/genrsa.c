@@ -1,4 +1,3 @@
-/* apps/genrsa.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -74,192 +73,108 @@
 # include <openssl/rand.h>
 
 # define DEFBITS 2048
-# undef PROG
-# define PROG genrsa_main
 
 static int genrsa_cb(int p, int n, BN_GENCB *cb);
 
-int MAIN(int, char **);
+typedef enum OPTION_choice {
+    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_3, OPT_F4, OPT_NON_FIPS_ALLOW, OPT_ENGINE,
+    OPT_OUT, OPT_RAND, OPT_PASSOUT, OPT_CIPHER
+} OPTION_CHOICE;
 
-int MAIN(int argc, char **argv)
+OPTIONS genrsa_options[] = {
+    {"help", OPT_HELP, '-', "Display this summary"},
+    {"3", OPT_3, '-', "Use 3 for the E value"},
+    {"F4", OPT_F4, '-', "Use F4 (0x10001) for the E value"},
+    {"f4", OPT_F4, '-', "Use F4 (0x10001) for the E value"},
+    {"non-fips-allow", OPT_NON_FIPS_ALLOW, '-'},
+    {"out", OPT_OUT, 's', "Output the key to specified file"},
+    {"rand", OPT_RAND, 's',
+     "Load the file(s) into the random number generator"},
+    {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
+    {"", OPT_CIPHER, '-', "Encrypt the output with any supported cipher"},
+# ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+# endif
+    {NULL}
+};
+
+int genrsa_main(int argc, char **argv)
 {
-    BN_GENCB *cb = NULL;
-# ifndef OPENSSL_NO_ENGINE
+    BN_GENCB *cb = BN_GENCB_new();
     ENGINE *e = NULL;
-# endif
-    int ret = 1;
-    int non_fips_allow = 0;
-    int num = DEFBITS;
-    const EVP_CIPHER *enc = NULL;
-    unsigned long f4 = RSA_F4;
-    char *outfile = NULL;
-    char *passargout = NULL, *passout = NULL;
-    char *hexe, *dece;
-# ifndef OPENSSL_NO_ENGINE
-    char *engine = NULL;
-# endif
-    char *inrand = NULL;
-    BIO *out = NULL;
     BIGNUM *bn = BN_new();
+    BIO *out = NULL;
     RSA *rsa = NULL;
-    if (!bn)
-        goto err;
+    const EVP_CIPHER *enc = NULL;
+    int ret = 1, non_fips_allow = 0, num = DEFBITS;
+    unsigned long f4 = RSA_F4;
+    char *outfile = NULL, *passoutarg = NULL, *passout = NULL;
+    char *engine = NULL, *inrand = NULL, *prog;
+    char *hexe, *dece;
+    OPTION_CHOICE o;
 
-    cb = BN_GENCB_new();
-    if (!cb)
-        goto err;
-
-    apps_startup();
+    if (!bn || !cb)
+        goto end;
 
     BN_GENCB_set(cb, genrsa_cb, bio_err);
 
-    if (bio_err == NULL)
-        if ((bio_err = BIO_new(BIO_s_file())) != NULL)
-            BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
-
-    if (!load_config(bio_err, NULL))
-        goto err;
-    if ((out = BIO_new(BIO_s_file())) == NULL) {
-        BIO_printf(bio_err, "unable to create BIO for output\n");
-        goto err;
-    }
-
-    argv++;
-    argc--;
-    for (;;) {
-        if (argc <= 0)
-            break;
-        if (strcmp(*argv, "-out") == 0) {
-            if (--argc < 1)
-                goto bad;
-            outfile = *(++argv);
-        } else if (strcmp(*argv, "-3") == 0)
+    prog = opt_init(argc, argv, genrsa_options);
+    while ((o = opt_next()) != OPT_EOF) {
+        switch (o) {
+        case OPT_EOF:
+        case OPT_ERR:
+            BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
+            goto end;
+        case OPT_HELP:
+            ret = 0;
+            opt_help(genrsa_options);
+            goto end;
+        case OPT_3:
             f4 = 3;
-        else if (strcmp(*argv, "-F4") == 0 || strcmp(*argv, "-f4") == 0)
-            f4 = RSA_F4;
-# ifndef OPENSSL_NO_ENGINE
-        else if (strcmp(*argv, "-engine") == 0) {
-            if (--argc < 1)
-                goto bad;
-            engine = *(++argv);
-        }
-# endif
-        else if (strcmp(*argv, "-rand") == 0) {
-            if (--argc < 1)
-                goto bad;
-            inrand = *(++argv);
-        }
-# ifndef OPENSSL_NO_DES
-        else if (strcmp(*argv, "-des") == 0)
-            enc = EVP_des_cbc();
-        else if (strcmp(*argv, "-des3") == 0)
-            enc = EVP_des_ede3_cbc();
-# endif
-# ifndef OPENSSL_NO_IDEA
-        else if (strcmp(*argv, "-idea") == 0)
-            enc = EVP_idea_cbc();
-# endif
-# ifndef OPENSSL_NO_SEED
-        else if (strcmp(*argv, "-seed") == 0)
-            enc = EVP_seed_cbc();
-# endif
-# ifndef OPENSSL_NO_AES
-        else if (strcmp(*argv, "-aes128") == 0)
-            enc = EVP_aes_128_cbc();
-        else if (strcmp(*argv, "-aes192") == 0)
-            enc = EVP_aes_192_cbc();
-        else if (strcmp(*argv, "-aes256") == 0)
-            enc = EVP_aes_256_cbc();
-# endif
-# ifndef OPENSSL_NO_CAMELLIA
-        else if (strcmp(*argv, "-camellia128") == 0)
-            enc = EVP_camellia_128_cbc();
-        else if (strcmp(*argv, "-camellia192") == 0)
-            enc = EVP_camellia_192_cbc();
-        else if (strcmp(*argv, "-camellia256") == 0)
-            enc = EVP_camellia_256_cbc();
-# endif
-        else if (strcmp(*argv, "-passout") == 0) {
-            if (--argc < 1)
-                goto bad;
-            passargout = *(++argv);
-        } else if (strcmp(*argv, "-non-fips-allow") == 0)
-            non_fips_allow = 1;
-        else
             break;
-        argv++;
-        argc--;
+        case OPT_F4:
+            f4 = RSA_F4;
+            break;
+        case OPT_NON_FIPS_ALLOW:
+            non_fips_allow = 1;
+            break;
+        case OPT_OUT:
+            outfile = opt_arg();
+        case OPT_ENGINE:
+            engine = opt_arg();
+            break;
+        case OPT_RAND:
+            inrand = opt_arg();
+            break;
+        case OPT_PASSOUT:
+            passoutarg = opt_arg();
+            break;
+        case OPT_CIPHER:
+            if (!opt_cipher(opt_unknown(), &enc))
+                goto end;
+            break;
+        }
     }
-    if ((argc >= 1) && ((sscanf(*argv, "%d", &num) == 0) || (num < 0))) {
- bad:
-        BIO_printf(bio_err, "usage: genrsa [args] [numbits]\n");
-        BIO_printf(bio_err,
-                   " -des            encrypt the generated key with DES in cbc mode\n");
-        BIO_printf(bio_err,
-                   " -des3           encrypt the generated key with DES in ede cbc mode (168 bit key)\n");
-# ifndef OPENSSL_NO_IDEA
-        BIO_printf(bio_err,
-                   " -idea           encrypt the generated key with IDEA in cbc mode\n");
-# endif
-# ifndef OPENSSL_NO_SEED
-        BIO_printf(bio_err, " -seed\n");
-        BIO_printf(bio_err,
-                   "                 encrypt PEM output with cbc seed\n");
-# endif
-# ifndef OPENSSL_NO_AES
-        BIO_printf(bio_err, " -aes128, -aes192, -aes256\n");
-        BIO_printf(bio_err,
-                   "                 encrypt PEM output with cbc aes\n");
-# endif
-# ifndef OPENSSL_NO_CAMELLIA
-        BIO_printf(bio_err, " -camellia128, -camellia192, -camellia256\n");
-        BIO_printf(bio_err,
-                   "                 encrypt PEM output with cbc camellia\n");
-# endif
-        BIO_printf(bio_err, " -out file       output the key to 'file\n");
-        BIO_printf(bio_err,
-                   " -passout arg    output file pass phrase source\n");
-        BIO_printf(bio_err,
-                   " -f4             use F4 (0x10001) for the E value\n");
-        BIO_printf(bio_err, " -3              use 3 for the E value\n");
-# ifndef OPENSSL_NO_ENGINE
-        BIO_printf(bio_err,
-                   " -engine e       use engine e, possibly a hardware device.\n");
-# endif
-        BIO_printf(bio_err, " -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR,
-                   LIST_SEPARATOR_CHAR);
-        BIO_printf(bio_err,
-                   "                 load the file (or the files in the directory) into\n");
-        BIO_printf(bio_err, "                 the random number generator\n");
-        goto err;
-    }
+    argc = opt_num_rest();
+    argv = opt_rest();
 
-    ERR_load_crypto_strings();
+    if (argv[0] && (!opt_int(argv[0], &num) || num <= 0))
+        goto end;
 
-    if (!app_passwd(bio_err, NULL, passargout, NULL, &passout)) {
+    if (!app_passwd(NULL, passoutarg, NULL, &passout)) {
         BIO_printf(bio_err, "Error getting password\n");
-        goto err;
+        goto end;
     }
 # ifndef OPENSSL_NO_ENGINE
-    e = setup_engine(bio_err, engine, 0);
+    e = setup_engine(engine, 0);
 # endif
 
-    if (outfile == NULL) {
-        BIO_set_fp(out, stdout, BIO_NOCLOSE);
-# ifdef OPENSSL_SYS_VMS
-        {
-            BIO *tmpbio = BIO_new(BIO_f_linebuffer());
-            out = BIO_push(tmpbio, out);
-        }
-# endif
-    } else {
-        if (BIO_write_filename(out, outfile) <= 0) {
-            perror(outfile);
-            goto err;
-        }
-    }
+    out = bio_open_default(outfile, "w");
+    if (out == NULL)
+        goto end;
 
-    if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL
+    if (!app_RAND_load_file(NULL, 1) && inrand == NULL
         && !RAND_status()) {
         BIO_printf(bio_err,
                    "warning, not much extra random data, consider using the -rand option\n");
@@ -276,15 +191,15 @@ int MAIN(int argc, char **argv)
     rsa = RSA_new_method(e);
 # endif
     if (!rsa)
-        goto err;
+        goto end;
 
     if (non_fips_allow)
         rsa->flags |= RSA_FLAG_NON_FIPS_ALLOW;
 
     if (!BN_set_word(bn, f4) || !RSA_generate_key_ex(rsa, num, bn, cb))
-        goto err;
+        goto end;
 
-    app_RAND_write_file(NULL, bio_err);
+    app_RAND_write_file(NULL);
 
     hexe = BN_bn2hex(rsa->e);
     dece = BN_bn2dec(rsa->e);
@@ -302,11 +217,11 @@ int MAIN(int argc, char **argv)
         if (!PEM_write_bio_RSAPrivateKey(out, rsa, enc, NULL, 0,
                                          (pem_password_cb *)password_callback,
                                          &cb_data))
-            goto err;
+            goto end;
     }
 
     ret = 0;
- err:
+ end:
     if (bn)
         BN_free(bn);
     if (cb)
@@ -317,8 +232,7 @@ int MAIN(int argc, char **argv)
         OPENSSL_free(passout);
     if (ret != 0)
         ERR_print_errors(bio_err);
-    apps_shutdown();
-    OPENSSL_EXIT(ret);
+    return (ret);
 }
 
 static int genrsa_cb(int p, int n, BN_GENCB *cb)

@@ -1,4 +1,3 @@
-/* apps/app_rand.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -109,25 +108,23 @@
  *
  */
 
-#define NON_MAIN
 #include "apps.h"
-#undef NON_MAIN
 #include <openssl/bio.h>
 #include <openssl/rand.h>
 
 static int seeded = 0;
 static int egdsocket = 0;
 
-int app_RAND_load_file(const char *file, BIO *bio_e, int dont_warn)
+int app_RAND_load_file(const char *file, int dont_warn)
 {
     int consider_randfile = (file == NULL);
     char buffer[200];
 
 #ifdef OPENSSL_SYS_WINDOWS
-    BIO_printf(bio_e, "Loading 'screen' into random state -");
-    BIO_flush(bio_e);
+    BIO_printf(bio_err, "Loading 'screen' into random state -");
+    BIO_flush(bio_err);
     RAND_screen();
-    BIO_printf(bio_e, " done\n");
+    BIO_printf(bio_err, " done\n");
 #endif
 
     if (file == NULL)
@@ -143,15 +140,15 @@ int app_RAND_load_file(const char *file, BIO *bio_e, int dont_warn)
     if (file == NULL || !RAND_load_file(file, -1)) {
         if (RAND_status() == 0) {
             if (!dont_warn) {
-                BIO_printf(bio_e, "unable to load 'random state'\n");
-                BIO_printf(bio_e,
+                BIO_printf(bio_err, "unable to load 'random state'\n");
+                BIO_printf(bio_err,
                            "This means that the random number generator has not been seeded\n");
-                BIO_printf(bio_e, "with much random data.\n");
+                BIO_printf(bio_err, "with much random data.\n");
                 if (consider_randfile) { /* explanation does not apply when a
                                           * file is explicitly named */
-                    BIO_printf(bio_e,
+                    BIO_printf(bio_err,
                                "Consider setting the RANDFILE environment variable to point at a file that\n");
-                    BIO_printf(bio_e,
+                    BIO_printf(bio_err,
                                "'random' data can be kept in (the file will be overwritten).\n");
                 }
             }
@@ -193,7 +190,7 @@ long app_RAND_load_files(char *name)
     return (tot);
 }
 
-int app_RAND_write_file(const char *file, BIO *bio_e)
+int app_RAND_write_file(const char *file)
 {
     char buffer[200];
 
@@ -208,7 +205,7 @@ int app_RAND_write_file(const char *file, BIO *bio_e)
     if (file == NULL)
         file = RAND_file_name(buffer, sizeof buffer);
     if (file == NULL || !RAND_write_file(file)) {
-        BIO_printf(bio_e, "unable to write 'random state'\n");
+        BIO_printf(bio_err, "unable to write 'random state'\n");
         return 0;
     }
     return 1;

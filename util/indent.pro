@@ -749,3 +749,5 @@
 -T ssl_trace_tbl
 -T _stdcall
 -T tls12_lookup
+-T OPTIONS
+-T OPT_PAIR

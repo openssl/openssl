@@ -393,3 +393,5 @@ SSL_set_wbio                            427	EXIST::FUNCTION:
 SSL_SESSION_get0_ticket                 428	EXIST::FUNCTION:
 SSL_SESSION_get_ticket_lifetime_hint    429	EXIST::FUNCTION:
 SSL_set_rbio                            430	EXIST::FUNCTION:
+SSL_CIPHER_get_digest_nid               431	EXIST::FUNCTION:
+SSL_CIPHER_get_cipher_nid               432	EXIST::FUNCTION:

@@ -1,4 +1,3 @@
-/* apps/sess_id.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,94 +65,81 @@
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
 
-#undef PROG
-#define PROG    sess_id_main
+typedef enum OPTION_choice {
+    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT,
+    OPT_TEXT, OPT_CERT, OPT_NOOUT, OPT_CONTEXT
+} OPTION_CHOICE;
 
-static const char *sess_id_usage[] = {
-    "usage: sess_id args\n",
-    "\n",
-    " -inform arg     - input format - default PEM (DER or PEM)\n",
-    " -outform arg    - output format - default PEM (PEM, DER or NSS)\n",
-    " -in arg         - input file - default stdin\n",
-    " -out arg        - output file - default stdout\n",
-    " -text           - print ssl session id details\n",
-    " -cert           - output certificate \n",
-    " -noout          - no output of encoded session info\n",
-    " -context arg    - set the session ID context\n",
-    NULL
+OPTIONS sess_id_options[] = {
+    {"help", OPT_HELP, '-', "Display this summary"},
+    {"inform", OPT_INFORM, 'F', "Input format - default PEM (DER or PEM)"},
+    {"outform", OPT_OUTFORM, 'F',
+     "Output format - default PEM (PEM, DER or NSS)"},
+    {"in", OPT_IN, 's', "Input file - default stdin"},
+    {"out", OPT_OUT, 's', "Output file - default stdout"},
+    {"text", OPT_TEXT, '-', "Print ssl session id details"},
+    {"cert", OPT_CERT, '-', "Output certificate "},
+    {"noout", OPT_NOOUT, '-', "Don't output the encoded session info"},
+    {"context", OPT_CONTEXT, 's', "Set the session ID context"},
+    {NULL}
 };
 
 static SSL_SESSION *load_sess_id(char *file, int format);
 
-int MAIN(int, char **);
-
-int MAIN(int argc, char **argv)
+int sess_id_main(int argc, char **argv)
 {
     SSL_SESSION *x = NULL;
     X509 *peer = NULL;
-    int ret = 1, i, num, badops = 0;
     BIO *out = NULL;
-    int informat, outformat;
-    char *infile = NULL, *outfile = NULL, *context = NULL;
-    int cert = 0, noout = 0, text = 0;
-    const char **pp;
+    char *infile = NULL, *outfile = NULL, *context = NULL, *prog;
+    int informat = FORMAT_PEM, outformat = FORMAT_PEM;
+    int cert = 0, noout = 0, text = 0, ret = 1, i, num = 0;
+    OPTION_CHOICE o;
 
-    apps_startup();
-
-    if (bio_err == NULL)
-        if ((bio_err = BIO_new(BIO_s_file())) != NULL)
-            BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
-
-    informat = FORMAT_PEM;
-    outformat = FORMAT_PEM;
-
-    argc--;
-    argv++;
-    num = 0;
-    while (argc >= 1) {
-        if (strcmp(*argv, "-inform") == 0) {
-            if (--argc < 1)
-                goto bad;
-            informat = str2fmt(*(++argv));
-        } else if (strcmp(*argv, "-outform") == 0) {
-            if (--argc < 1)
-                goto bad;
-            outformat = str2fmt(*(++argv));
-        } else if (strcmp(*argv, "-in") == 0) {
-            if (--argc < 1)
-                goto bad;
-            infile = *(++argv);
-        } else if (strcmp(*argv, "-out") == 0) {
-            if (--argc < 1)
-                goto bad;
-            outfile = *(++argv);
-        } else if (strcmp(*argv, "-text") == 0)
+    prog = opt_init(argc, argv, sess_id_options);
+    while ((o = opt_next()) != OPT_EOF) {
+        switch (o) {
+        case OPT_EOF:
+        case OPT_ERR:
+ opthelp:
+            BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
+            goto end;
+        case OPT_HELP:
+            opt_help(sess_id_options);
+            ret = 0;
+            goto end;
+        case OPT_INFORM:
+            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &informat))
+                goto opthelp;
+            break;
+        case OPT_OUTFORM:
+            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &outformat))
+                goto opthelp;
+            break;
+        case OPT_IN:
+            infile = opt_arg();
+            break;
+        case OPT_OUT:
+            outfile = opt_arg();
+            break;
+        case OPT_TEXT:
             text = ++num;
-        else if (strcmp(*argv, "-cert") == 0)
+            break;
+        case OPT_CERT:
             cert = ++num;
-        else if (strcmp(*argv, "-noout") == 0)
+            break;
+        case OPT_NOOUT:
             noout = ++num;
-        else if (strcmp(*argv, "-context") == 0) {
-            if (--argc < 1)
-                goto bad;
-            context = *++argv;
-        } else {
-            BIO_printf(bio_err, "unknown option %s\n", *argv);
-            badops = 1;
+            break;
+        case OPT_CONTEXT:
+            context = opt_arg();
             break;
         }
-        argc--;
-        argv++;
     }
+    argc = opt_num_rest();
+    argv = opt_rest();
 
-    if (badops) {
- bad:
-        for (pp = sess_id_usage; (*pp != NULL); pp++)
-            BIO_printf(bio_err, "%s", *pp);
-        goto end;
-    }
-
-    ERR_load_crypto_strings();
     x = load_sess_id(infile, informat);
     if (x == NULL) {
         goto end;
@@ -166,33 +152,20 @@ int MAIN(int argc, char **argv)
             BIO_printf(bio_err, "Context too long\n");
             goto end;
         }
-        if (!SSL_SESSION_set1_id_context(x, (unsigned char *)context, ctx_len)) {
+        if (!SSL_SESSION_set1_id_context(x, (unsigned char *)context,
+                    ctx_len)) {
             BIO_printf(bio_err, "Error setting id context\n");
             goto end;
         }
     }
 
     if (!noout || text) {
-        out = BIO_new(BIO_s_file());
-        if (out == NULL) {
-            ERR_print_errors(bio_err);
+        const char* modeflag = "w";
+        if (outformat == FORMAT_ASN1 || outformat == FORMAT_NSS)
+            modeflag = "wb";
+        out = bio_open_default(outfile, modeflag);
+        if (out == NULL)
             goto end;
-        }
-
-        if (outfile == NULL) {
-            BIO_set_fp(out, stdout, BIO_NOCLOSE);
-#ifdef OPENSSL_SYS_VMS
-            {
-                BIO *tmpbio = BIO_new(BIO_f_linebuffer());
-                out = BIO_push(tmpbio, out);
-            }
-#endif
-        } else {
-            if (BIO_write_filename(out, outfile) <= 0) {
-                perror(outfile);
-                goto end;
-            }
-        }
     }
 
     if (text) {
@@ -240,8 +213,7 @@ int MAIN(int argc, char **argv)
     BIO_free_all(out);
     if (x != NULL)
         SSL_SESSION_free(x);
-    apps_shutdown();
-    OPENSSL_EXIT(ret);
+    return (ret);
 }
 
 static SSL_SESSION *load_sess_id(char *infile, int format)
@@ -249,28 +221,13 @@ static SSL_SESSION *load_sess_id(char *infile, int format)
     SSL_SESSION *x = NULL;
     BIO *in = NULL;
 
-    in = BIO_new(BIO_s_file());
-    if (in == NULL) {
-        ERR_print_errors(bio_err);
+    in = bio_open_default(infile, RB(format));
+    if (in == NULL)
         goto end;
-    }
-
-    if (infile == NULL)
-        BIO_set_fp(in, stdin, BIO_NOCLOSE);
-    else {
-        if (BIO_read_filename(in, infile) <= 0) {
-            perror(infile);
-            goto end;
-        }
-    }
     if (format == FORMAT_ASN1)
         x = d2i_SSL_SESSION_bio(in, NULL);
-    else if (format == FORMAT_PEM)
+    else
         x = PEM_read_bio_SSL_SESSION(in, NULL, NULL, NULL);
-    else {
-        BIO_printf(bio_err, "bad input format specified for input crl\n");
-        goto end;
-    }
     if (x == NULL) {
         BIO_printf(bio_err, "unable to load SSL_SESSION\n");
         ERR_print_errors(bio_err);

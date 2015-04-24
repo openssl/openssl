@@ -1,4 +1,3 @@
-/* apps/pkeyparam.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2006
@@ -63,104 +62,72 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 
-#define PROG pkeyparam_main
+typedef enum OPTION_choice {
+    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_IN, OPT_OUT, OPT_TEXT, OPT_NOOUT, OPT_ENGINE
+} OPTION_CHOICE;
 
-int MAIN(int, char **);
+OPTIONS pkeyparam_options[] = {
+    {"help", OPT_HELP, '-', "Display this summary"},
+    {"in", OPT_IN, '<', "Input file"},
+    {"out", OPT_OUT, '>', "Output file"},
+    {"text", OPT_TEXT, '-', "Print parameters as text"},
+    {"noout", OPT_NOOUT, '-', "Don't output encoded parameters"},
+#ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+#endif
+    {NULL}
+};
 
-int MAIN(int argc, char **argv)
+int pkeyparam_main(int argc, char **argv)
 {
-    char **args, *infile = NULL, *outfile = NULL;
     BIO *in = NULL, *out = NULL;
-    int text = 0, noout = 0;
     EVP_PKEY *pkey = NULL;
-    int badarg = 0;
-#ifndef OPENSSL_NO_ENGINE
-    char *engine = NULL;
-#endif
-    int ret = 1;
+    int text = 0, noout = 0, ret = 1;
+    OPTION_CHOICE o;
+    char *infile = NULL, *outfile = NULL, *prog, *engine = NULL;
 
-    if (bio_err == NULL)
-        bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
-
-    if (!load_config(bio_err, NULL))
-        goto end;
-
-    ERR_load_crypto_strings();
-    OpenSSL_add_all_algorithms();
-    args = argv + 1;
-    while (!badarg && *args && *args[0] == '-') {
-        if (!strcmp(*args, "-in")) {
-            if (args[1]) {
-                args++;
-                infile = *args;
-            } else
-                badarg = 1;
-        } else if (!strcmp(*args, "-out")) {
-            if (args[1]) {
-                args++;
-                outfile = *args;
-            } else
-                badarg = 1;
-        }
-#ifndef OPENSSL_NO_ENGINE
-        else if (strcmp(*args, "-engine") == 0) {
-            if (!args[1])
-                goto bad;
-            engine = *(++args);
-        }
-#endif
-
-        else if (strcmp(*args, "-text") == 0)
+    prog = opt_init(argc, argv, pkeyparam_options);
+    while ((o = opt_next()) != OPT_EOF) {
+        switch (o) {
+        case OPT_EOF:
+        case OPT_ERR:
+            BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
+            goto end;
+        case OPT_HELP:
+            opt_help(pkeyparam_options);
+            ret = 0;
+            goto end;
+        case OPT_IN:
+            infile = opt_arg();
+            break;
+        case OPT_OUT:
+            outfile = opt_arg();
+            break;
+        case OPT_ENGINE:
+            engine = opt_arg();
+            break;
+        case OPT_TEXT:
             text = 1;
-        else if (strcmp(*args, "-noout") == 0)
+            break;
+        case OPT_NOOUT:
             noout = 1;
-        args++;
-    }
-
-    if (badarg) {
-#ifndef OPENSSL_NO_ENGINE
- bad:
-#endif
-        BIO_printf(bio_err, "Usage pkeyparam [options]\n");
-        BIO_printf(bio_err, "where options are\n");
-        BIO_printf(bio_err, "-in file        input file\n");
-        BIO_printf(bio_err, "-out file       output file\n");
-        BIO_printf(bio_err, "-text           print parameters as text\n");
-        BIO_printf(bio_err,
-                   "-noout          don't output encoded parameters\n");
-#ifndef OPENSSL_NO_ENGINE
-        BIO_printf(bio_err,
-                   "-engine e       use engine e, possibly a hardware device.\n");
-#endif
-        return 1;
-    }
-#ifndef OPENSSL_NO_ENGINE
-    setup_engine(bio_err, engine, 0);
-#endif
-
-    if (infile) {
-        if (!(in = BIO_new_file(infile, "r"))) {
-            BIO_printf(bio_err, "Can't open input file %s\n", infile);
-            goto end;
+            break;
         }
-    } else
-        in = BIO_new_fp(stdin, BIO_NOCLOSE);
-
-    if (outfile) {
-        if (!(out = BIO_new_file(outfile, "w"))) {
-            BIO_printf(bio_err, "Can't open output file %s\n", outfile);
-            goto end;
-        }
-    } else {
-        out = BIO_new_fp(stdout, BIO_NOCLOSE);
-#ifdef OPENSSL_SYS_VMS
-        {
-            BIO *tmpbio = BIO_new(BIO_f_linebuffer());
-            out = BIO_push(tmpbio, out);
-        }
-#endif
     }
+    argc = opt_num_rest();
+    argv = opt_rest();
 
+#ifndef OPENSSL_NO_ENGINE
+    setup_engine(engine, 0);
+#endif
+
+    in = bio_open_default(infile, "r");
+    if (in == NULL)
+        goto end;
+    out = bio_open_default(outfile, "w");
+    if (out == NULL)
+        goto end;
     pkey = PEM_read_bio_Parameters(in, NULL);
     if (!pkey) {
         BIO_printf(bio_err, "Error reading parameters\n");

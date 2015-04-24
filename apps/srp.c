@@ -1,4 +1,3 @@
-/* apps/srp.c */
 /*
  * Written by Peter Sylvester (peter.sylvester@edelweb.fr) for the EdelKey
  * project and contributed to the OpenSSL project 2004.
@@ -71,9 +70,6 @@
 
 # include "apps.h"
 
-# undef PROG
-# define PROG srp_main
-
 # define BASE_SECTION    "srp"
 # define CONFIG_FILE "openssl.cnf"
 
@@ -82,40 +78,11 @@
 # define ENV_DATABASE            "srpvfile"
 # define ENV_DEFAULT_SRP         "default_srp"
 
-static char *srp_usage[] = {
-    "usage: srp [args] [user] \n",
-    "\n",
-    " -verbose        Talk a lot while doing things\n",
-    " -config file    A config file\n",
-    " -name arg       The particular srp definition to use\n",
-    " -srpvfile arg   The srp verifier file name\n",
-    " -add            add an user and srp verifier\n",
-    " -modify         modify the srp verifier of an existing user\n",
-    " -delete         delete user from verifier file\n",
-    " -list           list user\n",
-    " -gn arg         g and N values to be used for new verifier\n",
-    " -userinfo arg   additional info to be set for user\n",
-    " -passin arg     input file pass phrase source\n",
-    " -passout arg    output file pass phrase source\n",
-# ifndef OPENSSL_NO_ENGINE
-    " -engine e         - use engine e, possibly a hardware device.\n",
-# endif
-    NULL
-};
-
 # ifdef EFENCE
 extern int EF_PROTECT_FREE;
 extern int EF_PROTECT_BELOW;
 extern int EF_ALIGNMENT;
 # endif
-
-static CONF *conf = NULL;
-static char *section = NULL;
-
-# define VERBOSE if (verbose)
-# define VVERBOSE if (verbose>1)
-
-int MAIN(int, char **);
 
 static int get_index(CA_DB *db, char *id, char type)
 {
@@ -216,18 +183,17 @@ static char *srp_verify_user(const char *user, const char *srp_verifier,
     cb_tmp.password = passin;
 
     if (password_callback(password, 1024, 0, &cb_tmp) > 0) {
-        VERBOSE BIO_printf(bio,
-                           "Validating\n"
-                           " user=\"%s\"\n"
-                           " srp_verifier=\"%s\"\n"
-                           " srp_usersalt=\"%s\"\n"
-                           " g=\"%s\"\n N=\"%s\"\n",
-                           user, srp_verifier, srp_usersalt, g, N);
+        if (verbose)
+            BIO_printf(bio,
+                       "Validating\n   user=\"%s\"\n srp_verifier=\"%s\"\n srp_usersalt=\"%s\"\n g=\"%s\"\n N=\"%s\"\n",
+                       user, srp_verifier, srp_usersalt, g, N);
         BIO_printf(bio, "Pass %s\n", password);
 
         OPENSSL_assert(srp_usersalt != NULL);
-        if (!(gNid = SRP_create_verifier(user, password, &srp_usersalt,
-                                         &verifier, N, g))) {
+        if (!
+            (gNid =
+             SRP_create_verifier(user, password, &srp_usersalt, &verifier, N,
+                                 g))) {
             BIO_printf(bio, "Internal error validating SRP verifier\n");
         } else {
             if (strcmp(verifier, srp_verifier))
@@ -250,56 +216,66 @@ static char *srp_create_user(char *user, char **srp_verifier,
     cb_tmp.password = passout;
 
     if (password_callback(password, 1024, 1, &cb_tmp) > 0) {
-        VERBOSE BIO_printf(bio,
-                           "Creating\n"
-                           " user=\"%s\"\n"
-                           " g=\"%s\"\n" " N=\"%s\"\n", user, g, N);
-        if (!(gNid = SRP_create_verifier(user, password, &salt,
-                                         srp_verifier, N, g))) {
+        if (verbose)
+            BIO_printf(bio, "Creating\n user=\"%s\"\n g=\"%s\"\n N=\"%s\"\n",
+                       user, g, N);
+        if (!
+            (gNid =
+             SRP_create_verifier(user, password, &salt, srp_verifier, N,
+                                 g))) {
             BIO_printf(bio, "Internal error creating SRP verifier\n");
         } else
             *srp_usersalt = salt;
-        VVERBOSE BIO_printf(bio, "gNid=%s salt =\"%s\"\n verifier =\"%s\"\n",
-                            gNid, salt, *srp_verifier);
+        if (verbose > 1)
+            BIO_printf(bio, "gNid=%s salt =\"%s\"\n verifier =\"%s\"\n", gNid,
+                       salt, *srp_verifier);
 
     }
     return gNid;
 }
 
-int MAIN(int argc, char **argv)
-{
-    int add_user = 0;
-    int list_user = 0;
-    int delete_user = 0;
-    int modify_user = 0;
-    char *user = NULL;
+typedef enum OPTION_choice {
+    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_VERBOSE, OPT_CONFIG, OPT_NAME, OPT_SRPVFILE, OPT_ADD,
+    OPT_DELETE, OPT_MODIFY, OPT_LIST, OPT_GN, OPT_USERINFO,
+    OPT_PASSIN, OPT_PASSOUT, OPT_ENGINE
+} OPTION_CHOICE;
 
-    char *passargin = NULL, *passargout = NULL;
-    char *passin = NULL, *passout = NULL;
-    char *gN = NULL;
-    int gNindex = -1;
-    char **gNrow = NULL;
-    int maxgN = -1;
-
-    char *userinfo = NULL;
-
-    int badops = 0;
-    int ret = 1;
-    int errors = 0;
-    int verbose = 0;
-    int doupdatedb = 0;
-    char *configfile = NULL;
-    char *dbfile = NULL;
-    CA_DB *db = NULL;
-    char **pp;
-    int i;
-    long errorline = -1;
-    char *randfile = NULL;
+OPTIONS srp_options[] = {
+    {"help", OPT_HELP, '-', "Display this summary"},
+    {"verbose", OPT_VERBOSE, '-', "Talk a lot while doing things"},
+    {"config", OPT_CONFIG, '<', "A config file"},
+    {"name", OPT_NAME, 's', "The particular srp definition to use"},
+    {"srpvfile", OPT_SRPVFILE, '<', "The srp verifier file name"},
+    {"add", OPT_ADD, '-', "Add a user and srp verifier"},
+    {"modify", OPT_MODIFY, '-',
+     "Modify the srp verifier of an existing user"},
+    {"delete", OPT_DELETE, '-', "Delete user from verifier file"},
+    {"list", OPT_LIST, '-', "List users"},
+    {"gn", OPT_GN, 's', "Set g and N values to be used for new verifier"},
+    {"userinfo", OPT_USERINFO, 's', "Additional info to be set for user"},
+    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
+    {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
 # ifndef OPENSSL_NO_ENGINE
-    char *engine = NULL;
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 # endif
-    char *tofree = NULL;
+    {NULL}
+};
+
+int srp_main(int argc, char **argv)
+{
+    CA_DB *db = NULL;
     DB_ATTR db_attr;
+    CONF *conf = NULL;
+    int gNindex = -1, maxgN = -1, ret = 1, errors = 0, verbose =
+        0, i, doupdatedb = 0;
+    int mode = OPT_ERR;
+    char *user = NULL, *passinarg = NULL, *passoutarg = NULL;
+    char *passin = NULL, *passout = NULL, *gN = NULL, *userinfo = NULL;
+    char *randfile = NULL, *engine = NULL, *tofree = NULL, *section = NULL;
+    char **gNrow = NULL, *configfile = NULL, *dbfile = NULL, **pp, *prog;
+    long errorline = -1;
+    OPTION_CHOICE o;
 
 # ifdef EFENCE
     EF_PROTECT_FREE = 1;
@@ -307,119 +283,89 @@ int MAIN(int argc, char **argv)
     EF_ALIGNMENT = 0;
 # endif
 
-    apps_startup();
-
-    conf = NULL;
-    section = NULL;
-
-    if (bio_err == NULL)
-        if ((bio_err = BIO_new(BIO_s_file())) != NULL)
-            BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
-
-    argc--;
-    argv++;
-    while (argc >= 1 && badops == 0) {
-        if (strcmp(*argv, "-verbose") == 0)
+    prog = opt_init(argc, argv, srp_options);
+    while ((o = opt_next()) != OPT_EOF) {
+        switch (o) {
+        case OPT_EOF:
+        case OPT_ERR:
+ opthelp:
+            BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
+            goto end;
+        case OPT_HELP:
+            opt_help(srp_options);
+            ret = 0;
+            goto end;
+        case OPT_VERBOSE:
             verbose++;
-        else if (strcmp(*argv, "-config") == 0) {
-            if (--argc < 1)
-                goto bad;
-            configfile = *(++argv);
-        } else if (strcmp(*argv, "-name") == 0) {
-            if (--argc < 1)
-                goto bad;
-            section = *(++argv);
-        } else if (strcmp(*argv, "-srpvfile") == 0) {
-            if (--argc < 1)
-                goto bad;
-            dbfile = *(++argv);
-        } else if (strcmp(*argv, "-add") == 0)
-            add_user = 1;
-        else if (strcmp(*argv, "-delete") == 0)
-            delete_user = 1;
-        else if (strcmp(*argv, "-modify") == 0)
-            modify_user = 1;
-        else if (strcmp(*argv, "-list") == 0)
-            list_user = 1;
-        else if (strcmp(*argv, "-gn") == 0) {
-            if (--argc < 1)
-                goto bad;
-            gN = *(++argv);
-        } else if (strcmp(*argv, "-userinfo") == 0) {
-            if (--argc < 1)
-                goto bad;
-            userinfo = *(++argv);
-        } else if (strcmp(*argv, "-passin") == 0) {
-            if (--argc < 1)
-                goto bad;
-            passargin = *(++argv);
-        } else if (strcmp(*argv, "-passout") == 0) {
-            if (--argc < 1)
-                goto bad;
-            passargout = *(++argv);
-        }
-# ifndef OPENSSL_NO_ENGINE
-        else if (strcmp(*argv, "-engine") == 0) {
-            if (--argc < 1)
-                goto bad;
-            engine = *(++argv);
-        }
-# endif
-
-        else if (**argv == '-') {
- bad:
-            BIO_printf(bio_err, "unknown option %s\n", *argv);
-            badops = 1;
             break;
-        } else
+        case OPT_CONFIG:
+            configfile = opt_arg();
             break;
-
-        argc--;
-        argv++;
+        case OPT_NAME:
+            section = opt_arg();
+            break;
+        case OPT_SRPVFILE:
+            dbfile = opt_arg();
+            break;
+        case OPT_ADD:
+        case OPT_DELETE:
+        case OPT_MODIFY:
+        case OPT_LIST:
+            if (mode != OPT_ERR) {
+                BIO_printf(bio_err,
+                           "%s: Only one of -add/delete-modify/-list\n",
+                           prog);
+                goto opthelp;
+            }
+            mode = o;
+            break;
+        case OPT_GN:
+            gN = opt_arg();
+            break;
+        case OPT_USERINFO:
+            userinfo = opt_arg();
+            break;
+        case OPT_PASSIN:
+            passinarg = opt_arg();
+            break;
+        case OPT_PASSOUT:
+            passoutarg = opt_arg();
+            break;
+        case OPT_ENGINE:
+            engine = opt_arg();
+            break;
+        }
     }
+    argc = opt_num_rest();
+    argv = opt_rest();
 
     if (dbfile && configfile) {
         BIO_printf(bio_err,
                    "-dbfile and -configfile cannot be specified together.\n");
-        badops = 1;
+        goto end;
     }
-    if (add_user + delete_user + modify_user + list_user != 1) {
-        BIO_printf(bio_err, "Exactly one of the options "
-                   "-add, -delete, -modify -list must be specified.\n");
-        badops = 1;
+    if (mode == OPT_ERR) {
+        BIO_printf(bio_err,
+                   "Exactly one of the options -add, -delete, -modify -list must be specified.\n");
+        goto opthelp;
     }
-    if (delete_user + modify_user + delete_user == 1 && argc <= 0) {
-        BIO_printf(bio_err, "Need at least one user for options "
-                   "-add, -delete, -modify. \n");
-        badops = 1;
+    if ((mode == OPT_DELETE || mode == OPT_MODIFY || OPT_ADD) && argc < 1) {
+        BIO_printf(bio_err,
+                   "Need at least one user for options -add, -delete, -modify. \n");
+        goto opthelp;
     }
     if ((passin || passout) && argc != 1) {
         BIO_printf(bio_err,
                    "-passin, -passout arguments only valid with one user.\n");
-        badops = 1;
+        goto opthelp;
     }
-
-    if (badops) {
-        for (pp = srp_usage; (*pp != NULL); pp++)
-            BIO_printf(bio_err, "%s", *pp);
-
-        BIO_printf(bio_err, " -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR,
-                   LIST_SEPARATOR_CHAR);
-        BIO_printf(bio_err,
-                   "                 load the file (or the files in the directory) into\n");
-        BIO_printf(bio_err, "                 the random number generator\n");
-        goto err;
-    }
-
-    ERR_load_crypto_strings();
-
 # ifndef OPENSSL_NO_ENGINE
-    setup_engine(bio_err, engine, 0);
+    setup_engine(engine, 0);
 # endif
 
-    if (!app_passwd(bio_err, passargin, passargout, &passin, &passout)) {
+    if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");
-        goto err;
+        goto end;
     }
 
     if (!dbfile) {
@@ -439,7 +385,7 @@ int MAIN(int argc, char **argv)
             tofree = OPENSSL_malloc(len);
             if (!tofree) {
                 BIO_printf(bio_err, "Out of memory\n");
-                goto err;
+                goto end;
             }
             strcpy(tofree, s);
 # else
@@ -447,7 +393,7 @@ int MAIN(int argc, char **argv)
             tofree = OPENSSL_malloc(len);
             if (!tofree) {
                 BIO_printf(bio_err, "Out of memory\n");
-                goto err;
+                goto end;
             }
             BUF_strlcpy(tofree, s, len);
             BUF_strlcat(tofree, "/", len);
@@ -456,8 +402,8 @@ int MAIN(int argc, char **argv)
             configfile = tofree;
         }
 
-        VERBOSE BIO_printf(bio_err, "Using configuration from %s\n",
-                           configfile);
+        if (verbose)
+            BIO_printf(bio_err, "Using configuration from %s\n", configfile);
         conf = NCONF_new(NULL);
         if (NCONF_load(conf, configfile, &errorline) <= 0) {
             if (errorline <= 0)
@@ -466,53 +412,53 @@ int MAIN(int argc, char **argv)
             else
                 BIO_printf(bio_err, "error on line %ld of config file '%s'\n",
                            errorline, configfile);
-            goto err;
+            goto end;
         }
         if (tofree) {
             OPENSSL_free(tofree);
             tofree = NULL;
         }
 
-        if (!load_config(bio_err, conf))
-            goto err;
-
         /* Lets get the config section we are using */
         if (section == NULL) {
-            VERBOSE BIO_printf(bio_err,
-                               "trying to read " ENV_DEFAULT_SRP
-                               " in \" BASE_SECTION \"\n");
+            if (verbose)
+                BIO_printf(bio_err,
+                           "trying to read " ENV_DEFAULT_SRP
+                           " in \" BASE_SECTION \"\n");
 
             section = NCONF_get_string(conf, BASE_SECTION, ENV_DEFAULT_SRP);
             if (section == NULL) {
                 lookup_fail(BASE_SECTION, ENV_DEFAULT_SRP);
-                goto err;
+                goto end;
             }
         }
 
         if (randfile == NULL && conf)
             randfile = NCONF_get_string(conf, BASE_SECTION, "RANDFILE");
 
-        VERBOSE BIO_printf(bio_err,
-                           "trying to read " ENV_DATABASE
-                           " in section \"%s\"\n", section);
+        if (verbose)
+            BIO_printf(bio_err,
+                       "trying to read " ENV_DATABASE " in section \"%s\"\n",
+                       section);
 
         if ((dbfile = NCONF_get_string(conf, section, ENV_DATABASE)) == NULL) {
             lookup_fail(section, ENV_DATABASE);
-            goto err;
+            goto end;
         }
 
     }
     if (randfile == NULL)
         ERR_clear_error();
     else
-        app_RAND_load_file(randfile, bio_err, 0);
+        app_RAND_load_file(randfile, 0);
 
-    VERBOSE BIO_printf(bio_err, "Trying to read SRP verifier file \"%s\"\n",
-                       dbfile);
+    if (verbose)
+        BIO_printf(bio_err, "Trying to read SRP verifier file \"%s\"\n",
+                   dbfile);
 
     db = load_index(dbfile, &db_attr);
     if (db == NULL)
-        goto err;
+        goto end;
 
     /* Lets check some fields */
     for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++) {
@@ -527,46 +473,50 @@ int MAIN(int argc, char **argv)
         }
     }
 
-    VERBOSE BIO_printf(bio_err, "Database initialised\n");
+    if (verbose)
+        BIO_printf(bio_err, "Database initialised\n");
 
     if (gNindex >= 0) {
         gNrow = sk_OPENSSL_PSTRING_value(db->db->data, gNindex);
         print_entry(db, bio_err, gNindex, verbose > 1, "Default g and N");
     } else if (maxgN > 0 && !SRP_get_default_gN(gN)) {
         BIO_printf(bio_err, "No g and N value for index \"%s\"\n", gN);
-        goto err;
+        goto end;
     } else {
-        VERBOSE BIO_printf(bio_err, "Database has no g N information.\n");
+        if (verbose)
+            BIO_printf(bio_err, "Database has no g N information.\n");
         gNrow = NULL;
     }
 
-    VVERBOSE BIO_printf(bio_err, "Starting user processing\n");
+    if (verbose > 1)
+        BIO_printf(bio_err, "Starting user processing\n");
 
     if (argc > 0)
         user = *(argv++);
 
-    while (list_user || user) {
+    while (mode == OPT_LIST || user) {
         int userindex = -1;
         if (user)
-            VVERBOSE BIO_printf(bio_err, "Processing user \"%s\"\n", user);
+            if (verbose > 1)
+                BIO_printf(bio_err, "Processing user \"%s\"\n", user);
         if ((userindex = get_index(db, user, 'U')) >= 0) {
-            print_user(db, bio_err, userindex, (verbose > 0) || list_user);
+            print_user(db, bio_err, userindex, (verbose > 0)
+                       || mode == OPT_LIST);
         }
 
-        if (list_user) {
+        if (mode == OPT_LIST) {
             if (user == NULL) {
                 BIO_printf(bio_err, "List all users\n");
 
                 for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++) {
                     print_user(db, bio_err, i, 1);
                 }
-                list_user = 0;
             } else if (userindex < 0) {
                 BIO_printf(bio_err,
                            "user \"%s\" does not exist, ignored. t\n", user);
                 errors++;
             }
-        } else if (add_user) {
+        } else if (mode == OPT_ADD) {
             if (userindex >= 0) {
                 /* reactivation of a new user */
                 char **row =
@@ -581,26 +531,31 @@ int MAIN(int argc, char **argv)
                 row[DB_srpverifier] = NULL;
                 row[DB_srpsalt] = NULL;
                 row[DB_srpinfo] = NULL;
-                if (!(gNid = srp_create_user(user, &(row[DB_srpverifier]),
-                                             &(row[DB_srpsalt]),
-                                             gNrow ? gNrow[DB_srpsalt] : gN,
-                                             gNrow ? gNrow[DB_srpverifier] :
-                                             NULL, passout, bio_err,
-                                             verbose))) {
+                if (!
+                    (gNid =
+                     srp_create_user(user, &(row[DB_srpverifier]),
+                                     &(row[DB_srpsalt]),
+                                     gNrow ? gNrow[DB_srpsalt] : gN,
+                                     gNrow ? gNrow[DB_srpverifier] : NULL,
+                                     passout, bio_err, verbose))) {
                     BIO_printf(bio_err,
-                               "Cannot create srp verifier for user \"%s\","
-                               " operation abandoned .\n", user);
+                               "Cannot create srp verifier for user \"%s\", operation abandoned .\n",
+                               user);
                     errors++;
-                    goto err;
+                    goto end;
                 }
                 row[DB_srpid] = BUF_strdup(user);
                 row[DB_srptype] = BUF_strdup("v");
                 row[DB_srpgN] = BUF_strdup(gNid);
 
                 if (!row[DB_srpid] || !row[DB_srpgN] || !row[DB_srptype]
-                    || !row[DB_srpverifier] || !row[DB_srpsalt]
-                    || (userinfo
-                        && (!(row[DB_srpinfo] = BUF_strdup(userinfo))))
+                    || !row[DB_srpverifier] || !row[DB_srpsalt] || (userinfo
+                                                                    &&
+                                                                    (!(row
+                                                                       [DB_srpinfo]
+                                                                       =
+                                                                       BUF_strdup
+                                                                       (userinfo))))
                     || !update_index(db, bio_err, row)) {
                     if (row[DB_srpid])
                         OPENSSL_free(row[DB_srpid]);
@@ -614,11 +569,11 @@ int MAIN(int argc, char **argv)
                         OPENSSL_free(row[DB_srpverifier]);
                     if (row[DB_srpsalt])
                         OPENSSL_free(row[DB_srpsalt]);
-                    goto err;
+                    goto end;
                 }
                 doupdatedb = 1;
             }
-        } else if (modify_user) {
+        } else if (mode == OPT_MODIFY) {
             if (userindex < 0) {
                 BIO_printf(bio_err,
                            "user \"%s\" does not exist, operation ignored.\n",
@@ -640,9 +595,10 @@ int MAIN(int argc, char **argv)
                     if (row[DB_srptype][0] == 'V') {
                         int user_gN;
                         char **irow = NULL;
-                        VERBOSE BIO_printf(bio_err,
-                                           "Verifying password for user \"%s\"\n",
-                                           user);
+                        if (verbose)
+                            BIO_printf(bio_err,
+                                       "Verifying password for user \"%s\"\n",
+                                       user);
                         if ((user_gN =
                              get_index(db, row[DB_srpgN], DB_SRP_INDEX)) >= 0)
                             irow =
@@ -658,25 +614,25 @@ int MAIN(int argc, char **argv)
                                        "Invalid password for user \"%s\", operation abandoned.\n",
                                        user);
                             errors++;
-                            goto err;
+                            goto end;
                         }
                     }
-                    VERBOSE BIO_printf(bio_err,
-                                       "Password for user \"%s\" ok.\n",
-                                       user);
+                    if (verbose)
+                        BIO_printf(bio_err, "Password for user \"%s\" ok.\n",
+                                   user);
 
-                    if (!(gNid = srp_create_user(user, &(row[DB_srpverifier]),
-                                                 &(row[DB_srpsalt]),
-                                                 gNrow ? gNrow[DB_srpsalt] :
-                                                 NULL,
-                                                 gNrow ? gNrow[DB_srpverifier]
-                                                 : NULL, passout, bio_err,
-                                                 verbose))) {
+                    if (!
+                        (gNid =
+                         srp_create_user(user, &(row[DB_srpverifier]),
+                                         &(row[DB_srpsalt]),
+                                         gNrow ? gNrow[DB_srpsalt] : NULL,
+                                         gNrow ? gNrow[DB_srpverifier] : NULL,
+                                         passout, bio_err, verbose))) {
                         BIO_printf(bio_err,
-                                   "Cannot create srp verifier for user \"%s\","
-                                   " operation abandoned.\n", user);
+                                   "Cannot create srp verifier for user \"%s\", operation abandoned.\n",
+                                   user);
                         errors++;
-                        goto err;
+                        goto end;
                     }
 
                     row[DB_srptype][0] = 'v';
@@ -686,12 +642,12 @@ int MAIN(int argc, char **argv)
                         || !row[DB_srpverifier] || !row[DB_srpsalt]
                         || (userinfo
                             && (!(row[DB_srpinfo] = BUF_strdup(userinfo)))))
-                        goto err;
+                        goto end;
 
                     doupdatedb = 1;
                 }
             }
-        } else if (delete_user) {
+        } else if (mode == OPT_DELETE) {
             if (userindex < 0) {
                 BIO_printf(bio_err,
                            "user \"%s\" does not exist, operation ignored. t\n",
@@ -711,11 +667,11 @@ int MAIN(int argc, char **argv)
             user = *(argv++);
         else {
             user = NULL;
-            list_user = 0;
         }
     }
 
-    VERBOSE BIO_printf(bio_err, "User procession done.\n");
+    if (verbose)
+        BIO_printf(bio_err, "User procession done.\n");
 
     if (doupdatedb) {
         /* Lets check some fields */
@@ -728,37 +684,41 @@ int MAIN(int argc, char **argv)
             }
         }
 
-        VERBOSE BIO_printf(bio_err, "Trying to update srpvfile.\n");
+        if (verbose)
+            BIO_printf(bio_err, "Trying to update srpvfile.\n");
         if (!save_index(dbfile, "new", db))
-            goto err;
+            goto end;
 
-        VERBOSE BIO_printf(bio_err, "Temporary srpvfile created.\n");
+        if (verbose)
+            BIO_printf(bio_err, "Temporary srpvfile created.\n");
         if (!rotate_index(dbfile, "new", "old"))
-            goto err;
+            goto end;
 
-        VERBOSE BIO_printf(bio_err, "srpvfile updated.\n");
+        if (verbose)
+            BIO_printf(bio_err, "srpvfile updated.\n");
     }
 
     ret = (errors != 0);
- err:
+ end:
     if (errors != 0)
-        VERBOSE BIO_printf(bio_err, "User errors %d.\n", errors);
+        if (verbose)
+            BIO_printf(bio_err, "User errors %d.\n", errors);
 
-    VERBOSE BIO_printf(bio_err, "SRP terminating with code %d.\n", ret);
+    if (verbose)
+        BIO_printf(bio_err, "SRP terminating with code %d.\n", ret);
     if (tofree)
         OPENSSL_free(tofree);
     if (ret)
         ERR_print_errors(bio_err);
     if (randfile)
-        app_RAND_write_file(randfile, bio_err);
+        app_RAND_write_file(randfile);
     if (conf)
         NCONF_free(conf);
     if (db)
         free_index(db);
 
     OBJ_cleanup();
-    apps_shutdown();
-    OPENSSL_EXIT(ret);
+    return (ret);
 }
 
 #endif
