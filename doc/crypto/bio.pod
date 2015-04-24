@@ -49,6 +49,7 @@ L<BIO_push(3)|BIO_push(3)>, L<BIO_read(3)|BIO_read(3)>,
 L<BIO_s_accept(3)|BIO_s_accept(3)>, L<BIO_s_bio(3)|BIO_s_bio(3)>,
 L<BIO_s_connect(3)|BIO_s_connect(3)>, L<BIO_s_fd(3)|BIO_s_fd(3)>,
 L<BIO_s_file(3)|BIO_s_file(3)>, L<BIO_s_mem(3)|BIO_s_mem(3)>,
+L<BIO_s_secmem(3)|BIO_s_mem(3)>,
 L<BIO_s_null(3)|BIO_s_null(3)>, L<BIO_s_socket(3)|BIO_s_socket(3)>,
 L<BIO_set_callback(3)|BIO_set_callback(3)>,
 L<BIO_should_retry(3)|BIO_should_retry(3)>
