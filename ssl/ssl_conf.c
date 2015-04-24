@@ -192,6 +192,7 @@ static int ssl_set_option_list(const char *elem, int len, void *usr)
 /* Single command line switches with no argument e.g. -no_ssl3 */
 static int ctrl_str_option(SSL_CONF_CTX *cctx, const char *cmd)
 {
+    /* See apps/apps.h if you change this table. */
     static const ssl_flag_tbl ssl_option_single[] = {
         SSL_FLAG_TBL("no_ssl3", SSL_OP_NO_SSLv3),
         SSL_FLAG_TBL("no_tls1", SSL_OP_NO_TLSv1),
@@ -457,6 +458,7 @@ typedef struct {
 #define SSL_CONF_CMD_STRING(name, cmdopt) \
         SSL_CONF_CMD(name, cmdopt, SSL_CONF_TYPE_STRING)
 
+/* See apps/apps.h if you change this table. */
 static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD_STRING(SignatureAlgorithms, "sigalgs"),
     SSL_CONF_CMD_STRING(ClientSignatureAlgorithms, "client_sigalgs"),

@@ -178,7 +178,7 @@ $! NOTE: Some might think this list ugly.  However, it's made this way to
 $! reflect the E_OBJ variable in Makefile as closely as possible, thereby
 $! making it fairly easy to verify that the lists are the same.
 $!
-$ LIB_OPENSSL = "VERIFY,ASN1PARS,REQ,DGST,DH,DHPARAM,ENC,PASSWD,GENDH,ERRSTR,"+-
+$ LIB_OPENSSL = "VERIFY,ASN1PARS,REQ,DGST,DHPARAM,ENC,PASSWD,ERRSTR,"+-
 	     	"CA,PKCS7,CRL2P7,CRL,"+-
 	      	"RSA,RSAUTL,DSA,DSAPARAM,EC,ECPARAM,"+-
 	      	"X509,GENRSA,GENDSA,GENPKEY,S_SERVER,S_CLIENT,SPEED,"+-

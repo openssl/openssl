@@ -1,5 +1,3 @@
-/* apps/spkac.c */
-
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 1999. Based on an original idea by Massimiliano Pala (madwolf@openca.org).
@@ -70,128 +68,105 @@
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 
-#undef PROG
-#define PROG    spkac_main
+typedef enum OPTION_choice {
+    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_NOOUT, OPT_PUBKEY, OPT_VERIFY, OPT_IN, OPT_OUT,
+    OPT_ENGINE, OPT_KEY, OPT_CHALLENGE, OPT_PASSIN, OPT_SPKAC,
+    OPT_SPKSECT
+} OPTION_CHOICE;
 
-/*-
- * -in arg      - input file - default stdin
- * -out arg     - output file - default stdout
- */
+OPTIONS spkac_options[] = {
+    {"help", OPT_HELP, '-', "Display this summary"},
+    {"in", OPT_IN, '<', "Input file"},
+    {"out", OPT_OUT, '>', "Output file"},
+    {"key", OPT_KEY, '<', "Create SPKAC using private key"},
+    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
+    {"challenge", OPT_CHALLENGE, 's', "Challenge string"},
+    {"spkac", OPT_SPKAC, 's', "Alternative SPKAC name"},
+    {"noout", OPT_NOOUT, '-', "Don't print SPKAC"},
+    {"pubkey", OPT_PUBKEY, '-', "Output public key"},
+    {"verify", OPT_VERIFY, '-', "Verify SPKAC signature"},
+    {"spksect", OPT_SPKSECT, 's'},
+#ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+#endif
+    {NULL}
+};
 
-int MAIN(int, char **);
-
-int MAIN(int argc, char **argv)
+int spkac_main(int argc, char **argv)
 {
-    ENGINE *e = NULL;
-    int i, badops = 0, ret = 1;
     BIO *in = NULL, *out = NULL;
-    int verify = 0, noout = 0, pubkey = 0;
-    char *infile = NULL, *outfile = NULL, *prog;
-    char *passargin = NULL, *passin = NULL;
-    const char *spkac = "SPKAC", *spksect = "default";
-    char *spkstr = NULL;
-    char *challenge = NULL, *keyfile = NULL;
     CONF *conf = NULL;
-    NETSCAPE_SPKI *spki = NULL;
+    ENGINE *e = NULL;
     EVP_PKEY *pkey = NULL;
-#ifndef OPENSSL_NO_ENGINE
-    char *engine = NULL;
-#endif
+    NETSCAPE_SPKI *spki = NULL;
+    char *challenge = NULL, *keyfile = NULL, *engine = NULL;
+    char *infile = NULL, *outfile = NULL, *passinarg = NULL, *passin = NULL;
+    char *spkstr = NULL, *prog;
+    const char *spkac = "SPKAC", *spksect = "default";
+    int i, ret = 1, verify = 0, noout = 0, pubkey = 0;
+    OPTION_CHOICE o;
 
-    apps_startup();
-
-    if (!bio_err)
-        bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
-
-    if (!load_config(bio_err, NULL))
-        goto end;
-
-    prog = argv[0];
-    argc--;
-    argv++;
-    while (argc >= 1) {
-        if (strcmp(*argv, "-in") == 0) {
-            if (--argc < 1)
-                goto bad;
-            infile = *(++argv);
-        } else if (strcmp(*argv, "-out") == 0) {
-            if (--argc < 1)
-                goto bad;
-            outfile = *(++argv);
-        } else if (strcmp(*argv, "-passin") == 0) {
-            if (--argc < 1)
-                goto bad;
-            passargin = *(++argv);
-        } else if (strcmp(*argv, "-key") == 0) {
-            if (--argc < 1)
-                goto bad;
-            keyfile = *(++argv);
-        } else if (strcmp(*argv, "-challenge") == 0) {
-            if (--argc < 1)
-                goto bad;
-            challenge = *(++argv);
-        } else if (strcmp(*argv, "-spkac") == 0) {
-            if (--argc < 1)
-                goto bad;
-            spkac = *(++argv);
-        } else if (strcmp(*argv, "-spksect") == 0) {
-            if (--argc < 1)
-                goto bad;
-            spksect = *(++argv);
-        }
-#ifndef OPENSSL_NO_ENGINE
-        else if (strcmp(*argv, "-engine") == 0) {
-            if (--argc < 1)
-                goto bad;
-            engine = *(++argv);
-        }
-#endif
-        else if (strcmp(*argv, "-noout") == 0)
+    prog = opt_init(argc, argv, spkac_options);
+    while ((o = opt_next()) != OPT_EOF) {
+        switch (o) {
+        case OPT_EOF:
+        case OPT_ERR:
+            BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
+            goto end;
+        case OPT_HELP:
+            opt_help(spkac_options);
+            ret = 0;
+            goto end;
+        case OPT_IN:
+            infile = opt_arg();
+            break;
+        case OPT_OUT:
+            outfile = opt_arg();
+            break;
+        case OPT_NOOUT:
             noout = 1;
-        else if (strcmp(*argv, "-pubkey") == 0)
+            break;
+        case OPT_PUBKEY:
             pubkey = 1;
-        else if (strcmp(*argv, "-verify") == 0)
+            break;
+        case OPT_VERIFY:
             verify = 1;
-        else
-            badops = 1;
-        argc--;
-        argv++;
-    }
+            break;
+        case OPT_PASSIN:
+            passinarg = opt_arg();
+            break;
+        case OPT_KEY:
+            keyfile = opt_arg();
+            break;
+        case OPT_CHALLENGE:
+            challenge = opt_arg();
+            break;
+        case OPT_SPKAC:
+            spkac = opt_arg();
+            break;
+        case OPT_SPKSECT:
+            spksect = opt_arg();
+            break;
+        case OPT_ENGINE:
+            engine = opt_arg();
+            break;
 
-    if (badops) {
- bad:
-        BIO_printf(bio_err, "%s [options]\n", prog);
-        BIO_printf(bio_err, "where options are\n");
-        BIO_printf(bio_err, " -in arg        input file\n");
-        BIO_printf(bio_err, " -out arg       output file\n");
-        BIO_printf(bio_err,
-                   " -key arg       create SPKAC using private key\n");
-        BIO_printf(bio_err,
-                   " -passin arg    input file pass phrase source\n");
-        BIO_printf(bio_err, " -challenge arg challenge string\n");
-        BIO_printf(bio_err, " -spkac arg     alternative SPKAC name\n");
-        BIO_printf(bio_err, " -noout         don't print SPKAC\n");
-        BIO_printf(bio_err, " -pubkey        output public key\n");
-        BIO_printf(bio_err, " -verify        verify SPKAC signature\n");
-#ifndef OPENSSL_NO_ENGINE
-        BIO_printf(bio_err,
-                   " -engine e      use engine e, possibly a hardware device.\n");
-#endif
-        goto end;
+        }
     }
+    argc = opt_num_rest();
+    argv = opt_rest();
 
-    ERR_load_crypto_strings();
-    if (!app_passwd(bio_err, passargin, NULL, &passin, NULL)) {
+    if (!app_passwd(passinarg, NULL, &passin, NULL)) {
         BIO_printf(bio_err, "Error getting password\n");
         goto end;
     }
 #ifndef OPENSSL_NO_ENGINE
-    e = setup_engine(bio_err, engine, 0);
+    e = setup_engine(engine, 0);
 #endif
 
     if (keyfile) {
-        pkey = load_key(bio_err,
-                        strcmp(keyfile, "-") ? keyfile : NULL,
+        pkey = load_key(strcmp(keyfile, "-") ? keyfile : NULL,
                         FORMAT_PEM, 1, passin, e, "private key");
         if (!pkey) {
             goto end;
@@ -204,39 +179,18 @@ int MAIN(int argc, char **argv)
         NETSCAPE_SPKI_sign(spki, pkey, EVP_md5());
         spkstr = NETSCAPE_SPKI_b64_encode(spki);
 
-        if (outfile)
-            out = BIO_new_file(outfile, "w");
-        else {
-            out = BIO_new_fp(stdout, BIO_NOCLOSE);
-#ifdef OPENSSL_SYS_VMS
-            {
-                BIO *tmpbio = BIO_new(BIO_f_linebuffer());
-                out = BIO_push(tmpbio, out);
-            }
-#endif
-        }
-
-        if (!out) {
-            BIO_printf(bio_err, "Error opening output file\n");
-            ERR_print_errors(bio_err);
+        out = bio_open_default(outfile, "w");
+        if (out == NULL)
             goto end;
-        }
         BIO_printf(out, "SPKAC=%s\n", spkstr);
         OPENSSL_free(spkstr);
         ret = 0;
         goto end;
     }
 
-    if (infile)
-        in = BIO_new_file(infile, "r");
-    else
-        in = BIO_new_fp(stdin, BIO_NOCLOSE);
-
-    if (!in) {
-        BIO_printf(bio_err, "Error opening input file\n");
-        ERR_print_errors(bio_err);
+    in = bio_open_default(infile, "r");
+    if (in == NULL)
         goto end;
-    }
 
     conf = NCONF_new(NULL);
     i = NCONF_load_bio(conf, in, NULL);
@@ -263,23 +217,9 @@ int MAIN(int argc, char **argv)
         goto end;
     }
 
-    if (outfile)
-        out = BIO_new_file(outfile, "w");
-    else {
-        out = BIO_new_fp(stdout, BIO_NOCLOSE);
-#ifdef OPENSSL_SYS_VMS
-        {
-            BIO *tmpbio = BIO_new(BIO_f_linebuffer());
-            out = BIO_push(tmpbio, out);
-        }
-#endif
-    }
-
-    if (!out) {
-        BIO_printf(bio_err, "Error opening output file\n");
-        ERR_print_errors(bio_err);
+    out = bio_open_default(outfile, "w");
+    if (out == NULL)
         goto end;
-    }
 
     if (!noout)
         NETSCAPE_SPKI_print(out, spki);
@@ -307,6 +247,5 @@ int MAIN(int argc, char **argv)
     EVP_PKEY_free(pkey);
     if (passin)
         OPENSSL_free(passin);
-    apps_shutdown();
-    OPENSSL_EXIT(ret);
+    return (ret);
 }

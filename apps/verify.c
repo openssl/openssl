@@ -1,4 +1,3 @@
-/* apps/verify.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,209 +65,173 @@
 #include <openssl/x509v3.h>
 #include <openssl/pem.h>
 
-#undef PROG
-#define PROG    verify_main
-
 static int cb(int ok, X509_STORE_CTX *ctx);
 static int check(X509_STORE *ctx, char *file,
                  STACK_OF(X509) *uchain, STACK_OF(X509) *tchain,
                  STACK_OF(X509_CRL) *crls, ENGINE *e, int show_chain);
 static int v_verbose = 0, vflags = 0;
 
-int MAIN(int, char **);
+typedef enum OPTION_choice {
+    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_ENGINE, OPT_CAPATH, OPT_CAFILE, OPT_UNTRUSTED, OPT_TRUSTED,
+    OPT_CRLFILE, OPT_CRL_DOWNLOAD, OPT_SHOW_CHAIN,
+    OPT_V_ENUM,
+    OPT_VERBOSE
+} OPTION_CHOICE;
 
-int MAIN(int argc, char **argv)
+OPTIONS verify_options[] = {
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] cert.pem...\n"},
+    {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
+    {"help", OPT_HELP, '-', "Display this summary"},
+    {"verbose", OPT_VERBOSE, '-'},
+    {"CApath", OPT_CAPATH, '/'},
+    {"CAfile", OPT_CAFILE, '<'},
+    {"untrusted", OPT_UNTRUSTED, '<'},
+    {"trusted", OPT_TRUSTED, '<'},
+    {"CRLfile", OPT_CRLFILE, '<'},
+    {"crl_download", OPT_CRL_DOWNLOAD, '-'},
+    {"show_chain", OPT_SHOW_CHAIN, '-'},
+#ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+#endif
+    OPT_V_OPTIONS,
+    {NULL}
+};
+
+int verify_main(int argc, char **argv)
 {
     ENGINE *e = NULL;
-    int i, ret = 1, badarg = 0;
-    char *CApath = NULL, *CAfile = NULL;
-    char *untfile = NULL, *trustfile = NULL, *crlfile = NULL;
     STACK_OF(X509) *untrusted = NULL, *trusted = NULL;
     STACK_OF(X509_CRL) *crls = NULL;
-    X509_STORE *cert_ctx = NULL;
-    X509_LOOKUP *lookup = NULL;
+    X509_STORE *store = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
-    int crl_download = 0, show_chain = 0;
-#ifndef OPENSSL_NO_ENGINE
-    char *engine = NULL;
-#endif
+    char *prog, *CApath = NULL, *CAfile = NULL, *engine = NULL;
+    char *untfile = NULL, *trustfile = NULL, *crlfile = NULL;
+    int vpmtouched = 0, crl_download = 0, show_chain = 0, i = 0, ret = 1;
+    OPTION_CHOICE o;
 
-    cert_ctx = X509_STORE_new();
-    if (cert_ctx == NULL)
-        goto end;
-    X509_STORE_set_verify_cb(cert_ctx, cb);
-
-    ERR_load_crypto_strings();
-
-    apps_startup();
-
-    if (bio_err == NULL)
-        if ((bio_err = BIO_new(BIO_s_file())) != NULL)
-            BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
-
-    if (!load_config(bio_err, NULL))
+    if ((vpm = X509_VERIFY_PARAM_new()) == NULL)
         goto end;
 
-    argc--;
-    argv++;
-    for (;;) {
-        if (argc >= 1) {
-            if (strcmp(*argv, "-CApath") == 0) {
-                if (argc-- < 1)
-                    goto end;
-                CApath = *(++argv);
-            } else if (strcmp(*argv, "-CAfile") == 0) {
-                if (argc-- < 1)
-                    goto end;
-                CAfile = *(++argv);
-            } else if (args_verify(&argv, &argc, &badarg, bio_err, &vpm)) {
-                if (badarg)
-                    goto end;
-                continue;
-            } else if (strcmp(*argv, "-untrusted") == 0) {
-                if (argc-- < 1)
-                    goto end;
-                untfile = *(++argv);
-            } else if (strcmp(*argv, "-trusted") == 0) {
-                if (argc-- < 1)
-                    goto end;
-                trustfile = *(++argv);
-            } else if (strcmp(*argv, "-CRLfile") == 0) {
-                if (argc-- < 1)
-                    goto end;
-                crlfile = *(++argv);
-            } else if (strcmp(*argv, "-crl_download") == 0)
-                crl_download = 1;
-            else if (strcmp(*argv, "-show_chain") == 0)
-                show_chain = 1;
-#ifndef OPENSSL_NO_ENGINE
-            else if (strcmp(*argv, "-engine") == 0) {
-                if (--argc < 1)
-                    goto end;
-                engine = *(++argv);
+    prog = opt_init(argc, argv, verify_options);
+    while ((o = opt_next()) != OPT_EOF) {
+        switch (o) {
+        case OPT_EOF:
+        case OPT_ERR:
+            BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
+            goto end;
+        case OPT_HELP:
+            opt_help(verify_options);
+            BIO_printf(bio_err, "Recognized usages:\n");
+            for (i = 0; i < X509_PURPOSE_get_count(); i++) {
+                X509_PURPOSE *ptmp;
+                ptmp = X509_PURPOSE_get0(i);
+                BIO_printf(bio_err, "\t%-10s\t%s\n",
+                        X509_PURPOSE_get0_sname(ptmp),
+                        X509_PURPOSE_get0_name(ptmp));
             }
-#endif
-            else if (strcmp(*argv, "-help") == 0)
+
+            BIO_printf(bio_err, "Recognized verify names:\n");
+            for (i = 0; i < X509_VERIFY_PARAM_get_count(); i++) {
+                const X509_VERIFY_PARAM *vptmp;
+                vptmp = X509_VERIFY_PARAM_get0(i);
+                BIO_printf(bio_err, "\t%-10s\n",
+                        X509_VERIFY_PARAM_get0_name(vptmp));
+            }
+            ret = 0;
+            goto end;
+        case OPT_V_CASES:
+            if (!opt_verify(o, vpm))
                 goto end;
-            else if (strcmp(*argv, "-verbose") == 0)
-                v_verbose = 1;
-            else if (argv[0][0] == '-')
-                goto end;
-            else
-                break;
-            argc--;
-            argv++;
-        } else
+            vpmtouched++;
             break;
+        case OPT_CAPATH:
+            CApath = opt_arg();
+            break;
+        case OPT_CAFILE:
+            CAfile = opt_arg();
+            break;
+        case OPT_UNTRUSTED:
+            untfile = opt_arg();
+            break;
+        case OPT_TRUSTED:
+            trustfile = opt_arg();
+            break;
+        case OPT_CRLFILE:
+            crlfile = opt_arg();
+            break;
+        case OPT_CRL_DOWNLOAD:
+            crl_download = 1;
+            break;
+        case OPT_SHOW_CHAIN:
+            show_chain = 1;
+            break;
+        case OPT_ENGINE:
+            engine = opt_arg();
+            break;
+        case OPT_VERBOSE:
+            v_verbose = 1;
+            break;
+        }
     }
+    argc = opt_num_rest();
+    argv = opt_rest();
 
 #ifndef OPENSSL_NO_ENGINE
-    e = setup_engine(bio_err, engine, 0);
+    e = setup_engine(engine, 0);
 #endif
+    if (!(store = setup_verify(CAfile, CApath)))
+        goto end;
+    X509_STORE_set_verify_cb(store, cb);
 
-    if (vpm)
-        X509_STORE_set1_param(cert_ctx, vpm);
-
-    lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_file());
-    if (lookup == NULL)
-        abort();
-    if (CAfile) {
-        i = X509_LOOKUP_load_file(lookup, CAfile, X509_FILETYPE_PEM);
-        if (!i) {
-            BIO_printf(bio_err, "Error loading file %s\n", CAfile);
-            ERR_print_errors(bio_err);
-            goto end;
-        }
-    } else
-        X509_LOOKUP_load_file(lookup, NULL, X509_FILETYPE_DEFAULT);
-
-    lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_hash_dir());
-    if (lookup == NULL)
-        abort();
-    if (CApath) {
-        i = X509_LOOKUP_add_dir(lookup, CApath, X509_FILETYPE_PEM);
-        if (!i) {
-            BIO_printf(bio_err, "Error loading directory %s\n", CApath);
-            ERR_print_errors(bio_err);
-            goto end;
-        }
-    } else
-        X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
+    if (vpmtouched)
+        X509_STORE_set1_param(store, vpm);
 
     ERR_clear_error();
 
     if (untfile) {
-        untrusted = load_certs(bio_err, untfile, FORMAT_PEM,
+        untrusted = load_certs(untfile, FORMAT_PEM,
                                NULL, e, "untrusted certificates");
         if (!untrusted)
             goto end;
     }
 
     if (trustfile) {
-        trusted = load_certs(bio_err, trustfile, FORMAT_PEM,
+        trusted = load_certs(trustfile, FORMAT_PEM,
                              NULL, e, "trusted certificates");
         if (!trusted)
             goto end;
     }
 
     if (crlfile) {
-        crls = load_crls(bio_err, crlfile, FORMAT_PEM, NULL, e, "other CRLs");
+        crls = load_crls(crlfile, FORMAT_PEM, NULL, e, "other CRLs");
         if (!crls)
             goto end;
     }
 
     if (crl_download)
-        store_setup_crl_download(cert_ctx);
+        store_setup_crl_download(store);
 
     ret = 0;
     if (argc < 1) {
-        if (1 !=
-            check(cert_ctx, NULL, untrusted, trusted, crls, e, show_chain))
+        if (check(store, NULL, untrusted, trusted, crls, e, show_chain) != 1)
             ret = -1;
     } else {
         for (i = 0; i < argc; i++)
-            if (1 !=
-                check(cert_ctx, argv[i], untrusted, trusted, crls, e,
-                      show_chain))
+            if (check(store, argv[i], untrusted, trusted, crls, e,
+                      show_chain) != 1)
                 ret = -1;
     }
 
  end:
-    if (ret == 1) {
-        BIO_printf(bio_err,
-                   "usage: verify [-verbose] [-CApath path] [-CAfile file] [-trusted_first] [-purpose purpose] [-crl_check] [-no_alt_chains]");
-#ifndef OPENSSL_NO_ENGINE
-        BIO_printf(bio_err, " [-engine e]");
-#endif
-        BIO_printf(bio_err, " cert1 cert2 ...\n");
-
-        BIO_printf(bio_err, "recognized usages:\n");
-        for (i = 0; i < X509_PURPOSE_get_count(); i++) {
-            X509_PURPOSE *ptmp;
-            ptmp = X509_PURPOSE_get0(i);
-            BIO_printf(bio_err, "\t%-10s\t%s\n",
-                       X509_PURPOSE_get0_sname(ptmp),
-                       X509_PURPOSE_get0_name(ptmp));
-        }
-
-        BIO_printf(bio_err, "recognized verify names:\n");
-        for (i = 0; i < X509_VERIFY_PARAM_get_count(); i++) {
-            const X509_VERIFY_PARAM *vptmp;
-            vptmp = X509_VERIFY_PARAM_get0(i);
-            BIO_printf(bio_err, "\t%-10s\n",
-                       X509_VERIFY_PARAM_get0_name(vptmp));
-        }
-
-    }
     if (vpm)
         X509_VERIFY_PARAM_free(vpm);
-    if (cert_ctx != NULL)
-        X509_STORE_free(cert_ctx);
+    if (store != NULL)
+        X509_STORE_free(store);
     sk_X509_pop_free(untrusted, X509_free);
     sk_X509_pop_free(trusted, X509_free);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
-    apps_shutdown();
-    OPENSSL_EXIT(ret < 0 ? 2 : ret);
+    return (ret < 0 ? 2 : ret);
 }
 
 static int check(X509_STORE *ctx, char *file,
@@ -280,10 +243,10 @@ static int check(X509_STORE *ctx, char *file,
     X509_STORE_CTX *csc;
     STACK_OF(X509) *chain = NULL;
 
-    x = load_cert(bio_err, file, FORMAT_PEM, NULL, e, "certificate file");
+    x = load_cert(file, FORMAT_PEM, NULL, e, "certificate file");
     if (x == NULL)
         goto end;
-    fprintf(stdout, "%s: ", (file == NULL) ? "stdin" : file);
+    printf("%s: ", (file == NULL) ? "stdin" : file);
 
     csc = X509_STORE_CTX_new();
     if (csc == NULL) {
@@ -307,7 +270,7 @@ static int check(X509_STORE *ctx, char *file,
     ret = 0;
  end:
     if (i > 0) {
-        fprintf(stdout, "OK\n");
+        printf("OK\n");
         ret = 1;
     } else
         ERR_print_errors(bio_err);
@@ -348,7 +311,7 @@ static int cb(int ok, X509_STORE_CTX *ctx)
                X509_verify_cert_error_string(cert_error));
         switch (cert_error) {
         case X509_V_ERR_NO_EXPLICIT_POLICY:
-            policies_print(NULL, ctx);
+            policies_print(bio_err, ctx);
         case X509_V_ERR_CERT_HAS_EXPIRED:
 
             /*
@@ -373,7 +336,7 @@ static int cb(int ok, X509_STORE_CTX *ctx)
 
     }
     if (cert_error == X509_V_OK && ok == 2)
-        policies_print(NULL, ctx);
+        policies_print(bio_out, ctx);
     if (!v_verbose)
         ERR_clear_error();
     return (ok);

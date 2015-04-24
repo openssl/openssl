@@ -1,4 +1,3 @@
-/* apps/dhparam.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -127,170 +126,131 @@
 #  include <openssl/dsa.h>
 # endif
 
-# undef PROG
-# define PROG    dhparam_main
-
 # define DEFBITS 2048
-
-/*-
- * -inform arg  - input format - default PEM (DER or PEM)
- * -outform arg - output format - default PEM
- * -in arg      - input file - default stdin
- * -out arg     - output file - default stdout
- * -dsaparam  - read or generate DSA parameters, convert to DH
- * -check       - check the parameters are ok
- * -noout
- * -text
- * -C
- */
 
 static int dh_cb(int p, int n, BN_GENCB *cb);
 
-int MAIN(int, char **);
+typedef enum OPTION_choice {
+    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT,
+    OPT_ENGINE, OPT_CHECK, OPT_TEXT, OPT_NOOUT,
+    OPT_RAND, OPT_DSAPARAM, OPT_C, OPT_2, OPT_5
+} OPTION_CHOICE;
 
-int MAIN(int argc, char **argv)
+OPTIONS dhparam_options[] = {
+    {OPT_HELP_STR, 1, '-', "Usage: %s [flags] [numbits]\n"},
+    {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
+    {"help", OPT_HELP, '-', "Display this summary"},
+    {"in", OPT_IN, '<', "Input file"},
+    {"inform", OPT_INFORM, 'F', "Input format, DER or PEM"},
+    {"outform", OPT_OUTFORM, 'F', "Output format, DER or PEM"},
+    {"out", OPT_OUT, '>', "Output file"},
+    {"check", OPT_CHECK, '-', "Check the DH parameters"},
+    {"text", OPT_TEXT, '-', "Print a text form of the DH parameters"},
+    {"noout", OPT_NOOUT, '-'},
+    {"rand", OPT_RAND, 's',
+     "Load the file(s) into the random number generator"},
+    {"C", OPT_C, '-', "Print C code"},
+    {"2", OPT_2, '-', "Generate parameters using 2 as the generator value"},
+    {"5", OPT_5, '-', "Generate parameters using 5 as the generator value"},
+# ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
+# endif
+# ifndef OPENSSL_NO_DSA
+    {"dsaparam", OPT_DSAPARAM, '-',
+     "Read or generate DSA parameters, convert to DH"},
+# endif
+    {NULL}
+};
+
+int dhparam_main(int argc, char **argv)
 {
-    DH *dh = NULL;
-    int i, badops = 0, text = 0;
-# ifndef OPENSSL_NO_DSA
-    int dsaparam = 0;
-# endif
     BIO *in = NULL, *out = NULL;
-    int informat, outformat, check = 0, noout = 0, C = 0, ret = 1;
-    char *infile, *outfile, *prog;
-    char *inrand = NULL;
-# ifndef OPENSSL_NO_ENGINE
-    char *engine = NULL;
-# endif
-    int num = 0, g = 0;
+    DH *dh = NULL;
+    char *engine = NULL, *infile = NULL, *outfile = NULL, *prog, *inrand =
+        NULL;
+    int dsaparam = 0, i, text = 0, C = 0, ret = 1, num = 0, g = 0;
+    int informat = FORMAT_PEM, outformat = FORMAT_PEM, check = 0, noout = 0;
+    OPTION_CHOICE o;
 
-    apps_startup();
-
-    if (bio_err == NULL)
-        if ((bio_err = BIO_new(BIO_s_file())) != NULL)
-            BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
-
-    if (!load_config(bio_err, NULL))
-        goto end;
-
-    infile = NULL;
-    outfile = NULL;
-    informat = FORMAT_PEM;
-    outformat = FORMAT_PEM;
-
-    prog = argv[0];
-    argc--;
-    argv++;
-    while (argc >= 1) {
-        if (strcmp(*argv, "-inform") == 0) {
-            if (--argc < 1)
-                goto bad;
-            informat = str2fmt(*(++argv));
-        } else if (strcmp(*argv, "-outform") == 0) {
-            if (--argc < 1)
-                goto bad;
-            outformat = str2fmt(*(++argv));
-        } else if (strcmp(*argv, "-in") == 0) {
-            if (--argc < 1)
-                goto bad;
-            infile = *(++argv);
-        } else if (strcmp(*argv, "-out") == 0) {
-            if (--argc < 1)
-                goto bad;
-            outfile = *(++argv);
-        }
-# ifndef OPENSSL_NO_ENGINE
-        else if (strcmp(*argv, "-engine") == 0) {
-            if (--argc < 1)
-                goto bad;
-            engine = *(++argv);
-        }
-# endif
-        else if (strcmp(*argv, "-check") == 0)
+    prog = opt_init(argc, argv, dhparam_options);
+    while ((o = opt_next()) != OPT_EOF) {
+        switch (o) {
+        case OPT_EOF:
+        case OPT_ERR:
+ opthelp:
+            BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
+            goto end;
+        case OPT_HELP:
+            opt_help(dhparam_options);
+            ret = 0;
+            goto end;
+        case OPT_INFORM:
+            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &informat))
+                goto opthelp;
+            break;
+        case OPT_OUTFORM:
+            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &outformat))
+                goto opthelp;
+            break;
+        case OPT_IN:
+            infile = opt_arg();
+            break;
+        case OPT_OUT:
+            outfile = opt_arg();
+            break;
+        case OPT_ENGINE:
+            engine = opt_arg();
+            break;
+        case OPT_CHECK:
             check = 1;
-        else if (strcmp(*argv, "-text") == 0)
+            break;
+        case OPT_TEXT:
             text = 1;
-# ifndef OPENSSL_NO_DSA
-        else if (strcmp(*argv, "-dsaparam") == 0)
+            break;
+        case OPT_DSAPARAM:
             dsaparam = 1;
-# endif
-        else if (strcmp(*argv, "-C") == 0)
+            break;
+        case OPT_C:
             C = 1;
-        else if (strcmp(*argv, "-noout") == 0)
-            noout = 1;
-        else if (strcmp(*argv, "-2") == 0)
+            break;
+        case OPT_2:
             g = 2;
-        else if (strcmp(*argv, "-5") == 0)
+            break;
+        case OPT_5:
             g = 5;
-        else if (strcmp(*argv, "-rand") == 0) {
-            if (--argc < 1)
-                goto bad;
-            inrand = *(++argv);
-        } else if (((sscanf(*argv, "%d", &num) == 0) || (num <= 0)))
-            goto bad;
-        argv++;
-        argc--;
+            break;
+        case OPT_NOOUT:
+            noout = 1;
+            break;
+        case OPT_RAND:
+            inrand = opt_arg();
+            break;
+        }
     }
+    argc = opt_num_rest();
+    argv = opt_rest();
 
-    if (badops) {
- bad:
-        BIO_printf(bio_err, "%s [options] [numbits]\n", prog);
-        BIO_printf(bio_err, "where options are\n");
-        BIO_printf(bio_err, " -inform arg   input format - one of DER PEM\n");
-        BIO_printf(bio_err,
-                   " -outform arg  output format - one of DER PEM\n");
-        BIO_printf(bio_err, " -in arg       input file\n");
-        BIO_printf(bio_err, " -out arg      output file\n");
-# ifndef OPENSSL_NO_DSA
-        BIO_printf(bio_err,
-                   " -dsaparam     read or generate DSA parameters, convert to DH\n");
-# endif
-        BIO_printf(bio_err, " -check        check the DH parameters\n");
-        BIO_printf(bio_err,
-                   " -text         print a text form of the DH parameters\n");
-        BIO_printf(bio_err, " -C            Output C code\n");
-        BIO_printf(bio_err,
-                   " -2            generate parameters using  2 as the generator value\n");
-        BIO_printf(bio_err,
-                   " -5            generate parameters using  5 as the generator value\n");
-        BIO_printf(bio_err,
-                   " numbits       number of bits in to generate (default 2048)\n");
-# ifndef OPENSSL_NO_ENGINE
-        BIO_printf(bio_err,
-                   " -engine e     use engine e, possibly a hardware device.\n");
-# endif
-        BIO_printf(bio_err, " -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR,
-                   LIST_SEPARATOR_CHAR);
-        BIO_printf(bio_err,
-                   "               - load the file (or the files in the directory) into\n");
-        BIO_printf(bio_err, "               the random number generator\n");
-        BIO_printf(bio_err, " -noout        no output\n");
+    if (argv[0] && (!opt_int(argv[0], &num) || num <= 0))
         goto end;
-    }
-
-    ERR_load_crypto_strings();
 
 # ifndef OPENSSL_NO_ENGINE
-    setup_engine(bio_err, engine, 0);
+    setup_engine(engine, 0);
 # endif
 
     if (g && !num)
         num = DEFBITS;
 
 # ifndef OPENSSL_NO_DSA
-    if (dsaparam) {
-        if (g) {
-            BIO_printf(bio_err,
-                       "generator may not be chosen for DSA parameters\n");
-            goto end;
-        }
-    } else
-# endif
-    {
-        /* DH parameters */
-        if (num && !g)
-            g = 2;
+    if (dsaparam && g) {
+        BIO_printf(bio_err,
+                   "generator may not be chosen for DSA parameters\n");
+        goto end;
     }
+# endif
+    /* DH parameters */
+    if (num && !g)
+        g = 2;
 
     if (num) {
 
@@ -302,7 +262,7 @@ int MAIN(int argc, char **argv)
         }
 
         BN_GENCB_set(cb, dh_cb, bio_err);
-        if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL) {
+        if (!app_RAND_load_file(NULL, 1) && inrand == NULL) {
             BIO_printf(bio_err,
                        "warning, not much extra random data, consider using the -rand option\n");
         }
@@ -348,27 +308,13 @@ int MAIN(int argc, char **argv)
         }
 
         BN_GENCB_free(cb);
-        app_RAND_write_file(NULL, bio_err);
+        app_RAND_write_file(NULL);
     } else {
 
-        in = BIO_new(BIO_s_file());
-        if (in == NULL) {
-            ERR_print_errors(bio_err);
+        in = bio_open_default(infile, RB(informat));
+        if (in == NULL)
             goto end;
-        }
-        if (infile == NULL)
-            BIO_set_fp(in, stdin, BIO_NOCLOSE);
-        else {
-            if (BIO_read_filename(in, infile) <= 0) {
-                perror(infile);
-                goto end;
-            }
-        }
 
-        if (informat != FORMAT_ASN1 && informat != FORMAT_PEM) {
-            BIO_printf(bio_err, "bad input format specified\n");
-            goto end;
-        }
 # ifndef OPENSSL_NO_DSA
         if (dsaparam) {
             DSA *dsa;
@@ -408,25 +354,9 @@ int MAIN(int argc, char **argv)
         /* dh != NULL */
     }
 
-    out = BIO_new(BIO_s_file());
-    if (out == NULL) {
-        ERR_print_errors(bio_err);
+    out = bio_open_default(outfile, "w");
+    if (out == NULL)
         goto end;
-    }
-    if (outfile == NULL) {
-        BIO_set_fp(out, stdout, BIO_NOCLOSE);
-# ifdef OPENSSL_SYS_VMS
-        {
-            BIO *tmpbio = BIO_new(BIO_f_linebuffer());
-            out = BIO_push(tmpbio, out);
-        }
-# endif
-    } else {
-        if (BIO_write_filename(out, outfile) <= 0) {
-            perror(outfile);
-            goto end;
-        }
-    }
 
     if (text) {
         DHparams_print(out, dh);
@@ -450,7 +380,7 @@ int MAIN(int argc, char **argv)
     }
     if (C) {
         unsigned char *data;
-        int len, l, bits;
+        int len, bits;
 
         len = BN_num_bytes(dh->p);
         bits = BN_num_bits(dh->p);
@@ -459,54 +389,39 @@ int MAIN(int argc, char **argv)
             perror("OPENSSL_malloc");
             goto end;
         }
-        printf("#ifndef HEADER_DH_H\n"
-               "#include <openssl/dh.h>\n" "#endif\n");
-        printf("DH *get_dh%d()\n\t{\n", bits);
-
-        l = BN_bn2bin(dh->p, data);
-        printf("\tstatic unsigned char dh%d_p[]={", bits);
-        for (i = 0; i < l; i++) {
-            if ((i % 12) == 0)
-                printf("\n\t\t");
-            printf("0x%02X,", data[i]);
-        }
-        printf("\n\t\t};\n");
-
-        l = BN_bn2bin(dh->g, data);
-        printf("\tstatic unsigned char dh%d_g[]={", bits);
-        for (i = 0; i < l; i++) {
-            if ((i % 12) == 0)
-                printf("\n\t\t");
-            printf("0x%02X,", data[i]);
-        }
-        printf("\n\t\t};\n");
-
-        printf("\tDH *dh;\n\n");
-        printf("\tif ((dh=DH_new()) == NULL) return(NULL);\n");
-        printf("\tdh->p=BN_bin2bn(dh%d_p,sizeof(dh%d_p),NULL);\n",
+        BIO_printf(out, "#ifndef HEADER_DH_H\n"
+                        "# include <openssl/dh.h>\n"
+                        "#endif\n"
+                        "\n");
+        BIO_printf(out, "DH *get_dh%d()\n{\n", bits);
+        print_bignum_var(out, dh->p, "dhp", bits, data);
+        print_bignum_var(out, dh->g, "dhg", bits, data);
+        BIO_printf(out, "    DH *dh = DN_new();\n"
+                        "\n"
+                        "    if (dh == NULL)\n"
+                        "        return NULL;\n");
+        BIO_printf(out, "    dh->p = BN_bin2bn(dhp_%d, sizeof (dhp_%d), NULL);\n",
                bits, bits);
-        printf("\tdh->g=BN_bin2bn(dh%d_g,sizeof(dh%d_g),NULL);\n",
+        BIO_printf(out, "    dh->g = BN_bin2bn(dhg_%d, sizeof (dhg_%d), NULL);\n",
                bits, bits);
-        printf("\tif ((dh->p == NULL) || (dh->g == NULL))\n");
-        printf("\t\t{ DH_free(dh); return(NULL); }\n");
+        BIO_printf(out, "    if (!dh->p || !dh->g) {\n"
+                        "        DH_free(dh);\n"
+                        "        return NULL;\n"
+                        "    }\n");
         if (dh->length)
-            printf("\tdh->length = %ld;\n", dh->length);
-        printf("\treturn(dh);\n\t}\n");
+            BIO_printf(out,
+                        "    dh->length = %ld;\n", dh->length);
+        BIO_printf(out, "    return dh;\n}\n");
         OPENSSL_free(data);
     }
 
     if (!noout) {
         if (outformat == FORMAT_ASN1)
             i = i2d_DHparams_bio(out, dh);
-        else if (outformat == FORMAT_PEM) {
-            if (dh->q)
-                i = PEM_write_bio_DHxparams(out, dh);
-            else
-                i = PEM_write_bio_DHparams(out, dh);
-        } else {
-            BIO_printf(bio_err, "bad output format specified for outfile\n");
-            goto end;
-        }
+        else if (dh->q)
+            i = PEM_write_bio_DHxparams(out, dh);
+        else
+            i = PEM_write_bio_DHparams(out, dh);
         if (!i) {
             BIO_printf(bio_err, "unable to write DH parameters\n");
             ERR_print_errors(bio_err);
@@ -518,11 +433,9 @@ int MAIN(int argc, char **argv)
     BIO_free(in);
     BIO_free_all(out);
     DH_free(dh);
-    apps_shutdown();
-    OPENSSL_EXIT(ret);
+    return (ret);
 }
 
-/* dh_cb is identical to dsa_cb in apps/dsaparam.c */
 static int dh_cb(int p, int n, BN_GENCB *cb)
 {
     char c = '*';

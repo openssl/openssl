@@ -52,67 +52,66 @@
 #include "apps.h"
 #include <openssl/bn.h>
 
-#undef PROG
-#define PROG prime_main
+typedef enum OPTION_choice {
+    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_HEX, OPT_GENERATE, OPT_BITS, OPT_SAFE, OPT_CHECKS
+} OPTION_CHOICE;
 
-int MAIN(int, char **);
+OPTIONS prime_options[] = {
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [number...]\n"},
+    {OPT_HELP_STR, 1, '-',
+        "  number Number to check for primarility\n"},
+    {"help", OPT_HELP, '-', "Display this summary"},
+    {"hex", OPT_HEX, '-', "Hex output"},
+    {"generate", OPT_GENERATE, '-', "Generate a prime"},
+    {"bits", OPT_BITS, 'p', "Size of number in bits"},
+    {"safe", OPT_SAFE, '-',
+     "When used with -generate, generate a safe prime"},
+    {"checks", OPT_CHECKS, 'p', "Number of checks"},
+    {NULL}
+};
 
-int MAIN(int argc, char **argv)
+int prime_main(int argc, char **argv)
 {
-    int hex = 0;
-    int checks = 20;
-    int generate = 0;
-    int bits = 0;
-    int safe = 0;
     BIGNUM *bn = NULL;
-    BIO *bio_out;
+    int hex = 0, checks = 20, generate = 0, bits = 0, safe = 0, ret = 1;
+    char *prog;
+    OPTION_CHOICE o;
 
-    apps_startup();
-
-    if (bio_err == NULL)
-        if ((bio_err = BIO_new(BIO_s_file())) != NULL)
-            BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
-
-    --argc;
-    ++argv;
-    while (argc >= 1 && **argv == '-') {
-        if (!strcmp(*argv, "-hex"))
+    prog = opt_init(argc, argv, prime_options);
+    while ((o = opt_next()) != OPT_EOF) {
+        switch (o) {
+        case OPT_EOF:
+        case OPT_ERR:
+            BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
+            goto end;
+        case OPT_HELP:
+            opt_help(prime_options);
+            ret = 0;
+            goto end;
+        case OPT_HEX:
             hex = 1;
-        else if (!strcmp(*argv, "-generate"))
+            break;
+        case OPT_GENERATE:
             generate = 1;
-        else if (!strcmp(*argv, "-bits"))
-            if (--argc < 1)
-                goto bad;
-            else
-                bits = atoi(*++argv);
-        else if (!strcmp(*argv, "-safe"))
+            break;
+        case OPT_BITS:
+            bits = atoi(opt_arg());
+            break;
+        case OPT_SAFE:
             safe = 1;
-        else if (!strcmp(*argv, "-checks"))
-            if (--argc < 1)
-                goto bad;
-            else
-                checks = atoi(*++argv);
-        else {
-            BIO_printf(bio_err, "Unknown option '%s'\n", *argv);
-            goto bad;
+            break;
+        case OPT_CHECKS:
+            checks = atoi(opt_arg());
+            break;
         }
-        --argc;
-        ++argv;
     }
+    argc = opt_num_rest();
+    argv = opt_rest();
 
-    if (argv[0] == NULL && !generate) {
-        BIO_printf(bio_err, "No prime specified\n");
-        goto bad;
-    }
-
-    if ((bio_out = BIO_new(BIO_s_file())) != NULL) {
-        BIO_set_fp(bio_out, stdout, BIO_NOCLOSE);
-#ifdef OPENSSL_SYS_VMS
-        {
-            BIO *tmpbio = BIO_new(BIO_f_linebuffer());
-            bio_out = BIO_push(tmpbio, bio_out);
-        }
-#endif
+    if (argc == 0 && !generate) {
+        BIO_printf(bio_err, "%s: No prime specified\n", prog);
+        goto end;
     }
 
     if (generate) {
@@ -120,7 +119,7 @@ int MAIN(int argc, char **argv)
 
         if (!bits) {
             BIO_printf(bio_err, "Specifiy the number of bits.\n");
-            return 1;
+            goto end;
         }
         bn = BN_new();
         BN_generate_prime_ex(bn, bits, safe, NULL, NULL, NULL);
@@ -128,24 +127,22 @@ int MAIN(int argc, char **argv)
         BIO_printf(bio_out, "%s\n", s);
         OPENSSL_free(s);
     } else {
-        if (hex)
-            BN_hex2bn(&bn, argv[0]);
-        else
-            BN_dec2bn(&bn, argv[0]);
+        for ( ; *argv; argv++) {
+            if (hex)
+                BN_hex2bn(&bn, argv[0]);
+            else
+                BN_dec2bn(&bn, argv[0]);
 
-        BN_print(bio_out, bn);
-        BIO_printf(bio_out, " is %sprime\n",
-                   BN_is_prime_ex(bn, checks, NULL, NULL) ? "" : "not ");
+            BN_print(bio_out, bn);
+            BIO_printf(bio_out, " (%s) %s prime\n",
+                       argv[0],
+                       BN_is_prime_ex(bn, checks, NULL, NULL)
+                           ? "is" : "is not");
+        }
     }
 
     BN_free(bn);
-    BIO_free_all(bio_out);
 
-    return 0;
-
- bad:
-    BIO_printf(bio_err, "options are\n");
-    BIO_printf(bio_err, "%-14s hex\n", "-hex");
-    BIO_printf(bio_err, "%-14s number of checks\n", "-checks <n>");
-    return 1;
+ end:
+    return ret;
 }

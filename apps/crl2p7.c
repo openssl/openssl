@@ -1,4 +1,3 @@
-/* apps/crl2p7.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -74,129 +73,89 @@
 #include <openssl/objects.h>
 
 static int add_certs_from_file(STACK_OF(X509) *stack, char *certfile);
-#undef PROG
-#define PROG    crl2pkcs7_main
 
-/*-
- * -inform arg  - input format - default PEM (DER or PEM)
- * -outform arg - output format - default PEM
- * -in arg      - input file - default stdin
- * -out arg     - output file - default stdout
- */
+typedef enum OPTION_choice {
+    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_NOCRL, OPT_CERTFILE
+} OPTION_CHOICE;
 
-int MAIN(int, char **);
+OPTIONS crl2pkcs7_options[] = {
+    {"help", OPT_HELP, '-', "Display this summary"},
+    {"inform", OPT_INFORM, 'F', "Input format - DER or PEM"},
+    {"outform", OPT_OUTFORM, 'F', "Output format - DER or PEM"},
+    {"in", OPT_IN, '<', "Input file"},
+    {"out", OPT_OUT, '>', "Output file"},
+    {"nocrl", OPT_NOCRL, '-', "No crl to load, just certs from '-certfile'"},
+    {"certfile", OPT_CERTFILE, '<',
+     "File of chain of certs to a trusted CA; can be repeated"},
+    {NULL}
+};
 
-int MAIN(int argc, char **argv)
+int crl2pkcs7_main(int argc, char **argv)
 {
-    int i, badops = 0;
     BIO *in = NULL, *out = NULL;
-    int informat, outformat;
-    char *infile, *outfile, *prog, *certfile;
     PKCS7 *p7 = NULL;
     PKCS7_SIGNED *p7s = NULL;
-    X509_CRL *crl = NULL;
     STACK_OF(OPENSSL_STRING) *certflst = NULL;
-    STACK_OF(X509_CRL) *crl_stack = NULL;
     STACK_OF(X509) *cert_stack = NULL;
-    int ret = 1, nocrl = 0;
+    STACK_OF(X509_CRL) *crl_stack = NULL;
+    X509_CRL *crl = NULL;
+    char *infile = NULL, *outfile = NULL, *prog, *certfile;
+    int i = 0, informat = FORMAT_PEM, outformat = FORMAT_PEM, ret = 1, nocrl =
+        0;
+    OPTION_CHOICE o;
 
-    apps_startup();
-
-    if (bio_err == NULL)
-        if ((bio_err = BIO_new(BIO_s_file())) != NULL)
-            BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
-
-    infile = NULL;
-    outfile = NULL;
-    informat = FORMAT_PEM;
-    outformat = FORMAT_PEM;
-
-    prog = argv[0];
-    argc--;
-    argv++;
-    while (argc >= 1) {
-        if (strcmp(*argv, "-inform") == 0) {
-            if (--argc < 1)
-                goto bad;
-            informat = str2fmt(*(++argv));
-        } else if (strcmp(*argv, "-outform") == 0) {
-            if (--argc < 1)
-                goto bad;
-            outformat = str2fmt(*(++argv));
-        } else if (strcmp(*argv, "-in") == 0) {
-            if (--argc < 1)
-                goto bad;
-            infile = *(++argv);
-        } else if (strcmp(*argv, "-nocrl") == 0) {
+    prog = opt_init(argc, argv, crl2pkcs7_options);
+    while ((o = opt_next()) != OPT_EOF) {
+        switch (o) {
+        case OPT_EOF:
+        case OPT_ERR:
+ opthelp:
+            BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
+            goto end;
+        case OPT_HELP:
+            opt_help(crl2pkcs7_options);
+            ret = 0;
+            goto end;
+        case OPT_INFORM:
+            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &informat))
+                goto opthelp;
+            break;
+        case OPT_OUTFORM:
+            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &outformat))
+                goto opthelp;
+            break;
+        case OPT_IN:
+            infile = opt_arg();
+            break;
+        case OPT_OUT:
+            outfile = opt_arg();
+            break;
+        case OPT_NOCRL:
             nocrl = 1;
-        } else if (strcmp(*argv, "-out") == 0) {
-            if (--argc < 1)
-                goto bad;
-            outfile = *(++argv);
-        } else if (strcmp(*argv, "-certfile") == 0) {
-            if (--argc < 1)
-                goto bad;
-            if (!certflst)
-                certflst = sk_OPENSSL_STRING_new_null();
-            if (!certflst)
+            break;
+        case OPT_CERTFILE:
+            if (!certflst && !(certflst = sk_OPENSSL_STRING_new_null()))
                 goto end;
             if (!sk_OPENSSL_STRING_push(certflst, *(++argv))) {
                 sk_OPENSSL_STRING_free(certflst);
                 goto end;
             }
-        } else {
-            BIO_printf(bio_err, "unknown option %s\n", *argv);
-            badops = 1;
             break;
         }
-        argc--;
-        argv++;
     }
-
-    if (badops) {
- bad:
-        BIO_printf(bio_err, "%s [options] <infile >outfile\n", prog);
-        BIO_printf(bio_err, "where options are\n");
-        BIO_printf(bio_err, " -inform arg    input format - DER or PEM\n");
-        BIO_printf(bio_err, " -outform arg   output format - DER or PEM\n");
-        BIO_printf(bio_err, " -in arg        input file\n");
-        BIO_printf(bio_err, " -out arg       output file\n");
-        BIO_printf(bio_err,
-                   " -certfile arg  certificates file of chain to a trusted CA\n");
-        BIO_printf(bio_err, "                (can be used more than once)\n");
-        BIO_printf(bio_err,
-                   " -nocrl         no crl to load, just certs from '-certfile'\n");
-        ret = 1;
-        goto end;
-    }
-
-    ERR_load_crypto_strings();
-
-    in = BIO_new(BIO_s_file());
-    out = BIO_new(BIO_s_file());
-    if ((in == NULL) || (out == NULL)) {
-        ERR_print_errors(bio_err);
-        goto end;
-    }
+    argc = opt_num_rest();
+    argv = opt_rest();
 
     if (!nocrl) {
-        if (infile == NULL)
-            BIO_set_fp(in, stdin, BIO_NOCLOSE);
-        else {
-            if (BIO_read_filename(in, infile) <= 0) {
-                perror(infile);
-                goto end;
-            }
-        }
+        in = bio_open_default(infile, RB(informat));
+        if (in == NULL)
+            goto end;
 
         if (informat == FORMAT_ASN1)
             crl = d2i_X509_CRL_bio(in, NULL);
         else if (informat == FORMAT_PEM)
             crl = PEM_read_bio_X509_CRL(in, NULL, NULL, NULL);
-        else {
-            BIO_printf(bio_err, "bad input format specified for input crl\n");
-            goto end;
-        }
         if (crl == NULL) {
             BIO_printf(bio_err, "unable to load CRL\n");
             ERR_print_errors(bio_err);
@@ -238,29 +197,14 @@ int MAIN(int argc, char **argv)
 
     sk_OPENSSL_STRING_free(certflst);
 
-    if (outfile == NULL) {
-        BIO_set_fp(out, stdout, BIO_NOCLOSE);
-#ifdef OPENSSL_SYS_VMS
-        {
-            BIO *tmpbio = BIO_new(BIO_f_linebuffer());
-            out = BIO_push(tmpbio, out);
-        }
-#endif
-    } else {
-        if (BIO_write_filename(out, outfile) <= 0) {
-            perror(outfile);
-            goto end;
-        }
-    }
+    out = bio_open_default(outfile, WB(outformat));
+    if (out == NULL)
+        goto end;
 
     if (outformat == FORMAT_ASN1)
         i = i2d_PKCS7_bio(out, p7);
     else if (outformat == FORMAT_PEM)
         i = PEM_write_bio_PKCS7(out, p7);
-    else {
-        BIO_printf(bio_err, "bad output format specified for outfile\n");
-        goto end;
-    }
     if (!i) {
         BIO_printf(bio_err, "unable to write pkcs7 object\n");
         ERR_print_errors(bio_err);
@@ -274,8 +218,7 @@ int MAIN(int argc, char **argv)
     if (crl != NULL)
         X509_CRL_free(crl);
 
-    apps_shutdown();
-    OPENSSL_EXIT(ret);
+    return (ret);
 }
 
 /*-
@@ -296,8 +239,8 @@ static int add_certs_from_file(STACK_OF(X509) *stack, char *certfile)
     STACK_OF(X509_INFO) *sk = NULL;
     X509_INFO *xi;
 
-    in = BIO_new(BIO_s_file());
-    if ((in == NULL) || (BIO_read_filename(in, certfile) <= 0)) {
+    in = BIO_new_file(certfile, "r");
+    if (in == NULL) {
         BIO_printf(bio_err, "error opening the file, %s\n", certfile);
         goto end;
     }

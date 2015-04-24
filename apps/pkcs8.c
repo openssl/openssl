@@ -1,4 +1,3 @@
-/* pkcs8.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 1999-2004.
@@ -65,180 +64,142 @@
 #include <openssl/evp.h>
 #include <openssl/pkcs12.h>
 
-#define PROG pkcs8_main
+typedef enum OPTION_choice {
+    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_INFORM, OPT_OUTFORM, OPT_ENGINE, OPT_IN, OPT_OUT,
+    OPT_TOPK8, OPT_NOITER, OPT_NOCRYPT, OPT_NOOCT, OPT_NSDB, OPT_EMBED,
+    OPT_V2, OPT_V1, OPT_V2PRF, OPT_ITER, OPT_PASSIN, OPT_PASSOUT
+} OPTION_CHOICE;
 
-int MAIN(int, char **);
+OPTIONS pkcs8_options[] = {
+    {"help", OPT_HELP, '-', "Display this summary"},
+    {"inform", OPT_INFORM, 'F', "Input format (DER or PEM)"},
+    {"outform", OPT_OUTFORM, 'F', "Output format (DER or PEM)"},
+    {"in", OPT_IN, '<', "Input file"},
+    {"out", OPT_OUT, '>', "Output file"},
+    {"topk8", OPT_TOPK8, '-', "Output PKCS8 file"},
+    {"noiter", OPT_NOITER, '-', "Use 1 as iteration count"},
+    {"nocrypt", OPT_NOCRYPT, '-', "Use or expect unencrypted private key"},
+    {"nooct", OPT_NOOCT, '-', "Use (nonstandard) no octet format"},
+    {"nsdb", OPT_NSDB, '-', "Use (nonstandard) DSA Netscape DB format"},
+    {"embed", OPT_EMBED, '-',
+     "Use (nonstandard) embedded DSA parameters format"},
+    {"v2", OPT_V2, 's', "Use PKCS#5 v2.0 and cipher"},
+    {"v1", OPT_V1, 's', "Use PKCS#5 v1.5 and cipher"},
+    {"v2prf", OPT_V2PRF, 's'},
+    {"iter", OPT_ITER, 'p', "Specify the iteration count"},
+    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
+    {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
+#ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+#endif
+    {NULL}
+};
 
-int MAIN(int argc, char **argv)
+int pkcs8_main(int argc, char **argv)
 {
-    ENGINE *e = NULL;
-    char **args, *infile = NULL, *outfile = NULL;
-    char *passargin = NULL, *passargout = NULL;
     BIO *in = NULL, *out = NULL;
-    int topk8 = 0;
-    int pbe_nid = -1;
-    const EVP_CIPHER *cipher = NULL;
-    int iter = PKCS12_DEFAULT_ITER;
-    int informat, outformat;
-    int p8_broken = PKCS8_OK;
-    int nocrypt = 0;
-    X509_SIG *p8 = NULL;
-    PKCS8_PRIV_KEY_INFO *p8inf = NULL;
+    ENGINE *e = NULL;
     EVP_PKEY *pkey = NULL;
+    PKCS8_PRIV_KEY_INFO *p8inf = NULL;
+    X509_SIG *p8 = NULL;
+    const EVP_CIPHER *cipher = NULL;
+    char *engine = NULL, *infile = NULL, *outfile = NULL;
+    char *passinarg = NULL, *passoutarg = NULL, *prog;
     char pass[50], *passin = NULL, *passout = NULL, *p8pass = NULL;
-    int badarg = 0;
-    int ret = 1;
-#ifndef OPENSSL_NO_ENGINE
-    char *engine = NULL;
-#endif
+    OPTION_CHOICE o;
+    int nocrypt = 0, ret = 1, iter = PKCS12_DEFAULT_ITER, p8_broken =
+        PKCS8_OK;
+    int informat = FORMAT_PEM, outformat = FORMAT_PEM, topk8 = 0, pbe_nid =
+        -1;
 
-    if (bio_err == NULL)
-        bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
-
-    if (!load_config(bio_err, NULL))
-        goto end;
-
-    informat = FORMAT_PEM;
-    outformat = FORMAT_PEM;
-
-    ERR_load_crypto_strings();
-    OpenSSL_add_all_algorithms();
-    args = argv + 1;
-    while (!badarg && *args && *args[0] == '-') {
-        if (!strcmp(*args, "-v2")) {
-            if (args[1]) {
-                args++;
-                cipher = EVP_get_cipherbyname(*args);
-                if (!cipher) {
-                    BIO_printf(bio_err, "Unknown cipher %s\n", *args);
-                    badarg = 1;
-                }
-            } else
-                badarg = 1;
-        } else if (!strcmp(*args, "-v1")) {
-            if (args[1]) {
-                args++;
-                pbe_nid = OBJ_txt2nid(*args);
-                if (pbe_nid == NID_undef) {
-                    BIO_printf(bio_err, "Unknown PBE algorithm %s\n", *args);
-                    badarg = 1;
-                }
-            } else
-                badarg = 1;
-        } else if (!strcmp(*args, "-v2prf")) {
-            if (args[1]) {
-                args++;
-                pbe_nid = OBJ_txt2nid(*args);
-                if (!EVP_PBE_find(EVP_PBE_TYPE_PRF, pbe_nid, NULL, NULL, 0)) {
-                    BIO_printf(bio_err, "Unknown PRF algorithm %s\n", *args);
-                    badarg = 1;
-                }
-            } else
-                badarg = 1;
-        } else if (!strcmp(*args, "-inform")) {
-            if (args[1]) {
-                args++;
-                informat = str2fmt(*args);
-            } else
-                badarg = 1;
-        } else if (!strcmp(*args, "-outform")) {
-            if (args[1]) {
-                args++;
-                outformat = str2fmt(*args);
-            } else
-                badarg = 1;
-        } else if (!strcmp(*args, "-topk8"))
+    prog = opt_init(argc, argv, pkcs8_options);
+    while ((o = opt_next()) != OPT_EOF) {
+        switch (o) {
+        case OPT_EOF:
+        case OPT_ERR:
+ opthelp:
+            BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
+            goto end;
+        case OPT_HELP:
+            opt_help(pkcs8_options);
+            ret = 0;
+            goto end;
+        case OPT_INFORM:
+            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &informat))
+                goto opthelp;
+            break;
+        case OPT_IN:
+            infile = opt_arg();
+            break;
+        case OPT_OUTFORM:
+            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &outformat))
+                goto opthelp;
+            break;
+        case OPT_OUT:
+            outfile = opt_arg();
+            break;
+        case OPT_TOPK8:
             topk8 = 1;
-        else if (!strcmp(*args, "-noiter"))
+            break;
+        case OPT_NOITER:
             iter = 1;
-        else if (!strcmp(*args, "-iter")) {
-            if (args[1]) {
-                iter = atoi(*(++args));
-                if (iter <= 0)
-                    badarg = 1;
-            } else
-                badarg = 1;
-        } else if (!strcmp(*args, "-nocrypt"))
+            break;
+        case OPT_NOCRYPT:
             nocrypt = 1;
-        else if (!strcmp(*args, "-nooct"))
+            break;
+        case OPT_NOOCT:
             p8_broken = PKCS8_NO_OCTET;
-        else if (!strcmp(*args, "-nsdb"))
+            break;
+        case OPT_NSDB:
             p8_broken = PKCS8_NS_DB;
-        else if (!strcmp(*args, "-embed"))
+            break;
+        case OPT_EMBED:
             p8_broken = PKCS8_EMBEDDED_PARAM;
-        else if (!strcmp(*args, "-passin")) {
-            if (args[1])
-                passargin = *(++args);
-            else
-                badarg = 1;
-        } else if (!strcmp(*args, "-passout")) {
-            if (args[1])
-                passargout = *(++args);
-            else
-                badarg = 1;
+            break;
+        case OPT_V2:
+            if (!opt_cipher(opt_arg(), &cipher))
+                goto opthelp;
+            break;
+        case OPT_V1:
+            pbe_nid = OBJ_txt2nid(opt_arg());
+            if (pbe_nid == NID_undef) {
+                BIO_printf(bio_err,
+                           "%s: Unknown PBE algorithm %s\n", prog, opt_arg());
+                goto opthelp;
+            }
+            break;
+        case OPT_V2PRF:
+            pbe_nid = OBJ_txt2nid(opt_arg());
+            if (!EVP_PBE_find(EVP_PBE_TYPE_PRF, pbe_nid, NULL, NULL, 0)) {
+                BIO_printf(bio_err,
+                           "%s: Unknown PRF algorithm %s\n", prog, opt_arg());
+                goto opthelp;
+            }
+            break;
+        case OPT_ITER:
+            if (!opt_int(opt_arg(), &iter))
+                goto opthelp;
+            break;
+        case OPT_PASSIN:
+            passinarg = opt_arg();
+            break;
+        case OPT_PASSOUT:
+            passoutarg = opt_arg();
+            break;
+        case OPT_ENGINE:
+            engine = opt_arg();
+            break;
         }
-#ifndef OPENSSL_NO_ENGINE
-        else if (strcmp(*args, "-engine") == 0) {
-            if (args[1])
-                engine = *(++args);
-            else
-                badarg = 1;
-        }
-#endif
-        else if (!strcmp(*args, "-in")) {
-            if (args[1]) {
-                args++;
-                infile = *args;
-            } else
-                badarg = 1;
-        } else if (!strcmp(*args, "-out")) {
-            if (args[1]) {
-                args++;
-                outfile = *args;
-            } else
-                badarg = 1;
-        } else
-            badarg = 1;
-        args++;
     }
+    argc = opt_num_rest();
+    argv = opt_rest();
 
-    if (badarg) {
-        BIO_printf(bio_err, "Usage pkcs8 [options]\n");
-        BIO_printf(bio_err, "where options are\n");
-        BIO_printf(bio_err, "-in file        input file\n");
-        BIO_printf(bio_err, "-inform X       input format (DER or PEM)\n");
-        BIO_printf(bio_err,
-                   "-passin arg     input file pass phrase source\n");
-        BIO_printf(bio_err, "-outform X      output format (DER or PEM)\n");
-        BIO_printf(bio_err, "-out file       output file\n");
-        BIO_printf(bio_err,
-                   "-passout arg    output file pass phrase source\n");
-        BIO_printf(bio_err, "-topk8          output PKCS8 file\n");
-        BIO_printf(bio_err,
-                   "-nooct          use (nonstandard) no octet format\n");
-        BIO_printf(bio_err,
-                   "-embed          use (nonstandard) embedded DSA parameters format\n");
-        BIO_printf(bio_err,
-                   "-nsdb           use (nonstandard) DSA Netscape DB format\n");
-        BIO_printf(bio_err, "-iter count     use count as iteration count\n");
-        BIO_printf(bio_err, "-noiter         use 1 as iteration count\n");
-        BIO_printf(bio_err,
-                   "-nocrypt        use or expect unencrypted private key\n");
-        BIO_printf(bio_err,
-                   "-v2 alg         use PKCS#5 v2.0 and cipher \"alg\"\n");
-        BIO_printf(bio_err,
-                   "-v1 obj         use PKCS#5 v1.5 and cipher \"alg\"\n");
 #ifndef OPENSSL_NO_ENGINE
-        BIO_printf(bio_err,
-                   " -engine e       use engine e, possibly a hardware device.\n");
-#endif
-        goto end;
-    }
-#ifndef OPENSSL_NO_ENGINE
-    e = setup_engine(bio_err, engine, 0);
+    e = setup_engine(engine, 0);
 #endif
 
-    if (!app_passwd(bio_err, passargin, passargout, &passin, &passout)) {
+    if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");
         goto end;
     }
@@ -246,30 +207,14 @@ int MAIN(int argc, char **argv)
     if ((pbe_nid == -1) && !cipher)
         pbe_nid = NID_pbeWithMD5AndDES_CBC;
 
-    if (infile) {
-        if (!(in = BIO_new_file(infile, "rb"))) {
-            BIO_printf(bio_err, "Can't open input file %s\n", infile);
-            goto end;
-        }
-    } else
-        in = BIO_new_fp(stdin, BIO_NOCLOSE);
-
-    if (outfile) {
-        if (!(out = BIO_new_file(outfile, "wb"))) {
-            BIO_printf(bio_err, "Can't open output file %s\n", outfile);
-            goto end;
-        }
-    } else {
-        out = BIO_new_fp(stdout, BIO_NOCLOSE);
-#ifdef OPENSSL_SYS_VMS
-        {
-            BIO *tmpbio = BIO_new(BIO_f_linebuffer());
-            out = BIO_push(tmpbio, out);
-        }
-#endif
-    }
+    in = bio_open_default(infile, "rb");
+    if (in == NULL)
+        goto end;
+    out = bio_open_default(outfile, "wb");
+    if (out == NULL)
+        goto end;
     if (topk8) {
-        pkey = load_key(bio_err, infile, informat, 1, passin, e, "key");
+        pkey = load_key(infile, informat, 1, passin, e, "key");
         if (!pkey)
             goto end;
         if (!(p8inf = EVP_PKEY2PKCS8_broken(pkey, p8_broken))) {
@@ -295,7 +240,7 @@ int MAIN(int argc, char **argv)
                     (pass, sizeof pass, "Enter Encryption Password:", 1))
                     goto end;
             }
-            app_RAND_load_file(NULL, bio_err, 0);
+            app_RAND_load_file(NULL, 0);
             if (!(p8 = PKCS8_encrypt(pbe_nid, cipher,
                                      p8pass, strlen(p8pass),
                                      NULL, 0, iter, p8inf))) {
@@ -303,7 +248,7 @@ int MAIN(int argc, char **argv)
                 ERR_print_errors(bio_err);
                 goto end;
             }
-            app_RAND_write_file(NULL, bio_err);
+            app_RAND_write_file(NULL);
             if (outformat == FORMAT_PEM)
                 PEM_write_bio_PKCS8(out, p8);
             else if (outformat == FORMAT_ASN1)

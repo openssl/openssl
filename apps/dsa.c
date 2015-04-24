@@ -1,4 +1,3 @@
-/* apps/dsa.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,214 +70,145 @@
 # include <openssl/pem.h>
 # include <openssl/bn.h>
 
-# undef PROG
-# define PROG    dsa_main
+typedef enum OPTION_choice {
+    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT,
+    OPT_ENGINE, OPT_PVK_STRONG, OPT_PVK_WEAK,
+    OPT_PVK_NONE, OPT_NOOUT, OPT_TEXT, OPT_MODULUS, OPT_PUBIN,
+    OPT_PUBOUT, OPT_CIPHER, OPT_PASSIN, OPT_PASSOUT
+} OPTION_CHOICE;
 
-/*-
- * -inform arg  - input format - default PEM (one of DER, NET or PEM)
- * -outform arg - output format - default PEM
- * -in arg      - input file - default stdin
- * -out arg     - output file - default stdout
- * -des         - encrypt output if PEM format with DES in cbc mode
- * -des3        - encrypt output if PEM format
- * -idea        - encrypt output if PEM format
- * -aes128      - encrypt output if PEM format
- * -aes192      - encrypt output if PEM format
- * -aes256      - encrypt output if PEM format
- * -camellia128 - encrypt output if PEM format
- * -camellia192 - encrypt output if PEM format
- * -camellia256 - encrypt output if PEM format
- * -seed        - encrypt output if PEM format
- * -text        - print a text version
- * -modulus     - print the DSA public key
- */
+OPTIONS dsa_options[] = {
+    {"help", OPT_HELP, '-', "Display this summary"},
+    {"inform", OPT_INFORM, 'F', "Input format, DER PEM PVK"},
+    {"outform", OPT_OUTFORM, 'F', "Output format, DER PEM PVK"},
+# ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
+# endif
+    {"in", OPT_IN, '<', "Input file"},
+    {"out", OPT_OUT, '>', "Output file"},
+    {"pvk-strong", OPT_PVK_STRONG, '-'},
+    {"pvk-weak", OPT_PVK_WEAK, '-'},
+    {"pvk-none", OPT_PVK_NONE, '-'},
+    {"noout", OPT_NOOUT, '-', "Don't print key out"},
+    {"text", OPT_TEXT, '-', "Print the key in text"},
+    {"modulus", OPT_MODULUS, '-', "Print the DSA public value"},
+    {"pubin", OPT_PUBIN, '-'},
+    {"pubout", OPT_PUBOUT, '-'},
+    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
+    {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
+    {"", OPT_CIPHER, '-', "Any supported cipher"},
+    {NULL}
+};
 
-int MAIN(int, char **);
-
-int MAIN(int argc, char **argv)
+int dsa_main(int argc, char **argv)
 {
-    ENGINE *e = NULL;
-    int ret = 1;
+    BIO *out = NULL;
     DSA *dsa = NULL;
-    int i, badops = 0;
+    ENGINE *e = NULL;
     const EVP_CIPHER *enc = NULL;
-    BIO *in = NULL, *out = NULL;
-    int informat, outformat, text = 0, noout = 0;
-    int pubin = 0, pubout = 0;
-    char *infile, *outfile, *prog;
-# ifndef OPENSSL_NO_ENGINE
-    char *engine;
-# endif
-    char *passargin = NULL, *passargout = NULL;
-    char *passin = NULL, *passout = NULL;
-    int modulus = 0;
+    char *engine = NULL, *infile = NULL, *outfile = NULL, *prog;
+    char *passin = NULL, *passout = NULL, *passinarg = NULL, *passoutarg =
+        NULL;
+    OPTION_CHOICE o;
+    int informat = FORMAT_PEM, outformat = FORMAT_PEM, text = 0, noout = 0;
+    int i, modulus = 0, pubin = 0, pubout = 0, pvk_encr = 2, ret = 1;
 
-#ifndef OPENSSL_NO_RC4
-    int pvk_encr = 2;
+    prog = opt_init(argc, argv, dsa_options);
+    while ((o = opt_next()) != OPT_EOF) {
+        switch (o) {
+        case OPT_EOF:
+        case OPT_ERR:
+#ifdef OPENSSL_NO_RC4
+        case OPT_PVK_STRONG:
+        case OPT_PVK_WEAK:
+        case OPT_PVK_NONE:
 #endif
-
-    apps_startup();
-
-    if (bio_err == NULL)
-        if ((bio_err = BIO_new(BIO_s_file())) != NULL)
-            BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
-
-    if (!load_config(bio_err, NULL))
-        goto end;
-
-# ifndef OPENSSL_NO_ENGINE
-    engine = NULL;
-# endif
-    infile = NULL;
-    outfile = NULL;
-    informat = FORMAT_PEM;
-    outformat = FORMAT_PEM;
-
-    prog = argv[0];
-    argc--;
-    argv++;
-    while (argc >= 1) {
-        if (strcmp(*argv, "-inform") == 0) {
-            if (--argc < 1)
-                goto bad;
-            informat = str2fmt(*(++argv));
-        } else if (strcmp(*argv, "-outform") == 0) {
-            if (--argc < 1)
-                goto bad;
-            outformat = str2fmt(*(++argv));
-        } else if (strcmp(*argv, "-in") == 0) {
-            if (--argc < 1)
-                goto bad;
-            infile = *(++argv);
-        } else if (strcmp(*argv, "-out") == 0) {
-            if (--argc < 1)
-                goto bad;
-            outfile = *(++argv);
-        } else if (strcmp(*argv, "-passin") == 0) {
-            if (--argc < 1)
-                goto bad;
-            passargin = *(++argv);
-        } else if (strcmp(*argv, "-passout") == 0) {
-            if (--argc < 1)
-                goto bad;
-            passargout = *(++argv);
-        }
-# ifndef OPENSSL_NO_ENGINE
-        else if (strcmp(*argv, "-engine") == 0) {
-            if (--argc < 1)
-                goto bad;
-            engine = *(++argv);
-        }
-# endif
+ opthelp:
+            ret = 0;
+            BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
+            goto end;
+        case OPT_HELP:
+            opt_help(dsa_options);
+            ret = 0;
+            goto end;
+        case OPT_INFORM:
+            if (!opt_format
+                (opt_arg(), OPT_FMT_PEMDER | OPT_FMT_PVK, &informat))
+                goto opthelp;
+            break;
+        case OPT_IN:
+            infile = opt_arg();
+            break;
+        case OPT_OUTFORM:
+            if (!opt_format
+                (opt_arg(), OPT_FMT_PEMDER | OPT_FMT_PVK, &outformat))
+                goto opthelp;
+            break;
+        case OPT_OUT:
+            outfile = opt_arg();
+            break;
+        case OPT_ENGINE:
+            engine = opt_arg();
+            break;
+        case OPT_PASSIN:
+            passinarg = opt_arg();
+            break;
+        case OPT_PASSOUT:
+            passoutarg = opt_arg();
+            break;
 #ifndef OPENSSL_NO_RC4
-        else if (strcmp(*argv, "-pvk-strong") == 0)
+        case OPT_PVK_STRONG:
             pvk_encr = 2;
-        else if (strcmp(*argv, "-pvk-weak") == 0)
+            break;
+        case OPT_PVK_WEAK:
             pvk_encr = 1;
-        else if (strcmp(*argv, "-pvk-none") == 0)
+            break;
+        case OPT_PVK_NONE:
             pvk_encr = 0;
+            break;
 #endif
-        else if (strcmp(*argv, "-noout") == 0)
+        case OPT_NOOUT:
             noout = 1;
-        else if (strcmp(*argv, "-text") == 0)
+            break;
+        case OPT_TEXT:
             text = 1;
-        else if (strcmp(*argv, "-modulus") == 0)
+            break;
+        case OPT_MODULUS:
             modulus = 1;
-        else if (strcmp(*argv, "-pubin") == 0)
+            break;
+        case OPT_PUBIN:
             pubin = 1;
-        else if (strcmp(*argv, "-pubout") == 0)
+            break;
+        case OPT_PUBOUT:
             pubout = 1;
-        else if ((enc = EVP_get_cipherbyname(&(argv[0][1]))) == NULL) {
-            BIO_printf(bio_err, "unknown option %s\n", *argv);
-            badops = 1;
+            break;
+        case OPT_CIPHER:
+            if (!opt_cipher(opt_unknown(), &enc))
+                goto end;
             break;
         }
-        argc--;
-        argv++;
     }
-
-    if (badops) {
- bad:
-        BIO_printf(bio_err, "%s [options] <infile >outfile\n", prog);
-        BIO_printf(bio_err, "where options are\n");
-        BIO_printf(bio_err, " -inform arg     input format - DER or PEM\n");
-        BIO_printf(bio_err, " -outform arg    output format - DER or PEM\n");
-        BIO_printf(bio_err, " -in arg         input file\n");
-        BIO_printf(bio_err,
-                   " -passin arg     input file pass phrase source\n");
-        BIO_printf(bio_err, " -out arg        output file\n");
-        BIO_printf(bio_err,
-                   " -passout arg    output file pass phrase source\n");
-# ifndef OPENSSL_NO_ENGINE
-        BIO_printf(bio_err,
-                   " -engine e       use engine e, possibly a hardware device.\n");
-# endif
-        BIO_printf(bio_err,
-                   " -des            encrypt PEM output with cbc des\n");
-        BIO_printf(bio_err,
-                   " -des3           encrypt PEM output with ede cbc des using 168 bit key\n");
-# ifndef OPENSSL_NO_IDEA
-        BIO_printf(bio_err,
-                   " -idea           encrypt PEM output with cbc idea\n");
-# endif
-# ifndef OPENSSL_NO_AES
-        BIO_printf(bio_err, " -aes128, -aes192, -aes256\n");
-        BIO_printf(bio_err,
-                   "                 encrypt PEM output with cbc aes\n");
-# endif
-# ifndef OPENSSL_NO_CAMELLIA
-        BIO_printf(bio_err, " -camellia128, -camellia192, -camellia256\n");
-        BIO_printf(bio_err,
-                   "                 encrypt PEM output with cbc camellia\n");
-# endif
-# ifndef OPENSSL_NO_SEED
-        BIO_printf(bio_err,
-                   " -seed           encrypt PEM output with cbc seed\n");
-# endif
-        BIO_printf(bio_err, " -text           print the key in text\n");
-        BIO_printf(bio_err, " -noout          don't print key out\n");
-        BIO_printf(bio_err, " -modulus        print the DSA public value\n");
-        goto end;
-    }
-
-    ERR_load_crypto_strings();
+    argc = opt_num_rest();
+    argv = opt_rest();
 
 # ifndef OPENSSL_NO_ENGINE
-    e = setup_engine(bio_err, engine, 0);
+    e = setup_engine(engine, 0);
 # endif
 
-    if (!app_passwd(bio_err, passargin, passargout, &passin, &passout)) {
+    if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");
         goto end;
     }
 
-    in = BIO_new(BIO_s_file());
-    out = BIO_new(BIO_s_file());
-    if ((in == NULL) || (out == NULL)) {
-        ERR_print_errors(bio_err);
-        goto end;
-    }
-
-    if (infile == NULL)
-        BIO_set_fp(in, stdin, BIO_NOCLOSE);
-    else {
-        if (BIO_read_filename(in, infile) <= 0) {
-            perror(infile);
-            goto end;
-        }
-    }
-
     BIO_printf(bio_err, "read DSA key\n");
-
     {
         EVP_PKEY *pkey;
 
         if (pubin)
-            pkey = load_pubkey(bio_err, infile, informat, 1,
-                               passin, e, "Public Key");
+            pkey = load_pubkey(infile, informat, 1, passin, e, "Public Key");
         else
-            pkey = load_key(bio_err, infile, informat, 1,
-                            passin, e, "Private Key");
+            pkey = load_key(infile, informat, 1, passin, e, "Private Key");
 
         if (pkey) {
             dsa = EVP_PKEY_get1_DSA(pkey);
@@ -291,20 +221,9 @@ int MAIN(int argc, char **argv)
         goto end;
     }
 
-    if (outfile == NULL) {
-        BIO_set_fp(out, stdout, BIO_NOCLOSE);
-# ifdef OPENSSL_SYS_VMS
-        {
-            BIO *tmpbio = BIO_new(BIO_f_linebuffer());
-            out = BIO_push(tmpbio, out);
-        }
-# endif
-    } else {
-        if (BIO_write_filename(out, outfile) <= 0) {
-            perror(outfile);
-            goto end;
-        }
-    }
+    out = bio_open_default(outfile, "w");
+    if (out == NULL)
+        goto end;
 
     if (text)
         if (!DSA_print(out, dsa, 0)) {
@@ -314,13 +233,15 @@ int MAIN(int argc, char **argv)
         }
 
     if (modulus) {
-        fprintf(stdout, "Public Key=");
+        BIO_printf(out, "Public Key=");
         BN_print(out, dsa->pub_key);
-        fprintf(stdout, "\n");
+        BIO_printf(out, "\n");
     }
 
-    if (noout)
+    if (noout) {
+        ret = 0;
         goto end;
+    }
     BIO_printf(bio_err, "writing DSA key\n");
     if (outformat == FORMAT_ASN1) {
         if (pubin || pubout)
@@ -353,18 +274,17 @@ int MAIN(int argc, char **argv)
     if (i <= 0) {
         BIO_printf(bio_err, "unable to write private key\n");
         ERR_print_errors(bio_err);
-    } else
-        ret = 0;
+        goto end;
+    }
+    ret = 0;
  end:
-    BIO_free(in);
     BIO_free_all(out);
     DSA_free(dsa);
     if (passin)
         OPENSSL_free(passin);
     if (passout)
         OPENSSL_free(passout);
-    apps_shutdown();
-    OPENSSL_EXIT(ret);
+    return (ret);
 }
 #else                           /* !OPENSSL_NO_DSA */
 

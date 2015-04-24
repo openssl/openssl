@@ -1,4 +1,3 @@
-/* apps/s_cb.c - callback functions used by s_client, s_server, and s_time */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -109,12 +108,12 @@
  *
  */
 
+/* callback functions used by s_client, s_server, and s_time */
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 #define USE_SOCKETS
-#define NON_MAIN
 #include "apps.h"
-#undef NON_MAIN
 #undef USE_SOCKETS
 #include <openssl/err.h>
 #include <openssl/rand.h>
@@ -200,11 +199,6 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
 int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
 {
     if (cert_file != NULL) {
-        /*-
-        SSL *ssl;
-        X509 *x509;
-        */
-
         if (SSL_CTX_use_certificate_file(ctx, cert_file,
                                          SSL_FILETYPE_PEM) <= 0) {
             BIO_printf(bio_err, "unable to get certificate from '%s'\n",
@@ -220,21 +214,6 @@ int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
             ERR_print_errors(bio_err);
             return (0);
         }
-
-        /*-
-        In theory this is no longer needed
-        ssl=SSL_new(ctx);
-        x509=SSL_get_certificate(ssl);
-
-        if (x509 != NULL) {
-                EVP_PKEY *pktmp;
-                pktmp = X509_get_pubkey(x509);
-                EVP_PKEY_copy_parameters(pktmp,
-                                        SSL_get_privatekey(ssl));
-                EVP_PKEY_free(pktmp);
-        }
-        SSL_free(ssl);
-        */
 
         /*
          * If we are using DSA, we can copy the parameters from the private
@@ -456,16 +435,16 @@ int ssl_print_curves(BIO *out, SSL *s, int noshared)
 {
     int i, ncurves, *curves, nid;
     const char *cname;
+
     ncurves = SSL_get1_curves(s, NULL);
     if (ncurves <= 0)
         return 1;
     curves = OPENSSL_malloc(ncurves * sizeof(int));
     if (!curves) {
-        BIO_puts(out, "Malloc error getting supported curves\n");
+        BIO_printf(out, "Out of memory\n");
         return 0;
     }
     SSL_get1_curves(s, curves);
-
 
     BIO_puts(out, "Supported Elliptic Curves: ");
     for (i = 0; i < ncurves; i++) {
@@ -1178,11 +1157,10 @@ static int set_cert_cb(SSL *ssl, void *arg)
         X509_NAME_print_ex(bio_err, X509_get_subject_name(exc->cert), 0,
                            XN_FLAG_ONELINE);
         BIO_puts(bio_err, "\n");
-
         print_chain_flags(bio_err, ssl, rv);
         if (rv & CERT_PKEY_VALID) {
             if (!SSL_use_certificate(ssl, exc->cert)
-               || !SSL_use_PrivateKey(ssl, exc->key)) {
+                    || !SSL_use_PrivateKey(ssl, exc->key)) {
                 return 0;
             }
             /*
@@ -1251,7 +1229,7 @@ void ssl_excert_free(SSL_EXCERT *exc)
     }
 }
 
-int load_excert(SSL_EXCERT **pexc, BIO *err)
+int load_excert(SSL_EXCERT **pexc)
 {
     SSL_EXCERT *exc = *pexc;
     if (!exc)
@@ -1264,25 +1242,24 @@ int load_excert(SSL_EXCERT **pexc, BIO *err)
     }
     for (; exc; exc = exc->next) {
         if (!exc->certfile) {
-            BIO_printf(err, "Missing filename\n");
+            BIO_printf(bio_err, "Missing filename\n");
             return 0;
         }
-        exc->cert = load_cert(err, exc->certfile, exc->certform,
+        exc->cert = load_cert(exc->certfile, exc->certform,
                               NULL, NULL, "Server Certificate");
         if (!exc->cert)
             return 0;
         if (exc->keyfile) {
-            exc->key = load_key(err, exc->keyfile, exc->keyform,
+            exc->key = load_key(exc->keyfile, exc->keyform,
                                 0, NULL, NULL, "Server Key");
         } else {
-            exc->key = load_key(err, exc->certfile, exc->certform,
+            exc->key = load_key(exc->certfile, exc->certform,
                                 0, NULL, NULL, "Server Key");
         }
         if (!exc->key)
             return 0;
         if (exc->chainfile) {
-            exc->chain = load_certs(err,
-                                    exc->chainfile, FORMAT_PEM,
+            exc->chain = load_certs(exc->chainfile, FORMAT_PEM,
                                     NULL, NULL, "Server Chain");
             if (!exc->chain)
                 return 0;
@@ -1291,86 +1268,70 @@ int load_excert(SSL_EXCERT **pexc, BIO *err)
     return 1;
 }
 
-int args_excert(char ***pargs, int *pargc,
-                int *badarg, BIO *err, SSL_EXCERT **pexc)
+enum range { OPT_X_ENUM };
+
+int args_excert(int opt, SSL_EXCERT **pexc)
 {
-    char *arg = **pargs, *argn = (*pargs)[1];
     SSL_EXCERT *exc = *pexc;
-    int narg = 2;
-    if (!exc) {
-        if (ssl_excert_prepend(&exc))
-            *pexc = exc;
-        else {
-            BIO_printf(err, "Error initialising xcert\n");
-            *badarg = 1;
+
+    assert(opt > OPT_X__FIRST);
+    assert(opt < OPT_X__LAST);
+
+    if (exc == NULL) {
+        if (!ssl_excert_prepend(&exc)) {
+            BIO_printf(bio_err, " %s: Error initialising xcert\n",
+                       opt_getprog());
             goto err;
         }
+        *pexc = exc;
     }
-    if (strcmp(arg, "-xcert") == 0) {
-        if (!argn) {
-            *badarg = 1;
-            return 1;
-        }
-        if (exc->certfile && !ssl_excert_prepend(&exc)) {
-            BIO_printf(err, "Error adding xcert\n");
-            *badarg = 1;
-            goto err;
-        }
-        exc->certfile = argn;
-    } else if (strcmp(arg, "-xkey") == 0) {
-        if (!argn) {
-            *badarg = 1;
-            return 1;
-        }
-        if (exc->keyfile) {
-            BIO_printf(err, "Key already specified\n");
-            *badarg = 1;
-            return 1;
-        }
-        exc->keyfile = argn;
-    } else if (strcmp(arg, "-xchain") == 0) {
-        if (!argn) {
-            *badarg = 1;
-            return 1;
-        }
-        if (exc->chainfile) {
-            BIO_printf(err, "Chain already specified\n");
-            *badarg = 1;
-            return 1;
-        }
-        exc->chainfile = argn;
-    } else if (strcmp(arg, "-xchain_build") == 0) {
-        narg = 1;
-        exc->build_chain = 1;
-    } else if (strcmp(arg, "-xcertform") == 0) {
-        if (!argn) {
-            *badarg = 1;
-            goto err;
-        }
-        exc->certform = str2fmt(argn);
-    } else if (strcmp(arg, "-xkeyform") == 0) {
-        if (!argn) {
-            *badarg = 1;
-            goto err;
-        }
-        exc->keyform = str2fmt(argn);
-    } else
+
+    switch ((enum range)opt) {
+    case OPT_X__FIRST:
+    case OPT_X__LAST:
         return 0;
-
-    (*pargs) += narg;
-
-    if (pargc)
-        *pargc -= narg;
-
-    *pexc = exc;
-
+    case OPT_X_CERT:
+        if (exc->certfile && !ssl_excert_prepend(&exc)) {
+            BIO_printf(bio_err, "%s: Error adding xcert\n", opt_getprog());
+            goto err;
+        }
+        exc->certfile = opt_arg();
+        break;
+    case OPT_X_KEY:
+        if (exc->keyfile) {
+            BIO_printf(bio_err, "%s: Key already specified\n", opt_getprog());
+            goto err;
+        }
+        exc->keyfile = opt_arg();
+        break;
+    case OPT_X_CHAIN:
+        if (exc->chainfile) {
+            BIO_printf(bio_err, "%s: Chain already specified\n",
+                       opt_getprog());
+            goto err;
+        }
+        exc->chainfile = opt_arg();
+        break;
+    case OPT_X_CHAIN_BUILD:
+        exc->build_chain = 1;
+        break;
+    case OPT_X_CERTFORM:
+        if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &exc->certform))
+            return 0;
+        break;
+    case OPT_X_KEYFORM:
+        if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &exc->keyform))
+            return 0;
+        break;
+    }
     return 1;
 
  err:
-    ERR_print_errors(err);
-    ssl_excert_free(exc);
+    ERR_print_errors(bio_err);
+    if (exc)
+        ssl_excert_free(exc);
     *pexc = NULL;
-    return 1;
+    return 0;
 }
 
 static void print_raw_cipherlist(BIO *bio, SSL *s)
@@ -1438,72 +1399,31 @@ void print_ssl_summary(BIO *bio, SSL *s)
 #endif
 }
 
-int args_ssl(char ***pargs, int *pargc, SSL_CONF_CTX *cctx,
-             int *badarg, BIO *err, STACK_OF(OPENSSL_STRING) **pstr)
-{
-    char *arg = **pargs, *argn = (*pargs)[1];
-    int rv;
-
-    /* Attempt to run SSL configuration command */
-    rv = SSL_CONF_cmd_argv(cctx, pargc, pargs);
-    /* If parameter not recognised just return */
-    if (rv == 0)
-        return 0;
-    /* see if missing argument error */
-    if (rv == -3) {
-        BIO_printf(err, "%s needs an argument\n", arg);
-        *badarg = 1;
-        goto end;
-    }
-    /* Check for some other error */
-    if (rv < 0) {
-        BIO_printf(err, "Error with command: \"%s %s\"\n",
-                   arg, argn ? argn : "");
-        *badarg = 1;
-        goto end;
-    }
-    /* Store command and argument */
-    /* If only one argument processed store value as NULL */
-    if (rv == 1)
-        argn = NULL;
-    if (!*pstr)
-        *pstr = sk_OPENSSL_STRING_new_null();
-    if (!*pstr || !sk_OPENSSL_STRING_push(*pstr, arg) ||
-        !sk_OPENSSL_STRING_push(*pstr, argn)) {
-        BIO_puts(err, "Memory allocation failure\n");
-        goto end;
-    }
-
- end:
-    if (*badarg)
-        ERR_print_errors(err);
-
-    return 1;
-}
-
-int args_ssl_call(SSL_CTX *ctx, BIO *err, SSL_CONF_CTX *cctx,
-                  STACK_OF(OPENSSL_STRING) *str, int no_ecdhe, int no_jpake)
+int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str,
+               SSL_CTX *ctx, int no_ecdhe, int no_jpake)
 {
     int i;
+
     SSL_CONF_CTX_set_ssl_ctx(cctx, ctx);
     for (i = 0; i < sk_OPENSSL_STRING_num(str); i += 2) {
-        const char *param = sk_OPENSSL_STRING_value(str, i);
-        const char *value = sk_OPENSSL_STRING_value(str, i + 1);
-        /*
-         * If no_ecdhe or named curve already specified don't need a default.
-         */
-        if (!no_ecdhe && !strcmp(param, "-named_curve"))
+        const char *flag = sk_OPENSSL_STRING_value(str, i);
+        const char *arg = sk_OPENSSL_STRING_value(str, i + 1);
+        /* If no_ecdhe or named curve already specified don't need a default. */
+        if (!no_ecdhe && !strcmp(flag, "-named_curve"))
             no_ecdhe = 1;
 #ifndef OPENSSL_NO_JPAKE
-        if (!no_jpake && !strcmp(param, "-cipher")) {
-            BIO_puts(err, "JPAKE sets cipher to PSK\n");
+        if (!no_jpake && !strcmp(flag, "-cipher")) {
+            BIO_puts(bio_err, "JPAKE sets cipher to PSK\n");
             return 0;
         }
 #endif
-        if (SSL_CONF_cmd(cctx, param, value) <= 0) {
-            BIO_printf(err, "Error with command: \"%s %s\"\n",
-                       param, value ? value : "");
-            ERR_print_errors(err);
+        if (SSL_CONF_cmd(cctx, flag, arg) <= 0) {
+            if (arg)
+                BIO_printf(bio_err, "Error with command: \"%s %s\"\n",
+                           flag, arg);
+            else
+                BIO_printf(bio_err, "Error with command: \"%s\"\n", flag);
+            ERR_print_errors(bio_err);
             return 0;
         }
     }
@@ -1514,23 +1434,23 @@ int args_ssl_call(SSL_CTX *ctx, BIO *err, SSL_CONF_CTX *cctx,
      */
     if (!no_ecdhe) {
         if (SSL_CONF_cmd(cctx, "-named_curve", "P-256") <= 0) {
-            BIO_puts(err, "Error setting EC curve\n");
-            ERR_print_errors(err);
+            BIO_puts(bio_err, "Error setting EC curve\n");
+            ERR_print_errors(bio_err);
             return 0;
         }
     }
 #ifndef OPENSSL_NO_JPAKE
     if (!no_jpake) {
         if (SSL_CONF_cmd(cctx, "-cipher", "PSK") <= 0) {
-            BIO_puts(err, "Error setting cipher to PSK\n");
-            ERR_print_errors(err);
+            BIO_puts(bio_err, "Error setting cipher to PSK\n");
+            ERR_print_errors(bio_err);
             return 0;
         }
     }
 #endif
     if (!SSL_CONF_CTX_finish(cctx)) {
-        BIO_puts(err, "Error finishing context\n");
-        ERR_print_errors(err);
+        BIO_puts(bio_err, "Error finishing context\n");
+        ERR_print_errors(bio_err);
         return 0;
     }
     return 1;

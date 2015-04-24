@@ -1,4 +1,3 @@
-/* apps/version.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -132,45 +131,66 @@
 # include <openssl/blowfish.h>
 #endif
 
-#undef PROG
-#define PROG    version_main
+typedef enum OPTION_choice {
+    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_B, OPT_D, OPT_F, OPT_O, OPT_P, OPT_V, OPT_A
+} OPTION_CHOICE;
 
-int MAIN(int, char **);
+OPTIONS version_options[] = {
+    {"help", OPT_HELP, '-', "Display this summary"},
+    {"a", OPT_A, '-', "Show all data"},
+    {"b", OPT_B, '-', "Show build date"},
+    {"d", OPT_D, '-', "Show configuration directory"},
+    {"f", OPT_F, '-', "Show compiler flags used"},
+    {"o", OPT_O, '-', "Show some internal datatype options"},
+    {"p", OPT_P, '-', "Show target build platform"},
+    {"v", OPT_V, '-', "Show library version"},
+    {NULL}
+};
 
-int MAIN(int argc, char **argv)
+int version_main(int argc, char **argv)
 {
-    int i, ret = 0;
+    int ret = 1, dirty = 0;
     int cflags = 0, version = 0, date = 0, options = 0, platform = 0, dir = 0;
+    char *prog;
+    OPTION_CHOICE o;
 
-    apps_startup();
-
-    if (bio_err == NULL)
-        if ((bio_err = BIO_new(BIO_s_file())) != NULL)
-            BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
-
-    if (argc == 1)
-        version = 1;
-    for (i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "-v") == 0)
-            version = 1;
-        else if (strcmp(argv[i], "-b") == 0)
-            date = 1;
-        else if (strcmp(argv[i], "-f") == 0)
-            cflags = 1;
-        else if (strcmp(argv[i], "-o") == 0)
-            options = 1;
-        else if (strcmp(argv[i], "-p") == 0)
-            platform = 1;
-        else if (strcmp(argv[i], "-d") == 0)
-            dir = 1;
-        else if (strcmp(argv[i], "-a") == 0)
-            date = version = cflags = options = platform = dir = 1;
-        else {
-            BIO_printf(bio_err, "usage:version -[avbofpd]\n");
-            ret = 1;
+    prog = opt_init(argc, argv, version_options);
+    while ((o = opt_next()) != OPT_EOF) {
+        switch (o) {
+        case OPT_EOF:
+        case OPT_ERR:
+            BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             goto end;
+        case OPT_HELP:
+            opt_help(version_options);
+            ret = 0;
+            goto end;
+        case OPT_B:
+            dirty = date = 1;
+            break;
+        case OPT_D:
+            dirty = dir = 1;
+            break;
+        case OPT_F:
+            dirty = cflags = 1;
+            break;
+        case OPT_O:
+            dirty = options = 1;
+            break;
+        case OPT_P:
+            dirty = platform = 1;
+            break;
+        case OPT_V:
+            dirty = version = 1;
+            break;
+        case OPT_A:
+            cflags = version = date = platform = dir = 1;
+            break;
         }
     }
+    if (!dirty)
+        version = 1;
 
     if (version) {
         if (SSLeay() == SSLEAY_VERSION_NUMBER) {
@@ -208,7 +228,7 @@ int MAIN(int argc, char **argv)
         printf("%s\n", SSLeay_version(SSLEAY_CFLAGS));
     if (dir)
         printf("%s\n", SSLeay_version(SSLEAY_DIR));
+    ret = 0;
  end:
-    apps_shutdown();
-    OPENSSL_EXIT(ret);
+    return (ret);
 }
