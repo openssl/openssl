@@ -776,7 +776,6 @@ typedef struct st_dynamic_LOCK_fns {
 /* The top-level structure */
 typedef struct st_dynamic_fns {
     void *static_state;
-    const CRYPTO_EX_DATA_IMPL *ex_data_fns;
     dynamic_MEM_fns mem_fns;
     dynamic_LOCK_fns lock_fns;
 } dynamic_fns;
@@ -834,8 +833,6 @@ typedef int (*dynamic_bind_engine) (ENGINE *e, const char *id,
                 CRYPTO_set_dynlock_create_callback(fns->lock_fns.dynlock_create_cb); \
                 CRYPTO_set_dynlock_lock_callback(fns->lock_fns.dynlock_lock_cb); \
                 CRYPTO_set_dynlock_destroy_callback(fns->lock_fns.dynlock_destroy_cb); \
-                if(!CRYPTO_set_ex_data_implementation(fns->ex_data_fns)) \
-                        return 0; \
         skip_cbs: \
                 if(!fn(e,id)) return 0; \
                 return 1; }
