@@ -587,6 +587,7 @@ static void ecp_nistz256_windowed_mul(const EC_GROUP *group,
     for (i = 0; i < num; i++) {
         P256_POINT *row = table[i];
 
+        /* This is an unusual input, we don't guarantee constant-timeness. */
         if ((BN_num_bits(scalar[i]) > 256) || BN_is_negative(scalar[i])) {
             BIGNUM *mod;
 
@@ -1331,9 +1332,11 @@ static int ecp_nistz256_points_mul(const EC_GROUP *group,
     bn_set_data(r->X, p.p.X, sizeof(p.p.X));
     bn_set_data(r->Y, p.p.Y, sizeof(p.p.Y));
     bn_set_data(r->Z, p.p.Z, sizeof(p.p.Z));
+    /* Not constant-time, but we're only operating on the public output. */
     bn_correct_top(r->X);
     bn_correct_top(r->Y);
     bn_correct_top(r->Z);
+    r->Z_is_one = is_one(p.p.Z);
 
     ret = 1;
 
