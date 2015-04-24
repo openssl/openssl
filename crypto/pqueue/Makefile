@@ -13,8 +13,6 @@ AR=		ar r
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
-TEST=
-APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=pqueue.c
@@ -22,8 +20,7 @@ LIBOBJ=pqueue.o
 
 SRC= $(LIBSRC)
 
-EXHEADER= pqueue.h
-HEADER=	$(EXHEADER)
+HEADER=	
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -33,25 +30,12 @@ top:
 all:	lib
 
 lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
+	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
 
 tags:
 	ctags $(SRC)
@@ -79,5 +63,6 @@ pqueue.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 pqueue.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 pqueue.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 pqueue.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-pqueue.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-pqueue.o: ../../include/openssl/symhacks.h ../cryptlib.h pqueue.c pqueue.h
+pqueue.o: ../../include/openssl/pqueue.h ../../include/openssl/safestack.h
+pqueue.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+pqueue.o: ../cryptlib.h pqueue.c

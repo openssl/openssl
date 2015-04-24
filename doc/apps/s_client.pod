@@ -19,7 +19,6 @@ B<openssl> B<s_client>
 [B<-pass arg>]
 [B<-CApath directory>]
 [B<-CAfile filename>]
-[B<-trusted_first>]
 [B<-attime timestamp>]
 [B<-check_ss_sig>]
 [B<-crl_check>]
@@ -39,6 +38,7 @@ B<openssl> B<s_client>
 [B<-suiteB_128_only>]
 [B<-suiteB_192>]
 [B<-trusted_first>]
+[B<-no_alt_chains>]
 [B<-use_deltas>]
 [B<-verify_depth num>]
 [B<-verify_email email>]
@@ -58,10 +58,8 @@ B<openssl> B<s_client>
 [B<-ign_eof>]
 [B<-no_ign_eof>]
 [B<-quiet>]
-[B<-ssl2>]
 [B<-ssl3>]
 [B<-tls1>]
-[B<-no_ssl2>]
 [B<-no_ssl3>]
 [B<-no_tls1>]
 [B<-no_tls1_1>]
@@ -157,11 +155,11 @@ and to use when attempting to build the client certificate chain.
 B<explicit_policy>, B<-extended_crl>, B<-ignore_critical>, B<-inhibit_any>,
 B<-inhibit_map>, B<-issuer_checks>, B<-partial_chain>, B<-policy>,
 B<-policy_check>, B<-policy_print>, B<-purpose>, B<-suiteB_128>,
-B<-suiteB_128_only>, B<-suiteB_192>, B<-trusted_first>, B<-use_deltas>,
-B<-verify_depth>, B<-verify_email>, B<-verify_hostname>, B<-verify_ip>,
-B<-verify_name>, B<-x509_strict>
+B<-suiteB_128_only>, B<-suiteB_192>, B<-trusted_first>, B<-no_alt_chains>,
+B<-use_deltas>, B<-verify_depth>, B<-verify_email>, B<-verify_hostname>,
+B<-verify_ip>, B<-verify_name>, B<-x509_strict>
 
-Set various certificate chain valiadition options. See the
+Set various certificate chain validation options. See the
 L<B<verify>|verify(1)> manual page for details.
 
 =item B<-reconnect>
@@ -248,11 +246,11 @@ Use the PSK key B<key> when using a PSK cipher suite. The key is
 given as a hexadecimal number without leading 0x, for example -psk
 1a2b3c4d.
 
-=item B<-ssl2>, B<-ssl3>, B<-tls1>, B<-no_ssl2>, B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>
+=item B<-ssl3>, B<-tls1>, B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>
 
 these options disable the use of certain SSL or TLS protocols. By default
 the initial handshake uses a method which should be compatible with all
-servers and permit them to use SSL v3, SSL v2 or TLS as appropriate.
+servers and permit them to use SSL v3 or TLS as appropriate.
 
 Unfortunately there are still ancient and broken servers in use which
 cannot handle this technique and will fail to connect. Some servers only
@@ -278,10 +276,6 @@ this allows the cipher list sent by the client to be modified. Although
 the server determines which cipher suite is used it should take the first
 supported cipher in the list sent by the client. See the B<ciphers>
 command for more information.
-
-=item B<-serverpref>
-
-use the server's cipher preferences; only used for SSLV2.
 
 =item B<-starttls protocol>
 
@@ -373,8 +367,8 @@ would typically be used (https uses port 443). If the connection succeeds
 then an HTTP command can be given such as "GET /" to retrieve a web page.
 
 If the handshake fails then there are several possible causes, if it is
-nothing obvious like no client certificate then the B<-bugs>, B<-ssl2>,
-B<-ssl3>, B<-tls1>, B<-no_ssl2>, B<-no_ssl3>, B<-no_tls1> options can be tried
+nothing obvious like no client certificate then the B<-bugs>,
+B<-ssl3>, B<-tls1>, B<-no_ssl3>, B<-no_tls1> options can be tried
 in case it is a buggy server. In particular you should play with these
 options B<before> submitting a bug report to an OpenSSL mailing list.
 
@@ -396,10 +390,6 @@ on the command line is no guarantee that the certificate works.
 If there are problems verifying a server certificate then the
 B<-showcerts> option can be used to show the whole chain.
 
-Since the SSLv23 client hello cannot include compression methods or extensions
-these will only be supported if its use is disabled, for example by using the
-B<-no_sslv2> option.
-
 The B<s_client> utility is a test tool and is designed to continue the
 handshake after any certificate verification errors. As a result it will
 accept any certificate chain (trusted or not) sent by the peer. None test
@@ -420,5 +410,9 @@ information whenever a session is renegotiated.
 =head1 SEE ALSO
 
 L<sess_id(1)|sess_id(1)>, L<s_server(1)|s_server(1)>, L<ciphers(1)|ciphers(1)>
+
+=head1 HISTORY
+
+The -no_alt_chains options was first added to OpenSSL 1.1.0.
 
 =cut

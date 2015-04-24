@@ -21,7 +21,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -67,8 +67,6 @@
  *
  */
 
-#define OPENSSL_FIPSAPI
-
 #include <string.h>
 #include <limits.h>
 
@@ -81,168 +79,135 @@
 #include <openssl/bn.h>
 
 static int ecdh_compute_key(void *out, size_t len, const EC_POINT *pub_key,
-	EC_KEY *ecdh, 
-	void *(*KDF)(const void *in, size_t inlen, void *out, size_t *outlen));
+                            EC_KEY *ecdh,
+                            void *(*KDF) (const void *in, size_t inlen,
+                                          void *out, size_t *outlen));
 
 static ECDH_METHOD openssl_ecdh_meth = {
-	"OpenSSL ECDH method",
-	ecdh_compute_key,
-#if 0
-	NULL, /* init     */
-	NULL, /* finish   */
-#endif
-	ECDH_FLAG_FIPS_METHOD,    /* flags    */
-	NULL  /* app_data */
+    "OpenSSL ECDH method",
+    ecdh_compute_key,
+    ECDH_FLAG_FIPS_METHOD,      /* flags */
+    NULL                        /* app_data */
 };
 
 const ECDH_METHOD *ECDH_OpenSSL(void)
-	{
-	return &openssl_ecdh_meth;
-	}
+{
+    return &openssl_ecdh_meth;
+}
 
-
-/* This implementation is based on the following primitives in the IEEE 1363 standard:
+/*-
+ * This implementation is based on the following primitives in the IEEE 1363 standard:
  *  - ECKAS-DH1
  *  - ECSVDP-DH
  * Finally an optional KDF is applied.
  */
 static int ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
-	EC_KEY *ecdh,
-	void *(*KDF)(const void *in, size_t inlen, void *out, size_t *outlen))
-	{
-	BN_CTX *ctx;
-	EC_POINT *tmp=NULL;
-	BIGNUM *x=NULL, *y=NULL;
-	const BIGNUM *priv_key;
-	const EC_GROUP* group;
-	int ret= -1;
-	size_t buflen, len;
-	unsigned char *buf=NULL;
+                            EC_KEY *ecdh,
+                            void *(*KDF) (const void *in, size_t inlen,
+                                          void *out, size_t *outlen))
+{
+    BN_CTX *ctx;
+    EC_POINT *tmp = NULL;
+    BIGNUM *x = NULL, *y = NULL;
+    const BIGNUM *priv_key;
+    const EC_GROUP *group;
+    int ret = -1;
+    size_t buflen, len;
+    unsigned char *buf = NULL;
 
-#ifdef OPENSSL_FIPS
-	if(FIPS_selftest_failed())
-		{
-		FIPSerr(FIPS_F_ECDH_COMPUTE_KEY,FIPS_R_FIPS_SELFTEST_FAILED);
-		return -1;
-		}
-#endif
+    if (outlen > INT_MAX) {
+        ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ERR_R_MALLOC_FAILURE); /* sort of,
+                                                                 * anyway */
+        return -1;
+    }
 
-	if (outlen > INT_MAX)
-		{
-		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,ERR_R_MALLOC_FAILURE); /* sort of, anyway */
-		return -1;
-		}
+    if ((ctx = BN_CTX_new()) == NULL)
+        goto err;
+    BN_CTX_start(ctx);
+    x = BN_CTX_get(ctx);
+    y = BN_CTX_get(ctx);
 
-	if ((ctx = BN_CTX_new()) == NULL) goto err;
-	BN_CTX_start(ctx);
-	x = BN_CTX_get(ctx);
-	y = BN_CTX_get(ctx);
-	
-	priv_key = EC_KEY_get0_private_key(ecdh);
-	if (priv_key == NULL)
-		{
-		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,ECDH_R_NO_PRIVATE_VALUE);
-		goto err;
-		}
+    priv_key = EC_KEY_get0_private_key(ecdh);
+    if (priv_key == NULL) {
+        ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ECDH_R_NO_PRIVATE_VALUE);
+        goto err;
+    }
 
-	group = EC_KEY_get0_group(ecdh);
+    group = EC_KEY_get0_group(ecdh);
 
-	if (EC_KEY_get_flags(ecdh) & EC_FLAG_COFACTOR_ECDH)
-		{
-		if (!EC_GROUP_get_cofactor(group, x, ctx) ||
-			!BN_mul(x, x, priv_key, ctx))
-			{
-			ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ERR_R_MALLOC_FAILURE);
-			goto err;
-			}
-		priv_key = x;
-		}
+    if (EC_KEY_get_flags(ecdh) & EC_FLAG_COFACTOR_ECDH) {
+        if (!EC_GROUP_get_cofactor(group, x, ctx) ||
+            !BN_mul(x, x, priv_key, ctx)) {
+            ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+        priv_key = x;
+    }
 
-	if ((tmp=EC_POINT_new(group)) == NULL)
-		{
-		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,ERR_R_MALLOC_FAILURE);
-		goto err;
-		}
+    if ((tmp = EC_POINT_new(group)) == NULL) {
+        ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
 
-	if (!EC_POINT_mul(group, tmp, NULL, pub_key, priv_key, ctx)) 
-		{
-		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,ECDH_R_POINT_ARITHMETIC_FAILURE);
-		goto err;
-		}
-		
-	if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) == NID_X9_62_prime_field) 
-		{
-		if (!EC_POINT_get_affine_coordinates_GFp(group, tmp, x, y, ctx)) 
-			{
-			ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,ECDH_R_POINT_ARITHMETIC_FAILURE);
-			goto err;
-			}
-		}
+    if (!EC_POINT_mul(group, tmp, NULL, pub_key, priv_key, ctx)) {
+        ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ECDH_R_POINT_ARITHMETIC_FAILURE);
+        goto err;
+    }
+
+    if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) ==
+        NID_X9_62_prime_field) {
+        if (!EC_POINT_get_affine_coordinates_GFp(group, tmp, x, y, ctx)) {
+            ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ECDH_R_POINT_ARITHMETIC_FAILURE);
+            goto err;
+        }
+    }
 #ifndef OPENSSL_NO_EC2M
-	else
-		{
-		if (!EC_POINT_get_affine_coordinates_GF2m(group, tmp, x, y, ctx)) 
-			{
-			ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,ECDH_R_POINT_ARITHMETIC_FAILURE);
-			goto err;
-			}
-		}
+    else {
+        if (!EC_POINT_get_affine_coordinates_GF2m(group, tmp, x, y, ctx)) {
+            ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ECDH_R_POINT_ARITHMETIC_FAILURE);
+            goto err;
+        }
+    }
 #endif
 
-	buflen = (EC_GROUP_get_degree(group) + 7)/8;
-	len = BN_num_bytes(x);
-	if (len > buflen)
-		{
-		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,ERR_R_INTERNAL_ERROR);
-		goto err;
-		}
-	if ((buf = OPENSSL_malloc(buflen)) == NULL)
-		{
-		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,ERR_R_MALLOC_FAILURE);
-		goto err;
-		}
-	
-	memset(buf, 0, buflen - len);
-	if (len != (size_t)BN_bn2bin(x, buf + buflen - len))
-		{
-		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,ERR_R_BN_LIB);
-		goto err;
-		}
+    buflen = (EC_GROUP_get_degree(group) + 7) / 8;
+    len = BN_num_bytes(x);
+    if (len > buflen) {
+        ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    if ((buf = OPENSSL_malloc(buflen)) == NULL) {
+        ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
 
-	if (KDF != 0)
-		{
-		if (KDF(buf, buflen, out, &outlen) == NULL)
-			{
-			ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,ECDH_R_KDF_FAILED);
-			goto err;
-			}
-		ret = outlen;
-		}
-	else
-		{
-		/* no KDF, just copy as much as we can */
-		if (outlen > buflen)
-			outlen = buflen;
-		memcpy(out, buf, outlen);
-		ret = outlen;
-		}
-	
-err:
-	if (tmp) EC_POINT_free(tmp);
-	if (ctx) BN_CTX_end(ctx);
-	if (ctx) BN_CTX_free(ctx);
-	if (buf) OPENSSL_free(buf);
-	return(ret);
-	}
+    memset(buf, 0, buflen - len);
+    if (len != (size_t)BN_bn2bin(x, buf + buflen - len)) {
+        ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ERR_R_BN_LIB);
+        goto err;
+    }
 
-#ifdef OPENSSL_FIPSCANISTER
-/* FIPS stanadlone version of ecdh_check: just return FIPS method */
-ECDH_DATA *fips_ecdh_check(EC_KEY *key)
-	{
-	static ECDH_DATA rv = {
-		0,0,0,
-		&openssl_ecdh_meth
-		};
-	return &rv;
-	}
-#endif
+    if (KDF != 0) {
+        if (KDF(buf, buflen, out, &outlen) == NULL) {
+            ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ECDH_R_KDF_FAILED);
+            goto err;
+        }
+        ret = outlen;
+    } else {
+        /* no KDF, just copy as much as we can */
+        if (outlen > buflen)
+            outlen = buflen;
+        memcpy(out, buf, outlen);
+        ret = outlen;
+    }
+
+ err:
+    EC_POINT_free(tmp);
+    if (ctx)
+        BN_CTX_end(ctx);
+    if (ctx)
+        BN_CTX_free(ctx);
+    if (buf)
+        OPENSSL_free(buf);
+    return (ret);
+}

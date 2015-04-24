@@ -69,10 +69,18 @@ The functions EC_GROUP_set_curve_name and EC_GROUP_get_curve_name, set and get t
 (see L<EC_GROUP_new(3)|EC_GROUP_new(3)>). If a curve does not have a NID associated with it, then EC_GROUP_get_curve_name
 will return 0.
 
-The asn1_flag value on a curve is used to determine whether there is a specific ASN1 OID to describe the curve or not.
-If the asn1_flag is 1 then this is a named curve with an associated ASN1 OID. If not then asn1_flag is 0. The functions
-EC_GROUP_get_asn1_flag and EC_GROUP_set_asn1_flag get and set the status of the asn1_flag for the curve. If set then
-the curve_name must also be set.
+The asn1_flag value is used to determine whether the curve encoding uses
+explicit parameters or a named curve using an ASN1 OID: many applications only
+support the latter form. If asn1_flag is B<OPENSSL_EC_NAMED_CURVE> then the
+named curve form is used and the parameters must have a corresponding
+named curve NID set. If asn1_flags is B<OPENSSL_EC_EXPLICIT_CURVE> the
+parameters are explicitly encoded. The functions EC_GROUP_get_asn1_flag and
+EC_GROUP_set_asn1_flag get and set the status of the asn1_flag for the curve.
+Note: B<OPENSSL_EC_EXPLICIT_CURVE> was first added to OpenSSL 1.1.0, for
+previous versions of OpenSSL the value 0 must be used instead. Before OpenSSL
+1.1.0 the default form was to use explicit parameters (meaning that
+applications would have to explicitly set the named curve form) in OpenSSL
+1.1.0 and later the named curve form is the default.
 
 The point_coversion_form for a curve controls how EC_POINT data is encoded as ASN1 as defined in X9.62 (ECDSA).
 point_conversion_form_t is an enum defined as follows: 

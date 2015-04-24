@@ -12,6 +12,7 @@
 /Makefile.bak
 /Makefile
 /MINFO
+/TABLE
 /*.a
 /include
 /inc32
@@ -27,17 +28,6 @@
 /tmp32dll
 /vsout
 
-
-# Most *.c files under test/ are symlinks
-/test/*.c
-# Apart from these
-!/test/asn1test.c
-!/test/methtest.c
-!/test/dummytest.c
-!/test/igetest.c
-!/test/r160test.c
-!/test/fips_algvs.c
-!/test/testutil.c
 
 /test/*.ss
 /test/*.srl
@@ -65,6 +55,21 @@
 *.s
 !/crypto/bn/asm/pa-risc2.s
 !/crypto/bn/asm/pa-risc2W.s
+crypto/aes/asm/a_win32.asm
+crypto/bf/asm/b_win32.asm
+crypto/bn/asm/bn_win32.asm
+crypto/bn/asm/co_win32.asm
+crypto/bn/asm/mt_win32.asm
+crypto/cast/asm/c_win32.asm
+crypto/cpu_win32.asm
+crypto/des/asm/d_win32.asm
+crypto/des/asm/y_win32.asm
+crypto/md5/asm/m5_win32.asm
+crypto/rc4/asm/r4_win32.asm
+crypto/rc5/asm/r5_win32.asm
+crypto/ripemd/asm/rm_win32.asm
+crypto/sha/asm/s1_win32.asm
+crypto/sha/asm/sha512-sse2.asm
 
 # Windows generated build files
 ms/libeay32.def
@@ -97,10 +102,30 @@ ms/ssleay32.def
 !/crypto/des/times/486-50.sol
 
 # Misc auto generated files
+include/openssl/opensslconf.h
 /tools/c_rehash
-/test/evptests.txt
 lib
 Makefile.save
 *.bak
 tags
 TAGS
+cscope.out
+*.d
+
+# Windows
+/tmp32
+/tmp32.dbg
+/tmp32dll
+/tmp32dll.dbg
+/out32
+/out32.dbg
+/out32dll
+/out32dll.dbg
+/inc32
+/MINFO
+ms/bcb.mak
+ms/libeay32.def
+ms/nt.mak
+ms/ntdll.mak
+ms/ssleay32.def
+ms/version32.rc

@@ -64,18 +64,20 @@ return after the handshake and successful completion.
 =item SSL_MODE_RELEASE_BUFFERS
 
 When we no longer need a read buffer or a write buffer for a given SSL,
-then release the memory we were using to hold it.  Released memory is
-either appended to a list of unused RAM chunks on the SSL_CTX, or simply
-freed if the list of unused chunks would become longer than 
-SSL_CTX->freelist_max_len, which defaults to 32.  Using this flag can
+then release the memory we were using to hold it.
+Using this flag can
 save around 34k per idle SSL connection.
 This flag has no effect on SSL v2 connections, or on DTLS connections.
 
-=item SSL_MODE_FALLBACK_SCSV
+=item SSL_MODE_SEND_FALLBACK_SCSV
 
 Send TLS_FALLBACK_SCSV in the ClientHello.
-To be set by applications that reconnect with a downgraded protocol
+To be set only by applications that reconnect with a downgraded protocol
 version; see draft-ietf-tls-downgrade-scsv-00 for details.
+
+DO NOT ENABLE THIS if your application attempts a normal handshake.
+Only use this in explicit fallback retries, following the guidance
+in draft-ietf-tls-downgrade-scsv-00.
 
 =back
 

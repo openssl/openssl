@@ -1249,6 +1249,7 @@ $code.=<<___;
 	fxor		%f8,  %f4, %f4
 	fxor		%f10, %f6, %f6
 
+	subcc		$len, 2, $len
 	stda		%f0, [$out]0xe2		! ASI_BLK_INIT, T4-specific
 	add		$out, 8, $out
 	stda		%f2, [$out]0xe2		! ASI_BLK_INIT, T4-specific

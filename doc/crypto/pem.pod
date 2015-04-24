@@ -477,4 +477,4 @@ The write routines return 1 for success or 0 for failure.
 
 =head1 SEE ALSO
 
-L<EVP_get_cipherbyname(3)|EVP_get_cipherbyname>, L<EVP_BytesToKey(3)|EVP_BytesToKey(3)>
+L<EVP_get_cipherbyname(3)|EVP_EncryptInit(3)>, L<EVP_BytesToKey(3)|EVP_BytesToKey(3)>

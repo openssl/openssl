@@ -76,12 +76,12 @@ $ sdirs := , -
    'archd', -
    objects, -
    md2, md4, md5, sha, mdc2, hmac, ripemd, whrlpool, -
-   des, aes, rc2, rc4, rc5, idea, bf, cast, camellia, seed, -
+   des, aes, rc2, rc4, rc5, idea, bf, cast, camellia, seed, modes, -
    bn, ec, rsa, dsa, ecdsa, dh, ecdh, dso, engine, -
    buffer, bio, stack, lhash, rand, err, -
    evp, asn1, pem, x509, x509v3, conf, txt_db, pkcs7, pkcs12, comp, ocsp, -
    ui, krb5, -
-   store, cms, pqueue, ts, jpake
+   cms, pqueue, ts, jpake, srp, store, cmac
 $!
 $ exheader_ := crypto.h, opensslv.h, ebcdic.h, symhacks.h, ossl_typ.h
 $ exheader_'archd' := opensslconf.h
@@ -94,7 +94,7 @@ $ exheader_mdc2 := mdc2.h
 $ exheader_hmac := hmac.h
 $ exheader_ripemd := ripemd.h
 $ exheader_whrlpool := whrlpool.h
-$ exheader_des := des.h, des_old.h
+$ exheader_des := des.h
 $ exheader_aes := aes.h
 $ exheader_rc2 := rc2.h
 $ exheader_rc4 := rc4.h
@@ -131,14 +131,16 @@ $ exheader_pkcs7 := pkcs7.h
 $ exheader_pkcs12 := pkcs12.h
 $ exheader_comp := comp.h
 $ exheader_ocsp := ocsp.h
-$ exheader_ui := ui.h, ui_compat.h
+$ exheader_ui := ui.h
 $ exheader_krb5 := krb5_asn.h
-$! exheader_store := store.h, str_compat.h
-$ exheader_store := store.h
 $ exheader_cms := cms.h
 $ exheader_pqueue := pqueue.h
 $ exheader_ts := ts.h
 $ exheader_jpake := jpake.h
+$ exheader_srp := srp.h
+$! exheader_store := store.h, str_compat.h
+$ exheader_store := store.h
+$ exheader_cmac := cmac.h
 $ libs := ssl_libcrypto
 $!
 $ exe_dir := [-.'archd'.exe.crypto]

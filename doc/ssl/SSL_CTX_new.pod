@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_CTX_new, SSLv2_method, SSLv2_server_method, SSLv2_client_method, SSLv3_method, SSLv3_server_method, SSLv3_client_method, TLSv1_method, TLSv1_server_method, TLSv1_client_method, TLSv1_1_method, TLSv1_1_server_method, TLSv1_1_client_method, SSLv23_method, SSLv23_server_method, SSLv23_client_method - create a new SSL_CTX object as framework for TLS/SSL enabled functions
+SSL_CTX_new, SSLv3_method, SSLv3_server_method, SSLv3_client_method, TLSv1_method, TLSv1_server_method, TLSv1_client_method, TLSv1_1_method, TLSv1_1_server_method, TLSv1_1_client_method, SSLv23_method, SSLv23_server_method, SSLv23_client_method - create a new SSL_CTX object as framework for TLS/SSL enabled functions
 
 =head1 SYNOPSIS
 
@@ -22,14 +22,6 @@ in a generic type (for client and server use), a server only type, and a
 client only type. B<method> can be of the following types:
 
 =over 4
-
-=item SSLv2_method(void), SSLv2_server_method(void), SSLv2_client_method(void)
-
-A TLS/SSL connection established with these methods will only understand
-the SSLv2 protocol. A client will send out SSLv2 client hello messages
-and will also indicate that it only understand SSLv2. A server will only
-understand SSLv2 client hello messages. The SSLv2 protocol is deprecated 
-and very broken: its use is B<strongly> discouraged.
 
 =item SSLv3_method(void), SSLv3_server_method(void), SSLv3_client_method(void)
 
@@ -62,33 +54,25 @@ SSLv3 client hello messages.
 
 =item SSLv23_method(void), SSLv23_server_method(void), SSLv23_client_method(void)
 
-A TLS/SSL connection established with these methods may understand the SSLv2,
+A TLS/SSL connection established with these methods may understand the
 SSLv3, TLSv1, TLSv1.1 and TLSv1.2 protocols.
 
-If the cipher list does not contain any SSLv2 ciphersuites (the default
-cipher list does not) or extensions are required (for example server name)
+If extensions are required (for example server name)
 a client will send out TLSv1 client hello messages including extensions and
 will indicate that it also understands TLSv1.1, TLSv1.2 and permits a
 fallback to SSLv3. A server will support SSLv3, TLSv1, TLSv1.1 and TLSv1.2
 protocols. This is the best choice when compatibility is a concern.
 
-If any SSLv2 ciphersuites are included in the cipher list and no extensions
-are required then SSLv2 compatible client hellos will be used by clients and
-SSLv2 will be accepted by servers. This is B<not> recommended due to the
-insecurity of SSLv2 and the limited nature of the SSLv2 client hello
-prohibiting the use of extensions.
-
 =back
 
-The list of protocols available can later be limited using the SSL_OP_NO_SSLv2,
+The list of protocols available can later be limited using the
 SSL_OP_NO_SSLv3, SSL_OP_NO_TLSv1, SSL_OP_NO_TLSv1_1 and SSL_OP_NO_TLSv1_2
 options of the SSL_CTX_set_options() or SSL_set_options() functions.
 Using these options it is possible to choose e.g. SSLv23_server_method() and
 be able to negotiate with all possible clients, but to only allow newer
 protocols like TLSv1, TLSv1.1 or TLS v1.2.
 
-Applications which never want to support SSLv2 (even is the cipher string
-is configured to use SSLv2 ciphersuites) can set SSL_OP_NO_SSLv2.
+Applications which never want to support SSLv3 can set SSL_OP_NO_SSLv3.
 
 SSL_CTX_new() initializes the list of ciphers, the session cache setting,
 the callbacks, the keys and certificates and the options to its default
@@ -110,6 +94,11 @@ find out the reason.
 The return value points to an allocated SSL_CTX object.
 
 =back
+
+=head1 HISTORY
+
+SSLv2_method, SSLv2_server_method and SSLv2_client_method where removed in
+OpenSSL 1.1.0.
 
 =head1 SEE ALSO
 

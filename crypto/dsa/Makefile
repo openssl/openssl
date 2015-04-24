@@ -13,8 +13,6 @@ AR=		ar r
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
-TEST=dsatest.c
-APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC= dsa_gen.c dsa_key.c dsa_lib.c dsa_asn1.c dsa_vrf.c dsa_sign.c \
@@ -24,8 +22,7 @@ LIBOBJ= dsa_gen.o dsa_key.o dsa_lib.o dsa_asn1.o dsa_vrf.o dsa_sign.o \
 
 SRC= $(LIBSRC)
 
-EXHEADER= dsa.h
-HEADER=	dsa_locl.h $(EXHEADER)
+HEADER=	dsa_locl.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -35,25 +32,12 @@ top:
 all:	lib
 
 lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
+	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
 
 tags:
 	ctags $(SRC)
@@ -90,8 +74,8 @@ dsa_ameth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 dsa_ameth.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 dsa_ameth.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 dsa_ameth.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-dsa_ameth.o: ../../include/openssl/x509_vfy.h ../asn1/asn1_locl.h ../cryptlib.h
-dsa_ameth.o: dsa_ameth.c
+dsa_ameth.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
+dsa_ameth.o: ../include/internal/asn1_int.h dsa_ameth.c
 dsa_asn1.o: ../../e_os.h ../../include/openssl/asn1.h
 dsa_asn1.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 dsa_asn1.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -178,8 +162,8 @@ dsa_pmeth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 dsa_pmeth.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 dsa_pmeth.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 dsa_pmeth.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-dsa_pmeth.o: ../../include/openssl/x509_vfy.h ../cryptlib.h ../evp/evp_locl.h
-dsa_pmeth.o: dsa_locl.h dsa_pmeth.c
+dsa_pmeth.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
+dsa_pmeth.o: ../include/internal/evp_int.h dsa_locl.h dsa_pmeth.c
 dsa_prn.o: ../../e_os.h ../../include/openssl/asn1.h
 dsa_prn.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 dsa_prn.o: ../../include/openssl/crypto.h ../../include/openssl/dsa.h

@@ -60,14 +60,28 @@
 # is ~2.5x larger and there are some redundant instructions executed
 # when processing last block, improvement is not as big for smallest
 # blocks, only ~30%. Snapdragon S4 is a tad faster, 6.4 cycles per
-# byte, which is also >80% faster than integer-only code.
+# byte, which is also >80% faster than integer-only code. Cortex-A15
+# is even faster spending 5.6 cycles per byte outperforming integer-
+# only code by factor of 2.
 
 # May 2014.
 #
 # Add ARMv8 code path performing at 2.35 cpb on Apple A7.
 
-while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
-open STDOUT,">$output";
+$flavour = shift;
+if ($flavour=~/^\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
+else { while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {} }
+
+if ($flavour && $flavour ne "void") {
+    $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+    ( $xlate="${dir}arm-xlate.pl" and -f $xlate ) or
+    ( $xlate="${dir}../../perlasm/arm-xlate.pl" and -f $xlate) or
+    die "can't locate arm-xlate.pl";
+
+    open STDOUT,"| \"$^X\" $xlate $flavour $output";
+} else {
+    open STDOUT,">$output";
+}
 
 $ctx="r0";
 $inp="r1";
@@ -174,10 +188,13 @@ $code=<<___;
 
 .align	5
 sha1_block_data_order:
-#if __ARM_ARCH__>=7
+#if __ARM_MAX_ARCH__>=7
 	sub	r3,pc,#8		@ sha1_block_data_order
 	ldr	r12,.LOPENSSL_armcap
 	ldr	r12,[r3,r12]		@ OPENSSL_armcap_P
+#ifdef	__APPLE__
+	ldr	r12,[r12]
+#endif
 	tst	r12,#ARMV8_SHA1
 	bne	.LARMv8
 	tst	r12,#ARMV7_NEON
@@ -264,8 +281,10 @@ $code.=<<___;
 .LK_20_39:	.word	0x6ed9eba1
 .LK_40_59:	.word	0x8f1bbcdc
 .LK_60_79:	.word	0xca62c1d6
+#if __ARM_MAX_ARCH__>=7
 .LOPENSSL_armcap:
 .word	OPENSSL_armcap_P-sha1_block_data_order
+#endif
 .asciz	"SHA1 block transform for ARMv4/NEON/ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
 .align	5
 ___
@@ -476,7 +495,8 @@ sub Xloop()
 }
 
 $code.=<<___;
-#if __ARM_ARCH__>=7
+#if __ARM_MAX_ARCH__>=7
+.arch	armv7-a
 .fpu	neon
 
 .type	sha1_block_data_order_neon,%function
@@ -563,7 +583,7 @@ my @Kxx=map("q$_",(8..11));
 my ($W0,$W1,$ABCD_SAVE)=map("q$_",(12..14));
 
 $code.=<<___;
-#if __ARM_ARCH__>=7
+#if __ARM_MAX_ARCH__>=7
 .type	sha1_block_data_order_armv8,%function
 .align	5
 sha1_block_data_order_armv8:
@@ -637,7 +657,9 @@ $code.=<<___;
 ___
 }}}
 $code.=<<___;
+#if __ARM_MAX_ARCH__>=7
 .comm	OPENSSL_armcap_P,4,4
+#endif
 ___
 
 {   my  %opcode = (

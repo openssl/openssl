@@ -20,7 +20,6 @@
 # Be as similar to the output of config.guess/config.sub
 # as possible.
 
-PREFIX=""
 SUFFIX=""
 TEST="false"
 EXE=""
@@ -29,7 +28,7 @@ EXE=""
 for i
 do
 case "$i" in 
--d*) PREFIX="debug-";;
+-d*) options=$options" --debug";;
 -t*) TEST="true";;
 -h*) TEST="true"; cat <<EOF
 Usage: config [options]
@@ -102,10 +101,6 @@ fi
 # Now we simply scan though... In most cases, the SYSTEM info is enough
 #
 case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
-    MPE/iX:*)
-	MACHINE=`echo "$MACHINE" | sed -e 's/-/_/g'`
-	echo "parisc-hp-MPE/iX"; exit 0
-	;;
     A/UX:*)
 	echo "m68k-apple-aux3"; exit 0
 	;;
@@ -120,18 +115,6 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 
     AIX:*)
 	echo "${MACHINE}-ibm-aix3"; exit 0
-	;;
-
-    BeOS:*:BePC)
-    if [ -e /boot/develop/headers/be/bone ]; then
-		echo "beos-x86-bone"; exit 0
-	else
-		echo "beos-x86-r5"; exit 0
-	fi
-	;;
-
-    dgux:*)
-	echo "${MACHINE}-dg-dgux"; exit 0
 	;;
 
     HI-UX:*)
@@ -320,10 +303,6 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "${MACHINE}-unknown-ultrix"; exit 0
 	;;
 
-    SINIX*|ReliantUNIX*)
-	echo "${MACHINE}-siemens-sysv4"; exit 0
-	;;
-
     POSIX-BC*)
 	echo "${MACHINE}-siemens-sysv4"; exit 0   # Here, $MACHINE == "BS2000"
 	;;
@@ -340,10 +319,6 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "${MACHINE}-v11-${SYSTEM}"; exit 0;
 	;;
 
-    NEWS-OS:4.*)
-	echo "mips-sony-newsos4"; exit 0;
-	;;
-
     MINGW*)
 	echo "${MACHINE}-whatever-mingw"; exit 0;
 	;;
@@ -358,18 +333,6 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	esac
 	exit 0
 	;;
-
-    *"CRAY T3E")
-       echo "t3e-cray-unicosmk"; exit 0;
-       ;;
-
-    *CRAY*)
-       echo "j90-cray-unicos"; exit 0;
-       ;;
-
-    NONSTOP_KERNEL*)
-       echo "nsr-tandem-nsk"; exit 0;
-       ;;
 
     vxworks*)
        echo "${MACHINE}-whatever-vxworks"; exit 0;
@@ -572,6 +535,8 @@ case "$GUESSOS" in
   *-*-iphoneos)
 	options="$options -arch%20${MACHINE}"
 	OUT="iphoneos-cross" ;;
+  arm64-*-iphoneos|*-*-ios64)
+	OUT="ios64-cross" ;;
   alpha-*-linux2)
         ISA=`awk '/cpu model/{print$4;exit(0);}' /proc/cpuinfo`
 	case ${ISA:-generic} in
@@ -782,8 +747,6 @@ case "$GUESSOS" in
 	EXE=".pm"
 	OUT="vos-$CC" ;;
   BS2000-siemens-sysv4) OUT="BS2000-OSD" ;;
-  RM*-siemens-sysv4) OUT="ReliantUNIX" ;;
-  *-siemens-sysv4) OUT="SINIX" ;;
   *-hpux1*)
 	if [ $CC = "gcc" -a $GCC_BITS = "64" ]; then
 	    OUT="hpux64-parisc2-gcc"
@@ -849,14 +812,8 @@ case "$GUESSOS" in
 	fi
 	;;
   # these are all covered by the catchall below
-  # *-dgux) OUT="dgux" ;;
-  mips-sony-newsos4) OUT="newsos4-gcc" ;;
   *-*-cygwin_pre1.3) OUT="Cygwin-pre1.3" ;;
   *-*-cygwin) OUT="Cygwin" ;;
-  t3e-cray-unicosmk) OUT="cray-t3e" ;;
-  j90-cray-unicos) OUT="cray-j90" ;;
-  nsr-tandem-nsk) OUT="tandem-c89" ;;
-  beos-*) OUT="$GUESSOS" ;;
   x86pc-*-qnx6) OUT="QNX6-i386" ;;
   *-*-qnx6) OUT="QNX6" ;;
   x86-*-android|i?86-*-android) OUT="android-x86" ;;
@@ -973,7 +930,7 @@ if [ $? = "0" ]; then
   OUT="$OUT-$CC"
 fi
 
-OUT="$PREFIX$OUT"
+OUT="$OUT"
 
 $PERL ./Configure LIST | grep "$OUT" > /dev/null
 if [ $? = "0" ]; then

@@ -1,6 +1,7 @@
 #!/bin/sh
 
 cmd='../util/shlib_wrap.sh ../apps/openssl pkcs7'
+OPENSSL_CONF=/dev/null ; export OPENSSL_CONF
 
 if [ "$1"x != "x" ]; then
 	t=$1
@@ -12,30 +13,22 @@ echo "testing pkcs7 conversions (2)"
 cp $t p7d-fff.p
 
 echo "p -> d"
-$cmd -in p7d-fff.p -inform p -outform d >p7d-f.d
-if [ $? != 0 ]; then exit 1; fi
+$cmd -in p7d-fff.p -inform p -outform d >p7d-f.d || exit 1
 echo "p -> p"
-$cmd -in p7d-fff.p -inform p -outform p >p7d-f.p
-if [ $? != 0 ]; then exit 1; fi
+$cmd -in p7d-fff.p -inform p -outform p >p7d-f.p || exit 1
 
 echo "d -> d"
-$cmd -in p7d-f.d -inform d -outform d >p7d-ff.d1
-if [ $? != 0 ]; then exit 1; fi
+$cmd -in p7d-f.d -inform d -outform d >p7d-ff.d1 || exit 1
 echo "p -> d"
-$cmd -in p7d-f.p -inform p -outform d >p7d-ff.d3
-if [ $? != 0 ]; then exit 1; fi
+$cmd -in p7d-f.p -inform p -outform d >p7d-ff.d3 || exit 1
 
 echo "d -> p"
-$cmd -in p7d-f.d -inform d -outform p >p7d-ff.p1
-if [ $? != 0 ]; then exit 1; fi
+$cmd -in p7d-f.d -inform d -outform p >p7d-ff.p1 || exit 1
 echo "p -> p"
-$cmd -in p7d-f.p -inform p -outform p >p7d-ff.p3
-if [ $? != 0 ]; then exit 1; fi
+$cmd -in p7d-f.p -inform p -outform p >p7d-ff.p3 || exit 1
 
-cmp p7d-f.p p7d-ff.p1
-if [ $? != 0 ]; then exit 1; fi
-cmp p7d-f.p p7d-ff.p3
-if [ $? != 0 ]; then exit 1; fi
+cmp p7d-f.p p7d-ff.p1 || exit 1
+cmp p7d-f.p p7d-ff.p3 || exit 1
 
 /bin/rm -f p7d-f.* p7d-ff.* p7d-fff.*
 exit 0

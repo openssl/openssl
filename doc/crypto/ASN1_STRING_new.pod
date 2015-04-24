@@ -22,6 +22,7 @@ ASN1_STRING_type_new() returns an allocated B<ASN1_STRING> structure of
 type B<type>.
 
 ASN1_STRING_free() frees up B<a>.
+If B<a> is NULL nothing is done.
 
 =head1 NOTES
 

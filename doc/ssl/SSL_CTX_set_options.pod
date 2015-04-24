@@ -63,18 +63,11 @@ The following B<bug workaround> options are available:
 
 =item SSL_OP_MICROSOFT_SESS_ID_BUG
 
-www.microsoft.com - when talking SSLv2, if session-id reuse is
-performed, the session-id passed back in the server-finished message
-is different from the one decided upon.
+As of OpenSSL 1.0.0 this option has no effect.
 
 =item SSL_OP_NETSCAPE_CHALLENGE_BUG
 
-Netscape-Commerce/1.12, when talking SSLv2, accepts a 32 byte
-challenge but then appears to only use 16 bytes when generating the
-encryption keys.  Using 16 bytes is ok but it should be ok to use 32.
-According to the SSLv3 spec, one should use 32 bytes for the challenge
-when operating in SSLv2/v3 compatibility mode, but as mentioned above,
-this breaks this server so 16 bytes is the way to go.
+As of OpenSSL 1.0.0 this option has no effect.
 
 =item SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG
 
@@ -158,15 +151,7 @@ temporary/ephemeral DH parameters are used.
 
 =item SSL_OP_EPHEMERAL_RSA
 
-Always use ephemeral (temporary) RSA key when doing RSA operations
-(see L<SSL_CTX_set_tmp_rsa_callback(3)|SSL_CTX_set_tmp_rsa_callback(3)>).
-According to the specifications this is only done, when a RSA key
-can only be used for signature operations (namely under export ciphers
-with restricted RSA keylength). By setting this option, ephemeral
-RSA keys are always used. This option breaks compatibility with the
-SSL/TLS specifications and may lead to interoperability problems with
-clients and should therefore never be used. Ciphers with DHE (ephemeral
-Diffie-Hellman) key exchange should be used instead.
+This option is no longer implemented and is treated as no op.
 
 =item SSL_OP_CIPHER_SERVER_PREFERENCE
 
@@ -184,15 +169,7 @@ will send its list of preferences to the client and the client chooses.
 
 ...
 
-=item SSL_OP_NETSCAPE_CA_DN_BUG
 
-If we accept a netscape connection, demand a client cert, have a
-non-self-signed CA which does not have its CA in netscape, and the
-browser has a cert, it will crash/hang.  Works for 3.x and 4.xbeta 
-
-=item SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG
-
-...
 
 =item SSL_OP_NO_SSLv2
 

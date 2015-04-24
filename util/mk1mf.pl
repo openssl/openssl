@@ -66,6 +66,7 @@ my %mf_import = (
 	CMLL_ENC       => \$mf_cm_asm,
 	MODES_ASM_OBJ  => \$mf_modes_asm,
         ENGINES_ASM_OBJ=> \$mf_engines_asm,
+	PERLASM_SCHEME => \$mf_perlasm_scheme,
 	FIPSCANISTERONLY  => \$mf_fipscanisteronly,
 	FIPSCANISTERINTERNAL  => \$mf_fipscanisterinternal,
 	EC_ASM	       => \$mf_ec_asm,
@@ -138,14 +139,12 @@ and [options] can be one of
 	no-rc2 no-rc4 no-rc5 no-idea no-des     - Skip this symetric cipher
 	no-bf no-cast no-aes no-camellia no-seed
 	no-rsa no-dsa no-dh			- Skip this public key cipher
-	no-ssl2 no-ssl3				- Skip this version of SSL
+	no-ssl3					- Skip this version of SSL
 	just-ssl				- remove all non-ssl keys/digest
 	no-asm 					- No x86 asm
 	no-krb5					- No KRB5
 	no-srp					- No SRP
 	no-ec					- No EC
-	no-ecdsa				- No ECDSA
-	no-ecdh					- No ECDH
 	no-engine				- No engine
 	no-hw					- No hw
 	nasm 					- Use NASM for x86 asm
@@ -179,11 +178,8 @@ $no_static_engine = 0 if (!$shlib);
 
 $no_mdc2=1 if ($no_des);
 
-$no_ssl3=1 if ($no_md5 || $no_sha);
+$no_ssl3=1 if ($no_md5);
 $no_ssl3=1 if ($no_rsa && $no_dh);
-
-$no_ssl2=1 if ($no_md5);
-$no_ssl2=1 if ($no_rsa);
 
 $out_def="out";
 $inc_def="outinc";
@@ -286,9 +282,7 @@ $cflags.=" -DOPENSSL_NO_RC5"  if $no_rc5;
 $cflags.=" -DOPENSSL_NO_MD2"  if $no_md2;
 $cflags.=" -DOPENSSL_NO_MD4"  if $no_md4;
 $cflags.=" -DOPENSSL_NO_MD5"  if $no_md5;
-$cflags.=" -DOPENSSL_NO_SHA"  if $no_sha;
-$cflags.=" -DOPENSSL_NO_SHA1" if $no_sha1;
-$cflags.=" -DOPENSSL_NO_RIPEMD" if $no_ripemd;
+$cflags.=" -DOPENSSL_NO_RMD160" if $no_ripemd;
 $cflags.=" -DOPENSSL_NO_MDC2" if $no_mdc2;
 $cflags.=" -DOPENSSL_NO_BF"  if $no_bf;
 $cflags.=" -DOPENSSL_NO_CAST" if $no_cast;
@@ -298,7 +292,6 @@ $cflags.=" -DOPENSSL_NO_DSA"  if $no_dsa;
 $cflags.=" -DOPENSSL_NO_DH"   if $no_dh;
 $cflags.=" -DOPENSSL_NO_WHIRLPOOL"   if $no_whirlpool;
 $cflags.=" -DOPENSSL_NO_SOCK" if $no_sock;
-$cflags.=" -DOPENSSL_NO_SSL2" if $no_ssl2;
 $cflags.=" -DOPENSSL_NO_SSL3" if $no_ssl3;
 $cflags.=" -DOPENSSL_NO_TLSEXT" if $no_tlsext;
 $cflags.=" -DOPENSSL_NO_SRP" if $no_srp;
@@ -306,8 +299,6 @@ $cflags.=" -DOPENSSL_NO_CMS" if $no_cms;
 $cflags.=" -DOPENSSL_NO_ERR"  if $no_err;
 $cflags.=" -DOPENSSL_NO_KRB5" if $no_krb5;
 $cflags.=" -DOPENSSL_NO_EC"   if $no_ec;
-$cflags.=" -DOPENSSL_NO_ECDSA" if $no_ecdsa;
-$cflags.=" -DOPENSSL_NO_ECDH" if $no_ecdh;
 $cflags.=" -DOPENSSL_NO_GOST" if $no_gost;
 $cflags.=" -DOPENSSL_NO_ENGINE"   if $no_engine;
 $cflags.=" -DOPENSSL_NO_HW"   if $no_hw;
@@ -405,7 +396,10 @@ for (;;)
 	if ($key eq "LIBKRB5")
 		{ $ex_libs .= " $val" if $val ne "";}
 
-	if ($key eq "TEST" && (!$fipscanisteronly || $dir =~ /^fips/ ))
+	if ($key eq "EX_LIBS")
+		{ $ex_libs .= " $val" if $val ne "";}
+
+	if ($key =~ /^[A-Z0-9_]*TEST$/ && (!$fipscanisteronly || $dir =~ /^fips/ ))
 		{ $test.=&var_add($dir,$val, 0); }
 
 	if (($key eq "PROGS") || ($key eq "E_OBJ"))
@@ -422,9 +416,6 @@ for (;;)
 		$lib =~ s/^.*\/([^\/]+)$/$1/;
 		$otherlibs .= " $lib";
 		}
-
-	if ($key eq "EXHEADER")
-		{ $exheader.=&var_add($dir,$val, 1); }
 
 	if ($key eq "HEADER")
 		{ $header.=&var_add($dir,$val, 1); }
@@ -463,7 +454,6 @@ if ($orig_platform eq 'copy')
 	{
 	# Remove opensslconf.h so it doesn't get updated if we configure a
 	# different branch.
-	$exheader =~ s/[^ ]+\/opensslconf.h//;
 	$header =~ s/[^ ]+\/opensslconf.h//;
 	}
 
@@ -577,7 +567,7 @@ if ($fipscanisteronly)
 $cp2 = $cp unless defined $cp2;
 
 $extra_install= <<"EOF";
-	\$(CP) \"\$(INCO_D)${o}*.\[ch\]\" \"\$(INSTALLTOP)${o}include${o}openssl\"
+	\$(CP) \"include${o}openssl${o}*.\[ch\]\" \"\$(INSTALLTOP)${o}include${o}openssl\"
 	\$(CP) \"\$(BIN_D)$o\$(E_EXE)$exep \$(INSTALLTOP)${o}bin\"
 	\$(MKDIR) \"\$(OPENSSLDIR)\"
 	\$(CP) apps${o}openssl.cnf \"\$(OPENSSLDIR)\"
@@ -590,8 +580,8 @@ if ($fipscanisteronly)
 	\$(CP) \"\$(O_FIPSCANISTER).sha1\" \"\$(INSTALLTOP)${o}lib\"
 	\$(CP2) \"fips${o}fips_premain.c\" \"\$(INSTALLTOP)${o}lib\"
 	\$(CP) \"fips${o}fips_premain.c.sha1\" \"\$(INSTALLTOP)${o}lib\"
-	\$(CP) \"\$(INCO_D)${o}fips.h\" \"\$(INSTALLTOP)${o}include${o}openssl\"
-	\$(CP) \"\$(INCO_D)${o}fips_rand.h\" \"\$(INSTALLTOP)${o}include${o}openssl\"
+	\$(CP) \"include${o}openssl${o}fips.h\" \"\$(INSTALLTOP)${o}include${o}openssl\"
+	\$(CP) \"include${o}openssl${o}fips_rand.h\" \"\$(INSTALLTOP)${o}include${o}openssl\"
 	\$(CP) "\$(BIN_D)${o}fips_standalone_sha1$exep" \"\$(INSTALLTOP)${o}bin\"
 	\$(CP) \"util${o}fipslink.pl\" \"\$(INSTALLTOP)${o}bin\"
 EOF
@@ -671,11 +661,9 @@ FIPSLINK=\$(PERL) util${o}fipslink.pl
 OUT_D=$out_dir
 # The output directory for all the temporary muck
 TMP_D=$tmp_dir
-# The output directory for the header files
-INC_D=$inc_dir
-INCO_D=$inc_dir${o}openssl
 
 PERL=$perl
+PERLASM_SCHEME=$mf_perlasm_scheme
 CP=$cp
 CP2=$cp2
 RM=$rm
@@ -734,7 +722,7 @@ L_LIBS= \$(L_SSL) \$(L_CRYPTO) $ex_l_libs
 # Don't touch anything below this point
 ######################################################
 
-INC=-I\$(INC_D) -I\$(INCL_D)
+INC=-I\$(SRC_D)${o}include -I\$(INCL_D) -I\$(SRC_D)${o}crypto${o}include
 APP_CFLAGS=\$(INC) \$(CFLAG) \$(APP_CFLAG)
 LIB_CFLAGS=\$(INC) \$(CFLAG) \$(LIB_CFLAG)
 SHLIB_CFLAGS=\$(INC) \$(CFLAG) \$(LIB_CFLAG) \$(SHLIB_CFLAG)
@@ -744,7 +732,7 @@ LIBS_DEP=$libs_dep
 EOF
 
 $rules=<<"EOF";
-all: banner \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) \$(INCO_D) headers \$(FIPS_SHA1_EXE) $build_targets
+all: banner \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) headers \$(FIPS_SHA1_EXE) $build_targets
 
 banner:
 $banner
@@ -761,18 +749,11 @@ $banner
 \$(LIB_D):
 	\$(MKDIR) \"\$(LIB_D)\"
 
-\$(INCO_D): \$(INC_D)
-	\$(MKDIR) \"\$(INCO_D)\"
-
-\$(INC_D):
-	\$(MKDIR) \"\$(INC_D)\"
-
 # This needs to be invoked once, when the makefile is first constructed, or
 # after cleaning.
-init: \$(TMP_D) \$(LIB_D) \$(INC_D) \$(INCO_D) \$(BIN_D) \$(TEST_D) headers
-	\$(PERL) \$(SRC_D)/util/copy-if-different.pl "\$(SRC_D)/crypto/opensslconf.h" "\$(INCO_D)/opensslconf.h"
+init: \$(TMP_D) \$(LIB_D) \$(BIN_D) \$(TEST_D) headers
 
-headers: \$(HEADER) \$(EXHEADER)
+headers: \$(HEADER)
 
 lib: \$(LIBS_DEP) \$(E_SHLIB)
 
@@ -798,7 +779,6 @@ reallyclean:
 	\$(RM) -rf \$(BIN_D)
 	\$(RM) -rf \$(TEST_D)
 	\$(RM) -rf \$(LIB_D)
-	\$(RM) -rf \$(INC_D)
 
 EOF
 
@@ -841,7 +821,7 @@ open (OUT,">>crypto/buildinf.h") || die "Can't open buildinf.h";
 printf OUT <<EOF;
 #ifdef $platform_cpp_symbol
   /* auto-generated/updated by util/mk1mf.pl for crypto/cversion.c */
-  #define CFLAGS "$cc $cflags"
+  #define CFLAGS "compiler: $cc $cflags"
   #define PLATFORM "$platform"
 EOF
 printf OUT "  #define DATE \"%s\"\n", scalar gmtime();
@@ -852,19 +832,10 @@ close(OUT);
 foreach (keys %lib_obj) { $lib_obj{$_}=&clean_up_ws($lib_obj{$_}); }
 $test=&clean_up_ws($test);
 $e_exe=&clean_up_ws($e_exe);
-$exheader=&clean_up_ws($exheader);
 $header=&clean_up_ws($header);
-
-# First we strip the exheaders from the headers list
-foreach (split(/\s+/,$exheader)){ $h{$_}=1; }
-foreach (split(/\s+/,$header))	{ $h.=$_." " unless $h{$_}; }
-chop($h); $header=$h;
 
 $defs.=&do_defs("HEADER",$header,"\$(INCL_D)","");
 $rules.=&do_copy_rule("\$(INCL_D)",$header,"");
-
-$defs.=&do_defs("EXHEADER",$exheader,"\$(INCO_D)","");
-$rules.=&do_copy_rule("\$(INCO_D)",$exheader,"");
 
 $defs.=&do_defs("T_OBJ",$test,"\$(OBJ_D)",$obj);
 $rules.=&do_compile_rule("\$(OBJ_D)",$test,"\$(APP_CFLAGS)");
@@ -922,12 +893,6 @@ foreach (values %lib_nam)
 	{
 	$lib_obj=$lib_obj{$_};
 	local($slib)=$shlib;
-
-	if (($_ eq "SSL") && $no_ssl2 && $no_ssl3)
-		{
-		$rules.="\$(O_SSL):\n\n"; 
-		next;
-		}
 
 	$defs.=&do_defs(${_}."OBJ",$lib_obj,"\$(OBJ_D)",$obj);
 	$lib=($slib)?" \$(SHLIB_CFLAGS)".$shlib_ex_cflags{$_}:" \$(LIB_CFLAGS)";
@@ -1122,7 +1087,6 @@ sub var_add
 	@a=grep(!/^e_camellia$/,@a) if $no_camellia;
 	@a=grep(!/^e_seed$/,@a) if $no_seed;
 
-	#@a=grep(!/(^s2_)|(^s23_)/,@a) if $no_ssl2;
 	#@a=grep(!/(^s3_)|(^s23_)/,@a) if $no_ssl3;
 
 	@a=grep(!/(_sock$)|(_acpt$)|(_conn$)|(^pxy_)/,@a) if $no_sock;
@@ -1143,8 +1107,6 @@ sub var_add
 
 	@a=grep(!/_dhp$/,@a) if $no_dh;
 
-	@a=grep(!/(^sha[^1])|(_sha$)|(m_dss$)/,@a) if $no_sha;
-	@a=grep(!/(^sha1)|(_sha1$)|(m_dss1$)/,@a) if $no_sha1;
 	@a=grep(!/_mdc2$/,@a) if $no_mdc2;
 
 	@a=grep(!/(srp)/,@a) if $no_srp;
@@ -1153,10 +1115,7 @@ sub var_add
 	@a=grep(!/^hw$/,@a) if $no_hw;
 	@a=grep(!/(^rsa$)|(^genrsa$)/,@a) if $no_rsa;
 	@a=grep(!/(^dsa$)|(^gendsa$)|(^dsaparam$)/,@a) if $no_dsa;
-	@a=grep(!/^gendsa$/,@a) if $no_sha1;
 	@a=grep(!/(^dh$)|(^gendh$)/,@a) if $no_dh;
-
-	@a=grep(!/(^dh)|(_sha1$)|(m_dss1$)/,@a) if $no_sha1;
 
 	grep($_="$dir/$_",@a);
 	@a=grep(!/(^|\/)s_/,@a) if $no_sock;
@@ -1411,12 +1370,17 @@ sub do_copy_rule
 	return($ret);
 	}
 
+# Options picked up from the OPTIONS line in the top level Makefile
+# generated by Configure.
+
 sub read_options
 	{
 	# Many options are handled in a similar way. In particular
 	# no-xxx sets zero or more scalars to 1.
-	# Process these using a hash containing the option name and
-	# reference to the scalars to set.
+	# Process these using the %valid_options hash containing the option
+	# name and reference to the scalars to set. In some cases the option
+	# needs no special handling and can be ignored: this is done by
+	# setting the value to 0.
 
 	my %valid_options = (
 		"no-rc2" => \$no_rc2,
@@ -1432,8 +1396,6 @@ sub read_options
 		"no-md2" => \$no_md2,
 		"no-md4" => \$no_md4,
 		"no-md5" => \$no_md5,
-		"no-sha" => \$no_sha,
-		"no-sha1" => \$no_sha1,
 		"no-ripemd" => \$no_ripemd,
 		"no-mdc2" => \$no_mdc2,
 		"no-whirlpool" => \$no_whirlpool,
@@ -1442,14 +1404,13 @@ sub read_options
 		"no-rsa" => \$no_rsa,
 		"no-dsa" => \$no_dsa,
 		"no-dh" => \$no_dh,
-		"no-hmac" => \$no_hmac,
 		"no-asm" => \$no_asm,
 		"nasm" => \$nasm,
 		"nw-nasm" => \$nw_nasm,
 		"nw-mwasm" => \$nw_mwasm,
 		"gaswin" => \$gaswin,
-		"no-ssl2" => \$no_ssl2,
 		"no-ssl3" => \$no_ssl3,
+		"no-ssl3-method" => 0,
 		"no-tlsext" => \$no_tlsext,
 		"no-srp" => \$no_srp,
 		"no-cms" => \$no_cms,
@@ -1460,15 +1421,13 @@ sub read_options
 		"no-sock" => \$no_sock,
 		"no-krb5" => \$no_krb5,
 		"no-ec" => \$no_ec,
-		"no-ecdsa" => \$no_ecdsa,
-		"no-ecdh" => \$no_ecdh,
 		"no-gost" => \$no_gost,
 		"no-engine" => \$no_engine,
 		"no-hw" => \$no_hw,
 		"just-ssl" =>
 			[\$no_rc2, \$no_idea, \$no_des, \$no_bf, \$no_cast,
-			  \$no_md2, \$no_sha, \$no_mdc2, \$no_dsa, \$no_dh,
-			  \$no_ssl2, \$no_err, \$no_ripemd, \$no_rc5,
+			  \$no_md2, \$no_mdc2, \$no_dsa, \$no_dh,
+			  \$no_err, \$no_ripemd, \$no_rc5,
 			  \$no_aes, \$no_camellia, \$no_seed, \$no_srp],
 		"rsaref" => 0,
 		"gcc" => \$gcc,
@@ -1488,6 +1447,8 @@ sub read_options
 		"no-zlib-dynamic" => 0,
 		"no-ssl-trace" => 0,
 		"no-unit-test" => 0,
+		"no-deprecated" => 0,
+		"no-ocb" => 0,
 		"fips" => \$fips,
 		"fipscanisterbuild" => [\$fips, \$fipscanisterbuild],
 		"fipscanisteronly" => [\$fips, \$fipscanisterbuild, \$fipscanisteronly],

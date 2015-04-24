@@ -20,7 +20,7 @@ EVP_CIPHER_CTX_set_padding,  EVP_enc_null, EVP_des_cbc, EVP_des_ecb,
 EVP_des_cfb, EVP_des_ofb, EVP_des_ede_cbc, EVP_des_ede, EVP_des_ede_ofb,
 EVP_des_ede_cfb, EVP_des_ede3_cbc, EVP_des_ede3, EVP_des_ede3_ofb,
 EVP_des_ede3_cfb, EVP_desx_cbc, EVP_rc4, EVP_rc4_40, EVP_idea_cbc,
-EVP_idea_ecb, EVP_idea_cfb, EVP_idea_ofb, EVP_idea_cbc, EVP_rc2_cbc,
+EVP_idea_ecb, EVP_idea_cfb, EVP_idea_ofb, EVP_rc2_cbc,
 EVP_rc2_ecb, EVP_rc2_cfb, EVP_rc2_ofb, EVP_rc2_40_cbc, EVP_rc2_64_cbc,
 EVP_bf_cbc, EVP_bf_ecb, EVP_bf_cfb, EVP_bf_ofb, EVP_cast5_cbc,
 EVP_cast5_ecb, EVP_cast5_cfb, EVP_cast5_ofb, EVP_rc5_32_12_16_cbc,
@@ -128,12 +128,13 @@ writes the encrypted version to B<out>. This function can be called
 multiple times to encrypt successive blocks of data. The amount
 of data written depends on the block alignment of the encrypted data:
 as a result the amount of data written may be anything from zero bytes
-to (inl + cipher_block_size - 1) so B<outl> should contain sufficient
+to (inl + cipher_block_size - 1) so B<out> should contain sufficient
 room. The actual number of bytes written is placed in B<outl>.
 
 If padding is enabled (the default) then EVP_EncryptFinal_ex() encrypts
 the "final" data, that is any data that remains in a partial block.
-It uses L<standard block padding|/NOTES> (aka PKCS padding). The encrypted
+It uses standard block padding (aka PKCS padding) as described in
+the NOTES section, below. The encrypted
 final data is written to B<out> which should have sufficient space for
 one cipher block. The number of bytes written is placed in B<outl>. After
 this function is called the encryption operation is finished and no further
@@ -332,7 +333,7 @@ RC4 stream cipher with 40 bit key length.
 This is obsolete and new code should use EVP_rc4()
 and the EVP_CIPHER_CTX_set_key_length() function.
 
-=item EVP_idea_cbc() EVP_idea_ecb(), EVP_idea_cfb(), EVP_idea_ofb(), EVP_idea_cbc()
+=item EVP_idea_cbc() EVP_idea_ecb(), EVP_idea_cfb(), EVP_idea_ofb()
 
 IDEA encryption algorithm in CBC, ECB, CFB and OFB modes respectively.
 
@@ -368,7 +369,13 @@ bits and 12 rounds.
 
 AES Galois Counter Mode (GCM) for 128, 192 and 256 bit keys respectively.
 These ciphers require additional control operations to function correctly: see
-L<GCM mode> section below for details.
+the L<GCM and OCB modes> section below for details.
+
+=item EVP_aes_128_ocb(void), EVP_aes_192_ocb(void), EVP_aes_256_ocb(void)
+
+Offest Codebook Mode (OCB) for 128, 192 and 256 bit keys respectively.
+These ciphers require additional control operations to function correctly: see
+the L<GCM and OCB modes> section below for details.
 
 =item EVP_aes_128_ccm(), EVP_aes_192_ccm(), EVP_aes_256_ccm()
 
@@ -378,10 +385,10 @@ CCM mode section below for details.
 
 =back
 
-=head1 GCM Mode
+=head1 GCM and OCB Modes
 
-For GCM mode ciphers the behaviour of the EVP interface is subtly altered and
-several GCM specific ctrl operations are supported.
+For GCM and OCB mode ciphers the behaviour of the EVP interface is subtly
+altered and several additional ctrl operations are supported.
 
 To specify any additional authenticated data (AAD) a call to EVP_CipherUpdate(),
 EVP_EncryptUpdate() or EVP_DecryptUpdate() should be made with the output
@@ -392,33 +399,41 @@ indicates if the operation was successful. If it does not indicate success
 the authentication operation has failed and any output data B<MUST NOT>
 be used as it is corrupted.
 
-The following ctrls are supported in GCM mode:
+The following ctrls are supported in both GCM and OCB modes:
 
- EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, ivlen, NULL);
+ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL);
 
-Sets the GCM IV length: this call can only be made before specifying an IV. If
-not called a default IV length is used (96 bits for AES).
+Sets the IV length: this call can only be made before specifying an IV. If
+not called a default IV length is used. For GCM AES and OCB AES the default is
+12 (i.e. 96 bits). For OCB mode the maximum is 15.
 
- EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, taglen, tag);
+ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen, tag);
 
 Writes B<taglen> bytes of the tag value to the buffer indicated by B<tag>.
 This call can only be made when encrypting data and B<after> all data has been
-processed (e.g. after an EVP_EncryptFinal() call).
+processed (e.g. after an EVP_EncryptFinal() call). For OCB mode the taglen must
+either be 16 or the value previously set via EVP_CTRL_OCB_SET_TAGLEN.
 
- EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, taglen, tag);
+ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen, tag);
 
 Sets the expected tag to B<taglen> bytes from B<tag>. This call is only legal
 when decrypting data and must be made B<before> any data is processed (e.g.
-before any EVP_DecryptUpdate() call).
+before any EVP_DecryptUpdate() call). For OCB mode the taglen must
+either be 16 or the value previously set via EVP_CTRL_AEAD_SET_TAG.
+
+In OCB mode calling this with B<tag> set to NULL sets the tag length. The tag
+length can only be set before specifying an IV. If not called a default tag
+length is used. For OCB AES the default is 16 (i.e. 128 bits). This is also the
+maximum tag length for OCB.
 
 See L<EXAMPLES> below for an example of the use of GCM mode.
 
 =head1 CCM Mode
 
-The behaviour of CCM mode ciphers is similar to CCM mode but with a few
+The behaviour of CCM mode ciphers is similar to GCM mode but with a few
 additional requirements and different ctrl values.
 
-Like GCM mode any additional authenticated data (AAD) is passed by calling
+Like GCM and OCB modes any additional authenticated data (AAD) is passed by calling
 EVP_CipherUpdate(), EVP_EncryptUpdate() or EVP_DecryptUpdate() with the output
 parameter B<out> set to B<NULL>. Additionally the total plaintext or ciphertext
 length B<MUST> be passed to EVP_CipherUpdate(), EVP_EncryptUpdate() or
@@ -427,7 +442,7 @@ set to B<NULL> and the length passed in the B<inl> parameter.
 
 The following ctrls are supported in CCM mode:
 
- EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_CCM_SET_TAG, taglen, tag);
+ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen, tag);
 
 This call is made to set the expected B<CCM> tag value when decrypting or
 the length of the tag (with the B<tag> parameter set to NULL) when encrypting.
@@ -438,7 +453,7 @@ used (12 for AES).
 
 Sets the CCM B<L> value. If not set a default is used (8 for AES).
 
- EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_CCM_SET_IVLEN, ivlen, NULL);
+ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL);
 
 Sets the CCM nonce (IV) length: this call can only be made before specifying
 an nonce value. The nonce length is given by B<15 - L> so it is 7 by default
@@ -607,4 +622,5 @@ OpenSSL 0.9.7.
 IDEA appeared in OpenSSL 0.9.7 but was often disabled due to
 patent concerns; the last patents expired in 2012.
 
+Support for OCB mode was added in OpenSSL 1.1.0
 =cut

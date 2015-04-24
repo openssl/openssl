@@ -92,7 +92,7 @@ Theses are described below in more detail.
 
 =item B<Protocol>
 
-this is the protocol in use TLSv1, SSLv3 or SSLv2.
+this is the protocol in use TLSv1.2, TLSv1.1, TLSv1 or SSLv3.
 
 =item B<Cipher>
 
@@ -110,10 +110,6 @@ the session ID context in hex format.
 =item B<Master-Key>
 
 this is the SSL session master key.
-
-=item B<Key-Arg>
-
-the key argument, this is only used in SSL v2.
 
 =item B<Start Time>
 

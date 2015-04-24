@@ -4,7 +4,7 @@
 # It is basically a list of all variables from the passed makefile
 #
 
-while ($ARGV[0] =~ /^(\S+)\s*=(.*)$/)
+while ($ARGV[0] =~ /^([^\s=]+)\s*=\s*(.*)$/)
 	{
 	$sym{$1} = $2;
 	shift;
@@ -15,7 +15,7 @@ while (<>)
 	{
 	chop;
 	s/#.*//;
-	if (/^(\S+)\s*=\s*(.*)$/)
+	if (/^([^\s=]+)\s*=\s*(.*)$/)
 		{
 		$o="";
 		($s,$b)=($1,$2);

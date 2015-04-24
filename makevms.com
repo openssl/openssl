@@ -26,7 +26,6 @@ $!      CRYPTO    Just build the "[.xxx.EXE.CRYPTO]LIBCRYPTO.OLB" library.
 $!      CRYPTO/x  Just build the x part of the
 $!                "[.xxx.EXE.CRYPTO]LIBCRYPTO.OLB" library.
 $!      SSL       Just build the "[.xxx.EXE.SSL]LIBSSL.OLB" library.
-$!      SSL_TASK  Just build the "[.xxx.EXE.SSL]SSL_TASK.EXE" program.
 $!      TEST      Just build the "[.xxx.EXE.TEST]" test programs for OpenSSL.
 $!      APPS      Just build the "[.xxx.EXE.APPS]" application programs for OpenSSL.
 $!      ENGINES   Just build the "[.xxx.EXE.ENGINES]" application programs for OpenSSL.
@@ -158,10 +157,6 @@ $!  Build The [.xxx.EXE.SSL]LIBSSL.OLB Library.
 $!
 $   GOSUB SSL
 $!
-$!  Build The [.xxx.EXE.SSL]SSL_TASK.EXE DECNet SSL Engine.
-$!
-$   GOSUB SSL_TASK
-$!
 $!  Build The [.xxx.EXE.TEST] OpenSSL Test Utilities.
 $!
 $   GOSUB TEST
@@ -243,16 +238,27 @@ $ WRITE H_FILE "#ifndef OPENSSL_SYS_VMS"
 $ WRITE H_FILE "# define OPENSSL_SYS_VMS"
 $ WRITE H_FILE "#endif"
 $
+$!
+$! Defined the full SDIRS here.  It will be pruned depending on configuration.
+$! This is an exact copy of what's found in Makefile.org, with spaces replaced
+$! with commas.
+$!
+$ SDIRS := -
+        objects,-
+        md2,md4,md5,sha,mdc2,hmac,ripemd,whrlpool,-
+        des,aes,rc2,rc4,rc5,idea,bf,cast,camellia,seed,modes,-
+        bn,ec,rsa,dsa,ecdsa,dh,ecdh,dso,engine,-
+        buffer,bio,stack,lhash,rand,err,-
+        evp,asn1,pem,x509,x509v3,conf,txt_db,pkcs7,pkcs12,comp,ocsp,ui,krb5,-
+        cms,pqueue,ts,jpake,srp,store,cmac
+$
 $! One of the best way to figure out what the list should be is to do
 $! the following on a Unix system:
-$!   grep OPENSSL_NO_ crypto/*/*.h ssl/*.h engines/*.h engines/*/*.h|grep ':# *if'|sed -e 's/^.*def //'|sort|uniq
+$!   grep OPENSSL_NO_ crypto/include/internal/*.h crypto/*/*.h ssl/*.h engines/*.h engines/*/*.h|grep ':# *if'|sed -e 's/^.*def //'|sort|uniq
 $! For that reason, the list will also always end up in alphabetical order
 $ CONFIG_LOGICALS := AES,-
 		     ASM,INLINE_ASM,-
 		     BF,-
-		     BIO,-
-		     BUFFER,-
-		     BUF_FREELISTS,-
 		     CAMELLIA,-
 		     CAST,-
 		     CMS,-
@@ -269,49 +275,41 @@ $ CONFIG_LOGICALS := AES,-
 		     EC_NISTP_64_GCC_128,-
 		     ENGINE,-
 		     ERR,-
-		     EVP,-
-		     FP_API,-
 		     GMP,-
 		     GOST,-
-		     HASH_COMP,-
+		     HEARTBEATS,-
 		     HMAC,-
 		     IDEA,-
 		     JPAKE,-
 		     KRB5,-
-		     LHASH,-
 		     MD2,-
 		     MD4,-
 		     MD5,-
 		     MDC2,-
 		     NEXTPROTONEG,-
+		     OCB,-
 		     OCSP,-
 		     PSK,-
 		     RC2,-
 		     RC4,-
 		     RC5,-
-		     RFC3779,-
-		     RIPEMD,-
+		     RMD160,-
 		     RSA,-
+		     SCTP,-
 		     SEED,-
-		     SHA,-
-		     SHA0,-
-		     SHA1,-
-		     SHA256,-
-		     SHA512,-
 		     SOCK,-
 		     SRP,-
-		     SSL2,-
-		     SSL_INTERN,-
-		     STACK,-
+		     SRTP,-
+		     SSL3_METHOD,-
+		     SSL_TRACE,-
 		     STATIC_ENGINE,-
 		     STDIO,-
 		     STORE,-
 		     TLSEXT,-
-		     WHIRLPOOL,-
-		     X509
-$! Add a few that we know about
-$ CONFIG_LOGICALS := 'CONFIG_LOGICALS',-
-		     THREADS
+		     UNIT_TEST,-
+		     WHIRLPOOL
+$ CONFIG_EXPERIMENTAL := JPAKE,-
+			 STORE
 $! The following rules, which dictate how some algorithm choices affect
 $! others, are picked from Configure.
 $! Quick syntax:
@@ -328,20 +326,29 @@ $! affect all following rules that depend on that algorithm being disabled.
 $! To force something to be enabled or disabled, have no algorithms in the
 $! algos part.
 $ CONFIG_DISABLE_RULES := RIJNDAEL/AES;-
+			  RMD160/RIPEMD;-
 			  DES/MDC2;-
 			  EC/ECDSA,ECDH;-
-			  MD5/SSL2,SSL3,TLS1;-
+			  MD5/SSL3,TLS1;-
 			  SHA/SSL3,TLS1;-
-			  RSA/SSL2;-
-			  RSA,DSA/SSL2;-
+			  RSA,DSA/SSL3,TLS1;-
 			  DH/SSL3,TLS1;-
 			  TLS1/TLSEXT;-
 			  EC/GOST;-
 			  DSA/GOST;-
 			  DH/GOST;-
+			  TLSEXT/SRP,HEARTBEAT;-
 			  /STATIC_ENGINE;-
 			  /KRB5;-
-			  /EC_NISTP_64_GCC_128
+			  /DEPRECATED;-
+			  /EC_NISTP_64_GCC_128;-
+			  /GMP;-
+			  /MD2;-
+			  /RC5;-
+			  /RFC3779;-
+			  /SCTP;-
+			  /SSL_TRACE;-
+			  /UNIT_TEST
 $ CONFIG_ENABLE_RULES := ZLIB_DYNAMIC/ZLIB;-
 			 /THREADS
 $
@@ -354,25 +361,59 @@ $   CONFIG_DISABLE_RULES = CONFIG_DISABLE_RULES + -
 			   ";/WHIRLPOOL"
 $ ENDIF
 $
+$! Keep track of things to remove from SDIRS, have the items surrounded
+$! with commas
+$ SKIP_SDIRS = ","
+$
 $ CONFIG_LOG_I = 0
-$ CONFIG_LOG_LOOP1:
+$ CONFIG_LOG_LOOP11:
 $   CONFIG_LOG_E = F$EDIT(F$ELEMENT(CONFIG_LOG_I,",",CONFIG_LOGICALS),"TRIM")
 $   CONFIG_LOG_I = CONFIG_LOG_I + 1
-$   IF CONFIG_LOG_E .EQS. "" THEN GOTO CONFIG_LOG_LOOP1
-$   IF CONFIG_LOG_E .EQS. "," THEN GOTO CONFIG_LOG_LOOP1_END
+$   IF CONFIG_LOG_E .EQS. "" THEN GOTO CONFIG_LOG_LOOP11
+$   IF CONFIG_LOG_E .EQS. "," THEN GOTO CONFIG_LOG_LOOP11_END
 $   IF F$TRNLNM("OPENSSL_NO_"+CONFIG_LOG_E)
 $   THEN
 $       CONFIG_DISABLED_'CONFIG_LOG_E' := YES
 $       CONFIG_ENABLED_'CONFIG_LOG_E' := NO
 $	CONFIG_CHANGED_'CONFIG_LOG_E' := YES
+$	IF (SKIP_SDIRS - (","+CONFIG_LOG_E+",")) .EQS. SKIP_SDIRS THEN -
+	    SKIP_SDIRS = SKIP_SDIRS + CONFIG_LOG_E + ","
 $   ELSE
 $       CONFIG_DISABLED_'CONFIG_LOG_E' := NO
 $       CONFIG_ENABLED_'CONFIG_LOG_E' := YES
-$	! Because all algorithms are assumed enabled by default
+$	! Because all non-experimental algorithms are assumed
+$	! enabled by default
 $	CONFIG_CHANGED_'CONFIG_LOG_E' := NO
+$	IF (SKIP_SDIRS - (","+CONFIG_LOG_E+",")) .NES. SKIP_SDIRS THEN -
+	    SKIP_SDIRS = SKIP_SDIRS - (CONFIG_LOG_E + ",")
 $   ENDIF
-$   GOTO CONFIG_LOG_LOOP1
-$ CONFIG_LOG_LOOP1_END:
+$   GOTO CONFIG_LOG_LOOP11
+$ CONFIG_LOG_LOOP11_END:
+$
+$ CONFIG_LOG_I = 0
+$ CONFIG_LOG_LOOP12:
+$   CONFIG_LOG_E = F$EDIT(F$ELEMENT(CONFIG_LOG_I,",",CONFIG_EXPERIMENTAL),"TRIM")
+$   CONFIG_LOG_I = CONFIG_LOG_I + 1
+$   IF CONFIG_LOG_E .EQS. "" THEN GOTO CONFIG_LOG_LOOP12
+$   IF CONFIG_LOG_E .EQS. "," THEN GOTO CONFIG_LOG_LOOP12_END
+$   IF F$TRNLNM("OPENSSL_EXPERIMENTAL_"+CONFIG_LOG_E)
+$   THEN
+$	CONFIG_DISABLED_'CONFIG_LOG_E' := NO
+$	CONFIG_ENABLED_'CONFIG_LOG_E' := YES
+$	CONFIG_CHANGED_'CONFIG_LOG_E' := YES
+$	IF (SKIP_SDIRS - (","+CONFIG_LOG_E+",")) .NES. SKIP_SDIRS THEN -
+	    SKIP_SDIRS = SKIP_SDIRS - (CONFIG_LOG_E + ",")
+$   ELSE
+$	CONFIG_DISABLED_'CONFIG_LOG_E' := YES
+$	CONFIG_ENABLED_'CONFIG_LOG_E' := NO
+$	! Because all experimental algorithms are assumed
+$	! disabled by default
+$	CONFIG_CHANGED_'CONFIG_LOG_E' := NO
+$	IF (SKIP_SDIRS - (","+CONFIG_LOG_E+",")) .EQS. SKIP_SDIRS THEN -
+	    SKIP_SDIRS = SKIP_SDIRS + CONFIG_LOG_E + ","
+$   ENDIF
+$   GOTO CONFIG_LOG_LOOP12
+$ CONFIG_LOG_LOOP12_END:
 $
 $! Apply cascading disable rules
 $ CONFIG_DISABLE_I = 0
@@ -415,6 +456,8 @@ $       CONFIG_DISABLED_'CONFIG_DEPENDENT_E' := YES
 $       CONFIG_ENABLED_'CONFIG_DEPENDENT_E' := NO
 $	! Better not to assume defaults at this point...
 $	CONFIG_CHANGED_'CONFIG_DEPENDENT_E' := YES
+$	IF (SKIP_SDIRS - (","+CONFIG_DEPENDENT_E+",")) .EQS. SKIP_SDIRS THEN -
+	    SKIP_SDIRS = SKIP_SDIRS + CONFIG_DEPENDENT_E + ","
 $	WRITE SYS$ERROR -
          "''CONFIG_DEPENDENT_E' disabled by rule ''CONFIG_DISABLE_E'"
 $	GOTO CONFIG_DISABLE_LOOP2
@@ -464,6 +507,8 @@ $       CONFIG_DISABLED_'CONFIG_DEPENDENT_E' := NO
 $       CONFIG_ENABLED_'CONFIG_DEPENDENT_E' := YES
 $	! Better not to assume defaults at this point...
 $	CONFIG_CHANGED_'CONFIG_DEPENDENT_E' := YES
+$	IF (SKIP_SDIRS - (","+CONFIG_DEPENDENT_E+",")) .NES. SKIP_SDIRS THEN -
+	    SKIP_SDIRS = SKIP_SDIRS - (CONFIG_DEPENDENT_E + ",")
 $	WRITE SYS$ERROR -
          "''CONFIG_DEPENDENT_E' enabled by rule ''CONFIG_ENABLE_E'"
 $	GOTO CONFIG_ENABLE_LOOP2
@@ -472,6 +517,19 @@ $   ENDIF
 $   GOTO CONFIG_ENABLE_LOOP0
 $ CONFIG_ENABLE_LOOP0_END:
 $
+$! Fix SDIRS
+$ SDIRS = ","+F$EDIT(SDIRS,"COLLAPSE")+","
+$ CONFIG_SKIP_I = 0
+$ CONFIG_SDIRS_LOOP1:
+$   CONFIG_SKIP_E = F$EDIT(F$ELEMENT(CONFIG_SKIP_I,",",SKIP_SDIRS),"TRIM")
+$   CONFIG_SKIP_I = CONFIG_SKIP_I + 1
+$   IF CONFIG_SKIP_E .EQS. "" THEN GOTO CONFIG_SDIRS_LOOP1
+$   IF CONFIG_SKIP_E .EQS. "," THEN GOTO CONFIG_SDIRS_LOOP1_END
+$   IF (SDIRS - (","+CONFIG_SKIP_E+",")) .NES. SDIRS THEN -
+       SDIRS = SDIRS - (CONFIG_SKIP_E+",")
+$   GOTO CONFIG_SDIRS_LOOP1
+$ CONFIG_SDIRS_LOOP1_END: 
+$ 
 $! Write to the configuration
 $ CONFIG_LOG_I = 0
 $ CONFIG_LOG_LOOP2:
@@ -479,31 +537,34 @@ $   CONFIG_LOG_E = F$EDIT(F$ELEMENT(CONFIG_LOG_I,",",CONFIG_LOGICALS),"TRIM")
 $   CONFIG_LOG_I = CONFIG_LOG_I + 1
 $   IF CONFIG_LOG_E .EQS. "" THEN GOTO CONFIG_LOG_LOOP2
 $   IF CONFIG_LOG_E .EQS. "," THEN GOTO CONFIG_LOG_LOOP2_END
-$   IF CONFIG_CHANGED_'CONFIG_LOG_E'
+$   IF CONFIG_DISABLED_'CONFIG_LOG_E'
 $   THEN
-$     IF CONFIG_DISABLED_'CONFIG_LOG_E'
+$     WRITE H_FILE "#ifndef OPENSSL_NO_",CONFIG_LOG_E
+$     WRITE H_FILE "# define OPENSSL_NO_",CONFIG_LOG_E
+$     WRITE H_FILE "#endif"
+$   ELSE
+$     IF CONFIG_CHANGED_'CONFIG_LOG_E'
 $     THEN
-$	WRITE H_FILE "#ifndef OPENSSL_NO_",CONFIG_LOG_E
-$	WRITE H_FILE "# define OPENSSL_NO_",CONFIG_LOG_E
+$	WRITE H_FILE "#ifndef OPENSSL_EXPERIMENTAL_",CONFIG_LOG_E
+$	WRITE H_FILE "# ifndef OPENSSL_NO_",CONFIG_LOG_E
+$	WRITE H_FILE "#  define OPENSSL_NO_",CONFIG_LOG_E
+$	WRITE H_FILE "# endif"
 $	WRITE H_FILE "#endif"
-$     ELSE
-$	WRITE H_FILE "#ifndef OPENSSL_",CONFIG_LOG_E
-$	WRITE H_FILE "# define OPENSSL_",CONFIG_LOG_E
-$	WRITE H_FILE "#endif"
+$
+$	IF F$TYPE(USER_CCDEFS) .NES. ""
+$	THEN
+$	  USER_CCDEFS = USER_CCDEFS + ",OPENSSL_EXPERIMENTAL_" + CONFIG_LOG_E
+$       ELSE
+$	  USER_CCDEFS = "OPENSSL_EXPERIMENTAL_" + CONFIG_LOG_E
+$       ENDIF
 $     ENDIF
 $   ENDIF
 $   GOTO CONFIG_LOG_LOOP2
 $ CONFIG_LOG_LOOP2_END:
+$
+$ WRITE/SYMBOL SYS$ERROR "SDIRS = """,SDIRS,""""
 $!
 $ WRITE H_FILE ""
-$ WRITE H_FILE "/* 2011-02-23 SMS."
-$ WRITE H_FILE " * On VMS (V8.3), setvbuf() doesn't support a 64-bit"
-$ WRITE H_FILE " * ""in"" pointer, and the help says:"
-$ WRITE H_FILE " *       Please note that the previously documented"
-$ WRITE H_FILE " *       value _IONBF is not supported."
-$ WRITE H_FILE " * So, skip it on VMS."
-$ WRITE H_FILE " */"
-$ WRITE H_FILE "#define OPENSSL_NO_SETVBUF_IONBF"
 $ WRITE H_FILE "/* STCP support comes with TCPIP 5.7 ECO 2 "
 $ WRITE H_FILE " * enable on newer systems / 2012-02-24 arpadffy */"
 $ WRITE H_FILE "#define OPENSSL_NO_SCTP"
@@ -581,12 +642,6 @@ $   WRITE H_FILE "#define THIRTY_TWO_BIT"
 $   WRITE H_FILE "#undef SIXTEEN_BIT"
 $   WRITE H_FILE "#undef EIGHT_BIT"
 $   WRITE H_FILE "#endif"
-$!
-$! Oddly enough, the following symbol is tested in crypto/sha/sha512.c
-$! before sha.h gets included (and HEADER_SHA_H defined), so we will not
-$! protect this one...
-$   WRITE H_FILE "#undef OPENSSL_NO_SHA512"
-$   WRITE H_FILE "#define OPENSSL_NO_SHA512"
 $!
 $   WRITE H_FILE "#undef OPENSSL_EXPORT_VAR_AS_FUNCTION"
 $   WRITE H_FILE "#define OPENSSL_EXPORT_VAR_AS_FUNCTION"
@@ -711,7 +766,7 @@ $ copy 'exheader' sys$disk:[.include.openssl]
 $!
 $! Copy All The ".H" Files From The [.CRYPTO] Directory Tree.
 $!
-$ SDIRS := , -
+$ HEADER_SDIRS := , -
    'ARCHD', -
    OBJECTS, -
    MD2, MD4, MD5, SHA, MDC2, HMAC, RIPEMD, WHRLPOOL, -
@@ -733,7 +788,7 @@ $ EXHEADER_MDC2 := mdc2.h
 $ EXHEADER_HMAC := hmac.h
 $ EXHEADER_RIPEMD := ripemd.h
 $ EXHEADER_WHRLPOOL := whrlpool.h
-$ EXHEADER_DES := des.h, des_old.h
+$ EXHEADER_DES := des.h
 $ EXHEADER_AES := aes.h
 $ EXHEADER_RC2 := rc2.h
 $ EXHEADER_RC4 := rc4.h
@@ -770,7 +825,7 @@ $ EXHEADER_PKCS7 := pkcs7.h
 $ EXHEADER_PKCS12 := pkcs12.h
 $ EXHEADER_COMP := comp.h
 $ EXHEADER_OCSP := ocsp.h
-$ EXHEADER_UI := ui.h, ui_compat.h
+$ EXHEADER_UI := ui.h
 $ EXHEADER_KRB5 := krb5_asn.h
 $ EXHEADER_CMS := cms.h
 $ EXHEADER_PQUEUE := pqueue.h
@@ -782,20 +837,20 @@ $ EXHEADER_STORE := store.h
 $ EXHEADER_CMAC := cmac.h
 $!
 $ i = 0
-$ loop_sdirs:
-$   sdir = f$edit( f$element( i, ",", sdirs), "trim")
+$ loop_header_sdirs:
+$   sdir = f$edit( f$element( i, ",", header_sdirs), "trim")
 $   i = i + 1
-$   if (sdir .eqs. ",") then goto loop_sdirs_end
+$   if (sdir .eqs. ",") then goto loop_header_sdirs_end
 $   hdr_list = exheader_'sdir'
 $   if (sdir .nes. "") then sdir = "."+ sdir
 $   copy [.crypto'sdir']'hdr_list' sys$disk:[.include.openssl]
-$ goto loop_sdirs
-$ loop_sdirs_end:
+$ goto loop_header_sdirs
+$ loop_header_sdirs_end:
 $!
 $! Copy All The ".H" Files From The [.SSL] Directory.
 $!
 $! (keep these in the same order as ssl/Makefile)
-$ EXHEADER := ssl.h, ssl2.h, ssl3.h, ssl23.h, tls1.h, dtls1.h, kssl.h
+$ EXHEADER := ssl.h, ssl2.h, ssl3.h, ssl23.h, tls1.h, dtls1.h, kssl.h, srtp.h
 $ copy sys$disk:[.ssl]'exheader' sys$disk:[.include.openssl]
 $!
 $! Purge the [.include.openssl] header files.
@@ -823,11 +878,6 @@ $!
 $! Build The [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library.
 $!  
 $ @CRYPTO-LIB LIBRARY 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" -
-   "''ISSEVEN'" "''BUILDPART'" "''POINTER_SIZE'" "''ZLIB'"
-$!
-$! Build The [.xxx.EXE.CRYPTO]*.EXE Test Applications.
-$!  
-$ @CRYPTO-LIB APPS 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" -
    "''ISSEVEN'" "''BUILDPART'" "''POINTER_SIZE'" "''ZLIB'"
 $!
 $! Go Back To The Main Directory.
@@ -862,33 +912,6 @@ $!
 $ SET DEFAULT [-]
 $!
 $! Time To Return.
-$!
-$ RETURN
-$!
-$! Build The "[.xxx.EXE.SSL]SSL_TASK.EXE" Program.
-$!
-$ SSL_TASK:
-$!
-$! Tell The User What We Are Doing.
-$!
-$ WRITE SYS$OUTPUT ""
-$ WRITE SYS$OUTPUT -
-   "Building DECNet Based SSL Engine, [.",ARCHD,".EXE.SSL]SSL_TASK.EXE"
-$!
-$! Go To The [.SSL] Directory.
-$!
-$ SET DEFAULT SYS$DISK:[.SSL]
-$!
-$! Build The [.xxx.EXE.SSL]SSL_TASK.EXE
-$!
-$ @SSL-LIB SSL_TASK 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" -
-   "''ISSEVEN'" "''POINTER_SIZE'" "''ZLIB'"
-$!
-$! Go Back To The Main Directory.
-$!
-$ SET DEFAULT [-]
-$!
-$! That's All, Time To RETURN.
 $!
 $ RETURN
 $!
@@ -1002,7 +1025,7 @@ $!
 $   IF (P1.EQS."CONFIG").OR.(P1.EQS."BUILDINF").OR.(P1.EQS."SOFTLINKS") -
        .OR.(P1.EQS."BUILDALL") -
        .OR.(P1.EQS."CRYPTO").OR.(P1.EQS."SSL") -
-       .OR.(P1.EQS."SSL_TASK").OR.(P1.EQS."TEST").OR.(P1.EQS."APPS") -
+       .OR.(P1.EQS."TEST").OR.(P1.EQS."APPS") -
        .OR.(P1.EQS."ENGINES")
 $   THEN
 $!
@@ -1032,7 +1055,6 @@ $     WRITE SYS$OUTPUT "    CRYPTO   :  To Build Just The [.xxx.EXE.CRYPTO]LIBCR
 $     WRITE SYS$OUTPUT "    CRYPTO/x :  To Build Just The x Part Of The"
 $     WRITE SYS$OUTPUT "                [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library."
 $     WRITE SYS$OUTPUT "    SSL      :  To Build Just The [.xxx.EXE.SSL]LIBSSL.OLB Library."
-$     WRITE SYS$OUTPUT "    SSL_TASK :  To Build Just The [.xxx.EXE.SSL]SSL_TASK.EXE Program."
 $     WRITE SYS$OUTPUT "    TEST     :  To Build Just The OpenSSL Test Programs."
 $     WRITE SYS$OUTPUT "    APPS     :  To Build Just The OpenSSL Application Programs."
 $     WRITE SYS$OUTPUT "    ENGINES  :  To Build Just The ENGINES"

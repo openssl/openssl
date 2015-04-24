@@ -29,6 +29,9 @@ functions
  int OBJ_create(const char *oid,const char *sn,const char *ln);
  void OBJ_cleanup(void);
 
+ size_t OBJ_length(const ASN1_OBJECT *obj);
+ const unsigned char *OBJ_get0_data(const ASN1_OBJECT *obj);
+
 =head1 DESCRIPTION
 
 The ASN1 object utility functions process ASN1_OBJECT structures which are
@@ -70,6 +73,11 @@ OBJ_cleanup() cleans up OpenSSLs internal object table: this should
 be called before an application exits if any new objects were added
 using OBJ_create().
 
+OBJ_length() returns the size of the content octets of B<obj>.
+
+OBJ_get0_data() returns a pointer to the content octets of B<obj>.
+The returned pointer is an internal pointer which B<must not> be freed.
+
 =head1 NOTES
 
 Objects in OpenSSL can have a short name, a long name and a numerical
@@ -95,6 +103,12 @@ Objects which are not in the table have the NID value NID_undef.
 Objects do not need to be in the internal tables to be processed,
 the functions OBJ_txt2obj() and OBJ_obj2txt() can process the numerical
 form of an OID.
+
+Some objects are used to reprsent algorithms which do not have a
+corresponding ASN.1 OBJECT IDENTIFIER encoding (for example no OID currently
+exists for a particular algorithm). As a result they B<cannot> be encoded or
+decoded as part of ASN.1 structures. Applications can determine if there
+is a corresponding OBJECT IDENTIFIER by checking OBJ_length() is not zero.
 
 =head1 EXAMPLES
 

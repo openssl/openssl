@@ -170,17 +170,6 @@ link_a.gnu:
 link_app.gnu:
 	@ $(DO_GNU_APP); $(LINK_APP)
 
-DO_BEOS_SO=	SHLIB=lib$(LIBNAME).so; \
-	SHLIB_SUFFIX=; \
-	ALLSYMSFLAGS='-Wl,--whole-archive'; \
-	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
-	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-Bsymbolic -Wl,-soname=$$SHLIB$$SHLIB_SUFFIX"
-
-link_o.beos:
-	@ $(DO_BEOS_SO); $(LINK_SO_O)
-link_a.beos:
-	@ $(DO_BEOS_SO); $(LINK_SO_A)
-
 link_o.bsd:
 	@if $(DETECT_GNU_LD); then $(DO_GNU_SO); else \
 	$(CALC_VERSIONS); \
@@ -555,28 +544,10 @@ link_app.aix:
 	LDFLAGS="$(CFLAGS) -Wl,-brtl,-blibpath:$(LIBRPATH):$${LIBPATH:-/usr/lib:/lib}"; \
 	$(LINK_APP)
 
-link_o.reliantunix:
-	@ $(CALC_VERSIONS); \
-	SHLIB=lib$(LIBNAME).so; \
-	SHLIB_SUFFIX=; \
-	ALLSYMSFLAGS=; \
-	NOALLSYMSFLAGS=''; \
-	SHAREDFLAGS='$(CFLAGS) -G'; \
-	$(LINK_SO_O)
-link_a.reliantunix:
-	@ $(CALC_VERSIONS); \
-	SHLIB=lib$(LIBNAME).so; \
-	SHLIB_SUFFIX=; \
-	ALLSYMSFLAGS=; \
-	NOALLSYMSFLAGS=''; \
-	SHAREDFLAGS='$(CFLAGS) -G'; \
-	$(LINK_SO_A_UNPACKED)
-link_app.reliantunix:
-	$(LINK_APP)
 
 # Targets to build symbolic links when needed
 symlink.gnu symlink.solaris symlink.svr3 symlink.svr5 symlink.irix \
-symlink.aix symlink.reliantunix:
+symlink.aix:
 	@ $(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).so; \
 	$(SYMLINK_SO)
@@ -591,7 +562,7 @@ symlink.hpux:
 	expr $(PLATFORM) : '.*ia64' > /dev/null && SHLIB=lib$(LIBNAME).so; \
 	$(SYMLINK_SO)
 # The following lines means those specific architectures do no symlinks
-symlink.cygwin symlink.alpha-osf1 symlink.tru64 symlink.tru64-rpath symlink.beos:
+symlink.cygwin symlink.alpha-osf1 symlink.tru64 symlink.tru64-rpath:
 
 # Compatibility targets
 link_o.bsd-gcc-shared link_o.linux-shared link_o.gnu-shared: link_o.gnu
@@ -645,11 +616,3 @@ link_o.aix-shared: link_o.aix
 link_a.aix-shared: link_a.aix
 link_app.aix-shared: link_app.aix
 symlink.aix-shared: symlink.aix
-link_o.reliantunix-shared: link_o.reliantunix
-link_a.reliantunix-shared: link_a.reliantunix
-link_app.reliantunix-shared: link_app.reliantunix
-symlink.reliantunix-shared: symlink.reliantunix
-link_o.beos-shared: link_o.beos
-link_a.beos-shared: link_a.beos
-link_app.beos-shared: link_app.gnu
-symlink.beos-shared: symlink.beos

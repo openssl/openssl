@@ -13,8 +13,6 @@ AR=		ar r
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
-TEST=hmactest.c
-APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=hmac.c hm_ameth.c hm_pmeth.c
@@ -22,8 +20,7 @@ LIBOBJ=hmac.o hm_ameth.o hm_pmeth.o
 
 SRC= $(LIBSRC)
 
-EXHEADER= hmac.h
-HEADER=	$(EXHEADER)
+HEADER=	
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -33,25 +30,12 @@ top:
 all:	lib
 
 lib:	$(LIBOBJ)
-	$(ARX) $(LIB) $(LIBOBJ)
+	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-links:
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
-
-install:
-	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
-	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
-	done;
 
 tags:
 	ctags $(SRC)
@@ -82,8 +66,8 @@ hm_ameth.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 hm_ameth.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 hm_ameth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 hm_ameth.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-hm_ameth.o: ../../include/openssl/symhacks.h ../asn1/asn1_locl.h ../cryptlib.h
-hm_ameth.o: hm_ameth.c
+hm_ameth.o: ../../include/openssl/symhacks.h ../cryptlib.h
+hm_ameth.o: ../include/internal/asn1_int.h hm_ameth.c
 hm_pmeth.o: ../../e_os.h ../../include/openssl/asn1.h
 hm_pmeth.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 hm_pmeth.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
@@ -98,7 +82,7 @@ hm_pmeth.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 hm_pmeth.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 hm_pmeth.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 hm_pmeth.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-hm_pmeth.o: ../cryptlib.h ../evp/evp_locl.h hm_pmeth.c
+hm_pmeth.o: ../cryptlib.h ../include/internal/evp_int.h hm_pmeth.c
 hmac.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 hmac.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 hmac.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
