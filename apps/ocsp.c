@@ -132,7 +132,7 @@ typedef enum OPTION_choice {
     OPT_REQIN, OPT_RESPIN, OPT_SIGNER, OPT_VAFILE, OPT_SIGN_OTHER,
     OPT_VERIFY_OTHER, OPT_CAFILE, OPT_CAPATH,
     OPT_VALIDITY_PERIOD, OPT_STATUS_AGE, OPT_SIGNKEY, OPT_REQOUT,
-    OPT_RESPOUT, OPT_PATH, OPT_CERT, OPT_SERIAL,
+    OPT_RESPOUT, OPT_PATH, OPT_ISSUER, OPT_CERT, OPT_SERIAL,
     OPT_INDEX, OPT_CA, OPT_NMIN, OPT_REQUEST, OPT_NDAYS, OPT_RSIGNER,
     OPT_RKEY, OPT_ROTHER, OPT_RMD, OPT_HEADER,
     OPT_V_ENUM,
@@ -189,6 +189,7 @@ OPTIONS ocsp_options[] = {
     {"reqout", OPT_REQOUT, 's', "Output file for the DER-encoded request"},
     {"respout", OPT_RESPOUT, 's', "Output file for the DER-encoded response"},
     {"path", OPT_PATH, 's', "Path to use in OCSP request"},
+    {"issuer", OPT_ISSUER, '<', "Issuer certificate"},
     {"cert", OPT_CERT, '<', "Certificate to check"},
     {"serial", OPT_SERIAL, 's', "Nerial number to check"},
     {"index", OPT_INDEX, '<', "Certificate status index file"},
@@ -390,6 +391,16 @@ int ocsp_main(int argc, char **argv)
             break;
         case OPT_PATH:
             path = opt_arg();
+            break;
+        case OPT_ISSUER:
+            X509_free(issuer);
+            issuer = load_cert(opt_arg(), FORMAT_PEM,
+                               NULL, NULL, "issuer certificate");
+            if (issuer == NULL)
+                goto end;
+            if ((issuers = sk_X509_new_null()) == NULL)
+                goto end;
+            sk_X509_push(issuers, issuer);
             break;
         case OPT_CERT:
             X509_free(cert);
@@ -703,6 +714,11 @@ int ocsp_main(int argc, char **argv)
         }
 
         i = OCSP_basic_verify(bs, verify_other, store, verify_flags);
+        if (i <= 0 && issuers) {
+            i = OCSP_basic_verify(bs, issuers, store, OCSP_TRUSTOTHER);
+            if (i > 0)
+                ERR_clear_error();
+        }
         if (i <= 0) {
             BIO_printf(bio_err, "Response Verify Failure\n");
             ERR_print_errors(bio_err);
