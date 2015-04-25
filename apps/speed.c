@@ -835,11 +835,9 @@ int speed_main(int argc, char **argv)
         case OPT_DECRYPT:
             decrypt = 1;
             break;
-#ifndef OPENSSL_NO_ENGINE
         case OPT_ENGINE:
-            setup_engine(opt_arg(), 0);
+            (void)setup_engine(opt_arg(), 0);
             break;
-#endif
 #ifndef NO_FORK
         case OPT_MULTI:
             multi = atoi(opt_arg());

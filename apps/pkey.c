@@ -97,7 +97,7 @@ int pkey_main(int argc, char **argv)
     EVP_PKEY *pkey = NULL;
     const EVP_CIPHER *cipher = NULL;
     char *infile = NULL, *outfile = NULL, *passin = NULL, *passout = NULL;
-    char *passinarg = NULL, *passoutarg = NULL, *prog, *engine = NULL;
+    char *passinarg = NULL, *passoutarg = NULL, *prog;
     OPTION_CHOICE o;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM;
     int pubin = 0, pubout = 0, pubtext = 0, text = 0, noout = 0, ret = 1;
@@ -129,7 +129,7 @@ int pkey_main(int argc, char **argv)
             passoutarg = opt_arg();
             break;
         case OPT_ENGINE:
-            engine = opt_arg();
+            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_IN:
             infile = opt_arg();
@@ -159,10 +159,6 @@ int pkey_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
-
-#ifndef OPENSSL_NO_ENGINE
-    e = setup_engine(engine, 0);
-#endif
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");

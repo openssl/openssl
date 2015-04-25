@@ -174,11 +174,9 @@ int pkeyutl_main(int argc, char **argv)
             if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &keyform))
                 goto opthelp;
             break;
-#ifndef OPENSSL_NO_ENGINE
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
             break;
-#endif
         case OPT_PUBIN:
             key_type = KEY_PUBKEY;
             break;

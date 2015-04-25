@@ -138,7 +138,7 @@ int ecparam_main(int argc, char **argv)
     EC_GROUP *group = NULL;
     point_conversion_form_t form = POINT_CONVERSION_UNCOMPRESSED;
     char *curve_name = NULL, *inrand = NULL;
-    char *engine = NULL, *infile = NULL, *outfile = NULL, *prog;
+    char *infile = NULL, *outfile = NULL, *prog;
     unsigned char *buffer = NULL;
     OPTION_CHOICE o;
     int asn1_flag = OPENSSL_EC_NAMED_CURVE, new_asn1_flag = 0;
@@ -213,7 +213,7 @@ int ecparam_main(int argc, char **argv)
             need_rand = 1;
             break;
         case OPT_ENGINE:
-            engine = opt_arg();
+            (void)setup_engine(opt_arg(), 0);
             break;
         }
     }
@@ -226,10 +226,6 @@ int ecparam_main(int argc, char **argv)
     out = bio_open_default(outfile, WB(outformat));
     if (out == NULL)
         goto end;
-
-# ifndef OPENSSL_NO_ENGINE
-    setup_engine(engine, 0);
-# endif
 
     if (list_curves) {
         EC_builtin_curve *curves = NULL;

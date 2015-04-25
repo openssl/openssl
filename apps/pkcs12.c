@@ -173,7 +173,7 @@ int pkcs12_main(int argc, char **argv)
     char *passinarg = NULL, *passoutarg = NULL, *passarg = NULL;
     char *passin = NULL, *passout = NULL, *inrand = NULL, *macalg = NULL;
     char *cpass = NULL, *mpass = NULL, *CApath = NULL, *CAfile = NULL;
-    char *engine = NULL, *prog;
+    char *prog;
     ENGINE *e = NULL;
     BIO *in = NULL, *out = NULL;
     PKCS12 *p12 = NULL;
@@ -308,16 +308,12 @@ int pkcs12_main(int argc, char **argv)
             CAfile = opt_arg();
             break;
         case OPT_ENGINE:
-            engine = opt_arg();
+            e = setup_engine(opt_arg(), 0);
             break;
         }
     }
     argc = opt_num_rest();
     argv = opt_rest();
-
-# ifndef OPENSSL_NO_ENGINE
-    e = setup_engine(engine, 0);
-# endif
 
     if (passarg) {
         if (export_cert)

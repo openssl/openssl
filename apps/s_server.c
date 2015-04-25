@@ -1378,7 +1378,7 @@ int s_server_main(int argc, char *argv[])
             session_id_prefix = opt_arg();
             break;
         case OPT_ENGINE:
-            engine_id = opt_arg();
+            e = setup_engine(opt_arg(), 1);
             break;
         case OPT_RAND:
             inrand = opt_arg();
@@ -1447,10 +1447,6 @@ int s_server_main(int argc, char *argv[])
         }
         psk_identity = "JPAKE";
     }
-#endif
-
-#ifndef OPENSSL_NO_ENGINE
-    e = setup_engine(engine_id, 1);
 #endif
 
     if (!app_passwd(passarg, dpassarg, &pass, &dpass)) {

@@ -132,7 +132,7 @@ int enc_main(int argc, char **argv)
     EVP_CIPHER_CTX *ctx = NULL;
     const EVP_CIPHER *cipher = NULL, *c;
     const EVP_MD *dgst = NULL;
-    char *engine = NULL, *hkey = NULL, *hiv = NULL, *hsalt = NULL, *p;
+    char *hkey = NULL, *hiv = NULL, *hsalt = NULL, *p;
     char *infile = NULL, *outfile = NULL, *prog;
     char *str = NULL, *passarg = NULL, *pass = NULL, *strbuf = NULL;
     char mbuf[sizeof magic - 1];
@@ -193,7 +193,7 @@ int enc_main(int argc, char **argv)
             passarg = opt_arg();
             break;
         case OPT_ENGINE:
-            engine = opt_arg();
+            (void)setup_engine(opt_arg(), 0);
             break;
         case OPT_D:
             enc = 0;
@@ -293,10 +293,6 @@ int enc_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
-
-#ifndef OPENSSL_NO_ENGINE
-    setup_engine(engine, 0);
-#endif
 
     if (cipher && EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
         BIO_printf(bio_err, "%s: AEAD ciphers not supported\n", prog);

@@ -136,7 +136,6 @@ OPTIONS req_options[] = {
     {"outform", OPT_OUTFORM, 'F', "Output format - DER or PEM"},
     {"in", OPT_IN, '<', "Input file"},
     {"out", OPT_OUT, '>', "Output file"},
-    {"keygen_engine", OPT_KEYGEN_ENGINE, 's'},
     {"key", OPT_KEY, '<', "Use the private key contained in file"},
     {"keyform", OPT_KEYFORM, 'F', "Key file format"},
     {"pubkey", OPT_PUBKEY, '-', "Output public key"},
@@ -179,6 +178,7 @@ OPTIONS req_options[] = {
      "Request extension section (override value in config file)"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+    {"keygen_engine", OPT_KEYGEN_ENGINE, 's'},
 #endif
     {"", OPT_MD, '-', "Any supported digest"},
     {NULL}
@@ -196,7 +196,7 @@ int req_main(int argc, char **argv)
     X509_REQ *req = NULL;
     const EVP_CIPHER *cipher = NULL;
     const EVP_MD *md_alg = NULL, *digest = NULL;
-    char *engine = NULL, *extensions = NULL, *infile = NULL;
+    char *extensions = NULL, *infile = NULL;
     char *outfile = NULL, *keyfile = NULL, *inrand = NULL;
     char *keyalgstr = NULL, *p, *prog, *passargin = NULL, *passargout = NULL;
     char *passin = NULL, *passout = NULL, *req_exts = NULL, *subj = NULL;
@@ -235,18 +235,18 @@ int req_main(int argc, char **argv)
             if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &outformat))
                 goto opthelp;
             break;
-#ifndef OPENSSL_NO_ENGINE
         case OPT_ENGINE:
-            engine = optarg;
+            (void)setup_engine(opt_arg(), 0);
             break;
         case OPT_KEYGEN_ENGINE:
+#ifndef OPENSSL_NO_ENGINE
             gen_eng = ENGINE_by_id(opt_arg());
             if (gen_eng == NULL) {
                 BIO_printf(bio_err, "Can't find keygen engine %s\n", *argv);
-                goto end;
+                goto opthelp;
             }
-            break;
 #endif
+            break;
         case OPT_KEY:
             keyfile = opt_arg();
             break;
@@ -498,9 +498,6 @@ int req_main(int argc, char **argv)
             goto end;
         }
     }
-#ifndef OPENSSL_NO_ENGINE
-    e = setup_engine(engine, 0);
-#endif
 
     if (keyfile != NULL) {
         pkey = load_key(keyfile, keyform, 0, passin, e, "Private Key");

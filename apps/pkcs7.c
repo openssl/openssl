@@ -143,7 +143,7 @@ int pkcs7_main(int argc, char **argv)
     PKCS7 *p7 = NULL;
     BIO *in = NULL, *out = NULL;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM;
-    char *engine = NULL, *infile = NULL, *outfile = NULL, *prog;
+    char *infile = NULL, *outfile = NULL, *prog;
     int i, print_certs = 0, text = 0, noout = 0, p7_print = 0, ret = 1;
     OPTION_CHOICE o;
 
@@ -186,16 +186,12 @@ int pkcs7_main(int argc, char **argv)
             print_certs = 1;
             break;
         case OPT_ENGINE:
-            engine = opt_arg();
+            (void)setup_engine(opt_arg(), 0);
             break;
         }
     }
     argc = opt_num_rest();
     argv = opt_rest();
-
-#ifndef OPENSSL_NO_ENGINE
-    setup_engine(engine, 0);
-#endif
 
     in = bio_open_default(infile, RB(informat));
     if (in == NULL)

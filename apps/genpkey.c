@@ -128,11 +128,9 @@ int genpkey_main(int argc, char **argv)
         case OPT_PASS:
             passarg = opt_arg();
             break;
-#ifndef OPENSSL_NO_ENGINE
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
             break;
-#endif
         case OPT_PARAMFILE:
             if (do_param == 1)
                 goto opthelp;

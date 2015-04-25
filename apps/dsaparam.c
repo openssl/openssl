@@ -124,8 +124,7 @@ int dsaparam_main(int argc, char **argv)
 # ifdef GENCB_TEST
     int timebomb = 0;
 # endif
-    char *infile = NULL, *outfile = NULL, *prog, *inrand = NULL, *engine =
-        NULL;
+    char *infile = NULL, *outfile = NULL, *prog, *inrand = NULL;
     OPTION_CHOICE o;
 
     prog = opt_init(argc, argv, dsaparam_options);
@@ -155,7 +154,7 @@ int dsaparam_main(int argc, char **argv)
             outfile = opt_arg();
             break;
         case OPT_ENGINE:
-            engine = opt_arg();
+            (void)setup_engine(opt_arg(), 0);
             break;
         case OPT_TIMEBOMB:
 # ifdef GENCB_TEST
@@ -200,10 +199,6 @@ int dsaparam_main(int argc, char **argv)
     out = bio_open_default(outfile, "w");
     if (out == NULL)
         goto end;
-
-# ifndef OPENSSL_NO_ENGINE
-    setup_engine(engine, 0);
-# endif
 
     if (need_rand) {
         app_RAND_load_file(NULL, (inrand != NULL));

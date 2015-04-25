@@ -292,17 +292,15 @@ int ca_main(int argc, char **argv)
     X509_CRL *crl = NULL;
     const EVP_MD *dgst = NULL;
     char *configfile = NULL, *md = NULL, *policy = NULL, *keyfile = NULL;
-    char *certfile = NULL, *crl_ext = NULL, *crlnumberfile = NULL, *enddate =
-        NULL;
+    char *certfile = NULL, *crl_ext = NULL, *crlnumberfile = NULL;
     char *infile = NULL, *spkac_file = NULL, *ss_cert_file = NULL;
     char *extensions = NULL, *extfile = NULL, *key = NULL, *passinarg = NULL;
     char *outdir = NULL, *outfile = NULL, *rev_arg = NULL, *ser_status = NULL;
-    char *serialfile = NULL, *startdate = NULL, *subj = NULL, *tmp_email_dn =
-        NULL;
-    char *prog;
-    char *const *pp;
-    char *dbfile = NULL, *engine = NULL, *f, *randfile = NULL, *tofree = NULL;
+    char *serialfile = NULL, *startdate = NULL, *subj = NULL;
+    char *prog, *enddate = NULL, *tmp_email_dn = NULL;
+    char *dbfile = NULL, *f, *randfile = NULL, *tofree = NULL;
     char buf[3][BSIZE];
+    char *const *pp;
     const char *p;
     int create_ser = 0, free_key = 0, total = 0, total_done = 0;
     int batch = 0, default_op = 1, doupdatedb = 0, ext_copy = EXT_COPY_NONE;
@@ -488,7 +486,7 @@ opthelp:
             rev_type = REV_CA_COMPROMISE;
             break;
         case OPT_ENGINE:
-            engine = opt_arg();
+            e = setup_engine(opt_arg(), 0);
             break;
         }
     }
@@ -542,9 +540,6 @@ end_of_options:
         OPENSSL_free(tofree);
         tofree = NULL;
     }
-#ifndef OPENSSL_NO_ENGINE
-    e = setup_engine(engine, 0);
-#endif
 
     /* Lets get the config section we are using */
     if (section == NULL) {
