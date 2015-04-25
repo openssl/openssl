@@ -2723,7 +2723,22 @@ static int www_body(char *hostname, int s, int stype, unsigned char *context)
 /*                      BIO_puts(io,SSLeay_version(SSLEAY_VERSION));*/
             BIO_puts(io, "\n");
             for (i = 0; i < local_argc; i++) {
-                BIO_puts(io, local_argv[i]);
+                const char *myp;
+                for (myp = local_argv[i]; *myp; myp++)
+                    switch (*myp) {
+                    case '<':
+                        BIO_puts(io, "&lt;");
+                        break;
+                    case '>':
+                        BIO_puts(io, "&gt;");
+                        break;
+                    case '&':
+                        BIO_puts(io, "&amp;");
+                        break;
+                    default:
+                        BIO_write(io, myp, 1);
+                        break;
+                    }
                 BIO_write(io, " ", 1);
             }
             BIO_puts(io, "\n");
