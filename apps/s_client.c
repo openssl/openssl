@@ -468,7 +468,7 @@ static int serverinfo_cli_parse_cb(SSL *s, unsigned int ext_type,
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_HOST, OPT_PORT, OPT_CONNECT, OPT_UNIX, OPT_VERIFY,
+    OPT_HOST, OPT_PORT, OPT_CONNECT, OPT_UNIX, OPT_XMPPHOST, OPT_VERIFY,
     OPT_CERT, OPT_CRL, OPT_CRL_DOWNLOAD, OPT_SESS_OUT, OPT_SESS_IN,
     OPT_CERTFORM, OPT_CRLFORM, OPT_VERIFY_RET_ERROR, OPT_VERIFY_QUIET,
     OPT_BRIEF, OPT_PREXIT, OPT_CRLF, OPT_QUIET, OPT_NBIO,
@@ -484,7 +484,7 @@ typedef enum OPTION_choice {
     OPT_KEY, OPT_RECONNECT, OPT_BUILD_CHAIN, OPT_CAFILE, OPT_KRB5SVC,
     OPT_CHAINCAFILE, OPT_VERIFYCAFILE, OPT_NEXTPROTONEG, OPT_ALPN,
     OPT_SERVERINFO, OPT_STARTTLS, OPT_SERVERNAME, OPT_JPAKE,
-    OPT_USE_SRTP, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN,
+    OPT_USE_SRTP, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN, OPT_SMTPHOST,
     OPT_V_ENUM,
     OPT_X_ENUM,
     OPT_S_ENUM,
@@ -533,6 +533,7 @@ OPTIONS s_client_options[] = {
     {"mtu", OPT_MTU, 'p', "Set the link layer MTU"},
     {"starttls", OPT_STARTTLS, 's',
      "Use the STARTTLS command before starting TLS"},
+    {"xmpphost", OPT_XMPPHOST, 's', "Host to use with \"-starttls xmpp\""},
     {"rand", OPT_RAND, 's',
      "Load the file(s) into the random number generator"},
     {"sess_out", OPT_SESS_OUT, '>', "File to write SSL session to"},
@@ -569,6 +570,7 @@ OPTIONS s_client_options[] = {
      "Tolerate other than the known g N values."},
     {"srp_strength", OPT_SRP_STRENGTH, 'p', "Minimal mength in bits for N"},
 #endif
+    {"name", OPT_SMTPHOST, 's', "Hostname to use for \"-starttls smtp\""},
 #ifndef OPENSSL_NO_TLSEXT
     {"servername", OPT_SERVERNAME, 's',
      "Set TLS extension servername in ClientHello"},
@@ -617,6 +619,7 @@ typedef enum PROTOCOL_choice {
     PROTO_POP3,
     PROTO_IMAP,
     PROTO_FTP,
+    PROTO_TELNET,
     PROTO_XMPP
 } PROTOCOL_CHOICE;
 
@@ -626,6 +629,7 @@ static OPT_PAIR services[] = {
     {"imap", PROTO_IMAP},
     {"ftp", PROTO_FTP},
     {"xmpp", PROTO_XMPP},
+    {"telnet", PROTO_TELNET},
     {NULL}
 };
 
@@ -650,8 +654,9 @@ int s_client_main(int argc, char **argv)
         NULL;
     char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
     char *sess_in = NULL, *sess_out = NULL, *crl_file = NULL, *p;
-    char *jpake_secret = NULL;
+    char *jpake_secret = NULL, *xmpphost;
     const char *unix_path = NULL;
+    const char *ehlo = "mail.example.com";
     struct sockaddr peer;
     struct timeval timeout, *timeoutp;
     fd_set readfds, writefds;
@@ -753,6 +758,12 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_UNIX:
             unix_path = opt_arg();
+            break;
+        case OPT_XMPPHOST:
+            xmpphost = opt_arg();
+            break;
+        case OPT_SMTPHOST:
+            ehlo = opt_arg();
             break;
         case OPT_VERIFY:
             verify = SSL_VERIFY_PEER;
@@ -1482,7 +1493,7 @@ int s_client_main(int argc, char **argv)
                 mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
             }
             while (mbuf_len > 3 && mbuf[3] == '-');
-            BIO_printf(fbio, "EHLO openssl.client.net\r\n");
+            BIO_printf(fbio, "EHLO %s\r\n", ehlo);
             (void)BIO_flush(fbio);
             /* wait for multi-line response to end EHLO SMTP response */
             do {
@@ -1562,7 +1573,7 @@ int s_client_main(int argc, char **argv)
             BIO_printf(sbio, "<stream:stream "
                        "xmlns:stream='http://etherx.jabber.org/streams' "
                        "xmlns='jabber:client' to='%s' version='1.0'>",
-                       host);
+                       xmpphost ? xmpphost : host);
             seen = BIO_read(sbio, mbuf, BUFSIZZ);
             mbuf[seen] = 0;
             while (!strstr
@@ -1586,6 +1597,35 @@ int s_client_main(int argc, char **argv)
             mbuf[0] = 0;
         }
         break;
+    case PROTO_TELNET:
+        {
+            static const unsigned char tls_do[] = {
+                /* IAC    DO   START_TLS */
+                   255,   253, 46
+            };
+            static const unsigned char tls_will[] = {
+                /* IAC  WILL START_TLS */
+                   255, 251, 46
+            };
+            static const unsigned char tls_follows[] = {
+                /* IAC  SB   START_TLS FOLLOWS IAC  SE */
+                   255, 250, 46,       1,      255, 240
+            };
+            int bytes;
+
+            /* Telnet server should demand we issue START_TLS */
+            bytes = BIO_read(sbio, mbuf, BUFSIZZ);
+            if (bytes != 3 || memcmp(mbuf, tls_do, 3) != 0)
+                goto shut;
+            /* Agree to issue START_TLS and send the FOLLOWS sub-command */
+            BIO_write(sbio, tls_will, 3);
+            BIO_write(sbio, tls_follows, 6);
+            (void)BIO_flush(sbio);
+            /* Telnet server also sent the FOLLOWS sub-command */
+            bytes = BIO_read(sbio, mbuf, BUFSIZZ);
+            if (bytes != 6 || memcmp(mbuf, tls_follows, 6) != 0)
+                goto shut;
+        }
     }
 
     for (;;) {
