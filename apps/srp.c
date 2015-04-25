@@ -78,12 +78,6 @@
 # define ENV_DATABASE            "srpvfile"
 # define ENV_DEFAULT_SRP         "default_srp"
 
-# ifdef EFENCE
-extern int EF_PROTECT_FREE;
-extern int EF_PROTECT_BELOW;
-extern int EF_ALIGNMENT;
-# endif
-
 static int get_index(CA_DB *db, char *id, char type)
 {
     char **pp;
@@ -276,12 +270,6 @@ int srp_main(int argc, char **argv)
     char **gNrow = NULL, *configfile = NULL, *dbfile = NULL, **pp, *prog;
     long errorline = -1;
     OPTION_CHOICE o;
-
-# ifdef EFENCE
-    EF_PROTECT_FREE = 1;
-    EF_PROTECT_BELOW = 1;
-    EF_ALIGNMENT = 0;
-# endif
 
     prog = opt_init(argc, argv, srp_options);
     while ((o = opt_next()) != OPT_EOF) {

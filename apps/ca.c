@@ -144,12 +144,6 @@
 #define REV_KEY_COMPROMISE      3 /* Value is cert key compromise time */
 #define REV_CA_COMPROMISE       4 /* Value is CA key compromise time */
 
-#ifdef EFENCE
-extern int EF_PROTECT_FREE;
-extern int EF_PROTECT_BELOW;
-extern int EF_ALIGNMENT;
-#endif
-
 static void lookup_fail(const char *name, const char *tag);
 static int certify(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
                    const EVP_MD *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
@@ -312,12 +306,6 @@ int ca_main(int argc, char **argv)
     X509 *x509 = NULL, *x509p = NULL, *x = NULL;
     X509_REVOKED *r = NULL;
     OPTION_CHOICE o;
-
-#ifdef EFENCE
-    EF_PROTECT_FREE = 1;
-    EF_PROTECT_BELOW = 1;
-    EF_ALIGNMENT = 0;
-#endif
 
     conf = NULL;
     section = NULL;
