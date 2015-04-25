@@ -488,7 +488,7 @@ typedef enum OPTION_choice {
     OPT_V_ENUM,
     OPT_X_ENUM,
     OPT_S_ENUM,
-    OPT_FALLBACKSCSV
+    OPT_FALLBACKSCSV, OPT_NOCMDS
 } OPTION_CHOICE;
 
 OPTIONS s_client_options[] = {
@@ -600,6 +600,7 @@ OPTIONS s_client_options[] = {
     {"build_chain", OPT_BUILD_CHAIN, '-'},
     {"chainCAfile", OPT_CHAINCAFILE, '<'},
     {"verifyCAfile", OPT_VERIFYCAFILE, '<'},
+    {"nocommands", OPT_NOCMDS, '-', "Do not use interactive command letters"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
     {"ssl_client_engine", OPT_SSL_CLIENT_ENGINE, 's'},
@@ -660,7 +661,7 @@ int s_client_main(int argc, char **argv)
     int enable_timeouts = 0, sdebug = 0, peerlen = sizeof peer;
     int reconnect = 0, verify = SSL_VERIFY_NONE, vpmtouched = 0;
     int ret = 1, in_init = 1, i, nbio_test = 0, s, k, width, state = 0;
-    int sbuf_len, sbuf_off, socket_type = SOCK_STREAM;
+    int sbuf_len, sbuf_off, socket_type = SOCK_STREAM, cmdletters = 1;
     int starttls_proto = PROTO_OFF, crl_format = FORMAT_PEM, crl_download = 0;
     int write_tty, read_tty, write_ssl, read_ssl, tty_on, ssl_pending;
     int fallback_scsv = 0;
@@ -821,6 +822,9 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_NBIO:
             c_nbio = 1;
+            break;
+        case OPT_NOCMDS:
+            cmdletters = 0;
             break;
         case OPT_KRB5SVC:
 #ifndef OPENSSL_NO_KRB5
@@ -1906,19 +1910,19 @@ int s_client_main(int argc, char **argv)
             } else
                 i = raw_read_stdin(cbuf, BUFSIZZ);
 
-            if ((!c_ign_eof) && ((i <= 0) || (cbuf[0] == 'Q'))) {
+            if ((!c_ign_eof) && ((i <= 0) || (cbuf[0] == 'Q' && cmdletters))) {
                 BIO_printf(bio_err, "DONE\n");
                 ret = 0;
                 goto shut;
             }
 
-            if ((!c_ign_eof) && (cbuf[0] == 'R')) {
+            if ((!c_ign_eof) && (cbuf[0] == 'R' && cmdletters)) {
                 BIO_printf(bio_err, "RENEGOTIATING\n");
                 SSL_renegotiate(con);
                 cbuf_len = 0;
             }
 #ifndef OPENSSL_NO_HEARTBEATS
-            else if ((!c_ign_eof) && (cbuf[0] == 'B')) {
+            else if ((!c_ign_eof) && (cbuf[0] == 'B' && cmdletters)) {
                 BIO_printf(bio_err, "HEARTBEATING\n");
                 SSL_heartbeat(con);
                 cbuf_len = 0;
