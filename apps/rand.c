@@ -85,7 +85,7 @@ OPTIONS rand_options[] = {
 int rand_main(int argc, char **argv)
 {
     BIO *out = NULL;
-    char *engine = NULL, *inrand = NULL, *outfile = NULL, *prog;
+    char *inrand = NULL, *outfile = NULL, *prog;
     OPTION_CHOICE o;
     int base64 = 0, hex = 0, i, num = -1, r, ret = 1;
 
@@ -105,7 +105,7 @@ int rand_main(int argc, char **argv)
             outfile = opt_arg();
             break;
         case OPT_ENGINE:
-            engine = opt_arg();
+            (void)setup_engine(opt_arg(), 0);
             break;
         case OPT_RAND:
             inrand = opt_arg();
@@ -125,10 +125,6 @@ int rand_main(int argc, char **argv)
         goto opthelp;
     if (sscanf(argv[0], "%d", &num) != 1 || num < 0)
         goto opthelp;
-
-#ifndef OPENSSL_NO_ENGINE
-    setup_engine(engine, 0);
-#endif
 
     app_RAND_load_file(NULL, (inrand != NULL));
     if (inrand != NULL)

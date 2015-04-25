@@ -591,7 +591,6 @@ OPTIONS s_client_options[] = {
     {"verify_quiet", OPT_VERIFY_QUIET, '-'},
     {"brief", OPT_BRIEF, '-'},
     {"prexit", OPT_PREXIT, '-'},
-    {"ssl_client_engine", OPT_SSL_CLIENT_ENGINE, 's'},
     {"trace", OPT_TRACE, '-'},
     {"security_debug", OPT_SECURITY_DEBUG, '-'},
     {"security_debug_verbose", OPT_SECURITY_DEBUG_VERBOSE, '-'},
@@ -603,6 +602,7 @@ OPTIONS s_client_options[] = {
     {"verifyCAfile", OPT_VERIFYCAFILE, '<'},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+    {"ssl_client_engine", OPT_SSL_CLIENT_ENGINE, 's'},
 #endif
     OPT_S_OPTIONS,
     OPT_V_OPTIONS,
@@ -649,7 +649,6 @@ int s_client_main(int argc, char **argv)
         NULL;
     char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
     char *sess_in = NULL, *sess_out = NULL, *crl_file = NULL, *p;
-    char *engine_id = NULL, *ssl_client_engine_id = NULL;
     char *jpake_secret = NULL;
     const char *unix_path = NULL;
     struct sockaddr peer;
@@ -674,8 +673,8 @@ int s_client_main(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_ENGINE
     ENGINE *ssl_client_engine = NULL;
-    ENGINE *e = NULL;
 #endif
+    ENGINE *e = NULL;
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE)
     struct timeval tv;
 #endif
@@ -829,10 +828,17 @@ int s_client_main(int argc, char **argv)
 #endif
             break;
         case OPT_ENGINE:
-            engine_id = opt_arg();
+            e = setup_engine(opt_arg(), 1);
             break;
         case OPT_SSL_CLIENT_ENGINE:
-            ssl_client_engine_id = opt_arg();
+#ifndef OPENSSL_NO_ENGINE
+            ssl_client_engine = ENGINE_by_id(opt_arg());
+            if (ssl_client_engine == NULL) {
+                BIO_printf(bio_err, "Error getting client auth engine\n");
+                goto opthelp;
+            }
+            break;
+#endif
             break;
         case OPT_RAND:
             inrand = opt_arg();
@@ -1073,17 +1079,6 @@ int s_client_main(int argc, char **argv)
         }
     } else
         next_proto.data = NULL;
-#endif
-
-#ifndef OPENSSL_NO_ENGINE
-    e = setup_engine(engine_id, 1);
-    if (ssl_client_engine_id) {
-        ssl_client_engine = ENGINE_by_id(ssl_client_engine_id);
-        if (ssl_client_engine == NULL) {
-            BIO_printf(bio_err, "Error getting client auth engine\n");
-            goto end;
-        }
-    }
 #endif
 
     if (!app_passwd(passarg, NULL, &pass, NULL)) {

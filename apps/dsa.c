@@ -107,9 +107,8 @@ int dsa_main(int argc, char **argv)
     DSA *dsa = NULL;
     ENGINE *e = NULL;
     const EVP_CIPHER *enc = NULL;
-    char *engine = NULL, *infile = NULL, *outfile = NULL, *prog;
-    char *passin = NULL, *passout = NULL, *passinarg = NULL, *passoutarg =
-        NULL;
+    char *infile = NULL, *outfile = NULL, *prog;
+    char *passin = NULL, *passout = NULL, *passinarg = NULL, *passoutarg = NULL;
     OPTION_CHOICE o;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, text = 0, noout = 0;
     int i, modulus = 0, pubin = 0, pubout = 0, pvk_encr = 2, ret = 1;
@@ -149,7 +148,7 @@ int dsa_main(int argc, char **argv)
             outfile = opt_arg();
             break;
         case OPT_ENGINE:
-            engine = opt_arg();
+            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_PASSIN:
             passinarg = opt_arg();
@@ -191,10 +190,6 @@ int dsa_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
-
-# ifndef OPENSSL_NO_ENGINE
-    e = setup_engine(engine, 0);
-# endif
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");

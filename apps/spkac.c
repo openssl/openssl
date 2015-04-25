@@ -100,7 +100,7 @@ int spkac_main(int argc, char **argv)
     ENGINE *e = NULL;
     EVP_PKEY *pkey = NULL;
     NETSCAPE_SPKI *spki = NULL;
-    char *challenge = NULL, *keyfile = NULL, *engine = NULL;
+    char *challenge = NULL, *keyfile = NULL;
     char *infile = NULL, *outfile = NULL, *passinarg = NULL, *passin = NULL;
     char *spkstr = NULL, *prog;
     const char *spkac = "SPKAC", *spksect = "default";
@@ -149,9 +149,8 @@ int spkac_main(int argc, char **argv)
             spksect = opt_arg();
             break;
         case OPT_ENGINE:
-            engine = opt_arg();
+            e = setup_engine(opt_arg(), 0);
             break;
-
         }
     }
     argc = opt_num_rest();
@@ -161,9 +160,6 @@ int spkac_main(int argc, char **argv)
         BIO_printf(bio_err, "Error getting password\n");
         goto end;
     }
-#ifndef OPENSSL_NO_ENGINE
-    e = setup_engine(engine, 0);
-#endif
 
     if (keyfile) {
         pkey = load_key(strcmp(keyfile, "-") ? keyfile : NULL,
@@ -194,7 +190,6 @@ int spkac_main(int argc, char **argv)
 
     conf = NCONF_new(NULL);
     i = NCONF_load_bio(conf, in, NULL);
-
     if (!i) {
         BIO_printf(bio_err, "Error parsing config file\n");
         ERR_print_errors(bio_err);

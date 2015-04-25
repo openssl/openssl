@@ -105,7 +105,7 @@ int verify_main(int argc, char **argv)
     STACK_OF(X509_CRL) *crls = NULL;
     X509_STORE *store = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
-    char *prog, *CApath = NULL, *CAfile = NULL, *engine = NULL;
+    char *prog, *CApath = NULL, *CAfile = NULL;
     char *untfile = NULL, *trustfile = NULL, *crlfile = NULL;
     int vpmtouched = 0, crl_download = 0, show_chain = 0, i = 0, ret = 1;
     OPTION_CHOICE o;
@@ -167,7 +167,7 @@ int verify_main(int argc, char **argv)
             show_chain = 1;
             break;
         case OPT_ENGINE:
-            engine = opt_arg();
+            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_VERBOSE:
             v_verbose = 1;
@@ -177,9 +177,6 @@ int verify_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
-#ifndef OPENSSL_NO_ENGINE
-    e = setup_engine(engine, 0);
-#endif
     if (!(store = setup_verify(CAfile, CApath)))
         goto end;
     X509_STORE_set_verify_cb(store, cb);

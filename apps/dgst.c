@@ -101,10 +101,6 @@ OPTIONS dgst_options[] = {
      "Verify a signature using private key in file"},
     {"signature", OPT_SIGNATURE, '<', "File with signature to verify"},
     {"keyform", OPT_KEYFORM, 'f', "Key file format (PEM or ENGINE)"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
-#endif
-    {"engine_impl", OPT_ENGINE_IMPL, '-'},
     {"hex", OPT_HEX, '-', "Print as hex dump"},
     {"binary", OPT_BINARY, '-', "Print in binary form"},
     {"d", OPT_DEBUG, '-', "Print debug info"},
@@ -115,6 +111,10 @@ OPTIONS dgst_options[] = {
     {"mac", OPT_MAC, 's', "Create MAC (not neccessarily HMAC)"},
     {"sigop", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
     {"macop", OPT_MACOPT, 's', "MAC algorithm parameters in n:v form or key"},
+#ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
+    {"engine_impl", OPT_ENGINE_IMPL, '-'},
+#endif
     {"", OPT_DIGEST, '-', "Any supported digest"},
     {NULL}
 };
@@ -136,10 +136,7 @@ int dgst_main(int argc, char **argv)
     int i, ret = 1, out_bin = -1, want_pub = 0, do_verify =
         0, non_fips_allow = 0;
     unsigned char *buf = NULL, *sigbuf = NULL;
-#ifndef OPENSSL_NO_ENGINE
-    char *engine = NULL;
     int engine_impl = 0;
-#endif
 
     prog = opt_progname(argv[0]);
     if ((buf = (unsigned char *)OPENSSL_malloc(BUFSIZE)) == NULL) {
@@ -193,15 +190,12 @@ int dgst_main(int argc, char **argv)
             if (!opt_format(opt_arg(), OPT_FMT_ANY, &keyform))
                 goto opthelp;
             break;
-#ifndef OPENSSL_NO_ENGINE
         case OPT_ENGINE:
-            engine = opt_arg();
-            e = setup_engine(engine, 0);
+            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_ENGINE_IMPL:
             engine_impl = 1;
             break;
-#endif
         case OPT_HEX:
             out_bin = 0;
             break;
@@ -250,10 +244,8 @@ int dgst_main(int argc, char **argv)
                    "No signature to verify: use the -signature option\n");
         goto end;
     }
-#ifndef OPENSSL_NO_ENGINE
     if (engine_impl)
         impl = e;
-#endif
 
     in = BIO_new(BIO_s_file());
     bmd = BIO_new(BIO_f_md());

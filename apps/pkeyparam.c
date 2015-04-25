@@ -85,7 +85,7 @@ int pkeyparam_main(int argc, char **argv)
     EVP_PKEY *pkey = NULL;
     int text = 0, noout = 0, ret = 1;
     OPTION_CHOICE o;
-    char *infile = NULL, *outfile = NULL, *prog, *engine = NULL;
+    char *infile = NULL, *outfile = NULL, *prog;
 
     prog = opt_init(argc, argv, pkeyparam_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -105,7 +105,7 @@ int pkeyparam_main(int argc, char **argv)
             outfile = opt_arg();
             break;
         case OPT_ENGINE:
-            engine = opt_arg();
+            (void)setup_engine(opt_arg(), 0);
             break;
         case OPT_TEXT:
             text = 1;
@@ -117,10 +117,6 @@ int pkeyparam_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
-
-#ifndef OPENSSL_NO_ENGINE
-    setup_engine(engine, 0);
-#endif
 
     in = bio_open_default(infile, "r");
     if (in == NULL)

@@ -164,7 +164,7 @@ int smime_main(int argc, char **argv)
     X509_VERIFY_PARAM *vpm = NULL;
     const EVP_CIPHER *cipher = NULL;
     const EVP_MD *sign_md = NULL;
-    char *CAfile = NULL, *CApath = NULL, *inrand = NULL, *engine = NULL;
+    char *CAfile = NULL, *CApath = NULL, *inrand = NULL;
     char *certfile = NULL, *keyfile = NULL, *contfile = NULL, *prog;
     char *infile = NULL, *outfile = NULL, *signerfile = NULL, *recipfile =
         NULL;
@@ -177,9 +177,7 @@ int smime_main(int argc, char **argv)
     int informat = FORMAT_SMIME, outformat = FORMAT_SMIME, keyform =
         FORMAT_PEM;
     int vpmtouched = 0, rv = 0;
-#ifndef OPENSSL_NO_ENGINE
     ENGINE *e = NULL;
-#endif
 
     if ((vpm = X509_VERIFY_PARAM_new()) == NULL)
         return 1;
@@ -276,7 +274,7 @@ int smime_main(int argc, char **argv)
             need_rand = 1;
             break;
         case OPT_ENGINE:
-            engine = opt_arg();
+            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_PASSIN:
             passinarg = opt_arg();
@@ -407,10 +405,6 @@ int smime_main(int argc, char **argv)
         need_rand = 1;
     } else if (!operation)
         goto opthelp;
-
-#ifndef OPENSSL_NO_ENGINE
-    e = setup_engine(engine, 0);
-#endif
 
     if (!app_passwd(passinarg, NULL, &passin, NULL)) {
         BIO_printf(bio_err, "Error getting password\n");

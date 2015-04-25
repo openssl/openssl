@@ -96,7 +96,7 @@ int gendsa_main(int argc, char **argv)
     BIO *out = NULL, *in = NULL;
     DSA *dsa = NULL;
     const EVP_CIPHER *enc = NULL;
-    char *engine = NULL, *inrand = NULL, *dsaparams = NULL;
+    char *inrand = NULL, *dsaparams = NULL;
     char *outfile = NULL, *passoutarg = NULL, *passout = NULL, *prog;
     OPTION_CHOICE o;
     int ret = 1;
@@ -120,7 +120,7 @@ int gendsa_main(int argc, char **argv)
             passoutarg = opt_arg();
             break;
         case OPT_ENGINE:
-            engine = opt_arg();
+            (void)setup_engine(opt_arg(), 0);
             break;
         case OPT_RAND:
             inrand = opt_arg();
@@ -137,10 +137,6 @@ int gendsa_main(int argc, char **argv)
     if (argc != 1)
         goto opthelp;
     dsaparams = *argv;
-
-# ifndef OPENSSL_NO_ENGINE
-    setup_engine(engine, 0);
-# endif
 
     if (!app_passwd(NULL, passoutarg, NULL, &passout)) {
         BIO_printf(bio_err, "Error getting password\n");

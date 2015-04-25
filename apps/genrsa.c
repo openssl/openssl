@@ -110,8 +110,7 @@ int genrsa_main(int argc, char **argv)
     int ret = 1, non_fips_allow = 0, num = DEFBITS;
     unsigned long f4 = RSA_F4;
     char *outfile = NULL, *passoutarg = NULL, *passout = NULL;
-    char *engine = NULL, *inrand = NULL, *prog;
-    char *hexe, *dece;
+    char *inrand = NULL, *prog, *hexe, *dece;
     OPTION_CHOICE o;
 
     if (!bn || !cb)
@@ -142,7 +141,7 @@ int genrsa_main(int argc, char **argv)
         case OPT_OUT:
             outfile = opt_arg();
         case OPT_ENGINE:
-            engine = opt_arg();
+            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_RAND:
             inrand = opt_arg();
@@ -166,9 +165,6 @@ int genrsa_main(int argc, char **argv)
         BIO_printf(bio_err, "Error getting password\n");
         goto end;
     }
-# ifndef OPENSSL_NO_ENGINE
-    e = setup_engine(engine, 0);
-# endif
 
     out = bio_open_default(outfile, "w");
     if (out == NULL)
@@ -185,11 +181,7 @@ int genrsa_main(int argc, char **argv)
 
     BIO_printf(bio_err, "Generating RSA private key, %d bit long modulus\n",
                num);
-# ifdef OPENSSL_NO_ENGINE
-    rsa = RSA_new();
-# else
-    rsa = RSA_new_method(e);
-# endif
+    rsa = e ? RSA_new_method(e) : RSA_new();
     if (!rsa)
         goto end;
 

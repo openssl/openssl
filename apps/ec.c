@@ -116,9 +116,8 @@ int ec_main(int argc, char **argv)
     const EC_GROUP *group;
     const EVP_CIPHER *enc = NULL;
     point_conversion_form_t form = POINT_CONVERSION_UNCOMPRESSED;
-    char *infile = NULL, *outfile = NULL, *prog, *engine = NULL;
-    char *passin = NULL, *passout = NULL, *passinarg = NULL, *passoutarg =
-        NULL;
+    char *infile = NULL, *outfile = NULL, *prog;
+    char *passin = NULL, *passout = NULL, *passinarg = NULL, *passoutarg = NULL;
     OPTION_CHOICE o;
     int asn1_flag = OPENSSL_EC_NAMED_CURVE, new_form = 0, new_asn1_flag = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, text = 0, noout = 0;
@@ -172,7 +171,7 @@ int ec_main(int argc, char **argv)
             passoutarg = opt_arg();
             break;
         case OPT_ENGINE:
-            engine = opt_arg();
+            (void)setup_engine(opt_arg(), 0);
             break;
         case OPT_CIPHER:
             if (!opt_cipher(opt_unknown(), &enc))
@@ -193,10 +192,6 @@ int ec_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
-
-# ifndef OPENSSL_NO_ENGINE
-    setup_engine(engine, 0);
-# endif
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");

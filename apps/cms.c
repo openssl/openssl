@@ -241,7 +241,7 @@ int cms_main(int argc, char **argv)
     X509_STORE *store = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
     char *certfile = NULL, *keyfile = NULL, *contfile = NULL;
-    char *CAfile = NULL, *CApath = NULL, *certsoutfile = NULL, *engine = NULL;
+    char *CAfile = NULL, *CApath = NULL, *certsoutfile = NULL;
     char *infile = NULL, *outfile = NULL, *rctfile = NULL, *inrand = NULL;
     char *passinarg = NULL, *passin = NULL, *signerfile = NULL, *recipfile =
         NULL;
@@ -475,7 +475,7 @@ int cms_main(int argc, char **argv)
             need_rand = 1;
             break;
         case OPT_ENGINE:
-            engine = opt_arg();
+            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_PASSIN:
             passinarg = opt_arg();
@@ -668,9 +668,6 @@ int cms_main(int argc, char **argv)
     } else if (!operation)
         goto opthelp;
 
-# ifndef OPENSSL_NO_ENGINE
-    e = setup_engine(engine, 0);
-# endif
 
     if (!app_passwd(passinarg, NULL, &passin, NULL)) {
         BIO_printf(bio_err, "Error getting password\n");

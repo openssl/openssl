@@ -116,7 +116,7 @@ int rsautl_main(int argc, char **argv)
     EVP_PKEY *pkey = NULL;
     RSA *rsa = NULL;
     X509 *x;
-    char *engine = NULL, *infile = NULL, *outfile = NULL, *keyfile = NULL;
+    char *infile = NULL, *outfile = NULL, *keyfile = NULL;
     char *passinarg = NULL, *passin = NULL, *prog;
     char rsa_mode = RSA_VERIFY, key_type = KEY_PRIVKEY;
     unsigned char *rsa_in = NULL, *rsa_out = NULL, pad = RSA_PKCS1_PADDING;
@@ -147,7 +147,7 @@ int rsautl_main(int argc, char **argv)
             outfile = opt_arg();
             break;
         case OPT_ENGINE:
-            engine = opt_arg();
+            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_ASN1PARSE:
             asn1parse = 1;
@@ -208,9 +208,7 @@ int rsautl_main(int argc, char **argv)
         BIO_printf(bio_err, "A private key is needed for this operation\n");
         goto end;
     }
-# ifndef OPENSSL_NO_ENGINE
-    e = setup_engine(engine, 0);
-# endif
+
     if (!app_passwd(passinarg, NULL, &passin, NULL)) {
         BIO_printf(bio_err, "Error getting password\n");
         goto end;

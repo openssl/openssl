@@ -104,14 +104,12 @@ int pkcs8_main(int argc, char **argv)
     PKCS8_PRIV_KEY_INFO *p8inf = NULL;
     X509_SIG *p8 = NULL;
     const EVP_CIPHER *cipher = NULL;
-    char *engine = NULL, *infile = NULL, *outfile = NULL;
+    char *infile = NULL, *outfile = NULL;
     char *passinarg = NULL, *passoutarg = NULL, *prog;
     char pass[50], *passin = NULL, *passout = NULL, *p8pass = NULL;
     OPTION_CHOICE o;
-    int nocrypt = 0, ret = 1, iter = PKCS12_DEFAULT_ITER, p8_broken =
-        PKCS8_OK;
-    int informat = FORMAT_PEM, outformat = FORMAT_PEM, topk8 = 0, pbe_nid =
-        -1;
+    int nocrypt = 0, ret = 1, iter = PKCS12_DEFAULT_ITER, p8_broken = PKCS8_OK;
+    int informat = FORMAT_PEM, outformat = FORMAT_PEM, topk8 = 0, pbe_nid = -1;
 
     prog = opt_init(argc, argv, pkcs8_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -188,16 +186,12 @@ int pkcs8_main(int argc, char **argv)
             passoutarg = opt_arg();
             break;
         case OPT_ENGINE:
-            engine = opt_arg();
+            e = setup_engine(opt_arg(), 0);
             break;
         }
     }
     argc = opt_num_rest();
     argv = opt_rest();
-
-#ifndef OPENSSL_NO_ENGINE
-    e = setup_engine(engine, 0);
-#endif
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");

@@ -431,7 +431,9 @@ STACK_OF(X509_CRL) *load_crls(const char *file, int format,
 X509_STORE *setup_verify(char *CAfile, char *CApath);
 int ctx_set_verify_locations(SSL_CTX *ctx,
                              const char *CAfile, const char *CApath);
-# ifndef OPENSSL_NO_ENGINE
+# ifdef OPENSSL_NO_ENGINE
+#  define setup_engine(engine, debug) NULL
+# else
 ENGINE *setup_engine(const char *engine, int debug);
 # endif
 # ifndef OPENSSL_NO_OCSP

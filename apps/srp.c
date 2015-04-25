@@ -272,7 +272,7 @@ int srp_main(int argc, char **argv)
     int mode = OPT_ERR;
     char *user = NULL, *passinarg = NULL, *passoutarg = NULL;
     char *passin = NULL, *passout = NULL, *gN = NULL, *userinfo = NULL;
-    char *randfile = NULL, *engine = NULL, *tofree = NULL, *section = NULL;
+    char *randfile = NULL, *tofree = NULL, *section = NULL;
     char **gNrow = NULL, *configfile = NULL, *dbfile = NULL, **pp, *prog;
     long errorline = -1;
     OPTION_CHOICE o;
@@ -332,7 +332,7 @@ int srp_main(int argc, char **argv)
             passoutarg = opt_arg();
             break;
         case OPT_ENGINE:
-            engine = opt_arg();
+            (void)setup_engine(opt_arg(), 0);
             break;
         }
     }
@@ -359,9 +359,6 @@ int srp_main(int argc, char **argv)
                    "-passin, -passout arguments only valid with one user.\n");
         goto opthelp;
     }
-# ifndef OPENSSL_NO_ENGINE
-    setup_engine(engine, 0);
-# endif
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");

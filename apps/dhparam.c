@@ -167,8 +167,7 @@ int dhparam_main(int argc, char **argv)
 {
     BIO *in = NULL, *out = NULL;
     DH *dh = NULL;
-    char *engine = NULL, *infile = NULL, *outfile = NULL, *prog, *inrand =
-        NULL;
+    char *infile = NULL, *outfile = NULL, *prog, *inrand = NULL;
     int dsaparam = 0, i, text = 0, C = 0, ret = 1, num = 0, g = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, check = 0, noout = 0;
     OPTION_CHOICE o;
@@ -200,7 +199,7 @@ int dhparam_main(int argc, char **argv)
             outfile = opt_arg();
             break;
         case OPT_ENGINE:
-            engine = opt_arg();
+            (void)setup_engine(opt_arg(), 0);
             break;
         case OPT_CHECK:
             check = 1;
@@ -233,10 +232,6 @@ int dhparam_main(int argc, char **argv)
 
     if (argv[0] && (!opt_int(argv[0], &num) || num <= 0))
         goto end;
-
-# ifndef OPENSSL_NO_ENGINE
-    setup_engine(engine, 0);
-# endif
 
     if (g && !num)
         num = DEFBITS;
