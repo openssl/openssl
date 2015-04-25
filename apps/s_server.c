@@ -338,6 +338,8 @@ static unsigned int psk_server_cb(SSL *ssl, const char *identity,
  out_err:
     if (s_debug)
         BIO_printf(bio_err, "Error in PSK server callback\n");
+    (void)BIO_flush(bio_err);
+    (void)BIO_flush(bio_s_out);
     return 0;
 }
 #endif
@@ -2404,6 +2406,7 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
     }
     if (ret >= 0)
         BIO_printf(bio_s_out, "ACCEPT\n");
+    (void)BIO_flush(bio_s_out);
     return (ret);
 }
 
