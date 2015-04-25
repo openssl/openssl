@@ -366,8 +366,7 @@ the B<-signkey> or B<-CA> options. If used in conjunction with the B<-CA>
 option the serial number file (as specified by the B<-CAserial> or
 B<-CAcreateserial> options) is not used.
 
-The serial number can be decimal or hex (if preceded by B<0x>). Negative
-serial numbers can also be specified but their use is not recommended.
+The serial number can be decimal or hex (if preceded by B<0x>).
 
 =item B<-CA filename>
 
@@ -402,8 +401,9 @@ The default filename consists of the CA certificate file base name with
 
 with this option the CA serial number file is created if it does not exist:
 it will contain the serial number "02" and the certificate being signed will
-have the 1 as its serial number. Normally if the B<-CA> option is specified
-and the serial number file does not exist it is an error.
+have the 1 as its serial number. If the B<-CA> option is specified
+and the serial number file does not exist a random number is generated;
+this is the recommended practice.
 
 =item B<-extfile filename>
 

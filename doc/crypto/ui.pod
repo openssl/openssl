@@ -106,6 +106,7 @@ most problems when porting.
 
 UI_free() removes a UI from memory, along with all other pieces of memory
 that's connected to it, like duplicated input strings, results and others.
+If B<ui> is NULL nothing is done.
 
 UI_add_input_string() and UI_add_verify_string() add a prompt to the UI,
 as well as flags and a result buffer and the desired minimum and maximum

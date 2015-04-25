@@ -14,7 +14,6 @@ B<openssl> B<rsa>
 [B<-passin arg>]
 [B<-out filename>]
 [B<-passout arg>]
-[B<-sgckey>]
 [B<-aes128>]
 [B<-aes192>]
 [B<-aes256>]
@@ -82,11 +81,6 @@ filename.
 
 the output file password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
-
-=item B<-sgckey>
-
-use the modified NET algorithm used with some versions of Microsoft IIS and SGC
-keys.
 
 =item B<-aes128|-aes192|-aes256|-camellia128|-camellia192|-camellia256|-des|-des3|-idea>
 
@@ -165,8 +159,7 @@ files. To use these with the utility, view the file with a binary editor
 and look for the string "private-key", then trace back to the byte
 sequence 0x30, 0x82 (this is an ASN1 SEQUENCE). Copy all the data
 from this point onwards to another file and use that as the input
-to the B<rsa> utility with the B<-inform NET> option. If you get
-an error after entering the password try the B<-sgckey> option.
+to the B<rsa> utility with the B<-inform NET> option.
 
 =head1 EXAMPLES
 
