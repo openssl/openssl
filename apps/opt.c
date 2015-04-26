@@ -171,7 +171,7 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
     for (; o->name; ++o) {
         const OPTIONS *next;
 #ifndef NDEBUG
-        int i;
+        int duplicated, i;
 #endif
 
         if (o->name == OPT_HELP_STR || o->name == OPT_MORE_STR)
@@ -188,11 +188,12 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
                || i == 'f' || i == 'F');
 
         /* Make sure there are no duplicates. */
-        for (next = o; (++next)->name;) {
+        for (next = o + 1; next->name; ++next) {
             /*
-             * do allow aliases: assert(o->retval != next->retval);
+             * Some compilers inline strcmp and the assert string is too long.
              */
-            assert(strcmp(o->name, next->name) != 0);
+            duplicated = strcmp(o->name, next->name) == 0;
+            assert(!duplicated);
         }
 #endif
         if (o->name[0] == '\0') {
