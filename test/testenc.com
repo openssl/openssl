@@ -35,7 +35,7 @@ $	if $severity .ne. 1 then exit 3
 $	delete 'test'-cipher;*,'test'-clear;*
 $
 $	define/user sys$output 'test'-cipher-commands
-$	'cmd' list-cipher-commands
+$	'cmd' list -cipher-commands
 $	open/read f 'test'-cipher-commands
 $ loop_cipher_commands:
 $	read/end=loop_cipher_commands_end f i

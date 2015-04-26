@@ -20,7 +20,7 @@ $cmd enc -a -d < $test.cipher >$test.clear
 cmp $test $test.clear || exit 1
 /bin/rm $test.cipher $test.clear
 
-for i in `$cmd list-cipher-commands`
+for i in `$cmd list -cipher-commands`
 do
 	echo $i
 	$cmd $i -bufsize 113 -e -k test < $test > $test.$i.cipher
