@@ -222,6 +222,7 @@ int ocsp_main(int argc, char **argv)
     STACK_OF(OCSP_CERTID) *ids = NULL;
     STACK_OF(OPENSSL_STRING) *reqnames = NULL;
     STACK_OF(X509) *sign_other = NULL, *verify_other = NULL, *rother = NULL;
+    STACK_OF(X509) *issuers = NULL;
     X509 *issuer = NULL, *cert = NULL, *rca_cert = NULL;
     X509 *signer = NULL, *rsigner = NULL;
     X509_STORE *store = NULL;
