@@ -594,6 +594,7 @@ typedef int (*custom_ext_parse_cb) (SSL *s, unsigned int ext_type,
 # define SSL_CONF_TYPE_STRING            0x1
 # define SSL_CONF_TYPE_FILE              0x2
 # define SSL_CONF_TYPE_DIR               0x3
+# define SSL_CONF_TYPE_NONE              0x4
 
 /*
  * Note: SSL[_CTX]_set_{options,mode} use |= op on the previous value, they
