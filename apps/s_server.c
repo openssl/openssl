@@ -3197,7 +3197,7 @@ static int add_session(SSL *ssl, SSL_SESSION *session)
 
     /* Assume it still works. */
     if (i2d_SSL_SESSION(session, &p) != sess->derlen) {
-        BIO_printf(bio_err, "Re-encoding session strangeness\n");
+        BIO_printf(bio_err, "Unexpected session encoding length\n");
         OPENSSL_free(sess->id);
         OPENSSL_free(sess->der);
         OPENSSL_free(sess);
