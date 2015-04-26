@@ -136,6 +136,7 @@
 #define ENV_UNIQUE_SUBJECT      "unique_subject"
 
 #define ENV_DATABASE            "database"
+#define ENV_NEW_REVOKED         "new_revoked"
 
 /* Additional revocation information types */
 
@@ -152,6 +153,7 @@ static const char *ca_usage[] = {
     " -config file    - A config file\n",
     " -name arg       - The particular CA definition to use\n",
     " -gencrl         - Generate a new CRL\n",
+    " -updatecrl      - Update new revoked certificate to CRL\n",
     " -crldays days   - Days is when the next CRL is due\n",
     " -crlhours hours - Hours is when the next CRL is due\n",
     " -startdate YYMMDDHHMMSSZ  - certificate validity notBefore\n",
@@ -236,6 +238,7 @@ static int do_revoke(X509 *x509, CA_DB *db, int ext, char *extval);
 static int get_certificate_status(const char *ser_status, CA_DB *db);
 static int do_updatedb(CA_DB *db);
 static int check_time_format(const char *str);
+static void truncate_new_revoked();
 char *make_revocation_str(int rev_type, char *rev_arg);
 int make_revoked(X509_REVOKED *rev, const char *str);
 int old_entry_print(BIO *bp, ASN1_OBJECT *obj, ASN1_STRING *str);
@@ -262,6 +265,7 @@ int MAIN(int argc, char **argv)
     int req = 0;
     int verbose = 0;
     int gencrl = 0;
+    int updatecrl = 0;
     int dorevoke = 0;
     int doupdatedb = 0;
     long crldays = 0;
@@ -309,6 +313,7 @@ int MAIN(int argc, char **argv)
     BIO *in = NULL, *out = NULL, *Sout = NULL, *Cout = NULL;
     char *dbfile = NULL;
     CA_DB *db = NULL;
+    CA_DB *new_db = NULL;
     X509_CRL *crl = NULL;
     X509_REVOKED *r = NULL;
     ASN1_TIME *tmptm;
@@ -445,7 +450,9 @@ int MAIN(int argc, char **argv)
             email_dn = 0;
         else if (strcmp(*argv, "-gencrl") == 0)
             gencrl = 1;
-        else if (strcmp(*argv, "-msie_hack") == 0)
+        else if (strcmp(*argv, "-updatecrl") == 0) {
+            updatecrl = 1;
+        } else if (strcmp(*argv, "-msie_hack") == 0)
             msie_hack = 1;
         else if (strcmp(*argv, "-crldays") == 0) {
             if (--argc < 1)
@@ -1435,7 +1442,144 @@ int MAIN(int argc, char **argv)
             if (!rotate_serial(crlnumberfile, "new", "old"))
                 goto err;
 
+        truncate_new_revoked(bio_err);
     }
+
+        /*****************************************************************/
+    if (updatecrl) {
+        int crl_v2 = 0;
+        char *new_revoked = NULL;
+        char *crlfile = NULL;
+
+        if ((crlfile = NCONF_get_string(conf, section, ENV_CRL)) == NULL) {
+            lookup_fail(section, ENV_CRL);
+            goto err;
+        }
+
+        if ((new_revoked = NCONF_get_string(conf, section, ENV_NEW_REVOKED)) == NULL) {
+            lookup_fail(section, ENV_NEW_REVOKED);
+            goto err;
+        }
+
+        new_db = load_index(new_revoked, &db_attr);
+        if (new_db == NULL)
+            goto err;
+
+        if (!index_index(new_db))
+            goto err;
+
+        if (verbose)
+            BIO_printf(bio_err, "updating CRL\n");
+
+        if ((crl = X509_CRL_new()) == NULL)
+            goto err;
+
+        FILE *f = fopen(crlfile, "r");
+        if (f == NULL) {
+            BIO_printf(bio_err, "WARNING:Can not read '%s'\n", crlfile);
+            goto err;
+        }
+
+        BIO_printf(bio_err, "reading '%s'\n", crlfile);
+        PEM_read_X509_CRL(f, &crl, NULL, NULL);
+        fclose(f);
+
+        tmptm = ASN1_TIME_new();
+        if (!tmptm)
+            goto err;
+        X509_gmtime_adj(tmptm, 0);
+        X509_CRL_set_lastUpdate(crl, tmptm);
+        if (!X509_time_adj_ex(tmptm, crldays, crlhours * 60 * 60 + crlsec,
+                              NULL)) {
+            BIO_puts(bio_err, "error setting CRL nextUpdate\n");
+            goto err;
+        }
+        X509_CRL_set_nextUpdate(crl, tmptm);
+
+        ASN1_TIME_free(tmptm);
+
+        for (i = 0; i < sk_OPENSSL_PSTRING_num(new_db->db->data); i++) {
+            pp = sk_OPENSSL_PSTRING_value(new_db->db->data, i);
+            if (pp[DB_type][0] == DB_TYPE_REV) {
+                if ((r = X509_REVOKED_new()) == NULL)
+                    goto err;
+                j = make_revoked(r, pp[DB_rev_date]);
+                if (!j)
+                    goto err;
+                if (j == 2)
+                    crl_v2 = 1;
+                if (!BN_hex2bn(&serial, pp[DB_serial]))
+                    goto err;
+                tmpser = BN_to_ASN1_INTEGER(serial, NULL);
+                BN_free(serial);
+                serial = NULL;
+                if (!tmpser)
+                    goto err;
+                X509_REVOKED_set_serialNumber(r, tmpser);
+                ASN1_INTEGER_free(tmpser);
+                X509_CRL_add0_revoked(crl, r);
+            }
+        }
+
+        /*
+         * sort the data so it will be written in serial number order
+         */
+        X509_CRL_sort(crl);
+
+        /* we now have a CRL */
+        if (verbose)
+            BIO_printf(bio_err, "signing CRL\n");
+
+        /* Add any extensions asked for */
+
+        if (crl_ext || crlnumberfile != NULL) {
+            X509V3_CTX crlctx;
+            X509V3_set_ctx(&crlctx, x509, NULL, NULL, crl, 0);
+            X509V3_set_nconf(&crlctx, conf);
+
+            if (crl_ext)
+                if (!X509V3_EXT_CRL_add_nconf(conf, &crlctx, crl_ext, crl))
+                    goto err;
+            if (crlnumberfile != NULL) {
+                tmpser = BN_to_ASN1_INTEGER(crlnumber, NULL);
+                if (!tmpser)
+                    goto err;
+                X509_CRL_add1_ext_i2d(crl, NID_crl_number, tmpser, 0, 0);
+                ASN1_INTEGER_free(tmpser);
+                crl_v2 = 1;
+                if (!BN_add_word(crlnumber, 1))
+                    goto err;
+            }
+        }
+        if (crl_ext || crl_v2) {
+            if (!X509_CRL_set_version(crl, 1))
+                goto err;       /* version 2 CRL */
+        }
+
+        /* we have a CRL number that need updating */
+        if (crlnumberfile != NULL)
+            if (!save_serial(crlnumberfile, "new", crlnumber, NULL))
+                goto err;
+
+        if (crlnumber) {
+            BN_free(crlnumber);
+            crlnumber = NULL;
+        }
+
+        if (!do_X509_CRL_sign(bio_err, crl, pkey, dgst, sigopts))
+            goto err;
+
+        f = fopen(crlfile, "wb");
+        PEM_write_X509_CRL(f, crl);
+        fclose(f);
+
+        if (crlnumberfile != NULL) /* Rename the crlnumber file */
+            if (!rotate_serial(crlnumberfile, "new", "old"))
+                goto err;
+
+        truncate_new_revoked(bio_err);
+    }
+
         /*****************************************************************/
     if (dorevoke) {
         if (infile == NULL) {
@@ -2330,12 +2474,33 @@ static int check_time_format(const char *str)
     return ASN1_TIME_set_string(NULL, str);
 }
 
+static void truncate_new_revoked(BIO* bio_err)
+{
+    char *new_revoked = NULL;
+    BIO *out = NULL;
+    if ((new_revoked = NCONF_get_string(conf, section, ENV_NEW_REVOKED)) == NULL) {
+        lookup_fail(section, ENV_NEW_REVOKED);
+    } else {
+        out = BIO_new(BIO_s_file());
+        if (out == NULL) {
+            ERR_print_errors(bio_err);
+        } else {
+            if (BIO_write_filename(out, new_revoked) <= 0) {
+                perror(new_revoked);
+            }
+            BIO_free_all(out);
+        }
+    }
+}
+
 static int do_revoke(X509 *x509, CA_DB *db, int type, char *value)
 {
     ASN1_UTCTIME *tm = NULL;
     char *row[DB_NUMBER], **rrow, **irow;
     char *rev_str = NULL;
     BIGNUM *bn = NULL;
+    BIO *out = NULL;
+    char *new_revoked = NULL;
     int ok = -1, i;
 
     for (i = 0; i < DB_NUMBER; i++)
@@ -2435,6 +2600,27 @@ static int do_revoke(X509 *x509, CA_DB *db, int type, char *value)
         rrow[DB_type][0] = 'R';
         rrow[DB_type][1] = '\0';
         rrow[DB_rev_date] = rev_str;
+
+        if ((new_revoked = NCONF_get_string(conf, section, ENV_NEW_REVOKED)) == NULL) {
+            lookup_fail(section, ENV_NEW_REVOKED);
+	} else {
+            BIO_printf(bio_err, "Adding revoked certificate to %s\n", new_revoked);
+            out = BIO_new(BIO_s_file());
+            if (out == NULL) {
+                ERR_print_errors(bio_err);
+            } else {
+		if (BIO_append_filename(out, new_revoked) <= 0) {
+                    perror(new_revoked);
+                } else {
+                   for (i = 0; i < DB_NUMBER; i++) {
+                       BIO_write(out, rrow[i], strlen(rrow[i]));
+                       BIO_write(out, "\t", 1);
+                   }
+                   BIO_write(out, "\n", 1);
+                }
+                BIO_free_all(out);
+            }
+	}
     }
     ok = 1;
  err:

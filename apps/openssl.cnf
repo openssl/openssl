@@ -43,6 +43,7 @@ dir		= ./demoCA		# Where everything is kept
 certs		= $dir/certs		# Where the issued certs are kept
 crl_dir		= $dir/crl		# Where the issued crl are kept
 database	= $dir/index.txt	# database index file.
+new_revoked     = $dir/new_revoked.txt  # Where the new revoked certs are kept
 #unique_subject	= no			# Set to 'no' to allow creation of
 					# several certs with same subject.
 new_certs_dir	= $dir/newcerts		# default place for new certs.
