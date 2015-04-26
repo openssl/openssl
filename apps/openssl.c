@@ -132,14 +132,6 @@
 #define INCLUDE_FUNCTION_TABLE
 #include "apps.h"
 
-#if 1
-# define LIST_STANDARD_COMMANDS "list-standard-commands"
-# define LIST_MESSAGE_DIGEST_COMMANDS "list-message-digest-commands"
-# define LIST_MESSAGE_DIGEST_ALGORITHMS "list-message-digest-algorithms"
-# define LIST_CIPHER_COMMANDS "list-cipher-commands"
-# define LIST_CIPHER_ALGORITHMS "list-cipher-algorithms"
-# define LIST_PUBLIC_KEY_ALGORITHMS "list-public-key-algorithms"
-#endif
 
 #ifdef OPENSSL_NO_CAMELLIA
 # define FORMAT "%-15s"
@@ -161,10 +153,8 @@
 DECLARE_LHASH_OF(FUNCTION);
 static LHASH_OF(FUNCTION) *prog_init(void);
 static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[]);
-static int list_pkey(void);
-static int list_cipher(void);
-static int list_md(void);
-static int list_type(FUNC_TYPE list_type);
+static void list_pkey(void);
+static void list_type(FUNC_TYPE ft);
 char *default_config_file = NULL;
 
 CONF *config = NULL;
@@ -519,6 +509,34 @@ OPTIONS exit_options[] = {
     {NULL}
 };
 
+static void list_cipher_fn(const EVP_CIPHER *c,
+                           const char *from, const char *to, void *arg)
+{
+    if (c)
+        BIO_printf(arg, "%s\n", EVP_CIPHER_name(c));
+    else {
+        if (!from)
+            from = "<undefined>";
+        if (!to)
+            to = "<undefined>";
+        BIO_printf(arg, "%s => %s\n", from, to);
+    }
+}
+
+static void list_md_fn(const EVP_MD *m,
+                       const char *from, const char *to, void *arg)
+{
+    if (m)
+        BIO_printf(arg, "%s\n", EVP_MD_name(m));
+    else {
+        if (!from)
+            from = "<undefined>";
+        if (!to)
+            to = "<undefined>";
+        BIO_printf((BIO *)arg, "%s => %s\n", from, to);
+    }
+}
+
 /* Unified enum for help and list commands. */
 typedef enum HELPLIST_CHOICE {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -558,17 +576,23 @@ int list_main(int argc, char **argv)
             opt_help(list_options);
             break;
         case OPT_COMMANDS:
-            return list_type(FT_general);
+            list_type(FT_general);
+            break;
         case OPT_DIGEST_COMMANDS:
-            return list_type(FT_md);
+            list_type(FT_md);
+            break;
         case OPT_DIGEST_ALGORITHMS:
-            return list_md();
+            EVP_MD_do_all_sorted(list_md_fn, bio_out);
+            break;
         case OPT_CIPHER_COMMANDS:
-            return list_type(FT_cipher);
+            list_type(FT_cipher);
+            break;
         case OPT_CIPHER_ALGORITHMS:
-            return list_cipher();
+            EVP_CIPHER_do_all_sorted(list_cipher_fn, bio_out);
+            break;
         case OPT_PK_ALGORITHMS:
-            return list_pkey();
+            list_pkey();
+            break;
         }
     }
 
@@ -641,19 +665,18 @@ int exit_main(int argc, char **argv)
     return EXIT_THE_PROGRAM;
 }
 
-static int list_type(FUNC_TYPE flist_type)
+static void list_type(FUNC_TYPE ft)
 {
     FUNCTION *fp;
     int i = 0;
 
     for (fp = functions; fp->name != NULL; fp++)
-        if (fp->type == flist_type) {
+        if (fp->type == ft) {
             if ((i++ % COLUMNS) == 0)
                 BIO_printf(bio_out, "\n");
             BIO_printf(bio_out, FORMAT, fp->name);
         }
     BIO_printf(bio_out, "\n");
-    return 0;
 }
 
 static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[])
@@ -695,27 +718,13 @@ static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[])
         strcmp(argv[0], "exit") == 0 || strcmp(argv[0], "bye") == 0)
         /* Special value to mean "exit the program. */
         return EXIT_THE_PROGRAM;
-#ifdef LIST_STANDARD_COMMANDS
-    if (strcmp(argv[0], LIST_STANDARD_COMMANDS) == 0)
-        return list_type(FT_general);
-    if (strcmp(argv[0], LIST_MESSAGE_DIGEST_ALGORITHMS) == 0)
-        return list_md();
-    if (strcmp(argv[0], LIST_PUBLIC_KEY_ALGORITHMS) == 0)
-        return list_pkey();
-    if (strcmp(argv[0], LIST_CIPHER_ALGORITHMS) == 0)
-        return list_cipher();
-    if (strcmp(argv[0], LIST_CIPHER_COMMANDS) == 0)
-        return list_type(FT_cipher);
-    if (strcmp(argv[0], LIST_MESSAGE_DIGEST_COMMANDS) == 0)
-        return list_type(FT_md);
-#endif
 
     BIO_printf(bio_err, "Invalid command '%s'; type \"help\" for a list.\n",
                argv[0]);
     return (1);
 }
 
-static int list_pkey(void)
+static void list_pkey(void)
 {
     int i;
 
@@ -742,47 +751,6 @@ static int list_pkey(void)
         }
 
     }
-    return 0;
-}
-
-static void list_cipher_fn(const EVP_CIPHER *c,
-                           const char *from, const char *to, void *arg)
-{
-    if (c)
-        BIO_printf(arg, "%s\n", EVP_CIPHER_name(c));
-    else {
-        if (!from)
-            from = "<undefined>";
-        if (!to)
-            to = "<undefined>";
-        BIO_printf(arg, "%s => %s\n", from, to);
-    }
-}
-
-static int list_cipher(void)
-{
-    EVP_CIPHER_do_all_sorted(list_cipher_fn, bio_out);
-    return 0;
-}
-
-static void list_md_fn(const EVP_MD *m,
-                       const char *from, const char *to, void *arg)
-{
-    if (m)
-        BIO_printf(arg, "%s\n", EVP_MD_name(m));
-    else {
-        if (!from)
-            from = "<undefined>";
-        if (!to)
-            to = "<undefined>";
-        BIO_printf((BIO *)arg, "%s => %s\n", from, to);
-    }
-}
-
-static int list_md(void)
-{
-    EVP_MD_do_all_sorted(list_md_fn, bio_out);
-    return 0;
 }
 
 static int function_cmp(const FUNCTION * a, const FUNCTION * b)
