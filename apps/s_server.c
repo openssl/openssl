@@ -228,6 +228,8 @@ static int s_server_verify = SSL_VERIFY_NONE;
 static int s_server_session_id_context = 1; /* anything will do */
 static const char *s_cert_file = TEST_CERT, *s_key_file =
     NULL, *s_chain_file = NULL;
+static const char *krb5svc = NULL;
+static const char *krb5tab = NULL;
 #ifndef OPENSSL_NO_TLSEXT
 static const char *s_cert_file2 = TEST_CERT2, *s_key_file2 = NULL;
 #endif
@@ -839,7 +841,8 @@ typedef enum OPTION_choice {
     OPT_SRTP_PROFILES, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN,
     OPT_S_ENUM,
     OPT_V_ENUM,
-    OPT_X_ENUM
+    OPT_X_ENUM,
+    OPT_KRB5SVC, OPT_KRBTAB
 } OPTION_CHOICE;
 
 OPTIONS s_server_options[] = {
@@ -897,6 +900,8 @@ OPTIONS s_server_options[] = {
     {"jpake", OPT_JPAKE, 's', "JPAKE secret to use"},
 # endif
 #endif
+    {"krb5svc", OPT_KRB5SVC, 's', "Kerberos service name"},
+    {"keytab", OPT_KRBTAB, '<', "Kerberos keytab file"},
 #ifndef OPENSSL_NO_SRP
     {"srpvfile", OPT_SRPVFILE, '<', "The verifier file for SRP"},
     {"srpuserseed", OPT_SRPUSERSEED, 's',
@@ -1413,6 +1418,12 @@ int s_server_main(int argc, char *argv[])
         case OPT_JPAKE:
             goto opthelp;
 #endif
+        case OPT_KRB5SVC:
+            krb5svc = opt_arg();
+            break;
+        case OPT_KRBTAB:
+            krb5tab = opt_arg();
+            break;
         case OPT_SRTP_PROFILES:
             srtp_profiles = opt_arg();
             break;
