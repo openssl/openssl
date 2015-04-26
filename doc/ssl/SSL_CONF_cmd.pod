@@ -332,6 +332,11 @@ The value is a file name.
 
 The value is a directory name.
 
+=item B<SSL_CONF_TYPE_NONE>
+
+The value string is not used e.g. a command line option which doesn't take an
+argument.
+
 =back
 
 =head1 NOTES
@@ -437,5 +442,9 @@ SSL_CONF_cmd() was first added to OpenSSL 1.0.2
 
 B<SSL_OP_NO_SSL2> doesn't have effect anymore since 1.1.0 but the define is kept
 for backward compatibility.
+
+B<SSL_CONF_TYPE_NONE> was first added to OpenSSL 1.1.0. In earlier versions of
+OpenSSL passing a command which didn't take an argument would return
+B<SSL_CONF_TYPE_UNKNOWN>.
 
 =cut
