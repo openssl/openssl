@@ -3169,6 +3169,7 @@ static int add_session(SSL *ssl, SSL_SESSION *session)
     sess->derlen = i2d_SSL_SESSION(session, NULL);
     if (sess->derlen < 0) {
         BIO_printf(bio_err, "Error encoding session\n");
+        OPENSSL_free(sess);
         return 0;
     }
 
@@ -3176,10 +3177,8 @@ static int add_session(SSL *ssl, SSL_SESSION *session)
     sess->der = OPENSSL_malloc(sess->derlen);
     if (!sess->id || !sess->der) {
         BIO_printf(bio_err, "Out of memory adding to external cache\n");
-        if (sess->id)
-            OPENSSL_free(sess->id);
-        if (sess->der)
-            OPENSSL_free(sess->der);
+        OPENSSL_free(sess->id);
+        OPENSSL_free(sess->der);
         OPENSSL_free(sess);
         return 0;
     }
@@ -3187,7 +3186,10 @@ static int add_session(SSL *ssl, SSL_SESSION *session)
 
     /* Assume it still works. */
     if (i2d_SSL_SESSION(session, &p) != sess->derlen) {
-        BIO_printf(bio_err, "Error encoding session\n");
+        BIO_printf(bio_err, "Re-encoding session strangeness\n");
+        OPENSSL_free(sess->id);
+        OPENSSL_free(sess->der);
+        OPENSSL_free(sess);
         return 0;
     }
 
