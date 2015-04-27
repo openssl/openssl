@@ -96,6 +96,9 @@ int DES_enc_write(int fd, const void *_buf, int len,
     const unsigned char *cp;
     static int start = 1;
 
+    if (len < 0)
+        return -1;
+
     if (outbuf == NULL) {
         outbuf = OPENSSL_malloc(BSIZE + HDRSIZE);
         if (outbuf == NULL)
