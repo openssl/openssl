@@ -396,8 +396,15 @@ for (;;)
 	if ($key eq "EX_LIBS")
 		{ $ex_libs .= " $val" if $val ne "";}
 
-	if ($key =~ /^[A-Z0-9_]*TEST$/ && (!$fipscanisteronly || $dir =~ /^fips/ ))
-		{ $test.=&var_add($dir,$val, 0); }
+	# There was a condition here before:
+	#       !$fipscanisteronly || $dir =~ /^fips/
+	# It currently fills no function and needs to be rewritten anyway, so
+	# removed for now.
+	if ($dir eq "test" && $key eq "EXE")
+		{
+		foreach my $t (split /\s+/, $val) {
+			$test.=&var_add($dir,$t, 0) if $t; }
+		}
 
 	if ($key eq "EXE_OBJ")
 		{ $e_exe.=&var_add($dir,$val, 0); }
