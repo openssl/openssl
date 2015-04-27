@@ -1327,7 +1327,7 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 
     case EVP_CTRL_AEAD_TLS1_AAD:
         /* Save the AAD for later use */
-        if (arg != 13)
+        if (arg != EVP_AEAD_TLS1_AAD_LEN)
             return 0;
         memcpy(c->buf, ptr, arg);
         gctx->tls_aad_len = arg;
