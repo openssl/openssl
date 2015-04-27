@@ -1803,7 +1803,6 @@ void free_index(CA_DB *db)
 
 int parse_yesno(const char *str, int def)
 {
-    int ret = def;
     if (str) {
         switch (*str) {
         case 'f':              /* false */
@@ -1811,21 +1810,16 @@ int parse_yesno(const char *str, int def)
         case 'n':              /* no */
         case 'N':              /* NO */
         case '0':              /* 0 */
-            ret = 0;
-            break;
+            return 0;
         case 't':              /* true */
         case 'T':              /* TRUE */
         case 'y':              /* yes */
         case 'Y':              /* YES */
         case '1':              /* 1 */
-            ret = 1;
-            break;
-        default:
-            ret = def;
-            break;
+            return 1;
         }
     }
-    return ret;
+    return def;
 }
 
 /*
