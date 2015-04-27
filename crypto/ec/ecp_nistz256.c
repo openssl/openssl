@@ -844,17 +844,25 @@ static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
         for (j = 0; j < 37; j++) {
             P256_POINT_AFFINE temp;
             /*
-             * It would be faster to use ec_GFp_simple_points_make_affine and
+             * It would be faster to use EC_POINTs_make_affine and
              * make multiple points affine at the same time.
              */
-            ec_GFp_simple_make_affine(group, P, ctx);
-            ecp_nistz256_bignum_to_field_elem(temp.X, P->X);
-            ecp_nistz256_bignum_to_field_elem(temp.Y, P->Y);
+            if (!EC_POINT_make_affine(group, P, ctx))
+                goto err;
+            if (!ecp_nistz256_bignum_to_field_elem(temp.X, P->X) ||
+                !ecp_nistz256_bignum_to_field_elem(temp.Y, P->Y)) {
+                ECerr(EC_F_ECP_NISTZ256_MULT_PRECOMPUTE,
+                      EC_R_COORDINATES_OUT_OF_RANGE);
+                goto err;
+            }
             ecp_nistz256_scatter_w7(preComputedTable[j], &temp, k);
-            for (i = 0; i < 7; i++)
-                ec_GFp_simple_dbl(group, P, P, ctx);
+            for (i = 0; i < 7; i++) {
+                if (!EC_POINT_dbl(group, P, P, ctx))
+                    goto err;
+            }
         }
-        ec_GFp_simple_add(group, T, T, generator, ctx);
+        if (!EC_POINT_add(group, T, T, generator, ctx))
+            goto err;
     }
 
     pre_comp->group = group;
