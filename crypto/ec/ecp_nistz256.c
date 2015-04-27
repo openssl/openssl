@@ -546,18 +546,18 @@ static void ecp_nistz256_mod_inverse(BN_ULONG r[P256_LIMBS],
  * ecp_nistz256_bignum_to_field_elem copies the contents of |in| to |out| and
  * returns one if it fits. Otherwise it returns zero.
  */
-static int ecp_nistz256_bignum_to_field_elem(BN_ULONG out[P256_LIMBS],
-                                             const BIGNUM *in)
+__owur static int ecp_nistz256_bignum_to_field_elem(BN_ULONG out[P256_LIMBS],
+                                                    const BIGNUM *in)
 {
     return bn_copy_words(out, in, P256_LIMBS);
 }
 
 /* r = sum(scalar[i]*point[i]) */
-static int ecp_nistz256_windowed_mul(const EC_GROUP *group,
-                                      P256_POINT *r,
-                                      const BIGNUM **scalar,
-                                      const EC_POINT **point,
-                                      size_t num, BN_CTX *ctx)
+__owur static int ecp_nistz256_windowed_mul(const EC_GROUP *group,
+                                            P256_POINT *r,
+                                            const BIGNUM **scalar,
+                                            const EC_POINT **point,
+                                            size_t num, BN_CTX *ctx)
 {
     size_t i;
     int j, ret = 0;
@@ -755,7 +755,7 @@ static int ecp_nistz256_is_affine_G(const EC_POINT *generator)
         is_one(bn_get_words(generator->Z));
 }
 
-static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
+__owur static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
 {
     /*
      * We precompute a table for a Booth encoded exponent (wNAF) based
@@ -1097,9 +1097,9 @@ static void ecp_nistz256_avx2_mul_g(P256_POINT *r,
 # endif
 #endif
 
-static int ecp_nistz256_set_from_affine(EC_POINT *out, const EC_GROUP *group,
-                                        const P256_POINT_AFFINE *in,
-                                        BN_CTX *ctx)
+__owur static int ecp_nistz256_set_from_affine(EC_POINT *out, const EC_GROUP *group,
+                                               const P256_POINT_AFFINE *in,
+                                               BN_CTX *ctx)
 {
     BIGNUM *x, *y;
     BN_ULONG d_x[P256_LIMBS], d_y[P256_LIMBS];
@@ -1130,12 +1130,12 @@ static int ecp_nistz256_set_from_affine(EC_POINT *out, const EC_GROUP *group,
 }
 
 /* r = scalar*G + sum(scalars[i]*points[i]) */
-static int ecp_nistz256_points_mul(const EC_GROUP *group,
-                                   EC_POINT *r,
-                                   const BIGNUM *scalar,
-                                   size_t num,
-                                   const EC_POINT *points[],
-                                   const BIGNUM *scalars[], BN_CTX *ctx)
+__owur static int ecp_nistz256_points_mul(const EC_GROUP *group,
+                                          EC_POINT *r,
+                                          const BIGNUM *scalar,
+                                          size_t num,
+                                          const EC_POINT *points[],
+                                          const BIGNUM *scalars[], BN_CTX *ctx)
 {
     int i = 0, ret = 0, no_precomp_for_generator = 0, p_is_infinity = 0;
     size_t j;
@@ -1365,9 +1365,9 @@ err:
     return ret;
 }
 
-static int ecp_nistz256_get_affine(const EC_GROUP *group,
-                                   const EC_POINT *point,
-                                   BIGNUM *x, BIGNUM *y, BN_CTX *ctx)
+__owur static int ecp_nistz256_get_affine(const EC_GROUP *group,
+                                          const EC_POINT *point,
+                                          BIGNUM *x, BIGNUM *y, BN_CTX *ctx)
 {
     BN_ULONG z_inv2[P256_LIMBS];
     BN_ULONG z_inv3[P256_LIMBS];
