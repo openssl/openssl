@@ -409,6 +409,9 @@ struct evp_cipher_st {
 /* Set the GCM invocation field, decrypt only */
 # define         EVP_CTRL_GCM_SET_IV_INV         0x18
 
+/* RFC 5246 defines additional data to be 13 bytes in length */
+# define         EVP_AEAD_TLS1_AAD_LEN           13
+
 /* GCM TLS constants */
 /* Length of fixed part of IV derived from PRF */
 # define EVP_GCM_TLS_FIXED_IV_LEN                        4
