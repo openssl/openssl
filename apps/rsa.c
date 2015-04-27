@@ -136,8 +136,8 @@ OPTIONS rsa_options[] = {
     {"pubout", OPT_PUBOUT, '-', "Output a public key"},
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
-    {"RSAPublicKey_in", OPT_RSAPUBKEY_IN, '-', "Input is an RSAPublicKye"},
-    {"RSAPublicKey_out", OPT_RSAPUBKEY_OUT, '-', "Output is an RSAPublicKye"},
+    {"RSAPublicKey_in", OPT_RSAPUBKEY_IN, '-', "Input is an RSAPublicKey"},
+    {"RSAPublicKey_out", OPT_RSAPUBKEY_OUT, '-', "Output is an RSAPublicKey"},
     {"pvk-strong", OPT_PVK_STRONG, '-'},
     {"pvk-weak", OPT_PVK_WEAK, '-'},
     {"pvk-none", OPT_PVK_NONE, '-'},
@@ -321,8 +321,8 @@ int rsa_main(int argc, char **argv)
             }
         }
 
-        if (r == -1 || ERR_peek_error() != 0) { /* should happen only if r ==
-                                                 * -1 */
+        /* should happen only if r == -1 */
+        if (r == -1 || ERR_peek_error() != 0) {
             ERR_print_errors(bio_err);
             goto end;
         }
