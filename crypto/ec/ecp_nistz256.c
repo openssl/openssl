@@ -1133,6 +1133,7 @@ static int ecp_nistz256_points_mul(const EC_GROUP *group,
     const PRECOMP256_ROW *preComputedTable = NULL;
     const EC_PRE_COMP *pre_comp = NULL;
     const EC_POINT *generator = NULL;
+    BN_CTX *new_ctx = NULL;
     unsigned int idx = 0;
     const unsigned int window_size = 7;
     const unsigned int mask = (1 << (window_size + 1)) - 1;
@@ -1152,6 +1153,7 @@ static int ecp_nistz256_points_mul(const EC_GROUP *group,
         ECerr(EC_F_ECP_NISTZ256_POINTS_MUL, EC_R_INCOMPATIBLE_OBJECTS);
         return 0;
     }
+
     if ((scalar == NULL) && (num == 0))
         return EC_POINT_set_to_infinity(group, r);
 
@@ -1162,13 +1164,13 @@ static int ecp_nistz256_points_mul(const EC_GROUP *group,
         }
     }
 
-    /* Need 256 bits for space for all coordinates. */
-    bn_wexpand(r->X, P256_LIMBS);
-    bn_wexpand(r->Y, P256_LIMBS);
-    bn_wexpand(r->Z, P256_LIMBS);
-    bn_set_top(r->X, P256_LIMBS);
-    bn_set_top(r->Y, P256_LIMBS);
-    bn_set_top(r->Z, P256_LIMBS);
+    if (ctx == NULL) {
+        ctx = new_ctx = BN_CTX_new();
+        if (ctx == NULL)
+            goto err;
+    }
+
+    BN_CTX_start(ctx);
 
     if (scalar) {
         generator = EC_GROUP_get0_generator(group);
@@ -1194,8 +1196,10 @@ static int ecp_nistz256_points_mul(const EC_GROUP *group,
 
             if (!ecp_nistz256_set_from_affine(pre_comp_generator,
                                               group, pre_comp->precomp[0],
-                                              ctx))
+                                              ctx)) {
+                EC_POINT_free(pre_comp_generator);
                 goto err;
+            }
 
             if (0 == EC_POINT_cmp(group, generator, pre_comp_generator, ctx))
                 preComputedTable = (const PRECOMP256_ROW *)pre_comp->precomp;
@@ -1300,14 +1304,14 @@ static int ecp_nistz256_points_mul(const EC_GROUP *group,
         new_scalars = OPENSSL_malloc((num + 1) * sizeof(BIGNUM *));
         if (!new_scalars) {
             ECerr(EC_F_ECP_NISTZ256_POINTS_MUL, ERR_R_MALLOC_FAILURE);
-            return 0;
+            goto err;
         }
 
         new_points = OPENSSL_malloc((num + 1) * sizeof(EC_POINT *));
         if (!new_points) {
             OPENSSL_free(new_scalars);
             ECerr(EC_F_ECP_NISTZ256_POINTS_MUL, ERR_R_MALLOC_FAILURE);
-            return 0;
+            goto err;
         }
 
         memcpy(new_scalars, scalars, num * sizeof(BIGNUM *));
@@ -1336,18 +1340,20 @@ static int ecp_nistz256_points_mul(const EC_GROUP *group,
         OPENSSL_free(scalars);
     }
 
-    bn_set_data(r->X, p.p.X, sizeof(p.p.X));
-    bn_set_data(r->Y, p.p.Y, sizeof(p.p.Y));
-    bn_set_data(r->Z, p.p.Z, sizeof(p.p.Z));
     /* Not constant-time, but we're only operating on the public output. */
-    bn_correct_top(r->X);
-    bn_correct_top(r->Y);
-    bn_correct_top(r->Z);
+    if (!bn_set_words(r->X, p.p.X, P256_LIMBS) ||
+        !bn_set_words(r->Y, p.p.Y, P256_LIMBS) ||
+        !bn_set_words(r->Z, p.p.Z, P256_LIMBS)) {
+        goto err;
+    }
     r->Z_is_one = is_one(p.p.Z);
 
     ret = 1;
 
- err:
+err:
+    if (ctx)
+        BN_CTX_end(ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -1360,6 +1366,7 @@ static int ecp_nistz256_get_affine(const EC_GROUP *group,
     BN_ULONG x_aff[P256_LIMBS];
     BN_ULONG y_aff[P256_LIMBS];
     BN_ULONG point_x[P256_LIMBS], point_y[P256_LIMBS], point_z[P256_LIMBS];
+    BN_ULONG x_ret[P256_LIMBS], y_ret[P256_LIMBS];
 
     if (EC_POINT_is_at_infinity(group, point)) {
         ECerr(EC_F_ECP_NISTZ256_GET_AFFINE, EC_R_POINT_AT_INFINITY);
@@ -1378,19 +1385,17 @@ static int ecp_nistz256_get_affine(const EC_GROUP *group,
     ecp_nistz256_mul_mont(x_aff, z_inv2, point_x);
 
     if (x != NULL) {
-        bn_wexpand(x, P256_LIMBS);
-        bn_set_top(x, P256_LIMBS);
-        ecp_nistz256_from_mont(bn_get_words(x), x_aff);
-        bn_correct_top(x);
+        ecp_nistz256_from_mont(x_ret, x_aff);
+        if (!bn_set_words(x, x_ret, P256_LIMBS))
+            return 0;
     }
 
     if (y != NULL) {
         ecp_nistz256_mul_mont(z_inv3, z_inv3, z_inv2);
         ecp_nistz256_mul_mont(y_aff, z_inv3, point_y);
-        bn_wexpand(y, P256_LIMBS);
-        bn_set_top(y, P256_LIMBS);
-        ecp_nistz256_from_mont(bn_get_words(y), y_aff);
-        bn_correct_top(y);
+        ecp_nistz256_from_mont(y_ret, y_aff);
+        if (!bn_set_words(y, y_ret, P256_LIMBS))
+            return 0;
     }
 
     return 1;

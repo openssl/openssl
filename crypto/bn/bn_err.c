@@ -1,6 +1,6 @@
 /* crypto/bn/bn_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2014 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -113,6 +113,7 @@ static ERR_STRING_DATA BN_str_functs[] = {
     {ERR_FUNC(BN_F_BN_NEW), "BN_new"},
     {ERR_FUNC(BN_F_BN_RAND), "BN_rand"},
     {ERR_FUNC(BN_F_BN_RAND_RANGE), "BN_rand_range"},
+    {ERR_FUNC(BN_F_BN_SET_WORDS), "bn_set_words"},
     {ERR_FUNC(BN_F_BN_USUB), "BN_usub"},
     {0, NULL}
 };
