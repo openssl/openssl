@@ -569,13 +569,14 @@ static int ecp_nistz256_bignum_to_field_elem(BN_ULONG out[P256_LIMBS],
 }
 
 /* r = sum(scalar[i]*point[i]) */
-static void ecp_nistz256_windowed_mul(const EC_GROUP *group,
+static int ecp_nistz256_windowed_mul(const EC_GROUP *group,
                                       P256_POINT *r,
                                       const BIGNUM **scalar,
                                       const EC_POINT **point,
                                       int num, BN_CTX *ctx)
 {
-    int i, j;
+
+    int i, j, ret = 0;
     unsigned int index;
     unsigned char (*p_str)[33] = NULL;
     const unsigned int window_size = 5;
@@ -710,6 +711,7 @@ static void ecp_nistz256_windowed_mul(const EC_GROUP *group,
         ecp_nistz256_point_add(r, r, &h);
     }
 
+    ret = 1;
  err:
     if (table_storage)
         OPENSSL_free(table_storage);
@@ -717,6 +719,7 @@ static void ecp_nistz256_windowed_mul(const EC_GROUP *group,
         OPENSSL_free(p_str);
     if (scalars)
         OPENSSL_free(scalars);
+    return ret;
 }
 
 /* Coordinates of G, for which we have precomputed tables */
@@ -1123,6 +1126,8 @@ static int ecp_nistz256_points_mul(const EC_GROUP *group,
     const EC_POINT *generator = NULL;
     unsigned int index = 0;
     BN_CTX *new_ctx = NULL;
+    const BIGNUM **new_scalars = NULL;
+    const EC_POINT **new_points = NULL;
     const unsigned int window_size = 7;
     const unsigned int mask = (1 << (window_size + 1)) - 1;
     unsigned int wvalue;
@@ -1279,9 +1284,6 @@ static int ecp_nistz256_points_mul(const EC_GROUP *group,
          * Without a precomputed table for the generator, it has to be
          * handled like a normal point.
          */
-        const BIGNUM **new_scalars;
-        const EC_POINT **new_points;
-
         new_scalars = OPENSSL_malloc((num + 1) * sizeof(BIGNUM *));
         if (!new_scalars) {
             ECerr(EC_F_ECP_NISTZ256_POINTS_MUL, ERR_R_MALLOC_FAILURE);
@@ -1290,7 +1292,6 @@ static int ecp_nistz256_points_mul(const EC_GROUP *group,
 
         new_points = OPENSSL_malloc((num + 1) * sizeof(EC_POINT *));
         if (!new_points) {
-            OPENSSL_free(new_scalars);
             ECerr(EC_F_ECP_NISTZ256_POINTS_MUL, ERR_R_MALLOC_FAILURE);
             goto err;
         }
@@ -1310,15 +1311,11 @@ static int ecp_nistz256_points_mul(const EC_GROUP *group,
         if (p_is_infinity)
             out = &p.p;
 
-        ecp_nistz256_windowed_mul(group, out, scalars, points, num, ctx);
+        if (!ecp_nistz256_windowed_mul(group, out, scalars, points, num, ctx))
+            goto err;
 
         if (!p_is_infinity)
             ecp_nistz256_point_add(&p.p, &p.p, out);
-    }
-
-    if (no_precomp_for_generator) {
-        OPENSSL_free(points);
-        OPENSSL_free(scalars);
     }
 
     /* Not constant-time, but we're only operating on the public output. */
@@ -1335,6 +1332,10 @@ err:
     if (ctx)
         BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
+    if (new_points)
+        OPENSSL_free(new_points);
+    if (new_scalars)
+        OPENSSL_free(new_scalars);
     return ret;
 }
 
