@@ -448,9 +448,11 @@ int main(int argc, char *argv[])
     /* ok, lets enter interactive mode */
     for (;;) {
         ret = 0;
-        for (p = buf, n = sizeof buf, i = 0, first = 1;; first = 0) {
-            prompt = first ? "OpenSSL> " : "> ";
+        /* Read a line, continue reading if line ends with \ */
+        for (p = buf, n = sizeof buf, i = 0, first = 1; n > 0; first = 0) {
+            prompt = first ? "openssl : " : "> ";
             p[0] = '\0';
+#ifndef READLINE
             fputs(prompt, stdout);
             fflush(stdout);
             if (!fgets(p, n, stdin))
@@ -465,7 +467,33 @@ int main(int argc, char *argv[])
             i -= 2;
             p += i;
             n -= i;
+#else
+            {
+                extern char *readline(const char *);
+                extern void add_history(const char *cp);
+                char *text;
+
+                char *text = readline(prompt);
+                if (text == NULL)
+                    goto end;
+                i = strlen(text);
+                if (i == 0 || i > n)
+                    break;
+                if (text[i - 1] != '\\') {
+                    p += strlen(strcpy(p, text));
+                    free(text);
+                    add_history(buf);
+                    break;
+                }
+
+                text[i - 1] = '\0';
+                p += strlen(strcpy(p, text));
+                free(text);
+                n -= i;
+            }
+#endif
         }
+
         if (!chopup_args(&arg, buf)) {
             BIO_printf(bio_err, "Can't parse (no memory?)\n");
             break;
