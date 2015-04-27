@@ -1346,7 +1346,7 @@ static int ecp_nistz256_points_mul(const EC_GROUP *group,
         !bn_set_words(r->Z, p.p.Z, P256_LIMBS)) {
         goto err;
     }
-    r->Z_is_one = is_one(p.p.Z);
+    r->Z_is_one = is_one(p.p.Z) & 1;
 
     ret = 1;
 
