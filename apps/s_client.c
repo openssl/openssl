@@ -654,7 +654,7 @@ int s_client_main(int argc, char **argv)
         NULL;
     char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
     char *sess_in = NULL, *sess_out = NULL, *crl_file = NULL, *p;
-    char *jpake_secret = NULL, *xmpphost;
+    char *jpake_secret = NULL, *xmpphost = NULL;
     const char *unix_path = NULL;
     const char *ehlo = "mail.example.com";
     struct sockaddr peer;
