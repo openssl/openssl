@@ -233,11 +233,20 @@ void bn_set_static_words(BIGNUM *a, BN_ULONG *words, int size)
     a->dmax = a->top = size;
     a->neg = 0;
     a->flags |= BN_FLG_STATIC_DATA;
+    bn_correct_top(a);
 }
 
-void bn_set_data(BIGNUM *a, const void *data, size_t size)
+int bn_set_words(BIGNUM *a, BN_ULONG *words, int num_words)
 {
-    memcpy(a->d, data, size);
+    if (bn_wexpand(a, num_words) == NULL) {
+        BNerr(BN_F_BN_SET_WORDS, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+
+    memcpy(a->d, words, sizeof(BN_ULONG) * num_words);
+    a->top = num_words;
+    bn_correct_top(a);
+    return 1;
 }
 
 size_t bn_sizeof_BIGNUM(void)
