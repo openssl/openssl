@@ -399,7 +399,7 @@ for (;;)
 	if ($key =~ /^[A-Z0-9_]*TEST$/ && (!$fipscanisteronly || $dir =~ /^fips/ ))
 		{ $test.=&var_add($dir,$val, 0); }
 
-	if (($key eq "PROGS") || ($key eq "E_OBJ"))
+	if ($key eq "EXE_OBJ")
 		{ $e_exe.=&var_add($dir,$val, 0); }
 
 	if ($key eq "LIB")
