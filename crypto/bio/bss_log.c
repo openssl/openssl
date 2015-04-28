@@ -239,7 +239,7 @@ static int slg_write(BIO *b, const char *in, int inl)
         /* The default */
     };
 
-    if ((buf = (char *)OPENSSL_malloc(inl + 1)) == NULL) {
+    if ((buf = OPENSSL_malloc(inl + 1)) == NULL) {
         return (0);
     }
     strncpy(buf, in, inl);

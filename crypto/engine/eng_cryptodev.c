@@ -1045,7 +1045,7 @@ static int crparam2bn(struct crparam *crp, BIGNUM *a)
     if (bytes == 0)
         return (-1);
 
-    if ((pd = (u_int8_t *) OPENSSL_malloc(bytes)) == NULL)
+    if ((pd = OPENSSL_malloc(bytes)) == NULL)
         return (-1);
 
     for (i = 0; i < bytes; i++)

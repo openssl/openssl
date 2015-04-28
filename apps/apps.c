@@ -180,7 +180,7 @@ int chopup_args(ARGS *arg, char *buf)
     arg->argc = 0;
     if (arg->size == 0) {
         arg->size = 20;
-        arg->argv = (char **)OPENSSL_malloc(sizeof(char *) * arg->size);
+        arg->argv = OPENSSL_malloc(sizeof(char *) * arg->size);
         if (arg->argv == NULL)
             return 0;
     }
@@ -195,8 +195,7 @@ int chopup_args(ARGS *arg, char *buf)
         /* The start of something good :-) */
         if (arg->argc >= arg->size) {
             arg->size += 20;
-            arg->argv = (char **)OPENSSL_realloc(arg->argv,
-                                                 sizeof(char *) * arg->size);
+            arg->argv = OPENSSL_realloc(arg->argv, sizeof(char *) * arg->size);
             if (arg->argv == NULL)
                 return 0;
         }
@@ -368,7 +367,7 @@ int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
             ok = UI_add_input_string(ui, prompt, ui_flags, buf,
                                      PW_MIN_LENGTH, bufsiz - 1);
         if (ok >= 0 && verify) {
-            buff = (char *)OPENSSL_malloc(bufsiz);
+            buff = OPENSSL_malloc(bufsiz);
             if (!buff) {
                 BIO_printf(bio_err, "Out of memory\n");
                 UI_free(ui);

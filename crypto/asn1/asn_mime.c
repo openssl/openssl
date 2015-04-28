@@ -844,7 +844,7 @@ static MIME_HEADER *mime_hdr_new(char *name, char *value)
             }
         }
     }
-    mhdr = (MIME_HEADER *)OPENSSL_malloc(sizeof(MIME_HEADER));
+    mhdr = OPENSSL_malloc(sizeof(MIME_HEADER));
     if (!mhdr)
         goto err;
     mhdr->name = tmpname;
@@ -886,7 +886,7 @@ static int mime_hdr_addparam(MIME_HEADER *mhdr, char *name, char *value)
             goto err;
     }
     /* Parameter values are case sensitive so leave as is */
-    mparam = (MIME_PARAM *)OPENSSL_malloc(sizeof(MIME_PARAM));
+    mparam = OPENSSL_malloc(sizeof(MIME_PARAM));
     if (!mparam)
         goto err;
     mparam->param_name = tmpname;

@@ -562,7 +562,7 @@ static int do_accept(int acc_sock, int *sock, char **host)
         *host = NULL;
         /* return(0); */
     } else {
-        if ((*host = (char *)OPENSSL_malloc(strlen(h1->h_name) + 1)) == NULL) {
+        if ((*host = OPENSSL_malloc(strlen(h1->h_name) + 1)) == NULL) {
             perror("OPENSSL_malloc");
             closesocket(ret);
             return (0);

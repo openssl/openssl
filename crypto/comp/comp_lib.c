@@ -8,7 +8,7 @@ COMP_CTX *COMP_CTX_new(COMP_METHOD *meth)
 {
     COMP_CTX *ret;
 
-    if ((ret = (COMP_CTX *)OPENSSL_malloc(sizeof(COMP_CTX))) == NULL) {
+    if ((ret = OPENSSL_malloc(sizeof(COMP_CTX))) == NULL) {
         /* ZZZZZZZZZZZZZZZZ */
         return (NULL);
     }

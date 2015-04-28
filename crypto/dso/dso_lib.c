@@ -96,14 +96,15 @@ DSO *DSO_new_method(DSO_METHOD *meth)
 {
     DSO *ret;
 
-    if (default_DSO_meth == NULL)
+    if (default_DSO_meth == NULL) {
         /*
          * We default to DSO_METH_openssl() which in turn defaults to
          * stealing the "best available" method. Will fallback to
          * DSO_METH_null() in the worst case.
          */
         default_DSO_meth = DSO_METHOD_openssl();
-    ret = (DSO *)OPENSSL_malloc(sizeof(DSO));
+    }
+    ret = OPENSSL_malloc(sizeof(DSO));
     if (ret == NULL) {
         DSOerr(DSO_F_DSO_NEW_METHOD, ERR_R_MALLOC_FAILURE);
         return (NULL);

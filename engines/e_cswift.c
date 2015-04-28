@@ -586,7 +586,7 @@ int cswift_bn_32copy(SW_LARGENUMBER *out, const BIGNUM *in)
     while (((out->nbytes = (numbytes + mod)) % 32)) {
         mod++;
     }
-    out->value = (unsigned char *)OPENSSL_malloc(out->nbytes);
+    out->value = OPENSSL_malloc(out->nbytes);
     if (!out->value) {
         return 0;
     }

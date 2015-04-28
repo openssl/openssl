@@ -117,7 +117,7 @@ DSA *DSA_new_method(ENGINE *engine)
 {
     DSA *ret;
 
-    ret = (DSA *)OPENSSL_malloc(sizeof(DSA));
+    ret = OPENSSL_malloc(sizeof(DSA));
     if (ret == NULL) {
         DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
         return (NULL);

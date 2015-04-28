@@ -349,7 +349,7 @@ int rsa_main(int argc, char **argv)
 
         i = 1;
         size = i2d_RSA_NET(rsa, NULL, NULL, 0);
-        if ((p = (unsigned char *)OPENSSL_malloc(size)) == NULL) {
+        if ((p = OPENSSL_malloc(size)) == NULL) {
             BIO_printf(bio_err, "Memory allocation failure\n");
             goto end;
         }

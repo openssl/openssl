@@ -63,8 +63,8 @@
 
 TS_VERIFY_CTX *TS_VERIFY_CTX_new(void)
 {
-    TS_VERIFY_CTX *ctx =
-        (TS_VERIFY_CTX *)OPENSSL_malloc(sizeof(TS_VERIFY_CTX));
+    TS_VERIFY_CTX *ctx = OPENSSL_malloc(sizeof(TS_VERIFY_CTX));
+
     if (ctx)
         memset(ctx, 0, sizeof(TS_VERIFY_CTX));
     else

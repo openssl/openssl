@@ -225,7 +225,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
         goto err;
     }
 
-    section = (char *)OPENSSL_malloc(10);
+    section = OPENSSL_malloc(10);
     if (section == NULL) {
         CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -357,13 +357,13 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
             p++;
             *p = '\0';
 
-            if (!(v = (CONF_VALUE *)OPENSSL_malloc(sizeof(CONF_VALUE)))) {
+            if (!(v = OPENSSL_malloc(sizeof(CONF_VALUE)))) {
                 CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
             if (psection == NULL)
                 psection = section;
-            v->name = (char *)OPENSSL_malloc(strlen(pname) + 1);
+            v->name = OPENSSL_malloc(strlen(pname) + 1);
             v->value = NULL;
             if (v->name == NULL) {
                 CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_MALLOC_FAILURE);

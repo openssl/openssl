@@ -143,7 +143,7 @@ char *EC_POINT_point2hex(const EC_GROUP *group,
         return NULL;
     }
 
-    ret = (char *)OPENSSL_malloc(buf_len * 2 + 2);
+    ret = OPENSSL_malloc(buf_len * 2 + 2);
     if (ret == NULL) {
         OPENSSL_free(buf);
         return NULL;

@@ -499,7 +499,7 @@ static void load_builtin_compressions(void)
             MemCheck_off();
             ssl_comp_methods = sk_SSL_COMP_new(sk_comp_cmp);
             if (ssl_comp_methods != NULL) {
-                comp = (SSL_COMP *)OPENSSL_malloc(sizeof(SSL_COMP));
+                comp = OPENSSL_malloc(sizeof(SSL_COMP));
                 if (comp != NULL) {
                     comp->method = COMP_zlib();
                     if (comp->method && comp->method->type == NID_undef)
@@ -1452,8 +1452,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
     fprintf(stderr, "ssl_create_cipher_list() for %d ciphers\n",
             num_of_ciphers);
 #endif                          /* KSSL_DEBUG */
-    co_list =
-        (CIPHER_ORDER *)OPENSSL_malloc(sizeof(CIPHER_ORDER) * num_of_ciphers);
+    co_list = OPENSSL_malloc(sizeof(CIPHER_ORDER) * num_of_ciphers);
     if (co_list == NULL) {
         SSLerr(SSL_F_SSL_CREATE_CIPHER_LIST, ERR_R_MALLOC_FAILURE);
         return (NULL);          /* Failure */
@@ -1935,7 +1934,7 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
     }
 
     MemCheck_off();
-    comp = (SSL_COMP *)OPENSSL_malloc(sizeof(SSL_COMP));
+    comp = OPENSSL_malloc(sizeof(SSL_COMP));
     if (comp == NULL) {
         MemCheck_on();
         SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD, ERR_R_MALLOC_FAILURE);

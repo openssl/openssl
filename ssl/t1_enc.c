@@ -649,7 +649,7 @@ int tls1_setup_key_block(SSL *s)
 
     ssl3_cleanup_key_block(s);
 
-    if ((p1 = (unsigned char *)OPENSSL_malloc(num)) == NULL) {
+    if ((p1 = OPENSSL_malloc(num)) == NULL) {
         SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -657,7 +657,7 @@ int tls1_setup_key_block(SSL *s)
     s->s3->tmp.key_block_length = num;
     s->s3->tmp.key_block = p1;
 
-    if ((p2 = (unsigned char *)OPENSSL_malloc(num)) == NULL) {
+    if ((p2 = OPENSSL_malloc(num)) == NULL) {
         SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(p1);
         goto err;

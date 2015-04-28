@@ -276,7 +276,7 @@ SSL *SSL_new(SSL_CTX *ctx)
         return (NULL);
     }
 
-    s = (SSL *)OPENSSL_malloc(sizeof(SSL));
+    s = OPENSSL_malloc(sizeof(SSL));
     if (s == NULL)
         goto err;
     memset(s, 0, sizeof(SSL));
@@ -1868,7 +1868,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
         SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_X509_VERIFICATION_SETUP_PROBLEMS);
         goto err;
     }
-    ret = (SSL_CTX *)OPENSSL_malloc(sizeof(SSL_CTX));
+    ret = OPENSSL_malloc(sizeof(SSL_CTX));
     if (ret == NULL)
         goto err;
 

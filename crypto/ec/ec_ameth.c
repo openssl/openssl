@@ -324,7 +324,7 @@ static int eckey_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
         ECerr(EC_F_ECKEY_PRIV_ENCODE, ERR_R_EC_LIB);
         return 0;
     }
-    ep = (unsigned char *)OPENSSL_malloc(eplen);
+    ep = OPENSSL_malloc(eplen);
     if (!ep) {
         EC_KEY_set_enc_flags(ec_key, old_flags);
         ECerr(EC_F_ECKEY_PRIV_ENCODE, ERR_R_MALLOC_FAILURE);

@@ -170,12 +170,12 @@ static hm_fragment *dtls1_hm_fragment_new(unsigned long frag_len,
     unsigned char *buf = NULL;
     unsigned char *bitmask = NULL;
 
-    frag = (hm_fragment *)OPENSSL_malloc(sizeof(hm_fragment));
+    frag = OPENSSL_malloc(sizeof(hm_fragment));
     if (frag == NULL)
         return NULL;
 
     if (frag_len) {
-        buf = (unsigned char *)OPENSSL_malloc(frag_len);
+        buf = OPENSSL_malloc(frag_len);
         if (buf == NULL) {
             OPENSSL_free(frag);
             return NULL;
@@ -187,8 +187,7 @@ static hm_fragment *dtls1_hm_fragment_new(unsigned long frag_len,
 
     /* Initialize reassembly bitmask if necessary */
     if (reassembly) {
-        bitmask =
-            (unsigned char *)OPENSSL_malloc(RSMBLY_BITMASK_SIZE(frag_len));
+        bitmask = OPENSSL_malloc(RSMBLY_BITMASK_SIZE(frag_len));
         if (bitmask == NULL) {
             if (buf != NULL)
                 OPENSSL_free(buf);

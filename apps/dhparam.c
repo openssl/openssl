@@ -379,7 +379,7 @@ int dhparam_main(int argc, char **argv)
 
         len = BN_num_bytes(dh->p);
         bits = BN_num_bits(dh->p);
-        data = (unsigned char *)OPENSSL_malloc(len);
+        data = OPENSSL_malloc(len);
         if (data == NULL) {
             perror("OPENSSL_malloc");
             goto end;

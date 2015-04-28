@@ -169,7 +169,7 @@ TS_RESP_CTX *TS_RESP_CTX_new()
 {
     TS_RESP_CTX *ctx;
 
-    if (!(ctx = (TS_RESP_CTX *)OPENSSL_malloc(sizeof(TS_RESP_CTX)))) {
+    if (!(ctx = OPENSSL_malloc(sizeof(TS_RESP_CTX)))) {
         TSerr(TS_F_TS_RESP_CTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -919,7 +919,7 @@ static int ESS_add_signing_cert(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT *sc)
     int len;
 
     len = i2d_ESS_SIGNING_CERT(sc, NULL);
-    if (!(pp = (unsigned char *)OPENSSL_malloc(len))) {
+    if (!(pp = OPENSSL_malloc(len))) {
         TSerr(TS_F_ESS_ADD_SIGNING_CERT, ERR_R_MALLOC_FAILURE);
         goto err;
     }

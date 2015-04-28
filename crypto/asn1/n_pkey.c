@@ -167,7 +167,7 @@ int i2d_RSA_NET(const RSA *a, unsigned char **pp,
     }
 
     /* Since its RC4 encrypted length is actual length */
-    if ((zz = (unsigned char *)OPENSSL_malloc(rsalen)) == NULL) {
+    if ((zz = OPENSSL_malloc(rsalen)) == NULL) {
         ASN1err(ASN1_F_I2D_RSA_NET, ERR_R_MALLOC_FAILURE);
         goto err;
     }

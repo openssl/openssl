@@ -83,7 +83,7 @@ int RSA_sign_ASN1_OCTET_STRING(int type,
                RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY);
         return (0);
     }
-    s = (unsigned char *)OPENSSL_malloc((unsigned int)j + 1);
+    s = OPENSSL_malloc((unsigned int)j + 1);
     if (s == NULL) {
         RSAerr(RSA_F_RSA_SIGN_ASN1_OCTET_STRING, ERR_R_MALLOC_FAILURE);
         return (0);
@@ -117,7 +117,7 @@ int RSA_verify_ASN1_OCTET_STRING(int dtype,
         return (0);
     }
 
-    s = (unsigned char *)OPENSSL_malloc((unsigned int)siglen);
+    s = OPENSSL_malloc((unsigned int)siglen);
     if (s == NULL) {
         RSAerr(RSA_F_RSA_VERIFY_ASN1_OCTET_STRING, ERR_R_MALLOC_FAILURE);
         goto err;

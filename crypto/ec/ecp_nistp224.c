@@ -1200,7 +1200,7 @@ static void batch_mul(felem x_out, felem y_out, felem z_out,
 static NISTP224_PRE_COMP *nistp224_pre_comp_new()
 {
     NISTP224_PRE_COMP *ret = NULL;
-    ret = (NISTP224_PRE_COMP *) OPENSSL_malloc(sizeof *ret);
+    ret = OPENSSL_malloc(sizeof *ret);
     if (!ret) {
         ECerr(EC_F_NISTP224_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
         return ret;

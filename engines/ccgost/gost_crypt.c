@@ -446,7 +446,7 @@ int gost89_set_asn1_parameters(EVP_CIPHER_CTX *ctx, ASN1_TYPE *params)
     gcp->enc_param_set = OBJ_nid2obj(c->paramNID);
 
     len = i2d_GOST_CIPHER_PARAMS(gcp, NULL);
-    p = buf = (unsigned char *)OPENSSL_malloc(len);
+    p = buf = OPENSSL_malloc(len);
     if (!buf) {
         GOST_CIPHER_PARAMS_free(gcp);
         GOSTerr(GOST_F_GOST89_SET_ASN1_PARAMETERS, ERR_R_MALLOC_FAILURE);

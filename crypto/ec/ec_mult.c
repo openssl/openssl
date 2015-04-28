@@ -100,7 +100,7 @@ static EC_PRE_COMP *ec_pre_comp_new(const EC_GROUP *group)
     if (!group)
         return NULL;
 
-    ret = (EC_PRE_COMP *)OPENSSL_malloc(sizeof(EC_PRE_COMP));
+    ret = OPENSSL_malloc(sizeof(EC_PRE_COMP));
     if (!ret) {
         ECerr(EC_F_EC_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
         return ret;

@@ -74,9 +74,8 @@ UI *UI_new(void)
 
 UI *UI_new_method(const UI_METHOD *method)
 {
-    UI *ret;
+    UI *ret = OPENSSL_malloc(sizeof(UI));
 
-    ret = (UI *)OPENSSL_malloc(sizeof(UI));
     if (ret == NULL) {
         UIerr(UI_F_UI_NEW_METHOD, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -142,7 +141,7 @@ static UI_STRING *general_allocate_prompt(UI *ui, const char *prompt,
     } else if ((type == UIT_PROMPT || type == UIT_VERIFY
                 || type == UIT_BOOLEAN) && result_buf == NULL) {
         UIerr(UI_F_GENERAL_ALLOCATE_PROMPT, UI_R_NO_RESULT_BUFFER);
-    } else if ((ret = (UI_STRING *)OPENSSL_malloc(sizeof(UI_STRING)))) {
+    } else if ((ret = OPENSSL_malloc(sizeof(UI_STRING)))) {
         ret->out_string = prompt;
         ret->flags = prompt_freeable ? OUT_STRING_FREEABLE : 0;
         ret->input_flags = input_flags;
@@ -410,7 +409,7 @@ char *UI_construct_prompt(UI *ui, const char *object_desc,
             len += sizeof(prompt2) - 1 + strlen(object_name);
         len += sizeof(prompt3) - 1;
 
-        prompt = (char *)OPENSSL_malloc(len + 1);
+        prompt = OPENSSL_malloc(len + 1);
         if (prompt == NULL)
             return NULL;
         BUF_strlcpy(prompt, prompt1, len + 1);
@@ -587,7 +586,7 @@ const UI_METHOD *UI_set_method(UI *ui, const UI_METHOD *meth)
 
 UI_METHOD *UI_create_method(char *name)
 {
-    UI_METHOD *ui_method = (UI_METHOD *)OPENSSL_malloc(sizeof(UI_METHOD));
+    UI_METHOD *ui_method = OPENSSL_malloc(sizeof(UI_METHOD));
 
     if (ui_method) {
         memset(ui_method, 0, sizeof(*ui_method));

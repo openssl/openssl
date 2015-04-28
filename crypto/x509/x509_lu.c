@@ -67,7 +67,7 @@ X509_LOOKUP *X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
 {
     X509_LOOKUP *ret;
 
-    ret = (X509_LOOKUP *)OPENSSL_malloc(sizeof(X509_LOOKUP));
+    ret = OPENSSL_malloc(sizeof(X509_LOOKUP));
     if (ret == NULL)
         return NULL;
 
@@ -184,7 +184,7 @@ X509_STORE *X509_STORE_new(void)
 {
     X509_STORE *ret;
 
-    if ((ret = (X509_STORE *)OPENSSL_malloc(sizeof(X509_STORE))) == NULL)
+    if ((ret = OPENSSL_malloc(sizeof(X509_STORE))) == NULL)
         return NULL;
     ret->objs = sk_X509_OBJECT_new(x509_object_cmp);
     ret->cache = 1;
@@ -341,7 +341,7 @@ int X509_STORE_add_cert(X509_STORE *ctx, X509 *x)
 
     if (x == NULL)
         return 0;
-    obj = (X509_OBJECT *)OPENSSL_malloc(sizeof(X509_OBJECT));
+    obj = OPENSSL_malloc(sizeof(X509_OBJECT));
     if (obj == NULL) {
         X509err(X509_F_X509_STORE_ADD_CERT, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -374,7 +374,7 @@ int X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x)
 
     if (x == NULL)
         return 0;
-    obj = (X509_OBJECT *)OPENSSL_malloc(sizeof(X509_OBJECT));
+    obj = OPENSSL_malloc(sizeof(X509_OBJECT));
     if (obj == NULL) {
         X509err(X509_F_X509_STORE_ADD_CRL, ERR_R_MALLOC_FAILURE);
         return 0;

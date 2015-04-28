@@ -287,7 +287,7 @@ BIO_CONNECT *BIO_CONNECT_new(void)
 {
     BIO_CONNECT *ret;
 
-    if ((ret = (BIO_CONNECT *)OPENSSL_malloc(sizeof(BIO_CONNECT))) == NULL)
+    if ((ret = OPENSSL_malloc(sizeof(BIO_CONNECT))) == NULL)
         return (NULL);
     ret->state = BIO_CONN_S_BEFORE;
     ret->param_hostname = NULL;

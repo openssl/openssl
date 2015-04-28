@@ -447,7 +447,7 @@ void *CRYPTO_remalloc(void *a, int num, const char *file, int line)
 {
     if (a != NULL)
         OPENSSL_free(a);
-    a = (char *)OPENSSL_malloc(num);
+    a = OPENSSL_malloc(num);
     return (a);
 }
 

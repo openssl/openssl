@@ -251,7 +251,7 @@ int CRYPTO_get_new_dynlockid(void)
     }
     CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
 
-    pointer = (CRYPTO_dynlock *) OPENSSL_malloc(sizeof(CRYPTO_dynlock));
+    pointer = OPENSSL_malloc(sizeof(CRYPTO_dynlock));
     if (pointer == NULL) {
         CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID, ERR_R_MALLOC_FAILURE);
         return (0);

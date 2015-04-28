@@ -791,13 +791,11 @@ int speed_main(int argc, char **argv)
         ecdh_doit[i] = 0;
 #endif
 
-    if ((buf_malloc =
-         (unsigned char *)OPENSSL_malloc((int)BUFSIZE + misalign)) == NULL) {
+    if ((buf_malloc = OPENSSL_malloc((int)BUFSIZE + misalign)) == NULL) {
         BIO_printf(bio_err, "out of memory\n");
         goto end;
     }
-    if ((buf2_malloc =
-         (unsigned char *)OPENSSL_malloc((int)BUFSIZE + misalign)) == NULL) {
+    if ((buf2_malloc = OPENSSL_malloc((int)BUFSIZE + misalign)) == NULL) {
         BIO_printf(bio_err, "out of memory\n");
         goto end;
     }
