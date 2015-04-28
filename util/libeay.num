@@ -2033,7 +2033,7 @@ EC_POINT_set_compr_coords_GFp           2597	EXIST:VMS:FUNCTION:EC
 OCSP_response_status_str                2598	EXIST::FUNCTION:
 d2i_OCSP_REVOKEDINFO                    2599	EXIST::FUNCTION:
 OCSP_basic_add1_cert                    2600	EXIST::FUNCTION:
-ERR_get_implementation                  2601	EXIST::FUNCTION:
+ERR_get_implementation                  2601	NOEXIST::FUNCTION:
 EVP_CipherFinal_ex                      2602	EXIST::FUNCTION:
 OCSP_CERTSTATUS_new                     2603	EXIST::FUNCTION:
 CRYPTO_cleanup_all_ex_data              2604	EXIST::FUNCTION:
@@ -2337,7 +2337,7 @@ UI_get0_result_string                   2845	EXIST::FUNCTION:
 ASN1_GENERALSTRING_new                  2846	EXIST::FUNCTION:
 X509_SIG_it                             2847	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 X509_SIG_it                             2847	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
-ERR_set_implementation                  2848	EXIST::FUNCTION:
+ERR_set_implementation                  2848	NOEXIST::FUNCTION:
 ERR_load_EC_strings                     2849	EXIST::FUNCTION:EC
 UI_get0_action_string                   2850	EXIST::FUNCTION:
 OCSP_ONEREQ_get_ext                     2851	EXIST::FUNCTION:
