@@ -2073,7 +2073,6 @@ void dtls1_set_message_header(SSL *s,
 __owur int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf, int len);
 
 __owur int dtls1_send_change_cipher_spec(SSL *s, int a, int b);
-__owur int dtls1_send_finished(SSL *s, int a, int b, const char *sender, int slen);
 __owur int dtls1_read_failed(SSL *s, int code);
 __owur int dtls1_buffer_message(SSL *s, int ccs);
 __owur int dtls1_retransmit_message(SSL *s, unsigned short seq,
