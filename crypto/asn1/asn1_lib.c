@@ -317,11 +317,7 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len)
     }
     if ((str->length < len) || (str->data == NULL)) {
         c = str->data;
-        if (c == NULL)
-            str->data = OPENSSL_malloc(len + 1);
-        else
-            str->data = OPENSSL_realloc(c, len + 1);
-
+        str->data = OPENSSL_realloc(c, len + 1);
         if (str->data == NULL) {
             ASN1err(ASN1_F_ASN1_STRING_SET, ERR_R_MALLOC_FAILURE);
             str->data = c;

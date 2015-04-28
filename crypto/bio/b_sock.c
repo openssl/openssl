@@ -673,12 +673,9 @@ int BIO_accept(int sock, char **addr)
             break;
         nl = strlen(h) + strlen(s) + 2;
         p = *addr;
-        if (p) {
+        if (p)
             *p = '\0';
-            p = OPENSSL_realloc(p, nl);
-        } else {
-            p = OPENSSL_malloc(nl);
-        }
+        p = OPENSSL_realloc(p, nl);
         if (p == NULL) {
             BIOerr(BIO_F_BIO_ACCEPT, ERR_R_MALLOC_FAILURE);
             goto end;

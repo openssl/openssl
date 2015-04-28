@@ -114,10 +114,7 @@ size_t BUF_MEM_grow(BUF_MEM *str, size_t len)
         return 0;
     }
     n = (len + 3) / 3 * 4;
-    if (str->data == NULL)
-        ret = OPENSSL_malloc(n);
-    else
-        ret = OPENSSL_realloc(str->data, n);
+    ret = OPENSSL_realloc(str->data, n);
     if (ret == NULL) {
         BUFerr(BUF_F_BUF_MEM_GROW, ERR_R_MALLOC_FAILURE);
         len = 0;
@@ -151,10 +148,7 @@ size_t BUF_MEM_grow_clean(BUF_MEM *str, size_t len)
         return 0;
     }
     n = (len + 3) / 3 * 4;
-    if (str->data == NULL)
-        ret = OPENSSL_malloc(n);
-    else
-        ret = OPENSSL_realloc_clean(str->data, str->max, n);
+    ret = OPENSSL_realloc_clean(str->data, str->max, n);
     if (ret == NULL) {
         BUFerr(BUF_F_BUF_MEM_GROW_CLEAN, ERR_R_MALLOC_FAILURE);
         len = 0;
