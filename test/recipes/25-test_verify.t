@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use File::Spec::Functions qw/canonpath/;
-use Test::More;
+use Test::More 0.96;
 use OpenSSL::Test qw/:DEFAULT top_dir top_file/;
 
 setup("test_verify");

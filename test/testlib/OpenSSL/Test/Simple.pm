@@ -10,7 +10,7 @@ $VERSION = "0.1";
 @EXPORT = qw(simple_test);
 
 
-use Test::More;
+use Test::More 0.96;
 use OpenSSL::Test;
 
 # args:
