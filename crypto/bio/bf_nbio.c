@@ -102,7 +102,7 @@ static int nbiof_new(BIO *bi)
 {
     NBIO_TEST *nt;
 
-    if (!(nt = (NBIO_TEST *)OPENSSL_malloc(sizeof(NBIO_TEST))))
+    if (!(nt = OPENSSL_malloc(sizeof(NBIO_TEST))))
         return (0);
     nt->lrn = -1;
     nt->lwn = -1;

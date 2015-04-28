@@ -188,7 +188,7 @@ void *lh_insert(_LHASH *lh, void *data)
     rn = getrn(lh, data, &hash);
 
     if (*rn == NULL) {
-        if ((nn = (LHASH_NODE *)OPENSSL_malloc(sizeof(LHASH_NODE))) == NULL) {
+        if ((nn = OPENSSL_malloc(sizeof(LHASH_NODE))) == NULL) {
             lh->error++;
             return (NULL);
         }
@@ -325,15 +325,13 @@ static void expand(_LHASH *lh)
 
     if ((lh->p) >= lh->pmax) {
         j = (int)lh->num_alloc_nodes * 2;
-        n = (LHASH_NODE **)OPENSSL_realloc(lh->b,
-                                           (int)(sizeof(LHASH_NODE *) * j));
+        n = OPENSSL_realloc(lh->b, (int)(sizeof(LHASH_NODE *) * j));
         if (n == NULL) {
-/*                      fputs("realloc error in lhash",stderr); */
+            /* fputs("realloc error in lhash",stderr); */
             lh->error++;
             lh->p = 0;
             return;
         }
-        /* else */
         for (i = (int)lh->num_alloc_nodes; i < j; i++) /* 26/02/92 eay */
             n[i] = NULL;        /* 02/03/92 eay */
         lh->pmax = lh->num_alloc_nodes;
@@ -351,11 +349,10 @@ static void contract(_LHASH *lh)
     np = lh->b[lh->p + lh->pmax - 1];
     lh->b[lh->p + lh->pmax - 1] = NULL; /* 24/07-92 - eay - weird but :-( */
     if (lh->p == 0) {
-        n = (LHASH_NODE **)OPENSSL_realloc(lh->b,
-                                           (unsigned int)(sizeof(LHASH_NODE *)
-                                                          * lh->pmax));
+        n = OPENSSL_realloc(lh->b,
+                            (unsigned int)(sizeof(LHASH_NODE *) * lh->pmax));
         if (n == NULL) {
-/*                      fputs("realloc error in lhash",stderr); */
+            /* fputs("realloc error in lhash",stderr); */
             lh->error++;
             return;
         }

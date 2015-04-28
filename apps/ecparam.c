@@ -388,8 +388,7 @@ int ecparam_main(int argc, char **argv)
         if ((tmp_len = (size_t)BN_num_bytes(ec_cofactor)) > buf_len)
             buf_len = tmp_len;
 
-        buffer = (unsigned char *)OPENSSL_malloc(buf_len);
-
+        buffer = OPENSSL_malloc(buf_len);
         if (buffer == NULL) {
             perror("OPENSSL_malloc");
             goto end;

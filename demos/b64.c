@@ -169,7 +169,7 @@ char **argv;
     }
 
     strbuf = OPENSSL_malloc(SIZE);
-    buff = (unsigned char *)OPENSSL_malloc(EVP_ENCODE_LENGTH(bsize));
+    buff = OPENSSL_malloc(EVP_ENCODE_LENGTH(bsize));
     if ((buff == NULL) || (strbuf == NULL)) {
         BIO_printf(bio_err, "OPENSSL_malloc failure\n");
         goto end;

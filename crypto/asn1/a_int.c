@@ -206,7 +206,7 @@ ASN1_INTEGER *c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp,
      * We must OPENSSL_malloc stuff, even for 0 bytes otherwise it signifies
      * a missing NULL parameter.
      */
-    s = (unsigned char *)OPENSSL_malloc((int)len + 1);
+    s = OPENSSL_malloc((int)len + 1);
     if (s == NULL) {
         i = ERR_R_MALLOC_FAILURE;
         goto err;
@@ -312,7 +312,7 @@ ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp,
      * We must OPENSSL_malloc stuff, even for 0 bytes otherwise it signifies
      * a missing NULL parameter.
      */
-    s = (unsigned char *)OPENSSL_malloc((int)len + 1);
+    s = OPENSSL_malloc((int)len + 1);
     if (s == NULL) {
         i = ERR_R_MALLOC_FAILURE;
         goto err;
@@ -351,8 +351,7 @@ int ASN1_INTEGER_set(ASN1_INTEGER *a, long v)
     if (a->length < (int)(sizeof(long) + 1)) {
         if (a->data != NULL)
             OPENSSL_free(a->data);
-        if ((a->data =
-             (unsigned char *)OPENSSL_malloc(sizeof(long) + 1)) != NULL)
+        if ((a->data = OPENSSL_malloc(sizeof(long) + 1)) != NULL)
             memset((char *)a->data, 0, sizeof(long) + 1);
     }
     if (a->data == NULL) {

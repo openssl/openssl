@@ -139,7 +139,7 @@ int dgst_main(int argc, char **argv)
     int engine_impl = 0;
 
     prog = opt_progname(argv[0]);
-    if ((buf = (unsigned char *)OPENSSL_malloc(BUFSIZE)) == NULL) {
+    if ((buf = OPENSSL_malloc(BUFSIZE)) == NULL) {
         BIO_printf(bio_err, "%s: out of memory\n", prog);
         goto end;
     }

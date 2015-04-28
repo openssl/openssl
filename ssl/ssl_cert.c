@@ -184,7 +184,7 @@ CERT *ssl_cert_new(void)
 {
     CERT *ret;
 
-    ret = (CERT *)OPENSSL_malloc(sizeof(CERT));
+    ret = OPENSSL_malloc(sizeof(CERT));
     if (ret == NULL) {
         SSLerr(SSL_F_SSL_CERT_NEW, ERR_R_MALLOC_FAILURE);
         return (NULL);
@@ -205,7 +205,7 @@ CERT *ssl_cert_dup(CERT *cert)
     CERT *ret;
     int i;
 
-    ret = (CERT *)OPENSSL_malloc(sizeof(CERT));
+    ret = OPENSSL_malloc(sizeof(CERT));
     if (ret == NULL) {
         SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_MALLOC_FAILURE);
         return (NULL);

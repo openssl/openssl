@@ -109,9 +109,8 @@ DH *DH_new(void)
 
 DH *DH_new_method(ENGINE *engine)
 {
-    DH *ret;
+    DH *ret = OPENSSL_malloc(sizeof(DH));
 
-    ret = (DH *)OPENSSL_malloc(sizeof(DH));
     if (ret == NULL) {
         DHerr(DH_F_DH_NEW_METHOD, ERR_R_MALLOC_FAILURE);
         return (NULL);

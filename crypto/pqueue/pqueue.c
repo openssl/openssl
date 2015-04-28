@@ -68,7 +68,7 @@ typedef struct _pqueue {
 
 pitem *pitem_new(unsigned char *prio64be, void *data)
 {
-    pitem *item = (pitem *)OPENSSL_malloc(sizeof(pitem));
+    pitem *item = OPENSSL_malloc(sizeof(pitem));
     if (item == NULL)
         return NULL;
 
@@ -90,7 +90,7 @@ void pitem_free(pitem *item)
 
 pqueue_s *pqueue_new()
 {
-    pqueue_s *pq = (pqueue_s *)OPENSSL_malloc(sizeof(pqueue_s));
+    pqueue_s *pq = OPENSSL_malloc(sizeof(pqueue_s));
     if (pq == NULL)
         return NULL;
 

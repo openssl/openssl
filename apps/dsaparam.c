@@ -273,7 +273,7 @@ int dsaparam_main(int argc, char **argv)
 
         len = BN_num_bytes(dsa->p);
         bits_p = BN_num_bits(dsa->p);
-        data = (unsigned char *)OPENSSL_malloc(len + 20);
+        data = OPENSSL_malloc(len + 20);
         if (data == NULL) {
             perror("OPENSSL_malloc");
             goto end;

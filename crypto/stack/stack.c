@@ -93,9 +93,8 @@ _STACK *sk_dup(_STACK *sk)
 
     if ((ret = sk_new(sk->comp)) == NULL)
         goto err;
-    s = (char **)OPENSSL_realloc((char *)ret->data,
-                                 (unsigned int)sizeof(char *) *
-                                 sk->num_alloc);
+    s = OPENSSL_realloc((char *)ret->data,
+                        (unsigned int)sizeof(char *) * sk->num_alloc);
     if (s == NULL)
         goto err;
     ret->data = s;

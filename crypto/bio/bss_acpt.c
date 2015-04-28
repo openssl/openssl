@@ -137,7 +137,7 @@ static BIO_ACCEPT *BIO_ACCEPT_new(void)
 {
     BIO_ACCEPT *ret;
 
-    if ((ret = (BIO_ACCEPT *)OPENSSL_malloc(sizeof(BIO_ACCEPT))) == NULL)
+    if ((ret = OPENSSL_malloc(sizeof(BIO_ACCEPT))) == NULL)
         return (NULL);
 
     memset(ret, 0, sizeof(BIO_ACCEPT));

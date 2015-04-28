@@ -148,7 +148,7 @@ static int new_dir(X509_LOOKUP *lu)
 {
     BY_DIR *a;
 
-    if ((a = (BY_DIR *)OPENSSL_malloc(sizeof(BY_DIR))) == NULL)
+    if ((a = OPENSSL_malloc(sizeof(BY_DIR))) == NULL)
         return (0);
     if ((a->buffer = BUF_MEM_new()) == NULL) {
         OPENSSL_free(a);

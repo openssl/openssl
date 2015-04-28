@@ -119,8 +119,7 @@ static int zlib_stateful_ex_idx = -1;
 static int zlib_stateful_init(COMP_CTX *ctx)
 {
     int err;
-    struct zlib_state *state =
-        (struct zlib_state *)OPENSSL_malloc(sizeof(struct zlib_state));
+    struct zlib_state *state = OPENSSL_malloc(sizeof(struct zlib_state));
 
     if (state == NULL)
         goto err;

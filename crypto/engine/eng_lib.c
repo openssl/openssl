@@ -66,7 +66,7 @@ ENGINE *ENGINE_new(void)
 {
     ENGINE *ret;
 
-    ret = (ENGINE *)OPENSSL_malloc(sizeof(ENGINE));
+    ret = OPENSSL_malloc(sizeof(ENGINE));
     if (ret == NULL) {
         ENGINEerr(ENGINE_F_ENGINE_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;

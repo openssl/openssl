@@ -85,7 +85,7 @@ int PEM_SealInit(PEM_ENCODE_SEAL_CTX *ctx, EVP_CIPHER *type, EVP_MD *md_type,
         if (j > max)
             max = j;
     }
-    s = (char *)OPENSSL_malloc(max * 2);
+    s = OPENSSL_malloc(max * 2);
     if (s == NULL) {
         PEMerr(PEM_F_PEM_SEALINIT, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -159,7 +159,7 @@ int PEM_SealFinal(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *sig, int *sigl,
     i = RSA_size(priv->pkey.rsa);
     if (i < 100)
         i = 100;
-    s = (unsigned char *)OPENSSL_malloc(i * 2);
+    s = OPENSSL_malloc(i * 2);
     if (s == NULL) {
         PEMerr(PEM_F_PEM_SEALFINAL, ERR_R_MALLOC_FAILURE);
         goto err;

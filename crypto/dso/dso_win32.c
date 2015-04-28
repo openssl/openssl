@@ -168,7 +168,7 @@ static int win32_load(DSO *dso)
         ERR_add_error_data(3, "filename(", filename, ")");
         goto err;
     }
-    p = (HINSTANCE *) OPENSSL_malloc(sizeof(HINSTANCE));
+    p = OPENSSL_malloc(sizeof(HINSTANCE));
     if (p == NULL) {
         DSOerr(DSO_F_WIN32_LOAD, ERR_R_MALLOC_FAILURE);
         goto err;

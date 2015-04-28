@@ -138,8 +138,7 @@ static int update_index(CA_DB *db, BIO *bio, char **row)
     char **irow;
     int i;
 
-    if ((irow =
-         (char **)OPENSSL_malloc(sizeof(char *) * (DB_NUMBER + 1))) == NULL) {
+    if ((irow = OPENSSL_malloc(sizeof(char *) * (DB_NUMBER + 1))) == NULL) {
         BIO_printf(bio_err, "Memory allocation failure\n");
         return 0;
     }

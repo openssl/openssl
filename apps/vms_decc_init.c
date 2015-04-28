@@ -130,7 +130,7 @@ char **copy_argv(int *argc, char *argv[])
      */
 
     int i, count = *argc;
-    char **newargv = (char **)OPENSSL_malloc((count + 1) * sizeof *newargv);
+    char **newargv = OPENSSL_malloc((count + 1) * sizeof *newargv);
 
     for (i = 0; i < count; i++)
         newargv[i] = argv[i];

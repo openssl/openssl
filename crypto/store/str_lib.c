@@ -109,7 +109,7 @@ STORE *STORE_new_method(const STORE_METHOD *method)
         return NULL;
     }
 
-    ret = (STORE *)OPENSSL_malloc(sizeof(STORE));
+    ret = OPENSSL_malloc(sizeof(STORE));
     if (ret == NULL) {
         STOREerr(STORE_F_STORE_NEW_METHOD, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -1206,7 +1206,7 @@ struct STORE_attr_info_st {
 
 STORE_ATTR_INFO *STORE_ATTR_INFO_new(void)
 {
-    return (STORE_ATTR_INFO *)OPENSSL_malloc(sizeof(STORE_ATTR_INFO));
+    return OPENSSL_malloc(sizeof(STORE_ATTR_INFO));
 }
 
 static void STORE_ATTR_INFO_attr_free(STORE_ATTR_INFO *attrs,

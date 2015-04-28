@@ -385,7 +385,7 @@ static int ssl_srp_verify_param_cb(SSL *s, void *arg)
 static char *ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
 {
     SRP_ARG *srp_arg = (SRP_ARG *)arg;
-    char *pass = (char *)OPENSSL_malloc(PWD_STRLEN + 1);
+    char *pass = OPENSSL_malloc(PWD_STRLEN + 1);
     PW_CB_DATA cb_tmp;
     int l;
 
