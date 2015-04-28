@@ -15,8 +15,8 @@ use File::Copy;
 use File::Spec::Functions qw/file_name_is_absolute curdir canonpath splitdir
                              catdir catfile splitpath catpath devnull abs2rel
                              rel2abs/;
-use File::Path qw/remove_tree mkpath/;
-use Test::More;
+use File::Path 2.00 qw/remove_tree mkpath/;
+use Test::More 0.96;
 
 
 my $test_name = undef;

@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More;
+use Test::More 0.96;
 use OpenSSL::Test qw/:DEFAULT top_file/;
 
 setup("test_evp");

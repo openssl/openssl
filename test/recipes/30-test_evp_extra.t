@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More;
+use Test::More 0.96;
 use OpenSSL::Test;
 
 setup("test_evp_extra");
