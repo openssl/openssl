@@ -171,7 +171,7 @@ dclean:
 	rm -f newkey.pem testkey.pem testreq.pem
 
 clean:
-	rm -f .rnd tmp.bntest tmp.bctest *.o *.obj *.dll lib tags core .pure .nfs* *.old *.bak fluff $(EXE) *.ss *.srl log dummytest
+	rm -f .rnd tmp.bntest tmp.bctest *.o *.obj *.dll lib tags core .pure .nfs* *.old *.bak fluff $(EXE) *.ss *.srl log *.log dummytest
 
 $(DLIBSSL):
 	(cd ..; $(MAKE) build_libssl)
