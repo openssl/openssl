@@ -969,8 +969,8 @@ void ERR_add_error_vdata(int num, va_list args)
                 if (p == NULL) {
                     OPENSSL_free(str);
                     return;
-                } else
-                    str = p;
+                }
+                str = p;
             }
             BUF_strlcat(str, a, (size_t)s + 1);
         }
