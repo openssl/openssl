@@ -186,11 +186,11 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
         break;
     case X509_V_ERR_NO_EXPLICIT_POLICY:
         if (!verify_quiet)
-            policies_print(bio_err, ctx);
+            policies_print(ctx);
         break;
     }
     if (err == X509_V_OK && ok == 2 && !verify_quiet)
-        policies_print(bio_err, ctx);
+        policies_print(ctx);
     if (ok && !verify_quiet)
         BIO_printf(bio_err, "verify return:%d\n", ok);
     return (ok);
@@ -1104,19 +1104,20 @@ struct chain_flags chain_flags_list[] = {
     {0, NULL}
 };
 
-static void print_chain_flags(BIO *out, SSL *s, int flags)
+static void print_chain_flags(SSL *s, int flags)
 {
     struct chain_flags *ctmp = chain_flags_list;
+
     while (ctmp->name) {
-        BIO_printf(out, "\t%s: %s\n", ctmp->name,
+        BIO_printf(bio_err, "\t%s: %s\n", ctmp->name,
                    flags & ctmp->flag ? "OK" : "NOT OK");
         ctmp++;
     }
-    BIO_printf(out, "\tSuite B: ");
+    BIO_printf(bio_err, "\tSuite B: ");
     if (SSL_set_cert_flags(s, 0) & SSL_CERT_FLAG_SUITEB_128_LOS)
-        BIO_puts(out, flags & CERT_PKEY_SUITEB ? "OK\n" : "NOT OK\n");
+        BIO_puts(bio_err, flags & CERT_PKEY_SUITEB ? "OK\n" : "NOT OK\n");
     else
-        BIO_printf(out, "not tested\n");
+        BIO_printf(bio_err, "not tested\n");
 }
 
 /*
@@ -1157,7 +1158,7 @@ static int set_cert_cb(SSL *ssl, void *arg)
         X509_NAME_print_ex(bio_err, X509_get_subject_name(exc->cert), 0,
                            XN_FLAG_ONELINE);
         BIO_puts(bio_err, "\n");
-        print_chain_flags(bio_err, ssl, rv);
+        print_chain_flags(ssl, rv);
         if (rv & CERT_PKEY_VALID) {
             if (!SSL_use_certificate(ssl, exc->cert)
                     || !SSL_use_PrivateKey(ssl, exc->key)) {
@@ -1334,7 +1335,7 @@ int args_excert(int opt, SSL_EXCERT **pexc)
     return 0;
 }
 
-static void print_raw_cipherlist(BIO *bio, SSL *s)
+static void print_raw_cipherlist(SSL *s)
 {
     const unsigned char *rlist;
     static const unsigned char scsv_id[] = { 0, 0, 0xFF };
@@ -1343,59 +1344,58 @@ static void print_raw_cipherlist(BIO *bio, SSL *s)
         return;
     num = SSL_get0_raw_cipherlist(s, NULL);
     rlistlen = SSL_get0_raw_cipherlist(s, &rlist);
-    BIO_puts(bio, "Client cipher list: ");
+    BIO_puts(bio_err, "Client cipher list: ");
     for (i = 0; i < rlistlen; i += num, rlist += num) {
         const SSL_CIPHER *c = SSL_CIPHER_find(s, rlist);
         if (i)
-            BIO_puts(bio, ":");
+            BIO_puts(bio_err, ":");
         if (c)
-            BIO_puts(bio, SSL_CIPHER_get_name(c));
+            BIO_puts(bio_err, SSL_CIPHER_get_name(c));
         else if (!memcmp(rlist, scsv_id - num + 3, num))
-            BIO_puts(bio, "SCSV");
+            BIO_puts(bio_err, "SCSV");
         else {
             size_t j;
-            BIO_puts(bio, "0x");
+            BIO_puts(bio_err, "0x");
             for (j = 0; j < num; j++)
-                BIO_printf(bio, "%02X", rlist[j]);
+                BIO_printf(bio_err, "%02X", rlist[j]);
         }
     }
-    BIO_puts(bio, "\n");
+    BIO_puts(bio_err, "\n");
 }
 
-void print_ssl_summary(BIO *bio, SSL *s)
+void print_ssl_summary(SSL *s)
 {
     const SSL_CIPHER *c;
     X509 *peer;
-    /*
-     * const char *pnam = SSL_is_server(s) ? "client" : "server";
-     */
-    BIO_printf(bio, "Protocol version: %s\n", SSL_get_version(s));
-    print_raw_cipherlist(bio, s);
+    /* const char *pnam = SSL_is_server(s) ? "client" : "server"; */
+
+    BIO_printf(bio_err, "Protocol version: %s\n", SSL_get_version(s));
+    print_raw_cipherlist(s);
     c = SSL_get_current_cipher(s);
-    BIO_printf(bio, "Ciphersuite: %s\n", SSL_CIPHER_get_name(c));
-    do_print_sigalgs(bio, s, 0);
+    BIO_printf(bio_err, "Ciphersuite: %s\n", SSL_CIPHER_get_name(c));
+    do_print_sigalgs(bio_err, s, 0);
     peer = SSL_get_peer_certificate(s);
     if (peer) {
         int nid;
-        BIO_puts(bio, "Peer certificate: ");
-        X509_NAME_print_ex(bio, X509_get_subject_name(peer),
+        BIO_puts(bio_err, "Peer certificate: ");
+        X509_NAME_print_ex(bio_err, X509_get_subject_name(peer),
                            0, XN_FLAG_ONELINE);
-        BIO_puts(bio, "\n");
+        BIO_puts(bio_err, "\n");
         if (SSL_get_peer_signature_nid(s, &nid))
-            BIO_printf(bio, "Hash used: %s\n", OBJ_nid2sn(nid));
+            BIO_printf(bio_err, "Hash used: %s\n", OBJ_nid2sn(nid));
     } else
-        BIO_puts(bio, "No peer certificate\n");
+        BIO_puts(bio_err, "No peer certificate\n");
     if (peer)
         X509_free(peer);
 #ifndef OPENSSL_NO_EC
-    ssl_print_point_formats(bio, s);
+    ssl_print_point_formats(bio_err, s);
     if (SSL_is_server(s))
-        ssl_print_curves(bio, s, 1);
+        ssl_print_curves(bio_err, s, 1);
     else
-        ssl_print_tmp_key(bio, s);
+        ssl_print_tmp_key(bio_err, s);
 #else
     if (!SSL_is_server(s))
-        ssl_print_tmp_key(bio, s);
+        ssl_print_tmp_key(bio_err, s);
 #endif
 }
 
@@ -1681,10 +1681,11 @@ static int security_callback_debug(SSL *s, SSL_CTX *ctx,
     return rv;
 }
 
-void ssl_ctx_security_debug(SSL_CTX *ctx, BIO *out, int verbose)
+void ssl_ctx_security_debug(SSL_CTX *ctx, int verbose)
 {
     static security_debug_ex sdb;
-    sdb.out = out;
+
+    sdb.out = bio_err;
     sdb.verbose = verbose;
     sdb.old_cb = SSL_CTX_get_security_callback(ctx);
     SSL_CTX_set_security_callback(ctx, security_callback_debug);

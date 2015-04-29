@@ -100,7 +100,7 @@ OPTIONS asn1parse_options[] = {
     {NULL}
 };
 
-static int do_generate(BIO *bio, char *genstr, char *genconf, BUF_MEM *buf);
+static int do_generate(char *genstr, char *genconf, BUF_MEM *buf);
 
 int asn1parse_main(int argc, char **argv)
 {
@@ -215,7 +215,7 @@ int asn1parse_main(int argc, char **argv)
             goto end;           /* Pre-allocate :-) */
 
         if (genstr || genconf) {
-            num = do_generate(bio_err, genstr, genconf, buf);
+            num = do_generate(genstr, genconf, buf);
             if (num < 0) {
                 ERR_print_errors(bio_err);
                 goto end;
@@ -335,7 +335,7 @@ int asn1parse_main(int argc, char **argv)
     return (ret);
 }
 
-static int do_generate(BIO *bio, char *genstr, char *genconf, BUF_MEM *buf)
+static int do_generate(char *genstr, char *genconf, BUF_MEM *buf)
 {
     CONF *cnf = NULL;
     int len;
@@ -350,7 +350,7 @@ static int do_generate(BIO *bio, char *genstr, char *genconf, BUF_MEM *buf)
         if (!genstr)
             genstr = NCONF_get_string(cnf, "default", "asn1");
         if (!genstr) {
-            BIO_printf(bio, "Can't find 'asn1' in '%s'\n", genconf);
+            BIO_printf(bio_err, "Can't find 'asn1' in '%s'\n", genconf);
             goto err;
         }
     }
@@ -380,10 +380,10 @@ static int do_generate(BIO *bio, char *genstr, char *genconf, BUF_MEM *buf)
  conferr:
 
     if (errline > 0)
-        BIO_printf(bio, "Error on line %ld of config file '%s'\n",
+        BIO_printf(bio_err, "Error on line %ld of config file '%s'\n",
                    errline, genconf);
     else
-        BIO_printf(bio, "Error loading config file '%s'\n", genconf);
+        BIO_printf(bio_err, "Error loading config file '%s'\n", genconf);
 
  err:
     NCONF_free(cnf);

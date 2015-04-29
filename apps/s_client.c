@@ -1181,7 +1181,7 @@ int s_client_main(int argc, char **argv)
     }
 
     if (sdebug)
-        ssl_ctx_security_debug(ctx, bio_err, sdebug);
+        ssl_ctx_security_debug(ctx, sdebug);
 
     if (vpmtouched && !SSL_CTX_set1_param(ctx, vpm)) {
         BIO_printf(bio_err, "Error setting verify params\n");
@@ -1663,7 +1663,7 @@ int s_client_main(int argc, char **argv)
                 }
                 if (c_brief) {
                     BIO_puts(bio_err, "CONNECTION ESTABLISHED\n");
-                    print_ssl_summary(bio_err, con);
+                    print_ssl_summary(con);
                 }
 
                 print_stuff(bio_c_out, con, full_log);

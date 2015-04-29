@@ -1617,7 +1617,7 @@ int s_server_main(int argc, char *argv[])
 
     ctx = SSL_CTX_new(meth);
     if (sdebug)
-        ssl_ctx_security_debug(ctx, bio_err, sdebug);
+        ssl_ctx_security_debug(ctx, sdebug);
     if (ctx == NULL) {
         ERR_print_errors(bio_err);
         goto end;
@@ -1690,7 +1690,7 @@ int s_server_main(int argc, char *argv[])
         BIO_printf(bio_s_out, "Setting secondary ctx parameters\n");
 
         if (sdebug)
-            ssl_ctx_security_debug(ctx, bio_err, sdebug);
+            ssl_ctx_security_debug(ctx, sdebug);
 
         if (session_id_prefix) {
             if (strlen(session_id_prefix) >= 32)
@@ -2487,7 +2487,7 @@ static int init_ssl_connection(SSL *con)
     }
 
     if (s_brief)
-        print_ssl_summary(bio_err, con);
+        print_ssl_summary(con);
 
     PEM_write_bio_SSL_SESSION(bio_s_out, SSL_get_session(con));
 
@@ -3036,7 +3036,7 @@ static int rev_body(char *hostname, int s, int stype, unsigned char *context)
         }
     }
     BIO_printf(bio_err, "CONNECTION ESTABLISHED\n");
-    print_ssl_summary(bio_err, con);
+    print_ssl_summary(con);
 
     for (;;) {
         i = BIO_gets(io, buf, bufsize - 1);

@@ -2006,34 +2006,34 @@ int pkey_ctrl_string(EVP_PKEY_CTX *ctx, char *value)
     return rv;
 }
 
-static void nodes_print(BIO *out, const char *name,
-                        STACK_OF(X509_POLICY_NODE) *nodes)
+static void nodes_print(const char *name, STACK_OF(X509_POLICY_NODE) *nodes)
 {
     X509_POLICY_NODE *node;
     int i;
-    BIO_printf(out, "%s Policies:", name);
+
+    BIO_printf(bio_err, "%s Policies:", name);
     if (nodes) {
-        BIO_puts(out, "\n");
+        BIO_puts(bio_err, "\n");
         for (i = 0; i < sk_X509_POLICY_NODE_num(nodes); i++) {
             node = sk_X509_POLICY_NODE_value(nodes, i);
-            X509_POLICY_NODE_print(out, node, 2);
+            X509_POLICY_NODE_print(bio_err, node, 2);
         }
     } else
-        BIO_puts(out, " <empty>\n");
+        BIO_puts(bio_err, " <empty>\n");
 }
 
-void policies_print(BIO *out, X509_STORE_CTX *ctx)
+void policies_print(X509_STORE_CTX *ctx)
 {
     X509_POLICY_TREE *tree;
     int explicit_policy;
     tree = X509_STORE_CTX_get0_policy_tree(ctx);
     explicit_policy = X509_STORE_CTX_get_explicit_policy(ctx);
 
-    BIO_printf(out, "Require explicit Policy: %s\n",
+    BIO_printf(bio_err, "Require explicit Policy: %s\n",
                explicit_policy ? "True" : "False");
 
-    nodes_print(out, "Authority", X509_policy_tree_get0_policies(tree));
-    nodes_print(out, "User", X509_policy_tree_get0_user_policies(tree));
+    nodes_print("Authority", X509_policy_tree_get0_policies(tree));
+    nodes_print("User", X509_policy_tree_get0_user_policies(tree));
 }
 
 #if !defined(OPENSSL_NO_JPAKE) && !defined(OPENSSL_NO_PSK)

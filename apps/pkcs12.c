@@ -86,7 +86,7 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bags, char *pass,
 int print_attribs(BIO *out, STACK_OF(X509_ATTRIBUTE) *attrlst,
                   const char *name);
 void hex_prin(BIO *out, unsigned char *buf, int len);
-int alg_print(BIO *x, X509_ALGOR *alg);
+static int alg_print(X509_ALGOR *alg);
 int cert_load(BIO *in, STACK_OF(X509) *sk);
 static int set_pbe(int *ppbe, const char *str);
 
@@ -587,7 +587,7 @@ int dump_certs_keys_p12(BIO *out, PKCS12 *p12, char *pass,
         } else if (bagnid == NID_pkcs7_encrypted) {
             if (options & INFO) {
                 BIO_printf(bio_err, "PKCS7 Encrypted data: ");
-                alg_print(bio_err, p7->d.encrypted->enc_data->algorithm);
+                alg_print(p7->d.encrypted->enc_data->algorithm);
             }
             bags = PKCS12_unpack_p7encdata(p7, pass, passlen);
         } else
@@ -649,7 +649,7 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
     case NID_pkcs8ShroudedKeyBag:
         if (options & INFO) {
             BIO_printf(bio_err, "Shrouded Keybag: ");
-            alg_print(bio_err, bag->value.shkeybag->algor);
+            alg_print(bag->value.shkeybag->algor);
         }
         if (options & NOKEYS)
             return 1;
@@ -737,11 +737,11 @@ int get_cert_chain(X509 *cert, X509_STORE *store, STACK_OF(X509) **chain)
     return i;
 }
 
-int alg_print(BIO *x, X509_ALGOR *alg)
+static int alg_print(X509_ALGOR *alg)
 {
     PBEPARAM *pbe;
-    const unsigned char *p;
-    p = alg->parameter->value.sequence->data;
+    const unsigned char *p = alg->parameter->value.sequence->data;
+
     pbe = d2i_PBEPARAM(NULL, &p, alg->parameter->value.sequence->length);
     if (!pbe)
         return 1;
