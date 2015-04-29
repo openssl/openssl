@@ -697,7 +697,7 @@ static int smime_cb(int ok, X509_STORE_CTX *ctx)
         && ((error != X509_V_OK) || (ok != 2)))
         return ok;
 
-    policies_print(bio_err, ctx);
+    policies_print(ctx);
 
     return ok;
 

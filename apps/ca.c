@@ -187,7 +187,7 @@ static int do_updatedb(CA_DB *db);
 static int check_time_format(const char *str);
 char *make_revocation_str(int rev_type, char *rev_arg);
 int make_revoked(X509_REVOKED *rev, const char *str);
-int old_entry_print(BIO *bp, ASN1_OBJECT *obj, ASN1_STRING *str);
+static int old_entry_print(ASN1_OBJECT *obj, ASN1_STRING *str);
 
 static CONF *conf = NULL;
 static CONF *extconf = NULL;
@@ -1604,7 +1604,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         }
 
         if (default_op)
-            old_entry_print(bio_err, obj, str);
+            old_entry_print(obj, str);
     }
 
     /* Ok, now we check the 'policy' stuff. */
@@ -2632,42 +2632,42 @@ int make_revoked(X509_REVOKED *rev, const char *str)
     return ret;
 }
 
-int old_entry_print(BIO *bp, ASN1_OBJECT *obj, ASN1_STRING *str)
+static int old_entry_print(ASN1_OBJECT *obj, ASN1_STRING *str)
 {
     char buf[25], *pbuf, *p;
     int j;
-    j = i2a_ASN1_OBJECT(bp, obj);
+    j = i2a_ASN1_OBJECT(bio_err, obj);
     pbuf = buf;
     for (j = 22 - j; j > 0; j--)
         *(pbuf++) = ' ';
     *(pbuf++) = ':';
     *(pbuf++) = '\0';
-    BIO_puts(bp, buf);
+    BIO_puts(bio_err, buf);
 
     if (str->type == V_ASN1_PRINTABLESTRING)
-        BIO_printf(bp, "PRINTABLE:'");
+        BIO_printf(bio_err, "PRINTABLE:'");
     else if (str->type == V_ASN1_T61STRING)
-        BIO_printf(bp, "T61STRING:'");
+        BIO_printf(bio_err, "T61STRING:'");
     else if (str->type == V_ASN1_IA5STRING)
-        BIO_printf(bp, "IA5STRING:'");
+        BIO_printf(bio_err, "IA5STRING:'");
     else if (str->type == V_ASN1_UNIVERSALSTRING)
-        BIO_printf(bp, "UNIVERSALSTRING:'");
+        BIO_printf(bio_err, "UNIVERSALSTRING:'");
     else
-        BIO_printf(bp, "ASN.1 %2d:'", str->type);
+        BIO_printf(bio_err, "ASN.1 %2d:'", str->type);
 
     p = (char *)str->data;
     for (j = str->length; j > 0; j--) {
         if ((*p >= ' ') && (*p <= '~'))
-            BIO_printf(bp, "%c", *p);
+            BIO_printf(bio_err, "%c", *p);
         else if (*p & 0x80)
-            BIO_printf(bp, "\\0x%02X", *p);
+            BIO_printf(bio_err, "\\0x%02X", *p);
         else if ((unsigned char)*p == 0xf7)
-            BIO_printf(bp, "^?");
+            BIO_printf(bio_err, "^?");
         else
-            BIO_printf(bp, "^%c", *p + '@');
+            BIO_printf(bio_err, "^%c", *p + '@');
         p++;
     }
-    BIO_printf(bp, "'\n");
+    BIO_printf(bio_err, "'\n");
     return 1;
 }
 

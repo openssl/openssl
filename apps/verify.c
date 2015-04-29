@@ -296,26 +296,25 @@ static int cb(int ok, X509_STORE_CTX *ctx)
 
     if (!ok) {
         if (current_cert) {
-            X509_NAME_print_ex_fp(stdout,
-                                  X509_get_subject_name(current_cert),
-                                  0, XN_FLAG_ONELINE);
-            printf("\n");
+            X509_NAME_print_ex(bio_err,
+                            X509_get_subject_name(current_cert),
+                            0, XN_FLAG_ONELINE);
+            BIO_printf(bio_err, "\n");
         }
-        printf("%serror %d at %d depth lookup:%s\n",
+        BIO_printf(bio_err, "%serror %d at %d depth lookup:%s\n",
                X509_STORE_CTX_get0_parent_ctx(ctx) ? "[CRL path]" : "",
                cert_error,
                X509_STORE_CTX_get_error_depth(ctx),
                X509_verify_cert_error_string(cert_error));
         switch (cert_error) {
         case X509_V_ERR_NO_EXPLICIT_POLICY:
-            policies_print(bio_err, ctx);
+            policies_print(ctx);
         case X509_V_ERR_CERT_HAS_EXPIRED:
 
             /*
              * since we are just checking the certificates, it is ok if they
              * are self signed. But we should still warn the user.
              */
-
         case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
             /* Continue after extension errors too */
         case X509_V_ERR_INVALID_CA:
@@ -326,14 +325,13 @@ static int cb(int ok, X509_STORE_CTX *ctx)
         case X509_V_ERR_CRL_NOT_YET_VALID:
         case X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION:
             ok = 1;
-
         }
 
         return ok;
 
     }
     if (cert_error == X509_V_OK && ok == 2)
-        policies_print(bio_out, ctx);
+        policies_print(ctx);
     if (!v_verbose)
         ERR_clear_error();
     return (ok);

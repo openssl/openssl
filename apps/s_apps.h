@@ -204,7 +204,7 @@ void ssl_ctx_set_excert(SSL_CTX *ctx, SSL_EXCERT *exc);
 void ssl_excert_free(SSL_EXCERT *exc);
 int args_excert(int option, SSL_EXCERT **pexc);
 int load_excert(SSL_EXCERT **pexc);
-void print_ssl_summary(BIO *bio, SSL *s);
+void print_ssl_summary(SSL *s);
 #ifdef HEADER_SSL_H
 int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str,
                SSL_CTX *ctx, int no_ecdhe, int no_jpake);
@@ -214,5 +214,5 @@ int ssl_load_stores(SSL_CTX *ctx, const char *vfyCApath,
                     const char *vfyCAfile, const char *chCApath,
                     const char *chCAfile, STACK_OF(X509_CRL) *crls,
                     int crl_download);
-void ssl_ctx_security_debug(SSL_CTX *ctx, BIO *out, int verbose);
+void ssl_ctx_security_debug(SSL_CTX *ctx, int verbose);
 #endif

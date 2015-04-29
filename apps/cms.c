@@ -68,7 +68,7 @@
 
 static int save_certs(char *signerfile, STACK_OF(X509) *signers);
 static int cms_cb(int ok, X509_STORE_CTX *ctx);
-static void receipt_request_print(BIO *out, CMS_ContentInfo *cms);
+static void receipt_request_print(CMS_ContentInfo *cms);
 static CMS_ReceiptRequest *make_receipt_request(STACK_OF(OPENSSL_STRING)
                                                 *rr_to, int rr_allorfirst, STACK_OF(OPENSSL_STRING)
                                                 *rr_from);
@@ -1075,7 +1075,7 @@ int cms_main(int argc, char **argv)
             sk_X509_free(signers);
         }
         if (rr_print)
-            receipt_request_print(bio_err, cms);
+            receipt_request_print(cms);
 
     } else if (operation == SMIME_VERIFY_RECEIPT) {
         if (CMS_verify_receipt(rcms, cms, other, store, flags) > 0)
@@ -1190,31 +1190,31 @@ static int cms_cb(int ok, X509_STORE_CTX *ctx)
         && ((error != X509_V_OK) || (ok != 2)))
         return ok;
 
-    /* Should be bio_err? */
-    policies_print(bio_out, ctx);
+    policies_print(ctx);
 
     return ok;
 
 }
 
-static void gnames_stack_print(BIO *out, STACK_OF(GENERAL_NAMES) *gns)
+static void gnames_stack_print(STACK_OF(GENERAL_NAMES) *gns)
 {
     STACK_OF(GENERAL_NAME) *gens;
     GENERAL_NAME *gen;
     int i, j;
+
     for (i = 0; i < sk_GENERAL_NAMES_num(gns); i++) {
         gens = sk_GENERAL_NAMES_value(gns, i);
         for (j = 0; j < sk_GENERAL_NAME_num(gens); j++) {
             gen = sk_GENERAL_NAME_value(gens, j);
-            BIO_puts(out, "    ");
-            GENERAL_NAME_print(out, gen);
-            BIO_puts(out, "\n");
+            BIO_puts(bio_err, "    ");
+            GENERAL_NAME_print(bio_err, gen);
+            BIO_puts(bio_err, "\n");
         }
     }
     return;
 }
 
-static void receipt_request_print(BIO *out, CMS_ContentInfo *cms)
+static void receipt_request_print(CMS_ContentInfo *cms)
 {
     STACK_OF(CMS_SignerInfo) *sis;
     CMS_SignerInfo *si;
@@ -1238,22 +1238,22 @@ static void receipt_request_print(BIO *out, CMS_ContentInfo *cms)
             int idlen;
             CMS_ReceiptRequest_get0_values(rr, &scid, &allorfirst,
                                            &rlist, &rto);
-            BIO_puts(out, "  Signed Content ID:\n");
+            BIO_puts(bio_err, "  Signed Content ID:\n");
             idlen = ASN1_STRING_length(scid);
             id = (char *)ASN1_STRING_data(scid);
-            BIO_dump_indent(out, id, idlen, 4);
-            BIO_puts(out, "  Receipts From");
+            BIO_dump_indent(bio_err, id, idlen, 4);
+            BIO_puts(bio_err, "  Receipts From");
             if (rlist) {
-                BIO_puts(out, " List:\n");
-                gnames_stack_print(out, rlist);
+                BIO_puts(bio_err, " List:\n");
+                gnames_stack_print(rlist);
             } else if (allorfirst == 1)
-                BIO_puts(out, ": First Tier\n");
+                BIO_puts(bio_err, ": First Tier\n");
             else if (allorfirst == 0)
-                BIO_puts(out, ": All\n");
+                BIO_puts(bio_err, ": All\n");
             else
-                BIO_printf(out, " Unknown (%d)\n", allorfirst);
-            BIO_puts(out, "  Receipts To:\n");
-            gnames_stack_print(out, rto);
+                BIO_printf(bio_err, " Unknown (%d)\n", allorfirst);
+            BIO_puts(bio_err, "  Receipts To:\n");
+            gnames_stack_print(rto);
         }
         if (rr)
             CMS_ReceiptRequest_free(rr);

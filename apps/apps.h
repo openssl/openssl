@@ -489,7 +489,7 @@ int parse_yesno(const char *str, int def);
 X509_NAME *parse_name(char *str, long chtype, int multirdn);
 int args_verify(char ***pargs, int *pargc,
                 int *badarg, X509_VERIFY_PARAM **pm);
-void policies_print(BIO *out, X509_STORE_CTX *ctx);
+void policies_print(X509_STORE_CTX *ctx);
 int bio_to_mem(unsigned char **out, int maxlen, BIO *in);
 int pkey_ctrl_string(EVP_PKEY_CTX *ctx, char *value);
 int init_gen_str(EVP_PKEY_CTX **pctx,
