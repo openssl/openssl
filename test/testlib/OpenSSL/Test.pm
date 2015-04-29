@@ -27,6 +27,8 @@ my %directories = ();		# Directories we want to keep track of
 				# to the environment variables TOP (mandatory),
 				# BIN_D, TEST_D and RESULT_D.
 
+my $end_with_bailout = 0;
+
 sub quotify;
 
 sub __top_file {
@@ -139,6 +141,8 @@ sub setup {
     $directories{APPS}    = $ENV{BIN_D}    || catdir($directories{TOP},"apps");
     $directories{TEST}    = $ENV{TEST_D}   || catdir($directories{TOP},"test");
     $directories{RESULTS} = $ENV{RESULT_D} || $directories{TEST};
+
+    $end_with_bailout	  = $ENV{STOPTEST} ? 1 : 0;
 
     BAIL_OUT("setup() expects the file Configure in the \$TOP directory")
 	unless -f top_file("Configure");
@@ -273,6 +277,13 @@ sub cmdstr {
     return $display_cmd;
 }
 
+END {
+    my $tb = Test::More->builder;
+    my $failure = scalar(grep { $_ == 0; } $tb->summary);
+    if ($failure && $end_with_bailout) {
+	BAIL_OUT("Stoptest!");
+    }
+}
 sub run {
     my ($cmd, $display_cmd, %errlogs) = shift->(0);
     my %opts = @_;
