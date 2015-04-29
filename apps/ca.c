@@ -778,16 +778,13 @@ end_of_options:
                        i + 1, j);
             goto end;
         }
-        while (*p) {
-            if (!(((*p >= '0') && (*p <= '9')) ||
-                  ((*p >= 'A') && (*p <= 'F')) ||
-                  ((*p >= 'a') && (*p <= 'f')))) {
+        for ( ; *p; p++) {
+            if (!isxdigit(*p)) {
                 BIO_printf(bio_err,
-                           "entry %d: bad serial number characters, char pos %ld, char is '%c'\n",
-                           i + 1, (long)(p - pp[DB_serial]), *p);
+                           "entry %d: bad char 0%o '%c' in serial number\n",
+                           i + 1, *p, *p);
                 goto end;
             }
-            p++;
         }
     }
     if (verbose) {

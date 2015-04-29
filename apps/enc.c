@@ -617,16 +617,11 @@ static int set_hex(char *in, unsigned char *out, int size)
         *(in++) = '\0';
         if (j == 0)
             break;
-        if ((j >= '0') && (j <= '9'))
-            j -= '0';
-        else if ((j >= 'A') && (j <= 'F'))
-            j = j - 'A' + 10;
-        else if ((j >= 'a') && (j <= 'f'))
-            j = j - 'a' + 10;
-        else {
+        if (!isxdigit(j)) {
             BIO_printf(bio_err, "non-hex digit\n");
             return (0);
         }
+        j = (unsigned char)app_hex(j);
         if (i & 1)
             out[i / 2] |= j;
         else
