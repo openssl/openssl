@@ -1043,13 +1043,32 @@ static BIO *init_responder(const char *port)
     return NULL;
 }
 
+
+static char *urldecode(char *p)
+{
+    unsigned char *out = (unsigned char *)p;
+    char *save = p;
+
+    for (; *p; p++) {
+        if (*p != '%')
+            *out++ = *p;
+        else if (p[1] && p[2]) {
+            *out++ = (app_hex(p[1]) << 4) | app_hex(p[2]);
+            p += 2;
+        }
+    }
+    *p = '\0';
+    return save;
+}
+
 static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio,
                         const char *port)
 {
     int len;
     OCSP_REQUEST *req = NULL;
     char inbuf[2048];
-    BIO *cbio = NULL;
+    char *p, *q;
+    BIO *cbio = NULL, *getbio = NULL, *b64 = NULL;
 
     if (BIO_do_accept(acbio) <= 0) {
         BIO_printf(bio_err, "Error accepting connection\n");
@@ -1064,7 +1083,29 @@ static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio,
     len = BIO_gets(cbio, inbuf, sizeof inbuf);
     if (len <= 0)
         return 1;
-    if (strncmp(inbuf, "POST", 4) != 0) {
+    if (strncmp(inbuf, "GET", 3) == 0) {
+        /* Expecting GET {sp} /URL {sp} HTTP/1.x */
+        for (p = inbuf + 3; *p == ' ' || *p == '\t'; ++p)
+            continue;
+        if (*p) {
+            /* Move past the slash before the URL part. */
+            p++;
+        }
+        /* Splice off the HTTP version identifier. */
+        for (q = p; *q; q++)
+            if (*q == ' ' || *q == '\t')
+                break;
+        if (*q == '\0') {
+            BIO_printf(bio_err, "Invalid request\n");
+            return 1;
+        }
+        *q = '\0';
+        p = urldecode(p);
+        getbio = BIO_new_mem_buf(p, strlen(p));
+        b64 = BIO_new(BIO_f_base64());
+        BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+        getbio = BIO_push(b64, getbio);
+    } else if (strncmp(inbuf, "POST", 4) != 0) {
         BIO_printf(bio_err, "Invalid request\n");
         return 1;
     }
@@ -1078,7 +1119,11 @@ static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio,
     }
 
     /* Try to read OCSP request */
-    req = d2i_OCSP_REQUEST_bio(cbio, NULL);
+    if (getbio) {
+        req = d2i_OCSP_REQUEST_bio(getbio, NULL);
+        BIO_free_all(getbio);
+    } else
+        req = d2i_OCSP_REQUEST_bio(cbio, NULL);
 
     if (!req) {
         BIO_printf(bio_err, "Error parsing OCSP request\n");
