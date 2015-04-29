@@ -1822,134 +1822,84 @@ int parse_yesno(const char *str, int def)
 }
 
 /*
- * subject is expected to be in the format /type0=value0/type1=value1/type2=...
+ * name is expected to be in the format /type0=value0/type1=value1/type2=...
  * where characters may be escaped by \
  */
-X509_NAME *parse_name(char *subject, long chtype, int multirdn)
+X509_NAME *parse_name(const char *cp, long chtype, int canmulti)
 {
-    size_t buflen = strlen(subject) + 1; /* to copy the types and values
-                                          * into. due to escaping, the copy
-                                          * can only become shorter */
-    char *buf = OPENSSL_malloc(buflen);
-    size_t max_ne = buflen / 2 + 1; /* maximum number of name elements */
-    char **ne_types = OPENSSL_malloc(max_ne * sizeof(char *));
-    char **ne_values = OPENSSL_malloc(max_ne * sizeof(char *));
-    int *mval = OPENSSL_malloc(max_ne * sizeof(int));
+    int nextismulti = 0;
+    char *work;
+    X509_NAME *n;
 
-    char *sp = subject, *bp = buf;
-    int i, ne_num = 0;
+    if (*cp++ != '/')
+        return NULL;
 
-    X509_NAME *n = NULL;
-    int nid;
+    n = X509_NAME_new();
+    if (n == NULL)
+        return NULL;
+    work = strdup(cp);
+    if (work == NULL)
+        goto err;
 
-    if (!buf || !ne_types || !ne_values || !mval) {
-        BIO_printf(bio_err, "malloc error\n");
-        goto error;
-    }
+    while (*cp) {
+        char *bp = work;
+        char *typestr = bp;
+        unsigned char *valstr;
+        int nid;
+        int ismulti = nextismulti;
+        nextismulti = 0;
 
-    if (*subject != '/') {
-        BIO_printf(bio_err, "Subject does not start with '/'.\n");
-        goto error;
-    }
-    sp++;                       /* skip leading / */
-
-    /* no multivalued RDN by default */
-    mval[ne_num] = 0;
-
-    while (*sp) {
-        /* collect type */
-        ne_types[ne_num] = bp;
-        while (*sp) {
-            if (*sp == '\\') {  /* is there anything to escape in the
-                                 * type...? */
-                if (*++sp)
-                    *bp++ = *sp++;
-                else {
-                    BIO_printf(bio_err,
-                               "escape character at end of string\n");
-                    goto error;
-                }
-            } else if (*sp == '=') {
-                sp++;
-                *bp++ = '\0';
-                break;
-            } else
-                *bp++ = *sp++;
-        }
-        if (!*sp) {
+        /* Collect the type */
+        while (*cp && *cp != '=')
+            *bp++ = *cp++;
+        if (*cp == '\0') {
             BIO_printf(bio_err,
-                       "end of string encountered while processing type of subject name element #%d\n",
-                       ne_num);
-            goto error;
-        }
-        ne_values[ne_num] = bp;
-        while (*sp) {
-            if (*sp == '\\') {
-                if (*++sp)
-                    *bp++ = *sp++;
-                else {
-                    BIO_printf(bio_err,
-                               "escape character at end of string\n");
-                    goto error;
-                }
-            } else if (*sp == '/') {
-                sp++;
-                /* no multivalued RDN by default */
-                mval[ne_num + 1] = 0;
-                break;
-            } else if (*sp == '+' && multirdn) {
-                /*
-                 * a not escaped + signals a mutlivalued RDN
-                 */
-                sp++;
-                mval[ne_num + 1] = -1;
-                break;
-            } else
-                *bp++ = *sp++;
+                    "%s: Hit end of string before finding the equals.\n",
+                    opt_getprog());
+            goto err;
         }
         *bp++ = '\0';
-        ne_num++;
-    }
+        ++cp;
 
-    if (!(n = X509_NAME_new()))
-        goto error;
+        /* Collect the value. */
+        valstr = (unsigned char *)bp;
+        for (; *cp && *cp != '/'; *bp++ = *cp++) {
+            if (canmulti && *cp == '+') {
+                nextismulti = 1;
+                break;
+            }
+            if (*cp == '\\' && *++cp == '\0') {
+                BIO_printf(bio_err,
+                        "%s: escape character at end of string\n",
+                        opt_getprog());
+                goto err;
+            }
+        }
+        *bp++ = '\0';
 
-    for (i = 0; i < ne_num; i++) {
-        if ((nid = OBJ_txt2nid(ne_types[i])) == NID_undef) {
-            BIO_printf(bio_err,
-                       "Subject Attribute %s has no known NID, skipped\n",
-                       ne_types[i]);
+        /* If not at EOS (must be + or /), move forward. */
+        if (*cp)
+            ++cp;
+
+        /* Parse */
+        nid = OBJ_txt2nid(typestr);
+        if (nid == NID_undef) {
+            BIO_printf(bio_err, "%s: Skipping unknown attribute \"%s\"\n",
+                      opt_getprog(), typestr);
             continue;
         }
-
-        if (!*ne_values[i]) {
-            BIO_printf(bio_err,
-                       "No value provided for Subject Attribute %s, skipped\n",
-                       ne_types[i]);
-            continue;
-        }
-
-        if (!X509_NAME_add_entry_by_NID
-            (n, nid, chtype, (unsigned char *)ne_values[i], -1, -1, mval[i]))
-            goto error;
+        if (!X509_NAME_add_entry_by_NID(n, nid, chtype,
+                                        valstr, strlen((char *)valstr),
+                                        -1, ismulti ? -1 : 0))
+            goto err;
     }
 
-    OPENSSL_free(ne_values);
-    OPENSSL_free(ne_types);
-    OPENSSL_free(buf);
-    OPENSSL_free(mval);
+    free(work);
     return n;
 
- error:
+ err:
     X509_NAME_free(n);
-    if (ne_values)
-        OPENSSL_free(ne_values);
-    if (ne_types)
-        OPENSSL_free(ne_types);
-    if (mval)
-        OPENSSL_free(mval);
-    if (buf)
-        OPENSSL_free(buf);
+    free(work);
     return NULL;
 }
 

@@ -486,7 +486,7 @@ void free_index(CA_DB *db);
 int index_name_cmp(const OPENSSL_CSTRING *a, const OPENSSL_CSTRING *b);
 int parse_yesno(const char *str, int def);
 
-X509_NAME *parse_name(char *str, long chtype, int multirdn);
+X509_NAME *parse_name(const char *str, long chtype, int multirdn);
 int args_verify(char ***pargs, int *pargc,
                 int *badarg, X509_VERIFY_PARAM **pm);
 void policies_print(X509_STORE_CTX *ctx);
