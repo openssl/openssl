@@ -4,6 +4,9 @@
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
 
+  *) Added HTTP GET support to the ocsp command.
+     [Rich Salz]
+
   *) RAND_pseudo_bytes has been deprecated. Users should use RAND bytes instead.
 
   *) Added support for TLS extended master secret from
