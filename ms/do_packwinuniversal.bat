@@ -6,18 +6,18 @@
      mkdir vsout\package\bin
      xcopy inc32 vsout\package\include /h /k /r /e /i /y >nul
 
-     call :pack OneCore 10.0 Dll    Unicode Debug   Win32
-     call :pack OneCore 10.0 Dll    Unicode Debug   arm
-     call :pack OneCore 10.0 Dll    Unicode Debug   x64
-     call :pack OneCore 10.0 Dll    Unicode Release Win32
-     call :pack OneCore 10.0 Dll    Unicode Release arm
-     call :pack OneCore 10.0 Dll    Unicode Release x64
-     call :pack OneCore 10.0 Static Unicode Debug   Win32
-     call :pack OneCore 10.0 Static Unicode Debug   arm
-     call :pack OneCore 10.0 Static Unicode Debug   x64
-     call :pack OneCore 10.0 Static Unicode Release Win32
-     call :pack OneCore 10.0 Static Unicode Release arm
-     call :pack OneCore 10.0 Static Unicode Release x64
+     call :pack Universal 10.0 Dll    Unicode Debug   Win32
+     call :pack Universal 10.0 Dll    Unicode Debug   arm
+     call :pack Universal 10.0 Dll    Unicode Debug   x64
+     call :pack Universal 10.0 Dll    Unicode Release Win32
+     call :pack Universal 10.0 Dll    Unicode Release arm
+     call :pack Universal 10.0 Dll    Unicode Release x64
+     call :pack Universal 10.0 Static Unicode Debug   Win32
+     call :pack Universal 10.0 Static Unicode Debug   arm
+     call :pack Universal 10.0 Static Unicode Debug   x64
+     call :pack Universal 10.0 Static Unicode Release Win32
+     call :pack Universal 10.0 Static Unicode Release arm
+     call :pack Universal 10.0 Static Unicode Release x64
 
      :pack
      echo %1 %2 %3 %4 %5 %6

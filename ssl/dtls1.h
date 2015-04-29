@@ -224,7 +224,10 @@ typedef struct dtls1_state_st {
     /*
      * Indicates when the last handshake msg or heartbeat sent will timeout
      */
-#  if defined(WINAPI_FAMILY) && ( WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP || WINAPI_FAMILY==WINAPI_FAMILY_PC_APP || WINAPI_FAMILY==WINAPI_FAMILY_ONECORE_APP)// winsock.h not defining the expected struct here 
+#  if defined(WINAPI_FAMILY) && ( WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP || WINAPI_FAMILY==WINAPI_FAMILY_PC_APP || WINAPI_FAMILY==WINAPI_FAMILY_APP)
+    /*
+     * winsock.h is not present in WindowsPhone/WindowsStore, defining the expected struct here
+     */
 	struct next_timeout {
 		long tv_sec;
 		long tv_usec;

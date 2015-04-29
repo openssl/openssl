@@ -11,7 +11,7 @@ if($ARGV[1]=="10.0")
 {
   $ToolsVersion="14.0";
   $PlatformToolset="v140";
-  $vstoolversion.="onecore10.0";
+  $vstoolversion.="universal10.0";
   $winrt=0;
 }
 elsif($ARGV[1]=="8.1")
@@ -461,7 +461,7 @@ sub addToProject{
 my @config=("Debug","Release");
 my @arch=("Win32","arm");
 my $rep="";
-push(@arch, "x64") if($ARGV[0]=~/Store|OneCore/);
+push(@arch, "x64") if($ARGV[0]=~/Store|Universal/);
 for my $_config (@config) {
    for my $_arch (@arch) {
       my $suffix=$ARGV[2]=~/Dll/?"dll":"";

@@ -48,7 +48,7 @@
 *.0
 # Include the Windows Test apps that end with .0
 !*Phone*.0
-!*Core*.0
+!*Universal*.0
 !*Store*.0
 
 # Links under apps

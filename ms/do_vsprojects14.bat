@@ -11,8 +11,8 @@ rem INITONCE common preprocessing across configurations
 set INITONCE=YES
 
 copy ms\vstemplates\vstemplates14.sln vsout\openSSL.sln
-call:makeProject OneCore 10.0 Static Unicode 5BAD3295-3CC2-4416-A65F-16B304654800 C4F0CF4C-F240-4E23-B520-026FFDDEB43A
-call:makeProject OneCore 10.0 Dll    Unicode 5C2E2BD9-44D0-411E-B46C-E9129B8F94187 EA1A3F14-D6FD-49CC-B0F1-416E60FA593A
+call:makeProject Universal 10.0 Static Unicode 5BAD3295-3CC2-4416-A65F-16B304654800 C4F0CF4C-F240-4E23-B520-026FFDDEB43A
+call:makeProject Universal 10.0 Dll    Unicode 5C2E2BD9-44D0-411E-B46C-E9129B8F94187 EA1A3F14-D6FD-49CC-B0F1-416E60FA593A
 
 goto :eof
 
@@ -35,7 +35,7 @@ goto :eof
 :makeConfiguration
 	set EXTRAFLAGS=
 	set Dll=
-	if "%1"=="OneCore" set VC-CONFIGURATION=VC-WINONECORE
+	if "%1"=="Universal" set VC-CONFIGURATION=VC-WINUNIVERSAL
 	if "%3"=="Dll" set Dll=dll
 	if "%4"=="Unicode" set EXTRAFLAGS=%EXTRAFLAGS% -DUNICODE -D_UNICODE
 	if "%5"=="Debug" set EXTRAFLAGS=%EXTRAFLAGS% -Zi -Od
