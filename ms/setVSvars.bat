@@ -1,7 +1,7 @@
 REM @echo off
 call:set_%1
 exit /b
-:set_onecore10.0Win32
+:set_universal10.0Win32
 	call:setVar _VS14VC VisualStudio14VC
 	call "%_VS14VC%vcvarsall" x86
 	set _VCPlatform=x86
@@ -9,7 +9,7 @@ exit /b
 	call:setEnv
 	goto :eof
 
-:set_onecore10.0x64
+:set_universal10.0x64
 	call:setVar _VS14VC VisualStudio14VC
 	call "%_VS14VC%vcvarsall" x64
 	set _VCPlatform=x64
@@ -17,7 +17,7 @@ exit /b
 	call:setEnv
 	goto :eof
 
-:set_onecore10.0arm
+:set_universal10.0arm
 	call:setVar _VS14VC VisualStudio14VC
 	call "%_VS14VC%vcvarsall" x86_arm
 	set _VCPlatform=ARM
@@ -25,7 +25,7 @@ exit /b
 	call:setEnv
 	goto :eof
 
-:set_onecore10.0arm64
+:set_universal10.0arm64
 	call:setVar _VS14VC VisualStudio14VC
 	call "%_VS14VC%vcvarsall" x86_arm64
 	set _VCPlatform=ARM64
@@ -157,28 +157,28 @@ exit /b
 	if not "%_WSKITS81%"=="" goto :eof
 	goto :eof
 
-:set_WOKITS10
-	if not "%_WOKITS10%"=="" goto :eof
-	call:setRegVar "HKLM\SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\Windows\v10.0" InstallationFolder _WOKITS10
-	if not "%_WOKITS10%"=="" goto :eof
+:set_WKITS10
+	if not "%_WKITS10%"=="" goto :eof
+	call:setRegVar "HKLM\SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\Windows\v10.0" InstallationFolder _WKITS10
+	if not "%_WKITS10%"=="" goto :eof
 	goto :eof
 
-:set_WOKITS10VER
-	if not "%_WOKITS10VER%"=="" goto :eof
-	call:setRegVar "HKLM\SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\Windows\v10.0" ProductVersion _WOKITS10VER
-	set _WOKITS10VER=%_WOKITS10VER%.0
-	echo %_WOKITS10VER%
-	if not "%_WOKITS10VER%"=="" goto :eof
+:set_WKITS10VER
+	if not "%_WKITS10VER%"=="" goto :eof
+	call:setRegVar "HKLM\SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\Windows\v10.0" ProductVersion _WKITS10VER
+	set _WKITS10VER=%_WKITS10VER%.0
+	echo %_WKITS10VER%
+	if not "%_WKITS10VER%"=="" goto :eof
 	goto :eof
 
 :setEnv
 	call:setVar _VS14VC VisualStudio14VC
-	call:setVar _WOKITS10 WindowsKits10.0
-	call:setVar _WOKITS10VER WindowsKits10Version
+	call:setVar _WKITS10 WindowsKits10.0
+	call:setVar _WKITS10VER WindowsKits10Version
 	set PATH=%_VS14VC\Bin%;%PATH%
-	set INCLUDE=%_VS14VC%\include;%_WOKITS10%\Include\%_WOKITS10VER%\um;%_WOKITS10%\Include\%_WOKITS10VER%\shared;%_WOKITS10%\Include\%_WOKITS10VER%\winrt;%_WOKITS10%\Include\ucrt;
-	set LIB=%_VS14VC%\lib\store\%_VCLibPlat%;%_WOKITS10%\lib\%_WOKITS10VER%\um\%_VCPlatform%;%_WOKITS10%\Lib\winv10.0\ucrt\%_VCPlatform%;
-	set LIBPATH=%_WOKITS10%\UnionMetadata;%_VS14VC%\vcpackages;
+	set INCLUDE=%_VS14VC%\include;%_WKITS10%\Include\%_WKITS10VER%\um;%_WKITS10%\Include\%_WKITS10VER%\shared;%_WKITS10%\Include\%_WKITS10VER%\winrt;%_WKITS10%\Include\%_WKITS10VER%\ucrt;
+	set LIB=%_VS14VC%\lib\store\%_VCLibPlat%;%_WKITS10%\lib\%_WKITS10VER%\um\%_VCPlatform%;%_WKITS10%\Lib\%_WKITS10VER%\ucrt\%_VCPlatform%;
+	set LIBPATH=%_WKITS10%\UnionMetadata\Facade;%_VS14VC%\vcpackages;c:\program files (x86)\windows kits\10\references\windows.foundation.foundationcontract\1.0.0.0\;c:\program files (x86)\windows kits\10\references\windows.foundation.universalapicontract\1.0.0.0\
 	goto :eof
 
 :end

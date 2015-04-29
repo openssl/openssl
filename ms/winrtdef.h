@@ -13,7 +13,6 @@
 # ifdef setenv
 #  undef setenv
 # endif
-#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_ONECORE_APP)
 # ifdef FindFirstFile
 #  undef FindFirstFile
 # endif
@@ -34,7 +33,6 @@
 #   undef GetModuleHandle
 # define GetModuleHandle winrt_GetModuleHandle
 # endif
-#endif
 # define getenv winrt_getenv
 # define setenv winrt_getenv
 

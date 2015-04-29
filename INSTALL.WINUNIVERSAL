@@ -1,5 +1,5 @@
 
- INSTALLATION ON WINDOWS 10 ONECORE PLATFORM
+ INSTALLATION ON WINDOWS 10 UNIVERSAL PLATFORM
  ----------------------------------
 
  [Instructions for building for Windows CE can be found in INSTALL.WCE]
@@ -27,8 +27,8 @@
 
  2 OpenSSL Projects
 
- OneCore 10.0 DLL    (Win32|x64|arm)     (Debug|Release)
- OneCore 10.0 STATIC (Win32|x86|arm)     (Debug|Release)
+ Universal 10.0 DLL    (Win32|x64|arm)     (Debug|Release)
+ Universal 10.0 STATIC (Win32|x86|arm)     (Debug|Release)
 
  2 Test Apps which host the tests and run them
 
@@ -69,9 +69,9 @@
 
  Run ms\setVSvars.bat to set this environmental variables, and fix the path if needed, following flavours are supported, If your version is not supported by this batch you will need to manually set previous variables
 
- ms\setVSvars onecore10.0arm
- ms\setVSvars onecore10.0Win32
- ms\setVSvars onecore10.01x64
+ ms\setVSvars universal10.0arm
+ ms\setVSvars universal10.0Win32
+ ms\setVSvars universal10.01x64
 
  Start nmake compilation with.
 

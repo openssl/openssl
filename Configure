@@ -759,7 +759,7 @@ my @MK1MF_Builds=qw(VC-WIN64I VC-WIN64A
 		    VC-NT VC-CE VC-WIN32 debug-VC-WIN32
 		    VC-WINSTORE debug-VC-WINSTORE
 		    VC-WINPHONE debug-VC-WINPHONE
-		    VC-WINONECORE debug-VC-WINONECORE
+		    VC-WINUNIVERSAL debug-VC-WINUNIVERSAL
 		    BC-32
 		    netware-clib netware-clib-bsdsock
 		    netware-libc netware-libc-bsdsock);

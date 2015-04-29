@@ -88,14 +88,12 @@ extern "C"
 		return NULL;
 		}
 #endif
-#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_ONECORE_APP)
 	void* GetModuleHandle(
 						 _In_opt_  LPCTSTR lpModuleName
 						 )
 		{
 		return NULL;
 		}
-#endif
 	//no log for phone
 	int RegisterEventSource(
 						   _In_  LPCTSTR lpUNCServerName,
@@ -146,14 +144,12 @@ extern "C"
 		return NULL;
 		}
 
-#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_ONECORE_APP)
 	BOOL WINAPI GetVersionEx(
 							_Inout_  LPOSVERSIONINFO lpVersionInfo
 							)
 		{
 		return 0;
 		}
-#endif
 	int GetObject(
 				 _In_   HGDIOBJ hgdiobj,
 				 _In_   int cbBuffer,
