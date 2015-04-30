@@ -54,7 +54,7 @@
 #if !defined(OPENSSL_SYS_MSDOS)
 # include OPENSSL_UNISTD
 #endif
-#include <unistd.h>
+
 #include <stdlib.h>
 #include <errno.h>
 #include <ctype.h>
@@ -96,11 +96,11 @@ char *opt_progname(const char *argv0)
     /* Strip off trailing nonsense. */
     n = strlen(p);
     if (n > 4 &&
-        (strcmp(&p[n - 4], ".exe") == 0 || strcmp(&p[n - 4], ".EXE") == 0)
+        (strcmp(&p[n - 4], ".exe") == 0 || strcmp(&p[n - 4], ".EXE") == 0))
         n -= 4;
 #if defined(OPENSSL_SYS_NETWARE)
     if (n > 4 &&
-        (strcmp(&p[n - 4], ".nlm") == 0 || strcmp(&p[n - 4], ".NLM") == 0)
+        (strcmp(&p[n - 4], ".nlm") == 0 || strcmp(&p[n - 4], ".NLM") == 0))
         n -= 4;
 #endif
 
@@ -108,7 +108,7 @@ char *opt_progname(const char *argv0)
     if (n > sizeof prog - 1)
         n = sizeof prog - 1;
     for (q = prog, i = 0; i < n; i++, p++)
-        q++ = isupper(*p) ? tolower(*p) : *p;
+        *q++ = isupper(*p) ? tolower(*p) : *p;
     *q = '\0';
     return prog;
 }
