@@ -136,6 +136,8 @@ OCSP_REQ_CTX *OCSP_REQ_CTX_new(BIO *io, int maxline)
 
 void OCSP_REQ_CTX_free(OCSP_REQ_CTX *rctx)
 {
+    if (!rctx)
+        return;
     BIO_free(rctx->mem);
     if (rctx->iobuf)
         OPENSSL_free(rctx->iobuf);

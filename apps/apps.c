@@ -600,8 +600,7 @@ int load_cert_crl_http(const char *url, X509 **pcert, X509_CRL **pcrl)
         OPENSSL_free(port);
     if (bio)
         BIO_free_all(bio);
-    if (rctx)
-        OCSP_REQ_CTX_free(rctx);
+    OCSP_REQ_CTX_free(rctx);
     if (rv != 1) {
         BIO_printf(bio_err, "Error loading %s from %s\n",
                    pcert ? "certificate" : "CRL", url);
@@ -1614,8 +1613,7 @@ CA_DB *load_index(char *dbfile, DB_ATTR *db_attr)
  err:
     if (dbattr_conf)
         NCONF_free(dbattr_conf);
-    if (tmpdb)
-        TXT_DB_free(tmpdb);
+    TXT_DB_free(tmpdb);
     BIO_free_all(in);
     return retdb;
 }
@@ -1793,8 +1791,7 @@ int rotate_index(const char *dbfile, const char *new_suffix,
 void free_index(CA_DB *db)
 {
     if (db) {
-        if (db->db)
-            TXT_DB_free(db->db);
+        TXT_DB_free(db->db);
         OPENSSL_free(db);
     }
 }

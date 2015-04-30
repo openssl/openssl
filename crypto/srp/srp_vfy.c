@@ -270,13 +270,14 @@ SRP_VBASE *SRP_VBASE_new(char *seed_key)
     return vb;
 }
 
-int SRP_VBASE_free(SRP_VBASE *vb)
+void SRP_VBASE_free(SRP_VBASE *vb)
 {
+    if (!vb)
+        return;
     sk_SRP_user_pwd_pop_free(vb->users_pwd, SRP_user_pwd_free);
     sk_SRP_gN_cache_free(vb->gN_cache);
     OPENSSL_free(vb->seed_key);
     OPENSSL_free(vb);
-    return 0;
 }
 
 static SRP_gN_cache *SRP_gN_new_init(const char *ch)
@@ -457,8 +458,7 @@ int SRP_VBASE_init(SRP_VBASE *vb, char *verifier_file)
 
     SRP_user_pwd_free(user_pwd);
 
-    if (tmpdb)
-        TXT_DB_free(tmpdb);
+    TXT_DB_free(tmpdb);
     BIO_free_all(in);
 
     sk_SRP_gN_free(SRP_gN_tab);
@@ -509,7 +509,8 @@ SRP_user_pwd *SRP_VBASE_get_by_user(SRP_VBASE *vb, char *username)
          BN_bin2bn(digv, SHA_DIGEST_LENGTH, NULL)))
         return user;
 
- err:SRP_user_pwd_free(user);
+ err:
+    SRP_user_pwd_free(user);
     return NULL;
 }
 

@@ -1229,8 +1229,7 @@ static OCSP_RESPONSE *query_responder(BIO *cbio, const char *path,
 
     }
  err:
-    if (ctx)
-        OCSP_REQ_CTX_free(ctx);
+    OCSP_REQ_CTX_free(ctx);
 
     return rsp;
 }

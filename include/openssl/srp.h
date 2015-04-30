@@ -113,7 +113,7 @@ typedef struct SRP_gN_st {
 DECLARE_STACK_OF(SRP_gN)
 
 SRP_VBASE *SRP_VBASE_new(char *seed_key);
-int SRP_VBASE_free(SRP_VBASE *vb);
+void SRP_VBASE_free(SRP_VBASE *vb);
 int SRP_VBASE_init(SRP_VBASE *vb, char *verifier_file);
 SRP_user_pwd *SRP_VBASE_get_by_user(SRP_VBASE *vb, char *username);
 char *SRP_create_verifier(const char *user, const char *pass, char **salt,
