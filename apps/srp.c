@@ -138,11 +138,7 @@ static int update_index(CA_DB *db, char **row)
     char **irow;
     int i;
 
-    if ((irow = OPENSSL_malloc(sizeof(char *) * (DB_NUMBER + 1))) == NULL) {
-        BIO_printf(bio_err, "Memory allocation failure\n");
-        return 0;
-    }
-
+    irow = app_malloc(sizeof(char *) * (DB_NUMBER + 1), "row pointers");
     for (i = 0; i < DB_NUMBER; i++) {
         irow[i] = row[i];
         row[i] = NULL;
@@ -363,23 +359,12 @@ int srp_main(int argc, char **argv)
             configfile = getenv("SSLEAY_CONF");
         if (configfile == NULL) {
             const char *s = X509_get_default_cert_area();
-            size_t len;
+            size_t len = strlen(s) + 1 + sizeof(CONFIG_FILE);
 
+            tofree = app_malloc(len, "config filename space");
 # ifdef OPENSSL_SYS_VMS
-            len = strlen(s) + sizeof(CONFIG_FILE);
-            tofree = OPENSSL_malloc(len);
-            if (!tofree) {
-                BIO_printf(bio_err, "Out of memory\n");
-                goto end;
-            }
             strcpy(tofree, s);
 # else
-            len = strlen(s) + sizeof(CONFIG_FILE) + 1;
-            tofree = OPENSSL_malloc(len);
-            if (!tofree) {
-                BIO_printf(bio_err, "Out of memory\n");
-                goto end;
-            }
             BUF_strlcpy(tofree, s, len);
             BUF_strlcat(tofree, "/", len);
 # endif

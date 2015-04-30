@@ -783,12 +783,7 @@ int x509_main(int argc, char **argv)
                                 " */\n", buf);
 
                 len = i2d_X509(x, NULL);
-                m = OPENSSL_malloc(len);
-                if (!m) {
-                    BIO_printf(bio_err, "Out of memory\n");
-                    goto end;
-                }
-
+                m = app_malloc(len, "x509 name buffer");
                 d = (unsigned char *)m;
                 len = i2d_X509_NAME(X509_get_subject_name(x), &d);
                 print_array(out, "the_subject_name", len, (unsigned char *)m);
@@ -976,11 +971,7 @@ static ASN1_INTEGER *x509_load_serial(char *CAfile, char *serialfile,
     len = ((serialfile == NULL)
            ? (strlen(CAfile) + strlen(POSTFIX) + 1)
            : (strlen(serialfile))) + 1;
-    buf = OPENSSL_malloc(len);
-    if (buf == NULL) {
-        BIO_printf(bio_err, "out of mem\n");
-        goto end;
-    }
+    buf = app_malloc(len, "serial# buffer");
     if (serialfile == NULL) {
         BUF_strlcpy(buf, CAfile, len);
         for (p = buf; *p; p++)

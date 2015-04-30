@@ -180,7 +180,7 @@ int chopup_args(ARGS *arg, char *buf)
     arg->argc = 0;
     if (arg->size == 0) {
         arg->size = 20;
-        arg->argv = OPENSSL_malloc(sizeof(char *) * arg->size);
+        arg->argv = app_malloc(sizeof(char *) * arg->size, "argv space");
         if (arg->argv == NULL)
             return 0;
     }
@@ -367,13 +367,7 @@ int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
             ok = UI_add_input_string(ui, prompt, ui_flags, buf,
                                      PW_MIN_LENGTH, bufsiz - 1);
         if (ok >= 0 && verify) {
-            buff = OPENSSL_malloc(bufsiz);
-            if (!buff) {
-                BIO_printf(bio_err, "Out of memory\n");
-                UI_free(ui);
-                OPENSSL_free(prompt);
-                return 0;
-            }
+            buff = app_malloc(bufsiz, "password buffer");
             ok = UI_add_verify_string(ui, prompt, ui_flags, buff,
                                       PW_MIN_LENGTH, bufsiz - 1, buf);
         }
@@ -989,6 +983,21 @@ static int load_certs_crls(const char *file, int format,
     return rv;
 }
 
+void* app_malloc(int sz, const char *what)
+{
+    void *vp = OPENSSL_malloc(sz);
+
+    if (vp == NULL) {
+        BIO_printf(bio_err, "%s: Could not allocate %d bytes for %s\n",
+                opt_getprog(), sz, what);
+        ERR_print_errors(bio_err);
+        exit(1);
+    }
+    return vp;
+}
+
+
+
 STACK_OF(X509) *load_certs(const char *file, int format,
                            const char *pass, ENGINE *e, const char *desc)
 {
@@ -1585,11 +1594,7 @@ CA_DB *load_index(char *dbfile, DB_ATTR *db_attr)
         }
     }
 
-    if ((retdb = OPENSSL_malloc(sizeof(CA_DB))) == NULL) {
-        fprintf(stderr, "Out of memory\n");
-        goto err;
-    }
-
+    retdb = app_malloc(sizeof *retdb, "new DB");
     retdb->db = tmpdb;
     tmpdb = NULL;
     if (db_attr)
@@ -2230,10 +2235,7 @@ unsigned char *next_protos_parse(unsigned short *outlen, const char *in)
     if (len >= 65535)
         return NULL;
 
-    out = OPENSSL_malloc(strlen(in) + 1);
-    if (!out)
-        return NULL;
-
+    out = app_malloc(strlen(in) + 1, "NPN buffer");
     for (i = 0; i <= len; ++i) {
         if (i == len || in[i] == ',') {
             if (i - start > 255) {

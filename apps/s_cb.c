@@ -439,11 +439,7 @@ int ssl_print_curves(BIO *out, SSL *s, int noshared)
     ncurves = SSL_get1_curves(s, NULL);
     if (ncurves <= 0)
         return 1;
-    curves = OPENSSL_malloc(ncurves * sizeof(int));
-    if (!curves) {
-        BIO_printf(out, "Out of memory\n");
-        return 0;
-    }
+    curves = app_malloc(ncurves * sizeof(int), "curves to print");
     SSL_get1_curves(s, curves);
 
     BIO_puts(out, "Supported Elliptic Curves: ");
@@ -955,12 +951,7 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
         OPENSSL_assert(0);
         break;
     }
-    buffer = OPENSSL_malloc(length);
-
-    if (buffer == NULL) {
-        BIO_printf(bio_err, "out of memory\n");
-        return 0;
-    }
+    buffer = app_malloc(length, "cookie generate buffer");
 
     switch (peer.sa.sa_family) {
     case AF_INET:
@@ -1028,12 +1019,7 @@ int verify_cookie_callback(SSL *ssl, unsigned char *cookie,
         OPENSSL_assert(0);
         break;
     }
-    buffer = OPENSSL_malloc(length);
-
-    if (buffer == NULL) {
-        BIO_printf(bio_err, "out of memory\n");
-        return 0;
-    }
+    buffer = app_malloc(length, "cookie verify buffer");
 
     switch (peer.sa.sa_family) {
     case AF_INET:
@@ -1187,10 +1173,8 @@ void ssl_ctx_set_excert(SSL_CTX *ctx, SSL_EXCERT *exc)
 
 static int ssl_excert_prepend(SSL_EXCERT **pexc)
 {
-    SSL_EXCERT *exc;
-    exc = OPENSSL_malloc(sizeof(SSL_EXCERT));
-    if (!exc)
-        return 0;
+    SSL_EXCERT *exc = app_malloc(sizeof *exc, "prepend cert");
+
     exc->certfile = NULL;
     exc->keyfile = NULL;
     exc->chainfile = NULL;

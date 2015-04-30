@@ -447,6 +447,7 @@ static BIO_METHOD methods_ebcdic = {
     ebcdic_free,
 };
 
+/* This struct is "unwarranted chumminess with the compiler." */
 typedef struct {
     size_t alloced;
     char buff[1];
@@ -461,9 +462,7 @@ static int ebcdic_new(BIO *bi)
 {
     EBCDIC_OUTBUFF *wbuf;
 
-    wbuf = OPENSSL_malloc(sizeof(EBCDIC_OUTBUFF) + 1024);
-    if (!wbuf)
-        return 0;
+    wbuf = app_malloc(sizeof(EBCDIC_OUTBUFF) + 1024, "ebcdef wbuf");
     wbuf->alloced = 1024;
     wbuf->buff[0] = '\0';
 
@@ -518,9 +517,7 @@ static int ebcdic_write(BIO *b, const char *in, int inl)
         num = num + num;        /* double the size */
         if (num < inl)
             num = inl;
-        wbuf = OPENSSL_malloc(sizeof(EBCDIC_OUTBUFF) + num);
-        if (!wbuf)
-            return 0;
+        wbuf = app_malloc(sizeof(EBCDIC_OUTBUFF) + num, "grow ebcdic wbuf");
         OPENSSL_free(b->ptr);
 
         wbuf->alloced = num;
@@ -2018,10 +2015,7 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
     struct timeval *timeoutp;
 #endif
 
-    if ((buf = OPENSSL_malloc(bufsize)) == NULL) {
-        BIO_printf(bio_err, "out of memory\n");
-        goto err;
-    }
+    buf = app_malloc(bufsize, "server buffer");
 #ifdef FIONBIO
     if (s_nbio) {
         unsigned long sl = 1;
@@ -2542,22 +2536,20 @@ static int init_ssl_connection(SSL *con)
         BIO_printf(bio_s_out, "Keying material exporter:\n");
         BIO_printf(bio_s_out, "    Label: '%s'\n", keymatexportlabel);
         BIO_printf(bio_s_out, "    Length: %i bytes\n", keymatexportlen);
-        exportedkeymat = OPENSSL_malloc(keymatexportlen);
-        if (exportedkeymat != NULL) {
-            if (!SSL_export_keying_material(con, exportedkeymat,
-                                            keymatexportlen,
-                                            keymatexportlabel,
-                                            strlen(keymatexportlabel),
-                                            NULL, 0, 0)) {
-                BIO_printf(bio_s_out, "    Error\n");
-            } else {
-                BIO_printf(bio_s_out, "    Keying material: ");
-                for (i = 0; i < keymatexportlen; i++)
-                    BIO_printf(bio_s_out, "%02X", exportedkeymat[i]);
-                BIO_printf(bio_s_out, "\n");
-            }
-            OPENSSL_free(exportedkeymat);
+        exportedkeymat = app_malloc(keymatexportlen, "export key");
+        if (!SSL_export_keying_material(con, exportedkeymat,
+                                        keymatexportlen,
+                                        keymatexportlabel,
+                                        strlen(keymatexportlabel),
+                                        NULL, 0, 0)) {
+            BIO_printf(bio_s_out, "    Error\n");
+        } else {
+            BIO_printf(bio_s_out, "    Keying material: ");
+            for (i = 0; i < keymatexportlen; i++)
+                BIO_printf(bio_s_out, "%02X", exportedkeymat[i]);
+            BIO_printf(bio_s_out, "\n");
         }
+        OPENSSL_free(exportedkeymat);
     }
 
     return (1);
@@ -2593,9 +2585,7 @@ static int www_body(char *hostname, int s, int stype, unsigned char *context)
     int total_bytes = 0;
 #endif
 
-    buf = OPENSSL_malloc(bufsize);
-    if (buf == NULL)
-        return (0);
+    buf = app_malloc(bufsize, "server www buffer");
     io = BIO_new(BIO_f_buffer());
     ssl_bio = BIO_new(BIO_f_ssl());
     if ((io == NULL) || (ssl_bio == NULL))
@@ -2962,9 +2952,7 @@ static int rev_body(char *hostname, int s, int stype, unsigned char *context)
     KSSL_CTX *kctx;
 #endif
 
-    buf = OPENSSL_malloc(bufsize);
-    if (buf == NULL)
-        return (0);
+    buf = app_malloc(bufsize, "server rev buffer");
     io = BIO_new(BIO_f_buffer());
     ssl_bio = BIO_new(BIO_f_ssl());
     if ((io == NULL) || (ssl_bio == NULL))
@@ -3161,14 +3149,8 @@ static simple_ssl_session *first = NULL;
 
 static int add_session(SSL *ssl, SSL_SESSION *session)
 {
-    simple_ssl_session *sess;
+    simple_ssl_session *sess = app_malloc(sizeof *sess, "get session");
     unsigned char *p;
-
-    sess = OPENSSL_malloc(sizeof(simple_ssl_session));
-    if (!sess) {
-        BIO_printf(bio_err, "Out of memory adding to external cache\n");
-        return 0;
-    }
 
     SSL_SESSION_get_id(session, &sess->idlen);
     sess->derlen = i2d_SSL_SESSION(session, NULL);
@@ -3179,8 +3161,8 @@ static int add_session(SSL *ssl, SSL_SESSION *session)
     }
 
     sess->id = BUF_memdup(SSL_SESSION_get_id(session, NULL), sess->idlen);
-    sess->der = OPENSSL_malloc(sess->derlen);
-    if (!sess->id || !sess->der) {
+    sess->der = app_malloc(sess->derlen, "get session buffer");
+    if (!sess->id) {
         BIO_printf(bio_err, "Out of memory adding to external cache\n");
         OPENSSL_free(sess->id);
         OPENSSL_free(sess->der);

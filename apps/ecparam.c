@@ -229,16 +229,10 @@ int ecparam_main(int argc, char **argv)
 
     if (list_curves) {
         EC_builtin_curve *curves = NULL;
-        size_t crv_len = 0;
-        size_t n = 0;
+        size_t crv_len = EC_get_builtin_curves(NULL, 0);
+        size_t n;
 
-        crv_len = EC_get_builtin_curves(NULL, 0);
-
-        curves = OPENSSL_malloc((int)(sizeof(EC_builtin_curve) * crv_len));
-
-        if (curves == NULL)
-            goto end;
-
+        curves = app_malloc((int)(sizeof *curves * crv_len), "list curves");
         if (!EC_get_builtin_curves(curves, crv_len)) {
             OPENSSL_free(curves);
             goto end;
@@ -346,7 +340,7 @@ int ecparam_main(int argc, char **argv)
                 || (ec_gen = BN_new()) == NULL
                 || (ec_order = BN_new()) == NULL
                 || (ec_cofactor = BN_new()) == NULL) {
-            perror("OPENSSL_malloc");
+            perror("Can't allocate BN");
             goto end;
         }
 
@@ -388,11 +382,7 @@ int ecparam_main(int argc, char **argv)
         if ((tmp_len = (size_t)BN_num_bytes(ec_cofactor)) > buf_len)
             buf_len = tmp_len;
 
-        buffer = OPENSSL_malloc(buf_len);
-        if (buffer == NULL) {
-            perror("OPENSSL_malloc");
-            goto end;
-        }
+        buffer = app_malloc(buf_len, "BN buffer");
 
         BIO_printf(out, "EC_GROUP *get_ec_group_%d(void)\n{\n", len);
         print_bignum_var(out, ec_p, "ec_p", len, buffer);

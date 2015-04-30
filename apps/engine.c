@@ -98,9 +98,7 @@ static int append_buf(char **buf, const char *s, int *size, int step)
 
     if (*buf == NULL) {
         *size = step;
-        *buf = OPENSSL_malloc(*size);
-        if (*buf == NULL)
-            return 0;
+        *buf = app_malloc(*size, "engine buffer");
         **buf = '\0';
     }
 
@@ -211,8 +209,7 @@ static int util_verbose(ENGINE *e, int verbose, BIO *out, const char *indent)
             if ((len = ENGINE_ctrl(e, ENGINE_CTRL_GET_NAME_LEN_FROM_CMD, num,
                                    NULL, NULL)) <= 0)
                 goto err;
-            if ((name = OPENSSL_malloc(len + 1)) == NULL)
-                goto err;
+            name = app_malloc(len + 1, "name buffer");
             if (ENGINE_ctrl(e, ENGINE_CTRL_GET_NAME_FROM_CMD, num, name,
                             NULL) <= 0)
                 goto err;
@@ -221,8 +218,7 @@ static int util_verbose(ENGINE *e, int verbose, BIO *out, const char *indent)
                                    NULL, NULL)) < 0)
                 goto err;
             if (len > 0) {
-                if ((desc = OPENSSL_malloc(len + 1)) == NULL)
-                    goto err;
+                desc = app_malloc(len + 1, "description buffer");
                 if (ENGINE_ctrl(e, ENGINE_CTRL_GET_DESC_FROM_CMD, num, desc,
                                 NULL) <= 0)
                     goto err;

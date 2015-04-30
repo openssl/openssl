@@ -791,17 +791,9 @@ int speed_main(int argc, char **argv)
         ecdh_doit[i] = 0;
 #endif
 
-    if ((buf_malloc = OPENSSL_malloc((int)BUFSIZE + misalign)) == NULL) {
-        BIO_printf(bio_err, "out of memory\n");
-        goto end;
-    }
-    if ((buf2_malloc = OPENSSL_malloc((int)BUFSIZE + misalign)) == NULL) {
-        BIO_printf(bio_err, "out of memory\n");
-        goto end;
-    }
+    buf = buf_malloc = app_malloc((int)BUFSIZE + misalign, "input buffer");
+    buf2 = buf2_malloc = app_malloc((int)BUFSIZE + misalign, "output buffer");
     misalign = 0;
-    buf = buf_malloc;
-    buf2 = buf2_malloc;
 
     prog = opt_init(argc, argv, speed_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -2452,13 +2444,8 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher)
     EVP_CIPHER_CTX ctx;
     double d = 0.0;
 
-    inp = OPENSSL_malloc(mblengths[num - 1]);
-    out = OPENSSL_malloc(mblengths[num - 1] + 1024);
-    if (!inp || !out) {
-        BIO_printf(bio_err, "Out of memory\n");
-        goto end;
-    }
-
+    inp = app_malloc(mblengths[num - 1], "multiblock input buffer");
+    out = app_malloc(mblengths[num - 1] + 1024, "multiblock output buffer");
     EVP_CIPHER_CTX_init(&ctx);
     EVP_EncryptInit_ex(&ctx, evp_cipher, NULL, no_key, no_iv);
     EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_AEAD_SET_MAC_KEY, sizeof(no_key),
@@ -2541,7 +2528,6 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher)
         fprintf(stdout, "\n");
     }
 
-end:
     if (inp)
         OPENSSL_free(inp);
     if (out)

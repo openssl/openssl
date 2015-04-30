@@ -139,10 +139,7 @@ int dgst_main(int argc, char **argv)
     int engine_impl = 0;
 
     prog = opt_progname(argv[0]);
-    if ((buf = OPENSSL_malloc(BUFSIZE)) == NULL) {
-        BIO_printf(bio_err, "%s: out of memory\n", prog);
-        goto end;
-    }
+    buf = app_malloc(BUFSIZE, "I/O buffer");
     md = EVP_get_digestbyname(prog);
 
     prog = opt_init(argc, argv, dgst_options);
@@ -394,11 +391,7 @@ int dgst_main(int argc, char **argv)
             goto end;
         }
         siglen = EVP_PKEY_size(sigkey);
-        sigbuf = OPENSSL_malloc(siglen);
-        if (!sigbuf) {
-            BIO_printf(bio_err, "Out of memory\n");
-            goto end;
-        }
+        sigbuf = app_malloc(siglen, "signature buffer");
         siglen = BIO_read(sigbio, sigbuf, siglen);
         BIO_free(sigbio);
         if (siglen <= 0) {
