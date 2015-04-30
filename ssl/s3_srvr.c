@@ -3271,8 +3271,7 @@ int ssl3_get_client_certificate(SSL *s)
         EVP_PKEY_free(pkey);
     }
 
-    if (s->session->peer != NULL) /* This should not be needed */
-        X509_free(s->session->peer);
+    X509_free(s->session->peer);
     s->session->peer = sk_X509_shift(sk);
     s->session->verify_result = s->verify_result;
 
@@ -3287,8 +3286,7 @@ int ssl3_get_client_certificate(SSL *s)
             goto err;
         }
     }
-    if (s->session->sess_cert->cert_chain != NULL)
-        sk_X509_pop_free(s->session->sess_cert->cert_chain, X509_free);
+    sk_X509_pop_free(s->session->sess_cert->cert_chain, X509_free);
     s->session->sess_cert->cert_chain = sk;
     /*
      * Inconsistency alert: cert_chain does *not* include the peer's own
@@ -3303,10 +3301,8 @@ int ssl3_get_client_certificate(SSL *s)
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
     }
  err:
-    if (x != NULL)
-        X509_free(x);
-    if (sk != NULL)
-        sk_X509_pop_free(sk, X509_free);
+    X509_free(x);
+    sk_X509_pop_free(sk, X509_free);
     return (ret);
 }
 

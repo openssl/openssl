@@ -532,9 +532,7 @@ void SSL_free(SSL *s)
     }
 #endif
 
-    if (s->param)
-        X509_VERIFY_PARAM_free(s->param);
-
+    X509_VERIFY_PARAM_free(s->param);
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL, s, &s->ex_data);
 
     if (s->bbio != NULL) {
@@ -581,8 +579,7 @@ void SSL_free(SSL *s)
     if (s->tlsext_ellipticcurvelist)
         OPENSSL_free(s->tlsext_ellipticcurvelist);
 # endif                         /* OPENSSL_NO_EC */
-    if (s->tlsext_ocsp_exts)
-        sk_X509_EXTENSION_pop_free(s->tlsext_ocsp_exts, X509_EXTENSION_free);
+    sk_X509_EXTENSION_pop_free(s->tlsext_ocsp_exts, X509_EXTENSION_free);
     if (s->tlsext_ocsp_ids)
         sk_OCSP_RESPID_pop_free(s->tlsext_ocsp_ids, OCSP_RESPID_free);
     if (s->tlsext_ocsp_resp)
@@ -591,8 +588,7 @@ void SSL_free(SSL *s)
         OPENSSL_free(s->alpn_client_proto_list);
 #endif
 
-    if (s->client_CA != NULL)
-        sk_X509_NAME_pop_free(s->client_CA, X509_NAME_free);
+    sk_X509_NAME_pop_free(s->client_CA, X509_NAME_free);
 
     if (s->method != NULL)
         s->method->ssl_free(s);
@@ -2032,8 +2028,7 @@ void SSL_CTX_free(SSL_CTX *a)
     }
 #endif
 
-    if (a->param)
-        X509_VERIFY_PARAM_free(a->param);
+    X509_VERIFY_PARAM_free(a->param);
 
     /*
      * Free internal session cache. However: the remove_cb() may reference
@@ -2052,17 +2047,14 @@ void SSL_CTX_free(SSL_CTX *a)
     if (a->sessions != NULL)
         lh_SSL_SESSION_free(a->sessions);
 
-    if (a->cert_store != NULL)
-        X509_STORE_free(a->cert_store);
+    X509_STORE_free(a->cert_store);
     if (a->cipher_list != NULL)
         sk_SSL_CIPHER_free(a->cipher_list);
     if (a->cipher_list_by_id != NULL)
         sk_SSL_CIPHER_free(a->cipher_list_by_id);
     ssl_cert_free(a->cert);
-    if (a->client_CA != NULL)
-        sk_X509_NAME_pop_free(a->client_CA, X509_NAME_free);
-    if (a->extra_certs != NULL)
-        sk_X509_pop_free(a->extra_certs, X509_free);
+    sk_X509_NAME_pop_free(a->client_CA, X509_NAME_free);
+    sk_X509_pop_free(a->extra_certs, X509_free);
     a->comp_methods = NULL;
 
 #ifndef OPENSSL_NO_SRTP
@@ -3186,8 +3178,7 @@ X509_STORE *SSL_CTX_get_cert_store(const SSL_CTX *ctx)
 
 void SSL_CTX_set_cert_store(SSL_CTX *ctx, X509_STORE *store)
 {
-    if (ctx->cert_store != NULL)
-        X509_STORE_free(ctx->cert_store);
+    X509_STORE_free(ctx->cert_store);
     ctx->cert_store = store;
 }
 

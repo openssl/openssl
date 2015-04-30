@@ -732,8 +732,7 @@ void SSL_SESSION_free(SSL_SESSION *ss)
     OPENSSL_cleanse(ss->master_key, sizeof ss->master_key);
     OPENSSL_cleanse(ss->session_id, sizeof ss->session_id);
     ssl_sess_cert_free(ss->sess_cert);
-    if (ss->peer != NULL)
-        X509_free(ss->peer);
+    X509_free(ss->peer);
     if (ss->ciphers != NULL)
         sk_SSL_CIPHER_free(ss->ciphers);
 #ifndef OPENSSL_NO_TLSEXT

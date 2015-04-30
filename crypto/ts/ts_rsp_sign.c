@@ -207,8 +207,7 @@ int TS_RESP_CTX_set_signer_cert(TS_RESP_CTX *ctx, X509 *signer)
               TS_R_INVALID_SIGNER_CERTIFICATE_PURPOSE);
         return 0;
     }
-    if (ctx->signer_cert)
-        X509_free(ctx->signer_cert);
+    X509_free(ctx->signer_cert);
     ctx->signer_cert = signer;
     CRYPTO_add(&ctx->signer_cert->references, +1, CRYPTO_LOCK_X509);
     return 1;
@@ -237,10 +236,8 @@ int TS_RESP_CTX_set_def_policy(TS_RESP_CTX *ctx, ASN1_OBJECT *def_policy)
 int TS_RESP_CTX_set_certs(TS_RESP_CTX *ctx, STACK_OF(X509) *certs)
 {
 
-    if (ctx->certs) {
-        sk_X509_pop_free(ctx->certs, X509_free);
-        ctx->certs = NULL;
-    }
+    sk_X509_pop_free(ctx->certs, X509_free);
+    ctx->certs = NULL;
     if (!certs)
         return 1;
     if (!(ctx->certs = X509_chain_up_ref(certs))) {

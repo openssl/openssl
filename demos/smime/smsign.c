@@ -68,8 +68,7 @@ int main(int argc, char **argv)
         ERR_print_errors_fp(stderr);
     }
     PKCS7_free(p7);
-    if (scert)
-        X509_free(scert);
+    X509_free(scert);
     EVP_PKEY_free(skey);
     BIO_free(in);
     BIO_free(out);

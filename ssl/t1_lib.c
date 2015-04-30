@@ -2219,11 +2219,8 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p,
                 }
                 sdata = data;
                 if (dsize > 0) {
-                    if (s->tlsext_ocsp_exts) {
-                        sk_X509_EXTENSION_pop_free(s->tlsext_ocsp_exts,
-                                                   X509_EXTENSION_free);
-                    }
-
+                    sk_X509_EXTENSION_pop_free(s->tlsext_ocsp_exts,
+                                               X509_EXTENSION_free);
                     s->tlsext_ocsp_exts =
                         d2i_X509_EXTENSIONS(NULL, &sdata, dsize);
                     if (!s->tlsext_ocsp_exts || (data + dsize != sdata)) {

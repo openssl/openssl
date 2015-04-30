@@ -104,10 +104,9 @@ X509 *X509_REQ_to_X509(X509_REQ *r, int days, EVP_PKEY *pkey)
 
     if (!X509_sign(ret, pkey, EVP_md5()))
         goto err;
-    if (0) {
+    return ret;
+
  err:
-        X509_free(ret);
-        ret = NULL;
-    }
-    return (ret);
+    X509_free(ret);
+    return NULL;
 }

@@ -215,8 +215,7 @@ int crl2pkcs7_main(int argc, char **argv)
     BIO_free(in);
     BIO_free_all(out);
     PKCS7_free(p7);
-    if (crl != NULL)
-        X509_CRL_free(crl);
+    X509_CRL_free(crl);
 
     return (ret);
 }
@@ -267,7 +266,6 @@ static int add_certs_from_file(STACK_OF(X509) *stack, char *certfile)
  end:
     /* never need to OPENSSL_free x */
     BIO_free(in);
-    if (sk != NULL)
-        sk_X509_INFO_free(sk);
+    sk_X509_INFO_free(sk);
     return (ret);
 }

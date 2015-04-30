@@ -3126,8 +3126,7 @@ void ssl3_free(SSL *s)
     EC_KEY_free(s->s3->tmp.ecdh);
 #endif
 
-    if (s->s3->tmp.ca_names != NULL)
-        sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
+    sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
     BIO_free(s->s3->handshake_buffer);
     if (s->s3->handshake_dgst)
         ssl3_free_digest_list(s);
@@ -3149,8 +3148,7 @@ void ssl3_clear(SSL *s)
     int init_extra;
 
     ssl3_cleanup_key_block(s);
-    if (s->s3->tmp.ca_names != NULL)
-        sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
+    sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
 
 #ifndef OPENSSL_NO_DH
     DH_free(s->s3->tmp.dh);
@@ -3925,10 +3923,8 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         break;
 
     case SSL_CTRL_CLEAR_EXTRA_CHAIN_CERTS:
-        if (ctx->extra_certs) {
-            sk_X509_pop_free(ctx->extra_certs, X509_free);
-            ctx->extra_certs = NULL;
-        }
+        sk_X509_pop_free(ctx->extra_certs, X509_free);
+        ctx->extra_certs = NULL;
         break;
 
     case SSL_CTRL_CHAIN:

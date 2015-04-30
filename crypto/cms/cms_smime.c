@@ -455,10 +455,8 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
     if (out != tmpout)
         BIO_free_all(tmpout);
 
-    if (cms_certs)
-        sk_X509_pop_free(cms_certs, X509_free);
-    if (crls)
-        sk_X509_CRL_pop_free(crls, X509_CRL_free);
+    sk_X509_pop_free(cms_certs, X509_free);
+    sk_X509_CRL_pop_free(crls, X509_CRL_free);
 
     return ret;
 }

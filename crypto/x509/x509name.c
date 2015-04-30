@@ -277,8 +277,7 @@ int X509_NAME_add_entry(X509_NAME *name, X509_NAME_ENTRY *ne, int loc,
     }
     return (1);
  err:
-    if (new_name != NULL)
-        X509_NAME_ENTRY_free(new_name);
+    X509_NAME_ENTRY_free(new_name);
     return (0);
 }
 

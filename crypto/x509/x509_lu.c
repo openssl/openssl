@@ -217,6 +217,8 @@ X509_STORE *X509_STORE_new(void)
 
 static void cleanup(X509_OBJECT *a)
 {
+    if (!a)
+        return;
     if (a->type == X509_LU_X509) {
         X509_free(a->data.x509);
     } else if (a->type == X509_LU_CRL) {
@@ -260,8 +262,7 @@ void X509_STORE_free(X509_STORE *vfy)
     sk_X509_OBJECT_pop_free(vfy->objs, cleanup);
 
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509_STORE, vfy, &vfy->ex_data);
-    if (vfy->param)
-        X509_VERIFY_PARAM_free(vfy->param);
+    X509_VERIFY_PARAM_free(vfy->param);
     OPENSSL_free(vfy);
 }
 
@@ -413,6 +414,8 @@ void X509_OBJECT_up_ref_count(X509_OBJECT *a)
 
 void X509_OBJECT_free_contents(X509_OBJECT *a)
 {
+    if (!a)
+        return;
     switch (a->type) {
     case X509_LU_X509:
         X509_free(a->data.x509);

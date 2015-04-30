@@ -150,8 +150,7 @@ static int x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it)
  memerr:
     ASN1err(ASN1_F_X509_NAME_EX_NEW, ERR_R_MALLOC_FAILURE);
     if (ret) {
-        if (ret->entries)
-            sk_X509_NAME_ENTRY_free(ret->entries);
+        sk_X509_NAME_ENTRY_free(ret->entries);
         OPENSSL_free(ret);
     }
     return 0;
@@ -160,6 +159,7 @@ static int x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it)
 static void x509_name_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
     X509_NAME *a;
+
     if (!pval || !*pval)
         return;
     a = (X509_NAME *)*pval;
@@ -232,8 +232,7 @@ static int x509_name_ex_d2i(ASN1_VALUE **val,
     *in = p;
     return ret;
  err:
-    if (nm.x != NULL)
-        X509_NAME_free(nm.x);
+    X509_NAME_free(nm.x);
     ASN1err(ASN1_F_X509_NAME_EX_D2I, ERR_R_NESTED_ASN1_ERROR);
     return 0;
 }
@@ -394,11 +393,9 @@ static int x509_name_canon(X509_NAME *a)
 
  err:
 
-    if (tmpentry)
-        X509_NAME_ENTRY_free(tmpentry);
-    if (intname)
-        sk_STACK_OF_X509_NAME_ENTRY_pop_free(intname,
-                                             local_sk_X509_NAME_ENTRY_pop_free);
+    X509_NAME_ENTRY_free(tmpentry);
+    sk_STACK_OF_X509_NAME_ENTRY_pop_free(intname,
+                                         local_sk_X509_NAME_ENTRY_pop_free);
     return ret;
 }
 

@@ -70,8 +70,7 @@ int main(int argc, char **argv)
     if (cms)
         CMS_ContentInfo_free(cms);
 
-    if (cacert)
-        X509_free(cacert);
+    X509_free(cacert);
 
     BIO_free(in);
     BIO_free(out);

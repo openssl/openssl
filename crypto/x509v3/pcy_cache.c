@@ -221,8 +221,7 @@ void policy_cache_free(X509_POLICY_CACHE *cache)
         return;
     if (cache->anyPolicy)
         policy_data_free(cache->anyPolicy);
-    if (cache->data)
-        sk_X509_POLICY_DATA_pop_free(cache->data, policy_data_free);
+    sk_X509_POLICY_DATA_pop_free(cache->data, policy_data_free);
     OPENSSL_free(cache);
 }
 

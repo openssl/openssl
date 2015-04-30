@@ -266,8 +266,7 @@ int int_rsa_verify(int dtype, const unsigned char *m,
             ret = 1;
     }
  err:
-    if (sig != NULL)
-        X509_SIG_free(sig);
+    X509_SIG_free(sig);
     if (s != NULL) {
         OPENSSL_cleanse(s, (unsigned int)siglen);
         OPENSSL_free(s);

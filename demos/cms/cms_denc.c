@@ -79,10 +79,8 @@ int main(int argc, char **argv)
 
     if (cms)
         CMS_ContentInfo_free(cms);
-    if (rcert)
-        X509_free(rcert);
-    if (recips)
-        sk_X509_pop_free(recips, X509_free);
+    X509_free(rcert);
+    sk_X509_pop_free(recips, X509_free);
 
     BIO_free(in);
     BIO_free(out);

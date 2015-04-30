@@ -1134,8 +1134,7 @@ int PKCS7_set_signed_attributes(PKCS7_SIGNER_INFO *p7si,
 {
     int i;
 
-    if (p7si->auth_attr != NULL)
-        sk_X509_ATTRIBUTE_pop_free(p7si->auth_attr, X509_ATTRIBUTE_free);
+    sk_X509_ATTRIBUTE_pop_free(p7si->auth_attr, X509_ATTRIBUTE_free);
     p7si->auth_attr = sk_X509_ATTRIBUTE_dup(sk);
     if (p7si->auth_attr == NULL)
         return 0;
@@ -1154,8 +1153,7 @@ int PKCS7_set_attributes(PKCS7_SIGNER_INFO *p7si,
 {
     int i;
 
-    if (p7si->unauth_attr != NULL)
-        sk_X509_ATTRIBUTE_pop_free(p7si->unauth_attr, X509_ATTRIBUTE_free);
+    sk_X509_ATTRIBUTE_pop_free(p7si->unauth_attr, X509_ATTRIBUTE_free);
     p7si->unauth_attr = sk_X509_ATTRIBUTE_dup(sk);
     if (p7si->unauth_attr == NULL)
         return 0;

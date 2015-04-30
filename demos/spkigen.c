@@ -166,7 +166,6 @@ EVP_PKEY *pkey;
     pk = NULL;
     ok = 1;
  err:
-    if (pk != NULL)
-        X509_PUBKEY_free(pk);
+    X509_PUBKEY_free(pk);
     return (ok);
 }

@@ -168,6 +168,7 @@ X509_VERIFY_PARAM *X509_VERIFY_PARAM_new(void)
 {
     X509_VERIFY_PARAM *param;
     X509_VERIFY_PARAM_ID *paramid;
+
     param = OPENSSL_malloc(sizeof(X509_VERIFY_PARAM));
     if (!param)
         return NULL;
@@ -185,7 +186,7 @@ X509_VERIFY_PARAM *X509_VERIFY_PARAM_new(void)
 
 void X509_VERIFY_PARAM_free(X509_VERIFY_PARAM *param)
 {
-    if (param == NULL)
+    if (!param)
         return;
     x509_verify_param_zero(param);
     OPENSSL_free(param->id);
@@ -644,7 +645,6 @@ const X509_VERIFY_PARAM *X509_VERIFY_PARAM_lookup(const char *name)
 
 void X509_VERIFY_PARAM_table_cleanup(void)
 {
-    if (param_table)
-        sk_X509_VERIFY_PARAM_pop_free(param_table, X509_VERIFY_PARAM_free);
+    sk_X509_VERIFY_PARAM_pop_free(param_table, X509_VERIFY_PARAM_free);
     param_table = NULL;
 }

@@ -1314,21 +1314,18 @@ int ssl3_get_server_certificate(SSL *s)
          * Why would the following ever happen? We just created sc a couple
          * of lines ago.
          */
-        if (sc->peer_pkeys[i].x509 != NULL)
-            X509_free(sc->peer_pkeys[i].x509);
+        X509_free(sc->peer_pkeys[i].x509);
         sc->peer_pkeys[i].x509 = x;
         sc->peer_key = &(sc->peer_pkeys[i]);
 
-        if (s->session->peer != NULL)
-            X509_free(s->session->peer);
+        X509_free(s->session->peer);
         CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
         s->session->peer = x;
     } else {
         sc->peer_cert_type = i;
         sc->peer_key = NULL;
 
-        if (s->session->peer != NULL)
-            X509_free(s->session->peer);
+        X509_free(s->session->peer);
         s->session->peer = NULL;
     }
     s->session->verify_result = s->verify_result;
@@ -2149,15 +2146,13 @@ int ssl3_get_certificate_request(SSL *s)
     /* we should setup a certificate to return.... */
     s->s3->tmp.cert_req = 1;
     s->s3->tmp.ctype_num = ctype_num;
-    if (s->s3->tmp.ca_names != NULL)
-        sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
+    sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
     s->s3->tmp.ca_names = ca_sk;
     ca_sk = NULL;
 
     ret = 1;
  err:
-    if (ca_sk != NULL)
-        sk_X509_NAME_pop_free(ca_sk, X509_NAME_free);
+    sk_X509_NAME_pop_free(ca_sk, X509_NAME_free);
     return (ret);
 }
 
@@ -3339,8 +3334,7 @@ int ssl3_send_client_certificate(SSL *s)
                    SSL_R_BAD_DATA_RETURNED_BY_CALLBACK);
         }
 
-        if (x509 != NULL)
-            X509_free(x509);
+        X509_free(x509);
         if (pkey != NULL)
             EVP_PKEY_free(pkey);
         if (i && !ssl3_check_client_certificate(s))

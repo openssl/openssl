@@ -221,10 +221,8 @@ int verify_main(int argc, char **argv)
     }
 
  end:
-    if (vpm)
-        X509_VERIFY_PARAM_free(vpm);
-    if (store != NULL)
-        X509_STORE_free(store);
+    X509_VERIFY_PARAM_free(vpm);
+    X509_STORE_free(store);
     sk_X509_pop_free(untrusted, X509_free);
     sk_X509_pop_free(trusted, X509_free);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
@@ -283,8 +281,7 @@ static int check(X509_STORE *ctx, char *file,
         }
         sk_X509_pop_free(chain, X509_free);
     }
-    if (x != NULL)
-        X509_free(x);
+    X509_free(x);
 
     return (ret);
 }

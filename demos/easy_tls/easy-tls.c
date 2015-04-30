@@ -943,8 +943,7 @@ static void write_info(SSL *ssl, int *info_fd)
 
             peercert = SSL_get_peer_certificate(ssl);
             tls_get_x509_subject_name_oneline(peercert, &peer);
-            if (peercert != NULL)
-                X509_free(peercert);
+            X509_free(peercert);
         }
         if (peer.str[0] == '\0')
             v_ok = '0';         /* no cert at all */

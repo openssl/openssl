@@ -1219,11 +1219,9 @@ void ssl_excert_free(SSL_EXCERT *exc)
 {
     SSL_EXCERT *curr;
     while (exc) {
-        if (exc->cert)
-            X509_free(exc->cert);
+        X509_free(exc->cert);
         EVP_PKEY_free(exc->key);
-        if (exc->chain)
-            sk_X509_pop_free(exc->chain, X509_free);
+        sk_X509_pop_free(exc->chain, X509_free);
         curr = exc;
         exc = exc->next;
         OPENSSL_free(curr);
@@ -1385,8 +1383,7 @@ void print_ssl_summary(SSL *s)
             BIO_printf(bio_err, "Hash used: %s\n", OBJ_nid2sn(nid));
     } else
         BIO_puts(bio_err, "No peer certificate\n");
-    if (peer)
-        X509_free(peer);
+    X509_free(peer);
 #ifndef OPENSSL_NO_EC
     ssl_print_point_formats(bio_err, s);
     if (SSL_is_server(s))
@@ -1501,10 +1498,8 @@ int ssl_load_stores(SSL_CTX *ctx,
     }
     rv = 1;
  err:
-    if (vfy)
-        X509_STORE_free(vfy);
-    if (ch)
-        X509_STORE_free(ch);
+    X509_STORE_free(vfy);
+    X509_STORE_free(ch);
     return rv;
 }
 

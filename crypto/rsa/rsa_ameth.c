@@ -381,8 +381,7 @@ static int rsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
         rv = rsa_pss_param_print(bp, pss, maskHash, indent);
         if (pss)
             RSA_PSS_PARAMS_free(pss);
-        if (maskHash)
-            X509_ALGOR_free(maskHash);
+        X509_ALGOR_free(maskHash);
         if (!rv)
             return 0;
     } else if (!sig && BIO_puts(bp, "\n") <= 0)
@@ -474,8 +473,7 @@ static int rsa_md_to_mgf1(X509_ALGOR **palg, const EVP_MD *mgf1md)
     stmp = NULL;
  err:
     ASN1_STRING_free(stmp);
-    if (algtmp)
-        X509_ALGOR_free(algtmp);
+    X509_ALGOR_free(algtmp);
     if (*palg)
         return 1;
     return 0;
@@ -652,8 +650,7 @@ static int rsa_pss_to_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pkctx,
 
  err:
     RSA_PSS_PARAMS_free(pss);
-    if (maskHash)
-        X509_ALGOR_free(maskHash);
+    X509_ALGOR_free(maskHash);
     return rv;
 }
 
@@ -840,8 +837,7 @@ static int rsa_cms_decrypt(CMS_RecipientInfo *ri)
 
  err:
     RSA_OAEP_PARAMS_free(oaep);
-    if (maskHash)
-        X509_ALGOR_free(maskHash);
+    X509_ALGOR_free(maskHash);
     return rv;
 }
 
