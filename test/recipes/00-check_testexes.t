@@ -3,6 +3,7 @@
 use strict;
 
 use File::Spec::Functions;
+use File::Basename;
 use OpenSSL::Test qw/:DEFAULT top_file/;
 
 setup("check_testexes");
@@ -10,51 +11,35 @@ setup("check_testexes");
 my $MINFO = top_file("MINFO");
 
  SKIP: {
-     my %foundfiles;
-     my $numtests = 1;
+     skip "because $MINFO not found. If you want this test to run, please do 'perl util/mkfiles.pl > $MINFO'"
+	 unless open(FH,$MINFO);
 
-     if (open(FH,$MINFO)) {
-	 while(<FH>) {
-	     chomp;
-	     last if /^RELATIVE_DIRECTORY=test$/;
-	 }
-	 while(<FH>) {
-	     chomp;
-	     last if /^EXE=/;
-	 }
-	 close FH;
-
-	 my $pathfix = sub { return shift; }; # noop
-	 if ($^O eq "MSWin32") {
-	     # Experience has shown that glob needs the backslashes escaped
-	     # to handle the glob glob() gets served.  Otherwise, it sometimes
-	     # considers the backslash an escape of the next character, most
-	     # notably the [.
-	     # (if the single backslash is followed by a *, however, the *
-	     # doesn't seem to be considered escaped...  go figure...)
-	     $pathfix = sub { shift; s/\\/\\\\/g; return $_; };
-	 }
-	 s/^EXE=\s*//;
-	 s/\s*$//;
-	 %foundfiles =
-	     map {
-		 my $key = $_;
-		 s/_?test$//;
-		 s/(sha\d+)t/$1/;
-		 $key =>
-		     $pathfix->(top_file("test", "recipes",
-					 "[0-9][0-9]-test_$_.t")); } split(/\s+/, $_);
-	 $numtests = scalar keys %foundfiles;
+     while(<FH>) {
+	 chomp;
+	 last if /^RELATIVE_DIRECTORY=test$/;
      }
+     while(<FH>) {
+	 chomp;
+	 last if /^EXE=/;
+     }
+     close FH;
 
-     plan tests => $numtests;
+     s/^EXE=\s*//;
+     s/\s*$//;
+     my @expected_tests =
+	 map { s/\..*$//;	# Remove extension
+	       s/_?test$//;	# Remove possible underscore
+	       s/(sha\d+)t/$1/;	# sha comes with no t at the end
+	       $_; } split(/\s+/, $_);
 
-     skip "because $MINFO not found. If you want this test to run, please do 'perl util/mkfiles.pl > $MINFO'", 1
-	 unless %foundfiles;
+     plan tests => scalar @expected_tests;
 
-     foreach (sort keys %foundfiles) {
-	 my @check = glob($foundfiles{$_});
-	 ok(scalar @check, "check that a test for $_ exists")
-	     || diag("Expected to find something matching $foundfiles{$_}");
+     my @found_tests =
+	 map { basename($_) } glob(top_file("test", "recipes", "*.t"));
+
+     foreach my $test (sort @expected_tests) {
+	 ok(scalar(grep(/^[0-9][0-9]-test_$test\.t$/, @found_tests)),
+	    "check that a test for $test exists")
+	     || diag("Expected to find something matching '[0-9][0-9]-test_$test.t'");
      }
 }
