@@ -312,6 +312,8 @@ void ECDSA_METHOD_set_name(ECDSA_METHOD *ecdsa_method, char *name)
 
 void ECDSA_METHOD_free(ECDSA_METHOD *ecdsa_method)
 {
+    if (!ecdsa_method)
+        return;
     if (ecdsa_method->flags & ECDSA_METHOD_FLAG_ALLOCATED)
         OPENSSL_free(ecdsa_method);
 }

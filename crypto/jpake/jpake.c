@@ -125,6 +125,8 @@ JPAKE_CTX *JPAKE_CTX_new(const char *name, const char *peer_name,
 
 void JPAKE_CTX_free(JPAKE_CTX *ctx)
 {
+    if (!ctx)
+        return;
     JPAKE_CTX_release(ctx);
     OPENSSL_free(ctx);
 }

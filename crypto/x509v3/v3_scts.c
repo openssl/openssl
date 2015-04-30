@@ -161,11 +161,11 @@ static void timestamp_print(BIO *out, SCT_TIMESTAMP timestamp)
 
 static void SCT_free(SCT *sct)
 {
-    if (sct) {
-        if (sct->sct)
-            OPENSSL_free(sct->sct);
-        OPENSSL_free(sct);
-    }
+    if (!sct)
+        return;
+    if (sct->sct)
+        OPENSSL_free(sct->sct);
+    OPENSSL_free(sct);
 }
 
 static void SCT_LIST_free(STACK_OF(SCT) *a)
