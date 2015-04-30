@@ -109,6 +109,8 @@
  *
  */
 
+#include <openssl/pqueue.h>
+
 /*****************************************************************************
  *                                                                           *
  * These structures should be considered PRIVATE to the record layer. No     *
