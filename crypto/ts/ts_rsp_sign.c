@@ -225,8 +225,7 @@ int TS_RESP_CTX_set_signer_key(TS_RESP_CTX *ctx, EVP_PKEY *key)
 
 int TS_RESP_CTX_set_def_policy(TS_RESP_CTX *ctx, ASN1_OBJECT *def_policy)
 {
-    if (ctx->default_policy)
-        ASN1_OBJECT_free(ctx->default_policy);
+    ASN1_OBJECT_free(ctx->default_policy);
     if (!(ctx->default_policy = OBJ_dup(def_policy)))
         goto err;
     return 1;

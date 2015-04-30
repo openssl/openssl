@@ -327,8 +327,7 @@ int asn1parse_main(int argc, char **argv)
         OPENSSL_free(header);
     if (strictpem && str != NULL)
         OPENSSL_free(str);
-    if (at != NULL)
-        ASN1_TYPE_free(at);
+    ASN1_TYPE_free(at);
     if (osk != NULL)
         sk_OPENSSL_STRING_free(osk);
     OBJ_cleanup();

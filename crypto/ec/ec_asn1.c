@@ -318,8 +318,7 @@ static int ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
 
     /* clear the old values (if necessary) */
     ASN1_OBJECT_free(field->fieldType);
-    if (field->p.other != NULL)
-        ASN1_TYPE_free(field->p.other);
+    ASN1_TYPE_free(field->p.other);
 
     nid = EC_METHOD_get_field_type(EC_GROUP_method_of(group));
     /* set OID for the field */
@@ -519,10 +518,8 @@ static int ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
             goto err;
         }
     } else {
-        if (curve->seed) {
-            ASN1_BIT_STRING_free(curve->seed);
-            curve->seed = NULL;
-        }
+        ASN1_BIT_STRING_free(curve->seed);
+        curve->seed = NULL;
     }
 
     ok = 1;

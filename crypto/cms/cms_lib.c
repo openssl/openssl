@@ -314,10 +314,8 @@ int CMS_set_detached(CMS_ContentInfo *cms, int detached)
     if (!pos)
         return 0;
     if (detached) {
-        if (*pos) {
-            ASN1_OCTET_STRING_free(*pos);
-            *pos = NULL;
-        }
+        ASN1_OCTET_STRING_free(*pos);
+        *pos = NULL;
         return 1;
     }
     if (!*pos)
@@ -605,13 +603,11 @@ int cms_set1_ias(CMS_IssuerAndSerialNumber **pias, X509 *cert)
         goto err;
     if (!ASN1_STRING_copy(ias->serialNumber, X509_get_serialNumber(cert)))
         goto err;
-    if (*pias)
-        M_ASN1_free_of(*pias, CMS_IssuerAndSerialNumber);
+    M_ASN1_free_of(*pias, CMS_IssuerAndSerialNumber);
     *pias = ias;
     return 1;
  err:
-    if (ias)
-        M_ASN1_free_of(ias, CMS_IssuerAndSerialNumber);
+    M_ASN1_free_of(ias, CMS_IssuerAndSerialNumber);
     CMSerr(CMS_F_CMS_SET1_IAS, ERR_R_MALLOC_FAILURE);
     return 0;
 }
@@ -629,8 +625,7 @@ int cms_set1_keyid(ASN1_OCTET_STRING **pkeyid, X509 *cert)
         CMSerr(CMS_F_CMS_SET1_KEYID, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    if (*pkeyid)
-        ASN1_OCTET_STRING_free(*pkeyid);
+    ASN1_OCTET_STRING_free(*pkeyid);
     *pkeyid = keyid;
     return 1;
 }

@@ -340,8 +340,7 @@ int cms_Receipt_verify(CMS_ContentInfo *cms, CMS_ContentInfo *req_cms)
  err:
     if (rr)
         CMS_ReceiptRequest_free(rr);
-    if (rct)
-        M_ASN1_free_of(rct, CMS_Receipt);
+    M_ASN1_free_of(rct, CMS_Receipt);
 
     return r;
 

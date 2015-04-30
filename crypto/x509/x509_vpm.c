@@ -144,15 +144,11 @@ static void x509_verify_param_zero(X509_VERIFY_PARAM *param)
     param->inh_flags = 0;
     param->flags = 0;
     param->depth = -1;
-    if (param->policies) {
-        sk_ASN1_OBJECT_pop_free(param->policies, ASN1_OBJECT_free);
-        param->policies = NULL;
-    }
+    sk_ASN1_OBJECT_pop_free(param->policies, ASN1_OBJECT_free);
+    param->policies = NULL;
     paramid = param->id;
-    if (paramid->hosts) {
-        string_stack_free(paramid->hosts);
-        paramid->hosts = NULL;
-    }
+    string_stack_free(paramid->hosts);
+    paramid->hosts = NULL;
     if (paramid->peername)
         OPENSSL_free(paramid->peername);
     if (paramid->email) {
@@ -426,10 +422,10 @@ int X509_VERIFY_PARAM_set1_policies(X509_VERIFY_PARAM *param,
 {
     int i;
     ASN1_OBJECT *oid, *doid;
+
     if (!param)
         return 0;
-    if (param->policies)
-        sk_ASN1_OBJECT_pop_free(param->policies, ASN1_OBJECT_free);
+    sk_ASN1_OBJECT_pop_free(param->policies, ASN1_OBJECT_free);
 
     if (!policies) {
         param->policies = NULL;

@@ -460,8 +460,7 @@ X509_EXTENSION *OCSP_accept_responses_new(char **oids)
     }
     x = X509V3_EXT_i2d(NID_id_pkix_OCSP_acceptableResponses, 0, sk);
  err:
-    if (sk)
-        sk_ASN1_OBJECT_pop_free(sk, ASN1_OBJECT_free);
+    sk_ASN1_OBJECT_pop_free(sk, ASN1_OBJECT_free);
     return x;
 }
 
@@ -477,8 +476,7 @@ X509_EXTENSION *OCSP_archive_cutoff_new(char *tim)
         goto err;
     x = X509V3_EXT_i2d(NID_id_pkix_OCSP_archiveCutoff, 0, gt);
  err:
-    if (gt)
-        ASN1_GENERALIZEDTIME_free(gt);
+    ASN1_GENERALIZEDTIME_free(gt);
     return x;
 }
 

@@ -1414,8 +1414,7 @@ BIGNUM *load_serial(char *serialfile, int create, ASN1_INTEGER **retai)
     }
  err:
     BIO_free(in);
-    if (ai != NULL)
-        ASN1_INTEGER_free(ai);
+    ASN1_INTEGER_free(ai);
     return (ret);
 }
 
@@ -1468,8 +1467,7 @@ int save_serial(char *serialfile, char *suffix, BIGNUM *serial,
     }
  err:
     BIO_free_all(out);
-    if (ai != NULL)
-        ASN1_INTEGER_free(ai);
+    ASN1_INTEGER_free(ai);
     return (ret);
 }
 

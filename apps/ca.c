@@ -2033,8 +2033,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         X509_NAME_free(subject);
     if ((dn_subject != NULL) && !email_dn)
         X509_NAME_free(dn_subject);
-    if (tmptm != NULL)
-        ASN1_UTCTIME_free(tmptm);
+    ASN1_UTCTIME_free(tmptm);
     if (ok <= 0) {
         if (ret != NULL)
             X509_free(ret);
@@ -2740,6 +2739,8 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
             }
             if (phold)
                 *phold = hold;
+            else
+                ASN1_OBJECT_free(hold);
         } else if ((reason_code == 9) || (reason_code == 10)) {
             if (!arg_str) {
                 BIO_printf(bio_err, "missing compromised time\n");
@@ -2763,10 +2764,10 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
 
     if (preason)
         *preason = reason_code;
-    if (pinvtm)
+    if (pinvtm) {
         *pinvtm = comp_time;
-    else
-        ASN1_GENERALIZEDTIME_free(comp_time);
+        comp_time = NULL;
+    }
 
     ret = 1;
 
@@ -2774,10 +2775,7 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
 
     if (tmp)
         OPENSSL_free(tmp);
-    if (!phold)
-        ASN1_OBJECT_free(hold);
-    if (!pinvtm)
-        ASN1_GENERALIZEDTIME_free(comp_time);
+    ASN1_GENERALIZEDTIME_free(comp_time);
 
     return ret;
 }

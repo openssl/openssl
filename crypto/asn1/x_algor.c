@@ -92,10 +92,8 @@ int X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype, void *pval)
     if (ptype == 0)
         return 1;
     if (ptype == V_ASN1_UNDEF) {
-        if (alg->parameter) {
-            ASN1_TYPE_free(alg->parameter);
-            alg->parameter = NULL;
-        }
+        ASN1_TYPE_free(alg->parameter);
+        alg->parameter = NULL;
     } else
         ASN1_TYPE_set(alg->parameter, ptype, pval);
     return 1;

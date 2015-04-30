@@ -140,8 +140,7 @@ static int dh_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
     return 1;
 
  err:
-    if (public_key)
-        ASN1_INTEGER_free(public_key);
+    ASN1_INTEGER_free(public_key);
     DH_free(dh);
     return 0;
 
@@ -296,8 +295,7 @@ static int dh_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
     if (dp != NULL)
         OPENSSL_free(dp);
     ASN1_STRING_free(params);
-    if (prkey != NULL)
-        ASN1_STRING_clear_free(prkey);
+    ASN1_STRING_clear_free(prkey);
     return 0;
 }
 
@@ -706,8 +704,7 @@ static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
     if (EVP_PKEY_derive_set_peer(pctx, pkpeer) > 0)
         rv = 1;
  err:
-    if (public_key)
-        ASN1_INTEGER_free(public_key);
+    ASN1_INTEGER_free(public_key);
     EVP_PKEY_free(pkpeer);
     DH_free(dhpeer);
     return rv;
