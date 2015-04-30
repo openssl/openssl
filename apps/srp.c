@@ -336,7 +336,8 @@ int srp_main(int argc, char **argv)
                    "Exactly one of the options -add, -delete, -modify -list must be specified.\n");
         goto opthelp;
     }
-    if ((mode == OPT_DELETE || mode == OPT_MODIFY || OPT_ADD) && argc < 1) {
+    if ((mode == OPT_DELETE || mode == OPT_MODIFY || mode == OPT_ADD)
+        && argc < 1) {
         BIO_printf(bio_err,
                    "Need at least one user for options -add, -delete, -modify. \n");
         goto opthelp;
