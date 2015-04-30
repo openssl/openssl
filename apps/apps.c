@@ -1837,7 +1837,7 @@ X509_NAME *parse_name(const char *cp, long chtype, int canmulti)
     n = X509_NAME_new();
     if (n == NULL)
         return NULL;
-    work = strdup(cp);
+    work = OPENSSL_strdup(cp);
     if (work == NULL)
         goto err;
 
@@ -1894,12 +1894,12 @@ X509_NAME *parse_name(const char *cp, long chtype, int canmulti)
             goto err;
     }
 
-    free(work);
+    OPENSSL_free(work);
     return n;
 
  err:
     X509_NAME_free(n);
-    free(work);
+    OPENSSL_free(work);
     return NULL;
 }
 
