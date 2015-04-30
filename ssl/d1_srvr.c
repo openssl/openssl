@@ -224,11 +224,13 @@ int dtls1_accept(SSL *s)
             if (s->init_buf == NULL) {
                 if ((buf = BUF_MEM_new()) == NULL) {
                     ret = -1;
+                    s->state = SSL_ST_ERR;
                     goto end;
                 }
                 if (!BUF_MEM_grow(buf, SSL3_RT_MAX_PLAIN_LENGTH)) {
                     BUF_MEM_free(buf);
                     ret = -1;
+                    s->state = SSL_ST_ERR;
                     goto end;
                 }
                 s->init_buf = buf;
@@ -236,6 +238,7 @@ int dtls1_accept(SSL *s)
 
             if (!ssl3_setup_buffers(s)) {
                 ret = -1;
+                s->state = SSL_ST_ERR;
                 goto end;
             }
 
@@ -257,6 +260,7 @@ int dtls1_accept(SSL *s)
 #endif
                     if (!ssl_init_wbio_buffer(s, 1)) {
                         ret = -1;
+                        s->state = SSL_ST_ERR;
                         goto end;
                     }
 
@@ -744,6 +748,7 @@ int dtls1_accept(SSL *s)
             s->session->cipher = s->s3->tmp.new_cipher;
             if (!s->method->ssl3_enc->setup_key_block(s)) {
                 ret = -1;
+                s->state = SSL_ST_ERR;
                 goto end;
             }
 
@@ -772,6 +777,7 @@ int dtls1_accept(SSL *s)
                                                           SSL3_CHANGE_CIPHER_SERVER_WRITE))
             {
                 ret = -1;
+                s->state = SSL_ST_ERR;
                 goto end;
             }
 
@@ -852,6 +858,7 @@ int dtls1_accept(SSL *s)
             goto end;
             /* break; */
 
+        case SSL_ST_ERR:
         default:
             SSLerr(SSL_F_DTLS1_ACCEPT, SSL_R_UNKNOWN_STATE);
             ret = -1;
@@ -932,6 +939,7 @@ int dtls1_send_hello_verify_request(SSL *s)
                                       &(s->d1->cookie_len)) == 0) {
             SSLerr(SSL_F_DTLS1_SEND_HELLO_VERIFY_REQUEST,
                    ERR_R_INTERNAL_ERROR);
+            s->state = SSL_ST_ERR;
             return 0;
         }
 
