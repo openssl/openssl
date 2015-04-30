@@ -6,7 +6,6 @@ use warnings;
 use POSIX;
 use File::Spec;
 use File::Copy;
-use Test::More 0.96;
 use OpenSSL::Test qw/:DEFAULT with top_file/;
 
 setup("test_ssl");

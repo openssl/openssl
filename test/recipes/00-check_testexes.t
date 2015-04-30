@@ -3,8 +3,6 @@
 use strict;
 
 use File::Spec::Functions;
-use Test::More 0.96;
-
 use OpenSSL::Test qw/:DEFAULT top_file/;
 
 setup("check_testexes");
@@ -51,7 +49,7 @@ my $MINFO = top_file("MINFO");
 
      plan tests => $numtests;
 
-     skip "because $MINFO found. If you want this test to run, please do 'perl util/mkfiles.pl > $MINFO'", 1
+     skip "because $MINFO not found. If you want this test to run, please do 'perl util/mkfiles.pl > $MINFO'", 1
 	 unless %foundfiles;
 
      foreach (sort keys %foundfiles) {

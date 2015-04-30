@@ -2,7 +2,6 @@
 
 use strict;
 use warnings;
-use Test::More 0.96;
 use OpenSSL::Test qw/:DEFAULT top_dir/;
 
 setup("test_gost2814789");

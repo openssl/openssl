@@ -6,7 +6,6 @@ use warnings;
 use POSIX;
 use File::Spec::Functions qw/splitdir curdir catfile/;
 use File::Compare;
-use Test::More 0.96;
 use OpenSSL::Test qw/:DEFAULT cmdstr top_file/;
 
 setup("test_tsa");

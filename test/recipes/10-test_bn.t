@@ -5,7 +5,6 @@ use warnings;
 
 use Math::BigInt;
 
-use Test::More 0.96;
 use OpenSSL::Test qw/:DEFAULT top_file/;
 
 setup("test_bn");

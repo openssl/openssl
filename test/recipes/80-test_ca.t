@@ -6,7 +6,6 @@ use warnings;
 use POSIX;
 use File::Spec::Functions qw/splitdir curdir catfile devnull/;
 use File::Path 2.00 qw/remove_tree/;
-use Test::More 0.96;
 use OpenSSL::Test qw/:DEFAULT cmdstr top_file quotify/;
 
 setup("test_ca");

@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use File::Spec;
-use Test::More 0.96;
 use OpenSSL::Test qw/:DEFAULT top_file/;
 
 setup("test_dsa");
