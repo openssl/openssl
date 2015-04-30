@@ -125,10 +125,15 @@ static int pkey_dsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,
     DSA_PKEY_CTX *dctx = ctx->data;
     DSA *dsa = ctx->pkey->pkey.dsa;
 
-    if (dctx->md)
+    if (dctx->md) {
+        if (tbslen != (size_t)EVP_MD_size(dctx->md))
+            return 0;
         type = EVP_MD_type(dctx->md);
-    else
+    } else {
+        if (tbslen != SHA_DIGEST_LENGTH)
+            return 0;
         type = NID_sha1;
+    }
 
     ret = DSA_sign(type, tbs, tbslen, sig, &sltmp, dsa);
 
@@ -146,10 +151,15 @@ static int pkey_dsa_verify(EVP_PKEY_CTX *ctx,
     DSA_PKEY_CTX *dctx = ctx->data;
     DSA *dsa = ctx->pkey->pkey.dsa;
 
-    if (dctx->md)
+    if (dctx->md) {
+        if (tbslen != (size_t)EVP_MD_size(dctx->md))
+            return 0;
         type = EVP_MD_type(dctx->md);
-    else
+    } else {
+        if (tbslen != SHA_DIGEST_LENGTH)
+            return 0;
         type = NID_sha1;
+    }
 
     ret = DSA_verify(type, tbs, tbslen, sig, siglen, dsa);
 
