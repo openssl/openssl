@@ -576,10 +576,7 @@ static int create_digest(BIO *input, char *digest, const EVP_MD *md,
         unsigned char buffer[4096];
         int length;
 
-        *md_value = OPENSSL_malloc(md_value_len);
-        if (*md_value == 0)
-            goto err;
-
+        *md_value = app_malloc(md_value_len, "digest buffer");
         EVP_DigestInit(&md_ctx, md);
         while ((length = BIO_read(input, buffer, sizeof(buffer))) > 0) {
             EVP_DigestUpdate(&md_ctx, buffer, length);
@@ -624,8 +621,7 @@ static ASN1_INTEGER *create_nonce(int bits)
     OPENSSL_free(nonce->data);
     /* Allocate at least one byte. */
     nonce->length = len - i;
-    if (!(nonce->data = OPENSSL_malloc(nonce->length + 1)))
-        goto err;
+    nonce->data = app_malloc(nonce->length + 1, "nonce buffer");
     memcpy(nonce->data, buf + i, nonce->length);
 
     return nonce;

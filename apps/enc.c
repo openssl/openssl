@@ -313,13 +313,8 @@ int enc_main(int argc, char **argv)
     if (verbose)
         BIO_printf(bio_err, "bufsize=%d\n", bsize);
 
-    strbuf = OPENSSL_malloc(SIZE);
-    buff = OPENSSL_malloc(EVP_ENCODE_LENGTH(bsize));
-    if ((buff == NULL) || (strbuf == NULL)) {
-        BIO_printf(bio_err, "OPENSSL_malloc failure %ld\n",
-                   (long)EVP_ENCODE_LENGTH(bsize));
-        goto end;
-    }
+    strbuf = app_malloc(SIZE, "strbuf");
+    buff = app_malloc(EVP_ENCODE_LENGTH(bsize), "evp buffer");
 
     if (debug) {
         BIO_set_callback(in, BIO_debug_callback);

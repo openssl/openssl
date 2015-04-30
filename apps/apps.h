@@ -469,6 +469,7 @@ typedef struct ca_db_st {
     TXT_DB *db;
 } CA_DB;
 
+void* app_malloc(int sz, const char *what);
 BIGNUM *load_serial(char *serialfile, int create, ASN1_INTEGER **retai);
 int save_serial(char *serialfile, char *suffix, BIGNUM *serial,
                 ASN1_INTEGER **retai);

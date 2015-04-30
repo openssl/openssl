@@ -385,14 +385,10 @@ static int ssl_srp_verify_param_cb(SSL *s, void *arg)
 static char *ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
 {
     SRP_ARG *srp_arg = (SRP_ARG *)arg;
-    char *pass = OPENSSL_malloc(PWD_STRLEN + 1);
+    char *pass = app_malloc(PWD_STRLEN + 1, "SRP password buffer");
     PW_CB_DATA cb_tmp;
     int l;
 
-    if (!pass) {
-        BIO_printf(bio_err, "Out of memory\n");
-        return NULL;
-    }
     cb_tmp.password = (char *)srp_arg->srppassin;
     cb_tmp.prompt_info = "SRP user";
     if ((l = password_callback(pass, PWD_STRLEN, 0, &cb_tmp)) < 0) {
@@ -712,13 +708,12 @@ int s_client_main(int argc, char **argv)
     verify_depth = 0;
     verify_error = X509_V_OK;
     vpm = X509_VERIFY_PARAM_new();
-    cbuf = OPENSSL_malloc(BUFSIZZ);
-    sbuf = OPENSSL_malloc(BUFSIZZ);
-    mbuf = OPENSSL_malloc(BUFSIZZ);
+    cbuf = app_malloc(BUFSIZZ, "cbuf");
+    sbuf = app_malloc(BUFSIZZ, "sbuf");
+    mbuf = app_malloc(BUFSIZZ, "mbuf");
     cctx = SSL_CONF_CTX_new();
 
-    if (vpm == NULL || cctx == NULL
-        || cbuf == NULL || sbuf == NULL || mbuf == NULL) {
+    if (vpm == NULL || cctx == NULL) {
         BIO_printf(bio_err, "%s: out of memory\n", prog);
         goto end;
     }
@@ -2176,22 +2171,20 @@ static void print_stuff(BIO *bio, SSL *s, int full)
         BIO_printf(bio, "Keying material exporter:\n");
         BIO_printf(bio, "    Label: '%s'\n", keymatexportlabel);
         BIO_printf(bio, "    Length: %i bytes\n", keymatexportlen);
-        exportedkeymat = OPENSSL_malloc(keymatexportlen);
-        if (exportedkeymat != NULL) {
-            if (!SSL_export_keying_material(s, exportedkeymat,
-                                            keymatexportlen,
-                                            keymatexportlabel,
-                                            strlen(keymatexportlabel),
-                                            NULL, 0, 0)) {
-                BIO_printf(bio, "    Error\n");
-            } else {
-                BIO_printf(bio, "    Keying material: ");
-                for (i = 0; i < keymatexportlen; i++)
-                    BIO_printf(bio, "%02X", exportedkeymat[i]);
-                BIO_printf(bio, "\n");
-            }
-            OPENSSL_free(exportedkeymat);
+        exportedkeymat = app_malloc(keymatexportlen, "export key");
+        if (!SSL_export_keying_material(s, exportedkeymat,
+                                        keymatexportlen,
+                                        keymatexportlabel,
+                                        strlen(keymatexportlabel),
+                                        NULL, 0, 0)) {
+            BIO_printf(bio, "    Error\n");
+        } else {
+            BIO_printf(bio, "    Keying material: ");
+            for (i = 0; i < keymatexportlen; i++)
+                BIO_printf(bio, "%02X", exportedkeymat[i]);
+            BIO_printf(bio, "\n");
         }
+        OPENSSL_free(exportedkeymat);
     }
     BIO_printf(bio, "---\n");
     X509_free(peer);

@@ -204,9 +204,7 @@ static char *make_config_name()
     char *p;
 
     len = strlen(t) + strlen(OPENSSL_CONF) + 2;
-    p = OPENSSL_malloc(len);
-    if (p == NULL)
-        return NULL;
+    p = app_malloc(len, "config filename buffer");
     BUF_strlcpy(p, t, len);
 #ifndef OPENSSL_SYS_VMS
     BUF_strlcat(p, "/", len);

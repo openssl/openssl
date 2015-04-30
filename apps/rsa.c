@@ -344,19 +344,14 @@ int rsa_main(int argc, char **argv)
     }
 # ifndef OPENSSL_NO_RC4
     else if (outformat == FORMAT_NETSCAPE) {
-        unsigned char *p, *pp;
-        int size;
+        unsigned char *p, *save;
+        int size = i2d_RSA_NET(rsa, NULL, NULL, 0);
 
-        i = 1;
-        size = i2d_RSA_NET(rsa, NULL, NULL, 0);
-        if ((p = OPENSSL_malloc(size)) == NULL) {
-            BIO_printf(bio_err, "Memory allocation failure\n");
-            goto end;
-        }
-        pp = p;
+        save = p = app_malloc(size, "RSA i2d buffer");
         i2d_RSA_NET(rsa, &p, NULL, 0);
-        BIO_write(out, (char *)pp, size);
-        OPENSSL_free(pp);
+        BIO_write(out, (char *)save, size);
+        OPENSSL_free(save);
+        i = 1;
     }
 # endif
     else if (outformat == FORMAT_PEM) {

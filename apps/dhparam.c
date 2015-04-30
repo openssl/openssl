@@ -379,11 +379,7 @@ int dhparam_main(int argc, char **argv)
 
         len = BN_num_bytes(dh->p);
         bits = BN_num_bits(dh->p);
-        data = OPENSSL_malloc(len);
-        if (data == NULL) {
-            perror("OPENSSL_malloc");
-            goto end;
-        }
+        data = app_malloc(len, "print a BN");
         BIO_printf(out, "#ifndef HEADER_DH_H\n"
                         "# include <openssl/dh.h>\n"
                         "#endif\n"

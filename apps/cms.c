@@ -570,11 +570,7 @@ int cms_main(int argc, char **argv)
             }
             if (key_param == NULL || key_param->idx != keyidx) {
                 cms_key_param *nparam;
-                nparam = OPENSSL_malloc(sizeof(cms_key_param));
-                if (!nparam) {
-                    BIO_printf(bio_err, "Out of memory\n");
-                    goto end;
-                }
+                nparam = app_malloc(sizeof *nparam, "key param buffer");
                 nparam->idx = keyidx;
                 if ((nparam->param = sk_OPENSSL_STRING_new_null()) == NULL)
                     goto end;

@@ -268,16 +268,9 @@ int dsaparam_main(int argc, char **argv)
     }
 
     if (C) {
-        unsigned char *data;
-        int len, bits_p;
-
-        len = BN_num_bytes(dsa->p);
-        bits_p = BN_num_bits(dsa->p);
-        data = OPENSSL_malloc(len + 20);
-        if (data == NULL) {
-            perror("OPENSSL_malloc");
-            goto end;
-        }
+        int len = BN_num_bytes(dsa->p);
+        int bits_p = BN_num_bits(dsa->p);
+        unsigned char *data = app_malloc(len + 20, "BN space");
 
         BIO_printf(bio_out, "DSA *get_dsa%d()\n{\n", bits_p);
         print_bignum_var(bio_out, dsa->p, "dsap", len, data);

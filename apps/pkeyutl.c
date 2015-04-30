@@ -299,13 +299,10 @@ int pkeyutl_main(int argc, char **argv)
     rv = do_keyop(ctx, pkey_op, NULL, (size_t *)&buf_outlen,
                   buf_in, (size_t)buf_inlen);
     if (rv > 0) {
-        buf_out = OPENSSL_malloc(buf_outlen);
-        if (!buf_out)
-            rv = -1;
-        else
-            rv = do_keyop(ctx, pkey_op,
-                          buf_out, (size_t *)&buf_outlen,
-                          buf_in, (size_t)buf_inlen);
+        buf_out = app_malloc(buf_outlen, "buffer output");
+        rv = do_keyop(ctx, pkey_op,
+                      buf_out, (size_t *)&buf_outlen,
+                      buf_in, (size_t)buf_inlen);
     }
     if (rv <= 0) {
         ERR_print_errors(bio_err);

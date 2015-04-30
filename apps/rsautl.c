@@ -257,12 +257,8 @@ int rsautl_main(int argc, char **argv)
 
     keysize = RSA_size(rsa);
 
-    rsa_in = OPENSSL_malloc(keysize * 2);
-    rsa_out = OPENSSL_malloc(keysize);
-    if (!rsa_in || !rsa_out) {
-        BIO_printf(bio_err, "Out of memory\n");
-        goto end;
-    }
+    rsa_in = app_malloc(keysize * 2, "hold rsa key");
+    rsa_out = app_malloc(keysize, "output rsa key");
 
     /* Read the input data */
     rsa_inlen = BIO_read(in, rsa_in, keysize * 2);
