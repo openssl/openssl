@@ -277,8 +277,7 @@ CMS_RecipientInfo *CMS_add1_recipient_cert(CMS_ContentInfo *cms,
  merr:
     CMSerr(CMS_F_CMS_ADD1_RECIPIENT_CERT, ERR_R_MALLOC_FAILURE);
  err:
-    if (ri)
-        M_ASN1_free_of(ri, CMS_RecipientInfo);
+    M_ASN1_free_of(ri, CMS_RecipientInfo);
     EVP_PKEY_free(pk);
     return NULL;
 
@@ -616,8 +615,7 @@ CMS_RecipientInfo *CMS_add0_recipient_key(CMS_ContentInfo *cms, int nid,
  merr:
     CMSerr(CMS_F_CMS_ADD0_RECIPIENT_KEY, ERR_R_MALLOC_FAILURE);
  err:
-    if (ri)
-        M_ASN1_free_of(ri, CMS_RecipientInfo);
+    M_ASN1_free_of(ri, CMS_RecipientInfo);
     return NULL;
 
 }

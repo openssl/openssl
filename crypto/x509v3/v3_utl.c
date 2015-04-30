@@ -1110,8 +1110,7 @@ ASN1_OCTET_STRING *a2i_IPADDRESS_NC(const char *ipasc)
  err:
     if (iptmp)
         OPENSSL_free(iptmp);
-    if (ret)
-        ASN1_OCTET_STRING_free(ret);
+    ASN1_OCTET_STRING_free(ret);
     return NULL;
 }
 

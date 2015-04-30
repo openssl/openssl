@@ -404,8 +404,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
  merr:
     CMSerr(CMS_F_CMS_ADD1_SIGNER, ERR_R_MALLOC_FAILURE);
  err:
-    if (si)
-        M_ASN1_free_of(si, CMS_SignerInfo);
+    M_ASN1_free_of(si, CMS_SignerInfo);
     return NULL;
 
 }
@@ -904,8 +903,7 @@ int CMS_add_simple_smimecap(STACK_OF(X509_ALGOR) **algs,
     }
     alg = X509_ALGOR_new();
     if (!alg) {
-        if (key)
-            ASN1_INTEGER_free(key);
+        ASN1_INTEGER_free(key);
         return 0;
     }
 

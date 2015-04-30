@@ -306,18 +306,12 @@ static PROXY_CERT_INFO_EXTENSION *r2i_pci(X509V3_EXT_METHOD *method,
     goto end;
  err:
     ASN1_OBJECT_free(language);
-    if (pathlen) {
-        ASN1_INTEGER_free(pathlen);
-        pathlen = NULL;
-    }
-    if (policy) {
-        ASN1_OCTET_STRING_free(policy);
-        policy = NULL;
-    }
-    if (pci) {
-        PROXY_CERT_INFO_EXTENSION_free(pci);
-        pci = NULL;
-    }
+    ASN1_INTEGER_free(pathlen);
+    pathlen = NULL;
+    ASN1_OCTET_STRING_free(policy);
+    policy = NULL;
+    PROXY_CERT_INFO_EXTENSION_free(pci);
+    pci = NULL;
  end:
     sk_CONF_VALUE_pop_free(vals, X509V3_conf_free);
     return pci;

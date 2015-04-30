@@ -118,8 +118,7 @@ static int dsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
     return 1;
 
  err:
-    if (public_key)
-        ASN1_INTEGER_free(public_key);
+    ASN1_INTEGER_free(public_key);
     DSA_free(dsa);
     return 0;
 
@@ -279,8 +278,7 @@ static int dsa_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
     DSAerr(DSA_F_DSA_PRIV_DECODE, EVP_R_DECODE_ERROR);
  dsaerr:
     BN_CTX_free(ctx);
-    if (privkey)
-        ASN1_STRING_clear_free(privkey);
+    ASN1_STRING_clear_free(privkey);
     sk_ASN1_TYPE_pop_free(ndsa, ASN1_TYPE_free);
     DSA_free(dsa);
     return 0;
@@ -334,8 +332,7 @@ static int dsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
     if (dp != NULL)
         OPENSSL_free(dp);
     ASN1_STRING_free(params);
-    if (prkey != NULL)
-        ASN1_STRING_clear_free(prkey);
+    ASN1_STRING_clear_free(prkey);
     return 0;
 }
 

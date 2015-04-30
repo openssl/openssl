@@ -178,7 +178,7 @@ int X509_add1_reject_object(X509 *x, ASN1_OBJECT *obj)
 
 void X509_trust_clear(X509 *x)
 {
-    if (x->aux && x->aux->trust) {
+    if (x->aux) {
         sk_ASN1_OBJECT_pop_free(x->aux->trust, ASN1_OBJECT_free);
         x->aux->trust = NULL;
     }
@@ -186,7 +186,7 @@ void X509_trust_clear(X509 *x)
 
 void X509_reject_clear(X509 *x)
 {
-    if (x->aux && x->aux->reject) {
+    if (x->aux) {
         sk_ASN1_OBJECT_pop_free(x->aux->reject, ASN1_OBJECT_free);
         x->aux->reject = NULL;
     }

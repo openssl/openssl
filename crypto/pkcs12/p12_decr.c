@@ -194,7 +194,6 @@ ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt(X509_ALGOR *algor,
     OPENSSL_free(in);
     return oct;
  err:
-    if (oct)
-        ASN1_OCTET_STRING_free(oct);
+    ASN1_OCTET_STRING_free(oct);
     return NULL;
 }

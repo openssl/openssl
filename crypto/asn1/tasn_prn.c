@@ -100,7 +100,8 @@ ASN1_PCTX *ASN1_PCTX_new(void)
 
 void ASN1_PCTX_free(ASN1_PCTX *p)
 {
-    OPENSSL_free(p);
+    if (p)
+        OPENSSL_free(p);
 }
 
 unsigned long ASN1_PCTX_get_flags(ASN1_PCTX *p)
