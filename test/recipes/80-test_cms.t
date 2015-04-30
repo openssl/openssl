@@ -6,7 +6,6 @@ use warnings;
 use POSIX;
 use File::Spec::Functions qw/catfile/;
 use File::Compare qw/compare_text/;
-use Test::More 0.96;
 use OpenSSL::Test qw/:DEFAULT top_dir top_file/;
 
 setup("test_cms");

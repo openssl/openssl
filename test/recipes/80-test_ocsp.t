@@ -6,7 +6,6 @@ use warnings;
 use POSIX;
 use File::Spec::Functions qw/devnull catfile/;
 use File::Copy;
-use Test::More 0.96;
 use OpenSSL::Test qw/:DEFAULT with pipe top_dir/;
 
 setup("test_ocsp");

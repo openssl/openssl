@@ -5,7 +5,6 @@ use warnings;
 
 use File::Compare qw/compare_text/;
 use File::Copy;
-use Test::More 0.96;
 use lib 'testlib';
 use OpenSSL::Test qw/:DEFAULT top_file/;
 

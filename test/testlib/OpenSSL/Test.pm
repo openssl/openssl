@@ -3,12 +3,15 @@ package OpenSSL::Test;
 use strict;
 use warnings;
 
+use Test::More 0.96;
+
 use Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 $VERSION = "0.5";
 @ISA = qw(Exporter);
-@EXPORT = qw(setup indir app test run);
-@EXPORT_OK = qw(top_dir top_file pipe with cmdstr quotify));
+@EXPORT = (@Test::More::EXPORT, qw(setup indir app test run));
+@EXPORT_OK = (@Test::More::EXPORT_OK, qw(top_dir top_file pipe with cmdstr
+                                         quotify));
 
 
 use File::Copy;
@@ -16,7 +19,6 @@ use File::Spec::Functions qw/file_name_is_absolute curdir canonpath splitdir
                              catdir catfile splitpath catpath devnull abs2rel
                              rel2abs/;
 use File::Path 2.00 qw/remove_tree mkpath/;
-use Test::More 0.96;
 
 
 my $test_name = undef;
