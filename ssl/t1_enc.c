@@ -717,10 +717,7 @@ int tls1_setup_key_block(SSL *s)
 
     ret = 1;
  err:
-    if (p2) {
-        OPENSSL_cleanse(p2, num);
-        OPENSSL_free(p2);
-    }
+    OPENSSL_clear_free(p2, num);
     return (ret);
 }
 

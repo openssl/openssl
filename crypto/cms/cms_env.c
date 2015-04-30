@@ -465,11 +465,7 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
 
     ret = 1;
 
-    if (ec->key) {
-        OPENSSL_cleanse(ec->key, ec->keylen);
-        OPENSSL_free(ec->key);
-    }
-
+    OPENSSL_clear_free(ec->key, ec->keylen);
     ec->key = ek;
     ec->keylen = eklen;
 
@@ -937,12 +933,9 @@ BIO *cms_EnvelopedData_init_bio(CMS_ContentInfo *cms)
 
  err:
     ec->cipher = NULL;
-    if (ec->key) {
-        OPENSSL_cleanse(ec->key, ec->keylen);
-        OPENSSL_free(ec->key);
-        ec->key = NULL;
-        ec->keylen = 0;
-    }
+    OPENSSL_clear_free(ec->key, ec->keylen);
+    ec->key = NULL;
+    ec->keylen = 0;
     if (ok)
         return ret;
     BIO_free(ret);

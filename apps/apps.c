@@ -377,10 +377,7 @@ int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
             }
             while (ok < 0 && UI_ctrl(ui, UI_CTRL_IS_REDOABLE, 0, 0, 0));
 
-        if (buff) {
-            OPENSSL_cleanse(buff, (unsigned int)bufsiz);
-            OPENSSL_free(buff);
-        }
+        OPENSSL_clear_free(buff, (unsigned int)bufsiz);
 
         if (ok >= 0)
             res = strlen(buf);

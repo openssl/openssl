@@ -172,10 +172,7 @@ void ecdh_data_free(void *data)
 #endif
 
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_ECDH, r, &r->ex_data);
-
-    OPENSSL_cleanse((void *)r, sizeof(ECDH_DATA));
-
-    OPENSSL_free(r);
+    OPENSSL_clear_free((void *)r, sizeof(ECDH_DATA));
 }
 
 ECDH_DATA *ecdh_check(EC_KEY *key)

@@ -948,10 +948,7 @@ static int surewarehk_rsa_priv_dec(int flen, const unsigned char *from,
                         SUREWARE_R_PADDING_CHECK_FAILED);
     }
  err:
-    if (buf) {
-        OPENSSL_cleanse(buf, tlen);
-        OPENSSL_free(buf);
-    }
+    OPENSSL_clear_free(buf, tlen);
     return ret;
 }
 

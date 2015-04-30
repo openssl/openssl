@@ -251,16 +251,10 @@ static int cms_ri_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
             EVP_PKEY_CTX_free(ktri->pctx);
         } else if (ri->type == CMS_RECIPINFO_KEK) {
             CMS_KEKRecipientInfo *kekri = ri->d.kekri;
-            if (kekri->key) {
-                OPENSSL_cleanse(kekri->key, kekri->keylen);
-                OPENSSL_free(kekri->key);
-            }
+            OPENSSL_clear_free(kekri->key, kekri->keylen);
         } else if (ri->type == CMS_RECIPINFO_PASS) {
             CMS_PasswordRecipientInfo *pwri = ri->d.pwri;
-            if (pwri->pass) {
-                OPENSSL_cleanse(pwri->pass, pwri->passlen);
-                OPENSSL_free(pwri->pass);
-            }
+            OPENSSL_clear_free(pwri->pass, pwri->passlen);
         }
     }
     return 1;

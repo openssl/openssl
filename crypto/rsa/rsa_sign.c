@@ -131,10 +131,8 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
     else
         *siglen = i;
 
-    if (type != NID_md5_sha1) {
-        OPENSSL_cleanse(tmps, (unsigned int)j + 1);
-        OPENSSL_free(tmps);
-    }
+    if (type != NID_md5_sha1)
+        OPENSSL_clear_free(tmps, (unsigned int)j + 1);
     return (ret);
 }
 
@@ -153,8 +151,7 @@ static int rsa_check_digestinfo(X509_SIG *sig, const unsigned char *dinfo,
         return 0;
     if (derlen == dinfolen && !memcmp(dinfo, der, derlen))
         ret = 1;
-    OPENSSL_cleanse(der, derlen);
-    OPENSSL_free(der);
+    OPENSSL_clear_free(der, derlen);
     return ret;
 }
 
@@ -267,10 +264,7 @@ int int_rsa_verify(int dtype, const unsigned char *m,
     }
  err:
     X509_SIG_free(sig);
-    if (s != NULL) {
-        OPENSSL_cleanse(s, (unsigned int)siglen);
-        OPENSSL_free(s);
-    }
+    OPENSSL_clear_free(s, (unsigned int)siglen);
     return (ret);
 }
 

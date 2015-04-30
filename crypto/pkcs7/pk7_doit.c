@@ -229,11 +229,7 @@ static int pkcs7_decrypt_rinfo(unsigned char **pek, int *peklen,
 
     ret = 1;
 
-    if (*pek) {
-        OPENSSL_cleanse(*pek, *peklen);
-        OPENSSL_free(*pek);
-    }
-
+    OPENSSL_clear_free(*pek, *peklen);
     *pek = ek;
     *peklen = eklen;
 
@@ -576,8 +572,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
              */
             if (!EVP_CIPHER_CTX_set_key_length(evp_ctx, eklen)) {
                 /* Use random key as MMA defence */
-                OPENSSL_cleanse(ek, eklen);
-                OPENSSL_free(ek);
+                OPENSSL_clear_free(ek, eklen);
                 ek = tkey;
                 eklen = tkeylen;
                 tkey = NULL;
@@ -588,16 +583,10 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
         if (EVP_CipherInit_ex(evp_ctx, NULL, NULL, ek, NULL, 0) <= 0)
             goto err;
 
-        if (ek) {
-            OPENSSL_cleanse(ek, eklen);
-            OPENSSL_free(ek);
-            ek = NULL;
-        }
-        if (tkey) {
-            OPENSSL_cleanse(tkey, tkeylen);
-            OPENSSL_free(tkey);
-            tkey = NULL;
-        }
+        OPENSSL_clear_free(ek, eklen);
+        ek = NULL;
+        OPENSSL_clear_free(tkey, tkeylen);
+        tkey = NULL;
 
         if (out == NULL)
             out = etmp;
@@ -619,23 +608,16 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
     }
     BIO_push(out, bio);
     bio = NULL;
-    if (0) {
+    return out;
+
  err:
-        if (ek) {
-            OPENSSL_cleanse(ek, eklen);
-            OPENSSL_free(ek);
-        }
-        if (tkey) {
-            OPENSSL_cleanse(tkey, tkeylen);
-            OPENSSL_free(tkey);
-        }
-        BIO_free_all(out);
-        BIO_free_all(btmp);
-        BIO_free_all(etmp);
-        BIO_free_all(bio);
-        out = NULL;
-    }
-    return (out);
+    OPENSSL_clear_free(ek, eklen);
+    OPENSSL_clear_free(tkey, tkeylen);
+    BIO_free_all(out);
+    BIO_free_all(btmp);
+    BIO_free_all(etmp);
+    BIO_free_all(bio);
+    return  NULL;
 }
 
 static BIO *PKCS7_find_digest(EVP_MD_CTX **pmd, BIO *bio, int nid)

@@ -441,10 +441,7 @@ int dgst_main(int argc, char **argv)
         }
     }
  end:
-    if (buf != NULL) {
-        OPENSSL_cleanse(buf, BUFSIZE);
-        OPENSSL_free(buf);
-    }
+    OPENSSL_clear_free(buf, BUFSIZE);
     BIO_free(in);
     if (passin)
         OPENSSL_free(passin);

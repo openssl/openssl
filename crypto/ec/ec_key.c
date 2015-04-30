@@ -127,9 +127,7 @@ void EC_KEY_free(EC_KEY *r)
 
     EC_EX_DATA_free_all_data(&r->method_data);
 
-    OPENSSL_cleanse((void *)r, sizeof(EC_KEY));
-
-    OPENSSL_free(r);
+    OPENSSL_clear_free((void *)r, sizeof(EC_KEY));
 }
 
 EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)

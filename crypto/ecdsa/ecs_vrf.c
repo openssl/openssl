@@ -103,10 +103,7 @@ int ECDSA_verify(int type, const unsigned char *dgst, int dgst_len,
         goto err;
     ret = ECDSA_do_verify(dgst, dgst_len, s, eckey);
  err:
-    if (derlen > 0) {
-        OPENSSL_cleanse(der, derlen);
-        OPENSSL_free(der);
-    }
+    OPENSSL_clear_free(der, derlen);
     ECDSA_SIG_free(s);
     return (ret);
 }

@@ -429,10 +429,7 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
     OPENSSL_cleanse(iv, sizeof(iv));
     OPENSSL_cleanse((char *)&ctx, sizeof(ctx));
     OPENSSL_cleanse(buf, PEM_BUFSIZE);
-    if (data != NULL) {
-        OPENSSL_cleanse(data, (unsigned int)dsize);
-        OPENSSL_free(data);
-    }
+    OPENSSL_clear_free(data, (unsigned int)dsize);
     return (ret);
 }
 
@@ -637,8 +634,7 @@ int PEM_write_bio(BIO *bp, const char *name, const char *header,
     EVP_EncodeFinal(&ctx, buf, &outl);
     if ((outl > 0) && (BIO_write(bp, (char *)buf, outl) != outl))
         goto err;
-    OPENSSL_cleanse(buf, PEM_BUFSIZE * 8);
-    OPENSSL_free(buf);
+    OPENSSL_clear_free(buf, PEM_BUFSIZE * 8);
     buf = NULL;
     if ((BIO_write(bp, "-----END ", 9) != 9) ||
         (BIO_write(bp, name, nlen) != nlen) ||
@@ -646,10 +642,7 @@ int PEM_write_bio(BIO *bp, const char *name, const char *header,
         goto err;
     return (i + outl);
  err:
-    if (buf) {
-        OPENSSL_cleanse(buf, PEM_BUFSIZE * 8);
-        OPENSSL_free(buf);
-    }
+    OPENSSL_clear_free(buf, PEM_BUFSIZE * 8);
     PEMerr(PEM_F_PEM_WRITE_BIO, reason);
     return (0);
 }

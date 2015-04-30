@@ -1471,13 +1471,9 @@ static void ecp_nistz256_pre_comp_clear_free(void *pre_)
     if (i > 0)
         return;
 
-    if (pre->precomp_storage) {
-        OPENSSL_cleanse(pre->precomp,
-                        32 * sizeof(unsigned char) * (1 << pre->w) * 2 * 37);
-        OPENSSL_free(pre->precomp_storage);
-    }
-    OPENSSL_cleanse(pre, sizeof *pre);
-    OPENSSL_free(pre);
+    OPENSSL_clear_free(pre->precomp,
+                       32 * sizeof(unsigned char) * (1 << pre->w) * 2 * 37);
+    OPENSSL_clear_free(pre, sizeof *pre);
 }
 
 static int ecp_nistz256_window_have_precompute_mult(const EC_GROUP *group)

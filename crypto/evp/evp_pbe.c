@@ -292,7 +292,7 @@ int EVP_PBE_find(int type, int pbe_nid,
 
 static void free_evp_pbe_ctl(EVP_PBE_CTL *pbe)
 {
-    OPENSSL_freeFunc(pbe);
+    OPENSSL_free(pbe);
 }
 
 void EVP_PBE_cleanup(void)

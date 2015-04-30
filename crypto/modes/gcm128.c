@@ -1709,10 +1709,7 @@ GCM128_CONTEXT *CRYPTO_gcm128_new(void *key, block128_f block)
 
 void CRYPTO_gcm128_release(GCM128_CONTEXT *ctx)
 {
-    if (ctx) {
-        OPENSSL_cleanse(ctx, sizeof(*ctx));
-        OPENSSL_free(ctx);
-    }
+    OPENSSL_clear_free(ctx, sizeof(*ctx));
 }
 
 #if defined(SELFTEST)

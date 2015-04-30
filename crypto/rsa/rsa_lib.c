@@ -243,8 +243,7 @@ void RSA_free(RSA *r)
         BN_BLINDING_free(r->blinding);
     if (r->mt_blinding != NULL)
         BN_BLINDING_free(r->mt_blinding);
-    if (r->bignum_data != NULL)
-        OPENSSL_free_locked(r->bignum_data);
+    OPENSSL_free_locked(r->bignum_data);
     OPENSSL_free(r);
 }
 

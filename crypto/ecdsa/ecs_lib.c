@@ -160,9 +160,7 @@ static void ecdsa_data_free(void *data)
 #endif
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_ECDSA, r, &r->ex_data);
 
-    OPENSSL_cleanse((void *)r, sizeof(ECDSA_DATA));
-
-    OPENSSL_free(r);
+    OPENSSL_clear_free((void *)r, sizeof(ECDSA_DATA));
 }
 
 ECDSA_DATA *ecdsa_check(EC_KEY *key)

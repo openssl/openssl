@@ -166,14 +166,8 @@ void EC_GROUP_clear_free(EC_GROUP *group)
     EC_POINT_clear_free(group->generator);
     BN_clear_free(group->order);
     BN_clear_free(group->cofactor);
-
-    if (group->seed) {
-        OPENSSL_cleanse(group->seed, group->seed_len);
-        OPENSSL_free(group->seed);
-    }
-
-    OPENSSL_cleanse(group, sizeof *group);
-    OPENSSL_free(group);
+    OPENSSL_clear_free(group->seed, group->seed_len);
+    OPENSSL_clear_free(group, sizeof *group);
 }
 
 int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
@@ -751,8 +745,7 @@ void EC_POINT_clear_free(EC_POINT *point)
         point->meth->point_clear_finish(point);
     else if (point->meth->point_finish != 0)
         point->meth->point_finish(point);
-    OPENSSL_cleanse(point, sizeof *point);
-    OPENSSL_free(point);
+    OPENSSL_clear_free(point, sizeof *point);
 }
 
 int EC_POINT_copy(EC_POINT *dest, const EC_POINT *src)

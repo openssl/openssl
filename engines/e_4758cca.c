@@ -709,10 +709,8 @@ static int cca_rsa_verify(int type, const unsigned char *m,
                            &keyTokenLength, keyToken, &length, hashBuffer,
                            &lsiglen, (unsigned char *)sigbuf);
 
-    if (type == NID_sha1 || type == NID_md5) {
-        OPENSSL_cleanse(hashBuffer, keyLength + 1);
-        OPENSSL_free(hashBuffer);
-    }
+    if (type == NID_sha1 || type == NID_md5)
+        OPENSSL_clear_free(hashBuffer, keyLength + 1);
 
     return ((returnCode || reasonCode) ? 0 : 1);
 }
@@ -820,10 +818,8 @@ static int cca_rsa_sign(int type, const unsigned char *m, unsigned int m_len,
                              &keyTokenLength, keyToken, &length, hashBuffer,
                              &outputLength, &outputBitLength, sigret);
 
-    if (type == NID_sha1 || type == NID_md5) {
-        OPENSSL_cleanse(hashBuffer, keyLength + 1);
-        OPENSSL_free(hashBuffer);
-    }
+    if (type == NID_sha1 || type == NID_md5)
+        OPENSSL_clear_free(hashBuffer, keyLength + 1);
 
     *siglen = outputLength;
 
