@@ -60,25 +60,6 @@
 #ifndef HEADER_DTLS1_H
 # define HEADER_DTLS1_H
 
-# include <openssl/buffer.h>
-# include <openssl/pqueue.h>
-# ifdef OPENSSL_SYS_VMS
-#  include <resource.h>
-#  include <sys/timeb.h>
-# endif
-# ifdef OPENSSL_SYS_WIN32
-/* Needed for struct timeval */
-#  include <winsock.h>
-# elif defined(OPENSSL_SYS_NETWARE) && !defined(_WINSOCK2API_)
-#  include <sys/timeval.h>
-# else
-#  if defined(OPENSSL_SYS_VXWORKS)
-#   include <sys/times.h>
-#  else
-#   include <sys/time.h>
-#  endif
-# endif
-
 #ifdef  __cplusplus
 extern "C" {
 #endif
