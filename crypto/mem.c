@@ -417,8 +417,7 @@ void *CRYPTO_realloc_clean(void *str, int old_len, int num, const char *file,
     ret = malloc_ex_func(num, file, line);
     if (ret) {
         memcpy(ret, str, old_len);
-        OPENSSL_cleanse(str, old_len);
-        free_func(str);
+        OPENSSL_clear_free(str, old_len);
     }
 #ifdef LEVITTE_DEBUG_MEM
     fprintf(stderr,
@@ -441,6 +440,15 @@ void CRYPTO_free(void *str)
     free_func(str);
     if (free_debug_func != NULL)
         free_debug_func(NULL, 1);
+}
+
+void CRYPTO_clear_free(void *str, size_t num)
+{
+    if (!str)
+        return;
+    if (num)
+        OPENSSL_cleanse(str, num);
+    CRYPTO_free(str);
 }
 
 void *CRYPTO_remalloc(void *a, int num, const char *file, int line)

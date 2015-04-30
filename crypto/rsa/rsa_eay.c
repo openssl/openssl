@@ -243,10 +243,7 @@ static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
         BN_CTX_end(ctx);
         BN_CTX_free(ctx);
     }
-    if (buf != NULL) {
-        OPENSSL_cleanse(buf, num);
-        OPENSSL_free(buf);
-    }
+    OPENSSL_clear_free(buf, num);
     return (r);
 }
 
@@ -480,10 +477,7 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
         BN_CTX_end(ctx);
         BN_CTX_free(ctx);
     }
-    if (buf != NULL) {
-        OPENSSL_cleanse(buf, num);
-        OPENSSL_free(buf);
-    }
+    OPENSSL_clear_free(buf, num);
     return (r);
 }
 
@@ -622,10 +616,7 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
         BN_CTX_end(ctx);
         BN_CTX_free(ctx);
     }
-    if (buf != NULL) {
-        OPENSSL_cleanse(buf, num);
-        OPENSSL_free(buf);
-    }
+    OPENSSL_clear_free(buf, num);
     return (r);
 }
 
@@ -725,10 +716,7 @@ static int RSA_eay_public_decrypt(int flen, const unsigned char *from,
         BN_CTX_end(ctx);
         BN_CTX_free(ctx);
     }
-    if (buf != NULL) {
-        OPENSSL_cleanse(buf, num);
-        OPENSSL_free(buf);
-    }
+    OPENSSL_clear_free(buf, num);
     return (r);
 }
 

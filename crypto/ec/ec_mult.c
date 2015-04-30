@@ -169,8 +169,7 @@ static void ec_pre_comp_clear_free(void *pre_)
         }
         OPENSSL_free(pre->points);
     }
-    OPENSSL_cleanse(pre, sizeof *pre);
-    OPENSSL_free(pre);
+    OPENSSL_clear_free(pre, sizeof *pre);
 }
 
 /*

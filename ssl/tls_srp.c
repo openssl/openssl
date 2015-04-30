@@ -339,7 +339,7 @@ int SSL_set_srp_server_param(SSL *s, const BIGNUM *N, const BIGNUM *g,
 int SRP_generate_server_master_secret(SSL *s, unsigned char *master_key)
 {
     BIGNUM *K = NULL, *u = NULL;
-    int ret = -1, tmp_len;
+    int ret = -1, tmp_len = 0;
     unsigned char *tmp = NULL;
 
     if (!SRP_Verify_A_mod_N(s->srp_ctx.A, s->srp_ctx.N))
@@ -360,10 +360,7 @@ int SRP_generate_server_master_secret(SSL *s, unsigned char *master_key)
         s->method->ssl3_enc->generate_master_secret(s, master_key, tmp,
                                                     tmp_len);
  err:
-    if (tmp) {
-        OPENSSL_cleanse(tmp, tmp_len);
-        OPENSSL_free(tmp);
-    }
+    OPENSSL_clear_free(tmp, tmp_len);
     BN_clear_free(K);
     BN_clear_free(u);
     return ret;
@@ -373,7 +370,7 @@ int SRP_generate_server_master_secret(SSL *s, unsigned char *master_key)
 int SRP_generate_client_master_secret(SSL *s, unsigned char *master_key)
 {
     BIGNUM *x = NULL, *u = NULL, *K = NULL;
-    int ret = -1, tmp_len;
+    int ret = -1, tmp_len = 0;
     char *passwd = NULL;
     unsigned char *tmp = NULL;
 
@@ -407,16 +404,10 @@ int SRP_generate_client_master_secret(SSL *s, unsigned char *master_key)
         s->method->ssl3_enc->generate_master_secret(s, master_key, tmp,
                                                     tmp_len);
  err:
-    if (tmp) {
-        OPENSSL_cleanse(tmp, tmp_len);
-        OPENSSL_free(tmp);
-    }
+    OPENSSL_clear_free(tmp, tmp_len);
     BN_clear_free(K);
     BN_clear_free(x);
-    if (passwd) {
-        OPENSSL_cleanse(passwd, strlen(passwd));
-        OPENSSL_free(passwd);
-    }
+    OPENSSL_clear_free(passwd, strlen(passwd));
     BN_clear_free(u);
     return ret;
 }

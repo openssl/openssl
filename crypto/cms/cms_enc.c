@@ -164,8 +164,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
                 goto err;
             } else {
                 /* Use random key */
-                OPENSSL_cleanse(ec->key, ec->keylen);
-                OPENSSL_free(ec->key);
+                OPENSSL_clear_free(ec->key, ec->keylen);
                 ec->key = tkey;
                 ec->keylen = tkeylen;
                 tkey = NULL;
@@ -196,14 +195,10 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 
  err:
     if (ec->key && !keep_key) {
-        OPENSSL_cleanse(ec->key, ec->keylen);
-        OPENSSL_free(ec->key);
+        OPENSSL_clear_free(ec->key, ec->keylen);
         ec->key = NULL;
     }
-    if (tkey) {
-        OPENSSL_cleanse(tkey, tkeylen);
-        OPENSSL_free(tkey);
-    }
+    OPENSSL_clear_free(tkey, tkeylen);
     if (ok)
         return b;
     BIO_free(b);

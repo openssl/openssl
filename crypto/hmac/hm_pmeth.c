@@ -113,13 +113,9 @@ static int pkey_hmac_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 static void pkey_hmac_cleanup(EVP_PKEY_CTX *ctx)
 {
     HMAC_PKEY_CTX *hctx = ctx->data;
+
     HMAC_CTX_cleanup(&hctx->ctx);
-    if (hctx->ktmp.data) {
-        if (hctx->ktmp.length)
-            OPENSSL_cleanse(hctx->ktmp.data, hctx->ktmp.length);
-        OPENSSL_free(hctx->ktmp.data);
-        hctx->ktmp.data = NULL;
-    }
+    OPENSSL_clear_free(hctx->ktmp.data, hctx->ktmp.length);
     OPENSSL_free(hctx);
 }
 

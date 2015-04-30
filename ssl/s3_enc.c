@@ -471,11 +471,8 @@ int ssl3_setup_key_block(SSL *s)
 
 void ssl3_cleanup_key_block(SSL *s)
 {
-    if (s->s3->tmp.key_block != NULL) {
-        OPENSSL_cleanse(s->s3->tmp.key_block, s->s3->tmp.key_block_length);
-        OPENSSL_free(s->s3->tmp.key_block);
-        s->s3->tmp.key_block = NULL;
-    }
+    OPENSSL_clear_free(s->s3->tmp.key_block, s->s3->tmp.key_block_length);
+    s->s3->tmp.key_block = NULL;
     s->s3->tmp.key_block_length = 0;
 }
 

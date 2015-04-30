@@ -294,10 +294,7 @@ int CMS_RecipientInfo_kari_decrypt(CMS_ContentInfo *cms,
     if (!cms_kek_cipher(&cek, &ceklen, enckey, enckeylen, ri->d.kari, 0))
         goto err;
     ec = cms->d.envelopedData->encryptedContentInfo;
-    if (ec->key) {
-        OPENSSL_cleanse(ec->key, ec->keylen);
-        OPENSSL_free(ec->key);
-    }
+    OPENSSL_clear_free(ec->key, ec->keylen);
     ec->key = cek;
     ec->keylen = ceklen;
     cek = NULL;

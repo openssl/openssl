@@ -268,10 +268,7 @@ static int pkey_ec_kdf_derive(EVP_PKEY_CTX *ctx,
     rv = 1;
 
  err:
-    if (ktmp) {
-        OPENSSL_cleanse(ktmp, ktmplen);
-        OPENSSL_free(ktmp);
-    }
+    OPENSSL_clear_free(ktmp, ktmplen);
     return rv;
 }
 #endif

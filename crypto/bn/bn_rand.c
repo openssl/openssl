@@ -187,10 +187,7 @@ static int bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
         goto err;
     ret = 1;
  err:
-    if (buf != NULL) {
-        OPENSSL_cleanse(buf, bytes);
-        OPENSSL_free(buf);
-    }
+    OPENSSL_clear_free(buf, bytes);
     bn_check_top(rnd);
     return (ret);
 }

@@ -759,8 +759,7 @@ void SSL_SESSION_free(SSL_SESSION *ss)
     if (ss->srp_username != NULL)
         OPENSSL_free(ss->srp_username);
 #endif
-    OPENSSL_cleanse(ss, sizeof(*ss));
-    OPENSSL_free(ss);
+    OPENSSL_clear_free(ss, sizeof(*ss));
 }
 
 int SSL_set_session(SSL *s, SSL_SESSION *session)

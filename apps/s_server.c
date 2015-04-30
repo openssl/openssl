@@ -2395,10 +2395,7 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
         SSL_free(con);
     }
     BIO_printf(bio_s_out, "CONNECTION CLOSED\n");
-    if (buf != NULL) {
-        OPENSSL_cleanse(buf, bufsize);
-        OPENSSL_free(buf);
-    }
+    OPENSSL_clear_free(buf, bufsize);
     if (ret >= 0)
         BIO_printf(bio_s_out, "ACCEPT\n");
     (void)BIO_flush(bio_s_out);

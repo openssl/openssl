@@ -3073,8 +3073,7 @@ int ssl3_send_client_key_exchange(SSL *s)
                                                         s->
                                                         session->master_key,
                                                         pms, pmslen);
-        OPENSSL_cleanse(pms, pmslen);
-        OPENSSL_free(pms);
+        OPENSSL_clear_free(pms, pmslen);
         s->cert->pms = NULL;
         if (s->session->master_key_length < 0) {
             ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
@@ -3087,11 +3086,8 @@ int ssl3_send_client_key_exchange(SSL *s)
     ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
     SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
  err:
-    if (pms) {
-        OPENSSL_cleanse(pms, pmslen);
-        OPENSSL_free(pms);
-        s->cert->pms = NULL;
-    }
+    OPENSSL_clear_free(pms, pmslen);
+    s->cert->pms = NULL;
 #ifndef OPENSSL_NO_EC
     BN_CTX_free(bn_ctx);
     if (encodedPoint != NULL)

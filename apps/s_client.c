@@ -1994,8 +1994,7 @@ int s_client_main(int argc, char **argv)
 #endif
     SSL_CTX_free(ctx);
     X509_free(cert);
-    if (crls)
-        sk_X509_CRL_pop_free(crls, X509_CRL_free);
+    sk_X509_CRL_pop_free(crls, X509_CRL_free);
     EVP_PKEY_free(key);
     sk_X509_pop_free(chain, X509_free);
     if (pass)
@@ -2008,18 +2007,9 @@ int s_client_main(int argc, char **argv)
     if (jpake_secret && psk_key)
         OPENSSL_free(psk_key);
 #endif
-    if (cbuf != NULL) {
-        OPENSSL_cleanse(cbuf, BUFSIZZ);
-        OPENSSL_free(cbuf);
-    }
-    if (sbuf != NULL) {
-        OPENSSL_cleanse(sbuf, BUFSIZZ);
-        OPENSSL_free(sbuf);
-    }
-    if (mbuf != NULL) {
-        OPENSSL_cleanse(mbuf, BUFSIZZ);
-        OPENSSL_free(mbuf);
-    }
+    OPENSSL_clear_free(cbuf, BUFSIZZ);
+    OPENSSL_clear_free(sbuf, BUFSIZZ);
+    OPENSSL_clear_free(mbuf, BUFSIZZ);
     BIO_free(bio_c_out);
     bio_c_out = NULL;
     BIO_free(bio_c_msg);

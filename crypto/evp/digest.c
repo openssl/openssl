@@ -349,8 +349,7 @@ int EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
         ctx->digest->cleanup(ctx);
     if (ctx->digest && ctx->digest->ctx_size && ctx->md_data
         && !EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_REUSE)) {
-        OPENSSL_cleanse(ctx->md_data, ctx->digest->ctx_size);
-        OPENSSL_free(ctx->md_data);
+        OPENSSL_clear_free(ctx->md_data, ctx->digest->ctx_size);
     }
     EVP_PKEY_CTX_free(ctx->pctx);
 #ifndef OPENSSL_NO_ENGINE

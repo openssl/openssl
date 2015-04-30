@@ -373,7 +373,7 @@ int CRYPTO_is_mem_check_on(void);
         CRYPTO_realloc_clean(addr,old_num,num,__FILE__,__LINE__)
 # define OPENSSL_remalloc(addr,num) \
         CRYPTO_remalloc((char **)addr,(int)num,__FILE__,__LINE__)
-# define OPENSSL_freeFunc        CRYPTO_free
+# define OPENSSL_clear_free(addr, num) CRYPTO_clear_free(addr, num)
 # define OPENSSL_free(addr)      CRYPTO_free(addr)
 
 # define OPENSSL_malloc_locked(num) \
@@ -526,6 +526,7 @@ void CRYPTO_free_locked(void *ptr);
 void *CRYPTO_malloc(int num, const char *file, int line);
 char *CRYPTO_strdup(const char *str, const char *file, int line);
 void CRYPTO_free(void *ptr);
+void CRYPTO_clear_free(void *ptr, size_t num);
 void *CRYPTO_realloc(void *addr, int num, const char *file, int line);
 void *CRYPTO_realloc_clean(void *addr, int old_num, int num, const char *file,
                            int line);

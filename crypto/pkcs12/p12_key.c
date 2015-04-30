@@ -96,10 +96,7 @@ int PKCS12_key_gen_asc(const char *pass, int passlen, unsigned char *salt,
                              id, iter, n, out, md_type);
     if (ret <= 0)
         return 0;
-    if (unipass) {
-        OPENSSL_cleanse(unipass, uniplen); /* Clear password from memory */
-        OPENSSL_free(unipass);
-    }
+    OPENSSL_clear_free(unipass, uniplen);
     return ret;
 }
 

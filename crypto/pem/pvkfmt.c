@@ -772,10 +772,7 @@ EVP_PKEY *b2i_PVK_bio(BIO *in, pem_password_cb *cb, void *u)
     ret = do_PVK_body(&p, saltlen, keylen, cb, u);
 
  err:
-    if (buf) {
-        OPENSSL_cleanse(buf, buflen);
-        OPENSSL_free(buf);
-    }
+    OPENSSL_clear_free(buf, buflen);
     return ret;
 }
 

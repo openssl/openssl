@@ -1862,8 +1862,7 @@ static void nistp256_pre_comp_clear_free(void *pre_)
     if (i > 0)
         return;
 
-    OPENSSL_cleanse(pre, sizeof *pre);
-    OPENSSL_free(pre);
+    OPENSSL_clear_free(pre, sizeof *pre);
 }
 
 /******************************************************************************/

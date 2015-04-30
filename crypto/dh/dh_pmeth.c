@@ -477,10 +477,7 @@ static int pkey_dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
         *keylen = dctx->kdf_outlen;
         ret = 1;
  err:
-        if (Z) {
-            OPENSSL_cleanse(Z, Zlen);
-            OPENSSL_free(Z);
-        }
+        OPENSSL_clear_free(Z, Zlen);
         return ret;
     }
     return 1;

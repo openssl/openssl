@@ -188,10 +188,7 @@ int DSA_verify(int type, const unsigned char *dgst, int dgst_len,
         goto err;
     ret = DSA_do_verify(dgst, dgst_len, s, dsa);
  err:
-    if (derlen > 0) {
-        OPENSSL_cleanse(der, derlen);
-        OPENSSL_free(der);
-    }
+    OPENSSL_clear_free(der, derlen);
     DSA_SIG_free(s);
     return (ret);
 }

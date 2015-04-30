@@ -588,10 +588,7 @@ int CRYPTO_ocb128_tag(OCB128_CONTEXT *ctx, unsigned char *tag, size_t len)
 void CRYPTO_ocb128_cleanup(OCB128_CONTEXT *ctx)
 {
     if (ctx) {
-        if (ctx->l) {
-            OPENSSL_cleanse(ctx->l, ctx->max_l_index * 16);
-            OPENSSL_free(ctx->l);
-        }
+        OPENSSL_clear_free(ctx->l, ctx->max_l_index * 16);
         OPENSSL_cleanse(ctx, sizeof(*ctx));
     }
 }

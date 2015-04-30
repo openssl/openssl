@@ -263,8 +263,7 @@ static int kek_unwrap_key(unsigned char *out, size_t *outlen,
     memcpy(out, tmp + 4, *outlen);
     rv = 1;
  err:
-    OPENSSL_cleanse(tmp, inlen);
-    OPENSSL_free(tmp);
+    OPENSSL_clear_free(tmp, inlen);
     return rv;
 
 }
