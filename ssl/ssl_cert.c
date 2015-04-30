@@ -398,16 +398,12 @@ void ssl_cert_clear_certs(CERT *c)
         return;
     for (i = 0; i < SSL_PKEY_NUM; i++) {
         CERT_PKEY *cpk = c->pkeys + i;
-        if (cpk->x509) {
-            X509_free(cpk->x509);
-            cpk->x509 = NULL;
-        }
+        X509_free(cpk->x509);
+        cpk->x509 = NULL;
         EVP_PKEY_free(cpk->privatekey);
         cpk->privatekey = NULL;
-        if (cpk->chain) {
-            sk_X509_pop_free(cpk->chain, X509_free);
-            cpk->chain = NULL;
-        }
+        sk_X509_pop_free(cpk->chain, X509_free);
+        cpk->chain = NULL;
 #ifndef OPENSSL_NO_TLSEXT
         if (cpk->serverinfo) {
             OPENSSL_free(cpk->serverinfo);
@@ -461,10 +457,8 @@ void ssl_cert_free(CERT *c)
         OPENSSL_free(c->shared_sigalgs);
     if (c->ctypes)
         OPENSSL_free(c->ctypes);
-    if (c->verify_store)
-        X509_STORE_free(c->verify_store);
-    if (c->chain_store)
-        X509_STORE_free(c->chain_store);
+    X509_STORE_free(c->verify_store);
+    X509_STORE_free(c->chain_store);
     if (c->ciphers_raw)
         OPENSSL_free(c->ciphers_raw);
 #ifndef OPENSSL_NO_TLSEXT
@@ -485,8 +479,7 @@ int ssl_cert_set0_chain(SSL *s, SSL_CTX *ctx, STACK_OF(X509) *chain)
     CERT_PKEY *cpk = s ? s->cert->key : ctx->cert->key;
     if (!cpk)
         return 0;
-    if (cpk->chain)
-        sk_X509_pop_free(cpk->chain, X509_free);
+    sk_X509_pop_free(cpk->chain, X509_free);
     for (i = 0; i < sk_X509_num(chain); i++) {
         r = ssl_security_cert(s, ctx, sk_X509_value(chain, i), 0, 0);
         if (r != 1) {
@@ -629,11 +622,9 @@ void ssl_sess_cert_free(SESS_CERT *sc)
 #endif
 
     /* i == 0 */
-    if (sc->cert_chain != NULL)
-        sk_X509_pop_free(sc->cert_chain, X509_free);
+    sk_X509_pop_free(sc->cert_chain, X509_free);
     for (i = 0; i < SSL_PKEY_NUM; i++) {
-        if (sc->peer_pkeys[i].x509 != NULL)
-            X509_free(sc->peer_pkeys[i].x509);
+        X509_free(sc->peer_pkeys[i].x509);
 #if 0
         /*
          * We don't have the peer's private key. These lines are just
@@ -726,9 +717,7 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
 static void set_client_CA_list(STACK_OF(X509_NAME) **ca_list,
                                STACK_OF(X509_NAME) *name_list)
 {
-    if (*ca_list != NULL)
-        sk_X509_NAME_pop_free(*ca_list, X509_NAME_free);
-
+    sk_X509_NAME_pop_free(*ca_list, X509_NAME_free);
     *ca_list = name_list;
 }
 
@@ -867,15 +856,12 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file)
 
     if (0) {
  err:
-        if (ret != NULL)
-            sk_X509_NAME_pop_free(ret, X509_NAME_free);
+        sk_X509_NAME_pop_free(ret, X509_NAME_free);
         ret = NULL;
     }
-    if (sk != NULL)
-        sk_X509_NAME_free(sk);
+    sk_X509_NAME_free(sk);
     BIO_free(in);
-    if (x != NULL)
-        X509_free(x);
+    X509_free(x);
     if (ret != NULL)
         ERR_clear_error();
     return (ret);
@@ -1205,8 +1191,7 @@ int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags)
             goto err;
         }
     }
-    if (cpk->chain)
-        sk_X509_pop_free(cpk->chain, X509_free);
+    sk_X509_pop_free(cpk->chain, X509_free);
     cpk->chain = chain;
     if (rv == 0)
         rv = 1;
@@ -1224,8 +1209,7 @@ int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain, int ref)
         pstore = &c->chain_store;
     else
         pstore = &c->verify_store;
-    if (*pstore)
-        X509_STORE_free(*pstore);
+    X509_STORE_free(*pstore);
     *pstore = store;
     if (ref && store)
         CRYPTO_add(&store->references, 1, CRYPTO_LOCK_X509_STORE);

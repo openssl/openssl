@@ -276,8 +276,7 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk,
     }
     ok = 1;
  err:
-    if (xi != NULL)
-        X509_INFO_free(xi);
+    X509_INFO_free(xi);
     if (!ok) {
         for (i = 0; ((int)i) < sk_X509_INFO_num(ret); i++) {
             xi = sk_X509_INFO_value(ret, i);

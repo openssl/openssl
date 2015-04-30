@@ -971,8 +971,7 @@ static int load_certs_crls(const char *file, int format,
 
  end:
 
-    if (xis)
-        sk_X509_INFO_pop_free(xis, X509_INFO_free);
+    sk_X509_INFO_pop_free(xis, X509_INFO_free);
 
     if (rv == 0) {
         if (pcerts) {

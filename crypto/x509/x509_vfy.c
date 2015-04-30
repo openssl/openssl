@@ -495,10 +495,8 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
  end:
         X509_get_pubkey_parameters(NULL, ctx->chain);
     }
-    if (sktmp != NULL)
-        sk_X509_free(sktmp);
-    if (chain_ss != NULL)
-        X509_free(chain_ss);
+    sk_X509_free(sktmp);
+    X509_free(chain_ss);
     return ok;
 }
 
@@ -1016,8 +1014,7 @@ static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509_CRL **pdcrl,
     }
 
     if (best_crl) {
-        if (*pcrl)
-            X509_CRL_free(*pcrl);
+        X509_CRL_free(*pcrl);
         *pcrl = best_crl;
         *pissuer = best_crl_issuer;
         *pscore = best_score;
@@ -2058,8 +2055,7 @@ X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
 
  memerr:
     X509err(X509_F_X509_CRL_DIFF, ERR_R_MALLOC_FAILURE);
-    if (crl)
-        X509_CRL_free(crl);
+    X509_CRL_free(crl);
     return NULL;
 }
 
@@ -2230,6 +2226,8 @@ X509_STORE_CTX *X509_STORE_CTX_new(void)
 
 void X509_STORE_CTX_free(X509_STORE_CTX *ctx)
 {
+    if (!ctx)
+        return;
     X509_STORE_CTX_cleanup(ctx);
     OPENSSL_free(ctx);
 }
@@ -2376,14 +2374,10 @@ void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
             X509_VERIFY_PARAM_free(ctx->param);
         ctx->param = NULL;
     }
-    if (ctx->tree != NULL) {
-        X509_policy_tree_free(ctx->tree);
-        ctx->tree = NULL;
-    }
-    if (ctx->chain != NULL) {
-        sk_X509_pop_free(ctx->chain, X509_free);
-        ctx->chain = NULL;
-    }
+    X509_policy_tree_free(ctx->tree);
+    ctx->tree = NULL;
+    sk_X509_pop_free(ctx->chain, X509_free);
+    ctx->chain = NULL;
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509_STORE_CTX, ctx, &(ctx->ex_data));
     memset(&ctx->ex_data, 0, sizeof(CRYPTO_EX_DATA));
 }
@@ -2436,7 +2430,6 @@ X509_VERIFY_PARAM *X509_STORE_CTX_get0_param(X509_STORE_CTX *ctx)
 
 void X509_STORE_CTX_set0_param(X509_STORE_CTX *ctx, X509_VERIFY_PARAM *param)
 {
-    if (ctx->param)
-        X509_VERIFY_PARAM_free(ctx->param);
+    X509_VERIFY_PARAM_free(ctx->param);
     ctx->param = param;
 }

@@ -735,8 +735,7 @@ int ocsp_main(int argc, char **argv)
     ERR_print_errors(bio_err);
     X509_free(signer);
     X509_STORE_free(store);
-    if (vpm)
-        X509_VERIFY_PARAM_free(vpm);
+    X509_VERIFY_PARAM_free(vpm);
     EVP_PKEY_free(key);
     EVP_PKEY_free(rkey);
     X509_free(cert);

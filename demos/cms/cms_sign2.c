@@ -80,14 +80,10 @@ int main(int argc, char **argv)
     if (cms)
         CMS_ContentInfo_free(cms);
 
-    if (scert)
-        X509_free(scert);
+    X509_free(scert);
     EVP_PKEY_free(skey);
-
-    if (scert2)
-        X509_free(scert2);
+    X509_free(scert2);
     EVP_PKEY_free(skey2);
-
     BIO_free(in);
     BIO_free(out);
     BIO_free(tbio);

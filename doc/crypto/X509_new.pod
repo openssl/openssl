@@ -19,6 +19,7 @@ X509 structure, which represents an X509 certificate.
 X509_new() allocates and initializes a X509 structure.
 
 X509_free() frees up the B<X509> structure B<a>.
+If B<a> is NULL nothing is done.
 
 =head1 RETURN VALUES
 

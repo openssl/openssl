@@ -66,8 +66,7 @@ int main(int argc, char **argv)
         ERR_print_errors_fp(stderr);
     }
     PKCS7_free(p7);
-    if (cacert)
-        X509_free(cacert);
+    X509_free(cacert);
     BIO_free(in);
     BIO_free(out);
     BIO_free(tbio);

@@ -1349,9 +1349,7 @@ end_of_options:
     BIO_free_all(Sout);
     BIO_free_all(out);
     BIO_free_all(in);
-
-    if (cert_sk)
-        sk_X509_pop_free(cert_sk, X509_free);
+    sk_X509_pop_free(cert_sk, X509_free);
 
     if (ret)
         ERR_print_errors(bio_err);
@@ -1364,8 +1362,7 @@ end_of_options:
     if (sigopts)
         sk_OPENSSL_STRING_free(sigopts);
     EVP_PKEY_free(pkey);
-    if (x509)
-        X509_free(x509);
+    X509_free(x509);
     X509_CRL_free(crl);
     NCONF_free(conf);
     NCONF_free(extconf);
@@ -1440,8 +1437,7 @@ static int certify(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
                  ext_copy, selfsign);
 
  end:
-    if (req != NULL)
-        X509_REQ_free(req);
+    X509_REQ_free(req);
     BIO_free(in);
     return (ok);
 }
@@ -1495,10 +1491,8 @@ static int certify_cert(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
                  ext_copy, 0);
 
  end:
-    if (rreq != NULL)
-        X509_REQ_free(rreq);
-    if (req != NULL)
-        X509_free(req);
+    X509_REQ_free(rreq);
+    X509_free(req);
     return (ok);
 }
 
@@ -1700,8 +1694,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
 
             if (push != NULL) {
                 if (!X509_NAME_add_entry(subject, push, -1, 0)) {
-                    if (push != NULL)
-                        X509_NAME_ENTRY_free(push);
+                    X509_NAME_ENTRY_free(push);
                     BIO_printf(bio_err, "Memory allocation failure\n");
                     goto end;
                 }
@@ -1876,8 +1869,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         /*
          * Free the current entries if any, there should not be any I believe
          */
-        if (ci->extensions != NULL)
-            sk_X509_EXTENSION_pop_free(ci->extensions, X509_EXTENSION_free);
+        sk_X509_EXTENSION_pop_free(ci->extensions, X509_EXTENSION_free);
 
         ci->extensions = NULL;
 
@@ -2027,18 +2019,14 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         if (row[i] != NULL)
             OPENSSL_free(row[i]);
 
-    if (CAname != NULL)
-        X509_NAME_free(CAname);
-    if (subject != NULL)
-        X509_NAME_free(subject);
-    if ((dn_subject != NULL) && !email_dn)
+    X509_NAME_free(CAname);
+    X509_NAME_free(subject);
+    if (dn_subject != subject)
         X509_NAME_free(dn_subject);
     ASN1_UTCTIME_free(tmptm);
-    if (ok <= 0) {
-        if (ret != NULL)
-            X509_free(ret);
-        ret = NULL;
-    } else
+    if (ok <= 0)
+        X509_free(ret);
+    else
         *xret = ret;
     return (ok);
 }
@@ -2186,14 +2174,12 @@ static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey,
                  verbose, req, ext_sect, lconf, certopt, nameopt, default_op,
                  ext_copy, 0);
  end:
-    if (req != NULL)
-        X509_REQ_free(req);
+    X509_REQ_free(req);
     if (parms != NULL)
         CONF_free(parms);
     if (spki != NULL)
         NETSCAPE_SPKI_free(spki);
-    if (ne != NULL)
-        X509_NAME_ENTRY_free(ne);
+    X509_NAME_ENTRY_free(ne);
 
     return (ok);
 }

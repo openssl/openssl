@@ -504,10 +504,8 @@ int pkcs12_main(int argc, char **argv)
  export_end:
 
         EVP_PKEY_free(key);
-        if (certs)
-            sk_X509_pop_free(certs, X509_free);
-        if (ucert)
-            X509_free(ucert);
+        sk_X509_pop_free(certs, X509_free);
+        X509_free(ucert);
 
         goto end;
 

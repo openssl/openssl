@@ -175,8 +175,7 @@ static int set_dist_point_name(DIST_POINT_NAME **pdp, X509V3_CTX *ctx,
  err:
     if (fnm)
         sk_GENERAL_NAME_pop_free(fnm, GENERAL_NAME_free);
-    if (rnm)
-        sk_X509_NAME_ENTRY_pop_free(rnm, X509_NAME_ENTRY_free);
+    sk_X509_NAME_ENTRY_pop_free(rnm, X509_NAME_ENTRY_free);
     return -1;
 }
 
@@ -354,8 +353,7 @@ static int dpn_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         break;
 
     case ASN1_OP_FREE_POST:
-        if (dpn->dpname)
-            X509_NAME_free(dpn->dpname);
+        X509_NAME_free(dpn->dpname);
         break;
     }
     return 1;

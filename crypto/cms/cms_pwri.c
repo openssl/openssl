@@ -204,8 +204,7 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
     EVP_CIPHER_CTX_cleanup(&ctx);
     if (ri)
         M_ASN1_free_of(ri, CMS_RecipientInfo);
-    if (encalg)
-        X509_ALGOR_free(encalg);
+    X509_ALGOR_free(encalg);
     return NULL;
 
 }

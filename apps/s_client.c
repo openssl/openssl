@@ -1998,17 +1998,14 @@ int s_client_main(int argc, char **argv)
         OPENSSL_free(next_proto.data);
 #endif
     SSL_CTX_free(ctx);
-    if (cert)
-        X509_free(cert);
+    X509_free(cert);
     if (crls)
         sk_X509_CRL_pop_free(crls, X509_CRL_free);
     EVP_PKEY_free(key);
-    if (chain)
-        sk_X509_pop_free(chain, X509_free);
+    sk_X509_pop_free(chain, X509_free);
     if (pass)
         OPENSSL_free(pass);
-    if (vpm)
-        X509_VERIFY_PARAM_free(vpm);
+    X509_VERIFY_PARAM_free(vpm);
     ssl_excert_free(exc);
     sk_OPENSSL_STRING_free(ssl_args);
     SSL_CONF_CTX_free(cctx);
@@ -2197,8 +2194,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
         }
     }
     BIO_printf(bio, "---\n");
-    if (peer != NULL)
-        X509_free(peer);
+    X509_free(peer);
     /* flush, or debugging output gets mixed with http response */
     (void)BIO_flush(bio);
 }

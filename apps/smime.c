@@ -650,8 +650,7 @@ int smime_main(int argc, char **argv)
         ERR_print_errors(bio_err);
     sk_X509_pop_free(encerts, X509_free);
     sk_X509_pop_free(other, X509_free);
-    if (vpm)
-        X509_VERIFY_PARAM_free(vpm);
+    X509_VERIFY_PARAM_free(vpm);
     if (sksigners)
         sk_OPENSSL_STRING_free(sksigners);
     if (skkeys)

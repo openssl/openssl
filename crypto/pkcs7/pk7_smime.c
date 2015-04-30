@@ -208,8 +208,7 @@ PKCS7_SIGNER_INFO *PKCS7_sign_add_signer(PKCS7 *p7, X509 *signcert,
     }
     return si;
  err:
-    if (smcap)
-        sk_X509_ALGOR_pop_free(smcap, X509_ALGOR_free);
+    sk_X509_ALGOR_pop_free(smcap, X509_ALGOR_free);
     return NULL;
 }
 

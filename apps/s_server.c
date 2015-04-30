@@ -1925,24 +1925,18 @@ int s_server_main(int argc, char *argv[])
     ret = 0;
  end:
     SSL_CTX_free(ctx);
-    if (s_cert)
-        X509_free(s_cert);
-    if (crls)
-        sk_X509_CRL_pop_free(crls, X509_CRL_free);
-    if (s_dcert)
-        X509_free(s_dcert);
+    X509_free(s_cert);
+    sk_X509_CRL_pop_free(crls, X509_CRL_free);
+    X509_free(s_dcert);
     EVP_PKEY_free(s_key);
     EVP_PKEY_free(s_dkey);
-    if (s_chain)
-        sk_X509_pop_free(s_chain, X509_free);
-    if (s_dchain)
-        sk_X509_pop_free(s_dchain, X509_free);
+    sk_X509_pop_free(s_chain, X509_free);
+    sk_X509_pop_free(s_dchain, X509_free);
     if (pass)
         OPENSSL_free(pass);
     if (dpass)
         OPENSSL_free(dpass);
-    if (vpm)
-        X509_VERIFY_PARAM_free(vpm);
+    X509_VERIFY_PARAM_free(vpm);
     free_sessions();
 #ifndef OPENSSL_NO_TLSEXT
     if (tlscstatp.host)
@@ -1951,9 +1945,9 @@ int s_server_main(int argc, char *argv[])
         OPENSSL_free(tlscstatp.port);
     if (tlscstatp.path)
         OPENSSL_free(tlscstatp.path);
+    if (ctx2 != NULL)
     SSL_CTX_free(ctx2);
-    if (s_cert2)
-        X509_free(s_cert2);
+    X509_free(s_cert2);
     EVP_PKEY_free(s_key2);
     BIO_free(serverinfo_in);
 # ifndef OPENSSL_NO_NEXTPROTONEG

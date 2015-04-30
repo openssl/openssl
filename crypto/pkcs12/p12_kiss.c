@@ -150,12 +150,10 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
                 goto err;
             x = NULL;
         }
-        if (x)
-            X509_free(x);
+        X509_free(x);
     }
 
-    if (ocerts)
-        sk_X509_pop_free(ocerts, X509_free);
+    sk_X509_pop_free(ocerts, X509_free);
 
     return 1;
 
@@ -163,12 +161,10 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 
     if (pkey)
         EVP_PKEY_free(*pkey);
-    if (cert && *cert)
+    if (cert)
         X509_free(*cert);
-    if (x)
-        X509_free(x);
-    if (ocerts)
-        sk_X509_pop_free(ocerts, X509_free);
+    X509_free(x);
+    sk_X509_pop_free(ocerts, X509_free);
     return 0;
 
 }

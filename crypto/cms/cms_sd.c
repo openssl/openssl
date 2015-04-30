@@ -489,8 +489,7 @@ void CMS_SignerInfo_set1_signer_cert(CMS_SignerInfo *si, X509 *signer)
         EVP_PKEY_free(si->pkey);
         si->pkey = X509_get_pubkey(signer);
     }
-    if (si->signer)
-        X509_free(si->signer);
+    X509_free(si->signer);
     si->signer = signer;
 }
 
