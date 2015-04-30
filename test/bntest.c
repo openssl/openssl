@@ -175,6 +175,12 @@ int main(int argc, char *argv[])
             EXIT(1);
         }
     }
+#ifdef OPENSSL_SYS_VMS
+    {
+        BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+        out = BIO_push(tmpbio, out);
+    }
+#endif
 
     if (!results)
         BIO_puts(out, "obase=16\nibase=16\n");
