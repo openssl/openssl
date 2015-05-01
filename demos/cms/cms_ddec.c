@@ -68,16 +68,12 @@ int main(int argc, char **argv)
         ERR_print_errors_fp(stderr);
     }
 
-    if (cms)
-        CMS_ContentInfo_free(cms);
+    CMS_ContentInfo_free(cms);
     X509_free(rcert);
     EVP_PKEY_free(rkey);
-
     BIO_free(in);
     BIO_free(out);
     BIO_free(tbio);
     BIO_free(dcont);
-
     return ret;
-
 }

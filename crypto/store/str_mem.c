@@ -346,7 +346,7 @@ static int mem_list_end(STORE *s, void *handle)
         STOREerr(STORE_F_MEM_LIST_END, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    if (context && context->search_attributes)
+    if (context)
         sk_STORE_ATTR_INFO_free(context->search_attributes);
     OPENSSL_free(context);
     return 1;

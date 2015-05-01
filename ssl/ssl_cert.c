@@ -405,11 +405,9 @@ void ssl_cert_clear_certs(CERT *c)
         sk_X509_pop_free(cpk->chain, X509_free);
         cpk->chain = NULL;
 #ifndef OPENSSL_NO_TLSEXT
-        if (cpk->serverinfo) {
-            OPENSSL_free(cpk->serverinfo);
-            cpk->serverinfo = NULL;
-            cpk->serverinfo_length = 0;
-        }
+        OPENSSL_free(cpk->serverinfo);
+        cpk->serverinfo = NULL;
+        cpk->serverinfo_length = 0;
 #endif
         /* Clear all flags apart from explicit sign */
         cpk->valid_flags &= CERT_PKEY_EXPLICIT_SIGN;
@@ -447,20 +445,14 @@ void ssl_cert_free(CERT *c)
 #endif
 
     ssl_cert_clear_certs(c);
-    if (c->peer_sigalgs)
-        OPENSSL_free(c->peer_sigalgs);
-    if (c->conf_sigalgs)
-        OPENSSL_free(c->conf_sigalgs);
-    if (c->client_sigalgs)
-        OPENSSL_free(c->client_sigalgs);
-    if (c->shared_sigalgs)
-        OPENSSL_free(c->shared_sigalgs);
-    if (c->ctypes)
-        OPENSSL_free(c->ctypes);
+    OPENSSL_free(c->peer_sigalgs);
+    OPENSSL_free(c->conf_sigalgs);
+    OPENSSL_free(c->client_sigalgs);
+    OPENSSL_free(c->shared_sigalgs);
+    OPENSSL_free(c->ctypes);
     X509_STORE_free(c->verify_store);
     X509_STORE_free(c->chain_store);
-    if (c->ciphers_raw)
-        OPENSSL_free(c->ciphers_raw);
+    OPENSSL_free(c->ciphers_raw);
 #ifndef OPENSSL_NO_TLSEXT
     custom_exts_free(&c->cli_ext);
     custom_exts_free(&c->srv_ext);
@@ -624,12 +616,11 @@ void ssl_sess_cert_free(SESS_CERT *sc)
         X509_free(sc->peer_pkeys[i].x509);
 #if 0
         /*
-         * We don't have the peer's private key. These lines are just
+         * We don't have the peer's private key. This line is just
          * here as a reminder that we're still using a not-quite-appropriate
          *  data structure.
          */
-        if (sc->peer_pkeys[i].privatekey != NULL)
-            EVP_PKEY_free(sc->peer_pkeys[i].privatekey);
+        EVP_PKEY_free(sc->peer_pkeys[i].privatekey);
 #endif
     }
 
@@ -917,8 +908,7 @@ int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
         ret = 0;
  done:
     BIO_free(in);
-    if (x != NULL)
-        X509_free(x);
+    X509_free(x);
     (void)sk_X509_NAME_set_cmp_func(stack, oldcmp);
     return ret;
 }

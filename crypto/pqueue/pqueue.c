@@ -82,9 +82,6 @@ pitem *pitem_new(unsigned char *prio64be, void *data)
 
 void pitem_free(pitem *item)
 {
-    if (item == NULL)
-        return;
-
     OPENSSL_free(item);
 }
 
@@ -100,9 +97,6 @@ pqueue_s *pqueue_new()
 
 void pqueue_free(pqueue_s *pq)
 {
-    if (pq == NULL)
-        return;
-
     OPENSSL_free(pq);
 }
 

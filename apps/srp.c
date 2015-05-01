@@ -669,11 +669,8 @@ int srp_main(int argc, char **argv)
         ERR_print_errors(bio_err);
     if (randfile)
         app_RAND_write_file(randfile);
-    if (conf)
-        NCONF_free(conf);
-    if (db)
-        free_index(db);
-
+    NCONF_free(conf);
+    free_index(db);
     OBJ_cleanup();
     return (ret);
 }

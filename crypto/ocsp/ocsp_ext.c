@@ -437,8 +437,7 @@ X509_EXTENSION *OCSP_crlID_new(char *url, long *n, char *tim)
     }
     x = X509V3_EXT_i2d(NID_id_pkix_OCSP_CrlID, 0, cid);
  err:
-    if (cid)
-        OCSP_CRLID_free(cid);
+    OCSP_CRLID_free(cid);
     return x;
 }
 
@@ -516,7 +515,6 @@ X509_EXTENSION *OCSP_url_svcloc_new(X509_NAME *issuer, char **urls)
     }
     x = X509V3_EXT_i2d(NID_id_pkix_OCSP_serviceLocator, 0, sloc);
  err:
-    if (sloc)
-        OCSP_SERVICELOC_free(sloc);
+    OCSP_SERVICELOC_free(sloc);
     return x;
 }

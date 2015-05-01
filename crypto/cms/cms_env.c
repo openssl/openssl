@@ -168,8 +168,7 @@ CMS_ContentInfo *CMS_EnvelopedData_create(const EVP_CIPHER *cipher)
         goto merr;
     return cms;
  merr:
-    if (cms)
-        CMS_ContentInfo_free(cms);
+    CMS_ContentInfo_free(cms);
     CMSerr(CMS_F_CMS_ENVELOPEDDATA_CREATE, ERR_R_MALLOC_FAILURE);
     return NULL;
 }
@@ -400,10 +399,8 @@ static int cms_RecipientInfo_ktri_encrypt(CMS_ContentInfo *cms,
     ret = 1;
 
  err:
-    if (pctx) {
-        EVP_PKEY_CTX_free(pctx);
-        ktri->pctx = NULL;
-    }
+    EVP_PKEY_CTX_free(pctx);
+    ktri->pctx = NULL;
     OPENSSL_free(ek);
     return ret;
 

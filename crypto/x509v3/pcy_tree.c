@@ -657,8 +657,7 @@ void X509_policy_tree_free(X509_POLICY_TREE *tree)
     for (i = 0, curr = tree->levels; i < tree->nlevel; i++, curr++) {
         X509_free(curr->cert);
         sk_X509_POLICY_NODE_pop_free(curr->nodes, policy_node_free);
-        if (curr->anyPolicy)
-            policy_node_free(curr->anyPolicy);
+        policy_node_free(curr->anyPolicy);
     }
 
     sk_X509_POLICY_DATA_pop_free(tree->extra_data, policy_data_free);

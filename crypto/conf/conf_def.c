@@ -391,19 +391,17 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
             v = NULL;
         }
     }
-    if (buff != NULL)
-        BUF_MEM_free(buff);
+    BUF_MEM_free(buff);
     OPENSSL_free(section);
     return (1);
  err:
-    if (buff != NULL)
-        BUF_MEM_free(buff);
+    BUF_MEM_free(buff);
     OPENSSL_free(section);
     if (line != NULL)
         *line = eline;
     BIO_snprintf(btmp, sizeof btmp, "%ld", eline);
     ERR_add_error_data(2, "line ", btmp);
-    if ((h != conf->data) && (conf->data != NULL)) {
+    if (h != conf->data) {
         CONF_free(conf->data);
         conf->data = NULL;
     }
@@ -595,8 +593,7 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
     OPENSSL_free(buf);
     return (1);
  err:
-    if (buf != NULL)
-        BUF_MEM_free(buf);
+    BUF_MEM_free(buf);
     return (0);
 }
 

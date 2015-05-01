@@ -116,8 +116,7 @@ int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
         return 1;
 
  err:
-    if (pbe != NULL)
-        PBEPARAM_free(pbe);
+    PBEPARAM_free(pbe);
     ASN1_STRING_free(pbe_str);
     return 0;
 }

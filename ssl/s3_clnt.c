@@ -599,11 +599,8 @@ int ssl3_connect(SSL *s)
         case SSL_ST_OK:
             /* clean a few things up */
             ssl3_cleanup_key_block(s);
-
-            if (s->init_buf != NULL) {
-                BUF_MEM_free(s->init_buf);
-                s->init_buf = NULL;
-            }
+            BUF_MEM_free(s->init_buf);
+            s->init_buf = NULL;
 
             /*
              * If we are not 'joining' the last two packets, remove the
@@ -657,8 +654,7 @@ int ssl3_connect(SSL *s)
     }
  end:
     s->in_handshake--;
-    if (buf != NULL)
-        BUF_MEM_free(buf);
+    BUF_MEM_free(buf);
     if (cb != NULL)
         cb(s, SSL_CB_CONNECT_EXIT, ret);
     return (ret);
@@ -3319,8 +3315,7 @@ int ssl3_send_client_certificate(SSL *s)
         }
 
         X509_free(x509);
-        if (pkey != NULL)
-            EVP_PKEY_free(pkey);
+        EVP_PKEY_free(pkey);
         if (i && !ssl3_check_client_certificate(s))
             i = 0;
         if (i == 0) {

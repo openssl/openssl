@@ -249,8 +249,7 @@ int ssl23_connect(SSL *s)
     }
  end:
     s->in_handshake--;
-    if (buf != NULL)
-        BUF_MEM_free(buf);
+    BUF_MEM_free(buf);
     if (cb != NULL)
         cb(s, SSL_CB_CONNECT_EXIT, ret);
     return (ret);

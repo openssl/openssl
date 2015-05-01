@@ -949,8 +949,7 @@ int x509_main(int argc, char **argv)
     EVP_PKEY_free(Upkey);
     EVP_PKEY_free(CApkey);
     EVP_PKEY_free(fkey);
-    if (sigopts)
-        sk_OPENSSL_STRING_free(sigopts);
+    sk_OPENSSL_STRING_free(sigopts);
     X509_REQ_free(rq);
     ASN1_INTEGER_free(sno);
     sk_ASN1_OBJECT_pop_free(trust, ASN1_OBJECT_free);

@@ -189,8 +189,7 @@ static void dynamic_data_ctx_free_func(void *parent, void *ptr,
         DSO_free(ctx->dynamic_dso);
         OPENSSL_free(ctx->DYNAMIC_LIBNAME);
         OPENSSL_free(ctx->engine_id);
-        if (ctx->dirs)
-            sk_OPENSSL_STRING_pop_free(ctx->dirs, int_free_str);
+        sk_OPENSSL_STRING_pop_free(ctx->dirs, int_free_str);
         OPENSSL_free(ctx);
     }
 }

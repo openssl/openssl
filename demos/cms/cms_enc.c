@@ -73,15 +73,11 @@ int main(int argc, char **argv)
         ERR_print_errors_fp(stderr);
     }
 
-    if (cms)
-        CMS_ContentInfo_free(cms);
+    CMS_ContentInfo_free(cms);
     X509_free(rcert);
     sk_X509_pop_free(recips, X509_free);
-
     BIO_free(in);
     BIO_free(out);
     BIO_free(tbio);
-
     return ret;
-
 }

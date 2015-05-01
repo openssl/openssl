@@ -524,10 +524,8 @@ static void int_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
         }
     }
     OPENSSL_free(storage);
-    if (ad->sk) {
-        sk_void_free(ad->sk);
-        ad->sk = NULL;
-    }
+    sk_void_free(ad->sk);
+    ad->sk = NULL;
 }
 
 /********************************************************************/

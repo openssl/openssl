@@ -173,8 +173,7 @@ static int set_dist_point_name(DIST_POINT_NAME **pdp, X509V3_CTX *ctx,
     return 1;
 
  err:
-    if (fnm)
-        sk_GENERAL_NAME_pop_free(fnm, GENERAL_NAME_free);
+    sk_GENERAL_NAME_pop_free(fnm, GENERAL_NAME_free);
     sk_X509_NAME_ENTRY_pop_free(rnm, X509_NAME_ENTRY_free);
     return -1;
 }
@@ -279,8 +278,7 @@ static DIST_POINT *crldp_from_section(X509V3_CTX *ctx,
     return point;
 
  err:
-    if (point)
-        DIST_POINT_free(point);
+    DIST_POINT_free(point);
     return NULL;
 }
 

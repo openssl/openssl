@@ -109,8 +109,8 @@ int fill_GOST2001_params(EC_KEY *eckey, int nid)
     }
     ok = 1;
  err:
-    if (P) EC_POINT_free(P);
-    if (grp) EC_GROUP_free(grp);
+    EC_POINT_free(P);
+    EC_GROUP_free(grp);
     if (ctx)
         BN_CTX_end(ctx);
     BN_CTX_free(ctx);
@@ -243,7 +243,7 @@ DSA_SIG *gost2001_do_sign(const unsigned char *dgst, int dlen, EC_KEY *eckey)
     if (ctx)
         BN_CTX_end(ctx);
     BN_CTX_free(ctx);
-    if (C) EC_POINT_free(C);
+    EC_POINT_free(C);
     BN_free(md);
     if (!ret)
         DSA_SIG_free(newsig);
@@ -361,7 +361,7 @@ int gost2001_do_verify(const unsigned char *dgst, int dgst_len,
         ok = 1;
     }
  err:
-    if (C) EC_POINT_free(C);
+    EC_POINT_free(C);
     if (ctx)
         BN_CTX_end(ctx);
     BN_CTX_free(ctx);
@@ -413,7 +413,7 @@ int gost2001_compute_public(EC_KEY *ec)
     }
     ok = 256;
  err:
-    if (pub_key) EC_POINT_free(pub_key);
+    EC_POINT_free(pub_key);
     if (ctx)
         BN_CTX_end(ctx);
     BN_CTX_free(ctx);

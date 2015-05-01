@@ -1600,8 +1600,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
         sk_SSL_CIPHER_free(cipherstack);
         return NULL;
     }
-    if (*cipher_list != NULL)
-        sk_SSL_CIPHER_free(*cipher_list);
+    sk_SSL_CIPHER_free(*cipher_list);
     *cipher_list = cipherstack;
     if (*cipher_list_by_id != NULL)
         sk_SSL_CIPHER_free(*cipher_list_by_id);

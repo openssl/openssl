@@ -128,9 +128,7 @@ CMS_ReceiptRequest *CMS_ReceiptRequest_create0(unsigned char *id, int idlen,
     CMSerr(CMS_F_CMS_RECEIPTREQUEST_CREATE0, ERR_R_MALLOC_FAILURE);
 
  err:
-    if (rr)
-        CMS_ReceiptRequest_free(rr);
-
+    CMS_ReceiptRequest_free(rr);
     return NULL;
 
 }
@@ -337,10 +335,8 @@ int cms_Receipt_verify(CMS_ContentInfo *cms, CMS_ContentInfo *req_cms)
     r = 1;
 
  err:
-    if (rr)
-        CMS_ReceiptRequest_free(rr);
+    CMS_ReceiptRequest_free(rr);
     M_ASN1_free_of(rct, CMS_Receipt);
-
     return r;
 
 }
@@ -384,9 +380,6 @@ ASN1_OCTET_STRING *cms_encode_Receipt(CMS_SignerInfo *si)
     os = ASN1_item_pack(&rct, ASN1_ITEM_rptr(CMS_Receipt), NULL);
 
  err:
-    if (rr)
-        CMS_ReceiptRequest_free(rr);
-
+    CMS_ReceiptRequest_free(rr);
     return os;
-
 }

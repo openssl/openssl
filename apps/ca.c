@@ -514,10 +514,8 @@ end_of_options:
                        errorline, configfile);
         goto end;
     }
-    if (tofree) {
-        OPENSSL_free(tofree);
-        tofree = NULL;
-    }
+    OPENSSL_free(tofree);
+    tofree = NULL;
 
     /* Lets get the config section we are using */
     if (section == NULL) {
@@ -1331,8 +1329,7 @@ end_of_options:
         /*****************************************************************/
     ret = 0;
  end:
-    if (tofree)
-        OPENSSL_free(tofree);
+    OPENSSL_free(tofree);
     BIO_free_all(Cout);
     BIO_free_all(Sout);
     BIO_free_all(out);
@@ -1342,13 +1339,12 @@ end_of_options:
     if (ret)
         ERR_print_errors(bio_err);
     app_RAND_write_file(randfile);
-    if (free_key && key)
+    if (free_key)
         OPENSSL_free(key);
     BN_free(serial);
     BN_free(crlnumber);
     free_index(db);
-    if (sigopts)
-        sk_OPENSSL_STRING_free(sigopts);
+    sk_OPENSSL_STRING_free(sigopts);
     EVP_PKEY_free(pkey);
     X509_free(x509);
     X509_CRL_free(crl);
@@ -2000,8 +1996,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     ok = 1;
  end:
     for (i = 0; i < DB_NUMBER; i++)
-        if (row[i] != NULL)
-            OPENSSL_free(row[i]);
+        OPENSSL_free(row[i]);
 
     X509_NAME_free(CAname);
     X509_NAME_free(subject);
@@ -2159,10 +2154,8 @@ static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey,
                  ext_copy, 0);
  end:
     X509_REQ_free(req);
-    if (parms != NULL)
-        CONF_free(parms);
-    if (spki != NULL)
-        NETSCAPE_SPKI_free(spki);
+    CONF_free(parms);
+    NETSCAPE_SPKI_free(spki);
     X509_NAME_ENTRY_free(ne);
 
     return (ok);

@@ -132,16 +132,11 @@ void EC_GROUP_free(EC_GROUP *group)
         group->meth->group_finish(group);
 
     EC_EX_DATA_free_all_data(&group->extra_data);
-
     BN_MONT_CTX_free(group->mont_data);
-
     EC_POINT_free(group->generator);
     BN_free(group->order);
     BN_free(group->cofactor);
-
-    if (group->seed)
-        OPENSSL_free(group->seed);
-
+    OPENSSL_free(group->seed);
     OPENSSL_free(group);
 }
 

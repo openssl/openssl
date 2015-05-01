@@ -559,10 +559,8 @@ void ERR_unload_strings(int lib, ERR_STRING_DATA *str)
 void ERR_free_strings(void)
 {
     CRYPTO_w_lock(CRYPTO_LOCK_ERR);
-    if (int_error_hash) {
-        lh_ERR_STRING_DATA_free(int_error_hash);
-        int_error_hash = NULL;
-    }
+    lh_ERR_STRING_DATA_free(int_error_hash);
+    int_error_hash = NULL;
     CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
 }
 

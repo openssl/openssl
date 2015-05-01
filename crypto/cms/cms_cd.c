@@ -105,10 +105,7 @@ CMS_ContentInfo *cms_CompressedData_create(int comp_nid)
     return cms;
 
  err:
-
-    if (cms)
-        CMS_ContentInfo_free(cms);
-
+    CMS_ContentInfo_free(cms);
     return NULL;
 }
 

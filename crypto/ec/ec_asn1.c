@@ -994,7 +994,6 @@ int i2d_ECPKParameters(const EC_GROUP *a, unsigned char **out)
 
 EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
 {
-    int ok = 0;
     EC_KEY *ret = NULL;
     EC_PRIVATEKEY *priv_key = NULL;
 
@@ -1075,18 +1074,14 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
 
     if (a)
         *a = ret;
-    ok = 1;
- err:
-    if (!ok) {
-        if (a == NULL || *a != ret)
-            EC_KEY_free(ret);
-        ret = NULL;
-    }
-
-    if (priv_key)
-        EC_PRIVATEKEY_free(priv_key);
-
+    EC_PRIVATEKEY_free(priv_key);
     return (ret);
+
+ err:
+    if (a == NULL || *a != ret)
+        EC_KEY_free(ret);
+    EC_PRIVATEKEY_free(priv_key);
+    return NULL;
 }
 
 int i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
@@ -1190,8 +1185,7 @@ int i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
     ok = 1;
  err:
     OPENSSL_free(buffer);
-    if (priv_key)
-        EC_PRIVATEKEY_free(priv_key);
+    EC_PRIVATEKEY_free(priv_key);
     return (ok ? ret : 0);
 }
 

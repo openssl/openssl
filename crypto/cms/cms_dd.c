@@ -88,10 +88,7 @@ CMS_ContentInfo *cms_DigestedData_create(const EVP_MD *md)
     return cms;
 
  err:
-
-    if (cms)
-        CMS_ContentInfo_free(cms);
-
+    CMS_ContentInfo_free(cms);
     return NULL;
 }
 

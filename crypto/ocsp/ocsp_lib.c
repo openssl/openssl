@@ -142,8 +142,7 @@ OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
  digerr:
     OCSPerr(OCSP_F_OCSP_CERT_ID_NEW, OCSP_R_DIGEST_ERR);
  err:
-    if (cid)
-        OCSP_CERTID_free(cid);
+    OCSP_CERTID_free(cid);
     return NULL;
 }
 

@@ -91,8 +91,7 @@ OCSP_ONEREQ *OCSP_request_add0_id(OCSP_REQUEST *req, OCSP_CERTID *cid)
 
     if (!(one = OCSP_ONEREQ_new()))
         goto err;
-    if (one->reqCert)
-        OCSP_CERTID_free(one->reqCert);
+    OCSP_CERTID_free(one->reqCert);
     one->reqCert = cid;
     if (req && !sk_OCSP_ONEREQ_push(req->tbsRequest->requestList, one))
         goto err;
@@ -107,6 +106,7 @@ OCSP_ONEREQ *OCSP_request_add0_id(OCSP_REQUEST *req, OCSP_CERTID *cid)
 int OCSP_request_set1_name(OCSP_REQUEST *req, X509_NAME *nm)
 {
     GENERAL_NAME *gen;
+
     gen = GENERAL_NAME_new();
     if (gen == NULL)
         return 0;
@@ -115,8 +115,7 @@ int OCSP_request_set1_name(OCSP_REQUEST *req, X509_NAME *nm)
         return 0;
     }
     gen->type = GEN_DIRNAME;
-    if (req->tbsRequest->requestorName)
-        GENERAL_NAME_free(req->tbsRequest->requestorName);
+    GENERAL_NAME_free(req->tbsRequest->requestorName);
     req->tbsRequest->requestorName = gen;
     return 1;
 }

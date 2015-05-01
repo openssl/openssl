@@ -197,10 +197,10 @@ static CRYPTO_THREADID disabling_threadid;
 
 static void app_info_free(APP_INFO *inf)
 {
+    if (!inf)
+        return;
     if (--(inf->references) <= 0) {
-        if (inf->next != NULL) {
-            app_info_free(inf->next);
-        }
+        app_info_free(inf->next);
         OPENSSL_free(inf);
     }
 }
@@ -559,8 +559,7 @@ void CRYPTO_dbg_free(void *addr, int before_p)
                 fprintf(stderr, "LEVITTE_DEBUG_MEM: [%5ld] - 0x%p (%d)\n",
                         mp->order, mp->addr, mp->num);
 #endif
-                if (mp->app_info != NULL)
-                    app_info_free(mp->app_info);
+                app_info_free(mp->app_info);
                 OPENSSL_free(mp);
             }
 
@@ -763,10 +762,8 @@ void CRYPTO_mem_leaks(BIO *b)
         old_mh_mode = mh_mode;
         mh_mode = CRYPTO_MEM_CHECK_OFF;
 
-        if (mh != NULL) {
-            lh_MEM_free(mh);
-            mh = NULL;
-        }
+        lh_MEM_free(mh);
+        mh = NULL;
         if (amih != NULL) {
             if (lh_APP_INFO_num_items(amih) == 0) {
                 lh_APP_INFO_free(amih);
