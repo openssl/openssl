@@ -1612,8 +1612,7 @@ CA_DB *load_index(char *dbfile, DB_ATTR *db_attr)
     }
 
  err:
-    if (dbattr_conf)
-        NCONF_free(dbattr_conf);
+    NCONF_free(dbattr_conf);
     TXT_DB_free(tmpdb);
     BIO_free_all(in);
     return retdb;

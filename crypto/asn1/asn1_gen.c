@@ -511,8 +511,7 @@ static ASN1_TYPE *asn1_multi(int utype, const char *section, X509V3_CTX *cnf,
     OPENSSL_free(der);
 
     sk_ASN1_TYPE_pop_free(sk, ASN1_TYPE_free);
-    if (sect)
-        X509V3_section_free(cnf, sect);
+    X509V3_section_free(cnf, sect);
 
     return ret;
 }

@@ -324,8 +324,7 @@ static int ibm_4758_cca_init(ENGINE *e)
 
     return 1;
  err:
-    if (dso)
-        DSO_free(dso);
+    DSO_free(dso);
     dso = NULL;
 
 #  ifndef OPENSSL_NO_RSA

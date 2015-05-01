@@ -241,8 +241,7 @@ static void value_free_stack_doall(CONF_VALUE *a)
         OPENSSL_free(vv->name);
         OPENSSL_free(vv);
     }
-    if (sk != NULL)
-        sk_CONF_VALUE_free(sk);
+    sk_CONF_VALUE_free(sk);
     OPENSSL_free(a->section);
     OPENSSL_free(a);
 }
@@ -251,7 +250,7 @@ static void value_free_stack_doall(CONF_VALUE *a)
 CONF_VALUE *_CONF_new_section(CONF *conf, const char *section)
 {
     STACK_OF(CONF_VALUE) *sk = NULL;
-    int ok = 0, i;
+    int i;
     CONF_VALUE *v = NULL, *vv;
 
     if ((sk = sk_CONF_VALUE_new_null()) == NULL)
@@ -268,13 +267,10 @@ CONF_VALUE *_CONF_new_section(CONF *conf, const char *section)
 
     vv = lh_CONF_VALUE_insert(conf->data, v);
     OPENSSL_assert(vv == NULL);
-    ok = 1;
+    return v;
+
  err:
-    if (!ok) {
-        if (sk != NULL)
-            sk_CONF_VALUE_free(sk);
-        OPENSSL_free(v);
-        v = NULL;
-    }
-    return (v);
+    sk_CONF_VALUE_free(sk);
+    OPENSSL_free(v);
+    return NULL;
 }

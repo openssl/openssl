@@ -431,10 +431,8 @@ static int cswift_init(ENGINE *e)
     /* Everything's fine. */
     return 1;
  err:
-    if (cswift_dso) {
-        DSO_free(cswift_dso);
-        cswift_dso = NULL;
-    }
+    DSO_free(cswift_dso);
+    cswift_dso = NULL;
     p_CSwift_AcquireAccContext = NULL;
     p_CSwift_AttachKeyParam = NULL;
     p_CSwift_SimpleRequest = NULL;

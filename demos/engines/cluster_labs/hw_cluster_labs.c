@@ -363,9 +363,7 @@ int cluster_labs_init(ENGINE *e)
 
  err:
     /* reset all pointers */
-    if (cluster_labs_dso)
-        DSO_free(cluster_labs_dso);
-
+    DSO_free(cluster_labs_dso);
     cluster_labs_dso = NULL;
     p_cl_engine_init = NULL;
     p_cl_mod_exp = NULL;

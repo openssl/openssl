@@ -2860,14 +2860,10 @@ void ssl_clear_cipher_ctx(SSL *s)
         s->enc_write_ctx = NULL;
     }
 #ifndef OPENSSL_NO_COMP
-    if (s->expand != NULL) {
-        COMP_CTX_free(s->expand);
-        s->expand = NULL;
-    }
-    if (s->compress != NULL) {
-        COMP_CTX_free(s->compress);
-        s->compress = NULL;
-    }
+    COMP_CTX_free(s->expand);
+    s->expand = NULL;
+    COMP_CTX_free(s->compress);
+    s->compress = NULL;
 #endif
 }
 

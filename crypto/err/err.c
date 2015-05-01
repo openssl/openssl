@@ -409,8 +409,7 @@ static void int_thread_del_item(const ERR_STATE *d)
     CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
 
     int_thread_release(&hash);
-    if (p)
-        ERR_STATE_free(p);
+    ERR_STATE_free(p);
 }
 
 #ifndef OPENSSL_NO_ERR
@@ -905,8 +904,7 @@ ERR_STATE *ERR_get_state(void)
          * If a race occurred in this function and we came second, tmpp is
          * the first one that we just replaced.
          */
-        if (tmpp)
-            ERR_STATE_free(tmpp);
+        ERR_STATE_free(tmpp);
     }
     return ret;
 }
