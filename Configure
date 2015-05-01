@@ -114,6 +114,16 @@ my $gcc_devteam_warn = "-Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare
 # -Wextended-offsetof
 my $clang_disabled_warnings = "-Wno-unused-parameter -Wno-missing-field-initializers -Wno-language-extension-token  -Wno-extended-offsetof";
 
+# These are used in addition to $gcc_devteam_warn when the compiler is clang.
+# TODO(openssl-team): fix problems and investigate if (at least) the
+# following warnings can also be enabled: -Wconditional-uninitialized,
+# -Wswitch-enum, -Wunused-macros, -Wmissing-field-initializers,
+# -Wmissing-variable-declarations,
+# -Wincompatible-pointer-types-discards-qualifiers, -Wcast-align,
+# -Wunreachable-code -Wunused-parameter -Wlanguage-extension-token
+# -Wextended-offsetof
+my $clang_devteam_warn = "-Wno-unused-parameter -Wno-missing-field-initializers -Wno-language-extension-token -Wno-extended-offsetof -Qunused-arguments";
+
 my $strict_warnings = 0;
 
 my $x86_gcc_des="DES_PTR DES_RISC1 DES_UNROLL";
@@ -469,7 +479,7 @@ my %table=(
 # triggered by RIPEMD160 code.
 "BSD-sparc64",	"gcc:-DB_ENDIAN -O3 -DMD32_REG_T=int -Wall::${BSDthreads}:::BN_LLONG RC2_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC2 BF_PTR:${sparcv9_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "BSD-ia64",	"gcc:-DL_ENDIAN -O3 -Wall::${BSDthreads}:::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_UNROLL DES_INT:${ia64_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"BSD-x86_64",	"gcc:-DL_ENDIAN -O3 -Wall::${BSDthreads}:::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"BSD-x86_64",	"cc:-DL_ENDIAN -O3 -Wall::${BSDthreads}:::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
 "bsdi-elf-gcc",     "gcc:-DPERL5 -DL_ENDIAN -fomit-frame-pointer -O3 -march=i486 -Wall::(unknown)::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
@@ -1202,6 +1212,7 @@ my $cc = $fields[$idx_cc];
 if($ENV{CC}) {
     $cc = $ENV{CC};
 }
+
 my $cflags = $fields[$idx_cflags];
 my $unistd = $fields[$idx_unistd];
 my $thread_cflag = $fields[$idx_thread_cflag];
@@ -1637,11 +1648,20 @@ if ($shlib_version_number =~ /(^[0-9]*)\.([0-9\.]*)/)
 
 if ($strict_warnings)
 	{
+	my $ecc = $cc;
+	$ecc = "clang" if `$cc --version 2>&1` =~ /clang/;
 	my $wopt;
-	die "ERROR --strict-warnings requires gcc or clang" unless ($cc =~ /gcc$/ or $cc =~ /clang$/);
+	die "ERROR --strict-warnings requires gcc or clang" unless ($ecc =~ /gcc$/ or $ecc =~ /clang$/);
 	foreach $wopt (split /\s+/, $gcc_devteam_warn)
 		{
 		$cflags .= " $wopt" unless ($cflags =~ /$wopt/)
+		}
+	if ($ecc eq "clang")
+		{
+		foreach $wopt (split /\s+/, $clang_devteam_warn)
+			{
+			$cflags .= " $wopt" unless ($cflags =~ /$wopt/)
+			}
 		}
 	}
 
