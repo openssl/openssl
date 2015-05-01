@@ -489,12 +489,12 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
     /* If we get this far evaluate policies */
     if (!bad_chain && (ctx->param->flags & X509_V_FLAG_POLICY_CHECK))
         ok = ctx->check_policy(ctx);
-    if (!ok)
-        goto end;
-    if (0) {
+    if (ok)
+        goto done;
+
  end:
-        X509_get_pubkey_parameters(NULL, ctx->chain);
-    }
+    X509_get_pubkey_parameters(NULL, ctx->chain);
+ done:
     sk_X509_free(sktmp);
     X509_free(chain_ss);
     return ok;

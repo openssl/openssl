@@ -3570,7 +3570,6 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             ptmp = EVP_PKEY_new();
             if (!ptmp)
                 return 0;
-            if (0) ;
 #ifndef OPENSSL_NO_RSA
             else if (sc->peer_rsa_tmp)
                 rv = EVP_PKEY_set1_RSA(ptmp, sc->peer_rsa_tmp);

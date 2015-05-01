@@ -1189,7 +1189,7 @@ int ssl3_get_server_certificate(SSL *s)
 
     if ((sk = sk_X509_new_null()) == NULL) {
         SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE, ERR_R_MALLOC_FAILURE);
-        goto err;
+        goto done;
     }
 
     n2l3(p, llen);
@@ -1222,7 +1222,7 @@ int ssl3_get_server_certificate(SSL *s)
         }
         if (!sk_X509_push(sk, x)) {
             SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE, ERR_R_MALLOC_FAILURE);
-            goto err;
+            goto done;
         }
         x = NULL;
         nc += l + 3;
@@ -1250,7 +1250,7 @@ int ssl3_get_server_certificate(SSL *s)
 
     sc = ssl_sess_cert_new();
     if (sc == NULL)
-        goto err;
+        goto done;
 
     ssl_sess_cert_free(s->session->sess_cert);
     s->session->sess_cert = sc;
@@ -1332,11 +1332,11 @@ int ssl3_get_server_certificate(SSL *s)
 
     x = NULL;
     ret = 1;
-    if (0) {
+    goto done;
+
  f_err:
-        ssl3_send_alert(s, SSL3_AL_FATAL, al);
-    }
- err:
+    ssl3_send_alert(s, SSL3_AL_FATAL, al);
+ done:
     EVP_PKEY_free(pkey);
     X509_free(x);
     sk_X509_pop_free(sk, X509_free);

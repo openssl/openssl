@@ -97,7 +97,6 @@ int i2a_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *a)
 
 int a2i_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *bs, char *buf, int size)
 {
-    int ret = 0;
     int i, j, k, m, n, again, bufsize;
     unsigned char *s = NULL, *sp;
     unsigned char *bufp;
@@ -108,16 +107,16 @@ int a2i_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *bs, char *buf, int size)
     bufsize = BIO_gets(bp, buf, size);
     for (;;) {
         if (bufsize < 1)
-            goto err_sl;
+            goto err;
         i = bufsize;
         if (buf[i - 1] == '\n')
             buf[--i] = '\0';
         if (i == 0)
-            goto err_sl;
+            goto err;
         if (buf[i - 1] == '\r')
             buf[--i] = '\0';
         if (i == 0)
-            goto err_sl;
+            goto err;
         again = (buf[i - 1] == '\\');
 
         for (j = 0; j < i; j++) {
@@ -133,7 +132,7 @@ int a2i_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *bs, char *buf, int size)
          * We have now cleared all the crap off the end of the line
          */
         if (i < 2)
-            goto err_sl;
+            goto err;
 
         bufp = (unsigned char *)buf;
         if (first) {
@@ -147,7 +146,7 @@ int a2i_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *bs, char *buf, int size)
         i -= again;
         if (i % 2 != 0) {
             ASN1err(ASN1_F_A2I_ASN1_ENUMERATED, ASN1_R_ODD_NUMBER_OF_CHARS);
-            goto err;
+            return 0;
         }
         i /= 2;
         if (num + i > slen) {
@@ -155,7 +154,7 @@ int a2i_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *bs, char *buf, int size)
             if (sp == NULL) {
                 ASN1err(ASN1_F_A2I_ASN1_ENUMERATED, ERR_R_MALLOC_FAILURE);
                 OPENSSL_free(s);
-                goto err;
+                return 0;
             }
             s = sp;
             slen = num + i * 2;
@@ -172,7 +171,7 @@ int a2i_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *bs, char *buf, int size)
                 else {
                     ASN1err(ASN1_F_A2I_ASN1_ENUMERATED,
                             ASN1_R_NON_HEX_CHARACTERS);
-                    goto err;
+                    return 0;
                 }
                 s[num + j] <<= 4;
                 s[num + j] |= m;
@@ -186,11 +185,9 @@ int a2i_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *bs, char *buf, int size)
     }
     bs->length = num;
     bs->data = s;
-    ret = 1;
+    return 1;
+
  err:
-    if (0) {
- err_sl:
-        ASN1err(ASN1_F_A2I_ASN1_ENUMERATED, ASN1_R_SHORT_LINE);
-    }
-    return (ret);
+    ASN1err(ASN1_F_A2I_ASN1_ENUMERATED, ASN1_R_SHORT_LINE);
+    return 0;
 }

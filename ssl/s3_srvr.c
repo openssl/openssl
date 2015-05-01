@@ -3184,7 +3184,7 @@ int ssl3_get_client_certificate(SSL *s)
 
     if ((sk = sk_X509_new_null()) == NULL) {
         SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE, ERR_R_MALLOC_FAILURE);
-        goto err;
+        goto done;
     }
 
     n2l3(p, llen);
@@ -3206,7 +3206,7 @@ int ssl3_get_client_certificate(SSL *s)
         x = d2i_X509(NULL, &p, l);
         if (x == NULL) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE, ERR_R_ASN1_LIB);
-            goto err;
+            goto done;
         }
         if (p != (q + l)) {
             al = SSL_AD_DECODE_ERROR;
@@ -3216,7 +3216,7 @@ int ssl3_get_client_certificate(SSL *s)
         }
         if (!sk_X509_push(sk, x)) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE, ERR_R_MALLOC_FAILURE);
-            goto err;
+            goto done;
         }
         x = NULL;
         nc += l + 3;
@@ -3279,7 +3279,7 @@ int ssl3_get_client_certificate(SSL *s)
         s->session->sess_cert = ssl_sess_cert_new();
         if (s->session->sess_cert == NULL) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE, ERR_R_MALLOC_FAILURE);
-            goto err;
+            goto done;
         }
     }
     sk_X509_pop_free(s->session->sess_cert->cert_chain, X509_free);
@@ -3288,15 +3288,13 @@ int ssl3_get_client_certificate(SSL *s)
      * Inconsistency alert: cert_chain does *not* include the peer's own
      * certificate, while we do include it in s3_clnt.c
      */
-
     sk = NULL;
-
     ret = 1;
-    if (0) {
+    goto done;
+
  f_err:
-        ssl3_send_alert(s, SSL3_AL_FATAL, al);
-    }
- err:
+    ssl3_send_alert(s, SSL3_AL_FATAL, al);
+ done:
     X509_free(x);
     sk_X509_pop_free(sk, X509_free);
     return (ret);
