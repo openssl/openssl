@@ -112,8 +112,7 @@ int EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx)
  err:
     if (ctx != NULL)
         BN_CTX_end(ctx);
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     EC_POINT_free(point);
     return ret;
 }

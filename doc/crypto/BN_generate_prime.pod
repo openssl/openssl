@@ -111,8 +111,8 @@ B<BN_GENCB> structure that are supported: "new" style and "old" style. New
 programs should prefer the "new" style, whilst the "old" style is provided
 for backwards compatibility purposes.
 
-A BN_GENCB structure should be created through a call to BN_GENCB_new, and freed
-through a call to BN_GENCB_free.
+A BN_GENCB structure should be created through a call to BN_GENCB_new(),
+and freed through a call to BN_GENCB_free().
 
 For "new" style callbacks a BN_GENCB structure should be initialised with a
 call to BN_GENCB_set(), where B<gencb> is a B<BN_GENCB *>, B<callback> is of

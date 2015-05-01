@@ -159,7 +159,6 @@ int DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *ret)
 
     ok = 1;
  err:
-    if (q != NULL)
-        BN_free(q);
+    BN_free(q);
     return (ok);
 }

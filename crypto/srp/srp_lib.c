@@ -228,8 +228,7 @@ BIGNUM *SRP_Calc_A(BIGNUM *a, BIGNUM *N, BIGNUM *g)
     BN_CTX *bn_ctx;
     BIGNUM *A = NULL;
 
-    if (a == NULL || N == NULL || g == NULL ||
-        (bn_ctx = BN_CTX_new()) == NULL)
+    if (a == NULL || N == NULL || g == NULL || (bn_ctx = BN_CTX_new()) == NULL)
         return NULL;
 
     if ((A = BN_new()) != NULL && !BN_mod_exp(A, g, a, N, bn_ctx)) {
@@ -252,7 +251,8 @@ BIGNUM *SRP_Calc_client_key(BIGNUM *N, BIGNUM *B, BIGNUM *g, BIGNUM *x,
 
     if ((tmp = BN_new()) == NULL ||
         (tmp2 = BN_new()) == NULL ||
-        (tmp3 = BN_new()) == NULL || (K = BN_new()) == NULL)
+        (tmp3 = BN_new()) == NULL ||
+        (K = BN_new()) == NULL)
         goto err;
 
     if (!BN_mod_exp(tmp, g, x, N, bn_ctx))

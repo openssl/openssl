@@ -241,8 +241,7 @@ static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
     if (!ret) {
         BIO_printf(bio_err, "Could not convert PSK key '%s' to BIGNUM\n",
                    psk_key);
-        if (bn)
-            BN_free(bn);
+        BN_free(bn);
         return 0;
     }
 
@@ -320,12 +319,9 @@ static int srp_Verify_N_and_g(const BIGNUM *N, const BIGNUM *g)
         BN_mod_exp(r, g, p, N, bn_ctx) &&
         BN_add_word(r, 1) && BN_cmp(r, N) == 0;
 
-    if (r)
-        BN_free(r);
-    if (p)
-        BN_free(p);
-    if (bn_ctx)
-        BN_CTX_free(bn_ctx);
+    BN_free(r);
+    BN_free(p);
+    BN_CTX_free(bn_ctx);
     return ret;
 }
 

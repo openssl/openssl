@@ -160,8 +160,7 @@ static void pkey_rsa_cleanup(EVP_PKEY_CTX *ctx)
 {
     RSA_PKEY_CTX *rctx = ctx->data;
     if (rctx) {
-        if (rctx->pub_exp)
-            BN_free(rctx->pub_exp);
+        BN_free(rctx->pub_exp);
         if (rctx->tbuf)
             OPENSSL_free(rctx->tbuf);
         if (rctx->oaep_label)

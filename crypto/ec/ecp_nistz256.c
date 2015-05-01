@@ -1121,10 +1121,8 @@ __owur static int ecp_nistz256_set_from_affine(EC_POINT *out, const EC_GROUP *gr
 
     ret = EC_POINT_set_affine_coordinates_GFp(group, out, x, y, ctx);
 
-    if (x)
-        BN_free(x);
-    if (y)
-        BN_free(y);
+    BN_free(x);
+    BN_free(y);
 
     return ret;
 }

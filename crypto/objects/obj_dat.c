@@ -589,13 +589,11 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
         }
     }
 
-    if (bl)
-        BN_free(bl);
+    BN_free(bl);
     return n;
 
  err:
-    if (bl)
-        BN_free(bl);
+    BN_free(bl);
     return -1;
 }
 

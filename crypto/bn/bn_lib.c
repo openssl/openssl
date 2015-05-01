@@ -541,8 +541,7 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
     i = ((n - 1) / BN_BYTES) + 1;
     m = ((n - 1) % (BN_BYTES));
     if (bn_wexpand(ret, (int)i) == NULL) {
-        if (bn)
-            BN_free(bn);
+        BN_free(bn);
         return NULL;
     }
     ret->top = i;

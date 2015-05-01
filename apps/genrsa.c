@@ -214,10 +214,8 @@ int genrsa_main(int argc, char **argv)
 
     ret = 0;
  end:
-    if (bn)
-        BN_free(bn);
-    if (cb)
-        BN_GENCB_free(cb);
+    BN_free(bn);
+    BN_GENCB_free(cb);
     RSA_free(rsa);
     BIO_free_all(out);
     if (passout)

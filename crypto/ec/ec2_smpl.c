@@ -135,12 +135,9 @@ int ec_GF2m_simple_group_init(EC_GROUP *group)
     group->b = BN_new();
 
     if (!group->field || !group->a || !group->b) {
-        if (group->field)
-            BN_free(group->field);
-        if (group->a)
-            BN_free(group->a);
-        if (group->b)
-            BN_free(group->b);
+        BN_free(group->field);
+        BN_free(group->a);
+        BN_free(group->b);
         return 0;
     }
     return 1;
@@ -318,8 +315,7 @@ int ec_GF2m_simple_group_check_discriminant(const EC_GROUP *group,
  err:
     if (ctx != NULL)
         BN_CTX_end(ctx);
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -331,12 +327,9 @@ int ec_GF2m_simple_point_init(EC_POINT *point)
     point->Z = BN_new();
 
     if (!point->X || !point->Y || !point->Z) {
-        if (point->X)
-            BN_free(point->X);
-        if (point->Y)
-            BN_free(point->Y);
-        if (point->Z)
-            BN_free(point->Z);
+        BN_free(point->X);
+        BN_free(point->Y);
+        BN_free(point->Z);
         return 0;
     }
     return 1;
@@ -569,8 +562,7 @@ int ec_GF2m_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
 
  err:
     BN_CTX_end(ctx);
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -663,8 +655,7 @@ int ec_GF2m_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point,
  err:
     if (ctx)
         BN_CTX_end(ctx);
-    if (new_ctx)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -716,8 +707,7 @@ int ec_GF2m_simple_cmp(const EC_GROUP *group, const EC_POINT *a,
  err:
     if (ctx)
         BN_CTX_end(ctx);
-    if (new_ctx)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -758,8 +748,7 @@ int ec_GF2m_simple_make_affine(const EC_GROUP *group, EC_POINT *point,
  err:
     if (ctx)
         BN_CTX_end(ctx);
-    if (new_ctx)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 

@@ -680,40 +680,6 @@ static int ubsec_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 }
 #  endif
 
-#  ifndef OPENSSL_NO_DSA
-#   ifdef NOT_USED
-static int ubsec_dsa_mod_exp(DSA *dsa, BIGNUM *rr, BIGNUM *a1,
-                             BIGNUM *p1, BIGNUM *a2, BIGNUM *p2, BIGNUM *m,
-                             BN_CTX *ctx, BN_MONT_CTX *in_mont)
-{
-    BIGNUM t;
-    int to_return = 0;
-
-    BN_init(&t);
-    /* let rr = a1 ^ p1 mod m */
-    if (!ubsec_mod_exp(rr, a1, p1, m, ctx))
-        goto end;
-    /* let t = a2 ^ p2 mod m */
-    if (!ubsec_mod_exp(&t, a2, p2, m, ctx))
-        goto end;
-    /* let rr = rr * t mod m */
-    if (!BN_mod_mul(rr, rr, &t, m, ctx))
-        goto end;
-    to_return = 1;
- end:
-    BN_free(&t);
-    return to_return;
-}
-
-static int ubsec_mod_exp_dsa(DSA *dsa, BIGNUM *r, BIGNUM *a,
-                             const BIGNUM *p, const BIGNUM *m, BN_CTX *ctx,
-                             BN_MONT_CTX *m_ctx)
-{
-    return ubsec_mod_exp(r, a, p, m, ctx);
-}
-#   endif
-#  endif
-
 #  ifndef OPENSSL_NO_RSA
 
 /*
@@ -825,10 +791,8 @@ static DSA_SIG *ubsec_dsa_do_sign(const unsigned char *dgst, int dlen,
 
  err:
     if (!to_return) {
-        if (r)
-            BN_free(r);
-        if (s)
-            BN_free(s);
+        BN_free(r);
+        BN_free(s);
     }
     BN_clear_free(&m);
     return to_return;

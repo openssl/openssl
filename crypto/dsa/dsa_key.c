@@ -111,12 +111,10 @@ static int dsa_builtin_keygen(DSA *dsa)
             prk = priv_key;
 
         if (!BN_mod_exp(pub_key, dsa->g, prk, dsa->p, ctx)) {
-            if (local_prk != NULL)
-                BN_free(local_prk);
+            BN_free(local_prk);
             goto err;
         }
-        if (local_prk != NULL)
-            BN_free(local_prk);
+        BN_free(local_prk);
     }
 
     dsa->priv_key = priv_key;
@@ -124,11 +122,10 @@ static int dsa_builtin_keygen(DSA *dsa)
     ok = 1;
 
  err:
-    if ((pub_key != NULL) && (dsa->pub_key == NULL))
+    if (pub_key != dsa->pub_key)
         BN_free(pub_key);
-    if ((priv_key != NULL) && (dsa->priv_key == NULL))
+    if (priv_key != dsa->priv_key)
         BN_free(priv_key);
-    if (ctx != NULL)
-        BN_CTX_free(ctx);
+    BN_CTX_free(ctx);
     return (ok);
 }

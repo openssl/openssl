@@ -273,14 +273,10 @@ int SSL_set_srp_server_param_pw(SSL *s, const char *user, const char *pass,
         return -1;
     s->srp_ctx.N = BN_dup(GN->N);
     s->srp_ctx.g = BN_dup(GN->g);
-    if (s->srp_ctx.v != NULL) {
-        BN_clear_free(s->srp_ctx.v);
-        s->srp_ctx.v = NULL;
-    }
-    if (s->srp_ctx.s != NULL) {
-        BN_clear_free(s->srp_ctx.s);
-        s->srp_ctx.s = NULL;
-    }
+    BN_clear_free(s->srp_ctx.v);
+    s->srp_ctx.v = NULL;
+    BN_clear_free(s->srp_ctx.s);
+    s->srp_ctx.s = NULL;
     if (!SRP_create_verifier_BN
         (user, pass, &s->srp_ctx.s, &s->srp_ctx.v, GN->N, GN->g))
         return -1;

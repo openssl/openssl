@@ -525,12 +525,14 @@ static int param_copy_gost94(EVP_PKEY *to, const EVP_PKEY *from)
         dto = DSA_new();
         EVP_PKEY_assign(to, EVP_PKEY_base_id(from), dto);
     }
-#define COPYBIGNUM(a,b,x) if (a->x) BN_free(a->x); a->x=BN_dup(b->x);
-    COPYBIGNUM(dto, dfrom, p)
-        COPYBIGNUM(dto, dfrom, q)
-        COPYBIGNUM(dto, dfrom, g)
+    BN_free(dto->p);
+    dto->p = BN_dup(dfrom->p);
+    BN_free(dto->q);
+    dto->q = BN_dup(dfrom->q);
+    BN_free(dto->g);
+    dto->g = BN_dup(dfrom->g);
 
-        if (dto->priv_key)
+    if (dto->priv_key)
         gost94_compute_public(dto);
     return 1;
 }
@@ -758,10 +760,8 @@ static int pub_encode_gost01(X509_PUBKEY *pub, const EVP_PKEY *pk)
     Y = BN_new();
     if (!X || !Y) {
         GOSTerr(GOST_F_PUB_ENCODE_GOST01, ERR_R_MALLOC_FAILURE);
-        if (X)
-            BN_free(X);
-        if (Y)
-            BN_free(Y);
+        BN_free(X);
+        BN_free(Y);
         BN_free(order);
         return 0;
     }

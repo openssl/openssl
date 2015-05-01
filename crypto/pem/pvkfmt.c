@@ -337,8 +337,7 @@ static EVP_PKEY *b2i_dss(const unsigned char **in, unsigned int length,
     PEMerr(PEM_F_B2I_DSS, ERR_R_MALLOC_FAILURE);
     DSA_free(dsa);
     EVP_PKEY_free(ret);
-    if (ctx)
-        BN_CTX_free(ctx);
+    BN_CTX_free(ctx);
     return NULL;
 }
 

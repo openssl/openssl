@@ -463,8 +463,7 @@ static int int_dh_bn_cpy(BIGNUM **dst, const BIGNUM *src)
             return 0;
     } else
         a = NULL;
-    if (*dst)
-        BN_free(*dst);
+    BN_free(*dst);
     *dst = a;
     return 1;
 }

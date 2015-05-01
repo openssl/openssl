@@ -946,10 +946,8 @@ static DSA_SIG *DSA_zencod_do_sign(const unsigned char *dgst, int dlen,
     return sig;
 
  FAILED:
-    if (bn_r)
-        BN_free(bn_r);
-    if (bn_s)
-        BN_free(bn_s);
+    BN_free(bn_r);
+    BN_free(bn_s);
     return NULL;
 }
 
@@ -1083,9 +1081,9 @@ static int DH_zencod_generate_key(DH *dh)
     return 1;
 
  FAILED:
-    if (!dh->priv_key && bn_prv)
+    if (!dh->priv_key)
         BN_free(bn_prv);
-    if (!dh->pub_key && bn_pub)
+    if (!dh->pub_key)
         BN_free(bn_pub);
 
     return 0;
