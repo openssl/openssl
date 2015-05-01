@@ -251,12 +251,10 @@ static void free_expected(struct evp_test *t)
 {
     OPENSSL_free(t->expected_err);
     t->expected_err = NULL;
-    if (t->out_expected) {
-        OPENSSL_free(t->out_expected);
-        OPENSSL_free(t->out_got);
-        t->out_expected = NULL;
-        t->out_got = NULL;
-    }
+    OPENSSL_free(t->out_expected);
+    OPENSSL_free(t->out_got);
+    t->out_expected = NULL;
+    t->out_got = NULL;
 }
 
 static void print_expected(struct evp_test *t)

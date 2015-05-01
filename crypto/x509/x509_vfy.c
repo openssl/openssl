@@ -1020,10 +1020,8 @@ static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509_CRL **pdcrl,
         *pscore = best_score;
         *preasons = best_reasons;
         CRYPTO_add(&best_crl->references, 1, CRYPTO_LOCK_X509_CRL);
-        if (*pdcrl) {
-            X509_CRL_free(*pdcrl);
-            *pdcrl = NULL;
-        }
+        X509_CRL_free(*pdcrl);
+        *pdcrl = NULL;
         get_delta_sk(ctx, pdcrl, pscore, best_crl, crls);
     }
 

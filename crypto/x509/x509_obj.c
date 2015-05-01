@@ -207,7 +207,6 @@ char *X509_NAME_oneline(X509_NAME *a, char *buf, int len)
     return (p);
  err:
     X509err(X509_F_X509_NAME_ONELINE, ERR_R_MALLOC_FAILURE);
-    if (b != NULL)
-        BUF_MEM_free(b);
+    BUF_MEM_free(b);
     return (NULL);
 }

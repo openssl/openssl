@@ -285,7 +285,6 @@ int pkey_GOST01cp_decrypt(EVP_PKEY_CTX *pctx, unsigned char *key,
     ret = 1;
  err:
     EVP_PKEY_free(eph_key);
-    if (gkt)
-        GOST_KEY_TRANSPORT_free(gkt);
+    GOST_KEY_TRANSPORT_free(gkt);
     return ret;
 }

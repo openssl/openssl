@@ -261,8 +261,7 @@ static int util_verbose(ENGINE *e, int verbose, BIO *out, const char *indent)
         BIO_printf(out, "\n");
     ret = 1;
  err:
-    if (cmds)
-        sk_OPENSSL_STRING_pop_free(cmds, identity);
+    sk_OPENSSL_STRING_pop_free(cmds, identity);
     OPENSSL_free(name);
     OPENSSL_free(desc);
     return ret;

@@ -194,7 +194,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
     ok = 1;
 
  err:
-    if (ec->key && !keep_key) {
+    if (!keep_key) {
         OPENSSL_clear_free(ec->key, ec->keylen);
         ec->key = NULL;
     }

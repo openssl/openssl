@@ -48,11 +48,8 @@ int main(int argc, char **argv)
         ERR_print_errors_fp(stderr);
     }
 
-    if (cms)
-        CMS_ContentInfo_free(cms);
+    CMS_ContentInfo_free(cms);
     BIO_free(in);
     BIO_free(out);
-
     return ret;
-
 }

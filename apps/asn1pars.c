@@ -319,15 +319,13 @@ int asn1parse_main(int argc, char **argv)
     BIO_free(b64);
     if (ret != 0)
         ERR_print_errors(bio_err);
-    if (buf != NULL)
-        BUF_MEM_free(buf);
+    BUF_MEM_free(buf);
     OPENSSL_free(name);
     OPENSSL_free(header);
     if (strictpem)
         OPENSSL_free(str);
     ASN1_TYPE_free(at);
-    if (osk != NULL)
-        sk_OPENSSL_STRING_free(osk);
+    sk_OPENSSL_STRING_free(osk);
     OBJ_cleanup();
     return (ret);
 }

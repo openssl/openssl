@@ -97,8 +97,7 @@ void *ASN1_d2i_bio(void *(*xnew) (void), d2i_of_void *d2i, BIO *in, void **x)
     p = (unsigned char *)b->data;
     ret = d2i(x, &p, len);
  err:
-    if (b != NULL)
-        BUF_MEM_free(b);
+    BUF_MEM_free(b);
     return (ret);
 }
 
@@ -118,8 +117,7 @@ void *ASN1_item_d2i_bio(const ASN1_ITEM *it, BIO *in, void *x)
     p = (const unsigned char *)b->data;
     ret = ASN1_item_d2i(x, &p, len, it);
  err:
-    if (b != NULL)
-        BUF_MEM_free(b);
+    BUF_MEM_free(b);
     return (ret);
 }
 
@@ -264,7 +262,6 @@ static int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
     *pb = b;
     return off;
  err:
-    if (b != NULL)
-        BUF_MEM_free(b);
+    BUF_MEM_free(b);
     return -1;
 }

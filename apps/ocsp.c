@@ -917,8 +917,7 @@ static void make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req,
                                          NULL);
             goto end;
         }
-        if (ca_id)
-            OCSP_CERTID_free(ca_id);
+        OCSP_CERTID_free(ca_id);
         ca_id = OCSP_cert_to_id(cert_id_md, NULL, ca);
 
         /* Is this request about our CA? */

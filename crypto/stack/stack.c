@@ -106,8 +106,7 @@ _STACK *sk_dup(_STACK *sk)
     ret->comp = sk->comp;
     return (ret);
  err:
-    if (ret)
-        sk_free(ret);
+    sk_free(ret);
     return (NULL);
 }
 

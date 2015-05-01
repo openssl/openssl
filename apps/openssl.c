@@ -511,12 +511,9 @@ int main(int argc, char *argv[])
  end:
     OPENSSL_free(copied_argv);
     OPENSSL_free(to_free);
-    if (config != NULL) {
-        NCONF_free(config);
-        config = NULL;
-    }
-    if (prog != NULL)
-        lh_FUNCTION_free(prog);
+    NCONF_free(config);
+    config = NULL;
+    lh_FUNCTION_free(prog);
     OPENSSL_free(arg.argv);
 
     BIO_free(bio_in);

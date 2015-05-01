@@ -110,8 +110,7 @@ static int policy_cache_create(X509 *x,
  bad_policy:
     if (ret == -1)
         x->ex_flags |= EXFLAG_INVALID_POLICY;
-    if (data)
-        policy_data_free(data);
+    policy_data_free(data);
     sk_POLICYINFO_pop_free(policies, POLICYINFO_free);
     if (ret <= 0) {
         sk_X509_POLICY_DATA_pop_free(cache->data, policy_data_free);
@@ -206,11 +205,8 @@ static int policy_cache_new(X509 *x)
     x->ex_flags |= EXFLAG_INVALID_POLICY;
 
  just_cleanup:
-    if (ext_pcons)
-        POLICY_CONSTRAINTS_free(ext_pcons);
-
+    POLICY_CONSTRAINTS_free(ext_pcons);
     ASN1_INTEGER_free(ext_any);
-
     return 1;
 
 }
@@ -219,8 +215,7 @@ void policy_cache_free(X509_POLICY_CACHE *cache)
 {
     if (!cache)
         return;
-    if (cache->anyPolicy)
-        policy_data_free(cache->anyPolicy);
+    policy_data_free(cache->anyPolicy);
     sk_X509_POLICY_DATA_pop_free(cache->data, policy_data_free);
     OPENSSL_free(cache);
 }

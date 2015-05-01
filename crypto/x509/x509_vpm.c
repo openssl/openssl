@@ -83,8 +83,6 @@ static void str_free(char *s)
     OPENSSL_free(s);
 }
 
-#define string_stack_free(sk) sk_OPENSSL_STRING_pop_free(sk, str_free)
-
 static int int_x509_param_set_hosts(X509_VERIFY_PARAM_ID *id, int mode,
                                     const char *name, size_t namelen)
 {
@@ -101,8 +99,8 @@ static int int_x509_param_set_hosts(X509_VERIFY_PARAM_ID *id, int mode,
     if (name && name[namelen - 1] == '\0')
         --namelen;
 
-    if (mode == SET_HOST && id->hosts) {
-        string_stack_free(id->hosts);
+    if (mode == SET_HOST) {
+        sk_OPENSSL_STRING_pop_free(id->hosts, str_free);
         id->hosts = NULL;
     }
     if (name == NULL || namelen == 0)
@@ -147,7 +145,7 @@ static void x509_verify_param_zero(X509_VERIFY_PARAM *param)
     sk_ASN1_OBJECT_pop_free(param->policies, ASN1_OBJECT_free);
     param->policies = NULL;
     paramid = param->id;
-    string_stack_free(paramid->hosts);
+    sk_OPENSSL_STRING_pop_free(paramid->hosts, str_free);
     paramid->hosts = NULL;
     OPENSSL_free(paramid->peername);
     OPENSSL_free(paramid->email);
@@ -287,10 +285,8 @@ int X509_VERIFY_PARAM_inherit(X509_VERIFY_PARAM *dest,
 
     /* Copy the host flags if and only if we're copying the host list */
     if (test_x509_verify_param_copy_id(hosts, NULL)) {
-        if (dest->id->hosts) {
-            string_stack_free(dest->id->hosts);
-            dest->id->hosts = NULL;
-        }
+        sk_OPENSSL_STRING_pop_free(dest->id->hosts, str_free);
+        dest->id->hosts = NULL;
         if (id->hosts) {
             dest->id->hosts =
                 sk_OPENSSL_STRING_deep_copy(id->hosts, str_copy, str_free);

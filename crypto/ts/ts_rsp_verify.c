@@ -718,8 +718,7 @@ static int TS_check_signer_name(GENERAL_NAME *tsa_name, X509 *signer)
         gen_names = X509_get_ext_d2i(signer, NID_subject_alt_name,
                                      NULL, &idx);
     }
-    if (gen_names)
-        GENERAL_NAMES_free(gen_names);
+    GENERAL_NAMES_free(gen_names);
 
     return found;
 }

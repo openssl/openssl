@@ -1272,14 +1272,9 @@ int ssl3_get_client_hello(SSL *s)
             }
 
             s->session->cipher = pref_cipher;
-
-            if (s->cipher_list)
-                sk_SSL_CIPHER_free(s->cipher_list);
-
-            if (s->cipher_list_by_id)
-                sk_SSL_CIPHER_free(s->cipher_list_by_id);
-
+            sk_SSL_CIPHER_free(s->cipher_list);
             s->cipher_list = sk_SSL_CIPHER_dup(s->session->ciphers);
+            sk_SSL_CIPHER_free(s->cipher_list_by_id);
             s->cipher_list_by_id = sk_SSL_CIPHER_dup(s->session->ciphers);
         }
     }
@@ -1371,8 +1366,7 @@ int ssl3_get_client_hello(SSL *s)
 #else
         s->session->compress_meth = (comp == NULL) ? 0 : comp->id;
 #endif
-        if (s->session->ciphers != NULL)
-            sk_SSL_CIPHER_free(s->session->ciphers);
+        sk_SSL_CIPHER_free(s->session->ciphers);
         s->session->ciphers = ciphers;
         if (ciphers == NULL) {
             al = SSL_AD_INTERNAL_ERROR;
@@ -1452,8 +1446,7 @@ int ssl3_get_client_hello(SSL *s)
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
     }
  err:
-    if (ciphers != NULL)
-        sk_SSL_CIPHER_free(ciphers);
+    sk_SSL_CIPHER_free(ciphers);
     return ret < 0 ? -1 : ret;
 }
 
@@ -3127,11 +3120,9 @@ int ssl3_get_cert_verify(SSL *s)
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
     }
  end:
-    if (s->s3->handshake_buffer) {
-        BIO_free(s->s3->handshake_buffer);
-        s->s3->handshake_buffer = NULL;
-        s->s3->flags &= ~TLS1_FLAGS_KEEP_HANDSHAKE;
-    }
+    BIO_free(s->s3->handshake_buffer);
+    s->s3->handshake_buffer = NULL;
+    s->s3->flags &= ~TLS1_FLAGS_KEEP_HANDSHAKE;
     EVP_MD_CTX_cleanup(&mctx);
     EVP_PKEY_free(pkey);
     return (ret);

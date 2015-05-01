@@ -872,16 +872,14 @@ int req_main(int argc, char **argv)
     if (ret) {
         ERR_print_errors(bio_err);
     }
-    if ((req_conf != NULL) && (req_conf != config))
+    if (req_conf != config)
         NCONF_free(req_conf);
     BIO_free(in);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(genctx);
-    if (pkeyopts)
-        sk_OPENSSL_STRING_free(pkeyopts);
-    if (sigopts)
-        sk_OPENSSL_STRING_free(sigopts);
+    sk_OPENSSL_STRING_free(pkeyopts);
+    sk_OPENSSL_STRING_free(sigopts);
 #ifndef OPENSSL_NO_ENGINE
     ENGINE_free(gen_eng);
 #endif

@@ -742,8 +742,7 @@ int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     if (ctx != NULL)
         BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
-    if (pre_comp)
-        ec_pre_comp_free(pre_comp);
+    ec_pre_comp_free(pre_comp);
     if (points) {
         EC_POINT **p;
 

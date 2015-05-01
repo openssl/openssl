@@ -140,12 +140,9 @@ int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)
 
     if (!d->unprocessed_rcds.q || !d->processed_rcds.q
         || !d->buffered_app_data.q) {
-        if (d->unprocessed_rcds.q)
-            pqueue_free(d->unprocessed_rcds.q);
-        if (d->processed_rcds.q)
-            pqueue_free(d->processed_rcds.q);
-        if (d->buffered_app_data.q)
-            pqueue_free(d->buffered_app_data.q);
+        pqueue_free(d->unprocessed_rcds.q);
+        pqueue_free(d->processed_rcds.q);
+        pqueue_free(d->buffered_app_data.q);
         OPENSSL_free(d);
         rl->d = NULL;
         return (0);
@@ -266,9 +263,7 @@ int dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
     item = pitem_new(priority, rdata);
     if (rdata == NULL || item == NULL) {
         OPENSSL_free(rdata);
-        if (item != NULL)
-            pitem_free(item);
-
+        pitem_free(item);
         SSLerr(SSL_F_DTLS1_BUFFER_RECORD, ERR_R_INTERNAL_ERROR);
         return -1;
     }

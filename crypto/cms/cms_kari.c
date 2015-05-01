@@ -207,10 +207,9 @@ int CMS_RecipientInfo_kari_set0_pkey(CMS_RecipientInfo *ri, EVP_PKEY *pk)
 {
     EVP_PKEY_CTX *pctx;
     CMS_KeyAgreeRecipientInfo *kari = ri->d.kari;
-    if (kari->pctx) {
-        EVP_PKEY_CTX_free(kari->pctx);
-        kari->pctx = NULL;
-    }
+
+    EVP_PKEY_CTX_free(kari->pctx);
+    kari->pctx = NULL;
     if (!pk)
         return 1;
     pctx = EVP_PKEY_CTX_new(pk, NULL);

@@ -733,31 +733,23 @@ void SSL_SESSION_free(SSL_SESSION *ss)
     OPENSSL_cleanse(ss->session_id, sizeof ss->session_id);
     ssl_sess_cert_free(ss->sess_cert);
     X509_free(ss->peer);
-    if (ss->ciphers != NULL)
-        sk_SSL_CIPHER_free(ss->ciphers);
+    sk_SSL_CIPHER_free(ss->ciphers);
 #ifndef OPENSSL_NO_TLSEXT
-    if (ss->tlsext_hostname != NULL)
-        OPENSSL_free(ss->tlsext_hostname);
-    if (ss->tlsext_tick != NULL)
-        OPENSSL_free(ss->tlsext_tick);
+    OPENSSL_free(ss->tlsext_hostname);
+    OPENSSL_free(ss->tlsext_tick);
 # ifndef OPENSSL_NO_EC
     ss->tlsext_ecpointformatlist_length = 0;
-    if (ss->tlsext_ecpointformatlist != NULL)
-        OPENSSL_free(ss->tlsext_ecpointformatlist);
+    OPENSSL_free(ss->tlsext_ecpointformatlist);
     ss->tlsext_ellipticcurvelist_length = 0;
-    if (ss->tlsext_ellipticcurvelist != NULL)
-        OPENSSL_free(ss->tlsext_ellipticcurvelist);
+    OPENSSL_free(ss->tlsext_ellipticcurvelist);
 # endif                         /* OPENSSL_NO_EC */
 #endif
 #ifndef OPENSSL_NO_PSK
-    if (ss->psk_identity_hint != NULL)
-        OPENSSL_free(ss->psk_identity_hint);
-    if (ss->psk_identity != NULL)
-        OPENSSL_free(ss->psk_identity);
+    OPENSSL_free(ss->psk_identity_hint);
+    OPENSSL_free(ss->psk_identity);
 #endif
 #ifndef OPENSSL_NO_SRP
-    if (ss->srp_username != NULL)
-        OPENSSL_free(ss->srp_username);
+    OPENSSL_free(ss->srp_username);
 #endif
     OPENSSL_clear_free(ss, sizeof(*ss));
 }

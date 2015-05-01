@@ -475,8 +475,7 @@ static int ebcdic_free(BIO *a)
 {
     if (a == NULL)
         return (0);
-    if (a->ptr != NULL)
-        OPENSSL_free(a->ptr);
+    OPENSSL_free(a->ptr);
     a->ptr = NULL;
     a->init = 0;
     a->flags = 0;
@@ -725,12 +724,9 @@ static int cert_status_cb(SSL *s, void *arg)
         OPENSSL_free(port);
         X509_email_free(aia);
     }
-    if (id)
-        OCSP_CERTID_free(id);
-    if (req)
-        OCSP_REQUEST_free(req);
-    if (resp)
-        OCSP_RESPONSE_free(resp);
+    OCSP_CERTID_free(id);
+    OCSP_REQUEST_free(req);
+    OCSP_RESPONSE_free(resp);
     return ret;
  err:
     ret = SSL_TLSEXT_ERR_ALERT_FATAL;
@@ -1928,30 +1924,22 @@ int s_server_main(int argc, char *argv[])
     EVP_PKEY_free(s_dkey);
     sk_X509_pop_free(s_chain, X509_free);
     sk_X509_pop_free(s_dchain, X509_free);
-    if (pass)
-        OPENSSL_free(pass);
-    if (dpass)
-        OPENSSL_free(dpass);
+    OPENSSL_free(pass);
+    OPENSSL_free(dpass);
     X509_VERIFY_PARAM_free(vpm);
     free_sessions();
 #ifndef OPENSSL_NO_TLSEXT
-    if (tlscstatp.host)
-        OPENSSL_free(tlscstatp.host);
-    if (tlscstatp.port)
-        OPENSSL_free(tlscstatp.port);
-    if (tlscstatp.path)
-        OPENSSL_free(tlscstatp.path);
-    if (ctx2 != NULL)
+    OPENSSL_free(tlscstatp.host);
+    OPENSSL_free(tlscstatp.port);
+    OPENSSL_free(tlscstatp.path);
     SSL_CTX_free(ctx2);
     X509_free(s_cert2);
     EVP_PKEY_free(s_key2);
     BIO_free(serverinfo_in);
 # ifndef OPENSSL_NO_NEXTPROTONEG
-    if (next_proto.data)
-        OPENSSL_free(next_proto.data);
+    OPENSSL_free(next_proto.data);
 # endif
-    if (alpn_ctx.data)
-        OPENSSL_free(alpn_ctx.data);
+    OPENSSL_free(alpn_ctx.data);
 #endif
     ssl_excert_free(exc);
     sk_OPENSSL_STRING_free(ssl_args);

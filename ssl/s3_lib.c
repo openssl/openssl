@@ -3131,8 +3131,7 @@ void ssl3_free(SSL *s)
     if (s->s3->handshake_dgst)
         ssl3_free_digest_list(s);
 #ifndef OPENSSL_NO_TLSEXT
-    if (s->s3->alpn_selected)
-        OPENSSL_free(s->s3->alpn_selected);
+    OPENSSL_free(s->s3->alpn_selected);
 #endif
 
 #ifndef OPENSSL_NO_SRP

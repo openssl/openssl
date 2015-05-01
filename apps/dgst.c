@@ -443,14 +443,11 @@ int dgst_main(int argc, char **argv)
  end:
     OPENSSL_clear_free(buf, BUFSIZE);
     BIO_free(in);
-    if (passin)
-        OPENSSL_free(passin);
+    OPENSSL_free(passin);
     BIO_free_all(out);
     EVP_PKEY_free(sigkey);
-    if (sigopts)
-        sk_OPENSSL_STRING_free(sigopts);
-    if (macopts)
-        sk_OPENSSL_STRING_free(macopts);
+    sk_OPENSSL_STRING_free(sigopts);
+    sk_OPENSSL_STRING_free(macopts);
     OPENSSL_free(sigbuf);
     BIO_free(bmd);
     return (ret);

@@ -674,6 +674,7 @@ static EVP_PKEY *do_PVK_body(const unsigned char **in,
     const unsigned char *p = *in;
     unsigned int magic;
     unsigned char *enctmp = NULL, *q;
+
     EVP_CIPHER_CTX cctx;
     EVP_CIPHER_CTX_init(&cctx);
     if (saltlen) {
@@ -736,8 +737,7 @@ static EVP_PKEY *do_PVK_body(const unsigned char **in,
     ret = b2i_PrivateKey(&p, keylen);
  err:
     EVP_CIPHER_CTX_cleanup(&cctx);
-    if (saltlen)
-        OPENSSL_free(enctmp);
+    OPENSSL_free(enctmp);
     return ret;
 }
 

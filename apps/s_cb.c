@@ -1202,6 +1202,9 @@ static int ssl_excert_prepend(SSL_EXCERT **pexc)
 void ssl_excert_free(SSL_EXCERT *exc)
 {
     SSL_EXCERT *curr;
+
+    if (!exc)
+        return;
     while (exc) {
         X509_free(exc->cert);
         EVP_PKEY_free(exc->key);
@@ -1311,8 +1314,7 @@ int args_excert(int opt, SSL_EXCERT **pexc)
 
  err:
     ERR_print_errors(bio_err);
-    if (exc)
-        ssl_excert_free(exc);
+    ssl_excert_free(exc);
     *pexc = NULL;
     return 0;
 }

@@ -77,9 +77,7 @@ int main(int argc, char **argv)
         ERR_print_errors_fp(stderr);
     }
 
-    if (cms)
-        CMS_ContentInfo_free(cms);
-
+    CMS_ContentInfo_free(cms);
     X509_free(scert);
     EVP_PKEY_free(skey);
     X509_free(scert2);
@@ -87,7 +85,5 @@ int main(int argc, char **argv)
     BIO_free(in);
     BIO_free(out);
     BIO_free(tbio);
-
     return ret;
-
 }
