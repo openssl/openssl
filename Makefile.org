@@ -406,7 +406,7 @@ libclean:
 	rm -f *.map *.so *.so.* *.dylib *.dll engines/*.so engines/*.dll engines/*.dylib *.a engines/*.a */lib */*/lib
 
 clean:	libclean
-	rm -f *.o core a.out fluff rehash.time testlog make.log cctest cctest.c
+	rm -f */*/*.o */*.o *.o core a.out fluff rehash.time testlog make.log cctest cctest.c
 	rm -rf *.bak certs/.0
 	@set -e; target=clean; $(RECURSIVE_BUILD_CMD)
 	rm -f $(LIBS) tags TAGS
