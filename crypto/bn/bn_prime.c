@@ -285,10 +285,9 @@ int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe,
     /* we have a prime :-) */
     found = 1;
  err:
-    if (ctx != NULL) {
+    if (ctx != NULL)
         BN_CTX_end(ctx);
-        BN_CTX_free(ctx);
-    }
+    BN_CTX_free(ctx);
     bn_check_top(ret);
     return found;
 }
@@ -397,8 +396,7 @@ int BN_is_prime_fasttest_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
         if (ctx_passed == NULL)
             BN_CTX_free(ctx);
     }
-    if (mont != NULL)
-        BN_MONT_CTX_free(mont);
+    BN_MONT_CTX_free(mont);
 
     return (ret);
 }

@@ -1532,6 +1532,7 @@ int rand_serial(BIGNUM *b, ASN1_INTEGER *ai)
 {
     BIGNUM *btmp;
     int ret = 0;
+
     if (b)
         btmp = b;
     else
@@ -1549,7 +1550,7 @@ int rand_serial(BIGNUM *b, ASN1_INTEGER *ai)
 
  error:
 
-    if (!b)
+    if (btmp != b)
         BN_free(btmp);
 
     return ret;

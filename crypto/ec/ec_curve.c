@@ -3115,20 +3115,13 @@ static EC_GROUP *ec_group_new_from_data(const ec_list_element curve)
         group = NULL;
     }
     EC_POINT_free(P);
-    if (ctx)
-        BN_CTX_free(ctx);
-    if (p)
-        BN_free(p);
-    if (a)
-        BN_free(a);
-    if (b)
-        BN_free(b);
-    if (order)
-        BN_free(order);
-    if (x)
-        BN_free(x);
-    if (y)
-        BN_free(y);
+    BN_CTX_free(ctx);
+    BN_free(p);
+    BN_free(a);
+    BN_free(b);
+    BN_free(order);
+    BN_free(x);
+    BN_free(y);
     return group;
 }
 

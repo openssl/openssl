@@ -851,8 +851,7 @@ static void prime_field_tests(void)
         BN_free(scalar3);
     }
 
-    if (ctx)
-        BN_CTX_free(ctx);
+    BN_CTX_free(ctx);
     BN_free(p);
     BN_free(a);
     BN_free(b);
@@ -1326,8 +1325,7 @@ static void char2_field_tests(void)
         fprintf(stdout, " ok\n\n");
     }
 
-    if (ctx)
-        BN_CTX_free(ctx);
+    BN_CTX_free(ctx);
     BN_free(p);
     BN_free(a);
     BN_free(b);

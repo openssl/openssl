@@ -2939,8 +2939,7 @@ static RSA *tmp_rsa_cb(SSL *s, int is_export, int keylength)
  end:
         printf("\n");
     }
-    if (bn)
-        BN_free(bn);
+    BN_free(bn);
     return (rsa_tmp);
 }
 
@@ -3106,8 +3105,7 @@ static int psk_key2bn(const char *pskkey, unsigned char *psk,
     if (!ret) {
         BIO_printf(bio_err, "Could not convert PSK key '%s' to BIGNUM\n",
                    pskkey);
-        if (bn)
-            BN_free(bn);
+        BN_free(bn);
         return 0;
     }
     if (BN_num_bytes(bn) > (int)max_psk_len) {

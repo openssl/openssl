@@ -227,20 +227,16 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value,
 
     ok = 1;
  err:
-    if (local_r0)
-        BN_free(local_r0);
-    if (local_d)
-        BN_free(local_d);
-    if (local_p)
-        BN_free(local_p);
+    BN_free(local_r0);
+    BN_free(local_d);
+    BN_free(local_p);
     if (ok == -1) {
         RSAerr(RSA_F_RSA_BUILTIN_KEYGEN, ERR_LIB_BN);
         ok = 0;
     }
-    if (ctx != NULL) {
+    if (ctx != NULL)
         BN_CTX_end(ctx);
-        BN_CTX_free(ctx);
-    }
+    BN_CTX_free(ctx);
 
     return ok;
 }

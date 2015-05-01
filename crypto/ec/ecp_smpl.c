@@ -225,8 +225,7 @@ int ec_GFp_simple_group_set_curve(EC_GROUP *group,
 
  err:
     BN_CTX_end(ctx);
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -271,8 +270,7 @@ int ec_GFp_simple_group_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a,
     ret = 1;
 
  err:
-    if (new_ctx)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -350,8 +348,7 @@ int ec_GFp_simple_group_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
  err:
     if (ctx != NULL)
         BN_CTX_end(ctx);
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -363,12 +360,9 @@ int ec_GFp_simple_point_init(EC_POINT *point)
     point->Z_is_one = 0;
 
     if (!point->X || !point->Y || !point->Z) {
-        if (point->X)
-            BN_free(point->X);
-        if (point->Y)
-            BN_free(point->Y);
-        if (point->Z)
-            BN_free(point->Z);
+        BN_free(point->X);
+        BN_free(point->Y);
+        BN_free(point->Z);
         return 0;
     }
     return 1;
@@ -466,8 +460,7 @@ int ec_GFp_simple_set_Jprojective_coordinates_GFp(const EC_GROUP *group,
     ret = 1;
 
  err:
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -516,8 +509,7 @@ int ec_GFp_simple_get_Jprojective_coordinates_GFp(const EC_GROUP *group,
     ret = 1;
 
  err:
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -649,8 +641,7 @@ int ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group,
 
  err:
     BN_CTX_end(ctx);
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -836,8 +827,7 @@ int ec_GFp_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
  end:
     if (ctx)                    /* otherwise we already called BN_CTX_end */
         BN_CTX_end(ctx);
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -979,8 +969,7 @@ int ec_GFp_simple_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
 
  err:
     BN_CTX_end(ctx);
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -1097,8 +1086,7 @@ int ec_GFp_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point,
 
  err:
     BN_CTX_end(ctx);
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -1206,8 +1194,7 @@ int ec_GFp_simple_cmp(const EC_GROUP *group, const EC_POINT *a,
 
  end:
     BN_CTX_end(ctx);
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -1246,8 +1233,7 @@ int ec_GFp_simple_make_affine(const EC_GROUP *group, EC_POINT *point,
 
  err:
     BN_CTX_end(ctx);
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -1398,8 +1384,7 @@ int ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num,
 
  err:
     BN_CTX_end(ctx);
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     if (prod_Z != NULL) {
         for (i = 0; i < num; i++) {
             if (prod_Z[i] == NULL)

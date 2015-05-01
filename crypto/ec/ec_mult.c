@@ -553,8 +553,7 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
     ret = 1;
 
  err:
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     EC_POINT_free(tmp);
     if (wsize != NULL)
         OPENSSL_free(wsize);
@@ -746,8 +745,7 @@ int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
  err:
     if (ctx != NULL)
         BN_CTX_end(ctx);
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     if (pre_comp)
         ec_pre_comp_free(pre_comp);
     if (points) {

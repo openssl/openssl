@@ -243,15 +243,11 @@ int x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
     EC_KEY_free(key);
     if (signature)
         ECDSA_SIG_free(signature);
-    if (r)
-        BN_free(r);
-    if (s)
-        BN_free(s);
+    BN_free(r);
+    BN_free(s);
     EVP_MD_CTX_cleanup(&md_ctx);
-    if (kinv)
-        BN_clear_free(kinv);
-    if (rp)
-        BN_clear_free(rp);
+    BN_clear_free(kinv);
+    BN_clear_free(rp);
     return ret;
 }
 

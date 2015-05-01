@@ -717,10 +717,8 @@ static int cswift_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
         OPENSSL_free(sw_param.up.crt.dmq1.value);
     if (sw_param.up.crt.iqmp.value)
         OPENSSL_free(sw_param.up.crt.iqmp.value);
-    if (result)
-        BN_free(result);
-    if (argument)
-        BN_free(argument);
+    BN_free(result);
+    BN_free(argument);
     if (acquired)
         release_context(hac);
     return to_return;
@@ -877,10 +875,9 @@ static DSA_SIG *cswift_dsa_sign(const unsigned char *dgst, int dlen, DSA *dsa)
  err:
     if (acquired)
         release_context(hac);
-    if (ctx) {
+    if (ctx)
         BN_CTX_end(ctx);
-        BN_CTX_free(ctx);
-    }
+    BN_CTX_free(ctx);
     return to_return;
 }
 
@@ -980,10 +977,9 @@ static int cswift_dsa_verify(const unsigned char *dgst, int dgst_len,
  err:
     if (acquired)
         release_context(hac);
-    if (ctx) {
+    if (ctx)
         BN_CTX_end(ctx);
-        BN_CTX_free(ctx);
-    }
+    BN_CTX_free(ctx);
     return to_return;
 }
 #  endif

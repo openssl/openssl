@@ -73,7 +73,6 @@ BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int safe,
 {
     BN_GENCB cb;
     BIGNUM *rnd = NULL;
-    int found = 0;
 
     BN_GENCB_set_old(&cb, callback, cb_arg);
 
@@ -86,11 +85,10 @@ BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int safe,
         goto err;
 
     /* we have a prime :-) */
-    found = 1;
+    return ret;
  err:
-    if (!found && (ret == NULL) && (rnd != NULL))
-        BN_free(rnd);
-    return (found ? rnd : NULL);
+    BN_free(rnd);
+    return NULL;
 }
 
 int BN_is_prime(const BIGNUM *a, int checks,

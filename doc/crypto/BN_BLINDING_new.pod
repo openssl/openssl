@@ -41,6 +41,7 @@ BN_BLINDING_new() allocates a new B<BN_BLINDING> structure and copies
 the B<A> and B<Ai> values into the newly created B<BN_BLINDING> object.
 
 BN_BLINDING_free() frees the B<BN_BLINDING> structure.
+If B<b> is NULL, nothing is done.
 
 BN_BLINDING_update() updates the B<BN_BLINDING> parameters by squaring
 the B<A> and B<Ai> or, after specific number of uses and if the

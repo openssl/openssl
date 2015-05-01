@@ -326,12 +326,9 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
     ok = 1;
  err:
     if (ok) {
-        if (ret->p)
-            BN_free(ret->p);
-        if (ret->q)
-            BN_free(ret->q);
-        if (ret->g)
-            BN_free(ret->g);
+        BN_free(ret->p);
+        BN_free(ret->q);
+        BN_free(ret->g);
         ret->p = BN_dup(p);
         ret->q = BN_dup(q);
         ret->g = BN_dup(g);
@@ -346,12 +343,10 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
         if (seed_out)
             memcpy(seed_out, seed, qsize);
     }
-    if (ctx) {
+    if (ctx)
         BN_CTX_end(ctx);
-        BN_CTX_free(ctx);
-    }
-    if (mont != NULL)
-        BN_MONT_CTX_free(mont);
+    BN_CTX_free(ctx);
+    BN_MONT_CTX_free(mont);
     return ok;
 }
 
@@ -631,17 +626,14 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
  err:
     if (ok == 1) {
         if (p != ret->p) {
-            if (ret->p)
-                BN_free(ret->p);
+            BN_free(ret->p);
             ret->p = BN_dup(p);
         }
         if (q != ret->q) {
-            if (ret->q)
-                BN_free(ret->q);
+            BN_free(ret->q);
             ret->q = BN_dup(q);
         }
-        if (ret->g)
-            BN_free(ret->g);
+        BN_free(ret->g);
         ret->g = BN_dup(g);
         if (ret->p == NULL || ret->q == NULL || ret->g == NULL) {
             ok = -1;
@@ -656,12 +648,10 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
         OPENSSL_free(seed);
     if (seed_out != seed_tmp)
         OPENSSL_free(seed_tmp);
-    if (ctx) {
+    if (ctx)
         BN_CTX_end(ctx);
-        BN_CTX_free(ctx);
-    }
-    if (mont != NULL)
-        BN_MONT_CTX_free(mont);
+    BN_CTX_free(ctx);
+    BN_MONT_CTX_free(mont);
     EVP_MD_CTX_cleanup(&mctx);
     return ok;
 }
@@ -696,8 +686,7 @@ int dsa_paramgen_check_g(DSA *dsa)
         rv = 0;
  err:
     BN_CTX_end(ctx);
-    if (mont)
-        BN_MONT_CTX_free(mont);
+    BN_MONT_CTX_free(mont);
     BN_CTX_free(ctx);
     return rv;
 

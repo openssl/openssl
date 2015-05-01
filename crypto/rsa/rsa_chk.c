@@ -203,17 +203,11 @@ int RSA_check_key_ex(const RSA *key, BN_GENCB *cb)
     }
 
  err:
-    if (i != NULL)
-        BN_free(i);
-    if (j != NULL)
-        BN_free(j);
-    if (k != NULL)
-        BN_free(k);
-    if (l != NULL)
-        BN_free(l);
-    if (m != NULL)
-        BN_free(m);
-    if (ctx != NULL)
-        BN_CTX_free(ctx);
+    BN_free(i);
+    BN_free(j);
+    BN_free(k);
+    BN_free(l);
+    BN_free(m);
+    BN_CTX_free(ctx);
     return (ret);
 }

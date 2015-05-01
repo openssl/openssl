@@ -328,8 +328,7 @@ int dsaparam_main(int argc, char **argv)
         app_RAND_write_file(NULL);
     ret = 0;
  end:
-    if (cb != NULL)
-        BN_GENCB_free(cb);
+    BN_GENCB_free(cb);
     BIO_free(in);
     BIO_free_all(out);
     DSA_free(dsa);

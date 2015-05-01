@@ -483,18 +483,12 @@ int ecparam_main(int argc, char **argv)
 
     ret = 0;
  end:
-    if (ec_p)
-        BN_free(ec_p);
-    if (ec_a)
-        BN_free(ec_a);
-    if (ec_b)
-        BN_free(ec_b);
-    if (ec_gen)
-        BN_free(ec_gen);
-    if (ec_order)
-        BN_free(ec_order);
-    if (ec_cofactor)
-        BN_free(ec_cofactor);
+    BN_free(ec_p);
+    BN_free(ec_a);
+    BN_free(ec_b);
+    BN_free(ec_gen);
+    BN_free(ec_order);
+    BN_free(ec_cofactor);
     if (buffer)
         OPENSSL_free(buffer);
     BIO_free(in);

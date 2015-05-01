@@ -201,14 +201,12 @@ int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
     }
     if (tmp != ftmp)
         OPENSSL_free(tmp);
-    if (bl)
-        BN_free(bl);
+    BN_free(bl);
     return (len);
  err:
     if (tmp != ftmp)
         OPENSSL_free(tmp);
-    if (bl)
-        BN_free(bl);
+    BN_free(bl);
     return (0);
 }
 

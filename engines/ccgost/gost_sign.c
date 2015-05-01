@@ -114,13 +114,11 @@ DSA_SIG *gost_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
     ret = newsig;
  err:
     BN_free(md);
-    if (ctx) {
+    if (ctx)
         BN_CTX_end(ctx);
-        BN_CTX_free(ctx);
-    }
-    if (!ret && newsig) {
+    BN_CTX_free(ctx);
+    if (!ret)
         DSA_SIG_free(newsig);
-    }
     return ret;
 }
 
@@ -214,13 +212,11 @@ int gost_do_verify(const unsigned char *dgst, int dgst_len,
         GOSTerr(GOST_F_GOST_DO_VERIFY, GOST_R_SIGNATURE_MISMATCH);
     }
 err:
-    if (md)
-        BN_free(md);
-    if (ctx) {
+    BN_free(md);
+    if (ctx)
         BN_CTX_end(ctx);
-        BN_CTX_free(ctx);
-    }
-    return ok;
+    BN_CTX_free(ctx);
+    return (ok == 0);
 }
 
 /*
@@ -268,19 +264,13 @@ int fill_GOST94_params(DSA *dsa, int nid)
         return 0;
     }
 #define dump_signature(a,b,c)
-    if (dsa->p) {
-        BN_free(dsa->p);
-    }
+    BN_free(dsa->p);
     dsa->p = NULL;
     BN_dec2bn(&(dsa->p), params->p);
-    if (dsa->q) {
-        BN_free(dsa->q);
-    }
+    BN_free(dsa->q);
     dsa->q = NULL;
     BN_dec2bn(&(dsa->q), params->q);
-    if (dsa->g) {
-        BN_free(dsa->g);
-    }
+    BN_free(dsa->g);
     dsa->g = NULL;
     BN_dec2bn(&(dsa->g), params->a);
     return 1;

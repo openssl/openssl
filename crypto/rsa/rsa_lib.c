@@ -223,26 +223,16 @@ void RSA_free(RSA *r)
 
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_RSA, r, &r->ex_data);
 
-    if (r->n != NULL)
-        BN_clear_free(r->n);
-    if (r->e != NULL)
-        BN_clear_free(r->e);
-    if (r->d != NULL)
-        BN_clear_free(r->d);
-    if (r->p != NULL)
-        BN_clear_free(r->p);
-    if (r->q != NULL)
-        BN_clear_free(r->q);
-    if (r->dmp1 != NULL)
-        BN_clear_free(r->dmp1);
-    if (r->dmq1 != NULL)
-        BN_clear_free(r->dmq1);
-    if (r->iqmp != NULL)
-        BN_clear_free(r->iqmp);
-    if (r->blinding != NULL)
-        BN_BLINDING_free(r->blinding);
-    if (r->mt_blinding != NULL)
-        BN_BLINDING_free(r->mt_blinding);
+    BN_clear_free(r->n);
+    BN_clear_free(r->e);
+    BN_clear_free(r->d);
+    BN_clear_free(r->p);
+    BN_clear_free(r->q);
+    BN_clear_free(r->dmp1);
+    BN_clear_free(r->dmq1);
+    BN_clear_free(r->iqmp);
+    BN_BLINDING_free(r->blinding);
+    BN_BLINDING_free(r->mt_blinding);
     OPENSSL_free_locked(r->bignum_data);
     OPENSSL_free(r);
 }

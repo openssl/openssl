@@ -1291,8 +1291,7 @@ int ec_GFp_nistp224_group_set_curve(EC_GROUP *group, const BIGNUM *p,
     ret = ec_GFp_simple_group_set_curve(group, p, a, b, ctx);
  err:
     BN_CTX_end(ctx);
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -1573,8 +1572,7 @@ int ec_GFp_nistp224_points_mul(const EC_GROUP *group, EC_POINT *r,
  err:
     BN_CTX_end(ctx);
     EC_POINT_free(generator);
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     if (secrets != NULL)
         OPENSSL_free(secrets);
     if (pre_comp != NULL)
@@ -1709,8 +1707,7 @@ int ec_GFp_nistp224_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
  err:
     BN_CTX_end(ctx);
     EC_POINT_free(generator);
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     nistp224_pre_comp_free(pre);
     return ret;
 }

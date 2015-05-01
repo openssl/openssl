@@ -439,8 +439,7 @@ int ec_GF2m_simple_mul(const EC_GROUP *group, EC_POINT *r,
  err:
     EC_POINT_free(p);
     EC_POINT_free(acc);
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 

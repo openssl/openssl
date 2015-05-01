@@ -99,11 +99,9 @@ RSA *RSA_generate_key(int bits, unsigned long e_value,
         return rsa;
     }
  err:
-    if (e)
-        BN_free(e);
+    BN_free(e);
     RSA_free(rsa);
-    if (cb)
-        BN_GENCB_free(cb);
+    BN_GENCB_free(cb);
     return 0;
 }
 #endif

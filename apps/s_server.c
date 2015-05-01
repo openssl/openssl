@@ -315,8 +315,7 @@ static unsigned int psk_server_cb(SSL *ssl, const char *identity,
     if (!ret) {
         BIO_printf(bio_err, "Could not convert PSK key '%s' to BIGNUM\n",
                    psk_key);
-        if (bn)
-            BN_free(bn);
+        BN_free(bn);
         return 0;
     }
     if (BN_num_bytes(bn) > (int)max_psk_len) {

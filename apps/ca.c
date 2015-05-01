@@ -1289,10 +1289,8 @@ end_of_options:
             if (!save_serial(crlnumberfile, "new", crlnumber, NULL))
                 goto end;
 
-        if (crlnumber) {
-            BN_free(crlnumber);
-            crlnumber = NULL;
-        }
+        BN_free(crlnumber);
+        crlnumber = NULL;
 
         if (!do_X509_CRL_sign(crl, pkey, dgst, sigopts))
             goto end;

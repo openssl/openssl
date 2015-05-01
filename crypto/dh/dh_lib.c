@@ -194,22 +194,15 @@ void DH_free(DH *r)
 
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DH, r, &r->ex_data);
 
-    if (r->p != NULL)
-        BN_clear_free(r->p);
-    if (r->g != NULL)
-        BN_clear_free(r->g);
-    if (r->q != NULL)
-        BN_clear_free(r->q);
-    if (r->j != NULL)
-        BN_clear_free(r->j);
+    BN_clear_free(r->p);
+    BN_clear_free(r->g);
+    BN_clear_free(r->q);
+    BN_clear_free(r->j);
     if (r->seed)
         OPENSSL_free(r->seed);
-    if (r->counter != NULL)
-        BN_clear_free(r->counter);
-    if (r->pub_key != NULL)
-        BN_clear_free(r->pub_key);
-    if (r->priv_key != NULL)
-        BN_clear_free(r->priv_key);
+    BN_clear_free(r->counter);
+    BN_clear_free(r->pub_key);
+    BN_clear_free(r->priv_key);
     OPENSSL_free(r);
 }
 

@@ -158,8 +158,7 @@ char *BN_bn2dec(const BIGNUM *a)
  err:
     if (bn_data != NULL)
         OPENSSL_free(bn_data);
-    if (t != NULL)
-        BN_free(t);
+    BN_free(t);
     if (!ok && buf) {
         OPENSSL_free(buf);
         buf = NULL;

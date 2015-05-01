@@ -172,12 +172,10 @@ static int generate_key(DH *dh)
             prk = priv_key;
 
         if (!dh->meth->bn_mod_exp(dh, pub_key, dh->g, prk, dh->p, ctx, mont)) {
-            if (local_prk)
-                BN_free(local_prk);
+            BN_free(local_prk);
             goto err;
         }
-        if (local_prk)
-            BN_free(local_prk);
+        BN_free(local_prk);
     }
 
     dh->pub_key = pub_key;
@@ -187,9 +185,9 @@ static int generate_key(DH *dh)
     if (ok != 1)
         DHerr(DH_F_GENERATE_KEY, ERR_R_BN_LIB);
 
-    if ((pub_key != NULL) && (dh->pub_key == NULL))
+    if (pub_key != dh->pub_key)
         BN_free(pub_key);
-    if ((priv_key != NULL) && (dh->priv_key == NULL))
+    if (priv_key != dh->priv_key)
         BN_free(priv_key);
     BN_CTX_free(ctx);
     return (ok);
@@ -273,7 +271,6 @@ static int dh_init(DH *dh)
 
 static int dh_finish(DH *dh)
 {
-    if (dh->method_mont_p)
-        BN_MONT_CTX_free(dh->method_mont_p);
+    BN_MONT_CTX_free(dh->method_mont_p);
     return (1);
 }

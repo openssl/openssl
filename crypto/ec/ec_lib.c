@@ -117,10 +117,8 @@ EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
 
     return ret;
  err:
-    if (ret->order)
-        BN_free(ret->order);
-    if (ret->cofactor)
-        BN_free(ret->cofactor);
+    BN_free(ret->order);
+    BN_free(ret->cofactor);
     OPENSSL_free(ret);
     return NULL;
 }
@@ -135,8 +133,7 @@ void EC_GROUP_free(EC_GROUP *group)
 
     EC_EX_DATA_free_all_data(&group->extra_data);
 
-    if (group->mont_data)
-        BN_MONT_CTX_free(group->mont_data);
+    BN_MONT_CTX_free(group->mont_data);
 
     EC_POINT_free(group->generator);
     BN_free(group->order);
@@ -160,8 +157,7 @@ void EC_GROUP_clear_free(EC_GROUP *group)
 
     EC_EX_DATA_clear_free_all_data(&group->extra_data);
 
-    if (group->mont_data)
-        BN_MONT_CTX_free(group->mont_data);
+    BN_MONT_CTX_free(group->mont_data);
 
     EC_POINT_clear_free(group->generator);
     BN_clear_free(group->order);
@@ -208,10 +204,8 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
             return 0;
     } else {
         /* src->generator == NULL */
-        if (dest->mont_data != NULL) {
-            BN_MONT_CTX_free(dest->mont_data);
-            dest->mont_data = NULL;
-        }
+        BN_MONT_CTX_free(dest->mont_data);
+        dest->mont_data = NULL;
     }
 
     if (src->generator != NULL) {
@@ -507,8 +501,7 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
     b3 = BN_CTX_get(ctx);
     if (!b3) {
         BN_CTX_end(ctx);
-        if (ctx_new)
-            BN_CTX_free(ctx);
+        BN_CTX_free(ctx_new);
         return -1;
     }
 
@@ -535,8 +528,7 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
             !EC_GROUP_get_cofactor(a, a2, ctx) ||
             !EC_GROUP_get_cofactor(b, b2, ctx)) {
             BN_CTX_end(ctx);
-            if (ctx_new)
-                BN_CTX_free(ctx);
+            BN_CTX_free(ctx_new);
             return -1;
         }
         if (BN_cmp(a1, b1) || BN_cmp(a2, b2))
@@ -544,8 +536,7 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
     }
 
     BN_CTX_end(ctx);
-    if (ctx_new)
-        BN_CTX_free(ctx);
+    BN_CTX_free(ctx_new);
 
     return r;
 }
@@ -1093,10 +1084,8 @@ int ec_precompute_mont_data(EC_GROUP *group)
     BN_CTX *ctx = BN_CTX_new();
     int ret = 0;
 
-    if (group->mont_data) {
-        BN_MONT_CTX_free(group->mont_data);
-        group->mont_data = NULL;
-    }
+    BN_MONT_CTX_free(group->mont_data);
+    group->mont_data = NULL;
 
     if (ctx == NULL)
         goto err;
@@ -1115,7 +1104,6 @@ int ec_precompute_mont_data(EC_GROUP *group)
 
  err:
 
-    if (ctx)
-        BN_CTX_free(ctx);
+    BN_CTX_free(ctx);
     return ret;
 }

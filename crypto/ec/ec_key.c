@@ -122,8 +122,7 @@ void EC_KEY_free(EC_KEY *r)
 
     EC_GROUP_free(r->group);
     EC_POINT_free(r->pub_key);
-    if (r->priv_key != NULL)
-        BN_clear_free(r->priv_key);
+    BN_clear_free(r->priv_key);
 
     EC_EX_DATA_free_all_data(&r->method_data);
 
@@ -266,14 +265,12 @@ int EC_KEY_generate_key(EC_KEY *eckey)
     ok = 1;
 
  err:
-    if (order)
-        BN_free(order);
+    BN_free(order);
     if (eckey->pub_key == NULL)
         EC_POINT_free(pub_key);
-    if (priv_key != NULL && eckey->priv_key == NULL)
+    if (eckey->priv_key != priv_key)
         BN_free(priv_key);
-    if (ctx != NULL)
-        BN_CTX_free(ctx);
+    BN_CTX_free(ctx);
     return (ok);
 }
 
@@ -339,8 +336,7 @@ int EC_KEY_check_key(const EC_KEY *eckey)
     }
     ok = 1;
  err:
-    if (ctx != NULL)
-        BN_CTX_free(ctx);
+    BN_CTX_free(ctx);
     EC_POINT_free(point);
     return (ok);
 }
@@ -413,8 +409,7 @@ int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x,
     ok = 1;
 
  err:
-    if (ctx)
-        BN_CTX_free(ctx);
+    BN_CTX_free(ctx);
     EC_POINT_free(point);
     return ok;
 
@@ -439,8 +434,7 @@ const BIGNUM *EC_KEY_get0_private_key(const EC_KEY *key)
 
 int EC_KEY_set_private_key(EC_KEY *key, const BIGNUM *priv_key)
 {
-    if (key->priv_key)
-        BN_clear_free(key->priv_key);
+    BN_clear_free(key->priv_key);
     key->priv_key = BN_dup(priv_key);
     return (key->priv_key == NULL) ? 0 : 1;
 }

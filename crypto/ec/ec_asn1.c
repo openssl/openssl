@@ -421,8 +421,8 @@ static int ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
 
     ok = 1;
 
- err:if (tmp)
-        BN_free(tmp);
+ err:
+    BN_free(tmp);
     return (ok);
 }
 
@@ -524,21 +524,19 @@ static int ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
 
     ok = 1;
 
- err:if (buffer_1)
+ err:
+    if (buffer_1)
         OPENSSL_free(buffer_1);
     if (buffer_2)
         OPENSSL_free(buffer_2);
-    if (tmp_1)
-        BN_free(tmp_1);
-    if (tmp_2)
-        BN_free(tmp_2);
+    BN_free(tmp_1);
+    BN_free(tmp_2);
     return (ok);
 }
 
 static ECPARAMETERS *ec_asn1_group2parameters(const EC_GROUP *group,
                                               ECPARAMETERS *param)
 {
-    int ok = 0;
     size_t len = 0;
     ECPARAMETERS *ret = NULL;
     BIGNUM *tmp = NULL;
@@ -624,18 +622,15 @@ static ECPARAMETERS *ec_asn1_group2parameters(const EC_GROUP *group,
         }
     }
 
-    ok = 1;
+    return ret;
 
- err:if (!ok) {
-        if (ret && !param)
-            ECPARAMETERS_free(ret);
-        ret = NULL;
-    }
-    if (tmp)
-        BN_free(tmp);
+ err:
+    if (!param)
+        ECPARAMETERS_free(ret);
+    BN_free(tmp);
     if (buffer)
         OPENSSL_free(buffer);
-    return (ret);
+    return NULL;
 }
 
 ECPKPARAMETERS *ec_asn1_group2pkparameters(const EC_GROUP *group,
@@ -891,10 +886,8 @@ static EC_GROUP *ec_asn1_parameters2group(const ECPARAMETERS *params)
 
     /* extract the cofactor (optional) */
     if (params->cofactor == NULL) {
-        if (b) {
-            BN_free(b);
-            b = NULL;
-        }
+        BN_free(b);
+        b = NULL;
     } else if ((b = ASN1_INTEGER_to_BN(params->cofactor, b)) == NULL) {
         ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, ERR_R_ASN1_LIB);
         goto err;
@@ -913,12 +906,9 @@ static EC_GROUP *ec_asn1_parameters2group(const ECPARAMETERS *params)
         ret = NULL;
     }
 
-    if (p)
-        BN_free(p);
-    if (a)
-        BN_free(a);
-    if (b)
-        BN_free(b);
+    BN_free(p);
+    BN_free(a);
+    BN_free(b);
     EC_POINT_free(point);
     return (ret);
 }

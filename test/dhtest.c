@@ -201,8 +201,7 @@ int main(int argc, char *argv[])
         OPENSSL_free(bbuf);
     DH_free(b);
     DH_free(a);
-    if (_cb)
-        BN_GENCB_free(_cb);
+    BN_GENCB_free(_cb);
     BIO_free(out);
 # ifdef OPENSSL_SYS_NETWARE
     if (ret)
