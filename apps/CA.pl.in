@@ -121,8 +121,8 @@ if ($WHAT eq '-newcert' ) {
     # ask user for existing CA certificate
     print "CA certificate filename (or enter to create)\n";
     $FILE = <STDIN>;
-    chop $FILE;
     if ($FILE) {
+    	chop $FILE;
         copy_pemfile($FILE,"${CATOP}/private/$CAKEY", "PRIVATE");
         copy_pemfile($FILE,"${CATOP}/$CACERT", "CERTIFICATE");
     } else {
@@ -161,8 +161,8 @@ if ($WHAT eq '-newcert' ) {
             . " -infiles tmp.pem") if $RET == 0;
     print "Signed certificate is in $NEWCERT\n" if $RET == 0;
 } elsif ($WHAT eq '-verify' ) {
-    my @files = @ARGV ? @ARGV : ( $NEWCVERT );
-    foreach $file (@files) {
+    my @files = @ARGV ? @ARGV : ( $NEWCERT );
+    foreach my $file (@files) {
         my $status = run("$VERIFY -CAfile ${CATOP}/$CACERT $file");
         $RET = $status if $status != 0;
     }
