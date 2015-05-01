@@ -556,10 +556,8 @@ int pkcs12_main(int argc, char **argv)
     BIO_free_all(out);
     if (canames)
         sk_OPENSSL_STRING_free(canames);
-    if (passin)
-        OPENSSL_free(passin);
-    if (passout)
-        OPENSSL_free(passout);
+    OPENSSL_free(passin);
+    OPENSSL_free(passout);
     return (ret);
 }
 

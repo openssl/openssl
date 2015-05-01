@@ -383,10 +383,8 @@ static int module_init(CONF_MODULE *pmod, char *name, char *value,
 
  memerr:
     if (imod) {
-        if (imod->name)
-            OPENSSL_free(imod->name);
-        if (imod->value)
-            OPENSSL_free(imod->value);
+        OPENSSL_free(imod->name);
+        OPENSSL_free(imod->value);
         OPENSSL_free(imod);
     }
 

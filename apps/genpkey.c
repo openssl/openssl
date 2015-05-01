@@ -235,8 +235,7 @@ int genpkey_main(int argc, char **argv)
     EVP_PKEY_CTX_free(ctx);
     BIO_free_all(out);
     BIO_free(in);
-    if (pass)
-        OPENSSL_free(pass);
+    OPENSSL_free(pass);
 
     return ret;
 }

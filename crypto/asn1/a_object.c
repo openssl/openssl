@@ -313,8 +313,7 @@ ASN1_OBJECT *c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
     /* once detached we can change it */
     if ((data == NULL) || (ret->length < length)) {
         ret->length = 0;
-        if (data != NULL)
-            OPENSSL_free(data);
+        OPENSSL_free(data);
         data = OPENSSL_malloc(length);
         if (data == NULL) {
             i = ERR_R_MALLOC_FAILURE;
@@ -368,16 +367,13 @@ void ASN1_OBJECT_free(ASN1_OBJECT *a)
 #ifndef CONST_STRICT            /* disable purely for compile-time strict
                                  * const checking. Doing this on a "real"
                                  * compile will cause memory leaks */
-        if (a->sn != NULL)
-            OPENSSL_free((void *)a->sn);
-        if (a->ln != NULL)
-            OPENSSL_free((void *)a->ln);
+        OPENSSL_free((void*)a->sn);
+        OPENSSL_free((void*)a->ln);
 #endif
         a->sn = a->ln = NULL;
     }
     if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC_DATA) {
-        if (a->data != NULL)
-            OPENSSL_free((void *)a->data);
+        OPENSSL_free((void*)a->data);
         a->data = NULL;
         a->length = 0;
     }

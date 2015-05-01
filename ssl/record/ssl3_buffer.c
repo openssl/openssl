@@ -122,8 +122,7 @@ void SSL3_BUFFER_set_data(SSL3_BUFFER *b, const unsigned char *d, int n)
 
 void SSL3_BUFFER_release(SSL3_BUFFER *b)
 {
-    if (b->buf != NULL)
-        OPENSSL_free(b->buf);
+    OPENSSL_free(b->buf);
     b->buf = NULL;
 }
 
@@ -224,10 +223,8 @@ int ssl3_release_write_buffer(SSL *s)
 
     wb = RECORD_LAYER_get_wbuf(&s->rlayer);
 
-    if (wb->buf != NULL) {
-        OPENSSL_free(wb->buf);
-        wb->buf = NULL;
-    }
+    OPENSSL_free(wb->buf);
+    wb->buf = NULL;
     return 1;
 }
 
@@ -236,9 +233,7 @@ int ssl3_release_read_buffer(SSL *s)
     SSL3_BUFFER *b;
 
     b = RECORD_LAYER_get_rbuf(&s->rlayer);
-    if (b->buf != NULL) {
-        OPENSSL_free(b->buf);
-        b->buf = NULL;
-    }
+    OPENSSL_free(b->buf);
+    b->buf = NULL;
     return 1;
 }

@@ -271,12 +271,9 @@ int ocsp_main(int argc, char **argv)
             req_timeout = atoi(opt_arg());
             break;
         case OPT_URL:
-            if (thost)
-                OPENSSL_free(thost);
-            if (tport)
-                OPENSSL_free(tport);
-            if (tpath)
-                OPENSSL_free(tpath);
+            OPENSSL_free(thost);
+            OPENSSL_free(tport);
+            OPENSSL_free(tpath);
             if (!OCSP_parse_url(opt_arg(), &host, &port, &path, &use_ssl)) {
                 BIO_printf(bio_err, "%s Error parsing URL\n", prog);
                 goto end;
@@ -753,13 +750,9 @@ int ocsp_main(int argc, char **argv)
     sk_X509_pop_free(sign_other, X509_free);
     sk_X509_pop_free(verify_other, X509_free);
     sk_CONF_VALUE_pop_free(headers, X509V3_conf_free);
-
-    if (thost)
-        OPENSSL_free(thost);
-    if (tport)
-        OPENSSL_free(tport);
-    if (tpath)
-        OPENSSL_free(tpath);
+    OPENSSL_free(thost);
+    OPENSSL_free(tport);
+    OPENSSL_free(tpath);
 
     return (ret);
 }

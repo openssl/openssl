@@ -564,10 +564,8 @@ int enc_main(int argc, char **argv)
     }
  end:
     ERR_print_errors(bio_err);
-    if (strbuf != NULL)
-        OPENSSL_free(strbuf);
-    if (buff != NULL)
-        OPENSSL_free(buff);
+    OPENSSL_free(strbuf);
+    OPENSSL_free(buff);
     BIO_free(in);
     BIO_free_all(out);
     BIO_free(benc);
@@ -575,8 +573,7 @@ int enc_main(int argc, char **argv)
 #ifdef ZLIB
     BIO_free(bzl);
 #endif
-    if (pass)
-        OPENSSL_free(pass);
+    OPENSSL_free(pass);
     return (ret);
 }
 

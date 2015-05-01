@@ -154,8 +154,7 @@ int a2i_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *bs, char *buf, int size)
             sp = OPENSSL_realloc(s, (unsigned int)num + i * 2);
             if (sp == NULL) {
                 ASN1err(ASN1_F_A2I_ASN1_ENUMERATED, ERR_R_MALLOC_FAILURE);
-                if (s != NULL)
-                    OPENSSL_free(s);
+                OPENSSL_free(s);
                 goto err;
             }
             s = sp;

@@ -136,11 +136,11 @@ struct st_dynamic_data_ctx {
      */
     dynamic_bind_engine bind_engine;
     /* The default name/path for loading the shared library */
-    const char *DYNAMIC_LIBNAME;
+    char *DYNAMIC_LIBNAME;
     /* Whether to continue loading on a version check failure */
     int no_vcheck;
     /* If non-NULL, stipulates the 'id' of the ENGINE to be loaded */
-    const char *engine_id;
+    char *engine_id;
     /*
      * If non-zero, a successfully loaded ENGINE should be added to the
      * internal ENGINE list. If 2, the add must succeed or the entire load
@@ -188,10 +188,8 @@ static void dynamic_data_ctx_free_func(void *parent, void *ptr,
         dynamic_data_ctx *ctx = (dynamic_data_ctx *)ptr;
         if (ctx->dynamic_dso)
             DSO_free(ctx->dynamic_dso);
-        if (ctx->DYNAMIC_LIBNAME)
-            OPENSSL_free((void *)ctx->DYNAMIC_LIBNAME);
-        if (ctx->engine_id)
-            OPENSSL_free((void *)ctx->engine_id);
+        OPENSSL_free(ctx->DYNAMIC_LIBNAME);
+        OPENSSL_free(ctx->engine_id);
         if (ctx->dirs)
             sk_OPENSSL_STRING_pop_free(ctx->dirs, int_free_str);
         OPENSSL_free(ctx);
@@ -243,8 +241,7 @@ static int dynamic_set_data_ctx(ENGINE *e, dynamic_data_ctx **ctx)
      * If we lost the race to set the context, c is non-NULL and *ctx is the
      * context of the thread that won.
      */
-    if (c)
-        OPENSSL_free(c);
+    OPENSSL_free(c);
     return 1;
 }
 
@@ -363,8 +360,7 @@ static int dynamic_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
         /* a NULL 'p' or a string of zero-length is the same thing */
         if (p && (strlen((const char *)p) < 1))
             p = NULL;
-        if (ctx->DYNAMIC_LIBNAME)
-            OPENSSL_free((void *)ctx->DYNAMIC_LIBNAME);
+        OPENSSL_free(ctx->DYNAMIC_LIBNAME);
         if (p)
             ctx->DYNAMIC_LIBNAME = BUF_strdup(p);
         else
@@ -377,8 +373,7 @@ static int dynamic_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
         /* a NULL 'p' or a string of zero-length is the same thing */
         if (p && (strlen((const char *)p) < 1))
             p = NULL;
-        if (ctx->engine_id)
-            OPENSSL_free((void *)ctx->engine_id);
+        OPENSSL_free(ctx->engine_id);
         if (p)
             ctx->engine_id = BUF_strdup(p);
         else

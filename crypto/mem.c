@@ -453,8 +453,7 @@ void CRYPTO_clear_free(void *str, size_t num)
 
 void *CRYPTO_remalloc(void *a, int num, const char *file, int line)
 {
-    if (a != NULL)
-        OPENSSL_free(a);
+    OPENSSL_free(a);
     a = OPENSSL_malloc(num);
     return (a);
 }

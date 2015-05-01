@@ -249,8 +249,7 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
     }
     ret = 1;
  err:
-    if (m != NULL)
-        OPENSSL_free(m);
+    OPENSSL_free(m);
     return (ret);
 }
 
@@ -299,8 +298,7 @@ int X509_ocspid_print(BIO *bp, X509 *x)
 
     return (1);
  err:
-    if (der != NULL)
-        OPENSSL_free(der);
+    OPENSSL_free(der);
     return (0);
 }
 

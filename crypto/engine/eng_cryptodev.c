@@ -889,11 +889,9 @@ static int cryptodev_digest_cleanup(EVP_MD_CTX *ctx)
         return (0);
     }
 
-    if (state->mac_data) {
-        OPENSSL_free(state->mac_data);
-        state->mac_data = NULL;
-        state->mac_len = 0;
-    }
+    OPENSSL_free(state->mac_data);
+    state->mac_data = NULL;
+    state->mac_len = 0;
 
     if (ioctl(state->d_fd, CIOCFSESSION, &sess->ses) < 0) {
         printf("cryptodev_digest_cleanup: failed to close session\n");

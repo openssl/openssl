@@ -555,10 +555,8 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
  err:
     BN_CTX_free(new_ctx);
     EC_POINT_free(tmp);
-    if (wsize != NULL)
-        OPENSSL_free(wsize);
-    if (wNAF_len != NULL)
-        OPENSSL_free(wNAF_len);
+    OPENSSL_free(wsize);
+    OPENSSL_free(wNAF_len);
     if (wNAF != NULL) {
         signed char **w;
 
@@ -573,9 +571,7 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 
         OPENSSL_free(val);
     }
-    if (val_sub != NULL) {
-        OPENSSL_free(val_sub);
-    }
+    OPENSSL_free(val_sub);
     return ret;
 }
 

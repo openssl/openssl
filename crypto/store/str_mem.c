@@ -348,8 +348,7 @@ static int mem_list_end(STORE *s, void *handle)
     }
     if (context && context->search_attributes)
         sk_STORE_ATTR_INFO_free(context->search_attributes);
-    if (context)
-        OPENSSL_free(context);
+    OPENSSL_free(context);
     return 1;
 }
 

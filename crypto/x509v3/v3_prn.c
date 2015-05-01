@@ -176,8 +176,7 @@ int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag,
 
  err:
     sk_CONF_VALUE_pop_free(nval, X509V3_conf_free);
-    if (value)
-        OPENSSL_free(value);
+    OPENSSL_free(value);
     if (method->it)
         ASN1_item_free(ext_str, ASN1_ITEM_ptr(method->it));
     else

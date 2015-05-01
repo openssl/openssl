@@ -183,8 +183,7 @@ static int asn1_bio_free(BIO *b)
 
     if (ctx == NULL)
         return 0;
-    if (ctx->buf)
-        OPENSSL_free(ctx->buf);
+    OPENSSL_free(ctx->buf);
     OPENSSL_free(ctx);
     b->init = 0;
     b->ptr = NULL;

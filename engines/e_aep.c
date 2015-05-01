@@ -403,8 +403,7 @@ static const char *get_AEP_LIBNAME(void)
 
 static void free_AEP_LIBNAME(void)
 {
-    if (AEP_LIBNAME)
-        OPENSSL_free((void *)AEP_LIBNAME);
+    OPENSSL_free(AEP_LIBNAME);
     AEP_LIBNAME = NULL;
 }
 

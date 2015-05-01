@@ -474,8 +474,7 @@ static EVP_PKEY *ibm_4758_load_privkey(ENGINE *e, const char *key_id,
 
     return res;
  err:
-    if (keyToken)
-        OPENSSL_free(keyToken);
+    OPENSSL_free(keyToken);
     return NULL;
 }
 
@@ -544,8 +543,7 @@ static EVP_PKEY *ibm_4758_load_pubkey(ENGINE *e, const char *key_id,
 
     return res;
  err:
-    if (keyToken)
-        OPENSSL_free(keyToken);
+    OPENSSL_free(keyToken);
     return NULL;
 }
 
@@ -924,8 +922,7 @@ static int cca_get_random_bytes(unsigned char *buf, int num)
 static void cca_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad, int idx,
                         long argl, void *argp)
 {
-    if (item)
-        OPENSSL_free(item);
+    OPENSSL_free(item);
 }
 #  endif
 

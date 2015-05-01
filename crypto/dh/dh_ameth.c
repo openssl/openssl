@@ -187,8 +187,7 @@ static int dh_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
         return 1;
 
  err:
-    if (penc)
-        OPENSSL_free(penc);
+    OPENSSL_free(penc);
     ASN1_STRING_free(str);
 
     return 0;
@@ -292,8 +291,7 @@ static int dh_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
     return 1;
 
  err:
-    if (dp != NULL)
-        OPENSSL_free(dp);
+    OPENSSL_free(dp);
     ASN1_STRING_free(params);
     ASN1_STRING_clear_free(prkey);
     return 0;
@@ -422,8 +420,7 @@ static int do_dh_print(BIO *bp, const DH *x, int indent,
  err:
         DHerr(DH_F_DO_DH_PRINT, reason);
     }
-    if (m != NULL)
-        OPENSSL_free(m);
+    OPENSSL_free(m);
     return (ret);
 }
 
@@ -481,11 +478,9 @@ static int int_dh_param_copy(DH *to, const DH *from, int is_x942)
             return 0;
         if (!int_dh_bn_cpy(&to->j, from->j))
             return 0;
-        if (to->seed) {
-            OPENSSL_free(to->seed);
-            to->seed = NULL;
-            to->seedlen = 0;
-        }
+        OPENSSL_free(to->seed);
+        to->seed = NULL;
+        to->seedlen = 0;
         if (from->seed) {
             to->seed = BUF_memdup(from->seed, from->seedlen);
             if (!to->seed)

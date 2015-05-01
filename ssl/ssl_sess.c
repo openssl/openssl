@@ -931,11 +931,8 @@ int SSL_set_session_ticket_ext_cb(SSL *s, tls_session_ticket_ext_cb_fn cb,
 int SSL_set_session_ticket_ext(SSL *s, void *ext_data, int ext_len)
 {
     if (s->version >= TLS1_VERSION) {
-        if (s->tlsext_session_ticket) {
-            OPENSSL_free(s->tlsext_session_ticket);
-            s->tlsext_session_ticket = NULL;
-        }
-
+        OPENSSL_free(s->tlsext_session_ticket);
+        s->tlsext_session_ticket = NULL;
         s->tlsext_session_ticket =
             OPENSSL_malloc(sizeof(TLS_SESSION_TICKET_EXT) + ext_len);
         if (!s->tlsext_session_ticket) {

@@ -162,11 +162,8 @@ int DSO_free(DSO *dso)
     }
 
     sk_void_free(dso->meth_data);
-    if (dso->filename != NULL)
-        OPENSSL_free(dso->filename);
-    if (dso->loaded_filename != NULL)
-        OPENSSL_free(dso->loaded_filename);
-
+    OPENSSL_free(dso->filename);
+    OPENSSL_free(dso->loaded_filename);
     OPENSSL_free(dso);
     return (1);
 }
@@ -360,8 +357,7 @@ int DSO_set_filename(DSO *dso, const char *filename)
         return (0);
     }
     BUF_strlcpy(copied, filename, strlen(filename) + 1);
-    if (dso->filename)
-        OPENSSL_free(dso->filename);
+    OPENSSL_free(dso->filename);
     dso->filename = copied;
     return (1);
 }

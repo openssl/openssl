@@ -886,15 +886,12 @@ int req_main(int argc, char **argv)
     if (gen_eng)
         ENGINE_free(gen_eng);
 #endif
-    if (keyalgstr)
-        OPENSSL_free(keyalgstr);
+    OPENSSL_free(keyalgstr);
     X509_REQ_free(req);
     X509_free(x509ss);
     ASN1_INTEGER_free(serial);
-    if (passargin && passin)
-        OPENSSL_free(passin);
-    if (passargout && passout)
-        OPENSSL_free(passout);
+    OPENSSL_free(passin);
+    OPENSSL_free(passout);
     OBJ_cleanup();
     return (ret);
 }

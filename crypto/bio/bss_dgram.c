@@ -245,8 +245,7 @@ static int dgram_free(BIO *a)
         return 0;
 
     data = (bio_dgram_data *)a->ptr;
-    if (data != NULL)
-        OPENSSL_free(data);
+    OPENSSL_free(data);
 
     return (1);
 }
@@ -1110,8 +1109,7 @@ static int dgram_sctp_free(BIO *a)
 
     data = (bio_dgram_sctp_data *) a->ptr;
     if (data != NULL) {
-        if (data->saved_message.data != NULL)
-            OPENSSL_free(data->saved_message.data);
+        OPENSSL_free(data->saved_message.data);
         OPENSSL_free(data);
     }
 
@@ -1413,8 +1411,7 @@ static int dgram_sctp_write(BIO *b, const char *in, int inl)
             BIOerr(BIO_F_DGRAM_SCTP_WRITE, ERR_R_MALLOC_FAILURE);
             return -1;
         }
-        if (data->saved_message.data)
-            OPENSSL_free(data->saved_message.data);
+        OPENSSL_free(data->saved_message.data);
         data->saved_message.data = tmp;
         memcpy(data->saved_message.data, in, inl);
         data->saved_message.length = inl;

@@ -218,8 +218,7 @@ ASN1_UTCTIME *ASN1_UTCTIME_adj(ASN1_UTCTIME *s, time_t t,
             ASN1err(ASN1_F_ASN1_UTCTIME_ADJ, ERR_R_MALLOC_FAILURE);
             goto err;
         }
-        if (s->data != NULL)
-            OPENSSL_free(s->data);
+        OPENSSL_free(s->data);
         s->data = (unsigned char *)p;
     }
 

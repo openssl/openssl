@@ -854,12 +854,9 @@ static MIME_HEADER *mime_hdr_new(char *name, char *value)
     return mhdr;
 
  err:
-    if (tmpname != NULL)
-        OPENSSL_free(tmpname);
-    if (tmpval != NULL)
-        OPENSSL_free(tmpval);
-    if (mhdr != NULL)
-        OPENSSL_free(mhdr);
+    OPENSSL_free(tmpname);
+    OPENSSL_free(tmpval);
+    OPENSSL_free(mhdr);
     return NULL;
 }
 
@@ -895,12 +892,9 @@ static int mime_hdr_addparam(MIME_HEADER *mhdr, char *name, char *value)
         goto err;
     return 1;
  err:
-    if (tmpname != NULL)
-        OPENSSL_free(tmpname);
-    if (tmpval != NULL)
-        OPENSSL_free(tmpval);
-    if (mparam != NULL)
-        OPENSSL_free(mparam);
+    OPENSSL_free(tmpname);
+    OPENSSL_free(tmpval);
+    OPENSSL_free(mparam);
     return 0;
 }
 
@@ -947,10 +941,8 @@ static MIME_PARAM *mime_param_find(MIME_HEADER *hdr, char *name)
 
 static void mime_hdr_free(MIME_HEADER *hdr)
 {
-    if (hdr->name)
-        OPENSSL_free(hdr->name);
-    if (hdr->value)
-        OPENSSL_free(hdr->value);
+    OPENSSL_free(hdr->name);
+    OPENSSL_free(hdr->value);
     if (hdr->params)
         sk_MIME_PARAM_pop_free(hdr->params, mime_param_free);
     OPENSSL_free(hdr);
@@ -958,10 +950,8 @@ static void mime_hdr_free(MIME_HEADER *hdr)
 
 static void mime_param_free(MIME_PARAM *param)
 {
-    if (param->param_name)
-        OPENSSL_free(param->param_name);
-    if (param->param_value)
-        OPENSSL_free(param->param_value);
+    OPENSSL_free(param->param_name);
+    OPENSSL_free(param->param_value);
     OPENSSL_free(param);
 }
 

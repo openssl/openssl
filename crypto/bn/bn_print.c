@@ -156,15 +156,12 @@ char *BN_bn2dec(const BIGNUM *a)
     }
     ok = 1;
  err:
-    if (bn_data != NULL)
-        OPENSSL_free(bn_data);
+    OPENSSL_free(bn_data);
     BN_free(t);
-    if (!ok && buf) {
-        OPENSSL_free(buf);
-        buf = NULL;
-    }
-
-    return (buf);
+    if (ok)
+        return buf;
+    OPENSSL_free(buf);
+    return NULL;
 }
 
 int BN_hex2bn(BIGNUM **bn, const char *a)

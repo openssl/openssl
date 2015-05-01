@@ -339,8 +339,7 @@ static const char *get_UBSEC_LIBNAME(void)
 
 static void free_UBSEC_LIBNAME(void)
 {
-    if (UBSEC_LIBNAME)
-        OPENSSL_free((void *)UBSEC_LIBNAME);
+    OPENSSL_free(UBSEC_LIBNAME);
     UBSEC_LIBNAME = NULL;
 }
 

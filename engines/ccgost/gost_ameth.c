@@ -848,9 +848,7 @@ static int pkey_bits_gost(const EVP_PKEY *pk)
 /* ---------------------- ASN1 METHOD for GOST MAC  -------------------*/
 static void mackey_free_gost(EVP_PKEY *pk)
 {
-    if (pk->pkey.ptr) {
-        OPENSSL_free(pk->pkey.ptr);
-    }
+    OPENSSL_free(pk->pkey.ptr);
 }
 
 static int mac_ctrl_gost(EVP_PKEY *pkey, int op, long arg1, void *arg2)

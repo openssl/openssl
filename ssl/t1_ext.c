@@ -195,8 +195,7 @@ int custom_exts_copy(custom_ext_methods *dst, const custom_ext_methods *src)
 
 void custom_exts_free(custom_ext_methods *exts)
 {
-    if (exts->meths)
-        OPENSSL_free(exts->meths);
+    OPENSSL_free(exts->meths);
 }
 
 /* Set callbacks for a custom extension. */

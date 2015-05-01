@@ -106,7 +106,6 @@ void X509_INFO_free(X509_INFO *x)
     X509_free(x->x509);
     X509_CRL_free(x->crl);
     X509_PKEY_free(x->x_pkey);
-    if (x->enc_data != NULL)
-        OPENSSL_free(x->enc_data);
+    OPENSSL_free(x->enc_data);
     OPENSSL_free(x);
 }

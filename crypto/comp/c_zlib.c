@@ -151,8 +151,7 @@ static int zlib_stateful_init(COMP_CTX *ctx)
     CRYPTO_set_ex_data(&ctx->ex_data, zlib_stateful_ex_idx, state);
     return 1;
  err:
-    if (state)
-        OPENSSL_free(state);
+    OPENSSL_free(state);
     return 0;
 }
 
@@ -606,18 +605,14 @@ static long bio_zlib_ctrl(BIO *b, int cmd, long num, void *ptr)
         }
 
         if (ibs != -1) {
-            if (ctx->ibuf) {
-                OPENSSL_free(ctx->ibuf);
-                ctx->ibuf = NULL;
-            }
+            OPENSSL_free(ctx->ibuf);
+            ctx->ibuf = NULL;
             ctx->ibufsize = ibs;
         }
 
         if (obs != -1) {
-            if (ctx->obuf) {
-                OPENSSL_free(ctx->obuf);
-                ctx->obuf = NULL;
-            }
+            OPENSSL_free(ctx->obuf);
+            ctx->obuf = NULL;
             ctx->obufsize = obs;
         }
         ret = 1;

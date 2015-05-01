@@ -190,11 +190,9 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
     if (*out) {
         free_out = 0;
         dest = *out;
-        if (dest->data) {
-            dest->length = 0;
-            OPENSSL_free(dest->data);
-            dest->data = NULL;
-        }
+        OPENSSL_free(dest->data);
+        dest->data = NULL;
+        dest->length = 0;
         dest->type = str_type;
     } else {
         free_out = 1;

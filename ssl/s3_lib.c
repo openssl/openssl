@@ -3187,11 +3187,9 @@ void ssl3_clear(SSL *s)
     s->version = SSL3_VERSION;
 
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
-    if (s->next_proto_negotiated) {
-        OPENSSL_free(s->next_proto_negotiated);
-        s->next_proto_negotiated = NULL;
-        s->next_proto_negotiated_len = 0;
-    }
+    OPENSSL_free(s->next_proto_negotiated);
+    s->next_proto_negotiated = NULL;
+    s->next_proto_negotiated_len = 0;
 #endif
 }
 
@@ -3331,8 +3329,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 #ifndef OPENSSL_NO_TLSEXT
     case SSL_CTRL_SET_TLSEXT_HOSTNAME:
         if (larg == TLSEXT_NAMETYPE_host_name) {
-            if (s->tlsext_hostname != NULL)
-                OPENSSL_free(s->tlsext_hostname);
+            OPENSSL_free(s->tlsext_hostname);
             s->tlsext_hostname = NULL;
 
             ret = 1;
@@ -3386,8 +3383,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         return s->tlsext_ocsp_resplen;
 
     case SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP:
-        if (s->tlsext_ocsp_resp)
-            OPENSSL_free(s->tlsext_ocsp_resp);
+        OPENSSL_free(s->tlsext_ocsp_resp);
         s->tlsext_ocsp_resp = parg;
         s->tlsext_ocsp_resplen = larg;
         ret = 1;
@@ -3833,8 +3829,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 # ifndef OPENSSL_NO_SRP
     case SSL_CTRL_SET_TLS_EXT_SRP_USERNAME:
         ctx->srp_ctx.srp_Mask |= SSL_kSRP;
-        if (ctx->srp_ctx.login != NULL)
-            OPENSSL_free(ctx->srp_ctx.login);
+        OPENSSL_free(ctx->srp_ctx.login);
         ctx->srp_ctx.login = NULL;
         if (parg == NULL)
             break;
@@ -4281,10 +4276,8 @@ int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 
 static int ssl3_set_req_cert_type(CERT *c, const unsigned char *p, size_t len)
 {
-    if (c->ctypes) {
-        OPENSSL_free(c->ctypes);
-        c->ctypes = NULL;
-    }
+    OPENSSL_free(c->ctypes);
+    c->ctypes = NULL;
     if (!p || !len)
         return 1;
     if (len > 0xff)

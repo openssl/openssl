@@ -1121,12 +1121,9 @@ int cms_main(int argc, char **argv)
         sk_OPENSSL_STRING_free(sksigners);
     if (skkeys)
         sk_OPENSSL_STRING_free(skkeys);
-    if (secret_key)
-        OPENSSL_free(secret_key);
-    if (secret_keyid)
-        OPENSSL_free(secret_keyid);
-    if (pwri_tmp)
-        OPENSSL_free(pwri_tmp);
+    OPENSSL_free(secret_key);
+    OPENSSL_free(secret_keyid);
+    OPENSSL_free(pwri_tmp);
     ASN1_OBJECT_free(econtent_type);
     if (rr)
         CMS_ReceiptRequest_free(rr);
@@ -1152,8 +1149,7 @@ int cms_main(int argc, char **argv)
     BIO_free(in);
     BIO_free(indata);
     BIO_free_all(out);
-    if (passin)
-        OPENSSL_free(passin);
+    OPENSSL_free(passin);
     return (ret);
 }
 

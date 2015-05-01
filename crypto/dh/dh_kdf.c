@@ -180,8 +180,7 @@ int DH_KDF_X9_42(unsigned char *out, size_t outlen,
     }
     rv = 1;
  err:
-    if (der)
-        OPENSSL_free(der);
+    OPENSSL_free(der);
     EVP_MD_CTX_cleanup(&mctx);
     return rv;
 }

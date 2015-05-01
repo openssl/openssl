@@ -163,8 +163,7 @@ static void SCT_free(SCT *sct)
 {
     if (!sct)
         return;
-    if (sct->sct)
-        OPENSSL_free(sct->sct);
+    OPENSSL_free(sct->sct);
     OPENSSL_free(sct);
 }
 

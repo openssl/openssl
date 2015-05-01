@@ -132,8 +132,7 @@ static int eckey_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
         ASN1_OBJECT_free(pval);
     else
         ASN1_STRING_free(pval);
-    if (penc)
-        OPENSSL_free(penc);
+    OPENSSL_free(penc);
     return 0;
 }
 
@@ -503,8 +502,7 @@ static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, int ktype)
     BN_free(pub_key);
     BN_free(order);
     BN_CTX_free(ctx);
-    if (buffer != NULL)
-        OPENSSL_free(buffer);
+    OPENSSL_free(buffer);
     return (ret);
 }
 

@@ -489,8 +489,7 @@ int ecparam_main(int argc, char **argv)
     BN_free(ec_gen);
     BN_free(ec_order);
     BN_free(ec_cofactor);
-    if (buffer)
-        OPENSSL_free(buffer);
+    OPENSSL_free(buffer);
     BIO_free(in);
     BIO_free_all(out);
     EC_GROUP_free(group);

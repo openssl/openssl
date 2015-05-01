@@ -190,8 +190,7 @@ int ASN1_sign(i2d_of_void *i2d, X509_ALGOR *algor1, X509_ALGOR *algor2,
         ASN1err(ASN1_F_ASN1_SIGN, ERR_R_EVP_LIB);
         goto err;
     }
-    if (signature->data != NULL)
-        OPENSSL_free(signature->data);
+    OPENSSL_free(signature->data);
     signature->data = buf_out;
     buf_out = NULL;
     signature->length = outl;
@@ -300,8 +299,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
         ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ERR_R_EVP_LIB);
         goto err;
     }
-    if (signature->data != NULL)
-        OPENSSL_free(signature->data);
+    OPENSSL_free(signature->data);
     signature->data = buf_out;
     buf_out = NULL;
     signature->length = outl;

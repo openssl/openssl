@@ -721,12 +721,9 @@ __owur static int ecp_nistz256_windowed_mul(const EC_GROUP *group,
 
     ret = 1;
  err:
-    if (table_storage)
-        OPENSSL_free(table_storage);
-    if (p_str)
-        OPENSSL_free(p_str);
-    if (scalars)
-        OPENSSL_free(scalars);
+    OPENSSL_free(table_storage);
+    OPENSSL_free(p_str);
+    OPENSSL_free(scalars);
     return ret;
 }
 
@@ -889,8 +886,7 @@ __owur static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
     BN_CTX_free(new_ctx);
 
     ecp_nistz256_pre_comp_free(pre_comp);
-    if (precomp_storage)
-        OPENSSL_free(precomp_storage);
+    OPENSSL_free(precomp_storage);
     EC_POINT_free(P);
     EC_POINT_free(T);
     return ret;
@@ -1356,10 +1352,8 @@ err:
     if (ctx)
         BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
-    if (new_points)
-        OPENSSL_free(new_points);
-    if (new_scalars)
-        OPENSSL_free(new_scalars);
+    OPENSSL_free(new_points);
+    OPENSSL_free(new_scalars);
     return ret;
 }
 
@@ -1451,9 +1445,7 @@ static void ecp_nistz256_pre_comp_free(void *pre_)
     if (i > 0)
         return;
 
-    if (pre->precomp_storage)
-        OPENSSL_free(pre->precomp_storage);
-
+    OPENSSL_free(pre->precomp_storage);
     OPENSSL_free(pre);
 }
 
