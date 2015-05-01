@@ -96,17 +96,16 @@ char *argv[];
     }
 
     ret = 1;
+    goto done;
 
-    if (0) {
  err:
-        if (ERR_peek_error() == 0) { /* system call error */
-            fprintf(stderr, "errno=%d ", errno);
-            perror("error");
-        } else
-            ERR_print_errors_fp(stderr);
-    }
+    if (ERR_peek_error() == 0) { /* system call error */
+        fprintf(stderr, "errno=%d ", errno);
+        perror("error");
+    } else
+        ERR_print_errors_fp(stderr);
+ done:
     BIO_free_all(out);
     SSL_CTX_free(ssl_ctx);
-    exit(!ret);
-    return (ret);
+    return (ret == 1);
 }

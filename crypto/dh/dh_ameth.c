@@ -327,7 +327,7 @@ static int do_dh_print(BIO *bp, const DH *x, int indent,
                        ASN1_PCTX *ctx, int ptype)
 {
     unsigned char *m = NULL;
-    int reason = ERR_R_BUF_LIB, ret = 0;
+    int reason = ERR_R_BUF_LIB;
     size_t buf_len = 0;
 
     const char *ktype = NULL;
@@ -415,13 +415,13 @@ static int do_dh_print(BIO *bp, const DH *x, int indent,
             goto err;
     }
 
-    ret = 1;
-    if (0) {
- err:
-        DHerr(DH_F_DO_DH_PRINT, reason);
-    }
     OPENSSL_free(m);
-    return (ret);
+    return 1;
+
+ err:
+    DHerr(DH_F_DO_DH_PRINT, reason);
+    OPENSSL_free(m);
+    return 0;
 }
 
 static int int_dh_size(const EVP_PKEY *pkey)

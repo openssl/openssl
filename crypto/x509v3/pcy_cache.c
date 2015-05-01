@@ -200,12 +200,12 @@ static int policy_cache_new(X509 *x)
             goto bad_cache;
     } else if (!policy_cache_set_int(&cache->any_skip, ext_any))
         goto bad_cache;
+    goto just_cleanup;
 
-    if (0) {
  bad_cache:
-        x->ex_flags |= EXFLAG_INVALID_POLICY;
-    }
+    x->ex_flags |= EXFLAG_INVALID_POLICY;
 
+ just_cleanup:
     if (ext_pcons)
         POLICY_CONSTRAINTS_free(ext_pcons);
 

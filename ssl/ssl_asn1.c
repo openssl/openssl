@@ -325,10 +325,6 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
     if (as == NULL)
         goto err;
 
-    if (0) {
-        i2d_SSL_SESSION_ASN1(NULL, NULL);
-    }
-
     if (!a || !*a) {
         ret = SSL_SESSION_new();
         if (ret == NULL)

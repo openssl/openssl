@@ -2838,13 +2838,11 @@ SSL *SSL_dup(SSL *s)
             }
         }
     }
+    return ret;
 
-    if (0) {
  err:
-        SSL_free(ret);
-        ret = NULL;
-    }
-    return (ret);
+    SSL_free(ret);
+    return NULL;
 }
 
 void ssl_clear_cipher_ctx(SSL *s)

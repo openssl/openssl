@@ -850,12 +850,12 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file)
             sk_X509_NAME_push(ret, xn);
         }
     }
+    goto done;
 
-    if (0) {
  err:
-        sk_X509_NAME_pop_free(ret, X509_NAME_free);
-        ret = NULL;
-    }
+    sk_X509_NAME_pop_free(ret, X509_NAME_free);
+    ret = NULL;
+ done:
     sk_X509_NAME_free(sk);
     BIO_free(in);
     X509_free(x);
@@ -911,17 +911,15 @@ int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
     }
 
     ERR_clear_error();
+    goto done;
 
-    if (0) {
  err:
         ret = 0;
-    }
+ done:
     BIO_free(in);
     if (x != NULL)
         X509_free(x);
-
     (void)sk_X509_NAME_set_cmp_func(stack, oldcmp);
-
     return ret;
 }
 

@@ -490,7 +490,7 @@ int ASN1_UTCTIME_print(BIO *bp, const ASN1_UTCTIME *tm)
 int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
 {
     char *s, *c, *b;
-    int ret = 0, l, i;
+    int l, i;
 
     l = 80 - 2 - obase;
 
@@ -535,11 +535,10 @@ int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
         l--;
     }
 
-    ret = 1;
-    if (0) {
- err:
-        X509err(X509_F_X509_NAME_PRINT, ERR_R_BUF_LIB);
-    }
     OPENSSL_free(b);
-    return (ret);
+    return 1;
+ err:
+    X509err(X509_F_X509_NAME_PRINT, ERR_R_BUF_LIB);
+    OPENSSL_free(b);
+    return 0;
 }
