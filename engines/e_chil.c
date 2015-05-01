@@ -622,8 +622,7 @@ static int hwcrhk_init(ENGINE *e)
 #  endif
     return 1;
  err:
-    if (hwcrhk_dso)
-        DSO_free(hwcrhk_dso);
+    DSO_free(hwcrhk_dso);
     hwcrhk_dso = NULL;
     p_hwcrhk_Init = NULL;
     p_hwcrhk_Finish = NULL;

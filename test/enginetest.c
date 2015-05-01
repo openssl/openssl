@@ -147,8 +147,7 @@ int main(int argc, char *argv[])
         printf("Remove failed!\n");
         goto end;
     }
-    if (ptr)
-        ENGINE_free(ptr);
+    ENGINE_free(ptr);
     display_engine_list();
     if (!ENGINE_add(new_h3) || !ENGINE_add(new_h2)) {
         printf("Add failed!\n");
@@ -196,8 +195,7 @@ int main(int argc, char *argv[])
         if (!ENGINE_remove(ptr))
             printf("Remove failed!i - probably no hardware "
                    "support present.\n");
-    if (ptr)
-        ENGINE_free(ptr);
+    ENGINE_free(ptr);
     display_engine_list();
     if (!ENGINE_add(new_h1) || !ENGINE_remove(new_h1)) {
         printf("Couldn't add and remove to an empty list!\n");
@@ -248,17 +246,12 @@ int main(int argc, char *argv[])
  end:
     if (to_return)
         ERR_print_errors_fp(stderr);
-    if (new_h1)
-        ENGINE_free(new_h1);
-    if (new_h2)
-        ENGINE_free(new_h2);
-    if (new_h3)
-        ENGINE_free(new_h3);
-    if (new_h4)
-        ENGINE_free(new_h4);
+    ENGINE_free(new_h1);
+    ENGINE_free(new_h2);
+    ENGINE_free(new_h3);
+    ENGINE_free(new_h4);
     for (loop = 0; loop < 512; loop++)
-        if (block[loop])
-            ENGINE_free(block[loop]);
+        ENGINE_free(block[loop]);
     ENGINE_cleanup();
     CRYPTO_cleanup_all_ex_data();
     ERR_free_strings();

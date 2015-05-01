@@ -186,8 +186,7 @@ static void dynamic_data_ctx_free_func(void *parent, void *ptr,
 {
     if (ptr) {
         dynamic_data_ctx *ctx = (dynamic_data_ctx *)ptr;
-        if (ctx->dynamic_dso)
-            DSO_free(ctx->dynamic_dso);
+        DSO_free(ctx->dynamic_dso);
         OPENSSL_free(ctx->DYNAMIC_LIBNAME);
         OPENSSL_free(ctx->engine_id);
         if (ctx->dirs)

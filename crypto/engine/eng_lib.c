@@ -108,16 +108,14 @@ int engine_free_util(ENGINE *e, int locked)
 {
     int i;
 
-    if (e == NULL) {
-        ENGINEerr(ENGINE_F_ENGINE_FREE_UTIL, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
+    if (e == NULL)
+        return 1;
     if (locked)
         i = CRYPTO_add(&e->struct_ref, -1, CRYPTO_LOCK_ENGINE);
     else
         i = --e->struct_ref;
     engine_ref_debug(e, 0, -1)
-        if (i > 0)
+    if (i > 0)
         return 1;
 #ifdef REF_CHECK
     if (i < 0) {

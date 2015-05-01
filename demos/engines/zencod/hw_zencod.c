@@ -623,9 +623,7 @@ static int zencod_init(ENGINE *e)
 
     return 1;
  err:
-    if (zencod_dso) {
-        DSO_free(zencod_dso);
-    }
+    DSO_free(zencod_dso);
     zencod_dso = NULL;
     ptr_zencod_bytes2bits = NULL;
     ptr_zencod_bits2bytes = NULL;

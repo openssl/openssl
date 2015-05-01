@@ -883,8 +883,7 @@ int req_main(int argc, char **argv)
     if (sigopts)
         sk_OPENSSL_STRING_free(sigopts);
 #ifndef OPENSSL_NO_ENGINE
-    if (gen_eng)
-        ENGINE_free(gen_eng);
+    ENGINE_free(gen_eng);
 #endif
     OPENSSL_free(keyalgstr);
     X509_REQ_free(req);

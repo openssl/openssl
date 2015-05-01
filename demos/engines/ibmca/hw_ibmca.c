@@ -412,9 +412,7 @@ static int ibmca_init(ENGINE *e)
 
     return 1;
  err:
-    if (ibmca_dso)
-        DSO_free(ibmca_dso);
-
+    DSO_free(ibmca_dso);
     p_icaOpenAdapter = NULL;
     p_icaCloseAdapter = NULL;
     p_icaRsaModExpo = NULL;

@@ -560,8 +560,7 @@ static int surewarehk_init(ENGINE *e)
 
     return 1;
  err:
-    if (surewarehk_dso)
-        DSO_free(surewarehk_dso);
+    DSO_free(surewarehk_dso);
     surewarehk_dso = NULL;
     p_surewarehk_Init = NULL;
     p_surewarehk_Finish = NULL;

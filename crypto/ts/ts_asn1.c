@@ -189,8 +189,7 @@ static int ts_resp_set_tst_info(TS_RESP *a)
             TSerr(TS_F_TS_RESP_SET_TST_INFO, TS_R_TOKEN_PRESENT);
             return 0;
         }
-        if (a->tst_info != NULL)
-            TS_TST_INFO_free(a->tst_info);
+        TS_TST_INFO_free(a->tst_info);
         a->tst_info = PKCS7_to_TS_TST_INFO(a->token);
         if (!a->tst_info) {
             TSerr(TS_F_TS_RESP_SET_TST_INFO,
@@ -212,8 +211,7 @@ static int ts_resp_cb(int op, ASN1_VALUE **pval, const ASN1_ITEM *it,
     if (op == ASN1_OP_NEW_POST) {
         ts_resp->tst_info = NULL;
     } else if (op == ASN1_OP_FREE_POST) {
-        if (ts_resp->tst_info != NULL)
-            TS_TST_INFO_free(ts_resp->tst_info);
+        TS_TST_INFO_free(ts_resp->tst_info);
     } else if (op == ASN1_OP_D2I_POST) {
         if (ts_resp_set_tst_info(ts_resp) == 0)
             return 0;

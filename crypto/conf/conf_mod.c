@@ -266,8 +266,7 @@ static CONF_MODULE *module_load_dso(const CONF *cnf, char *name, char *value,
     return md;
 
  err:
-    if (dso)
-        DSO_free(dso);
+    DSO_free(dso);
     CONFerr(CONF_F_MODULE_LOAD_DSO, errcode);
     ERR_add_error_data(4, "module=", name, ", path=", path);
     return NULL;
@@ -422,8 +421,7 @@ void CONF_modules_unload(int all)
 /* unload a single module */
 static void module_free(CONF_MODULE *md)
 {
-    if (md->dso)
-        DSO_free(md->dso);
+    DSO_free(md->dso);
     OPENSSL_free(md->name);
     OPENSSL_free(md);
 }
@@ -445,6 +443,8 @@ void CONF_modules_finish(void)
 
 static void module_finish(CONF_IMODULE *imod)
 {
+    if (!imod)
+        return;
     if (imod->pmod->finish)
         imod->pmod->finish(imod);
     imod->pmod->links--;

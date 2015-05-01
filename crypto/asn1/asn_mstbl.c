@@ -154,7 +154,6 @@ static int do_tcreate(char *value, char *name)
         if (!rv)
             ASN1err(ASN1_F_DO_TCREATE, ERR_R_MALLOC_FAILURE);
     }
-    if (lst)
-        sk_CONF_VALUE_pop_free(lst, X509V3_conf_free);
+    sk_CONF_VALUE_pop_free(lst, X509V3_conf_free);
     return rv;
 }

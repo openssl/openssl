@@ -385,10 +385,8 @@ int tls1_change_cipher_state(SSL *s, int which)
         dd = s->enc_read_ctx;
         mac_ctx = ssl_replace_hash(&s->read_hash, NULL);
 #ifndef OPENSSL_NO_COMP
-        if (s->expand != NULL) {
-            COMP_CTX_free(s->expand);
-            s->expand = NULL;
-        }
+        COMP_CTX_free(s->expand);
+        s->expand = NULL;
         if (comp != NULL) {
             s->expand = COMP_CTX_new(comp->method);
             if (s->expand == NULL) {
@@ -425,10 +423,8 @@ int tls1_change_cipher_state(SSL *s, int which)
         } else
             mac_ctx = ssl_replace_hash(&s->write_hash, NULL);
 #ifndef OPENSSL_NO_COMP
-        if (s->compress != NULL) {
-            COMP_CTX_free(s->compress);
-            s->compress = NULL;
-        }
+        COMP_CTX_free(s->compress);
+        s->compress = NULL;
         if (comp != NULL) {
             s->compress = COMP_CTX_new(comp->method);
             if (s->compress == NULL) {

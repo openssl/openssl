@@ -133,10 +133,8 @@ int DSO_free(DSO *dso)
 {
     int i;
 
-    if (dso == NULL) {
-        DSOerr(DSO_F_DSO_FREE, ERR_R_PASSED_NULL_PARAMETER);
-        return (0);
-    }
+    if (dso == NULL)
+        return (1);
 
     i = CRYPTO_add(&dso->references, -1, CRYPTO_LOCK_DSO);
 #ifdef REF_PRINT
