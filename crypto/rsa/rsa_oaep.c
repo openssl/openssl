@@ -232,10 +232,8 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
     RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP_MGF1,
            RSA_R_OAEP_DECODING_ERROR);
  cleanup:
-    if (db != NULL)
-        OPENSSL_free(db);
-    if (em != NULL)
-        OPENSSL_free(em);
+    OPENSSL_free(db);
+    OPENSSL_free(em);
     return mlen;
 }
 

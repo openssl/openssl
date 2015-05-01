@@ -232,8 +232,7 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
     dest->asn1_form = src->asn1_form;
 
     if (src->seed) {
-        if (dest->seed)
-            OPENSSL_free(dest->seed);
+        OPENSSL_free(dest->seed);
         dest->seed = OPENSSL_malloc(src->seed_len);
         if (dest->seed == NULL)
             return 0;
@@ -241,8 +240,7 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
             return 0;
         dest->seed_len = src->seed_len;
     } else {
-        if (dest->seed)
-            OPENSSL_free(dest->seed);
+        OPENSSL_free(dest->seed);
         dest->seed = NULL;
         dest->seed_len = 0;
     }
@@ -382,11 +380,9 @@ point_conversion_form_t EC_GROUP_get_point_conversion_form(const EC_GROUP
 
 size_t EC_GROUP_set_seed(EC_GROUP *group, const unsigned char *p, size_t len)
 {
-    if (group->seed) {
-        OPENSSL_free(group->seed);
-        group->seed = NULL;
-        group->seed_len = 0;
-    }
+    OPENSSL_free(group->seed);
+    group->seed = NULL;
+    group->seed_len = 0;
 
     if (!len || !p)
         return 1;

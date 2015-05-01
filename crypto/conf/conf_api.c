@@ -273,8 +273,7 @@ CONF_VALUE *_CONF_new_section(CONF *conf, const char *section)
     if (!ok) {
         if (sk != NULL)
             sk_CONF_VALUE_free(sk);
-        if (v != NULL)
-            OPENSSL_free(v);
+        OPENSSL_free(v);
         v = NULL;
     }
     return (v);

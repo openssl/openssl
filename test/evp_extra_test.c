@@ -320,9 +320,7 @@ static int test_EVP_DigestSignInit(void)
     EVP_MD_CTX_cleanup(&md_ctx);
     EVP_MD_CTX_cleanup(&md_ctx_verify);
     EVP_PKEY_free(pkey);
-    if (sig) {
-        OPENSSL_free(sig);
-    }
+    OPENSSL_free(sig);
 
     return ret;
 }

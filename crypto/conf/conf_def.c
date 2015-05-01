@@ -393,14 +393,12 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
     }
     if (buff != NULL)
         BUF_MEM_free(buff);
-    if (section != NULL)
-        OPENSSL_free(section);
+    OPENSSL_free(section);
     return (1);
  err:
     if (buff != NULL)
         BUF_MEM_free(buff);
-    if (section != NULL)
-        OPENSSL_free(section);
+    OPENSSL_free(section);
     if (line != NULL)
         *line = eline;
     BIO_snprintf(btmp, sizeof btmp, "%ld", eline);
@@ -410,12 +408,9 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
         conf->data = NULL;
     }
     if (v != NULL) {
-        if (v->name != NULL)
-            OPENSSL_free(v->name);
-        if (v->value != NULL)
-            OPENSSL_free(v->value);
-        if (v != NULL)
-            OPENSSL_free(v);
+        OPENSSL_free(v->name);
+        OPENSSL_free(v->value);
+        OPENSSL_free(v);
     }
     return (0);
 }
@@ -595,8 +590,7 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
             buf->data[to++] = *(from++);
     }
     buf->data[to] = '\0';
-    if (*pto != NULL)
-        OPENSSL_free(*pto);
+    OPENSSL_free(*pto);
     *pto = buf->data;
     OPENSSL_free(buf);
     return (1);

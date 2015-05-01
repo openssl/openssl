@@ -177,27 +177,21 @@ void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl)
     
     while ((item = pqueue_pop(d->unprocessed_rcds.q)) != NULL) {
         rdata = (DTLS1_RECORD_DATA *)item->data;
-        if (rdata->rbuf.buf) {
-            OPENSSL_free(rdata->rbuf.buf);
-        }
+        OPENSSL_free(rdata->rbuf.buf);
         OPENSSL_free(item->data);
         pitem_free(item);
     }
 
     while ((item = pqueue_pop(d->processed_rcds.q)) != NULL) {
         rdata = (DTLS1_RECORD_DATA *)item->data;
-        if (rdata->rbuf.buf) {
-            OPENSSL_free(rdata->rbuf.buf);
-        }
+        OPENSSL_free(rdata->rbuf.buf);
         OPENSSL_free(item->data);
         pitem_free(item);
     }
 
     while ((item = pqueue_pop(d->buffered_app_data.q)) != NULL) {
         rdata = (DTLS1_RECORD_DATA *)item->data;
-        if (rdata->rbuf.buf) {
-            OPENSSL_free(rdata->rbuf.buf);
-        }
+        OPENSSL_free(rdata->rbuf.buf);
         OPENSSL_free(item->data);
         pitem_free(item);
     }
@@ -271,8 +265,7 @@ int dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
     rdata = OPENSSL_malloc(sizeof(DTLS1_RECORD_DATA));
     item = pitem_new(priority, rdata);
     if (rdata == NULL || item == NULL) {
-        if (rdata != NULL)
-            OPENSSL_free(rdata);
+        OPENSSL_free(rdata);
         if (item != NULL)
             pitem_free(item);
 
@@ -304,8 +297,7 @@ int dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
 
     if (!ssl3_setup_buffers(s)) {
         SSLerr(SSL_F_DTLS1_BUFFER_RECORD, ERR_R_INTERNAL_ERROR);
-        if (rdata->rbuf.buf != NULL)
-            OPENSSL_free(rdata->rbuf.buf);
+        OPENSSL_free(rdata->rbuf.buf);
         OPENSSL_free(rdata);
         pitem_free(item);
         return (-1);
@@ -314,8 +306,7 @@ int dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
     /* insert should not fail, since duplicates are dropped */
     if (pqueue_insert(queue->q, item) == NULL) {
         SSLerr(SSL_F_DTLS1_BUFFER_RECORD, ERR_R_INTERNAL_ERROR);
-        if (rdata->rbuf.buf != NULL)
-            OPENSSL_free(rdata->rbuf.buf);
+        OPENSSL_free(rdata->rbuf.buf);
         OPENSSL_free(rdata);
         pitem_free(item);
         return (-1);

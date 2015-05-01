@@ -113,8 +113,7 @@ static int pkey_dsa_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 static void pkey_dsa_cleanup(EVP_PKEY_CTX *ctx)
 {
     DSA_PKEY_CTX *dctx = ctx->data;
-    if (dctx)
-        OPENSSL_free(dctx);
+    OPENSSL_free(dctx);
 }
 
 static int pkey_dsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,

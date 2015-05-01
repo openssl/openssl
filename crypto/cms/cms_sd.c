@@ -728,8 +728,7 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
     return 1;
 
  err:
-    if (abuf)
-        OPENSSL_free(abuf);
+    OPENSSL_free(abuf);
     EVP_MD_CTX_cleanup(mctx);
     return 0;
 

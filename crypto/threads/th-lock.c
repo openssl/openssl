@@ -318,10 +318,8 @@ void CRYPTO_thread_setup(void)
     lock_count = OPENSSL_malloc(CRYPTO_num_locks() * sizeof(long));
     if (!lock_cs || !lock_count) {
         /* Nothing we can do about this...void function! */
-        if (lock_cs)
-            OPENSSL_free(lock_cs);
-        if (lock_count)
-            OPENSSL_free(lock_count);
+        OPENSSL_free(lock_cs);
+        OPENSSL_free(lock_count);
         return;
     }
     for (i = 0; i < CRYPTO_num_locks(); i++) {

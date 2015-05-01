@@ -664,8 +664,7 @@ int smime_main(int argc, char **argv)
     BIO_free(in);
     BIO_free(indata);
     BIO_free_all(out);
-    if (passin)
-        OPENSSL_free(passin);
+    OPENSSL_free(passin);
     return (ret);
 }
 

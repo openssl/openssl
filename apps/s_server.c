@@ -1956,10 +1956,6 @@ int s_server_main(int argc, char *argv[])
     ssl_excert_free(exc);
     sk_OPENSSL_STRING_free(ssl_args);
     SSL_CONF_CTX_free(cctx);
-#ifndef OPENSSL_NO_JPAKE
-    if (jpake_secret && psk_key)
-        OPENSSL_free(psk_key);
-#endif
     BIO_free(bio_s_out);
     bio_s_out = NULL;
     BIO_free(bio_s_msg);
@@ -2931,8 +2927,7 @@ static int www_body(char *hostname, int s, int stype, unsigned char *context)
  err:
     if (ret >= 0)
         BIO_printf(bio_s_out, "ACCEPT\n");
-    if (buf != NULL)
-        OPENSSL_free(buf);
+    OPENSSL_free(buf);
     BIO_free_all(io);
     return (ret);
 }
@@ -3065,8 +3060,7 @@ static int rev_body(char *hostname, int s, int stype, unsigned char *context)
 
  err:
 
-    if (buf != NULL)
-        OPENSSL_free(buf);
+    OPENSSL_free(buf);
     BIO_free_all(io);
     return (ret);
 }

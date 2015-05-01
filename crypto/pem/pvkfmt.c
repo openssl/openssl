@@ -285,8 +285,7 @@ static EVP_PKEY *do_b2i_bio(BIO *in, int ispub)
         ret = b2i_rsa(&p, length, bitlen, ispub);
 
  err:
-    if (buf)
-        OPENSSL_free(buf);
+    OPENSSL_free(buf);
     return ret;
 }
 
@@ -737,7 +736,7 @@ static EVP_PKEY *do_PVK_body(const unsigned char **in,
     ret = b2i_PrivateKey(&p, keylen);
  err:
     EVP_CIPHER_CTX_cleanup(&cctx);
-    if (enctmp && saltlen)
+    if (saltlen)
         OPENSSL_free(enctmp);
     return ret;
 }

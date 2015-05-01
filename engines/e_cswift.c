@@ -338,8 +338,7 @@ static const char *get_CSWIFT_LIBNAME(void)
 
 static void free_CSWIFT_LIBNAME(void)
 {
-    if (CSWIFT_LIBNAME)
-        OPENSSL_free((void *)CSWIFT_LIBNAME);
+    OPENSSL_free(CSWIFT_LIBNAME);
     CSWIFT_LIBNAME = NULL;
 }
 
@@ -707,16 +706,11 @@ static int cswift_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     BN_bin2bn((unsigned char *)result->d, res.nbytes, r);
     to_return = 1;
  err:
-    if (sw_param.up.crt.p.value)
-        OPENSSL_free(sw_param.up.crt.p.value);
-    if (sw_param.up.crt.q.value)
-        OPENSSL_free(sw_param.up.crt.q.value);
-    if (sw_param.up.crt.dmp1.value)
-        OPENSSL_free(sw_param.up.crt.dmp1.value);
-    if (sw_param.up.crt.dmq1.value)
-        OPENSSL_free(sw_param.up.crt.dmq1.value);
-    if (sw_param.up.crt.iqmp.value)
-        OPENSSL_free(sw_param.up.crt.iqmp.value);
+    OPENSSL_free(sw_param.up.crt.p.value);
+    OPENSSL_free(sw_param.up.crt.q.value);
+    OPENSSL_free(sw_param.up.crt.dmp1.value);
+    OPENSSL_free(sw_param.up.crt.dmq1.value);
+    OPENSSL_free(sw_param.up.crt.iqmp.value);
     BN_free(result);
     BN_free(argument);
     if (acquired)

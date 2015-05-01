@@ -326,8 +326,7 @@ static int ocsp_add1_nonce(STACK_OF(X509_EXTENSION) **exts,
         goto err;
     ret = 1;
  err:
-    if (os.data)
-        OPENSSL_free(os.data);
+    OPENSSL_free(os.data);
     return ret;
 }
 

@@ -75,8 +75,7 @@ int ASN1_ENUMERATED_set(ASN1_ENUMERATED *a, long v)
 
     a->type = V_ASN1_ENUMERATED;
     if (a->length < (int)(sizeof(long) + 1)) {
-        if (a->data != NULL)
-            OPENSSL_free(a->data);
+        OPENSSL_free(a->data);
         if ((a->data = OPENSSL_malloc(sizeof(long) + 1)) != NULL)
             memset((char *)a->data, 0, sizeof(long) + 1);
     }

@@ -148,8 +148,7 @@ static void pkey_ec_cleanup(EVP_PKEY_CTX *ctx)
     if (dctx) {
         EC_GROUP_free(dctx->gen_group);
         EC_KEY_free(dctx->co_key);
-        if (dctx->kdf_ukm)
-            OPENSSL_free(dctx->kdf_ukm);
+        OPENSSL_free(dctx->kdf_ukm);
         OPENSSL_free(dctx);
     }
 }
@@ -359,8 +358,7 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         return 1;
 
     case EVP_PKEY_CTRL_EC_KDF_UKM:
-        if (dctx->kdf_ukm)
-            OPENSSL_free(dctx->kdf_ukm);
+        OPENSSL_free(dctx->kdf_ukm);
         dctx->kdf_ukm = p2;
         if (p2)
             dctx->kdf_ukmlen = p1;

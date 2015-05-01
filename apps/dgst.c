@@ -451,8 +451,7 @@ int dgst_main(int argc, char **argv)
         sk_OPENSSL_STRING_free(sigopts);
     if (macopts)
         sk_OPENSSL_STRING_free(macopts);
-    if (sigbuf)
-        OPENSSL_free(sigbuf);
+    OPENSSL_free(sigbuf);
     BIO_free(bmd);
     return (ret);
 }

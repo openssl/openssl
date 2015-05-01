@@ -268,7 +268,7 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
 
  err:
     OPENSSL_cleanse(kek, keklen);
-    if (!rv && out)
+    if (!rv)
         OPENSSL_free(out);
     EVP_CIPHER_CTX_cleanup(&kari->ctx);
     EVP_PKEY_CTX_free(kari->pctx);
@@ -300,8 +300,7 @@ int CMS_RecipientInfo_kari_decrypt(CMS_ContentInfo *cms,
     cek = NULL;
     rv = 1;
  err:
-    if (cek)
-        OPENSSL_free(cek);
+    OPENSSL_free(cek);
     return rv;
 }
 

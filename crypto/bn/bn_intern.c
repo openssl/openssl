@@ -67,7 +67,6 @@
 signed char *bn_compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
 {
     int window_val;
-    int ok = 0;
     signed char *r = NULL;
     int sign = 1;
     int bit, next_bit, mask;
@@ -176,17 +175,12 @@ signed char *bn_compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
         BNerr(BN_F_BN_COMPUTE_WNAF, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    len = j;
-    ok = 1;
+    *ret_len = j;
+    return r;
 
  err:
-    if (!ok) {
-        OPENSSL_free(r);
-        r = NULL;
-    }
-    if (ok)
-        *ret_len = len;
-    return r;
+    OPENSSL_free(r);
+    return NULL;
 }
 
 int bn_get_top(const BIGNUM *a)

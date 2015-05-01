@@ -404,8 +404,7 @@ static int cms_RecipientInfo_ktri_encrypt(CMS_ContentInfo *cms,
         EVP_PKEY_CTX_free(pctx);
         ktri->pctx = NULL;
     }
-    if (ek)
-        OPENSSL_free(ek);
+    OPENSSL_free(ek);
     return ret;
 
 }
@@ -472,7 +471,7 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
  err:
     EVP_PKEY_CTX_free(ktri->pctx);
     ktri->pctx = NULL;
-    if (!ret && ek)
+    if (!ret)
         OPENSSL_free(ek);
 
     return ret;
@@ -712,7 +711,7 @@ static int cms_RecipientInfo_kekri_encrypt(CMS_ContentInfo *cms,
 
  err:
 
-    if (!r && wkey)
+    if (!r)
         OPENSSL_free(wkey);
     OPENSSL_cleanse(&actx, sizeof(actx));
 
@@ -785,7 +784,7 @@ static int cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms,
 
  err:
 
-    if (!r && ukey)
+    if (!r)
         OPENSSL_free(ukey);
     OPENSSL_cleanse(&actx, sizeof(actx));
 

@@ -198,8 +198,7 @@ void DH_free(DH *r)
     BN_clear_free(r->g);
     BN_clear_free(r->q);
     BN_clear_free(r->j);
-    if (r->seed)
-        OPENSSL_free(r->seed);
+    OPENSSL_free(r->seed);
     BN_clear_free(r->counter);
     BN_clear_free(r->pub_key);
     BN_clear_free(r->priv_key);

@@ -267,10 +267,8 @@ static int vms_load(DSO *dso)
     return (1);
  err:
     /* Cleanup! */
-    if (p != NULL)
-        OPENSSL_free(p);
-    if (filename != NULL)
-        OPENSSL_free(filename);
+    OPENSSL_free(p);
+    OPENSSL_free(filename);
     return (0);
 }
 

@@ -2271,8 +2271,7 @@ static int do_revoke(X509 *x509, CA_DB *db, int type, char *value)
     ok = 1;
  end:
     for (i = 0; i < DB_NUMBER; i++) {
-        if (row[i] != NULL)
-            OPENSSL_free(row[i]);
+        OPENSSL_free(row[i]);
     }
     return (ok);
 }
@@ -2339,8 +2338,7 @@ static int get_certificate_status(const char *serial, CA_DB *db)
     }
  end:
     for (i = 0; i < DB_NUMBER; i++) {
-        if (row[i] != NULL)
-            OPENSSL_free(row[i]);
+        OPENSSL_free(row[i]);
     }
     return (ok);
 }
@@ -2564,8 +2562,7 @@ int make_revoked(X509_REVOKED *rev, const char *str)
 
  end:
 
-    if (tmp)
-        OPENSSL_free(tmp);
+    OPENSSL_free(tmp);
     ASN1_OBJECT_free(hold);
     ASN1_GENERALIZEDTIME_free(comp_time);
     ASN1_ENUMERATED_free(rtmp);
@@ -2719,8 +2716,7 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
 
  end:
 
-    if (tmp)
-        OPENSSL_free(tmp);
+    OPENSSL_free(tmp);
     ASN1_GENERALIZEDTIME_free(comp_time);
 
     return ret;

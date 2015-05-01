@@ -182,8 +182,7 @@ int gendsa_main(int argc, char **argv)
     BIO_free(in);
     BIO_free_all(out);
     DSA_free(dsa);
-    if (passout)
-        OPENSSL_free(passout);
+    OPENSSL_free(passout);
     return (ret);
 }
 #else                           /* !OPENSSL_NO_DSA */

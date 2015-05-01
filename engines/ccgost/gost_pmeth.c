@@ -66,8 +66,8 @@ static int pkey_gost_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 static void pkey_gost_cleanup(EVP_PKEY_CTX *ctx)
 {
     struct gost_pmeth_data *data = EVP_PKEY_CTX_get_data(ctx);
-    if (data->shared_ukm)
-        OPENSSL_free(data->shared_ukm);
+
+    OPENSSL_free(data->shared_ukm);
     OPENSSL_free(data);
 }
 

@@ -1401,8 +1401,7 @@ int ssl3_get_key_exchange(SSL *s)
          */
         if (alg_k & SSL_kPSK) {
             s->session->sess_cert = ssl_sess_cert_new();
-            if (s->ctx->psk_identity_hint)
-                OPENSSL_free(s->ctx->psk_identity_hint);
+            OPENSSL_free(s->ctx->psk_identity_hint);
             s->ctx->psk_identity_hint = NULL;
         }
 #endif
@@ -1471,8 +1470,7 @@ int ssl3_get_key_exchange(SSL *s)
          */
         memcpy(tmp_id_hint, p, i);
         memset(tmp_id_hint + i, 0, PSK_MAX_IDENTITY_LEN + 1 - i);
-        if (s->ctx->psk_identity_hint != NULL)
-            OPENSSL_free(s->ctx->psk_identity_hint);
+        OPENSSL_free(s->ctx->psk_identity_hint);
         s->ctx->psk_identity_hint = BUF_strdup(tmp_id_hint);
         if (s->ctx->psk_identity_hint == NULL) {
             al = SSL_AD_HANDSHAKE_FAILURE;
@@ -2054,10 +2052,8 @@ int ssl3_get_certificate_request(SSL *s)
 
     /* get the certificate types */
     ctype_num = *(p++);
-    if (s->cert->ctypes) {
-        OPENSSL_free(s->cert->ctypes);
-        s->cert->ctypes = NULL;
-    }
+    OPENSSL_free(s->cert->ctypes);
+    s->cert->ctypes = NULL;
     if (ctype_num > SSL3_CT_NUMBER) {
         /* If we exceed static buffer copy all to cert structure */
         s->cert->ctypes = OPENSSL_malloc(ctype_num);
@@ -2193,10 +2189,8 @@ int ssl3_get_new_session_ticket(SSL *s)
         SSLerr(SSL_F_SSL3_GET_NEW_SESSION_TICKET, SSL_R_LENGTH_MISMATCH);
         goto f_err;
     }
-    if (s->session->tlsext_tick) {
-        OPENSSL_free(s->session->tlsext_tick);
-        s->session->tlsext_ticklen = 0;
-    }
+    OPENSSL_free(s->session->tlsext_tick);
+    s->session->tlsext_ticklen = 0;
     s->session->tlsext_tick = OPENSSL_malloc(ticklen);
     if (!s->session->tlsext_tick) {
         SSLerr(SSL_F_SSL3_GET_NEW_SESSION_TICKET, ERR_R_MALLOC_FAILURE);
@@ -2257,8 +2251,7 @@ int ssl3_get_cert_status(SSL *s)
         SSLerr(SSL_F_SSL3_GET_CERT_STATUS, SSL_R_LENGTH_MISMATCH);
         goto f_err;
     }
-    if (s->tlsext_ocsp_resp)
-        OPENSSL_free(s->tlsext_ocsp_resp);
+    OPENSSL_free(s->tlsext_ocsp_resp);
     s->tlsext_ocsp_resp = BUF_memdup(p, resplen);
     if (!s->tlsext_ocsp_resp) {
         al = SSL_AD_INTERNAL_ERROR;
@@ -2786,8 +2779,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 
             /* Free allocated memory */
             BN_CTX_free(bn_ctx);
-            if (encodedPoint != NULL)
-                OPENSSL_free(encodedPoint);
+            OPENSSL_free(encodedPoint);
             EC_KEY_free(clnt_ecdh);
             EVP_PKEY_free(srvr_pub_pkey);
         }
@@ -2919,8 +2911,7 @@ int ssl3_send_client_key_exchange(SSL *s)
                        ERR_R_INTERNAL_ERROR);
                 goto err;
             }
-            if (s->session->srp_username != NULL)
-                OPENSSL_free(s->session->srp_username);
+            OPENSSL_free(s->session->srp_username);
             s->session->srp_username = BUF_strdup(s->srp_ctx.login);
             if (s->session->srp_username == NULL) {
                 SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
@@ -2985,8 +2976,7 @@ int ssl3_send_client_key_exchange(SSL *s)
             t += psk_len;
             s2n(psk_len, t);
 
-            if (s->session->psk_identity_hint != NULL)
-                OPENSSL_free(s->session->psk_identity_hint);
+            OPENSSL_free(s->session->psk_identity_hint);
             s->session->psk_identity_hint =
                 BUF_strdup(s->ctx->psk_identity_hint);
             if (s->ctx->psk_identity_hint != NULL
@@ -2996,8 +2986,7 @@ int ssl3_send_client_key_exchange(SSL *s)
                 goto psk_err;
             }
 
-            if (s->session->psk_identity != NULL)
-                OPENSSL_free(s->session->psk_identity);
+            OPENSSL_free(s->session->psk_identity);
             s->session->psk_identity = BUF_strdup(identity);
             if (s->session->psk_identity == NULL) {
                 SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
@@ -3090,8 +3079,7 @@ int ssl3_send_client_key_exchange(SSL *s)
     s->cert->pms = NULL;
 #ifndef OPENSSL_NO_EC
     BN_CTX_free(bn_ctx);
-    if (encodedPoint != NULL)
-        OPENSSL_free(encodedPoint);
+    OPENSSL_free(encodedPoint);
     EC_KEY_free(clnt_ecdh);
     EVP_PKEY_free(srvr_pub_pkey);
 #endif

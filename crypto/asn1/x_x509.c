@@ -103,8 +103,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         break;
 
     case ASN1_OP_D2I_POST:
-        if (ret->name != NULL)
-            OPENSSL_free(ret->name);
+        OPENSSL_free(ret->name);
         ret->name = X509_NAME_oneline(ret->cert_info->subject, NULL, 0);
         break;
 
@@ -119,9 +118,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         NAME_CONSTRAINTS_free(ret->nc);
         sk_IPAddressFamily_pop_free(ret->rfc3779_addr, IPAddressFamily_free);
         ASIdentifiers_free(ret->rfc3779_asid);
-
-        if (ret->name != NULL)
-            OPENSSL_free(ret->name);
+        OPENSSL_free(ret->name);
         break;
 
     }

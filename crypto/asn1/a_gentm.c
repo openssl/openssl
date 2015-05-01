@@ -243,8 +243,7 @@ ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_adj(ASN1_GENERALIZEDTIME *s,
             ASN1err(ASN1_F_ASN1_GENERALIZEDTIME_ADJ, ERR_R_MALLOC_FAILURE);
             return (NULL);
         }
-        if (s->data != NULL)
-            OPENSSL_free(s->data);
+        OPENSSL_free(s->data);
         s->data = (unsigned char *)p;
     }
 

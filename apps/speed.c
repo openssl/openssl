@@ -2529,8 +2529,6 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher)
         fprintf(stdout, "\n");
     }
 
-    if (inp)
-        OPENSSL_free(inp);
-    if (out)
-        OPENSSL_free(out);
+    OPENSSL_free(inp);
+    OPENSSL_free(out);
 }

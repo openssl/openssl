@@ -169,8 +169,7 @@ static int dsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
         return 1;
 
  err:
-    if (penc)
-        OPENSSL_free(penc);
+    OPENSSL_free(penc);
     ASN1_STRING_free(str);
 
     return 0;
@@ -329,8 +328,7 @@ static int dsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
     return 1;
 
  err:
-    if (dp != NULL)
-        OPENSSL_free(dp);
+    OPENSSL_free(dp);
     ASN1_STRING_free(params);
     ASN1_STRING_clear_free(prkey);
     return 0;
@@ -471,8 +469,7 @@ static int do_dsa_print(BIO *bp, const DSA *x, int off, int ptype)
         goto err;
     ret = 1;
  err:
-    if (m != NULL)
-        OPENSSL_free(m);
+    OPENSSL_free(m);
     return (ret);
 }
 
@@ -562,8 +559,7 @@ static int dsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
             goto err;
         rv = 1;
  err:
-        if (m)
-            OPENSSL_free(m);
+        OPENSSL_free(m);
         DSA_SIG_free(dsa_sig);
         return rv;
     }

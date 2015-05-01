@@ -149,19 +149,13 @@ static void x509_verify_param_zero(X509_VERIFY_PARAM *param)
     paramid = param->id;
     string_stack_free(paramid->hosts);
     paramid->hosts = NULL;
-    if (paramid->peername)
-        OPENSSL_free(paramid->peername);
-    if (paramid->email) {
-        OPENSSL_free(paramid->email);
-        paramid->email = NULL;
-        paramid->emaillen = 0;
-    }
-    if (paramid->ip) {
-        OPENSSL_free(paramid->ip);
-        paramid->ip = NULL;
-        paramid->iplen = 0;
-    }
-
+    OPENSSL_free(paramid->peername);
+    OPENSSL_free(paramid->email);
+    paramid->email = NULL;
+    paramid->emaillen = 0;
+    OPENSSL_free(paramid->ip);
+    paramid->ip = NULL;
+    paramid->iplen = 0;
 }
 
 X509_VERIFY_PARAM *X509_VERIFY_PARAM_new(void)
@@ -346,8 +340,7 @@ static int int_x509_param_set1(char **pdest, size_t *pdestlen,
         tmp = NULL;
         srclen = 0;
     }
-    if (*pdest)
-        OPENSSL_free(*pdest);
+    OPENSSL_free(*pdest);
     *pdest = tmp;
     if (pdestlen)
         *pdestlen = srclen;
@@ -356,8 +349,7 @@ static int int_x509_param_set1(char **pdest, size_t *pdestlen,
 
 int X509_VERIFY_PARAM_set1_name(X509_VERIFY_PARAM *param, const char *name)
 {
-    if (param->name)
-        OPENSSL_free(param->name);
+    OPENSSL_free(param->name);
     param->name = BUF_strdup(name);
     if (param->name)
         return 1;

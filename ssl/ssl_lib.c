@@ -570,22 +570,17 @@ void SSL_free(SSL *s)
     /* Free up if allocated */
 
 #ifndef OPENSSL_NO_TLSEXT
-    if (s->tlsext_hostname)
-        OPENSSL_free(s->tlsext_hostname);
+    OPENSSL_free(s->tlsext_hostname);
     SSL_CTX_free(s->initial_ctx);
 # ifndef OPENSSL_NO_EC
-    if (s->tlsext_ecpointformatlist)
-        OPENSSL_free(s->tlsext_ecpointformatlist);
-    if (s->tlsext_ellipticcurvelist)
-        OPENSSL_free(s->tlsext_ellipticcurvelist);
+    OPENSSL_free(s->tlsext_ecpointformatlist);
+    OPENSSL_free(s->tlsext_ellipticcurvelist);
 # endif                         /* OPENSSL_NO_EC */
     sk_X509_EXTENSION_pop_free(s->tlsext_ocsp_exts, X509_EXTENSION_free);
     if (s->tlsext_ocsp_ids)
         sk_OCSP_RESPID_pop_free(s->tlsext_ocsp_ids, OCSP_RESPID_free);
-    if (s->tlsext_ocsp_resp)
-        OPENSSL_free(s->tlsext_ocsp_resp);
-    if (s->alpn_client_proto_list)
-        OPENSSL_free(s->alpn_client_proto_list);
+    OPENSSL_free(s->tlsext_ocsp_resp);
+    OPENSSL_free(s->alpn_client_proto_list);
 #endif
 
     sk_X509_NAME_pop_free(s->client_CA, X509_NAME_free);
@@ -603,8 +598,7 @@ void SSL_free(SSL *s)
 #endif                          /* OPENSSL_NO_KRB5 */
 
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
-    if (s->next_proto_negotiated)
-        OPENSSL_free(s->next_proto_negotiated);
+    OPENSSL_free(s->next_proto_negotiated);
 #endif
 
 #ifndef OPENSSL_NO_SRTP

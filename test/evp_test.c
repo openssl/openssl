@@ -249,10 +249,8 @@ static void hex_print(const char *name, const unsigned char *buf, size_t len)
 
 static void free_expected(struct evp_test *t)
 {
-    if (t->expected_err) {
-        OPENSSL_free(t->expected_err);
-        t->expected_err = NULL;
-    }
+    OPENSSL_free(t->expected_err);
+    t->expected_err = NULL;
     if (t->out_expected) {
         OPENSSL_free(t->out_expected);
         OPENSSL_free(t->out_got);
@@ -320,10 +318,8 @@ static int setup_test(struct evp_test *t, const struct evp_test_method *tmeth)
         t->meth->cleanup(t);
         OPENSSL_free(t->data);
         t->data = NULL;
-        if (t->expected_err) {
-            OPENSSL_free(t->expected_err);
-            t->expected_err = NULL;
-        }
+        OPENSSL_free(t->expected_err);
+        t->expected_err = NULL;
         free_expected(t);
     }
     t->meth = tmeth;
@@ -534,8 +530,7 @@ int main(int argc, char **argv)
 
 static void test_free(void *d)
 {
-    if (d)
-        OPENSSL_free(d);
+    OPENSSL_free(d);
 }
 
 /* Message digest tests */
@@ -861,8 +856,7 @@ static int cipher_test_enc(struct evp_test *t, int enc)
     }
     err = NULL;
  err:
-    if (tmp)
-        OPENSSL_free(tmp);
+    OPENSSL_free(tmp);
     EVP_CIPHER_CTX_free(ctx);
     t->err = err;
     return err ? 0 : 1;
@@ -1049,8 +1043,7 @@ static int mac_test_run(struct evp_test *t)
  err:
     if (mctx)
         EVP_MD_CTX_destroy(mctx);
-    if (mac)
-        OPENSSL_free(mac);
+    OPENSSL_free(mac);
     EVP_PKEY_CTX_free(genctx);
     EVP_PKEY_free(key);
     t->err = err;
@@ -1133,10 +1126,9 @@ static int pkey_test_init(struct evp_test *t, const char *name,
 static void pkey_test_cleanup(struct evp_test *t)
 {
     struct pkey_data *kdata = t->data;
-    if (kdata->input)
-        OPENSSL_free(kdata->input);
-    if (kdata->output)
-        OPENSSL_free(kdata->output);
+
+    OPENSSL_free(kdata->input);
+    OPENSSL_free(kdata->output);
     EVP_PKEY_CTX_free(kdata->ctx);
 }
 
@@ -1185,8 +1177,7 @@ static int pkey_test_run(struct evp_test *t)
         goto err;
     err = NULL;
  err:
-    if (out)
-        OPENSSL_free(out);
+    OPENSSL_free(out);
     t->err = err;
     return 1;
 }

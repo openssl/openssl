@@ -280,10 +280,8 @@ static ASN1_TYPE *generate_v3(char *str, X509V3_CTX *cnf, int depth,
     ret = d2i_ASN1_TYPE(NULL, &cp, len);
 
  err:
-    if (orig_der)
-        OPENSSL_free(orig_der);
-    if (new_der)
-        OPENSSL_free(new_der);
+    OPENSSL_free(orig_der);
+    OPENSSL_free(new_der);
 
     return ret;
 
@@ -510,8 +508,7 @@ static ASN1_TYPE *asn1_multi(int utype, const char *section, X509V3_CTX *cnf,
 
  bad:
 
-    if (der)
-        OPENSSL_free(der);
+    OPENSSL_free(der);
 
     sk_ASN1_TYPE_pop_free(sk, ASN1_TYPE_free);
     if (sect)

@@ -209,9 +209,7 @@ int tls1_new(SSL *s)
 void tls1_free(SSL *s)
 {
 #ifndef OPENSSL_NO_TLSEXT
-    if (s->tlsext_session_ticket) {
-        OPENSSL_free(s->tlsext_session_ticket);
-    }
+    OPENSSL_free(s->tlsext_session_ticket);
 #endif                          /* OPENSSL_NO_TLSEXT */
     ssl3_free(s);
 }
@@ -576,8 +574,7 @@ int tls1_set_curves(unsigned char **pext, size_t *pextlen,
         dup_list |= idmask;
         s2n(id, p);
     }
-    if (*pext)
-        OPENSSL_free(*pext);
+    OPENSSL_free(*pext);
     *pext = clist;
     *pextlen = ncurves * 2;
     return 1;
@@ -1779,8 +1776,7 @@ static int tls1_alpn_handle_client_hello(SSL *s, const unsigned char *data,
     r = s->ctx->alpn_select_cb(s, &selected, &selected_len, data, data_len,
                                s->ctx->alpn_select_cb_arg);
     if (r == SSL_TLSEXT_ERR_OK) {
-        if (s->s3->alpn_selected)
-            OPENSSL_free(s->s3->alpn_selected);
+        OPENSSL_free(s->s3->alpn_selected);
         s->s3->alpn_selected = OPENSSL_malloc(selected_len);
         if (!s->s3->alpn_selected) {
             *al = SSL_AD_INTERNAL_ERROR;
@@ -1894,10 +1890,8 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p,
     s->s3->next_proto_neg_seen = 0;
 # endif
 
-    if (s->s3->alpn_selected) {
-        OPENSSL_free(s->s3->alpn_selected);
-        s->s3->alpn_selected = NULL;
-    }
+    OPENSSL_free(s->s3->alpn_selected);
+    s->s3->alpn_selected = NULL;
 # ifndef OPENSSL_NO_HEARTBEATS
     s->tlsext_heartbeat &= ~(SSL_TLSEXT_HB_ENABLED |
                              SSL_TLSEXT_HB_DONT_SEND_REQUESTS);
@@ -1909,19 +1903,15 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p,
 # endif                         /* !OPENSSL_NO_EC */
 
     /* Clear any signature algorithms extension received */
-    if (s->cert->peer_sigalgs) {
-        OPENSSL_free(s->cert->peer_sigalgs);
-        s->cert->peer_sigalgs = NULL;
-    }
+    OPENSSL_free(s->cert->peer_sigalgs);
+    s->cert->peer_sigalgs = NULL;
 # ifdef TLSEXT_TYPE_encrypt_then_mac
     s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC;
 # endif
 
 # ifndef OPENSSL_NO_SRP
-    if (s->srp_ctx.login != NULL) {
-        OPENSSL_free(s->srp_ctx.login);
-        s->srp_ctx.login = NULL;
-    }
+    OPENSSL_free(s->srp_ctx.login);
+    s->srp_ctx.login = NULL;
 # endif
 
     s->srtp_profile = NULL;
@@ -2078,10 +2068,8 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p,
                 return 0;
             }
             if (!s->hit) {
-                if (s->session->tlsext_ecpointformatlist) {
-                    OPENSSL_free(s->session->tlsext_ecpointformatlist);
-                    s->session->tlsext_ecpointformatlist = NULL;
-                }
+                OPENSSL_free(s->session->tlsext_ecpointformatlist);
+                s->session->tlsext_ecpointformatlist = NULL;
                 s->session->tlsext_ecpointformatlist_length = 0;
                 if ((s->session->tlsext_ecpointformatlist =
                      OPENSSL_malloc(ecpointformatlist_length)) == NULL) {
@@ -2387,10 +2375,8 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p,
 # endif
     s->tlsext_ticket_expected = 0;
 
-    if (s->s3->alpn_selected) {
-        OPENSSL_free(s->s3->alpn_selected);
-        s->s3->alpn_selected = NULL;
-    }
+    OPENSSL_free(s->s3->alpn_selected);
+    s->s3->alpn_selected = NULL;
 # ifndef OPENSSL_NO_HEARTBEATS
     s->tlsext_heartbeat &= ~(SSL_TLSEXT_HB_ENABLED |
                              SSL_TLSEXT_HB_DONT_SEND_REQUESTS);
@@ -2442,8 +2428,7 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p,
             }
             if (!s->hit) {
                 s->session->tlsext_ecpointformatlist_length = 0;
-                if (s->session->tlsext_ecpointformatlist != NULL)
-                    OPENSSL_free(s->session->tlsext_ecpointformatlist);
+                OPENSSL_free(s->session->tlsext_ecpointformatlist);
                 if ((s->session->tlsext_ecpointformatlist =
                      OPENSSL_malloc(ecpointformatlist_length)) == NULL) {
                     *al = TLS1_AD_INTERNAL_ERROR;
@@ -2548,8 +2533,7 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p,
                 *al = TLS1_AD_DECODE_ERROR;
                 return 0;
             }
-            if (s->s3->alpn_selected)
-                OPENSSL_free(s->s3->alpn_selected);
+            OPENSSL_free(s->s3->alpn_selected);
             s->s3->alpn_selected = OPENSSL_malloc(len);
             if (!s->s3->alpn_selected) {
                 *al = TLS1_AD_INTERNAL_ERROR;
@@ -2704,11 +2688,9 @@ int tls1_set_server_sigalgs(SSL *s)
     int al;
     size_t i;
     /* Clear any shared sigtnature algorithms */
-    if (s->cert->shared_sigalgs) {
-        OPENSSL_free(s->cert->shared_sigalgs);
-        s->cert->shared_sigalgs = NULL;
-        s->cert->shared_sigalgslen = 0;
-    }
+    OPENSSL_free(s->cert->shared_sigalgs);
+    s->cert->shared_sigalgs = NULL;
+    s->cert->shared_sigalgslen = 0;
     /* Clear certificate digests and validity flags */
     for (i = 0; i < SSL_PKEY_NUM; i++) {
         s->cert->pkeys[i].digest = NULL;
@@ -2860,10 +2842,8 @@ int ssl_check_serverhello_tlsext(SSL *s)
          * Set resp to NULL, resplen to -1 so callback knows there is no
          * response.
          */
-        if (s->tlsext_ocsp_resp) {
-            OPENSSL_free(s->tlsext_ocsp_resp);
-            s->tlsext_ocsp_resp = NULL;
-        }
+        OPENSSL_free(s->tlsext_ocsp_resp);
+        s->tlsext_ocsp_resp = NULL;
         s->tlsext_ocsp_resplen = -1;
         r = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
         if (r == 0) {
@@ -3408,11 +3388,10 @@ static int tls1_set_shared_sigalgs(SSL *s)
     TLS_SIGALGS *salgs = NULL;
     CERT *c = s->cert;
     unsigned int is_suiteb = tls1_suiteb(s);
-    if (c->shared_sigalgs) {
-        OPENSSL_free(c->shared_sigalgs);
-        c->shared_sigalgs = NULL;
-        c->shared_sigalgslen = 0;
-    }
+
+    OPENSSL_free(c->shared_sigalgs);
+    c->shared_sigalgs = NULL;
+    c->shared_sigalgslen = 0;
     /* If client use client signature algorithms if not NULL */
     if (!s->server && c->client_sigalgs && !is_suiteb) {
         conf = c->client_sigalgs;
@@ -3459,8 +3438,7 @@ int tls1_save_sigalgs(SSL *s, const unsigned char *data, int dsize)
     if (!c)
         return 0;
 
-    if (c->peer_sigalgs)
-        OPENSSL_free(c->peer_sigalgs);
+    OPENSSL_free(c->peer_sigalgs);
     c->peer_sigalgs = OPENSSL_malloc(dsize);
     if (!c->peer_sigalgs)
         return 0;
@@ -3840,13 +3818,11 @@ int tls1_set_sigalgs(CERT *c, const int *psig_nids, size_t salglen,
     }
 
     if (client) {
-        if (c->client_sigalgs)
-            OPENSSL_free(c->client_sigalgs);
+        OPENSSL_free(c->client_sigalgs);
         c->client_sigalgs = sigalgs;
         c->client_sigalgslen = salglen;
     } else {
-        if (c->conf_sigalgs)
-            OPENSSL_free(c->conf_sigalgs);
+        OPENSSL_free(c->conf_sigalgs);
         c->conf_sigalgs = sigalgs;
         c->conf_sigalgslen = salglen;
     }

@@ -176,8 +176,7 @@ static int by_dir_hash_cmp(const BY_DIR_HASH *const *a,
 
 static void by_dir_entry_free(BY_DIR_ENTRY *ent)
 {
-    if (ent->dir)
-        OPENSSL_free(ent->dir);
+    OPENSSL_free(ent->dir);
     if (ent->hashes)
         sk_BY_DIR_HASH_pop_free(ent->hashes, by_dir_hash_free);
     OPENSSL_free(ent);

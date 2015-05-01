@@ -130,8 +130,7 @@ static int ssl_free(BIO *a)
         a->init = 0;
         a->flags = 0;
     }
-    if (a->ptr != NULL)
-        OPENSSL_free(a->ptr);
+    OPENSSL_free(a->ptr);
     return (1);
 }
 

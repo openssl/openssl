@@ -2019,8 +2019,7 @@ int ssl3_send_server_key_exchange(SSL *s)
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
 #ifndef OPENSSL_NO_EC
-    if (encodedPoint != NULL)
-        OPENSSL_free(encodedPoint);
+    OPENSSL_free(encodedPoint);
     BN_CTX_free(bn_ctx);
 #endif
     EVP_MD_CTX_cleanup(&md_ctx);
@@ -2763,16 +2762,14 @@ int ssl3_get_client_key_exchange(SSL *s)
         t += psk_len;
         s2n(psk_len, t);
 
-        if (s->session->psk_identity != NULL)
-            OPENSSL_free(s->session->psk_identity);
+        OPENSSL_free(s->session->psk_identity);
         s->session->psk_identity = BUF_strdup((char *)p);
         if (s->session->psk_identity == NULL) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
             goto psk_err;
         }
 
-        if (s->session->psk_identity_hint != NULL)
-            OPENSSL_free(s->session->psk_identity_hint);
+        OPENSSL_free(s->session->psk_identity_hint);
         s->session->psk_identity_hint = BUF_strdup(s->ctx->psk_identity_hint);
         if (s->ctx->psk_identity_hint != NULL &&
             s->session->psk_identity_hint == NULL) {
@@ -2821,8 +2818,7 @@ int ssl3_get_client_key_exchange(SSL *s)
                    SSL_R_BAD_SRP_PARAMETERS);
             goto f_err;
         }
-        if (s->session->srp_username != NULL)
-            OPENSSL_free(s->session->srp_username);
+        OPENSSL_free(s->session->srp_username);
         s->session->srp_username = BUF_strdup(s->srp_ctx.login);
         if (s->session->srp_username == NULL) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
@@ -3473,8 +3469,7 @@ int ssl3_send_newsession_ticket(SSL *s)
     /* SSL3_ST_SW_SESSION_TICKET_B */
     return ssl_do_write(s);
  err:
-    if (senc)
-        OPENSSL_free(senc);
+    OPENSSL_free(senc);
     EVP_CIPHER_CTX_cleanup(&ctx);
     HMAC_CTX_cleanup(&hctx);
     return -1;

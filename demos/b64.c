@@ -239,10 +239,8 @@ char **argv;
         BIO_printf(bio_err, "bytes written:%8ld\n", BIO_number_written(out));
     }
  end:
-    if (strbuf != NULL)
-        OPENSSL_free(strbuf);
-    if (buff != NULL)
-        OPENSSL_free(buff);
+    OPENSSL_free(strbuf);
+    OPENSSL_free(buff);
     BIO_free(in);
     BIO_free(out);
     BIO_free(benc);

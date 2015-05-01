@@ -509,18 +509,15 @@ int main(int argc, char *argv[])
     }
     ret = 1;
  end:
-    if (copied_argv)
-        OPENSSL_free(copied_argv);
-    if (to_free)
-        OPENSSL_free(to_free);
+    OPENSSL_free(copied_argv);
+    OPENSSL_free(to_free);
     if (config != NULL) {
         NCONF_free(config);
         config = NULL;
     }
     if (prog != NULL)
         lh_FUNCTION_free(prog);
-    if (arg.argv != NULL)
-        OPENSSL_free(arg.argv);
+    OPENSSL_free(arg.argv);
 
     BIO_free(bio_in);
     BIO_free_all(bio_out);

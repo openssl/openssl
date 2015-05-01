@@ -275,10 +275,8 @@ int dsa_main(int argc, char **argv)
  end:
     BIO_free_all(out);
     DSA_free(dsa);
-    if (passin)
-        OPENSSL_free(passin);
-    if (passout)
-        OPENSSL_free(passout);
+    OPENSSL_free(passin);
+    OPENSSL_free(passout);
     return (ret);
 }
 #else                           /* !OPENSSL_NO_DSA */

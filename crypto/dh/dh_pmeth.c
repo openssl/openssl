@@ -153,8 +153,7 @@ static void pkey_dh_cleanup(EVP_PKEY_CTX *ctx)
 {
     DH_PKEY_CTX *dctx = ctx->data;
     if (dctx) {
-        if (dctx->kdf_ukm)
-            OPENSSL_free(dctx->kdf_ukm);
+        OPENSSL_free(dctx->kdf_ukm);
         ASN1_OBJECT_free(dctx->kdf_oid);
         OPENSSL_free(dctx);
     }
@@ -230,8 +229,7 @@ static int pkey_dh_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         return 1;
 
     case EVP_PKEY_CTRL_DH_KDF_UKM:
-        if (dctx->kdf_ukm)
-            OPENSSL_free(dctx->kdf_ukm);
+        OPENSSL_free(dctx->kdf_ukm);
         dctx->kdf_ukm = p2;
         if (p2)
             dctx->kdf_ukmlen = p1;

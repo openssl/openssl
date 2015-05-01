@@ -2165,9 +2165,7 @@ void jpake_client_auth(BIO *out, BIO *conn, const char *secret)
 
     BIO_puts(out, "JPAKE authentication succeeded, setting PSK\n");
 
-    if (psk_key)
-        OPENSSL_free(psk_key);
-
+    OPENSSL_free(psk_key);
     psk_key = BN_bn2hex(JPAKE_get_shared_key(ctx));
 
     BIO_pop(bconn);
@@ -2197,9 +2195,7 @@ void jpake_server_auth(BIO *out, BIO *conn, const char *secret)
 
     BIO_puts(out, "JPAKE authentication succeeded, setting PSK\n");
 
-    if (psk_key)
-        OPENSSL_free(psk_key);
-
+    OPENSSL_free(psk_key);
     psk_key = BN_bn2hex(JPAKE_get_shared_key(ctx));
 
     BIO_pop(bconn);

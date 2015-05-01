@@ -315,12 +315,9 @@ int rsautl_main(int argc, char **argv)
     RSA_free(rsa);
     BIO_free(in);
     BIO_free_all(out);
-    if (rsa_in)
-        OPENSSL_free(rsa_in);
-    if (rsa_out)
-        OPENSSL_free(rsa_out);
-    if (passin)
-        OPENSSL_free(passin);
+    OPENSSL_free(rsa_in);
+    OPENSSL_free(rsa_out);
+    OPENSSL_free(passin);
     return ret;
 }
 

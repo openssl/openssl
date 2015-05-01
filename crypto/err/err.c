@@ -478,8 +478,7 @@ static void build_SYS_str_reasons(void)
 
 #define err_clear_data(p,i) \
         do { \
-        if (((p)->err_data[i] != NULL) && \
-                (p)->err_data_flags[i] & ERR_TXT_MALLOCED) \
+        if ((p)->err_data_flags[i] & ERR_TXT_MALLOCED) \
                 {  \
                 OPENSSL_free((p)->err_data[i]); \
                 (p)->err_data[i]=NULL; \

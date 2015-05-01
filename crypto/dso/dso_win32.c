@@ -183,10 +183,8 @@ static int win32_load(DSO *dso)
     return (1);
  err:
     /* Cleanup ! */
-    if (filename != NULL)
-        OPENSSL_free(filename);
-    if (p != NULL)
-        OPENSSL_free(p);
+    OPENSSL_free(filename);
+    OPENSSL_free(p);
     if (h != NULL)
         FreeLibrary(h);
     return (0);

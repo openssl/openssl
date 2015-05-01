@@ -136,8 +136,7 @@ static int pkey_rsa_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
     dctx->md = sctx->md;
     dctx->mgf1md = sctx->mgf1md;
     if (sctx->oaep_label) {
-        if (dctx->oaep_label)
-            OPENSSL_free(dctx->oaep_label);
+        OPENSSL_free(dctx->oaep_label);
         dctx->oaep_label = BUF_memdup(sctx->oaep_label, sctx->oaep_labellen);
         if (!dctx->oaep_label)
             return 0;
@@ -161,10 +160,8 @@ static void pkey_rsa_cleanup(EVP_PKEY_CTX *ctx)
     RSA_PKEY_CTX *rctx = ctx->data;
     if (rctx) {
         BN_free(rctx->pub_exp);
-        if (rctx->tbuf)
-            OPENSSL_free(rctx->tbuf);
-        if (rctx->oaep_label)
-            OPENSSL_free(rctx->oaep_label);
+        OPENSSL_free(rctx->tbuf);
+        OPENSSL_free(rctx->oaep_label);
         OPENSSL_free(rctx);
     }
 }
@@ -514,8 +511,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_PADDING_MODE);
             return -2;
         }
-        if (rctx->oaep_label)
-            OPENSSL_free(rctx->oaep_label);
+        OPENSSL_free(rctx->oaep_label);
         if (p2 && p1 > 0) {
             rctx->oaep_label = p2;
             rctx->oaep_labellen = p1;

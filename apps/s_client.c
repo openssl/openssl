@@ -1985,24 +1985,18 @@ int s_client_main(int argc, char **argv)
         SSL_free(con);
     }
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
-    if (next_proto.data)
-        OPENSSL_free(next_proto.data);
+    OPENSSL_free(next_proto.data);
 #endif
     SSL_CTX_free(ctx);
     X509_free(cert);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
     EVP_PKEY_free(key);
     sk_X509_pop_free(chain, X509_free);
-    if (pass)
-        OPENSSL_free(pass);
+    OPENSSL_free(pass);
     X509_VERIFY_PARAM_free(vpm);
     ssl_excert_free(exc);
     sk_OPENSSL_STRING_free(ssl_args);
     SSL_CONF_CTX_free(cctx);
-#ifndef OPENSSL_NO_JPAKE
-    if (jpake_secret && psk_key)
-        OPENSSL_free(psk_key);
-#endif
     OPENSSL_clear_free(cbuf, BUFSIZZ);
     OPENSSL_clear_free(sbuf, BUFSIZZ);
     OPENSSL_clear_free(mbuf, BUFSIZZ);

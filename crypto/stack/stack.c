@@ -167,8 +167,7 @@ _STACK *sk_new(int (*c) (const void *, const void *))
     ret->sorted = 0;
     return (ret);
  err:
-    if (ret)
-        OPENSSL_free(ret);
+    OPENSSL_free(ret);
     return (NULL);
 }
 
@@ -318,8 +317,7 @@ void sk_free(_STACK *st)
 {
     if (st == NULL)
         return;
-    if (st->data != NULL)
-        OPENSSL_free(st->data);
+    OPENSSL_free(st->data);
     OPENSSL_free(st);
 }
 

@@ -955,8 +955,7 @@ int x509_main(int argc, char **argv)
     ASN1_INTEGER_free(sno);
     sk_ASN1_OBJECT_pop_free(trust, ASN1_OBJECT_free);
     sk_ASN1_OBJECT_pop_free(reject, ASN1_OBJECT_free);
-    if (passin)
-        OPENSSL_free(passin);
+    OPENSSL_free(passin);
     return (ret);
 }
 
@@ -996,8 +995,7 @@ static ASN1_INTEGER *x509_load_serial(char *CAfile, char *serialfile,
         goto end;
 
  end:
-    if (buf)
-        OPENSSL_free(buf);
+    OPENSSL_free(buf);
     BN_free(serial);
     return bs;
 }

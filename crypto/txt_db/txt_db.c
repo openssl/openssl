@@ -184,12 +184,9 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
         if (ret != NULL) {
             if (ret->data != NULL)
                 sk_OPENSSL_PSTRING_free(ret->data);
-            if (ret->index != NULL)
-                OPENSSL_free(ret->index);
-            if (ret->qual != NULL)
-                OPENSSL_free(ret->qual);
-            if (ret != NULL)
-                OPENSSL_free(ret);
+            OPENSSL_free(ret->index);
+            OPENSSL_free(ret->qual);
+            OPENSSL_free(ret);
         }
         return (NULL);
     } else
@@ -350,8 +347,7 @@ void TXT_DB_free(TXT_DB *db)
                 lh_OPENSSL_STRING_free(db->index[i]);
         OPENSSL_free(db->index);
     }
-    if (db->qual != NULL)
-        OPENSSL_free(db->qual);
+    OPENSSL_free(db->qual);
     if (db->data != NULL) {
         for (i = sk_OPENSSL_PSTRING_num(db->data) - 1; i >= 0; i--) {
             /*
@@ -362,12 +358,10 @@ void TXT_DB_free(TXT_DB *db)
             max = p[db->num_fields]; /* last address */
             if (max == NULL) {  /* new row */
                 for (n = 0; n < db->num_fields; n++)
-                    if (p[n] != NULL)
-                        OPENSSL_free(p[n]);
+                    OPENSSL_free(p[n]);
             } else {
                 for (n = 0; n < db->num_fields; n++) {
-                    if (((p[n] < (char *)p) || (p[n] > max))
-                        && (p[n] != NULL))
+                    if (((p[n] < (char *)p) || (p[n] > max)))
                         OPENSSL_free(p[n]);
                 }
             }

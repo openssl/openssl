@@ -504,12 +504,9 @@ int test_builtin(BIO *out)
     EC_KEY_free(wrong_eckey);
     if (ecdsa_sig)
         ECDSA_SIG_free(ecdsa_sig);
-    if (signature)
-        OPENSSL_free(signature);
-    if (raw_buf)
-        OPENSSL_free(raw_buf);
-    if (curves)
-        OPENSSL_free(curves);
+    OPENSSL_free(signature);
+    OPENSSL_free(raw_buf);
+    OPENSSL_free(curves);
 
     return ret;
 }

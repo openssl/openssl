@@ -139,8 +139,7 @@ void SSL3_RECORD_clear(SSL3_RECORD *r)
 
 void SSL3_RECORD_release(SSL3_RECORD *r)
 {
-    if (r->comp != NULL)
-        OPENSSL_free(r->comp);
+    OPENSSL_free(r->comp);
     r->comp = NULL;
 }
 

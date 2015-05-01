@@ -258,8 +258,7 @@ ASN1_INTEGER *c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp,
         memcpy(s, p, (int)len);
     }
 
-    if (ret->data != NULL)
-        OPENSSL_free(ret->data);
+    OPENSSL_free(ret->data);
     ret->data = s;
     ret->length = (int)len;
     if (a != NULL)
@@ -327,8 +326,7 @@ ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp,
         p += len;
     }
 
-    if (ret->data != NULL)
-        OPENSSL_free(ret->data);
+    OPENSSL_free(ret->data);
     ret->data = s;
     ret->length = (int)len;
     if (a != NULL)
@@ -349,8 +347,7 @@ int ASN1_INTEGER_set(ASN1_INTEGER *a, long v)
     unsigned char buf[sizeof(long) + 1];
 
     if (a->length < (int)(sizeof(long) + 1)) {
-        if (a->data != NULL)
-            OPENSSL_free(a->data);
+        OPENSSL_free(a->data);
         if ((a->data = OPENSSL_malloc(sizeof(long) + 1)) != NULL)
             memset((char *)a->data, 0, sizeof(long) + 1);
     }

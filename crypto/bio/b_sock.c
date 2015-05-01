@@ -572,8 +572,7 @@ int BIO_get_accept_socket(char *host, int bind_mode)
     }
     ret = 1;
  err:
-    if (str != NULL)
-        OPENSSL_free(str);
+    OPENSSL_free(str);
     if ((ret == 0) && (s != INVALID_SOCKET)) {
         closesocket(s);
         s = INVALID_SOCKET;

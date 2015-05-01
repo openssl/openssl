@@ -166,8 +166,7 @@ static void x509_name_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 
     BUF_MEM_free(a->bytes);
     sk_X509_NAME_ENTRY_pop_free(a->entries, X509_NAME_ENTRY_free);
-    if (a->canon_enc)
-        OPENSSL_free(a->canon_enc);
+    OPENSSL_free(a->canon_enc);
     OPENSSL_free(a);
     *pval = NULL;
 }
@@ -343,10 +342,8 @@ static int x509_name_canon(X509_NAME *a)
     X509_NAME_ENTRY *entry, *tmpentry = NULL;
     int i, set = -1, ret = 0;
 
-    if (a->canon_enc) {
-        OPENSSL_free(a->canon_enc);
-        a->canon_enc = NULL;
-    }
+    OPENSSL_free(a->canon_enc);
+    a->canon_enc = NULL;
     /* Special case: empty X509_NAME => null encoding */
     if (sk_X509_NAME_ENTRY_num(a->entries) == 0) {
         a->canon_enclen = 0;
