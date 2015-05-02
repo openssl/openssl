@@ -204,8 +204,8 @@ int req_main(int argc, char **argv)
     char *template = default_config_file, *keyout = NULL;
     const char *keyalg = NULL;
     OPTION_CHOICE o;
-    int ret = 1, x509 = 0, days = 30, i = 0, newreq = 0, verbose =
-        0, pkey_type = -1;
+    int ret = 1, x509 = 0, days = 30, i = 0, newreq = 0, verbose = 0;
+    int pkey_type = -1, private = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, keyform = FORMAT_PEM;
     int modulus = 0, multirdn = 0, verify = 0, noout = 0, text = 0;
     int nodes = 0, kludge = 0, newhdr = 0, subject = 0, pubkey = 0;
@@ -375,6 +375,7 @@ int req_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
+    private = newreq && (pkey == NULL) ? 1 : 0;
 
     if (!app_passwd(passargin, passargout, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");
@@ -569,7 +570,7 @@ int req_main(int argc, char **argv)
             BIO_printf(bio_err, "writing new private key to stdout\n");
         else
             BIO_printf(bio_err, "writing new private key to '%s'\n", keyout);
-        out = bio_open_default(keyout, "w");
+        out = bio_open_owner(keyout, "w", private);
         if (out == NULL)
             goto end;
 
@@ -587,6 +588,7 @@ int req_main(int argc, char **argv)
 
         i = 0;
  loop:
+        assert(private);
         if (!PEM_write_bio_PrivateKey(out, pkey, cipher,
                                       NULL, 0, NULL, passout)) {
             if ((ERR_GET_REASON(ERR_peek_error()) ==

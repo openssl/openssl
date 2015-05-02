@@ -162,7 +162,7 @@ int rsa_main(int argc, char **argv)
     const EVP_CIPHER *enc = NULL;
     char *infile = NULL, *outfile = NULL, *prog;
     char *passin = NULL, *passout = NULL, *passinarg = NULL, *passoutarg = NULL;
-    int i;
+    int i, private = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, text = 0, check = 0;
     int noout = 0, modulus = 0, pubin = 0, pubout = 0, pvk_encr = 2, ret = 1;
     OPTION_CHOICE o;
@@ -250,6 +250,7 @@ int rsa_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
+    private = text || (!pubout && !noout) ? 1 : 0;
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");
@@ -291,16 +292,18 @@ int rsa_main(int argc, char **argv)
         goto end;
     }
 
-    out = bio_open_default(outfile, "w");
+    out = bio_open_owner(outfile, "w", private);
     if (out == NULL)
         goto end;
 
-    if (text)
+    if (text) {
+        assert(private);
         if (!RSA_print(out, rsa, 0)) {
             perror(outfile);
             ERR_print_errors(bio_err);
             goto end;
         }
+    }
 
     if (modulus) {
         BIO_printf(out, "Modulus=");
@@ -344,8 +347,10 @@ int rsa_main(int argc, char **argv)
                 i = i2d_RSAPublicKey_bio(out, rsa);
             else
                 i = i2d_RSA_PUBKEY_bio(out, rsa);
-        } else
+        } else {
+            assert(private);
             i = i2d_RSAPrivateKey_bio(out, rsa);
+        }
     }
 # ifndef OPENSSL_NO_RC4
     else if (outformat == FORMAT_NETSCAPE) {
@@ -353,6 +358,7 @@ int rsa_main(int argc, char **argv)
         int size = i2d_RSA_NET(rsa, NULL, NULL, 0);
 
         save = p = app_malloc(size, "RSA i2d buffer");
+        assert(private);
         i2d_RSA_NET(rsa, &p, NULL, 0);
         BIO_write(out, (char *)save, size);
         OPENSSL_free(save);
@@ -365,9 +371,11 @@ int rsa_main(int argc, char **argv)
                 i = PEM_write_bio_RSAPublicKey(out, rsa);
             else
                 i = PEM_write_bio_RSA_PUBKEY(out, rsa);
-        } else
+        } else {
+            assert(private);
             i = PEM_write_bio_RSAPrivateKey(out, rsa,
                                             enc, NULL, 0, NULL, passout);
+        }
 # if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_RC4)
     } else if (outformat == FORMAT_MSBLOB || outformat == FORMAT_PVK) {
         EVP_PKEY *pk;
@@ -377,8 +385,10 @@ int rsa_main(int argc, char **argv)
             i = i2b_PVK_bio(out, pk, pvk_encr, 0, passout);
         else if (pubin || pubout)
             i = i2b_PublicKey_bio(out, pk);
-        else
+        else {
+            assert(private);
             i = i2b_PrivateKey_bio(out, pk);
+        }
         EVP_PKEY_free(pk);
 # endif
     } else {

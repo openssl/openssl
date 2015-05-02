@@ -99,7 +99,7 @@ int gendsa_main(int argc, char **argv)
     char *inrand = NULL, *dsaparams = NULL;
     char *outfile = NULL, *passoutarg = NULL, *passout = NULL, *prog;
     OPTION_CHOICE o;
-    int ret = 1;
+    int ret = 1, private = 0;
 
     prog = opt_init(argc, argv, gendsa_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -133,6 +133,7 @@ int gendsa_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
+    private = 1;
 
     if (argc != 1)
         goto opthelp;
@@ -157,7 +158,7 @@ int gendsa_main(int argc, char **argv)
     BIO_free(in);
     in = NULL;
 
-    out = bio_open_default(outfile, "w");
+    out = bio_open_owner(outfile, "w", private);
     if (out == NULL)
         goto end2;
 
@@ -175,6 +176,7 @@ int gendsa_main(int argc, char **argv)
 
     app_RAND_write_file(NULL);
 
+    assert(private);
     if (!PEM_write_bio_DSAPrivateKey(out, dsa, enc, NULL, 0, NULL, passout))
         goto end;
     ret = 0;

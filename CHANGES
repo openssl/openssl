@@ -41,6 +41,10 @@
      code and the associated standard is no longer considered fit-for-purpose.
      [Matt Caswell]
 
+  *) RT2547 was closed.  When generating a private key, try to make the
+     output file readable only by the owner.  This behavior change might
+     be noticeable when interacting with other software.
+
   *) Added HTTP GET support to the ocsp command.
      [Rich Salz]
 

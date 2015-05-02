@@ -115,6 +115,7 @@ int pkcs8_main(int argc, char **argv)
     OPTION_CHOICE o;
     int nocrypt = 0, ret = 1, iter = PKCS12_DEFAULT_ITER, p8_broken = PKCS8_OK;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, topk8 = 0, pbe_nid = -1;
+    int private = 0;
     unsigned long scrypt_N = 0, scrypt_r = 0, scrypt_p = 0;
 
     prog = opt_init(argc, argv, pkcs8_options);
@@ -217,6 +218,7 @@ int pkcs8_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
+    private = 1;
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");
@@ -232,9 +234,10 @@ int pkcs8_main(int argc, char **argv)
     in = bio_open_default(infile, "rb");
     if (in == NULL)
         goto end;
-    out = bio_open_default(outfile, "wb");
+    out = bio_open_owner(outfile, "wb", private);
     if (out == NULL)
         goto end;
+
     if (topk8) {
         pkey = load_key(infile, informat, 1, passin, e, "key");
         if (!pkey)
@@ -245,6 +248,7 @@ int pkcs8_main(int argc, char **argv)
             goto end;
         }
         if (nocrypt) {
+            assert(private);
             if (outformat == FORMAT_PEM)
                 PEM_write_bio_PKCS8_PRIV_KEY_INFO(out, p8inf);
             else if (outformat == FORMAT_ASN1)
@@ -289,6 +293,7 @@ int pkcs8_main(int argc, char **argv)
                 goto end;
             }
             app_RAND_write_file(NULL);
+            assert(private);
             if (outformat == FORMAT_PEM)
                 PEM_write_bio_PKCS8(out, p8);
             else if (outformat == FORMAT_ASN1)
@@ -373,6 +378,7 @@ int pkcs8_main(int argc, char **argv)
         }
     }
 
+    assert(private);
     if (outformat == FORMAT_PEM)
         PEM_write_bio_PrivateKey(out, pkey, NULL, NULL, 0, NULL, passout);
     else if (outformat == FORMAT_ASN1)

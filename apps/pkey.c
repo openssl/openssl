@@ -101,6 +101,7 @@ int pkey_main(int argc, char **argv)
     OPTION_CHOICE o;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM;
     int pubin = 0, pubout = 0, pubtext = 0, text = 0, noout = 0, ret = 1;
+    int private = 0;
 
     prog = opt_init(argc, argv, pkey_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -159,6 +160,9 @@ int pkey_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
+    private = !noout && !pubout ? 1 : 0;
+    if (text && !pubtext)
+        private = 1;
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");
@@ -168,7 +172,7 @@ int pkey_main(int argc, char **argv)
     if (!app_load_modules(NULL))
         goto end;
 
-    out = bio_open_default(outfile, "wb");
+    out = bio_open_owner(outfile, "wb", private);
     if (out == NULL)
         goto end;
 
@@ -181,12 +185,14 @@ int pkey_main(int argc, char **argv)
 
     if (!noout) {
         if (outformat == FORMAT_PEM) {
+            assert(private);
             if (pubout)
                 PEM_write_bio_PUBKEY(out, pkey);
             else
                 PEM_write_bio_PrivateKey(out, pkey, cipher,
                                          NULL, 0, NULL, passout);
         } else if (outformat == FORMAT_ASN1) {
+            assert(private);
             if (pubout)
                 i2d_PUBKEY_bio(out, pkey);
             else
@@ -201,8 +207,10 @@ int pkey_main(int argc, char **argv)
     if (text) {
         if (pubtext)
             EVP_PKEY_print_public(out, pkey, 0, NULL);
-        else
+        else {
+            assert(private);
             EVP_PKEY_print_private(out, pkey, 0, NULL);
+        }
     }
 
     ret = 0;

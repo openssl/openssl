@@ -124,7 +124,6 @@
 #include <sys/types.h>
 #include <ctype.h>
 #include <errno.h>
-#include <assert.h>
 #include <openssl/err.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>

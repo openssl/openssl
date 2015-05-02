@@ -55,7 +55,6 @@
  * [including the GNU Public Licence.]
  */
 
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
