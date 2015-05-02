@@ -1035,21 +1035,26 @@ static BIO *init_responder(const char *port)
 }
 
 
-static char *urldecode(char *p)
+/*
+ * Decode %xx URL-decoding in-place. Ignores mal-formed sequences.
+ */
+static int urldecode(char *p)
 {
     unsigned char *out = (unsigned char *)p;
-    char *save = p;
+    unsigned char *save = out;
 
     for (; *p; p++) {
         if (*p != '%')
             *out++ = *p;
-        else if (p[1] && p[2]) {
+        else if (isxdigit(p[1]) && isxdigit(p[2])) {
             *out++ = (app_hex(p[1]) << 4) | app_hex(p[2]);
             p += 2;
         }
+        else
+            return -1;
     }
-    *p = '\0';
-    return save;
+    *out = '\0';
+    return (int)(out - save);
 }
 
 static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio,
@@ -1057,7 +1062,7 @@ static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio,
 {
     int len;
     OCSP_REQUEST *req = NULL;
-    char inbuf[2048];
+    char inbuf[2048], reqbuf[2048];
     char *p, *q;
     BIO *cbio = NULL, *getbio = NULL, *b64 = NULL;
 
@@ -1071,40 +1076,51 @@ static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio,
     *pcbio = cbio;
 
     /* Read the request line. */
-    len = BIO_gets(cbio, inbuf, sizeof inbuf);
+    len = BIO_gets(cbio, reqbuf, sizeof reqbuf);
     if (len <= 0)
         return 1;
-    if (strncmp(inbuf, "GET", 3) == 0) {
+    if (strncmp(reqbuf, "GET ", 4) == 0) {
         /* Expecting GET {sp} /URL {sp} HTTP/1.x */
-        for (p = inbuf + 3; *p == ' ' || *p == '\t'; ++p)
+        for (p = reqbuf + 4; *p == ' '; ++p)
             continue;
-        if (*p) {
-            /* Move past the slash before the URL part. */
-            p++;
+        if (*p != '/') {
+            BIO_printf(bio_err, "Invalid request -- bad URL\n");
+            return 1;
         }
+        p++;
+
         /* Splice off the HTTP version identifier. */
         for (q = p; *q; q++)
-            if (*q == ' ' || *q == '\t')
+            if (*q == ' ')
                 break;
-        if (*q == '\0') {
-            BIO_printf(bio_err, "Invalid request\n");
+        if (strncmp(q, " HTTP/1.", 8) != 0) {
+            BIO_printf(bio_err, "Invalid request -- bad HTTP vesion\n");
             return 1;
         }
         *q = '\0';
-        p = urldecode(p);
-        getbio = BIO_new_mem_buf(p, strlen(p));
-        b64 = BIO_new(BIO_f_base64());
+        len = urldecode(p);
+        if (len <= 0) {
+            BIO_printf(bio_err, "Invalid request -- bad URL encoding\n");
+            return 1;
+        }
+        if ((getbio = BIO_new_mem_buf(p, len)) == NULL
+            || (b64 = BIO_new(BIO_f_base64())) == NULL) {
+            BIO_printf(bio_err, "Could not allocate memory\n");
+            ERR_print_errors(bio_err);
+            return 1;
+        }
         BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
         getbio = BIO_push(b64, getbio);
-    } else if (strncmp(inbuf, "POST", 4) != 0) {
-        BIO_printf(bio_err, "Invalid request\n");
+    } else if (strncmp(reqbuf, "POST ", 5) != 0) {
+        BIO_printf(bio_err, "Invalid request -- bad HTTP verb\n");
         return 1;
     }
+
+    /* Read and skip past the headers. */
     for (;;) {
         len = BIO_gets(cbio, inbuf, sizeof inbuf);
         if (len <= 0)
             return 1;
-        /* Look for end of headers */
         if ((inbuf[0] == '\r') || (inbuf[0] == '\n'))
             break;
     }
