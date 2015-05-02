@@ -219,10 +219,9 @@
 #endif
 
 /*
- * There is really no standard for this, so let's assign some tentative
- * numbers.  In any case, these numbers are only for this test
+ * There is really no standard for this, so let's assign something
+ * only for this test
  */
-#define COMP_RLE        255
 #define COMP_ZLIB       1
 
 static int verify_callback(int ok, X509_STORE_CTX *ctx);
@@ -804,7 +803,6 @@ static void sv_usage(void)
     fprintf(stderr,
             " -time         - measure processor time used by client and server\n");
     fprintf(stderr, " -zlib         - use zlib compression\n");
-    fprintf(stderr, " -rle          - use rle compression\n");
 #ifndef OPENSSL_NO_EC
     fprintf(stderr,
             " -named_curve arg  - Elliptic curve name to use for ephemeral ECDH keys.\n"
@@ -1212,8 +1210,6 @@ int main(int argc, char *argv[])
 #ifndef OPENSSL_NO_COMP
         else if (strcmp(*argv, "-zlib") == 0) {
             comp = COMP_ZLIB;
-        } else if (strcmp(*argv, "-rle") == 0) {
-            comp = COMP_RLE;
         }
 #endif
         else if (strcmp(*argv, "-named_curve") == 0) {
@@ -1376,8 +1372,6 @@ int main(int argc, char *argv[])
 #ifndef OPENSSL_NO_COMP
     if (comp == COMP_ZLIB)
         cm = COMP_zlib();
-    if (comp == COMP_RLE)
-        cm = COMP_rle();
     if (cm != NULL) {
         if (cm->type != NID_undef) {
             if (SSL_COMP_add_compression_method(comp, cm) != 0) {
@@ -1387,8 +1381,7 @@ int main(int argc, char *argv[])
         } else {
             fprintf(stderr,
                     "Warning: %s compression not supported\n",
-                    (comp == COMP_RLE ? "rle" :
-                     (comp == COMP_ZLIB ? "zlib" : "unknown")));
+                    comp == COMP_ZLIB ? "zlib" : "unknown");
             ERR_print_errors_fp(stderr);
         }
     }
