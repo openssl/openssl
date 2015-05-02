@@ -162,7 +162,8 @@ if ($WHAT eq '-newcert' ) {
     print "Signed certificate is in $NEWCERT\n" if $RET == 0;
 } elsif ($WHAT eq '-verify' ) {
     my @files = @ARGV ? @ARGV : ( $NEWCERT );
-    foreach my $file (@files) {
+    my $file;
+    foreach $file (@files) {
         my $status = run("$VERIFY -CAfile ${CATOP}/$CACERT $file");
         $RET = $status if $status != 0;
     }

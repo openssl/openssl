@@ -403,8 +403,7 @@ static const char *get_AEP_LIBNAME(void)
 
 static void free_AEP_LIBNAME(void)
 {
-    if (AEP_LIBNAME)
-        OPENSSL_free((void *)AEP_LIBNAME);
+    OPENSSL_free(AEP_LIBNAME);
     AEP_LIBNAME = NULL;
 }
 
@@ -502,8 +501,7 @@ static int aep_init(ENGINE *e)
 
  err:
 
-    if (aep_dso)
-        DSO_free(aep_dso);
+    DSO_free(aep_dso);
     aep_dso = NULL;
 
     p_AEP_OpenConnection = NULL;

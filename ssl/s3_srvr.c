@@ -1272,14 +1272,9 @@ int ssl3_get_client_hello(SSL *s)
             }
 
             s->session->cipher = pref_cipher;
-
-            if (s->cipher_list)
-                sk_SSL_CIPHER_free(s->cipher_list);
-
-            if (s->cipher_list_by_id)
-                sk_SSL_CIPHER_free(s->cipher_list_by_id);
-
+            sk_SSL_CIPHER_free(s->cipher_list);
             s->cipher_list = sk_SSL_CIPHER_dup(s->session->ciphers);
+            sk_SSL_CIPHER_free(s->cipher_list_by_id);
             s->cipher_list_by_id = sk_SSL_CIPHER_dup(s->session->ciphers);
         }
     }
@@ -1371,8 +1366,7 @@ int ssl3_get_client_hello(SSL *s)
 #else
         s->session->compress_meth = (comp == NULL) ? 0 : comp->id;
 #endif
-        if (s->session->ciphers != NULL)
-            sk_SSL_CIPHER_free(s->session->ciphers);
+        sk_SSL_CIPHER_free(s->session->ciphers);
         s->session->ciphers = ciphers;
         if (ciphers == NULL) {
             al = SSL_AD_INTERNAL_ERROR;
@@ -1452,8 +1446,7 @@ int ssl3_get_client_hello(SSL *s)
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
     }
  err:
-    if (ciphers != NULL)
-        sk_SSL_CIPHER_free(ciphers);
+    sk_SSL_CIPHER_free(ciphers);
     return ret < 0 ? -1 : ret;
 }
 
@@ -2019,8 +2012,7 @@ int ssl3_send_server_key_exchange(SSL *s)
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
 #ifndef OPENSSL_NO_EC
-    if (encodedPoint != NULL)
-        OPENSSL_free(encodedPoint);
+    OPENSSL_free(encodedPoint);
     BN_CTX_free(bn_ctx);
 #endif
     EVP_MD_CTX_cleanup(&md_ctx);
@@ -2763,16 +2755,14 @@ int ssl3_get_client_key_exchange(SSL *s)
         t += psk_len;
         s2n(psk_len, t);
 
-        if (s->session->psk_identity != NULL)
-            OPENSSL_free(s->session->psk_identity);
+        OPENSSL_free(s->session->psk_identity);
         s->session->psk_identity = BUF_strdup((char *)p);
         if (s->session->psk_identity == NULL) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
             goto psk_err;
         }
 
-        if (s->session->psk_identity_hint != NULL)
-            OPENSSL_free(s->session->psk_identity_hint);
+        OPENSSL_free(s->session->psk_identity_hint);
         s->session->psk_identity_hint = BUF_strdup(s->ctx->psk_identity_hint);
         if (s->ctx->psk_identity_hint != NULL &&
             s->session->psk_identity_hint == NULL) {
@@ -2821,8 +2811,7 @@ int ssl3_get_client_key_exchange(SSL *s)
                    SSL_R_BAD_SRP_PARAMETERS);
             goto f_err;
         }
-        if (s->session->srp_username != NULL)
-            OPENSSL_free(s->session->srp_username);
+        OPENSSL_free(s->session->srp_username);
         s->session->srp_username = BUF_strdup(s->srp_ctx.login);
         if (s->session->srp_username == NULL) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
@@ -3131,11 +3120,9 @@ int ssl3_get_cert_verify(SSL *s)
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
     }
  end:
-    if (s->s3->handshake_buffer) {
-        BIO_free(s->s3->handshake_buffer);
-        s->s3->handshake_buffer = NULL;
-        s->s3->flags &= ~TLS1_FLAGS_KEEP_HANDSHAKE;
-    }
+    BIO_free(s->s3->handshake_buffer);
+    s->s3->handshake_buffer = NULL;
+    s->s3->flags &= ~TLS1_FLAGS_KEEP_HANDSHAKE;
     EVP_MD_CTX_cleanup(&mctx);
     EVP_PKEY_free(pkey);
     return (ret);
@@ -3188,7 +3175,7 @@ int ssl3_get_client_certificate(SSL *s)
 
     if ((sk = sk_X509_new_null()) == NULL) {
         SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE, ERR_R_MALLOC_FAILURE);
-        goto err;
+        goto done;
     }
 
     n2l3(p, llen);
@@ -3210,7 +3197,7 @@ int ssl3_get_client_certificate(SSL *s)
         x = d2i_X509(NULL, &p, l);
         if (x == NULL) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE, ERR_R_ASN1_LIB);
-            goto err;
+            goto done;
         }
         if (p != (q + l)) {
             al = SSL_AD_DECODE_ERROR;
@@ -3220,7 +3207,7 @@ int ssl3_get_client_certificate(SSL *s)
         }
         if (!sk_X509_push(sk, x)) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE, ERR_R_MALLOC_FAILURE);
-            goto err;
+            goto done;
         }
         x = NULL;
         nc += l + 3;
@@ -3283,7 +3270,7 @@ int ssl3_get_client_certificate(SSL *s)
         s->session->sess_cert = ssl_sess_cert_new();
         if (s->session->sess_cert == NULL) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE, ERR_R_MALLOC_FAILURE);
-            goto err;
+            goto done;
         }
     }
     sk_X509_pop_free(s->session->sess_cert->cert_chain, X509_free);
@@ -3292,15 +3279,13 @@ int ssl3_get_client_certificate(SSL *s)
      * Inconsistency alert: cert_chain does *not* include the peer's own
      * certificate, while we do include it in s3_clnt.c
      */
-
     sk = NULL;
-
     ret = 1;
-    if (0) {
+    goto done;
+
  f_err:
-        ssl3_send_alert(s, SSL3_AL_FATAL, al);
-    }
- err:
+    ssl3_send_alert(s, SSL3_AL_FATAL, al);
+ done:
     X509_free(x);
     sk_X509_pop_free(sk, X509_free);
     return (ret);
@@ -3473,8 +3458,7 @@ int ssl3_send_newsession_ticket(SSL *s)
     /* SSL3_ST_SW_SESSION_TICKET_B */
     return ssl_do_write(s);
  err:
-    if (senc)
-        OPENSSL_free(senc);
+    OPENSSL_free(senc);
     EVP_CIPHER_CTX_cleanup(&ctx);
     HMAC_CTX_cleanup(&hctx);
     return -1;

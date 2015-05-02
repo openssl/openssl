@@ -599,11 +599,8 @@ int ssl3_connect(SSL *s)
         case SSL_ST_OK:
             /* clean a few things up */
             ssl3_cleanup_key_block(s);
-
-            if (s->init_buf != NULL) {
-                BUF_MEM_free(s->init_buf);
-                s->init_buf = NULL;
-            }
+            BUF_MEM_free(s->init_buf);
+            s->init_buf = NULL;
 
             /*
              * If we are not 'joining' the last two packets, remove the
@@ -657,8 +654,7 @@ int ssl3_connect(SSL *s)
     }
  end:
     s->in_handshake--;
-    if (buf != NULL)
-        BUF_MEM_free(buf);
+    BUF_MEM_free(buf);
     if (cb != NULL)
         cb(s, SSL_CB_CONNECT_EXIT, ret);
     return (ret);
@@ -1189,7 +1185,7 @@ int ssl3_get_server_certificate(SSL *s)
 
     if ((sk = sk_X509_new_null()) == NULL) {
         SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE, ERR_R_MALLOC_FAILURE);
-        goto err;
+        goto done;
     }
 
     n2l3(p, llen);
@@ -1222,7 +1218,7 @@ int ssl3_get_server_certificate(SSL *s)
         }
         if (!sk_X509_push(sk, x)) {
             SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE, ERR_R_MALLOC_FAILURE);
-            goto err;
+            goto done;
         }
         x = NULL;
         nc += l + 3;
@@ -1250,7 +1246,7 @@ int ssl3_get_server_certificate(SSL *s)
 
     sc = ssl_sess_cert_new();
     if (sc == NULL)
-        goto err;
+        goto done;
 
     ssl_sess_cert_free(s->session->sess_cert);
     s->session->sess_cert = sc;
@@ -1332,11 +1328,11 @@ int ssl3_get_server_certificate(SSL *s)
 
     x = NULL;
     ret = 1;
-    if (0) {
+    goto done;
+
  f_err:
-        ssl3_send_alert(s, SSL3_AL_FATAL, al);
-    }
- err:
+    ssl3_send_alert(s, SSL3_AL_FATAL, al);
+ done:
     EVP_PKEY_free(pkey);
     X509_free(x);
     sk_X509_pop_free(sk, X509_free);
@@ -1401,8 +1397,7 @@ int ssl3_get_key_exchange(SSL *s)
          */
         if (alg_k & SSL_kPSK) {
             s->session->sess_cert = ssl_sess_cert_new();
-            if (s->ctx->psk_identity_hint)
-                OPENSSL_free(s->ctx->psk_identity_hint);
+            OPENSSL_free(s->ctx->psk_identity_hint);
             s->ctx->psk_identity_hint = NULL;
         }
 #endif
@@ -1471,8 +1466,7 @@ int ssl3_get_key_exchange(SSL *s)
          */
         memcpy(tmp_id_hint, p, i);
         memset(tmp_id_hint + i, 0, PSK_MAX_IDENTITY_LEN + 1 - i);
-        if (s->ctx->psk_identity_hint != NULL)
-            OPENSSL_free(s->ctx->psk_identity_hint);
+        OPENSSL_free(s->ctx->psk_identity_hint);
         s->ctx->psk_identity_hint = BUF_strdup(tmp_id_hint);
         if (s->ctx->psk_identity_hint == NULL) {
             al = SSL_AD_HANDSHAKE_FAILURE;
@@ -2054,10 +2048,8 @@ int ssl3_get_certificate_request(SSL *s)
 
     /* get the certificate types */
     ctype_num = *(p++);
-    if (s->cert->ctypes) {
-        OPENSSL_free(s->cert->ctypes);
-        s->cert->ctypes = NULL;
-    }
+    OPENSSL_free(s->cert->ctypes);
+    s->cert->ctypes = NULL;
     if (ctype_num > SSL3_CT_NUMBER) {
         /* If we exceed static buffer copy all to cert structure */
         s->cert->ctypes = OPENSSL_malloc(ctype_num);
@@ -2193,10 +2185,8 @@ int ssl3_get_new_session_ticket(SSL *s)
         SSLerr(SSL_F_SSL3_GET_NEW_SESSION_TICKET, SSL_R_LENGTH_MISMATCH);
         goto f_err;
     }
-    if (s->session->tlsext_tick) {
-        OPENSSL_free(s->session->tlsext_tick);
-        s->session->tlsext_ticklen = 0;
-    }
+    OPENSSL_free(s->session->tlsext_tick);
+    s->session->tlsext_ticklen = 0;
     s->session->tlsext_tick = OPENSSL_malloc(ticklen);
     if (!s->session->tlsext_tick) {
         SSLerr(SSL_F_SSL3_GET_NEW_SESSION_TICKET, ERR_R_MALLOC_FAILURE);
@@ -2257,8 +2247,7 @@ int ssl3_get_cert_status(SSL *s)
         SSLerr(SSL_F_SSL3_GET_CERT_STATUS, SSL_R_LENGTH_MISMATCH);
         goto f_err;
     }
-    if (s->tlsext_ocsp_resp)
-        OPENSSL_free(s->tlsext_ocsp_resp);
+    OPENSSL_free(s->tlsext_ocsp_resp);
     s->tlsext_ocsp_resp = BUF_memdup(p, resplen);
     if (!s->tlsext_ocsp_resp) {
         al = SSL_AD_INTERNAL_ERROR;
@@ -2786,8 +2775,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 
             /* Free allocated memory */
             BN_CTX_free(bn_ctx);
-            if (encodedPoint != NULL)
-                OPENSSL_free(encodedPoint);
+            OPENSSL_free(encodedPoint);
             EC_KEY_free(clnt_ecdh);
             EVP_PKEY_free(srvr_pub_pkey);
         }
@@ -2919,8 +2907,7 @@ int ssl3_send_client_key_exchange(SSL *s)
                        ERR_R_INTERNAL_ERROR);
                 goto err;
             }
-            if (s->session->srp_username != NULL)
-                OPENSSL_free(s->session->srp_username);
+            OPENSSL_free(s->session->srp_username);
             s->session->srp_username = BUF_strdup(s->srp_ctx.login);
             if (s->session->srp_username == NULL) {
                 SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
@@ -2985,8 +2972,7 @@ int ssl3_send_client_key_exchange(SSL *s)
             t += psk_len;
             s2n(psk_len, t);
 
-            if (s->session->psk_identity_hint != NULL)
-                OPENSSL_free(s->session->psk_identity_hint);
+            OPENSSL_free(s->session->psk_identity_hint);
             s->session->psk_identity_hint =
                 BUF_strdup(s->ctx->psk_identity_hint);
             if (s->ctx->psk_identity_hint != NULL
@@ -2996,8 +2982,7 @@ int ssl3_send_client_key_exchange(SSL *s)
                 goto psk_err;
             }
 
-            if (s->session->psk_identity != NULL)
-                OPENSSL_free(s->session->psk_identity);
+            OPENSSL_free(s->session->psk_identity);
             s->session->psk_identity = BUF_strdup(identity);
             if (s->session->psk_identity == NULL) {
                 SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
@@ -3090,8 +3075,7 @@ int ssl3_send_client_key_exchange(SSL *s)
     s->cert->pms = NULL;
 #ifndef OPENSSL_NO_EC
     BN_CTX_free(bn_ctx);
-    if (encodedPoint != NULL)
-        OPENSSL_free(encodedPoint);
+    OPENSSL_free(encodedPoint);
     EC_KEY_free(clnt_ecdh);
     EVP_PKEY_free(srvr_pub_pkey);
 #endif
@@ -3331,8 +3315,7 @@ int ssl3_send_client_certificate(SSL *s)
         }
 
         X509_free(x509);
-        if (pkey != NULL)
-            EVP_PKEY_free(pkey);
+        EVP_PKEY_free(pkey);
         if (i && !ssl3_check_client_certificate(s))
             i = 0;
         if (i == 0) {

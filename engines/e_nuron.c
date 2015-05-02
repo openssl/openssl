@@ -90,8 +90,7 @@ static const char *get_NURON_LIBNAME(void)
 
 static void free_NURON_LIBNAME(void)
 {
-    if (NURON_LIBNAME)
-        OPENSSL_free((void *)NURON_LIBNAME);
+    OPENSSL_free(NURON_LIBNAME);
     NURON_LIBNAME = NULL;
 }
 

@@ -489,12 +489,12 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
     /* If we get this far evaluate policies */
     if (!bad_chain && (ctx->param->flags & X509_V_FLAG_POLICY_CHECK))
         ok = ctx->check_policy(ctx);
-    if (!ok)
-        goto end;
-    if (0) {
+    if (ok)
+        goto done;
+
  end:
-        X509_get_pubkey_parameters(NULL, ctx->chain);
-    }
+    X509_get_pubkey_parameters(NULL, ctx->chain);
+ done:
     sk_X509_free(sktmp);
     X509_free(chain_ss);
     return ok;
@@ -1020,10 +1020,8 @@ static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509_CRL **pdcrl,
         *pscore = best_score;
         *preasons = best_reasons;
         CRYPTO_add(&best_crl->references, 1, CRYPTO_LOCK_X509_CRL);
-        if (*pdcrl) {
-            X509_CRL_free(*pdcrl);
-            *pdcrl = NULL;
-        }
+        X509_CRL_free(*pdcrl);
+        *pdcrl = NULL;
         get_delta_sk(ctx, pdcrl, pscore, best_crl, crls);
     }
 

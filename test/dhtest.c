@@ -195,10 +195,8 @@ int main(int argc, char *argv[])
  err:
     ERR_print_errors_fp(stderr);
 
-    if (abuf != NULL)
-        OPENSSL_free(abuf);
-    if (bbuf != NULL)
-        OPENSSL_free(bbuf);
+    OPENSSL_free(abuf);
+    OPENSSL_free(bbuf);
     DH_free(b);
     DH_free(a);
     BN_GENCB_free(_cb);

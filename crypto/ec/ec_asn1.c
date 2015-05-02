@@ -525,10 +525,8 @@ static int ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
     ok = 1;
 
  err:
-    if (buffer_1)
-        OPENSSL_free(buffer_1);
-    if (buffer_2)
-        OPENSSL_free(buffer_2);
+    OPENSSL_free(buffer_1);
+    OPENSSL_free(buffer_2);
     BN_free(tmp_1);
     BN_free(tmp_2);
     return (ok);
@@ -628,8 +626,7 @@ static ECPARAMETERS *ec_asn1_group2parameters(const EC_GROUP *group,
     if (!param)
         ECPARAMETERS_free(ret);
     BN_free(tmp);
-    if (buffer)
-        OPENSSL_free(buffer);
+    OPENSSL_free(buffer);
     return NULL;
 }
 
@@ -840,8 +837,7 @@ static EC_GROUP *ec_asn1_parameters2group(const ECPARAMETERS *params)
 
     /* extract seed (optional) */
     if (params->curve->seed != NULL) {
-        if (ret->seed != NULL)
-            OPENSSL_free(ret->seed);
+        OPENSSL_free(ret->seed);
         if (!(ret->seed = OPENSSL_malloc(params->curve->seed->length))) {
             ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, ERR_R_MALLOC_FAILURE);
             goto err;
@@ -998,7 +994,6 @@ int i2d_ECPKParameters(const EC_GROUP *a, unsigned char **out)
 
 EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
 {
-    int ok = 0;
     EC_KEY *ret = NULL;
     EC_PRIVATEKEY *priv_key = NULL;
 
@@ -1079,18 +1074,14 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
 
     if (a)
         *a = ret;
-    ok = 1;
- err:
-    if (!ok) {
-        if (a == NULL || *a != ret)
-            EC_KEY_free(ret);
-        ret = NULL;
-    }
-
-    if (priv_key)
-        EC_PRIVATEKEY_free(priv_key);
-
+    EC_PRIVATEKEY_free(priv_key);
     return (ret);
+
+ err:
+    if (a == NULL || *a != ret)
+        EC_KEY_free(ret);
+    EC_PRIVATEKEY_free(priv_key);
+    return NULL;
 }
 
 int i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
@@ -1193,10 +1184,8 @@ int i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
     }
     ok = 1;
  err:
-    if (buffer)
-        OPENSSL_free(buffer);
-    if (priv_key)
-        EC_PRIVATEKEY_free(priv_key);
+    OPENSSL_free(buffer);
+    EC_PRIVATEKEY_free(priv_key);
     return (ok ? ret : 0);
 }
 

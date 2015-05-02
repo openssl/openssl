@@ -259,10 +259,8 @@ int ssl3_change_cipher_state(SSL *s, int which)
         }
 #ifndef OPENSSL_NO_COMP
         /* COMPRESS */
-        if (s->expand != NULL) {
-            COMP_CTX_free(s->expand);
-            s->expand = NULL;
-        }
+        COMP_CTX_free(s->expand);
+        s->expand = NULL;
         if (comp != NULL) {
             s->expand = COMP_CTX_new(comp);
             if (s->expand == NULL) {
@@ -294,10 +292,8 @@ int ssl3_change_cipher_state(SSL *s, int which)
         }
 #ifndef OPENSSL_NO_COMP
         /* COMPRESS */
-        if (s->compress != NULL) {
-            COMP_CTX_free(s->compress);
-            s->compress = NULL;
-        }
+        COMP_CTX_free(s->compress);
+        s->compress = NULL;
         if (comp != NULL) {
             s->compress = COMP_CTX_new(comp);
             if (s->compress == NULL) {

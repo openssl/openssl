@@ -324,8 +324,7 @@ static int ibm_4758_cca_init(ENGINE *e)
 
     return 1;
  err:
-    if (dso)
-        DSO_free(dso);
+    DSO_free(dso);
     dso = NULL;
 
 #  ifndef OPENSSL_NO_RSA
@@ -474,8 +473,7 @@ static EVP_PKEY *ibm_4758_load_privkey(ENGINE *e, const char *key_id,
 
     return res;
  err:
-    if (keyToken)
-        OPENSSL_free(keyToken);
+    OPENSSL_free(keyToken);
     return NULL;
 }
 
@@ -544,8 +542,7 @@ static EVP_PKEY *ibm_4758_load_pubkey(ENGINE *e, const char *key_id,
 
     return res;
  err:
-    if (keyToken)
-        OPENSSL_free(keyToken);
+    OPENSSL_free(keyToken);
     return NULL;
 }
 
@@ -924,8 +921,7 @@ static int cca_get_random_bytes(unsigned char *buf, int num)
 static void cca_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad, int idx,
                         long argl, void *argp)
 {
-    if (item)
-        OPENSSL_free(item);
+    OPENSSL_free(item);
 }
 #  endif
 

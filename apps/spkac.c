@@ -240,7 +240,6 @@ int spkac_main(int argc, char **argv)
     BIO_free(in);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
-    if (passin)
-        OPENSSL_free(passin);
+    OPENSSL_free(passin);
     return (ret);
 }

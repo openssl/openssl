@@ -278,10 +278,8 @@ static int test_ecdh_curve(int nid, const char *text, BN_CTX *ctx, BIO *out)
  err:
     ERR_print_errors_fp(stderr);
 
-    if (abuf != NULL)
-        OPENSSL_free(abuf);
-    if (bbuf != NULL)
-        OPENSSL_free(bbuf);
+    OPENSSL_free(abuf);
+    OPENSSL_free(bbuf);
     BN_free(x_a);
     BN_free(y_a);
     BN_free(x_b);
@@ -433,8 +431,7 @@ static int ecdh_kat(BIO *out, const char *cname, int nid,
  err:
     EC_KEY_free(key1);
     EC_KEY_free(key2);
-    if (Ztmp)
-        OPENSSL_free(Ztmp);
+    OPENSSL_free(Ztmp);
     if (rv)
         BIO_puts(out, " ok\n");
     else {

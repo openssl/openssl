@@ -101,7 +101,6 @@ int i2a_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *a)
 
 int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
 {
-    int ret = 0;
     int i, j, k, m, n, again, bufsize;
     unsigned char *s = NULL, *sp;
     unsigned char *bufp;
@@ -112,16 +111,16 @@ int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
     bufsize = BIO_gets(bp, buf, size);
     for (;;) {
         if (bufsize < 1)
-            goto err_sl;
+            goto err;
         i = bufsize;
         if (buf[i - 1] == '\n')
             buf[--i] = '\0';
         if (i == 0)
-            goto err_sl;
+            goto err;
         if (buf[i - 1] == '\r')
             buf[--i] = '\0';
         if (i == 0)
-            goto err_sl;
+            goto err;
         again = (buf[i - 1] == '\\');
 
         for (j = 0; j < i; j++) {
@@ -147,7 +146,7 @@ int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
          * We have now cleared all the crap off the end of the line
          */
         if (i < 2)
-            goto err_sl;
+            goto err;
 
         bufp = (unsigned char *)buf;
         if (first) {
@@ -161,16 +160,15 @@ int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
         i -= again;
         if (i % 2 != 0) {
             ASN1err(ASN1_F_A2I_ASN1_INTEGER, ASN1_R_ODD_NUMBER_OF_CHARS);
-            goto err;
+            return 0;
         }
         i /= 2;
         if (num + i > slen) {
             sp = OPENSSL_realloc_clean(s, slen, num + i * 2);
             if (sp == NULL) {
                 ASN1err(ASN1_F_A2I_ASN1_INTEGER, ERR_R_MALLOC_FAILURE);
-                if (s != NULL)
-                    OPENSSL_free(s);
-                goto err;
+                OPENSSL_free(s);
+                return 0;
             }
             s = sp;
             slen = num + i * 2;
@@ -201,11 +199,8 @@ int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
     }
     bs->length = num;
     bs->data = s;
-    ret = 1;
+    return 1;
  err:
-    if (0) {
- err_sl:
-        ASN1err(ASN1_F_A2I_ASN1_INTEGER, ASN1_R_SHORT_LINE);
-    }
-    return (ret);
+    ASN1err(ASN1_F_A2I_ASN1_INTEGER, ASN1_R_SHORT_LINE);
+    return 0;
 }

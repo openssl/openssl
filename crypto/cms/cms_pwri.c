@@ -420,7 +420,7 @@ int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
 
     EVP_CIPHER_CTX_cleanup(&kekctx);
 
-    if (!r && key)
+    if (!r)
         OPENSSL_free(key);
     X509_ALGOR_free(kekalg);
 

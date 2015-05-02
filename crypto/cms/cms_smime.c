@@ -512,8 +512,7 @@ CMS_ContentInfo *CMS_sign(X509 *signcert, EVP_PKEY *pkey,
     CMSerr(CMS_F_CMS_SIGN, ERR_R_MALLOC_FAILURE);
 
  err:
-    if (cms)
-        CMS_ContentInfo_free(cms);
+    CMS_ContentInfo_free(cms);
     return NULL;
 }
 
@@ -614,8 +613,7 @@ CMS_ContentInfo *CMS_encrypt(STACK_OF(X509) *certs, BIO *data,
  merr:
     CMSerr(CMS_F_CMS_ENCRYPT, ERR_R_MALLOC_FAILURE);
  err:
-    if (cms)
-        CMS_ContentInfo_free(cms);
+    CMS_ContentInfo_free(cms);
     return NULL;
 }
 

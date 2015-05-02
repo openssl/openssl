@@ -384,10 +384,8 @@ int srp_main(int argc, char **argv)
                            errorline, configfile);
             goto end;
         }
-        if (tofree) {
-            OPENSSL_free(tofree);
-            tofree = NULL;
-        }
+        OPENSSL_free(tofree);
+        tofree = NULL;
 
         /* Lets get the config section we are using */
         if (section == NULL) {
@@ -519,26 +517,16 @@ int srp_main(int argc, char **argv)
                 row[DB_srpgN] = BUF_strdup(gNid);
 
                 if (!row[DB_srpid] || !row[DB_srpgN] || !row[DB_srptype]
-                    || !row[DB_srpverifier] || !row[DB_srpsalt] || (userinfo
-                                                                    &&
-                                                                    (!(row
-                                                                       [DB_srpinfo]
-                                                                       =
-                                                                       BUF_strdup
-                                                                       (userinfo))))
+                    || !row[DB_srpverifier] || !row[DB_srpsalt]
+                    || (userinfo &&
+                         (!(row [DB_srpinfo] = BUF_strdup (userinfo))))
                     || !update_index(db, row)) {
-                    if (row[DB_srpid])
-                        OPENSSL_free(row[DB_srpid]);
-                    if (row[DB_srpgN])
-                        OPENSSL_free(row[DB_srpgN]);
-                    if (row[DB_srpinfo])
-                        OPENSSL_free(row[DB_srpinfo]);
-                    if (row[DB_srptype])
-                        OPENSSL_free(row[DB_srptype]);
-                    if (row[DB_srpverifier])
-                        OPENSSL_free(row[DB_srpverifier]);
-                    if (row[DB_srpsalt])
-                        OPENSSL_free(row[DB_srpsalt]);
+                    OPENSSL_free(row[DB_srpid]);
+                    OPENSSL_free(row[DB_srpgN]);
+                    OPENSSL_free(row[DB_srpinfo]);
+                    OPENSSL_free(row[DB_srptype]);
+                    OPENSSL_free(row[DB_srpverifier]);
+                    OPENSSL_free(row[DB_srpsalt]);
                     goto end;
                 }
                 doupdatedb = 1;
@@ -676,17 +664,13 @@ int srp_main(int argc, char **argv)
 
     if (verbose)
         BIO_printf(bio_err, "SRP terminating with code %d.\n", ret);
-    if (tofree)
-        OPENSSL_free(tofree);
+    OPENSSL_free(tofree);
     if (ret)
         ERR_print_errors(bio_err);
     if (randfile)
         app_RAND_write_file(randfile);
-    if (conf)
-        NCONF_free(conf);
-    if (db)
-        free_index(db);
-
+    NCONF_free(conf);
+    free_index(db);
     OBJ_cleanup();
     return (ret);
 }

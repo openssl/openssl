@@ -319,17 +319,13 @@ int asn1parse_main(int argc, char **argv)
     BIO_free(b64);
     if (ret != 0)
         ERR_print_errors(bio_err);
-    if (buf != NULL)
-        BUF_MEM_free(buf);
-    if (name != NULL)
-        OPENSSL_free(name);
-    if (header != NULL)
-        OPENSSL_free(header);
-    if (strictpem && str != NULL)
+    BUF_MEM_free(buf);
+    OPENSSL_free(name);
+    OPENSSL_free(header);
+    if (strictpem)
         OPENSSL_free(str);
     ASN1_TYPE_free(at);
-    if (osk != NULL)
-        sk_OPENSSL_STRING_free(osk);
+    sk_OPENSSL_STRING_free(osk);
     OBJ_cleanup();
     return (ret);
 }
@@ -338,7 +334,7 @@ static int do_generate(char *genstr, char *genconf, BUF_MEM *buf)
 {
     CONF *cnf = NULL;
     int len;
-    long errline;
+    long errline = 0;
     unsigned char *p;
     ASN1_TYPE *atyp = NULL;
 

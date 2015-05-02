@@ -170,8 +170,7 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
         ret = 1;
 
  err:
-    if (DB)
-        OPENSSL_free(DB);
+    OPENSSL_free(DB);
     EVP_MD_CTX_cleanup(&ctx);
 
     return ret;
@@ -279,8 +278,7 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
     ret = 1;
 
  err:
-    if (salt)
-        OPENSSL_free(salt);
+    OPENSSL_free(salt);
 
     return ret;
 

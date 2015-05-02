@@ -249,8 +249,7 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
     }
     ret = 1;
  err:
-    if (m != NULL)
-        OPENSSL_free(m);
+    OPENSSL_free(m);
     return (ret);
 }
 
@@ -299,8 +298,7 @@ int X509_ocspid_print(BIO *bp, X509 *x)
 
     return (1);
  err:
-    if (der != NULL)
-        OPENSSL_free(der);
+    OPENSSL_free(der);
     return (0);
 }
 
@@ -492,7 +490,7 @@ int ASN1_UTCTIME_print(BIO *bp, const ASN1_UTCTIME *tm)
 int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
 {
     char *s, *c, *b;
-    int ret = 0, l, i;
+    int l, i;
 
     l = 80 - 2 - obase;
 
@@ -537,11 +535,10 @@ int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
         l--;
     }
 
-    ret = 1;
-    if (0) {
- err:
-        X509err(X509_F_X509_NAME_PRINT, ERR_R_BUF_LIB);
-    }
     OPENSSL_free(b);
-    return (ret);
+    return 1;
+ err:
+    X509err(X509_F_X509_NAME_PRINT, ERR_R_BUF_LIB);
+    OPENSSL_free(b);
+    return 0;
 }

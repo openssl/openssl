@@ -130,8 +130,7 @@ OCSP_RESPONSE *OCSP_response_create(int status, OCSP_BASICRESP *bs)
          goto err;
     return rsp;
  err:
-    if (rsp)
-        OCSP_RESPONSE_free(rsp);
+    OCSP_RESPONSE_free(rsp);
     return NULL;
 }
 

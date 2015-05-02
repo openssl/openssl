@@ -143,8 +143,7 @@ BIO *BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
 
  err:
     BIO_free(asn_bio);
-    if (ndef_aux)
-        OPENSSL_free(ndef_aux);
+    OPENSSL_free(ndef_aux);
     return NULL;
 }
 
@@ -186,8 +185,7 @@ static int ndef_prefix_free(BIO *b, unsigned char **pbuf, int *plen,
 
     ndef_aux = *(NDEF_SUPPORT **)parg;
 
-    if (ndef_aux->derbuf)
-        OPENSSL_free(ndef_aux->derbuf);
+    OPENSSL_free(ndef_aux->derbuf);
 
     ndef_aux->derbuf = NULL;
     *pbuf = NULL;

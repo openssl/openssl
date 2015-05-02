@@ -168,8 +168,7 @@ CMS_ContentInfo *CMS_EnvelopedData_create(const EVP_CIPHER *cipher)
         goto merr;
     return cms;
  merr:
-    if (cms)
-        CMS_ContentInfo_free(cms);
+    CMS_ContentInfo_free(cms);
     CMSerr(CMS_F_CMS_ENVELOPEDDATA_CREATE, ERR_R_MALLOC_FAILURE);
     return NULL;
 }
@@ -400,12 +399,9 @@ static int cms_RecipientInfo_ktri_encrypt(CMS_ContentInfo *cms,
     ret = 1;
 
  err:
-    if (pctx) {
-        EVP_PKEY_CTX_free(pctx);
-        ktri->pctx = NULL;
-    }
-    if (ek)
-        OPENSSL_free(ek);
+    EVP_PKEY_CTX_free(pctx);
+    ktri->pctx = NULL;
+    OPENSSL_free(ek);
     return ret;
 
 }
@@ -472,7 +468,7 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
  err:
     EVP_PKEY_CTX_free(ktri->pctx);
     ktri->pctx = NULL;
-    if (!ret && ek)
+    if (!ret)
         OPENSSL_free(ek);
 
     return ret;
@@ -712,7 +708,7 @@ static int cms_RecipientInfo_kekri_encrypt(CMS_ContentInfo *cms,
 
  err:
 
-    if (!r && wkey)
+    if (!r)
         OPENSSL_free(wkey);
     OPENSSL_cleanse(&actx, sizeof(actx));
 
@@ -785,7 +781,7 @@ static int cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms,
 
  err:
 
-    if (!r && ukey)
+    if (!r)
         OPENSSL_free(ukey);
     OPENSSL_cleanse(&actx, sizeof(actx));
 

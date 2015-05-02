@@ -198,10 +198,8 @@ int genrsa_main(int argc, char **argv)
     if (hexe && dece) {
         BIO_printf(bio_err, "e is %s (0x%s)\n", dece, hexe);
     }
-    if (hexe)
-        OPENSSL_free(hexe);
-    if (dece)
-        OPENSSL_free(dece);
+    OPENSSL_free(hexe);
+    OPENSSL_free(dece);
     {
         PW_CB_DATA cb_data;
         cb_data.password = passout;
@@ -218,8 +216,7 @@ int genrsa_main(int argc, char **argv)
     BN_GENCB_free(cb);
     RSA_free(rsa);
     BIO_free_all(out);
-    if (passout)
-        OPENSSL_free(passout);
+    OPENSSL_free(passout);
     if (ret != 0)
         ERR_print_errors(bio_err);
     return (ret);

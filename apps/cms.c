@@ -1117,23 +1117,15 @@ int cms_main(int argc, char **argv)
     sk_X509_pop_free(encerts, X509_free);
     sk_X509_pop_free(other, X509_free);
     X509_VERIFY_PARAM_free(vpm);
-    if (sksigners)
-        sk_OPENSSL_STRING_free(sksigners);
-    if (skkeys)
-        sk_OPENSSL_STRING_free(skkeys);
-    if (secret_key)
-        OPENSSL_free(secret_key);
-    if (secret_keyid)
-        OPENSSL_free(secret_keyid);
-    if (pwri_tmp)
-        OPENSSL_free(pwri_tmp);
+    sk_OPENSSL_STRING_free(sksigners);
+    sk_OPENSSL_STRING_free(skkeys);
+    OPENSSL_free(secret_key);
+    OPENSSL_free(secret_keyid);
+    OPENSSL_free(pwri_tmp);
     ASN1_OBJECT_free(econtent_type);
-    if (rr)
-        CMS_ReceiptRequest_free(rr);
-    if (rr_to)
-        sk_OPENSSL_STRING_free(rr_to);
-    if (rr_from)
-        sk_OPENSSL_STRING_free(rr_from);
+    CMS_ReceiptRequest_free(rr);
+    sk_OPENSSL_STRING_free(rr_to);
+    sk_OPENSSL_STRING_free(rr_from);
     for (key_param = key_first; key_param;) {
         cms_key_param *tparam;
         sk_OPENSSL_STRING_free(key_param->param);
@@ -1152,8 +1144,7 @@ int cms_main(int argc, char **argv)
     BIO_free(in);
     BIO_free(indata);
     BIO_free_all(out);
-    if (passin)
-        OPENSSL_free(passin);
+    OPENSSL_free(passin);
     return (ret);
 }
 
@@ -1251,8 +1242,7 @@ static void receipt_request_print(CMS_ContentInfo *cms)
             BIO_puts(bio_err, "  Receipts To:\n");
             gnames_stack_print(rto);
         }
-        if (rr)
-            CMS_ReceiptRequest_free(rr);
+        CMS_ReceiptRequest_free(rr);
     }
 }
 
@@ -1284,12 +1274,9 @@ static STACK_OF(GENERAL_NAMES) *make_names_stack(STACK_OF(OPENSSL_STRING) *ns)
     return ret;
 
  err:
-    if (ret)
-        sk_GENERAL_NAMES_pop_free(ret, GENERAL_NAMES_free);
-    if (gens)
-        GENERAL_NAMES_free(gens);
-    if (gen)
-        GENERAL_NAME_free(gen);
+    sk_GENERAL_NAMES_pop_free(ret, GENERAL_NAMES_free);
+    GENERAL_NAMES_free(gens);
+    GENERAL_NAME_free(gen);
     return NULL;
 }
 

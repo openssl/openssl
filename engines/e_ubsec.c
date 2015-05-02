@@ -339,8 +339,7 @@ static const char *get_UBSEC_LIBNAME(void)
 
 static void free_UBSEC_LIBNAME(void)
 {
-    if (UBSEC_LIBNAME)
-        OPENSSL_free((void *)UBSEC_LIBNAME);
+    OPENSSL_free(UBSEC_LIBNAME);
     UBSEC_LIBNAME = NULL;
 }
 
@@ -482,8 +481,7 @@ static int ubsec_init(ENGINE *e)
     }
 
  err:
-    if (ubsec_dso)
-        DSO_free(ubsec_dso);
+    DSO_free(ubsec_dso);
     ubsec_dso = NULL;
     p_UBSEC_ubsec_bytes_to_bits = NULL;
     p_UBSEC_ubsec_bits_to_bytes = NULL;

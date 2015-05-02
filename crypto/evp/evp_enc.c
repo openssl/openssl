@@ -523,8 +523,7 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx)
 {
     EVP_CIPHER_CTX_cleanup(ctx);
-    if (ctx)
-        OPENSSL_free(ctx);
+    OPENSSL_free(ctx);
 }
 
 int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
@@ -538,8 +537,7 @@ int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
         if (c->cipher_data)
             OPENSSL_cleanse(c->cipher_data, c->cipher->ctx_size);
     }
-    if (c->cipher_data)
-        OPENSSL_free(c->cipher_data);
+    OPENSSL_free(c->cipher_data);
 #ifndef OPENSSL_NO_ENGINE
     if (c->engine)
         /*

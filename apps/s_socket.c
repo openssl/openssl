@@ -354,8 +354,7 @@ int do_server(int port, int type, int *ret,
         } else
             sock = accept_socket;
         i = (*cb) (name, sock, type, context);
-        if (name != NULL)
-            OPENSSL_free(name);
+        OPENSSL_free(name);
         if (type == SOCK_STREAM)
             SHUTDOWN2(sock);
         if (naccept != -1)

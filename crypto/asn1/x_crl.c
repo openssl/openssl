@@ -281,10 +281,8 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
             if (!crl->meth->crl_free(crl))
                 return 0;
         }
-        if (crl->akid)
-            AUTHORITY_KEYID_free(crl->akid);
-        if (crl->idp)
-            ISSUING_DIST_POINT_free(crl->idp);
+        AUTHORITY_KEYID_free(crl->akid);
+        ISSUING_DIST_POINT_free(crl->idp);
         ASN1_INTEGER_free(crl->crl_number);
         ASN1_INTEGER_free(crl->base_crl_number);
         sk_GENERAL_NAMES_pop_free(crl->issuers, GENERAL_NAMES_free);

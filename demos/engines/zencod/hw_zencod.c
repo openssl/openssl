@@ -623,9 +623,7 @@ static int zencod_init(ENGINE *e)
 
     return 1;
  err:
-    if (zencod_dso) {
-        DSO_free(zencod_dso);
-    }
+    DSO_free(zencod_dso);
     zencod_dso = NULL;
     ptr_zencod_bytes2bits = NULL;
     ptr_zencod_bits2bytes = NULL;
@@ -1548,12 +1546,9 @@ static int engine_md_cleanup(EVP_MD_CTX *ctx)
 
     ZEN_MD_DATA *zen_md_data = (ZEN_MD_DATA *)ctx->md_data;
 
-    if (zen_md_data->HashBuffer != NULL) {
-        OPENSSL_free(zen_md_data->HashBuffer);
-        zen_md_data->HashBufferSize = 0;
-        ctx->md_data = NULL;
-    }
-
+    OPENSSL_free(zen_md_data->HashBuffer);
+    zen_md_data->HashBufferSize = 0;
+    ctx->md_data = NULL;
     return 1;
 }
 

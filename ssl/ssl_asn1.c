@@ -285,10 +285,8 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 
 static int ssl_session_strndup(char **pdst, ASN1_OCTET_STRING *src)
 {
-    if (*pdst) {
-        OPENSSL_free(*pdst);
-        *pdst = NULL;
-    }
+    OPENSSL_free(*pdst);
+    *pdst = NULL;
     if (src == NULL)
         return 1;
     *pdst = BUF_strndup((char *)src->data, src->length);
@@ -326,10 +324,6 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
     /* ASN.1 code returns suitable error */
     if (as == NULL)
         goto err;
-
-    if (0) {
-        i2d_SSL_SESSION_ASN1(NULL, NULL);
-    }
 
     if (!a || !*a) {
         ret = SSL_SESSION_new();

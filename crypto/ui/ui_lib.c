@@ -335,14 +335,10 @@ int UI_dup_input_boolean(UI *ui, const char *prompt, const char *action_desc,
                                     ok_chars_copy, cancel_chars_copy, 1,
                                     UIT_BOOLEAN, flags, result_buf);
  err:
-    if (prompt_copy)
-        OPENSSL_free(prompt_copy);
-    if (action_desc_copy)
-        OPENSSL_free(action_desc_copy);
-    if (ok_chars_copy)
-        OPENSSL_free(ok_chars_copy);
-    if (cancel_chars_copy)
-        OPENSSL_free(cancel_chars_copy);
+    OPENSSL_free(prompt_copy);
+    OPENSSL_free(action_desc_copy);
+    OPENSSL_free(ok_chars_copy);
+    OPENSSL_free(cancel_chars_copy);
     return -1;
 }
 

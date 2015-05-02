@@ -409,8 +409,7 @@ static void int_thread_del_item(const ERR_STATE *d)
     CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
 
     int_thread_release(&hash);
-    if (p)
-        ERR_STATE_free(p);
+    ERR_STATE_free(p);
 }
 
 #ifndef OPENSSL_NO_ERR
@@ -478,8 +477,7 @@ static void build_SYS_str_reasons(void)
 
 #define err_clear_data(p,i) \
         do { \
-        if (((p)->err_data[i] != NULL) && \
-                (p)->err_data_flags[i] & ERR_TXT_MALLOCED) \
+        if ((p)->err_data_flags[i] & ERR_TXT_MALLOCED) \
                 {  \
                 OPENSSL_free((p)->err_data[i]); \
                 (p)->err_data[i]=NULL; \
@@ -561,10 +559,8 @@ void ERR_unload_strings(int lib, ERR_STRING_DATA *str)
 void ERR_free_strings(void)
 {
     CRYPTO_w_lock(CRYPTO_LOCK_ERR);
-    if (int_error_hash) {
-        lh_ERR_STRING_DATA_free(int_error_hash);
-        int_error_hash = NULL;
-    }
+    lh_ERR_STRING_DATA_free(int_error_hash);
+    int_error_hash = NULL;
     CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
 }
 
@@ -906,8 +902,7 @@ ERR_STATE *ERR_get_state(void)
          * If a race occurred in this function and we came second, tmpp is
          * the first one that we just replaced.
          */
-        if (tmpp)
-            ERR_STATE_free(tmpp);
+        ERR_STATE_free(tmpp);
     }
     return ret;
 }

@@ -1560,7 +1560,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
     if (ok && (strlen(rule_p) > 0))
         ok = ssl_cipher_process_rulestr(rule_p, &head, &tail, ca_list, c);
 
-    OPENSSL_free((void *)ca_list); /* Not needed anymore */
+    OPENSSL_free(ca_list); /* Not needed anymore */
 
     if (!ok) {                  /* Rule processing failure */
         OPENSSL_free(co_list);
@@ -1600,8 +1600,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
         sk_SSL_CIPHER_free(cipherstack);
         return NULL;
     }
-    if (*cipher_list != NULL)
-        sk_SSL_CIPHER_free(*cipher_list);
+    sk_SSL_CIPHER_free(*cipher_list);
     *cipher_list = cipherstack;
     if (*cipher_list_by_id != NULL)
         sk_SSL_CIPHER_free(*cipher_list_by_id);

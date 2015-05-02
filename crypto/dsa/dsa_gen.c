@@ -644,8 +644,7 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
         if (h_ret != NULL)
             *h_ret = h;
     }
-    if (seed)
-        OPENSSL_free(seed);
+    OPENSSL_free(seed);
     if (seed_out != seed_tmp)
         OPENSSL_free(seed_tmp);
     if (ctx)

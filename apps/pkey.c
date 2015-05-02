@@ -208,10 +208,8 @@ int pkey_main(int argc, char **argv)
     EVP_PKEY_free(pkey);
     BIO_free_all(out);
     BIO_free(in);
-    if (passin)
-        OPENSSL_free(passin);
-    if (passout)
-        OPENSSL_free(passout);
+    OPENSSL_free(passin);
+    OPENSSL_free(passout);
 
     return ret;
 }

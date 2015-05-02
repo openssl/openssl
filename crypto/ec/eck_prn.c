@@ -325,8 +325,7 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
     BN_free(order);
     BN_free(cofactor);
     BN_CTX_free(ctx);
-    if (buffer != NULL)
-        OPENSSL_free(buffer);
+    OPENSSL_free(buffer);
     return (ret);
 }
 

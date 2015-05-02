@@ -100,12 +100,9 @@ int X509V3_add_value(const char *name, const char *value,
     return 1;
  err:
     X509V3err(X509V3_F_X509V3_ADD_VALUE, ERR_R_MALLOC_FAILURE);
-    if (vtmp)
-        OPENSSL_free(vtmp);
-    if (tname)
-        OPENSSL_free(tname);
-    if (tvalue)
-        OPENSSL_free(tvalue);
+    OPENSSL_free(vtmp);
+    OPENSSL_free(tname);
+    OPENSSL_free(tvalue);
     return 0;
 }
 
@@ -121,12 +118,9 @@ void X509V3_conf_free(CONF_VALUE *conf)
 {
     if (!conf)
         return;
-    if (conf->name)
-        OPENSSL_free(conf->name);
-    if (conf->value)
-        OPENSSL_free(conf->value);
-    if (conf->section)
-        OPENSSL_free(conf->section);
+    OPENSSL_free(conf->name);
+    OPENSSL_free(conf->value);
+    OPENSSL_free(conf->section);
     OPENSSL_free(conf);
 }
 
@@ -472,8 +466,7 @@ unsigned char *string_to_hex(const char *str, long *len)
     return hexbuf;
 
  err:
-    if (hexbuf)
-        OPENSSL_free(hexbuf);
+    OPENSSL_free(hexbuf);
     X509V3err(X509V3_F_STRING_TO_HEX, ERR_R_MALLOC_FAILURE);
     return NULL;
 
@@ -1108,8 +1101,7 @@ ASN1_OCTET_STRING *a2i_IPADDRESS_NC(const char *ipasc)
     return ret;
 
  err:
-    if (iptmp)
-        OPENSSL_free(iptmp);
+    OPENSSL_free(iptmp);
     ASN1_OCTET_STRING_free(ret);
     return NULL;
 }

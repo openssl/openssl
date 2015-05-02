@@ -444,8 +444,7 @@ static int int_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
                                  storage[i]->argl, storage[i]->argp);
         }
     }
-    if (storage)
-        OPENSSL_free(storage);
+    OPENSSL_free(storage);
     return 1;
 }
 
@@ -487,8 +486,7 @@ static int int_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
                                  storage[i]->argl, storage[i]->argp);
         CRYPTO_set_ex_data(to, i, ptr);
     }
-    if (storage)
-        OPENSSL_free(storage);
+    OPENSSL_free(storage);
     return 1;
 }
 
@@ -525,12 +523,9 @@ static void int_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
                                   storage[i]->argl, storage[i]->argp);
         }
     }
-    if (storage)
-        OPENSSL_free(storage);
-    if (ad->sk) {
-        sk_void_free(ad->sk);
-        ad->sk = NULL;
-    }
+    OPENSSL_free(storage);
+    sk_void_free(ad->sk);
+    ad->sk = NULL;
 }
 
 /********************************************************************/

@@ -132,16 +132,11 @@ void EC_GROUP_free(EC_GROUP *group)
         group->meth->group_finish(group);
 
     EC_EX_DATA_free_all_data(&group->extra_data);
-
     BN_MONT_CTX_free(group->mont_data);
-
     EC_POINT_free(group->generator);
     BN_free(group->order);
     BN_free(group->cofactor);
-
-    if (group->seed)
-        OPENSSL_free(group->seed);
-
+    OPENSSL_free(group->seed);
     OPENSSL_free(group);
 }
 
@@ -232,8 +227,7 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
     dest->asn1_form = src->asn1_form;
 
     if (src->seed) {
-        if (dest->seed)
-            OPENSSL_free(dest->seed);
+        OPENSSL_free(dest->seed);
         dest->seed = OPENSSL_malloc(src->seed_len);
         if (dest->seed == NULL)
             return 0;
@@ -241,8 +235,7 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
             return 0;
         dest->seed_len = src->seed_len;
     } else {
-        if (dest->seed)
-            OPENSSL_free(dest->seed);
+        OPENSSL_free(dest->seed);
         dest->seed = NULL;
         dest->seed_len = 0;
     }
@@ -382,11 +375,9 @@ point_conversion_form_t EC_GROUP_get_point_conversion_form(const EC_GROUP
 
 size_t EC_GROUP_set_seed(EC_GROUP *group, const unsigned char *p, size_t len)
 {
-    if (group->seed) {
-        OPENSSL_free(group->seed);
-        group->seed = NULL;
-        group->seed_len = 0;
-    }
+    OPENSSL_free(group->seed);
+    group->seed = NULL;
+    group->seed_len = 0;
 
     if (!len || !p)
         return 1;

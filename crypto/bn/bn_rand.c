@@ -351,7 +351,6 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
     ret = 1;
 
  err:
-    if (k_bytes)
-        OPENSSL_free(k_bytes);
+    OPENSSL_free(k_bytes);
     return ret;
 }

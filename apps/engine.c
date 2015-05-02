@@ -252,10 +252,8 @@ static int util_verbose(ENGINE *e, int verbose, BIO *out, const char *indent)
         }
         OPENSSL_free(name);
         name = NULL;
-        if (desc) {
-            OPENSSL_free(desc);
-            desc = NULL;
-        }
+        OPENSSL_free(desc);
+        desc = NULL;
         /* Move to the next command */
         num = ENGINE_ctrl(e, ENGINE_CTRL_GET_NEXT_CMD_TYPE, num, NULL, NULL);
     } while (num > 0);
@@ -263,12 +261,9 @@ static int util_verbose(ENGINE *e, int verbose, BIO *out, const char *indent)
         BIO_printf(out, "\n");
     ret = 1;
  err:
-    if (cmds)
-        sk_OPENSSL_STRING_pop_free(cmds, identity);
-    if (name)
-        OPENSSL_free(name);
-    if (desc)
-        OPENSSL_free(desc);
+    sk_OPENSSL_STRING_pop_free(cmds, identity);
+    OPENSSL_free(name);
+    OPENSSL_free(desc);
     return ret;
 }
 

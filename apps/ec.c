@@ -271,10 +271,8 @@ int ec_main(int argc, char **argv)
     BIO_free(in);
     BIO_free_all(out);
     EC_KEY_free(eckey);
-    if (passin)
-        OPENSSL_free(passin);
-    if (passout)
-        OPENSSL_free(passout);
+    OPENSSL_free(passin);
+    OPENSSL_free(passout);
     return (ret);
 }
 #else                           /* !OPENSSL_NO_EC */

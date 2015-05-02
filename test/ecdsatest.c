@@ -241,8 +241,7 @@ int x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
     if (!ret)
         BIO_printf(out, " failed\n");
     EC_KEY_free(key);
-    if (signature)
-        ECDSA_SIG_free(signature);
+    ECDSA_SIG_free(signature);
     BN_free(r);
     BN_free(s);
     EVP_MD_CTX_cleanup(&md_ctx);
@@ -502,14 +501,10 @@ int test_builtin(BIO *out)
  builtin_err:
     EC_KEY_free(eckey);
     EC_KEY_free(wrong_eckey);
-    if (ecdsa_sig)
-        ECDSA_SIG_free(ecdsa_sig);
-    if (signature)
-        OPENSSL_free(signature);
-    if (raw_buf)
-        OPENSSL_free(raw_buf);
-    if (curves)
-        OPENSSL_free(curves);
+    ECDSA_SIG_free(ecdsa_sig);
+    OPENSSL_free(signature);
+    OPENSSL_free(raw_buf);
+    OPENSSL_free(curves);
 
     return ret;
 }

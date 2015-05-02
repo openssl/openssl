@@ -466,10 +466,8 @@ static int verify_alpn(SSL *client, SSL *server)
     SSL_get0_alpn_selected(client, &client_proto, &client_proto_len);
     SSL_get0_alpn_selected(server, &server_proto, &server_proto_len);
 
-    if (alpn_selected != NULL) {
-        OPENSSL_free(alpn_selected);
-        alpn_selected = NULL;
-    }
+    OPENSSL_free(alpn_selected);
+    alpn_selected = NULL;
 
     if (client_proto_len != server_proto_len ||
         memcmp(client_proto, server_proto, client_proto_len) != 0) {
@@ -2457,11 +2455,8 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
     BIO_free(s_to_c);
     BIO_free_all(c_bio);
     BIO_free_all(s_bio);
-
-    if (cbuf)
-        OPENSSL_free(cbuf);
-    if (sbuf)
-        OPENSSL_free(sbuf);
+    OPENSSL_free(cbuf);
+    OPENSSL_free(sbuf);
 
     return (ret);
 }

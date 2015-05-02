@@ -194,8 +194,7 @@ static int int_engine_configure(char *name, char *value, const CONF *cnf)
                                ", name=", ecmd->name,
                                ", value=", ecmd->value);
     }
-    if (e)
-        ENGINE_free(e);
+    ENGINE_free(e);
     return ret;
 }
 

@@ -189,8 +189,7 @@ static hm_fragment *dtls1_hm_fragment_new(unsigned long frag_len,
     if (reassembly) {
         bitmask = OPENSSL_malloc(RSMBLY_BITMASK_SIZE(frag_len));
         if (bitmask == NULL) {
-            if (buf != NULL)
-                OPENSSL_free(buf);
+            OPENSSL_free(buf);
             OPENSSL_free(frag);
             return NULL;
         }
@@ -204,17 +203,16 @@ static hm_fragment *dtls1_hm_fragment_new(unsigned long frag_len,
 
 void dtls1_hm_fragment_free(hm_fragment *frag)
 {
-
+    if (!frag)
+        return;
     if (frag->msg_header.is_ccs) {
         EVP_CIPHER_CTX_free(frag->msg_header.
                             saved_retransmit_state.enc_write_ctx);
         EVP_MD_CTX_destroy(frag->msg_header.
                            saved_retransmit_state.write_hash);
     }
-    if (frag->fragment)
-        OPENSSL_free(frag->fragment);
-    if (frag->reassembly)
-        OPENSSL_free(frag->reassembly);
+    OPENSSL_free(frag->fragment);
+    OPENSSL_free(frag->reassembly);
     OPENSSL_free(frag);
 }
 
@@ -727,7 +725,7 @@ dtls1_reassemble_fragment(SSL *s, const struct hm_header_st *msg_hdr, int *ok)
     return DTLS1_HM_FRAGMENT_RETRY;
 
  err:
-    if (frag != NULL && item == NULL)
+    if (item == NULL)
         dtls1_hm_fragment_free(frag);
     *ok = 0;
     return i;
@@ -824,7 +822,7 @@ dtls1_process_out_of_seq_message(SSL *s, const struct hm_header_st *msg_hdr,
     return DTLS1_HM_FRAGMENT_RETRY;
 
  err:
-    if (frag != NULL && item == NULL)
+    if (item == NULL)
         dtls1_hm_fragment_free(frag);
     *ok = 0;
     return i;

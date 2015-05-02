@@ -462,8 +462,7 @@ static HWCryptoHook_ModExpCRT_t *p_hwcrhk_ModExpCRT = NULL;
 static const char *HWCRHK_LIBNAME = NULL;
 static void free_HWCRHK_LIBNAME(void)
 {
-    if (HWCRHK_LIBNAME)
-        OPENSSL_free((void *)HWCRHK_LIBNAME);
+    OPENSSL_free(HWCRHK_LIBNAME);
     HWCRHK_LIBNAME = NULL;
 }
 
@@ -623,8 +622,7 @@ static int hwcrhk_init(ENGINE *e)
 #  endif
     return 1;
  err:
-    if (hwcrhk_dso)
-        DSO_free(hwcrhk_dso);
+    DSO_free(hwcrhk_dso);
     hwcrhk_dso = NULL;
     p_hwcrhk_Init = NULL;
     p_hwcrhk_Finish = NULL;

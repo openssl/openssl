@@ -210,8 +210,7 @@ static X509_EXTENSION *do_ext_i2d(const X509V3_EXT_METHOD *method,
 
  merr:
     X509V3err(X509V3_F_DO_EXT_I2D, ERR_R_MALLOC_FAILURE);
-    if (ext_der != NULL)
-        OPENSSL_free(ext_der);
+    OPENSSL_free(ext_der);
     ASN1_OCTET_STRING_free(ext_oct);
     return NULL;
 
@@ -305,8 +304,7 @@ static X509_EXTENSION *v3_generic_extension(const char *ext, char *value,
  err:
     ASN1_OBJECT_free(obj);
     ASN1_OCTET_STRING_free(oct);
-    if (ext_der)
-        OPENSSL_free(ext_der);
+    OPENSSL_free(ext_der);
     return extension;
 
 }

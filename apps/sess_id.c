@@ -211,8 +211,7 @@ int sess_id_main(int argc, char **argv)
     ret = 0;
  end:
     BIO_free_all(out);
-    if (x != NULL)
-        SSL_SESSION_free(x);
+    SSL_SESSION_free(x);
     return (ret);
 }
 

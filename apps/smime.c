@@ -651,10 +651,8 @@ int smime_main(int argc, char **argv)
     sk_X509_pop_free(encerts, X509_free);
     sk_X509_pop_free(other, X509_free);
     X509_VERIFY_PARAM_free(vpm);
-    if (sksigners)
-        sk_OPENSSL_STRING_free(sksigners);
-    if (skkeys)
-        sk_OPENSSL_STRING_free(skkeys);
+    sk_OPENSSL_STRING_free(sksigners);
+    sk_OPENSSL_STRING_free(skkeys);
     X509_STORE_free(store);
     X509_free(cert);
     X509_free(recip);
@@ -664,8 +662,7 @@ int smime_main(int argc, char **argv)
     BIO_free(in);
     BIO_free(indata);
     BIO_free_all(out);
-    if (passin)
-        OPENSSL_free(passin);
+    OPENSSL_free(passin);
     return (ret);
 }
 

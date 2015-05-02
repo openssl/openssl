@@ -207,10 +207,9 @@ int CMS_RecipientInfo_kari_set0_pkey(CMS_RecipientInfo *ri, EVP_PKEY *pk)
 {
     EVP_PKEY_CTX *pctx;
     CMS_KeyAgreeRecipientInfo *kari = ri->d.kari;
-    if (kari->pctx) {
-        EVP_PKEY_CTX_free(kari->pctx);
-        kari->pctx = NULL;
-    }
+
+    EVP_PKEY_CTX_free(kari->pctx);
+    kari->pctx = NULL;
     if (!pk)
         return 1;
     pctx = EVP_PKEY_CTX_new(pk, NULL);
@@ -268,7 +267,7 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
 
  err:
     OPENSSL_cleanse(kek, keklen);
-    if (!rv && out)
+    if (!rv)
         OPENSSL_free(out);
     EVP_CIPHER_CTX_cleanup(&kari->ctx);
     EVP_PKEY_CTX_free(kari->pctx);
@@ -300,8 +299,7 @@ int CMS_RecipientInfo_kari_decrypt(CMS_ContentInfo *cms,
     cek = NULL;
     rv = 1;
  err:
-    if (cek)
-        OPENSSL_free(cek);
+    OPENSSL_free(cek);
     return rv;
 }
 

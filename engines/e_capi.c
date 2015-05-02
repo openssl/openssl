@@ -360,8 +360,7 @@ static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
         break;
 
     case CAPI_CMD_STORE_NAME:
-        if (ctx->storename)
-            OPENSSL_free(ctx->storename);
+        OPENSSL_free(ctx->storename);
         ctx->storename = BUF_strdup(p);
         CAPI_trace(ctx, "Setting store name to %s\n", p);
         break;
@@ -751,8 +750,7 @@ static EVP_PKEY *capi_get_pkey(ENGINE *eng, CAPI_KEY * key)
     }
 
  err:
-    if (pubkey)
-        OPENSSL_free(pubkey);
+    OPENSSL_free(pubkey);
     if (!ret) {
         RSA_free(rkey);
         DSA_free(dkey);
@@ -1232,8 +1230,7 @@ static int capi_list_containers(CAPI_CTX * ctx, BIO *out)
     ret = 0;
 
  done:
-    if (cname)
-        OPENSSL_free(cname);
+    OPENSSL_free(cname);
     CryptReleaseContext(hprov, 0);
 
     return ret;
@@ -1282,10 +1279,8 @@ static void capi_dump_prov_info(CAPI_CTX * ctx, BIO *out,
     BIO_printf(out, "    Container Name: %s, Key Type %d\n", contname,
                pinfo->dwKeySpec);
  err:
-    if (provname)
-        OPENSSL_free(provname);
-    if (contname)
-        OPENSSL_free(contname);
+    OPENSSL_free(provname);
+    OPENSSL_free(contname);
 }
 
 char *capi_cert_get_fname(CAPI_CTX * ctx, PCCERT_CONTEXT cert)
@@ -1346,8 +1341,7 @@ void capi_dump_cert(CAPI_CTX * ctx, BIO *out, PCCERT_CONTEXT cert)
         CRYPT_KEY_PROV_INFO *pinfo;
         pinfo = capi_get_prov_info(ctx, cert);
         capi_dump_prov_info(ctx, out, pinfo);
-        if (pinfo)
-            OPENSSL_free(pinfo);
+        OPENSSL_free(pinfo);
     }
 
     if (flags & CAPI_DMP_PEM)
@@ -1462,10 +1456,8 @@ static CAPI_KEY *capi_get_key(CAPI_CTX * ctx, const TCHAR *contname,
 
         CAPI_trace(ctx, "capi_get_key, contname=%s, provname=%s, type=%d\n",
                    _contname, _provname, ptype);
-        if (_provname)
-            OPENSSL_free(_provname);
-        if (_contname)
-            OPENSSL_free(_contname);
+        OPENSSL_free(_provname);
+        OPENSSL_free(_contname);
     }
     if (ctx->store_flags & CERT_SYSTEM_STORE_LOCAL_MACHINE)
         dwFlags = CRYPT_MACHINE_KEYSET;
@@ -1511,12 +1503,9 @@ static CAPI_KEY *capi_get_cert_key(CAPI_CTX * ctx, PCCERT_CONTEXT cert)
     }
 
  err:
-    if (pinfo)
-        OPENSSL_free(pinfo);
-    if (provname)
-        OPENSSL_free(provname);
-    if (contname)
-        OPENSSL_free(contname);
+    OPENSSL_free(pinfo);
+    OPENSSL_free(provname);
+    OPENSSL_free(contname);
     return key;
 }
 
@@ -1610,14 +1599,10 @@ static void capi_ctx_free(CAPI_CTX * ctx)
     CAPI_trace(ctx, "Calling capi_ctx_free with %lx\n", ctx);
     if (!ctx)
         return;
-    if (ctx->cspname)
-        OPENSSL_free(ctx->cspname);
-    if (ctx->debug_file)
-        OPENSSL_free(ctx->debug_file);
-    if (ctx->storename)
-        OPENSSL_free(ctx->storename);
-    if (ctx->ssl_client_store)
-        OPENSSL_free(ctx->ssl_client_store);
+    OPENSSL_free(ctx->cspname);
+    OPENSSL_free(ctx->debug_file);
+    OPENSSL_free(ctx->storename);
+    OPENSSL_free(ctx->ssl_client_store);
     OPENSSL_free(ctx);
 }
 
@@ -1647,8 +1632,7 @@ static int capi_ctx_set_provname(CAPI_CTX * ctx, LPSTR pname, DWORD type,
         }
         CryptReleaseContext(hprov, 0);
     }
-    if (ctx->cspname)
-        OPENSSL_free(ctx->cspname);
+    OPENSSL_free(ctx->cspname);
     ctx->cspname = BUF_strdup(pname);
     ctx->csptype = type;
     return 1;

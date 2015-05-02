@@ -176,10 +176,8 @@ static int by_dir_hash_cmp(const BY_DIR_HASH *const *a,
 
 static void by_dir_entry_free(BY_DIR_ENTRY *ent)
 {
-    if (ent->dir)
-        OPENSSL_free(ent->dir);
-    if (ent->hashes)
-        sk_BY_DIR_HASH_pop_free(ent->hashes, by_dir_hash_free);
+    OPENSSL_free(ent->dir);
+    sk_BY_DIR_HASH_pop_free(ent->hashes, by_dir_hash_free);
     OPENSSL_free(ent);
 }
 
@@ -188,10 +186,8 @@ static void free_dir(X509_LOOKUP *lu)
     BY_DIR *a;
 
     a = (BY_DIR *)lu->method_data;
-    if (a->dirs != NULL)
-        sk_BY_DIR_ENTRY_pop_free(a->dirs, by_dir_entry_free);
-    if (a->buffer != NULL)
-        BUF_MEM_free(a->buffer);
+    sk_BY_DIR_ENTRY_pop_free(a->dirs, by_dir_entry_free);
+    BUF_MEM_free(a->buffer);
     OPENSSL_free(a);
 }
 
@@ -436,7 +432,6 @@ static int get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
         }
     }
  finish:
-    if (b != NULL)
-        BUF_MEM_free(b);
+    BUF_MEM_free(b);
     return (ok);
 }

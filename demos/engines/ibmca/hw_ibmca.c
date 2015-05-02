@@ -412,9 +412,7 @@ static int ibmca_init(ENGINE *e)
 
     return 1;
  err:
-    if (ibmca_dso)
-        DSO_free(ibmca_dso);
-
+    DSO_free(ibmca_dso);
     p_icaOpenAdapter = NULL;
     p_icaCloseAdapter = NULL;
     p_icaRsaModExpo = NULL;
@@ -598,8 +596,7 @@ static int ibmca_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
                                       rsa->dmq1, rsa->iqmp, ctx);
     }
  err:
-    if (ctx)
-        BN_CTX_free(ctx);
+    BN_CTX_free(ctx);
     return to_return;
 }
 #  endif

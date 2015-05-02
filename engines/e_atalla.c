@@ -324,8 +324,7 @@ static const char *get_ATALLA_LIBNAME(void)
 
 static void free_ATALLA_LIBNAME(void)
 {
-    if (ATALLA_LIBNAME)
-        OPENSSL_free((void *)ATALLA_LIBNAME);
+    OPENSSL_free(ATALLA_LIBNAME);
     ATALLA_LIBNAME = NULL;
 }
 
@@ -407,8 +406,7 @@ static int atalla_init(ENGINE *e)
     /* Everything's fine. */
     return 1;
  err:
-    if (atalla_dso)
-        DSO_free(atalla_dso);
+    DSO_free(atalla_dso);
     atalla_dso = NULL;
     p_Atalla_GetHardwareConfig = NULL;
     p_Atalla_RSAPrivateKeyOpFn = NULL;

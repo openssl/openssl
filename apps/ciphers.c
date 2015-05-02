@@ -214,7 +214,7 @@ int ciphers_main(int argc, char **argv)
  err:
     ERR_print_errors(bio_err);
  end:
-    if (use_supported && sk)
+    if (use_supported)
         sk_SSL_CIPHER_free(sk);
     SSL_CTX_free(ctx);
     SSL_free(ssl);

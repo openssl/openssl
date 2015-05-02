@@ -77,10 +77,8 @@ ASN1_STRING *ASN1_item_pack(void *obj, const ASN1_ITEM *it, ASN1_STRING **oct)
     } else
         octmp = *oct;
 
-    if (octmp->data) {
-        OPENSSL_free(octmp->data);
-        octmp->data = NULL;
-    }
+    OPENSSL_free(octmp->data);
+    octmp->data = NULL;
 
     if (!(octmp->length = ASN1_item_i2d(obj, &octmp->data, it))) {
         ASN1err(ASN1_F_ASN1_ITEM_PACK, ASN1_R_ENCODE_ERROR);

@@ -251,8 +251,7 @@ static int do_rsa_print(BIO *bp, const RSA *x, int off, int priv)
     }
     ret = 1;
  err:
-    if (m != NULL)
-        OPENSSL_free(m);
+    OPENSSL_free(m);
     return (ret);
 }
 
@@ -379,8 +378,7 @@ static int rsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
         X509_ALGOR *maskHash;
         pss = rsa_pss_decode(sigalg, &maskHash);
         rv = rsa_pss_param_print(bp, pss, maskHash, indent);
-        if (pss)
-            RSA_PSS_PARAMS_free(pss);
+        RSA_PSS_PARAMS_free(pss);
         X509_ALGOR_free(maskHash);
         if (!rv)
             return 0;
@@ -558,8 +556,7 @@ static ASN1_STRING *rsa_ctx_to_pss(EVP_PKEY_CTX *pkctx)
          goto err;
     rv = 1;
  err:
-    if (pss)
-        RSA_PSS_PARAMS_free(pss);
+    RSA_PSS_PARAMS_free(pss);
     if (rv)
         return os;
     ASN1_STRING_free(os);
@@ -897,8 +894,7 @@ static int rsa_cms_encrypt(CMS_RecipientInfo *ri)
     os = NULL;
     rv = 1;
  err:
-    if (oaep)
-        RSA_OAEP_PARAMS_free(oaep);
+    RSA_OAEP_PARAMS_free(oaep);
     ASN1_STRING_free(os);
     return rv;
 }
