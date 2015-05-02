@@ -122,12 +122,22 @@
 #ifndef OPENSSL_NO_ENGINE
 # include <openssl/engine.h>
 #endif
-/* needed for the _O_BINARY defs in the MS world */
-#define USE_SOCKETS
-#include "s_apps.h"
 #include <openssl/err.h>
 #ifdef OPENSSL_FIPS
 # include <openssl/fips.h>
+#endif
+#define USE_SOCKETS /* needed for the _O_BINARY defs in the MS world */
+#include "s_apps.h"
+/* Needed to get the other O_xxx flags. */
+#ifdef OPENSSL_SYS_VMS
+# include <unixio.h>
+#endif
+#ifndef NO_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#ifndef OPENSSL_NO_POSIX_IO
+# include <sys/stat.h>
+# include <fcntl.h>
 #endif
 #define INCLUDE_FUNCTION_TABLE
 #include "apps.h"
@@ -289,6 +299,59 @@ void unbuffer(FILE *fp)
     setbuf(fp, NULL);
 }
 
+/*
+ * Open a file for writing, owner-read-only.
+ */
+BIO *bio_open_owner(const char *filename, const char *modestr, int private)
+{
+    FILE *fp = NULL;
+    BIO *b = NULL;
+    int fd = -1, bflags, mode, binmode;
+
+    if (!private || filename == NULL || strcmp(filename, "-") == 0)
+        return bio_open_default(filename, modestr);
+
+    mode = O_WRONLY;
+#ifdef O_CREAT
+    mode |= O_CREAT;
+#endif
+#ifdef O_TRUNC
+    mode |= O_TRUNC;
+#endif
+    binmode = strchr(modestr, 'b') != NULL;
+    if (binmode) {
+#ifdef O_BINARY
+        mode |= O_BINARY;
+#elif defined(_O_BINARY)
+        mode |= _O_BINARY;
+#endif
+    }
+
+    fd = open(filename, mode, 0600);
+    if (fd < 0)
+        goto err;
+    fp = fdopen(fd, modestr);
+    if (fp == NULL)
+        goto err;
+    bflags = BIO_CLOSE;
+    if (!binmode)
+        bflags |= BIO_FP_TEXT;
+    b = BIO_new_fp(fp, bflags);
+    if (b)
+        return b;
+
+ err:
+    BIO_printf(bio_err, "%s: Can't open \"%s\" for writing, %s\n",
+               opt_getprog(), filename, strerror(errno));
+    ERR_print_errors(bio_err);
+    /* If we have fp, then fdopen took over fd, so don't close both. */
+    if (fp)
+        fclose(fp);
+    else if (fd >= 0)
+        close(fd);
+    return NULL;
+}
+
 static BIO *bio_open_default_(const char *filename, const char *mode, int quiet)
 {
     BIO *ret;
@@ -320,10 +383,12 @@ static BIO *bio_open_default_(const char *filename, const char *mode, int quiet)
     ERR_print_errors(bio_err);
     return NULL;
 }
+
 BIO *bio_open_default(const char *filename, const char *mode)
 {
     return bio_open_default_(filename, mode, 0);
 }
+
 BIO *bio_open_default_quiet(const char *filename, const char *mode)
 {
     return bio_open_default_(filename, mode, 1);

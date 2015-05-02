@@ -113,6 +113,7 @@
 # define HEADER_APPS_H
 
 # include "e_os.h"
+# include <assert.h>
 
 # include <openssl/bio.h>
 # include <openssl/x509.h>
@@ -153,6 +154,7 @@ extern BIO *bio_out;
 extern BIO *bio_err;
 BIO *dup_bio_in(void);
 BIO *dup_bio_out(void);
+BIO *bio_open_owner(const char *filename, const char *mode, int private);
 BIO *bio_open_default(const char *filename, const char *mode);
 BIO *bio_open_default_quiet(const char *filename, const char *mode);
 CONF *app_load_config(const char *filename);

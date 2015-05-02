@@ -49,7 +49,6 @@
 
 /* #define COMPILE_STANDALONE_TEST_DRIVER  */
 #include "apps.h"
-#include <assert.h>
 #include <string.h>
 #if !defined(OPENSSL_SYS_MSDOS)
 # include OPENSSL_UNISTD

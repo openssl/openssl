@@ -70,7 +70,6 @@
 
 #include <openssl/opensslconf.h>
 #ifndef OPENSSL_NO_EC
-# include <assert.h>
 # include <stdio.h>
 # include <stdlib.h>
 # include <time.h>
@@ -142,8 +141,8 @@ int ecparam_main(int argc, char **argv)
     unsigned char *buffer = NULL;
     OPTION_CHOICE o;
     int asn1_flag = OPENSSL_EC_NAMED_CURVE, new_asn1_flag = 0;
-    int informat = FORMAT_PEM, outformat = FORMAT_PEM, noout = 0, C = 0, ret =
-        1;
+    int informat = FORMAT_PEM, outformat = FORMAT_PEM, noout = 0, C = 0;
+    int ret = 1, private = 0;
     int list_curves = 0, no_seed = 0, check = 0, new_form = 0;
     int text = 0, i, need_rand = 0, genkey = 0;
 
@@ -219,6 +218,7 @@ int ecparam_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
+    private = genkey ? 1 : 0;
 
     if (!app_load_modules(NULL))
         goto end;
@@ -226,7 +226,7 @@ int ecparam_main(int argc, char **argv)
     in = bio_open_default(infile, RB(informat));
     if (in == NULL)
         goto end;
-    out = bio_open_default(outfile, WB(outformat));
+    out = bio_open_owner(outfile, WB(outformat), private);
     if (out == NULL)
         goto end;
 
@@ -473,6 +473,7 @@ int ecparam_main(int argc, char **argv)
             EC_KEY_free(eckey);
             goto end;
         }
+        assert(private);
         if (outformat == FORMAT_ASN1)
             i = i2d_ECPrivateKey_bio(out, eckey);
         else

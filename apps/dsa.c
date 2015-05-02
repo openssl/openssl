@@ -114,6 +114,7 @@ int dsa_main(int argc, char **argv)
     OPTION_CHOICE o;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, text = 0, noout = 0;
     int i, modulus = 0, pubin = 0, pubout = 0, pvk_encr = 2, ret = 1;
+    int private = 0;
 
     prog = opt_init(argc, argv, dsa_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -192,6 +193,9 @@ int dsa_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
+    private = pubin || pubout ? 0 : 1;
+    if (text)
+        private = 1;
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");
@@ -221,16 +225,18 @@ int dsa_main(int argc, char **argv)
         goto end;
     }
 
-    out = bio_open_default(outfile, "w");
+    out = bio_open_owner(outfile, "w", private);
     if (out == NULL)
         goto end;
 
-    if (text)
+    if (text) {
+        assert(private);
         if (!DSA_print(out, dsa, 0)) {
             perror(outfile);
             ERR_print_errors(bio_err);
             goto end;
         }
+    }
 
     if (modulus) {
         BIO_printf(out, "Public Key=");
@@ -246,25 +252,33 @@ int dsa_main(int argc, char **argv)
     if (outformat == FORMAT_ASN1) {
         if (pubin || pubout)
             i = i2d_DSA_PUBKEY_bio(out, dsa);
-        else
+        else {
+            assert(private);
             i = i2d_DSAPrivateKey_bio(out, dsa);
+        }
     } else if (outformat == FORMAT_PEM) {
         if (pubin || pubout)
             i = PEM_write_bio_DSA_PUBKEY(out, dsa);
-        else
+        else {
+            assert(private);
             i = PEM_write_bio_DSAPrivateKey(out, dsa, enc,
                                             NULL, 0, NULL, passout);
+        }
 # if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_RC4)
     } else if (outformat == FORMAT_MSBLOB || outformat == FORMAT_PVK) {
         EVP_PKEY *pk;
         pk = EVP_PKEY_new();
         EVP_PKEY_set1_DSA(pk, dsa);
-        if (outformat == FORMAT_PVK)
+        if (outformat == FORMAT_PVK) {
+            assert(private);
             i = i2b_PVK_bio(out, pk, pvk_encr, 0, passout);
+        }
         else if (pubin || pubout)
             i = i2b_PublicKey_bio(out, pk);
-        else
+        else {
+            assert(private);
             i = i2b_PrivateKey_bio(out, pk);
+        }
         EVP_PKEY_free(pk);
 # endif
     } else {

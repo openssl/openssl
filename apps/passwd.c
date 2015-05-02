@@ -53,7 +53,6 @@
 
 #if !defined(OPENSSL_NO_DES) || !defined(NO_MD5CRYPT_1)
 
-# include <assert.h>
 # include <string.h>
 
 # include "apps.h"

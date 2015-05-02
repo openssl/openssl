@@ -169,7 +169,7 @@ int pkcs12_main(int argc, char **argv)
     int cert_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
 # endif
     int key_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
-    int ret = 1, macver = 1, noprompt = 0, add_lmk = 0;
+    int ret = 1, macver = 1, noprompt = 0, add_lmk = 0, private = 0;
     char *passinarg = NULL, *passoutarg = NULL, *passarg = NULL;
     char *passin = NULL, *passout = NULL, *inrand = NULL, *macalg = NULL;
     char *cpass = NULL, *mpass = NULL, *CApath = NULL, *CAfile = NULL;
@@ -314,6 +314,7 @@ int pkcs12_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
+    private = 1;
 
     if (passarg) {
         if (export_cert)
@@ -355,8 +356,7 @@ int pkcs12_main(int argc, char **argv)
     in = bio_open_default(infile, "rb");
     if (in == NULL)
         goto end;
-
-    out = bio_open_default(outfile, "wb");
+    out = bio_open_owner(outfile, "wb", private);
     if (out == NULL)
         goto end;
 
@@ -500,6 +500,7 @@ int pkcs12_main(int argc, char **argv)
         if (maciter != -1)
             PKCS12_set_mac(p12, mpass, -1, NULL, 0, maciter, macmd);
 
+        assert(private);
         i2d_PKCS12_bio(out, p12);
 
         ret = 0;
@@ -545,6 +546,7 @@ int pkcs12_main(int argc, char **argv)
         }
     }
 
+    assert(private);
     if (!dump_certs_keys_p12(out, p12, cpass, -1, options, passout, enc)) {
         BIO_printf(bio_err, "Error outputting keys and certificates\n");
         ERR_print_errors(bio_err);

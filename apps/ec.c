@@ -121,7 +121,7 @@ int ec_main(int argc, char **argv)
     OPTION_CHOICE o;
     int asn1_flag = OPENSSL_EC_NAMED_CURVE, new_form = 0, new_asn1_flag = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, text = 0, noout = 0;
-    int pubin = 0, pubout = 0, param_out = 0, i, ret = 1;
+    int pubin = 0, pubout = 0, param_out = 0, i, ret = 1, private = 0;
 
     prog = opt_init(argc, argv, ec_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -193,6 +193,9 @@ int ec_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
+    private = param_out || pubin || pubout ? 0 : 1;
+    if (text)
+        private = 1;
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");
@@ -224,7 +227,7 @@ int ec_main(int argc, char **argv)
         goto end;
     }
 
-    out = bio_open_default(outfile, WB(outformat));
+    out = bio_open_owner(outfile, WB(outformat), private);
     if (out == NULL)
         goto end;
 
@@ -236,12 +239,14 @@ int ec_main(int argc, char **argv)
     if (new_asn1_flag)
         EC_KEY_set_asn1_flag(eckey, asn1_flag);
 
-    if (text)
+    if (text) {
+        assert(private);
         if (!EC_KEY_print(out, eckey, 0)) {
             perror(outfile);
             ERR_print_errors(bio_err);
             goto end;
         }
+    }
 
     if (noout) {
         ret = 0;
@@ -254,16 +259,20 @@ int ec_main(int argc, char **argv)
             i = i2d_ECPKParameters_bio(out, group);
         else if (pubin || pubout)
             i = i2d_EC_PUBKEY_bio(out, eckey);
-        else
+        else {
+            assert(private);
             i = i2d_ECPrivateKey_bio(out, eckey);
+        }
     } else {
         if (param_out)
             i = PEM_write_bio_ECPKParameters(out, group);
         else if (pubin || pubout)
             i = PEM_write_bio_EC_PUBKEY(out, eckey);
-        else
+        else {
+            assert(private);
             i = PEM_write_bio_ECPrivateKey(out, eckey, enc,
                                            NULL, 0, NULL, passout);
+        }
     }
 
     if (!i) {

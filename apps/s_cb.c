@@ -111,7 +111,6 @@
 /* callback functions used by s_client, s_server, and s_time */
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
 #include <string.h> /* for memcpy() and strcmp() */
 #define USE_SOCKETS
 #include "apps.h"
