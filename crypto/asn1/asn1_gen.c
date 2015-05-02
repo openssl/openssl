@@ -620,7 +620,7 @@ static int asn1_str2tag(const char *tagstr, int len)
         len = strlen(tagstr);
 
     tntmp = tnst;
-    for (i = 0; i < sizeof(tnst) / sizeof(struct tag_name_st); i++, tntmp++) {
+    for (i = 0; i < OSSL_NELEM(tnst); i++, tntmp++) {
         if ((len == tntmp->len) && !strncmp(tntmp->strnam, tagstr, len))
             return tntmp->tag;
     }

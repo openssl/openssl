@@ -601,7 +601,7 @@ int X509_VERIFY_PARAM_add0_table(X509_VERIFY_PARAM *param)
 
 int X509_VERIFY_PARAM_get_count(void)
 {
-    int num = sizeof(default_table) / sizeof(X509_VERIFY_PARAM);
+    int num = OSSL_NELEM(default_table);
     if (param_table)
         num += sk_X509_VERIFY_PARAM_num(param_table);
     return num;
@@ -609,7 +609,7 @@ int X509_VERIFY_PARAM_get_count(void)
 
 const X509_VERIFY_PARAM *X509_VERIFY_PARAM_get0(int id)
 {
-    int num = sizeof(default_table) / sizeof(X509_VERIFY_PARAM);
+    int num = OSSL_NELEM(default_table);
     if (id < num)
         return default_table + id;
     return sk_X509_VERIFY_PARAM_value(param_table, id - num);
@@ -626,9 +626,7 @@ const X509_VERIFY_PARAM *X509_VERIFY_PARAM_lookup(const char *name)
         if (idx != -1)
             return sk_X509_VERIFY_PARAM_value(param_table, idx);
     }
-    return OBJ_bsearch_table(&pm, default_table,
-                             sizeof(default_table) /
-                             sizeof(X509_VERIFY_PARAM));
+    return OBJ_bsearch_table(&pm, default_table, OSSL_NELEM(default_table));
 }
 
 void X509_VERIFY_PARAM_table_cleanup(void)

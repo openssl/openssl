@@ -94,7 +94,7 @@ static X509_TRUST trstandard[] = {
     {X509_TRUST_TSA, 0, trust_1oidany, "TSA server", NID_time_stamp, NULL}
 };
 
-#define X509_TRUST_COUNT        (sizeof(trstandard)/sizeof(X509_TRUST))
+#define X509_TRUST_COUNT        OSSL_NELEM(trstandard)
 
 static STACK_OF(X509_TRUST) *trtable = NULL;
 

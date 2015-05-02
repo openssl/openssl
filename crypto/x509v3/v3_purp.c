@@ -108,7 +108,7 @@ static X509_PURPOSE xstandard[] = {
      NULL},
 };
 
-#define X509_PURPOSE_COUNT (sizeof(xstandard)/sizeof(X509_PURPOSE))
+#define X509_PURPOSE_COUNT OSSL_NELEM(xstandard)
 
 static STACK_OF(X509_PURPOSE) *xptable = NULL;
 
@@ -334,8 +334,7 @@ int X509_supported_extension(X509_EXTENSION *ex)
     if (ex_nid == NID_undef)
         return 0;
 
-    if (OBJ_bsearch_nid(&ex_nid, supported_nids,
-                        sizeof(supported_nids) / sizeof(int)))
+    if (OBJ_bsearch_nid(&ex_nid, supported_nids, OSSL_NELEM(supported_nids)))
         return 1;
     return 0;
 }

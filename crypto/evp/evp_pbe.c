@@ -130,7 +130,7 @@ int main(int argc, char **argv)
      * OpenSSL_add_all_algorithms();
      */
 
-    for (i = 0; i < sizeof(builtin_pbe) / sizeof(EVP_PBE_CTL); i++) {
+    for (i = 0; i < OSSL_NELEM(builtin_pbe); i++) {
         tpbe = builtin_pbe + i;
         fprintf(stderr, "%d %d %s ", tpbe->pbe_type, tpbe->pbe_nid,
                 OBJ_nid2sn(tpbe->pbe_nid));
@@ -276,8 +276,7 @@ int EVP_PBE_find(int type, int pbe_nid,
             pbetmp = sk_EVP_PBE_CTL_value(pbe_algs, i);
     }
     if (pbetmp == NULL) {
-        pbetmp = OBJ_bsearch_pbe2(&pbelu, builtin_pbe,
-                                  sizeof(builtin_pbe) / sizeof(EVP_PBE_CTL));
+        pbetmp = OBJ_bsearch_pbe2(&pbelu, builtin_pbe, OSSL_NELEM(builtin_pbe));
     }
     if (pbetmp == NULL)
         return 0;

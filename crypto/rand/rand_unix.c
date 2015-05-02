@@ -250,7 +250,7 @@ int RAND_poll(void)
 #  endif
 #  ifdef DEVRANDOM
     static const char *randomfiles[] = { DEVRANDOM };
-    struct stat randomstats[sizeof(randomfiles) / sizeof(randomfiles[0])];
+    struct stat randomstats[OSSL_NELEM(randomfiles)];
     int fd;
     unsigned int i;
 #  endif
@@ -267,8 +267,7 @@ int RAND_poll(void)
      * out of random entries.
      */
 
-    for (i = 0; (i < sizeof(randomfiles) / sizeof(randomfiles[0])) &&
-         (n < ENTROPY_NEEDED); i++) {
+    for (i = 0; (i < OSSL_NELEM(randomfiles)) && (n < ENTROPY_NEEDED); i++) {
         if ((fd = open(randomfiles[i], O_RDONLY
 #   ifdef O_NONBLOCK
                        | O_NONBLOCK

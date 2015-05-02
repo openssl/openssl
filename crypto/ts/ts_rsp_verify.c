@@ -101,7 +101,7 @@ static const char *TS_status_text[] = { "granted",
     "revocationNotification"
 };
 
-#define TS_STATUS_TEXT_SIZE     (sizeof(TS_status_text)/sizeof(*TS_status_text))
+#define TS_STATUS_TEXT_SIZE     OSSL_NELEM(TS_status_text)
 
 /*
  * This must be greater or equal to the sum of the strings in TS_status_text
