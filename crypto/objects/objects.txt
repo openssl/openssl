@@ -748,7 +748,7 @@ id-ce 24		: invalidityDate	: Invalidity Date
 !Cname delta-crl
 id-ce 27		: deltaCRL		: X509v3 Delta CRL Indicator
 !Cname issuing-distribution-point
-id-ce 28		: issuingDistributionPoint : X509v3 Issuing Distrubution Point
+id-ce 28		: issuingDistributionPoint : X509v3 Issuing Distribution Point
 !Cname certificate-issuer
 id-ce 29		: certificateIssuer	: X509v3 Certificate Issuer
 !Cname name-constraints

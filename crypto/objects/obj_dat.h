@@ -2164,7 +2164,7 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 	&(lvalues[5107]),0},
 {"subjectDirectoryAttributes","X509v3 Subject Directory Attributes",
 	NID_subject_directory_attributes,3,&(lvalues[5115]),0},
-{"issuingDistributionPoint","X509v3 Issuing Distrubution Point",
+{"issuingDistributionPoint","X509v3 Issuing Distribution Point",
 	NID_issuing_distribution_point,3,&(lvalues[5118]),0},
 {"certificateIssuer","X509v3 Certificate Issuer",
 	NID_certificate_issuer,3,&(lvalues[5121]),0},
@@ -3654,7 +3654,7 @@ static const unsigned int ln_objs[NUM_LN]={
 857,	/* "X509v3 Freshest CRL" */
 748,	/* "X509v3 Inhibit Any Policy" */
 86,	/* "X509v3 Issuer Alternative Name" */
-770,	/* "X509v3 Issuing Distrubution Point" */
+770,	/* "X509v3 Issuing Distribution Point" */
 83,	/* "X509v3 Key Usage" */
 666,	/* "X509v3 Name Constraints" */
 403,	/* "X509v3 No Revocation Available" */
