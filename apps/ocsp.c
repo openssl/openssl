@@ -1010,22 +1010,27 @@ static BIO *init_responder(const char *port)
 {
     BIO *acbio = NULL, *bufbio = NULL;
 
+# ifdef OPENSSL_NO_SOCK
+    BIO_printf(bio_err,
+               "Error setting up accept BIO - sockets not supported.\n");
+    return NULL;
+# endif
     bufbio = BIO_new(BIO_f_buffer());
     if (!bufbio)
         goto err;
-# ifndef OPENSSL_NO_SOCK
-    acbio = BIO_new_accept(port);
-# else
-    BIO_printf(bio_err,
-               "Error setting up accept BIO - sockets not supported.\n");
-# endif
-    if (!acbio)
+    acbio = BIO_new(BIO_s_accept());
+    if (acbio == NULL
+        || BIO_set_bind_mode(acbio, BIO_BIND_REUSEADDR) < 0
+        || BIO_set_accept_port(acbio, port) < 0) {
+        BIO_printf(bio_err, "Error setting up accept BIO\n");
+        ERR_print_errors(bio_err);
         goto err;
+    }
+
     BIO_set_accept_bios(acbio, bufbio);
     bufbio = NULL;
-
     if (BIO_do_accept(acbio) <= 0) {
-        BIO_printf(bio_err, "Error setting up accept BIO\n");
+        BIO_printf(bio_err, "Error starting accept\n");
         ERR_print_errors(bio_err);
         goto err;
     }
