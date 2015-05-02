@@ -115,7 +115,7 @@ static int b64_new(BIO *bi)
 {
     BIO_B64_CTX *ctx;
 
-    ctx = OPENSSL_malloc(sizeof(BIO_B64_CTX));
+    ctx = OPENSSL_malloc(sizeof(*ctx));
     if (ctx == NULL)
         return (0);
 

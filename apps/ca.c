@@ -1970,7 +1970,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     row[DB_type][0] = 'V';
     row[DB_type][1] = '\0';
 
-    irow = app_malloc(sizeof(char *) * (DB_NUMBER + 1), "row space");
+    irow = app_malloc(sizeof(*irow) * (DB_NUMBER + 1), "row space");
     for (i = 0; i < DB_NUMBER; i++) {
         irow[i] = row[i];
         row[i] = NULL;
@@ -2207,7 +2207,7 @@ static int do_revoke(X509 *x509, CA_DB *db, int type, char *value)
         row[DB_type][0] = 'V';
         row[DB_type][1] = '\0';
 
-        irow = app_malloc(sizeof(char *) * (DB_NUMBER + 1), "row ptr");
+        irow = app_malloc(sizeof(*irow) * (DB_NUMBER + 1), "row ptr");
         for (i = 0; i < DB_NUMBER; i++) {
             irow[i] = row[i];
             row[i] = NULL;

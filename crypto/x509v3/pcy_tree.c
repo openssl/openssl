@@ -218,13 +218,13 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
 
     /* If we get this far initialize the tree */
 
-    tree = OPENSSL_malloc(sizeof(X509_POLICY_TREE));
+    tree = OPENSSL_malloc(sizeof(*tree));
 
     if (!tree)
         return 0;
 
     tree->flags = 0;
-    tree->levels = OPENSSL_malloc(sizeof(X509_POLICY_LEVEL) * n);
+    tree->levels = OPENSSL_malloc(sizeof(*tree->levels) * n);
     tree->nlevel = 0;
     tree->extra_data = NULL;
     tree->auth_policies = NULL;

@@ -244,7 +244,7 @@ static void *mem_list_start(STORE *s, STORE_OBJECT_TYPES type,
                             OPENSSL_ITEM attributes[],
                             OPENSSL_ITEM parameters[])
 {
-    struct mem_ctx_st *context = OPENSSL_malloc(sizeof(struct mem_ctx_st));
+    struct mem_ctx_st *context = OPENSSL_malloc(sizeof(*context));
     void *attribute_context = NULL;
     STORE_ATTR_INFO *attrs = NULL;
 

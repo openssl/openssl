@@ -609,9 +609,9 @@ int SSL_CONF_cmd_value_type(SSL_CONF_CTX *cctx, const char *cmd)
 
 SSL_CONF_CTX *SSL_CONF_CTX_new(void)
 {
-    SSL_CONF_CTX *ret;
+    SSL_CONF_CTX *ret = OPENSSL_malloc(sizeof(*ret));
     size_t i;
-    ret = OPENSSL_malloc(sizeof(SSL_CONF_CTX));
+
     if (ret) {
         ret->flags = 0;
         ret->prefix = NULL;

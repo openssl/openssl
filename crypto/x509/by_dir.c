@@ -148,7 +148,7 @@ static int new_dir(X509_LOOKUP *lu)
 {
     BY_DIR *a;
 
-    if ((a = OPENSSL_malloc(sizeof(BY_DIR))) == NULL)
+    if ((a = OPENSSL_malloc(sizeof(*a))) == NULL)
         return (0);
     if ((a->buffer = BUF_MEM_new()) == NULL) {
         OPENSSL_free(a);
@@ -226,7 +226,7 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
                     return 0;
                 }
             }
-            ent = OPENSSL_malloc(sizeof(BY_DIR_ENTRY));
+            ent = OPENSSL_malloc(sizeof(*ent));
             if (!ent)
                 return 0;
             ent->dir_type = type;
@@ -396,7 +396,7 @@ static int get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
                     hent = sk_BY_DIR_HASH_value(ent->hashes, idx);
             }
             if (!hent) {
-                hent = OPENSSL_malloc(sizeof(BY_DIR_HASH));
+                hent = OPENSSL_malloc(sizeof(*hent));
                 if (hent == NULL) {
                     CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
                     X509err(X509_F_GET_CERT_BY_SUBJECT, ERR_R_MALLOC_FAILURE);

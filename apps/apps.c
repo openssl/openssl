@@ -180,7 +180,7 @@ int chopup_args(ARGS *arg, char *buf)
     arg->argc = 0;
     if (arg->size == 0) {
         arg->size = 20;
-        arg->argv = app_malloc(sizeof(char *) * arg->size, "argv space");
+        arg->argv = app_malloc(sizeof(*arg->argv) * arg->size, "argv space");
         if (arg->argv == NULL)
             return 0;
     }
@@ -195,7 +195,8 @@ int chopup_args(ARGS *arg, char *buf)
         /* The start of something good :-) */
         if (arg->argc >= arg->size) {
             arg->size += 20;
-            arg->argv = OPENSSL_realloc(arg->argv, sizeof(char *) * arg->size);
+            arg->argv = OPENSSL_realloc(arg->argv,
+                                        sizeof(*arg->argv) * arg->size);
             if (arg->argv == NULL)
                 return 0;
         }
@@ -1585,7 +1586,7 @@ CA_DB *load_index(char *dbfile, DB_ATTR *db_attr)
         }
     }
 
-    retdb = app_malloc(sizeof *retdb, "new DB");
+    retdb = app_malloc(sizeof(*retdb), "new DB");
     retdb->db = tmpdb;
     tmpdb = NULL;
     if (db_attr)
@@ -2364,7 +2365,7 @@ static int WIN32_rename(const char *from, const char *to)
     } else {                    /* UNICODE path */
 
         size_t i, flen = strlen(from) + 1, tlen = strlen(to) + 1;
-        tfrom = (TCHAR *)malloc(sizeof(TCHAR) * (flen + tlen));
+        tfrom = malloc(*sizeof(*tfrom) * (flen + tlen));
         if (tfrom == NULL)
             goto err;
         tto = tfrom + flen;

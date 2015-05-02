@@ -2211,9 +2211,8 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
 
 X509_STORE_CTX *X509_STORE_CTX_new(void)
 {
-    X509_STORE_CTX *ctx;
+    X509_STORE_CTX *ctx = OPENSSL_malloc(sizeof(*ctx));
 
-    ctx = OPENSSL_malloc(sizeof(X509_STORE_CTX));
     if (!ctx) {
         X509err(X509_F_X509_STORE_CTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;

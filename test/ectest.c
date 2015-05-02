@@ -1359,9 +1359,7 @@ static void internal_curve_test(void)
     int ok = 1;
 
     crv_len = EC_get_builtin_curves(NULL, 0);
-
-    curves = OPENSSL_malloc(sizeof(EC_builtin_curve) * crv_len);
-
+    curves = OPENSSL_malloc(sizeof(*curves) * crv_len);
     if (curves == NULL)
         return;
 

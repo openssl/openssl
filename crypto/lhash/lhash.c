@@ -117,9 +117,9 @@ _LHASH *lh_new(LHASH_HASH_FN_TYPE h, LHASH_COMP_FN_TYPE c)
     _LHASH *ret;
     int i;
 
-    if ((ret = OPENSSL_malloc(sizeof(_LHASH))) == NULL)
+    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
         goto err0;
-    if ((ret->b = OPENSSL_malloc(sizeof(LHASH_NODE *) * MIN_NODES)) == NULL)
+    if ((ret->b = OPENSSL_malloc(sizeof(*ret->b) * MIN_NODES)) == NULL)
         goto err1;
     for (i = 0; i < MIN_NODES; i++)
         ret->b[i] = NULL;
@@ -188,7 +188,7 @@ void *lh_insert(_LHASH *lh, void *data)
     rn = getrn(lh, data, &hash);
 
     if (*rn == NULL) {
-        if ((nn = OPENSSL_malloc(sizeof(LHASH_NODE))) == NULL) {
+        if ((nn = OPENSSL_malloc(sizeof(*nn))) == NULL) {
             lh->error++;
             return (NULL);
         }

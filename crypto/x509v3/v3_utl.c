@@ -88,7 +88,7 @@ int X509V3_add_value(const char *name, const char *value,
         goto err;
     if (value && !(tvalue = BUF_strdup(value)))
         goto err;
-    if (!(vtmp = OPENSSL_malloc(sizeof(CONF_VALUE))))
+    if (!(vtmp = OPENSSL_malloc(sizeof(*vtmp))))
         goto err;
     if (!*extlist && !(*extlist = sk_CONF_VALUE_new_null()))
         goto err;

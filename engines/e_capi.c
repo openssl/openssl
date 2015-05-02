@@ -1441,9 +1441,9 @@ static PCCERT_CONTEXT capi_find_cert(CAPI_CTX * ctx, const char *id,
 static CAPI_KEY *capi_get_key(CAPI_CTX * ctx, const TCHAR *contname,
                               TCHAR *provname, DWORD ptype, DWORD keyspec)
 {
-    CAPI_KEY *key;
     DWORD dwFlags = 0;
-    key = OPENSSL_malloc(sizeof(CAPI_KEY));
+    CAPI_KEY *key = OPENSSL_malloc(sizeof(*key));
+
     if (key == NULL)
         return NULL;
     if (sizeof(TCHAR) == sizeof(char))
@@ -1573,8 +1573,8 @@ void capi_free_key(CAPI_KEY * key)
 
 static CAPI_CTX *capi_ctx_new()
 {
-    CAPI_CTX *ctx;
-    ctx = OPENSSL_malloc(sizeof(CAPI_CTX));
+    CAPI_CTX *ctx = OPENSSL_malloc(sizeof(*ctx));
+
     if (!ctx) {
         CAPIerr(CAPI_F_CAPI_CTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;

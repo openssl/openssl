@@ -230,7 +230,7 @@ static int vms_load(DSO *dso)
         goto err;
     }
 
-    p = DSO_MALLOC(sizeof(DSO_VMS_INTERNAL));
+    p = DSO_MALLOC(sizeof(*p));
     if (p == NULL) {
         DSOerr(DSO_F_VMS_LOAD, ERR_R_MALLOC_FAILURE);
         goto err;

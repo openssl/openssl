@@ -318,7 +318,7 @@ static EX_CLASS_ITEM *def_get_class(int class_index)
     CRYPTO_w_lock(CRYPTO_LOCK_EX_DATA);
     p = lh_EX_CLASS_ITEM_retrieve(ex_data, &d);
     if (!p) {
-        gen = OPENSSL_malloc(sizeof(EX_CLASS_ITEM));
+        gen = OPENSSL_malloc(sizeof(*gen));
         if (gen) {
             gen->class_index = class_index;
             gen->meth_num = 0;
@@ -350,7 +350,7 @@ static int def_add_index(EX_CLASS_ITEM *item, long argl, void *argp,
                          CRYPTO_EX_free *free_func)
 {
     int toret = -1;
-    CRYPTO_EX_DATA_FUNCS *a = OPENSSL_malloc(sizeof(CRYPTO_EX_DATA_FUNCS));
+    CRYPTO_EX_DATA_FUNCS *a = OPENSSL_malloc(sizeof(*a));
     if (!a) {
         CRYPTOerr(CRYPTO_F_DEF_ADD_INDEX, ERR_R_MALLOC_FAILURE);
         return -1;

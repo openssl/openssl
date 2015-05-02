@@ -318,9 +318,7 @@ int test_builtin(BIO *out)
 
     /* get a list of all internal curves */
     crv_len = EC_get_builtin_curves(NULL, 0);
-
-    curves = OPENSSL_malloc(sizeof(EC_builtin_curve) * crv_len);
-
+    curves = OPENSSL_malloc(sizeof(*curves) * crv_len);
     if (curves == NULL) {
         BIO_printf(out, "malloc error\n");
         goto builtin_err;

@@ -455,8 +455,8 @@ static void build_SYS_str_reasons(void)
             char (*dest)[LEN_SYS_STR_REASON] = &(strerror_tab[i - 1]);
             char *src = strerror(i);
             if (src != NULL) {
-                strncpy(*dest, src, sizeof *dest);
-                (*dest)[sizeof *dest - 1] = '\0';
+                strncpy(*dest, src, sizeof(*dest));
+                (*dest)[sizeof(*dest) - 1] = '\0';
                 str->string = *dest;
             }
         }
@@ -882,7 +882,7 @@ ERR_STATE *ERR_get_state(void)
 
     /* ret == the error state, if NULL, make a new one */
     if (ret == NULL) {
-        ret = OPENSSL_malloc(sizeof(ERR_STATE));
+        ret = OPENSSL_malloc(sizeof(*ret));
         if (ret == NULL)
             return (&fallback);
         CRYPTO_THREADID_cpy(&ret->tid, &tid);

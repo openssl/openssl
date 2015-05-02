@@ -133,8 +133,8 @@ IMPLEMENT_ASN1_DUP_FUNCTION(X509_NAME)
 
 static int x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it)
 {
-    X509_NAME *ret = NULL;
-    ret = OPENSSL_malloc(sizeof(X509_NAME));
+    X509_NAME *ret = OPENSSL_malloc(sizeof(*ret));
+
     if (!ret)
         goto memerr;
     if ((ret->entries = sk_X509_NAME_ENTRY_new_null()) == NULL)

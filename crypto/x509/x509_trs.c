@@ -188,7 +188,7 @@ int X509_TRUST_add(int id, int flags, int (*ck) (X509_TRUST *, X509 *, int),
     idx = X509_TRUST_get_by_id(id);
     /* Need a new entry */
     if (idx == -1) {
-        if (!(trtmp = OPENSSL_malloc(sizeof(X509_TRUST)))) {
+        if (!(trtmp = OPENSSL_malloc(sizeof(*trtmp)))) {
             X509err(X509_F_X509_TRUST_ADD, ERR_R_MALLOC_FAILURE);
             return 0;
         }

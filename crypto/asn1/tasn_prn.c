@@ -85,7 +85,7 @@ ASN1_PCTX default_pctx = {
 ASN1_PCTX *ASN1_PCTX_new(void)
 {
     ASN1_PCTX *ret;
-    ret = OPENSSL_malloc(sizeof(ASN1_PCTX));
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         ASN1err(ASN1_F_ASN1_PCTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;

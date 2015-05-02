@@ -113,8 +113,8 @@ static int parse_http_line1(char *line);
 
 OCSP_REQ_CTX *OCSP_REQ_CTX_new(BIO *io, int maxline)
 {
-    OCSP_REQ_CTX *rctx;
-    rctx = OPENSSL_malloc(sizeof(OCSP_REQ_CTX));
+    OCSP_REQ_CTX *rctx = OPENSSL_malloc(sizeof(*rctx));
+
     if (!rctx)
         return NULL;
     rctx->state = OHS_ERROR;

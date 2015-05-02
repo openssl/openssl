@@ -284,7 +284,7 @@ EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_new(int id, int flags,
                                         const char *pem_str, const char *info)
 {
     EVP_PKEY_ASN1_METHOD *ameth;
-    ameth = OPENSSL_malloc(sizeof(EVP_PKEY_ASN1_METHOD));
+    ameth = OPENSSL_malloc(sizeof(*ameth));
     if (!ameth)
         return NULL;
 

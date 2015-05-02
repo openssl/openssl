@@ -76,7 +76,7 @@ void EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *ctx)
 
 EVP_CIPHER_CTX *EVP_CIPHER_CTX_new(void)
 {
-    EVP_CIPHER_CTX *ctx = OPENSSL_malloc(sizeof *ctx);
+    EVP_CIPHER_CTX *ctx = OPENSSL_malloc(sizeof(*ctx));
     if (ctx)
         EVP_CIPHER_CTX_init(ctx);
     return ctx;
@@ -619,7 +619,7 @@ int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
 #endif
 
     EVP_CIPHER_CTX_cleanup(out);
-    memcpy(out, in, sizeof *out);
+    memcpy(out, in, sizeof(*out));
 
     if (in->cipher_data && in->cipher->ctx_size) {
         out->cipher_data = OPENSSL_malloc(in->cipher->ctx_size);

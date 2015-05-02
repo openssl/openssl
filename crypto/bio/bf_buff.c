@@ -91,9 +91,8 @@ BIO_METHOD *BIO_f_buffer(void)
 
 static int buffer_new(BIO *bi)
 {
-    BIO_F_BUFFER_CTX *ctx;
+    BIO_F_BUFFER_CTX *ctx = OPENSSL_malloc(sizeof(*ctx));
 
-    ctx = OPENSSL_malloc(sizeof(BIO_F_BUFFER_CTX));
     if (ctx == NULL)
         return (0);
     ctx->ibuf = OPENSSL_malloc(DEFAULT_BUFFER_SIZE);

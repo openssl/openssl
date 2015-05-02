@@ -1408,7 +1408,7 @@ static EC_PRE_COMP *ecp_nistz256_pre_comp_new(const EC_GROUP *group)
     if (!group)
         return NULL;
 
-    ret = OPENSSL_malloc(sizeof(EC_PRE_COMP));
+    ret = OPENSSL_malloc(sizeof(*ret));
 
     if (!ret) {
         ECerr(EC_F_ECP_NISTZ256_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
@@ -1463,7 +1463,7 @@ static void ecp_nistz256_pre_comp_clear_free(void *pre_)
 
     OPENSSL_clear_free(pre->precomp,
                        32 * sizeof(unsigned char) * (1 << pre->w) * 2 * 37);
-    OPENSSL_clear_free(pre, sizeof *pre);
+    OPENSSL_clear_free(pre, sizeof(*pre));
 }
 
 static int ecp_nistz256_window_have_precompute_mult(const EC_GROUP *group)

@@ -786,7 +786,7 @@ static EVP_PKEY *hwcrhk_load_privkey(ENGINE *eng, const char *key_id,
         goto err;
     }
 #  ifndef OPENSSL_NO_RSA
-    hptr = OPENSSL_malloc(sizeof(HWCryptoHook_RSAKeyHandle));
+    hptr = OPENSSL_malloc(sizeof(*hptr));
     if (!hptr) {
         HWCRHKerr(HWCRHK_F_HWCRHK_LOAD_PRIVKEY, ERR_R_MALLOC_FAILURE);
         goto err;

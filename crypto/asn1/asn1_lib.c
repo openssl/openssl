@@ -349,7 +349,7 @@ ASN1_STRING *ASN1_STRING_type_new(int type)
 {
     ASN1_STRING *ret;
 
-    ret = OPENSSL_malloc(sizeof(ASN1_STRING));
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         ASN1err(ASN1_F_ASN1_STRING_TYPE_NEW, ERR_R_MALLOC_FAILURE);
         return (NULL);

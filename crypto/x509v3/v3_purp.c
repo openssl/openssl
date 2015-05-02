@@ -209,7 +209,7 @@ int X509_PURPOSE_add(int id, int trust, int flags,
     idx = X509_PURPOSE_get_by_id(id);
     /* Need a new entry */
     if (idx == -1) {
-        if (!(ptmp = OPENSSL_malloc(sizeof(X509_PURPOSE)))) {
+        if (!(ptmp = OPENSSL_malloc(sizeof(*ptmp)))) {
             X509V3err(X509V3_F_X509_PURPOSE_ADD, ERR_R_MALLOC_FAILURE);
             return 0;
         }

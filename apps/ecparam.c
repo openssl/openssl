@@ -232,7 +232,7 @@ int ecparam_main(int argc, char **argv)
         size_t crv_len = EC_get_builtin_curves(NULL, 0);
         size_t n;
 
-        curves = app_malloc((int)(sizeof *curves * crv_len), "list curves");
+        curves = app_malloc((int)sizeof(*curves) * crv_len, "list curves");
         if (!EC_get_builtin_curves(curves, crv_len)) {
             OPENSSL_free(curves);
             goto end;

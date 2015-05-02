@@ -101,9 +101,8 @@ BIO_METHOD *BIO_f_ssl(void)
 
 static int ssl_new(BIO *bi)
 {
-    BIO_SSL *bs;
+    BIO_SSL *bs = OPENSSL_malloc(sizeof(*bs));
 
-    bs = OPENSSL_malloc(sizeof(BIO_SSL));
     if (bs == NULL) {
         BIOerr(BIO_F_SSL_NEW, ERR_R_MALLOC_FAILURE);
         return (0);

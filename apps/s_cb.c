@@ -1173,7 +1173,7 @@ void ssl_ctx_set_excert(SSL_CTX *ctx, SSL_EXCERT *exc)
 
 static int ssl_excert_prepend(SSL_EXCERT **pexc)
 {
-    SSL_EXCERT *exc = app_malloc(sizeof *exc, "prepend cert");
+    SSL_EXCERT *exc = app_malloc(sizeof(*exc), "prepend cert");
 
     exc->certfile = NULL;
     exc->keyfile = NULL;

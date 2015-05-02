@@ -170,7 +170,7 @@ static hm_fragment *dtls1_hm_fragment_new(unsigned long frag_len,
     unsigned char *buf = NULL;
     unsigned char *bitmask = NULL;
 
-    frag = OPENSSL_malloc(sizeof(hm_fragment));
+    frag = OPENSSL_malloc(sizeof(*frag));
     if (frag == NULL)
         return NULL;
 

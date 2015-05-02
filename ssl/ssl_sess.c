@@ -193,7 +193,7 @@ SSL_SESSION *SSL_SESSION_new(void)
 {
     SSL_SESSION *ss;
 
-    ss = OPENSSL_malloc(sizeof(SSL_SESSION));
+    ss = OPENSSL_malloc(sizeof(*ss));
     if (ss == NULL) {
         SSLerr(SSL_F_SSL_SESSION_NEW, ERR_R_MALLOC_FAILURE);
         return (0);

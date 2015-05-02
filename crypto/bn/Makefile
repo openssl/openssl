@@ -215,7 +215,7 @@ bn_depr.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 bn_depr.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
 bn_depr.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 bn_depr.o: ../cryptlib.h ../include/internal/bn_int.h bn_depr.c bn_lcl.h
-bn_dh.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+bn_dh.o: ../../e_os.h ../../include/openssl/bn.h ../../include/openssl/crypto.h
 bn_dh.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 bn_dh.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 bn_dh.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
@@ -391,12 +391,12 @@ bn_sqrt.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 bn_sqrt.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 bn_sqrt.o: ../../include/openssl/symhacks.h ../cryptlib.h
 bn_sqrt.o: ../include/internal/bn_int.h bn_lcl.h bn_sqrt.c
-bn_srp.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
-bn_srp.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
-bn_srp.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bn_srp.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bn_srp.o: ../../include/openssl/symhacks.h ../include/internal/bn_int.h
-bn_srp.o: bn_lcl.h bn_srp.c
+bn_srp.o: ../../e_os.h ../../include/openssl/bn.h
+bn_srp.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+bn_srp.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+bn_srp.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
+bn_srp.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+bn_srp.o: ../include/internal/bn_int.h bn_lcl.h bn_srp.c
 bn_word.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
 bn_word.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 bn_word.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h

@@ -203,7 +203,7 @@ static STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a,
             goto err;
         listlen -= sctlen;
 
-        sct = OPENSSL_malloc(sizeof(SCT));
+        sct = OPENSSL_malloc(sizeof(*sct));
         if (!sct)
             goto err;
         if (!sk_SCT_push(sk, sct)) {

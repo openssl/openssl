@@ -114,7 +114,7 @@ void SSLStateMachine_print_error(SSLStateMachine * pMachine,
 SSLStateMachine *SSLStateMachine_new(const char *szCertificateFile,
                                      const char *szKeyFile)
 {
-    SSLStateMachine *pMachine = malloc(sizeof *pMachine);
+    SSLStateMachine *pMachine = malloc(sizeof(*pMachine));
     int n;
 
     die_unless(pMachine);

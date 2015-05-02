@@ -65,9 +65,8 @@
 
 BIO *BIO_new(BIO_METHOD *method)
 {
-    BIO *ret = NULL;
+    BIO *ret = OPENSSL_malloc(sizeof(*ret));
 
-    ret = OPENSSL_malloc(sizeof(BIO));
     if (ret == NULL) {
         BIOerr(BIO_F_BIO_NEW, ERR_R_MALLOC_FAILURE);
         return (NULL);

@@ -471,7 +471,7 @@ static int ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
             ASRange *r;
             switch (a->type) {
             case ASIdOrRange_id:
-                if ((r = OPENSSL_malloc(sizeof(ASRange))) == NULL) {
+                if ((r = OPENSSL_malloc(sizeof(*r))) == NULL) {
                     X509V3err(X509V3_F_ASIDENTIFIERCHOICE_CANONIZE,
                               ERR_R_MALLOC_FAILURE);
                     goto done;

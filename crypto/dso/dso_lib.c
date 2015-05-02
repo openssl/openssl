@@ -104,7 +104,7 @@ DSO *DSO_new_method(DSO_METHOD *meth)
          */
         default_DSO_meth = DSO_METHOD_openssl();
     }
-    ret = OPENSSL_malloc(sizeof(DSO));
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         DSOerr(DSO_F_DSO_NEW_METHOD, ERR_R_MALLOC_FAILURE);
         return (NULL);

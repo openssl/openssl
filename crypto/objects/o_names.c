@@ -83,7 +83,7 @@ int OBJ_NAME_new_index(unsigned long (*hash_func) (const char *),
     names_type_num++;
     for (i = sk_NAME_FUNCS_num(name_funcs_stack); i < names_type_num; i++) {
         MemCheck_off();
-        name_funcs = OPENSSL_malloc(sizeof(NAME_FUNCS));
+        name_funcs = OPENSSL_malloc(sizeof(*name_funcs));
         MemCheck_on();
         if (!name_funcs) {
             OBJerr(OBJ_F_OBJ_NAME_NEW_INDEX, ERR_R_MALLOC_FAILURE);
@@ -187,7 +187,7 @@ int OBJ_NAME_add(const char *name, int type, const char *data)
     alias = type & OBJ_NAME_ALIAS;
     type &= ~OBJ_NAME_ALIAS;
 
-    onp = OPENSSL_malloc(sizeof(OBJ_NAME));
+    onp = OPENSSL_malloc(sizeof(*onp));
     if (onp == NULL) {
         /* ERROR */
         return (0);
@@ -310,13 +310,13 @@ void OBJ_NAME_do_all_sorted(int type,
 
     d.type = type;
     d.names =
-        OPENSSL_malloc(lh_OBJ_NAME_num_items(names_lh) * sizeof *d.names);
+        OPENSSL_malloc(sizeof(*d.names) * lh_OBJ_NAME_num_items(names_lh));
     /* Really should return an error if !d.names...but its a void function! */
     if (d.names) {
         d.n = 0;
         OBJ_NAME_do_all(type, do_all_sorted_fn, &d);
 
-        qsort((void *)d.names, d.n, sizeof *d.names, do_all_sorted_cmp);
+        qsort((void *)d.names, d.n, sizeof(*d.names), do_all_sorted_cmp);
 
         for (n = 0; n < d.n; ++n)
             fn(d.names[n], arg);
