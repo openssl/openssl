@@ -57,6 +57,24 @@
  *
  */
 
+/*
+ * This structure holds all parameters associated with a verify operation by
+ * including an X509_VERIFY_PARAM structure in related structures the
+ * parameters used can be customized
+ */
+
+struct X509_VERIFY_PARAM_st {
+    char *name;
+    time_t check_time;          /* Time to use */
+    unsigned long inh_flags;    /* Inheritance flags */
+    unsigned long flags;        /* Various verify flags */
+    int purpose;                /* purpose to check untrusted certificates */
+    int trust;                  /* trust setting to check */
+    int depth;                  /* Verify depth */
+    STACK_OF(ASN1_OBJECT) *policies; /* Permissible policies */
+    X509_VERIFY_PARAM_ID *id;   /* opaque ID data */
+};
+
 /* internal only structure to hold additional X509_VERIFY_PARAM data */
 
 struct X509_VERIFY_PARAM_ID_st {
