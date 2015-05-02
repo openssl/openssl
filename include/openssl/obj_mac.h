@@ -2354,7 +2354,7 @@
 #define OBJ_delta_crl           OBJ_id_ce,27L
 
 #define SN_issuing_distribution_point           "issuingDistributionPoint"
-#define LN_issuing_distribution_point           "X509v3 Issuing Distrubution Point"
+#define LN_issuing_distribution_point           "X509v3 Issuing Distribution Point"
 #define NID_issuing_distribution_point          770
 #define OBJ_issuing_distribution_point          OBJ_id_ce,28L
 
