@@ -242,7 +242,7 @@ static int ssl_cipher_info_find(const ssl_cipher_table * table,
 }
 
 #define ssl_cipher_info_lookup(table, x) \
-    ssl_cipher_info_find(table, sizeof(table)/sizeof(*table), x)
+    ssl_cipher_info_find(table, OSSL_NELEM(table), x)
 
 /*
  * PKEY_TYPE for GOST89MAC is known in advance, but, because implementation
@@ -1531,7 +1531,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
      * groups of cipher_aliases added together in one list (otherwise
      * we would be happy with just the cipher_aliases table).
      */
-    num_of_group_aliases = sizeof(cipher_aliases) / sizeof(SSL_CIPHER);
+    num_of_group_aliases = OSSL_NELEM(cipher_aliases);
     num_of_alias_max = num_of_ciphers + num_of_group_aliases + 1;
     ca_list = OPENSSL_malloc(sizeof(SSL_CIPHER *) * num_of_alias_max);
     if (ca_list == NULL) {

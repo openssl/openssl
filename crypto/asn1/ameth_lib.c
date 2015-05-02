@@ -107,8 +107,7 @@ static STACK_OF(EVP_PKEY_ASN1_METHOD) *app_methods = NULL;
 void main()
 {
     int i;
-    for (i = 0;
-         i < sizeof(standard_methods) / sizeof(EVP_PKEY_ASN1_METHOD *); i++)
+    for (i = 0; i < OSSL_NELEM(standard_methods); i++)
         fprintf(stderr, "Number %d id=%d (%s)\n", i,
                 standard_methods[i]->pkey_id,
                 OBJ_nid2sn(standard_methods[i]->pkey_id));
@@ -129,7 +128,7 @@ IMPLEMENT_OBJ_BSEARCH_CMP_FN(const EVP_PKEY_ASN1_METHOD *,
 
 int EVP_PKEY_asn1_get_count(void)
 {
-    int num = sizeof(standard_methods) / sizeof(EVP_PKEY_ASN1_METHOD *);
+    int num = OSSL_NELEM(standard_methods);
     if (app_methods)
         num += sk_EVP_PKEY_ASN1_METHOD_num(app_methods);
     return num;
@@ -137,7 +136,7 @@ int EVP_PKEY_asn1_get_count(void)
 
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx)
 {
-    int num = sizeof(standard_methods) / sizeof(EVP_PKEY_ASN1_METHOD *);
+    int num = OSSL_NELEM(standard_methods);
     if (idx < 0)
         return NULL;
     if (idx < num)
@@ -157,8 +156,7 @@ static const EVP_PKEY_ASN1_METHOD *pkey_asn1_find(int type)
         if (idx >= 0)
             return sk_EVP_PKEY_ASN1_METHOD_value(app_methods, idx);
     }
-    ret = OBJ_bsearch_ameth(&t, standard_methods, sizeof(standard_methods)
-                            / sizeof(EVP_PKEY_ASN1_METHOD *));
+    ret = OBJ_bsearch_ameth(&t, standard_methods, OSSL_NELEM(standard_methods));
     if (!ret || !*ret)
         return NULL;
     return *ret;

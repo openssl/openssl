@@ -72,7 +72,7 @@ main()
 {
     int i, prev = -1, bad = 0;
     X509V3_EXT_METHOD **tmp;
-    i = sizeof(standard_exts) / sizeof(X509V3_EXT_METHOD *);
+    i = OSSL_NELEM(standard_exts);
     if (i != STANDARD_EXTENSION_COUNT)
         fprintf(stderr, "Extension number invalid expecting %d\n", i);
     tmp = standard_exts;

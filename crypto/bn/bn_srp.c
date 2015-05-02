@@ -1,4 +1,5 @@
 #include "bn_lcl.h"
+#include "e_os.h"
 
 #ifndef OPENSSL_NO_SRP
 
@@ -37,8 +38,8 @@ static const BN_ULONG bn_group_1024_value[] = {
 
 const BIGNUM bn_group_1024 = {
     (BN_ULONG *)bn_group_1024_value,
-    (sizeof bn_group_1024_value) / sizeof(BN_ULONG),
-    (sizeof bn_group_1024_value) / sizeof(BN_ULONG),
+    OSSL_NELEM(bn_group_1024_value),
+    OSSL_NELEM(bn_group_1024_value),
     0,
     BN_FLG_STATIC_DATA
 };
@@ -72,8 +73,8 @@ static const BN_ULONG bn_group_1536_value[] = {
 
 const BIGNUM bn_group_1536 = {
     (BN_ULONG *)bn_group_1536_value,
-    (sizeof bn_group_1536_value) / sizeof(BN_ULONG),
-    (sizeof bn_group_1536_value) / sizeof(BN_ULONG),
+    OSSL_NELEM(bn_group_1536_value),
+    OSSL_NELEM(bn_group_1536_value),
     0,
     BN_FLG_STATIC_DATA
 };
@@ -115,8 +116,8 @@ static const BN_ULONG bn_group_2048_value[] = {
 
 const BIGNUM bn_group_2048 = {
     (BN_ULONG *)bn_group_2048_value,
-    (sizeof bn_group_2048_value) / sizeof(BN_ULONG),
-    (sizeof bn_group_2048_value) / sizeof(BN_ULONG),
+    OSSL_NELEM(bn_group_2048_value),
+    OSSL_NELEM(bn_group_2048_value),
     0,
     BN_FLG_STATIC_DATA
 };
@@ -174,8 +175,8 @@ static const BN_ULONG bn_group_3072_value[] = {
 
 const BIGNUM bn_group_3072 = {
     (BN_ULONG *)bn_group_3072_value,
-    (sizeof bn_group_3072_value) / sizeof(BN_ULONG),
-    (sizeof bn_group_3072_value) / sizeof(BN_ULONG),
+    OSSL_NELEM(bn_group_3072_value),
+    OSSL_NELEM(bn_group_3072_value),
     0,
     BN_FLG_STATIC_DATA
 };
@@ -249,8 +250,8 @@ static const BN_ULONG bn_group_4096_value[] = {
 
 const BIGNUM bn_group_4096 = {
     (BN_ULONG *)bn_group_4096_value,
-    (sizeof bn_group_4096_value) / sizeof(BN_ULONG),
-    (sizeof bn_group_4096_value) / sizeof(BN_ULONG),
+    OSSL_NELEM(bn_group_4096_value),
+    OSSL_NELEM(bn_group_4096_value),
     0,
     BN_FLG_STATIC_DATA
 };
@@ -356,8 +357,8 @@ static const BN_ULONG bn_group_6144_value[] = {
 
 const BIGNUM bn_group_6144 = {
     (BN_ULONG *)bn_group_6144_value,
-    (sizeof bn_group_6144_value) / sizeof(BN_ULONG),
-    (sizeof bn_group_6144_value) / sizeof(BN_ULONG),
+    OSSL_NELEM(bn_group_6144_value),
+    OSSL_NELEM(bn_group_6144_value),
     0,
     BN_FLG_STATIC_DATA
 };
@@ -495,8 +496,8 @@ static const BN_ULONG bn_group_8192_value[] = {
 
 const BIGNUM bn_group_8192 = {
     (BN_ULONG *)bn_group_8192_value,
-    (sizeof bn_group_8192_value) / sizeof(BN_ULONG),
-    (sizeof bn_group_8192_value) / sizeof(BN_ULONG),
+    OSSL_NELEM(bn_group_8192_value),
+    OSSL_NELEM(bn_group_8192_value),
     0,
     BN_FLG_STATIC_DATA
 };

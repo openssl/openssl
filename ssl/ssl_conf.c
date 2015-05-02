@@ -220,7 +220,7 @@ static int ctrl_str_option(SSL_CONF_CTX *cctx, const char *cmd)
 #endif
     };
     cctx->tbl = ssl_option_single;
-    cctx->ntbl = sizeof(ssl_option_single) / sizeof(ssl_flag_tbl);
+    cctx->ntbl = OSSL_NELEM(ssl_option_single);
     return ssl_set_option_list(cmd, -1, cctx);
 }
 
@@ -335,7 +335,7 @@ static int cmd_Protocol(SSL_CONF_CTX *cctx, const char *value)
     if (!(cctx->flags & SSL_CONF_FLAG_FILE))
         return -2;
     cctx->tbl = ssl_protocol_list;
-    cctx->ntbl = sizeof(ssl_protocol_list) / sizeof(ssl_flag_tbl);
+    cctx->ntbl = OSSL_NELEM(ssl_protocol_list);
     return CONF_parse_list(value, ',', 1, ssl_set_option_list, cctx);
 }
 
@@ -360,7 +360,7 @@ static int cmd_Options(SSL_CONF_CTX *cctx, const char *value)
     if (value == NULL)
         return -3;
     cctx->tbl = ssl_option_list;
-    cctx->ntbl = sizeof(ssl_option_list) / sizeof(ssl_flag_tbl);
+    cctx->ntbl = OSSL_NELEM(ssl_option_list);
     return CONF_parse_list(value, ',', 1, ssl_set_option_list, cctx);
 }
 
@@ -508,8 +508,7 @@ static const ssl_conf_cmd_tbl *ssl_conf_cmd_lookup(SSL_CONF_CTX *cctx,
         return NULL;
 
     /* Look for matching parameter name in table */
-    for (i = 0, t = ssl_conf_cmds;
-         i < sizeof(ssl_conf_cmds) / sizeof(ssl_conf_cmd_tbl); i++, t++) {
+    for (i = 0, t = ssl_conf_cmds; i < OSSL_NELEM(ssl_conf_cmds); i++, t++) {
         if (cctx->flags & SSL_CONF_FLAG_CMDLINE) {
             if (t->str_cmdline && !strcmp(t->str_cmdline, cmd))
                 return t;

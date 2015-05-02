@@ -689,6 +689,8 @@ struct servent *getservbyname(const char *name, const char *proto);
 #  endif
 # endif
 
+#define OSSL_NELEM(x)    (sizeof(x)/sizeof(x[0]))
+
 #ifdef  __cplusplus
 }
 #endif

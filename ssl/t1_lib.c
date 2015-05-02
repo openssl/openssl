@@ -307,8 +307,7 @@ static const unsigned char suiteb_curves[] = {
 int tls1_ec_curve_id2nid(int curve_id)
 {
     /* ECC curves from RFC 4492 and RFC 7027 */
-    if ((curve_id < 1) || ((unsigned int)curve_id >
-                           sizeof(nid_list) / sizeof(nid_list[0])))
+    if ((curve_id < 1) || ((unsigned int)curve_id > OSSL_NELEM(nid_list)))
         return 0;
     return nid_list[curve_id - 1].nid;
 }
@@ -442,8 +441,7 @@ static int tls_curve_allowed(SSL *s, const unsigned char *curve, int op)
     const tls_curve_info *cinfo;
     if (curve[0])
         return 1;
-    if ((curve[1] < 1) || ((size_t)curve[1] >
-                           sizeof(nid_list) / sizeof(nid_list[0])))
+    if ((curve[1] < 1) || ((size_t)curve[1] > OSSL_NELEM(nid_list)))
         return 0;
     cinfo = &nid_list[curve[1] - 1];
 # ifdef OPENSSL_NO_EC2M
@@ -3172,8 +3170,7 @@ int tls12_get_sigandhash(unsigned char *p, const EVP_PKEY *pk,
     int sig_id, md_id;
     if (!md)
         return 0;
-    md_id = tls12_find_id(EVP_MD_type(md), tls12_md,
-                          sizeof(tls12_md) / sizeof(tls12_lookup));
+    md_id = tls12_find_id(EVP_MD_type(md), tls12_md, OSSL_NELEM(tls12_md));
     if (md_id == -1)
         return 0;
     sig_id = tls12_get_sigid(pk);
@@ -3186,8 +3183,7 @@ int tls12_get_sigandhash(unsigned char *p, const EVP_PKEY *pk,
 
 int tls12_get_sigid(const EVP_PKEY *pk)
 {
-    return tls12_find_id(pk->type, tls12_sig,
-                         sizeof(tls12_sig) / sizeof(tls12_lookup));
+    return tls12_find_id(pk->type, tls12_sig, OSSL_NELEM(tls12_sig));
 }
 
 typedef struct {
@@ -3213,7 +3209,7 @@ static const tls12_hash_info *tls12_get_hash_info(unsigned char hash_alg)
 {
     if (hash_alg == 0)
         return NULL;
-    if (hash_alg > sizeof(tls12_md_info) / sizeof(tls12_md_info[0]))
+    if (hash_alg > OSSL_NELEM(tls12_md_info))
         return NULL;
     return tls12_md_info + hash_alg - 1;
 }
@@ -3256,14 +3252,12 @@ static void tls1_lookup_sigalg(int *phash_nid, int *psign_nid,
     if (!phash_nid && !psign_nid && !psignhash_nid)
         return;
     if (phash_nid || psignhash_nid) {
-        hash_nid = tls12_find_nid(data[0], tls12_md,
-                                  sizeof(tls12_md) / sizeof(tls12_lookup));
+        hash_nid = tls12_find_nid(data[0], tls12_md, OSSL_NELEM(tls12_md));
         if (phash_nid)
             *phash_nid = hash_nid;
     }
     if (psign_nid || psignhash_nid) {
-        sign_nid = tls12_find_nid(data[1], tls12_sig,
-                                  sizeof(tls12_sig) / sizeof(tls12_lookup));
+        sign_nid = tls12_find_nid(data[1], tls12_sig, OSSL_NELEM(tls12_sig));
         if (psign_nid)
             *psign_nid = sign_nid;
     }
@@ -3806,10 +3800,8 @@ int tls1_set_sigalgs(CERT *c, const int *psig_nids, size_t salglen,
     if (sigalgs == NULL)
         return 0;
     for (i = 0, sptr = sigalgs; i < salglen; i += 2) {
-        rhash = tls12_find_id(*psig_nids++, tls12_md,
-                              sizeof(tls12_md) / sizeof(tls12_lookup));
-        rsign = tls12_find_id(*psig_nids++, tls12_sig,
-                              sizeof(tls12_sig) / sizeof(tls12_lookup));
+        rhash = tls12_find_id(*psig_nids++, tls12_md, OSSL_NELEM(tls12_md));
+        rsign = tls12_find_id(*psig_nids++, tls12_sig, OSSL_NELEM(tls12_sig));
 
         if (rhash == -1 || rsign == -1)
             goto err;
