@@ -176,7 +176,7 @@ static int ok_new(BIO *bi)
 {
     BIO_OK_CTX *ctx;
 
-    ctx = OPENSSL_malloc(sizeof(BIO_OK_CTX));
+    ctx = OPENSSL_malloc(sizeof(*ctx));
     if (ctx == NULL)
         return (0);
 

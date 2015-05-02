@@ -100,7 +100,7 @@ static EC_PRE_COMP *ec_pre_comp_new(const EC_GROUP *group)
     if (!group)
         return NULL;
 
-    ret = OPENSSL_malloc(sizeof(EC_PRE_COMP));
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (!ret) {
         ECerr(EC_F_EC_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
         return ret;
@@ -165,11 +165,11 @@ static void ec_pre_comp_clear_free(void *pre_)
 
         for (p = pre->points; *p != NULL; p++) {
             EC_POINT_clear_free(*p);
-            OPENSSL_cleanse(p, sizeof *p);
+            OPENSSL_cleanse(p, sizeof(*p));
         }
         OPENSSL_free(pre->points);
     }
-    OPENSSL_clear_free(pre, sizeof *pre);
+    OPENSSL_clear_free(pre, sizeof(*pre));
 }
 
 /*
@@ -659,7 +659,7 @@ int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     num = pre_points_per_block * numblocks; /* number of points to compute
                                              * and store */
 
-    points = OPENSSL_malloc(sizeof(EC_POINT *) * (num + 1));
+    points = OPENSSL_malloc(sizeof(*points) * (num + 1));
     if (!points) {
         ECerr(EC_F_EC_WNAF_PRECOMPUTE_MULT, ERR_R_MALLOC_FAILURE);
         goto err;

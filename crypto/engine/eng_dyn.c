@@ -202,8 +202,8 @@ static void dynamic_data_ctx_free_func(void *parent, void *ptr,
  */
 static int dynamic_set_data_ctx(ENGINE *e, dynamic_data_ctx **ctx)
 {
-    dynamic_data_ctx *c;
-    c = OPENSSL_malloc(sizeof(dynamic_data_ctx));
+    dynamic_data_ctx *c = OPENSSL_malloc(sizeof(*c));
+
     if (!c) {
         ENGINEerr(ENGINE_F_DYNAMIC_SET_DATA_CTX, ERR_R_MALLOC_FAILURE);
         return 0;

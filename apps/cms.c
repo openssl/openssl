@@ -570,7 +570,7 @@ int cms_main(int argc, char **argv)
             }
             if (key_param == NULL || key_param->idx != keyidx) {
                 cms_key_param *nparam;
-                nparam = app_malloc(sizeof *nparam, "key param buffer");
+                nparam = app_malloc(sizeof(*nparam), "key param buffer");
                 nparam->idx = keyidx;
                 if ((nparam->param = sk_OPENSSL_STRING_new_null()) == NULL)
                     goto end;

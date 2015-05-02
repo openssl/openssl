@@ -127,7 +127,7 @@ static int policy_cache_new(X509 *x)
     CERTIFICATEPOLICIES *ext_cpols = NULL;
     POLICY_MAPPINGS *ext_pmaps = NULL;
     int i;
-    cache = OPENSSL_malloc(sizeof(X509_POLICY_CACHE));
+    cache = OPENSSL_malloc(sizeof(*cache));
     if (!cache)
         return 0;
     cache->anyPolicy = NULL;

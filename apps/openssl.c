@@ -804,7 +804,7 @@ static LHASH_OF(FUNCTION) *prog_init(void)
 
     /* Sort alphabetically within category. For nicer help displays. */
     for (i = 0, f = functions; f->name != NULL; ++f, ++i) ;
-    qsort(functions, i, sizeof *functions, SortFnByName);
+    qsort(functions, i, sizeof(*functions), SortFnByName);
 
     if ((ret = lh_FUNCTION_new()) == NULL)
         return (NULL);

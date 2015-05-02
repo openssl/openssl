@@ -119,12 +119,12 @@
 
 void EVP_MD_CTX_init(EVP_MD_CTX *ctx)
 {
-    memset(ctx, '\0', sizeof *ctx);
+    memset(ctx, '\0', sizeof(*ctx));
 }
 
 EVP_MD_CTX *EVP_MD_CTX_create(void)
 {
-    EVP_MD_CTX *ctx = OPENSSL_malloc(sizeof *ctx);
+    EVP_MD_CTX *ctx = OPENSSL_malloc(sizeof(*ctx));
 
     if (ctx)
         EVP_MD_CTX_init(ctx);
@@ -281,7 +281,7 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
     } else
         tmp_buf = NULL;
     EVP_MD_CTX_cleanup(out);
-    memcpy(out, in, sizeof *out);
+    memcpy(out, in, sizeof(*out));
 
     if (in->md_data && out->digest->ctx_size) {
         if (tmp_buf)
@@ -360,7 +360,7 @@ int EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
          */
         ENGINE_finish(ctx->engine);
 #endif
-    memset(ctx, '\0', sizeof *ctx);
+    memset(ctx, '\0', sizeof(*ctx));
 
     return 1;
 }

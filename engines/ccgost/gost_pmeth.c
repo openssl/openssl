@@ -24,7 +24,8 @@ static int pkey_gost_init(EVP_PKEY_CTX *ctx)
 {
     struct gost_pmeth_data *data;
     EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(ctx);
-    data = OPENSSL_malloc(sizeof(struct gost_pmeth_data));
+
+    data = OPENSSL_malloc(sizeof(*data));
     if (!data)
         return 0;
     memset(data, 0, sizeof(struct gost_pmeth_data));
@@ -406,8 +407,8 @@ static int pkey_gost_derive_init(EVP_PKEY_CTX *ctx)
 /* -------- PKEY_METHOD for GOST MAC algorithm --------------------*/
 static int pkey_gost_mac_init(EVP_PKEY_CTX *ctx)
 {
-    struct gost_mac_pmeth_data *data;
-    data = OPENSSL_malloc(sizeof(struct gost_mac_pmeth_data));
+    struct gost_mac_pmeth_data *data = OPENSSL_malloc(sizeof(*data));
+
     if (!data)
         return 0;
     memset(data, 0, sizeof(struct gost_mac_pmeth_data));

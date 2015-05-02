@@ -117,7 +117,7 @@ static ECDH_DATA *ECDH_DATA_new_method(ENGINE *engine)
 {
     ECDH_DATA *ret;
 
-    ret = OPENSSL_malloc(sizeof(ECDH_DATA));
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         ECDHerr(ECDH_F_ECDH_DATA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
         return (NULL);

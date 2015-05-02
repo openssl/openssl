@@ -400,7 +400,7 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
             fprintf(stderr, "Duplicate key %s\n", value);
             return 0;
         }
-        key = OPENSSL_malloc(sizeof(struct key_list));
+        key = OPENSSL_malloc(sizeof(*key));
         if (!key)
             return 0;
         key->name = BUF_strdup(value);
@@ -559,7 +559,7 @@ static int digest_test_init(struct evp_test *t, const char *alg)
         }
         return 0;
     }
-    mdat = OPENSSL_malloc(sizeof(struct digest_data));
+    mdat = OPENSSL_malloc(sizeof(*mdat));
     mdat->digest = digest;
     mdat->input = NULL;
     mdat->output = NULL;
@@ -671,7 +671,7 @@ static int cipher_test_init(struct evp_test *t, const char *alg)
         }
         return 0;
     }
-    cdat = OPENSSL_malloc(sizeof(struct cipher_data));
+    cdat = OPENSSL_malloc(sizeof(*cdat));
     cdat->cipher = cipher;
     cdat->enc = -1;
     cdat->key = NULL;
@@ -935,7 +935,7 @@ static int mac_test_init(struct evp_test *t, const char *alg)
     else
         return 0;
 
-    mdat = OPENSSL_malloc(sizeof(struct mac_data));
+    mdat = OPENSSL_malloc(sizeof(*mdat));
     mdat->type = type;
     mdat->alg = NULL;
     mdat->key = NULL;
@@ -1103,7 +1103,7 @@ static int pkey_test_init(struct evp_test *t, const char *name,
         return 1;
     }
 
-    kdata = OPENSSL_malloc(sizeof(struct pkey_data));
+    kdata = OPENSSL_malloc(sizeof(*kdata));
     if (!kdata) {
         EVP_PKEY_free(pkey);
         return 0;

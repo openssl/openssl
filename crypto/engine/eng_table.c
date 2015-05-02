@@ -147,7 +147,7 @@ int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
         tmplate.nid = *nids;
         fnd = lh_ENGINE_PILE_retrieve(&(*table)->piles, &tmplate);
         if (!fnd) {
-            fnd = OPENSSL_malloc(sizeof(ENGINE_PILE));
+            fnd = OPENSSL_malloc(sizeof(*fnd));
             if (!fnd)
                 goto end;
             fnd->uptodate = 1;

@@ -127,9 +127,8 @@ int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)
 {
     DTLS_RECORD_LAYER *d;
     
-    if ((d = OPENSSL_malloc(sizeof *d)) == NULL) {
+    if ((d = OPENSSL_malloc(sizeof(*d))) == NULL)
         return (0);
-    }
 
 
     rl->d = d;
@@ -196,7 +195,7 @@ void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl)
     unprocessed_rcds = d->unprocessed_rcds.q;
     processed_rcds = d->processed_rcds.q;
     buffered_app_data = d->buffered_app_data.q;
-    memset(d, 0, sizeof *d);
+    memset(d, 0, sizeof(*d));
     d->unprocessed_rcds.q = unprocessed_rcds;
     d->processed_rcds.q = processed_rcds;
     d->buffered_app_data.q = buffered_app_data;
@@ -259,7 +258,7 @@ int dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
     if (pqueue_size(queue->q) >= 100)
         return 0;
 
-    rdata = OPENSSL_malloc(sizeof(DTLS1_RECORD_DATA));
+    rdata = OPENSSL_malloc(sizeof(*rdata));
     item = pitem_new(priority, rdata);
     if (rdata == NULL || item == NULL) {
         OPENSSL_free(rdata);

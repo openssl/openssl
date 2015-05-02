@@ -186,7 +186,7 @@ static void ctxdbg(BN_CTX *ctx)
 
 BN_CTX *BN_CTX_new(void)
 {
-    BN_CTX *ret = OPENSSL_malloc(sizeof(BN_CTX));
+    BN_CTX *ret = OPENSSL_malloc(sizeof(*ret));
     if (!ret) {
         BNerr(BN_F_BN_CTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -353,7 +353,7 @@ static BIGNUM *BN_POOL_get(BN_POOL *p)
     if (p->used == p->size) {
         BIGNUM *bn;
         unsigned int loop = 0;
-        BN_POOL_ITEM *item = OPENSSL_malloc(sizeof(BN_POOL_ITEM));
+        BN_POOL_ITEM *item = OPENSSL_malloc(sizeof(*item));
         if (!item)
             return NULL;
         /* Initialise the structure */

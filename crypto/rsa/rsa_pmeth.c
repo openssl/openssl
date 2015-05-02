@@ -97,7 +97,7 @@ typedef struct {
 static int pkey_rsa_init(EVP_PKEY_CTX *ctx)
 {
     RSA_PKEY_CTX *rctx;
-    rctx = OPENSSL_malloc(sizeof(RSA_PKEY_CTX));
+    rctx = OPENSSL_malloc(sizeof(*rctx));
     if (!rctx)
         return 0;
     rctx->nbits = 1024;

@@ -137,7 +137,7 @@ BN_BLINDING *BN_BLINDING_new(const BIGNUM *A, const BIGNUM *Ai, BIGNUM *mod)
 
     bn_check_top(mod);
 
-    if ((ret = OPENSSL_malloc(sizeof(BN_BLINDING))) == NULL) {
+    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL) {
         BNerr(BN_F_BN_BLINDING_NEW, ERR_R_MALLOC_FAILURE);
         return (NULL);
     }

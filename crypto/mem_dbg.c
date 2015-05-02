@@ -394,7 +394,7 @@ int CRYPTO_push_info_(const char *info, const char *file, int line)
     if (is_MemCheck_on()) {
         MemCheck_off();         /* obtain MALLOC2 lock */
 
-        if ((ami = OPENSSL_malloc(sizeof(APP_INFO))) == NULL) {
+        if ((ami = OPENSSL_malloc(sizeof(*ami))) == NULL) {
             ret = 0;
             goto err;
         }
@@ -478,7 +478,7 @@ void CRYPTO_dbg_malloc(void *addr, int num, const char *file, int line,
 
         if (is_MemCheck_on()) {
             MemCheck_off();     /* make sure we hold MALLOC2 lock */
-            if ((m = OPENSSL_malloc(sizeof(MEM))) == NULL) {
+            if ((m = OPENSSL_malloc(sizeof(*m))) == NULL) {
                 OPENSSL_free(addr);
                 MemCheck_on();  /* release MALLOC2 lock if num_disabled drops
                                  * to 0 */

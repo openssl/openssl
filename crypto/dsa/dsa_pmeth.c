@@ -81,7 +81,7 @@ typedef struct {
 static int pkey_dsa_init(EVP_PKEY_CTX *ctx)
 {
     DSA_PKEY_CTX *dctx;
-    dctx = OPENSSL_malloc(sizeof(DSA_PKEY_CTX));
+    dctx = OPENSSL_malloc(sizeof(*dctx));
     if (!dctx)
         return 0;
     dctx->nbits = 1024;

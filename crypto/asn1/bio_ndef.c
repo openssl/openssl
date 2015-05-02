@@ -106,7 +106,7 @@ BIO *BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
         ASN1err(ASN1_F_BIO_NEW_NDEF, ASN1_R_STREAMING_NOT_SUPPORTED);
         return NULL;
     }
-    ndef_aux = OPENSSL_malloc(sizeof(NDEF_SUPPORT));
+    ndef_aux = OPENSSL_malloc(sizeof(*ndef_aux));
     asn_bio = BIO_new(BIO_f_asn1());
 
     /* ASN1 bio needs to be next to output BIO */

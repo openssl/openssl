@@ -114,7 +114,7 @@ X509_POLICY_NODE *level_add_node(X509_POLICY_LEVEL *level,
                                  X509_POLICY_TREE *tree)
 {
     X509_POLICY_NODE *node;
-    node = OPENSSL_malloc(sizeof(X509_POLICY_NODE));
+    node = OPENSSL_malloc(sizeof(*node));
     if (!node)
         return NULL;
     node->data = data;

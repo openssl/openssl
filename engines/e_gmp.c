@@ -322,9 +322,10 @@ typedef struct st_e_gmp_rsa_ctx {
 static E_GMP_RSA_CTX *e_gmp_get_rsa(RSA *rsa)
 {
     E_GMP_RSA_CTX *hptr = RSA_get_ex_data(rsa, hndidx_rsa);
+
     if (hptr)
         return hptr;
-    hptr = OPENSSL_malloc(sizeof(E_GMP_RSA_CTX));
+    hptr = OPENSSL_malloc(sizeof(*hptr));
     if (!hptr)
         return NULL;
     /*

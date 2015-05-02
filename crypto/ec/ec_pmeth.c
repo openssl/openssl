@@ -91,7 +91,8 @@ typedef struct {
 static int pkey_ec_init(EVP_PKEY_CTX *ctx)
 {
     EC_PKEY_CTX *dctx;
-    dctx = OPENSSL_malloc(sizeof(EC_PKEY_CTX));
+
+    dctx = OPENSSL_malloc(sizeof(*dctx));
     if (!dctx)
         return 0;
     dctx->gen_group = NULL;

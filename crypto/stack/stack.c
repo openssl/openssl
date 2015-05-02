@@ -122,7 +122,7 @@ _STACK *sk_deep_copy(_STACK *sk, void *(*copy_func) (void *),
     ret->sorted = sk->sorted;
     ret->num = sk->num;
     ret->num_alloc = sk->num > MIN_NODES ? sk->num : MIN_NODES;
-    ret->data = OPENSSL_malloc(sizeof(char *) * ret->num_alloc);
+    ret->data = OPENSSL_malloc(sizeof(*ret->data) * ret->num_alloc);
     if (ret->data == NULL) {
         OPENSSL_free(ret);
         return NULL;
@@ -156,7 +156,7 @@ _STACK *sk_new(int (*c) (const void *, const void *))
 
     if ((ret = OPENSSL_malloc(sizeof(_STACK))) == NULL)
         goto err;
-    if ((ret->data = OPENSSL_malloc(sizeof(char *) * MIN_NODES)) == NULL)
+    if ((ret->data = OPENSSL_malloc(sizeof(*ret->data) * MIN_NODES)) == NULL)
         goto err;
     for (i = 0; i < MIN_NODES; i++)
         ret->data[i] = NULL;

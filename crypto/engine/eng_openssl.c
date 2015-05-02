@@ -425,7 +425,7 @@ typedef struct {
 static int ossl_hmac_init(EVP_PKEY_CTX *ctx)
 {
     OSSL_HMAC_PKEY_CTX *hctx;
-    hctx = OPENSSL_malloc(sizeof(OSSL_HMAC_PKEY_CTX));
+    hctx = OPENSSL_malloc(sizeof(*hctx));
     if (!hctx)
         return 0;
     hctx->md = NULL;

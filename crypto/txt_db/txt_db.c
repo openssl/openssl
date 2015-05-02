@@ -85,7 +85,7 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
     if (!BUF_MEM_grow(buf, size))
         goto err;
 
-    if ((ret = OPENSSL_malloc(sizeof(TXT_DB))) == NULL)
+    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
         goto err;
     ret->num_fields = num;
     ret->index = NULL;

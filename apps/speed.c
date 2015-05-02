@@ -2283,7 +2283,7 @@ static int do_multi(int multi)
     int *fds;
     static char sep[] = ":";
 
-    fds = malloc(multi * sizeof *fds);
+    fds = malloc(sizeof(*fds) * multi);
     for (n = 0; n < multi; ++n) {
         if (pipe(fd) == -1) {
             fprintf(stderr, "pipe failure\n");

@@ -66,7 +66,7 @@ ENGINE *ENGINE_new(void)
 {
     ENGINE *ret;
 
-    ret = OPENSSL_malloc(sizeof(ENGINE));
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         ENGINEerr(ENGINE_F_ENGINE_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -163,7 +163,7 @@ static int int_cleanup_check(int create)
 
 static ENGINE_CLEANUP_ITEM *int_cleanup_item(ENGINE_CLEANUP_CB *cb)
 {
-    ENGINE_CLEANUP_ITEM *item = OPENSSL_malloc(sizeof(ENGINE_CLEANUP_ITEM));
+    ENGINE_CLEANUP_ITEM *item = OPENSSL_malloc(sizeof(*item));
     if (!item)
         return NULL;
     item->cb = cb;

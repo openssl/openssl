@@ -105,7 +105,7 @@ static ECDSA_DATA *ECDSA_DATA_new_method(ENGINE *engine)
 {
     ECDSA_DATA *ret;
 
-    ret = OPENSSL_malloc(sizeof(ECDSA_DATA));
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         ECDSAerr(ECDSA_F_ECDSA_DATA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
         return (NULL);
@@ -253,7 +253,7 @@ ECDSA_METHOD *ECDSA_METHOD_new(ECDSA_METHOD *ecdsa_meth)
 {
     ECDSA_METHOD *ret;
 
-    ret = OPENSSL_malloc(sizeof(ECDSA_METHOD));
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         ECDSAerr(ECDSA_F_ECDSA_METHOD_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;

@@ -461,7 +461,7 @@ static int ebcdic_new(BIO *bi)
 {
     EBCDIC_OUTBUFF *wbuf;
 
-    wbuf = app_malloc(sizeof(EBCDIC_OUTBUFF) + 1024, "ebcdef wbuf");
+    wbuf = app_malloc(sizeof(*wbuf) + 1024, "ebcdic wbuf");
     wbuf->alloced = 1024;
     wbuf->buff[0] = '\0';
 
@@ -515,7 +515,7 @@ static int ebcdic_write(BIO *b, const char *in, int inl)
         num = num + num;        /* double the size */
         if (num < inl)
             num = inl;
-        wbuf = app_malloc(sizeof(EBCDIC_OUTBUFF) + num, "grow ebcdic wbuf");
+        wbuf = app_malloc(sizeof(*wbuf) + num, "grow ebcdic wbuf");
         OPENSSL_free(b->ptr);
 
         wbuf->alloced = num;
@@ -3127,7 +3127,7 @@ static simple_ssl_session *first = NULL;
 
 static int add_session(SSL *ssl, SSL_SESSION *session)
 {
-    simple_ssl_session *sess = app_malloc(sizeof *sess, "get session");
+    simple_ssl_session *sess = app_malloc(sizeof(*sess), "get session");
     unsigned char *p;
 
     SSL_SESSION_get_id(session, &sess->idlen);

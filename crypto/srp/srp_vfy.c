@@ -198,7 +198,7 @@ static void SRP_user_pwd_free(SRP_user_pwd *user_pwd)
 
 static SRP_user_pwd *SRP_user_pwd_new(void)
 {
-    SRP_user_pwd *ret = OPENSSL_malloc(sizeof(SRP_user_pwd));
+    SRP_user_pwd *ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL)
         return NULL;
     ret->N = NULL;
@@ -249,7 +249,7 @@ static int SRP_user_pwd_set_sv_BN(SRP_user_pwd *vinfo, BIGNUM *s, BIGNUM *v)
 
 SRP_VBASE *SRP_VBASE_new(char *seed_key)
 {
-    SRP_VBASE *vb = OPENSSL_malloc(sizeof(SRP_VBASE));
+    SRP_VBASE *vb = OPENSSL_malloc(sizeof(*vb));
 
     if (vb == NULL)
         return NULL;
@@ -284,7 +284,7 @@ static SRP_gN_cache *SRP_gN_new_init(const char *ch)
 {
     unsigned char tmp[MAX_LEN];
     int len;
-    SRP_gN_cache *newgN = OPENSSL_malloc(sizeof(SRP_gN_cache));
+    SRP_gN_cache *newgN = OPENSSL_malloc(sizeof(*newgN));
 
     if (newgN == NULL)
         return NULL;
@@ -391,7 +391,7 @@ int SRP_VBASE_init(SRP_VBASE *vb, char *verifier_file)
              * we add this couple in the internal Stack
              */
 
-            if ((gN = OPENSSL_malloc(sizeof(SRP_gN))) == NULL)
+            if ((gN = OPENSSL_malloc(sizeof(*gN))) == NULL)
                 goto err;
 
             if (!(gN->id = BUF_strdup(pp[DB_srpid]))

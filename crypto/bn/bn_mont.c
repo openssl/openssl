@@ -314,7 +314,7 @@ BN_MONT_CTX *BN_MONT_CTX_new(void)
 {
     BN_MONT_CTX *ret;
 
-    if ((ret = OPENSSL_malloc(sizeof(BN_MONT_CTX))) == NULL)
+    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
         return (NULL);
 
     BN_MONT_CTX_init(ret);

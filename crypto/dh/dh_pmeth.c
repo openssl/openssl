@@ -98,7 +98,7 @@ typedef struct {
 static int pkey_dh_init(EVP_PKEY_CTX *ctx)
 {
     DH_PKEY_CTX *dctx;
-    dctx = OPENSSL_malloc(sizeof(DH_PKEY_CTX));
+    dctx = OPENSSL_malloc(sizeof(*dctx));
     if (!dctx)
         return 0;
     dctx->prime_len = 1024;

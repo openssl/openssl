@@ -476,7 +476,7 @@ X509_CRL_METHOD *X509_CRL_METHOD_new(int (*crl_init) (X509_CRL *crl),
                                                         EVP_PKEY *pk))
 {
     X509_CRL_METHOD *m;
-    m = OPENSSL_malloc(sizeof(X509_CRL_METHOD));
+    m = OPENSSL_malloc(sizeof(*m));
     if (!m)
         return NULL;
     m->crl_init = crl_init;

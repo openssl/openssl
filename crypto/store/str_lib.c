@@ -109,7 +109,7 @@ STORE *STORE_new_method(const STORE_METHOD *method)
         return NULL;
     }
 
-    ret = OPENSSL_malloc(sizeof(STORE));
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         STOREerr(STORE_F_STORE_NEW_METHOD, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -1156,9 +1156,9 @@ int STORE_delete_arbitrary(STORE *s, OPENSSL_ITEM attributes[],
 
 STORE_OBJECT *STORE_OBJECT_new(void)
 {
-    STORE_OBJECT *object = OPENSSL_malloc(sizeof(STORE_OBJECT));
+    STORE_OBJECT *object = OPENSSL_malloc(sizeof(*object));
     if (object)
-        memset(object, 0, sizeof(STORE_OBJECT));
+        memset(object, 0, sizeof(*object));
     return object;
 }
 
@@ -1206,7 +1206,9 @@ struct STORE_attr_info_st {
 
 STORE_ATTR_INFO *STORE_ATTR_INFO_new(void)
 {
-    return OPENSSL_malloc(sizeof(STORE_ATTR_INFO));
+    STORE_ATTR_INFO *p = OPENSSL_malloc(sizeof(*p));
+
+    return p;
 }
 
 static void STORE_ATTR_INFO_attr_free(STORE_ATTR_INFO *attrs,
@@ -1450,8 +1452,7 @@ struct attr_list_ctx_st {
 void *STORE_parse_attrs_start(OPENSSL_ITEM *attributes)
 {
     if (attributes) {
-        struct attr_list_ctx_st *context = (struct attr_list_ctx_st *)
-            OPENSSL_malloc(sizeof(struct attr_list_ctx_st));
+        struct attr_list_ctx_st *context = OPENSSL_malloc(sizeof(*context));
         if (context)
             context->attributes = attributes;
         else

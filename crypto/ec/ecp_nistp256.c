@@ -1815,7 +1815,7 @@ const EC_METHOD *EC_GFp_nistp256_method(void)
 static NISTP256_PRE_COMP *nistp256_pre_comp_new()
 {
     NISTP256_PRE_COMP *ret = NULL;
-    ret = OPENSSL_malloc(sizeof *ret);
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (!ret) {
         ECerr(EC_F_NISTP256_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
         return ret;
@@ -1862,7 +1862,7 @@ static void nistp256_pre_comp_clear_free(void *pre_)
     if (i > 0)
         return;
 
-    OPENSSL_clear_free(pre, sizeof *pre);
+    OPENSSL_clear_free(pre, sizeof(*pre));
 }
 
 /******************************************************************************/

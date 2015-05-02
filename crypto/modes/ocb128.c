@@ -210,7 +210,7 @@ OCB128_CONTEXT *CRYPTO_ocb128_new(void *keyenc, void *keydec,
     OCB128_CONTEXT *octx;
     int ret;
 
-    if ((octx = OPENSSL_malloc(sizeof(OCB128_CONTEXT)))) {
+    if ((octx = OPENSSL_malloc(sizeof(*octx)))) {
         ret = CRYPTO_ocb128_init(octx, keyenc, keydec, encrypt, decrypt);
         if (ret)
             return octx;

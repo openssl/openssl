@@ -168,7 +168,7 @@ static int win32_load(DSO *dso)
         ERR_add_error_data(3, "filename(", filename, ")");
         goto err;
     }
-    p = OPENSSL_malloc(sizeof(HINSTANCE));
+    p = OPENSSL_malloc(sizeof(*p));
     if (p == NULL) {
         DSOerr(DSO_F_WIN32_LOAD, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -304,7 +304,7 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
         return (NULL);
     }
 
-    result = OPENSSL_malloc(sizeof(struct file_st));
+    result = OPENSSL_malloc(sizeof(*result));
     if (result == NULL) {
         DSOerr(DSO_F_WIN32_SPLITTER, ERR_R_MALLOC_FAILURE);
         return (NULL);

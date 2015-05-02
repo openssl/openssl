@@ -225,7 +225,7 @@ static int dgram_new(BIO *bi)
 
     bi->init = 0;
     bi->num = 0;
-    data = OPENSSL_malloc(sizeof(bio_dgram_data));
+    data = OPENSSL_malloc(sizeof(*data));
     if (data == NULL)
         return 0;
     memset(data, 0x00, sizeof(bio_dgram_data));
@@ -1085,7 +1085,7 @@ static int dgram_sctp_new(BIO *bi)
 
     bi->init = 0;
     bi->num = 0;
-    data = OPENSSL_malloc(sizeof(bio_dgram_sctp_data));
+    data = OPENSSL_malloc(sizeof(*data));
     if (data == NULL)
         return 0;
     memset(data, 0x00, sizeof(bio_dgram_sctp_data));

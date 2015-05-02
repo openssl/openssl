@@ -240,7 +240,7 @@ static ASN1_STRING_TABLE *stable_get(int nid)
     tmp = ASN1_STRING_TABLE_get(nid);
     if (tmp && tmp->flags & STABLE_FLAGS_MALLOC)
         return tmp;
-    rv = OPENSSL_malloc(sizeof(ASN1_STRING_TABLE));
+    rv = OPENSSL_malloc(sizeof(*rv));
     if (!rv)
         return NULL;
     if (!sk_ASN1_STRING_TABLE_push(stable, rv)) {

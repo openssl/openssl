@@ -90,7 +90,8 @@ static void make_kn(unsigned char *k1, const unsigned char *l, int bl)
 CMAC_CTX *CMAC_CTX_new(void)
 {
     CMAC_CTX *ctx;
-    ctx = OPENSSL_malloc(sizeof(CMAC_CTX));
+
+    ctx = OPENSSL_malloc(sizeof(*ctx));
     if (!ctx)
         return NULL;
     EVP_CIPHER_CTX_init(&ctx->cctx);
