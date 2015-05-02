@@ -2537,7 +2537,7 @@ int ssl3_get_client_key_exchange(SSL *s)
                                                         session->master_key,
                                                         pms, outl);
         if (s->session->master_key_length < 0) {
-            al = SSL_INTERNAL_ERROR;
+            al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             goto f_err;
         }
