@@ -16,10 +16,10 @@ GENERAL=Makefile
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC= comp_lib.c comp_err.c \
-	c_rle.c c_zlib.c
+	c_zlib.c
 
 LIBOBJ=	comp_lib.o comp_err.o \
-	c_rle.o c_zlib.o
+	c_zlib.o
 
 SRC= $(LIBSRC)
 
@@ -61,13 +61,6 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-c_rle.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-c_rle.o: ../../include/openssl/comp.h ../../include/openssl/crypto.h
-c_rle.o: ../../include/openssl/e_os2.h ../../include/openssl/obj_mac.h
-c_rle.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-c_rle.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-c_rle.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-c_rle.o: ../../include/openssl/symhacks.h c_rle.c
 c_zlib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 c_zlib.o: ../../include/openssl/comp.h ../../include/openssl/crypto.h
 c_zlib.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h

@@ -339,7 +339,7 @@ $ LIB_PKCS12 = "p12_add,p12_asn,p12_attr,p12_crpt,p12_crt,p12_decr,"+ -
 	"p12_init,p12_key,p12_kiss,p12_mutl,"+ -
 	"p12_utl,p12_npas,pk12err,p12_p8d,p12_p8e"
 $ LIB_COMP = "comp_lib,comp_err,"+ -
-	"c_rle,c_zlib"
+	"c_zlib"
 $ LIB_OCSP = "ocsp_asn,ocsp_ext,ocsp_ht,ocsp_lib,ocsp_cl,"+ -
 	"ocsp_srv,ocsp_prn,ocsp_vfy,ocsp_err,v3_ocsp"
 $ LIB_UI = "ui_err,ui_lib,ui_openssl,ui_util"
