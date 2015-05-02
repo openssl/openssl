@@ -122,7 +122,7 @@ if ($WHAT eq '-newcert' ) {
     print "CA certificate filename (or enter to create)\n";
     $FILE = <STDIN>;
     if ($FILE) {
-    	chop $FILE;
+        chop $FILE;
         copy_pemfile($FILE,"${CATOP}/private/$CAKEY", "PRIVATE");
         copy_pemfile($FILE,"${CATOP}/$CACERT", "CERTIFICATE");
     } else {
