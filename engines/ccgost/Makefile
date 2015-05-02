@@ -17,7 +17,7 @@ SRC=$(LIBSRC)
 LIBNAME=gost
 
 top: 
-	(cd $(TOP); $(MAKE) DIRS=engines EDIRS=$(DIR) sub_all)
+	(cd $(TOP); $(MAKE) DIRS=engines sub_all)
 
 all: lib
 
