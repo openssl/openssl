@@ -370,7 +370,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 
 #ifndef OPENSSL_NO_KRB5
     if (!ssl_session_memcpy(ret->krb5_client_princ, &ret->krb5_client_princ_len,
-                            as->krb5_princ, SSL_MAX_PRINCIPAL_LENGTH))
+                            as->krb5_princ, SSL_MAX_KRB5_PRINCIPAL_LENGTH))
         goto err;
 #endif                          /* OPENSSL_NO_KRB5 */
 
