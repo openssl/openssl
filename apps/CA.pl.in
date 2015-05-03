@@ -121,8 +121,8 @@ if ($WHAT eq '-newcert' ) {
     # ask user for existing CA certificate
     print "CA certificate filename (or enter to create)\n";
     $FILE = <STDIN>;
-    chop $FILE;
     if ($FILE) {
+        chop $FILE;
         copy_pemfile($FILE,"${CATOP}/private/$CAKEY", "PRIVATE");
         copy_pemfile($FILE,"${CATOP}/$CACERT", "CERTIFICATE");
     } else {
