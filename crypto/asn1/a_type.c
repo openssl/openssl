@@ -179,7 +179,7 @@ ASN1_TYPE *ASN1_TYPE_pack_sequence(const ASN1_ITEM *it, void *s, ASN1_TYPE **t)
 
 void *ASN1_TYPE_unpack_sequence(const ASN1_ITEM *it, const ASN1_TYPE *t)
 {
-    if (t->type != V_ASN1_SEQUENCE || t->value.sequence == NULL)
+    if (t == NULL || t->type != V_ASN1_SEQUENCE || t->value.sequence == NULL)
         return NULL;
     return ASN1_item_unpack(t->value.sequence, it);
 }
