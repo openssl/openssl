@@ -26,6 +26,7 @@ int main(int argc, char *argv[])
 # include <openssl/evp.h>
 # include <openssl/hmac.h>
 # include <openssl/obj_mac.h>
+# include "e_os.h"
 
 # define CCGOST_ID "gost"
 
@@ -1311,7 +1312,7 @@ int main(int argc, char *argv[])
     }
 
     /* Test cases */
-    for (t = 0; t < sizeof(tcs) / sizeof(tcs[0]); t++) {
+    for (t = 0; t < OSSL_NELEM(tcs); t++) {
         if (NULL == tcs[t].szDerive) {
             continue;
         }

@@ -2654,7 +2654,7 @@ int app_isdir(const char *name)
 # if defined(UNICODE) || defined(_UNICODE)
     size_t i, len_0 = strlen(name) + 1;
 
-    if (len_0 > sizeof(FileData.cFileName) / sizeof(FileData.cFileName[0]))
+    if (len_0 > OSSL_NELEM(FileData.cFileName))
         return -1;
 
 #  if !defined(_WIN32_WCE) || _WIN32_WCE>=101

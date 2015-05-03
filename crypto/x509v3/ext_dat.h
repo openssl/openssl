@@ -131,4 +131,4 @@ static const X509V3_EXT_METHOD *standard_exts[] = {
 
 /* Number of standard extensions */
 
-#define STANDARD_EXTENSION_COUNT (sizeof(standard_exts)/sizeof(X509V3_EXT_METHOD *))
+#define STANDARD_EXTENSION_COUNT OSSL_NELEM(standard_exts)

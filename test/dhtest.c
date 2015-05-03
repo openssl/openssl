@@ -485,7 +485,7 @@ static const rfc5114_td rfctd[] = {
 static int run_rfc5114_tests(void)
 {
     int i;
-    for (i = 0; i < (int)(sizeof(rfctd) / sizeof(rfc5114_td)); i++) {
+    for (i = 0; i < (int)OSSL_NELEM(rfctd); i++) {
         DH *dhA, *dhB;
         unsigned char *Z1 = NULL, *Z2 = NULL;
         const rfc5114_td *td = rfctd + i;

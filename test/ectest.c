@@ -1628,9 +1628,7 @@ static void nistp_tests()
 {
     unsigned i;
 
-    for (i = 0;
-         i < sizeof(nistp_tests_params) / sizeof(struct nistp_test_params);
-         i++) {
+    for (i = 0; i < OSSL_NELEM(nistp_tests_params); i++) {
         nistp_single_test(&nistp_tests_params[i]);
     }
 }

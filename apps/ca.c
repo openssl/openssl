@@ -2408,7 +2408,7 @@ static const char *crl_reasons[] = {
     "CAkeyTime"
 };
 
-#define NUM_REASONS (sizeof(crl_reasons) / sizeof(char *))
+#define NUM_REASONS OSSL_NELEM(crl_reasons)
 
 /*
  * Given revocation information convert to a DB string. The format of the
