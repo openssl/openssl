@@ -61,6 +61,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "e_os.h"
 
 /*
  * Declares the structures needed to register each test case function.
@@ -75,7 +76,7 @@ static int num_tests = 0;
 
 void add_test(const char *test_case_name, int (*test_fn) ())
 {
-    assert(num_tests != (sizeof(all_tests) / sizeof(all_tests)[0]));
+    assert(num_tests != OSSL_NELEM(all_tests));
     all_tests[num_tests].test_case_name = test_case_name;
     all_tests[num_tests].test_fn = test_fn;
     ++num_tests;

@@ -231,12 +231,12 @@ int main(int argc, char *argv[])
     int num_failed = 0, num_all = 0;
     fprintf(stdout, "Testing constant time operations...\n");
 
-    for (i = 0; i < sizeof(test_values) / sizeof(int); ++i) {
+    for (i = 0; i < OSSL_NELEM(test_values); ++i) {
         a = test_values[i];
         num_failed += test_is_zero(a);
         num_failed += test_is_zero_8(a);
         num_all += 2;
-        for (j = 0; j < sizeof(test_values) / sizeof(int); ++j) {
+        for (j = 0; j < OSSL_NELEM(test_values); ++j) {
             b = test_values[j];
             num_failed += test_binary_op(&constant_time_lt,
                                          "constant_time_lt", a, b, a < b);
@@ -274,9 +274,9 @@ int main(int argc, char *argv[])
         }
     }
 
-    for (i = 0; i < sizeof(signed_test_values) / sizeof(int); ++i) {
+    for (i = 0; i < OSSL_NELEM(signed_test_values); ++i) {
         c = signed_test_values[i];
-        for (j = 0; j < sizeof(signed_test_values) / sizeof(int); ++j) {
+        for (j = 0; j < OSSL_NELEM(signed_test_values); ++j) {
             d = signed_test_values[j];
             num_failed += test_select_int(c, d);
             num_failed += test_eq_int(c, d);

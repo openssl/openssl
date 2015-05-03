@@ -2438,7 +2438,7 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher)
 {
     static int mblengths[] =
         { 8 * 1024, 2 * 8 * 1024, 4 * 8 * 1024, 8 * 8 * 1024, 8 * 16 * 1024 };
-    int j, count, num = sizeof(lengths) / sizeof(lengths[0]);
+    int j, count, num = OSSL_NELEM(lengths);
     const char *alg_name;
     unsigned char *inp, *out, no_key[32], no_iv[16];
     EVP_CIPHER_CTX ctx;

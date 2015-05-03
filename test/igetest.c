@@ -55,6 +55,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include "e_os.h"
 
 #define TEST_SIZE       128
 #define BIG_TEST_SIZE 10240
@@ -191,8 +192,7 @@ static int run_test_vectors(void)
     unsigned int n;
     int errs = 0;
 
-    for (n = 0; n < sizeof(ige_test_vectors) / sizeof(ige_test_vectors[0]);
-         ++n) {
+    for (n = 0; n < OSSL_NELEM(ige_test_vectors); ++n) {
         const struct ige_test *const v = &ige_test_vectors[n];
         AES_KEY key;
         unsigned char buf[MAX_VECTOR_SIZE];
@@ -235,9 +235,7 @@ static int run_test_vectors(void)
         }
     }
 
-    for (n = 0;
-         n < sizeof(bi_ige_test_vectors) / sizeof(bi_ige_test_vectors[0]);
-         ++n) {
+    for (n = 0; n < OSSL_NELEM(bi_ige_test_vectors); ++n) {
         const struct bi_ige_test *const v = &bi_ige_test_vectors[n];
         AES_KEY key1;
         AES_KEY key2;
