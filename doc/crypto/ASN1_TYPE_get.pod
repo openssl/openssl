@@ -78,7 +78,7 @@ ASN1_TYPE_get() returns the type of the ASN1_TYPE argument.
 
 ASN1_TYPE_set() does not return a value.
 
-ASN1_TYPE_set1() returns 1 for sucess and 0 for failure.
+ASN1_TYPE_set1() returns 1 for success and 0 for failure.
 
 ASN1_TYPE_cmp() returns 0 if the types are identical and non-zero otherwise.
 

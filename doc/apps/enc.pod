@@ -170,7 +170,7 @@ configuration file is read and any ENGINEs loaded.
 Engines which provide entirely new encryption algorithms (such as ccgost
 engine which provides gost89 algorithm) should be configured in the
 configuration file. Engines, specified in the command line using -engine
-options can only be used for hadrware-assisted implementations of
+options can only be used for hardware-assisted implementations of
 ciphers, which are supported by OpenSSL core or other engine, specified
 in the configuration file.
 
@@ -212,7 +212,7 @@ Note that some of these ciphers can be disabled at compile time
 and some are available only if an appropriate engine is configured
 in the configuration file. The output of the B<enc> command run with
 unsupported options (for example B<openssl enc -help>) includes a
-list of ciphers, supported by your versesion of OpenSSL, including
+list of ciphers, supported by your version of OpenSSL, including
 ones provided by configured engines.
 
 The B<enc> program does not support authenticated encryption modes

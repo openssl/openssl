@@ -26,7 +26,7 @@ be used to set alternative signing options.
 EVP_DigestSignUpdate() hashes B<cnt> bytes of data at B<d> into the
 signature context B<ctx>. This function can be called several times on the
 same B<ctx> to include additional data. This function is currently implemented
-usig a macro.
+using a macro.
 
 EVP_DigestSignFinal() signs the data in B<ctx> places the signature in B<sig>.
 If B<sig> is B<NULL> then the maximum size of the output buffer is written to

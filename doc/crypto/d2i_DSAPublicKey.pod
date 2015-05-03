@@ -68,7 +68,7 @@ If B<write_params> is zero then only the B<pub_key> field is encoded as an
 B<INTEGER>. If B<write_params> is 1 then a B<SEQUENCE> consisting of the
 B<p>, B<q>, B<g> and B<pub_key> respectively fields are encoded.
 
-The B<DSAPrivateKey> functions also use a non standard structure consiting
+The B<DSAPrivateKey> functions also use a non standard structure consisting
 consisting of a SEQUENCE containing the B<p>, B<q>, B<g> and B<pub_key> and
 B<priv_key> fields respectively.
 

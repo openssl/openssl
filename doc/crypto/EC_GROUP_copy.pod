@@ -58,7 +58,7 @@ EC_GROUP_method_of obtains the EC_METHOD of B<group>.
 EC_GROUP_set_generator sets curve paramaters that must be agreed by all participants using the curve. These
 paramaters include the B<generator>, the B<order> and the B<cofactor>. The B<generator> is a well defined point on the
 curve chosen for cryptographic operations. Integers used for point multiplications will be between 0 and
-n-1 where n is the B<order>. The B<order> multipied by the B<cofactor> gives the number of points on the curve.
+n-1 where n is the B<order>. The B<order> multiplied by the B<cofactor> gives the number of points on the curve.
 
 EC_GROUP_get0_generator returns the generator for the identified B<group>.
 
@@ -82,7 +82,7 @@ previous versions of OpenSSL the value 0 must be used instead. Before OpenSSL
 applications would have to explicitly set the named curve form) in OpenSSL
 1.1.0 and later the named curve form is the default.
 
-The point_coversion_form for a curve controls how EC_POINT data is encoded as ASN1 as defined in X9.62 (ECDSA).
+The point_conversion_form for a curve controls how EC_POINT data is encoded as ASN1 as defined in X9.62 (ECDSA).
 point_conversion_form_t is an enum defined as follows: 
 
  typedef enum {
@@ -143,7 +143,7 @@ or a pentanomial of the form:
 f(x) = x^m + x^k3 + x^k2 + x^k1 + 1 with m > k3 > k2 > k1 >= 1
 
 The function EC_GROUP_get_basis_type returns a NID identifying whether a trinomial or pentanomial is in use for the field. The
-function EC_GROUP_get_trinomial_basis must only be called where f(x) is of the trinomial form, and returns the value of B<k>. Similary
+function EC_GROUP_get_trinomial_basis must only be called where f(x) is of the trinomial form, and returns the value of B<k>. Similarly
 the function EC_GROUP_get_pentanomial_basis must only be called where f(x) is of the pentanomial form, and returns the values of B<k1>,
 B<k2> and B<k3> respectively.
 

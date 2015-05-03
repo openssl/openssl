@@ -88,7 +88,7 @@ only be used to sign end user certificates and not further CAs.
 Key usage is a multi valued extension consisting of a list of names of the
 permitted key usages.
 
-The supporte names are: digitalSignature, nonRepudiation, keyEncipherment,
+The supported names are: digitalSignature, nonRepudiation, keyEncipherment,
 dataEncipherment, keyAgreement, keyCertSign, cRLSign, encipherOnly
 and decipherOnly.
 
@@ -202,7 +202,7 @@ Examples:
 The issuer alternative name option supports all the literal options of
 subject alternative name. It does B<not> support the email:copy option because
 that would not make sense. It does support an additional issuer:copy option
-that will copy all the subject alternative name values from the issuer 
+that will copy all the subject alternative name values from the issuer
 certificate (if possible).
 
 Example:
@@ -358,7 +358,7 @@ Some software (for example some versions of MSIE) may require ia5org.
 =head2 Policy Constraints
 
 This is a multi-valued extension which consisting of the names
-B<requireExplicitPolicy> or B<inhibitPolicyMapping> and a non negative intger
+B<requireExplicitPolicy> or B<inhibitPolicyMapping> and a non negative integer
 value. At least one component must be present.
 
 Example:
@@ -380,7 +380,7 @@ Example:
 The name constraints extension is a multi-valued extension. The name should
 begin with the word B<permitted> or B<excluded> followed by a B<;>. The rest of
 the name and the value follows the syntax of subjectAltName except email:copy
-is not supported and the B<IP> form should consist of an IP addresses and 
+is not supported and the B<IP> form should consist of an IP addresses and
 subnet mask separated by a B</>.
 
 Examples:
@@ -491,7 +491,7 @@ will produce an error but the equivalent form:
  [subject_alt_section]
  subjectAltName=URI:ldap://somehost.com/CN=foo,OU=bar
 
-is valid. 
+is valid.
 
 Due to the behaviour of the OpenSSL B<conf> library the same field name
 can only occur once in a section. This means that:

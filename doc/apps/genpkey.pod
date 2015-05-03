@@ -87,7 +87,7 @@ parameters along with the PEM or DER structure.
 
 =head1 KEY GENERATION OPTIONS
 
-The options supported by each algorith and indeed each implementation of an
+The options supported by each algorithm and indeed each implementation of an
 algorithm can vary. The options for the OpenSSL implementations are detailed
 below.
 
@@ -154,7 +154,7 @@ such as "P-256".
 
 =item B<ec_param_enc:encoding>
 
-the encoding to use for parameters. The "encoding" paramater must be either
+the encoding to use for parameters. The "encoding" parameter must be either
 "named_curve" or "explicit".
 
 =back
@@ -163,7 +163,7 @@ the encoding to use for parameters. The "encoding" paramater must be either
 
 Gost 2001 support is not enabled by default. To enable this algorithm,
 one should load the ccgost engine in the OpenSSL configuration file.
-See README.gost file in the engines/ccgost directiry of the source
+See README.gost file in the engines/ccgost directory of the source
 distribution for more details.
 
 Use of a parameter file for the GOST R 34.10 algorithm is optional.

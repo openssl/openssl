@@ -43,7 +43,7 @@ SSL_add1_chain_cert().
 It might also call SSL_certs_clear() to delete any certificates associated
 with the B<SSL> object.
 
-The certificate callback functionality supercedes the (largely broken)
+The certificate callback functionality supersedes the (largely broken)
 functionality provided by the old client certificate callback interface.
 It is B<always> called even is a certificate is already set so the callback
 can modify or delete the existing certificate.

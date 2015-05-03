@@ -40,7 +40,7 @@ the data must be read twice: once to compute the signature in PKCS7_sign()
 and once to output the S/MIME message.
 
 If streaming is performed the content is output in BER format using indefinite
-length constructuted encoding except in the case of signed data with detached
+length constructed encoding except in the case of signed data with detached
 content where the content is absent and DER format is used.
 
 =head1 BUGS

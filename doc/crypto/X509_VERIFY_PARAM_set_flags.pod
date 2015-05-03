@@ -89,7 +89,7 @@ with the DANE-EE(3) certificate usage, and the internal check will
 be suppressed as appropriate when DANE support is added to OpenSSL.
 
 X509_VERIFY_PARAM_add1_host() adds B<name> as an additional reference
-identifer that can match the peer's certificate.  Any previous names
+identifier that can match the peer's certificate.  Any previous names
 set via X509_VERIFY_PARAM_set1_host() or X509_VERIFY_PARAM_add1_host()
 are retained, no change is made if B<name> is NULL or empty.  When
 multiple names are configured, the peer is considered verified when
@@ -157,13 +157,13 @@ ignored. B<WARNING> setting this option for anything other than debugging
 purposes can be a security risk. Finer control over which extensions are
 supported can be performed in the verification callback.
 
-THe B<X509_V_FLAG_X509_STRICT> flag disables workarounds for some broken
+The B<X509_V_FLAG_X509_STRICT> flag disables workarounds for some broken
 certificates and makes the verification strictly apply B<X509> rules.
 
 B<X509_V_FLAG_ALLOW_PROXY_CERTS> enables proxy certificate verification.
 
 B<X509_V_FLAG_POLICY_CHECK> enables certificate policy checking, by default
-no policy checking is peformed. Additional information is sent to the 
+no policy checking is performed. Additional information is sent to the
 verification callback relating to policy checking.
 
 B<X509_V_FLAG_EXPLICIT_POLICY>, B<X509_V_FLAG_INHIBIT_ANY> and
@@ -181,11 +181,11 @@ By default some additional features such as indirect CRLs and CRLs signed by
 different keys are disabled. If B<X509_V_FLAG_EXTENDED_CRL_SUPPORT> is set
 they are enabled.
 
-If B<X509_V_FLAG_USE_DELTAS> ise set delta CRLs (if present) are used to
+If B<X509_V_FLAG_USE_DELTAS> is set delta CRLs (if present) are used to
 determine certificate status. If not set deltas are ignored.
 
 B<X509_V_FLAG_CHECK_SS_SIGNATURE> enables checking of the root CA self signed
-cerificate signature. By default this check is disabled because it doesn't
+certificate signature. By default this check is disabled because it doesn't
 add any additional security but in some cases applications might want to
 check the signature anyway. A side effect of not checking the root CA
 signature is that disabled or unsupported message digests on the root CA
