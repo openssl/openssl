@@ -113,7 +113,7 @@ OPTIONS enc_options[] = {
     {"bufsize", OPT_BUFSIZE, 's', "Buffer size"},
     {"k", OPT_K, 's', "Passphrase"},
     {"kfile", OPT_KFILE, '<', "Fead passphrase from file"},
-    {"K", OPT_UPPER_K, '-', "Same as -iv"},
+    {"K", OPT_UPPER_K, 's', "Raw key, in hex"},
     {"S", OPT_UPPER_S, 's', "Salt, in hex"},
     {"iv", OPT_IV, 's', "IV in hex"},
     {"md", OPT_MD, 's', "Use specified digest to create key from passphrase"},
