@@ -789,18 +789,15 @@ considered to be security issues.
 
 * Is OpenSSL thread-safe?
 
-Yes (with limitations: an SSL connection may not concurrently be used
-by multiple threads).  On Windows and many Unix systems, OpenSSL
-automatically uses the multi-threaded versions of the standard
-libraries.  If your platform is not one of these, consult the INSTALL
-file.
+Provided an application sets up the thread callback functions, the
+answer is yes. There are limitations; for example, an SSL connection
+cannot be used concurrently by multiple threads.  This is true for
+most OpenSSL objects.
 
-Multi-threaded applications must provide two callback functions to
-OpenSSL by calling CRYPTO_set_locking_callback() and
-CRYPTO_set_id_callback(), for all versions of OpenSSL up to and
-including 0.9.8[abc...]. As of version 1.0.0, CRYPTO_set_id_callback()
-and associated APIs are deprecated by CRYPTO_THREADID_set_callback()
-and friends. This is described in the threads(3) manpage.
+To do this, your application must call CRYPTO_set_locking_callback()
+and one of the CRYPTO_THREADID_set...() API's.  See the OpenSSL threads
+manpage for details and "note on multi-threading" in the INSTALL file in
+the source distribution.
 
 * I've compiled a program under Windows and it crashes: why?
 
