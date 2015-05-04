@@ -144,7 +144,7 @@ typedef fd_mask fd_set;
 # define FD_SET(n, p)    (*(p) |= (1 << ((n) % NFDBITS)))
 # define FD_CLR(n, p)    (*(p) &= ~(1 << ((n) % NFDBITS)))
 # define FD_ISSET(n, p)  (*(p) & (1 << ((n) % NFDBITS)))
-# define FD_ZERO(p)      memset((char *)(p), 0, sizeof(*(p)))
+# define FD_ZERO(p)      memset((p), 0, sizeof(*(p)))
 #endif
 
 #define PORT            4433

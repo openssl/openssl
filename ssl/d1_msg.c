@@ -161,7 +161,7 @@ int dtls1_dispatch_alert(SSL *s)
 
     s->s3->alert_dispatch = 0;
 
-    memset(buf, 0x00, sizeof(buf));
+    memset(buf, 0, sizeof(buf));
     *ptr++ = s->s3->send_alert[0];
     *ptr++ = s->s3->send_alert[1];
 

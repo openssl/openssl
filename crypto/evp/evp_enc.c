@@ -70,8 +70,7 @@ const char EVP_version[] = "EVP" OPENSSL_VERSION_PTEXT;
 
 void EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *ctx)
 {
-    memset(ctx, 0, sizeof(EVP_CIPHER_CTX));
-    /* ctx->cipher=NULL; */
+    memset(ctx, 0, sizeof(*ctx));
 }
 
 EVP_CIPHER_CTX *EVP_CIPHER_CTX_new(void)
@@ -546,7 +545,7 @@ int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
          */
         ENGINE_finish(c->engine);
 #endif
-    memset(c, 0, sizeof(EVP_CIPHER_CTX));
+    memset(c, 0, sizeof(*c));
     return 1;
 }
 

@@ -232,7 +232,7 @@ static int custom_ext_meth_add(custom_ext_methods *exts,
     }
 
     meth = exts->meths + exts->meths_count;
-    memset(meth, 0, sizeof(custom_ext_method));
+    memset(meth, 0, sizeof(*meth));
     meth->parse_cb = parse_cb;
     meth->add_cb = add_cb;
     meth->free_cb = free_cb;

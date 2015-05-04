@@ -122,9 +122,9 @@ const char *MD2_options(void)
 int MD2_Init(MD2_CTX *c)
 {
     c->num = 0;
-    memset(c->state, 0, sizeof c->state);
-    memset(c->cksm, 0, sizeof c->cksm);
-    memset(c->data, 0, sizeof c->data);
+    memset(c->state, 0, sizeof(c->state));
+    memset(c->cksm, 0, sizeof(c->cksm));
+    memset(c->data, 0, sizeof(c->data));
     return 1;
 }
 
@@ -219,6 +219,6 @@ int MD2_Final(unsigned char *md, MD2_CTX *c)
 
     for (i = 0; i < 16; i++)
         md[i] = (UCHAR) (p1[i] & 0xff);
-    memset((char *)&c, 0, sizeof(c));
+    memset(&c, 0, sizeof(c));
     return 1;
 }

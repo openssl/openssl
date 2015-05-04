@@ -154,10 +154,7 @@ int BN_lshift(BIGNUM *r, const BIGNUM *a, int n)
             t[nw + i + 1] |= (l >> rb) & BN_MASK2;
             t[nw + i] = (l << lb) & BN_MASK2;
         }
-    memset(t, 0, nw * sizeof(t[0]));
-    /*
-     * for (i=0; i<nw; i++) t[i]=0;
-     */
+    memset(t, 0, sizeof(*t) * nw);
     r->top = a->top + nw + 1;
     bn_correct_top(r);
     bn_check_top(r);

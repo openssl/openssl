@@ -91,7 +91,7 @@ pqueue_s *pqueue_new()
     if (pq == NULL)
         return NULL;
 
-    memset(pq, 0x00, sizeof(pqueue_s));
+    memset(pq, 0, sizeof(*pq));
     return pq;
 }
 

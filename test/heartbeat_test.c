@@ -211,7 +211,7 @@ static int execute_heartbeat(HEARTBEAT_TEST_FIXTURE fixture)
      * Make a local copy of the request, since it gets overwritten at some
      * point
      */
-    memcpy((char *)sent_buf, (const char *)payload, sizeof(sent_buf));
+    memcpy(sent_buf, payload, sizeof(sent_buf));
 
     return_value = fixture.process_heartbeat(s, s->rlayer.rrec.data,
         s->rlayer.rrec.length);

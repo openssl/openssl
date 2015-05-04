@@ -173,7 +173,7 @@ TS_RESP_CTX *TS_RESP_CTX_new()
         TSerr(TS_F_TS_RESP_CTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    memset(ctx, 0, sizeof(TS_RESP_CTX));
+    memset(ctx, 0, sizeof(*ctx));
 
     /* Setting default callbacks. */
     ctx->serial_cb = def_serial_cb;

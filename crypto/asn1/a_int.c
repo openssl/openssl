@@ -349,7 +349,7 @@ int ASN1_INTEGER_set(ASN1_INTEGER *a, long v)
     if (a->length < (int)(sizeof(long) + 1)) {
         OPENSSL_free(a->data);
         if ((a->data = OPENSSL_malloc(sizeof(long) + 1)) != NULL)
-            memset((char *)a->data, 0, sizeof(long) + 1);
+            memset(a->data, 0, sizeof(long) + 1);
     }
     if (a->data == NULL) {
         ASN1err(ASN1_F_ASN1_INTEGER_SET, ERR_R_MALLOC_FAILURE);

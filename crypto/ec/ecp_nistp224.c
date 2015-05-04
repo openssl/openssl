@@ -317,7 +317,7 @@ static int BN_to_felem(felem out, const BIGNUM *bn)
     unsigned num_bytes;
 
     /* BN_bn2bin eats leading zeroes */
-    memset(b_out, 0, sizeof b_out);
+    memset(b_out, 0, sizeof(b_out));
     num_bytes = BN_num_bytes(bn);
     if (num_bytes > sizeof b_out) {
         ECerr(EC_F_BN_TO_FELEM, EC_R_BIGNUM_OUT_OF_RANGE);
@@ -1069,8 +1069,8 @@ static void select_point(const u64 idx, unsigned int size,
 {
     unsigned i, j;
     limb *outlimbs = &out[0][0];
-    memset(outlimbs, 0, 3 * sizeof(felem));
 
+    memset(out 0, sizeof(out));
     for (i = 0; i < size; i++) {
         const limb *inlimbs = &pre_comp[i][0][0];
         u64 mask = i ^ idx;
@@ -1113,7 +1113,7 @@ static void batch_mul(felem x_out, felem y_out, felem z_out,
     u8 sign, digit;
 
     /* set nq to the point at infinity */
-    memset(nq, 0, 3 * sizeof(felem));
+    memset(nq, 0, sizeof(nq));
 
     /*
      * Loop over all scalars msb-to-lsb, interleaving additions of multiples
@@ -1390,7 +1390,7 @@ int ec_GFp_nistp224_points_mul(const EC_GROUP *group, EC_POINT *r,
     BIGNUM *x, *y, *z, *tmp_scalar;
     felem_bytearray g_secret;
     felem_bytearray *secrets = NULL;
-    felem(*pre_comp)[17][3] = NULL;
+    felem (*pre_comp)[17][3] = NULL;
     felem *tmp_felems = NULL;
     felem_bytearray tmp;
     unsigned num_bytes;
@@ -1457,11 +1457,11 @@ int ec_GFp_nistp224_points_mul(const EC_GROUP *group, EC_POINT *r,
              */
             mixed = 1;
         }
-        secrets = OPENSSL_malloc(num_points * sizeof(felem_bytearray));
-        pre_comp = OPENSSL_malloc(num_points * 17 * 3 * sizeof(felem));
+        secrets = OPENSSL_malloc(sizeof(*secrets) * num_points);
+        pre_comp = OPENSSL_malloc(sizeof(*pre_comp) * num_points);
         if (mixed)
             tmp_felems =
-                OPENSSL_malloc((num_points * 17 + 1) * sizeof(felem));
+                OPENSSL_malloc(sizeof(felem) * (num_points * 17 + 1));
         if ((secrets == NULL) || (pre_comp == NULL)
             || (mixed && (tmp_felems == NULL))) {
             ECerr(EC_F_EC_GFP_NISTP224_POINTS_MUL, ERR_R_MALLOC_FAILURE);
@@ -1472,8 +1472,8 @@ int ec_GFp_nistp224_points_mul(const EC_GROUP *group, EC_POINT *r,
          * we treat NULL scalars as 0, and NULL points as points at infinity,
          * i.e., they contribute nothing to the linear combination
          */
-        memset(secrets, 0, num_points * sizeof(felem_bytearray));
-        memset(pre_comp, 0, num_points * 17 * 3 * sizeof(felem));
+        memset(secrets, 0, sizeof(*secrets) * num_points);
+        memset(pre_comp, 0, sizeof(*pre_comp) * num_points);
         for (i = 0; i < num_points; ++i) {
             if (i == num)
                 /* the generator */
@@ -1533,7 +1533,7 @@ int ec_GFp_nistp224_points_mul(const EC_GROUP *group, EC_POINT *r,
 
     /* the scalar for the generator */
     if ((scalar != NULL) && (have_pre_comp)) {
-        memset(g_secret, 0, sizeof g_secret);
+        memset(g_secret, 0, sizeof(g_secret));
         /* reduce scalar to 0 <= scalar < 2^224 */
         if ((BN_num_bits(scalar) > 224) || (BN_is_negative(scalar))) {
             /*

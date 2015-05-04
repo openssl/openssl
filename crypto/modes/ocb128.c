@@ -226,9 +226,7 @@ OCB128_CONTEXT *CRYPTO_ocb128_new(void *keyenc, void *keydec,
 int CRYPTO_ocb128_init(OCB128_CONTEXT *ctx, void *keyenc, void *keydec,
                        block128_f encrypt, block128_f decrypt)
 {
-    /* Clear everything to NULLs */
     memset(ctx, 0, sizeof(*ctx));
-
     ctx->l_index = 0;
     ctx->max_l_index = 1;
     ctx->l = OPENSSL_malloc(ctx->max_l_index * 16);
@@ -374,8 +372,8 @@ int CRYPTO_ocb128_aad(OCB128_CONTEXT *ctx, const unsigned char *aad,
         ocb_block16_xor(&ctx->offset_aad, &ctx->l_star, &ctx->offset_aad);
 
         /* CipherInput = (A_* || 1 || zeros(127-bitlen(A_*))) xor Offset_* */
-        memset((void *)&tmp1, 0, 16);
-        memcpy((void *)&tmp1, aad + (num_blocks * 16), last_len);
+        memset(&tmp1, 0, 16);
+        memcpy(&tmp1, aad + (num_blocks * 16), last_len);
         ((unsigned char *)&tmp1)[last_len] = 0x80;
         ocb_block16_xor(&ctx->offset_aad, &tmp1, &tmp2);
 
@@ -453,8 +451,8 @@ int CRYPTO_ocb128_encrypt(OCB128_CONTEXT *ctx,
                       out + (num_blocks * 16));
 
         /* Checksum_* = Checksum_m xor (P_* || 1 || zeros(127-bitlen(P_*))) */
-        memset((void *)&tmp1, 0, 16);
-        memcpy((void *)&tmp1, in + (len / 16) * 16, last_len);
+        memset(&tmp1, 0, 16);
+        memcpy(&tmp1, in + (len / 16) * 16, last_len);
         ((unsigned char *)(&tmp1))[last_len] = 0x80;
         ocb_block16_xor(&ctx->checksum, &tmp1, &ctx->checksum);
     }
@@ -526,8 +524,8 @@ int CRYPTO_ocb128_decrypt(OCB128_CONTEXT *ctx,
                       out + (num_blocks * 16));
 
         /* Checksum_* = Checksum_m xor (P_* || 1 || zeros(127-bitlen(P_*))) */
-        memset((void *)&tmp1, 0, 16);
-        memcpy((void *)&tmp1, out + (len / 16) * 16, last_len);
+        memset(&tmp1, 0, 16);
+        memcpy(&tmp1, out + (len / 16) * 16, last_len);
         ((unsigned char *)(&tmp1))[last_len] = 0x80;
         ocb_block16_xor(&ctx->checksum, &tmp1, &ctx->checksum);
     }

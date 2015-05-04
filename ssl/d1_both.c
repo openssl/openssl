@@ -467,7 +467,7 @@ long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
     }
 
     msg_hdr = &s->d1->r_msg_hdr;
-    memset(msg_hdr, 0x00, sizeof(struct hm_header_st));
+    memset(msg_hdr, 0, sizeof(*msg_hdr));
 
  again:
     i = dtls1_get_message_fragment(s, st1, stn, max, ok);
@@ -497,7 +497,7 @@ long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
         s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE,
                         p, msg_len, s, s->msg_callback_arg);
 
-    memset(msg_hdr, 0x00, sizeof(struct hm_header_st));
+    memset(msg_hdr, 0, sizeof(*msg_hdr));
 
     /* Don't change sequence numbers while listening */
     if (!s->d1->listen)
@@ -1289,7 +1289,7 @@ unsigned int dtls1_min_mtu(SSL *s)
 void
 dtls1_get_message_header(unsigned char *data, struct hm_header_st *msg_hdr)
 {
-    memset(msg_hdr, 0x00, sizeof(struct hm_header_st));
+    memset(msg_hdr, 0, sizeof(*msg_hdr));
     msg_hdr->type = *(data++);
     n2l3(data, msg_hdr->msg_len);
 
@@ -1300,7 +1300,7 @@ dtls1_get_message_header(unsigned char *data, struct hm_header_st *msg_hdr)
 
 void dtls1_get_ccs_header(unsigned char *data, struct ccs_header_st *ccs_hdr)
 {
-    memset(ccs_hdr, 0x00, sizeof(struct ccs_header_st));
+    memset(ccs_hdr, 0, sizeof(*ccs_hdr));
 
     ccs_hdr->type = *(data++);
 }

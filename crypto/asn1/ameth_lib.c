@@ -288,8 +288,7 @@ EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_new(int id, int flags,
     if (!ameth)
         return NULL;
 
-    memset(ameth, 0, sizeof(EVP_PKEY_ASN1_METHOD));
-
+    memset(ameth, 0, sizeof(*ameth));
     ameth->pkey_id = id;
     ameth->pkey_base_id = id;
     ameth->pkey_flags = flags | ASN1_PKEY_DYNAMIC;

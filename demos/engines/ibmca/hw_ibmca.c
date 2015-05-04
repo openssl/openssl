@@ -506,7 +506,7 @@ static int ibmca_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     if (publKey == NULL) {
         goto err;
     }
-    memset(publKey, 0, sizeof(ICA_KEY_RSA_MODEXPO));
+    memset(publKey, 0, sizeof(*publKey));
 
     publKey->keyType = CORRECT_ENDIANNESS(ME_KEY_TYPE);
     publKey->keyLength = CORRECT_ENDIANNESS(sizeof(ICA_KEY_RSA_MODEXPO));
@@ -670,7 +670,7 @@ static int ibmca_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 
 /* end SAB additions */
 
-    memset(privKey, 0, sizeof(ICA_KEY_RSA_CRT));
+    memset(privKey, 0, sizeof(*privKey));
     privKey->keyType = CORRECT_ENDIANNESS(CRT_KEY_TYPE);
     privKey->keyLength = CORRECT_ENDIANNESS(sizeof(ICA_KEY_RSA_CRT));
     privKey->modulusBitLength = CORRECT_ENDIANNESS(BN_num_bytes(q) * 2 * 8);

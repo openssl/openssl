@@ -107,7 +107,7 @@ static void JPAKE_CTX_release(JPAKE_CTX *ctx)
     OPENSSL_free(ctx->p.peer_name);
     OPENSSL_free(ctx->p.name);
 
-    memset(ctx, '\0', sizeof(*ctx));
+    memset(ctx, 0, sizeof(*ctx));
 }
 
 JPAKE_CTX *JPAKE_CTX_new(const char *name, const char *peer_name,

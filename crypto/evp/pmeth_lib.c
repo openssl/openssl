@@ -202,7 +202,7 @@ EVP_PKEY_METHOD *EVP_PKEY_meth_new(int id, int flags)
     if (!pmeth)
         return NULL;
 
-    memset(pmeth, 0, sizeof(EVP_PKEY_METHOD));
+    memset(pmeth, 0, sizeof(*pmeth));
 
     pmeth->pkey_id = id;
     pmeth->flags = flags | EVP_PKEY_FLAG_DYNAMIC;
