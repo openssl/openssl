@@ -169,7 +169,7 @@ X509_VERIFY_PARAM *X509_VERIFY_PARAM_new(void)
         OPENSSL_free(param);
         return NULL;
     }
-    memset(param, 0, sizeof *paramid);
+    memset(param, 0, sizeof *param);
     memset(paramid, 0, sizeof *paramid);
     param->id = paramid;
     x509_verify_param_zero(param);
