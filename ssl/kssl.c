@@ -79,6 +79,7 @@
 #include <openssl/objects.h>
 #include <openssl/krb5_asn.h>
 #include "kssl_lcl.h"
+#include "ssl_locl.h"
 
 #ifndef OPENSSL_NO_KRB5
 
