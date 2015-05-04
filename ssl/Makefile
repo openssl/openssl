@@ -278,24 +278,27 @@ dtls1_bitmap.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 dtls1_bitmap.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 dtls1_bitmap.o: dtls1_bitmap.c record/../record/record.h record/../ssl_locl.h
 dtls1_bitmap.o: record/dtls1_bitmap.c record/record_locl.h
-kssl.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+kssl.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 kssl.o: ../include/openssl/buffer.h ../include/openssl/comp.h
-kssl.o: ../include/openssl/crypto.h ../include/openssl/dtls1.h
-kssl.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-kssl.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+kssl.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
+kssl.o: ../include/openssl/dtls1.h ../include/openssl/e_os2.h
+kssl.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
+kssl.o: ../include/openssl/ecdsa.h ../include/openssl/err.h
 kssl.o: ../include/openssl/evp.h ../include/openssl/hmac.h
 kssl.o: ../include/openssl/krb5_asn.h ../include/openssl/kssl.h
 kssl.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 kssl.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 kssl.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
 kssl.o: ../include/openssl/pem.h ../include/openssl/pem2.h
-kssl.o: ../include/openssl/pkcs7.h ../include/openssl/safestack.h
+kssl.o: ../include/openssl/pkcs7.h ../include/openssl/pqueue.h
+kssl.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 kssl.o: ../include/openssl/sha.h ../include/openssl/srtp.h
 kssl.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
 kssl.o: ../include/openssl/ssl23.h ../include/openssl/ssl3.h
 kssl.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 kssl.o: ../include/openssl/tls1.h ../include/openssl/x509.h
-kssl.o: ../include/openssl/x509_vfy.h kssl.c kssl_lcl.h
+kssl.o: ../include/openssl/x509_vfy.h kssl.c kssl_lcl.h record/record.h
+kssl.o: ssl_locl.h
 rec_layer_d1.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 rec_layer_d1.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 rec_layer_d1.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
