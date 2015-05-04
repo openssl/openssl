@@ -275,7 +275,7 @@ SSL *SSL_new(SSL_CTX *ctx)
     s = OPENSSL_malloc(sizeof(*s));
     if (s == NULL)
         goto err;
-    memset(s, 0, sizeof(SSL));
+    memset(s, 0, sizeof(*s));
 
     RECORD_LAYER_init(&s->rlayer, s);
 
@@ -1848,7 +1848,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     if (ret == NULL)
         goto err;
 
-    memset(ret, 0, sizeof(SSL_CTX));
+    memset(ret, 0, sizeof(*ret));
 
     ret->method = meth;
 
@@ -1866,7 +1866,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     ret->get_session_cb = 0;
     ret->generate_session_id = 0;
 
-    memset((char *)&ret->stats, 0, sizeof(ret->stats));
+    memset(&ret->stats, 0, sizeof(ret->stats));
 
     ret->references = 1;
     ret->quiet_shutdown = 0;

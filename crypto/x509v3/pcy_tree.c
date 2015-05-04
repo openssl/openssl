@@ -235,14 +235,11 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
         return 0;
     }
 
-    memset(tree->levels, 0, n * sizeof(X509_POLICY_LEVEL));
-
+    memset(tree->levels, 0, sizeof(*tree->levels) * n);
     tree->nlevel = n;
-
     level = tree->levels;
 
     /* Root data: initialize to anyPolicy */
-
     data = policy_data_new(NULL, OBJ_nid2obj(NID_any_policy), 0);
 
     if (!data || !level_add_node(level, data, NULL, tree))

@@ -293,14 +293,14 @@ int RSA_memory_lock(RSA *r)
         RSAerr(RSA_F_RSA_MEMORY_LOCK, ERR_R_MALLOC_FAILURE);
         return (0);
     }
-    memset(p, 0, (off + j) * sizeof(BN_ULONG));
+    memset(p, 0, sizeof(*p) * (off + j));
     bn = (BIGNUM *)p;
     ul = (BN_ULONG *)&(p[off]);
     for (i = 0; i < 6; i++) {
         b = *(t[i]);
         *(t[i]) = bn_array_el(bn, i);
-        memcpy((char *)bn_array_el(bn, i), (char *)b, bn_sizeof_BIGNUM());
-        memcpy((char *)ul, bn_get_words(b), sizeof(BN_ULONG) * bn_get_top(b));
+        memcpy(bn_array_el(bn, i), b, bn_sizeof_BIGNUM());
+        memcpy(ul, bn_get_words(b), sizeof(*ul) * bn_get_top(b));
         bn_set_static_words(bn_array_el(bn, i), ul, bn_get_top(b));
         ul += bn_get_top(b);
         BN_clear_free(b);

@@ -661,7 +661,7 @@ padlock_aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
         return 0;               /* ERROR */
 
     cdata = ALIGNED_CIPHER_DATA(ctx);
-    memset(cdata, 0, sizeof(struct padlock_cipher_data));
+    memset(cdata, 0, sizeof(*cdata));
 
     /* Prepare Control word. */
     if (mode == EVP_CIPH_OFB_MODE || mode == EVP_CIPH_CTR_MODE)

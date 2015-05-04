@@ -154,7 +154,7 @@ static int hash_step(gost_ctx * c, byte * H, const byte * M)
 int init_gost_hash_ctx(gost_hash_ctx * ctx,
                        const gost_subst_block * subst_block)
 {
-    memset(ctx, 0, sizeof(gost_hash_ctx));
+    memset(ctx, 0, sizeof(*ctx));
     ctx->cipher_ctx = (gost_ctx *) MYALLOC(sizeof(gost_ctx));
     if (!ctx->cipher_ctx) {
         return 0;

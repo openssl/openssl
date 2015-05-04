@@ -71,7 +71,7 @@ ENGINE *ENGINE_new(void)
         ENGINEerr(ENGINE_F_ENGINE_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    memset(ret, 0, sizeof(ENGINE));
+    memset(ret, 0, sizeof(*ret));
     ret->struct_ref = 1;
     engine_ref_debug(ret, 0, 1)
         CRYPTO_new_ex_data(CRYPTO_EX_INDEX_ENGINE, ret, &ret->ex_data);

@@ -188,7 +188,7 @@ CERT *ssl_cert_new(void)
         SSLerr(SSL_F_SSL_CERT_NEW, ERR_R_MALLOC_FAILURE);
         return (NULL);
     }
-    memset(ret, 0, sizeof(CERT));
+    memset(ret, 0, sizeof(*ret));
 
     ret->key = &(ret->pkeys[SSL_PKEY_RSA_ENC]);
     ret->references = 1;
@@ -209,14 +209,9 @@ CERT *ssl_cert_dup(CERT *cert)
         return (NULL);
     }
 
-    memset(ret, 0, sizeof(CERT));
+    memset(ret, 0, sizeof(*ret));
 
-    ret->key = &ret->pkeys[cert->key - &cert->pkeys[0]];
-    /*
-     * or ret->key = ret->pkeys + (cert->key - cert->pkeys), if you find that
-     * more readable
-     */
-
+    ret->key = &ret->pkeys[cert->key - cert->pkeys];
     ret->valid = cert->valid;
     ret->mask_k = cert->mask_k;
     ret->mask_a = cert->mask_a;

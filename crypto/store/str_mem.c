@@ -252,7 +252,7 @@ static void *mem_list_start(STORE *s, STORE_OBJECT_TYPES type,
         STOREerr(STORE_F_MEM_LIST_START, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    memset(context, 0, sizeof(struct mem_ctx_st));
+    memset(context, 0, sizeof(*context));
 
     attribute_context = STORE_parse_attrs_start(attributes);
     if (!attribute_context) {

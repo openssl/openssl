@@ -2217,7 +2217,7 @@ X509_STORE_CTX *X509_STORE_CTX_new(void)
         X509err(X509_F_X509_STORE_CTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    memset(ctx, 0, sizeof(X509_STORE_CTX));
+    memset(ctx, 0, sizeof(*ctx));
     return ctx;
 }
 
@@ -2337,11 +2337,9 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
     ctx->check_policy = check_policy;
 
     /*
-     * This memset() can't make any sense anyway, so it's removed. As
-     * X509_STORE_CTX_cleanup does a proper "free" on the ex_data, we put a
-     * corresponding "new" here and remove this bogus initialisation.
+     * Since X509_STORE_CTX_cleanup does a proper "free" on the ex_data, we
+     * put a corresponding "new" here.
      */
-    /* memset(&(ctx->ex_data),0,sizeof(CRYPTO_EX_DATA)); */
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE_CTX, ctx,
                             &(ctx->ex_data))) {
         OPENSSL_free(ctx);
@@ -2376,7 +2374,7 @@ void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
     sk_X509_pop_free(ctx->chain, X509_free);
     ctx->chain = NULL;
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509_STORE_CTX, ctx, &(ctx->ex_data));
-    memset(&ctx->ex_data, 0, sizeof(CRYPTO_EX_DATA));
+    memset(&ctx->ex_data, 0, sizeof(ctx->ex_data));
 }
 
 void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth)

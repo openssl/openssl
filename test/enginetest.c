@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
     ERR_load_crypto_strings();
 
-    memset(block, 0, 512 * sizeof(ENGINE *));
+    memset(block, 0, sizeof(block));
     if (((new_h1 = ENGINE_new()) == NULL) ||
         !ENGINE_set_id(new_h1, "test_id0") ||
         !ENGINE_set_name(new_h1, "First test item") ||

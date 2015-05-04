@@ -107,7 +107,7 @@ static int ssl_new(BIO *bi)
         BIOerr(BIO_F_SSL_NEW, ERR_R_MALLOC_FAILURE);
         return (0);
     }
-    memset(bs, 0, sizeof(BIO_SSL));
+    memset(bs, 0, sizeof(*bs));
     bi->init = 0;
     bi->ptr = (char *)bs;
     bi->flags = 0;

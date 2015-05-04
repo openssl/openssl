@@ -178,7 +178,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
 
         case BIO_CONN_S_CREATE_SOCKET:
             /* now setup address */
-            memset((char *)&c->them, 0, sizeof(c->them));
+            memset(&c->them, 0, sizeof(c->them));
             c->them.sin_family = AF_INET;
             c->them.sin_port = htons((unsigned short)c->port);
             l = (unsigned long)
@@ -298,7 +298,7 @@ BIO_CONNECT *BIO_CONNECT_new(void)
     ret->ip[2] = 0;
     ret->ip[3] = 0;
     ret->port = 0;
-    memset((char *)&ret->them, 0, sizeof(ret->them));
+    memset(&ret->them, 0, sizeof(ret->them));
     return (ret);
 }
 

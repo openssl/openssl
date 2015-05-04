@@ -484,7 +484,7 @@ int BIO_get_accept_socket(char *host, int bind_mode)
     if (!BIO_get_port(p, &port))
         goto err;
 
-    memset((char *)&server, 0, sizeof(server));
+    memset(&server, 0, sizeof(server));
     server.sa_in.sin_family = AF_INET;
     server.sa_in.sin_port = htons(port);
     addrlen = sizeof(server.sa_in);

@@ -28,7 +28,7 @@ static int pkey_gost_init(EVP_PKEY_CTX *ctx)
     data = OPENSSL_malloc(sizeof(*data));
     if (!data)
         return 0;
-    memset(data, 0, sizeof(struct gost_pmeth_data));
+    memset(data, 0, sizeof(*data));
     if (pkey && EVP_PKEY_get0(pkey)) {
         switch (EVP_PKEY_base_id(pkey)) {
         case NID_id_GostR3410_94:
@@ -411,7 +411,7 @@ static int pkey_gost_mac_init(EVP_PKEY_CTX *ctx)
 
     if (!data)
         return 0;
-    memset(data, 0, sizeof(struct gost_mac_pmeth_data));
+    memset(data, 0, sizeof(*data));
     EVP_PKEY_CTX_set_data(ctx, data);
     return 1;
 }

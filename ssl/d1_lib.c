@@ -215,7 +215,7 @@ void dtls1_clear(SSL *s)
 
         dtls1_clear_queues(s);
 
-        memset(s->d1, 0, sizeof(*(s->d1)));
+        memset(s->d1, 0, sizeof(*s->d1));
 
         if (s->server) {
             s->d1->cookie_len = sizeof(s->d1->cookie);
@@ -324,7 +324,7 @@ void dtls1_start_timer(SSL *s)
 #ifndef OPENSSL_NO_SCTP
     /* Disable timer for SCTP */
     if (BIO_dgram_is_sctp(SSL_get_wbio(s))) {
-        memset(&(s->d1->next_timeout), 0, sizeof(struct timeval));
+        memset(&s->d1->next_timeout, 0, sizeof(s->d1->next_timeout));
         return;
     }
 #endif
@@ -359,7 +359,7 @@ struct timeval *dtls1_get_timeout(SSL *s, struct timeval *timeleft)
     if (s->d1->next_timeout.tv_sec < timenow.tv_sec ||
         (s->d1->next_timeout.tv_sec == timenow.tv_sec &&
          s->d1->next_timeout.tv_usec <= timenow.tv_usec)) {
-        memset(timeleft, 0, sizeof(struct timeval));
+        memset(timeleft, 0, sizeof(*timeleft));
         return timeleft;
     }
 
@@ -377,7 +377,7 @@ struct timeval *dtls1_get_timeout(SSL *s, struct timeval *timeleft)
      * because of small devergences with socket timeouts.
      */
     if (timeleft->tv_sec == 0 && timeleft->tv_usec < 15000) {
-        memset(timeleft, 0, sizeof(struct timeval));
+        memset(timeleft, 0, sizeof(*timeleft));
     }
 
     return timeleft;
@@ -412,8 +412,8 @@ void dtls1_double_timeout(SSL *s)
 void dtls1_stop_timer(SSL *s)
 {
     /* Reset everything */
-    memset(&(s->d1->timeout), 0, sizeof(struct dtls1_timeout_st));
-    memset(&(s->d1->next_timeout), 0, sizeof(struct timeval));
+    memset(&s->d1->timeout, 0, sizeof(s->d1->timeout));
+    memset(&s->d1->next_timeout, 0, sizeof(s->d1->next_timeout));
     s->d1->timeout_duration = 1;
     BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT, 0,
              &(s->d1->next_timeout));

@@ -1048,7 +1048,7 @@ krb5_error_code kssl_cget_tkt( /* UPDATE */ KSSL_CTX *kssl_ctx,
     krb5_data krb5_app_req;
 
     kssl_err_set(kssl_err, 0, "");
-    memset((char *)&krb5creds, 0, sizeof(krb5creds));
+    memset(&krb5creds, 0, sizeof(krb5creds));
 
     if (!kssl_ctx) {
         kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT, "No kssl_ctx defined.\n");
@@ -1797,7 +1797,7 @@ int kssl_tgt_is_available(KSSL_CTX *kssl_ctx)
     krb5_creds krb5creds, *krb5credsp = NULL;
     int rc = 0;
 
-    memset((char *)&krb5creds, 0, sizeof(krb5creds));
+    memset(&krb5creds, 0, sizeof(krb5creds));
 
     if (!kssl_ctx)
         return (0);
@@ -2072,7 +2072,7 @@ krb5_error_code kssl_check_authent(
     }
 # endif
     enc = kssl_map_enc(enctype);
-    memset(iv, 0, sizeof iv);   /* per RFC 1510 */
+    memset(iv, 0, sizeof(iv));   /* per RFC 1510 */
 
     if (enc == NULL) {
         /*
@@ -2126,7 +2126,7 @@ krb5_error_code kssl_check_authent(
         goto err;
     }
 
-    memset(&tm_time, 0, sizeof(struct tm));
+    memset(&tm_time, 0, sizeof(tm_tmime));
     if (k_gmtime(auth->ctime, &tm_time) &&
         ((tr = mktime(&tm_time)) != (time_t)(-1))) {
         now = time(&now);

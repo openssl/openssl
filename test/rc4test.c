@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
 
     for (i = 0; i < 6; i++) {
         RC4_set_key(&key, keys[i][0], &(keys[i][1]));
-        memset(obuf, 0x00, sizeof(obuf));
+        memset(obuf, 0, sizeof(obuf));
         RC4(&key, data_len[i], &(data[i][0]), obuf);
         if (memcmp(obuf, output[i], data_len[i] + 1) != 0) {
             printf("error calculating RC4\n");
@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
     printf("test end processing ");
     for (i = 0; i < data_len[3]; i++) {
         RC4_set_key(&key, keys[3][0], &(keys[3][1]));
-        memset(obuf, 0x00, sizeof(obuf));
+        memset(obuf, 0, sizeof(obuf));
         RC4(&key, i, &(data[3][0]), obuf);
         if ((memcmp(obuf, output[3], i) != 0) || (obuf[i] != 0)) {
             printf("error in RC4 length processing\n");
@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
     printf("test multi-call ");
     for (i = 0; i < data_len[3]; i++) {
         RC4_set_key(&key, keys[3][0], &(keys[3][1]));
-        memset(obuf, 0x00, sizeof(obuf));
+        memset(obuf, 0, sizeof(obuf));
         RC4(&key, i, &(data[3][0]), obuf);
         RC4(&key, data_len[3] - i, &(data[3][i]), &(obuf[i]));
         if (memcmp(obuf, output[3], data_len[3] + 1) != 0) {
@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
         };
 
         RC4_set_key(&key, keys[0][0], &(keys[3][1]));
-        memset(buf, '\0', sizeof(buf));
+        memset(buf, 0, sizeof(buf));
         SHA1_Init(&c);
         for (i = 0; i < 2571; i++) {
             RC4(&key, sizeof(buf), buf, buf);

@@ -12,7 +12,7 @@ COMP_CTX *COMP_CTX_new(COMP_METHOD *meth)
         /* ZZZZZZZZZZZZZZZZ */
         return (NULL);
     }
-    memset(ret, 0, sizeof(COMP_CTX));
+    memset(ret, 0, sizeof(*ret));
     ret->meth = meth;
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
         OPENSSL_free(ret);

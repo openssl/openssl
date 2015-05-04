@@ -257,7 +257,7 @@ int OpenSocket(int nPort)
         exit(2);
     }
 
-    memset(&saServer, 0, sizeof saServer);
+    memset(&saServer, 0, sizeof(saServer));
     saServer.sin_family = AF_INET;
     saServer.sin_port = htons(nPort);
     nSize = sizeof saServer;

@@ -260,7 +260,7 @@ void BN_free(BIGNUM *a)
 
 void BN_init(BIGNUM *a)
 {
-    memset(a, 0, sizeof(BIGNUM));
+    memset(a, 0, sizeof(*a));
     bn_check_top(a);
 }
 
@@ -311,7 +311,7 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
      * function - what's important is constant time operation (we're not
      * actually going to use the data)
      */
-    memset(a, 0, sizeof(BN_ULONG) * words);
+    memset(a, 0, sizeof(*a) * words);
 #endif
 
 #if 1
@@ -355,7 +355,7 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
         }
     }
 #else
-    memset(A, 0, sizeof(BN_ULONG) * words);
+    memset(A, 0, sizeof(*A) * words);
     memcpy(A, b->d, sizeof(b->d[0]) * b->top);
 #endif
 
@@ -492,7 +492,7 @@ void BN_clear(BIGNUM *a)
 {
     bn_check_top(a);
     if (a->d != NULL)
-        memset(a->d, 0, a->dmax * sizeof(a->d[0]));
+        memset(a->d, 0, sizeof(*a->d) * a->dmax);
     a->top = 0;
     a->neg = 0;
 }

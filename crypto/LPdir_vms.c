@@ -109,7 +109,7 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
             errno = ENOMEM;
             return 0;
         }
-        memset(*ctx, '\0', sizeof(**ctx));
+        memset(*ctx, 0, sizeof(**ctx));
 
         strcpy((*ctx)->filespec, directory);
         strcat((*ctx)->filespec, "*.*;");

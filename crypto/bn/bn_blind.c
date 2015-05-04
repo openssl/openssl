@@ -141,7 +141,7 @@ BN_BLINDING *BN_BLINDING_new(const BIGNUM *A, const BIGNUM *Ai, BIGNUM *mod)
         BNerr(BN_F_BN_BLINDING_NEW, ERR_R_MALLOC_FAILURE);
         return (NULL);
     }
-    memset(ret, 0, sizeof(BN_BLINDING));
+    memset(ret, 0, sizeof(*ret));
     if (A != NULL) {
         if ((ret->A = BN_dup(A)) == NULL)
             goto err;

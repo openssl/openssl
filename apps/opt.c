@@ -795,7 +795,7 @@ void opt_help(const OPTIONS *list)
         }
 
         /* Pad out prefix */
-        memset(start, ' ', sizeof start - 1);
+        memset(start, ' ', sizeof(start) - 1);
         start[sizeof start - 1] = '\0';
 
         if (o->name == OPT_MORE_STR) {
@@ -821,7 +821,7 @@ void opt_help(const OPTIONS *list)
         if ((int)(p - start) >= MAX_OPT_HELP_WIDTH) {
             *p = '\0';
             BIO_printf(bio_err, "%s\n", start);
-            memset(start, ' ', sizeof start);
+            memset(start, ' ', sizeof(start));
         }
         start[width] = '\0';
         BIO_printf(bio_err, "%s  %s\n", start, help);

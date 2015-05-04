@@ -337,8 +337,7 @@ static int ok_write(BIO *b, const char *in, int inl)
         n = (inl + ctx->buf_len > OK_BLOCK_SIZE + OK_BLOCK_BLOCK) ?
             (int)(OK_BLOCK_SIZE + OK_BLOCK_BLOCK - ctx->buf_len) : inl;
 
-        memcpy((unsigned char *)(&(ctx->buf[ctx->buf_len])),
-               (unsigned char *)in, n);
+        memcpy(&ctx->buf[ctx->buf_len], in, n);
         ctx->buf_len += n;
         inl -= n;
         in += n;

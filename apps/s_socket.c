@@ -252,7 +252,7 @@ static int init_client_ip(int *sock, const unsigned char ip[4], int port,
     if (!ssl_sock_init())
         return (0);
 
-    memset((char *)&them, 0, sizeof(them));
+    memset(&them, 0, sizeof(them));
     them.sin_family = AF_INET;
     them.sin_port = htons((unsigned short)port);
     addr = (unsigned long)
@@ -308,7 +308,7 @@ int init_client_unix(int *sock, const char *server)
         return (0);
     }
 
-    memset((char *)&them, 0, sizeof(them));
+    memset(&them, 0, sizeof(them));
     them.sun_family = AF_UNIX;
     strcpy(them.sun_path, server);
 
@@ -410,7 +410,7 @@ static int init_server_long(int *sock, int port, char *ip, int type)
     if (!ssl_sock_init())
         return (0);
 
-    memset((char *)&server, 0, sizeof(server));
+    memset(&server, 0, sizeof(server));
     server.sin_family = AF_INET;
     server.sin_port = htons((unsigned short)port);
     if (ip == NULL)
@@ -475,7 +475,7 @@ static int init_server_unix(int *sock, const char *path)
     if (s == INVALID_SOCKET)
         goto err;
 
-    memset((char *)&server, 0, sizeof(server));
+    memset(&server, 0, sizeof(server));
     server.sun_family = AF_UNIX;
     strcpy(server.sun_path, path);
 
@@ -518,7 +518,7 @@ static int do_accept(int acc_sock, int *sock, char **host)
  redoit:
 # endif
 
-    memset((char *)&from, 0, sizeof(from));
+    memset(&from, 0, sizeof(from));
     len = sizeof(from);
     /*
      * Note: under VMS with SOCKETSHR the fourth parameter is currently of

@@ -211,8 +211,8 @@ int bn_copy_words(BN_ULONG *out, const BIGNUM *in, int size)
     if (in->top > size)
         return 0;
 
-    memset(out, 0, sizeof(BN_ULONG) * size);
-    memcpy(out, in->d, sizeof(BN_ULONG) * in->top);
+    memset(out, 0, sizeof(*out) * size);
+    memcpy(out, in->d, sizeof(*out) * in->top);
     return 1;
 }
 

@@ -198,7 +198,7 @@ SSL_SESSION *SSL_SESSION_new(void)
         SSLerr(SSL_F_SSL_SESSION_NEW, ERR_R_MALLOC_FAILURE);
         return (0);
     }
-    memset(ss, 0, sizeof(SSL_SESSION));
+    memset(ss, 0, sizeof(*ss));
 
     ss->verify_result = 1;      /* avoid 0 (= X509_V_OK) just in case */
     ss->references = 1;

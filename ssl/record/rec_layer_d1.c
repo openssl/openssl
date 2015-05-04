@@ -286,8 +286,8 @@ int dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
 
     s->rlayer.packet = NULL;
     s->rlayer.packet_length = 0;
-    memset(&s->rlayer.rbuf, 0, sizeof(SSL3_BUFFER));
-    memset(&s->rlayer.rrec, 0, sizeof(SSL3_RECORD));
+    memset(&s->rlayer.rbuf, 0, sizeof(s->rlayer.rbuf));
+    memset(&s->rlayer.rrec, 0, sizeof(s->rlayer.rrec));
 
     if (!ssl3_setup_buffers(s)) {
         SSLerr(SSL_F_DTLS1_BUFFER_RECORD, ERR_R_INTERNAL_ERROR);
@@ -1298,9 +1298,10 @@ void dtls1_reset_seq_numbers(SSL *s, int rw)
     if (rw & SSL3_CC_READ) {
         seq = s->rlayer.read_sequence;
         s->rlayer.d->r_epoch++;
-        memcpy(&(s->rlayer.d->bitmap), &(s->rlayer.d->next_bitmap),
-            sizeof(DTLS1_BITMAP));
-        memset(&(s->rlayer.d->next_bitmap), 0x00, sizeof(DTLS1_BITMAP));
+        memcpy(&s->rlayer.d->bitmap, &s->rlayer.d->next_bitmap,
+               sizeof(s->rlayer.d->bitmap));
+        memset(&s->rlayer.d->next_bitmap, 0,
+               sizeof(s->rlayer.d->next_bitmap));
     } else {
         seq = s->rlayer.write_sequence;
         memcpy(s->rlayer.d->last_write_sequence, seq,
@@ -1308,5 +1309,5 @@ void dtls1_reset_seq_numbers(SSL *s, int rw)
         s->rlayer.d->w_epoch++;
     }
 
-    memset(seq, 0x00, seq_bytes);
+    memset(seq, 0, seq_bytes);
 }

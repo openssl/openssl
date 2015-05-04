@@ -155,7 +155,7 @@ void RECORD_LAYER_clear(RECORD_LAYER *rl)
     rlen = SSL3_BUFFER_get_len(&rl->rbuf);
     wp = SSL3_BUFFER_get_buf(&rl->wbuf);
     wlen = SSL3_BUFFER_get_len(&rl->wbuf);
-    memset(rl, 0, sizeof (RECORD_LAYER));
+    memset(rl, 0, sizeof(*rl));
     SSL3_BUFFER_set_buf(&rl->rbuf, rp);
     SSL3_BUFFER_set_len(&rl->rbuf, rlen);
     SSL3_BUFFER_set_buf(&rl->wbuf, wp);

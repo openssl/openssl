@@ -2518,7 +2518,7 @@ int ssl3_send_client_key_exchange(SSL *s)
              *      EVP_EncryptInit_ex(&ciph_ctx,NULL, key,iv);
              */
 
-            memset(iv, 0, sizeof iv); /* per RFC 1510 */
+            memset(iv, 0, sizeof(iv)); /* per RFC 1510 */
             EVP_EncryptInit_ex(&ciph_ctx, enc, NULL, kssl_ctx->key, iv);
             EVP_EncryptUpdate(&ciph_ctx, epms, &outl, pms, pmslen);
             EVP_EncryptFinal_ex(&ciph_ctx, &(epms[outl]), &padl);
@@ -2788,7 +2788,7 @@ int ssl3_send_client_key_exchange(SSL *s)
                 /* Encoded point will be copied here */
                 p += 1;
                 /* copy the point */
-                memcpy((unsigned char *)p, encodedPoint, n);
+                memcpy(p, encodedPoint, n);
                 /* increment n to account for length field */
                 n += 1;
             }
