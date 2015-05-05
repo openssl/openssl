@@ -4649,6 +4649,6 @@ X509_get0_uids                          5008	EXIST::FUNCTION:
 X509_aux_print                          5009	EXIST::FUNCTION:STDIO
 ENGINE_load_dasync                      5010	EXIST::FUNCTION:ENGINE,STATIC_ENGINE
 ASYNC_pause_job                         5011	EXIST::FUNCTION:
-ASYNC_job_is_waiting                    5012	EXIST::FUNCTION:
+ASYNC_job_is_waiting                    5012	NOEXIST::FUNCTION:
 ASYNC_in_job                            5013	EXIST::FUNCTION:
 ASYNC_start_job                         5014	EXIST::FUNCTION:
