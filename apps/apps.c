@@ -2365,7 +2365,7 @@ static int WIN32_rename(const char *from, const char *to)
     } else {                    /* UNICODE path */
 
         size_t i, flen = strlen(from) + 1, tlen = strlen(to) + 1;
-        tfrom = malloc(*sizeof(*tfrom) * (flen + tlen));
+        tfrom = malloc(sizeof(*tfrom) * (flen + tlen));
         if (tfrom == NULL)
             goto err;
         tto = tfrom + flen;
