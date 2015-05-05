@@ -75,6 +75,7 @@ int ASYNC_FIBRE_init(ASYNC_FIBRE *fibre)
     fibre->fibre.uc_stack.ss_sp = stack;
     fibre->fibre.uc_stack.ss_size = STACKSIZE;
     fibre->fibre.uc_link = NULL;
+    fibre->env_init = 0;
 
     return 1;
 }
