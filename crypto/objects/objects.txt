@@ -839,8 +839,6 @@ mime-mhs-headings 1	: id-hex-partial-message : id-hex-partial-message
 mime-mhs-headings 2	: id-hex-multipart-message : id-hex-multipart-message
 
 # What the hell are these OIDs, really?
-!Cname rle-compression
-1 1 1 1 666 1		: RLE			: run length compression
 !Cname zlib-compression
 id-smime-alg 8		: ZLIB			: zlib compression
 
