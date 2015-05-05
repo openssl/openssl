@@ -62,20 +62,34 @@
 #  define ASYNC_ARCH
 
 #  include <ucontext.h>
+#  include <setjmp.h>
+#  include "e_os.h"
 
 extern __thread ASYNC_CTX *sysvctx;
 
 typedef struct async_fibre_st {
     ucontext_t fibre;
+    jmp_buf env;
+    int env_init;
 } ASYNC_FIBRE;
 
 #  define ASYNC_set_ctx(nctx)             (sysvctx = (nctx))
 #  define ASYNC_get_ctx()                 (sysvctx)
-#  define ASYNC_FIBRE_swapcontext(o,n,r) \
-            ((r)? \
-                !swapcontext(&(o)->fibre, &(n)->fibre) \
-            : \
-                !setcontext(&(n)->fibre))
+
+static inline int ASYNC_FIBRE_swapcontext(ASYNC_FIBRE *o, ASYNC_FIBRE *n, int r)
+{
+    o->env_init = 1;
+
+    if (!r || !setjmp(o->env)) {
+        if (n->env_init)
+            longjmp(n->env, 1);
+        else
+            setcontext(&n->fibre);
+    }
+
+    return 1;
+}
+
 #  define ASYNC_FIBRE_makecontext(c) \
             (ASYNC_FIBRE_init(c) \
             && !getcontext(&(c)->fibre) \
