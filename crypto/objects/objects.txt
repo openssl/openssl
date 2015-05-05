@@ -838,7 +838,7 @@ mime-mhs 2		: mime-mhs-bodies	: mime-mhs-bodies
 mime-mhs-headings 1	: id-hex-partial-message : id-hex-partial-message
 mime-mhs-headings 2	: id-hex-multipart-message : id-hex-multipart-message
 
-# What the hell are these OIDs, really?
+# RFC 3274
 !Cname zlib-compression
 id-smime-alg 8		: ZLIB			: zlib compression
 
