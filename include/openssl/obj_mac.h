@@ -2579,11 +2579,6 @@
 #define NID_id_hex_multipart_message            508
 #define OBJ_id_hex_multipart_message            OBJ_mime_mhs_headings,2L
 
-#define SN_rle_compression              "RLE"
-#define LN_rle_compression              "run length compression"
-#define NID_rle_compression             124
-#define OBJ_rle_compression             1L,1L,1L,1L,666L,1L
-
 #define SN_zlib_compression             "ZLIB"
 #define LN_zlib_compression             "zlib compression"
 #define NID_zlib_compression            125
