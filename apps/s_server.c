@@ -1336,29 +1336,29 @@ int s_server_main(int argc, char *argv[])
             break;
 #ifndef OPENSSL_NO_SSL3
         case OPT_SSL3:
-            meth = SSLv3_client_method();
+            meth = SSLv3_server_method();
             break;
 #endif
         case OPT_TLS1_2:
-            meth = TLSv1_2_client_method();
+            meth = TLSv1_2_server_method();
             break;
         case OPT_TLS1_1:
-            meth = TLSv1_1_client_method();
+            meth = TLSv1_1_server_method();
             break;
         case OPT_TLS1:
-            meth = TLSv1_client_method();
+            meth = TLSv1_server_method();
             break;
 #ifndef OPENSSL_NO_DTLS1
         case OPT_DTLS:
-            meth = DTLS_client_method();
+            meth = DTLS_server_method();
             socket_type = SOCK_DGRAM;
             break;
         case OPT_DTLS1:
-            meth = DTLSv1_client_method();
+            meth = DTLSv1_server_method();
             socket_type = SOCK_DGRAM;
             break;
         case OPT_DTLS1_2:
-            meth = DTLSv1_2_client_method();
+            meth = DTLSv1_2_server_method();
             socket_type = SOCK_DGRAM;
             break;
         case OPT_TIMEOUT:
