@@ -692,15 +692,6 @@ int ssl3_accept(SSL *s)
 
         case SSL3_ST_SR_CERT_VRFY_A:
         case SSL3_ST_SR_CERT_VRFY_B:
-            /*
-             * This *should* be the first time we enable CCS, but be
-             * extra careful about surrounding code changes. We need
-             * to set this here because we don't know if we're
-             * expecting a CertificateVerify or not.
-             */
-            if (!s->s3->change_cipher_spec)
-                s->s3->flags |= SSL3_FLAGS_CCS_OK;
-            /* we should decide if we expected this one */
             ret = ssl3_get_cert_verify(s);
             if (ret <= 0)
                 goto end;
@@ -720,11 +711,10 @@ int ssl3_accept(SSL *s)
         case SSL3_ST_SR_NEXT_PROTO_A:
         case SSL3_ST_SR_NEXT_PROTO_B:
             /*
-             * Enable CCS for resumed handshakes with NPN.
-             * In a full handshake with NPN, we end up here through
-             * SSL3_ST_SR_CERT_VRFY_B, where SSL3_FLAGS_CCS_OK was
-             * already set. Receiving a CCS clears the flag, so make
-             * sure not to re-enable it to ban duplicates.
+             * Enable CCS for NPN. Receiving a CCS clears the flag, so make
+             * sure not to re-enable it to ban duplicates. This *should* be the
+             * first time we have received one - but we check anyway to be
+             * cautious.
              * s->s3->change_cipher_spec is set when a CCS is
              * processed in s3_pkt.c, and remains set until
              * the client's Finished message is read.
@@ -743,10 +733,8 @@ int ssl3_accept(SSL *s)
         case SSL3_ST_SR_FINISHED_A:
         case SSL3_ST_SR_FINISHED_B:
             /*
-             * Enable CCS for resumed handshakes without NPN.
-             * In a full handshake, we end up here through
-             * SSL3_ST_SR_CERT_VRFY_B, where SSL3_FLAGS_CCS_OK was
-             * already set. Receiving a CCS clears the flag, so make
+             * Enable CCS for handshakes without NPN. In NPN the CCS flag has
+             * already been set. Receiving a CCS clears the flag, so make
              * sure not to re-enable it to ban duplicates.
              * s->s3->change_cipher_spec is set when a CCS is
              * processed in s3_pkt.c, and remains set until
@@ -2963,50 +2951,36 @@ int ssl3_get_cert_verify(SSL *s)
     EVP_MD_CTX mctx;
     EVP_MD_CTX_init(&mctx);
 
-    n = s->method->ssl_get_message(s,
-                                   SSL3_ST_SR_CERT_VRFY_A,
-                                   SSL3_ST_SR_CERT_VRFY_B,
-                                   -1, SSL3_RT_MAX_PLAIN_LENGTH, &ok);
-
-    if (!ok)
-        return ((int)n);
-
-    if (s->session->peer != NULL) {
-        peer = s->session->peer;
-        pkey = X509_get_pubkey(peer);
-        type = X509_certificate_type(peer, pkey);
-    } else {
-        peer = NULL;
-        pkey = NULL;
-    }
-
-    if (s->s3->tmp.message_type != SSL3_MT_CERTIFICATE_VERIFY) {
-        s->s3->tmp.reuse_message = 1;
-        if (peer != NULL) {
-            al = SSL_AD_UNEXPECTED_MESSAGE;
-            SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, SSL_R_MISSING_VERIFY_MESSAGE);
-            goto f_err;
-        }
+    /*
+     * We should only process a CertificateVerify message if we have received
+     * a Certificate from the client. If so then |s->session->peer| will be non
+     * NULL. In some instances a CertificateVerify message is not required even
+     * if the peer has sent a Certificate (e.g. such as in the case of static
+     * DH). In that case the ClientKeyExchange processing will skip the
+     * CertificateVerify state so we should not arrive here.
+     */
+    if (s->session->peer == NULL) {
         ret = 1;
         goto end;
     }
 
-    if (peer == NULL) {
-        SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, SSL_R_NO_CLIENT_CERT_RECEIVED);
-        al = SSL_AD_UNEXPECTED_MESSAGE;
-        goto f_err;
-    }
+    n = s->method->ssl_get_message(s,
+                                   SSL3_ST_SR_CERT_VRFY_A,
+                                   SSL3_ST_SR_CERT_VRFY_B,
+                                   SSL3_MT_CERTIFICATE_VERIFY,
+                                   SSL3_RT_MAX_PLAIN_LENGTH, &ok);
+
+    if (!ok)
+        return ((int)n);
+
+    peer = s->session->peer;
+    pkey = X509_get_pubkey(peer);
+    type = X509_certificate_type(peer, pkey);
 
     if (!(type & EVP_PKT_SIGN)) {
         SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,
                SSL_R_SIGNATURE_FOR_NON_SIGNING_CERTIFICATE);
         al = SSL_AD_ILLEGAL_PARAMETER;
-        goto f_err;
-    }
-
-    if (s->s3->change_cipher_spec) {
-        SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, SSL_R_CCS_RECEIVED_EARLY);
-        al = SSL_AD_UNEXPECTED_MESSAGE;
         goto f_err;
     }
 
