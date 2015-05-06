@@ -1036,7 +1036,7 @@ int ssl3_get_server_hello(SSL *s)
             al = SSL_AD_PROTOCOL_VERSION;
             goto f_err;
         }
-        s->version = s->method->version;
+        s->session->ssl_version = s->version = s->method->version;
     } else if ((p[0] != (s->version >> 8)) || (p[1] != (s->version & 0xff))) {
         SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_WRONG_SSL_VERSION);
         s->version = (s->version & 0xff00) | p[1];
