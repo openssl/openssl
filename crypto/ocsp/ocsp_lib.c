@@ -196,10 +196,10 @@ int OCSP_parse_url(const char *url, char **phost, char **pport, char **ppath,
 
     *(p++) = '\0';
 
-    if (!strcmp(buf, "http")) {
+    if (strcmp(buf, "http") == 0) {
         *pssl = 0;
         port = "80";
-    } else if (!strcmp(buf, "https")) {
+    } else if (strcmp(buf, "https") == 0) {
         *pssl = 1;
         port = "443";
     } else

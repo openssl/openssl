@@ -182,17 +182,17 @@ void *PEM_ASN1_read(d2i_of_void *d2i, const char *name, FILE *fp, void **x,
 static int check_pem(const char *nm, const char *name)
 {
     /* Normal matching nm and name */
-    if (!strcmp(nm, name))
+    if (strcmp(nm, name) == 0)
         return 1;
 
     /* Make PEM_STRING_EVP_PKEY match any private key */
 
-    if (!strcmp(name, PEM_STRING_EVP_PKEY)) {
+    if (strcmp(name, PEM_STRING_EVP_PKEY) == 0) {
         int slen;
         const EVP_PKEY_ASN1_METHOD *ameth;
-        if (!strcmp(nm, PEM_STRING_PKCS8))
+        if (strcmp(nm, PEM_STRING_PKCS8) == 0)
             return 1;
-        if (!strcmp(nm, PEM_STRING_PKCS8INF))
+        if (strcmp(nm, PEM_STRING_PKCS8INF) == 0)
             return 1;
         slen = pem_check_suffix(nm, "PRIVATE KEY");
         if (slen > 0) {
@@ -207,7 +207,7 @@ static int check_pem(const char *nm, const char *name)
         return 0;
     }
 
-    if (!strcmp(name, PEM_STRING_PARAMETERS)) {
+    if (strcmp(name, PEM_STRING_PARAMETERS) == 0) {
         int slen;
         const EVP_PKEY_ASN1_METHOD *ameth;
         slen = pem_check_suffix(nm, "PARAMETERS");
@@ -230,41 +230,45 @@ static int check_pem(const char *nm, const char *name)
         return 0;
     }
     /* If reading DH parameters handle X9.42 DH format too */
-    if (!strcmp(nm, PEM_STRING_DHXPARAMS) &&
-        !strcmp(name, PEM_STRING_DHPARAMS))
+    if (strcmp(nm, PEM_STRING_DHXPARAMS) == 0
+        && strcmp(name, PEM_STRING_DHPARAMS) == 0)
         return 1;
 
     /* Permit older strings */
 
-    if (!strcmp(nm, PEM_STRING_X509_OLD) && !strcmp(name, PEM_STRING_X509))
+    if (strcmp(nm, PEM_STRING_X509_OLD) == 0
+        && strcmp(name, PEM_STRING_X509) == 0)
         return 1;
 
-    if (!strcmp(nm, PEM_STRING_X509_REQ_OLD) &&
-        !strcmp(name, PEM_STRING_X509_REQ))
+    if (strcmp(nm, PEM_STRING_X509_REQ_OLD) == 0
+        && strcmp(name, PEM_STRING_X509_REQ) == 0)
         return 1;
 
     /* Allow normal certs to be read as trusted certs */
-    if (!strcmp(nm, PEM_STRING_X509) &&
-        !strcmp(name, PEM_STRING_X509_TRUSTED))
+    if (strcmp(nm, PEM_STRING_X509) == 0
+        && strcmp(name, PEM_STRING_X509_TRUSTED) == 0)
         return 1;
 
-    if (!strcmp(nm, PEM_STRING_X509_OLD) &&
-        !strcmp(name, PEM_STRING_X509_TRUSTED))
+    if (strcmp(nm, PEM_STRING_X509_OLD) == 0
+        && strcmp(name, PEM_STRING_X509_TRUSTED) == 0)
         return 1;
 
     /* Some CAs use PKCS#7 with CERTIFICATE headers */
-    if (!strcmp(nm, PEM_STRING_X509) && !strcmp(name, PEM_STRING_PKCS7))
+    if (strcmp(nm, PEM_STRING_X509) == 0
+        && strcmp(name, PEM_STRING_PKCS7) == 0)
         return 1;
 
-    if (!strcmp(nm, PEM_STRING_PKCS7_SIGNED) &&
-        !strcmp(name, PEM_STRING_PKCS7))
+    if (strcmp(nm, PEM_STRING_PKCS7_SIGNED) == 0
+        && strcmp(name, PEM_STRING_PKCS7) == 0)
         return 1;
 
 #ifndef OPENSSL_NO_CMS
-    if (!strcmp(nm, PEM_STRING_X509) && !strcmp(name, PEM_STRING_CMS))
+    if (strcmp(nm, PEM_STRING_X509) == 0
+        && strcmp(name, PEM_STRING_CMS) == 0)
         return 1;
     /* Allow CMS to be read from PKCS#7 headers */
-    if (!strcmp(nm, PEM_STRING_PKCS7) && !strcmp(name, PEM_STRING_CMS))
+    if (strcmp(nm, PEM_STRING_PKCS7) == 0
+        && strcmp(name, PEM_STRING_CMS) == 0)
         return 1;
 #endif
 

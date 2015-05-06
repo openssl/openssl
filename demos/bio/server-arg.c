@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
         if (rv > 0)
             continue;
         /* Otherwise application specific argument processing */
-        if (!strcmp(*args, "-port")) {
+        if (strcmp(*args, "-port") == 0) {
             port = args[1];
             if (port == NULL) {
                 fprintf(stderr, "Missing -port argument\n");

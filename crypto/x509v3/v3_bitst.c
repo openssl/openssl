@@ -119,8 +119,8 @@ ASN1_BIT_STRING *v2i_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
     for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
         val = sk_CONF_VALUE_value(nval, i);
         for (bnam = method->usr_data; bnam->lname; bnam++) {
-            if (!strcmp(bnam->sname, val->name) ||
-                !strcmp(bnam->lname, val->name)) {
+            if (strcmp(bnam->sname, val->name) == 0
+                || strcmp(bnam->lname, val->name) == 0) {
                 if (!ASN1_BIT_STRING_set_bit(bs, bnam->bitnum, 1)) {
                     X509V3err(X509V3_F_V2I_ASN1_BIT_STRING,
                               ERR_R_MALLOC_FAILURE);

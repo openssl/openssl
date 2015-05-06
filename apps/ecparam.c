@@ -265,11 +265,11 @@ int ecparam_main(int argc, char **argv)
          * are the same as the curves prime192v1 and prime256v1 defined in
          * X9.62)
          */
-        if (!strcmp(curve_name, "secp192r1")) {
+        if (strcmp(curve_name, "secp192r1") == 0) {
             BIO_printf(bio_err, "using curve name prime192v1 "
                        "instead of secp192r1\n");
             nid = NID_X9_62_prime192v1;
-        } else if (!strcmp(curve_name, "secp256r1")) {
+        } else if (strcmp(curve_name, "secp256r1") == 0) {
             BIO_printf(bio_err, "using curve name prime256v1 "
                        "instead of secp256r1\n");
             nid = NID_X9_62_prime256v1;

@@ -172,7 +172,7 @@ int X509_PURPOSE_get_by_sname(char *sname)
     X509_PURPOSE *xptmp;
     for (i = 0; i < X509_PURPOSE_get_count(); i++) {
         xptmp = X509_PURPOSE_get0(i);
-        if (!strcmp(xptmp->sname, sname))
+        if (strcmp(xptmp->sname, sname) == 0)
             return i;
     }
     return -1;

@@ -1392,10 +1392,10 @@ int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str,
         const char *flag = sk_OPENSSL_STRING_value(str, i);
         const char *arg = sk_OPENSSL_STRING_value(str, i + 1);
         /* If no_ecdhe or named curve already specified don't need a default. */
-        if (!no_ecdhe && !strcmp(flag, "-named_curve"))
+        if (!no_ecdhe && strcmp(flag, "-named_curve") == 0)
             no_ecdhe = 1;
 #ifndef OPENSSL_NO_JPAKE
-        if (!no_jpake && !strcmp(flag, "-cipher")) {
+        if (!no_jpake && (strcmp(flag, "-cipher") == 0)) {
             BIO_puts(bio_err, "JPAKE sets cipher to PSK\n");
             return 0;
         }

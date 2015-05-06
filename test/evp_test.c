@@ -231,8 +231,9 @@ static const struct evp_test_method *evp_test_list[] = {
 static const struct evp_test_method *evp_find_test(const char *name)
 {
     const struct evp_test_method **tt;
+
     for (tt = evp_test_list; *tt; tt++) {
-        if (!strcmp(name, (*tt)->name))
+        if (strcmp(name, (*tt)->name) == 0)
             return *tt;
     }
     return NULL;
@@ -281,7 +282,7 @@ static int check_test_error(struct evp_test *t)
                 t->start_line, t->expected_err);
         return 0;
     }
-    if (!strcmp(t->err, t->expected_err))
+    if (strcmp(t->err, t->expected_err) == 0)
         return 1;
 
     fprintf(stderr, "Test line %d: expecting %s got %s\n",
@@ -327,7 +328,7 @@ static int setup_test(struct evp_test *t, const struct evp_test_method *tmeth)
 static int find_key(EVP_PKEY **ppk, const char *name, struct key_list *lst)
 {
     for (; lst; lst = lst->next) {
-        if (!strcmp(lst->name, name)) {
+        if (strcmp(lst->name, name) == 0) {
             if (ppk)
                 *ppk = lst->key;
             return 1;
@@ -371,7 +372,7 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
         fputs(buf, stdout);
     if (!parse_line(&keyword, &value, buf))
         return 1;
-    if (!strcmp(keyword, "PrivateKey")) {
+    if (strcmp(keyword, "PrivateKey") == 0) {
         save_pos = ftell(t->in);
         pk = PEM_read_PrivateKey(t->in, NULL, 0, NULL);
         if (pk == NULL && !check_unsupported()) {
@@ -382,7 +383,7 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
         lst = &t->private;
         add_key = 1;
     }
-    if (!strcmp(keyword, "PublicKey")) {
+    if (strcmp(keyword, "PublicKey") == 0) {
         save_pos = ftell(t->in);
         pk = PEM_read_PUBKEY(t->in, NULL, 0, NULL);
         if (pk == NULL && !check_unsupported()) {
@@ -411,7 +412,7 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
         fseek(t->in, save_pos, SEEK_SET);
         while (fgets(tmpbuf, sizeof(tmpbuf), t->in)) {
             t->line++;
-            if (!strncmp(tmpbuf, "-----END", 8))
+            if (strncmp(tmpbuf, "-----END", 8) == 0)
                 return 1;
         }
         fprintf(stderr, "Can't find key end\n");
@@ -432,7 +433,7 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
         return 1;
     } else if (t->skip) {
         return 1;
-    } else if (!strcmp(keyword, "Result")) {
+    } else if (strcmp(keyword, "Result") == 0) {
         if (t->expected_err) {
             fprintf(stderr, "Line %d: multiple result lines\n", t->line);
             return 0;
@@ -579,11 +580,11 @@ static int digest_test_parse(struct evp_test *t,
                              const char *keyword, const char *value)
 {
     struct digest_data *mdata = t->data;
-    if (!strcmp(keyword, "Input"))
+    if (strcmp(keyword, "Input") == 0)
         return test_bin(value, &mdata->input, &mdata->input_len);
-    if (!strcmp(keyword, "Output"))
+    if (strcmp(keyword, "Output") == 0)
         return test_bin(value, &mdata->output, &mdata->output_len);
-    if (!strcmp(keyword, "Count")) {
+    if (strcmp(keyword, "Count") == 0) {
         long nrpt = atoi(value);
         if (nrpt <= 0)
             return 0;
@@ -706,25 +707,25 @@ static int cipher_test_parse(struct evp_test *t, const char *keyword,
                              const char *value)
 {
     struct cipher_data *cdat = t->data;
-    if (!strcmp(keyword, "Key"))
+    if (strcmp(keyword, "Key") == 0)
         return test_bin(value, &cdat->key, &cdat->key_len);
-    if (!strcmp(keyword, "IV"))
+    if (strcmp(keyword, "IV") == 0)
         return test_bin(value, &cdat->iv, &cdat->iv_len);
-    if (!strcmp(keyword, "Plaintext"))
+    if (strcmp(keyword, "Plaintext") == 0)
         return test_bin(value, &cdat->plaintext, &cdat->plaintext_len);
-    if (!strcmp(keyword, "Ciphertext"))
+    if (strcmp(keyword, "Ciphertext") == 0)
         return test_bin(value, &cdat->ciphertext, &cdat->ciphertext_len);
     if (cdat->aead) {
-        if (!strcmp(keyword, "AAD"))
+        if (strcmp(keyword, "AAD") == 0)
             return test_bin(value, &cdat->aad, &cdat->aad_len);
-        if (!strcmp(keyword, "Tag"))
+        if (strcmp(keyword, "Tag") == 0)
             return test_bin(value, &cdat->tag, &cdat->tag_len);
     }
 
-    if (!strcmp(keyword, "Operation")) {
-        if (!strcmp(value, "ENCRYPT"))
+    if (strcmp(keyword, "Operation") == 0) {
+        if (strcmp(value, "ENCRYPT") == 0)
             cdat->enc = 1;
-        else if (!strcmp(value, "DECRYPT"))
+        else if (strcmp(value, "DECRYPT") == 0)
             cdat->enc = 0;
         else
             return 0;
@@ -928,9 +929,9 @@ static int mac_test_init(struct evp_test *t, const char *alg)
 {
     int type;
     struct mac_data *mdat;
-    if (!strcmp(alg, "HMAC"))
+    if (strcmp(alg, "HMAC") == 0)
         type = EVP_PKEY_HMAC;
-    else if (!strcmp(alg, "CMAC"))
+    else if (strcmp(alg, "CMAC") == 0)
         type = EVP_PKEY_CMAC;
     else
         return 0;
@@ -958,17 +959,17 @@ static int mac_test_parse(struct evp_test *t,
                           const char *keyword, const char *value)
 {
     struct mac_data *mdata = t->data;
-    if (!strcmp(keyword, "Key"))
+    if (strcmp(keyword, "Key") == 0)
         return test_bin(value, &mdata->key, &mdata->key_len);
-    if (!strcmp(keyword, "Algorithm")) {
+    if (strcmp(keyword, "Algorithm") == 0) {
         mdata->alg = BUF_strdup(value);
         if (!mdata->alg)
             return 0;
         return 1;
     }
-    if (!strcmp(keyword, "Input"))
+    if (strcmp(keyword, "Input") == 0)
         return test_bin(value, &mdata->input, &mdata->input_len);
-    if (!strcmp(keyword, "Output"))
+    if (strcmp(keyword, "Output") == 0)
         return test_bin(value, &mdata->output, &mdata->output_len);
     return 0;
 }
@@ -1134,11 +1135,11 @@ static int pkey_test_parse(struct evp_test *t,
                            const char *keyword, const char *value)
 {
     struct pkey_data *kdata = t->data;
-    if (!strcmp(keyword, "Input"))
+    if (strcmp(keyword, "Input") == 0)
         return test_bin(value, &kdata->input, &kdata->input_len);
-    if (!strcmp(keyword, "Output"))
+    if (strcmp(keyword, "Output") == 0)
         return test_bin(value, &kdata->output, &kdata->output_len);
-    if (!strcmp(keyword, "Ctrl")) {
+    if (strcmp(keyword, "Ctrl") == 0) {
         char *p = strchr(value, ':');
         if (p)
             *p++ = 0;

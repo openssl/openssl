@@ -113,10 +113,10 @@ static BASIC_CONSTRAINTS *v2i_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method,
     }
     for (i = 0; i < sk_CONF_VALUE_num(values); i++) {
         val = sk_CONF_VALUE_value(values, i);
-        if (!strcmp(val->name, "CA")) {
+        if (strcmp(val->name, "CA") == 0) {
             if (!X509V3_get_value_bool(val, &bcons->ca))
                 goto err;
-        } else if (!strcmp(val->name, "pathlen")) {
+        } else if (strcmp(val->name, "pathlen") == 0) {
             if (!X509V3_get_value_int(val, &bcons->pathlen))
                 goto err;
         } else {

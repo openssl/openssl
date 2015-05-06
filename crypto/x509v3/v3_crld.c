@@ -117,11 +117,12 @@ static int set_dist_point_name(DIST_POINT_NAME **pdp, X509V3_CTX *ctx,
 {
     STACK_OF(GENERAL_NAME) *fnm = NULL;
     STACK_OF(X509_NAME_ENTRY) *rnm = NULL;
-    if (!strncmp(cnf->name, "fullname", 9)) {
+
+    if (strncmp(cnf->name, "fullname", 9) == 0) {
         fnm = gnames_from_sectname(ctx, cnf->value);
         if (!fnm)
             goto err;
-    } else if (!strcmp(cnf->name, "relativename")) {
+    } else if (strcmp(cnf->name, "relativename") == 0) {
         int ret;
         STACK_OF(CONF_VALUE) *dnsect;
         X509_NAME *nm;
@@ -210,7 +211,7 @@ static int set_reasons(ASN1_BIT_STRING **preas, char *value)
                 goto err;
         }
         for (pbn = reason_flags; pbn->lname; pbn++) {
-            if (!strcmp(pbn->sname, bnam)) {
+            if (strcmp(pbn->sname, bnam) == 0) {
                 if (!ASN1_BIT_STRING_set_bit(*preas, pbn->bitnum, 1))
                     goto err;
                 break;
@@ -265,10 +266,10 @@ static DIST_POINT *crldp_from_section(X509V3_CTX *ctx,
             continue;
         if (ret < 0)
             goto err;
-        if (!strcmp(cnf->name, "reasons")) {
+        if (strcmp(cnf->name, "reasons") == 0) {
             if (!set_reasons(&point->reasons, cnf->value))
                 goto err;
-        } else if (!strcmp(cnf->name, "CRLissuer")) {
+        } else if (strcmp(cnf->name, "CRLissuer") == 0) {
             point->CRLissuer = gnames_from_sectname(ctx, cnf->value);
             if (!point->CRLissuer)
                 goto err;
@@ -426,19 +427,19 @@ static void *v2i_idp(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
             continue;
         if (ret < 0)
             goto err;
-        if (!strcmp(name, "onlyuser")) {
+        if (strcmp(name, "onlyuser") == 0) {
             if (!X509V3_get_value_bool(cnf, &idp->onlyuser))
                 goto err;
-        } else if (!strcmp(name, "onlyCA")) {
+        } else if (strcmp(name, "onlyCA") == 0) {
             if (!X509V3_get_value_bool(cnf, &idp->onlyCA))
                 goto err;
-        } else if (!strcmp(name, "onlyAA")) {
+        } else if (strcmp(name, "onlyAA") == 0) {
             if (!X509V3_get_value_bool(cnf, &idp->onlyattr))
                 goto err;
-        } else if (!strcmp(name, "indirectCRL")) {
+        } else if (strcmp(name, "indirectCRL") == 0) {
             if (!X509V3_get_value_bool(cnf, &idp->indirectCRL))
                 goto err;
-        } else if (!strcmp(name, "onlysomereasons")) {
+        } else if (strcmp(name, "onlysomereasons") == 0) {
             if (!set_reasons(&idp->onlysomereasons, val))
                 goto err;
         } else {

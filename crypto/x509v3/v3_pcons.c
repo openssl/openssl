@@ -114,10 +114,10 @@ static void *v2i_POLICY_CONSTRAINTS(const X509V3_EXT_METHOD *method,
     }
     for (i = 0; i < sk_CONF_VALUE_num(values); i++) {
         val = sk_CONF_VALUE_value(values, i);
-        if (!strcmp(val->name, "requireExplicitPolicy")) {
+        if (strcmp(val->name, "requireExplicitPolicy") == 0) {
             if (!X509V3_get_value_int(val, &pcons->requireExplicitPolicy))
                 goto err;
-        } else if (!strcmp(val->name, "inhibitPolicyMapping")) {
+        } else if (strcmp(val->name, "inhibitPolicyMapping") == 0) {
             if (!X509V3_get_value_int(val, &pcons->inhibitPolicyMapping))
                 goto err;
         } else {

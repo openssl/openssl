@@ -81,7 +81,7 @@ static int alg_module_init(CONF_IMODULE *md, const CONF *cnf)
     }
     for (i = 0; i < sk_CONF_VALUE_num(sktmp); i++) {
         oval = sk_CONF_VALUE_value(sktmp, i);
-        if (!strcmp(oval->name, "fips_mode")) {
+        if (strcmp(oval->name, "fips_mode") == 0) {
             int m;
             if (!X509V3_get_value_bool(oval, &m)) {
                 EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_INVALID_FIPS_MODE);

@@ -569,7 +569,7 @@ end_of_options:
         f = NCONF_get_string(conf, section, UTF8_IN);
         if (!f)
             ERR_clear_error();
-        else if (!strcmp(f, "yes"))
+        else if (strcmp(f, "yes") == 0)
             chtype = MBSTRING_UTF8;
     }
 
@@ -841,7 +841,7 @@ end_of_options:
         goto end;
     }
 
-    if (!strcmp(md, "default")) {
+    if (strcmp(md, "default") == 0) {
         int def_nid;
         if (EVP_PKEY_get_default_digest_nid(pkey, &def_nid) <= 0) {
             BIO_puts(bio_err, "no default digest\n");
@@ -2419,7 +2419,7 @@ char *make_revocation_str(int rev_type, char *rev_arg)
 
     case REV_CRL_REASON:
         for (i = 0; i < 8; i++) {
-            if (!strcasecmp(rev_arg, crl_reasons[i])) {
+            if (strcasecmp(rev_arg, crl_reasons[i]) == 0) {
                 reason = crl_reasons[i];
                 break;
             }
@@ -2637,7 +2637,7 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
     }
     if (reason_str) {
         for (i = 0; i < NUM_REASONS; i++) {
-            if (!strcasecmp(reason_str, crl_reasons[i])) {
+            if (strcasecmp(reason_str, crl_reasons[i]) == 0) {
                 reason_code = i;
                 break;
             }

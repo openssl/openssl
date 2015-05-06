@@ -100,19 +100,19 @@ int ASN1_STRING_set_default_mask_asc(const char *p)
 {
     unsigned long mask;
     char *end;
-    if (!strncmp(p, "MASK:", 5)) {
+    if (strncmp(p, "MASK:", 5) == 0) {
         if (!p[5])
             return 0;
         mask = strtoul(p + 5, &end, 0);
         if (*end)
             return 0;
-    } else if (!strcmp(p, "nombstr"))
+    } else if (strcmp(p, "nombstr") == 0)
         mask = ~((unsigned long)(B_ASN1_BMPSTRING | B_ASN1_UTF8STRING));
-    else if (!strcmp(p, "pkix"))
+    else if (strcmp(p, "pkix") == 0)
         mask = ~((unsigned long)B_ASN1_T61STRING);
-    else if (!strcmp(p, "utf8only"))
+    else if (strcmp(p, "utf8only") == 0)
         mask = B_ASN1_UTF8STRING;
-    else if (!strcmp(p, "default"))
+    else if (strcmp(p, "default") == 0)
         mask = 0xFFFFFFFFL;
     else
         return 0;

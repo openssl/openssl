@@ -1059,7 +1059,7 @@ int main(int argc, char *argv[])
     argv++;
 
     while (argc >= 1) {
-        if (!strcmp(*argv, "-F")) {
+        if (strcmp(*argv, "-F") == 0) {
 #ifdef OPENSSL_FIPS
             fips_mode = 1;
 #else

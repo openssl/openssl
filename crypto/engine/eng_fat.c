@@ -103,29 +103,29 @@ static int int_def_cb(const char *alg, int len, void *arg)
     unsigned int *pflags = arg;
     if (alg == NULL)
         return 0;
-    if (!strncmp(alg, "ALL", len))
+    if (strncmp(alg, "ALL", len) == 0)
         *pflags |= ENGINE_METHOD_ALL;
-    else if (!strncmp(alg, "RSA", len))
+    else if (strncmp(alg, "RSA", len) == 0)
         *pflags |= ENGINE_METHOD_RSA;
-    else if (!strncmp(alg, "DSA", len))
+    else if (strncmp(alg, "DSA", len) == 0)
         *pflags |= ENGINE_METHOD_DSA;
-    else if (!strncmp(alg, "ECDH", len))
+    else if (strncmp(alg, "ECDH", len) == 0)
         *pflags |= ENGINE_METHOD_ECDH;
-    else if (!strncmp(alg, "ECDSA", len))
+    else if (strncmp(alg, "ECDSA", len) == 0)
         *pflags |= ENGINE_METHOD_ECDSA;
-    else if (!strncmp(alg, "DH", len))
+    else if (strncmp(alg, "DH", len) == 0)
         *pflags |= ENGINE_METHOD_DH;
-    else if (!strncmp(alg, "RAND", len))
+    else if (strncmp(alg, "RAND", len) == 0)
         *pflags |= ENGINE_METHOD_RAND;
-    else if (!strncmp(alg, "CIPHERS", len))
+    else if (strncmp(alg, "CIPHERS", len) == 0)
         *pflags |= ENGINE_METHOD_CIPHERS;
-    else if (!strncmp(alg, "DIGESTS", len))
+    else if (strncmp(alg, "DIGESTS", len) == 0)
         *pflags |= ENGINE_METHOD_DIGESTS;
-    else if (!strncmp(alg, "PKEY", len))
+    else if (strncmp(alg, "PKEY", len) == 0)
         *pflags |= ENGINE_METHOD_PKEY_METHS | ENGINE_METHOD_PKEY_ASN1_METHS;
-    else if (!strncmp(alg, "PKEY_CRYPTO", len))
+    else if (strncmp(alg, "PKEY_CRYPTO", len) == 0)
         *pflags |= ENGINE_METHOD_PKEY_METHS;
-    else if (!strncmp(alg, "PKEY_ASN1", len))
+    else if (strncmp(alg, "PKEY_ASN1", len) == 0)
         *pflags |= ENGINE_METHOD_PKEY_ASN1_METHS;
     else
         return 0;

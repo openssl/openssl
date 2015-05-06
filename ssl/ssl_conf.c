@@ -251,13 +251,13 @@ static int cmd_ECDHParameters(SSL_CONF_CTX *cctx, const char *value)
             onoff = 0;
             value++;
         }
-        if (!strcasecmp(value, "automatic")) {
+        if (strcasecmp(value, "automatic") == 0) {
             if (onoff == -1)
                 onoff = 1;
         } else if (onoff != -1)
             return 0;
     } else if (cctx->flags & SSL_CONF_FLAG_CMDLINE) {
-        if (!strcmp(value, "auto"))
+        if (strcmp(value, "auto") == 0)
             onoff = 1;
     }
 
@@ -546,11 +546,11 @@ static const ssl_conf_cmd_tbl *ssl_conf_cmd_lookup(SSL_CONF_CTX *cctx,
     for (i = 0, t = ssl_conf_cmds; i < OSSL_NELEM(ssl_conf_cmds); i++, t++) {
         if (ssl_conf_cmd_allowed(cctx, t)) {
             if (cctx->flags & SSL_CONF_FLAG_CMDLINE) {
-                if (t->str_cmdline && !strcmp(t->str_cmdline, cmd))
+                if (t->str_cmdline && strcmp(t->str_cmdline, cmd) == 0)
                     return t;
             }
             if (cctx->flags & SSL_CONF_FLAG_FILE) {
-                if (t->str_file && !strcasecmp(t->str_file, cmd))
+                if (t->str_file && strcasecmp(t->str_file, cmd) == 0)
                     return t;
             }
         }
