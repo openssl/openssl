@@ -9,6 +9,7 @@ OPENSSL_CONF=/dev/null ; export OPENSSL_CONF
 
 CAkey="keyCA.ss"
 CAcert="certCA.ss"
+CAserial="certCA.srl"
 CAreq="reqCA.ss"
 CAconf="CAss.cnf"
 CAreq2="req2CA.ss"	# temp
@@ -61,7 +62,7 @@ echo make a user cert request
 $reqcmd -config $Uconf -out $Ureq -keyout $Ukey $req_new >err.ss || exit 1
 
 echo sign user cert request
-$x509cmd -CAcreateserial -in $Ureq -days 30 -req -out $Ucert -CA $CAcert -CAkey $CAkey -extfile $Uconf -extensions v3_ee >err.ss || exit 1
+$x509cmd -CAcreateserial -in $Ureq -days 30 -req -out $Ucert -CA $CAcert -CAkey $CAkey -CAserial $CAserial -extfile $Uconf -extensions v3_ee >err.ss || exit 1
 $verifycmd -CAfile $CAcert $Ucert || exit 1
 
 echo Certificate details
