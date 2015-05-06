@@ -4,7 +4,7 @@
      mkdir vsout\package\include
      mkdir vsout\package\lib
      mkdir vsout\package\bin
-     xcopy inc32 vsout\package\include /h /k /r /e /i /y >nul
+     xcopy include vsout\package\include /h /k /r /e /i /y >nul
 
      call :pack Universal 10.0 Dll    Unicode Debug   Win32
      call :pack Universal 10.0 Dll    Unicode Debug   arm
