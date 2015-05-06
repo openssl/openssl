@@ -62,7 +62,8 @@
 #include "e_os.h"
 
 DECLARE_STACK_OF(nid_triple)
-STACK_OF(nid_triple) *sig_app, *sigx_app;
+
+static STACK_OF(nid_triple) *sig_app, *sigx_app;
 
 static int sig_cmp(const nid_triple *a, const nid_triple *b)
 {
