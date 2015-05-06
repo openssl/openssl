@@ -3348,6 +3348,11 @@ int ssl3_send_client_certificate(SSL *s)
                 return (1);
             } else {
                 s->s3->tmp.cert_req = 2;
+                if (s->s3->handshake_buffer && !ssl3_digest_cached_records(s)) {
+                    ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+                    s->state = SSL_ST_ERR;
+                    return 0;
+                }
             }
         }
 
