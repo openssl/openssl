@@ -842,7 +842,7 @@ static int check_trust(X509_STORE_CTX *ctx)
 
 static int check_revocation(X509_STORE_CTX *ctx)
 {
-    int i, last, ok;
+    int i = 0, last = 0, ok = 0;
     if (!(ctx->param->flags & X509_V_FLAG_CRL_CHECK))
         return 1;
     if (ctx->param->flags & X509_V_FLAG_CRL_CHECK_ALL)
@@ -865,9 +865,9 @@ static int check_revocation(X509_STORE_CTX *ctx)
 static int check_cert(X509_STORE_CTX *ctx)
 {
     X509_CRL *crl = NULL, *dcrl = NULL;
-    X509 *x;
-    int ok, cnum;
-    unsigned int last_reasons;
+    X509 *x = NULL;
+    int ok = 0, cnum = 0;
+    unsigned int last_reasons = 0;
     cnum = ctx->error_depth;
     x = sk_X509_value(ctx->chain, cnum);
     ctx->current_cert = x;

@@ -945,7 +945,7 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
         CONF_VALUE *val = sk_CONF_VALUE_value(values, i);
         unsigned char min[ADDR_RAW_BUF_LEN], max[ADDR_RAW_BUF_LEN];
         unsigned afi, *safi = NULL, safi_;
-        const char *addr_chars;
+        const char *addr_chars = NULL;
         int prefixlen, i1, i2, delim, length;
 
         if (!name_cmp(val->name, "IPv4")) {

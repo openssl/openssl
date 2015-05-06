@@ -339,7 +339,7 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
                        int klen, pem_password_cb *callback, void *u)
 {
     EVP_CIPHER_CTX ctx;
-    int dsize = 0, i, j, ret = 0;
+    int dsize = 0, i = 0, j = 0, ret = 0;
     unsigned char *p, *data = NULL;
     const char *objstr = NULL;
     char buf[PEM_BUFSIZE];

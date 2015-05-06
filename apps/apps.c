@@ -175,7 +175,7 @@ int app_init(long mesgwin);
 int chopup_args(ARGS *arg, char *buf)
 {
     int quoted;
-    char c, *p;
+    char c = '\0', *p = NULL;
 
     arg->argc = 0;
     if (arg->size == 0) {

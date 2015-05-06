@@ -66,15 +66,15 @@ int EVP_VerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
                     unsigned int siglen, EVP_PKEY *pkey)
 {
     unsigned char m[EVP_MAX_MD_SIZE];
-    unsigned int m_len;
-    int i = 0, ok = 0, v;
+    unsigned int m_len = 0;
+    int i = 0, ok = 0, v = 0;
     EVP_PKEY_CTX *pkctx = NULL;
 
     if (ctx->flags & EVP_MD_CTX_FLAG_FINALISE) {
         if (!EVP_DigestFinal_ex(ctx, m, &m_len))
             goto err;
     } else {
-        int rv;
+        int rv = 0;
         EVP_MD_CTX tmp_ctx;
         EVP_MD_CTX_init(&tmp_ctx);
         rv = EVP_MD_CTX_copy_ex(&tmp_ctx, ctx);

@@ -267,7 +267,7 @@ static X509_EXTENSION *v3_generic_extension(const char *ext, char *value,
                                             X509V3_CTX *ctx)
 {
     unsigned char *ext_der = NULL;
-    long ext_len;
+    long ext_len = 0;
     ASN1_OBJECT *obj = NULL;
     ASN1_OCTET_STRING *oct = NULL;
     X509_EXTENSION *extension = NULL;

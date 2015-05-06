@@ -128,7 +128,7 @@ int EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
                         size_t *siglen)
 {
-    int sctx, r = 0;
+    int sctx = 0, r = 0;
     EVP_PKEY_CTX *pctx = ctx->pctx;
     if (pctx->pmeth->flags & EVP_PKEY_FLAG_SIGCTX_CUSTOM) {
         if (!sigret)
@@ -150,7 +150,7 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
         sctx = 0;
     if (sigret) {
         unsigned char md[EVP_MAX_MD_SIZE];
-        unsigned int mdlen;
+        unsigned int mdlen = 0;
         if (ctx->flags & EVP_MD_CTX_FLAG_FINALISE) {
             if (sctx)
                 r = ctx->pctx->pmeth->signctx(ctx->pctx, sigret, siglen, ctx);
@@ -189,9 +189,9 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
                           size_t siglen)
 {
     unsigned char md[EVP_MAX_MD_SIZE];
-    int r;
-    unsigned int mdlen;
-    int vctx;
+    int r = 0;
+    unsigned int mdlen = 0;
+    int vctx = 0;
 
     if (ctx->pctx->pmeth->verifyctx)
         vctx = 1;

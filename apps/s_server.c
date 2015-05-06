@@ -631,7 +631,7 @@ static tlsextstatusctx tlscstatp = { NULL, NULL, NULL, 0, -1, 0 };
 static int cert_status_cb(SSL *s, void *arg)
 {
     tlsextstatusctx *srctx = arg;
-    char *host, *port, *path;
+    char *host = NULL, *port = NULL, *path = NULL;
     int use_ssl;
     unsigned char *rspder = NULL;
     int rspderlen;

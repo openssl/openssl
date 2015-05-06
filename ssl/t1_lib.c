@@ -2720,7 +2720,7 @@ int tls1_set_server_sigalgs(SSL *s)
 int ssl_check_clienthello_tlsext_late(SSL *s)
 {
     int ret = SSL_TLSEXT_ERR_OK;
-    int al;
+    int al = SSL_AD_INTERNAL_ERROR;
 
     /*
      * If status request then ask callback what to do. Note: this must be
