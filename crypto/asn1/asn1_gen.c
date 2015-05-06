@@ -375,13 +375,13 @@ static int asn1_cb(const char *elem, int len, void *bitstr)
             ASN1err(ASN1_F_ASN1_CB, ASN1_R_UNKNOWN_FORMAT);
             return -1;
         }
-        if (!strncmp(vstart, "ASCII", 5))
+        if (strncmp(vstart, "ASCII", 5) == 0)
             arg->format = ASN1_GEN_FORMAT_ASCII;
-        else if (!strncmp(vstart, "UTF8", 4))
+        else if (strncmp(vstart, "UTF8", 4) == 0)
             arg->format = ASN1_GEN_FORMAT_UTF8;
-        else if (!strncmp(vstart, "HEX", 3))
+        else if (strncmp(vstart, "HEX", 3) == 0)
             arg->format = ASN1_GEN_FORMAT_HEX;
-        else if (!strncmp(vstart, "BITLIST", 7))
+        else if (strncmp(vstart, "BITLIST", 7) == 0)
             arg->format = ASN1_GEN_FORMAT_BITLIST;
         else {
             ASN1err(ASN1_F_ASN1_CB, ASN1_R_UNKNOWN_FORMAT);
@@ -621,7 +621,7 @@ static int asn1_str2tag(const char *tagstr, int len)
 
     tntmp = tnst;
     for (i = 0; i < OSSL_NELEM(tnst); i++, tntmp++) {
-        if ((len == tntmp->len) && !strncmp(tntmp->strnam, tagstr, len))
+        if ((len == tntmp->len) && (strncmp(tntmp->strnam, tagstr, len) == 0))
             return tntmp->tag;
     }
 
@@ -829,7 +829,7 @@ static int mask_cb(const char *elem, int len, void *arg)
     int tag;
     if (elem == NULL)
         return 0;
-    if (len == 3 && !strncmp(elem, "DIR", 3)) {
+    if ((len == 3) && (strncmp(elem, "DIR", 3) == 0)) {
         *pmask |= B_ASN1_DIRECTORYSTRING;
         return 1;
     }

@@ -836,7 +836,7 @@ static int set_pbe(int *ppbe, const char *str)
 {
     if (!str)
         return 0;
-    if (!strcmp(str, "NONE")) {
+    if (strcmp(str, "NONE") == 0) {
         *ppbe = -1;
         return 1;
     }

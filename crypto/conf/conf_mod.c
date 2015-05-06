@@ -319,7 +319,7 @@ static CONF_MODULE *module_find(char *name)
 
     for (i = 0; i < sk_CONF_MODULE_num(supported_modules); i++) {
         tmod = sk_CONF_MODULE_value(supported_modules, i);
-        if (!strncmp(tmod->name, name, nchar))
+        if (strncmp(tmod->name, name, nchar) == 0)
             return tmod;
     }
 

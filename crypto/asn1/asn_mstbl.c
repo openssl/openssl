@@ -118,21 +118,21 @@ static int do_tcreate(char *value, char *name)
         goto err;
     for (i = 0; i < sk_CONF_VALUE_num(lst); i++) {
         cnf = sk_CONF_VALUE_value(lst, i);
-        if (!strcmp(cnf->name, "min")) {
+        if (strcmp(cnf->name, "min") == 0) {
             tbl_min = strtoul(cnf->value, &eptr, 0);
             if (*eptr)
                 goto err;
-        } else if (!strcmp(cnf->name, "max")) {
+        } else if (strcmp(cnf->name, "max") == 0) {
             tbl_max = strtoul(cnf->value, &eptr, 0);
             if (*eptr)
                 goto err;
-        } else if (!strcmp(cnf->name, "mask")) {
+        } else if (strcmp(cnf->name, "mask") == 0) {
             if (!ASN1_str2mask(cnf->value, &tbl_mask) || !tbl_mask)
                 goto err;
-        } else if (!strcmp(cnf->name, "flags")) {
-            if (!strcmp(cnf->value, "nomask"))
+        } else if (strcmp(cnf->name, "flags") == 0) {
+            if (strcmp(cnf->value, "nomask") == 0)
                 tbl_flags = STABLE_NO_MASK;
-            else if (!strcmp(cnf->value, "none"))
+            else if (strcmp(cnf->value, "none") == 0)
                 tbl_flags = STABLE_FLAGS_CLEAR;
             else
                 goto err;

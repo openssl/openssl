@@ -3206,7 +3206,7 @@ int EC_curve_nist2nid(const char *name)
 {
     size_t i;
     for (i = 0; i < OSSL_NELEM(nist_curves); i++) {
-        if (!strcmp(nist_curves[i].name, name))
+        if (strcmp(nist_curves[i].name, name) == 0)
             return nist_curves[i].nid;
     }
     return NID_undef;

@@ -440,7 +440,7 @@ ASN1_VALUE *SMIME_read_ASN1(BIO *bio, BIO **bcont, const ASN1_ITEM *it)
 
     /* Handle multipart/signed */
 
-    if (!strcmp(hdr->value, "multipart/signed")) {
+    if (strcmp(hdr->value, "multipart/signed") == 0) {
         /* Split into two parts */
         prm = mime_param_find(hdr, "boundary");
         if (!prm || !prm->param_value) {
@@ -971,8 +971,9 @@ static int mime_bound_check(char *line, int linelen, char *bound, int blen)
     if (blen + 2 > linelen)
         return 0;
     /* Check for part boundary */
-    if (!strncmp(line, "--", 2) && !strncmp(line + 2, bound, blen)) {
-        if (!strncmp(line + blen + 2, "--", 2))
+    if ((strncmp(line, "--", 2) == 0)
+        && strncmp(line + 2, bound, blen) == 0) {
+        if (strncmp(line + blen + 2, "--", 2) == 0)
             return 2;
         else
             return 1;

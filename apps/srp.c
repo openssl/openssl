@@ -88,14 +88,14 @@ static int get_index(CA_DB *db, char *id, char type)
         for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++) {
             pp = sk_OPENSSL_PSTRING_value(db->db->data, i);
             if (pp[DB_srptype][0] == DB_SRP_INDEX
-                && !strcmp(id, pp[DB_srpid]))
+                && strcmp(id, pp[DB_srpid]) == 0)
                 return i;
     } else
         for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++) {
             pp = sk_OPENSSL_PSTRING_value(db->db->data, i);
 
             if (pp[DB_srptype][0] != DB_SRP_INDEX
-                && !strcmp(id, pp[DB_srpid]))
+                && strcmp(id, pp[DB_srpid]) == 0)
                 return i;
         }
 
@@ -434,7 +434,7 @@ int srp_main(int argc, char **argv)
 
         if (pp[DB_srptype][0] == DB_SRP_INDEX) {
             maxgN = i;
-            if (gNindex < 0 && gN != NULL && !strcmp(gN, pp[DB_srpid]))
+            if ((gNindex < 0) && (gN != NULL) && strcmp(gN, pp[DB_srpid]) == 0)
                 gNindex = i;
 
             print_index(db, i, verbose > 1);

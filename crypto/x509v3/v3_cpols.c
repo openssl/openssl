@@ -162,7 +162,7 @@ static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
             goto err;
         }
         pstr = cnf->name;
-        if (!strcmp(pstr, "ia5org")) {
+        if (strcmp(pstr, "ia5org") == 0) {
             ia5org = 1;
             continue;
         } else if (*pstr == '@') {
@@ -213,7 +213,7 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
         goto merr;
     for (i = 0; i < sk_CONF_VALUE_num(polstrs); i++) {
         cnf = sk_CONF_VALUE_value(polstrs, i);
-        if (!strcmp(cnf->name, "policyIdentifier")) {
+        if (strcmp(cnf->name, "policyIdentifier") == 0) {
             ASN1_OBJECT *pobj;
             if (!(pobj = OBJ_txt2obj(cnf->value, 0))) {
                 X509V3err(X509V3_F_POLICY_SECTION,
@@ -303,13 +303,13 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
     qual->d.usernotice = not;
     for (i = 0; i < sk_CONF_VALUE_num(unot); i++) {
         cnf = sk_CONF_VALUE_value(unot, i);
-        if (!strcmp(cnf->name, "explicitText")) {
+        if (strcmp(cnf->name, "explicitText") == 0) {
             if (!(not->exptext = ASN1_VISIBLESTRING_new()))
                 goto merr;
             if (!ASN1_STRING_set(not->exptext, cnf->value,
                                  strlen(cnf->value)))
                 goto merr;
-        } else if (!strcmp(cnf->name, "organization")) {
+        } else if (strcmp(cnf->name, "organization") == 0) {
             NOTICEREF *nref;
             if (!not->noticeref) {
                 if (!(nref = NOTICEREF_new()))
@@ -324,7 +324,7 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
             if (!ASN1_STRING_set(nref->organization, cnf->value,
                                  strlen(cnf->value)))
                 goto merr;
-        } else if (!strcmp(cnf->name, "noticeNumbers")) {
+        } else if (strcmp(cnf->name, "noticeNumbers") == 0) {
             NOTICEREF *nref;
             STACK_OF(CONF_VALUE) *nos;
             if (!not->noticeref) {

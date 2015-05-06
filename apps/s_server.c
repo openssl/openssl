@@ -3025,7 +3025,7 @@ static int rev_body(char *hostname, int s, int stype, unsigned char *context)
                 p--;
                 i--;
             }
-            if (!s_ign_eof && i == 5 && !strncmp(buf, "CLOSE", 5)) {
+            if (!s_ign_eof && (i == 5) && (strncmp(buf, "CLOSE", 5) == 0)) {
                 ret = 1;
                 BIO_printf(bio_err, "CONNECTION CLOSED\n");
                 goto end;

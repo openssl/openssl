@@ -87,7 +87,7 @@ int main(int argc, char **argv)
                 exit(2);
             }
             count++;
-            if (!strncmp(calcsum, inhash, 65)) {
+            if (strncmp(calcsum, inhash, 65) == 0) {
                 if (verbose) {
                     fprintf(stderr, "%s\tOK\n", filename);
                 }

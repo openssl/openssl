@@ -221,8 +221,8 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(ENGINE **pe,
         ameth = EVP_PKEY_asn1_get0(i);
         if (ameth->pkey_flags & ASN1_PKEY_ALIAS)
             continue;
-        if (((int)strlen(ameth->pem_str) == len) &&
-            !strncasecmp(ameth->pem_str, str, len))
+        if (((int)strlen(ameth->pem_str) == len)
+            && (strncasecmp(ameth->pem_str, str, len) == 0))
             return ameth;
     }
     return NULL;

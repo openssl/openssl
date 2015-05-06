@@ -257,7 +257,7 @@ DH *PEM_read_bio_DHparams(BIO *bp, DH **x, pem_password_cb *cb, void *u)
         return NULL;
     p = data;
 
-    if (!strcmp(nm, PEM_STRING_DHXPARAMS))
+    if (strcmp(nm, PEM_STRING_DHXPARAMS) == 0)
         ret = d2i_DHxparams(x, &p, len);
     else
         ret = d2i_DHparams(x, &p, len);

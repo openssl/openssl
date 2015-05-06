@@ -131,13 +131,13 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
 
     for (i = 0; i < sk_CONF_VALUE_num(values); i++) {
         cnf = sk_CONF_VALUE_value(values, i);
-        if (!strcmp(cnf->name, "keyid")) {
+        if (strcmp(cnf->name, "keyid") == 0) {
             keyid = 1;
-            if (cnf->value && !strcmp(cnf->value, "always"))
+            if (cnf->value && strcmp(cnf->value, "always") == 0)
                 keyid = 2;
-        } else if (!strcmp(cnf->name, "issuer")) {
+        } else if (strcmp(cnf->name, "issuer") == 0) {
             issuer = 1;
-            if (cnf->value && !strcmp(cnf->value, "always"))
+            if (cnf->value && strcmp(cnf->value, "always") == 0)
                 issuer = 2;
         } else {
             X509V3err(X509V3_F_V2I_AUTHORITY_KEYID, X509V3_R_UNKNOWN_OPTION);

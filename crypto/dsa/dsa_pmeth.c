@@ -218,18 +218,18 @@ static int pkey_dsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 static int pkey_dsa_ctrl_str(EVP_PKEY_CTX *ctx,
                              const char *type, const char *value)
 {
-    if (!strcmp(type, "dsa_paramgen_bits")) {
+    if (strcmp(type, "dsa_paramgen_bits") == 0) {
         int nbits;
         nbits = atoi(value);
         return EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, nbits);
     }
-    if (!strcmp(type, "dsa_paramgen_q_bits")) {
+    if (strcmp(type, "dsa_paramgen_q_bits") == 0) {
         int qbits = atoi(value);
         return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN,
                                  EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS, qbits,
                                  NULL);
     }
-    if (!strcmp(type, "dsa_paramgen_md")) {
+    if (strcmp(type, "dsa_paramgen_md") == 0) {
         return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN,
                                  EVP_PKEY_CTRL_DSA_PARAMGEN_MD, 0,
                                  (void *)EVP_get_digestbyname(value));

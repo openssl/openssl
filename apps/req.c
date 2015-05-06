@@ -477,7 +477,7 @@ int req_main(int argc, char **argv)
         p = NCONF_get_string(req_conf, SECTION, UTF8_IN);
         if (!p)
             ERR_clear_error();
-        else if (!strcmp(p, "yes"))
+        else if (strcmp(p, "yes") == 0)
             chtype = MBSTRING_UTF8;
     }
 
@@ -904,7 +904,7 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int multirdn,
     tmp = NCONF_get_string(req_conf, SECTION, PROMPT);
     if (tmp == NULL)
         ERR_clear_error();
-    if ((tmp != NULL) && !strcmp(tmp, "no"))
+    if ((tmp != NULL) && strcmp(tmp, "no") == 0)
         no_prompt = 1;
 
     dn_sect = NCONF_get_string(req_conf, SECTION, DISTINGUISHED_NAME);
@@ -1373,7 +1373,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
         *pkey_type = EVP_PKEY_RSA;
         keylen = atol(gstr);
         *pkeylen = keylen;
-    } else if (!strncmp(gstr, "param:", 6))
+    } else if (strncmp(gstr, "param:", 6) == 0)
         paramfile = gstr + 6;
     else {
         const char *p = strchr(gstr, ':');

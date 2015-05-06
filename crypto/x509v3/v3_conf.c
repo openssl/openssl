@@ -246,10 +246,10 @@ static int v3_check_generic(char **value)
 {
     int gen_type = 0;
     char *p = *value;
-    if ((strlen(p) >= 4) && !strncmp(p, "DER:", 4)) {
+    if ((strlen(p) >= 4) && strncmp(p, "DER:", 4) == 0) {
         p += 4;
         gen_type = 1;
-    } else if ((strlen(p) >= 5) && !strncmp(p, "ASN1:", 5)) {
+    } else if ((strlen(p) >= 5) && strncmp(p, "ASN1:", 5) == 0) {
         p += 5;
         gen_type = 2;
     } else

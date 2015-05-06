@@ -98,7 +98,8 @@ int ASN1_BIT_STRING_num_asc(char *name, BIT_STRING_BITNAME *tbl)
 {
     BIT_STRING_BITNAME *bnam;
     for (bnam = tbl; bnam->lname; bnam++) {
-        if (!strcmp(bnam->sname, name) || !strcmp(bnam->lname, name))
+        if ((strcmp(bnam->sname, name) == 0)
+            || (strcmp(bnam->lname, name) == 0))
             return bnam->bitnum;
     }
     return -1;

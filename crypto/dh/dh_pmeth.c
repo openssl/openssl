@@ -259,12 +259,12 @@ static int pkey_dh_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 static int pkey_dh_ctrl_str(EVP_PKEY_CTX *ctx,
                             const char *type, const char *value)
 {
-    if (!strcmp(type, "dh_paramgen_prime_len")) {
+    if (strcmp(type, "dh_paramgen_prime_len") == 0) {
         int len;
         len = atoi(value);
         return EVP_PKEY_CTX_set_dh_paramgen_prime_len(ctx, len);
     }
-    if (!strcmp(type, "dh_rfc5114")) {
+    if (strcmp(type, "dh_rfc5114") == 0) {
         DH_PKEY_CTX *dctx = ctx->data;
         int len;
         len = atoi(value);
@@ -273,17 +273,17 @@ static int pkey_dh_ctrl_str(EVP_PKEY_CTX *ctx,
         dctx->rfc5114_param = len;
         return 1;
     }
-    if (!strcmp(type, "dh_paramgen_generator")) {
+    if (strcmp(type, "dh_paramgen_generator") == 0) {
         int len;
         len = atoi(value);
         return EVP_PKEY_CTX_set_dh_paramgen_generator(ctx, len);
     }
-    if (!strcmp(type, "dh_paramgen_subprime_len")) {
+    if (strcmp(type, "dh_paramgen_subprime_len") == 0) {
         int len;
         len = atoi(value);
         return EVP_PKEY_CTX_set_dh_paramgen_subprime_len(ctx, len);
     }
-    if (!strcmp(type, "dh_paramgen_type")) {
+    if (strcmp(type, "dh_paramgen_type") == 0) {
         int typ;
         typ = atoi(value);
         return EVP_PKEY_CTX_set_dh_paramgen_type(ctx, typ);

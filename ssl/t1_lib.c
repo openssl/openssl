@@ -3749,11 +3749,11 @@ static int sig_cb(const char *elem, int len, void *arg)
     if (!*p)
         return 0;
 
-    if (!strcmp(etmp, "RSA"))
+    if (strcmp(etmp, "RSA") == 0)
         sig_alg = EVP_PKEY_RSA;
-    else if (!strcmp(etmp, "DSA"))
+    else if (strcmp(etmp, "DSA") == 0)
         sig_alg = EVP_PKEY_DSA;
-    else if (!strcmp(etmp, "ECDSA"))
+    else if (strcmp(etmp, "ECDSA") == 0)
         sig_alg = EVP_PKEY_EC;
     else
         return 0;

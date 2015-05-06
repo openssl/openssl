@@ -428,9 +428,10 @@ static char *app_get_pass(char *arg, int keepbio)
     char *tmp, tpass[APP_PASS_LEN];
     static BIO *pwdbio = NULL;
     int i;
-    if (!strncmp(arg, "pass:", 5))
+
+    if (strncmp(arg, "pass:", 5) == 0)
         return BUF_strdup(arg + 5);
-    if (!strncmp(arg, "env:", 4)) {
+    if (strncmp(arg, "env:", 4) == 0) {
         tmp = getenv(arg + 4);
         if (!tmp) {
             BIO_printf(bio_err, "Can't read environment variable %s\n", arg + 4);
@@ -439,7 +440,7 @@ static char *app_get_pass(char *arg, int keepbio)
         return BUF_strdup(tmp);
     }
     if (!keepbio || !pwdbio) {
-        if (!strncmp(arg, "file:", 5)) {
+        if (strncmp(arg, "file:", 5) == 0) {
             pwdbio = BIO_new_file(arg + 5, "r");
             if (!pwdbio) {
                 BIO_printf(bio_err, "Can't open file %s\n", arg + 5);
@@ -454,7 +455,7 @@ static char *app_get_pass(char *arg, int keepbio)
              * on real Windows descriptors, such as those obtained
              * with CreateFile.
              */
-        } else if (!strncmp(arg, "fd:", 3)) {
+        } else if (strncmp(arg, "fd:", 3) == 0) {
             BIO *btmp;
             i = atoi(arg + 3);
             if (i >= 0)
@@ -469,7 +470,7 @@ static char *app_get_pass(char *arg, int keepbio)
             btmp = BIO_new(BIO_f_buffer());
             pwdbio = BIO_push(btmp, pwdbio);
 #endif
-        } else if (!strcmp(arg, "stdin")) {
+        } else if (strcmp(arg, "stdin") == 0) {
             pwdbio = dup_bio_in();
             if (!pwdbio) {
                 BIO_printf(bio_err, "Can't open BIO for stdin\n");
@@ -1083,11 +1084,11 @@ int set_name_ex(unsigned long *flags, const char *arg)
 
 int set_ext_copy(int *copy_type, const char *arg)
 {
-    if (!strcasecmp(arg, "none"))
+    if (strcasecmp(arg, "none") == 0)
         *copy_type = EXT_COPY_NONE;
-    else if (!strcasecmp(arg, "copy"))
+    else if (strcasecmp(arg, "copy") == 0)
         *copy_type = EXT_COPY_ADD;
-    else if (!strcasecmp(arg, "copyall"))
+    else if (strcasecmp(arg, "copyall") == 0)
         *copy_type = EXT_COPY_ALL;
     else
         return 0;
@@ -1169,7 +1170,7 @@ static int set_table_opts(unsigned long *flags, const char *arg,
         c = 1;
 
     for (ptbl = in_tbl; ptbl->name; ptbl++) {
-        if (!strcasecmp(arg, ptbl->name)) {
+        if (strcasecmp(arg, ptbl->name) == 0) {
             *flags &= ~ptbl->mask;
             if (c)
                 *flags |= ptbl->flag;
@@ -2279,7 +2280,7 @@ static const char *get_dp_url(DIST_POINT *dp)
         uri = GENERAL_NAME_get0_value(gen, &gtype);
         if (gtype == GEN_URI && ASN1_STRING_length(uri) > 6) {
             char *uptr = (char *)ASN1_STRING_data(uri);
-            if (!strncmp(uptr, "http://", 7))
+            if (strncmp(uptr, "http://", 7) == 0)
                 return uptr;
         }
     }
