@@ -159,7 +159,7 @@ static ASN1_TYPE *generate_v3(char *str, X509V3_CTX *cnf, int depth,
     unsigned char *p;
     const unsigned char *cp;
     int cpy_len;
-    long hdr_len;
+    long hdr_len = 0;
     int hdr_constructed = 0, hdr_tag, hdr_class;
     int r;
 

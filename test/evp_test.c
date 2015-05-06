@@ -361,12 +361,12 @@ static int check_unsupported()
 
 static int process_test(struct evp_test *t, char *buf, int verbose)
 {
-    char *keyword, *value;
+    char *keyword = NULL, *value = NULL;
     int rv = 0, add_key = 0;
-    long save_pos;
-    struct key_list **lst, *key;
+    long save_pos = 0;
+    struct key_list **lst = NULL, *key = NULL;
     EVP_PKEY *pk = NULL;
-    const struct evp_test_method *tmeth;
+    const struct evp_test_method *tmeth = NULL;
     if (verbose)
         fputs(buf, stdout);
     if (!parse_line(&keyword, &value, buf))

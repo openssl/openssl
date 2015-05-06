@@ -645,7 +645,7 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval,
     long plen;
     char cst, inf, free_cont = 0;
     const unsigned char *p;
-    BUF_MEM buf;
+    BUF_MEM buf = { 0 };
     const unsigned char *cont = NULL;
     long len;
     if (!pval) {

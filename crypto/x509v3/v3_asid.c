@@ -553,7 +553,7 @@ static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
 
     for (i = 0; i < sk_CONF_VALUE_num(values); i++) {
         CONF_VALUE *val = sk_CONF_VALUE_value(values, i);
-        int i1, i2, i3, is_range, which;
+        int i1 = 0, i2 = 0, i3 = 0, is_range = 0, which = 0;
 
         /*
          * Figure out whether this is an AS or an RDI.
