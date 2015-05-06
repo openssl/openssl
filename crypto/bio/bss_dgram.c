@@ -1406,7 +1406,7 @@ static int dgram_sctp_write(BIO *b, const char *in, int inl)
     if (data->save_shutdown && !BIO_dgram_sctp_wait_for_dry(b)) {
         char *tmp;
         data->saved_message.bio = b;
-        if (!(tmp = OPENSSL_malloc(inl))) {
+        if ((tmp = OPENSSL_malloc(inl)) == NULL) {
             BIOerr(BIO_F_DGRAM_SCTP_WRITE, ERR_R_MALLOC_FAILURE);
             return -1;
         }

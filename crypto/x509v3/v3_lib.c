@@ -73,7 +73,8 @@ static void ext_list_free(X509V3_EXT_METHOD *ext);
 
 int X509V3_EXT_add(X509V3_EXT_METHOD *ext)
 {
-    if (!ext_list && !(ext_list = sk_X509V3_EXT_METHOD_new(ext_cmp))) {
+    if (ext_list == NULL
+        && (ext_list = sk_X509V3_EXT_METHOD_new(ext_cmp)) == NULL) {
         X509V3err(X509V3_F_X509V3_EXT_ADD, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -135,12 +136,11 @@ int X509V3_EXT_add_alias(int nid_to, int nid_from)
     const X509V3_EXT_METHOD *ext;
     X509V3_EXT_METHOD *tmpext;
 
-    if (!(ext = X509V3_EXT_get_nid(nid_from))) {
-        X509V3err(X509V3_F_X509V3_EXT_ADD_ALIAS,
-                  X509V3_R_EXTENSION_NOT_FOUND);
+    if ((ext = X509V3_EXT_get_nid(nid_from)) == NULL) {
+        X509V3err(X509V3_F_X509V3_EXT_ADD_ALIAS, X509V3_R_EXTENSION_NOT_FOUND);
         return 0;
     }
-    if (!(tmpext = OPENSSL_malloc(sizeof(*tmpext)))) {
+    if ((tmpext = OPENSSL_malloc(sizeof(*tmpext))) == NULL) {
         X509V3err(X509V3_F_X509V3_EXT_ADD_ALIAS, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -181,7 +181,7 @@ void *X509V3_EXT_d2i(X509_EXTENSION *ext)
     ASN1_STRING *extvalue;
     int extlen;
 
-    if (!(method = X509V3_EXT_get(ext)))
+    if ((method = X509V3_EXT_get(ext)) == NULL)
         return NULL;
     extvalue = X509_EXTENSION_get_data(ext);
     p = ASN1_STRING_data(extvalue);
@@ -326,7 +326,8 @@ int X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value,
         return 1;
     }
 
-    if (!*x && !(*x = sk_X509_EXTENSION_new_null()))
+    if (*x == NULL
+        && (*x = sk_X509_EXTENSION_new_null()) == NULL)
         return -1;
     if (!sk_X509_EXTENSION_push(*x, ext))
         return -1;

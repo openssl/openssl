@@ -106,7 +106,7 @@ OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
     OCSP_CERTID *cid = NULL;
     unsigned char md[EVP_MAX_MD_SIZE];
 
-    if (!(cid = OCSP_CERTID_new()))
+    if ((cid = OCSP_CERTID_new()) == NULL)
         goto err;
 
     alg = cid->hashAlgorithm;
@@ -115,7 +115,7 @@ OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
         OCSPerr(OCSP_F_OCSP_CERT_ID_NEW, OCSP_R_UNKNOWN_NID);
         goto err;
     }
-    if (!(alg->algorithm = OBJ_nid2obj(nid)))
+    if ((alg->algorithm = OBJ_nid2obj(nid)) == NULL)
         goto err;
     if ((alg->parameter = ASN1_TYPE_new()) == NULL)
         goto err;
@@ -135,7 +135,7 @@ OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
 
     if (serialNumber) {
         ASN1_INTEGER_free(cid->serialNumber);
-        if (!(cid->serialNumber = ASN1_INTEGER_dup(serialNumber)))
+        if ((cid->serialNumber = ASN1_INTEGER_dup(serialNumber)) == NULL)
             goto err;
     }
     return cid;

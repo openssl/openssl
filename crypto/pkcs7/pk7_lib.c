@@ -265,8 +265,8 @@ int PKCS7_add_signer(PKCS7 *p7, PKCS7_SIGNER_INFO *psi)
         }
     }
     if (!j) {                   /* we need to add another algorithm */
-        if (!(alg = X509_ALGOR_new())
-            || !(alg->parameter = ASN1_TYPE_new())) {
+        if ((alg = X509_ALGOR_new()) == NULL
+            || (alg->parameter = ASN1_TYPE_new()) == NULL) {
             X509_ALGOR_free(alg);
             PKCS7err(PKCS7_F_PKCS7_ADD_SIGNER, ERR_R_MALLOC_FAILURE);
             return (0);
@@ -426,7 +426,7 @@ PKCS7_SIGNER_INFO *PKCS7_add_signature(PKCS7 *p7, X509 *x509, EVP_PKEY *pkey,
 int PKCS7_set_digest(PKCS7 *p7, const EVP_MD *md)
 {
     if (PKCS7_type_is_digest(p7)) {
-        if (!(p7->d.digest->md->parameter = ASN1_TYPE_new())) {
+        if ((p7->d.digest->md->parameter = ASN1_TYPE_new()) == NULL) {
             PKCS7err(PKCS7_F_PKCS7_SET_DIGEST, ERR_R_MALLOC_FAILURE);
             return 0;
         }

@@ -606,7 +606,7 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
 
     if (strcmp(type, "rsa_mgf1_md") == 0) {
         const EVP_MD *md;
-        if (!(md = EVP_get_digestbyname(value))) {
+        if ((md = EVP_get_digestbyname(value)) == NULL) {
             RSAerr(RSA_F_PKEY_RSA_CTRL_STR, RSA_R_INVALID_DIGEST);
             return 0;
         }
@@ -615,7 +615,7 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
 
     if (strcmp(type, "rsa_oaep_md") == 0) {
         const EVP_MD *md;
-        if (!(md = EVP_get_digestbyname(value))) {
+        if ((md = EVP_get_digestbyname(value)) == NULL) {
             RSAerr(RSA_F_PKEY_RSA_CTRL_STR, RSA_R_INVALID_DIGEST);
             return 0;
         }

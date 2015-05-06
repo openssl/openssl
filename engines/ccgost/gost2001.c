@@ -393,7 +393,7 @@ int gost2001_compute_public(EC_KEY *ec)
         goto err;
     }
     BN_CTX_start(ctx);
-    if (!(priv_key = EC_KEY_get0_private_key(ec))) {
+    if ((priv_key = EC_KEY_get0_private_key(ec)) == NULL) {
         GOSTerr(GOST_F_GOST2001_COMPUTE_PUBLIC, ERR_R_EC_LIB);
         goto err;
     }

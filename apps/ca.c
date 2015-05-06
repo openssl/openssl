@@ -1703,7 +1703,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
          * Its best to dup the subject DN and then delete any email addresses
          * because this retains its structure.
          */
-        if (!(dn_subject = X509_NAME_dup(subject))) {
+        if ((dn_subject = X509_NAME_dup(subject)) == NULL) {
             BIO_printf(bio_err, "Memory allocation failure\n");
             goto end;
         }

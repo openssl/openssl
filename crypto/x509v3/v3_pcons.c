@@ -108,7 +108,8 @@ static void *v2i_POLICY_CONSTRAINTS(const X509V3_EXT_METHOD *method,
     POLICY_CONSTRAINTS *pcons = NULL;
     CONF_VALUE *val;
     int i;
-    if (!(pcons = POLICY_CONSTRAINTS_new())) {
+
+    if ((pcons = POLICY_CONSTRAINTS_new()) == NULL) {
         X509V3err(X509V3_F_V2I_POLICY_CONSTRAINTS, ERR_R_MALLOC_FAILURE);
         return NULL;
     }

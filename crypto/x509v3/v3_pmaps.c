@@ -119,7 +119,7 @@ static void *v2i_POLICY_MAPPINGS(const X509V3_EXT_METHOD *method,
     CONF_VALUE *val;
     int i;
 
-    if (!(pmaps = sk_POLICY_MAPPING_new_null())) {
+    if ((pmaps = sk_POLICY_MAPPING_new_null()) == NULL) {
         X509V3err(X509V3_F_V2I_POLICY_MAPPINGS, ERR_R_MALLOC_FAILURE);
         return NULL;
     }

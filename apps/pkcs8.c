@@ -211,7 +211,7 @@ int pkcs8_main(int argc, char **argv)
         pkey = load_key(infile, informat, 1, passin, e, "key");
         if (!pkey)
             goto end;
-        if (!(p8inf = EVP_PKEY2PKCS8_broken(pkey, p8_broken))) {
+        if ((p8inf = EVP_PKEY2PKCS8_broken(pkey, p8_broken)) == NULL) {
             BIO_printf(bio_err, "Error converting key\n");
             ERR_print_errors(bio_err);
             goto end;
@@ -235,9 +235,9 @@ int pkcs8_main(int argc, char **argv)
                     goto end;
             }
             app_RAND_load_file(NULL, 0);
-            if (!(p8 = PKCS8_encrypt(pbe_nid, cipher,
-                                     p8pass, strlen(p8pass),
-                                     NULL, 0, iter, p8inf))) {
+            if ((p8 = PKCS8_encrypt(pbe_nid, cipher,
+                                    p8pass, strlen(p8pass),
+                                    NULL, 0, iter, p8inf)) == NULL) {
                 BIO_printf(bio_err, "Error encrypting key\n");
                 ERR_print_errors(bio_err);
                 goto end;
@@ -296,7 +296,7 @@ int pkcs8_main(int argc, char **argv)
         goto end;
     }
 
-    if (!(pkey = EVP_PKCS82PKEY(p8inf))) {
+    if ((pkey = EVP_PKCS82PKEY(p8inf)) == NULL) {
         BIO_printf(bio_err, "Error converting key\n");
         ERR_print_errors(bio_err);
         goto end;

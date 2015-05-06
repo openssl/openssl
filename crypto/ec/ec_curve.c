@@ -3049,9 +3049,9 @@ static EC_GROUP *ec_group_new_from_data(const ec_list_element curve)
     params = (const unsigned char *)(data + 1); /* skip header */
     params += seed_len;         /* skip seed */
 
-    if (!(p = BN_bin2bn(params + 0 * param_len, param_len, NULL))
-        || !(a = BN_bin2bn(params + 1 * param_len, param_len, NULL))
-        || !(b = BN_bin2bn(params + 2 * param_len, param_len, NULL))) {
+    if ((p = BN_bin2bn(params + 0 * param_len, param_len, NULL)) == NULL
+        || (a = BN_bin2bn(params + 1 * param_len, param_len, NULL)) == NULL
+        || (b = BN_bin2bn(params + 2 * param_len, param_len, NULL)) == NULL) {
         ECerr(EC_F_EC_GROUP_NEW_FROM_DATA, ERR_R_BN_LIB);
         goto err;
     }
@@ -3085,8 +3085,8 @@ static EC_GROUP *ec_group_new_from_data(const ec_list_element curve)
         goto err;
     }
 
-    if (!(x = BN_bin2bn(params + 3 * param_len, param_len, NULL))
-        || !(y = BN_bin2bn(params + 4 * param_len, param_len, NULL))) {
+    if ((x = BN_bin2bn(params + 3 * param_len, param_len, NULL)) == NULL
+        || (y = BN_bin2bn(params + 4 * param_len, param_len, NULL)) == NULL) {
         ECerr(EC_F_EC_GROUP_NEW_FROM_DATA, ERR_R_BN_LIB);
         goto err;
     }
@@ -3094,7 +3094,7 @@ static EC_GROUP *ec_group_new_from_data(const ec_list_element curve)
         ECerr(EC_F_EC_GROUP_NEW_FROM_DATA, ERR_R_EC_LIB);
         goto err;
     }
-    if (!(order = BN_bin2bn(params + 5 * param_len, param_len, NULL))
+    if ((order = BN_bin2bn(params + 5 * param_len, param_len, NULL)) == NULL
         || !BN_set_word(x, (BN_ULONG)data->cofactor)) {
         ECerr(EC_F_EC_GROUP_NEW_FROM_DATA, ERR_R_BN_LIB);
         goto err;

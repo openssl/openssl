@@ -227,9 +227,9 @@ int EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid,
 {
     EVP_PBE_CTL *pbe_tmp;
 
-    if (!pbe_algs)
+    if (pbe_algs == NULL)
         pbe_algs = sk_EVP_PBE_CTL_new(pbe_cmp);
-    if (!(pbe_tmp = OPENSSL_malloc(sizeof(*pbe_tmp)))) {
+    if ((pbe_tmp = OPENSSL_malloc(sizeof(*pbe_tmp))) == NULL) {
         EVPerr(EVP_F_EVP_PBE_ALG_ADD_TYPE, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -247,6 +247,7 @@ int EVP_PBE_alg_add(int nid, const EVP_CIPHER *cipher, const EVP_MD *md,
                     EVP_PBE_KEYGEN *keygen)
 {
     int cipher_nid, md_nid;
+
     if (cipher)
         cipher_nid = EVP_CIPHER_nid(cipher);
     else

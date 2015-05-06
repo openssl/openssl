@@ -22,7 +22,7 @@ int main(int argc, char **argv)
     }
     OpenSSL_add_all_algorithms();
     ERR_load_crypto_strings();
-    if (!(fp = fopen(argv[1], "rb"))) {
+    if ((fp = fopen(argv[1], "rb")) == NULL) {
         fprintf(stderr, "Error opening file %s\n", argv[1]);
         exit(1);
     }
@@ -39,7 +39,7 @@ int main(int argc, char **argv)
         exit(1);
     }
     PKCS12_free(p12);
-    if (!(fp = fopen(argv[3], "w"))) {
+    if ((fp = fopen(argv[3], "w")) == NULL) {
         fprintf(stderr, "Error opening file %s\n", argv[1]);
         exit(1);
     }

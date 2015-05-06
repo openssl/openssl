@@ -255,16 +255,16 @@ int OBJ_add_object(const ASN1_OBJECT *obj)
             return (0);
     if ((o = OBJ_dup(obj)) == NULL)
         goto err;
-    if (!(ao[ADDED_NID] = OPENSSL_malloc(sizeof(*ao))))
+    if ((ao[ADDED_NID] = OPENSSL_malloc(sizeof(*ao))) == NULL)
         goto err2;
     if ((o->length != 0) && (obj->data != NULL))
-        if (!(ao[ADDED_DATA] = OPENSSL_malloc(sizeof(*ao))))
+        if ((ao[ADDED_DATA] = OPENSSL_malloc(sizeof(*ao))) == NULL)
             goto err2;
     if (o->sn != NULL)
-        if (!(ao[ADDED_SNAME] = OPENSSL_malloc(sizeof(*ao))))
+        if ((ao[ADDED_SNAME] = OPENSSL_malloc(sizeof(*ao))) == NULL)
             goto err2;
     if (o->ln != NULL)
-        if (!(ao[ADDED_LNAME] = OPENSSL_malloc(sizeof(*ao))))
+        if ((ao[ADDED_LNAME] = OPENSSL_malloc(sizeof(*ao))) == NULL)
             goto err2;
 
     for (i = ADDED_DATA; i <= ADDED_NID; i++) {
@@ -507,7 +507,7 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
             if (!(c & 0x80))
                 break;
             if (!use_bn && (l > (ULONG_MAX >> 7L))) {
-                if (!bl && !(bl = BN_new()))
+                if (bl == NULL && (bl = BN_new()) == NULL)
                     goto err;
                 if (!BN_set_word(bl, l))
                     goto err;

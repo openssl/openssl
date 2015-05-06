@@ -123,7 +123,7 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
             continue;
         else {
             buf->data[offset - 1] = '\0'; /* blat the '\n' */
-            if (!(p = OPENSSL_malloc(add + offset)))
+            if ((p = OPENSSL_malloc(add + offset)) == NULL)
                 goto err;
             offset = 0;
         }

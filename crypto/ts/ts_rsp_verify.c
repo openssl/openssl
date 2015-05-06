@@ -511,7 +511,7 @@ static int TS_check_status_info(TS_RESP *response)
 
     /* Set the embedded_status_text to the returned description. */
     if (sk_ASN1_UTF8STRING_num(info->text) > 0
-        && !(embedded_status_text = TS_get_status_text(info->text)))
+        && (embedded_status_text = TS_get_status_text(info->text)) == NULL)
         return 0;
 
     /* Filling in failure_text with the failure information. */
@@ -558,7 +558,7 @@ static char *TS_get_status_text(STACK_OF(ASN1_UTF8STRING) *text)
         length += 1;            /* separator character */
     }
     /* Allocate memory (closing '\0' included). */
-    if (!(result = OPENSSL_malloc(length))) {
+    if ((result = OPENSSL_malloc(length)) == NULL) {
         TSerr(TS_F_TS_GET_STATUS_TEXT, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -604,11 +604,11 @@ static int TS_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
     *imprint = NULL;
 
     /* Return the MD algorithm of the response. */
-    if (!(*md_alg = X509_ALGOR_dup(md_alg_resp)))
+    if ((*md_alg = X509_ALGOR_dup(md_alg_resp)) == NULL)
         goto err;
 
     /* Getting the MD object. */
-    if (!(md = EVP_get_digestbyobj((*md_alg)->algorithm))) {
+    if ((md = EVP_get_digestbyobj((*md_alg)->algorithm)) == NULL) {
         TSerr(TS_F_TS_COMPUTE_IMPRINT, TS_R_UNSUPPORTED_MD_ALGORITHM);
         goto err;
     }
@@ -618,7 +618,7 @@ static int TS_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
     if (length < 0)
         goto err;
     *imprint_len = length;
-    if (!(*imprint = OPENSSL_malloc(*imprint_len))) {
+    if ((*imprint = OPENSSL_malloc(*imprint_len)) == NULL) {
         TSerr(TS_F_TS_COMPUTE_IMPRINT, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -708,15 +708,16 @@ static int TS_check_signer_name(GENERAL_NAME *tsa_name, X509 *signer)
 
     /* Check all the alternative names. */
     gen_names = X509_get_ext_d2i(signer, NID_subject_alt_name, NULL, &idx);
-    while (gen_names != NULL
-           && !(found = TS_find_name(gen_names, tsa_name) >= 0)) {
+    while (gen_names != NULL) {
+        found = TS_find_name(gen_names, tsa_name) >= 0;
+        if (found)
+            break;
         /*
          * Get the next subject alternative name, although there should be no
          * more than one.
          */
         GENERAL_NAMES_free(gen_names);
-        gen_names = X509_get_ext_d2i(signer, NID_subject_alt_name,
-                                     NULL, &idx);
+        gen_names = X509_get_ext_d2i(signer, NID_subject_alt_name, NULL, &idx);
     }
     GENERAL_NAMES_free(gen_names);
 

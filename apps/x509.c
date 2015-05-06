@@ -1021,10 +1021,8 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
     }
     if (sno)
         bs = sno;
-    else if (!(bs = x509_load_serial(CAfile, serialfile, create)))
+    else if ((bs = x509_load_serial(CAfile, serialfile, create)) == NULL)
         goto end;
-
-/*      if (!X509_STORE_add_cert(ctx,x)) goto end;*/
 
     /*
      * NOTE: this certificate can/should be self signed, unless it was a

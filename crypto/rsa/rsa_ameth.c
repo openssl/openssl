@@ -93,9 +93,10 @@ static int rsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
     const unsigned char *p;
     int pklen;
     RSA *rsa = NULL;
+
     if (!X509_PUBKEY_get0_param(NULL, &p, &pklen, NULL, pubkey))
         return 0;
-    if (!(rsa = d2i_RSAPublicKey(NULL, &p, pklen))) {
+    if ((rsa = d2i_RSAPublicKey(NULL, &p, pklen)) == NULL) {
         RSAerr(RSA_F_RSA_PUB_DECODE, ERR_R_RSA_LIB);
         return 0;
     }
@@ -115,7 +116,8 @@ static int old_rsa_priv_decode(EVP_PKEY *pkey,
                                const unsigned char **pder, int derlen)
 {
     RSA *rsa;
-    if (!(rsa = d2i_RSAPrivateKey(NULL, pder, derlen))) {
+
+    if ((rsa = d2i_RSAPrivateKey(NULL, pder, derlen)) == NULL) {
         RSAerr(RSA_F_OLD_RSA_PRIV_DECODE, ERR_R_RSA_LIB);
         return 0;
     }

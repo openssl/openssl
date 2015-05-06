@@ -127,7 +127,7 @@ BIGNUM *SRP_Calc_u(BIGNUM *A, BIGNUM *B, BIGNUM *N)
     EVP_DigestFinal_ex(&ctxt, cu, NULL);
     EVP_MD_CTX_cleanup(&ctxt);
 
-    if (!(u = BN_bin2bn(cu, sizeof(cu), NULL)))
+    if ((u = BN_bin2bn(cu, sizeof(cu), NULL)) == NULL)
         return NULL;
     if (!BN_is_zero(u))
         return u;
@@ -178,10 +178,10 @@ BIGNUM *SRP_Calc_B(BIGNUM *b, BIGNUM *N, BIGNUM *g, BIGNUM *v)
 
     /* B = g**b + k*v */
 
-    if (!BN_mod_exp(gb, g, b, N, bn_ctx) ||
-        !(k = srp_Calc_k(N, g)) ||
-        !BN_mod_mul(kv, v, k, N, bn_ctx) ||
-        !BN_mod_add(B, gb, kv, N, bn_ctx)) {
+    if (!BN_mod_exp(gb, g, b, N, bn_ctx)
+        || (k = srp_Calc_k(N, g)) == NULL
+        || !BN_mod_mul(kv, v, k, N, bn_ctx)
+        || !BN_mod_add(B, gb, kv, N, bn_ctx)) {
         BN_free(B);
         B = NULL;
     }
@@ -257,13 +257,12 @@ BIGNUM *SRP_Calc_client_key(BIGNUM *N, BIGNUM *B, BIGNUM *g, BIGNUM *x,
 
     if (!BN_mod_exp(tmp, g, x, N, bn_ctx))
         goto err;
-    if (!(k = srp_Calc_k(N, g)))
+    if ((k = srp_Calc_k(N, g)) == NULL)
         goto err;
     if (!BN_mod_mul(tmp2, tmp, k, N, bn_ctx))
         goto err;
     if (!BN_mod_sub(tmp, B, tmp2, N, bn_ctx))
         goto err;
-
     if (!BN_mod_mul(tmp3, u, x, N, bn_ctx))
         goto err;
     if (!BN_mod_add(tmp2, a, tmp3, N, bn_ctx))

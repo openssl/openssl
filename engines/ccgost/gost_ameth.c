@@ -200,7 +200,7 @@ BIGNUM *gost_get0_priv_key(const EVP_PKEY *pkey)
             if (!ec) {
                 return NULL;
             }
-            if (!(priv = EC_KEY_get0_private_key(ec)))
+            if ((priv = EC_KEY_get0_private_key(ec)) == NULL)
                 return NULL;
             return (BIGNUM *)priv;
         }

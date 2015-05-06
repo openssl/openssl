@@ -316,13 +316,12 @@ static EVP_PKEY *b2i_dss(const unsigned char **in, unsigned int length,
         if (!read_lebn(&p, 20, &dsa->priv_key))
             goto memerr;
         /* Calculate public key */
-        if (!(dsa->pub_key = BN_new()))
+        if ((dsa->pub_key = BN_new()) == NULL)
             goto memerr;
-        if (!(ctx = BN_CTX_new()))
+        if ((ctx = BN_CTX_new()) == NULL)
             goto memerr;
 
         if (!BN_mod_exp(dsa->pub_key, dsa->g, dsa->priv_key, dsa->p, ctx))
-
             goto memerr;
         BN_CTX_free(ctx);
     }

@@ -290,28 +290,21 @@ static int ibm_4758_cca_init(ENGINE *e)
         CCA4758err(CCA4758_F_IBM_4758_CCA_INIT, CCA4758_R_DSO_FAILURE);
         goto err;
     }
+#define BINDIT(t, name) (t)DSO_bind_func(dso, name)
 #  ifndef OPENSSL_NO_RSA
-    if (!(keyRecordRead = (F_KEYRECORDREAD)
-          DSO_bind_func(dso, n_keyRecordRead)) ||
-        !(randomNumberGenerate = (F_RANDOMNUMBERGENERATE)
-          DSO_bind_func(dso, n_randomNumberGenerate)) ||
-        !(digitalSignatureGenerate = (F_DIGITALSIGNATUREGENERATE)
-          DSO_bind_func(dso, n_digitalSignatureGenerate)) ||
-        !(digitalSignatureVerify = (F_DIGITALSIGNATUREVERIFY)
-          DSO_bind_func(dso, n_digitalSignatureVerify)) ||
-        !(publicKeyExtract = (F_PUBLICKEYEXTRACT)
-          DSO_bind_func(dso, n_publicKeyExtract)) ||
-        !(pkaEncrypt = (F_PKAENCRYPT)
-          DSO_bind_func(dso, n_pkaEncrypt)) || !(pkaDecrypt = (F_PKADECRYPT)
-                                                 DSO_bind_func(dso,
-                                                               n_pkaDecrypt)))
+    if ((keyRecordRead = BINDIT(F_KEYRECORDREAD, n_keyRecordRead)) == NULL
+        || (randomNumberGenerate = BINDIT(F_RANDOMNUMBERGENERATE, n_randomNumberGenerate)) == NULL
+        || (digitalSignatureGenerate = BINDIT(F_DIGITALSIGNATUREGENERATE, n_digitalSignatureGenerate)) == NULL
+        || (digitalSignatureVerify = BINDIT(F_DIGITALSIGNATUREVERIFY, n_digitalSignatureVerify)) == NULL
+        || (publicKeyExtract = BINDIT(F_PUBLICKEYEXTRACT, n_publicKeyExtract)) == NULL
+        || (pkaEncrypt = BINDIT(F_PKAENCRYPT, n_pkaEncrypt)) == NULL
+        || (pkaDecrypt = BINDIT(F_PKADECRYPT, n_pkaDecrypt)) == NULL)
     {
         CCA4758err(CCA4758_F_IBM_4758_CCA_INIT, CCA4758_R_DSO_FAILURE);
         goto err;
     }
 #  else
-    if (!(randomNumberGenerate = (F_RANDOMNUMBERGENERATE)
-          DSO_bind_func(dso, n_randomNumberGenerate))) {
+    if ((randomNumberGenerate = BINDIT(F_RANDOMNUMBERGENERATE, n_randomNumberGenerate)) == NULL) {
         CCA4758err(CCA4758_F_IBM_4758_CCA_INIT, CCA4758_R_DSO_FAILURE);
         goto err;
     }

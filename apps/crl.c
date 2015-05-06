@@ -222,7 +222,7 @@ int crl_main(int argc, char **argv)
         goto end;
 
     if (do_ver) {
-        if (!(store = setup_verify(CAfile, CApath)))
+        if ((store = setup_verify(CAfile, CApath)) == NULL)
             goto end;
         lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
         if (lookup == NULL)

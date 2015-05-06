@@ -209,7 +209,7 @@ int X509_PURPOSE_add(int id, int trust, int flags,
     idx = X509_PURPOSE_get_by_id(id);
     /* Need a new entry */
     if (idx == -1) {
-        if (!(ptmp = OPENSSL_malloc(sizeof(*ptmp)))) {
+        if ((ptmp = OPENSSL_malloc(sizeof(*ptmp))) == NULL) {
             X509V3err(X509V3_F_X509_PURPOSE_ADD, ERR_R_MALLOC_FAILURE);
             return 0;
         }
@@ -241,7 +241,8 @@ int X509_PURPOSE_add(int id, int trust, int flags,
 
     /* If its a new entry manage the dynamic table */
     if (idx == -1) {
-        if (!xptable && !(xptable = sk_X509_PURPOSE_new(xp_cmp))) {
+        if (xptable == NULL
+            && (xptable = sk_X509_PURPOSE_new(xp_cmp)) == NULL) {
             X509V3err(X509V3_F_X509_PURPOSE_ADD, ERR_R_MALLOC_FAILURE);
             return 0;
         }

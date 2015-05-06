@@ -72,7 +72,7 @@ PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
     PKCS7 *p7;
     int i;
 
-    if (!(p7 = PKCS7_new())) {
+    if ((p7 = PKCS7_new()) == NULL) {
         PKCS7err(PKCS7_F_PKCS7_SIGN, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -113,7 +113,7 @@ int PKCS7_final(PKCS7 *p7, BIO *data, int flags)
 {
     BIO *p7bio;
     int ret = 0;
-    if (!(p7bio = PKCS7_dataInit(p7, NULL))) {
+    if ((p7bio = PKCS7_dataInit(p7, NULL)) == NULL) {
         PKCS7err(PKCS7_F_PKCS7_FINAL, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -164,7 +164,7 @@ PKCS7_SIGNER_INFO *PKCS7_sign_add_signer(PKCS7 *p7, X509 *signcert,
         return NULL;
     }
 
-    if (!(si = PKCS7_add_signature(p7, signcert, pkey, md))) {
+    if ((si = PKCS7_add_signature(p7, signcert, pkey, md)) == NULL) {
         PKCS7err(PKCS7_F_PKCS7_SIGN_ADD_SIGNER,
                  PKCS7_R_PKCS7_ADD_SIGNATURE_ERROR);
         return NULL;
@@ -180,7 +180,7 @@ PKCS7_SIGNER_INFO *PKCS7_sign_add_signer(PKCS7 *p7, X509 *signcert,
             goto err;
         /* Add SMIMECapabilities */
         if (!(flags & PKCS7_NOSMIMECAP)) {
-            if (!(smcap = sk_X509_ALGOR_new_null())) {
+            if ((smcap = sk_X509_ALGOR_new_null()) == NULL) {
                 PKCS7err(PKCS7_F_PKCS7_SIGN_ADD_SIGNER, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
@@ -353,11 +353,11 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
     } else
         tmpin = indata;
 
-    if (!(p7bio = PKCS7_dataInit(p7, tmpin)))
+    if ((p7bio = PKCS7_dataInit(p7, tmpin)) == NULL)
         goto err;
 
     if (flags & PKCS7_TEXT) {
-        if (!(tmpout = BIO_new(BIO_s_mem()))) {
+        if ((tmpout = BIO_new(BIO_s_mem())) == NULL) {
             PKCS7err(PKCS7_F_PKCS7_VERIFY, ERR_R_MALLOC_FAILURE);
             goto err;
         }
@@ -439,7 +439,7 @@ STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs,
         return 0;
     }
 
-    if (!(signers = sk_X509_new_null())) {
+    if ((signers = sk_X509_new_null()) == NULL) {
         PKCS7err(PKCS7_F_PKCS7_GET0_SIGNERS, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -481,7 +481,7 @@ PKCS7 *PKCS7_encrypt(STACK_OF(X509) *certs, BIO *in, const EVP_CIPHER *cipher,
     BIO *p7bio = NULL;
     int i;
     X509 *x509;
-    if (!(p7 = PKCS7_new())) {
+    if ((p7 = PKCS7_new()) == NULL) {
         PKCS7err(PKCS7_F_PKCS7_ENCRYPT, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -537,7 +537,7 @@ int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data, int flags)
         return 0;
     }
 
-    if (!(tmpmem = PKCS7_dataDecode(p7, pkey, NULL, cert))) {
+    if ((tmpmem = PKCS7_dataDecode(p7, pkey, NULL, cert)) == NULL) {
         PKCS7err(PKCS7_F_PKCS7_DECRYPT, PKCS7_R_DECRYPT_ERROR);
         return 0;
     }
@@ -545,12 +545,12 @@ int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data, int flags)
     if (flags & PKCS7_TEXT) {
         BIO *tmpbuf, *bread;
         /* Encrypt BIOs can't do BIO_gets() so add a buffer BIO */
-        if (!(tmpbuf = BIO_new(BIO_f_buffer()))) {
+        if ((tmpbuf = BIO_new(BIO_f_buffer())) == NULL) {
             PKCS7err(PKCS7_F_PKCS7_DECRYPT, ERR_R_MALLOC_FAILURE);
             BIO_free_all(tmpmem);
             return 0;
         }
-        if (!(bread = BIO_push(tmpbuf, tmpmem))) {
+        if ((bread = BIO_push(tmpbuf, tmpmem)) == NULL) {
             PKCS7err(PKCS7_F_PKCS7_DECRYPT, ERR_R_MALLOC_FAILURE);
             BIO_free_all(tmpbuf);
             BIO_free_all(tmpmem);

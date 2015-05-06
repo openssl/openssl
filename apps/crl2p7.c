@@ -135,7 +135,8 @@ int crl2pkcs7_main(int argc, char **argv)
             nocrl = 1;
             break;
         case OPT_CERTFILE:
-            if (!certflst && !(certflst = sk_OPENSSL_STRING_new_null()))
+            if ((certflst == NULL)
+                && (certflst = sk_OPENSSL_STRING_new_null()) == NULL)
                 goto end;
             if (!sk_OPENSSL_STRING_push(certflst, *(++argv))) {
                 sk_OPENSSL_STRING_free(certflst);

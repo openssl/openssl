@@ -84,13 +84,14 @@ int X509V3_add_value(const char *name, const char *value,
 {
     CONF_VALUE *vtmp = NULL;
     char *tname = NULL, *tvalue = NULL;
-    if (name && !(tname = BUF_strdup(name)))
+
+    if (name && (tname = BUF_strdup(name)) == NULL)
         goto err;
-    if (value && !(tvalue = BUF_strdup(value)))
+    if (value && (tvalue = BUF_strdup(value)) == NULL)
         goto err;
-    if (!(vtmp = OPENSSL_malloc(sizeof(*vtmp))))
+    if ((vtmp = OPENSSL_malloc(sizeof(*vtmp))) == NULL)
         goto err;
-    if (!*extlist && !(*extlist = sk_CONF_VALUE_new_null()))
+    if (*extlist == NULL && (*extlist = sk_CONF_VALUE_new_null()) == NULL)
         goto err;
     vtmp->section = NULL;
     vtmp->name = tname;
@@ -144,10 +145,11 @@ char *i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *method, ASN1_ENUMERATED *a)
 {
     BIGNUM *bntmp = NULL;
     char *strtmp = NULL;
+
     if (!a)
         return NULL;
-    if (!(bntmp = ASN1_ENUMERATED_to_BN(a, NULL)) ||
-        !(strtmp = BN_bn2dec(bntmp)))
+    if ((bntmp = ASN1_ENUMERATED_to_BN(a, NULL)) == NULL
+        || (strtmp = BN_bn2dec(bntmp)) == NULL)
         X509V3err(X509V3_F_I2S_ASN1_ENUMERATED, ERR_R_MALLOC_FAILURE);
     BN_free(bntmp);
     return strtmp;
@@ -157,10 +159,11 @@ char *i2s_ASN1_INTEGER(X509V3_EXT_METHOD *method, ASN1_INTEGER *a)
 {
     BIGNUM *bntmp = NULL;
     char *strtmp = NULL;
+
     if (!a)
         return NULL;
-    if (!(bntmp = ASN1_INTEGER_to_BN(a, NULL)) ||
-        !(strtmp = BN_bn2dec(bntmp)))
+    if ((bntmp = ASN1_INTEGER_to_BN(a, NULL)) == NULL
+        || (strtmp = BN_bn2dec(bntmp)) == NULL)
         X509V3err(X509V3_F_I2S_ASN1_INTEGER, ERR_R_MALLOC_FAILURE);
     BN_free(bntmp);
     return strtmp;
@@ -220,9 +223,10 @@ int X509V3_add_value_int(const char *name, ASN1_INTEGER *aint,
 {
     char *strtmp;
     int ret;
+
     if (!aint)
         return 1;
-    if (!(strtmp = i2s_ASN1_INTEGER(NULL, aint)))
+    if ((strtmp = i2s_ASN1_INTEGER(NULL, aint)) == NULL)
         return 0;
     ret = X509V3_add_value(name, strtmp, extlist);
     OPENSSL_free(strtmp);
@@ -232,7 +236,8 @@ int X509V3_add_value_int(const char *name, ASN1_INTEGER *aint,
 int X509V3_get_value_bool(CONF_VALUE *value, int *asn1_bool)
 {
     char *btmp;
-    if (!(btmp = value->value))
+
+    if ((btmp = value->value) == NULL)
         goto err;
     if (strcmp(btmp, "TRUE") == 0
         || strcmp(btmp, "true") == 0
@@ -262,7 +267,8 @@ int X509V3_get_value_bool(CONF_VALUE *value, int *asn1_bool)
 int X509V3_get_value_int(CONF_VALUE *value, ASN1_INTEGER **aint)
 {
     ASN1_INTEGER *itmp;
-    if (!(itmp = s2i_ASN1_INTEGER(NULL, value->value))) {
+
+    if ((itmp = s2i_ASN1_INTEGER(NULL, value->value)) == NULL) {
         X509V3_conf_err(value);
         return 0;
     }
@@ -401,7 +407,7 @@ char *hex_to_string(const unsigned char *buffer, long len)
     const static char hexdig[] = "0123456789ABCDEF";
     if (!buffer || !len)
         return NULL;
-    if (!(tmp = OPENSSL_malloc(len * 3 + 1))) {
+    if ((tmp = OPENSSL_malloc(len * 3 + 1)) == NULL) {
         X509V3err(X509V3_F_HEX_TO_STRING, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -431,7 +437,7 @@ unsigned char *string_to_hex(const char *str, long *len)
         X509V3err(X509V3_F_STRING_TO_HEX, X509V3_R_INVALID_NULL_ARGUMENT);
         return NULL;
     }
-    if (!(hexbuf = OPENSSL_malloc(strlen(str) >> 1)))
+    if ((hexbuf = OPENSSL_malloc(strlen(str) >> 1)) == NULL)
         goto err;
     for (p = (unsigned char *)str, q = hexbuf; *p;) {
         ch = *p++;

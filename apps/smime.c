@@ -463,16 +463,16 @@ int smime_main(int argc, char **argv)
     }
 
     if (certfile) {
-        if (!(other = load_certs(certfile, FORMAT_PEM, NULL,
-                                 e, "certificate file"))) {
+        if ((other = load_certs(certfile, FORMAT_PEM, NULL,
+                                 e, "certificate file")) == NULL) {
             ERR_print_errors(bio_err);
             goto end;
         }
     }
 
     if (recipfile && (operation == SMIME_DECRYPT)) {
-        if (!(recip = load_cert(recipfile, FORMAT_PEM, NULL,
-                                e, "recipient certificate file"))) {
+        if ((recip = load_cert(recipfile, FORMAT_PEM, NULL,
+                                e, "recipient certificate file")) == NULL) {
             ERR_print_errors(bio_err);
             goto end;
         }
@@ -515,7 +515,7 @@ int smime_main(int argc, char **argv)
         }
         if (contfile) {
             BIO_free(indata);
-            if (!(indata = BIO_new_file(contfile, "rb"))) {
+            if ((indata = BIO_new_file(contfile, "rb")) == NULL) {
                 BIO_printf(bio_err, "Can't read content file %s\n", contfile);
                 goto end;
             }
@@ -527,7 +527,7 @@ int smime_main(int argc, char **argv)
         goto end;
 
     if (operation == SMIME_VERIFY) {
-        if (!(store = setup_verify(CAfile, CApath)))
+        if ((store = setup_verify(CAfile, CApath)) == NULL)
             goto end;
         X509_STORE_set_verify_cb(store, smime_cb);
         if (vpmtouched)

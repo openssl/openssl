@@ -382,13 +382,10 @@ static int atalla_init(ENGINE *e)
         ATALLAerr(ATALLA_F_ATALLA_INIT, ATALLA_R_NOT_LOADED);
         goto err;
     }
-    if (!
-        (p1 =
-         (tfnASI_GetHardwareConfig *) DSO_bind_func(atalla_dso, ATALLA_F1))
-|| !(p2 = (tfnASI_RSAPrivateKeyOpFn *) DSO_bind_func(atalla_dso, ATALLA_F2))
-|| !(p3 =
-     (tfnASI_GetPerformanceStatistics *) DSO_bind_func(atalla_dso,
-                                                       ATALLA_F3))) {
+#define BINDIT(t, name) (t *)DSO_bind_func(atalla_dso, name)
+    if ((p1 = BINDIT(tfnASI_GetHardwareConfig, ATALLA_F1)) == NULL
+        || (p2 = BINDIT(tfnASI_RSAPrivateKeyOpFn, ATALLA_F2)) == NULL
+        || (p3 = BINDIT(tfnASI_GetPerformanceStatistics, ATALLA_F3)) == NULL) {
         ATALLAerr(ATALLA_F_ATALLA_INIT, ATALLA_R_NOT_LOADED);
         goto err;
     }
