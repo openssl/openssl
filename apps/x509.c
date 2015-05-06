@@ -175,7 +175,7 @@ OPTIONS x509_options[] = {
      "The CA key, must be PEM format; if not in CAfile"},
     {"CAcreateserial", OPT_CACREATESERIAL, '-',
      "Create serial number file if it does not exist"},
-    {"CAserial", OPT_CASERIAL, '<', "Serial file"},
+    {"CAserial", OPT_CASERIAL, 's', "Serial file"},
     {"set_serial", OPT_SET_SERIAL, 's', "Serial number to use"},
     {"text", OPT_TEXT, '-', "Print the certificate in text form"},
     {"C", OPT_C, '-', "Print out C code forms"},
