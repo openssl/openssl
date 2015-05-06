@@ -314,7 +314,8 @@ static int ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid,
         X509_NAME *iname;
         int mdlen;
         unsigned char md[EVP_MAX_MD_SIZE];
-        if (!(dgst = EVP_get_digestbyobj(cid->hashAlgorithm->algorithm))) {
+        if ((dgst = EVP_get_digestbyobj(cid->hashAlgorithm->algorithm))
+                == NULL) {
             OCSPerr(OCSP_F_OCSP_MATCH_ISSUERID,
                     OCSP_R_UNKNOWN_MESSAGE_DIGEST);
             return -1;

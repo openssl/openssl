@@ -1104,7 +1104,7 @@ static ASN1_TYPE *get_attribute(STACK_OF(X509_ATTRIBUTE) *sk, int nid)
 ASN1_OCTET_STRING *PKCS7_digest_from_attributes(STACK_OF(X509_ATTRIBUTE) *sk)
 {
     ASN1_TYPE *astype;
-    if (!(astype = get_attribute(sk, NID_pkcs9_messageDigest)))
+    if ((astype = get_attribute(sk, NID_pkcs9_messageDigest)) == NULL)
         return NULL;
     return astype->value.octet_string;
 }
@@ -1165,11 +1165,10 @@ static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
     X509_ATTRIBUTE *attr = NULL;
 
     if (*sk == NULL) {
-        *sk = sk_X509_ATTRIBUTE_new_null();
-        if (*sk == NULL)
+        if ((*sk = sk_X509_ATTRIBUTE_new_null()) == NULL)
             return 0;
  new_attrib:
-        if (!(attr = X509_ATTRIBUTE_create(nid, atrtype, value)))
+        if ((attr = X509_ATTRIBUTE_create(nid, atrtype, value)) == NULL)
             return 0;
         if (!sk_X509_ATTRIBUTE_push(*sk, attr)) {
             X509_ATTRIBUTE_free(attr);

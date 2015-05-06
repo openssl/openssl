@@ -838,7 +838,7 @@ static EC_GROUP *ec_asn1_parameters2group(const ECPARAMETERS *params)
     /* extract seed (optional) */
     if (params->curve->seed != NULL) {
         OPENSSL_free(ret->seed);
-        if (!(ret->seed = OPENSSL_malloc(params->curve->seed->length))) {
+        if ((ret->seed = OPENSSL_malloc(params->curve->seed->length)) == NULL) {
             ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, ERR_R_MALLOC_FAILURE);
             goto err;
         }

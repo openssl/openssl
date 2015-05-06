@@ -717,8 +717,8 @@ int cms_main(int argc, char **argv)
             if ((encerts = sk_X509_new_null()) == NULL)
                 goto end;
         while (*argv) {
-            if (!(cert = load_cert(*argv, FORMAT_PEM,
-                                   NULL, e, "recipient certificate file")))
+            if ((cert = load_cert(*argv, FORMAT_PEM, NULL, e,
+                                  "recipient certificate file")) == NULL)
                 goto end;
             sk_X509_push(encerts, cert);
             cert = NULL;
@@ -727,24 +727,24 @@ int cms_main(int argc, char **argv)
     }
 
     if (certfile) {
-        if (!(other = load_certs(certfile, FORMAT_PEM, NULL,
-                                 e, "certificate file"))) {
+        if ((other = load_certs(certfile, FORMAT_PEM, NULL, e,
+                                "certificate file")) == NULL) {
             ERR_print_errors(bio_err);
             goto end;
         }
     }
 
     if (recipfile && (operation == SMIME_DECRYPT)) {
-        if (!(recip = load_cert(recipfile, FORMAT_PEM, NULL,
-                                e, "recipient certificate file"))) {
+        if ((recip = load_cert(recipfile, FORMAT_PEM, NULL, e,
+                               "recipient certificate file")) == NULL) {
             ERR_print_errors(bio_err);
             goto end;
         }
     }
 
     if (operation == SMIME_SIGN_RECEIPT) {
-        if (!(signer = load_cert(signerfile, FORMAT_PEM, NULL,
-                                 e, "receipt signer certificate file"))) {
+        if ((signer = load_cert(signerfile, FORMAT_PEM, NULL, e,
+                                "receipt signer certificate file")) == NULL) {
             ERR_print_errors(bio_err);
             goto end;
         }
@@ -787,7 +787,7 @@ int cms_main(int argc, char **argv)
         }
         if (contfile) {
             BIO_free(indata);
-            if (!(indata = BIO_new_file(contfile, "rb"))) {
+            if ((indata = BIO_new_file(contfile, "rb")) == NULL) {
                 BIO_printf(bio_err, "Can't read content file %s\n", contfile);
                 goto end;
             }
@@ -807,7 +807,7 @@ int cms_main(int argc, char **argv)
 
     if (rctfile) {
         char *rctmode = (rctformat == FORMAT_ASN1) ? "rb" : "r";
-        if (!(rctin = BIO_new_file(rctfile, rctmode))) {
+        if ((rctin = BIO_new_file(rctfile, rctmode)) == NULL) {
             BIO_printf(bio_err, "Can't open receipt file %s\n", rctfile);
             goto end;
         }
@@ -834,7 +834,7 @@ int cms_main(int argc, char **argv)
         goto end;
 
     if ((operation == SMIME_VERIFY) || (operation == SMIME_VERIFY_RECEIPT)) {
-        if (!(store = setup_verify(CAfile, CApath)))
+        if ((store = setup_verify(CAfile, CApath)) == NULL)
             goto end;
         X509_STORE_set_verify_cb(store, cms_cb);
         if (vpmtouched)

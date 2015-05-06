@@ -466,7 +466,7 @@ static void prime_field_tests(void)
 
     group_order_tests(group);
 
-    if (!(P_160 = EC_GROUP_new(EC_GROUP_method_of(group))))
+    if ((P_160 = EC_GROUP_new(EC_GROUP_method_of(group))) == NULL)
         ABORT;
     if (!EC_GROUP_copy(P_160, group))
         ABORT;
@@ -515,7 +515,7 @@ static void prime_field_tests(void)
 
     group_order_tests(group);
 
-    if (!(P_192 = EC_GROUP_new(EC_GROUP_method_of(group))))
+    if ((P_192 = EC_GROUP_new(EC_GROUP_method_of(group))) == NULL)
         ABORT;
     if (!EC_GROUP_copy(P_192, group))
         ABORT;
@@ -570,7 +570,7 @@ static void prime_field_tests(void)
 
     group_order_tests(group);
 
-    if (!(P_224 = EC_GROUP_new(EC_GROUP_method_of(group))))
+    if ((P_224 = EC_GROUP_new(EC_GROUP_method_of(group))) == NULL)
         ABORT;
     if (!EC_GROUP_copy(P_224, group))
         ABORT;
@@ -630,7 +630,7 @@ static void prime_field_tests(void)
 
     group_order_tests(group);
 
-    if (!(P_256 = EC_GROUP_new(EC_GROUP_method_of(group))))
+    if ((P_256 = EC_GROUP_new(EC_GROUP_method_of(group))) == NULL)
         ABORT;
     if (!EC_GROUP_copy(P_256, group))
         ABORT;
@@ -685,7 +685,7 @@ static void prime_field_tests(void)
 
     group_order_tests(group);
 
-    if (!(P_384 = EC_GROUP_new(EC_GROUP_method_of(group))))
+    if ((P_384 = EC_GROUP_new(EC_GROUP_method_of(group))) == NULL)
         ABORT;
     if (!EC_GROUP_copy(P_384, group))
         ABORT;
@@ -746,7 +746,7 @@ static void prime_field_tests(void)
 
     group_order_tests(group);
 
-    if (!(P_521 = EC_GROUP_new(EC_GROUP_method_of(group))))
+    if ((P_521 = EC_GROUP_new(EC_GROUP_method_of(group))) == NULL)
         ABORT;
     if (!EC_GROUP_copy(P_521, group))
         ABORT;
@@ -916,7 +916,7 @@ static void prime_field_tests(void)
         if (EC_GROUP_get_degree(group) != _degree) ABORT; \
         fprintf(stdout, " ok\n"); \
         group_order_tests(group); \
-        if (!(_variable = EC_GROUP_new(EC_GROUP_method_of(group)))) ABORT; \
+        if ((_variable = EC_GROUP_new(EC_GROUP_method_of(group))) == NULL) ABORT; \
         if (!EC_GROUP_copy(_variable, group)) ABORT; \
 
 # ifndef OPENSSL_NO_EC2M

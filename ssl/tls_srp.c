@@ -340,21 +340,18 @@ int SRP_generate_server_master_secret(SSL *s, unsigned char *master_key)
 
     if (!SRP_Verify_A_mod_N(s->srp_ctx.A, s->srp_ctx.N))
         goto err;
-    if (!(u = SRP_Calc_u(s->srp_ctx.A, s->srp_ctx.B, s->srp_ctx.N)))
+    if ((u = SRP_Calc_u(s->srp_ctx.A, s->srp_ctx.B, s->srp_ctx.N)) == NULL)
         goto err;
-    if (!
-        (K =
-         SRP_Calc_server_key(s->srp_ctx.A, s->srp_ctx.v, u, s->srp_ctx.b,
-                             s->srp_ctx.N)))
+    if ((K = SRP_Calc_server_key(s->srp_ctx.A, s->srp_ctx.v, u, s->srp_ctx.b,
+                                 s->srp_ctx.N)) == NULL)
         goto err;
 
     tmp_len = BN_num_bytes(K);
     if ((tmp = OPENSSL_malloc(tmp_len)) == NULL)
         goto err;
     BN_bn2bin(K, tmp);
-    ret =
-        s->method->ssl3_enc->generate_master_secret(s, master_key, tmp,
-                                                    tmp_len);
+    ret = s->method->ssl3_enc->generate_master_secret(s, master_key, tmp,
+                                                      tmp_len);
  err:
     OPENSSL_clear_free(tmp, tmp_len);
     BN_clear_free(K);
@@ -375,7 +372,7 @@ int SRP_generate_client_master_secret(SSL *s, unsigned char *master_key)
      */
     if (SRP_Verify_B_mod_N(s->srp_ctx.B, s->srp_ctx.N) == 0)
         goto err;
-    if (!(u = SRP_Calc_u(s->srp_ctx.A, s->srp_ctx.B, s->srp_ctx.N)))
+    if ((u = SRP_Calc_u(s->srp_ctx.A, s->srp_ctx.B, s->srp_ctx.N)) == NULL)
         goto err;
     if (s->srp_ctx.SRP_give_srp_client_pwd_callback == NULL)
         goto err;
@@ -384,12 +381,10 @@ int SRP_generate_client_master_secret(SSL *s, unsigned char *master_key)
          s->srp_ctx.SRP_give_srp_client_pwd_callback(s,
                                                      s->srp_ctx.SRP_cb_arg)))
         goto err;
-    if (!(x = SRP_Calc_x(s->srp_ctx.s, s->srp_ctx.login, passwd)))
+    if ((x = SRP_Calc_x(s->srp_ctx.s, s->srp_ctx.login, passwd)) == NULL)
         goto err;
-    if (!
-        (K =
-         SRP_Calc_client_key(s->srp_ctx.N, s->srp_ctx.B, s->srp_ctx.g, x,
-                             s->srp_ctx.a, u)))
+    if ((K = SRP_Calc_client_key(s->srp_ctx.N, s->srp_ctx.B, s->srp_ctx.g, x,
+                                 s->srp_ctx.a, u)) == NULL)
         goto err;
 
     tmp_len = BN_num_bytes(K);

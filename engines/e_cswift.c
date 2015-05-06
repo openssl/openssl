@@ -404,14 +404,12 @@ static int cswift_init(ENGINE *e)
         CSWIFTerr(CSWIFT_F_CSWIFT_INIT, CSWIFT_R_NOT_LOADED);
         goto err;
     }
-    if (!(p1 = (t_swAcquireAccContext *)
-          DSO_bind_func(cswift_dso, CSWIFT_F1)) ||
-        !(p2 = (t_swAttachKeyParam *)
-          DSO_bind_func(cswift_dso, CSWIFT_F2)) ||
-        !(p3 = (t_swSimpleRequest *)
-          DSO_bind_func(cswift_dso, CSWIFT_F3)) ||
-        !(p4 = (t_swReleaseAccContext *)
-          DSO_bind_func(cswift_dso, CSWIFT_F4))) {
+
+#define BINDIT(t, name) (t *)DSO_bind_func(cswift_dso, name)
+    if ((p1 = BINDIT(t_swAcquireAccContext, CSWIFT_F1)) == NULL
+        || (p2 = BINDIT(t_swAttachKeyParam, CSWIFT_F2)) == NULL
+        || (p3 = BINDIT(t_swSimpleRequest *) DSO_bind_func(cswift_dso, CSWIFT_F3)) == NULL
+        || (p4 = BINDIT(t_swReleaseAccContext *) DSO_bind_func(cswift_dso, CSWIFT_F4)) == NULL) {
         CSWIFTerr(CSWIFT_F_CSWIFT_INIT, CSWIFT_R_NOT_LOADED);
         goto err;
     }

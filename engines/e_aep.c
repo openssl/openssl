@@ -462,22 +462,22 @@ static int aep_init(ENGINE *e)
     /* Attempt to load libaep.so. */
 
     aep_dso = DSO_load(NULL, get_AEP_LIBNAME(), NULL, 0);
-
     if (aep_dso == NULL) {
         AEPHKerr(AEPHK_F_AEP_INIT, AEPHK_R_NOT_LOADED);
         goto err;
     }
 
-    if (!(p1 = (t_AEP_ModExp *) DSO_bind_func(aep_dso, AEP_F1)) ||
-        !(p2 = (t_AEP_ModExpCrt *) DSO_bind_func(aep_dso, AEP_F2)) ||
+#define BINDIT(t, name) (t *)DSO_bind_func(aep_dso, name)
+    if ((p1 = BINDIT(t_AEP_ModExp, AEP_F1)) == NULL
+        || (p2 = BINDIT(t_AEP_ModExpCrt, AEP_F2)) == NULL
 #  ifdef AEPRAND
-        !(p3 = (t_AEP_GenRandom *) DSO_bind_func(aep_dso, AEP_F3)) ||
+        || (p3 = BINDIT(t_AEP_GenRandom, AEP_F3)) == NULL
 #  endif
-        !(p4 = (t_AEP_Finalize *) DSO_bind_func(aep_dso, AEP_F4)) ||
-        !(p5 = (t_AEP_Initialize *) DSO_bind_func(aep_dso, AEP_F5)) ||
-        !(p6 = (t_AEP_OpenConnection *) DSO_bind_func(aep_dso, AEP_F6)) ||
-        !(p7 = (t_AEP_SetBNCallBacks *) DSO_bind_func(aep_dso, AEP_F7)) ||
-        !(p8 = (t_AEP_CloseConnection *) DSO_bind_func(aep_dso, AEP_F8))) {
+        || (p4 = BINDIT(t_AEP_Finalize, AEP_F4)) == NULL
+        || (p5 = BINDIT(t_AEP_Initialize, AEP_F5)) == NULL
+        || (p6 = BINDIT(t_AEP_OpenConnection, AEP_F6)) == NULL
+        || (p7 = BINDIT(t_AEP_SetBNCallBacks, AEP_F7)) == NULL
+        || (p8 = BINDIT(t_AEP_CloseConnection, AEP_F8)) == NULL) {
         AEPHKerr(AEPHK_F_AEP_INIT, AEPHK_R_NOT_LOADED);
         goto err;
     }

@@ -70,8 +70,9 @@ static int stbl_module_init(CONF_IMODULE *md, const CONF *cnf)
     const char *stbl_section;
     STACK_OF(CONF_VALUE) *sktmp;
     CONF_VALUE *mval;
+
     stbl_section = CONF_imodule_get_value(md);
-    if (!(sktmp = NCONF_get_section(cnf, stbl_section))) {
+    if ((sktmp = NCONF_get_section(cnf, stbl_section)) == NULL) {
         ASN1err(ASN1_F_STBL_MODULE_INIT, ASN1_R_ERROR_LOADING_SECTION);
         return 0;
     }

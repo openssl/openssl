@@ -555,26 +555,19 @@ static int hwcrhk_init(ENGINE *e)
         HWCRHKerr(HWCRHK_F_HWCRHK_INIT, HWCRHK_R_DSO_FAILURE);
         goto err;
     }
-    if (!(p1 = (HWCryptoHook_Init_t *)
-          DSO_bind_func(hwcrhk_dso, n_hwcrhk_Init)) ||
-        !(p2 = (HWCryptoHook_Finish_t *)
-          DSO_bind_func(hwcrhk_dso, n_hwcrhk_Finish)) ||
-        !(p3 = (HWCryptoHook_ModExp_t *)
-          DSO_bind_func(hwcrhk_dso, n_hwcrhk_ModExp)) ||
+
+#define BINDIT(t, name) (t *)DSO_bind_func(hwcrhk_dso, name)
+    if ((p1 = BINDIT(HWCryptoHook_Init_t, n_hwcrhk_Init)) == NULL
+        || (p2 = BINDIT(HWCryptoHook_Finish_t, n_hwcrhk_Finish)) == NULL
+        || (p3 = BINDIT(HWCryptoHook_ModExp_t, n_hwcrhk_ModExp)) == NULL
 #  ifndef OPENSSL_NO_RSA
-        !(p4 = (HWCryptoHook_RSA_t *)
-          DSO_bind_func(hwcrhk_dso, n_hwcrhk_RSA)) ||
-        !(p5 = (HWCryptoHook_RSALoadKey_t *)
-          DSO_bind_func(hwcrhk_dso, n_hwcrhk_RSALoadKey)) ||
-        !(p6 = (HWCryptoHook_RSAGetPublicKey_t *)
-          DSO_bind_func(hwcrhk_dso, n_hwcrhk_RSAGetPublicKey)) ||
-        !(p7 = (HWCryptoHook_RSAUnloadKey_t *)
-          DSO_bind_func(hwcrhk_dso, n_hwcrhk_RSAUnloadKey)) ||
+        || (p4 = BINDIT(HWCryptoHook_RSA_t, n_hwcrhk_RSA)) == NULL
+        || (p5 = BINDIT(HWCryptoHook_RSALoadKey_t, n_hwcrhk_RSALoadKey)) == NULL
+        || (p6 = BINDIT(HWCryptoHook_RSAGetPublicKey_t, n_hwcrhk_RSAGetPublicKey)) == NULL
+        || (p7 = BINDIT(HWCryptoHook_RSAUnloadKey_t, n_hwcrhk_RSAUnloadKey)) == NULL
 #  endif
-        !(p8 = (HWCryptoHook_RandomBytes_t *)
-          DSO_bind_func(hwcrhk_dso, n_hwcrhk_RandomBytes)) ||
-        !(p9 = (HWCryptoHook_ModExpCRT_t *)
-          DSO_bind_func(hwcrhk_dso, n_hwcrhk_ModExpCRT))) {
+        || (p8 = BINDIT(HWCryptoHook_RandomBytes_t, n_hwcrhk_RandomBytes)) == NULL
+        || (p9 = BINDIT(HWCryptoHook_ModExpCRT_t, n_hwcrhk_ModExpCRT)) == NULL) {
         HWCRHKerr(HWCRHK_F_HWCRHK_INIT, HWCRHK_R_DSO_FAILURE);
         goto err;
     }

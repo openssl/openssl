@@ -388,11 +388,11 @@ static int ibmca_init(ENGINE *e)
         goto err;
     }
 
-    if (!(p1 = DSO_bind_func(ibmca_dso, IBMCA_F1)) ||
-        !(p2 = DSO_bind_func(ibmca_dso, IBMCA_F2)) ||
-        !(p3 = DSO_bind_func(ibmca_dso, IBMCA_F3)) ||
-        !(p4 = DSO_bind_func(ibmca_dso, IBMCA_F4)) ||
-        !(p5 = DSO_bind_func(ibmca_dso, IBMCA_F5))) {
+    if ((p1 = DSO_bind_func(ibmca_dso, IBMCA_F1)) == NULL
+        || (p2 = DSO_bind_func(ibmca_dso, IBMCA_F2)) == NULL
+        || (p3 = DSO_bind_func(ibmca_dso, IBMCA_F3)) == NULL
+        || (p4 = DSO_bind_func(ibmca_dso, IBMCA_F4)) == NULL
+        || (p5 = DSO_bind_func(ibmca_dso, IBMCA_F5)) == NULL) {
         IBMCAerr(IBMCA_F_IBMCA_INIT, IBMCA_R_DSO_FAILURE);
         goto err;
     }

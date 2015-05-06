@@ -68,7 +68,8 @@ PKCS12_SAFEBAG *PKCS12_item_pack_safebag(void *obj, const ASN1_ITEM *it,
 {
     PKCS12_BAGS *bag;
     PKCS12_SAFEBAG *safebag;
-    if (!(bag = PKCS12_BAGS_new())) {
+
+    if ((bag = PKCS12_BAGS_new()) == NULL) {
         PKCS12err(PKCS12_F_PKCS12_ITEM_PACK_SAFEBAG, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -77,7 +78,7 @@ PKCS12_SAFEBAG *PKCS12_item_pack_safebag(void *obj, const ASN1_ITEM *it,
         PKCS12err(PKCS12_F_PKCS12_ITEM_PACK_SAFEBAG, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    if (!(safebag = PKCS12_SAFEBAG_new())) {
+    if ((safebag = PKCS12_SAFEBAG_new()) == NULL) {
         PKCS12err(PKCS12_F_PKCS12_ITEM_PACK_SAFEBAG, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -91,7 +92,8 @@ PKCS12_SAFEBAG *PKCS12_item_pack_safebag(void *obj, const ASN1_ITEM *it,
 PKCS12_SAFEBAG *PKCS12_MAKE_KEYBAG(PKCS8_PRIV_KEY_INFO *p8)
 {
     PKCS12_SAFEBAG *bag;
-    if (!(bag = PKCS12_SAFEBAG_new())) {
+
+    if ((bag = PKCS12_SAFEBAG_new()) == NULL) {
         PKCS12err(PKCS12_F_PKCS12_MAKE_KEYBAG, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -111,7 +113,7 @@ PKCS12_SAFEBAG *PKCS12_MAKE_SHKEYBAG(int pbe_nid, const char *pass,
     const EVP_CIPHER *pbe_ciph;
 
     /* Set up the safe bag */
-    if (!(bag = PKCS12_SAFEBAG_new())) {
+    if ((bag = PKCS12_SAFEBAG_new()) == NULL) {
         PKCS12err(PKCS12_F_PKCS12_MAKE_SHKEYBAG, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -137,12 +139,13 @@ PKCS12_SAFEBAG *PKCS12_MAKE_SHKEYBAG(int pbe_nid, const char *pass,
 PKCS7 *PKCS12_pack_p7data(STACK_OF(PKCS12_SAFEBAG) *sk)
 {
     PKCS7 *p7;
-    if (!(p7 = PKCS7_new())) {
+
+    if ((p7 = PKCS7_new()) == NULL) {
         PKCS12err(PKCS12_F_PKCS12_PACK_P7DATA, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     p7->type = OBJ_nid2obj(NID_pkcs7_data);
-    if (!(p7->d.data = ASN1_OCTET_STRING_new())) {
+    if ((p7->d.data = ASN1_OCTET_STRING_new()) == NULL) {
         PKCS12err(PKCS12_F_PKCS12_PACK_P7DATA, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -174,7 +177,8 @@ PKCS7 *PKCS12_pack_p7encdata(int pbe_nid, const char *pass, int passlen,
     PKCS7 *p7;
     X509_ALGOR *pbe;
     const EVP_CIPHER *pbe_ciph;
-    if (!(p7 = PKCS7_new())) {
+
+    if ((p7 = PKCS7_new()) == NULL) {
         PKCS12err(PKCS12_F_PKCS12_PACK_P7ENCDATA, ERR_R_MALLOC_FAILURE);
         return NULL;
     }

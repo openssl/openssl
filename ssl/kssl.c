@@ -873,7 +873,8 @@ static size_t *populate_cksumlens(void)
 # endif                         /* KRB5_MIT_OLD11 */
 
 # ifdef KRB5CHECKAUTH
-    if (!cklens && !(cklens = (size_t *)calloc(sizeof(int), n + 1)))
+    if (cklens == NULL
+        && (cklens = (size_t *)calloc(sizeof(int), n + 1)) == NULL)
         return NULL;
 
     for (i = 0; i < n; i++) {
@@ -911,7 +912,8 @@ unsigned char *kssl_skip_confound(krb5_enctype etype, unsigned char *a)
 
     conlen = (etype) ? 8 : 0;
 
-    if (!cksumlens && !(cksumlens = populate_cksumlens()))
+    if (cksumlens NULL
+        && (cksumlens = populate_cksumlens()) == NULL)
         return NULL;
     for (i = 0; (cklen = cksumlens[i]) != 0; i++) {
         test_auth = a + conlen + cklen;

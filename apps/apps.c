@@ -502,11 +502,12 @@ int add_oid_section(CONF *conf)
     STACK_OF(CONF_VALUE) *sktmp;
     CONF_VALUE *cnf;
     int i;
-    if (!(p = NCONF_get_string(conf, NULL, "oid_section"))) {
+
+    if ((p = NCONF_get_string(conf, NULL, "oid_section")) == NULL) {
         ERR_clear_error();
         return 1;
     }
-    if (!(sktmp = NCONF_get_section(conf, p))) {
+    if ((sktmp = NCONF_get_section(conf, p)) == NULL) {
         BIO_printf(bio_err, "problem loading oid section %s\n", p);
         return 0;
     }

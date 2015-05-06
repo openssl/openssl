@@ -291,7 +291,8 @@ static void *v2i_crld(const X509V3_EXT_METHOD *method,
     GENERAL_NAME *gen = NULL;
     CONF_VALUE *cnf;
     int i;
-    if (!(crld = sk_DIST_POINT_new_null()))
+
+    if ((crld = sk_DIST_POINT_new_null()) == NULL)
         goto merr;
     for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
         DIST_POINT *point;
@@ -310,20 +311,20 @@ static void *v2i_crld(const X509V3_EXT_METHOD *method,
                 goto merr;
             }
         } else {
-            if (!(gen = v2i_GENERAL_NAME(method, ctx, cnf)))
+            if ((gen = v2i_GENERAL_NAME(method, ctx, cnf)) == NULL)
                 goto err;
-            if (!(gens = GENERAL_NAMES_new()))
+            if ((gens = GENERAL_NAMES_new()) == NULL)
                 goto merr;
             if (!sk_GENERAL_NAME_push(gens, gen))
                 goto merr;
             gen = NULL;
-            if (!(point = DIST_POINT_new()))
+            if ((point = DIST_POINT_new()) == NULL)
                 goto merr;
             if (!sk_DIST_POINT_push(crld, point)) {
                 DIST_POINT_free(point);
                 goto merr;
             }
-            if (!(point->distpoint = DIST_POINT_NAME_new()))
+            if ((point->distpoint = DIST_POINT_NAME_new()) == NULL)
                 goto merr;
             point->distpoint->name.fullname = gens;
             point->distpoint->type = 0;

@@ -2828,7 +2828,7 @@ int ssl3_get_client_key_exchange(SSL *s)
                    SSL_R_BAD_SRP_A_LENGTH);
             goto f_err;
         }
-        if (!(s->srp_ctx.A = BN_bin2bn(p, i, NULL))) {
+        if ((s->srp_ctx.A = BN_bin2bn(p, i, NULL)) == NULL) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_BN_LIB);
             goto err;
         }

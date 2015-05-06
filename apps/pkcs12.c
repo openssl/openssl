@@ -421,8 +421,8 @@ int pkcs12_main(int argc, char **argv)
         /* Add any more certificates asked for */
         if (certfile) {
             STACK_OF(X509) *morecerts = NULL;
-            if (!(morecerts = load_certs(certfile, FORMAT_PEM, NULL, e,
-                                         "certificates from certfile")))
+            if ((morecerts = load_certs(certfile, FORMAT_PEM, NULL, e,
+                                        "certificates from certfile")) == NULL)
                 goto export_end;
             while (sk_X509_num(morecerts) > 0)
                 sk_X509_push(certs, sk_X509_shift(morecerts));
@@ -434,7 +434,7 @@ int pkcs12_main(int argc, char **argv)
             int vret;
             STACK_OF(X509) *chain2;
             X509_STORE *store;
-            if (!(store = setup_verify(CAfile, CApath)))
+            if ((store = setup_verify(CAfile, CApath)) == NULL)
                 goto export_end;
 
             vret = get_cert_chain(ucert, store, &chain2);
@@ -511,7 +511,7 @@ int pkcs12_main(int argc, char **argv)
 
     }
 
-    if (!(p12 = d2i_PKCS12_bio(in, NULL))) {
+    if ((p12 = d2i_PKCS12_bio(in, NULL)) == NULL) {
         ERR_print_errors(bio_err);
         goto end;
     }
@@ -570,7 +570,7 @@ int dump_certs_keys_p12(BIO *out, PKCS12 *p12, char *pass,
     int ret = 0;
     PKCS7 *p7;
 
-    if (!(asafes = PKCS12_unpack_authsafes(p12)))
+    if ((asafes = PKCS12_unpack_authsafes(p12)) == NULL)
         return 0;
     for (i = 0; i < sk_PKCS7_num(asafes); i++) {
         p7 = sk_PKCS7_value(asafes, i);
@@ -634,7 +634,7 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
             return 1;
         print_attribs(out, bag->attrib, "Bag Attributes");
         p8 = bag->value.keybag;
-        if (!(pkey = EVP_PKCS82PKEY(p8)))
+        if ((pkey = EVP_PKCS82PKEY(p8)) == NULL)
             return 0;
         print_attribs(out, p8->attributes, "Key Attributes");
         PEM_write_bio_PrivateKey(out, pkey, enc, NULL, 0, NULL, pempass);
@@ -649,9 +649,9 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
         if (options & NOKEYS)
             return 1;
         print_attribs(out, bag->attrib, "Bag Attributes");
-        if (!(p8 = PKCS12_decrypt_skey(bag, pass, passlen)))
+        if ((p8 = PKCS12_decrypt_skey(bag, pass, passlen)) == NULL)
             return 0;
-        if (!(pkey = EVP_PKCS82PKEY(p8))) {
+        if ((pkey = EVP_PKCS82PKEY(p8)) == NULL) {
             PKCS8_PRIV_KEY_INFO_free(p8);
             return 0;
         }
@@ -674,7 +674,7 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
         print_attribs(out, bag->attrib, "Bag Attributes");
         if (M_PKCS12_cert_bag_type(bag) != NID_x509Certificate)
             return 1;
-        if (!(x509 = PKCS12_certbag2x509(bag)))
+        if ((x509 = PKCS12_certbag2x509(bag)) == NULL)
             return 0;
         dump_cert_text(out, x509);
         PEM_write_bio_X509(out, x509);

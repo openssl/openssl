@@ -177,7 +177,7 @@ int verify_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
-    if (!(store = setup_verify(CAfile, CApath)))
+    if ((store = setup_verify(CAfile, CApath)) == NULL)
         goto end;
     X509_STORE_set_verify_cb(store, cb);
 

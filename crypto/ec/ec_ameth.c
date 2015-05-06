@@ -145,7 +145,7 @@ static EC_KEY *eckey_type2param(int ptype, void *pval)
         int pmlen;
         pm = pstr->data;
         pmlen = pstr->length;
-        if (!(eckey = d2i_ECParameters(NULL, &pm, pmlen))) {
+        if ((eckey = d2i_ECParameters(NULL, &pm, pmlen)) == NULL) {
             ECerr(EC_F_ECKEY_TYPE2PARAM, EC_R_DECODE_ERROR);
             goto ecerr;
         }
@@ -510,7 +510,8 @@ static int eckey_param_decode(EVP_PKEY *pkey,
                               const unsigned char **pder, int derlen)
 {
     EC_KEY *eckey;
-    if (!(eckey = d2i_ECParameters(NULL, pder, derlen))) {
+
+    if ((eckey = d2i_ECParameters(NULL, pder, derlen)) == NULL) {
         ECerr(EC_F_ECKEY_PARAM_DECODE, ERR_R_EC_LIB);
         return 0;
     }
@@ -545,7 +546,8 @@ static int old_ec_priv_decode(EVP_PKEY *pkey,
                               const unsigned char **pder, int derlen)
 {
     EC_KEY *ec;
-    if (!(ec = d2i_ECPrivateKey(NULL, pder, derlen))) {
+
+    if ((ec = d2i_ECPrivateKey(NULL, pder, derlen)) == NULL) {
         ECerr(EC_F_OLD_EC_PRIV_DECODE, EC_R_DECODE_ERROR);
         return 0;
     }

@@ -538,46 +538,28 @@ static int zencod_init(ENGINE *e)
     /*
      * Trying to load Function from the Library
      */
-    if (!
-        (ptr_1 =
-         (t_zencod_bytes2bits *) DSO_bind_func(zencod_dso, ZENCOD_Fct_1))
-|| !(ptr_2 = (t_zencod_bits2bytes *) DSO_bind_func(zencod_dso, ZENCOD_Fct_2))
-|| !(ptr_3 = (t_zencod_new_number *) DSO_bind_func(zencod_dso, ZENCOD_Fct_3))
-|| !(ptr_4 = (t_zencod_init_number *) DSO_bind_func(zencod_dso, ZENCOD_Fct_4))
-|| !(ptr_exp_1 =
-     (t_zencod_rsa_mod_exp *) DSO_bind_func(zencod_dso, ZENCOD_Fct_exp_1))
-|| !(ptr_exp_2 =
-     (t_zencod_rsa_mod_exp_crt *) DSO_bind_func(zencod_dso, ZENCOD_Fct_exp_2))
-|| !(ptr_dsa_1 =
-     (t_zencod_dsa_do_sign *) DSO_bind_func(zencod_dso, ZENCOD_Fct_dsa_1))
-|| !(ptr_dsa_2 =
-     (t_zencod_dsa_do_verify *) DSO_bind_func(zencod_dso, ZENCOD_Fct_dsa_2))
-|| !(ptr_dh_1 =
-     (t_zencod_dh_generate_key *) DSO_bind_func(zencod_dso, ZENCOD_Fct_dh_1))
-|| !(ptr_dh_2 =
-     (t_zencod_dh_compute_key *) DSO_bind_func(zencod_dso, ZENCOD_Fct_dh_2))
-|| !(ptr_rand_1 =
-     (t_zencod_rand_bytes *) DSO_bind_func(zencod_dso, ZENCOD_Fct_rand_1))
-|| !(ptr_math_1 =
-     (t_zencod_math_mod_exp *) DSO_bind_func(zencod_dso, ZENCOD_Fct_math_1))
-|| !(ptr_0 = (t_zencod_test *) DSO_bind_func(zencod_dso, ZENCOD_Fct_0))
-|| !(ptr_md5_1 =
-     (t_zencod_md5_init *) DSO_bind_func(zencod_dso, ZENCOD_Fct_md5_1))
-|| !(ptr_md5_2 =
-     (t_zencod_md5_update *) DSO_bind_func(zencod_dso, ZENCOD_Fct_md5_2))
-|| !(ptr_md5_3 =
-     (t_zencod_md5_do_final *) DSO_bind_func(zencod_dso, ZENCOD_Fct_md5_3))
-|| !(ptr_sha1_1 =
-     (t_zencod_sha1_init *) DSO_bind_func(zencod_dso, ZENCOD_Fct_sha1_1))
-|| !(ptr_sha1_2 =
-     (t_zencod_sha1_update *) DSO_bind_func(zencod_dso, ZENCOD_Fct_sha1_2))
-|| !(ptr_sha1_3 =
-     (t_zencod_sha1_do_final *) DSO_bind_func(zencod_dso, ZENCOD_Fct_sha1_3))
-|| !(ptr_xdes_1 =
-     (t_zencod_xdes_cipher *) DSO_bind_func(zencod_dso, ZENCOD_Fct_xdes_1))
-|| !(ptr_rc4_1 =
-     (t_zencod_rc4_cipher *) DSO_bind_func(zencod_dso, ZENCOD_Fct_rc4_1))) {
-
+#define BINDIT(t, name) (t*)DSO_bindfunc(zencod_dso, name)
+    if ((ptr_1 = BINDIT(t_zencod_bytes2bits ZENCOD_Fct_1)) == NULL
+    || (ptr_2 = BINDIT(t_zencod_bits2bytes ZENCOD_Fct_2)) == NULL
+    || (ptr_3 = BINDIT(t_zencod_new_number ZENCOD_Fct_3)) == NULL
+    || (ptr_4 = BINDIT(t_zencod_init_number ZENCOD_Fct_4)) == NULL
+    || (ptr_exp_1 = BINDIT(t_zencod_rsa_mod_exp, ZENCOD_Fct_exp_1)) == NULL
+    || (ptr_exp_2 = BINDIT(t_zencod_rsa_mod_exp_crt, ZENCOD_Fct_exp_2)) == NULL
+    || (ptr_dsa_1 = BINDIT(t_zencod_dsa_do_sign, ZENCOD_Fct_dsa_1)) == NULL
+    || (ptr_dsa_2 = BINDIT(t_zencod_dsa_do_verify, ZENCOD_Fct_dsa_2)) == NULL
+    || (ptr_dh_1 = BINDIT(t_zencod_dh_generate_key, ZENCOD_Fct_dh_1)) == NULL
+    || (ptr_dh_2 = BINDIT(t_zencod_dh_compute_key, ZENCOD_Fct_dh_2)) == NULL
+    || (ptr_rand_1 = BINDIT(t_zencod_rand_bytes, ZENCOD_Fct_rand_1)) == NULL
+    || (ptr_math_1 = BINDIT(t_zencod_math_mod_exp, ZENCOD_Fct_math_1)) == NULL
+    || (ptr_0 = BINDIT(t_zencod_test, ZENCOD_Fct_0)) == NULL
+    || (ptr_md5_1 = BINDIT(t_zencod_md5_init, ZENCOD_Fct_md5_1)) == NULL
+    || (ptr_md5_2 = BINDIT(t_zencod_md5_update, ZENCOD_Fct_md5_2)) == NULL
+    || (ptr_md5_3 = BINDIT(t_zencod_md5_do_final, ZENCOD_Fct_md5_3)) == NULL
+    || (ptr_sha1_1 = BINDIT(t_zencod_sha1_init, ZENCOD_Fct_sha1_1)) == NULL
+    || (ptr_sha1_2 = BINDIT(t_zencod_sha1_update, ZENCOD_Fct_sha1_2)) == NULL
+    || (ptr_sha1_3 = BINDIT(t_zencod_sha1_do_final, ZENCOD_Fct_sha1_3)) == NULL
+    || (ptr_xdes_1 = BINDIT(t_zencod_xdes_cipher, ZENCOD_Fct_xdes_1)) == NULL
+    || (ptr_rc4_1 = BINDIT(t_zencod_rc4_cipher, ZENCOD_Fct_rc4_1)) == NULL) {
         ZENCODerr(ZENCOD_F_ZENCOD_INIT, ZENCOD_R_DSO_FAILURE);
         goto err;
     }
@@ -906,7 +888,7 @@ static DSA_SIG *DSA_zencod_do_sign(const unsigned char *dgst, int dlen,
         return meth->dsa_do_sign(dgst, dlen, dsa);
     }
 
-    if (!(bn_s = BN_new()) || !(bn_r = BN_new())) {
+    if ((bn_s = BN_new()) == NULL || (bn_r = BN_new()) == NULL) {
         ENGINEerr(ZENCOD_F_ZENCOD_DSA_DO_SIGN, ZENCOD_R_BAD_KEY_COMPONENTS);
         goto FAILED;
     }
@@ -935,7 +917,7 @@ static DSA_SIG *DSA_zencod_do_sign(const unsigned char *dgst, int dlen,
         goto FAILED;
     }
 
-    if (!(sig = DSA_SIG_new())) {
+    if ((sig = DSA_SIG_new()) == NULL) {
         ENGINEerr(ZENCOD_F_ZENCOD_DSA_DO_SIGN, ZENCOD_R_REQUEST_FAILED);
         goto FAILED;
     }
@@ -1032,7 +1014,7 @@ static int DH_zencod_generate_key(DH *dh)
         bn_prv = dh->priv_key;
         generate_x = 0;
     } else {
-        if (!(bn_prv = BN_new())) {
+        if ((bn_prv = BN_new()) == NULL) {
             ENGINEerr(ZENCOD_F_ZENCOD_DH_GENERATE, ZENCOD_R_BN_EXPAND_FAIL);
             goto FAILED;
         }
@@ -1042,7 +1024,7 @@ static int DH_zencod_generate_key(DH *dh)
     /* Public key */
     if (dh->pub_key)
         bn_pub = dh->pub_key;
-    else if (!(bn_pub = BN_new())) {
+    else if ((bn_pub = BN_new()) == NULL) {
         ENGINEerr(ZENCOD_F_ZENCOD_DH_GENERATE, ZENCOD_R_BN_EXPAND_FAIL);
         goto FAILED;
     }

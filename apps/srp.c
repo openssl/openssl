@@ -516,10 +516,13 @@ int srp_main(int argc, char **argv)
                 row[DB_srptype] = BUF_strdup("v");
                 row[DB_srpgN] = BUF_strdup(gNid);
 
-                if (!row[DB_srpid] || !row[DB_srpgN] || !row[DB_srptype]
-                    || !row[DB_srpverifier] || !row[DB_srpsalt]
-                    || (userinfo &&
-                         (!(row [DB_srpinfo] = BUF_strdup (userinfo))))
+                if ((row[DB_srpid] == NULL)
+                    || (row[DB_srpgN] == NULL)
+                    || (row[DB_srptype] == NULL)
+                    || (row[DB_srpverifier] == NULL)
+                    || (row[DB_srpsalt] == NULL)
+                    || (userinfo
+                        && ((row[DB_srpinfo] = BUF_strdup(userinfo)) == NULL))
                     || !update_index(db, row)) {
                     OPENSSL_free(row[DB_srpid]);
                     OPENSSL_free(row[DB_srpgN]);
@@ -596,10 +599,14 @@ int srp_main(int argc, char **argv)
                     row[DB_srptype][0] = 'v';
                     row[DB_srpgN] = BUF_strdup(gNid);
 
-                    if (!row[DB_srpid] || !row[DB_srpgN] || !row[DB_srptype]
-                        || !row[DB_srpverifier] || !row[DB_srpsalt]
+                    if (row[DB_srpid] == NULL
+                        || row[DB_srpgN] == NULL
+                        || row[DB_srptype] == NULL
+                        || row[DB_srpverifier] == NULL
+                        || row[DB_srpsalt] == NULL
                         || (userinfo
-                            && (!(row[DB_srpinfo] = BUF_strdup(userinfo)))))
+                            && ((row[DB_srpinfo] = BUF_strdup(userinfo))
+                                == NULL)))
                         goto end;
 
                     doupdatedb = 1;
@@ -612,12 +619,10 @@ int srp_main(int argc, char **argv)
                            user);
                 errors++;
             } else {
-                char **xpp =
-                    sk_OPENSSL_PSTRING_value(db->db->data, userindex);
+                char **xpp = sk_OPENSSL_PSTRING_value(db->db->data, userindex);
+
                 BIO_printf(bio_err, "user \"%s\" revoked. t\n", user);
-
                 xpp[DB_srptype][0] = 'R';
-
                 doupdatedb = 1;
             }
         }

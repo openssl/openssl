@@ -114,11 +114,11 @@ STACK_OF(X509) *TS_CONF_load_certs(const char *file)
     STACK_OF(X509_INFO) *allcerts = NULL;
     int i;
 
-    if (!(certs = BIO_new_file(file, "r")))
+    if ((certs = BIO_new_file(file, "r")) == NULL)
+        goto end;
+    if ((othercerts = sk_X509_new_null()) == NULL)
         goto end;
 
-    if (!(othercerts = sk_X509_new_null()))
-        goto end;
     allcerts = PEM_X509_INFO_read_bio(certs, NULL, NULL, NULL);
     for (i = 0; i < sk_X509_INFO_num(allcerts); i++) {
         X509_INFO *xi = sk_X509_INFO_value(allcerts, i);
@@ -140,7 +140,7 @@ EVP_PKEY *TS_CONF_load_key(const char *file, const char *pass)
     BIO *key = NULL;
     EVP_PKEY *pkey = NULL;
 
-    if (!(key = BIO_new_file(file, "r")))
+    if ((key = BIO_new_file(file, "r")) == NULL)
         goto end;
     pkey = PEM_read_bio_PrivateKey(key, NULL, NULL, (char *)pass);
  end:
@@ -195,7 +195,7 @@ int TS_CONF_set_crypto_device(CONF *conf, const char *section,
 {
     int ret = 0;
 
-    if (!device)
+    if (device == NULL)
         device = NCONF_get_string(conf, section, ENV_CRYPTO_DEVICE);
 
     if (device && !TS_CONF_set_default_engine(device)) {
@@ -216,8 +216,9 @@ int TS_CONF_set_default_engine(const char *name)
     if (strcmp(name, "builtin") == 0)
         return 1;
 
-    if (!(e = ENGINE_by_id(name)))
+    if ((e = ENGINE_by_id(name)) == NULL)
         goto err;
+
     /* Enable the use of the NCipher HSM for forked children. */
     if (strcmp(name, "chil") == 0)
         ENGINE_ctrl(e, ENGINE_CTRL_CHIL_SET_FORKCHECK, 1, 0, 0);
@@ -241,13 +242,15 @@ int TS_CONF_set_signer_cert(CONF *conf, const char *section,
 {
     int ret = 0;
     X509 *cert_obj = NULL;
-    if (!cert)
+
+    if (cert == NULL) {
         cert = NCONF_get_string(conf, section, ENV_SIGNER_CERT);
-    if (!cert) {
-        TS_CONF_lookup_fail(section, ENV_SIGNER_CERT);
-        goto err;
+        if (cert == NULL) {
+            TS_CONF_lookup_fail(section, ENV_SIGNER_CERT);
+            goto err;
+        }
     }
-    if (!(cert_obj = TS_CONF_load_cert(cert)))
+    if ((cert_obj = TS_CONF_load_cert(cert)) == NULL)
         goto err;
     if (!TS_RESP_CTX_set_signer_cert(ctx, cert_obj))
         goto err;
@@ -263,12 +266,13 @@ int TS_CONF_set_certs(CONF *conf, const char *section, const char *certs,
 {
     int ret = 0;
     STACK_OF(X509) *certs_obj = NULL;
-    if (!certs)
-        certs = NCONF_get_string(conf, section, ENV_CERTS);
-    /* Certificate chain is optional. */
-    if (!certs)
-        goto end;
-    if (!(certs_obj = TS_CONF_load_certs(certs)))
+
+    if (certs == NULL) {
+        /* Certificate chain is optional. */
+        if ((certs = NCONF_get_string(conf, section, ENV_CERTS)) == NULL)
+            goto end;
+    }
+    if ((certs_obj = TS_CONF_load_certs(certs)) == NULL)
         goto err;
     if (!TS_RESP_CTX_set_certs(ctx, certs_obj))
         goto err;
@@ -291,7 +295,7 @@ int TS_CONF_set_signer_key(CONF *conf, const char *section,
         TS_CONF_lookup_fail(section, ENV_SIGNER_KEY);
         goto err;
     }
-    if (!(key_obj = TS_CONF_load_key(key, pass)))
+    if ((key_obj = TS_CONF_load_key(key, pass)) == NULL)
         goto err;
     if (!TS_RESP_CTX_set_signer_key(ctx, key_obj))
         goto err;
@@ -313,7 +317,7 @@ int TS_CONF_set_def_policy(CONF *conf, const char *section,
         TS_CONF_lookup_fail(section, ENV_DEFAULT_POLICY);
         goto err;
     }
-    if (!(policy_obj = OBJ_txt2obj(policy, 0))) {
+    if ((policy_obj = OBJ_txt2obj(policy, 0)) == NULL) {
         TS_CONF_invalid(section, ENV_DEFAULT_POLICY);
         goto err;
     }
@@ -331,10 +335,10 @@ int TS_CONF_set_policies(CONF *conf, const char *section, TS_RESP_CTX *ctx)
     int ret = 0;
     int i;
     STACK_OF(CONF_VALUE) *list = NULL;
-    char *policies = NCONF_get_string(conf, section,
-                                      ENV_OTHER_POLICIES);
+    char *policies = NCONF_get_string(conf, section, ENV_OTHER_POLICIES);
+
     /* If no other policy is specified, that's fine. */
-    if (policies && !(list = X509V3_parse_list(policies))) {
+    if (policies && (list = X509V3_parse_list(policies)) == NULL) {
         TS_CONF_invalid(section, ENV_OTHER_POLICIES);
         goto err;
     }
@@ -342,7 +346,8 @@ int TS_CONF_set_policies(CONF *conf, const char *section, TS_RESP_CTX *ctx)
         CONF_VALUE *val = sk_CONF_VALUE_value(list, i);
         const char *extval = val->value ? val->value : val->name;
         ASN1_OBJECT *objtmp;
-        if (!(objtmp = OBJ_txt2obj(extval, 0))) {
+
+        if ((objtmp = OBJ_txt2obj(extval, 0)) == NULL) {
             TS_CONF_invalid(section, ENV_OTHER_POLICIES);
             goto err;
         }
@@ -363,11 +368,12 @@ int TS_CONF_set_digests(CONF *conf, const char *section, TS_RESP_CTX *ctx)
     int i;
     STACK_OF(CONF_VALUE) *list = NULL;
     char *digests = NCONF_get_string(conf, section, ENV_DIGESTS);
-    if (!digests) {
+
+    if (digests == NULL) {
         TS_CONF_lookup_fail(section, ENV_DIGESTS);
         goto err;
     }
-    if (!(list = X509V3_parse_list(digests))) {
+    if ((list = X509V3_parse_list(digests)) == NULL) {
         TS_CONF_invalid(section, ENV_DIGESTS);
         goto err;
     }
@@ -379,7 +385,8 @@ int TS_CONF_set_digests(CONF *conf, const char *section, TS_RESP_CTX *ctx)
         CONF_VALUE *val = sk_CONF_VALUE_value(list, i);
         const char *extval = val->value ? val->value : val->name;
         const EVP_MD *md;
-        if (!(md = EVP_get_digestbyname(extval))) {
+
+        if ((md = EVP_get_digestbyname(extval)) == NULL) {
             TS_CONF_invalid(section, ENV_DIGESTS);
             goto err;
         }
@@ -401,7 +408,7 @@ int TS_CONF_set_accuracy(CONF *conf, const char *section, TS_RESP_CTX *ctx)
     STACK_OF(CONF_VALUE) *list = NULL;
     char *accuracy = NCONF_get_string(conf, section, ENV_ACCURACY);
 
-    if (accuracy && !(list = X509V3_parse_list(accuracy))) {
+    if (accuracy && (list = X509V3_parse_list(accuracy)) == NULL) {
         TS_CONF_invalid(section, ENV_ACCURACY);
         goto err;
     }

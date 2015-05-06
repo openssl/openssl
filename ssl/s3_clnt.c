@@ -1506,7 +1506,7 @@ int ssl3_get_key_exchange(SSL *s)
         }
         param_len += i;
 
-        if (!(s->srp_ctx.N = BN_bin2bn(p, i, NULL))) {
+        if ((s->srp_ctx.N = BN_bin2bn(p, i, NULL)) == NULL) {
             SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_BN_LIB);
             goto err;
         }
@@ -1526,7 +1526,7 @@ int ssl3_get_key_exchange(SSL *s)
         }
         param_len += i;
 
-        if (!(s->srp_ctx.g = BN_bin2bn(p, i, NULL))) {
+        if ((s->srp_ctx.g = BN_bin2bn(p, i, NULL)) == NULL) {
             SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_BN_LIB);
             goto err;
         }
@@ -1547,7 +1547,7 @@ int ssl3_get_key_exchange(SSL *s)
         }
         param_len += i;
 
-        if (!(s->srp_ctx.s = BN_bin2bn(p, i, NULL))) {
+        if ((s->srp_ctx.s = BN_bin2bn(p, i, NULL)) == NULL) {
             SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_BN_LIB);
             goto err;
         }
@@ -1567,7 +1567,7 @@ int ssl3_get_key_exchange(SSL *s)
         }
         param_len += i;
 
-        if (!(s->srp_ctx.B = BN_bin2bn(p, i, NULL))) {
+        if ((s->srp_ctx.B = BN_bin2bn(p, i, NULL)) == NULL) {
             SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_BN_LIB);
             goto err;
         }
@@ -1623,7 +1623,7 @@ int ssl3_get_key_exchange(SSL *s)
         }
         param_len += i;
 
-        if (!(rsa->n = BN_bin2bn(p, i, rsa->n))) {
+        if ((rsa->n = BN_bin2bn(p, i, rsa->n)) == NULL) {
             SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_BN_LIB);
             goto err;
         }
@@ -1643,7 +1643,7 @@ int ssl3_get_key_exchange(SSL *s)
         }
         param_len += i;
 
-        if (!(rsa->e = BN_bin2bn(p, i, rsa->e))) {
+        if ((rsa->e = BN_bin2bn(p, i, rsa->e)) == NULL) {
             SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_BN_LIB);
             goto err;
         }
@@ -1685,7 +1685,7 @@ int ssl3_get_key_exchange(SSL *s)
         }
         param_len += i;
 
-        if (!(dh->p = BN_bin2bn(p, i, NULL))) {
+        if ((dh->p = BN_bin2bn(p, i, NULL)) == NULL) {
             SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_BN_LIB);
             goto err;
         }
@@ -1705,7 +1705,7 @@ int ssl3_get_key_exchange(SSL *s)
         }
         param_len += i;
 
-        if (!(dh->g = BN_bin2bn(p, i, NULL))) {
+        if ((dh->g = BN_bin2bn(p, i, NULL)) == NULL) {
             SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_BN_LIB);
             goto err;
         }
@@ -1725,7 +1725,7 @@ int ssl3_get_key_exchange(SSL *s)
         }
         param_len += i;
 
-        if (!(dh->pub_key = BN_bin2bn(p, i, NULL))) {
+        if ((dh->pub_key = BN_bin2bn(p, i, NULL)) == NULL) {
             SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_BN_LIB);
             goto err;
         }

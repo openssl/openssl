@@ -176,10 +176,10 @@ static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
             }
             pol = policy_section(ctx, polsect, ia5org);
             X509V3_section_free(ctx, polsect);
-            if (!pol)
+            if (pol == NULL)
                 goto err;
         } else {
-            if (!(pobj = OBJ_txt2obj(cnf->name, 0))) {
+            if ((pobj = OBJ_txt2obj(cnf->name, 0)) == NULL) {
                 X509V3err(X509V3_F_R2I_CERTPOL,
                           X509V3_R_INVALID_OBJECT_IDENTIFIER);
                 X509V3_conf_err(cnf);
@@ -209,13 +209,14 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
     CONF_VALUE *cnf;
     POLICYINFO *pol;
     POLICYQUALINFO *qual;
-    if (!(pol = POLICYINFO_new()))
+
+    if ((pol = POLICYINFO_new()) == NULL)
         goto merr;
     for (i = 0; i < sk_CONF_VALUE_num(polstrs); i++) {
         cnf = sk_CONF_VALUE_value(polstrs, i);
         if (strcmp(cnf->name, "policyIdentifier") == 0) {
             ASN1_OBJECT *pobj;
-            if (!(pobj = OBJ_txt2obj(cnf->value, 0))) {
+            if ((pobj = OBJ_txt2obj(cnf->value, 0)) == NULL) {
                 X509V3err(X509V3_F_POLICY_SECTION,
                           X509V3_R_INVALID_OBJECT_IDENTIFIER);
                 X509V3_conf_err(cnf);
@@ -224,17 +225,17 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
             pol->policyid = pobj;
 
         } else if (!name_cmp(cnf->name, "CPS")) {
-            if (!pol->qualifiers)
+            if (pol->qualifiers == NULL)
                 pol->qualifiers = sk_POLICYQUALINFO_new_null();
-            if (!(qual = POLICYQUALINFO_new()))
+            if ((qual = POLICYQUALINFO_new()) == NULL)
                 goto merr;
             if (!sk_POLICYQUALINFO_push(pol->qualifiers, qual))
                 goto merr;
-            if (!(qual->pqualid = OBJ_nid2obj(NID_id_qt_cps))) {
+            if ((qual->pqualid = OBJ_nid2obj(NID_id_qt_cps)) == NULL) {
                 X509V3err(X509V3_F_POLICY_SECTION, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
-            if (!(qual->d.cpsuri = ASN1_IA5STRING_new()))
+            if ((qual->d.cpsuri = ASN1_IA5STRING_new()) == NULL)
                 goto merr;
             if (!ASN1_STRING_set(qual->d.cpsuri, cnf->value,
                                  strlen(cnf->value)))
@@ -292,19 +293,20 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
     CONF_VALUE *cnf;
     USERNOTICE *not;
     POLICYQUALINFO *qual;
-    if (!(qual = POLICYQUALINFO_new()))
+
+    if ((qual = POLICYQUALINFO_new()) == NULL)
         goto merr;
-    if (!(qual->pqualid = OBJ_nid2obj(NID_id_qt_unotice))) {
+    if ((qual->pqualid = OBJ_nid2obj(NID_id_qt_unotice)) == NULL) {
         X509V3err(X509V3_F_NOTICE_SECTION, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    if (!(not = USERNOTICE_new()))
+    if ((not = USERNOTICE_new()) == NULL)
         goto merr;
     qual->d.usernotice = not;
     for (i = 0; i < sk_CONF_VALUE_num(unot); i++) {
         cnf = sk_CONF_VALUE_value(unot, i);
         if (strcmp(cnf->name, "explicitText") == 0) {
-            if (!(not->exptext = ASN1_VISIBLESTRING_new()))
+            if ((not->exptext = ASN1_VISIBLESTRING_new()) == NULL)
                 goto merr;
             if (!ASN1_STRING_set(not->exptext, cnf->value,
                                  strlen(cnf->value)))
@@ -312,7 +314,7 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
         } else if (strcmp(cnf->name, "organization") == 0) {
             NOTICEREF *nref;
             if (!not->noticeref) {
-                if (!(nref = NOTICEREF_new()))
+                if ((nref = NOTICEREF_new()) == NULL)
                     goto merr;
                 not->noticeref = nref;
             } else
@@ -328,7 +330,7 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
             NOTICEREF *nref;
             STACK_OF(CONF_VALUE) *nos;
             if (!not->noticeref) {
-                if (!(nref = NOTICEREF_new()))
+                if ((nref = NOTICEREF_new()) == NULL)
                     goto merr;
                 not->noticeref = nref;
             } else
@@ -376,7 +378,7 @@ static int nref_nos(STACK_OF(ASN1_INTEGER) *nnums, STACK_OF(CONF_VALUE) *nos)
 
     for (i = 0; i < sk_CONF_VALUE_num(nos); i++) {
         cnf = sk_CONF_VALUE_value(nos, i);
-        if (!(aint = s2i_ASN1_INTEGER(NULL, cnf->name))) {
+        if ((aint = s2i_ASN1_INTEGER(NULL, cnf->name)) == NULL) {
             X509V3err(X509V3_F_NREF_NOS, X509V3_R_INVALID_NUMBER);
             goto err;
         }

@@ -86,7 +86,7 @@ static int process_pci_value(CONF_VALUE *val,
             X509V3_conf_err(val);
             return 0;
         }
-        if (!(*language = OBJ_txt2obj(val->value, 0))) {
+        if ((*language = OBJ_txt2obj(val->value, 0)) == NULL) {
             X509V3err(X509V3_F_PROCESS_PCI_VALUE,
                       X509V3_R_INVALID_OBJECT_IDENTIFIER);
             X509V3_conf_err(val);
