@@ -5,20 +5,27 @@ Original text by James Westby, contributed under the OpenSSL license.
 
 =head1 NAME
 
-c_rehash - Create symbolic links to files named by the hash values
+c_rehash, rehash - Create symbolic links to files named by the hash values
 
 =head1 SYNOPSIS
 
-B<c_rehash>
+B<openssl>
+B<rehash>
 B<[-old]>
 B<[-h]>
 B<[-n]>
 B<[-v]>
 [ I<directory>...]
 
+B<c_rehash>
+I<flags...>
+
 =head1 DESCRIPTION
 
-B<c_rehash> scans directories and calculates a hash value of each
+On some platforms, the OpenSSL B<rehash> command is available as
+an external script called B<c_rehash>.  They are functionally equivalent.
+
+B<rehash> scans directories and calculates a hash value of each
 C<.pem>, C<.crt>, C<.cer>, or C<.crl>
 file in the specified directory list and creates symbolic links
 for each file, where the name of the link is the hash value.
@@ -37,7 +44,7 @@ In order for a directory to be processed, the user must have write
 permissions on that directory, otherwise it will be skipped.
 The links created are of the form C<HHHHHHHH.D>, where each B<H>
 is a hexadecimal character and B<D> is a single decimal digit.
-When processing a directory, B<c_rehash> will first remove all links
+When processing a directory, B<rehash> will first remove all links
 that have a name in that syntax. If you have links in that format
 used for other purposes, they will be removed.
 To skip the removal step, use the B<-n> flag.
@@ -87,7 +94,7 @@ This is needed when keeping new and old-style links in the same directory.
 =item B<-v>
 
 Print messages about old links removed and new links created.
-By default, B<c_rehash> only lists each directory as it is processed.
+By default, B<rehash> only lists each directory as it is processed.
 
 =back
 

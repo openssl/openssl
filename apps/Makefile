@@ -5,7 +5,7 @@
 DIR=		apps
 TOP=		..
 CC=		cc
-INCLUDES=	-I$(TOP) -I../include
+INCLUDES=	-I$(TOP) -I../crypto -I../include
 CFLAG=		-g -static -Wswitch
 MAKEFILE=	Makefile
 PERL=		perl
@@ -35,23 +35,14 @@ COMMANDS= \
 	genpkey.o genrsa.o nseq.o ocsp.o passwd.o pkcs12.o pkcs7.o pkcs8.o \
 	pkey.o pkeyparam.o pkeyutl.o prime.o rand.o req.o rsa.o rsautl.o \
 	s_client.o s_server.o s_time.o sess_id.o smime.o speed.o spkac.o \
-	srp.o ts.o verify.o version.o x509.o
+	srp.o ts.o verify.o version.o x509.o rehash.o
 
-A_OBJ=apps.o opt.o
-A_SRC=apps.c opt.c
-S_OBJ=	s_cb.o s_socket.o
-S_SRC=	s_cb.c s_socket.c
+EXTRA_OBJ=apps.o opt.o s_cb.o s_socket.o
+EXTRA_SRC=apps.c opt.c s_cb.c s_socket.c
 RAND_OBJ=app_rand.o
 RAND_SRC=app_rand.c
 
-OBJ	= \
-	asn1pars.o ca.o ciphers.o cms.o crl.o crl2p7.o dgst.o dhparam.o \
-	dsa.o dsaparam.o ec.o ecparam.o enc.o engine.o errstr.o gendsa.o \
-	genpkey.o genrsa.o nseq.o ocsp.o passwd.o pkcs12.o pkcs7.o pkcs8.o \
-	pkey.o pkeyparam.o pkeyutl.o prime.o rand.o req.o rsa.o rsautl.o \
-	s_client.o s_server.o s_time.o sess_id.o smime.o speed.o spkac.o \
-	srp.o ts.o verify.o version.o x509.o
-
+OBJ	= $(COMMANDS)
 
 SRC	= \
 	asn1pars.c ca.c ciphers.c cms.c crl.c crl2p7.c dgst.c dhparam.c \
@@ -61,8 +52,8 @@ SRC	= \
 	s_client.c s_server.c s_time.c sess_id.c smime.c speed.c spkac.c \
 	srp.c ts.c verify.c version.c x509.c
 
-EXE_OBJ	= openssl.o $(OBJ) $(A_OBJ) $(S_OBJ) $(RAND_OBJ)
-EXE_SRC = openssl.c $(SRC) $(A_SRC) $(S_SRC) $(RAND_SRC)
+EXE_OBJ	= openssl.o $(OBJ) $(EXTRA_OBJ) $(RAND_OBJ)
+EXE_SRC = openssl.c $(SRC) $(EXTRA_SRC) $(RAND_SRC)
 
 HEADER=	apps.h progs.h s_apps.h \
 	testdsa.h testrsa.h timeouts.h
