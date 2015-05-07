@@ -807,7 +807,7 @@ static const unsigned char *valid_star(const unsigned char *p, size_t len,
          */
         if (p[i] == '*') {
             int atstart = (state & LABEL_START);
-            int atend = (i == len - 1 || p[i + i] == '.');
+            int atend = (i == len - 1 || p[i + 1] == '.');
             /*-
              * At most one wildcard per pattern.
              * No wildcards in IDNA labels.
