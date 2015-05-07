@@ -395,3 +395,4 @@ SSL_SESSION_get_ticket_lifetime_hint    429	EXIST::FUNCTION:
 SSL_set_rbio                            430	EXIST::FUNCTION:
 SSL_CIPHER_get_digest_nid               431	EXIST::FUNCTION:
 SSL_CIPHER_get_cipher_nid               432	EXIST::FUNCTION:
+SSL_use_certificate_chain_file          433	EXIST::FUNCTION:STDIO
