@@ -1446,6 +1446,7 @@ __owur int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type)
 __owur int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type);
 /* PEM type */
 __owur int SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx, const char *file);
+__owur int SSL_use_certificate_chain_file(SSL *ssl, const char *file);
 __owur STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file);
 __owur int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
                                         const char *file);
@@ -2069,7 +2070,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL_CTX_SET_TRUST                          229
 # define SSL_F_SSL_CTX_USE_CERTIFICATE                    171
 # define SSL_F_SSL_CTX_USE_CERTIFICATE_ASN1               172
-# define SSL_F_SSL_CTX_USE_CERTIFICATE_CHAIN_FILE         220
+# define SSL_F_USE_CERTIFICATE_CHAIN_FILE                 220
 # define SSL_F_SSL_CTX_USE_CERTIFICATE_FILE               173
 # define SSL_F_SSL_CTX_USE_PRIVATEKEY                     174
 # define SSL_F_SSL_CTX_USE_PRIVATEKEY_ASN1                175

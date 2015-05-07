@@ -344,7 +344,7 @@ static int cmd_Certificate(SSL_CONF_CTX *cctx, const char *value)
         c = cctx->ctx->cert;
     }
     if (cctx->ssl) {
-        rv = SSL_use_certificate_file(cctx->ssl, value, SSL_FILETYPE_PEM);
+        rv = SSL_use_certificate_chain_file(cctx->ssl, value);
         c = cctx->ssl->cert;
     }
     if (rv > 0 && c && cctx->flags & SSL_CONF_FLAG_REQUIRE_PRIVATE) {
