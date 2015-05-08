@@ -481,7 +481,7 @@ typedef enum OPTION_choice {
     OPT_V_ENUM,
     OPT_X_ENUM,
     OPT_S_ENUM,
-    OPT_FALLBACKSCSV, OPT_NOCMDS
+    OPT_FALLBACKSCSV, OPT_NOCMDS, OPT_PROXY
 } OPTION_CHOICE;
 
 OPTIONS s_client_options[] = {
@@ -490,6 +490,8 @@ OPTIONS s_client_options[] = {
     {"port", OPT_PORT, 'p', "Use -connect instead"},
     {"connect", OPT_CONNECT, 's',
      "TCP/IP where to connect (default is " SSL_HOST_NAME ":" PORT_STR ")"},
+    {"proxy", OPT_PROXY, 's',
+     "Connect to via specified proxy to the real server"},
     {"unix", OPT_UNIX, 's', "Connect over unix domain sockets"},
     {"verify", OPT_VERIFY, 'p', "Turn on peer certificate verification"},
     {"cert", OPT_CERT, '<', "Certificate file to use, PEM format assumed"},
@@ -610,7 +612,8 @@ typedef enum PROTOCOL_choice {
     PROTO_IMAP,
     PROTO_FTP,
     PROTO_TELNET,
-    PROTO_XMPP
+    PROTO_XMPP,
+    PROTO_CONNECT
 } PROTOCOL_CHOICE;
 
 static OPT_PAIR services[] = {
@@ -637,8 +640,8 @@ int s_client_main(int argc, char **argv)
     STACK_OF(OPENSSL_STRING) *ssl_args = NULL;
     STACK_OF(X509_CRL) *crls = NULL;
     const SSL_METHOD *meth = TLS_client_method();
-    char *CApath = NULL, *CAfile = NULL, *cbuf = NULL, *sbuf = NULL, *mbuf =
-        NULL;
+    char *CApath = NULL, *CAfile = NULL, *cbuf = NULL, *sbuf = NULL;
+    char *mbuf = NULL, *proxystr = NULL, *connectstr = NULL;
     char *cert_file = NULL, *key_file = NULL, *chain_file = NULL, *prog;
     char *chCApath = NULL, *chCAfile = NULL, *host = SSL_HOST_NAME, *inrand =
         NULL;
@@ -752,8 +755,11 @@ int s_client_main(int argc, char **argv)
             port = atoi(opt_arg());
             break;
         case OPT_CONNECT:
-            if (!extract_host_port(opt_arg(), &host, NULL, &port))
-                goto end;
+            connectstr = opt_arg();
+            break;
+        case OPT_PROXY:
+            proxystr = opt_arg();
+            starttls_proto = PROTO_CONNECT;
             break;
         case OPT_UNIX:
             unix_path = opt_arg();
@@ -1068,6 +1074,17 @@ int s_client_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
+
+    if (proxystr) {
+        if (connectstr == NULL) {
+            BIO_printf(bio_err, "%s: -proxy requires use of -connect\n", prog);
+            goto opthelp;
+        }
+        if (!extract_host_port(proxystr, &host, NULL, &port))
+            goto end;
+    }
+    else if (!extract_host_port(connectstr, &host, NULL, &port))
+        goto end;
 
     if (unix_path && (socket_type != SOCK_STREAM)) {
         BIO_printf(bio_err,
@@ -1619,6 +1636,31 @@ int s_client_main(int argc, char **argv)
             if (bytes != 6 || memcmp(mbuf, tls_follows, 6) != 0)
                 goto shut;
         }
+        break;
+    case PROTO_CONNECT:
+        {
+            int foundit = 0;
+            BIO *fbio = BIO_new(BIO_f_buffer());
+
+            BIO_push(fbio, sbio);
+            BIO_printf(fbio, "CONNECT %s\r\n\r\n", connectstr);
+            (void)BIO_flush(fbio);
+            /* wait for multi-line response to end CONNECT response */
+            do {
+                mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
+                if (strstr(mbuf, "200") != NULL
+                    && strstr(mbuf, "established") != NULL)
+                    foundit++;
+            } while (mbuf_len > 3 && foundit == 0);
+            (void)BIO_flush(fbio);
+            BIO_pop(fbio);
+            BIO_free(fbio);
+            if (!foundit) {
+                BIO_printf(bio_err, "%s: HTTP CONNECT failed\n", prog);
+                goto shut;
+            }
+        }
+        break;
     }
 
     for (;;) {
