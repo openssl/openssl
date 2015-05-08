@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2017 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -49,89 +49,26 @@
  * This product includes cryptographic software written by Eric Young
  * (eay@cryptsoft.com).  This product includes software written by Tim
  * Hudson (tjh@cryptsoft.com).
- *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <openssl/objects.h>
-#include <openssl/comp.h>
-#include "comp_lcl.h"
 
-COMP_CTX *COMP_CTX_new(COMP_METHOD *meth)
-{
-    COMP_CTX *ret;
+struct comp_method_st {
+    int type;                   /* NID for compression library */
+    const char *name;           /* A text string to identify the library */
+    int (*init) (COMP_CTX *ctx);
+    void (*finish) (COMP_CTX *ctx);
+    int (*compress) (COMP_CTX *ctx,
+                     unsigned char *out, unsigned int olen,
+                     unsigned char *in, unsigned int ilen);
+    int (*expand) (COMP_CTX *ctx,
+                   unsigned char *out, unsigned int olen,
+                   unsigned char *in, unsigned int ilen);
+};
 
-    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
-        return (NULL);
-    memset(ret, 0, sizeof(*ret));
-    ret->meth = meth;
-    if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
-        OPENSSL_free(ret);
-        ret = NULL;
-    }
-    return (ret);
-}
-
-const COMP_METHOD *COMP_CTX_get_method(const COMP_CTX *ctx)
-{
-    return ctx->meth;
-}
-
-int COMP_get_type(const COMP_METHOD *meth)
-{
-    return meth->type;
-}
-
-const char *COMP_get_name(const COMP_METHOD *meth)
-{
-    return meth->name;
-}
-
-void COMP_CTX_free(COMP_CTX *ctx)
-{
-    if (ctx == NULL)
-        return;
-
-    if (ctx->meth->finish != NULL)
-        ctx->meth->finish(ctx);
-
-    OPENSSL_free(ctx);
-}
-
-int COMP_compress_block(COMP_CTX *ctx, unsigned char *out, int olen,
-                        unsigned char *in, int ilen)
-{
-    int ret;
-    if (ctx->meth->compress == NULL) {
-        return (-1);
-    }
-    ret = ctx->meth->compress(ctx, out, olen, in, ilen);
-    if (ret > 0) {
-        ctx->compress_in += ilen;
-        ctx->compress_out += ret;
-    }
-    return (ret);
-}
-
-int COMP_expand_block(COMP_CTX *ctx, unsigned char *out, int olen,
-                      unsigned char *in, int ilen)
-{
-    int ret;
-
-    if (ctx->meth->expand == NULL) {
-        return (-1);
-    }
-    ret = ctx->meth->expand(ctx, out, olen, in, ilen);
-    if (ret > 0) {
-        ctx->expand_in += ilen;
-        ctx->expand_out += ret;
-    }
-    return (ret);
-}
-
-int COMP_CTX_get_type(const COMP_CTX* comp)
-{
-    return comp->meth ? comp->meth->type : NID_undef;
-}
+struct comp_ctx_st {
+    struct comp_method_st *meth;
+    unsigned long compress_in;
+    unsigned long compress_out;
+    unsigned long expand_in;
+    unsigned long expand_out;
+};

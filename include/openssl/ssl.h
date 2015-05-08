@@ -145,9 +145,7 @@
 
 # include <openssl/e_os2.h>
 
-# ifndef OPENSSL_NO_COMP
-#  include <openssl/comp.h>
-# endif
+# include <openssl/comp.h>
 # include <openssl/bio.h>
 # ifdef OPENSSL_USE_DEPRECATED
 #  include <openssl/x509.h>
@@ -702,9 +700,6 @@ __owur int SRP_generate_client_master_secret(SSL *s, unsigned char *master_key);
  */
 typedef int (*GEN_SESSION_CB) (const SSL *ssl, unsigned char *id,
                                unsigned int *id_len);
-
-typedef struct ssl_comp_st SSL_COMP;
-
 
 # define SSL_SESS_CACHE_OFF                      0x0000
 # define SSL_SESS_CACHE_CLIENT                   0x0001
@@ -1774,7 +1769,6 @@ void SSL_set_tmp_ecdh_callback(SSL *ssl,
                                                 int keylength));
 # endif
 
-# ifndef OPENSSL_NO_COMP
 __owur const COMP_METHOD *SSL_get_current_compression(SSL *s);
 __owur const COMP_METHOD *SSL_get_current_expansion(SSL *s);
 __owur const char *SSL_COMP_get_name(const COMP_METHOD *comp);
@@ -1783,13 +1777,6 @@ __owur STACK_OF(SSL_COMP) *SSL_COMP_set0_compression_methods(STACK_OF(SSL_COMP)
                                                       *meths);
 void SSL_COMP_free_compression_methods(void);
 __owur int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm);
-# else
-__owur const void *SSL_get_current_compression(SSL *s);
-__owur const void *SSL_get_current_expansion(SSL *s);
-__owur const char *SSL_COMP_get_name(const void *comp);
-void *SSL_COMP_get_compression_methods(void);
-__owur int SSL_COMP_add_compression_method(int id, void *cm);
-# endif
 
 const SSL_CIPHER *SSL_CIPHER_find(SSL *ssl, const unsigned char *ptr);
 int SSL_CIPHER_get_cipher_nid(const SSL_CIPHER *c);

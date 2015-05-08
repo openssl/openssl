@@ -495,22 +495,20 @@ static void load_builtin_compressions(void)
 
         if (ssl_comp_methods == NULL) {
             SSL_COMP *comp = NULL;
+            COMP_METHOD *method = COMP_zlib();
 
             MemCheck_off();
             ssl_comp_methods = sk_SSL_COMP_new(sk_comp_cmp);
-            if (ssl_comp_methods != NULL) {
+            if (COMP_get_type(method) != NID_undef
+                && ssl_comp_methods != NULL) {
                 comp = OPENSSL_malloc(sizeof(*comp));
                 if (comp != NULL) {
-                    comp->method = COMP_zlib();
-                    if (comp->method && comp->method->type == NID_undef)
-                        OPENSSL_free(comp);
-                    else {
-                        comp->id = SSL_COMP_ZLIB_IDX;
-                        comp->name = comp->method->name;
-                        sk_SSL_COMP_push(ssl_comp_methods, comp);
-                    }
+                    comp->method = method;
+                    comp->id = SSL_COMP_ZLIB_IDX;
+                    comp->name = COMP_get_name(method);
+                    sk_SSL_COMP_push(ssl_comp_methods, comp);
+                    sk_SSL_COMP_sort(ssl_comp_methods);
                 }
-                sk_SSL_COMP_sort(ssl_comp_methods);
             }
             MemCheck_on();
         }
@@ -1870,20 +1868,23 @@ SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n)
 }
 
 #ifdef OPENSSL_NO_COMP
-void *SSL_COMP_get_compression_methods(void)
+STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void)
 {
     return NULL;
 }
-
-int SSL_COMP_add_compression_method(int id, void *cm)
+STACK_OF(SSL_COMP) *SSL_COMP_set0_compression_methods(STACK_OF(SSL_COMP)
+                                                      *meths)
+{
+    return meths;
+}
+void SSL_COMP_free_compression_methods(void)
+{
+}
+int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 {
     return 1;
 }
 
-const char *SSL_COMP_get_name(const void *comp)
-{
-    return NULL;
-}
 #else
 STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void)
 {
@@ -1915,7 +1916,7 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 {
     SSL_COMP *comp;
 
-    if (cm == NULL || cm->type == NID_undef)
+    if (cm == NULL || COMP_get_type(cm) == NID_undef)
         return 1;
 
     /*-
@@ -1960,14 +1961,17 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
         return (0);
     }
 }
+#endif
 
 const char *SSL_COMP_get_name(const COMP_METHOD *comp)
 {
-    if (comp)
-        return comp->name;
+#ifndef OPENSSL_NO_COMP
+    return comp ? COMP_get_name(comp) : NULL;
+#else
     return NULL;
-}
 #endif
+}
+
 /* For a cipher return the index corresponding to the certificate type */
 int ssl_cipher_get_cert_index(const SSL_CIPHER *c)
 {

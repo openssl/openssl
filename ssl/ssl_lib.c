@@ -2882,32 +2882,23 @@ const SSL_CIPHER *SSL_get_current_cipher(const SSL *s)
     return (NULL);
 }
 
-#ifdef OPENSSL_NO_COMP
-const void *SSL_get_current_compression(SSL *s)
-{
-    return NULL;
-}
-
-const void *SSL_get_current_expansion(SSL *s)
-{
-    return NULL;
-}
-#else
-
 const COMP_METHOD *SSL_get_current_compression(SSL *s)
 {
-    if (s->compress != NULL)
-        return (s->compress->meth);
-    return (NULL);
+#ifndef OPENSSL_NO_COMP
+    return s->compress ? COMP_CTX_get_method(s->compress) : NULL;
+#else
+    return NULL;
+#endif
 }
 
 const COMP_METHOD *SSL_get_current_expansion(SSL *s)
 {
-    if (s->expand != NULL)
-        return (s->expand->meth);
-    return (NULL);
-}
+#ifndef OPENSSL_NO_COMP
+    return s->expand ? COMP_CTX_get_method(s->expand) : NULL;
+#else
+    return NULL;
 #endif
+}
 
 int ssl_init_wbio_buffer(SSL *s, int push)
 {

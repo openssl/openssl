@@ -705,15 +705,12 @@ typedef struct srp_ctx_st {
 
 # endif
 
+typedef struct ssl_comp_st SSL_COMP;
 
 struct ssl_comp_st {
     int id;
     const char *name;
-#  ifndef OPENSSL_NO_COMP
     COMP_METHOD *method;
-#  else
-    char *method;
-#  endif
 };
 
 DECLARE_STACK_OF(SSL_COMP)
@@ -1045,18 +1042,10 @@ struct ssl_st {
     int mac_flags;
     EVP_CIPHER_CTX *enc_read_ctx; /* cryptographic state */
     EVP_MD_CTX *read_hash;      /* used for mac generation */
-#  ifndef OPENSSL_NO_COMP
+    COMP_CTX *compress;         /* compression */
     COMP_CTX *expand;           /* uncompress */
-#  else
-    char *expand;
-#  endif
     EVP_CIPHER_CTX *enc_write_ctx; /* cryptographic state */
     EVP_MD_CTX *write_hash;     /* used for mac generation */
-#  ifndef OPENSSL_NO_COMP
-    COMP_CTX *compress;         /* compression */
-#  else
-    char *compress;
-#  endif
     /* session info */
     /* client cert? */
     /* This is used to hold the server certificate used */
@@ -1357,11 +1346,7 @@ typedef struct ssl3_state_st {
 struct dtls1_retransmit_state {
     EVP_CIPHER_CTX *enc_write_ctx; /* cryptographic state */
     EVP_MD_CTX *write_hash;     /* used for mac generation */
-#  ifndef OPENSSL_NO_COMP
     COMP_CTX *compress;         /* compression */
-#  else
-    char *compress;
-#  endif
     SSL_SESSION *session;
     unsigned short epoch;
 };
