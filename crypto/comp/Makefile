@@ -68,7 +68,7 @@ c_zlib.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 c_zlib.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 c_zlib.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 c_zlib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-c_zlib.o: ../../include/openssl/symhacks.h c_zlib.c
+c_zlib.o: ../../include/openssl/symhacks.h c_zlib.c comp_lcl.h
 comp_err.o: ../../include/openssl/bio.h ../../include/openssl/comp.h
 comp_err.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 comp_err.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
@@ -82,4 +82,4 @@ comp_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/obj_mac.h
 comp_lib.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 comp_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 comp_lib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-comp_lib.o: ../../include/openssl/symhacks.h comp_lib.c
+comp_lib.o: ../../include/openssl/symhacks.h comp_lcl.h comp_lib.c

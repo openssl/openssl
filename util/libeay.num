@@ -4557,3 +4557,7 @@ ASN1_TYPE_pack_sequence                 4915	EXIST::FUNCTION:
 ASN1_TYPE_unpack_sequence               4916	EXIST::FUNCTION:
 CRYPTO_clean_free                       4917	NOEXIST::FUNCTION:
 CRYPTO_clear_free                       4918	EXIST::FUNCTION:
+COMP_CTX_get_method                     4919	EXIST::FUNCTION:
+COMP_CTX_get_type                       4920	EXIST::FUNCTION:
+COMP_get_name                           4921	EXIST::FUNCTION:
+COMP_get_type                           4922	EXIST::FUNCTION:
