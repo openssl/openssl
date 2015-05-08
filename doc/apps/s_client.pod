@@ -9,6 +9,7 @@ s_client - SSL/TLS client program
 
 B<openssl> B<s_client>
 [B<-connect host:port>]
+[B<-proxy host:port>]
 [B<-servername name>]
 [B<-verify depth>]
 [B<-verify_return_error>]
@@ -99,6 +100,12 @@ manual page.
 
 This specifies the host and optional port to connect to. If not specified
 then an attempt is made to connect to the local host on port 4433.
+
+=item B<-proxy host:port>
+
+When used with the B<-connect> flag, the program uses the host and port
+specified with this flag and issues an HTTP CONNECT command to connect
+to the desired server.
 
 =item B<-servername name>
 
