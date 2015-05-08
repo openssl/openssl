@@ -67,13 +67,17 @@
 #include <openssl/ts.h>
 #include <openssl/bn.h>
 
-/* Length of the nonce of the request in bits (must be a multiple of 8). */
+/* Request nonce length, in bits (must be a multiple of 8). */
 #define NONCE_LENGTH            64
 
-/* Macro definitions for the configuration file. */
+/* Name of config entry that defines the OID file. */
 #define ENV_OID_FILE            "oid_file"
 
-/* Local function declarations. */
+/* Is |EXACTLY_ONE| of three pointers set? */
+#define EXACTLY_ONE(a, b, c) \
+        (( a && !b && !c) || \
+         ( b && !a && !c) || \
+         ( c && !a && !b))
 
 static ASN1_OBJECT *txt2obj(const char *oid);
 static CONF *load_config_file(const char *configfile);
@@ -309,7 +313,6 @@ int ts_main(int argc, char **argv)
                        app_RAND_load_files(rnd));
     }
 
-    /* Get the password if required. */
     if (mode == OPT_REPLY && passin &&
         !app_passwd(passin, NULL, &password, NULL)) {
         BIO_printf(bio_err, "Error getting password.\n");
@@ -320,33 +323,22 @@ int ts_main(int argc, char **argv)
     if (!app_load_modules(conf))
         goto end;
 
-    /*
-     * Check consistency of parameters and execute the appropriate function.
-     */
+    /* Check parameter consistency and execute the appropriate function. */
     switch (mode) {
     default:
     case OPT_ERR:
         goto opthelp;
     case OPT_QUERY:
-        /*
-         * Data file and message imprint cannot be specified at the same
-         * time.
-         */
-        ret = data != NULL && digest != NULL;
-        if (ret)
+        if ((data != NULL) && (digest != NULL))
             goto opthelp;
         ret = !query_command(data, digest, md, policy, no_nonce, cert,
                              in, out, text);
         break;
     case OPT_REPLY:
+        if ((in != NULL) && (queryfile != NULL))
+            goto opthelp;
         if (in == NULL) {
-            ret = !(queryfile != NULL && conf != NULL && !token_in);
-            if (ret)
-                goto opthelp;
-        } else {
-            /* 'in' and 'queryfile' are exclusive. */
-            ret = !(queryfile == NULL);
-            if (ret)
+            if ((conf == NULL) || (token_in != 0))
                 goto opthelp;
         }
         ret = !reply_command(conf, section, engine, queryfile,
@@ -354,24 +346,17 @@ int ts_main(int argc, char **argv)
                              in, token_in, out, token_out, text);
         break;
     case OPT_VERIFY:
-        ret = !(((queryfile && !data && !digest)
-                 || (!queryfile && data && !digest)
-                 || (!queryfile && !data && digest))
-                && in != NULL);
-        if (ret)
+        if ((in == NULL) || !EXACTLY_ONE(queryfile, data, digest))
             goto opthelp;
-
         ret = !verify_command(data, digest, queryfile, in, token_in,
                               CApath, CAfile, untrusted);
     }
 
  end:
-    /* Clean up. */
     app_RAND_write_file(NULL);
     NCONF_free(conf);
     OPENSSL_free(password);
     OBJ_cleanup();
-
     return (ret);
 }
 
@@ -427,13 +412,12 @@ static int query_command(const char *data, char *digest, const EVP_MD *md,
     BIO *data_bio = NULL;
     BIO *out_bio = NULL;
 
-    /* Build query object either from file or from scratch. */
+    /* Build query object. */
     if (in != NULL) {
         if ((in_bio = bio_open_default(in, 'r', FORMAT_ASN1)) == NULL)
             goto end;
         query = d2i_TS_REQ_bio(in_bio, NULL);
     } else {
-        /* Open the file if no explicit digest bytes were specified. */
         if (digest == NULL
             && (data_bio = bio_open_default(data, 'r', FORMAT_ASN1)) == NULL)
             goto end;
@@ -442,15 +426,12 @@ static int query_command(const char *data, char *digest, const EVP_MD *md,
     if (query == NULL)
         goto end;
 
-    /* Write query either in ASN.1 or in text format. */
     if (text) {
-        /* Text output. */
         if ((out_bio = bio_open_default(out, 'w', FORMAT_TEXT)) == NULL)
             goto end;
         if (!TS_REQ_print_bio(out_bio, query))
             goto end;
     } else {
-        /* ASN.1 output. */
         if ((out_bio = bio_open_default(out, 'w', FORMAT_ASN1)) == NULL)
             goto end;
         if (!i2d_TS_REQ_bio(out_bio, query))
@@ -461,13 +442,10 @@ static int query_command(const char *data, char *digest, const EVP_MD *md,
 
  end:
     ERR_print_errors(bio_err);
-
-    /* Clean up. */
     BIO_free_all(in_bio);
     BIO_free_all(data_bio);
     BIO_free_all(out_bio);
     TS_REQ_free(query);
-
     return ret;
 }
 
@@ -483,23 +461,14 @@ static TS_REQ *create_query(BIO *data_bio, char *digest, const EVP_MD *md,
     ASN1_OBJECT *policy_obj = NULL;
     ASN1_INTEGER *nonce_asn1 = NULL;
 
-    /* Setting default message digest. */
     if (md == NULL && (md = EVP_get_digestbyname("sha1")) == NULL)
         goto err;
-
-    /* Creating request object. */
     if ((ts_req = TS_REQ_new()) == NULL)
         goto err;
-
-    /* Setting version. */
     if (!TS_REQ_set_version(ts_req, 1))
         goto err;
-
-    /* Creating and adding MSG_IMPRINT object. */
     if ((msg_imprint = TS_MSG_IMPRINT_new()) == NULL)
         goto err;
-
-    /* Adding algorithm. */
     if ((algo = X509_ALGOR_new()) == NULL)
         goto err;
     if ((algo->algorithm = OBJ_nid2obj(EVP_MD_type(md))) == NULL)
@@ -509,17 +478,12 @@ static TS_REQ *create_query(BIO *data_bio, char *digest, const EVP_MD *md,
     algo->parameter->type = V_ASN1_NULL;
     if (!TS_MSG_IMPRINT_set_algo(msg_imprint, algo))
         goto err;
-
-    /* Adding message digest. */
     if ((len = create_digest(data_bio, digest, md, &data)) == 0)
         goto err;
     if (!TS_MSG_IMPRINT_set_msg(msg_imprint, data, len))
         goto err;
-
     if (!TS_REQ_set_msg_imprint(ts_req, msg_imprint))
         goto err;
-
-    /* Setting policy if requested. */
     if (policy && (policy_obj = txt2obj(policy)) == NULL)
         goto err;
     if (policy_obj && !TS_REQ_set_policy_id(ts_req, policy_obj))
@@ -530,8 +494,6 @@ static TS_REQ *create_query(BIO *data_bio, char *digest, const EVP_MD *md,
         goto err;
     if (nonce_asn1 && !TS_REQ_set_nonce(ts_req, nonce_asn1))
         goto err;
-
-    /* Setting certificate request flag if requested. */
     if (!TS_REQ_set_cert_req(ts_req, cert))
         goto err;
 
@@ -541,6 +503,7 @@ static TS_REQ *create_query(BIO *data_bio, char *digest, const EVP_MD *md,
         TS_REQ_free(ts_req);
         ts_req = NULL;
         BIO_printf(bio_err, "could not create query\n");
+        ERR_print_errors(bio_err);
     }
     TS_MSG_IMPRINT_free(msg_imprint);
     X509_ALGOR_free(algo);
@@ -557,9 +520,9 @@ static int create_digest(BIO *input, char *digest, const EVP_MD *md,
 
     md_value_len = EVP_MD_size(md);
     if (md_value_len < 0)
-        goto err;
+        return 0;
+
     if (input) {
-        /* Digest must be computed from an input file. */
         EVP_MD_CTX md_ctx;
         unsigned char buffer[4096];
         int length;
@@ -572,7 +535,6 @@ static int create_digest(BIO *input, char *digest, const EVP_MD *md,
         if (!EVP_DigestFinal(&md_ctx, *md_value, NULL))
             return 0;
     } else {
-        /* Digest bytes are specified with digest. */
         long digest_len;
         *md_value = string_to_hex(digest, &digest_len);
         if (!*md_value || md_value_len != digest_len) {
@@ -580,13 +542,10 @@ static int create_digest(BIO *input, char *digest, const EVP_MD *md,
             *md_value = NULL;
             BIO_printf(bio_err, "bad digest, %d bytes "
                        "must be specified\n", md_value_len);
-            goto err;
+            return 0;
         }
     }
-
     return md_value_len;
- err:
-    return 0;
 }
 
 static ASN1_INTEGER *create_nonce(int bits)
@@ -596,7 +555,6 @@ static ASN1_INTEGER *create_nonce(int bits)
     int len = (bits - 1) / 8 + 1;
     int i;
 
-    /* Generating random byte sequence. */
     if (len > (int)sizeof(buf))
         goto err;
     if (RAND_bytes(buf, len) <= 0)
@@ -608,12 +566,11 @@ static ASN1_INTEGER *create_nonce(int bits)
     if ((nonce = ASN1_INTEGER_new()) == NULL)
         goto err;
     OPENSSL_free(nonce->data);
-    /* Allocate at least one byte. */
     nonce->length = len - i;
     nonce->data = app_malloc(nonce->length + 1, "nonce buffer");
     memcpy(nonce->data, buf + i, nonce->length);
-
     return nonce;
+
  err:
     BIO_printf(bio_err, "could not create nonce\n");
     ASN1_INTEGER_free(nonce);
@@ -638,18 +595,12 @@ static int reply_command(CONF *conf, char *section, char *engine,
     BIO *signer_bio = NULL;
     BIO *out_bio = NULL;
 
-    /* Build response object either from response or query. */
     if (in != NULL) {
         if ((in_bio = BIO_new_file(in, "rb")) == NULL)
             goto end;
         if (token_in) {
-            /*
-             * We have a ContentInfo (PKCS7) object, add 'granted' status
-             * info around it.
-             */
             response = read_PKCS7(in_bio);
         } else {
-            /* We have a ready-made TS_RESP object. */
             response = d2i_TS_RESP_bio(in_bio, NULL);
         }
     } else {
@@ -663,9 +614,8 @@ static int reply_command(CONF *conf, char *section, char *engine,
     if (response == NULL)
         goto end;
 
-    /* Write response either in ASN.1 or text format. */
+    /* Write response. */
     if (text) {
-        /* Text output. */
         if ((out_bio = bio_open_default(out, 'w', FORMAT_TEXT)) == NULL)
         goto end;
         if (token_out) {
@@ -677,7 +627,6 @@ static int reply_command(CONF *conf, char *section, char *engine,
                 goto end;
         }
     } else {
-        /* ASN.1 DER output. */
         if ((out_bio = bio_open_default(out, 'w', FORMAT_ASN1)) == NULL)
             goto end;
         if (token_out) {
@@ -694,15 +643,12 @@ static int reply_command(CONF *conf, char *section, char *engine,
 
  end:
     ERR_print_errors(bio_err);
-
-    /* Clean up. */
     BIO_free_all(in_bio);
     BIO_free_all(query_bio);
     BIO_free_all(inkey_bio);
     BIO_free_all(signer_bio);
     BIO_free_all(out_bio);
     TS_RESP_free(response);
-
     return ret;
 }
 
@@ -715,30 +661,23 @@ static TS_RESP *read_PKCS7(BIO *in_bio)
     TS_RESP *resp = NULL;
     TS_STATUS_INFO *si = NULL;
 
-    /* Read PKCS7 object and extract the signed time stamp info. */
     if ((token = d2i_PKCS7_bio(in_bio, NULL)) == NULL)
         goto end;
     if ((tst_info = PKCS7_to_TS_TST_INFO(token)) == NULL)
         goto end;
-
-    /* Creating response object. */
     if ((resp = TS_RESP_new()) == NULL)
         goto end;
-
-    /* Create granted status info. */
     if ((si = TS_STATUS_INFO_new()) == NULL)
         goto end;
     if (!TS_STATUS_INFO_set_status(si, TS_STATUS_GRANTED))
         goto end;
     if (!TS_RESP_set_status_info(resp, si))
         goto end;
-
-    /* Setting encapsulated token. */
     TS_RESP_set_tst_info(resp, token, tst_info);
     token = NULL;               /* Ownership is lost. */
     tst_info = NULL;            /* Ownership is lost. */
-
     ret = 1;
+
  end:
     PKCS7_free(token);
     TS_TST_INFO_free(tst_info);
@@ -762,73 +701,42 @@ static TS_RESP *create_response(CONF *conf, const char *section, char *engine,
 
     if ((query_bio = BIO_new_file(queryfile, "rb")) == NULL)
         goto end;
-
-    /* Getting TSA configuration section. */
     if ((section = TS_CONF_get_tsa_section(conf, section)) == NULL)
         goto end;
-
-    /* Setting up response generation context. */
     if ((resp_ctx = TS_RESP_CTX_new()) == NULL)
         goto end;
-
-    /* Setting serial number provider callback. */
     if (!TS_CONF_set_serial(conf, section, serial_cb, resp_ctx))
         goto end;
 #ifndef OPENSSL_NO_ENGINE
-    /* Setting default OpenSSL engine. */
     if (!TS_CONF_set_crypto_device(conf, section, engine))
         goto end;
 #endif
-
-    /* Setting TSA signer certificate. */
     if (!TS_CONF_set_signer_cert(conf, section, signer, resp_ctx))
         goto end;
-
-    /* Setting TSA signer certificate chain. */
     if (!TS_CONF_set_certs(conf, section, chain, resp_ctx))
         goto end;
-
-    /* Setting TSA signer private key. */
     if (!TS_CONF_set_signer_key(conf, section, inkey, passin, resp_ctx))
         goto end;
-
-    /* Setting default policy OID. */
     if (!TS_CONF_set_def_policy(conf, section, policy, resp_ctx))
         goto end;
-
-    /* Setting acceptable policy OIDs. */
     if (!TS_CONF_set_policies(conf, section, resp_ctx))
         goto end;
-
-    /* Setting the acceptable one-way hash algorithms. */
     if (!TS_CONF_set_digests(conf, section, resp_ctx))
         goto end;
-
-    /* Setting guaranteed time stamp accuracy. */
     if (!TS_CONF_set_accuracy(conf, section, resp_ctx))
         goto end;
-
-    /* Setting the precision of the time. */
     if (!TS_CONF_set_clock_precision_digits(conf, section, resp_ctx))
         goto end;
-
-    /* Setting the ordering flaf if requested. */
     if (!TS_CONF_set_ordering(conf, section, resp_ctx))
         goto end;
-
-    /* Setting the TSA name required flag if requested. */
     if (!TS_CONF_set_tsa_name(conf, section, resp_ctx))
         goto end;
-
-    /* Setting the ESS cert id chain flag if requested. */
     if (!TS_CONF_set_ess_cert_id_chain(conf, section, resp_ctx))
         goto end;
-
-    /* Creating the response. */
     if ((response = TS_RESP_create_response(resp_ctx, query_bio)) == NULL)
         goto end;
-
     ret = 1;
+
  end:
     if (!ret) {
         TS_RESP_free(response);
@@ -836,7 +744,6 @@ static TS_RESP *create_response(CONF *conf, const char *section, char *engine,
     }
     TS_RESP_CTX_free(resp_ctx);
     BIO_free_all(query_bio);
-
     return response;
 }
 
@@ -889,6 +796,7 @@ static ASN1_INTEGER *next_serial(const char *serialfile)
             goto err;
     }
     ret = 1;
+
  err:
     if (!ret) {
         ASN1_INTEGER_free(serial);
@@ -919,6 +827,7 @@ static int save_ts_serial(const char *serialfile, ASN1_INTEGER *serial)
     return ret;
 }
 
+
 /*
  * Verify-related method definitions.
  */
@@ -933,7 +842,6 @@ static int verify_command(char *data, char *digest, char *queryfile,
     TS_VERIFY_CTX *verify_ctx = NULL;
     int ret = 0;
 
-    /* Decode the token (PKCS7) or response (TS_RESP) files. */
     if ((in_bio = BIO_new_file(in, "rb")) == NULL)
         goto end;
     if (token_in) {
@@ -948,10 +856,9 @@ static int verify_command(char *data, char *digest, char *queryfile,
                                         CApath, CAfile, untrusted)) == NULL)
         goto end;
 
-    /* Checking the token or response against the request. */
-    ret = token_in ?
-        TS_RESP_verify_token(verify_ctx, token) :
-        TS_RESP_verify_response(verify_ctx, response);
+    ret = token_in
+        ? TS_RESP_verify_token(verify_ctx, token)
+        : TS_RESP_verify_response(verify_ctx, response);
 
  end:
     printf("Verification: ");
@@ -959,11 +866,9 @@ static int verify_command(char *data, char *digest, char *queryfile,
         printf("OK\n");
     else {
         printf("FAILED\n");
-        /* Print errors, if there are any. */
         ERR_print_errors(bio_err);
     }
 
-    /* Clean up. */
     BIO_free_all(in_bio);
     PKCS7_free(token);
     TS_RESP_free(response);
@@ -1001,10 +906,6 @@ static TS_VERIFY_CTX *create_verify_ctx(char *data, char *digest,
         }
 
     } else if (queryfile != NULL) {
-        /*
-         * The request has just to be read, decoded and converted to a verify
-         * context object.
-         */
         if ((input = BIO_new_file(queryfile, "rb")) == NULL)
             goto err;
         if ((request = d2i_TS_REQ_bio(input, NULL)) == NULL)
@@ -1026,8 +927,8 @@ static TS_VERIFY_CTX *create_verify_ctx(char *data, char *digest,
     if (untrusted
         && TS_VERIFY_CTS_set_certs(ctx, TS_CONF_load_certs(untrusted)) == NULL)
         goto err;
-
     ret = 1;
+
  err:
     if (!ret) {
         TS_VERIFY_CTX_free(ctx);
@@ -1044,13 +945,8 @@ static X509_STORE *create_cert_store(char *CApath, char *CAfile)
     X509_LOOKUP *lookup = NULL;
     int i;
 
-    /* Creating the X509_STORE object. */
     cert_ctx = X509_STORE_new();
-
-    /* Setting the callback for certificate chain verification. */
     X509_STORE_set_verify_cb(cert_ctx, verify_cb);
-
-    /* Adding a trusted certificate directory source. */
     if (CApath) {
         lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_hash_dir());
         if (lookup == NULL) {
@@ -1064,7 +960,6 @@ static X509_STORE *create_cert_store(char *CApath, char *CAfile)
         }
     }
 
-    /* Adding a trusted certificate file source. */
     if (CAfile) {
         lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_file());
         if (lookup == NULL) {
@@ -1077,8 +972,8 @@ static X509_STORE *create_cert_store(char *CApath, char *CAfile)
             goto err;
         }
     }
-
     return cert_ctx;
+
  err:
     X509_STORE_free(cert_ctx);
     return NULL;

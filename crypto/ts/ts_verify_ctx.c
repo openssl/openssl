@@ -162,17 +162,14 @@ TS_VERIFY_CTX *TS_REQ_to_TS_VERIFY_CTX(TS_REQ *req, TS_VERIFY_CTX *ctx)
     else if ((ret = TS_VERIFY_CTX_new()) == NULL)
         return NULL;
 
-    /* Setting flags. */
     ret->flags = TS_VFY_ALL_IMPRINT & ~(TS_VFY_TSA_NAME | TS_VFY_SIGNATURE);
 
-    /* Setting policy. */
     if ((policy = req->policy_id) != NULL) {
         if ((ret->policy = OBJ_dup(policy)) == NULL)
             goto err;
     } else
         ret->flags &= ~TS_VFY_POLICY;
 
-    /* Setting md_alg, imprint and imprint_len. */
     imprint = req->msg_imprint;
     md_alg = imprint->hash_algo;
     if ((ret->md_alg = X509_ALGOR_dup(md_alg)) == NULL)
@@ -183,7 +180,6 @@ TS_VERIFY_CTX *TS_REQ_to_TS_VERIFY_CTX(TS_REQ *req, TS_VERIFY_CTX *ctx)
         goto err;
     memcpy(ret->imprint, ASN1_STRING_data(msg), ret->imprint_len);
 
-    /* Setting nonce. */
     if ((nonce = req->nonce) != NULL) {
         if ((ret->nonce = ASN1_INTEGER_dup(nonce)) == NULL)
             goto err;

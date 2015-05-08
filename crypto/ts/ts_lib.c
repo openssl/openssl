@@ -66,10 +66,6 @@
 #include <openssl/ts.h>
 #include "ts_lcl.h"
 
-/* Local function declarations. */
-
-/* Function definitions. */
-
 int TS_ASN1_INTEGER_print_bio(BIO *bio, const ASN1_INTEGER *num)
 {
     BIGNUM *num_bn;

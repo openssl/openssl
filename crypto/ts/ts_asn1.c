@@ -287,31 +287,22 @@ TS_TST_INFO *PKCS7_to_TS_TST_INFO(PKCS7 *token)
         TSerr(TS_F_PKCS7_TO_TS_TST_INFO, TS_R_BAD_PKCS7_TYPE);
         return NULL;
     }
-
-    /* Content must be present. */
     if (PKCS7_get_detached(token)) {
         TSerr(TS_F_PKCS7_TO_TS_TST_INFO, TS_R_DETACHED_CONTENT);
         return NULL;
     }
-
-    /* We have a signed data with content. */
     pkcs7_signed = token->d.sign;
     enveloped = pkcs7_signed->contents;
     if (OBJ_obj2nid(enveloped->type) != NID_id_smime_ct_TSTInfo) {
         TSerr(TS_F_PKCS7_TO_TS_TST_INFO, TS_R_BAD_PKCS7_TYPE);
         return NULL;
     }
-
-    /* We have a DER encoded TST_INFO as the signed data. */
     tst_info_wrapper = enveloped->d.other;
     if (tst_info_wrapper->type != V_ASN1_OCTET_STRING) {
         TSerr(TS_F_PKCS7_TO_TS_TST_INFO, TS_R_BAD_TYPE);
         return NULL;
     }
-
-    /* We have the correct ASN1_OCTET_STRING type. */
     tst_info_der = tst_info_wrapper->value.octet_string;
-    /* At last, decode the TST_INFO. */
     p = tst_info_der->data;
     return d2i_TS_TST_INFO(NULL, &p, tst_info_der->length);
 }
