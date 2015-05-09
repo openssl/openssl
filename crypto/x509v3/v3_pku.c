@@ -1,7 +1,6 @@
-/* v3_pku.c */
-/*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
- * 1999.
+/* $OpenBSD: v3_pku.c,v 1.8 2014/06/12 15:49:31 deraadt Exp $ */
+/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
+ * project 1999.
  */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
@@ -58,52 +57,50 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
 
 static int i2r_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method,
-                                 PKEY_USAGE_PERIOD *usage, BIO *out,
-                                 int indent);
+    PKEY_USAGE_PERIOD *usage, BIO *out, int indent);
 /*
- * static PKEY_USAGE_PERIOD *v2i_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method,
- * X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *values);
- */
+static PKEY_USAGE_PERIOD *v2i_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *values);
+*/
 const X509V3_EXT_METHOD v3_pkey_usage_period = {
-    NID_private_key_usage_period, 0, ASN1_ITEM_ref(PKEY_USAGE_PERIOD),
-    0, 0, 0, 0,
-    0, 0, 0, 0,
-    (X509V3_EXT_I2R)i2r_PKEY_USAGE_PERIOD, NULL,
-    NULL
+	NID_private_key_usage_period, 0, ASN1_ITEM_ref(PKEY_USAGE_PERIOD),
+	0, 0, 0, 0,
+	0, 0, 0, 0,
+	(X509V3_EXT_I2R)i2r_PKEY_USAGE_PERIOD, NULL,
+	NULL
 };
 
 ASN1_SEQUENCE(PKEY_USAGE_PERIOD) = {
-        ASN1_IMP_OPT(PKEY_USAGE_PERIOD, notBefore, ASN1_GENERALIZEDTIME, 0),
-        ASN1_IMP_OPT(PKEY_USAGE_PERIOD, notAfter, ASN1_GENERALIZEDTIME, 1)
+	ASN1_IMP_OPT(PKEY_USAGE_PERIOD, notBefore, ASN1_GENERALIZEDTIME, 0),
+	ASN1_IMP_OPT(PKEY_USAGE_PERIOD, notAfter, ASN1_GENERALIZEDTIME, 1)
 } ASN1_SEQUENCE_END(PKEY_USAGE_PERIOD)
 
 IMPLEMENT_ASN1_FUNCTIONS(PKEY_USAGE_PERIOD)
 
-static int i2r_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method,
-                                 PKEY_USAGE_PERIOD *usage, BIO *out,
-                                 int indent)
+static int
+i2r_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method, PKEY_USAGE_PERIOD *usage,
+    BIO *out, int indent)
 {
-    BIO_printf(out, "%*s", indent, "");
-    if (usage->notBefore) {
-        BIO_write(out, "Not Before: ", 12);
-        ASN1_GENERALIZEDTIME_print(out, usage->notBefore);
-        if (usage->notAfter)
-            BIO_write(out, ", ", 2);
-    }
-    if (usage->notAfter) {
-        BIO_write(out, "Not After: ", 11);
-        ASN1_GENERALIZEDTIME_print(out, usage->notAfter);
-    }
-    return 1;
+	BIO_printf(out, "%*s", indent, "");
+	if (usage->notBefore) {
+		BIO_write(out, "Not Before: ", 12);
+		ASN1_GENERALIZEDTIME_print(out, usage->notBefore);
+		if (usage->notAfter)
+			BIO_write(out, ", ", 2);
+	}
+	if (usage->notAfter) {
+		BIO_write(out, "Not After: ", 11);
+		ASN1_GENERALIZEDTIME_print(out, usage->notAfter);
+	}
+	return 1;
 }
 
-/*-
+/*
 static PKEY_USAGE_PERIOD *v2i_PKEY_USAGE_PERIOD(method, ctx, values)
 X509V3_EXT_METHOD *method;
 X509V3_CTX *ctx;

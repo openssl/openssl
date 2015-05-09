@@ -1,7 +1,6 @@
 /* x509_lcl.h */
-/*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
- * 2013.
+/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
+ * project 2013.
  */
 /* ====================================================================
  * Copyright (c) 2013 The OpenSSL Project.  All rights reserved.
@@ -11,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ *    notice, this list of conditions and the following disclaimer. 
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -57,46 +56,4 @@
  *
  */
 
-/*
- * This structure holds all parameters associated with a verify operation by
- * including an X509_VERIFY_PARAM structure in related structures the
- * parameters used can be customized
- */
-
-struct X509_VERIFY_PARAM_st {
-    char *name;
-    time_t check_time;          /* Time to use */
-    unsigned long inh_flags;    /* Inheritance flags */
-    unsigned long flags;        /* Various verify flags */
-    int purpose;                /* purpose to check untrusted certificates */
-    int trust;                  /* trust setting to check */
-    int depth;                  /* Verify depth */
-    STACK_OF(ASN1_OBJECT) *policies; /* Permissible policies */
-    X509_VERIFY_PARAM_ID *id;   /* opaque ID data */
-};
-
-/* internal only structure to hold additional X509_VERIFY_PARAM data */
-
-struct X509_VERIFY_PARAM_ID_st {
-    STACK_OF(OPENSSL_STRING) *hosts; /* Set of acceptable names */
-    unsigned int hostflags;     /* Flags to control matching features */
-    char *peername;             /* Matching hostname in peer certificate */
-    char *email;                /* If not NULL email address to match */
-    size_t emaillen;
-    unsigned char *ip;          /* If not NULL IP address to match */
-    size_t iplen;               /* Length of IP address */
-};
-
 int x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int quiet);
-
-/* a sequence of these are used */
-struct x509_attributes_st {
-    ASN1_OBJECT *object;
-    STACK_OF(ASN1_TYPE) *set;
-};
-
-struct X509_extension_st {
-    ASN1_OBJECT *object;
-    ASN1_BOOLEAN critical;
-    ASN1_OCTET_STRING *value;
-};

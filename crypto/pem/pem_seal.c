@@ -1,4 +1,4 @@
-/* crypto/pem/pem_seal.c */
+/* $OpenBSD: pem_seal.c,v 1.19 2014/07/10 22:45:57 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,137 +56,136 @@
  * [including the GNU Public Licence.]
  */
 
-#include <openssl/opensslconf.h> /* for OPENSSL_NO_RSA */
+#include <stdio.h>
+#include <string.h>
+
+#include <openssl/opensslconf.h>	/* for OPENSSL_NO_RSA */
+
 #ifndef OPENSSL_NO_RSA
-# include <stdio.h>
-# include "cryptlib.h"
-# include <openssl/evp.h>
-# include <openssl/rand.h>
-# include <openssl/objects.h>
-# include <openssl/x509.h>
-# include <openssl/pem.h>
-# include <openssl/rsa.h>
 
-int PEM_SealInit(PEM_ENCODE_SEAL_CTX *ctx, EVP_CIPHER *type, EVP_MD *md_type,
-                 unsigned char **ek, int *ekl, unsigned char *iv,
-                 EVP_PKEY **pubk, int npubk)
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
+#include <openssl/objects.h>
+#include <openssl/pem.h>
+#include <openssl/rsa.h>
+#include <openssl/x509.h>
+
+int
+PEM_SealInit(PEM_ENCODE_SEAL_CTX *ctx, EVP_CIPHER *type, EVP_MD *md_type,
+    unsigned char **ek, int *ekl, unsigned char *iv, EVP_PKEY **pubk, int npubk)
 {
-    unsigned char key[EVP_MAX_KEY_LENGTH];
-    int ret = -1;
-    int i, j, max = 0;
-    char *s = NULL;
+	unsigned char key[EVP_MAX_KEY_LENGTH];
+	int ret = -1;
+	int i, j, max = 0;
+	char *s = NULL;
 
-    for (i = 0; i < npubk; i++) {
-        if (pubk[i]->type != EVP_PKEY_RSA) {
-            PEMerr(PEM_F_PEM_SEALINIT, PEM_R_PUBLIC_KEY_NO_RSA);
-            goto err;
-        }
-        j = RSA_size(pubk[i]->pkey.rsa);
-        if (j > max)
-            max = j;
-    }
-    s = OPENSSL_malloc(max * 2);
-    if (s == NULL) {
-        PEMerr(PEM_F_PEM_SEALINIT, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
+	for (i = 0; i < npubk; i++) {
+		if (pubk[i]->type != EVP_PKEY_RSA) {
+			PEMerr(PEM_F_PEM_SEALINIT, PEM_R_PUBLIC_KEY_NO_RSA);
+			goto err;
+		}
+		j = RSA_size(pubk[i]->pkey.rsa);
+		if (j > max)
+			max = j;
+	}
+	s = reallocarray(NULL, max, 2);
+	if (s == NULL) {
+		PEMerr(PEM_F_PEM_SEALINIT, ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
 
-    EVP_EncodeInit(&ctx->encode);
+	EVP_EncodeInit(&ctx->encode);
 
-    EVP_MD_CTX_init(&ctx->md);
-    if (!EVP_SignInit(&ctx->md, md_type))
-        goto err;
+	EVP_MD_CTX_init(&ctx->md);
+	if (!EVP_SignInit(&ctx->md, md_type))
+		goto err;
 
-    EVP_CIPHER_CTX_init(&ctx->cipher);
-    ret = EVP_SealInit(&ctx->cipher, type, ek, ekl, iv, pubk, npubk);
-    if (ret <= 0)
-        goto err;
+	EVP_CIPHER_CTX_init(&ctx->cipher);
+	ret = EVP_SealInit(&ctx->cipher, type, ek, ekl, iv, pubk, npubk);
+	if (ret <= 0)
+		goto err;
 
-    /* base64 encode the keys */
-    for (i = 0; i < npubk; i++) {
-        j = EVP_EncodeBlock((unsigned char *)s, ek[i],
-                            RSA_size(pubk[i]->pkey.rsa));
-        ekl[i] = j;
-        memcpy(ek[i], s, j + 1);
-    }
+	/* base64 encode the keys */
+	for (i = 0; i < npubk; i++) {
+		j = EVP_EncodeBlock((unsigned char *)s, ek[i],
+		    RSA_size(pubk[i]->pkey.rsa));
+		ekl[i] = j;
+		memcpy(ek[i], s, j + 1);
+	}
 
-    ret = npubk;
- err:
-    OPENSSL_free(s);
-    OPENSSL_cleanse(key, EVP_MAX_KEY_LENGTH);
-    return (ret);
+	ret = npubk;
+
+err:
+	free(s);
+	OPENSSL_cleanse(key, EVP_MAX_KEY_LENGTH);
+	return (ret);
 }
 
-int PEM_SealUpdate(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *out, int *outl,
-                   unsigned char *in, int inl)
+void
+PEM_SealUpdate(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *out, int *outl,
+    unsigned char *in, int inl)
 {
-    unsigned char buffer[1600];
-    int i, j;
+	unsigned char buffer[1600];
+	int i, j;
 
-    *outl = 0;
-    if (!EVP_SignUpdate(&ctx->md, in, inl))
-        return 0;
-    for (;;) {
-        if (inl <= 0)
-            break;
-        if (inl > 1200)
-            i = 1200;
-        else
-            i = inl;
-        if (!EVP_EncryptUpdate(&ctx->cipher, buffer, &j, in, i))
-            return 0;
-        EVP_EncodeUpdate(&ctx->encode, out, &j, buffer, j);
-        *outl += j;
-        out += j;
-        in += i;
-        inl -= i;
-    }
-    return 1;
+	*outl = 0;
+	EVP_SignUpdate(&ctx->md, in, inl);
+	for (;;) {
+		if (inl <= 0)
+			break;
+		if (inl > 1200)
+			i = 1200;
+		else
+			i = inl;
+		EVP_EncryptUpdate(&ctx->cipher, buffer, &j, in, i);
+		EVP_EncodeUpdate(&ctx->encode, out, &j, buffer, j);
+		*outl += j;
+		out += j;
+		in += i;
+		inl -= i;
+	}
 }
 
-int PEM_SealFinal(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *sig, int *sigl,
-                  unsigned char *out, int *outl, EVP_PKEY *priv)
+int
+PEM_SealFinal(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *sig, int *sigl,
+    unsigned char *out, int *outl, EVP_PKEY *priv)
 {
-    unsigned char *s = NULL;
-    int ret = 0, j;
-    unsigned int i;
+	unsigned char *s = NULL;
+	int ret = 0, j;
+	unsigned int i;
 
-    if (priv->type != EVP_PKEY_RSA) {
-        PEMerr(PEM_F_PEM_SEALFINAL, PEM_R_PUBLIC_KEY_NO_RSA);
-        goto err;
-    }
-    i = RSA_size(priv->pkey.rsa);
-    if (i < 100)
-        i = 100;
-    s = OPENSSL_malloc(i * 2);
-    if (s == NULL) {
-        PEMerr(PEM_F_PEM_SEALFINAL, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
+	if (priv->type != EVP_PKEY_RSA) {
+		PEMerr(PEM_F_PEM_SEALFINAL, PEM_R_PUBLIC_KEY_NO_RSA);
+		goto err;
+	}
+	i = RSA_size(priv->pkey.rsa);
+	if (i < 100)
+		i = 100;
+	s = reallocarray(NULL, i, 2);
+	if (s == NULL) {
+		PEMerr(PEM_F_PEM_SEALFINAL, ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
 
-    if (!EVP_EncryptFinal_ex(&ctx->cipher, s, (int *)&i))
-        goto err;
-    EVP_EncodeUpdate(&ctx->encode, out, &j, s, i);
-    *outl = j;
-    out += j;
-    EVP_EncodeFinal(&ctx->encode, out, &j);
-    *outl += j;
+	if (!EVP_EncryptFinal_ex(&ctx->cipher, s, (int *)&i))
+		goto err;
+	EVP_EncodeUpdate(&ctx->encode, out, &j, s, i);
+	*outl = j;
+	out += j;
+	EVP_EncodeFinal(&ctx->encode, out, &j);
+	*outl += j;
 
-    if (!EVP_SignFinal(&ctx->md, s, &i, priv))
-        goto err;
-    *sigl = EVP_EncodeBlock(sig, s, i);
+	if (!EVP_SignFinal(&ctx->md, s, &i, priv))
+		goto err;
+	*sigl = EVP_EncodeBlock(sig, s, i);
 
-    ret = 1;
- err:
-    EVP_MD_CTX_cleanup(&ctx->md);
-    EVP_CIPHER_CTX_cleanup(&ctx->cipher);
-    OPENSSL_free(s);
-    return (ret);
+	ret = 1;
+
+err:
+	EVP_MD_CTX_cleanup(&ctx->md);
+	EVP_CIPHER_CTX_cleanup(&ctx->cipher);
+	free(s);
+	return (ret);
 }
-#else                           /* !OPENSSL_NO_RSA */
-
-# if PEDANTIC
-static void *dummy = &dummy;
-# endif
-
 #endif

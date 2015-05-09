@@ -1,4 +1,4 @@
-/* crypto/evp/c_all.c */
+/* $OpenBSD: c_all.c,v 1.13 2014/06/12 15:49:29 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,25 +57,29 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+
+#include <openssl/opensslconf.h>
+
+#include <openssl/conf.h>
 #include <openssl/evp.h>
+
 #ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
+#include <openssl/engine.h>
 #endif
 
-void OPENSSL_add_all_algorithms_noconf(void)
+#include "cryptlib.h"
+
+void
+OPENSSL_add_all_algorithms_noconf(void)
 {
-    /*
-     * For the moment OPENSSL_cpuid_setup does something
-     * only on IA-32, but we reserve the option for all
-     * platforms...
-     */
-    OPENSSL_cpuid_setup();
-    OpenSSL_add_all_ciphers();
-    OpenSSL_add_all_digests();
-#ifndef OPENSSL_NO_ENGINE
-# if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV)
-    ENGINE_setup_bsd_cryptodev();
-# endif
-#endif
+	OPENSSL_cpuid_setup();
+	OpenSSL_add_all_ciphers();
+	OpenSSL_add_all_digests();
+}
+
+void
+OPENSSL_add_all_algorithms_conf(void)
+{
+	OPENSSL_add_all_algorithms_noconf();
+	OPENSSL_config(NULL);
 }

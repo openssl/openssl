@@ -1,6 +1,5 @@
-/* bio_pk7.c */
-/*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
+/* $OpenBSD: bio_pk7.c,v 1.3 2014/06/12 15:49:30 deraadt Exp $ */
+/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
 /* ====================================================================
@@ -57,14 +56,11 @@
 #include <openssl/pkcs7.h>
 #include <openssl/bio.h>
 
-#if !defined(OPENSSL_SYS_NETWARE) && !defined(OPENSSL_SYS_VXWORKS)
-# include <memory.h>
-#endif
 #include <stdio.h>
 
 /* Streaming encode support for PKCS#7 */
-
-BIO *BIO_new_PKCS7(BIO *out, PKCS7 *p7)
+BIO *
+BIO_new_PKCS7(BIO *out, PKCS7 *p7)
 {
-    return BIO_new_NDEF(out, (ASN1_VALUE *)p7, ASN1_ITEM_rptr(PKCS7));
+	return BIO_new_NDEF(out, (ASN1_VALUE *)p7, ASN1_ITEM_rptr(PKCS7));
 }

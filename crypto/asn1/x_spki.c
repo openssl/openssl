@@ -1,4 +1,4 @@
-/* crypto/asn1/x_spki.c */
+/* $OpenBSD: x_spki.c,v 1.7 2014/06/12 15:49:27 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,27 +56,26 @@
  * [including the GNU Public Licence.]
  */
 
- /*
-  * This module was send to me my Pat Richards <patr@x509.com> who wrote it.
-  * It is under my Copyright with his permission
+ /* This module was send to me my Pat Richards <patr@x509.com> who
+  * wrote it.  It is under my Copyright with his permission
   */
 
 #include <stdio.h>
-#include "cryptlib.h"
+
 #include <openssl/x509.h>
 #include <openssl/asn1t.h>
 
 ASN1_SEQUENCE(NETSCAPE_SPKAC) = {
-        ASN1_SIMPLE(NETSCAPE_SPKAC, pubkey, X509_PUBKEY),
-        ASN1_SIMPLE(NETSCAPE_SPKAC, challenge, ASN1_IA5STRING)
+	ASN1_SIMPLE(NETSCAPE_SPKAC, pubkey, X509_PUBKEY),
+	ASN1_SIMPLE(NETSCAPE_SPKAC, challenge, ASN1_IA5STRING)
 } ASN1_SEQUENCE_END(NETSCAPE_SPKAC)
 
 IMPLEMENT_ASN1_FUNCTIONS(NETSCAPE_SPKAC)
 
 ASN1_SEQUENCE(NETSCAPE_SPKI) = {
-        ASN1_SIMPLE(NETSCAPE_SPKI, spkac, NETSCAPE_SPKAC),
-        ASN1_SIMPLE(NETSCAPE_SPKI, sig_algor, X509_ALGOR),
-        ASN1_SIMPLE(NETSCAPE_SPKI, signature, ASN1_BIT_STRING)
+	ASN1_SIMPLE(NETSCAPE_SPKI, spkac, NETSCAPE_SPKAC),
+	ASN1_SIMPLE(NETSCAPE_SPKI, sig_algor, X509_ALGOR),
+	ASN1_SIMPLE(NETSCAPE_SPKI, signature, ASN1_BIT_STRING)
 } ASN1_SEQUENCE_END(NETSCAPE_SPKI)
 
 IMPLEMENT_ASN1_FUNCTIONS(NETSCAPE_SPKI)

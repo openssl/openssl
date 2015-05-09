@@ -1,4 +1,4 @@
-/* crypto/x509/x509_def.c */
+/* $OpenBSD$ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,32 +61,38 @@
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
 
-const char *X509_get_default_private_dir(void)
+const char *
+X509_get_default_private_dir(void)
 {
-    return (X509_PRIVATE_DIR);
+	return (X509_PRIVATE_DIR);
 }
 
-const char *X509_get_default_cert_area(void)
+const char *
+X509_get_default_cert_area(void)
 {
-    return (X509_CERT_AREA);
+	return (X509_CERT_AREA);
 }
 
-const char *X509_get_default_cert_dir(void)
+const char *
+X509_get_default_cert_dir(void)
 {
-    return (X509_CERT_DIR);
+	return (X509_CERT_DIR);
 }
 
-const char *X509_get_default_cert_file(void)
+const char *
+X509_get_default_cert_file(void)
 {
-    return (X509_CERT_FILE);
+	return (X509_CERT_FILE);
 }
 
-const char *X509_get_default_cert_dir_env(void)
+const char *
+X509_get_default_cert_dir_env(void)
 {
-    return (X509_CERT_DIR_EVP);
+	return (X509_CERT_DIR_EVP);
 }
 
-const char *X509_get_default_cert_file_env(void)
+const char *
+X509_get_default_cert_file_env(void)
 {
-    return (X509_CERT_FILE_EVP);
+	return (X509_CERT_FILE_EVP);
 }

@@ -1,4 +1,4 @@
-/* crypto/asn1/a_dup.c */
+/* $OpenBSD: a_dup.c,v 1.12 2014/06/12 15:49:27 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,61 +57,62 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+
 #include <openssl/asn1.h>
+#include <openssl/err.h>
 
 #ifndef NO_OLD_ASN1
 
-void *ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, void *x)
+void *
+ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, void *x)
 {
-    unsigned char *b, *p;
-    const unsigned char *p2;
-    int i;
-    char *ret;
+	unsigned char *b, *p;
+	const unsigned char *p2;
+	int i;
+	char *ret;
 
-    if (x == NULL)
-        return (NULL);
+	if (x == NULL)
+		return (NULL);
 
-    i = i2d(x, NULL);
-    b = OPENSSL_malloc(i + 10);
-    if (b == NULL) {
-        ASN1err(ASN1_F_ASN1_DUP, ERR_R_MALLOC_FAILURE);
-        return (NULL);
-    }
-    p = b;
-    i = i2d(x, &p);
-    p2 = b;
-    ret = d2i(NULL, &p2, i);
-    OPENSSL_free(b);
-    return (ret);
+	i = i2d(x, NULL);
+	b = malloc(i + 10);
+	if (b == NULL) {
+		ASN1err(ASN1_F_ASN1_DUP, ERR_R_MALLOC_FAILURE);
+		return (NULL);
+	}
+	p = b;
+	i = i2d(x, &p);
+	p2 = b;
+	ret = d2i(NULL, &p2, i);
+	free(b);
+	return (ret);
 }
 
 #endif
 
-/*
- * ASN1_ITEM version of dup: this follows the model above except we don't
- * need to allocate the buffer. At some point this could be rewritten to
- * directly dup the underlying structure instead of doing and encode and
- * decode.
+/* ASN1_ITEM version of dup: this follows the model above except we don't need
+ * to allocate the buffer. At some point this could be rewritten to directly dup
+ * the underlying structure instead of doing and encode and decode.
  */
 
-void *ASN1_item_dup(const ASN1_ITEM *it, void *x)
+void *
+ASN1_item_dup(const ASN1_ITEM *it, void *x)
 {
-    unsigned char *b = NULL;
-    const unsigned char *p;
-    long i;
-    void *ret;
+	unsigned char *b = NULL;
+	const unsigned char *p;
+	long i;
+	void *ret;
 
-    if (x == NULL)
-        return (NULL);
+	if (x == NULL)
+		return (NULL);
 
-    i = ASN1_item_i2d(x, &b, it);
-    if (b == NULL) {
-        ASN1err(ASN1_F_ASN1_ITEM_DUP, ERR_R_MALLOC_FAILURE);
-        return (NULL);
-    }
-    p = b;
-    ret = ASN1_item_d2i(NULL, &p, i, it);
-    OPENSSL_free(b);
-    return (ret);
+	i = ASN1_item_i2d(x, &b, it);
+	if (b == NULL) {
+		ASN1err(ASN1_F_ASN1_ITEM_DUP, ERR_R_MALLOC_FAILURE);
+		return (NULL);
+	}
+	p = b;
+	ret = ASN1_item_d2i(NULL, &p, i, it);
+	free(b);
+	return (ret);
 }

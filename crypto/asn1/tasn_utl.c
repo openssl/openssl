@@ -1,7 +1,6 @@
-/* tasn_utl.c */
-/*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
- * 2000.
+/* $OpenBSD$ */
+/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
+ * project 2000.
  */
 /* ====================================================================
  * Copyright (c) 2000-2004 The OpenSSL Project.  All rights reserved.
@@ -63,210 +62,220 @@
 #include <openssl/asn1t.h>
 #include <openssl/objects.h>
 #include <openssl/err.h>
-#include "asn1_locl.h"
 
 /* Utility functions for manipulating fields and offsets */
 
 /* Add 'offset' to 'addr' */
 #define offset2ptr(addr, offset) (void *)(((char *) addr) + offset)
 
-/*
- * Given an ASN1_ITEM CHOICE type return the selector value
+/* Given an ASN1_ITEM CHOICE type return
+ * the selector value
  */
 
-int asn1_get_choice_selector(ASN1_VALUE **pval, const ASN1_ITEM *it)
+int
+asn1_get_choice_selector(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
-    int *sel = offset2ptr(*pval, it->utype);
-    return *sel;
+	int *sel = offset2ptr(*pval, it->utype);
+	return *sel;
 }
 
-/*
- * Given an ASN1_ITEM CHOICE type set the selector value, return old value.
+/* Given an ASN1_ITEM CHOICE type set
+ * the selector value, return old value.
  */
 
-int asn1_set_choice_selector(ASN1_VALUE **pval, int value,
-                             const ASN1_ITEM *it)
+int
+asn1_set_choice_selector(ASN1_VALUE **pval, int value, const ASN1_ITEM *it)
 {
-    int *sel, ret;
-    sel = offset2ptr(*pval, it->utype);
-    ret = *sel;
-    *sel = value;
-    return ret;
+	int *sel, ret;
+	sel = offset2ptr(*pval, it->utype);
+	ret = *sel;
+	*sel = value;
+	return ret;
 }
 
-/*
- * Do reference counting. The value 'op' decides what to do. if it is +1
- * then the count is incremented. If op is 0 count is set to 1. If op is -1
- * count is decremented and the return value is the current reference count
- * or 0 if no reference count exists.
+/* Do reference counting. The value 'op' decides what to do.
+ * if it is +1 then the count is incremented. If op is 0 count is
+ * set to 1. If op is -1 count is decremented and the return value
+ * is the current refrence count or 0 if no reference count exists.
  */
 
-int asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it)
+int
+asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it)
 {
-    const ASN1_AUX *aux;
-    int *lck, ret;
-    if ((it->itype != ASN1_ITYPE_SEQUENCE)
-        && (it->itype != ASN1_ITYPE_NDEF_SEQUENCE))
-        return 0;
-    aux = it->funcs;
-    if (!aux || !(aux->flags & ASN1_AFLG_REFCOUNT))
-        return 0;
-    lck = offset2ptr(*pval, aux->ref_offset);
-    if (op == 0) {
-        *lck = 1;
-        return 1;
-    }
-    ret = CRYPTO_add(lck, op, aux->ref_lock);
-#ifdef REF_PRINT
-    fprintf(stderr, "%s: Reference Count: %d\n", it->sname, *lck);
-#endif
-#ifdef REF_CHECK
-    if (ret < 0)
-        fprintf(stderr, "%s, bad reference count\n", it->sname);
-#endif
-    return ret;
+	const ASN1_AUX *aux;
+	int *lck, ret;
+
+	if ((it->itype != ASN1_ITYPE_SEQUENCE) &&
+	    (it->itype != ASN1_ITYPE_NDEF_SEQUENCE))
+		return 0;
+	aux = it->funcs;
+	if (!aux || !(aux->flags & ASN1_AFLG_REFCOUNT))
+		return 0;
+	lck = offset2ptr(*pval, aux->ref_offset);
+	if (op == 0) {
+		*lck = 1;
+		return 1;
+	}
+	ret = CRYPTO_add(lck, op, aux->ref_lock);
+	return ret;
 }
 
-static ASN1_ENCODING *asn1_get_enc_ptr(ASN1_VALUE **pval, const ASN1_ITEM *it)
+static ASN1_ENCODING *
+asn1_get_enc_ptr(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
-    const ASN1_AUX *aux;
-    if (!pval || !*pval)
-        return NULL;
-    aux = it->funcs;
-    if (!aux || !(aux->flags & ASN1_AFLG_ENCODING))
-        return NULL;
-    return offset2ptr(*pval, aux->enc_offset);
+	const ASN1_AUX *aux;
+
+	if (!pval || !*pval)
+		return NULL;
+	aux = it->funcs;
+	if (!aux || !(aux->flags & ASN1_AFLG_ENCODING))
+		return NULL;
+	return offset2ptr(*pval, aux->enc_offset);
 }
 
-void asn1_enc_init(ASN1_VALUE **pval, const ASN1_ITEM *it)
+void
+asn1_enc_init(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
-    ASN1_ENCODING *enc;
-    enc = asn1_get_enc_ptr(pval, it);
-    if (enc) {
-        enc->enc = NULL;
-        enc->len = 0;
-        enc->modified = 1;
-    }
+	ASN1_ENCODING *enc;
+
+	enc = asn1_get_enc_ptr(pval, it);
+	if (enc) {
+		enc->enc = NULL;
+		enc->len = 0;
+		enc->modified = 1;
+	}
 }
 
-void asn1_enc_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
+void
+asn1_enc_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
-    ASN1_ENCODING *enc;
-    enc = asn1_get_enc_ptr(pval, it);
-    if (enc) {
-        OPENSSL_free(enc->enc);
-        enc->enc = NULL;
-        enc->len = 0;
-        enc->modified = 1;
-    }
+	ASN1_ENCODING *enc;
+
+	enc = asn1_get_enc_ptr(pval, it);
+	if (enc) {
+		free(enc->enc);
+		enc->enc = NULL;
+		enc->len = 0;
+		enc->modified = 1;
+	}
 }
 
-int asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, int inlen,
-                  const ASN1_ITEM *it)
+int
+asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, int inlen,
+    const ASN1_ITEM *it)
 {
-    ASN1_ENCODING *enc;
-    enc = asn1_get_enc_ptr(pval, it);
-    if (!enc)
-        return 1;
+	ASN1_ENCODING *enc;
 
-    OPENSSL_free(enc->enc);
-    enc->enc = OPENSSL_malloc(inlen);
-    if (!enc->enc)
-        return 0;
-    memcpy(enc->enc, in, inlen);
-    enc->len = inlen;
-    enc->modified = 0;
+	enc = asn1_get_enc_ptr(pval, it);
+	if (!enc)
+		return 1;
 
-    return 1;
+	free(enc->enc);
+	enc->enc = malloc(inlen);
+	if (!enc->enc)
+		return 0;
+	memcpy(enc->enc, in, inlen);
+	enc->len = inlen;
+	enc->modified = 0;
+
+	return 1;
 }
 
-int asn1_enc_restore(int *len, unsigned char **out, ASN1_VALUE **pval,
-                     const ASN1_ITEM *it)
+int
+asn1_enc_restore(int *len, unsigned char **out, ASN1_VALUE **pval,
+    const ASN1_ITEM *it)
 {
-    ASN1_ENCODING *enc;
-    enc = asn1_get_enc_ptr(pval, it);
-    if (!enc || enc->modified)
-        return 0;
-    if (out) {
-        memcpy(*out, enc->enc, enc->len);
-        *out += enc->len;
-    }
-    if (len)
-        *len = enc->len;
-    return 1;
+	ASN1_ENCODING *enc;
+
+	enc = asn1_get_enc_ptr(pval, it);
+	if (!enc || enc->modified)
+		return 0;
+	if (out) {
+		memcpy(*out, enc->enc, enc->len);
+		*out += enc->len;
+	}
+	if (len)
+		*len = enc->len;
+	return 1;
 }
 
 /* Given an ASN1_TEMPLATE get a pointer to a field */
-ASN1_VALUE **asn1_get_field_ptr(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
+ASN1_VALUE **
+asn1_get_field_ptr(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
 {
-    ASN1_VALUE **pvaltmp;
-    pvaltmp = offset2ptr(*pval, tt->offset);
-    /*
-     * NOTE for BOOLEAN types the field is just a plain int so we can't
-     * return int **, so settle for (int *).
-     */
-    return pvaltmp;
+	ASN1_VALUE **pvaltmp;
+
+	if (tt->flags & ASN1_TFLG_COMBINE)
+		return pval;
+	pvaltmp = offset2ptr(*pval, tt->offset);
+	/* NOTE for BOOLEAN types the field is just a plain
+ 	 * int so we can't return int **, so settle for
+	 * (int *).
+	 */
+	return pvaltmp;
 }
 
-/*
- * Handle ANY DEFINED BY template, find the selector, look up the relevant
- * ASN1_TEMPLATE in the table and return it.
+/* Handle ANY DEFINED BY template, find the selector, look up
+ * the relevant ASN1_TEMPLATE in the table and return it.
  */
 
-const ASN1_TEMPLATE *asn1_do_adb(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt,
-                                 int nullerr)
+const ASN1_TEMPLATE *
+asn1_do_adb(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt, int nullerr)
 {
-    const ASN1_ADB *adb;
-    const ASN1_ADB_TABLE *atbl;
-    long selector;
-    ASN1_VALUE **sfld;
-    int i;
-    if (!(tt->flags & ASN1_TFLG_ADB_MASK))
-        return tt;
+	const ASN1_ADB *adb;
+	const ASN1_ADB_TABLE *atbl;
+	long selector;
+	ASN1_VALUE **sfld;
+	int i;
 
-    /* Else ANY DEFINED BY ... get the table */
-    adb = ASN1_ADB_ptr(tt->item);
+	if (!(tt->flags & ASN1_TFLG_ADB_MASK))
+		return tt;
 
-    /* Get the selector field */
-    sfld = offset2ptr(*pval, adb->offset);
+	/* Else ANY DEFINED BY ... get the table */
+	adb = ASN1_ADB_ptr(tt->item);
 
-    /* Check if NULL */
-    if (!sfld) {
-        if (!adb->null_tt)
-            goto err;
-        return adb->null_tt;
-    }
+	/* Get the selector field */
+	sfld = offset2ptr(*pval, adb->offset);
 
-    /*
-     * Convert type to a long: NB: don't check for NID_undef here because it
-     * might be a legitimate value in the table
-     */
-    if (tt->flags & ASN1_TFLG_ADB_OID)
-        selector = OBJ_obj2nid((ASN1_OBJECT *)*sfld);
-    else
-        selector = ASN1_INTEGER_get((ASN1_INTEGER *)*sfld);
+	/* Check if NULL */
+	if (!sfld) {
+		if (!adb->null_tt)
+			goto err;
+		return adb->null_tt;
+	}
 
-    /*
-     * Try to find matching entry in table Maybe should check application
-     * types first to allow application override? Might also be useful to
-     * have a flag which indicates table is sorted and we can do a binary
-     * search. For now stick to a linear search.
-     */
+	/* Convert type to a long:
+	 * NB: don't check for NID_undef here because it
+	 * might be a legitimate value in the table
+	 */
+	if (tt->flags & ASN1_TFLG_ADB_OID)
+		selector = OBJ_obj2nid((ASN1_OBJECT *)*sfld);
+	else
+		selector = ASN1_INTEGER_get((ASN1_INTEGER *)*sfld);
 
-    for (atbl = adb->tbl, i = 0; i < adb->tblcount; i++, atbl++)
-        if (atbl->value == selector)
-            return &atbl->tt;
+	/* Try to find matching entry in table
+	 * Maybe should check application types first to
+	 * allow application override? Might also be useful
+	 * to have a flag which indicates table is sorted and
+	 * we can do a binary search. For now stick to a
+	 * linear search.
+	 */
 
-    /* FIXME: need to search application table too */
+	for (atbl = adb->tbl, i = 0; i < adb->tblcount; i++, atbl++)
+		if (atbl->value == selector)
+			return &atbl->tt;
 
-    /* No match, return default type */
-    if (!adb->default_tt)
-        goto err;
-    return adb->default_tt;
+	/* FIXME: need to search application table too */
 
- err:
-    /* FIXME: should log the value or OID of unsupported type */
-    if (nullerr)
-        ASN1err(ASN1_F_ASN1_DO_ADB, ASN1_R_UNSUPPORTED_ANY_DEFINED_BY_TYPE);
-    return NULL;
+	/* No match, return default type */
+	if (!adb->default_tt)
+		goto err;
+	return adb->default_tt;
+
+err:
+	/* FIXME: should log the value or OID of unsupported type */
+	if (nullerr)
+		ASN1err(ASN1_F_ASN1_DO_ADB,
+		    ASN1_R_UNSUPPORTED_ANY_DEFINED_BY_TYPE);
+	return NULL;
 }

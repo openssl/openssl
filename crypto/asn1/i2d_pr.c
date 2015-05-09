@@ -1,4 +1,4 @@
-/* crypto/asn1/i2d_pr.c */
+/* $OpenBSD: i2d_pr.c,v 1.9 2014/06/12 15:49:27 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,22 +57,25 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
-#include "internal/asn1_int.h"
 
-int i2d_PrivateKey(EVP_PKEY *a, unsigned char **pp)
+#include "asn1_locl.h"
+
+int
+i2d_PrivateKey(EVP_PKEY *a, unsigned char **pp)
 {
-    if (a->ameth && a->ameth->old_priv_encode) {
-        return a->ameth->old_priv_encode(a, pp);
-    }
-    if (a->ameth && a->ameth->priv_encode) {
-        PKCS8_PRIV_KEY_INFO *p8 = EVP_PKEY2PKCS8(a);
-        int ret = i2d_PKCS8_PRIV_KEY_INFO(p8, pp);
-        PKCS8_PRIV_KEY_INFO_free(p8);
-        return ret;
-    }
-    ASN1err(ASN1_F_I2D_PRIVATEKEY, ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE);
-    return (-1);
+	if (a->ameth && a->ameth->old_priv_encode) {
+		return a->ameth->old_priv_encode(a, pp);
+	}
+	if (a->ameth && a->ameth->priv_encode) {
+		PKCS8_PRIV_KEY_INFO *p8 = EVP_PKEY2PKCS8(a);
+		int ret = i2d_PKCS8_PRIV_KEY_INFO(p8, pp);
+		PKCS8_PRIV_KEY_INFO_free(p8);
+		return ret;
+	}
+	ASN1err(ASN1_F_I2D_PRIVATEKEY, ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE);
+	return (-1);
 }

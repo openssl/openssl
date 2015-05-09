@@ -1,4 +1,4 @@
-/* ssl/t1_clnt.c */
+/* $OpenBSD$ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,27 +64,129 @@
 #include <openssl/evp.h>
 
 static const SSL_METHOD *tls1_get_client_method(int ver);
-static const SSL_METHOD *tls1_get_client_method(int ver)
+
+const SSL_METHOD TLSv1_client_method_data = {
+	.version = TLS1_VERSION,
+	.ssl_new = tls1_new,
+	.ssl_clear = tls1_clear,
+	.ssl_free = tls1_free,
+	.ssl_accept = ssl_undefined_function,
+	.ssl_connect = ssl3_connect,
+	.ssl_read = ssl3_read,
+	.ssl_peek = ssl3_peek,
+	.ssl_write = ssl3_write,
+	.ssl_shutdown = ssl3_shutdown,
+	.ssl_renegotiate = ssl3_renegotiate,
+	.ssl_renegotiate_check = ssl3_renegotiate_check,
+	.ssl_get_message = ssl3_get_message,
+	.ssl_read_bytes = ssl3_read_bytes,
+	.ssl_write_bytes = ssl3_write_bytes,
+	.ssl_dispatch_alert = ssl3_dispatch_alert,
+	.ssl_ctrl = ssl3_ctrl,
+	.ssl_ctx_ctrl = ssl3_ctx_ctrl,
+	.get_cipher_by_char = ssl3_get_cipher_by_char,
+	.put_cipher_by_char = ssl3_put_cipher_by_char,
+	.ssl_pending = ssl3_pending,
+	.num_ciphers = ssl3_num_ciphers,
+	.get_cipher = ssl3_get_cipher,
+	.get_ssl_method = tls1_get_client_method,
+	.get_timeout = tls1_default_timeout,
+	.ssl3_enc = &TLSv1_enc_data,
+	.ssl_version = ssl_undefined_void_function,
+	.ssl_callback_ctrl = ssl3_callback_ctrl,
+	.ssl_ctx_callback_ctrl = ssl3_ctx_callback_ctrl,
+};
+
+const SSL_METHOD TLSv1_1_client_method_data = {
+	.version = TLS1_1_VERSION,
+	.ssl_new = tls1_new,
+	.ssl_clear = tls1_clear,
+	.ssl_free = tls1_free,
+	.ssl_accept = ssl_undefined_function,
+	.ssl_connect = ssl3_connect,
+	.ssl_read = ssl3_read,
+	.ssl_peek = ssl3_peek,
+	.ssl_write = ssl3_write,
+	.ssl_shutdown = ssl3_shutdown,
+	.ssl_renegotiate = ssl3_renegotiate,
+	.ssl_renegotiate_check = ssl3_renegotiate_check,
+	.ssl_get_message = ssl3_get_message,
+	.ssl_read_bytes = ssl3_read_bytes,
+	.ssl_write_bytes = ssl3_write_bytes,
+	.ssl_dispatch_alert = ssl3_dispatch_alert,
+	.ssl_ctrl = ssl3_ctrl,
+	.ssl_ctx_ctrl = ssl3_ctx_ctrl,
+	.get_cipher_by_char = ssl3_get_cipher_by_char,
+	.put_cipher_by_char = ssl3_put_cipher_by_char,
+	.ssl_pending = ssl3_pending,
+	.num_ciphers = ssl3_num_ciphers,
+	.get_cipher = ssl3_get_cipher,
+	.get_ssl_method = tls1_get_client_method,
+	.get_timeout = tls1_default_timeout,
+	.ssl3_enc = &TLSv1_1_enc_data,
+	.ssl_version = ssl_undefined_void_function,
+	.ssl_callback_ctrl = ssl3_callback_ctrl,
+	.ssl_ctx_callback_ctrl = ssl3_ctx_callback_ctrl,
+};
+
+const SSL_METHOD TLSv1_2_client_method_data = {
+	.version = TLS1_2_VERSION,
+	.ssl_new = tls1_new,
+	.ssl_clear = tls1_clear,
+	.ssl_free = tls1_free,
+	.ssl_accept = ssl_undefined_function,
+	.ssl_connect = ssl3_connect,
+	.ssl_read = ssl3_read,
+	.ssl_peek = ssl3_peek,
+	.ssl_write = ssl3_write,
+	.ssl_shutdown = ssl3_shutdown,
+	.ssl_renegotiate = ssl3_renegotiate,
+	.ssl_renegotiate_check = ssl3_renegotiate_check,
+	.ssl_get_message = ssl3_get_message,
+	.ssl_read_bytes = ssl3_read_bytes,
+	.ssl_write_bytes = ssl3_write_bytes,
+	.ssl_dispatch_alert = ssl3_dispatch_alert,
+	.ssl_ctrl = ssl3_ctrl,
+	.ssl_ctx_ctrl = ssl3_ctx_ctrl,
+	.get_cipher_by_char = ssl3_get_cipher_by_char,
+	.put_cipher_by_char = ssl3_put_cipher_by_char,
+	.ssl_pending = ssl3_pending,
+	.num_ciphers = ssl3_num_ciphers,
+	.get_cipher = ssl3_get_cipher,
+	.get_ssl_method = tls1_get_client_method,
+	.get_timeout = tls1_default_timeout,
+	.ssl3_enc = &TLSv1_2_enc_data,
+	.ssl_version = ssl_undefined_void_function,
+	.ssl_callback_ctrl = ssl3_callback_ctrl,
+	.ssl_ctx_callback_ctrl = ssl3_ctx_callback_ctrl,
+};
+
+const SSL_METHOD *
+TLSv1_client_method(void)
 {
-    if (ver == TLS1_2_VERSION)
-        return TLSv1_2_client_method();
-    if (ver == TLS1_1_VERSION)
-        return TLSv1_1_client_method();
-    if (ver == TLS1_VERSION)
-        return TLSv1_client_method();
-    return NULL;
+	return &TLSv1_client_method_data;
 }
 
-IMPLEMENT_tls_meth_func(TLS1_2_VERSION, TLSv1_2_client_method,
-                        ssl_undefined_function,
-                        ssl3_connect,
-                        tls1_get_client_method, TLSv1_2_enc_data)
+const SSL_METHOD *
+TLSv1_1_client_method(void)
+{
+	return &TLSv1_1_client_method_data;
+}
 
-    IMPLEMENT_tls_meth_func(TLS1_1_VERSION, TLSv1_1_client_method,
-                        ssl_undefined_function,
-                        ssl3_connect,
-                        tls1_get_client_method, TLSv1_1_enc_data)
+const SSL_METHOD *
+TLSv1_2_client_method(void)
+{
+	return &TLSv1_2_client_method_data;
+}
 
-    IMPLEMENT_tls_meth_func(TLS1_VERSION, TLSv1_client_method,
-                        ssl_undefined_function,
-                        ssl3_connect, tls1_get_client_method, TLSv1_enc_data)
+static const SSL_METHOD *
+tls1_get_client_method(int ver)
+{
+	if (ver == TLS1_2_VERSION)
+		return (TLSv1_2_client_method());
+	if (ver == TLS1_1_VERSION)
+		return (TLSv1_1_client_method());
+	if (ver == TLS1_VERSION)
+		return (TLSv1_client_method());
+	return (NULL);
+}

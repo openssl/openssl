@@ -1,4 +1,4 @@
-/* crypto/evp/m_mdc2.c */
+/* $OpenBSD: m_mdc2.c,v 1.13 2014/07/10 22:45:57 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,50 +57,64 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+
+#include <openssl/opensslconf.h>
 
 #ifndef OPENSSL_NO_MDC2
 
-# include <openssl/evp.h>
-# include <openssl/objects.h>
-# include <openssl/x509.h>
-# include <openssl/mdc2.h>
-# ifndef OPENSSL_NO_RSA
-#  include <openssl/rsa.h>
-# endif
+#include <openssl/evp.h>
+#include <openssl/mdc2.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
 
-static int init(EVP_MD_CTX *ctx)
+#ifndef OPENSSL_NO_RSA
+#include <openssl/rsa.h>
+#endif
+
+#include "evp_locl.h"
+
+static int
+init(EVP_MD_CTX *ctx)
 {
-    return MDC2_Init(ctx->md_data);
+	return MDC2_Init(ctx->md_data);
 }
 
-static int update(EVP_MD_CTX *ctx, const void *data, size_t count)
+static int
+update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
-    return MDC2_Update(ctx->md_data, data, count);
+	return MDC2_Update(ctx->md_data, data, count);
 }
 
-static int final(EVP_MD_CTX *ctx, unsigned char *md)
+static int
+final(EVP_MD_CTX *ctx, unsigned char *md)
 {
-    return MDC2_Final(md, ctx->md_data);
+	return MDC2_Final(md, ctx->md_data);
 }
 
 static const EVP_MD mdc2_md = {
-    NID_mdc2,
-    NID_mdc2WithRSA,
-    MDC2_DIGEST_LENGTH,
-    0,
-    init,
-    update,
-    final,
-    NULL,
-    NULL,
-    EVP_PKEY_RSA_ASN1_OCTET_STRING_method,
-    MDC2_BLOCK,
-    sizeof(EVP_MD *) + sizeof(MDC2_CTX),
+	.type = NID_mdc2,
+	.pkey_type = NID_mdc2WithRSA,
+	.md_size = MDC2_DIGEST_LENGTH,
+	.flags = 0,
+	.init = init,
+	.update = update,
+	.final = final,
+	.copy = NULL,
+	.cleanup = NULL,
+#ifndef OPENSSL_NO_RSA
+	.sign = (evp_sign_method *)RSA_sign_ASN1_OCTET_STRING,
+	.verify = (evp_verify_method *)RSA_verify_ASN1_OCTET_STRING,
+	.required_pkey_type = {
+		EVP_PKEY_RSA, EVP_PKEY_RSA2, 0, 0,
+	},
+#endif
+	.block_size = MDC2_BLOCK,
+	.ctx_size = sizeof(EVP_MD *) + sizeof(MDC2_CTX),
 };
 
-const EVP_MD *EVP_mdc2(void)
+const EVP_MD *
+EVP_mdc2(void)
 {
-    return (&mdc2_md);
+	return (&mdc2_md);
 }
 #endif

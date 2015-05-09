@@ -1,4 +1,4 @@
-/* crypto/evp/p_enc.c */
+/* $OpenBSD: p_enc.c,v 1.8 2014/07/10 22:45:57 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,31 +57,34 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
-#include <openssl/rand.h>
-#ifndef OPENSSL_NO_RSA
-# include <openssl/rsa.h>
-#endif
+
+#include <openssl/opensslconf.h>
+
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include <openssl/rand.h>
 #include <openssl/x509.h>
 
-int EVP_PKEY_encrypt_old(unsigned char *ek, const unsigned char *key,
-                         int key_len, EVP_PKEY *pubk)
+#ifndef OPENSSL_NO_RSA
+#include <openssl/rsa.h>
+#endif
+
+int
+EVP_PKEY_encrypt_old(unsigned char *ek, const unsigned char *key, int key_len,
+    EVP_PKEY *pubk)
 {
-    int ret = 0;
+	int ret = 0;
 
 #ifndef OPENSSL_NO_RSA
-    if (pubk->type != EVP_PKEY_RSA) {
+	if (pubk->type != EVP_PKEY_RSA) {
 #endif
-        EVPerr(EVP_F_EVP_PKEY_ENCRYPT_OLD, EVP_R_PUBLIC_KEY_NOT_RSA);
+		EVPerr(EVP_F_EVP_PKEY_ENCRYPT_OLD, EVP_R_PUBLIC_KEY_NOT_RSA);
 #ifndef OPENSSL_NO_RSA
-        goto err;
-    }
-    ret =
-        RSA_public_encrypt(key_len, key, ek, pubk->pkey.rsa,
-                           RSA_PKCS1_PADDING);
- err:
+		goto err;
+	}
+	ret = RSA_public_encrypt(key_len, key, ek, pubk->pkey.rsa, RSA_PKCS1_PADDING);
+err:
 #endif
-    return (ret);
+	return (ret);
 }

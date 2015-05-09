@@ -1,3 +1,4 @@
+/* $OpenBSD$ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -111,124 +112,97 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "apps.h"
-#include <openssl/evp.h>
-#include <openssl/crypto.h>
+
 #include <openssl/bn.h>
-#ifndef OPENSSL_NO_MD2
-# include <openssl/md2.h>
-#endif
-#ifndef OPENSSL_NO_RC4
-# include <openssl/rc4.h>
-#endif
-#ifndef OPENSSL_NO_DES
-# include <openssl/des.h>
-#endif
-#ifndef OPENSSL_NO_IDEA
-# include <openssl/idea.h>
-#endif
+#include <openssl/crypto.h>
+#include <openssl/evp.h>
+
 #ifndef OPENSSL_NO_BF
-# include <openssl/blowfish.h>
+#include <openssl/blowfish.h>
 #endif
 
-typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_B, OPT_D, OPT_F, OPT_O, OPT_P, OPT_V, OPT_A
-} OPTION_CHOICE;
+#ifndef OPENSSL_NO_DES
+#include <openssl/des.h>
+#endif
 
-OPTIONS version_options[] = {
-    {"help", OPT_HELP, '-', "Display this summary"},
-    {"a", OPT_A, '-', "Show all data"},
-    {"b", OPT_B, '-', "Show build date"},
-    {"d", OPT_D, '-', "Show configuration directory"},
-    {"f", OPT_F, '-', "Show compiler flags used"},
-    {"o", OPT_O, '-', "Show some internal datatype options"},
-    {"p", OPT_P, '-', "Show target build platform"},
-    {"v", OPT_V, '-', "Show library version"},
-    {NULL}
-};
+#ifndef OPENSSL_NO_IDEA
+#include <openssl/idea.h>
+#endif
 
-int version_main(int argc, char **argv)
+#ifndef OPENSSL_NO_RC4
+#include <openssl/rc4.h>
+#endif
+
+int version_main(int, char **);
+
+int
+version_main(int argc, char **argv)
 {
-    int ret = 1, dirty = 0;
-    int cflags = 0, version = 0, date = 0, options = 0, platform = 0, dir = 0;
-    char *prog;
-    OPTION_CHOICE o;
+	int i, ret = 0;
+	int cflags = 0, version = 0, date = 0, options = 0, platform = 0,
+	    dir = 0;
 
-    prog = opt_init(argc, argv, version_options);
-    while ((o = opt_next()) != OPT_EOF) {
-        switch (o) {
-        case OPT_EOF:
-        case OPT_ERR:
-            BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
-            goto end;
-        case OPT_HELP:
-            opt_help(version_options);
-            ret = 0;
-            goto end;
-        case OPT_B:
-            dirty = date = 1;
-            break;
-        case OPT_D:
-            dirty = dir = 1;
-            break;
-        case OPT_F:
-            dirty = cflags = 1;
-            break;
-        case OPT_O:
-            dirty = options = 1;
-            break;
-        case OPT_P:
-            dirty = platform = 1;
-            break;
-        case OPT_V:
-            dirty = version = 1;
-            break;
-        case OPT_A:
-            cflags = version = date = platform = dir = 1;
-            break;
-        }
-    }
-    if (!dirty)
-        version = 1;
+	if (argc == 1)
+		version = 1;
+	for (i = 1; i < argc; i++) {
+		if (strcmp(argv[i], "-v") == 0)
+			version = 1;
+		else if (strcmp(argv[i], "-b") == 0)
+			date = 1;
+		else if (strcmp(argv[i], "-f") == 0)
+			cflags = 1;
+		else if (strcmp(argv[i], "-o") == 0)
+			options = 1;
+		else if (strcmp(argv[i], "-p") == 0)
+			platform = 1;
+		else if (strcmp(argv[i], "-d") == 0)
+			dir = 1;
+		else if (strcmp(argv[i], "-a") == 0)
+			date = version = cflags = options = platform = dir = 1;
+		else {
+			BIO_printf(bio_err, "usage:version -[avbofpd]\n");
+			ret = 1;
+			goto end;
+		}
+	}
 
-    if (version) {
-        if (SSLeay() == SSLEAY_VERSION_NUMBER) {
-            printf("%s\n", SSLeay_version(SSLEAY_VERSION));
-        } else {
-            printf("%s (Library: %s)\n",
-                   OPENSSL_VERSION_TEXT, SSLeay_version(SSLEAY_VERSION));
-        }
-    }
-    if (date)
-        printf("%s\n", SSLeay_version(SSLEAY_BUILT_ON));
-    if (platform)
-        printf("%s\n", SSLeay_version(SSLEAY_PLATFORM));
-    if (options) {
-        printf("options:  ");
-        printf("%s ", BN_options());
-#ifndef OPENSSL_NO_MD2
-        printf("%s ", MD2_options());
-#endif
+	if (version) {
+		if (SSLeay() == SSLEAY_VERSION_NUMBER) {
+			printf("%s\n", SSLeay_version(SSLEAY_VERSION));
+		} else {
+			printf("%s (Library: %s)\n",
+			    OPENSSL_VERSION_TEXT,
+			    SSLeay_version(SSLEAY_VERSION));
+		}
+	}
+	if (date)
+		printf("%s\n", SSLeay_version(SSLEAY_BUILT_ON));
+	if (platform)
+		printf("%s\n", SSLeay_version(SSLEAY_PLATFORM));
+	if (options) {
+		printf("options:  ");
+		printf("%s ", BN_options());
 #ifndef OPENSSL_NO_RC4
-        printf("%s ", RC4_options());
+		printf("%s ", RC4_options());
 #endif
 #ifndef OPENSSL_NO_DES
-        printf("%s ", DES_options());
+		printf("%s ", DES_options());
 #endif
 #ifndef OPENSSL_NO_IDEA
-        printf("%s ", idea_options());
+		printf("%s ", idea_options());
 #endif
 #ifndef OPENSSL_NO_BF
-        printf("%s ", BF_options());
+		printf("%s ", BF_options());
 #endif
-        printf("\n");
-    }
-    if (cflags)
-        printf("%s\n", SSLeay_version(SSLEAY_CFLAGS));
-    if (dir)
-        printf("%s\n", SSLeay_version(SSLEAY_DIR));
-    ret = 0;
- end:
-    return (ret);
+		printf("\n");
+	}
+	if (cflags)
+		printf("%s\n", SSLeay_version(SSLEAY_CFLAGS));
+	if (dir)
+		printf("%s\n", SSLeay_version(SSLEAY_DIR));
+end:
+	
+	return (ret);
 }

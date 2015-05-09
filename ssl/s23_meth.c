@@ -1,4 +1,4 @@
-/* ssl/s23_meth.c */
+/* $OpenBSD: s23_meth.c,v 1.13 2014/06/12 15:49:31 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,22 +61,55 @@
 #include "ssl_locl.h"
 
 static const SSL_METHOD *ssl23_get_method(int ver);
-static const SSL_METHOD *ssl23_get_method(int ver)
+
+const SSL_METHOD SSLv23_method_data = {
+	.version = TLS1_2_VERSION,
+	.ssl_new = tls1_new,
+	.ssl_clear = tls1_clear,
+	.ssl_free = tls1_free,
+	.ssl_accept = ssl23_accept,
+	.ssl_connect = ssl23_connect,
+	.ssl_read = ssl23_read,
+	.ssl_peek = ssl23_peek,
+	.ssl_write = ssl23_write,
+	.ssl_shutdown = ssl_undefined_function,
+	.ssl_renegotiate = ssl_undefined_function,
+	.ssl_renegotiate_check = ssl_ok,
+	.ssl_get_message = ssl3_get_message,
+	.ssl_read_bytes = ssl3_read_bytes,
+	.ssl_write_bytes = ssl3_write_bytes,
+	.ssl_dispatch_alert = ssl3_dispatch_alert,
+	.ssl_ctrl = ssl3_ctrl,
+	.ssl_ctx_ctrl = ssl3_ctx_ctrl,
+	.get_cipher_by_char = ssl3_get_cipher_by_char,
+	.put_cipher_by_char = ssl23_put_cipher_by_char,
+	.ssl_pending = ssl_undefined_const_function,
+	.num_ciphers = ssl3_num_ciphers,
+	.get_cipher = ssl3_get_cipher,
+	.get_ssl_method = ssl23_get_method,
+	.get_timeout = ssl23_default_timeout,
+	.ssl3_enc = &ssl3_undef_enc_method,
+	.ssl_version = ssl_undefined_void_function,
+	.ssl_callback_ctrl = ssl3_callback_ctrl,
+	.ssl_ctx_callback_ctrl = ssl3_ctx_callback_ctrl,
+};
+
+const SSL_METHOD *
+SSLv23_method(void)
 {
-#ifndef OPENSSL_NO_SSL3
-    if (ver == SSL3_VERSION)
-        return (SSLv3_method());
-    else
-#endif
-    if (ver == TLS1_VERSION)
-        return (TLSv1_method());
-    else if (ver == TLS1_1_VERSION)
-        return (TLSv1_1_method());
-    else if (ver == TLS1_2_VERSION)
-        return (TLSv1_2_method());
-    else
-        return (NULL);
+	return &SSLv23_method_data;
 }
 
-IMPLEMENT_ssl23_meth_func(SSLv23_method,
-                          ssl23_accept, ssl23_connect, ssl23_get_method)
+static const SSL_METHOD *
+ssl23_get_method(int ver)
+{
+	if (ver == SSL3_VERSION)
+		return (SSLv3_method());
+	if (ver == TLS1_VERSION)
+		return (TLSv1_method());
+	if (ver == TLS1_1_VERSION)
+		return (TLSv1_1_method());
+	if (ver == TLS1_2_VERSION)
+		return (TLSv1_2_method());
+	return (NULL);
+}

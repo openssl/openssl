@@ -1,3 +1,4 @@
+/* $OpenBSD$ */
 /* ====================================================================
  * Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
  *
@@ -54,71 +55,73 @@
 
 #include "eng_int.h"
 
-/*
- * If this symbol is defined then ENGINE_get_default_DH(), the function that
- * is used by DH to hook in implementation code and cache defaults (etc),
- * will display brief debugging summaries to stderr with the 'nid'.
- */
+/* If this symbol is defined then ENGINE_get_default_DH(), the function that is
+ * used by DH to hook in implementation code and cache defaults (etc), will
+ * display brief debugging summaries to stderr with the 'nid'. */
 /* #define ENGINE_DH_DEBUG */
 
 static ENGINE_TABLE *dh_table = NULL;
 static const int dummy_nid = 1;
 
-void ENGINE_unregister_DH(ENGINE *e)
+void
+ENGINE_unregister_DH(ENGINE *e)
 {
-    engine_table_unregister(&dh_table, e);
+	engine_table_unregister(&dh_table, e);
 }
 
-static void engine_unregister_all_DH(void)
+static void
+engine_unregister_all_DH(void)
 {
-    engine_table_cleanup(&dh_table);
+	engine_table_cleanup(&dh_table);
 }
 
-int ENGINE_register_DH(ENGINE *e)
+int
+ENGINE_register_DH(ENGINE *e)
 {
-    if (e->dh_meth)
-        return engine_table_register(&dh_table,
-                                     engine_unregister_all_DH, e, &dummy_nid,
-                                     1, 0);
-    return 1;
+	if (e->dh_meth)
+		return engine_table_register(&dh_table,
+		    engine_unregister_all_DH, e, &dummy_nid, 1, 0);
+	return 1;
 }
 
-void ENGINE_register_all_DH()
+void
+ENGINE_register_all_DH(void)
 {
-    ENGINE *e;
+	ENGINE *e;
 
-    for (e = ENGINE_get_first(); e; e = ENGINE_get_next(e))
-        ENGINE_register_DH(e);
+	for (e = ENGINE_get_first(); e; e = ENGINE_get_next(e))
+		ENGINE_register_DH(e);
 }
 
-int ENGINE_set_default_DH(ENGINE *e)
+int
+ENGINE_set_default_DH(ENGINE *e)
 {
-    if (e->dh_meth)
-        return engine_table_register(&dh_table,
-                                     engine_unregister_all_DH, e, &dummy_nid,
-                                     1, 1);
-    return 1;
+	if (e->dh_meth)
+		return engine_table_register(&dh_table,
+		    engine_unregister_all_DH, e, &dummy_nid, 1, 1);
+	return 1;
 }
 
-/*
- * Exposed API function to get a functional reference from the implementation
+/* Exposed API function to get a functional reference from the implementation
  * table (ie. try to get a functional reference from the tabled structural
- * references).
- */
-ENGINE *ENGINE_get_default_DH(void)
+ * references). */
+ENGINE *
+ENGINE_get_default_DH(void)
 {
-    return engine_table_select(&dh_table, dummy_nid);
+	return engine_table_select(&dh_table, dummy_nid);
 }
 
 /* Obtains an DH implementation from an ENGINE functional reference */
-const DH_METHOD *ENGINE_get_DH(const ENGINE *e)
+const DH_METHOD *
+ENGINE_get_DH(const ENGINE *e)
 {
-    return e->dh_meth;
+	return e->dh_meth;
 }
 
 /* Sets an DH implementation in an ENGINE structure */
-int ENGINE_set_DH(ENGINE *e, const DH_METHOD *dh_meth)
+int
+ENGINE_set_DH(ENGINE *e, const DH_METHOD *dh_meth)
 {
-    e->dh_meth = dh_meth;
-    return 1;
+	e->dh_meth = dh_meth;
+	return 1;
 }

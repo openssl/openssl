@@ -1,3 +1,4 @@
+/* $OpenBSD: gendsa.c,v 1.27 2014/06/12 15:49:27 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -55,140 +56,179 @@
  * [including the GNU Public Licence.]
  */
 
-#include <openssl/opensslconf.h> /* for OPENSSL_NO_DSA */
-#ifndef OPENSSL_NO_DSA
-# include <stdio.h>
-# include <string.h>
-# include <sys/types.h>
-# include <sys/stat.h>
-# include "apps.h"
-# include <openssl/bio.h>
-# include <openssl/err.h>
-# include <openssl/bn.h>
-# include <openssl/dsa.h>
-# include <openssl/x509.h>
-# include <openssl/pem.h>
+#include <openssl/opensslconf.h>	/* for OPENSSL_NO_DSA */
 
-# define DEFBITS 512
 
-typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_OUT, OPT_PASSOUT, OPT_ENGINE, OPT_RAND, OPT_CIPHER
-} OPTION_CHOICE;
+#include <sys/types.h>
+#include <sys/stat.h>
 
-OPTIONS gendsa_options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: %s [args] dsaparam-file\n"},
-    {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
-    {"help", OPT_HELP, '-', "Display this summary"},
-    {"out", OPT_OUT, '>', "Output the key to the specified file"},
-    {"passout", OPT_PASSOUT, 's'},
-    {"rand", OPT_RAND, 's',
-     "Load the file(s) into the random number generator"},
-# ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-# endif
-    {"", OPT_CIPHER, '-', "Encrypt the output with any supported cipher"},
-    {NULL}
-};
+#include <stdio.h>
+#include <string.h>
 
-int gendsa_main(int argc, char **argv)
+#include "apps.h"
+
+#include <openssl/bio.h>
+#include <openssl/bn.h>
+#include <openssl/dsa.h>
+#include <openssl/err.h>
+#include <openssl/pem.h>
+#include <openssl/x509.h>
+
+#define DEFBITS	512
+
+int gendsa_main(int, char **);
+
+int
+gendsa_main(int argc, char **argv)
 {
-    BIO *out = NULL, *in = NULL;
-    DSA *dsa = NULL;
-    const EVP_CIPHER *enc = NULL;
-    char *inrand = NULL, *dsaparams = NULL;
-    char *outfile = NULL, *passoutarg = NULL, *passout = NULL, *prog;
-    OPTION_CHOICE o;
-    int ret = 1;
-
-    prog = opt_init(argc, argv, gendsa_options);
-    while ((o = opt_next()) != OPT_EOF) {
-        switch (o) {
-        case OPT_EOF:
-        case OPT_ERR:
- opthelp:
-            BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
-            goto end;
-        case OPT_HELP:
-            ret = 0;
-            opt_help(gendsa_options);
-            goto end;
-        case OPT_OUT:
-            outfile = opt_arg();
-            break;
-        case OPT_PASSOUT:
-            passoutarg = opt_arg();
-            break;
-        case OPT_ENGINE:
-            (void)setup_engine(opt_arg(), 0);
-            break;
-        case OPT_RAND:
-            inrand = opt_arg();
-            break;
-        case OPT_CIPHER:
-            if (!opt_cipher(opt_unknown(), &enc))
-                goto end;
-            break;
-        }
-    }
-    argc = opt_num_rest();
-    argv = opt_rest();
-
-    if (argc != 1)
-        goto opthelp;
-    dsaparams = *argv;
-
-    if (!app_passwd(NULL, passoutarg, NULL, &passout)) {
-        BIO_printf(bio_err, "Error getting password\n");
-        goto end;
-    }
-
-    in = bio_open_default(dsaparams, "r");
-    if (in == NULL)
-        goto end2;
-
-    if ((dsa = PEM_read_bio_DSAparams(in, NULL, NULL, NULL)) == NULL) {
-        BIO_printf(bio_err, "unable to load DSA parameter file\n");
-        goto end;
-    }
-    BIO_free(in);
-    in = NULL;
-
-    out = bio_open_default(outfile, "w");
-    if (out == NULL)
-        goto end2;
-
-    if (!app_RAND_load_file(NULL, 1) && inrand == NULL) {
-        BIO_printf(bio_err,
-                   "warning, not much extra random data, consider using the -rand option\n");
-    }
-    if (inrand != NULL)
-        BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
-                   app_RAND_load_files(inrand));
-
-    BIO_printf(bio_err, "Generating DSA key, %d bits\n", BN_num_bits(dsa->p));
-    if (!DSA_generate_key(dsa))
-        goto end;
-
-    app_RAND_write_file(NULL);
-
-    if (!PEM_write_bio_DSAPrivateKey(out, dsa, enc, NULL, 0, NULL, passout))
-        goto end;
-    ret = 0;
- end:
-    if (ret != 0)
-        ERR_print_errors(bio_err);
- end2:
-    BIO_free(in);
-    BIO_free_all(out);
-    DSA_free(dsa);
-    OPENSSL_free(passout);
-    return (ret);
-}
-#else                           /* !OPENSSL_NO_DSA */
-
-# if PEDANTIC
-static void *dummy = &dummy;
-# endif
-
+	DSA *dsa = NULL;
+	int ret = 1;
+	char *outfile = NULL;
+	char *dsaparams = NULL;
+	char *passargout = NULL, *passout = NULL;
+	BIO *out = NULL, *in = NULL;
+	const EVP_CIPHER *enc = NULL;
+#ifndef OPENSSL_NO_ENGINE
+	char *engine = NULL;
 #endif
+
+	if (!load_config(bio_err, NULL))
+		goto end;
+
+	argv++;
+	argc--;
+	for (;;) {
+		if (argc <= 0)
+			break;
+		if (strcmp(*argv, "-out") == 0) {
+			if (--argc < 1)
+				goto bad;
+			outfile = *(++argv);
+		} else if (strcmp(*argv, "-passout") == 0) {
+			if (--argc < 1)
+				goto bad;
+			passargout = *(++argv);
+		}
+#ifndef OPENSSL_NO_ENGINE
+		else if (strcmp(*argv, "-engine") == 0) {
+			if (--argc < 1)
+				goto bad;
+			engine = *(++argv);
+		}
+#endif
+		else if (strcmp(*argv, "-") == 0)
+			goto bad;
+#ifndef OPENSSL_NO_DES
+		else if (strcmp(*argv, "-des") == 0)
+			enc = EVP_des_cbc();
+		else if (strcmp(*argv, "-des3") == 0)
+			enc = EVP_des_ede3_cbc();
+#endif
+#ifndef OPENSSL_NO_IDEA
+		else if (strcmp(*argv, "-idea") == 0)
+			enc = EVP_idea_cbc();
+#endif
+#ifndef OPENSSL_NO_AES
+		else if (strcmp(*argv, "-aes128") == 0)
+			enc = EVP_aes_128_cbc();
+		else if (strcmp(*argv, "-aes192") == 0)
+			enc = EVP_aes_192_cbc();
+		else if (strcmp(*argv, "-aes256") == 0)
+			enc = EVP_aes_256_cbc();
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+		else if (strcmp(*argv, "-camellia128") == 0)
+			enc = EVP_camellia_128_cbc();
+		else if (strcmp(*argv, "-camellia192") == 0)
+			enc = EVP_camellia_192_cbc();
+		else if (strcmp(*argv, "-camellia256") == 0)
+			enc = EVP_camellia_256_cbc();
+#endif
+		else if (**argv != '-' && dsaparams == NULL) {
+			dsaparams = *argv;
+		} else
+			goto bad;
+		argv++;
+		argc--;
+	}
+
+	if (dsaparams == NULL) {
+bad:
+		BIO_printf(bio_err, "usage: gendsa [args] dsaparam-file\n");
+		BIO_printf(bio_err, " -out file - output the key to 'file'\n");
+#ifndef OPENSSL_NO_DES
+		BIO_printf(bio_err, " -des      - encrypt the generated key with DES in cbc mode\n");
+		BIO_printf(bio_err, " -des3     - encrypt the generated key with DES in ede cbc mode (168 bit key)\n");
+#endif
+#ifndef OPENSSL_NO_IDEA
+		BIO_printf(bio_err, " -idea     - encrypt the generated key with IDEA in cbc mode\n");
+#endif
+#ifndef OPENSSL_NO_AES
+		BIO_printf(bio_err, " -aes128, -aes192, -aes256\n");
+		BIO_printf(bio_err, "                 encrypt PEM output with cbc aes\n");
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+		BIO_printf(bio_err, " -camellia128, -camellia192, -camellia256\n");
+		BIO_printf(bio_err, "                 encrypt PEM output with cbc camellia\n");
+#endif
+#ifndef OPENSSL_NO_ENGINE
+		BIO_printf(bio_err, " -engine e - use engine e, possibly a hardware device.\n");
+#endif
+		BIO_printf(bio_err, " dsaparam-file\n");
+		BIO_printf(bio_err, "           - a DSA parameter file as generated by the dsaparam command\n");
+		goto end;
+	}
+#ifndef OPENSSL_NO_ENGINE
+	setup_engine(bio_err, engine, 0);
+#endif
+
+	if (!app_passwd(bio_err, NULL, passargout, NULL, &passout)) {
+		BIO_printf(bio_err, "Error getting password\n");
+		goto end;
+	}
+	in = BIO_new(BIO_s_file());
+	if (!(BIO_read_filename(in, dsaparams))) {
+		perror(dsaparams);
+		goto end;
+	}
+	if ((dsa = PEM_read_bio_DSAparams(in, NULL, NULL, NULL)) == NULL) {
+		BIO_printf(bio_err, "unable to load DSA parameter file\n");
+		goto end;
+	}
+	BIO_free(in);
+	in = NULL;
+
+	out = BIO_new(BIO_s_file());
+	if (out == NULL)
+		goto end;
+
+	if (outfile == NULL) {
+		BIO_set_fp(out, stdout, BIO_NOCLOSE);
+	} else {
+		if (BIO_write_filename(out, outfile) <= 0) {
+			perror(outfile);
+			goto end;
+		}
+	}
+
+	BIO_printf(bio_err, "Generating DSA key, %d bits\n",
+	    BN_num_bits(dsa->p));
+	if (!DSA_generate_key(dsa))
+		goto end;
+
+	if (!PEM_write_bio_DSAPrivateKey(out, dsa, enc, NULL, 0, NULL, passout))
+		goto end;
+	ret = 0;
+end:
+	if (ret != 0)
+		ERR_print_errors(bio_err);
+	if (in != NULL)
+		BIO_free(in);
+	if (out != NULL)
+		BIO_free_all(out);
+	if (dsa != NULL)
+		DSA_free(dsa);
+	free(passout);
+	
+	return (ret);
+}

@@ -1,4 +1,4 @@
-/* crypto/aes/aes_cbc.c -*- mode:C; c-file-style: "eay" -*- */
+/* $OpenBSD$ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ *    notice, this list of conditions and the following disclaimer. 
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -52,15 +52,14 @@
 #include <openssl/aes.h>
 #include <openssl/modes.h>
 
-void AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
-                     size_t len, const AES_KEY *key,
-                     unsigned char *ivec, const int enc)
+void
+AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
+    size_t len, const AES_KEY *key, unsigned char *ivec, const int enc)
 {
-
-    if (enc)
-        CRYPTO_cbc128_encrypt(in, out, len, key, ivec,
-                              (block128_f) AES_encrypt);
-    else
-        CRYPTO_cbc128_decrypt(in, out, len, key, ivec,
-                              (block128_f) AES_decrypt);
+	if (enc)
+		CRYPTO_cbc128_encrypt(in, out, len, key, ivec,
+		    (block128_f)AES_encrypt);
+	else
+		CRYPTO_cbc128_decrypt(in, out, len, key, ivec,
+		    (block128_f)AES_decrypt);
 }

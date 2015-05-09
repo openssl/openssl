@@ -1,4 +1,4 @@
-/* crypto/dh/dh_depr.c */
+/* $OpenBSD: dh_depr.c,v 1.5 2014/07/10 22:45:56 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ *    notice, this list of conditions and the following disclaimer. 
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -56,35 +56,28 @@
 /* This file contains deprecated functions as wrappers to the new ones */
 
 #include <stdio.h>
-#include "cryptlib.h"
+
+#include <openssl/opensslconf.h>
+
 #include <openssl/bn.h>
 #include <openssl/dh.h>
 
-static void *dummy = &dummy;
-
 #ifndef OPENSSL_NO_DEPRECATED
-DH *DH_generate_parameters(int prime_len, int generator,
-                           void (*callback) (int, int, void *), void *cb_arg)
+DH *
+DH_generate_parameters(int prime_len, int generator,
+    void (*callback)(int, int, void *), void *cb_arg)
 {
-    BN_GENCB *cb;
-    DH *ret = NULL;
+	BN_GENCB cb;
+	DH *ret = NULL;
 
-    if ((ret = DH_new()) == NULL)
-        return NULL;
-    cb = BN_GENCB_new();
-    if (!cb) {
-        DH_free(ret);
-        return NULL;
-    }
+	if ((ret = DH_new()) == NULL)
+		return NULL;
 
-    BN_GENCB_set_old(cb, callback, cb_arg);
+	BN_GENCB_set_old(&cb, callback, cb_arg);
 
-    if (DH_generate_parameters_ex(ret, prime_len, generator, cb)) {
-        BN_GENCB_free(cb);
-        return ret;
-    }
-    BN_GENCB_free(cb);
-    DH_free(ret);
-    return NULL;
+	if (DH_generate_parameters_ex(ret, prime_len, generator, &cb))
+		return ret;
+	DH_free(ret);
+	return NULL;
 }
 #endif

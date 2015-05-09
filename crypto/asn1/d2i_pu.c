@@ -1,4 +1,4 @@
-/* crypto/asn1/d2i_pu.c */
+/* $OpenBSD: d2i_pu.c,v 1.11 2014/07/10 22:45:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,80 +57,80 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+
+#include <openssl/opensslconf.h>
+
+#include <openssl/asn1.h>
 #include <openssl/bn.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
-#include <openssl/asn1.h>
-#ifndef OPENSSL_NO_RSA
-# include <openssl/rsa.h>
-#endif
+
 #ifndef OPENSSL_NO_DSA
-# include <openssl/dsa.h>
+#include <openssl/dsa.h>
 #endif
 #ifndef OPENSSL_NO_EC
-# include <openssl/ec.h>
+#include <openssl/ec.h>
+#endif
+#ifndef OPENSSL_NO_RSA
+#include <openssl/rsa.h>
 #endif
 
-EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp,
-                        long length)
+EVP_PKEY *
+d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp, long length)
 {
-    EVP_PKEY *ret;
+	EVP_PKEY *ret;
 
-    if ((a == NULL) || (*a == NULL)) {
-        if ((ret = EVP_PKEY_new()) == NULL) {
-            ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_EVP_LIB);
-            return (NULL);
-        }
-    } else
-        ret = *a;
+	if ((a == NULL) || (*a == NULL)) {
+		if ((ret = EVP_PKEY_new()) == NULL) {
+			ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_EVP_LIB);
+			return (NULL);
+		}
+	} else
+		ret = *a;
 
-    if (!EVP_PKEY_set_type(ret, type)) {
-        ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_EVP_LIB);
-        goto err;
-    }
+	if (!EVP_PKEY_set_type(ret, type)) {
+		ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_EVP_LIB);
+		goto err;
+	}
 
-    switch (EVP_PKEY_id(ret)) {
+	switch (EVP_PKEY_id(ret)) {
 #ifndef OPENSSL_NO_RSA
-    case EVP_PKEY_RSA:
-        /* TMP UGLY CAST */
-        if ((ret->pkey.rsa = d2i_RSAPublicKey(NULL,
-                                              (const unsigned char **)pp,
-                                              length)) == NULL) {
-            ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_ASN1_LIB);
-            goto err;
-        }
-        break;
+	case EVP_PKEY_RSA:
+		if ((ret->pkey.rsa = d2i_RSAPublicKey(NULL, pp, length)) ==
+		    NULL) {
+			ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_ASN1_LIB);
+			goto err;
+		}
+		break;
 #endif
 #ifndef OPENSSL_NO_DSA
-    case EVP_PKEY_DSA:
-        /* TMP UGLY CAST */
-        if (!d2i_DSAPublicKey(&(ret->pkey.dsa),
-                              (const unsigned char **)pp, length)) {
-            ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_ASN1_LIB);
-            goto err;
-        }
-        break;
+	case EVP_PKEY_DSA:
+		if (!d2i_DSAPublicKey(&(ret->pkey.dsa), pp, length)) {
+			ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_ASN1_LIB);
+			goto err;
+		}
+		break;
 #endif
 #ifndef OPENSSL_NO_EC
-    case EVP_PKEY_EC:
-        if (!o2i_ECPublicKey(&(ret->pkey.ec),
-                             (const unsigned char **)pp, length)) {
-            ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_ASN1_LIB);
-            goto err;
-        }
-        break;
+	case EVP_PKEY_EC:
+		if (!o2i_ECPublicKey(&(ret->pkey.ec), pp, length)) {
+			ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_ASN1_LIB);
+			goto err;
+		}
+		break;
 #endif
-    default:
-        ASN1err(ASN1_F_D2I_PUBLICKEY, ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE);
-        goto err;
-        /* break; */
-    }
-    if (a != NULL)
-        (*a) = ret;
-    return (ret);
- err:
-    if (a == NULL || *a != ret)
-        EVP_PKEY_free(ret);
-    return (NULL);
+	default:
+		ASN1err(ASN1_F_D2I_PUBLICKEY, ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE);
+		goto err;
+		/* break; */
+	}
+	if (a != NULL)
+		(*a) = ret;
+	return (ret);
+
+err:
+	if ((ret != NULL) && ((a == NULL) || (*a != ret)))
+		EVP_PKEY_free(ret);
+	return (NULL);
 }

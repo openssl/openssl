@@ -1,4 +1,4 @@
-/* crypto/evp/m_ripemd.c */
+/* $OpenBSD: m_ripemd.c,v 1.10 2014/07/10 22:45:57 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,50 +57,64 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
 
-#ifndef OPENSSL_NO_RMD160
+#include <openssl/opensslconf.h>
 
-# include <openssl/ripemd.h>
-# include <openssl/evp.h>
-# include <openssl/objects.h>
-# include <openssl/x509.h>
-# ifndef OPENSSL_NO_RSA
-#  include <openssl/rsa.h>
-# endif
+#ifndef OPENSSL_NO_RIPEMD
 
-static int init(EVP_MD_CTX *ctx)
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/ripemd.h>
+#include <openssl/x509.h>
+
+#ifndef OPENSSL_NO_RSA
+#include <openssl/rsa.h>
+#endif
+
+#include "evp_locl.h"
+
+static int
+init(EVP_MD_CTX *ctx)
 {
-    return RIPEMD160_Init(ctx->md_data);
+	return RIPEMD160_Init(ctx->md_data);
 }
 
-static int update(EVP_MD_CTX *ctx, const void *data, size_t count)
+static int
+update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
-    return RIPEMD160_Update(ctx->md_data, data, count);
+	return RIPEMD160_Update(ctx->md_data, data, count);
 }
 
-static int final(EVP_MD_CTX *ctx, unsigned char *md)
+static int
+final(EVP_MD_CTX *ctx, unsigned char *md)
 {
-    return RIPEMD160_Final(md, ctx->md_data);
+	return RIPEMD160_Final(md, ctx->md_data);
 }
 
 static const EVP_MD ripemd160_md = {
-    NID_ripemd160,
-    NID_ripemd160WithRSA,
-    RIPEMD160_DIGEST_LENGTH,
-    0,
-    init,
-    update,
-    final,
-    NULL,
-    NULL,
-    EVP_PKEY_RSA_method,
-    RIPEMD160_CBLOCK,
-    sizeof(EVP_MD *) + sizeof(RIPEMD160_CTX),
+	.type = NID_ripemd160,
+	.pkey_type = NID_ripemd160WithRSA,
+	.md_size = RIPEMD160_DIGEST_LENGTH,
+	.flags = 0,
+	.init = init,
+	.update = update,
+	.final = final,
+	.copy = NULL,
+	.cleanup = NULL,
+#ifndef OPENSSL_NO_RSA
+	.sign = (evp_sign_method *)RSA_sign,
+	.verify = (evp_verify_method *)RSA_verify,
+	.required_pkey_type = {
+		EVP_PKEY_RSA, EVP_PKEY_RSA2, 0, 0,
+	},
+#endif
+	.block_size = RIPEMD160_CBLOCK,
+	.ctx_size = sizeof(EVP_MD *) + sizeof(RIPEMD160_CTX),
 };
 
-const EVP_MD *EVP_ripemd160(void)
+const EVP_MD *
+EVP_ripemd160(void)
 {
-    return (&ripemd160_md);
+	return (&ripemd160_md);
 }
 #endif

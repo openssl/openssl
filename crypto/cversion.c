@@ -1,4 +1,4 @@
-/* crypto/cversion.c */
+/* $OpenBSD: cversion.c,v 1.14 2014/07/11 08:44:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,52 +56,31 @@
  * [including the GNU Public Licence.]
  */
 
+#include <openssl/crypto.h>
+#include <openssl/opensslv.h>
+
 #include "cryptlib.h"
 
-#ifndef NO_WINDOWS_BRAINDEATH
-# include "buildinf.h"
-#endif
-
-const char *SSLeay_version(int t)
+const char *
+SSLeay_version(int t)
 {
-    if (t == SSLEAY_VERSION)
-        return OPENSSL_VERSION_TEXT;
-    if (t == SSLEAY_BUILT_ON) {
-#ifdef DATE
-# ifdef OPENSSL_USE_BUILD_DATE
-        return (DATE);
-# else
-        return ("built on: reproducible build, date unspecified");
-# endif
-#else
-        return ("built on: date not available");
-#endif
-    }
-    if (t == SSLEAY_CFLAGS) {
-#ifdef CFLAGS
-        return (CFLAGS);
-#else
-        return ("compiler: information not available");
-#endif
-    }
-    if (t == SSLEAY_PLATFORM) {
-#ifdef PLATFORM
-        return (PLATFORM);
-#else
-        return ("platform: information not available");
-#endif
-    }
-    if (t == SSLEAY_DIR) {
-#ifdef OPENSSLDIR
-        return "OPENSSLDIR: \"" OPENSSLDIR "\"";
-#else
-        return "OPENSSLDIR: N/A";
-#endif
-    }
-    return ("not available");
+	switch (t) {
+	case SSLEAY_VERSION:
+		return OPENSSL_VERSION_TEXT;
+	case SSLEAY_BUILT_ON:
+		return("built on: date not available");
+	case SSLEAY_CFLAGS:
+		return("compiler: information not available");
+	case SSLEAY_PLATFORM:
+		return("platform: information not available");
+	case SSLEAY_DIR:
+		return "OPENSSLDIR: \"" OPENSSLDIR "\"";
+	}
+	return("not available");
 }
 
-unsigned long SSLeay(void)
+unsigned long
+SSLeay(void)
 {
-    return (SSLEAY_VERSION_NUMBER);
+	return (SSLEAY_VERSION_NUMBER);
 }

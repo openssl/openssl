@@ -1,4 +1,4 @@
-/* apps/s_apps.h */
+/* $OpenBSD$ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -108,111 +108,40 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
-/* conflicts with winsock2 stuff on netware */
-#if !defined(OPENSSL_SYS_NETWARE)
-# include <sys/types.h>
-#endif
+#include <sys/types.h>
 #include <openssl/opensslconf.h>
-
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
-# include <conio.h>
-#endif
-
-#if defined(OPENSSL_SYS_MSDOS) && !defined(_WIN32)
-# define _kbhit kbhit
-#endif
-
-#if defined(OPENSSL_SYS_VMS) && !defined(FD_SET)
-/*
- * VAX C does not defined fd_set and friends, but it's actually quite simple
- */
-/* These definitions are borrowed from SOCKETSHR.       /Richard Levitte */
-# define MAX_NOFILE      32
-# define NBBY             8     /* number of bits in a byte */
-
-# ifndef FD_SETSIZE
-#  define FD_SETSIZE      MAX_NOFILE
-# endif                         /* FD_SETSIZE */
-
-/* How many things we'll allow select to use. 0 if unlimited */
-# define MAXSELFD        MAX_NOFILE
-typedef int fd_mask;            /* int here! VMS prototypes int, not long */
-# define NFDBITS (sizeof(fd_mask) * NBBY)/* bits per mask (power of 2!) */
-# define NFDSHIFT 5             /* Shift based on above */
-
-typedef fd_mask fd_set;
-# define FD_SET(n, p)    (*(p) |= (1 << ((n) % NFDBITS)))
-# define FD_CLR(n, p)    (*(p) &= ~(1 << ((n) % NFDBITS)))
-# define FD_ISSET(n, p)  (*(p) & (1 << ((n) % NFDBITS)))
-# define FD_ZERO(p)      memset((p), 0, sizeof(*(p)))
-#endif
 
 #define PORT            4433
 #define PORT_STR        "4433"
 #define PROTOCOL        "tcp"
 
 int do_server(int port, int type, int *ret,
-              int (*cb) (char *hostname, int s, int stype,
-                         unsigned char *context), unsigned char *context,
-              int naccept);
-#ifndef NO_SYS_UN_H
-int do_server_unix(const char *path, int *ret,
-                   int (*cb) (char *hostname, int s, int stype,
-                              unsigned char *context), unsigned char *context,
-                   int naccept);
-#endif
+    int (*cb)(char *hostname, int s, unsigned char *context),
+    unsigned char *context);
 #ifdef HEADER_X509_H
 int verify_callback(int ok, X509_STORE_CTX *ctx);
 #endif
 #ifdef HEADER_SSL_H
 int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file);
-int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
-                       STACK_OF(X509) *chain, int build_chain);
-int ssl_print_sigalgs(BIO *out, SSL *s);
-int ssl_print_point_formats(BIO *out, SSL *s);
-int ssl_print_curves(BIO *out, SSL *s, int noshared);
+int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key);
 #endif
-int ssl_print_tmp_key(BIO *out, SSL *s);
-int init_client(int *sock, const char *server, int port, int type);
-#ifndef NO_SYS_UN_H
-int init_client_unix(int *sock, const char *server);
-#endif
+int init_client(int *sock, char *server, char *port, int type, int af);
 int should_retry(int i);
-int extract_port(const char *str, unsigned short *port_ptr);
-int extract_host_port(char *str, char **host_ptr, unsigned char *ip,
-                      unsigned short *p);
+int extract_port(char *str, short *port_ptr);
+int extract_host_port(char *str, char **host_ptr, unsigned char *ip, char **p);
 
-long bio_dump_callback(BIO *bio, int cmd, const char *argp,
-                       int argi, long argl, long ret);
+long bio_dump_callback(BIO *bio, int cmd, const char *argp, int argi,
+    long argl, long ret);
 
 #ifdef HEADER_SSL_H
 void apps_ssl_info_callback(const SSL *s, int where, int ret);
 void msg_cb(int write_p, int version, int content_type, const void *buf,
-            size_t len, SSL *ssl, void *arg);
+    size_t len, SSL *ssl, void *arg);
 void tlsext_cb(SSL *s, int client_server, int type, unsigned char *data,
-               int len, void *arg);
+    int len, void *arg);
 #endif
 
 int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
-                             unsigned int *cookie_len);
+    unsigned int *cookie_len);
 int verify_cookie_callback(SSL *ssl, unsigned char *cookie,
-                           unsigned int cookie_len);
-
-typedef struct ssl_excert_st SSL_EXCERT;
-
-void ssl_ctx_set_excert(SSL_CTX *ctx, SSL_EXCERT *exc);
-void ssl_excert_free(SSL_EXCERT *exc);
-int args_excert(int option, SSL_EXCERT **pexc);
-int load_excert(SSL_EXCERT **pexc);
-void print_ssl_summary(SSL *s);
-#ifdef HEADER_SSL_H
-int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str,
-               SSL_CTX *ctx, int no_ecdhe, int no_jpake);
-int ssl_ctx_add_crls(SSL_CTX *ctx, STACK_OF(X509_CRL) *crls,
-                     int crl_download);
-int ssl_load_stores(SSL_CTX *ctx, const char *vfyCApath,
-                    const char *vfyCAfile, const char *chCApath,
-                    const char *chCAfile, STACK_OF(X509_CRL) *crls,
-                    int crl_download);
-void ssl_ctx_security_debug(SSL_CTX *ctx, int verbose);
-#endif
+    unsigned int cookie_len);

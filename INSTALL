@@ -1,354 +1,370 @@
-
- INSTALLATION ON THE UNIX PLATFORM
- ---------------------------------
-
- [Installation on DOS (with djgpp), Windows, OpenVMS, MacOS (before MacOS X)
-  and NetWare is described in INSTALL.DJGPP, INSTALL.W32, INSTALL.VMS,
-  INSTALL.MacOS and INSTALL.NW.
-  
-  This document describes installation on operating systems in the Unix
-  family.]
-
- To install OpenSSL, you will need:
-
-  * make
-  * Perl 5
-  * an ANSI C compiler
-  * a development environment in form of development libraries and C
-    header files
-  * a supported Unix operating system
-
- Quick Start
- -----------
-
- If you want to just get on with it, do:
-
-  $ ./config
-  $ make
-  $ make test
-  $ make install
-
- [If any of these steps fails, see section Installation in Detail below.]
-
- This will build and install OpenSSL in the default location, which is (for
- historical reasons) /usr/local/ssl. If you want to install it anywhere else,
- run config like this:
-
-  $ ./config --prefix=/usr/local --openssldir=/usr/local/openssl
-
-
- Configuration Options
- ---------------------
-
- There are several options to ./config (or ./Configure) to customize
- the build:
-
-  --prefix=DIR  Install in DIR/bin, DIR/lib, DIR/include/openssl.
-	        Configuration files used by OpenSSL will be in DIR/ssl
-                or the directory specified by --openssldir.
-
-  --openssldir=DIR Directory for OpenSSL files. If no prefix is specified,
-                the library files and binaries are also installed there.
-
-  no-threads    Don't try to build with support for multi-threaded
-                applications.
-
-  threads       Build with support for multi-threaded applications.
-                This will usually require additional system-dependent options!
-                See "Note on multi-threading" below.
-
-  no-zlib       Don't try to build with support for zlib compression and
-                decompression.
-
-  zlib          Build with support for zlib compression/decompression.
-
-  zlib-dynamic  Like "zlib", but has OpenSSL load the zlib library dynamically
-                when needed.  This is only supported on systems where loading
-                of shared libraries is supported.  This is the default choice.
-
-  no-shared     Don't try to create shared libraries.
-
-  shared        In addition to the usual static libraries, create shared
-                libraries on platforms where it's supported.  See "Note on
-                shared libraries" below.
-
-  no-asm        Do not use assembler code.
-
-  386           Use the 80386 instruction set only (the default x86 code is
-                more efficient, but requires at least a 486). Note: Use
-                compiler flags for any other CPU specific configuration,
-                e.g. "-m32" to build x86 code on an x64 system.
-
-  no-sse2	Exclude SSE2 code pathes. Normally SSE2 extension is
-		detected at run-time, but the decision whether or not the
-		machine code will be executed is taken solely on CPU
-		capability vector. This means that if you happen to run OS
-		kernel which does not support SSE2 extension on Intel P4
-		processor, then your application might be exposed to
-		"illegal instruction" exception. There might be a way
-		to enable support in kernel, e.g. FreeBSD kernel can be
-		compiled with CPU_ENABLE_SSE, and there is a way to
-		disengage SSE2 code pathes upon application start-up,
-		but if you aim for wider "audience" running such kernel,
-		consider no-sse2. Both 386 and no-asm options above imply
-		no-sse2.
-
-  no-<cipher>   Build without the specified cipher (bf, cast, des, dh, dsa,
-                hmac, md2, md5, mdc2, rc2, rc4, rc5, rsa, sha).
-                The crypto/<cipher> directory can be removed after running
-                "make depend".
-
-  -Dxxx, -lxxx, -Lxxx, -fxxx, -mXXX, -Kxxx These system specific options will
-                be passed through to the compiler to allow you to
-                define preprocessor symbols, specify additional libraries,
-                library directories or other compiler options.
-
-
- Installation in Detail
- ----------------------
-
- 1a. Configure OpenSSL for your operation system automatically:
-
-       $ ./config [options]
-
-     This guesses at your operating system (and compiler, if necessary) and
-     configures OpenSSL based on this guess. Run ./config -t to see
-     if it guessed correctly. If you want to use a different compiler, you
-     are cross-compiling for another platform, or the ./config guess was
-     wrong for other reasons, go to step 1b. Otherwise go to step 2.
-
-     On some systems, you can include debugging information as follows:
-
-       $ ./config -d [options]
-
- 1b. Configure OpenSSL for your operating system manually
-
-     OpenSSL knows about a range of different operating system, hardware and
-     compiler combinations. To see the ones it knows about, run
-
-       $ ./Configure
-
-     Pick a suitable name from the list that matches your system. For most
-     operating systems there is a choice between using "cc" or "gcc".  When
-     you have identified your system (and if necessary compiler) use this name
-     as the argument to ./Configure. For example, a "linux-elf" user would
-     run:
-
-       $ ./Configure linux-elf [options]
-
-     If your system is not available, you will have to edit the Configure
-     program and add the correct configuration for your system. The
-     generic configurations "cc" or "gcc" should usually work on 32 bit
-     systems.
-
-     Configure creates the file Makefile.ssl from Makefile.org and
-     defines various macros in crypto/opensslconf.h (generated from
-     crypto/opensslconf.h.in).
-
-  2. Build OpenSSL by running:
-
-       $ make
-
-     This will build the OpenSSL libraries (libcrypto.a and libssl.a) and the
-     OpenSSL binary ("openssl"). The libraries will be built in the top-level
-     directory, and the binary will be in the "apps" directory.
-
-     If "make" fails, look at the output.  There may be reasons for
-     the failure that aren't problems in OpenSSL itself (like missing
-     standard headers).  If it is a problem with OpenSSL itself, please
-     report the problem to <openssl-bugs@openssl.org> (note that your
-     message will be recorded in the request tracker publicly readable
-     via http://www.openssl.org/support/rt.html and will be forwarded to a
-     public mailing list). Include the output of "make report" in your message.
-     Please check out the request tracker. Maybe the bug was already
-     reported or has already been fixed.
-
-     [If you encounter assembler error messages, try the "no-asm"
-     configuration option as an immediate fix.]
-
-     Compiling parts of OpenSSL with gcc and others with the system
-     compiler will result in unresolved symbols on some systems.
-
-  3. After a successful build, the libraries should be tested. Run:
-
-       $ make test
-
-     If a test fails, look at the output.  There may be reasons for
-     the failure that isn't a problem in OpenSSL itself (like a missing
-     or malfunctioning bc).  If it is a problem with OpenSSL itself,
-     try removing any compiler optimization flags from the CFLAG line
-     in Makefile.ssl and run "make clean; make". Please send a bug
-     report to <openssl-bugs@openssl.org>, including the output of
-     "make report" in order to be added to the request tracker at
-     http://www.openssl.org/support/rt.html.
-
-  4. If everything tests ok, install OpenSSL with
-
-       $ make install
-
-     This will create the installation directory (if it does not exist) and
-     then the following subdirectories:
-
-       certs           Initially empty, this is the default location
-                       for certificate files.
-       man/man1        Manual pages for the 'openssl' command line tool
-       man/man3        Manual pages for the libraries (very incomplete)
-       misc            Various scripts.
-       private         Initially empty, this is the default location
-                       for private key files.
-
-     If you didn't choose a different installation prefix, the
-     following additional subdirectories will be created:
-
-       bin             Contains the openssl binary and a few other 
-                       utility programs. 
-       include/openssl Contains the header files needed if you want to
-                       compile programs with libcrypto or libssl.
-       lib             Contains the OpenSSL library files themselves.
-
-     Use "make install_sw" to install the software without documentation,
-     and "install_docs_html" to install HTML renditions of the manual
-     pages.
-
-     Package builders who want to configure the library for standard
-     locations, but have the package installed somewhere else so that
-     it can easily be packaged, can use
-
-       $ make INSTALL_PREFIX=/tmp/package-root install
-
-     (or specify "--install_prefix=/tmp/package-root" as a configure
-     option).  The specified prefix will be prepended to all
-     installation target filenames.
-
-
-  NOTE: The header files used to reside directly in the include
-  directory, but have now been moved to include/openssl so that
-  OpenSSL can co-exist with other libraries which use some of the
-  same filenames.  This means that applications that use OpenSSL
-  should now use C preprocessor directives of the form
-
-       #include <openssl/ssl.h>
-
-  instead of "#include <ssl.h>", which was used with library versions
-  up to OpenSSL 0.9.2b.
-
-  If you install a new version of OpenSSL over an old library version,
-  you should delete the old header files in the include directory.
-
-  Compatibility issues:
-
-  *  COMPILING existing applications
-
-     To compile an application that uses old filenames -- e.g.
-     "#include <ssl.h>" --, it will usually be enough to find
-     the CFLAGS definition in the application's Makefile and
-     add a C option such as
-
-          -I/usr/local/ssl/include/openssl
-
-     to it.
-
-     But don't delete the existing -I option that points to
-     the ..../include directory!  Otherwise, OpenSSL header files
-     could not #include each other.
-
-  *  WRITING applications
-
-     To write an application that is able to handle both the new
-     and the old directory layout, so that it can still be compiled
-     with library versions up to OpenSSL 0.9.2b without bothering
-     the user, you can proceed as follows:
-
-     -  Always use the new filename of OpenSSL header files,
-        e.g. #include <openssl/ssl.h>.
-
-     -  Create a directory "incl" that contains only a symbolic
-        link named "openssl", which points to the "include" directory
-        of OpenSSL.
-        For example, your application's Makefile might contain the
-        following rule, if OPENSSLDIR is a pathname (absolute or
-        relative) of the directory where OpenSSL resides:
-
-        incl/openssl:
-        	-mkdir incl
-        	cd $(OPENSSLDIR) # Check whether the directory really exists
-        	-ln -s `cd $(OPENSSLDIR); pwd`/include incl/openssl
-
-        You will have to add "incl/openssl" to the dependencies
-        of those C files that include some OpenSSL header file.
-
-     -  Add "-Iincl" to your CFLAGS.
-
-     With these additions, the OpenSSL header files will be available
-     under both name variants if an old library version is used:
-     Your application can reach them under names like <openssl/foo.h>,
-     while the header files still are able to #include each other
-     with names of the form <foo.h>.
-
-
- Note on multi-threading
- -----------------------
-
- For some systems, the OpenSSL Configure script knows what compiler options
- are needed to generate a library that is suitable for multi-threaded
- applications.  On these systems, support for multi-threading is enabled
- by default; use the "no-threads" option to disable (this should never be
- necessary).
-
- On other systems, to enable support for multi-threading, you will have
- to specify at least two options: "threads", and a system-dependent option.
- (The latter is "-D_REENTRANT" on various systems.)  The default in this
- case, obviously, is not to include support for multi-threading (but
- you can still use "no-threads" to suppress an annoying warning message
- from the Configure script.)
-
-
- Note on shared libraries
- ------------------------
-
- Shared libraries have certain caveats.  Binary backward compatibility
- can't be guaranteed before OpenSSL version 1.0.  The only reason to
- use them would be to conserve memory on systems where several programs
- are using OpenSSL.
-
- For some systems, the OpenSSL Configure script knows what is needed to
- build shared libraries for libcrypto and libssl.  On these systems,
- the shared libraries are currently not created by default, but giving
- the option "shared" will get them created.  This method supports Makefile
- targets for shared library creation, like linux-shared.  Those targets
- can currently be used on their own just as well, but this is expected
- to change in future versions of OpenSSL.
-
- Note on random number generation
- --------------------------------
-
- Availability of cryptographically secure random numbers is required for
- secret key generation. OpenSSL provides several options to seed the
- internal PRNG. If not properly seeded, the internal PRNG will refuse
- to deliver random bytes and a "PRNG not seeded error" will occur.
- On systems without /dev/urandom (or similar) device, it may be necessary
- to install additional support software to obtain random seed.
- Please check out the manual pages for RAND_add(), RAND_bytes(), RAND_egd(),
- and the FAQ for more information.
-
- Note on support for multiple builds
- -----------------------------------
-
- OpenSSL is usually built in its source tree.  Unfortunately, this doesn't
- support building for multiple platforms from the same source tree very well.
- It is however possible to build in a separate tree through the use of lots
- of symbolic links, which should be prepared like this:
-
-	mkdir -p objtree/"`uname -s`-`uname -r`-`uname -m`"
-	cd objtree/"`uname -s`-`uname -r`-`uname -m`"
-	(cd $OPENSSL_SOURCE; find . -type f) | while read F; do
-		mkdir -p `dirname $F`
-		rm -f $F; ln -s $OPENSSL_SOURCE/$F $F
-		echo $F '->' $OPENSSL_SOURCE/$F
-	done
-	make -f Makefile.org clean
-
- OPENSSL_SOURCE is an environment variable that contains the absolute (this
- is important!) path to the OpenSSL source tree.
-
- Also, operations like 'make update' should still be made in the source tree.
+Installation Instructions
+*************************
+
+Copyright (C) 1994-1996, 1999-2002, 2004-2013 Free Software Foundation,
+Inc.
+
+   Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.  This file is offered as-is,
+without warranty of any kind.
+
+Basic Installation
+==================
+
+   Briefly, the shell command `./configure && make && make install'
+should configure, build, and install this package.  The following
+more-detailed instructions are generic; see the `README' file for
+instructions specific to this package.  Some packages provide this
+`INSTALL' file but do not implement all of the features documented
+below.  The lack of an optional feature in a given package is not
+necessarily a bug.  More recommendations for GNU packages can be found
+in *note Makefile Conventions: (standards)Makefile Conventions.
+
+   The `configure' shell script attempts to guess correct values for
+various system-dependent variables used during compilation.  It uses
+those values to create a `Makefile' in each directory of the package.
+It may also create one or more `.h' files containing system-dependent
+definitions.  Finally, it creates a shell script `config.status' that
+you can run in the future to recreate the current configuration, and a
+file `config.log' containing compiler output (useful mainly for
+debugging `configure').
+
+   It can also use an optional file (typically called `config.cache'
+and enabled with `--cache-file=config.cache' or simply `-C') that saves
+the results of its tests to speed up reconfiguring.  Caching is
+disabled by default to prevent problems with accidental use of stale
+cache files.
+
+   If you need to do unusual things to compile the package, please try
+to figure out how `configure' could check whether to do them, and mail
+diffs or instructions to the address given in the `README' so they can
+be considered for the next release.  If you are using the cache, and at
+some point `config.cache' contains results you don't want to keep, you
+may remove or edit it.
+
+   The file `configure.ac' (or `configure.in') is used to create
+`configure' by a program called `autoconf'.  You need `configure.ac' if
+you want to change it or regenerate `configure' using a newer version
+of `autoconf'.
+
+   The simplest way to compile this package is:
+
+  1. `cd' to the directory containing the package's source code and type
+     `./configure' to configure the package for your system.
+
+     Running `configure' might take a while.  While running, it prints
+     some messages telling which features it is checking for.
+
+  2. Type `make' to compile the package.
+
+  3. Optionally, type `make check' to run any self-tests that come with
+     the package, generally using the just-built uninstalled binaries.
+
+  4. Type `make install' to install the programs and any data files and
+     documentation.  When installing into a prefix owned by root, it is
+     recommended that the package be configured and built as a regular
+     user, and only the `make install' phase executed with root
+     privileges.
+
+  5. Optionally, type `make installcheck' to repeat any self-tests, but
+     this time using the binaries in their final installed location.
+     This target does not install anything.  Running this target as a
+     regular user, particularly if the prior `make install' required
+     root privileges, verifies that the installation completed
+     correctly.
+
+  6. You can remove the program binaries and object files from the
+     source code directory by typing `make clean'.  To also remove the
+     files that `configure' created (so you can compile the package for
+     a different kind of computer), type `make distclean'.  There is
+     also a `make maintainer-clean' target, but that is intended mainly
+     for the package's developers.  If you use it, you may have to get
+     all sorts of other programs in order to regenerate files that came
+     with the distribution.
+
+  7. Often, you can also type `make uninstall' to remove the installed
+     files again.  In practice, not all packages have tested that
+     uninstallation works correctly, even though it is required by the
+     GNU Coding Standards.
+
+  8. Some packages, particularly those that use Automake, provide `make
+     distcheck', which can by used by developers to test that all other
+     targets like `make install' and `make uninstall' work correctly.
+     This target is generally not run by end users.
+
+Compilers and Options
+=====================
+
+   Some systems require unusual options for compilation or linking that
+the `configure' script does not know about.  Run `./configure --help'
+for details on some of the pertinent environment variables.
+
+   You can give `configure' initial values for configuration parameters
+by setting variables in the command line or in the environment.  Here
+is an example:
+
+     ./configure CC=c99 CFLAGS=-g LIBS=-lposix
+
+   *Note Defining Variables::, for more details.
+
+Compiling For Multiple Architectures
+====================================
+
+   You can compile the package for more than one kind of computer at the
+same time, by placing the object files for each architecture in their
+own directory.  To do this, you can use GNU `make'.  `cd' to the
+directory where you want the object files and executables to go and run
+the `configure' script.  `configure' automatically checks for the
+source code in the directory that `configure' is in and in `..'.  This
+is known as a "VPATH" build.
+
+   With a non-GNU `make', it is safer to compile the package for one
+architecture at a time in the source code directory.  After you have
+installed the package for one architecture, use `make distclean' before
+reconfiguring for another architecture.
+
+   On MacOS X 10.5 and later systems, you can create libraries and
+executables that work on multiple system types--known as "fat" or
+"universal" binaries--by specifying multiple `-arch' options to the
+compiler but only a single `-arch' option to the preprocessor.  Like
+this:
+
+     ./configure CC="gcc -arch i386 -arch x86_64 -arch ppc -arch ppc64" \
+                 CXX="g++ -arch i386 -arch x86_64 -arch ppc -arch ppc64" \
+                 CPP="gcc -E" CXXCPP="g++ -E"
+
+   This is not guaranteed to produce working output in all cases, you
+may have to build one architecture at a time and combine the results
+using the `lipo' tool if you have problems.
+
+Installation Names
+==================
+
+   By default, `make install' installs the package's commands under
+`/usr/local/bin', include files under `/usr/local/include', etc.  You
+can specify an installation prefix other than `/usr/local' by giving
+`configure' the option `--prefix=PREFIX', where PREFIX must be an
+absolute file name.
+
+   You can specify separate installation prefixes for
+architecture-specific files and architecture-independent files.  If you
+pass the option `--exec-prefix=PREFIX' to `configure', the package uses
+PREFIX as the prefix for installing programs and libraries.
+Documentation and other data files still use the regular prefix.
+
+   In addition, if you use an unusual directory layout you can give
+options like `--bindir=DIR' to specify different values for particular
+kinds of files.  Run `configure --help' for a list of the directories
+you can set and what kinds of files go in them.  In general, the
+default for these options is expressed in terms of `${prefix}', so that
+specifying just `--prefix' will affect all of the other directory
+specifications that were not explicitly provided.
+
+   The most portable way to affect installation locations is to pass the
+correct locations to `configure'; however, many packages provide one or
+both of the following shortcuts of passing variable assignments to the
+`make install' command line to change installation locations without
+having to reconfigure or recompile.
+
+   The first method involves providing an override variable for each
+affected directory.  For example, `make install
+prefix=/alternate/directory' will choose an alternate location for all
+directory configuration variables that were expressed in terms of
+`${prefix}'.  Any directories that were specified during `configure',
+but not in terms of `${prefix}', must each be overridden at install
+time for the entire installation to be relocated.  The approach of
+makefile variable overrides for each directory variable is required by
+the GNU Coding Standards, and ideally causes no recompilation.
+However, some platforms have known limitations with the semantics of
+shared libraries that end up requiring recompilation when using this
+method, particularly noticeable in packages that use GNU Libtool.
+
+   The second method involves providing the `DESTDIR' variable.  For
+example, `make install DESTDIR=/alternate/directory' will prepend
+`/alternate/directory' before all installation names.  The approach of
+`DESTDIR' overrides is not required by the GNU Coding Standards, and
+does not work on platforms that have drive letters.  On the other hand,
+it does better at avoiding recompilation issues, and works well even
+when some directory options were not specified in terms of `${prefix}'
+at `configure' time.
+
+Optional Features
+=================
+
+   If the package supports it, you can cause programs to be installed
+with an extra prefix or suffix on their names by giving `configure' the
+option `--program-prefix=PREFIX' or `--program-suffix=SUFFIX'.
+
+   Some packages pay attention to `--enable-FEATURE' options to
+`configure', where FEATURE indicates an optional part of the package.
+They may also pay attention to `--with-PACKAGE' options, where PACKAGE
+is something like `gnu-as' or `x' (for the X Window System).  The
+`README' should mention any `--enable-' and `--with-' options that the
+package recognizes.
+
+   For packages that use the X Window System, `configure' can usually
+find the X include and library files automatically, but if it doesn't,
+you can use the `configure' options `--x-includes=DIR' and
+`--x-libraries=DIR' to specify their locations.
+
+   Some packages offer the ability to configure how verbose the
+execution of `make' will be.  For these packages, running `./configure
+--enable-silent-rules' sets the default to minimal output, which can be
+overridden with `make V=1'; while running `./configure
+--disable-silent-rules' sets the default to verbose, which can be
+overridden with `make V=0'.
+
+Particular systems
+==================
+
+   On HP-UX, the default C compiler is not ANSI C compatible.  If GNU
+CC is not installed, it is recommended to use the following options in
+order to use an ANSI C compiler:
+
+     ./configure CC="cc -Ae -D_XOPEN_SOURCE=500"
+
+and if that doesn't work, install pre-built binaries of GCC for HP-UX.
+
+   HP-UX `make' updates targets which have the same time stamps as
+their prerequisites, which makes it generally unusable when shipped
+generated files such as `configure' are involved.  Use GNU `make'
+instead.
+
+   On OSF/1 a.k.a. Tru64, some versions of the default C compiler cannot
+parse its `<wchar.h>' header file.  The option `-nodtk' can be used as
+a workaround.  If GNU CC is not installed, it is therefore recommended
+to try
+
+     ./configure CC="cc"
+
+and if that doesn't work, try
+
+     ./configure CC="cc -nodtk"
+
+   On Solaris, don't put `/usr/ucb' early in your `PATH'.  This
+directory contains several dysfunctional programs; working variants of
+these programs are available in `/usr/bin'.  So, if you need `/usr/ucb'
+in your `PATH', put it _after_ `/usr/bin'.
+
+   On Haiku, software installed for all users goes in `/boot/common',
+not `/usr/local'.  It is recommended to use the following options:
+
+     ./configure --prefix=/boot/common
+
+Specifying the System Type
+==========================
+
+   There may be some features `configure' cannot figure out
+automatically, but needs to determine by the type of machine the package
+will run on.  Usually, assuming the package is built to be run on the
+_same_ architectures, `configure' can figure that out, but if it prints
+a message saying it cannot guess the machine type, give it the
+`--build=TYPE' option.  TYPE can either be a short name for the system
+type, such as `sun4', or a canonical name which has the form:
+
+     CPU-COMPANY-SYSTEM
+
+where SYSTEM can have one of these forms:
+
+     OS
+     KERNEL-OS
+
+   See the file `config.sub' for the possible values of each field.  If
+`config.sub' isn't included in this package, then this package doesn't
+need to know the machine type.
+
+   If you are _building_ compiler tools for cross-compiling, you should
+use the option `--target=TYPE' to select the type of system they will
+produce code for.
+
+   If you want to _use_ a cross compiler, that generates code for a
+platform different from the build platform, you should specify the
+"host" platform (i.e., that on which the generated programs will
+eventually be run) with `--host=TYPE'.
+
+Sharing Defaults
+================
+
+   If you want to set default values for `configure' scripts to share,
+you can create a site shell script called `config.site' that gives
+default values for variables like `CC', `cache_file', and `prefix'.
+`configure' looks for `PREFIX/share/config.site' if it exists, then
+`PREFIX/etc/config.site' if it exists.  Or, you can set the
+`CONFIG_SITE' environment variable to the location of the site script.
+A warning: not all `configure' scripts look for a site script.
+
+Defining Variables
+==================
+
+   Variables not defined in a site shell script can be set in the
+environment passed to `configure'.  However, some packages may run
+configure again during the build, and the customized values of these
+variables may be lost.  In order to avoid this problem, you should set
+them in the `configure' command line, using `VAR=value'.  For example:
+
+     ./configure CC=/usr/local2/bin/gcc
+
+causes the specified `gcc' to be used as the C compiler (unless it is
+overridden in the site shell script).
+
+Unfortunately, this technique does not work for `CONFIG_SHELL' due to
+an Autoconf limitation.  Until the limitation is lifted, you can use
+this workaround:
+
+     CONFIG_SHELL=/bin/bash ./configure CONFIG_SHELL=/bin/bash
+
+`configure' Invocation
+======================
+
+   `configure' recognizes the following options to control how it
+operates.
+
+`--help'
+`-h'
+     Print a summary of all of the options to `configure', and exit.
+
+`--help=short'
+`--help=recursive'
+     Print a summary of the options unique to this package's
+     `configure', and exit.  The `short' variant lists options used
+     only in the top level, while the `recursive' variant lists options
+     also present in any nested packages.
+
+`--version'
+`-V'
+     Print the version of Autoconf used to generate the `configure'
+     script, and exit.
+
+`--cache-file=FILE'
+     Enable the cache: use and save the results of the tests in FILE,
+     traditionally `config.cache'.  FILE defaults to `/dev/null' to
+     disable caching.
+
+`--config-cache'
+`-C'
+     Alias for `--cache-file=config.cache'.
+
+`--quiet'
+`--silent'
+`-q'
+     Do not print messages saying which checks are being made.  To
+     suppress all normal output, redirect it to `/dev/null' (any error
+     messages will still be shown).
+
+`--srcdir=DIR'
+     Look for the package's source code in directory DIR.  Usually
+     `configure' can determine that directory automatically.
+
+`--prefix=DIR'
+     Use DIR as the installation prefix.  *note Installation Names::
+     for more details, including other options available for fine-tuning
+     the installation locations.
+
+`--no-create'
+`-n'
+     Run the configure checks, but stop before creating any output
+     files.
+
+`configure' also accepts some other, not widely useful, options.  Run
+`configure --help' for more details.

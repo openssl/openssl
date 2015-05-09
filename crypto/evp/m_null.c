@@ -1,4 +1,4 @@
-/* crypto/evp/m_null.c */
+/* $OpenBSD: m_null.c,v 1.8 2014/06/12 15:49:29 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,42 +57,50 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-static int init(EVP_MD_CTX *ctx)
+static int
+init(EVP_MD_CTX *ctx)
 {
-    return 1;
+	return 1;
 }
 
-static int update(EVP_MD_CTX *ctx, const void *data, size_t count)
+static int
+update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
-    return 1;
+	return 1;
 }
 
-static int final(EVP_MD_CTX *ctx, unsigned char *md)
+static int
+final(EVP_MD_CTX *ctx, unsigned char *md)
 {
-    return 1;
+	return 1;
 }
 
 static const EVP_MD null_md = {
-    NID_undef,
-    NID_undef,
-    0,
-    0,
-    init,
-    update,
-    final,
-    NULL,
-    NULL,
-    EVP_PKEY_NULL_method,
-    0,
-    sizeof(EVP_MD *),
+	.type = NID_undef,
+	.pkey_type = NID_undef,
+	.md_size = 0,
+	.flags = 0,
+	.init = init,
+	.update = update,
+	.final = final,
+	.copy = NULL,
+	.cleanup = NULL,
+	.sign = NULL,
+	.verify = NULL,
+	.required_pkey_type = {
+		0, 0, 0, 0,
+	},
+	.block_size = 0,
+	.ctx_size = sizeof(EVP_MD *),
 };
 
-const EVP_MD *EVP_md_null(void)
+const EVP_MD *
+EVP_md_null(void)
 {
-    return (&null_md);
+	return (&null_md);
 }

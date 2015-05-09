@@ -1,7 +1,6 @@
-/* pcy_lib.c */
-/*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
- * 2004.
+/* $OpenBSD: pcy_lib.c,v 1.3 2014/06/12 15:49:31 deraadt Exp $ */
+/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
+ * project 2004.
  */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
@@ -57,7 +56,6 @@
  *
  */
 
-#include "cryptlib.h"
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
@@ -67,92 +65,103 @@
 
 /* X509_POLICY_TREE stuff */
 
-int X509_policy_tree_level_count(const X509_POLICY_TREE *tree)
+int
+X509_policy_tree_level_count(const X509_POLICY_TREE *tree)
 {
-    if (!tree)
-        return 0;
-    return tree->nlevel;
+	if (!tree)
+		return 0;
+	return tree->nlevel;
 }
 
-X509_POLICY_LEVEL *X509_policy_tree_get0_level(const X509_POLICY_TREE *tree,
-                                               int i)
+X509_POLICY_LEVEL *
+X509_policy_tree_get0_level(const X509_POLICY_TREE *tree, int i)
 {
-    if (!tree || (i < 0) || (i >= tree->nlevel))
-        return NULL;
-    return tree->levels + i;
+	if (!tree || (i < 0) || (i >= tree->nlevel))
+		return NULL;
+	return tree->levels + i;
 }
 
-STACK_OF(X509_POLICY_NODE) *X509_policy_tree_get0_policies(const
-                                                           X509_POLICY_TREE
-                                                           *tree)
+STACK_OF(X509_POLICY_NODE) *
+X509_policy_tree_get0_policies(const X509_POLICY_TREE *tree)
 {
-    if (!tree)
-        return NULL;
-    return tree->auth_policies;
+	if (!tree)
+		return NULL;
+	return tree->auth_policies;
 }
 
-STACK_OF(X509_POLICY_NODE) *X509_policy_tree_get0_user_policies(const
-                                                                X509_POLICY_TREE
-                                                                *tree)
+STACK_OF(X509_POLICY_NODE) *
+X509_policy_tree_get0_user_policies(const X509_POLICY_TREE *tree)
 {
-    if (!tree)
-        return NULL;
-    if (tree->flags & POLICY_FLAG_ANY_POLICY)
-        return tree->auth_policies;
-    else
-        return tree->user_policies;
+	if (!tree)
+		return NULL;
+	if (tree->flags & POLICY_FLAG_ANY_POLICY)
+		return tree->auth_policies;
+	else
+		return tree->user_policies;
 }
 
 /* X509_POLICY_LEVEL stuff */
 
-int X509_policy_level_node_count(X509_POLICY_LEVEL *level)
+int
+X509_policy_level_node_count(X509_POLICY_LEVEL *level)
 {
-    int n;
-    if (!level)
-        return 0;
-    if (level->anyPolicy)
-        n = 1;
-    else
-        n = 0;
-    if (level->nodes)
-        n += sk_X509_POLICY_NODE_num(level->nodes);
-    return n;
+	int n;
+	if (!level)
+		return 0;
+	if (level->anyPolicy)
+		n = 1;
+	else
+		n = 0;
+	if (level->nodes)
+		n += sk_X509_POLICY_NODE_num(level->nodes);
+	return n;
 }
 
-X509_POLICY_NODE *X509_policy_level_get0_node(X509_POLICY_LEVEL *level, int i)
+X509_POLICY_NODE *
+X509_policy_level_get0_node(X509_POLICY_LEVEL *level, int i)
 {
-    if (!level)
-        return NULL;
-    if (level->anyPolicy) {
-        if (i == 0)
-            return level->anyPolicy;
-        i--;
-    }
-    return sk_X509_POLICY_NODE_value(level->nodes, i);
+	if (!level)
+		return NULL;
+	if (level->anyPolicy) {
+		if (i == 0)
+			return level->anyPolicy;
+		i--;
+	}
+	return sk_X509_POLICY_NODE_value(level->nodes, i);
 }
 
 /* X509_POLICY_NODE stuff */
 
-const ASN1_OBJECT *X509_policy_node_get0_policy(const X509_POLICY_NODE *node)
+const ASN1_OBJECT *
+X509_policy_node_get0_policy(const X509_POLICY_NODE *node)
 {
-    if (!node)
-        return NULL;
-    return node->data->valid_policy;
+	if (!node)
+		return NULL;
+	return node->data->valid_policy;
 }
 
-STACK_OF(POLICYQUALINFO) *X509_policy_node_get0_qualifiers(const
-                                                           X509_POLICY_NODE
-                                                           *node)
+#if 0
+int
+X509_policy_node_get_critical(const X509_POLICY_NODE *node)
 {
-    if (!node)
-        return NULL;
-    return node->data->qualifier_set;
+	if (node_critical(node))
+		return 1;
+	return 0;
+}
+#endif
+
+STACK_OF(POLICYQUALINFO) *
+X509_policy_node_get0_qualifiers(const X509_POLICY_NODE *node)
+{
+	if (!node)
+		return NULL;
+	return node->data->qualifier_set;
 }
 
-const X509_POLICY_NODE *X509_policy_node_get0_parent(const X509_POLICY_NODE
-                                                     *node)
+const X509_POLICY_NODE *
+X509_policy_node_get0_parent(const X509_POLICY_NODE *node)
 {
-    if (!node)
-        return NULL;
-    return node->parent;
+	if (!node)
+		return NULL;
+	return node->parent;
 }

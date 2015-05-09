@@ -1,7 +1,6 @@
-/* x_nx509.c */
-/*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
- * 2005.
+/* $OpenBSD$ */
+/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
+ * project 2005.
  */
 /* ====================================================================
  * Copyright (c) 2005 The OpenSSL Project.  All rights reserved.
@@ -65,8 +64,8 @@
 /* Old netscape certificate wrapper format */
 
 ASN1_SEQUENCE(NETSCAPE_X509) = {
-        ASN1_SIMPLE(NETSCAPE_X509, header, ASN1_OCTET_STRING),
-        ASN1_OPT(NETSCAPE_X509, cert, X509)
+	ASN1_SIMPLE(NETSCAPE_X509, header, ASN1_OCTET_STRING),
+	ASN1_OPT(NETSCAPE_X509, cert, X509)
 } ASN1_SEQUENCE_END(NETSCAPE_X509)
 
 IMPLEMENT_ASN1_FUNCTIONS(NETSCAPE_X509)

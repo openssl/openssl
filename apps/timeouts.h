@@ -1,4 +1,4 @@
-/* apps/timeouts.h */
+/* $OpenBSD$ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -58,10 +58,10 @@
  */
 
 #ifndef INCLUDED_TIMEOUTS_H
-# define INCLUDED_TIMEOUTS_H
+#define INCLUDED_TIMEOUTS_H
 
 /* numbers in us */
-# define DGRAM_RCV_TIMEOUT         250000
-# define DGRAM_SND_TIMEOUT         250000
+#define DGRAM_RCV_TIMEOUT         250000
+#define DGRAM_SND_TIMEOUT         250000
 
-#endif                          /* ! INCLUDED_TIMEOUTS_H */
+#endif /* ! INCLUDED_TIMEOUTS_H */

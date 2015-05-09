@@ -1,4 +1,4 @@
-/* crypto/evp/e_null.c */
+/* $OpenBSD: e_null.c,v 1.13 2014/07/10 13:58:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,42 +57,49 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include <string.h>
+
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
 static int null_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                         const unsigned char *iv, int enc);
+    const unsigned char *iv, int enc);
 static int null_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-                       const unsigned char *in, size_t inl);
+    const unsigned char *in, size_t inl);
+
 static const EVP_CIPHER n_cipher = {
-    NID_undef,
-    1, 0, 0, 0,
-    null_init_key,
-    null_cipher,
-    NULL,
-    0,
-    NULL,
-    NULL,
-    NULL,
-    NULL
+	NID_undef,
+	1, 0, 0,
+	0,
+	null_init_key,
+	null_cipher,
+	NULL,
+	0,
+	NULL,
+	NULL,
+	NULL,
+	NULL
 };
 
-const EVP_CIPHER *EVP_enc_null(void)
+const EVP_CIPHER *
+EVP_enc_null(void)
 {
-    return (&n_cipher);
+	return (&n_cipher);
 }
 
-static int null_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                         const unsigned char *iv, int enc)
+static int
+null_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+    const unsigned char *iv, int enc)
 {
-    return 1;
+	/*	memset(&(ctx->c),0,sizeof(ctx->c));*/
+	return 1;
 }
 
-static int null_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-                       const unsigned char *in, size_t inl)
+static int
+null_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+    const unsigned char *in, size_t inl)
 {
-    if (in != out)
-        memcpy(out, in, inl);
-    return 1;
+	if (in != out)
+		memcpy((char *)out, (const char *)in, inl);
+	return 1;
 }
