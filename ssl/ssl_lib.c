@@ -1484,7 +1484,11 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s, unsigned char *p,
         return (NULL);
     }
     if ((skp == NULL) || (*skp == NULL))
+        {
         sk = sk_SSL_CIPHER_new_null(); /* change perhaps later */
+        if(sk == NULL)
+            return NULL;
+        }
     else {
         sk = *skp;
         sk_SSL_CIPHER_zero(sk);
