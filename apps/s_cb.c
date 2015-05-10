@@ -112,6 +112,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h> /* for memcpy() and strcmp() */
 #define USE_SOCKETS
 #include "apps.h"
 #undef USE_SOCKETS
