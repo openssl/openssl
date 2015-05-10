@@ -111,6 +111,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h> /* for memcpy() and strcmp() */
 #define USE_SOCKETS
 #define NON_MAIN
 #include "apps.h"
