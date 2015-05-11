@@ -87,6 +87,7 @@ ppccpuid.s:	ppccpuid.pl;	$(PERL) ppccpuid.pl $(PERLASM_SCHEME) $@
 pariscid.s:	pariscid.pl;	$(PERL) pariscid.pl $(PERLASM_SCHEME) $@
 alphacpuid.s:	alphacpuid.pl
 	$(PERL) $< | $(CC) -E - | tee $@ > /dev/null
+arm64cpuid.S:	arm64cpuid.pl;	$(PERL) arm64cpuid.pl $(PERLASM_SCHEME) > $@
 
 subdirs:
 	@target=all; $(RECURSIVE_MAKE)
