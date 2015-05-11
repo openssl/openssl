@@ -701,6 +701,16 @@
 #define _sha1_block_data_order _fips_sha1_block_data_order
 #define _sha256_block_data_order _fips_sha256_block_data_order
 #define _sha512_block_data_order _fips_sha512_block_data_order
+#define _AES_decrypt _fips_aes_decrypt
+#define _AES_encrypt _fips_aes_encrypt
+#define _AES_set_decrypt_key _fips_aes_set_decrypt_key
+#define _AES_set_encrypt_key _fips_aes_set_encrypt_key
+#define _gcm_gmult_4bit _fips_gcm_gmult_4bit
+#define _gcm_ghash_4bit _fips_gcm_ghash_4bit
+#define _gcm_gmult_neon _fips_gcm_gmult_neon
+#define _gcm_ghash_neon _fips_gcm_ghash_neon
+#define _bn_GF2m_mul_2x2 _fips_bn_GF2m_mul_2x2
+#define _OPENSSL_cleanse _FIPS_openssl_cleanse
 #endif
 
 #if defined(_MSC_VER)
