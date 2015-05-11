@@ -151,7 +151,7 @@ extern const unsigned char FIPS_rodata_start[], FIPS_rodata_end[];
 #ifdef _TMS320C6X
 const
 #endif
-unsigned char              FIPS_signature [20] = { 0 };
+unsigned char              FIPS_signature [20] = { 0, 0xff };
 __fips_constseg
 static const char          FIPS_hmac_key[]="etaonrishdlcupfm";
 
