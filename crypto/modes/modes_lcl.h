@@ -26,13 +26,16 @@ typedef unsigned int u32;
 typedef unsigned char u8;
 
 #define STRICT_ALIGNMENT 1
-#if defined(__i386)	|| defined(__i386__)	|| \
-    defined(__x86_64)	|| defined(__x86_64__)	|| \
-    defined(_M_IX86)	|| defined(_M_AMD64)	|| defined(_M_X64) || \
-    defined(__s390__)	|| defined(__s390x__)	|| \
-    ( (defined(__arm__)	|| defined(__arm)) && \
-      (defined(__ARM_ARCH_7__)	|| defined(__ARM_ARCH_7A__) || \
-       defined(__ARM_ARCH_7R__)	|| defined(__ARM_ARCH_7M__)) )
+#if defined(__i386)     || defined(__i386__)	|| \
+    defined(__x86_64)   || defined(__x86_64__)	|| \
+    defined(_M_IX86)    || defined(_M_AMD64)	|| defined(_M_X64) || \
+    defined(__s390__)   || defined(__s390x__)	|| \
+    ( \
+    ( (defined(__arm__) || defined(__arm)) && \
+      (defined(__ARM_ARCH_7__)  || defined(__ARM_ARCH_7A__) || \
+       defined(__ARM_ARCH_7R__) || defined(__ARM_ARCH_7M__)) ) && \
+    !( defined(__arm__) && defined(__APPLE__) ) \
+    )
 # undef STRICT_ALIGNMENT
 #endif
 
