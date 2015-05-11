@@ -1611,6 +1611,12 @@ int main(int argc, char **argv)
 
     FIPS_post_set_callback(post_cb);
 
+#if defined(__APPLE__) && (defined(__arm__) || defined(__aarch64__))
+    extern unsigned int OPENSSL_armcap_P;
+    if (0 == OPENSSL_armcap_P)
+	fprintf(stderr, "Optimizations disabled\n");
+#endif
+
     printf("\tFIPS-mode test application\n");
 
     printf("\t%s\n\n", FIPS_module_version_text());
