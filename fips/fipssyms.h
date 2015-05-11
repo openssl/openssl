@@ -668,6 +668,40 @@
 #define bn_mul_mont_gather5 fips_bn_mul_mont_gather5
 #define bn_scatter5 fips_bn_scatter5
 #define bn_gather5 fips_bn_gather5
+#define _armv8_aes_probe _fips_armv8_aes_probe
+#define _armv8_pmull_probe _fips_armv8_pmull_probe
+#define _armv8_sha1_probe _fips_armv8_sha1_probe
+#define _armv8_sha256_probe _fips_armv8_sha256_probe
+#define aes_v8_encrypt fips_aes_v8_encrypt
+#define aes_v8_decrypt fips_aes_v8_decrypt
+#define aes_v8_set_encrypt_key fips_aes_v8_set_encrypt_key
+#define aes_v8_set_decrypt_key fips_aes_v8_set_decrypt_key
+#define aes_v8_cbc_encrypt fips_aes_v8_cbc_encrypt
+#define aes_v8_ctr32_encrypt_blocks fips_aes_v8_ctr32_encrypt_blocks
+#define gcm_init_v8 fips_gcm_init_v8
+#define gcm_gmult_v8 fips_gcm_gmult_v8
+#define gcm_ghash_v8 fips_gcm_ghash_v8
+#if defined(__APPLE__) && __ASSEMBLER__
+#define _OPENSSL_armcap_P _fips_openssl_armcap_P
+#define __armv7_neon_probe __fips_armv7_neon_probe
+#define __armv7_tick __fips_armv7_tick
+#define __armv8_aes_probe __fips_armv8_aes_probe
+#define __armv8_pmull_probe __fips_armv8_pmull_probe
+#define __armv8_sha1_probe __fips_armv8_sha1_probe
+#define __armv8_sha256_probe __fips_armv8_sha256_probe
+#define _aes_v8_encrypt _fips_aes_v8_encrypt
+#define _aes_v8_decrypt _fips_aes_v8_decrypt
+#define _aes_v8_set_encrypt_key _fips_aes_v8_set_encrypt_key
+#define _aes_v8_set_decrypt_key _fips_aes_v8_set_decrypt_key
+#define _aes_v8_cbc_encrypt _fips_aes_v8_cbc_encrypt
+#define _aes_v8_ctr32_encrypt_blocks _fips_aes_v8_ctr32_encrypt_blocks
+#define _gcm_init_v8 _fips_gcm_init_v8
+#define _gcm_gmult_v8 _fips_gcm_gmult_v8
+#define _gcm_ghash_v8 _fips_gcm_ghash_v8
+#define _sha1_block_data_order _fips_sha1_block_data_order
+#define _sha256_block_data_order _fips_sha256_block_data_order
+#define _sha512_block_data_order _fips_sha512_block_data_order
+#endif
 
 #if defined(_MSC_VER)
 # pragma const_seg("fipsro$b")
