@@ -265,6 +265,16 @@ int main(int argc, char **argv)
 	SysInit();
 #endif
 
+#if defined(__APPLE__) && (defined(__arm__) || defined(__aarch64__))
+	if (*args && !strcmp(*args, "-noaccel"))
+		{
+		extern unsigned int OPENSSL_armcap_P;
+
+		OPENSSL_armcap_P=0;
+		args++;
+		argc--;
+		}
+#endif
 	if (*args && *args[0] != '-')
 		{
 		rv = run_prg(argc - 1, args);
