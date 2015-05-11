@@ -395,7 +395,8 @@ int dtls1_process_buffered_records(SSL *s)
  *     Application data protocol
  *             none of our business
  */
-int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
+int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
+                     int len, int peek)
 {
     int al, i, j, ret;
     unsigned int n;

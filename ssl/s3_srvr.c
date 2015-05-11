@@ -281,7 +281,6 @@ int ssl3_accept(SSL *s)
 
             s->init_num = 0;
             s->s3->flags &= ~TLS1_FLAGS_SKIP_CERT_VERIFY;
-            s->s3->flags &= ~SSL3_FLAGS_CCS_OK;
             /*
              * Should have been reset by ssl3_get_finished, too.
              */
@@ -576,14 +575,7 @@ int ssl3_accept(SSL *s)
                  * not sent. Also for GOST ciphersuites when the client uses
                  * its key from the certificate for key exchange.
                  */
-#if defined(OPENSSL_NO_NEXTPROTONEG)
-                s->state = SSL3_ST_SR_FINISHED_A;
-#else
-                if (s->s3->next_proto_neg_seen)
-                    s->state = SSL3_ST_SR_NEXT_PROTO_A;
-                else
-                    s->state = SSL3_ST_SR_FINISHED_A;
-#endif
+                s->state = SSL3_ST_SR_CHANGE_A;
                 s->init_num = 0;
             } else if (SSL_USE_SIGALGS(s)) {
                 s->state = SSL3_ST_SR_CERT_VRFY_A;
@@ -650,6 +642,29 @@ int ssl3_accept(SSL *s)
             if (ret <= 0)
                 goto end;
 
+            s->state = SSL3_ST_SR_CHANGE_A;
+            s->init_num = 0;
+            break;
+
+#if !defined(OPENSSL_NO_NEXTPROTONEG)
+        case SSL3_ST_SR_NEXT_PROTO_A:
+        case SSL3_ST_SR_NEXT_PROTO_B:
+            ret = ssl3_get_next_proto(s);
+            if (ret <= 0)
+                goto end;
+            s->init_num = 0;
+            s->state = SSL3_ST_SR_FINISHED_A;
+            break;
+#endif
+
+
+        case SSL3_ST_SR_CHANGE_A:
+        case SSL3_ST_SR_CHANGE_B:
+            ret = ssl3_get_change_cipher_spec(s, SSL3_ST_SR_CHANGE_A,
+                                              SSL3_ST_SR_CHANGE_B);
+            if (ret <= 0)
+                goto end;
+
 #if defined(OPENSSL_NO_NEXTPROTONEG)
             s->state = SSL3_ST_SR_FINISHED_A;
 #else
@@ -661,41 +676,8 @@ int ssl3_accept(SSL *s)
             s->init_num = 0;
             break;
 
-#if !defined(OPENSSL_NO_NEXTPROTONEG)
-        case SSL3_ST_SR_NEXT_PROTO_A:
-        case SSL3_ST_SR_NEXT_PROTO_B:
-            /*
-             * Enable CCS for NPN. Receiving a CCS clears the flag, so make
-             * sure not to re-enable it to ban duplicates. This *should* be the
-             * first time we have received one - but we check anyway to be
-             * cautious.
-             * s->s3->change_cipher_spec is set when a CCS is
-             * processed in s3_pkt.c, and remains set until
-             * the client's Finished message is read.
-             */
-            if (!s->s3->change_cipher_spec)
-                s->s3->flags |= SSL3_FLAGS_CCS_OK;
-
-            ret = ssl3_get_next_proto(s);
-            if (ret <= 0)
-                goto end;
-            s->init_num = 0;
-            s->state = SSL3_ST_SR_FINISHED_A;
-            break;
-#endif
-
         case SSL3_ST_SR_FINISHED_A:
         case SSL3_ST_SR_FINISHED_B:
-            /*
-             * Enable CCS for handshakes without NPN. In NPN the CCS flag has
-             * already been set. Receiving a CCS clears the flag, so make
-             * sure not to re-enable it to ban duplicates.
-             * s->s3->change_cipher_spec is set when a CCS is
-             * processed in s3_pkt.c, and remains set until
-             * the client's Finished message is read.
-             */
-            if (!s->s3->change_cipher_spec)
-                s->s3->flags |= SSL3_FLAGS_CCS_OK;
             ret = ssl3_get_finished(s, SSL3_ST_SR_FINISHED_A,
                                     SSL3_ST_SR_FINISHED_B);
             if (ret <= 0)
@@ -769,14 +751,7 @@ int ssl3_accept(SSL *s)
                 goto end;
             s->state = SSL3_ST_SW_FLUSH;
             if (s->hit) {
-#if defined(OPENSSL_NO_NEXTPROTONEG)
-                s->s3->tmp.next_state = SSL3_ST_SR_FINISHED_A;
-#else
-                if (s->s3->next_proto_neg_seen) {
-                    s->s3->tmp.next_state = SSL3_ST_SR_NEXT_PROTO_A;
-                } else
-                    s->s3->tmp.next_state = SSL3_ST_SR_FINISHED_A;
-#endif
+                s->s3->tmp.next_state = SSL3_ST_SR_CHANGE_A;
             } else
                 s->s3->tmp.next_state = SSL_ST_OK;
             s->init_num = 0;

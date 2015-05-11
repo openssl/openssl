@@ -955,8 +955,9 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
  * (possibly multiple records if we still don't have anything to return).
  *
  * This function must handle any surprises the peer may have for us, such as
- * Alert records (e.g. close_notify), ChangeCipherSpec records (not really
- * a surprise, but handled as if it were), or renegotiation requests.
+ * Alert records (e.g. close_notify) or renegotiation requests. ChangeCipherSpec
+ * messages are treated as if they were handshake messages *if* the |recd_type|
+ * argument is non NULL.
  * Also if record payloads contain fragments too small to process, we store
  * them until there is enough for the respective protocol (the record protocol
  * may use arbitrary fragmentation and even interleaving):
@@ -971,7 +972,8 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
  *     Application data protocol
  *             none of our business
  */
-int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
+int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
+                    int len, int peek)
 {
     int al, i, j, ret;
     unsigned int n;
@@ -1066,9 +1068,14 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
         return (0);
     }
 
-    if (type == SSL3_RECORD_get_type(rr)) {
-        /* SSL3_RT_APPLICATION_DATA or
-         * SSL3_RT_HANDSHAKE */
+    if (type == SSL3_RECORD_get_type(rr)
+            || (SSL3_RECORD_get_type(rr) == SSL3_RT_CHANGE_CIPHER_SPEC
+                && type == SSL3_RT_HANDSHAKE && recvd_type != NULL)) {
+        /*
+         * SSL3_RT_APPLICATION_DATA or
+         * SSL3_RT_HANDSHAKE or
+         * SSL3_RT_CHANGE_CIPHER_SPEC
+         */
         /*
          * make sure that we are not getting application data when we are
          * doing a handshake for the first time
@@ -1079,6 +1086,17 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
             SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_APP_DATA_IN_HANDSHAKE);
             goto f_err;
         }
+
+        if (type == SSL3_RT_HANDSHAKE
+                && SSL3_RECORD_get_type(rr) == SSL3_RT_CHANGE_CIPHER_SPEC
+                && s->rlayer.handshake_fragment_len > 0) {
+            al = SSL_AD_UNEXPECTED_MESSAGE;
+            SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_CCS_RECEIVED_EARLY);
+            goto f_err;
+        }
+
+        if (recvd_type != NULL)
+            *recvd_type = SSL3_RECORD_get_type(rr);
 
         if (len <= 0)
             return (len);
@@ -1105,8 +1123,15 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 
     /*
      * If we get here, then type != rr->type; if we have a handshake message,
-     * then it was unexpected (Hello Request or Client Hello).
+     * then it was unexpected (Hello Request or Client Hello) or invalid (we
+     * were actually expecting a CCS).
      */
+
+    if (rr->type == SSL3_RT_HANDSHAKE && type == SSL3_RT_CHANGE_CIPHER_SPEC) {
+        al = SSL_AD_UNEXPECTED_MESSAGE;
+        SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_UNEXPECTED_MESSAGE);
+        goto f_err;
+    }
 
     /*
      * Lets just double check that we've not got an SSLv2 record
@@ -1344,45 +1369,9 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
     }
 
     if (SSL3_RECORD_get_type(rr) == SSL3_RT_CHANGE_CIPHER_SPEC) {
-        /*
-         * 'Change Cipher Spec' is just a single byte, so we know exactly
-         * what the record payload has to look like
-         */
-        if ((SSL3_RECORD_get_length(rr) != 1)
-            || (SSL3_RECORD_get_off(rr) != 0)
-            || (SSL3_RECORD_get_data(rr)[0] != SSL3_MT_CCS)) {
-            al = SSL_AD_ILLEGAL_PARAMETER;
-            SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_BAD_CHANGE_CIPHER_SPEC);
-            goto f_err;
-        }
-
-        /* Check we have a cipher to change to */
-        if (s->s3->tmp.new_cipher == NULL) {
-            al = SSL_AD_UNEXPECTED_MESSAGE;
-            SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_CCS_RECEIVED_EARLY);
-            goto f_err;
-        }
-
-        if (!(s->s3->flags & SSL3_FLAGS_CCS_OK)) {
-            al = SSL_AD_UNEXPECTED_MESSAGE;
-            SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_CCS_RECEIVED_EARLY);
-            goto f_err;
-        }
-
-        s->s3->flags &= ~SSL3_FLAGS_CCS_OK;
-
-        SSL3_RECORD_set_length(rr, 0);
-
-        if (s->msg_callback)
-            s->msg_callback(0, s->version, SSL3_RT_CHANGE_CIPHER_SPEC,
-                            SSL3_RECORD_get_data(rr), 1, s,
-                            s->msg_callback_arg);
-
-        s->s3->change_cipher_spec = 1;
-        if (!ssl3_do_change_cipher_spec(s))
-            goto err;
-        else
-            goto start;
+        al = SSL_AD_UNEXPECTED_MESSAGE;
+        SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_CCS_RECEIVED_EARLY);
+        goto f_err;
     }
 
     /*
@@ -1477,7 +1466,6 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
- err:
     return (-1);
 }
 

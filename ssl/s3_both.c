@@ -228,6 +228,47 @@ static void ssl3_take_mac(SSL *s)
 }
 #endif
 
+int ssl3_get_change_cipher_spec(SSL *s, int a, int b)
+{
+    int ok, al;
+    long n;
+
+    n = s->method->ssl_get_message(s, a, b, SSL3_MT_CHANGE_CIPHER_SPEC, 1, &ok);
+
+    if (!ok)
+        return ((int)n);
+
+    /*
+     * 'Change Cipher Spec' is just a single byte, which should already have
+     * been consumed by ssl_get_message() so there should be no bytes left
+     */
+    if (n != 0) {
+        al = SSL_AD_ILLEGAL_PARAMETER;
+        SSLerr(SSL_F_SSL3_GET_CHANGE_CIPHER_SPEC, SSL_R_BAD_CHANGE_CIPHER_SPEC);
+        goto f_err;
+    }
+
+    /* Check we have a cipher to change to */
+    if (s->s3->tmp.new_cipher == NULL) {
+        al = SSL_AD_UNEXPECTED_MESSAGE;
+        SSLerr(SSL_F_SSL3_GET_CHANGE_CIPHER_SPEC, SSL_R_CCS_RECEIVED_EARLY);
+        goto f_err;
+    }
+
+    s->s3->change_cipher_spec = 1;
+    if (!ssl3_do_change_cipher_spec(s)) {
+        al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_SSL3_GET_CHANGE_CIPHER_SPEC, ERR_R_INTERNAL_ERROR);
+        goto f_err;
+    }
+
+    return 1;
+ f_err:
+    ssl3_send_alert(s, SSL3_AL_FATAL, al);
+    return 0;
+}
+
+
 int ssl3_get_finished(SSL *s, int a, int b)
 {
     int al, i, ok;
@@ -345,7 +386,7 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
     unsigned char *p;
     unsigned long l;
     long n;
-    int i, al;
+    int i, al, recvd_type;
 
     if (s->s3->tmp.reuse_message) {
         s->s3->tmp.reuse_message = 0;
@@ -369,12 +410,37 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 
         do {
             while (s->init_num < SSL3_HM_HEADER_LENGTH) {
-                i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
+                i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, &recvd_type,
                     &p[s->init_num], SSL3_HM_HEADER_LENGTH - s->init_num, 0);
                 if (i <= 0) {
                     s->rwstate = SSL_READING;
                     *ok = 0;
                     return i;
+                }
+                if (s->init_num == 0
+                        && recvd_type == SSL3_RT_CHANGE_CIPHER_SPEC
+                        && (mt < 0 || mt == SSL3_MT_CHANGE_CIPHER_SPEC)) {
+                    if (*p != SSL3_MT_CCS) {
+                        al = SSL_AD_UNEXPECTED_MESSAGE;
+                        SSLerr(SSL_F_SSL3_GET_MESSAGE,
+                               SSL_R_UNEXPECTED_MESSAGE);
+                        goto f_err;
+                    }
+                    s->init_num = i - 1;
+                    s->init_msg = p + 1;
+                    s->s3->tmp.message_type = SSL3_MT_CHANGE_CIPHER_SPEC;
+                    s->s3->tmp.message_size = i - 1;
+                    s->state = stn;
+                    *ok = 1;
+                    if (s->msg_callback)
+                        s->msg_callback(0, s->version,
+                                        SSL3_RT_CHANGE_CIPHER_SPEC, p, 1, s,
+                                        s->msg_callback_arg);
+                    return i - 1;
+                } else if (recvd_type != SSL3_RT_HANDSHAKE) {
+                    al = SSL_AD_UNEXPECTED_MESSAGE;
+                    SSLerr(SSL_F_SSL3_GET_MESSAGE, SSL_R_CCS_RECEIVED_EARLY);
+                    goto f_err;
                 }
                 s->init_num += i;
             }
@@ -458,8 +524,8 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
     p = s->init_msg;
     n = s->s3->tmp.message_size - s->init_num;
     while (n > 0) {
-        i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, &p[s->init_num],
-                                      n, 0);
+        i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, NULL,
+                                      &p[s->init_num], n, 0);
         if (i <= 0) {
             s->rwstate = SSL_READING;
             *ok = 0;
