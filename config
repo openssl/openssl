@@ -383,6 +383,10 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
        echo "nsr-tandem-nsk"; exit 0;
        ;;
 
+    vxworks:kernel*)
+       echo "${MACHINE}-kernel-vxworks"; exit 0;
+       ;;
+
     vxworks*)
        echo "${MACHINE}-whatever-vxworks"; exit 0;
        ;;
@@ -613,6 +617,7 @@ case "$GUESSOS" in
 	;;
   ppc-*-linux2) OUT="linux-ppc" ;;
   ppc60x-*-vxworks*) OUT="vxworks-ppc60x" ;;
+  ppcgen-kernel-vxworks*) OUT="vxworks-ppcgen-kernel" ;;
   ppcgen-*-vxworks*) OUT="vxworks-ppcgen" ;;
   pentium-*-vxworks*) OUT="vxworks-pentium" ;;
   simlinux-*-vxworks*) OUT="vxworks-simlinux" ;;

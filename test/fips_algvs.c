@@ -70,6 +70,67 @@ int main(int argc, char **argv)
 }
 #else
 
+#if defined(__vxworks)
+
+#include <taskLibCommon.h>
+#include <string.h>
+
+int fips_algvs_main(int argc, char **argv);
+#define main fips_algvs_main
+
+static int fips_algvs_argv(char *a0)
+{
+	char *argv[32] = { "fips_algvs" };
+	int argc = 1;
+	int main_ret;
+
+	if (a0) {
+		char *scan = a0, *arg = a0;
+
+		while (*scan) {
+			if (*scan++ == ' ') {
+				scan[-1] = '\0';
+				argv[argc++] = arg;
+				if (argc == (sizeof(argv)/sizeof(argv[0])-1))
+					break;
+
+				while (*scan == ' ') scan++;
+				arg = scan;
+			}
+		}
+		if (*scan == '\0') argv[argc++] = arg;
+	}
+
+	argv[argc] = NULL;
+
+	main_ret = fips_algvs_main(argc, argv);
+
+	if (a0) free(a0);
+
+	return main_ret;
+}
+
+int fips_algvs(int a0)
+{
+	return taskSpawn("fips_algvs", 100, (VX_FP_TASK | VX_SPE_TASK), 100000,
+			(FUNCPTR)fips_algvs_argv,
+			a0 ? strdup(a0) : 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+}
+
+static FILE *fips_fopen(const char *path, const char *mode)
+{
+	char fips_path [256];
+
+	if (path[0] != '/' && strlen(path) < (sizeof(fips_path)-8)) {
+		strcpy(fips_path,"/fips0/");
+		strcat(fips_path,path);
+		return fopen(fips_path,mode);
+	}
+	return fopen(path,mode);
+}
+#define fopen fips_fopen
+#endif
+
 #define FIPS_ALGVS
 
 extern int fips_aesavs_main(int argc, char **argv);
