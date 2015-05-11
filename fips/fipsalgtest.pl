@@ -7,17 +7,6 @@
 # FIPS test definitions
 # List of all the unqualified file names we expect and command lines to run
 
-# DSA tests
-my @fips_dsa_test_list = (
-
-    "DSA",
-
-    [ "PQGGen",  "fips_dssvs pqg", "path:[^C]DSA/.*PQGGen" ],
-    [ "KeyPair", "fips_dssvs keypair", "path:[^C]DSA/.*KeyPair" ],
-    [ "SigGen",  "fips_dssvs siggen", "path:[^C]DSA/.*SigGen" ],
-    [ "SigVer",  "fips_dssvs sigver", "path:[^C]DSA/.*SigVer" ]
-
-);
 
 my @fips_dsa_pqgver_test_list = (
     "DSA",
@@ -38,16 +27,7 @@ my @fips_dsa2_test_list = (
 
 );
 
-# ECDSA and ECDSA2 tests
-my @fips_ecdsa_test_list = (
-
-    "ECDSA",
-
-    [ "KeyPair", "fips_ecdsavs KeyPair", "path:/ECDSA/.*KeyPair" ],
-    [ "PKV",  "fips_ecdsavs PKV", "path:/ECDSA/.*PKV" ],
-    [ "SigGen",  "fips_ecdsavs SigGen", "path:/ECDSA/.*SigGen" ],
-    [ "SigVer",  "fips_ecdsavs SigVer", "path:/ECDSA/.*SigVer" ],
-);
+# ECDSA2 tests
 
 my @fips_ecdsa2_test_list = (
     "ECDSA2",
@@ -357,10 +337,8 @@ my @fips_des3_test_list = (
     "Triple DES",
 
     [ "TCBCinvperm",   "fips_desmovs -f" ],
-    [ "TCBCMMT1",      "fips_desmovs -f" ],
     [ "TCBCMMT2",      "fips_desmovs -f" ],
     [ "TCBCMMT3",      "fips_desmovs -f" ],
-    [ "TCBCMonte1",    "fips_desmovs -f" ],
     [ "TCBCMonte2",    "fips_desmovs -f" ],
     [ "TCBCMonte3",    "fips_desmovs -f" ],
     [ "TCBCpermop",    "fips_desmovs -f" ],
@@ -368,10 +346,8 @@ my @fips_des3_test_list = (
     [ "TCBCvarkey",    "fips_desmovs -f" ],
     [ "TCBCvartext",   "fips_desmovs -f" ],
     [ "TCFB64invperm", "fips_desmovs -f" ],
-    [ "TCFB64MMT1",    "fips_desmovs -f" ],
     [ "TCFB64MMT2",    "fips_desmovs -f" ],
     [ "TCFB64MMT3",    "fips_desmovs -f" ],
-    [ "TCFB64Monte1",  "fips_desmovs -f" ],
     [ "TCFB64Monte2",  "fips_desmovs -f" ],
     [ "TCFB64Monte3",  "fips_desmovs -f" ],
     [ "TCFB64permop",  "fips_desmovs -f" ],
@@ -379,10 +355,8 @@ my @fips_des3_test_list = (
     [ "TCFB64varkey",  "fips_desmovs -f" ],
     [ "TCFB64vartext", "fips_desmovs -f" ],
     [ "TCFB8invperm",  "fips_desmovs -f" ],
-    [ "TCFB8MMT1",     "fips_desmovs -f" ],
     [ "TCFB8MMT2",     "fips_desmovs -f" ],
     [ "TCFB8MMT3",     "fips_desmovs -f" ],
-    [ "TCFB8Monte1",   "fips_desmovs -f" ],
     [ "TCFB8Monte2",   "fips_desmovs -f" ],
     [ "TCFB8Monte3",   "fips_desmovs -f" ],
     [ "TCFB8permop",   "fips_desmovs -f" ],
@@ -390,10 +364,8 @@ my @fips_des3_test_list = (
     [ "TCFB8varkey",   "fips_desmovs -f" ],
     [ "TCFB8vartext",  "fips_desmovs -f" ],
     [ "TECBinvperm",   "fips_desmovs -f" ],
-    [ "TECBMMT1",      "fips_desmovs -f" ],
     [ "TECBMMT2",      "fips_desmovs -f" ],
     [ "TECBMMT3",      "fips_desmovs -f" ],
-    [ "TECBMonte1",    "fips_desmovs -f" ],
     [ "TECBMonte2",    "fips_desmovs -f" ],
     [ "TECBMonte3",    "fips_desmovs -f" ],
     [ "TECBpermop",    "fips_desmovs -f" ],
@@ -401,10 +373,8 @@ my @fips_des3_test_list = (
     [ "TECBvarkey",    "fips_desmovs -f" ],
     [ "TECBvartext",   "fips_desmovs -f" ],
     [ "TOFBinvperm",   "fips_desmovs -f" ],
-    [ "TOFBMMT1",      "fips_desmovs -f" ],
     [ "TOFBMMT2",      "fips_desmovs -f" ],
     [ "TOFBMMT3",      "fips_desmovs -f" ],
-    [ "TOFBMonte1",    "fips_desmovs -f" ],
     [ "TOFBMonte2",    "fips_desmovs -f" ],
     [ "TOFBMonte3",    "fips_desmovs -f" ],
     [ "TOFBpermop",    "fips_desmovs -f" ],
@@ -419,10 +389,8 @@ my @fips_des3_cfb1_test_list = (
     # DES3 CFB1 tests
 
     [ "TCFB1invperm",  "fips_desmovs -f" ],
-    [ "TCFB1MMT1",     "fips_desmovs -f" ],
     [ "TCFB1MMT2",     "fips_desmovs -f" ],
     [ "TCFB1MMT3",     "fips_desmovs -f" ],
-    [ "TCFB1Monte1",   "fips_desmovs -f" ],
     [ "TCFB1Monte2",   "fips_desmovs -f" ],
     [ "TCFB1Monte3",   "fips_desmovs -f" ],
     [ "TCFB1permop",   "fips_desmovs -f" ],
@@ -475,8 +443,6 @@ my @fips_ecdh_test_list = (
 #
 
 my %verify_special = (
-    "DSA:PQGGen"        => "fips_dssvs pqgver",
-    "DSA:KeyPair"       => "fips_dssvs keyver",
     "DSA:SigGen"        => "fips_dssvs sigver",
     "DSA2:PQGGen"        => "fips_dssvs pqgver",
     "DSA2:KeyPair"       => "fips_dssvs keyver",
@@ -650,10 +616,8 @@ if (!$fips_enabled{"v2"}) {
 	}
 }
 
-push @fips_test_list, @fips_dsa_test_list       if $fips_enabled{"dsa"};
 push @fips_test_list, @fips_dsa2_test_list      if $fips_enabled{"dsa2"};
 push @fips_test_list, @fips_dsa_pqgver_test_list if $fips_enabled{"dsa-pqgver"};
-push @fips_test_list, @fips_ecdsa_test_list     if $fips_enabled{"ecdsa"};
 push @fips_test_list, @fips_ecdsa2_test_list     if $fips_enabled{"ecdsa2"};
 push @fips_test_list, @fips_rsa_test_list       if $fips_enabled{"rsa"};
 push @fips_test_list, @fips_rsa_pss0_test_list  if $fips_enabled{"rsa-pss0"};
