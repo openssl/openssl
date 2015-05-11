@@ -1611,7 +1611,7 @@ int main(int argc, char **argv)
 
     FIPS_post_set_callback(post_cb);
 
-#if defined(__APPLE__) && (defined(__arm__) || defined(__aarch64__))
+#if (defined(__arm__) || defined(__aarch64__))
     extern unsigned int OPENSSL_armcap_P;
     if (0 == OPENSSL_armcap_P)
 	fprintf(stderr, "Optimizations disabled\n");
