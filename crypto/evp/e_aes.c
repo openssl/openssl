@@ -471,6 +471,35 @@ const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
 { return &aes_##keylen##_##mode; }
 #endif
 
+#if defined(OPENSSL_CPUID_OBJ) && defined(__aarch64__)
+#include "arm_arch.h"
+#if __ARM_ARCH__>=7
+# define HWAES_CAPABLE (OPENSSL_armcap_P & ARMV8_AES)
+# define HWAES_set_encrypt_key aes_v8_set_encrypt_key
+# define HWAES_set_decrypt_key aes_v8_set_decrypt_key
+# define HWAES_encrypt aes_v8_encrypt
+# define HWAES_decrypt aes_v8_decrypt
+# define HWAES_cbc_encrypt aes_v8_cbc_encrypt
+# define HWAES_ctr32_encrypt_blocks aes_v8_ctr32_encrypt_blocks
+#endif
+#endif
+
+#if defined(HWAES_CAPABLE)
+int HWAES_set_encrypt_key(const unsigned char *userKey, const int bits,
+	AES_KEY *key);
+int HWAES_set_decrypt_key(const unsigned char *userKey, const int bits,
+	AES_KEY *key);
+void HWAES_encrypt(const unsigned char *in, unsigned char *out,
+	const AES_KEY *key);
+void HWAES_decrypt(const unsigned char *in, unsigned char *out,
+	const AES_KEY *key);
+void HWAES_cbc_encrypt(const unsigned char *in, unsigned char *out,
+	size_t length, const AES_KEY *key,
+	unsigned char *ivec, const int enc);
+void HWAES_ctr32_encrypt_blocks(const unsigned char *in, unsigned char *out,
+	size_t len, const AES_KEY *key, const unsigned char ivec[16]);
+#endif
+
 #define BLOCK_CIPHER_generic_pack(nid,keylen,flags)		\
 	BLOCK_CIPHER_generic(nid,keylen,16,16,cbc,cbc,CBC,flags|EVP_CIPH_FLAG_DEFAULT_ASN1)	\
 	BLOCK_CIPHER_generic(nid,keylen,16,0,ecb,ecb,ECB,flags|EVP_CIPH_FLAG_DEFAULT_ASN1)	\
@@ -489,6 +518,19 @@ static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	mode = ctx->cipher->flags & EVP_CIPH_MODE;
 	if ((mode == EVP_CIPH_ECB_MODE || mode == EVP_CIPH_CBC_MODE)
 	    && !enc)
+#ifdef HWAES_CAPABLE
+	    if (HWAES_CAPABLE)
+		{
+		ret = HWAES_set_decrypt_key(key,ctx->key_len*8,&dat->ks);
+		dat->block      = (block128_f)HWAES_decrypt;
+		dat->stream.cbc = NULL;
+#ifdef HWAES_cbc_encrypt
+		if (mode==EVP_CIPH_CBC_MODE)
+		    dat->stream.cbc = (cbc128_f)HWAES_cbc_encrypt;
+#endif
+		}
+	    else
+#endif
 #ifdef BSAES_CAPABLE
 	    if (BSAES_CAPABLE && mode==EVP_CIPH_CBC_MODE)
 		{
@@ -517,6 +559,26 @@ static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 					NULL;
 		}
 	else
+#ifdef HWAES_CAPABLE
+	    if (HWAES_CAPABLE)
+		{
+		ret = HWAES_set_encrypt_key(key,ctx->key_len*8,&dat->ks);
+		dat->block      = (block128_f)HWAES_encrypt;
+		dat->stream.cbc = NULL;
+#ifdef HWAES_cbc_encrypt
+		if (mode==EVP_CIPH_CBC_MODE)
+		    dat->stream.cbc = (cbc128_f)HWAES_cbc_encrypt;
+		else
+#endif
+#ifdef HWAES_ctr32_encrypt_blocks
+		if (mode==EVP_CIPH_CTR_MODE)
+		    dat->stream.ctr = (ctr128_f)HWAES_ctr32_encrypt_blocks;
+		else
+#endif
+		(void)0;	/* terminate potentially open 'else' */
+		}
+	    else
+#endif
 #ifdef BSAES_CAPABLE
 	    if (BSAES_CAPABLE && mode==EVP_CIPH_CTR_MODE)
 		{
@@ -831,6 +893,21 @@ static int aes_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		return 1;
 	if (key)
 		{ do {
+#ifdef HWAES_CAPABLE
+		if (HWAES_CAPABLE)
+			{
+			HWAES_set_encrypt_key(key,ctx->key_len*8,&gctx->ks);
+			CRYPTO_gcm128_init(&gctx->gcm,&gctx->ks,
+					(block128_f)HWAES_encrypt);
+#ifdef HWAES_ctr32_encrypt_blocks
+			gctx->ctr = (ctr128_f)HWAES_ctr32_encrypt_blocks;
+#else
+			gctx->ctr = NULL;
+#endif
+			break;
+			}
+		else
+#endif
 #ifdef BSAES_CAPABLE
 		if (BSAES_CAPABLE)
 			{
@@ -1088,6 +1165,29 @@ static int aes_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		{
 		xctx->stream = NULL;
 		/* key_len is two AES keys */
+#ifdef HWAES_CAPABLE
+		if (HWAES_CAPABLE)
+			{
+			if (enc)
+			    {
+			    HWAES_set_encrypt_key(key, ctx->key_len * 4, &xctx->ks1);
+			    xctx->xts.block1 = (block128_f)HWAES_encrypt;
+			    }
+			else
+			    {
+			    HWAES_set_decrypt_key(key, ctx->key_len * 4, &xctx->ks1);
+			    xctx->xts.block1 = (block128_f)HWAES_decrypt;
+			    }
+
+			HWAES_set_encrypt_key(key + ctx->key_len/2,
+						    ctx->key_len * 4, &xctx->ks2);
+			xctx->xts.block2 = (block128_f)HWAES_encrypt;
+
+			xctx->xts.key1 = &xctx->ks1;
+			break;
+			}
+		else
+#endif
 #ifdef VPAES_CAPABLE
 		if (VPAES_CAPABLE)
 		    {
@@ -1244,6 +1344,19 @@ static int aes_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		return 1;
 	if (key) do
 		{
+#ifdef HWAES_CAPABLE
+		if (HWAES_CAPABLE)
+			{
+			HWAES_set_encrypt_key(key,ctx->key_len*8,&cctx->ks);
+
+			CRYPTO_ccm128_init(&cctx->ccm, cctx->M, cctx->L,
+					&cctx->ks, (block128_f)HWAES_encrypt);
+			cctx->str = NULL;
+			cctx->key_set = 1;
+			break;
+			}
+		else
+#endif
 #ifdef VPAES_CAPABLE
 		if (VPAES_CAPABLE)
 			{
