@@ -21,8 +21,20 @@
 # runs in even less cycles, ~30, improvement is measurable only on
 # longer keys. One has to optimize code elsewhere to get NEON glow...
 
-while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
-open STDOUT,">$output";
+$flavour = shift;
+if ($flavour=~/^\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
+else { while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {} }
+
+if ($flavour && $flavour ne "void") {
+    $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+    ( $xlate="${dir}arm-xlate.pl" and -f $xlate ) or
+    ( $xlate="${dir}../../perlasm/arm-xlate.pl" and -f $xlate) or
+    die "can't locate arm-xlate.pl";
+
+    open STDOUT,"| \"$^X\" $xlate $flavour $output";
+} else {
+    open STDOUT,">$output";
+}
 
 sub Dlo()   { shift=~m|q([1]?[0-9])|?"d".($1*2):"";     }
 sub Dhi()   { shift=~m|q([1]?[0-9])|?"d".($1*2+1):"";   }
@@ -170,11 +182,18 @@ bn_GF2m_mul_2x2:
 #if __ARM_ARCH__>=7
 	ldr	r12,.LOPENSSL_armcap
 .Lpic:	ldr	r12,[pc,r12]
+#ifdef	__APPLE__
+	ldr	r12,[r12]
+#endif
 	tst	r12,#1
 	beq	.Lialu
 
 	veor	$A1,$A1
+#ifdef	__APPLE__
+	vmov	$B1,r3,r3		@ two copies of b1
+#else
 	vmov.32	$B1,r3,r3		@ two copies of b1
+#endif
 	vmov.32	${A1}[0],r1		@ a1
 
 	veor	$A0,$A0

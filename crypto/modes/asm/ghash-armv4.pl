@@ -57,8 +57,20 @@
 # *native* byte order on current platform. See gcm128.c for working
 # example...
 
-while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
-open STDOUT,">$output";
+$flavour = shift;
+if ($flavour=~/^\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
+else { while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {} }
+
+if ($flavour && $flavour ne "void") {
+    $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+    ( $xlate="${dir}arm-xlate.pl" and -f $xlate ) or
+    ( $xlate="${dir}../../perlasm/arm-xlate.pl" and -f $xlate) or
+    die "can't locate arm-xlate.pl";
+
+    open STDOUT,"| \"$^X\" $xlate $flavour $output";
+} else {
+    open STDOUT,">$output";
+}
 
 $Xi="r0";	# argument block
 $Htbl="r1";
@@ -111,6 +123,11 @@ $code=<<___;
 
 .text
 .code	32
+
+#ifdef  __APPLE__
+#define ldrplb	ldrbpl
+#define ldrneb	ldrbne
+#endif
 
 .type	rem_4bit,%object
 .align	5
@@ -326,9 +343,9 @@ $code.=<<___;
 .align	4
 gcm_gmult_neon:
 	sub		$Htbl,#16		@ point at H in GCM128_CTX
-	vld1.64		`&Dhi("$IN")`,[$Xi,:64]!@ load Xi
+	vld1.64		`&Dhi("$IN")`,[$Xi]!	@ load Xi
 	vmov.i32	$mod,#0xe1		@ our irreducible polynomial
-	vld1.64		`&Dlo("$IN")`,[$Xi,:64]!
+	vld1.64		`&Dlo("$IN")`,[$Xi]!
 	vshr.u64	$mod,#32
 	vldmia		$Htbl,{$Hhi-$Hlo}	@ load H
 	veor		$zero,$zero
@@ -349,9 +366,9 @@ gcm_gmult_neon:
 .type	gcm_ghash_neon,%function
 .align	4
 gcm_ghash_neon:
-	vld1.64		`&Dhi("$Z")`,[$Xi,:64]!	@ load Xi
+	vld1.64		`&Dhi("$Z")`,[$Xi]!	@ load Xi
 	vmov.i32	$mod,#0xe1		@ our irreducible polynomial
-	vld1.64		`&Dlo("$Z")`,[$Xi,:64]!
+	vld1.64		`&Dlo("$Z")`,[$Xi]!
 	vshr.u64	$mod,#32
 	vldmia		$Xi,{$Hhi-$Hlo}		@ load H
 	veor		$zero,$zero
@@ -410,8 +427,8 @@ gcm_ghash_neon:
 	vrev64.8	$Z,$Z
 #endif
 	sub		$Xi,#16	
-	vst1.64		`&Dhi("$Z")`,[$Xi,:64]!	@ write out Xi
-	vst1.64		`&Dlo("$Z")`,[$Xi,:64]
+	vst1.64		`&Dhi("$Z")`,[$Xi]!	@ write out Xi
+	vst1.64		`&Dlo("$Z")`,[$Xi]
 
 	bx	lr
 .size	gcm_ghash_neon,.-gcm_ghash_neon
