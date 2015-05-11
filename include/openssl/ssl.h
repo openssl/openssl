@@ -1943,6 +1943,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL3_GET_CERTIFICATE_REQUEST               135
 # define SSL_F_SSL3_GET_CERT_STATUS                       289
 # define SSL_F_SSL3_GET_CERT_VERIFY                       136
+# define SSL_F_SSL3_GET_CHANGE_CIPHER_SPEC                348
 # define SSL_F_SSL3_GET_CLIENT_CERTIFICATE                137
 # define SSL_F_SSL3_GET_CLIENT_HELLO                      138
 # define SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE               139

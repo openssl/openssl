@@ -679,7 +679,7 @@ dtls1_reassemble_fragment(SSL *s, const struct hm_header_st *msg_hdr, int *ok)
         unsigned char devnull[256];
 
         while (frag_len) {
-            i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
+            i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, NULL,
                                           devnull,
                                           frag_len >
                                           sizeof(devnull) ? sizeof(devnull) :
@@ -692,7 +692,7 @@ dtls1_reassemble_fragment(SSL *s, const struct hm_header_st *msg_hdr, int *ok)
     }
 
     /* read the body of the fragment (header has already been read */
-    i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
+    i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, NULL,
                                   frag->fragment + msg_hdr->frag_off,
                                   frag_len, 0);
     if ((unsigned long)i != frag_len)
@@ -775,7 +775,7 @@ dtls1_process_out_of_seq_message(SSL *s, const struct hm_header_st *msg_hdr,
         unsigned char devnull[256];
 
         while (frag_len) {
-            i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
+            i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, NULL,
                                           devnull,
                                           frag_len >
                                           sizeof(devnull) ? sizeof(devnull) :
@@ -801,7 +801,7 @@ dtls1_process_out_of_seq_message(SSL *s, const struct hm_header_st *msg_hdr,
             /*
              * read the body of the fragment (header has already been read
              */
-            i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
+            i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, NULL,
                                           frag->fragment, frag_len, 0);
             if ((unsigned long)i != frag_len)
                 i = -1;
@@ -851,7 +851,7 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
     }
 
     /* read handshake message header */
-    i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, wire,
+    i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, NULL, wire,
                                   DTLS1_HM_HEADER_LENGTH, 0);
     if (i <= 0) {               /* nbio, or an error */
         s->rwstate = SSL_READING;
@@ -926,7 +926,7 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
         unsigned char *p =
             (unsigned char *)s->init_buf->data + DTLS1_HM_HEADER_LENGTH;
 
-        i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
+        i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, NULL,
                                       &p[frag_off], frag_len, 0);
 
         /*

@@ -4808,7 +4808,7 @@ int ssl3_shutdown(SSL *s)
         /*
          * If we are waiting for a close from our peer, we are closed
          */
-        s->method->ssl_read_bytes(s, 0, NULL, 0, 0);
+        s->method->ssl_read_bytes(s, 0, NULL, NULL, 0, 0);
         if (!(s->shutdown & SSL_RECEIVED_SHUTDOWN)) {
             return (-1);        /* return WANT_READ */
         }
@@ -4840,7 +4840,7 @@ static int ssl3_read_internal(SSL *s, void *buf, int len, int peek)
         ssl3_renegotiate_check(s);
     s->s3->in_read_app_data = 1;
     ret =
-        s->method->ssl_read_bytes(s, SSL3_RT_APPLICATION_DATA, buf, len,
+        s->method->ssl_read_bytes(s, SSL3_RT_APPLICATION_DATA, NULL, buf, len,
                                   peek);
     if ((ret == -1) && (s->s3->in_read_app_data == 2)) {
         /*
@@ -4852,8 +4852,8 @@ static int ssl3_read_internal(SSL *s, void *buf, int len, int peek)
          */
         s->in_handshake++;
         ret =
-            s->method->ssl_read_bytes(s, SSL3_RT_APPLICATION_DATA, buf, len,
-                                      peek);
+            s->method->ssl_read_bytes(s, SSL3_RT_APPLICATION_DATA, NULL, buf,
+                                      len, peek);
         s->in_handshake--;
     } else
         s->s3->in_read_app_data = 0;

@@ -165,7 +165,7 @@
 
 static int ssl_set_version(SSL *s);
 static int ca_dn_cmp(const X509_NAME *const *a, const X509_NAME *const *b);
-static int ssl3_check_finished(SSL *s);
+static int ssl3_check_change(SSL *s);
 static int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk,
                                     unsigned char *p,
                                     int (*put_cb) (const SSL_CIPHER *,
@@ -276,7 +276,6 @@ int ssl3_connect(SSL *s)
             s->state = SSL3_ST_CW_CLNT_HELLO_A;
             s->ctx->stats.sess_connect++;
             s->init_num = 0;
-            s->s3->flags &= ~SSL3_FLAGS_CCS_OK;
             /*
              * Should have been reset by ssl3_get_finished, too.
              */
@@ -306,7 +305,7 @@ int ssl3_connect(SSL *s)
                 goto end;
 
             if (s->hit) {
-                s->state = SSL3_ST_CR_FINISHED_A;
+                s->state = SSL3_ST_CR_CHANGE_A;
                 if (s->tlsext_ticket_expected) {
                     /* receive renewed session ticket */
                     s->state = SSL3_ST_CR_SESSION_TICKET_A;
@@ -319,12 +318,12 @@ int ssl3_connect(SSL *s)
         case SSL3_ST_CR_CERT_A:
         case SSL3_ST_CR_CERT_B:
             /* Noop (ret = 0) for everything but EAP-FAST. */
-            ret = ssl3_check_finished(s);
+            ret = ssl3_check_change(s);
             if (ret < 0)
                 goto end;
             if (ret == 1) {
                 s->hit = 1;
-                s->state = SSL3_ST_CR_FINISHED_A;
+                s->state = SSL3_ST_CR_CHANGE_A;
                 s->init_num = 0;
                 break;
             }
@@ -525,7 +524,7 @@ int ssl3_connect(SSL *s)
                 if (s->tlsext_ticket_expected)
                     s->s3->tmp.next_state = SSL3_ST_CR_SESSION_TICKET_A;
                 else
-                    s->s3->tmp.next_state = SSL3_ST_CR_FINISHED_A;
+                    s->s3->tmp.next_state = SSL3_ST_CR_CHANGE_A;
             }
             s->init_num = 0;
             break;
@@ -535,7 +534,7 @@ int ssl3_connect(SSL *s)
             ret = ssl3_get_new_session_ticket(s);
             if (ret <= 0)
                 goto end;
-            s->state = SSL3_ST_CR_FINISHED_A;
+            s->state = SSL3_ST_CR_CHANGE_A;
             s->init_num = 0;
             break;
 
@@ -548,10 +547,19 @@ int ssl3_connect(SSL *s)
             s->init_num = 0;
             break;
 
+        case SSL3_ST_CR_CHANGE_A:
+        case SSL3_ST_CR_CHANGE_B:
+            ret = ssl3_get_change_cipher_spec(s, SSL3_ST_CR_CHANGE_A,
+                                              SSL3_ST_CR_CHANGE_B);
+            if (ret <= 0)
+                goto end;
+
+            s->state = SSL3_ST_CR_FINISHED_A;
+            s->init_num = 0;
+            break;
+
         case SSL3_ST_CR_FINISHED_A:
         case SSL3_ST_CR_FINISHED_B:
-            if (!s->s3->change_cipher_spec)
-                s->s3->flags |= SSL3_FLAGS_CCS_OK;
             ret = ssl3_get_finished(s, SSL3_ST_CR_FINISHED_A,
                                     SSL3_ST_CR_FINISHED_B);
             if (ret <= 0)
@@ -3368,11 +3376,11 @@ int ssl3_check_cert_and_algorithm(SSL *s)
  * the session ID. EAP-FAST (RFC 4851), however, relies on the next server
  * message after the ServerHello to determine if the server is resuming.
  * Therefore, we allow EAP-FAST to peek ahead.
- * ssl3_check_finished returns 1 if we are resuming from an external
- * pre-shared secret, we have a "ticket" and the next server handshake message
- * is Finished; and 0 otherwise. It returns -1 upon an error.
+ * ssl3_check_change returns 1 if we are resuming from an external
+ * pre-shared secret, we have a "ticket" and the next server message
+ * is CCS; and 0 otherwise. It returns -1 upon an error.
  */
-static int ssl3_check_finished(SSL *s)
+static int ssl3_check_change(SSL *s)
 {
     int ok = 0;
 
@@ -3380,8 +3388,6 @@ static int ssl3_check_finished(SSL *s)
         !s->session->tlsext_tick)
         return 0;
 
-    /* Need to permit this temporarily, in case the next message is Finished. */
-    s->s3->flags |= SSL3_FLAGS_CCS_OK;
     /*
      * This function is called when we might get a Certificate message instead,
      * so permit appropriate message length.
@@ -3392,22 +3398,14 @@ static int ssl3_check_finished(SSL *s)
                                SSL3_ST_CR_CERT_A,
                                SSL3_ST_CR_CERT_B,
                                -1, s->max_cert_list, &ok);
-    s->s3->flags &= ~SSL3_FLAGS_CCS_OK;
 
     if (!ok)
         return -1;
 
     s->s3->tmp.reuse_message = 1;
 
-    if (s->s3->tmp.message_type == SSL3_MT_FINISHED)
+    if (s->s3->tmp.message_type == SSL3_MT_CHANGE_CIPHER_SPEC)
         return 1;
-
-    /* If we're not done, then the CCS arrived early and we should bail. */
-    if (s->s3->change_cipher_spec) {
-        SSLerr(SSL_F_SSL3_CHECK_FINISHED, SSL_R_CCS_RECEIVED_EARLY);
-        ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_UNEXPECTED_MESSAGE);
-        return -1;
-    }
 
     return 0;
 }

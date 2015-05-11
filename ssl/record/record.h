@@ -331,7 +331,8 @@ __owur int ssl3_pending(const SSL *s);
 __owur int ssl3_write_bytes(SSL *s, int type, const void *buf, int len);
 __owur int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
                          unsigned int len, int create_empty_fragment);
-__owur int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
+__owur int ssl3_read_bytes(SSL *s, int type, int *recvd_type,
+                           unsigned char *buf, int len, int peek);
 __owur int ssl3_setup_buffers(SSL *s);
 __owur int ssl3_enc(SSL *s, int send_data);
 __owur int n_ssl3_mac(SSL *ssl, unsigned char *md, int send_data);
@@ -345,7 +346,8 @@ void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_set_saved_w_epoch(RECORD_LAYER *rl, unsigned short e);
 void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_resync_write(RECORD_LAYER *rl);
-__owur int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
+__owur int dtls1_read_bytes(SSL *s, int type, int *recvd_type,
+                            unsigned char *buf, int len, int peek);
 __owur int dtls1_write_bytes(SSL *s, int type, const void *buf, int len);
 __owur int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
                    unsigned int len, int create_empty_fragement);

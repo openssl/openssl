@@ -563,8 +563,8 @@ struct ssl_method_st {
     int (*ssl_renegotiate_check) (SSL *s);
     long (*ssl_get_message) (SSL *s, int st1, int stn, int mt, long
                              max, int *ok);
-    int (*ssl_read_bytes) (SSL *s, int type, unsigned char *buf, int len,
-                           int peek);
+    int (*ssl_read_bytes) (SSL *s, int type, int *recvd_type,
+                           unsigned char *buf, int len, int peek);
     int (*ssl_write_bytes) (SSL *s, int type, const void *buf_, int len);
     int (*ssl_dispatch_alert) (SSL *s);
     long (*ssl_ctrl) (SSL *s, int cmd, long larg, void *parg);
@@ -1912,6 +1912,7 @@ void ssl3_init_finished_mac(SSL *s);
 __owur int ssl3_send_server_certificate(SSL *s);
 __owur int ssl3_send_newsession_ticket(SSL *s);
 __owur int ssl3_send_cert_status(SSL *s);
+__owur int ssl3_get_change_cipher_spec(SSL *s, int a, int b);
 __owur int ssl3_get_finished(SSL *s, int state_a, int state_b);
 __owur int ssl3_setup_key_block(SSL *s);
 __owur int ssl3_send_change_cipher_spec(SSL *s, int state_a, int state_b);

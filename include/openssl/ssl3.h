@@ -365,11 +365,6 @@ extern "C" {
 # define TLS1_FLAGS_TLS_PADDING_BUG              0x0
 
 # define TLS1_FLAGS_SKIP_CERT_VERIFY             0x0010
-/*
- * Set when the handshake is ready to process peer's ChangeCipherSpec message.
- * Cleared after the message has been processed.
- */
-# define SSL3_FLAGS_CCS_OK                       0x0080
 
 /* Set if we encrypt then mac instead of usual mac then encrypt */
 # define TLS1_FLAGS_ENCRYPT_THEN_MAC             0x0100
@@ -498,6 +493,9 @@ extern "C" {
 #  define SSL3_MT_NEXT_PROTO                      67
 # endif
 # define DTLS1_MT_HELLO_VERIFY_REQUEST    3
+
+/* Dummy message type for handling CCS like a normal handshake message */
+# define SSL3_MT_CHANGE_CIPHER_SPEC              0x0101
 
 # define SSL3_MT_CCS                             1
 

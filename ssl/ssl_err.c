@@ -131,6 +131,8 @@ static ERR_STRING_DATA SSL_str_functs[] = {
      "ssl3_get_certificate_request"},
     {ERR_FUNC(SSL_F_SSL3_GET_CERT_STATUS), "ssl3_get_cert_status"},
     {ERR_FUNC(SSL_F_SSL3_GET_CERT_VERIFY), "ssl3_get_cert_verify"},
+    {ERR_FUNC(SSL_F_SSL3_GET_CHANGE_CIPHER_SPEC),
+     "ssl3_get_change_cipher_spec"},
     {ERR_FUNC(SSL_F_SSL3_GET_CLIENT_CERTIFICATE),
      "ssl3_get_client_certificate"},
     {ERR_FUNC(SSL_F_SSL3_GET_CLIENT_HELLO), "ssl3_get_client_hello"},
