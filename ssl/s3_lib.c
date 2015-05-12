@@ -1839,21 +1839,6 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-    {
-     1,
-     "SCSV",
-     SSL3_CK_SCSV,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0},
-#endif
 
 #ifndef OPENSSL_NO_CAMELLIA
     /* TLS 1.2 Camellia SHA-256 ciphersuites from RFC5932 */
@@ -2049,6 +2034,23 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
+#endif
+
+#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
+    /* Cipher FF */
+    {
+     1,
+     "SCSV",
+     SSL3_CK_SCSV,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0},
 #endif
 
 #ifndef OPENSSL_NO_EC
