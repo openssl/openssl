@@ -795,9 +795,9 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int set_ee_md)
             return 0;
         if (set_ee_md == 2) {
             if (check_md == NID_ecdsa_with_SHA256)
-                c->pkeys[SSL_PKEY_ECC].digest = EVP_sha256();
+                s->s3->tmp.md[SSL_PKEY_ECC] = EVP_sha256();
             else
-                c->pkeys[SSL_PKEY_ECC].digest = EVP_sha384();
+                s->s3->tmp.md[SSL_PKEY_ECC] = EVP_sha384();
         }
     }
     return rv;
@@ -1036,8 +1036,7 @@ int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s,
     /*
      * Store the digest used so applications can retrieve it if they wish.
      */
-    if (s->session && s->session->sess_cert)
-        s->session->sess_cert->peer_key->digest = *pmd;
+    s->s3->tmp.peer_md = *pmd;
     return 1;
 }
 
@@ -2668,6 +2667,21 @@ static int ssl_check_clienthello_tlsext_early(SSL *s)
         return 1;
     }
 }
+/* Initialise digests to default values */
+static void ssl_set_default_md(SSL *s)
+{
+    const EVP_MD **pmd = s->s3->tmp.md;
+#ifndef OPENSSL_NO_DSA
+    pmd[SSL_PKEY_DSA_SIGN] = EVP_sha1();
+#endif
+#ifndef OPENSSL_NO_RSA
+    pmd[SSL_PKEY_RSA_SIGN] = EVP_sha1();
+    pmd[SSL_PKEY_RSA_ENC] = EVP_sha1();
+#endif
+#ifndef OPENSSL_NO_EC
+    pmd[SSL_PKEY_ECC] = EVP_sha1();
+#endif
+}
 
 int tls1_set_server_sigalgs(SSL *s)
 {
@@ -2679,7 +2693,7 @@ int tls1_set_server_sigalgs(SSL *s)
     s->cert->shared_sigalgslen = 0;
     /* Clear certificate digests and validity flags */
     for (i = 0; i < SSL_PKEY_NUM; i++) {
-        s->cert->pkeys[i].digest = NULL;
+        s->s3->tmp.md[i] = NULL;
         s->cert->pkeys[i].valid_flags = 0;
     }
 
@@ -2697,8 +2711,9 @@ int tls1_set_server_sigalgs(SSL *s)
             al = SSL_AD_ILLEGAL_PARAMETER;
             goto err;
         }
-    } else
-        ssl_cert_set_default_md(s->cert);
+    } else {
+        ssl_set_default_md(s);
+    }
     return 1;
  err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
@@ -3434,6 +3449,7 @@ int tls1_process_sigalgs(SSL *s)
     int idx;
     size_t i;
     const EVP_MD *md;
+    const EVP_MD **pmd = s->s3->tmp.md;
     CERT *c = s->cert;
     TLS_SIGALGS *sigptr;
     if (!tls1_set_shared_sigalgs(s))
@@ -3453,12 +3469,12 @@ int tls1_process_sigalgs(SSL *s)
         if (sigs) {
             idx = tls12_get_pkey_idx(sigs[1]);
             md = tls12_get_hash(sigs[0]);
-            c->pkeys[idx].digest = md;
+            pmd[idx] = md;
             c->pkeys[idx].valid_flags = CERT_PKEY_EXPLICIT_SIGN;
             if (idx == SSL_PKEY_RSA_SIGN) {
                 c->pkeys[SSL_PKEY_RSA_ENC].valid_flags =
                     CERT_PKEY_EXPLICIT_SIGN;
-                c->pkeys[SSL_PKEY_RSA_ENC].digest = md;
+                pmd[SSL_PKEY_RSA_ENC] = md;
             }
         }
     }
@@ -3467,14 +3483,14 @@ int tls1_process_sigalgs(SSL *s)
     for (i = 0, sigptr = c->shared_sigalgs;
          i < c->shared_sigalgslen; i++, sigptr++) {
         idx = tls12_get_pkey_idx(sigptr->rsign);
-        if (idx > 0 && c->pkeys[idx].digest == NULL) {
+        if (idx > 0 && pmd[idx] == NULL) {
             md = tls12_get_hash(sigptr->rhash);
-            c->pkeys[idx].digest = md;
+            pmd[idx] = md;
             c->pkeys[idx].valid_flags = CERT_PKEY_EXPLICIT_SIGN;
             if (idx == SSL_PKEY_RSA_SIGN) {
                 c->pkeys[SSL_PKEY_RSA_ENC].valid_flags =
                     CERT_PKEY_EXPLICIT_SIGN;
-                c->pkeys[SSL_PKEY_RSA_ENC].digest = md;
+                pmd[SSL_PKEY_RSA_ENC] = md;
             }
         }
 
@@ -3489,18 +3505,18 @@ int tls1_process_sigalgs(SSL *s)
          * supported it stays as NULL.
          */
 # ifndef OPENSSL_NO_DSA
-        if (!c->pkeys[SSL_PKEY_DSA_SIGN].digest)
-            c->pkeys[SSL_PKEY_DSA_SIGN].digest = EVP_sha1();
+        if (pmd[SSL_PKEY_DSA_SIGN] == NULL)
+            pmd[SSL_PKEY_DSA_SIGN] = EVP_sha1();
 # endif
 # ifndef OPENSSL_NO_RSA
-        if (!c->pkeys[SSL_PKEY_RSA_SIGN].digest) {
-            c->pkeys[SSL_PKEY_RSA_SIGN].digest = EVP_sha1();
-            c->pkeys[SSL_PKEY_RSA_ENC].digest = EVP_sha1();
+        if (pmd[SSL_PKEY_RSA_SIGN] == NULL) {
+            pmd[SSL_PKEY_RSA_SIGN] = EVP_sha1();
+            pmd[SSL_PKEY_RSA_ENC] = EVP_sha1();
         }
 # endif
 # ifndef OPENSSL_NO_EC
-        if (!c->pkeys[SSL_PKEY_ECC].digest)
-            c->pkeys[SSL_PKEY_ECC].digest = EVP_sha1();
+        if (pmd[SSL_PKEY_ECC] == NULL)
+            pmd[SSL_PKEY_ECC] = EVP_sha1();
 # endif
     }
     return 1;
@@ -4086,7 +4102,7 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
     if (TLS1_get_version(s) >= TLS1_2_VERSION) {
         if (cpk->valid_flags & CERT_PKEY_EXPLICIT_SIGN)
             rv |= CERT_PKEY_EXPLICIT_SIGN | CERT_PKEY_SIGN;
-        else if (cpk->digest)
+        else if (s->s3->tmp.md[idx] != NULL)
             rv |= CERT_PKEY_SIGN;
     } else
         rv |= CERT_PKEY_SIGN | CERT_PKEY_EXPLICIT_SIGN;

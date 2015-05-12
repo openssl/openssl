@@ -2163,7 +2163,7 @@ int ssl3_get_certificate_request(SSL *s)
         }
         /* Clear certificate digests and validity flags */
         for (i = 0; i < SSL_PKEY_NUM; i++) {
-            s->cert->pkeys[i].digest = NULL;
+            s->s3->tmp.md[i] = NULL;
             s->cert->pkeys[i].valid_flags = 0;
         }
         if ((llen & 1) || !tls1_save_sigalgs(s, p, llen)) {
@@ -3081,7 +3081,7 @@ int ssl3_send_client_verify(SSL *s)
         if (SSL_USE_SIGALGS(s)) {
             long hdatalen = 0;
             void *hdata;
-            const EVP_MD *md = s->cert->key->digest;
+            const EVP_MD *md = s->s3->tmp.md[s->cert->key - s->cert->pkeys];
             hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
             if (hdatalen <= 0 || !tls12_get_sigandhash(p, pkey, md)) {
                 SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
@@ -3197,7 +3197,7 @@ static int ssl3_check_client_certificate(SSL *s)
     if (!s->cert || !s->cert->key->x509 || !s->cert->key->privatekey)
         return 0;
     /* If no suitable signature algorithm can't use certificate */
-    if (SSL_USE_SIGALGS(s) && !s->cert->key->digest)
+    if (SSL_USE_SIGALGS(s) && !s->s3->tmp.md[s->cert->key - s->cert->pkeys])
         return 0;
     /*
      * If strict mode check suitability of chain before using it. This also

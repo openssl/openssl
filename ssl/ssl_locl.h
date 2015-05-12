@@ -1291,6 +1291,10 @@ typedef struct ssl3_state_st {
         unsigned char *peer_sigalgs;
         /* Size of above array */
         size_t peer_sigalgslen;
+        /* Digest peer uses for signing */
+        const EVP_MD *peer_md;
+        /* Array of digests used for signing */
+        const EVP_MD *md[SSL_PKEY_NUM];
     } tmp;
 
     /* Connection binding to prevent renegotiation attacks */
@@ -1439,8 +1443,6 @@ typedef struct dtls1_state_st {
 typedef struct cert_pkey_st {
     X509 *x509;
     EVP_PKEY *privatekey;
-    /* Digest to use when signing */
-    const EVP_MD *digest;
     /* Chain for this certificate */
     STACK_OF(X509) *chain;
 # ifndef OPENSSL_NO_TLSEXT
@@ -1870,7 +1872,6 @@ void ssl_clear_cipher_ctx(SSL *s);
 int ssl_clear_bad_session(SSL *s);
 __owur CERT *ssl_cert_new(void);
 __owur CERT *ssl_cert_dup(CERT *cert);
-void ssl_cert_set_default_md(CERT *cert);
 void ssl_cert_clear_certs(CERT *c);
 void ssl_cert_free(CERT *c);
 __owur SESS_CERT *ssl_sess_cert_new(void);

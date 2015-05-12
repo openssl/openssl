@@ -3326,7 +3326,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         if (SSL_USE_SIGALGS(s)) {
             if (s->session && s->session->sess_cert) {
                 const EVP_MD *sig;
-                sig = s->session->sess_cert->peer_key->digest;
+                sig = s->s3->tmp.peer_md;
                 if (sig) {
                     *(int *)parg = EVP_MD_type(sig);
                     return 1;

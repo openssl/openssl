@@ -165,21 +165,6 @@ int SSL_get_ex_data_X509_STORE_CTX_idx(void)
     return ssl_x509_store_ctx_idx;
 }
 
-void ssl_cert_set_default_md(CERT *cert)
-{
-    /* Set digest values to defaults */
-#ifndef OPENSSL_NO_DSA
-    cert->pkeys[SSL_PKEY_DSA_SIGN].digest = EVP_sha1();
-#endif
-#ifndef OPENSSL_NO_RSA
-    cert->pkeys[SSL_PKEY_RSA_SIGN].digest = EVP_sha1();
-    cert->pkeys[SSL_PKEY_RSA_ENC].digest = EVP_sha1();
-#endif
-#ifndef OPENSSL_NO_EC
-    cert->pkeys[SSL_PKEY_ECC].digest = EVP_sha1();
-#endif
-}
-
 CERT *ssl_cert_new(void)
 {
     CERT *ret = OPENSSL_malloc(sizeof(*ret));
@@ -192,7 +177,6 @@ CERT *ssl_cert_new(void)
 
     ret->key = &(ret->pkeys[SSL_PKEY_RSA_ENC]);
     ret->references = 1;
-    ssl_cert_set_default_md(ret);
     ret->sec_cb = ssl_security_default_callback;
     ret->sec_level = OPENSSL_TLS_SECURITY_LEVEL;
     ret->sec_ex = NULL;
@@ -306,11 +290,6 @@ CERT *ssl_cert_dup(CERT *cert)
     }
 
     ret->references = 1;
-    /*
-     * Set digests to defaults. NB: we don't copy existing values as they
-     * will be set during handshake.
-     */
-    ssl_cert_set_default_md(ret);
     /* Configured sigalgs copied across */
     if (cert->conf_sigalgs) {
         ret->conf_sigalgs = OPENSSL_malloc(cert->conf_sigalgslen);
