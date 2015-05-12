@@ -1076,10 +1076,10 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
 
     case SSL_CTRL_GET_RAW_CIPHERLIST:
         if (parg) {
-            if (s->cert->ciphers_raw == NULL)
+            if (s->s3->tmp.ciphers_raw == NULL)
                 return 0;
-            *(unsigned char **)parg = s->cert->ciphers_raw;
-            return (int)s->cert->ciphers_rawlen;
+            *(unsigned char **)parg = s->s3->tmp.ciphers_raw;
+            return (int)s->s3->tmp.ciphers_rawlen;
         } else
             return ssl_put_cipher_by_char(s, NULL, NULL);
     case SSL_CTRL_GET_EXTMS_SUPPORT:
@@ -2825,15 +2825,6 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
     new_cert = ssl_cert_dup(ctx->cert);
     if (new_cert == NULL) {
         return NULL;
-    }
-    /* Preserve any already negotiated parameters */
-    if (ssl->server) {
-        new_cert->peer_sigalgs = ssl->cert->peer_sigalgs;
-        new_cert->peer_sigalgslen = ssl->cert->peer_sigalgslen;
-        ssl->cert->peer_sigalgs = NULL;
-        new_cert->ciphers_raw = ssl->cert->ciphers_raw;
-        new_cert->ciphers_rawlen = ssl->cert->ciphers_rawlen;
-        ssl->cert->ciphers_raw = NULL;
     }
     ssl_cert_free(ssl->cert);
     ssl->cert = new_cert;

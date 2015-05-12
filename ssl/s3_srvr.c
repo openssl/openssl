@@ -3572,13 +3572,13 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s, unsigned char *p,
         sk_SSL_CIPHER_zero(sk);
     }
 
-    OPENSSL_free(s->cert->ciphers_raw);
-    s->cert->ciphers_raw = BUF_memdup(p, num);
-    if (s->cert->ciphers_raw == NULL) {
+    OPENSSL_free(s->s3->tmp.ciphers_raw);
+    s->s3->tmp.ciphers_raw = BUF_memdup(p, num);
+    if (s->s3->tmp.ciphers_raw == NULL) {
         SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST, ERR_R_MALLOC_FAILURE);
         goto err;
     }
-    s->cert->ciphers_rawlen = (size_t)num;
+    s->s3->tmp.ciphers_rawlen = (size_t)num;
 
     for (i = 0; i < num; i += n) {
         /* Check for TLS_EMPTY_RENEGOTIATION_INFO_SCSV */

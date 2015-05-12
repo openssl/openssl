@@ -3003,13 +3003,13 @@ int ssl3_send_client_key_exchange(SSL *s)
 #endif
         /* If we haven't written everything save PMS */
     if (n <= 0) {
-        s->cert->pms = pms;
-        s->cert->pmslen = pmslen;
+        s->s3->tmp.pms = pms;
+        s->s3->tmp.pmslen = pmslen;
     } else {
         /* If we don't have a PMS restore */
         if (pms == NULL) {
-            pms = s->cert->pms;
-            pmslen = s->cert->pmslen;
+            pms = s->s3->tmp.pms;
+            pmslen = s->s3->tmp.pmslen;
         }
         if (pms == NULL) {
             ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
@@ -3022,7 +3022,7 @@ int ssl3_send_client_key_exchange(SSL *s)
                                                         session->master_key,
                                                         pms, pmslen);
         OPENSSL_clear_free(pms, pmslen);
-        s->cert->pms = NULL;
+        s->s3->tmp.pms = NULL;
         if (s->session->master_key_length < 0) {
             ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
             SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
@@ -3035,7 +3035,7 @@ int ssl3_send_client_key_exchange(SSL *s)
     SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
  err:
     OPENSSL_clear_free(pms, pmslen);
-    s->cert->pms = NULL;
+    s->s3->tmp.pms = NULL;
 #ifndef OPENSSL_NO_EC
     BN_CTX_free(bn_ctx);
     OPENSSL_free(encodedPoint);

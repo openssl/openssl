@@ -2902,6 +2902,9 @@ void ssl3_free(SSL *s)
 #endif
 
     sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
+    OPENSSL_free(s->s3->tmp.ciphers_raw);
+    OPENSSL_clear_free(s->s3->tmp.pms, s->s3->tmp.pmslen);
+    OPENSSL_free(s->s3->tmp.peer_sigalgs);
     BIO_free(s->s3->handshake_buffer);
     if (s->s3->handshake_dgst)
         ssl3_free_digest_list(s);
@@ -2922,6 +2925,12 @@ void ssl3_clear(SSL *s)
 
     ssl3_cleanup_key_block(s);
     sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
+    OPENSSL_free(s->s3->tmp.ciphers_raw);
+    s->s3->tmp.ciphers_raw = NULL;
+    OPENSSL_clear_free(s->s3->tmp.pms, s->s3->tmp.pmslen);
+    s->s3->tmp.pms = NULL;
+    OPENSSL_free(s->s3->tmp.peer_sigalgs);
+    s->s3->tmp.peer_sigalgs = NULL;
 
 #ifndef OPENSSL_NO_DH
     DH_free(s->s3->tmp.dh);
