@@ -1068,12 +1068,6 @@ void ssl_set_client_disabled(SSL *s)
         c->mask_k |= SSL_kDHd;
     if (c->mask_a & SSL_aECDSA)
         c->mask_k |= SSL_kECDHe;
-# ifndef OPENSSL_NO_KRB5
-    if (!kssl_tgt_is_available(s->kssl_ctx)) {
-        c->mask_a |= SSL_aKRB5;
-        c->mask_k |= SSL_kKRB5;
-    }
-# endif
 # ifndef OPENSSL_NO_PSK
     /* with PSK there must be client callback set */
     if (!s->psk_client_callback) {

@@ -150,7 +150,6 @@
 
 #include <stdio.h>
 #include "ssl_locl.h"
-#include "kssl_lcl.h"
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
 #include <openssl/objects.h>
@@ -1161,7 +1160,7 @@ int ssl3_get_server_hello(SSL *s)
 
 int ssl3_get_server_certificate(SSL *s)
 {
-    int al, i, ok, ret = -1;
+    int al, i, ok, ret = -1, exp_idx;
     unsigned long n, nc, llen, l;
     X509 *x = NULL;
     const unsigned char *q, *p;
@@ -1169,8 +1168,6 @@ int ssl3_get_server_certificate(SSL *s)
     STACK_OF(X509) *sk = NULL;
     SESS_CERT *sc;
     EVP_PKEY *pkey = NULL;
-    int need_cert = 1;          /* VRS: 0=> will allow null cert if auth ==
-                                 * KRB5 */
 
     n = s->method->ssl_get_message(s,
                                    SSL3_ST_CR_CERT_A,
@@ -1180,9 +1177,7 @@ int ssl3_get_server_certificate(SSL *s)
     if (!ok)
         return ((int)n);
 
-    if ((s->s3->tmp.message_type == SSL3_MT_SERVER_KEY_EXCHANGE) ||
-        ((s->s3->tmp.new_cipher->algorithm_auth & SSL_aKRB5) &&
-         (s->s3->tmp.message_type == SSL3_MT_SERVER_DONE))) {
+    if (s->s3->tmp.message_type == SSL3_MT_SERVER_KEY_EXCHANGE) {
         s->s3->tmp.reuse_message = 1;
         return (1);
     }
@@ -1237,12 +1232,7 @@ int ssl3_get_server_certificate(SSL *s)
     }
 
     i = ssl_verify_cert_chain(s, sk);
-    if ((s->verify_mode != SSL_VERIFY_NONE) && (i <= 0)
-#ifndef OPENSSL_NO_KRB5
-        && !((s->s3->tmp.new_cipher->algorithm_mkey & SSL_kKRB5) &&
-             (s->s3->tmp.new_cipher->algorithm_auth & SSL_aKRB5))
-#endif                          /* OPENSSL_NO_KRB5 */
-        ) {
+    if (s->verify_mode != SSL_VERIFY_NONE && i <= 0) {
         al = ssl_verify_alarm_type(s->verify_result);
         SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
                SSL_R_CERTIFICATE_VERIFY_FAILED);
@@ -1275,21 +1265,7 @@ int ssl3_get_server_certificate(SSL *s)
 
     pkey = X509_get_pubkey(x);
 
-    /* VRS: allow null cert if auth == KRB5 */
-    need_cert = ((s->s3->tmp.new_cipher->algorithm_mkey & SSL_kKRB5) &&
-                 (s->s3->tmp.new_cipher->algorithm_auth & SSL_aKRB5))
-        ? 0 : 1;
-
-#ifdef KSSL_DEBUG
-    fprintf(stderr, "pkey,x = %p, %p\n", pkey, x);
-    fprintf(stderr, "ssl_cert_type(x,pkey) = %d\n", ssl_cert_type(x, pkey));
-    fprintf(stderr, "cipher, alg, nc = %s, %lx, %lx, %d\n",
-            s->s3->tmp.new_cipher->name,
-            s->s3->tmp.new_cipher->algorithm_mkey,
-            s->s3->tmp.new_cipher->algorithm_auth, need_cert);
-#endif                          /* KSSL_DEBUG */
-
-    if (need_cert && ((pkey == NULL) || EVP_PKEY_missing_parameters(pkey))) {
+    if (pkey == NULL || EVP_PKEY_missing_parameters(pkey)) {
         x = NULL;
         al = SSL3_AL_FATAL;
         SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
@@ -1298,7 +1274,7 @@ int ssl3_get_server_certificate(SSL *s)
     }
 
     i = ssl_cert_type(x, pkey);
-    if (need_cert && i < 0) {
+    if (i < 0) {
         x = NULL;
         al = SSL3_AL_FATAL;
         SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
@@ -1306,35 +1282,27 @@ int ssl3_get_server_certificate(SSL *s)
         goto f_err;
     }
 
-    if (need_cert) {
-        int exp_idx = ssl_cipher_get_cert_index(s->s3->tmp.new_cipher);
-        if (exp_idx >= 0 && i != exp_idx) {
-            x = NULL;
-            al = SSL_AD_ILLEGAL_PARAMETER;
-            SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
-                   SSL_R_WRONG_CERTIFICATE_TYPE);
-            goto f_err;
-        }
-        sc->peer_cert_type = i;
-        CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
-        /*
-         * Why would the following ever happen? We just created sc a couple
-         * of lines ago.
-         */
-        X509_free(sc->peer_pkeys[i].x509);
-        sc->peer_pkeys[i].x509 = x;
-        sc->peer_key = &(sc->peer_pkeys[i]);
-
-        X509_free(s->session->peer);
-        CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
-        s->session->peer = x;
-    } else {
-        sc->peer_cert_type = i;
-        sc->peer_key = NULL;
-
-        X509_free(s->session->peer);
-        s->session->peer = NULL;
+    exp_idx = ssl_cipher_get_cert_index(s->s3->tmp.new_cipher);
+    if (exp_idx >= 0 && i != exp_idx) {
+        x = NULL;
+        al = SSL_AD_ILLEGAL_PARAMETER;
+        SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
+               SSL_R_WRONG_CERTIFICATE_TYPE);
+        goto f_err;
     }
+    sc->peer_cert_type = i;
+    CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
+    /*
+     * Why would the following ever happen? We just created sc a couple
+     * of lines ago.
+     */
+    X509_free(sc->peer_pkeys[i].x509);
+    sc->peer_pkeys[i].x509 = x;
+    sc->peer_key = &(sc->peer_pkeys[i]);
+
+    X509_free(s->session->peer);
+    CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
+    s->session->peer = x;
     s->session->verify_result = s->verify_result;
 
     x = NULL;
@@ -2328,9 +2296,6 @@ int ssl3_send_client_key_exchange(SSL *s)
     unsigned char *q;
     EVP_PKEY *pkey = NULL;
 #endif
-#ifndef OPENSSL_NO_KRB5
-    KSSL_ERR kssl_err;
-#endif                          /* OPENSSL_NO_KRB5 */
 #ifndef OPENSSL_NO_EC
     EC_KEY *clnt_ecdh = NULL;
     const EC_POINT *srvr_ecpoint = NULL;
@@ -2411,131 +2376,6 @@ int ssl3_send_client_key_exchange(SSL *s)
                 s2n(n, q);
                 n += 2;
             }
-        }
-#endif
-#ifndef OPENSSL_NO_KRB5
-        else if (alg_k & SSL_kKRB5) {
-            krb5_error_code krb5rc;
-            KSSL_CTX *kssl_ctx = s->kssl_ctx;
-            /*  krb5_data   krb5_ap_req;  */
-            krb5_data *enc_ticket;
-            krb5_data authenticator, *authp = NULL;
-            EVP_CIPHER_CTX ciph_ctx;
-            const EVP_CIPHER *enc = NULL;
-            unsigned char iv[EVP_MAX_IV_LENGTH];
-            unsigned char tmp_buf[SSL_MAX_MASTER_KEY_LENGTH];
-            unsigned char epms[SSL_MAX_MASTER_KEY_LENGTH + EVP_MAX_IV_LENGTH];
-            int padl, outl = sizeof(epms);
-
-            EVP_CIPHER_CTX_init(&ciph_ctx);
-
-# ifdef KSSL_DEBUG
-            fprintf(stderr, "ssl3_send_client_key_exchange(%lx & %lx)\n",
-                    alg_k, SSL_kKRB5);
-# endif                         /* KSSL_DEBUG */
-
-            authp = NULL;
-# ifdef KRB5SENDAUTH
-            if (KRB5SENDAUTH)
-                authp = &authenticator;
-# endif                         /* KRB5SENDAUTH */
-
-            krb5rc = kssl_cget_tkt(kssl_ctx, &enc_ticket, authp, &kssl_err);
-            enc = kssl_map_enc(kssl_ctx->enctype);
-            if (enc == NULL)
-                goto err;
-# ifdef KSSL_DEBUG
-            {
-                fprintf(stderr, "kssl_cget_tkt rtn %d\n", krb5rc);
-                if (krb5rc && kssl_err.text)
-                    fprintf(stderr, "kssl_cget_tkt kssl_err=%s\n",
-                            kssl_err.text);
-            }
-# endif                         /* KSSL_DEBUG */
-
-            if (krb5rc) {
-                ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
-                SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, kssl_err.reason);
-                goto err;
-            }
-
-            /*-
-             * 20010406 VRS - Earlier versions used KRB5 AP_REQ
-             * in place of RFC 2712 KerberosWrapper, as in:
-             *
-             * Send ticket (copy to *p, set n = length)
-             * n = krb5_ap_req.length;
-             * memcpy(p, krb5_ap_req.data, krb5_ap_req.length);
-             * if (krb5_ap_req.data)
-             *   kssl_krb5_free_data_contents(NULL,&krb5_ap_req);
-             *
-             * Now using real RFC 2712 KerberosWrapper
-             * (Thanks to Simon Wilkinson <sxw@sxw.org.uk>)
-             * Note: 2712 "opaque" types are here replaced
-             * with a 2-byte length followed by the value.
-             * Example:
-             * KerberosWrapper= xx xx asn1ticket 0 0 xx xx encpms
-             * Where "xx xx" = length bytes.  Shown here with
-             * optional authenticator omitted.
-             */
-
-            /*  KerberosWrapper.Ticket              */
-            s2n(enc_ticket->length, p);
-            memcpy(p, enc_ticket->data, enc_ticket->length);
-            p += enc_ticket->length;
-            n = enc_ticket->length + 2;
-
-            /*  KerberosWrapper.Authenticator       */
-            if (authp && authp->length) {
-                s2n(authp->length, p);
-                memcpy(p, authp->data, authp->length);
-                p += authp->length;
-                n += authp->length + 2;
-
-                free(authp->data);
-                authp->data = NULL;
-                authp->length = 0;
-            } else {
-                s2n(0, p);      /* null authenticator length */
-                n += 2;
-            }
-
-            pmslen = SSL_MAX_MASTER_KEY_LENGTH;
-            pms = OPENSSL_malloc(pmslen);
-            if (!pms)
-                goto memerr;
-
-            pms[0] = s->client_version >> 8;
-            pms[1] = s->client_version & 0xff;
-            if (RAND_bytes(pms + 2, pmslen - 2) <= 0)
-                goto err;
-
-            /*-
-             * 20010420 VRS.  Tried it this way; failed.
-             *      EVP_EncryptInit_ex(&ciph_ctx,enc, NULL,NULL);
-             *      EVP_CIPHER_CTX_set_key_length(&ciph_ctx,
-             *                              kssl_ctx->length);
-             *      EVP_EncryptInit_ex(&ciph_ctx,NULL, key,iv);
-             */
-
-            memset(iv, 0, sizeof(iv)); /* per RFC 1510 */
-            EVP_EncryptInit_ex(&ciph_ctx, enc, NULL, kssl_ctx->key, iv);
-            EVP_EncryptUpdate(&ciph_ctx, epms, &outl, pms, pmslen);
-            EVP_EncryptFinal_ex(&ciph_ctx, &(epms[outl]), &padl);
-            outl += padl;
-            if (outl > (int)sizeof epms) {
-                SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-                       ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
-            EVP_CIPHER_CTX_cleanup(&ciph_ctx);
-
-            /*  KerberosWrapper.EncryptedPreMasterSecret    */
-            s2n(outl, p);
-            memcpy(p, epms, outl);
-            p += outl;
-            n += outl + 2;
-            OPENSSL_cleanse(epms, outl);
         }
 #endif
 #ifndef OPENSSL_NO_DH
@@ -3394,7 +3234,7 @@ int ssl3_check_cert_and_algorithm(SSL *s)
     alg_a = s->s3->tmp.new_cipher->algorithm_auth;
 
     /* we don't have a certificate */
-    if ((alg_a & (SSL_aNULL | SSL_aKRB5)) || (alg_k & SSL_kPSK))
+    if ((alg_a & SSL_aNULL) || (alg_k & SSL_kPSK))
         return (1);
 
     sc = s->session->sess_cert;

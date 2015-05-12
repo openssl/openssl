@@ -300,8 +300,6 @@
 # define SSL_kDHE                0x00000008L
 /* synonym */
 # define SSL_kEDH                SSL_kDHE
-/* Kerberos5 key exchange */
-# define SSL_kKRB5               0x00000010L
 /* ECDH cert, RSA CA cert */
 # define SSL_kECDHr              0x00000020L
 /* ECDH cert, ECDSA CA cert */
@@ -328,8 +326,6 @@
 # define SSL_aDH                 0x00000008L
 /* Fixed ECDH auth (kECDHe or kECDHr) */
 # define SSL_aECDH               0x00000010L
-/* KRB5 auth */
-# define SSL_aKRB5               0x00000020L
 /* ECDSA auth*/
 # define SSL_aECDSA              0x00000040L
 /* PSK auth */
@@ -585,7 +581,6 @@ struct ssl_method_st {
  *      Cipher                  OCTET STRING,   -- the 3 byte cipher ID
  *      Session_ID              OCTET STRING,   -- the Session ID
  *      Master_key              OCTET STRING,   -- the master key
- *      KRB5_principal          OCTET STRING    -- optional Kerberos principal
  *      Key_Arg [ 0 ] IMPLICIT  OCTET STRING,   -- the optional Key argument
  *      Time [ 1 ] EXPLICIT     INTEGER,        -- optional Start Time
  *      Timeout [ 2 ] EXPLICIT  INTEGER,        -- optional Timeout ins seconds
@@ -619,10 +614,6 @@ struct ssl_session_st {
      */
     unsigned int sid_ctx_length;
     unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
-# ifndef OPENSSL_NO_KRB5
-    unsigned int krb5_client_princ_len;
-    unsigned char krb5_client_princ[SSL_MAX_KRB5_PRINCIPAL_LENGTH];
-# endif                        /* OPENSSL_NO_KRB5 */
 # ifndef OPENSSL_NO_PSK
     char *psk_identity_hint;
     char *psk_identity;
@@ -1074,10 +1065,6 @@ struct ssl_st {
     int error;
     /* actual code */
     int error_code;
-#  ifndef OPENSSL_NO_KRB5
-    /* Kerberos 5 context */
-    KSSL_CTX *kssl_ctx;
-#  endif                        /* OPENSSL_NO_KRB5 */
 #  ifndef OPENSSL_NO_PSK
     unsigned int (*psk_client_callback) (SSL *ssl, const char *hint,
                                          char *identity,

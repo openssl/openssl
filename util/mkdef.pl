@@ -258,7 +258,6 @@ $max_ssl = $max_num;
 $max_crypto = $max_num;
 
 my $ssl="include/openssl/ssl.h";
-$ssl.=" include/openssl/kssl.h";
 $ssl.=" include/openssl/tls1.h";
 $ssl.=" include/openssl/srtp.h";
 

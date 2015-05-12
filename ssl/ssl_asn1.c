@@ -95,9 +95,6 @@ typedef struct {
     ASN1_OCTET_STRING *comp_id;
     ASN1_OCTET_STRING *master_key;
     ASN1_OCTET_STRING *session_id;
-#ifndef OPENSSL_NO_KRB5
-    ASN1_OCTET_STRING *krb5_princ;
-#endif
     ASN1_OCTET_STRING *key_arg;
     long time;
     long timeout;
@@ -125,9 +122,6 @@ ASN1_SEQUENCE(SSL_SESSION_ASN1) = {
     ASN1_SIMPLE(SSL_SESSION_ASN1, cipher, ASN1_OCTET_STRING),
     ASN1_SIMPLE(SSL_SESSION_ASN1, session_id, ASN1_OCTET_STRING),
     ASN1_SIMPLE(SSL_SESSION_ASN1, master_key, ASN1_OCTET_STRING),
-#ifndef OPENSSL_NO_KRB5
-    ASN1_OPT(SSL_SESSION_ASN1, krb5_princ, ASN1_OCTET_STRING),
-#endif
     ASN1_IMP_OPT(SSL_SESSION_ASN1, key_arg, ASN1_OCTET_STRING, 0),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, time, ZLONG, 1),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, timeout, ZLONG, 2),
@@ -195,10 +189,6 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
     ASN1_OCTET_STRING tlsext_hostname, tlsext_tick;
 #endif
 
-#ifndef OPENSSL_NO_KRB5
-    ASN1_OCTET_STRING krb5_princ;
-#endif
-
 #ifndef OPENSSL_NO_SRP
     ASN1_OCTET_STRING srp_username;
 #endif
@@ -241,12 +231,6 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 
     ssl_session_oinit(&as.session_id_context, &sid_ctx,
                       in->sid_ctx, in->sid_ctx_length);
-#ifndef OPENSSL_NO_KRB5
-    if (in->krb5_client_princ_len) {
-        ssl_session_oinit(&as.krb5_princ, &krb5_princ,
-                          in->krb5_client_princ, in->krb5_client_princ_len);
-    }
-#endif                          /* OPENSSL_NO_KRB5 */
 
     as.time = in->time;
     as.timeout = in->timeout;
@@ -367,12 +351,6 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
         goto err;
 
     ret->master_key_length = tmpl;
-
-#ifndef OPENSSL_NO_KRB5
-    if (!ssl_session_memcpy(ret->krb5_client_princ, &ret->krb5_client_princ_len,
-                            as->krb5_princ, SSL_MAX_KRB5_PRINCIPAL_LENGTH))
-        goto err;
-#endif                          /* OPENSSL_NO_KRB5 */
 
     if (as->time != 0)
         ret->time = as->time;

@@ -778,10 +778,6 @@ static int ssl_get_keyex(const char **pname, SSL *ssl)
         *pname = "dh_dss";
         return SSL_kDHd;
     }
-    if (alg_k & SSL_kKRB5) {
-        *pname = "krb5";
-        return SSL_kKRB5;
-    }
     if (alg_k & SSL_kDHE) {
         *pname = "DHE";
         return SSL_kDHE;

@@ -165,18 +165,6 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
         if (BIO_printf(bp, "%02X", x->master_key[i]) <= 0)
             goto err;
     }
-#ifndef OPENSSL_NO_KRB5
-    if (BIO_puts(bp, "\n    Krb5 Principal: ") <= 0)
-        goto err;
-    if (x->krb5_client_princ_len == 0) {
-        if (BIO_puts(bp, "None") <= 0)
-            goto err;
-    } else
-        for (i = 0; i < x->krb5_client_princ_len; i++) {
-            if (BIO_printf(bp, "%02X", x->krb5_client_princ[i]) <= 0)
-                goto err;
-        }
-#endif                          /* OPENSSL_NO_KRB5 */
 #ifndef OPENSSL_NO_PSK
     if (BIO_puts(bp, "\n    PSK identity: ") <= 0)
         goto err;
