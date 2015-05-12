@@ -2694,7 +2694,7 @@ int tls1_set_server_sigalgs(SSL *s)
     /* Clear certificate digests and validity flags */
     for (i = 0; i < SSL_PKEY_NUM; i++) {
         s->s3->tmp.md[i] = NULL;
-        s->cert->pkeys[i].valid_flags = 0;
+        s->s3->tmp.valid_flags[i] = 0;
     }
 
     /* If sigalgs received process it. */
@@ -3450,6 +3450,7 @@ int tls1_process_sigalgs(SSL *s)
     size_t i;
     const EVP_MD *md;
     const EVP_MD **pmd = s->s3->tmp.md;
+    int *pvalid = s->s3->tmp.valid_flags;
     CERT *c = s->cert;
     TLS_SIGALGS *sigptr;
     if (!tls1_set_shared_sigalgs(s))
@@ -3470,10 +3471,9 @@ int tls1_process_sigalgs(SSL *s)
             idx = tls12_get_pkey_idx(sigs[1]);
             md = tls12_get_hash(sigs[0]);
             pmd[idx] = md;
-            c->pkeys[idx].valid_flags = CERT_PKEY_EXPLICIT_SIGN;
+            pvalid[idx] = CERT_PKEY_EXPLICIT_SIGN;
             if (idx == SSL_PKEY_RSA_SIGN) {
-                c->pkeys[SSL_PKEY_RSA_ENC].valid_flags =
-                    CERT_PKEY_EXPLICIT_SIGN;
+                pvalid[SSL_PKEY_RSA_ENC] = CERT_PKEY_EXPLICIT_SIGN;
                 pmd[SSL_PKEY_RSA_ENC] = md;
             }
         }
@@ -3486,10 +3486,9 @@ int tls1_process_sigalgs(SSL *s)
         if (idx > 0 && pmd[idx] == NULL) {
             md = tls12_get_hash(sigptr->rhash);
             pmd[idx] = md;
-            c->pkeys[idx].valid_flags = CERT_PKEY_EXPLICIT_SIGN;
+            pvalid[idx] = CERT_PKEY_EXPLICIT_SIGN;
             if (idx == SSL_PKEY_RSA_SIGN) {
-                c->pkeys[SSL_PKEY_RSA_ENC].valid_flags =
-                    CERT_PKEY_EXPLICIT_SIGN;
+                pvalid[SSL_PKEY_RSA_ENC] = CERT_PKEY_EXPLICIT_SIGN;
                 pmd[SSL_PKEY_RSA_ENC] = md;
             }
         }
@@ -3882,6 +3881,7 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
     int check_flags = 0, strict_mode;
     CERT_PKEY *cpk = NULL;
     CERT *c = s->cert;
+    int *pvalid;
     unsigned int suiteb_flags = tls1_suiteb(s);
     /* idx == -1 means checking server chains */
     if (idx != -1) {
@@ -3891,6 +3891,7 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
             idx = cpk - c->pkeys;
         } else
             cpk = c->pkeys + idx;
+        pvalid = s->s3->tmp.valid_flags + idx;
         x = cpk->x509;
         pk = cpk->privatekey;
         chain = cpk->chain;
@@ -3903,7 +3904,7 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
         if (s->cert->cert_flags & SSL_CERT_FLAG_BROKEN_PROTOCOL) {
             rv = CERT_PKEY_STRICT_FLAGS | CERT_PKEY_EXPLICIT_SIGN |
                 CERT_PKEY_VALID | CERT_PKEY_SIGN;
-            cpk->valid_flags = rv;
+            *pvalid = rv;
             return rv;
         }
 # endif
@@ -3914,6 +3915,8 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
         if (idx == -1)
             return 0;
         cpk = c->pkeys + idx;
+        pvalid = s->s3->tmp.valid_flags + idx;
+
         if (c->cert_flags & SSL_CERT_FLAGS_CHECK_TLS_STRICT)
             check_flags = CERT_PKEY_STRICT_FLAGS;
         else
@@ -4100,7 +4103,7 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
  end:
 
     if (TLS1_get_version(s) >= TLS1_2_VERSION) {
-        if (cpk->valid_flags & CERT_PKEY_EXPLICIT_SIGN)
+        if (*pvalid & CERT_PKEY_EXPLICIT_SIGN)
             rv |= CERT_PKEY_EXPLICIT_SIGN | CERT_PKEY_SIGN;
         else if (s->s3->tmp.md[idx] != NULL)
             rv |= CERT_PKEY_SIGN;
@@ -4113,10 +4116,10 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
      */
     if (!check_flags) {
         if (rv & CERT_PKEY_VALID)
-            cpk->valid_flags = rv;
+            *pvalid = rv;
         else {
             /* Preserve explicit sign flag, clear rest */
-            cpk->valid_flags &= CERT_PKEY_EXPLICIT_SIGN;
+            *pvalid &= CERT_PKEY_EXPLICIT_SIGN;
             return 0;
         }
     }

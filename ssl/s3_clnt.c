@@ -2164,7 +2164,7 @@ int ssl3_get_certificate_request(SSL *s)
         /* Clear certificate digests and validity flags */
         for (i = 0; i < SSL_PKEY_NUM; i++) {
             s->s3->tmp.md[i] = NULL;
-            s->cert->pkeys[i].valid_flags = 0;
+            s->s3->tmp.valid_flags[i] = 0;
         }
         if ((llen & 1) || !tls1_save_sigalgs(s, p, llen)) {
             ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);

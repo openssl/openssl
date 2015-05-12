@@ -270,7 +270,6 @@ CERT *ssl_cert_dup(CERT *cert)
                 goto err;
             }
         }
-        rpk->valid_flags = 0;
 #ifndef OPENSSL_NO_TLSEXT
         if (cert->pkeys[i].serverinfo != NULL) {
             /* Just copy everything. */
@@ -375,8 +374,6 @@ void ssl_cert_clear_certs(CERT *c)
         cpk->serverinfo = NULL;
         cpk->serverinfo_length = 0;
 #endif
-        /* Clear all flags apart from explicit sign */
-        cpk->valid_flags &= CERT_PKEY_EXPLICIT_SIGN;
     }
 }
 
