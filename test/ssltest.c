@@ -1719,21 +1719,6 @@ int main(int argc, char *argv[])
     c_ssl = SSL_new(c_ctx);
     s_ssl = SSL_new(s_ctx);
 
-#ifndef OPENSSL_NO_KRB5
-    if (c_ssl && c_ssl->kssl_ctx) {
-        char localhost[MAXHOSTNAMELEN + 2];
-
-        if (gethostname(localhost, sizeof localhost - 1) == 0) {
-            localhost[sizeof localhost - 1] = '\0';
-            if (strlen(localhost) == sizeof localhost - 1) {
-                BIO_printf(bio_err, "localhost name too long\n");
-                goto end;
-            }
-            kssl_ctx_setstring(c_ssl->kssl_ctx, KSSL_SERVER, localhost);
-        }
-    }
-#endif                          /* OPENSSL_NO_KRB5 */
-
     BIO_printf(bio_stdout, "Doing handshakes=%d bytes=%ld\n", number, bytes);
     for (i = 0; i < number; i++) {
         if (!reuse) {

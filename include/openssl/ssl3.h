@@ -177,25 +177,6 @@ extern "C" {
 # define SSL3_CK_ADH_DES_64_CBC_SHA              0x0300001A
 # define SSL3_CK_ADH_DES_192_CBC_SHA             0x0300001B
 
-/*
- * VRS Additional Kerberos5 entries
- */
-# define SSL3_CK_KRB5_DES_64_CBC_SHA             0x0300001E
-# define SSL3_CK_KRB5_DES_192_CBC3_SHA           0x0300001F
-# define SSL3_CK_KRB5_RC4_128_SHA                0x03000020
-# define SSL3_CK_KRB5_IDEA_128_CBC_SHA           0x03000021
-# define SSL3_CK_KRB5_DES_64_CBC_MD5             0x03000022
-# define SSL3_CK_KRB5_DES_192_CBC3_MD5           0x03000023
-# define SSL3_CK_KRB5_RC4_128_MD5                0x03000024
-# define SSL3_CK_KRB5_IDEA_128_CBC_MD5           0x03000025
-
-# define SSL3_CK_KRB5_DES_40_CBC_SHA             0x03000026
-# define SSL3_CK_KRB5_RC2_40_CBC_SHA             0x03000027
-# define SSL3_CK_KRB5_RC4_40_SHA                 0x03000028
-# define SSL3_CK_KRB5_DES_40_CBC_MD5             0x03000029
-# define SSL3_CK_KRB5_RC2_40_CBC_MD5             0x0300002A
-# define SSL3_CK_KRB5_RC4_40_MD5                 0x0300002B
-
 # define SSL3_TXT_RSA_NULL_MD5                   "NULL-MD5"
 # define SSL3_TXT_RSA_NULL_SHA                   "NULL-SHA"
 # define SSL3_TXT_RSA_RC4_40_MD5                 "EXP-RC4-MD5"
@@ -238,22 +219,6 @@ extern "C" {
 # define SSL3_TXT_ADH_DES_40_CBC_SHA             "EXP-ADH-DES-CBC-SHA"
 # define SSL3_TXT_ADH_DES_64_CBC_SHA             "ADH-DES-CBC-SHA"
 # define SSL3_TXT_ADH_DES_192_CBC_SHA            "ADH-DES-CBC3-SHA"
-
-# define SSL3_TXT_KRB5_DES_64_CBC_SHA            "KRB5-DES-CBC-SHA"
-# define SSL3_TXT_KRB5_DES_192_CBC3_SHA          "KRB5-DES-CBC3-SHA"
-# define SSL3_TXT_KRB5_RC4_128_SHA               "KRB5-RC4-SHA"
-# define SSL3_TXT_KRB5_IDEA_128_CBC_SHA          "KRB5-IDEA-CBC-SHA"
-# define SSL3_TXT_KRB5_DES_64_CBC_MD5            "KRB5-DES-CBC-MD5"
-# define SSL3_TXT_KRB5_DES_192_CBC3_MD5          "KRB5-DES-CBC3-MD5"
-# define SSL3_TXT_KRB5_RC4_128_MD5               "KRB5-RC4-MD5"
-# define SSL3_TXT_KRB5_IDEA_128_CBC_MD5          "KRB5-IDEA-CBC-MD5"
-
-# define SSL3_TXT_KRB5_DES_40_CBC_SHA            "EXP-KRB5-DES-CBC-SHA"
-# define SSL3_TXT_KRB5_RC2_40_CBC_SHA            "EXP-KRB5-RC2-CBC-SHA"
-# define SSL3_TXT_KRB5_RC4_40_SHA                "EXP-KRB5-RC4-SHA"
-# define SSL3_TXT_KRB5_DES_40_CBC_MD5            "EXP-KRB5-DES-CBC-MD5"
-# define SSL3_TXT_KRB5_RC2_40_CBC_MD5            "EXP-KRB5-RC2-CBC-MD5"
-# define SSL3_TXT_KRB5_RC4_40_MD5                "EXP-KRB5-RC4-MD5"
 
 # define SSL3_SSL_SESSION_ID_LENGTH              32
 # define SSL3_MAX_SSL_SESSION_ID_LENGTH          32

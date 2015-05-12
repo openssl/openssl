@@ -147,7 +147,6 @@
 #endif
 #include <stdio.h>
 #include "ssl_locl.h"
-#include "kssl_lcl.h"
 #include <openssl/objects.h>
 #include <openssl/lhash.h>
 #include <openssl/x509v3.h>
@@ -278,10 +277,6 @@ SSL *SSL_new(SSL_CTX *ctx)
     memset(s, 0, sizeof(*s));
 
     RECORD_LAYER_init(&s->rlayer, s);
-
-#ifndef OPENSSL_NO_KRB5
-    s->kssl_ctx = kssl_ctx_new();
-#endif                          /* OPENSSL_NO_KRB5 */
 
     s->options = ctx->options;
     s->mode = ctx->mode;
@@ -583,11 +578,6 @@ void SSL_free(SSL *s)
     RECORD_LAYER_release(&s->rlayer);
 
     SSL_CTX_free(s->ctx);
-
-#ifndef OPENSSL_NO_KRB5
-    if (s->kssl_ctx != NULL)
-        kssl_ctx_free(s->kssl_ctx);
-#endif                          /* OPENSSL_NO_KRB5 */
 
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
     OPENSSL_free(s->next_proto_negotiated);
@@ -2216,13 +2206,6 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 
     mask_a |= SSL_aNULL;
     emask_a |= SSL_aNULL;
-
-#ifndef OPENSSL_NO_KRB5
-    mask_k |= SSL_kKRB5;
-    mask_a |= SSL_aKRB5;
-    emask_k |= SSL_kKRB5;
-    emask_a |= SSL_aKRB5;
-#endif
 
     /*
      * An ECC certificate may be usable for ECDH and/or ECDSA cipher suites

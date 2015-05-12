@@ -526,16 +526,12 @@ int dtls1_accept(SSL *s)
                     * RFC 2246):
                     */
                    ((s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL) &&
-                    /*
-                     * ... except when the application insists on
-                     * verification (against the specs, but s3_clnt.c accepts
-                     * this for SSL 3)
-                     */
-                    !(s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)) ||
                    /*
-                    * never request cert in Kerberos ciphersuites
+                    * ... except when the application insists on
+                    * verification (against the specs, but s3_clnt.c accepts
+                    * this for SSL 3)
                     */
-                   (s->s3->tmp.new_cipher->algorithm_auth & SSL_aKRB5)
+                   !(s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT))
                    /*
                     * With normal PSK Certificates and Certificate Requests
                     * are omitted

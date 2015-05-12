@@ -644,10 +644,6 @@ int tls1_enc(SSL *s, int send)
             enc = EVP_CIPHER_CTX_cipher(s->enc_read_ctx);
     }
 
-#ifdef KSSL_DEBUG
-    fprintf(stderr, "tls1_enc(%d)\n", send);
-#endif                          /* KSSL_DEBUG */
-
     if ((s->session == NULL) || (ds == NULL) || (enc == NULL)) {
         memmove(rec->data, rec->input, rec->length);
         rec->input = rec->data;
@@ -707,26 +703,6 @@ int tls1_enc(SSL *s, int send)
             l += i;
             rec->length += i;
         }
-#ifdef KSSL_DEBUG
-        {
-            unsigned long ui;
-            fprintf(stderr,
-                    "EVP_Cipher(ds=%p,rec->data=%p,rec->input=%p,l=%ld) ==>\n",
-                    ds, rec->data, rec->input, l);
-            fprintf(stderr,
-                    "\tEVP_CIPHER_CTX: %d buf_len, %d key_len [%lu %lu], %d iv_len\n",
-                    ds->buf_len, ds->cipher->key_len, DES_KEY_SZ,
-                    DES_SCHEDULE_SZ, ds->cipher->iv_len);
-            fprintf(stderr, "\t\tIV: ");
-            for (i = 0; i < ds->cipher->iv_len; i++)
-                fprintf(stderr, "%02X", ds->iv[i]);
-            fprintf(stderr, "\n");
-            fprintf(stderr, "\trec->input=");
-            for (ui = 0; ui < l; ui++)
-                fprintf(stderr, " %02x", rec->input[ui]);
-            fprintf(stderr, "\n");
-        }
-#endif                          /* KSSL_DEBUG */
 
         if (!send) {
             if (l == 0 || l % bs != 0)
@@ -743,15 +719,6 @@ int tls1_enc(SSL *s, int send)
             rec->input += EVP_GCM_TLS_EXPLICIT_IV_LEN;
             rec->length -= EVP_GCM_TLS_EXPLICIT_IV_LEN;
         }
-#ifdef KSSL_DEBUG
-        {
-            unsigned long i;
-            fprintf(stderr, "\trec->data=");
-            for (i = 0; i < l; i++)
-                fprintf(stderr, " %02x", rec->data[i]);
-            fprintf(stderr, "\n");
-        }
-#endif                          /* KSSL_DEBUG */
 
         ret = 1;
         if (!SSL_USE_ETM(s) && EVP_MD_CTX_md(s->read_hash) != NULL)
