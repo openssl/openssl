@@ -14,7 +14,7 @@ use File::Spec::Functions;
 
 # see INSTALL for instructions.
 
-my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [experimental-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-krb5] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--test-sanity] [--config=FILE] os/compiler[:flags]\n";
+my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [experimental-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--test-sanity] [--config=FILE] os/compiler[:flags]\n";
 
 # Options:
 #
@@ -29,18 +29,6 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [experimenta
 # --install_prefix  Additional prefix for package builders (empty by
 #               default).  This needn't be set in advance, you can
 #               just as well use "make INSTALL_PREFIX=/whatever install".
-#
-# --with-krb5-dir  Declare where Kerberos 5 lives.  The libraries are expected
-#		to live in the subdirectory lib/ and the header files in
-#		include/.  A value is required.
-# --with-krb5-lib  Declare where the Kerberos 5 libraries live.  A value is
-#		required.
-#		(Default: KRB5_DIR/lib)
-# --with-krb5-include  Declare where the Kerberos 5 header files live.  A
-#		value is required.
-#		(Default: KRB5_DIR/include)
-# --with-krb5-flavor  Declare what flavor of Kerberos 5 is used.  Currently
-#		supported values are "MIT" and "Heimdal".  A value is required.
 #
 # --test-sanity Make a number of sanity checks on the data in this file.
 #               This is a debugging tool for OpenSSL developers.
@@ -59,7 +47,6 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [experimenta
 # no-asm        do not use assembler
 # no-dso        do not compile in any native shared-library methods. This
 #               will ensure that all methods just return NULL.
-# no-krb5       do not compile in any KRB5 library or code.
 # [no-]zlib     [don't] compile support for zlib compression.
 # zlib-dynamic	Like "zlib", but the zlib library is expected to be a shared
 #		library and will be loaded in run-time by the OpenSSL library.
@@ -782,7 +769,6 @@ my $no_threads=0;
 my $threads=0;
 my $no_shared=0; # but "no-shared" is default
 my $zlib=1;      # but "no-zlib" is default
-my $no_krb5=0;   # but "no-krb5" is implied unless "--with-krb5-..." is used
 my $no_rfc3779=1; # but "no-rfc3779" is default
 my $no_asm=0;
 my $no_dso=0;
@@ -856,7 +842,6 @@ my $openssl_thread_defines;
 my $openssl_sys_defines="";
 my $openssl_other_defines;
 my $libs;
-my $libkrb5="";
 my $target;
 my $options;
 my $make_depend=0;
@@ -1005,10 +990,6 @@ PROCESS_ARGS:
 				{
 				$install_prefix=$1;
 				}
-			elsif (/^--with-krb5-(dir|lib|include|flavor)=(.*)$/)
-				{
-				$withargs{"krb5-".$1}=$2;
-				}
 			elsif (/^--with-zlib-lib=(.*)$/)
 				{
 				$withargs{"zlib-lib"}=$1;
@@ -1074,11 +1055,6 @@ PROCESS_ARGS:
 if ($processor eq "386")
 	{
 	$disabled{"sse2"} = "forced";
-	}
-
-if (!defined($withargs{"krb5-flavor"}) || $withargs{"krb5-flavor"} eq "")
-	{
-	$disabled{"krb5"} = "krb5-flavor not specified";
 	}
 
 if (!defined($disabled{"zlib-dynamic"}))
@@ -1223,19 +1199,14 @@ foreach (sort (keys %disabled))
 			$openssl_algorithm_defines .= "#define OPENSSL_NO_$ALGO\n";
 			print " OPENSSL_NO_$ALGO";
 
-			if (/^krb5$/)
-				{ $no_krb5 = 1; }
-			else
-				{
-				push @skip, $algo;
-				# fix-up crypto/directory name(s)
-				$skip[$#skip]="whrlpool" if $algo eq "whirlpool";
-				$skip[$#skip]="ripemd" if $algo eq "rmd160";
+			push @skip, $algo;
+			# fix-up crypto/directory name(s)
+			$skip[$#skip]="whrlpool" if $algo eq "whirlpool";
+			$skip[$#skip]="ripemd" if $algo eq "rmd160";
 
-				print " (skip dir)";
+			print " (skip dir)";
 
-				$depflags .= " -DOPENSSL_NO_$ALGO";
-				}
+			$depflags .= " -DOPENSSL_NO_$ALGO";
 			}
 		}
 
@@ -1353,62 +1324,6 @@ my $no_user_cflags=0;
 
 if ($flags ne "")	{ $cflags="$flags$cflags"; }
 else			{ $no_user_cflags=1;       }
-
-# Kerberos settings.  The flavor must be provided from outside, either through
-# the script "config" or manually.
-if (!$no_krb5)
-	{
-	my ($lresolv, $lpath, $lext);
-	if ($withargs{"krb5-flavor"} =~ /^[Hh]eimdal$/)
-		{
-		die "Sorry, Heimdal is currently not supported\n";
-		}
-	##### HACK to force use of Heimdal.
-	##### WARNING: Since we don't really have adequate support for Heimdal,
-	#####          using this will break the build.  You'll have to make
-	#####          changes to the source, and if you do, please send
-	#####          patches to openssl-dev@openssl.org
-	if ($withargs{"krb5-flavor"} =~ /^force-[Hh]eimdal$/)
-		{
-		warn "Heimdal isn't really supported.  Your build WILL break\n";
-		warn "If you fix the problems, please send a patch to openssl-dev\@openssl.org\n";
-		$withargs{"krb5-dir"} = "/usr/heimdal"
-			if $withargs{"krb5-dir"} eq "";
-		$withargs{"krb5-lib"} = "-L".$withargs{"krb5-dir"}.
-			"/lib -lgssapi -lkrb5 -lcom_err"
-			if $withargs{"krb5-lib"} eq "" && !$IsMK1MF;
-		$cflags="-DKRB5_HEIMDAL $cflags";
-		}
-	if ($withargs{"krb5-flavor"} =~ /^[Mm][Ii][Tt]/)
-		{
-		$withargs{"krb5-dir"} = "/usr/kerberos"
-			if $withargs{"krb5-dir"} eq "";
-		$withargs{"krb5-lib"} = "-L".$withargs{"krb5-dir"}.
-			"/lib -lgssapi_krb5 -lkrb5 -lcom_err -lk5crypto"
-			if $withargs{"krb5-lib"} eq "" && !$IsMK1MF;
-		$cflags="-DKRB5_MIT $cflags";
-		$withargs{"krb5-flavor"} =~ s/^[Mm][Ii][Tt][._-]*//;
-		if ($withargs{"krb5-flavor"} =~ /^1[._-]*[01]/)
-			{
-			$cflags="-DKRB5_MIT_OLD11 $cflags";
-			}
-		}
-	LRESOLV:
-	foreach $lpath ("/lib", "/usr/lib")
-		{
-		foreach $lext ("a", "so")
-			{
-			$lresolv = "$lpath/libresolv.$lext";
-			last LRESOLV	if (-r "$lresolv");
-			$lresolv = "";
-			}
-		}
-	$withargs{"krb5-lib"} .= " -lresolv"
-		if ("$lresolv" ne "");
-	$withargs{"krb5-include"} = "-I".$withargs{"krb5-dir"}."/include"
-		if $withargs{"krb5-include"} eq "" &&
-		   $withargs{"krb5-dir"} ne "";
-	}
 
 # The DSO code currently always implements all functions so that no
 # applications will have to worry about that from a compilation point
@@ -1827,8 +1742,6 @@ while (<IN>)
 	s/^PROCESSOR=.*/PROCESSOR= $processor/;
 	s/^ARFLAGS=.*/ARFLAGS= $arflags/;
 	s/^PERL=.*/PERL= $perl/;
-	s/^KRB5_INCLUDES=.*/KRB5_INCLUDES=$withargs{"krb5-include"}/;
-	s/^LIBKRB5=.*/LIBKRB5=$withargs{"krb5-lib"}/;
 	s/^LIBZLIB=.*/LIBZLIB=$withargs{"zlib-lib"}/;
 	s/^ZLIB_INCLUDE=.*/ZLIB_INCLUDE=$withargs{"zlib-include"}/;
 	s/^FIPSLIBDIR=.*/FIPSLIBDIR=$fipslibdir/;
@@ -1887,8 +1800,6 @@ print "PROCESSOR     =$processor\n";
 print "RANLIB        =$ranlib\n";
 print "ARFLAGS       =$arflags\n";
 print "PERL          =$perl\n";
-print "KRB5_INCLUDES =",$withargs{"krb5-include"},"\n"
-	if $withargs{"krb5-include"} ne "";
 
 my $des_ptr=0;
 my $des_risc1=0;

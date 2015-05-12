@@ -58,7 +58,6 @@ my @dirs = (
 "crypto/engine",
 "crypto/ocsp",
 "crypto/ui",
-"crypto/krb5",
 #"crypto/store",
 "crypto/pqueue",
 "crypto/whrlpool",

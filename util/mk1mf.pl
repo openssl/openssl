@@ -139,7 +139,6 @@ and [options] can be one of
 	no-ssl3					- Skip this version of SSL
 	just-ssl				- remove all non-ssl keys/digest
 	no-asm 					- No x86 asm
-	no-krb5					- No KRB5
 	no-srp					- No SRP
 	no-ec					- No EC
 	no-engine				- No engine
@@ -294,7 +293,6 @@ $cflags.=" -DOPENSSL_NO_TLSEXT" if $no_tlsext;
 $cflags.=" -DOPENSSL_NO_SRP" if $no_srp;
 $cflags.=" -DOPENSSL_NO_CMS" if $no_cms;
 $cflags.=" -DOPENSSL_NO_ERR"  if $no_err;
-$cflags.=" -DOPENSSL_NO_KRB5" if $no_krb5;
 $cflags.=" -DOPENSSL_NO_EC"   if $no_ec;
 $cflags.=" -DOPENSSL_NO_GOST" if $no_gost;
 $cflags.=" -DOPENSSL_NO_ENGINE"   if $no_engine;
@@ -381,17 +379,11 @@ for (;;)
 		$dir=$val;
 		}
 
-	if ($key eq "KRB5_INCLUDES")
-		{ $cflags .= " $val";}
-
 	if ($key eq "ZLIB_INCLUDE")
 		{ $cflags .= " $val" if $val ne "";}
 
 	if ($key eq "LIBZLIB")
 		{ $zlib_lib = "$val" if $val ne "";}
-
-	if ($key eq "LIBKRB5")
-		{ $ex_libs .= " $val" if $val ne "";}
 
 	if ($key eq "EX_LIBS")
 		{ $ex_libs .= " $val" if $val ne "";}
@@ -1407,7 +1399,6 @@ sub read_options
 		"no-ec_nistp_64_gcc_128" => 0,
 		"no-err" => \$no_err,
 		"no-sock" => \$no_sock,
-		"no-krb5" => \$no_krb5,
 		"no-ec" => \$no_ec,
 		"no-gost" => \$no_gost,
 		"no-engine" => \$no_engine,
@@ -1493,22 +1484,6 @@ sub read_options
 
 		$xcflags="-DOPENSSL_EXPERIMENTAL_$ALGO $xcflags";
 		
-		}
-	elsif (/^--with-krb5-flavor=(.*)$/)
-		{
-		my $krb5_flavor = $1;
-		if ($krb5_flavor =~ /^force-[Hh]eimdal$/)
-			{
-			$xcflags="-DKRB5_HEIMDAL $xcflags";
-			}
-		elsif ($krb5_flavor =~ /^MIT/i)
-			{
-			$xcflags="-DKRB5_MIT $xcflags";
-		 	if ($krb5_flavor =~ /^MIT[._-]*1[._-]*[01]/i)
-				{
-				$xcflags="-DKRB5_MIT_OLD11 $xcflags"
-				}
-			}
 		}
 	elsif (/^([^=]*)=(.*)$/){ $VARS{$1}=$2; }
 	elsif (/^-[lL].*$/)	{ $l_flags.="$_ "; }

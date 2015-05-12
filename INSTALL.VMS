@@ -134,7 +134,7 @@ Currently, the logical names supported are:
                         disabling it is supported.  Supported algorithms to
                         do this with are: AES, BF, CAMELLIA, CAST, CMS, COMP,
                         DES, DGRAM, DH, DSA, EC, EC2M, ECDH, ECDSA, ENGINE,
-                        ERR, GOST, HEARTBEATS, HMAC, IDEA, KRB5, MD2, MD4,
+                        ERR, GOST, HEARTBEATS, HMAC, IDEA, MD2, MD4,
                         MD5, OCB, OCSP, PSK, RC2, RC4, RC5, RMD160, RSA, SCTP,
                         SEED, SOCK, SRP, SRTP, TLSEXT, WHIRLPOOL.  So, for
                         example, having the logical name OPENSSL_NO_RSA with
