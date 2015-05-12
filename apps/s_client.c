@@ -474,7 +474,7 @@ typedef enum OPTION_choice {
     OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
     OPT_DTLS1_2, OPT_TIMEOUT, OPT_MTU, OPT_KEYFORM, OPT_PASS,
     OPT_CERT_CHAIN, OPT_CAPATH, OPT_CHAINCAPATH, OPT_VERIFYCAPATH,
-    OPT_KEY, OPT_RECONNECT, OPT_BUILD_CHAIN, OPT_CAFILE, OPT_KRB5SVC,
+    OPT_KEY, OPT_RECONNECT, OPT_BUILD_CHAIN, OPT_CAFILE,
     OPT_CHAINCAFILE, OPT_VERIFYCAFILE, OPT_NEXTPROTONEG, OPT_ALPN,
     OPT_SERVERINFO, OPT_STARTTLS, OPT_SERVERNAME, OPT_JPAKE,
     OPT_USE_SRTP, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN, OPT_SMTPHOST,
@@ -550,9 +550,6 @@ OPTIONS s_client_options[] = {
 # ifndef OPENSSL_NO_JPAKE
     {"jpake", OPT_JPAKE, 's', "JPAKE secret to use"},
 # endif
-#endif
-#ifndef OPENSSL_NO_KRB5
-    {"krb5svc", OPT_KRB5SVC, 's', "Kerberos service name"},
 #endif
 #ifndef OPENSSL_NO_SRP
     {"srpuser", OPT_SRPUSER, 's', "SRP authentification for 'user'"},
@@ -666,10 +663,6 @@ int s_client_main(int argc, char **argv)
     long socket_mtu = 0, randamt = 0;
     unsigned short port = PORT;
     OPTION_CHOICE o;
-#ifndef OPENSSL_NO_KRB5
-    KSSL_CTX *kctx;
-    const char *krb5svc = NULL;
-#endif
 #ifndef OPENSSL_NO_ENGINE
     ENGINE *ssl_client_engine = NULL;
 #endif
@@ -828,11 +821,6 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_NOCMDS:
             cmdletters = 0;
-            break;
-        case OPT_KRB5SVC:
-#ifndef OPENSSL_NO_KRB5
-            krb5svc = opt_arg();
-#endif
             break;
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 1);
@@ -1333,14 +1321,6 @@ int s_client_main(int argc, char **argv)
         }
     }
 #endif
-#ifndef OPENSSL_NO_KRB5
-    if (con && (kctx = kssl_ctx_new()) != NULL) {
-        SSL_set0_kssl_ctx(con, kctx);
-        kssl_ctx_setstring(kctx, KSSL_SERVER, host);
-        if (krb5svc)
-            kssl_ctx_setstring(kctx, KSSL_SERVICE, krb5svc);
-    }
-#endif                          /* OPENSSL_NO_KRB5 */
 
  re_start:
 #ifdef NO_SYS_UN_H

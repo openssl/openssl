@@ -5,14 +5,11 @@
 DIR=		apps
 TOP=		..
 CC=		cc
-INCLUDES=	-I$(TOP) -I../include $(KRB5_INCLUDES)
+INCLUDES=	-I$(TOP) -I../include
 CFLAG=		-g -static -Wswitch
 MAKEFILE=	Makefile
 PERL=		perl
 RM=		rm -f
-# KRB5 stuff
-KRB5_INCLUDES=
-LIBKRB5=
 
 PEX_LIBS=
 EX_LIBS= 
@@ -149,7 +146,7 @@ $(EXE): progs.h $(EXE_OBJ) $(DLIBCRYPTO) $(DLIBSSL)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
-	LIBRARIES="$(LIBSSL) $(LIBKRB5) $(LIBCRYPTO)" ; \
+	LIBRARIES="$(LIBSSL) $(LIBCRYPTO)" ; \
 	$(MAKE) -f $(TOP)/Makefile.shared -e \
 		APPNAME=$(EXE) OBJECTS="$(EXE_OBJ)" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
