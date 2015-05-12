@@ -873,27 +873,6 @@ do
   fi
 done
 
-# Discover Kerberos 5 (since it's still a prototype, we don't
-# do any guesses yet, that's why this section is commented away.
-#if [ -d /usr/kerberos ]; then
-#    krb5_dir=/usr/kerberos
-#    if [ \( -f $krb5_dir/lib/libgssapi_krb5.a -o -f $krb5_dir/lib/libgssapi_krb5.so* \)\
-#	-a \( -f $krb5_dir/lib/libkrb5.a -o -f $krb5_dir/lib/libkrb5.so* \)\
-#	-a \( -f $krb5_dir/lib/libcom_err.a -o -f $krb5_dir/lib/libcom_err.so* \)\
-#	-a \( -f $krb5_dir/lib/libk5crypto.a -o -f $krb5_dir/lib/libk5crypto.so* \)\
-#	-a \( -f $krb5_dir/include/krb5.h \) ]; then
-#	options="$options --with-krb5-flavor=MIT"
-#    fi
-#elif [ -d /usr/heimdal ]; then
-#    krb5_dir=/usr/heimdal
-#    if [ \( -f $krb5_dir/lib/libgssapi.a -o -f $krb5_dir/lib/libgssapi.so* \)\
-#	-a \( -f $krb5_dir/lib/libkrb5.a -o -f $krb5_dir/lib/libkrb5.so* \)\
-#	-a \( -f $krb5_dir/lib/libcom_err.a -o -f $krb5_dir/lib/libcom_err.so* \)\
-#	-a \( -f $krb5_dir/include/krb5.h \) ]; then
-#	options="$options --with-krb5-flavor=Heimdal"
-#    fi
-#fi
-
 if [ -z "$OUT" ]; then
   OUT="$CC"
 fi

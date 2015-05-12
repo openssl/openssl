@@ -180,8 +180,7 @@ typedef enum STORE_params {
     STORE_PARAM_KEY_PARAMETERS = 0x03, /* ??? */
     STORE_PARAM_KEY_NO_PARAMETERS = 0x04, /* N/A */
     STORE_PARAM_AUTH_PASSPHRASE = 0x05, /* char * */
-    STORE_PARAM_AUTH_KRB5_TICKET = 0x06, /* void * */
-    STORE_PARAM_TYPE_NUM = 0x06 /* The amount of known parameter types */
+    STORE_PARAM_TYPE_NUM = 0x05 /* The amount of known parameter types */
 } STORE_PARAM_TYPES;
 /*
  * Parameter value sizes.  -1 means unknown, anything else is the required

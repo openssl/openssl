@@ -127,7 +127,7 @@ $   ENCRYPT_TYPES = "Basic,"+ -
 		    "DES,AES,RC2,RC4,RC5,IDEA,BF,CAST,CAMELLIA,SEED,MODES,"+ -
 		    "BN,EC,RSA,DSA,ECDSA,DH,ECDH,DSO,ENGINE,"+ -
 		    "BUFFER,BIO,STACK,LHASH,RAND,ERR,"+ -
-		    "EVP,ASN1,PEM,X509,X509V3,CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,KRB5,"+ -
+		    "EVP,ASN1,PEM,X509,X509V3,CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,"+ -
 		    "CMS,PQUEUE,TS,JPAKE,SRP,STORE,CMAC"
 $ ENDIF
 $!
@@ -343,7 +343,6 @@ $ LIB_COMP = "comp_lib,comp_err,"+ -
 $ LIB_OCSP = "ocsp_asn,ocsp_ext,ocsp_ht,ocsp_lib,ocsp_cl,"+ -
 	"ocsp_srv,ocsp_prn,ocsp_vfy,ocsp_err,v3_ocsp"
 $ LIB_UI = "ui_err,ui_lib,ui_openssl,ui_util"
-$ LIB_KRB5 = "krb5_asn"
 $ LIB_CMS = "cms_lib,cms_asn1,cms_att,cms_io,cms_smime,cms_err,"+ -
 	"cms_sd,cms_dd,cms_cd,cms_env,cms_enc,cms_ess,"+ -
 	"cms_pwri,cms_kari"

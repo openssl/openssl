@@ -5,13 +5,10 @@
 DIR=		test
 TOP=		..
 CC=		cc
-INCLUDES=	-I$(TOP) -I../include -I../crypto/include $(KRB5_INCLUDES) -I$(TOP)/fips
+INCLUDES=	-I$(TOP) -I../include -I../crypto/include -I$(TOP)/fips
 CFLAG=		-g
 MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 PERL=		perl
-# KRB5 stuff
-KRB5_INCLUDES=
-LIBKRB5=
 
 PEX_LIBS=
 EX_LIBS= #-lnsl -lsocket
@@ -419,14 +416,14 @@ $(DLIBCRYPTO):
 BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
-	LIBRARIES="$(LIBSSL) $(LIBCRYPTO) $(LIBKRB5)"; \
+	LIBRARIES="$(LIBSSL) $(LIBCRYPTO)"; \
 	$(MAKE) -f $(TOP)/Makefile.shared -e \
 		APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o $$testutil" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
 
 BUILD_CMD_STATIC=shlib_target=; \
-	LIBRARIES="$(DLIBSSL) $(DLIBCRYPTO) $(LIBKRB5)"; \
+	LIBRARIES="$(DLIBSSL) $(DLIBCRYPTO)"; \
 	$(MAKE) -f $(TOP)/Makefile.shared -e \
 		APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o $$testutil" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
@@ -478,7 +475,7 @@ FIPS_BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 FIPS_CRYPTO_BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
-	LIBRARIES="$(LIBSSL) $(LIBCRYPTO) $(LIBKRB5)"; \
+	LIBRARIES="$(LIBSSL) $(LIBCRYPTO)"; \
 	if [ -z "$(SHARED_LIBS)" -a -n "$(FIPSCANLIB)" ] ; then \
 		FIPSLD_CC="$(CC)"; CC=$(TOP)/fips/fipsld; export CC FIPSLD_CC; \
 	fi; \

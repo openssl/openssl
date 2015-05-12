@@ -219,7 +219,6 @@ BUILDENV=	PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)' \
 		DEPFLAG='-DOPENSSL_NO_DEPRECATED $(DEPFLAG)'	\
 		MAKEDEPPROG='$(MAKEDEPPROG)'			\
 		SHARED_LDFLAGS='$(SHARED_LDFLAGS)'		\
-		KRB5_INCLUDES='$(KRB5_INCLUDES)' LIBKRB5='$(LIBKRB5)'	\
 		ZLIB_INCLUDE='$(ZLIB_INCLUDE)' LIBZLIB='$(LIBZLIB)'	\
 		EXE_EXT='$(EXE_EXT)' SHARED_LIBS='$(SHARED_LIBS)'	\
 		SHLIB_EXT='$(SHLIB_EXT)' SHLIB_TARGET='$(SHLIB_TARGET)'	\
@@ -340,9 +339,6 @@ build-shared: do_$(SHLIB_TARGET) link-shared
 
 do_$(SHLIB_TARGET):
 	@ set -e; libs='-L. $(SHLIBDEPS)'; for i in $(SHLIBDIRS); do \
-		if [ "$$i" = "ssl" -a -n "$(LIBKRB5)" ]; then \
-			libs="$(LIBKRB5) $$libs"; \
-		fi; \
 		$(CLEARENV) && $(MAKE) -f Makefile.shared -e $(BUILDENV) \
 			LIBNAME=$$i LIBVERSION=$(SHLIB_MAJOR).$(SHLIB_MINOR) \
 			LIBCOMPATVERSIONS=";$(SHLIB_VERSION_HISTORY)" \
@@ -363,7 +359,7 @@ libcrypto.pc: Makefile
 	    echo 'Requires: '; \
 	    echo 'Libs: -L$${libdir} -lcrypto'; \
 	    echo 'Libs.private: $(EX_LIBS)'; \
-	    echo 'Cflags: -I$${includedir} $(KRB5_INCLUDES)' ) > libcrypto.pc
+	    echo 'Cflags: -I$${includedir}' ) > libcrypto.pc
 
 libssl.pc: Makefile
 	@ ( echo 'prefix=$(INSTALLTOP)'; \
@@ -377,7 +373,7 @@ libssl.pc: Makefile
 	    echo 'Requires.private: libcrypto'; \
 	    echo 'Libs: -L$${libdir} -lssl'; \
 	    echo 'Libs.private: $(EX_LIBS)'; \
-	    echo 'Cflags: -I$${includedir} $(KRB5_INCLUDES)' ) > libssl.pc
+	    echo 'Cflags: -I$${includedir}' ) > libssl.pc
 
 openssl.pc: Makefile
 	@ ( echo 'prefix=$(INSTALLTOP)'; \

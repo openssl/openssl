@@ -249,7 +249,7 @@ $ SDIRS := -
         des,aes,rc2,rc4,rc5,idea,bf,cast,camellia,seed,modes,-
         bn,ec,rsa,dsa,ecdsa,dh,ecdh,dso,engine,-
         buffer,bio,stack,lhash,rand,err,-
-        evp,asn1,pem,x509,x509v3,conf,txt_db,pkcs7,pkcs12,comp,ocsp,ui,krb5,-
+        evp,asn1,pem,x509,x509v3,conf,txt_db,pkcs7,pkcs12,comp,ocsp,ui,-
         cms,pqueue,ts,jpake,srp,store,cmac
 $
 $! One of the best way to figure out what the list should be is to do
@@ -281,7 +281,6 @@ $ CONFIG_LOGICALS := AES,-
 		     HMAC,-
 		     IDEA,-
 		     JPAKE,-
-		     KRB5,-
 		     MD2,-
 		     MD4,-
 		     MD5,-
@@ -339,7 +338,6 @@ $ CONFIG_DISABLE_RULES := RIJNDAEL/AES;-
 			  DH/GOST;-
 			  TLSEXT/SRP,HEARTBEAT;-
 			  /STATIC_ENGINE;-
-			  /KRB5;-
 			  /DEPRECATED;-
 			  /EC_NISTP_64_GCC_128;-
 			  /GMP;-
@@ -774,7 +772,7 @@ $ HEADER_SDIRS := , -
    BN, EC, RSA, DSA, ECDSA, DH, ECDH, DSO, ENGINE, -
    BUFFER, BIO, STACK, LHASH, RAND, ERR, -
    EVP, ASN1, PEM, X509, X509V3, CONF, TXT_DB, PKCS7, PKCS12, -
-   COMP, OCSP, UI, KRB5, -
+   COMP, OCSP, UI, -
    CMS, PQUEUE, TS, JPAKE, SRP, STORE, CMAC
 $!
 $ EXHEADER_ := crypto.h, opensslv.h, ebcdic.h, symhacks.h, ossl_typ.h
@@ -826,7 +824,6 @@ $ EXHEADER_PKCS12 := pkcs12.h
 $ EXHEADER_COMP := comp.h
 $ EXHEADER_OCSP := ocsp.h
 $ EXHEADER_UI := ui.h
-$ EXHEADER_KRB5 := krb5_asn.h
 $ EXHEADER_CMS := cms.h
 $ EXHEADER_PQUEUE := pqueue.h
 $ EXHEADER_TS := ts.h
@@ -850,7 +847,7 @@ $!
 $! Copy All The ".H" Files From The [.SSL] Directory.
 $!
 $! (keep these in the same order as ssl/Makefile)
-$ EXHEADER := ssl.h, ssl2.h, ssl3.h, ssl23.h, tls1.h, dtls1.h, kssl.h, srtp.h
+$ EXHEADER := ssl.h, ssl2.h, ssl3.h, ssl23.h, tls1.h, dtls1.h, srtp.h
 $ copy sys$disk:[.ssl]'exheader' sys$disk:[.include.openssl]
 $!
 $! Purge the [.include.openssl] header files.

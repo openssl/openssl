@@ -77,7 +77,7 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "BIO", "COMP", "BUFFER", "LHASH", "STACK", "ERR",
 			 "LOCKING",
 			 # External "algorithms"
-			 "FP_API", "STDIO", "SOCK", "KRB5", "DGRAM",
+			 "FP_API", "STDIO", "SOCK", "DGRAM",
 			 # Engines
 			 "STATIC_ENGINE", "ENGINE", "HW", "GMP",
 			 # TLS
@@ -121,7 +121,7 @@ close(IN);
 my $no_rc2; my $no_rc4; my $no_rc5; my $no_idea; my $no_des; my $no_bf;
 my $no_cast; my $no_whirlpool; my $no_camellia; my $no_seed;
 my $no_md2; my $no_md4; my $no_md5; my $no_sha; my $no_ripemd; my $no_mdc2;
-my $no_rsa; my $no_dsa; my $no_dh; my $no_aes; my $no_krb5;
+my $no_rsa; my $no_dsa; my $no_dh; my $no_aes;
 my $no_ec; my $no_ecdsa; my $no_ecdh; my $no_engine; my $no_hw;
 my $no_fp_api; my $no_static_engine=1; my $no_gmp; my $no_deprecated;
 my $no_psk; my $no_tlsext; my $no_cms; my $no_capieng;
@@ -210,7 +210,6 @@ foreach (@ARGV, split(/ /, $options))
 	#elsif (/^no-locking$/)	{ $no_locking=1; }
 	elsif (/^no-comp$/)	{ $no_comp=1; }
 	elsif (/^no-dso$/)	{ $no_dso=1; }
-	elsif (/^no-krb5$/)	{ $no_krb5=1; }
 	elsif (/^no-engine$/)	{ $no_engine=1; }
 	elsif (/^no-hw$/)	{ $no_hw=1; }
 	elsif (/^no-gmp$/)	{ $no_gmp=1; }
@@ -319,7 +318,6 @@ $crypto.=" include/openssl/rand.h";
 $crypto.=" include/openssl/comp.h" ; # unless $no_comp;
 $crypto.=" include/openssl/ocsp.h";
 $crypto.=" include/openssl/ui.h";
-$crypto.=" include/openssl/krb5_asn.h";
 #$crypto.=" include/openssl/store.h";
 $crypto.=" include/openssl/pqueue.h";
 $crypto.=" include/openssl/cms.h";
@@ -1195,7 +1193,6 @@ sub is_valid
 			if ($keyword eq "BIO" && $no_bio) { return 0; }
 			if ($keyword eq "COMP" && $no_comp) { return 0; }
 			if ($keyword eq "DSO" && $no_dso) { return 0; }
-			if ($keyword eq "KRB5" && $no_krb5) { return 0; }
 			if ($keyword eq "ENGINE" && $no_engine) { return 0; }
 			if ($keyword eq "HW" && $no_hw) { return 0; }
 			if ($keyword eq "FP_API" && $no_fp_api) { return 0; }

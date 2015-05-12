@@ -23,8 +23,6 @@ while(<STDIN>) {
     @deps=grep(!/^\//,@deps);
     @deps=grep(!/^\\$/,@deps);
     @deps=grep(!/^$origfile$/,@deps);
-# pull out the kludged kerberos header (if present).
-    @deps=grep(!/^[.\/]+\/krb5.h/,@deps);
     push @{$files{$thisfile}},@deps;
 }
 
