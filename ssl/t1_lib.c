@@ -1889,8 +1889,8 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p,
 # endif                         /* !OPENSSL_NO_EC */
 
     /* Clear any signature algorithms extension received */
-    OPENSSL_free(s->cert->peer_sigalgs);
-    s->cert->peer_sigalgs = NULL;
+    OPENSSL_free(s->s3->tmp.peer_sigalgs);
+    s->s3->tmp.peer_sigalgs = NULL;
 # ifdef TLSEXT_TYPE_encrypt_then_mac
     s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC;
 # endif
@@ -2107,7 +2107,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p,
             }
         } else if (type == TLSEXT_TYPE_signature_algorithms) {
             int dsize;
-            if (s->cert->peer_sigalgs || size < 2) {
+            if (s->s3->tmp.peer_sigalgs || size < 2) {
                 *al = SSL_AD_DECODE_ERROR;
                 return 0;
             }
@@ -2684,7 +2684,7 @@ int tls1_set_server_sigalgs(SSL *s)
     }
 
     /* If sigalgs received process it. */
-    if (s->cert->peer_sigalgs) {
+    if (s->s3->tmp.peer_sigalgs) {
         if (!tls1_process_sigalgs(s)) {
             SSLerr(SSL_F_TLS1_SET_SERVER_SIGALGS, ERR_R_MALLOC_FAILURE);
             al = SSL_AD_INTERNAL_ERROR;
@@ -3386,13 +3386,13 @@ static int tls1_set_shared_sigalgs(SSL *s)
     if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE || is_suiteb) {
         pref = conf;
         preflen = conflen;
-        allow = c->peer_sigalgs;
-        allowlen = c->peer_sigalgslen;
+        allow = s->s3->tmp.peer_sigalgs;
+        allowlen = s->s3->tmp.peer_sigalgslen;
     } else {
         allow = conf;
         allowlen = conflen;
-        pref = c->peer_sigalgs;
-        preflen = c->peer_sigalgslen;
+        pref = s->s3->tmp.peer_sigalgs;
+        preflen = s->s3->tmp.peer_sigalgslen;
     }
     nmatch = tls12_shared_sigalgs(s, NULL, pref, preflen, allow, allowlen);
     if (nmatch) {
@@ -3420,12 +3420,12 @@ int tls1_save_sigalgs(SSL *s, const unsigned char *data, int dsize)
     if (!c)
         return 0;
 
-    OPENSSL_free(c->peer_sigalgs);
-    c->peer_sigalgs = OPENSSL_malloc(dsize);
-    if (!c->peer_sigalgs)
+    OPENSSL_free(s->s3->tmp.peer_sigalgs);
+    s->s3->tmp.peer_sigalgs = OPENSSL_malloc(dsize);
+    if (s->s3->tmp.peer_sigalgs == NULL)
         return 0;
-    c->peer_sigalgslen = dsize;
-    memcpy(c->peer_sigalgs, data, dsize);
+    s->s3->tmp.peer_sigalgslen = dsize;
+    memcpy(s->s3->tmp.peer_sigalgs, data, dsize);
     return 1;
 }
 
@@ -3510,12 +3510,12 @@ int SSL_get_sigalgs(SSL *s, int idx,
                     int *psign, int *phash, int *psignhash,
                     unsigned char *rsig, unsigned char *rhash)
 {
-    const unsigned char *psig = s->cert->peer_sigalgs;
+    const unsigned char *psig = s->s3->tmp.peer_sigalgs;
     if (psig == NULL)
         return 0;
     if (idx >= 0) {
         idx <<= 1;
-        if (idx >= (int)s->cert->peer_sigalgslen)
+        if (idx >= (int)s->s3->tmp.peer_sigalgslen)
             return 0;
         psig += idx;
         if (rhash)
@@ -3524,7 +3524,7 @@ int SSL_get_sigalgs(SSL *s, int idx,
             *rsig = psig[1];
         tls1_lookup_sigalg(phash, psign, psignhash, psig);
     }
-    return s->cert->peer_sigalgslen / 2;
+    return s->s3->tmp.peer_sigalgslen / 2;
 }
 
 int SSL_get_shared_sigalgs(SSL *s, int idx,
@@ -3923,7 +3923,7 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
     if (TLS1_get_version(s) >= TLS1_2_VERSION && strict_mode) {
         int default_nid;
         unsigned char rsign = 0;
-        if (c->peer_sigalgs)
+        if (s->s3->tmp.peer_sigalgs)
             default_nid = 0;
         /* If no sigalgs extension use defaults from RFC5246 */
         else {

@@ -311,11 +311,7 @@ CERT *ssl_cert_dup(CERT *cert)
      * will be set during handshake.
      */
     ssl_cert_set_default_md(ret);
-    /* Peer sigalgs set to NULL as we get these from handshake too */
-    ret->peer_sigalgs = NULL;
-    ret->peer_sigalgslen = 0;
-    /* Configured sigalgs however we copy across */
-
+    /* Configured sigalgs copied across */
     if (cert->conf_sigalgs) {
         ret->conf_sigalgs = OPENSSL_malloc(cert->conf_sigalgslen);
         if (!ret->conf_sigalgs)
@@ -360,8 +356,6 @@ CERT *ssl_cert_dup(CERT *cert)
         CRYPTO_add(&cert->chain_store->references, 1, CRYPTO_LOCK_X509_STORE);
         ret->chain_store = cert->chain_store;
     }
-
-    ret->ciphers_raw = NULL;
 
     ret->sec_cb = cert->sec_cb;
     ret->sec_level = cert->sec_level;
@@ -438,20 +432,16 @@ void ssl_cert_free(CERT *c)
 #endif
 
     ssl_cert_clear_certs(c);
-    OPENSSL_free(c->peer_sigalgs);
     OPENSSL_free(c->conf_sigalgs);
     OPENSSL_free(c->client_sigalgs);
     OPENSSL_free(c->shared_sigalgs);
     OPENSSL_free(c->ctypes);
     X509_STORE_free(c->verify_store);
     X509_STORE_free(c->chain_store);
-    OPENSSL_free(c->ciphers_raw);
 #ifndef OPENSSL_NO_TLSEXT
     custom_exts_free(&c->cli_ext);
     custom_exts_free(&c->srv_ext);
 #endif
-    OPENSSL_clear_free(c->pms, c->pmslen);
-    c->pms = NULL;
     OPENSSL_free(c);
 }
 

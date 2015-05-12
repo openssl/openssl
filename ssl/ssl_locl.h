@@ -1277,6 +1277,20 @@ typedef struct ssl3_state_st {
         char *new_compression;
 #  endif
         int cert_request;
+        /* Raw values of the cipher list from a client */
+        unsigned char *ciphers_raw;
+        size_t ciphers_rawlen;
+        /* Temporary storage for premaster secret */
+        unsigned char *pms;
+        size_t pmslen;
+        /*
+         * signature algorithms peer reports: e.g. supported signature
+         * algorithms extension for server or as part of a certificate
+         * request for client.
+         */
+        unsigned char *peer_sigalgs;
+        /* Size of above array */
+        size_t peer_sigalgslen;
     } tmp;
 
     /* Connection binding to prevent renegotiation attacks */
@@ -1531,16 +1545,6 @@ typedef struct cert_st {
      */
     unsigned char *ctypes;
     size_t ctype_num;
-    /* Temporary storage for premaster secret */
-    unsigned char *pms;
-    size_t pmslen;
-    /*
-     * signature algorithms peer reports: e.g. supported signature algorithms
-     * extension for server or as part of a certificate request for client.
-     */
-    unsigned char *peer_sigalgs;
-    /* Size of above array */
-    size_t peer_sigalgslen;
     /*
      * suppported signature algorithms. When set on a client this is sent in
      * the client hello as the supported signature algorithms extension. For
@@ -1580,9 +1584,6 @@ typedef struct cert_st {
      */
     X509_STORE *chain_store;
     X509_STORE *verify_store;
-    /* Raw values of the cipher list from a client */
-    unsigned char *ciphers_raw;
-    size_t ciphers_rawlen;
     /* Custom extension methods for server and client */
     custom_ext_methods cli_ext;
     custom_ext_methods srv_ext;
