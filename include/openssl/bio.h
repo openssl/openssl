@@ -212,21 +212,6 @@ extern "C" {
 #  define BIO_FLAGS_UPLINK        0
 # endif
 
-/* Used in BIO_gethostbyname() */
-# define BIO_GHBN_CTRL_HITS              1
-# define BIO_GHBN_CTRL_MISSES            2
-# define BIO_GHBN_CTRL_CACHE_SIZE        3
-# define BIO_GHBN_CTRL_GET_ENTRY         4
-# define BIO_GHBN_CTRL_FLUSH             5
-
-/* Mostly used in the SSL BIO */
-/*-
- * Not used anymore
- * #define BIO_FLAGS_PROTOCOL_DELAYED_READ 0x10
- * #define BIO_FLAGS_PROTOCOL_DELAYED_WRITE 0x20
- * #define BIO_FLAGS_PROTOCOL_STARTUP   0x40
- */
-
 # define BIO_FLAGS_BASE64_NO_NL  0x100
 
 /*
