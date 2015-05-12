@@ -1295,6 +1295,12 @@ typedef struct ssl3_state_st {
         const EVP_MD *peer_md;
         /* Array of digests used for signing */
         const EVP_MD *md[SSL_PKEY_NUM];
+        /*
+         * Set if corresponding CERT_PKEY can be used with current
+         * SSL session: e.g. appropriate curve, signature algorithms etc.
+         * If zero it can't be used at all.
+         */
+        int valid_flags[SSL_PKEY_NUM];
     } tmp;
 
     /* Connection binding to prevent renegotiation attacks */
@@ -1456,12 +1462,6 @@ typedef struct cert_pkey_st {
     unsigned char *serverinfo;
     size_t serverinfo_length;
 # endif
-    /*
-     * Set if CERT_PKEY can be used with current SSL session: e.g.
-     * appropriate curve, signature algorithms etc. If zero it can't be used
-     * at all.
-     */
-    int valid_flags;
 } CERT_PKEY;
 /* Retrieve Suite B flags */
 # define tls1_suiteb(s)  (s->cert->cert_flags & SSL_CERT_FLAG_SUITEB_128_LOS)
@@ -1916,14 +1916,14 @@ __owur int ssl_ctx_security(SSL_CTX *ctx, int op, int bits, int nid, void *other
 int ssl_undefined_function(SSL *s);
 __owur int ssl_undefined_void_function(void);
 __owur int ssl_undefined_const_function(const SSL *s);
-__owur CERT_PKEY *ssl_get_server_send_pkey(const SSL *s);
+__owur CERT_PKEY *ssl_get_server_send_pkey(SSL *s);
 #  ifndef OPENSSL_NO_TLSEXT
 __owur int ssl_get_server_cert_serverinfo(SSL *s, const unsigned char **serverinfo,
                                    size_t *serverinfo_length);
 #  endif
 __owur EVP_PKEY *ssl_get_sign_pkey(SSL *s, const SSL_CIPHER *c, const EVP_MD **pmd);
 __owur int ssl_cert_type(X509 *x, EVP_PKEY *pkey);
-void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher);
+void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher);
 __owur STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s);
 __owur int ssl_verify_alarm_type(long type);
 void ssl_load_ciphers(void);

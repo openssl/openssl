@@ -1933,9 +1933,11 @@ void SSL_set_cert_cb(SSL *s, int (*cb) (SSL *ssl, void *arg), void *arg)
     ssl_cert_set_cert_cb(s->cert, cb, arg);
 }
 
-void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
+void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
 {
     CERT_PKEY *cpk;
+    CERT *c = s->cert;
+    int *pvalid = s->s3->tmp.valid_flags;
     int rsa_enc, rsa_tmp, rsa_sign, dh_tmp, dh_rsa, dh_dsa, dsa_sign;
     int rsa_enc_export, dh_rsa_export, dh_dsa_export;
     int rsa_tmp_export, dh_tmp_export, kl;
@@ -1972,22 +1974,21 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
     have_ecdh_tmp = (c->ecdh_tmp || c->ecdh_tmp_cb || c->ecdh_tmp_auto);
 #endif
     cpk = &(c->pkeys[SSL_PKEY_RSA_ENC]);
-    rsa_enc = cpk->valid_flags & CERT_PKEY_VALID;
+    rsa_enc = pvalid[SSL_PKEY_RSA_ENC] & CERT_PKEY_VALID;
     rsa_enc_export = (rsa_enc && EVP_PKEY_size(cpk->privatekey) * 8 <= kl);
     cpk = &(c->pkeys[SSL_PKEY_RSA_SIGN]);
-    rsa_sign = cpk->valid_flags & CERT_PKEY_SIGN;
+    rsa_sign = pvalid[SSL_PKEY_RSA_SIGN] & CERT_PKEY_SIGN;
     cpk = &(c->pkeys[SSL_PKEY_DSA_SIGN]);
-    dsa_sign = cpk->valid_flags & CERT_PKEY_SIGN;
+    dsa_sign = pvalid[SSL_PKEY_DSA_SIGN] & CERT_PKEY_SIGN;
     cpk = &(c->pkeys[SSL_PKEY_DH_RSA]);
-    dh_rsa = cpk->valid_flags & CERT_PKEY_VALID;
+    dh_rsa = pvalid[SSL_PKEY_DH_RSA] & CERT_PKEY_VALID;
     dh_rsa_export = (dh_rsa && EVP_PKEY_size(cpk->privatekey) * 8 <= kl);
     cpk = &(c->pkeys[SSL_PKEY_DH_DSA]);
-/* FIX THIS EAY EAY EAY */
-    dh_dsa = cpk->valid_flags & CERT_PKEY_VALID;
+    dh_dsa = pvalid[SSL_PKEY_DH_DSA] & CERT_PKEY_VALID;
     dh_dsa_export = (dh_dsa && EVP_PKEY_size(cpk->privatekey) * 8 <= kl);
     cpk = &(c->pkeys[SSL_PKEY_ECC]);
 #ifndef OPENSSL_NO_EC
-    have_ecc_cert = cpk->valid_flags & CERT_PKEY_VALID;
+    have_ecc_cert = pvalid[SSL_PKEY_ECC] & CERT_PKEY_VALID;
 #endif
     mask_k = 0;
     mask_a = 0;
@@ -2063,7 +2064,7 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
             (x->ex_kusage & X509v3_KU_KEY_AGREEMENT) : 1;
         ecdsa_ok = (x->ex_flags & EXFLAG_KUSAGE) ?
             (x->ex_kusage & X509v3_KU_DIGITAL_SIGNATURE) : 1;
-        if (!(cpk->valid_flags & CERT_PKEY_SIGN))
+        if (!(pvalid[SSL_PKEY_ECC] & CERT_PKEY_SIGN))
             ecdsa_ok = 0;
         ecc_pkey = X509_get_pubkey(x);
         ecc_pkey_size = (ecc_pkey != NULL) ? EVP_PKEY_bits(ecc_pkey) : 0;
@@ -2204,7 +2205,7 @@ static int ssl_get_server_cert_index(const SSL *s)
     return idx;
 }
 
-CERT_PKEY *ssl_get_server_send_pkey(const SSL *s)
+CERT_PKEY *ssl_get_server_send_pkey(SSL *s)
 {
     CERT *c;
     int i;
@@ -2212,7 +2213,7 @@ CERT_PKEY *ssl_get_server_send_pkey(const SSL *s)
     c = s->cert;
     if (!s->s3 || !s->s3->tmp.new_cipher)
         return NULL;
-    ssl_set_cert_masks(c, s->s3->tmp.new_cipher);
+    ssl_set_masks(s, s->s3->tmp.new_cipher);
 
 #ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
     /*

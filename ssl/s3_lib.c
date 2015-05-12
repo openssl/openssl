@@ -3892,7 +3892,7 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
         if ((c->algorithm_ssl & SSL_TLSV1_2) && !SSL_USE_TLS1_2_CIPHERS(s))
             continue;
 
-        ssl_set_cert_masks(cert, c);
+        ssl_set_masks(s, c);
         mask_k = cert->mask_k;
         mask_a = cert->mask_a;
         emask_k = cert->export_mask_k;
