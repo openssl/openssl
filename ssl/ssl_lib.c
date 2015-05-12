@@ -2269,7 +2269,7 @@ EVP_PKEY *ssl_get_sign_pkey(SSL *s, const SSL_CIPHER *cipher,
         return (NULL);
     }
     if (pmd)
-        *pmd = c->pkeys[idx].digest;
+        *pmd = s->s3->tmp.md[idx];
     return c->pkeys[idx].privatekey;
 }
 
