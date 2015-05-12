@@ -3,11 +3,15 @@
  _______________
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
+  *) Support for Kerberos ciphersuites in TLS (RFC2712) has been removed. This
+     code and the associated standard is no longer considered fit-for-purpose.
+     [Matt Caswell]
 
   *) Added HTTP GET support to the ocsp command.
      [Rich Salz]
 
-  *) RAND_pseudo_bytes has been deprecated. Users should use RAND bytes instead.
+  *) RAND_pseudo_bytes has been deprecated. Users should use RAND_bytes instead.
+     [Matt Caswell]
 
   *) Added support for TLS extended master secret from
      draft-ietf-tls-session-hash-03.txt. Thanks for Alfredo Pironti for an
