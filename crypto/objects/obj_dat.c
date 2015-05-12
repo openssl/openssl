@@ -255,16 +255,16 @@ int OBJ_add_object(const ASN1_OBJECT *obj)
             return (0);
     if ((o = OBJ_dup(obj)) == NULL)
         goto err;
-    if ((ao[ADDED_NID] = OPENSSL_malloc(sizeof(*ao))) == NULL)
+    if ((ao[ADDED_NID] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL)
         goto err2;
     if ((o->length != 0) && (obj->data != NULL))
-        if ((ao[ADDED_DATA] = OPENSSL_malloc(sizeof(*ao))) == NULL)
+        if ((ao[ADDED_DATA] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL)
             goto err2;
     if (o->sn != NULL)
-        if ((ao[ADDED_SNAME] = OPENSSL_malloc(sizeof(*ao))) == NULL)
+        if ((ao[ADDED_SNAME] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL)
             goto err2;
     if (o->ln != NULL)
-        if ((ao[ADDED_LNAME] = OPENSSL_malloc(sizeof(*ao))) == NULL)
+        if ((ao[ADDED_LNAME] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL)
             goto err2;
 
     for (i = ADDED_DATA; i <= ADDED_NID; i++) {
