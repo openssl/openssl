@@ -71,22 +71,14 @@
 #define n2s(c,s)        ((s=(((unsigned int)(c[0]))<< 8)| \
                             (((unsigned int)(c[1]))    )),c+=2)
 
-#if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)
-# define SCT_TIMESTAMP unsigned __int64
-#elif defined(__arch64__)
-# define SCT_TIMESTAMP unsigned long
-#else
-# define SCT_TIMESTAMP unsigned long long
-#endif
-
-#define n2l8(c,l)       (l =((SCT_TIMESTAMP)(*((c)++)))<<56, \
-                         l|=((SCT_TIMESTAMP)(*((c)++)))<<48, \
-                         l|=((SCT_TIMESTAMP)(*((c)++)))<<40, \
-                         l|=((SCT_TIMESTAMP)(*((c)++)))<<32, \
-                         l|=((SCT_TIMESTAMP)(*((c)++)))<<24, \
-                         l|=((SCT_TIMESTAMP)(*((c)++)))<<16, \
-                         l|=((SCT_TIMESTAMP)(*((c)++)))<< 8, \
-                         l|=((SCT_TIMESTAMP)(*((c)++))))
+#define n2l8(c,l)       (l =((uint64_t)(*((c)++)))<<56, \
+                         l|=((uint64_t)(*((c)++)))<<48, \
+                         l|=((uint64_t)(*((c)++)))<<40, \
+                         l|=((uint64_t)(*((c)++)))<<32, \
+                         l|=((uint64_t)(*((c)++)))<<24, \
+                         l|=((uint64_t)(*((c)++)))<<16, \
+                         l|=((uint64_t)(*((c)++)))<< 8, \
+                         l|=((uint64_t)(*((c)++))))
 
 typedef struct SCT_st {
     /* The encoded SCT */
@@ -99,7 +91,7 @@ typedef struct SCT_st {
     unsigned char version;
     unsigned char *logid;
     unsigned short logidlen;
-    SCT_TIMESTAMP timestamp;
+    uint64_t timestamp;
     unsigned char *ext;
     unsigned short extlen;
     unsigned char hash_alg;
@@ -149,7 +141,7 @@ static void tls12_signature_print(BIO *out, const unsigned char hash_alg,
         BIO_printf(out, "%s", OBJ_nid2ln(nid));
 }
 
-static void timestamp_print(BIO *out, SCT_TIMESTAMP timestamp)
+static void timestamp_print(BIO *out, uint64_t timestamp)
 {
     ASN1_GENERALIZEDTIME *gen;
     char genstr[20];
