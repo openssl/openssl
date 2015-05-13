@@ -83,9 +83,9 @@ see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
 
 =item B<-iter count>
 
-When creating new PKCS#8 containers, use a given number of iterations on the password
-in deriving the encryption key for the PKCS#8 output. High values increase the time
-required to brute-force a PKCS#8 container.
+When creating new PKCS#8 containers, use a given number of iterations on
+the password in deriving the encryption key for the PKCS#8 output.
+High values increase the time required to brute-force a PKCS#8 container.
 
 =item B<-nocrypt>
 
@@ -278,5 +278,9 @@ the old format at present.
 
 L<dsa(1)|dsa(1)>, L<rsa(1)|rsa(1)>, L<genrsa(1)|genrsa(1)>,
 L<gendsa(1)|gendsa(1)> 
+
+=head1 HISTORY
+
+The B<-iter> option was added to OpenSSL 1.1.0.
 
 =cut
