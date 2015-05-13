@@ -268,6 +268,45 @@ extern "C" {
 #  define __owur
 # endif
 
+/* Standard integer types */
+# if defined(__osf__) || defined(__sgi) || defined(__hpux) || defined(OPENSSL_SYS_VMS)
+#  include <inttypes.h>
+# elif defined(_MSC_VER) && _MSC_VER<=1500
+/*
+ * minimally required typdefs for systems not supporting inttypes.h or
+ * stdint.h: currently just older VC++
+ */
+typedef signed char int8_t;
+typedef unsigned char uint8_t;
+typedef short int16_t;
+typedef unsigned short uint16_t;
+typedef int int32_t;
+typedef unsigned int uint32_t;
+typedef __int64 int64_t;
+typedef unsigned __int64 uint64_t;
+
+#  include <limits.h>
+
+#  define INT8_MAX    SCHAR_MAX
+#  define INT8_MIN    SCHAR_MIN
+#  define UINT8_MAX   UCHAR_MAX
+
+#  define INT16_MAX   SHRT_MAX
+#  define INT16_MIN   SHRT_MIN
+#  define UINT16_MAX  USHRT_MAX
+
+#  define INT32_MAX   INT_MAX
+#  define INT32_MIN   INT_MIN
+#  define UINT32_MAX  UINT_MAX
+
+#  define INT64_MAX   _I64_MAX
+#  define INT64_MIN   _I64_MIN
+#  define UINT64_MAX  _UI64_MAX
+
+# else
+#  include <stdint.h>
+# endif
+
 #ifdef  __cplusplus
 }
 #endif
