@@ -189,6 +189,7 @@ static void apps_shutdown()
     CONF_modules_unload(1);
 #ifndef OPENSSL_NO_COMP
     COMP_zlib_cleanup();
+    SSL_COMP_free_compression_methods();
 #endif
     OBJ_cleanup();
     EVP_cleanup();
