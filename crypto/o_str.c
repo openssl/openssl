@@ -59,7 +59,7 @@
 
 #include <ctype.h>
 #include <e_os.h>
-#include "o_str.h"
+#include "internal/o_str.h"
 
 #if !defined(OPENSSL_IMPLEMENTS_strncasecmp) && \
     !defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_SYS_WINCE) && \

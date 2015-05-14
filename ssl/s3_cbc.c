@@ -53,7 +53,7 @@
  *
  */
 
-#include "../crypto/constant_time_locl.h"
+#include "internal/constant_time_locl.h"
 #include "ssl_locl.h"
 
 #include <openssl/md5.h>

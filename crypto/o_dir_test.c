@@ -36,7 +36,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include "e_os2.h"
-#include "o_dir.h"
+#include "internal/o_dir.h"
 
 #if defined OPENSSL_SYS_UNIX || defined OPENSSL_SYS_WIN32 || defined OPENSSL_SYS_WINCE
 # define CURRDIR "."

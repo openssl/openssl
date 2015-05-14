@@ -123,7 +123,7 @@
 # include <sys/types.h>
 #endif
 
-#include "o_dir.h"
+#include "internal/o_dir.h"
 #include <openssl/objects.h>
 #include <openssl/bio.h>
 #include <openssl/pem.h>

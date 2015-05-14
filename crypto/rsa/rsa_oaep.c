@@ -17,7 +17,7 @@
  * one-wayness.  For the RSA function, this is an equivalent notion.
  */
 
-#include "constant_time_locl.h"
+#include "internal/constant_time_locl.h"
 
 #include <stdio.h>
 #include "cryptlib.h"
