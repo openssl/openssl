@@ -72,41 +72,6 @@ extern "C" {
 
 # define PEM_BUFSIZE             1024
 
-# define PEM_OBJ_UNDEF           0
-# define PEM_OBJ_X509            1
-# define PEM_OBJ_X509_REQ        2
-# define PEM_OBJ_CRL             3
-# define PEM_OBJ_SSL_SESSION     4
-# define PEM_OBJ_PRIV_KEY        10
-# define PEM_OBJ_PRIV_RSA        11
-# define PEM_OBJ_PRIV_DSA        12
-# define PEM_OBJ_PRIV_DH         13
-# define PEM_OBJ_PUB_RSA         14
-# define PEM_OBJ_PUB_DSA         15
-# define PEM_OBJ_PUB_DH          16
-# define PEM_OBJ_DHPARAMS        17
-# define PEM_OBJ_DSAPARAMS       18
-# define PEM_OBJ_PRIV_RSA_PUBLIC 19
-# define PEM_OBJ_PRIV_ECDSA      20
-# define PEM_OBJ_PUB_ECDSA       21
-# define PEM_OBJ_ECPARAMETERS    22
-
-# define PEM_ERROR               30
-# define PEM_DEK_DES_CBC         40
-# define PEM_DEK_IDEA_CBC        45
-# define PEM_DEK_DES_EDE         50
-# define PEM_DEK_DES_ECB         60
-# define PEM_DEK_RSA             70
-# define PEM_DEK_RSA_MD2         80
-# define PEM_DEK_RSA_MD5         90
-
-# define PEM_MD_MD2              NID_md2
-# define PEM_MD_MD5              NID_md5
-# define PEM_MD_SHA              NID_sha
-# define PEM_MD_MD2_RSA          NID_md2WithRSAEncryption
-# define PEM_MD_MD5_RSA          NID_md5WithRSAEncryption
-# define PEM_MD_SHA_RSA          NID_sha1WithRSAEncryption
-
 # define PEM_STRING_X509_OLD     "X509 CERTIFICATE"
 # define PEM_STRING_X509         "CERTIFICATE"
 # define PEM_STRING_X509_TRUSTED "TRUSTED CERTIFICATE"
@@ -143,7 +108,6 @@ typedef struct PEM_Encode_Seal_st {
     EVP_CIPHER_CTX cipher;
 } PEM_ENCODE_SEAL_CTX;
 
-/* enc_type is one off */
 # define PEM_TYPE_ENCRYPTED      10
 # define PEM_TYPE_MIC_ONLY       20
 # define PEM_TYPE_MIC_CLEAR      30
