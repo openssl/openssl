@@ -605,7 +605,7 @@ extern int sys_nerr;
 #  define strerror(errnum) \
         (((errnum)<0 || (errnum)>=sys_nerr) ? NULL : sys_errlist[errnum])
   /* Being signed SunOS 4.x memcpy breaks ASN1_OBJECT table lookup */
-#  include "crypto/o_str.h"
+#  include "internal/o_str.h"
 #  define memcmp OPENSSL_memcmp
 # endif
 
@@ -624,7 +624,7 @@ extern int sys_nerr;
 #  define strncasecmp _strnicmp
 # elif defined(OPENSSL_SYS_VMS)
 /* VMS below version 7.0 doesn't have strcasecmp() */
-#  include "o_str.h"
+#  include "internal/o_str.h"
 #  define strcasecmp OPENSSL_strcasecmp
 #  define strncasecmp OPENSSL_strncasecmp
 #  define OPENSSL_IMPLEMENTS_strncasecmp

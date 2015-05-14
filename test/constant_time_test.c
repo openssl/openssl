@@ -44,7 +44,7 @@
  * [including the GNU Public Licence.]
  */
 
-#include "../crypto/constant_time_locl.h"
+#include "internal/constant_time_locl.h"
 
 #include <limits.h>
 #include <stdio.h>

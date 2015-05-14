@@ -5,7 +5,7 @@
 DIR=	ssl
 TOP=	..
 CC=	cc
-INCLUDES= -I../crypto -I$(TOP) -I../include
+INCLUDES= -I$(TOP) -I../include
 CFLAG=-g
 MAKEFILE=	Makefile
 AR=		ar r
