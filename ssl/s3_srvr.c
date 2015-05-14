@@ -167,21 +167,7 @@
 static STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s, unsigned char *p,
     int num, STACK_OF(SSL_CIPHER) **skp, int sslv2format);
 
-#ifndef OPENSSL_NO_SSL3_METHOD
-static const SSL_METHOD *ssl3_get_server_method(int ver);
 
-static const SSL_METHOD *ssl3_get_server_method(int ver)
-{
-    if (ver == SSL3_VERSION)
-        return (SSLv3_server_method());
-    else
-        return (NULL);
-}
-
-IMPLEMENT_ssl3_meth_func(SSLv3_server_method,
-                         ssl3_accept,
-                         ssl_undefined_function, ssl3_get_server_method)
-#endif
 #ifndef OPENSSL_NO_SRP
 static int ssl_check_srp_ext_ClientHello(SSL *s, int *al)
 {

@@ -101,3 +101,9 @@ IMPLEMENT_tls_meth_func(TLS1_VERSION, TLSv1_server_method,
                         ssl3_accept,
                         ssl_undefined_function,
                         tls1_get_server_method, TLSv1_enc_data)
+
+#ifndef OPENSSL_NO_SSL3_METHOD
+IMPLEMENT_ssl3_meth_func(SSLv3_server_method,
+                         ssl3_accept,
+                         ssl_undefined_function, tls1_get_server_method)
+#endif

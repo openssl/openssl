@@ -173,19 +173,7 @@ static int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk,
                                     int (*put_cb) (const SSL_CIPHER *,
                                                  unsigned char *));
 
-#ifndef OPENSSL_NO_SSL3_METHOD
-static const SSL_METHOD *ssl3_get_client_method(int ver)
-{
-    if (ver == SSL3_VERSION)
-        return (SSLv3_client_method());
-    else
-        return (NULL);
-}
 
-IMPLEMENT_ssl3_meth_func(SSLv3_client_method,
-                         ssl_undefined_function,
-                         ssl3_connect, ssl3_get_client_method)
-#endif
 int ssl3_connect(SSL *s)
 {
     BUF_MEM *buf = NULL;
