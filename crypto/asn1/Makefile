@@ -17,7 +17,7 @@ GENERAL=Makefile README
 LIB=$(TOP)/libcrypto.a
 LIBSRC=	a_object.c a_bitstr.c a_utctm.c a_gentm.c a_time.c a_int.c a_octet.c \
 	a_print.c a_type.c a_dup.c a_d2i_fp.c a_i2d_fp.c \
-	a_enum.c a_utf8.c a_sign.c a_digest.c a_verify.c a_mbstr.c a_strex.c \
+	a_utf8.c a_sign.c a_digest.c a_verify.c a_mbstr.c a_strex.c \
 	x_algor.c x_val.c x_pubkey.c x_sig.c x_req.c x_bignum.c \
 	x_long.c x_x509.c x_x509a.c x_crl.c x_info.c x_spki.c nsseq.c \
 	x_nx509.c d2i_pu.c d2i_pr.c i2d_pu.c i2d_pr.c\
@@ -25,13 +25,13 @@ LIBSRC=	a_object.c a_bitstr.c a_utctm.c a_gentm.c a_time.c a_int.c a_octet.c \
 	tasn_new.c tasn_fre.c tasn_enc.c tasn_dec.c tasn_utl.c tasn_typ.c \
 	tasn_prn.c tasn_scn.c ameth_lib.c \
 	f_int.c f_string.c n_pkey.c \
-	f_enum.c x_pkey.c bio_asn1.c bio_ndef.c asn_mime.c \
+	x_pkey.c bio_asn1.c bio_ndef.c asn_mime.c \
 	asn1_gen.c asn1_par.c asn1_lib.c asn1_err.c a_strnid.c \
 	evp_asn1.c asn_pack.c p5_pbe.c p5_pbev2.c p8_pkey.c asn_moid.c \
 	asn_mstbl.c
 LIBOBJ= a_object.o a_bitstr.o a_utctm.o a_gentm.o a_time.o a_int.o a_octet.o \
 	a_print.o a_type.o a_dup.o a_d2i_fp.o a_i2d_fp.o \
-	a_enum.o a_utf8.o a_sign.o a_digest.o a_verify.o a_mbstr.o a_strex.o \
+	a_utf8.o a_sign.o a_digest.o a_verify.o a_mbstr.o a_strex.o \
 	x_algor.o x_val.o x_pubkey.o x_sig.o x_req.o x_bignum.o \
 	x_long.o x_x509.o x_x509a.o x_crl.o x_info.o x_spki.o nsseq.o \
 	x_nx509.o d2i_pu.o d2i_pr.o i2d_pu.o i2d_pr.o \
@@ -39,7 +39,7 @@ LIBOBJ= a_object.o a_bitstr.o a_utctm.o a_gentm.o a_time.o a_int.o a_octet.o \
 	tasn_new.o tasn_fre.o tasn_enc.o tasn_dec.o tasn_utl.o tasn_typ.o \
 	tasn_prn.o tasn_scn.o ameth_lib.o \
 	f_int.o f_string.o n_pkey.o \
-	f_enum.o x_pkey.o bio_asn1.o bio_ndef.o asn_mime.o \
+	x_pkey.o bio_asn1.o bio_ndef.o asn_mime.o \
 	asn1_gen.o asn1_par.o asn1_lib.o asn1_err.o a_strnid.o \
 	evp_asn1.o asn_pack.o p5_pbe.o p5_pbev2.o p8_pkey.o asn_moid.o \
 	asn_mstbl.o
@@ -133,14 +133,6 @@ a_dup.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 a_dup.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 a_dup.o: ../../include/openssl/symhacks.h ../include/internal/cryptlib.h
 a_dup.o: a_dup.c
-a_enum.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
-a_enum.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
-a_enum.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-a_enum.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
-a_enum.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-a_enum.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-a_enum.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-a_enum.o: ../include/internal/cryptlib.h a_enum.c
 a_gentm.o: ../../e_os.h ../../include/openssl/asn1.h
 a_gentm.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 a_gentm.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
@@ -441,14 +433,6 @@ evp_asn1.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 evp_asn1.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 evp_asn1.o: ../../include/openssl/symhacks.h ../include/internal/cryptlib.h
 evp_asn1.o: evp_asn1.c
-f_enum.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
-f_enum.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-f_enum.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-f_enum.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-f_enum.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-f_enum.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-f_enum.o: ../../include/openssl/symhacks.h ../include/internal/cryptlib.h
-f_enum.o: f_enum.c
 f_int.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 f_int.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 f_int.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
