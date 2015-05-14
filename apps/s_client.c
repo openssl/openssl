@@ -925,6 +925,13 @@ int s_client_main(int argc, char **argv)
             srp_arg.amp = 1;
             meth = TLSv1_client_method();
             break;
+#else
+        case OPT_SRPUSER:
+        case OPT_SRPPASS:
+        case OPT_SRP_STRENGTH:
+        case OPT_SRP_LATEUSER:
+        case OPT_SRP_MOREGROUPS:
+            break;
 #endif
 #ifndef OPENSSL_NO_SSL3
         case OPT_SSL3:
