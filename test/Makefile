@@ -245,7 +245,7 @@ test_x509: ../apps/openssl$(EXE_EXT) tx509 testx509.pem v3-cert1.pem v3-cert2.pe
 	@echo $(START) $@ -- second x509v3 certificate
 	sh ./tx509 v3-cert2.pem
 
-test_rsa: $(RSATEST)$(EXE_EXT) ../apps/openssl$(EXE_EXT) tkey testrsa.pem
+test_rsa: $(RSATEST)$(EXE_EXT) ../apps/openssl$(EXE_EXT) tkey testrsa.pem testrsapub.pem
 	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(RSATEST)
 	@echo $(START) $@ -- private key
@@ -282,7 +282,7 @@ test_bn: $(BNTEST)$(EXE_EXT) $(EXPTEST)$(EXE_EXT) bctest
 	@echo $(START) $@ -- $(EXPTEST)
 	../util/shlib_wrap.sh ./$(EXPTEST)
 
-test_ec: $(ECTEST)$(EXE_EXT) tkey testec-p256.pem
+test_ec: $(ECTEST)$(EXE_EXT) tkey testec-p256.pem testecpub-p256.pem
 	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(ECTEST)
 	@echo $(START) $@ -- private
@@ -306,7 +306,7 @@ test_dh: $(DHTEST)$(EXE_EXT)
 	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(DHTEST)
 
-test_dsa: $(DSATEST)$(EXE_EXT) tkey testdsa.pem
+test_dsa: $(DSATEST)$(EXE_EXT) tkey testdsa.pem testdsapub.pem
 	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(DSATEST)
 	@echo $(START) $@ -- app2_1
