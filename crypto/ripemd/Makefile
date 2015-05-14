@@ -68,7 +68,7 @@ clean:
 
 rmd_dgst.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 rmd_dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/ripemd.h
-rmd_dgst.o: ../md32_common.h rmd_dgst.c rmd_locl.h rmdconst.h
+rmd_dgst.o: ../include/internal/md32_common.h rmd_dgst.c rmd_locl.h rmdconst.h
 rmd_one.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 rmd_one.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 rmd_one.o: ../../include/openssl/ossl_typ.h ../../include/openssl/ripemd.h

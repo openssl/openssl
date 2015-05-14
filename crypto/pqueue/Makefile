@@ -65,4 +65,4 @@ pqueue.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 pqueue.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 pqueue.o: ../../include/openssl/pqueue.h ../../include/openssl/safestack.h
 pqueue.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-pqueue.o: ../cryptlib.h pqueue.c
+pqueue.o: ../include/internal/cryptlib.h pqueue.c
