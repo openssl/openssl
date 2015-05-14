@@ -92,7 +92,7 @@ void ripemd160_block_data_order(RIPEMD160_CTX *c, const void *p, size_t num);
         } while (0)
 #define HASH_BLOCK_DATA_ORDER   ripemd160_block_data_order
 
-#include "md32_common.h"
+#include "internal/md32_common.h"
 
 /*
  * Transformed F2 and F4 are courtesy of Wei Dai <weidai@eskimo.com>

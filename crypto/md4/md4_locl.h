@@ -80,7 +80,7 @@ void md4_block_data_order(MD4_CTX *c, const void *p, size_t num);
         } while (0)
 #define HASH_BLOCK_DATA_ORDER   md4_block_data_order
 
-#include "md32_common.h"
+#include "internal/md32_common.h"
 
 /*-
 #define F(x,y,z)        (((x) & (y))  |  ((~(x)) & (z)))

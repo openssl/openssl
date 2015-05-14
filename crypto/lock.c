@@ -114,7 +114,7 @@
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/safestack.h>
 
 #if defined(OPENSSL_SYS_WIN32)

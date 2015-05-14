@@ -58,7 +58,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
 
 static int pkcs12_add_bag(STACK_OF(PKCS12_SAFEBAG) **pbags,

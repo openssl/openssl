@@ -58,7 +58,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/x509v3.h>
 
 const X509V3_EXT_METHOD v3_crl_num = {

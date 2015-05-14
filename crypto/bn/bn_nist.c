@@ -57,7 +57,7 @@
  */
 
 #include "bn_lcl.h"
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 
 #define BN_NIST_192_TOP (192+BN_BITS2-1)/BN_BITS2
 #define BN_NIST_224_TOP (224+BN_BITS2-1)/BN_BITS2

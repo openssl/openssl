@@ -60,7 +60,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/dso.h>
 
 #ifndef OPENSSL_SYS_VMS

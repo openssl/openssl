@@ -59,7 +59,7 @@
  *  allows you to use them for any 128 bit block cipher.
  */
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/modes.h>
 
 /** RFC 3394 section 2.2.3.1 Default Initial Value */

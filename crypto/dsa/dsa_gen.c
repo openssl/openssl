@@ -66,7 +66,7 @@
 #include <openssl/opensslconf.h> /* To see if OPENSSL_NO_SHA is defined */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/bn.h>
 #include <openssl/rand.h>

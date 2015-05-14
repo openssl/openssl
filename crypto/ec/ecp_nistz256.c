@@ -28,7 +28,7 @@
 
 #include <string.h>
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include "internal/bn_int.h"
 #include "ec_lcl.h"
 

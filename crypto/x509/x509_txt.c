@@ -60,7 +60,7 @@
 #include <time.h>
 #include <errno.h>
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/lhash.h>
 #include <openssl/buffer.h>
 #include <openssl/evp.h>

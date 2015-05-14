@@ -58,7 +58,7 @@
  */
 
 #include <string.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/e_os2.h>
 #include <openssl/buffer.h>
 #include <openssl/ui.h>

@@ -64,7 +64,7 @@
 
 #include <stdio.h>
 #include <openssl/crypto.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/engine.h>
 #include <openssl/dso.h>
 #include <openssl/pem.h>

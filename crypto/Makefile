@@ -43,7 +43,7 @@ LIBOBJ= cryptlib.o mem.o mem_dbg.o cversion.o ex_data.o cpt_err.o \
 
 SRC= $(LIBSRC)
 
-HEADER=	cryptlib.h buildinf.h md32_common.h
+HEADER=	buildinf.h arm_arch.h ppc_arch.h sparc_arch.h
 
 ALL=	$(GENERAL) $(SRC) $(HEADER)
 
