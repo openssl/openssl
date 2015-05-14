@@ -261,7 +261,7 @@ $ssl.=" include/openssl/tls1.h";
 $ssl.=" include/openssl/srtp.h";
 
 my $crypto ="include/openssl/crypto.h";
-$crypto.=" crypto/cryptlib.h";
+$crypto.=" crypto/include/internal/cryptlib.h";
 $crypto.=" include/internal/o_dir.h";
 $crypto.=" include/internal/o_str.h";
 $crypto.=" include/openssl/des.h" ; # unless $no_des;
