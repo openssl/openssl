@@ -5,7 +5,7 @@
 DIR=		crypto
 TOP=		..
 CC=		cc
-INCLUDE=	-I. -I$(TOP) -I../include $(ZLIB_INCLUDE)
+INCLUDE=	-I. -I$(TOP) -I../include -Iinclude $(ZLIB_INCLUDE)
 # INCLUDES targets sudbirs!
 INCLUDES=	-I.. -I../.. -I../modes -I../include -I../../include $(ZLIB_INCLUDE)
 CFLAG=		-g
