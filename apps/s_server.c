@@ -1317,6 +1317,10 @@ int s_server_main(int argc, char *argv[])
             srpuserseed = opt_arg();
             meth = TLSv1_server_method();
             break;
+#else
+        case OPT_SRPVFILE:
+        case OPT_SRPUSERSEED:
+            break;
 #endif
         case OPT_REV:
             rev = 1;

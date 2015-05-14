@@ -680,4 +680,10 @@ int srp_main(int argc, char **argv)
     return (ret);
 }
 
+#else
+
+# if PEDANTIC
+static void *dummy = &dummy;
+# endif
+
 #endif
