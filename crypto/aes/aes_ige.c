@@ -49,7 +49,7 @@
  *
  */
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 
 #include <openssl/aes.h>
 #include "aes_locl.h"

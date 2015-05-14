@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <openssl/crypto.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 
 static int allow_customize = 1; /* we provide flexible functions for */
 static int allow_customize_debug = 1; /* exchanging memory-related functions

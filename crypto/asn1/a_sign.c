@@ -112,7 +112,7 @@
 #include <stdio.h>
 #include <time.h>
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 
 #ifndef NO_SYS_TYPES_H
 # include <sys/types.h>

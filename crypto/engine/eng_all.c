@@ -57,7 +57,7 @@
  *
  */
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include "eng_int.h"
 
 void ENGINE_load_builtin_engines(void)

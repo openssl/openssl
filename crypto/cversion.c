@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 
 #ifndef NO_WINDOWS_BRAINDEATH
 # include "buildinf.h"

@@ -61,7 +61,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include "bio_lcl.h"
 
 #define TRUNCATE

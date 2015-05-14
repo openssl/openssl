@@ -58,7 +58,7 @@
  */
 
 # include <stdio.h>
-# include "cryptlib.h"
+# include "internal/cryptlib.h"
 # include <openssl/hmac.h>
 # include <openssl/rand.h>
 # include <openssl/pkcs12.h>

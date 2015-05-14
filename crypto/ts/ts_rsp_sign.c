@@ -57,7 +57,7 @@
  *
  */
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 
 #if defined(OPENSSL_SYS_UNIX)
 # include <sys/time.h>

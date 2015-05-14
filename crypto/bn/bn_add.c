@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include "bn_lcl.h"
 
 /* r can == a or b */

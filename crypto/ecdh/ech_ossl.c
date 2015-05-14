@@ -70,7 +70,7 @@
 #include <string.h>
 #include <limits.h>
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 
 #include "ech_locl.h"
 #include <openssl/err.h>

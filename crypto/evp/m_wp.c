@@ -1,7 +1,7 @@
 /* crypto/evp/m_wp.c */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 
 #ifndef OPENSSL_NO_WHIRLPOOL
 
