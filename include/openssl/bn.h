@@ -272,10 +272,6 @@ extern "C" {
 # ifdef OPENSSL_USE_DEPRECATED
 /* deprecated name for the flag */
 #  define BN_FLG_EXP_CONSTTIME BN_FLG_CONSTTIME
-/*
- * avoid leaking exponent information through timings
- * (BN_mod_exp_mont() will call BN_mod_exp_mont_consttime)
- */
 # endif
 
 # ifdef OPENSSL_USE_DEPRECATED
