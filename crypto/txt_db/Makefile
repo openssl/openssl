@@ -65,4 +65,4 @@ txt_db.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 txt_db.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 txt_db.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 txt_db.o: ../../include/openssl/symhacks.h ../../include/openssl/txt_db.h
-txt_db.o: ../cryptlib.h txt_db.c
+txt_db.o: ../include/internal/cryptlib.h txt_db.c
