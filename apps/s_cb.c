@@ -135,6 +135,14 @@ int verify_return_error = 0;
 unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
 int cookie_initialized = 0;
 
+static const char *lookup(int val, const STRINT_PAIR* list, const char* def)
+{
+    for ( ; list->name; ++list)
+        if (list->retval == val)
+            return list->name;
+    return def;
+}
+
 int verify_callback(int ok, X509_STORE_CTX *ctx)
 {
     X509 *err_cert;
@@ -273,6 +281,19 @@ int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
     return 1;
 }
 
+static STRINT_PAIR cert_type_list[] = {
+    {"RSA sign", TLS_CT_RSA_SIGN},
+    {"DSA sign", TLS_CT_DSS_SIGN},
+    {"RSA fixed DH", TLS_CT_RSA_FIXED_DH},
+    {"DSS fixed DH", TLS_CT_DSS_FIXED_DH},
+    {"ECDSA sign", TLS_CT_ECDSA_SIGN},
+    {"RSA fixed ECDH", TLS_CT_RSA_FIXED_ECDH},
+    {"ECDSA fixed ECDH", TLS_CT_ECDSA_FIXED_ECDH},
+    {"GOST94 Sign", TLS_CT_GOST94_SIGN},
+    {"GOST01 Sign", TLS_CT_GOST01_SIGN},
+    {NULL}
+};
+
 static void ssl_print_client_cert_types(BIO *bio, SSL *s)
 {
     const unsigned char *p;
@@ -283,51 +304,10 @@ static void ssl_print_client_cert_types(BIO *bio, SSL *s)
     BIO_puts(bio, "Client Certificate Types: ");
     for (i = 0; i < cert_type_num; i++) {
         unsigned char cert_type = p[i];
-        char *cname;
-        switch (cert_type) {
-        case TLS_CT_RSA_SIGN:
-            cname = "RSA sign";
-            break;
-
-        case TLS_CT_DSS_SIGN:
-            cname = "DSA sign";
-            break;
-
-        case TLS_CT_RSA_FIXED_DH:
-            cname = "RSA fixed DH";
-            break;
-
-        case TLS_CT_DSS_FIXED_DH:
-            cname = "DSS fixed DH";
-            break;
-
-        case TLS_CT_ECDSA_SIGN:
-            cname = "ECDSA sign";
-            break;
-
-        case TLS_CT_RSA_FIXED_ECDH:
-            cname = "RSA fixed ECDH";
-            break;
-
-        case TLS_CT_ECDSA_FIXED_ECDH:
-            cname = "ECDSA fixed ECDH";
-            break;
-
-        case TLS_CT_GOST94_SIGN:
-            cname = "GOST94 Sign";
-            break;
-
-        case TLS_CT_GOST01_SIGN:
-            cname = "GOST01 Sign";
-            break;
-
-        default:
-            cname = NULL;
-        }
+        const char *cname = lookup((int)cert_type, cert_type_list, NULL);
 
         if (i)
             BIO_puts(bio, ", ");
-
         if (cname)
             BIO_puts(bio, cname);
         else
@@ -571,36 +551,71 @@ void apps_ssl_info_callback(const SSL *s, int where, int ret)
     }
 }
 
-static const char *ssl_version_str(int version)
-{
-    switch (version) {
-    case SSL3_VERSION:
-        return "SSL 3.0";
-    case TLS1_VERSION:
-        return "TLS 1.0";
-    case TLS1_1_VERSION:
-        return "TLS 1.1";
-    case TLS1_2_VERSION:
-        return "TLS 1.2";
-    case DTLS1_VERSION:
-        return "DTLS 1.0";
-    case DTLS1_BAD_VER:
-        return "DTLS 1.0 (bad)";
-    default:
-        return "???";
-    }
-}
+static STRINT_PAIR ssl_versions[] = {
+    {"SSL 3.0", SSL3_VERSION},
+    {"TLS 1.0", TLS1_VERSION},
+    {"TLS 1.1", TLS1_1_VERSION},
+    {"TLS 1.2", TLS1_2_VERSION},
+    {"DTLS 1.0", DTLS1_VERSION},
+    {"DTLS 1.0 (bad)", DTLS1_BAD_VER},
+    {NULL}
+};
+static STRINT_PAIR alert_types[] = {
+    {" close_notify", 0},
+    {" unexpected_message", 10},
+    {" bad_record_mac", 20},
+    {" decryption_failed", 21},
+    {" record_overflow", 22},
+    {" decompression_failure", 30},
+    {" handshake_failure", 40},
+    {" bad_certificate", 42},
+    {" unsupported_certificate", 43},
+    {" certificate_revoked", 44},
+    {" certificate_expired", 45},
+    {" certificate_unknown", 46},
+    {" illegal_parameter", 47},
+    {" unknown_ca", 48},
+    {" access_denied", 49},
+    {" decode_error", 50},
+    {" decrypt_error", 51},
+    {" export_restriction", 60},
+    {" protocol_version", 70},
+    {" insufficient_security", 71},
+    {" internal_error", 80},
+    {" user_canceled", 90},
+    {" no_renegotiation", 100},
+    {" unsupported_extension", 110},
+    {" certificate_unobtainable", 111},
+    {" unrecognized_name", 112},
+    {" bad_certificate_status_response", 113},
+    {" bad_certificate_hash_value", 114},
+    {" unknown_psk_identity", 115},
+    {NULL}
+};
+
+static STRINT_PAIR handshakes[] = {
+    {", HelloRequest", 0},
+    {", ClientHello", 1},
+    {", ServerHello", 2},
+    {", HelloVerifyRequest", 3},
+    {", Certificate", 11},
+    {", ServerKeyExchange", 12},
+    {", CertificateRequest", 13},
+    {", ServerHelloDone", 14},
+    {", CertificateVerify", 15},
+    {", ClientKeyExchange", 16},
+    {", Finished", 20},
+    {NULL}
+};
 
 void msg_cb(int write_p, int version, int content_type, const void *buf,
             size_t len, SSL *ssl, void *arg)
 {
     BIO *bio = arg;
-    const char *str_write_p, *str_version, *str_content_type =
-        "", *str_details1 = "", *str_details2 = "";
-
-    str_write_p = write_p ? ">>>" : "<<<";
-
-    str_version = ssl_version_str(version);
+    const char *str_write_p = write_p ? ">>>" : "<<<";
+    const char *str_version = lookup(version, ssl_versions, "???");
+    const char *str_content_type = "", *str_details1 = "", *str_details2 = "";
+    const unsigned char* bp = buf;
 
     if (version == SSL3_VERSION ||
         version == TLS1_VERSION ||
@@ -613,17 +628,9 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
             break;
         case 21:
             str_content_type = "Alert";
-            break;
-        case 22:
-            str_content_type = "Handshake";
-            break;
-        }
-
-        if (content_type == 21) { /* Alert */
             str_details1 = ", ???";
-
             if (len == 2) {
-                switch (((const unsigned char *)buf)[0]) {
+                switch (bp[0]) {
                 case 1:
                     str_details1 = ", warning";
                     break;
@@ -631,147 +638,21 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
                     str_details1 = ", fatal";
                     break;
                 }
-
-                str_details2 = " ???";
-                switch (((const unsigned char *)buf)[1]) {
-                case 0:
-                    str_details2 = " close_notify";
-                    break;
-                case 10:
-                    str_details2 = " unexpected_message";
-                    break;
-                case 20:
-                    str_details2 = " bad_record_mac";
-                    break;
-                case 21:
-                    str_details2 = " decryption_failed";
-                    break;
-                case 22:
-                    str_details2 = " record_overflow";
-                    break;
-                case 30:
-                    str_details2 = " decompression_failure";
-                    break;
-                case 40:
-                    str_details2 = " handshake_failure";
-                    break;
-                case 42:
-                    str_details2 = " bad_certificate";
-                    break;
-                case 43:
-                    str_details2 = " unsupported_certificate";
-                    break;
-                case 44:
-                    str_details2 = " certificate_revoked";
-                    break;
-                case 45:
-                    str_details2 = " certificate_expired";
-                    break;
-                case 46:
-                    str_details2 = " certificate_unknown";
-                    break;
-                case 47:
-                    str_details2 = " illegal_parameter";
-                    break;
-                case 48:
-                    str_details2 = " unknown_ca";
-                    break;
-                case 49:
-                    str_details2 = " access_denied";
-                    break;
-                case 50:
-                    str_details2 = " decode_error";
-                    break;
-                case 51:
-                    str_details2 = " decrypt_error";
-                    break;
-                case 60:
-                    str_details2 = " export_restriction";
-                    break;
-                case 70:
-                    str_details2 = " protocol_version";
-                    break;
-                case 71:
-                    str_details2 = " insufficient_security";
-                    break;
-                case 80:
-                    str_details2 = " internal_error";
-                    break;
-                case 90:
-                    str_details2 = " user_canceled";
-                    break;
-                case 100:
-                    str_details2 = " no_renegotiation";
-                    break;
-                case 110:
-                    str_details2 = " unsupported_extension";
-                    break;
-                case 111:
-                    str_details2 = " certificate_unobtainable";
-                    break;
-                case 112:
-                    str_details2 = " unrecognized_name";
-                    break;
-                case 113:
-                    str_details2 = " bad_certificate_status_response";
-                    break;
-                case 114:
-                    str_details2 = " bad_certificate_hash_value";
-                    break;
-                case 115:
-                    str_details2 = " unknown_psk_identity";
-                    break;
-                }
+                str_details2 = lookup((int)bp[1], alert_types, " ???");
             }
-        }
-
-        if (content_type == 22) { /* Handshake */
+            break;
+        case 22:
+            str_content_type = "Handshake";
             str_details1 = "???";
-
-            if (len > 0) {
-                switch (((const unsigned char *)buf)[0]) {
-                case 0:
-                    str_details1 = ", HelloRequest";
-                    break;
-                case 1:
-                    str_details1 = ", ClientHello";
-                    break;
-                case 2:
-                    str_details1 = ", ServerHello";
-                    break;
-                case 3:
-                    str_details1 = ", HelloVerifyRequest";
-                    break;
-                case 11:
-                    str_details1 = ", Certificate";
-                    break;
-                case 12:
-                    str_details1 = ", ServerKeyExchange";
-                    break;
-                case 13:
-                    str_details1 = ", CertificateRequest";
-                    break;
-                case 14:
-                    str_details1 = ", ServerHelloDone";
-                    break;
-                case 15:
-                    str_details1 = ", CertificateVerify";
-                    break;
-                case 16:
-                    str_details1 = ", ClientKeyExchange";
-                    break;
-                case 20:
-                    str_details1 = ", Finished";
-                    break;
-                }
-            }
-        }
+            if (len > 0)
+                str_details1 = lookup((int)bp[0], handshakes, "???");
+            break;
 #ifndef OPENSSL_NO_HEARTBEATS
-        if (content_type == 24) { /* Heartbeat */
+        case 24:
             str_details1 = ", Heartbeat";
 
             if (len > 0) {
-                switch (((const unsigned char *)buf)[0]) {
+                switch (bp[0]) {
                 case 1:
                     str_details1 = ", HeartbeatRequest";
                     break;
@@ -780,8 +661,9 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
                     break;
                 }
             }
-        }
+            break;
 #endif
+        }
     }
 
     BIO_printf(bio, "%s %s%s [length %04lx]%s%s\n", str_write_p, str_version,
@@ -805,104 +687,40 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
     (void)BIO_flush(bio);
 }
 
+static STRINT_PAIR tlsext_types[] = {
+    {"server name", TLSEXT_TYPE_server_name},
+    {"max fragment length", TLSEXT_TYPE_max_fragment_length},
+    {"client certificate URL", TLSEXT_TYPE_client_certificate_url},
+    {"trusted CA keys", TLSEXT_TYPE_trusted_ca_keys},
+    {"truncated HMAC", TLSEXT_TYPE_truncated_hmac},
+    {"status request", TLSEXT_TYPE_status_request},
+    {"user mapping", TLSEXT_TYPE_user_mapping},
+    {"client authz", TLSEXT_TYPE_client_authz},
+    {"server authz", TLSEXT_TYPE_server_authz},
+    {"cert type", TLSEXT_TYPE_cert_type},
+    {"elliptic curves", TLSEXT_TYPE_elliptic_curves},
+    {"EC point formats", TLSEXT_TYPE_ec_point_formats},
+    {"SRP", TLSEXT_TYPE_srp},
+    {"signature algorithms", TLSEXT_TYPE_signature_algorithms},
+    {"use SRTP", TLSEXT_TYPE_use_srtp},
+    {"heartbeat", TLSEXT_TYPE_heartbeat},
+    {"session ticket", TLSEXT_TYPE_session_ticket},
+    {"renegotiation info", TLSEXT_TYPE_renegotiate},
+    {"TLS padding", TLSEXT_TYPE_padding},
+#ifdef TLSEXT_TYPE_next_proto_neg
+    {"next protocol", TLSEXT_TYPE_next_proto_neg},
+#endif
+#ifdef TLSEXT_TYPE_encrypt_then_mac
+    {"encrypt-then-mac", TLSEXT_TYPE_encrypt_then_mac},
+#endif
+    {NULL}
+};
+
 void tlsext_cb(SSL *s, int client_server, int type,
                unsigned char *data, int len, void *arg)
 {
     BIO *bio = arg;
-    char *extname;
-
-    switch (type) {
-    case TLSEXT_TYPE_server_name:
-        extname = "server name";
-        break;
-
-    case TLSEXT_TYPE_max_fragment_length:
-        extname = "max fragment length";
-        break;
-
-    case TLSEXT_TYPE_client_certificate_url:
-        extname = "client certificate URL";
-        break;
-
-    case TLSEXT_TYPE_trusted_ca_keys:
-        extname = "trusted CA keys";
-        break;
-
-    case TLSEXT_TYPE_truncated_hmac:
-        extname = "truncated HMAC";
-        break;
-
-    case TLSEXT_TYPE_status_request:
-        extname = "status request";
-        break;
-
-    case TLSEXT_TYPE_user_mapping:
-        extname = "user mapping";
-        break;
-
-    case TLSEXT_TYPE_client_authz:
-        extname = "client authz";
-        break;
-
-    case TLSEXT_TYPE_server_authz:
-        extname = "server authz";
-        break;
-
-    case TLSEXT_TYPE_cert_type:
-        extname = "cert type";
-        break;
-
-    case TLSEXT_TYPE_elliptic_curves:
-        extname = "elliptic curves";
-        break;
-
-    case TLSEXT_TYPE_ec_point_formats:
-        extname = "EC point formats";
-        break;
-
-    case TLSEXT_TYPE_srp:
-        extname = "SRP";
-        break;
-
-    case TLSEXT_TYPE_signature_algorithms:
-        extname = "signature algorithms";
-        break;
-
-    case TLSEXT_TYPE_use_srtp:
-        extname = "use SRTP";
-        break;
-
-    case TLSEXT_TYPE_heartbeat:
-        extname = "heartbeat";
-        break;
-
-    case TLSEXT_TYPE_session_ticket:
-        extname = "session ticket";
-        break;
-
-    case TLSEXT_TYPE_renegotiate:
-        extname = "renegotiation info";
-        break;
-
-#ifdef TLSEXT_TYPE_next_proto_neg
-    case TLSEXT_TYPE_next_proto_neg:
-        extname = "next protocol";
-        break;
-#endif
-#ifdef TLSEXT_TYPE_encrypt_then_mac
-    case TLSEXT_TYPE_encrypt_then_mac:
-        extname = "encrypt-then-mac";
-        break;
-#endif
-    case TLSEXT_TYPE_padding:
-        extname = "TLS padding";
-        break;
-
-    default:
-        extname = "unknown";
-        break;
-
-    }
+    const char *extname = lookup(type, tlsext_types, "unknown");
 
     BIO_printf(bio, "TLS %s extension \"%s\" (id=%d), len=%d\n",
                client_server ? "server" : "client", extname, type, len);
@@ -1073,33 +891,27 @@ struct ssl_excert_st {
     struct ssl_excert_st *next, *prev;
 };
 
-struct chain_flags {
-    int flag;
-    const char *name;
-};
-
-struct chain_flags chain_flags_list[] = {
-    {CERT_PKEY_VALID, "Overall Validity"},
-    {CERT_PKEY_SIGN, "Sign with EE key"},
-    {CERT_PKEY_EE_SIGNATURE, "EE signature"},
-    {CERT_PKEY_CA_SIGNATURE, "CA signature"},
-    {CERT_PKEY_EE_PARAM, "EE key parameters"},
-    {CERT_PKEY_CA_PARAM, "CA key parameters"},
-    {CERT_PKEY_EXPLICIT_SIGN, "Explicity sign with EE key"},
-    {CERT_PKEY_ISSUER_NAME, "Issuer Name"},
-    {CERT_PKEY_CERT_TYPE, "Certificate Type"},
-    {0, NULL}
+static STRINT_PAIR chain_flags[] = {
+    {"Overall Validity", CERT_PKEY_VALID},
+    {"Sign with EE key", CERT_PKEY_SIGN},
+    {"EE signature", CERT_PKEY_EE_SIGNATURE},
+    {"CA signature", CERT_PKEY_CA_SIGNATURE},
+    {"EE key parameters", CERT_PKEY_EE_PARAM},
+    {"CA key parameters", CERT_PKEY_CA_PARAM},
+    {"Explicity sign with EE key", CERT_PKEY_EXPLICIT_SIGN},
+    {"Issuer Name", CERT_PKEY_ISSUER_NAME},
+    {"Certificate Type", CERT_PKEY_CERT_TYPE},
+    {NULL}
 };
 
 static void print_chain_flags(SSL *s, int flags)
 {
-    struct chain_flags *ctmp = chain_flags_list;
+    STRINT_PAIR *pp;
 
-    while (ctmp->name) {
-        BIO_printf(bio_err, "\t%s: %s\n", ctmp->name,
-                   flags & ctmp->flag ? "OK" : "NOT OK");
-        ctmp++;
-    }
+    for (pp = chain_flags; pp->name; ++pp)
+        BIO_printf(bio_err, "\t%s: %s\n",
+                   pp->name,
+                   (flags & pp->retval) ? "OK" : "NOT OK");
     BIO_printf(bio_err, "\tSuite B: ");
     if (SSL_set_cert_flags(s, 0) & SSL_CERT_FLAG_SUITEB_128_LOS)
         BIO_puts(bio_err, flags & CERT_PKEY_SUITEB ? "OK\n" : "NOT OK\n");
@@ -1499,6 +1311,31 @@ typedef struct {
                    void *other, void *ex);
 } security_debug_ex;
 
+static STRINT_PAIR callback_types[] = {
+    {"Supported Ciphersuite", SSL_SECOP_CIPHER_SUPPORTED},
+    {"Shared Ciphersuite", SSL_SECOP_CIPHER_SHARED},
+    {"Check Ciphersuite", SSL_SECOP_CIPHER_CHECK},
+#ifndef OPENSSL_NO_DH
+    {"Temp DH key bits", SSL_SECOP_TMP_DH},
+#endif
+    {"Supported Curve", SSL_SECOP_CURVE_SUPPORTED},
+    {"Shared Curve", SSL_SECOP_CURVE_SHARED},
+    {"Check Curve", SSL_SECOP_CURVE_CHECK},
+    {"Supported Signature Algorithm digest", SSL_SECOP_SIGALG_SUPPORTED},
+    {"Shared Signature Algorithm digest", SSL_SECOP_SIGALG_SHARED},
+    {"Check Signature Algorithm digest", SSL_SECOP_SIGALG_CHECK},
+    {"Signature Algorithm mask", SSL_SECOP_SIGALG_MASK},
+    {"Certificate chain EE key", SSL_SECOP_EE_KEY},
+    {"Certificate chain CA key", SSL_SECOP_CA_KEY},
+    {"Peer Chain EE key", SSL_SECOP_PEER_EE_KEY},
+    {"Peer Chain CA key", SSL_SECOP_PEER_CA_KEY},
+    {"Certificate chain CA digest", SSL_SECOP_CA_MD},
+    {"Peer chain CA digest", SSL_SECOP_PEER_CA_MD},
+    {"SSL compression", SSL_SECOP_COMPRESSION},
+    {"Session ticket", SSL_SECOP_TICKET},
+    {NULL}
+};
+
 static int security_callback_debug(SSL *s, SSL_CTX *ctx,
                                    int op, int bits, int nid,
                                    void *other, void *ex)
@@ -1511,79 +1348,22 @@ static int security_callback_debug(SSL *s, SSL_CTX *ctx,
         return 1;
     BIO_puts(sdb->out, "Security callback: ");
 
+    nm = lookup(op, callback_types, NULL);
     switch (op) {
-    case SSL_SECOP_CIPHER_SUPPORTED:
-        nm = "Supported Ciphersuite";
-        break;
-    case SSL_SECOP_CIPHER_SHARED:
-        nm = "Shared Ciphersuite";
-        break;
-    case SSL_SECOP_CIPHER_CHECK:
-        nm = "Check Ciphersuite";
-        break;
     case SSL_SECOP_TICKET:
-        BIO_puts(sdb->out, "Session ticket");
-        show_bits = 0;
-        nm = NULL;
-        break;
     case SSL_SECOP_COMPRESSION:
-        BIO_puts(sdb->out, "SSL compression");
         show_bits = 0;
         nm = NULL;
-        break;
-#ifndef OPENSSL_NO_DH
-    case SSL_SECOP_TMP_DH:
-        nm = "Temp DH key bits";
-        break;
-#endif
-    case SSL_SECOP_CURVE_SUPPORTED:
-        nm = "Supported Curve";
-        break;
-    case SSL_SECOP_CURVE_SHARED:
-        nm = "Shared Curve";
-        break;
-    case SSL_SECOP_CURVE_CHECK:
-        nm = "Check Curve";
         break;
     case SSL_SECOP_VERSION:
-        BIO_printf(sdb->out, "Version=%s", ssl_version_str(nid));
+        BIO_printf(sdb->out, "Version=%s", lookup(nid, ssl_versions, "???"));
         show_bits = 0;
         nm = NULL;
         break;
-    case SSL_SECOP_SIGALG_SUPPORTED:
-        nm = "Supported Signature Algorithm digest";
-        break;
-    case SSL_SECOP_SIGALG_SHARED:
-        nm = "Shared Signature Algorithm digest";
-        break;
-    case SSL_SECOP_SIGALG_CHECK:
-        nm = "Check Signature Algorithm digest";
-        break;
-    case SSL_SECOP_SIGALG_MASK:
-        nm = "Signature Algorithm mask";
-        break;
-    case SSL_SECOP_EE_KEY:
-        nm = "Certificate chain EE key";
-        break;
-    case SSL_SECOP_CA_KEY:
-        nm = "Certificate chain CA key";
-        break;
     case SSL_SECOP_CA_MD:
-        cert_md = 1;
-        nm = "Certificate chain CA digest";
-        break;
-    case SSL_SECOP_PEER_EE_KEY:
-        nm = "Peer Chain EE key";
-        break;
-    case SSL_SECOP_PEER_CA_KEY:
-        nm = "Peer Chain CA key";
-        break;
     case SSL_SECOP_PEER_CA_MD:
         cert_md = 1;
-        nm = "Peer chain CA digest";
         break;
-    default:
-        nm = NULL;
     }
     if (nm)
         BIO_printf(sdb->out, "%s=", nm);
