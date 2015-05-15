@@ -265,7 +265,6 @@ CERT *ssl_cert_dup(CERT *cert)
                 goto err;
             }
         }
-        rpk->valid_flags = 0;
         if (cert->pkeys[i].serverinfo != NULL) {
             /* Just copy everything. */
             ret->pkeys[i].serverinfo =
