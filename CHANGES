@@ -3,6 +3,11 @@
  _______________
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
+  *) Given the pervasive nature of TLS extensions it is inadvisable to run
+     OpenSSL without support for them. It also means that maintaining
+     the OPENSSL_NO_TLSEXT option within the code is very invasive (and probably
+     not well tested). Therefore the OPENSSL_NO_TLSEXT option has been removed.
+     [Matt Caswell]
 
   *) Version negotiation has been rewritten. In particular SSLv23_method(),
      SSLv23_client_method() and SSLv23_server_method() have been deprecated,
