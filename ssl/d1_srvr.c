@@ -425,14 +425,10 @@ int dtls1_accept(SSL *s)
                 BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_ADD_AUTH_KEY,
                          sizeof(sctpauthkey), sctpauthkey);
 #endif
-#ifndef OPENSSL_NO_TLSEXT
                 if (s->tlsext_ticket_expected)
                     s->state = SSL3_ST_SW_SESSION_TICKET_A;
                 else
                     s->state = SSL3_ST_SW_CHANGE_A;
-#else
-                s->state = SSL3_ST_SW_CHANGE_A;
-#endif
             } else
                 s->state = SSL3_ST_SW_CERT_A;
             s->init_num = 0;
@@ -447,7 +443,7 @@ int dtls1_accept(SSL *s)
                 ret = ssl3_send_server_certificate(s);
                 if (ret <= 0)
                     goto end;
-#ifndef OPENSSL_NO_TLSEXT
+
                 if (s->tlsext_status_expected)
                     s->state = SSL3_ST_SW_CERT_STATUS_A;
                 else
@@ -456,12 +452,6 @@ int dtls1_accept(SSL *s)
                 skip = 1;
                 s->state = SSL3_ST_SW_KEY_EXCH_A;
             }
-#else
-            } else
-                skip = 1;
-
-            s->state = SSL3_ST_SW_KEY_EXCH_A;
-#endif
             s->init_num = 0;
             break;
 
@@ -712,16 +702,13 @@ int dtls1_accept(SSL *s)
             dtls1_stop_timer(s);
             if (s->hit)
                 s->state = SSL_ST_OK;
-#ifndef OPENSSL_NO_TLSEXT
             else if (s->tlsext_ticket_expected)
                 s->state = SSL3_ST_SW_SESSION_TICKET_A;
-#endif
             else
                 s->state = SSL3_ST_SW_CHANGE_A;
             s->init_num = 0;
             break;
 
-#ifndef OPENSSL_NO_TLSEXT
         case SSL3_ST_SW_SESSION_TICKET_A:
         case SSL3_ST_SW_SESSION_TICKET_B:
             ret = ssl3_send_newsession_ticket(s);
@@ -739,8 +726,6 @@ int dtls1_accept(SSL *s)
             s->state = SSL3_ST_SW_KEY_EXCH_A;
             s->init_num = 0;
             break;
-
-#endif
 
         case SSL3_ST_SW_CHANGE_A:
         case SSL3_ST_SW_CHANGE_B:

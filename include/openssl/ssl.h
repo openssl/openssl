@@ -338,8 +338,6 @@ typedef int (*tls_session_secret_cb_fn) (SSL *s, void *secret,
                                          STACK_OF(SSL_CIPHER) *peer_ciphers,
                                          SSL_CIPHER **cipher, void *arg);
 
-# ifndef OPENSSL_NO_TLSEXT
-
 /* Typedefs for handling custom extensions */
 
 typedef int (*custom_ext_add_cb) (SSL *s, unsigned int ext_type,
@@ -352,8 +350,6 @@ typedef void (*custom_ext_free_cb) (SSL *s, unsigned int ext_type,
 typedef int (*custom_ext_parse_cb) (SSL *s, unsigned int ext_type,
                                     const unsigned char *in,
                                     size_t inlen, int *al, void *parse_arg);
-
-# endif
 
 /* Allow initial connection to servers that don't support RI */
 # define SSL_OP_LEGACY_SERVER_CONNECT                    0x00000004L
@@ -771,12 +767,10 @@ void SSL_get0_next_proto_negotiated(const SSL *s, const unsigned char **data,
                                     unsigned *len);
 # endif
 
-# ifndef OPENSSL_NO_TLSEXT
 __owur int SSL_select_next_proto(unsigned char **out, unsigned char *outlen,
                           const unsigned char *in, unsigned int inlen,
                           const unsigned char *client,
                           unsigned int client_len);
-# endif
 
 # define OPENSSL_NPN_UNSUPPORTED 0
 # define OPENSSL_NPN_NEGOTIATED  1
@@ -867,7 +861,6 @@ const char *SSL_get_psk_identity_hint(const SSL *s);
 const char *SSL_get_psk_identity(const SSL *s);
 # endif
 
-# ifndef OPENSSL_NO_TLSEXT
 /* Register callbacks to handle custom TLS Extensions for client or server. */
 
 __owur int SSL_CTX_add_client_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
@@ -885,8 +878,6 @@ __owur int SSL_CTX_add_server_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
                                   void *parse_arg);
 
 __owur int SSL_extension_supported(unsigned int ext_type);
-
-# endif
 
 # define SSL_NOTHING     1
 # define SSL_WRITING     2
@@ -1112,40 +1103,38 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_CTRL_SET_MAX_CERT_LIST              51
 # define SSL_CTRL_SET_MAX_SEND_FRAGMENT          52
 /* see tls1.h for macros based on these */
-# ifndef OPENSSL_NO_TLSEXT
-#  define SSL_CTRL_SET_TLSEXT_SERVERNAME_CB       53
-#  define SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG      54
-#  define SSL_CTRL_SET_TLSEXT_HOSTNAME            55
-#  define SSL_CTRL_SET_TLSEXT_DEBUG_CB            56
-#  define SSL_CTRL_SET_TLSEXT_DEBUG_ARG           57
-#  define SSL_CTRL_GET_TLSEXT_TICKET_KEYS         58
-#  define SSL_CTRL_SET_TLSEXT_TICKET_KEYS         59
-/*#  define SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT    60 */
-/*#  define SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT_CB 61 */
-/*#  define SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT_CB_ARG 62 */
-#  define SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB       63
-#  define SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG   64
-#  define SSL_CTRL_SET_TLSEXT_STATUS_REQ_TYPE     65
-#  define SSL_CTRL_GET_TLSEXT_STATUS_REQ_EXTS     66
-#  define SSL_CTRL_SET_TLSEXT_STATUS_REQ_EXTS     67
-#  define SSL_CTRL_GET_TLSEXT_STATUS_REQ_IDS      68
-#  define SSL_CTRL_SET_TLSEXT_STATUS_REQ_IDS      69
-#  define SSL_CTRL_GET_TLSEXT_STATUS_REQ_OCSP_RESP        70
-#  define SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP        71
-#  define SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB       72
-#  define SSL_CTRL_SET_TLS_EXT_SRP_USERNAME_CB    75
-#  define SSL_CTRL_SET_SRP_VERIFY_PARAM_CB                76
-#  define SSL_CTRL_SET_SRP_GIVE_CLIENT_PWD_CB             77
-#  define SSL_CTRL_SET_SRP_ARG            78
-#  define SSL_CTRL_SET_TLS_EXT_SRP_USERNAME               79
-#  define SSL_CTRL_SET_TLS_EXT_SRP_STRENGTH               80
-#  define SSL_CTRL_SET_TLS_EXT_SRP_PASSWORD               81
-#  ifndef OPENSSL_NO_HEARTBEATS
-#   define SSL_CTRL_TLS_EXT_SEND_HEARTBEAT                         85
-#   define SSL_CTRL_GET_TLS_EXT_HEARTBEAT_PENDING          86
-#   define SSL_CTRL_SET_TLS_EXT_HEARTBEAT_NO_REQUESTS      87
-#  endif
-# endif                         /* OPENSSL_NO_TLSEXT */
+# define SSL_CTRL_SET_TLSEXT_SERVERNAME_CB       53
+# define SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG      54
+# define SSL_CTRL_SET_TLSEXT_HOSTNAME            55
+# define SSL_CTRL_SET_TLSEXT_DEBUG_CB            56
+# define SSL_CTRL_SET_TLSEXT_DEBUG_ARG           57
+# define SSL_CTRL_GET_TLSEXT_TICKET_KEYS         58
+# define SSL_CTRL_SET_TLSEXT_TICKET_KEYS         59
+/*# define SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT    60 */
+/*# define SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT_CB 61 */
+/*# define SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT_CB_ARG 62 */
+# define SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB       63
+# define SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG   64
+# define SSL_CTRL_SET_TLSEXT_STATUS_REQ_TYPE     65
+# define SSL_CTRL_GET_TLSEXT_STATUS_REQ_EXTS     66
+# define SSL_CTRL_SET_TLSEXT_STATUS_REQ_EXTS     67
+# define SSL_CTRL_GET_TLSEXT_STATUS_REQ_IDS      68
+# define SSL_CTRL_SET_TLSEXT_STATUS_REQ_IDS      69
+# define SSL_CTRL_GET_TLSEXT_STATUS_REQ_OCSP_RESP        70
+# define SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP        71
+# define SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB       72
+# define SSL_CTRL_SET_TLS_EXT_SRP_USERNAME_CB    75
+# define SSL_CTRL_SET_SRP_VERIFY_PARAM_CB                76
+# define SSL_CTRL_SET_SRP_GIVE_CLIENT_PWD_CB             77
+# define SSL_CTRL_SET_SRP_ARG            78
+# define SSL_CTRL_SET_TLS_EXT_SRP_USERNAME               79
+# define SSL_CTRL_SET_TLS_EXT_SRP_STRENGTH               80
+# define SSL_CTRL_SET_TLS_EXT_SRP_PASSWORD               81
+# ifndef OPENSSL_NO_HEARTBEATS
+#  define SSL_CTRL_TLS_EXT_SEND_HEARTBEAT                         85
+#  define SSL_CTRL_GET_TLS_EXT_HEARTBEAT_PENDING          86
+#  define SSL_CTRL_SET_TLS_EXT_HEARTBEAT_NO_REQUESTS      87
+# endif
 # define DTLS_CTRL_GET_TIMEOUT           73
 # define DTLS_CTRL_HANDLE_TIMEOUT        74
 # define DTLS_CTRL_LISTEN                        75
@@ -1390,15 +1379,12 @@ __owur int SSL_use_PrivateKey_ASN1(int pk, SSL *ssl, const unsigned char *d,
 __owur int SSL_use_certificate(SSL *ssl, X509 *x);
 __owur int SSL_use_certificate_ASN1(SSL *ssl, const unsigned char *d, int len);
 
-# ifndef OPENSSL_NO_TLSEXT
 /* Set serverinfo data for the current active cert. */
 __owur int SSL_CTX_use_serverinfo(SSL_CTX *ctx, const unsigned char *serverinfo,
                            size_t serverinfo_length);
-#  ifndef OPENSSL_NO_STDIO
+# ifndef OPENSSL_NO_STDIO
 __owur int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file);
-#  endif                        /* NO_STDIO */
-
-# endif
+# endif                        /* NO_STDIO */
 
 # ifndef OPENSSL_NO_STDIO
 __owur int SSL_use_RSAPrivateKey_file(SSL *ssl, const char *file, int type);

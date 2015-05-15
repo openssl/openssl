@@ -738,7 +738,6 @@ int SSL_use_certificate_chain_file(SSL *ssl, const char *file)
 }
 #endif
 
-#ifndef OPENSSL_NO_TLSEXT
 static int serverinfo_find_extension(const unsigned char *serverinfo,
                                      size_t serverinfo_length,
                                      unsigned int extension_type,
@@ -910,7 +909,7 @@ int SSL_CTX_use_serverinfo(SSL_CTX *ctx, const unsigned char *serverinfo,
     return 1;
 }
 
-# ifndef OPENSSL_NO_STDIO
+#ifndef OPENSSL_NO_STDIO
 int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
 {
     unsigned char *serverinfo = NULL;
@@ -1000,5 +999,4 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
     BIO_free(bin);
     return ret;
 }
-# endif                         /* OPENSSL_NO_STDIO */
-#endif                          /* OPENSSL_NO_TLSEXT */
+#endif                         /* OPENSSL_NO_STDIO */

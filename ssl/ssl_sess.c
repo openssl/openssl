@@ -207,14 +207,12 @@ SSL_SESSION *SSL_SESSION_new(void)
     ss->prev = NULL;
     ss->next = NULL;
     ss->compress_meth = 0;
-#ifndef OPENSSL_NO_TLSEXT
     ss->tlsext_hostname = NULL;
-# ifndef OPENSSL_NO_EC
+#ifndef OPENSSL_NO_EC
     ss->tlsext_ecpointformatlist_length = 0;
     ss->tlsext_ecpointformatlist = NULL;
     ss->tlsext_ellipticcurvelist_length = 0;
     ss->tlsext_ellipticcurvelist = NULL;
-# endif
 #endif
     CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data);
 #ifndef OPENSSL_NO_PSK
@@ -322,7 +320,7 @@ int ssl_get_new_session(SSL *s, int session)
             SSL_SESSION_free(ss);
             return (0);
         }
-#ifndef OPENSSL_NO_TLSEXT
+
         /*-
          * If RFC5077 ticket, use empty session ID (as server).
          * Note that:
@@ -342,7 +340,7 @@ int ssl_get_new_session(SSL *s, int session)
             ss->session_id_length = 0;
             goto sess_id_done;
         }
-#endif
+
         /* Choose which callback will set the session ID */
         CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
         if (s->generate_session_id)
@@ -378,7 +376,7 @@ int ssl_get_new_session(SSL *s, int session)
             SSL_SESSION_free(ss);
             return (0);
         }
-#ifndef OPENSSL_NO_TLSEXT
+
  sess_id_done:
         if (s->tlsext_hostname) {
             ss->tlsext_hostname = BUF_strdup(s->tlsext_hostname);
@@ -388,7 +386,6 @@ int ssl_get_new_session(SSL *s, int session)
                 return 0;
             }
         }
-#endif
     } else {
         ss->session_id_length = 0;
     }
@@ -435,9 +432,7 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
     SSL_SESSION *ret = NULL;
     int fatal = 0;
     int try_session_cache = 1;
-#ifndef OPENSSL_NO_TLSEXT
     int r;
-#endif
 
     if (len < 0 || len > SSL_MAX_SSL_SESSION_ID_LENGTH)
         goto err;
@@ -450,7 +445,6 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
     if (len == 0)
         try_session_cache = 0;
 
-#ifndef OPENSSL_NO_TLSEXT
     /* sets s->tlsext_ticket_expected */
     r = tls1_process_ticket(s, session_id, len, limit, &ret);
     switch (r) {
@@ -467,7 +461,6 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
     default:
         abort();
     }
-#endif
 
     if (try_session_cache &&
         ret == NULL &&
@@ -589,7 +582,7 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
  err:
     if (ret != NULL) {
         SSL_SESSION_free(ret);
-#ifndef OPENSSL_NO_TLSEXT
+
         if (!try_session_cache) {
             /*
              * The session was from a ticket, so we should issue a ticket for
@@ -597,7 +590,6 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
              */
             s->tlsext_ticket_expected = 1;
         }
-#endif
     }
     if (fatal)
         return -1;
@@ -734,16 +726,14 @@ void SSL_SESSION_free(SSL_SESSION *ss)
     ssl_sess_cert_free(ss->sess_cert);
     X509_free(ss->peer);
     sk_SSL_CIPHER_free(ss->ciphers);
-#ifndef OPENSSL_NO_TLSEXT
     OPENSSL_free(ss->tlsext_hostname);
     OPENSSL_free(ss->tlsext_tick);
-# ifndef OPENSSL_NO_EC
+#ifndef OPENSSL_NO_EC
     ss->tlsext_ecpointformatlist_length = 0;
     OPENSSL_free(ss->tlsext_ecpointformatlist);
     ss->tlsext_ellipticcurvelist_length = 0;
     OPENSSL_free(ss->tlsext_ellipticcurvelist);
-# endif                         /* OPENSSL_NO_EC */
-#endif
+#endif                         /* OPENSSL_NO_EC */
 #ifndef OPENSSL_NO_PSK
     OPENSSL_free(ss->psk_identity_hint);
     OPENSSL_free(ss->psk_identity);
@@ -877,7 +867,6 @@ long SSL_CTX_get_timeout(const SSL_CTX *s)
     return (s->session_timeout);
 }
 
-#ifndef OPENSSL_NO_TLSEXT
 int SSL_set_session_secret_cb(SSL *s,
                               int (*tls_session_secret_cb) (SSL *s,
                                                             void *secret,
@@ -932,7 +921,6 @@ int SSL_set_session_ticket_ext(SSL *s, void *ext_data, int ext_len)
 
     return 0;
 }
-#endif                          /* OPENSSL_NO_TLSEXT */
 
 typedef struct timeout_param_st {
     SSL_CTX *ctx;

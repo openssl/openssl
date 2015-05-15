@@ -315,7 +315,6 @@ SSL *SSL_new(SSL_CTX *ctx)
 
     CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
     s->ctx = ctx;
-#ifndef OPENSSL_NO_TLSEXT
     s->tlsext_debug_cb = 0;
     s->tlsext_debug_arg = NULL;
     s->tlsext_ticket_expected = 0;
@@ -360,7 +359,6 @@ SSL *SSL_new(SSL_CTX *ctx)
                s->ctx->alpn_client_proto_list_len);
         s->alpn_client_proto_list_len = s->ctx->alpn_client_proto_list_len;
     }
-#endif
 
     s->verify_result = X509_V_OK;
 
@@ -557,18 +555,16 @@ void SSL_free(SSL *s)
     ssl_cert_free(s->cert);
     /* Free up if allocated */
 
-#ifndef OPENSSL_NO_TLSEXT
     OPENSSL_free(s->tlsext_hostname);
     SSL_CTX_free(s->initial_ctx);
-# ifndef OPENSSL_NO_EC
+#ifndef OPENSSL_NO_EC
     OPENSSL_free(s->tlsext_ecpointformatlist);
     OPENSSL_free(s->tlsext_ellipticcurvelist);
-# endif                         /* OPENSSL_NO_EC */
+#endif                         /* OPENSSL_NO_EC */
     sk_X509_EXTENSION_pop_free(s->tlsext_ocsp_exts, X509_EXTENSION_free);
     sk_OCSP_RESPID_pop_free(s->tlsext_ocsp_ids, OCSP_RESPID_free);
     OPENSSL_free(s->tlsext_ocsp_resp);
     OPENSSL_free(s->alpn_client_proto_list);
-#endif
 
     sk_X509_NAME_pop_free(s->client_CA, X509_NAME_free);
 
@@ -579,7 +575,7 @@ void SSL_free(SSL *s)
 
     SSL_CTX_free(s->ctx);
 
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
+#if !defined(OPENSSL_NO_NEXTPROTONEG)
     OPENSSL_free(s->next_proto_negotiated);
 #endif
 
@@ -1394,7 +1390,6 @@ char *SSL_get_shared_ciphers(const SSL *s, char *buf, int len)
     return (buf);
 }
 
-#ifndef OPENSSL_NO_TLSEXT
 /** return a servername extension value if provided in Client Hello, or NULL.
  * So far, only host_name types are defined (RFC 3546).
  */
@@ -1476,7 +1471,7 @@ int SSL_select_next_proto(unsigned char **out, unsigned char *outlen,
     return status;
 }
 
-# ifndef OPENSSL_NO_NEXTPROTONEG
+#ifndef OPENSSL_NO_NEXTPROTONEG
 /*
  * SSL_get0_next_proto_negotiated sets *data and *len to point to the
  * client's requested protocol for this connection and returns 0. If the
@@ -1537,7 +1532,7 @@ void SSL_CTX_set_next_proto_select_cb(SSL_CTX *ctx,
     ctx->next_proto_select_cb = cb;
     ctx->next_proto_select_cb_arg = arg;
 }
-# endif
+#endif
 
 /*
  * SSL_CTX_set_alpn_protos sets the ALPN protocol list on |ctx| to |protos|.
@@ -1610,7 +1605,6 @@ void SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
         *len = ssl->s3->alpn_selected_len;
 }
 
-#endif                          /* !OPENSSL_NO_TLSEXT */
 
 int SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
                                const char *label, size_t llen,
@@ -1765,7 +1759,6 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 
     ret->max_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH;
 
-#ifndef OPENSSL_NO_TLSEXT
     ret->tlsext_servername_callback = 0;
     ret->tlsext_servername_arg = NULL;
     /* Setup RFC4507 ticket keys */
@@ -1777,10 +1770,9 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     ret->tlsext_status_cb = 0;
     ret->tlsext_status_arg = NULL;
 
-# ifndef OPENSSL_NO_NEXTPROTONEG
+#ifndef OPENSSL_NO_NEXTPROTONEG
     ret->next_protos_advertised_cb = 0;
     ret->next_proto_select_cb = 0;
-# endif
 #endif
 #ifndef OPENSSL_NO_PSK
     ret->psk_identity_hint = NULL;
@@ -1881,13 +1873,11 @@ void SSL_CTX_free(SSL_CTX *a)
         ENGINE_finish(a->client_cert_engine);
 #endif
 
-#ifndef OPENSSL_NO_TLSEXT
-# ifndef OPENSSL_NO_EC
+#ifndef OPENSSL_NO_EC
     OPENSSL_free(a->tlsext_ecpointformatlist);
     OPENSSL_free(a->tlsext_ellipticcurvelist);
-# endif
-    OPENSSL_free(a->alpn_client_proto_list);
 #endif
+    OPENSSL_free(a->alpn_client_proto_list);
 
     OPENSSL_free(a);
 }
@@ -2273,7 +2263,6 @@ EVP_PKEY *ssl_get_sign_pkey(SSL *s, const SSL_CIPHER *cipher,
     return c->pkeys[idx].privatekey;
 }
 
-#ifndef OPENSSL_NO_TLSEXT
 int ssl_get_server_cert_serverinfo(SSL *s, const unsigned char **serverinfo,
                                    size_t *serverinfo_length)
 {
@@ -2293,7 +2282,6 @@ int ssl_get_server_cert_serverinfo(SSL *s, const unsigned char **serverinfo,
     *serverinfo_length = c->pkeys[i].serverinfo_length;
     return 1;
 }
-#endif
 
 void ssl_update_cache(SSL *s, int mode)
 {
@@ -2818,10 +2806,8 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
     CERT *new_cert;
     if (ssl->ctx == ctx)
         return ssl->ctx;
-#ifndef OPENSSL_NO_TLSEXT
     if (ctx == NULL)
         ctx = ssl->initial_ctx;
-#endif
     new_cert = ssl_cert_dup(ctx->cert);
     if (new_cert == NULL) {
         return NULL;

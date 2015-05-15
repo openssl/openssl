@@ -265,7 +265,7 @@ CERT *ssl_cert_dup(CERT *cert)
                 goto err;
             }
         }
-#ifndef OPENSSL_NO_TLSEXT
+        rpk->valid_flags = 0;
         if (cert->pkeys[i].serverinfo != NULL) {
             /* Just copy everything. */
             ret->pkeys[i].serverinfo =
@@ -280,7 +280,6 @@ CERT *ssl_cert_dup(CERT *cert)
                    cert->pkeys[i].serverinfo,
                    cert->pkeys[i].serverinfo_length);
         }
-#endif
     }
 
     ret->references = 1;
@@ -334,12 +333,10 @@ CERT *ssl_cert_dup(CERT *cert)
     ret->sec_level = cert->sec_level;
     ret->sec_ex = cert->sec_ex;
 
-#ifndef OPENSSL_NO_TLSEXT
     if (!custom_exts_copy(&ret->cli_ext, &cert->cli_ext))
         goto err;
     if (!custom_exts_copy(&ret->srv_ext, &cert->srv_ext))
         goto err;
-#endif
 
     return (ret);
 
@@ -364,11 +361,9 @@ void ssl_cert_clear_certs(CERT *c)
         cpk->privatekey = NULL;
         sk_X509_pop_free(cpk->chain, X509_free);
         cpk->chain = NULL;
-#ifndef OPENSSL_NO_TLSEXT
         OPENSSL_free(cpk->serverinfo);
         cpk->serverinfo = NULL;
         cpk->serverinfo_length = 0;
-#endif
     }
 }
 
@@ -409,10 +404,8 @@ void ssl_cert_free(CERT *c)
     OPENSSL_free(c->ctypes);
     X509_STORE_free(c->verify_store);
     X509_STORE_free(c->chain_store);
-#ifndef OPENSSL_NO_TLSEXT
     custom_exts_free(&c->cli_ext);
     custom_exts_free(&c->srv_ext);
-#endif
     OPENSSL_free(c);
 }
 

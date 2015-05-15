@@ -652,19 +652,17 @@ struct ssl_session_st {
      * implement a maximum cache size.
      */
     struct ssl_session_st *prev, *next;
-# ifndef OPENSSL_NO_TLSEXT
     char *tlsext_hostname;
-#  ifndef OPENSSL_NO_EC
+# ifndef OPENSSL_NO_EC
     size_t tlsext_ecpointformatlist_length;
     unsigned char *tlsext_ecpointformatlist; /* peer's list */
     size_t tlsext_ellipticcurvelist_length;
     unsigned char *tlsext_ellipticcurvelist; /* peer's list */
-#  endif                       /* OPENSSL_NO_EC */
+# endif                       /* OPENSSL_NO_EC */
     /* RFC4507 info */
     unsigned char *tlsext_tick; /* Session ticket */
     size_t tlsext_ticklen;      /* Session ticket length */
     unsigned long tlsext_tick_lifetime_hint; /* Session lifetime hint in seconds */
-# endif
 # ifndef OPENSSL_NO_SRP
     char *srp_username;
 # endif
@@ -850,7 +848,6 @@ struct ssl_ctx_st {
     ENGINE *client_cert_engine;
 #  endif
 
-#  ifndef OPENSSL_NO_TLSEXT
     /* TLS extensions servername callback */
     int (*tlsext_servername_callback) (SSL *, int *, void *);
     void *tlsext_servername_arg;
@@ -868,7 +865,6 @@ struct ssl_ctx_st {
     /* Callback for status request */
     int (*tlsext_status_cb) (SSL *ssl, void *arg);
     void *tlsext_status_arg;
-#  endif
 
 #  ifndef OPENSSL_NO_PSK
     char *psk_identity_hint;
@@ -886,9 +882,7 @@ struct ssl_ctx_st {
     SRP_CTX srp_ctx;            /* ctx for SRP authentication */
 #  endif
 
-#  ifndef OPENSSL_NO_TLSEXT
-
-#   ifndef OPENSSL_NO_NEXTPROTONEG
+#  ifndef OPENSSL_NO_NEXTPROTONEG
     /* Next protocol negotiation information */
     /* (for experimental NPN extension). */
 
@@ -908,7 +902,7 @@ struct ssl_ctx_st {
                                  const unsigned char *in,
                                  unsigned int inlen, void *arg);
     void *next_proto_select_cb_arg;
-#   endif
+#  endif
 
     /*
      * ALPN information (we are in the process of transitioning from NPN to
@@ -941,7 +935,6 @@ struct ssl_ctx_st {
 
     /* SRTP profiles we are willing to do from RFC 5764 */
     STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;
-#  endif
     /*
      * Callback for disabling session caching and ticket support on a session
      * basis, depending on the chosen cipher.
@@ -1096,7 +1089,7 @@ struct ssl_st {
     /* what was passed, used for SSLv3/TLS rollback check */
     int client_version;
     unsigned int max_send_fragment;
-#  ifndef OPENSSL_NO_TLSEXT
+
     /* TLS extension debug callback */
     void (*tlsext_debug_cb) (SSL *s, int client_server, int type,
                              unsigned char *data, int len, void *arg);
@@ -1122,14 +1115,14 @@ struct ssl_st {
     int tlsext_ocsp_resplen;
     /* RFC4507 session ticket expected to be received or sent */
     int tlsext_ticket_expected;
-#   ifndef OPENSSL_NO_EC
+#  ifndef OPENSSL_NO_EC
     size_t tlsext_ecpointformatlist_length;
     /* our list */
     unsigned char *tlsext_ecpointformatlist;
     size_t tlsext_ellipticcurvelist_length;
     /* our list */
     unsigned char *tlsext_ellipticcurvelist;
-#   endif                       /* OPENSSL_NO_EC */
+#  endif                       /* OPENSSL_NO_EC */
     /* TLS Session Ticket extension override */
     TLS_SESSION_TICKET_EXT *tlsext_session_ticket;
     /* TLS Session Ticket extension callback */
@@ -1139,7 +1132,7 @@ struct ssl_st {
     tls_session_secret_cb_fn tls_session_secret_cb;
     void *tls_session_secret_cb_arg;
     SSL_CTX *initial_ctx;       /* initial ctx, used to store sessions */
-#   ifndef OPENSSL_NO_NEXTPROTONEG
+#  ifndef OPENSSL_NO_NEXTPROTONEG
     /*
      * Next protocol negotiation. For the client, this is the protocol that
      * we sent in NextProtocol and is set when handling ServerHello
@@ -1149,8 +1142,8 @@ struct ssl_st {
      */
     unsigned char *next_proto_negotiated;
     unsigned char next_proto_negotiated_len;
-#   endif
-#   define session_ctx initial_ctx
+#  endif
+#  define session_ctx initial_ctx
     /* What we'll do */
     STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;
     /* What's been chosen */
@@ -1172,9 +1165,7 @@ struct ssl_st {
      */
     unsigned char *alpn_client_proto_list;
     unsigned alpn_client_proto_list_len;
-#  else
-#   define session_ctx ctx
-#  endif                        /* OPENSSL_NO_TLSEXT */
+
     /*-
      * 1 if we are renegotiating.
      * 2 if we are a server and are inside a handshake
@@ -1328,8 +1319,6 @@ typedef struct ssl3_state_st {
     int next_proto_neg_seen;
 #  endif
 
-#  ifndef OPENSSL_NO_TLSEXT
-
     /*
      * ALPN information (we are in the process of transitioning from NPN to
      * ALPN.)
@@ -1351,8 +1340,6 @@ typedef struct ssl3_state_st {
      */
     char is_probably_safari;
 #   endif                       /* !OPENSSL_NO_EC */
-
-#  endif                        /* !OPENSSL_NO_TLSEXT */
 } SSL3_STATE;
 
 
@@ -1462,7 +1449,7 @@ typedef struct cert_pkey_st {
     EVP_PKEY *privatekey;
     /* Chain for this certificate */
     STACK_OF(X509) *chain;
-# ifndef OPENSSL_NO_TLSEXT
+
     /*-
      * serverinfo data for this certificate.  The data is in TLS Extension
      * wire format, specifically it's a series of records like:
@@ -1472,7 +1459,6 @@ typedef struct cert_pkey_st {
      */
     unsigned char *serverinfo;
     size_t serverinfo_length;
-# endif
 } CERT_PKEY;
 /* Retrieve Suite B flags */
 # define tls1_suiteb(s)  (s->cert->cert_flags & SSL_CERT_FLAG_SUITEB_128_LOS)
@@ -1916,10 +1902,8 @@ int ssl_undefined_function(SSL *s);
 __owur int ssl_undefined_void_function(void);
 __owur int ssl_undefined_const_function(const SSL *s);
 __owur CERT_PKEY *ssl_get_server_send_pkey(SSL *s);
-#  ifndef OPENSSL_NO_TLSEXT
 __owur int ssl_get_server_cert_serverinfo(SSL *s, const unsigned char **serverinfo,
                                    size_t *serverinfo_length);
-#  endif
 __owur EVP_PKEY *ssl_get_sign_pkey(SSL *s, const SSL_CIPHER *c, const EVP_MD **pmd);
 __owur int ssl_cert_type(X509 *x, EVP_PKEY *pkey);
 void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher);
@@ -2031,10 +2015,8 @@ __owur int ssl3_send_client_key_exchange(SSL *s);
 __owur int ssl3_get_key_exchange(SSL *s);
 __owur int ssl3_get_server_certificate(SSL *s);
 __owur int ssl3_check_cert_and_algorithm(SSL *s);
-#  ifndef OPENSSL_NO_TLSEXT
-#   ifndef OPENSSL_NO_NEXTPROTONEG
+#  ifndef OPENSSL_NO_NEXTPROTONEG
 __owur int ssl3_send_next_proto(SSL *s);
-#   endif
 #  endif
 
 int dtls1_client_hello(SSL *s);
@@ -2106,7 +2088,6 @@ __owur int tls1_set_curves_list(unsigned char **pext, size_t *pextlen,
 __owur int tls1_check_ec_tmp_key(SSL *s, unsigned long id);
 #  endif                        /* OPENSSL_NO_EC */
 
-#  ifndef OPENSSL_NO_TLSEXT
 __owur int tls1_shared_list(SSL *s,
                      const unsigned char *l1, size_t l1len,
                      const unsigned char *l2, size_t l2len, int nmatch);
@@ -2123,12 +2104,12 @@ __owur int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **data,
 __owur int ssl_prepare_clienthello_tlsext(SSL *s);
 __owur int ssl_prepare_serverhello_tlsext(SSL *s);
 
-#   ifndef OPENSSL_NO_HEARTBEATS
+#  ifndef OPENSSL_NO_HEARTBEATS
 __owur int tls1_heartbeat(SSL *s);
 __owur int dtls1_heartbeat(SSL *s);
 __owur int tls1_process_heartbeat(SSL *s, unsigned char *p, unsigned int length);
 __owur int dtls1_process_heartbeat(SSL *s, unsigned char *p, unsigned int length);
-#   endif
+#  endif
 
 __owur int tls1_process_ticket(SSL *s, unsigned char *session_id, int len,
                         const unsigned char *limit, SSL_SESSION **ret);
@@ -2145,7 +2126,6 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
                      int idx);
 void tls1_set_cert_validity(SSL *s);
 
-#  endif
 #  ifndef OPENSSL_NO_DH
 __owur DH *ssl_get_auto_dh(SSL *s);
 #  endif

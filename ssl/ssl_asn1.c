@@ -101,11 +101,9 @@ typedef struct {
     X509 *peer;
     ASN1_OCTET_STRING *session_id_context;
     long verify_result;
-#ifndef OPENSSL_NO_TLSEXT
     ASN1_OCTET_STRING *tlsext_hostname;
     long tlsext_tick_lifetime_hint;
     ASN1_OCTET_STRING *tlsext_tick;
-#endif
 #ifndef OPENSSL_NO_PSK
     ASN1_OCTET_STRING *psk_identity_hint;
     ASN1_OCTET_STRING *psk_identity;
@@ -128,17 +126,13 @@ ASN1_SEQUENCE(SSL_SESSION_ASN1) = {
     ASN1_EXP_OPT(SSL_SESSION_ASN1, peer, X509, 3),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, session_id_context, ASN1_OCTET_STRING, 4),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, verify_result, ZLONG, 5),
-#ifndef OPENSSL_NO_TLSEXT
     ASN1_EXP_OPT(SSL_SESSION_ASN1, tlsext_hostname, ASN1_OCTET_STRING, 6),
-#endif
 #ifndef OPENSSL_NO_PSK
     ASN1_EXP_OPT(SSL_SESSION_ASN1, psk_identity_hint, ASN1_OCTET_STRING, 7),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, psk_identity, ASN1_OCTET_STRING, 8),
 #endif
-#ifndef OPENSSL_NO_TLSEXT
     ASN1_EXP_OPT(SSL_SESSION_ASN1, tlsext_tick_lifetime_hint, ZLONG, 9),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, tlsext_tick, ASN1_OCTET_STRING, 10),
-#endif
     ASN1_EXP_OPT(SSL_SESSION_ASN1, comp_id, ASN1_OCTET_STRING, 11),
 #ifndef OPENSSL_NO_SRP
     ASN1_EXP_OPT(SSL_SESSION_ASN1, srp_username, ASN1_OCTET_STRING, 12),
@@ -185,9 +179,7 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
     unsigned char comp_id_data;
 #endif
 
-#ifndef OPENSSL_NO_TLSEXT
     ASN1_OCTET_STRING tlsext_hostname, tlsext_tick;
-#endif
 
 #ifndef OPENSSL_NO_SRP
     ASN1_OCTET_STRING srp_username;
@@ -238,7 +230,6 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 
     as.peer = in->peer;
 
-#ifndef OPENSSL_NO_TLSEXT
     ssl_session_sinit(&as.tlsext_hostname, &tlsext_hostname,
                       in->tlsext_hostname);
     if (in->tlsext_tick) {
@@ -247,7 +238,6 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
     }
     if (in->tlsext_tick_lifetime_hint > 0)
         as.tlsext_tick_lifetime_hint = in->tlsext_tick_lifetime_hint;
-#endif                          /* OPENSSL_NO_TLSEXT */
 #ifndef OPENSSL_NO_PSK
     ssl_session_sinit(&as.psk_identity_hint, &psk_identity_hint,
                       in->psk_identity_hint);
@@ -373,10 +363,8 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
     /* NB: this defaults to zero which is X509_V_OK */
     ret->verify_result = as->verify_result;
 
-#ifndef OPENSSL_NO_TLSEXT
     if (!ssl_session_strndup(&ret->tlsext_hostname, as->tlsext_hostname))
         goto err;
-#endif                          /* OPENSSL_NO_TLSEXT */
 
 #ifndef OPENSSL_NO_PSK
     if (!ssl_session_strndup(&ret->psk_identity_hint, as->psk_identity_hint))
@@ -385,7 +373,6 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
         goto err;
 #endif
 
-#ifndef OPENSSL_NO_TLSEXT
     ret->tlsext_tick_lifetime_hint = as->tlsext_tick_lifetime_hint;
     if (as->tlsext_tick) {
         ret->tlsext_tick = as->tlsext_tick->data;
@@ -394,7 +381,6 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
     } else {
         ret->tlsext_tick = NULL;
     }
-#endif                          /* OPENSSL_NO_TLSEXT */
 #ifndef OPENSSL_NO_COMP
     if (as->comp_id) {
         if (as->comp_id->length != 1) {

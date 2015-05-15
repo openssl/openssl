@@ -433,9 +433,7 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD_SWITCH("bugs", 0),
     SSL_CONF_CMD_SWITCH("no_comp", 0),
     SSL_CONF_CMD_SWITCH("ecdh_single", SSL_CONF_FLAG_SERVER),
-#ifndef OPENSSL_NO_TLSEXT
     SSL_CONF_CMD_SWITCH("no_ticket", 0),
-#endif
     SSL_CONF_CMD_SWITCH("serverpref", SSL_CONF_FLAG_SERVER),
     SSL_CONF_CMD_SWITCH("legacy_renegotiation", 0),
     SSL_CONF_CMD_SWITCH("legacy_server_connect", SSL_CONF_FLAG_SERVER),
@@ -477,9 +475,7 @@ static const ssl_switch_tbl ssl_cmd_switches[] = {
     {SSL_OP_ALL, 0},            /* bugs */
     {SSL_OP_NO_COMPRESSION, 0}, /* no_comp */
     {SSL_OP_SINGLE_ECDH_USE, 0}, /* ecdh_single */
-#ifndef OPENSSL_NO_TLSEXT
     {SSL_OP_NO_TICKET, 0},      /* no_ticket */
-#endif
     {SSL_OP_CIPHER_SERVER_PREFERENCE, 0}, /* serverpref */
     /* legacy_renegotiation */
     {SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION, 0},
