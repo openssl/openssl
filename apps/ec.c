@@ -92,9 +92,6 @@ OPTIONS ec_options[] = {
     {"inform", OPT_INFORM, 'F', "Input format - DER or PEM"},
     {"out", OPT_OUT, '>', "Output file"},
     {"outform", OPT_OUTFORM, 'F', "Output format - DER or PEM"},
-# ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-# endif
     {"noout", OPT_NOOUT, '-', "Don't print key out"},
     {"text", OPT_TEXT, '-', "Print the key"},
     {"param_out", OPT_PARAM_OUT, '-', "Print the elliptic curve parameters"},
@@ -106,6 +103,9 @@ OPTIONS ec_options[] = {
      "Specifies the way the ec parameters are encoded"},
     {"conv_form", OPT_CONV_FORM, 's', "Specifies the point conversion form "},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
+# ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+# endif
     {NULL}
 };
 

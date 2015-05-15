@@ -509,17 +509,9 @@ OPTIONS s_client_options[] = {
     {"quiet", OPT_QUIET, '-', "No s_client output"},
     {"ign_eof", OPT_IGN_EOF, '-', "Ignore input eof (default when -quiet)"},
     {"no_ign_eof", OPT_NO_IGN_EOF, '-', "Don't ignore input eof"},
-#ifndef OPENSSL_NO_SSL3
-    {"ssl3", OPT_SSL3, '-', "Just use SSLv3"},
-#endif
     {"tls1_2", OPT_TLS1_2, '-', "Just use TLSv1.2"},
     {"tls1_1", OPT_TLS1_1, '-', "Just use TLSv1.1"},
     {"tls1", OPT_TLS1, '-', "Just use TLSv1"},
-    {"dtls", OPT_DTLS, '-'},
-    {"dtls1", OPT_DTLS1, '-', "Just use DTLSv1"},
-    {"dtls1_2", OPT_DTLS1_2, '-'},
-    {"timeout", OPT_TIMEOUT, '-'},
-    {"mtu", OPT_MTU, 'p', "Set the link layer MTU"},
     {"starttls", OPT_STARTTLS, 's',
      "Use the STARTTLS command before starting TLS"},
     {"xmpphost", OPT_XMPPHOST, 's', "Host to use with \"-starttls xmpp\""},
@@ -534,6 +526,48 @@ OPTIONS s_client_options[] = {
     {"keymatexportlen", OPT_KEYMATEXPORTLEN, 'p',
      "Export len bytes of keying material (default 20)"},
     {"fallback_scsv", OPT_FALLBACKSCSV, '-', "Send the fallback SCSV"},
+    {"name", OPT_SMTPHOST, 's', "Hostname to use for \"-starttls smtp\""},
+    {"CRL", OPT_CRL, '<'},
+    {"crl_download", OPT_CRL_DOWNLOAD, '-'},
+    {"CRLform", OPT_CRLFORM, 'F'},
+    {"verify_return_error", OPT_VERIFY_RET_ERROR, '-'},
+    {"verify_quiet", OPT_VERIFY_QUIET, '-'},
+    {"brief", OPT_BRIEF, '-'},
+    {"prexit", OPT_PREXIT, '-'},
+    {"security_debug", OPT_SECURITY_DEBUG, '-'},
+    {"security_debug_verbose", OPT_SECURITY_DEBUG_VERBOSE, '-'},
+    {"cert_chain", OPT_CERT_CHAIN, '<'},
+    {"chainCApath", OPT_CHAINCAPATH, '/'},
+    {"verifyCApath", OPT_VERIFYCAPATH, '/'},
+    {"build_chain", OPT_BUILD_CHAIN, '-'},
+    {"chainCAfile", OPT_CHAINCAFILE, '<'},
+    {"verifyCAfile", OPT_VERIFYCAFILE, '<'},
+    {"nocommands", OPT_NOCMDS, '-', "Do not use interactive command letters"},
+    {"servername", OPT_SERVERNAME, 's',
+     "Set TLS extension servername in ClientHello"},
+    {"tlsextdebug", OPT_TLSEXTDEBUG, '-',
+     "Hex dump of all TLS extensions received"},
+    {"status", OPT_STATUS, '-', "Request certificate status from server"},
+    {"serverinfo", OPT_SERVERINFO, 's',
+     "types  Send empty ClientHello extensions (comma-separated numbers)"},
+    {"alpn", OPT_ALPN, 's',
+     "Enable ALPN extension, considering named protocols supported (comma-separated list)"},
+    OPT_S_OPTIONS,
+    OPT_V_OPTIONS,
+    OPT_X_OPTIONS,
+#ifndef OPENSSL_NO_SSL3
+    {"ssl3", OPT_SSL3, '-', "Just use SSLv3"},
+#endif
+#ifndef OPENSSL_NO_DTLS1
+    {"dtls", OPT_DTLS, '-'},
+    {"dtls1", OPT_DTLS1, '-', "Just use DTLSv1"},
+    {"dtls1_2", OPT_DTLS1_2, '-'},
+    {"timeout", OPT_TIMEOUT, '-'},
+    {"mtu", OPT_MTU, 'p', "Set the link layer MTU"},
+#endif
+#ifndef OPENSSL_NO_SSL_TRACE
+    {"trace", OPT_TRACE, '-'},
+#endif
 #ifdef WATT32
     {"wdebug", OPT_WDEBUG, '-', "WATT-32 tcp debugging"},
 #endif
@@ -556,44 +590,14 @@ OPTIONS s_client_options[] = {
      "Tolerate other than the known g N values."},
     {"srp_strength", OPT_SRP_STRENGTH, 'p', "Minimal mength in bits for N"},
 #endif
-    {"name", OPT_SMTPHOST, 's', "Hostname to use for \"-starttls smtp\""},
-    {"servername", OPT_SERVERNAME, 's',
-     "Set TLS extension servername in ClientHello"},
-    {"tlsextdebug", OPT_TLSEXTDEBUG, '-',
-     "Hex dump of all TLS extensions received"},
-    {"status", OPT_STATUS, '-', "Request certificate status from server"},
-    {"serverinfo", OPT_SERVERINFO, 's',
-     "types  Send empty ClientHello extensions (comma-separated numbers)"},
-    {"alpn", OPT_ALPN, 's',
-     "Enable ALPN extension, considering named protocols supported (comma-separated list)"},
 #ifndef OPENSSL_NO_NEXTPROTONEG
     {"nextprotoneg", OPT_NEXTPROTONEG, 's',
      "Enable NPN extension, considering named protocols supported (comma-separated list)"},
 #endif
-    {"CRL", OPT_CRL, '<'},
-    {"crl_download", OPT_CRL_DOWNLOAD, '-'},
-    {"CRLform", OPT_CRLFORM, 'F'},
-    {"verify_return_error", OPT_VERIFY_RET_ERROR, '-'},
-    {"verify_quiet", OPT_VERIFY_QUIET, '-'},
-    {"brief", OPT_BRIEF, '-'},
-    {"prexit", OPT_PREXIT, '-'},
-    {"trace", OPT_TRACE, '-'},
-    {"security_debug", OPT_SECURITY_DEBUG, '-'},
-    {"security_debug_verbose", OPT_SECURITY_DEBUG_VERBOSE, '-'},
-    {"cert_chain", OPT_CERT_CHAIN, '<'},
-    {"chainCApath", OPT_CHAINCAPATH, '/'},
-    {"verifyCApath", OPT_VERIFYCAPATH, '/'},
-    {"build_chain", OPT_BUILD_CHAIN, '-'},
-    {"chainCAfile", OPT_CHAINCAFILE, '<'},
-    {"verifyCAfile", OPT_VERIFYCAFILE, '<'},
-    {"nocommands", OPT_NOCMDS, '-', "Do not use interactive command letters"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
     {"ssl_client_engine", OPT_SSL_CLIENT_ENGINE, 's'},
 #endif
-    OPT_S_OPTIONS,
-    OPT_V_OPTIONS,
-    OPT_X_OPTIONS,
     {NULL}
 };
 
@@ -706,29 +710,6 @@ int s_client_main(int argc, char **argv)
     prog = opt_init(argc, argv, s_client_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
-#ifndef WATT32
-        case OPT_WDEBUG:
-#endif
-#ifdef OPENSSL_NO_JPAKE
-        case OPT_JPAKE:
-#endif
-#ifdef OPENSSL_NO_SSL_TRACE
-        case OPT_TRACE:
-#endif
-#ifdef OPENSSL_NO_PSK
-        case OPT_PSK_IDENTITY:
-        case OPT_PSK:
-#endif
-#ifdef OPENSSL_NO_SSL3
-        case OPT_SSL3:
-#endif
-#ifdef OPENSSL_NO_DTLS1
-        case OPT_DTLS:
-        case OPT_DTLS1:
-        case OPT_DTLS1_2:
-        case OPT_TIMEOUT:
-        case OPT_MTU:
-#endif
         case OPT_EOF:
         case OPT_ERR:
  opthelp:
@@ -866,22 +847,22 @@ int s_client_main(int argc, char **argv)
         case OPT_STATUS:
             c_status_req = 1;
             break;
-#ifdef WATT32
         case OPT_WDEBUG:
+#ifdef WATT32
             dbug_init();
-            break;
 #endif
+            break;
         case OPT_MSG:
             c_msg = 1;
             break;
         case OPT_MSGFILE:
             bio_c_msg = BIO_new_file(opt_arg(), "w");
             break;
-#ifndef OPENSSL_NO_SSL_TRACE
         case OPT_TRACE:
+#ifndef OPENSSL_NO_SSL_TRACE
             c_msg = 2;
-            break;
 #endif
+            break;
         case OPT_SECURITY_DEBUG:
             sdebug = 1;
             break;
@@ -908,6 +889,9 @@ int s_client_main(int argc, char **argv)
                 BIO_printf(bio_err, "Not a hex number '%s'\n", psk_key);
                 goto end;
             }
+#else
+        case OPT_PSK_IDENTITY:
+        case OPT_PSK:
             break;
 #endif
 #ifndef OPENSSL_NO_SRP
@@ -941,11 +925,11 @@ int s_client_main(int argc, char **argv)
         case OPT_SRP_MOREGROUPS:
             break;
 #endif
-#ifndef OPENSSL_NO_SSL3
         case OPT_SSL3:
+#ifndef OPENSSL_NO_SSL3
             meth = SSLv3_client_method();
-            break;
 #endif
+            break;
         case OPT_TLS1_2:
             meth = TLSv1_2_client_method();
             break;
@@ -973,6 +957,13 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_MTU:
             socket_mtu = atol(opt_arg());
+            break;
+#else
+        case OPT_DTLS:
+        case OPT_DTLS1:
+        case OPT_DTLS1_2:
+        case OPT_TIMEOUT:
+        case OPT_MTU:
             break;
 #endif
         case OPT_FALLBACKSCSV:
@@ -1038,13 +1029,12 @@ int s_client_main(int argc, char **argv)
                 goto end;
         case OPT_SERVERNAME:
             servername = opt_arg();
-            /* meth=TLSv1_client_method(); */
             break;
-#ifndef OPENSSL_NO_JPAKE
         case OPT_JPAKE:
+#ifndef OPENSSL_NO_JPAKE
             jpake_secret = opt_arg();
-            break;
 #endif
+            break;
         case OPT_USE_SRTP:
             srtp_profiles = opt_arg();
             break;

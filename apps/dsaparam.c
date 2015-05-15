@@ -103,11 +103,11 @@ OPTIONS dsaparam_options[] = {
     {"genkey", OPT_GENKEY, '-', "Generate a DSA key"},
     {"rand", OPT_RAND, 's', "Files to use for random number input"},
     {"non-fips-allow", OPT_NON_FIPS_ALLOW, '-'},
-# ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
-# endif
 # ifdef GENCB_TEST
     {"timebomb", OPT_TIMEBOMB, 'p', "Interrupt keygen after 'pnum' seconds"},
+# endif
+# ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
 # endif
     {NULL}
 };

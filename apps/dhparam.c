@@ -153,12 +153,12 @@ OPTIONS dhparam_options[] = {
     {"C", OPT_C, '-', "Print C code"},
     {"2", OPT_2, '-', "Generate parameters using 2 as the generator value"},
     {"5", OPT_5, '-', "Generate parameters using 5 as the generator value"},
-# ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
-# endif
 # ifndef OPENSSL_NO_DSA
     {"dsaparam", OPT_DSAPARAM, '-',
      "Read or generate DSA parameters, convert to DH"},
+# endif
+# ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
 # endif
     {NULL}
 };

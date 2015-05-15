@@ -151,10 +151,10 @@ OPTIONS ts_options[] = {
     {"CApath", OPT_CAPATH, '/', "Path to trusted CA files"},
     {"CAfile", OPT_CAFILE, '<', "File with trusted CA certs"},
     {"untrusted", OPT_UNTRUSTED, '<', "File with untrusted certs"},
+    {"", OPT_MD, '-', "Any supported digest"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
-    {"", OPT_MD, '-', "Any supported digest"},
     {NULL}
 };
 

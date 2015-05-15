@@ -114,9 +114,7 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_CONNECT, OPT_CIPHER, OPT_CERT, OPT_KEY, OPT_CAPATH,
     OPT_CAFILE, OPT_NEW, OPT_REUSE, OPT_BUGS, OPT_VERIFY, OPT_TIME,
-#ifndef OPENSSL_NO_SSL3
     OPT_SSL3,
-#endif
     OPT_WWW
 } OPTION_CHOICE;
 
@@ -227,11 +225,11 @@ int s_time_main(int argc, char **argv)
                 goto end;
             }
             break;
-#ifndef OPENSSL_NO_SSL3
         case OPT_SSL3:
+#ifndef OPENSSL_NO_SSL3
             meth = SSLv3_client_method();
-            break;
 #endif
+            break;
         }
     }
     argc = opt_num_rest();

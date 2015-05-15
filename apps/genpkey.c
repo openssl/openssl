@@ -89,6 +89,7 @@ OPTIONS genpkey_options[] = {
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
+    /* This is deliberately last. */
     {OPT_HELP_STR, 1, 1,
      "Order of options may be important!  See the documentation.\n"},
     {NULL}

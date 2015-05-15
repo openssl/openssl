@@ -84,10 +84,10 @@ OPTIONS gendsa_options[] = {
     {"passout", OPT_PASSOUT, 's'},
     {"rand", OPT_RAND, 's',
      "Load the file(s) into the random number generator"},
+    {"", OPT_CIPHER, '-', "Encrypt the output with any supported cipher"},
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 # endif
-    {"", OPT_CIPHER, '-', "Encrypt the output with any supported cipher"},
     {NULL}
 };
 

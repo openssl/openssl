@@ -82,14 +82,8 @@ OPTIONS dsa_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'F', "Input format, DER PEM PVK"},
     {"outform", OPT_OUTFORM, 'F', "Output format, DER PEM PVK"},
-# ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
-# endif
     {"in", OPT_IN, '<', "Input file"},
     {"out", OPT_OUT, '>', "Output file"},
-    {"pvk-strong", OPT_PVK_STRONG, '-'},
-    {"pvk-weak", OPT_PVK_WEAK, '-'},
-    {"pvk-none", OPT_PVK_NONE, '-'},
     {"noout", OPT_NOOUT, '-', "Don't print key out"},
     {"text", OPT_TEXT, '-', "Print the key in text"},
     {"modulus", OPT_MODULUS, '-', "Print the DSA public value"},
@@ -98,6 +92,14 @@ OPTIONS dsa_options[] = {
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
+# ifndef OPENSSL_NO_RC4
+    {"pvk-strong", OPT_PVK_STRONG, '-'},
+    {"pvk-weak", OPT_PVK_WEAK, '-'},
+    {"pvk-none", OPT_PVK_NONE, '-'},
+# endif
+# ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
+# endif
     {NULL}
 };
 
@@ -118,11 +120,6 @@ int dsa_main(int argc, char **argv)
         switch (o) {
         case OPT_EOF:
         case OPT_ERR:
-#ifdef OPENSSL_NO_RC4
-        case OPT_PVK_STRONG:
-        case OPT_PVK_WEAK:
-        case OPT_PVK_NONE:
-#endif
  opthelp:
             ret = 0;
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
@@ -165,6 +162,11 @@ int dsa_main(int argc, char **argv)
             break;
         case OPT_PVK_NONE:
             pvk_encr = 0;
+            break;
+#else
+        case OPT_PVK_STRONG:
+        case OPT_PVK_WEAK:
+        case OPT_PVK_NONE:
             break;
 #endif
         case OPT_NOOUT:

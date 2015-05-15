@@ -208,6 +208,8 @@ OPTIONS cms_options[] = {
     {"keyopt", OPT_KEYOPT, 's', "Set public key parameters as n:v pairs"},
     {"receipt_request_from", OPT_RR_FROM, 's'},
     {"receipt_request_to", OPT_RR_TO, 's'},
+    {"", OPT_CIPHER, '-', "Any supported cipher"},
+    OPT_V_OPTIONS,
 # ifndef OPENSSL_NO_AES
     {"aes128-wrap", OPT_AES128_WRAP, '-', "Use AES128 to wrap key"},
     {"aes192-wrap", OPT_AES192_WRAP, '-', "Use AES192 to wrap key"},
@@ -219,9 +221,7 @@ OPTIONS cms_options[] = {
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
 # endif
-    {"", OPT_CIPHER, '-', "Any supported cipher"},
-    OPT_V_OPTIONS,
-    {NULL},
+    {NULL}
 };
 
 int cms_main(int argc, char **argv)
@@ -588,11 +588,11 @@ int cms_main(int argc, char **argv)
                 goto end;
             vpmtouched++;
             break;
-# ifndef OPENSSL_NO_DES
         case OPT_3DES_WRAP:
+# ifndef OPENSSL_NO_DES
             wrap_cipher = EVP_des_ede3_wrap();
-            break;
 # endif
+            break;
 # ifndef OPENSSL_NO_AES
         case OPT_AES128_WRAP:
             wrap_cipher = EVP_aes_128_wrap();
@@ -602,6 +602,11 @@ int cms_main(int argc, char **argv)
             break;
         case OPT_AES256_WRAP:
             wrap_cipher = EVP_aes_256_wrap();
+            break;
+# else
+        case OPT_AES128_WRAP:
+        case OPT_AES192_WRAP:
+        case OPT_AES256_WRAP:
             break;
 # endif
         }

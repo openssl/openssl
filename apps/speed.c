@@ -358,19 +358,19 @@ OPTIONS speed_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] ciphers...\n"},
     {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
     {"help", OPT_HELP, '-', "Display this summary"},
+    {"evp", OPT_EVP, 's', "Use specified EVP cipher"},
+    {"decrypt", OPT_DECRYPT, '-',
+     "Time decryption instead of encryption (only EVP)"},
+    {"mr", OPT_MR, '-', "Produce machine readable output"},
+    {"mb", OPT_MB, '-'},
+    {"misalign", OPT_MISALIGN, 'n', "Amount to mis-align buffers"},
 #if defined(TIMES) || defined(USE_TOD)
     {"elapsed", OPT_ELAPSED, '-',
      "Measure time in real time instead of CPU user time"},
 #endif
-    {"evp", OPT_EVP, 's', "Use specified EVP cipher"},
-    {"decrypt", OPT_DECRYPT, '-',
-     "Time decryption instead of encryption (only EVP)"},
 #ifndef NO_FORK
     {"multi", OPT_MULTI, 'p', "Run benchmarks in parallel"},
 #endif
-    {"mr", OPT_MR, '-', "Produce machine readable output"},
-    {"mb", OPT_MB, '-'},
-    {"misalign", OPT_MISALIGN, 'n', "Amount to mis-align buffers"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
@@ -829,11 +829,11 @@ int speed_main(int argc, char **argv)
         case OPT_ENGINE:
             (void)setup_engine(opt_arg(), 0);
             break;
-#ifndef NO_FORK
         case OPT_MULTI:
+#ifndef NO_FORK
             multi = atoi(opt_arg());
-            break;
 #endif
+            break;
         case OPT_MISALIGN:
             if (!opt_int(opt_arg(), &misalign))
                 goto end;

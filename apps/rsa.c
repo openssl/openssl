@@ -138,14 +138,16 @@ OPTIONS rsa_options[] = {
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"RSAPublicKey_in", OPT_RSAPUBKEY_IN, '-', "Input is an RSAPublicKey"},
     {"RSAPublicKey_out", OPT_RSAPUBKEY_OUT, '-', "Output is an RSAPublicKey"},
-    {"pvk-strong", OPT_PVK_STRONG, '-'},
-    {"pvk-weak", OPT_PVK_WEAK, '-'},
-    {"pvk-none", OPT_PVK_NONE, '-'},
     {"noout", OPT_NOOUT, '-', "Don't print key out"},
     {"text", OPT_TEXT, '-', "Print the key in text"},
     {"modulus", OPT_MODULUS, '-', "Print the RSA key modulus"},
     {"check", OPT_CHECK, '-', "Verify key consistency"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
+# ifdef OPENSSL_NO_RC4
+    {"pvk-strong", OPT_PVK_STRONG, '-'},
+    {"pvk-weak", OPT_PVK_WEAK, '-'},
+    {"pvk-none", OPT_PVK_NONE, '-'},
+# endif
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 # endif
@@ -170,11 +172,6 @@ int rsa_main(int argc, char **argv)
         switch (o) {
         case OPT_EOF:
         case OPT_ERR:
-#ifdef OPENSSL_NO_RC4
-        case OPT_PVK_STRONG:
-        case OPT_PVK_WEAK:
-        case OPT_PVK_NONE:
-#endif
  opthelp:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             goto end;
@@ -226,6 +223,11 @@ int rsa_main(int argc, char **argv)
             break;
         case OPT_PVK_NONE:
             pvk_encr = 0;
+            break;
+#else
+        case OPT_PVK_STRONG:
+        case OPT_PVK_WEAK:
+        case OPT_PVK_NONE:
             break;
 #endif
         case OPT_NOOUT:

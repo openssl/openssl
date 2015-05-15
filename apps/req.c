@@ -176,11 +176,11 @@ OPTIONS req_options[] = {
      "Cert extension section (override value in config file)"},
     {"reqexts", OPT_REQEXTS, 's',
      "Request extension section (override value in config file)"},
+    {"", OPT_MD, '-', "Any supported digest"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
     {"keygen_engine", OPT_KEYGEN_ENGINE, 's'},
 #endif
-    {"", OPT_MD, '-', "Any supported digest"},
     {NULL}
 };
 
