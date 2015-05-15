@@ -340,10 +340,15 @@ typedef struct options_st {
     const char *helpstr;
 } OPTIONS;
 
-typedef struct opt_pair_st {
+/*
+ * A string/int pairing; widely use for option value lookup, hence the
+ * name OPT_PAIR. But that name is misleading in s_cb.c, so we also use
+ * the "generic" name STRINT_PAIR.
+ */
+typedef struct string_int_pair_st {
     const char *name;
     int retval;
-} OPT_PAIR;
+} OPT_PAIR, STRINT_PAIR;
 
 /* Flags to pass into opt_format; see FORMAT_xxx, below. */
 # define OPT_FMT_PEMDER          (1L <<  1)
