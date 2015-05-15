@@ -997,7 +997,10 @@ int s_server_main(int argc, char *argv[])
     char *CApath = NULL, *CAfile = NULL, *chCApath = NULL, *chCAfile = NULL;
     char *dhfile = NULL, *dpassarg = NULL, *dpass = NULL, *inrand = NULL;
     char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
-    char *crl_file = NULL, *prog, *p;
+    char *crl_file = NULL, *prog;
+#ifndef OPENSSL_NO_PSK
+    char *p;
+#endif
     const char *unix_path = NULL;
 #ifndef NO_SYS_UN_H
     int unlink_unix_path = 0;
@@ -1046,6 +1049,18 @@ int s_server_main(int argc, char *argv[])
     prog = opt_init(argc, argv, s_server_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
+#ifdef OPENSSL_NO_PSK
+        case OPT_PSK_HINT:
+        case OPT_PSK:
+#endif
+#ifdef OPENSSL_NO_DTLS1
+        case OPT_DTLS:
+        case OPT_DTLS1:
+        case OPT_DTLS1_2:
+        case OPT_TIMEOUT:
+        case OPT_MTU:
+        case OPT_CHAIN:
+#endif
         case OPT_EOF:
         case OPT_ERR:
  opthelp:

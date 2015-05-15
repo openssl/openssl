@@ -722,6 +722,20 @@ int s_client_main(int argc, char **argv)
 #ifdef OPENSSL_NO_SSL_TRACE
         case OPT_TRACE:
 #endif
+#ifdef OPENSSL_NO_PSK
+        case OPT_PSK_IDENTITY:
+        case OPT_PSK:
+#endif
+#ifdef OPENSSL_NO_SSL3
+        case OPT_SSL3:
+#endif
+#ifdef OPENSSL_NO_DTLS1
+        case OPT_DTLS:
+        case OPT_DTLS1:
+        case OPT_DTLS1_2:
+        case OPT_TIMEOUT:
+        case OPT_MTU:
+#endif
         case OPT_EOF:
         case OPT_ERR:
  opthelp:
