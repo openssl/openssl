@@ -107,13 +107,9 @@ typedef enum OPTION_choice {
     OPT_PURPOSE, OPT_STARTDATE, OPT_ENDDATE, OPT_CHECKEND, OPT_CHECKHOST,
     OPT_CHECKEMAIL, OPT_CHECKIP, OPT_NOOUT, OPT_TRUSTOUT, OPT_CLRTRUST,
     OPT_CLRREJECT, OPT_ALIAS, OPT_CACREATESERIAL, OPT_CLREXT, OPT_OCSPID,
-#ifndef OPENSSL_NO_MD5
     OPT_SUBJECT_HASH_OLD,
     OPT_ISSUER_HASH_OLD,
-#endif
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
     OPT_FORCE_VERSION,
-#endif
     OPT_BADSIG, OPT_MD, OPT_ENGINE, OPT_NOCERT
 } OPTION_CHOICE;
 
@@ -130,12 +126,6 @@ OPTIONS x509_options[] = {
     {"serial", OPT_SERIAL, '-', "Print serial number value"},
     {"subject_hash", OPT_HASH, '-', "Print subject hash value"},
     {"issuer_hash", OPT_ISSUER_HASH, '-', "Print issuer hash value"},
-#ifndef OPENSSL_NO_MD5
-    {"subject_hash_old", OPT_SUBJECT_HASH_OLD, '-',
-     "Print old-style (MD5) issuer hash value"},
-    {"issuer_hash_old", OPT_ISSUER_HASH_OLD, '-',
-     "Print old-style (MD5) subject hash value"},
-#endif
     {"hash", OPT_HASH, '-', "Synonym for -subject_hash"},
     {"subject", OPT_SUBJECT, '-', "Print subject DN"},
     {"issuer", OPT_ISSUER, '-', "Print issuer DN"},
@@ -194,11 +184,17 @@ OPTIONS x509_options[] = {
     {"clrreject", OPT_CLRREJECT, '-'},
     {"badsig", OPT_BADSIG, '-'},
     {"", OPT_MD, '-', "Any supported digest"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+#ifndef OPENSSL_NO_MD5
+    {"subject_hash_old", OPT_SUBJECT_HASH_OLD, '-',
+     "Print old-style (MD5) issuer hash value"},
+    {"issuer_hash_old", OPT_ISSUER_HASH_OLD, '-',
+     "Print old-style (MD5) subject hash value"},
 #endif
 #ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
     {"force_version", OPT_FORCE_VERSION, 'p'},
+#endif
+#ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
     {NULL}
 };
@@ -291,11 +287,11 @@ int x509_main(int argc, char **argv)
             if (!sigopts || !sk_OPENSSL_STRING_push(sigopts, opt_arg()))
                 goto opthelp;
             break;
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
         case OPT_FORCE_VERSION:
+#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
             force_version = atoi(opt_arg()) - 1;
-            break;
 #endif
+            break;
         case OPT_DAYS:
             days = atoi(opt_arg());
             break;
@@ -458,6 +454,10 @@ int x509_main(int argc, char **argv)
             break;
         case OPT_ISSUER_HASH_OLD:
             issuer_hash_old = ++num;
+            break;
+#else
+        case OPT_SUBJECT_HASH_OLD:
+        case OPT_ISSUER_HASH_OLD:
             break;
 #endif
         case OPT_DATES:

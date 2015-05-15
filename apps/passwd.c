@@ -101,6 +101,8 @@ OPTIONS passwd_options[] = {
     {"quiet", OPT_QUIET, '-', "No warnings"},
     {"table", OPT_TABLE, '-', "Format output as table"},
     {"reverse", OPT_REVERSE, '-', "Switch table columns"},
+    {"salt", OPT_SALT, 's', "Use provided salt"},
+    {"stdin", OPT_STDIN, '-', "Read passwords from stdin"},
 # ifndef NO_MD5CRYPT_1
     {"apr1", OPT_APR1, '-', "MD5-based password algorithm, Apache variant"},
     {"1", OPT_1, '-', "MD5-based password algorithm"},
@@ -108,8 +110,6 @@ OPTIONS passwd_options[] = {
 # ifndef OPENSSL_NO_DES
     {"crypt", OPT_CRYPT, '-', "Standard Unix password algorithm (default)"},
 # endif
-    {"salt", OPT_SALT, 's', "Use provided salt"},
-    {"stdin", OPT_STDIN, '-', "Read passwords from stdin"},
     {NULL}
 };
 

@@ -64,12 +64,8 @@
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-#ifndef OPENSSL_NO_SSL_TRACE
     OPT_STDNAME,
-#endif
-#ifndef OPENSSL_NO_SSL3
     OPT_SSL3,
-#endif
     OPT_TLS1,
     OPT_V, OPT_UPPER_V, OPT_S
 } OPTION_CHOICE;
@@ -79,13 +75,13 @@ OPTIONS ciphers_options[] = {
     {"v", OPT_V, '-', "Verbose listing of the SSL/TLS ciphers"},
     {"V", OPT_UPPER_V, '-', "Even more verbose"},
     {"s", OPT_S, '-', "Only supported ciphers"},
+    {"tls1", OPT_TLS1, '-', "TLS1 mode"},
 #ifndef OPENSSL_NO_SSL_TRACE
     {"stdname", OPT_STDNAME, '-', "Show standard cipher names"},
 #endif
 #ifndef OPENSSL_NO_SSL3
     {"ssl3", OPT_SSL3, '-', "SSL3 mode"},
 #endif
-    {"tls1", OPT_TLS1, '-', "TLS1 mode"},
     {NULL}
 };
 
@@ -125,16 +121,16 @@ int ciphers_main(int argc, char **argv)
         case OPT_S:
             use_supported = 1;
             break;
-#ifndef OPENSSL_NO_SSL_TRACE
         case OPT_STDNAME:
+#ifndef OPENSSL_NO_SSL_TRACE
             stdname = verbose = 1;
-            break;
 #endif
-#ifndef OPENSSL_NO_SSL3
+            break;
         case OPT_SSL3:
+#ifndef OPENSSL_NO_SSL3
             meth = SSLv3_client_method();
-            break;
 #endif
+            break;
         case OPT_TLS1:
             meth = TLSv1_client_method();
             break;

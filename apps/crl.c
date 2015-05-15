@@ -95,11 +95,11 @@ OPTIONS crl_options[] = {
     {"verify", OPT_VERIFY, '-'},
     {"text", OPT_TEXT, '-', "Print out a text format version"},
     {"hash", OPT_HASH, '-', "Print hash value"},
+    {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
+    {"", OPT_MD, '-', "Any supported digest"},
 #ifndef OPENSSL_NO_MD5
     {"hash_old", OPT_HASH_OLD, '-', "Print old-style (MD5) hash value"},
 #endif
-    {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
-    {"", OPT_MD, '-', "Any supported digest"},
     {NULL}
 };
 
@@ -117,11 +117,11 @@ int crl_main(int argc, char **argv)
     char *infile = NULL, *outfile = NULL, *crldiff = NULL, *keyfile = NULL;
     char *CAfile = NULL, *CApath = NULL, *prog;
     OPTION_CHOICE o;
-    int hash = 0, issuer = 0, lastupdate = 0, nextupdate = 0, noout =
-        0, text = 0;
+    int hash = 0, issuer = 0, lastupdate = 0, nextupdate = 0, noout = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, keyformat = FORMAT_PEM;
-    int ret = 1, num = 0, badsig = 0, fingerprint = 0, crlnumber =
-        0, i, do_ver = 0;
+    int ret = 1, num = 0, badsig = 0, fingerprint = 0, crlnumber = 0;
+    int text = 0, do_ver = 0;
+    int i;
 #ifndef OPENSSL_NO_MD5
     int hash_old = 0;
 #endif
@@ -170,11 +170,11 @@ int crl_main(int argc, char **argv)
             CAfile = opt_arg();
             do_ver = 1;
             break;
-#ifndef OPENSSL_NO_MD5
         case OPT_HASH_OLD:
+#ifndef OPENSSL_NO_MD5
             hash_old = ++num;
-            break;
 #endif
+            break;
         case OPT_VERIFY:
             do_ver = 1;
             break;

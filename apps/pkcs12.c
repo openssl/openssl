@@ -149,10 +149,10 @@ OPTIONS pkcs12_options[] = {
     {"password", OPT_PASSWORD, 's', "Set import/export password source"},
     {"CApath", OPT_CAPATH, '/', "PEM-format directory of CA's"},
     {"CAfile", OPT_CAFILE, '<', "PEM-format file of CA's"},
+    {"", OPT_CIPHER, '-', "Any supported cipher"},
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 # endif
-    {"", OPT_CIPHER, '-', "Any supported cipher"},
     {NULL}
 };
 

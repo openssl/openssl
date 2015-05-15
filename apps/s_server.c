@@ -806,9 +806,7 @@ typedef enum OPTION_choice {
     OPT_BRIEF, OPT_NO_TMP_RSA, OPT_NO_DHE, OPT_NO_ECDHE,
     OPT_NO_RESUME_EPHEMERAL, OPT_PSK_HINT, OPT_PSK, OPT_SRPVFILE,
     OPT_SRPUSERSEED, OPT_REV, OPT_WWW, OPT_UPPER_WWW, OPT_HTTP,
-#ifndef OPENSSL_NO_SSL3
     OPT_SSL3,
-#endif
     OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
     OPT_DTLS1_2, OPT_TIMEOUT, OPT_MTU, OPT_CHAIN,
     OPT_ID_PREFIX, OPT_RAND, OPT_SERVERNAME, OPT_SERVERNAME_FATAL,
@@ -821,7 +819,6 @@ typedef enum OPTION_choice {
 
 OPTIONS s_server_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
-
     {"port", OPT_PORT, 'p'},
     {"accept", OPT_PORT, 'p',
      "TCP/IP port to accept on (default is " PORT_STR ")"},
@@ -851,9 +848,6 @@ OPTIONS s_server_options[] = {
     {"dkeyform", OPT_DKEYFORM, 'F',
      "Second key format (PEM, DER or ENGINE) PEM default"},
     {"dpass", OPT_DPASS, 's', "Second private key file pass phrase source"},
-#ifdef FIONBIO
-    {"nbio", OPT_NBIO, '-', "Use non-blocking IO"},
-#endif
     {"nbio_test", OPT_NBIO_TEST, '-', "Test with the non-blocking test bio"},
     {"crlf", OPT_CRLF, '-', "Convert LF from terminal into CRLF"},
     {"debug", OPT_DEBUG, '-', "Print more output"},
@@ -865,47 +859,13 @@ OPTIONS s_server_options[] = {
     {"nocert", OPT_NOCERT, '-', "Don't use any certificates (Anon-DH)"},
     {"quiet", OPT_QUIET, '-', "No server output"},
     {"no_tmp_rsa", OPT_NO_TMP_RSA, '-', "Do not generate a tmp RSA key"},
-#ifndef OPENSSL_NO_PSK
-    {"psk_hint", OPT_PSK_HINT, 's', "PSK identity hint to use"},
-    {"psk", OPT_PSK, 's', "PSK in hex (without 0x)"},
-# ifndef OPENSSL_NO_JPAKE
-    {"jpake", OPT_JPAKE, 's', "JPAKE secret to use"},
-# endif
-#endif
-#ifndef OPENSSL_NO_SRP
-    {"srpvfile", OPT_SRPVFILE, '<', "The verifier file for SRP"},
-    {"srpuserseed", OPT_SRPUSERSEED, 's',
-     "A seed string for a default user salt"},
-#endif
-#ifndef OPENSSL_NO_SSL3
-    {"ssl3", OPT_SSL3, '-', "Just talk SSLv3"},
-#endif
     {"tls1_2", OPT_TLS1_2, '-', "just talk TLSv1.2"},
     {"tls1_1", OPT_TLS1_1, '-', "Just talk TLSv1.1"},
     {"tls1", OPT_TLS1, '-', "Just talk TLSv1"},
-#ifndef OPENSSL_NO_DTLS1
-    {"dtls", OPT_DTLS, '-'},
-    {"dtls1", OPT_DTLS1, '-', "Just talk DTLSv1"},
-    {"dtls1_2", OPT_DTLS1_2, '-', "Just talk DTLSv1.2"},
-    {"timeout", OPT_TIMEOUT, '-', "Enable timeouts"},
-    {"mtu", OPT_MTU, 'p', "Set link layer MTU"},
-    {"chain", OPT_CHAIN, '-', "Read a certificate chain"},
-#endif
-#ifndef OPENSSL_NO_DH
-    {"no_dhe", OPT_NO_DHE, '-', "Disable ephemeral DH"},
-#endif
-#ifndef OPENSSL_NO_EC
-    {"no_ecdhe", OPT_NO_ECDHE, '-', "Disable ephemeral ECDH"},
-#endif
     {"no_resume_ephemeral", OPT_NO_RESUME_EPHEMERAL, '-',
      "Disable caching and tickets if ephemeral (EC)DH is used"},
     {"www", OPT_WWW, '-', "Respond to a 'GET /' with a status page"},
     {"WWW", OPT_UPPER_WWW, '-', "Respond to a 'GET with the file ./path"},
-    {"HTTP", OPT_HTTP, '-', "Like -WWW but ./path incluedes HTTP headers"},
-    {"id_prefix", OPT_ID_PREFIX, 's',
-     "Generate SSL/TLS session IDs prefixed by arg"},
-    {"rand", OPT_RAND, 's',
-     "Load the file(s) into the random number generator"},
     {"servername", OPT_SERVERNAME, 's',
      "Servername for HostName TLS extension"},
     {"servername_fatal", OPT_SERVERNAME_FATAL, '-',
@@ -916,14 +876,11 @@ OPTIONS s_server_options[] = {
      "-Private Key file to use for servername if not in -cert2"},
     {"tlsextdebug", OPT_TLSEXTDEBUG, '-',
      "Hex dump of all TLS extensions received"},
-#ifndef OPENSSL_NO_NEXTPROTONEG
-    {"nextprotoneg", OPT_NEXTPROTONEG, 's',
-     "Set the advertised protocols for the NPN extension (comma-separated list)"},
-#endif
-    {"use_srtp", OPT_SRTP_PROFILES, '<',
-     "Offer SRTP key management with a colon-separated profile list"},
-    {"alpn", OPT_ALPN, 's',
-     "Set the advertised protocols for the ALPN extension (comma-separated list)"},
+    {"HTTP", OPT_HTTP, '-', "Like -WWW but ./path incluedes HTTP headers"},
+    {"id_prefix", OPT_ID_PREFIX, 's',
+     "Generate SSL/TLS session IDs prefixed by arg"},
+    {"rand", OPT_RAND, 's',
+     "Load the file(s) into the random number generator"},
     {"keymatexport", OPT_KEYMATEXPORT, 's',
      "Export keying material using label"},
     {"keymatexportlen", OPT_KEYMATEXPORTLEN, 'p',
@@ -953,12 +910,54 @@ OPTIONS s_server_options[] = {
     {"security_debug_verbose", OPT_SECURITY_DEBUG_VERBOSE, '-'},
     {"brief", OPT_BRIEF, '-'},
     {"rev", OPT_REV, '-'},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's'},
-#endif
     OPT_S_OPTIONS,
     OPT_V_OPTIONS,
     OPT_X_OPTIONS,
+#ifdef FIONBIO
+    {"nbio", OPT_NBIO, '-', "Use non-blocking IO"},
+#endif
+#ifndef OPENSSL_NO_PSK
+    {"psk_hint", OPT_PSK_HINT, 's', "PSK identity hint to use"},
+    {"psk", OPT_PSK, 's', "PSK in hex (without 0x)"},
+# ifndef OPENSSL_NO_JPAKE
+    {"jpake", OPT_JPAKE, 's', "JPAKE secret to use"},
+# endif
+#endif
+#ifndef OPENSSL_NO_SRP
+    {"srpvfile", OPT_SRPVFILE, '<', "The verifier file for SRP"},
+    {"srpuserseed", OPT_SRPUSERSEED, 's',
+     "A seed string for a default user salt"},
+#endif
+#ifndef OPENSSL_NO_SSL3
+    {"ssl3", OPT_SSL3, '-', "Just talk SSLv3"},
+#endif
+#ifndef OPENSSL_NO_DTLS1
+    {"dtls", OPT_DTLS, '-'},
+    {"dtls1", OPT_DTLS1, '-', "Just talk DTLSv1"},
+    {"dtls1_2", OPT_DTLS1_2, '-', "Just talk DTLSv1.2"},
+    {"timeout", OPT_TIMEOUT, '-', "Enable timeouts"},
+    {"mtu", OPT_MTU, 'p', "Set link layer MTU"},
+    {"chain", OPT_CHAIN, '-', "Read a certificate chain"},
+#endif
+#ifndef OPENSSL_NO_DH
+    {"no_dhe", OPT_NO_DHE, '-', "Disable ephemeral DH"},
+#endif
+#ifndef OPENSSL_NO_EC
+    {"no_ecdhe", OPT_NO_ECDHE, '-', "Disable ephemeral ECDH"},
+#endif
+#ifndef OPENSSL_NO_NEXTPROTONEG
+    {"nextprotoneg", OPT_NEXTPROTONEG, 's',
+     "Set the advertised protocols for the NPN extension (comma-separated list)"},
+#endif
+#ifndef OPENSSL_NO_SRTP
+    {"use_srtp", OPT_SRTP_PROFILES, '<',
+     "Offer SRTP key management with a colon-separated profile list"},
+    {"alpn", OPT_ALPN, 's',
+     "Set the advertised protocols for the ALPN extension (comma-separated list)"},
+#endif
+#ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's'},
+#endif
     {NULL}
 };
 
@@ -1246,13 +1245,11 @@ int s_server_main(int argc, char *argv[])
         case OPT_MSGFILE:
             bio_s_msg = BIO_new_file(opt_arg(), "w");
             break;
+        case OPT_TRACE:
 #ifndef OPENSSL_NO_SSL_TRACE
-        case OPT_TRACE:
             s_msg = 2;
-            break;
 #else
-        case OPT_TRACE:
-            goto opthelp;
+            break;
 #endif
         case OPT_SECURITY_DEBUG:
             sdebug = 1;
@@ -1296,6 +1293,10 @@ int s_server_main(int argc, char *argv[])
                 goto end;
             }
             break;
+#else
+        case OPT_PSK_HINT:
+        case OPT_PSK:
+            break;
 #endif
 #ifndef OPENSSL_NO_SRP
         case OPT_SRPVFILE:
@@ -1323,11 +1324,11 @@ int s_server_main(int argc, char *argv[])
         case OPT_HTTP:
             www = 3;
             break;
-#ifndef OPENSSL_NO_SSL3
         case OPT_SSL3:
+#ifndef OPENSSL_NO_SSL3
             meth = SSLv3_server_method();
-            break;
 #endif
+            break;
         case OPT_TLS1_2:
             meth = TLSv1_2_server_method();
             break;
@@ -1359,6 +1360,14 @@ int s_server_main(int argc, char *argv[])
         case OPT_CHAIN:
             cert_chain = 1;
             break;
+#else
+        case OPT_DTLS:
+        case OPT_DTLS1:
+        case OPT_DTLS1_2:
+        case OPT_TIMEOUT:
+        case OPT_MTU:
+        case OPT_CHAIN:
+            break;
 #endif
         case OPT_ID_PREFIX:
             session_id_prefix = opt_arg();
@@ -1381,11 +1390,11 @@ int s_server_main(int argc, char *argv[])
         case OPT_KEY2:
             s_key_file2 = opt_arg();
             break;
-#ifndef OPENSSL_NO_NEXTPROTONEG
         case OPT_NEXTPROTONEG:
+# ifndef OPENSSL_NO_NEXTPROTONEG
             next_proto_neg_in = opt_arg();
-            break;
 #endif
+            break;
         case OPT_ALPN:
             alpn_in = opt_arg();
             break;
