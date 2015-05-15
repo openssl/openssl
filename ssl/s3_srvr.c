@@ -883,7 +883,7 @@ int ssl3_send_hello_request(SSL *s)
 
 int ssl3_get_client_hello(SSL *s)
 {
-    int i, j, ok, al = SSL_AD_INTERNAL_ERROR, ret = -1;
+    int i, complen, j, ok, al = SSL_AD_INTERNAL_ERROR, ret = -1;
     unsigned int cookie_len;
     long n;
     unsigned long id;
@@ -921,13 +921,7 @@ int ssl3_get_client_hello(SSL *s)
     d = p = (unsigned char *)s->init_msg;
 
     /* First lets get s->client_version set correctly */
-    if (!s->read_hash && !s->enc_read_ctx
-            && RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
-        if (n < MIN_SSL2_RECORD_LEN) {
-            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_RECORD_LENGTH_MISMATCH);
-            al = SSL_AD_DECODE_ERROR;
-            goto f_err;
-        }
+    if (RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
         /*-
          * An SSLv3/TLSv1 backwards-compatible CLIENT-HELLO in an SSLv2
          * header is sent directly on the wire, not wrapped as a TLS
@@ -986,11 +980,10 @@ int ssl3_get_client_hello(SSL *s)
     /* Do SSL/TLS version negotiation if applicable */
     if (!SSL_IS_DTLS(s)) {
         if (s->version != TLS_ANY_VERSION) {
-            if (s->client_version >= s->version
-                && (((s->client_version >> 8) & 0xff) == SSL3_VERSION_MAJOR)) {
+            if (s->client_version >= s->version) {
                 protverr = 0;
             }
-        } else if (((s->client_version >> 8) & 0xff) == SSL3_VERSION_MAJOR) {
+        } else if (s->client_version >= SSL3_VERSION) {
             switch(s->client_version) {
             default:
             case TLS1_2_VERSION:
@@ -1018,17 +1011,20 @@ int ssl3_get_client_hello(SSL *s)
                 }
                 /* Deliberately fall through */
             case SSL3_VERSION:
+#ifndef OPENSSL_NO_SSL3
                 if(!(s->options & SSL_OP_NO_SSLv3)) {
                     s->version = SSL3_VERSION;
                     s->method = SSLv3_server_method();
                     protverr = 0;
                     break;
                 }
+#else
+                break;
+#endif
             }
         }
-    } else if (((s->client_version >> 8) & 0xff) == DTLS1_VERSION_MAJOR &&
-                (s->client_version <= s->version
-                || s->method->version == DTLS_ANY_VERSION)) {
+    } else if (s->client_version <= s->version
+                || s->method->version == DTLS_ANY_VERSION) {
         /*
          * For DTLS we just check versions are potentially compatible. Version
          * negotiation comes later.
@@ -1096,8 +1092,8 @@ int ssl3_get_client_hello(SSL *s)
         /* Set p to end of packet to ensure we don't look for extensions */
         p = d + n;
 
-        /* No compression, so set i to 0 */
-        i = 0;
+        /* No compression, so set complen to 0 */
+        complen = 0;
     } else {
         /* If we get here we've got SSLv3+ in an SSLv3+ record */
 
@@ -1341,8 +1337,8 @@ int ssl3_get_client_hello(SSL *s)
         }
 
         /* compression */
-        i = *(p++);
-        if ((p + i) > (d + n)) {
+        complen = *(p++);
+        if ((p + complen) > (d + n)) {
             /* not enough data */
             al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_MISMATCH);
@@ -1351,13 +1347,13 @@ int ssl3_get_client_hello(SSL *s)
 #ifndef OPENSSL_NO_COMP
         q = p;
 #endif
-        for (j = 0; j < i; j++) {
+        for (j = 0; j < complen; j++) {
             if (p[j] == 0)
                 break;
         }
 
-        p += i;
-        if (j >= i) {
+        p += complen;
+        if (j >= complen) {
             /* no compress */
             al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_NO_COMPRESSION_SPECIFIED);
@@ -1426,7 +1422,7 @@ int ssl3_get_client_hello(SSL *s)
 
     /*
      * Worst case, we will use the NULL compression, but if we have other
-     * options, we will now look for them.  We have i-1 compression
+     * options, we will now look for them.  We have complen-1 compression
      * algorithms from the client, starting at q.
      */
     s->s3->tmp.new_compression = NULL;
@@ -1455,11 +1451,11 @@ int ssl3_get_client_hello(SSL *s)
             goto f_err;
         }
         /* Look for resumed method in compression list */
-        for (m = 0; m < i; m++) {
+        for (m = 0; m < complen; m++) {
             if (q[m] == comp_id)
                 break;
         }
-        if (m >= i) {
+        if (m >= complen) {
             al = SSL_AD_ILLEGAL_PARAMETER;
             SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
                    SSL_R_REQUIRED_COMPRESSSION_ALGORITHM_MISSING);
@@ -1475,7 +1471,7 @@ int ssl3_get_client_hello(SSL *s)
         for (m = 0; m < nn; m++) {
             comp = sk_SSL_COMP_value(s->ctx->comp_methods, m);
             v = comp->id;
-            for (o = 0; o < i; o++) {
+            for (o = 0; o < complen; o++) {
                 if (v == q[o]) {
                     done = 1;
                     break;

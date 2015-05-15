@@ -17,7 +17,7 @@ GENERAL=Makefile README ssl-lib.com install.com
 LIB=$(TOP)/libssl.a
 SHARED_LIB= libssl$(SHLIB_EXT)
 LIBSRC=	\
-	s3_meth.c   s3_srvr.c s3_clnt.c  s3_lib.c  s3_enc.c record/rec_layer_s3.c \
+	s3_srvr.c s3_clnt.c  s3_lib.c  s3_enc.c record/rec_layer_s3.c \
 	s3_both.c s3_cbc.c s3_msg.c \
 	t1_meth.c   t1_srvr.c t1_clnt.c  t1_lib.c  t1_enc.c t1_ext.c \
 	d1_meth.c   d1_srvr.c d1_clnt.c  d1_lib.c  record/rec_layer_d1.c d1_msg.c \
@@ -28,7 +28,7 @@ LIBSRC=	\
 	bio_ssl.c ssl_err.c t1_reneg.c tls_srp.c t1_trce.c ssl_utst.c \
 	record/ssl3_buffer.c record/ssl3_record.c record/dtls1_bitmap.c
 LIBOBJ= \
-	s3_meth.o  s3_srvr.o  s3_clnt.o  s3_lib.o  s3_enc.o record/rec_layer_s3.o \
+	s3_srvr.o  s3_clnt.o  s3_lib.o  s3_enc.o record/rec_layer_s3.o \
 	s3_both.o s3_cbc.o s3_msg.o \
 	t1_meth.o   t1_srvr.o t1_clnt.o  t1_lib.o  t1_enc.o t1_ext.o \
 	d1_meth.o   d1_srvr.o d1_clnt.o  d1_lib.o  record/rec_layer_d1.o d1_msg.o \
@@ -406,25 +406,6 @@ s3_lib.o: ../include/openssl/ssl2.h ../include/openssl/ssl3.h
 s3_lib.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 s3_lib.o: ../include/openssl/tls1.h ../include/openssl/x509.h
 s3_lib.o: ../include/openssl/x509_vfy.h record/record.h s3_lib.c ssl_locl.h
-s3_meth.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
-s3_meth.o: ../include/openssl/buffer.h ../include/openssl/comp.h
-s3_meth.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
-s3_meth.o: ../include/openssl/dtls1.h ../include/openssl/e_os2.h
-s3_meth.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-s3_meth.o: ../include/openssl/ecdsa.h ../include/openssl/err.h
-s3_meth.o: ../include/openssl/evp.h ../include/openssl/hmac.h
-s3_meth.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
-s3_meth.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-s3_meth.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-s3_meth.o: ../include/openssl/pem.h ../include/openssl/pem2.h
-s3_meth.o: ../include/openssl/pkcs7.h ../include/openssl/pqueue.h
-s3_meth.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-s3_meth.o: ../include/openssl/sha.h ../include/openssl/srtp.h
-s3_meth.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
-s3_meth.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
-s3_meth.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
-s3_meth.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
-s3_meth.o: record/record.h s3_meth.c ssl_locl.h
 s3_msg.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 s3_msg.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 s3_msg.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
