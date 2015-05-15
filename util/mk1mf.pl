@@ -289,7 +289,6 @@ $cflags.=" -DOPENSSL_NO_DH"   if $no_dh;
 $cflags.=" -DOPENSSL_NO_WHIRLPOOL"   if $no_whirlpool;
 $cflags.=" -DOPENSSL_NO_SOCK" if $no_sock;
 $cflags.=" -DOPENSSL_NO_SSL3" if $no_ssl3;
-$cflags.=" -DOPENSSL_NO_TLSEXT" if $no_tlsext;
 $cflags.=" -DOPENSSL_NO_SRP" if $no_srp;
 $cflags.=" -DOPENSSL_NO_CMS" if $no_cms;
 $cflags.=" -DOPENSSL_NO_ERR"  if $no_err;
@@ -1391,7 +1390,6 @@ sub read_options
 		"gaswin" => \$gaswin,
 		"no-ssl3" => \$no_ssl3,
 		"no-ssl3-method" => 0,
-		"no-tlsext" => \$no_tlsext,
 		"no-srp" => \$no_srp,
 		"no-cms" => \$no_cms,
 		"no-jpake" => \$no_jpake,

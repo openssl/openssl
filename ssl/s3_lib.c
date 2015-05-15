@@ -2908,9 +2908,7 @@ void ssl3_free(SSL *s)
     BIO_free(s->s3->handshake_buffer);
     if (s->s3->handshake_dgst)
         ssl3_free_digest_list(s);
-#ifndef OPENSSL_NO_TLSEXT
     OPENSSL_free(s->s3->alpn_selected);
-#endif
 
 #ifndef OPENSSL_NO_SRP
     SSL_SRP_CTX_free(s);
@@ -2939,12 +2937,8 @@ void ssl3_clear(SSL *s)
 #ifndef OPENSSL_NO_EC
     EC_KEY_free(s->s3->tmp.ecdh);
     s->s3->tmp.ecdh = NULL;
-#endif
-#ifndef OPENSSL_NO_TLSEXT
-# ifndef OPENSSL_NO_EC
     s->s3->is_probably_safari = 0;
-# endif                         /* !OPENSSL_NO_EC */
-#endif                          /* !OPENSSL_NO_TLSEXT */
+#endif                         /* !OPENSSL_NO_EC */
 
     init_extra = s->s3->init_extra;
     BIO_free(s->s3->handshake_buffer);
@@ -2952,12 +2946,12 @@ void ssl3_clear(SSL *s)
     if (s->s3->handshake_dgst) {
         ssl3_free_digest_list(s);
     }
-#if !defined(OPENSSL_NO_TLSEXT)
+
     if (s->s3->alpn_selected) {
         free(s->s3->alpn_selected);
         s->s3->alpn_selected = NULL;
     }
-#endif
+
     memset(s->s3, 0, sizeof(*s->s3));
     s->s3->init_extra = init_extra;
 
@@ -2969,7 +2963,7 @@ void ssl3_clear(SSL *s)
     s->s3->in_read_app_data = 0;
     s->version = SSL3_VERSION;
 
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
+#if !defined(OPENSSL_NO_NEXTPROTONEG)
     OPENSSL_free(s->next_proto_negotiated);
     s->next_proto_negotiated = NULL;
     s->next_proto_negotiated_len = 0;
@@ -3109,7 +3103,6 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             return (ret);
         }
 #endif                          /* !OPENSSL_NO_EC */
-#ifndef OPENSSL_NO_TLSEXT
     case SSL_CTRL_SET_TLSEXT_HOSTNAME:
         if (larg == TLSEXT_NAMETYPE_host_name) {
             OPENSSL_free(s->tlsext_hostname);
@@ -3172,7 +3165,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         ret = 1;
         break;
 
-# ifndef OPENSSL_NO_HEARTBEATS
+#ifndef OPENSSL_NO_HEARTBEATS
     case SSL_CTRL_TLS_EXT_SEND_HEARTBEAT:
         if (SSL_IS_DTLS(s))
             ret = dtls1_heartbeat(s);
@@ -3191,9 +3184,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             s->tlsext_heartbeat &= ~SSL_TLSEXT_HB_DONT_RECV_REQUESTS;
         ret = 1;
         break;
-# endif
-
-#endif                          /* !OPENSSL_NO_TLSEXT */
+#endif
 
     case SSL_CTRL_CHAIN:
         if (larg)
@@ -3443,12 +3434,11 @@ long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
         }
         break;
 #endif
-#ifndef OPENSSL_NO_TLSEXT
     case SSL_CTRL_SET_TLSEXT_DEBUG_CB:
         s->tlsext_debug_cb = (void (*)(SSL *, int, int,
                                        unsigned char *, int, void *))fp;
         break;
-#endif
+
     case SSL_CTRL_SET_NOT_RESUMABLE_SESS_CB:
         {
             s->not_resumable_session_cb = (int (*)(SSL *, int))fp;
@@ -3578,7 +3568,6 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
             return (0);
         }
 #endif                          /* !OPENSSL_NO_EC */
-#ifndef OPENSSL_NO_TLSEXT
     case SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG:
         ctx->tlsext_servername_arg = parg;
         break;
@@ -3608,7 +3597,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         ctx->tlsext_status_arg = parg;
         return 1;
 
-# ifndef OPENSSL_NO_SRP
+#ifndef OPENSSL_NO_SRP
     case SSL_CTRL_SET_TLS_EXT_SRP_USERNAME:
         ctx->srp_ctx.srp_Mask |= SSL_kSRP;
         OPENSSL_free(ctx->srp_ctx.login);
@@ -3638,9 +3627,9 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
     case SSL_CTRL_SET_TLS_EXT_SRP_STRENGTH:
         ctx->srp_ctx.strength = larg;
         break;
-# endif
+#endif
 
-# ifndef OPENSSL_NO_EC
+#ifndef OPENSSL_NO_EC
     case SSL_CTRL_SET_CURVES:
         return tls1_set_curves(&ctx->tlsext_ellipticcurvelist,
                                &ctx->tlsext_ellipticcurvelist_length,
@@ -3650,12 +3639,10 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         return tls1_set_curves_list(&ctx->tlsext_ellipticcurvelist,
                                     &ctx->tlsext_ellipticcurvelist_length,
                                     parg);
-#  ifndef OPENSSL_NO_EC
     case SSL_CTRL_SET_ECDH_AUTO:
         ctx->cert->ecdh_tmp_auto = larg;
         return 1;
-#  endif
-# endif
+#endif
     case SSL_CTRL_SET_SIGALGS:
         return tls1_set_sigalgs(ctx->cert, parg, larg, 0);
 
@@ -3679,8 +3666,6 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 
     case SSL_CTRL_SET_CHAIN_CERT_STORE:
         return ssl_cert_set_cert_store(ctx->cert, parg, 1, larg);
-
-#endif                          /* !OPENSSL_NO_TLSEXT */
 
         /* A Thawte special :-) */
     case SSL_CTRL_EXTRA_CHAIN_CERT:
@@ -3759,7 +3744,6 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
         }
         break;
 #endif
-#ifndef OPENSSL_NO_TLSEXT
     case SSL_CTRL_SET_TLSEXT_SERVERNAME_CB:
         ctx->tlsext_servername_callback = (int (*)(SSL *, int *, void *))fp;
         break;
@@ -3775,7 +3759,7 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
                                              HMAC_CTX *, int))fp;
         break;
 
-# ifndef OPENSSL_NO_SRP
+#ifndef OPENSSL_NO_SRP
     case SSL_CTRL_SET_SRP_VERIFY_PARAM_CB:
         ctx->srp_ctx.srp_Mask |= SSL_kSRP;
         ctx->srp_ctx.SRP_verify_param_callback = (int (*)(SSL *, void *))fp;
@@ -3790,7 +3774,6 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
         ctx->srp_ctx.SRP_give_srp_client_pwd_callback =
             (char *(*)(SSL *, void *))fp;
         break;
-# endif
 #endif
     case SSL_CTRL_SET_NOT_RESUMABLE_SESS_CB:
         {
@@ -3927,7 +3910,6 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 #endif
         }
 
-#ifndef OPENSSL_NO_TLSEXT
 # ifndef OPENSSL_NO_EC
         /*
          * if we are considering an ECC cipher suite that uses an ephemeral
@@ -3936,7 +3918,6 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
         if (alg_k & SSL_kECDHE)
             ok = ok && tls1_check_ec_tmp_key(s, c->id);
 # endif                         /* OPENSSL_NO_EC */
-#endif                          /* OPENSSL_NO_TLSEXT */
 
         if (!ok)
             continue;
@@ -3946,7 +3927,7 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
             if (!ssl_security(s, SSL_SECOP_CIPHER_SHARED,
                               c->strength_bits, 0, c))
                 continue;
-#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_TLSEXT)
+#if !defined(OPENSSL_NO_EC)
             if ((alg_k & SSL_kECDHE) && (alg_a & SSL_aECDSA)
                 && s->s3->is_probably_safari) {
                 if (!ret)

@@ -198,9 +198,7 @@ static int c_ign_eof = 0;
 static int c_brief = 0;
 
 static void print_stuff(BIO *berr, SSL *con, int full);
-#ifndef OPENSSL_NO_TLSEXT
 static int ocsp_resp_cb(SSL *s, void *arg);
-#endif
 
 #ifndef OPENSSL_NO_PSK
 /* Default PSK identity and key */
@@ -269,8 +267,6 @@ static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
 }
 #endif
 
-#ifndef OPENSSL_NO_TLSEXT
-
 /* This is a context that we pass to callbacks */
 typedef struct tlsextctx_st {
     BIO *biodebug;
@@ -289,7 +285,7 @@ static int ssl_servername_cb(SSL *s, int *ad, void *arg)
     return SSL_TLSEXT_ERR_OK;
 }
 
-# ifndef OPENSSL_NO_SRP
+#ifndef OPENSSL_NO_SRP
 
 /* This is a context that we pass to all callbacks */
 typedef struct srp_arg_st {
@@ -301,7 +297,7 @@ typedef struct srp_arg_st {
     int strength /* minimal size for N */ ;
 } SRP_ARG;
 
-#  define SRP_NUMBER_ITERATIONS_FOR_PRIME 64
+# define SRP_NUMBER_ITERATIONS_FOR_PRIME 64
 
 static int srp_Verify_N_and_g(const BIGNUM *N, const BIGNUM *g)
 {
@@ -377,7 +373,7 @@ static int ssl_srp_verify_param_cb(SSL *s, void *arg)
     return 0;
 }
 
-#  define PWD_STRLEN 1024
+# define PWD_STRLEN 1024
 
 static char *ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
 {
@@ -398,11 +394,11 @@ static char *ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
     return pass;
 }
 
-# endif
+#endif
 
 char *srtp_profiles = NULL;
 
-# ifndef OPENSSL_NO_NEXTPROTONEG
+#ifndef OPENSSL_NO_NEXTPROTONEG
 /* This the context that we pass to next_proto_cb */
 typedef struct tlsextnextprotoctx_st {
     unsigned char *data;
@@ -435,7 +431,7 @@ static int next_proto_cb(SSL *s, unsigned char **out, unsigned char *outlen,
         SSL_select_next_proto(out, outlen, in, inlen, ctx->data, ctx->len);
     return SSL_TLSEXT_ERR_OK;
 }
-# endif                         /* ndef OPENSSL_NO_NEXTPROTONEG */
+#endif                         /* ndef OPENSSL_NO_NEXTPROTONEG */
 
 static int serverinfo_cli_parse_cb(SSL *s, unsigned int ext_type,
                                    const unsigned char *in, size_t inlen,
@@ -456,8 +452,6 @@ static int serverinfo_cli_parse_cb(SSL *s, unsigned int ext_type,
     PEM_write_bio(bio_c_out, pem_name, "", ext_buf, 4 + inlen);
     return 1;
 }
-
-#endif
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -563,7 +557,6 @@ OPTIONS s_client_options[] = {
     {"srp_strength", OPT_SRP_STRENGTH, 'p', "Minimal mength in bits for N"},
 #endif
     {"name", OPT_SMTPHOST, 's', "Hostname to use for \"-starttls smtp\""},
-#ifndef OPENSSL_NO_TLSEXT
     {"servername", OPT_SERVERNAME, 's',
      "Set TLS extension servername in ClientHello"},
     {"tlsextdebug", OPT_TLSEXTDEBUG, '-',
@@ -573,10 +566,9 @@ OPTIONS s_client_options[] = {
      "types  Send empty ClientHello extensions (comma-separated numbers)"},
     {"alpn", OPT_ALPN, 's',
      "Enable ALPN extension, considering named protocols supported (comma-separated list)"},
-# ifndef OPENSSL_NO_NEXTPROTONEG
+#ifndef OPENSSL_NO_NEXTPROTONEG
     {"nextprotoneg", OPT_NEXTPROTONEG, 's',
      "Enable NPN extension, considering named protocols supported (comma-separated list)"},
-# endif
 #endif
     {"CRL", OPT_CRL, '<'},
     {"crl_download", OPT_CRL_DOWNLOAD, '-'},
@@ -673,16 +665,14 @@ int s_client_main(int argc, char **argv)
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE)
     struct timeval tv;
 #endif
-#ifndef OPENSSL_NO_TLSEXT
     char *servername = NULL;
     const char *alpn_in = NULL;
     tlsextctx tlsextcbp = { NULL, 0 };
-# define MAX_SI_TYPES 100
+#define MAX_SI_TYPES 100
     unsigned short serverinfo_types[MAX_SI_TYPES];
     int serverinfo_count = 0, start = 0, len;
-# ifndef OPENSSL_NO_NEXTPROTONEG
+#ifndef OPENSSL_NO_NEXTPROTONEG
     const char *next_proto_neg_in = NULL;
-# endif
 #endif
 #ifndef OPENSSL_NO_SRP
     char *srppass = NULL;
@@ -870,14 +860,12 @@ int s_client_main(int argc, char **argv)
         case OPT_DEBUG:
             c_debug = 1;
             break;
-#ifndef OPENSSL_NO_TLSEXT
         case OPT_TLSEXTDEBUG:
             c_tlsextdebug = 1;
             break;
         case OPT_STATUS:
             c_status_req = 1;
             break;
-#endif
 #ifdef WATT32
         case OPT_WDEBUG:
             dbug_init();
@@ -1027,7 +1015,6 @@ int s_client_main(int argc, char **argv)
         case OPT_VERIFYCAFILE:
             vfyCAfile = opt_arg();
             break;
-#ifndef OPENSSL_NO_TLSEXT
         case OPT_NEXTPROTONEG:
             next_proto_neg_in = opt_arg();
             break;
@@ -1046,16 +1033,13 @@ int s_client_main(int argc, char **argv)
                 }
             }
             break;
-#endif
         case OPT_STARTTLS:
             if (!opt_pair(opt_arg(), services, &starttls_proto))
                 goto end;
-#ifndef OPENSSL_NO_TLSEXT
         case OPT_SERVERNAME:
             servername = opt_arg();
             /* meth=TLSv1_client_method(); */
             break;
-#endif
 #ifndef OPENSSL_NO_JPAKE
         case OPT_JPAKE:
             jpake_secret = opt_arg();
@@ -1101,7 +1085,7 @@ int s_client_main(int argc, char **argv)
     }
 #endif
 
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
+#if !defined(OPENSSL_NO_NEXTPROTONEG)
     next_proto.status = -1;
     if (next_proto_neg_in) {
         next_proto.data =
@@ -1250,11 +1234,10 @@ int s_client_main(int argc, char **argv)
     if (exc)
         ssl_ctx_set_excert(ctx, exc);
 
-#if !defined(OPENSSL_NO_TLSEXT)
-# if !defined(OPENSSL_NO_NEXTPROTONEG)
+#if !defined(OPENSSL_NO_NEXTPROTONEG)
     if (next_proto.data)
         SSL_CTX_set_next_proto_select_cb(ctx, next_proto_cb, &next_proto);
-# endif
+#endif
     if (alpn_in) {
         unsigned short alpn_len;
         unsigned char *alpn = next_protos_parse(&alpn_len, alpn_in);
@@ -1270,8 +1253,7 @@ int s_client_main(int argc, char **argv)
         }
         OPENSSL_free(alpn);
     }
-#endif
-#ifndef OPENSSL_NO_TLSEXT
+
     for (i = 0; i < serverinfo_count; i++) {
         if (!SSL_CTX_add_client_custom_ext(ctx,
                                            serverinfo_types[i],
@@ -1282,7 +1264,6 @@ int s_client_main(int argc, char **argv)
                     serverinfo_types[i]);
         }
     }
-#endif
 
     if (state)
         SSL_CTX_set_info_callback(ctx, apps_ssl_info_callback);
@@ -1299,7 +1280,6 @@ int s_client_main(int argc, char **argv)
     if (!set_cert_key_stuff(ctx, cert, key, chain, build_chain))
         goto end;
 
-#ifndef OPENSSL_NO_TLSEXT
     if (servername != NULL) {
         tlsextcbp.biodebug = bio_err;
         SSL_CTX_set_tlsext_servername_callback(ctx, ssl_servername_cb);
@@ -1321,7 +1301,6 @@ int s_client_main(int argc, char **argv)
                                                   ssl_srp_verify_param_cb);
     }
 # endif
-#endif
 
     con = SSL_new(ctx);
     if (sess_in) {
@@ -1350,7 +1329,6 @@ int s_client_main(int argc, char **argv)
     if (fallback_scsv)
         SSL_set_mode(con, SSL_MODE_SEND_FALLBACK_SCSV);
 
-#ifndef OPENSSL_NO_TLSEXT
     if (servername != NULL) {
         if (!SSL_set_tlsext_host_name(con, servername)) {
             BIO_printf(bio_err, "Unable to set TLS servername extension.\n");
@@ -1358,7 +1336,6 @@ int s_client_main(int argc, char **argv)
             goto end;
         }
     }
-#endif
 
  re_start:
 #ifdef NO_SYS_UN_H
@@ -1449,7 +1426,7 @@ int s_client_main(int argc, char **argv)
             SSL_set_msg_callback(con, msg_cb);
         SSL_set_msg_callback_arg(con, bio_c_msg ? bio_c_msg : bio_c_out);
     }
-#ifndef OPENSSL_NO_TLSEXT
+
     if (c_tlsextdebug) {
         SSL_set_tlsext_debug_callback(con, tlsext_cb);
         SSL_set_tlsext_debug_arg(con, bio_c_out);
@@ -1459,7 +1436,6 @@ int s_client_main(int argc, char **argv)
         SSL_CTX_set_tlsext_status_cb(ctx, ocsp_resp_cb);
         SSL_CTX_set_tlsext_status_arg(ctx, bio_c_out);
     }
-#endif
 #ifndef OPENSSL_NO_JPAKE
     if (jpake_secret)
         jpake_client_auth(bio_c_out, sbio, jpake_secret);
@@ -1680,13 +1656,13 @@ int s_client_main(int argc, char **argv)
             tty_on = 1;
             if (in_init) {
                 in_init = 0;
-#ifndef OPENSSL_NO_TLSEXT
+
                 if (servername != NULL && !SSL_session_reused(con)) {
                     BIO_printf(bio_c_out,
                                "Server did %sacknowledge servername extension.\n",
                                tlsextcbp.ack ? "" : "not ");
                 }
-#endif
+
                 if (sess_out) {
                     BIO *stmp = BIO_new_file(sess_out, "w");
                     if (stmp) {
@@ -2028,7 +2004,7 @@ int s_client_main(int argc, char **argv)
             print_stuff(bio_c_out, con, 1);
         SSL_free(con);
     }
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
+#if !defined(OPENSSL_NO_NEXTPROTONEG)
     OPENSSL_free(next_proto.data);
 #endif
     SSL_CTX_free(ctx);
@@ -2155,8 +2131,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     }
 #endif
 
-#if !defined(OPENSSL_NO_TLSEXT)
-# if !defined(OPENSSL_NO_NEXTPROTONEG)
+#if !defined(OPENSSL_NO_NEXTPROTONEG)
     if (next_proto.status != -1) {
         const unsigned char *proto;
         unsigned int proto_len;
@@ -2165,7 +2140,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
         BIO_write(bio, proto, proto_len);
         BIO_write(bio, "\n", 1);
     }
-# endif
+#endif
     {
         const unsigned char *proto;
         unsigned int proto_len;
@@ -2177,7 +2152,6 @@ static void print_stuff(BIO *bio, SSL *s, int full)
         } else
             BIO_printf(bio, "No ALPN negotiated\n");
     }
-#endif
 
 #ifndef OPENSSL_NO_SRTP
     {
@@ -2216,8 +2190,6 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     (void)BIO_flush(bio);
 }
 
-#ifndef OPENSSL_NO_TLSEXT
-
 static int ocsp_resp_cb(SSL *s, void *arg)
 {
     const unsigned char *p;
@@ -2241,5 +2213,3 @@ static int ocsp_resp_cb(SSL *s, void *arg)
     OCSP_RESPONSE_free(rsp);
     return 1;
 }
-
-#endif

@@ -514,9 +514,7 @@ void jpake_client_auth(BIO *out, BIO *conn, const char *secret);
 void jpake_server_auth(BIO *out, BIO *conn, const char *secret);
 # endif
 
-# ifndef OPENSSL_NO_TLSEXT
 unsigned char *next_protos_parse(unsigned short *outlen, const char *in);
-# endif                         /* ndef OPENSSL_NO_TLSEXT */
 
 void print_cert_checks(BIO *bio, X509 *x,
                        const char *checkhost,

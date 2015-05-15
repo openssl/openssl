@@ -387,19 +387,15 @@ int ssl3_accept(SSL *s)
             ret = ssl3_send_server_hello(s);
             if (ret <= 0)
                 goto end;
-#ifndef OPENSSL_NO_TLSEXT
+
             if (s->hit) {
                 if (s->tlsext_ticket_expected)
                     s->state = SSL3_ST_SW_SESSION_TICKET_A;
                 else
                     s->state = SSL3_ST_SW_CHANGE_A;
-            }
-#else
-            if (s->hit)
-                s->state = SSL3_ST_SW_CHANGE_A;
-#endif
-            else
+            } else {
                 s->state = SSL3_ST_SW_CERT_A;
+            }
             s->init_num = 0;
             break;
 
@@ -414,7 +410,7 @@ int ssl3_accept(SSL *s)
                 ret = ssl3_send_server_certificate(s);
                 if (ret <= 0)
                     goto end;
-#ifndef OPENSSL_NO_TLSEXT
+
                 if (s->tlsext_status_expected)
                     s->state = SSL3_ST_SW_CERT_STATUS_A;
                 else
@@ -423,12 +419,6 @@ int ssl3_accept(SSL *s)
                 skip = 1;
                 s->state = SSL3_ST_SW_KEY_EXCH_A;
             }
-#else
-            } else
-                skip = 1;
-
-            s->state = SSL3_ST_SW_KEY_EXCH_A;
-#endif
             s->init_num = 0;
             break;
 
@@ -587,7 +577,7 @@ int ssl3_accept(SSL *s)
                  * not sent. Also for GOST ciphersuites when the client uses
                  * its key from the certificate for key exchange.
                  */
-#if defined(OPENSSL_NO_TLSEXT) || defined(OPENSSL_NO_NEXTPROTONEG)
+#if defined(OPENSSL_NO_NEXTPROTONEG)
                 s->state = SSL3_ST_SR_FINISHED_A;
 #else
                 if (s->s3->next_proto_neg_seen)
@@ -666,7 +656,7 @@ int ssl3_accept(SSL *s)
             if (ret <= 0)
                 goto end;
 
-#if defined(OPENSSL_NO_TLSEXT) || defined(OPENSSL_NO_NEXTPROTONEG)
+#if defined(OPENSSL_NO_NEXTPROTONEG)
             s->state = SSL3_ST_SR_FINISHED_A;
 #else
             if (s->s3->next_proto_neg_seen)
@@ -677,7 +667,7 @@ int ssl3_accept(SSL *s)
             s->init_num = 0;
             break;
 
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
+#if !defined(OPENSSL_NO_NEXTPROTONEG)
         case SSL3_ST_SR_NEXT_PROTO_A:
         case SSL3_ST_SR_NEXT_PROTO_B:
             /*
@@ -718,16 +708,13 @@ int ssl3_accept(SSL *s)
                 goto end;
             if (s->hit)
                 s->state = SSL_ST_OK;
-#ifndef OPENSSL_NO_TLSEXT
             else if (s->tlsext_ticket_expected)
                 s->state = SSL3_ST_SW_SESSION_TICKET_A;
-#endif
             else
                 s->state = SSL3_ST_SW_CHANGE_A;
             s->init_num = 0;
             break;
 
-#ifndef OPENSSL_NO_TLSEXT
         case SSL3_ST_SW_SESSION_TICKET_A:
         case SSL3_ST_SW_SESSION_TICKET_B:
             ret = ssl3_send_newsession_ticket(s);
@@ -745,8 +732,6 @@ int ssl3_accept(SSL *s)
             s->state = SSL3_ST_SW_KEY_EXCH_A;
             s->init_num = 0;
             break;
-
-#endif
 
         case SSL3_ST_SW_CHANGE_A:
         case SSL3_ST_SW_CHANGE_B:
@@ -790,7 +775,7 @@ int ssl3_accept(SSL *s)
                 goto end;
             s->state = SSL3_ST_SW_FLUSH;
             if (s->hit) {
-#if defined(OPENSSL_NO_TLSEXT) || defined(OPENSSL_NO_NEXTPROTONEG)
+#if defined(OPENSSL_NO_NEXTPROTONEG)
                 s->s3->tmp.next_state = SSL3_ST_SR_FINISHED_A;
 #else
                 if (s->s3->next_proto_neg_seen) {
@@ -1361,7 +1346,6 @@ int ssl3_get_client_hello(SSL *s)
         }
     }
 
-#ifndef OPENSSL_NO_TLSEXT
     /* TLS extensions */
     if (s->version >= SSL3_VERSION) {
         if (!ssl_parse_clienthello_tlsext(s, &p, d, n)) {
@@ -1418,7 +1402,6 @@ int ssl3_get_client_hello(SSL *s)
             s->cipher_list_by_id = sk_SSL_CIPHER_dup(s->session->ciphers);
         }
     }
-#endif
 
     /*
      * Worst case, we will use the NULL compression, but if we have other
@@ -1602,13 +1585,13 @@ int ssl3_send_server_hello(SSL *s)
 
     if (s->state == SSL3_ST_SW_SRVR_HELLO_A) {
         buf = (unsigned char *)s->init_buf->data;
-#ifdef OPENSSL_NO_TLSEXT
+
         p = s->s3->server_random;
         if (ssl_fill_hello_random(s, 1, p, SSL3_RANDOM_SIZE) <= 0) {
             s->state = SSL_ST_ERR;
             return -1;
         }
-#endif
+
         /* Do the message type and length last */
         d = p = ssl_handshake_start(s);
 
@@ -1663,7 +1646,7 @@ int ssl3_send_server_hello(SSL *s)
         else
             *(p++) = s->s3->tmp.new_compression->id;
 #endif
-#ifndef OPENSSL_NO_TLSEXT
+
         if (ssl_prepare_serverhello_tlsext(s) <= 0) {
             SSLerr(SSL_F_SSL3_SEND_SERVER_HELLO, SSL_R_SERVERHELLO_TLSEXT);
             s->state = SSL_ST_ERR;
@@ -1677,7 +1660,7 @@ int ssl3_send_server_hello(SSL *s)
             s->state = SSL_ST_ERR;
             return -1;
         }
-#endif
+
         /* do the header */
         l = (p - d);
         if (!ssl_set_handshake_header(s, SSL3_MT_SERVER_HELLO, l)) {
@@ -3266,7 +3249,6 @@ int ssl3_send_server_certificate(SSL *s)
     return ssl_do_write(s);
 }
 
-#ifndef OPENSSL_NO_TLSEXT
 /* send a new session ticket (not necessarily for a new session) */
 int ssl3_send_newsession_ticket(SSL *s)
 {
@@ -3454,7 +3436,7 @@ int ssl3_send_cert_status(SSL *s)
     return (ssl3_do_write(s, SSL3_RT_HANDSHAKE));
 }
 
-# ifndef OPENSSL_NO_NEXTPROTONEG
+#ifndef OPENSSL_NO_NEXTPROTONEG
 /*
  * ssl3_get_next_proto reads a Next Protocol Negotiation handshake message.
  * It sets the next_proto member in s if found
@@ -3533,8 +3515,6 @@ int ssl3_get_next_proto(SSL *s)
 
     return 1;
 }
-# endif
-
 #endif
 
 #define SSLV2_CIPHER_LEN    3
