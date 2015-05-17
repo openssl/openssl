@@ -717,3 +717,11 @@
 -T tls12_lookup
 -T OPTIONS
 -T OPT_PAIR
+-T uint64_t
+-T int64_t
+-T uint32_t
+-T int32_t
+-T uint16_t
+-T int16_t
+-T uint8_t
+-T int8_t
