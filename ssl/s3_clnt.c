@@ -1722,6 +1722,38 @@ int ssl3_get_new_session_ticket(SSL *s)
     }
 
     p = d = (unsigned char *)s->init_msg;
+
+    if (s->session->session_id_length > 0) {
+        int i = s->session_ctx->session_cache_mode;
+        SSL_SESSION *new_sess;
+        /*
+         * We reused an existing session, so we need to replace it with a new
+         * one
+         */
+        if (i & SSL_SESS_CACHE_CLIENT) {
+            /*
+             * Remove the old session from the cache
+             */
+            if (i & SSL_SESS_CACHE_NO_INTERNAL_STORE) {
+                if (s->session_ctx->remove_session_cb != NULL)
+                    s->session_ctx->remove_session_cb(s->session_ctx,
+                                                      s->session);
+            } else {
+                /* We carry on if this fails */
+                SSL_CTX_remove_session(s->session_ctx, s->session);
+            }
+        }
+
+        if ((new_sess = ssl_session_dup(s->session, 0)) == 0) {
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_SSL3_GET_NEW_SESSION_TICKET, ERR_R_MALLOC_FAILURE);
+            goto f_err;
+        }
+
+        SSL_SESSION_free(s->session);
+        s->session = new_sess;
+    }
+
     n2l(p, s->session->tlsext_tick_lifetime_hint);
     n2s(p, ticklen);
     /* ticket_lifetime_hint + ticket_length + ticket */

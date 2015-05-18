@@ -135,6 +135,78 @@ SSL_SESSION *SSL_SESSION_new(void)
     return (ss);
 }
 
+/*
+ * Create a new SSL_SESSION and duplicate the contents of |src| into it. If
+ * ticket == 0 then no ticket information is duplicated, otherwise it is.
+ */
+SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
+{
+    SSL_SESSION *dest;
+
+    dest = OPENSSL_malloc(sizeof(*src));
+    if (dest == NULL) {
+        goto err;
+    }
+    memcpy(dest, src, sizeof(*dest));
+
+#ifndef OPENSSL_NO_KRB5
+    dest->krb5_client_princ_len = dest->krb5_client_princ_len;
+    if (src->krb5_client_princ_len > 0)
+        memcpy(dest->krb5_client_princ, src->krb5_client_princ,
+               src->krb5_client_princ_len);
+#endif
+
+    if (src->sess_cert != NULL)
+        CRYPTO_add(&src->sess_cert->references, 1, CRYPTO_LOCK_SSL_SESS_CERT);
+
+    if (src->peer != NULL)
+        CRYPTO_add(&src->peer->references, 1, CRYPTO_LOCK_X509);
+
+    dest->references = 1;
+
+    if(src->ciphers != NULL) {
+        dest->ciphers = sk_SSL_CIPHER_dup(src->ciphers);
+        if (dest->ciphers == NULL)
+            goto err;
+    } else {
+        dest->ciphers = NULL;
+    }
+
+    if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_SSL_SESSION,
+                                            &dest->ex_data, &src->ex_data)) {
+        goto err;
+    }
+
+    /* We deliberately don't copy the prev and next pointers */
+    dest->prev = NULL;
+    dest->next = NULL;
+
+#ifndef OPENSSL_NO_TLSEXT
+    if (src->tlsext_hostname) {
+        dest->tlsext_hostname = BUF_strdup(src->tlsext_hostname);
+        if (dest->tlsext_hostname == NULL) {
+            goto err;
+        }
+    } else {
+        dest->tlsext_hostname = NULL;
+    }
+#endif
+
+    if (ticket != 0) {
+        dest->tlsext_tick_lifetime_hint = src->tlsext_tick_lifetime_hint;
+        dest->tlsext_ticklen = src->tlsext_ticklen;
+        if((dest->tlsext_tick = OPENSSL_malloc(src->tlsext_ticklen)) == NULL) {
+            goto err;
+        }
+    }
+
+    return dest;
+err:
+    SSLerr(SSL_F_SSL_SESSION_DUP, ERR_R_MALLOC_FAILURE);
+    SSL_SESSION_free(dest);
+    return NULL;
+}
+
 const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *s,
                                         unsigned int *len)
 {
