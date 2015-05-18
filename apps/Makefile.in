@@ -137,4 +137,9 @@ progs.h: progs.pl Makefile
 	$(PERL) progs.pl $(COMMANDS) >progs.h
 	$(RM) openssl.o
 
+CA.pl: CA.pl.in
+	$(PERL) -I$(TOP) -Mconfigdata $(TOP)/util/dofile.pl < CA.pl.in > CA.pl.new
+	mv CA.pl.new CA.pl
+
+
 # DO NOT DELETE THIS LINE -- make depend depends on it.
