@@ -172,13 +172,6 @@ foreach (sort glob($pattern) ) {
     &read_config($_);
 }
 
-my @MK1MF_Builds=qw(VC-WIN64I VC-WIN64A
-		    debug-VC-WIN64I debug-VC-WIN64A
-		    VC-NT VC-CE VC-WIN32 debug-VC-WIN32
-		    BC-32
-		    netware-clib netware-clib-bsdsock
-		    netware-libc netware-libc-bsdsock);
-
 my $prefix="";
 my $libdir="";
 my $openssldir="";
@@ -763,8 +756,6 @@ my %target = ( %{$table{$base_target}}, resolve_config($target) );
 
 &usage if (!%target || $target{template});
 
-my $IsMK1MF=scalar grep /^$target$/,@MK1MF_Builds;
-
 $exe_ext=".exe" if ($target eq "Cygwin" || $target eq "DJGPP" || $target =~ /^mingw/);
 $exe_ext=".nlm" if ($target =~ /netware/);
 $exe_ext=".pm"  if ($target =~ /vos/);
@@ -781,8 +772,6 @@ $openssldir = "ssl" if !$openssldir;
 $openssldir = catdir($prefix, $openssldir)
     unless file_name_is_absolute($openssldir);
 
-
-print "IsMK1MF=$IsMK1MF\n";
 
 # Allow environment CC to override compiler...
 my $cc = $ENV{CC} || $target{cc};
@@ -828,6 +817,9 @@ my $ranlib = $ENV{'RANLIB'} || $target{ranlib};
 my $ar = $ENV{'AR'} || "ar";
 my $arflags = $target{arflags};
 my $multilib = $target{multilib};
+my @build_scheme =
+    ref($target{build_scheme}) eq "ARRAY"
+    ? @{$target{build_scheme}} : ( $target{build_scheme} );
 
 # if $prefix/lib$multilib is not an existing directory, then
 # assume that it's not searched by linker automatically, in
@@ -976,7 +968,7 @@ if (!$no_shared)
 		}
 	}
 
-if (!$IsMK1MF)
+if ($build_scheme[0] ne "mk1mf")
 	{
 	# add {no-}static-engine to options to allow mkdef.pl to work without extra arguments
 	if ($no_shared)
@@ -1301,6 +1293,7 @@ close(OUT);
 rename($Makefile,"$Makefile.orig") || die "unable to rename $Makefile\n" if -e $Makefile;
 rename("$Makefile.new",$Makefile) || die "unable to rename $Makefile.new\n";
 
+print "IsMK1MF       =", ($build_scheme[0] eq "mk1mf" ? "yes" : "no"), "\n";
 print "CC            =$cc\n";
 print "CFLAG         =$cflags\n";
 print "EX_LIBS       =$lflags\n";
@@ -1546,17 +1539,25 @@ find(sub {
                 $File::Find::dir;
     }, ".");
 
-{
-    my $perlguess = $perl =~ m@^/@ ? $perl : '/usr/local/bin/perl';
-
-    &dofile("tools/c_rehash",$perlguess,
-	    '^#!/'		=> '#!%s',
-	    '^my \$dir;$'	=> 'my $dir = "' . $openssldir . '";',
-	    '^my \$prefix;$'	=> 'my $prefix = "' . $prefix . '";');
-    &dofile("apps/CA.pl",$perl,
-	    '^#!/'		=> '#!%s');
-}
-if($IsMK1MF) {
+my %builders = (
+    unixmake => sub {
+	my $perlguess = $perl =~ m@^/@ ? $perl : '/usr/local/bin/perl';
+	my $make_command = "$make PERL=\'$perlguess\'";
+	my $make_targets = "";
+	$make_targets .= " depend" if $depflags ne $default_depflags && $make_depend;
+	(system $make_command.$make_targets) == 0 or die "make $make_targets failed"
+	    if $make_targets ne "";
+	&dofile("tools/c_rehash",$perlguess,
+		'^#!/'		 => '#!%s',
+		'^my \$dir;$'	 => 'my $dir = "' . $openssldir . '";',
+		'^my \$prefix;$' => 'my $prefix = "' . $prefix . '";');
+	&dofile("apps/CA.pl",$perlguess,
+		'^#!/'		 => '#!%s');
+	if ($depflags ne $default_depflags && !$make_depend) {
+            $warn_make_depend++;
+        }
+    },
+    mk1mf => sub {
 	open (OUT,">crypto/buildinf.h") || die "Can't open buildinf.h";
 	printf OUT <<"EOF";
 #ifndef MK1MF_BUILD
@@ -1568,28 +1569,18 @@ if($IsMK1MF) {
 #endif
 EOF
 	close(OUT);
-} else {
-	my $make_command = "$make PERL=\'$perl\'";
-	my $make_targets = "";
-	$make_targets .= " depend" if $depflags ne $default_depflags && $make_depend;
-	(system $make_command.$make_targets) == 0 or die "make $make_targets failed"
-		if $make_targets ne "";
-	if ($depflags ne $default_depflags && !$make_depend) {
-            $warn_make_depend++;
-        }
-}
 
-# create the ms/version32.rc file if needed
-if ($IsMK1MF && ($target !~ /^netware/)) {
-	my ($v1, $v2, $v3, $v4);
-	if ($version_num =~ /^0x([0-9a-f]{1})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{1})L$/i) {
+	# create the ms/version32.rc file if needed
+	if (! grep /^netware/, @build_scheme) {
+	    my ($v1, $v2, $v3, $v4);
+	    if ($version_num =~ /^0x([0-9a-f]{1})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{1})L$/i) {
 		$v1=hex $1;
 		$v2=hex $2;
 		$v3=hex $3;
 		$v4=hex $4;
-	}
-	open (OUT,">ms/version32.rc") || die "Can't open ms/version32.rc";
-	print OUT <<"EOF";
+	    }
+	    open (OUT,">ms/version32.rc") || die "Can't open ms/version32.rc";
+	    print OUT <<"EOF";
 #include <winver.h>
 
 LANGUAGE 0x09,0x01
@@ -1638,8 +1629,13 @@ BEGIN
     END
 END
 EOF
-	close(OUT);
-  }
+	    close(OUT);
+	}
+    },
+    );
+
+my ($builder, @builder_opts) = @build_scheme;
+$builders{$builder}->(@builder_opts);
 
 print <<"EOF";
 
@@ -1688,6 +1684,43 @@ sub asm {
     sub {
 	$no_asm ? () : @x;
     }
+}
+
+# Helper function to implement adding values to already existing configuration
+# values.  It handles elements that are ARRAYs, CODEs and scalars
+sub _add {
+    my $separator = shift;
+
+    # If there's any ARRAY in the collection of values, we will return
+    # an ARRAY of combined values, otherwise a string of joined values
+    # with $separator as the separator.
+    my $found_array = 0;
+
+    my @values =
+	map {
+	    if (ref($_) eq "ARRAY") {
+		$found_array = 1;
+		@$_;
+	    } else {
+		$_;
+	    }
+    } (@_);
+
+    if ($found_array) {
+	[ @values ];
+    } else {
+	join($separator, @values);
+    }
+}
+sub add_before {
+    my $separator = shift;
+    my @x = @_;
+    sub { _add($separator, @x, @_) };
+}
+sub add {
+    my $separator = shift;
+    my @x = @_;
+    sub { _add($separator, @_, @x) };
 }
 
 # configuration reader, evaluates the input file as a perl script and expects
@@ -1783,7 +1816,7 @@ sub resolve_config {
     #   value.
     # - Otherwise, this target's value is assumed to be a string that
     #   will simply override the inherited list of values.
-    my $default_combiner = sub { join(' ',@_) };
+    my $default_combiner = add(" ");
 
     my %all_keys =
 	map { $_ => 1 } (keys %combined_inheritance,
@@ -1803,8 +1836,8 @@ sub resolve_config {
 	    # arguments.
 	    $table{$target}->{$_} =
 		$table{$target}->{$_}->(@{$combined_inheritance{$_}});
-	} elsif ($valuetype eq "") {
-	    # Scalar, just leave it as is.
+	} elsif ($valuetype eq "ARRAY" || $valuetype eq "") {
+	    # ARRAY or Scalar, just leave it as is.
 	} else {
 	    # Some other type of reference that we don't handle.
 	    # Better to abort at this point.
