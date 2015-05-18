@@ -97,8 +97,16 @@ In each table entry, the following keys are significant:
         shared_target   => The shared library building method used.
                            This is a target found in Makefile.shared.
         build_scheme    => The scheme used to build up a Makefile.
-                           (NOTE: this is here for future use, it's
-                           not implemented yet)
+                           In its simplest form, the value is a string
+                           with the name of the build scheme.
+                           The value may also take the form of a list
+                           of strings, if the build_scheme is to have
+                           some options.  In this case, the first
+                           string in the list is the name of the build
+                           scheme.
+                           Currently recognised build schemes are
+                           "mk1mf" and "unixmake".  Others may appear
+                           in the future.
 
         multilib        => On systems that support having multiple
                            implementations of a library (typically a
