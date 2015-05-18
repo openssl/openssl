@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!{- $config{perl} -}
 #
 # Wrapper around the ca to make it easier to use
 # Edit CA.pl.in not CA.pl!

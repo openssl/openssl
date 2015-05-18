@@ -21,6 +21,7 @@
 /makefile.*
 /out.*
 /tmp.*
+/configdata.pm
 
 **/Makefile
 
