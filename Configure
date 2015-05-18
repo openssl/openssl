@@ -148,283 +148,8 @@ my $apitable = {
     "0.9.8" => "0x00908000L",
 };
 
-# table of known configurations, read in from files
-#
-# The content of each entry comes in the form of config hash table,
-# which has additional attributes for debug and non-debug flags to be
-# added to the common flags, for cflags and lflags:
-#
-#	{
-#	  cc => $cc,
-#	  cflags => $cflags,
-#	  debug_cflags => $debug_cflags,
-#	  release_cflags => $release_cflags,
-#	  unistd => $unistd,
-#	  thread_cflag => $thread_cflag,
-#	  sys_id => $sys_id,
-#	  lflags => $lflags,
-#	  debug_lflags => $debug_lflags,
-#	  release_lflags => $release_lflags,
-#	  bn_ops => $bn_ops,
-#	  cpuid_obj => $cpuid_obj,
-#	  bn_obj => $bn_obj,
-#	  ec_obj => $ec_obj,
-#	  des_obj => $des_obj,
-#	  aes_obj => $aes_obj,
-#	  bf_obj => $bf_obj,
-#	  md5_obj => $md5_obj,
-#	  sha1_obj => $sha1_obj,
-#	  cast_obj => $cast_obj,
-#	  rc4_obj => $rc4_obj,
-#	  rmd160_obj => $rmd160_obj,
-#	  rc5_obj => $rc5_obj,
-#	  wp_obj => $wp_obj,
-#	  cmll_obj => $cmll_obj,
-#	  modes_obj => $modes_obj,
-#	  engines_obj => $engines_obj,
-#	  chacha_obj => $wp_obj,
-#	  poly1305_obj => $cmll_obj,
-#	  dso_scheme => $dso_scheme,
-#	  shared_target => $shared_target,
-#	  shared_cflag => $shared_cflag,
-#	  shared_ldflag => $shared_ldflag,
-#	  shared_extension => $shared_extension,
-#	  ranlib => $ranlib,
-#	  arflags => $arflags,
-#	  multilib => $multilib
-#	}
-#
-# The configuration hashes can refer to templates in two different manners:
-#
-# - as part of the hash, one can have a key called 'inherit_from' that
-#   indicate what other configuration hashes to inherit data from.
-#   These are resolved recursively.
-#
-#   Inheritance works as a set of default values that can be overriden
-#   by corresponding attribute values in the inheriting configuration.
-#
-#   If several configurations are given in the 'inherit_from' array, the
-#   values of same attribute are concatenated with space separation.
-#   With this, it's possible to have several smaller templates for
-#   different configuration aspects that can be combined into a complete
-#   configuration.
-#
-#   Example:
-#
-#	"foo" => {
-#		template => 1,
-#		haha => "haha",
-#		hoho => "ho"
-#	},
-#	"bar" => {
-#		template => 1,
-#		hoho => "ho",
-#		hehe => "hehe"
-#	},
-#	"laughter" => {
-#		inherit_from => [ "foo", "bar" ],
-#	}
-#
-#	The entry for "foo" will become as follows after processing:
-#
-#	"laughter" => {
-#		haha => "haha",
-#		hoho => "ho ho",
-#		hehe => "hehe"
-#	}
-#
-#   Note 1: any entry from the table can be used as a template.
-#   Note 2: pure templates have the attribute 'template => 1' and cannot
-#           be used as targets.
-#
-# - instead of a string, one can have a code block of the form
-#   'sub { /* your code here */ }', where the arguments are the list of
-#   inherited values for that key.  In fact, the concatenation of strings
-#   is really done by using 'sub { join(" ",@_) }' on the list of inherited
-#   values.
-#
-#   Example:
-#
-#	"foo" => {
-#		template => 1,
-#		haha => "ha ha",
-#		hoho => "ho",
-#		ignored => "This should not appear in the end result",
-#	},
-#	"bar" => {
-#		template => 1,
-#		haha => "ah",
-#		hoho => "haho",
-#		hehe => "hehe"
-#	},
-#	"laughter" => {
-#		inherit_from => [ "foo", "bar" ],
-#		hehe => sub { join(" ",(@_,"!!!")) },
-#		ignored => "",
-#	}
-#
-#	The entry for "foo" will become as follows after processing:
-#
-#	"laughter" => {
-#		haha => "ha ha ah",
-#		hoho => "ho haho",
-#		hehe => "hehe !!!",
-#		ignored => ""
-#	}
-#
-
-our %table=(
-
-    # All these templates are merely a translation of the corresponding
-    # variables further up.
-    #
-    # Note: as long as someone might use old style configuration strings,
-    # or we bother supporting that, those variables need to stay
-
-    x86_asm => {
-	template	=> 1,
-	cpuid_obj	=> "x86cpuid.o",
-	bn_obj		=> "bn-586.o co-586.o x86-mont.o x86-gf2m.o",
-	ec_obj		=> "ecp_nistz256.o ecp_nistz256-x86.o",
-	des_obj		=> "des-586.o crypt586.o",
-	aes_obj		=> "aes-586.o vpaes-x86.o aesni-x86.o",
-	bf_obj		=> "bf-586.o",
-	md5_obj		=> "md5-586.o",
-	sha1_obj	=> "sha1-586.o sha256-586.o sha512-586.o",
-	rc4_obj		=> "rc4-586.o",
-	rmd160_obj	=> "rmd-586.o",
-	rc5_obj		=> "rc5-586.o",
-	wp_obj		=> "wp_block.o wp-mmx.o",
-	cmll_obj	=> "cmll-x86.o",
-	modes_obj	=> "ghash-x86.o",
-	engines_obj	=> "e_padlock-x86.o"
-    },
-    x86_elf_asm => {
-	template	=> 1,
-	inherit_from	=> [ "x86_asm" ],
-	perlasm_scheme	=> "elf"
-    },
-    x86_64_asm => {
-	template	=> 1,
-	cpuid_obj       => "x86_64cpuid.o",
-	bn_obj          => "x86_64-gcc.o x86_64-mont.o x86_64-mont5.o x86_64-gf2m.o rsaz_exp.o rsaz-x86_64.o rsaz-avx2.o",
-	ec_obj          => "ecp_nistz256.o ecp_nistz256-x86_64.o",
-	aes_obj         => "aes-x86_64.o vpaes-x86_64.o bsaes-x86_64.o aesni-x86_64.o aesni-sha1-x86_64.o aesni-sha256-x86_64.o aesni-mb-x86_64.o",
-	md5_obj         => "md5-x86_64.o",
-	sha1_obj        => "sha1-x86_64.o sha256-x86_64.o sha512-x86_64.o sha1-mb-x86_64.o sha256-mb-x86_64.o",
-	rc4_obj         => "rc4-x86_64.o rc4-md5-x86_64.o",
-	wp_obj          => "wp-x86_64.o",
-	cmll_obj        => "cmll-x86_64.o cmll_misc.o",
-	modes_obj       => "ghash-x86_64.o aesni-gcm-x86_64.o",
-	engines_obj     => "e_padlock-x86_64.o"
-    },
-    ia64_asm => {
-	template	=> 1,
-	cpuid_obj       => "ia64cpuid.o",
-	bn_obj          => "bn-ia64.o ia64-mont.o",
-	aes_obj         => "aes_core.o aes_cbc.o aes-ia64.o",
-	md5_obj         => "md5-ia64.o",
-	sha1_obj        => "sha1-ia64.o sha256-ia64.o sha512-ia64.o",
-	rc4_obj         => "rc4-ia64.o rc4_skey.o",
-	modes_obj       => "ghash-ia64.o",
-	perlasm_scheme	=> "void"
-    },
-    sparcv9_asm => {
-	template	=> 1,
-	cpuid_obj       => "sparcv9cap.o sparccpuid.o",
-	bn_obj          => "bn-sparcv9.o sparcv9-mont.o sparcv9a-mont.o vis3-mont.o sparct4-mont.o sparcv9-gf2m.o",
-        ec_obj          => "ecp_nistz256.o ecp_nistz256-sparcv9.o",
-	des_obj         => "des_enc-sparc.o fcrypt_b.o dest4-sparcv9.o",
-	aes_obj         => "aes_core.o aes_cbc.o aes-sparcv9.o aest4-sparcv9.o",
-	md5_obj         => "md5-sparcv9.o",
-	sha1_obj        => "sha1-sparcv9.o sha256-sparcv9.o sha512-sparcv9.o",
-	cmll_obj        => "camellia.o cmll_misc.o cmll_cbc.o cmllt4-sparcv9.o",
-	modes_obj       => "ghash-sparcv9.o",
-	perlasm_scheme	=> "void"
-    },
-    sparcv8_asm => {
-	template	=> 1,
-	cpuid_obj       => "",
-	bn_obj          => "sparcv8.o",
-	des_obj         => "des_enc-sparc.o fcrypt_b.o",
-	perlasm_scheme	=> "void"
-    },
-    alpha_asm => {
-	template	=> 1,
-	cpuid_obj       => "alphacpuid.o",
-	bn_obj          => "bn_asm.o alpha-mont.o",
-	sha1_obj        => "sha1-alpha.o",
-	modes_obj       => "ghash-alpha.o",
-	perlasm_scheme	=> "void"
-    },
-    mips32_asm => {
-	template	=> 1,
-	bn_obj          => "bn-mips.o mips-mont.o",
-	aes_obj         => "aes_cbc.o aes-mips.o",
-	sha1_obj        => "sha1-mips.o sha256-mips.o",
-    },
-    mips64_asm => {
-	inherit_from	=> [ "mips32_asm" ],
-	template	=> 1,
-	sha1_obj        => sub { join(" ", @_, "sha512-mips.o") }
-    },
-    s390x_asm => {
-	template	=> 1,
-	cpuid_obj       => "s390xcap.o s390xcpuid.o",
-	bn_obj          => "bn-s390x.o s390x-mont.o s390x-gf2m.o",
-	aes_obj         => "aes-s390x.o aes-ctr.o aes-xts.o",
-	sha1_obj        => "sha1-s390x.o sha256-s390x.o sha512-s390x.o",
-	rc4_obj         => "rc4-s390x.o",
-	modes_obj       => "ghash-s390x.o",
-    },
-    armv4_asm => {
-	template	=> 1,
-	cpuid_obj       => "armcap.o armv4cpuid.o",
-	bn_obj          => "bn_asm.o armv4-mont.o armv4-gf2m.o",
-	ec_obj          => "ecp_nistz256.o ecp_nistz256-armv4.o",
-	aes_obj         => "aes_cbc.o aes-armv4.o bsaes-armv7.o aesv8-armx.o",
-	sha1_obj        => "sha1-armv4-large.o sha256-armv4.o sha512-armv4.o",
-	modes_obj       => "ghash-armv4.o ghashv8-armx.o",
-	perlasm_scheme	=> "void"
-    },
-    aarch64_asm => {
-	template	=> 1,
-	cpuid_obj       => "armcap.o arm64cpuid.o mem_clr.o",
-	ec_obj          => "ecp_nistz256.o ecp_nistz256-armv8.o",
-	bn_obj          => "bn_asm.o armv8-mont.o",
-	aes_obj         => "aes_core.o aes_cbc.o aesv8-armx.o vpaes-armv8.o",
-	sha1_obj        => "sha1-armv8.o sha256-armv8.o sha512-armv8.o",
-	modes_obj       => "ghashv8-armx.o",
-    },
-    parisc11_asm => {
-	template	=> 1,
-	cpuid_obj       => "pariscid.o",
-	bn_obj          => "bn_asm.o parisc-mont.o",
-	aes_obj         => "aes_core.o aes_cbc.o aes-parisc.o",
-	sha1_obj        => "sha1-parisc.o sha256-parisc.o sha512-parisc.o",
-	rc4_obj         => "rc4-parisc.o",
-	modes_obj       => "ghash-parisc.o",
-	perlasm_scheme	=> "32"
-    },
-    parisc20_64_asm => {
-	template	=> 1,
-	inherit_from	=> [ "parisc11_asm" ],
-	bn_obj          => sub { my $r=join(" ",@_); $r=~s/bn_asm/pa-risc2W/; $r; },
-	perlasm_scheme	=> "64",
-    },
-    ppc64_asm => {
-	template	=> 1,
-	cpuid_obj       => "ppccpuid.o ppccap.o",
-	bn_obj          => "bn-ppc.o ppc-mont.o ppc64-mont.o",
-	aes_obj         => "aes_core.o aes_cbc.o aes-ppc.o vpaes-ppc.o aesp8-ppc.o",
-	sha1_obj        => "sha1-ppc.o sha256-ppc.o sha512-ppc.o sha256p8-ppc.o sha512p8-ppc.o",
-	modes_obj       => "ghashp8-ppc.o",
-    },
-    ppc32_asm => {
-	inherit_from	=> [ "ppc64_asm" ],
-	template	=> 1
-    },
-);
+my $base_target = "BASE";   # The template that all other inherit from
+our %table = ();
 
 # Forward declarations ###############################################
 
@@ -472,24 +197,6 @@ my $no_asm=0;
 my $no_dso=0;
 my @skip=();
 my $Makefile="Makefile";
-my $des_locl="crypto/des/des_locl.h";
-my $des	="include/openssl/des.h";
-my $bn	="include/openssl/bn.h";
-my $md2	="include/openssl/md2.h";
-my $rc4	="include/openssl/rc4.h";
-my $rc4_locl="crypto/rc4/rc4_locl.h";
-my $idea	="include/openssl/idea.h";
-my $rc2	="include/openssl/rc2.h";
-my $bf	="crypto/bf/bf_locl.h";
-my $bn_asm	="bn_asm.o";
-my $des_enc="des_enc.o fcrypt_b.o";
-my $aes_enc="aes_core.o aes_cbc.o";
-my $bf_enc	="bf_enc.o";
-my $cast_enc="c_enc.o";
-my $rc4_enc="rc4_enc.o rc4_skey.o";
-my $rc5_enc="rc5_enc.o";
-my $cmll_enc="camellia.o cmll_misc.o cmll_cbc.o";
-my $chacha_enc="chacha_enc.o";
 my $processor="";
 my $default_ranlib;
 my $perl;
@@ -972,24 +679,6 @@ if ($target =~ m/^CygWin32(-.*)$/) {
 	$target = "Cygwin".$1;
 }
 
-print "Configuring for $target\n";
-
-# Support for legacy targets having a name starting with 'debug-'
-my ($d, $t) = $target =~ m/^(debug-)?(.*)$/;
-if ($d) {
-    $build_prefix = "debug_";
-
-    # If we do not find debug-foo in the table, the target is set to foo,
-    # but only if the foo target has a noon-empty debug_cflags or debug_lflags
-    # attribute.
-    if (!$table{$target}) {
-	$target = $t;
-    }
-}
-my %target = resolve_config($target);
-
-&usage if (!%target || $target{template});
-
 foreach (sort (keys %disabled))
 	{
 	$options .= " no-$_";
@@ -1055,6 +744,24 @@ foreach (sort @experimental)
 	$openssl_experimental_defines .= "#define OPENSSL_NO_$ALGO\n";
 	$exp_cflags .= " -DOPENSSL_EXPERIMENTAL_$ALGO";
 	}
+
+print "Configuring for $target\n";
+
+# Support for legacy targets having a name starting with 'debug-'
+my ($d, $t) = $target =~ m/^(debug-)?(.*)$/;
+if ($d) {
+    $build_prefix = "debug_";
+
+    # If we do not find debug-foo in the table, the target is set to foo.
+    if (!$table{$target}) {
+	$target = $t;
+    }
+}
+
+delete $table{$base_target}->{template}; # or the next test will fail.
+my %target = ( %{$table{$base_target}}, resolve_config($target) );
+
+&usage if (!%target || $target{template});
 
 my $IsMK1MF=scalar grep /^$target$/,@MK1MF_Builds;
 
@@ -1219,21 +926,8 @@ $lflags="$libs$lflags" if ($libs ne "");
 
 if ($no_asm)
 	{
-	$cpuid_obj=$bn_obj=$ec_obj=
-	$des_obj=$aes_obj=$bf_obj=$cast_obj=$rc4_obj=$rc5_obj=$cmll_obj=
-	$modes_obj=$sha1_obj=$md5_obj=$rmd160_obj=$wp_obj=$engines_obj=
-	$chacha_obj=$poly1305_obj="";
 	$cflags=~s/\-D[BL]_ENDIAN//		if ($fips);
 	$thread_cflags=~s/\-D[BL]_ENDIAN//	if ($fips);
-	}
-elsif (defined($disabled{ec2m}))
-	{
-	$bn_obj =~ s/\w+-gf2m.o//;
-	}
-
-if (!$no_shared)
-	{
-	$cast_obj="";	# CAST assembler is not PIC
 	}
 
 if ($threads)
@@ -1297,8 +991,6 @@ if (!$IsMK1MF)
 		}
 	}
 
-$cpuid_obj.=" uplink.o uplink-x86.o" if ($cflags =~ /\-DOPENSSL_USE_APPLINK/);
-
 #
 # Platform fix-ups
 #
@@ -1358,58 +1050,44 @@ if ($ranlib eq "")
 	$ranlib = $default_ranlib;
 	}
 
-#my ($bn1)=split(/\s+/,$bn_obj);
-#$bn1 = "" unless defined $bn1;
-#$bn1=$bn_asm unless ($bn1 =~ /\.o$/);
-#$bn_obj="$bn1";
+if (!$no_asm) {
+    $cpuid_obj=$table{BASE}->{cpuid_obj} if ($processor eq "386");
+    $cpuid_obj.=" uplink.o uplink-x86.o" if ($cflags =~ /\-DOPENSSL_USE_APPLINK/);
 
-$cpuid_obj="" if ($processor eq "386");
+    $bn_obj =~ s/\w+-gf2m.o// if (defined($disabled{ec2m}));
 
-$bn_obj = $bn_asm unless $bn_obj ne "";
-# bn-586 is the only one implementing bn_*_part_words
-$cflags.=" -DOPENSSL_BN_ASM_PART_WORDS" if ($bn_obj =~ /bn-586/);
-$cflags.=" -DOPENSSL_IA32_SSE2" if (!$no_sse2 && $bn_obj =~ /86/);
+    # bn-586 is the only one implementing bn_*_part_words
+    $cflags.=" -DOPENSSL_BN_ASM_PART_WORDS" if ($bn_obj =~ /bn-586/);
+    $cflags.=" -DOPENSSL_IA32_SSE2" if (!$no_sse2 && $bn_obj =~ /86/);
 
-$cflags.=" -DOPENSSL_BN_ASM_MONT" if ($bn_obj =~ /-mont/);
-$cflags.=" -DOPENSSL_BN_ASM_MONT5" if ($bn_obj =~ /-mont5/);
-$cflags.=" -DOPENSSL_BN_ASM_GF2m" if ($bn_obj =~ /-gf2m/);
+    $cflags.=" -DOPENSSL_BN_ASM_MONT" if ($bn_obj =~ /-mont/);
+    $cflags.=" -DOPENSSL_BN_ASM_MONT5" if ($bn_obj =~ /-mont5/);
+    $cflags.=" -DOPENSSL_BN_ASM_GF2m" if ($bn_obj =~ /-gf2m/);
 
-if ($fips)
-	{
+    if ($fips) {
 	$openssl_other_defines.="#define OPENSSL_FIPS\n";
-	}
+    }
 
-$cpuid_obj="mem_clr.o"	unless ($cpuid_obj =~ /\.o$/);
-$des_obj=$des_enc	unless ($des_obj =~ /\.o$/);
-$bf_obj=$bf_enc		unless ($bf_obj =~ /\.o$/);
-$cast_obj=$cast_enc	unless ($cast_obj =~ /\.o$/);
-$rc4_obj=$rc4_enc	unless ($rc4_obj =~ /\.o$/);
-$rc5_obj=$rc5_enc	unless ($rc5_obj =~ /\.o$/);
-if ($sha1_obj =~ /\.o$/)
-	{
-#	$sha1_obj=$sha1_enc;
+    if ($sha1_obj =~ /\.o$/) {
 	$cflags.=" -DSHA1_ASM"   if ($sha1_obj =~ /sx86/ || $sha1_obj =~ /sha1/);
 	$cflags.=" -DSHA256_ASM" if ($sha1_obj =~ /sha256/);
 	$cflags.=" -DSHA512_ASM" if ($sha1_obj =~ /sha512/);
-	if ($sha1_obj =~ /sse2/)
-	    {	if ($no_sse2)
-		{   $sha1_obj =~ s/\S*sse2\S+//;        }
-		elsif ($cflags !~ /OPENSSL_IA32_SSE2/)
-		{   $cflags.=" -DOPENSSL_IA32_SSE2";    }
+	if ($sha1_obj =~ /sse2/) {
+	    if ($no_sse2) {
+		$sha1_obj =~ s/\S*sse2\S+//;
+	    } elsif ($cflags !~ /OPENSSL_IA32_SSE2/) {
+		$cflags.=" -DOPENSSL_IA32_SSE2";
 	    }
 	}
-if ($md5_obj =~ /\.o$/)
-	{
-#	$md5_obj=$md5_enc;
+    }
+    if ($md5_obj =~ /\.o$/) {
 	$cflags.=" -DMD5_ASM";
-	}
-if ($rmd160_obj =~ /\.o$/)
-	{
-#	$rmd160_obj=$rmd160_enc;
+    }
+    $cast_obj=$table{BASE}->{cast_obj} if (!$no_shared); # CAST assembler is not PIC
+    if ($rmd160_obj =~ /\.o$/) {
 	$cflags.=" -DRMD160_ASM";
-	}
-if ($aes_obj =~ /\.o$/)
-	{
+    }
+    if ($aes_obj =~ /\.o$/) {
 	$cflags.=" -DAES_ASM" if ($aes_obj =~ m/\baes\-/);;
 	# aes-ctr.o is not a real file, only indication that assembler
 	# module implements AES_ctr32_encrypt...
@@ -1419,32 +1097,22 @@ if ($aes_obj =~ /\.o$/)
 	$aes_obj =~ s/\s*(vpaes|aesni)\-x86\.o//g if ($no_sse2);
 	$cflags.=" -DVPAES_ASM" if ($aes_obj =~ m/vpaes/);
 	$cflags.=" -DBSAES_ASM" if ($aes_obj =~ m/bsaes/);
-	}
-else	{
-	$aes_obj=$aes_enc;
-	}
-$wp_obj="" if ($wp_obj =~ /mmx/ && $processor eq "386");
-if ($wp_obj =~ /\.o$/ && !$disabled{"whirlpool"})
-	{
+    }
+    if ($wp_obj =~ /mmx/ && $processor eq "386") {
+	$wp_obj=$table{BASE}->{wp_obj};
+    } elsif (!$disabled{"whirlpool"}) {
 	$cflags.=" -DWHIRLPOOL_ASM";
-	}
-else	{
-	$wp_obj="wp_block.o";
-	}
-$cmll_obj=$cmll_enc	unless ($cmll_obj =~ /.o$/);
-if ($modes_obj =~ /ghash\-/)
-	{
+    }
+    if ($modes_obj =~ /ghash\-/) {
 	$cflags.=" -DGHASH_ASM";
-	}
-if ($ec_obj =~ /ecp_nistz256/)
-	{
+    }
+    if ($ec_obj =~ /ecp_nistz256/) {
 	$cflags.=" -DECP_NISTZ256_ASM";
-	}
-$chacha_obj=$chacha_enc	unless ($chacha_obj =~ /\.o$/);
-if ($poly1305_obj =~ /\.o$/)
-	{
+    }
+    if ($poly1305_obj =~ /\.o$/) {
 	$cflags.=" -DPOLY1305_ASM";
-	}
+    }
+}
 
 # "Stringify" the C flags string.  This permits it to be made part of a string
 # and works as well on command lines.
@@ -1771,7 +1439,6 @@ while (<IN>)
 			($export_var_as_fn)?"define":"undef"; }
 	elsif	(/^#define\s+OPENSSL_UNISTD/)
 		{
-		$unistd = "<unistd.h>" if $unistd eq "";
 		print OUT "#define OPENSSL_UNISTD $unistd\n";
 		}
 	elsif	(/^#((define)|(undef))\s+SIXTY_FOUR_BIT_LONG/)
