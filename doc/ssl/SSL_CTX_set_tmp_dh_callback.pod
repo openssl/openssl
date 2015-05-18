@@ -83,9 +83,8 @@ which use safe primes and were generated verifiably pseudo-randomly.
 These files can be converted into C code using the B<-C> option of the
 L<dhparam(1)|dhparam(1)> application. Generation of custom DH
 parameters during installation should still be preferred to stop an
-attacker from specializing on a commonly used group. Files dh1024.pem
-and dh512.pem contain old parameters that must not be used by
-applications.
+attacker from specializing on a commonly used group. File dh1024.pem
+contains old parameters that must not be used by applications.
 
 An application may either directly specify the DH parameters or
 can supply the DH parameters via a callback function.
