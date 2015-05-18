@@ -1301,6 +1301,17 @@ typedef struct ssl3_state_st {
          * If zero it can't be used at all.
          */
         int valid_flags[SSL_PKEY_NUM];
+        /*
+         * For servers the following masks are for the key and auth algorithms
+         * that are supported by the certs below. For clients they are masks of
+         * *disabled* algorithms based on the current session.
+         */
+        unsigned long mask_k;
+        unsigned long mask_a;
+        unsigned long export_mask_k;
+        unsigned long export_mask_a;
+        /* Client only */
+        unsigned long mask_ssl;
     } tmp;
 
     /* Connection binding to prevent renegotiation attacks */
@@ -1509,18 +1520,6 @@ typedef struct cert_st {
      * an index, not a pointer.
      */
     CERT_PKEY *key;
-    /*
-     * For servers the following masks are for the key and auth algorithms
-     * that are supported by the certs below. For clients they are masks of
-     * *disabled* algorithms based on the current session.
-     */
-    int valid;
-    unsigned long mask_k;
-    unsigned long mask_a;
-    unsigned long export_mask_k;
-    unsigned long export_mask_a;
-    /* Client only */
-    unsigned long mask_ssl;
 # ifndef OPENSSL_NO_RSA
     RSA *rsa_tmp;
     RSA *(*rsa_tmp_cb) (SSL *ssl, int is_export, int keysize);

@@ -957,7 +957,6 @@ int ssl3_get_server_hello(SSL *s)
 {
     STACK_OF(SSL_CIPHER) *sk;
     const SSL_CIPHER *c;
-    CERT *ct = s->cert;
     unsigned char *p, *d;
     int i, al = SSL_AD_INTERNAL_ERROR, ok;
     unsigned int j;
@@ -1151,9 +1150,9 @@ int ssl3_get_server_hello(SSL *s)
     }
     /* Set version disabled mask now we know version */
     if (!SSL_USE_TLS1_2_CIPHERS(s))
-        ct->mask_ssl = SSL_TLSV1_2;
+        s->s3->tmp.mask_ssl = SSL_TLSV1_2;
     else
-        ct->mask_ssl = 0;
+        s->s3->tmp.mask_ssl = 0;
     /*
      * If it is a disabled cipher we didn't send it in client hello, so
      * return an error.

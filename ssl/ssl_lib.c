@@ -2114,11 +2114,10 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
     emask_a |= SSL_aPSK;
 #endif
 
-    c->mask_k = mask_k;
-    c->mask_a = mask_a;
-    c->export_mask_k = emask_k;
-    c->export_mask_a = emask_a;
-    c->valid = 1;
+    s->s3->tmp.mask_k = mask_k;
+    s->s3->tmp.mask_a = mask_a;
+    s->s3->tmp.export_mask_k = emask_k;
+    s->s3->tmp.export_mask_a = emask_a;
 }
 
 /* This handy macro borrowed from crypto/x509v3/v3_purp.c */

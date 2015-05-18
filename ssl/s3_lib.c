@@ -3843,11 +3843,9 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
     SSL_CIPHER *c, *ret = NULL;
     STACK_OF(SSL_CIPHER) *prio, *allow;
     int i, ii, ok;
-    CERT *cert;
     unsigned long alg_k, alg_a, mask_k, mask_a, emask_k, emask_a;
 
     /* Let's see which ciphers we can support */
-    cert = s->cert;
 
 #if 0
     /*
@@ -3893,10 +3891,10 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
             continue;
 
         ssl_set_masks(s, c);
-        mask_k = cert->mask_k;
-        mask_a = cert->mask_a;
-        emask_k = cert->export_mask_k;
-        emask_a = cert->export_mask_a;
+        mask_k = s->s3->tmp.mask_k;
+        mask_a = s->s3->tmp.mask_a;
+        emask_k = s->s3->tmp.export_mask_k;
+        emask_a = s->s3->tmp.export_mask_a;
 #ifndef OPENSSL_NO_SRP
         if (s->srp_ctx.srp_Mask & SSL_kSRP) {
             mask_k |= SSL_kSRP;

@@ -216,7 +216,6 @@ static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
     CRYPTO_add(&pkey->references, 1, CRYPTO_LOCK_EVP_PKEY);
     c->pkeys[i].privatekey = pkey;
     c->key = &(c->pkeys[i]);
-    c->valid = 0;
     return (1);
 }
 
@@ -420,7 +419,6 @@ static int ssl_set_cert(CERT *c, X509 *x)
     c->pkeys[i].x509 = x;
     c->key = &(c->pkeys[i]);
 
-    c->valid = 0;
     return (1);
 }
 
