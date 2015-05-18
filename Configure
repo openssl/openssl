@@ -1051,10 +1051,6 @@ PROCESS_ARGS:
 
 			$threads = 1 if ($algo eq "threads");
 			}
-		elsif (/^--test-sanity$/)
-			{
-			exit(&test_sanity());
-			}
 		elsif (/^--strict-warnings$/)
 			{
 			$strict_warnings = 1;
@@ -2559,43 +2555,4 @@ EOF
 	    }
 	    print "    },\n";
 	}
-	}
-
-sub test_sanity
-	{
-	my $errorcnt = 0;
-
-	print STDERR "=" x 70, "\n";
-	print STDERR "=== SANITY TESTING!\n";
-	print STDERR "=== No configuration will be done, all other arguments will be ignored!\n";
-	print STDERR "=" x 70, "\n";
-
-	foreach $target (sort keys %table)
-		{
-		my $pre_dso_scheme = "perlasm_scheme";
-		my $dso_scheme = "dso_scheme";
-		my $post_dso_scheme = "shared_target";
-
-
-		if ($table{$target}->{$pre_dso_scheme} =~ /^(beos|dl|dlfcn|win32|vms)$/)
-			{
-			$errorcnt++;
-			print STDERR "SANITY ERROR: '$target' has the dso_scheme values\n";
-			print STDERR "              in the previous field\n";
-			}
-		elsif ($table{$target}->{$post_dso_scheme} =~ /^(beos|dl|dlfcn|win32|vms)$/)
-			{
-			$errorcnt++;
-			print STDERR "SANITY ERROR: '$target' has the dso_scheme values\n";
-			print STDERR "              in the following field\n";
-			}
-		elsif ($table{$target}->{$dso_scheme} !~ /^(beos|dl|dlfcn|win32|vms|)$/)
-			{
-			$errorcnt++;
-			print STDERR "SANITY ERROR: '$target' has the dso_scheme field = ",$table{$target}->{$dso_scheme},"\n";
-			print STDERR "              valid values are 'beos', 'dl', 'dlfcn', 'win32' and 'vms'\n";
-			}
-		}
-	print STDERR "No sanity errors detected!\n" if $errorcnt == 0;
-	return $errorcnt;
 	}
