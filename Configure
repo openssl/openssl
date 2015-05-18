@@ -619,256 +619,234 @@ my $no_sse2=0;
 
 &usage if ($#ARGV < 0);
 
-my $flags;
-my $depflags;
-my $openssl_experimental_defines;
-my $openssl_algorithm_defines;
-my $openssl_thread_defines;
+my $flags="";
+my $depflags="";
+my $openssl_experimental_defines="";
+my $openssl_algorithm_defines="";
+my $openssl_thread_defines="";
 my $openssl_sys_defines="";
-my $openssl_other_defines;
-my $libs;
-my $target;
-my $options;
+my $openssl_other_defines="";
+my $libs="";
+my $target="";
+my $options="";
 my $api;
 my $make_depend=0;
 my %withargs=();
 my $build_prefix = "release_";
 
 my @argvcopy=@ARGV;
-my $argvstring="";
-my $argv_unprocessed=1;
 
-while($argv_unprocessed)
+if (grep /^reconf(igure)?$/, @argvcopy) {
+    if (open IN, "<$Makefile") {
+	while (<IN>) {
+	    chomp;
+	    if (/^CONFIGURE_ARGS=\s*(.*)\s*/) {
+		my $line = $1;
+		if ($line =~ /^\s*\(/) {
+		    # New form perl expression saved in Makefile, eval it
+		    @argvcopy = eval $line;
+		} else {
+		    # Older form, we split the string and hope for the best
+		    @argvcopy = split /\s+/, $line;
+		}
+		die "Incorrect data to reconfigure, please do a normal configuration\n"
+		    if (grep(/^reconf/,@argvcopy));
+	    } elsif (/^CROSS_COMPILE=\s*(.*)/) {
+		$ENV{CROSS_COMPILE}=$1;
+	    } elsif (/^CC=\s*(?:\$\(CROSS_COMPILE\))?(.*?)$/) {
+		$ENV{CC}=$1;
+	    }
+	}
+	print "Reconfiguring with: ", join(" ",@argvcopy), "\n";
+	print "    CROSS_COMPILE = ",$ENV{CROSS_COMPILE},"\n"
+	    if $ENV{CROSS_COMPILE};
+	print "    CC = ",$ENV{CC},"\n" if $ENV{CC};
+	close IN;
+    } else {
+	die "Insufficient data to reconfigure, please do a normal configuration\n";
+    }
+}
+
+
+my %unsupported_options = ();
+foreach (@argvcopy)
 	{
-	$flags="";
-	$depflags="";
-	$openssl_experimental_defines="";
-	$openssl_algorithm_defines="";
-	$openssl_thread_defines="";
-	$openssl_sys_defines="";
-	$openssl_other_defines="";
-	$libs="";
-	$target="";
-	$options="";
+	s /^-no-/no-/; # some people just can't read the instructions
 
-	$argv_unprocessed=0;
-	$argvstring=join(' ',@argvcopy);
+	# rewrite some options in "enable-..." form
+	s /^-?-?shared$/enable-shared/;
+	s /^sctp$/enable-sctp/;
+	s /^threads$/enable-threads/;
+	s /^zlib$/enable-zlib/;
+	s /^zlib-dynamic$/enable-zlib-dynamic/;
 
-PROCESS_ARGS:
-	{
-	my %unsupported_options = ();
-	foreach (@argvcopy)
+        if (/^(no|disable|enable|experimental)-(.+)$/)
 		{
-		s /^-no-/no-/; # some people just can't read the instructions
-
-		# rewrite some options in "enable-..." form
-		s /^-?-?shared$/enable-shared/;
-		s /^sctp$/enable-sctp/;
-		s /^threads$/enable-threads/;
-		s /^zlib$/enable-zlib/;
-		s /^zlib-dynamic$/enable-zlib-dynamic/;
-
-		if (/^(no|disable|enable|experimental)-(.+)$/)
+		my $word = $2;
+		if (!grep { $word =~ /^${_}$/ } @disablables)
 			{
-			my $word = $2;
-			if (!grep { $word =~ /^${_}$/ } @disablables)
-				{
-				$unsupported_options{$_} = 1;
-				next;
-				}
+			$unsupported_options{$_} = 1;
+			next;
 			}
-		if (/^no-(.+)$/ || /^disable-(.+)$/)
+		}
+	if (/^no-(.+)$/ || /^disable-(.+)$/)
+		{
+		if (!($disabled{$1} eq "experimental"))
 			{
-			if (!($disabled{$1} eq "experimental"))
+			foreach my $proto ((@tls, @dtls))
 				{
-				foreach my $proto ((@tls, @dtls))
+				if ($1 eq "$proto-method")
 					{
-					if ($1 eq "$proto-method")
-						{
-						$disabled{"$proto"} = "option($proto-method)";
-						last;
-						}
-					}
-				if ($1 eq "dtls")
-					{
-                                        foreach my $proto (@dtls)
-						{
-						$disabled{$proto} = "option(dtls)";
-						}
-					}
-				elsif ($1 eq "ssl")
-					{
-					# Last one of its kind
-					$disabled{"ssl3"} = "option(ssl)";
-					}
-				elsif ($1 eq "tls")
-					{
-                                        # XXX: Tests will fail if all SSL/TLS
-                                        # protocols are disabled.
-                                        foreach my $proto (@tls)
-						{
-						$disabled{$proto} = "option(tls)";
-						}
-					}
-				else
-					{
-					$disabled{$1} = "option";
+					$disabled{"$proto"} = "option($proto-method)";
+					last;
 					}
 				}
-			}
-		elsif (/^enable-(.+)$/ || /^experimental-(.+)$/)
-			{
-			my $algo = $1;
-			if ($disabled{$algo} eq "experimental")
+			if ($1 eq "dtls")
 				{
-				die "You are requesting an experimental feature; please say 'experimental-$algo' if you are sure\n"
-					unless (/^experimental-/);
-				push @experimental, $algo;
-				}
-			delete $disabled{$algo};
-
-			$threads = 1 if ($algo eq "threads");
-			}
-		elsif (/^--strict-warnings$/)
-			{
-			$strict_warnings = 1;
-			}
-		elsif (/^--debug$/)
-			{
-			$build_prefix = "debug_";
-			}
-		elsif (/^--release$/)
-			{
-			$build_prefix = "release_";
-			}
-		elsif (/^reconfigure/ || /^reconf/)
-			{
-			if (open(IN,"<$Makefile"))
-				{
-				my $config_args_found=0;
-				while (<IN>)
+                                foreach my $proto (@dtls)
 					{
-					chomp;
-					if (/^CONFIGURE_ARGS=(.*)/)
-						{
-						$argvstring=$1;
-						@argvcopy=split(' ',$argvstring);
-						die "Incorrect data to reconfigure, please do a normal configuration\n"
-							if (grep(/^reconf/,@argvcopy));
-						print "Reconfiguring with: $argvstring\n";
-						$argv_unprocessed=1;
-						$config_args_found=1;
-						}
-					elsif (/^CROSS_COMPILE=\s*(.*)/)
-						{
-						$ENV{CROSS_COMPILE}=$1;
-						}
-					elsif (/^CC=\s*(?:\$\(CROSS_COMPILE\))?(.*?)$/)
-						{
-						$ENV{CC}=$1;
-						}
+					$disabled{$proto} = "option(dtls)";
 					}
-				close(IN);
-				last PROCESS_ARGS if ($config_args_found);
 				}
-			die "Insufficient data to reconfigure, please do a normal configuration\n";
-			}
-		elsif (/^386$/)
-			{ $processor=386; }
-		elsif (/^fips$/)
-			{
-			$fips=1;
-			}
-		elsif (/^rsaref$/)
-			{
-			# No RSAref support any more since it's not needed.
-			# The check for the option is there so scripts aren't
-			# broken
-			}
-		elsif (/^nofipscanistercheck$/)
-			{
-			$fips = 1;
-			$nofipscanistercheck = 1;
-			}
-		elsif (/^[-+]/)
-			{
-			if (/^--prefix=(.*)$/)
+			elsif ($1 eq "ssl")
 				{
-				$prefix=$1;
+				# Last one of its kind
+				$disabled{"ssl3"} = "option(ssl)";
 				}
-			elsif (/^--api=(.*)$/)
+			elsif ($1 eq "tls")
 				{
-				$api=$1;
+                                # XXX: Tests will fail if all SSL/TLS
+                                # protocols are disabled.
+                                foreach my $proto (@tls)
+					{
+					$disabled{$proto} = "option(tls)";
+					}
 				}
-			elsif (/^--libdir=(.*)$/)
-				{
-				$libdir=$1;
-				}
-			elsif (/^--openssldir=(.*)$/)
-				{
-				$openssldir=$1;
-				}
-			elsif (/^--install.prefix=(.*)$/)
-				{
-				$install_prefix=$1;
-				}
-			elsif (/^--with-zlib-lib=(.*)$/)
-				{
-				$withargs{"zlib-lib"}=$1;
-				}
-			elsif (/^--with-zlib-include=(.*)$/)
-				{
-				$withargs{"zlib-include"}="-I$1";
-				}
-			elsif (/^--with-fipslibdir=(.*)$/)
-				{
-				$fipslibdir="$1/";
-				}
-			elsif (/^--with-baseaddr=(.*)$/)
-				{
-				$baseaddr="$1";
-				}
-			elsif (/^--cross-compile-prefix=(.*)$/)
-				{
-				$cross_compile_prefix=$1;
-				}
-			elsif (/^--config=(.*)$/)
-				{
-				read_config $1;
-				}
-			elsif (/^-[lL](.*)$/ or /^-Wl,/)
-				{
-				$libs.=$_." ";
-				}
-			else	# common if (/^[-+]/), just pass down...
-				{
-				$_ =~ s/%([0-9a-f]{1,2})/chr(hex($1))/gei;
-				$flags.=$_." ";
-				}
-			}
-		elsif ($_ =~ /^([^:]+):(.+)$/)
-			{
-			eval "\$table{\$1} = \"$2\""; # allow $xxx constructs in the string
-			$target=$1;
-			}
-		else
-			{
-			die "target already defined - $target (offending arg: $_)\n" if ($target ne "");
-			$target=$_;
-			}
-
-		unless ($_ eq $target || /^no-/ || /^disable-/)
-			{
-			# "no-..." follows later after implied disactivations
-			# have been derived.  (Don't take this too seroiusly,
-			# we really only write OPTIONS to the Makefile out of
-			# nostalgia.)
-
-			if ($options eq "")
-				{ $options = $_; }
 			else
-				{ $options .= " ".$_; }
+				{
+				$disabled{$1} = "option";
+				}
 			}
+		}
+	elsif (/^enable-(.+)$/ || /^experimental-(.+)$/)
+		{
+		my $algo = $1;
+		if ($disabled{$algo} eq "experimental")
+			{
+			die "You are requesting an experimental feature; please say 'experimental-$algo' if you are sure\n"
+				unless (/^experimental-/);
+			push @experimental, $algo;
+			}
+		delete $disabled{$algo};
+
+		$threads = 1 if ($algo eq "threads");
+		}
+	elsif (/^--strict-warnings$/)
+		{
+		$strict_warnings = 1;
+		}
+	elsif (/^--debug$/)
+		{
+		$build_prefix = "debug_";
+		}
+	elsif (/^--release$/)
+		{
+		$build_prefix = "release_";
+		}
+	elsif (/^386$/)
+		{ $processor=386; }
+	elsif (/^fips$/)
+		{
+		$fips=1;
+		}
+	elsif (/^rsaref$/)
+		{
+		# No RSAref support any more since it's not needed.
+		# The check for the option is there so scripts aren't
+		# broken
+		}
+	elsif (/^nofipscanistercheck$/)
+		{
+		$fips = 1;
+		$nofipscanistercheck = 1;
+		}
+	elsif (/^[-+]/)
+		{
+		if (/^--prefix=(.*)$/)
+			{
+			$prefix=$1;
+			}
+		elsif (/^--api=(.*)$/)
+			{
+			$api=$1;
+			}
+		elsif (/^--libdir=(.*)$/)
+			{
+			$libdir=$1;
+			}
+		elsif (/^--openssldir=(.*)$/)
+			{
+			$openssldir=$1;
+			}
+		elsif (/^--install.prefix=(.*)$/)
+			{
+			$install_prefix=$1;
+			}
+		elsif (/^--with-zlib-lib=(.*)$/)
+			{
+			$withargs{"zlib-lib"}=$1;
+			}
+		elsif (/^--with-zlib-include=(.*)$/)
+			{
+			$withargs{"zlib-include"}="-I$1";
+			}
+		elsif (/^--with-fipslibdir=(.*)$/)
+			{
+			$fipslibdir="$1/";
+			}
+		elsif (/^--with-baseaddr=(.*)$/)
+			{
+			$baseaddr="$1";
+			}
+		elsif (/^--cross-compile-prefix=(.*)$/)
+			{
+			$cross_compile_prefix=$1;
+			}
+		elsif (/^--config=(.*)$/)
+			{
+			read_config $1;
+			}
+		elsif (/^-[lL](.*)$/ or /^-Wl,/)
+			{
+			$libs.=$_." ";
+			}
+		else	# common if (/^[-+]/), just pass down...
+			{
+			$_ =~ s/%([0-9a-f]{1,2})/chr(hex($1))/gei;
+			$flags.=$_." ";
+			}
+		}
+	elsif ($_ =~ /^([^:]+):(.+)$/)
+		{
+		eval "\$table{\$1} = \"$2\""; # allow $xxx constructs in the string
+		$target=$1;
+		}
+	else
+		{
+		die "target already defined - $target (offending arg: $_)\n" if ($target ne "");
+		$target=$_;
+		}
+	unless ($_ eq $target || /^no-/ || /^disable-/)
+		{
+		# "no-..." follows later after implied disactivations
+		# have been derived.  (Don't take this too seroiusly,
+		# we really only write OPTIONS to the Makefile out of
+		# nostalgia.)
+
+		if ($options eq "")
+			{ $options = $_; }
+		else
+			{ $options .= " ".$_; }
 		}
 
         if (defined($api) && !exists $apitable->{$api}) {
@@ -880,7 +858,6 @@ PROCESS_ARGS:
 		die "***** Unsupported options: ",
 			join(", ", keys %unsupported_options), "\n";
 		}
-	}
 	}
 
 
@@ -1617,6 +1594,7 @@ while (<IN>)
 	s/^INSTALL_PREFIX=.*$/INSTALL_PREFIX=$install_prefix/;
 	s/^PLATFORM=.*$/PLATFORM=$target/;
 	s/^OPTIONS=.*$/OPTIONS=$options/;
+	my $argvstring = "(".join(", ", map { quotify("perl", $_) } @argvcopy).")";
 	s/^CONFIGURE_ARGS=.*$/CONFIGURE_ARGS=$argvstring/;
 	if ($cross_compile_prefix)
 		{
@@ -2384,3 +2362,16 @@ EOF
 	    print "    },\n";
 	}
 	}
+
+sub quotify {
+    my %processors = (
+	perl    => sub { my $x = shift;
+			 $x =~ s/([\\\$\@"])/\\$1/g;
+			 return '"'.$x.'"'; },
+	);
+    my $for = shift;
+    my $processor =
+	defined($processors{$for}) ? $processors{$for} : sub { shift; };
+
+    map { $processor->($_); } @_;
+}
