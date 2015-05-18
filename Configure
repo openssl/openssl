@@ -646,30 +646,30 @@ while (@tocheckfor) {
 }
 
 if ($target eq "TABLE") {
-	foreach $target (sort keys %table) {
-		print_table_entry($target, "TABLE");
-	}
-	exit 0;
+    foreach (sort keys %table) {
+	print_table_entry($_, "TABLE");
+    }
+    exit 0;
 }
 
 if ($target eq "LIST") {
-	foreach (sort keys %table) {
-		print;
-		print "\n";
-	}
-	exit 0;
+    foreach (sort keys %table) {
+	print $_,"\n" unless $table{$_}->{template};
+    }
+    exit 0;
 }
 
 if ($target eq "HASH") {
-	print "%table = (\n";
-	foreach (sort keys %table) {
-		print_table_entry($_, "HASH");
-	}
-	exit 0;
+    print "%table = (\n";
+    foreach (sort keys %table) {
+	print_table_entry($_, "HASH");
+    }
+    exit 0;
 }
 
+# Backward compatibility?
 if ($target =~ m/^CygWin32(-.*)$/) {
-	$target = "Cygwin".$1;
+    $target = "Cygwin".$1;
 }
 
 foreach (sort (keys %disabled))
@@ -1885,6 +1885,75 @@ sub usage
 	exit(1);
 	}
 
+# Configuration printer ##############################################
+
+sub print_table_entry
+{
+    my $target = shift;
+    my %target = resolve_config($target);
+    my $type = shift;
+
+    # Don't print the templates
+    return if $target{template};
+
+    my @sequence = (
+	"cc",
+	"cflags",
+	"debug_cflags",
+	"release_cflags",
+	"unistd",
+	"thread_cflag",
+	"sys_id",
+	"lflags",
+	"debug_lflags",
+	"release_lflags",
+	"bn_ops",
+	"cpuid_obj",
+	"bn_obj",
+	"ec_obj",
+	"des_obj",
+	"aes_obj",
+	"bf_obj",
+	"md5_obj",
+	"sha1_obj",
+	"cast_obj",
+	"rc4_obj",
+	"rmd160_obj",
+	"rc5_obj",
+	"wp_obj",
+	"cmll_obj",
+	"modes_obj",
+	"engines_obj",
+	"perlasm_scheme",
+	"dso_scheme",
+	"shared_target",
+	"shared_cflag",
+	"shared_ldflag",
+	"shared_extension",
+	"ranlib",
+	"arflags",
+	"multilib",
+	);
+
+    if ($type eq "TABLE") {
+	print "\n";
+	print "*** $target\n";
+	printf "\$%-12s = %s\n", $_, $target{$_} foreach (@sequence);
+    } elsif ($type eq "HASH") {
+	my $largest =
+	    length((sort { length($a) <=> length($b) } @sequence)[-1]);
+	print "    '$target' => {\n";
+	foreach (@sequence) {
+	    if ($target{$_}) {
+		print "      '",$_,"'"," " x ($largest - length($_))," => '",$target{$_},"',\n";
+	    }
+	}
+	print "    },\n";
+    }
+}
+
+# Utility routines ###################################################
+
 sub which
 	{
 	my($name)=@_;
@@ -1916,111 +1985,6 @@ sub dofile
 	close(OUT);
 	rename($f,"$f.bak") || die "unable to rename $f\n" if -e $f;
 	rename("$f.new",$f) || die "unable to rename $f.new\n";
-	}
-
-sub print_table_entry
-	{
-	my $target = shift;
-	my %target = resolve_config($target);
-	my $type = shift;
-
-	# Don't print the templates
-	return if $target{template};
-
-	if ($type eq "TABLE") {
-	    print <<"EOF"
-
-*** $target
-\$cc           = $target{cc}
-\$cflags       = $target{cflags}
-\$debug_cflags   = $target{debug_cflags}
-\$release_cflags = $target{release_cflags}
-\$unistd       = $target{unistd}
-\$thread_cflag = $target{thread_cflag}
-\$sys_id       = $target{sys_id}
-\$lflags       = $target{lflags}
-\$debug_lflags   = $target{debug_lflags}
-\$release_lflags = $target{release_lflags}
-\$bn_ops       = $target{bn_ops}
-\$cpuid_obj    = $target{cpuid_obj}
-\$bn_obj       = $target{bn_obj}
-\$ec_obj       = $target{ec_obj}
-\$des_obj      = $target{des_obj}
-\$aes_obj      = $target{aes_obj}
-\$bf_obj       = $target{bf_obj}
-\$md5_obj      = $target{md5_obj}
-\$sha1_obj     = $target{sha1_obj}
-\$cast_obj     = $target{cast_obj}
-\$rc4_obj      = $target{rc4_obj}
-\$rmd160_obj   = $target{rmd160_obj}
-\$rc5_obj      = $target{rc5_obj}
-\$wp_obj       = $target{wp_obj}
-\$cmll_obj     = $target{cmll_obj}
-\$modes_obj    = $target{modes_obj}
-\$engines_obj  = $target{engines_obj}
-\$chacha_obj   = $target{chacha_obj}
-\$poly1305_obj = $target{poly1305_obj}
-\$perlasm_scheme = $target{perlasm_scheme}
-\$dso_scheme   = $target{dso_scheme}
-\$shared_target= $target{shared_target}
-\$shared_cflag = $target{shared_cflag}
-\$shared_ldflag = $target{shared_ldflag}
-\$shared_extension = $target{shared_extension}
-\$ranlib       = $target{ranlib}
-\$arflags      = $target{arflags}
-\$multilib     = $target{multilib}
-EOF
-	} elsif ($type eq "HASH") {
-	    my @sequence = (
-		"cc",
-		"cflags",
-		"debug_cflags",
-		"release_cflags",
-		"unistd",
-		"thread_cflag",
-		"sys_id",
-		"lflags",
-		"debug_lflags",
-		"release_lflags",
-		"bn_ops",
-		"cpuid_obj",
-		"bn_obj",
-		"ec_obj",
-		"des_obj",
-		"aes_obj",
-		"bf_obj",
-		"md5_obj",
-		"sha1_obj",
-		"cast_obj",
-		"rc4_obj",
-		"rmd160_obj",
-		"rc5_obj",
-		"wp_obj",
-		"cmll_obj",
-		"modes_obj",
-		"engines_obj",
-		"chacha_obj",
-		"poly1305_obj",
-		"perlasm_scheme",
-		"dso_scheme",
-		"shared_target",
-		"shared_cflag",
-		"shared_ldflag",
-		"shared_extension",
-		"ranlib",
-		"arflags",
-		"multilib",
-		);
-	    my $largest =
-		length((sort { length($a) <=> length($b) } @sequence)[-1]);
-	    print "    '$target' => {\n";
-	    foreach (@sequence) {
-		if ($target{$_}) {
-		    print "      '",$_,"'"," " x ($largest - length($_))," => '",$target{$_},"',\n";
-		}
-	    }
-	    print "    },\n";
-	}
 	}
 
 sub quotify {
