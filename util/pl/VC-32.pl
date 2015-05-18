@@ -401,7 +401,7 @@ sub do_rlink_rule
 	my $files = "$rl_start $rl_mid $rl_end";
 
 	$file =~ s/\//$o/g if $o ne '/';
-	$n=&bname($targer);
+	$n=&bname($target);
 	$ret.="$target: $files $dep_libs \$(FIPS_SHA1_EXE)\n";
 	$ret.="\t\$(PERL) ms\\segrenam.pl \$\$a $rl_start\n";
 	$ret.="\t\$(PERL) ms\\segrenam.pl \$\$b $rl_mid\n";
