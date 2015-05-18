@@ -1048,46 +1048,44 @@ int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s,
  */
 void ssl_set_client_disabled(SSL *s)
 {
-    CERT *c = s->cert;
-    c->mask_a = 0;
-    c->mask_k = 0;
+    s->s3->tmp.mask_a = 0;
+    s->s3->tmp.mask_k = 0;
     /* Don't allow TLS 1.2 only ciphers if we don't suppport them */
     if (!SSL_CLIENT_USE_TLS1_2_CIPHERS(s))
-        c->mask_ssl = SSL_TLSV1_2;
+        s->s3->tmp.mask_ssl = SSL_TLSV1_2;
     else
-        c->mask_ssl = 0;
-    ssl_set_sig_mask(&c->mask_a, s, SSL_SECOP_SIGALG_MASK);
+        s->s3->tmp.mask_ssl = 0;
+    ssl_set_sig_mask(&s->s3->tmp.mask_a, s, SSL_SECOP_SIGALG_MASK);
     /*
      * Disable static DH if we don't include any appropriate signature
      * algorithms.
      */
-    if (c->mask_a & SSL_aRSA)
-        c->mask_k |= SSL_kDHr | SSL_kECDHr;
-    if (c->mask_a & SSL_aDSS)
-        c->mask_k |= SSL_kDHd;
-    if (c->mask_a & SSL_aECDSA)
-        c->mask_k |= SSL_kECDHe;
+    if (s->s3->tmp.mask_a & SSL_aRSA)
+        s->s3->tmp.mask_k |= SSL_kDHr | SSL_kECDHr;
+    if (s->s3->tmp.mask_a & SSL_aDSS)
+        s->s3->tmp.mask_k |= SSL_kDHd;
+    if (s->s3->tmp.mask_a & SSL_aECDSA)
+        s->s3->tmp.mask_k |= SSL_kECDHe;
 # ifndef OPENSSL_NO_PSK
     /* with PSK there must be client callback set */
     if (!s->psk_client_callback) {
-        c->mask_a |= SSL_aPSK;
-        c->mask_k |= SSL_kPSK;
+        s->s3->tmp.mask_a |= SSL_aPSK;
+        s->s3->tmp.mask_k |= SSL_kPSK;
     }
 # endif                         /* OPENSSL_NO_PSK */
 # ifndef OPENSSL_NO_SRP
     if (!(s->srp_ctx.srp_Mask & SSL_kSRP)) {
-        c->mask_a |= SSL_aSRP;
-        c->mask_k |= SSL_kSRP;
+        s->s3->tmp.mask_a |= SSL_aSRP;
+        s->s3->tmp.mask_k |= SSL_kSRP;
     }
 # endif
-    c->valid = 1;
 }
 
 int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c, int op)
 {
-    CERT *ct = s->cert;
-    if (c->algorithm_ssl & ct->mask_ssl || c->algorithm_mkey & ct->mask_k
-        || c->algorithm_auth & ct->mask_a)
+    if (c->algorithm_ssl & s->s3->tmp.mask_ssl
+        || c->algorithm_mkey & s->s3->tmp.mask_k
+        || c->algorithm_auth & s->s3->tmp.mask_a)
         return 1;
     return !ssl_security(s, op, c->strength_bits, 0, (void *)c);
 }

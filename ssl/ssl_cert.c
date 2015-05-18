@@ -196,11 +196,6 @@ CERT *ssl_cert_dup(CERT *cert)
     memset(ret, 0, sizeof(*ret));
 
     ret->key = &ret->pkeys[cert->key - cert->pkeys];
-    ret->valid = cert->valid;
-    ret->mask_k = cert->mask_k;
-    ret->mask_a = cert->mask_a;
-    ret->export_mask_k = cert->export_mask_k;
-    ret->export_mask_a = cert->export_mask_a;
 
 #ifndef OPENSSL_NO_RSA
     if (cert->rsa_tmp != NULL) {
