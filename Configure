@@ -602,9 +602,72 @@ my %disabled = ( # "what"         => "comment" [or special keyword "experimental
 	       );
 my @experimental = ();
 
-# This is what $depflags will look like with the above defaults
-# (we need this to see if we should advise the user to run "make depend"):
-my $default_depflags = " -DOPENSSL_NO_CRYPTO_MDEBUG -DOPENSSL_NO_EC_NISTP_64_GCC_128 -DOPENSSL_NO_JPAKE -DOPENSSL_NO_MD2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_SCTP -DOPENSSL_NO_SSL_TRACE -DOPENSSL_NO_STORE -DOPENSSL_NO_UNIT_TEST";
+# Note: => pair form used for aesthetics, not to truly make a hash table
+my @disable_cascades = (
+    # "what"		=> [ "cascade", ... ]
+    sub { $processor eq "386" }
+			=> [ "sse2" ],
+    "ssl"		=> [ "ssl3" ],
+    "ssl3-method"	=> [ "ssl3" ],
+    "zlib"		=> [ "zlib-dynamic" ],
+    "rijndael"		=> [ "aes" ],
+    "des"		=> [ "mdc2" ],
+    "ec"		=> [ "ecdsa", "ecdh", "gost" ],
+    "dsa"		=> [ "gost" ],
+    "dh"		=> [ "gost" ],
+
+    "dgram"		=> [ "dtls" ],
+    "dtls"		=> [ @dtls ],
+
+    # SSL 3.0, (D)TLS 1.0 and TLS 1.1 require MD5 and SHA
+    "md5"		=> [ "ssl", "tls1", "tls1_1", "dtls1" ],
+    "sha"		=> [ "ssl", "tls1", "tls1_1", "dtls1" ],
+
+    # Additionally, SSL 3.0 requires either RSA or DSA+DH
+    sub { $disabled{rsa}
+	  && ($disabled{dsa} || $disabled{dh}); }
+			=> [ "ssl" ],
+
+    # (D)TLS 1.0 and TLS 1.1 also require either RSA or DSA+DH
+    # or ECDSA + ECDH.  (D)TLS 1.2 has this requirement as well.
+    # (XXX: We don't support PSK-only builds).
+    sub { $disabled{rsa}
+	  && ($disabled{dsa} || $disabled{dh})
+	  && ($disabled{ecdsa} || $disabled{ecdh}); }
+			=> [ "tls1", "tls1_1", "tls1_2",
+			     "dtls1", "dtls1_2" ],
+
+    "tls"		=> [ @tls ],
+
+    # SRP and HEARTBEATS require TLSEXT
+    "tlsext"		=> [ "srp", "heartbeats" ],
+    );
+
+# Avoid protocol support holes.  Also disable all versions below N, if version
+# N is disabled while N+1 is enabled.
+#
+my @list = (reverse @tls);
+while ((my $first, my $second) = (shift @list, shift @list)) {
+    last unless @list;
+    push @disable_cascades, ( sub { !$disabled{$first} && $disabled{$second} }
+			      => [ @list ] );
+    unshift @list, $second;
+}
+my @list = (reverse @dtls);
+while ((my $first, my $second) = (shift @list, shift @list)) {
+    last unless @list;
+    push @disable_cascades, ( sub { !$disabled{$first} && $disabled{$second} }
+			      => [ @list ] );
+    unshift @list, $second;
+}
+
+# Construct the string of what $depflags should look like with the defaults
+# from %disabled above.  (we need this to see if we should advise the user
+# to run "make depend"):
+my $default_depflags = " ".join(" ",
+    map { my $x = $_; $x =~ tr{[a-z]-}{[A-Z]_}; "-DOPENSSL_NO_$x"; }
+    grep { $disabled{$_} !~ /\(no-depflags\)$/ }
+    sort keys %disabled);
 
 # Explicit "no-..." options will be collected in %disabled along with the defaults.
 # To remove something from %disabled, use "enable-foo" (unless it's experimental).
@@ -860,122 +923,25 @@ foreach (@argvcopy)
 		}
 	}
 
-
-if ($processor eq "386")
+if ($fips)
 	{
-	$disabled{"sse2"} = "forced";
+	delete $disabled{"shared"} if ($disabled{"shared"} =~ /^default/);
 	}
 
-if (!defined($disabled{"zlib-dynamic"}))
-	{
-	# "zlib-dynamic" was specifically enabled, so enable "zlib"
-	delete $disabled{"zlib"};
+my @tocheckfor = (keys %disabled);
+while (@tocheckfor) {
+    my %new_tocheckfor = ();
+    my @cascade_copy = (@disable_cascades);
+    while (@cascade_copy) {
+	my ($test, $descendents) = (shift @cascade_copy, shift @cascade_copy);
+	if (ref($test) eq "CODE" ? $test->() : defined($disabled{$test})) {
+	    map {
+		$new_tocheckfor{$_} => 1; $disabled{$_} = "forced";
+	    } grep { !defined($disabled{$_}) } @$descendents;
 	}
-
-if (defined($disabled{"rijndael"}))
-	{
-	$disabled{"aes"} = "forced";
-	}
-if (defined($disabled{"des"}))
-	{
-	$disabled{"mdc2"} = "forced";
-	}
-if (defined($disabled{"ec"}))
-	{
-	$disabled{"ecdsa"} = "forced";
-	$disabled{"ecdh"} = "forced";
-	}
-
-# SSL 3.0 requires MD5 and SHA and either RSA or DSA+DH
-if (defined($disabled{"md5"}) || defined($disabled{"sha"})
-    || (defined($disabled{"rsa"})
-	&& (defined($disabled{"dsa"}) || defined($disabled{"dh"}))))
-	{
-	$disabled{"ssl3"} = "forced";
-	$disabled{"ssl"} = "forced";
-	}
-
-# (D)TLS 1.0 and TLS 1.1 require MD5 and SHA and either RSA or DSA+DH
-# or ECDSA + ECDH.  (XXX: We don't support PSK-only builds).
-#
-if (defined($disabled{"md5"}) || defined($disabled{"sha"})
-    || (defined($disabled{"rsa"})
-	&& (defined($disabled{"dsa"}) || defined($disabled{"dh"}))
-	&& (defined($disabled{"ecdsa"}) || defined($disabled{"ecdh"}))))
-	{
-	$disabled{"tls1"} = "forced";
-	$disabled{"dtls1"} = "forced";
-	$disabled{"tls1_1"} = "forced";
-	}
-
-# (D)TLS 1.2 requires either RSA or DSA+DH or ECDSA + ECDH
-# So if all are missing, we can't do either TLS or DTLS.
-# (XXX: We don't support PSK-only builds).
-#
-if (defined($disabled{"rsa"})
-    && (defined($disabled{"dsa"}) || defined($disabled{"dh"}))
-    && (defined($disabled{"ecdsa"}) || defined($disabled{"ecdh"})))
-	{
-	$disabled{"tls"} = "forced";
-	$disabled{"dtls"} = "forced";
-	foreach my $proto ((@tls, @dtls))
-		{
-		$disabled{"$proto"} = "forced";
-		}
-	}
-
-
-# Avoid protocol support holes.  Also disable all versions below N, if version
-# N is disabled while N+1 is enabled.
-#
-my $prev_disabled = 1;
-my $force_disable = 0;
-foreach my $proto (reverse(@tls))
-	{
-	if ($force_disable)
-		{
-		$disabled{$proto} = 1;
-		}
-	elsif (! defined($disabled{$proto}))
-		{
-		$prev_disabled = 0;
-		}
-	elsif (! $prev_disabled)
-		{
-		$force_disable = 1;
-		}
-	}
-my $prev_disabled = 1;
-my $force_disable = 0;
-foreach my $proto (reverse(@dtls))
-	{
-	if ($force_disable)
-		{
-		$disabled{$proto} = 1;
-		}
-	elsif (! defined($disabled{$proto}))
-		{
-		$prev_disabled = 0;
-		}
-	elsif (! $prev_disabled)
-		{
-		$force_disable = 1;
-		}
-	}
-
-if (defined($disabled{"dgram"}))
-	{
-	$disabled{"dtls"} = "forced";
-	$disabled{"dtls1"} = "forced";
-	$disabled{"dtls1_2"} = "forced";
-	}
-
-if (defined($disabled{"ec"}) || defined($disabled{"dsa"})
-    || defined($disabled{"dh"}) || defined($disabled{"stdio"}))
-	{
-	$disabled{"gost"} = "forced";
-	}
-
+    }
+    @tocheckfor = (keys %new_tocheckfor);
+}
 
 if ($target eq "TABLE") {
 	foreach $target (sort keys %table) {
@@ -1021,11 +987,6 @@ if ($d) {
 my %target = resolve_config($target);
 
 &usage if (!%target || $target{template});
-
-if ($fips)
-	{
-	delete $disabled{"shared"} if ($disabled{"shared"} eq "default");
-	}
 
 foreach (sort (keys %disabled))
 	{
