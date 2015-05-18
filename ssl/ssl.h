@@ -2787,6 +2787,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL_RSA_PUBLIC_ENCRYPT                     188
 # define SSL_F_SSL_SCAN_CLIENTHELLO_TLSEXT                320
 # define SSL_F_SSL_SCAN_SERVERHELLO_TLSEXT                321
+# define SSL_F_SSL_SESSION_DUP                            348
 # define SSL_F_SSL_SESSION_NEW                            189
 # define SSL_F_SSL_SESSION_PRINT_FP                       190
 # define SSL_F_SSL_SESSION_SET1_ID_CONTEXT                312
