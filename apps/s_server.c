@@ -2251,8 +2251,10 @@ static int sv_body(char *hostname, int s, unsigned char *context)
                     ret = 1;
                     goto err;
                 }
-                l += k;
-                i -= k;
+                if (k > 0) {
+                    l += k;
+                    i -= k;
+                }
                 if (i <= 0)
                     break;
             }
