@@ -4,7 +4,8 @@
 
  Changes between 1.0.1m and 1.0.1n [xx XXX xxxx]
 
-  *)
+  *) Reject DH handshakes with parameters shorter than 768 bits.
+     [Kurt Roeckx and Emilia Kasper]
 
  Changes between 1.0.1l and 1.0.1m [19 Mar 2015]
 

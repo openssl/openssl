@@ -3295,23 +3295,33 @@ int ssl3_check_cert_and_algorithm(SSL *s)
     }
 #endif
 #ifndef OPENSSL_NO_DH
-    if ((alg_k & SSL_kEDH) &&
-        !(has_bits(i, EVP_PK_DH | EVP_PKT_EXCH) || (dh != NULL))) {
-        SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM, SSL_R_MISSING_DH_KEY);
+    if ((alg_k & SSL_kEDH) && dh == NULL) {
+        SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM, ERR_R_INTERNAL_ERROR);
         goto f_err;
-    } else if ((alg_k & SSL_kDHr) && !has_bits(i, EVP_PK_DH | EVP_PKS_RSA)) {
+    }
+    if ((alg_k & SSL_kDHr) && !has_bits(i, EVP_PK_DH | EVP_PKS_RSA)) {
         SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
                SSL_R_MISSING_DH_RSA_CERT);
         goto f_err;
     }
 # ifndef OPENSSL_NO_DSA
-    else if ((alg_k & SSL_kDHd) && !has_bits(i, EVP_PK_DH | EVP_PKS_DSA)) {
+    if ((alg_k & SSL_kDHd) && !has_bits(i, EVP_PK_DH | EVP_PKS_DSA)) {
         SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
                SSL_R_MISSING_DH_DSA_CERT);
         goto f_err;
     }
 # endif
-#endif
+
+    /* Check DHE only: static DH not implemented. */
+    if (alg_k & SSL_kEDH) {
+        int dh_size = BN_num_bits(dh->p);
+        if ((!SSL_C_IS_EXPORT(s->s3->tmp.new_cipher) && dh_size < 768)
+            || (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher) && dh_size < 512)) {
+            SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM, SSL_R_DH_KEY_TOO_SMALL);
+            goto f_err;
+        }
+    }
+#endif  /* !OPENSSL_NO_DH */
 
     if (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher) && !has_bits(i, EVP_PKT_EXP)) {
 #ifndef OPENSSL_NO_RSA
