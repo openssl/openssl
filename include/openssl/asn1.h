@@ -679,6 +679,9 @@ ASN1_OBJECT *ASN1_OBJECT_create(int nid, unsigned char *data, int len,
 
 int ASN1_INTEGER_get_int64(int64_t *pr, const ASN1_INTEGER *a);
 int ASN1_INTEGER_set_int64(ASN1_INTEGER *a, int64_t r);
+int ASN1_INTEGER_get_uint64(uint64_t *pr, const ASN1_INTEGER *a);
+int ASN1_INTEGER_set_uint64(ASN1_INTEGER *a, uint64_t r);
+
 int ASN1_INTEGER_set(ASN1_INTEGER *a, long v);
 long ASN1_INTEGER_get(const ASN1_INTEGER *a);
 ASN1_INTEGER *BN_to_ASN1_INTEGER(const BIGNUM *bn, ASN1_INTEGER *ai);
@@ -967,6 +970,7 @@ void ERR_load_ASN1_strings(void);
 # define ASN1_F_ASN1_SIGN                                 128
 # define ASN1_F_ASN1_STR2TYPE                             179
 # define ASN1_F_ASN1_STRING_GET_INT64                     227
+# define ASN1_F_ASN1_STRING_GET_UINT64                    230
 # define ASN1_F_ASN1_STRING_SET                           186
 # define ASN1_F_ASN1_STRING_TABLE_ADD                     129
 # define ASN1_F_ASN1_STRING_TO_BN                         228
@@ -1085,6 +1089,7 @@ void ERR_load_ASN1_strings(void);
 # define ASN1_R_ILLEGAL_HEX                               178
 # define ASN1_R_ILLEGAL_IMPLICIT_TAG                      179
 # define ASN1_R_ILLEGAL_INTEGER                           180
+# define ASN1_R_ILLEGAL_NEGATIVE_VALUE                    226
 # define ASN1_R_ILLEGAL_NESTED_TAGGING                    181
 # define ASN1_R_ILLEGAL_NULL                              125
 # define ASN1_R_ILLEGAL_NULL_VALUE                        182
