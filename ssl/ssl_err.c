@@ -1,6 +1,6 @@
 /* ssl/ssl_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2014 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -119,6 +119,7 @@ static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_GET_CLIENT_MASTER_KEY), "GET_CLIENT_MASTER_KEY"},
     {ERR_FUNC(SSL_F_GET_SERVER_FINISHED), "GET_SERVER_FINISHED"},
     {ERR_FUNC(SSL_F_GET_SERVER_HELLO), "GET_SERVER_HELLO"},
+    {ERR_FUNC(SSL_F_GET_SERVER_STATIC_DH_KEY), "GET_SERVER_STATIC_DH_KEY"},
     {ERR_FUNC(SSL_F_GET_SERVER_VERIFY), "GET_SERVER_VERIFY"},
     {ERR_FUNC(SSL_F_I2D_SSL_SESSION), "i2d_SSL_SESSION"},
     {ERR_FUNC(SSL_F_READ_N), "READ_N"},
@@ -459,6 +460,7 @@ static ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_REASON(SSL_R_DECRYPTION_FAILED), "decryption failed"},
     {ERR_REASON(SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC),
      "decryption failed or bad record mac"},
+    {ERR_REASON(SSL_R_DH_KEY_TOO_SMALL), "dh key too small"},
     {ERR_REASON(SSL_R_DH_PUBLIC_VALUE_LENGTH_IS_WRONG),
      "dh public value length is wrong"},
     {ERR_REASON(SSL_R_DIGEST_CHECK_FAILED), "digest check failed"},

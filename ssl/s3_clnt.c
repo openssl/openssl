@@ -2361,6 +2361,25 @@ int ssl3_get_server_done(SSL *s)
     return (ret);
 }
 
+#ifndef OPENSSL_NO_DH
+static DH *get_server_static_dh_key(SESS_CERT *scert)
+{
+    DH *dh_srvr = NULL;
+    EVP_PKEY *spkey = NULL;
+    int idx = scert->peer_cert_type;
+
+    if (idx >= 0)
+        spkey = X509_get_pubkey(scert->peer_pkeys[idx].x509);
+    if (spkey) {
+        dh_srvr = EVP_PKEY_get1_DH(spkey);
+        EVP_PKEY_free(spkey);
+    }
+    if (dh_srvr == NULL)
+        SSLerr(SSL_F_GET_SERVER_STATIC_DH_KEY, ERR_R_INTERNAL_ERROR);
+    return dh_srvr;
+}
+#endif
+
 int ssl3_send_client_key_exchange(SSL *s)
 {
     unsigned char *p;
@@ -2603,25 +2622,14 @@ int ssl3_send_client_key_exchange(SSL *s)
                 goto err;
             }
 
-            if (scert->peer_dh_tmp != NULL)
+            if (scert->peer_dh_tmp != NULL) {
                 dh_srvr = scert->peer_dh_tmp;
-            else {
-                /* we get them from the cert */
-                int idx = scert->peer_cert_type;
-                EVP_PKEY *spkey = NULL;
-                dh_srvr = NULL;
-                if (idx >= 0)
-                    spkey = X509_get_pubkey(scert->peer_pkeys[idx].x509);
-                if (spkey) {
-                    dh_srvr = EVP_PKEY_get1_DH(spkey);
-                    EVP_PKEY_free(spkey);
-                }
-                if (dh_srvr == NULL) {
-                    SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-                           ERR_R_INTERNAL_ERROR);
+            } else {
+                dh_srvr = get_server_static_dh_key(scert);
+                if (dh_srvr == NULL)
                     goto err;
-                }
             }
+
             if (s->s3->flags & TLS1_FLAGS_SKIP_CERT_VERIFY) {
                 /* Use client certificate key */
                 EVP_PKEY *clkey = s->cert->key->privatekey;
@@ -3464,25 +3472,44 @@ int ssl3_check_cert_and_algorithm(SSL *s)
     }
 #endif
 #ifndef OPENSSL_NO_DH
-    if ((alg_k & SSL_kEDH) &&
-        !(has_bits(i, EVP_PK_DH | EVP_PKT_EXCH) || (dh != NULL))) {
-        SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM, SSL_R_MISSING_DH_KEY);
+    if ((alg_k & SSL_kEDH) && dh == NULL) {
+        SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM, ERR_R_INTERNAL_ERROR);
         goto f_err;
-    } else if ((alg_k & SSL_kDHr) && !SSL_USE_SIGALGS(s) &&
+    }
+    if ((alg_k & SSL_kDHr) && !SSL_USE_SIGALGS(s) &&
                !has_bits(i, EVP_PK_DH | EVP_PKS_RSA)) {
         SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
                SSL_R_MISSING_DH_RSA_CERT);
         goto f_err;
     }
 # ifndef OPENSSL_NO_DSA
-    else if ((alg_k & SSL_kDHd) && !SSL_USE_SIGALGS(s) &&
-             !has_bits(i, EVP_PK_DH | EVP_PKS_DSA)) {
+    if ((alg_k & SSL_kDHd) && !SSL_USE_SIGALGS(s) &&
+        !has_bits(i, EVP_PK_DH | EVP_PKS_DSA)) {
         SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
                SSL_R_MISSING_DH_DSA_CERT);
         goto f_err;
     }
 # endif
-#endif
+
+    if (alg_k & (SSL_kDHE | SSL_kDHr | SSL_kDHd)) {
+        int dh_size;
+        if (alg_k & SSL_kDHE) {
+            dh_size = BN_num_bits(dh->p);
+        } else {
+            DH *dh_srvr = get_server_static_dh_key(sc);
+            if (dh_srvr == NULL)
+                goto f_err;
+            dh_size = BN_num_bits(dh_srvr->p);
+            DH_free(dh_srvr);
+        }
+
+        if ((!SSL_C_IS_EXPORT(s->s3->tmp.new_cipher) && dh_size < 768)
+            || (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher) && dh_size < 512)) {
+            SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM, SSL_R_DH_KEY_TOO_SMALL);
+            goto f_err;
+        }
+    }
+#endif  /* !OPENSSL_NO_DH */
 
     if (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher) && !has_bits(i, EVP_PKT_EXP)) {
 #ifndef OPENSSL_NO_RSA

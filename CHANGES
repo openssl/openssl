@@ -4,7 +4,8 @@
 
  Changes between 1.0.2a and 1.0.2b [xx XXX xxxx]
 
-  *)
+  *) Reject DH handshakes with parameters shorter than 768 bits.
+     [Kurt Roeckx and Emilia Kasper]
 
  Changes between 1.0.2 and 1.0.2a [19 Mar 2015]
 
