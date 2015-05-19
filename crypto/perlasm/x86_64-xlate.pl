@@ -192,13 +192,19 @@ my %globals;
 	}
 	$ret;
     }
+    sub myoct {
+        my $v = shift;
+	return $v if ($v =~ /^0x[0-9a-f]{9,16}/i); # if 64-bit hex leave as-is
+        use integer;
+        return oct($v);
+    }
     sub out {
     	my $self = shift;
 
 	if ($gas) {
 	    # Solaris /usr/ccs/bin/as can't handle multiplications
 	    # in $self->{value}
-	    $self->{value} =~ s/(?<![\w\$\.])(0x?[0-9a-f]+)/oct($1)/egi;
+	    $self->{value} =~ s/(?<![\w\$\.])(0x?[0-9a-f]+)/myoct($1)/egi;
 	    $self->{value} =~ s/([0-9]+\s*[\*\/\%]\s*[0-9]+)/eval($1)/eg;
 	    sprintf "\$%s",$self->{value};
 	} else {
