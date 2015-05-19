@@ -60,6 +60,7 @@
 #include <openssl/pem.h>
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
+#include "internal/numbers.h"
 
 /* Remove spaces from beginning and end of a string */
 
@@ -143,7 +144,16 @@ static int test_bin(const char *value, unsigned char **buf, size_t *buflen)
         if (value[vlen - 1] != '"')
             return 0;
         vlen--;
-        *buf = BUF_memdup(value, vlen);
+        if (vlen == 0) {
+            *buf = OPENSSL_malloc(1);
+            if (*buf == NULL)
+                return 0;
+            **buf = 0;
+        } else {
+            *buf = BUF_memdup(value, vlen);
+            if (*buf == NULL)
+                return 0;
+        }
         *buflen = vlen;
         return 1;
     }
@@ -155,6 +165,30 @@ static int test_bin(const char *value, unsigned char **buf, size_t *buflen)
     }
     /* Size of input buffer means we'll never overflow */
     *buflen = len;
+    return 1;
+}
+/* Parse unsigned decimal 64 bit integer value */
+static int test_uint64(const char *value, uint64_t *pr)
+{
+    const char *p = value;
+    if (!*p) {
+        fprintf(stderr, "Invalid empty integer value\n");
+        return -1;
+    }
+    *pr = 0;
+    while (*p) {
+        if (*pr > UINT64_MAX/10) {
+            fprintf(stderr, "Integer string overflow value=%s\n", value);
+            return -1;
+        }
+        *pr *= 10;
+        if (*p < '0' || *p > '9') {
+            fprintf(stderr, "Invalid integer string value=%s\n", value);
+            return -1;
+        }
+        *pr += *p - '0';
+        p++;
+    }
     return 1;
 }
 
@@ -216,6 +250,7 @@ static const struct evp_test_method mac_test_method;
 static const struct evp_test_method psign_test_method, pverify_test_method;
 static const struct evp_test_method pdecrypt_test_method;
 static const struct evp_test_method pverify_recover_test_method;
+static const struct evp_test_method pbe_test_method;
 
 static const struct evp_test_method *evp_test_list[] = {
     &digest_test_method,
@@ -225,6 +260,7 @@ static const struct evp_test_method *evp_test_list[] = {
     &pverify_test_method,
     &pdecrypt_test_method,
     &pverify_recover_test_method,
+    &pbe_test_method,
     NULL
 };
 
@@ -1242,4 +1278,126 @@ static const struct evp_test_method pverify_test_method = {
     pkey_test_cleanup,
     pkey_test_parse,
     verify_test_run
+};
+
+/* PBE tests */
+
+#define PBE_TYPE_SCRYPT 1
+
+struct pbe_data {
+
+    int pbe_type;
+
+    /* scrypt parameters */
+    uint64_t N, r, p, maxmem;
+
+    /* password */
+    unsigned char *pass;
+    size_t pass_len;
+
+    /* salt */
+    unsigned char *salt;
+    size_t salt_len;
+
+    /* Expected output */
+    unsigned char *key;
+    size_t key_len;
+};
+
+static int scrypt_test_parse(struct evp_test *t,
+                             const char *keyword, const char *value)
+{
+    struct pbe_data *pdata = t->data;
+    if (strcmp(keyword, "N") == 0)
+        return test_uint64(value, &pdata->N);
+    if (strcmp(keyword, "p") == 0)
+        return test_uint64(value, &pdata->p);
+    if (strcmp(keyword, "r") == 0)
+        return test_uint64(value, &pdata->r);
+    if (strcmp(keyword, "maxmem") == 0)
+        return test_uint64(value, &pdata->maxmem);
+    return 0;
+}
+
+static int scrypt_test_run(struct evp_test *t)
+{
+    struct pbe_data *pdata = t->data;
+    const char *err = "INTERNAL_ERROR";
+    unsigned char *key;
+    key = OPENSSL_malloc(pdata->key_len);
+    if (!key)
+        goto err;
+    err = "SCRYPT_ERROR";
+    if (EVP_PBE_scrypt((const char *)pdata->pass, pdata->pass_len,
+                       pdata->salt, pdata->salt_len,
+                       pdata->N, pdata->r, pdata->p, pdata->maxmem,
+                       key, pdata->key_len) == 0)
+        goto err;
+    err = "KEY_MISMATCH";
+    if (check_output(t, pdata->key, key, pdata->key_len))
+        goto err;
+    err = NULL;
+    err:
+    OPENSSL_free(key);
+    t->err = err;
+    return 1;
+}
+
+static int pbe_test_init(struct evp_test *t, const char *alg)
+{
+    struct pbe_data *pdat;
+    int pbe_type = 0;
+    if (strcmp(alg, "scrypt") == 0)
+        pbe_type = PBE_TYPE_SCRYPT;
+    else
+        fprintf(stderr, "Unknown pbe algorithm %s\n", alg);
+    pdat = OPENSSL_malloc(sizeof(*pdat));
+    pdat->pbe_type = pbe_type;
+    pdat->pass = NULL;
+    pdat->salt = NULL;
+    pdat->N = 0;
+    pdat->r = 0;
+    pdat->p = 0;
+    pdat->maxmem = 0;
+    t->data = pdat;
+    return 1;
+}
+
+static void pbe_test_cleanup(struct evp_test *t)
+{
+    struct pbe_data *pdat = t->data;
+    test_free(pdat->pass);
+    test_free(pdat->salt);
+    test_free(pdat->key);
+}
+
+static int pbe_test_parse(struct evp_test *t,
+                             const char *keyword, const char *value)
+{
+    struct pbe_data *pdata = t->data;
+    if (strcmp(keyword, "Password") == 0)
+        return test_bin(value, &pdata->pass, &pdata->pass_len);
+    if (strcmp(keyword, "Salt") == 0)
+        return test_bin(value, &pdata->salt, &pdata->salt_len);
+    if (strcmp(keyword, "Key") == 0)
+        return test_bin(value, &pdata->key, &pdata->key_len);
+    if (pdata->pbe_type == PBE_TYPE_SCRYPT)
+        return scrypt_test_parse(t, keyword, value);
+    return 0;
+}
+
+static int pbe_test_run(struct evp_test *t)
+{
+    struct pbe_data *pdata = t->data;
+    if (pdata->pbe_type == PBE_TYPE_SCRYPT)
+        return scrypt_test_run(t);
+    return 0;
+}
+
+static const struct evp_test_method pbe_test_method = {
+    "PBE",
+    pbe_test_init,
+    pbe_test_cleanup,
+    pbe_test_parse,
+    pbe_test_run
 };

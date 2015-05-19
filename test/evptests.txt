@@ -2314,3 +2314,42 @@ Ctrl = digest:SHA1
 Input = "0123456789ABCDEF1234"
 Output = 3080022100b1d1cb1a577035bccdd5a86c6148c2cc7c633cd42b7234139b593076d041e15202201898cdd52b41ca502098184b409cf83a21bc945006746e3b7cea52234e043ec80000
 Result = VERIFY_ERROR
+
+# scrypt tests from draft-josefsson-scrypt-kdf-03
+PBE = scrypt
+Password = ""
+Salt = ""
+N = 16
+r = 1
+p = 1
+Key = 77d6576238657b203b19ca42c18a0497f16b4844e3074ae8dfdffa3fede21442fcd0069ded0948f8326a753a0fc81f17e8d3e0fb2e0d3628cf35e20c38d18906
+
+PBE = scrypt
+Password = "password"
+Salt = "NaCl"
+N = 1024
+r = 8
+p = 16
+Key = fdbabe1c9d3472007856e7190d01e9fe7c6ad7cbc8237830e77376634b3731622eaf30d92e22a3886ff109279d9830dac727afb94a83ee6d8360cbdfa2cc0640
+
+PBE = scrypt
+Password = "pleaseletmein"
+Salt = "SodiumChloride"
+N = 16384
+r = 8
+p = 1
+Key = 7023bdcb3afd7348461c06cd81fd38ebfda8fbba904f8e3ea9b543f6545da1f2d5432955613f0fcf62d49705242a9af9e61e85dc0d651e40dfcf017b45575887
+
+# NB: this test requires more than 2GB of memory to run so it will hit the
+# scrypt memory limit and return an error. To run this test without error
+# uncomment out the "maxmem" line and comment out the "Result"
+# line
+PBE = scrypt
+Password = "pleaseletmein"
+Salt = "SodiumChloride"
+N = 1048576
+r = 8
+p = 1
+Key = 2101cb9b6a511aaeaddbbe09cf70f881ec568d574a2ffd4dabe5ee9820adaa478e56fd8f4ba5d09ffa1c6d927c40f4c337304049e8a952fbcbf45c6fa77a41a4
+#maxmem = 10000000000
+Result = SCRYPT_ERROR
