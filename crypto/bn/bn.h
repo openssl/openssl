@@ -916,6 +916,7 @@ void ERR_load_BN_strings(void);
 # define BN_R_ARG2_LT_ARG3                                100
 # define BN_R_BAD_RECIPROCAL                              101
 # define BN_R_BIGNUM_TOO_LONG                             114
+# define BN_R_BITS_TOO_SMALL                              118
 # define BN_R_CALLED_WITH_EVEN_MODULUS                    102
 # define BN_R_DIV_BY_ZERO                                 103
 # define BN_R_ENCODING_ERROR                              104
