@@ -58,6 +58,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "internal/numbers.h"
 #include <limits.h>
 #include <openssl/asn1.h>
 #include <openssl/bn.h>
@@ -418,6 +419,35 @@ static int asn1_string_set_int64(ASN1_STRING *a, int64_t r, int itype)
     return ASN1_STRING_set(a, tbuf, l);
 }
 
+static int asn1_string_get_uint64(uint64_t *pr, const ASN1_STRING *a,
+                                  int itype)
+{
+    if (a == NULL) {
+        ASN1err(ASN1_F_ASN1_STRING_GET_UINT64, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if ((a->type & ~V_ASN1_NEG) != itype) {
+        ASN1err(ASN1_F_ASN1_STRING_GET_UINT64, ASN1_R_WRONG_INTEGER_TYPE);
+        return 0;
+    }
+    if (a->type & V_ASN1_NEG) {
+        ASN1err(ASN1_F_ASN1_STRING_GET_UINT64, ASN1_R_ILLEGAL_NEGATIVE_VALUE);
+        return 0;
+    }
+    return asn1_get_uint64(pr, a->data, a->length);
+}
+
+static int asn1_string_set_uint64(ASN1_STRING *a, uint64_t r, int itype)
+{
+    unsigned char tbuf[sizeof(r)];
+    size_t l;
+    a->type = itype;
+    l = asn1_put_uint64(tbuf, r);
+    if (l == 0)
+        return 0;
+    return ASN1_STRING_set(a, tbuf, l);
+}
+
 /*
  * This is a version of d2i_ASN1_INTEGER that ignores the sign bit of ASN1
  * integers: some broken software can encode a positive INTEGER with its MSB
@@ -558,6 +588,16 @@ int ASN1_INTEGER_get_int64(int64_t *pr, const ASN1_INTEGER *a)
 int ASN1_INTEGER_set_int64(ASN1_INTEGER *a, int64_t r)
 {
     return asn1_string_set_int64(a, r, V_ASN1_INTEGER);
+}
+
+int ASN1_INTEGER_get_uint64(uint64_t *pr, const ASN1_INTEGER *a)
+{
+    return asn1_string_get_uint64(pr, a, V_ASN1_INTEGER);
+}
+
+int ASN1_INTEGER_set_uint64(ASN1_INTEGER *a, uint64_t r)
+{
+    return asn1_string_set_uint64(a, r, V_ASN1_INTEGER);
 }
 
 int ASN1_INTEGER_set(ASN1_INTEGER *a, long v)

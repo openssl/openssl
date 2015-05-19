@@ -14,6 +14,9 @@ ASN1_INTEGER_get_int64, ASN1_INTEGER_get, ASN1_INTEGER_set_int64, ASN1_INTEGER_s
  int ASN1_INTEGER_set_int64(ASN1_INTEGER *a, int64_t r);
  long ASN1_INTEGER_set(const ASN1_INTEGER *a);
 
+ int ASN1_INTEGER_get_uint64(uint64_t *pr, const ASN1_INTEGER *a);
+ int ASN1_INTEGER_set_uint64(ASN1_INTEGER *a, uint64_t r);
+
  ASN1_INTEGER *BN_to_ASN1_INTEGER(const BIGNUM *bn, ASN1_INTEGER *ai);
  BIGNUM *ASN1_INTEGER_to_BN(const ASN1_INTEGER *ai, BIGNUM *bn);
 
@@ -36,6 +39,10 @@ If successful it returns 1 and sets B<*pr> to the value of B<a>. If it fails
 (due to invalid type or the value being too big to fit into an B<int64_t> type)
 it returns 0.
 
+ASN1_INTEGER_get_uint64() is similar to ASN1_INTEGER_get_int64_t() except it
+converts to a B<uint64_t> type and an error is returned if the passed integer
+is negative.
+
 ASN1_INTEGER_get() also returns the value of B<a> but it returns 0 if B<a> is
 NULL and -1 on error (which is ambiguous because -1 is a legitimate value for
 an B<ASN1_INTEGER>). New applications should use ASN1_INTEGER_get_int64()
@@ -43,6 +50,9 @@ instead.
 
 ASN1_INTEGER_set_int64() sets the value of B<ASN1_INTEGER> B<a> to the
 B<int64_t> value B<r>.
+
+ASN1_INTEGER_set_uint64() sets the value of B<ASN1_INTEGER> B<a> to the
+B<uint64_t> value B<r>.
 
 ASN1_INTEGER_set() sets the value of B<ASN1_INTEGER> B<a> to the B<long> value
 B<v>.
