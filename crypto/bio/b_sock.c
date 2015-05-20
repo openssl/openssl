@@ -100,7 +100,7 @@ int BIO_get_host_ip(const char *str, unsigned char *ip)
     int i;
     int err = 1;
     int locked = 0;
-    struct hostent *he;
+    struct sockaddr *he;
 
     i = get_ip(str, ip);
     if (i < 0) {
@@ -131,13 +131,12 @@ int BIO_get_host_ip(const char *str, unsigned char *ip)
         goto err;
     }
 
-    if (he->h_addrtype != AF_INET) {
+    if (he->sa_family != AF_INET) {
         BIOerr(BIO_F_BIO_GET_HOST_IP,
                BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET);
         goto err;
     }
-    for (i = 0; i < 4; i++)
-        ip[i] = he->h_addr_list[0][i];
+    ip = he->sa_data;
     err = 0;
 
  err:
@@ -224,7 +223,7 @@ int BIO_sock_error(int sock)
         return (j);
 }
 
-struct hostent *BIO_gethostbyname(const char *name)
+struct sockaddr *BIO_gethostbyname(const char *name)
 {
     /*
      * Caching gethostbyname() results forever is wrong, so we have to let
@@ -233,7 +232,10 @@ struct hostent *BIO_gethostbyname(const char *name)
 # if (defined(NETWARE_BSDSOCK) && !defined(__NOVELL_LIBC__))
     return gethostbyname((char *)name);
 # else
-    return gethostbyname(name);
+    struct addrinfo *res;
+    getaddrinfo(name, NULL, NULL, &res);
+
+    return res->ai_addr;
 # endif
 }
 
