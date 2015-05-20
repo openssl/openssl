@@ -71,4 +71,5 @@ struct comp_ctx_st {
     unsigned long compress_out;
     unsigned long expand_in;
     unsigned long expand_out;
+    void* data;
 };

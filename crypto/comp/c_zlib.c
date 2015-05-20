@@ -109,9 +109,7 @@ static COMP_METHOD zlib_stateful_method = {
     zlib_stateful_init,
     zlib_stateful_finish,
     zlib_stateful_compress_block,
-    zlib_stateful_expand_block,
-    NULL,
-    NULL,
+    zlib_stateful_expand_block
 };
 
 /*
@@ -167,8 +165,6 @@ struct zlib_state {
     z_stream ostream;
 };
 
-static int zlib_stateful_ex_idx = -1;
-
 static int zlib_stateful_init(COMP_CTX *ctx)
 {
     int err;
@@ -200,8 +196,7 @@ static int zlib_stateful_init(COMP_CTX *ctx)
     if (err != Z_OK)
         goto err;
 
-    CRYPTO_new_ex_data(CRYPTO_EX_INDEX_COMP, ctx, &ctx->ex_data);
-    CRYPTO_set_ex_data(&ctx->ex_data, zlib_stateful_ex_idx, state);
+    ctx->data = state;
     return 1;
  err:
     OPENSSL_free(state);
@@ -210,13 +205,10 @@ static int zlib_stateful_init(COMP_CTX *ctx)
 
 static void zlib_stateful_finish(COMP_CTX *ctx)
 {
-    struct zlib_state *state =
-        (struct zlib_state *)CRYPTO_get_ex_data(&ctx->ex_data,
-                                                zlib_stateful_ex_idx);
+    struct zlib_state *state = ctx->data;
     inflateEnd(&state->istream);
     deflateEnd(&state->ostream);
     OPENSSL_free(state);
-    CRYPTO_free_ex_data(CRYPTO_EX_INDEX_COMP, ctx, &ctx->ex_data);
 }
 
 static int zlib_stateful_compress_block(COMP_CTX *ctx, unsigned char *out,
@@ -224,9 +216,7 @@ static int zlib_stateful_compress_block(COMP_CTX *ctx, unsigned char *out,
                                         unsigned int ilen)
 {
     int err = Z_OK;
-    struct zlib_state *state =
-        (struct zlib_state *)CRYPTO_get_ex_data(&ctx->ex_data,
-                                                zlib_stateful_ex_idx);
+    struct zlib_state *state = ctx->data;
 
     if (state == NULL)
         return -1;
@@ -252,10 +242,7 @@ static int zlib_stateful_expand_block(COMP_CTX *ctx, unsigned char *out,
                                       unsigned int ilen)
 {
     int err = Z_OK;
-
-    struct zlib_state *state =
-        (struct zlib_state *)CRYPTO_get_ex_data(&ctx->ex_data,
-                                                zlib_stateful_ex_idx);
+    struct zlib_state *state = ctx->data;
 
     if (state == NULL)
         return 0;
@@ -307,33 +294,13 @@ COMP_METHOD *COMP_zlib(void)
                 && p_inflateInit_ && p_deflateEnd
                 && p_deflate && p_deflateInit_ && p_zError)
                 zlib_loaded++;
+            if (zlib_loaded)
+                meth = &zlib_stateful_method;
         }
     }
 #endif
-#ifdef ZLIB_SHARED
-    if (zlib_loaded)
-#endif
-#if defined(ZLIB) || defined(ZLIB_SHARED)
-    {
-        /*
-         * init zlib_stateful_ex_idx here so that in a multi-process
-         * application it's enough to intialize openssl before forking (idx
-         * will be inherited in all the children)
-         */
-        if (zlib_stateful_ex_idx == -1) {
-            CRYPTO_w_lock(CRYPTO_LOCK_COMP);
-            if (zlib_stateful_ex_idx == -1)
-                zlib_stateful_ex_idx =
-                    CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_COMP,
-                                            0, NULL, NULL, NULL, NULL);
-            CRYPTO_w_unlock(CRYPTO_LOCK_COMP);
-            if (zlib_stateful_ex_idx == -1)
-                goto err;
-        }
-
-        meth = &zlib_stateful_method;
-    }
- err:
+#if defined(ZLIB)
+    meth = &zlib_stateful_method;
 #endif
 
     return (meth);
