@@ -226,18 +226,30 @@ int pkcs8_main(int argc, char **argv)
                 goto end;
             }
         } else {
+            X509_ALGOR *pbe;
+            if (cipher)
+                pbe = PKCS5_pbe2_set_iv(cipher, iter, NULL, 0, NULL, pbe_nid);
+            else
+                pbe = PKCS5_pbe_set(pbe_nid, iter, NULL, 0);
+            if (pbe == NULL) {
+                BIO_printf(bio_err, "Error setting PBE algorithm\n");
+                ERR_print_errors(bio_err);
+                goto end;
+            }
             if (passout)
                 p8pass = passout;
             else {
                 p8pass = pass;
                 if (EVP_read_pw_string
-                    (pass, sizeof pass, "Enter Encryption Password:", 1))
+                    (pass, sizeof pass, "Enter Encryption Password:", 1)) {
+                    X509_ALGOR_free(pbe);
                     goto end;
+                }
             }
             app_RAND_load_file(NULL, 0);
-            if ((p8 = PKCS8_encrypt(pbe_nid, cipher,
-                                    p8pass, strlen(p8pass),
-                                    NULL, 0, iter, p8inf)) == NULL) {
+            p8 = PKCS8_set0_pbe(p8pass, strlen(p8pass), p8inf, pbe);
+            if (p8 == NULL) {
+                X509_ALGOR_free(pbe);
                 BIO_printf(bio_err, "Error encrypting key\n");
                 ERR_print_errors(bio_err);
                 goto end;
