@@ -396,7 +396,14 @@
      whose return value is often ignored. 
      [Steve Henson]
 
- Changes between 1.0.2 and 1.0.2a [xx XXX xxxx]
+ Changes between 1.0.2a and 1.0.2b [xx XXX xxxx]
+
+  *) Only support 256-bit or stronger elliptic curves with the
+     'ecdh_auto' setting (server) or by default (client). Of supported
+     curves, prefer P-256 (both).
+     [Emilia Kasper]
+
+ Changes between 1.0.2 and 1.0.2a [19 Mar 2015]
 
   *) ClientHello sigalgs DoS fix
 

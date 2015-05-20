@@ -268,36 +268,64 @@ static const unsigned char ecformats_default[] = {
     TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2
 };
 
-static const unsigned char eccurves_default[] = {
-    0, 14,                      /* sect571r1 (14) */
-    0, 13,                      /* sect571k1 (13) */
+/* The client's default curves / the server's 'auto' curves. */
+static const unsigned char eccurves_auto[] = {
+    /* Prefer P-256 which has the fastest and most secure implementations. */
+    0, 23,                      /* secp256r1 (23) */
+    /* Other >= 256-bit prime curves. */
     0, 25,                      /* secp521r1 (25) */
     0, 28,                      /* brainpool512r1 (28) */
-    0, 11,                      /* sect409k1 (11) */
-    0, 12,                      /* sect409r1 (12) */
     0, 27,                      /* brainpoolP384r1 (27) */
     0, 24,                      /* secp384r1 (24) */
-    0, 9,                       /* sect283k1 (9) */
-    0, 10,                      /* sect283r1 (10) */
     0, 26,                      /* brainpoolP256r1 (26) */
     0, 22,                      /* secp256k1 (22) */
+    /* >= 256-bit binary curves. */
+    0, 14,                      /* sect571r1 (14) */
+    0, 13,                      /* sect571k1 (13) */
+    0, 11,                      /* sect409k1 (11) */
+    0, 12,                      /* sect409r1 (12) */
+    0, 9,                       /* sect283k1 (9) */
+    0, 10,                      /* sect283r1 (10) */
+};
+
+static const unsigned char eccurves_all[] = {
+    /* Prefer P-256 which has the fastest and most secure implementations. */
     0, 23,                      /* secp256r1 (23) */
-    0, 8,                       /* sect239k1 (8) */
-    0, 6,                       /* sect233k1 (6) */
-    0, 7,                       /* sect233r1 (7) */
+    /* Other >= 256-bit prime curves. */
+    0, 25,                      /* secp521r1 (25) */
+    0, 28,                      /* brainpool512r1 (28) */
+    0, 27,                      /* brainpoolP384r1 (27) */
+    0, 24,                      /* secp384r1 (24) */
+    0, 26,                      /* brainpoolP256r1 (26) */
+    0, 22,                      /* secp256k1 (22) */
+    /* >= 256-bit binary curves. */
+    0, 14,                      /* sect571r1 (14) */
+    0, 13,                      /* sect571k1 (13) */
+    0, 11,                      /* sect409k1 (11) */
+    0, 12,                      /* sect409r1 (12) */
+    0, 9,                       /* sect283k1 (9) */
+    0, 10,                      /* sect283r1 (10) */
+    /*
+     * Remaining curves disabled by default but still permitted if set
+     * via an explicit callback or parameters.
+     */
     0, 20,                      /* secp224k1 (20) */
     0, 21,                      /* secp224r1 (21) */
-    0, 4,                       /* sect193r1 (4) */
-    0, 5,                       /* sect193r2 (5) */
     0, 18,                      /* secp192k1 (18) */
     0, 19,                      /* secp192r1 (19) */
-    0, 1,                       /* sect163k1 (1) */
-    0, 2,                       /* sect163r1 (2) */
-    0, 3,                       /* sect163r2 (3) */
     0, 15,                      /* secp160k1 (15) */
     0, 16,                      /* secp160r1 (16) */
     0, 17,                      /* secp160r2 (17) */
+    0, 8,                       /* sect239k1 (8) */
+    0, 6,                       /* sect233k1 (6) */
+    0, 7,                       /* sect233r1 (7) */
+    0, 4,                       /* sect193r1 (4) */
+    0, 5,                       /* sect193r2 (5) */
+    0, 1,                       /* sect163k1 (1) */
+    0, 2,                       /* sect163r1 (2) */
+    0, 3,                       /* sect163r2 (3) */
 };
+
 
 static const unsigned char suiteb_curves[] = {
     0, TLSEXT_curve_P_256,
@@ -419,8 +447,13 @@ static int tls1_get_curvelist(SSL *s, int sess,
             pcurveslen = s->tlsext_ellipticcurvelist_length;
         }
         if (!*pcurves) {
-            *pcurves = eccurves_default;
-            pcurveslen = sizeof(eccurves_default);
+            if (!s->server || (s->cert && s->cert->ecdh_tmp_auto)) {
+                *pcurves = eccurves_auto;
+                pcurveslen = sizeof(eccurves_auto);
+            } else {
+                *pcurves = eccurves_all;
+                pcurveslen = sizeof(eccurves_all);
+            }
         }
     }
 
