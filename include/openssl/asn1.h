@@ -1033,9 +1033,11 @@ void ERR_load_ASN1_strings(void);
 # define ASN1_F_OID_MODULE_INIT                           174
 # define ASN1_F_PARSE_TAGGING                             182
 # define ASN1_F_PKCS5_PBE2_SET_IV                         167
+# define ASN1_F_PKCS5_PBE2_SET_SCRYPT                     231
 # define ASN1_F_PKCS5_PBE_SET                             202
 # define ASN1_F_PKCS5_PBE_SET0_ALGOR                      215
 # define ASN1_F_PKCS5_PBKDF2_SET                          219
+# define ASN1_F_PKCS5_SCRYPT_SET                          232
 # define ASN1_F_SMIME_READ_ASN1                           212
 # define ASN1_F_SMIME_TEXT                                213
 # define ASN1_F_STBL_MODULE_INIT                          223
@@ -1109,6 +1111,7 @@ void ERR_load_ASN1_strings(void);
 # define ASN1_R_INVALID_MODIFIER                          186
 # define ASN1_R_INVALID_NUMBER                            187
 # define ASN1_R_INVALID_OBJECT_ENCODING                   216
+# define ASN1_R_INVALID_SCRYPT_PARAMETERS                 227
 # define ASN1_R_INVALID_SEPARATOR                         131
 # define ASN1_R_INVALID_STRING_TABLE_VALUE                218
 # define ASN1_R_INVALID_TIME_FORMAT                       132
