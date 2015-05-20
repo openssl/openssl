@@ -1339,12 +1339,9 @@ int main(int argc, char *argv[])
                 BIO_printf(bio_err, "unknown curve name (%s)\n", named_curve);
                 goto end;
             }
-        } else
-# ifdef OPENSSL_NO_EC2M
+        } else {
             nid = NID_X9_62_prime256v1;
-# else
-            nid = NID_sect163r2;
-# endif
+        }
 
         ecdh = EC_KEY_new_by_curve_name(nid);
         if (ecdh == NULL) {

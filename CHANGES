@@ -4,6 +4,11 @@
 
  Changes between 1.0.2a and 1.0.2b [xx XXX xxxx]
 
+  *) Only support 256-bit or stronger elliptic curves with the
+     'ecdh_auto' setting (server) or by default (client). Of supported
+     curves, prefer P-256 (both).
+     [Emilia Kasper]
+
   *) Reject DH handshakes with parameters shorter than 768 bits.
      [Kurt Roeckx and Emilia Kasper]
 
