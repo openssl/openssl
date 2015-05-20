@@ -4561,3 +4561,8 @@ COMP_CTX_get_method                     4919	EXIST::FUNCTION:
 COMP_CTX_get_type                       4920	EXIST::FUNCTION:
 COMP_get_name                           4921	EXIST::FUNCTION:
 COMP_get_type                           4922	EXIST::FUNCTION:
+ASN1_INTEGER_get_int64                  4923	EXIST::FUNCTION:
+ASN1_ENUMERATED_set_int64               4924	EXIST::FUNCTION:
+EVP_PBE_scrypt                          4925	EXIST::FUNCTION:
+ASN1_INTEGER_set_int64                  4926	EXIST::FUNCTION:
+ASN1_ENUMERATED_get_int64               4927	EXIST::FUNCTION:
