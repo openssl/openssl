@@ -1,6 +1,6 @@
 /* crypto/evp/evp_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2013 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -148,6 +148,7 @@ static ERR_STRING_DATA EVP_str_functs[] = {
     {ERR_FUNC(EVP_F_PKCS5_PBE_KEYIVGEN), "PKCS5_PBE_keyivgen"},
     {ERR_FUNC(EVP_F_PKCS5_V2_PBE_KEYIVGEN), "PKCS5_v2_PBE_keyivgen"},
     {ERR_FUNC(EVP_F_PKCS5_V2_PBKDF2_KEYIVGEN), "PKCS5_V2_PBKDF2_KEYIVGEN"},
+    {ERR_FUNC(EVP_F_PKCS5_V2_SCRYPT_KEYIVGEN), "PKCS5_v2_scrypt_keyivgen"},
     {ERR_FUNC(EVP_F_PKCS8_SET_BROKEN), "PKCS8_set_broken"},
     {ERR_FUNC(EVP_F_PKEY_SET_TYPE), "PKEY_SET_TYPE"},
     {ERR_FUNC(EVP_F_RC2_MAGIC_TO_METH), "RC2_MAGIC_TO_METH"},
@@ -165,8 +166,7 @@ static ERR_STRING_DATA EVP_str_reasons[] = {
     {ERR_REASON(EVP_R_BN_DECODE_ERROR), "bn decode error"},
     {ERR_REASON(EVP_R_BN_PUBKEY_ERROR), "bn pubkey error"},
     {ERR_REASON(EVP_R_BUFFER_TOO_SMALL), "buffer too small"},
-    {ERR_REASON(EVP_R_CAMELLIA_KEY_SETUP_FAILED),
-     "camellia key setup failed"},
+    {ERR_REASON(EVP_R_CAMELLIA_KEY_SETUP_FAILED), "camellia key setup failed"},
     {ERR_REASON(EVP_R_CIPHER_PARAMETER_ERROR), "cipher parameter error"},
     {ERR_REASON(EVP_R_COMMAND_NOT_SUPPORTED), "command not supported"},
     {ERR_REASON(EVP_R_CTRL_NOT_IMPLEMENTED), "ctrl not implemented"},
@@ -188,6 +188,7 @@ static ERR_STRING_DATA EVP_str_reasons[] = {
     {ERR_REASON(EVP_R_EXPECTING_A_ECDSA_KEY), "expecting a ecdsa key"},
     {ERR_REASON(EVP_R_EXPECTING_A_EC_KEY), "expecting a ec key"},
     {ERR_REASON(EVP_R_FIPS_MODE_NOT_SUPPORTED), "fips mode not supported"},
+    {ERR_REASON(EVP_R_ILLEGAL_SCRYPT_PARAMETERS), "illegal scrypt parameters"},
     {ERR_REASON(EVP_R_INITIALIZATION_ERROR), "initialization error"},
     {ERR_REASON(EVP_R_INPUT_NOT_INITIALIZED), "input not initialized"},
     {ERR_REASON(EVP_R_INVALID_DIGEST), "invalid digest"},
@@ -212,8 +213,7 @@ static ERR_STRING_DATA EVP_str_reasons[] = {
     {ERR_REASON(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE),
      "operation not supported for this keytype"},
     {ERR_REASON(EVP_R_OPERATON_NOT_INITIALIZED), "operaton not initialized"},
-    {ERR_REASON(EVP_R_PKCS8_UNKNOWN_BROKEN_TYPE),
-     "pkcs8 unknown broken type"},
+    {ERR_REASON(EVP_R_PKCS8_UNKNOWN_BROKEN_TYPE), "pkcs8 unknown broken type"},
     {ERR_REASON(EVP_R_PRIVATE_KEY_DECODE_ERROR), "private key decode error"},
     {ERR_REASON(EVP_R_PRIVATE_KEY_ENCODE_ERROR), "private key encode error"},
     {ERR_REASON(EVP_R_PUBLIC_KEY_NOT_RSA), "public key not rsa"},
