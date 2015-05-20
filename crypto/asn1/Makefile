@@ -150,7 +150,8 @@ a_i2d_fp.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 a_i2d_fp.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 a_i2d_fp.o: ../../include/openssl/symhacks.h ../include/internal/cryptlib.h
 a_i2d_fp.o: a_i2d_fp.c
-a_int.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
+a_int.o: ../../e_os.h ../../include/internal/numbers.h
+a_int.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 a_int.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 a_int.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 a_int.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
@@ -528,6 +529,21 @@ p5_pbev2.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 p5_pbev2.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 p5_pbev2.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 p5_pbev2.o: ../include/internal/cryptlib.h p5_pbev2.c
+p5_scrypt.o: ../../e_os.h ../../include/openssl/asn1.h
+p5_scrypt.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
+p5_scrypt.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+p5_scrypt.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+p5_scrypt.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
+p5_scrypt.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+p5_scrypt.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+p5_scrypt.o: ../../include/openssl/objects.h
+p5_scrypt.o: ../../include/openssl/opensslconf.h
+p5_scrypt.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+p5_scrypt.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
+p5_scrypt.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+p5_scrypt.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+p5_scrypt.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+p5_scrypt.o: ../include/internal/cryptlib.h p5_scrypt.c
 p8_pkey.o: ../../e_os.h ../../include/openssl/asn1.h
 p8_pkey.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 p8_pkey.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
