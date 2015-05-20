@@ -99,6 +99,7 @@ my $template = Text::Template->new(TYPE => 'STRING', SOURCE => $text );
 $template->fill_in(OUTPUT => \*STDOUT,
                    HASH => { config => \%config,
                              target => \%target,
+                             withargs => \%withargs,
                              quotify1 => \&quotify1,
                              quotify_l => \&quotify_l },
                    DELIMITERS => [ "{-", "-}" ],
