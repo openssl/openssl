@@ -300,7 +300,7 @@ sub do_link_rule
 	local($ret,$_);
 	
 	$file =~ s/\//$o/g if $o ne '/';
-	$n=&bname($targer);
+	$n=&bname($target);
 	$ret.="$target: $files $dep_libs\n";
 	$ret.="\t\$(LINK) \$(LFLAGS) $efile$target @<<\n";
 	$ret.="  \$(APP_EX_OBJ) $files $libs\n<<\n";
