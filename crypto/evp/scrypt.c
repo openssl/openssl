@@ -61,6 +61,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <openssl/evp.h>
+#include <openssl/err.h>
 #include <internal/numbers.h>
 
 #define R(a,b) (((a) << (b)) | ((a) >> (32 - (b))))
@@ -255,8 +256,10 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
     if (maxmem == 0)
         maxmem = SCRYPT_MAX_MEM;
 
-    if (Blen + Vlen > maxmem)
+    if (Blen + Vlen > maxmem) {
+        EVPerr(EVP_F_EVP_PBE_SCRYPT, EVP_R_MEMORY_LIMIT_EXCEEDED);
         return 0;
+    }
 
     /* If no key return to indicate parameters are OK */
     if (key == NULL)

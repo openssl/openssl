@@ -1447,6 +1447,7 @@ void ERR_load_EVP_strings(void);
 # define EVP_F_EVP_PBE_ALG_ADD                            115
 # define EVP_F_EVP_PBE_ALG_ADD_TYPE                       160
 # define EVP_F_EVP_PBE_CIPHERINIT                         116
+# define EVP_F_EVP_PBE_SCRYPT                             181
 # define EVP_F_EVP_PKCS82PKEY                             111
 # define EVP_F_EVP_PKCS82PKEY_BROKEN                      136
 # define EVP_F_EVP_PKEY2PKCS8_BROKEN                      113
@@ -1538,6 +1539,7 @@ void ERR_load_EVP_strings(void);
 # define EVP_R_INVALID_OPERATION                          148
 # define EVP_R_IV_TOO_LARGE                               102
 # define EVP_R_KEYGEN_FAILURE                             120
+# define EVP_R_MEMORY_LIMIT_EXCEEDED                      172
 # define EVP_R_MESSAGE_DIGEST_IS_NULL                     159
 # define EVP_R_METHOD_NOT_SUPPORTED                       144
 # define EVP_R_MISSING_PARAMETERS                         103
