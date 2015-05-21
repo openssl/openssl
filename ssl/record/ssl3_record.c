@@ -132,9 +132,15 @@ static const unsigned char ssl3_pad_2[48] = {
     0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c
 };
 
+/*
+ * Clear the contents of an SSL3_RECORD but retain any memory allocated
+ */
 void SSL3_RECORD_clear(SSL3_RECORD *r)
 {
-    memset(r->seq_num, 0, sizeof(r->seq_num));
+    unsigned char *comp = r->comp;
+
+    memset(r, 0, sizeof(*r));
+    r->comp = comp;
 }
 
 void SSL3_RECORD_release(SSL3_RECORD *r)

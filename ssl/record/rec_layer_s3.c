@@ -142,35 +142,34 @@ void RECORD_LAYER_init(RECORD_LAYER *rl, SSL *s)
 
 void RECORD_LAYER_clear(RECORD_LAYER *rl)
 {
-    unsigned char *rp, *wp;
-    size_t rlen, wlen;
-    int read_ahead;
-    SSL *s;
-    DTLS_RECORD_LAYER *d;
+    rl->rstate = SSL_ST_READ_HEADER;
 
-    s = rl->s;
-    d = rl->d;
-    read_ahead = rl->read_ahead;
-    rp = SSL3_BUFFER_get_buf(&rl->rbuf);
-    rlen = SSL3_BUFFER_get_len(&rl->rbuf);
-    wp = SSL3_BUFFER_get_buf(&rl->wbuf);
-    wlen = SSL3_BUFFER_get_len(&rl->wbuf);
-    memset(rl, 0, sizeof(*rl));
-    SSL3_BUFFER_set_buf(&rl->rbuf, rp);
-    SSL3_BUFFER_set_len(&rl->rbuf, rlen);
-    SSL3_BUFFER_set_buf(&rl->wbuf, wp);
-    SSL3_BUFFER_set_len(&rl->wbuf, wlen);
-
-    /* Do I need to do this? As far as I can tell read_ahead did not
+    /* Do I need to clear read_ahead? As far as I can tell read_ahead did not
      * previously get reset by SSL_clear...so I'll keep it that way..but is
      * that right?
      */
-    rl->read_ahead = read_ahead;
-    rl->rstate = SSL_ST_READ_HEADER;
-    rl->s = s;
-    rl->d = d;
+
+    rl->packet = NULL;
+    rl->packet_length = 0;
+    rl->wnum = 0;
+    memset(rl->alert_fragment, 0, sizeof(rl->alert_fragment));
+    rl->alert_fragment_len = 0;
+    memset(rl->handshake_fragment, 0, sizeof(rl->handshake_fragment));
+    rl->handshake_fragment_len = 0;
+    rl->wpend_tot = 0;
+    rl->wpend_type = 0;
+    rl->wpend_ret = 0;
+    rl->wpend_buf = NULL;
+
+    SSL3_BUFFER_clear(&rl->rbuf);
+    SSL3_BUFFER_clear(&rl->wbuf);
+    SSL3_RECORD_clear(&rl->rrec);
+    SSL3_RECORD_clear(&rl->wrec);
+
+    memset(rl->read_sequence, 0, sizeof(rl->read_sequence));
+    memset(rl->write_sequence, 0, sizeof(rl->write_sequence));
     
-    if (d)
+    if (rl->d)
         DTLS_RECORD_LAYER_clear(rl);
 }
 
