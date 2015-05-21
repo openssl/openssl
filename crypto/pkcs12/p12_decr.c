@@ -75,7 +75,7 @@ unsigned char *PKCS12_pbe_crypt(X509_ALGOR *algor, const char *pass,
                                 int passlen, unsigned char *in, int inlen,
                                 unsigned char **data, int *datalen, int en_de)
 {
-    unsigned char *out;
+    unsigned char *out = NULL;
     int outlen, i;
     EVP_CIPHER_CTX ctx;
 
@@ -85,7 +85,7 @@ unsigned char *PKCS12_pbe_crypt(X509_ALGOR *algor, const char *pass,
                             algor->parameter, &ctx, en_de)) {
         PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT,
                   PKCS12_R_PKCS12_ALGOR_CIPHERINIT_ERROR);
-        return NULL;
+        goto err;
     }
 
     if ((out = OPENSSL_malloc(inlen + EVP_CIPHER_CTX_block_size(&ctx)))
