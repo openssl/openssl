@@ -30,20 +30,24 @@
 
 # Further optimization by <appro@openssl.org>:
 #
-#		this/original
-# Opteron	+12-49%
-# Bulldozer	+14-45%
-# P4		+18-46%
-# Westmere	+12-34%
-# Sandy Bridge	+9-35%
-# Ivy Bridge	+9-35%
-# Haswell	+8-37%
-# Broadwell	+18-58%
-# Atom		+15-50%
-# VIA Nano	+43-160%
+#		this/original	with/without -DECP_NISTZ256_ASM(*)
+# Opteron	+12-49%		+110-150%
+# Bulldozer	+14-45%		+175-210%
+# P4		+18-46%		n/a :-(
+# Westmere	+12-34%		+80-87%
+# Sandy Bridge	+9-35%		+110-120%
+# Ivy Bridge	+9-35%		+110-125%
+# Haswell	+8-37%		+140-160%
+# Broadwell	+18-58%		+145-210%
+# Atom		+15-50%		+130-180%
+# VIA Nano	+43-160%	+300-480%
+#
+# (*)	"without -DECP_NISTZ256_ASM" refers to build with
+#	"enable-ec_nistp_64_gcc_128";
 #
 # Ranges denote minimum and maximum improvement coefficients depending
-# on benchmark.
+# on benchmark. Lower coefficients are for ECDSA sign, relatively fastest
+# server-side operation. Keep in mind that +100% means 2x improvement.
 
 $flavour = shift;
 $output  = shift;

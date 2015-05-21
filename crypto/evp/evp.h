@@ -103,7 +103,6 @@
 # define EVP_PKS_RSA     0x0100
 # define EVP_PKS_DSA     0x0200
 # define EVP_PKS_EC      0x0400
-# define EVP_PKT_EXP     0x1000 /* <= 512 bit key */
 
 # define EVP_PKEY_NONE   NID_undef
 # define EVP_PKEY_RSA    NID_rsaEncryption
@@ -423,6 +422,9 @@ struct evp_cipher_st {
 # define         EVP_CTRL_TLS1_1_MULTIBLOCK_ENCRYPT      0x1a
 # define         EVP_CTRL_TLS1_1_MULTIBLOCK_DECRYPT      0x1b
 # define         EVP_CTRL_TLS1_1_MULTIBLOCK_MAX_BUFSIZE  0x1c
+
+/* RFC 5246 defines additional data to be 13 bytes in length */
+# define         EVP_AEAD_TLS1_AAD_LEN           13
 
 typedef struct {
     unsigned char *out;

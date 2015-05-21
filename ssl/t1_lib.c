@@ -262,47 +262,68 @@ static const unsigned char ecformats_default[] = {
     TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2
 };
 
-static const unsigned char eccurves_default[] = {
-# ifndef OPENSSL_NO_EC2M
-    0, 14,                      /* sect571r1 (14) */
-    0, 13,                      /* sect571k1 (13) */
-# endif
+/* The client's default curves / the server's 'auto' curves. */
+static const unsigned char eccurves_auto[] = {
+    /* Prefer P-256 which has the fastest and most secure implementations. */
+    0, 23,                      /* secp256r1 (23) */
+    /* Other >= 256-bit prime curves. */
     0, 25,                      /* secp521r1 (25) */
     0, 28,                      /* brainpool512r1 (28) */
-# ifndef OPENSSL_NO_EC2M
-    0, 11,                      /* sect409k1 (11) */
-    0, 12,                      /* sect409r1 (12) */
-# endif
     0, 27,                      /* brainpoolP384r1 (27) */
     0, 24,                      /* secp384r1 (24) */
+    0, 26,                      /* brainpoolP256r1 (26) */
+    0, 22,                      /* secp256k1 (22) */
 # ifndef OPENSSL_NO_EC2M
+    /* >= 256-bit binary curves. */
+    0, 14,                      /* sect571r1 (14) */
+    0, 13,                      /* sect571k1 (13) */
+    0, 11,                      /* sect409k1 (11) */
+    0, 12,                      /* sect409r1 (12) */
     0, 9,                       /* sect283k1 (9) */
     0, 10,                      /* sect283r1 (10) */
 # endif
+};
+
+static const unsigned char eccurves_all[] = {
+    /* Prefer P-256 which has the fastest and most secure implementations. */
+    0, 23,                      /* secp256r1 (23) */
+    /* Other >= 256-bit prime curves. */
+    0, 25,                      /* secp521r1 (25) */
+    0, 28,                      /* brainpool512r1 (28) */
+    0, 27,                      /* brainpoolP384r1 (27) */
+    0, 24,                      /* secp384r1 (24) */
     0, 26,                      /* brainpoolP256r1 (26) */
     0, 22,                      /* secp256k1 (22) */
-    0, 23,                      /* secp256r1 (23) */
+# ifndef OPENSSL_NO_EC2M
+    /* >= 256-bit binary curves. */
+    0, 14,                      /* sect571r1 (14) */
+    0, 13,                      /* sect571k1 (13) */
+    0, 11,                      /* sect409k1 (11) */
+    0, 12,                      /* sect409r1 (12) */
+    0, 9,                       /* sect283k1 (9) */
+    0, 10,                      /* sect283r1 (10) */
+# endif
+    /*
+     * Remaining curves disabled by default but still permitted if set
+     * via an explicit callback or parameters.
+     */
+    0, 20,                      /* secp224k1 (20) */
+    0, 21,                      /* secp224r1 (21) */
+    0, 18,                      /* secp192k1 (18) */
+    0, 19,                      /* secp192r1 (19) */
+    0, 15,                      /* secp160k1 (15) */
+    0, 16,                      /* secp160r1 (16) */
+    0, 17,                      /* secp160r2 (17) */
 # ifndef OPENSSL_NO_EC2M
     0, 8,                       /* sect239k1 (8) */
     0, 6,                       /* sect233k1 (6) */
     0, 7,                       /* sect233r1 (7) */
-# endif
-    0, 20,                      /* secp224k1 (20) */
-    0, 21,                      /* secp224r1 (21) */
-# ifndef OPENSSL_NO_EC2M
     0, 4,                       /* sect193r1 (4) */
     0, 5,                       /* sect193r2 (5) */
-# endif
-    0, 18,                      /* secp192k1 (18) */
-    0, 19,                      /* secp192r1 (19) */
-# ifndef OPENSSL_NO_EC2M
     0, 1,                       /* sect163k1 (1) */
     0, 2,                       /* sect163r1 (2) */
     0, 3,                       /* sect163r2 (3) */
 # endif
-    0, 15,                      /* secp160k1 (15) */
-    0, 16,                      /* secp160r1 (16) */
-    0, 17,                      /* secp160r2 (17) */
 };
 
 static const unsigned char suiteb_curves[] = {
@@ -476,8 +497,13 @@ static int tls1_get_curvelist(SSL *s, int sess,
             } else
 # endif
             {
-                *pcurves = eccurves_default;
-                pcurveslen = sizeof(eccurves_default);
+                if (!s->server || (s->cert && s->cert->ecdh_tmp_auto)) {
+                    *pcurves = eccurves_auto;
+                    pcurveslen = sizeof(eccurves_auto);
+                } else {
+                    *pcurves = eccurves_all;
+                    pcurveslen = sizeof(eccurves_all);
+                }
             }
         }
     }
@@ -3849,7 +3875,7 @@ int tls1_process_heartbeat(SSL *s)
         memcpy(bp, pl, payload);
         bp += payload;
         /* Random padding */
-        if(RAND_pseudo_bytes(bp, padding) < 0) {
+        if (RAND_pseudo_bytes(bp, padding) < 0) {
             OPENSSL_free(buffer);
             return -1;
         }
@@ -3935,13 +3961,13 @@ int tls1_heartbeat(SSL *s)
     /* Sequence number */
     s2n(s->tlsext_hb_seq, p);
     /* 16 random bytes */
-    if(RAND_pseudo_bytes(p, 16) < 0) {
+    if (RAND_pseudo_bytes(p, 16) < 0) {
         SSLerr(SSL_F_TLS1_HEARTBEAT, ERR_R_INTERNAL_ERROR);
         goto err;
     }
     p += 16;
     /* Random padding */
-    if(RAND_pseudo_bytes(p, padding) < 0) {
+    if (RAND_pseudo_bytes(p, padding) < 0) {
         SSLerr(SSL_F_TLS1_HEARTBEAT, ERR_R_INTERNAL_ERROR);
         goto err;
     }

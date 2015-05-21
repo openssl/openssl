@@ -111,6 +111,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h> /* for memcpy() and strcmp() */
 #define USE_SOCKETS
 #define NON_MAIN
 #include "apps.h"
@@ -456,7 +457,7 @@ int ssl_print_curves(BIO *out, SSL *s, int noshared)
     if (ncurves <= 0)
         return 1;
     curves = OPENSSL_malloc(ncurves * sizeof(int));
-    if(!curves) {
+    if (!curves) {
         BIO_puts(out, "Malloc error getting supported curves\n");
         return 0;
     }
