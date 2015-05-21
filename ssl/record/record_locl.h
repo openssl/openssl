@@ -162,6 +162,7 @@ void dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap);
 #define SSL3_BUFFER_add_offset(b, o)        ((b)->offset += (o))
 #define SSL3_BUFFER_is_initialised(b)       ((b)->buf != NULL)
 
+void SSL3_BUFFER_clear(SSL3_BUFFER *b);
 void SSL3_BUFFER_set_data(SSL3_BUFFER *b, const unsigned char *d, int n);
 void SSL3_BUFFER_release(SSL3_BUFFER *b);
 __owur int ssl3_setup_read_buffer(SSL *s);
