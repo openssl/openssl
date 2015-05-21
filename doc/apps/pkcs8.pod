@@ -24,6 +24,10 @@ B<openssl> B<pkcs8>
 [B<-v2prf alg>]
 [B<-v1 alg>]
 [B<-engine id>]
+[B<-scrypt>]
+[B<-scrypt_N N>]
+[B<-scrypt_r r>]
+[B<-scrypt_p p>]
 
 =head1 DESCRIPTION
 
@@ -143,6 +147,17 @@ specifying an engine (by its unique B<id> string) will cause B<pkcs8>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
+
+=item B<-scrypt>
+
+uses the B<scrypt> algorithm for private key encryption using default
+parameters: currently N=1024, r=8 and p=16 and AES in CBC mode with a 256 bit
+key. These parameters can be modified using the B<-scrypt_N>, B<-scrypt_r>,
+B<-scrypt_p> and B<-v2> options.
+
+B<-scrypt_N N> B<-scrypt_r r> B<-scrypt_p p>
+
+sets the scrypt B<N>, B<r> or B<p> parameters.
 
 =back
 
