@@ -4,6 +4,13 @@
 
  Changes between 1.0.1m and 1.0.1n [xx XXX xxxx]
 
+  *) Disable weaker elliptic curves
+
+     Do not include curves in the Supported Elliptic Curves Extension that
+     provide less than the equivalent of 128 bits of symmetric key security as
+     estimated by NIST / ECRYPT II.
+     [mancha security <mancha1@zoho.com>]
+
   *) Reject DH handshakes with parameters shorter than 768 bits.
      [Kurt Roeckx and Emilia Kasper]
 
