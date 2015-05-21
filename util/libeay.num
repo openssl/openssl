@@ -4570,3 +4570,4 @@ PKCS5_v2_scrypt_keyivgen                4928	EXIST::FUNCTION:
 ASN1_INTEGER_get_uint64                 4929	EXIST::FUNCTION:
 ASN1_INTEGER_set_uint64                 4930	EXIST::FUNCTION:
 PKCS5_pbe2_set_scrypt                   4931	EXIST::FUNCTION:
+PKCS8_set0_pbe                          4932	EXIST::FUNCTION:

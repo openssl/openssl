@@ -772,7 +772,8 @@ pmeth_lib.o: ../include/internal/cryptlib.h ../include/internal/evp_int.h
 pmeth_lib.o: pmeth_lib.c
 scrypt.o: ../../include/internal/numbers.h ../../include/openssl/asn1.h
 scrypt.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
-scrypt.o: ../../include/openssl/e_os2.h ../../include/openssl/evp.h
+scrypt.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+scrypt.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 scrypt.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 scrypt.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 scrypt.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h

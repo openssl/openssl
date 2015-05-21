@@ -701,11 +701,11 @@ evp_test.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 evp_test.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 evp_test.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
 evp_test.o: ../include/openssl/pem.h ../include/openssl/pem2.h
-evp_test.o: ../include/openssl/pkcs7.h ../include/openssl/safestack.h
-evp_test.o: ../include/openssl/sha.h ../include/openssl/stack.h
-evp_test.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
-evp_test.o: ../include/openssl/x509_vfy.h ../include/openssl/x509v3.h
-evp_test.o: evp_test.c
+evp_test.o: ../include/openssl/pkcs12.h ../include/openssl/pkcs7.h
+evp_test.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+evp_test.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+evp_test.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
+evp_test.o: ../include/openssl/x509v3.h evp_test.c
 exptest.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/bn.h
 exptest.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 exptest.o: ../include/openssl/err.h ../include/openssl/lhash.h
