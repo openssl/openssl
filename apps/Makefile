@@ -76,6 +76,9 @@ all:	exe
 
 exe:	$(EXE)
 
+openssl-vms.cnf: openssl.cnf
+	$(PERL) $(TOP)/VMS/VMSify-conf.pl < openssl.cnf > openssl-vms.cnf
+
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 
@@ -119,6 +122,8 @@ tests:
 
 lint:
 	echo nope >fluff
+
+update: openssl-vms.cnf depend
 
 depend:
 	@if [ -z "$(THIS)" ]; then \
