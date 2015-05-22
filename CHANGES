@@ -9,6 +9,14 @@
      not well tested). Therefore the OPENSSL_NO_TLSEXT option has been removed.
      [Matt Caswell]
 
+  *) Removed support for the two export grade static DH ciphersuites
+     EXP-DH-RSA-DES-CBC-SHA and EXP-DH-DSS-DES-CBC-SHA. These two ciphersuites
+     were newly added (along with a number of other static DH ciphersuites) to
+     1.0.2. However the two export ones have *never* worked since they were
+     introduced. It seems strange in any case to be adding new export
+     ciphersuites, and given "logjam" it also does not seem correct to fix them.
+     [Matt Caswell]
+
   *) Version negotiation has been rewritten. In particular SSLv23_method(),
      SSLv23_client_method() and SSLv23_server_method() have been deprecated,
      and turned into macros which simply call the new preferred function names
