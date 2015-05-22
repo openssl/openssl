@@ -439,7 +439,7 @@ tests: rehash
 report:
 	@$(PERL) util/selftest.pl
 
-update: errors stacks util/libeay.num util/ssleay.num apps/openssl-vms.cnf TABLE
+update: errors stacks util/libeay.num util/ssleay.num TABLE
 	@set -e; target=update; $(RECURSIVE_BUILD_CMD)
 
 depend:
