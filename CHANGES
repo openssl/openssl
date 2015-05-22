@@ -4,6 +4,14 @@
 
  Changes between 1.0.2a and 1.0.2b [xx XXX xxxx]
 
+  *) Removed support for the two export grade static DH ciphersuites
+     EXP-DH-RSA-DES-CBC-SHA and EXP-DH-DSS-DES-CBC-SHA. These two ciphersuites
+     were newly added (along with a number of other static DH ciphersuites) to
+     1.0.2. However the two export ones have *never* worked since they were
+     introduced. It seems strange in any case to be adding new export
+     ciphersuites, and given "logjam" it also does not seem correct to fix them.
+     [Matt Caswell]
+
   *) Only support 256-bit or stronger elliptic curves with the
      'ecdh_auto' setting (server) or by default (client). Of supported
      curves, prefer P-256 (both).
