@@ -94,6 +94,9 @@ req: sreq.o $(A_OBJ) $(DLIBCRYPTO)
 sreq.o: req.c 
 	$(CC) -c $(INCLUDES) $(CFLAG) -o sreq.o req.c
 
+openssl-vms.cnf: openssl.cnf
+	$(PERL) $(TOP)/VMS/VMSify-conf.pl < openssl.cnf > openssl-vms.cnf
+
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 
@@ -126,6 +129,8 @@ links:
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
+
+update: openssl-vms.cnf depend
 
 depend:
 	@if [ -z "$(THIS)" ]; then \

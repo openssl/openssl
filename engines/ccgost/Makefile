@@ -66,12 +66,13 @@ links:
 
 tests:
 
-depend:
-	@if [ -z "$(THIS)" ]; then \
-	    $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; \
-	else \
-	    $(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC); \
-	fi
+update: local_depend
+	@[ -z "$(THIS)" ] && $(MAKE) -f $(TOP)/Makefile reflect THIS=$@
+
+depend: local_depend
+	@[ -z "$(THIS)" ] && $(MAKE) -f $(TOP)/Makefile reflect THIS=$@
+local_depend:
+	@[ -z "$(THIS)" ] || $(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
 
 files:
 
