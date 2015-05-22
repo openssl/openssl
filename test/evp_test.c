@@ -60,6 +60,7 @@
 #include <openssl/pem.h>
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
+#include <openssl/pkcs12.h>
 #include "internal/numbers.h"
 
 /* Remove spaces from beginning and end of a string */
@@ -1283,6 +1284,8 @@ static const struct evp_test_method pverify_test_method = {
 /* PBE tests */
 
 #define PBE_TYPE_SCRYPT 1
+#define PBE_TYPE_PBKDF2 2
+#define PBE_TYPE_PKCS12 3
 
 struct pbe_data {
 
@@ -1290,6 +1293,10 @@ struct pbe_data {
 
     /* scrypt parameters */
     uint64_t N, r, p, maxmem;
+
+    /* PKCS#12 parameters */
+    int id, iter;
+    const EVP_MD *md;
 
     /* password */
     unsigned char *pass;
@@ -1308,6 +1315,7 @@ static int scrypt_test_parse(struct evp_test *t,
                              const char *keyword, const char *value)
 {
     struct pbe_data *pdata = t->data;
+
     if (strcmp(keyword, "N") == 0)
         return test_uint64(value, &pdata->N);
     if (strcmp(keyword, "p") == 0)
@@ -1319,36 +1327,51 @@ static int scrypt_test_parse(struct evp_test *t,
     return 0;
 }
 
-static int scrypt_test_run(struct evp_test *t)
+static int pbkdf2_test_parse(struct evp_test *t,
+                             const char *keyword, const char *value)
 {
     struct pbe_data *pdata = t->data;
-    const char *err = "INTERNAL_ERROR";
-    unsigned char *key;
-    key = OPENSSL_malloc(pdata->key_len);
-    if (!key)
-        goto err;
-    err = "SCRYPT_ERROR";
-    if (EVP_PBE_scrypt((const char *)pdata->pass, pdata->pass_len,
-                       pdata->salt, pdata->salt_len,
-                       pdata->N, pdata->r, pdata->p, pdata->maxmem,
-                       key, pdata->key_len) == 0)
-        goto err;
-    err = "KEY_MISMATCH";
-    if (check_output(t, pdata->key, key, pdata->key_len))
-        goto err;
-    err = NULL;
-    err:
-    OPENSSL_free(key);
-    t->err = err;
-    return 1;
+
+    if (strcmp(keyword, "iter") == 0) {
+        pdata->iter = atoi(value);
+        if (pdata->iter <= 0)
+            return 0;
+        return 1;
+    }
+    if (strcmp(keyword, "MD") == 0) {
+        pdata->md = EVP_get_digestbyname(value);
+        if (pdata->md == NULL)
+            return 0;
+        return 1;
+    }
+    return 0;
+}
+
+static int pkcs12_test_parse(struct evp_test *t,
+                             const char *keyword, const char *value)
+{
+    struct pbe_data *pdata = t->data;
+
+    if (strcmp(keyword, "id") == 0) {
+        pdata->id = atoi(value);
+        if (pdata->id <= 0)
+            return 0;
+        return 1;
+    }
+    return pbkdf2_test_parse(t, keyword, value);
 }
 
 static int pbe_test_init(struct evp_test *t, const char *alg)
 {
     struct pbe_data *pdat;
     int pbe_type = 0;
+
     if (strcmp(alg, "scrypt") == 0)
         pbe_type = PBE_TYPE_SCRYPT;
+    else if (strcmp(alg, "pbkdf2") == 0)
+        pbe_type = PBE_TYPE_PBKDF2;
+    else if (strcmp(alg, "pkcs12") == 0)
+        pbe_type = PBE_TYPE_PKCS12;
     else
         fprintf(stderr, "Unknown pbe algorithm %s\n", alg);
     pdat = OPENSSL_malloc(sizeof(*pdat));
@@ -1359,6 +1382,9 @@ static int pbe_test_init(struct evp_test *t, const char *alg)
     pdat->r = 0;
     pdat->p = 0;
     pdat->maxmem = 0;
+    pdat->id = 0;
+    pdat->iter = 0;
+    pdat->md = NULL;
     t->data = pdat;
     return 1;
 }
@@ -1375,6 +1401,7 @@ static int pbe_test_parse(struct evp_test *t,
                              const char *keyword, const char *value)
 {
     struct pbe_data *pdata = t->data;
+
     if (strcmp(keyword, "Password") == 0)
         return test_bin(value, &pdata->pass, &pdata->pass_len);
     if (strcmp(keyword, "Salt") == 0)
@@ -1383,15 +1410,52 @@ static int pbe_test_parse(struct evp_test *t,
         return test_bin(value, &pdata->key, &pdata->key_len);
     if (pdata->pbe_type == PBE_TYPE_SCRYPT)
         return scrypt_test_parse(t, keyword, value);
+    else if (pdata->pbe_type == PBE_TYPE_PBKDF2)
+        return pbkdf2_test_parse(t, keyword, value);
+    else if (pdata->pbe_type == PBE_TYPE_PKCS12)
+        return pkcs12_test_parse(t, keyword, value);
     return 0;
 }
 
 static int pbe_test_run(struct evp_test *t)
 {
     struct pbe_data *pdata = t->data;
-    if (pdata->pbe_type == PBE_TYPE_SCRYPT)
-        return scrypt_test_run(t);
-    return 0;
+    const char *err = "INTERNAL_ERROR";
+    unsigned char *key;
+
+    key = OPENSSL_malloc(pdata->key_len);
+    if (!key)
+        goto err;
+    if (pdata->pbe_type == PBE_TYPE_PBKDF2) {
+        err = "PBKDF2_ERROR";
+        if (PKCS5_PBKDF2_HMAC((char *)pdata->pass, pdata->pass_len,
+                              pdata->salt, pdata->salt_len,
+                              pdata->iter, pdata->md,
+                              pdata->key_len, key) == 0)
+            goto err;
+    } else if (pdata->pbe_type == PBE_TYPE_SCRYPT) {
+        err = "SCRYPT_ERROR";
+        if (EVP_PBE_scrypt((const char *)pdata->pass, pdata->pass_len,
+                           pdata->salt, pdata->salt_len,
+                           pdata->N, pdata->r, pdata->p, pdata->maxmem,
+                           key, pdata->key_len) == 0)
+            goto err;
+    } else if (pdata->pbe_type == PBE_TYPE_PKCS12) {
+        err = "PKCS12_ERROR";
+        if (PKCS12_key_gen_uni(pdata->pass, pdata->pass_len,
+                               pdata->salt, pdata->salt_len,
+                               pdata->id, pdata->iter, pdata->key_len,
+                               key, pdata->md) == 0)
+            goto err;
+    }
+    err = "KEY_MISMATCH";
+    if (check_output(t, pdata->key, key, pdata->key_len))
+        goto err;
+    err = NULL;
+    err:
+    OPENSSL_free(key);
+    t->err = err;
+    return 1;
 }
 
 static const struct evp_test_method pbe_test_method = {
