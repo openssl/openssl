@@ -27,6 +27,8 @@ lib:	$(LIBOBJ)
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 
+update: depend
+
 depend:
 	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
 	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)

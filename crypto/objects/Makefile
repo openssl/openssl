@@ -58,6 +58,8 @@ tests:
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
+update: obj_dat.h ../../include/openssl/obj_mac.h obj_xref.h depend
+
 depend:
 	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
 	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
