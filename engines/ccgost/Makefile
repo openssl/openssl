@@ -67,10 +67,10 @@ links:
 tests:
 
 update: local_depend
-	@[ -z "$(THIS)" ] && $(MAKE) -f $(TOP)/Makefile reflect THIS=$@
+	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
 
 depend: local_depend
-	@[ -z "$(THIS)" ] && $(MAKE) -f $(TOP)/Makefile reflect THIS=$@
+	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
 local_depend:
 	@[ -z "$(THIS)" ] || $(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
 
