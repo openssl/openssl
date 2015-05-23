@@ -1767,6 +1767,7 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_CTRL_CLEAR_MODE                     78
 # define SSL_CTRL_GET_EXTRA_CHAIN_CERTS          82
 # define SSL_CTRL_CLEAR_EXTRA_CHAIN_CERTS        83
+# define SSL_CTRL_GET_SERVER_TMP_KEY             109
 # define SSL_CTRL_CHECK_PROTO_VERSION            119
 # define DTLS_CTRL_SET_LINK_MTU                  120
 # define DTLS_CTRL_GET_LINK_MIN_MTU              121
@@ -1806,6 +1807,9 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
         SSL_CTX_ctrl(ctx,SSL_CTRL_GET_EXTRA_CHAIN_CERTS,0,px509)
 # define SSL_CTX_clear_extra_chain_certs(ctx) \
         SSL_CTX_ctrl(ctx,SSL_CTRL_CLEAR_EXTRA_CHAIN_CERTS,0,NULL)
+# define SSL_get_server_tmp_key(s, pk) \
+        SSL_ctrl(s,SSL_CTRL_GET_SERVER_TMP_KEY,0,pk)
+
 # ifndef OPENSSL_NO_BIO
 BIO_METHOD *BIO_f_ssl(void);
 BIO *BIO_new_ssl(SSL_CTX *ctx, int client);

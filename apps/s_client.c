@@ -1969,6 +1969,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
         } else {
             BIO_printf(bio, "---\nNo client certificate CA names sent\n");
         }
+        ssl_print_tmp_key(bio, s);
         p = SSL_get_shared_ciphers(s, buf, sizeof buf);
         if (p != NULL) {
             /*
