@@ -136,6 +136,7 @@ lint:
 
 update: local_depend
 	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
+	@[ -z "$(THIS)" ] || (set -e; target=update; $(RECURSIVE_MAKE) )
 
 depend: local_depend
 	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
