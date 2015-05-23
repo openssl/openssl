@@ -947,8 +947,7 @@ int ssl3_get_server_hello(SSL *s)
      * Hello verify request and/or server hello version may not match so set
      * first packet if we're negotiating version.
      */
-    if (SSL_IS_DTLS(s))
-        s->first_packet = 1;
+    s->first_packet = 1;
 
     n = s->method->ssl_get_message(s,
                                    SSL3_ST_CR_SRVR_HELLO_A,
@@ -957,8 +956,8 @@ int ssl3_get_server_hello(SSL *s)
     if (!ok)
         return ((int)n);
 
+    s->first_packet = 0;
     if (SSL_IS_DTLS(s)) {
-        s->first_packet = 0;
         if (s->s3->tmp.message_type == DTLS1_MT_HELLO_VERIFY_REQUEST) {
             if (s->d1->send_cookie == 0) {
                 s->s3->tmp.reuse_message = 1;
