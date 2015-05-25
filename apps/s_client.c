@@ -635,8 +635,8 @@ int s_client_main(int argc, char **argv)
     char *CApath = NULL, *CAfile = NULL, *cbuf = NULL, *sbuf = NULL;
     char *mbuf = NULL, *proxystr = NULL, *connectstr = NULL;
     char *cert_file = NULL, *key_file = NULL, *chain_file = NULL, *prog;
-    char *chCApath = NULL, *chCAfile = NULL, *host = SSL_HOST_NAME, *inrand =
-        NULL;
+    char *chCApath = NULL, *chCAfile = NULL, *host = SSL_HOST_NAME;
+    char *inrand = NULL;
     char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
     char *sess_in = NULL, *sess_out = NULL, *crl_file = NULL, *p;
     char *jpake_secret = NULL, *xmpphost = NULL;
@@ -1067,7 +1067,8 @@ int s_client_main(int argc, char **argv)
         if (!extract_host_port(proxystr, &host, NULL, &port))
             goto end;
     }
-    else if (!extract_host_port(connectstr, &host, NULL, &port))
+    else if (connectstr != NULL
+            && !extract_host_port(connectstr, &host, NULL, &port))
         goto end;
 
     if (unix_path && (socket_type != SOCK_STREAM)) {
