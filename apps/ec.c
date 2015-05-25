@@ -176,6 +176,7 @@ int ec_main(int argc, char **argv)
         case OPT_CIPHER:
             if (!opt_cipher(opt_unknown(), &enc))
                 goto opthelp;
+            break;
         case OPT_CONV_FORM:
             if (!opt_pair(opt_arg(), conv_forms, &i))
                 goto opthelp;
