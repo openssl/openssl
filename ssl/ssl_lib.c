@@ -2897,6 +2897,37 @@ long SSL_get_verify_result(const SSL *ssl)
     return (ssl->verify_result);
 }
 
+int SSL_get_client_random(const SSL *ssl, unsigned char *out, int outlen)
+{
+    if (outlen < 0)
+        return sizeof(ssl->s3->client_random);
+    if (outlen > sizeof(ssl->s3->client_random))
+        outlen = sizeof(ssl->s3->client_random);
+    memcpy(out, ssl->s3->client_random, outlen);
+    return (outlen);
+}
+
+int SSL_get_server_random(const SSL *ssl, unsigned char *out, int outlen)
+{
+    if (outlen < 0)
+        return sizeof(ssl->s3->server_random);
+    if (outlen > sizeof(ssl->s3->server_random))
+        outlen = sizeof(ssl->s3->server_random);
+    memcpy(out, ssl->s3->server_random, outlen);
+    return (outlen);
+}
+
+int SSL_SESSION_get_master_key(const SSL_SESSION *session,
+                               unsigned char *out, int outlen)
+{
+    if (outlen < 0)
+        return session->master_key_length;
+    if (outlen > session->master_key_length)
+        outlen = session->master_key_length;
+    memcpy(out, session->master_key, outlen);
+    return (outlen);
+}
+
 int SSL_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
                          CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
 {
