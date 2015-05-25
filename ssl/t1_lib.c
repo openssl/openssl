@@ -2047,7 +2047,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p,
         }
 #ifndef OPENSSL_NO_SRP
         else if (type == TLSEXT_TYPE_srp) {
-            if (size <= 0 || ((len = data[0])) != (size - 1)) {
+            if (size == 0 || ((len = data[0])) != (size - 1)) {
                 *al = SSL_AD_DECODE_ERROR;
                 return 0;
             }
