@@ -305,16 +305,17 @@ static void dgram_adjust_rcv_timeout(BIO *b)
 
         /* Calculate time left until timer expires */
         memcpy(&timeleft, &(data->next_timeout), sizeof(struct timeval));
-        timeleft.tv_sec -= timenow.tv_sec;
-        timeleft.tv_usec -= timenow.tv_usec;
-        if (timeleft.tv_usec < 0) {
+        if (timeleft.tv_usec < timenow.tv_usec) {
+            timeleft.tv_usec = 1000000 - timenow.tv_usec + timeleft.tv_usec;
             timeleft.tv_sec--;
-            timeleft.tv_usec += 1000000;
+        } else {
+            timeleft.tv_usec -= timenow.tv_usec;
         }
-
-        if (timeleft.tv_sec < 0) {
+        if (timeleft.tv_sec < timenow.tv_sec) {
             timeleft.tv_sec = 0;
             timeleft.tv_usec = 1;
+        } else {
+            timeleft.tv_sec -= timenow.tv_sec;
         }
 
         /*
