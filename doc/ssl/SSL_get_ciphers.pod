@@ -35,6 +35,11 @@ the L<SSL_CIPHER_get_name(3)|SSL_CIPHER_get_name(3)> family of functions.
 Call SSL_get_cipher_list() with B<priority> starting from 0 to obtain the
 sorted list of available ciphers, until NULL is returned.
 
+Note: SSL_get_ciphers() and SSL_get_client_ciphers() return a pointer
+to an internal cipher stack, which will be freed later on when the SSL
+or SSL_SESSION object is freed.  Therefore, the calling code B<MUST
+NOT> free the return value itself.
+
 =head1 RETURN VALUES
 
 See DESCRIPTION
