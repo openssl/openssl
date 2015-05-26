@@ -139,7 +139,7 @@ for protocol in TLSv1.2 SSLv3; do
   for cipher in `../util/shlib_wrap.sh ../apps/openssl ciphers "RSA+$protocol" | tr ':' ' '`; do
     test_cipher $cipher $protocol
   done
-  if ../util/shlib_wrap.sh ../apps/openssl no-dh; then
+  if ../util/shlib_wrap.sh ../apps/openssl no-dhparam; then
     echo "skipping RSA+DHE tests"
   else
     for cipher in `../util/shlib_wrap.sh ../apps/openssl ciphers "EDH+aRSA+$protocol:-EXP" | tr ':' ' '`; do
@@ -147,9 +147,9 @@ for protocol in TLSv1.2 SSLv3; do
     done
     echo "testing connection with weak DH, expecting failure"
     if [ $protocol = "SSLv3" ] ; then
-      $ssltest -cipher EDH -dhe512 -ssl3
+      $ssltest -s_cipher "EDH" -c_cipher "EDH:@SECLEVEL=1" -dhe512 -ssl3
     else
-      $ssltest -cipher EDH -dhe512
+      $ssltest -s_cipher "EDH" -c_cipher "EDH:@SECLEVEL=1" -dhe512
     fi
     if [ $? -eq 0 ]; then
       echo "FAIL: connection with weak DH succeeded"
@@ -167,7 +167,7 @@ done
 
 #############################################################################
 
-if ../util/shlib_wrap.sh ../apps/openssl no-dh; then
+if ../util/shlib_wrap.sh ../apps/openssl no-dhparam; then
   echo skipping anonymous DH tests
 else
   echo test tls1 with 1024bit anonymous DH, multiple handshakes
@@ -180,7 +180,7 @@ else
   echo 'test tls1 with 1024bit RSA, no (EC)DHE, multiple handshakes'
   ../util/shlib_wrap.sh ./ssltest -v -bio_pair -tls1 -cert ../apps/server2.pem -no_dhe -no_ecdhe -num 10 -f -time $extra || exit 1
 
-  if ../util/shlib_wrap.sh ../apps/openssl no-dh; then
+  if ../util/shlib_wrap.sh ../apps/openssl no-dhparam; then
     echo skipping RSA+DHE tests
   else
     echo test tls1 with 1024bit RSA, 1024bit DHE, multiple handshakes

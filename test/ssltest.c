@@ -1429,7 +1429,8 @@ int main(int argc, char *argv[])
     }
     /*
      * Since we will use low security ciphersuites and keys for testing set
-     * security level to zero.
+     * security level to zero by default. Tests can override this by adding
+     * "@SECLEVEL=n" to the cipher string.
      */
     SSL_CTX_set_security_level(c_ctx, 0);
     SSL_CTX_set_security_level(s_ctx, 0);
