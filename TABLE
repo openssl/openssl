@@ -35,7 +35,7 @@ $multilib     =
 
 *** BS2000-OSD
 $cc           = c89
-$cflags       = -O -XLLML -XLLMK -XL -DB_ENDIAN -DTERMIOS -DCHARSET_EBCDIC
+$cflags       = -O -XLLML -XLLMK -XL -DB_ENDIAN -DCHARSET_EBCDIC
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = 
@@ -68,7 +68,7 @@ $multilib     =
 
 *** BSD-generic32
 $cc           = gcc
-$cflags       = -DTERMIOS -O3 -fomit-frame-pointer -Wall
+$cflags       = -O3 -fomit-frame-pointer -Wall
 $unistd       = 
 $thread_cflag = -pthread -D_THREAD_SAFE -D_REENTRANT
 $sys_id       = 
@@ -101,7 +101,7 @@ $multilib     =
 
 *** BSD-generic64
 $cc           = gcc
-$cflags       = -DTERMIOS -O3 -Wall
+$cflags       = -O3 -Wall
 $unistd       = 
 $thread_cflag = -pthread -D_THREAD_SAFE -D_REENTRANT
 $sys_id       = 
@@ -134,7 +134,7 @@ $multilib     =
 
 *** BSD-ia64
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DTERMIOS -O3 -Wall
+$cflags       = -DL_ENDIAN -O3 -Wall
 $unistd       = 
 $thread_cflag = -pthread -D_THREAD_SAFE -D_REENTRANT
 $sys_id       = 
@@ -167,7 +167,7 @@ $multilib     =
 
 *** BSD-sparc64
 $cc           = gcc
-$cflags       = -DB_ENDIAN -DTERMIOS -O3 -DMD32_REG_T=int -Wall
+$cflags       = -DB_ENDIAN -O3 -DMD32_REG_T=int -Wall
 $unistd       = 
 $thread_cflag = -pthread -D_THREAD_SAFE -D_REENTRANT
 $sys_id       = 
@@ -200,7 +200,7 @@ $multilib     =
 
 *** BSD-sparcv8
 $cc           = gcc
-$cflags       = -DB_ENDIAN -DTERMIOS -O3 -mv8 -Wall
+$cflags       = -DB_ENDIAN -O3 -mcpu=v8 -Wall
 $unistd       = 
 $thread_cflag = -pthread -D_THREAD_SAFE -D_REENTRANT
 $sys_id       = 
@@ -233,7 +233,7 @@ $multilib     =
 
 *** BSD-x86
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer -Wall
+$cflags       = -DL_ENDIAN -O3 -fomit-frame-pointer -Wall
 $unistd       = 
 $thread_cflag = -pthread -D_THREAD_SAFE -D_REENTRANT
 $sys_id       = 
@@ -266,7 +266,7 @@ $multilib     =
 
 *** BSD-x86-elf
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer -Wall
+$cflags       = -DL_ENDIAN -O3 -fomit-frame-pointer -Wall
 $unistd       = 
 $thread_cflag = -pthread -D_THREAD_SAFE -D_REENTRANT
 $sys_id       = 
@@ -299,7 +299,7 @@ $multilib     =
 
 *** BSD-x86_64
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DTERMIOS -O3 -Wall
+$cflags       = -DL_ENDIAN -O3 -Wall
 $unistd       = 
 $thread_cflag = -pthread -D_THREAD_SAFE -D_REENTRANT
 $sys_id       = 
@@ -398,7 +398,7 @@ $multilib     =
 
 *** DJGPP
 $cc           = gcc
-$cflags       = -I/dev/env/WATT_ROOT/inc -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -Wall
+$cflags       = -I/dev/env/WATT_ROOT/inc -DTERMIO -DL_ENDIAN -fomit-frame-pointer -O2 -Wall
 $unistd       = 
 $thread_cflag = 
 $sys_id       = MSDOS
@@ -530,7 +530,7 @@ $multilib     =
 
 *** QNX6
 $cc           = gcc
-$cflags       = -DTERMIOS
+$cflags       = 
 $unistd       = 
 $thread_cflag = 
 $sys_id       = 
@@ -563,7 +563,7 @@ $multilib     =
 
 *** QNX6-i386
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DTERMIOS -O2 -Wall
+$cflags       = -DL_ENDIAN -O2 -Wall
 $unistd       = 
 $thread_cflag = 
 $sys_id       = 
@@ -1520,7 +1520,7 @@ $multilib     =
 
 *** debug-BSD-x86-elf
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DTERMIOS -O3 -Wall -g
+$cflags       = -DL_ENDIAN -O3 -Wall -g
 $unistd       = 
 $thread_cflag = -pthread -D_THREAD_SAFE -D_REENTRANT
 $sys_id       = 
@@ -2213,7 +2213,7 @@ $multilib     =
 
 *** debug-levitte-linux-elf-extreme
 $cc           = gcc
-$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DL_ENDIAN -DTERMIO -DPEDANTIC -ggdb -g3 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wno-long-long -Wundef -Wconversion -pipe
+$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DL_ENDIAN -DPEDANTIC -ggdb -g3 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wno-long-long -Wundef -Wconversion -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2279,7 +2279,7 @@ $multilib     =
 
 *** debug-levitte-linux-noasm-extreme
 $cc           = gcc
-$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DOPENSSL_NO_ASM -DL_ENDIAN -DTERMIO -DPEDANTIC -ggdb -g3 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wno-long-long -Wundef -Wconversion -pipe
+$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DOPENSSL_NO_ASM -DL_ENDIAN -DPEDANTIC -ggdb -g3 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wno-long-long -Wundef -Wconversion -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2312,7 +2312,7 @@ $multilib     =
 
 *** debug-linux-elf
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -march=i486 -Wall
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -g -march=i486 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2345,7 +2345,7 @@ $multilib     =
 
 *** debug-linux-elf-noefence
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -march=i486 -Wall
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -g -march=i486 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2378,7 +2378,7 @@ $multilib     =
 
 *** debug-linux-generic32
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -DTERMIO -g -Wall
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -g -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2411,7 +2411,7 @@ $multilib     =
 
 *** debug-linux-generic64
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -DTERMIO -g -Wall
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -g -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2444,7 +2444,7 @@ $multilib     =
 
 *** debug-linux-ia32-aes
 $cc           = gcc
-$cflags       = -DAES_EXPERIMENTAL -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
+$cflags       = -DAES_EXPERIMENTAL -DL_ENDIAN -O3 -fomit-frame-pointer -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2477,7 +2477,7 @@ $multilib     =
 
 *** debug-linux-pentium
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -mcpu=pentium -Wall
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -g -mcpu=pentium -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2510,7 +2510,7 @@ $multilib     =
 
 *** debug-linux-ppro
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -mcpu=pentiumpro -Wall
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -g -mcpu=pentiumpro -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2543,7 +2543,7 @@ $multilib     =
 
 *** debug-linux-x86_64
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -m64 -DL_ENDIAN -DTERMIO -g -Wall
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -m64 -DL_ENDIAN -g -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2642,7 +2642,7 @@ $multilib     =
 
 *** debug-solaris-sparcv8-gcc
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -O -g -mv8 -Wall -DB_ENDIAN
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -O -g -mcpu=v8 -Wall -DB_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -3566,7 +3566,7 @@ $multilib     = /pa20_64
 
 *** hurd-x86
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer -march=i486 -Wall
+$cflags       = -DL_ENDIAN -O3 -fomit-frame-pointer -march=i486 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -3632,7 +3632,7 @@ $multilib     =
 
 *** irix-cc
 $cc           = cc
-$cflags       = -O2 -use_readonly_const -DTERMIOS -DB_ENDIAN
+$cflags       = -O2 -use_readonly_const -DB_ENDIAN
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = 
@@ -3665,7 +3665,7 @@ $multilib     =
 
 *** irix-gcc
 $cc           = gcc
-$cflags       = -O3 -DTERMIOS -DB_ENDIAN
+$cflags       = -O3 -DB_ENDIAN
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = 
@@ -3698,7 +3698,7 @@ $multilib     =
 
 *** irix-mips3-cc
 $cc           = cc
-$cflags       = -n32 -mips3 -O2 -use_readonly_const -G0 -rdata_shared -DTERMIOS -DB_ENDIAN -DBN_DIV3W
+$cflags       = -n32 -mips3 -O2 -use_readonly_const -G0 -rdata_shared -DB_ENDIAN -DBN_DIV3W
 $unistd       = 
 $thread_cflag = -D_SGI_MP_SOURCE
 $sys_id       = 
@@ -3731,7 +3731,7 @@ $multilib     = 32
 
 *** irix-mips3-gcc
 $cc           = gcc
-$cflags       = -mabi=n32 -O3 -DTERMIOS -DB_ENDIAN -DBN_DIV3W
+$cflags       = -mabi=n32 -O3 -DB_ENDIAN -DBN_DIV3W
 $unistd       = 
 $thread_cflag = -D_SGI_MP_SOURCE
 $sys_id       = 
@@ -3764,7 +3764,7 @@ $multilib     = 32
 
 *** irix64-mips4-cc
 $cc           = cc
-$cflags       = -64 -mips4 -O2 -use_readonly_const -G0 -rdata_shared -DTERMIOS -DB_ENDIAN -DBN_DIV3W
+$cflags       = -64 -mips4 -O2 -use_readonly_const -G0 -rdata_shared -DB_ENDIAN -DBN_DIV3W
 $unistd       = 
 $thread_cflag = -D_SGI_MP_SOURCE
 $sys_id       = 
@@ -3797,7 +3797,7 @@ $multilib     = 64
 
 *** irix64-mips4-gcc
 $cc           = gcc
-$cflags       = -mabi=64 -mips4 -O3 -DTERMIOS -DB_ENDIAN -DBN_DIV3W
+$cflags       = -mabi=64 -mips4 -O3 -DB_ENDIAN -DBN_DIV3W
 $unistd       = 
 $thread_cflag = -D_SGI_MP_SOURCE
 $sys_id       = 
@@ -3830,7 +3830,7 @@ $multilib     = 64
 
 *** linux-alpha+bwx-ccc
 $cc           = ccc
-$cflags       = -fast -readonly_strings -DL_ENDIAN -DTERMIO
+$cflags       = -fast -readonly_strings -DL_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -3863,7 +3863,7 @@ $multilib     =
 
 *** linux-alpha+bwx-gcc
 $cc           = gcc
-$cflags       = -O3 -DL_ENDIAN -DTERMIO
+$cflags       = -O3 -DL_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -3896,7 +3896,7 @@ $multilib     =
 
 *** linux-alpha-ccc
 $cc           = ccc
-$cflags       = -fast -readonly_strings -DL_ENDIAN -DTERMIO
+$cflags       = -fast -readonly_strings -DL_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -3929,7 +3929,7 @@ $multilib     =
 
 *** linux-alpha-gcc
 $cc           = gcc
-$cflags       = -O3 -DL_ENDIAN -DTERMIO
+$cflags       = -O3 -DL_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -3962,7 +3962,7 @@ $multilib     =
 
 *** linux-aout
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -march=i486 -Wall
+$cflags       = -DL_ENDIAN -O3 -fomit-frame-pointer -march=i486 -Wall
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = 
@@ -3995,7 +3995,7 @@ $multilib     =
 
 *** linux-armv4
 $cc           = gcc
-$cflags       = -DTERMIO -O3 -Wall
+$cflags       = -O3 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4028,7 +4028,7 @@ $multilib     =
 
 *** linux-elf
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
+$cflags       = -DL_ENDIAN -O3 -fomit-frame-pointer -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4061,7 +4061,7 @@ $multilib     =
 
 *** linux-generic32
 $cc           = gcc
-$cflags       = -DTERMIO -O3 -fomit-frame-pointer -Wall
+$cflags       = -O3 -fomit-frame-pointer -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4094,7 +4094,7 @@ $multilib     =
 
 *** linux-generic64
 $cc           = gcc
-$cflags       = -DTERMIO -O3 -Wall
+$cflags       = -O3 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4127,7 +4127,7 @@ $multilib     =
 
 *** linux-ia32-icc
 $cc           = icc
-$cflags       = -DL_ENDIAN -DTERMIO -O2 -no_cpprt
+$cflags       = -DL_ENDIAN -O2 -no_cpprt
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4160,7 +4160,7 @@ $multilib     =
 
 *** linux-ia64
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DTERMIO -O3 -Wall
+$cflags       = -DL_ENDIAN -O3 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4193,7 +4193,7 @@ $multilib     =
 
 *** linux-ia64-ecc
 $cc           = ecc
-$cflags       = -DL_ENDIAN -DTERMIO -O2 -Wall -no_cpprt
+$cflags       = -DL_ENDIAN -O2 -Wall -no_cpprt
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4226,7 +4226,7 @@ $multilib     =
 
 *** linux-ia64-icc
 $cc           = icc
-$cflags       = -DL_ENDIAN -DTERMIO -O2 -Wall -no_cpprt
+$cflags       = -DL_ENDIAN -O2 -Wall -no_cpprt
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4259,7 +4259,7 @@ $multilib     =
 
 *** linux-ppc
 $cc           = gcc
-$cflags       = -DB_ENDIAN -DTERMIO -O3 -Wall
+$cflags       = -DB_ENDIAN -O3 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4292,7 +4292,7 @@ $multilib     =
 
 *** linux-ppc64
 $cc           = gcc
-$cflags       = -m64 -DB_ENDIAN -DTERMIO -O3 -Wall
+$cflags       = -m64 -DB_ENDIAN -O3 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4325,7 +4325,7 @@ $multilib     = 64
 
 *** linux-sparcv8
 $cc           = gcc
-$cflags       = -mv8 -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall -DBN_DIV2W
+$cflags       = -mcpu=v8 -DB_ENDIAN -O3 -fomit-frame-pointer -Wall -DBN_DIV2W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4358,7 +4358,7 @@ $multilib     =
 
 *** linux-sparcv9
 $cc           = gcc
-$cflags       = -m32 -mcpu=ultrasparc -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall -Wa,-Av8plus -DBN_DIV2W
+$cflags       = -m32 -mcpu=ultrasparc -DB_ENDIAN -O3 -fomit-frame-pointer -Wall -Wa,-Av8plus -DBN_DIV2W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = ULTRASPARC
@@ -4391,7 +4391,7 @@ $multilib     =
 
 *** linux-x86_64
 $cc           = gcc
-$cflags       = -m64 -DL_ENDIAN -DTERMIO -O3 -Wall
+$cflags       = -m64 -DL_ENDIAN -O3 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4424,7 +4424,7 @@ $multilib     = 64
 
 *** linux32-s390x
 $cc           = gcc
-$cflags       = -m31 -Wa,-mzarch -DB_ENDIAN -DTERMIO -O3 -Wall
+$cflags       = -m31 -Wa,-mzarch -DB_ENDIAN -O3 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4457,7 +4457,7 @@ $multilib     = /highgprs
 
 *** linux64-s390x
 $cc           = gcc
-$cflags       = -m64 -DB_ENDIAN -DTERMIO -O3 -Wall
+$cflags       = -m64 -DB_ENDIAN -O3 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4490,7 +4490,7 @@ $multilib     = 64
 
 *** linux64-sparcv9
 $cc           = gcc
-$cflags       = -m64 -mcpu=ultrasparc -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
+$cflags       = -m64 -mcpu=ultrasparc -DB_ENDIAN -O3 -fomit-frame-pointer -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = ULTRASPARC
@@ -5315,7 +5315,7 @@ $multilib     =
 
 *** solaris-sparcv8-gcc
 $cc           = gcc
-$cflags       = -mv8 -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W
+$cflags       = -mcpu=v8 -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -5612,7 +5612,7 @@ $multilib     = /64
 
 *** sunos-gcc
 $cc           = gcc
-$cflags       = -O3 -mv8 -Dssize_t=int
+$cflags       = -O3 -mcpu=v8 -Dssize_t=int
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = SUNOS
