@@ -15,12 +15,12 @@ SSL_get_client_random, SSL_get_server_random, SSL_SESSION_get_master_key - retri
 =head1 DESCRIPTION
 
 SSL_get_client_random() extracts the random value sent from the client
-to the server during the initial SSL/TLS handshake.  It copies this
-value into the buffer provided in B<out>, which must have at least
-B<outlen> bytes available. It returns the total number of bytes that were
-actually copied.
-If B<outlen> is less than zero, SSL_get_client_random() copies nothing, and
-returns the total size of the client_random value.
+to the server during the initial SSL/TLS handshake.  It copies as many
+bytes as it can of this value into the buffer provided in B<out>,
+which must have at least B<outlen> bytes available. It returns the
+total number of bytes that were actually copied.  If B<outlen> is less
+than zero, SSL_get_client_random() copies nothing, and returns the
+total size of the client_random value.
 
 SSL_get_server_random() behaves the same, but extracts the random value
 sent from the server to the client during the initial SSL/TLS handshake.
@@ -49,6 +49,12 @@ do not expose it, or any information about it, to anybody.
 If you need to calculate another secret value that depends on the master
 secret, you should probably use SSL_export_keying_material() instead, and
 forget that you ever saw these functions.
+
+In current versions of the TLS protocols, the length of client_random
+(and also server_random) is always SSL3_RANDOM_SIZE bytes. Support for
+other outlen arguments to the SSL_get_*_random() functions is provided
+in case of the unlikely event that a future version or variant of TLS
+uses some other length there.
 
 Finally, though the "client_random" and "server_random" values are called
 "random", many TLS implementations will generate four bytes of those
