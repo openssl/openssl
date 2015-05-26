@@ -9,6 +9,7 @@ SSL_get_ciphers, SSL_get_cipher_list - get list of available SSL_CIPHERs
  #include <openssl/ssl.h>
 
  STACK_OF(SSL_CIPHER) *SSL_get_ciphers(const SSL *ssl);
+ STACK_OF(SSL_CIPHER) *SSL_get_client_ciphers(const SSL *ssl);
  const char *SSL_get_cipher_list(const SSL *ssl, int priority);
 
 =head1 DESCRIPTION
@@ -16,6 +17,10 @@ SSL_get_ciphers, SSL_get_cipher_list - get list of available SSL_CIPHERs
 SSL_get_ciphers() returns the stack of available SSL_CIPHERs for B<ssl>,
 sorted by preference. If B<ssl> is NULL or no ciphers are available, NULL
 is returned.
+
+SSL_get_client_ciphers() returns the stack of available SSL_CIPHERS matching the
+list sent by the client for B<ssl>. If B<ssl> is NULL, no ciphers are
+available, or B<ssl> is not operating in server mode, NULL is returned.
 
 SSL_get_cipher_list() returns a pointer to the name of the SSL_CIPHER
 listed for B<ssl> with B<priority>. If B<ssl> is NULL, no ciphers are

@@ -1258,6 +1258,13 @@ STACK_OF(SSL_CIPHER) *SSL_get_ciphers(const SSL *s)
     return (NULL);
 }
 
+STACK_OF(SSL_CIPHER) *SSL_get_client_ciphers(const SSL *s)
+{
+    if ((s == NULL) || (s->session == NULL) || !s->server)
+        return NULL;
+    return s->session->ciphers;
+}
+
 STACK_OF(SSL_CIPHER) *SSL_get1_supported_ciphers(SSL *s)
 {
     STACK_OF(SSL_CIPHER) *sk = NULL, *ciphers;
