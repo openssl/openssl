@@ -1070,7 +1070,7 @@ static void select_point(const u64 idx, unsigned int size,
     unsigned i, j;
     limb *outlimbs = &out[0][0];
 
-    memset(out 0, sizeof(out));
+    memset(out, 0, sizeof(*out) * 3);
     for (i = 0; i < size; i++) {
         const limb *inlimbs = &pre_comp[i][0][0];
         u64 mask = i ^ idx;
