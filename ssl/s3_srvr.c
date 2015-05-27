@@ -369,7 +369,6 @@ int ssl3_accept(SSL *s)
                      */
                     if (al != TLS1_AD_UNKNOWN_PSK_IDENTITY)
                         SSLerr(SSL_F_SSL3_ACCEPT, SSL_R_CLIENTHELLO_TLSEXT);
-                    ret = SSL_TLSEXT_ERR_ALERT_FATAL;
                     ret = -1;
                     s->state = SSL_ST_ERR;
                     goto end;
