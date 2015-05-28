@@ -8,9 +8,9 @@ SSL_get_client_random, SSL_get_server_random, SSL_SESSION_get_master_key - retri
 
  #include <openssl/ssl.h>
 
- int SSL_get_client_random(const SSL *ssl, unsigned char *out, int outlen);
- int SSL_get_server_random(const SSL *ssl, unsigned char *out, int outlen);
- int SSL_SESSION_get_master_key(const SSL_SESSION *session, unsigned char *out, int outlen);
+ int SSL_get_client_random(const SSL *ssl, unsigned char *out, size_t outlen);
+ int SSL_get_server_random(const SSL *ssl, unsigned char *out, size_t outlen);
+ int SSL_SESSION_get_master_key(const SSL_SESSION *session, unsigned char *out, size_t outlen);
 
 =head1 DESCRIPTION
 

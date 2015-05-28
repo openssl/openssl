@@ -1652,9 +1652,12 @@ void SSL_set_state(SSL *ssl, int state);
 void SSL_set_verify_result(SSL *ssl, long v);
 __owur long SSL_get_verify_result(const SSL *ssl);
 
-__owur int SSL_get_client_random(const SSL *ssl, unsigned char *out, int outlen);
-__owur int SSL_get_server_random(const SSL *ssl, unsigned char *out, int outlen);
-__owur int SSL_SESSION_get_master_key(const SSL_SESSION *ssl, unsigned char *out, int outlen);
+__owur int SSL_get_client_random(const SSL *ssl, unsigned char *out,
+                                 size_t outlen);
+__owur int SSL_get_server_random(const SSL *ssl, unsigned char *out,
+                                 size_t outlen);
+__owur int SSL_SESSION_get_master_key(const SSL_SESSION *ssl,
+                                      unsigned char *out, size_t outlen);
 
 __owur int SSL_set_ex_data(SSL *ssl, int idx, void *data);
 void *SSL_get_ex_data(const SSL *ssl, int idx);
