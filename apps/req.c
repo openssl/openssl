@@ -200,7 +200,7 @@ int req_main(int argc, char **argv)
     char *outfile = NULL, *keyfile = NULL, *inrand = NULL;
     char *keyalgstr = NULL, *p, *prog, *passargin = NULL, *passargout = NULL;
     char *passin = NULL, *passout = NULL, *req_exts = NULL, *subj = NULL;
-    char *template = NULL, *keyout = NULL;
+    char *template = default_config_file, *keyout = NULL;
     const char *keyalg = NULL;
     OPTION_CHOICE o;
     int ret = 1, x509 = 0, days = 30, i = 0, newreq = 0, verbose =
@@ -377,31 +377,9 @@ int req_main(int argc, char **argv)
         goto end;
     }
 
-    if (template != NULL) {
-        long errline = -1;
-
-        if (verbose)
-            BIO_printf(bio_err, "Using configuration from %s\n", template);
-        req_conf = NCONF_new(NULL);
-        i = NCONF_load(req_conf, template, &errline);
-        if (i == 0) {
-            BIO_printf(bio_err, "error on line %ld of %s\n", errline,
-                       template);
-            goto end;
-        }
-    } else {
-        req_conf = config;
-
-        if (req_conf == NULL) {
-            BIO_printf(bio_err, "Unable to load config info from %s\n",
-                       default_config_file);
-            if (newreq)
-                goto end;
-        } else if (verbose)
-            BIO_printf(bio_err, "Using configuration from %s\n",
-                       default_config_file);
-    }
-
+    if (verbose)
+        BIO_printf(bio_err, "Using configuration from %s\n", template);
+    req_conf = app_load_config(template);
     if (req_conf != NULL) {
         p = NCONF_get_string(req_conf, NULL, "oid_file");
         if (p == NULL)
@@ -873,8 +851,7 @@ int req_main(int argc, char **argv)
     if (ret) {
         ERR_print_errors(bio_err);
     }
-    if (req_conf != config)
-        NCONF_free(req_conf);
+    NCONF_free(req_conf);
     BIO_free(in);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);

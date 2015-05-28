@@ -334,14 +334,12 @@ static int do_generate(char *genstr, char *genconf, BUF_MEM *buf)
 {
     CONF *cnf = NULL;
     int len;
-    long errline = 0;
     unsigned char *p;
     ASN1_TYPE *atyp = NULL;
 
     if (genconf) {
-        cnf = NCONF_new(NULL);
-        if (!NCONF_load(cnf, genconf, &errline))
-            goto conferr;
+        if ((cnf = app_load_config(genconf)) == NULL)
+            goto err;
         if (!genstr)
             genstr = NCONF_get_string(cnf, "default", "asn1");
         if (!genstr) {
@@ -372,18 +370,8 @@ static int do_generate(char *genstr, char *genconf, BUF_MEM *buf)
     ASN1_TYPE_free(atyp);
     return len;
 
- conferr:
-
-    if (errline > 0)
-        BIO_printf(bio_err, "Error on line %ld of config file '%s'\n",
-                   errline, genconf);
-    else
-        BIO_printf(bio_err, "Error loading config file '%s'\n", genconf);
-
  err:
     NCONF_free(cnf);
     ASN1_TYPE_free(atyp);
-
     return -1;
-
 }
