@@ -300,7 +300,7 @@ test_ecdh: $(ECDHTEST)$(EXE_EXT)
 
 test_verify: ../apps/openssl$(EXE_EXT)
 	@echo $(START) $@ -- expect some failures and expired certificates
-	OPENSSL_CONF=/dev/null ../util/shlib_wrap.sh ../apps/openssl verify -CApath ../certs/demo ../certs/demo/*.pem
+	../util/shlib_wrap.sh ../apps/openssl verify -CApath ../certs/demo ../certs/demo/*.pem
 
 test_dh: $(DHTEST)$(EXE_EXT)
 	@echo $(START) $@
@@ -345,7 +345,7 @@ test_ssl: keyU.ss certU.ss certCA.ss certP1.ss keyP1.ss certP2.ss keyP2.ss \
 	@sh ./testsslproxy keyP2.ss certP2.ss intP2.ss
 
 test_ca: ../apps/openssl$(EXE_EXT) testca CAss.cnf Uss.cnf
-	@if OPENSSL_CONF=/dev/null ../util/shlib_wrap.sh ../apps/openssl no-rsa; then \
+	@if ../util/shlib_wrap.sh ../apps/openssl no-rsa; then \
 	  echo SKIP $@ -- requires RSA; \
 	else \
 	  echo $(START) $@; \
@@ -353,7 +353,7 @@ test_ca: ../apps/openssl$(EXE_EXT) testca CAss.cnf Uss.cnf
 	fi
 
 test_tsa: ../apps/openssl$(EXE_EXT) testtsa CAtsa.cnf ../util/shlib_wrap.sh
-	@if OPENSSL_CONF=/dev/null ../util/shlib_wrap.sh ../apps/openssl no-rsa; then \
+	@if ../util/shlib_wrap.sh ../apps/openssl no-rsa; then \
 	    echo SKIP $@ -- requires RSA; \
 	else \
 	  echo $(START) $@; \
@@ -370,7 +370,7 @@ test_jpake: $(JPAKETEST)$(EXE_EXT)
 
 test_cms: ../apps/openssl$(EXE_EXT) cms-test.pl smcont.txt
 	@echo $(START) $@
-	OPENSSL_CONFIG=/dev/null $(PERL) cms-test.pl
+	$(PERL) cms-test.pl
 
 test_srp: $(SRPTEST)$(EXE_EXT)
 	@echo $(START) $@

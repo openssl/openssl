@@ -18,7 +18,7 @@ export SSLEAY_CONFIG OPENSSL
 SSLEAY_CONFIG="-config CAss.cnf"
 OPENSSL="`pwd`/../util/opensslwrap.sh"
 
-OPENSSL_CONFIG=/dev/null $PERL ../apps/CA.pl -newca </dev/null
+$PERL ../apps/CA.pl -newca </dev/null
 
 SSLEAY_CONFIG="-config Uss.cnf"
 $PERL ../apps/CA.pl -newreq
