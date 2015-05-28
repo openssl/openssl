@@ -255,14 +255,13 @@ int srp_main(int argc, char **argv)
     CA_DB *db = NULL;
     DB_ATTR db_attr;
     CONF *conf = NULL;
-    int gNindex = -1, maxgN = -1, ret = 1, errors = 0, verbose =
-        0, i, doupdatedb = 0;
-    int mode = OPT_ERR;
+    int gNindex = -1, maxgN = -1, ret = 1, errors = 0, verbose = 0, i;
+    int doupdatedb = 0, mode = OPT_ERR;
     char *user = NULL, *passinarg = NULL, *passoutarg = NULL;
     char *passin = NULL, *passout = NULL, *gN = NULL, *userinfo = NULL;
     char *randfile = NULL, *tofree = NULL, *section = NULL;
-    char **gNrow = NULL, *configfile = NULL, *dbfile = NULL, **pp, *prog;
-    long errorline = -1;
+    char **gNrow = NULL, *configfile = default_config_file;
+    char *dbfile = NULL, **pp, *prog;
     OPTION_CHOICE o;
 
     prog = opt_init(argc, argv, srp_options);
@@ -349,42 +348,12 @@ int srp_main(int argc, char **argv)
     }
 
     if (!dbfile) {
-
-        /*****************************************************************/
-        tofree = NULL;
-        if (configfile == NULL)
-            configfile = getenv("OPENSSL_CONF");
-        if (configfile == NULL)
-            configfile = getenv("SSLEAY_CONF");
-        if (configfile == NULL) {
-            const char *s = X509_get_default_cert_area();
-            size_t len = strlen(s) + 1 + sizeof(CONFIG_FILE);
-
-            tofree = app_malloc(len, "config filename space");
-# ifdef OPENSSL_SYS_VMS
-            strcpy(tofree, s);
-# else
-            BUF_strlcpy(tofree, s, len);
-            BUF_strlcat(tofree, "/", len);
-# endif
-            BUF_strlcat(tofree, CONFIG_FILE, len);
-            configfile = tofree;
-        }
-
         if (verbose)
-            BIO_printf(bio_err, "Using configuration from %s\n", configfile);
-        conf = NCONF_new(NULL);
-        if (NCONF_load(conf, configfile, &errorline) <= 0) {
-            if (errorline <= 0)
-                BIO_printf(bio_err, "error loading the config file '%s'\n",
-                           configfile);
-            else
-                BIO_printf(bio_err, "error on line %ld of config file '%s'\n",
-                           errorline, configfile);
+            BIO_printf(bio_err, "Using configuration from %s\n",
+                       configfile);
+        conf = app_load_config(configfile);
+        if (conf == NULL)
             goto end;
-        }
-        OPENSSL_free(tofree);
-        tofree = NULL;
 
         /* Lets get the config section we are using */
         if (section == NULL) {

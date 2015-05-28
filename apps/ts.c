@@ -188,7 +188,8 @@ int ts_main(int argc, char **argv)
 {
     CONF *conf = NULL;
     char *CAfile = NULL, *untrusted = NULL, *engine = NULL, *prog, **helpp;
-    char *configfile = NULL, *section = NULL, *password = NULL;
+    char *configfile = default_config_file;
+    char *section = NULL, *password = NULL;
     char *data = NULL, *digest = NULL, *rnd = NULL, *policy = NULL;
     char *in = NULL, *out = NULL, *queryfile = NULL, *passin = NULL;
     char *inkey = NULL, *signer = NULL, *chain = NULL, *CApath = NULL;
@@ -389,24 +390,7 @@ static ASN1_OBJECT *txt2obj(const char *oid)
 
 static CONF *load_config_file(const char *configfile)
 {
-    CONF *conf = NULL;
-    long errorline = -1;
-
-    if (!configfile)
-        configfile = getenv("OPENSSL_CONF");
-    if (!configfile)
-        configfile = getenv("SSLEAY_CONF");
-
-    if (configfile &&
-        ((conf = NCONF_new(NULL)) == NULL
-         || NCONF_load(conf, configfile, &errorline) <= 0)) {
-        if (errorline <= 0)
-            BIO_printf(bio_err, "error loading the config file "
-                       "'%s'\n", configfile);
-        else
-            BIO_printf(bio_err, "error on line %ld of config file "
-                       "'%s'\n", errorline, configfile);
-    }
+    CONF *conf = app_load_config(configfile);
 
     if (conf != NULL) {
         const char *p;
