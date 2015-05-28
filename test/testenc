@@ -3,7 +3,6 @@
 testsrc=testenc
 test=./p
 
-OPENSSL_CONF=/dev/null ; export OPENSSL_CONF
 cmd="../util/shlib_wrap.sh ../apps/openssl"
 
 cat $testsrc >$test;
