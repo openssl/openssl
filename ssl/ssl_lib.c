@@ -2897,39 +2897,39 @@ long SSL_get_verify_result(const SSL *ssl)
     return (ssl->verify_result);
 }
 
-int SSL_get_client_random(const SSL *ssl, unsigned char *out, size_t outlen)
+size_t SSL_get_client_random(const SSL *ssl, unsigned char *out, size_t outlen)
 {
     if (outlen == 0)
         return sizeof(ssl->s3->client_random);
     if (outlen > sizeof(ssl->s3->client_random))
         outlen = sizeof(ssl->s3->client_random);
     memcpy(out, ssl->s3->client_random, outlen);
-    return (outlen);
+    return outlen;
 }
 
-int SSL_get_server_random(const SSL *ssl, unsigned char *out, size_t outlen)
+size_t SSL_get_server_random(const SSL *ssl, unsigned char *out, size_t outlen)
 {
     if (outlen == 0)
         return sizeof(ssl->s3->server_random);
     if (outlen > sizeof(ssl->s3->server_random))
         outlen = sizeof(ssl->s3->server_random);
     memcpy(out, ssl->s3->server_random, outlen);
-    return (outlen);
+    return outlen;
 }
 
-int SSL_SESSION_get_master_key(const SSL_SESSION *session,
+size_t SSL_SESSION_get_master_key(const SSL_SESSION *session,
                                unsigned char *out, size_t outlen)
 {
-    if (outlen == 0)
-        return session->master_key_length;
     if (session->master_key_length < 0) {
         /* Should never happen */
         return 0;
     }
+    if (outlen == 0)
+        return session->master_key_length;
     if (outlen > (size_t)session->master_key_length)
         outlen = session->master_key_length;
     memcpy(out, session->master_key, outlen);
-    return (outlen);
+    return outlen;
 }
 
 int SSL_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,

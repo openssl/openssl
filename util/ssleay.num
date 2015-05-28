@@ -399,3 +399,7 @@ SSL_use_certificate_chain_file          433	EXIST::FUNCTION:STDIO
 TLS_server_method                       434	EXIST::FUNCTION:
 TLS_method                              435	EXIST::FUNCTION:
 TLS_client_method                       436	EXIST::FUNCTION:
+SSL_get_server_random                   437	EXIST::FUNCTION:
+SSL_get_client_ciphers                  438	EXIST::FUNCTION:
+SSL_get_client_random                   439	EXIST::FUNCTION:
+SSL_SESSION_get_master_key              440	EXIST::FUNCTION:

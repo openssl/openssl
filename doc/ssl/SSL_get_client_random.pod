@@ -8,9 +8,9 @@ SSL_get_client_random, SSL_get_server_random, SSL_SESSION_get_master_key - retri
 
  #include <openssl/ssl.h>
 
- int SSL_get_client_random(const SSL *ssl, unsigned char *out, size_t outlen);
- int SSL_get_server_random(const SSL *ssl, unsigned char *out, size_t outlen);
- int SSL_SESSION_get_master_key(const SSL_SESSION *session, unsigned char *out, size_t outlen);
+ size_t SSL_get_client_random(const SSL *ssl, unsigned char *out, size_t outlen);
+ size_t SSL_get_server_random(const SSL *ssl, unsigned char *out, size_t outlen);
+ size_t SSL_SESSION_get_master_key(const SSL_SESSION *session, unsigned char *out, size_t outlen);
 
 =head1 DESCRIPTION
 
@@ -18,8 +18,8 @@ SSL_get_client_random() extracts the random value sent from the client
 to the server during the initial SSL/TLS handshake.  It copies as many
 bytes as it can of this value into the buffer provided in B<out>,
 which must have at least B<outlen> bytes available. It returns the
-total number of bytes that were actually copied.  If B<outlen> is less
-than zero, SSL_get_client_random() copies nothing, and returns the
+total number of bytes that were actually copied.  If B<outlen> is
+zero, SSL_get_client_random() copies nothing, and returns the
 total size of the client_random value.
 
 SSL_get_server_random() behaves the same, but extracts the random value
@@ -63,10 +63,10 @@ values based on their view of the current time.
 
 =head1 RETURN VALUES
 
-If B<outlen> is at least 0, these functions return the number of bytes
+If B<outlen> is greater than 0, these functions return the number of bytes
 actually copied, which will be less than or equal to B<outlen>.
 
-If B<outlen> is less than 0, these functions return the maximum number
+If B<outlen> is 0, these functions return the maximum number
 of bytes they would copy--that is, the length of the underlying field.
 
 =head1 SEE ALSO
