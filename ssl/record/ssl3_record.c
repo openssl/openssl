@@ -1072,7 +1072,7 @@ int tls1_cbc_remove_padding(const SSL *s,
      */
     if ((s->options & SSL_OP_TLS_BLOCK_PADDING_BUG) && !s->expand) {
         /* First packet is even in size, so check */
-        if ((memcmp(RECORD_LAYER_get_read_sequence(&s->rlayer),
+        if ((CRYPTO_memcmp(RECORD_LAYER_get_read_sequence(&s->rlayer),
                 "\0\0\0\0\0\0\0\0", 8) == 0) &&
             !(padding_length & 1)) {
             s->s3->flags |= TLS1_FLAGS_TLS_PADDING_BUG;
@@ -1578,4 +1578,3 @@ int dtls1_get_record(SSL *s)
     return (1);
 
 }
-
