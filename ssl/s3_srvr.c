@@ -2238,7 +2238,6 @@ int ssl3_get_client_key_exchange(SSL *s)
     BIGNUM *pub = NULL;
     DH *dh_srvr, *dh_clnt = NULL;
 #endif
-
 #ifndef OPENSSL_NO_EC
     EC_KEY *srvr_ecdh = NULL;
     EVP_PKEY *clnt_pub_pkey = NULL;
@@ -2676,7 +2675,7 @@ int ssl3_get_client_key_exchange(SSL *s)
         psk_len = s->psk_server_callback(s, tmp_id,
                                          psk_or_pre_ms,
                                          sizeof(psk_or_pre_ms));
-        OPENSSL_cleanse(tmp_id, PSK_MAX_IDENTITY_LEN + 1);
+        OPENSSL_cleanse(tmp_id, sizeof(tmp_id));
 
         if (psk_len > PSK_MAX_PSK_LEN) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);

@@ -206,7 +206,7 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 
         km += MD5_DIGEST_LENGTH;
     }
-    OPENSSL_cleanse(smd, SHA_DIGEST_LENGTH);
+    OPENSSL_cleanse(smd, sizeof(smd));
     EVP_MD_CTX_cleanup(&m5);
     EVP_MD_CTX_cleanup(&s1);
     return 1;
@@ -388,13 +388,15 @@ int ssl3_change_cipher_state(SSL *s, int which)
     }
 #endif
 
-    OPENSSL_cleanse(&(exp_key[0]), sizeof(exp_key));
-    OPENSSL_cleanse(&(exp_iv[0]), sizeof(exp_iv));
+    OPENSSL_cleanse(exp_key, sizeof(exp_key));
+    OPENSSL_cleanse(exp_iv, sizeof(exp_iv));
     EVP_MD_CTX_cleanup(&md);
     return (1);
  err:
     SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE, ERR_R_MALLOC_FAILURE);
  err2:
+    OPENSSL_cleanse(exp_key, sizeof(exp_key));
+    OPENSSL_cleanse(exp_iv, sizeof(exp_iv));
     return (0);
 }
 
@@ -687,7 +689,7 @@ int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
                         s, s->msg_callback_arg);
     }
 #endif
-    OPENSSL_cleanse(buf, sizeof buf);
+    OPENSSL_cleanse(buf, sizeof(buf));
     return (ret);
 }
 
