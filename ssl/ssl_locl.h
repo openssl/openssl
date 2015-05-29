@@ -1370,11 +1370,6 @@ struct hm_header_st {
     struct dtls1_retransmit_state saved_retransmit_state;
 };
 
-struct ccs_header_st {
-    unsigned char type;
-    unsigned short seq;
-};
-
 struct dtls1_timeout_st {
     /* Number of read timeouts so far */
     unsigned int read_timeouts;
@@ -1986,7 +1981,6 @@ int dtls1_retransmit_buffered_messages(SSL *s);
 void dtls1_clear_record_buffer(SSL *s);
 void dtls1_get_message_header(unsigned char *data,
                               struct hm_header_st *msg_hdr);
-void dtls1_get_ccs_header(unsigned char *data, struct ccs_header_st *ccs_hdr);
 __owur long dtls1_default_timeout(void);
 __owur struct timeval *dtls1_get_timeout(SSL *s, struct timeval *timeleft);
 __owur int dtls1_check_timeout_num(SSL *s);
