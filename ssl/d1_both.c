@@ -478,6 +478,12 @@ long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
         return i;
     }
 
+    if (mt >= 0 && s->s3->tmp.message_type != mt) {
+        al = SSL_AD_UNEXPECTED_MESSAGE;
+        SSLerr(SSL_F_DTLS1_GET_MESSAGE, SSL_R_UNEXPECTED_MESSAGE);
+        goto f_err;
+    }
+
     p = (unsigned char *)s->init_buf->data;
     msg_len = msg_hdr->msg_len;
 
