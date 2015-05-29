@@ -563,6 +563,10 @@ int tls1_change_cipher_state(SSL *s, int which)
  err:
     SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE, ERR_R_MALLOC_FAILURE);
  err2:
+    OPENSSL_cleanse(tmp1, sizeof(tmp1));
+    OPENSSL_cleanse(tmp2, sizeof(tmp1));
+    OPENSSL_cleanse(iv1, sizeof(iv1));
+    OPENSSL_cleanse(iv2, sizeof(iv2));
     return (0);
 }
 
@@ -721,7 +725,7 @@ int tls1_final_finish_mac(SSL *s, const char *str, int slen,
         return 0;
     OPENSSL_cleanse(hash, hashlen);
     OPENSSL_cleanse(buf2, sizeof(buf2));
-    return sizeof buf2;
+    return sizeof(buf2);
 }
 
 int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
@@ -871,8 +875,6 @@ int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
                   NULL, 0,
                   s->session->master_key, s->session->master_key_length,
                   out, buff, olen);
-    OPENSSL_cleanse(val, vallen);
-    OPENSSL_cleanse(buff, olen);
 
     goto ret;
  err1:
@@ -884,8 +886,8 @@ int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
     SSLerr(SSL_F_TLS1_EXPORT_KEYING_MATERIAL, ERR_R_MALLOC_FAILURE);
     rv = 0;
  ret:
-    OPENSSL_free(buff);
-    OPENSSL_free(val);
+    CRYPTO_clear_free(val, vallen);
+    CRYPTO_clear_free(buff, olen);
     return (rv);
 }
 
