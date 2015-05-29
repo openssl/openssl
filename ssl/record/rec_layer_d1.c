@@ -857,10 +857,7 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
     }
 
     if (SSL3_RECORD_get_type(rr) == SSL3_RT_CHANGE_CIPHER_SPEC) {
-        struct ccs_header_st ccs_hdr;
         unsigned int ccs_hdr_len = DTLS1_CCS_HEADER_LENGTH;
-
-        dtls1_get_ccs_header(SSL3_RECORD_get_data(rr), &ccs_hdr);
 
         if (s->version == DTLS1_BAD_VER)
             ccs_hdr_len = 3;

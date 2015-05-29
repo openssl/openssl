@@ -1298,13 +1298,6 @@ dtls1_get_message_header(unsigned char *data, struct hm_header_st *msg_hdr)
     n2l3(data, msg_hdr->frag_len);
 }
 
-void dtls1_get_ccs_header(unsigned char *data, struct ccs_header_st *ccs_hdr)
-{
-    memset(ccs_hdr, 0, sizeof(*ccs_hdr));
-
-    ccs_hdr->type = *(data++);
-}
-
 int dtls1_shutdown(SSL *s)
 {
     int ret;
