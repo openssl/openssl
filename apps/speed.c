@@ -856,6 +856,9 @@ int speed_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
+    if (!app_load_modules(NULL))
+        goto end;
+
     /* Remaining arguments are algorithms. */
     for ( ; *argv; argv++) {
         if (found(*argv, doit_choices, &i)) {

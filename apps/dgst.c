@@ -236,6 +236,9 @@ int dgst_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
+    if (!app_load_modules(NULL))
+        goto end;
+
     if (do_verify && !sigfile) {
         BIO_printf(bio_err,
                    "No signature to verify: use the -signature option\n");

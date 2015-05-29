@@ -185,6 +185,9 @@ int dsaparam_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
+    if (!app_load_modules(NULL))
+        goto end;
+
     if (argc == 1) {
         if (!opt_int(argv[0], &num))
             goto end;

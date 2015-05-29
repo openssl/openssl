@@ -289,12 +289,16 @@ void unbuffer(FILE *fp)
     setbuf(fp, NULL);
 }
 
-BIO *bio_open_default(const char *filename, const char *mode)
+static BIO *bio_open_default_(const char *filename, const char *mode, int quiet)
 {
     BIO *ret;
 
     if (filename == NULL || strcmp(filename, "-") == 0) {
         ret = *mode == 'r' ? dup_bio_in() : dup_bio_out();
+        if (quiet) {
+            ERR_clear_error();
+            return ret;
+        }
         if (ret != NULL)
             return ret;
         BIO_printf(bio_err,
@@ -302,6 +306,10 @@ BIO *bio_open_default(const char *filename, const char *mode)
                    *mode == 'r' ? "stdin" : "stdout", strerror(errno));
     } else {
         ret = BIO_new_file(filename, mode);
+        if (quiet) {
+            ERR_clear_error();
+            return ret;
+        }
         if (ret != NULL)
             return ret;
         BIO_printf(bio_err,
@@ -311,6 +319,14 @@ BIO *bio_open_default(const char *filename, const char *mode)
     }
     ERR_print_errors(bio_err);
     return NULL;
+}
+BIO *bio_open_default(const char *filename, const char *mode)
+{
+    return bio_open_default_(filename, mode, 0);
+}
+BIO *bio_open_default_quiet(const char *filename, const char *mode)
+{
+    return bio_open_default_(filename, mode, 1);
 }
 
 #if defined( OPENSSL_SYS_VMS)
