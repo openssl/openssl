@@ -140,7 +140,7 @@ int asn1parse_main(int argc, char **argv)
         case OPT_INFORM:
             if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &informat))
                 goto opthelp;
-            goto end;
+            break;
         case OPT_IN:
             infile = opt_arg();
             break;
