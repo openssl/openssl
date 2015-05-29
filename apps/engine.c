@@ -369,6 +369,9 @@ int engine_main(int argc, char **argv)
         }
     }
 
+    if (!app_load_modules(NULL))
+        goto end;
+
     for (i = 0; i < sk_OPENSSL_STRING_num(engines); i++) {
         const char *id = sk_OPENSSL_STRING_value(engines, i);
         if ((e = ENGINE_by_id(id)) != NULL) {

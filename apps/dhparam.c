@@ -230,6 +230,9 @@ int dhparam_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
+    if (!app_load_modules(NULL))
+        goto end;
+
     if (argv[0] && (!opt_int(argv[0], &num) || num <= 0))
         goto end;
 

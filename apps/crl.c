@@ -217,6 +217,9 @@ int crl_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
+    if (!app_load_modules(NULL))
+        goto end;
+
     x = load_crl(infile, informat);
     if (x == NULL)
         goto end;

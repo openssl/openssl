@@ -496,20 +496,14 @@ static char *app_get_pass(char *arg, int keepbio)
     return BUF_strdup(tpass);
 }
 
-CONF *app_load_config(const char *filename)
+static CONF *app_load_config_(BIO *in, const char *filename)
 {
     long errorline = -1;
     CONF *conf;
     int i;
-    BIO *in;
-
-    in = bio_open_default(filename, "r");
-    if (in == NULL)
-        return NULL;
 
     conf = NCONF_new(NULL);
     i = NCONF_load_bio(conf, in, &errorline);
-    BIO_free(in);
     if (i > 0)
         return conf;
 
@@ -521,6 +515,51 @@ CONF *app_load_config(const char *filename)
                    opt_getprog(), errorline, filename);
     NCONF_free(conf);
     return NULL;
+}
+CONF *app_load_config(const char *filename)
+{
+    BIO *in;
+    CONF *conf;
+
+    in = bio_open_default(filename, "r");
+    if (in == NULL)
+        return NULL;
+
+    conf = app_load_config_(in, filename);
+    BIO_free(in);
+    return conf;
+}
+CONF *app_load_config_quiet(const char *filename)
+{
+    BIO *in;
+    CONF *conf;
+
+    in = bio_open_default_quiet(filename, "r");
+    if (in == NULL)
+        return NULL;
+
+    conf = app_load_config_(in, filename);
+    BIO_free(in);
+    return conf;
+}
+
+int app_load_modules(const CONF *config)
+{
+    CONF *to_free = NULL;
+
+    if (config == NULL)
+	config = to_free = app_load_config_quiet(default_config_file);
+    if (config == NULL)
+	return 1;
+
+    if (CONF_modules_load(config, NULL, 0) <= 0) {
+        BIO_printf(bio_err, "Error configuring OpenSSL modules\n");
+        ERR_print_errors(bio_err);
+        NCONF_free(to_free);
+        return 0;
+    }
+    NCONF_free(to_free);
+    return 1;
 }
 
 int add_oid_section(CONF *conf)

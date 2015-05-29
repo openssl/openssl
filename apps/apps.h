@@ -154,7 +154,10 @@ extern BIO *bio_err;
 BIO *dup_bio_in(void);
 BIO *dup_bio_out(void);
 BIO *bio_open_default(const char *filename, const char *mode);
-CONF *app_load_config(const char* filename);
+BIO *bio_open_default_quiet(const char *filename, const char *mode);
+CONF *app_load_config(const char *filename);
+CONF *app_load_config_quiet(const char *filename);
+int app_load_modules(const CONF *config);
 void unbuffer(FILE *fp);
 
 /* Often used in calls to bio_open_default. */

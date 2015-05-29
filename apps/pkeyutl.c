@@ -229,6 +229,9 @@ int pkeyutl_main(int argc, char **argv)
     if (ctx == NULL)
         goto opthelp;
 
+    if (!app_load_modules(NULL))
+        goto end;
+
     if (sigfile && (pkey_op != EVP_PKEY_OP_VERIFY)) {
         BIO_printf(bio_err,
                    "%s: Signature file specified for non verify\n", prog);

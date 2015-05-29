@@ -109,6 +109,9 @@ int prime_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
+    if (!app_load_modules(NULL))
+        goto end;
+
     if (argc == 0 && !generate) {
         BIO_printf(bio_err, "%s: No prime specified\n", prog);
         goto end;

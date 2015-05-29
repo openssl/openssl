@@ -199,6 +199,9 @@ int ec_main(int argc, char **argv)
         goto end;
     }
 
+    if (!app_load_modules(NULL))
+        goto end;
+
     in = bio_open_default(infile, RB(informat));
     if (in == NULL)
         goto end;

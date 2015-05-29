@@ -1059,6 +1059,9 @@ int s_client_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
+    if (!app_load_modules(NULL))
+        goto end;
+
     if (proxystr) {
         if (connectstr == NULL) {
             BIO_printf(bio_err, "%s: -proxy requires use of -connect\n", prog);

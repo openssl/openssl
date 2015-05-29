@@ -485,6 +485,8 @@ end_of_options:
     BIO_printf(bio_err, "Using configuration from %s\n", configfile);
     if ((conf = app_load_config(configfile)) == NULL)
         goto end;
+    if (!app_load_modules(conf))
+        goto end;
 
     /* Lets get the config section we are using */
     if (section == NULL) {

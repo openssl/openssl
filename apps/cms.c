@@ -664,11 +664,13 @@ int cms_main(int argc, char **argv)
     } else if (!operation)
         goto opthelp;
 
-
     if (!app_passwd(passinarg, NULL, &passin, NULL)) {
         BIO_printf(bio_err, "Error getting password\n");
         goto end;
     }
+
+    if (!app_load_modules(NULL))
+        goto end;
 
     if (need_rand) {
         app_RAND_load_file(NULL, (inrand != NULL));

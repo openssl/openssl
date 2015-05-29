@@ -166,6 +166,9 @@ int genrsa_main(int argc, char **argv)
         goto end;
     }
 
+    if (!app_load_modules(NULL))
+        goto end;
+
     out = bio_open_default(outfile, "w");
     if (out == NULL)
         goto end;

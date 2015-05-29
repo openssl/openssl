@@ -316,6 +316,10 @@ int ts_main(int argc, char **argv)
         goto end;
     }
 
+    conf = load_config_file(configfile);
+    if (!app_load_modules(conf))
+        goto end;
+
     /*
      * Check consistency of parameters and execute the appropriate function.
      */
@@ -331,13 +335,10 @@ int ts_main(int argc, char **argv)
         ret = data != NULL && digest != NULL;
         if (ret)
             goto opthelp;
-        /* Load the config file for possible policy OIDs. */
-        conf = load_config_file(configfile);
         ret = !query_command(data, digest, md, policy, no_nonce, cert,
                              in, out, text);
         break;
     case OPT_REPLY:
-        conf = load_config_file(configfile);
         if (in == NULL) {
             ret = !(queryfile != NULL && conf != NULL && !token_in);
             if (ret)
