@@ -591,6 +591,7 @@ int req_main(int argc, char **argv)
             goto end;
         }
         BIO_free(out);
+        out = NULL;
         BIO_printf(bio_err, "-----\n");
     }
 
