@@ -555,6 +555,20 @@ int tls1_shared_curve(SSL *s, int nmatch)
         (s, !(s->options & SSL_OP_CIPHER_SERVER_PREFERENCE), &pref,
          &num_pref))
         return nmatch == -1 ? 0 : NID_undef;
+
+    /*
+     * If the client didn't send the elliptic_curves extension all of them
+     * are allowed.
+     */
+    if (num_supp == 0 && (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE) != 0) {
+        supp = eccurves_all;
+        num_supp = sizeof(eccurves_all) / 2;
+    } else if (num_pref == 0 &&
+        (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE) == 0) {
+        pref = eccurves_all;
+        num_pref = sizeof(eccurves_all) / 2;
+    }
+
     k = 0;
     for (i = 0; i < num_pref; i++, pref += 2) {
         const unsigned char *tsupp = supp;
