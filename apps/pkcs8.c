@@ -115,7 +115,7 @@ int pkcs8_main(int argc, char **argv)
     OPTION_CHOICE o;
     int nocrypt = 0, ret = 1, iter = PKCS12_DEFAULT_ITER, p8_broken = PKCS8_OK;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, topk8 = 0, pbe_nid = -1;
-    uint64_t scrypt_N = 0, scrypt_r = 0, scrypt_p = 0;
+    unsigned long scrypt_N = 0, scrypt_r = 0, scrypt_p = 0;
 
     prog = opt_init(argc, argv, pkcs8_options);
     while ((o = opt_next()) != OPT_EOF) {
