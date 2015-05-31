@@ -808,7 +808,7 @@ int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
 {
     unsigned char *buff;
     unsigned char *val = NULL;
-    size_t vallen, currentvalpos;
+    size_t vallen = 0, currentvalpos;
     int rv;
 
     buff = OPENSSL_malloc(olen);
