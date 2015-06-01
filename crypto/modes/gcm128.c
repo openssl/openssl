@@ -694,7 +694,7 @@ static void gcm_gmult_1bit(u64 Xi[2], const u64 H[2])
          defined(_M_IX86)       || defined(_M_AMD64)    || defined(_M_X64))
 #  define GHASH_ASM_X86_OR_64
 #  define GCM_FUNCREF_4BIT
-extern unsigned int OPENSSL_ia32cap_P[2];
+extern unsigned int OPENSSL_ia32cap_P[];
 
 void gcm_init_clmul(u128 Htable[16], const u64 Xi[2]);
 void gcm_gmult_clmul(u64 Xi[2], const u128 Htable[16]);
