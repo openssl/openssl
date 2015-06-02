@@ -379,8 +379,9 @@ int dtls1_process_buffered_records(SSL *s)
  * (possibly multiple records if we still don't have anything to return).
  *
  * This function must handle any surprises the peer may have for us, such as
- * Alert records (e.g. close_notify), ChangeCipherSpec records (not really
- * a surprise, but handled as if it were), or renegotiation requests.
+ * Alert records (e.g. close_notify) or renegotiation requests. ChangeCipherSpec
+ * messages are treated as if they were handshake messages *if* the |recd_type|
+ * argument is non NULL.
  * Also if record payloads contain fragments too small to process, we store
  * them until there is enough for the respective protocol (the record protocol
  * may use arbitrary fragmentation and even interleaving):
@@ -538,9 +539,14 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         return (0);
     }
 
-    if (type == SSL3_RECORD_get_type(rr)) {
-        /* SSL3_RT_APPLICATION_DATA or
-         * SSL3_RT_HANDSHAKE */
+    if (type == SSL3_RECORD_get_type(rr)
+            || (SSL3_RECORD_get_type(rr) == SSL3_RT_CHANGE_CIPHER_SPEC
+                && type == SSL3_RT_HANDSHAKE && recvd_type != NULL)) {
+        /*
+         * SSL3_RT_APPLICATION_DATA or
+         * SSL3_RT_HANDSHAKE or
+         * SSL3_RT_CHANGE_CIPHER_SPEC
+         */
         /*
          * make sure that we are not getting application data when we are
          * doing a handshake for the first time
@@ -551,6 +557,9 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             SSLerr(SSL_F_DTLS1_READ_BYTES, SSL_R_APP_DATA_IN_HANDSHAKE);
             goto f_err;
         }
+
+        if (recvd_type != NULL)
+            *recvd_type = SSL3_RECORD_get_type(rr);
 
         if (len <= 0)
             return (len);
@@ -858,59 +867,11 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     }
 
     if (SSL3_RECORD_get_type(rr) == SSL3_RT_CHANGE_CIPHER_SPEC) {
-        unsigned int ccs_hdr_len = DTLS1_CCS_HEADER_LENGTH;
-
-        if (s->version == DTLS1_BAD_VER)
-            ccs_hdr_len = 3;
-
-        /*
-         * 'Change Cipher Spec' is just a single byte, so we know exactly
-         * what the record payload has to look like
-         */
-        /* XDTLS: check that epoch is consistent */
-        if ((SSL3_RECORD_get_length(rr) != ccs_hdr_len)
-                || (SSL3_RECORD_get_off(rr) != 0)
-                || (SSL3_RECORD_get_data(rr)[0] != SSL3_MT_CCS)) {
-            i = SSL_AD_ILLEGAL_PARAMETER;
-            SSLerr(SSL_F_DTLS1_READ_BYTES, SSL_R_BAD_CHANGE_CIPHER_SPEC);
-            goto err;
-        }
-
-        SSL3_RECORD_set_length(rr, 0);
-
-        if (s->msg_callback)
-            s->msg_callback(0, s->version, SSL3_RT_CHANGE_CIPHER_SPEC,
-                SSL3_RECORD_get_data(rr), 1, s, s->msg_callback_arg);
-
         /*
          * We can't process a CCS now, because previous handshake messages
          * are still missing, so just drop it.
          */
-        if (!s->d1->change_cipher_spec_ok) {
-            goto start;
-        }
-
-        s->d1->change_cipher_spec_ok = 0;
-
-        s->s3->change_cipher_spec = 1;
-        if (!ssl3_do_change_cipher_spec(s))
-            goto err;
-
-        /* do this whenever CCS is processed */
-        dtls1_reset_seq_numbers(s, SSL3_CC_READ);
-
-        if (s->version == DTLS1_BAD_VER)
-            s->d1->handshake_read_seq++;
-
-#ifndef OPENSSL_NO_SCTP
-        /*
-         * Remember that a CCS has been received, so that an old key of
-         * SCTP-Auth can be deleted when a CCS is sent. Will be ignored if no
-         * SCTP is used
-         */
-        BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_AUTH_CCS_RCVD, 1, NULL);
-#endif
-
+        SSL3_RECORD_set_length(rr, 0);
         goto start;
     }
 
@@ -1026,7 +987,6 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
 
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
- err:
     return (-1);
 }
 

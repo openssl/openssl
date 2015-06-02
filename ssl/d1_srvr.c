@@ -257,7 +257,6 @@ int dtls1_accept(SSL *s)
             }
 
             s->init_num = 0;
-            s->d1->change_cipher_spec_ok = 0;
             /*
              * Should have been reset by ssl3_get_finished, too.
              */
@@ -378,7 +377,7 @@ int dtls1_accept(SSL *s)
                 goto end;
             }
 
-            s->state = SSL3_ST_SR_FINISHED_A;
+            s->state = SSL3_ST_SR_CHANGE_A;
             break;
 
         case DTLS1_SCTP_ST_SW_WRITE_SOCK:
@@ -624,7 +623,7 @@ int dtls1_accept(SSL *s)
                  * pub key in a certificate, the CertificateVerify message is
                  * not sent.
                  */
-                s->state = SSL3_ST_SR_FINISHED_A;
+                s->state = SSL3_ST_SR_CHANGE_A;
                 s->init_num = 0;
             } else if (SSL_USE_SIGALGS(s)) {
                 s->state = SSL3_ST_SR_CERT_VRFY_A;
@@ -675,23 +674,23 @@ int dtls1_accept(SSL *s)
                 s->state = DTLS1_SCTP_ST_SR_READ_SOCK;
             else
 #endif
-                s->state = SSL3_ST_SR_FINISHED_A;
+                s->state = SSL3_ST_SR_CHANGE_A;
+            s->init_num = 0;
+            break;
+
+        case SSL3_ST_SR_CHANGE_A:
+        case SSL3_ST_SR_CHANGE_B:
+            ret = ssl3_get_change_cipher_spec(s, SSL3_ST_SR_CHANGE_A,
+                                              SSL3_ST_SR_CHANGE_B);
+            if (ret <= 0)
+                goto end;
+
+            s->state = SSL3_ST_SR_FINISHED_A;
             s->init_num = 0;
             break;
 
         case SSL3_ST_SR_FINISHED_A:
         case SSL3_ST_SR_FINISHED_B:
-            /*
-             * Enable CCS. Receiving a CCS clears the flag, so make
-             * sure not to re-enable it to ban duplicates. This *should* be the
-             * first time we have received one - but we check anyway to be
-             * cautious.
-             * s->s3->change_cipher_spec is set when a CCS is
-             * processed in d1_pkt.c, and remains set until
-             * the client's Finished message is read.
-             */
-            if (!s->s3->change_cipher_spec)
-                s->d1->change_cipher_spec_ok = 1;
             ret = ssl3_get_finished(s, SSL3_ST_SR_FINISHED_A,
                                     SSL3_ST_SR_FINISHED_B);
             if (ret <= 0)
@@ -779,7 +778,7 @@ int dtls1_accept(SSL *s)
                 goto end;
             s->state = SSL3_ST_SW_FLUSH;
             if (s->hit) {
-                s->s3->tmp.next_state = SSL3_ST_SR_FINISHED_A;
+                s->s3->tmp.next_state = SSL3_ST_SR_CHANGE_A;
 
 #ifndef OPENSSL_NO_SCTP
                 /*

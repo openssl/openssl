@@ -240,12 +240,23 @@ int ssl3_get_change_cipher_spec(SSL *s, int a, int b)
 
     /*
      * 'Change Cipher Spec' is just a single byte, which should already have
-     * been consumed by ssl_get_message() so there should be no bytes left
+     * been consumed by ssl_get_message() so there should be no bytes left,
+     * unless we're using DTLS1_BAD_VER, which has an extra 2 bytes
      */
-    if (n != 0) {
-        al = SSL_AD_ILLEGAL_PARAMETER;
-        SSLerr(SSL_F_SSL3_GET_CHANGE_CIPHER_SPEC, SSL_R_BAD_CHANGE_CIPHER_SPEC);
-        goto f_err;
+    if (SSL_IS_DTLS(s)) {
+        if ((s->version == DTLS1_BAD_VER && n != DTLS1_CCS_HEADER_LENGTH + 1)
+                    || (s->version != DTLS1_BAD_VER
+                        && n != DTLS1_CCS_HEADER_LENGTH - 1)) {
+                al = SSL_AD_ILLEGAL_PARAMETER;
+                SSLerr(SSL_F_SSL3_GET_CHANGE_CIPHER_SPEC, SSL_R_BAD_CHANGE_CIPHER_SPEC);
+                goto f_err;
+        }
+    } else {
+        if (n != 0) {
+            al = SSL_AD_ILLEGAL_PARAMETER;
+            SSLerr(SSL_F_SSL3_GET_CHANGE_CIPHER_SPEC, SSL_R_BAD_CHANGE_CIPHER_SPEC);
+            goto f_err;
+        }
     }
 
     /* Check we have a cipher to change to */
@@ -260,6 +271,22 @@ int ssl3_get_change_cipher_spec(SSL *s, int a, int b)
         al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_SSL3_GET_CHANGE_CIPHER_SPEC, ERR_R_INTERNAL_ERROR);
         goto f_err;
+    }
+
+    if (SSL_IS_DTLS(s)) {
+        dtls1_reset_seq_numbers(s, SSL3_CC_READ);
+
+        if (s->version == DTLS1_BAD_VER)
+            s->d1->handshake_read_seq++;
+
+#ifndef OPENSSL_NO_SCTP
+        /*
+         * Remember that a CCS has been received, so that an old key of
+         * SCTP-Auth can be deleted when a CCS is sent. Will be ignored if no
+         * SCTP is used
+         */
+        BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_AUTH_CCS_RCVD, 1, NULL);
+#endif
     }
 
     return 1;

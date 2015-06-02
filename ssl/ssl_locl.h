@@ -1437,11 +1437,6 @@ typedef struct dtls1_state_st {
     unsigned short timeout_duration;
 
     unsigned int retransmitting;
-    /*
-     * Set when the handshake is ready to process peer's ChangeCipherSpec message.
-     * Cleared after the message has been processed.
-     */
-    unsigned int change_cipher_spec_ok;
 #  ifndef OPENSSL_NO_SCTP
     /* used when SSL_ST_XX_FLUSH is entered */
     int next_state;
