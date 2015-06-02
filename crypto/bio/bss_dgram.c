@@ -882,7 +882,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
                 perror("setsockopt");
                 ret = -1;
             }
-# elif defined(OPENSSL_SYS_LINUX) && defined(IP_MTU_DISCOVER)
+# elif defined(OPENSSL_SYS_LINUX) && defined(IP_MTU_DISCOVER) && defined (IP_PMTUDISC_PROBE)
             if ((sockopt_val = num ? IP_PMTUDISC_PROBE : IP_PMTUDISC_DONT),
                 (ret = setsockopt(b->num, IPPROTO_IP, IP_MTU_DISCOVER,
                                   &sockopt_val, sizeof(sockopt_val))) < 0) {
