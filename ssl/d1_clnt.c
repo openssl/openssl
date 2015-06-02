@@ -271,7 +271,6 @@ int dtls1_connect(SSL *s)
             memset(s->s3->client_random, 0, sizeof(s->s3->client_random));
             s->d1->send_cookie = 0;
             s->hit = 0;
-            s->d1->change_cipher_spec_ok = 0;
             /*
              * Should have been reset by ssl3_get_finished, too.
              */
@@ -376,7 +375,7 @@ int dtls1_connect(SSL *s)
                              sizeof(sctpauthkey), sctpauthkey);
 #endif
 
-                    s->state = SSL3_ST_CR_FINISHED_A;
+                    s->state = SSL3_ST_CR_CHANGE_A;
                 } else
                     s->state = DTLS1_ST_CR_HELLO_VERIFY_REQUEST_A;
             }
@@ -628,7 +627,7 @@ int dtls1_connect(SSL *s)
                 if (s->tlsext_ticket_expected)
                     s->s3->tmp.next_state = SSL3_ST_CR_SESSION_TICKET_A;
                 else
-                    s->s3->tmp.next_state = SSL3_ST_CR_FINISHED_A;
+                    s->s3->tmp.next_state = SSL3_ST_CR_CHANGE_A;
             }
             s->init_num = 0;
             break;
@@ -638,7 +637,7 @@ int dtls1_connect(SSL *s)
             ret = ssl3_get_new_session_ticket(s);
             if (ret <= 0)
                 goto end;
-            s->state = SSL3_ST_CR_FINISHED_A;
+            s->state = SSL3_ST_CR_CHANGE_A;
             s->init_num = 0;
             break;
 
@@ -651,9 +650,19 @@ int dtls1_connect(SSL *s)
             s->init_num = 0;
             break;
 
+        case SSL3_ST_CR_CHANGE_A:
+        case SSL3_ST_CR_CHANGE_B:
+            ret = ssl3_get_change_cipher_spec(s, SSL3_ST_CR_CHANGE_A,
+                                              SSL3_ST_CR_CHANGE_B);
+            if (ret <= 0)
+                goto end;
+
+            s->state = SSL3_ST_CR_FINISHED_A;
+            s->init_num = 0;
+            break;
+
         case SSL3_ST_CR_FINISHED_A:
         case SSL3_ST_CR_FINISHED_B:
-            s->d1->change_cipher_spec_ok = 1;
             ret = ssl3_get_finished(s, SSL3_ST_CR_FINISHED_A,
                                     SSL3_ST_CR_FINISHED_B);
             if (ret <= 0)

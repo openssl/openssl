@@ -160,8 +160,8 @@ static void dtls1_set_message_header_int(SSL *s, unsigned char mt,
                                          unsigned short seq_num,
                                          unsigned long frag_off,
                                          unsigned long frag_len);
-static long dtls1_get_message_fragment(SSL *s, int st1, int stn, long max,
-                                       int *ok);
+static long dtls1_get_message_fragment(SSL *s, int st1, int stn, int mt,
+                                       long max, int *ok);
 
 static hm_fragment *dtls1_hm_fragment_new(unsigned long frag_len,
                                           int reassembly)
@@ -470,7 +470,7 @@ long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
     memset(msg_hdr, 0, sizeof(*msg_hdr));
 
  again:
-    i = dtls1_get_message_fragment(s, st1, stn, max, ok);
+    i = dtls1_get_message_fragment(s, st1, stn, mt, max, ok);
     if (i == DTLS1_HM_BAD_FRAGMENT || i == DTLS1_HM_FRAGMENT_RETRY) {
         /* bad fragment received */
         goto again;
@@ -485,6 +485,20 @@ long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
     }
 
     p = (unsigned char *)s->init_buf->data;
+
+    if (mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
+        if (s->msg_callback) {
+            s->msg_callback(0, s->version, SSL3_RT_CHANGE_CIPHER_SPEC,
+                            p, 1, s, s->msg_callback_arg);
+        }
+        /*
+         * This isn't a real handshake message so skip the processing below.
+         * dtls1_get_message_fragment() will never return a CCS if mt == -1,
+         * so we are ok to continue in that case.
+         */
+        return i;
+    }
+
     msg_len = msg_hdr->msg_len;
 
     /* reconstruct message header */
@@ -835,11 +849,11 @@ dtls1_process_out_of_seq_message(SSL *s, const struct hm_header_st *msg_hdr,
 }
 
 static long
-dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
+dtls1_get_message_fragment(SSL *s, int st1, int stn, int mt, long max, int *ok)
 {
     unsigned char wire[DTLS1_HM_HEADER_LENGTH];
     unsigned long len, frag_off, frag_len;
-    int i, al;
+    int i, al, recvd_type;
     struct hm_header_st msg_hdr;
 
  redo:
@@ -851,13 +865,46 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
     }
 
     /* read handshake message header */
-    i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, NULL, wire,
+    i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, &recvd_type, wire,
                                   DTLS1_HM_HEADER_LENGTH, 0);
     if (i <= 0) {               /* nbio, or an error */
         s->rwstate = SSL_READING;
         *ok = 0;
         return i;
     }
+    if(recvd_type == SSL3_RT_CHANGE_CIPHER_SPEC) {
+        /* This isn't a real handshake message - its a CCS.
+         * There is no message sequence number in a CCS to give us confidence
+         * that this was really intended to be at this point in the handshake
+         * sequence. Therefore we only allow this if we were explicitly looking
+         * for it (i.e. if |mt| is -1 we still don't allow it).
+         */
+        if(mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
+            if (wire[0] != SSL3_MT_CCS) {
+                al = SSL_AD_UNEXPECTED_MESSAGE;
+                SSLerr(SSL_F_SSL3_GET_MESSAGE, SSL_R_BAD_CHANGE_CIPHER_SPEC);
+                goto f_err;
+            }
+
+            memcpy(s->init_buf->data, wire, i);
+            s->init_num = i - 1;
+            s->init_msg = s->init_buf->data + 1;
+            s->s3->tmp.message_type = SSL3_MT_CHANGE_CIPHER_SPEC;
+            s->s3->tmp.message_size = i - 1;
+            s->state = stn;
+            *ok = 1;
+            return i-1;
+        } else {
+            /*
+             * We weren't expecting a CCS yet. Probably something got
+             * re-ordered or this is a retransmit. We should drop this and try
+             * again.
+             */
+            s->init_num = 0;
+            goto redo;
+        }
+    }
+
     /* Handshake fails if message header is incomplete */
     if (i != DTLS1_HM_HEADER_LENGTH) {
         al = SSL_AD_UNEXPECTED_MESSAGE;
