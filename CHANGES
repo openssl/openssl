@@ -5027,7 +5027,7 @@
 	done
 
      To be absolutely sure not to disturb the source tree, a "make clean"
-     is a good thing.  If it isn't successfull, don't worry about it,
+     is a good thing.  If it isn't successful, don't worry about it,
      it probably means the source directory is very clean.
      [Richard Levitte]
 
