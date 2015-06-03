@@ -4414,8 +4414,8 @@ ECDSA_METHOD_get_app_data               4770	EXIST::FUNCTION:EC
 X509_VERIFY_PARAM_add1_host             4771	EXIST::FUNCTION:
 EC_GROUP_get_mont_data                  4772	EXIST::FUNCTION:EC
 i2d_re_X509_tbs                         4773	EXIST::FUNCTION:
-RSA_security_bits                       4774	EXIST::FUNCTION:RSA
-FIPS_ecdsa_verify_digest                4775	NOEXIST::FUNCTION:
+EVP_PKEY_asn1_set_item                  4774	EXIST::FUNCTION:
+RSA_security_bits                       4775	EXIST::FUNCTION:RSA
 FIPS_ecdsa_verify                       4776	NOEXIST::FUNCTION:
 BN_security_bits                        4777	EXIST::FUNCTION:
 FIPS_ecdsa_verify_ctx                   4778	NOEXIST::FUNCTION:
