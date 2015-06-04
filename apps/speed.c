@@ -1649,7 +1649,7 @@ int speed_main(int argc, char **argv)
             if (!
                 (EVP_CIPHER_flags(evp_cipher) &
                  EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)) {
-                fprintf(stderr, "%s is not multi-block capable\n",
+                BIO_printf(bio_err, "%s is not multi-block capable\n",
                         OBJ_nid2ln(evp_cipher->nid));
                 goto end;
             }
@@ -2290,11 +2290,11 @@ static int do_multi(int multi)
     fds = malloc(sizeof(*fds) * multi);
     for (n = 0; n < multi; ++n) {
         if (pipe(fd) == -1) {
-            fprintf(stderr, "pipe failure\n");
+            BIO_printf(bio_err, "pipe failure\n");
             exit(1);
         }
         fflush(stdout);
-        fflush(stderr);
+        (void)BIO_flush(bio_err);
         if (fork()) {
             close(fd[1]);
             fds[n] = fd[0];
@@ -2302,7 +2302,7 @@ static int do_multi(int multi)
             close(fd[0]);
             close(1);
             if (dup(fd[1]) == -1) {
-                fprintf(stderr, "dup failed\n");
+                BIO_printf(bio_err, "dup failed\n");
                 exit(1);
             }
             close(fd[1]);
@@ -2326,7 +2326,7 @@ static int do_multi(int multi)
             if (p)
                 *p = '\0';
             if (buf[0] != '+') {
-                fprintf(stderr, "Don't understand line '%s' from child %d\n",
+                BIO_printf(bio_err, "Don't understand line '%s' from child %d\n",
                         buf, n);
                 continue;
             }
@@ -2428,7 +2428,7 @@ static int do_multi(int multi)
             else if (strncmp(buf, "+H:", 3) == 0) {
                 ;
             } else
-                fprintf(stderr, "Unknown type '%s' from child %d\n", buf, n);
+                BIO_printf(bio_err, "Unknown type '%s' from child %d\n", buf, n);
         }
 
         fclose(f);

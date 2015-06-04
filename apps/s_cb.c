@@ -931,8 +931,9 @@ static int set_cert_cb(SSL *ssl, void *arg)
     static int retry_cnt;
     if (retry_cnt < 5) {
         retry_cnt++;
-        fprintf(stderr, "Certificate callback retry test: count %d\n",
-                retry_cnt);
+        BIO_printf(bio_err,
+                   "Certificate callback retry test: count %d\n",
+                   retry_cnt);
         return -1;
     }
 #endif
