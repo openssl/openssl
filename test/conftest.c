@@ -1,4 +1,4 @@
-/* crypto/conf/cnf_save.c */
+/* crypto/conf/test.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,48 +57,43 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <openssl/lhash.h>
 #include <openssl/conf.h>
+#include <openssl/err.h>
 
-static void print_conf(CONF_VALUE *cv);
-static IMPLEMENT_LHASH_DOALL_FN(print_conf, CONF_VALUE *);
-
+int
 main()
 {
     LHASH *conf;
-    long l;
+    long eline;
+    char *s;
 
-    conf = CONF_load(NULL, "../../apps/openssl.cnf", &l);
+#ifdef USE_WIN32
+    CONF_set_default_method(CONF_WIN32);
+#endif
+    conf = CONF_load(NULL, "ssleay.cnf", &eline);
     if (conf == NULL) {
-        fprintf(stderr, "error loading config, line %ld\n", l);
+        ERR_load_crypto_strings();
+        printf("unable to load configuration, line %ld\n", eline);
+        ERR_print_errors_fp(stderr);
         exit(1);
     }
+    lh_stats(conf, stdout);
+    lh_node_stats(conf, stdout);
+    lh_node_usage_stats(conf, stdout);
 
-    lh_doall(conf, LHASH_DOALL_FN(print_conf));
-}
+    s = CONF_get_string(conf, NULL, "init2");
+    printf("init2=%s\n", (s == NULL) ? "NULL" : s);
 
-static void print_conf(CONF_VALUE *cv)
-{
-    int i;
-    CONF_VALUE *v;
-    char *section;
-    char *name;
-    char *value;
-    STACK *s;
+    s = CONF_get_string(conf, NULL, "cipher1");
+    printf("cipher1=%s\n", (s == NULL) ? "NULL" : s);
 
-    /* If it is a single entry, return */
+    s = CONF_get_string(conf, "s_client", "cipher1");
+    printf("s_client:cipher1=%s\n", (s == NULL) ? "NULL" : s);
 
-    if (cv->name != NULL)
-        return;
+    printf("---------------------------- DUMP ------------------------\n");
+    CONF_dump_fp(conf, stdout);
 
-    printf("[ %s ]\n", cv->section);
-    s = (STACK *) cv->value;
-
-    for (i = 0; i < sk_num(s); i++) {
-        v = (CONF_VALUE *)sk_value(s, i);
-        section = (v->section == NULL) ? "None" : v->section;
-        name = (v->name == NULL) ? "None" : v->name;
-        value = (v->value == NULL) ? "None" : v->value;
-        printf("%s=%s\n", name, value);
-    }
-    printf("\n");
+    return 0;
 }

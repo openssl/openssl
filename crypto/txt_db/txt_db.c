@@ -155,11 +155,7 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
         }
         *(p++) = '\0';
         if ((n != num) || (*f != '\0')) {
-#if !defined(OPENSSL_NO_STDIO)  /* temporary fix :-( */
-            fprintf(stderr,
-                    "wrong number of fields on line %ld (looking for field %d, got %d, '%s' left)\n",
-                    ln, num, n, f);
-#endif
+            ret->error = DB_ERROR_WRONG_NUM_FIELDS;
             goto err;
         }
         pp[n] = p;
