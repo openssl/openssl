@@ -2307,8 +2307,6 @@ int ssl3_send_client_key_exchange(SSL *s)
             n += 2;
 
             DH_free(dh_clnt);
-
-            /* perhaps clean things up a bit EAY EAY EAY EAY */
         }
 #endif
 
