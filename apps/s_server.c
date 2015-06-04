@@ -2376,8 +2376,8 @@ static int init_ssl_connection(SSL *con)
     {
         while (i <= 0 && SSL_get_error(con, i) == SSL_ERROR_WANT_X509_LOOKUP
                && SSL_state(con) == SSL3_ST_SR_CLNT_HELLO_C) {
-            fprintf(stderr,
-                    "LOOKUP from certificate callback during accept\n");
+            BIO_printf(bio_err,
+                       "LOOKUP from certificate callback during accept\n");
             i = SSL_accept(con);
         }
     }
@@ -2811,10 +2811,10 @@ static int www_body(char *hostname, int s, int stype, unsigned char *context)
 
 #ifdef RENEG
                 total_bytes += i;
-                fprintf(stderr, "%d\n", i);
+                BIO_printf(bio_err, "%d\n", i);
                 if (total_bytes > 3 * 1024) {
                     total_bytes = 0;
-                    fprintf(stderr, "RENEGOTIATE\n");
+                    BIO_printf(bio_err, "RENEGOTIATE\n");
                     SSL_renegotiate(con);
                 }
 #endif

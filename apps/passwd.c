@@ -496,7 +496,7 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
 
 int passwd_main(int argc, char **argv)
 {
-    fputs("Program not available.\n", stderr)
-        return (1);
+    BIO_printf(bio_err, "Program not available.\n");
+    return (1);
 }
 #endif

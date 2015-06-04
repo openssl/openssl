@@ -238,7 +238,7 @@ int s_time_main(int argc, char **argv)
     if (cipher == NULL)
         cipher = getenv("SSL_CIPHER");
     if (cipher == NULL) {
-        fprintf(stderr, "No CIPHER specified\n");
+        BIO_printf(bio_err, "No CIPHER specified\n");
         goto end;
     }
 
@@ -336,7 +336,7 @@ int s_time_main(int argc, char **argv)
 
     /* Get an SSL object so we can reuse the session id */
     if ((scon = doConnection(NULL, host, ctx)) == NULL) {
-        fprintf(stderr, "Unable to get connection\n");
+        BIO_printf(bio_err, "Unable to get connection\n");
         goto end;
     }
 

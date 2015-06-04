@@ -264,10 +264,9 @@ static void lock_dbg_cb(int mode, int type, const char *file, int line)
 
  err:
     if (errstr) {
-        /* we cannot use bio_err here */
-        fprintf(stderr,
-                "openssl (lock_dbg_cb): %s (mode=%d, type=%d) at %s:%d\n",
-                errstr, mode, type, file, line);
+        BIO_printf(bio_err,
+                   "openssl (lock_dbg_cb): %s (mode=%d, type=%d) at %s:%d\n",
+                   errstr, mode, type, file, line);
     }
 }
 
@@ -348,6 +347,12 @@ int main(int argc, char *argv[])
     arg.argv = NULL;
     arg.size = 0;
 
+    /* Set up some of the environment. */
+    default_config_file = make_config_name();
+    bio_in = dup_bio_in();
+    bio_out = dup_bio_out();
+    bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
+
 #if defined( OPENSSL_SYS_VMS)
     copied_argv = argv = copy_argv(&argc, argv);
 #endif
@@ -369,12 +374,12 @@ int main(int argc, char *argv[])
 #ifdef OPENSSL_FIPS
         if (!FIPS_mode_set(1)) {
             ERR_load_crypto_strings();
-            ERR_print_errors(BIO_new_fp(stderr, BIO_NOCLOSE));
-            EXIT(1);
+            ERR_print_errors(bio_err);
+            return 1;
         }
 #else
-        fprintf(stderr, "FIPS mode not supported.\n");
-        EXIT(1);
+        BIO_printf(bio_err, "FIPS mode not supported.\n");
+        return 1;
 #endif
     }
 
@@ -392,12 +397,6 @@ int main(int argc, char *argv[])
     }
     prog = prog_init();
     pname = opt_progname(argv[0]);
-
-    /* Lets load up our environment a little */
-    default_config_file = make_config_name();
-    bio_in = dup_bio_in();
-    bio_out = dup_bio_out();
-    bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
 
     /* first check the program name */
     f.name = pname;
