@@ -2825,6 +2825,7 @@ int ssl3_get_client_key_exchange(SSL *s)
                                                         s->
                                                         session->master_key,
                                                         premaster_secret, 32);
+        OPENSSL_cleanse(premaster_secret, sizeof(premaster_secret));
         if (s->session->master_key_length < 0) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
