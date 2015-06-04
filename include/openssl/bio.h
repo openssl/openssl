@@ -321,8 +321,8 @@ struct bio_st {
     struct bio_st *next_bio;    /* used by filter BIOs */
     struct bio_st *prev_bio;    /* used by filter BIOs */
     int references;
-    unsigned long num_read;
-    unsigned long num_write;
+    uint64_t num_read;
+    uint64_t num_write;
     CRYPTO_EX_DATA ex_data;
 };
 
@@ -618,8 +618,8 @@ int BIO_set_ex_data(BIO *bio, int idx, void *data);
 void *BIO_get_ex_data(BIO *bio, int idx);
 int BIO_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
                          CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
-unsigned long BIO_number_read(BIO *bio);
-unsigned long BIO_number_written(BIO *bio);
+uint64_t BIO_number_read(BIO *bio);
+uint64_t BIO_number_written(BIO *bio);
 
 /* For BIO_f_asn1() */
 int BIO_asn1_set_prefix(BIO *b, asn1_ps_func *prefix,
