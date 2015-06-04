@@ -2009,6 +2009,7 @@ int ssl3_get_client_key_exchange(SSL *s)
         int padl, outl;
         krb5_timestamp authtime = 0;
         krb5_ticket_times ttimes;
+        int kerr = 0;
 
         EVP_CIPHER_CTX_init(&ciph_ctx);
 
@@ -2111,23 +2112,27 @@ int ssl3_get_client_key_exchange(SSL *s)
         {
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
                    SSL_R_DECRYPTION_FAILED);
-            goto err;
+            kerr = 1;
+            goto kclean;
         }
         if (outl > SSL_MAX_MASTER_KEY_LENGTH) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
                    SSL_R_DATA_LENGTH_TOO_LONG);
-            goto err;
+            kerr = 1;
+            goto kclean;
         }
         if (!EVP_DecryptFinal_ex(&ciph_ctx, &(pms[outl]), &padl)) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
                    SSL_R_DECRYPTION_FAILED);
-            goto err;
+            kerr = 1;
+            goto kclean;
         }
         outl += padl;
         if (outl > SSL_MAX_MASTER_KEY_LENGTH) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
                    SSL_R_DATA_LENGTH_TOO_LONG);
-            goto err;
+            kerr = 1;
+            goto kclean;
         }
         if (!((pms[0] == (s->client_version >> 8))
               && (pms[1] == (s->client_version & 0xff)))) {
@@ -2144,7 +2149,8 @@ int ssl3_get_client_key_exchange(SSL *s)
             if (!(s->options & SSL_OP_TLS_ROLLBACK_BUG)) {
                 SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
                        SSL_AD_DECODE_ERROR);
-                goto err;
+                kerr = 1;
+                goto kclean;
             }
         }
 
@@ -2170,6 +2176,11 @@ int ssl3_get_client_key_exchange(SSL *s)
          *  kssl_ctx = kssl_ctx_free(kssl_ctx);
          *  if (s->kssl_ctx)  s->kssl_ctx = NULL;
          */
+
+ kclean:
+        OPENSSL_cleanse(pms, sizeof(pms));
+        if (kerr)
+            goto err;
     } else
 #endif                          /* OPENSSL_NO_KRB5 */
 
