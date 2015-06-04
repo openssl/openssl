@@ -1,6 +1,6 @@
 /* crypto/ts/ts_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -87,6 +87,11 @@ static ERR_STRING_DATA TS_str_functs[] = {
     {ERR_FUNC(TS_F_TS_CHECK_SIGNING_CERTS), "TS_CHECK_SIGNING_CERTS"},
     {ERR_FUNC(TS_F_TS_CHECK_STATUS_INFO), "TS_CHECK_STATUS_INFO"},
     {ERR_FUNC(TS_F_TS_COMPUTE_IMPRINT), "TS_COMPUTE_IMPRINT"},
+    {ERR_FUNC(TS_F_TS_CONF_INVALID), "ts_CONF_invalid"},
+    {ERR_FUNC(TS_F_TS_CONF_LOAD_CERT), "TS_CONF_load_cert"},
+    {ERR_FUNC(TS_F_TS_CONF_LOAD_CERTS), "TS_CONF_load_certs"},
+    {ERR_FUNC(TS_F_TS_CONF_LOAD_KEY), "TS_CONF_load_key"},
+    {ERR_FUNC(TS_F_TS_CONF_LOOKUP_FAIL), "ts_CONF_lookup_fail"},
     {ERR_FUNC(TS_F_TS_CONF_SET_DEFAULT_ENGINE), "TS_CONF_set_default_engine"},
     {ERR_FUNC(TS_F_TS_GET_STATUS_TEXT), "TS_GET_STATUS_TEXT"},
     {ERR_FUNC(TS_F_TS_MSG_IMPRINT_SET_ALGO), "TS_MSG_IMPRINT_set_algo"},
@@ -132,6 +137,8 @@ static ERR_STRING_DATA TS_str_functs[] = {
 static ERR_STRING_DATA TS_str_reasons[] = {
     {ERR_REASON(TS_R_BAD_PKCS7_TYPE), "bad pkcs7 type"},
     {ERR_REASON(TS_R_BAD_TYPE), "bad type"},
+    {ERR_REASON(TS_R_CANNOT_LOAD_CERT), "cannot load certificate"},
+    {ERR_REASON(TS_R_CANNOT_LOAD_KEY), "cannot load private key"},
     {ERR_REASON(TS_R_CERTIFICATE_VERIFY_ERROR), "certificate verify error"},
     {ERR_REASON(TS_R_COULD_NOT_SET_ENGINE), "could not set engine"},
     {ERR_REASON(TS_R_COULD_NOT_SET_TIME), "could not set time"},
@@ -170,6 +177,8 @@ static ERR_STRING_DATA TS_str_reasons[] = {
     {ERR_REASON(TS_R_UNACCEPTABLE_POLICY), "unacceptable policy"},
     {ERR_REASON(TS_R_UNSUPPORTED_MD_ALGORITHM), "unsupported md algorithm"},
     {ERR_REASON(TS_R_UNSUPPORTED_VERSION), "unsupported version"},
+    {ERR_REASON(TS_R_VAR_BAD_VALUE), "var bad value"},
+    {ERR_REASON(TS_R_VAR_LOOKUP_FAILURE), "cannot find config variable"},
     {ERR_REASON(TS_R_WRONG_CONTENT_TYPE), "wrong content type"},
     {0, NULL}
 };
