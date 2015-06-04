@@ -70,6 +70,7 @@
 # define DB_ERROR_INDEX_OUT_OF_RANGE     3
 # define DB_ERROR_NO_INDEX               4
 # define DB_ERROR_INSERT_INDEX_CLASH     5
+# define DB_ERROR_WRONG_NUM_FIELDS       6
 
 #ifdef  __cplusplus
 extern "C" {
