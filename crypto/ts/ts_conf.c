@@ -152,12 +152,12 @@ EVP_PKEY *TS_CONF_load_key(const char *file, const char *pass)
 
 /* Function definitions for handling configuration options. */
 
-static void TS_CONF_lookup_fail(const char *name, const char *tag)
+static void ts_CONF_lookup_fail(const char *name, const char *tag)
 {
     fprintf(stderr, "variable lookup failed for %s::%s\n", name, tag);
 }
 
-static void TS_CONF_invalid(const char *name, const char *tag)
+static void ts_CONF_invalid(const char *name, const char *tag)
 {
     fprintf(stderr, "invalid variable value for %s::%s\n", name, tag);
 }
@@ -167,7 +167,7 @@ const char *TS_CONF_get_tsa_section(CONF *conf, const char *section)
     if (!section) {
         section = NCONF_get_string(conf, BASE_SECTION, ENV_DEFAULT_TSA);
         if (!section)
-            TS_CONF_lookup_fail(BASE_SECTION, ENV_DEFAULT_TSA);
+            ts_CONF_lookup_fail(BASE_SECTION, ENV_DEFAULT_TSA);
     }
     return section;
 }
@@ -178,7 +178,7 @@ int TS_CONF_set_serial(CONF *conf, const char *section, TS_serial_cb cb,
     int ret = 0;
     char *serial = NCONF_get_string(conf, section, ENV_SERIAL);
     if (!serial) {
-        TS_CONF_lookup_fail(section, ENV_SERIAL);
+        ts_CONF_lookup_fail(section, ENV_SERIAL);
         goto err;
     }
     TS_RESP_CTX_set_serial_cb(ctx, cb, serial);
@@ -199,7 +199,7 @@ int TS_CONF_set_crypto_device(CONF *conf, const char *section,
         device = NCONF_get_string(conf, section, ENV_CRYPTO_DEVICE);
 
     if (device && !TS_CONF_set_default_engine(device)) {
-        TS_CONF_invalid(section, ENV_CRYPTO_DEVICE);
+        ts_CONF_invalid(section, ENV_CRYPTO_DEVICE);
         goto err;
     }
     ret = 1;
@@ -246,7 +246,7 @@ int TS_CONF_set_signer_cert(CONF *conf, const char *section,
     if (cert == NULL) {
         cert = NCONF_get_string(conf, section, ENV_SIGNER_CERT);
         if (cert == NULL) {
-            TS_CONF_lookup_fail(section, ENV_SIGNER_CERT);
+            ts_CONF_lookup_fail(section, ENV_SIGNER_CERT);
             goto err;
         }
     }
@@ -292,7 +292,7 @@ int TS_CONF_set_signer_key(CONF *conf, const char *section,
     if (!key)
         key = NCONF_get_string(conf, section, ENV_SIGNER_KEY);
     if (!key) {
-        TS_CONF_lookup_fail(section, ENV_SIGNER_KEY);
+        ts_CONF_lookup_fail(section, ENV_SIGNER_KEY);
         goto err;
     }
     if ((key_obj = TS_CONF_load_key(key, pass)) == NULL)
@@ -314,11 +314,11 @@ int TS_CONF_set_def_policy(CONF *conf, const char *section,
     if (!policy)
         policy = NCONF_get_string(conf, section, ENV_DEFAULT_POLICY);
     if (!policy) {
-        TS_CONF_lookup_fail(section, ENV_DEFAULT_POLICY);
+        ts_CONF_lookup_fail(section, ENV_DEFAULT_POLICY);
         goto err;
     }
     if ((policy_obj = OBJ_txt2obj(policy, 0)) == NULL) {
-        TS_CONF_invalid(section, ENV_DEFAULT_POLICY);
+        ts_CONF_invalid(section, ENV_DEFAULT_POLICY);
         goto err;
     }
     if (!TS_RESP_CTX_set_def_policy(ctx, policy_obj))
@@ -339,7 +339,7 @@ int TS_CONF_set_policies(CONF *conf, const char *section, TS_RESP_CTX *ctx)
 
     /* If no other policy is specified, that's fine. */
     if (policies && (list = X509V3_parse_list(policies)) == NULL) {
-        TS_CONF_invalid(section, ENV_OTHER_POLICIES);
+        ts_CONF_invalid(section, ENV_OTHER_POLICIES);
         goto err;
     }
     for (i = 0; i < sk_CONF_VALUE_num(list); ++i) {
@@ -348,7 +348,7 @@ int TS_CONF_set_policies(CONF *conf, const char *section, TS_RESP_CTX *ctx)
         ASN1_OBJECT *objtmp;
 
         if ((objtmp = OBJ_txt2obj(extval, 0)) == NULL) {
-            TS_CONF_invalid(section, ENV_OTHER_POLICIES);
+            ts_CONF_invalid(section, ENV_OTHER_POLICIES);
             goto err;
         }
         if (!TS_RESP_CTX_add_policy(ctx, objtmp))
@@ -370,15 +370,15 @@ int TS_CONF_set_digests(CONF *conf, const char *section, TS_RESP_CTX *ctx)
     char *digests = NCONF_get_string(conf, section, ENV_DIGESTS);
 
     if (digests == NULL) {
-        TS_CONF_lookup_fail(section, ENV_DIGESTS);
+        ts_CONF_lookup_fail(section, ENV_DIGESTS);
         goto err;
     }
     if ((list = X509V3_parse_list(digests)) == NULL) {
-        TS_CONF_invalid(section, ENV_DIGESTS);
+        ts_CONF_invalid(section, ENV_DIGESTS);
         goto err;
     }
     if (sk_CONF_VALUE_num(list) == 0) {
-        TS_CONF_invalid(section, ENV_DIGESTS);
+        ts_CONF_invalid(section, ENV_DIGESTS);
         goto err;
     }
     for (i = 0; i < sk_CONF_VALUE_num(list); ++i) {
@@ -387,7 +387,7 @@ int TS_CONF_set_digests(CONF *conf, const char *section, TS_RESP_CTX *ctx)
         const EVP_MD *md;
 
         if ((md = EVP_get_digestbyname(extval)) == NULL) {
-            TS_CONF_invalid(section, ENV_DIGESTS);
+            ts_CONF_invalid(section, ENV_DIGESTS);
             goto err;
         }
         if (!TS_RESP_CTX_add_md(ctx, md))
@@ -409,7 +409,7 @@ int TS_CONF_set_accuracy(CONF *conf, const char *section, TS_RESP_CTX *ctx)
     char *accuracy = NCONF_get_string(conf, section, ENV_ACCURACY);
 
     if (accuracy && (list = X509V3_parse_list(accuracy)) == NULL) {
-        TS_CONF_invalid(section, ENV_ACCURACY);
+        ts_CONF_invalid(section, ENV_ACCURACY);
         goto err;
     }
     for (i = 0; i < sk_CONF_VALUE_num(list); ++i) {
@@ -424,7 +424,7 @@ int TS_CONF_set_accuracy(CONF *conf, const char *section, TS_RESP_CTX *ctx)
             if (val->value)
                 micros = atoi(val->value);
         } else {
-            TS_CONF_invalid(section, ENV_ACCURACY);
+            ts_CONF_invalid(section, ENV_ACCURACY);
             goto err;
         }
     }
@@ -450,7 +450,7 @@ int TS_CONF_set_clock_precision_digits(CONF *conf, const char *section,
                             &digits))
         digits = 0;
     if (digits < 0 || digits > TS_MAX_CLOCK_PRECISION_DIGITS) {
-        TS_CONF_invalid(section, ENV_CLOCK_PRECISION_DIGITS);
+        ts_CONF_invalid(section, ENV_CLOCK_PRECISION_DIGITS);
         goto err;
     }
 
@@ -462,7 +462,7 @@ int TS_CONF_set_clock_precision_digits(CONF *conf, const char *section,
     return ret;
 }
 
-static int TS_CONF_add_flag(CONF *conf, const char *section,
+static int ts_CONF_add_flag(CONF *conf, const char *section,
                             const char *field, int flag, TS_RESP_CTX *ctx)
 {
     /* Default is false. */
@@ -471,7 +471,7 @@ static int TS_CONF_add_flag(CONF *conf, const char *section,
         if (strcmp(value, ENV_VALUE_YES) == 0)
             TS_RESP_CTX_add_flags(ctx, flag);
         else if (strcmp(value, ENV_VALUE_NO) != 0) {
-            TS_CONF_invalid(section, field);
+            ts_CONF_invalid(section, field);
             return 0;
         }
     }
@@ -481,17 +481,17 @@ static int TS_CONF_add_flag(CONF *conf, const char *section,
 
 int TS_CONF_set_ordering(CONF *conf, const char *section, TS_RESP_CTX *ctx)
 {
-    return TS_CONF_add_flag(conf, section, ENV_ORDERING, TS_ORDERING, ctx);
+    return ts_CONF_add_flag(conf, section, ENV_ORDERING, TS_ORDERING, ctx);
 }
 
 int TS_CONF_set_tsa_name(CONF *conf, const char *section, TS_RESP_CTX *ctx)
 {
-    return TS_CONF_add_flag(conf, section, ENV_TSA_NAME, TS_TSA_NAME, ctx);
+    return ts_CONF_add_flag(conf, section, ENV_TSA_NAME, TS_TSA_NAME, ctx);
 }
 
 int TS_CONF_set_ess_cert_id_chain(CONF *conf, const char *section,
                                   TS_RESP_CTX *ctx)
 {
-    return TS_CONF_add_flag(conf, section, ENV_ESS_CERT_ID_CHAIN,
+    return ts_CONF_add_flag(conf, section, ENV_ESS_CERT_ID_CHAIN,
                             TS_ESS_CERT_ID_CHAIN, ctx);
 }
