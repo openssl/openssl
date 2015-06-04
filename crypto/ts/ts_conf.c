@@ -102,7 +102,7 @@ X509 *TS_CONF_load_cert(const char *file)
     x = PEM_read_bio_X509_AUX(cert, NULL, NULL, NULL);
  end:
     if (x == NULL)
-        fprintf(stderr, "unable to load certificate: %s\n", file);
+        TSerr(TS_F_TS_CONF_LOAD_CERT, TS_R_CANNOT_LOAD_CERT);
     BIO_free(cert);
     return x;
 }
@@ -129,7 +129,7 @@ STACK_OF(X509) *TS_CONF_load_certs(const char *file)
     }
  end:
     if (othercerts == NULL)
-        fprintf(stderr, "unable to load certificates: %s\n", file);
+        TSerr(TS_F_TS_CONF_LOAD_CERTS, TS_R_CANNOT_LOAD_CERT);
     sk_X509_INFO_pop_free(allcerts, X509_INFO_free);
     BIO_free(certs);
     return othercerts;
@@ -145,7 +145,7 @@ EVP_PKEY *TS_CONF_load_key(const char *file, const char *pass)
     pkey = PEM_read_bio_PrivateKey(key, NULL, NULL, (char *)pass);
  end:
     if (pkey == NULL)
-        fprintf(stderr, "unable to load private key: %s\n", file);
+        TSerr(TS_F_TS_CONF_LOAD_KEY, TS_R_CANNOT_LOAD_KEY);
     BIO_free(key);
     return pkey;
 }
@@ -154,12 +154,14 @@ EVP_PKEY *TS_CONF_load_key(const char *file, const char *pass)
 
 static void ts_CONF_lookup_fail(const char *name, const char *tag)
 {
-    fprintf(stderr, "variable lookup failed for %s::%s\n", name, tag);
+    TSerr(TS_F_TS_CONF_LOOKUP_FAIL, TS_R_VAR_LOOKUP_FAILURE);
+    ERR_add_error_data(3, name, "::", tag);
 }
 
 static void ts_CONF_invalid(const char *name, const char *tag)
 {
-    fprintf(stderr, "invalid variable value for %s::%s\n", name, tag);
+    TSerr(TS_F_TS_CONF_INVALID, TS_R_VAR_BAD_VALUE);
+    ERR_add_error_data(3, name, "::", tag);
 }
 
 const char *TS_CONF_get_tsa_section(CONF *conf, const char *section)
