@@ -2914,6 +2914,7 @@ int ssl3_get_client_key_exchange(SSL *s)
                                                         s->
                                                         session->master_key,
                                                         premaster_secret, 32);
+        OPENSSL_cleanse(premaster_secret, sizeof(premaster_secret));
         /* Check if pubkey from client certificate was used */
         if (EVP_PKEY_CTX_ctrl
             (pkey_ctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY, 2, NULL) > 0)
