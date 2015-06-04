@@ -3,6 +3,13 @@
  _______________
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
+  *) The return type of BIO_number_read() and BIO_number_written() as well as
+     the corresponding num_read and num_write members in the BIO structure has
+     changed from unsigned long to uint64_t. On platforms where an unsigned
+     long is 32 bits (e.g. Windows) these counters could overflow if >4Gb is
+     transferred.
+     [Matt Caswell]
+
   *) Given the pervasive nature of TLS extensions it is inadvisable to run
      OpenSSL without support for them. It also means that maintaining
      the OPENSSL_NO_TLSEXT option within the code is very invasive (and probably

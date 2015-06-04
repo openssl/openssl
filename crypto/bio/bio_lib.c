@@ -209,7 +209,7 @@ int BIO_read(BIO *b, void *out, int outl)
     i = b->method->bread(b, out, outl);
 
     if (i > 0)
-        b->num_read += (unsigned long)i;
+        b->num_read += (uint64_t)i;
 
     if (cb != NULL)
         i = (int)cb(b, BIO_CB_READ | BIO_CB_RETURN, out, outl, 0L, (long)i);
@@ -242,7 +242,7 @@ int BIO_write(BIO *b, const void *in, int inl)
     i = b->method->bwrite(b, in, inl);
 
     if (i > 0)
-        b->num_write += (unsigned long)i;
+        b->num_write += (uint64_t)i;
 
     if (cb != NULL)
         i = (int)cb(b, BIO_CB_WRITE | BIO_CB_RETURN, in, inl, 0L, (long)i);
@@ -272,7 +272,7 @@ int BIO_puts(BIO *b, const char *in)
     i = b->method->bputs(b, in);
 
     if (i > 0)
-        b->num_write += (unsigned long)i;
+        b->num_write += (uint64_t)i;
 
     if (cb != NULL)
         i = (int)cb(b, BIO_CB_PUTS | BIO_CB_RETURN, in, 0, 0L, (long)i);
@@ -578,14 +578,14 @@ void *BIO_get_ex_data(BIO *bio, int idx)
     return (CRYPTO_get_ex_data(&(bio->ex_data), idx));
 }
 
-unsigned long BIO_number_read(BIO *bio)
+uint64_t BIO_number_read(BIO *bio)
 {
     if (bio)
         return bio->num_read;
     return 0;
 }
 
-unsigned long BIO_number_written(BIO *bio)
+uint64_t BIO_number_written(BIO *bio)
 {
     if (bio)
         return bio->num_write;
