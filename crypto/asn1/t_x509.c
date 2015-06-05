@@ -141,7 +141,13 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
 
         bs = X509_get_serialNumber(x);
         if (bs->length <= (int)sizeof(long)) {
-            l = ASN1_INTEGER_get(bs);
+                ERR_set_mark();
+                l = ASN1_INTEGER_get(bs);
+                ERR_pop_to_mark();
+        } else {
+            l = -1;
+        }
+        if (l != -1) {
             if (bs->type == V_ASN1_NEG_INTEGER) {
                 l = -l;
                 neg = "-";
