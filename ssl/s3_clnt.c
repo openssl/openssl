@@ -3436,6 +3436,7 @@ int ssl3_check_cert_and_algorithm(SSL *s)
 #ifndef OPENSSL_NO_DH
     DH *dh;
 #endif
+    int al = SSL_AD_HANDSHAKE_FAILURE;
 
     alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
     alg_a = s->s3->tmp.new_cipher->algorithm_auth;
@@ -3496,15 +3497,32 @@ int ssl3_check_cert_and_algorithm(SSL *s)
     }
 #endif
 #ifndef OPENSSL_NO_RSA
-    if ((alg_k & SSL_kRSA) &&
-        !(has_bits(i, EVP_PK_RSA | EVP_PKT_ENC) || (rsa != NULL))) {
-        SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
-               SSL_R_MISSING_RSA_ENCRYPTING_CERT);
-        goto f_err;
+    if (alg_k & SSL_kRSA) {
+        if (!SSL_C_IS_EXPORT(s->s3->tmp.new_cipher) &&
+            !has_bits(i, EVP_PK_RSA | EVP_PKT_ENC)) {
+            SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
+                   SSL_R_MISSING_RSA_ENCRYPTING_CERT);
+            goto f_err;
+        } else if (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher)) {
+            if (pkey_bits <= SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher)) {
+                if (!has_bits(i, EVP_PK_RSA | EVP_PKT_ENC)) {
+                    SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
+                           SSL_R_MISSING_RSA_ENCRYPTING_CERT);
+                    goto f_err;
+                }
+                if (rsa != NULL) {
+                    /* server key exchange is not allowed. */
+                    al = SSL_AD_INTERNAL_ERROR;
+                    SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM, ERR_R_INTERNAL_ERROR);
+                    goto f_err;
+                }
+            }
+        }
     }
 #endif
 #ifndef OPENSSL_NO_DH
     if ((alg_k & SSL_kEDH) && dh == NULL) {
+        al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM, ERR_R_INTERNAL_ERROR);
         goto f_err;
     }
@@ -3547,9 +3565,14 @@ int ssl3_check_cert_and_algorithm(SSL *s)
         pkey_bits > SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher)) {
 #ifndef OPENSSL_NO_RSA
         if (alg_k & SSL_kRSA) {
-            if (rsa == NULL
-                || RSA_size(rsa) * 8 >
+            if (rsa == NULL) {
+                SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
+                       SSL_R_MISSING_EXPORT_TMP_RSA_KEY);
+                goto f_err;
+            } else if (BN_num_bits(rsa->n) >
                 SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher)) {
+                /* We have a temporary RSA key but it's too large. */
+                al = SSL_AD_EXPORT_RESTRICTION;
                 SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
                        SSL_R_MISSING_EXPORT_TMP_RSA_KEY);
                 goto f_err;
@@ -3557,14 +3580,21 @@ int ssl3_check_cert_and_algorithm(SSL *s)
         } else
 #endif
 #ifndef OPENSSL_NO_DH
-        if (alg_k & (SSL_kEDH | SSL_kDHr | SSL_kDHd)) {
-            if (dh == NULL
-                || DH_size(dh) * 8 >
+        if (alg_k & SSL_kDHE) {
+            if (BN_num_bits(dh->p) >
                 SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher)) {
+                /* We have a temporary DH key but it's too large. */
+                al = SSL_AD_EXPORT_RESTRICTION;
                 SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
                        SSL_R_MISSING_EXPORT_TMP_DH_KEY);
                 goto f_err;
             }
+        } else if (alg_k & (SSL_kDHr | SSL_kDHd)) {
+            /* The cert should have had an export DH key. */
+            al = SSL_AD_EXPORT_RESTRICTION;
+            SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
+                   SSL_R_MISSING_EXPORT_TMP_DH_KEY);
+                goto f_err;
         } else
 #endif
         {
@@ -3575,7 +3605,7 @@ int ssl3_check_cert_and_algorithm(SSL *s)
     }
     return (1);
  f_err:
-    ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
+    ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
     return (0);
 }
