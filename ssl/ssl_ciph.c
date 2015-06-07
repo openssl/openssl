@@ -470,6 +470,10 @@ void ssl_load_ciphers(void)
     /* Make sure we can access MD5 and SHA1 */
     OPENSSL_assert(ssl_digest_methods[SSL_MD_MD5_IDX] != NULL);
     OPENSSL_assert(ssl_digest_methods[SSL_MD_SHA1_IDX] != NULL);
+    ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX] = get_optional_pkey_id("gost-mac");
+    if (ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX]) {
+        ssl_mac_secret_size[SSL_MD_GOST89MAC_IDX] = 32;
+    }
 }
 
 #ifndef OPENSSL_NO_COMP
