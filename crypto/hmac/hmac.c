@@ -251,6 +251,7 @@ unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
     HMAC_CTX_cleanup(&c);
     return md;
  err:
+    HMAC_CTX_cleanup(&c);
     return NULL;
 }
 
