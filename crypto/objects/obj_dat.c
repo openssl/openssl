@@ -382,6 +382,9 @@ int OBJ_obj2nid(const ASN1_OBJECT *a)
     if (a->nid != 0)
         return (a->nid);
 
+    if (a->length == 0)
+        return NID_undef;
+
     if (added != NULL) {
         ad.type = ADDED_DATA;
         ad.obj = (ASN1_OBJECT *)a; /* XXX: ugly but harmless */
