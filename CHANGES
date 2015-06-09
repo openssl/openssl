@@ -3,6 +3,11 @@
  _______________
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
+  *) Remove SSL_OP_TLS_BLOCK_PADDING_BUG. This is SSLeay legacy, we're
+     not aware of clients that still exhibit this bug, and the workaround
+     hasn't been working properly for a while.
+     [Emilia Käsper]
+
   *) The return type of BIO_number_read() and BIO_number_written() as well as
      the corresponding num_read and num_write members in the BIO structure has
      changed from unsigned long to uint64_t. On platforms where an unsigned

@@ -2462,9 +2462,6 @@ static int init_ssl_connection(SSL *con)
 #endif
     if (SSL_cache_hit(con))
         BIO_printf(bio_s_out, "Reused session-id\n");
-    if (SSL_ctrl(con, SSL_CTRL_GET_FLAGS, 0, NULL) &
-        TLS1_FLAGS_TLS_PADDING_BUG)
-        BIO_printf(bio_s_out, "Peer has incorrect TLSv1 block padding\n");
     BIO_printf(bio_s_out, "Secure Renegotiation IS%s supported\n",
                SSL_get_secure_renegotiation_support(con) ? "" : " NOT");
     if (keymatexportlabel != NULL) {
