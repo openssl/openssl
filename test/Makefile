@@ -355,10 +355,10 @@ clean:
 	rm -f .rnd tmp.bntest tmp.bctest *.o *.obj *.dll lib tags core .pure .nfs* *.old *.bak fluff $(EXE) *.ss *.srl log dummytest
 
 $(DLIBSSL):
-	(cd ..; $(MAKE) DIRS=ssl all)
+	(cd ..; $(MAKE) build_libssl)
 
 $(DLIBCRYPTO):
-	(cd ..; $(MAKE) DIRS=crypto all)
+	(cd ..; $(MAKE) build_libcrypto)
 
 BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
