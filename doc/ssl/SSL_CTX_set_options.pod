@@ -94,10 +94,6 @@ OS X 10.8..10.8.3 has broken support for ECDHE-ECDSA ciphers.
 
 ...
 
-=item SSL_OP_TLS_BLOCK_PADDING_BUG
-
-...
-
 =item SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS
 
 Disables a countermeasure against a SSL 3.0/TLS 1.0 protocol

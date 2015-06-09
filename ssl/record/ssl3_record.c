@@ -748,10 +748,6 @@ int tls1_enc(SSL *s, int send)
 
             /* we need to add 'i' padding bytes of value j */
             j = i - 1;
-            if (s->options & SSL_OP_TLS_BLOCK_PADDING_BUG) {
-                if (s->s3->flags & TLS1_FLAGS_TLS_PADDING_BUG)
-                    j++;
-            }
             for (k = (int)l; k < (int)(l + i); k++)
                 rec->input[k] = j;
             l += i;
@@ -1063,24 +1059,6 @@ int tls1_cbc_remove_padding(const SSL *s,
         return 0;
 
     padding_length = rec->data[rec->length - 1];
-
-    /*
-     * NB: if compression is in operation the first packet may not be of even
-     * length so the padding bug check cannot be performed. This bug
-     * workaround has been around since SSLeay so hopefully it is either
-     * fixed now or no buggy implementation supports compression [steve]
-     */
-    if ((s->options & SSL_OP_TLS_BLOCK_PADDING_BUG) && !s->expand) {
-        /* First packet is even in size, so check */
-        if ((CRYPTO_memcmp(RECORD_LAYER_get_read_sequence(&s->rlayer),
-                "\0\0\0\0\0\0\0\0", 8) == 0) &&
-            !(padding_length & 1)) {
-            s->s3->flags |= TLS1_FLAGS_TLS_PADDING_BUG;
-        }
-        if ((s->s3->flags & TLS1_FLAGS_TLS_PADDING_BUG) && padding_length > 0) {
-            padding_length--;
-        }
-    }
 
     if (EVP_CIPHER_flags(s->enc_read_ctx->cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
         /* padding is already verified */
