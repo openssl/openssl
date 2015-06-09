@@ -139,10 +139,10 @@ clean:
 	rm -f req
 
 $(DLIBSSL):
-	(cd ..; $(MAKE) DIRS=ssl all)
+	(cd ..; $(MAKE) build_libssl)
 
 $(DLIBCRYPTO):
-	(cd ..; $(MAKE) DIRS=crypto all)
+	(cd ..; $(MAKE) build_libcrypto)
 
 $(EXE): progs.h $(EXE_OBJ) $(DLIBCRYPTO) $(DLIBSSL)
 	$(RM) $(EXE)
