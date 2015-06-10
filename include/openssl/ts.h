@@ -93,99 +93,12 @@ extern "C" {
 # include <openssl/x509.h>
 # include <openssl/x509v3.h>
 
-/*-
-MessageImprint ::= SEQUENCE  {
-     hashAlgorithm                AlgorithmIdentifier,
-     hashedMessage                OCTET STRING  }
-*/
+typedef struct TS_msg_imprint_st TS_MSG_IMPRINT;
+typedef struct TS_req_st TS_REQ;
+typedef struct TS_accuracy_st TS_ACCURACY;
+typedef struct TS_tst_info_st TS_TST_INFO;
 
-typedef struct TS_msg_imprint_st {
-    X509_ALGOR *hash_algo;
-    ASN1_OCTET_STRING *hashed_msg;
-} TS_MSG_IMPRINT;
-
-/*-
-TimeStampReq ::= SEQUENCE  {
-   version                  INTEGER  { v1(1) },
-   messageImprint           MessageImprint,
-     --a hash algorithm OID and the hash value of the data to be
-     --time-stamped
-   reqPolicy                TSAPolicyId                OPTIONAL,
-   nonce                    INTEGER                    OPTIONAL,
-   certReq                  BOOLEAN                    DEFAULT FALSE,
-   extensions               [0] IMPLICIT Extensions    OPTIONAL  }
-*/
-
-typedef struct TS_req_st {
-    ASN1_INTEGER *version;
-    TS_MSG_IMPRINT *msg_imprint;
-    ASN1_OBJECT *policy_id;     /* OPTIONAL */
-    ASN1_INTEGER *nonce;        /* OPTIONAL */
-    ASN1_BOOLEAN cert_req;      /* DEFAULT FALSE */
-    STACK_OF(X509_EXTENSION) *extensions; /* [0] OPTIONAL */
-} TS_REQ;
-
-/*-
-Accuracy ::= SEQUENCE {
-                seconds        INTEGER           OPTIONAL,
-                millis     [0] INTEGER  (1..999) OPTIONAL,
-                micros     [1] INTEGER  (1..999) OPTIONAL  }
-*/
-
-typedef struct TS_accuracy_st {
-    ASN1_INTEGER *seconds;
-    ASN1_INTEGER *millis;
-    ASN1_INTEGER *micros;
-} TS_ACCURACY;
-
-/*-
-TSTInfo ::= SEQUENCE  {
-    version                      INTEGER  { v1(1) },
-    policy                       TSAPolicyId,
-    messageImprint               MessageImprint,
-      -- MUST have the same value as the similar field in
-      -- TimeStampReq
-    serialNumber                 INTEGER,
-     -- Time-Stamping users MUST be ready to accommodate integers
-     -- up to 160 bits.
-    genTime                      GeneralizedTime,
-    accuracy                     Accuracy                 OPTIONAL,
-    ordering                     BOOLEAN             DEFAULT FALSE,
-    nonce                        INTEGER                  OPTIONAL,
-      -- MUST be present if the similar field was present
-      -- in TimeStampReq.  In that case it MUST have the same value.
-    tsa                          [0] GeneralName          OPTIONAL,
-    extensions                   [1] IMPLICIT Extensions  OPTIONAL   }
-*/
-
-typedef struct TS_tst_info_st {
-    ASN1_INTEGER *version;
-    ASN1_OBJECT *policy_id;
-    TS_MSG_IMPRINT *msg_imprint;
-    ASN1_INTEGER *serial;
-    ASN1_GENERALIZEDTIME *time;
-    TS_ACCURACY *accuracy;
-    ASN1_BOOLEAN ordering;
-    ASN1_INTEGER *nonce;
-    GENERAL_NAME *tsa;
-    STACK_OF(X509_EXTENSION) *extensions;
-} TS_TST_INFO;
-
-/*-
-PKIStatusInfo ::= SEQUENCE {
-    status        PKIStatus,
-    statusString  PKIFreeText     OPTIONAL,
-    failInfo      PKIFailureInfo  OPTIONAL  }
-
-From RFC 1510 - section 3.1.1:
-PKIFreeText ::= SEQUENCE SIZE (1..MAX) OF UTF8String
-        -- text encoded as UTF-8 String (note:  each UTF8String SHOULD
-        -- include an RFC 1766 language tag to indicate the language
-        -- of the contained text)
-*/
-
-/* Possible values for status. See ts_resp_print.c && ts_resp_verify.c. */
-
+/* Possible values for status. */
 # define TS_STATUS_GRANTED                       0
 # define TS_STATUS_GRANTED_WITH_MODS             1
 # define TS_STATUS_REJECTION                     2
@@ -193,10 +106,7 @@ PKIFreeText ::= SEQUENCE SIZE (1..MAX) OF UTF8String
 # define TS_STATUS_REVOCATION_WARNING            4
 # define TS_STATUS_REVOCATION_NOTIFICATION       5
 
-/*
- * Possible values for failure_info. See ts_resp_print.c && ts_resp_verify.c
- */
-
+/* Possible values for failure_info. */
 # define TS_INFO_BAD_ALG                 0
 # define TS_INFO_BAD_REQUEST             2
 # define TS_INFO_BAD_DATA_FORMAT         5
@@ -206,65 +116,15 @@ PKIFreeText ::= SEQUENCE SIZE (1..MAX) OF UTF8String
 # define TS_INFO_ADD_INFO_NOT_AVAILABLE  17
 # define TS_INFO_SYSTEM_FAILURE          25
 
-typedef struct TS_status_info_st {
-    ASN1_INTEGER *status;
-    STACK_OF(ASN1_UTF8STRING) *text;
-    ASN1_BIT_STRING *failure_info;
-} TS_STATUS_INFO;
 
-DECLARE_STACK_OF(ASN1_UTF8STRING)
-
-/*-
-TimeStampResp ::= SEQUENCE  {
-     status                  PKIStatusInfo,
-     timeStampToken          TimeStampToken     OPTIONAL }
-*/
-
-typedef struct TS_resp_st {
-    TS_STATUS_INFO *status_info;
-    PKCS7 *token;
-    TS_TST_INFO *tst_info;
-} TS_RESP;
-
-/* The structure below would belong to the ESS component. */
-
-/*-
-IssuerSerial ::= SEQUENCE {
-        issuer                   GeneralNames,
-        serialNumber             CertificateSerialNumber
-        }
-*/
-
-typedef struct ESS_issuer_serial {
-    STACK_OF(GENERAL_NAME) *issuer;
-    ASN1_INTEGER *serial;
-} ESS_ISSUER_SERIAL;
-
-/*-
-ESSCertID ::=  SEQUENCE {
-        certHash                 Hash,
-        issuerSerial             IssuerSerial OPTIONAL
-}
-*/
-
-typedef struct ESS_cert_id {
-    ASN1_OCTET_STRING *hash;    /* Always SHA-1 digest. */
-    ESS_ISSUER_SERIAL *issuer_serial;
-} ESS_CERT_ID;
+typedef struct TS_status_info_st TS_STATUS_INFO;
+typedef struct ESS_issuer_serial ESS_ISSUER_SERIAL;
+typedef struct ESS_cert_id ESS_CERT_ID;
+typedef struct ESS_signing_cert ESS_SIGNING_CERT;
 
 DECLARE_STACK_OF(ESS_CERT_ID)
 
-/*-
-SigningCertificate ::=  SEQUENCE {
-       certs        SEQUENCE OF ESSCertID,
-       policies     SEQUENCE OF PolicyInformation OPTIONAL
-}
-*/
-
-typedef struct ESS_signing_cert {
-    STACK_OF(ESS_CERT_ID) *cert_ids;
-    STACK_OF(POLICYINFO) *policy_info;
-} ESS_SIGNING_CERT;
+typedef struct TS_resp_st TS_RESP;
 
 TS_REQ *TS_REQ_new(void);
 void TS_REQ_free(TS_REQ *a);
@@ -355,6 +215,8 @@ void ERR_load_TS_strings(void);
 
 int TS_REQ_set_version(TS_REQ *a, long version);
 long TS_REQ_get_version(const TS_REQ *a);
+
+int TS_STATUS_INFO_set_status(TS_STATUS_INFO *a, int i);
 
 int TS_REQ_set_msg_imprint(TS_REQ *a, TS_MSG_IMPRINT *msg_imprint);
 TS_MSG_IMPRINT *TS_REQ_get_msg_imprint(TS_REQ *a);
@@ -487,31 +349,7 @@ typedef int (*TS_time_cb) (struct TS_resp_ctx *, void *, long *sec,
 typedef int (*TS_extension_cb) (struct TS_resp_ctx *, X509_EXTENSION *,
                                 void *);
 
-typedef struct TS_resp_ctx {
-    X509 *signer_cert;
-    EVP_PKEY *signer_key;
-    STACK_OF(X509) *certs;      /* Certs to include in signed data. */
-    STACK_OF(ASN1_OBJECT) *policies; /* Acceptable policies. */
-    ASN1_OBJECT *default_policy; /* It may appear in policies, too. */
-    STACK_OF(EVP_MD) *mds;      /* Acceptable message digests. */
-    ASN1_INTEGER *seconds;      /* accuracy, 0 means not specified. */
-    ASN1_INTEGER *millis;       /* accuracy, 0 means not specified. */
-    ASN1_INTEGER *micros;       /* accuracy, 0 means not specified. */
-    unsigned clock_precision_digits; /* fraction of seconds in time stamp
-                                      * token. */
-    unsigned flags;             /* Optional info, see values above. */
-    /* Callback functions. */
-    TS_serial_cb serial_cb;
-    void *serial_cb_data;       /* User data for serial_cb. */
-    TS_time_cb time_cb;
-    void *time_cb_data;         /* User data for time_cb. */
-    TS_extension_cb extension_cb;
-    void *extension_cb_data;    /* User data for extension_cb. */
-    /* These members are used only while creating the response. */
-    TS_REQ *request;
-    TS_RESP *response;
-    TS_TST_INFO *tst_info;
-} TS_RESP_CTX;
+typedef struct TS_resp_ctx TS_RESP_CTX;
 
 DECLARE_STACK_OF(EVP_MD)
 
@@ -645,42 +483,25 @@ int TS_RESP_verify_signature(PKCS7 *token, STACK_OF(X509) *certs,
                                  | TS_VFY_SIGNER        \
                                  | TS_VFY_TSA_NAME)
 
-typedef struct TS_verify_ctx {
-    /* Set this to the union of TS_VFY_... flags you want to carry out. */
-    unsigned flags;
-    /* Must be set only with TS_VFY_SIGNATURE. certs is optional. */
-    X509_STORE *store;
-    STACK_OF(X509) *certs;
-    /* Must be set only with TS_VFY_POLICY. */
-    ASN1_OBJECT *policy;
-    /*
-     * Must be set only with TS_VFY_IMPRINT. If md_alg is NULL, the
-     * algorithm from the response is used.
-     */
-    X509_ALGOR *md_alg;
-    unsigned char *imprint;
-    unsigned imprint_len;
-    /* Must be set only with TS_VFY_DATA. */
-    BIO *data;
-    /* Must be set only with TS_VFY_TSA_NAME. */
-    ASN1_INTEGER *nonce;
-    /* Must be set only with TS_VFY_TSA_NAME. */
-    GENERAL_NAME *tsa_name;
-} TS_VERIFY_CTX;
+typedef struct TS_verify_ctx TS_VERIFY_CTX;
 
 int TS_RESP_verify_response(TS_VERIFY_CTX *ctx, TS_RESP *response);
 int TS_RESP_verify_token(TS_VERIFY_CTX *ctx, PKCS7 *token);
 
 /*
  * Declarations related to response verification context,
- * they are defined in ts/ts_verify_ctx.c.
  */
-
-/* Set all fields to zero. */
 TS_VERIFY_CTX *TS_VERIFY_CTX_new(void);
 void TS_VERIFY_CTX_init(TS_VERIFY_CTX *ctx);
 void TS_VERIFY_CTX_free(TS_VERIFY_CTX *ctx);
 void TS_VERIFY_CTX_cleanup(TS_VERIFY_CTX *ctx);
+int TS_VERIFY_CTX_set_flags(TS_VERIFY_CTX *ctx, int f);
+int TS_VERIFY_CTX_add_flags(TS_VERIFY_CTX *ctx, int f);
+BIO *TS_VERIFY_CTX_set_data(TS_VERIFY_CTX *ctx, BIO *b);
+unsigned char *TS_VERIFY_CTX_set_imprint(TS_VERIFY_CTX *ctx,
+                                         unsigned char *hexstr, long len);
+X509_STORE *TS_VERIFY_CTX_set_store(TS_VERIFY_CTX *ctx, X509_STORE *s);
+STACK_OF(X509) *TS_VERIFY_CTS_set_certs(TS_VERIFY_CTX *ctx, STACK_OF(X509) *certs);
 
 /*-
  * If ctx is NULL, it allocates and returns a new object, otherwise

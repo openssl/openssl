@@ -64,6 +64,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/ts.h>
+#include "ts_lcl.h"
 
 /* Local function declarations. */
 
@@ -135,10 +136,10 @@ int TS_MSG_IMPRINT_print_bio(BIO *bio, TS_MSG_IMPRINT *a)
 {
     ASN1_OCTET_STRING *msg;
 
-    TS_X509_ALGOR_print_bio(bio, TS_MSG_IMPRINT_get_algo(a));
+    TS_X509_ALGOR_print_bio(bio, a->hash_algo);
 
     BIO_printf(bio, "Message data:\n");
-    msg = TS_MSG_IMPRINT_get_msg(a);
+    msg = a->hashed_msg;
     BIO_dump_indent(bio, (const char *)ASN1_STRING_data(msg),
                     ASN1_STRING_length(msg), 4);
 

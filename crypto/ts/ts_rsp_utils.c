@@ -62,6 +62,7 @@
 #include <openssl/objects.h>
 #include <openssl/ts.h>
 #include <openssl/pkcs7.h>
+#include "ts_lcl.h"
 
 /* Function definitions. */
 
@@ -393,4 +394,9 @@ int TS_TST_INFO_add_ext(TS_TST_INFO *a, X509_EXTENSION *ex, int loc)
 void *TS_TST_INFO_get_ext_d2i(TS_TST_INFO *a, int nid, int *crit, int *idx)
 {
     return X509V3_get_d2i(a->extensions, nid, crit, idx);
+}
+
+int TS_STATUS_INFO_set_status(TS_STATUS_INFO *a, int i)
+{
+    return ASN1_INTEGER_set(a->status, i);
 }

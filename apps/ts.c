@@ -724,7 +724,7 @@ static TS_RESP *read_PKCS7(BIO *in_bio)
     /* Create granted status info. */
     if ((si = TS_STATUS_INFO_new()) == NULL)
         goto end;
-    if (!(ASN1_INTEGER_set(si->status, TS_STATUS_GRANTED)))
+    if (!TS_STATUS_INFO_set_status(si, TS_STATUS_GRANTED))
         goto end;
     if (!TS_RESP_set_status_info(resp, si))
         goto end;
@@ -976,23 +976,24 @@ static TS_VERIFY_CTX *create_verify_ctx(char *data, char *digest,
     BIO *input = NULL;
     TS_REQ *request = NULL;
     int ret = 0;
+    int f = 0;
 
     if (data != NULL || digest != NULL) {
         if ((ctx = TS_VERIFY_CTX_new()) == NULL)
             goto err;
-        ctx->flags = TS_VFY_VERSION | TS_VFY_SIGNER;
+        f = TS_VFY_VERSION | TS_VFY_SIGNER;
         if (data != NULL) {
-            ctx->flags |= TS_VFY_DATA;
-            if ((ctx->data = BIO_new_file(data, "rb")) == NULL)
+            f |= TS_VFY_DATA;
+            if (TS_VERIFY_CTX_set_data(ctx, BIO_new_file(data, "rb")) == NULL)
                 goto err;
         } else if (digest != NULL) {
             long imprint_len;
-            ctx->flags |= TS_VFY_IMPRINT;
-            if ((ctx->imprint = string_to_hex(digest, &imprint_len)) == NULL) {
+            unsigned char *hexstr = string_to_hex(digest, &imprint_len);
+            f |= TS_VFY_IMPRINT;
+            if (TS_VERIFY_CTX_set_imprint(ctx, hexstr, imprint_len) == NULL) {
                 BIO_printf(bio_err, "invalid digest string\n");
                 goto err;
             }
-            ctx->imprint_len = imprint_len;
         }
 
     } else if (queryfile != NULL) {
@@ -1010,14 +1011,16 @@ static TS_VERIFY_CTX *create_verify_ctx(char *data, char *digest,
         return NULL;
 
     /* Add the signature verification flag and arguments. */
-    ctx->flags |= TS_VFY_SIGNATURE;
+    TS_VERIFY_CTX_add_flags(ctx, f | TS_VFY_SIGNATURE);
 
     /* Initialising the X509_STORE object. */
-    if ((ctx->store = create_cert_store(CApath, CAfile)) == NULL)
+    if (TS_VERIFY_CTX_set_store(ctx, create_cert_store(CApath, CAfile))
+            == NULL)
         goto err;
 
     /* Loading untrusted certificates. */
-    if (untrusted && (ctx->certs = TS_CONF_load_certs(untrusted)) == NULL)
+    if (untrusted
+        && TS_VERIFY_CTS_set_certs(ctx, TS_CONF_load_certs(untrusted)) == NULL)
         goto err;
 
     ret = 1;

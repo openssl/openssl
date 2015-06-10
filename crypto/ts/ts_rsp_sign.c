@@ -66,6 +66,7 @@
 #include <openssl/objects.h>
 #include <openssl/ts.h>
 #include <openssl/pkcs7.h>
+#include "ts_lcl.h"
 
 /* Private function declarations. */
 
@@ -377,7 +378,7 @@ int TS_RESP_CTX_set_status_info_cond(TS_RESP_CTX *ctx,
                                      int status, const char *text)
 {
     int ret = 1;
-    TS_STATUS_INFO *si = TS_RESP_get_status_info(ctx->response);
+    TS_STATUS_INFO *si = ctx->response->status_info;
 
     if (ASN1_INTEGER_get(si->status) == TS_STATUS_GRANTED) {
         /* Status has not been set, set it now. */
@@ -388,7 +389,7 @@ int TS_RESP_CTX_set_status_info_cond(TS_RESP_CTX *ctx,
 
 int TS_RESP_CTX_add_failure_info(TS_RESP_CTX *ctx, int failure)
 {
-    TS_STATUS_INFO *si = TS_RESP_get_status_info(ctx->response);
+    TS_STATUS_INFO *si = ctx->response->status_info;
     if (si->failure_info == NULL
         && (si->failure_info = ASN1_BIT_STRING_new()) == NULL)
         goto err;
@@ -526,8 +527,8 @@ static int ts_RESP_check_request(TS_RESP_CTX *ctx)
     }
 
     /* Checking message digest algorithm. */
-    msg_imprint = TS_REQ_get_msg_imprint(request);
-    md_alg = TS_MSG_IMPRINT_get_algo(msg_imprint);
+    msg_imprint = request->msg_imprint;
+    md_alg = msg_imprint->hash_algo;
     md_alg_id = OBJ_obj2nid(md_alg->algorithm);
     for (i = 0; !md && i < sk_EVP_MD_num(ctx->mds); ++i) {
         EVP_MD *current_md = sk_EVP_MD_value(ctx->mds, i);
@@ -551,7 +552,7 @@ static int ts_RESP_check_request(TS_RESP_CTX *ctx)
         return 0;
     }
     /* Checking message digest size. */
-    digest = TS_MSG_IMPRINT_get_msg(msg_imprint);
+    digest = msg_imprint->hashed_msg;
     if (digest->length != EVP_MD_size(md)) {
         TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
                                     "Bad message digest.");
@@ -565,7 +566,7 @@ static int ts_RESP_check_request(TS_RESP_CTX *ctx)
 /* Returns the TSA policy based on the requested and acceptable policies. */
 static ASN1_OBJECT *ts_RESP_get_policy(TS_RESP_CTX *ctx)
 {
-    ASN1_OBJECT *requested = TS_REQ_get_policy_id(ctx->request);
+    ASN1_OBJECT *requested = ctx->request->policy_id;
     ASN1_OBJECT *policy = NULL;
     int i;
 
@@ -646,7 +647,7 @@ static TS_TST_INFO *ts_RESP_create_tst_info(TS_RESP_CTX *ctx,
         goto end;
 
     /* Setting nonce if needed. */
-    if ((nonce = TS_REQ_get_nonce(ctx->request)) != NULL
+    if ((nonce = ctx->request->nonce) != NULL
         && !TS_TST_INFO_set_nonce(tst_info, nonce))
         goto end;
 
@@ -684,7 +685,7 @@ static TS_TST_INFO *ts_RESP_create_tst_info(TS_RESP_CTX *ctx,
 /* Processing the extensions of the request. */
 static int ts_RESP_process_extensions(TS_RESP_CTX *ctx)
 {
-    STACK_OF(X509_EXTENSION) *exts = TS_REQ_get_exts(ctx->request);
+    STACK_OF(X509_EXTENSION) *exts = ctx->request->extensions;
     int i;
     int ok = 1;
 
@@ -733,7 +734,7 @@ static int ts_RESP_sign(TS_RESP_CTX *ctx)
         goto err;
 
     /* Add signer certificate and optional certificate chain. */
-    if (TS_REQ_get_cert_req(ctx->request)) {
+    if (ctx->request->cert_req) {
         PKCS7_add_certificate(p7, ctx->signer_cert);
         if (ctx->certs) {
             for (i = 0; i < sk_X509_num(ctx->certs); ++i) {
