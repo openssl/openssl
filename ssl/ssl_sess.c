@@ -150,7 +150,7 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
     memcpy(dest, src, sizeof(*dest));
 
 #ifndef OPENSSL_NO_KRB5
-    dest->krb5_client_princ_len = dest->krb5_client_princ_len;
+    dest->krb5_client_princ_len = src->krb5_client_princ_len;
     if (src->krb5_client_princ_len > 0)
         memcpy(dest->krb5_client_princ, src->krb5_client_princ,
                src->krb5_client_princ_len);
