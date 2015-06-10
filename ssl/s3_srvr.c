@@ -3226,22 +3226,15 @@ int ssl3_send_newsession_ticket(SSL *s)
         p = ssl_handshake_start(s);
         /*
          * Initialize HMAC and cipher contexts. If callback present it does
-         * all the work otherwise use generated values from parent ctx.
+         * all the work otherwise use default callback.
          */
         if (tctx->tlsext_ticket_key_cb) {
             if (tctx->tlsext_ticket_key_cb(s, key_name, iv, &ctx,
                                            &hctx, 1) < 0)
                 goto err;
         } else {
-            if (RAND_bytes(iv, 16) <= 0)
+            if (handle_session_tickets(s, key_name, iv, &ctx, &hctx, 1) <= 0)
                 goto err;
-            if (!EVP_EncryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
-                                    tctx->tlsext_tick_aes_key, iv))
-                goto err;
-            if (!HMAC_Init_ex(&hctx, tctx->tlsext_tick_hmac_key, 16,
-                              EVP_sha256(), NULL))
-                goto err;
-            memcpy(key_name, tctx->tlsext_tick_key_name, 16);
         }
 
         /*

@@ -145,6 +145,7 @@
 #ifdef REF_CHECK
 # include <assert.h>
 #endif
+#include <limits.h>
 #include <stdio.h>
 #include "ssl_locl.h"
 #include <openssl/objects.h>
@@ -1666,6 +1667,9 @@ static int ssl_session_cmp(const SSL_SESSION *a, const SSL_SESSION *b)
 static IMPLEMENT_LHASH_HASH_FN(ssl_session, SSL_SESSION)
 static IMPLEMENT_LHASH_COMP_FN(ssl_session, SSL_SESSION)
 
+#define KEY_ELEM_LEN 16
+void SESS_TICKET_KEY_LIST_free(SESS_TICKET_KEY_LIST *key_list);
+
 SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 {
     SSL_CTX *ret = NULL;
@@ -1738,11 +1742,14 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 
     ret->max_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH;
 
-    /* Setup RFC4507 ticket keys */
-    if ((RAND_bytes(ret->tlsext_tick_key_name, 16) <= 0)
-        || (RAND_bytes(ret->tlsext_tick_hmac_key, 16) <= 0)
-        || (RAND_bytes(ret->tlsext_tick_aes_key, 16) <= 0))
+    /* Setup RFC5077 ticket keys */
+    SESS_TICKET_KEY key;
+    if ((RAND_bytes(key.key_name, KEY_ELEM_LEN) <= 0)
+        || (RAND_bytes(key.hmac_key, KEY_ELEM_LEN) <= 0)
+        || (RAND_bytes(key.aes_key, KEY_ELEM_LEN) <= 0))
         ret->options |= SSL_OP_NO_TICKET;
+    else
+        SSL_CTX_set_tlsext_ticket_keys(ret, (unsigned char*)&key, sizeof(SESS_TICKET_KEY));
 
 #ifndef OPENSSL_NO_SRP
     if (!SSL_CTX_SRP_CTX_init(ret))
@@ -3294,6 +3301,152 @@ void SSL_CTX_set0_security_ex_data(SSL_CTX *ctx, void *ex)
 void *SSL_CTX_get0_security_ex_data(const SSL_CTX *ctx)
 {
     return ctx->cert->sec_ex;
+}
+
+/* Must be called with non-null keys. */
+SESS_TICKET_KEY *find_ticket_key(SESS_TICKET_KEY_LIST *keys,
+                                 unsigned char key_name[KEY_ELEM_LEN]) {
+    int i;
+    if (keys != NULL) {
+        for (i = 0; i < keys->all_len; i++) {
+            SESS_TICKET_KEY *key = &keys->all[i];
+            if (memcmp(key->key_name, key_name, KEY_ELEM_LEN) == 0)
+                return key;
+        }
+    }
+    return NULL;
+}
+
+/* Decrement reference count for key_list and free it if zero. */
+void SESS_TICKET_KEY_LIST_free(SESS_TICKET_KEY_LIST *key_list) {
+    int lock_result;
+
+    if (key_list == NULL)
+        return;
+
+    lock_result = CRYPTO_add(&key_list->references, -1, CRYPTO_LOCK_SSL_CTX);
+# ifdef REF_PRINT
+    REF_PRINT("SESS_TICKET_KEY_LIST", s);
+# endif
+    if (lock_result > 0) return;
+# ifdef REF_CHECK
+    if (lock_result < 0) {
+        fprintf(stderr,"SESS_TICKET_KEY_LIST_free, bad reference count\n");
+        abort();
+    }
+# endif
+    OPENSSL_cleanse(key_list->all, sizeof(SESS_TICKET_KEY) * key_list->all_len);
+    if (key_list->all)
+        free(key_list->all);
+    free(key_list);
+}
+
+int handle_session_tickets_inner(SESS_TICKET_KEY_LIST *key_list,
+                                 unsigned char key_name[KEY_ELEM_LEN], unsigned char iv[EVP_MAX_IV_LENGTH],
+                                 EVP_CIPHER_CTX *ctx, HMAC_CTX *hctx, int enc) {
+    if (key_list == NULL || key_list->all == NULL)
+        return SSL_RESUME_ERROR;
+
+    /* Request has no ticket, or unrecognized ticket, or we are renewing based on
+     * a recognized ticket: Encrypt a new ticket to send to the client. */
+    if (enc) {
+        /* The first key in the list is used for all new tickets. */
+        SESS_TICKET_KEY *key = &key_list->all[0];
+
+        if (RAND_bytes(iv, EVP_MAX_IV_LENGTH) <= 0)
+            return SSL_RESUME_ERROR; /* insufficient random */
+        EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key->aes_key, iv);
+        HMAC_Init_ex(hctx, key->hmac_key, KEY_ELEM_LEN, EVP_sha256(), NULL);
+        memcpy(key_name, key->key_name, KEY_ELEM_LEN);
+        return SSL_RESUME_SUCCESS;
+    } else {
+        /* Request has session ticket. */
+        SESS_TICKET_KEY *key = find_ticket_key(key_list, key_name);
+        if (!key) {
+            /* if the key is so old that it's no longer in our list, we have to do a full handshake. */
+            return SSL_RESUME_NOPE;
+        }
+        EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key->aes_key, iv);
+        HMAC_Init_ex(hctx, key->hmac_key, KEY_ELEM_LEN, EVP_sha256(), NULL);
+        if (key != &key_list->all[0]) {
+            /* Successful resume, but key is stale. Function will be called again with
+               enc = 1 to re-encrypt the session parameters with the current key. */
+            return SSL_RESUME_SUCCESS_RENEW;
+        }
+        return SSL_RESUME_SUCCESS;
+    }
+}
+
+/* Outer function to handle resumption from or creation of RFC 5077 session tickets.
+ * This function handles reference counting and calls into an inner function for the
+ * key lookup. */
+int handle_session_tickets(SSL *s,
+                           unsigned char key_name[KEY_ELEM_LEN], unsigned char iv[EVP_MAX_IV_LENGTH],
+                           EVP_CIPHER_CTX *ctx, HMAC_CTX *hctx, int enc) {
+    /* It's possible s->ctx->ticket_key_list gets changed while we are
+     * looking for the right key. So we save a pointer and increment the
+     * reference count so it doesn't get deleted from under us. */
+    CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
+    SESS_TICKET_KEY_LIST *list = s->ctx->ticket_key_list;
+    if (list != NULL)
+        list->references++;
+    CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
+
+    int code = handle_session_tickets_inner(list, key_name, iv, ctx, hctx, enc);
+
+    SESS_TICKET_KEY_LIST_free(list);
+    return code;
+}
+
+/* Assign a list of one or more keys to be used for RFC 5077 session tickets.
+ * The first key in the list (key[0]) is considered the 'current' key. New
+ * tickets will be signed / encrypted using it, and old sessions will be
+ * re-signed and re-encrypted using it. `len' is the number of keys, not the
+ * number of bytes.
+ *
+ * This is useful for ticket key rotation. Typically an implementer would add
+ * new keys near the front of the list as they are generated, while preserving
+ * a few recent keys so there is no sudden drop in resumption rates. Lookup
+ * by key_name is O(n) so small numbers of keys are ideal.
+ *
+ * For the cleanest switchover to new keys, provide new keys at some non-initial
+ * point in the list, then bring it to the `current' position once all frontends
+ * are probably in possession of the new key (for instance, after a suitable
+ * interval of time).
+ *
+ * OpenSSL makes a copy of the keys, and overwrites the input. */
+void SSL_CTX_set_tlsext_ticket_key_list(SSL_CTX *ctx, SESS_TICKET_KEY *keys, int len) {
+    if (keys == NULL || len < 1 || INT_MAX / sizeof(SESS_TICKET_KEY) < len) {
+        SSLerr(SSL_F_SSL_CTX_SET_TLSEXT_TICKET_KEY_LIST,ERR_R_PASSED_NULL_PARAMETER);
+        return;
+    }
+
+    SESS_TICKET_KEY_LIST *old_list,
+                         *new_list = OPENSSL_malloc(sizeof(SESS_TICKET_KEY_LIST));
+
+    if (new_list == NULL) {
+        SSLerr(SSL_F_SSL_CTX_SET_TLSEXT_TICKET_KEY_LIST,ERR_R_MALLOC_FAILURE);
+        OPENSSL_cleanse(keys, sizeof(SESS_TICKET_KEY) * len);
+        return;
+    }
+    new_list->references = 1;
+    new_list->all = (SESS_TICKET_KEY*)OPENSSL_malloc(sizeof(SESS_TICKET_KEY) * len);
+    new_list->all_len = len;
+    if (new_list->all == NULL) {
+        SSLerr(SSL_F_SSL_CTX_SET_TLSEXT_TICKET_KEY_LIST,ERR_R_MALLOC_FAILURE);
+        OPENSSL_cleanse(keys, sizeof(SESS_TICKET_KEY) * len);
+        return;
+    }
+
+    memcpy(new_list->all, keys, len * sizeof(SESS_TICKET_KEY));
+    OPENSSL_cleanse(keys, sizeof(SESS_TICKET_KEY) * len);
+
+    CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
+    old_list = ctx->ticket_key_list;
+    ctx->ticket_key_list = new_list;
+    CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
+
+    SESS_TICKET_KEY_LIST_free(old_list);
 }
 
 IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER, ssl_cipher_id);

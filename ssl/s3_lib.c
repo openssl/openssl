@@ -4543,21 +4543,26 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
     case SSL_CTRL_SET_TLSEXT_TICKET_KEYS:
     case SSL_CTRL_GET_TLSEXT_TICKET_KEYS:
         {
-            unsigned char *keys = parg;
+            SESS_TICKET_KEY *keys = parg;
             if (!keys)
                 return 48;
-            if (larg != 48) {
+            if (larg > 0 && larg % sizeof(SESS_TICKET_KEY) != 0) {
                 SSLerr(SSL_F_SSL3_CTX_CTRL, SSL_R_INVALID_TICKET_KEYS_LENGTH);
                 return 0;
             }
             if (cmd == SSL_CTRL_SET_TLSEXT_TICKET_KEYS) {
-                memcpy(ctx->tlsext_tick_key_name, keys, 16);
-                memcpy(ctx->tlsext_tick_hmac_key, keys + 16, 16);
-                memcpy(ctx->tlsext_tick_aes_key, keys + 32, 16);
+                SSL_CTX_set_tlsext_ticket_key_list(ctx, keys, larg / sizeof(SESS_TICKET_KEY));
+            } else if (ctx->ticket_key_list == NULL ||
+                    ctx->ticket_key_list->all == NULL ||
+                    ctx->ticket_key_list->all_len < 1) {
+                SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_PASSED_NULL_PARAMETER);
+                return 0;
             } else {
-                memcpy(keys, ctx->tlsext_tick_key_name, 16);
-                memcpy(keys + 16, ctx->tlsext_tick_hmac_key, 16);
-                memcpy(keys + 32, ctx->tlsext_tick_aes_key, 16);
+                if (larg != ctx->ticket_key_list->all_len * sizeof(SESS_TICKET_KEY)) {
+                    SSLerr(SSL_F_SSL3_CTX_CTRL, SSL_R_INVALID_TICKET_KEYS_LENGTH);
+                    return 0;
+                }
+                memcpy(keys, ctx->ticket_key_list->all, larg);
             }
             return 1;
         }
