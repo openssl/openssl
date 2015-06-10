@@ -62,6 +62,7 @@
 #include <openssl/objects.h>
 #include <openssl/ts.h>
 #include <openssl/pkcs7.h>
+#include "ts_lcl.h"
 
 /* Private function declarations. */
 
@@ -363,8 +364,8 @@ static int ts_issuer_serial_cmp(ESS_ISSUER_SERIAL *is, X509_CINF *cinfo)
  */
 int TS_RESP_verify_response(TS_VERIFY_CTX *ctx, TS_RESP *response)
 {
-    PKCS7 *token = TS_RESP_get_token(response);
-    TS_TST_INFO *tst_info = TS_RESP_get_tst_info(response);
+    PKCS7 *token = response->token;
+    TS_TST_INFO *tst_info = response->tst_info;
     int ret = 0;
 
     /* Check if we have a successful TS_TST_INFO object in place. */
@@ -411,7 +412,7 @@ static int int_ts_RESP_verify_token(TS_VERIFY_CTX *ctx,
                                     PKCS7 *token, TS_TST_INFO *tst_info)
 {
     X509 *signer = NULL;
-    GENERAL_NAME *tsa_name = TS_TST_INFO_get_tsa(tst_info);
+    GENERAL_NAME *tsa_name = tst_info->tsa;
     X509_ALGOR *md_alg = NULL;
     unsigned char *imprint = NULL;
     unsigned imprint_len = 0;
@@ -476,7 +477,7 @@ static int int_ts_RESP_verify_token(TS_VERIFY_CTX *ctx,
 
 static int ts_check_status_info(TS_RESP *response)
 {
-    TS_STATUS_INFO *info = TS_RESP_get_status_info(response);
+    TS_STATUS_INFO *info = response->status_info;
     long status = ASN1_INTEGER_get(info->status);
     const char *status_text = NULL;
     char *embedded_status_text = NULL;
@@ -562,7 +563,7 @@ static char *ts_get_status_text(STACK_OF(ASN1_UTF8STRING) *text)
 
 static int ts_check_policy(ASN1_OBJECT *req_oid, TS_TST_INFO *tst_info)
 {
-    ASN1_OBJECT *resp_oid = TS_TST_INFO_get_policy_id(tst_info);
+    ASN1_OBJECT *resp_oid = tst_info->policy_id;
 
     if (OBJ_cmp(req_oid, resp_oid) != 0) {
         TSerr(TS_F_TS_CHECK_POLICY, TS_R_POLICY_MISMATCH);
@@ -576,8 +577,8 @@ static int ts_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
                               X509_ALGOR **md_alg,
                               unsigned char **imprint, unsigned *imprint_len)
 {
-    TS_MSG_IMPRINT *msg_imprint = TS_TST_INFO_get_msg_imprint(tst_info);
-    X509_ALGOR *md_alg_resp = TS_MSG_IMPRINT_get_algo(msg_imprint);
+    TS_MSG_IMPRINT *msg_imprint = tst_info->msg_imprint;
+    X509_ALGOR *md_alg_resp = msg_imprint->hash_algo;
     const EVP_MD *md;
     EVP_MD_CTX md_ctx;
     unsigned char buffer[4096];
@@ -628,8 +629,8 @@ static int ts_check_imprints(X509_ALGOR *algor_a,
                              unsigned char *imprint_a, unsigned len_a,
                              TS_TST_INFO *tst_info)
 {
-    TS_MSG_IMPRINT *b = TS_TST_INFO_get_msg_imprint(tst_info);
-    X509_ALGOR *algor_b = TS_MSG_IMPRINT_get_algo(b);
+    TS_MSG_IMPRINT *b = tst_info->msg_imprint;
+    X509_ALGOR *algor_b = b->hash_algo;
     int ret = 0;
 
     /* algor_a is optional. */
@@ -657,7 +658,7 @@ static int ts_check_imprints(X509_ALGOR *algor_a,
 
 static int ts_check_nonces(const ASN1_INTEGER *a, TS_TST_INFO *tst_info)
 {
-    const ASN1_INTEGER *b = TS_TST_INFO_get_nonce(tst_info);
+    const ASN1_INTEGER *b = tst_info->nonce;
 
     /* Error if nonce is missing. */
     if (!b) {

@@ -63,6 +63,7 @@
 #include <openssl/bn.h>
 #include <openssl/x509v3.h>
 #include <openssl/ts.h>
+#include "ts_lcl.h"
 
 struct status_map_st {
     int bit;
@@ -79,15 +80,12 @@ static int ts_ACCURACY_print_bio(BIO *bio, const TS_ACCURACY *accuracy);
 
 int TS_RESP_print_bio(BIO *bio, TS_RESP *a)
 {
-    TS_TST_INFO *tst_info;
-
     BIO_printf(bio, "Status info:\n");
-    TS_STATUS_INFO_print_bio(bio, TS_RESP_get_status_info(a));
+    TS_STATUS_INFO_print_bio(bio, a->status_info);
 
     BIO_printf(bio, "\nTST info:\n");
-    tst_info = TS_RESP_get_tst_info(a);
-    if (tst_info != NULL)
-        TS_TST_INFO_print_bio(bio, TS_RESP_get_tst_info(a));
+    if (a->tst_info != NULL)
+        TS_TST_INFO_print_bio(bio, a->tst_info);
     else
         BIO_printf(bio, "Not included.\n");
 
@@ -176,102 +174,85 @@ static int ts_status_map_print(BIO *bio, const struct status_map_st *a,
 int TS_TST_INFO_print_bio(BIO *bio, TS_TST_INFO *a)
 {
     int v;
-    ASN1_OBJECT *policy_id;
-    const ASN1_INTEGER *serial;
-    const ASN1_GENERALIZEDTIME *gtime;
-    TS_ACCURACY *accuracy;
-    const ASN1_INTEGER *nonce;
-    GENERAL_NAME *tsa_name;
 
     if (a == NULL)
         return 0;
 
     /* Print version. */
-    v = TS_TST_INFO_get_version(a);
+    v = ASN1_INTEGER_get(a->version);
     BIO_printf(bio, "Version: %d\n", v);
 
     /* Print policy id. */
     BIO_printf(bio, "Policy OID: ");
-    policy_id = TS_TST_INFO_get_policy_id(a);
-    TS_OBJ_print_bio(bio, policy_id);
+    TS_OBJ_print_bio(bio, a->policy_id);
 
     /* Print message imprint. */
-    TS_MSG_IMPRINT_print_bio(bio, TS_TST_INFO_get_msg_imprint(a));
+    TS_MSG_IMPRINT_print_bio(bio, a->msg_imprint);
 
     /* Print serial number. */
     BIO_printf(bio, "Serial number: ");
-    serial = TS_TST_INFO_get_serial(a);
-    if (serial == NULL)
+    if (a->serial == NULL)
         BIO_printf(bio, "unspecified");
     else
-        TS_ASN1_INTEGER_print_bio(bio, serial);
+        TS_ASN1_INTEGER_print_bio(bio, a->serial);
     BIO_write(bio, "\n", 1);
 
     /* Print time stamp. */
     BIO_printf(bio, "Time stamp: ");
-    gtime = TS_TST_INFO_get_time(a);
-    ASN1_GENERALIZEDTIME_print(bio, gtime);
+    ASN1_GENERALIZEDTIME_print(bio, a->time);
     BIO_write(bio, "\n", 1);
 
     /* Print accuracy. */
     BIO_printf(bio, "Accuracy: ");
-    accuracy = TS_TST_INFO_get_accuracy(a);
-    if (accuracy == NULL)
+    if (a->accuracy == NULL)
         BIO_printf(bio, "unspecified");
     else
-        ts_ACCURACY_print_bio(bio, accuracy);
+        ts_ACCURACY_print_bio(bio, a->accuracy);
     BIO_write(bio, "\n", 1);
 
     /* Print ordering. */
-    BIO_printf(bio, "Ordering: %s\n",
-               TS_TST_INFO_get_ordering(a) ? "yes" : "no");
+    BIO_printf(bio, "Ordering: %s\n", a->ordering ? "yes" : "no");
 
     /* Print nonce. */
     BIO_printf(bio, "Nonce: ");
-    nonce = TS_TST_INFO_get_nonce(a);
-    if (nonce == NULL)
+    if (a->nonce == NULL)
         BIO_printf(bio, "unspecified");
     else
-        TS_ASN1_INTEGER_print_bio(bio, nonce);
+        TS_ASN1_INTEGER_print_bio(bio, a->nonce);
     BIO_write(bio, "\n", 1);
 
     /* Print TSA name. */
     BIO_printf(bio, "TSA: ");
-    tsa_name = TS_TST_INFO_get_tsa(a);
-    if (tsa_name == NULL)
+    if (a->tsa == NULL)
         BIO_printf(bio, "unspecified");
     else {
         STACK_OF(CONF_VALUE) *nval;
-        if ((nval = i2v_GENERAL_NAME(NULL, tsa_name, NULL)))
+        if ((nval = i2v_GENERAL_NAME(NULL, a->tsa, NULL)))
             X509V3_EXT_val_prn(bio, nval, 0, 0);
         sk_CONF_VALUE_pop_free(nval, X509V3_conf_free);
     }
     BIO_write(bio, "\n", 1);
 
     /* Print extensions. */
-    TS_ext_print_bio(bio, TS_TST_INFO_get_exts(a));
+    TS_ext_print_bio(bio, a->extensions);
 
     return 1;
 }
 
-static int ts_ACCURACY_print_bio(BIO *bio, const TS_ACCURACY *accuracy)
+static int ts_ACCURACY_print_bio(BIO *bio, const TS_ACCURACY *a)
 {
-    const ASN1_INTEGER *seconds = TS_ACCURACY_get_seconds(accuracy);
-    const ASN1_INTEGER *millis = TS_ACCURACY_get_millis(accuracy);
-    const ASN1_INTEGER *micros = TS_ACCURACY_get_micros(accuracy);
-
-    if (seconds != NULL)
-        TS_ASN1_INTEGER_print_bio(bio, seconds);
+    if (a->seconds != NULL)
+        TS_ASN1_INTEGER_print_bio(bio, a->seconds);
     else
         BIO_printf(bio, "unspecified");
     BIO_printf(bio, " seconds, ");
-    if (millis != NULL)
-        TS_ASN1_INTEGER_print_bio(bio, millis);
+    if (a->millis != NULL)
+        TS_ASN1_INTEGER_print_bio(bio, a->millis);
     else
         BIO_printf(bio, "unspecified");
     BIO_printf(bio, " millis, ");
-    if (micros != NULL)
-        TS_ASN1_INTEGER_print_bio(bio, micros);
+    if (a->micros != NULL)
+        TS_ASN1_INTEGER_print_bio(bio, a->micros);
     else
         BIO_printf(bio, "unspecified");
     BIO_printf(bio, " micros");
