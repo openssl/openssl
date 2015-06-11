@@ -3069,7 +3069,11 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     if (tctx->tlsext_ticket_key_cb != NULL) {
         rv = tctx->tlsext_ticket_key_cb(s, nctick, nctick + 16, &ctx, &hctx, 0);
     } else {
-        rv = handle_session_tickets(s, nctick, nctick + 16, &ctx, &hctx, 0);
+      SESS_TICKET_ELEM key_name;
+      memcpy(key_name.elem, nctick, 16);
+      SESS_TICKET_IV iv;
+      memcpy(iv.iv, nctick+16, 16);
+      rv = handle_session_tickets(s, &key_name, &iv, &ctx, &hctx, 0);
     }
 
     if (rv < 0)

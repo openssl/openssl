@@ -4546,19 +4546,19 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
             SESS_TICKET_KEY *keys = parg;
             if (!keys)
                 return 48;
-            if (larg > 0 && larg % sizeof(SESS_TICKET_KEY) != 0) {
+            if ((larg > 0) && ((larg % sizeof(SESS_TICKET_KEY)) != 0)) {
                 SSLerr(SSL_F_SSL3_CTX_CTRL, SSL_R_INVALID_TICKET_KEYS_LENGTH);
                 return 0;
             }
             if (cmd == SSL_CTRL_SET_TLSEXT_TICKET_KEYS) {
-                SSL_CTX_set_tlsext_ticket_key_list(ctx, keys, larg / sizeof(SESS_TICKET_KEY));
+                SSL_CTX_set_tlsext_ticket_key_list(ctx, keys, larg / (long)sizeof(SESS_TICKET_KEY));
             } else if (ctx->ticket_key_list == NULL ||
                     ctx->ticket_key_list->all == NULL ||
                     ctx->ticket_key_list->all_len < 1) {
                 SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_PASSED_NULL_PARAMETER);
                 return 0;
             } else {
-                if (larg != ctx->ticket_key_list->all_len * sizeof(SESS_TICKET_KEY)) {
+                if (larg != (ctx->ticket_key_list->all_len * (long)sizeof(SESS_TICKET_KEY))) {
                     SSLerr(SSL_F_SSL3_CTX_CTRL, SSL_R_INVALID_TICKET_KEYS_LENGTH);
                     return 0;
                 }

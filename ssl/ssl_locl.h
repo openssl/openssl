@@ -772,6 +772,9 @@ struct ssl_ctx_st {
                                  * indicates that the application is
                                  * supplying session-id's from other
                                  * processes - spooky :-) */
+        int tls_ticket_success; /* tls ticket session resumptions (primary key) */
+        int tls_ticket_renew;   /* tls ticket session upgrades (non-primary key) */
+        int tls_ticket_fail;    /* tls ticket session renewal failure */
     } stats;
 
     int references;

@@ -324,6 +324,14 @@ typedef struct ssl_session_st SSL_SESSION;
 typedef struct tls_sigalgs_st TLS_SIGALGS;
 typedef struct ssl_conf_ctx_st SSL_CONF_CTX;
 
+
+#define SESS_TICKET_ELEM_SIZE 16
+typedef struct sess_ticket_key_elem_st {
+    unsigned char elem[SESS_TICKET_ELEM_SIZE];
+} SESS_TICKET_ELEM;
+typedef struct sess_ticket_iv_st {
+    unsigned char iv[EVP_MAX_IV_LENGTH];
+} SESS_TICKET_IV;
 typedef struct tls_session_ticket_ext_st TLS_SESSION_TICKET_EXT;
 typedef struct sess_ticket_key_st SESS_TICKET_KEY;
 typedef struct sess_ticket_key_set_st SESS_TICKET_KEY_LIST;
@@ -331,7 +339,7 @@ typedef struct sess_ticket_key_set_st SESS_TICKET_KEY_LIST;
 typedef int (*tls_session_ticket_ext_cb_fn)(SSL *s,
                                             const unsigned char *data,
                                             int len, void *arg);
-int handle_session_tickets(SSL *s, unsigned char key_name[16], unsigned char iv[EVP_MAX_IV_LENGTH], EVP_CIPHER_CTX *ctx, HMAC_CTX *hctx, int enc);
+int handle_session_tickets(SSL *s, SESS_TICKET_ELEM *key_name, SESS_TICKET_IV *iv, EVP_CIPHER_CTX *ctx, HMAC_CTX *hctx, int enc);
 
 # define SSL_RESUME_SUCCESS_RENEW 2
 # define SSL_RESUME_SUCCESS 1
@@ -688,9 +696,9 @@ typedef int (*GEN_SESSION_CB) (const SSL *ssl, unsigned char *id,
  * creation and decryption.
  **/
 struct sess_ticket_key_st {
-    unsigned char key_name[16];
-    unsigned char hmac_key[16];
-    unsigned char aes_key[16];
+    SESS_TICKET_ELEM key_name;
+    SESS_TICKET_ELEM hmac_key;
+    SESS_TICKET_ELEM aes_key;
 };
 
 /**
@@ -741,6 +749,13 @@ LHASH_OF(SSL_SESSION) *SSL_CTX_sessions(SSL_CTX *ctx);
         SSL_CTX_ctrl(ctx,SSL_CTRL_SESS_TIMEOUTS,0,NULL)
 # define SSL_CTX_sess_cache_full(ctx) \
         SSL_CTX_ctrl(ctx,SSL_CTRL_SESS_CACHE_FULL,0,NULL)
+
+# define SSL_CTX_tls_ticket_success(ctx) \
+        SSL_CTX_ctrl(ctx,SSL_CTRL_TLS_TICKET_SUCCESS,0,NULL)
+# define SSL_CTX_tls_ticket_renew(ctx) \
+        SSL_CTX_ctrl(ctx,SSL_CTRL_TLS_TICKET_RENEW,0,NULL)
+# define SSL_CTX_tls_ticket_fail(ctx) \
+        SSL_CTX_ctrl(ctx,SSL_CTRL_TLS_TICKET_FAIL,0,NULL)
 
 void SSL_CTX_sess_set_new_cb(SSL_CTX *ctx,
                              int (*new_session_cb) (struct ssl_st *ssl,
@@ -1213,6 +1228,13 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define DTLS_CTRL_SET_LINK_MTU                  120
 # define DTLS_CTRL_GET_LINK_MIN_MTU              121
 # define SSL_CTRL_GET_EXTMS_SUPPORT              122
+
+/* TLS stats */
+# define SSL_CTRL_TLS_TICKET_SUCCESS             122
+# define SSL_CTRL_TLS_TICKET_RENEW               123
+# define SSL_CTRL_TLS_TICKET_FAIL                124
+
+
 # define SSL_CERT_SET_FIRST                      1
 # define SSL_CERT_SET_NEXT                       2
 # define SSL_CERT_SET_SERVER                     3
