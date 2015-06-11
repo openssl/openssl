@@ -241,31 +241,33 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
     }
     memcpy(dest, src, sizeof(*dest));
 
-#ifndef OPENSSL_NO_KRB5
-    dest->krb5_client_princ_len = src->krb5_client_princ_len;
-    if (src->krb5_client_princ_len > 0)
-        memcpy(dest->krb5_client_princ, src->krb5_client_princ,
-               src->krb5_client_princ_len);
-#endif
-
+    /*
+     * Set the various pointers to NULL so that we can call SSL_SESSION_free in
+     * the case of an error whilst halfway through constructing dest
+     */
 #ifndef OPENSSL_NO_PSK
-    if (src->psk_identity_hint) {
-        dest->psk_identity_hint = BUF_strdup(src->psk_identity_hint);
-        if (dest->psk_identity_hint == NULL) {
-            goto err;
-        }
-    } else {
-        dest->psk_identity_hint = NULL;
-    }
-    if (src->psk_identity) {
-        dest->psk_identity = BUF_strdup(src->psk_identity);
-        if (dest->psk_identity == NULL) {
-            goto err;
-        }
-    } else {
-        dest->psk_identity = NULL;
-    }
+    dest->psk_identity_hint = NULL;
+    dest->psk_identity = NULL;
 #endif
+    dest->ciphers = NULL;
+#ifndef OPENSSL_NO_TLSEXT
+    dest->tlsext_hostname = NULL;
+# ifndef OPENSSL_NO_EC
+    dest->tlsext_ecpointformatlist = NULL;
+    dest->tlsext_ellipticcurvelist = NULL;
+# endif
+#endif
+    dest->tlsext_tick = NULL;
+#ifndef OPENSSL_NO_SRP
+    dest->srp_username = NULL;
+#endif
+    memset(&dest->ex_data, 0, sizeof(dest->ex_data));
+
+    /* We deliberately don't copy the prev and next pointers */
+    dest->prev = NULL;
+    dest->next = NULL;
+
+    dest->references = 1;
 
     if (src->sess_cert != NULL)
         CRYPTO_add(&src->sess_cert->references, 1, CRYPTO_LOCK_SSL_SESS_CERT);
@@ -273,14 +275,25 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
     if (src->peer != NULL)
         CRYPTO_add(&src->peer->references, 1, CRYPTO_LOCK_X509);
 
-    dest->references = 1;
+#ifndef OPENSSL_NO_PSK
+    if (src->psk_identity_hint) {
+        dest->psk_identity_hint = BUF_strdup(src->psk_identity_hint);
+        if (dest->psk_identity_hint == NULL) {
+            goto err;
+        }
+    }
+    if (src->psk_identity) {
+        dest->psk_identity = BUF_strdup(src->psk_identity);
+        if (dest->psk_identity == NULL) {
+            goto err;
+        }
+    }
+#endif
 
     if(src->ciphers != NULL) {
         dest->ciphers = sk_SSL_CIPHER_dup(src->ciphers);
         if (dest->ciphers == NULL)
             goto err;
-    } else {
-        dest->ciphers = NULL;
     }
 
     if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_SSL_SESSION,
@@ -288,18 +301,12 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
         goto err;
     }
 
-    /* We deliberately don't copy the prev and next pointers */
-    dest->prev = NULL;
-    dest->next = NULL;
-
 #ifndef OPENSSL_NO_TLSEXT
     if (src->tlsext_hostname) {
         dest->tlsext_hostname = BUF_strdup(src->tlsext_hostname);
         if (dest->tlsext_hostname == NULL) {
             goto err;
         }
-    } else {
-        dest->tlsext_hostname = NULL;
     }
 # ifndef OPENSSL_NO_EC
     if (src->tlsext_ecpointformatlist) {
@@ -308,8 +315,6 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
                        src->tlsext_ecpointformatlist_length);
         if (dest->tlsext_ecpointformatlist == NULL)
             goto err;
-        dest->tlsext_ecpointformatlist_length =
-            src->tlsext_ecpointformatlist_length;
     }
     if (src->tlsext_ellipticcurvelist) {
         dest->tlsext_ellipticcurvelist =
@@ -317,29 +322,25 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
                        src->tlsext_ellipticcurvelist_length);
         if (dest->tlsext_ellipticcurvelist == NULL)
             goto err;
-        dest->tlsext_ellipticcurvelist_length =
-            src->tlsext_ellipticcurvelist_length;
     }
 # endif
 #endif
 
     if (ticket != 0) {
-        dest->tlsext_tick_lifetime_hint = src->tlsext_tick_lifetime_hint;
-        dest->tlsext_ticklen = src->tlsext_ticklen;
-        if((dest->tlsext_tick = OPENSSL_malloc(src->tlsext_ticklen)) == NULL) {
+        dest->tlsext_tick = BUF_memdup(src->tlsext_tick, src->tlsext_ticklen);
+        if(dest->tlsext_tick == NULL)
             goto err;
-        }
+    } else {
+        dest->tlsext_tick_lifetime_hint = 0;
+        dest->tlsext_ticklen = 0;
     }
 
 #ifndef OPENSSL_NO_SRP
-    dest->srp_username = NULL;
     if (src->srp_username) {
         dest->srp_username = BUF_strdup(src->srp_username);
         if (dest->srp_username == NULL) {
             goto err;
         }
-    } else {
-        dest->srp_username = NULL;
     }
 #endif
 
