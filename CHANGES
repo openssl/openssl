@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.1m and 1.0.1n [xx XXX xxxx]
+ Changes between 1.0.1m and 1.0.1n [11 Jun 2015]
 
   *) Malformed ECParameters causes infinite loop
 
