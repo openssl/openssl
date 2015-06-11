@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8zf and 0.9.8zg [xx XXX xxxx]
+ Changes between 0.9.8zf and 0.9.8zg [11 Jun 2015]
 
   *) Malformed ECParameters causes infinite loop
 
