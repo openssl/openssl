@@ -5,6 +5,10 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.8zg and OpenSSL 0.9.8zh [under development]
+
+      o
+
   Major changes between OpenSSL 0.9.8zf and OpenSSL 0.9.8zg [11 Jun 2015]
 
       o Malformed ECParameters causes infinite loop (CVE-2015-1788)
