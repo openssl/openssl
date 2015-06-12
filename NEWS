@@ -7,7 +7,7 @@
 
   Major changes between OpenSSL 1.0.2b and OpenSSL 1.0.2c [under development]
 
-      o
+      o Fix HMAC ABI incompatibility
 
   Major changes between OpenSSL 1.0.2a and OpenSSL 1.0.2b [11 Jun 2015]
 
