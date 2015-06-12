@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 1.0.1o and 1.0.1p [xx XXX xxxx]
+
+  *)
+
  Changes between 1.0.1n and 1.0.1o [12 Jun 2015]
 
   *) Fix HMAC ABI incompatibility. The previous version introduced an ABI
