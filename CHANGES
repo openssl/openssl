@@ -4,7 +4,9 @@
 
  Changes between 1.0.1n and 1.0.1o [xx XXX xxxx]
 
-  *)
+  *) Fix HMAC ABI incompatibility. The previous version introduced an ABI
+     incompatibility in the handling of HMAC. The previous ABI has now been
+     restored.
 
  Changes between 1.0.1m and 1.0.1n [11 Jun 2015]
 

@@ -7,7 +7,7 @@
 
   Major changes between OpenSSL 1.0.1n and OpenSSL 1.0.1o [under development]
 
-      o
+      o Fix HMAC ABI incompatibility
 
   Major changes between OpenSSL 1.0.1m and OpenSSL 1.0.1n [11 Jun 2015]
 
