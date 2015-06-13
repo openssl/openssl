@@ -306,7 +306,7 @@ int enc_main(int argc, char **argv)
     }
 
     if (dgst == NULL)
-        dgst = EVP_md5();
+        dgst = EVP_sha256();
 
     /* It must be large enough for a base64 encoded line */
     if (base64 && bsize < 80)

@@ -1420,7 +1420,7 @@ static int certify_cert(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
     } else
         BIO_printf(bio_err, "Signature ok\n");
 
-    if ((rreq = X509_to_X509_REQ(req, NULL, EVP_md5())) == NULL)
+    if ((rreq = X509_to_X509_REQ(req, NULL, NULL)) == NULL)
         goto end;
 
     ok = do_body(xret, pkey, x509, dgst, sigopts, policy, db, serial, subj,
