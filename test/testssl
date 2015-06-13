@@ -118,11 +118,10 @@ echo test sslv2/sslv3 with both client and server authentication via BIO pair an
 $ssltest -bio_pair -server_auth -client_auth -app_verify $CA $extra || exit 1
 
 test_cipher() {
-  local cipher=$1
-  local protocol=$2
+    _cipher=$1
     echo "Testing $cipher"
     prot=""
-    if [ $protocol = "SSLv3" ] ; then
+    if [ $2 = "SSLv3" ] ; then
       prot="-ssl3"
     fi
     $ssltest -cipher $cipher $prot
