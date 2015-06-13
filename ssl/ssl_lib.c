@@ -186,6 +186,14 @@ SSL3_ENC_METHOD ssl3_undef_enc_method = {
              int use_context))ssl_undefined_function,
 };
 
+static void clear_ciphers(SSL *s)
+{
+    /* clear the current cipher */
+    ssl_clear_cipher_ctx(s);
+    ssl_clear_hash_ctx(&s->read_hash);
+    ssl_clear_hash_ctx(&s->write_hash);
+}
+
 int SSL_clear(SSL *s)
 {
     if (s->method == NULL) {
@@ -217,9 +225,7 @@ int SSL_clear(SSL *s)
 
     BUF_MEM_free(s->init_buf);
     s->init_buf = NULL;
-    ssl_clear_cipher_ctx(s);
-    ssl_clear_hash_ctx(&s->read_hash);
-    ssl_clear_hash_ctx(&s->write_hash);
+    clear_ciphers(s);
     s->first_packet = 0;
 
     /*
@@ -548,9 +554,7 @@ void SSL_free(SSL *s)
         SSL_SESSION_free(s->session);
     }
 
-    ssl_clear_cipher_ctx(s);
-    ssl_clear_hash_ctx(&s->read_hash);
-    ssl_clear_hash_ctx(&s->write_hash);
+    clear_ciphers(s);
 
     ssl_cert_free(s->cert);
     /* Free up if allocated */
@@ -2450,20 +2454,13 @@ int SSL_do_handshake(SSL *s)
     return (ret);
 }
 
-/*
- * For the next 2 functions, SSL_clear() sets shutdown and so one of these
- * calls will reset it
- */
 void SSL_set_accept_state(SSL *s)
 {
     s->server = 1;
     s->shutdown = 0;
     s->state = SSL_ST_ACCEPT | SSL_ST_BEFORE;
     s->handshake_func = s->method->ssl_accept;
-    /* clear the current cipher */
-    ssl_clear_cipher_ctx(s);
-    ssl_clear_hash_ctx(&s->read_hash);
-    ssl_clear_hash_ctx(&s->write_hash);
+    clear_ciphers(s);
 }
 
 void SSL_set_connect_state(SSL *s)
@@ -2472,10 +2469,7 @@ void SSL_set_connect_state(SSL *s)
     s->shutdown = 0;
     s->state = SSL_ST_CONNECT | SSL_ST_BEFORE;
     s->handshake_func = s->method->ssl_connect;
-    /* clear the current cipher */
-    ssl_clear_cipher_ctx(s);
-    ssl_clear_hash_ctx(&s->read_hash);
-    ssl_clear_hash_ctx(&s->write_hash);
+    clear_ciphers(s);
 }
 
 int ssl_undefined_function(SSL *s)
