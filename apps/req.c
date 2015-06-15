@@ -125,7 +125,7 @@ typedef enum OPTION_choice {
     OPT_KEYOUT, OPT_PASSIN, OPT_PASSOUT, OPT_RAND, OPT_NEWKEY,
     OPT_PKEYOPT, OPT_SIGOPT, OPT_BATCH, OPT_NEWHDR, OPT_MODULUS,
     OPT_VERIFY, OPT_NODES, OPT_NOOUT, OPT_VERBOSE, OPT_UTF8,
-    OPT_NAMEOPT, OPT_REQOPT, OPT_SUBJECT, OPT_TEXT, OPT_X509,
+    OPT_NAMEOPT, OPT_REQOPT, OPT_SUBJ, OPT_SUBJECT, OPT_TEXT, OPT_X509,
     OPT_ASN1_KLUDGE, OPT_NO_ASN1_KLUDGE, OPT_MULTIVALUE_RDN,
     OPT_DAYS, OPT_SET_SERIAL, OPT_EXTENSIONS, OPT_REQEXTS, OPT_MD
 } OPTION_CHOICE;
@@ -167,7 +167,8 @@ OPTIONS req_options[] = {
      "Output the request in a format that is wrong"},
     {OPT_MORE_STR, 1, 1, "(Required by some CA's)"},
     {"no-asn1-kludge", OPT_NO_ASN1_KLUDGE, '-'},
-    {"subject", OPT_SUBJECT, 's', "Output the request's subject"},
+    {"subj", OPT_SUBJ, 's', "Set or modify request subject"},
+    {"subject", OPT_SUBJECT, '-', "Output the request's subject"},
     {"multivalue-rdn", OPT_MULTIVALUE_RDN, '-',
      "Enable support for multivalued RDNs"},
     {"days", OPT_DAYS, 'p', "Number of days cert is valid for"},
@@ -351,6 +352,9 @@ int req_main(int argc, char **argv)
                 goto opthelp;
             break;
         case OPT_SUBJECT:
+	    subject = 1;
+            break;
+        case OPT_SUBJ:
             subj = opt_arg();
             break;
         case OPT_MULTIVALUE_RDN:
