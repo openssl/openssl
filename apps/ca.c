@@ -325,6 +325,7 @@ opthelp:
                 ret = 0;
                 goto end;
             case OPT_IN:
+		req = 1;
                 infile = opt_arg();
                 break;
             case OPT_OUT:
