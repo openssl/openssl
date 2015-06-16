@@ -365,7 +365,6 @@ extern "C" {
 /* Removed from OpenSSL 1.1.0 */
 # define TLS1_FLAGS_TLS_PADDING_BUG              0x0
 # define TLS1_FLAGS_SKIP_CERT_VERIFY             0x0010
-# define TLS1_FLAGS_KEEP_HANDSHAKE               0x0020
 /*
  * Set when the handshake is ready to process peer's ChangeCipherSpec message.
  * Cleared after the message has been processed.
