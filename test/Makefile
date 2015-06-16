@@ -71,6 +71,8 @@ CONSTTIMETEST=  constant_time_test
 VERIFYEXTRATEST=	verify_extra_test
 CLIENTHELLOTEST=	clienthellotest
 PACKETTEST=	packettest
+SSLVERTOLTEST=	sslvertoltest.pl
+SSLEXTENSIONTEST=	sslextensiontest.pl
 
 TESTS=		alltests
 
@@ -156,7 +158,8 @@ alltests: \
 	test_ige test_jpake test_secmem \
 	test_srp test_cms test_v3name test_ocsp \
 	test_gost2814789 test_heartbeat test_p5_crpt2 \
-	test_constant_time test_verify_extra test_clienthello test_packet
+	test_constant_time test_verify_extra test_clienthello test_packet \
+	test_sslvertol test_sslextension
 
 test_evp: $(EVPTEST)$(EXE_EXT) evptests.txt
 	@echo $(START) $@
@@ -416,6 +419,15 @@ test_clienthello: $(CLIENTHELLOTEST)$(EXE_EXT)
 test_packet: $(PACKETTEST)$(EXE_EXT)
 	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(PACKETTEST)
+
+#OPENSSL_ia32cap=... in ssl tests below ensures AES-NI is switched off (AES-NI does not go through the testmode engine)
+test_sslvertol: ../apps/openssl$(EXE_EXT)
+	@echo $(START) $@
+	PERL5LIB=$$PERL5LIB:../util ../util/shlib_wrap.sh ./$(SSLVERTOLTEST) "OPENSSL_ia32cap='~0x200000200000000' ../apps/openssl$(EXE_EXT)" ../apps/server.pem
+
+test_sslextension: ../apps/openssl$(EXE_EXT)
+	@echo $(START) $@
+	PERL5LIB=$$PERL5LIB:../util ../util/shlib_wrap.sh ./$(SSLEXTENSIONTEST) "OPENSSL_ia32cap='~0x200000200000000' ../apps/openssl$(EXE_EXT)" ../apps/server.pem
 
 update: local_depend
 	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
