@@ -31,16 +31,18 @@ AFLAGS= $(ASFLAGS)
 GENERAL=Makefile engines.com install.com engine_vector.mar
 
 LIB=$(TOP)/libcrypto.a
-LIBNAMES= 4758cca gmp padlock capi
+LIBNAMES= 4758cca gmp padlock capi ossltest
 
 LIBSRC=	e_4758cca.c \
 	e_gmp.c \
 	e_padlock.c \
-	e_capi.c
+	e_capi.c \
+	e_ossltest.c
 LIBOBJ= e_4758cca.o \
 	e_gmp.o \
 	e_padlock.o \
 	e_capi.o \
+	e_ossltest.o \
 	$(ENGINES_ASM_OBJ)
 
 SRC= $(LIBSRC)
@@ -51,7 +53,8 @@ HEADER=	e_4758cca_err.c e_4758cca_err.h \
 	e_nuron_err.c e_nuron_err.h \
 	e_sureware_err.c e_sureware_err.h \
 	e_ubsec_err.c e_ubsec_err.h \
-	e_capi_err.c e_capi_err.h
+	e_capi_err.c e_capi_err.h \
+	e_ossltest_err.c e_ossltest_err.h
 
 ALL=	$(GENERAL) $(SRC) $(HEADER)
 
@@ -183,6 +186,20 @@ e_capi.o: ../include/openssl/pkcs7.h ../include/openssl/safestack.h
 e_capi.o: ../include/openssl/sha.h ../include/openssl/stack.h
 e_capi.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
 e_capi.o: ../include/openssl/x509_vfy.h e_capi.c
+e_ossltest.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+e_ossltest.o: ../include/openssl/buffer.h ../include/openssl/crypto.h
+e_ossltest.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+e_ossltest.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+e_ossltest.o: ../include/openssl/engine.h ../include/openssl/err.h
+e_ossltest.o: ../include/openssl/evp.h ../include/openssl/lhash.h
+e_ossltest.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+e_ossltest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+e_ossltest.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
+e_ossltest.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+e_ossltest.o: ../include/openssl/sha.h ../include/openssl/stack.h
+e_ossltest.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
+e_ossltest.o: ../include/openssl/x509_vfy.h e_ossltest.c e_ossltest_err.c
+e_ossltest.o: e_ossltest_err.h
 e_gmp.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 e_gmp.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 e_gmp.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
