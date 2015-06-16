@@ -679,9 +679,8 @@ int tls1_cert_verify_mac(SSL *s, int md_nid, unsigned char *out)
     EVP_MD_CTX ctx, *d = NULL;
     int i;
 
-    if (s->s3->handshake_buffer)
-        if (!ssl3_digest_cached_records(s))
-            return 0;
+    if (!ssl3_digest_cached_records(s, 0))
+        return 0;
 
     for (i = 0; i < SSL_MAX_DIGEST; i++) {
         if (s->s3->handshake_dgst[i]
@@ -709,9 +708,8 @@ int tls1_final_finish_mac(SSL *s, const char *str, int slen,
     unsigned char hash[2 * EVP_MAX_MD_SIZE];
     unsigned char buf2[12];
 
-    if (s->s3->handshake_buffer)
-        if (!ssl3_digest_cached_records(s))
-            return 0;
+    if (!ssl3_digest_cached_records(s, 0))
+        return 0;
 
     hashlen = ssl_handshake_hash(s, hash, sizeof(hash));
 
@@ -736,17 +734,13 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
     if (s->session->flags & SSL_SESS_FLAG_EXTMS) {
         unsigned char hash[EVP_MAX_MD_SIZE * 2];
         int hashlen;
-        /* If we don't have any digests cache records */
-        if (s->s3->handshake_buffer) {
-            /*
-             * keep record buffer: this wont affect client auth because we're
-             * freezing the buffer at the same point (after client key
-             * exchange and before certificate verify)
-             */
-            s->s3->flags |= TLS1_FLAGS_KEEP_HANDSHAKE;
-            if (!ssl3_digest_cached_records(s))
-                return -1;
-        }
+        /* Digest cached records keeping record buffer (if present):
+         * this wont affect client auth because we're freezing the buffer
+         * at the same point (after client key exchange and before certificate
+         * verify)
+         */
+        if (!ssl3_digest_cached_records(s, 1))
+            return -1;
         hashlen = ssl_handshake_hash(s, hash, sizeof(hash));
 #ifdef SSL_DEBUG
         fprintf(stderr, "Handshake hashes:\n");

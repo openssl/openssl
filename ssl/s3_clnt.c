@@ -1168,7 +1168,7 @@ int ssl3_get_server_hello(SSL *s)
      * Don't digest cached records if no sigalgs: we may need them for client
      * authentication.
      */
-    if (!SSL_USE_SIGALGS(s) && !ssl3_digest_cached_records(s))
+    if (!SSL_USE_SIGALGS(s) && !ssl3_digest_cached_records(s, 0))
         goto f_err;
     /* lets get the compression algorithm */
     /* COMPRESSION */
@@ -2030,10 +2030,8 @@ int ssl3_get_certificate_request(SSL *s)
          * If we get here we don't need any cached handshake records as we
          * wont be doing client auth.
          */
-        if (s->s3->handshake_buffer) {
-            if (!ssl3_digest_cached_records(s))
-                goto err;
-        }
+        if (!ssl3_digest_cached_records(s, 0))
+            goto err;
         return (1);
     }
 
@@ -3026,15 +3024,8 @@ int ssl3_send_client_verify(SSL *s)
             }
             s2n(u, p);
             n = u + 4;
-            /*
-             * For extended master secret we've already digested cached
-             * records.
-             */
-            if (s->session->flags & SSL_SESS_FLAG_EXTMS) {
-                BIO_free(s->s3->handshake_buffer);
-                s->s3->handshake_buffer = NULL;
-                s->s3->flags &= ~TLS1_FLAGS_KEEP_HANDSHAKE;
-            } else if (!ssl3_digest_cached_records(s))
+            /* Digest cached records and discard handshake buffer */
+            if (!ssl3_digest_cached_records(s, 0))
                 goto err;
         } else
 #ifndef OPENSSL_NO_RSA
@@ -3216,7 +3207,7 @@ int ssl3_send_client_certificate(SSL *s)
                 return (1);
             } else {
                 s->s3->tmp.cert_req = 2;
-                if (s->s3->handshake_buffer && !ssl3_digest_cached_records(s)) {
+                if (!ssl3_digest_cached_records(s, 0)) {
                     ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
                     s->state = SSL_ST_ERR;
                     return 0;

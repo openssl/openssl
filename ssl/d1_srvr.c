@@ -640,12 +640,9 @@ int dtls1_accept(SSL *s)
                  * For sigalgs freeze the handshake buffer. If we support
                  * extms we've done this already.
                  */
-                if (!(s->s3->flags & SSL_SESS_FLAG_EXTMS)) {
-                    s->s3->flags |= TLS1_FLAGS_KEEP_HANDSHAKE;
-                    if (!ssl3_digest_cached_records(s)) {
-                        s->state = SSL_ST_ERR;
-                        return -1;
-                    }
+                if (!ssl3_digest_cached_records(s, 1)) {
+                    s->state = SSL_ST_ERR;
+                    return -1;
                 }
             } else {
                 s->state = SSL3_ST_SR_CERT_VRFY_A;

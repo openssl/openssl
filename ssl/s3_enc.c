@@ -497,8 +497,7 @@ void ssl3_free_digest_list(SSL *s)
 
 void ssl3_finish_mac(SSL *s, const unsigned char *buf, int len)
 {
-    if (s->s3->handshake_buffer
-        && !(s->s3->flags & TLS1_FLAGS_KEEP_HANDSHAKE)) {
+    if (s->s3->handshake_dgst == NULL) {
         BIO_write(s->s3->handshake_buffer, (void *)buf, len);
     } else {
         int i;
@@ -509,7 +508,7 @@ void ssl3_finish_mac(SSL *s, const unsigned char *buf, int len)
     }
 }
 
-int ssl3_digest_cached_records(SSL *s)
+int ssl3_digest_cached_records(SSL *s, int keep)
 {
     int i;
     long mask;
@@ -517,38 +516,37 @@ int ssl3_digest_cached_records(SSL *s)
     long hdatalen;
     void *hdata;
 
-    /* Allocate handshake_dgst array */
-    ssl3_free_digest_list(s);
-    s->s3->handshake_dgst =
-        OPENSSL_malloc(sizeof(*s->s3->handshake_dgst) * SSL_MAX_DIGEST);
     if (s->s3->handshake_dgst == NULL) {
-        SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS, ERR_R_MALLOC_FAILURE);
-        return 0;
-    }
-    memset(s->s3->handshake_dgst, 0,
-           sizeof(*s->s3->handshake_dgst) * SSL_MAX_DIGEST);
-    hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
-    if (hdatalen <= 0) {
-        SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS, SSL_R_BAD_HANDSHAKE_LENGTH);
-        return 0;
-    }
-
-    /* Loop through bitso of algorithm2 field and create MD_CTX-es */
-    for (i = 0; ssl_get_handshake_digest(i, &mask, &md); i++) {
-        if ((mask & ssl_get_algorithm2(s)) && md) {
-            s->s3->handshake_dgst[i] = EVP_MD_CTX_create();
-            if (EVP_MD_nid(md) == NID_md5) {
-                EVP_MD_CTX_set_flags(s->s3->handshake_dgst[i],
-                                     EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
-            }
-            EVP_DigestInit_ex(s->s3->handshake_dgst[i], md, NULL);
-            EVP_DigestUpdate(s->s3->handshake_dgst[i], hdata, hdatalen);
-        } else {
-            s->s3->handshake_dgst[i] = NULL;
+        /* Allocate handshake_dgst array */
+        s->s3->handshake_dgst =
+            OPENSSL_malloc(sizeof(*s->s3->handshake_dgst) * SSL_MAX_DIGEST);
+        if (s->s3->handshake_dgst == NULL) {
+            SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS, ERR_R_MALLOC_FAILURE);
+            return 0;
         }
+        hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
+        if (hdatalen <= 0) {
+            SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS, SSL_R_BAD_HANDSHAKE_LENGTH);
+            return 0;
+        }
+
+        /* Loop through bits of algorithm2 field and create MD_CTX-es */
+        for (i = 0; ssl_get_handshake_digest(i, &mask, &md); i++) {
+            if ((mask & ssl_get_algorithm2(s)) && md) {
+                s->s3->handshake_dgst[i] = EVP_MD_CTX_create();
+                if (EVP_MD_nid(md) == NID_md5) {
+                    EVP_MD_CTX_set_flags(s->s3->handshake_dgst[i],
+                                         EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
+                }
+                EVP_DigestInit_ex(s->s3->handshake_dgst[i], md, NULL);
+                EVP_DigestUpdate(s->s3->handshake_dgst[i], hdata, hdatalen);
+            } else {
+                s->s3->handshake_dgst[i] = NULL;
+            }
+        }
+
     }
-    if (!(s->s3->flags & TLS1_FLAGS_KEEP_HANDSHAKE)) {
-        /* Free handshake_buffer BIO */
+    if (keep == 0) {
         BIO_free(s->s3->handshake_buffer);
         s->s3->handshake_buffer = NULL;
     }
@@ -588,9 +586,8 @@ static int ssl3_handshake_mac(SSL *s, int md_nid,
     unsigned char md_buf[EVP_MAX_MD_SIZE];
     EVP_MD_CTX ctx, *d = NULL;
 
-    if (s->s3->handshake_buffer)
-        if (!ssl3_digest_cached_records(s))
-            return 0;
+    if (!ssl3_digest_cached_records(s, 0))
+        return 0;
 
     /*
      * Search for digest of specified type in the handshake_dgst array

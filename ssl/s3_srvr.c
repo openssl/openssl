@@ -507,11 +507,9 @@ int ssl3_accept(SSL *s)
                 skip = 1;
                 s->s3->tmp.cert_request = 0;
                 s->state = SSL3_ST_SW_SRVR_DONE_A;
-                if (s->s3->handshake_buffer) {
-                    if (!ssl3_digest_cached_records(s)) {
-                        s->state = SSL_ST_ERR;
-                        return -1;
-                    }
+                if (!ssl3_digest_cached_records(s, 0)) {
+                    s->state = SSL_ST_ERR;
+                    return -1;
                 }
             } else {
                 s->s3->tmp.cert_request = 1;
@@ -598,14 +596,11 @@ int ssl3_accept(SSL *s)
                 }
                 /*
                  * For sigalgs freeze the handshake buffer. If we support
-                 * extms we've done this already.
+                 * extms we've done this already so this is a no-op
                  */
-                if (!(s->s3->flags & SSL_SESS_FLAG_EXTMS)) {
-                    s->s3->flags |= TLS1_FLAGS_KEEP_HANDSHAKE;
-                    if (!ssl3_digest_cached_records(s)) {
-                        s->state = SSL_ST_ERR;
-                        return -1;
-                    }
+                if (!ssl3_digest_cached_records(s, 1)) {
+                    s->state = SSL_ST_ERR;
+                    return -1;
                 }
             } else {
                 int offset = 0;
@@ -620,11 +615,9 @@ int ssl3_accept(SSL *s)
                  * CertificateVerify should be generalized. But it is next
                  * step
                  */
-                if (s->s3->handshake_buffer) {
-                    if (!ssl3_digest_cached_records(s)) {
-                        s->state = SSL_ST_ERR;
-                        return -1;
-                    }
+                if (!ssl3_digest_cached_records(s, 0)) {
+                    s->state = SSL_ST_ERR;
+                    return -1;
                 }
                 for (dgst_num = 0; dgst_num < SSL_MAX_DIGEST; dgst_num++)
                     if (s->s3->handshake_dgst[dgst_num]) {
@@ -1538,7 +1531,7 @@ int ssl3_get_client_hello(SSL *s)
     }
 
     if (!SSL_USE_SIGALGS(s) || !(s->verify_mode & SSL_VERIFY_PEER)) {
-        if (!ssl3_digest_cached_records(s))
+        if (!ssl3_digest_cached_records(s, 0))
             goto f_err;
     }
 
@@ -3055,7 +3048,6 @@ int ssl3_get_cert_verify(SSL *s)
  end:
     BIO_free(s->s3->handshake_buffer);
     s->s3->handshake_buffer = NULL;
-    s->s3->flags &= ~TLS1_FLAGS_KEEP_HANDSHAKE;
     EVP_MD_CTX_cleanup(&mctx);
     EVP_PKEY_free(pkey);
     return (ret);
@@ -3163,7 +3155,7 @@ int ssl3_get_client_certificate(SSL *s)
             goto f_err;
         }
         /* No client certificate so digest cached records */
-        if (s->s3->handshake_buffer && !ssl3_digest_cached_records(s)) {
+        if (s->s3->handshake_buffer && !ssl3_digest_cached_records(s, 0)) {
             al = SSL_AD_INTERNAL_ERROR;
             goto f_err;
         }
