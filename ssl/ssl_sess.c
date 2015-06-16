@@ -156,8 +156,8 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
     dest->ciphers = NULL;
 #ifndef OPENSSL_NO_TLSEXT
     dest->tlsext_hostname = NULL;
-#endif
     dest->tlsext_tick = NULL;
+#endif
     memset(&dest->ex_data, 0, sizeof(dest->ex_data));
 
     /* We deliberately don't copy the prev and next pointers */
@@ -190,7 +190,6 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
             goto err;
         }
     }
-#endif
 
     if (ticket != 0) {
         dest->tlsext_tick = BUF_memdup(src->tlsext_tick, src->tlsext_ticklen);
@@ -200,6 +199,7 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
         dest->tlsext_tick_lifetime_hint = 0;
         dest->tlsext_ticklen = 0;
     }
+#endif
 
     return dest;
 err:
