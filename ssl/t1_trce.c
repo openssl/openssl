@@ -986,6 +986,13 @@ static int ssl_print_client_keyex(BIO *bio, int indent, SSL *ssl,
         if (!ssl_print_hexbuf(bio, indent + 2, "ecdh_Yc", 1, &msg, &msglen))
             return 0;
         break;
+
+    case SSL_kPSK:
+        if (!ssl_print_hexbuf(bio, indent + 2,
+                              "psk_identity", 2, &msg, &msglen))
+            return 0;
+        break;
+
     }
 
     return 1;
@@ -1049,6 +1056,13 @@ static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
                 return 0;
         }
         break;
+
+    case SSL_kPSK:
+        if (!ssl_print_hexbuf(bio, indent + 2,
+                              "psk_identity_hint", 2, &msg, &msglen))
+            return 0;
+        /* No signature */
+        return 1;
     }
     return ssl_print_signature(bio, indent, ssl, &msg, &msglen);
 }
