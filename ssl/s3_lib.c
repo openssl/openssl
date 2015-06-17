@@ -4291,3 +4291,18 @@ int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, int len)
     } else
         return RAND_bytes(result, len);
 }
+
+int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
+                               int free_pms)
+{
+    s->session->master_key_length =
+        s->method->ssl3_enc->generate_master_secret(s, s->session->master_key,
+                                                    pms, pmslen);
+    if (free_pms)
+        OPENSSL_clear_free(pms, pmslen);
+    else
+        OPENSSL_cleanse(pms, pmslen);
+    if (s->server == 0)
+        s->s3->tmp.pms = NULL;
+    return s->session->master_key_length >= 0;
+}

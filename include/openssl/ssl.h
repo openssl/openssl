@@ -636,9 +636,7 @@ __owur int SSL_CTX_SRP_CTX_init(SSL_CTX *ctx);
 int SSL_SRP_CTX_free(SSL *ctx);
 int SSL_CTX_SRP_CTX_free(SSL_CTX *ctx);
 __owur int SSL_srp_server_param_with_username(SSL *s, int *ad);
-__owur int SRP_generate_server_master_secret(SSL *s, unsigned char *master_key);
 __owur int SRP_Calc_A_param(SSL *s);
-__owur int SRP_generate_client_master_secret(SSL *s, unsigned char *master_key);
 
 # endif
 
