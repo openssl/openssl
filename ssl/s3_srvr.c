@@ -2381,15 +2381,7 @@ int ssl3_get_client_key_exchange(SSL *s)
                                           rand_premaster_secret[j]);
         }
 
-        s->session->master_key_length =
-            s->method->ssl3_enc->generate_master_secret(s,
-                                                        s->
-                                                        session->master_key,
-                                                        p,
-                                                        sizeof
-                                                        (rand_premaster_secret));
-        OPENSSL_cleanse(p, sizeof(rand_premaster_secret));
-        if (s->session->master_key_length < 0) {
+        if (!ssl_generate_master_secret(s, p, sizeof(rand_premaster_secret), 0)) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             goto f_err;
@@ -2480,13 +2472,7 @@ int ssl3_get_client_key_exchange(SSL *s)
         else
             BN_clear_free(pub);
         pub = NULL;
-        s->session->master_key_length =
-            s->method->ssl3_enc->generate_master_secret(s,
-                                                        s->
-                                                        session->master_key,
-                                                        p, i);
-        OPENSSL_cleanse(p, i);
-        if (s->session->master_key_length < 0) {
+        if (!ssl_generate_master_secret(s, p, i, 0)) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             goto f_err;
@@ -2618,15 +2604,7 @@ int ssl3_get_client_key_exchange(SSL *s)
         EC_KEY_free(s->s3->tmp.ecdh);
         s->s3->tmp.ecdh = NULL;
 
-        /* Compute the master secret */
-        s->session->master_key_length =
-            s->method->ssl3_enc->generate_master_secret(s,
-                                                        s->
-                                                        session->master_key,
-                                                        p, i);
-
-        OPENSSL_cleanse(p, i);
-        if (s->session->master_key_length < 0) {
+        if (!ssl_generate_master_secret(s, p, i, 0)) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             goto f_err;
@@ -2707,22 +2685,17 @@ int ssl3_get_client_key_exchange(SSL *s)
             goto psk_err;
         }
 
-        s->session->master_key_length =
-            s->method->ssl3_enc->generate_master_secret(s,
-                                                        s->
-                                                        session->master_key,
-                                                        psk_or_pre_ms,
-                                                        pre_ms_len);
-        if (s->session->master_key_length < 0) {
+        if (!ssl_generate_master_secret(s, psk_or_pre_ms, pre_ms_len, 0)) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
-            goto psk_err;
+            goto f_err;
         }
         psk_err = 0;
  psk_err:
-        OPENSSL_cleanse(psk_or_pre_ms, sizeof(psk_or_pre_ms));
-        if (psk_err != 0)
+        if (psk_err != 0) {
+            OPENSSL_cleanse(psk_or_pre_ms, sizeof(psk_or_pre_ms));
             goto f_err;
+        }
     } else
 #endif
 #ifndef OPENSSL_NO_SRP
@@ -2755,9 +2728,7 @@ int ssl3_get_client_key_exchange(SSL *s)
             goto err;
         }
 
-        if ((s->session->master_key_length =
-             SRP_generate_server_master_secret(s,
-                                               s->session->master_key)) < 0) {
+        if (!srp_generate_server_master_secret(s)) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             goto err;
         }
@@ -2813,13 +2784,8 @@ int ssl3_get_client_key_exchange(SSL *s)
             goto gerr;
         }
         /* Generate master secret */
-        s->session->master_key_length =
-            s->method->ssl3_enc->generate_master_secret(s,
-                                                        s->
-                                                        session->master_key,
-                                                        premaster_secret, 32);
-        OPENSSL_cleanse(premaster_secret, sizeof(premaster_secret));
-        if (s->session->master_key_length < 0) {
+        if (!ssl_generate_master_secret(s, premaster_secret,
+                                        sizeof(premaster_secret), 0)) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             goto f_err;

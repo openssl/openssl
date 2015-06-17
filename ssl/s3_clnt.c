@@ -2891,13 +2891,10 @@ int ssl3_send_client_key_exchange(SSL *s)
     if (s->s3->tmp.new_cipher->algorithm_mkey & SSL_kSRP) {
         /*
          * If everything written generate master key: no need to save PMS as
-         * SRP_generate_client_master_secret generates it internally.
+         * srp_generate_client_master_secret generates it internally.
          */
         if (n > 0) {
-            if ((s->session->master_key_length =
-                 SRP_generate_client_master_secret(s,
-                                                   s->session->master_key)) <
-                0) {
+            if (!srp_generate_client_master_secret(s)) {
                 SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
                        ERR_R_INTERNAL_ERROR);
                 goto err;
@@ -2920,14 +2917,7 @@ int ssl3_send_client_key_exchange(SSL *s)
             SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
             goto err;
         }
-        s->session->master_key_length =
-            s->method->ssl3_enc->generate_master_secret(s,
-                                                        s->
-                                                        session->master_key,
-                                                        pms, pmslen);
-        OPENSSL_clear_free(pms, pmslen);
-        s->s3->tmp.pms = NULL;
-        if (s->session->master_key_length < 0) {
+        if (!ssl_generate_master_secret(s, pms, pmslen, 1)) {
             ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
             SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             goto err;

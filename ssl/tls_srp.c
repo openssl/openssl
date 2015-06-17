@@ -332,7 +332,7 @@ int SSL_set_srp_server_param(SSL *s, const BIGNUM *N, const BIGNUM *g,
     return 1;
 }
 
-int SRP_generate_server_master_secret(SSL *s, unsigned char *master_key)
+int srp_generate_server_master_secret(SSL *s)
 {
     BIGNUM *K = NULL, *u = NULL;
     int ret = -1, tmp_len = 0;
@@ -350,17 +350,15 @@ int SRP_generate_server_master_secret(SSL *s, unsigned char *master_key)
     if ((tmp = OPENSSL_malloc(tmp_len)) == NULL)
         goto err;
     BN_bn2bin(K, tmp);
-    ret = s->method->ssl3_enc->generate_master_secret(s, master_key, tmp,
-                                                      tmp_len);
+    ret = ssl_generate_master_secret(s, tmp, tmp_len, 1);
  err:
-    OPENSSL_clear_free(tmp, tmp_len);
     BN_clear_free(K);
     BN_clear_free(u);
     return ret;
 }
 
 /* client side */
-int SRP_generate_client_master_secret(SSL *s, unsigned char *master_key)
+int srp_generate_client_master_secret(SSL *s)
 {
     BIGNUM *x = NULL, *u = NULL, *K = NULL;
     int ret = -1, tmp_len = 0;
@@ -391,11 +389,8 @@ int SRP_generate_client_master_secret(SSL *s, unsigned char *master_key)
     if ((tmp = OPENSSL_malloc(tmp_len)) == NULL)
         goto err;
     BN_bn2bin(K, tmp);
-    ret =
-        s->method->ssl3_enc->generate_master_secret(s, master_key, tmp,
-                                                    tmp_len);
+    ret = ssl_generate_master_secret(s, tmp, tmp_len, 1);
  err:
-    OPENSSL_clear_free(tmp, tmp_len);
     BN_clear_free(K);
     BN_clear_free(x);
     OPENSSL_clear_free(passwd, strlen(passwd));
