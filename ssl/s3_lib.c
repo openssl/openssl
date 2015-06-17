@@ -1612,6 +1612,40 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
+#ifndef OPENSSL_NO_PSK
+    /* Cipher A8 */
+    {
+     1,
+     TLS1_TXT_PSK_WITH_AES_128_GCM_SHA256,
+     TLS1_CK_PSK_WITH_AES_128_GCM_SHA256,
+     SSL_kPSK,
+     SSL_aPSK,
+     SSL_AES128GCM,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     128,
+     128,
+     },
+
+    /* Cipher A9 */
+    {
+     1,
+     TLS1_TXT_PSK_WITH_AES_256_GCM_SHA384,
+     TLS1_CK_PSK_WITH_AES_256_GCM_SHA384,
+     SSL_kPSK,
+     SSL_aPSK,
+     SSL_AES256GCM,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
+     SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
+     256,
+     256,
+     },
+
+#endif
 
 #ifndef OPENSSL_NO_CAMELLIA
     /* TLS 1.2 Camellia SHA-256 ciphersuites from RFC5932 */
