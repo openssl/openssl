@@ -315,7 +315,7 @@ static __inline unsigned int _strlen31(const char *str)
 #    undef isxdigit
 #   endif
 #   if defined(_MSC_VER) && !defined(_DLL) && defined(stdin)
-#    if _MSC_VER>=1300
+#    if _MSC_VER>=1300 && _MSC_VER<1900
 #     undef stdin
 #     undef stdout
 #     undef stderr
