@@ -2906,8 +2906,7 @@ void ssl3_free(SSL *s)
     OPENSSL_clear_free(s->s3->tmp.pms, s->s3->tmp.pmslen);
     OPENSSL_free(s->s3->tmp.peer_sigalgs);
     BIO_free(s->s3->handshake_buffer);
-    if (s->s3->handshake_dgst)
-        ssl3_free_digest_list(s);
+    ssl3_free_digest_list(s);
     OPENSSL_free(s->s3->alpn_selected);
 
 #ifndef OPENSSL_NO_SRP
@@ -2943,9 +2942,7 @@ void ssl3_clear(SSL *s)
     init_extra = s->s3->init_extra;
     BIO_free(s->s3->handshake_buffer);
     s->s3->handshake_buffer = NULL;
-    if (s->s3->handshake_dgst) {
-        ssl3_free_digest_list(s);
-    }
+    ssl3_free_digest_list(s);
 
     if (s->s3->alpn_selected) {
         OPENSSL_free(s->s3->alpn_selected);
