@@ -2905,7 +2905,6 @@ void ssl3_free(SSL *s)
     OPENSSL_free(s->s3->tmp.ciphers_raw);
     OPENSSL_clear_free(s->s3->tmp.pms, s->s3->tmp.pmslen);
     OPENSSL_free(s->s3->tmp.peer_sigalgs);
-    BIO_free(s->s3->handshake_buffer);
     ssl3_free_digest_list(s);
     OPENSSL_free(s->s3->alpn_selected);
 
@@ -2940,8 +2939,6 @@ void ssl3_clear(SSL *s)
 #endif                         /* !OPENSSL_NO_EC */
 
     init_extra = s->s3->init_extra;
-    BIO_free(s->s3->handshake_buffer);
-    s->s3->handshake_buffer = NULL;
     ssl3_free_digest_list(s);
 
     if (s->s3->alpn_selected) {
