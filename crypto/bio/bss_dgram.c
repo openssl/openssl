@@ -1404,18 +1404,24 @@ static int dgram_sctp_write(BIO *b, const char *in, int inl)
      * If we have to send a shutdown alert message and the socket is not dry
      * yet, we have to save it and send it as soon as the socket gets dry.
      */
-    if (data->save_shutdown && !BIO_dgram_sctp_wait_for_dry(b)) {
-        char *tmp;
-        data->saved_message.bio = b;
-        if ((tmp = OPENSSL_malloc(inl)) == NULL) {
-            BIOerr(BIO_F_DGRAM_SCTP_WRITE, ERR_R_MALLOC_FAILURE);
+    if (data->save_shutdown) {
+        ret = BIO_dgram_sctp_wait_for_dry(b);
+        if (ret < 0) {
             return -1;
         }
-        OPENSSL_free(data->saved_message.data);
-        data->saved_message.data = tmp;
-        memcpy(data->saved_message.data, in, inl);
-        data->saved_message.length = inl;
-        return inl;
+        if (ret == 0) {
+            char *tmp;
+            data->saved_message.bio = b;
+            if ((tmp = OPENSSL_malloc(inl)) == NULL) {
+                BIOerr(BIO_F_DGRAM_SCTP_WRITE, ERR_R_MALLOC_FAILURE);
+                return -1;
+            }
+            OPENSSL_free(data->saved_message.data);
+            data->saved_message.data = tmp;
+            memcpy(data->saved_message.data, in, inl);
+            data->saved_message.length = inl;
+            return inl;
+        }
     }
 
     iov[0].iov_base = (char *)in;
@@ -1733,6 +1739,19 @@ int BIO_dgram_sctp_notification_cb(BIO *b,
     return 0;
 }
 
+/*
+ * BIO_dgram_sctp_wait_for_dry - Wait for SCTP SENDER_DRY event
+ * @b: The BIO to check for the dry event
+ *
+ * Wait until the peer confirms all packets have been received, and so that
+ * our kernel doesn't have anything to send anymore.  This is only received by
+ * the peer's kernel, not the application.
+ *
+ * Returns:
+ * -1 on error
+ *  0 when not dry yet
+ *  1 when dry
+ */
 int BIO_dgram_sctp_wait_for_dry(BIO *b)
 {
     int is_dry = 0;
