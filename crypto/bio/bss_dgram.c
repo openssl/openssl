@@ -1219,9 +1219,13 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
                      * it can be sent now.
                      */
                     if (data->saved_message.length > 0) {
-                        dgram_sctp_write(data->saved_message.bio,
+                        i = dgram_sctp_write(data->saved_message.bio,
                                          data->saved_message.data,
                                          data->saved_message.length);
+                        if (i < 0) {
+                            ret = i;
+                            break;
+                        }
                         OPENSSL_free(data->saved_message.data);
                         data->saved_message.data = NULL;
                         data->saved_message.length = 0;
@@ -1366,6 +1370,14 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
     return (ret);
 }
 
+/*
+ * dgram_sctp_write - send message on SCTP socket
+ * @b: BIO to write to
+ * @in: data to send
+ * @inl: amount of bytes in @in to send
+ *
+ * Returns -1 on error or the sent amount of bytes on success
+ */
 static int dgram_sctp_write(BIO *b, const char *in, int inl)
 {
     int ret;
