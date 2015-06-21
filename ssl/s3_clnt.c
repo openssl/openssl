@@ -1464,22 +1464,22 @@ int ssl3_get_key_exchange(SSL *s)
     }
 
     param = p = (unsigned char *)s->init_msg;
-    if (s->session->sess_cert != NULL) {
+
 #ifndef OPENSSL_NO_RSA
-        RSA_free(s->session->sess_cert->peer_rsa_tmp);
-        s->session->sess_cert->peer_rsa_tmp = NULL;
+    RSA_free(s->s3->peer_rsa_tmp);
+    s->s3->peer_rsa_tmp = NULL;
 #endif
 #ifndef OPENSSL_NO_DH
-        DH_free(s->session->sess_cert->peer_dh_tmp);
-        s->session->sess_cert->peer_dh_tmp = NULL;
+    DH_free(s->s3->peer_dh_tmp);
+    s->s3->peer_dh_tmp = NULL;
 #endif
 #ifndef OPENSSL_NO_EC
-        EC_KEY_free(s->session->sess_cert->peer_ecdh_tmp);
-        s->session->sess_cert->peer_ecdh_tmp = NULL;
+    EC_KEY_free(s->s3->peer_ecdh_tmp);
+    s->s3->peer_ecdh_tmp = NULL;
 #endif
-    } else {
+
+    if (s->session->sess_cert == NULL)
         s->session->sess_cert = ssl_sess_cert_new();
-    }
 
     /* Total length of the parameters including the length prefix */
     param_len = 0;
@@ -1711,7 +1711,7 @@ int ssl3_get_key_exchange(SSL *s)
             goto f_err;
         }
 
-        s->session->sess_cert->peer_rsa_tmp = rsa;
+        s->s3->peer_rsa_tmp = rsa;
         rsa = NULL;
     }
 #else                           /* OPENSSL_NO_RSA */
@@ -1806,7 +1806,7 @@ int ssl3_get_key_exchange(SSL *s)
 # endif
         /* else anonymous DH, so no certificate or pkey. */
 
-        s->session->sess_cert->peer_dh_tmp = dh;
+        s->s3->peer_dh_tmp = dh;
         dh = NULL;
     }
 #endif                          /* !OPENSSL_NO_DH */
@@ -1917,7 +1917,7 @@ int ssl3_get_key_exchange(SSL *s)
 # endif
         /* else anonymous ECDH, so no certificate or pkey. */
         EC_KEY_set_public_key(ecdh, srvr_ecpoint);
-        s->session->sess_cert->peer_ecdh_tmp = ecdh;
+        s->s3->peer_ecdh_tmp = ecdh;
         ecdh = NULL;
         BN_CTX_free(bn_ctx);
         bn_ctx = NULL;
@@ -2446,8 +2446,8 @@ int ssl3_send_client_key_exchange(SSL *s)
                 goto err;
             }
 
-            if (s->session->sess_cert->peer_rsa_tmp != NULL)
-                rsa = s->session->sess_cert->peer_rsa_tmp;
+            if (s->s3->peer_rsa_tmp != NULL)
+                rsa = s->s3->peer_rsa_tmp;
             else {
                 pkey =
                     X509_get_pubkey(s->session->
@@ -2504,8 +2504,8 @@ int ssl3_send_client_key_exchange(SSL *s)
                 goto err;
             }
 
-            if (scert->peer_dh_tmp != NULL)
-                dh_srvr = scert->peer_dh_tmp;
+            if (s->s3->peer_dh_tmp != NULL)
+                dh_srvr = s->s3->peer_dh_tmp;
             else {
                 /* we get them from the cert */
                 int idx = scert->peer_cert_type;
@@ -2558,7 +2558,7 @@ int ssl3_send_client_key_exchange(SSL *s)
              */
 
             n = DH_compute_key(pms, dh_srvr->pub_key, dh_clnt);
-            if (scert->peer_dh_tmp == NULL)
+            if (s->s3->peer_dh_tmp == NULL)
                 DH_free(dh_srvr);
 
             if (n <= 0) {
@@ -2624,8 +2624,8 @@ int ssl3_send_client_key_exchange(SSL *s)
                  */
             }
 
-            if (s->session->sess_cert->peer_ecdh_tmp != NULL) {
-                tkey = s->session->sess_cert->peer_ecdh_tmp;
+            if (s->s3->peer_ecdh_tmp != NULL) {
+                tkey = s->s3->peer_ecdh_tmp;
             } else {
                 /* Get the Server Public Key from Cert */
                 srvr_pub_pkey =
@@ -3357,10 +3357,10 @@ int ssl3_check_cert_and_algorithm(SSL *s)
         goto err;
     }
 #ifndef OPENSSL_NO_RSA
-    rsa = s->session->sess_cert->peer_rsa_tmp;
+    rsa = s->s3->peer_rsa_tmp;
 #endif
 #ifndef OPENSSL_NO_DH
-    dh = s->session->sess_cert->peer_dh_tmp;
+    dh = s->s3->peer_dh_tmp;
 #endif
 
     /* This is the passed certificate */

@@ -570,16 +570,6 @@ void ssl_sess_cert_free(SESS_CERT *sc)
 #endif
     }
 
-#ifndef OPENSSL_NO_RSA
-    RSA_free(sc->peer_rsa_tmp);
-#endif
-#ifndef OPENSSL_NO_DH
-    DH_free(sc->peer_dh_tmp);
-#endif
-#ifndef OPENSSL_NO_EC
-    EC_KEY_free(sc->peer_ecdh_tmp);
-#endif
-
     OPENSSL_free(sc);
 }
 

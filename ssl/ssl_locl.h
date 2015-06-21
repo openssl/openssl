@@ -1340,6 +1340,18 @@ typedef struct ssl3_state_st {
      */
     char is_probably_safari;
 #   endif                       /* !OPENSSL_NO_EC */
+
+    /* For clients: peer temporary key */
+# ifndef OPENSSL_NO_RSA
+    RSA *peer_rsa_tmp;
+# endif
+# ifndef OPENSSL_NO_DH
+    DH *peer_dh_tmp;
+# endif
+# ifndef OPENSSL_NO_EC
+    EC_KEY *peer_ecdh_tmp;
+# endif
+
 } SSL3_STATE;
 
 
@@ -1589,15 +1601,6 @@ typedef struct sess_cert_st {
      * Obviously we don't have the private keys of these, so maybe we
      * shouldn't even use the CERT_PKEY type here.
      */
-# ifndef OPENSSL_NO_RSA
-    RSA *peer_rsa_tmp;          /* not used for SSL 2 */
-# endif
-# ifndef OPENSSL_NO_DH
-    DH *peer_dh_tmp;            /* not used for SSL 2 */
-# endif
-# ifndef OPENSSL_NO_EC
-    EC_KEY *peer_ecdh_tmp;
-# endif
     int references;             /* actually always 1 at the moment */
 } SESS_CERT;
 /* Structure containing decoded values of signature algorithms extension */
