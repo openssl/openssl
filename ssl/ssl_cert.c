@@ -530,7 +530,6 @@ SESS_CERT *ssl_sess_cert_new(void)
     }
 
     memset(ret, 0, sizeof(*ret));
-    ret->peer_key = &(ret->peer_pkeys[SSL_PKEY_RSA_ENC]);
     ret->references = 1;
 
     return ret;
@@ -558,25 +557,7 @@ void ssl_sess_cert_free(SESS_CERT *sc)
 
     /* i == 0 */
     sk_X509_pop_free(sc->cert_chain, X509_free);
-    for (i = 0; i < SSL_PKEY_NUM; i++) {
-        X509_free(sc->peer_pkeys[i].x509);
-#if 0
-        /*
-         * We don't have the peer's private key. This line is just
-         * here as a reminder that we're still using a not-quite-appropriate
-         *  data structure.
-         */
-        EVP_PKEY_free(sc->peer_pkeys[i].privatekey);
-#endif
-    }
-
     OPENSSL_free(sc);
-}
-
-int ssl_set_peer_cert_type(SESS_CERT *sc, int type)
-{
-    sc->peer_cert_type = type;
-    return (1);
 }
 
 int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)

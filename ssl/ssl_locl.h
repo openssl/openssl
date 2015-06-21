@@ -626,13 +626,9 @@ struct ssl_session_st {
     int not_resumable;
     /* The cert is the certificate used to establish this connection */
     struct sess_cert_st /* SESS_CERT */ *sess_cert;
-    /*
-     * This is the cert for the other end. On clients, it will be the same as
-     * sess_cert->peer_key->x509 (the latter is not enough as sess_cert is
-     * not retained in the external representation of sessions, see
-     * ssl_asn1.c).
-     */
+    /* This is the cert and type for the other end. */
     X509 *peer;
+    int peer_type;
     /*
      * when app_verify_callback accepts a session where the peer's
      * certificate is not ok, we must remember the error for session reuse:
@@ -1592,15 +1588,6 @@ typedef struct cert_st {
 
 typedef struct sess_cert_st {
     STACK_OF(X509) *cert_chain; /* as received from peer */
-    /* The 'peer_...' members are used only by clients. */
-    int peer_cert_type;
-    CERT_PKEY *peer_key;        /* points to an element of peer_pkeys (never
-                                 * NULL!) */
-    CERT_PKEY peer_pkeys[SSL_PKEY_NUM];
-    /*
-     * Obviously we don't have the private keys of these, so maybe we
-     * shouldn't even use the CERT_PKEY type here.
-     */
     int references;             /* actually always 1 at the moment */
 } SESS_CERT;
 /* Structure containing decoded values of signature algorithms extension */
@@ -1859,7 +1846,6 @@ void ssl_cert_clear_certs(CERT *c);
 void ssl_cert_free(CERT *c);
 __owur SESS_CERT *ssl_sess_cert_new(void);
 void ssl_sess_cert_free(SESS_CERT *sc);
-__owur int ssl_set_peer_cert_type(SESS_CERT *c, int type);
 __owur int ssl_get_new_session(SSL *s, int session);
 __owur int ssl_get_prev_session(SSL *s, unsigned char *session, int len,
                          const unsigned char *limit);
