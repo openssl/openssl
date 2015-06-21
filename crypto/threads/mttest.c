@@ -842,8 +842,12 @@ void do_threads(SSL_CTX *s_ctx, SSL_CTX *c_ctx)
         thr_join(thread_ctx[i], NULL, NULL);
     }
 
+#if 0 /* We can't currently find out the reference amount */
     BIO_printf(bio_stdout, "solaris threads done (%d,%d)\n",
                s_ctx->references, c_ctx->references);
+#else
+    BIO_printf(bio_stdout, "solaris threads done\n");
+#endif
 }
 
 void solaris_thread_id(CRYPTO_THREADID *tid)
@@ -926,8 +930,12 @@ void do_threads(SSL_CTX *s_ctx, SSL_CTX *c_ctx)
         wait(NULL);
     }
 
+#if 0 /* We can't currently find out the reference amount */
     BIO_printf(bio_stdout, "irix threads done (%d,%d)\n",
                s_ctx->references, c_ctx->references);
+#else
+    BIO_printf(bio_stdout, "irix threads done\n");
+#endif
 }
 
 unsigned long irix_thread_id(void)
@@ -1016,8 +1024,12 @@ void do_threads(SSL_CTX *s_ctx, SSL_CTX *c_ctx)
         pthread_join(thread_ctx[i], NULL);
     }
 
+#if 0 /* We can't currently find out the reference amount */
     BIO_printf(bio_stdout, "pthreads threads done (%d,%d)\n",
                s_ctx->references, c_ctx->references);
+#else
+    BIO_printf(bio_stdout, "pthreads threads done\n");
+#endif
 }
 
 void pthreads_thread_id(CRYPTO_THREADID *tid)
@@ -1094,8 +1106,12 @@ void do_threads(SSL_CTX *s_ctx, SSL_CTX *c_ctx)
     for (i = 0; i < thread_number; i++) {
         MPKSemaphoreWait(ThreadSem);
     }
+#if 0 /* We can't currently find out the reference amount */
     BIO_printf(bio_stdout, "netware threads done (%d,%d)\n",
                s_ctx->references, c_ctx->references);
+#else
+    BIO_printf(bio_stdout, "netware threads done\n");
+#endif
 }
 
 unsigned long netware_thread_id(void)
