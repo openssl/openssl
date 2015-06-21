@@ -1367,15 +1367,7 @@ int ssl3_get_server_certificate(SSL *s)
                SSL_R_WRONG_CERTIFICATE_TYPE);
         goto f_err;
     }
-    sc->peer_cert_type = i;
-    CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
-    /*
-     * Why would the following ever happen? We just created sc a couple
-     * of lines ago.
-     */
-    X509_free(sc->peer_pkeys[i].x509);
-    sc->peer_pkeys[i].x509 = x;
-    sc->peer_key = &(sc->peer_pkeys[i]);
+    s->session->peer_type = i;
 
     X509_free(s->session->peer);
     CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
@@ -1627,18 +1619,13 @@ int ssl3_get_key_exchange(SSL *s)
 /* We must check if there is a certificate */
 # ifndef OPENSSL_NO_RSA
         if (alg_a & SSL_aRSA)
-            pkey =
-                X509_get_pubkey(s->session->
-                                sess_cert->peer_pkeys[SSL_PKEY_RSA_ENC].x509);
+            pkey = X509_get_pubkey(s->session->peer);
 # else
         if (0) ;
 # endif
 # ifndef OPENSSL_NO_DSA
         else if (alg_a & SSL_aDSS)
-            pkey =
-                X509_get_pubkey(s->session->
-                                sess_cert->peer_pkeys[SSL_PKEY_DSA_SIGN].
-                                x509);
+            pkey = X509_get_pubkey(s->session->peer);
 # endif
     } else
 #endif                          /* !OPENSSL_NO_SRP */
@@ -1697,9 +1684,7 @@ int ssl3_get_key_exchange(SSL *s)
 
         /* this should be because we are using an export cipher */
         if (alg_a & SSL_aRSA)
-            pkey =
-                X509_get_pubkey(s->session->
-                                sess_cert->peer_pkeys[SSL_PKEY_RSA_ENC].x509);
+            pkey = X509_get_pubkey(s->session->peer);
         else {
             SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             goto err;
@@ -1791,18 +1776,13 @@ int ssl3_get_key_exchange(SSL *s)
         }
 # ifndef OPENSSL_NO_RSA
         if (alg_a & SSL_aRSA)
-            pkey =
-                X509_get_pubkey(s->session->
-                                sess_cert->peer_pkeys[SSL_PKEY_RSA_ENC].x509);
+            pkey = X509_get_pubkey(s->session->peer);
 # else
         if (0) ;
 # endif
 # ifndef OPENSSL_NO_DSA
         else if (alg_a & SSL_aDSS)
-            pkey =
-                X509_get_pubkey(s->session->
-                                sess_cert->peer_pkeys[SSL_PKEY_DSA_SIGN].
-                                x509);
+            pkey = X509_get_pubkey(s->session->peer);
 # endif
         /* else anonymous DH, so no certificate or pkey. */
 
@@ -1905,15 +1885,11 @@ int ssl3_get_key_exchange(SSL *s)
         if (0) ;
 # ifndef OPENSSL_NO_RSA
         else if (alg_a & SSL_aRSA)
-            pkey =
-                X509_get_pubkey(s->session->
-                                sess_cert->peer_pkeys[SSL_PKEY_RSA_ENC].x509);
+            pkey = X509_get_pubkey(s->session->peer);
 # endif
 # ifndef OPENSSL_NO_EC
         else if (alg_a & SSL_aECDSA)
-            pkey =
-                X509_get_pubkey(s->session->
-                                sess_cert->peer_pkeys[SSL_PKEY_ECC].x509);
+            pkey = X509_get_pubkey(s->session->peer);
 # endif
         /* else anonymous ECDH, so no certificate or pkey. */
         EC_KEY_set_public_key(ecdh, srvr_ecpoint);
@@ -2449,10 +2425,7 @@ int ssl3_send_client_key_exchange(SSL *s)
             if (s->s3->peer_rsa_tmp != NULL)
                 rsa = s->s3->peer_rsa_tmp;
             else {
-                pkey =
-                    X509_get_pubkey(s->session->
-                                    sess_cert->peer_pkeys[SSL_PKEY_RSA_ENC].
-                                    x509);
+                pkey = X509_get_pubkey(s->session->peer);
                 if ((pkey == NULL) || (pkey->type != EVP_PKEY_RSA)
                     || (pkey->pkey.rsa == NULL)) {
                     SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
@@ -2508,11 +2481,9 @@ int ssl3_send_client_key_exchange(SSL *s)
                 dh_srvr = s->s3->peer_dh_tmp;
             else {
                 /* we get them from the cert */
-                int idx = scert->peer_cert_type;
                 EVP_PKEY *spkey = NULL;
                 dh_srvr = NULL;
-                if (idx >= 0)
-                    spkey = X509_get_pubkey(scert->peer_pkeys[idx].x509);
+                spkey = X509_get_pubkey(s->session->peer);
                 if (spkey) {
                     dh_srvr = EVP_PKEY_get1_DH(spkey);
                     EVP_PKEY_free(spkey);
@@ -2628,9 +2599,7 @@ int ssl3_send_client_key_exchange(SSL *s)
                 tkey = s->s3->peer_ecdh_tmp;
             } else {
                 /* Get the Server Public Key from Cert */
-                srvr_pub_pkey =
-                    X509_get_pubkey(s->session->
-                                    sess_cert->peer_pkeys[SSL_PKEY_ECC].x509);
+                srvr_pub_pkey = X509_get_pubkey(s->session->peer);
                 if ((srvr_pub_pkey == NULL)
                     || (srvr_pub_pkey->type != EVP_PKEY_EC)
                     || (srvr_pub_pkey->pkey.ec == NULL)) {
@@ -2758,7 +2727,6 @@ int ssl3_send_client_key_exchange(SSL *s)
             X509 *peer_cert;
             size_t msglen;
             unsigned int md_len;
-            int keytype;
             unsigned char shared_ukm[32], tmp[256];
             EVP_MD_CTX *ukm_hash;
             EVP_PKEY *pub_key;
@@ -2771,13 +2739,7 @@ int ssl3_send_client_key_exchange(SSL *s)
             /*
              * Get server sertificate PKEY and create ctx from it
              */
-            peer_cert =
-                s->session->
-                sess_cert->peer_pkeys[(keytype = SSL_PKEY_GOST01)].x509;
-            if (!peer_cert)
-                peer_cert =
-                    s->session->
-                    sess_cert->peer_pkeys[(keytype = SSL_PKEY_GOST94)].x509;
+            peer_cert = s->session->peer;
             if (!peer_cert) {
                 SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
                        SSL_R_NO_GOST_CERTIFICATE_SENT_BY_PEER);
@@ -3218,15 +3180,14 @@ static int ssl3_check_client_certificate(SSL *s)
     alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
     /* See if we can use client certificate for fixed DH */
     if (alg_k & (SSL_kDHr | SSL_kDHd)) {
-        SESS_CERT *scert = s->session->sess_cert;
-        int i = scert->peer_cert_type;
+        int i = s->session->peer_type;
         EVP_PKEY *clkey = NULL, *spkey = NULL;
         clkey = s->cert->key->privatekey;
         /* If client key not DH assume it can be used */
         if (EVP_PKEY_id(clkey) != EVP_PKEY_DH)
             return 1;
         if (i >= 0)
-            spkey = X509_get_pubkey(scert->peer_pkeys[i].x509);
+            spkey = X509_get_pubkey(s->session->peer);
         if (spkey) {
             /* Compare server and client parameters */
             i = EVP_PKEY_cmp_parameters(clkey, spkey);
@@ -3365,10 +3326,10 @@ int ssl3_check_cert_and_algorithm(SSL *s)
 
     /* This is the passed certificate */
 
-    idx = sc->peer_cert_type;
+    idx = s->session->peer_type;
 #ifndef OPENSSL_NO_EC
     if (idx == SSL_PKEY_ECC) {
-        if (ssl_check_srvr_ecc_cert_and_alg(sc->peer_pkeys[idx].x509, s) == 0) {
+        if (ssl_check_srvr_ecc_cert_and_alg(s->session->peer, s) == 0) {
             /* check failed */
             SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM, SSL_R_BAD_ECC_CERT);
             goto f_err;
@@ -3384,9 +3345,9 @@ int ssl3_check_cert_and_algorithm(SSL *s)
         goto f_err;
     }
 #endif
-    pkey = X509_get_pubkey(sc->peer_pkeys[idx].x509);
+    pkey = X509_get_pubkey(s->session->peer);
     pkey_bits = EVP_PKEY_bits(pkey);
-    i = X509_certificate_type(sc->peer_pkeys[idx].x509, pkey);
+    i = X509_certificate_type(s->session->peer, pkey);
     EVP_PKEY_free(pkey);
 
     /* Check that we have a certificate if we require one */
