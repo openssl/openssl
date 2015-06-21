@@ -112,18 +112,18 @@ void thread_setup(void);
 void thread_cleanup(void);
 void do_threads(SSL_CTX *s_ctx, SSL_CTX *c_ctx);
 
-void irix_locking_callback(int mode, int type, char *file, int line);
-void solaris_locking_callback(int mode, int type, char *file, int line);
-void win32_locking_callback(int mode, int type, char *file, int line);
-void pthreads_locking_callback(int mode, int type, char *file, int line);
-void netware_locking_callback(int mode, int type, char *file, int line);
+void irix_locking_callback(int mode, int type, const char *file, int line);
+void solaris_locking_callback(int mode, int type, const char *file, int line);
+void win32_locking_callback(int mode, int type, const char *file, int line);
+void pthreads_locking_callback(int mode, int type, const char *file, int line);
+void netware_locking_callback(int mode, int type, const char *file, int line);
 void beos_locking_callback(int mode, int type, const char *file, int line);
 
-unsigned long irix_thread_id(void);
-unsigned long solaris_thread_id(void);
-unsigned long pthreads_thread_id(void);
-unsigned long netware_thread_id(void);
-unsigned long beos_thread_id(void);
+void irix_thread_id(CRYPTO_THREADID *tid);
+void solaris_thread_id(CRYPTO_THREADID *tid);
+void pthreads_thread_id(CRYPTO_THREADID *tid);
+void netware_thread_id(CRYPTO_THREADID *tid);
+void beos_thread_id(CRYPTO_THREADID *tid);
 
 #if defined(OPENSSL_SYS_NETWARE)
 static MPKMutex *lock_cs;
@@ -355,6 +355,7 @@ int ndoit(SSL_CTX *ssl_ctx[2])
     int i;
     int ret;
     char *ctx[4];
+    CRYPTO_THREADID thread_id;
 
     ctx[0] = (char *)ssl_ctx[0];
     ctx[1] = (char *)ssl_ctx[1];
@@ -367,22 +368,24 @@ int ndoit(SSL_CTX *ssl_ctx[2])
         ctx[3] = NULL;
     }
 
-    fprintf(stdout, "started thread %lu\n", CRYPTO_thread_id());
+    CRYPTO_THREADID_current(&thread_id);
+    BIO_printf(bio_stdout, "started thread %lu\n",
+	       CRYPTO_THREADID_hash(&thread_id));
     for (i = 0; i < number_of_loops; i++) {
-/*-     fprintf(stderr,"%4d %2d ctx->ref (%3d,%3d)\n",
-            CRYPTO_thread_id(),i,
-            ssl_ctx[0]->references,
-            ssl_ctx[1]->references); */
+/*-     BIO_printf(bio_err,"%4d %2d ctx->ref (%3d,%3d)\n",
+                   CRYPTO_THREADID_hash(&thread_id),i,
+                   ssl_ctx[0]->references,
+                   ssl_ctx[1]->references); */
 /*      pthread_delay_np(&tm); */
 
         ret = doit(ctx);
         if (ret != 0) {
-            fprintf(stdout, "error[%d] %lu - %d\n",
-                    i, CRYPTO_thread_id(), ret);
+            BIO_printf(bio_stdout, "error[%d] %lu - %d\n",
+                       i, CRYPTO_THREADID_hash(&thread_id), ret);
             return (ret);
         }
     }
-    fprintf(stdout, "DONE %lu\n", CRYPTO_thread_id());
+    BIO_printf(bio_stdout, "DONE %lu\n", CRYPTO_THREADID_hash(&thread_id));
     if (reconnect) {
         SSL_free((SSL *)ctx[2]);
         SSL_free((SSL *)ctx[3]);
@@ -688,7 +691,7 @@ void thread_cleanup(void)
     OPENSSL_free(lock_cs);
 }
 
-void win32_locking_callback(int mode, int type, char *file, int line)
+void win32_locking_callback(int mode, int type, const char *file, int line)
 {
     if (mode & CRYPTO_LOCK) {
         WaitForSingleObject(lock_cs[type], INFINITE);
@@ -768,8 +771,8 @@ void thread_setup(void)
         mutex_init(&(lock_cs[i]), USYNC_THREAD, NULL);
     }
 
-    CRYPTO_set_id_callback((unsigned long (*)())solaris_thread_id);
-    CRYPTO_set_locking_callback((void (*)())solaris_locking_callback);
+    CRYPTO_set_id_callback(solaris_thread_id);
+    CRYPTO_set_locking_callback(solaris_locking_callback);
 }
 
 void thread_cleanup(void)
@@ -792,7 +795,7 @@ void thread_cleanup(void)
 
 }
 
-void solaris_locking_callback(int mode, int type, char *file, int line)
+void solaris_locking_callback(int mode, int type, const char *file, int line)
 {
 # ifdef undef
     fprintf(stderr, "thread=%4d mode=%s lock=%s %s:%d\n",
@@ -846,12 +849,9 @@ void do_threads(SSL_CTX *s_ctx, SSL_CTX *c_ctx)
            s_ctx->references, c_ctx->references);
 }
 
-unsigned long solaris_thread_id(void)
+void solaris_thread_id(CRYPTO_THREADID *tid)
 {
-    unsigned long ret;
-
-    ret = (unsigned long)thr_self();
-    return (ret);
+    CRYPTO_THREADID_set_numeric((unsigned long)thr_self());
 }
 #endif                          /* SOLARIS */
 
@@ -880,8 +880,8 @@ void thread_setup(void)
         lock_cs[i] = usnewsema(arena, 1);
     }
 
-    CRYPTO_set_id_callback((unsigned long (*)())irix_thread_id);
-    CRYPTO_set_locking_callback((void (*)())irix_locking_callback);
+    CRYPTO_set_id_callback(irix_thread_id);
+    CRYPTO_set_locking_callback(irix_locking_callback);
 }
 
 void thread_cleanup(void)
@@ -899,7 +899,7 @@ void thread_cleanup(void)
     OPENSSL_free(lock_cs);
 }
 
-void irix_locking_callback(int mode, int type, char *file, int line)
+void irix_locking_callback(int mode, int type, const char *file, int line)
 {
     if (mode & CRYPTO_LOCK) {
         printf("lock %d\n", type);
@@ -935,10 +935,7 @@ void do_threads(SSL_CTX *s_ctx, SSL_CTX *c_ctx)
 
 unsigned long irix_thread_id(void)
 {
-    unsigned long ret;
-
-    ret = (unsigned long)getpid();
-    return (ret);
+    CRYPTO_THREADID_set_numeric((unsigned long)getpid());
 }
 #endif                          /* IRIX */
 
@@ -958,8 +955,8 @@ void thread_setup(void)
         pthread_mutex_init(&(lock_cs[i]), NULL);
     }
 
-    CRYPTO_set_id_callback((unsigned long (*)())pthreads_thread_id);
-    CRYPTO_set_locking_callback((void (*)())pthreads_locking_callback);
+    CRYPTO_THREADID_set_callback(pthreads_thread_id);
+    CRYPTO_set_locking_callback(pthreads_locking_callback);
 }
 
 void thread_cleanup(void)
@@ -978,7 +975,7 @@ void thread_cleanup(void)
     fprintf(stderr, "done cleanup\n");
 }
 
-void pthreads_locking_callback(int mode, int type, char *file, int line)
+void pthreads_locking_callback(int mode, int type, const char *file, int line)
 {
 # ifdef undef
     fprintf(stderr, "thread=%4d mode=%s lock=%s %s:%d\n",
@@ -1026,12 +1023,9 @@ void do_threads(SSL_CTX *s_ctx, SSL_CTX *c_ctx)
            s_ctx->references, c_ctx->references);
 }
 
-unsigned long pthreads_thread_id(void)
+void pthreads_thread_id(CRYPTO_THREADID *tid)
 {
-    unsigned long ret;
-
-    ret = (unsigned long)pthread_self();
-    return (ret);
+    CRYPTO_THREADID_set_numeric(tid, (unsigned long)pthread_self());
 }
 
 #endif                          /* PTHREADS */
@@ -1051,8 +1045,8 @@ void thread_setup(void)
 
     ThreadSem = MPKSemaphoreAlloc("OpenSSL mttest semaphore", 0);
 
-    CRYPTO_set_id_callback((unsigned long (*)())netware_thread_id);
-    CRYPTO_set_locking_callback((void (*)())netware_locking_callback);
+    CRYPTO_set_id_callback(netware_thread_id);
+    CRYPTO_set_locking_callback(netware_locking_callback);
 }
 
 void thread_cleanup(void)
@@ -1075,7 +1069,7 @@ void thread_cleanup(void)
     fprintf(stdout, "done cleanup\n");
 }
 
-void netware_locking_callback(int mode, int type, char *file, int line)
+void netware_locking_callback(int mode, int type, const char *file, int line)
 {
     if (mode & CRYPTO_LOCK) {
         MPKMutexLock(lock_cs[type]);
@@ -1109,10 +1103,7 @@ void do_threads(SSL_CTX *s_ctx, SSL_CTX *c_ctx)
 
 unsigned long netware_thread_id(void)
 {
-    unsigned long ret;
-
-    ret = (unsigned long)GetThreadID();
-    return (ret);
+    CRYPTO_THREADID_set_numeric((unsigned long)GetThreadID());
 }
 #endif                          /* NETWARE */
 
