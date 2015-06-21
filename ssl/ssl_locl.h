@@ -629,6 +629,8 @@ struct ssl_session_st {
     /* This is the cert and type for the other end. */
     X509 *peer;
     int peer_type;
+    /* Certificate chain of peer */
+    STACK_OF(X509) *peer_chain;
     /*
      * when app_verify_callback accepts a session where the peer's
      * certificate is not ok, we must remember the error for session reuse:
@@ -1587,7 +1589,6 @@ typedef struct cert_st {
 } CERT;
 
 typedef struct sess_cert_st {
-    STACK_OF(X509) *cert_chain; /* as received from peer */
     int references;             /* actually always 1 at the moment */
 } SESS_CERT;
 /* Structure containing decoded values of signature algorithms extension */

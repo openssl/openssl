@@ -845,6 +845,7 @@ void SSL_SESSION_free(SSL_SESSION *ss)
     OPENSSL_cleanse(ss->session_id, sizeof ss->session_id);
     ssl_sess_cert_free(ss->sess_cert);
     X509_free(ss->peer);
+    sk_X509_pop_free(ss->peer_chain, X509_free);
     sk_SSL_CIPHER_free(ss->ciphers);
     OPENSSL_free(ss->tlsext_hostname);
     OPENSSL_free(ss->tlsext_tick);
