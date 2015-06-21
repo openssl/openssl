@@ -86,15 +86,10 @@
 #include <openssl/lhash.h>
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
-#include "../../e_os.h"
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
-
-#ifdef OPENSSL_NO_STDIO
-# include "../buffer/bss_file.c"
-#endif
 
 #ifdef OPENSSL_SYS_NETWARE
 # define TEST_SERVER_CERT "/openssl/apps/server.pem"
@@ -148,39 +143,39 @@ static const char rnd_seed[] =
     "string to make the random number generator think it has entropy";
 
 int doit(char *ctx[4]);
-static void print_stats(FILE *fp, SSL_CTX *ctx)
+static void print_stats(BIO *bio, SSL_CTX *ctx)
 {
-    fprintf(fp, "%4ld items in the session cache\n",
-            SSL_CTX_sess_number(ctx));
-    fprintf(fp, "%4d client connects (SSL_connect())\n",
-            SSL_CTX_sess_connect(ctx));
-    fprintf(fp, "%4d client connects that finished\n",
-            SSL_CTX_sess_connect_good(ctx));
-    fprintf(fp, "%4d server connects (SSL_accept())\n",
-            SSL_CTX_sess_accept(ctx));
-    fprintf(fp, "%4d server connects that finished\n",
-            SSL_CTX_sess_accept_good(ctx));
-    fprintf(fp, "%4d session cache hits\n", SSL_CTX_sess_hits(ctx));
-    fprintf(fp, "%4d session cache misses\n", SSL_CTX_sess_misses(ctx));
-    fprintf(fp, "%4d session cache timeouts\n", SSL_CTX_sess_timeouts(ctx));
+    BIO_printf(bio, "%4ld items in the session cache\n",
+	       SSL_CTX_sess_number(ctx));
+    BIO_printf(bio, "%4d client connects (SSL_connect())\n",
+	       SSL_CTX_sess_connect(ctx));
+    BIO_printf(bio, "%4d client connects that finished\n",
+	       SSL_CTX_sess_connect_good(ctx));
+    BIO_printf(bio, "%4d server connects (SSL_accept())\n",
+	       SSL_CTX_sess_accept(ctx));
+    BIO_printf(bio, "%4d server connects that finished\n",
+	       SSL_CTX_sess_accept_good(ctx));
+    BIO_printf(bio, "%4d session cache hits\n", SSL_CTX_sess_hits(ctx));
+    BIO_printf(bio, "%4d session cache misses\n", SSL_CTX_sess_misses(ctx));
+    BIO_printf(bio, "%4d session cache timeouts\n", SSL_CTX_sess_timeouts(ctx));
 }
 
 static void sv_usage(void)
 {
-    fprintf(stderr, "usage: ssltest [args ...]\n");
-    fprintf(stderr, "\n");
-    fprintf(stderr, " -server_auth  - check server certificate\n");
-    fprintf(stderr, " -client_auth  - do client authentication\n");
-    fprintf(stderr, " -v            - more output\n");
-    fprintf(stderr, " -CApath arg   - PEM format directory of CA's\n");
-    fprintf(stderr, " -CAfile arg   - PEM format file of CA's\n");
-    fprintf(stderr, " -threads arg  - number of threads\n");
-    fprintf(stderr, " -loops arg    - number of 'connections', per thread\n");
-    fprintf(stderr, " -reconnect    - reuse session-id's\n");
-    fprintf(stderr, " -stats        - server session-id cache stats\n");
-    fprintf(stderr, " -cert arg     - server certificate/key\n");
-    fprintf(stderr, " -ccert arg    - client certificate/key\n");
-    fprintf(stderr, " -ssl3         - just SSLv3n\n");
+    BIO_printf(bio_err, "usage: ssltest [args ...]\n");
+    BIO_printf(bio_err, "\n");
+    BIO_printf(bio_err, " -server_auth  - check server certificate\n");
+    BIO_printf(bio_err, " -client_auth  - do client authentication\n");
+    BIO_printf(bio_err, " -v            - more output\n");
+    BIO_printf(bio_err, " -CApath arg   - PEM format directory of CA's\n");
+    BIO_printf(bio_err, " -CAfile arg   - PEM format file of CA's\n");
+    BIO_printf(bio_err, " -threads arg  - number of threads\n");
+    BIO_printf(bio_err, " -loops arg    - number of 'connections', per thread\n");
+    BIO_printf(bio_err, " -reconnect    - reuse session-id's\n");
+    BIO_printf(bio_err, " -stats        - server session-id cache stats\n");
+    BIO_printf(bio_err, " -cert arg     - server certificate/key\n");
+    BIO_printf(bio_err, " -ccert arg    - client certificate/key\n");
+    BIO_printf(bio_err, " -ssl3         - just SSLv3n\n");
 }
 
 int main(int argc, char *argv[])
@@ -199,9 +194,9 @@ int main(int argc, char *argv[])
     RAND_seed(rnd_seed, sizeof rnd_seed);
 
     if (bio_err == NULL)
-        bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
+        bio_err = BIO_new_fd(2, BIO_NOCLOSE);
     if (bio_stdout == NULL)
-        bio_stdout = BIO_new_fp(stdout, BIO_NOCLOSE);
+        bio_stdout = BIO_new_fd(1, BIO_NOCLOSE);
     argc--;
     argv++;
 
@@ -247,7 +242,7 @@ int main(int argc, char *argv[])
             if (number_of_loops == 0)
                 number_of_loops = 1;
         } else {
-            fprintf(stderr, "unknown option %s\n", *argv);
+            BIO_printf(bio_err, "unknown option %s\n", *argv);
             badop = 1;
             break;
         }
@@ -297,19 +292,19 @@ int main(int argc, char *argv[])
         (!SSL_CTX_set_default_verify_paths(s_ctx)) ||
         (!SSL_CTX_load_verify_locations(c_ctx, CAfile, CApath)) ||
         (!SSL_CTX_set_default_verify_paths(c_ctx))) {
-        fprintf(stderr, "SSL_load_verify_locations\n");
+        BIO_printf(bio_err, "SSL_load_verify_locations\n");
         ERR_print_errors(bio_err);
         goto end;
     }
 
     if (client_auth) {
-        fprintf(stderr, "client authentication\n");
+        BIO_printf(bio_err, "client authentication\n");
         SSL_CTX_set_verify(s_ctx,
                            SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
                            verify_callback);
     }
     if (server_auth) {
-        fprintf(stderr, "server authentication\n");
+        BIO_printf(bio_err, "server authentication\n");
         SSL_CTX_set_verify(c_ctx, SSL_VERIFY_PEER, verify_callback);
     }
 
@@ -319,24 +314,24 @@ int main(int argc, char *argv[])
  end:
 
     if (c_ctx != NULL) {
-        fprintf(stderr, "Client SSL_CTX stats then free it\n");
-        print_stats(stderr, c_ctx);
+        BIO_printf(bio_err, "Client SSL_CTX stats then free it\n");
+        print_stats(bio_err, c_ctx);
         SSL_CTX_free(c_ctx);
     }
     if (s_ctx != NULL) {
-        fprintf(stderr, "Server SSL_CTX stats then free it\n");
-        print_stats(stderr, s_ctx);
+        BIO_printf(bio_err, "Server SSL_CTX stats then free it\n");
+        print_stats(bio_err, s_ctx);
         if (cache_stats) {
-            fprintf(stderr, "-----\n");
-            lh_stats(SSL_CTX_sessions(s_ctx), stderr);
-            fprintf(stderr, "-----\n");
-                /*-     lh_node_stats(SSL_CTX_sessions(s_ctx),stderr);
-                        fprintf(stderr,"-----\n"); */
-            lh_node_usage_stats(SSL_CTX_sessions(s_ctx), stderr);
-            fprintf(stderr, "-----\n");
+            BIO_printf(bio_err, "-----\n");
+            lh_SSL_SESSION_stats_bio(SSL_CTX_sessions(s_ctx), bio_err);
+            BIO_printf(bio_err, "-----\n");
+    /*-     lh_SSL_SESSION_node_stats_bio(SSL_CTX_sessions(s_ctx),bio_err);
+            BIO_printf(bio_err,"-----\n"); */
+            lh_SSL_SESSION_node_usage_stats_bio(SSL_CTX_sessions(s_ctx), bio_err);
+            BIO_printf(bio_err, "-----\n");
         }
         SSL_CTX_free(s_ctx);
-        fprintf(stderr, "done free\n");
+        BIO_printf(bio_err, "done free\n");
     }
     exit(ret);
     return (0);
@@ -467,26 +462,26 @@ int doit(char *ctx[4])
 
         if (do_server && verbose) {
             if (SSL_in_init(s_ssl))
-                printf("server waiting in SSL_accept - %s\n",
-                       SSL_state_string_long(s_ssl));
+                BIO_printf(bio_stdout, "server waiting in SSL_accept - %s\n",
+                           SSL_state_string_long(s_ssl));
             else if (s_write)
-                printf("server:SSL_write()\n");
+                BIO_printf(bio_stdout, "server:SSL_write()\n");
             else
-                printf("server:SSL_read()\n");
+                BIO_printf(bio_stdout, "server:SSL_read()\n");
         }
 
         if (do_client && verbose) {
             if (SSL_in_init(c_ssl))
-                printf("client waiting in SSL_connect - %s\n",
-                       SSL_state_string_long(c_ssl));
+                BIO_printf(bio_stdout, "client waiting in SSL_connect - %s\n",
+                           SSL_state_string_long(c_ssl));
             else if (c_write)
-                printf("client:SSL_write()\n");
+                BIO_printf(bio_stdout, "client:SSL_write()\n");
             else
-                printf("client:SSL_read()\n");
+                BIO_printf(bio_stdout, "client:SSL_read()\n");
         }
 
         if (!do_client && !do_server) {
-            fprintf(stdout, "ERROR IN STARTUP\n");
+            BIO_printf(bio_stdout, "ERROR IN STARTUP\n");
             break;
         }
         if (do_client && !(done & C_DONE)) {
@@ -501,12 +496,12 @@ int doit(char *ctx[4])
                         if (BIO_should_write(c_bio))
                             c_w = 1;
                     } else {
-                        fprintf(stderr, "ERROR in CLIENT\n");
+                        BIO_printf(bio_err, "ERROR in CLIENT\n");
                         ERR_print_errors_fp(stderr);
                         return (1);
                     }
                 } else if (i == 0) {
-                    fprintf(stderr, "SSL CLIENT STARTUP FAILED\n");
+                    BIO_printf(bio_err, "SSL CLIENT STARTUP FAILED\n");
                     return (1);
                 } else {
                     /* ok */
@@ -523,12 +518,12 @@ int doit(char *ctx[4])
                         if (BIO_should_write(c_bio))
                             c_w = 1;
                     } else {
-                        fprintf(stderr, "ERROR in CLIENT\n");
+                        BIO_printf(bio_err, "ERROR in CLIENT\n");
                         ERR_print_errors_fp(stderr);
                         return (1);
                     }
                 } else if (i == 0) {
-                    fprintf(stderr, "SSL CLIENT STARTUP FAILED\n");
+                    BIO_printf(bio_err, "SSL CLIENT STARTUP FAILED\n");
                     return (1);
                 } else {
                     done |= C_DONE;
@@ -548,12 +543,12 @@ int doit(char *ctx[4])
                         if (BIO_should_write(s_bio))
                             s_w = 1;
                     } else {
-                        fprintf(stderr, "ERROR in SERVER\n");
+                        BIO_printf(bio_err, "ERROR in SERVER\n");
                         ERR_print_errors_fp(stderr);
                         return (1);
                     }
                 } else if (i == 0) {
-                    fprintf(stderr, "SSL SERVER STARTUP FAILED\n");
+                    BIO_printf(bio_err, "SSL SERVER STARTUP FAILED\n");
                     return (1);
                 } else {
                     s_write = 1;
@@ -570,12 +565,12 @@ int doit(char *ctx[4])
                         if (BIO_should_write(s_bio))
                             s_w = 1;
                     } else {
-                        fprintf(stderr, "ERROR in SERVER\n");
+                        BIO_printf(bio_err, "ERROR in SERVER\n");
                         ERR_print_errors_fp(stderr);
                         return (1);
                     }
                 } else if (i == 0) {
-                    fprintf(stderr, "SSL SERVER STARTUP FAILED\n");
+                    BIO_printf(bio_err, "SSL SERVER STARTUP FAILED\n");
                     return (1);
                 } else {
                     s_write = 0;
@@ -632,9 +627,9 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
                               buf, 256);
         if (s != NULL) {
             if (ok)
-                fprintf(stderr, "depth=%d %s\n", ctx->error_depth, buf);
+                BIO_printf(bio_err, "depth=%d %s\n", ctx->error_depth, buf);
             else
-                fprintf(stderr, "depth=%d error=%d %s\n",
+                BIO_printf(bio_err, "depth=%d error=%d %s\n",
                         ctx->error_depth, ctx->error, buf);
         }
     }
@@ -700,7 +695,7 @@ void do_threads(SSL_CTX *s_ctx, SSL_CTX *c_ctx)
                                         (void *)ssl_ctx, 0L, &(thread_id[i]));
     }
 
-    printf("reaping\n");
+    BIO_printf(bio_stdout, "reaping\n");
     for (i = 0; i < thread_number; i += 50) {
         int j;
 
@@ -710,7 +705,7 @@ void do_threads(SSL_CTX *s_ctx, SSL_CTX *c_ctx)
                                    (CONST HANDLE *) & (thread_handle[i]),
                                    TRUE, INFINITE)
             == WAIT_FAILED) {
-            fprintf(stderr, "WaitForMultipleObjects failed:%d\n",
+            BIO_printf(bio_err, "WaitForMultipleObjects failed:%d\n",
                     GetLastError());
             exit(1);
         }
@@ -726,7 +721,7 @@ void do_threads(SSL_CTX *s_ctx, SSL_CTX *c_ctx)
     ret = (ret + end.wSecond - start.wSecond);
     ret += (end.wMilliseconds - start.wMilliseconds) / 1000.0;
 
-    printf("win32 threads done - %.3f seconds\n", ret);
+    BIO_printf(bio_stdout, "win32 threads done - %.3f seconds\n", ret);
 }
 
 #endif                          /* OPENSSL_SYS_WIN32 */
@@ -761,17 +756,17 @@ void thread_cleanup(void)
 
     CRYPTO_set_locking_callback(NULL);
 
-    fprintf(stderr, "cleanup\n");
+    BIO_printf(bio_err, "cleanup\n");
 
     for (i = 0; i < CRYPTO_num_locks(); i++) {
         /* rwlock_destroy(&(lock_cs[i])); */
         mutex_destroy(&(lock_cs[i]));
-        fprintf(stderr, "%8ld:%s\n", lock_count[i], CRYPTO_get_lock_name(i));
+        BIO_printf(bio_err, "%8ld:%s\n", lock_count[i], CRYPTO_get_lock_name(i));
     }
     OPENSSL_free(lock_cs);
     OPENSSL_free(lock_count);
 
-    fprintf(stderr, "done cleanup\n");
+    BIO_printf(bio_err, "done cleanup\n");
 
 }
 
@@ -800,13 +795,13 @@ void do_threads(SSL_CTX *s_ctx, SSL_CTX *c_ctx)
                    (void *(*)())ndoit, (void *)ssl_ctx, 0L, &(thread_ctx[i]));
     }
 
-    printf("reaping\n");
+    BIO_printf(bio_stdout, "reaping\n");
     for (i = 0; i < thread_number; i++) {
         thr_join(thread_ctx[i], NULL, NULL);
     }
 
-    printf("solaris threads done (%d,%d)\n",
-           s_ctx->references, c_ctx->references);
+    BIO_printf(bio_stdout, "solaris threads done (%d,%d)\n",
+               s_ctx->references, c_ctx->references);
 }
 
 void solaris_thread_id(CRYPTO_THREADID *tid)
@@ -862,10 +857,10 @@ void thread_cleanup(void)
 void irix_locking_callback(int mode, int type, const char *file, int line)
 {
     if (mode & CRYPTO_LOCK) {
-        printf("lock %d\n", type);
+        BIO_printf(bio_stdout, "lock %d\n", type);
         uspsema(lock_cs[type]);
     } else {
-        printf("unlock %d\n", type);
+        BIO_printf(bio_stdout, "unlock %d\n", type);
         usvsema(lock_cs[type]);
     }
 }
@@ -884,13 +879,13 @@ void do_threads(SSL_CTX *s_ctx, SSL_CTX *c_ctx)
                               PR_SADDR | PR_SFDS, (void *)ssl_ctx);
     }
 
-    printf("reaping\n");
+    BIO_printf(bio_stdout, "reaping\n");
     for (i = 0; i < thread_number; i++) {
         wait(NULL);
     }
 
-    printf("irix threads done (%d,%d)\n",
-           s_ctx->references, c_ctx->references);
+    BIO_printf(bio_stdout, "irix threads done (%d,%d)\n",
+               s_ctx->references, c_ctx->references);
 }
 
 unsigned long irix_thread_id(void)
@@ -924,15 +919,15 @@ void thread_cleanup(void)
     int i;
 
     CRYPTO_set_locking_callback(NULL);
-    fprintf(stderr, "cleanup\n");
+    BIO_printf(bio_err, "cleanup\n");
     for (i = 0; i < CRYPTO_num_locks(); i++) {
         pthread_mutex_destroy(&(lock_cs[i]));
-        fprintf(stderr, "%8ld:%s\n", lock_count[i], CRYPTO_get_lock_name(i));
+        BIO_printf(bio_err, "%8ld:%s\n", lock_count[i], CRYPTO_get_lock_name(i));
     }
     OPENSSL_free(lock_cs);
     OPENSSL_free(lock_count);
 
-    fprintf(stderr, "done cleanup\n");
+    BIO_printf(bio_err, "done cleanup\n");
 }
 
 void pthreads_locking_callback(int mode, int type, const char *file, int line)
@@ -962,13 +957,13 @@ void do_threads(SSL_CTX *s_ctx, SSL_CTX *c_ctx)
                        (void *(*)())ndoit, (void *)ssl_ctx);
     }
 
-    printf("reaping\n");
+    BIO_printf(bio_stdout, "reaping\n");
     for (i = 0; i < thread_number; i++) {
         pthread_join(thread_ctx[i], NULL);
     }
 
-    printf("pthreads threads done (%d,%d)\n",
-           s_ctx->references, c_ctx->references);
+    BIO_printf(bio_stdout, "pthreads threads done (%d,%d)\n",
+               s_ctx->references, c_ctx->references);
 }
 
 void pthreads_thread_id(CRYPTO_THREADID *tid)
@@ -1003,18 +998,18 @@ void thread_cleanup(void)
 
     CRYPTO_set_locking_callback(NULL);
 
-    fprintf(stdout, "thread_cleanup\n");
+    BIO_printf(bio_stdout, "thread_cleanup\n");
 
     for (i = 0; i < CRYPTO_num_locks(); i++) {
         MPKMutexFree(lock_cs[i]);
-        fprintf(stdout, "%8ld:%s\n", lock_count[i], CRYPTO_get_lock_name(i));
+        BIO_printf(bio_stdout, "%8ld:%s\n", lock_count[i], CRYPTO_get_lock_name(i));
     }
     OPENSSL_free(lock_cs);
     OPENSSL_free(lock_count);
 
     MPKSemaphoreFree(ThreadSem);
 
-    fprintf(stdout, "done cleanup\n");
+    BIO_printf(bio_stdout, "done cleanup\n");
 }
 
 void netware_locking_callback(int mode, int type, const char *file, int line)
@@ -1039,14 +1034,14 @@ void do_threads(SSL_CTX *s_ctx, SSL_CTX *c_ctx)
         ThreadSwitchWithDelay();
     }
 
-    printf("reaping\n");
+    BIO_printf(bio_stdout, "reaping\n");
 
     /* loop until all threads have signaled the semaphore */
     for (i = 0; i < thread_number; i++) {
         MPKSemaphoreWait(ThreadSem);
     }
-    printf("netware threads done (%d,%d)\n",
-           s_ctx->references, c_ctx->references);
+    BIO_printf(bio_stdout, "netware threads done (%d,%d)\n",
+               s_ctx->references, c_ctx->references);
 }
 
 unsigned long netware_thread_id(void)
