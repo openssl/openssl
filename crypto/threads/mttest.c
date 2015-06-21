@@ -530,9 +530,9 @@ int doit(char *ctx[4])
                 } else {
                     done |= C_DONE;
 #ifdef undef
-                    fprintf(stdout, "CLIENT:from server:");
-                    fwrite(cbuf, 1, i, stdout);
-                    fflush(stdout);
+                    BIO_printf(bio_stdout, "CLIENT:from server:");
+                    BIO_write(bio_stdout, cbuf, i);
+                    BIO_flush(bio_stdout);
 #endif
                 }
             }
@@ -561,9 +561,9 @@ int doit(char *ctx[4])
                     s_write = 1;
                     s_w = 1;
 #ifdef undef
-                    fprintf(stdout, "SERVER:from client:");
-                    fwrite(sbuf, 1, i, stdout);
-                    fflush(stdout);
+                    BIO_printf(bio_stdout, "SERVER:from client:");
+                    BIO_write(bio_stdout, sbuf, i);
+                    BIO_flush(bio_stdout);
 #endif
                 }
             } else {
@@ -603,7 +603,7 @@ int doit(char *ctx[4])
     SSL_set_shutdown(s_ssl, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
 
 #ifdef undef
-    fprintf(stdout, "DONE\n");
+    BIO_printf(bio_stdout, "DONE\n");
 #endif
  err:
     /*
@@ -792,17 +792,17 @@ void thread_cleanup(void)
 void solaris_locking_callback(int mode, int type, const char *file, int line)
 {
 # ifdef undef
-    fprintf(stderr, "thread=%4d mode=%s lock=%s %s:%d\n",
-            CRYPTO_thread_id(),
-            (mode & CRYPTO_LOCK) ? "l" : "u",
-            (type & CRYPTO_READ) ? "r" : "w", file, line);
+    BIO_printf(bio_err, "thread=%4d mode=%s lock=%s %s:%d\n",
+               CRYPTO_thread_id(),
+               (mode & CRYPTO_LOCK) ? "l" : "u",
+               (type & CRYPTO_READ) ? "r" : "w", file, line);
 # endif
 
     /*-
     if (CRYPTO_LOCK_SSL_CERT == type)
-    fprintf(stderr,"(t,m,f,l) %ld %d %s %d\n",
-            CRYPTO_thread_id(),
-            mode,file,line);
+    BIO_printf(bio_err,"(t,m,f,l) %ld %d %s %d\n",
+               CRYPTO_thread_id(),
+               mode,file,line);
     */
     if (mode & CRYPTO_LOCK) {
         /*-
@@ -972,16 +972,16 @@ void thread_cleanup(void)
 void pthreads_locking_callback(int mode, int type, const char *file, int line)
 {
 # ifdef undef
-    fprintf(stderr, "thread=%4d mode=%s lock=%s %s:%d\n",
-            CRYPTO_thread_id(),
-            (mode & CRYPTO_LOCK) ? "l" : "u",
-            (type & CRYPTO_READ) ? "r" : "w", file, line);
+    BIO_printf(bio_err, "thread=%4d mode=%s lock=%s %s:%d\n",
+               CRYPTO_thread_id(),
+               (mode & CRYPTO_LOCK) ? "l" : "u",
+               (type & CRYPTO_READ) ? "r" : "w", file, line);
 # endif
 /*-
     if (CRYPTO_LOCK_SSL_CERT == type)
-            fprintf(stderr,"(t,m,f,l) %ld %d %s %d\n",
-            CRYPTO_thread_id(),
-            mode,file,line);
+            BIO_printf(bio_err,"(t,m,f,l) %ld %d %s %d\n",
+                       CRYPTO_thread_id(),
+                       mode,file,line);
 */
     if (mode & CRYPTO_LOCK) {
         pthread_mutex_lock(&(lock_cs[type]));
@@ -1129,24 +1129,24 @@ void thread_cleanup(void)
     int i;
 
     CRYPTO_set_locking_callback(NULL);
-    fprintf(stderr, "cleanup\n");
+    BIO_printf(bio_err, "cleanup\n");
     for (i = 0; i < CRYPTO_num_locks(); i++) {
         delete lock_cs[i];
-        fprintf(stderr, "%8ld:%s\n", lock_count[i], CRYPTO_get_lock_name(i));
+        BIO_printf(bio_err, "%8ld:%s\n", lock_count[i], CRYPTO_get_lock_name(i));
     }
     OPENSSL_free(lock_cs);
     OPENSSL_free(lock_count);
 
-    fprintf(stderr, "done cleanup\n");
+    BIO_printf(bio_err, "done cleanup\n");
 }
 
 void beos_locking_callback(int mode, int type, const char *file, int line)
 {
 # if 0
-    fprintf(stderr, "thread=%4d mode=%s lock=%s %s:%d\n",
-            CRYPTO_thread_id(),
-            (mode & CRYPTO_LOCK) ? "l" : "u",
-            (type & CRYPTO_READ) ? "r" : "w", file, line);
+    BIO_printf(bio_err, "thread=%4d mode=%s lock=%s %s:%d\n",
+               CRYPTO_thread_id(),
+               (mode & CRYPTO_LOCK) ? "l" : "u",
+               (type & CRYPTO_READ) ? "r" : "w", file, line);
 # endif
     if (mode & CRYPTO_LOCK) {
         lock_cs[type]->Lock();
@@ -1172,14 +1172,14 @@ void do_threads(SSL_CTX *s_ctx, SSL_CTX *c_ctx)
         resume_thread(thread_ctx[i]);
     }
 
-    printf("waiting...\n");
+    BIO_printf(bio_stdout, "waiting...\n");
     for (i = 0; i < thread_number; i++) {
         status_t result;
         wait_for_thread(thread_ctx[i], &result);
     }
 
-    printf("beos threads done (%d,%d)\n",
-           s_ctx->references, c_ctx->references);
+    BIO_printf(bio_stdout, "beos threads done (%d,%d)\n",
+               s_ctx->references, c_ctx->references);
 }
 
 unsigned long beos_thread_id(void)
