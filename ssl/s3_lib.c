@@ -2894,11 +2894,17 @@ void ssl3_free(SSL *s)
         return;
 
     ssl3_cleanup_key_block(s);
+
+#ifndef OPENSSL_NO_RSA
+    RSA_free(s->s3->peer_rsa_tmp);
+#endif
 #ifndef OPENSSL_NO_DH
     DH_free(s->s3->tmp.dh);
+    DH_free(s->s3->peer_dh_tmp);
 #endif
 #ifndef OPENSSL_NO_EC
     EC_KEY_free(s->s3->tmp.ecdh);
+    EC_KEY_free(s->s3->peer_ecdh_tmp);
 #endif
 
     sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
@@ -2929,13 +2935,22 @@ void ssl3_clear(SSL *s)
     OPENSSL_free(s->s3->tmp.peer_sigalgs);
     s->s3->tmp.peer_sigalgs = NULL;
 
+#ifndef OPENSSL_NO_RSA
+    RSA_free(s->s3->peer_rsa_tmp);
+    s->s3->peer_rsa_tmp = NULL;
+#endif
+
 #ifndef OPENSSL_NO_DH
     DH_free(s->s3->tmp.dh);
     s->s3->tmp.dh = NULL;
+    DH_free(s->s3->peer_dh_tmp);
+    s->s3->peer_dh_tmp = NULL;
 #endif
 #ifndef OPENSSL_NO_EC
     EC_KEY_free(s->s3->tmp.ecdh);
     s->s3->tmp.ecdh = NULL;
+    EC_KEY_free(s->s3->peer_ecdh_tmp);
+    s->s3->peer_ecdh_tmp = NULL;
     s->s3->is_probably_safari = 0;
 #endif                         /* !OPENSSL_NO_EC */
 
@@ -3330,28 +3345,26 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         if (s->server || !s->session || !s->session->sess_cert)
             return 0;
         else {
-            SESS_CERT *sc;
             EVP_PKEY *ptmp;
             int rv = 0;
-            sc = s->session->sess_cert;
 #if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_EC)
-            if (!sc->peer_rsa_tmp && !sc->peer_dh_tmp && !sc->peer_ecdh_tmp)
+            if (!s->s3->peer_rsa_tmp && !s->s3->peer_dh_tmp && !s->s3->peer_ecdh_tmp)
                 return 0;
 #endif
             ptmp = EVP_PKEY_new();
             if (!ptmp)
                 return 0;
 #ifndef OPENSSL_NO_RSA
-            else if (sc->peer_rsa_tmp)
-                rv = EVP_PKEY_set1_RSA(ptmp, sc->peer_rsa_tmp);
+            else if (s->s3->peer_rsa_tmp)
+                rv = EVP_PKEY_set1_RSA(ptmp, s->s3->peer_rsa_tmp);
 #endif
 #ifndef OPENSSL_NO_DH
-            else if (sc->peer_dh_tmp)
-                rv = EVP_PKEY_set1_DH(ptmp, sc->peer_dh_tmp);
+            else if (s->s3->peer_dh_tmp)
+                rv = EVP_PKEY_set1_DH(ptmp, s->s3->peer_dh_tmp);
 #endif
 #ifndef OPENSSL_NO_EC
-            else if (sc->peer_ecdh_tmp)
-                rv = EVP_PKEY_set1_EC_KEY(ptmp, sc->peer_ecdh_tmp);
+            else if (s->s3->peer_ecdh_tmp)
+                rv = EVP_PKEY_set1_EC_KEY(ptmp, s->s3->peer_ecdh_tmp);
 #endif
             if (rv) {
                 *(EVP_PKEY **)parg = ptmp;
