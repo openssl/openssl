@@ -56,7 +56,6 @@
  * [including the GNU Public Licence.]
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
