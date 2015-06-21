@@ -276,9 +276,12 @@ int main(int argc, char *argv[])
                                    SSL_SESS_CACHE_SERVER);
 
     if (!SSL_CTX_use_certificate_file(s_ctx, scert, SSL_FILETYPE_PEM)) {
+        BIO_printf(bio_err, "SSL_CTX_use_certificate_file (%s)\n", scert);
         ERR_print_errors(bio_err);
+        goto end;
     } else
         if (!SSL_CTX_use_RSAPrivateKey_file(s_ctx, scert, SSL_FILETYPE_PEM)) {
+        BIO_printf(bio_err, "SSL_CTX_use_RSAPrivateKey_file (%s)\n", scert);
         ERR_print_errors(bio_err);
         goto end;
     }
