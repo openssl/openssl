@@ -594,6 +594,7 @@ int doit(char *ctx[4])
     SSL_set_shutdown(s_ssl, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
 
  err:
+#if 0
     /*
      * We have to set the BIO's to NULL otherwise they will be free()ed
      * twice.  Once when th s_ssl is SSL_free()ed and again when c_ssl is
@@ -615,6 +616,7 @@ int doit(char *ctx[4])
     /* The SSL's are optionally freed in the following calls */
     BIO_free(c_to_s);
     BIO_free(s_to_c);
+#endif
 
     BIO_free(c_bio);
     BIO_free(s_bio);
