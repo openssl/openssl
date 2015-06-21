@@ -519,46 +519,6 @@ void ssl_cert_set_cert_cb(CERT *c, int (*cb) (SSL *ssl, void *arg), void *arg)
     c->cert_cb_arg = arg;
 }
 
-SESS_CERT *ssl_sess_cert_new(void)
-{
-    SESS_CERT *ret;
-
-    ret = OPENSSL_malloc(sizeof(*ret));
-    if (ret == NULL) {
-        SSLerr(SSL_F_SSL_SESS_CERT_NEW, ERR_R_MALLOC_FAILURE);
-        return NULL;
-    }
-
-    memset(ret, 0, sizeof(*ret));
-    ret->references = 1;
-
-    return ret;
-}
-
-void ssl_sess_cert_free(SESS_CERT *sc)
-{
-    int i;
-
-    if (sc == NULL)
-        return;
-
-    i = CRYPTO_add(&sc->references, -1, CRYPTO_LOCK_SSL_SESS_CERT);
-#ifdef REF_PRINT
-    REF_PRINT("SESS_CERT", sc);
-#endif
-    if (i > 0)
-        return;
-#ifdef REF_CHECK
-    if (i < 0) {
-        fprintf(stderr, "ssl_sess_cert_free, bad reference count\n");
-        abort();                /* ok */
-    }
-#endif
-
-    /* i == 0 */
-    OPENSSL_free(sc);
-}
-
 int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
 {
     X509 *x;

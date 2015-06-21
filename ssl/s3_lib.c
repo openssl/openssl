@@ -3327,7 +3327,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 
     case SSL_CTRL_GET_PEER_SIGNATURE_NID:
         if (SSL_USE_SIGALGS(s)) {
-            if (s->session && s->session->sess_cert) {
+            if (s->session) {
                 const EVP_MD *sig;
                 sig = s->s3->tmp.peer_md;
                 if (sig) {
@@ -3342,7 +3342,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             return 0;
 
     case SSL_CTRL_GET_SERVER_TMP_KEY:
-        if (s->server || !s->session || !s->session->sess_cert)
+        if (s->server || !s->session)
             return 0;
         else {
             EVP_PKEY *ptmp;

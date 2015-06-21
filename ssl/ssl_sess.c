@@ -265,9 +265,6 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
 
     dest->references = 1;
 
-    if (src->sess_cert != NULL)
-        CRYPTO_add(&src->sess_cert->references, 1, CRYPTO_LOCK_SSL_SESS_CERT);
-
     if (src->peer != NULL)
         CRYPTO_add(&src->peer->references, 1, CRYPTO_LOCK_X509);
 
@@ -843,7 +840,6 @@ void SSL_SESSION_free(SSL_SESSION *ss)
 
     OPENSSL_cleanse(ss->master_key, sizeof ss->master_key);
     OPENSSL_cleanse(ss->session_id, sizeof ss->session_id);
-    ssl_sess_cert_free(ss->sess_cert);
     X509_free(ss->peer);
     sk_X509_pop_free(ss->peer_chain, X509_free);
     sk_SSL_CIPHER_free(ss->ciphers);
