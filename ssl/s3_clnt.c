@@ -1329,7 +1329,7 @@ int ssl3_get_server_certificate(SSL *s)
     ssl_sess_cert_free(s->session->sess_cert);
     s->session->sess_cert = sc;
 
-    sc->cert_chain = sk;
+    s->session->peer_chain = sk;
     /*
      * Inconsistency alert: cert_chain does include the peer's certificate,
      * which we don't include in s3_srvr.c

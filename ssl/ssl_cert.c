@@ -556,7 +556,6 @@ void ssl_sess_cert_free(SESS_CERT *sc)
 #endif
 
     /* i == 0 */
-    sk_X509_pop_free(sc->cert_chain, X509_free);
     OPENSSL_free(sc);
 }
 
