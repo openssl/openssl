@@ -476,21 +476,15 @@ void ssl3_cleanup_key_block(SSL *s)
 
 void ssl3_init_finished_mac(SSL *s)
 {
+    BIO_free(s->s3->handshake_buffer);
     ssl3_free_digest_list(s);
     s->s3->handshake_buffer = BIO_new(BIO_s_mem());
     (void)BIO_set_close(s->s3->handshake_buffer, BIO_CLOSE);
 }
 
-/*
- * Free digest list. Also frees handshake buffer since they are always freed
- * together.
- */
-
 void ssl3_free_digest_list(SSL *s)
 {
     int i;
-    BIO_free(s->s3->handshake_buffer);
-    s->s3->handshake_buffer = NULL;
     if (!s->s3->handshake_dgst)
         return;
     for (i = 0; i < SSL_MAX_DIGEST; i++) {
