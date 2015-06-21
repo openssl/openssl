@@ -624,8 +624,6 @@ struct ssl_session_st {
      * to disable session caching and tickets.
      */
     int not_resumable;
-    /* The cert is the certificate used to establish this connection */
-    struct sess_cert_st /* SESS_CERT */ *sess_cert;
     /* This is the cert and type for the other end. */
     X509 *peer;
     int peer_type;
@@ -1588,9 +1586,6 @@ typedef struct cert_st {
     int references;             /* >1 only if SSL_copy_session_id is used */
 } CERT;
 
-typedef struct sess_cert_st {
-    int references;             /* actually always 1 at the moment */
-} SESS_CERT;
 /* Structure containing decoded values of signature algorithms extension */
 struct tls_sigalgs_st {
     /* NID of hash algorithm */
@@ -1845,8 +1840,6 @@ __owur CERT *ssl_cert_new(void);
 __owur CERT *ssl_cert_dup(CERT *cert);
 void ssl_cert_clear_certs(CERT *c);
 void ssl_cert_free(CERT *c);
-__owur SESS_CERT *ssl_sess_cert_new(void);
-void ssl_sess_cert_free(SESS_CERT *sc);
 __owur int ssl_get_new_session(SSL *s, int session);
 __owur int ssl_get_prev_session(SSL *s, unsigned char *session, int len,
                          const unsigned char *limit);

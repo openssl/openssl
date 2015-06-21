@@ -3195,17 +3195,6 @@ int ssl3_get_client_certificate(SSL *s)
     s->session->peer = sk_X509_shift(sk);
     s->session->verify_result = s->verify_result;
 
-    /*
-     * With the current implementation, sess_cert will always be NULL when we
-     * arrive here.
-     */
-    if (s->session->sess_cert == NULL) {
-        s->session->sess_cert = ssl_sess_cert_new();
-        if (s->session->sess_cert == NULL) {
-            SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE, ERR_R_MALLOC_FAILURE);
-            goto done;
-        }
-    }
     sk_X509_pop_free(s->session->peer_chain, X509_free);
     s->session->peer_chain = sk;
     /*

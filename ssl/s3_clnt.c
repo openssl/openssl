@@ -1243,7 +1243,6 @@ int ssl3_get_server_certificate(SSL *s)
     const unsigned char *q, *p;
     unsigned char *d;
     STACK_OF(X509) *sk = NULL;
-    SESS_CERT *sc;
     EVP_PKEY *pkey = NULL;
 
     n = s->method->ssl_get_message(s,
@@ -1321,13 +1320,6 @@ int ssl3_get_server_certificate(SSL *s)
         al = SSL_AD_HANDSHAKE_FAILURE;
         goto f_err;
     }
-
-    sc = ssl_sess_cert_new();
-    if (sc == NULL)
-        goto err;
-
-    ssl_sess_cert_free(s->session->sess_cert);
-    s->session->sess_cert = sc;
 
     s->session->peer_chain = sk;
     /*
@@ -1446,7 +1438,6 @@ int ssl3_get_key_exchange(SSL *s)
          * problems later.
          */
         if (alg_k & SSL_kPSK) {
-            s->session->sess_cert = ssl_sess_cert_new();
             OPENSSL_free(s->ctx->psk_identity_hint);
             s->ctx->psk_identity_hint = NULL;
         }
@@ -1469,9 +1460,6 @@ int ssl3_get_key_exchange(SSL *s)
     EC_KEY_free(s->s3->peer_ecdh_tmp);
     s->s3->peer_ecdh_tmp = NULL;
 #endif
-
-    if (s->session->sess_cert == NULL)
-        s->session->sess_cert = ssl_sess_cert_new();
 
     /* Total length of the parameters including the length prefix */
     param_len = 0;
@@ -2397,7 +2385,7 @@ int ssl3_send_client_key_exchange(SSL *s)
             if (!pms)
                 goto memerr;
 
-            if (s->session->sess_cert == NULL) {
+            if (s->session->peer == NULL) {
                 /*
                  * We should always have a server certificate with SSL_kRSA.
                  */
@@ -2452,15 +2440,6 @@ int ssl3_send_client_key_exchange(SSL *s)
 #ifndef OPENSSL_NO_DH
         else if (alg_k & (SSL_kDHE | SSL_kDHr | SSL_kDHd)) {
             DH *dh_srvr, *dh_clnt;
-            SESS_CERT *scert = s->session->sess_cert;
-
-            if (scert == NULL) {
-                ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_UNEXPECTED_MESSAGE);
-                SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-                       SSL_R_UNEXPECTED_MESSAGE);
-                goto err;
-            }
-
             if (s->s3->peer_dh_tmp != NULL)
                 dh_srvr = s->s3->peer_dh_tmp;
             else {
@@ -2543,14 +2522,6 @@ int ssl3_send_client_key_exchange(SSL *s)
             EC_KEY *tkey;
             int ecdh_clnt_cert = 0;
             int field_size = 0;
-
-            if (s->session->sess_cert == NULL) {
-                ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_UNEXPECTED_MESSAGE);
-                SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-                       SSL_R_UNEXPECTED_MESSAGE);
-                goto err;
-            }
-
             /*
              * Did we send out the client's ECDH share for use in premaster
              * computation as part of client certificate? If so, set
@@ -3280,7 +3251,6 @@ int ssl3_check_cert_and_algorithm(SSL *s)
     long alg_k, alg_a;
     EVP_PKEY *pkey = NULL;
     int pkey_bits;
-    SESS_CERT *sc;
 #ifndef OPENSSL_NO_RSA
     RSA *rsa;
 #endif
@@ -3295,12 +3265,6 @@ int ssl3_check_cert_and_algorithm(SSL *s)
     /* we don't have a certificate */
     if ((alg_a & SSL_aNULL) || (alg_k & SSL_kPSK))
         return (1);
-
-    sc = s->session->sess_cert;
-    if (sc == NULL) {
-        SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
 #ifndef OPENSSL_NO_RSA
     rsa = s->s3->peer_rsa_tmp;
 #endif
@@ -3437,7 +3401,6 @@ int ssl3_check_cert_and_algorithm(SSL *s)
     return (1);
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
- err:
     return (0);
 }
 
