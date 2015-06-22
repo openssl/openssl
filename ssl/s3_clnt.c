@@ -1431,17 +1431,7 @@ int ssl3_get_key_exchange(SSL *s)
             al = SSL_AD_UNEXPECTED_MESSAGE;
             goto f_err;
         }
-#ifndef OPENSSL_NO_PSK
-        /*
-         * In plain PSK ciphersuite, ServerKeyExchange can be omitted if no
-         * identity hint is sent. Set session->sess_cert anyway to avoid
-         * problems later.
-         */
-        if (alg_k & SSL_kPSK) {
-            OPENSSL_free(s->ctx->psk_identity_hint);
-            s->ctx->psk_identity_hint = NULL;
-        }
-#endif
+
         s->s3->tmp.reuse_message = 1;
         return (1);
     }
@@ -1504,9 +1494,9 @@ int ssl3_get_key_exchange(SSL *s)
          */
         memcpy(tmp_id_hint, p, i);
         memset(tmp_id_hint + i, 0, PSK_MAX_IDENTITY_LEN + 1 - i);
-        OPENSSL_free(s->ctx->psk_identity_hint);
-        s->ctx->psk_identity_hint = BUF_strdup(tmp_id_hint);
-        if (s->ctx->psk_identity_hint == NULL) {
+        OPENSSL_free(s->session->psk_identity_hint);
+        s->session->psk_identity_hint = BUF_strdup(tmp_id_hint);
+        if (s->session->psk_identity_hint == NULL) {
             al = SSL_AD_HANDSHAKE_FAILURE;
             SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
             goto f_err;
@@ -2830,7 +2820,7 @@ int ssl3_send_client_key_exchange(SSL *s)
             if (!pms)
                 goto memerr;
 
-            psk_len = s->psk_client_callback(s, s->ctx->psk_identity_hint,
+            psk_len = s->psk_client_callback(s, s->session->psk_identity_hint,
                                              identity, sizeof(identity) - 1,
                                              pms, pmslen);
             if (psk_len > PSK_MAX_PSK_LEN) {
@@ -2858,16 +2848,6 @@ int ssl3_send_client_key_exchange(SSL *s)
             memset(t, 0, psk_len);
             t += psk_len;
             s2n(psk_len, t);
-
-            OPENSSL_free(s->session->psk_identity_hint);
-            s->session->psk_identity_hint =
-                BUF_strdup(s->ctx->psk_identity_hint);
-            if (s->ctx->psk_identity_hint != NULL
-                && s->session->psk_identity_hint == NULL) {
-                SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-                       ERR_R_MALLOC_FAILURE);
-                goto psk_err;
-            }
 
             OPENSSL_free(s->session->psk_identity);
             s->session->psk_identity = BUF_strdup(identity);
