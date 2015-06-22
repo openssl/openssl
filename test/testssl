@@ -121,14 +121,14 @@ $ssltest -bio_pair -server_auth -client_auth -app_verify $CA $extra || exit 1
 
 test_cipher() {
     _cipher=$1
-    echo "Testing $cipher"
+    echo "Testing $_cipher"
     prot=""
     if [ $2 = "SSLv3" ] ; then
       prot="-ssl3"
     fi
-    $ssltest -cipher $cipher $prot
+    $ssltest -cipher $_cipher $prot
     if [ $? -ne 0 ] ; then
-	  echo "Failed $cipher"
+	  echo "Failed $_cipher"
 	  exit 1
     fi
 }
