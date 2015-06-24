@@ -389,8 +389,8 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
                         xtmp = sk_X509_pop(ctx->chain);
                         X509_free(xtmp);
                         num--;
-                        ctx->last_untrusted--;
                     }
+                    ctx->last_untrusted = sk_X509_num(ctx->chain);
                     retry = 1;
                     break;
                 }
