@@ -4,7 +4,11 @@
 
  Changes between 0.9.8zg and 0.9.8zh [xx XXX xxxx]
 
-  *)
+  *) Reject DH handshakes with parameters shorter than 768 bits, backported 
+     from 1.0.1.
+     [Srinivasa Rao Yarlagdda]
+
+  *) 
 
  Changes between 0.9.8zf and 0.9.8zg [11 Jun 2015]
 

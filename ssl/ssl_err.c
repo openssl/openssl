@@ -391,6 +391,7 @@ static ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_REASON(SSL_R_DECRYPTION_FAILED), "decryption failed"},
     {ERR_REASON(SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC),
      "decryption failed or bad record mac"},
+    {ERR_REASON(SSL_R_DH_KEY_TOO_SMALL), "dh key too small"},
     {ERR_REASON(SSL_R_DH_PUBLIC_VALUE_LENGTH_IS_WRONG),
      "dh public value length is wrong"},
     {ERR_REASON(SSL_R_DIGEST_CHECK_FAILED), "digest check failed"},
