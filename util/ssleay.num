@@ -286,11 +286,11 @@ SSL_CTX_set_srp_username                329	EXIST::FUNCTION:SRP
 SSL_CTX_SRP_CTX_init                    330	EXIST::FUNCTION:SRP
 SSL_SRP_CTX_init                        331	EXIST::FUNCTION:SRP
 SRP_Calc_A_param                        332	EXIST::FUNCTION:SRP
-SRP_generate_server_master_secret       333	EXIST:!VMS:FUNCTION:SRP
-SRP_gen_server_master_secret            333	EXIST:VMS:FUNCTION:SRP
+SRP_gen_server_master_secret            333	NOEXIST::FUNCTION:
+SRP_generate_server_master_secret       333	NOEXIST::FUNCTION:
 SSL_CTX_SRP_CTX_free                    334	EXIST::FUNCTION:SRP
-SRP_generate_client_master_secret       335	EXIST:!VMS:FUNCTION:SRP
-SRP_gen_client_master_secret            335	EXIST:VMS:FUNCTION:SRP
+SRP_gen_client_master_secret            335	NOEXIST::FUNCTION:
+SRP_generate_client_master_secret       335	NOEXIST::FUNCTION:
 SSL_srp_server_param_with_username      336	EXIST:!VMS:FUNCTION:SRP
 SSL_srp_server_param_with_un            336	EXIST:VMS:FUNCTION:SRP
 SRP_have_to_put_srp_username            337	NOEXIST::FUNCTION:
