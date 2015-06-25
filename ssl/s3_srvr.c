@@ -1580,19 +1580,16 @@ int ssl3_send_server_hello(SSL *s)
     if (s->state == SSL3_ST_SW_SRVR_HELLO_A) {
         buf = (unsigned char *)s->init_buf->data;
 
-        p = s->s3->server_random;
-        if (ssl_fill_hello_random(s, 1, p, SSL3_RANDOM_SIZE) <= 0) {
-            s->state = SSL_ST_ERR;
-            return -1;
-        }
-
         /* Do the message type and length last */
         d = p = ssl_handshake_start(s);
 
         *(p++) = s->version >> 8;
         *(p++) = s->version & 0xff;
 
-        /* Random stuff */
+        /*
+         * Random stuff. Filling of the server_random takes place in
+         * ssl3_get_client_hello()
+         */
         memcpy(p, s->s3->server_random, SSL3_RANDOM_SIZE);
         p += SSL3_RANDOM_SIZE;
 
