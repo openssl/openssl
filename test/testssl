@@ -236,16 +236,16 @@ if ../util/shlib_wrap.sh ../apps/openssl no-srp; then
   echo skipping SRP tests
 else
   echo test tls1 with SRP
-  $ssltest -tls1 -cipher SRP -srpuser test -srppass abc123
+  $ssltest -tls1 -cipher SRP -srpuser test -srppass abc123 || exit 1
 
   echo test tls1 with SRP via BIO pair
-  $ssltest -bio_pair -tls1 -cipher SRP -srpuser test -srppass abc123
+  $ssltest -bio_pair -tls1 -cipher SRP -srpuser test -srppass abc123 || exit 1
 
   echo test tls1 with SRP auth
-  $ssltest -tls1 -cipher aSRP -srpuser test -srppass abc123
+  $ssltest -tls1 -cipher aSRP -srpuser test -srppass abc123 || exit 1
 
   echo test tls1 with SRP auth via BIO pair
-  $ssltest -bio_pair -tls1 -cipher aSRP -srpuser test -srppass abc123
+  $ssltest -bio_pair -tls1 -cipher aSRP -srpuser test -srppass abc123 || exit 1
 fi
 
 #############################################################################
