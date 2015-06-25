@@ -888,6 +888,7 @@ int s_client_main(int argc, char **argv)
                 BIO_printf(bio_err, "Not a hex number '%s'\n", psk_key);
                 goto end;
             }
+            break;
 #else
         case OPT_PSK_IDENTITY:
         case OPT_PSK:
