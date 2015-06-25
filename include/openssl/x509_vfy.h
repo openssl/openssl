@@ -528,6 +528,7 @@ void X509_STORE_CTX_set_verify_cb(X509_STORE_CTX *ctx,
 
 X509_POLICY_TREE *X509_STORE_CTX_get0_policy_tree(X509_STORE_CTX *ctx);
 int X509_STORE_CTX_get_explicit_policy(X509_STORE_CTX *ctx);
+int X509_STORE_CTX_get_num_untrusted(X509_STORE_CTX *ctx);
 
 X509_VERIFY_PARAM *X509_STORE_CTX_get0_param(X509_STORE_CTX *ctx);
 void X509_STORE_CTX_set0_param(X509_STORE_CTX *ctx, X509_VERIFY_PARAM *param);

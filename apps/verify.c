@@ -244,6 +244,7 @@ static int check(X509_STORE *ctx, char *file,
     int i = 0, ret = 0;
     X509_STORE_CTX *csc;
     STACK_OF(X509) *chain = NULL;
+    int num_untrusted;
 
     x = load_cert(file, FORMAT_PEM, NULL, e, "certificate file");
     if (x == NULL)
@@ -265,8 +266,10 @@ static int check(X509_STORE *ctx, char *file,
     if (crls)
         X509_STORE_CTX_set0_crls(csc, crls);
     i = X509_verify_cert(csc);
-    if (i > 0 && show_chain)
+    if (i > 0 && show_chain) {
         chain = X509_STORE_CTX_get1_chain(csc);
+        num_untrusted = X509_STORE_CTX_get_num_untrusted(csc);
+    }
     X509_STORE_CTX_free(csc);
 
     ret = 0;
@@ -284,6 +287,9 @@ static int check(X509_STORE *ctx, char *file,
             X509_NAME_print_ex_fp(stdout,
                                   X509_get_subject_name(cert),
                                   0, XN_FLAG_ONELINE);
+            if (i < num_untrusted) {
+                printf(" (untrusted)");
+            }
             printf("\n");
         }
         sk_X509_pop_free(chain, X509_free);

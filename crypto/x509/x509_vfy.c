@@ -2452,6 +2452,11 @@ int X509_STORE_CTX_get_explicit_policy(X509_STORE_CTX *ctx)
     return ctx->explicit_policy;
 }
 
+int X509_STORE_CTX_get_num_untrusted(X509_STORE_CTX *ctx)
+{
+    return ctx->last_untrusted;
+}
+
 int X509_STORE_CTX_set_default(X509_STORE_CTX *ctx, const char *name)
 {
     const X509_VERIFY_PARAM *param;
