@@ -42,6 +42,7 @@ B<openssl> B<verify>
 [B<-verify_ip ip>]
 [B<-verify_name name>]
 [B<-x509_strict>]
+[B<-show_chain>]
 [B<->]
 [certificates]
 
@@ -226,6 +227,12 @@ Supported usages include: default, pkcs7, smime_sign, ssl_client, ssl_server.
 
 For strict X.509 compliance, disable non-compliant workarounds for broken
 certificates.
+
+=item B<-show_chain>
+
+Display information about the certificate chain that has been built (if
+successful). Certificates in the chain that came from the untrusted list will be
+flagged as "untrusted".
 
 =item B<->
 
@@ -491,6 +498,6 @@ L<x509(1)|x509(1)>
 
 =head1 HISTORY
 
-The -no_alt_chains options was first added to OpenSSL 1.1.0.
+The -show_chain option was first added to OpenSSL 1.1.0.
 
 =cut
