@@ -4165,7 +4165,7 @@ DH *ssl_get_auto_dh(SSL *s)
     int dh_secbits = 80;
     if (s->cert->dh_tmp_auto == 2)
         return DH_get_1024_160();
-    if (s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL) {
+    if (s->s3->tmp.new_cipher->algorithm_auth & (SSL_aNULL | SSL_aPSK)) {
         if (s->s3->tmp.new_cipher->strength_bits == 256)
             dh_secbits = 128;
         else
