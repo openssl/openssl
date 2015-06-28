@@ -442,6 +442,12 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
 # define TLS1_CK_RSA_PSK_WITH_NULL_SHA256                0x030000B8
 # define TLS1_CK_RSA_PSK_WITH_NULL_SHA384                0x030000B9
 
+/* NULL PSK ciphersuites from RFC4785 */
+
+# define TLS1_CK_PSK_WITH_NULL_SHA                       0x0300002C
+# define TLS1_CK_DHE_PSK_WITH_NULL_SHA                   0x0300002D
+# define TLS1_CK_RSA_PSK_WITH_NULL_SHA                   0x0300002E
+
 /* AES ciphersuites from RFC3268 */
 
 # define TLS1_CK_RSA_WITH_AES_128_SHA                    0x0300002F
@@ -603,6 +609,8 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
 # define TLS1_CK_ECDHE_PSK_WITH_AES_128_CBC_SHA256       0x0300C037
 # define TLS1_CK_ECDHE_PSK_WITH_AES_256_CBC_SHA384       0x0300C038
 
+/* NULL PSK ciphersuites from RFC4785 */
+
 # define TLS1_CK_ECDHE_PSK_WITH_NULL_SHA                 0x0300C039
 # define TLS1_CK_ECDHE_PSK_WITH_NULL_SHA256              0x0300C03A
 # define TLS1_CK_ECDHE_PSK_WITH_NULL_SHA384              0x0300C03B
@@ -630,6 +638,10 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
 # define TLS1_TXT_RSA_EXPORT1024_WITH_RC4_56_SHA         "EXP1024-RC4-SHA"
 # define TLS1_TXT_DHE_DSS_EXPORT1024_WITH_RC4_56_SHA     "EXP1024-DHE-DSS-RC4-SHA"
 # define TLS1_TXT_DHE_DSS_WITH_RC4_128_SHA               "DHE-DSS-RC4-SHA"
+
+# define TLS1_TXT_PSK_WITH_NULL_SHA                      "PSK-NULL-SHA"
+# define TLS1_TXT_DHE_PSK_WITH_NULL_SHA                  "DHE-PSK-NULL-SHA"
+# define TLS1_TXT_RSA_PSK_WITH_NULL_SHA                  "RSA-PSK-NULL-SHA"
 
 /* AES ciphersuites from RFC3268 */
 # define TLS1_TXT_RSA_WITH_AES_128_SHA                   "AES128-SHA"

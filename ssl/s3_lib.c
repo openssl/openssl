@@ -600,6 +600,53 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      112,
      168,
      },
+#ifndef OPENSSL_NO_PSK
+    /* Cipher 2C */
+    {
+     1,
+     TLS1_TXT_PSK_WITH_NULL_SHA,
+     TLS1_CK_PSK_WITH_NULL_SHA,
+     SSL_kPSK,
+     SSL_aPSK,
+     SSL_eNULL,
+     SSL_SHA1,
+     SSL_TLSV1,
+     SSL_NOT_EXP | SSL_STRONG_NONE | SSL_FIPS,
+     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
+     0,
+     0,
+     },
+    /* Cipher 2D */
+    {
+     1,
+     TLS1_TXT_DHE_PSK_WITH_NULL_SHA,
+     TLS1_CK_DHE_PSK_WITH_NULL_SHA,
+     SSL_kDHEPSK,
+     SSL_aPSK,
+     SSL_eNULL,
+     SSL_SHA1,
+     SSL_TLSV1,
+     SSL_NOT_EXP | SSL_STRONG_NONE | SSL_FIPS,
+     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
+     0,
+     0,
+     },
+    /* Cipher 2E */
+    {
+     1,
+     TLS1_TXT_RSA_PSK_WITH_NULL_SHA,
+     TLS1_CK_RSA_PSK_WITH_NULL_SHA,
+     SSL_kRSAPSK,
+     SSL_aRSA,
+     SSL_eNULL,
+     SSL_SHA1,
+     SSL_TLSV1,
+     SSL_NOT_EXP | SSL_STRONG_NONE | SSL_FIPS,
+     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
+     0,
+     0,
+     },
+#endif
 
 /* New AES ciphersuites */
 /* Cipher 2F */
