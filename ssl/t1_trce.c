@@ -928,6 +928,18 @@ static int ssl_get_keyex(const char **pname, SSL *ssl)
         *pname = "PSK";
         return SSL_kPSK;
     }
+    if (alg_k & SSL_kRSAPSK) {
+        *pname = "RSAPSK";
+        return SSL_kRSAPSK;
+    }
+    if (alg_k & SSL_kDHEPSK) {
+        *pname = "DHEPSK";
+        return SSL_kDHEPSK;
+    }
+    if (alg_k & SSL_kECDHEPSK) {
+        *pname = "ECDHEPSK";
+        return SSL_kECDHEPSK;
+    }
     if (alg_k & SSL_kSRP) {
         *pname = "SRP";
         return SSL_kSRP;
@@ -948,9 +960,15 @@ static int ssl_print_client_keyex(BIO *bio, int indent, SSL *ssl,
     id = ssl_get_keyex(&algname, ssl);
     BIO_indent(bio, indent, 80);
     BIO_printf(bio, "KeyExchangeAlgorithm=%s\n", algname);
+    if (id & SSL_PSK) {
+        if (!ssl_print_hexbuf(bio, indent + 2,
+                              "psk_identity", 2, &msg, &msglen))
+            return 0;
+    }
     switch (id) {
 
     case SSL_kRSA:
+    case SSL_kRSAPSK:
         if (TLS1_get_version(ssl) == SSL3_VERSION) {
             ssl_print_hex(bio, indent + 2,
                           "EncyptedPreMasterSecret", msg, msglen);
@@ -971,6 +989,7 @@ static int ssl_print_client_keyex(BIO *bio, int indent, SSL *ssl,
             break;
         }
     case SSL_kDHE:
+    case SSL_kDHEPSK:
         if (!ssl_print_hexbuf(bio, indent + 2, "dh_Yc", 2, &msg, &msglen))
             return 0;
         break;
@@ -983,19 +1002,14 @@ static int ssl_print_client_keyex(BIO *bio, int indent, SSL *ssl,
             break;
         }
     case SSL_kECDHE:
+    case SSL_kECDHEPSK:
         if (!ssl_print_hexbuf(bio, indent + 2, "ecdh_Yc", 1, &msg, &msglen))
-            return 0;
-        break;
-
-    case SSL_kPSK:
-        if (!ssl_print_hexbuf(bio, indent + 2,
-                              "psk_identity", 2, &msg, &msglen))
             return 0;
         break;
 
     }
 
-    return 1;
+    return !msglen;
 }
 
 static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
@@ -1006,6 +1020,11 @@ static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
     id = ssl_get_keyex(&algname, ssl);
     BIO_indent(bio, indent, 80);
     BIO_printf(bio, "KeyExchangeAlgorithm=%s\n", algname);
+    if (id & SSL_PSK) {
+        if (!ssl_print_hexbuf(bio, indent + 2,
+                              "psk_identity_hint", 2, &msg, &msglen))
+            return 0;
+    }
     switch (id) {
         /* Should never happen */
     case SSL_kDHd:
@@ -1027,6 +1046,7 @@ static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
         break;
 
     case SSL_kDHE:
+    case SSL_kDHEPSK:
         if (!ssl_print_hexbuf(bio, indent + 2, "dh_p", 2, &msg, &msglen))
             return 0;
         if (!ssl_print_hexbuf(bio, indent + 2, "dh_g", 2, &msg, &msglen))
@@ -1036,6 +1056,7 @@ static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
         break;
 
     case SSL_kECDHE:
+    case SSL_kECDHEPSK:
         if (msglen < 1)
             return 0;
         BIO_indent(bio, indent + 2, 80);
@@ -1054,17 +1075,19 @@ static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
             msglen -= 3;
             if (!ssl_print_hexbuf(bio, indent + 2, "point", 1, &msg, &msglen))
                 return 0;
+        } else {
+            BIO_printf(bio, "UNKNOWN CURVE PARAMETER TYPE %d\n", msg[0]);
+            return 0;
         }
         break;
 
     case SSL_kPSK:
-        if (!ssl_print_hexbuf(bio, indent + 2,
-                              "psk_identity_hint", 2, &msg, &msglen))
-            return 0;
-        /* No signature */
-        return 1;
+    case SSL_kRSAPSK:
+        break;
     }
-    return ssl_print_signature(bio, indent, ssl, &msg, &msglen);
+    if (!(id & SSL_PSK))
+        ssl_print_signature(bio, indent, ssl, &msg, &msglen);
+    return !msglen;
 }
 
 static int ssl_print_certificate(BIO *bio, int indent,
