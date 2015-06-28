@@ -495,22 +495,22 @@ void ssl_load_ciphers(void)
     disabled_auth_mask = 0;
 
 #ifdef OPENSSL_NO_RSA
-    disabled_mkey_mask |= SSL_kRSA;
+    disabled_mkey_mask |= SSL_kRSA | SSL_kRSAPSK;
     disabled_auth_mask |= SSL_aRSA;
 #endif
 #ifdef OPENSSL_NO_DSA
     disabled_auth_mask |= SSL_aDSS;
 #endif
 #ifdef OPENSSL_NO_DH
-    disabled_mkey_mask |= SSL_kDHr | SSL_kDHd | SSL_kDHE;
+    disabled_mkey_mask |= SSL_kDHr | SSL_kDHd | SSL_kDHE | SSL_kDHEPSK;
     disabled_auth_mask |= SSL_aDH;
 #endif
 #ifdef OPENSSL_NO_EC
-    disabled_mkey_mask |= SSL_kECDHe | SSL_kECDHr;
+    disabled_mkey_mask |= SSL_kECDHe | SSL_kECDHr | SSL_kECDHEPSK;
     disabled_auth_mask |= SSL_aECDSA | SSL_aECDH;
 #endif
 #ifdef OPENSSL_NO_PSK
-    disabled_mkey_mask |= SSL_kPSK;
+    disabled_mkey_mask |= SSL_PSK;
     disabled_auth_mask |= SSL_aPSK;
 #endif
 #ifdef OPENSSL_NO_SRP
