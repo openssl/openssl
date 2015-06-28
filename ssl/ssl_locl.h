@@ -1277,9 +1277,11 @@ typedef struct ssl3_state_st {
         /* Temporary storage for premaster secret */
         unsigned char *pms;
         size_t pmslen;
+#ifndef OPENSSL_NO_PSK
         /* Temporary storage for PSK key */
         unsigned char *psk;
         size_t psklen;
+#endif
         /*
          * signature algorithms peer reports: e.g. supported signature
          * algorithms extension for server or as part of a certificate
