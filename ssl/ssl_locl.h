@@ -315,6 +315,14 @@
 /* SRP */
 # define SSL_kSRP        0x00000400L
 
+# define SSL_kRSAPSK             0x00000800L
+# define SSL_kECDHEPSK           0x00001000L
+# define SSL_kDHEPSK             0x00002000L
+
+/* all PSK */
+
+#define SSL_PSK     (SSL_kPSK | SSL_kRSAPSK | SSL_kECDHEPSK | SSL_kDHEPSK)
+
 /* Bits for algorithm_auth (server authentication) */
 /* RSA auth */
 # define SSL_aRSA                0x00000001L
@@ -1269,6 +1277,9 @@ typedef struct ssl3_state_st {
         /* Temporary storage for premaster secret */
         unsigned char *pms;
         size_t pmslen;
+        /* Temporary storage for PSK key */
+        unsigned char *psk;
+        size_t psklen;
         /*
          * signature algorithms peer reports: e.g. supported signature
          * algorithms extension for server or as part of a certificate
