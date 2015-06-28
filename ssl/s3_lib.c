@@ -4217,13 +4217,19 @@ int ssl3_renegotiate_check(SSL *s)
 /*
  * If we are using default SHA1+MD5 algorithms switch to new SHA256 PRF and
  * handshake macs if required.
+ *
+ * If PSK and using SHA384 for TLS < 1.2 switch to default.
  */
 long ssl_get_algorithm2(SSL *s)
 {
     long alg2 = s->s3->tmp.new_cipher->algorithm2;
-    if (s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_SHA256_PRF
-        && alg2 == (SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF))
-        return SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256;
+    if (s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_SHA256_PRF) {
+        if (alg2 == (SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF))
+            return SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256;
+    } else if (s->s3->tmp.new_cipher->algorithm_mkey & SSL_PSK) {
+        if (alg2 == (SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384))
+            return SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF;
+    }
     return alg2;
 }
 
