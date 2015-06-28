@@ -1629,6 +1629,15 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
     case SSL_kPSK:
         kx = "PSK";
         break;
+    case SSL_kRSAPSK:
+        kx = "RSAPSK";
+        break;
+    case SSL_kECDHEPSK:
+        kx = "ECDHEPSK";
+        break;
+    case SSL_kDHEPSK:
+        kx = "DHEPSK";
+        break;
     case SSL_kSRP:
         kx = "SRP";
         break;
