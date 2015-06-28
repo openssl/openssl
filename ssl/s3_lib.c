@@ -4259,13 +4259,52 @@ int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, int len)
 int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
                                int free_pms)
 {
-    s->session->master_key_length =
-        s->method->ssl3_enc->generate_master_secret(s, s->session->master_key,
-                                                    pms, pmslen);
-    if (free_pms)
-        OPENSSL_clear_free(pms, pmslen);
-    else
-        OPENSSL_cleanse(pms, pmslen);
+#ifndef OPENSSL_NO_PSK
+    unsigned long alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
+    if (alg_k & SSL_PSK) {
+        unsigned char *pskpms, *t;
+        size_t psklen = s->s3->tmp.psklen;
+        size_t pskpmslen;
+
+        /* create PSK premaster_secret */
+
+        /* For plain PSK "other_secret" is psklen zeroes */
+        if (alg_k & SSL_kPSK)
+            pmslen = psklen;
+
+        pskpmslen = 4 + pmslen + psklen;
+        pskpms = OPENSSL_malloc(pskpmslen);
+        if (pskpms == NULL)
+            return 0;
+        t = pskpms;
+        s2n(pmslen, t);
+        if (alg_k & SSL_kPSK)
+            memset(t, 0, pmslen);
+        else
+            memcpy(t, pms, pmslen);
+        t += pmslen;
+        s2n(psklen, t);
+        memcpy(t, s->s3->tmp.psk, psklen);
+
+        OPENSSL_clear_free(s->s3->tmp.psk, psklen);
+        s->s3->tmp.psk = NULL;
+        s->session->master_key_length =
+            s->method->ssl3_enc->generate_master_secret(s,
+                                                        s->session->master_key,
+                                                        pskpms, pskpmslen);
+        OPENSSL_clear_free(pskpms, pskpmslen);
+    } else
+#endif
+        s->session->master_key_length =
+            s->method->ssl3_enc->generate_master_secret(s,
+                                                        s->session->master_key,
+                                                        pms, pmslen);
+    if (pms) {
+        if (free_pms)
+            OPENSSL_clear_free(pms, pmslen);
+        else
+            OPENSSL_cleanse(pms, pmslen);
+    }
     if (s->server == 0)
         s->s3->tmp.pms = NULL;
     return s->session->master_key_length >= 0;
