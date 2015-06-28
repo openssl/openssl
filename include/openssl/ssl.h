@@ -204,6 +204,9 @@ extern "C" {
 # define SSL_TXT_kEECDH          "kEECDH"/* alias for kECDHE */
 # define SSL_TXT_kECDHE          "kECDHE"
 # define SSL_TXT_kPSK            "kPSK"
+# define SSL_TXT_kRSAPSK         "kRSAPSK"
+# define SSL_TXT_kECDHEPSK       "kECDHEPSK"
+# define SSL_TXT_kDHEPSK         "kDHEPSK"
 # define SSL_TXT_kGOST           "kGOST"
 # define SSL_TXT_kSRP            "kSRP"
 
