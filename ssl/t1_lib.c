@@ -1111,7 +1111,7 @@ void ssl_set_client_disabled(SSL *s)
     /* with PSK there must be client callback set */
     if (!s->psk_client_callback) {
         s->s3->tmp.mask_a |= SSL_aPSK;
-        s->s3->tmp.mask_k |= SSL_kPSK;
+        s->s3->tmp.mask_k |= SSL_PSK;
     }
 #endif                         /* OPENSSL_NO_PSK */
 #ifndef OPENSSL_NO_SRP
