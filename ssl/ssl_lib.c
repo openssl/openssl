@@ -2112,6 +2112,12 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
     mask_a |= SSL_aPSK;
     emask_k |= SSL_kPSK;
     emask_a |= SSL_aPSK;
+    if (mask_k & SSL_kRSA)
+        mask_k |= SSL_kRSAPSK;
+    if (mask_k & SSL_kDHE)
+        mask_k |= SSL_kDHEPSK;
+    if (mask_k & SSL_kECDHE)
+        mask_k |= SSL_kECDHEPSK;
 #endif
 
     s->s3->tmp.mask_k = mask_k;
