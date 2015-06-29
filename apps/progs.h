@@ -72,6 +72,7 @@ extern int ts_main(int argc, char *argv[]);
 extern int verify_main(int argc, char *argv[]);
 extern int version_main(int argc, char *argv[]);
 extern int x509_main(int argc, char *argv[]);
+extern int pbe_main(int argc, char *argv[]);
 
 extern OPTIONS asn1parse_options[];
 extern OPTIONS ca_options[];
@@ -121,6 +122,7 @@ extern OPTIONS ts_options[];
 extern OPTIONS verify_options[];
 extern OPTIONS version_options[];
 extern OPTIONS x509_options[];
+extern OPTIONS pbe_options[];
 
 #ifdef INCLUDE_FUNCTION_TABLE
 static FUNCTION functions[] = {
@@ -208,6 +210,7 @@ static FUNCTION functions[] = {
     { FT_general, "verify", verify_main, verify_options },
     { FT_general, "version", version_main, version_options },
     { FT_general, "x509", x509_main, x509_options },
+    { FT_general, "pbe", pbe_main, pbe_options },
 #ifndef OPENSSL_NO_MD2
     { FT_md, "md2", dgst_main},
 #endif
