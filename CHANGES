@@ -3,6 +3,14 @@
  _______________
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
+
+  *) Rewrite PSK to support ECDHE_PSK, DHE_PSK and RSA_PSK. Add ciphersuites
+     from RFC4279, RFC4785, RFC5487, RFC5489.
+
+     Thanks to Christian J. Dietrich and Giuseppe D'Angelo for the
+     original RSA_PSK patch.
+     [Steve Henson]
+
   *) Dropped support for the SSL3_FLAGS_DELAY_CLIENT_FINISHED flag. This SSLeay
      era flag was never set throughout the codebase (only read). Also removed
      SSL3_FLAGS_POP_BUFFER which was only used if
