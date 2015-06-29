@@ -35,7 +35,7 @@ COMMANDS= \
 	genpkey.o genrsa.o nseq.o ocsp.o passwd.o pkcs12.o pkcs7.o pkcs8.o \
 	pkey.o pkeyparam.o pkeyutl.o prime.o rand.o req.o rsa.o rsautl.o \
 	s_client.o s_server.o s_time.o sess_id.o smime.o speed.o spkac.o \
-	srp.o ts.o verify.o version.o x509.o
+	srp.o ts.o verify.o version.o x509.o pbe.o
 
 A_OBJ=apps.o opt.o
 A_SRC=apps.c opt.c
@@ -50,7 +50,7 @@ OBJ	= \
 	genpkey.o genrsa.o nseq.o ocsp.o passwd.o pkcs12.o pkcs7.o pkcs8.o \
 	pkey.o pkeyparam.o pkeyutl.o prime.o rand.o req.o rsa.o rsautl.o \
 	s_client.o s_server.o s_time.o sess_id.o smime.o speed.o spkac.o \
-	srp.o ts.o verify.o version.o x509.o
+	srp.o ts.o verify.o version.o x509.o pbe.o
 
 
 SRC	= \
@@ -59,7 +59,7 @@ SRC	= \
 	genpkey.c genrsa.c nseq.c ocsp.c passwd.c pkcs12.c pkcs7.c pkcs8.c \
 	pkey.c pkeyparam.c pkeyutl.c prime.c rand.c req.c rsa.c rsautl.c \
 	s_client.c s_server.c s_time.c sess_id.c smime.c speed.c spkac.c \
-	srp.c ts.c verify.c version.c x509.c
+	srp.c ts.c verify.c version.c x509.c pbe.c
 
 EXE_OBJ	= openssl.o $(OBJ) $(A_OBJ) $(S_OBJ) $(RAND_OBJ)
 EXE_SRC = openssl.c $(SRC) $(A_SRC) $(S_SRC) $(RAND_SRC)
