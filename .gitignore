@@ -119,8 +119,12 @@ tags
 TAGS
 
 # Windows
+/tmp32
+/tmp32.dbg
 /tmp32dll
 /tmp32dll.dbg
+/out32
+/out32.dbg
 /out32dll
 /out32dll.dbg
 /inc32

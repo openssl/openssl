@@ -3226,11 +3226,16 @@ $code.=<<___;
 .type	bn_get_bits5,\@abi-omnipotent
 .align	16
 bn_get_bits5:
-	mov	$inp,%r10
+	lea	0($inp),%r10
+	lea	1($inp),%r11
 	mov	$num,%ecx
-	shr	\$3,$num
-	movzw	(%r10,$num),%eax
-	and	\$7,%ecx
+	shr	\$4,$num
+	and	\$15,%ecx
+	lea	-8(%ecx),%eax
+	cmp	\$11,%ecx
+	cmova	%r11,%r10
+	cmova	%eax,%ecx
+	movzw	(%r10,$num,2),%eax
 	shrl	%cl,%eax
 	and	\$31,%eax
 	ret

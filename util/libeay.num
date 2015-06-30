@@ -4519,3 +4519,4 @@ bn_probable_prime_dh_retry              4878	NOEXIST::FUNCTION:
 bn_probable_prime_dh_coprime            4879	NOEXIST::FUNCTION:
 bn_probable_prime_dh                    4880	NOEXIST::FUNCTION:
 EC_GROUP_get_mont_data                  4881	EXIST::FUNCTION:EC
+EVP_PKEY_asn1_set_item                  4882	EXIST::FUNCTION:
