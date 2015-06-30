@@ -1012,6 +1012,10 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         /* move any remaining fragment bytes: */
         for (k = 0; k < s->rlayer.handshake_fragment_len; k++)
             s->rlayer.handshake_fragment[k] = *src++;
+
+        if (recvd_type != NULL)
+            *recvd_type = SSL3_RT_HANDSHAKE;
+
         return n;
     }
 
