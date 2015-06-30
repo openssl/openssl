@@ -268,6 +268,12 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
     if (src->peer != NULL)
         CRYPTO_add(&src->peer->references, 1, CRYPTO_LOCK_X509);
 
+    if (src->peer_chain != NULL) {
+        dest->peer_chain = X509_chain_up_ref(src->peer_chain);
+        if (dest->peer_chain == NULL)
+            goto err;
+    }
+
 #ifndef OPENSSL_NO_PSK
     if (src->psk_identity_hint) {
         dest->psk_identity_hint = BUF_strdup(src->psk_identity_hint);
