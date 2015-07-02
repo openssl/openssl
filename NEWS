@@ -7,7 +7,7 @@
 
   Major changes between OpenSSL 1.0.2c and OpenSSL 1.0.2d [under development]
 
-      o
+      o Alternate chains certificate forgery (CVE-2015-1793)
 
   Major changes between OpenSSL 1.0.2b and OpenSSL 1.0.2c [12 Jun 2015]
 
