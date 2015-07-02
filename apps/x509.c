@@ -913,16 +913,6 @@ int x509_main(int argc, char **argv)
             i = PEM_write_bio_X509_AUX(out, x);
         else
             i = PEM_write_bio_X509(out, x);
-    } else if (outformat == FORMAT_NETSCAPE) {
-        NETSCAPE_X509 nx;
-        ASN1_OCTET_STRING hdr;
-
-        hdr.data = (unsigned char *)NETSCAPE_CERT_HDR;
-        hdr.length = strlen(NETSCAPE_CERT_HDR);
-        nx.header = &hdr;
-        nx.cert = x;
-
-        i = ASN1_item_i2d_bio(ASN1_ITEM_rptr(NETSCAPE_X509), out, &nx);
     } else {
         BIO_printf(bio_err, "bad output format specified for outfile\n");
         goto end;

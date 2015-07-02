@@ -509,11 +509,6 @@ typedef STACK_OF(ASN1_TYPE) ASN1_SEQUENCE_ANY;
 DECLARE_ASN1_ENCODE_FUNCTIONS_const(ASN1_SEQUENCE_ANY, ASN1_SEQUENCE_ANY)
 DECLARE_ASN1_ENCODE_FUNCTIONS_const(ASN1_SEQUENCE_ANY, ASN1_SET_ANY)
 
-typedef struct NETSCAPE_X509_st {
-    ASN1_OCTET_STRING *header;
-    X509 *cert;
-} NETSCAPE_X509;
-
 /* This is used to contain a list of bit names */
 typedef struct BIT_STRING_BITNAME_st {
     int bitnum;
@@ -797,8 +792,6 @@ const char *ASN1_tag2str(int tag);
 
 /* Used to load and write netscape format cert */
 
-DECLARE_ASN1_FUNCTIONS(NETSCAPE_X509)
-
 int ASN1_UNIVERSALSTRING_to_string(ASN1_UNIVERSALSTRING *s);
 
 int ASN1_TYPE_set_octetstring(ASN1_TYPE *a, unsigned char *data, int len);
@@ -1014,8 +1007,6 @@ void ERR_load_ASN1_strings(void);
 # define ASN1_F_D2I_NETSCAPE_RSA_2                        153
 # define ASN1_F_D2I_PRIVATEKEY                            154
 # define ASN1_F_D2I_PUBLICKEY                             155
-# define ASN1_F_D2I_RSA_NET                               200
-# define ASN1_F_D2I_RSA_NET_2                             201
 # define ASN1_F_D2I_X509                                  156
 # define ASN1_F_D2I_X509_CINF                             157
 # define ASN1_F_D2I_X509_PKEY                             159
@@ -1027,7 +1018,6 @@ void ERR_load_ASN1_strings(void);
 # define ASN1_F_I2D_EC_PUBKEY                             181
 # define ASN1_F_I2D_PRIVATEKEY                            163
 # define ASN1_F_I2D_PUBLICKEY                             164
-# define ASN1_F_I2D_RSA_NET                               162
 # define ASN1_F_I2D_RSA_PUBKEY                            165
 # define ASN1_F_LONG_C2I                                  166
 # define ASN1_F_OID_MODULE_INIT                           174
