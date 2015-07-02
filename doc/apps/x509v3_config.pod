@@ -118,14 +118,12 @@ following PKIX, NS and MS values are meaningful:
  msCodeInd		Microsoft Individual Code Signing (authenticode)
  msCodeCom		Microsoft Commercial Code Signing (authenticode)
  msCTLSign		Microsoft Trust List Signing
- msSGC			Microsoft Server Gated Crypto
  msEFS			Microsoft Encrypted File System
- nsSGC			Netscape Server Gated Crypto
 
 Examples:
 
  extendedKeyUsage=critical,codeSigning,1.2.3.4
- extendedKeyUsage=nsSGC,msSGC
+ extendedKeyUsage=serverAuth,clientAuth
 
 
 =head2 Subject Key Identifier.
