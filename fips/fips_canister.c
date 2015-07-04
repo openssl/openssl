@@ -32,7 +32,8 @@ const void         *FIPS_text_end(void);
 				  defined(__aarch64__)			|| \
 				  defined(__i386__)|| defined(__i386)))	|| \
 	(defined(__vxworks)   && (defined(__ppc__) || defined(__ppc)	|| \
-				  defined(__mips__)|| defined(__mips)))	|| \
+				  defined(__mips__)|| defined(__mips)	|| \
+				  defined(__i386__)|| defined(__i386)))	|| \
         (defined(__NetBSD__)  && (defined(__powerpc__) || defined(__i386))) || \
 	(defined(__linux)     && ((defined(__PPC__) && !defined(__PPC64__)) || \
 				  defined(__arm__) || defined(__arm)) || \
