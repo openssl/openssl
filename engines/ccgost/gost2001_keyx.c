@@ -42,7 +42,8 @@ static int VKO_compute_key(unsigned char *shared_key, size_t shared_key_size,
     Y = BN_CTX_get(ctx);
     EC_GROUP_get_order(EC_KEY_get0_group(priv_key), order, ctx);
     BN_mod_mul(p, key, UKM, order, ctx);
-    EC_POINT_mul(EC_KEY_get0_group(priv_key), pnt, NULL, pub_key, p, ctx);
+    if (!EC_POINT_mul(EC_KEY_get0_group(priv_key), pnt, NULL, pub_key, p, ctx))
+	goto err;
     EC_POINT_get_affine_coordinates_GFp(EC_KEY_get0_group(priv_key),
                                         pnt, X, Y, ctx);
     /*
@@ -59,6 +60,7 @@ static int VKO_compute_key(unsigned char *shared_key, size_t shared_key_size,
     hash_block(&hash_ctx, hashbuf, 64);
     finish_hash(&hash_ctx, shared_key);
     done_gost_hash_ctx(&hash_ctx);
+err:
     BN_free(UKM);
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
