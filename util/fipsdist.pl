@@ -58,7 +58,7 @@ while (<STDIN>)
 		}
 	else
 		{
-		next unless (/^(fips\/|crypto|util|test|include|ms|c6x)/);
+		next unless (/^(fips\/|crypto|util|test|include|ms|c6x|iOS)/);
 		}
 	if (/^crypto\/([^\/]+)/)
 		{
