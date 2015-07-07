@@ -114,6 +114,7 @@ int crl_main(int argc, char **argv)
     EVP_PKEY *pkey;
     const EVP_MD *digest = EVP_sha1();
     unsigned long nmflag = 0;
+    char nmflag_set = 0;
     char *infile = NULL, *outfile = NULL, *crldiff = NULL, *keyfile = NULL;
     char *CAfile = NULL, *CApath = NULL, *prog;
     OPTION_CHOICE o;
@@ -206,6 +207,7 @@ int crl_main(int argc, char **argv)
             badsig = 1;
             break;
         case OPT_NAMEOPT:
+            nmflag_set = 1;
             if (!set_name_ex(&nmflag, opt_arg()))
                 goto opthelp;
             break;
@@ -216,6 +218,9 @@ int crl_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
+
+    if (!nmflag_set)
+        nmflag = XN_FLAG_ONELINE;
 
     if (!app_load_modules(NULL))
         goto end;

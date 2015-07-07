@@ -227,6 +227,7 @@ int x509_main(int argc, char **argv)
     int text = 0, serial = 0, subject = 0, issuer = 0, startdate = 0;
     int checkoffset = 0, enddate = 0;
     unsigned long nmflag = 0, certflag = 0;
+    char nmflag_set = 0;
     OPTION_CHOICE o;
     ENGINE *e = NULL;
 #ifndef OPENSSL_NO_MD5
@@ -360,6 +361,7 @@ int x509_main(int argc, char **argv)
                 goto opthelp;
             break;
         case OPT_NAMEOPT:
+            nmflag_set = 1;
             if (!set_name_ex(&nmflag, opt_arg()))
                 goto opthelp;
             break;
@@ -487,6 +489,9 @@ int x509_main(int argc, char **argv)
         BIO_printf(bio_err, "%s: Unknown parameter %s\n", prog, argv[0]);
         goto opthelp;
     }
+
+    if (!nmflag_set)
+        nmflag = XN_FLAG_ONELINE;
 
     if (!app_load_modules(NULL))
         goto end;

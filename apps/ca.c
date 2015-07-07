@@ -325,7 +325,7 @@ opthelp:
                 ret = 0;
                 goto end;
             case OPT_IN:
-		req = 1;
+                req = 1;
                 infile = opt_arg();
                 break;
             case OPT_OUT:
@@ -638,8 +638,10 @@ end_of_options:
             goto end;
         }
         default_op = 0;
-    } else
+    } else {
+        nameopt = XN_FLAG_ONELINE;
         ERR_clear_error();
+    }
 
     f = NCONF_get_string(conf, section, ENV_CERTOPT);
 
