@@ -211,6 +211,7 @@ int req_main(int argc, char **argv)
     int nodes = 0, kludge = 0, newhdr = 0, subject = 0, pubkey = 0;
     long newkey = -1;
     unsigned long chtype = MBSTRING_ASC, nmflag = 0, reqflag = 0;
+    char nmflag_set = 0;
 
 #ifndef OPENSSL_NO_DES
     cipher = EVP_des_ede3_cbc();
@@ -323,6 +324,7 @@ int req_main(int argc, char **argv)
             chtype = MBSTRING_UTF8;
             break;
         case OPT_NAMEOPT:
+            nmflag_set = 1;
             if (!set_name_ex(&nmflag, opt_arg()))
                 goto opthelp;
             break;
@@ -352,7 +354,7 @@ int req_main(int argc, char **argv)
                 goto opthelp;
             break;
         case OPT_SUBJECT:
-	    subject = 1;
+            subject = 1;
             break;
         case OPT_SUBJ:
             subj = opt_arg();
@@ -375,6 +377,10 @@ int req_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
+
+    if (!nmflag_set)
+        nmflag = XN_FLAG_ONELINE;
+
     private = newreq && (pkey == NULL) ? 1 : 0;
 
     if (!app_passwd(passargin, passargout, &passin, &passout)) {
