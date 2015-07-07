@@ -3,6 +3,10 @@
  _______________
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
+  *) Changed the default name options in the "ca", "crl", "req" and "x509"
+     to be "oneline" instead of "compat".
+     [Richard Levitte]
+
   *) Remove SSL_OP_TLS_BLOCK_PADDING_BUG. This is SSLeay legacy, we're
      not aware of clients that still exhibit this bug, and the workaround
      hasn't been working properly for a while.
