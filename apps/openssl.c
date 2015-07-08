@@ -176,6 +176,7 @@ static int apps_startup()
     ERR_load_SSL_strings();
 
     OPENSSL_load_builtin_modules();
+    SSL_add_ssl_module();
 #ifndef OPENSSL_NO_ENGINE
     ENGINE_load_builtin_engines();
 #endif
