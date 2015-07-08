@@ -807,7 +807,7 @@ typedef enum OPTION_choice {
     OPT_QUIET, OPT_BRIEF, OPT_NO_DHE,
     OPT_NO_RESUME_EPHEMERAL, OPT_PSK_HINT, OPT_PSK, OPT_SRPVFILE,
     OPT_SRPUSERSEED, OPT_REV, OPT_WWW, OPT_UPPER_WWW, OPT_HTTP, OPT_ASYNC,
-    OPT_SSL3,
+    OPT_SSL_CONFIG, OPT_SSL3,
     OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
     OPT_DTLS1_2, OPT_TIMEOUT, OPT_MTU, OPT_CHAIN, OPT_LISTEN,
     OPT_ID_PREFIX, OPT_RAND, OPT_SERVERNAME, OPT_SERVERNAME_FATAL,
@@ -915,6 +915,7 @@ OPTIONS s_server_options[] = {
     {"brief", OPT_BRIEF, '-'},
     {"rev", OPT_REV, '-'},
     {"async", OPT_ASYNC, '-', "Operate in asynchronous mode"},
+    {"ssl_config", OPT_SSL_CONFIG, 's'},
     OPT_S_OPTIONS,
     OPT_V_OPTIONS,
     OPT_X_OPTIONS,
@@ -1009,6 +1010,7 @@ int s_server_main(int argc, char *argv[])
     EVP_PKEY *s_key2 = NULL;
     X509 *s_cert2 = NULL;
     tlsextctx tlsextcbp = { NULL, NULL, SSL_TLSEXT_ERR_ALERT_WARNING };
+    const char *ssl_config = NULL;
 #ifndef OPENSSL_NO_NEXTPROTONEG
     const char *next_proto_neg_in = NULL;
     tlsextnextprotoctx next_proto = { NULL, 0 };
@@ -1336,6 +1338,9 @@ int s_server_main(int argc, char *argv[])
         case OPT_HTTP:
             www = 3;
             break;
+        case OPT_SSL_CONFIG:
+            ssl_config = opt_arg();
+            break;
         case OPT_SSL3:
 #ifndef OPENSSL_NO_SSL3
             meth = SSLv3_server_method();
@@ -1613,6 +1618,15 @@ int s_server_main(int argc, char *argv[])
         ERR_print_errors(bio_err);
         goto end;
     }
+    if (ssl_config) {
+        if (SSL_CTX_config(ctx, ssl_config) == 0) {
+            BIO_printf(bio_err, "Error using configuration \"%s\"\n",
+                       ssl_config);
+        ERR_print_errors(bio_err);
+        goto end;
+        }
+    }
+
     if (session_id_prefix) {
         if (strlen(session_id_prefix) >= 32)
             BIO_printf(bio_err,

@@ -466,7 +466,7 @@ typedef enum OPTION_choice {
     OPT_MSG, OPT_MSGFILE, OPT_ENGINE, OPT_TRACE, OPT_SECURITY_DEBUG,
     OPT_SECURITY_DEBUG_VERBOSE, OPT_SHOWCERTS, OPT_NBIO_TEST, OPT_STATE,
     OPT_PSK_IDENTITY, OPT_PSK, OPT_SRPUSER, OPT_SRPPASS, OPT_SRP_STRENGTH,
-    OPT_SRP_LATEUSER, OPT_SRP_MOREGROUPS, OPT_SSL3,
+    OPT_SRP_LATEUSER, OPT_SRP_MOREGROUPS, OPT_SSL3, OPT_SSL_CONFIG,
     OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
     OPT_DTLS1_2, OPT_TIMEOUT, OPT_MTU, OPT_KEYFORM, OPT_PASS,
     OPT_CERT_CHAIN, OPT_CAPATH, OPT_NOCAPATH, OPT_CHAINCAPATH, OPT_VERIFYCAPATH,
@@ -561,6 +561,7 @@ OPTIONS s_client_options[] = {
     {"alpn", OPT_ALPN, 's',
      "Enable ALPN extension, considering named protocols supported (comma-separated list)"},
     {"async", OPT_ASYNC, '-', "Support asynchronous operation"},
+    {"ssl_config", OPT_SSL_CONFIG, 's'},
     OPT_S_OPTIONS,
     OPT_V_OPTIONS,
     OPT_X_OPTIONS,
@@ -686,6 +687,7 @@ int s_client_main(int argc, char **argv)
     char *servername = NULL;
     const char *alpn_in = NULL;
     tlsextctx tlsextcbp = { NULL, 0 };
+    const char *ssl_config = NULL;
 #define MAX_SI_TYPES 100
     unsigned short serverinfo_types[MAX_SI_TYPES];
     int serverinfo_count = 0, start = 0, len;
@@ -940,6 +942,9 @@ int s_client_main(int argc, char **argv)
         case OPT_SRP_MOREGROUPS:
             break;
 #endif
+        case OPT_SSL_CONFIG:
+            ssl_config = opt_arg();
+            break;
         case OPT_SSL3:
 #ifndef OPENSSL_NO_SSL3
             meth = SSLv3_client_method();
@@ -1199,6 +1204,15 @@ int s_client_main(int argc, char **argv)
 
     if (sdebug)
         ssl_ctx_security_debug(ctx, sdebug);
+
+    if (ssl_config) {
+        if (SSL_CTX_config(ctx, ssl_config) == 0) {
+            BIO_printf(bio_err, "Error using configuration \"%s\"\n",
+                       ssl_config);
+        ERR_print_errors(bio_err);
+        goto end;
+        }
+    }
 
     if (vpmtouched && !SSL_CTX_set1_param(ctx, vpm)) {
         BIO_printf(bio_err, "Error setting verify params\n");
