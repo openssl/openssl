@@ -47,7 +47,7 @@ if ($flavour =~ /3[12]/) {
 	$g="g";
 }
 
-while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
+while (($output=shift) && ($output!~/^\w[\w\-\/]*\.\w+$/)) {}
 open STDOUT,">$output";
 
 $softonly=0;

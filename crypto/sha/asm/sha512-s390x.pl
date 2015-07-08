@@ -64,7 +64,7 @@ $tbl="%r13";
 $T1="%r14";
 $sp="%r15";
 
-while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
+while (($output=shift) && ($output!~/^\w[\w\-\/]*\.\w+$/)) {}
 open STDOUT,">$output";
 
 if ($output =~ /512/) {
