@@ -58,6 +58,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/conf.h>
@@ -215,6 +216,84 @@ int CONF_dump_bio(LHASH_OF(CONF_VALUE) *conf, BIO *out)
     CONF ctmp;
     CONF_set_nconf(&ctmp, conf);
     return NCONF_dump_bio(&ctmp, out);
+}
+
+#define CIPHER_POLICIES "cipher_profiles"
+static STACK_OF(CONF_VALUE) *openssl_profile_values = NULL;
+
+STACK_OF(CONF_VALUE) *_CONF_get_profile_values(void)
+{
+    return openssl_profile_values;
+}
+
+void CONF_profile_unload(void)
+{
+    SKM_sk_free(CONF_VALUE, openssl_profile_values);
+    openssl_profile_values = NULL;
+}
+
+static void confval_free(CONF_VALUE *c)
+{
+    OPENSSL_free(c->value);
+    OPENSSL_free(c->name);
+    OPENSSL_free(c->section);
+    OPENSSL_free(c);
+}
+
+static CONF_VALUE *confval_copy(const CONF_VALUE *src)
+{
+    CONF_VALUE *r;
+
+    r = OPENSSL_malloc(sizeof(*r));
+    if (r == NULL)
+	return NULL;
+
+    memset(r, 0, sizeof(*r));
+
+    if (src->section) {
+    	r->section = OPENSSL_strdup(src->section);
+    	if (r->section == NULL) {
+	    confval_free(r);
+	    return NULL;
+    	}
+    }
+    if (src->name) {
+    	r->name = OPENSSL_strdup(src->name);
+    	if (r->name == NULL) {
+	    confval_free(r);
+	    return NULL;
+    	}
+    }
+    if (src->value) {
+    	r->value = OPENSSL_strdup(src->value);
+    	if (r->value == NULL) {
+	    confval_free(r);
+	    return NULL;
+    	}
+    }
+
+    return r;
+}
+
+int CONF_profile_load(const CONF *cnf)
+{
+    STACK_OF(CONF_VALUE) *t;
+
+    if (openssl_profile_values != NULL)
+	return 1;
+
+    if (!cnf)
+	return 1;
+
+    t = NCONF_get_section(cnf, CIPHER_POLICIES);
+    if (!t)
+        return 0;
+
+    openssl_profile_values = sk_CONF_VALUE_deep_copy(t, confval_copy, confval_free);
+    if (!openssl_profile_values)
+        return 0;
+
+    return 1;
 }
 
 /*

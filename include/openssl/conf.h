@@ -199,6 +199,9 @@ int CONF_parse_list(const char *list, int sep, int nospc,
                     int (*list_cb) (const char *elem, int len, void *usr),
                     void *arg);
 
+int CONF_profile_load(const CONF *cnf);
+void CONF_profile_unload(void);
+
 void OPENSSL_load_builtin_modules(void);
 
 /* BEGIN ERROR CODES */

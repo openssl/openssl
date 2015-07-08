@@ -131,6 +131,11 @@ int CONF_modules_load(const CONF *cnf, const char *appname,
     if (!cnf)
         return 1;
 
+    /* This is unrelated but added here because everyone calls
+     * CONF_modules_load(), but no other conf function.
+     */
+    CONF_profile_load(cnf);
+
     if (appname)
         vsection = NCONF_get_string(cnf, NULL, appname);
 
@@ -401,6 +406,7 @@ void CONF_modules_unload(int all)
 {
     int i;
     CONF_MODULE *md;
+    CONF_profile_unload();
     CONF_modules_finish();
     /* unload modules in reverse order */
     for (i = sk_CONF_MODULE_num(supported_modules) - 1; i >= 0; i--) {
