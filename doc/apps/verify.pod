@@ -182,13 +182,17 @@ behaviour to match that of OpenSSL versions prior to 1.1.0.
 
 =item B<-untrusted file>
 
-A file of untrusted certificates. The file should contain multiple certificates
-in PEM format concatenated together.
+A file of untrusted certificates. The file should contain one or more
+certificates in PEM format.
 
 =item B<-trusted file>
 
-A file of additional trusted certificates. The file should contain multiple
-certificates in PEM format concatenated together.
+A file of trusted certificates. The file contain one or more
+certificates in PEM format.
+With this option, no additional (e.g., default) certificate lists
+are consulted. That is, the only trusted issuers are those listed
+in B<file>.
+This option cannot be used with the B<-CAfile> or B<-CApath> options.
 
 =item B<-use_deltas>
 
