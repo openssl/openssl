@@ -889,12 +889,21 @@ v3nametest.o: ../include/openssl/sha.h ../include/openssl/stack.h
 v3nametest.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
 v3nametest.o: ../include/openssl/x509_vfy.h ../include/openssl/x509v3.h
 v3nametest.o: v3nametest.c
-verify_extra_test.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
+verify_extra_test.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+verify_extra_test.o: ../include/openssl/buffer.h ../include/openssl/crypto.h
+verify_extra_test.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+verify_extra_test.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+verify_extra_test.o: ../include/openssl/err.h ../include/openssl/evp.h
+verify_extra_test.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
+verify_extra_test.o: ../include/openssl/objects.h
 verify_extra_test.o: ../include/openssl/opensslconf.h
 verify_extra_test.o: ../include/openssl/opensslv.h
-verify_extra_test.o: ../include/openssl/ossl_typ.h
-verify_extra_test.o: ../include/openssl/safestack.h ../include/openssl/stack.h
-verify_extra_test.o: ../include/openssl/symhacks.h verify_extra_test.c
+verify_extra_test.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
+verify_extra_test.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
+verify_extra_test.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+verify_extra_test.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+verify_extra_test.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
+verify_extra_test.o: verify_extra_test.c
 wp_test.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 wp_test.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 wp_test.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
