@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.1o and 1.0.1p [xx XXX xxxx]
+ Changes between 1.0.1o and 1.0.1p [9 Jul 2015]
 
   *) Alternate chains certificate forgery
 
