@@ -88,7 +88,7 @@ OPTIONS verify_options[] = {
     {"CApath", OPT_CAPATH, '/', "A directory of trusted certificates"},
     {"CAfile", OPT_CAFILE, '<', "A file of trusted certificates"},
     {"untrusted", OPT_UNTRUSTED, '<', "A file of untrusted certificates"},
-    {"trusted", OPT_TRUSTED, '<', "A file of additional trusted certificates"},
+    {"trusted", OPT_TRUSTED, '<', "A file of trusted certificates"},
     {"CRLfile", OPT_CRLFILE, '<',
         "File containing one or more CRL's (in PEM format) to load"},
     {"crl_download", OPT_CRL_DOWNLOAD, '-',
@@ -180,6 +180,12 @@ int verify_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
+    if (trustfile && (CAfile || CApath)) {
+        BIO_printf(bio_err,
+                   "%s: Cannot use -trusted with -CAfile or -CApath\n",
+                   prog);
+        goto end;
+    }
 
     if (!app_load_modules(NULL))
         goto end;
