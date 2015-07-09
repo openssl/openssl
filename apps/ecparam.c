@@ -419,8 +419,9 @@ int MAIN(int argc, char **argv)
         if (!EC_GROUP_check(group, NULL)) {
             BIO_printf(bio_err, "failed\n");
             ERR_print_errors(bio_err);
-        } else
-            BIO_printf(bio_err, "ok\n");
+            goto end;
+        }
+        BIO_printf(bio_err, "ok\n");
 
     }
 
