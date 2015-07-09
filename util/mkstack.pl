@@ -283,7 +283,7 @@ foreach $type_thing (sort @stacklst) {
 EOF
 }
 
-foreach $type_thing (sort @sstacklst) {
+foreach $type_thing (sort { $a->[0] cmp $b->[0]} @sstacklst) {
     my $t1 = $type_thing->[0];
     my $t2 = $type_thing->[1];
     $new_stackfile .= <<EOF;
