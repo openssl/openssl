@@ -925,6 +925,11 @@ long SSL_SESSION_set_time(SSL_SESSION *s, long t)
     return (t);
 }
 
+const char *SSL_SESSION_get0_hostname(const SSL_SESSION *s)
+{
+    return s->tlsext_hostname;
+}
+
 int SSL_SESSION_has_ticket(const SSL_SESSION *s)
 {
     return (s->tlsext_ticklen > 0) ? 1 : 0;
