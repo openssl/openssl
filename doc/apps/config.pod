@@ -208,6 +208,34 @@ For example:
 
  fips_mode = on
 
+=head2 SSL CONFIGURATION MODULE
+
+This module has the name B<ssl_conf> which points to a section containing
+SSL configurations.
+
+Each line in the SSL configuration section contains the name of the
+configuration and the section containing it.
+
+Each configuration section consists of command value pairs for B<SSL_CONF>.
+Each pair will be passed to a B<SSL_CTX> or B<SSL> structure if it calls
+SSL_CTX_config() or SSL_config() with the appropriate configuration name.
+
+Note: any characters before an initial dot in the configuration section are
+ignored so the same command can be used multiple times.
+
+For example:
+
+ ssl_conf = ssl_sect
+
+ [ssl_sect]
+
+ server = server_section
+
+ [server_section]
+
+ RSA.Certificate = server-rsa.pem
+ ECDSA.Certificate = server-ecdsa.pem
+ Ciphers = ALL:!RC4
 
 =head1 NOTES
 
