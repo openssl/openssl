@@ -482,7 +482,7 @@ TABLE: Configure Configurations/*.conf
 # and read directly, requiring GNU-Tar. Call "make TAR=gtar dist" if the normal
 # tar does not support the --files-from option.
 TAR_COMMAND=$(TAR) $(TARFLAGS) --files-from ../$(TARFILE).list \
-	                       --owner openssl --group openssl \
+	                       --owner openssl:0 --group openssl:0 \
 			       --transform 's|^|openssl-$(VERSION)/|' \
 			       -cvf -
 
