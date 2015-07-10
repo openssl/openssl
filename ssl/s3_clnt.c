@@ -2373,6 +2373,7 @@ int ssl3_send_client_key_exchange(SSL *s)
             if (!pms)
                 goto memerr;
 
+            memset(pms,0,pmslen);
             if (s->session->peer == NULL) {
                 /*
                  * We should always have a server certificate with SSL_kRSA.
