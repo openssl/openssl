@@ -503,7 +503,7 @@ int ssl3_accept(SSL *s)
                     * With normal PSK Certificates and Certificate Requests
                     * are omitted
                     */
-                   || (s->s3->tmp.new_cipher->algorithm_mkey & SSL_kPSK)) {
+                   || (s->s3->tmp.new_cipher->algorithm_mkey & SSL_PSK)) {
                 /* no cert request */
                 skip = 1;
                 s->s3->tmp.cert_request = 0;
