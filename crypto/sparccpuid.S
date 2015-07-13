@@ -127,7 +127,7 @@ OPENSSL_wipe_cpu:
 			fmovs	%f1,%f3
 			fmovs	%f0,%f2
 
-	add	%fp,BIAS,%i0	! return pointer to caller´s top of stack
+	add	%fp,BIAS,%i0	! return pointer to callerÂ´s top of stack
 
 	ret
 	restore
