@@ -891,7 +891,7 @@ ret?:						; B0 holds rounds or zero
 	MVC	B0,ILC
 ||	SUB	B0,1,B0
 
-	GMPY4	$K[0],A24,$Kx9[0]		; ·0x09
+	GMPY4	$K[0],A24,$Kx9[0]		; Â·0x09
 ||	GMPY4	$K[1],A24,$Kx9[1]
 ||	MVK	0x00000D0D,A25
 ||	MVK	0x00000E0E,B25
@@ -900,14 +900,14 @@ ret?:						; B0 holds rounds or zero
 ||	MVKH	0x0D0D0000,A25
 ||	MVKH	0x0E0E0000,B25
 
-	GMPY4	$K[0],B24,$KxB[0]		; ·0x0B
+	GMPY4	$K[0],B24,$KxB[0]		; Â·0x0B
 ||	GMPY4	$K[1],B24,$KxB[1]
 	GMPY4	$K[2],B24,$KxB[2]
 ||	GMPY4	$K[3],B24,$KxB[3]
 
 	SPLOOP	11				; InvMixColumns
 ;;====================================================================
-	GMPY4	$K[0],A25,$KxD[0]		; ·0x0D
+	GMPY4	$K[0],A25,$KxD[0]		; Â·0x0D
 ||	GMPY4	$K[1],A25,$KxD[1]
 ||	SWAP2	$Kx9[0],$Kx9[0]			; rotate by 16
 ||	SWAP2	$Kx9[1],$Kx9[1]
@@ -924,7 +924,7 @@ ret?:						; B0 holds rounds or zero
 || [B0]	LDW	*${KPA}[6],$K[2]
 || [B0]	LDW	*${KPB}[7],$K[3]
 
-	GMPY4	$s[0],B25,$KxE[0]		; ·0x0E
+	GMPY4	$s[0],B25,$KxE[0]		; Â·0x0E
 ||	GMPY4	$s[1],B25,$KxE[1]
 ||	XOR	$Kx9[0],$KxB[0],$KxB[0]
 ||	XOR	$Kx9[1],$KxB[1],$KxB[1]
@@ -944,7 +944,7 @@ ret?:						; B0 holds rounds or zero
 
 	XOR	$KxE[0],$KxD[0],$KxE[0]
 ||	XOR	$KxE[1],$KxD[1],$KxE[1]
-|| [B0]	GMPY4	$K[0],A24,$Kx9[0]		; ·0x09
+|| [B0]	GMPY4	$K[0],A24,$Kx9[0]		; Â·0x09
 || [B0]	GMPY4	$K[1],A24,$Kx9[1]
 ||	ADDAW	$KPA,4,$KPA
 	XOR	$KxE[2],$KxD[2],$KxE[2]
@@ -955,7 +955,7 @@ ret?:						; B0 holds rounds or zero
 
 	XOR	$KxB[0],$KxE[0],$KxE[0]
 ||	XOR	$KxB[1],$KxE[1],$KxE[1]
-|| [B0]	GMPY4	$K[0],B24,$KxB[0]		; ·0x0B
+|| [B0]	GMPY4	$K[0],B24,$KxB[0]		; Â·0x0B
 || [B0]	GMPY4	$K[1],B24,$KxB[1]
 	XOR	$KxB[2],$KxE[2],$KxE[2]
 ||	XOR	$KxB[3],$KxE[3],$KxE[3]
