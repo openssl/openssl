@@ -86,8 +86,14 @@ typedef struct {
 
 /* Sense of name is inverted e.g. "TLSv1" will clear SSL_OP_NO_TLSv1 */
 #define SSL_TFLAG_INV   0x1
-/* Flags refers to cert_flags not options */
-#define SSL_TFLAG_CERT  0x2
+/* Mask for type of flag referred to */
+#define SSL_TFLAG_TYPE_MASK 0xf00
+/* Flag is for options */
+#define SSL_TFLAG_OPTION    0x000
+/* Flag is for cert_flags */
+#define SSL_TFLAG_CERT      0x100
+/* Flag is for verify mode */
+#define SSL_TFLAG_VFY       0x200
 /* Option can only be used for clients */
 #define SSL_TFLAG_CLIENT SSL_CONF_FLAG_CLIENT
 /* Option can only be used for servers */
@@ -106,6 +112,11 @@ typedef struct {
         {str, (int)(sizeof(str) - 1), SSL_TFLAG_INV|SSL_TFLAG_SERVER, flag}
 #define SSL_FLAG_TBL_CERT(str, flag) \
         {str, (int)(sizeof(str) - 1), SSL_TFLAG_CERT|SSL_TFLAG_BOTH, flag}
+
+#define SSL_FLAG_VFY_CLI(str, flag) \
+        {str, (int)(sizeof(str) - 1), SSL_TFLAG_VFY | SSL_TFLAG_CLIENT, flag}
+#define SSL_FLAG_VFY_SRV(str, flag) \
+        {str, (int)(sizeof(str) - 1), SSL_TFLAG_VFY | SSL_TFLAG_SERVER, flag}
 
 /*
  * Opaque structure containing SSL configuration context.
@@ -129,30 +140,46 @@ struct ssl_conf_ctx_st {
     char *cert_filename[SSL_PKEY_NUM];
     /* Pointer to SSL or SSL_CTX cert_flags or NULL if none */
     uint32_t *pcert_flags;
+    /* Pointer to SSL or SSL_CTX verify_mode or NULL if none */
+    uint32_t *pvfy_flags;
     /* Current flag table being worked on */
     const ssl_flag_tbl *tbl;
     /* Size of table */
     size_t ntbl;
+    /* Client CA names */
+    STACK_OF(X509_NAME) *canames;
 };
 
 static void ssl_set_option(SSL_CONF_CTX *cctx, unsigned int name_flags,
                            unsigned long option_value, int onoff)
 {
+    unint32_t *pflags;
     if (cctx->poptions == NULL)
         return;
     if (name_flags & SSL_TFLAG_INV)
         onoff ^= 1;
-    if (name_flags & SSL_TFLAG_CERT) {
-        if (onoff)
-            *cctx->pcert_flags |= option_value;
-        else
-            *cctx->pcert_flags &= ~option_value;
-    } else {
-        if (onoff)
-            *cctx->poptions |= option_value;
-        else
-            *cctx->poptions &= ~option_value;
+    switch (name_flags & SSL_TFLAG_TYPE_MASK) {
+
+    case SSL_TFLAG_CERT:
+        pflags = cctx->pcert_flags;
+        break;
+
+    case SSL_TFLAG_VFY:
+        pflags =  cctx->pvfy_flags;
+        break;
+
+    case SSL_TFLAG_OPTION:
+        pflags = cctx->poptions;
+        break;
+
+    default:
+        return;
+
     }
+    if (onoff)
+        *pflags |= option_value;
+    else
+        *pflags &= ~option_value;
 }
 
 static int ssl_match_option(SSL_CONF_CTX *cctx, const ssl_flag_tbl *tbl,
@@ -335,6 +362,22 @@ static int cmd_Options(SSL_CONF_CTX *cctx, const char *value)
     return CONF_parse_list(value, ',', 1, ssl_set_option_list, cctx);
 }
 
+static int cmd_VerifyMode(SSL_CONF_CTX *cctx, const char *value)
+{
+    static const ssl_flag_tbl ssl_vfy_list[] = {
+        SSL_FLAG_VFY_CLI("Peer", SSL_VERIFY_PEER),
+        SSL_FLAG_VFY_SRV("Request", SSL_VERIFY_PEER),
+        SSL_FLAG_VFY_SRV("Require",
+                         SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT),
+        SSL_FLAG_VFY_SRV("Once", SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE)
+    };
+    if (value == NULL)
+        return -3;
+    cctx->tbl = ssl_vfy_list;
+    cctx->ntbl = OSSL_NELEM(ssl_vfy_list);
+    return CONF_parse_list(value, ',', 1, ssl_set_option_list, cctx);
+}
+
 static int cmd_Certificate(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv = 1;
@@ -376,6 +419,64 @@ static int cmd_ServerInfoFile(SSL_CONF_CTX *cctx, const char *value)
     if (cctx->ctx)
         rv = SSL_CTX_use_serverinfo_file(cctx->ctx, value);
     return rv > 0;
+}
+
+static int do_store(SSL_CONF_CTX *cctx,
+                    const char *CAfile, const char *CApath, int verify_store)
+{
+    CERT *cert;
+    X509_STORE **st;
+    if (cctx->ctx)
+        cert = cctx->ctx->cert;
+    else if (cctx->ssl)
+        cert = cctx->ssl->cert;
+    else
+        return 1;
+    st = verify_store ? &cert->verify_store : &cert->chain_store;
+    if (*st == NULL) {
+        *st = X509_STORE_new();
+        if (*st == NULL)
+            return 0;
+    }
+    return X509_STORE_load_locations(*st, CAfile, CApath) > 0;
+}
+
+static int cmd_ChainCAPath(SSL_CONF_CTX *cctx, const char *value)
+{
+    return do_store(cctx, NULL, value, 0);
+}
+
+static int cmd_ChainCAFile(SSL_CONF_CTX *cctx, const char *value)
+{
+    return do_store(cctx, value, NULL, 0);
+}
+
+static int cmd_VerifyCAPath(SSL_CONF_CTX *cctx, const char *value)
+{
+    return do_store(cctx, NULL, value, 1);
+}
+
+static int cmd_VerifyCAFile(SSL_CONF_CTX *cctx, const char *value)
+{
+    return do_store(cctx, value, NULL, 1);
+}
+
+static int cmd_ClientCAFile(SSL_CONF_CTX *cctx, const char *value)
+{
+    if (cctx->canames == NULL)
+        cctx->canames = sk_X509_NAME_new_null();
+    if (cctx->canames == NULL)
+        return 0;
+    return SSL_add_file_cert_subjects_to_stack(cctx->canames, value);
+}
+
+static int cmd_ClientCAPath(SSL_CONF_CTX *cctx, const char *value)
+{
+    if (cctx->canames == NULL)
+        cctx->canames = sk_X509_NAME_new_null();
+    if (cctx->canames == NULL)
+        return 0;
+    return SSL_add_dir_cert_subjects_to_stack(cctx->canames, value);
 }
 
 #ifndef OPENSSL_NO_DH
@@ -452,6 +553,7 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD_STRING(CipherString, "cipher", 0),
     SSL_CONF_CMD_STRING(Protocol, NULL, 0),
     SSL_CONF_CMD_STRING(Options, NULL, 0),
+    SSL_CONF_CMD_STRING(VerifyMode, NULL, 0),
     SSL_CONF_CMD(Certificate, "cert", SSL_CONF_FLAG_CERTIFICATE,
                  SSL_CONF_TYPE_FILE),
     SSL_CONF_CMD(PrivateKey, "key", SSL_CONF_FLAG_CERTIFICATE,
@@ -459,6 +561,20 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD(ServerInfoFile, NULL,
                  SSL_CONF_FLAG_SERVER | SSL_CONF_FLAG_CERTIFICATE,
                  SSL_CONF_TYPE_FILE),
+    SSL_CONF_CMD(ChainCAPath, "chainCApath", SSL_CONF_FLAG_CERTIFICATE,
+                 SSL_CONF_TYPE_DIR),
+    SSL_CONF_CMD(ChainCAFile, "chainCAfile", SSL_CONF_FLAG_CERTIFICATE,
+                 SSL_CONF_TYPE_FILE),
+    SSL_CONF_CMD(VerifyCAPath, "verifyCApath", SSL_CONF_FLAG_CERTIFICATE,
+                 SSL_CONF_TYPE_DIR),
+    SSL_CONF_CMD(VerifyCAFile, "verifyCAfile", SSL_CONF_FLAG_CERTIFICATE,
+                 SSL_CONF_TYPE_FILE),
+    SSL_CONF_CMD(ClientCAFile, NULL,
+                 SSL_CONF_FLAG_SERVER | SSL_CONF_FLAG_CERTIFICATE,
+                 SSL_CONF_TYPE_FILE),
+    SSL_CONF_CMD(ClientCAPath, NULL,
+                 SSL_CONF_FLAG_SERVER | SSL_CONF_FLAG_CERTIFICATE,
+                 SSL_CONF_TYPE_DIR),
 #ifndef OPENSSL_NO_DH
     SSL_CONF_CMD(DHParameters, "dhparam",
                  SSL_CONF_FLAG_SERVER | SSL_CONF_FLAG_CERTIFICATE,
@@ -666,10 +782,12 @@ SSL_CONF_CTX *SSL_CONF_CTX_new(void)
         ret->ctx = NULL;
         ret->poptions = NULL;
         ret->pcert_flags = NULL;
+        ret->pvfy_flags = NULL;
         ret->tbl = NULL;
         ret->ntbl = 0;
         for (i = 0; i < SSL_PKEY_NUM; i++)
             ret->cert_filename[i] = NULL;
+        ret->canames = NULL;
     }
     return ret;
 }
@@ -695,6 +813,15 @@ int SSL_CONF_CTX_finish(SSL_CONF_CTX *cctx)
             }
         }
     }
+    if (cctx->canames) {
+        if (cctx->ssl)
+            SSL_set_client_CA_list(cctx->ssl, cctx->canames);
+        else if (cctx->ctx)
+            SSL_CTX_set_client_CA_list(cctx->ctx, cctx->canames);
+        else
+            sk_X509_NAME_pop_free(cctx->canames, X509_NAME_free);
+        cctx->canames = NULL;
+    }
     return 1;
 }
 
@@ -706,6 +833,7 @@ void SSL_CONF_CTX_free(SSL_CONF_CTX *cctx)
             OPENSSL_free(cctx->cert_filename[i]);
         OPENSSL_free(cctx->prefix);
         OPENSSL_free(cctx);
+        sk_X509_NAME_pop_free(cctx->canames, X509_NAME_free);
     }
 }
 
@@ -745,9 +873,11 @@ void SSL_CONF_CTX_set_ssl(SSL_CONF_CTX *cctx, SSL *ssl)
     if (ssl) {
         cctx->poptions = &ssl->options;
         cctx->pcert_flags = &ssl->cert->cert_flags;
+        cctx->pvfy_flags = &ssl->verify_mode;
     } else {
         cctx->poptions = NULL;
         cctx->pcert_flags = NULL;
+        cctx->pvfy_flags = NULL;
     }
 }
 
@@ -758,8 +888,10 @@ void SSL_CONF_CTX_set_ssl_ctx(SSL_CONF_CTX *cctx, SSL_CTX *ctx)
     if (ctx) {
         cctx->poptions = &ctx->options;
         cctx->pcert_flags = &ctx->cert->cert_flags;
+        cctx->pvfy_flags = &ctx->verify_mode;
     } else {
         cctx->poptions = NULL;
         cctx->pcert_flags = NULL;
+        cctx->pvfy_flags = NULL;
     }
 }
