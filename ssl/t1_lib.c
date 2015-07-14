@@ -3459,7 +3459,7 @@ int tls1_process_sigalgs(SSL *s)
     size_t i;
     const EVP_MD *md;
     const EVP_MD **pmd = s->s3->tmp.md;
-    int *pvalid = s->s3->tmp.valid_flags;
+    uint32_t *pvalid = s->s3->tmp.valid_flags;
     CERT *c = s->cert;
     TLS_SIGALGS *sigptr;
     if (!tls1_set_shared_sigalgs(s))
@@ -3890,7 +3890,7 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
     int check_flags = 0, strict_mode;
     CERT_PKEY *cpk = NULL;
     CERT *c = s->cert;
-    int *pvalid;
+    uint32_t *pvalid;
     unsigned int suiteb_flags = tls1_suiteb(s);
     /* idx == -1 means checking server chains */
     if (idx != -1) {

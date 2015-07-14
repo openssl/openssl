@@ -124,11 +124,11 @@ struct ssl_conf_ctx_st {
     SSL_CTX *ctx;
     SSL *ssl;
     /* Pointer to SSL or SSL_CTX options field or NULL if none */
-    unsigned long *poptions;
+    uint32_t *poptions;
     /* Certificate filenames for each type */
     char *cert_filename[SSL_PKEY_NUM];
     /* Pointer to SSL or SSL_CTX cert_flags or NULL if none */
-    unsigned int *pcert_flags;
+    uint32_t *pcert_flags;
     /* Current flag table being worked on */
     const ssl_flag_tbl *tbl;
     /* Size of table */
