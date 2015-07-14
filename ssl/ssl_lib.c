@@ -1937,7 +1937,7 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
 {
     CERT_PKEY *cpk;
     CERT *c = s->cert;
-    int *pvalid = s->s3->tmp.valid_flags;
+    uint32_t *pvalid = s->s3->tmp.valid_flags;
     int rsa_enc, rsa_tmp, rsa_sign, dh_tmp, dh_rsa, dh_dsa, dsa_sign;
     int rsa_enc_export, dh_rsa_export, dh_dsa_export;
     int rsa_tmp_export, dh_tmp_export, kl;
