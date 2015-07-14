@@ -1,0 +1,7 @@
+#
+# Example configuration file using includes.
+#
+
+.include includes1.cnf
+
+.include includes2.cnf
