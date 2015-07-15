@@ -1546,11 +1546,9 @@ __owur const SSL_METHOD *SSLv3_server_method(void); /* SSLv3 */
 __owur const SSL_METHOD *SSLv3_client_method(void); /* SSLv3 */
 # endif
 
-#ifdef OPENSSL_USE_DEPRECATED
 #define SSLv23_method           TLS_method
 #define SSLv23_server_method    TLS_server_method
 #define SSLv23_client_method    TLS_client_method
-#endif
 
 /* Negotiate highest available SSL/TLS version */
 __owur const SSL_METHOD *TLS_method(void);
