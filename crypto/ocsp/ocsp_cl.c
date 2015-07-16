@@ -386,3 +386,8 @@ int OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
 
     return ret;
 }
+
+OCSP_CERTID *OCSP_SINGLERESP_get0_id(OCSP_SINGLERESP *single)
+{
+    return single->certId;
+}
