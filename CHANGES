@@ -3,6 +3,12 @@
  _______________
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
+  *) Dropped support for the SSL3_FLAGS_DELAY_CLIENT_FINISHED flag. This SSLeay
+     era flag was never set throughout the codebase (only read). Also removed
+     SSL3_FLAGS_POP_BUFFER which was only used if
+     SSL3_FLAGS_DELAY_CLIENT_FINISHED was also set.
+     [Matt Caswell]
+
   *) Changed the default name options in the "ca", "crl", "req" and "x509"
      to be "oneline" instead of "compat".
      [Richard Levitte]

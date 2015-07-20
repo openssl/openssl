@@ -518,15 +518,8 @@ int ssl3_connect(SSL *s)
                 goto end;
             s->state = SSL3_ST_CW_FLUSH;
 
-            /* clear flags */
-            s->s3->flags &= ~SSL3_FLAGS_POP_BUFFER;
             if (s->hit) {
                 s->s3->tmp.next_state = SSL_ST_OK;
-                if (s->s3->flags & SSL3_FLAGS_DELAY_CLIENT_FINISHED) {
-                    s->state = SSL_ST_OK;
-                    s->s3->flags |= SSL3_FLAGS_POP_BUFFER;
-                    s->s3->delay_buf_pop_ret = 0;
-                }
             } else {
                 /*
                  * Allow NewSessionTicket if ticket expected
@@ -589,13 +582,8 @@ int ssl3_connect(SSL *s)
             BUF_MEM_free(s->init_buf);
             s->init_buf = NULL;
 
-            /*
-             * If we are not 'joining' the last two packets, remove the
-             * buffering now
-             */
-            if (!(s->s3->flags & SSL3_FLAGS_POP_BUFFER))
-                ssl_free_wbio_buffer(s);
-            /* else do it later in ssl3_write */
+            /* remove the buffering */
+            ssl_free_wbio_buffer(s);
 
             s->init_num = 0;
             s->renegotiate = 0;
