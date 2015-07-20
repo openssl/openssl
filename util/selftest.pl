@@ -199,3 +199,6 @@ while (<IN>) {
 }
 print "\nTest report in file $report\n";
 
+if ($ok != 2) {
+        die;
+}
