@@ -153,7 +153,7 @@ struct ssl_conf_ctx_st {
 static void ssl_set_option(SSL_CONF_CTX *cctx, unsigned int name_flags,
                            unsigned long option_value, int onoff)
 {
-    unint32_t *pflags;
+    uint32_t *pflags;
     if (cctx->poptions == NULL)
         return;
     if (name_flags & SSL_TFLAG_INV)
