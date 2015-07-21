@@ -832,8 +832,8 @@ void SSL_CONF_CTX_free(SSL_CONF_CTX *cctx)
         for (i = 0; i < SSL_PKEY_NUM; i++)
             OPENSSL_free(cctx->cert_filename[i]);
         OPENSSL_free(cctx->prefix);
-        OPENSSL_free(cctx);
         sk_X509_NAME_pop_free(cctx->canames, X509_NAME_free);
+        OPENSSL_free(cctx);
     }
 }
 
