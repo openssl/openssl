@@ -5,7 +5,7 @@
 # editor artefacts
 *.swp
 .#*
-#*#
+\#*#
 *~
 
 # Top level excludes
