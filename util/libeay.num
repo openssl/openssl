@@ -1004,7 +1004,7 @@ CRYPTO_get_new_lockid                   1026	EXIST::FUNCTION:
 CRYPTO_new_ex_data                      1027	EXIST::FUNCTION:
 RSA_set_ex_data                         1028	EXIST::FUNCTION:RSA
 RSA_get_ex_data                         1029	EXIST::FUNCTION:RSA
-RSA_get_ex_new_index                    1030	EXIST::FUNCTION:RSA
+RSA_get_ex_new_index                    1030	NOEXIST::FUNCTION:
 RSA_padding_add_PKCS1_type_1            1031	EXIST::FUNCTION:RSA
 RSA_padding_add_PKCS1_type_2            1032	EXIST::FUNCTION:RSA
 RSA_padding_add_SSLv23                  1033	EXIST::FUNCTION:RSA
@@ -1033,7 +1033,7 @@ BN_mpi2bn                               1059	EXIST::FUNCTION:
 ASN1_BIT_STRING_get_bit                 1060	EXIST::FUNCTION:
 ASN1_BIT_STRING_set_bit                 1061	EXIST::FUNCTION:
 BIO_get_ex_data                         1062	EXIST::FUNCTION:
-BIO_get_ex_new_index                    1063	EXIST::FUNCTION:
+BIO_get_ex_new_index                    1063	NOEXIST::FUNCTION:
 BIO_set_ex_data                         1064	EXIST::FUNCTION:
 X509v3_get_key_usage                    1066	NOEXIST::FUNCTION:
 X509v3_set_key_usage                    1067	NOEXIST::FUNCTION:
@@ -1069,7 +1069,7 @@ COMP_CTX_new                            1096	EXIST::FUNCTION:
 COMP_CTX_free                           1097	EXIST::FUNCTION:
 COMP_CTX_compress_block                 1098	NOEXIST::FUNCTION:
 COMP_CTX_expand_block                   1099	NOEXIST::FUNCTION:
-X509_STORE_CTX_get_ex_new_index         1100	EXIST::FUNCTION:
+X509_STORE_CTX_get_ex_new_index         1100	NOEXIST::FUNCTION:
 OBJ_NAME_add                            1101	EXIST::FUNCTION:
 BIO_socket_nbio                         1102	EXIST::FUNCTION:
 EVP_rc2_64_cbc                          1103	EXIST::FUNCTION:RC2
@@ -1484,11 +1484,11 @@ DH_set_ex_data                          1883	EXIST::FUNCTION:DH
 DH_set_method                           1884	EXIST::FUNCTION:DH
 DSA_OpenSSL                             1885	EXIST::FUNCTION:DSA
 DH_get_ex_data                          1886	EXIST::FUNCTION:DH
-DH_get_ex_new_index                     1887	EXIST::FUNCTION:DH
+DH_get_ex_new_index                     1887	NOEXIST::FUNCTION:
 DSA_new_method                          1888	EXIST::FUNCTION:DSA
 DH_new_method                           1889	EXIST::FUNCTION:DH
 DH_OpenSSL                              1890	EXIST::FUNCTION:DH
-DSA_get_ex_new_index                    1891	EXIST::FUNCTION:DSA
+DSA_get_ex_new_index                    1891	NOEXIST::FUNCTION:
 DH_get_default_method                   1892	EXIST::FUNCTION:DH
 DSA_set_ex_data                         1893	EXIST::FUNCTION:DSA
 DH_set_default_method                   1894	EXIST::FUNCTION:DH
@@ -1580,7 +1580,7 @@ i2d_DSA_PUBKEY_bio                      2014	EXIST::FUNCTION:DSA
 i2d_OTHERNAME                           2015	EXIST::FUNCTION:
 ASN1_OCTET_STRING_free                  2016	EXIST::FUNCTION:
 ASN1_BIT_STRING_set_asc                 2017	EXIST::FUNCTION:
-X509_get_ex_new_index                   2019	EXIST::FUNCTION:
+X509_get_ex_new_index                   2019	NOEXIST::FUNCTION:
 ASN1_STRING_TABLE_cleanup               2020	EXIST::FUNCTION:
 X509_TRUST_get_by_id                    2021	EXIST::FUNCTION:
 X509_PURPOSE_get_trust                  2022	EXIST::FUNCTION:
@@ -2311,7 +2311,7 @@ d2i_ASN1_GENERALSTRING                  2822	EXIST::FUNCTION:
 X509_CRL_set_version                    2823	EXIST::FUNCTION:
 BN_mod_sub                              2824	EXIST::FUNCTION:
 OCSP_SINGLERESP_get_ext_by_NID          2825	EXIST::FUNCTION:
-ENGINE_get_ex_new_index                 2826	EXIST::FUNCTION:ENGINE
+ENGINE_get_ex_new_index                 2826	NOEXIST::FUNCTION:
 OCSP_REQUEST_free                       2827	EXIST::FUNCTION:
 OCSP_REQUEST_add1_ext_i2d               2828	EXIST::FUNCTION:
 X509_VAL_it                             2829	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
@@ -2435,7 +2435,7 @@ EC_POINT_free                           2929	EXIST::FUNCTION:EC
 DH_up_ref                               2930	EXIST::FUNCTION:DH
 X509_NAME_ENTRY_it                      2931	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 X509_NAME_ENTRY_it                      2931	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
-UI_get_ex_new_index                     2932	EXIST::FUNCTION:
+UI_get_ex_new_index                     2932	NOEXIST::FUNCTION:
 BN_mod_sub_quick                        2933	EXIST::FUNCTION:
 OCSP_ONEREQ_add_ext                     2934	EXIST::FUNCTION:
 OCSP_request_sign                       2935	EXIST::FUNCTION:
@@ -3173,7 +3173,7 @@ BIO_dgram_non_fatal_error               3586	EXIST::FUNCTION:
 EC_GROUP_get_asn1_flag                  3587	EXIST::FUNCTION:EC
 STORE_ATTR_INFO_in_ex                   3588	NOEXIST::FUNCTION:
 STORE_list_crl_start                    3589	NOEXIST::FUNCTION:
-ECDH_get_ex_new_index                   3590	EXIST::FUNCTION:EC
+ECDH_get_ex_new_index                   3590	NOEXIST::FUNCTION:
 STORE_meth_get_modify_fn                3591	NOEXIST::FUNCTION:
 STORE_method_get_modify_function        3591	NOEXIST::FUNCTION:
 v2i_ASN1_BIT_STRING                     3592	EXIST::FUNCTION:
@@ -3341,7 +3341,7 @@ PKCS7_set_digest                        3741	EXIST::FUNCTION:
 EC_KEY_print                            3742	EXIST::FUNCTION:EC
 STORE_meth_set_lock_store_fn            3743	NOEXIST::FUNCTION:
 STORE_method_set_lock_store_function    3743	NOEXIST::FUNCTION:
-ECDSA_get_ex_new_index                  3744	EXIST::FUNCTION:EC
+ECDSA_get_ex_new_index                  3744	NOEXIST::FUNCTION:
 SHA384                                  3745	EXIST:!VMSVAX:FUNCTION:
 POLICY_MAPPING_new                      3746	EXIST::FUNCTION:
 STORE_list_certificate_endp             3747	NOEXIST::FUNCTION:
@@ -4665,3 +4665,4 @@ ASYNC_cleanup                           5024	EXIST::FUNCTION:
 ASYNC_init                              5025	EXIST::FUNCTION:
 EVP_MD_CTX_ctrl                         5026	EXIST::FUNCTION:
 EVP_md5_sha1                            5027	EXIST::FUNCTION:MD5
+CRYPTO_free_ex_index                    5028	EXIST::FUNCTION:

@@ -212,14 +212,6 @@ void ENGINE_cleanup(void)
 
 /* Now the "ex_data" support */
 
-int ENGINE_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-                            CRYPTO_EX_dup *dup_func,
-                            CRYPTO_EX_free *free_func)
-{
-    return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_ENGINE, argl, argp,
-                                   new_func, dup_func, free_func);
-}
-
 int ENGINE_set_ex_data(ENGINE *e, int idx, void *arg)
 {
     return (CRYPTO_set_ex_data(&e->ex_data, idx, arg));

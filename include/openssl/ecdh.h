@@ -97,9 +97,8 @@ int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
                      EC_KEY *ecdh, void *(*KDF) (const void *in, size_t inlen,
                                                  void *out, size_t *outlen));
 
-int ECDH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new
-                          *new_func, CRYPTO_EX_dup *dup_func,
-                          CRYPTO_EX_free *free_func);
+#define ECDH_get_ex_new_index(l, p, newf, dupf, freef) \
+    CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_ECDH, l, p, newf, dupf, freef)
 int ECDH_set_ex_data(EC_KEY *d, int idx, void *arg);
 void *ECDH_get_ex_data(EC_KEY *d, int idx);
 

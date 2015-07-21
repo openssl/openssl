@@ -151,6 +151,10 @@
      output file readable only by the owner.  This behavior change might
      be noticeable when interacting with other software.
 
+  *) Documented all exdata functions.  Added CRYPTO_free_ex_index.
+     Added a test.
+     [Rich Salz]
+
   *) Added HTTP GET support to the ocsp command.
      [Rich Salz]
 
