@@ -602,13 +602,10 @@ int BIO_ctrl_reset_read_request(BIO *b);
 # define BIO_dgram_get_mtu_overhead(b) \
          (unsigned int)BIO_ctrl((b), BIO_CTRL_DGRAM_GET_MTU_OVERHEAD, 0, NULL)
 
-/* These two aren't currently implemented */
-/* int BIO_get_ex_num(BIO *bio); */
-/* void BIO_set_ex_free_func(BIO *bio,int idx,void (*cb)()); */
+#define BIO_get_ex_new_index(l, p, newf, dupf, freef) \
+    CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_BIO, l, p, newf, dupf, freef)
 int BIO_set_ex_data(BIO *bio, int idx, void *data);
 void *BIO_get_ex_data(BIO *bio, int idx);
-int BIO_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-                         CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
 uint64_t BIO_number_read(BIO *bio);
 uint64_t BIO_number_written(BIO *bio);
 

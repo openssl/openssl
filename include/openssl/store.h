@@ -122,9 +122,9 @@ int STORE_ctrl(STORE *store, int cmd, long i, void *p, void (*f) (void));
 /* Some methods may use extra data */
 # define STORE_set_app_data(s,arg)       STORE_set_ex_data(s,0,arg)
 # define STORE_get_app_data(s)           STORE_get_ex_data(s,0)
-int STORE_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-                           CRYPTO_EX_dup *dup_func,
-                           CRYPTO_EX_free *free_func);
+
+#define STORE_get_ex_new_index(l, p, newf, dupf, freef) \
+    CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_STORE, l, p, newf, dupf, freef)
 int STORE_set_ex_data(STORE *r, int idx, void *arg);
 void *STORE_get_ex_data(STORE *r, int idx);
 

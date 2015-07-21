@@ -187,13 +187,6 @@ int STORE_ctrl(STORE *store, int cmd, long i, void *p, void (*f) (void))
     return 0;
 }
 
-int STORE_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-                           CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
-{
-    return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_STORE, argl, argp,
-                                   new_func, dup_func, free_func);
-}
-
 int STORE_set_ex_data(STORE *r, int idx, void *arg)
 {
     return (CRYPTO_set_ex_data(&r->ex_data, idx, arg));

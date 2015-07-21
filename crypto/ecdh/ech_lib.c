@@ -200,13 +200,6 @@ ECDH_DATA *ecdh_check(EC_KEY *key)
     return ecdh_data;
 }
 
-int ECDH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-                          CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
-{
-    return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_ECDH, argl, argp,
-                                   new_func, dup_func, free_func);
-}
-
 int ECDH_set_ex_data(EC_KEY *d, int idx, void *arg)
 {
     ECDH_DATA *ecdh;

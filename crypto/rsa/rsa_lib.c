@@ -234,13 +234,6 @@ int RSA_up_ref(RSA *r)
     return ((i > 1) ? 1 : 0);
 }
 
-int RSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-                         CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
-{
-    return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_RSA, argl, argp,
-                                   new_func, dup_func, free_func);
-}
-
 int RSA_set_ex_data(RSA *r, int idx, void *arg)
 {
     return (CRYPTO_set_ex_data(&r->ex_data, idx, arg));

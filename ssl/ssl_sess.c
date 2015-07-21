@@ -170,15 +170,6 @@ SSL_SESSION *SSL_get1_session(SSL *ssl)
     return (sess);
 }
 
-int SSL_SESSION_get_ex_new_index(long argl, void *argp,
-                                 CRYPTO_EX_new *new_func,
-                                 CRYPTO_EX_dup *dup_func,
-                                 CRYPTO_EX_free *free_func)
-{
-    return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_SSL_SESSION, argl, argp,
-                                   new_func, dup_func, free_func);
-}
-
 int SSL_SESSION_set_ex_data(SSL_SESSION *s, int idx, void *arg)
 {
     return (CRYPTO_set_ex_data(&s->ex_data, idx, arg));

@@ -222,9 +222,8 @@ int ECDSA_verify(int type, const unsigned char *dgst, int dgstlen,
                  const unsigned char *sig, int siglen, EC_KEY *eckey);
 
 /* the standard ex_data functions */
-int ECDSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new
-                           *new_func, CRYPTO_EX_dup *dup_func,
-                           CRYPTO_EX_free *free_func);
+#define ECDSA_get_ex_new_index(l, p, newf, dupf, freef) \
+    CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_ECDSA, l, p, newf, dupf, freef)
 int ECDSA_set_ex_data(EC_KEY *d, int idx, void *arg);
 void *ECDSA_get_ex_data(EC_KEY *d, int idx);
 

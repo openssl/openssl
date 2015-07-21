@@ -146,9 +146,9 @@ SSL_set_verify_result                   163	EXIST::FUNCTION:
 SSL_version                             164	EXIST::FUNCTION:
 SSL_get_info_callback                   165	EXIST::FUNCTION:
 SSL_state                               166	NOEXIST::FUNCTION:
-SSL_CTX_get_ex_new_index                167	EXIST::FUNCTION:
-SSL_SESSION_get_ex_new_index            168	EXIST::FUNCTION:
-SSL_get_ex_new_index                    169	EXIST::FUNCTION:
+SSL_CTX_get_ex_new_index                167	NOEXIST::FUNCTION:
+SSL_SESSION_get_ex_new_index            168	NOEXIST::FUNCTION:
+SSL_get_ex_new_index                    169	NOEXIST::FUNCTION:
 TLSv1_method                            170	EXIST::FUNCTION:
 TLSv1_server_method                     171	EXIST::FUNCTION:
 TLSv1_client_method                     172	EXIST::FUNCTION:

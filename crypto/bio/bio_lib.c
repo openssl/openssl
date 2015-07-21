@@ -561,13 +561,6 @@ void BIO_copy_next_retry(BIO *b)
     b->retry_reason = b->next_bio->retry_reason;
 }
 
-int BIO_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-                         CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
-{
-    return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_BIO, argl, argp,
-                                   new_func, dup_func, free_func);
-}
-
 int BIO_set_ex_data(BIO *bio, int idx, void *data)
 {
     return (CRYPTO_set_ex_data(&(bio->ex_data), idx, data));
