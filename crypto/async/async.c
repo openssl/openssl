@@ -61,6 +61,12 @@
 #define ASYNC_JOB_PAUSED    2
 #define ASYNC_JOB_STOPPING  3
 
+static size_t pool_max_size = 0;
+static size_t curr_size = 0;
+
+DECLARE_STACK_OF(ASYNC_JOB)
+static STACK_OF(ASYNC_JOB) *pool = NULL;
+
 
 static ASYNC_CTX *ASYNC_CTX_new(void)
 {
@@ -121,22 +127,60 @@ static void ASYNC_JOB_free(ASYNC_JOB *job)
     }
 }
 
+static ASYNC_JOB *async_get_pool_job(void) {
+    ASYNC_JOB *job;
+
+    if (pool == NULL) {
+        /*
+         * Pool has not been initialised, so init with the defaults, i.e.
+         * global pool, with no max size and no pre-created jobs
+         */
+        if (ASYNC_init_pool(0, 0, 0) == 0)
+            return NULL;
+    }
+
+    job = sk_ASYNC_JOB_pop(pool);
+    if (job == NULL) {
+        /* Pool is empty */
+        if (pool_max_size && curr_size >= pool_max_size) {
+            /* Pool is at max size. We cannot continue */
+            return NULL;
+        }
+        job = ASYNC_JOB_new();
+        if (job) {
+            ASYNC_FIBRE_makecontext(&job->fibrectx);
+            curr_size++;
+        }
+    }
+    return job;
+}
+
+static void async_release_job(ASYNC_JOB *job) {
+    if(job->funcargs)
+        OPENSSL_free(job->funcargs);
+    job->funcargs = NULL;
+    /* Ignore error return */
+    sk_ASYNC_JOB_push(pool, job);
+}
+
 void ASYNC_start_func(void)
 {
     ASYNC_JOB *job;
 
-    /* Run the job */
-    job = ASYNC_get_ctx()->currjob;
-    job->ret = job->func(job->funcargs);
+    while (1) {
+        /* Run the job */
+        job = ASYNC_get_ctx()->currjob;
+        job->ret = job->func(job->funcargs);
 
-    /* Stop the job */
-    job->status = ASYNC_JOB_STOPPING;
-    if(!ASYNC_FIBRE_swapcontext(&job->fibrectx,
-                                &ASYNC_get_ctx()->dispatcher, 0)) {
-        /*
-         * Should not happen. Getting here will close the thread...can't do much
-         * about it
-         */
+        /* Stop the job */
+        job->status = ASYNC_JOB_STOPPING;
+        if(!ASYNC_FIBRE_swapcontext(&job->fibrectx,
+                                    &ASYNC_get_ctx()->dispatcher, 1)) {
+            /*
+             * Should not happen. Getting here will close the thread...can't do much
+             * about it
+             */
+        }
     }
 }
 
@@ -155,7 +199,7 @@ int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
         if(ASYNC_get_ctx()->currjob) {
             if(ASYNC_get_ctx()->currjob->status == ASYNC_JOB_STOPPING) {
                 *ret = ASYNC_get_ctx()->currjob->ret;
-                ASYNC_JOB_free(ASYNC_get_ctx()->currjob);
+                async_release_job(ASYNC_get_ctx()->currjob);
                 ASYNC_get_ctx()->currjob = NULL;
                 *job = NULL;
                 ASYNC_CTX_free();
@@ -179,7 +223,7 @@ int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
             }
 
             /* Should not happen */
-            ASYNC_JOB_free(ASYNC_get_ctx()->currjob);
+            async_release_job(ASYNC_get_ctx()->currjob);
             ASYNC_get_ctx()->currjob = NULL;
             *job = NULL;
             ASYNC_CTX_free();
@@ -187,15 +231,15 @@ int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
         }
 
         /* Start a new job */
-        if(!(ASYNC_get_ctx()->currjob = ASYNC_JOB_new())) {
+        if(!(ASYNC_get_ctx()->currjob = async_get_pool_job())) {
             ASYNC_CTX_free();
-            return ASYNC_ERR;
+            return ASYNC_NO_JOBS;
         }
 
         if(args != NULL) {
             ASYNC_get_ctx()->currjob->funcargs = OPENSSL_malloc(size);
             if(!ASYNC_get_ctx()->currjob->funcargs) {
-                ASYNC_JOB_free(ASYNC_get_ctx()->currjob);
+                async_release_job(ASYNC_get_ctx()->currjob);
                 ASYNC_get_ctx()->currjob = NULL;
                 ASYNC_CTX_free();
                 return ASYNC_ERR;
@@ -206,14 +250,13 @@ int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
         }
 
         ASYNC_get_ctx()->currjob->func = func;
-        ASYNC_FIBRE_makecontext(&ASYNC_get_ctx()->currjob->fibrectx);
         if(!ASYNC_FIBRE_swapcontext(&ASYNC_get_ctx()->dispatcher,
             &ASYNC_get_ctx()->currjob->fibrectx, 1))
             goto err;
     }
 
 err:
-    ASYNC_JOB_free(ASYNC_get_ctx()->currjob);
+    async_release_job(ASYNC_get_ctx()->currjob);
     ASYNC_get_ctx()->currjob = NULL;
     *job = NULL;
     ASYNC_CTX_free();
@@ -246,4 +289,49 @@ int ASYNC_in_job(void)
         return 1;
 
     return 0;
+}
+
+int ASYNC_init_pool(unsigned int local, size_t max_size, size_t init_size)
+{
+    if (local != 0) {
+        /* We only support a global pool so far */
+        return 0;
+    }
+
+    pool_max_size = max_size;
+    pool = sk_ASYNC_JOB_new_null();
+    if (pool == NULL) {
+        return 0;
+    }
+    /* Pre-create jobs as required */
+    while (init_size) {
+        ASYNC_JOB *job;
+        job = ASYNC_JOB_new();
+        if (job) {
+            ASYNC_FIBRE_makecontext(&job->fibrectx);
+            job->funcargs = NULL;
+            sk_ASYNC_JOB_push(pool, job);
+            curr_size++;
+            init_size--;
+        } else {
+            /*
+             * Not actually fatal because we already created the pool, just skip
+             * creation of any more jobs
+             */
+            init_size = 0;
+        }
+    }
+
+    return 1;
+}
+
+void ASYNC_free_pool(void)
+{
+    ASYNC_JOB *job;
+
+    do {
+        job = sk_ASYNC_JOB_pop(pool);
+        ASYNC_JOB_free(job);
+    } while (job);
+    sk_ASYNC_JOB_free(pool);
 }
