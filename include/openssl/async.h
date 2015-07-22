@@ -63,8 +63,12 @@ extern "C" {
 typedef struct async_job_st ASYNC_JOB;
 
 #define ASYNC_ERR      0
-#define ASYNC_PAUSE    1
-#define ASYNC_FINISH   2
+#define ASYNC_NO_JOBS  1
+#define ASYNC_PAUSE    2
+#define ASYNC_FINISH   3
+
+int ASYNC_init_pool(unsigned int local, size_t max_size, size_t init_size);
+void ASYNC_free_pool(void);
 
 int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
                          void *args, size_t size);
