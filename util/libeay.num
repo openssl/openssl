@@ -4654,3 +4654,5 @@ ASYNC_pause_job                         5013	EXIST::FUNCTION:
 ASYNC_job_is_waiting                    5014	NOEXIST::FUNCTION:
 ASYNC_in_job                            5015	EXIST::FUNCTION:
 ASYNC_start_job                         5016	EXIST::FUNCTION:
+ASYNC_init_pool                         5017	EXIST::FUNCTION:
+ASYNC_free_pool                         5018	EXIST::FUNCTION:
