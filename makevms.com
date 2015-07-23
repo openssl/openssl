@@ -292,6 +292,7 @@ $ CONFIG_LOGICALS := AES,-
 		     RC2,-
 		     RC4,-
 		     RC5,-
+		     RFC3779,-
 		     RMD160,-
 		     RSA,-
 		     SCTP,-
