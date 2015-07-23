@@ -3739,12 +3739,27 @@ typedef struct {
     int sigalgs[MAX_SIGALGLEN];
 } sig_cb_st;
 
+static void get_sigorhash(int *psig, int *phash, const char *str)
+{
+    if (strcmp(str, "RSA") == 0) {
+        *psig = EVP_PKEY_RSA;
+    } else if (strcmp(str, "DSA") == 0) {
+        *psig = EVP_PKEY_DSA;
+    } else if (strcmp(str, "ECDSA") == 0) {
+        *psig = EVP_PKEY_EC;
+    } else {
+        *phash = OBJ_sn2nid(str);
+        if (*phash == NID_undef)
+            *phash = OBJ_ln2nid(str);
+    }
+}
+
 static int sig_cb(const char *elem, int len, void *arg)
 {
     sig_cb_st *sarg = arg;
     size_t i;
     char etmp[20], *p;
-    int sig_alg, hash_alg;
+    int sig_alg = NID_undef, hash_alg = NID_undef;
     if (elem == NULL)
         return 0;
     if (sarg->sigalgcnt == MAX_SIGALGLEN)
@@ -3761,19 +3776,10 @@ static int sig_cb(const char *elem, int len, void *arg)
     if (!*p)
         return 0;
 
-    if (strcmp(etmp, "RSA") == 0)
-        sig_alg = EVP_PKEY_RSA;
-    else if (strcmp(etmp, "DSA") == 0)
-        sig_alg = EVP_PKEY_DSA;
-    else if (strcmp(etmp, "ECDSA") == 0)
-        sig_alg = EVP_PKEY_EC;
-    else
-        return 0;
+    get_sigorhash(&sig_alg, &hash_alg, etmp);
+    get_sigorhash(&sig_alg, &hash_alg, p);
 
-    hash_alg = OBJ_sn2nid(p);
-    if (hash_alg == NID_undef)
-        hash_alg = OBJ_ln2nid(p);
-    if (hash_alg == NID_undef)
+    if (sig_alg == NID_undef || hash_alg == NID_undef)
         return 0;
 
     for (i = 0; i < sarg->sigalgcnt; i += 2) {
