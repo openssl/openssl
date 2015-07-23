@@ -69,6 +69,7 @@
 #include <openssl/buffer.h>
 #include <openssl/x509v3.h>
 
+#ifndef OPENSSL_NO_RFC3779
 
 /*
  * OpenSSL ASN.1 template translation of RFC 3779 2.2.3.
@@ -1339,3 +1340,5 @@ int v3_addr_validate_resource_set(STACK_OF(X509) *chain,
         return 0;
     return v3_addr_validate_path_internal(NULL, chain, ext);
 }
+
+#endif                          /* OPENSSL_NO_RFC3779 */
