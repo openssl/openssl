@@ -931,6 +931,14 @@ int SSL_waiting_for_async(SSL *s)
     return 0;
 }
 
+int SSL_get_async_wait_fd(SSL *s)
+{
+    if (!s->job)
+        return 0;
+
+    return ASYNC_get_wait_fd(s->job);
+}
+
 static int ssl_accept_intern(void *vargs)
 {
     struct ssl_async_args *args;

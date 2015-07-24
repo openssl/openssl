@@ -57,6 +57,7 @@
 #ifdef ASYNC_SYSV
 # include <stddef.h>
 # include <ucontext.h>
+# include <unistd.h>
 # include <openssl/crypto.h>
 # include <openssl/async.h>
 
@@ -85,4 +86,29 @@ void ASYNC_FIBRE_free(ASYNC_FIBRE *fibre)
     if (fibre->fibre.uc_stack.ss_sp)
         OPENSSL_free(fibre->fibre.uc_stack.ss_sp);
 }
+
+int async_pipe(int *pipefds)
+{
+    if (pipe(pipefds) == 0)
+        return 1;
+
+    return 0;
+}
+
+int async_write1(int fd, const void *buf)
+{
+    if (write(fd, buf, 1) > 0)
+        return 1;
+
+    return 0;
+}
+
+int async_read1(int fd, void *buf)
+{
+    if (read(fd, buf, 1) > 0)
+        return 1;
+
+    return 0;
+}
+
 #endif

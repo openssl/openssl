@@ -1572,6 +1572,7 @@ __owur char *SSL_get_srp_userinfo(SSL *s);
 void SSL_certs_clear(SSL *s);
 void SSL_free(SSL *ssl);
 __owur int SSL_waiting_for_async(SSL *s);
+__owur int SSL_get_async_wait_fd(SSL *s);
 __owur int SSL_accept(SSL *ssl);
 __owur int SSL_connect(SSL *ssl);
 __owur int SSL_read(SSL *ssl, void *buf, int num);

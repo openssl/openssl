@@ -106,10 +106,20 @@ static int ASYNC_CTX_free(void)
 static ASYNC_JOB *ASYNC_JOB_new(void)
 {
     ASYNC_JOB *job = NULL;
+    int pipefds[2];
 
     if(!(job = OPENSSL_malloc(sizeof (ASYNC_JOB)))) {
         return NULL;
     }
+
+    if(!async_pipe(pipefds)) {
+        OPENSSL_free(job);
+        return NULL;
+    }
+
+    job->wake_set = 0;
+    job->wait_fd = pipefds[0];
+    job->wake_fd = pipefds[1];
 
     job->status = ASYNC_JOB_RUNNING;
     job->funcargs = NULL;
@@ -334,4 +344,37 @@ void ASYNC_free_pool(void)
         ASYNC_JOB_free(job);
     } while (job);
     sk_ASYNC_JOB_free(pool);
+}
+
+ASYNC_JOB *ASYNC_get_current_job(void)
+{
+    ASYNC_CTX *ctx;
+    if((ctx = ASYNC_get_ctx()) == NULL)
+        return NULL;
+
+    return ctx->currjob;
+}
+
+int ASYNC_get_wait_fd(ASYNC_JOB *job)
+{
+    return job->wait_fd;
+}
+
+void ASYNC_wake(ASYNC_JOB *job)
+{
+    char dummy = 0;
+
+    if (job->wake_set)
+        return;
+    async_write1(job->wake_fd, &dummy);
+    job->wake_set = 1;
+}
+
+void ASYNC_clear_wake(ASYNC_JOB *job)
+{
+    char dummy = 0;
+    if (!job->wake_set)
+        return;
+    async_read1(job->wait_fd, &dummy);
+    job->wake_set = 0;
 }
