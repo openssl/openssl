@@ -70,6 +70,9 @@ struct async_job_st {
     void *funcargs;
     int ret;
     int status;
+    int wake_set;
+    int wait_fd;
+    int wake_fd;
 };
 
 void ASYNC_start_func(void);
