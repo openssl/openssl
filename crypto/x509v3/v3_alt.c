@@ -68,8 +68,6 @@ static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method,
 static GENERAL_NAMES *v2i_issuer_alt(X509V3_EXT_METHOD *method,
                                      X509V3_CTX *ctx,
                                      STACK_OF(CONF_VALUE) *nval);
-static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p);
-static int copy_cn(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p);
 static int copy_subject_rdn(X509V3_CTX *ctx,
                             int nid,
                             int type,
@@ -329,19 +327,21 @@ static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method,
         cnf = sk_CONF_VALUE_value(nval, i);
         if (!name_cmp(cnf->name, "email")
             && cnf->value && strcmp(cnf->value, "copy") == 0) {
-            if (!copy_email(ctx, gens, 0))
+            if (!copy_subject_rdn(ctx, NID_pkcs9_emailAddress, GEN_EMAIL,
+                                  gens, 0))
                 goto err;
         } else if (!name_cmp(cnf->name, "email")
                    && cnf->value && strcmp(cnf->value, "move") == 0) {
-            if (!copy_email(ctx, gens, 1))
+            if (!copy_subject_rdn(ctx, NID_pkcs9_emailAddress, GEN_EMAIL,
+                                  gens, 1))
                 goto err;
         } else if (!name_cmp(cnf->name, "DNS")
             && cnf->value && strcmp(cnf->value, "copy") == 0) {
-            if (!copy_cn(ctx, gens, 0))
+            if (!copy_subject_rdn(ctx, NID_commonName, GEN_DNS, gens, 0))
                 goto err;
         } else if (!name_cmp(cnf->name, "DNS")
             && cnf->value && strcmp(cnf->value, "move") == 0) {
-            if (!copy_cn(ctx, gens, 1))
+            if (!copy_subject_rdn(ctx, NID_commonName, GEN_DNS, gens, 1))
                 goto err;
         } else {
             GENERAL_NAME *gen;
@@ -354,25 +354,6 @@ static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method,
  err:
     sk_GENERAL_NAME_pop_free(gens, GENERAL_NAME_free);
     return NULL;
-}
-
-/*
- * Copy any email addresses in a certificate or request to GENERAL_NAMES
- */
-
-static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
-{
-    return copy_subject_rdn(ctx, NID_pkcs9_emailAddress, GEN_EMAIL, gens,
-                            move_p);
-}
-
-/*
- * Copy any common names in a certificate or request to GENERAL_NAMES
- */
-
-static int copy_cn(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
-{
-    return copy_subject_rdn(ctx, NID_commonName, GEN_DNS, gens, move_p);
 }
 
 /*
@@ -402,7 +383,7 @@ static int copy_subject_rdn(X509V3_CTX *ctx,
     else
         nm = X509_REQ_get_subject_name(ctx->subject_req);
 
-    /* Now add any common name(s) to STACK */
+    /* Now add any matching subject RDN(s) to STACK */
     i = -1;
     while ((i = X509_NAME_get_index_by_NID(nm,
                                            nid, i)) >= 0) {
