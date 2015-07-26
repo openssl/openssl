@@ -906,9 +906,9 @@ void ERR_load_X509V3_strings(void);
 # define X509V3_F_A2I_GENERAL_NAME                        164
 # define X509V3_F_ASIDENTIFIERCHOICE_CANONIZE             161
 # define X509V3_F_ASIDENTIFIERCHOICE_IS_CANONICAL         162
-# define X509V3_F_COPY_CN                                 165
 # define X509V3_F_COPY_EMAIL                              122
 # define X509V3_F_COPY_ISSUER                             123
+# define X509V3_F_COPY_SUBJECT_RDN                        165
 # define X509V3_F_DO_DIRNAME                              144
 # define X509V3_F_DO_EXT_CONF                             124
 # define X509V3_F_DO_EXT_I2D                              135
