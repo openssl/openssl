@@ -80,6 +80,8 @@ char *_CONF_get_string(const CONF *conf, const char *section,
 long _CONF_get_number(const CONF *conf, const char *section,
                       const char *name);
 
+STACK_OF(CONF_VALUE) *_CONF_get_policy_values(void);
+
 int _CONF_new_data(CONF *conf);
 void _CONF_free_data(CONF *conf);
 
