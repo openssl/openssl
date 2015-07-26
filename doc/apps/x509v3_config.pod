@@ -164,9 +164,11 @@ B<URI> a uniform resource indicator, B<DNS> (a DNS domain name), B<RID> (a
 registered ID: OBJECT IDENTIFIER), B<IP> (an IP address), B<dirName>
 (a distinguished name) and otherName.
 
-The email option include a special 'copy' value. This will automatically
-include and email addresses contained in the certificate subject name in
-the extension.
+The email and DNS options include a special 'copy' value. This will
+automatically include any email addresses and/or common names contained in the
+certificate subject name in the extension. The special 'move' value can be
+used in the same way to move any email addresses and/or common names from the
+certificate subject name to the extension.
 
 The IP address used in the B<IP> options can be in either IPv4 or IPv6 format.
 
