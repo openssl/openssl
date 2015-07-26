@@ -69,6 +69,7 @@ static GENERAL_NAMES *v2i_issuer_alt(X509V3_EXT_METHOD *method,
                                      X509V3_CTX *ctx,
                                      STACK_OF(CONF_VALUE) *nval);
 static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p);
+static int copy_cn(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p);
 static int copy_issuer(X509V3_CTX *ctx, GENERAL_NAMES *gens);
 static int do_othername(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx);
 static int do_dirname(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx);
@@ -329,6 +330,14 @@ static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method,
                    && cnf->value && strcmp(cnf->value, "move") == 0) {
             if (!copy_email(ctx, gens, 1))
                 goto err;
+        } else if (!name_cmp(cnf->name, "DNS")
+            && cnf->value && strcmp(cnf->value, "copy") == 0) {
+            if (!copy_cn(ctx, gens, 0))
+                goto err;
+        } else if (!name_cmp(cnf->name, "DNS")
+            && cnf->value && strcmp(cnf->value, "move") == 0) {
+            if (!copy_cn(ctx, gens, 1))
+                goto err;
         } else {
             GENERAL_NAME *gen;
             if ((gen = v2i_GENERAL_NAME(method, ctx, cnf)) == NULL)
@@ -397,6 +406,62 @@ static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
     ASN1_IA5STRING_free(email);
     return 0;
 
+}
+
+/*
+ * Copy any common names in a certificate or request to GENERAL_NAMES
+ */
+
+static int copy_cn(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
+{
+    X509_NAME *nm;
+    ASN1_IA5STRING *cn = NULL;
+    X509_NAME_ENTRY *ne;
+    GENERAL_NAME *gen = NULL;
+    int i;
+    if (ctx != NULL && ctx->flags == CTX_TEST)
+        return 1;
+    if (!ctx || (!ctx->subject_cert && !ctx->subject_req)) {
+        X509V3err(X509V3_F_COPY_CN, X509V3_R_NO_SUBJECT_DETAILS);
+        goto err;
+    }
+    /* Find the subject name */
+    if (ctx->subject_cert)
+        nm = X509_get_subject_name(ctx->subject_cert);
+    else
+        nm = X509_REQ_get_subject_name(ctx->subject_req);
+
+    /* Now add any common name(s) to STACK */
+    i = -1;
+    while ((i = X509_NAME_get_index_by_NID(nm,
+                                           NID_commonName, i)) >= 0) {
+        ne = X509_NAME_get_entry(nm, i);
+        cn = ASN1_STRING_dup(X509_NAME_ENTRY_get_data(ne));
+        if (move_p) {
+            X509_NAME_delete_entry(nm, i);
+            X509_NAME_ENTRY_free(ne);
+            i--;
+        }
+        if (cn == NULL || (gen = GENERAL_NAME_new()) == NULL) {
+            X509V3err(X509V3_F_COPY_CN, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+        gen->d.ia5 = cn;
+        cn = NULL;
+        gen->type = GEN_DNS;
+        if (!sk_GENERAL_NAME_push(gens, gen)) {
+            X509V3err(X509V3_F_COPY_CN, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+        gen = NULL;
+    }
+
+    return 1;
+
+ err:
+    GENERAL_NAME_free(gen);
+    ASN1_IA5STRING_free(cn);
+    return 0;
 }
 
 GENERAL_NAMES *v2i_GENERAL_NAMES(const X509V3_EXT_METHOD *method,
