@@ -663,7 +663,7 @@ case "$GUESSOS" in
   *-*-linux2) OUT="linux-generic32" ;;
   sun4[uv]*-*-solaris2)
 	OUT="solaris-sparcv9-$CC"
-	ISA64=`(isalist) 2>/dev/null | grep sparcv9`
+	ISA64=`(isainfo) 2>/dev/null | grep sparcv9`
 	if [ "$ISA64" != "" -a "$KERNEL_BITS" = "" ]; then
 	    if [ "$CC" = "cc" -a $CCVER -ge 50 ]; then
 		echo "WARNING! If you wish to build 64-bit library, then you have to"
@@ -702,7 +702,7 @@ case "$GUESSOS" in
   sun4d-*-solaris2)	OUT="solaris-sparcv8-$CC" ;;
   sun4*-*-solaris2)	OUT="solaris-sparcv7-$CC" ;;
   *86*-*-solaris2)
-	ISA64=`(isalist) 2>/dev/null | grep amd64`
+	ISA64=`(isainfo) 2>/dev/null | grep amd64`
 	if [ "$ISA64" != "" -a ${KERNEL_BITS:-64} -eq 64 ]; then
 	    OUT="solaris64-x86_64-$CC"
 	else
