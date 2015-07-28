@@ -2391,8 +2391,10 @@ int ssl3_send_client_key_exchange(SSL *s)
             s->s3->tmp.psk = BUF_memdup(psk, psklen);
             OPENSSL_cleanse(psk, psklen);
 
-            if (s->s3->tmp.psk == NULL)
+            if (s->s3->tmp.psk == NULL) {
+                OPENSSL_cleanse(identity, sizeof(identity));
                 goto memerr;
+            }
 
             s->s3->tmp.psklen = psklen;
 
@@ -2404,8 +2406,10 @@ int ssl3_send_client_key_exchange(SSL *s)
             }
             OPENSSL_free(s->session->psk_identity);
             s->session->psk_identity = BUF_strdup(identity);
-            if (s->session->psk_identity == NULL)
+            if (s->session->psk_identity == NULL) {
+                OPENSSL_cleanse(identity, sizeof(identity));
                 goto memerr;
+            }
 
             s2n(identitylen, p);
             memcpy(p, identity, identitylen);
