@@ -4966,8 +4966,10 @@ int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
 
         pskpmslen = 4 + pmslen + psklen;
         pskpms = OPENSSL_malloc(pskpmslen);
-        if (pskpms == NULL)
-            return 0;
+        if (pskpms == NULL) {
+            s->session->master_key_length = 0;
+            goto err;
+        }
         t = pskpms;
         s2n(pmslen, t);
         if (alg_k & SSL_kPSK)
@@ -4991,6 +4993,8 @@ int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
             s->method->ssl3_enc->generate_master_secret(s,
                                                         s->session->master_key,
                                                         pms, pmslen);
+
+    err:
     if (pms) {
         if (free_pms)
             OPENSSL_clear_free(pms, pmslen);
